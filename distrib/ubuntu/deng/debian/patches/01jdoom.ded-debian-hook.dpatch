@@ -1,0 +1,20 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 01jdoom.ded-debian-hook.dpatch by  <jamie_jones_au@yahoo.com.au>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: This adds the jdoom-debian.ded that is responsible for ensuring
+## DP: the jpacks are loaded, and that they are disabled when they
+## DP: conflict with any mods or pwads.
+
+@DPATCH@
+diff -urNad deng-1.8.9+1.9.0beta2/Defs/jDoom/jDoom.ded /tmp/dpep.oSh97x/deng-1.8.9+1.9.0beta2/Defs/jDoom/jDoom.ded
+--- deng-1.8.9+1.9.0beta2/Defs/jDoom/jDoom.ded	2004-01-26 08:31:00.000000000 +1100
++++ /tmp/dpep.oSh97x/deng-1.8.9+1.9.0beta2/Defs/jDoom/jDoom.ded	2005-08-14 02:19:48.003157216 +1000
+@@ -25,6 +25,7 @@
+ Include "Text.ded";
+ Include "Values.ded";
+ Include "Models.ded";
++Include "jdoom-debian.ded";
+ Include "User.ded";
+ 
+ IncludeIf Not -noauto "Auto\*.ded";

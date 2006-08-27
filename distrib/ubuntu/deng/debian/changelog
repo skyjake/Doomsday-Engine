@@ -1,0 +1,169 @@
+deng (1.8.9+1.9.0beta4-1ubuntu2) dapper; urgency=low
+
+  * Build scripts update.
+  * Revert explictly setting timidity.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Fri, 28 Jul 2006 20:21:46 +1000
+
+deng (1.8.9+1.9.0beta4-1ubuntu1) dapper; urgency=medium
+
+  * Fixes from svn 3274.
+  * Fix no sound with custom timidity patchset, by explicitly
+    satating timidity is to be used for midi, in doomsday.sh
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed, 14 Jun 2006 00:49:36 +1000
+
+deng (1.8.9+1.9.0beta4-1ubuntu0) dapper; urgency=low
+
+  * New upstream release
+  * Remove preperations for optimised builds. Testing showed that had little
+    effect.
+  * Add zip and python to build-deps.
+  * No longer symlink to doomsday.sh
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 28 May 2006 19:17:55 +0000
+
+deng (1.8.9+1.9.0beta3-1ubuntu6) dapper; urgency=low
+
+  * Rebuild due to openal transition.
+  * Build-dep on gcc-4.1. Future builds will uses features that ICE under gcc < 4.1
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed, 10 May 2006 17:13:27 +1000
+
+deng (1.8.9+1.9.0beta3-1ubuntu5) dapper; urgency=low
+
+  * Begin preperations for optimised builds.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Thu, 20 Apr 2006 13:27:19 +1000
+
+deng (1.8.9+1.9.0beta3-1ubuntu4) dapper; urgency=low
+
+  * Fix spelling mistakes.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 16 Apr 2006 23:57:03 +1000
+
+deng (1.8.9+1.9.0beta3-1ubuntu3) dapper; urgency=low
+
+  * General Packaging cleanups.
+  * copyright file cleaned up.
+  * Build-depends adjusted.
+  * autoconf, automake etc now run at build time.
+  * amd64 package now downloads and repacks the i386 deb at build time.
+    This works as my pbuilders all have access to i386 and amd64 repos.
+    It removes a 3MB .diff, and a lot of rules hackery.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Fri, 31 Mar 2006 19:36:24 +1100
+
+deng (1.8.9+1.9.0beta3-1ubuntu2) breezy; urgency=low
+
+  * NEW version for amd64. (32bit package)
+  * Adjust CFLAGS for a small speed increase.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed, 28 Dec 2005 06:55:20 +0000
+
+deng (1.8.9+1.9.0beta3-1ubuntu1) breezy; urgency=low
+
+  * Adjust build-depends
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Mon, 21 Nov 2005 23:18:57 +1100
+
+deng (1.8.9+1.9.0beta3-1ubuntu0) breezy; urgency=low
+
+  * Rebuild + version bump to fix the versioning stuffup.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Mon,  7 Nov 2005 02:31:27 +1100
+
+deng (1.8.9+1.9.0beta3-0ubuntu4) breezy; urgency=low
+
+  * Actually enable the walllights and teleports.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Mon,  7 Nov 2005 01:42:45 +1100
+
+deng (1.8.9+1.9.0beta3-0ubuntu3) breezy; urgency=low
+
+  * Added support picklebrosteleports, and walllights.
+  * Updated suggests for new heretic packs.
+  * Updated suggests for new hexen packs.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Mon,  7 Nov 2005 01:03:42 +1100
+
+deng (1.8.9+1.9.0beta3-0ubuntu1-2) breezy; urgency=low
+
+  * Added support for lavalights, and bulletdecals.
+  * Updated suggests for new doom packs.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun,  6 Nov 2005 20:27:56 +1100
+
+deng (1.8.9+1.9.0beta3-0ubuntu1-1) breezy; urgency=low
+
+  * New upstream release
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sat, 22 Oct 2005 21:57:00 +1000
+
+deng (1.8.9+1.9.0beta2-7ubuntu1) hoary; urgency=low
+
+  * Merge deng-debian and deng packages.
+  * Correct install paths to be policy compliant.
+  * Removed divert magic, not needed now.
+  * Bump standards to 3.6.2
+  * Created a man page.
+  * Removed suggests for deng-jhexen-skypack, obsoleted by new release
+    of deng-jhexen-xccp.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Mon, 22 Aug 2005 00:17:08 +1000
+
+deng (1.8.9+1.9.0beta2-6) hoary; urgency=low
+
+  * Convert to dpatch for patches.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 14 Aug 2005 03:02:12 +1000
+
+deng (1.8.9+1.9.0beta2-5) hoary; urgency=low
+
+  * Fix typo in reportbug script. Removed suggests for timidity-patches-eaw
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Tue, 26 Jul 2005 20:06:30 +1000
+
+deng (1.8.9+1.9.0beta2-4) hoary; urgency=low
+
+  * Back out fix-64.diff from skyjake. Tweak reportbug script.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Tue, 26 Jul 2005 18:22:26 +1000
+
+deng (1.8.9+1.9.0beta2-3) hoary; urgency=low
+
+  * Implemented fix-64.diff from skyjake.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 24 Jul 2005 03:23:13 +1000
+
+deng (1.8.9+1.9.0beta2-2) hoary; urgency=low
+
+  * Moved resource pack recommendations to deng-debian.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed, 20 Jul 2005 02:14:46 +1000
+
+deng (1.8.9+1.9.0beta2-1) hoary; urgency=low
+
+  * New upstream release
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Tue, 19 Jul 2005 16:25:58 +1000
+
+deng (1.8.9+1.9.0beta1-1) hoary; urgency=low
+
+  * New upstream release.
+  * Added build support for OpenAL 3D sound.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Mon, 18 Jul 2005 11:17:13 +1000
+
+deng (1.8.6-2) unstable; urgency=low
+
+  * Rebuild against Debian Sarge and Ubuntu Hoary only.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 17 Jul 2005 17:02:01 +1000
+
+deng (1.8.6-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sat,  5 Mar 2005 22:24:41 +1100
+

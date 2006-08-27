@@ -1,0 +1,215 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+## Make sure we use dpatch
+include /usr/share/dpatch/dpatch.make
+
+## These are used for cross-compiling and for saving the configure script
+## from having to guess our platform (since we know it already)
+DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+DEBIAN_ARCH = $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+
+
+## Set the configure options here. Attempt to comply with debian policy.
+CONFIG_OPTIONS=	--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr \
+		--bindir=/usr/games --libdir=/usr/lib/deng \
+		--mandir=/usr/share/man --infodir=/usr/share/info \
+		--with-datadir-name=deng --datadir=/usr/share/games
+
+#CC=gcc-4.1
+CFLAGS = -Wall -ggdb3 -Q -fPIC
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+## Optimise the engine a bit, but still remain generic enough to run on anything debian supports
+## -fomit-frame-pointer may give us an extra register, which is good on i386
+## -ffast-math is fine. we can take some shortcuts with math, we don't need uber acuraccy here
+## (an we are mostly integer based anyway)
+## -frename-registers should give amd64 (when it builds that is) and powerpc a boost
+##-fgcse-after-reload is to clean up any redundant loads after gcse optimisation.
+## Doesn't seem to cause any problems
+	CFLAGS += -fgcse-after-reload -fomit-frame-pointer -ffast-math
+
+#These cflags below break gcc :)
+#	CFLAGS += -O2 -fPIC -fweb -ffast-math -funswitch-loops -fgcse-after-reload -fomit-frame-pointer -fgcse-lm -fgcse-sm -fgcse-las -ftree-loop-linear -ftree-loop-im -ftree-loop-ivcanon -fivopts -ftree-vectorize -ftracer -fvariable-expansion-in-unroller
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+
+# Now tune the engine based on our arch
+# Need to see if it is a win to remove the assembler code.
+ifeq "$(DEBIAN_ARCH)" "i386"
+
+	CFLAGS += -march=i486 -mtune=pentium4 -O2
+
+## Pentium 4 and K8 systems have quite a lot of new features we can really use
+## to sppeed the code up.
+## -ftracer enlaagers the code a bit, but it strengthens other optimisations.
+## -mmmx, -msse, -msse2 ensure those build-in simd functions are available.
+## -mfpmath=sse enables automatic generation of sse/sse2 code for fp math.
+## Currently no effect on current code base. Does cause an ICE in gcc < 4.1 though.
+## -ftree-vectorize try to rearange code to be SIMD friendly. Needs sse or sse2
+## -ftree-vectorizer-verbose=5 debugging info for me.
+
+#	P4_CFLAGS += -march=pentium4 -mmmx -msse -msse2 -mfpmath=sse -O2 -ftracer -ftree-vectorize -ftree-vectorizer-verbose=5
+endif
+#ifeq "$(DEBIAN_ARCH)" "amd64"
+#	CFLAGS += -march=athlon64 -mfpmath=sse
+#endif
+
+# FIXME add other archs - would be nice to see this on everything from m68k and arm to S/390 :)
+
+
+ifneq "$(DEBIAN_ARCH)" "amd64"
+# We are not on amd64, so build this package normally
+
+config.status: configure
+	dh_testdir
+	# Add here commands to configure the package.
+#	test -w config.cache && rm config.cache
+#	test -w config.cross.cache && rm config.cross.cache
+	aclocal
+	autoheader
+	autoconf
+	libtoolize --automake --ltdl
+	automake --foreign -a
+	ls -lah
+	CFLAGS="$(CFLAGS)" ./configure $(CONFIG_OPTIONS)
+
+build: build-stamp
+
+build-stamp:  patch config.status
+	dh_testdir
+
+	# Add here commands to compile the package.
+	$(MAKE)
+	#/usr/bin/docbook-to-man debian/deng.sgml > deng.1
+
+	touch build-stamp
+
+clean: unpatch
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp 
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) distclean
+ifneq "$(wildcard /usr/share/misc/config.sub)" ""
+	cp -f /usr/share/misc/config.sub config.sub
+endif
+ifneq "$(wildcard /usr/share/misc/config.guess)" ""
+	cp -f /usr/share/misc/config.guess config.guess
+endif
+
+	dh_clean 
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+	mkdir -p debian/deng/usr/share/bug/deng
+	install -m 644 debian/reportbug.control debian/deng/usr/share/bug/deng/control
+	install -m 644 debian/reportbug.presubj debian/deng/usr/share/bug/deng/presubj
+	install -m 755 debian/reportbug.script debian/deng/usr/share/bug/deng/script
+	install -m 644 debian/jdoom-debian.ded debian/deng/usr/share/games/deng/Defs/jDoom
+	install -m 644 debian/jhexen-debian.ded debian/deng/usr/share/games/deng/Defs/jHexen
+	install -m 644 debian/jheretic-debian.ded debian/deng/usr/share/games/deng/Defs/jHeretic
+	install -m 755 debian/doomsday.sh debian/deng/usr/games
+	uudecode debian/deng.png.uue > debian/deng/usr/share/pixmaps/deng.png
+	/usr/bin/xsltproc -""-nonet -o debian/doomsday.6 /usr/share/xml/docbook/stylesheet/nwalsh/manpages/docbook.xsl debian/manpage.xml
+
+
+	# Add here commands to install the package into debian/deng.
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/deng
+
+
+# Build architecture-independent files here.
+binary-indep: build install
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs Doc/ChangeLog.txt
+	dh_installdocs
+	dh_installman debian/doomsday.6
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	chmod 644 debian/deng/usr/lib/deng/*
+	mv debian/deng/usr/games/doomsday debian/deng/usr/games/doomsday.real
+	mv debian/deng/usr/games/doomsday.sh debian/deng/usr/games/doomsday
+	dh_link /usr/share/man/man6/doomsday.6.gz /usr/share/man/man6/doomsday.sh.6.gz
+	dh_link /usr/share/man/man6/doomsday.6.gz /usr/share/man/man6/doomsday.real.6.gz
+	dh_installdeb
+	dh_shlibdeps debian/deng/usr/lib/deng/* debian/deng/usr/games/*
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install 
+endif
+
+ifeq "$(DEBIAN_ARCH)" "amd64"
+# We are on amd64, so do the funky shit :)
+
+build:
+	rm -f debian/control
+	cp ./debian/control.amd64 ./debian/control
+	chmod +x debian/ubuntu-fetch-and-build-amd64
+	debian/ubuntu-fetch-and-build-amd64
+
+
+clean:
+	dh_testdir
+	dh_testroot
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+# Extract all debs
+	for i in `cd ./debian/pkgs ; /bin/ls *.deb` ; do \
+	    dpkg-deb -x ./debian/pkgs/$$i ./debian/$${i%%_*}/ ; done
+
+
+binary-indep:
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installdocs
+	dh_installexamples
+	dh_installchangelogs
+#      dh_link
+#      dh_strip
+	dh_compress
+	dh_fixperms --exclude "*/ld-*"
+#      dh_makeshlibs
+	dh_installdeb
+#      dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
+endif

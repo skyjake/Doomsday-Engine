@@ -1,0 +1,706 @@
+This package was debianized by Jamie Jones <jamie_jones_au@yahoo.com.au> on
+Sat,  5 Mar 2005 22:24:41 +1100.
+
+It was downloaded from http://www.doomsdayhq.com/
+
+Doomsday Copyright:
+Jaakko Keranen <skyjake@doomsdayhq.com> 2000-2006
+Daniel Swanson <danij@dengine.net> 2005-2006
+Jamie Jones <jamie_jones_au@yahoo.com.au> 2005-2006
+Andrew Apted 1999-2002
+id Software 1993-1996
+Raven Software / Activision 1995-1996
+Randy Heit <rheit@iastate.edu> 2003
+
+Zlib 1.1.4 Copyright:
+Jean-loup Gailly <jloup@gzip.org> 1995-2002
+Mark Adler <madler@alumni.caltech.edu> 1995-2002
+
+libpng 1.2.1 Copyright:
+Glenn Randers-Pehrson 1998-2001 
+Andreas Dilger 1996-1997
+Guy Eric Schalnat, Group 42, Inc. 1995-1996
+Simon-Pierre Cadieux 2000-2001
+Eric S. Raymond 2000-2001
+Gilles Vollant 2000-2001
+Tom Lane 1998-2000
+Willem van Schaik 1998-2000
+John Bowler 1996-1997
+Kevin Bracey 1996-1997
+Sam Bushell 1996-1997
+Magnus Holmgren 1996-1997
+Greg Roelofs 1996-1997
+Tom Tanner 1996-1997
+Dave Martindale 1995-1996
+Paul Schmidt 1995-1996
+Tim Wegner 1995-1996
+
+lzss Copyright:
+Haruhiko Okumura 1989
+Shawn Hargreaves
+Jaakko Keranen <skyjake@doomsdayhq.com> 2000-2006
+
+FMOD Copyright:
+Firelight Technologies Pty Ltd 1994-2004
+
+libltdl Copyright:
+Free Software Foundation 1998-2000
+
+Packaging Copyright:
+Jamie Jones <jamie_jones_au@yahoo.com.au> 2005-2006
+
+
+*** Important Notice 1
+Many source files from doom contain the original license
+terms from before id Software mass-relicensed doom under
+the GNU GPL v2 or later. These files are used under the
+terms of the GNU GPL v2 or later.
+***
+
+*** Important Notice 2
+Doomsday is built as a main engine, with a plug-in system.
+The engine itself, while being pure GPLv2 or later, needs
+either the jDoom, jHeretic or jHexen plugins to function
+as a game. The jDoom, jHeretic and jHexen plugins are
+implemented as shared objects, and pass data back and
+forth to the engine, over a relative well defined interface.
+This results in the Raven Hexen Source licensed jHeretic
+and jHexen not being mixed with the GPLv2 or later code
+in the engine and jDoom plugins. As a result, I believe
+that this is suitable for distribution in the
+multiverse component of the Ubuntu archive.
+***
+
+
+License: Multiple. ???, FMOD Non-Commercial license, BSD Style, GPLv2 Only, GPLv2 or later, and Raven Hexen Source license.
+
+The following files are under the ??? license: <- Possible Problem: These need clarification
+./Include/LZSS.h
+./Src/Unix/lzss.c
+
+#ubuntu-motu
+(03:36:00) Yagisan: If the entire copyright notice in some code is " Use, distribute, and modify this code freely" that would be public domain right ?
+(03:36:30) azeem: Yagisan: it dubious whether distribution of modified works is allowed under such terms, AIUI
+(03:36:50) azeem: it's definetely not public domain
+(03:36:56) crimsun: no, not public domain
+(03:38:51) Yagisan: ok. I'm documenting all copyright in a package that I'd like to see in dapper +1, and found a file with that notice, that's gone author -> FLOSS project 1 -> FLOSS project 2
+(03:40:19) Yagisan: how would I call a file licensed as such ?
+(03:41:42) crimsun: doesn't mean anything. You should contact the contributors in addition to the original author for clarification.
+
+
+The following files are under the FMOD license: <- Possible Problem: Non-free for Commerical Use
+./Src/Unix/sys_musd_fmod.c
+
+The following files are under Zlib's BSD Style license:
+./Include/zconf.h
+./Include/zlib.h
+
+The following files are under libpng's BSD Style license:
+./Include/pngconf.h
+./Include/png.h
+
+The following files are under the GPLv2 only:
+./debian/manpage.xml
+
+The following files are under the GPLv2 or any later version:
+./Include/Common/am_map.h
+./Include/Common/d_netcl.h
+./Include/Common/d_net.h
+./Include/Common/d_netsv.h
+./Include/Common/f_infine.h
+./Include/Common/g_common.h
+./Include/Common/g_dgl.h
+./Include/Common/g_update.h
+./Include/Common/hu_lib.h
+./Include/Common/hu_msg.h
+./Include/Common/hu_pspr.h
+./Include/Common/hu_stuff.h
+./Include/Common/m_swap.h
+./Include/Common/p_actor.h
+./Include/Common/p_saveg.h
+./Include/Common/p_start.h
+./Include/Common/p_svtexarc.h
+./Include/Common/p_ticcmd.h
+./Include/Common/p_view.h
+./Include/Common/p_xg.h
+./Include/Common/p_xgline.h
+./Include/Common/p_xgsec.h
+./Include/Common/r_common.h
+./Include/Common/st_lib.h
+./Include/Common/xgclass.h
+./Include/Common/x_hair.h
+./Include/Unix/sys_findfile.h
+./Include/Unix/sys_path.h
+./Include/drD3D/box.h
+./Include/drD3D/drD3D.h
+./Include/drD3D/window.h
+./Include/drOpenGL/atiext.h
+./Include/drOpenGL/drOpenGL.h
+./Include/jDoom/D_Action.h
+./Include/jDoom/d_config.h
+./Include/jDoom/d_console.h
+./Include/jDoom/d_englsh.h
+./Include/jDoom/d_event.h
+./Include/jDoom/d_french.h
+./Include/jDoom/d_items.h
+./Include/jDoom/d_main.h
+./Include/jDoom/d_netJD.h
+./Include/jDoom/doomdata.h
+./Include/jDoom/doomdef.h
+./Include/jDoom/doomstat.h
+./Include/jDoom/doomtype.h
+./Include/jDoom/d_player.h
+./Include/jDoom/dstrings.h
+./Include/jDoom/d_think.h
+./Include/jDoom/d_ticcmd.h
+./Include/jDoom/g_game.h
+./Include/jDoom/info.h
+./Include/jDoom/m_argv.h
+./Include/jDoom/m_cheat.h
+./Include/jDoom/m_ctrl.h
+./Include/jDoom/m_menu.h
+./Include/jDoom/Mn_def.h
+./Include/jDoom/m_random.h
+./Include/jDoom/oldinfo.h
+./Include/jDoom/p_inter.h
+./Include/jDoom/p_local.h
+./Include/jDoom/p_mobj.h
+./Include/jDoom/p_oldsvg.h
+./Include/jDoom/p_pspr.h
+./Include/jDoom/p_setup.h
+./Include/jDoom/p_spec.h
+./Include/jDoom/r_data.h
+./Include/jDoom/r_defs.h
+./Include/jDoom/r_local.h
+./Include/jDoom/r_sky.h
+./Include/jDoom/r_state.h
+./Include/jDoom/SndIdx.h
+./Include/jDoom/s_sound.h
+./Include/jDoom/st_stuff.h
+./Include/jDoom/tables.h
+./Include/jDoom/version.h
+./Include/jDoom/wi_stuff.h
+./Include/jDoom/x_hair.h
+./Include/cl_def.h
+./Include/cl_frame.h
+./Include/cl_mobj.h
+./Include/cl_player.h
+./Include/cl_sound.h
+./Include/cl_world.h
+./Include/con_action.h
+./Include/con_bar.h
+./Include/con_bind.h
+./Include/con_config.h
+./Include/con_decl.h
+./Include/con_main.h
+./Include/con_start.h
+./Include/dd_api.h
+./Include/dd_def.h
+./Include/dd_dgl.h
+./Include/dd_help.h
+./Include/dd_input.h
+./Include/dd_loop.h
+./Include/dd_main.h
+./Include/dd_pinit.h
+./Include/dd_plugin.h
+./Include/dd_share.h
+./Include/dd_types.h
+./Include/dd_version.h
+./Include/dd_wad.h
+./Include/dd_winit.h
+./Include/dd_zip.h
+./Include/dd_zone.h
+./Include/de_audio.h
+./Include/de_base.h
+./Include/de_console.h
+./Include/de_defs.h
+./Include/def_data.h
+./Include/def_main.h
+./Include/def_share.h
+./Include/de_graphics.h
+./Include/de_misc.h
+./Include/de_network.h
+./Include/de_platform.h
+./Include/de_play.h
+./Include/de_refresh.h
+./Include/de_render.h
+./Include/de_system.h
+./Include/de_ui.h
+./Include/dglib.h
+./Include/doomsday.h
+./Include/gl_draw.h
+./Include/gl_font.h
+./Include/gl_hq2x.h
+./Include/gl_main.h
+./Include/gl_model.h
+./Include/gl_pcx.h
+./Include/gl_png.h
+./Include/gl_tex.h
+./Include/gl_tga.h
+./Include/m_args.h
+./Include/m_bams.h
+./Include/m_filehash.h
+./Include/m_huffman.h
+./Include/m_misc.h
+./Include/m_nodepile.h
+./Include/m_profiler.h
+./Include/m_string.h
+./Include/m_vector.h
+./Include/net_buf.h
+./Include/net_demo.h
+./Include/net_event.h
+./Include/net_main.h
+./Include/net_msg.h
+./Include/p_bmap.h
+./Include/p_data.h
+./Include/p_intercept.h
+./Include/p_maputil.h
+./Include/p_mobj.h
+./Include/p_particle.h
+./Include/p_polyob.h
+./Include/p_sight.h
+./Include/p_think.h
+./Include/p_tick.h
+./Include/r_data.h
+./Include/r_draw.h
+./Include/rend_bias.h
+./Include/rend_clip.h
+./Include/rend_decor.h
+./Include/rend_dyn.h
+./Include/rend_fakeradio.h
+./Include/rend_halo.h
+./Include/rend_list.h
+./Include/rend_main.h
+./Include/rend_model.h
+./Include/rend_particle.h
+./Include/rend_shadow.h
+./Include/rend_sky.h
+./Include/rend_sprite.h
+./Include/r_extres.h
+./Include/r_lgrid.h
+./Include/r_main.h
+./Include/r_model.h
+./Include/r_shadow.h
+./Include/r_sky.h
+./Include/r_things.h
+./Include/r_util.h
+./Include/r_world.h
+./Include/s_cache.h
+./Include/s_environ.h
+./Include/s_logic.h
+./Include/s_main.h
+./Include/s_mus.h
+./Include/s_sfx.h
+./Include/sv_def.h
+./Include/sv_frame.h
+./Include/sv_missile.h
+./Include/sv_pool.h
+./Include/sv_sound.h
+./Include/s_wav.h
+./Include/sys_audio.h
+./Include/sys_console.h
+./Include/sys_direc.h
+./Include/sys_file.h
+./Include/sys_findfile.h
+./Include/sys_input.h
+./Include/sys_master.h
+./Include/sys_mixer.h
+./Include/sys_musd_fmod.h
+./Include/sys_musd.h
+./Include/sys_musd_win.h
+./Include/sys_network.h
+./Include/sys_sfxd_ds.h
+./Include/sys_sfxd_dummy.h
+./Include/sys_sfxd.h
+./Include/sys_sfxd_loader.h
+./Include/sys_sock.h
+./Include/sys_stwin.h
+./Include/sys_system.h
+./Include/sys_timer.h
+./Include/tab_anorms.h
+./Include/template.h
+./Include/ui_main.h
+./Include/ui_mpi.h
+./Include/ui_panel.h
+./Src/Common/am_map.c
+./Src/Common/d_net.c
+./Src/Common/d_netcl.c
+./Src/Common/d_netsv.c
+./Src/Common/f_infine.c
+./Src/Common/g_dglinit.c
+./Src/Common/g_game.c
+./Src/Common/g_update.c
+./Src/Common/hu_lib.c
+./Src/Common/hu_msg.c
+./Src/Common/hu_pspr.c
+./Src/Common/hu_stuff.c
+./Src/Common/m_ctrl.c
+./Src/Common/m_fixed.c
+./Src/Common/m_multi.c
+./Src/Common/mn_menu.c
+./Src/Common/p_actor.c
+./Src/Common/p_saveg.c
+./Src/Common/p_start.c
+./Src/Common/p_svtexarc.c
+./Src/Common/p_tick.c
+./Src/Common/p_view.c
+./Src/Common/p_xgfile.c
+./Src/Common/p_xgline.c
+./Src/Common/p_xgsave.c
+./Src/Common/p_xgsec.c
+./Src/Common/r_common.c
+./Src/Common/st_lib.c
+./Src/Common/x_hair.c
+./Src/Unix/dd_uinit.c
+./Src/Unix/sys_console.c
+./Src/Unix/sys_findfile.c
+./Src/Unix/sys_input.c
+./Src/Unix/sys_mixer.c
+./Src/Unix/sys_network.c
+./Src/Unix/sys_path.c
+./Src/Unix/sys_sfxd_dummy.c
+./Src/Unix/sys_sfxd_loader.c
+./Src/Unix/sys_stwin.c
+./Src/dpDehRead/dehmain.c
+./Src/dpMapLoad/maploader.c
+./Src/dpMapLoad/glBSP/blockmap.c
+./Src/dpMapLoad/glBSP/blockmap.h
+./Src/dpMapLoad/glBSP/glbsp.c
+./Src/dpMapLoad/glBSP/glbsp.h
+./Src/dpMapLoad/glBSP/level.c
+./Src/dpMapLoad/glBSP/level.h
+./Src/dpMapLoad/glBSP/node.c
+./Src/dpMapLoad/glBSP/node.h
+./Src/dpMapLoad/glBSP/reject.c
+./Src/dpMapLoad/glBSP/reject.h
+./Src/dpMapLoad/glBSP/seg.c
+./Src/dpMapLoad/glBSP/seg.h
+./Src/dpMapLoad/glBSP/structs.h
+./Src/dpMapLoad/glBSP/system.c
+./Src/dpMapLoad/glBSP/system.h
+./Src/dpMapLoad/glBSP/util.c
+./Src/dpMapLoad/glBSP/util.h
+./Src/dpMapLoad/glBSP/wad.c
+./Src/dpMapLoad/glBSP/wad.h
+./Src/drOpenGL/common.c
+./Src/drOpenGL/draw.c
+./Src/drOpenGL/ext.c
+./Src/drOpenGL/texture.c
+./Src/drOpenGL/Unix/main.c
+./Src/dsOpenAL/driver_openal.c
+./Src/dsSDLMixer/driver.h
+./Src/dsSDLMixer/driver_sdlmixer.c
+./Src/dsSDLMixer/mus2midi.c
+./Src/dsSDLMixer/mus2midi.h
+./Src/dsSDLMixer/sdl.c
+./Src/jDoom/AcFnLink.c
+./Src/jDoom/AcFnLink.h
+./Src/jDoom/D_Action.c
+./Src/jDoom/d_console.c
+./Src/jDoom/d_items.c
+./Src/jDoom/d_main.c
+./Src/jDoom/doomdef.c
+./Src/jDoom/doomstat.c
+./Src/jDoom/d_refresh.c
+./Src/jDoom/dstrings.c
+./Src/jDoom/m_cheat.c
+./Src/jDoom/m_random.c
+./Src/jDoom/m_swap.c
+./Src/jDoom/p_ceilng.c
+./Src/jDoom/p_doors.c
+./Src/jDoom/p_enemy.c
+./Src/jDoom/p_floor.c
+./Src/jDoom/p_inter.c
+./Src/jDoom/p_lights.c
+./Src/jDoom/p_map.c
+./Src/jDoom/p_maputl.c
+./Src/jDoom/p_mobj.c
+./Src/jDoom/p_oldsvg.c
+./Src/jDoom/p_plats.c
+./Src/jDoom/p_pspr.c
+./Src/jDoom/p_setup.c
+./Src/jDoom/p_sound.c
+./Src/jDoom/p_spec.c
+./Src/jDoom/p_switch.c
+./Src/jDoom/p_telept.c
+./Src/jDoom/p_user.c
+./Src/jDoom/r_sky.c
+./Src/jDoom/st_stuff.c
+./Src/jDoom/tables.c
+./Src/jDoom/wi_stuff.c
+./Src/cl_frame.c
+./Src/cl_main.c
+./Src/cl_mobj.c
+./Src/cl_player.c
+./Src/cl_sound.c
+./Src/cl_world.c
+./Src/con_action.c
+./Src/con_bar.c
+./Src/con_bind.c
+./Src/con_config.c
+./Src/con_main.c
+./Src/con_start.c
+./Src/dd_dgl.c
+./Src/dd_help.c
+./Src/dd_input.c
+./Src/dd_loop.c
+./Src/dd_main.c
+./Src/dd_pinit.c
+./Src/dd_plugin.c
+./Src/dd_wad.c
+./Src/dd_zip.c
+./Src/dd_zone.c
+./Src/def_data.c
+./Src/def_main.c
+./Src/def_read.c
+./Src/gl_draw.c
+./Src/gl_font.c
+./Src/gl_hq2x.c
+./Src/gl_main.c
+./Src/gl_pcx.c
+./Src/gl_png.c
+./Src/gl_tex.c
+./Src/gl_tga.c
+./Src/m_args.c
+./Src/m_bams.c
+./Src/m_filehash.c
+./Src/m_huffman.c
+./Src/m_misc.c
+./Src/m_nodepile.c
+./Src/m_string.c
+./Src/m_vector.c
+./Src/net_buf.c
+./Src/net_demo.c
+./Src/net_event.c
+./Src/net_main.c
+./Src/net_msg.c
+./Src/net_ping.c
+./Src/p_bmap.c
+./Src/p_data.c
+./Src/p_intercept.c
+./Src/p_maputil.c
+./Src/p_mobj.c
+./Src/p_particle.c
+./Src/p_polyob.c
+./Src/p_sight.c
+./Src/p_think.c
+./Src/p_tick.c
+./Src/r_data.c
+./Src/r_draw.c
+./Src/rend_bias.c
+./Src/rend_clip.c
+./Src/rend_decor.c
+./Src/rend_dyn.c
+./Src/rend_fakeradio.c
+./Src/rend_halo.c
+./Src/rend_list.c
+./Src/rend_main.c
+./Src/rend_model.c
+./Src/rend_particle.c
+./Src/rend_shadow.c
+./Src/rend_sky.c
+./Src/rend_sprite.c
+./Src/r_extres.c
+./Src/r_lgrid.c
+./Src/r_main.c
+./Src/r_model.c
+./Src/r_shadow.c
+./Src/r_sky.c
+./Src/r_things.c
+./Src/r_util.c
+./Src/r_world.c
+./Src/s_cache.c
+./Src/s_environ.c
+./Src/s_logic.c
+./Src/s_main.c
+./Src/s_mus.c
+./Src/s_sfx.c
+./Src/sv_frame.c
+./Src/sv_main.c
+./Src/sv_missile.c
+./Src/sv_pool.c
+./Src/p_sight.c
+./Src/p_think.c
+./Src/p_tick.c
+./Src/r_data.c
+./Src/r_draw.c
+./Src/rend_bias.c
+./Src/rend_clip.c
+./Src/rend_decor.c
+./Src/rend_dyn.c
+./Src/rend_fakeradio.c
+./Src/rend_halo.c
+./Src/rend_list.c
+./Src/rend_main.c
+./Src/rend_model.c
+./Src/rend_particle.c
+./Src/rend_shadow.c
+./Src/rend_sky.c
+./Src/rend_sprite.c
+./Src/r_extres.c
+./Src/r_lgrid.c
+./Src/r_main.c
+./Src/r_model.c
+./Src/r_shadow.c
+./Src/r_sky.c
+./Src/r_things.c
+./Src/r_util.c
+./Src/r_world.c
+./Src/s_cache.c
+./Src/s_environ.c
+./Src/s_logic.c
+./Src/s_main.c
+./Src/s_mus.c
+./Src/s_sfx.c
+./Src/sv_frame.c
+./Src/sv_main.c
+./Src/sv_missile.c
+./Src/sv_pool.c
+./Src/sv_sound.c
+./Src/s_wav.c
+./Src/sys_direc.c
+./Src/sys_filein.c
+./Src/sys_master.c
+./Src/sys_sock.c
+./Src/sys_system.c
+./Src/sys_timer.c
+./Src/tab_tables.c
+./Src/tab_video.c
+./Src/ui_main.c
+./Src/ui_mpi.c
+./Src/ui_panel.c
+./libltdl/ltdl.c
+./libltdl/ltdl.h
+./debian/control
+./debian/control.amd64
+./debian/decode-i386-deb
+./debian/doomsday.sh
+./debian/jdoom-debian.ded
+./debian/jheretic-debian.ded
+./debian/jhexen-debian.ded
+./debian/prerm
+./debian/reportbug.control
+./debian/reportbug.presubj
+./debian/reportbug.script
+./debian/rules
+./debian/ubuntu-fetch-and-build-amd64
+
+
+The following files are under the Raven Hexen Source license.:: <- Possible Problem: Non-free for Commerical Use
+./Include/jHeretic/AcFnLink.h
+./Include/jHeretic/Doomdata.h
+./Include/jHeretic/Doomdef.h
+./Include/jHeretic/Dstrings.h
+./Include/jHeretic/G_game.h
+./Include/jHeretic/H_Action.h
+./Include/jHeretic/h_config.h
+./Include/jHeretic/Info.h
+./Include/jHeretic/m_ctrl.h
+./Include/jHeretic/Mn_def.h
+./Include/jHeretic/P_local.h
+./Include/jHeretic/p_oldsvg.h
+./Include/jHeretic/P_spec.h
+./Include/jHeretic/resource.h
+./Include/jHeretic/R_local.h
+./Include/jHeretic/Sounds.h
+./Include/jHeretic/Soundst.h
+./Include/jHeretic/S_sound.h
+./Include/jHeretic/st_stuff.h
+./Include/jHeretic/version.h
+./Include/jHexen/AcFnLink.h
+./Include/jHexen/dstrings.h
+./Include/jHexen/h2_actn.h
+./Include/jHexen/h2def.h
+./Include/jHexen/info.h
+./Include/jHexen/m_ctrl.h
+./Include/jHexen/mn_def.h
+./Include/jHexen/p_local.h
+./Include/jHexen/p_spec.h
+./Include/jHexen/r_local.h
+./Include/jHexen/sounds.h
+./Include/jHexen/soundst.h
+./Include/jHexen/st_stuff.h
+./Include/jHexen/textdefs.h
+./Include/jHexen/version.h
+./Include/jHexen/x_config.h
+./Include/jHexen/xddefs.h
+./Src/jHeretic/AcFnLink.c
+./Src/jHeretic/H_Action.c
+./Src/jHeretic/H_Console.c
+./Src/jHeretic/H_Main.c
+./Src/jHeretic/H_Refresh.c
+./Src/jHeretic/In_lude.c
+./Src/jHeretic/M_misc.c
+./Src/jHeretic/P_ceilng.c
+./Src/jHeretic/P_doors.c
+./Src/jHeretic/P_enemy.c
+./Src/jHeretic/P_floor.c
+./Src/jHeretic/P_inter.c
+./Src/jHeretic/P_lights.c
+./Src/jHeretic/P_map.c
+./Src/jHeretic/P_maputl.c
+./Src/jHeretic/P_mobj.c
+./Src/jHeretic/P_oldsvg.c
+./Src/jHeretic/P_plats.c
+./Src/jHeretic/P_pspr.c
+./Src/jHeretic/P_setup.c
+./Src/jHeretic/P_sight.c
+./Src/jHeretic/p_sound.c
+./Src/jHeretic/P_spec.c
+./Src/jHeretic/P_switch.c
+./Src/jHeretic/P_telept.c
+./Src/jHeretic/P_user.c
+./Src/jHeretic/st_stuff.c
+./Src/jHeretic/Tables.c
+./Src/jHexen/A_action.c
+./Src/jHexen/AcFnLink.c
+./Src/jHexen/H2_Actn.c
+./Src/jHexen/H2_main.c
+./Src/jHexen/HConsole.c
+./Src/jHexen/HRefresh.c
+./Src/jHexen/In_lude.c
+./Src/jHexen/M_misc.c
+./Src/jHexen/P_acs.c
+./Src/jHexen/P_anim.c
+./Src/jHexen/P_ceilng.c
+./Src/jHexen/P_doors.c
+./Src/jHexen/P_enemy.c
+./Src/jHexen/P_floor.c
+./Src/jHexen/P_inter.c
+./Src/jHexen/P_lights.c
+./Src/jHexen/P_map.c
+./Src/jHexen/P_maputl.c
+./Src/jHexen/P_mobj.c
+./Src/jHexen/Po_man.c
+./Src/jHexen/P_plats.c
+./Src/jHexen/P_pspr.c
+./Src/jHexen/P_setup.c
+./Src/jHexen/P_sight.c
+./Src/jHexen/P_spec.c
+./Src/jHexen/P_switch.c
+./Src/jHexen/P_telept.c
+./Src/jHexen/P_things.c
+./Src/jHexen/P_user.c
+./Src/jHexen/Sc_man.c
+./Src/jHexen/Sn_sonix.c
+./Src/jHexen/s_sound.c
+./Src/jHexen/st_stuff.c
+./Src/jHexen/sv_save.c
+./Src/jHexen/Tables.c
+
+Some portions covered by the non-free Hexen Source License.
+These files are located in jheretic and jhexen. The jhexen files
+are clearly indicated by a raven copyright notice.
+
+## TODO - Document which files exactly are covered in jheretic.
+## TODO - Document all files and there license.
+## TODO - Put license details in here.
+
+Raven.
+Please refer to: /usr/share/doc/deng/Doc/Ravenlic.txt
+
+GPL.
+Please refer to: /usr/share/common-licenses/GPL-2
+
+
+

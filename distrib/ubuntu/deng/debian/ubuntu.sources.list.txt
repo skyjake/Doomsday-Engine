@@ -1,0 +1,6 @@
+deb http://192.168.1.1:3142/au.archive.ubuntu.com/ubuntu dapper main restricted universe multiverse
+deb-src http://192.168.1.1:3142/au.archive.ubuntu.com/ubuntu dapper main restricted universe multiverse
+
+deb http://eyagi.bpa.nu/~jamie/ubuntu dapper main restricted universe multiverse
+deb-src http://eyagi.bpa.nu/~jamie/ubuntu dapper main restricted universe multiverse
+

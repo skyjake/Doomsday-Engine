@@ -1,0 +1,60 @@
+#!/bin/sh
+
+set -e
+
+# download from the sources listed in sources.list.txt
+
+DEBS="
+deng
+"
+cd ./debian
+
+export APTDIR=$(mktemp -d)
+mkdir -p $APTDIR
+
+rm -rf pkgs
+mkdir pkgs
+
+rm -rf srcs
+mkdir srcs
+
+rm -rf build
+mkdir build
+
+LIST=ubuntu.sources.list.txt
+
+APT_GET="apt-get --assume-yes \
+	-o Dir::Etc::sourcelist=`pwd`/$LIST \
+	-o Dir::State=$APTDIR/state \
+	-o Debug::NoLocking=true \
+	-o Dir::Cache=$APTDIR/cache \
+	-o Acquire::Retries=3 \
+	-o Apt::Architecture=i386"
+
+# Prepare APTDIR
+mkdir -p $APTDIR/state/lists/partial
+mkdir -p $APTDIR/cache/archives/partial
+echo -n > $APTDIR/state/status
+APT_GET="$APT_GET --allow-unauthenticated -o Dir::State::Status=$APTDIR/state/status"
+
+$APT_GET update
+
+APT_CACHE="apt-cache \
+	-o Dir::Etc::sourcelist=`pwd`/$LIST \
+	-o Dir::State=$APTDIR/state \
+	-o Debug::NoLocking=true \
+	-o Dir::Cache=$APTDIR/cache \
+	-o Acquire::Retries=3 \
+	-o Apt::Architecture=i386 \
+	-o Dir::State::Status=$APTDIR/state/status"
+
+    for pkg in $DEBS; do
+            $APT_GET --download-only install $pkg
+            cp $APTDIR/cache/archives/$pkg_*.deb build/
+    done
+
+for pkg in $DEBS; do
+  mv build/${pkg}_*.deb pkgs/
+done
+rm -rf $APTDIR build
+exit 0

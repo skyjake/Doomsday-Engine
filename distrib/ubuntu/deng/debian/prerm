@@ -1,0 +1,7 @@
+#!/bin/sh -e
+if [ $1 != "upgrade" ]; then
+#	update-alternatives --remove doomsday /usr/games/deng/bin/doomsday.sh
+	rm -f /usr/share/pixmaps/deng.png
+fi
+
+#DEBHELPER#
