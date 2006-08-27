@@ -114,7 +114,7 @@ int lt_dlforeachfile(const char *searchPath,
     while((entry = readdir(dir)) != NULL)
     {
 #ifndef MACOSX
-        if(entry->d_type == DT_DIR &&
+        if(entry->d_type != DT_DIR &&
            !strncmp(entry->d_name, "libdp", 5))
 #endif
 #ifdef MACOSX
