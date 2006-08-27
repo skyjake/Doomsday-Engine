@@ -49,6 +49,7 @@ void            DD_Main();
 void            DD_GameUpdate(int flags);
 void            DD_AddStartupWAD(const char *file);
 void            DD_AddIWAD(const char *path);
+void            DD_AutoLoad(void);
 void            DD_SetConfigFile(char *filename);
 void            DD_SetDefsFile(char *filename);
 int             DD_GetInteger(int ddvalue);

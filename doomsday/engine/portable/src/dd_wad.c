@@ -562,7 +562,7 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
         fileinfo = &singleinfo;
         freeFileInfo = NULL;
         singleinfo.filepos = 0;
-        singleinfo.size = F_Length(handle);
+        singleinfo.size = LONG(F_Length(handle));
 
         // Is there a prefix to be omitted in the name?
         slash = strrchr(filename, DIR_SEP_CHAR);
@@ -752,7 +752,7 @@ void W_InitMultipleFiles(char **filenames)
     loadingForStartup = true;
 
     // Before anything else, load PK3s, because they may contain virtual
-    // WAD files.
+    // WAD files. (Should load WADs that have a DD_DIREC as well...)
     for(ptr = filenames; *ptr; ptr++)
         if(W_IsPK3(*ptr))
         {
@@ -770,6 +770,10 @@ void W_InitMultipleFiles(char **filenames)
             W_AddFile(*ptr, false);
         }
     }
+
+    // Do a full autoload round before loading any other WAD files.
+    DD_AutoLoad();
+
     // Make sure an IWAD gets loaded; if not, display a warning.
     W_CheckIWAD();
 

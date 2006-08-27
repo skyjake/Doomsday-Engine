@@ -263,6 +263,25 @@ void DD_DefineBuiltinVDM(void)
     F_AddMapping("auto", dest);
 }
 
+/**
+ * Looks for new files to autoload. Runs until there are no more files to
+ * autoload.
+ */
+void DD_AutoLoad(void)
+{
+    int p;
+    
+    // Load files from the Auto directory.  (If already loaded, won't
+    // be loaded again.)  This is done again because virtual files may
+    // now exist in the Auto directory.  Repeated until no new files
+    // found.
+    while((p = DD_AddAutoData(true)) > 0)
+    {
+        VERBOSE(Con_Message("Autoload round completed with %i new files.\n",
+                            p));
+    }
+}
+
 /*
  * Engine and game initialization. When complete, starts the game loop.
  * What a mess...
@@ -438,17 +457,10 @@ void DD_Main(void)
     // Load help resources. Now virtual files are available as well.
     if(!isDedicated)
         DD_InitHelp();
-    
-    // Load files from the Auto directory.  (If already loaded, won't
-    // be loaded again.)  This is done again because virtual files may
-    // now exist in the Auto directory.  Repeated until no new files
-    // found.
-    while((p = DD_AddAutoData(true)) > 0)
-    {
-        VERBOSE(Con_Message("Autoload round completed with %i new files.\n",
-                            p));
-    }
 
+    // Final autoload round.
+    DD_AutoLoad();
+    
     // No more WADs will be loaded in startup mode after this point.
     W_EndStartup();
 
