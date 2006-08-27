@@ -112,8 +112,8 @@ class Wad:
     def list(self):
         for i in range(len(self.lumps)):
             lump = self.lumps[i]
-            print "%i -- %s (at %i, %i bytes)" % (i, lump.name, lump.offset, 
-                                                  len(lump.data))
+            print "%5i -- %-8s (at %8i, %8i bytes)" % (i, lump.name, lump.offset, 
+                                                       len(lump.data))
         print "%i lumps total." % len(self.lumps)
         
     def insert(self, at_lump, names):
