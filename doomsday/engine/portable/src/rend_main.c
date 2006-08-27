@@ -1072,21 +1072,13 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
            (backsec && backsec != seg->frontsector &&
             (bceil + backsec->skyfix.ceilOffset < fceil + frontsec->skyfix.ceilOffset)))
         {
-            if(backsec && backSide && sid->middle.texture != 0)
-            {
-                // This traps the skyfix glitch as seen in ICARUS.wad MAP01's
-                // engine tubes (scrolling mid texture doors)
-            }
-            else
-            {
-                quad.flags = RPF_SKY_MASK;
-                vTL[VZ] = vTR[VZ] = fceil + frontsec->skyfix.ceilOffset;
-                vBL[VZ] = vBR[VZ] = fceil;
-                quad.tex.id = 0;
-                quad.lights = NULL;
-                quad.intertex.id = 0;
-                RL_AddPoly(&quad);
-            }
+            quad.flags = RPF_SKY_MASK;
+            vTL[VZ] = vTR[VZ] = fceil + frontsec->skyfix.ceilOffset;
+            vBL[VZ] = vBR[VZ] = fceil;
+            quad.tex.id = 0;
+            quad.lights = NULL;
+            quad.intertex.id = 0;
+            RL_AddPoly(&quad);
         }
     }
     if(backsec && bceil - bfloor <= 0 &&
@@ -1104,6 +1096,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         RL_AddPoly(&quad);
         backsecSkyFix = true;
     }
+
     // Floor skyfix
     if(frontsec->skyfix.floorOffset < 0)
     {
@@ -1111,21 +1104,13 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
            (backsec && backsec != seg->frontsector &&
             (bfloor + backsec->skyfix.floorOffset > ffloor + frontsec->skyfix.floorOffset)))
         {
-            if(backsec && backSide && sid->middle.texture != 0)
-            {
-                // This traps the skyfix glitch as seen in ICARUS.wad MAP01's
-                // engine tubes (scrolling mid texture doors)
-            }
-            else
-            {
-                quad.flags = RPF_SKY_MASK;
-                vTL[VZ] = vTR[VZ] = ffloor;
-                vBL[VZ] = vBR[VZ] = ffloor + frontsec->skyfix.floorOffset;
-                quad.tex.id = 0;
-                quad.lights = NULL;
-                quad.intertex.id = 0;
-                RL_AddPoly(&quad);
-            }
+            quad.flags = RPF_SKY_MASK;
+            vTL[VZ] = vTR[VZ] = ffloor;
+            vBL[VZ] = vBR[VZ] = ffloor + frontsec->skyfix.floorOffset;
+            quad.tex.id = 0;
+            quad.lights = NULL;
+            quad.intertex.id = 0;
+            RL_AddPoly(&quad);
         }
     }
     if(backsec && bceil - bfloor <= 0 &&
