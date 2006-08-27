@@ -93,3 +93,10 @@ p.add_files(
       ('plugins/wolftc/data/wolftc.wad', 'wolftc.wad') ] )
 p.create('wolftc.pk3')
 
+# Doom64tc.pk3
+p = Pack()
+p.add_files(
+    [ ('plugins/doom64tc/defs', 'defs/doom64tc'),
+      ('plugins/doom64tc/data/conhelp.txt', 'data/doom64tc/conhelp.txt'),
+      ('plugins/doom64tc/data/wolftc.wad', 'doom64tc.wad') ] )
+p.create('doom64tc.pk3')
