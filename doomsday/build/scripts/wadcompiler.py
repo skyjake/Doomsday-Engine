@@ -140,29 +140,32 @@ class Wad:
     
     def extract(self, names):
         split_names = [split_name(n) for n in names]
-        names = [arch for arch, real in split_names]
+        names = [arch.upper() for arch, real in split_names]
         for lump in self.lumps:
             nice_name = lump.nice_name()
-            if len(names) == 0 or nice_name in names:
+            if len(names) == 0 or nice_name.upper() in names:
                 # Check for a substitution first.
+                ext = '.lmp'
                 for arch, real in split_names:
-                    if arch == nice_name:
-                        nice_name = real
+                    if arch.upper() == nice_name.upper():
+                        if nice_name != real:
+                            nice_name = real
+                            ext = ''
                         break
                 # Write out this lump.
-                print "extracting", nice_name, "(%i bytes)" % len(lump.data)
-                if os.path.exists(nice_name):
+                nice_name = nice_name.lower()
+                if os.path.exists(nice_name + ext):
                     counter = 1
                     while True:
-                        try_name = nice_name + ".LMP_" + str(counter)
+                        try_name = nice_name + ext + "_" + str(counter)
                         counter += 1
                         if not os.path.exists(try_name):
                             nice_name = try_name
-                            print "    (saving as %s)" % nice_name
                             break
                 else:
-                    nice_name += '.LMP'
-                f = file(nice_name.lower(), 'wb')
+                    nice_name += ext
+                print "extracting", lump.name, "(%i bytes) as %s" % (len(lump.data), nice_name)
+                f = file(nice_name, 'wb')
                 f.write(lump.data)
                 f.close()
 
