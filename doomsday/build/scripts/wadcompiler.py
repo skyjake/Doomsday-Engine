@@ -162,7 +162,7 @@ class Wad:
                             break
                 else:
                     nice_name += '.LMP'
-                f = file(nice_name, 'wb')
+                f = file(nice_name.lower(), 'wb')
                 f.write(lump.data)
                 f.close()
 
