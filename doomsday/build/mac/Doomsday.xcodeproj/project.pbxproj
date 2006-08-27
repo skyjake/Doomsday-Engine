@@ -1163,6 +1163,8 @@
 		B0AC1EFE0A8F11EA0095D788 /* p_player.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_player.h; path = ../../plugins/common/include/p_player.h; sourceTree = SOURCE_ROOT; };
 		B0AC1EFF0A8F11EA0095D788 /* p_spechit.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_spechit.h; path = ../../plugins/common/include/p_spechit.h; sourceTree = SOURCE_ROOT; };
 		B0AC1F0A0A8F13750095D788 /* p_spechit.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = p_spechit.c; path = ../../plugins/common/src/p_spechit.c; sourceTree = SOURCE_ROOT; };
+		B0B436BF0AA23E0100B06DCF /* packres.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = packres.py; path = ../scripts/packres.py; sourceTree = SOURCE_ROOT; };
+		B0B436C00AA23E0100B06DCF /* wadcompiler.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = wadcompiler.py; path = ../scripts/wadcompiler.py; sourceTree = SOURCE_ROOT; };
 		B0BBED3007DB998600663713 /* deng.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = deng.icns; path = ../../engine/mac/res/deng.icns; sourceTree = SOURCE_ROOT; };
 		B0C8F4490A3F10FC00CFA4A5 /* DoomsdayRunner.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = DoomsdayRunner.m; path = ../../engine/mac/src/DoomsdayRunner.m; sourceTree = SOURCE_ROOT; };
 		B0C8F44A0A3F10FC00CFA4A5 /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = SDLMain.m; path = ../../engine/mac/src/SDLMain.m; sourceTree = SOURCE_ROOT; };
@@ -1612,6 +1614,8 @@
 		B0111A8609E9891800475FB2 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
+				B0B436BF0AA23E0100B06DCF /* packres.py */,
+				B0B436C00AA23E0100B06DCF /* wadcompiler.py */,
 				B00B8A370A261D2C0019238B /* createfont_osx.py */,
 				B0111A8709E9896B00475FB2 /* mapdata.hs */,
 				B0111A8509E9891100475FB2 /* makedmt.py */,
