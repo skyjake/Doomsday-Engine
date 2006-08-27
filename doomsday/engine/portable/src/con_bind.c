@@ -692,7 +692,7 @@ void B_FormEventString(char *buff, evtype_t type, evstate_t state,
         break;
 
     case EV_JOY_BUTTON:
-        sprintf(buff, "%cJB%d", prefix, buttonNumber(data1) + 1);
+        sprintf(buff, "%cJB%d", prefix[state], buttonNumber(data1) + 1);
         break;
 
     case EV_POV:
