@@ -2331,13 +2331,12 @@ void AM_drawLevelName(void)
     int    x, y, otherY;
     const char *lname = "";
 
-#if __JHERETIC__
-    if((gameepisode < (gamemode == extended? 6 : 4)) && gamemap < 10)
-    {
-        lname = DD_GetVariable(DD_MAP_NAME);
-    }
-#else
     lname = DD_GetVariable(DD_MAP_NAME);
+
+#if __JHEXEN__
+    // In jHexen we can look in the MAPINFO for the map name
+    if(!lname)
+        lname = P_GetMapName(gamemap);
 #endif
 
     if(lname)

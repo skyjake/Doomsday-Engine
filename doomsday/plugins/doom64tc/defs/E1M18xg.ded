@@ -1,0 +1,127 @@
+#===================================================================
+#==Map18 Specials==
+#===================================================================
+
+Line Type {
+ID = 2055;
+Comment = "spawntronandndemon";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Time = 15;
+Act sound = "itmbk";
+Sp0 = "spawnmobj BABY -1920 1056 0 0; spawnmobj BABY -1920 488 0 0; spawnmobj KNIGHT -1888 768 0 0";
+}
+
+Line Type {
+ID = 2056;
+Comment = "Dart Activate_Map18_NE";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_command";
+Count = -1;
+Time = 1;
+Act sound = "skeswg";
+Sp0 = "spawnmobj DART -2800 -368 8 45";
+}
+
+Line Type {
+ID = 2057;
+Comment = "Map18dartexit";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act sound = "skeswg";
+Ip0 = chsf_done_d;
+Ip1 = 2058;
+Ip2 = 2059;
+Fp1 = 0;
+Fp2 = 0;
+}
+
+Line Type {
+ID = 2058;
+Comment = "Dart Activate_Map18_1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_command";
+Count = -1;
+Time = 1;
+Act sound = "skeswg";
+Sp0 = "spawnmobj DART -2576 1032 0 270; spawnmobj DART -2256 1032 0 270";
+}
+
+Line Type {
+ID = 2059;
+Comment = "Dart Activate_Map18_1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_command";
+Count = -1;
+Time = 1;
+Act sound = "skeswg";
+Sp0 = "spawnmobj DART -2608 504 0 90; spawnmobj DART -2288 504 0 90";
+}
+
+Line Type {
+ID = 2060;
+Comment = "map18fakeknightcheck";
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Thing type = "FAKEKNIGHT";
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 22;
+Ip2 = "spref_highest_ceiling";
+Ip4 = "bdopn";
+Fp0 = 8;
+}
+
+Sector Type {
+ID = 2060;
+Comment = "Scroll flat w/line pointermap18";
+Flags = "stf_tagtexmove";
+Act tag = 555;
+Floor texmove speed = 1;
+Red fn = "\"u\"";
+Green fn = "\"n\"";
+Blue fn = "\i\"";
+}
+
+Sector Type {
+ID = 2061;
+Comment = "5564 tag sectormap18";
+Floor chain = 5564;
+Floor chain flags = "scef_player_a";
+Floor chain min interval = 1;
+Floor chain max interval = 1;
+Floor chain count = -1;
+Red fn = "\"a\"";
+Blue fn = "\a\"";
+Flags = "stf_tagtexmove";
+Act tag = 556;
+Floor texmove speed = 1;
+}
+
+Line Type {
+ID = 3415;
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Thing type = "FSHOTGUY";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 27;
+Ip2 = "spref_none";
+Fp0 = 8;
+Fp2 = 8;
+}

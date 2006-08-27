@@ -338,13 +338,8 @@ int menusnds[] = {
 static int SkullBaseLump;
 #endif
 
-#ifdef __JSTRIFE__
-static int    cursors = 8;
-dpatch_t cursorst[8];
-#else
-static int    cursors = 2;
-dpatch_t cursorst[2];
-#endif
+static int    cursors = NUMCURSORS;
+dpatch_t cursorst[NUMCURSORS];
 
 static dpatch_t     borderpatches[8];
 
@@ -403,7 +398,14 @@ static int quickload;
 #endif
 
 MenuItem_t MainItems[] = {
-#if __JDOOM__
+#if __DOOM64TC__
+    {ITT_EFUNC, 0, "{case}New Game", M_NewGame, 0},
+    {ITT_SETMENU, 0, "{case}Options", NULL, MENU_OPTIONS},
+    {ITT_EFUNC, 0, "{case}Load Game", M_LoadGame, 0},
+    {ITT_EFUNC, 0, "{case}Save Game", M_SaveGame, 0},
+    {ITT_EFUNC, 0, "{case}Read This!", M_ReadThis, 0},
+    {ITT_EFUNC, 0, "{case}Quit Game", M_QuitDOOM, 0}
+#elif __JDOOM__
     {ITT_EFUNC, 0, "{case}New Game", M_NewGame, 0, "M_NGAME"},
     {ITT_EFUNC, 0, "{case}Multiplayer", SCEnterMultiplayerMenu, 0},
     {ITT_SETMENU, 0, "{case}Options", NULL, MENU_OPTIONS, "M_OPTION" },
@@ -457,6 +459,15 @@ Menu_t MainDef = {
     cfg.menuColor,
     LINEHEIGHT_B + 1,
     0, 7
+#elif __DOOM64TC__
+    97, 64,
+    M_DrawMainMenu,
+    6, MainItems,
+    0, MENU_NONE, 0,
+    hu_font_b,                    //1, 0, 0,
+    cfg.menuColor,
+    LINEHEIGHT_B + 1,
+    0, 6
 #else
     97, 64,
     M_DrawMainMenu,
@@ -506,6 +517,23 @@ Menu_t EpiDef = {
     cfg.menuColor,
     LINEHEIGHT + 1,
     0, 3
+};
+#elif __DOOM64TC__
+MenuItem_t EpisodeItems[] = {
+    // Text defs TXT_EPISODE1..2.
+    {ITT_EFUNC, 0, "A", M_Episode, 0 },
+    {ITT_EFUNC, 0, "O", M_Episode, 1 }
+};
+
+Menu_t  EpiDef = {
+    48, 63,
+    M_DrawEpisode,
+    2, EpisodeItems,
+    0, MENU_MAIN, 0,
+    hu_font_b,                    //1, 0, 0,
+    cfg.menuColor,
+    LINEHEIGHT + 1,
+    0, 2
 };
 #elif __JDOOM__
 MenuItem_t EpisodeItems[] = {
@@ -1311,7 +1339,9 @@ void M_UnloadData(void)
  */
 void MN_Init(void)
 {
+#if !__DOOM64TC__
     MenuItem_t *item;
+#endif
 
 #if __JDOOM__ || __JHERETIC__
     int   i, w, maxw;
@@ -1345,7 +1375,11 @@ void MN_Init(void)
     //episodemsg = GET_TXT(TXT_ASK_EPISODE);
 #elif __JDOOM__
     // Episode names.
+# if __DOOM64TC__
+    for(i = 0, maxw = 0; i < 2; i++)
+# else
     for(i = 0, maxw = 0; i < 4; i++)
+# endif
     {
         EpisodeItems[i].text = GET_TXT(TXT_EPISODE1 + i);
         w = M_StringWidth(EpisodeItems[i].text, EpiDef.font);
@@ -1384,6 +1418,7 @@ void MN_Init(void)
     quickSaveSlot = -1;
 
 #ifdef __JDOOM__
+#if !__DOOM64TC__
     // Here we could catch other version dependencies,
     //  like HELP1/2, and four episodes.
 
@@ -1424,6 +1459,7 @@ void MN_Init(void)
     default:
         break;
     }
+# endif
 #else
         item = &MainItems[READTHISID];
         item->func = M_ReadThis;
@@ -2412,6 +2448,10 @@ void M_DrawEpisode(void)
 
 #ifdef __JHERETIC__
     M_DrawTitle("WHICH EPISODE?", 4);
+#elif __DOOM64TC__
+    WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
+                 0, "{case}Which Episode{scaley=1.25,y=-3}?",
+                 true, ALIGN_LEFT);
 #elif __JDOOM__
     WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menu_alpha,
                  W_GetNumForName("M_EPISOD"), "{case}Which Episode{scaley=1.25,y=-3}?",
@@ -2774,7 +2814,9 @@ void M_DrawReadThis1(void)
 void M_DrawReadThis2(void)
 {
     inhelpscreens = true;
-#ifdef __JDOOM__
+#if __DOOM64TC__
+        WI_DrawPatch(0, 0, 1, 1, 1, 1, W_GetNumForName("CREDIT"), NULL, false, ALIGN_LEFT);
+#elif __JDOOM__
     switch (gamemode)
     {
     case retail:
@@ -2819,9 +2861,15 @@ void M_DrawOptions(void)
 #else
     WI_DrawPatch(94, 2, 1, 1, 1, menu_alpha, W_GetNumForName("M_DOOM"),
                  NULL, false, ALIGN_LEFT);
+# if __DOOM64TC__
+    WI_DrawPatch(160, 64, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
+                 menu_alpha, 0, "{case}OPTIONS",
+                 true, ALIGN_CENTER);
+#else
     WI_DrawPatch(160, 64, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2],
                  menu_alpha, W_GetNumForName("M_OPTTTL"), "{case}OPTIONS",
                  true, ALIGN_CENTER);
+# endif
 #endif
 }
 

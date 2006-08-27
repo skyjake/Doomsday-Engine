@@ -1,0 +1,436 @@
+#===================================================================
+#==Map07 Specials==
+#===================================================================
+
+Line Type {
+ID = 2062;
+Comment = "map07bluekeycheck";
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Time = 1;
+Thing type = "MISC4";
+Act sound = "itmbk";
+Sp0 = "spawnmobj SERGEANT -608 1888 0 0; spawnmobj SERGEANT -608 1248 0 0";
+}
+
+Line Type {
+ID = 2063;
+Comment = "map07puzzle1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act sound = "swtchn";
+Ip0 = chsf_done_d;
+Ip1 = 2003;
+Ip2 = 2065;
+Ip3 = 2066;
+Ip4 = 2067;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+Fp4 = 0;
+}
+
+Line Type {
+ID = 2065;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 15;
+Ip2 = "spref_lowest_floor";
+Fp0 = 1;
+}
+
+Line Type {
+ID = 2066;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 17;
+Ip2 = "spref_none";
+Fp0 = 16;
+Fp2 = 56;
+}
+
+Line Type {
+ID = 2067;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 18;
+Ip2 = "spref_none";
+Fp0 = 16;
+Fp2 = 160;
+}
+
+Line Type {
+ID = 2068;
+Comment = "map07puzzle2";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act sound = "swtchn";
+Ip0 = chsf_done_d;
+Ip1 = 2069;
+Ip2 = 2070;
+Ip3 = 2071;
+Ip4 = 2072;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+Fp4 = 0;
+}
+
+Line Type {
+ID = 2069;
+Comment = "Trapopen2";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 14;
+Ip2 = "spref_highest_ceiling";
+Ip4 = "bdopn";
+Fp0 = 8;
+}
+
+Line Type {
+ID = 2070;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 16;
+Ip2 = "spref_lowest_floor";
+Fp0 = 1;
+}
+
+Line Type {
+ID = 2071;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 18;
+Ip2 = "spref_none";
+Fp0 = 16;
+Fp2 = 56;
+}
+
+Line Type {
+ID = 2072;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 17;
+Ip2 = "spref_none";
+Fp0 = 16;
+Fp2 = 160;
+}
+
+Line Type {
+ID = 2073;
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "BABY";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 21;
+Ip2 = "spref_lowest_floor";
+Fp0 = 8;
+}
+
+Line Type {
+ID = 2074;
+Comment = "map07spawnpain";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Time = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj PAIN -528 2304 0 0; spawnmobj PAIN -208 2304 0 0";
+}
+
+Sector Type {
+ID = 2074;
+Comment = "Scroll flat w/line pointermap07";
+Flags = "stf_tagtexmove";
+Act tag = 963;
+Floor texmove speed = 1;
+Red fn = "\"i\"";
+Green fn = "\"j\"";
+Blue fn = "\n\"";
+}
+
+Sector Type {
+ID = 2075;
+Comment = "5564 tag sectormap07";
+Floor chain = 5564;
+Floor chain flags = "scef_player_a";
+Floor chain min interval = 1;
+Floor chain max interval = 1;
+Floor chain count = -1;
+Red fn = "\"l\"";
+Green fn = "\"o\"";
+Blue fn = "\"p\"";
+}
+
+Sector Type {
+ID = 2076;
+Comment = "5564 tag sectormap07";
+Floor chain = 5564;
+Floor chain flags = "scef_player_a";
+Floor chain min interval = 1;
+Floor chain max interval = 1;
+Floor chain count = -1;
+Red fn = "\"m\"";
+Green fn = "\"z\"";
+Blue fn = "\o\"";
+}
+
+Line Type {
+ID = 2075;
+Comment = "map07puzzle3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 20;
+Act sound = "swtchn";
+Ip0 = chsf_done_d;
+Ip1 = 2076;
+Ip2 = 2077;
+Ip3 = 2079;
+Ip4 = 2078;
+Fp1 = 0;
+Fp2 = 4;
+Fp3 = 0;
+Fp4 = 4;
+}
+
+Line Type {
+ID = 2076;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 25;
+Ip2 = "spref_highest_ceiling";
+Fp0 = 8;
+}
+
+Line Type {
+ID = 2077;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 24;
+Ip2 = "spref_none";
+Fp0 = 1;
+Fp2 = -304;
+}
+
+Line Type {
+ID = 2078;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 28;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 1;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2079;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 25;
+Ip2 = "spref_none";
+Fp0 = 1;
+Fp2 = -304;
+}
+
+Line Type {
+ID = 3035;
+Comment = "map07puzzle1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = chsf_done_d;
+Ip1 = 3036;
+Ip2 = 3037;
+Ip3 = 3038;
+Ip4 = 3039;
+Ip5 = 3040;
+Ip6 = 3041;
+Fp1 = 0;
+Fp2 = 0.5;
+Fp3 = 1.5;
+Fp4 = 0;
+Fp5 = 1;
+Fp6 = 0;
+}
+
+Line Type {
+ID = 3036;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 30;
+Ip2 = "spref_none";
+Fp0 = 4;
+Fp2 = 128;
+}
+
+Line Type {
+ID = 3037;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 30;
+Ip2 = "spref_none";
+Ip3 = "pmf_follow";
+Ip10 = "CUSTOMN";
+Fp0 = 4;
+Fp2 = -96;
+}
+
+Line Type {
+ID = 3038;
+Comment = "map07spawnpain";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Time = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj F_BRUISER -1376 2592 0 180; spawnmobj F_BRUISER -928 2592 0 180; spawnmobj F_BRUISER -1376 2016 0 180";
+}
+
+Line Type {
+ID = 3039;
+Comment = "map07spawnpain";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Time = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj F_BRUISER -928 2016 0 180";
+}
+
+Line Type {
+ID = 3040;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 30;
+Ip2 = "spref_none";
+Ip3 = "pmf_follow";
+Ip10 = "CUSTOMN";
+Fp0 = 4;
+Fp2 = 128;
+}
+
+Line Type {
+ID = 3041;
+Comment = "null1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act tag = 7;
+Ip0 = "lref_tagged";
+Ip1 = 255;
+Ip2 = 3042;
+}
+
+Line Type {
+ID = 3042;
+Comment = "baby check";
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Thing type = "F_BRUISER";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 29;
+Ip2 = "spref_none";
+Fp0 = 8;
+Fp2 = -24;
+}

@@ -1,0 +1,65 @@
+This is a faq of common questions regarding to the Doom64 TC. If you have any questions or problems, be refer to this faq first before emailing me or Elbryan.            -kaiser
+====================================================================
+NOTE: You no longer need kick.exe to start the game.
+
+1: will there be an mp3 music wad?
+
+1A: Of course! The wad should be on the same page/link where the tc is posted.
+
+2: does the motherdemon work right?
+
+2A: Yes, and her attack has been enhanced to challenge the more experienced Doomers.
+
+3: what new stuff that wasn't in the real game be in the tc?
+
+3A: Can't say...
+
+4: Why do I get a memory allocation errror?
+
+4A: Your memory is set too low. Try using maxzone192.bat
+
+5: All the sprites are in low resolution. Why?
+
+5A: The hi res sprites are stored in pk3 files, which goes in /data/doom64/auto/. From there, they are loaded automatically.
+
+6: Why can't I turn jumping on?
+
+6A: Complete Map38
+
+7: When I pick up the Unmaker, the game crashes, why?
+
+7A: Doom64 TC uses a new DLL file called Doom64.dll, this file contains new coded information for the TC which belongs in /bin.
+
+8: Can I play the TC on another port beises Jdoom, or on Doomsday?
+
+8A: No, its made for the Absolution game only.
+
+9: Is this an addon wad for Doom2?
+
+9A: No, this is a entire new game on its own, but due to legal reasons etc, you must have a registered copy of Doom2 to play. So you must have the doom2.wad to play this game.
+
+10: I can't mouselook!
+
+10A: Go to console (~) and type input-mouse-y-disable 0
+
+11: How come some of the particle effects are missing?
+
+11A: I took them out of the rocket smoke trail and explosion effects to simply display the new rocket trail sprite and new fade away/hi res rocket explosion.
+
+12: Why isn't this TC perfect?
+
+12A: Because me and the rest of the team tried our best to make this close as possible to the real thing, right now I am VERY pleased that we were able to get 90% of the game converted, and thank Skyjake for this wonderful source port that made this TC possible.
+
+13: I am getting errors launching the game.
+
+13a: This TC uses direct x renderings as its default renderer because of unknown gliches opengl causes to some of the glowing effects. Download the latest direct x installer. If that doesn't work, then launch opengl.bat.
+
+14: Where does the Doom2 IWAD go?
+
+14a: /bin/
+
+15: Can I play this online?
+
+15a: No all levels were designed for sp only.
+
+Please refer to d64_files.txt to see what files belong in that certian directory. and also check out d64_setup.txt for a graphic explaination on how to setup doom64 tc with kickstart 2.

@@ -29,7 +29,9 @@
 #define FG 0
 
 // Patch used for '-' in the status bar
-#ifdef __JDOOM__
+#if __DOOM64TC__
+# define MINUSPATCH "FONTB046"
+#elif __JDOOM__
 # define MINUSPATCH "STTMINUS"
 #else
 # define MINUSPATCH "FONTB13"

@@ -1,0 +1,68 @@
+#
+# -=- Doom64TC Definitions -=-
+#
+# This file is overwritten on every upgrade. Add custom definitions
+# to User.ded.
+#
+# For information about DED syntax and semantics, see Doc\DEDDoc.txt.
+#
+
+Header {
+  Version = 5;
+  Default model scale = 1.2;
+  Model path = "data\doom64tc\models";
+}
+
+Include "objects.ded";
+Include "sprites.ded";
+Include "anim.ded";
+Include "audio.ded";
+Include "special.ded";
+Include "lights.ded";
+Include "maps.ded";
+Include "finales.ded";
+Include "text.ded";
+Include "values.ded";
+Include "models.ded";
+Include "user.ded";
+
+Include "d64xg.ded";
+Include "colorrooms.ded";
+Include "hecticxg.ded";
+Include "E1M01xg.ded";
+Include "E1M02xg.ded";
+Include "E1M03xg.ded";
+Include "E1M04xg.ded";
+Include "E1M05xg.ded";
+Include "E1M06xg.ded";
+Include "E1M07xg.ded";
+Include "E1M08xg.ded";
+Include "E1M09xg.ded";
+Include "E1M10xg.ded";
+Include "E1M11xg.ded";
+Include "E1M12xg.ded";
+Include "E1M13xg.ded";
+Include "E1M14xg.ded";
+Include "E1M15xg.ded";
+Include "E1M16xg.ded";
+Include "E1M17xg.ded";
+Include "E1M18xg.ded";
+Include "E1M19xg.ded";
+Include "E1M20xg.ded";
+Include "E1M22xg.ded";
+Include "E1M23xg.ded";
+Include "E1M24xg.ded";
+Include "E1M25xg.ded";
+Include "E1M26xg.ded";
+Include "E1M27xg.ded";
+Include "E1M28xg.ded";
+Include "E1M29xg.ded";
+Include "E1M30xg.ded";
+Include "E1M31xg.ded";
+Include "E1M32xg.ded";
+Include "E1M34xg.ded";
+Include "E1M38xg.ded";
+Include "secretlevelxg.ded";
+Include "examplexg.ded";
+
+IncludeIf Not -noauto "auto\*.ded";

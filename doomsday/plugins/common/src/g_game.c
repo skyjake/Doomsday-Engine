@@ -1419,9 +1419,11 @@ void G_LeaveLevel(int map, int position, boolean secret)
 #else
     secretexit = secret;
   #if __JDOOM__
+  # if !__DOOM64TC__
       // IF NO WOLF3D LEVELS, NO SECRET EXIT!
       if(secret && (gamemode == commercial) && (W_CheckNumForName("map31") < 0))
           secretexit = false;
+  # endif
   #endif
 #endif
 
@@ -1913,13 +1915,15 @@ void G_InitNew(skill_t skill, int episode, int map)
 #endif
 }
 
-/*
+/**
  * Return the index of this level.
  */
 int G_GetLevelNumber(int episode, int map)
 {
 #if __JHEXEN__ || __JSTRIFE__
     return P_TranslateMap(map);
+#elif __DOOM64TC__
+    return (episode == 2? 39 + map : map); //episode1 has 40 maps
 #else
   #if __JDOOM__
     if(gamemode == commercial)
@@ -1932,20 +1936,18 @@ int G_GetLevelNumber(int episode, int map)
 #endif
 }
 
-/*
+/**
  * Compose the name of the map lump identifier.
  */
 void P_GetMapLumpName(int episode, int map, char *lumpName)
 {
-#ifdef __JDOOM__
+#if __DOOM64TC__
+    sprintf(lumpName, "E%iM%02i", episode, map);
+#elif __JDOOM__
     if(gamemode == commercial)
-    {
         sprintf(lumpName, "MAP%02i", map);
-    }
     else
-    {
         sprintf(lumpName, "E%iM%i", episode, map);
-    }
 #elif  __JHERETIC__
     sprintf(lumpName, "E%iM%i", episode, map);
 #else
@@ -1982,8 +1984,29 @@ boolean G_ValidateMap(int *episode, int *map)
         *map = 1;
         ok = false;
     }
-
-#ifdef __JDOOM__
+#if __DOOM64TC__
+    if(*episode > 2)
+    {
+        *episode = 2;
+        ok = false;
+    }
+    if(*episode == 2)
+    {
+        if(*map > 7)
+        {
+            *map = 7;
+            ok = false;
+        }
+    }
+    else
+    {
+        if(*map > 40)
+        {
+            *map = 40;
+            ok = false;
+        }
+    }
+#elif __JDOOM__
     if(gamemode == shareware)
     {
         // only start episode 1 on shareware

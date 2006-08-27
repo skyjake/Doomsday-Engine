@@ -144,6 +144,17 @@ void HU_Init(void)
     }
 
     // load the map name patches
+# if __DOOM64TC__
+    lnames = Z_Malloc(sizeof(dpatch_t) * (39+7), PU_STATIC, 0);
+    for(i = 0; i < 2; ++i) // number of episodes
+    {
+        for(j=0; j < (i==0? 39 : 7); ++j) // number of maps per episode
+        {
+            sprintf(name, "WILV%2.2d", (i * 39) + j);
+            R_CachePatch(&lnames[(i * 39)+j], name);
+        }
+    }
+# else
     if(gamemode == commercial)
     {
         int NUMCMAPS = 32;
@@ -168,6 +179,7 @@ void HU_Init(void)
             }
         }
     }
+# endif
 #elif __JSTRIFE__
     // load the heads-up fonts
 
@@ -869,15 +881,12 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
                   int lump, char *altstring, boolean builtin, int halign)
 {
     char    def[80], *string;
-    const char *name = W_LumpName(lump);
     int patchString = 0;
     int posx = x;
     patch_t *patch;
 
     if(IS_DEDICATED)
         return;
-
-    patch = (patch_t *) W_CacheLumpNum(lump, PU_CACHE);
 
     if(altstring && !builtin)
     {   // We have already determined a string to replace this with.
@@ -890,8 +899,11 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     }
     else if(cfg.usePatchReplacement)
     {   // We might be able to replace the patch with a string
+        if(lump <= 0)
+            return;
+
         strcpy(def, "Patch Replacement|");
-        strcat(def, name);
+        strcat(def, W_LumpName(lump));
 
         patchString = Def_Get(DD_DEF_VALUE, def, &string);
 
@@ -914,6 +926,11 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
             }
         }
     }
+
+    if(lump <= 0)
+        return;
+
+    patch = (patch_t *) W_CacheLumpNum(lump, PU_CACHE);
 
     // No replacement possible/wanted - use the original patch.
     if(halign == ALIGN_CENTER)

@@ -1,0 +1,300 @@
+#===================================================================
+#==Map32 Specials==
+#===================================================================
+
+#===================================================================
+#==Phase 1==
+#===================================================================
+
+Line Type {
+ID = 3028;
+Flags = "ltf_player_use_a ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 400;
+Act sound = "itmbk";
+Ip0 = "lref_act_tagged";
+Ip1 = 5;
+}
+
+Line Type {
+ID = 3012;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 100;
+Act tag = 5;
+Ip0 = "chsf_loop";
+Ip1 = 3013;
+Fp1 = 8;
+}
+
+Line Type {
+ID = 3013;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act sound = "itmbk";
+Ip0 = "lref_act_tagged";
+Ip1 = 1;
+}
+
+Line Type {
+ID = 3014;
+Comment = "Map11 troopcheck1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj EMARINEP -1328 672 128 0; spawnmobj EMARINEL -864 480 128 0; spawnmobj EMARINES -496 720 128 0";
+}
+
+Line Type {
+ID = 3015;
+Comment = "Map11 troopcheck1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj EMARINEP -528 1184 128 0; spawnmobj EMARINES -576 1488 128 0; spawnmobj EMARINEL 304 896 128 0";
+}
+
+Line Type {
+ID = 3016;
+Comment = "Map11 troopcheck1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj EMARINES 112 1200 128 0; spawnmobj EMARINEP 176 1536 128 0; spawnmobj EMARINES 1104 1232 128 0";
+}
+
+Line Type {
+ID = 3017;
+Comment = "Map11 troopcheck1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj EMARINEL 1040 768 128 0; spawnmobj EMARINEL 1536 1792 128 0; spawnmobj EMARINEP 1008 3296 128 0";
+}
+
+Line Type {
+ID = 3018;
+Comment = "Map11 troopcheck1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj EMARINES 512 3136 128 0; spawnmobj EMARINEP -400 3104 128 0; spawnmobj EMARINES -1072 1760 128 0";
+}
+
+Line Type {
+ID = 3019;
+Comment = "Map11 troopcheck1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj EMARINEL -1328 2192 128 0; spawnmobj EMARINES -608 2704 128 0; spawnmobj EMARINEP -288 2256 128 0";
+}
+
+Line Type {
+ID = 3020;
+Comment = "Map11 troopcheck1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj EMARINES 208 2784 128 0; spawnmobj EMARINEL 1088 2528 128 0; spawnmobj EMARINEP 1232 1472 128 0";
+}
+
+Line Type {
+ID = 3025;
+Comment = "Map11 troopcheck1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj EMARINER -360 992 128 0; spawnmobj EMARINER 416 1152 128 0; spawnmobj EMARINER 480 584 128 0";
+}
+
+Line Type {
+ID = 3026;
+Comment = "Map11 troopcheck1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj EMARINER -1080 624 128 0; spawnmobj EMARINER -64 1384 128 0; spawnmobj EMARINER 936 1160 128 0";
+}
+
+Line Type {
+ID = 3027;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act tag = 5;
+Ip0 = chsf_done_d;
+Ip1 = 3031;
+Ip2 = 3032;
+Ip3 = 3033;
+Ip4 = 3034;
+Fp1 = 105;
+Fp2 = 5;
+Fp3 = 0;
+Fp4 = 0.5;
+}
+
+Line Type {
+ID = 3031;
+Comment = "Trap1";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_all_floors";
+Ip2 = "spref_none";
+Fp0 = 8;
+Fp2 = 0;
+}
+
+Line Type {
+ID = 3032;
+Comment = "Trap1";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 8;
+Ip2 = "spref_none";
+Fp0 = 8;
+Fp2 = 64;
+}
+
+Line Type {
+ID = 3033;
+Comment = "Trap1";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 9;
+Ip2 = "spref_none";
+Fp0 = 8;
+Fp2 = 16;
+}
+
+Line Type {
+ID = 3034;
+Comment = "1205part3";
+Flags = "ltf_any_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lref_tagged";
+Ip1 = 111;
+Ip2 = 1204;
+}
+
+Sector Type {
+ID = 8891;
+Floor chain = 2944;
+Floor chain flags = "scef_player_a scef_monster_a";
+Floor chain min interval = 1;
+Floor chain max interval = 1;
+Floor chain count = -1;
+Red fn = "\"k\"";
+Green fn = "\"x\"";
+Blue fn = "\l\"";
+Flags = "stf_tagtexmove";
+Act tag = 1000;
+Floor texmove speed = 3;
+}
+
+Line Type {
+ID = 3420;
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 9;
+Ip2 = "spref_none";
+Fp0 = 4;
+Fp2 = 0;
+}
+
+Line Type {
+ID = 3421;
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 8;
+Ip2 = "spref_none";
+Ip10 = "F_SKY1";
+Fp0 = 4;
+Fp2 = 1;
+}

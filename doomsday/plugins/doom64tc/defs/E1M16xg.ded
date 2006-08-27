@@ -1,0 +1,303 @@
+#===================================================================
+#==Map16 Specials==
+#===================================================================
+
+Line Type {
+ID = 3370;
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Thing type = "F_BRUISER";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 15;
+Ip2 = "spref_none";
+Fp0 = 8;
+Fp2 = 8;
+}
+
+Line Type {
+ID = 3371;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 1;
+}
+
+Line Type {
+ID = 3372;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Sp0 = "spawnmobj SERGEANT 48 1104 0 0; spawnmobj SERGEANT 160 1104 0 0; spawnmobj SERGEANT 272 1104 0 0";
+}
+
+Line Type {
+ID = 3373;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Sp0 = "spawnmobj SERGEANT 48 976 0 0; spawnmobj SERGEANT 160 976 0 0; spawnmobj SERGEANT 272 976 0 0";
+}
+
+Line Type {
+ID = 3374;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Sp0 = "spawnmobj SERGEANT 48 848 0 0; spawnmobj SERGEANT 160 848 0 0; spawnmobj SERGEANT 272 848 0 0";
+}
+
+Line Type {
+ID = 3375;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 2;
+}
+
+Line Type {
+ID = 3376;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 2;
+Sp0 = "spawnmobj SERGEANT 2048 -880 0 0; spawnmobj SERGEANT 2160 -880 0 0; spawnmobj SERGEANT 2272 -880 0 0";
+}
+
+Line Type {
+ID = 3377;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 2;
+Sp0 = "spawnmobj SERGEANT 2048 -1008 0 0; spawnmobj SERGEANT 2160 -1008 0 0; spawnmobj SERGEANT 2272 -1008 0 0";
+}
+
+Line Type {
+ID = 3378;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 2;
+Sp0 = "spawnmobj SERGEANT 2048 -1136 0 0; spawnmobj SERGEANT 2160 -1136 0 0; spawnmobj SERGEANT 2272 -1136 0 0";
+}
+
+Line Type {
+ID = 3379;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 3;
+}
+
+Line Type {
+ID = 3380;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 3;
+Sp0 = "spawnmobj SKULL -256 -1472 0 315; spawnmobj SKULL -368 -1328 0 315; spawnmobj SKULL -96 -1616 0 315";
+}
+
+Line Type {
+ID = 3381;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 3;
+Sp0 = "spawnmobj SKULL -224 -1184 0 315; spawnmobj SKULL -96 -1312 0 315; spawnmobj SKULL 32 -1440 0 315";
+}
+
+Line Type {
+ID = 3382;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 3;
+Sp0 = "spawnmobj SKULL -96 -1072 0 315; spawnmobj SKULL 144 -1296 0 315; spawnmobj SKULL -176 -1392 0 315";
+}
+
+Line Type {
+ID = 3383;
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Thing type = "BRUISER";
+Act sound = "itmbk";
+Ip0 = "lref_act_tagged";
+Ip1 = 4;
+}
+
+Line Type {
+ID = 3384;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 4;
+Sp0 = "spawnmobj MISC12 672 -544 0 0";
+}
+
+Line Type {
+ID = 3385;
+Comment = "null1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act tag = 4;
+Ip0 = "lref_tagged";
+Ip1 = 17;
+Ip2 = 3386;
+}
+
+Line Type {
+ID = 3386;
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any ltf2_2sided";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Thing type = "MISC12";
+Act sound = "itmbk";
+Ip0 = "lref_act_tagged";
+Ip1 = 5;
+}
+
+Line Type {
+ID = 3387;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 5;
+Sp0 = "spawnmobj HEAD 720 80 0 270; spawnmobj HEAD 880 80 0 270; spawnmobj HEAD 1312 -352 0 180";
+}
+
+Line Type {
+ID = 3388;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 5;
+Sp0 = "spawnmobj HEAD 1312 -512 0 180";
+}
+
+Line Type {
+ID = 3410;
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "F_BRUISER";
+Ip0 = "lref_act_tagged";
+Ip1 = 6;
+}
+
+Line Type {
+ID = 3411;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 6;
+Sp0 = "spawnmobj SKULL 1440 672 0 0; spawnmobj SKULL 1440 608 0 0; spawnmobj SKULL 1568 608 0 0";
+}
+
+Line Type {
+ID = 3412;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 6;
+Sp0 = "spawnmobj SKULL 1696 608 0 0; spawnmobj SKULL 1696 672 0 0; spawnmobj SKULL 1824 480 0 0";
+}
+
+Line Type {
+ID = 3413;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 6;
+Sp0 = "spawnmobj SKULL 1888 480 0 0; spawnmobj SKULL 1824 352 0 0; spawnmobj SKULL 1824 224 0 0";
+}
+
+Line Type {
+ID = 3414;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 6;
+Sp0 = "spawnmobj SKULL 1888 224 0 0";
+}

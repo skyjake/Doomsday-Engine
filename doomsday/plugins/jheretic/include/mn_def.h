@@ -30,6 +30,7 @@
 #define SKULLH          15
 #define CURSORPREF      "M_SLCTR%d"
 #define SKULLBASELMP    "M_SKL00"
+#define NUMCURSORS      2
 
 #define NUMSAVESLOTS    8
 

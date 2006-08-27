@@ -1,0 +1,987 @@
+#===================================================================
+#==Map03 Specials==
+#===================================================================
+
+Line Type {
+ID = 1278;
+Comment = "Map03_room1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "itmbk";
+Ip0 = chsf_done_d;
+Ip1 = 1279;
+Ip2 = 1280;
+Ip3 = 1282;
+Ip4 = 1283;
+Ip5 = 1284;
+Ip6 = 1285;
+Ip7 = 1287;
+Ip8 = 1286;
+Ip9 = 1288;
+Ip10 = 1281;
+Ip11 = 1295;
+Ip12 = 1289;
+Ip13 = 1291;
+Fp1 = 0;
+Fp2 = 3;
+Fp3 = 2.7;
+Fp4 = 1;
+Fp5 = 1;
+Fp6 = 1;
+Fp7 = 1;
+Fp8 = 0;
+Fp9 = 0;
+Fp10 = 0;
+Fp11 = 0;
+Fp12 = 0;
+Ip13 = 2;
+}
+
+Line Type {
+ID = 1279;
+Comment = "map03_room1_1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 2;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 11;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+}
+
+Line Type {
+ID = 1280;
+Comment = "map03_room1_2_1";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 13;
+Ip2 = "spref_next_lowest_ceiling";
+Ip5 = "barexp";
+Fp0 = 6;
+}
+
+Line Type {
+ID = 1281;
+Comment = "map03_room1_7";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 14;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+}
+
+Line Type {
+ID = 1282;
+Comment = "map03_room1_3";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Sp0 = "spawnmobj MISC4 -256 -1088 0 0";
+}
+
+Line Type {
+ID = 1283;
+Comment = "map03_room1_4_1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 2;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 14;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 1284;
+Comment = "map03_room1_4_2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 2;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 15;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+Fp2 = 16;
+}
+
+Line Type {
+ID = 1285;
+Comment = "map03_room1_2_3";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 13;
+Ip2 = "spref_highest_ceiling";
+Fp0 = 6;
+}
+
+Line Type {
+ID = 1286;
+Comment = "map03_room1_5";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 12;
+Ip2 = "spref_highest_floor";
+Fp0 = 6;
+}
+
+Line Type {
+ID = 1287;
+Comment = "map03_room1_1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 2;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 11;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+}
+
+Line Type {
+ID = 1288;
+Comment = "map03_room1_7";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 15;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+}
+
+Line Type {
+ID = 1289;
+Comment = "map03_room1_end";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 10;
+Ip2 = "spref_lowest_floor";
+Fp0 = 6;
+Fp2 = 16;
+}
+
+Line Type {
+ID = 1291;
+Comment = "Map03_impspawn";
+Flags = "ltf_any_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act sound = "itmbk";
+Ip0 = chsf_done_d;
+Ip1 = 1292;
+Ip2 = 1293;
+Ip3 = 1294;
+Ip4 = 0;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+Fp4 = 0;
+}
+
+Line Type {
+ID = 1292;
+Comment = "map03impspawn1";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj TROOP -392 -792 0 270; spawnmobj TROOP -112 -792 0 180; spawnmobj TROOP -528 -1216 0 90";
+}
+
+Line Type {
+ID = 1293;
+Comment = "map03impspawn2";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj NTROOP -720 -664 0 0; spawnmobj NTROOP -720 -1064 0 0; spawnmobj TROOP 0 -1224 0 90";
+}
+
+Line Type {
+ID = 1294;
+Comment = "map03impspawn3";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj NTROOP 208 -664 0 0; spawnmobj NTROOP 216 -1064 0 0";
+}
+
+Line Type {
+ID = 1295;
+Comment = "map03_room1_7";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 13;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+Fp2 = 94;
+}
+
+Line Type {
+ID = 1296;
+Comment = "map03_room2_1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 16;
+Ip2 = "spref_highest_ceiling";
+Ip3 = "pmf_follow";
+Fp0 = 3;
+Fp2 = -128;
+}
+
+Line Type {
+ID = 1297;
+Comment = "map03_room2_2";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 17;
+Ip2 = "spref_highest_ceiling";
+Ip3 = "pmf_follow";
+Fp0 = 3;
+Fp2 = -128;
+}
+
+Line Type {
+ID = 1298;
+Comment = "Map03_room2";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = chsf_done_d;
+Ip1 = 1299;
+Ip2 = 1300;
+Ip3 = 1301;
+Ip4 = 1302;
+Ip5 = 1303;
+Ip6 = 1304;
+Ip7 = 1305;
+Ip8 = 1306;
+Ip9 = 1307;
+Ip10 = 0;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+Fp4 = 0;
+Fp5 = 0;
+Fp6 = 1;
+Fp7 = 0;
+Fp8 = 0.5;
+Ip9 = 0.7;
+Ip10 = 0;
+}
+
+Line Type {
+ID = 1299;
+Comment = "map03_room2_3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 21;
+Ip2 = "spref_lowest_floor";
+Fp0 = 3;
+Fp2 = 16;
+}
+
+Line Type {
+ID = 1300;
+Comment = "map03_room2_4";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 20;
+Ip2 = "spref_next_highest_ceiling";
+Fp0 = 3;
+}
+
+Line Type {
+ID = 1301;
+Comment = "map03_room2_4";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 22;
+Ip2 = "spref_highest_ceiling";
+Fp0 = 50;
+}
+
+Line Type {
+ID = 1302;
+Comment = "map03_room2_6";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 22;
+Ip2 = "spref_highest_floor";
+Fp0 = 50;
+}
+
+Line Type {
+ID = 1303;
+Comment = "map03_room2_5";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 23;
+Ip2 = "spref_next_highest_floor";
+Ip3 = "pmf_follow";
+Fp0 = 3;
+Fp2 = 77;
+}
+
+Line Type {
+ID = 1304;
+Comment = "map03_room2spawn1";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj HEAD 1000 -312 0 0; spawnmobj HEAD 768 -64 0 0; spawnmobj HEAD 768 -592 0 0";
+}
+
+Line Type {
+ID = 1305;
+Comment = "map03_room2spawn2";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj HEAD 536 -672 0 0; spawnmobj HEAD 536 32 0 0; spawnmobj HEAD 1064 -24 0 180";
+}
+
+Line Type {
+ID = 1306;
+Comment = "map03SetHEADCheck";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lref_tagged";
+Ip1 = 100;
+Ip2 = 1308;
+}
+
+Line Type {
+ID = 1308;
+Comment = "map03headcheck";
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Thing type = "HEAD";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 80;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 50;
+}
+
+Line Type {
+ID = 1309;
+Comment = "Map03_room3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = chsf_done_d;
+Ip1 = 1310;
+Ip2 = 1311;
+Ip3 = 1312;
+Ip4 = 1313;
+Ip5 = 1314;
+Ip6 = 1315;
+Ip7 = 1316;
+Ip8 = 1317;
+Ip9 = 1318;
+Ip10 = 1319;
+Ip11 = 1320;
+Ip12 = 1321;
+Ip13 = 1322;
+Ip14 = 1323;
+Ip15 = 1324;
+Ip16 = 0;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+Fp4 = 0;
+Fp5 = 0;
+FP6 = 0;
+Fp7 = 1;
+Fp8 = 1;
+Fp9 = 1;
+Fp10 = 0;
+Fp11 = 0;
+Fp12 = 0;
+Fp13 = 0;
+Fp14 = 0;
+Fp15 = 0;
+Fp16 = 0;
+}
+
+Line Type {
+ID = 1310;
+Comment = "map03_room3_1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 901;
+Ip2 = "spref_lowest_ceiling";
+Fp0 = 1;
+}
+
+Line Type {
+ID = 1311;
+Comment = "map03_room3_1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 902;
+Ip2 = "spref_lowest_ceiling";
+Fp0 = 1;
+}
+
+Line Type {
+ID = 1312;
+Comment = "map03_room3_1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 903;
+Ip2 = "spref_lowest_ceiling";
+Fp0 = 1;
+}
+
+Line Type {
+ID = 1313;
+Comment = "map03_room3_1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 904;
+Ip2 = "spref_lowest_ceiling";
+Fp0 = 1;
+}
+
+Line Type {
+ID = 1314;
+Comment = "map03_room3_1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 905;
+Ip2 = "spref_lowest_ceiling";
+Fp0 = 1;
+}
+
+Line Type {
+ID = 1315;
+Comment = "map03_room3_1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 906;
+Ip2 = "spref_lowest_ceiling";
+Fp0 = 1;
+}
+
+Line Type {
+ID = 1316;
+Comment = "map03_room3_2";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 900;
+Ip2 = "spref_lowest_ceiling";
+Ip5 = "barexp";
+Fp0 = 6;
+}
+
+Line Type {
+ID = 1317;
+Comment = "map03_room3_3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 901;
+Ip2 = "spref_highest_floor";
+Fp0 = 20;
+}
+
+Line Type {
+ID = 1318;
+Comment = "map03_room3_3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 902;
+Ip2 = "spref_lowest_floor";
+Fp0 = 20;
+}
+
+Line Type {
+ID = 1319;
+Comment = "map03_room3_3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 903;
+Ip2 = "spref_lowest_floor";
+Fp0 = 20;
+}
+
+Line Type {
+ID = 1320;
+Comment = "map03_room3_3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 904;
+Ip2 = "spref_lowest_floor";
+Fp0 = 20;
+Fp2 = 16;
+}
+
+Line Type {
+ID = 1321;
+Comment = "map03_room3_3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 905;
+Ip2 = "spref_lowest_floor";
+Fp0 = 20;
+Fp2 = 12;
+}
+
+Line Type {
+ID = 1322;
+Comment = "map03_room3_3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 906;
+Ip2 = "spref_lowest_floor";
+Fp0 = 20;
+Fp2 = 8;
+}
+
+Line Type {
+ID = 1323;
+Comment = "map03_room3_3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 900;
+Ip2 = "spref_highest_ceiling";
+Fp0 = 6;
+Fp2 = -72;
+}
+
+Line Type {
+ID = 1324;
+Comment = "map03_room3_3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 6;
+Ip2 = "spref_lowest_floor";
+Fp0 = 6;
+}
+
+Line Type {
+ID = 1325;
+Comment = "map03_room3changeflat";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any"; 
+Class = "ltc_plane_texture";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 901;
+Ip2 = "spref_none";
+Ip3 = "CUSTOM65";
+}
+
+Line Type {
+ID = 1326;
+Comment = "map03_room3changeflat";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any"; 
+Class = "ltc_plane_texture";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 902;
+Ip2 = "spref_none";
+Ip3 = "CUSTOM65";
+}
+
+Line Type {
+ID = 1327;
+Comment = "map03_room3changeflat";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any"; 
+Class = "ltc_plane_texture";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 903;
+Ip2 = "spref_none";
+Ip3 = "CUSTOM65";
+}
+
+Line Type {
+ID = 1328;
+Comment = "map03_room3changeflat";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any"; 
+Class = "ltc_plane_texture";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 904;
+Ip2 = "spref_none";
+Ip3 = "CUSTOM65";
+}
+
+Line Type {
+ID = 1329;
+Comment = "map03_room3changeflat";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any"; 
+Class = "ltc_plane_texture";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 905;
+Ip2 = "spref_none";
+Ip3 = "CUSTOM65";
+}
+
+Line Type {
+ID = 1330;
+Comment = "map03_room3changeflat";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any"; 
+Class = "ltc_plane_texture";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 906;
+Ip2 = "spref_none";
+Ip3 = "CUSTOM65";
+}
+
+Line Type {
+ID = 1331;
+Comment = "Map03_flatchange";
+Flags = "ltf_any_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = chsf_done_d;
+Ip1 = 1325;
+Ip2 = 1326;
+Ip3 = 1327;
+Ip4 = 1328;
+Ip5 = 1329;
+Ip6 = 1330;
+Ip7 = 0;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+Fp4 = 0;
+Fp5 = 0;
+FP6 = 0;
+}
+
+Line Type {
+ID = 1332;
+Comment = "map03room3spawnpart1";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 47;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -352 -2216 0 90; spawnmobj SKULL -296 -2216 0 90; spawnmobj SKULL -208 -2216 0 90";
+}
+
+Line Type {
+ID = 1333;
+Comment = "map03room3spawnpart2";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 47;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -160 -2216 64 90; spawnmobj SKULL -352 -2352 64 90; spawnmobj SKULL -296 -2352 64 90";
+}
+
+Line Type {
+ID = 1334;
+Comment = "map03room3spawnpart3";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 47;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -208 -2352 64 90; spawnmobj SKULL -160 -2352 64 90; spawnmobj TROOP -576 -2008 0 45";
+}
+
+Line Type {
+ID = 1335;
+Comment = "map03room3spawnpart4";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 47;
+Act sound = "itmbk";
+Sp0 = "spawnmobj TROOP -600 -2128 0 45; spawnmobj TROOP -608 -2472 0 45; spawnmobj TROOP -536 -2552 0 45";
+}
+
+Line Type {
+ID = 1336;
+Comment = "map03room3spawnpart5";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 47;
+Act sound = "itmbk";
+Sp0 = "spawnmobj TROOP 8 -2536 0 135; spawnmobj TROOP 96 -2432 0 135; spawnmobj TROOP 96 -2120 0 180";
+}
+
+Line Type {
+ID = 1337;
+Comment = "map03room3spawnpart6";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 47;
+Act sound = "itmbk";
+Sp0 = "spawnmobj TROOP 8 -2008 0 180";
+}
+
+Line Type {
+ID = 1338;
+Comment = "Map03_superspawn";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lref_act_tagged";
+Ip1 = 47;
+}
+
+Line Type {
+ID = 1339;
+Comment = "map03spawnbackpack";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Time = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj MISC24 -256 -72 0 0";
+}
+
+Line Type {
+ID = 1340;
+Comment = "map03spawnrl";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Time = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj MISC27 -256 -1088 64 0";
+}
+
+Line Type {
+ID = 1341;
+Comment = "map03spawnredkey";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Time = -1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj MISC5 -256 -1088 64 0";
+}

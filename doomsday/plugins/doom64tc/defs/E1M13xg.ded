@@ -1,0 +1,2705 @@
+#===================================================================
+#==Map13 Specials==
+#===================================================================
+
+Line Type {
+ID = 2107;
+Comment = "Raisebridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 1;
+}
+
+Line Type {
+ID = 2108;
+Comment = "changetexture_floor";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 2;
+Ip2 = "spref_none";
+
+Ip8 = "SPECIALV";
+Fp0 = 999;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 2109;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 3;
+Ip2 = "spref_none";
+
+Ip8 = "SPECIALV";
+Fp0 = 999;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 2110;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 4;
+Ip2 = "spref_none";
+
+Ip8 = "SPECIALV";
+Fp0 = 999;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 2111;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 5;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE135";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 288;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 6;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE135";
+Fp0 = 999;
+Fp2 = 88;
+}
+
+Line Type {
+ID = 2113;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 7;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE135";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2115;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 2;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2116;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 3;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2117;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 5;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2118;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 6;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2119;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 7;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+#===================================================================
+#==Lower Sequence===================================================
+#==Goldeneye sucks ass!!!===========================================
+#===================================================================
+
+Line Type {
+ID = 2120;
+Comment = "Returnbridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 2;
+}
+
+Line Type {
+ID = 2121;
+Comment = "changetexture_floor";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 2;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2122;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 3;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2123;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 4;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2124;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 5;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2125;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 6;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2126;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 7;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2128;
+Comment = "lowertobridge1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 2;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 96;
+}
+
+Line Type {
+ID = 2129;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 3;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 120;
+}
+
+Line Type {
+ID = 2130;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 5;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 88;
+}
+
+Line Type {
+ID = 2131;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 6;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2132;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 7;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2133;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 7;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 1200;
+Fp2 = -16;
+}
+
+#===================================================================
+#==Other Bridge...yay...============================================
+#==riged to the player can't see the other one revealed.============
+
+Line Type {
+ID = 2134;
+Comment = "Raisebridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 3;
+}
+
+Line Type {
+ID = 2135;
+Comment = "changetexture_floor";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 9;
+Ip2 = "spref_none";
+
+Ip8 = "SPECIALV";
+Fp0 = 999;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 2136;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 10;
+Ip2 = "spref_none";
+
+Ip8 = "SPECIALV";
+Fp0 = 999;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 2137;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 11;
+Ip2 = "spref_none";
+
+Ip8 = "SPECIALV";
+Fp0 = 999;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 2138;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 12;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE135";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2139;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 13;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE135";
+Fp0 = 999;
+Fp2 = 88;
+}
+
+Line Type {
+ID = 2140;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 14;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE135";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2141;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 9;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2142;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 10;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2143;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 12;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2144;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 13;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2145;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 3;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 14;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+#===================================================================
+#==Lower Sequence===================================================
+#==Goldeneye sucks ass!!!===========================================
+#===================================================================
+
+Line Type {
+ID = 2146;
+Comment = "Returnbridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 4;
+}
+
+Line Type {
+ID = 2147;
+Comment = "changetexture_floor";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 9;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2148;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 10;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2149;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 11;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2150;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 12;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2151;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 13;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2152;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 14;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2153;
+Comment = "lowertobridge1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 9;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 96;
+}
+
+Line Type {
+ID = 2154;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 10;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 120;
+}
+
+Line Type {
+ID = 2155;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 12;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 88;
+}
+
+Line Type {
+ID = 2156;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 13;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2157;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 4;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 14;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2158;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 14;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 1200;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2159;
+Comment = "Spawnbluekeymap11";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Time = -1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj MISC9 -2144 1232 0 0";
+}
+
+#===================================================================
+#==third bridge=====================================================
+#===================================================================
+
+Line Type {
+ID = 2160;
+Comment = "Raisebridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 5;
+}
+
+Line Type {
+ID = 2161;
+Comment = "changetexture_floor";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 20;
+Ip2 = "spref_none";
+
+Ip8 = "SPECIALV";
+Fp0 = 999;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 2162;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 21;
+Ip2 = "spref_none";
+
+Ip8 = "SPECIALV";
+Fp0 = 999;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 2163;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 25;
+Ip2 = "spref_none";
+
+Ip8 = "SPECIALV";
+Fp0 = 999;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 2164;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 22;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE135";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2165;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 23;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE135";
+Fp0 = 999;
+Fp2 = 88;
+}
+
+Line Type {
+ID = 2166;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 24;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE135";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2167;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 20;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2168;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 21;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2169;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 22;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2170;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 23;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+Line Type {
+ID = 2171;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 5;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 24;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 360;
+}
+
+#===================================================================
+#==LowerSequence..again!============================================
+#==Goldeneye sucks ass!!!===========================================
+#===================================================================
+
+Line Type {
+ID = 2172;
+Comment = "Returnbridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 6;
+}
+
+Line Type {
+ID = 2173;
+Comment = "changetexture_floor";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 20;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2174;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 21;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2175;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 25;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2176;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 22;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2177;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 23;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2178;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 24;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 999;
+Fp2 = -16;
+}
+
+Line Type {
+ID = 2179;
+Comment = "lowertobridge1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 20;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 96;
+}
+
+Line Type {
+ID = 2180;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 21;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 120;
+}
+
+Line Type {
+ID = 2181;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 22;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 88;
+}
+
+Line Type {
+ID = 2182;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 23;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2183;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 6;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 24;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 144;
+}
+
+Line Type {
+ID = 2184;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 24;
+Ip2 = "spref_none";
+
+Ip8 = "SLIME05";
+Fp0 = 1200;
+Fp2 = -16;
+}
+
+#===================================================================
+#==bridge four======================================================
+#===================================================================
+
+Line Type {
+ID = 2185;
+Comment = "Raisebridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 7;
+}
+
+Line Type {
+ID = 2186;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 7;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 36;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 368;
+}
+
+Line Type {
+ID = 2187;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 7;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 40;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+Line Type {
+ID = 2188;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 7;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 37;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 368;
+}
+
+Line Type {
+ID = 2189;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 7;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 38;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+Line Type {
+ID = 2190;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 7;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 39;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2192;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 7;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 36;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2193;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 7;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 37;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2194;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 7;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 38;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2195;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 7;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 39;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+#===================================================================
+#==bridge four lower================================================
+#===================================================================
+
+Line Type {
+ID = 2191;
+Comment = "Raisebridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 8;
+}
+
+Line Type {
+ID = 2196;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 8;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 36;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2197;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 8;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 40;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2198;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 8;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 37;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2199;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 8;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 38;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE0DE";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2200;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 8;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 39;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2201;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 8;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 36;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 352;
+}
+
+Line Type {
+ID = 2202;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 8;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 37;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2203;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 8;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 38;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 344;
+}
+
+Line Type {
+ID = 2204;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 8;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 39;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+#===================================================================
+#==bridge five======================================================
+#===================================================================
+
+Line Type {
+ID = 2205;
+Comment = "Raisebridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 9;
+}
+
+Line Type {
+ID = 2206;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 9;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 41;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 368;
+}
+
+Line Type {
+ID = 2207;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 9;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 45;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+Line Type {
+ID = 2208;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 9;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 42;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 368;
+}
+
+Line Type {
+ID = 2209;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 9;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 43;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+Line Type {
+ID = 2210;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 9;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 44;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2211;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 9;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 41;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2212;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 9;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 42;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2213;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 9;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 43;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2214;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 9;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 44;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+#===================================================================
+#==bridge five lower================================================
+#===================================================================
+
+Line Type {
+ID = 2215;
+Comment = "Raisebridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 10;
+}
+
+Line Type {
+ID = 2216;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 10;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 41;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2217;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 10;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 45;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2218;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 10;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 42;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2219;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 10;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 43;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE0DE";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2220;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 10;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 44;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2221;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 10;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 41;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 352;
+}
+
+Line Type {
+ID = 2222;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 10;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 42;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2223;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 10;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 43;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 344;
+}
+
+Line Type {
+ID = 2224;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 10;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 44;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+#===================================================================
+#==superbridge======================================================
+#===================================================================
+
+Line Type {
+ID = 2225;
+Comment = "Raisebridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 11;
+}
+
+Line Type {
+ID = 2226;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 46;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 368;
+}
+
+Line Type {
+ID = 2227;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 50;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+Line Type {
+ID = 2228;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 47;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 368;
+}
+
+Line Type {
+ID = 2229;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 48;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+Line Type {
+ID = 2230;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 49;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2231;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 46;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2232;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 47;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2233;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 48;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2234;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 49;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2245;
+Comment = "barsforsuperbridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 51;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+Line Type {
+ID = 2246;
+Comment = "barsforsuperbridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 11;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 51;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+#===================================================================
+#==superbridge lower================================================
+#===================================================================
+
+Line Type {
+ID = 2235;
+Comment = "Raisebridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 12;
+}
+
+Line Type {
+ID = 2236;
+Comment = "changetexture_floor_selfsector";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 46;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2237;
+Comment = "changetexture_floor_selfsectorbarrier";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 50;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2238;
+Comment = "changetexture_rail";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 47;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2239;
+Comment = "changetexture_rail1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 48;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE0DE";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2240;
+Comment = "changetexture_rail2";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 49;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2241;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 46;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 352;
+}
+
+Line Type {
+ID = 2242;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 47;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 528;
+}
+
+Line Type {
+ID = 2243;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 48;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 344;
+}
+
+Line Type {
+ID = 2244;
+Comment = "raisetosky1";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 49;
+Ip2 = "spref_none";
+
+Ip8 = "F_SKY1";
+Fp0 = 999;
+Fp2 = 400;
+}
+
+Line Type {
+ID = 2247;
+Comment = "barsforsuperbridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 51;
+Ip2 = "spref_none";
+Fp0 = 999;
+Fp2 = 240;
+}
+
+Line Type {
+ID = 2248;
+Comment = "barsforsuperbridge";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Act tag = 12;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 51;
+Ip2 = "spref_none";
+
+Ip8 = "FTILE6C8";
+Fp0 = 999;
+Fp2 = 241;
+}
+
+Line Type {
+ID = 2249;
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "FAKETROOP";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 27;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+Fp2 = -42;
+}
+
+Line Type {
+ID = 2250;
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "FAKESHADOWS";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 27;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+Fp2 = -42;
+}
+
+Line Type {
+ID = 2251;
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "FAKESKULL";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 27;
+Ip2 = "spref_next_highest_floor";
+Fp0 = 6;
+Fp2 = -42;
+}
+
+Line Type {
+ID = 2252;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj FATSO 368 368 0 180; spawnmobj FATSO 368 656 0 180";
+}
+
+Line Type {
+ID = 2253;
+Comment = "finalspawn";
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "MISC8";
+Act sound = "itmbk";
+Ip0 = "lref_act_tagged";
+Ip1 = 13;
+}
+
+Line Type {
+ID = 2254;
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 13;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -1744 -400 0 180; spawnmobj SKULL -1456 -400 0 180; spawnmobj SKULL -1648 -304 0 180";
+}
+
+Line Type {
+ID = 2255;
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 13;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -552 -304 0 180; spawnmobj SKULL -1456 -512 0 180; spawnmobj SKULL -1744 -528 0 180";
+}
+
+Line Type {
+ID = 2256;
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 13;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -1408 464 0 180; spawnmobj SKULL -1408 352 0 180; spawnmobj SKULL -1312 352 0 180";
+}
+
+Line Type {
+ID = 2257;
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 13;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -1984 464 0 180; spawnmobj SKULL -1888 352 0 180; spawnmobj SKULL -1888 464 0 180";
+}
+
+Line Type {
+ID = 2258;
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 13;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -1987 1040 0 180; spawnmobj SKULL -1872 912 0 180; spawnmobj SKULL -1987 912 0 180";
+}
+
+Line Type {
+ID = 2259;
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 13;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -1040 -16 0 180; spawnmobj SKULL -944 80 0 180; spawnmobj SKULL -944 176 0 180";
+}
+
+Line Type {
+ID = 2260;
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act tag = 13;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SHOTGUY -816 -352 0 0; spawnmobj SHOTGUY -624 -144 0 180";
+}

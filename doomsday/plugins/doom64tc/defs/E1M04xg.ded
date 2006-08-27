@@ -1,0 +1,437 @@
+#===================================================================
+#==Map04 Specials==
+#===================================================================
+
+Line Type {
+ID = 1247;
+Comment = "map04shadowcheck";
+Flags = "ltf_mobj_gone ltf_ticker";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Thing type = "SHADOWS";
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 1;
+Ip2 = "spref_none";
+Ip4 = "bdopn";
+Fp0 = 6;
+Fp2 = 112;
+}
+
+Line Type {
+ID = 1248;
+Comment = "Map04 Red alarm";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_sector_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 3;
+Ip2 = 9998;
+}
+
+Line Type {
+ID = 1249;
+Comment = "Map04_spawner1";
+Flags = "ltf_player_use_a ltf_other_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "itmbk";
+Ip0 = chsf_done_d;
+Ip1 = 1250;
+Ip2 = 1252;
+Ip3 = 0;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+}
+
+Line Type {
+ID = 1250;
+Comment = "1249_starter1";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SHADOWS 416 -1424 0 180; spawnmobj SHADOWS 224 -1424 0 180; spawnmobj SHOTGUY 32 -1240 0 270";
+}
+
+Line Type {
+ID = 1251;
+Comment = "1249_starter2";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 1;
+Ip0 = "lpref_my_floor";
+Ip2 = "spref_lowest_floor";
+Fp0 = 8;
+}
+
+Line Type {
+ID = 1252;
+Comment = "1249_starter2activate";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 1;
+}
+
+Line Type {
+ID = 1253;
+Comment = "Map04_spawner2";
+Flags = "ltf_player_use_a ltf_other_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "itmbk";
+Ip0 = chsf_done_d;
+Ip1 = 1254;
+Ip2 = 1256;
+Ip3 = 0;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+}
+
+Line Type {
+ID = 1254;
+Comment = "1253_starter1";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SHOTGUY 416 -1424 0 180; spawnmobj SHADOWS 224 -1424 0 180; spawnmobj SHOTGUY 32 -1240 0 270";
+}
+
+Line Type {
+ID = 1255;
+Comment = "1253_starter2";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Act tag = 2;
+Ip0 = "lpref_my_floor";
+Ip2 = "spref_lowest_floor";
+Fp0 = 8;
+}
+
+Line Type {
+ID = 1256;
+Comment = "1253_starter2activate";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_activate";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = 1;
+Ip0 = "lref_act_tagged";
+Ip1 = 2;
+}
+
+Line Type {
+ID = 1257;
+Comment = "map04_secretelevator";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 8;
+Act sound = "PSTART";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 9;
+Ip2 = "spref_lowest_floor";
+Fp0 = 8;
+}
+
+Line Type {
+ID = 1258;
+Comment = "map04_secretelevator2";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 8;
+Act sound = "PSTART";
+Ip0 = "lpref_tagged_floors";
+Ip1 = 9;
+Ip2 = "spref_highest_floor";
+Fp0 = 8;
+}
+
+Line Type {
+ID = 1259;
+Comment = "Map04_secretelevatortrigger";
+Flags = "ltf_player_shoot";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 8;
+Act sound = "swtchn";
+Ip1 = 1257;
+Ip2 = 1258;
+Ip3 = 0;
+Fp1 = 0;
+Fp2 = 3;
+Fp3 = 0;
+}
+
+Line Type {
+ID = 1263;
+Comment = "map04_puzzle1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = "lref_tagged";
+Ip1 = 21;
+Ip2 = 1264;
+}
+
+Line Type {
+ID = 1264;
+Comment = "map04_puzzle2";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = "lref_tagged";
+Ip1 = 22;
+Ip2 = 1265;
+}
+
+Line Type {
+ID = 1265;
+Comment = "map04_puzzle3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = "lref_tagged";
+Ip1 = 23;
+Ip2 = 1266;
+}
+
+Line Type {
+ID = 1266;
+Comment = "Map04_puzzlesolved";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = chsf_done_d;
+Ip1 = 1267;
+Ip2 = 1268;
+Ip3 = 1269;
+Ip4 = 0;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+Fp4 = 0;
+}
+
+Line Type {
+ID = 1267;
+Comment = "map04_solvedswitchdone";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 5;
+Ip2 = "spref_lowest_floor";
+Fp0 = 4;
+}
+
+Line Type {
+ID = 1268;
+Comment = "map04_solvedplatdone";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 4;
+Ip2 = "spref_highest_floor";
+Ip3 = "pmf_follow";
+Fp0 = 2;
+Fp2 = 136;
+}
+
+Line Type {
+ID = 1269;
+Comment = "map04_spawnsolved";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj SKULL -256 -2208 0 270; spawnmobj SKULL -24 -2208 0 270; spawnmobj SKULL 200 -2208 0 270";
+}
+
+Line Type {
+ID = 1270;
+Comment = "Map04_puzzleincorrect";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_chain_sequence";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = -1;
+Act sound = "swtchn";
+Ip0 = chsf_done_d;
+Ip1 = 1267;
+Ip2 = 1271;
+Ip3 = 1269;
+Ip4 = 1272;
+Ip5 = 1273;
+Ip6 = 1274;
+Ip7 = 1275;
+Ip8 = 0;
+Fp1 = 0;
+Fp2 = 0;
+Fp3 = 0;
+Fp4 = 0;
+Fp5 = 0;
+Fp6 = 0;
+Fp7 = 0;
+Fp8 = 0;
+}
+
+Line Type {
+ID = 1271;
+Comment = "map04_incorrectplatdone";
+Flags = "ltf_no_other_use_secret";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_plane_move";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lpref_tagged_floors";
+Ip1 = 4;
+Ip2 = "spref_highest_floor";
+Ip3 = "pmf_follow";
+Fp0 = 2;
+Fp2 = 308;
+}
+
+Line Type {
+ID = 1272;
+Comment = "map04_ipuzzle1";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lref_tagged";
+Ip1 = 20;
+Ip2 = 1269;
+}
+
+Line Type {
+ID = 1273;
+Comment = "map04_ipuzzle2";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lref_tagged";
+Ip1 = 21;
+Ip2 = 1269;
+}
+
+Line Type {
+ID = 1274;
+Comment = "map04_ipuzzle3";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lref_tagged";
+Ip1 = 22;
+Ip2 = 1269;
+}
+
+Line Type {
+ID = 1275;
+Comment = "map04_ipuzzle4";
+Flags = "ltf_player_use_a";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_line_type";
+Type = "lat_flip_timed_off";
+Count = 1;
+Time = -1;
+Ip0 = "lref_tagged";
+Ip1 = 23;
+Ip2 = 1269;
+}
+
+Line Type {
+ID = 1276;
+Comment = "map04_knightrap";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_command";
+Count = 1;
+Act sound = "itmbk";
+Sp0 = "spawnmobj KNIGHT 21 -1048 0 90";
+}
+
+Line Type {
+ID = 1277;
+Comment = "Map04 Red alarm_restore";
+Flags = "ltf_player_cross";
+Flags2 = "ltf2_when_act ltf2_any";
+Class = "ltc_sector_type";
+Type = "lat_flip_timed_off";
+Count = -1;
+Time = 1;
+Ip0 = "lpref_tagged_ceilings";
+Ip1 = 3;
+Ip2 = 10022;
+}

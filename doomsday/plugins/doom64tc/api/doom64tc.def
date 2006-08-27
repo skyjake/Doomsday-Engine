@@ -1,0 +1,4 @@
+LIBRARY			DOOM64TC
+
+EXPORTS
+	GetGameAPI		@1
