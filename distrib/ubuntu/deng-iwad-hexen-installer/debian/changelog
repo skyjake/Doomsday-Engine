@@ -1,0 +1,28 @@
+deng-iwad-hexen-installer (1.1ubuntu3) dapper; urgency=low
+
+  * Install to draft Doom Policy locations.
+  * Auto-generate .gwa files
+  * Explicitly state -iwad in the menu commands.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Mon, 12 Jun 2006 04:46:42 +1000
+
+deng-iwad-hexen-installer (1.1ubuntu2) breezy; urgency=low
+
+  * Make sure if wad isn't found, package fails to install
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sat, 29 Oct 2005 18:18:03 +1000
+
+deng-iwad-hexen-installer (1.1ubuntu1) hoary; urgency=low
+
+  * Correct description.
+  * Bump Standards.
+  * Correct menu entries for deng binary correct location.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Thu, 18 Aug 2005 06:55:58 +1000
+
+deng-iwad-hexen-installer (1.0-1) hoary; urgency=low
+
+  * Initial Release.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Tue, 26 Jul 2005 19:27:12 +1000
+

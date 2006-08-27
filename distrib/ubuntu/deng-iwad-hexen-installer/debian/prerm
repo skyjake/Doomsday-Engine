@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  remove|purge|abort-install)
+	rm -f /usr/share/games/doom/iwad/hexen/hexen.wad
+	rm -f /usr/share/games/doom/iwad/hexen/hexen.gwa
+	;;
+esac
+
+#DEBHELPER#

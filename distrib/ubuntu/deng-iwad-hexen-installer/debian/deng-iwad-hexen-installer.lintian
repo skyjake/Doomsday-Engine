@@ -1,0 +1,2 @@
+# We depend on deng which contains this command
+deng-iwad-hexen-installer: menu-command-not-in-package /usr/lib/menu/deng-iwad-hexen-installer:2 /usr/games/doomsday
