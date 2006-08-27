@@ -15,7 +15,7 @@
 #  include "jstrife.h"
 #endif
 
-extern boolean  cyclingMaps, mapCycleNoExit;
+extern char     cyclingMaps, mapCycleNoExit;
 extern int      netSvAllowCheats;
 extern char    *mapCycle;
 extern char     gameConfigString[];

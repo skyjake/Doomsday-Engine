@@ -99,9 +99,9 @@ void    NetSv_SendPlayerClass(int pnum, char cls);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean cyclingMaps = false;
+char    cyclingMaps = false;
 char   *mapCycle = "";
-boolean mapCycleNoExit = true;
+char    mapCycleNoExit = true;
 int     netSvAllowSendMsg = true;
 int     netSvAllowCheats = false;
 
