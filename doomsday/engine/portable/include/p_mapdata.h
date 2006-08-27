@@ -79,10 +79,11 @@ typedef struct {
 #define NF_SUBSECTOR    0x80000000
 
 // Sidedef flags
-#define SDF_BLENDTOPTOMID       0x1
-#define SDF_BLENDMIDTOTOP       0x2
-#define SDF_BLENDMIDTOBOTTOM    0x4
-#define SDF_BLENDBOTTOMTOMID    0x8
+#define SDF_BLENDTOPTOMID       0x01
+#define SDF_BLENDMIDTOTOP       0x02
+#define SDF_BLENDMIDTOBOTTOM    0x04
+#define SDF_BLENDBOTTOMTOMID    0x08
+#define SDF_MIDTEXUPPER         0x10
 
 // Runtime map data objects, such as vertices, sectors, and subsectors all
 // have this header as their first member. This makes it possible to treat

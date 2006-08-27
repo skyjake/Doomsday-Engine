@@ -796,6 +796,9 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     const byte *colorPtr = NULL;
     const byte *color2Ptr = NULL;
 
+    if(alpha == 0)
+        return; // no point rendering transparent polys...
+
     // Select the correct colors for this surface.
     switch(mode)
     {
@@ -958,11 +961,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     surface_t *surface;
     side_t *sid, *backsid, *side;
     line_t *ldef;
-    float   ffloor, fceil, bfloor, bceil, fsh, bsh, mceil, tcxoff, tcyoff;
+    float   ffloor, fceil, bfloor, bceil, fsh, bsh, tcxoff, tcyoff;
     rendpoly_t quad;
-    float  *v1, *v2, *v3, *v4;
+    float  *vBL, *vBR, *vTL, *vTR;
     boolean backSide = true;
-    boolean mid_covers_top = false;
     boolean backsecSkyFix = false;
 
     // Let's first check which way this seg is facing.
@@ -1010,20 +1012,20 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     quad.numvertices = 4;
     quad.isWall = true;
 
-    v1 = quad.vertices[0].pos;
-    v2 = quad.vertices[1].pos;
-    v3 = quad.vertices[2].pos;
-    v4 = quad.vertices[3].pos;
+    vBL = quad.vertices[0].pos;
+    vBR = quad.vertices[1].pos;
+    vTL = quad.vertices[2].pos;
+    vTR = quad.vertices[3].pos;
 
-    // Get the start and end points.
-    v1[VX] = v3[VX] = FIX2FLT(seg->v1->x);
-    v1[VY] = v3[VY] = FIX2FLT(seg->v1->y);
-    v2[VX] = v4[VX] = FIX2FLT(seg->v2->x);
-    v2[VY] = v4[VY] = FIX2FLT(seg->v2->y);
+    // Get the start and end vertices, left then right. Top and bottom.
+    vBL[VX] = vTL[VX] = FIX2FLT(seg->v1->x);
+    vBL[VY] = vTL[VY] = FIX2FLT(seg->v1->y);
+    vBR[VX] = vTR[VX] = FIX2FLT(seg->v2->x);
+    vBR[VY] = vTR[VY] = FIX2FLT(seg->v2->y);
 
     // Calculate the distances.
-    quad.vertices[0].dist = quad.vertices[2].dist = Rend_PointDist2D(v1);
-    quad.vertices[1].dist = quad.vertices[3].dist = Rend_PointDist2D(v2);
+    quad.vertices[0].dist = quad.vertices[2].dist = Rend_PointDist2D(vBL);
+    quad.vertices[1].dist = quad.vertices[3].dist = Rend_PointDist2D(vBR);
 
     // Some texture coordinates.
     quad.wall.length = seg->length;
@@ -1078,8 +1080,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             else
             {
                 quad.flags = RPF_SKY_MASK;
-                quad.vertices[2].pos[VZ] = quad.vertices[3].pos[VZ] = fceil + frontsec->skyfix;
-                quad.vertices[0].pos[VZ] = quad.vertices[1].pos[VZ] = fceil;
+                vTL[VZ] = vTR[VZ] = fceil + frontsec->skyfix;
+                vBL[VZ] = vBR[VZ] = fceil;
                 quad.tex.id = 0;
                 quad.lights = NULL;
                 quad.intertex.id = 0;
@@ -1088,12 +1090,14 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         }
     }
     if(backsec && bceil - bfloor <= 0 &&
-       ((R_IsSkySurface(&frontsec->SP_floorsurface) && R_IsSkySurface(&backsec->SP_floorsurface)) ||
-        (R_IsSkySurface(&frontsec->SP_ceilsurface) && R_IsSkySurface(&backsec->SP_ceilsurface))))
+       ((R_IsSkySurface(&frontsec->SP_floorsurface) &&
+         R_IsSkySurface(&backsec->SP_floorsurface)) ||
+        (R_IsSkySurface(&frontsec->SP_ceilsurface) &&
+         R_IsSkySurface(&backsec->SP_ceilsurface))))
     {
         quad.flags = RPF_SKY_MASK;
-        quad.vertices[2].pos[VZ] = quad.vertices[3].pos[VZ] = fceil + frontsec->skyfix;
-        quad.vertices[0].pos[VZ] = quad.vertices[1].pos[VZ] = bceil;
+        vTL[VZ] = vTR[VZ] = fceil + frontsec->skyfix;
+        vBL[VZ] = vBR[VZ] = bceil;
         quad.tex.id = 0;
         quad.lights = NULL;
         quad.intertex.id = 0;
@@ -1117,8 +1121,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             {
                 // Fill in the remaining quad data.
                 quad.flags = 0;
-                quad.vertices[2].pos[VZ] = quad.vertices[3].pos[VZ] = fceil;
-                quad.vertices[0].pos[VZ] = quad.vertices[1].pos[VZ] = ffloor;
+                vTL[VZ] = vTR[VZ] = fceil;
+                vBL[VZ] = vBR[VZ] = ffloor;
 
                 quad.texoffx = tcxoff;
                 quad.texoffy = tcyoff;
@@ -1143,7 +1147,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
 
         // Quite probably a masked texture. Won't be drawn if a visible
         // top or bottom texture is missing.
-        if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
+        if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide) &&
+           !(side->flags & SDF_MIDTEXUPPER))
         {
             // Use actual (smoothed) sector heights (non-linked).
             float   rbceil = SECT_CEIL(seg->backsector);
@@ -1160,31 +1165,19 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             if(texFlags != -1)
             {
                 // Calculate texture coordinates.
-                quad.vertices[2].pos[VZ] = quad.vertices[3].pos[VZ] = gaptop = MIN_OF(rbceil, rfceil);
-                quad.vertices[0].pos[VZ] = quad.vertices[1].pos[VZ] = gapbottom = MAX_OF(rbfloor, rffloor);
+                vTL[VZ] = vTR[VZ] = gaptop    = MIN_OF(rbceil, rfceil);
+                vBL[VZ] = vBR[VZ] = gapbottom = MAX_OF(rbfloor, rffloor);
 
-                if(bceil < fceil && side->top.texture == 0)
-                {
-                    mceil = quad.vertices[2].pos[VZ];
-                    // Extend to cover missing top texture.
-                    quad.vertices[2].pos[VZ] = quad.vertices[3].pos[VZ] = MAX_OF(bceil, fceil);
-                    if(texh > quad.vertices[2].pos[VZ] - quad.vertices[0].pos[VZ])
-                    {
-                        mid_covers_top = true;  // At least partially...
-                        tcyoff -= quad.vertices[2].pos[VZ] - mceil;
-                    }
-                }
                 quad.texoffx = tcxoff;
 
                 if(Rend_MidTexturePos
-                   (&quad.vertices[0].pos[VZ], &quad.vertices[1].pos[VZ],
-                    &quad.vertices[2].pos[VZ], &quad.vertices[3].pos[VZ],
+                   (&vBL[VZ], &vBR[VZ], &vTL[VZ], &vTR[VZ],
                     &quad.texoffy, tcyoff,
                     0 != (ldef->flags & ML_DONTPEGBOTTOM)))
                 {
                     // Should a solid segment be added here?
-                    if(quad.vertices[2].pos[VZ] >= gaptop && quad.vertices[0].pos[VZ] <= gapbottom &&
-                       quad.vertices[3].pos[VZ] >= gaptop && quad.vertices[1].pos[VZ] <= gapbottom)
+                    if(vTL[VZ] >= gaptop && vBL[VZ] <= gapbottom &&
+                       vTR[VZ] >= gaptop && vBR[VZ] <= gapbottom)
                     {
                         if(!texmask && alpha == 255 && side->blendmode == 0)
                             solidSeg = true; // We could add clipping seg.
@@ -1259,8 +1252,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         quad.type = RP_QUAD;
 
         // Upper wall.
-        if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide) &&
-           !mid_covers_top)
+        if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide))
         {
             surface = &side->top;
             texFlags = Rend_PrepareTextureForPoly(&quad, surface);
@@ -1268,20 +1260,68 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             // Is there a visible surface?
             if(texFlags != -1)
             {
+                byte alpha;
+                boolean isVisible = true;
+
                 // Calculate texture coordinates.
                 quad.texoffx = tcxoff;
-                quad.texoffy = tcyoff;
-                if(!(ldef->flags & ML_DONTPEGTOP)) // Normal alignment to bottom.
-                    quad.texoffy += texh - (fceil - bceil);
 
                 quad.flags = 0;
-                quad.vertices[2].pos[VZ] = quad.vertices[3].pos[VZ] = fceil;
-                quad.vertices[0].pos[VZ] = quad.vertices[1].pos[VZ] = bceil;
-                if(quad.vertices[0].pos[VZ] < ffloor)
-                    quad.vertices[0].pos[VZ] = ffloor;
 
+                if(side->flags & SDF_MIDTEXUPPER)
+                {
+                    // DOOM.EXE rendering hack.
+                    // Mid texture uppers use a relative offset to the lower
+                    // ceiling plus peggedness is always ignored.
+                    // However, negative yoffsets mean we get no upper.
+
+                    if(tcyoff)
+                    {
+                        float relOffset = bceil + tcyoff;
+
+                        vTL[VZ] = vTR[VZ] = relOffset;
+                        vBL[VZ] = vBR[VZ] = relOffset - texh;
+                        quad.texoffy = 0;
+
+                        // We allow all properties normally associated with
+                        // middle textures on mid texture uppers.
+
+                        // Blendmode
+                        if(sid->blendmode == BM_NORMAL && noSpriteTrans)
+                            quad.blendmode = BM_ZEROALPHA; // "no translucency" mode
+                        else
+                            quad.blendmode = sid->blendmode;
+
+                        alpha = side->middle.rgba[3];
+
+                        // If alpha, masked or blended we must render as a vissprite
+                        if(alpha < 255 || texmask || side->blendmode > 0)
+                            quad.flags = RPF_MASKED;
+                    }
+                    else
+                        isVisible = false;
+                }
+                else
+                {
+                    vTL[VZ] = vTR[VZ] = fceil;
+                    vBL[VZ] = vBR[VZ] = bceil;
+
+                    quad.texoffy = tcyoff;
+                    if(!(ldef->flags & ML_DONTPEGTOP)) // Normal alignment to bottom.
+                        quad.texoffy += texh - (fceil - bceil);
+
+                    alpha = 255;
+                }
+
+                if(vBL[VZ] < ffloor)
+                {
+                    vBL[VZ] = ffloor;
+                    vBR[VZ] = ffloor;
+                }
+
+                if(isVisible)
                 Rend_RenderWallSection(&quad, seg, side, frontsec, surface, SEG_TOP,
-                          /*Alpha*/    255,
+                          /*Alpha*/    alpha,
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
                           /*Shiny?*/   (surface->texture != -1),
                           /*Glow?*/    (texFlags & TXF_GLOW));
@@ -1307,13 +1347,13 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                     quad.texoffy += fceil - bfloor; // Align with normal middle texture.
 
                 quad.flags = 0;
-                quad.vertices[2].pos[VZ] = quad.vertices[3].pos[VZ] = bfloor;
-                quad.vertices[0].pos[VZ] = quad.vertices[1].pos[VZ] = ffloor;
-                if(quad.vertices[2].pos[VZ] > fceil)
+                vTL[VZ] = vTR[VZ] = bfloor;
+                vBL[VZ] = vBR[VZ] = ffloor;
+                if(vTL[VZ] > fceil)
                 {
                     // Can't go over front ceiling, would induce polygon flaws.
-                    quad.texoffy += quad.vertices[2].pos[VZ] - fceil;
-                    quad.vertices[2].pos[VZ] = quad.vertices[3].pos[VZ] = fceil;
+                    quad.texoffy += vTL[VZ] - fceil;
+                    vTL[VZ] = vTR[VZ] = fceil;
                 }
 
                 Rend_RenderWallSection(&quad, seg, side, frontsec, surface, SEG_BOTTOM,
@@ -1332,7 +1372,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     if(solidSeg)
     {
         // We KNOW we can make it solid.
-        C_AddViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]);
+        C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
     }
     else // We'll have to determine whether we can...
     {
@@ -1340,22 +1380,26 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         {
             // An obvious hack, what to do though??
         }
-        else if((bceil <= ffloor && (side->top.texture != 0 || side->middle.texture != 0)) ||
-                (bfloor >= fceil && (side->bottom.texture != 0 || side->middle.texture !=0)))
+        else if((bceil <= ffloor &&
+                    ((side->top.texture != 0 && !(side->flags & SDF_MIDTEXUPPER)) ||
+                     (side->middle.texture != 0))) ||
+                (bfloor >= fceil &&
+                    (side->bottom.texture != 0 || side->middle.texture !=0)))
         {
             // A closed gap.
             solidSeg = true;
         }
         else if(backsecSkyFix ||
                 (bsh == 0 && bfloor > ffloor && bceil < fceil &&
-                side->top.texture != 0 && side->bottom.texture != 0))
+                (side->top.texture != 0 && !(side->flags & SDF_MIDTEXUPPER)) &&
+                (side->bottom.texture != 0)))
         {
             // A zero height back segment
             solidSeg = true;
         }
 
         if(solidSeg)
-            C_AddViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]);
+            C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
     }
 }
 

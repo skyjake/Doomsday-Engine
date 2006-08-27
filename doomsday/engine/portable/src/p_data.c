@@ -377,7 +377,8 @@ void P_PlaneChanged(sector_t *sector, int plane)
             continue;
 
         // Do as in the original Doom if the texture has not been defined -
-        // extend the floor/ceiling to fill the space (unless its the skyflat).
+        // extend the floor/ceiling to fill the space (unless its the skyflat),
+        // or if there is a midtexture use that instead.
         if(plane == PLN_FLOOR)
         {
             // Check for missing lowers.
@@ -387,6 +388,7 @@ void P_PlaneChanged(sector_t *sector, int plane)
                 if(!R_IsSkySurface(&front->sector->SP_floorsurface))
                 {
                     front->bottom.flags |= SUF_TEXFIX;
+
                     front->bottom.texture =
                         front->sector->planes[PLN_FLOOR].surface.texture;
 
@@ -406,6 +408,7 @@ void P_PlaneChanged(sector_t *sector, int plane)
                 if(!R_IsSkySurface(&back->sector->SP_floorsurface))
                 {
                     back->bottom.flags |= SUF_TEXFIX;
+
                     back->bottom.texture =
                         back->sector->planes[PLN_FLOOR].surface.texture;
 
@@ -429,11 +432,22 @@ void P_PlaneChanged(sector_t *sector, int plane)
                 if(!R_IsSkySurface(&front->sector->SP_ceilsurface))
                 {
                     front->top.flags |= SUF_TEXFIX;
-                    front->top.texture =
-                        front->sector->planes[PLN_CEILING].surface.texture;
+                    // Preference a middle texture when doing replacements as
+                    // this could be a mid tex door hack.
+                    if(front->middle.texture)
+                    {
+                        front->flags |= SDF_MIDTEXUPPER;
+                        front->top.texture = front->middle.texture;
+                        front->top.isflat = front->middle.isflat;
+                    }
+                    else
+                    {
+                        front->top.texture =
+                            front->sector->planes[PLN_CEILING].surface.texture;
 
-                    front->top.isflat =
-                        front->sector->planes[PLN_CEILING].surface.isflat;
+                        front->top.isflat =
+                            front->sector->planes[PLN_CEILING].surface.isflat;
+                    }
                 }
 
                 if(back->top.flags & SUF_TEXFIX)
@@ -448,11 +462,22 @@ void P_PlaneChanged(sector_t *sector, int plane)
                 if(!R_IsSkySurface(&back->sector->SP_ceilsurface))
                 {
                     back->top.flags |= SUF_TEXFIX;
-                    back->top.texture =
-                        back->sector->planes[PLN_CEILING].surface.texture;
+                    // Preference a middle texture when doing replacements as
+                    // this could be a mid tex door hack.
+                    if(front->middle.texture)
+                    {
+                        back->flags |= SDF_MIDTEXUPPER;
+                        back->top.texture = back->middle.texture;
+                        back->top.isflat = back->middle.isflat;
+                    }
+                    else
+                    {
+                        back->top.texture =
+                            back->sector->planes[PLN_CEILING].surface.texture;
 
-                    back->top.isflat =
-                        back->sector->planes[PLN_CEILING].surface.isflat;
+                        back->top.isflat =
+                            back->sector->planes[PLN_CEILING].surface.isflat;
+                    }
                 }
 
                 if(front->top.flags & SUF_TEXFIX)

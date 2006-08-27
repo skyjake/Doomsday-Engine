@@ -1188,6 +1188,8 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_TEXTURE, &p->top.texture, args, 0);
             p->top.isflat = false;
             p->top.flags &= ~SUF_TEXFIX;
+            if(p->top.texture)
+                p->flags &= ~SDF_MIDTEXUPPER;
             break;
         case DMU_MIDDLE_COLOR:
             SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
