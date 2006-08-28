@@ -1,0 +1,31 @@
+deng-jdoom-pwad-2002ado (1.0-5) dapper; urgency=low
+
+  * Rebuild for Dapper.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Tue, 13 Jun 2006 21:19:29 +1000
+
+deng-jdoom-pwad-2002ado (1.0-4) breezy; urgency=low
+
+  * Rebuild for breezy.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed,  2 Nov 2005 15:15:37 +1100
+
+deng-jdoom-pwad-2002ado (1.0-3) hoary; urgency=low
+
+  * Bump Standards.
+  * Adjust menus and deps.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed, 24 Aug 2005 00:35:48 +1000
+
+deng-jdoom-pwad-2002ado (1.0-2) hoary; urgency=low
+
+  * Removed pdf maps. Added desktop file.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sat, 23 Jul 2005 18:52:25 +1000
+
+deng-jdoom-pwad-2002ado (1.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Fri, 11 Mar 2005 19:11:06 +1100
+

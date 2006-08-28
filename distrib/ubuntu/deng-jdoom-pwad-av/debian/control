@@ -1,0 +1,27 @@
+Source: deng-jdoom-pwad-av
+Section: multiverse/games
+Priority: optional
+Maintainer: Jamie Jones <jamie_jones_au@yahoo.com.au>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.2
+
+Package: deng-jdoom-pwad-av
+Architecture: all
+Depends: deng, deng-iwad-doom2-installer
+Description: Alien Vendetta 32 Level Megawad for Doom 2 [SP, COOP]
+ Alien Vendetta offers 32 all new levels, ranging from small fast-paced
+ tech-styled ones, to complex medieval- and hellish-themed maps. Variety
+ was to be expected considering several authors had a hand in the making
+ of these maps and as no specific criteria were given to them.
+ .
+ Although map continuity exists between a few levels this is a variation
+ instead of a one-themed 32 level scenario. This difference in scenery from
+ map to map hopefully contributes to less redundant gameplay. Each level is
+ completable from scratch, but when approached this way it should be noted
+ that secret areas become vital for health and ammo supply. The first episode
+ consists of a variety of "earthly" themed maps/bases and a few tech facilities.
+ Difficulty here leans more towards easy even on skill 4, and primarily
+ functions as a warm-up. Episode 2 starts out with a series of techbases and
+ ends up in a more brick styled fashion. The first really hard scenes for the
+ average player will occur in this episode. The final chapter is mainly hell
+ themed and holds the most extreme levels in terms of hardness.

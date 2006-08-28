@@ -1,0 +1,49 @@
+deng-jdoom-pwad-av (1.0-8) dapper; urgency=low
+
+  * Rebuild for dapper
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Tue, 13 Jun 2006 21:22:34 +1000
+
+deng-jdoom-pwad-av (1.0-7) breezy; urgency=low
+
+  * Rebuild for breezy.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed,  2 Nov 2005 15:16:10 +1100
+
+deng-jdoom-pwad-av (1.0-6) hoary; urgency=low
+
+  * Bump Standards.
+  * Adjust menus and deps.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed, 24 Aug 2005 00:50:31 +1000
+
+deng-jdoom-pwad-av (1.0-5) hoary; urgency=low
+
+  * Disable JDEP. (AV has custom skys).
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Fri,  5 Aug 2005 20:19:00 +1000
+
+deng-jdoom-pwad-av (1.0-4) hoary; urgency=low
+
+  * Corrected loading of dehacked file. Disabled loading of avfixmov.wad
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Fri,  5 Aug 2005 19:39:38 +1000
+
+deng-jdoom-pwad-av (1.0-3) hoary; urgency=low
+
+  * Removed pdf maps. Created desktop entry.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sat, 23 Jul 2005 19:50:24 +1000
+
+deng-jdoom-pwad-av (1.0-2) unstable; urgency=low
+
+  * Disable lavalights jpack with AV. It crashed level 30.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Fri, 11 Mar 2005 22:47:00 +1100
+
+deng-jdoom-pwad-av (1.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Fri, 11 Mar 2005 19:11:06 +1100
+

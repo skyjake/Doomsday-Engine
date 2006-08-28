@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Megawad: Alien Vendetta
+GenericName=
+Comment=Alien Vendetta 32 Level Megawad for Doom 2 [SP, COOP]
+Exec=/usr/games/doomsday -anifilter -texcomp -game jdoom -iwad /usr/share/games/doom/iwad/doom2/doom2.wad -file /usr/share/games/deng/Data/jDoom/pwad-av/av.wad -deh /usr/share/games/deng/Data/jDoom/pwad-av/av.deh -nojdep
+Icon=/usr/share/pixmaps/deng.png
+Terminal=0
+Type=Application
+Categories=Application;Game;ActionGame;
