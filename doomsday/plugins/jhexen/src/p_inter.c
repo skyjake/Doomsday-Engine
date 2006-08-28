@@ -1190,6 +1190,9 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     int     dummy;
     mobj_t *master;
 
+    if(!target) // nothing to kill
+        return;
+
     target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY | MF_NOGRAVITY);
     target->flags |= MF_CORPSE | MF_DROPOFF;
     target->flags2 &= ~MF2_PASSMOBJ;

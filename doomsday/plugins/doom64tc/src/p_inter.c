@@ -680,6 +680,9 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     mobj_t *mo;
     angle_t angle;
 
+    if(!target) // nothing to kill
+        return;
+
     target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY);
 
     if(target->type != MT_SKULL)
