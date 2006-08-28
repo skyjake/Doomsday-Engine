@@ -41,7 +41,7 @@ void            R_SetSectorLinks(sector_t *sec);
 sector_t       *R_GetLinkedSector(sector_t *startsec, int plane);
 void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
-void            R_SkyFix(void);
+void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
 void            R_OrderVertices(line_t *line, const sector_t *sector,
                                 vertex_t * verts[2]);
 void            R_GetMapSize(vertex_t *min, vertex_t *max);

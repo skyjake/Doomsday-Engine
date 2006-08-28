@@ -103,7 +103,7 @@ typedef struct sector_s {
     struct line_s**     Lines;         // [linecount] size.
     int                 subscount;
     struct subsector_s** subsectors;   // [subscount] size.
-    skyfix_t            skyfix;
+    skyfix_t            skyfix[2];     // floor, ceiling.
     degenmobj_t         soundorg;
     float               reverb[NUM_REVERB_DATA];
     int                 blockbox[4];   // Mapblock bounding box.

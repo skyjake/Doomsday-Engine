@@ -1066,14 +1066,15 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         bottomColorPtr = sLightColor;
 
     // Ceiling skyfix.
-    if(frontsec->skyfix.ceilOffset)
+    if(frontsec->skyfix[PLN_CEILING].offset)
     {
         if(!backsec ||
            (backsec && backsec != seg->frontsector &&
-            (bceil + backsec->skyfix.ceilOffset < fceil + frontsec->skyfix.ceilOffset)))
+            (bceil + backsec->skyfix[PLN_CEILING].offset <
+             fceil + frontsec->skyfix[PLN_CEILING].offset)))
         {
             quad.flags = RPF_SKY_MASK;
-            vTL[VZ] = vTR[VZ] = fceil + frontsec->skyfix.ceilOffset;
+            vTL[VZ] = vTR[VZ] = fceil + frontsec->skyfix[PLN_CEILING].offset;
             vBL[VZ] = vBR[VZ] = fceil;
             quad.tex.id = 0;
             quad.lights = NULL;
@@ -1081,52 +1082,66 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             RL_AddPoly(&quad);
         }
     }
-    if(backsec && bceil - bfloor <= 0 &&
-       ((R_IsSkySurface(&frontsec->SP_floorsurface) &&
-         R_IsSkySurface(&backsec->SP_floorsurface)) ||
-        (R_IsSkySurface(&frontsec->SP_ceilsurface) &&
-         R_IsSkySurface(&backsec->SP_ceilsurface))))
-    {
-        quad.flags = RPF_SKY_MASK;
-        vTL[VZ] = vTR[VZ] = fceil + frontsec->skyfix.ceilOffset;
-        vBL[VZ] = vBR[VZ] = bceil;
-        quad.tex.id = 0;
-        quad.lights = NULL;
-        quad.intertex.id = 0;
-        RL_AddPoly(&quad);
-        backsecSkyFix = true;
-    }
-
     // Floor skyfix
-    if(frontsec->skyfix.floorOffset < 0)
+    if(frontsec->skyfix[PLN_FLOOR].offset < 0)
     {
         if(!backsec ||
            (backsec && backsec != seg->frontsector &&
-            (bfloor + backsec->skyfix.floorOffset > ffloor + frontsec->skyfix.floorOffset)))
+            (bfloor + backsec->skyfix[PLN_FLOOR].offset >
+             ffloor + frontsec->skyfix[PLN_FLOOR].offset)))
         {
             quad.flags = RPF_SKY_MASK;
             vTL[VZ] = vTR[VZ] = ffloor;
-            vBL[VZ] = vBR[VZ] = ffloor + frontsec->skyfix.floorOffset;
+            vBL[VZ] = vBR[VZ] = ffloor + frontsec->skyfix[PLN_FLOOR].offset;
             quad.tex.id = 0;
             quad.lights = NULL;
             quad.intertex.id = 0;
             RL_AddPoly(&quad);
         }
     }
-    if(backsec && bceil - bfloor <= 0 &&
-       ((R_IsSkySurface(&frontsec->SP_floorsurface) &&
-         R_IsSkySurface(&backsec->SP_floorsurface)) ||
-        (R_IsSkySurface(&frontsec->SP_ceilsurface) &&
-         R_IsSkySurface(&backsec->SP_ceilsurface))))
+
+    // Backsec zero height skyfixes.
+    if(backsec && bceil - bfloor <= 0)
     {
-        quad.flags = RPF_SKY_MASK;
-        vTL[VZ] = vTR[VZ] = ffloor;
-        vBL[VZ] = vBR[VZ] = bfloor + frontsec->skyfix.floorOffset;
-        quad.tex.id = 0;
-        quad.lights = NULL;
-        quad.intertex.id = 0;
-        RL_AddPoly(&quad);
-        backsecSkyFix = true;
+        // Floor
+        if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
+           R_IsSkySurface(&backsec->SP_floorsurface))
+        {
+            if(frontsec->skyfix[PLN_FLOOR].offset < 0)
+            {
+                quad.flags = RPF_SKY_MASK;
+                quad.tex.id = 0;
+                quad.lights = NULL;
+                quad.intertex.id = 0;
+
+                vTL[VZ] = vTR[VZ] = ffloor;
+                vBL[VZ] = vBR[VZ] = bfloor + frontsec->skyfix[PLN_FLOOR].offset;
+
+                RL_AddPoly(&quad);
+            }
+
+            backsecSkyFix = true; // ensure we add a solid view seg.
+        }
+
+        // Ceiling
+        if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
+           R_IsSkySurface(&backsec->SP_ceilsurface))
+        {
+            if(frontsec->skyfix[PLN_CEILING].offset)
+            {
+                quad.flags = RPF_SKY_MASK;
+                quad.tex.id = 0;
+                quad.lights = NULL;
+                quad.intertex.id = 0;
+
+                vTL[VZ] = vTR[VZ] = fceil + frontsec->skyfix[PLN_CEILING].offset;
+                vBL[VZ] = vBR[VZ] = bceil;
+
+                RL_AddPoly(&quad);
+            }
+
+            backsecSkyFix = true; // ensure we add a solid view seg.
+        }
     }
 
     // Create the wall sections.
@@ -1541,11 +1556,8 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
     {
         poly.sector = sector;
         height = sin->planeinfo[plane->type].visheight;
-        // Add the skyfixes.
-        if(plane->type == PLN_CEILING)
-            height += sector->skyfix.ceilOffset;
-        else
-            height += sector->skyfix.floorOffset;
+        // Add the skyfix
+        height += sector->skyfix[plane->type].offset;
 
         surface = &sector->planes[plane->type].surface;
     }

@@ -963,10 +963,11 @@ void R_ProjectSprite(mobj_t *thing)
 
 void R_AddSprites(sector_t *sec)
 {
-    mobj_t *thing;
+    fixed_t     visibleTop;
+    mobj_t      *thing;
     spriteinfo_t spriteInfo;
-    fixed_t visibleTop;
     sectorinfo_t *info = SECT_INFO(sec);
+    boolean     raised = false;
 
     // Don't use validcount, because other parts of the renderer may
     // change it.
@@ -991,17 +992,19 @@ void R_AddSprites(sector_t *sec)
             visibleTop = thing->pos[VZ] + (spriteInfo.height << FRACBITS);
 
             if(R_IsSkySurface(&sec->SP_ceilsurface) &&
-               visibleTop > sec->SP_ceilheight + (sec->skyfix.ceilOffset << FRACBITS))
+               visibleTop > sec->SP_ceilheight + (sec->skyfix[PLN_CEILING].offset << FRACBITS))
             {
                 // Raise sector skyfix.
-                sec->skyfix.ceilOffset =
+                sec->skyfix[PLN_CEILING].offset =
                     ((visibleTop - sec->SP_ceilheight) >> FRACBITS) + 16; // Add some leeway.
-
-                // This'll adjust all adjacent sectors.
-                R_SkyFix();
+                raised = true;
             }
         }
     }
+
+    // This'll adjust all adjacent sky ceiling fixes.
+    if(raised)
+        R_SkyFix(false, true);
 }
 
 vissprite_t vsprsortedhead;

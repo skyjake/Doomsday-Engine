@@ -99,7 +99,7 @@ struct sector
     PTR     line_s**    Lines       // [linecount] size.
     INT     int         subscount
     PTR     subsector_s** subsectors // [subscount] size.
-    -       skyfix_t    skyfix
+    -       skyfix_t[2] skyfix      // floor, ceiling.
     PTR     degenmobj_t soundorg
 
     FLOAT   float[NUM_REVERB_DATA] reverb

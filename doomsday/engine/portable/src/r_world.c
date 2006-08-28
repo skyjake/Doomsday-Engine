@@ -488,163 +488,157 @@ void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
     free(childlist);
 }
 
-/*
- * Fixing the sky means that for adjacent sky sectors the lower sky
- * ceiling is lifted to match the upper sky. The raising only affects
- * rendering, it has no bearing on gameplay.
+/**
+ * Initialize the skyfix. In practice all this does is to check for things
+ * intersecting ceilings and if so: raises the sky fix for the sector a
+ * bit to accommodate them.
  */
-void R_SkyFix(void)
+static void R_InitSkyFix(void)
 {
-    boolean adjusted;
-    int     i, f, b;
+    int         i, f, b;
+    int        *fix;
+    mobj_t     *it;
+    sector_t   *sec;
 
-    // Check all things first (only check sky ceilings).
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
-        sector_t *sec = SECTOR_PTR(i);
-        mobj_t *it;
+        sec = SECTOR_PTR(i);
 
         // Must have a sky ceiling.
         if(!R_IsSkySurface(&sec->SP_ceilsurface))
             continue;
+
+        fix = &sec->skyfix[PLN_CEILING].offset;
+
         // Check that all the things in the sector fit in.
         for(it = sec->thinglist; it; it = it->snext)
         {
             b = it->height >> FRACBITS;
-            f = (sec->SP_ceilheight >> FRACBITS) + sec->skyfix.ceilOffset -
+            f = (sec->SP_ceilheight >> FRACBITS) + *fix -
                 (sec->SP_floorheight >> FRACBITS);
+
             if(b > f)
-            {
-                // Must increase skyfix.
-                sec->skyfix.ceilOffset += b - f;
+            {   // Must increase skyfix.
+                *fix += b - f;
+
                 if(verbose)
                 {
                     Con_Printf("S%i: (mo)skyfix to %i (ceil=%i)\n",
-                               GET_SECTOR_IDX(sec), sec->skyfix.ceilOffset,
-                               (sec->SP_ceilheight >> FRACBITS) + sec->skyfix.ceilOffset);
+                               GET_SECTOR_IDX(sec), *fix,
+                               (sec->SP_ceilheight >> FRACBITS) + *fix);
                 }
             }
         }
     }
+}
+
+/**
+ * Fixing the sky means that for adjacent sky sectors the lower sky
+ * ceiling is lifted to match the upper sky. The raising only affects
+ * rendering, it has no bearing on gameplay.
+ */
+void R_SkyFix(boolean fixFloors, boolean fixCeilings)
+{
+    int        *fix;
+    int         i, f, b, pln;
+    boolean     adjusted[2], doFix[2];
+
+    if(!fixFloors && !fixCeilings)
+        return; // Why are we here?
+
+    doFix[PLN_FLOOR]   = fixFloors;
+    doFix[PLN_CEILING] = fixCeilings;
 
     // We'll do this as long as we must to be sure all the sectors are fixed.
-    // Do ceilings first.
+    // Do both floors and ceilings at the same time.
     do
     {
-        adjusted = false;
+        adjusted[PLN_FLOOR] = adjusted[PLN_CEILING] = false;
 
         // We need to check all the linedefs.
-        for(i = 0; i < numlines; i++)
+        for(i = 0; i < numlines; ++i)
         {
-            line_t *line = LINE_PTR(i);
-            sector_t *front = line->frontsector, *back = line->backsector;
-            int     fix = 0;
+            int         height;
+            line_t     *line = LINE_PTR(i);
+            sector_t   *front = line->frontsector, *back = line->backsector;
+            sector_t   *adjustSec;
 
             // The conditions: must have two sides.
             if(!front || !back)
                 continue;
 
-            // Both the front and back sectors must have the sky ceiling.
-            if(!R_IsSkySurface(&front->SP_ceilsurface) ||
-               !R_IsSkySurface(&back->SP_ceilsurface))
-                continue;
-
-            f = (front->SP_ceilheight >> FRACBITS) + front->skyfix.ceilOffset;
-            b = (back->SP_ceilheight >> FRACBITS) + back->skyfix.ceilOffset;
-            if(f < b)
+            for(pln = 0; pln < 2; ++pln)
             {
-                fix = b - (front->SP_ceilheight >> FRACBITS);
-                if(fix > front->skyfix.ceilOffset)
+                if(!doFix[pln])
+                    continue;
+
+                // Both the front and back surfaces must be sky on this plane.
+                if(!R_IsSkySurface(&front->planes[pln].surface) ||
+                   !R_IsSkySurface(&back->planes[pln].surface))
+                    continue;
+
+                f = (front->planes[pln].height >> FRACBITS) +
+                    front->skyfix[pln].offset;
+                b = (back->planes[pln].height >> FRACBITS) +
+                    back->skyfix[pln].offset;
+
+                if(f == b)
+                    continue;
+
+                if(pln == PLN_CEILING)
                 {
-                    front->skyfix.ceilOffset = fix;
-                    if(verbose)
+                    if(f < b)
                     {
-                        Con_Printf("S%i: skyfix to %i (ceil=%i)\n",
-                                   GET_SECTOR_IDX(front), front->skyfix.ceilOffset,
-                                   (front->SP_ceilheight >> FRACBITS) +
-                                   front->skyfix.ceilOffset);
+                        height = b - (front->planes[pln].height >> FRACBITS);
+                        fix = &front->skyfix[pln].offset;
+                        adjustSec = front;
                     }
-                    adjusted = true;
+                    else if(f > b)
+                    {
+                        height = f - (back->planes[pln].height >> FRACBITS);
+                        fix = &back->skyfix[pln].offset;
+                        adjustSec = back;
+                    }
+
+                    if(height > *fix)
+                    {   // Must increase skyfix.
+                       *fix = height;
+                        adjusted[pln] = true;
+                    }
                 }
-            }
-            else if(f > b)
-            {
-                fix = f - (back->SP_ceilheight >> FRACBITS);
-                if(fix > back->skyfix.ceilOffset)
+                else // its the floor.
                 {
-                    back->skyfix.ceilOffset = fix;
-                    if(verbose)
+                    if(f > b)
                     {
-                        Con_Printf("S%i: skyfix to %i (ceil=%i)\n",
-                                   GET_SECTOR_IDX(back), back->skyfix.ceilOffset,
-                                   (back->SP_ceilheight >> FRACBITS) +
-                                   back->skyfix.ceilOffset);
+                        height = b - (front->planes[pln].height >> FRACBITS);
+                        fix = &front->skyfix[pln].offset;
+                        adjustSec = front;
                     }
-                    adjusted = true;
+                    else if(f < b)
+                    {
+                        height = f - (back->planes[pln].height >> FRACBITS);
+                        fix = &back->skyfix[pln].offset;
+                        adjustSec = back;
+                    }
+
+                    if(height < *fix)
+                    {   // Must increase skyfix.
+                       *fix = height;
+                        adjusted[pln] = true;
+                    }
                 }
-            }
-        }
-    }
-    while(adjusted);
 
-    // Now floors.
-    do
-    {
-        adjusted = false;
-
-        // We need to check all the linedefs.
-        for(i = 0; i < numlines; i++)
-        {
-            line_t *line = LINE_PTR(i);
-            sector_t *front = line->frontsector, *back = line->backsector;
-            int     fix = 0;
-
-            // The conditions: must have two sides.
-            if(!front || !back)
-                continue;
-
-            // Both the front and back sectors must have the sky floor.
-            if(!R_IsSkySurface(&front->SP_floorsurface) ||
-               !R_IsSkySurface(&back->SP_floorsurface))
-                continue;
-
-            f = (front->SP_floorheight >> FRACBITS) + front->skyfix.floorOffset;
-            b = (back->SP_floorheight >> FRACBITS) + back->skyfix.floorOffset;
-            if(f > b)
-            {
-                fix = b - (front->SP_floorheight >> FRACBITS);
-                if(fix < front->skyfix.floorOffset)
+                if(verbose && adjusted[pln])
                 {
-                    front->skyfix.floorOffset = fix;
-                    if(verbose)
-                    {
-                        Con_Printf("S%i: skyfix to %i (floor=%i)\n",
-                                   GET_SECTOR_IDX(front), front->skyfix.floorOffset,
-                                   (front->SP_floorheight >> FRACBITS) +
-                                   front->skyfix.floorOffset);
-                    }
-                    adjusted = true;
-                }
-            }
-            else if(f < b)
-            {
-                fix = f - (back->SP_floorheight >> FRACBITS);
-                if(fix < back->skyfix.floorOffset)
-                {
-                    back->skyfix.floorOffset = fix;
-                    if(verbose)
-                    {
-                        Con_Printf("S%i: skyfix to %i (floor=%i)\n",
-                                   GET_SECTOR_IDX(back), back->skyfix.floorOffset,
-                                   (back->SP_floorheight >> FRACBITS) +
-                                   -back->skyfix.floorOffset);
-                    }
-                    adjusted = true;
+                    Con_Printf("S%i: skyfix to %i (%s=%i)\n",
+                               GET_SECTOR_IDX(adjustSec), *fix,
+                               (pln == PLN_CEILING? "ceil" : "floor"),
+                               (adjustSec->planes[pln].height >> FRACBITS) + *fix);
                 }
             }
         }
     }
-    while(adjusted);
+    while(adjusted[PLN_FLOOR] || adjusted[PLN_CEILING]);
 }
 
 static float TriangleArea(fvertex_t * o, fvertex_t * s, fvertex_t * t)
@@ -2084,7 +2078,10 @@ void R_SetupLevel(char *level_id, int flags)
     Con_Progress(10, 0);
 
     if(flags & DDSLF_FIX_SKY)
-        R_SkyFix();
+    {
+        R_InitSkyFix();
+        R_SkyFix(true, true); // fix floors and ceilings.
+    }
     if(flags & DDSLF_REVERB)
         S_CalcSectorReverbs();
 

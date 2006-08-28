@@ -105,8 +105,7 @@ enum {
 };
 
 typedef struct skyfix_s {
-    int ceilOffset;
-    int floorOffset;
+    int offset;
 } skyfix_t;
 
 #include "p_maptypes.h"
