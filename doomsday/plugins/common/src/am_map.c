@@ -940,12 +940,16 @@ void AM_loadPics(void)
     int     i;
     char    namebuf[9];
 
+#if !__DOOM64TC__
+    // FIXME >
     for(i = 0; i < 10; i++)
     {
         MARKERPATCHES;        // Check the macros eg: "sprintf(namebuf, "AMMNUM%d", i)" for jDoom
 
         markpnums[i] = W_GetNumForName(namebuf);
     }
+    // < FIXME
+#endif
 
     if (maplumpnum != 0){
         maplumpnum = W_GetNumForName("AUTOPAGE");
@@ -2000,6 +2004,8 @@ void AM_drawMarks(void)
 {
     int     i, fx, fy, w, h;
 
+#if !__DOOM64TC__
+    // FIXME >
     for(i = 0; i < AM_NUMMARKPOINTS; i++)
     {
         if(markpoints[i].pos[VX] != -1)
@@ -2013,6 +2019,8 @@ void AM_drawMarks(void)
             GL_DrawPatch_CS(fx, fy, markpnums[i]);
         }
     }
+    // < FIXME
+#endif
 }
 
 /*
