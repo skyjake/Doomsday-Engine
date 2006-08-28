@@ -198,25 +198,31 @@ void G_SetGlowing(void)
 
     if(!ArgCheck("-noglow"))
     {
-        ptr = GET_TXT(TXT_RENDER_GLOWFLATS);
         // Set some glowing textures.
-        for(ptr = ScanWord(ptr, buf); *buf; ptr = ScanWord(ptr, buf))
+        ptr = GET_TXT(TXT_RENDER_GLOWFLATS);
+        if(ptr)
         {
-            // Is there such a flat?
-            if(W_CheckNumForName(buf) == -1)
-                continue;
-            Set(DD_TEXTURE_GLOW,
-                DD_TGLOW_PARM(R_FlatNumForName(buf), false, true));
+            for(ptr = ScanWord(ptr, buf); *buf; ptr = ScanWord(ptr, buf))
+            {
+                // Is there such a flat?
+                if(W_CheckNumForName(buf) == -1)
+                    continue;
+                Set(DD_TEXTURE_GLOW,
+                    DD_TGLOW_PARM(R_FlatNumForName(buf), false, true));
+            }
         }
 
         ptr = GET_TXT(TXT_RENDER_GLOWTEXTURES);
-        for(ptr = ScanWord(ptr, buf); *buf; ptr = ScanWord(ptr, buf))
+        if(ptr)
         {
-            // Is there such a texture?
-            if(R_CheckTextureNumForName(buf) == -1)
-                continue;
-            Set(DD_TEXTURE_GLOW,
-                DD_TGLOW_PARM(R_TextureNumForName(buf), true, true));
+            for(ptr = ScanWord(ptr, buf); *buf; ptr = ScanWord(ptr, buf))
+            {
+                // Is there such a texture?
+                if(R_CheckTextureNumForName(buf) == -1)
+                    continue;
+                Set(DD_TEXTURE_GLOW,
+                    DD_TGLOW_PARM(R_TextureNumForName(buf), true, true));
+            }
         }
     }
 }
