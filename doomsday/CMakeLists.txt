@@ -10,18 +10,22 @@ SET(deng_VERSION_MINOR 9)
 SET(deng_VERSION_PATCH 0)
 SET(deng_VERSION_REVISION beta5)
 SET(deng_VERSION "${deng_VERSION_MAJOR}.${deng_VERSION_MINOR}.${deng_VERSION_PATCH}.${deng_VERSION_REVISION}")
+# where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build/cmake")
+
 ################################################################################
 ######################## Additional Win32 Path Setup  ##########################
 IF (WIN32)
-## Cmake NEEDS UNIX style paths ie / not \
-## We should really read these varibles from the path
-## not hardcode them here
-SET(ENV{SDLDIR} "c:/sdk/sdl")
-SET(ENV{OPENALDIR} "c:/sdk/openal")
-SET(ENV{ZLIBDIR} "c:/sdk/zlib")
-SET(ENV{LIBPNGDIR} "c:/sdk/libpng")
-SET(ENV{DIRECTXDIR} "c:/sdk/dx8mgw")
+	## Cmake NEEDS UNIX style paths ie / not \
+	## We should really read these varibles from the path
+	## not hardcode them here
+	SET(ENV{SDLDIR} "c:/sdk/sdl")
+	SET(ENV{OPENALDIR} "c:/sdk/openal")
+ 	SET(ENV{ZLIBDIR} "c:/sdk/zlib")
+	SET(ENV{LIBPNGDIR} "c:/sdk/libpng")
+	SET(ENV{DIRECTXDIR} "c:/sdk/dx8mgw")
 ENDIF (WIN32)
+
 ################################################################################
 ######################## Configure Build Options  ##############################
 SET(BUILD_SHARED_LIBS ON) 
@@ -45,24 +49,24 @@ OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 OPTION (BUILDDOX "Build doxygen documentation. Default OFF" OFF)
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
-MESSAGE( FATAL_ERROR
-"In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
+	MESSAGE( FATAL_ERROR
+	"In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
 ENDIF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
 
 IF (CMAKE_BUILD_TYPE STREQUAL Debug)
-SET (CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS}${CMAKE_C_FLAGS_DEBUG} )
+	SET (CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS}${CMAKE_C_FLAGS_DEBUG} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
 
 IF (CMAKE_BUILD_TYPE STREQUAL Release)
-SET (CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS}${CMAKE_C_FLAGS_RELEASE} )
+	SET (CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS}${CMAKE_C_FLAGS_RELEASE} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL Release)
 
 IF (CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
-SET (CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS}${CMAKE_C_FLAGS_RELWITHDEBINFO} )
+	SET (CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS}${CMAKE_C_FLAGS_RELWITHDEBINFO} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
 
 IF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
-SET (CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS}${CMAKE_C_FLAGS_MINSIZEREL} )
+	SET (CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS}${CMAKE_C_FLAGS_MINSIZEREL} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
 
 ################################################################################
@@ -79,152 +83,164 @@ ENDIF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
 
 
 IF (UNIX)
-IF (NOT WIN32)
-IF (APPLE)
-## FIXME. Add location here for OSX
-ELSE (APPLE)
+	IF (NOT WIN32)
+		IF (APPLE)
+			## FIXME. Add location here for OSX
+		ELSE (APPLE)
 
-## Do an approximation of the autotools install options. Should make an
-## easy transition for package maintainers (like me when I'm not hacking here)
+		## Do an approximation of the autotools install options. Should make an
+		## easy transition for package maintainers (like me when I'm not hacking here)
 
-SET (bindir
-${CMAKE_INSTALL_PREFIX}/bin
-CACHE
-PATH
-"install location for executables"
-)
+		SET (bindir
+		${CMAKE_INSTALL_PREFIX}/bin
+		CACHE
+		PATH
+		"install location for executables"
+		)
 
-SET (libdir
-${CMAKE_INSTALL_PREFIX}/lib
-CACHE
-PATH
-"install location for libraries"
-)
+		SET (libdir
+		${CMAKE_INSTALL_PREFIX}/lib
+		CACHE
+		PATH
+		"install location for libraries"
+		)
 
-SET (datadir
-${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
-CACHE
-PATH
-"install location for data files"
-)
+		SET (datadir
+		${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
+		CACHE
+		PATH
+		"install location for data files"
+		)
 
-SET (mandir
-${CMAKE_INSTALL_PREFIX}/share/man
-CACHE
-PATH
-"install location for man files"
-)
+		SET (mandir
+		${CMAKE_INSTALL_PREFIX}/share/man
+		CACHE
+		PATH
+		"install location for man files"
+		)
 
-ENDIF (APPLE)
-ENDIF (NOT WIN32)
+		ENDIF (APPLE)
+	ENDIF (NOT WIN32)
 ENDIF (UNIX)
-IF (WIN32)
-## FIXME. Add location here for WIN32
-ENDIF (WIN32)
+	IF (WIN32)
+		## FIXME. Add location here for WIN32
+	ENDIF (WIN32)
 
 IF (UNIX)
-IF (NOT WIN32)
-## Where does it go on OSX ? FIXME
-## This .pk3 is generated in the doomsday target.
-SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 )
-SET (DENG_ENGINE_DATA_DIR ${datadir}/data)
+	IF (NOT WIN32)
+	## Where does it go on OSX ? FIXME
+	## Thess .pk3s is generated in the Generate.pk3 target.
+	SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 )
+	SET (DENG_ENGINE_DATA_DIR ${datadir}/data)
 
-SET (DENG_JDOOM_DATA ${CMAKE_CURRENT_BINARY_DIR}/jdoom.pk3 )
-SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom)
+	SET (DENG_JDOOM_DATA ${CMAKE_CURRENT_BINARY_DIR}/jdoom.pk3 )
+	SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom)
 
-SET (DENG_JHERETIC_DATA ${CMAKE_CURRENT_BINARY_DIR}/jheretic.pk3 )
-SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jheretic)
+	SET (DENG_JHERETIC_DATA ${CMAKE_CURRENT_BINARY_DIR}/jheretic.pk3 )
+	SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jheretic)
 
-SET (DENG_JHEXEN_DATA ${CMAKE_CURRENT_BINARY_DIR}/jhexen.pk3 )
-SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jhexen)
+	SET (DENG_JHEXEN_DATA ${CMAKE_CURRENT_BINARY_DIR}/jhexen.pk3 )
+	SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jhexen)
 
-SET (DENG_JSTRIFE_DATA ${CMAKE_CURRENT_BINARY_DIR}/jstrife.pk3 )
-SET (DENG_JSTRIFE_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jstrife)
+	SET (DENG_JSTRIFE_DATA ${CMAKE_CURRENT_BINARY_DIR}/jstrife.pk3 )
+	SET (DENG_JSTRIFE_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jstrife)
 
-SET (DENG_WOLFTC_DATA ${CMAKE_CURRENT_BINARY_DIR}/wolftc.pk3 )
-SET (DENG_WOLFTC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/wolftc)
+	SET (DENG_WOLFTC_DATA ${CMAKE_CURRENT_BINARY_DIR}/wolftc.pk3 )
+	SET (DENG_WOLFTC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/wolftc)
 
-SET (DENG_DOOM64TC_DATA ${CMAKE_CURRENT_BINARY_DIR}/doom64tc.pk3 )
-SET (DENG_DOOM64TC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/doom64tc)
+	SET (DENG_DOOM64TC_DATA ${CMAKE_CURRENT_BINARY_DIR}/doom64tc.pk3 )
+	SET (DENG_DOOM64TC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/doom64tc)
 
-ENDIF (NOT WIN32)
+	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (UNIX)
-IF (NOT APPLE)
-IF (NOT WIN32)
-ADD_DEFINITIONS ('-DDENG_BASE_DIR="${datadir}/" ')
-ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${libdir}/" ')
-ENDIF (NOT WIN32)
-ENDIF (NOT APPLE)
+	IF (NOT APPLE)
+		IF (NOT WIN32)
+			ADD_DEFINITIONS ('-DDENG_BASE_DIR="${datadir}/" ')
+			ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${libdir}/" ')
+		ENDIF (NOT WIN32)
+	ENDIF (NOT APPLE)
 ENDIF (UNIX)
 IF (APPLE)
-ADD_DEFINITIONS ('-DDENG_BASE_DIR="./" ')
-ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="./" ')
+	ADD_DEFINITIONS ('-DDENG_BASE_DIR="./" ')
+	ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="./" ')
 ENDIF (APPLE)
 
 ################################################################################
 ######################## Include Standard Cmake Helpers  #######################
 IF (NOT BUILDDEDICATED)
-IF (BUILDOPENGL)
-INCLUDE (${CMAKE_ROOT}/Modules/FindOpenGL.cmake)
-ENDIF (BUILDOPENGL)
+	IF (BUILDOPENGL)
+		FIND_PACKAGE(OpenGL REQUIRED)
+		##INCLUDE (${CMAKE_ROOT}/Modules/FindOpenGL.cmake)
+	ENDIF (BUILDOPENGL)
 ENDIF (NOT BUILDDEDICATED)
 
-INCLUDE (${CMAKE_ROOT}/Modules/FindSDL.cmake)
+FIND_PACKAGE(SDL REQUIRED)
+##INCLUDE (${CMAKE_ROOT}/Modules/FindSDL.cmake)
 
 IF (NOT BUILDDEDICATED)
-IF (BUILDSDLMIXER)
-INCLUDE (${CMAKE_ROOT}/Modules/FindSDL_mixer.cmake)
-ENDIF (BUILDSDLMIXER)
+	IF (BUILDSDLMIXER)
+		FIND_PACKAGE(SDL_mixer REQUIRED)
+		##INCLUDE (${CMAKE_ROOT}/Modules/FindSDL_mixer.cmake)
+	ENDIF (BUILDSDLMIXER)
 ENDIF (NOT BUILDDEDICATED)
 
-INCLUDE (${CMAKE_ROOT}/Modules/FindSDL_net.cmake)
+FIND_PACKAGE(SDL_net REQUIRED)
+##INCLUDE (${CMAKE_ROOT}/Modules/FindSDL_net.cmake)
 
-INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindZLIB.cmake)
+FIND_PACKAGE(ZLIB REQUIRED)
+##INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindZLIB.cmake)
 
-INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindPNG.cmake)
+FIND_PACKAGE(PNG REQUIRED)
+##INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindPNG.cmake)
 
-INCLUDE (${CMAKE_ROOT}/Modules/FindPythonInterp.cmake)
+FIND_PACKAGE(PythonInterp REQUIRED)
+##INCLUDE (${CMAKE_ROOT}/Modules/FindPythonInterp.cmake)
 
 IF (UNIX)
-INCLUDE (${CMAKE_ROOT}/Modules/FindCurses.cmake)
+	FIND_PACKAGE(Curses REQUIRED)
+	##INCLUDE (${CMAKE_ROOT}/Modules/FindCurses.cmake)
 ENDIF (UNIX)
 
 IF (WIN32)
-INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindDX_Dinput.cmake)
+	FIND_PACKAGE(DX_Dinput REQUIRED)
+	##INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindDX_Dinput.cmake)
 ENDIF (WIN32)
 
 IF (NOT BUILDDEDICATED)
-IF (UNIX)
-IF (NOT APPLE)
-INCLUDE (${CMAKE_ROOT}/Modules/FindX11.cmake)
-ENDIF (NOT APPLE)
-ENDIF (UNIX)
+	IF (UNIX)
+		IF (NOT APPLE)
+			FIND_PACKAGE(X11 REQUIRED)
+			##INCLUDE (${CMAKE_ROOT}/Modules/FindX11.cmake)
+		ENDIF (NOT APPLE)
+	ENDIF (UNIX)
 
-IF (BUILDOPENAL)
-INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindOpenAL.cmake)
-ENDIF (BUILDOPENAL)
+	IF (BUILDOPENAL)
+		FIND_PACKAGE(OpenAL REQUIRED)
+		##INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindOpenAL.cmake)
+	ENDIF (BUILDOPENAL)
 ENDIF (NOT BUILDDEDICATED)
 
 IF (NOT BUILDDEDICATED AND NOT BUILDOPENGL)
-MESSAGE( FATAL_ERROR
-"If not building a dedicated server, the OPENGL renderer must be built.")
+	MESSAGE( FATAL_ERROR
+	"If not building a dedicated server, the OPENGL renderer must be built.")
 ENDIF (NOT BUILDDEDICATED AND NOT BUILDOPENGL)
 
 IF (NOT BUILDDEDICATED AND NOT BUILDOPENAL AND NOT BUILDSDLMIXER)
-MESSAGE( FATAL_ERROR
-"If not building a dedicated server, a sound plugin must be built")
+	MESSAGE( FATAL_ERROR
+	"If not building a dedicated server, a sound plugin must be built")
 ENDIF (NOT BUILDDEDICATED AND NOT BUILDOPENAL AND NOT BUILDSDLMIXER)
 
 IF (UNIX)
-IF (NOT WIN32)
-INCLUDE (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
-INCLUDE (${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
-ENDIF (NOT WIN32)
+	IF (NOT WIN32)
+		INCLUDE (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
+		INCLUDE (${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
+	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
-INCLUDE (${CMAKE_ROOT}/Modules/FindDoxygen.cmake)
+FIND_PACKAGE(Doxygen)
+##INCLUDE (${CMAKE_ROOT}/Modules/FindDoxygen.cmake)
 
 ################################################################################
 ######################## Cpack - Generate packages and source tarballs  ########
@@ -244,40 +260,39 @@ SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
 SET(CPACK_SOURCE_PACKAGE_FILE_NAME "deng-${deng_VERSION}")
 
 IF(NOT DEFINED CPACK_SYSTEM_NAME)
-SET(CPACK_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+	SET(CPACK_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
 ENDIF(NOT DEFINED CPACK_SYSTEM_NAME)
 
 IF(${CPACK_SYSTEM_NAME} MATCHES Windows)
-IF(CMAKE_CL_64)
-SET(CPACK_SYSTEM_NAME win64-${CMAKE_SYSTEM_PROCESSOR})
-ELSE(CMAKE_CL_64)
-SET(CPACK_SYSTEM_NAME win32-${CMAKE_SYSTEM_PROCESSOR})
-ENDIF(CMAKE_CL_64)
+	IF(CMAKE_CL_64)
+		SET(CPACK_SYSTEM_NAME win64-${CMAKE_SYSTEM_PROCESSOR})
+	ELSE(CMAKE_CL_64)
+		SET(CPACK_SYSTEM_NAME win32-${CMAKE_SYSTEM_PROCESSOR})
+	ENDIF(CMAKE_CL_64)
 ENDIF(${CPACK_SYSTEM_NAME} MATCHES Windows)
 
 SET(CPACK_PACKAGE_FILE_NAME "${CPACK_SOURCE_PACKAGE_FILE_NAME}-${CPACK_SYSTEM_NAME}")
 
 
 IF(WIN32 AND NOT UNIX)
-# Win32 packaging setup (MSVC Built)
-# There is a bug in NSI that does not handle full unix paths properly. Make
-# sure there is at least one set of four (4) backlasshes.
-SET(CPACK_PACKAGE_EXECUTABLES "doomsday.exe")
-SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} - The Doomsday Engine: for jDoom, jHeretic, jHexen")
-SET(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.doomsdayhq.com")
-SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.doomsdayhq.com")
-SET(CPACK_NSIS_CONTACT "deng-devel@lists.sourceforge.net")
-SET(CPACK_NSIS_MODIFY_PATH ON)
-ELSE(WIN32 AND NOT UNIX)
+	# Win32 packaging setup (MSVC Built)
+	# There is a bug in NSI that does not handle full unix paths properly. Make
+	# sure there is at least one set of four (4) backlasshes.
+	SET(CPACK_PACKAGE_EXECUTABLES "doomsday.exe")
+	SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} - The Doomsday Engine: for jDoom, jHeretic, jHexen")
+	SET(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.doomsdayhq.com")
+	SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.doomsdayhq.com")
+	SET(CPACK_NSIS_CONTACT "deng-devel@lists.sourceforge.net")
+	SET(CPACK_NSIS_MODIFY_PATH ON)
 
-IF (APPLE)
-# OSX packaging setup
-ELSE (APPLE)
-
-# *Nix packaging setup (Inc Cygwin/MinGw)
-SET(CPACK_SOURCE_STRIP_FILES "")
-SET(CPACK_PACKAGE_EXECUTABLES "doomsday")
-ENDIF (APPLE)
+	ELSE(WIN32 AND NOT UNIX)
+		IF (APPLE)
+			# OSX packaging setup
+		ELSE (APPLE)
+			# *Nix packaging setup (Inc Cygwin/MinGw)
+			SET(CPACK_SOURCE_STRIP_FILES "")
+			SET(CPACK_PACKAGE_EXECUTABLES "doomsday")
+		ENDIF (APPLE)
 ENDIF(WIN32 AND NOT UNIX)
 INCLUDE(${CMAKE_ROOT}/Modules/CPack.cmake)
 
@@ -286,247 +301,188 @@ INCLUDE(${CMAKE_ROOT}/Modules/CPack.cmake)
 ##ADD_DEFINITIONS (-DNORANGECHECKING)
 
 IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-IF (CMAKE_SYSTEM_MACHINE MATCHES "i.86" OR MAKE_SYSTEM_MACHINE MATCHES "x86")
-ADD_DEFINITIONS (-DGNU_X86_FIXED_ASM )
-SET (BUILDFIXEDASM ON)
-ELSE (CMAKE_SYSTEM_MACHINE MATCHES "i.86" OR MAKE_SYSTEM_MACHINE MATCHES "x86")
-ADD_DEFINITIONS (-DNO_FIXED_ASM )
-SET (BUILDFIXEDASM OFF)
-ENDIF (CMAKE_SYSTEM_MACHINE MATCHES "i.86" OR MAKE_SYSTEM_MACHINE MATCHES "x86")
+	IF (CMAKE_SYSTEM_MACHINE MATCHES "i.86" OR MAKE_SYSTEM_MACHINE MATCHES "x86")
+		ADD_DEFINITIONS (-DGNU_X86_FIXED_ASM )
+		SET (BUILDFIXEDASM ON)
+	ELSE (CMAKE_SYSTEM_MACHINE MATCHES "i.86" OR MAKE_SYSTEM_MACHINE MATCHES "x86")
+		ADD_DEFINITIONS (-DNO_FIXED_ASM )
+		SET (BUILDFIXEDASM OFF)
+	ENDIF (CMAKE_SYSTEM_MACHINE MATCHES "i.86" OR MAKE_SYSTEM_MACHINE MATCHES "x86")
 ELSE (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-ADD_DEFINITIONS (-DNO_FIXED_ASM )
-SET (BUILDFIXEDASM OFF)
+	ADD_DEFINITIONS (-DNO_FIXED_ASM )
+	SET (BUILDFIXEDASM OFF)
 ENDIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
 ## Apple also needs -DUNIX in places
 IF (UNIX)
-IF (NOT WIN32)
-ADD_DEFINITIONS ( -DUNIX)
-SET (BUILDSYSTEM UNIX)
-ENDIF (NOT WIN32)
+	IF (NOT WIN32)
+		ADD_DEFINITIONS ( -DUNIX)
+		SET (BUILDSYSTEM UNIX)
+	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (WIN32)
-ADD_DEFINITIONS ( -DWIN32 -D_USRDLL -D_WINDLL -D_WINDOWS )
-SET (BUILDSYSTEM WIN32)
-IF (MSVC)
-ADD_DEFINITIONS ( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
-SET (BUILDSYSTEM WIN32-MSVC)
-ENDIF (MSVC)
-IF (MINGW)
-ADD_DEFINITIONS ( -DUNICODE)
-SET (BUILDSYSTEM WIN32-MINGW)
-ENDIF (MINGW)
+	ADD_DEFINITIONS ( -DWIN32 -D_USRDLL -D_WINDLL -D_WINDOWS )
+	SET (BUILDSYSTEM WIN32)
+	IF (MSVC)
+		ADD_DEFINITIONS ( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
+		SET (BUILDSYSTEM WIN32-MSVC)
+	ENDIF (MSVC)
+	IF (MINGW)
+		ADD_DEFINITIONS ( -DUNICODE)
+		SET (BUILDSYSTEM WIN32-MINGW)
+	ENDIF (MINGW)
 ENDIF (WIN32)
 
 IF (APPLE)
-ADD_DEFINITIONS ( -DMACOSX)
-SET (CMAKE_OSX_ARCHITECTURES ppc;i386)
-SET (BUILDSYSTEM MACOSX)
+	ADD_DEFINITIONS ( -DMACOSX)
+	SET (CMAKE_OSX_ARCHITECTURES ppc;i386)
+	SET (BUILDSYSTEM MACOSX)
 
-## Add needed Compiler and Linker flags for OSX
-IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+	## Add needed Compiler and Linker flags for OSX
+	IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
-SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flat_namespace -undefined suppress" )
-SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flat_namespace -undefined suppress" )
-SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
-SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
-SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flat_namespace -undefined suppress" )
+		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flat_namespace -undefined suppress" )
+		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flat_namespace -undefined suppress" )
 
-SET (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
-SET (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
-SET (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
-SET (CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
-SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
+		SET (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
+		SET (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
 
-SET (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-SET (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-SET (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-SET (CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
 
-SET (CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-SET (CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-SET (CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-SET (CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
 
-SET (CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-SET (CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-SET (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-SET (CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL "${CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-SET (CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "${CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL "${CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "${CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
 
-ENDIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+	ENDIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 ENDIF (APPLE)
 ################################################################################
 ######################## Find Our Build Deps  ##################################
 IF (BUILDOPENGL)
-## Confirm we have OpenGL
-IF (OPENGL_FOUND STREQUAL "NO")
-MESSAGE (FATAL_ERROR
-"** libGL not found.
-On Ubuntu install libgl1-mesa-dev.
-On Mac OSX install FIXME.
-On Windows install FIXME.")
-ENDIF (OPENGL_FOUND STREQUAL "NO")
+	## Confirm we have OpenGL
+	IF (OPENGL_FOUND STREQUAL "NO")
+		MESSAGE (FATAL_ERROR "** libGL not found. On Ubuntu install libgl1-mesa-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+	ENDIF (OPENGL_FOUND STREQUAL "NO")
 
-## Confirm we have GLU
-IF (OPENGL_GLU_FOUND STREQUAL "NO")
-MESSAGE (FATAL_ERROR
-"** libGLU not found.
-On Ubuntu install libglu1-mesa-dev.
-On Mac OSX install FIXME.
-On Windows install FIXME.")
-ENDIF (OPENGL_GLU_FOUND STREQUAL "NO")
-INCLUDE_DIRECTORIES (${OPENGL_INCLUDE_DIR})
+	## Confirm we have GLU
+	IF (OPENGL_GLU_FOUND STREQUAL "NO")
+		MESSAGE (FATAL_ERROR "** libGLU not found. On Ubuntu install libglu1-mesa-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+	ENDIF (OPENGL_GLU_FOUND STREQUAL "NO")
+	INCLUDE_DIRECTORIES (${OPENGL_INCLUDE_DIR})
 ENDIF (BUILDOPENGL)
 
 ## Confirm we have SDL
 IF (SDL_FOUND STREQUAL "NO")
-MESSAGE (FATAL_ERROR
-"** SDL not found.
-On Ubuntu install libsdl1.2-dev.
-On Mac OSX install FIXME.
-On Windows/MSVC install SDL-devel-1.2.11-VC6.zip.")
-ENDIF (SDL_FOUND STREQUAL "NO")
+	MESSAGE (FATAL_ERROR "** SDL not found.	On Ubuntu install libsdl1.2-dev. On Mac OSX install FIXME. On Windows/MSVC install SDL-devel-1.2.11-VC6.zip.")
+	ENDIF (SDL_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${SDL_INCLUDE_DIR})
 
 IF (BUILDSDLMIXER)
-## Confirm we have SDL_mixer
-IF (SDLMIXER_FOUND STREQUAL "NO")
-MESSAGE (FATAL_ERROR
-"** SDL Mixer not found.
-On Ubuntu install libsdl-mixer1.2-dev.
-On Mac OSX install FIXME.
-On Windows/MSVC install SDL_mixer-devel-1.2.7-VC6.zip.")
-ENDIF (SDLMIXER_FOUND STREQUAL "NO")
-INCLUDE_DIRECTORIES (${SDLMIXER_INCLUDE_DIR})
+	## Confirm we have SDL_mixer
+	IF (SDLMIXER_FOUND STREQUAL "NO")
+		MESSAGE (FATAL_ERROR "** SDL Mixer not found. On Ubuntu install libsdl-mixer1.2-dev. On Mac OSX install FIXME. On Windows/MSVC install SDL_mixer-devel-1.2.7-VC6.zip.")
+	ENDIF (SDLMIXER_FOUND STREQUAL "NO")
+	INCLUDE_DIRECTORIES (${SDLMIXER_INCLUDE_DIR})
 ENDIF (BUILDSDLMIXER)
 
 ## Confirm we have SDL_net
 IF (SDLNET_FOUND STREQUAL "NO")
-MESSAGE (FATAL_ERROR
-"** SDL Net not found.
-On Ubuntu install libsdl-net1.2-dev.
-On Mac OSX install FIXME.
-On Windows/MSVC install SDL_net-devel-1.2.6-VC6.zip.")
+	MESSAGE (FATAL_ERROR "** SDL Net not found. On Ubuntu install libsdl-net1.2-dev. On Mac OSX install FIXME. On Windows/MSVC install SDL_net-devel-1.2.6-VC6.zip.")
 ENDIF (SDLNET_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${SDLNET_INCLUDE_DIR})
 
 ## Confirm we have zlib
 IF (NOT ZLIB_FOUND STREQUAL "YES")
-MESSAGE (FATAL_ERROR
-"** zlib not found.
-On Ubuntu install zlib1g-dev.
-On Mac OSX install FIXME.
-On Windows install zlib123-dll.zip.")
+	MESSAGE (FATAL_ERROR "** zlib not found. On Ubuntu install zlib1g-dev. On Mac OSX install FIXME. On Windows install zlib123-dll.zip.")
 ENDIF (NOT ZLIB_FOUND STREQUAL "YES")
 INCLUDE_DIRECTORIES (${ZLIB_INCLUDE_DIR})
 
 ## confirm we have libPNG.
 IF (NOT PNG_FOUND)
-MESSAGE (FATAL_ERROR
-"** libpng not found.
-On Ubuntu install libpng-dev.
-On Mac OSX install FIXME.
-On Windows install libpng-1.2.8-lib.zip.")
+	MESSAGE (FATAL_ERROR "** libpng not found. On Ubuntu install libpng-dev. On Mac OSX install FIXME. On Windows install libpng-1.2.8-lib.zip.")
 ENDIF (NOT PNG_FOUND)
 INCLUDE_DIRECTORIES (${PNG_INCLUDE_DIR})
 
 ## Confirm we have ncurses
 IF (UNIX)
-IF (CURSES_LIBRARIES STREQUAL "")
-MESSAGE (FATAL_ERROR
-"** ncurses not found.
-On Ubuntu install libncurses5-dev.
-On Mac OSX install FIXME.")
-ENDIF (CURSES_LIBRARIES STREQUAL "")
-INCLUDE_DIRECTORIES (${CURSES_INCLUDE_DIR})
+	IF (CURSES_LIBRARIES STREQUAL "")
+		MESSAGE (FATAL_ERROR "** ncurses not found. On Ubuntu install libncurses5-dev. On Mac OSX install FIXME.")
+	ENDIF (CURSES_LIBRARIES STREQUAL "")
+	INCLUDE_DIRECTORIES (${CURSES_INCLUDE_DIR})
 ENDIF (UNIX)
 
 ## Confirm we have X11
 IF (UNIX)
-IF (NOT APPLE)
-IF (NOT X11_FOUND)
-MESSAGE (FATAL_ERROR
-"** X11 not found.
-On Ubuntu install libx11-dev, libxext-dev.")
-ENDIF (NOT X11_FOUND)
-INCLUDE_DIRECTORIES (${X11_INCLUDE_DIR})
-ENDIF (NOT APPLE)
+	IF (NOT APPLE)
+		IF (NOT X11_FOUND)
+			MESSAGE (FATAL_ERROR "** X11 not found. On Ubuntu install libx11-dev, libxext-dev.")
+		ENDIF (NOT X11_FOUND)
+	INCLUDE_DIRECTORIES (${X11_INCLUDE_DIR})
+	ENDIF (NOT APPLE)
 ENDIF (UNIX)
 
 ## Confirm we have DirectX
 IF (WIN32)
-IF (NOT DIRECTX_DINPUT_FOUND STREQUAL "YES")
-MESSAGE (FATAL_ERROR
-"** DirectX Dinput not found.
-On Windows install dx9sdk.exe.")
-ENDIF (NOT DIRECTX_DINPUT_FOUND  STREQUAL "YES")
-INCLUDE_DIRECTORIES (${DIRECTX_DINPUT_INCLUDE_DIR})
+	IF (NOT DIRECTX_DINPUT_FOUND STREQUAL "YES")
+		MESSAGE (FATAL_ERROR "** DirectX Dinput not found. On Windows install dx9sdk.exe.")
+	ENDIF (NOT DIRECTX_DINPUT_FOUND  STREQUAL "YES")
+	INCLUDE_DIRECTORIES (${DIRECTX_DINPUT_INCLUDE_DIR})
 ENDIF (WIN32)
 
 IF (BUILDOPENAL)
-## Confirm we have OpenAL
-IF (NOT OPENAL_FOUND STREQUAL "YES")
-MESSAGE (FATAL_ERROR
-"** Openal not found.
-On Ubuntu install libopenal-dev.
-On Mac OSX install FIXME.
-On Windows install OpenAL11CoreSDK.exe.")
-ENDIF (NOT OPENAL_FOUND STREQUAL "YES")
-INCLUDE_DIRECTORIES (${OPENAL_INCLUDE_DIR})
+	## Confirm we have OpenAL
+	IF (NOT OPENAL_FOUND STREQUAL "YES")
+		MESSAGE (FATAL_ERROR "** Openal not found. On Ubuntu install libopenal-dev. On Mac OSX install FIXME. On Windows install OpenAL11CoreSDK.exe.")
+	ENDIF (NOT OPENAL_FOUND STREQUAL "YES")
+	INCLUDE_DIRECTORIES (${OPENAL_INCLUDE_DIR})
 ENDIF (BUILDOPENAL)
 
 IF (UNIX)
-IF (NOT WIN32)
-## Confirm we have dlopen
-CHECK_INCLUDE_FILE("dlfcn.h" HAVE_DL)
-IF(HAVE_DL)
-CHECK_LIBRARY_EXISTS("dl" "dlopen" "" HAVE_LIB_DL)
-IF(NOT HAVE_LIB_DL)
-MESSAGE (FATAL_ERROR
-"** dlopen not found.
-On Ubuntu install FIXME
-On Mac OSX install FIXME.
-On Windows install FIXME.")
-ENDIF(NOT HAVE_LIB_DL)
-ELSE(HAVE_DL)
-MESSAGE (FATAL_ERROR
-"** dlopen not found.
-On Ubuntu install FIXME
-On Mac OSX install FIXME.
-On Windows install FIXME.")
-ENDIF(HAVE_DL)
-ENDIF (NOT WIN32)
+	IF (NOT WIN32)
+	## Confirm we have dlopen
+	CHECK_INCLUDE_FILE("dlfcn.h" HAVE_DL)
+		IF(HAVE_DL)
+			CHECK_LIBRARY_EXISTS("dl" "dlopen" "" HAVE_LIB_DL)
+			IF(NOT HAVE_LIB_DL)
+				MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install FIXME. On Mac OSX install FIXME. On Windows install FIXME.")
+			ENDIF(NOT HAVE_LIB_DL)
+		ELSE(HAVE_DL)
+			MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install FIXME. On Mac OSX install FIXME. On Windows install FIXME.")
+		ENDIF(HAVE_DL)
+	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 ## confirm we have Python
 IF (NOT PYTHONINTERP_FOUND)
-MESSAGE (FATAL_ERROR
-"** Python not found.
-On Ubuntu install python.
-On Mac OSX install FIXME.
-On Windows install FIXME.")
+	MESSAGE (FATAL_ERROR "** Python not found. On Ubuntu install python. On Mac OSX install FIXME. On Windows install FIXME.")
 ENDIF (NOT  PYTHONINTERP_FOUND)
 
 ## confirm we have Doxygen.
 IF (NOT DOXYGEN)
-MESSAGE (STATUS
-"** Doxygen not found.
-On Ubuntu install doxygen.
-On Mac OSX install FIXME.
-On Windows install FIXME.")
+	MESSAGE (STATUS "** Doxygen not found. On Ubuntu install doxygen. On Mac OSX install FIXME. On Windows install FIXME.")
 ENDIF (NOT DOXYGEN)
 
 ## confirm we have Graphviz.
 IF (NOT DOT)
-MESSAGE (STATUS
-"** Graphviz not found.
-On Ubuntu install graphviz.
-On Mac OSX install FIXME.
-On Windows install FIXME.")
+	MESSAGE (STATUS "** Graphviz not found. On Ubuntu install graphviz. On Mac OSX install FIXME. On Windows install FIXME.")
 ENDIF (NOT DOT)
 
 ################################################################################
@@ -534,11 +490,11 @@ ENDIF (NOT DOT)
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
 
 IF (UNIX)
-FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c )
+	FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c )
 ENDIF (UNIX)
 
 IF (WIN32)
-SET (LZSS_SOURCES "")
+	SET (LZSS_SOURCES "")
 ENDIF (WIN32)
 ################################################################################
 ######################## The Doomsday Engine  ##################################
@@ -550,81 +506,78 @@ SET (DENG_SOURCES ${DENG_PORTABLE_SOURCES} ${LZSS_SOURCES}
  plugins/common/src/m_fixed.c)
 
 IF (UNIX)
-IF (NOT WIN32)
-INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
-FILE(GLOB DENG_UNIX_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c)
+	IF (NOT WIN32)
+		INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
+		FILE(GLOB DENG_UNIX_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c)
 
-SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_UNIX_SOURCES} )
+		SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_UNIX_SOURCES} )
 
-ENDIF (NOT WIN32)
+	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (WIN32)
-INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/win32/include )
-##FILE(GLOB DENG_WIN32_SOURCES ${CMAKE_SOURCE_DIR}/engine/win32/src/*.c)
-SET (DENG_WIN32_SOURCES
-${CMAKE_SOURCE_DIR}/engine/win32/src/dd_winit.c
-${CMAKE_SOURCE_DIR}/engine/win32/src/sys_console.c
-${CMAKE_SOURCE_DIR}/engine/win32/src/sys_findfile.c
-${CMAKE_SOURCE_DIR}/engine/win32/src/sys_mixer.c
-${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
-${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
-${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c
-${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c )
+	INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/win32/include )
+	##FILE(GLOB DENG_WIN32_SOURCES ${CMAKE_SOURCE_DIR}/engine/win32/src/*.c)
+	SET (DENG_WIN32_SOURCES
+	${CMAKE_SOURCE_DIR}/engine/win32/src/dd_winit.c
+	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_console.c
+	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_findfile.c
+	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_mixer.c
+	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
+	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
+	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c
+	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c )
 
 
-SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_WIN32_SOURCES})
+	SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_WIN32_SOURCES})
 ENDIF (WIN32)
 
 ## .m is Obj-C
 IF (APPLE)
-INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/mac/include )
-FILE(GLOB DENG_OSX_SOURCES ${CMAKE_SOURCE_DIR}/engine/mac/src/*.m)
-SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_OSX_SOURCES})
+	INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/mac/include )
+	FILE(GLOB DENG_OSX_SOURCES ${CMAKE_SOURCE_DIR}/engine/mac/src/*.m)
+	SET (DENG_SOURCES ${DENG_SOURCES} ${DENG_OSX_SOURCES})
 ENDIF (APPLE)
 
 IF (APPLE)
-SET (MACOSX_BUNDLE_INFO_STRING "The Doomsday Engine: For jDoom, jHeretic and jHexen" )
-##MACOSX_BUNDLE_ICON_FILE
-##MACOSX_BUNDLE_GUI_IDENTIFIER
-SET (MACOSX_BUNDLE_LONG_VERSION_STRING "1.9.0-beta5" )
-SET (MACOSX_BUNDLE_BUNDLE_NAME "Doomsday" )
-SET (MACOSX_BUNDLE_SHORT_VERSION_STRING "1.9.0-beta5" )
-SET (MACOSX_BUNDLE_BUNDLE_VERSION "1.0.0" )
-## Aplhabetical order ok ?
-SET (MACOSX_BUNDLE_COPYRIGHT "2006, DaniJ, Skyjake, Yagisan" )
+	SET (MACOSX_BUNDLE_INFO_STRING "The Doomsday Engine: For jDoom, jHeretic and jHexen" )
+	##MACOSX_BUNDLE_ICON_FILE
+	##MACOSX_BUNDLE_GUI_IDENTIFIER
+	SET (MACOSX_BUNDLE_LONG_VERSION_STRING "1.9.0-beta5" )
+	SET (MACOSX_BUNDLE_BUNDLE_NAME "Doomsday" )
+	SET (MACOSX_BUNDLE_SHORT_VERSION_STRING "1.9.0-beta5" )
+	SET (MACOSX_BUNDLE_BUNDLE_VERSION "1.0.0" )
+	## Aplhabetical order ok ?
+	SET (MACOSX_BUNDLE_COPYRIGHT "2006, DaniJ, Skyjake, Yagisan" )
 ENDIF (APPLE)
 
 ADD_EXECUTABLE (doomsday MACOSX_BUNDLE ${DENG_SOURCES})
-TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY}
-${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} )
+TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} )
 
 IF (UNIX)
-IF (NOT WIN32)
-TARGET_LINK_LIBRARIES (doomsday dl)
-IF (NOT APPLE)
-TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
-ENDIF (NOT APPLE)
-ENDIF (NOT WIN32)
+	IF (NOT WIN32)
+		TARGET_LINK_LIBRARIES (doomsday dl)
+			IF (NOT APPLE)
+				TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
+			ENDIF (NOT APPLE)
+	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (WIN32)
-TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32
-${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
+	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
 ENDIF (WIN32)
 
 ## Work around for Win32 wanting something for the plugins to link to
 IF (WIN32)
-ADD_LIBRARY (deng STATIC ${DENG_SOURCES} engine/api/doomsday.def)
-TARGET_LINK_LIBRARIES (deng ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES}
-${CURSES_LIBRARIES} ${PNG_LIBRARIES} wsock32 winmm gdi32 ole32 user32
-${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
+	ADD_LIBRARY (deng STATIC ${DENG_SOURCES} engine/api/doomsday.def)
+	TARGET_LINK_LIBRARIES (deng ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} wsock32 winmm gdi32 ole32 user32
+	${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
 ENDIF (WIN32)
 
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
 IF (BUILDOPENGL)
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/opengl )
+	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/opengl )
 ENDIF (BUILDOPENGL)
 ################################################################################
 ######################## Maploader Plugin  #####################################
@@ -635,42 +588,42 @@ ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/dehread )
 ################################################################################
 ######################## SDLMixer Output Plugin  ###############################
 IF (BUILDSDLMIXER)
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/sdlmixer )
+	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/sdlmixer )
 ENDIF (BUILDSDLMIXER)
 ################################################################################
 ######################## OpenAL Output Plugin  #################################
 IF (BUILDOPENAL)
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/openal )
+	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/openal )
 ENDIF (BUILDOPENAL)
 ################################################################################
 ######################## jDoom Game Plugin  ####################################
 IF (BUILDJDOOM)
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jdoom )
+	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jdoom )
 ENDIF (BUILDJDOOM)
 ################################################################################
 ######################## jHeretic Game Plugin  #################################
 IF (BUILDJHERETIC)
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jheretic )
+	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jheretic )
 ENDIF (BUILDJHERETIC)
 ################################################################################
 ######################## jHexen Game Plugin  ###################################
 IF (BUILDJHEXEN)
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jhexen )
+	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jhexen )
 ENDIF (BUILDJHEXEN)
 ################################################################################
 ######################## WolfTC Game Plugin  ###################################
 IF (BUILDWOLFTC)
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/wolftc )
+	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/wolftc )
 ENDIF (BUILDWOLFTC)
 ################################################################################
 ######################## DOOM64TC Game Plugin  #################################
 IF (BUILDDOOM64TC)
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/doom64tc )
+	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/doom64tc )
 ENDIF (BUILDDOOM64TC)
 ################################################################################
 ######################## jStrife Game Plugin  ##################################
 IF (BUILDJSTRIFE)
-ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jstrife )
+	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jstrife )
 ENDIF (BUILDJSTRIFE)
 ################################################################################
 ######################## Doxygenate Engine  ####################################
@@ -678,12 +631,12 @@ ENDIF (BUILDJSTRIFE)
 ## 25m20.447s to genereate on a 2GHz Athlon64 (64bit mode)
 
 IF (BUILDDOX)
-IF (DOXYGEN)
-IF (DOT)
-ADD_CUSTOM_TARGET (Doxygenate.engine  ALL doxygen
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine )
-ENDIF (DOT)
-ENDIF (DOXYGEN)
+	IF (DOXYGEN)
+		IF (DOT)
+			ADD_CUSTOM_TARGET (Doxygenate.engine  ALL doxygen
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine )
+		ENDIF (DOT)
+	ENDIF (DOXYGEN)
 ENDIF (BUILDDOX)
 ################################################################################
 ######################## Doxygenate Externals  #################################
@@ -691,12 +644,12 @@ ENDIF (BUILDDOX)
 ## 2m30.932s to genereate on a 2GHz Athlon64 (64bit mode)
 
 IF (BUILDDOX)
-IF (DOXYGEN)
-IF (DOT)
-ADD_CUSTOM_TARGET (Doxygenate.externals  ALL doxygen
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/external )
-ENDIF (DOT)
-ENDIF (DOXYGEN)
+	IF (DOXYGEN)
+		IF (DOT)
+			ADD_CUSTOM_TARGET (Doxygenate.externals  ALL doxygen
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/external )
+		ENDIF (DOT)
+	ENDIF (DOXYGEN)
 ENDIF (BUILDDOX)
 ################################################################################
 ######################## Doxygenate Plugins  ###################################
@@ -704,12 +657,12 @@ ENDIF (BUILDDOX)
 ## 22m27.128s to genereate on a 2GHz Athlon64 (64bit mode)
 
 IF (BUILDDOX)
-IF (DOXYGEN)
-IF (DOT)
-ADD_CUSTOM_TARGET (Doxygenate.plugins  ALL doxygen
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins )
-ENDIF (DOT)
-ENDIF (DOXYGEN)
+	IF (DOXYGEN)
+		IF (DOT)
+			ADD_CUSTOM_TARGET (Doxygenate.plugins  ALL doxygen
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins )
+		ENDIF (DOT)
+	ENDIF (DOXYGEN)
 ENDIF (BUILDDOX)
 ################################################################################
 ######################## Doxygenate All Source  ################################
@@ -717,17 +670,17 @@ ENDIF (BUILDDOX)
 ## but the 3 seperate functionaliy targets are better in most cases.
 ## In other words, don't build this, if you build the 3 other Doxygenate targets
 IF (BUILDDOX)
-IF (DOXYGEN)
-IF (DOT)
-ADD_CUSTOM_TARGET (Doxygenate.all  doxygen
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
-ENDIF (DOT)
-ENDIF (DOXYGEN)
+	IF (DOXYGEN)
+		IF (DOT)
+			ADD_CUSTOM_TARGET (Doxygenate.all  doxygen
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
+		ENDIF (DOT)
+	ENDIF (DOXYGEN)
 ENDIF (BUILDDOX)
 ################################################################################
 ######################## Generate pk3s ##########################################
 ADD_CUSTOM_TARGET (Generate.pk3  ALL ${PYTHON_EXECUTABLE} ./packres.py ${CMAKE_CURRENT_BINARY_DIR}
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/build/scripts/ )
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/build/scripts/ )
 ################################################################################
 ######################## Show Build Details  ###################################
 MESSAGE( STATUS "BUILDSCRIPTSDATE:             " ${BUILDSCRIPTSDATE} )
@@ -735,19 +688,19 @@ MESSAGE( STATUS "CMAKE_SYSTEM:                 " ${CMAKE_SYSTEM} )
 MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR:       " ${CMAKE_SYSTEM_PROCESSOR} )
 MESSAGE( STATUS "CMAKE_BUILD_TYPE:             " ${CMAKE_BUILD_TYPE} )
 IF (CMAKE_BUILD_TYPE STREQUAL "")
-MESSAGE( STATUS "CMAKE_C_FLAGS:                " ${CMAKE_C_FLAGS} )
+	MESSAGE( STATUS "CMAKE_C_FLAGS:                " ${CMAKE_C_FLAGS} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL "")
 IF (CMAKE_BUILD_TYPE STREQUAL Debug)
-MESSAGE( STATUS "CMAKE_C_FLAGS_DEBUG:          " ${CMAKE_C_FLAGS_DEBUG} )
+	MESSAGE( STATUS "CMAKE_C_FLAGS_DEBUG:          " ${CMAKE_C_FLAGS_DEBUG} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
 IF (CMAKE_BUILD_TYPE STREQUAL Release)
-MESSAGE( STATUS "CMAKE_C_FLAGS_RELEASE:        " ${CMAKE_C_FLAGS_RELEASE} )
+	MESSAGE( STATUS "CMAKE_C_FLAGS_RELEASE:        " ${CMAKE_C_FLAGS_RELEASE} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL Release)
 IF (CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
-MESSAGE( STATUS "CMAKE_C_FLAGS_RELWITHDEBINFO: " ${CMAKE_C_FLAGS_RELWITHDEBINFO} )
+	MESSAGE( STATUS "CMAKE_C_FLAGS_RELWITHDEBINFO: " ${CMAKE_C_FLAGS_RELWITHDEBINFO} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
 IF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
-MESSAGE( STATUS "CMAKE_C_FLAGS_MINSIZEREL:     " ${CMAKE_C_FLAGS_MINSIZEREL} )
+	MESSAGE( STATUS "CMAKE_C_FLAGS_MINSIZEREL:     " ${CMAKE_C_FLAGS_MINSIZEREL} )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
 MESSAGE( STATUS "CMAKE_C_COMPILER:             " ${CMAKE_C_COMPILER} )
 MESSAGE( STATUS "CMAKE_SOURCE_DIR:             " ${CMAKE_SOURCE_DIR} )
@@ -784,25 +737,25 @@ LIBRARY DESTINATION ${libdir} )
 INSTALL(FILES ${DENG_ENGINE_DATA} DESTINATION ${DENG_ENGINE_DATA_DIR} )
 
 IF (BUILDJDOOM)
-INSTALL(FILES ${DENG_JDOOM_DATA} DESTINATION ${DENG_JDOOM_DATA_DIR} )
+	INSTALL(FILES ${DENG_JDOOM_DATA} DESTINATION ${DENG_JDOOM_DATA_DIR} )
 ENDIF (BUILDJDOOM)
 
 IF (BUILDJHERETIC)
-INSTALL(FILES ${DENG_JHERETIC_DATA} DESTINATION ${DENG_JHERETIC_DATA_DIR} )
+	INSTALL(FILES ${DENG_JHERETIC_DATA} DESTINATION ${DENG_JHERETIC_DATA_DIR} )
 ENDIF (BUILDJHERETIC)
 
 IF (BUILDJHEXEN)
-INSTALL(FILES ${DENG_JHEXEN_DATA} DESTINATION ${DENG_JHEXEN_DATA_DIR} )
+	INSTALL(FILES ${DENG_JHEXEN_DATA} DESTINATION ${DENG_JHEXEN_DATA_DIR} )
 ENDIF (BUILDJHEXEN)
 
 IF (BUILDJSTRIFE)
-INSTALL(FILES ${DENG_JSTRIFE_DATA} DESTINATION ${DENG_JSTRIFE_DATA_DIR} )
+	INSTALL(FILES ${DENG_JSTRIFE_DATA} DESTINATION ${DENG_JSTRIFE_DATA_DIR} )
 ENDIF (BUILDJSTRIFE)
 
 IF (BUILDWOLFTC)
-INSTALL(FILES ${DENG_WOLFTC_DATA} DESTINATION ${DENG_WOLFTC_DATA_DIR} )
+	INSTALL(FILES ${DENG_WOLFTC_DATA} DESTINATION ${DENG_WOLFTC_DATA_DIR} )
 ENDIF (BUILDWOLFTC)
 
 IF (BUILDDOOM64TC)
-INSTALL(FILES ${DENG_DOOM64TC_DATA} DESTINATION ${DENG_DOOM64TC_DATA_DIR} )
+	INSTALL(FILES ${DENG_DOOM64TC_DATA} DESTINATION ${DENG_DOOM64TC_DATA_DIR} )
 ENDIF (BUILDDOOM64TC)
