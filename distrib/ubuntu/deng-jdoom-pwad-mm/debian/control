@@ -1,0 +1,19 @@
+Source: deng-jdoom-pwad-mm
+Section: multiverse/games
+Priority: optional
+Maintainer: Jamie Jones <jamie_jones_au@yahoo.com.au>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.2
+
+Package: deng-jdoom-pwad-mm
+Architecture: all
+Depends: deng, deng-iwad-doom2-installer
+Description: Memento Mori 32 Level Megawad for Doom 2 [SP, COOP, DM]
+ This is one of the all-time 5 greatest, alongside its successor
+ Memento Mori 2, Requiem, Alien Vendetta, and Hell Revealed. It
+ was also one of the first megawads to focus on co/op play. Yes,
+ it is aged, but the overall quality of the maps is still amazingly
+ high. I regard some of these maps as among the very best ever made,
+ period. Almost nothing is as classic in the long history of Doom as
+ Memento Mori. If you haven't yet, play it through (perhaps with a
+ friend!) and be pleasantly surprised

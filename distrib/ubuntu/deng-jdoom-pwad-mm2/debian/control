@@ -1,0 +1,12 @@
+Source: deng-jdoom-pwad-mm2
+Section: multiverse/games
+Priority: optional
+Maintainer: Jamie Jones <jamie_jones_au@yahoo.com.au>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.2
+
+Package: deng-jdoom-pwad-mm2
+Architecture: all
+Depends: deng, deng-iwad-doom2-installer
+Description: Memento Mori 2 32 Level Megawad for Doom 2 [SP, COOP, DM]
+ The sequal to one of the all-time greatest megawads.

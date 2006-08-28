@@ -1,0 +1,2 @@
+?package(deng-jdoom-pwad-mm):needs="X11" section="Games/Arcade"\
+  title="Megawad: Memento Mori" command="/usr/games/doomsday -anifilter -texcomp -game jdoom -iwad /usr/share/games/doom/iwad/doom2/doom2.wad -file /usr/share/games/deng/Data/jDoom/pwad-mm/mm.wad /usr/share/games/deng/Data/jDoom/pwad-mm/mmmus.wad"
