@@ -1,0 +1,2 @@
+?package(deng-iwad-hexendd-installer):needs="X11" section="Games/Arcade"\
+  title="Hexen: Deathkings" command="/usr/games/doomsday -anifilter -texcomp -game jhexen -iwad /usr/share/games/doom/iwad/hexen/hexen.wad  -file /usr/share/games/doom/iwad/hexdd/hexdd.wad "
