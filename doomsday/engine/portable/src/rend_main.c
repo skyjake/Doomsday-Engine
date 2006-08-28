@@ -1174,6 +1174,22 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                           /*Shiny?*/   (surface->texture != -1),
                           /*Glow?*/    (texFlags & TXF_GLOW));
             }
+            else
+            {
+                if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
+                   R_IsSkySurface(&frontsec->SP_floorsurface))
+                {   // We'll mask this.
+                    quad.flags = RPF_SKY_MASK;
+                    quad.tex.id = 0;
+                    quad.lights = NULL;
+                    quad.intertex.id = 0;
+
+                    vTL[VZ] = vTR[VZ] = fceil;
+                    vBL[VZ] = vBR[VZ] = ffloor;
+
+                    RL_AddPoly(&quad);
+                }
+            }
 
             // This is guaranteed to be a solid segment.
             solidSeg = true;
