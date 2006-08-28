@@ -1,0 +1,30 @@
+deng-jdoom-pwad-darkening2 (1.0-5) dapper; urgency=low
+
+  * Rebuid for dapper.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Tue, 13 Jun 2006 21:38:08 +1000
+
+deng-jdoom-pwad-darkening2 (1.0-4) breezy; urgency=low
+
+  * Fix depends.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Fri,  4 Nov 2005 15:07:32 +1100
+
+deng-jdoom-pwad-darkening2 (1.0-3) breezy; urgency=low
+
+  * Rebuild for breezy
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed,  2 Nov 2005 15:38:54 +1100
+
+deng-jdoom-pwad-darkening2 (1.0-2) hoary; urgency=low
+
+  * Removed pdf maps. Added desktop entry.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 24 Jul 2005 01:30:24 +1000
+
+deng-jdoom-pwad-darkening2 (1.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Fri, 11 Mar 2005 19:11:06 +1100
+

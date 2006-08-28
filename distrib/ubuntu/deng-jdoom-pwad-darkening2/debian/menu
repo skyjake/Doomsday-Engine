@@ -1,0 +1,2 @@
+?package(deng-jdoom-pwad-darkening2):needs="X11" section="Games/Deng/jDoom"\
+  title="Pwad: The Darkening 2" command="/usr/bin/doomsday -anifilter -texcomp -game jdoom -iwad /usr/share/games/doom/iwad/doom2/doom2.wad -file /usr/share/games/deng/Data/jDoom/pwad-darkening2/darken2.wad"

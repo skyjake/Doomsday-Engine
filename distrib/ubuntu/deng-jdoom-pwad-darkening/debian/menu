@@ -1,0 +1,4 @@
+?package(deng-jdoom-pwad-darkening):needs="X11" section="Games/Arcade"\
+  title="Pwad: The Darkening" command="/usr/games/doomsday -anifilter -texcomp -game jdoom -iwad /usr/share/games/doom/iwad/doom2/doom2.wad -file /usr/share/games/deng/Data/jDoom/pwad-darkening/resource.wad /usr/share/games/deng/Data/jDoom/pwad-darkening/darken.wad -deh /usr/share/games/deng/Data/jDoom/pwad-darkening/dark.deh"
+?package(deng-jdoom-pwad-darkening):needs="X11" section="Games/Arcade"\
+  title="Pwad: The Darkening (Deathmatch)" command="/usr/games/doomsday -anifilter -texcomp -game jdoom -iwad /usr/share/games/doom/iwad/doom2/doom2.wad -file /usr/share/games/deng/Data/jDoom/pwad-darkening/resource.wad /usr/share/games/deng/Data/jDoom/pwad-darkening/darkdm.wad -deh /usr/share/games/deng/Data/jDoom/pwad-darkening/dark.deh"
