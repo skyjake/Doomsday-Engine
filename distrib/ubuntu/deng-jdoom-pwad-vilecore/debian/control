@@ -1,0 +1,16 @@
+Source: deng-jdoom-pwad-vilecore
+Section: multiverse/games
+Priority: optional
+Maintainer: Jamie Jones <jamie_jones_au@yahoo.com.au>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.2
+
+Package: deng-jdoom-pwad-vilecore
+Architecture: all
+Depends: deng, deng-iwad-doom2-installer
+Description: Vilecore 32 Level Megawad for Doom 2 [SP, COOP]
+ A good one-man megawad. Difficulty (never very high) and
+ quality are a bit uneven, but there is decent gameplay throughout
+ .
+ http://megawad.newdoom.com/
+
