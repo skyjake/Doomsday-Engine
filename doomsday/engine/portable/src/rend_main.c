@@ -548,18 +548,12 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
 /*
  * Prepares the correct flat/texture for the passed poly.
  *
- * TODO: We shouldn't pass tex and isFlat and use the properties of the
- * surface instead. However due to dynamic texture replacements (missing
- * texture fixes) we cannot yet. Fixing these needs to be moved higher up
- * the logic chain (ie when a plane move exposes the missing surface the
- * fix should be made).
- *
  * @param poly:     Ptr to the poly to apply the texture to.
  * @param tex:      Texture/Flat id number. If -1 we'll apply the
  *                  special "missing" texture instead.
  * @param isFlat:   (True) "tex" is a flat id ELSE "tex" is a texture id.
  * @return int      (-1) If the texture reference is invalid.
- *                  Else return the flags for the texture chosen.
+ *                  Else return the surface flags for this poly.
  */
 int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
 {
@@ -576,7 +570,7 @@ int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
         poly->tex.width = texw;
         poly->tex.height = texh;
         poly->tex.detail = texdetail;
-        return 0 | TXF_GLOW; // Make it stand out
+        return 0 | SUF_GLOW; // Make it stand out
     }
 
     if(surface->texture == -1) // An unknown texture, draw the "unknown" graphic
@@ -585,7 +579,7 @@ int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
         poly->tex.width = texw;
         poly->tex.height = texh;
         poly->tex.detail = texdetail;
-        return 0 | TXF_GLOW; // Make it stand out
+        return 0 | SUF_GLOW; // Make it stand out
     }
     else
     {
@@ -600,8 +594,7 @@ int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
         poly->tex.detail = texdetail;
 
         // Return the parameters for this surface texture.
-        return R_GraphicResourceFlags((surface->isflat? RC_FLAT : RC_TEXTURE),
-                                      surface->texture);
+        return surface->flags;
     }
 }
 
@@ -850,7 +843,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
         Con_Error("Rend_RenderWallSection: Invalid wall section mode %i", mode);
     }
 
-    if(glow)        // Make it fullbright?
+    if(glow && r_texglow)        // Make it fullbright?
         quad->flags |= RPF_GLOW;
 
     // Check for neighborhood division?
@@ -910,7 +903,7 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
     int subIndex = GET_SUBSECTOR_IDX(subsector);
     rendpoly_vertex_t *vtx;
 
-    if(glow)        // Make it fullbright?
+    if(glow && r_texglow)        // Make it fullbright?
         poly->flags |= RPF_GLOW;
 
     // Surface color/light.
@@ -955,7 +948,7 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
 void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
 {
     int i;
-    int texFlags;
+    int surfaceFlags;
     int solidSeg = false; // -1 means NEVER.
     sector_t *backsec;
     surface_t *surface;
@@ -1153,10 +1146,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
         {
             surface = &side->middle;
-            texFlags = Rend_PrepareTextureForPoly(&quad, surface);
+            surfaceFlags = Rend_PrepareTextureForPoly(&quad, surface);
 
             // Is there a visible surface?
-            if(texFlags != -1)
+            if(surfaceFlags != -1)
             {
                 // Fill in the remaining quad data.
                 quad.flags = 0;
@@ -1172,7 +1165,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                           /*Alpha*/    255,
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
                           /*Shiny?*/   (surface->texture != -1),
-                          /*Glow?*/    (texFlags & TXF_GLOW));
+                          /*Glow?*/    (surfaceFlags & SUF_GLOW));
             }
             else
             {
@@ -1214,10 +1207,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             byte    alpha = side->middle.rgba[3];
 
             surface = &side->middle;
-            texFlags = Rend_PrepareTextureForPoly(&quad, surface);
+            surfaceFlags = Rend_PrepareTextureForPoly(&quad, surface);
 
             // Is there a visible surface?
-            if(texFlags != -1)
+            if(surfaceFlags != -1)
             {
                 // Calculate texture coordinates.
                 vTL[VZ] = vTR[VZ] = gaptop    = MIN_OF(rbceil, rfceil);
@@ -1298,7 +1291,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                               /*Alpha*/    alpha,
                               /*Shadow?*/  (solidSeg && !(flags & RWSF_NO_RADIO) && !texmask),
                               /*Shiny?*/   (solidSeg && surface->texture != -1 && !texmask),
-                              /*Glow?*/    (texFlags & TXF_GLOW));
+                              /*Glow?*/    (surfaceFlags & SUF_GLOW));
                 }
             }
         }
@@ -1310,10 +1303,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide))
         {
             surface = &side->top;
-            texFlags = Rend_PrepareTextureForPoly(&quad, surface);
+            surfaceFlags = Rend_PrepareTextureForPoly(&quad, surface);
 
             // Is there a visible surface?
-            if(texFlags != -1)
+            if(surfaceFlags != -1)
             {
                 byte alpha;
                 boolean isVisible = true;
@@ -1379,7 +1372,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                           /*Alpha*/    alpha,
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
                           /*Shiny?*/   (surface->texture != -1),
-                          /*Glow?*/    (texFlags & TXF_GLOW));
+                          /*Glow?*/    (surfaceFlags & SUF_GLOW));
             }
         }
 
@@ -1390,10 +1383,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_BOTTOM, backSide))
         {
             surface = &side->bottom;
-            texFlags = Rend_PrepareTextureForPoly(&quad, surface);
+            surfaceFlags = Rend_PrepareTextureForPoly(&quad, surface);
 
             // Is there a visible surface?
-            if(texFlags != -1)
+            if(surfaceFlags != -1)
             {
                 // Calculate texture coordinates.
                 quad.texoffx = tcxoff;
@@ -1415,7 +1408,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                           /*Alpha*/    255,
                           /*Shadow?*/  !(flags & RWSF_NO_RADIO),
                           /*Shiny?*/   (surface->texture != -1),
-                          /*Glow?*/    (texFlags & TXF_GLOW));
+                          /*Glow?*/    (surfaceFlags & SUF_GLOW));
             }
         }
     }
@@ -1549,7 +1542,7 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
 {
     rendpoly_t poly;
     sector_t *sector = subsector->sector, *link = NULL;
-    int     texFlags;
+    int     surfaceFlags;
     float   height;
     surface_t *surface;
 
@@ -1583,31 +1576,24 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
     if(sin->unclosed && R_IsSkySurface(surface))
         return;
 
-    // Has the texture changed?
-    if(surface->texture != plane->pic)
-    {
-        plane->pic = surface->texture;
+    poly.flags = 0;
 
-        // The sky?
-        if(R_IsSkySurface(surface))
-            plane->flags |= RPF_SKY_MASK;
-        else
-            plane->flags &= ~RPF_SKY_MASK;
-    }
+    // The sky?
+    if(R_IsSkySurface(surface))
+        poly.flags |= RPF_SKY_MASK;
 
     // Is the plane visible?
     if((plane->type == PLN_FLOOR && vy > height) ||
        (plane->type == PLN_CEILING && vy < height))
     {
-        texFlags =
+        surfaceFlags =
             Rend_PrepareTextureForPoly(&poly, surface);
 
         // Is there a visible surface?
-        if(texFlags != -1)
+        if(surfaceFlags != -1)
         {
             // Fill in the remaining quad data.
             poly.type = RP_FLAT; // We're creating a flat.
-            poly.flags = plane->flags;
             poly.isWall = false;
 
             // Check for sky.
@@ -1621,7 +1607,7 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
                 /*Alpha*/    255,
                 /*Shadow?*/  false, // unused
                 /*Shiny?*/   (surface->texture != -1),
-                /*Glow?*/    (texFlags & TXF_GLOW));
+                /*Glow?*/    (surfaceFlags & SUF_GLOW));
         }
     }
 }

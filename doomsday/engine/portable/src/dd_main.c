@@ -270,7 +270,7 @@ void DD_DefineBuiltinVDM(void)
 void DD_AutoLoad(void)
 {
     int p;
-    
+
     // Load files from the Auto directory.  (If already loaded, won't
     // be loaded again.)  This is done again because virtual files may
     // now exist in the Auto directory.  Repeated until no new files
@@ -445,7 +445,7 @@ void DD_Main(void)
     if(defaultWads)
         AddToWadList(defaultWads);  // These must take precedence.
     HandleArgs(1);              // Only the WADs.
-    
+
     Con_Message("W_Init: Init WADfiles.\n");
 
     // Add real files from the Auto directory to the wadfiles list.
@@ -460,7 +460,7 @@ void DD_Main(void)
 
     // Final autoload round.
     DD_AutoLoad();
-    
+
     // No more WADs will be loaded in startup mode after this point.
     W_EndStartup();
 
@@ -922,6 +922,9 @@ void DD_SetInteger(int ddvalue, int parm)
                 else
                     fl->flags &= ~TXF_GLOW;
             }
+
+            // Update all surfaces which may be using this texture.
+            R_UpdateAllSurfaces(false);
         }
         return;
     }

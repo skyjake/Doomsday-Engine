@@ -67,6 +67,7 @@ sectorinfo_t    *secinfo;
 seginfo_t       *seginfo;
 subsectorinfo_t *subsecinfo;
 lineinfo_t      *lineinfo;
+sideinfo_t      *sideinfo;
 vertexowner_t   *vertexowners;
 nodeindex_t     *linelinks;         // indices to roots
 
@@ -1740,6 +1741,9 @@ void R_InitLineInfo(void)
         info->length = P_AccurateDistance(line->dx, line->dy);
         info->angle = bamsAtan2(-(line->dx >> 13), line->dy >> 13);
     }
+
+    // Allocate memory for the side info.
+    sideinfo = Z_Calloc(sizeof(sideinfo_t) * numsides, PU_LEVEL, NULL);
 }
 
 /*
@@ -1751,7 +1755,7 @@ void R_InitLineNeighbors(void)
     sector_t *sector;
     int     i, k, j, m;
     lineinfo_t *info;
-    lineinfo_side_t *side;
+    sideinfo_t *side;
     vertexowner_t *owner;
     vertex_t *vertices[2];
 
@@ -1765,9 +1769,9 @@ void R_InitLineNeighbors(void)
             info = LINE_INFO(line);
 
             // Which side is this?
-            side =
+            side = sideinfo +
                 (line->frontsector ==
-                 sector ? &info->side[0] : &info->side[1]);
+                 sector ? line->sidenum[0] : line->sidenum[1]);
 
             R_FindLineNeighbors(sector, line, side->neighbor, 0);
 
@@ -1810,7 +1814,7 @@ void R_InitLineNeighbors(void)
                     //if(owner->list[m] == k) continue;
                     R_FindLineNeighbors(SECTOR_PTR(owner->list[m]), line,
                                         side->alignneighbor,
-                                        side == &info->side[0] ? 1 : -1);
+                                        (side == (sideinfo + line->sidenum[0]) ? 1 : -1));
                 }
             }
 
@@ -1960,6 +1964,9 @@ void R_SetupLevel(char *level_id, int flags)
     }
     if(flags & DDSLF_FINALIZE)
     {
+        side_t *side;
+        sideinfo_t *sinfo;
+
         if(loadInStartupMode)
             Con_StartupDone();
 
@@ -1970,6 +1977,16 @@ void R_SetupLevel(char *level_id, int flags)
         // and interpolated properties (lighting, smoothed planes etc).
         for(i = 0; i < numsectors; ++i)
             R_UpdateSector(SECTOR_PTR(i), true);
+
+        // Do the same for side surfaces.
+        for(i = 0; i < numsides; ++i)
+        {
+            side = SIDE_PTR(i);
+            sinfo = SIDE_INFO(side);
+            R_UpdateSurface(&side->top, &sinfo->oldtop, true);
+            R_UpdateSurface(&side->middle, &sinfo->oldmiddle, true);
+            R_UpdateSurface(&side->bottom, &sinfo->oldbottom, true);
+        }
 
         // Run any commands specified in Map Info.
         if(mapinfo && mapinfo->execute)
@@ -2186,10 +2203,135 @@ sector_t *R_GetLinkedSector(sector_t *startsec, int plane)
     }
 }
 
-void R_UpdateSector(sector_t* sec, boolean forceUpdate)
+void R_UpdateAllSurfaces(boolean forceUpdate)
 {
     int i, j;
-    int setGlow[NUM_PLANES];
+
+    // First, all planes of all sectors.
+    for(i = 0; i < numsectors; ++i)
+    {
+        sector_t *sec = SECTOR_PTR(i);
+        sectorinfo_t *sInfo = SECT_INFO(sec);
+
+        for(j = 0; j < NUM_PLANES; ++j)
+            R_UpdateSurface(&sec->planes[j].surface, &sInfo->planeinfo[j].oldsurface,
+                            forceUpdate);
+    }
+
+    // Then all sections of all sides.
+    for(i = 0; i < numsides; ++i)
+    {
+        side_t *side = SIDE_PTR(i);
+        sideinfo_t *sInfo = SIDE_INFO(side);
+
+        R_UpdateSurface(&side->top, &sInfo->oldtop, forceUpdate);
+        R_UpdateSurface(&side->middle, &sInfo->oldmiddle, forceUpdate);
+        R_UpdateSurface(&side->bottom, &sInfo->oldbottom, forceUpdate);
+    }
+}
+
+void R_UpdateSurface(surface_t *current, surface_t *old, boolean forceUpdate)
+{
+    int texFlags, oldTexFlags;
+
+    // Any change to the texture or glow properties?
+    // TODO: Implement Decoration{ Glow{}} definitions.
+    texFlags =
+        R_GraphicResourceFlags((current->isflat? RC_FLAT : RC_TEXTURE),
+                               current->texture);
+    oldTexFlags =
+        R_GraphicResourceFlags((old->isflat? RC_FLAT : RC_TEXTURE),
+                               old->texture);
+    // FIXME >
+    // Update glowing status?
+    // The order of these tests is important.
+    if(forceUpdate || (current->texture != old->texture))
+    {
+        // Check if the new texture is declared as glowing.
+        // NOTE: Currently, we always discard the glow settings of the
+        //       previous flat after a texture change.
+
+        // Now that glows are properties of the sector this does not
+        // need to be the case. If we expose these properties via DMU
+        // they could be changed at any time. However in order to support
+        // flats that are declared as glowing we would need some method
+        // of telling Doomsday IF we want to inherit these properties when
+        // the plane flat changes...
+        if(texFlags & TXF_GLOW)
+        {
+            // The new texture is glowing.
+            current->flags |= SUF_GLOW;
+        }
+        else if(old->texture && (oldTexFlags & TXF_GLOW))
+        {
+            // The old texture was glowing but the new one is not.
+            current->flags &= ~SUF_GLOW;
+        }
+
+        old->texture = current->texture;
+    }
+    else if((texFlags & TXF_GLOW) != (oldTexFlags & TXF_GLOW))
+    {
+        // The glow property of the current flat has been changed
+        // since last update.
+
+        // NOTE:
+        // This approach is hardly optimal but since flats will
+        // rarely/if ever have this property changed during normal
+        // gameplay (the RENDER_GLOWFLATS text string is depreciated and
+        // the only time this property might change is after a console
+        // RESET) so it doesn't matter.
+        if(!(texFlags & TXF_GLOW) && (oldTexFlags & TXF_GLOW))
+        {
+            // The current flat is no longer glowing
+            current->flags &= ~SUF_GLOW;
+        }
+        else if((texFlags & TXF_GLOW) && !(oldTexFlags & TXF_GLOW))
+        {
+            // The current flat is now glowing
+            current->flags |= SUF_GLOW;
+        }
+    }
+    // < FIXME
+
+    if(forceUpdate ||
+       current->flags != old->flags)
+    {
+        old->flags = current->flags;
+    }
+
+    if(forceUpdate ||
+       current->isflat != old->isflat)
+    {
+        old->isflat = current->isflat;
+    }
+
+    if(forceUpdate ||
+       (current->texmove[0] != old->texmove[0] ||
+        current->texmove[1] != old->texmove[1]))
+    {
+        old->texmove[0] = current->texmove[0];
+        old->texmove[1] = current->texmove[1];
+    }
+
+    // Surface color change?
+    if(forceUpdate ||
+       (current->rgba[0] != old->rgba[0] ||
+        current->rgba[1] != old->rgba[1] ||
+        current->rgba[2] != old->rgba[2] ||
+        current->rgba[3] != old->rgba[3]))
+    {
+        // TODO: when surface colours are intergrated with the
+        // bias lighting model we will need to recalculate the
+        // vertex colours when they are changed.
+        memcpy(old->rgba, current->rgba, 4);
+    }
+}
+
+void R_UpdateSector(sector_t* sec, boolean forceUpdate)
+{
+    int          i, j;
+    plane_t      *plane;
     sectorinfo_t *sin = SECT_INFO(sec);
 
     // Check if there are any lightlevel or color changes.
@@ -2213,21 +2355,34 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     // For each plane.
     for(i = 0; i < NUM_PLANES; ++i)
     {
-        // Surface color change?
-        // TODO: when surface colours are intergrated with the
-        // bias lighting model we will need to recalculate the
-        // vertex colours when they are changed.
-        if(forceUpdate ||
-           (sec->planes[i].surface.rgba[0] != sin->planeinfo[i].oldrgb[0] ||
-            sec->planes[i].surface.rgba[1] != sin->planeinfo[i].oldrgb[1] ||
-            sec->planes[i].surface.rgba[2] != sin->planeinfo[i].oldrgb[2]))
+        plane = &sec->planes[i];
+
+        // Surface changes?
+        R_UpdateSurface(&plane->surface, &sin->planeinfo[i].oldsurface, forceUpdate);
+
+        // FIXME >
+        // Now update the glow properties.
+        if(plane->surface.flags & SUF_GLOW)
         {
-            memcpy(sin->planeinfo[i].oldrgb, sec->planes[i].surface.rgba, 3);
+            plane->glow = 4; // Default height factor is 4
+
+            // FIXME: Now that we support textures on planes we need to average
+            // their color too.
+            if(plane->surface.isflat)
+                GL_GetFlatColor(plane->surface.texture, plane->glowrgb);
+            else
+                memset(plane->glowrgb, 255, 3); // use white for now.
         }
+        else
+        {
+            plane->glow = 0;
+            memset(plane->glowrgb, 0, 3);
+        }
+        // < FIXME
 
         // Geometry change?
         if(forceUpdate ||
-           sec->planes[i].height != sin->planeinfo[i].oldheight[1])
+           plane->height != sin->planeinfo[i].oldheight[1])
         {
             ddplayer_t *player;
 
@@ -2240,7 +2395,8 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
                 if(!player->ingame || !player->mo || !player->mo->subsector)
                     continue;
 
-                if((player->flags & DDPF_CAMERA) && player->mo->subsector->sector == sec &&
+                if((player->flags & DDPF_CAMERA) &&
+                   player->mo->subsector->sector == sec &&
                    (player->mo->pos[VZ] > sec->SP_ceilheight ||
                     player->mo->pos[VZ] < sec->SP_floorheight))
                 {
@@ -2249,103 +2405,6 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
             }
 
             P_PlaneChanged(sec, i);
-        }
-
-        // Update glowing status?
-        // FIXME
-
-        // Any change to the texture or glow properties?
-        // TODO: Implement Decoration{ Glow{}} definitions.
-        setGlow[i] = 0;
-        // The order of these tests is important.
-        if(forceUpdate || (sec->planes[i].surface.texture != sin->planeinfo[i].oldpic))
-        {
-            // Check if the new texture is declared as glowing.
-            // NOTE: Currently, we always discard the glow settings of the
-            //       previous flat after a texture change.
-
-            // Now that glows are properties of the sector this does not
-            // need to be the case. If we expose these properties via DMU
-            // they could be changed at any time. However in order to support
-            // flats that are declared as glowing we would need some method
-            // of telling Doomsday IF we want to inherit these properties when
-            // the plane flat changes...
-            if(R_GraphicResourceFlags(RC_FLAT, sec->planes[i].surface.texture) & TXF_GLOW)
-            {
-                // The new texture is glowing.
-
-                // Default height factor is 4
-                sec->planes[i].glow = 4;
-
-                // Always use the average colour.
-                GL_GetFlatColor(sec->planes[i].surface.texture, sec->planes[i].glowrgb);
-
-                // Do we need to update the plane glow flags?
-                if(sin->planeinfo[i].oldpic)
-                {
-                    if(!(R_GraphicResourceFlags(RC_FLAT, sin->planeinfo[i].oldpic) & TXF_GLOW))
-                        setGlow[i] = 1; // Turn the subsector plane glow flags on
-                }
-                else
-                    setGlow[i] = 1;
-            }
-            else if(sin->planeinfo[i].oldpic && (R_GraphicResourceFlags(RC_FLAT, sin->planeinfo[i].oldpic) & TXF_GLOW))
-            {
-                // The old texture was glowing but the new one is not.
-                // Clear the glow properties for this plane.
-                sec->planes[i].glow = 0;
-                memset(sec->planes[i].glowrgb, 0, 3);
-
-                setGlow[i] = -1; // Turn the subsector plane glow flags off
-            }
-
-            sin->planeinfo[i].oldpic = sec->planes[i].surface.texture;
-        }
-        else if((R_GraphicResourceFlags(RC_FLAT, sec->planes[i].surface.texture) & TXF_GLOW) != (sec->planes[i].glow != 0))
-        {
-            // The glow property of the current flat has been changed
-            // since last update.
-
-            // NOTE:
-            // This approach is hardly optimal but since flats will
-            // rarely/if ever have this property changed during normal
-            // gameplay (the RENDER_GLOWFLATS text string is depreciated and
-            // the only time this property might change is after a console
-            // RESET) so it doesn't matter.
-            if(!(R_GraphicResourceFlags(RC_FLAT, sec->planes[i].surface.texture) & TXF_GLOW) && sec->planes[i].glow != 0)
-            {
-                // The current flat is no longer glowing
-                sec->planes[i].glow = 0;
-                memset(sec->planes[i].glowrgb, 0, 3);
-                setGlow[i] = -1; // Turn the subsector plane glow flags off
-            }
-            else if((R_GraphicResourceFlags(RC_FLAT, sec->planes[i].surface.texture) & TXF_GLOW) && sec->planes[i].glow == 0)
-            {
-                // The current flat is now glowing
-                sec->planes[i].glow = 4;
-                GL_GetFlatColor(sec->planes[i].surface.texture, sec->planes[i].glowrgb);
-                setGlow[i] = 1; // Turn the subsector plane glow flags on
-            }
-        }
-    }
-
-    // Do we need to update the subsector plane glow flags?
-    if(setGlow[PLN_FLOOR] != 0 || setGlow[PLN_CEILING] != 0)
-    {
-        for(i = 0; i < sec->subscount; ++i)
-        {
-            subsector_t *sub = sec->subsectors[i];
-            subsectorinfo_t *subInfo = SUBSECT_INFO(sub);
-
-            // Update the plane's glow flag?
-            // For each plane
-            for(j = 0; j < NUM_PLANES; ++j)
-            {
-                if(setGlow[j] == 1)
-                    subInfo->plane[j].flags |= RPF_GLOW;
-                else if(setGlow[j] == -1)
-                    subInfo->plane[j].flags &= ~RPF_GLOW;
-            }
         }
     }
 

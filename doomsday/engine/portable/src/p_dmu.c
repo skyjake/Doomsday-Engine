@@ -1155,6 +1155,8 @@ static int SetProperty(void* ptr, void* context)
     case DMU_SIDE:
         {
         side_t* p = ptr;
+        sideinfo_t *info = SIDE_INFO(p);
+
         switch(args->prop)
         {
         case DMU_FLAGS:
@@ -1240,6 +1242,10 @@ static int SetProperty(void* ptr, void* context)
             Con_Error("SetProperty: Property %s is not writable in DMU_SIDE.\n",
                       DMU_Str(args->prop));
         }
+
+        R_UpdateSurface(&p->top, &info->oldtop, false);
+        R_UpdateSurface(&p->middle, &info->oldmiddle, false);
+        R_UpdateSurface(&p->bottom, &info->oldbottom, false);
         break;
         }
 

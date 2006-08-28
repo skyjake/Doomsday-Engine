@@ -567,9 +567,6 @@ int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
     switch(rclass)
     {
     case RC_TEXTURE:  // picid is a texture id
-        if(!r_texglow)
-            return 0;
-
         picid = texturetranslation[picid].current;
         if(!picid)
             return 0;
@@ -580,7 +577,7 @@ int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
         {
         flat_t *fl = R_GetFlat(picid);
 
-        if(!r_texglow || !fl)
+        if(!fl)
             return 0;
 
         return fl->flags;

@@ -41,6 +41,7 @@
 #define SECF_INVIS_CEILING  0x2
 
 #define LINE_INFO(x)    (lineinfo + GET_LINE_IDX(x))
+#define SIDE_INFO(x)    (sideinfo + GET_SIDE_IDX(x))
 #define SEG_INFO(x)     (seginfo + GET_SEG_IDX(x))
 #define SUBSECT_INFO(x) (subsecinfo + GET_SUBSECTOR_IDX(x))
 #define SECT_INFO(x)    (secinfo + GET_SECTOR_IDX(x))
@@ -56,6 +57,7 @@
 // Surface flags.
 #define SUF_TEXFIX      0x1        // Current texture is a fix replacement
                                    // (not sent to clients, returned via DMU etc)
+#define SUF_GLOW        0x2        // Surface glows (full bright).
 
 // Texture flags.
 #define TXF_MASKED      0x1
@@ -150,7 +152,7 @@ typedef enum {
 } rendpolytype_t;
 
 typedef struct {
-    float           pos[3];        // X and Y coordinates.
+    float           pos[3];        // X, Y and Z coordinates.
     gl_rgba_t       color;         // Color of the vertex.
     float           dist;          // Distance to the vertex.
 } rendpoly_vertex_t;
@@ -178,7 +180,6 @@ typedef struct rendpoly_s {
     // Wall specific data
     struct rendpoly_wall_s {
         float           length;
-        //gl_rgba_t       bottomcolor[2];
         struct div_t {
             byte            num;
             float           pos[RL_MAX_DIVS];
@@ -201,8 +202,7 @@ typedef struct {
     float           visheight;          // Visible plane height, float,
     float           visoffset;
     sector_t       *linked;             // Plane attached to another sector.
-    byte            oldrgb[3];          // Surface color tint
-    short           oldpic;
+    surface_t       oldsurface;         // Last known surface property values.
 } secplaneinfo_t;
 
 typedef struct {
@@ -236,19 +236,15 @@ typedef struct vertexillum_s {
     gl_rgba_t       color;        // Current color of the vertex.
     gl_rgba_t       dest;         // Destination color of the vertex.
     unsigned int    updatetime;   // When the value was calculated.
-    //sector_t *front;              // Sector of the vertex's owner.
     short           flags;
     vilight_t       casted[MAX_BIAS_AFFECTED];
 } vertexillum_t;
 
 typedef struct biasaffection_s {
     short           source;       // Index of light source.
-    //byte            rgb[3];     // Amount of light from the source.
 } biasaffection_t;
 
 typedef struct planeinfo_s {
-    short           flags;
-    int             pic;
     int             type;           // Plane type (ie PLN_FLOOR or PLN_CEILING)
     vertexillum_t  *illumination;
     biastracker_t   tracker;
@@ -289,7 +285,7 @@ typedef struct subsectorinfo_s {
     shadowlink_t   *shadows;
 } subsectorinfo_t;
 
-typedef struct lineinfo_side_s {
+typedef struct sideinfo_s {
     struct line_s  *neighbor[2];      // Left and right neighbour.
     boolean         pretendneighbor[2]; // Neighbor is not a "real" neighbor
                                       // (it does not share a line with this
@@ -297,12 +293,15 @@ typedef struct lineinfo_side_s {
     struct sector_s *proxsector[2];   // Sectors behind the neighbors.
     struct line_s  *backneighbor[2];  // Neighbour in the backsector (if any).
     struct line_s  *alignneighbor[2]; // Aligned left and right neighbours.
-} lineinfo_side_t;
+
+    surface_t       oldtop;         // Last known surface property values.
+    surface_t       oldmiddle;
+    surface_t       oldbottom;
+} sideinfo_t;
 
 typedef struct lineinfo_s {
     float           length;        // Accurate length.
     binangle_t      angle;         // Calculated from front side's normal.
-    lineinfo_side_t side[2];       // 0 = front, 1 = back
     boolean         selfrefhackroot; // This line is the root of a self-referencing
                                      // hack sector.
 } lineinfo_t;
@@ -400,6 +399,7 @@ extern sectorinfo_t *secinfo;
 extern seginfo_t *seginfo;
 extern subsectorinfo_t *subsecinfo;
 extern lineinfo_t *lineinfo;
+extern sideinfo_t *sideinfo;
 extern nodeindex_t *linelinks;
 extern long    *blockmaplump;      // offsets in blockmap are from here
 extern long    *blockmap;
@@ -430,6 +430,9 @@ void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
 void            R_UpdateSector(sector_t* sec, boolean forceUpdate);
+void            R_UpdateSurface(surface_t *current, surface_t *old,
+                                boolean forceUpdate);
+void            R_UpdateAllSurfaces(boolean forceUpdate);
 void            R_PrecacheLevel(void);
 void            R_InitAnimGroup(ded_group_t * def);
 void            R_ResetAnimGroups(void);

@@ -127,14 +127,14 @@ void R_ShadowDelta(pvec2_t delta, line_t *line, sector_t *frontSector)
     }
 }
 
-lineinfo_side_t *R_GetShadowLineSideInfo(shadowpoly_t *poly)
+sideinfo_t *R_GetShadowLineSideInfo(shadowpoly_t *poly)
 {
-    return &LINE_INFO(poly->line)->side[poly->flags & SHPF_FRONTSIDE ? 0 : 1];
+    return (sideinfo + poly->line->sidenum[poly->flags & SHPF_FRONTSIDE ? 0 : 1]);
 }
 
 line_t *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left, boolean back)
 {
-    lineinfo_side_t *side = R_GetShadowLineSideInfo(poly);
+    sideinfo_t *side = R_GetShadowLineSideInfo(poly);
     line_t **neighbors = (back ? side->backneighbor : side->neighbor);
 
     return neighbors[left ? 0 : 1];
@@ -154,7 +154,7 @@ sector_t *R_GetShadowSector(shadowpoly_t *poly)
  */
 sector_t *R_GetShadowProximity(shadowpoly_t *poly, boolean left)
 {
-    lineinfo_side_t *side = R_GetShadowLineSideInfo(poly);
+    sideinfo_t *side = R_GetShadowLineSideInfo(poly);
 
     return side->proxsector[left ? 0 : 1];
 }
@@ -495,7 +495,7 @@ int R_MakeShadowEdges(shadowpoly_t *storage)
     int     i, j, counter;
     sector_t *sector;
     line_t *line;
-    lineinfo_side_t *info;
+    sideinfo_t *info;
     boolean frontside;
     shadowpoly_t *poly, *sectorFirst, *allocator = storage;
 
@@ -509,7 +509,7 @@ int R_MakeShadowEdges(shadowpoly_t *storage)
         {
             line = sector->Lines[j];
             frontside = (line->frontsector == sector);
-            info = &LINE_INFO(line)->side[frontside ? 0 : 1];
+            info = sideinfo + line->sidenum[frontside ? 0 : 1];
 
             // If the line hasn't got two neighbors, it won't get a
             // shadow.
