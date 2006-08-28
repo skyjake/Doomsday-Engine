@@ -1,0 +1,86 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+
+# Nothing to build here
+build: 
+
+clean:
+	dh_testdir
+	dh_testroot
+	dh_clean 
+
+install:
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+	mkdir -p debian/deng-jhexen-ui/usr/share/games/deng/Data/jHexen/Auto
+	install -m 644 jxui.pk3 debian/deng-jhexen-ui/usr/share/games/deng/Data/jHexen/Auto
+	mkdir -p debian/deng-jhexen-ui/usr/share/bug/deng-jhexen-ui
+	install -m 644 debian/reportbug.control debian/deng-jhexen-ui/usr/share/bug/deng-jhexen-ui/control
+	install -m 644 debian/reportbug.presubj debian/deng-jhexen-ui/usr/share/bug/deng-jhexen-ui/presubj
+	install -m 755 debian/reportbug.script debian/deng-jhexen-ui/usr/share/bug/deng-jhexen-ui/script
+
+	mkdir -p debian/deng-jhexen-xccp/usr/share/games/deng/Data/jHexen/Auto
+	install -m 644 xccp11.zip debian/deng-jhexen-xccp/usr/share/games/deng/Data/jHexen/Auto
+	mkdir -p debian/deng-jhexen-xccp/usr/share/bug/deng-jhexen-xccp
+	install -m 644 debian/reportbug.control debian/deng-jhexen-xccp/usr/share/bug/deng-jhexen-xccp/control
+	install -m 644 debian/reportbug.presubj debian/deng-jhexen-xccp/usr/share/bug/deng-jhexen-xccp/presubj
+	install -m 755 debian/reportbug.script debian/deng-jhexen-xccp/usr/share/bug/deng-jhexen-xccp/script
+
+	mkdir -p debian/deng-jhexen-textures/usr/share/games/deng/Data/jHexen/Auto
+	install -m 644 JX-Textures.zip debian/deng-jhexen-textures/usr/share/games/deng/Data/jHexen/Auto
+	mkdir -p debian/deng-jhexen-textures/usr/share/bug/deng-jhexen-textures
+	install -m 644 debian/reportbug.control debian/deng-jhexen-textures/usr/share/bug/deng-jhexen-textures/control
+	install -m 644 debian/reportbug.presubj debian/deng-jhexen-textures/usr/share/bug/deng-jhexen-textures/presubj
+	install -m 755 debian/reportbug.script debian/deng-jhexen-textures/usr/share/bug/deng-jhexen-textures/script
+
+	mkdir -p debian/deng-jhexen-lights/usr/share/games/deng/Data/jHexen/Auto
+	install -m 644 JX-Lights.zip debian/deng-jhexen-lights/usr/share/games/deng/Data/jHexen/Auto
+	mkdir -p debian/deng-jhexen-lights/usr/share/bug/deng-jhexen-lights
+	install -m 644 debian/reportbug.control debian/deng-jhexen-lights/usr/share/bug/deng-jhexen-lights/control
+	install -m 644 debian/reportbug.presubj debian/deng-jhexen-lights/usr/share/bug/deng-jhexen-lights/presubj
+	install -m 755 debian/reportbug.script debian/deng-jhexen-lights/usr/share/bug/deng-jhexen-lights/script
+
+	mkdir -p debian/deng-jhexen-lightmaps/usr/share/games/deng/Data/jHexen/Auto
+	install -m 644 JX-LightMaps.zip debian/deng-jhexen-lightmaps/usr/share/games/deng/Data/jHexen/Auto
+	mkdir -p debian/deng-jhexen-lightmaps/usr/share/bug/deng-jhexen-lightmaps
+	install -m 644 debian/reportbug.control debian/deng-jhexen-lightmaps/usr/share/bug/deng-jhexen-lightmaps/control
+	install -m 644 debian/reportbug.presubj debian/deng-jhexen-lightmaps/usr/share/bug/deng-jhexen-lightmaps/presubj
+	install -m 755 debian/reportbug.script debian/deng-jhexen-lightmaps/usr/share/bug/deng-jhexen-lightmaps/script
+
+	mkdir -p debian/deng-jhexen-sycraftshexenmusic/usr/share/games/deng/Data/jHexen/Auto
+	install -m 644 sycrafts-hexen-music.zip debian/deng-jhexen-sycraftshexenmusic/usr/share/games/deng/Data/jHexen/Auto
+	mkdir -p debian/deng-jhexen-sycraftshexenmusic/usr/share/bug/deng-jhexen-sycraftshexenmusic
+	install -m 644 debian/reportbug.control debian/deng-jhexen-sycraftshexenmusic/usr/share/bug/deng-jhexen-sycraftshexenmusic/control
+	install -m 644 debian/reportbug.presubj debian/deng-jhexen-sycraftshexenmusic/usr/share/bug/deng-jhexen-sycraftshexenmusic/presubj
+	install -m 755 debian/reportbug.script debian/deng-jhexen-sycraftshexenmusic/usr/share/bug/deng-jhexen-sycraftshexenmusic/script
+
+# Build architecture-independent files here.
+binary-indep: install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs 
+	dh_installdocs
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-dependent files here.
+binary-arch:
+
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
