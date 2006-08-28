@@ -1,0 +1,2 @@
+?package(deng-iwad-plutonia-installer):needs="X11" section="Games/Arcade"\
+  title="Plutonia" command="/usr/games/doomsday -anifilter -texcomp -game jdoom -iwad /usr/share/games/doom/iwad/plutonia/plutonia.wad"

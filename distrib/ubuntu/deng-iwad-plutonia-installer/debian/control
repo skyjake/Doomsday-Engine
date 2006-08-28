@@ -1,0 +1,20 @@
+Source: deng-iwad-plutonia-installer
+Section: universe/games
+Priority: optional
+Maintainer: Jamie Jones <jamie_jones_au@yahoo.com.au>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.2
+
+Package: deng-iwad-plutonia-installer
+Architecture: all
+Depends: deng, glbsp
+Description: deng installer for plutonia.wad
+ This will install your plutonia.wad file for use with The Doomsday Engine,
+ and other Doom engines.
+ .
+ You will be prompted for the location of your plutonia.wad file so it
+ can be copied to the correct location for IWADS.
+ .
+ It will also run GLBSP on your IWAD to create a .gwa file for Doom engines
+ such as The Doomsday Engine and EDGE that need them.
+ 
