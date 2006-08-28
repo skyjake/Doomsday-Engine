@@ -1,0 +1,198 @@
+This package was debianized by Jamie Jones <jamie_jones_au@yahoo.com.au> on
+Wed, 2 Nov 2005 15:15:26 +1100.
+
+deng-jheretic-tp
+===========================================================================
+It was downloaded from http://cainx.free.fr/
+
+Copyright:
+
+Upstream Authors:
+Various
+
+License:
+
+Non Commercial Use Only
+
+<Internal Readme follows>
+Me: anthraxscare@hotmail.com
+
+jHeretic Retexuring Project 2003 --->> Optimised and Repack by Cain
+================================
+
+Hello kids...
+
+  Well here it is.  A result of far too much time than I care to mention.
+
+  I'm not sure why texture packs seem to skip this part, but in case you're 
+an invalid like at least half of us:  To use the textures with doomsday, 
+create then extract them into this directory:
+
+           c:\[doomsday root directory]\Data\jHeretic\Textures
+
+=======
+
+  While I have tried to hold true to maintain the artist's basic conceptual 
+idea, I thought that the original textures looked very dated and needed some 
+hefty "spicing" up.  As a result, you won't find ridiculous changes like 
+finding a nude clown where a skull used to be, but you will find that the 
+original basic texture has been replaced with a much more complex, intricate 
+picture with a surprising amount of detail. In short, these just make things 
+look an awful lot cooler.
+
+   Another thanks goes out to "splatterworld.de" for a stone texturing base 
+that helped shape roughly 20 of the 164 textures.  The only textures that 
+AREN'T replaced in this pack are textures that are currently being worked 
+into Models (by someone else... hint, hint) like weapons, hanging bodies 
+etc.
+
+   - Off hand, the mountain range background textures are a combination of 2 
+or 3 different mountains, so don't ask me where the mountain range is 
+located in real life - the answer's nowhere.
+
+Enjoy folks.  Wanna play online sometime?  I do.  I'm obviously bored.
+
+Seriously, please send me any questions if you have them.  Or even if you 
+don't.  Later.
+
+anthraxscare@hotmail.com
+
+
+===================================================================
+Check out the other retexturing projects currently underway:
+
+Doom2: http://switch.to/doom2textures
+Hexen: http://switch.to/hexentextures
+-these other projects I know little about.. contact "[Win]Elchtest" at: 
+doom2textures@justmail.de if you have questions or if you want to help.
+
+And don't forget to donate (yes, cash!) to the doomsday project at
+http://www.doomsdayhq.com
+
+deng-jheretic-ui
+===========================================================================
+It was downloaded from http://slide.newdoom.com/
+
+Copyright:
+
+Upstream Author:
+Slide et al<email unknown>
+
+License:
+Non Commercial Use Only
+
+<original readme follows>
+-----------------------------------
+    jHeretic User Interface pack  
+    -     v2.0 - 27/12/03      -
+            by Slide
+-----------------------------------
+
+----------------------
+ Install Instructions
+----------------------
+
+Welcome to the jHUI for jHeretic (on the Doomsday engine).
+To install simply locate your main Doomsday install
+folder on your machine (default c:\doomsday).
+
+This file after installation will be located within your
+docs\ subfolder.      
+
+
+-------------------
+  Version History
+-------------------
+
+v2.0  - 8 New Face Avatars.
+	Ammo Icons
+	Inventory Background
+
+v1.2  - *Note this was unreleased for various reasons*
+	New Used Inventory animations
+	New Map Overlays
+	New Ammo icons
+	New 'God' eyes overlays
+
+v1.06 -	*Note this was unreleased for various reasons*
+	The jHUI has been repackaged into a self extracting archive
+	New HUD Artifact icons
+	New legit Barback
+	Various little tweaks
+	New HUD Arrows
+
+v1.05 -	Added new versions of:
+
+	Chain, 
+	Statbar, 
+	lifebar, 
+	Paused, 
+	l/r horns, 
+	key graphics, 
+	Life Gem, 
+	barback 
+	Some other bits.
+	and A high res Credit screen - These have all been done by me.
+
+v1.01	- Fixed incorect title pic names (thanks EagleEye) 
+	  and 8bit font patches (thanks 1ntru)
+v1.0 	- Initial release
+
+
+------------------
+Credits
+------------------
+
+I finish this listing once the pack is finalised,  but the authors that made the contents of this pack are as follows:
+
+
+Chain, 
+Statbar, 
+lifebar, 
+Paused, 
+l/r horns, 
+key graphics, 
+Life Gem, 
+barback 
+Some other bits.
+Credit screen
+Expansion pack menu logo (based off Lord-Noctrun's)
+New legit Barback
+Various little tweaks
+New HUD Arrows
+Face Avatars
+Ammo Icons
+Artifact Icons
+
+Fontpack by:
+MoBro88 
+Sambo9000
+
+Titlepics by: 
+Nephil
+
+Golden Skull by:
+-RightField- 
+
+Menu Logo by:
+lord-noctrun
+
+
+
+
+I've gone through and resized, balanced and tweaked the images 
+and added a menu logo for the expansion pack. 
+
+deng-jheretic-ujhrp
+===========================================================================
+It was downloaded from http://cainx.free.fr/Heretic.htm
+
+Copyright:
+
+Upstream Authors:
+
+Cain et al <cainkaleb@hotmail.com>
+
+License:
+
+Non Commercial Use Only
