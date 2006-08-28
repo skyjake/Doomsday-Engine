@@ -416,16 +416,8 @@ void WI_drawEL(void)
     ddmapinfo_t minfo;
     char    levid[10];
 
-    if(gamemode == commercial)
-    {
-        sprintf(levid, "MAP%02i", wbs->next+1);
-        mapnum = wbs->next;
-    }
-    else
-    {
-        sprintf(levid, "E%iM%i", gameepisode, wbs->next+1);
-        mapnum = ((gameepisode -1) * 9) + wbs->next;
-    }
+    P_GetMapLumpName(gameepisode, wbs->next+1, levid);
+    mapnum = G_GetLevelNumber(gameepisode, wbs->next);
 
     // See if there is a level name
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.name)

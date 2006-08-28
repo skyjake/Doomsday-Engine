@@ -35,9 +35,6 @@
 
 #define NUM_TEAMS       4       // Color = team.
 
-#define NUMEPISODES     4
-#define NUMMAPS         9
-
 // GLOBAL LOCATIONS
 #define WI_TITLEY       2
 #define WI_SPACINGY     33
@@ -158,98 +155,6 @@ extern dpatch_t *lnames;
 
 static teaminfo_t teaminfo[NUM_TEAMS];
 
-static point_t lnodes[NUMEPISODES][NUMMAPS] = {
-    // Episode 0 World Map
-    {
-     {185, 164},                // location of level 0 (CJ)
-     {148, 143},                // location of level 1 (CJ)
-     {69, 122},                 // location of level 2 (CJ)
-     {209, 102},                // location of level 3 (CJ)
-     {116, 89},                 // location of level 4 (CJ)
-     {166, 55},                 // location of level 5 (CJ)
-     {71, 56},                  // location of level 6 (CJ)
-     {135, 29},                 // location of level 7 (CJ)
-     {71, 24}                   // location of level 8 (CJ)
-     },
-
-    // Episode 1 World Map should go here
-    {
-     {254, 25},                 // location of level 0 (CJ)
-     {97, 50},                  // location of level 1 (CJ)
-     {188, 64},                 // location of level 2 (CJ)
-     {128, 78},                 // location of level 3 (CJ)
-     {214, 92},                 // location of level 4 (CJ)
-     {133, 130},                // location of level 5 (CJ)
-     {208, 136},                // location of level 6 (CJ)
-     {148, 140},                // location of level 7 (CJ)
-     {235, 158}                 // location of level 8 (CJ)
-     },
-
-    // Episode 2 World Map should go here
-    {
-     {156, 168},                // location of level 0 (CJ)
-     {48, 154},                 // location of level 1 (CJ)
-     {174, 95},                 // location of level 2 (CJ)
-     {265, 75},                 // location of level 3 (CJ)
-     {130, 48},                 // location of level 4 (CJ)
-     {279, 23},                 // location of level 5 (CJ)
-     {198, 48},                 // location of level 6 (CJ)
-     {140, 25},                 // location of level 7 (CJ)
-     {281, 136}                 // location of level 8 (CJ)
-     }
-};
-
-//
-// Animation locations for episode 0 (1).
-// Using patches saves a lot of space,
-//  as they replace 320x200 full screen frames.
-//
-static wianim_t epsd0animinfo[] = {
-    {ANIM_ALWAYS, TICRATE / 3, 3, {224, 104}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {184, 160}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {112, 136}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {72, 112}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {88, 96}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {64, 48}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {192, 40}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {136, 16}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {80, 16}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {64, 24}}
-};
-
-static wianim_t epsd1animinfo[] = {
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 1},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 2},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 3},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 4},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 5},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 6},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 7},
-    {ANIM_LEVEL, TICRATE / 3, 3, {192, 144}, 8},
-    {ANIM_LEVEL, TICRATE / 3, 1, {128, 136}, 8}
-};
-
-static wianim_t epsd2animinfo[] = {
-    {ANIM_ALWAYS, TICRATE / 3, 3, {104, 168}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {40, 136}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {160, 96}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {104, 80}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {120, 32}},
-    {ANIM_ALWAYS, TICRATE / 4, 3, {40, 0}}
-};
-
-static int NUMANIMS[NUMEPISODES] = {
-    sizeof(epsd0animinfo) / sizeof(wianim_t),
-    sizeof(epsd1animinfo) / sizeof(wianim_t),
-    sizeof(epsd2animinfo) / sizeof(wianim_t)
-};
-
-static wianim_t *anims[NUMEPISODES] = {
-    epsd0animinfo,
-    epsd1animinfo,
-    epsd2animinfo
-};
-
 // used to accelerate or skip a stage
 static int acceleratestage;
 
@@ -302,12 +207,6 @@ static int cnt_pause;
 
 // background (map of levels).
 static dpatch_t bg;
-
-// You Are Here graphic
-static dpatch_t yah[2];
-
-// splat
-static dpatch_t splat;
 
 // %, : graphics
 static dpatch_t percent;
@@ -416,16 +315,8 @@ void WI_drawEL(void)
     ddmapinfo_t minfo;
     char    levid[10];
 
-    if(gamemode == commercial)
-    {
-        sprintf(levid, "MAP%02i", wbs->next+1);
-        mapnum = wbs->next;
-    }
-    else
-    {
-        sprintf(levid, "E%iM%i", gameepisode, wbs->next+1);
-        mapnum = ((gameepisode -1) * 9) + wbs->next;
-    }
+    P_GetMapLumpName(gameepisode, wbs->next+1, levid);
+    mapnum = G_GetLevelNumber(gameepisode, wbs->next);
 
     // See if there is a level name
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.name)
@@ -451,136 +342,19 @@ void WI_drawEL(void)
                  lname, false, ALIGN_CENTER);
 }
 
-void WI_drawOnLnode(int n, dpatch_t * c)
-{
-    int     i;
-    int     left;
-    int     top;
-    int     right;
-    int     bottom;
-    boolean fits = false;
-
-    i = 0;
-    do
-    {
-        left = lnodes[wbs->epsd][n].x - SHORT(c[i].leftoffset);
-        top = lnodes[wbs->epsd][n].y - SHORT(c[i].topoffset);
-        right = left + SHORT(c[i].width);
-        bottom = top + SHORT(c[i].height);
-        if(left >= 0 && right < SCREENWIDTH && top >= 0 &&
-           bottom < SCREENHEIGHT)
-            fits = true;
-        else
-            i++;
-    } while(!fits && i != 2);
-
-    if(fits && i < 2)
-    {
-        WI_DrawPatch(lnodes[wbs->epsd][n].x, lnodes[wbs->epsd][n].y, 1, 1, 1, 1,
-                     c[i].lump, NULL, false, ALIGN_LEFT);
-    }
-    else
-    {
-        // DEBUG
-        Con_Message("Could not place patch on level %d", n + 1);
-    }
-}
-
 void WI_initAnimatedBack(void)
 {
-    int     i;
-    wianim_t *a;
-
-    if(gamemode == commercial)
-        return;
-    if(wbs->epsd > 2)
-        return;
-
-    for(i = 0; i < NUMANIMS[wbs->epsd]; i++)
-    {
-        a = &anims[wbs->epsd][i];
-
-        // init variables
-        a->ctr = -1;
-
-        // specify the next time to draw it
-        if(a->type == ANIM_ALWAYS)
-            a->nexttic = bcnt + 1 + (M_Random() % a->period);
-        else if(a->type == ANIM_RANDOM)
-            a->nexttic = bcnt + 1 + a->data2 + (M_Random() % a->data1);
-        else if(a->type == ANIM_LEVEL)
-            a->nexttic = bcnt + 1;
-    }
+    // nothing to do
 }
 
 void WI_updateAnimatedBack(void)
 {
-    int     i;
-    wianim_t *a;
-
-    if(gamemode == commercial)
-        return;
-    if(wbs->epsd > 2)
-        return;
-
-    for(i = 0; i < NUMANIMS[wbs->epsd]; i++)
-    {
-        a = &anims[wbs->epsd][i];
-
-        if(bcnt == a->nexttic)
-        {
-            switch (a->type)
-            {
-            case ANIM_ALWAYS:
-                if(++a->ctr >= a->nanims)
-                    a->ctr = 0;
-                a->nexttic = bcnt + a->period;
-                break;
-
-            case ANIM_RANDOM:
-                a->ctr++;
-                if(a->ctr == a->nanims)
-                {
-                    a->ctr = -1;
-                    a->nexttic = bcnt + a->data2 + (M_Random() % a->data1);
-                }
-                else
-                    a->nexttic = bcnt + a->period;
-                break;
-
-            case ANIM_LEVEL:
-                // gawd-awful hack for level anims
-                if(!(state == StatCount && i == 7) && wbs->next == a->data1)
-                {
-                    a->ctr++;
-                    if(a->ctr == a->nanims)
-                        a->ctr--;
-                    a->nexttic = bcnt + a->period;
-                }
-                break;
-            }
-        }
-    }
+    // nothing to do
 }
 
 void WI_drawAnimatedBack(void)
 {
-    int     i;
-    wianim_t *a;
-
-    if(gamemode == commercial)
-        return;
-    if(wbs->epsd > 2)
-        return;
-
-    for(i = 0; i < NUMANIMS[wbs->epsd]; i++)
-    {
-        a = &anims[wbs->epsd][i];
-        if(a->ctr >= 0)
-            WI_DrawPatch(a->loc.x, a->loc.y, 1, 1, 1, 1, a->p[a->ctr].lump,
-                         NULL, false, ALIGN_LEFT);
-    }
-
+    // nothing to do
 }
 
 /*
@@ -713,69 +487,9 @@ void WI_updateNoState(void)
 
 }
 
-void WI_initShowNextLoc(void)
-{
-    state = ShowNextLoc;
-    acceleratestage = 0;
-    cnt = SHOWNEXTLOCDELAY * TICRATE;
-
-    WI_initAnimatedBack();
-
-    NetSv_Intermission(IMF_STATE, state, 0);
-}
-
-void WI_updateShowNextLoc(void)
-{
-    WI_updateAnimatedBack();
-
-    if(!--cnt || acceleratestage)
-        WI_initNoState();
-    else
-        snl_pointeron = (cnt & 31) < 20;
-}
-
-void WI_drawShowNextLoc(void)
-{
-    int     i;
-    int     last;
-
-    WI_slamBackground();
-
-    // draw animated background
-    WI_drawAnimatedBack();
-
-    if(gamemode != commercial)
-    {
-        if(wbs->epsd > 2)
-        {
-            WI_drawEL();
-            return;
-        }
-
-        last = (wbs->last == 8) ? wbs->next - 1 : wbs->last;
-
-        // draw a splat on taken cities.
-        for(i = 0; i <= last; i++)
-            WI_drawOnLnode(i, &splat);
-
-        // splat the secret level?
-        if(wbs->didsecret)
-            WI_drawOnLnode(8, &splat);
-
-        // draw flashing ptr
-        if(snl_pointeron)
-            WI_drawOnLnode(wbs->next, yah);
-    }
-
-    // draws which level you are entering..
-    if((gamemode != commercial) || wbs->next != 30)
-        WI_drawEL();
-}
-
 void WI_drawNoState(void)
 {
     snl_pointeron = true;
-    WI_drawShowNextLoc();
 }
 
 int WI_fragSum(int teamnum)
@@ -895,10 +609,7 @@ void WI_updateDeathmatchStats(void)
         if(acceleratestage)
         {
             S_LocalSound(sfx_slop, 0);
-            if(gamemode == commercial)
-                WI_initNoState();
-            else
-                WI_initShowNextLoc();
+            WI_initNoState();
         }
     }
     else if(dm_state & 1)
@@ -1160,10 +871,7 @@ void WI_updateNetgameStats(void)
         if(acceleratestage)
         {
             S_LocalSound(sfx_sgcock, 0);
-            if(gamemode == commercial)
-                WI_initNoState();
-            else
-                WI_initShowNextLoc();
+            WI_initNoState();
         }
     }
     else if(ng_state & 1)
@@ -1344,11 +1052,7 @@ void WI_updateStats(void)
         if(acceleratestage)
         {
             S_LocalSound(sfx_sgcock, 0);
-
-            if(gamemode == commercial)
-                WI_initNoState();
-            else
-                WI_initShowNextLoc();
+            WI_initNoState();
         }
     }
     else if(sp_state & 1)
@@ -1455,10 +1159,6 @@ void WI_Ticker(void)
             WI_updateStats();
         break;
 
-    case ShowNextLoc:
-        WI_updateShowNextLoc();
-        break;
-
     case NoState:
         WI_updateNoState();
         break;
@@ -1469,9 +1169,7 @@ void WI_Ticker(void)
 void WI_loadData(void)
 {
     int     i;
-    int     j;
     char    name[9];
-    wianim_t *a;
 
     if(gamemode == commercial)
         strcpy(name, "INTERPIC");
@@ -1489,41 +1187,6 @@ void WI_loadData(void)
         // background
         R_CachePatch(&bg, name);
         GL_DrawPatch(0, 0, bg.lump);
-    }
-
-    if(gamemode != commercial)
-    {
-        // you are here
-        R_CachePatch(&yah[0], "WIURH0");
-
-        // you are here (alt.)
-        R_CachePatch(&yah[1], "WIURH1");
-
-        // splat
-        R_CachePatch(&splat, "WISPLAT");
-
-        if(wbs->epsd < 3)
-        {
-            for(j = 0; j < NUMANIMS[wbs->epsd]; j++)
-            {
-                a = &anims[wbs->epsd][j];
-                for(i = 0; i < a->nanims; i++)
-                {
-                    // MONDO HACK!
-                    if(wbs->epsd != 1 || j != 8)
-                    {
-                        // animations
-                        sprintf(name, "WIA%d%.2d%.2d", wbs->epsd, j, i);
-                        R_CachePatch(&a->p[i], name);
-                    }
-                    else
-                    {
-                        // HACK ALERT!
-                        memcpy(&a->p[i], &anims[1][4].p[i], sizeof(dpatch_t));
-                    }
-                }
-            }
-        }
     }
 
     // More hacks on minus sign.
@@ -1680,10 +1343,6 @@ void WI_Drawer(void)
             WI_drawStats();
         break;
 
-    case ShowNextLoc:
-        WI_drawShowNextLoc();
-        break;
-
     case NoState:
         WI_drawNoState();
         break;
@@ -1782,8 +1441,6 @@ void WI_SetState(stateenum_t st)
 {
     if(st == StatCount)
         WI_initStats();
-    if(st == ShowNextLoc)
-        WI_initShowNextLoc();
     if(st == NoState)
         WI_initNoState();
 }
