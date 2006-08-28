@@ -242,7 +242,7 @@ void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, int destWidth,
     int     srcNumPels = srcWidth * srcHeight;
     int     destNumPels = destWidth * destHeight;
 
-    for(y = 0; y < regHeight; y++)  // Copy line by line.
+    for(y = 0; y < regHeight; ++y)  // Copy line by line.
     {
         // The color index data.
         memcpy(dest + destRegX + (y + destRegY) * destWidth,
@@ -268,14 +268,14 @@ static void LookupPal18to8(byte *palette)
     byte    palRGB[3];
     unsigned int diff, smallestDiff, closestIndex = 0;
 
-    for(r = 0; r < 64; r++)
-        for(g = 0; g < 64; g++)
-            for(b = 0; b < 64; b++)
+    for(r = 0; r < 64; ++r)
+        for(g = 0; g < 64; ++g)
+            for(b = 0; b < 64; ++b)
             {
                 // We must find the color index that most closely
                 // resembles this RGB combination.
                 smallestDiff = -1;
-                for(i = 0; i < 256; i++)
+                for(i = 0; i < 256; ++i)
                 {
                     memcpy(palRGB, palette + 3 * i, 3);
                     diff =
@@ -308,10 +308,10 @@ static void LoadPalette()
     int     i, c, gammalevel = /*gammaSupport? 0 : */ usegamma;
 
     // Prepare the color table.
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         // Adjust the values for the appropriate gamma level.
-        for(c = 0; c < 3; c++)
+        for(c = 0; c < 3; ++c)
             paldata[i * 3 + c] = gammatable[gammalevel][playpal[i * 3 + c]];
     }
     gl.Palette(DGL_RGB, paldata);
@@ -571,7 +571,7 @@ void GL_LoadFlareMap(ded_flaremap_t * map, int oldidx)
         // Try to convert str "map->tex" to a flare tex constant idx
         // Second pass:
         // Use oldidx (if available) as a flare tex constant idx
-        for(pass = 0; pass < 2 && !loaded; pass++)
+        for(pass = 0; pass < 2 && !loaded; ++pass)
         {
             ok = false;
             if(pass == 0 && map->id[0])
@@ -735,7 +735,7 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
     if(loadLightMaps || loadFlares)
     {
         // Load lightmaps and flaremaps.
-        for(i = 0; i < defs.count.lights.num; i++)
+        for(i = 0; i < defs.count.lights.num; ++i)
         {
             if(loadLightMaps)
             {
@@ -748,9 +748,9 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
                 GL_LoadFlareMap(&defs.lights[i].flare, -1);
         }
         for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-            i++, decor++)
+            ++i, decor++)
         {
-            for(k = 0; k < DED_DECOR_NUM_LIGHTS; k++)
+            for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
             {
                 if(loadFlares)
                     GL_LoadFlareMap(&decor->lights[k].flare,
@@ -788,7 +788,7 @@ void GL_ClearSystemTextures(void)
     if(!texInited)
         return;
 
-    for(i = 0; i < defs.count.lights.num; i++)
+    for(i = 0; i < defs.count.lights.num; ++i)
     {
         GL_DeleteLightMap(&defs.lights[i].up);
         GL_DeleteLightMap(&defs.lights[i].down);
@@ -797,9 +797,9 @@ void GL_ClearSystemTextures(void)
         GL_DeleteFlareMap(&defs.lights[i].flare);
     }
     for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        i++, decor++)
+        ++i, decor++)
     {
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; k++)
+        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
             if(!R_IsValidLightDecoration(&decor->lights[k]))
                 break;
@@ -841,13 +841,13 @@ void GL_ClearRuntimeTextures(void)
     RL_DeleteLists();
 
     // Textures and sprite lumps.
-    for(i = 0; i < numtextures; i++)
+    for(i = 0; i < numtextures; ++i)
         GL_DeleteTexture(i);
-    for(i = 0; i < numspritelumps; i++)
+    for(i = 0; i < numspritelumps; ++i)
         GL_DeleteSprite(i);
 
     // The translated sprite textures.
-    for(i = 0; i < numtranssprites; i++)
+    for(i = 0; i < numtranssprites; ++i)
     {
         gl.DeleteTextures(1, &transsprites[i].tex);
         transsprites[i].tex = 0;
@@ -858,7 +858,7 @@ void GL_ClearRuntimeTextures(void)
     numtranssprites = 0;
 
     // Delete skins.
-    for(i = 0; i < numskinnames; i++)
+    for(i = 0; i < numskinnames; ++i)
     {
         gl.DeleteTextures(1, &skinnames[i].tex);
         skinnames[i].tex = 0;
@@ -876,11 +876,11 @@ void GL_ClearRuntimeTextures(void)
     }
     VERBOSE(Con_Message
             ("GL_ClearRuntimeTextures: %i detail texture " "instances.\n", i));
-    for(i = 0; i < defs.count.details.num; i++)
+    for(i = 0; i < defs.count.details.num; ++i)
         details[i].gltex = 0;
 
     // Surface reflection textures and masks.
-    for(i = 0; i < defs.count.reflections.num; i++)
+    for(i = 0; i < defs.count.reflections.num; ++i)
     {
         GL_DeleteReflectionMap(&defs.reflections[i]);
     }
@@ -888,7 +888,7 @@ void GL_ClearRuntimeTextures(void)
     GL_DeleteRawImages();
 
     // Delete any remaining lump textures (e.g. flats).
-    for(i = 0; i < numlumptexinfo; i++)
+    for(i = 0; i < numlumptexinfo; ++i)
     {
         gl.DeleteTextures(2, lumptexinfo[i].tex);
         memset(lumptexinfo[i].tex, 0, sizeof(lumptexinfo[i].tex));
@@ -938,7 +938,7 @@ void PalIdxToRGB(byte *pal, int idx, byte *rgb)
     int     c;
     int     gammalevel = /*gammaSupport? 0 : */ usegamma;
 
-    for(c = 0; c < 3; c++)      // Red, green and blue.
+    for(c = 0; c < 3; ++c)      // Red, green and blue.
         rgb[c] = gammatable[gammalevel][pal[idx * 3 + c]];
 }
 
@@ -966,12 +966,12 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
     // Conversion from pal8(a) to RGB(A).
     if(informat <= 2 && outformat >= 3)
     {
-        for(i = 0; i < numPixels; i++, in += inSize, out += outSize)
+        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
             // Copy the RGB values in every case.
             if(gamma)
             {
-                for(a = 0; a < 3; a++)
+                for(a = 0; a < 3; ++a)
                     out[a] = gammatable[usegamma][*(palette + 3 * (*in) + a)];
             }
             else
@@ -989,7 +989,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
     // Conversion from RGB(A) to pal8(a), using pal18to8.
     else if(informat >= 3 && outformat <= 2)
     {
-        for(i = 0; i < numPixels; i++, in += inSize, out += outSize)
+        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
             // Convert the color value.
             *out = pal18to8[RGB18(in[0] >> 2, in[1] >> 2, in[2] >> 2)];
@@ -1003,7 +1003,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
     }
     else if(informat == 3 && outformat == 4)
     {
-        for(i = 0; i < numPixels; i++, in += inSize, out += outSize)
+        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
             memcpy(out, in, 3);
             out[3] = 0xff;      // Opaque.
@@ -1040,7 +1040,7 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
         out += outStride;
 
         // Step at each out pixel between the first and last ones.
-        for(i = 1; i < outLen - 1; i++, out += outStride, inPos += inPosDelta)
+        for(i = 1; i < outLen - 1; ++i, out += outStride, inPos += inPosDelta)
         {
             col1 = in + (inPos >> FRACBITS) * inStride;
             col2 = col1 + inStride;
@@ -1063,13 +1063,13 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
         unsigned int cumul[4] = { 0, 0, 0, 0 }, count = 0;
         int     outpos = 0;
 
-        for(i = 0; i < inLen; i++, in += inStride)
+        for(i = 0; i < inLen; ++i, in += inStride)
         {
             if((int) (i * inToOutScale) != outpos)
             {
                 outpos = (int) i *inToOutScale;
 
-                for(c = 0; c < comps; c++)
+                for(c = 0; c < comps; ++c)
                 {
                     out[c] = cumul[c] / count;
                     cumul[c] = 0;
@@ -1077,13 +1077,13 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
                 count = 0;
                 out += outStride;
             }
-            for(c = 0; c < comps; c++)
+            for(c = 0; c < comps; ++c)
                 cumul[c] += in[c];
             count++;
         }
         // Fill in the last pixel, too.
         if(count)
-            for(c = 0; c < comps; c++)
+            for(c = 0; c < comps; ++c)
                 out[c] = cumul[c] / count;
     }
     else
@@ -1120,14 +1120,14 @@ void GL_ScaleBuffer32(byte *in, int inWidth, int inHeight, byte *out,
     temp = M_Malloc(outWidth * inHeight * comps);
 
     // First scale horizontally, to outWidth, into the temporary buffer.
-    for(i = 0; i < inHeight; i++)
+    for(i = 0; i < inHeight; ++i)
     {
         scaleLine(in + inWidth * comps * i, comps, temp + outWidth * comps * i,
                   comps, outWidth, inWidth, comps);
     }
 
     // Then scale vertically, to outHeight, into the out buffer.
-    for(i = 0; i < outWidth; i++)
+    for(i = 0; i < outWidth; ++i)
     {
         scaleLine(temp + comps * i, outWidth * comps, out + comps * i,
                   outWidth * comps, outHeight, inHeight, comps);
@@ -1158,16 +1158,16 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
         int     outDim = width > 1 ? outW : outH;
 
         out = in;
-        for(x = 0; x < outDim; x++, in += comps * 2)
-            for(c = 0; c < comps; c++, out++)
+        for(x = 0; x < outDim; ++x, in += comps * 2)
+            for(c = 0; c < comps; ++c, out++)
                 *out = (in[c] + in[comps + c]) >> 1;
     }
     else                        // Unconstrained, 2x2 -> 1x1 reduction?
     {
         out = in;
-        for(y = 0; y < outH; y++, in += width * comps)
-            for(x = 0; x < outW; x++, in += comps * 2)
-                for(c = 0; c < comps; c++, out++)
+        for(y = 0; y < outH; ++y, in += width * comps)
+            for(x = 0; x < outW; ++x, in += comps * 2)
+                for(c = 0; c < comps; ++c, out++)
                     *out =
                         (in[c] + in[comps + c] + in[comps * width + c] +
                          in[comps * (width + 1) + c]) >> 2;
@@ -1346,7 +1346,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
         {
             // Copy the image into a buffer with power-of-two dimensions.
             memset(buffer, 0, levelWidth * levelHeight * comps);
-            for(i = 0; i < height; i++) // Copy line by line.
+            for(i = 0; i < height; ++i) // Copy line by line.
                 memcpy(buffer + levelWidth * comps * i,
                        rgbaOriginal + width * comps * i, comps * width);
         }
@@ -1381,7 +1381,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
 
         // Since this is a paletted texture, we may need to manually
         // generate the mipmaps.
-        for(i = 0; levelWidth || levelHeight; i++)
+        for(i = 0; levelWidth || levelHeight; ++i)
         {
             if(!levelWidth)
                 levelWidth = 1;
@@ -1800,7 +1800,7 @@ static int DrawRealPatch(byte *buffer, byte *palette, int texwidth,
     destAlphaTop = buffer + origx + bufsize;
     w = SHORT(patch->width);
     x = origx;
-    for(; col < w; col++, destTop++, destAlphaTop++, x++)
+    for(; col < w; ++col, destTop++, destAlphaTop++, ++x)
     {
         column = (column_t *) ((byte *) patch + LONG(patch->columnofs[col]));
         top = -1;
@@ -1858,7 +1858,7 @@ static int DrawRealPatch(byte *buffer, byte *palette, int texwidth,
     {
         // Scan through the RGBA buffer and check for sub-0xff alpha.
         source = buffer + texwidth * texheight;
-        for(i = 0, count = 0; i < texwidth * texheight; i++)
+        for(i = 0, count = 0; i < texwidth * texheight; ++i)
         {
             if(source[i] < 0xff)
             {
@@ -1887,7 +1887,7 @@ void TranslatePatch(patch_t *patch, byte *transTable)
     byte   *source;
     int     w = SHORT(patch->width);
 
-    for(; col < w; col++)
+    for(; col < w; ++col)
     {
         column = (column_t *) ((byte *) patch + LONG(patch->columnofs[col]));
         // Step through the posts in a column
@@ -1920,7 +1920,7 @@ void GL_ConvertToLuminance(image_t * image)
     }
 
     // Average the RGB colors.
-    for(p = 0; p < total; p++, ptr += image->pixelSize)
+    for(p = 0; p < total; ++p, ptr += image->pixelSize)
     {
         image->pixels[p] = (ptr[0] + ptr[1] + ptr[2]) / 3;
     }
@@ -1932,7 +1932,7 @@ void GL_ConvertToAlpha(image_t * image, boolean makeWhite)
     int     p, total = image->width * image->height;
 
     GL_ConvertToLuminance(image);
-    for(p = 0; p < total; p++)
+    for(p = 0; p < total; ++p)
     {
         // Move the average color to the alpha channel, make the
         // actual color white.
@@ -2028,7 +2028,7 @@ byte   *GL_LoadImage(image_t * img, const char *imagefn, boolean useModelPath)
         {
             ckdest = M_Malloc(4 * img->width * img->height);
             for(in = img->pixels, out = ckdest, i = 0; i < numpx;
-                i++, in += img->pixelSize, out += 4)
+                ++i, in += img->pixelSize, out += 4)
             {
                 if(GL_ColorKey(in))
                     memset(out, 0, 4);  // Totally black.
@@ -2044,7 +2044,7 @@ byte   *GL_LoadImage(image_t * img, const char *imagefn, boolean useModelPath)
         else                    // We can do the keying in-buffer.
         {
             // This preserves the alpha values of non-keyed pixels.
-            for(i = 0; i < img->height; i++)
+            for(i = 0; i < img->height; ++i)
                 GL_DoColorKeying(img->pixels + 4 * i * img->width, img->width);
         }
         // Color keying is done; now we have 4 bytes per pixel.
@@ -2055,7 +2055,7 @@ byte   *GL_LoadImage(image_t * img, const char *imagefn, boolean useModelPath)
     // Any alpha pixels?
     img->isMasked = false;
     if(img->pixelSize == 4)
-        for(i = 0, in = img->pixels; i < numpx; i++, in += 4)
+        for(i = 0, in = img->pixels; i < numpx; ++i, in += 4)
             if(in[3] < 255)
             {
                 img->isMasked = true;
@@ -2252,7 +2252,7 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 
     // Draw all the patches. Check for alpha pixels after last patch has
     // been drawn.
-    for(i = 0; i < tex->patchcount; i++)
+    for(i = 0; i < tex->patchcount; ++i)
     {
         patch = W_CacheLumpNum(tex->patches[i].patch, PU_CACHE);
         // Check for big patches?
@@ -2430,7 +2430,7 @@ int LineAverageRGB(byte *imgdata, int width, int height, int line, byte *rgb,
     int     integerRGB[3] = { 0, 0, 0 };
     byte    col[3];
 
-    for(i = 0; i < width; i++)
+    for(i = 0; i < width; ++i)
     {
         // Not transparent?
         if(alphaStart[i] > 0 || !has_alpha)
@@ -2438,7 +2438,7 @@ int LineAverageRGB(byte *imgdata, int width, int height, int line, byte *rgb,
             count++;
             // Ignore the gamma level.
             memcpy(col, palette + 3 * start[i], 3);
-            for(c = 0; c < 3; c++)
+            for(c = 0; c < 3; ++c)
                 integerRGB[c] += col[c];
         }
     }
@@ -2447,7 +2447,7 @@ int LineAverageRGB(byte *imgdata, int width, int height, int line, byte *rgb,
         return 0;
 
     // We're going to make it!
-    for(c = 0; c < 3; c++)
+    for(c = 0; c < 3; ++c)
         rgb[c] = integerRGB[c] / count;
     return 1;                   // Successful.
 }
@@ -2460,17 +2460,17 @@ void ImageAverageRGB(byte *imgdata, int width, int height, byte *rgb,
 {
     int     i, c, integerRGB[3] = { 0, 0, 0 }, count = 0;
 
-    for(i = 0; i < height; i++)
+    for(i = 0; i < height; ++i)
     {
         if(LineAverageRGB(imgdata, width, height, i, rgb, palette, true))
         {
             count++;
-            for(c = 0; c < 3; c++)
+            for(c = 0; c < 3; ++c)
                 integerRGB[c] += rgb[c];
         }
     }
     if(count)                   // If there were pixels...
-        for(c = 0; c < 3; c++)
+        for(c = 0; c < 3; ++c)
             rgb[c] = integerRGB[c] / count;
 }
 
@@ -2485,13 +2485,13 @@ static void ColorOutlines(byte *buffer, int width, int height)
     byte   *ptr;
     int     i, k, a, b;
 
-    for(k = 0; k < height; k++)
-        for(i = 0; i < width; i++)
+    for(k = 0; k < height; ++k)
+        for(i = 0; i < width; ++i)
             // Solid pixels spread around...
             if(buffer[numpels + i + k * width])
             {
-                for(b = -1; b <= 1; b++)
-                    for(a = -1; a <= 1; a++)
+                for(b = -1; b <= 1; ++b)
+                    for(a = -1; a <= 1; ++a)
                     {
                         // First check that the pixel is OK.
                         if((!a && !b) || i + a < 0 || k + b < 0 ||
@@ -2519,7 +2519,7 @@ static void DeSaturate(byte *buffer, int width, int height)
 
     // What is the maximum color value?
     max = 0;
-    for(i = 0; i < numpels; i++)
+    for(i = 0; i < numpels; ++i)
     {
         rgb = &palette[buffer[i] * 3];
         temp = (2*rgb[0] + 4*rgb[1] + 3*rgb[2]) / 9;
@@ -2529,7 +2529,7 @@ static void DeSaturate(byte *buffer, int width, int height)
         }
     }
 
-    for(i = 0; i < numpels; i++)
+    for(i = 0; i < numpels; ++i)
     {
         rgb = &palette[buffer[i] * 3];
 
@@ -2702,7 +2702,7 @@ skycol_t *GL_GetSkyColor(int texidx)
         return NULL;
 
     // Try to find a skytop color for this.
-    for(i = 0; i < num_skytop_colors; i++)
+    for(i = 0; i < num_skytop_colors; ++i)
         if(skytop_colors[i].texidx == texidx)
             return skytop_colors + i;
 
@@ -2768,12 +2768,12 @@ int amplify(byte *rgb)
 {
     int     i, max = 0;
 
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         if(rgb[i] > max)
             max = rgb[i];
     if(max)
     {
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
             rgb[i] *= 255.0f / max;
     }
     return max;
@@ -2793,7 +2793,7 @@ void averageColorIdx(rgbcol_t * col, byte *data, int w, int h, byte *palette,
     // First clear them.
     memset(col->rgb, 0, sizeof(col->rgb));
     r = g = b = count = 0;
-    for(i = 0; i < w * h; i++)
+    for(i = 0; i < w * h; ++i)
     {
         if(!has_alpha || alphaStart[i])
         {
@@ -2822,13 +2822,13 @@ void averageColorRGB(rgbcol_t * col, byte *data, int w, int h)
     if(!count)
         return;
     memset(cumul, 0, sizeof(cumul));
-    for(i = 0; i < count; i++)
+    for(i = 0; i < count; ++i)
     {
         cumul[0] += *data++;
         cumul[1] += *data++;
         cumul[2] += *data++;
     }
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         col->rgb[i] = cumul[i] / count;
     amplify(col->rgb);
 }
@@ -2856,8 +2856,10 @@ void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
         // In paletted mode, the alpha channel follows the actual image.
         alphasrc = buffer + width * height;
 
-    for(k = 0; k < height; k++)
-        for(i = 0; i < width; i++, src += pixelsize, alphasrc++)
+    // TODO: This is not very efficent.
+    // Better to use an algorithm which works on full rows and full columns.
+    for(k = 0; k < height; ++k)
+        for(i = 0; i < width; ++i, src += pixelsize, alphasrc++)
         {
             // Alpha pixels don't count.
             if(pixelsize == 1)
@@ -2922,8 +2924,8 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
     slump->flarex = region[0];
     slump->flarey = region[2];
 
-    for(k = region[2]; k < region[3]; k++)
-        for(i = region[0]; i < region[1]; i++, src += pixelsize, alphasrc++)
+    for(k = region[2]; k < region[3]; ++k)
+        for(i = region[0]; i < region[1]; ++i, src += pixelsize, alphasrc++)
         {
             // Alpha pixels don't count.
             if(pixelsize == 1)
@@ -2964,13 +2966,13 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
             if(rgb[0] > collimit || rgb[1] > collimit || rgb[2] > collimit)
             {
                 avcnt++;
-                for(c = 0; c < 3; c++)
+                for(c = 0; c < 3; ++c)
                     average[c] += rgb[c];
             }
             else
             {
                 lowcnt++;
-                for(c = 0; c < 3; c++)
+                for(c = 0; c < 3; ++c)
                     lowavg[c] += rgb[c];
             }
         }
@@ -2997,14 +2999,14 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         else
         {
             // Low-intensity color average.
-            for(c = 0; c < 3; c++)
+            for(c = 0; c < 3; ++c)
                 sprcol->rgb[c] = lowavg[c] / lowcnt;
         }
     }
     else
     {
         // High-intensity color average.
-        for(c = 0; c < 3; c++)
+        for(c = 0; c < 3; ++c)
             sprcol->rgb[c] = average[c] / avcnt;
     }
 
@@ -3323,16 +3325,16 @@ void GL_SetRawImageLump(int lump, int part)
     palette = W_CacheLumpNum(pallump, PU_CACHE);
 
     // Image data loaded, divide it into two parts.
-    for(k = 0; k < height; k++)
-        for(i = 0; i < 256; i++)
+    for(k = 0; k < height; ++k)
+        for(i = 0; i < 256; ++i)
         {
             idx = k * assumedWidth + i;
             // Part one.
-            for(c = 0; c < comps; c++)
+            for(c = 0; c < comps; ++c)
                 dat1[(k * 256 + i) * comps + c] = image[idx * comps + c];
             // We can setup part two at the same time.
             if(i < 64 && part)
-                for(c = 0; c < comps; c++)
+                for(c = 0; c < comps; ++c)
                 {
                     dat2[(k * 64 + i) * comps + c] =
                         image[(idx + 256) * comps + c];
@@ -3741,7 +3743,7 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
     if(gameTex)
     {
         // Textures.
-        for(i = 0; i < numtextures; i++)
+        for(i = 0; i < numtextures; ++i)
             if(textures[i]->tex)    // Is the texture loaded?
             {
                 gl.Bind(textures[i]->tex);
@@ -3759,7 +3761,7 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
             }
         Z_Free(flats);
         // Sprites.
-        for(i = 0; i < numspritelumps; i++)
+        for(i = 0; i < numspritelumps; ++i)
             if(spritelumps[i].tex)
             {
                 gl.Bind(spritelumps[i].tex);
@@ -3767,7 +3769,7 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
                 gl.TexParameter(DGL_MAG_FILTER, magMode);
             }
         // Translated sprites.
-        for(i = 0; i < numtranssprites; i++)
+        for(i = 0; i < numtranssprites; ++i)
         {
             gl.Bind(transsprites[i].tex);
             gl.TexParameter(DGL_MIN_FILTER, minMode);
@@ -3776,8 +3778,8 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
     }
     if(uiTex)
     {
-        for(i = 0; i < numlumps; i++)
-            for(k = 0; k < 2; k++)
+        for(i = 0; i < numlumps; ++i)
+            for(k = 0; k < 2; ++k)
                 if(lumptexinfo[i].tex[k])
                 {
                     gl.Bind(lumptexinfo[i].tex[k]);
@@ -3818,7 +3820,7 @@ void GL_DeleteRawImages(void)
 {
     int     i;
 
-    for(i = 0; i < numrawlumps; i++)
+    for(i = 0; i < numrawlumps; ++i)
     {
         gl.DeleteTextures(2, lumptexinfo[rawlumps[i]].tex);
         lumptexinfo[rawlumps[i]].tex[0] = lumptexinfo[rawlumps[i]].tex[1] = 0;
@@ -3838,7 +3840,7 @@ void GL_UpdateRawScreenParams(int smoothing)
     int     glmode = smoothing ? DGL_LINEAR : DGL_NEAREST;
 
     linearRaw = smoothing;
-    for(i = 0; i < numrawlumps; i++)
+    for(i = 0; i < numrawlumps; ++i)
     {
         // First part 1.
         gl.Bind(lumptexinfo[rawlumps[i]].tex[0]);
@@ -3889,7 +3891,7 @@ skintex_t *GL_GetSkinTex(const char *skin)
     // Convert the given skin file to a full pathname.
     _fullpath(realpath, skin, 255);
 
-    for(i = 0; i < numskinnames; i++)
+    for(i = 0; i < numskinnames; ++i)
         if(!stricmp(skinnames[i].path, realpath))
             return skinnames + i;
 
@@ -4032,7 +4034,7 @@ void GL_DoColorKeying(byte *rgbaBuf, int width)
 {
     int     i;
 
-    for(i = 0; i < width; i++, rgbaBuf += 4)
+    for(i = 0; i < width; ++i, rgbaBuf += 4)
         if(GL_ColorKey(rgbaBuf))
             rgbaBuf[3] = rgbaBuf[2] = rgbaBuf[1] = rgbaBuf[0] = 0;
 }
@@ -4057,7 +4059,7 @@ D_CMD(TranslateFont)
         return false;
 
     // Prepare the red-to-white table.
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         if(i == 176)
             redToWhite[i] = 168;    // Full red -> white.
@@ -4076,7 +4078,7 @@ D_CMD(TranslateFont)
     }
 
     // Translate everything.
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         sprintf(name, "%s%.3d", argv[1], i);
         if((lump = W_CheckNumForName(name)) != -1)
