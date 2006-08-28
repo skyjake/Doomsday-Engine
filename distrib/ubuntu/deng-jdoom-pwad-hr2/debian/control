@@ -1,0 +1,13 @@
+Source: deng-jdoom-pwad-hr2
+Section: multiverse/games
+Priority: optional
+Maintainer: Jamie Jones <jamie_jones_au@yahoo.com.au>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.2
+
+Package: deng-jdoom-pwad-hr2
+Architecture: all
+Depends: deng, deng-iwad-doom2-installer
+Description: Hell Revealed 2 32 Level Megawad for Doom 2 [SP, COOP, DM]
+ Hell Revealed 2 is the long-awaited sequel to the original "Hell
+ Revealed" 

@@ -1,0 +1,17 @@
+Source: deng-jdoom-pwad-hr
+Section: multiverse/games
+Priority: optional
+Maintainer: Jamie Jones <jamie_jones_au@yahoo.com.au>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.2
+
+Package: deng-jdoom-pwad-hr
+Architecture: all
+Depends: deng, deng-iwad-doom2-installer
+Description: Hell Revealed 32 Level Megawad for Doom 2 [SP, COOP, DM]
+ Hell Revealed is a megawad, a 32-level replacement for DooM II,
+ created by Yonatan Donner and Haggay Niv. 
+ .
+ Hell Revealed supports single player, cooperative (with additional
+ weapons and enemies) and several maps have special DM parts (maps
+ 1 and 2 are especially good for deathmatch).

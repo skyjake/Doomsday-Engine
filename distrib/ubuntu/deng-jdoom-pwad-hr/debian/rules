@@ -1,0 +1,51 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This is the debhelper compatability version to use.
+#export DH_COMPAT=3
+
+# No building here
+build: 
+
+clean:
+	dh_testdir
+	dh_testroot
+
+	dh_clean
+
+install:
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	mkdir -p debian/deng-jdoom-pwad-hr/usr/share/games/deng/Data/jDoom/pwad-hr
+	install -m 644 hr.wad debian/deng-jdoom-pwad-hr/usr/share/games/deng/Data/jDoom/pwad-hr
+	install -m 644 hrmus.wad debian/deng-jdoom-pwad-hr/usr/share/games/deng/Data/jDoom/pwad-hr
+	mkdir -p debian/deng-jdoom-pwad-hr/usr/share/bug/deng-jdoom-pwad-hr
+	install -m 644 debian/reportbug.control debian/deng-jdoom-pwad-hr/usr/share/bug/deng-jdoom-pwad-hr/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-pwad-hr/usr/share/bug/deng-jdoom-pwad-hr/presubj
+	install -m 644 debian/deng-jdoom-pwad-hr.desktop debian/deng-jdoom-pwad-hr/usr/share/applications/deng-jdoom-pwad-hr.desktop
+	install -m 755 debian/reportbug.script debian/deng-jdoom-pwad-hr/usr/share/bug/deng-jdoom-pwad-hr/script
+	install -o root -g root -m 644 debian/deng-jdoom-pwad-hr.lintian debian/deng-jdoom-pwad-hr/usr/share/lintian/overrides/deng-jdoom-pwad-hr
+
+binary: binary-indep
+
+binary-arch: 
+
+binary-indep: install
+	dh_testdir
+	dh_testroot
+	dh_installdocs
+	dh_installchangelogs
+	dh_installmenu
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install
