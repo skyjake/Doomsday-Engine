@@ -1,0 +1,46 @@
+deng-jdoom-addons (20051128-ubuntu2) dapper; urgency=low
+
+  * Rebuild for dapper. No updates as yet. Will need to update on beta5 release
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 20 Aug 2006 18:02:11 +1000
+
+deng-jdoom-addons (20051128-ubuntu1) breezy; urgency=low
+
+  * Edited the details textures so they are no longer applied
+    to liquids, which makes the fluids pack look as it should.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Mon, 28 Nov 2005 13:36:31 +1100
+
+deng-jdoom-addons (20051127-ubuntu1) breezy; urgency=low
+
+  * Repack all packs without compression for faster loading.
+  * New upstream release of the texture pack.
+  * New fluids pack, based on a modifed JohnXFluids pack.
+  * New Enemy Teritory styly hud pack.
+  * New TNT pack for doom lights.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 27 Nov 2005 22:22:42 +1100
+
+deng-jdoom-addons (20051106-0ubuntu2) breezy; urgency=low
+
+  * Update doomaudio description to indicate that installing
+    it will cause pwads to be unable to play custom music
+    (at least with current versions of deng)
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun,  6 Nov 2005 22:52:28 +1100
+
+deng-jdoom-addons (20051106-0ubuntu1) breezy; urgency=low
+
+  * New release
+  * Added lavalights, bulletdecals, doomrain, doomlights, doomaudio
+    and detail textures.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun,  6 Nov 2005 19:56:28 +1100
+
+deng-jdoom-addons (20051025-0ubuntu1) breezy; urgency=low
+
+  * Initial Release.
+  * Obsoletes existing deng-jdoom-* resource packs.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Tue, 25 Oct 2005 01:21:26 +1000
+

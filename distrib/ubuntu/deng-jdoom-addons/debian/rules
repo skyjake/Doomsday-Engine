@@ -1,0 +1,212 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+
+# Nothing to build here
+build: 
+
+clean:
+	dh_testdir
+	dh_testroot
+	dh_clean 
+
+install:
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+	
+	mkdir -p debian/deng-jdoom-rp-core/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-core/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdrp-core-1.01.zip debian/deng-jdoom-rp-core/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 jdrp.ded debian/deng-jdoom-rp-core/usr/share/games/deng/Defs/jDoom
+	mkdir -p debian/deng-jdoom-rp-core/usr/share/bug/deng-jdoom-rp-core
+	install -m 644 debian/reportbug.control debian/deng-jdoom-rp-core/usr/share/bug/deng-jdoom-rp-core/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-rp-core/usr/share/bug/deng-jdoom-rp-core/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-rp-core/usr/share/bug/deng-jdoom-rp-core/script
+
+	mkdir -p debian/deng-jdoom-rp-decorations/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-decorations/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdrp-decorations-1.01.zip debian/deng-jdoom-rp-decorations/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-decorations/usr/share/bug/deng-jdoom-rp-decorations
+	install -m 644 debian/reportbug.control debian/deng-jdoom-rp-decorations/usr/share/bug/deng-jdoom-rp-decorations/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-rp-decorations/usr/share/bug/deng-jdoom-rp-decorations/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-rp-decorations/usr/share/bug/deng-jdoom-rp-decorations/script
+
+	mkdir -p debian/deng-jdoom-rp-effects/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-effects/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdrp-effects-1.01.zip debian/deng-jdoom-rp-effects/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-effects/usr/share/bug/deng-jdoom-rp-effects
+	install -m 644 debian/reportbug.control debian/deng-jdoom-rp-effects/usr/share/bug/deng-jdoom-rp-effects/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-rp-effects/usr/share/bug/deng-jdoom-rp-effects/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-rp-effects/usr/share/bug/deng-jdoom-rp-effects/script
+
+	mkdir -p debian/deng-jdoom-rp-hud/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-hud/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdrp-hud-1.01.zip debian/deng-jdoom-rp-hud/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-hud/usr/share/bug/deng-jdoom-rp-hud
+	install -m 644 debian/reportbug.control debian/deng-jdoom-rp-hud/usr/share/bug/deng-jdoom-rp-hud/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-rp-hud/usr/share/bug/deng-jdoom-rp-hud/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-rp-hud/usr/share/bug/deng-jdoom-rp-hud/script
+
+	mkdir -p debian/deng-jdoom-rp-items/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-items/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdrp-items-1.01.zip debian/deng-jdoom-rp-items/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-items/usr/share/bug/deng-jdoom-rp-items
+	install -m 644 debian/reportbug.control debian/deng-jdoom-rp-items/usr/share/bug/deng-jdoom-rp-items/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-rp-items/usr/share/bug/deng-jdoom-rp-items/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-rp-items/usr/share/bug/deng-jdoom-rp-items/script
+
+	mkdir -p debian/deng-jdoom-rp-monsters/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-monsters/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdrp-monsters-1.01.zip debian/deng-jdoom-rp-monsters/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-monsters/usr/share/bug/deng-jdoom-rp-monsters
+	install -m 644 debian/reportbug.control debian/deng-jdoom-rp-monsters/usr/share/bug/deng-jdoom-rp-monsters/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-rp-monsters/usr/share/bug/deng-jdoom-rp-monsters/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-rp-monsters/usr/share/bug/deng-jdoom-rp-monsters/script
+
+	mkdir -p debian/deng-jdoom-rp-projectiles/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-projectiles/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdrp-projectiles-1.01.zip debian/deng-jdoom-rp-projectiles/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-rp-projectiles/usr/share/bug/deng-jdoom-rp-projectiles
+	install -m 644 debian/reportbug.control debian/deng-jdoom-rp-projectiles/usr/share/bug/deng-jdoom-rp-projectiles/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-rp-projectiles/usr/share/bug/deng-jdoom-rp-projectiles/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-rp-projectiles/usr/share/bug/deng-jdoom-rp-projectiles/script
+
+	mkdir -p debian/deng-jdoom-ep/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-ep/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdep_2.03.zip debian/deng-jdoom-ep/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 jdep-doom1.ded debian/deng-jdoom-ep/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdep-doom2.ded debian/deng-jdoom-ep/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdep-ultimatedoom.ded debian/deng-jdoom-ep/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdep-ext-evilution.ded debian/deng-jdoom-ep/usr/share/games/deng/Defs/jDoom
+	install -m 644 jdep-ext-plutonia.ded debian/deng-jdoom-ep/usr/share/games/deng/Defs/jDoom
+	mkdir -p debian/deng-jdoom-ep/usr/share/bug/deng-jdoom-ep
+	install -m 644 debian/reportbug.control debian/deng-jdoom-ep/usr/share/bug/deng-jdoom-ep/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-ep/usr/share/bug/deng-jdoom-ep/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-ep/usr/share/bug/deng-jdoom-ep/script
+
+	mkdir -p debian/deng-jdoom-tp/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 jdtp-flats-base.zip debian/deng-jdoom-tp/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 jdtp-textures-base.zip debian/deng-jdoom-tp/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 jdtp-textures-doom1.zip debian/deng-jdoom-tp/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 jdtp-textures-finaldoom-plu.zip debian/deng-jdoom-tp/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-tp/usr/share/bug/deng-jdoom-tp
+	install -m 644 debian/reportbug.control debian/deng-jdoom-tp/usr/share/bug/deng-jdoom-tp/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-tp/usr/share/bug/deng-jdoom-tp/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-tp/usr/share/bug/deng-jdoom-tp/script
+
+	mkdir -p debian/deng-jdoom-ui/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 jdui_1.07.zip debian/deng-jdoom-ui/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-ui/usr/share/bug/deng-jdoom-ui
+	install -m 644 debian/reportbug.control debian/deng-jdoom-ui/usr/share/bug/deng-jdoom-ui/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-ui/usr/share/bug/deng-jdoom-ui/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-ui/usr/share/bug/deng-jdoom-ui/script
+
+	mkdir -p debian/deng-jdoom-awp/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 abbspack_3.03.zip debian/deng-jdoom-awp/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-awp/usr/share/games/deng/Defs/jDoom
+	install -m 644 abbspack.ded debian/deng-jdoom-awp/usr/share/games/deng/Defs/jDoom
+	mkdir -p debian/deng-jdoom-awp/usr/share/bug/deng-jdoom-awp
+	install -m 644 debian/reportbug.control debian/deng-jdoom-awp/usr/share/bug/deng-jdoom-awp/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-awp/usr/share/bug/deng-jdoom-awp/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-awp/usr/share/bug/deng-jdoom-awp/script
+
+	mkdir -p debian/deng-jdoom-bamteleports/usr/share/games/deng/Defs/jDoom
+	install -m 644 bam-teleporters.ded debian/deng-jdoom-bamteleports/usr/share/games/deng/Defs/jDoom
+	mkdir -p debian/deng-jdoom-bamteleports/usr/share/bug/deng-jdoom-bamteleports
+	install -m 644 debian/reportbug.control debian/deng-jdoom-bamteleports/usr/share/bug/deng-jdoom-bamteleports/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-bamteleports/usr/share/bug/deng-jdoom-bamteleports/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-bamteleports/usr/share/bug/deng-jdoom-bamteleports/script
+
+	mkdir -p debian/deng-jdoom-lavalights/usr/share/games/deng/Defs/jDoom
+	install -m 644 lavalights.ded debian/deng-jdoom-lavalights/usr/share/games/deng/Defs/jDoom
+	mkdir -p debian/deng-jdoom-lavalights/usr/share/bug/deng-jdoom-lavalights
+	install -m 644 debian/reportbug.control debian/deng-jdoom-lavalights/usr/share/bug/deng-jdoom-lavalights/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-lavalights/usr/share/bug/deng-jdoom-lavalights/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-lavalights/usr/share/bug/deng-jdoom-lavalights/script
+
+	mkdir -p debian/deng-jdoom-bulletdecals/usr/share/games/deng/Defs/jDoom
+	install -m 644 picklebro-bulletdecals.ded debian/deng-jdoom-bulletdecals/usr/share/games/deng/Defs/jDoom
+	mkdir -p debian/deng-jdoom-bulletdecals/usr/share/bug/deng-jdoom-bulletdecals
+	install -m 644 debian/reportbug.control debian/deng-jdoom-bulletdecals/usr/share/bug/deng-jdoom-bulletdecals/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-bulletdecals/usr/share/bug/deng-jdoom-bulletdecals/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-bulletdecals/usr/share/bug/deng-jdoom-bulletdecals/script
+
+	mkdir -p debian/deng-jdoom-kurikaisdoomrain/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 kurikai_doom_rain.zip debian/deng-jdoom-kurikaisdoomrain/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-kurikaisdoomrain/usr/share/bug/deng-jdoom-kurikaisdoomrain
+	install -m 644 debian/reportbug.control debian/deng-jdoom-kurikaisdoomrain/usr/share/bug/deng-jdoom-kurikaisdoomrain/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-kurikaisdoomrain/usr/share/bug/deng-jdoom-kurikaisdoomrain/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-kurikaisdoomrain/usr/share/bug/deng-jdoom-kurikaisdoomrain/script
+
+	mkdir -p debian/deng-jdoom-kurikaisdoomlights/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 kurikai-iwad-doom-lights.zip debian/deng-jdoom-kurikaisdoomlights/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 kurikai-iwad-doom2-lights.zip debian/deng-jdoom-kurikaisdoomlights/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 kurikai-iwad-plutonia-lights.zip debian/deng-jdoom-kurikaisdoomlights/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 kurikai-iwad-tnt-lights.zip debian/deng-jdoom-kurikaisdoomlights/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-kurikaisdoomlights/usr/share/bug/deng-jdoom-kurikaisdoomlights
+	install -m 644 debian/reportbug.control debian/deng-jdoom-kurikaisdoomlights/usr/share/bug/deng-jdoom-kurikaisdoomlights/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-kurikaisdoomlights/usr/share/bug/deng-jdoom-kurikaisdoomlights/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-kurikaisdoomlights/usr/share/bug/deng-jdoom-kurikaisdoomlights/script
+
+	mkdir -p debian/deng-jdoom-sycraftsdoommusic/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 sycrafts-doom-music-hq.zip debian/deng-jdoom-sycraftsdoommusic/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 sycrafts-doom2-music-hq.zip debian/deng-jdoom-sycraftsdoommusic/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 sycrafts-plutonia-music-hq.zip debian/deng-jdoom-sycraftsdoommusic/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 sycrafts-tnt-music-hq.zip debian/deng-jdoom-sycraftsdoommusic/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-sycraftsdoommusic/usr/share/bug/deng-jdoom-sycraftsdoommusic
+	install -m 644 debian/reportbug.control debian/deng-jdoom-sycraftsdoommusic/usr/share/bug/deng-jdoom-sycraftsdoommusic/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-sycraftsdoommusic/usr/share/bug/deng-jdoom-sycraftsdoommusic/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-sycraftsdoommusic/usr/share/bug/deng-jdoom-sycraftsdoommusic/script
+
+	mkdir -p debian/deng-jdoom-detailtextures/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 jdoom_detail_textures.zip debian/deng-jdoom-detailtextures/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-detailtextures/usr/share/bug/deng-jdoom-detailtextures
+	install -m 644 debian/reportbug.control debian/deng-jdoom-detailtextures/usr/share/bug/deng-jdoom-detailtextures/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-detailtextures/usr/share/bug/deng-jdoom-detailtextures/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-detailtextures/usr/share/bug/deng-jdoom-detailtextures/script
+
+	mkdir -p debian/deng-jdoom-ethudface/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 et_hud_face.zip debian/deng-jdoom-ethudface/usr/share/games/deng/Data/jDoom/Auto
+	mkdir -p debian/deng-jdoom-ethudface/usr/share/bug/deng-jdoom-ethudface
+	install -m 644 debian/reportbug.control debian/deng-jdoom-ethudface/usr/share/bug/deng-jdoom-ethudface/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-ethudface/usr/share/bug/deng-jdoom-ethudface/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-ethudface/usr/share/bug/deng-jdoom-ethudface/script
+
+	mkdir -p debian/deng-jdoom-fluids/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 johnx_fluids.zip debian/deng-jdoom-fluids/usr/share/games/deng/Data/jDoom/Auto
+	install -m 644 jDoom.wad debian/deng-jdoom-fluids/usr/share/games/deng/Data/jDoom
+	mkdir -p debian/deng-jdoom-fluids/usr/share/bug/deng-jdoom-fluids
+	install -m 644 debian/reportbug.control debian/deng-jdoom-fluids/usr/share/bug/deng-jdoom-fluids/control
+	install -m 644 debian/reportbug.presubj debian/deng-jdoom-fluids/usr/share/bug/deng-jdoom-fluids/presubj
+	install -m 755 debian/reportbug.script debian/deng-jdoom-fluids/usr/share/bug/deng-jdoom-fluids/script
+
+
+# Build architecture-independent files here.
+binary-indep: install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs 
+	dh_installdocs
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-dependent files here.
+binary-arch:
+
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

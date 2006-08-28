@@ -1,0 +1,272 @@
+Source: deng-jdoom-addons
+Section: multiverse/games
+Priority: optional
+Maintainer: Jamie Jones <jamie_jones_au@yahoo.com.au>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.2
+
+Package: deng-jdoom-rp-core
+Architecture: all
+Depends: deng
+Replaces: deng-jdoom-rp
+Conflicts: deng-jdoom-rp
+Description: jDoom Resource Pack
+ The jDoom Resource Pack. This is the pack that gives you 3D Monsters and
+ Items. This is the core pack that enables the JDRP to function.
+ .
+ The goal of this project is create quality resources to help bring the
+ graphics in Doom up to modern standards whilest keeping true to Doom's
+ classic style.
+ .
+ Downloaded from:
+ http://modelyard.newdoom.com/
+
+Package: deng-jdoom-rp-decorations
+Architecture: all
+Depends: deng, deng-jdoom-rp-core
+Description: jDoom Resource Pack Map Decorations
+ The jDoom Resource Pack. This is the pack that gives you 3D Monsters and
+ Items. This pack contains the Map Decorations.
+ .
+ The goal of this project is create quality resources to help bring the
+ graphics in Doom up to modern standards whilest keeping true to Doom's
+ classic style.
+ .
+ Downloaded from:
+ http://modelyard.newdoom.com/
+
+Package: deng-jdoom-rp-effects
+Architecture: all
+Depends: deng, deng-jdoom-rp-core
+Description: jDoom Resource Pack Special Effects
+ The jDoom Resource Pack. This is the pack that gives you 3D Monsters and
+ Items. This pack contains the Special Effects.
+ .
+ The goal of this project is create quality resources to help bring the
+ graphics in Doom up to modern standards whilest keeping true to Doom's
+ classic style.
+ .
+ Downloaded from:
+ http://modelyard.newdoom.com/
+
+Package: deng-jdoom-rp-hud
+Architecture: all
+Depends: deng, deng-jdoom-rp-core
+Description: jDoom Resource Pack HUD
+ The jDoom Resource Pack. This is the pack that gives you 3D Monsters and
+ Items. This pack contains the Heads Up Display models.
+ .
+ The goal of this project is create quality resources to help bring the
+ graphics in Doom up to modern standards whilest keeping true to Doom's
+ classic style.
+ .
+ Downloaded from:
+ http://modelyard.newdoom.com/
+
+Package: deng-jdoom-rp-items
+Architecture: all
+Depends: deng, deng-jdoom-rp-core
+Description: jDoom Resource Pack items
+ The jDoom Resource Pack. This is the pack that gives you 3D Monsters and
+ Items. This pack contains the item models.
+ .
+ The goal of this project is create quality resources to help bring the
+ graphics in Doom up to modern standards whilest keeping true to Doom's
+ classic style.
+ .
+ Downloaded from:
+ http://modelyard.newdoom.com/
+
+Package: deng-jdoom-rp-monsters
+Architecture: all
+Depends: deng, deng-jdoom-rp-core
+Description: jDoom Resource Pack Monsters
+ The jDoom Resource Pack. This is the pack that gives you 3D Monsters and
+ Items. This pack contains the monster models.
+ .
+ The goal of this project is create quality resources to help bring the
+ graphics in Doom up to modern standards whilest keeping true to Doom's
+ classic style.
+ .
+ Downloaded from:
+ http://modelyard.newdoom.com/
+
+Package: deng-jdoom-rp-projectiles
+Architecture: all
+Depends: deng, deng-jdoom-rp-core
+Description: jDoom Resource Pack Projectiles
+ The jDoom Resource Pack. This is the pack that gives you 3D Monsters and
+ Items. This pack contains the projectile models.
+ .
+ The goal of this project is create quality resources to help bring the
+ graphics in Doom up to modern standards whilest keeping true to Doom's
+ classic style.
+ .
+ Downloaded from:
+ http://modelyard.newdoom.com/
+
+Package: deng-jdoom-ep
+Architecture: all
+Depends: deng
+Description: jDoom Environment Pack
+ The jDoom Environment Pack for Doom 1, Doom 2, TNT and Plutonia
+ .
+ The jDoom Environment Pack (jDEP) is an addon for jDoom that
+ provides settings for fog and Sky boxes for levels. Each sky
+ box consists of a cube that encompasses the entire level, with
+ a texture on each of its (six) surfaces. If these textures are made
+ correctly a pretty good illusion of an 360 panoramic environment
+ can be achieved, it is an effect that has been in use in most
+ first person shooters since Quake days.
+ .
+ Downloaded from:
+ http://slide.newdoom.com/
+
+Package: deng-jdoom-tp
+Architecture: all
+Depends: deng
+Description: jDoom Texture Pack
+ The jDoom High Resolution Texture Pack from www.jfiles.org is
+ the best collection of high resolution textures for jDoom.
+ Doom looks visibly better with this pack, although it is not
+ yet complete. Highly Recommended
+ .
+ This currently includes Hi-Res textures common to all Doom wads,
+ Doom 1 and Plutonia specific textures. Currently no Hi-Res textures
+ for TNT yet.
+ .
+ Downloaded from:
+ http://www.jfiles.org/
+
+Package: deng-jdoom-ui
+Architecture: all
+Depends: deng
+Description: jDoom UI Pack
+ The jDoom User Interface Pack is an updated UI for Doom.
+ Includes Hi-Res intermission maps, fonts, status bar etc.
+ Highly Recommended
+ .
+ Downloaded from:
+ http://slide.newdoom.com/
+
+Package: deng-jdoom-awp
+Architecture: all
+Depends: deng
+Description: Abb's Alternate Weapon Pack
+ is a Half-Life inspired weapons pack for jDoom.
+ .
+ Abb's Weapon Pack is no longer supported but is still a nice
+ alternate weapon model pack for those that do not like the
+ weapons in deng-jdoom-rp-hud
+ .
+ Downloaded from:
+ http://www.doomsdayhq.com/files.php?pro=2&class=4&type=6
+
+Package: deng-jdoom-bamteleports
+Architecture: all
+Depends: deng
+Description: Bams Teleport Effects
+ for jDoom adds sparkling particle  effects to the
+ teleporters. Highly recommended for faster computers.
+ .
+ Downloaded from:
+ http://forums.newdoom.com/showthread.php?t=16068 
+
+Package: deng-jdoom-lavalights
+Architecture: all
+Depends: deng
+Description: KuriKais and Picklebros Lava Light Effects
+ for jDoom adds flaming lava effects to lava textures.
+ Highly recommended for faster computers.
+ .
+ Downloaded from:
+ http://forums.jfiles.org/viewtopic.php?t=35 
+
+Package: deng-jdoom-bulletdecals
+Architecture: all
+Depends: deng
+Description: Picklebros Bullet Decals Effects
+ for jDoom adds partical based bullet decals.
+ This adds bullet holes to walls and doors
+ if you happen to miss your opponent with a
+ bullet based weapon.
+ Highly recommended for faster computers.
+ .
+ Downloaded from:
+ http://forums.jfiles.org/viewtopic.php?t=103
+
+Package: deng-jdoom-kurikaisdoomrain
+Architecture: all
+Depends: deng
+Description: KuriKais Doom Rain Effects
+ for jDoom adds rain to to several levels in Doom
+ and plutonia where it looks like it might rain.
+ Highly recommended for faster computers.
+ .
+ Downloaded from:
+ http://ddayxl.jfiles.org/
+
+Package: deng-jdoom-kurikaisdoomlights
+Architecture: all
+Depends: deng
+Description: KuriKais Doom Bias Lighting Effects
+ for jDoom implements bias lighting effects for
+ Doom, Doom2, TNT and Plutonia. This gives a more
+ realistic atmosphere to the game.
+ Type "rend-bias 1" (minus the quotes) in the doomsday
+ console to activate bias lights, "rend-bias 0" to
+ disable them.
+ .
+ Downloaded from:
+ http://ddayxl.jfiles.org/
+
+Package: deng-jdoom-sycraftsdoommusic
+Architecture: all
+Depends: deng
+Description: Sycrafts High Quality Doom Soundtracks
+ for jDoom is a fully remastered doom soundtrack
+ in high quality ogg format. This is what you might
+ have heard Doom like if you had had 50 grand's
+ worth of audio equipment back in 1993
+ Highly recommended.
+ .
+ With this pack installed, you WILL NOT here
+ any custom music in any pwads.
+ .
+ Downloaded from:
+ http://sycraft.org/content/audio/doom.shtml
+
+Package: deng-jdoom-detailtextures
+Architecture: all
+Depends: deng
+Description: Daniel Nortons Detail Textures
+ for jDoom is a is a pack that detail textures
+ to the existing doom textures. Detail textures
+ add scratches and other markings to the textures
+ to give them extra detail and increase realism
+ .
+ Downloaded from:
+ http://www.doomsdayhq.com/files.php?class=4&type=3
+
+Package: deng-jdoom-ethudface
+Architecture: all
+Depends: deng
+Description: Enemy Territory Styled HUD Face
+ The Enemy Territory Styled HUD Face replaces the
+ old doomguy face in the hud, with a rendered face
+ in the style of Enemy Territory HUD faces.
+ .
+ Downloaded from:
+ http://www.jfiles.org/
+
+Package: deng-jdoom-fluids
+Architecture: all
+Depends: deng
+Replaces: deng
+Description: Smooth Animated Liquids for Doom
+ This pack originally based on the JohnXFluids pack
+ provides smooth animated water, slime, nukage, blood
+ and lava effects.
+ .
+ Based on a package originally downloaded from:
+ http://www.johnxmas.ch/jdfluids/
