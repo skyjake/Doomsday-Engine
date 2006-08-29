@@ -718,11 +718,9 @@ void            G_DemoAborted(void);
 //SV_SAVE
 //-------
 
-#define HXS_VERSION_TEXT "HXS Ver 2.37"
-#define HXS_VERSION_TEXT_LENGTH 16
-#define HXS_DESCRIPTION_LENGTH 24
-
 void            SV_Init(void);
+void            SV_SaveGameFile(int slot, char *str);
+int             SV_GetSaveDescription(char *filename, char *str);
 void            SV_HxSaveGame(int slot, char *description);
 void            SV_HxSaveMap(boolean savePlayers);
 void            SV_HxLoadGame(int slot);

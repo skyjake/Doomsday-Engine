@@ -226,12 +226,6 @@ int     screenblocks = 10;        // has default
 static int MenuEpisode;
 #endif
 
-
-// old save description before edit
-char    saveOldString[SAVESTRINGSIZE];
-
-char    savegamestrings[10][SAVESTRINGSIZE];
-
 // -1 = no quicksave slot picked!
 int     quickSaveSlot;
 
@@ -2483,12 +2477,11 @@ void M_DrawFilesMenu(void)
     quickload = 0;
 }
 
-/*
- *  read the strings from the savegame files
+/**
+ *  Read the strings from the savegame files.
  */
 void M_ReadSaveStrings(void)
 {
-#if __JDOOM__ || __JHERETIC__
     int     i;
     char    name[256];
 
@@ -2503,43 +2496,6 @@ void M_ReadSaveStrings(void)
         else
             LoadItems[i].type = ITT_EFUNC;
     }
-#else
-    int     i;
-    LZFILE *fp;
-    char    name[100];
-    char    versionText[HXS_VERSION_TEXT_LENGTH];
-    char    description[HXS_DESCRIPTION_LENGTH];
-    boolean found;
-
-    for(i = 0; i < NUMSAVESLOTS; i++)
-    {
-        found = false;
-        sprintf(name, "%shex%d.hxs", SavePath, i);
-        M_TranslatePath(name, name);
-        fp = lzOpen(name, "rp");
-        if(fp)
-        {
-            lzRead(description, HXS_DESCRIPTION_LENGTH, fp);
-            lzRead(versionText, HXS_VERSION_TEXT_LENGTH, fp);
-            lzClose(fp);
-            if(!strcmp(versionText, HXS_VERSION_TEXT))
-            {
-                found = true;
-            }
-        }
-        if(!found)
-        {
-            strcpy(savegamestrings[i], EMPTYSTRING);
-            LoadItems[i].type = ITT_INERT;
-        }
-        else
-        {
-            strcpy(savegamestrings[i], description);
-            LoadItems[i].type = ITT_EFUNC;
-        }
-    }
-#endif
-
 }
 
 //---------------------------------------------------------------------------

@@ -2467,6 +2467,10 @@ int SV_GetSaveDescription(char *filename, char *str)
     savefile = lzOpen(filename, "rp");
     if(!savefile)
     {
+#if __DOOM64TC__ || __WOLFTC__
+        // we don't support the original game's save format (for obvious reasons).
+        return false;
+#else
         // It might still be a v19 savegame.
         savefile = lzOpen(filename, "r");
         if(!savefile)
@@ -2475,6 +2479,7 @@ int SV_GetSaveDescription(char *filename, char *str)
         str[SAVESTRINGSIZE - 1] = 0;
         lzClose(savefile);
         return true;
+#endif
     }
     // Read the header.
     lzRead(&hdr, sizeof(hdr), savefile);

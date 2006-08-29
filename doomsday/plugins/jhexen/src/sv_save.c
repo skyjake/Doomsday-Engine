@@ -49,9 +49,15 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define HXS_VERSION_TEXT        "HXS Ver 2.37"
+#define HXS_VERSION_TEXT_LENGTH 16
+#define HXS_DESCRIPTION_LENGTH  24
+
 #define DEFAULT_SAVEPATH        "hexndata\\"
 
+#define SAVEGAMENAME            "hex"
 #define CLIENTSAVEGAMENAME      "HexenCl"
+#define SAVEGAMEEXTENSION       "hxs"
 
 #define DBG(x)                  //x
 
@@ -292,6 +298,35 @@ static thinkinfo_t ThinkerInfo[] = {
 };
 
 // CODE --------------------------------------------------------------------
+
+void SV_SaveGameFile(int slot, char *str)
+{
+    sprintf(str, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, SavePath, slot);
+}
+
+int SV_GetSaveDescription(char *filename, char *str)
+{
+    LZFILE *fp;
+    char name[256];
+    char    versionText[HXS_VERSION_TEXT_LENGTH];
+    boolean found = false;
+
+    strncpy(name, filename, sizeof(name));
+    M_TranslatePath(name, name);
+    fp = lzOpen(name, "rp");
+    if(fp)
+    {
+        lzRead(str, HXS_DESCRIPTION_LENGTH, fp);
+        lzRead(versionText, HXS_VERSION_TEXT_LENGTH, fp);
+        lzClose(fp);
+        if(!strcmp(versionText, HXS_VERSION_TEXT))
+        {
+            found = true;
+        }
+    }
+
+    return found;
+}
 
 //===========================================================================
 // SV_Init
@@ -1213,8 +1248,8 @@ void ArchiveWorld(void)
                 continue;
             }
             si = P_ToPtr(DMU_SIDE, sd);
-            StreamOutWord(P_GetIntp(si, DMU_TEXTURE_OFFSET_X));
-            StreamOutWord(P_GetIntp(si, DMU_TEXTURE_OFFSET_Y));
+            //StreamOutWord(P_GetIntp(si, DMU_TEXTURE_OFFSET_X));
+            //StreamOutWord(P_GetIntp(si, DMU_TEXTURE_OFFSET_Y));
             StreamOutWord(SV_TextureArchiveNum(P_GetIntp(si, DMU_TOP_TEXTURE)));
             StreamOutWord(SV_TextureArchiveNum(P_GetIntp(si, DMU_BOTTOM_TEXTURE)));
             StreamOutWord(SV_TextureArchiveNum(P_GetIntp(si, DMU_MIDDLE_TEXTURE)));
@@ -1304,8 +1339,8 @@ void UnarchiveWorld(void)
                 continue;
             }
             si = P_ToPtr(DMU_SIDE, sdnum);
-            P_SetIntp(si, DMU_TEXTURE_OFFSET_X, GET_WORD);
-            P_SetIntp(si, DMU_TEXTURE_OFFSET_Y, GET_WORD);
+            //P_SetIntp(si, DMU_TEXTURE_OFFSET_X, GET_WORD);
+            //P_SetIntp(si, DMU_TEXTURE_OFFSET_Y, GET_WORD);
             P_SetIntp(si, DMU_TOP_TEXTURE, SV_GetArchiveTexture(GET_WORD));
             P_SetIntp(si, DMU_BOTTOM_TEXTURE, SV_GetArchiveTexture(GET_WORD));
             P_SetIntp(si, DMU_MIDDLE_TEXTURE, SV_GetArchiveTexture(GET_WORD));
