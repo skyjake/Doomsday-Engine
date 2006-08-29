@@ -1878,6 +1878,33 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                       value_Str(prop->size));
         }
     }
+    else if(valueType == DDVT_FLOAT)
+    {
+        float* d = dst;
+        switch(prop->size)
+        {
+        case 2:
+            if(flags & DT_UNSIGNED)
+            {
+                if(flags & DT_FRACBITS)
+                    *d = FIX2FLT(USHORT(*((short*)(src))) << FRACBITS);
+                else
+                    *d = FIX2FLT(USHORT(*((short*)(src))));
+            }
+            else
+            {
+                if(flags & DT_FRACBITS)
+                    *d = FIX2FLT(SHORT(*((short*)(src))) << FRACBITS);
+                else
+                    *d = FIX2FLT(SHORT(*((short*)(src))));
+            }
+            break;
+
+        default:
+            Con_Error("ReadValue: DDVT_FLOAT incompatible with value type %s\n",
+                      value_Str(prop->size));
+        }
+    }
     else if(valueType == DDVT_SHORT || valueType == DDVT_FLAT_INDEX)
     {
         short* d = dst;
