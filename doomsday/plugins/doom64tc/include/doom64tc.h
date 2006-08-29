@@ -40,7 +40,6 @@
 #include "../../doom64tc/include/m_ctrl.h"
 #include "../../doom64tc/include/p_inter.h"
 #include "../../doom64tc/include/p_local.h"
-#include "../../doom64tc/include/p_oldsvg.h"
 #include "../../doom64tc/include/p_pspr.h"
 #include "../../doom64tc/include/p_setup.h"
 #include "../../doom64tc/include/r_defs.h"

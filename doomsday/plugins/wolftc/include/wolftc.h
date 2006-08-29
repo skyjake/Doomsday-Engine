@@ -40,7 +40,6 @@
 #include "../../wolftc/include/m_ctrl.h"
 #include "../../wolftc/include/p_inter.h"
 #include "../../wolftc/include/p_local.h"
-#include "../../wolftc/include/p_oldsvg.h"
 #include "../../wolftc/include/p_pspr.h"
 #include "../../wolftc/include/p_setup.h"
 #include "../../wolftc/include/r_defs.h"

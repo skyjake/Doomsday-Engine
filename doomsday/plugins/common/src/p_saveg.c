@@ -2503,13 +2503,13 @@ int SV_LoadGame(char *filename)
 #if __DOOM64TC__ || __WOLFTC__
         // we don't support the original game's save format (for obvious reasons).
         return false;
-#endif
-
-#if __JDOOM__
+#else
+# if __JDOOM__
         // It might still be a v19 savegame.
         SV_v19_LoadGame(filename);
-#elif __JHERETIC__
+# elif __JHERETIC__
         SV_v13_LoadGame(filename);
+# endif
 #endif
         return true;
     }
