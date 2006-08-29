@@ -507,7 +507,7 @@ void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
             top[0] = top[1] = (fceil < bceil ? fceil : bceil);
             bottom[0] = bottom[1] = (ffloor > bfloor ? ffloor : bfloor);
             Rend_MidTexturePos(&bottom[0], &bottom[1], &top[0], &top[1],
-                               NULL, FIX2FLT(sdef->rowoffset),
+                               NULL, sdef->middle.offy,
                                seg->linedef ? (seg->linedef->
                                                flags & ML_DONTPEGBOTTOM) !=
                                0 : false);

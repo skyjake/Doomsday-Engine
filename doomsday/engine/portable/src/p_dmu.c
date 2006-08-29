@@ -140,11 +140,17 @@ const char* DMU_Str(int prop)
         { DMU_ANGLE, "DMU_ANGLE" },
         { DMU_OFFSET, "DMU_OFFSET" },
         { DMU_TOP_TEXTURE, "DMU_TOP_TEXTURE" },
+        { DMU_TOP_TEXTURE_OFFSET_X, "DMU_TOP_TEXTURE_OFFSET_X" },
+        { DMU_TOP_TEXTURE_OFFSET_Y, "DMU_TOP_TEXTURE_OFFSET_Y" },
+        { DMU_TOP_TEXTURE_OFFSET_XY, "DMU_TOP_TEXTURE_OFFSET_XY" },
         { DMU_TOP_COLOR, "DMU_TOP_COLOR" },
         { DMU_TOP_COLOR_RED, "DMU_TOP_COLOR_RED" },
         { DMU_TOP_COLOR_GREEN, "DMU_TOP_COLOR_GREEN" },
         { DMU_TOP_COLOR_BLUE, "DMU_TOP_COLOR_BLUE" },
         { DMU_MIDDLE_TEXTURE, "DMU_MIDDLE_TEXTURE" },
+        { DMU_MIDDLE_TEXTURE_OFFSET_X, "DMU_MIDDLE_TEXTURE_OFFSET_X" },
+        { DMU_MIDDLE_TEXTURE_OFFSET_Y, "DMU_MIDDLE_TEXTURE_OFFSET_Y" },
+        { DMU_MIDDLE_TEXTURE_OFFSET_XY, "DMU_MIDDLE_TEXTURE_OFFSET_XY" },
         { DMU_MIDDLE_COLOR, "DMU_MIDDLE_COLOR" },
         { DMU_MIDDLE_COLOR_RED, "DMU_MIDDLE_COLOR_RED" },
         { DMU_MIDDLE_COLOR_GREEN, "DMU_MIDDLE_COLOR_GREEN" },
@@ -152,13 +158,13 @@ const char* DMU_Str(int prop)
         { DMU_MIDDLE_COLOR_ALPHA, "DMU_MIDDLE_COLOR_ALPHA" },
         { DMU_MIDDLE_BLENDMODE, "DMU_MIDDLE_BLENDMODE" },
         { DMU_BOTTOM_TEXTURE, "DMU_BOTTOM_TEXTURE" },
+        { DMU_BOTTOM_TEXTURE_OFFSET_X, "DMU_BOTTOM_TEXTURE_OFFSET_X" },
+        { DMU_BOTTOM_TEXTURE_OFFSET_Y, "DMU_BOTTOM_TEXTURE_OFFSET_Y" },
+        { DMU_BOTTOM_TEXTURE_OFFSET_XY, "DMU_BOTTOM_TEXTURE_OFFSET_XY" },
         { DMU_BOTTOM_COLOR, "DMU_BOTTOM_COLOR" },
         { DMU_BOTTOM_COLOR_RED, "DMU_BOTTOM_COLOR_RED" },
         { DMU_BOTTOM_COLOR_GREEN, "DMU_BOTTOM_COLOR_GREEN" },
         { DMU_BOTTOM_COLOR_BLUE, "DMU_BOTTOM_COLOR_BLUE" },
-        { DMU_TEXTURE_OFFSET_X, "DMU_TEXTURE_OFFSET_X" },
-        { DMU_TEXTURE_OFFSET_Y, "DMU_TEXTURE_OFFSET_Y" },
-        { DMU_TEXTURE_OFFSET_XY, "DMU_TEXTURE_OFFSET_XY" },
         { DMU_VALID_COUNT, "DMU_VALID_COUNT" },
         { DMU_LINE_COUNT, "DMU_LINE_COUNT" },
         { DMU_COLOR, "DMU_COLOR" },
@@ -1041,14 +1047,14 @@ static int SetProperty(void* ptr, void* context)
             p->surface.isflat = true;
             break;
         case DMU_PLANE_OFFSET_X:
-            SetValue(DMT_PLANE_OFFX, &p->offx, args, 0);
+            SetValue(DMT_PLANE_OFFX, &p->surface.offx, args, 0);
             break;
         case DMU_PLANE_OFFSET_Y:
-            SetValue(DMT_PLANE_OFFY, &p->offy, args, 0);
+            SetValue(DMT_PLANE_OFFY, &p->surface.offy, args, 0);
             break;
         case DMU_PLANE_OFFSET_XY:
-            SetValue(DMT_PLANE_OFFX, &p->offx, args, 0);
-            SetValue(DMT_PLANE_OFFY, &p->offy, args, 1);
+            SetValue(DMT_PLANE_OFFX, &p->surface.offx, args, 0);
+            SetValue(DMT_PLANE_OFFY, &p->surface.offy, args, 1);
             break;
         case DMU_PLANE_TEXTURE_MOVE_X:
             SetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[0], args, 0);
@@ -1162,16 +1168,6 @@ static int SetProperty(void* ptr, void* context)
         case DMU_FLAGS:
             SetValue(DMT_SIDE_FLAGS, &p->flags, args, 0);
             break;
-        case DMU_TEXTURE_OFFSET_X:
-            SetValue(DMT_SIDE_TEXTUREOFFSET, &p->textureoffset, args, 0);
-            break;
-        case DMU_TEXTURE_OFFSET_Y:
-            SetValue(DMT_SIDE_ROWOFFSET, &p->rowoffset, args, 0);
-            break;
-        case DMU_TEXTURE_OFFSET_XY:
-            SetValue(DMT_SIDE_TEXTUREOFFSET, &p->textureoffset, args, 0);
-            SetValue(DMT_SIDE_ROWOFFSET, &p->rowoffset, args, 1);
-            break;
         case DMU_TOP_COLOR:
             SetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
             SetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 1);
@@ -1192,6 +1188,16 @@ static int SetProperty(void* ptr, void* context)
             p->top.flags &= ~SUF_TEXFIX;
             if(p->top.texture)
                 p->flags &= ~SDF_MIDTEXUPPER;
+            break;
+        case DMU_TOP_TEXTURE_OFFSET_X:
+            SetValue(DMT_SURFACE_OFFX, &p->top.offx, args, 0);
+            break;
+        case DMU_TOP_TEXTURE_OFFSET_Y:
+            SetValue(DMT_SURFACE_OFFY, &p->top.offy, args, 0);
+            break;
+        case DMU_TOP_TEXTURE_OFFSET_XY:
+            SetValue(DMT_SURFACE_OFFX, &p->top.offx, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->top.offy, args, 1);
             break;
         case DMU_MIDDLE_COLOR:
             SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
@@ -1219,6 +1225,16 @@ static int SetProperty(void* ptr, void* context)
             p->middle.isflat = false;
             p->middle.flags &= ~SUF_TEXFIX;
             break;
+        case DMU_MIDDLE_TEXTURE_OFFSET_X:
+            SetValue(DMT_SURFACE_OFFX, &p->middle.offx, args, 0);
+            break;
+        case DMU_MIDDLE_TEXTURE_OFFSET_Y:
+            SetValue(DMT_SURFACE_OFFY, &p->middle.offy, args, 0);
+            break;
+        case DMU_MIDDLE_TEXTURE_OFFSET_XY:
+            SetValue(DMT_SURFACE_OFFX, &p->middle.offx, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->middle.offy, args, 1);
+            break;
         case DMU_BOTTOM_COLOR:
             SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
             SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 1);
@@ -1237,6 +1253,16 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_TEXTURE, &p->bottom.texture, args, 0);
             p->bottom.isflat = false;
             p->bottom.flags &= ~SUF_TEXFIX;
+            break;
+        case DMU_BOTTOM_TEXTURE_OFFSET_X:
+            SetValue(DMT_SURFACE_OFFX, &p->bottom.offx, args, 0);
+            break;
+        case DMU_BOTTOM_TEXTURE_OFFSET_Y:
+            SetValue(DMT_SURFACE_OFFY, &p->bottom.offy, args, 0);
+            break;
+        case DMU_BOTTOM_TEXTURE_OFFSET_XY:
+            SetValue(DMT_SURFACE_OFFX, &p->bottom.offx, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->bottom.offy, args, 1);
             break;
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_SIDE.\n",
@@ -1697,14 +1723,14 @@ static int GetProperty(void* ptr, void* context)
             break;
         }
         case DMU_PLANE_OFFSET_X:
-            GetValue(DMT_PLANE_OFFX, &p->offx, args, 0);
+            GetValue(DMT_PLANE_OFFX, &p->surface.offx, args, 0);
             break;
         case DMU_PLANE_OFFSET_Y:
-            GetValue(DMT_PLANE_OFFY, &p->offy, args, 0);
+            GetValue(DMT_PLANE_OFFY, &p->surface.offy, args, 0);
             break;
         case DMU_PLANE_OFFSET_XY:
-            GetValue(DMT_PLANE_OFFX, &p->offx, args, 0);
-            GetValue(DMT_PLANE_OFFY, &p->offy, args, 1);
+            GetValue(DMT_PLANE_OFFX, &p->surface.offx, args, 0);
+            GetValue(DMT_PLANE_OFFY, &p->surface.offy, args, 1);
             break;
         case DMU_PLANE_TEXTURE_MOVE_X:
             GetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[0], args, 0);
@@ -1821,16 +1847,6 @@ static int GetProperty(void* ptr, void* context)
         case DMU_SECTOR:
             GetValue(DMT_SIDE_SECTOR, &p->sector, args, 0);
             break;
-        case DMU_TEXTURE_OFFSET_X:
-            GetValue(DMT_SIDE_TEXTUREOFFSET, &p->textureoffset, args, 0);
-            break;
-        case DMU_TEXTURE_OFFSET_Y:
-            GetValue(DMT_SIDE_ROWOFFSET, &p->rowoffset, args, 0);
-            break;
-        case DMU_TEXTURE_OFFSET_XY:
-            GetValue(DMT_SIDE_TEXTUREOFFSET, &p->textureoffset, args, 0);
-            GetValue(DMT_SIDE_ROWOFFSET, &p->rowoffset, args, 1);
-            break;
         case DMU_TOP_TEXTURE:
             {
             short texture = p->top.texture;
@@ -1841,6 +1857,16 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
             }
+        case DMU_TOP_TEXTURE_OFFSET_X:
+            GetValue(DMT_SURFACE_OFFX, &p->top.offx, args, 0);
+            break;
+        case DMU_TOP_TEXTURE_OFFSET_Y:
+            GetValue(DMT_SURFACE_OFFY, &p->top.offy, args, 0);
+            break;
+        case DMU_TOP_TEXTURE_OFFSET_XY:
+            GetValue(DMT_SURFACE_OFFX, &p->top.offx, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->top.offy, args, 1);
+            break;
         case DMU_TOP_COLOR:
             GetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
             GetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 1);
@@ -1865,6 +1891,16 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
             }
+        case DMU_MIDDLE_TEXTURE_OFFSET_X:
+            GetValue(DMT_SURFACE_OFFX, &p->middle.offx, args, 0);
+            break;
+        case DMU_MIDDLE_TEXTURE_OFFSET_Y:
+            GetValue(DMT_SURFACE_OFFY, &p->middle.offy, args, 0);
+            break;
+        case DMU_MIDDLE_TEXTURE_OFFSET_XY:
+            GetValue(DMT_SURFACE_OFFX, &p->middle.offx, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->middle.offy, args, 1);
+            break;
         case DMU_MIDDLE_COLOR:
             GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
             GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[1], args, 1);
@@ -1896,6 +1932,16 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
             }
+        case DMU_BOTTOM_TEXTURE_OFFSET_X:
+            GetValue(DMT_SURFACE_OFFX, &p->bottom.offx, args, 0);
+            break;
+        case DMU_BOTTOM_TEXTURE_OFFSET_Y:
+            GetValue(DMT_SURFACE_OFFY, &p->bottom.offy, args, 0);
+            break;
+        case DMU_BOTTOM_TEXTURE_OFFSET_XY:
+            GetValue(DMT_SURFACE_OFFX, &p->bottom.offx, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->bottom.offy, args, 1);
+            break;
         case DMU_BOTTOM_COLOR:
             GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
             GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 1);

@@ -26,11 +26,11 @@
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_TEXTURE DDVT_SHORT
 #define DMT_SURFACE_TEXMOVE DDVT_FIXED // Texture movement X and Y.
+#define DMT_SURFACE_OFFX DDVT_FLOAT    // Texture x offset.
+#define DMT_SURFACE_OFFY DDVT_FLOAT    // Texture y offset.
 #define DMT_SURFACE_RGBA DDVT_BYTE     // Surface color tint
 
 #define DMT_PLANE_HEIGHT DDVT_FIXED    // Current height.
-#define DMT_PLANE_OFFX DDVT_FLOAT      // Texture x offset.
-#define DMT_PLANE_OFFY DDVT_FLOAT      // Texture y offset.
 #define DMT_PLANE_GLOW DDVT_FLOAT      // Glow amount.
 #define DMT_PLANE_GLOWRGB DDVT_BYTE    // Glow color.
 #define DMT_PLANE_TARGET DDVT_FIXED    // Target height.
@@ -38,6 +38,8 @@
 #define DMT_PLANE_SOUNDORG DDVT_PTR    // Sound origin for plane.
 
 #define DMT_PLANE_SECTOR        DDVT_PTR
+#define DMT_PLANE_OFFX          DDVT_FLOAT
+#define DMT_PLANE_OFFY          DDVT_FLOAT
 
 #define DMT_SECTOR_LIGHTLEVEL DDVT_SHORT
 #define DMT_SECTOR_RGB DDVT_BYTE
@@ -50,8 +52,6 @@
 #define DMT_SECTOR_SOUNDORG DDVT_PTR
 #define DMT_SECTOR_REVERB DDVT_FLOAT
 
-#define DMT_SIDE_TEXTUREOFFSET DDVT_FIXED // Add this to the calculated texture col.
-#define DMT_SIDE_ROWOFFSET DDVT_FIXED  // Add this to the calculated texture top.
 #define DMT_SIDE_BLENDMODE DDVT_BLENDMODE
 #define DMT_SIDE_SECTOR DDVT_PTR
 #define DMT_SIDE_FLAGS DDVT_SHORT

@@ -2314,6 +2314,18 @@ void R_UpdateSurface(surface_t *current, surface_t *old, boolean forceUpdate)
         old->texmove[1] = current->texmove[1];
     }
 
+    if(forceUpdate ||
+       (current->offx != old->offx))
+    {
+        old->offx = current->offx;
+    }
+
+    if(forceUpdate ||
+       (current->offy != old->offy))
+    {
+        old->offy = current->offy;
+    }
+
     // Surface color change?
     if(forceUpdate ||
        (current->rgba[0] != old->rgba[0] ||

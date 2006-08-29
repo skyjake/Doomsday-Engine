@@ -44,6 +44,8 @@ typedef struct surface_s {
     short               texture;
     boolean             isflat;        // true if current texture is a flat
     fixed_t             texmove[2];    // Texture movement X and Y.
+    float               offx;          // Texture x offset.
+    float               offy;          // Texture y offset.
     byte                rgba[4];       // Surface color tint
 } surface_t;
 
@@ -52,8 +54,6 @@ typedef struct plane_s {
     fixed_t             height;        // Current height.
     surface_t           surface;
     float               normal[3];     // Plane normal.
-    float               offx;          // Texture x offset.
-    float               offy;          // Texture y offset.
     float               glow;          // Glow amount.
     byte                glowrgb[3];    // Glow color.
     fixed_t             target;        // Target height.
@@ -68,8 +68,8 @@ typedef struct plane_s {
 #define SP_ceilnormal           planes[PLN_CEILING].normal
 #define SP_ceilpic              planes[PLN_CEILING].surface.texture
 #define SP_ceilisflat           planes[PLN_CEILING].surface.isflat
-#define SP_ceiloffx             planes[PLN_CEILING].offx
-#define SP_ceiloffy             planes[PLN_CEILING].offy
+#define SP_ceiloffx             planes[PLN_CEILING].surface.offx
+#define SP_ceiloffy             planes[PLN_CEILING].surface.offy
 #define SP_ceilrgb              planes[PLN_CEILING].surface.rgba
 #define SP_ceilglow             planes[PLN_CEILING].glow
 #define SP_ceilglowrgb          planes[PLN_CEILING].glowrgb
@@ -83,8 +83,8 @@ typedef struct plane_s {
 #define SP_floornormal          planes[PLN_FLOOR].normal
 #define SP_floorpic             planes[PLN_FLOOR].surface.texture
 #define SP_floorisflat          planes[PLN_FLOOR].surface.isflat
-#define SP_flooroffx            planes[PLN_FLOOR].offx
-#define SP_flooroffy            planes[PLN_FLOOR].offy
+#define SP_flooroffx            planes[PLN_FLOOR].surface.offx
+#define SP_flooroffy            planes[PLN_FLOOR].surface.offy
 #define SP_floorrgb             planes[PLN_FLOOR].surface.rgba
 #define SP_floorglow            planes[PLN_FLOOR].glow
 #define SP_floorglowrgb         planes[PLN_FLOOR].glowrgb
@@ -112,8 +112,6 @@ typedef struct sector_s {
 
 typedef struct side_s {
     runtime_mapdata_header_t header;
-    fixed_t             textureoffset; // Add this to the calculated texture col.
-    fixed_t             rowoffset;     // Add this to the calculated texture top.
     surface_t           top;
     surface_t           middle;
     surface_t           bottom;

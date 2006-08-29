@@ -954,7 +954,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     surface_t *surface;
     side_t *sid, *backsid, *side;
     line_t *ldef;
-    float   ffloor, fceil, bfloor, bceil, fsh, bsh, tcxoff, tcyoff;
+    float   ffloor, fceil, bfloor, bceil, fsh, bsh;
     rendpoly_t quad;
     float  *vBL, *vBR, *vTL, *vTR;
     boolean backSide = true;
@@ -1022,8 +1022,6 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
 
     // Some texture coordinates.
     quad.wall.length = seg->length;
-    tcxoff = FIX2FLT(side->textureoffset + seg->offset);
-    tcyoff = FIX2FLT(side->rowoffset);
 
     // Top wall section color offset?
     if(side->top.rgba[0] < 255 || side->top.rgba[1] < 255 || side->top.rgba[2] < 255)
@@ -1156,8 +1154,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 vTL[VZ] = vTR[VZ] = fceil;
                 vBL[VZ] = vBR[VZ] = ffloor;
 
-                quad.texoffx = tcxoff;
-                quad.texoffy = tcyoff;
+                quad.texoffx = side->middle.offx + FIX2FLT(seg->offset);
+                quad.texoffy = side->middle.offy;
                 if(ldef->flags & ML_DONTPEGBOTTOM)
                     quad.texoffy += texh - fsh;
 
@@ -1216,11 +1214,11 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 vTL[VZ] = vTR[VZ] = gaptop    = MIN_OF(rbceil, rfceil);
                 vBL[VZ] = vBR[VZ] = gapbottom = MAX_OF(rbfloor, rffloor);
 
-                quad.texoffx = tcxoff;
+                quad.texoffx = side->middle.offx + FIX2FLT(seg->offset);
 
                 if(Rend_MidTexturePos
                    (&vBL[VZ], &vBR[VZ], &vTL[VZ], &vTR[VZ],
-                    &quad.texoffy, tcyoff,
+                    &quad.texoffy, side->middle.offy,
                     0 != (ldef->flags & ML_DONTPEGBOTTOM)))
                 {
                     // Should a solid segment be added here?
@@ -1310,9 +1308,11 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             {
                 byte alpha;
                 boolean isVisible = true;
+                float tcyoff;
 
                 // Calculate texture coordinates.
-                quad.texoffx = tcxoff;
+                quad.texoffx = side->top.offx + FIX2FLT(seg->offset);
+                tcyoff = side->middle.offy;
 
                 quad.flags = 0;
 
@@ -1389,8 +1389,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             if(surfaceFlags != -1)
             {
                 // Calculate texture coordinates.
-                quad.texoffx = tcxoff;
-                quad.texoffy = tcyoff;
+                quad.texoffx = side->bottom.offx + FIX2FLT(seg->offset);
+                quad.texoffy = side->bottom.offy;
                 if(ldef->flags & ML_DONTPEGBOTTOM)
                     quad.texoffy += fceil - bfloor; // Align with normal middle texture.
 
@@ -1599,8 +1599,8 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
             // Check for sky.
             if(!R_IsSkySurface(surface))
             {
-                poly.texoffx = sector->planes[plane->type].offx;
-                poly.texoffy = sector->planes[plane->type].offy;
+                poly.texoffx = sector->planes[plane->type].surface.offx;
+                poly.texoffy = sector->planes[plane->type].surface.offy;
             }
 
             Rend_DoRenderPlane(&poly, subsector, plane, surface, height,

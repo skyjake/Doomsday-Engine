@@ -34,7 +34,6 @@
 #define SIF_VISIBLE         0x1    // Sector is visible on this frame.
 #define SIF_FRAME_CLEAR     0x1    // Flags to clear before each frame.
 #define SIF_LIGHT_CHANGED   0x2
-#define SIF_PLANE_COLOR_CHANGED 0x4        // One (at least) of the sector's planes color has changed
 
 // Sector flags.
 #define SECF_INVIS_FLOOR    0x1

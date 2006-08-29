@@ -224,7 +224,7 @@ boolean Rend_DoesMidTextureFillGap(line_t* line, boolean frontside)
                     // Possibly. Check the placement of the mid texture.
                     if(Rend_MidTexturePos
                        (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
-                        NULL, FIX2FLT(side->rowoffset),
+                        NULL, side->middle.offy,
                         0 != (line->flags & ML_DONTPEGBOTTOM)))
                     {
                         if(openTop[0] >= gapTop[0] &&

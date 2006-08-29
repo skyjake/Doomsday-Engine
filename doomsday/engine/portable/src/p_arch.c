@@ -2374,11 +2374,17 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         switch(prop->property)
         {
         case DAM_TEXTURE_OFFSET_X:
-            ReadValue(map, DMT_SIDE_TEXTUREOFFSET, &p->textureoffset, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_OFFX, &p->top.offx, buffer + prop->offset, prop, idx);
+            // DOOM format maps don't support per wall section offsets so, this
+            // property is a special case which copies the value to the others.
+            p->middle.offx = p->bottom.offx = p->top.offx;
             break;
 
         case DAM_TEXTURE_OFFSET_Y:
-            ReadValue(map, DMT_SIDE_ROWOFFSET, &p->rowoffset, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_OFFY, &p->top.offy, buffer + prop->offset, prop, idx);
+            // DOOM format maps don't support per wall section offsets so, this
+            // property is a special case which copies the value to the others.
+            p->middle.offy = p->bottom.offy = p->top.offy;
             break;
 
         case DAM_TOP_TEXTURE:

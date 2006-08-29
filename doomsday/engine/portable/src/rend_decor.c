@@ -339,9 +339,8 @@ void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
 /**
  * Generate decorations for the specified section of a line.
  */
-void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
-                              boolean isFlat, float top, float bottom,
-                              float texOffY)
+void Rend_DecorateLineSection(line_t *line, side_t * side, surface_t *surface,
+                              float top, float bottom, float texOffY)
 {
     lineinfo_t *linfo = &lineinfo[GET_LINE_IDX(line)];
     ded_decor_t *def;
@@ -357,7 +356,7 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
         return;
 
     // Should this be decorated at all?
-    if(!(def = Rend_GetGraphicResourceDecoration(texture, isFlat)))
+    if(!(def = Rend_GetGraphicResourceDecoration(surface->texture, surface->isflat)))
         return;
 
     v1 = line->v1;
@@ -381,10 +380,10 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
     lh = top - bottom;
 
     // Setup the global texture info variables.
-    if(isFlat)
-        GL_PrepareFlat2(texture, true);
+    if(surface->isflat)
+        GL_PrepareFlat2(surface->texture, true);
     else
-        GL_GetTextureInfo(texture);
+        GL_GetTextureInfo(surface->texture);
 
     surfTexW = texw;
     surfTexH = texh;
@@ -412,13 +411,13 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, int texture,
         patternH = surfTexH * skip[VY];
 
         // Let's see where the top left light is.
-        s = M_CycleIntoRange(lightDef->pos[VX] - FIX2FLT(side->textureoffset) -
+        s = M_CycleIntoRange(lightDef->pos[VX] - surface->offx -
                              surfTexW * lightDef->pattern_offset[VX],
                              patternW);
 
         for(; s < linfo->length; s += patternW)
         {
-            t = M_CycleIntoRange(lightDef->pos[VY] - FIX2FLT(side->rowoffset) -
+            t = M_CycleIntoRange(lightDef->pos[VY] - surface->offy -
                                  surfTexH * lightDef->pattern_offset[VY] +
                                  texOffY, patternH);
 
@@ -551,8 +550,7 @@ void Rend_DecorateLine(int index)
                 else
                     GL_GetTextureInfo(side->top.texture);
 
-                Rend_DecorateLineSection(line, side, side->top.texture,
-                                         side->top.isflat,
+                Rend_DecorateLineSection(line, side, &side->top,
                                          SECT_CEIL(highSector),
                                          SECT_CEIL(lowSector),
                                          line->flags & ML_DONTPEGTOP ? 0 : -texh +
@@ -587,8 +585,7 @@ void Rend_DecorateLine(int index)
                 else
                     GL_GetTextureInfo(side->bottom.texture);
 
-                Rend_DecorateLineSection(line, side, side->bottom.texture,
-                                         side->bottom.isflat,
+                Rend_DecorateLineSection(line, side, &side->bottom,
                                          SECT_FLOOR(highSector),
                                          SECT_FLOOR(lowSector),
                                          line->flags & ML_DONTPEGBOTTOM ?
@@ -616,7 +613,7 @@ void Rend_DecorateLine(int index)
             if(Rend_MidTexturePos(&quad.top, &quad.bottom, &quad.texoffy, 0,
                                   (line->flags & ML_DONTPEGBOTTOM) != 0))
             {
-                Rend_DecorateLineSection(line, side, side->midtexture, false,
+                Rend_DecorateLineSection(line, side, &side->middle,
                                          quad.top, quad.bottom, quad.texoffy);
             }
         }*/
@@ -635,8 +632,7 @@ void Rend_DecorateLine(int index)
             else
                 GL_GetTextureInfo(side->middle.texture);
 
-            Rend_DecorateLineSection(line, side, side->middle.texture,
-                                     side->middle.isflat, frontCeil,
+            Rend_DecorateLineSection(line, side, &side->middle, frontCeil,
                                      frontFloor,
                                      line->flags & ML_DONTPEGBOTTOM ? -texh +
                                      (frontCeil - frontFloor) : 0);
@@ -735,7 +731,7 @@ void Rend_DecorateSector(int index)
 
         if(def != NULL) // The surface is decorated.
             Rend_DecoratePlane(index, SECT_PLANE_HEIGHT(sector, i), pln->normal[VZ],
-                               pln->offx, pln->offy, def);
+                               pln->surface.offx, pln->surface.offy, def);
     }
 }
 

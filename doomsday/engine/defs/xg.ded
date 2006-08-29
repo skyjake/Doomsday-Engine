@@ -211,8 +211,12 @@ Flag { ID = "ldref_acttag"; Value = 0x4; }
 Flag { ID = "ldref_count"; Value = 0x5; }
 Flag { ID = "ldref_angle"; Value = 0x6; }
 Flag { ID = "ldref_length"; Value = 0x7; }
-Flag { ID = "ldref_offsetx"; Value = 0x8; }
-Flag { ID = "ldref_offsety"; Value = 0x9; }
+Flag { ID = "ldref_top_offsetx"; Value = 0x8; }
+Flag { ID = "ldref_top_offsety"; Value = 0x9; }
+Flag { ID = "ldref_middle_offsetx"; Value = 0x10; }
+Flag { ID = "ldref_middle_offsety"; Value = 0x11; }
+Flag { ID = "ldref_bottom_offsetx"; Value = 0x12; }
+Flag { ID = "ldref_bottom_offsety"; Value = 0x13; }
 
 Flag { ID = "sdf_fade_top_mid";  Value = 0x1; }
 Flag { ID = "sdf_fade_mid_top";  Value = 0x2; }

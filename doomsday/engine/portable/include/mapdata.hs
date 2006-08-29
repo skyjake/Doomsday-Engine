@@ -36,6 +36,8 @@ struct surface
     SHORT   short       texture
     -       boolean     isflat  // true if current texture is a flat
     FIXED   fixed_t[2]  texmove // Texture movement X and Y.
+    FLOAT   float       offx	// Texture x offset.
+    FLOAT   float       offy	// Texture y offset.
     BYTE    byte[4]     rgba    // Surface color tint
 end
 
@@ -43,8 +45,6 @@ struct plane
     FIXED   fixed_t     height  // Current height.
     -       surface_t   surface
     -       float[3]    normal  // Plane normal.
-    FLOAT   float       offx    // Texture x offset.
-    FLOAT   float       offy    // Texture y offset.
     FLOAT   float       glow    // Glow amount.
     BYTE    byte[3]     glowrgb // Glow color.
     FIXED   fixed_t     target  // Target height.
@@ -55,6 +55,8 @@ end
 
 public
 #define DMT_PLANE_SECTOR        DDVT_PTR
+#define DMT_PLANE_OFFX          DDVT_FLOAT
+#define DMT_PLANE_OFFY          DDVT_FLOAT
 end
 
 internal
@@ -64,8 +66,8 @@ internal
 #define SP_ceilnormal           planes[PLN_CEILING].normal
 #define SP_ceilpic              planes[PLN_CEILING].surface.texture
 #define SP_ceilisflat           planes[PLN_CEILING].surface.isflat
-#define SP_ceiloffx             planes[PLN_CEILING].offx
-#define SP_ceiloffy             planes[PLN_CEILING].offy
+#define SP_ceiloffx             planes[PLN_CEILING].surface.offx
+#define SP_ceiloffy             planes[PLN_CEILING].surface.offy
 #define SP_ceilrgb              planes[PLN_CEILING].surface.rgba
 #define SP_ceilglow             planes[PLN_CEILING].glow
 #define SP_ceilglowrgb          planes[PLN_CEILING].glowrgb
@@ -79,8 +81,8 @@ internal
 #define SP_floornormal          planes[PLN_FLOOR].normal
 #define SP_floorpic             planes[PLN_FLOOR].surface.texture
 #define SP_floorisflat          planes[PLN_FLOOR].surface.isflat
-#define SP_flooroffx            planes[PLN_FLOOR].offx
-#define SP_flooroffy            planes[PLN_FLOOR].offy
+#define SP_flooroffx            planes[PLN_FLOOR].surface.offx
+#define SP_flooroffy            planes[PLN_FLOOR].surface.offy
 #define SP_floorrgb             planes[PLN_FLOOR].surface.rgba
 #define SP_floorglow            planes[PLN_FLOOR].glow
 #define SP_floorglowrgb         planes[PLN_FLOOR].glowrgb
@@ -108,8 +110,6 @@ struct sector
 end
 
 struct side
-    FIXED   fixed_t     textureoffset   // Add this to the calculated texture col.
-    FIXED   fixed_t     rowoffset       // Add this to the calculated texture top.
     -       surface_t   top
     -       surface_t   middle
     -       surface_t   bottom
