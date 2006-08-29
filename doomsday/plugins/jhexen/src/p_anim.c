@@ -89,7 +89,7 @@ static int *LightningLightLevels;
 
 void P_AnimateSurfaces(void)
 {
-    int     i;
+    int     i, j;
     line_t *line;
 
     // Update scrolling textures
@@ -100,25 +100,35 @@ void P_AnimateSurfaces(void)
 
         line = linespeciallist[i];
         side = P_GetPtrp(line, DMU_SIDE0);
-        P_GetFixedpv(side, DMU_TEXTURE_OFFSET_XY, texOff);
-
-        switch (P_XLine(line)->special)
+        for(j =0; j < 3; ++j)
         {
-        case 100:               // Scroll_Texture_Left
-            texOff[0] += P_XLine(line)->arg1 << 10;
-            break;
-        case 101:               // Scroll_Texture_Right
-            texOff[0] -= P_XLine(line)->arg1 << 10;
-            break;
-        case 102:               // Scroll_Texture_Up
-            texOff[1] += P_XLine(line)->arg1 << 10;
-            break;
-        case 103:               // Scroll_Texture_Down
-            texOff[1] -= P_XLine(line)->arg1 << 10;
-            break;
-        }
 
-        P_SetFixedpv(side, DMU_TEXTURE_OFFSET_XY, texOff);
+            P_GetFixedpv(side,
+                         (j==0? DMU_TOP_TEXTURE_OFFSET_XY :
+                          j==1? DMU_MIDDLE_TEXTURE_OFFSET_XY :
+                          DMU_BOTTOM_TEXTURE_OFFSET_XY), texOff);
+
+            switch (P_XLine(line)->special)
+            {
+            case 100:               // Scroll_Texture_Left
+                texOff[0] += P_XLine(line)->arg1 << 10;
+                break;
+            case 101:               // Scroll_Texture_Right
+                texOff[0] -= P_XLine(line)->arg1 << 10;
+                break;
+            case 102:               // Scroll_Texture_Up
+                texOff[1] += P_XLine(line)->arg1 << 10;
+                break;
+            case 103:               // Scroll_Texture_Down
+                texOff[1] -= P_XLine(line)->arg1 << 10;
+                break;
+            }
+
+            P_SetFixedpv(side,
+                         (j==0? DMU_TOP_TEXTURE_OFFSET_XY :
+                          j==1? DMU_MIDDLE_TEXTURE_OFFSET_XY :
+                          DMU_BOTTOM_TEXTURE_OFFSET_XY), texOff);
+        }
     }
 
     // Update sky column offsets

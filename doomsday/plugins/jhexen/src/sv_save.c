@@ -49,7 +49,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define HXS_VERSION_TEXT        "HXS Ver 2.37"
+#define HXS_VERSION_TEXT        "HXS Ver " // Do not change me!
 #define HXS_VERSION_TEXT_LENGTH 16
 #define HXS_DESCRIPTION_LENGTH  24
 
@@ -58,6 +58,7 @@
 #define SAVEGAMENAME            "hex"
 #define CLIENTSAVEGAMENAME      "HexenCl"
 #define SAVEGAMEEXTENSION       "hxs"
+#define MY_SAVE_VERSION         3
 
 #define DBG(x)                  //x
 
@@ -191,6 +192,8 @@ char    SavePath[256] = DEFAULT_SAVEPATH;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int saveVersion;
+
 //static boolean kickout[MAXPLAYERS];
 static int SaveToRealPlayerNum[MAXPLAYERS];
 static int MobjCount;
@@ -310,7 +313,7 @@ int SV_GetSaveDescription(char *filename, char *str)
     char name[256];
     char    versionText[HXS_VERSION_TEXT_LENGTH];
     boolean found = false;
-
+;
     strncpy(name, filename, sizeof(name));
     M_TranslatePath(name, name);
     fp = lzOpen(name, "rp");
@@ -319,12 +322,13 @@ int SV_GetSaveDescription(char *filename, char *str)
         lzRead(str, HXS_DESCRIPTION_LENGTH, fp);
         lzRead(versionText, HXS_VERSION_TEXT_LENGTH, fp);
         lzClose(fp);
-        if(!strcmp(versionText, HXS_VERSION_TEXT))
+        if(!strncmp(versionText, HXS_VERSION_TEXT, 8))
         {
-            found = true;
+            saveVersion = atoi(&versionText[8]);
+            if(saveVersion <= MY_SAVE_VERSION)
+                found = true;
         }
     }
-
     return found;
 }
 
@@ -370,7 +374,7 @@ void SV_HxSaveGame(int slot, char *description)
 
     // Write version info
     memset(versionText, 0, HXS_VERSION_TEXT_LENGTH);
-    strcpy(versionText, HXS_VERSION_TEXT);
+    sprintf(versionText, HXS_VERSION_TEXT"%i", MY_SAVE_VERSION);
     StreamOutBuffer(versionText, HXS_VERSION_TEXT_LENGTH);
 
     // Place a header marker
@@ -478,10 +482,13 @@ void SV_HxLoadGame(int slot)
     SavePtr.b = SaveBuffer + HXS_DESCRIPTION_LENGTH;
 
     // Check the version text
-    if(strcmp(SavePtr.b, HXS_VERSION_TEXT))
+    if(strncmp(SavePtr.b, HXS_VERSION_TEXT, 8))
     {                           // Bad version
         return;
     }
+    saveVersion = atoi(SavePtr.b + 8);
+    if(saveVersion > MY_SAVE_VERSION)
+        return; // Bad version
     SavePtr.b += HXS_VERSION_TEXT_LENGTH;
 
     AssertSegment(ASEG_GAME_HEADER);
@@ -1211,6 +1218,9 @@ void ArchiveWorld(void)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = &xsectors[i];
+
+        StreamOutByte(2); // write a version byte.
+
         StreamOutWord(P_GetIntp(sec, DMU_FLOOR_HEIGHT));
         StreamOutWord(P_GetIntp(sec, DMU_CEILING_HEIGHT));
         StreamOutWord(SV_FlatArchiveNum(P_GetIntp(sec, DMU_FLOOR_TEXTURE)));
@@ -1231,6 +1241,9 @@ void ArchiveWorld(void)
     {
         li = P_ToPtr(DMU_LINE, i);
         xli = &xlines[i];
+
+        StreamOutByte(2); // write a version byte.
+
         StreamOutWord(P_GetIntp(li, DMU_FLAGS));
         StreamOutByte(xli->special);
         StreamOutByte(xli->arg1);
@@ -1248,8 +1261,12 @@ void ArchiveWorld(void)
                 continue;
             }
             si = P_ToPtr(DMU_SIDE, sd);
-            //StreamOutWord(P_GetIntp(si, DMU_TEXTURE_OFFSET_X));
-            //StreamOutWord(P_GetIntp(si, DMU_TEXTURE_OFFSET_Y));
+            StreamOutWord(P_GetFixedp(si, DMU_TOP_TEXTURE_OFFSET_X) >> FRACBITS);
+            StreamOutWord(P_GetFixedp(si, DMU_TOP_TEXTURE_OFFSET_Y) >> FRACBITS);
+            StreamOutWord(P_GetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS);
+            StreamOutWord(P_GetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_Y) >> FRACBITS);
+            StreamOutWord(P_GetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_X) >> FRACBITS);
+            StreamOutWord(P_GetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_Y) >> FRACBITS);
             StreamOutWord(SV_TextureArchiveNum(P_GetIntp(si, DMU_TOP_TEXTURE)));
             StreamOutWord(SV_TextureArchiveNum(P_GetIntp(si, DMU_BOTTOM_TEXTURE)));
             StreamOutWord(SV_TextureArchiveNum(P_GetIntp(si, DMU_MIDDLE_TEXTURE)));
@@ -1273,6 +1290,7 @@ void UnarchiveWorld(void)
 {
     int     i;
     int     j;
+    int     ver;
     sector_t *sec;
     xsector_t *xsec;
     line_t *li;
@@ -1286,8 +1304,15 @@ void UnarchiveWorld(void)
     AssertSegment(ASEG_WORLD);
     for(i = 0; i < DD_GetInteger(DD_SECTOR_COUNT); i++)
     {
-        int fh = GET_WORD;
-        int ch = GET_WORD;
+        int fh;
+        int ch;
+
+        ver = 1;
+        if(saveVersion >= 3)
+            ver = GET_BYTE;
+
+        fh = GET_WORD;
+        ch = GET_WORD;
 
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = &xsectors[i];
@@ -1319,10 +1344,15 @@ void UnarchiveWorld(void)
         xsec->specialdata = 0;
         xsec->soundtarget = 0;
     }
+
     for(i = 0; i < DD_GetInteger(DD_LINE_COUNT); i++)
     {
         li = P_ToPtr(DMU_LINE, i);
         xli = &xlines[i];
+
+        ver = 1;
+        if(saveVersion >= 3)
+            ver = GET_BYTE;
 
         P_SetIntp(li, DMU_FLAGS, GET_WORD);
         xli->special = GET_BYTE;
@@ -1339,17 +1369,43 @@ void UnarchiveWorld(void)
                 continue;
             }
             si = P_ToPtr(DMU_SIDE, sdnum);
-            //P_SetIntp(si, DMU_TEXTURE_OFFSET_X, GET_WORD);
-            //P_SetIntp(si, DMU_TEXTURE_OFFSET_Y, GET_WORD);
+
+            if(ver >= 2)
+            {
+                P_SetFixedp(si, DMU_TOP_TEXTURE_OFFSET_X, GET_WORD << FRACBITS);
+                P_SetFixedp(si, DMU_TOP_TEXTURE_OFFSET_Y, GET_WORD << FRACBITS);
+                P_SetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_X, GET_WORD << FRACBITS);
+                P_SetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_Y, GET_WORD << FRACBITS);
+                P_SetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_X, GET_WORD << FRACBITS);
+                P_SetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_Y, GET_WORD << FRACBITS);
+            }
+            else
+            {
+                float offx, offy;
+
+                offx = (float) GET_WORD;
+                offy = (float) GET_WORD;
+
+                P_SetFloatp(si, DMU_TOP_TEXTURE_OFFSET_X, offx);
+                P_SetFloatp(si, DMU_TOP_TEXTURE_OFFSET_Y, offy);
+                P_SetFloatp(si, DMU_MIDDLE_TEXTURE_OFFSET_X, offx);
+                P_SetFloatp(si, DMU_MIDDLE_TEXTURE_OFFSET_Y, offy);
+                P_SetFloatp(si, DMU_BOTTOM_TEXTURE_OFFSET_X, offx);
+                P_SetFloatp(si, DMU_BOTTOM_TEXTURE_OFFSET_Y, offy);
+            }
+
             P_SetIntp(si, DMU_TOP_TEXTURE, SV_GetArchiveTexture(GET_WORD));
             P_SetIntp(si, DMU_BOTTOM_TEXTURE, SV_GetArchiveTexture(GET_WORD));
             P_SetIntp(si, DMU_MIDDLE_TEXTURE, SV_GetArchiveTexture(GET_WORD));
 
-            GET_DATA(rgb, 3); P_SetBytepv(si, DMU_TOP_COLOR, rgb);
-            GET_DATA(rgb, 4); P_SetBytepv(si, DMU_MIDDLE_COLOR, rgb);
-            GET_DATA(rgb, 3); P_SetBytepv(si, DMU_BOTTOM_COLOR, rgb);
-            P_SetIntp(si, DMU_MIDDLE_BLENDMODE, GET_WORD);
-            P_SetIntp(si, DMU_FLAGS, GET_WORD);
+            if(ver >= 2)
+            {
+                GET_DATA(rgb, 3); P_SetBytepv(si, DMU_TOP_COLOR, rgb);
+                GET_DATA(rgb, 4); P_SetBytepv(si, DMU_MIDDLE_COLOR, rgb);
+                GET_DATA(rgb, 3); P_SetBytepv(si, DMU_BOTTOM_COLOR, rgb);
+                P_SetIntp(si, DMU_MIDDLE_BLENDMODE, GET_WORD);
+                P_SetIntp(si, DMU_FLAGS, GET_WORD);
+            }
         }
     }
 }
@@ -2128,6 +2184,8 @@ static void ArchiveSounds(void)
     StreamOutLong(ActiveSequences);
     for(node = SequenceListHead; node; node = node->next)
     {
+        StreamOutByte(1); // write a version byte.
+
         StreamOutLong(node->sequence);
         StreamOutLong(node->delayTics);
         StreamOutLong(node->volume);
@@ -2164,7 +2222,7 @@ static void ArchiveSounds(void)
 
 static void UnarchiveSounds(void)
 {
-    int     i;
+    int     i, ver;
     int     numSequences;
     int     sequence;
     int     delayTics;
@@ -2182,6 +2240,9 @@ static void UnarchiveSounds(void)
     i = 0;
     while(i < numSequences)
     {
+        if(saveVersion >= 3)
+            ver = GET_BYTE;
+
         sequence = GET_LONG;
         delayTics = GET_LONG;
         volume = GET_LONG;
@@ -2220,6 +2281,9 @@ static void ArchivePolyobjs(void)
     for(i = 0; i < count; i++)
     {
         polyobj_t* po = P_ToPtr(DMU_POLYOBJ, i);
+
+        StreamOutByte(1); // write a version byte.
+
         StreamOutLong(P_GetIntp(po, DMU_TAG));
         StreamOutLong(P_GetAnglep(po, DMU_ANGLE));
         StreamOutLong(P_GetFixedp(po, DMU_START_SPOT_X));
@@ -2235,7 +2299,7 @@ static void ArchivePolyobjs(void)
 
 static void UnarchivePolyobjs(void)
 {
-    int     i;
+    int     i, ver;
     fixed_t deltaX;
     fixed_t deltaY;
     angle_t angle;
@@ -2249,6 +2313,10 @@ static void UnarchivePolyobjs(void)
     for(i = 0; i < count; i++)
     {
         polyobj_t* po = P_ToPtr(DMU_POLYOBJ, i);
+
+        if(saveVersion >= 3)
+            ver = GET_BYTE;
+
         if(GET_LONG != P_GetIntp(po, DMU_TAG))
         {
             Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
