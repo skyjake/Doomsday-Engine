@@ -151,6 +151,7 @@ void            GL_SetSprite(int pnum, int spriteType);
 void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
 void            GL_GetSpriteColorf(int pnum, float *rgb);
 void            GL_GetFlatColor(int fnum, unsigned char *rgb);
+void            GL_GetTextureColor(int texid, unsigned char *rgb);
 void            GL_NewSplitTex(int lump, DGLuint part2name);
 DGLuint         GL_GetOtherPart(int lump);
 void            GL_SetPatch(int lump);  // No mipmaps are generated.

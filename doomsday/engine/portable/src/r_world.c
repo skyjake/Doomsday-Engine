@@ -2378,12 +2378,10 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         {
             plane->glow = 4; // Default height factor is 4
 
-            // FIXME: Now that we support textures on planes we need to average
-            // their color too.
             if(plane->surface.isflat)
                 GL_GetFlatColor(plane->surface.texture, plane->glowrgb);
             else
-                memset(plane->glowrgb, 255, 3); // use white for now.
+                GL_GetTextureColor(plane->surface.texture, plane->glowrgb);
         }
         else
         {

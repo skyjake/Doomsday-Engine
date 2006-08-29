@@ -323,6 +323,10 @@ typedef struct vertexowner_s {
 typedef struct vertexowner_s sector_divisions_t;
 
 typedef struct {
+    byte            rgb[3];
+} rgbcol_t;
+
+typedef struct {
     int             originx;       // block origin (allways UL), which has allready
     int             originy;       // accounted  for the patch's internal origin
     int             patch;
@@ -335,6 +339,7 @@ typedef struct {
     short           width;
     short           height;
     int             flags;         // TXF_* flags.
+    rgbcol_t        color;
     short           patchcount;
     DGLuint         tex;           // Name of the associated DGL texture.
     byte            masked;        // Is the (DGL) texture masked?
@@ -346,10 +351,6 @@ typedef struct {
 
     texpatch_t      patches[1];    // [patchcount] drawn back to front
 } texture_t;                       //   into the cached texture
-
-typedef struct {
-    byte            rgb[3];
-} rgbcol_t;
 
 typedef struct translation_s {
     int             current;

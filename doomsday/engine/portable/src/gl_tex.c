@@ -2360,6 +2360,19 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
             GL_UploadTexture(image.pixels, image.width, image.height,
                              alphaChannel, true, RGBData, false);
 
+        // Average color for glow planes.
+        if(RGBData)
+        {
+            averageColorRGB(&textures[idx]->color, image.pixels, image.width,
+                            image.height);
+        }
+        else
+        {
+            averageColorIdx(&textures[idx]->color, image.pixels, image.width,
+                            image.height,
+                            W_CacheLumpNum(pallump, PU_CACHE), false);
+        }
+
         // Set texture parameters.
         gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
         gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
@@ -2414,6 +2427,19 @@ DGLuint GL_GetTextureInfo2(int index, boolean translate)
     texmask = tex->masked;
     texdetail = (r_detail && tex->detail.tex ? &tex->detail : 0);
     return tex->tex;
+}
+
+/**
+ * Copy the averaged texture color into the dest buffer <code>rgb</code>.
+ *
+ * @param   texid       The id of the texture.
+ * @param   rgb         The dest buffer.
+ */
+void GL_GetTextureColor(int texid, unsigned char *rgb)
+{
+    texture_t *tex = textures[texid];
+
+    memcpy(rgb, tex->color.rgb, 3);
 }
 
 void GL_SetTexture(int idx)
