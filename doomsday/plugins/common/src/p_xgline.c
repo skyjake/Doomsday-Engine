@@ -2555,25 +2555,56 @@ void XL_Think(line_t *line)
         fixed_t yoff = FixedMul(finesine[ang], spd);
 
         // Apply to both sides of the line.
+        // These are group offsets. All surfaces on a given side are
+        // moved using the same texmove speed/angle.
+
+        // TODO:
+        // Implement per-surface texture movement also which would
+        // be added to each independantly.
+
         // Front side
         side = P_GetPtrp(line, DMU_SIDE0);
         if(side)
         {
-            offset = P_GetIntp(side, DMU_TEXTURE_OFFSET_X) + xoff;
-            P_SetIntp(side, DMU_TEXTURE_OFFSET_X, offset);
+            offset = P_GetIntp(side, DMU_TOP_TEXTURE_OFFSET_X) + xoff;
+            P_SetIntp(side, DMU_TOP_TEXTURE_OFFSET_X, offset);
 
-            offset = P_GetIntp(side, DMU_TEXTURE_OFFSET_Y) + yoff;
-            P_SetIntp(side, DMU_TEXTURE_OFFSET_Y, offset);
+            offset = P_GetIntp(side, DMU_TOP_TEXTURE_OFFSET_Y) + yoff;
+            P_SetIntp(side, DMU_TOP_TEXTURE_OFFSET_Y, offset);
+
+            offset = P_GetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_X) + xoff;
+            P_SetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, offset);
+
+            offset = P_GetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y) + yoff;
+            P_SetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, offset);
+
+            offset = P_GetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_X) + xoff;
+            P_SetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, offset);
+
+            offset = P_GetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y) + yoff;
+            P_SetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, offset);
         }
         // back side
         side = P_GetPtrp(line, DMU_SIDE1);
         if(side)
         {
-            offset = P_GetIntp(side, DMU_TEXTURE_OFFSET_X) + xoff;
-            P_SetIntp(side, DMU_TEXTURE_OFFSET_X, offset);
+            offset = P_GetIntp(side, DMU_TOP_TEXTURE_OFFSET_X) + xoff;
+            P_SetIntp(side, DMU_TOP_TEXTURE_OFFSET_X, offset);
 
-            offset = P_GetIntp(side, DMU_TEXTURE_OFFSET_Y) + yoff;
-            P_SetIntp(side, DMU_TEXTURE_OFFSET_Y, offset);
+            offset = P_GetIntp(side, DMU_TOP_TEXTURE_OFFSET_Y) + yoff;
+            P_SetIntp(side, DMU_TOP_TEXTURE_OFFSET_Y, offset);
+
+            offset = P_GetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_X) + xoff;
+            P_SetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, offset);
+
+            offset = P_GetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y) + yoff;
+            P_SetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, offset);
+
+            offset = P_GetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_X) + xoff;
+            P_SetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, offset);
+
+            offset = P_GetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y) + yoff;
+            P_SetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, offset);
         }
     }
 }
