@@ -1164,7 +1164,7 @@ static void SV_WriteLine(line_t *li)
         type = lc_normal;
 
     SV_WriteByte(type);
-    SV_WriteByte(1); // Write a version byte
+    SV_WriteByte(2); // Write a version byte
 
     SV_WriteShort(P_GetIntp(li, DMU_FLAGS));
     SV_WriteShort(xli->special);
@@ -1181,8 +1181,12 @@ static void SV_WriteLine(line_t *li)
         if(!side)
             continue;
 
-        SV_WriteShort(P_GetFixedp(side, DMU_TEXTURE_OFFSET_X) >> FRACBITS);
-        SV_WriteShort(P_GetFixedp(side, DMU_TEXTURE_OFFSET_Y) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y) >> FRACBITS);
 
         texid = P_GetIntp(side, DMU_TOP_TEXTURE);
         SV_WriteShort(SV_TextureArchiveNum(texid));
@@ -1255,8 +1259,30 @@ static void SV_ReadLine(line_t *li)
         if(!side)
             continue;
 
-        P_SetFixedp(side, DMU_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
-        P_SetFixedp(side, DMU_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
+        // Versions latter than 2 store per surface texture offsets.
+        if(ver >= 2)
+        {
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
+        }
+        else
+        {
+            fixed_t offx, offy;
+
+            offx = SV_ReadShort() << FRACBITS;
+            offy = SV_ReadShort() << FRACBITS;
+
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, offx);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y, offy);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, offx);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, offy);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, offx);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, offy);
+        }
 
         topTexID = SV_ReadShort();
         bottomTexID = SV_ReadShort();
@@ -2474,11 +2500,15 @@ int SV_LoadGame(char *filename)
     savefile = lzOpen(filename, "rp");
     if(!savefile)
     {
-#ifdef __JDOOM__
+#if __DOOM64TC__ || __WOLFTC__
+        // we don't support the original game's save format (for obvious reasons).
+        return false;
+#endif
+
+#if __JDOOM__
         // It might still be a v19 savegame.
         SV_v19_LoadGame(filename);
-#endif
-#ifdef __JHERETIC__
+#elif __JHERETIC__
         SV_v13_LoadGame(filename);
 #endif
         return true;
