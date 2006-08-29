@@ -29,7 +29,6 @@
  ./../../plugins/common/src/p_saveg.c
  ./../../plugins/doom64tc/src/p_pspr.c
  ./../../plugins/doom64tc/src/p_plats.c
- ./../../plugins/doom64tc/src/p_oldsvg.c
  ./../../plugins/doom64tc/src/p_mobj.c
  ./../../plugins/doom64tc/src/p_maputl.c
  ./../../plugins/common/src/p_spechit.c
