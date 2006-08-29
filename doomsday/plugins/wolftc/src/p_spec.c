@@ -1093,8 +1093,12 @@ void P_UpdateSpecials(void)
             side = P_GetPtrp(line, DMU_SIDE0);
 
             // EFFECT FIRSTCOL SCROLL +
-            x = P_GetFixedp(side, DMU_TEXTURE_OFFSET_X);
-            P_SetFixedp(side, DMU_TEXTURE_OFFSET_X, x += FRACUNIT);
+            x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x += FRACUNIT);
+            x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x += FRACUNIT);
+            x = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x += FRACUNIT);
             break;
 
         default:

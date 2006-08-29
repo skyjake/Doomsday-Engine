@@ -100,8 +100,7 @@ void P_CopyLine(line_t* from, line_t* to)
 
 #if 0
         // P_Copyp is not implemented in Doomsday yet.
-        P_Copyp(DMU_TEXTURE_OFFSET_XY, sidefrom, sideto);
-
+        P_Copyp(DMU_TOP_TEXTURE_OFFSET_XY, sidefrom, sideto);
         P_Copyp(DMU_TOP_TEXTURE, sidefrom, sideto);
         P_Copyp(DMU_TOP_COLOR, sidefrom, sideto);
 
@@ -114,22 +113,24 @@ void P_CopyLine(line_t* from, line_t* to)
 #else
         {
         byte temp[4];
-        int  itemp[2];
-
-        P_GetIntpv(sidefrom, DMU_TEXTURE_OFFSET_XY, itemp);
-        P_SetIntpv(sideto, DMU_TEXTURE_OFFSET_XY, itemp);
+        float itemp[2];
 
         P_SetIntp(sideto, DMU_TOP_TEXTURE, P_GetIntp(sidefrom, DMU_TOP_TEXTURE));
-
+        P_GetFloatpv(sidefrom, DMU_TOP_TEXTURE_OFFSET_XY, itemp);
+        P_SetFloatpv(sideto, DMU_TOP_TEXTURE_OFFSET_XY, itemp);
         P_GetBytepv(sidefrom, DMU_TOP_COLOR, temp);
         P_SetBytepv(sideto, DMU_TOP_COLOR, temp);
 
         P_SetIntp(sideto, DMU_MIDDLE_TEXTURE, P_GetIntp(sidefrom, DMU_MIDDLE_TEXTURE));
         P_GetBytepv(sidefrom, DMU_MIDDLE_COLOR, temp);
+        P_GetFloatpv(sidefrom, DMU_MIDDLE_TEXTURE_OFFSET_XY, itemp);
+        P_SetFloatpv(sideto, DMU_MIDDLE_TEXTURE_OFFSET_XY, itemp);
         P_SetBytepv(sideto, DMU_MIDDLE_COLOR, temp);
         P_SetIntp(sideto, DMU_MIDDLE_BLENDMODE, P_GetIntp(sidefrom, DMU_MIDDLE_BLENDMODE));
 
         P_SetIntp(sideto, DMU_BOTTOM_TEXTURE, P_GetIntp(sidefrom, DMU_BOTTOM_TEXTURE));
+        P_GetFloatpv(sidefrom, DMU_BOTTOM_TEXTURE_OFFSET_XY, itemp);
+        P_SetFloatpv(sideto, DMU_BOTTOM_TEXTURE_OFFSET_XY, itemp);
         P_GetBytepv(sidefrom, DMU_BOTTOM_COLOR, temp);
         P_SetBytepv(sideto, DMU_BOTTOM_COLOR, temp);
         }

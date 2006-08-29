@@ -198,6 +198,7 @@ void P_v13_UnArchivePlayers(void)
 void P_v13_UnArchiveWorld(void)
 {
     int     i, j;
+    fixed_t offx, offy;
     short  *get;
     int     firstflat = W_CheckNumForName("F_START") + 1;
 
@@ -236,8 +237,14 @@ void P_v13_UnArchiveWorld(void)
             if(!sdef)
                 continue;
 
-            P_SetFixedp(sdef, DMU_TEXTURE_OFFSET_X, *get++ << FRACBITS);
-            P_SetFixedp(sdef, DMU_TEXTURE_OFFSET_Y, *get++ << FRACBITS);
+            offx = *get++ << FRACBITS;
+            offy = *get++ << FRACBITS;
+            P_SetFixedp(sdef, DMU_TOP_TEXTURE_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_TOP_TEXTURE_OFFSET_Y, offy);
+            P_SetFixedp(sdef, DMU_MIDDLE_TEXTURE_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_MIDDLE_TEXTURE_OFFSET_Y, offy);
+            P_SetFixedp(sdef, DMU_BOTTOM_TEXTURE_OFFSET_X, offx);
+            P_SetFixedp(sdef, DMU_BOTTOM_TEXTURE_OFFSET_Y, offy);
             P_SetIntp(sdef, DMU_TOP_TEXTURE, *get++);
             P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, *get++);
             P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, *get++);

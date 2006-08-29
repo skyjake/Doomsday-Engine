@@ -272,8 +272,12 @@ enum                              // Line.data references
     LDREF_COUNT,
     LDREF_ANGLE,
     LDREF_LENGTH,
-    LDREF_OFFSETX,
-    LDREF_OFFSETY
+    LDREF_TOP_OFFSETX,
+    LDREF_TOP_OFFSETY,
+    LDREF_MIDDLE_OFFSETX,
+    LDREF_MIDDLE_OFFSETY,
+    LDREF_BOTTOM_OFFSETX,
+    LDREF_BOTTOM_OFFSETY
 };
 
 // Chain sequence flags.

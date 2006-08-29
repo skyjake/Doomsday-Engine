@@ -915,7 +915,7 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context, char *parmname)
         XG_Dev("XL_ValidateLineRef: Using Line Length (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_OFFSETX:    // x offset
+    case LDREF_TOP_OFFSETX:
         // Can this ever fail?
         side = P_GetPtrp(line, DMU_SIDE0);
         if(!side)
@@ -924,12 +924,12 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context, char *parmname)
             break;
         }
 
-        answer = P_GetIntp(side, DMU_TEXTURE_OFFSET_X);
+        answer = P_GetIntp(side, DMU_TOP_TEXTURE_OFFSET_X);
 
-        XG_Dev("XL_ValidateLineRef: Using Line X Offset (%i) as %s", answer, parmname);
+        XG_Dev("XL_ValidateLineRef: Using Line Top X Offset (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_OFFSETY:    // y offset
+    case LDREF_TOP_OFFSETY:
         // Can this ever fail?
         side = P_GetPtrp(line, DMU_SIDE0);
         if(!side)
@@ -938,9 +938,65 @@ int XL_ValidateLineRef(line_t *line, int reftype, void *context, char *parmname)
             break;
         }
 
-        answer = P_GetIntp(side, DMU_TEXTURE_OFFSET_Y);
+        answer = P_GetIntp(side, DMU_TOP_TEXTURE_OFFSET_Y);
 
-        XG_Dev("XL_ValidateLineRef: Using Line Y Offset (%i) as %s", answer, parmname);
+        XG_Dev("XL_ValidateLineRef: Using Line Top Y Offset (%i) as %s", answer, parmname);
+        break;
+
+    case LDREF_MIDDLE_OFFSETX:
+        // Can this ever fail?
+        side = P_GetPtrp(line, DMU_SIDE0);
+        if(!side)
+        {
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            break;
+        }
+
+        answer = P_GetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
+
+        XG_Dev("XL_ValidateLineRef: Using Line Middle X Offset (%i) as %s", answer, parmname);
+        break;
+
+    case LDREF_MIDDLE_OFFSETY:
+        // Can this ever fail?
+        side = P_GetPtrp(line, DMU_SIDE0);
+        if(!side)
+        {
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            break;
+        }
+
+        answer = P_GetIntp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y);
+
+        XG_Dev("XL_ValidateLineRef: Using Line Middle Y Offset (%i) as %s", answer, parmname);
+        break;
+
+    case LDREF_BOTTOM_OFFSETX:
+        // Can this ever fail?
+        side = P_GetPtrp(line, DMU_SIDE0);
+        if(!side)
+        {
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            break;
+        }
+
+        answer = P_GetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
+
+        XG_Dev("XL_ValidateLineRef: Using Line Bottom X Offset (%i) as %s", answer, parmname);
+        break;
+
+    case LDREF_BOTTOM_OFFSETY:
+        // Can this ever fail?
+        side = P_GetPtrp(line, DMU_SIDE0);
+        if(!side)
+        {
+            XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
+            break;
+        }
+
+        answer = P_GetIntp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y);
+
+        XG_Dev("XL_ValidateLineRef: Using Line Bottom Y Offset (%i) as %s", answer, parmname);
         break;
 
     default:    // Could be explicit, return the actual int value

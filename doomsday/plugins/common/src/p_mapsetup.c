@@ -425,7 +425,7 @@ static void P_FinalizeLevel(void)
     int     lumpnum = R_TextureNumForName("NUKE24");
     int     bottomTex;
     int     midTex;
-    fixed_t yoff;
+    float   yoff;
     side_t* side;
     line_t* line;
 
@@ -437,12 +437,12 @@ static void P_FinalizeLevel(void)
             if(P_GetPtrp(line, k == 0? DMU_FRONT_SECTOR : DMU_BACK_SECTOR))
             {
                 side = P_GetPtrp(line, k == 0? DMU_SIDE0 : DMU_SIDE1);
-                yoff = P_GetFixedp(side, DMU_TEXTURE_OFFSET_Y);
+                yoff = P_GetFloatp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y);
                 bottomTex = P_GetIntp(side, DMU_BOTTOM_TEXTURE);
                 midTex = P_GetIntp(side, DMU_MIDDLE_TEXTURE);
 
                 if(bottomTex == lumpnum && midTex == 0)
-                    P_SetFixedp(side, DMU_TEXTURE_OFFSET_Y, yoff + FRACUNIT);
+                    P_SetFloatp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, yoff + 1.0f);
             }
         }
     }
