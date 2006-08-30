@@ -730,7 +730,7 @@ void Rend_DecorateSector(int index)
         def = Rend_GetGraphicResourceDecoration(pln->surface.texture, pln->surface.isflat);
 
         if(def != NULL) // The surface is decorated.
-            Rend_DecoratePlane(index, SECT_PLANE_HEIGHT(sector, i), pln->normal[VZ],
+            Rend_DecoratePlane(index, SECT_PLANE_HEIGHT(sector, i), pln->surface.normal[VZ],
                                pln->surface.offx, pln->surface.offy, def);
     }
 }

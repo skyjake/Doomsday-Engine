@@ -1774,13 +1774,13 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
                 }
 
                 // Set plane normals
-                sec->planes[PLN_FLOOR].normal[VX] = 0;
-                sec->planes[PLN_FLOOR].normal[VY] = 0;
-                sec->planes[PLN_FLOOR].normal[VZ] = 1;
+                sec->planes[PLN_FLOOR].surface.normal[VX] = 0;
+                sec->planes[PLN_FLOOR].surface.normal[VY] = 0;
+                sec->planes[PLN_FLOOR].surface.normal[VZ] = 1;
 
-                sec->planes[PLN_CEILING].normal[VX] = 0;
-                sec->planes[PLN_CEILING].normal[VY] = 0;
-                sec->planes[PLN_CEILING].normal[VZ] = -1;
+                sec->planes[PLN_CEILING].surface.normal[VX] = 0;
+                sec->planes[PLN_CEILING].surface.normal[VY] = 0;
+                sec->planes[PLN_CEILING].surface.normal[VZ] = -1;
             }
             break;
             }
@@ -2846,6 +2846,23 @@ static void P_ProcessSegs(gamemap_t* map, int version)
 
         if(version == 0 && seg->length == 0)
             seg->length = 0.01f; // Hmm...
+
+        // Calculate the surface normals
+        // Front first
+        if(seg->sidedef)
+        {
+            surface_t *surface = &seg->sidedef->top;
+
+            surface->normal[VY] =
+                (FIX2FLT(seg->v1->x) - FIX2FLT(seg->v2->x)) / seg->length;
+            surface->normal[VX] =
+                (FIX2FLT(seg->v2->y) - FIX2FLT(seg->v1->y)) / seg->length;
+            surface->normal[VZ] = 0;
+
+            // All surfaces of a sidedef have the same normal.
+            memcpy(seg->sidedef->middle.normal, surface->normal, sizeof(surface->normal));
+            memcpy(seg->sidedef->bottom.normal, surface->normal, sizeof(surface->normal));
+        }
     }
 }
 
@@ -2863,8 +2880,7 @@ static void P_FinishLineDefs(gamemap_t* map)
 {
     int i;
     line_t *ld;
-    vertex_t *v1;
-    vertex_t *v2;
+    vertex_t *v1, *v2;
 
     VERBOSE2(Con_Message("Finalizing Linedefs...\n"));
 

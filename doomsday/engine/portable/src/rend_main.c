@@ -868,8 +868,9 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     quad->lights = DL_GetSegLightLinks(segIndex, mode);
 
     // Do BIAS lighting for this poly.
-    SB_RendPoly(quad, false, frontsec, seginfo[segIndex].illum[1],
-                &seginfo[segIndex].tracker[1], segIndex);
+    SB_RendPoly(quad, surface, frontsec, seginfo[segIndex].illum[1],
+                &seginfo[segIndex].tracker[1],  seginfo[segIndex].affected,
+                segIndex);
 
     // Smooth Texture Animation?
     Rend_PolyTexBlend(surface, quad);
@@ -923,8 +924,8 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
         poly->lights = DL_GetSubSecLightLinks(subIndex, plane->type);
 
     // Do BIAS lighting for this poly.
-    SB_RendPoly(poly, plane->type, subsector->sector, plane->illumination,
-                &plane->tracker, subIndex);
+    SB_RendPoly(poly, surface, subsector->sector, plane->illumination,
+                &plane->tracker, plane->affected, subIndex);
 
     // Smooth Texture Animation?
     Rend_PolyTexBlend(surface, poly);
@@ -1019,9 +1020,6 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     // Calculate the distances.
     quad.vertices[0].dist = quad.vertices[2].dist = Rend_PointDist2D(vBL);
     quad.vertices[1].dist = quad.vertices[3].dist = Rend_PointDist2D(vBR);
-
-    // Some texture coordinates.
-    quad.wall.length = seg->length;
 
     // Top wall section color offset?
     if(side->top.rgba[0] < 255 || side->top.rgba[1] < 255 || side->top.rgba[2] < 255)

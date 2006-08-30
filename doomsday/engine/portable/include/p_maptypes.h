@@ -43,6 +43,7 @@ typedef struct surface_s {
     int                 flags;         // SUF_ flags
     short               texture;
     boolean             isflat;        // true if current texture is a flat
+    float               normal[3];     // Surface normal.
     fixed_t             texmove[2];    // Texture movement X and Y.
     float               offx;          // Texture x offset.
     float               offy;          // Texture y offset.
@@ -53,7 +54,6 @@ typedef struct plane_s {
     runtime_mapdata_header_t header;
     fixed_t             height;        // Current height.
     surface_t           surface;
-    float               normal[3];     // Plane normal.
     float               glow;          // Glow amount.
     byte                glowrgb[3];    // Glow color.
     fixed_t             target;        // Target height.

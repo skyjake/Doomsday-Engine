@@ -35,6 +35,7 @@ struct surface
     INT     int         flags   // SUF_ flags
     SHORT   short       texture
     -       boolean     isflat  // true if current texture is a flat
+    -       float[3]    normal  // Surface normal.
     FIXED   fixed_t[2]  texmove // Texture movement X and Y.
     FLOAT   float       offx	// Texture x offset.
     FLOAT   float       offy	// Texture y offset.
@@ -44,7 +45,6 @@ end
 struct plane
     FIXED   fixed_t     height  // Current height.
     -       surface_t   surface
-    -       float[3]    normal  // Plane normal.
     FLOAT   float       glow    // Glow amount.
     BYTE    byte[3]     glowrgb // Glow color.
     FIXED   fixed_t     target  // Target height.

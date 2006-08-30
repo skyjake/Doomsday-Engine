@@ -57,10 +57,12 @@ void            SB_InitForLevel(const char *uniqueId);
 void            SB_SegHasMoved(seg_t *seg);
 void            SB_PlaneHasMoved(subsector_t *subsector, int plane);
 void            SB_BeginFrame(void);
-void            SB_RendPoly(struct rendpoly_s *poly, int plane,
-                            sector_t *sector,
+void            SB_RendPoly(struct rendpoly_s *poly,
+                            surface_t *surface, sector_t *sector,
                             struct vertexillum_s *illumination,
-                            biastracker_t *tracker, int mapElementIndex);
+                            biastracker_t *tracker,
+                            struct biasaffection_s *affected,
+                            int mapElementIndex);
 void            SB_EndFrame(void);
 
 int             SB_NewSourceAt(float x, float y, float z, float size, int minLight,

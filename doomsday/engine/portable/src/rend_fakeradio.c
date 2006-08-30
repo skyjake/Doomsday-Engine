@@ -1017,7 +1017,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         }
         else // Right Shadow
         {
-            if(sideCn[1].corner > 0 && segOffset + q->wall.length > info->length - size)
+            if(sideCn[1].corner > 0 && segOffset + seg->length > info->length - size)
             {
                 q->texoffx = -info->length + segOffset;
                 // Make sure the shadow isn't too big

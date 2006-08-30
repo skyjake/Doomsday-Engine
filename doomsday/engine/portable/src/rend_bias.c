@@ -394,15 +394,6 @@ void HSVtoRGB(float *rgb, float h, float s, float v)
     }
 }
 
-static void SB_WallNormal(rendpoly_t *poly, float normal[3])
-{
-    normal[VY] = (poly->vertices[0].pos[VX] -
-                  poly->vertices[1].pos[VX]) / poly->wall.length;
-    normal[VX] = (poly->vertices[1].pos[VY] -
-                  poly->vertices[0].pos[VY]) / poly->wall.length;
-    normal[VZ] = 0;
-}
-
 static void SB_AddAffected(affection_t *aff, int k, float intensity)
 {
     int i, worst;
@@ -471,7 +462,7 @@ void SB_UpdateSegAffected(int seg, rendpoly_t *poly)
     int i, k;
     vec2_t delta;
     source_t *src;
-    float distance = 0, len, normal[3];
+    float distance = 0, len;
     float intensity;
     affection_t aff;
 
@@ -501,8 +492,7 @@ void SB_UpdateSegAffected(int seg, rendpoly_t *poly)
                 distance = len;
         }
 
-        SB_WallNormal(poly, normal);
-        if(M_DotProduct(delta, normal) >= 0)
+        if(M_DotProduct(delta, SEG_PTR(seg)->sidedef->middle.normal) >= 0)
             continue;
 
         if(distance < 1)
@@ -531,17 +521,6 @@ static float SB_Dot(source_t *src, float point[3], float normal[3])
     M_Normalize(delta);
 
     return M_DotProduct(delta, normal);
-}
-
-static float SB_PlaneDot(source_t *src, float point[3], plane_t *plane)
-{
-    float normal[3];
-
-    normal[VX] = plane->normal[VX];
-    normal[VY] = plane->normal[VY];
-    normal[VZ] = plane->normal[VZ];
-
-    return SB_Dot(src, point, normal);
 }
 
 /*
@@ -601,7 +580,7 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
             point[VY] = subsector->midpoint.y;
             point[VZ] = FIX2FLT(subsector->sector->planes[i].height);
 
-            dot = SB_PlaneDot(src, point, &subsector->sector->planes[i]);
+            dot = SB_Dot(src, point, subsector->sector->planes[i].surface.normal);
             if(dot <= 0)
                 continue;
 
@@ -876,16 +855,14 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * tracker          Tracker of all the changed lights for this polygon.
  * mapElementIndex  Index of the seg or subsector in the global arrays.
  */
-void SB_RendPoly(struct rendpoly_s *poly, int plane, sector_t *sector,
-                 struct vertexillum_s *illumination,
-                 biastracker_t *tracker,
+void SB_RendPoly(struct rendpoly_s *poly, surface_t *surface,
+                 sector_t *sector, struct vertexillum_s *illumination,
+                 biastracker_t *tracker, biasaffection_t *affected,
                  int mapElementIndex)
 {
     float pos[3];
-    float normal[3];
     int i;
     boolean forced;
-    biasaffection_t *affected;
 
     if(!useBias)
         return;
@@ -911,13 +888,6 @@ void SB_RendPoly(struct rendpoly_s *poly, int plane, sector_t *sector,
 /*            // Planes and the top edge of walls.
             SB_AddLight(&poly->vertices[i].color,
                         colorOverride ? NULL : sectorColor, applied);
-
-            if(poly->isWall)
-            {
-                // The bottom edge of walls.
-                SB_AddLight(&poly->bottomcolor[i],
-                            colorOverride ? NULL : sectorColor, applied);
-            }
             }*/
     }
     else
@@ -933,17 +903,12 @@ void SB_RendPoly(struct rendpoly_s *poly, int plane, sector_t *sector,
     if(poly->isWall)
     {
         // Has any of the old affected lights changed?
-        affected = seginfo[mapElementIndex].affected;
-          /*forced = SB_ChangeInAffected(affected);*/
-
         forced = false; //seginfo[mapElementIndex].forced;
 
         // It's a wall.
-        SB_WallNormal(poly, normal);
-
         SB_UpdateSegAffected(mapElementIndex, poly);
 
-        for(i = 0; i < 4; ++i)
+        for(i = 0; i < poly->numvertices; ++i)
         {
             pos[VX] = poly->vertices[i].pos[VX];
             pos[VY] = poly->vertices[i].pos[VY];
@@ -951,22 +916,16 @@ void SB_RendPoly(struct rendpoly_s *poly, int plane, sector_t *sector,
 
             SB_EvalPoint((i >= 2? &poly->vertices[i-2].color : &poly->vertices[i+2].color),
                          &illumination[i], affected,
-                         pos, normal);
+                         pos, surface->normal);
         }
 
 //        colorOverride = SB_CheckColorOverride(affected);
     }
     else
     {
-        affected = subsecinfo[mapElementIndex].plane[plane].affected;
-
         forced = false; /*subsecinfo[mapElementIndex].plane[plane].forced*/
 
         // It's a plane.
-        normal[VX] = sector->planes[plane].normal[VX];
-        normal[VY] = sector->planes[plane].normal[VY];
-        normal[VZ] = sector->planes[plane].normal[VZ];
-
         SB_UpdateSubsectorAffected(mapElementIndex, poly);
 
         for(i = 0; i < poly->numvertices; ++i)
@@ -977,7 +936,7 @@ void SB_RendPoly(struct rendpoly_s *poly, int plane, sector_t *sector,
 
             SB_EvalPoint(&poly->vertices[i].color,
                          &illumination[i], affected,
-                         pos, normal);
+                         pos, surface->normal);
         }
 
 //        colorOverride = SB_CheckColorOverride(affected);
