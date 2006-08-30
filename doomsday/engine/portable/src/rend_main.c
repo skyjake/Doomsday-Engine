@@ -1021,6 +1021,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     quad.vertices[0].dist = quad.vertices[2].dist = Rend_PointDist2D(vBL);
     quad.vertices[1].dist = quad.vertices[3].dist = Rend_PointDist2D(vBR);
 
+    quad.wall.length = seg->length;
+
     // Top wall section color offset?
     if(side->top.rgba[0] < 255 || side->top.rgba[1] < 255 || side->top.rgba[2] < 255)
     {
