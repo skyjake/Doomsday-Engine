@@ -3,8 +3,6 @@
 ## This file is licensed under the GNU GPLv2 or any later versions,
 ## or at your option the BSD 3 clause license. Both license texts follow.
 ##
-## GPL v2 or later.
-##
 ## This file is part of the deng build scripts
 ##
 ## Copyright © 2006 - Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
