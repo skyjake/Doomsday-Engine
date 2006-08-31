@@ -187,6 +187,11 @@ void Rend_RenderShadows(void)
         if(!(secinfo[i].flags & SIF_VISIBLE))
             continue;
         sec = SECTOR_PTR(i);
+
+        // Don't render mobj shadows on sky floors.
+        if(R_IsSkySurface(&sec->planes[PLN_FLOOR].surface))
+            continue;
+
         for(mo = sec->thinglist; mo; mo = mo->snext)
         {
             // Should this mobj have a shadow?
