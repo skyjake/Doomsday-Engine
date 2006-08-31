@@ -49,17 +49,6 @@ typedef struct {
 } planeitervars_t;
 
 typedef struct {
-    int     subIndex;
-    subsector_t *subsector;
-    planeitervars_t planes[NUM_PLANES];
-} subsecitervars_t;
-
-typedef struct {
-    rendpoly_t *poly;
-    float  *v1, *v2;
-} wallitervars_t;
-
-typedef struct {
     float   color[3];
     float   size;
     float   flareSize;
@@ -97,7 +86,6 @@ typedef struct contactfinder_data_s {
 
 extern int useDynLights;
 extern int useBias;
-extern subsector_t *currentssec;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1341,27 +1329,22 @@ static boolean DL_IsTexUsed(dynlight_t *node, DGLuint texture)
     return false;
 }
 
-static boolean DL_LightIteratorFunc(lumobj_t *lum, subsecitervars_t *fi)
+/**
+ * Process the given lumobj to maybe add a dynamic light for the plane.
+ */
+static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
+                            int planeID, planeitervars_t* planeVars)
 {
-    int     pln, j;
-    seg_t  *seg;
-    subsectorinfo_t *ssInfo;
-    float   pos[3];
+    dynlight_t *dyn;
+    DGLuint lightTex;
     float   diff, lightStrength, srcRadius;
     float   s[2], t[2];
-    dynlight_t *dyn;
-    planeitervars_t *planeVars;
-    DGLuint lightTex;
+    float   pos[3];
+    subsectorinfo_t *ssInfo;
 
     pos[VX] = FIX2FLT(lum->thing->pos[VX]);
     pos[VY] = FIX2FLT(lum->thing->pos[VY]);
     pos[VZ] = FIX2FLT(lum->thing->pos[VZ]);
-
-    if(haloMode)
-    {
-        if(lum->thing->subsector == fi->subsector)
-            lum->flags |= LUMF_RENDERED;
-    }
 
     // Center the Z.
     pos[VZ] += lum->center;
@@ -1370,89 +1353,84 @@ static boolean DL_LightIteratorFunc(lumobj_t *lum, subsecitervars_t *fi)
         srcRadius = 1;
 
     // Determine on which side the light is for all planes.
-    ssInfo = SUBSECT_INFO(fi->subsector);
-    for(pln = 0, planeVars = fi->planes; pln < NUM_PLANES; ++pln, planeVars++)
+    ssInfo = SUBSECT_INFO(subsector);
+
+    lightTex = 0;
+    lightStrength = 0;
+
+    if(ssInfo->plane[planeID].type == PLN_FLOOR)
     {
-        if(!planeVars->isLit)
-            continue; // The plane is definetly not lit, skip it.
-
-        lightTex = 0;
-        lightStrength = 0;
-
-        if(ssInfo->plane[pln].type == PLN_FLOOR)
+        if((lightTex = lum->floorTex) != 0)
         {
-            if((lightTex = lum->floorTex) != 0)
-            {
-                if(pos[VZ] > planeVars->height)
-                    lightStrength = 1;
-                else if(pos[VZ] > planeVars->height - srcRadius)
-                    lightStrength = 1 - (planeVars->height - pos[VZ]) / srcRadius;
-            }
+            if(pos[VZ] > planeVars->height)
+                lightStrength = 1;
+            else if(pos[VZ] > planeVars->height - srcRadius)
+                lightStrength = 1 - (planeVars->height - pos[VZ]) / srcRadius;
         }
-        else
+    }
+    else
+    {
+        if((lightTex = lum->ceilTex) != 0)
         {
-            if((lightTex = lum->ceilTex) != 0)
-            {
-                if(pos[VZ] < planeVars->height)
-                    lightStrength = 1;
-                else if(pos[VZ] < planeVars->height + srcRadius)
-                    lightStrength = 1 - (pos[VZ] - planeVars->height) / srcRadius;
-            }
-        }
-
-        // Is there light in this direction? Is it strong enough?
-        if(!lightTex || !lightStrength)
-            continue;
-
-        // Check that the height difference is tolerable.
-        if(ssInfo->plane[pln].type == PLN_CEILING)
-            diff = planeVars->height - pos[VZ];
-        else
-            diff = pos[VZ] - planeVars->height;
-
-        // Clamp it.
-        if(diff < 0)
-            diff = 0;
-
-        if(diff < lum->radius)
-        {
-            // Calculate dynlight position. It may still be outside
-            // the bounding box the subsector.
-            s[0] = -pos[VX] + lum->radius;
-            t[0] = pos[VY] + lum->radius;
-            s[1] = t[1] = 1.0f / (2 * lum->radius);
-
-            // A dynamic light will be generated.
-            dyn = DL_New(s, t);
-            dyn->flags = 0;
-            dyn->texture = lightTex;
-
-            DL_ThingColor(lum, dyn->color, LUM_FACTOR(diff) * lightStrength);
-
-            // Link to this plane's list.
-            DL_SubSecLink(dyn, fi->subIndex, pln);
+            if(pos[VZ] < planeVars->height)
+                lightStrength = 1;
+            else if(pos[VZ] < planeVars->height + srcRadius)
+                lightStrength = 1 - (pos[VZ] - planeVars->height) / srcRadius;
         }
     }
 
-    // If the light has no texture for the 'sides', there's no point in
-    // going through the wall segments.
-    if(!lum->tex)
-        return true;
+    // Is there light in this direction? Is it strong enough?
+    if(!lightTex || !lightStrength)
+        return;
+
+    // Check that the height difference is tolerable.
+    if(ssInfo->plane[planeID].type == PLN_CEILING)
+        diff = planeVars->height - pos[VZ];
+    else
+        diff = pos[VZ] - planeVars->height;
+
+    // Clamp it.
+    if(diff < 0)
+        diff = 0;
+
+    if(diff < lum->radius)
+    {
+        // Calculate dynlight position. It may still be outside
+        // the bounding box the subsector.
+        s[0] = -pos[VX] + lum->radius;
+        t[0] = pos[VY] + lum->radius;
+        s[1] = t[1] = 1.0f / (2 * lum->radius);
+
+        // A dynamic light will be generated.
+        dyn = DL_New(s, t);
+        dyn->flags = 0;
+        dyn->texture = lightTex;
+
+        DL_ThingColor(lum, dyn->color, LUM_FACTOR(diff) * lightStrength);
+
+        // Link to this plane's list.
+        DL_SubSecLink(dyn, GET_SUBSECTOR_IDX(subsector), planeID);
+    }
+}
+
+static boolean DL_LightSegIteratorFunc(lumobj_t *lum, subsector_t *ssec)
+{
+    int     j;
+    seg_t  *seg;
 
     // The wall segments.
-    for(j = 0, seg = &segs[fi->subsector->firstline];
-        j < fi->subsector->linecount; ++j, seg++)
+    for(j = 0, seg = &segs[ssec->firstline];
+        j < ssec->linecount; ++j, seg++)
     {
         if(seg->linedef)    // "minisegs" have no linedefs.
-            DL_ProcessWallSeg(lum, seg, fi->subsector->sector);
+            DL_ProcessWallSeg(lum, seg, ssec->sector);
     }
 
     // Is there a polyobj on board? Light it, too.
-    if(fi->subsector->poly)
-        for(j = 0; j < fi->subsector->poly->numsegs; ++j)
+    if(ssec->poly)
+        for(j = 0; j < ssec->poly->numsegs; ++j)
         {
-            DL_ProcessWallSeg(lum, fi->subsector->poly->segs[j],
-                              fi->subsector->sector);
+            DL_ProcessWallSeg(lum, ssec->poly->segs[j], ssec->sector);
         }
 
     return true;
@@ -1482,41 +1460,57 @@ void DL_ProcessSubsector(subsector_t *ssec)
 {
     int     pln, j;
     seg_t  *seg;
-    subsecitervars_t fi;
     lumcontact_t *con;
     sector_t *sect = ssec->sector;
     subsectorinfo_t *ssInfo;
-    planeitervars_t *planeVars;
+    planeitervars_t planeVars[NUM_PLANES];
 
     // First make sure we know which lumobjs are contacting us.
     DL_SpreadBlocks(ssec);
 
-    fi.subsector = ssec;
-    fi.subIndex = GET_SUBSECTOR_IDX(ssec);
-
     // Check if lighting can be skipped for each plane.
     ssInfo = SUBSECT_INFO(ssec);
-    for(pln = 0, planeVars = fi.planes; pln < NUM_PLANES; ++pln, planeVars++)
+    for(pln = 0; pln < NUM_PLANES; ++pln)
     {
-        planeVars->height = SECT_PLANE_HEIGHT(sect, pln);
-        planeVars->isLit = (!R_IsSkySurface(&sect->planes[pln].surface));
+        planeVars[pln].height = SECT_PLANE_HEIGHT(sect, pln);
+        planeVars[pln].isLit = (!R_IsSkySurface(&sect->planes[pln].surface));
 
         // View height might prevent us from seeing the light.
         if(ssInfo->plane[pln].type == PLN_FLOOR)
         {
-            if(vy < planeVars->height)
-                planeVars->isLit = false;
+            if(vy < planeVars[pln].height)
+                planeVars[pln].isLit = false;
         }
         else
         {
-            if(vy > planeVars->height)
-                planeVars->isLit = false;
+            if(vy > planeVars[pln].height)
+                planeVars[pln].isLit = false;
         }
     }
 
     // Process each lumobj contacting the subsector.
     for(con = subContacts[GET_SUBSECTOR_IDX(ssec)]; con; con = con->next)
-        DL_LightIteratorFunc(con->lum, &fi);
+    {
+        lumobj_t *lum = con->lum;
+
+        if(haloMode)
+        {
+            if(lum->thing->subsector == ssec)
+                lum->flags |= LUMF_RENDERED;
+        }
+
+        // Process the planes
+        for(pln = 0; pln < NUM_PLANES; ++pln)
+        {
+            if(planeVars[pln].isLit)
+                DL_ProcessPlane(lum, ssec, pln, &planeVars[pln]);
+        }
+
+        // If the light has no texture for the 'sides', there's no point in
+        // going through the wall segments.
+        if(lum->tex)
+            DL_LightSegIteratorFunc(con->lum, ssec);
+    }
 
     // Check glowing planes.
     if(useWallGlow &&
