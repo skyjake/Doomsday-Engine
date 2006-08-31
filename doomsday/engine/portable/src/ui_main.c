@@ -958,8 +958,10 @@ int UIEdit_Responder(ui_object_t *ob, event_t *ev)
 
     if(ob->flags & UIF_ACTIVE)
     {
-        if(ev->type != EV_KEY &&
-           (ev->state != EVS_DOWN || ev->state != EVS_REPEAT))
+        if(ev->type != EV_KEY)
+            return false;
+
+        if(!(ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
             return false;
 
         switch (ev->data1)
