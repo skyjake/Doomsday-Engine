@@ -295,6 +295,18 @@ void DD_Main(void)
 
     DD_Verbosity();
 
+#ifdef UNIX
+    #ifndef MACOSX
+        if (getenv("HOME")) {
+            filename_t homeDir;
+            sprintf(homeDir, "%s/.deng", getenv("HOME"));
+            M_CheckPath(homeDir);
+            Dir_MakeDir(homeDir, &ddRuntimeDir);
+            userdir_ok = Dir_ChDir(&ddRuntimeDir);
+        }
+    #endif
+#endif
+
     // The -userdir option sets the working directory.
     if(ArgCheckWith("-userdir", 1))
     {
