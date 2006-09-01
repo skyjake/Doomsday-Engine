@@ -3341,7 +3341,7 @@ static void registerVariables(void)
                Rend_CalcLightRangeModMatrix);
 
     C_VAR_INT("rend-light", &useDynLights, 0, 0, 1);
-    C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 3);
+    C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 2);
 
     C_VAR_FLOAT("rend-light-bright", &dlFactor, 0, 0, 1);
     C_VAR_INT("rend-light-num", &maxDynLights, 0, 0, 8000);
