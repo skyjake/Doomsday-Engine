@@ -48,6 +48,7 @@ typedef struct biastracker_s {
 
 struct vertexillum_s;
 struct rendpoly_s;
+struct biasaffection_s;
 
 extern int      useBias; // Bias lighting enabled.
 extern unsigned int currentTimeSB;
