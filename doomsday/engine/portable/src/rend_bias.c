@@ -857,7 +857,7 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  */
 void SB_RendPoly(struct rendpoly_s *poly, surface_t *surface,
                  sector_t *sector, struct vertexillum_s *illumination,
-                 biastracker_t *tracker, biasaffection_t *affected,
+                 biastracker_t *tracker, struct biasaffection_s *affected,
                  int mapElementIndex)
 {
     float pos[3];
