@@ -2407,7 +2407,7 @@ void RL_RenderAllLists(void)
 
     // If multitexturing is available, we'll use it to our advantage
     // when rendering lights.
-    if(IS_MTEX_LIGHTS)
+    if(IS_MTEX_LIGHTS && dlBlend != 2)
     {
         if(IS_MUL)
         {
@@ -2464,7 +2464,8 @@ void RL_RenderAllLists(void)
      */
     // Draw all dynamic lights (always additive).
     count = RL_CollectLists(dynHash, lists);
-    RL_RenderLists(LM_LIGHTS, lists, count);
+    if(dlBlend != 2)
+        RL_RenderLists(LM_LIGHTS, lists, count);
 
     /*
      * Texture Modulation Pass
@@ -2481,7 +2482,7 @@ void RL_RenderAllLists(void)
         }
         else
         {
-            if(IS_MTEX_LIGHTS)
+            if(IS_MTEX_LIGHTS && dlBlend != 2)
             {
                 RL_RenderLists(LM_MOD_TEXTURE_MANY_LIGHTS, lists, count);
             }

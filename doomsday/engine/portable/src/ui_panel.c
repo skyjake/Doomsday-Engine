@@ -203,7 +203,7 @@ uidata_list_t lst_mipmap = {
 uidata_listitem_t lstit_blend[] = {
     {"Multiply", 0},
     {"Add", 1},
-    {"Process wo/rendering", 3}
+    {"Process wo/rendering", 2}
 };
 uidata_list_t lst_blend = {
     lstit_blend, NUMITEMS(lstit_blend), "rend-light-blend"
