@@ -41,7 +41,7 @@
  * DOOMSDAY_VERSION unless you wish to break compatibility.
  */
 #define DOOMSDAY_VERSION		10900 // Don't touch; see above.
-#define DOOMSDAY_RELEASE_NAME	"0-unreleased-unsupported-svn-checkout"
+#define DOOMSDAY_RELEASE_NAME	"0-svn-trunk-devel"
 #define DOOMSDAY_VERSION_TEXT	"1.9."DOOMSDAY_RELEASE_NAME
 
 #endif
