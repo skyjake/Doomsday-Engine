@@ -363,7 +363,7 @@ static void P_ResetWorldState(void)
 
 #if __JDOOM__
     wminfo.maxfrags = 0;
-    wminfo.partime = 180;
+    wminfo.partime = -1;
 
     // Only used with 666/7 specials
     bossKilled = false;

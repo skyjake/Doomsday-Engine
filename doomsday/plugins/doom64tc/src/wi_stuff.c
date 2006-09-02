@@ -976,7 +976,8 @@ void WI_updateStats(void)
         cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxitems;
         cnt_secret[0] = (plrs[me].ssecret * 100) / wbs->maxsecret;
         cnt_time = plrs[me].stime / TICRATE;
-        cnt_par = wbs->partime / TICRATE;
+        if(cnt_par != -1)
+            cnt_par = wbs->partime / TICRATE;
         S_LocalSound(sfx_barexp, 0);
         sp_state = 10;
     }
@@ -1034,18 +1035,23 @@ void WI_updateStats(void)
         if(cnt_time >= plrs[me].stime / TICRATE)
             cnt_time = plrs[me].stime / TICRATE;
 
-        cnt_par += 3;
-
-        if(cnt_par >= wbs->partime / TICRATE)
+        if(cnt_par != -1)
         {
-            cnt_par = wbs->partime / TICRATE;
+            cnt_par += 3;
 
-            if(cnt_time >= plrs[me].stime / TICRATE)
+            if(cnt_par >= wbs->partime / TICRATE)
             {
-                S_LocalSound(sfx_barexp, 0);
-                sp_state++;
+                cnt_par = wbs->partime / TICRATE;
+
+                if(cnt_time >= plrs[me].stime / TICRATE)
+                {
+                    S_LocalSound(sfx_barexp, 0);
+                    sp_state++;
+                }
             }
         }
+        else
+            sp_state++;
     }
     else if(sp_state == 10)
     {
@@ -1095,7 +1101,7 @@ void WI_drawStats(void)
                  ALIGN_LEFT);
     WI_drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cnt_time);
 
-    if(wbs->epsd < 3)
+    if(wbs->epsd < 3 && cnt_par != -1)
     {
         WI_DrawPatch(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, par.lump,
                      NULL, false, ALIGN_LEFT);

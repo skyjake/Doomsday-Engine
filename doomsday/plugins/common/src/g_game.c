@@ -1625,6 +1625,8 @@ void G_PrepareWIData(void)
     // See if there is a par time definition.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.partime > 0)
         wminfo.partime = 35 * (int) minfo.partime;
+    else
+        wminfo.partime = -1; // unknown
 
     wminfo.pnum = consoleplayer;
     for(i = 0; i < MAXPLAYERS; i++)

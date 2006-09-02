@@ -329,6 +329,7 @@ int DED_AddMapInfo(ded_t * ded, char *str)
     strcpy(inf->id, str);
     inf->gravity = 1;
     inf->sky_height = .666667f;
+    inf->partime = -1; // unknown
 
     for(i = 0; i < NUM_SKY_MODELS; i++)
     {
