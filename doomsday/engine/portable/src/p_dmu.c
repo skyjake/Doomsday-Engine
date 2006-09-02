@@ -1854,6 +1854,9 @@ static int GetProperty(void* ptr, void* context)
             if(p->top.flags & SUF_TEXFIX)
                 texture = 0;
 
+            if(p->flags & SDF_MIDTEXUPPER)
+                texture = 0;
+
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
             }
@@ -1887,6 +1890,9 @@ static int GetProperty(void* ptr, void* context)
 
             if(p->middle.flags & SUF_TEXFIX)
                 texture = 0;
+
+            if(p->flags & SDF_MIDTEXUPPER)
+                texture = p->top.texture;
 
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
