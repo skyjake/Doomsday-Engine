@@ -35,6 +35,7 @@ const char     *R_GetUniqueLevelID(void);
 const byte     *R_GetSectorLightColor(sector_t *sector);
 boolean         R_IsSkySurface(surface_t *surface);
 void            R_SetupLevel(char *level_id, int flags);
+void            R_InitLinks(void);
 void            R_SetupFog(void);
 void            R_SetupSky(void);
 void            R_SetSectorLinks(sector_t *sec);

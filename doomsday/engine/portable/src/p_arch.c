@@ -1278,6 +1278,14 @@ boolean P_GetMapFormat(void)
     }
 }
 
+/**
+ * Return <code>true</code> if gl node data is present for the CURRENT map.
+ */
+boolean P_GLNodeDataPresent(void)
+{
+    return glNodeData;
+}
+
 /*
  * Do any final initialization of map data members.
  *
@@ -1398,7 +1406,6 @@ static void SetCurrentMap(gamemap_t* map)
  */
 boolean P_LoadMapData(char *levelId)
 {
-    int setupflags = DDSLF_POLYGONIZE | DDSLF_FIX_SKY | DDSLF_REVERB;
     int lumpNumbers[2];
     gamemap_t* newmap;
 
@@ -1500,26 +1507,14 @@ boolean P_LoadMapData(char *levelId)
         M_Free(newmap);
 
         // Must be called before any mobjs are spawned.
-        Con_Message("Init links\n");
-        R_SetupLevel(levelId, DDSLF_INIT_LINKS);
-
-        // DJS - TODO:
-        // This needs to be sorted out. R_SetupLevel should be called from the
-        // engine but in order to move it there we need to decide how polyobject
-        // init/setup is going to be handled.
+        R_InitLinks();
 
         // It's imperative that this is called!
-        // - dlBlockLinks initialized
         // - necessary GL data generated
         // - sky fix
         // - map info setup
 
-        // Server can't be initialized before PO_Init is done, but PO_Init
-        // can't be done until SetupLevel is called...
-        if(glNodeData)
-            setupflags |= DDSLF_DONT_CLIP;
-
-        R_SetupLevel(levelId, setupflags | DDSLF_NO_SERVER);
+        R_SetupLevel(levelId, 0);
 
         return true;
     }

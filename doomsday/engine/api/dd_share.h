@@ -732,17 +732,9 @@ extern          "C" {
     } ddvertexf_t;
 
     // SetupLevel flags.
-#define DDSLF_POLYGONIZE    0x1    // Create sector floor/ceiling triangles.
-#define DDSLF_DONT_CLIP     0x2    /* Don't clip sector polys: use subsectors
-                                      as they are (use with DDSLF_POLYGONIZE). */
-#define DDSLF_FIX_SKY       0x4    // Fix walls between sky-ceiling sectors.
-#define DDSLF_REVERB        0x8    // Calculate sector reverbs.
-#define DDSLF_NO_SERVER     0x10   // Do not initialize server.
-#define DDSLF_SERVER_ONLY   0x20   // Server init only, nothing else.
-#define DDSLF_AFTER_LOADING 0x40   // After loading a savegame...
-#define DDSLF_INIT_LINKS    0x80   // Init linelinks.
-#define DDSLF_FINALIZE      0x100  // After everything else is done.
-#define DDSLF_INITIALIZE    0x200  // Before anything else if done.
+#define DDSLF_AFTER_LOADING 0x1  // After loading a savegame...
+#define DDSLF_FINALIZE      0x2  // After everything else is done.
+#define DDSLF_INITIALIZE    0x4  // Before anything else if done.
 
     enum                           // Sector reverb data indices.
     {

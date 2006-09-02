@@ -1907,6 +1907,25 @@ void R_InitLineNeighbors(void)
 #endif
 }
 
+void R_InitLinks(void)
+{
+    int i;
+
+    Con_Message("R_InitLinks: Initializing\n");
+
+    // Init polyobj blockmap.
+    P_InitPolyBlockMap();
+
+    // Initialize node piles and line rings.
+    NP_Init(&thingnodes, 256);  // Allocate a small pile.
+    NP_Init(&linenodes, numlines + 1000);
+
+    // Allocate the rings.
+    linelinks = Z_Malloc(sizeof(*linelinks) * numlines, PU_LEVEL, 0);
+    for(i = 0; i < numlines; i++)
+        linelinks[i] = NP_New(&linenodes, NP_ROOT_NODE);
+}
+
 /*
  * This routine is called from the Game to polygonize the current
  * level.  Creates floors and ceilings and fixes the adjacent sky
@@ -1931,35 +1950,35 @@ void R_SetupLevel(char *level_id, int flags)
             Con_StartupInit();
         return;
     }
-
-    // First check for some special tasks.
-    if(flags & DDSLF_INIT_LINKS)
-    {
-        // Init polyobj blockmap.
-        P_InitPolyBlockMap();
-
-        // Initialize node piles and line rings.
-        NP_Init(&thingnodes, 256);  // Allocate a small pile.
-        NP_Init(&linenodes, numlines + 1000);
-
-        // Allocate the rings.
-        linelinks = Z_Malloc(sizeof(*linelinks) * numlines, PU_LEVEL, 0);
-        for(i = 0; i < numlines; i++)
-            linelinks[i] = NP_New(&linenodes, NP_ROOT_NODE);
-        return;                 // Do nothing else.
-    }
-    if(flags & DDSLF_SERVER_ONLY)
-    {
-        // Only init server data.
-        Sv_InitPools();
-        return;
-    }
     if(flags & DDSLF_AFTER_LOADING)
     {
+        side_t *side;
+        sideinfo_t *sinfo;
+
         // Loading a game usually destroys all thinkers. Until a proper
         // savegame system handled by the engine is introduced we'll have
         // to resort to re-initializing the most important stuff.
         P_SpawnTypeParticleGens();
+
+        // Update everything again. Its possible that after loading we
+        // now have more HOMs to fix, etc..
+
+        R_SkyFix(true, true); // fix floors and ceilings.
+
+        // Update all sectors. Set intial values of various tracked
+        // and interpolated properties (lighting, smoothed planes etc).
+        for(i = 0; i < numsectors; ++i)
+            R_UpdateSector(SECTOR_PTR(i), false);
+
+        // Do the same for side surfaces.
+        for(i = 0; i < numsides; ++i)
+        {
+            side = SIDE_PTR(i);
+            sinfo = SIDE_INFO(side);
+            R_UpdateSurface(&side->top, &sinfo->oldtop, false);
+            R_UpdateSurface(&side->middle, &sinfo->oldmiddle, false);
+            R_UpdateSurface(&side->bottom, &sinfo->oldbottom, false);
+        }
         return;
     }
     if(flags & DDSLF_FINALIZE)
@@ -1969,6 +1988,9 @@ void R_SetupLevel(char *level_id, int flags)
 
         if(loadInStartupMode)
             Con_StartupDone();
+
+        // Init server data.
+        Sv_InitPools();
 
         // Recalculate the light range mod matrix.
         Rend_CalcLightRangeModMatrix(NULL);
@@ -2057,13 +2079,11 @@ void R_SetupLevel(char *level_id, int flags)
     Con_Progress(10, 0);
 
     // Polygonize.
-    if(flags & DDSLF_POLYGONIZE)
-    {
-        if(flags & DDSLF_DONT_CLIP)
-            R_PolygonizeWithoutCarving();
-        else
-            R_CreateFloorsAndCeilings(numnodes - 1, 0, NULL);
-    }
+    if(P_GLNodeDataPresent())
+        R_PolygonizeWithoutCarving();
+    else
+        R_CreateFloorsAndCeilings(numnodes - 1, 0, NULL);
+
     Con_Progress(10, 0);
 
     // Init Particle Generator links.
@@ -2094,13 +2114,10 @@ void R_SetupLevel(char *level_id, int flags)
 
     Con_Progress(10, 0);
 
-    if(flags & DDSLF_FIX_SKY)
-    {
-        R_InitSkyFix();
-        R_SkyFix(true, true); // fix floors and ceilings.
-    }
-    if(flags & DDSLF_REVERB)
-        S_CalcSectorReverbs();
+    R_InitSkyFix();
+    R_SkyFix(true, true); // fix floors and ceilings.
+
+    S_CalcSectorReverbs();
 
     DL_InitLinks();
 
@@ -2148,12 +2165,6 @@ void R_SetupLevel(char *level_id, int flags)
 
     // Texture animations should begin from their first step.
     R_ResetAnimGroups();
-
-    // Do network init: Initialize Delta Pools.
-    if(!(flags & DDSLF_NO_SERVER))
-    {
-        Sv_InitPools();
-    }
 
     // Tell shadow bias to initialize the bias light sources.
     SB_InitForLevel(R_GetUniqueLevelID());

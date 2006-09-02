@@ -2610,7 +2610,7 @@ int SV_LoadGame(char *filename)
     // In netgames, the server tells the clients about this.
     NetSv_LoadGame(hdr.gameid);
 
-    // Spawn particle generators.
+    // Spawn particle generators, fix HOMS etc, etc...
     R_SetupLevel("", DDSLF_AFTER_LOADING);
     return true;
 }

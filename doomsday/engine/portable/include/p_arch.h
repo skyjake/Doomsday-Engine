@@ -104,5 +104,6 @@ typedef struct mapdatalumpinfo_s {
 } mapdatalumpinfo_t;
 
 void        P_InitMapDataFormats(void);
-boolean    P_LoadMapData(char *levelId);
+boolean     P_LoadMapData(char *levelId);
+boolean     P_GLNodeDataPresent(void);
 #endif
