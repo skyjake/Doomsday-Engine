@@ -65,11 +65,6 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-#if __JHERETIC__
-char *P_GetLevelName(int episode, int map);
-char *P_GetShortLevelName(int episode, int map);
-#endif
-
 #ifdef __JHEXEN__
 void InitMapInfo(void);
 #endif

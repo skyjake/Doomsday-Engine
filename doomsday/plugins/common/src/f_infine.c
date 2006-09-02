@@ -724,20 +724,6 @@ DEFCC(CCmdStopInFine)
     return true;
 }
 
-void FI_GetMapID(char *dest, int ep, int map)
-{
-#if __JDOOM__
-    if(gamemode == commercial)
-        sprintf(dest, "MAP%02i", map);
-    else
-        sprintf(dest, "E%iM%i", ep, map);
-#elif __JHERETIC__
-    sprintf(dest, "E%iM%i", ep, map);
-#elif __JHEXEN__ || __JSTRIFE__
-    sprintf(dest, "MAP%02i", map);
-#endif
-}
-
 /*
  * Check if there is a finale before the map and play it.
  * Returns true if a finale was begun.
@@ -753,7 +739,7 @@ int FI_Briefing(int episode, int map)
         return false;
 
     // Is there such a finale definition?
-    FI_GetMapID(mid, episode, map);
+    P_GetMapLumpName(episode, map, mid);
 
     if(!Def_Get(DD_DEF_FINALE_BEFORE, mid, &fin))
         return false;
@@ -777,7 +763,7 @@ int FI_Debriefing(int episode, int map)
         return false;
 
     // Is there such a finale definition?
-    FI_GetMapID(mid, episode, map);
+    P_GetMapLumpName(episode, map, mid);
     if(!Def_Get(DD_DEF_FINALE_AFTER, mid, &fin))
         return false;
 
