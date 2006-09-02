@@ -372,8 +372,13 @@ int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line, int side,
                          boolean leftNeighbor)
 {
     lineinfo_t *info = LINE_INFO(line);
-    sideinfo_t *sideInfo = sideinfo + line->sidenum[side];
+    sideinfo_t *sideInfo;
     int     i;
+
+    if(line->sidenum[side] == NO_INDEX)
+        return 0;
+
+    sideInfo = sideinfo + line->sidenum[side];
 
     *neighbor = sideInfo->alignneighbor[leftNeighbor ? 0 : 1];
     if(!*neighbor)
@@ -474,7 +479,10 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
             if(!edges[i].done)
             {
                 edges[i].line = iter;
-                edges[i].sideInfo = sideinfo + iter->sidenum[scanSide];
+                if(iter->sidenum[scanSide] != NO_INDEX)
+                    edges[i].sideInfo = sideinfo + iter->sidenum[scanSide];
+                else
+                    edges[i].sideInfo = NULL;
                 edges[i].sector = scanSector;
 
                 if(iter != line)
@@ -545,7 +553,7 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
         if(toLeft)
             spans[i].shift += edges[i].length;
 
-        if(edges[i].sideInfo->neighbor[nIdx])
+        if(edges[i].sideInfo && edges[i].sideInfo->neighbor[nIdx])
         {
             if(edges[i].sideInfo->pretendneighbor[nIdx]) // It's a pretend neighbor.
                 corner->corner = 0;
@@ -562,7 +570,7 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
             corner->corner = 0;
         }
 
-        if(edges[i].sideInfo->proxsector[nIdx])
+        if(edges[i].sideInfo && edges[i].sideInfo->proxsector[nIdx])
         {
             corner->proximity = edges[i].sideInfo->proxsector[nIdx];
             if(i == 0)          // floor
@@ -603,15 +611,18 @@ void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
                          shadowcorner_t sideCorners[2], line_t *line, int side,
                          edgespan_t spans[2])
 {
-    sideinfo_t *sInfo = sideinfo + line->sidenum[side];
+    sideinfo_t *sInfo = NULL;
     int     i;
+
+    if(line->sidenum[side] != NO_INDEX)
+        sInfo = sideinfo + line->sidenum[side];
 
     memset(sideCorners, 0, sizeof(sideCorners));
 
     // Find the sidecorners first: left and right neighbour.
     for(i = 0; i < 2; i++)
     {
-        if(sInfo->neighbor[i] && !sInfo->pretendneighbor[i])
+        if(sInfo && sInfo->neighbor[i] && !sInfo->pretendneighbor[i])
         {
             sideCorners[i].corner =
                 Rend_RadioLineCorner(line, sInfo->neighbor[i], frontSector);
