@@ -1266,8 +1266,7 @@ void P_SpawnMapThing(thing_t * th)
     // Check for boss spots
     if(th->type == 56)      // Monster_BossSpot
     {
-        P_AddBossSpot(th->x, th->y,
-                      ANG45 * (th->angle / 45));
+        P_AddBossSpot(th->x << FRACBITS, th->y << FRACBITS, ANG45 * (th->angle / 45));
         return;
     }
 
