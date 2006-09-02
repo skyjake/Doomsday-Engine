@@ -988,10 +988,8 @@ void G_PlayerExitMap(int player)
     memset(p->powers, 0, sizeof(p->powers));
 
 #if __JHEXEN__ || __JSTRIFE__
-    p->powers[pw_flight] = flightPower; // restore flight.
-
-    if(deathmatch)
-        p->powers[pw_flight] = 0;
+    if(!newCluster && !deathmatch)
+        p->powers[pw_flight] = flightPower; // restore flight.
 #endif
 
     // Remove their keys.
