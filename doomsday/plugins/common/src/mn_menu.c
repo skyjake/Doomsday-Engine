@@ -3643,15 +3643,17 @@ void M_ChooseSkill(int option, void *data)
     SB_state = -1;
 
 #else
+# if __JDOOM__ || __JSTRIFE__
     if(option == sk_nightmare)
     {
-#if __JSTRIFE__
+#  if __JSTRIFE__
         M_StartMessage("u nuts? FIXME!!!", M_VerifyNightmare, true);
-#else
+#  else
         M_StartMessage(NIGHTMARE, M_VerifyNightmare, true);
-#endif
+#  endif
         return;
     }
+# endif
 #endif
 
 #ifdef __JHERETIC__

@@ -372,7 +372,7 @@ void H_PreInit(void)
     cfg.bobWeapon = 1;
     cfg.bobWeaponLower = true;
     cfg.cameraNoClip = true;
-    cfg.respawnMonstersNightmare = true;
+    cfg.respawnMonstersNightmare = false;
 
     cfg.weaponOrder[0] = WP_SEVENTH;    // mace \ beak
     cfg.weaponOrder[1] = WP_SIXTH;      // phoenixrod \ beak
