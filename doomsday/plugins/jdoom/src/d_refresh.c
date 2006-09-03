@@ -261,7 +261,6 @@ void D_Display(void)
         R_ViewWindow((int) x, (int) y, (int) w, (int) h);
     }
 
-    // Do buffered drawing.
     switch (gamestate)
     {
     case GS_LEVEL:

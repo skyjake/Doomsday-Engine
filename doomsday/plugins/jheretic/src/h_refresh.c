@@ -103,8 +103,14 @@ void R_InitTranslationTables(void)
 /*
  * Draws a special filter over the screen
  */
-void R_DrawRingFilter()
+void R_DrawSpecialFilter(void)
 {
+    player_t *player = &players[displayplayer];
+
+    if(!(player->powers[pw_invulnerability] > BLINKTHRESHOLD) ||
+       !(player->powers[pw_invulnerability] & 8))
+        return;
+
     gl.Disable(DGL_TEXTURING);
     if(cfg.ringFilter == 1)
     {
@@ -222,7 +228,6 @@ void D_Display(void)
         R_ViewWindow((int) x, (int) y, (int) w, (int) h);
     }
 
-    // Do buffered drawing
     switch (gamestate)
     {
     case GS_LEVEL:
@@ -248,14 +253,13 @@ void D_Display(void)
             GL_SetFilter(vplayer->plr->filter);
 
             // How about fullbright?
-            Set(DD_FULLBRIGHT, vplayer->powers[pw_invulnerability]);
+            Set(DD_FULLBRIGHT, (vplayer->powers[pw_invulnerability] > BLINKTHRESHOLD) ||
+                               (vplayer->powers[pw_invulnerability] & 8));
 
             // Render the view with possible custom filters.
             R_RenderPlayerView(vplayer->plr);
 
-            if(vplayer->powers[pw_invulnerability])
-                R_DrawRingFilter();
-
+            R_DrawSpecialFilter();
             // Crosshair.
             if(!iscam)
                 X_Drawer();
