@@ -368,7 +368,7 @@ int P_FindSectorFromLineTag(line_t *line, int start)
     int     i;
     xline_t *xline;
 
-    xline = &xlines[P_ToIndex(line)];
+    xline = P_XLine(line);
 
 
     for(i = start + 1; i < numsectors; i++)
