@@ -1,6 +1,8 @@
 /**\file
  * Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  * Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ * Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  * Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
