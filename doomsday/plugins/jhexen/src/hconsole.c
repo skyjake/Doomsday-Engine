@@ -231,9 +231,17 @@ void H2_ConsoleBg(int *width, int *height)
     extern int consoleFlat;
     extern float consoleZoom;
 
-    GL_SetFlat(consoleFlat + W_CheckNumForName("F_START") + 1);
-    *width = 64 * consoleZoom;
-    *height = 64 * consoleZoom;
+    if(consoleFlat)
+    {
+        GL_SetFlat(consoleFlat + W_CheckNumForName("F_START") + 1);
+        *width = (int) (64 * consoleZoom);
+        *height = (int) (64 * consoleZoom);
+    }
+    else
+    {
+        GL_SetNoTexture();
+        *width = *height = 0;
+    }
 }
 
 /*
