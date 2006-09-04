@@ -3376,15 +3376,15 @@ static void registerVariables(void)
     C_VAR_FLOAT("rend-halo-fade-near", &haloFadeMin, CVF_NO_MAX, 0, 0);
     // * Render-Texture
     C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4);
-    C_VAR_INT("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5);
-    C_VAR_BYTE("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1);
-    C_VAR_BYTE("rend-tex-external-always", &loadExtAlways, 0, 0, 1);
-    C_VAR_INT("rend-tex-quality", &texQuality, 0, 0, 8);
-    C_VAR_INT("rend-tex-filter-sprite", &filterSprites, 0, 0, 1);
-    C_VAR_INT("rend-tex-filter-raw", &linearRaw, CVF_PROTECTED, 0, 1);
-    C_VAR_INT("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1);
-    C_VAR_INT("rend-tex-filter-mag", &texMagMode, 0, 0, 1);
+    C_VAR_INT2("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4, GL_DoTexReset);
+    C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5, GL_DoTexReset);
+    C_VAR_BYTE2("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1, GL_DoTexReset);
+    C_VAR_BYTE2("rend-tex-external-always", &loadExtAlways, 0, 0, 1, GL_DoTexReset);
+    C_VAR_INT2("rend-tex-quality", &texQuality, 0, 0, 8, GL_DoTexReset);
+    C_VAR_INT2("rend-tex-filter-sprite", &filterSprites, 0, 0, 1, GL_DoTexReset);
+    C_VAR_INT2("rend-tex-filter-raw", &linearRaw, CVF_PROTECTED, 0, 1, GL_DoTexReset);
+    C_VAR_INT2("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1, GL_DoTexReset);
+    C_VAR_INT2("rend-tex-filter-mag", &texMagMode, 0, 0, 1, GL_DoTexReset);
     C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1);
     C_VAR_FLOAT("rend-tex-detail-scale", &detailScale, CVF_NO_MIN | CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("rend-tex-detail-strength", &detailFactor, 0, 0, 10);

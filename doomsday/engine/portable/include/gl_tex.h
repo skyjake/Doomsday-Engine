@@ -104,6 +104,7 @@ void            GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlareMa
 void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
+void            GL_DoTexReset(cvar_t *unused);
 int             GL_InitPalettedTexture(void);
 void            GL_DestroySkinNames(void);
 void            GL_ResetLumpTexData(void);

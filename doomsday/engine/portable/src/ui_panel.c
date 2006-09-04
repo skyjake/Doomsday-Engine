@@ -69,7 +69,6 @@ void    CP_CvarEdit(ui_object_t *ob);
 void    CP_CvarSlider(ui_object_t *ob);
 int     CP_KeyGrabResponder(ui_object_t *ob, event_t *ev);
 void    CP_KeyGrabDrawer(ui_object_t *ob);
-void    CP_TexReset(ui_object_t *ob);
 void    CP_QuickFOV(ui_object_t *ob);
 void    CP_ResolutionInfo(ui_object_t *ob);
 void    CP_ResolutionList(ui_object_t *ob);
@@ -515,8 +514,6 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_scale },
     { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Detail texture contrast", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
-    { UI_TEXT,      0,  0,              300, 730, 0, 60,    "Force texture reset", UIText_Drawer },
-    { UI_BUTTON,    0,  0,              680, 730, 110, 60,  "Reset!", UIButton_Drawer, UIButton_Responder, 0, CP_TexReset },
 
     { UI_META,      9 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Objects", UIText_BrightDrawer },
@@ -765,11 +762,6 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, true, true,
                  UI_COL(UIC_TEXT), alpha);
-}
-
-void CP_TexReset(ui_object_t *ob)
-{
-    Con_Execute(CMDS_DDAY, "texreset", false);
 }
 
 void CP_QuickFOV(ui_object_t *ob)

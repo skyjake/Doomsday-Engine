@@ -3828,6 +3828,17 @@ void GL_TexReset(void)
     Con_Printf("All DGL textures deleted.\n");
 }
 
+/**
+ * Called when changing the value of any cvar affecting texture quality which
+ * in turn calls GL_TexReset. Added to remove the need for reseting  manually.
+ *
+ * @param   unused      Unused. Must be signature compatible.
+ */
+void GL_DoTexReset(cvar_t *unused)
+{
+    GL_TexReset();
+}
+
 void GL_LowRes(void)
 {
     // Set everything as low as they go.
