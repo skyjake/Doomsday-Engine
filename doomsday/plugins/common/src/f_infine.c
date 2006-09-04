@@ -1293,7 +1293,7 @@ void FI_Ticker(void)
     // Execute commands until a wait time is set or we reach the end of
     // the script. If the end is reached, the finale really ends (FI_End).
     while(fi_active && !fi->wait && !fi->waitingtext && !fi->waitingpic && !last)
-        last = FI_ExecuteNextCommand();
+        last = !FI_ExecuteNextCommand();
 
     // The script has ended!
     if(last)
@@ -1387,12 +1387,11 @@ int FI_Responder(event_t *ev)
         return FI_AteEvent(ev);
 
     // We are only interested in key/button down presses.
-    if(ev->type != EV_KEY && ev->type != EV_MOUSE_BUTTON &&
-       ev->type != EV_JOY_BUTTON && ev->state != EVS_DOWN)
+    if(ev->type != EV_KEY || ev->state != EVS_DOWN)
         return FI_AteEvent(ev);
 
     // We're not interested in the Escape key.
-    if(ev->type == EV_KEY && ev->data1 == DDKEY_ESCAPE)
+    if(ev->type == EV_KEY && ev->state == EVS_DOWN && ev->data1 == DDKEY_ESCAPE)
         return FI_AteEvent(ev);
 
     // Servers tell clients to skip.
