@@ -1107,7 +1107,7 @@ void C_DECL A_MummyAttack2(mobj_t *actor)
     mo = P_SpawnMissile(actor, actor->target, MT_MUMMYFX1);
 
     if(mo != NULL)
-        mo->target = actor->target;
+        mo->tracer = actor->target;
 }
 
 void C_DECL A_MummyFX1Seek(mobj_t *actor)
