@@ -138,6 +138,10 @@ void Rend_ProcessThingShadow(mobj_t *mo)
     if(floor >= FIX2FLT(moz + mo->height))
         return; // Can't have a shadow above the object!
 
+    // View height might prevent us from seeing the shadow.
+    if(vy < floor)
+        return;
+
     // Prepare the poly.
     memset(&poly, 0, sizeof(poly));
     poly.type = RP_FLAT;
