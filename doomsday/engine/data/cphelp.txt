@@ -12,7 +12,7 @@
 #
 # VIDEO 
 #
-[Gamma]
+[Gamma correction]
 cvar = vid-gamma
 def = 1.0
 desc = Smaller values result in a darker picture. In order for this setting to work your display adapter must support color adjustments. You should lower the gamma correction value until dark areas in maps become sufficiently dark. Note that with some monitors different resolutions require different gamma correction levels.\bUse the -noramp option to disable all color adjustments.
@@ -22,7 +22,7 @@ cvar = vid-contrast
 def = 1.0
 desc = Modifies the steepness of the gamma ramp. Values greater than 1.0 result in a more colorful picture but since the colors are clamped, some are lost in both the bright and dark ends of the ramp. Values less than 1.0 fade the picture towards gray. In order for this setting to work your display adapter must support color adjustments.\bUse the -noramp option to disable all color adjustments.
 
-[Display bright]
+[Display brightness]
 cvar = vid-bright
 def = 0.0
 desc = Applies an offset to the gamma ramp. Positive values make the picture lighter, negative ones darker. For the best results, use a small positive brightness value with dark gamma and slightly increased contrast. In order for this setting to work your display adapter must support color adjustments.\bUse the -noramp option to disable all color adjustments.
@@ -30,22 +30,22 @@ desc = Applies an offset to the gamma ramp. Positive values make the picture lig
 #
 # AUDIO
 #
-[Preferred music]
+[Preferred music source]
 cvar = music-source
 def = External files
 desc = There can be a WAD lump, external file and a CD track associated with each song. This setting controls which of these resources is actually played when the song is started. If the selected resource is not available, one that is will be chosen instead.
 
-[16-bit]
+[16-bit sound effects]
 cvar = sound-16bit
 def = No
 desc = When this setting is activated, 8-bit sounds are converted to 16-bit before playing. In order for this to be effective you must also choose a sample rate higher than 11025 Hz.
 
-[Sound effects sample]
+[Sound effects sample rate]
 cvar = sound-rate
 def = 11025 Hz
 desc = The minimum sample rate for all sound effects. Samples with a smaller rate will be resampled to this rate before playing. To increase the quality of the resampling, activate the 16-bit sound effects option.
 
-[Show status]
+[Show status of channels]
 cvar = sound-info
 def = No
 desc = The status of all sound channels is drawn on screen. This is intended for debugging. The displayed information consists of sample cache size, channel flags, volume, frequency, latest start time, cursor positions, buffer flags and sample information.\bO = Origin, A = Attenuated, E = Emitter, 3 = 3D, P = Playing, R = Repeat, L = Reload.
@@ -53,7 +53,7 @@ desc = The status of all sound channels is drawn on screen. This is intended for
 #
 # INPUT
 #
-[Joystick sensi]
+[Joystick sensitivity]
 cvar = input-joy-sensi
 def = 5
 desc = With the sensitivity value of zero the whole axis range is in use. When the sensitivity is increased, the axis values are scaled so that their limits are closer to the center position. Use small values like zero or one for the best control with joysticks. With pad controllers this setting may have little effect, but it's best to keep the sensitivity at the default value of five.
@@ -61,17 +61,12 @@ desc = With the sensitivity value of zero the whole axis range is in use. When t
 #
 # GRAPHICS 
 #
-[Smooth cam]
-cvar = rend-camera-smooth
-def = No
-desc = Camera movement is interpolated between the ticks of the 35 Hz game clock. Note that this does not affect the movement of game objects such as missiles. They may seem to stutter a bit as they move, even though they move the same way as with camera smoothing turned off. Also, player controls may seem somewhat lagged: because of the interpolation, the movement of the camera is delayed 1/35 seconds.
-
-[Field Of View]
+[Field Of View angle]
 cvar = rend-camera-fov
 def = 90
 desc = Adjust the camera's Field Of View angle according to your monitor configuration. If you have a large monitor and view it close by, using a larger FOV angle (around 100 degrees) will result in a more natural game view. With small monitors it's best to stick to 90 degrees or else the fish eye effect may become distracting.
 
-[Sky sphere]
+[Sky sphere radius]
 cvar = rend-sky-distance
 def = 1600
 desc = The sky is composed of two capped hemispheres rendered around the camera location. The sky sphere radius is the radius of these hemispheres. The primary purpose of this setting is to determine how large an impact fog has on the sky. Larger radii will result in a sky with heavier fog.
@@ -81,14 +76,10 @@ cvar = rend-sky-full
 def = No
 desc = Always render both the upper and lower sky hemispheres, even if one of them might be fully occluded by world geometry. If your video card has sufficient fill rate, keeping this set to Yes is a good idea. In some maps there may be a hall-of-mirrors effect visible in the sky when this is set to No.
 
-[Shadow visible]
+[Shadow visible distance]
 cvar = rend-shadow-far
 def = 1000
 desc = Maximum distance at which shadows under objects are visible. If the object is farther than this, no shadow will be drawn. Since the shadows are extremely simple, posing little fear of performance loss, it's safe to increase this value as needed.
-
-[Print tri]
-cvar = rend-info-tris
-desc = Print scene and model triangle counts in the console after rendering each frame.\bThe first figure is the number of triangles rendered during the entire frame, and the second figure (in parentheses) is the number of triangles in the rendered 3D models.
 
 #
 # GRAPHICS: LIGHTS
@@ -103,12 +94,12 @@ cvar = rend-light-radius-scale
 def = 3
 desc = The radius of all dynamic lights is multiplied by this factor. Lights are never larger than the Maximum dynamic light radius, though.
 
-[Maximum dynamic light rad]
+[Maximum dynamic light radius]
 cvar = rend-light-radius-max
 def = 256
 desc = The maximum radius a dynamic light can have. This is just a limit: to make the lights larger, you also need to increase the Dynamic light radius factor.
 
-[Floor/ceiling glow on w]
+[Floor/ceiling glow on walls]
 cvar = rend-glow-wall
 def = Yes
 desc = Glowing floor and ceiling textures will cast a dynamic light on surrounding walls.
@@ -116,22 +107,27 @@ desc = Glowing floor and ceiling textures will cast a dynamic light on surroundi
 #
 # GRAPHICS: HALOS
 #
-[Number of flares]
+[Number of flares per halo]
 cvar = rend-halo
 def = 5
 desc = Maximum number of lens flares originating from a luminous object. To disable lens flares, set this to None (zero).
 
-[Occlusion fade]
+[Use realistic halos]
+cvar = rend-halo-realistic
+def = Yes
+desc = When enabled, halos are rendered in a more true-to-life way. This also means that secondary lens flares are disabled.
+
+[Occlusion fade speed]
 cvar = rend-halo-occlusion
 def = 48
 desc = The rate at which a halo changes state from "visible" to "occluded" and vice versa. A small fade speed results in halos that appear and disappear softly, but are visible through walls for a short while before disappearing.
 
-[Flare visibility lim]
+[Flare visibility limitation]
 cvar = rend-halo-secondary-limit
 def = 1
 desc = Controls when secondary lens flares become visible. They are only visible when the light source is close enough to the camera. The larger the number, the farther away secondary flares are visible.
 
-[Z magn]
+[Z magnification divisor]
 cvar = rend-halo-zmag-div
 def = 100
 desc = The higher the number, the smaller lens flares become when the source is far away. Normally halos grow slightly larger as they move away from the camera.
@@ -144,20 +140,28 @@ cvar = rend-tex-quality
 def = 8
 desc = All textures must be resized so that their dimensions are powers of two. Depending on this setting either the higher or smaller matching power of two is chosen. At quality zero, all textures are reduced in size, to match the largest power of two smaller than the original size. At quality 8, the resizing is always done upwards.
 
+[Smart texture filtering]
+cvar = rend-tex-filter-smart
+def = No
+desc = When enabled the hq2x texture filtering algorithm is used to enlarge all textures as opposed to linear scaling.
+
+[Bilinear filtering]
+desc = Controls which class(es) of graphics receive bilinear filtering. Disabling bilinear filtering results in "pixelated" textures when up close.
+
 #
 # GRAPHICS: OBJECTS
 #
-[3D model vis]
+[3D model visibility limit]
 cvar = rend-model-distance
 def = 1500
 desc = Objects farther than this will never be rendered as 3D models.
 
-[Align sprites]
+[Align sprites to...]
 cvar = rend-sprite-align
 def = Camera
 desc = This setting controls which direction sprites face. Aligning to camera means the sprites are always upright (to make them appear more 3D) but they will turn to face the camera coordinates. Aligning to view plane resembles the way the sprites were drawn in software. The "limited" options restrict how much the sprite can tilt vertically.
 
-[LOD level zero]
+[LOD level zero distance]
 cvar = rend-model-lod
 def = 256
 desc = The distance where LOD level zero becomes LOD level one. Only affects 3D models that have Level Of Detail information (DMDs).
@@ -165,12 +169,12 @@ desc = The distance where LOD level zero becomes LOD level one. Only affects 3D 
 #
 # GRAPHICS: PARTICLES
 #
-[Near diffusion]
+[Near diffusion factor]
 cvar = rend-particle-diffuse
 def = 4
 desc = Particles may cause excessive overdraw if many are visible just in front of the camera. This setting makes large particles near the camera more transparent and ultimately invisible. The larger the diffuse factor, the smaller particles will be affected. The end result is that particles will not be visible near the camera. Increase the setting if framerate drops alarmingly when in smoke.
 
-[Near clip dist]
+[Near clip distance]
 cvar = rend-particle-visible-near
 def = Disabled
 desc = Particles that are closer to the camera than this are not drawn at all.
@@ -178,16 +182,16 @@ desc = Particles that are closer to the camera than this are not drawn at all.
 #
 # NETWORK
 #
-[Cl-to-sv pos transmit]
+[Cl-to-sv pos transmit tics]
 cvar = client-pos-interval
 def = 10
 desc = The client periodically sends its coordinates to the server in order to keep it synchronized with the player position the client perceives as correct. The interval between the coordinate transmissions as a number of 35 Hz tics. Use a larger interval with low-bandwidth connections (can lead to more warping, though).
 
-[Server login pass]
+[Server login password]
 cvar = server-password
 desc = If a client wishes to make a remote console connection to the server it must specify this password. If the password is empty, clients can issue console commands on the server without specifying a password. Clients use the "login" and "logout" commands to begin and end a remote connection.
 
-[Frame interval]
+[Frame interval tics]
 cvar = server-frame-interval
 def = 1
 desc = Number of 35 Hz ticks between frames sent to clients. Only for the server. Small intervals require more bandwidth but result in smoother animation and other world events. Use larger intervals (2..5) with low-bandwidth connections.
@@ -195,30 +199,15 @@ desc = Number of 35 Hz ticks between frames sent to clients. Only for the server
 #
 # CONSOLE
 #
-[Silent console]
+[Silent console variables]
 cvar = con-var-silent
 def = No
 desc = Normally when the value of a console variable is changed, its name and the new value get printed in the console. If the variables are silent, this will not happen and the value can be changed without anything being printed as a confirmation.
 
-[Command compl]
+[Command completion with Tab]
 cvar = con-completion
 def = List with values
 desc = The Tab key is used to complete words in the console. The console knows how to complete command, variable and alias names. The completion can work in two ways. In the "List with values" mode, pressing Tab will complete the unambiguous part of the word and print a list of possible completions. Variables will be printed with their values. In the "Cycle" mode, Tab is used to cycle through all the choices.
-
-#
-# NETWORK SETUP
-#
-[TCP/IP]
-desc = The TCP/IP protocol can be used for internet games as well as Local Area Network games.\bThe TCP/IP port setting specifies the port that this computer will be using for all Doomsday-related communications. If you're behind a firewall, you can use the port setting to make sure that only this one port is used. You will still need to open the port in the firewall. Otherwise, if port zero is used, the actual port will be selected automatically, and may be blocked by a firewall.\bIn order to connect, a client must know the address of the server. If the server is on the local network, the Search Address box on the Client Setup screen can be left empty. Otherwise, the client must type in a valid URL or IP address: e.g. "example.doom.com" or "127.0.0.1".
-
-[IPX]
-desc = The IPX (Internetwork Packet Exchange) protocol requires no configuration. It can only be used on Local Area Networks. If you want to play over the internet, you must use the TCP/IP protocol.
-
-[Modem]
-desc = If you have several modem devices, select the one to use here.\bWhen hosting a game, the modem protocol does not need any further configuration. In order to connect, a client must type in the phone number of the server on the Client Setup screen.\bThe modem protocol is limited to 2-player games.
-
-[Serial Link]
-desc = Make sure both computers are using the same settings.
 
 #
 # CONSOLE COMMANDS

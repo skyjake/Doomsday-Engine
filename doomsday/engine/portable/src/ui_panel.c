@@ -123,8 +123,9 @@ cvarbutton_t cvarbuttons[] = {
     {0, "rend-model-mirror-hud"},
     {0, "rend-model-shiny-multitex", "Shiny", "Shiny"},
     {0, "rend-tex"},
-    {0, "rend-tex-filter-sprite"},
-    {0, "rend-tex-filter-raw"},
+    {0, "rend-tex-filter-sprite", "Sprite", "Sprite"},
+    {0, "rend-tex-filter-mag", "World", "World"},
+    {0, "rend-tex-filter-raw", "Raw", "Raw"},
     {0, "rend-tex-filter-smart"},
     {0, "rend-tex-detail"},
     {0, "rend-tex-detail-multitex", "Detail", "Detail"},
@@ -497,23 +498,23 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Smooth texture animation", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "rend-tex-anim-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_META,      8,  0,              0, 120 },
-    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Mipmapping and texture filter", UIText_Drawer },
+    { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Mipmapping filter", UIText_Drawer },
     { UI_LIST,      0,  0,              680, 130, 300, 175, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_mipmap },
     { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Texture quality", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_tex_quality },
     { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Smart texture filtering", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 370, 70, 55,   "rend-tex-filter-smart", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_META,      8,  0,              0,   180 },
-    { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Bilinear filtering for sprites", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 370, 70, 55,   "rend-tex-filter-sprite", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Bilinear filtering for raw screens", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 430, 70, 55,   "rend-tex-filter-raw", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Enable detail textures", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 490, 70, 55,   "rend-tex-detail", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Detail texture scaling factor", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_scale },
-    { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Detail texture contrast", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
+    { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Bilinear filtering", UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 370, 95, 55,   "rend-tex-filter-sprite", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_BUTTON2,   0,  0,              780, 370, 95, 55,   "rend-tex-filter-mag", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_BUTTON2,   0,  0,              880, 370, 95, 55,   "rend-tex-filter-raw", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Enable detail textures", UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 430, 70, 55,   "rend-tex-detail", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Detail texture scaling factor", UIText_Drawer },
+    { UI_SLIDER,    0,  0,              680, 490, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_scale },
+    { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Detail texture contrast", UIText_Drawer },
+    { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
 
     { UI_META,      9 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Objects", UIText_BrightDrawer },
@@ -687,12 +688,6 @@ void CP_CvarList(ui_object_t *ob)
 
     if(list->selection < 0)
         return;                 // Hmm?
-    if(!strcmp(list->data, "rend-tex-mipmap"))
-    {
-        Con_Executef(CMDS_DDAY, false, "mipmap %i", value);
-        return;
-    }
-
     if(!var)
         return;
 
