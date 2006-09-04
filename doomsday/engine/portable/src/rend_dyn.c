@@ -60,7 +60,7 @@ typedef struct seglight_s {
 } seglight_t;
 
 typedef struct subseclight_s {
-    dynlight_t *planes[NUM_PLANES];
+    dynlight_t **planes;
 } subseclight_t;
 
 typedef struct lumcontact_s {
@@ -142,13 +142,18 @@ int    *spreadBlocks;
  */
 static void DL_DeleteUsed(void)
 {
+    int i;
+
     // Start reusing nodes from the first one in the list.
     dynCursor = dynFirst;
     contCursor = contFirst;
 
     // Clear the surface light links.
     memset(segLightLinks, 0, numsegs * sizeof(seglight_t));
-    memset(subSecLightLinks, 0, numsubsectors * sizeof(subseclight_t));
+    for(i=0; i < numsubsectors; ++i)
+    {
+        memset(subSecLightLinks[i].planes, 0, SUBSECTOR_PTR(i)->sector->planecount * sizeof(dynlight_t*));
+    }
 
     // Clear lumobj contacts.
     memset(subContacts, 0, numsubsectors * sizeof(lumcontact_t *));
@@ -324,6 +329,7 @@ void DL_ThingColor(lumobj_t * lum, DGLubyte * outRGB, float light)
 
 void DL_InitLinks(void)
 {
+    int i;
     vertex_t min, max;
 
     // First initialize the subsector links (root pointers).
@@ -349,6 +355,13 @@ void DL_InitLinks(void)
         Z_Calloc(numsegs * sizeof(seglight_t), PU_LEVELSTATIC, 0);
     subSecLightLinks =
         Z_Calloc(numsubsectors * sizeof(subseclight_t), PU_LEVELSTATIC, 0);
+    for(i = 0; i < numsubsectors; ++i)
+    {
+        int planecount = SUBSECTOR_PTR(i)->sector->planecount;
+
+        subSecLightLinks[i].planes =
+            Z_Calloc(planecount * sizeof(dynlight_t*), PU_LEVELSTATIC, 0);
+    }
 
     // Initialize lumobj -> subsector contacts.
     subContacts =
@@ -578,7 +591,7 @@ static void DL_CreateGlowLights(seg_t *seg, int part, float segtop,
         s[1] = 1;
 
         glowHeight =
-            (MAX_GLOWHEIGHT * sect->planes[g].glow) * glowHeightFactor;
+            (MAX_GLOWHEIGHT * sect->planes[g]->glow) * glowHeightFactor;
 
         // Don't make too small or too large glows.
         if(glowHeight <= 2)
@@ -611,7 +624,7 @@ static void DL_CreateGlowLights(seg_t *seg, int part, float segtop,
         }
 
         dyn = DL_New(s, t);
-        memcpy(dyn->color, sect->planes[g].glowrgb, 3);
+        memcpy(dyn->color, sect->planes[g]->glowrgb, 3);
 
         dyn->texture = GL_PrepareLSTexture(LST_GRADIENT);
 
@@ -901,7 +914,7 @@ void DL_AddLuminous(mobj_t *thing)
         mul =
             FIX2FLT(thing->pos[VZ]) + spritelumps[lump].topoffset -
             spritelumps[lump].height -
-            FIX2FLT(thing->subsector->sector->planes[PLN_FLOOR].height);
+            FIX2FLT(thing->subsector->sector->planes[PLN_FLOOR]->height);
         if(!(thing->ddflags & DDMF_NOFITBOTTOM) && mul < 0)
         {
             // Must adjust.
@@ -1109,9 +1122,9 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     }
 
     // Can the spread happen?
-    if(dest->planes[PLN_CEILING].height <= dest->planes[PLN_FLOOR].height ||
-       dest->planes[PLN_CEILING].height <= source->planes[PLN_FLOOR].height ||
-       dest->planes[PLN_FLOOR].height >= source->planes[PLN_CEILING].height)
+    if(dest->planes[PLN_CEILING]->height <= dest->planes[PLN_FLOOR]->height ||
+       dest->planes[PLN_CEILING]->height <= source->planes[PLN_FLOOR]->height ||
+       dest->planes[PLN_FLOOR]->height >= source->planes[PLN_CEILING]->height)
     {
         // No; destination sector is closed with no height.
         return true;
@@ -1358,7 +1371,7 @@ static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
     lightTex = 0;
     lightStrength = 0;
 
-    if(ssInfo->plane[planeID].type == PLN_FLOOR)
+    if(ssInfo->planes[planeID]->type == PLN_FLOOR)
     {
         if((lightTex = lum->floorTex) != 0)
         {
@@ -1384,7 +1397,7 @@ static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
         return;
 
     // Check that the height difference is tolerable.
-    if(ssInfo->plane[planeID].type == PLN_CEILING)
+    if(ssInfo->planes[planeID]->type == PLN_CEILING)
         diff = planeVars->height - pos[VZ];
     else
         diff = pos[VZ] - planeVars->height;
@@ -1463,20 +1476,23 @@ void DL_ProcessSubsector(subsector_t *ssec)
     lumcontact_t *con;
     sector_t *sect = ssec->sector;
     subsectorinfo_t *ssInfo;
-    planeitervars_t planeVars[NUM_PLANES];
+    planeitervars_t *planeVars;
+
+    // FIXME: NOT optimal
+    planeVars = M_Malloc(sect->planecount * sizeof(planeitervars_t));
 
     // First make sure we know which lumobjs are contacting us.
     DL_SpreadBlocks(ssec);
 
     // Check if lighting can be skipped for each plane.
     ssInfo = SUBSECT_INFO(ssec);
-    for(pln = 0; pln < NUM_PLANES; ++pln)
+    for(pln = 0; pln < sect->planecount; ++pln)
     {
         planeVars[pln].height = SECT_PLANE_HEIGHT(sect, pln);
-        planeVars[pln].isLit = (!R_IsSkySurface(&sect->planes[pln].surface));
+        planeVars[pln].isLit = (!R_IsSkySurface(&sect->planes[pln]->surface));
 
         // View height might prevent us from seeing the light.
-        if(ssInfo->plane[pln].type == PLN_FLOOR)
+        if(ssInfo->planes[pln]->type == PLN_FLOOR)
         {
             if(vy < planeVars[pln].height)
                 planeVars[pln].isLit = false;
@@ -1500,7 +1516,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
         }
 
         // Process the planes
-        for(pln = 0; pln < NUM_PLANES; ++pln)
+        for(pln = 0; pln < sect->planecount; ++pln)
         {
             if(planeVars[pln].isLit)
                 DL_ProcessPlane(lum, ssec, pln, &planeVars[pln]);
@@ -1531,6 +1547,8 @@ void DL_ProcessSubsector(subsector_t *ssec)
                 DL_ProcessWallGlow(ssec->poly->segs[j], sect);
         }
     }
+
+    M_Free(planeVars);
 }
 
 /**

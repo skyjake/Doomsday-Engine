@@ -32,7 +32,7 @@ typedef enum {
     DT_SECTOR_R6 = 2,               // 2 bytes for flags.
     DT_SIDE_R6 = 3,                 // 1 byte for flags.
     DT_POLY = 4,
-    DT_LUMP = 5, 
+    DT_LUMP = 5,
     DT_SOUND = 6,                   // No emitter
     DT_MOBJ_SOUND = 7,
     DT_SECTOR_SOUND = 8,
@@ -44,7 +44,7 @@ typedef enum {
     DT_CREATE_MOBJ = 12,            // Regular DT_MOBJ, but the mobj was just created.
 
     DT_SIDE = 13,                   // Flags in a packed long.
-    
+
     NUM_DELTA_TYPES
 } deltatype_t;
 
@@ -248,7 +248,8 @@ typedef struct {
 typedef struct {
     short           lightlevel;
     byte            rgb[3];
-    plane_t         planes[2];
+    int             planecount;
+    plane_t       **planes;
 } dt_sector_t;
 
 typedef struct {

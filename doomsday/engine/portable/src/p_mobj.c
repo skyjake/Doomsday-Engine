@@ -294,8 +294,8 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     // that contains the point.
     // Any contacted lines the step closer together
     // will adjust them.
-    data.floorz = data.dropoffz = newsubsec->sector->planes[PLN_FLOOR].height;
-    data.ceilingz = newsubsec->sector->planes[PLN_CEILING].height;
+    data.floorz = data.dropoffz = newsubsec->sector->planes[PLN_FLOOR]->height;
+    data.ceilingz = newsubsec->sector->planes[PLN_CEILING]->height;
 
     validcount++;
 

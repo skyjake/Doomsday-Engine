@@ -443,7 +443,7 @@ void SB_PlaneHasMoved(subsector_t *subsector, int plane)
 {
     int i;
     subsectorinfo_t *subInfo = SUBSECT_INFO(subsector);
-    planeinfo_t *info = &subInfo->plane[plane];
+    planeinfo_t *info = subInfo->planes[plane];
 
     // Mark the affected lights changed.
     for(i = 0; i < MAX_BIAS_AFFECTED && info->affected[i].source >= 0; ++i)
@@ -537,19 +537,22 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
     source_t *src;
     float distance = 0, len, dot;
     float intensity;
-    affection_t aff[NUM_PLANES];
+    affection_t *aff;
 
     // If the data is already up to date, nothing needs to be done.
-    if(info->plane[PLN_FLOOR].updated == lastChangeOnFrame || !updateAffected)
+    if(info->planes[PLN_FLOOR]->updated == lastChangeOnFrame || !updateAffected)
         return;
 
+    // FIXME: NOT optimal.
+    aff = M_Calloc(subsector->sector->planecount * sizeof(affection_t));
+
     // For each plane.
-    for(k = 0; k < NUM_PLANES; ++k)
+    for(k = 0; k < subsector->sector->planecount; ++k)
     {
-        info->plane[k].updated = lastChangeOnFrame;
-        aff[k].affected = info->plane[k].affected;
+        info->planes[k]->updated = lastChangeOnFrame;
+        aff[k].affected = info->planes[k]->affected;
         aff[k].numFound = 0;
-        memset(aff[k].affected, -1, sizeof(info->plane[k].affected));
+        memset(aff[k].affected, -1, sizeof(info->planes[k]->affected));
     }
 
     for(k = 0, src = sources; k < numSources; ++k, ++src)
@@ -573,14 +576,14 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
             distance = 1;
 
         // For each plane
-        for(i = 0; i < NUM_PLANES; ++i)
+        for(i = 0; i < subsector->sector->planecount; ++i)
         {
             // Estimate the effect on this plane.
             point[VX] = subsector->midpoint.x;
             point[VY] = subsector->midpoint.y;
-            point[VZ] = FIX2FLT(subsector->sector->planes[i].height);
+            point[VZ] = FIX2FLT(subsector->sector->planes[i]->height);
 
-            dot = SB_Dot(src, point, subsector->sector->planes[i].surface.normal);
+            dot = SB_Dot(src, point, subsector->sector->planes[i]->surface.normal);
             if(dot <= 0)
                 continue;
 
@@ -593,6 +596,8 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
             SB_AddAffected(&aff[i], k, intensity);
         }
     }
+
+    M_Free(aff);
 }
 
 /*
@@ -670,7 +675,7 @@ void SB_MarkPlaneChanges(subsectorinfo_t *ssecinfo, int plane,
                          biastracker_t *allChanges)
 {
     int i;
-    planeinfo_t *pinfo = &ssecinfo->plane[plane];
+    planeinfo_t *pinfo = ssecinfo->planes[plane];
 
     SB_TrackerApply(&pinfo->tracker, allChanges);
 
@@ -766,7 +771,7 @@ void SB_BeginFrame(void)
     // Apply to all planes.
     for(i = 0; i < numsubsectors; ++i)
     {
-        for(j = 0; j < NUM_PLANES; ++j)
+        for(j = 0; j < subsectors[i].sector->planecount; ++j)
             SB_MarkPlaneChanges(&subsecinfo[i], j, &allChanges);
     }
 }

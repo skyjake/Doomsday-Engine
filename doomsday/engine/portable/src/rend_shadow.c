@@ -189,7 +189,7 @@ void Rend_RenderShadows(void)
         sec = SECTOR_PTR(i);
 
         // Don't render mobj shadows on sky floors.
-        if(R_IsSkySurface(&sec->planes[PLN_FLOOR].surface))
+        if(R_IsSkySurface(&sec->planes[PLN_FLOOR]->surface))
             continue;
 
         for(mo = sec->thinglist; mo; mo = mo->snext)

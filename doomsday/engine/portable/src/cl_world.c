@@ -208,7 +208,7 @@ void Cl_AddMover(int sectornum, clmovertype_t type, fixed_t dest, fixed_t speed)
     VERBOSE( Con_Printf("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
                         sectornum, type==MVT_FLOOR? "floor" : "ceiling",
                         FIX2FLT(dest), FIX2FLT(speed)) );
-    
+
     if(speed == 0)
         return;
 
@@ -249,8 +249,8 @@ void Cl_AddMover(int sectornum, clmovertype_t type, fixed_t dest, fixed_t speed)
             mov->speed = abs(speed);
             mov->current =
                 (type ==
-                 MVT_FLOOR ? &mov->sector->planes[PLN_FLOOR].height : &mov->sector->
-                 planes[PLN_CEILING].height);
+                 MVT_FLOOR ? &mov->sector->planes[PLN_FLOOR]->height : &mov->sector->
+                 planes[PLN_CEILING]->height);
             // Set the right sign for speed.
             if(mov->destination < *mov->current)
                 mov->speed = -mov->speed;
@@ -456,42 +456,42 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->lightlevel = Msg_ReadByte();
     if(df & SDF_FLOOR_HEIGHT)
     {
-        sec->planes[PLN_FLOOR].height = Msg_ReadShort() << 16;
+        sec->planes[PLN_FLOOR]->height = Msg_ReadShort() << 16;
         wasChanged = true;
 
         if(!skip)
         {
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute floor height=%f\n", 
+            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute floor height=%f\n",
                                 num, FIX2FLT(sec->SP_floorheight)) );
         }
     }
     if(df & SDF_CEILING_HEIGHT)
     {
-        sec->planes[PLN_CEILING].height = Msg_ReadShort() << 16;
+        sec->planes[PLN_CEILING]->height = Msg_ReadShort() << 16;
         wasChanged = true;
 
-        VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute ceiling height=%f%s\n", 
+        VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute ceiling height=%f%s\n",
                             num, FIX2FLT(sec->SP_ceilheight), skip? " --SKIPPED!--" : "") );
     }
     if(df & SDF_FLOOR_TARGET)
     {
-        sec->planes[PLN_FLOOR].target = Msg_ReadShort() << 16;
-        
+        sec->planes[PLN_FLOOR]->target = Msg_ReadShort() << 16;
+
         if(!skip)
         {
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor target=%f\n", 
-                                num, FIX2FLT(sec->planes[PLN_FLOOR].target)) );
+            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor target=%f\n",
+                                num, FIX2FLT(sec->planes[PLN_FLOOR]->target)) );
         }
     }
     if(df & SDF_FLOOR_SPEED)
     {
-        sec->planes[PLN_FLOOR].speed =
+        sec->planes[PLN_FLOOR]->speed =
             Msg_ReadByte() << (df & SDF_FLOOR_SPEED_44 ? 12 : 15);
 
         if(!skip)
         {
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor speed=%f\n", 
-                                num, FIX2FLT(sec->planes[PLN_FLOOR].speed)) );
+            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor speed=%f\n",
+                                num, FIX2FLT(sec->planes[PLN_FLOOR]->speed)) );
         }
     }
     if(df & SDF_FLOOR_TEXMOVE)
@@ -501,23 +501,23 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     }
     if(df & SDF_CEILING_TARGET)
     {
-        sec->planes[PLN_CEILING].target = Msg_ReadShort() << 16;
+        sec->planes[PLN_CEILING]->target = Msg_ReadShort() << 16;
 
         if(!skip)
         {
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling target=%f\n", 
-                                num, FIX2FLT(sec->planes[PLN_CEILING].target)) );
+            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling target=%f\n",
+                                num, FIX2FLT(sec->planes[PLN_CEILING]->target)) );
         }
-    }        
+    }
     if(df & SDF_CEILING_SPEED)
     {
-        sec->planes[PLN_CEILING].speed =
+        sec->planes[PLN_CEILING]->speed =
             Msg_ReadByte() << (df & SDF_CEILING_SPEED_44 ? 12 : 15);
 
         if(!skip)
         {
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling speed=%f\n", 
-                                num, FIX2FLT(sec->planes[PLN_CEILING].speed)) );
+            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling speed=%f\n",
+                                num, FIX2FLT(sec->planes[PLN_CEILING]->speed)) );
         }
     }
     if(df & SDF_CEILING_TEXMOVE)
@@ -547,23 +547,23 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->SP_ceilrgb[2] = Msg_ReadByte();
 
     if(df & SDF_FLOOR_GLOW_RED)
-        sec->planes[PLN_FLOOR].glowrgb[0] = Msg_ReadByte();
+        sec->planes[PLN_FLOOR]->glowrgb[0] = Msg_ReadByte();
     if(df & SDF_FLOOR_GLOW_GREEN)
-        sec->planes[PLN_FLOOR].glowrgb[1] = Msg_ReadByte();
+        sec->planes[PLN_FLOOR]->glowrgb[1] = Msg_ReadByte();
     if(df & SDF_FLOOR_GLOW_BLUE)
-        sec->planes[PLN_FLOOR].glowrgb[2] = Msg_ReadByte();
+        sec->planes[PLN_FLOOR]->glowrgb[2] = Msg_ReadByte();
 
     if(df & SDF_CEIL_GLOW_RED)
-        sec->planes[PLN_CEILING].glowrgb[0] = Msg_ReadByte();
+        sec->planes[PLN_CEILING]->glowrgb[0] = Msg_ReadByte();
     if(df & SDF_CEIL_GLOW_GREEN)
-        sec->planes[PLN_CEILING].glowrgb[1] = Msg_ReadByte();
+        sec->planes[PLN_CEILING]->glowrgb[1] = Msg_ReadByte();
     if(df & SDF_CEIL_GLOW_BLUE)
-        sec->planes[PLN_CEILING].glowrgb[2] = Msg_ReadByte();
+        sec->planes[PLN_CEILING]->glowrgb[2] = Msg_ReadByte();
 
     if(df & SDF_FLOOR_GLOW)
-        sec->planes[PLN_FLOOR].glow = (float) Msg_ReadShort() / DDMAXSHORT;
+        sec->planes[PLN_FLOOR]->glow = (float) Msg_ReadShort() / DDMAXSHORT;
     if(df & SDF_CEIL_GLOW)
-        sec->planes[PLN_CEILING].glow = (float) Msg_ReadShort() / DDMAXSHORT;
+        sec->planes[PLN_CEILING]->glow = (float) Msg_ReadShort() / DDMAXSHORT;
 
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)
@@ -579,13 +579,13 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     // Do we need to start any moving planes?
     if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        Cl_AddMover(num, MVT_FLOOR, sec->planes[PLN_FLOOR].target,
-                    sec->planes[PLN_FLOOR].speed);
+        Cl_AddMover(num, MVT_FLOOR, sec->planes[PLN_FLOOR]->target,
+                    sec->planes[PLN_FLOOR]->speed);
     }
     if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        Cl_AddMover(num, MVT_CEILING, sec->planes[PLN_CEILING].target,
-                    sec->planes[PLN_CEILING].speed);
+        Cl_AddMover(num, MVT_CEILING, sec->planes[PLN_CEILING]->target,
+                    sec->planes[PLN_CEILING]->speed);
     }
 }
 
@@ -671,11 +671,11 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     if(df & SIDF_MIDTEX)
         sid->middle.texture = midtexture;
     if(df & SIDF_BOTTOMTEX)
-    {    
+    {
         sid->bottom.texture = bottomtexture;
-        
+
 #ifdef _DEBUG
-        Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num, 
+        Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num,
                    bottomtexture);
 #endif
     }

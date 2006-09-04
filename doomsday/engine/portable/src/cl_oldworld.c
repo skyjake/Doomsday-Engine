@@ -20,7 +20,7 @@
  *
  * This file contains obsolete delta routines. They are preserved so that
  * backwards compatibility is retained with older versions of the network
- * protocol. 
+ * protocol.
  *
  * These routines should be considered FROZEN. Do not change them.
  */
@@ -80,10 +80,10 @@ int Cl_ReadSectorDelta(void)
     if(df & SDF_LIGHT)
         sec->lightlevel = Msg_ReadByte();
     if(df & SDF_FLOOR_TARGET)
-        sec->planes[PLN_FLOOR].target = Msg_ReadShort() << 16;
+        sec->planes[PLN_FLOOR]->target = Msg_ReadShort() << 16;
     if(df & SDF_FLOOR_SPEED)
     {
-        sec->planes[PLN_FLOOR].speed =
+        sec->planes[PLN_FLOOR]->speed =
             Msg_ReadByte() << (df & SDF_FLOOR_SPEED_44 ? 12 : 15);
     }
     if(df & SDF_FLOOR_TEXMOVE)
@@ -92,10 +92,10 @@ int Cl_ReadSectorDelta(void)
         sec->SP_floortexmove[1] = Msg_ReadShort() << 8;
     }
     if(df & SDF_CEILING_TARGET)
-        sec->planes[PLN_CEILING].target = Msg_ReadShort() << 16;
+        sec->planes[PLN_CEILING]->target = Msg_ReadShort() << 16;
     if(df & SDF_CEILING_SPEED)
     {
-        sec->planes[PLN_CEILING].speed =
+        sec->planes[PLN_CEILING]->speed =
             Msg_ReadByte() << (df & SDF_CEILING_SPEED_44 ? 12 : 15);
     }
     if(df & SDF_CEILING_TEXMOVE)
@@ -146,13 +146,13 @@ int Cl_ReadSectorDelta(void)
     // Do we need to start any moving planes?
     if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        Cl_AddMover(num, MVT_FLOOR, sec->planes[PLN_FLOOR].target,
-                    sec->planes[PLN_FLOOR].speed);
+        Cl_AddMover(num, MVT_FLOOR, sec->planes[PLN_FLOOR]->target,
+                    sec->planes[PLN_FLOOR]->speed);
     }
     if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        Cl_AddMover(num, MVT_CEILING, sec->planes[PLN_CEILING].target,
-                    sec->planes[PLN_CEILING].speed);
+        Cl_AddMover(num, MVT_CEILING, sec->planes[PLN_CEILING]->target,
+                    sec->planes[PLN_CEILING]->speed);
     }
 
     // Continue reading.

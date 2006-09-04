@@ -336,19 +336,19 @@ void P_LineOpening(line_t *linedef)
     front = linedef->frontsector;
     back = linedef->backsector;
 
-    if(front->planes[PLN_CEILING].height < back->planes[PLN_CEILING].height)
-        opentop = front->planes[PLN_CEILING].height;
+    if(front->planes[PLN_CEILING]->height < back->planes[PLN_CEILING]->height)
+        opentop = front->planes[PLN_CEILING]->height;
     else
-        opentop = back->planes[PLN_CEILING].height;
-    if(front->planes[PLN_FLOOR].height > back->planes[PLN_FLOOR].height)
+        opentop = back->planes[PLN_CEILING]->height;
+    if(front->planes[PLN_FLOOR]->height > back->planes[PLN_FLOOR]->height)
     {
-        openbottom = front->planes[PLN_FLOOR].height;
-        lowfloor = back->planes[PLN_FLOOR].height;
+        openbottom = front->planes[PLN_FLOOR]->height;
+        lowfloor = back->planes[PLN_FLOOR]->height;
     }
     else
     {
-        openbottom = back->planes[PLN_FLOOR].height;
-        lowfloor = front->planes[PLN_FLOOR].height;
+        openbottom = back->planes[PLN_FLOOR]->height;
+        lowfloor = front->planes[PLN_FLOOR]->height;
     }
 
     openrange = opentop - openbottom;

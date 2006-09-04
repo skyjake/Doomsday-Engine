@@ -1478,8 +1478,8 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
     float  *startv, *endv;
     seg_t  *seg;
 
-    fronth[0] = FIX2FLT(front->planes[PLN_FLOOR].height);
-    fronth[1] = FIX2FLT(front->planes[PLN_CEILING].height);
+    fronth[0] = FIX2FLT(front->planes[PLN_FLOOR]->height);
+    fronth[1] = FIX2FLT(front->planes[PLN_CEILING]->height);
 
     if(devNoCulling || P_IsInVoid(viewplayer))
         return;
@@ -1499,8 +1499,8 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
         segfacing = Rend_SegFacingDir(v1, v2);  // 1=front
         if(forward_facing != (segfacing != 0))
             continue;
-        backh[0] = FIX2FLT(back->planes[PLN_FLOOR].height);
-        backh[1] = FIX2FLT(back->planes[PLN_CEILING].height);
+        backh[0] = FIX2FLT(back->planes[PLN_FLOOR]->height);
+        backh[1] = FIX2FLT(back->planes[PLN_CEILING]->height);
         // Choose start and end vertices so that it's facing forward.
         if(forward_facing)
         {
@@ -1547,28 +1547,29 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
     surface_t *surface;
 
     // Sky planes of self-referrencing hack sectors are never rendered.
-    if(checkSelfRef && sin->selfRefHack && R_IsSkySurface(&sector->planes[plane->type].surface))
+    if(checkSelfRef && sin->selfRefHack &&
+       R_IsSkySurface(&sector->planes[plane->type]->surface))
         return;
 
     // Determine the height of the plane.
-    if(sin->planeinfo[plane->type].linked)
+    if(sin->planeinfo[plane->type]->linked)
     {
         poly.sector = link =
-            R_GetLinkedSector(sin->planeinfo[plane->type].linked, plane->type);
+            R_GetLinkedSector(sin->planeinfo[plane->type]->linked, plane->type);
 
         // This sector has an invisible plane.
-        height = SECT_INFO(link)->planeinfo[plane->type].visheight;
+        height = SECT_INFO(link)->planeinfo[plane->type]->visheight;
 
-        surface = &link->planes[plane->type].surface;
+        surface = &link->planes[plane->type]->surface;
     }
     else
     {
         poly.sector = sector;
-        height = sin->planeinfo[plane->type].visheight;
+        height = sin->planeinfo[plane->type]->visheight;
         // Add the skyfix
         height += sector->skyfix[plane->type].offset;
 
-        surface = &sector->planes[plane->type].surface;
+        surface = &sector->planes[plane->type]->surface;
     }
 
     // We don't render planes for unclosed sectors when the polys would
@@ -1599,8 +1600,8 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
             // Check for sky.
             if(!R_IsSkySurface(surface))
             {
-                poly.texoffx = sector->planes[plane->type].surface.offx;
-                poly.texoffy = sector->planes[plane->type].surface.offy;
+                poly.texoffx = sector->planes[plane->type]->surface.offx;
+                poly.texoffy = sector->planes[plane->type]->surface.offy;
             }
 
             Rend_DoRenderPlane(&poly, subsector, plane, surface, height,
@@ -1622,8 +1623,8 @@ void Rend_RenderSubsector(int ssecidx)
     int     sectoridx = GET_SECTOR_IDX(sect);
     sectorinfo_t *sin = secinfo + sectoridx;
     int     flags = 0;
-    float   sceil = sin->planeinfo[PLN_CEILING].visheight;
-    float  sfloor = sin->planeinfo[PLN_FLOOR].visheight;
+    float   sceil = sin->planeinfo[PLN_CEILING]->visheight;
+    float  sfloor = sin->planeinfo[PLN_FLOOR]->visheight;
     lumobj_t *lumi;             // Lum Iterator, or 'snow' in Finnish. :-)
     subsectorinfo_t *subin;
     boolean checkSelfRef[2] = {false, false};
@@ -1725,9 +1726,9 @@ void Rend_RenderSubsector(int ssecidx)
 
     subin = &subsecinfo[ssecidx];
     // Render all planes of this sector.
-    for(i = 0; i < NUM_PLANES; ++i)
+    for(i = 0; i < sect->planecount; ++i)
     {
-        Rend_RenderPlane(&subin->plane[i], ssec, sin, (i < 2? checkSelfRef[i] : false));
+        Rend_RenderPlane(subin->planes[i], ssec, sin, (i < 2? checkSelfRef[i] : false));
     }
 }
 

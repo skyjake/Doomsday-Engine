@@ -460,23 +460,23 @@ void P_NewParticle(ptcgen_t * gen)
         if(gen->flags & PGF_SPACE_SPAWN)
         {
             pt->pos[VZ] =
-                gen->sector->planes[PLN_FLOOR].height + i + FixedMul(M_Random() << 8,
+                gen->sector->planes[PLN_FLOOR]->height + i + FixedMul(M_Random() << 8,
                                                         gen->sector->
-                                                        planes[PLN_CEILING].height -
+                                                        planes[PLN_CEILING]->height -
                                                         gen->sector->
-                                                        planes[PLN_FLOOR].height - 2 * i);
+                                                        planes[PLN_FLOOR]->height - 2 * i);
         }
         else if(gen->flags & PGF_FLOOR_SPAWN ||
                 (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
                  !gen->ceiling))
         {
             // Spawn on the floor.
-            pt->pos[VZ] = gen->sector->planes[PLN_FLOOR].height + i;
+            pt->pos[VZ] = gen->sector->planes[PLN_FLOOR]->height + i;
         }
         else
         {
             // Spawn on the ceiling.
-            pt->pos[VZ] = gen->sector->planes[PLN_CEILING].height - i;
+            pt->pos[VZ] = gen->sector->planes[PLN_CEILING]->height - i;
         }
 
         // Choosing the XY spot is a bit more difficult.
@@ -630,8 +630,8 @@ boolean PIT_CheckLinePtc(line_t *ld, void *data)
     // Determine the opening we have here.
     front = ld->frontsector;
     back = ld->backsector;
-    ceil = MIN_OF(front->planes[PLN_CEILING].height, back->planes[PLN_CEILING].height);
-    floor = MAX_OF(front->planes[PLN_FLOOR].height, back->planes[PLN_FLOOR].height);
+    ceil = MIN_OF(front->planes[PLN_CEILING]->height, back->planes[PLN_CEILING]->height);
+    floor = MAX_OF(front->planes[PLN_FLOOR]->height, back->planes[PLN_FLOOR]->height);
 
     // There is a backsector. We possibly might hit something.
     if(tmpz - tmprad < floor || tmpz + tmprad > ceil)
@@ -718,10 +718,10 @@ float P_GetParticleRadius(ded_ptcstage_t * stage_def, int ptc_index)
 fixed_t P_GetParticleZ(particle_t *pt)
 {
     if(pt->pos[VZ] == DDMAXINT)
-        return pt->sector->planes[PLN_CEILING].height - 2 * FRACUNIT;
+        return pt->sector->planes[PLN_CEILING]->height - 2 * FRACUNIT;
 
     if(pt->pos[VZ] == DDMININT)
-        return FRACUNIT * (SECT_INFO(pt->sector)->planeinfo[PLN_FLOOR].visheight + 2);
+        return FRACUNIT * (SECT_INFO(pt->sector)->planeinfo[PLN_FLOOR]->visheight + 2);
 
     return pt->pos[VZ];
 }
@@ -929,9 +929,9 @@ void P_MoveParticle(ptcgen_t * gen, particle_t * pt)
                 // If the particle is in the opening of a 2-sided line, it's
                 // quite likely that it shouldn't be here...
                 if(P_GetParticleZ(pt) >
-                   MAX_OF(front->planes[PLN_FLOOR].height, back->planes[PLN_FLOOR].height) &&
-                   P_GetParticleZ(pt) < MIN_OF(front->planes[PLN_CEILING].height,
-                                               back->planes[PLN_CEILING].height))
+                   MAX_OF(front->planes[PLN_FLOOR]->height, back->planes[PLN_FLOOR]->height) &&
+                   P_GetParticleZ(pt) < MIN_OF(front->planes[PLN_CEILING]->height,
+                                               back->planes[PLN_CEILING]->height))
                 {
                     // Kill the particle.
                     pt->stage = -1;
@@ -1196,7 +1196,7 @@ void P_CheckPtcPlanes(void)
         for(p = 0; p < 2; p++)
         {
             plane = p;
-            def = P_GetPtcGenForFlat(sector->planes[plane].surface.texture);
+            def = P_GetPtcGenForFlat(sector->planes[plane]->surface.texture);
 
             if(!def)
                 continue;

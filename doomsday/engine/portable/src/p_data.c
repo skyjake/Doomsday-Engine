@@ -360,7 +360,7 @@ void P_PlaneChanged(sector_t *sector, int plane)
     side_t *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
-    sector->planes[plane].soundorg.z = sector->planes[plane].height;
+    sector->planes[plane]->soundorg.z = sector->planes[plane]->height;
 
     if(plane == PLN_FLOOR || plane == PLN_CEILING)
         sector->soundorg.z = (sector->SP_ceilheight - sector->SP_floorheight) / 2;
@@ -371,9 +371,9 @@ void P_PlaneChanged(sector_t *sector, int plane)
         back = SIDE_PTR(sector->Lines[i]->sidenum[1]);
 
         if(!front || !front->sector ||
-           SECT_INFO(front->sector)->planeinfo[plane].linked ||
+           SECT_INFO(front->sector)->planeinfo[plane]->linked ||
            !back || !back->sector ||
-           SECT_INFO(back->sector)->planeinfo[plane].linked)
+           SECT_INFO(back->sector)->planeinfo[plane]->linked)
             continue;
 
         // Do as in the original Doom if the texture has not been defined -
@@ -390,10 +390,10 @@ void P_PlaneChanged(sector_t *sector, int plane)
                     front->bottom.flags |= SUF_TEXFIX;
 
                     front->bottom.texture =
-                        front->sector->planes[PLN_FLOOR].surface.texture;
+                        front->sector->planes[PLN_FLOOR]->surface.texture;
 
                     front->bottom.isflat =
-                        front->sector->planes[PLN_FLOOR].surface.isflat;
+                        front->sector->planes[PLN_FLOOR]->surface.isflat;
                 }
 
                 if(back->bottom.flags & SUF_TEXFIX)
@@ -410,10 +410,10 @@ void P_PlaneChanged(sector_t *sector, int plane)
                     back->bottom.flags |= SUF_TEXFIX;
 
                     back->bottom.texture =
-                        back->sector->planes[PLN_FLOOR].surface.texture;
+                        back->sector->planes[PLN_FLOOR]->surface.texture;
 
                     back->bottom.isflat =
-                        back->sector->planes[PLN_FLOOR].surface.isflat;
+                        back->sector->planes[PLN_FLOOR]->surface.isflat;
                 }
 
                 if(front->bottom.flags & SUF_TEXFIX)
@@ -443,10 +443,10 @@ void P_PlaneChanged(sector_t *sector, int plane)
                     else
                     {
                         front->top.texture =
-                            front->sector->planes[PLN_CEILING].surface.texture;
+                            front->sector->planes[PLN_CEILING]->surface.texture;
 
                         front->top.isflat =
-                            front->sector->planes[PLN_CEILING].surface.isflat;
+                            front->sector->planes[PLN_CEILING]->surface.isflat;
                     }
                 }
 
@@ -473,10 +473,10 @@ void P_PlaneChanged(sector_t *sector, int plane)
                     else
                     {
                         back->top.texture =
-                            back->sector->planes[PLN_CEILING].surface.texture;
+                            back->sector->planes[PLN_CEILING]->surface.texture;
 
                         back->top.isflat =
-                            back->sector->planes[PLN_CEILING].surface.isflat;
+                            back->sector->planes[PLN_CEILING]->surface.isflat;
                     }
                 }
 

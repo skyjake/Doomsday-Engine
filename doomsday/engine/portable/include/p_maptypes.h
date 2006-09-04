@@ -63,35 +63,35 @@ typedef struct plane_s {
 } plane_t;
 
 // Helper macros for accessing sector floor/ceiling plane data elements.
-#define SP_ceilsurface          planes[PLN_CEILING].surface
-#define SP_ceilheight           planes[PLN_CEILING].height
-#define SP_ceilnormal           planes[PLN_CEILING].normal
-#define SP_ceilpic              planes[PLN_CEILING].surface.texture
-#define SP_ceilisflat           planes[PLN_CEILING].surface.isflat
-#define SP_ceiloffx             planes[PLN_CEILING].surface.offx
-#define SP_ceiloffy             planes[PLN_CEILING].surface.offy
-#define SP_ceilrgb              planes[PLN_CEILING].surface.rgba
-#define SP_ceilglow             planes[PLN_CEILING].glow
-#define SP_ceilglowrgb          planes[PLN_CEILING].glowrgb
-#define SP_ceiltarget           planes[PLN_CEILING].target
-#define SP_ceilspeed            planes[PLN_CEILING].speed
-#define SP_ceiltexmove          planes[PLN_CEILING].surface.texmove
-#define SP_ceilsoundorg         planes[PLN_CEILING].soundorg
+#define SP_ceilsurface          planes[PLN_CEILING]->surface
+#define SP_ceilheight           planes[PLN_CEILING]->height
+#define SP_ceilnormal           planes[PLN_CEILING]->normal
+#define SP_ceilpic              planes[PLN_CEILING]->surface.texture
+#define SP_ceilisflat           planes[PLN_CEILING]->surface.isflat
+#define SP_ceiloffx             planes[PLN_CEILING]->surface.offx
+#define SP_ceiloffy             planes[PLN_CEILING]->surface.offy
+#define SP_ceilrgb              planes[PLN_CEILING]->surface.rgba
+#define SP_ceilglow             planes[PLN_CEILING]->glow
+#define SP_ceilglowrgb          planes[PLN_CEILING]->glowrgb
+#define SP_ceiltarget           planes[PLN_CEILING]->target
+#define SP_ceilspeed            planes[PLN_CEILING]->speed
+#define SP_ceiltexmove          planes[PLN_CEILING]->surface.texmove
+#define SP_ceilsoundorg         planes[PLN_CEILING]->soundorg
 
-#define SP_floorsurface         planes[PLN_FLOOR].surface
-#define SP_floorheight          planes[PLN_FLOOR].height
-#define SP_floornormal          planes[PLN_FLOOR].normal
-#define SP_floorpic             planes[PLN_FLOOR].surface.texture
-#define SP_floorisflat          planes[PLN_FLOOR].surface.isflat
-#define SP_flooroffx            planes[PLN_FLOOR].surface.offx
-#define SP_flooroffy            planes[PLN_FLOOR].surface.offy
-#define SP_floorrgb             planes[PLN_FLOOR].surface.rgba
-#define SP_floorglow            planes[PLN_FLOOR].glow
-#define SP_floorglowrgb         planes[PLN_FLOOR].glowrgb
-#define SP_floortarget          planes[PLN_FLOOR].target
-#define SP_floorspeed           planes[PLN_FLOOR].speed
-#define SP_floortexmove         planes[PLN_FLOOR].surface.texmove
-#define SP_floorsoundorg        planes[PLN_FLOOR].soundorg
+#define SP_floorsurface         planes[PLN_FLOOR]->surface
+#define SP_floorheight          planes[PLN_FLOOR]->height
+#define SP_floornormal          planes[PLN_FLOOR]->normal
+#define SP_floorpic             planes[PLN_FLOOR]->surface.texture
+#define SP_floorisflat          planes[PLN_FLOOR]->surface.isflat
+#define SP_flooroffx            planes[PLN_FLOOR]->surface.offx
+#define SP_flooroffy            planes[PLN_FLOOR]->surface.offy
+#define SP_floorrgb             planes[PLN_FLOOR]->surface.rgba
+#define SP_floorglow            planes[PLN_FLOOR]->glow
+#define SP_floorglowrgb         planes[PLN_FLOOR]->glowrgb
+#define SP_floortarget          planes[PLN_FLOOR]->target
+#define SP_floorspeed           planes[PLN_FLOOR]->speed
+#define SP_floortexmove         planes[PLN_FLOOR]->surface.texmove
+#define SP_floorsoundorg        planes[PLN_FLOOR]->soundorg
 
 typedef struct sector_s {
     runtime_mapdata_header_t header;
@@ -107,7 +107,8 @@ typedef struct sector_s {
     degenmobj_t         soundorg;
     float               reverb[NUM_REVERB_DATA];
     int                 blockbox[4];   // Mapblock bounding box.
-    plane_t             planes[2];
+    int                 planecount;
+    plane_t**           planes;        // [planecount] size.
 } sector_t;
 
 typedef struct side_s {

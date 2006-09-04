@@ -391,16 +391,19 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
 int R_GetSectorNumForDegen(void *degenmobj)
 {
     int     i, k;
+    sector_t *sec;
 
     // Check all sectors; find where the sound is coming from.
     for(i = 0; i < numsectors; i++)
     {
-        if(degenmobj == &SECTOR_PTR(i)->soundorg)
+        sec = SECTOR_PTR(i);
+
+        if(degenmobj == &sec->soundorg)
             return i;
         else
         {   // Check the planes of this sector
-            for(k=0; k < NUM_PLANES; ++k)
-                if(degenmobj == &SECTOR_PTR(i)->planes[k].soundorg)
+            for(k=0; k < sec->planecount; ++k)
+                if(degenmobj == &sec->planes[k]->soundorg)
                 {
                     return i;
                 }

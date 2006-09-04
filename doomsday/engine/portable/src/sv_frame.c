@@ -430,7 +430,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     // (7.1 is too inaccurate for very slow movement)
     if(df & SDF_FLOOR_SPEED)
     {
-        spd = abs(d->planes[PLN_FLOOR].speed);
+        spd = abs(d->planes[PLN_FLOOR]->speed);
         floorspd = spd >> 15;
         if(!floorspd)
         {
@@ -440,7 +440,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     }
     if(df & SDF_CEILING_SPEED)
     {
-        spd = abs(d->planes[PLN_CEILING].speed);
+        spd = abs(d->planes[PLN_CEILING]->speed);
         ceilspd = spd >> 15;
         if(!ceilspd)
         {
@@ -467,7 +467,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     }
     if(df & SDF_FLOOR_HEIGHT)
     {
-        Msg_WriteShort(d->planes[PLN_FLOOR].height >> 16);
+        Msg_WriteShort(d->planes[PLN_FLOOR]->height >> 16);
     }
     if(df & SDF_CEILING_HEIGHT)
     {
@@ -476,10 +476,10 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
                             delta->delta.id, FIX2FLT(d->SP_ceilheight)) );
 #endif
 
-        Msg_WriteShort(d->planes[PLN_CEILING].height >> 16);
+        Msg_WriteShort(d->planes[PLN_CEILING]->height >> 16);
     }
     if(df & SDF_FLOOR_TARGET)
-        Msg_WriteShort(d->planes[PLN_FLOOR].target >> 16);
+        Msg_WriteShort(d->planes[PLN_FLOOR]->target >> 16);
     if(df & SDF_FLOOR_SPEED)    // 7.1/4.4 fixed-point
         Msg_WriteByte(floorspd);
     if(df & SDF_FLOOR_TEXMOVE)
@@ -488,7 +488,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
         Msg_WriteShort(d->SP_floortexmove[1] >> 8);
     }
     if(df & SDF_CEILING_TARGET)
-        Msg_WriteShort(d->planes[PLN_CEILING].target >> 16);
+        Msg_WriteShort(d->planes[PLN_CEILING]->target >> 16);
     if(df & SDF_CEILING_SPEED)  // 7.1/4.4 fixed-point
         Msg_WriteByte(ceilspd);
     if(df & SDF_CEILING_TEXMOVE)
@@ -739,7 +739,7 @@ void Sv_WriteDelta(const delta_t * delta)
                delta->flags, delta->state);
                #endif */
         }
-#endif        
+#endif
     }
 
     // First the type of the delta.

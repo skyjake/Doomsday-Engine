@@ -355,16 +355,16 @@ void R_NewSharpWorld(void)
     {
         sector = SECTOR_PTR(i);
         // For each plane
-        for(j = 0; j < NUM_PLANES; ++j)
+        for(j = 0; j < sector->planecount; ++j)
         {
-            secinfo[i].planeinfo[j].oldheight[0] = secinfo[i].planeinfo[j].oldheight[1];
-            secinfo[i].planeinfo[j].oldheight[1] = sector->planes[j].height;
+            secinfo[i].planeinfo[j]->oldheight[0] = secinfo[i].planeinfo[j]->oldheight[1];
+            secinfo[i].planeinfo[j]->oldheight[1] = sector->planes[j]->height;
 
-            if(abs(secinfo[i].planeinfo[j].oldheight[0] - secinfo[i].planeinfo[j].oldheight[1]) >=
+            if(abs(secinfo[i].planeinfo[j]->oldheight[0] - secinfo[i].planeinfo[j]->oldheight[1]) >=
                MAX_SMOOTH_PLANE_MOVE)
             {
                 // Too fast: make an instantaneous jump.
-                secinfo[i].planeinfo[j].oldheight[0] = secinfo[i].planeinfo[j].oldheight[1];
+                secinfo[i].planeinfo[j]->oldheight[0] = secinfo[i].planeinfo[j]->oldheight[1];
             }
         }
     }
@@ -393,13 +393,13 @@ void R_SetupWorldFrame(void)
             sector = SECTOR_PTR(i);
 
             // For each plane
-            for(j = 0; j < NUM_PLANES; ++j)
+            for(j = 0; j < sector->planecount; ++j)
             {
-                secinfo[i].planeinfo[j].visoffset = 0;
+                secinfo[i].planeinfo[j]->visoffset = 0;
 
-                secinfo[i].planeinfo[j].oldheight[0] =
-                    secinfo[i].planeinfo[j].oldheight[1] =
-                        sector->planes[j].height;
+                secinfo[i].planeinfo[j]->oldheight[0] =
+                    secinfo[i].planeinfo[j]->oldheight[1] =
+                        sector->planes[j]->height;
             }
         }
     }
@@ -414,24 +414,24 @@ void R_SetupWorldFrame(void)
             sin = SECT_INFO(sector);
 
             // For each plane.
-            for(j = 0; j < NUM_PLANES; ++j)
+            for(j = 0; j < sector->planecount; ++j)
             {
-                sin->planeinfo[j].visoffset =
-                    FIX2FLT(sin->planeinfo[j].oldheight[0] * (1 - frameTimePos) +
-                            sector->planes[j].height * frameTimePos -
-                            sector->planes[j].height);
+                sin->planeinfo[j]->visoffset =
+                    FIX2FLT(sin->planeinfo[j]->oldheight[0] * (1 - frameTimePos) +
+                            sector->planes[j]->height * frameTimePos -
+                            sector->planes[j]->height);
 
                 // Visible plane height.
-                if(!sin->planeinfo[j].linked)
+                if(!sin->planeinfo[j]->linked)
                 {
-                    sin->planeinfo[j].visheight =
-                        FIX2FLT(sector->planes[j].height) + sin->planeinfo[j].visoffset;
+                    sin->planeinfo[j]->visheight =
+                        FIX2FLT(sector->planes[j]->height) + sin->planeinfo[j]->visoffset;
                 }
                 else
                 {
-                    sin->planeinfo[j].visheight =
-                        FIX2FLT(R_GetLinkedSector(sin->planeinfo[j].linked, j)->
-                                planes[j].height);
+                    sin->planeinfo[j]->visheight =
+                        FIX2FLT(R_GetLinkedSector(sin->planeinfo[j]->linked, j)->
+                                planes[j]->height);
                 }
             }
         }

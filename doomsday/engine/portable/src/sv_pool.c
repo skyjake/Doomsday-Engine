@@ -54,7 +54,7 @@ typedef struct reg_mobj_s {
 
     // The tic when the mobj state was last sent.
     int lastTimeStateSent;
-    
+
     // The state of the mobj.
     dt_mobj_t mo;
 } reg_mobj_t;
@@ -536,19 +536,19 @@ boolean Sv_RegisterCompareMobj(cregister_t * reg, const mobj_t *s,
         df |= MDFC_FADETARGET;
 
     // Mobj state sent periodically, if it keeps changing.
-    if((!(s->ddflags & DDMF_MISSILE) && regMo && 
+    if((!(s->ddflags & DDMF_MISSILE) && regMo &&
         Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35) &&
-        r->state != s->state) || 
+        r->state != s->state) ||
        !Def_SameStateSequence(r->state, s->state))
     {
         df |= MDF_STATE;
-       
+
 #ifdef _DEBUG
         VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35))
             Con_Message("Sv_RegisterCompareMobj: (%i) Sending state due to time.\n",
                         s->thinker.id) );
 #endif
-        
+
         if(regMo) regMo->lastTimeStateSent = Sys_GetTime();
     }
 
@@ -612,7 +612,7 @@ boolean Sv_RegisterComparePlayer(cregister_t * reg, int number,
         df |= PDF_CLYAW;
     if(r->clPitch != s->clPitch)
         df |= PDF_CLPITCH;
-    
+
     /*
     // The player sprites are a bit more complicated to check.
     for(i = 0; i < 2; i++)
@@ -696,9 +696,9 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
     if(r->SP_ceilglowrgb[2] != s->SP_ceilglowrgb[2])
         df |= SDF_CEIL_GLOW_BLUE;
 
-    if(r->planes[PLN_FLOOR].glow != s->planes[PLN_FLOOR].glow)
+    if(r->planes[PLN_FLOOR]->glow != s->planes[PLN_FLOOR]->glow)
         df |= SDF_FLOOR_GLOW;
-    if(r->planes[PLN_CEILING].glow != s->planes[PLN_CEILING].glow)
+    if(r->planes[PLN_CEILING]->glow != s->planes[PLN_CEILING]->glow)
         df |= SDF_CEIL_GLOW;
 
     // The cases where an immediate change to a plane's height is needed:
@@ -708,58 +708,58 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
     //    The clientside height should be fixed.
 
     // Should we make an immediate change in floor height?
-    if(!r->planes[PLN_FLOOR].speed && !s->planes[PLN_FLOOR].speed)
+    if(!r->planes[PLN_FLOOR]->speed && !s->planes[PLN_FLOOR]->speed)
     {
-        if(r->planes[PLN_FLOOR].height != s->planes[PLN_FLOOR].height)
+        if(r->planes[PLN_FLOOR]->height != s->planes[PLN_FLOOR]->height)
             df |= SDF_FLOOR_HEIGHT;
     }
     else
     {
-        if(abs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR].height) > PLANE_SKIP_LIMIT)
+        if(abs(r->planes[PLN_FLOOR]->height - s->planes[PLN_FLOOR]->height) > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
 
     // How about the ceiling?
-    if(!r->planes[PLN_CEILING].speed && !s->planes[PLN_CEILING].speed)
+    if(!r->planes[PLN_CEILING]->speed && !s->planes[PLN_CEILING]->speed)
     {
-        if(r->planes[PLN_CEILING].height != s->planes[PLN_CEILING].height)
+        if(r->planes[PLN_CEILING]->height != s->planes[PLN_CEILING]->height)
             df |= SDF_CEILING_HEIGHT;
     }
     else
     {
-        if(abs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING].height) > PLANE_SKIP_LIMIT)
+        if(abs(r->planes[PLN_CEILING]->height - s->planes[PLN_CEILING]->height) > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
 
     // Check planes, too.
-    if(r->planes[PLN_FLOOR].target != s->planes[PLN_FLOOR].target)
+    if(r->planes[PLN_FLOOR]->target != s->planes[PLN_FLOOR]->target)
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(r->planes[PLN_FLOOR].speed != s->planes[PLN_FLOOR].speed)
+    if(r->planes[PLN_FLOOR]->speed != s->planes[PLN_FLOOR]->speed)
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(r->planes[PLN_FLOOR].surface.texmove[0] != s->planes[PLN_FLOOR].surface.texmove[0] ||
-       r->planes[PLN_FLOOR].surface.texmove[1] != s->planes[PLN_FLOOR].surface.texmove[1])
+    if(r->planes[PLN_FLOOR]->surface.texmove[0] != s->planes[PLN_FLOOR]->surface.texmove[0] ||
+       r->planes[PLN_FLOOR]->surface.texmove[1] != s->planes[PLN_FLOOR]->surface.texmove[1])
     {
         df |= SDF_FLOOR_TEXMOVE;
     }
-    if(r->planes[PLN_CEILING].target != s->planes[PLN_CEILING].target)
+    if(r->planes[PLN_CEILING]->target != s->planes[PLN_CEILING]->target)
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(r->planes[PLN_CEILING].speed != s->planes[PLN_CEILING].speed)
+    if(r->planes[PLN_CEILING]->speed != s->planes[PLN_CEILING]->speed)
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
     }
-    if(r->planes[PLN_CEILING].surface.texmove[0] != s->planes[PLN_CEILING].surface.texmove[0]
-       || r->planes[PLN_CEILING].surface.texmove[1] !=
-       s->planes[PLN_CEILING].surface.texmove[1])
+    if(r->planes[PLN_CEILING]->surface.texmove[0] != s->planes[PLN_CEILING]->surface.texmove[0]
+       || r->planes[PLN_CEILING]->surface.texmove[1] !=
+       s->planes[PLN_CEILING]->surface.texmove[1])
     {
         df |= SDF_CEILING_TEXMOVE;
     }
@@ -781,8 +781,8 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
     {
         // The plane heights should be tracked regardless of the
         // change flags.
-        r->planes[PLN_FLOOR].height = s->planes[PLN_FLOOR].height;
-        r->planes[PLN_CEILING].height = s->planes[PLN_CEILING].height;
+        r->planes[PLN_FLOOR]->height = s->planes[PLN_FLOOR]->height;
+        r->planes[PLN_CEILING]->height = s->planes[PLN_CEILING]->height;
     }
 
     d->delta.flags = df;
@@ -983,7 +983,7 @@ boolean Sv_IsPlayerIgnored(int number)
  */
 void Sv_RegisterWorld(cregister_t * reg, boolean isInitial)
 {
-    int     i;
+    int     i, j;
 
     memset(reg, 0, sizeof(*reg));
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -995,6 +995,12 @@ void Sv_RegisterWorld(cregister_t * reg, boolean isInitial)
     reg->sectors = Z_Calloc(sizeof(dt_sector_t) * numsectors, PU_LEVEL, 0);
     for(i = 0; i < numsectors; i++)
     {
+        reg->sectors[i].planecount = sectors[i].planecount;
+        reg->sectors[i].planes =
+            Z_Calloc(sizeof(plane_t*) * reg->sectors[i].planecount, PU_LEVEL, 0);
+        for(j = 0; j < reg->sectors[i].planecount; ++j)
+            reg->sectors[i].planes[j] = Z_Calloc(sizeof(plane_t), PU_LEVEL, 0);
+
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
@@ -1320,27 +1326,27 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         if(sf & SDF_LIGHT)
             d->lightlevel = s->lightlevel;
         if(sf & SDF_FLOOR_TARGET)
-            d->planes[PLN_FLOOR].target = s->planes[PLN_FLOOR].target;
+            d->planes[PLN_FLOOR]->target = s->planes[PLN_FLOOR]->target;
         if(sf & SDF_FLOOR_SPEED)
-            d->planes[PLN_FLOOR].speed = s->planes[PLN_FLOOR].speed;
+            d->planes[PLN_FLOOR]->speed = s->planes[PLN_FLOOR]->speed;
         if(sf & SDF_FLOOR_TEXMOVE)
         {
             memcpy(d->SP_floortexmove, s->SP_floortexmove,
                    sizeof(int) * 2);
         }
         if(sf & SDF_CEILING_TARGET)
-            d->planes[PLN_CEILING].target = s->planes[PLN_CEILING].target;
+            d->planes[PLN_CEILING]->target = s->planes[PLN_CEILING]->target;
         if(sf & SDF_CEILING_SPEED)
-            d->planes[PLN_CEILING].speed = s->planes[PLN_CEILING].speed;
+            d->planes[PLN_CEILING]->speed = s->planes[PLN_CEILING]->speed;
         if(sf & SDF_CEILING_TEXMOVE)
         {
             memcpy(d->SP_ceiltexmove, s->SP_ceiltexmove,
                    sizeof(int) * 2);
         }
         if(sf & SDF_FLOOR_HEIGHT)
-            d->planes[PLN_FLOOR].height = s->planes[PLN_FLOOR].height;
+            d->planes[PLN_FLOOR]->height = s->planes[PLN_FLOOR]->height;
         if(sf & SDF_CEILING_HEIGHT)
-            d->planes[PLN_CEILING].height = s->planes[PLN_CEILING].height;
+            d->planes[PLN_CEILING]->height = s->planes[PLN_CEILING]->height;
         if(sf & SDF_COLOR_RED)
             d->rgb[0] = s->rgb[0];
         if(sf & SDF_COLOR_GREEN)
@@ -1363,23 +1369,23 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
             d->SP_ceilrgb[2] = s->SP_ceilrgb[2];
 
         if(sf & SDF_FLOOR_GLOW_RED)
-            d->planes[PLN_FLOOR].glowrgb[0] = s->planes[PLN_FLOOR].glowrgb[0];
+            d->planes[PLN_FLOOR]->glowrgb[0] = s->planes[PLN_FLOOR]->glowrgb[0];
         if(sf & SDF_FLOOR_GLOW_GREEN)
-            d->planes[PLN_FLOOR].glowrgb[1] = s->planes[PLN_FLOOR].glowrgb[1];
+            d->planes[PLN_FLOOR]->glowrgb[1] = s->planes[PLN_FLOOR]->glowrgb[1];
         if(sf & SDF_FLOOR_GLOW_BLUE)
-            d->planes[PLN_FLOOR].glowrgb[2] = s->planes[PLN_FLOOR].glowrgb[2];
+            d->planes[PLN_FLOOR]->glowrgb[2] = s->planes[PLN_FLOOR]->glowrgb[2];
 
         if(sf & SDF_CEIL_GLOW_RED)
-            d->planes[PLN_CEILING].glowrgb[0] = s->planes[PLN_CEILING].glowrgb[0];
+            d->planes[PLN_CEILING]->glowrgb[0] = s->planes[PLN_CEILING]->glowrgb[0];
         if(sf & SDF_CEIL_GLOW_GREEN)
-            d->planes[PLN_CEILING].glowrgb[1] = s->planes[PLN_CEILING].glowrgb[1];
+            d->planes[PLN_CEILING]->glowrgb[1] = s->planes[PLN_CEILING]->glowrgb[1];
         if(sf & SDF_CEIL_GLOW_BLUE)
-            d->planes[PLN_CEILING].glowrgb[2] = s->planes[PLN_CEILING].glowrgb[2];
+            d->planes[PLN_CEILING]->glowrgb[2] = s->planes[PLN_CEILING]->glowrgb[2];
 
         if(sf & SDF_FLOOR_GLOW)
-            d->planes[PLN_FLOOR].glow = s->planes[PLN_FLOOR].glow;
+            d->planes[PLN_FLOOR]->glow = s->planes[PLN_FLOOR]->glow;
         if(sf & SDF_CEIL_GLOW)
-            d->planes[PLN_CEILING].glow = s->planes[PLN_CEILING].glow;
+            d->planes[PLN_CEILING]->glow = s->planes[PLN_CEILING]->glow;
     }
     else if(src->type == DT_SIDE)
     {
@@ -1576,8 +1582,8 @@ fixed_t Sv_SectorDistance(int index, const ownerinfo_t * info)
     return P_ApproxDistance3(info->x - sectorOrigins[index].x,
                              info->y - sectorOrigins[index].y,
                              info->z -
-                             ((sector->planes[PLN_CEILING].height +
-                               sector->planes[PLN_FLOOR].height) / 2));
+                             ((sector->planes[PLN_CEILING]->height +
+                               sector->planes[PLN_FLOOR]->height) / 2));
 }
 
 /*
@@ -2058,7 +2064,7 @@ int Sv_GetTargetPools(pool_t ** targets, int clientsMask)
             targets[numTargets++] = &pools[i];
         }
     }
-/*    
+/*
     if(specificClient & SVSF_ specificClient >= 0)
     {
         targets[0] = &pools[specificClient];
@@ -2362,9 +2368,9 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, int sourceSector,
         // Clients need to know which emitter to use.
         if(emitter)
         {
-            if(emitter == (mobj_t*) &SECTOR_PTR(sourceSector)->planes[PLN_FLOOR].soundorg)
+            if(emitter == (mobj_t*) &SECTOR_PTR(sourceSector)->planes[PLN_FLOOR]->soundorg)
                 df |= SNDDF_FLOOR;
-            else if(emitter == (mobj_t*) &SECTOR_PTR(sourceSector)->planes[PLN_CEILING].soundorg)
+            else if(emitter == (mobj_t*) &SECTOR_PTR(sourceSector)->planes[PLN_CEILING]->soundorg)
                 df |= SNDDF_CEILING;
             // else client assumes sector->soundorg
         }
@@ -2674,7 +2680,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t * info)
     // Calculate the distance to the delta's origin.
     // If no distance can be determined, it's 1.0.
     distance = FIX2FLT(Sv_DeltaDistance(delta, info));
-    if(distance < 1) 
+    if(distance < 1)
         distance = 1;
     distance = distance * distance; // power of two
 
@@ -2856,10 +2862,10 @@ void Sv_AckDeltaSet(int clientNumber, int set, byte resent)
  */
 int Sv_CountUnackedDeltas(int clientNumber)
 {
-    pool_t *pool = Sv_GetPool(clientNumber);    
+    pool_t *pool = Sv_GetPool(clientNumber);
     delta_t *delta;
     int i, count = 0;
-    
+
     // Iterate through the entire hash table.
     for(i = 0; i < POOL_HASH_SIZE; i++)
     {

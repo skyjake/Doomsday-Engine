@@ -901,12 +901,12 @@ void R_PrecacheLevel(void)
     {
         sec = SECTOR_PTR(i);
 
-        for(j = 0; j < NUM_PLANES; ++j)
+        for(j = 0; j < sec->planecount; ++j)
         {
-            if(sec->planes[j].surface.isflat)
-                R_PrecacheFlat(sec->planes[j].surface.texture);
+            if(sec->planes[j]->surface.isflat)
+                R_PrecacheFlat(sec->planes[j]->surface.texture);
             else
-                texturepresent[sec->planes[j].surface.texture] = 1;
+                texturepresent[sec->planes[j]->surface.texture] = 1;
         }
 
         if(i % SAFEDIV(numsectors, 10) == 0)

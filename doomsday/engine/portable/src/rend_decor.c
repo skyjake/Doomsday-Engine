@@ -463,17 +463,17 @@ boolean Rend_LineDecorationBounds(line_t *line)
 
     // Figure out the highest and lowest Z height.
     sector = line->frontsector;
-    bounds[BFLOOR] = sector->planes[PLN_FLOOR].height;
-    bounds[BCEILING] = sector->planes[PLN_CEILING].height;
+    bounds[BFLOOR] = sector->planes[PLN_FLOOR]->height;
+    bounds[BCEILING] = sector->planes[PLN_CEILING]->height;
 
     // Is the other sector higher/lower?
     if((sector = line->backsector) != NULL)
     {
-        if(sector->planes[PLN_FLOOR].height < bounds[BFLOOR])
-            bounds[BFLOOR] = sector->planes[PLN_FLOOR].height;
+        if(sector->planes[PLN_FLOOR]->height < bounds[BFLOOR])
+            bounds[BFLOOR] = sector->planes[PLN_FLOOR]->height;
 
-        if(sector->planes[PLN_CEILING].height > bounds[BCEILING])
-            bounds[BCEILING] = sector->planes[PLN_CEILING].height;
+        if(sector->planes[PLN_CEILING]->height > bounds[BCEILING])
+            bounds[BCEILING] = sector->planes[PLN_CEILING]->height;
     }
 
     return Rend_CheckDecorationBounds(bounds, decorWallMaxDist);
@@ -491,8 +491,8 @@ boolean Rend_SectorDecorationBounds(sector_t *sector, sectorinfo_t *sin)
     // Sectorinfo has top and bottom the other way around.
     bounds[BBOTTOM] = FRACUNIT * sin->bounds[BTOP];
     bounds[BTOP] = FRACUNIT * sin->bounds[BBOTTOM];
-    bounds[BFLOOR] = FRACUNIT * sin->planeinfo[PLN_FLOOR].visheight;
-    bounds[BCEILING] = FRACUNIT * sin->planeinfo[PLN_CEILING].visheight;
+    bounds[BFLOOR] = FRACUNIT * sin->planeinfo[PLN_FLOOR]->visheight;
+    bounds[BCEILING] = FRACUNIT * sin->planeinfo[PLN_CEILING]->visheight;
 
     return Rend_CheckDecorationBounds(bounds, decorPlaneMaxDist);
 }
@@ -718,15 +718,16 @@ void Rend_DecorateSector(int index)
     ded_decor_t *def;
 
     // The sector must have height if it wants decorations.
-    if(sector->planes[PLN_CEILING].height <= sector->planes[PLN_FLOOR].height)
+    if(sector->planes[PLN_CEILING]->height <= sector->planes[PLN_FLOOR]->height)
         return;
 
     // Is this sector close enough for the decorations to be visible?
     if(!Rend_SectorDecorationBounds(sector, &secinfo[index]))
         return;
 
-    for(i = 0, pln = sector->planes; i < NUM_PLANES; ++i, pln++)
+    for(i = 0; i < sector->planecount; ++i)
     {
+        pln = sector->planes[i];
         def = Rend_GetGraphicResourceDecoration(pln->surface.texture, pln->surface.isflat);
 
         if(def != NULL) // The surface is decorated.

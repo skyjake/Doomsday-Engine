@@ -55,7 +55,7 @@ typedef struct {
 #define GET_NODE_IDX(nd)        ((nd) - nodes)
 
 // Return the index of plane within a sector's planes array.
-#define GET_PLANE_IDX(pln)      ((pln) - (pln)->sector->planes)
+#define GET_PLANE_IDX(pln)      ((pln) - (pln)->sector->planes[0])
 
 #define VERTEX_PTR(i)           (&vertexes[i])
 #define SEG_PTR(i)              (&segs[i])
@@ -101,7 +101,7 @@ typedef struct fvertex_s {
 enum {
     PLN_FLOOR,
     PLN_CEILING,
-    NUM_PLANES
+    NUM_PLANE_TYPES
 };
 
 typedef struct skyfix_s {

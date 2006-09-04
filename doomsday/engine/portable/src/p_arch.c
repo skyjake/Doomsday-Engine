@@ -1318,8 +1318,8 @@ static void FinalizeMapData(gamemap_t* map)
     {
         sec = &map->sectors[i];
 
-        for(k = 0; k < NUM_PLANES; ++k)
-            sec->planes[k].target = sec->planes[k].height;
+        for(k = 0; k < sec->planecount; ++k)
+            sec->planes[k]->target = sec->planes[k]->height;
     }
 
     // Initialize polyobject properties (here?)
@@ -1754,28 +1754,33 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
                 sec->thinglist = NULL;
                 memset(sec->rgb, 0xff, 3);
 
-                // Do the planes too.
-                for(j = 0; j < NUM_PLANES; ++j)
-                {
-                    sec->planes[j].header.type = DMU_PLANE;
+                sec->planecount = 2;
+                sec->planes = Z_Malloc(sizeof(plane_t*) * sec->planecount, PU_LEVEL, 0);
 
-                    sec->planes[j].surface.isflat = true;
-                    memset(sec->planes[j].surface.rgba, 0xff, 3);
-                    memset(sec->planes[j].glowrgb, 0xff, 3);
-                    sec->planes[j].glow = 0;
+                // Do the planes too.
+                for(j = 0; j < sec->planecount; ++j)
+                {
+                    sec->planes[j] = Z_Malloc(sizeof(plane_t), PU_LEVEL, 0);
+
+                    sec->planes[j]->header.type = DMU_PLANE;
+
+                    sec->planes[j]->surface.isflat = true;
+                    memset(sec->planes[j]->surface.rgba, 0xff, 3);
+                    memset(sec->planes[j]->glowrgb, 0xff, 3);
+                    sec->planes[j]->glow = 0;
 
                     // The back pointer (temporary)
-                    sec->planes[j].sector = &map->sectors[k];
+                    sec->planes[j]->sector = &map->sectors[k];
                 }
 
                 // Set plane normals
-                sec->planes[PLN_FLOOR].surface.normal[VX] = 0;
-                sec->planes[PLN_FLOOR].surface.normal[VY] = 0;
-                sec->planes[PLN_FLOOR].surface.normal[VZ] = 1;
+                sec->planes[PLN_FLOOR]->surface.normal[VX] = 0;
+                sec->planes[PLN_FLOOR]->surface.normal[VY] = 0;
+                sec->planes[PLN_FLOOR]->surface.normal[VZ] = 1;
 
-                sec->planes[PLN_CEILING].surface.normal[VX] = 0;
-                sec->planes[PLN_CEILING].surface.normal[VY] = 0;
-                sec->planes[PLN_CEILING].surface.normal[VZ] = -1;
+                sec->planes[PLN_CEILING]->surface.normal[VX] = 0;
+                sec->planes[PLN_CEILING]->surface.normal[VY] = 0;
+                sec->planes[PLN_CEILING]->surface.normal[VZ] = -1;
             }
             break;
             }
@@ -2440,19 +2445,19 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         switch(prop->property)
         {
         case DAM_FLOOR_HEIGHT:
-            ReadValue(map, DMT_PLANE_HEIGHT, &p->planes[PLN_FLOOR].height, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_PLANE_HEIGHT, &p->planes[PLN_FLOOR]->height, buffer + prop->offset, prop, idx);
             break;
 
         case DAM_CEILING_HEIGHT:
-            ReadValue(map, DMT_PLANE_HEIGHT, &p->planes[PLN_CEILING].height, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_PLANE_HEIGHT, &p->planes[PLN_CEILING]->height, buffer + prop->offset, prop, idx);
             break;
 
         case DAM_FLOOR_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->planes[PLN_FLOOR].surface.texture, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->planes[PLN_FLOOR]->surface.texture, buffer + prop->offset, prop, idx);
             break;
 
         case DAM_CEILING_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->planes[PLN_CEILING].surface.texture, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->planes[PLN_CEILING]->surface.texture, buffer + prop->offset, prop, idx);
             break;
 
         case DAM_LIGHT_LEVEL:
@@ -3134,15 +3139,15 @@ static void P_GroupLines(gamemap_t* map)
         sec->soundorg.y = (bbox[BOXTOP] + bbox[BOXBOTTOM]) / 2;
 
         // set the z height of the sector sound origin
-        sec->soundorg.z = (sec->planes[PLN_CEILING].height - sec->planes[PLN_FLOOR].height) / 2;
+        sec->soundorg.z = (sec->planes[PLN_CEILING]->height - sec->planes[PLN_FLOOR]->height) / 2;
 
         // set the position of the sound origin for all plane sound origins.
-        for(k = 0; k < NUM_PLANES; ++k)
+        for(k = 0; k < sec->planecount; ++k)
         {
-            sec->planes[k].soundorg.x = sec->soundorg.x;
-            sec->planes[k].soundorg.y = sec->soundorg.y;
+            sec->planes[k]->soundorg.x = sec->soundorg.x;
+            sec->planes[k]->soundorg.y = sec->soundorg.y;
 
-            sec->planes[k].soundorg.z = sec->planes[k].height;
+            sec->planes[k]->soundorg.z = sec->planes[k]->height;
         }
 
         // adjust bounding box to map blocks

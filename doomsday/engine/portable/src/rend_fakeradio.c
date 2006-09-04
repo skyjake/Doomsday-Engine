@@ -141,8 +141,9 @@ void Rend_RadioInitForSector(sector_t *sector)
  */
 boolean Rend_RadioNonGlowingFlat(sector_t* sector, int plane)
 {
-    return !(sector->planes[plane].surface.texture <= 0 || sector->planes[plane].glow ||
-             R_IsSkySurface(&sector->planes[plane].surface));
+    return !(sector->planes[plane]->surface.texture <= 0 ||
+             sector->planes[plane]->glow ||
+             R_IsSkySurface(&sector->planes[plane]->surface));
 }
 
 /*
@@ -171,7 +172,8 @@ void Rend_RadioSetColor(rendpoly_t *q, float darkness)
  */
 boolean Rend_IsSectorOpen(sector_t *sector)
 {
-    return sector && sector->planes[PLN_CEILING].height > sector->planes[PLN_FLOOR].height;
+    return sector &&
+        sector->planes[PLN_CEILING]->height > sector->planes[PLN_FLOOR]->height;
 }
 
 boolean Rend_DoesMidTextureFillGap(line_t* line, boolean frontside)
@@ -1143,18 +1145,18 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
 
     if(isCeiling)
     {
-        fz = -fInfo->planeinfo[PLN_CEILING].visheight;
-        bz = -bInfo->planeinfo[PLN_CEILING].visheight;
-        bhz = -bInfo->planeinfo[PLN_FLOOR].visheight;
+        fz = -fInfo->planeinfo[PLN_CEILING]->visheight;
+        bz = -bInfo->planeinfo[PLN_CEILING]->visheight;
+        bhz = -bInfo->planeinfo[PLN_FLOOR]->visheight;
 
         if(fz < bz && fside->top.texture == 0)
             return 2; // Consider it fully open.
     }
     else
     {
-        fz = fInfo->planeinfo[PLN_FLOOR].visheight;
-        bz = bInfo->planeinfo[PLN_FLOOR].visheight;
-        bhz = bInfo->planeinfo[PLN_CEILING].visheight;
+        fz = fInfo->planeinfo[PLN_FLOOR]->visheight;
+        bz = bInfo->planeinfo[PLN_FLOOR]->visheight;
+        bhz = bInfo->planeinfo[PLN_CEILING]->visheight;
 
         // If theres a missing texture and the visible heights are
         // different - never consider this edge for a plane shadow.
@@ -1165,14 +1167,14 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
     }
 
     // Is the back sector closed?
-    if(bInfo->planeinfo[PLN_FLOOR].visheight >= bInfo->planeinfo[PLN_CEILING].visheight)
+    if(bInfo->planeinfo[PLN_FLOOR]->visheight >= bInfo->planeinfo[PLN_CEILING]->visheight)
     {
         if((!isCeiling &&
-                R_IsSkySurface(&front->planes[PLN_CEILING].surface) &&
-                R_IsSkySurface(&back->planes[PLN_CEILING].surface)) ||
+                R_IsSkySurface(&front->planes[PLN_CEILING]->surface) &&
+                R_IsSkySurface(&back->planes[PLN_CEILING]->surface)) ||
            (isCeiling &&
-                R_IsSkySurface(&front->planes[PLN_FLOOR].surface) &&
-                R_IsSkySurface(&back->planes[PLN_FLOOR].surface)))
+                R_IsSkySurface(&front->planes[PLN_FLOOR]->surface) &&
+                R_IsSkySurface(&back->planes[PLN_FLOOR]->surface)))
             return 2; // Consider it fully open.
         else
             return 0;
@@ -1340,7 +1342,7 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
 
         sector = R_GetShadowSector(shadow);
 
-        for(pln = 0; pln < NUM_PLANES; pln++)
+        for(pln = 0; pln < sector->planecount; pln++)
         {
             // Glowing surfaces or missing textures shouldn't have shadows.
             if(!Rend_RadioNonGlowingFlat(sector, pln))

@@ -98,9 +98,9 @@ boolean R_IsValidLink(sector_t *startsec, sector_t *destlink, int plane)
     {
         sin = SECT_INFO(sec);
         // Advance to the linked sector.
-        if(!sin->planeinfo[plane].linked)
+        if(!sin->planeinfo[plane]->linked)
             break;
-        link = sin->planeinfo[plane].linked;
+        link = sin->planeinfo[plane]->linked;
 
         // Is there an illegal linkage?
         if(sec == link || startsec == link)
@@ -168,16 +168,16 @@ void R_SetSectorLinks(sector_t *sec)
             return;
 
         // Check that there is something on the other side.
-        if(back->planes[PLN_CEILING].height == back->planes[PLN_FLOOR].height)
+        if(back->planes[PLN_CEILING]->height == back->planes[PLN_FLOOR]->height)
             return;
         // Check the conditions that prevent the invis plane.
-        if(back->planes[PLN_FLOOR].height == sec->planes[PLN_FLOOR].height)
+        if(back->planes[PLN_FLOOR]->height == sec->planes[PLN_FLOOR]->height)
         {
             hackfloor = false;
         }
         else
         {
-            if(back->planes[PLN_FLOOR].height > sec->planes[PLN_FLOOR].height)
+            if(back->planes[PLN_FLOOR]->height > sec->planes[PLN_FLOOR]->height)
                 sid = frontsid;
             else
                 sid = backsid;
@@ -188,11 +188,11 @@ void R_SetSectorLinks(sector_t *sec)
                 floorlink_candidate = back;
         }
 
-        if(back->planes[PLN_CEILING].height == sec->planes[PLN_CEILING].height)
+        if(back->planes[PLN_CEILING]->height == sec->planes[PLN_CEILING]->height)
             hackceil = false;
         else
         {
-            if(back->planes[PLN_CEILING].height < sec->planes[PLN_CEILING].height)
+            if(back->planes[PLN_CEILING]->height < sec->planes[PLN_CEILING]->height)
                 sid = frontsid;
             else
                 sid = backsid;
@@ -205,7 +205,7 @@ void R_SetSectorLinks(sector_t *sec)
     if(hackfloor)
     {
         if(floorlink_candidate == SECT_INFO(sec)->containsector)
-            secinfo[i].planeinfo[PLN_FLOOR].linked = floorlink_candidate;
+            secinfo[i].planeinfo[PLN_FLOOR]->linked = floorlink_candidate;
 
         /*      if(floorlink_candidate)
            Con_Printf("LF:%i->%i\n",
@@ -214,7 +214,7 @@ void R_SetSectorLinks(sector_t *sec)
     if(hackceil)
     {
         if(ceillink_candidate == SECT_INFO(sec)->containsector)
-            secinfo[i].planeinfo[PLN_CEILING].linked = ceillink_candidate;
+            secinfo[i].planeinfo[PLN_CEILING]->linked = ceillink_candidate;
 
         /*      if(ceillink_candidate)
            Con_Printf("LC:%i->%i\n",
@@ -574,13 +574,13 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                     continue;
 
                 // Both the front and back surfaces must be sky on this plane.
-                if(!R_IsSkySurface(&front->planes[pln].surface) ||
-                   !R_IsSkySurface(&back->planes[pln].surface))
+                if(!R_IsSkySurface(&front->planes[pln]->surface) ||
+                   !R_IsSkySurface(&back->planes[pln]->surface))
                     continue;
 
-                f = (front->planes[pln].height >> FRACBITS) +
+                f = (front->planes[pln]->height >> FRACBITS) +
                     front->skyfix[pln].offset;
-                b = (back->planes[pln].height >> FRACBITS) +
+                b = (back->planes[pln]->height >> FRACBITS) +
                     back->skyfix[pln].offset;
 
                 if(f == b)
@@ -590,13 +590,13 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                 {
                     if(f < b)
                     {
-                        height = b - (front->planes[pln].height >> FRACBITS);
+                        height = b - (front->planes[pln]->height >> FRACBITS);
                         fix = &front->skyfix[pln].offset;
                         adjustSec = front;
                     }
                     else if(f > b)
                     {
-                        height = f - (back->planes[pln].height >> FRACBITS);
+                        height = f - (back->planes[pln]->height >> FRACBITS);
                         fix = &back->skyfix[pln].offset;
                         adjustSec = back;
                     }
@@ -611,13 +611,13 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                 {
                     if(f > b)
                     {
-                        height = b - (front->planes[pln].height >> FRACBITS);
+                        height = b - (front->planes[pln]->height >> FRACBITS);
                         fix = &front->skyfix[pln].offset;
                         adjustSec = front;
                     }
                     else if(f < b)
                     {
-                        height = f - (back->planes[pln].height >> FRACBITS);
+                        height = f - (back->planes[pln]->height >> FRACBITS);
                         fix = &back->skyfix[pln].offset;
                         adjustSec = back;
                     }
@@ -634,7 +634,7 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                     Con_Printf("S%i: skyfix to %i (%s=%i)\n",
                                GET_SECTOR_IDX(adjustSec), *fix,
                                (pln == PLN_CEILING? "ceil" : "floor"),
-                               (adjustSec->planes[pln].height >> FRACBITS) + *fix);
+                               (adjustSec->planes[pln]->height >> FRACBITS) + *fix);
                 }
             }
         }
@@ -964,7 +964,15 @@ void R_InitSectorInfo(void)
     // Check for unclosed sectors.
     for(i = 0; i < numsectors; i++)
     {
-        P_SectorBoundingBox(SECTOR_PTR(i), secinfo[i].bounds);
+        sec = SECTOR_PTR(i);
+
+        secinfo[i].planeinfo =
+            Z_Calloc(sizeof(secplaneinfo_t*) * sec->planecount, PU_LEVEL, 0);
+
+        for(k = 0; k < sec->planecount; ++k)
+            secinfo[i].planeinfo[k] = Z_Calloc(sizeof(secplaneinfo_t), PU_LEVEL, 0);
+
+        P_SectorBoundingBox(sec, secinfo[i].bounds);
 
         if(i == 0)
         {
@@ -1018,8 +1026,9 @@ void R_InitSectorInfo(void)
         {
             // Link all planes permanently.
             info->permanentlink = true;
-            for(k = 0; k < NUM_PLANES; ++k)
-                info->planeinfo[k].linked = info->containsector;
+            // Only floor and ceiling can be linked, not all planes inbetween.
+            info->planeinfo[PLN_FLOOR]->linked = info->containsector;
+            info->planeinfo[PLN_CEILING]->linked = info->containsector;
 
             Con_Printf("Linking S%i planes permanently to S%i\n", i,
                        GET_SECTOR_IDX(info->containsector));
@@ -1080,7 +1089,7 @@ void R_InitPlaneIllumination(subsector_t *sub, int planeid)
 {
     int i, j;
     subsectorinfo_t *ssecinfo = SUBSECT_INFO(sub);
-    planeinfo_t *plane = &ssecinfo->plane[planeid];
+    planeinfo_t *plane = ssecinfo->planes[planeid];
 
     plane->illumination = Z_Calloc(ssecinfo->numvertices * sizeof(vertexillum_t),
                                    PU_LEVELSTATIC, NULL);
@@ -1143,18 +1152,19 @@ void R_InitPlanePolys(subsector_t *subsector)
     }
 
     // Initialize the illumination for the subsector.
-    for(i = 0; i < NUM_PLANES; ++i)
+    for(i = 0; i < subsector->sector->planecount; ++i)
         R_InitPlaneIllumination(subsector, i);
 
     // FIXME: $nplanes
     // Initialize the plane types.
-    ssecinfo->plane[PLN_FLOOR].type = PLN_FLOOR;
-    ssecinfo->plane[PLN_CEILING].type = PLN_CEILING;
+    ssecinfo->planes[PLN_FLOOR]->type = PLN_FLOOR;
+    ssecinfo->planes[PLN_CEILING]->type = PLN_CEILING;
 }
 
 void R_InitSubsectorInfo(void)
 {
-    int     i;
+    int     i, k;
+    subsector_t *sub;
     subsectorinfo_t *info;
 
     i = sizeof(subsectorinfo_t) * numsubsectors;
@@ -1169,7 +1179,13 @@ void R_InitSubsectorInfo(void)
 
     for(i = 0, info = subsecinfo; i < numsubsectors; i++, info++)
     {
-        R_InitPlanePolys(SUBSECTOR_PTR(i));
+        sub = SUBSECTOR_PTR(i);
+
+        info->planes = Z_Calloc(sub->sector->planecount * sizeof(planeinfo_t*), PU_LEVEL, NULL);
+        for(k = 0; k < sub->sector->planecount; ++k)
+            info->planes[k] = Z_Calloc(sizeof(planeinfo_t), PU_LEVEL, NULL);
+
+        R_InitPlanePolys(sub);
     }
 
 #ifdef _DEBUG
@@ -2197,9 +2213,9 @@ sector_t *R_GetLinkedSector(sector_t *startsec, int plane)
     {
         sin = SECT_INFO(sec);
 
-        if(!sin->planeinfo[plane].linked)
+        if(!sin->planeinfo[plane]->linked)
             return sec;
-        link = sin->planeinfo[plane].linked;
+        link = sin->planeinfo[plane]->linked;
 
 #ifdef _DEBUG
         if(sec == link || startsec == link)
@@ -2224,8 +2240,8 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
         sector_t *sec = SECTOR_PTR(i);
         sectorinfo_t *sInfo = SECT_INFO(sec);
 
-        for(j = 0; j < NUM_PLANES; ++j)
-            R_UpdateSurface(&sec->planes[j].surface, &sInfo->planeinfo[j].oldsurface,
+        for(j = 0; j < sec->planecount; ++j)
+            R_UpdateSurface(&sec->planes[j]->surface, &sInfo->planeinfo[j]->oldsurface,
                             forceUpdate);
     }
 
@@ -2376,12 +2392,12 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     }
 
     // For each plane.
-    for(i = 0; i < NUM_PLANES; ++i)
+    for(i = 0; i < sec->planecount; ++i)
     {
-        plane = &sec->planes[i];
+        plane = sec->planes[i];
 
         // Surface changes?
-        R_UpdateSurface(&plane->surface, &sin->planeinfo[i].oldsurface, forceUpdate);
+        R_UpdateSurface(&plane->surface, &sin->planeinfo[i]->oldsurface, forceUpdate);
 
         // FIXME >
         // Now update the glow properties.
@@ -2403,7 +2419,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
         // Geometry change?
         if(forceUpdate ||
-           plane->height != sin->planeinfo[i].oldheight[1])
+           plane->height != sin->planeinfo[i]->oldheight[1])
         {
             ddplayer_t *player;
 
@@ -2431,9 +2447,9 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
     if(!sin->permanentlink) // Assign new links
     {
-        // For each plane
-        for(i = 0; i < NUM_PLANES; ++i)
-            sin->planeinfo[i].linked = NULL;
+        // Only floor and ceiling can be linked, not all inbetween
+        sin->planeinfo[PLN_FLOOR]->linked = NULL;
+        sin->planeinfo[PLN_CEILING]->linked = NULL;
         R_SetSectorLinks(sec);
     }
 }

@@ -111,9 +111,9 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         // Should we use a specific origin?
         if(flags & SNDDF_FLOOR)
-            emitter = (mobj_t *) &sector->planes[PLN_FLOOR].soundorg;
+            emitter = (mobj_t *) &sector->planes[PLN_FLOOR]->soundorg;
         else if(flags & SNDDF_CEILING)
-            emitter = (mobj_t *) &sector->planes[PLN_CEILING].soundorg;
+            emitter = (mobj_t *) &sector->planes[PLN_CEILING]->soundorg;
         else
             emitter = (mobj_t *) &sector->soundorg;
     }

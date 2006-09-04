@@ -581,12 +581,12 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
     assert(data != NULL);
 
     if(vis->data.mo.flooradjust &&
-       projectedThing->pos[VZ] == sector->planes[PLN_FLOOR].height)
+       projectedThing->pos[VZ] == sector->planes[PLN_FLOOR]->height)
     {
         vis->data.mo.gz = FRACUNIT * SECT_FLOOR(sector);
     }
 
-    if(projectedThing->pos[VZ] + projectedThing->height == sector->planes[PLN_CEILING].height)
+    if(projectedThing->pos[VZ] + projectedThing->height == sector->planes[PLN_CEILING]->height)
     {
         vis->data.mo.gz =
             FRACUNIT * SECT_CEIL(sector) - projectedThing->height;
@@ -771,7 +771,7 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.gz = thing->pos[VZ];
 
     vis->data.mo.flooradjust =
-        (fabs(SECT_FLOOR(sect) - FIX2FLT(sect->planes[PLN_FLOOR].height)) < 8);
+        (fabs(SECT_FLOOR(sect) - FIX2FLT(sect->planes[PLN_FLOOR]->height)) < 8);
 
     // The thing's Z coordinate must match the actual visible
     // floor/ceiling height.  When using smoothing, this requires
@@ -934,25 +934,25 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.hasglow = false;
     if(useWallGlow)
     {
-        if(sect->planes[PLN_CEILING].glow)
+        if(sect->planes[PLN_CEILING]->glow)
         {
-            memcpy(vis->data.mo.ceilglow, sect->planes[PLN_CEILING].glowrgb, 3);
+            memcpy(vis->data.mo.ceilglow, sect->planes[PLN_CEILING]->glowrgb, 3);
             for(i = 0; i < 3; i++)
                 vis->data.mo.ceilglow[i] *= dlFactor;
             vis->data.mo.hasglow = true;
-            vis->data.mo.ceilglowamount = sect->planes[PLN_CEILING].glow;
+            vis->data.mo.ceilglowamount = sect->planes[PLN_CEILING]->glow;
         }
         else
         {
             memset(vis->data.mo.ceilglow, 0, sizeof(vis->data.mo.ceilglow));
         }
-        if(sect->planes[PLN_FLOOR].glow)
+        if(sect->planes[PLN_FLOOR]->glow)
         {
-            memcpy(vis->data.mo.floorglow, sect->planes[PLN_FLOOR].glowrgb, 3);
+            memcpy(vis->data.mo.floorglow, sect->planes[PLN_FLOOR]->glowrgb, 3);
             for(i = 0; i < 3; i++)
                 vis->data.mo.floorglow[i] *= dlFactor;
             vis->data.mo.hasglow = true;
-            vis->data.mo.floorglowamount = sect->planes[PLN_FLOOR].glow;
+            vis->data.mo.floorglowamount = sect->planes[PLN_FLOOR]->glow;
         }
         else
         {

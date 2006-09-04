@@ -1008,17 +1008,17 @@ static int SetProperty(void* ptr, void* context)
         {
             sector_t* sec = (sector_t*)ptr;
             if(args->aliases & DMU_FLOOR_OF_SECTOR)
-                p = &sec->planes[PLN_FLOOR];
+                p = sec->planes[PLN_FLOOR];
             else
-                p = &sec->planes[PLN_CEILING];
+                p = sec->planes[PLN_CEILING];
         }
         else if(args->type == DMU_SUBSECTOR)
         {
             sector_t* sec = ((subsector_t*)ptr)->sector;
             if(args->aliases & DMU_FLOOR_OF_SECTOR)
-                p = &sec->planes[PLN_FLOOR];
+                p = sec->planes[PLN_FLOOR];
             else
-                p = &sec->planes[PLN_CEILING];
+                p = sec->planes[PLN_CEILING];
         }
         else
             Con_Error("SetProperty: Invalid args.\n");
@@ -1676,17 +1676,17 @@ static int GetProperty(void* ptr, void* context)
         {
             sector_t* sec = (sector_t*)ptr;
             if(args->aliases & DMU_FLOOR_OF_SECTOR)
-                p = &sec->planes[PLN_FLOOR];
+                p = sec->planes[PLN_FLOOR];
             else
-                p = &sec->planes[PLN_CEILING];
+                p = sec->planes[PLN_CEILING];
         }
         else if(args->type == DMU_SUBSECTOR)
         {
             sector_t* sec = ((subsector_t*)ptr)->sector;
             if(args->aliases & DMU_FLOOR_OF_SECTOR)
-                p = &sec->planes[PLN_FLOOR];
+                p = sec->planes[PLN_FLOOR];
             else
-                p = &sec->planes[PLN_CEILING];
+                p = sec->planes[PLN_CEILING];
         }
         else
             Con_Error("GetProperty: Invalid args.\n");

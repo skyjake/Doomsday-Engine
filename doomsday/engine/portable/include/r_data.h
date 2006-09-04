@@ -44,9 +44,9 @@
 #define SEG_INFO(x)     (seginfo + GET_SEG_IDX(x))
 #define SUBSECT_INFO(x) (subsecinfo + GET_SUBSECTOR_IDX(x))
 #define SECT_INFO(x)    (secinfo + GET_SECTOR_IDX(x))
-#define SECT_FLOOR(x)   (secinfo[GET_SECTOR_IDX(x)].planeinfo[PLN_FLOOR].visheight)
-#define SECT_CEIL(x)    (secinfo[GET_SECTOR_IDX(x)].planeinfo[PLN_CEILING].visheight)
-#define SECT_PLANE_HEIGHT(x, n) (secinfo[GET_SECTOR_IDX(x)].planeinfo[n].visheight)
+#define SECT_FLOOR(x)   (secinfo[GET_SECTOR_IDX(x)].planeinfo[PLN_FLOOR]->visheight)
+#define SECT_CEIL(x)    (secinfo[GET_SECTOR_IDX(x)].planeinfo[PLN_CEILING]->visheight)
+#define SECT_PLANE_HEIGHT(x, n) (secinfo[GET_SECTOR_IDX(x)].planeinfo[n]->visheight)
 
 // Flags for decorations.
 #define DCRF_NO_IWAD    0x1        // Don't use if from IWAD.
@@ -219,7 +219,7 @@ typedef struct {
     int             blockcount;         // Number of gridblocks in the sector.
     int             changedblockcount;  // Number of blocks to mark changed.
     unsigned short *blocks;             // Light grid block indices.
-    secplaneinfo_t  planeinfo[NUM_PLANES];
+    secplaneinfo_t  **planeinfo;        // [sector->planecount] size
 } sectorinfo_t;
 
 typedef struct vilight_s {
@@ -277,7 +277,7 @@ typedef struct seginfo_s {
 } seginfo_t;
 
 typedef struct subsectorinfo_s {
-    planeinfo_t     plane[NUM_PLANES];
+    planeinfo_t   **planes;
     ushort          numvertices;
     fvertex_t      *vertices;
     int             validcount;

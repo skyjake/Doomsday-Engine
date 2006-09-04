@@ -119,8 +119,8 @@ void S_CalcSectorReverbs(void)
         rev = &sub_reverb[c];
         // Space is the rough volume of the subsector (bounding box).
         rev->data[SRD_SPACE] =
-            ((sub->sector->planes[PLN_CEILING].height -
-              sub->sector->planes[PLN_FLOOR].height) >> FRACBITS) * (sub->bbox[1].x -
+            ((sub->sector->planes[PLN_CEILING]->height -
+              sub->sector->planes[PLN_FLOOR]->height) >> FRACBITS) * (sub->bbox[1].x -
                                                         sub->bbox[0].x) *
             (sub->bbox[1].y - sub->bbox[0].y);
 
@@ -228,8 +228,8 @@ void S_CalcSectorReverbs(void)
            bbox[BLEFT], bbox[BTOP], bbox[BRIGHT], bbox[BBOTTOM]); */
 
         sectorSpace =
-            ((sec->planes[PLN_CEILING].height -
-              sec->planes[PLN_FLOOR].height) >> FRACBITS) * (bbox[BRIGHT] -
+            ((sec->planes[PLN_CEILING]->height -
+              sec->planes[PLN_FLOOR]->height) >> FRACBITS) * (bbox[BRIGHT] -
                                                 bbox[BLEFT]) * (bbox[BBOTTOM] -
                                                                 bbox[BTOP]);
 

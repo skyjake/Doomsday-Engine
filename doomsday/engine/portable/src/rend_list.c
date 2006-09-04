@@ -418,14 +418,14 @@ void RL_PreparePlane(planeinfo_t *plane, rendpoly_t *poly, float height,
     pLightColor = R_GetSectorLightColor(poly->sector);
 
     // Calculate the color for each vertex, blended with plane color?
-    if(poly->sector->planes[plane->type].surface.rgba[0] < 255 ||
-       poly->sector->planes[plane->type].surface.rgba[1] < 255 ||
-       poly->sector->planes[plane->type].surface.rgba[2] < 255 )
+    if(poly->sector->planes[plane->type]->surface.rgba[0] < 255 ||
+       poly->sector->planes[plane->type]->surface.rgba[1] < 255 ||
+       poly->sector->planes[plane->type]->surface.rgba[2] < 255 )
     {
         // Blend sector light+color+planecolor
         for(i = 0; i < 3; i++)
         {
-            vColor[i] = (byte) (((poly->sector->planes[plane->type].surface.rgba[i]/ 255.0f)) * pLightColor[i]);
+            vColor[i] = (byte) (((poly->sector->planes[plane->type]->surface.rgba[i]/ 255.0f)) * pLightColor[i]);
         }
 
         RL_VertexColors(poly, sectorlight, vColor);
