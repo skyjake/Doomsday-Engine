@@ -1,5 +1,4 @@
 /**\file
- * Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
  * Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
