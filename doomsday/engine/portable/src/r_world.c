@@ -967,7 +967,7 @@ void R_InitSectorInfo(void)
         sec = SECTOR_PTR(i);
 
         secinfo[i].planeinfo =
-            Z_Calloc(sizeof(secplaneinfo_t*) * sec->planecount, PU_LEVEL, 0);
+            Z_Malloc(sizeof(secplaneinfo_t*) * sec->planecount, PU_LEVEL, 0);
 
         for(k = 0; k < sec->planecount; ++k)
             secinfo[i].planeinfo[k] = Z_Calloc(sizeof(secplaneinfo_t), PU_LEVEL, 0);
@@ -1181,7 +1181,7 @@ void R_InitSubsectorInfo(void)
     {
         sub = SUBSECTOR_PTR(i);
 
-        info->planes = Z_Calloc(sub->sector->planecount * sizeof(planeinfo_t*), PU_LEVEL, NULL);
+        info->planes = Z_Malloc(sub->sector->planecount * sizeof(planeinfo_t*), PU_LEVEL, NULL);
         for(k = 0; k < sub->sector->planecount; ++k)
             info->planes[k] = Z_Calloc(sizeof(planeinfo_t), PU_LEVEL, NULL);
 
