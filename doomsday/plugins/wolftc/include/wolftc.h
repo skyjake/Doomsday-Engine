@@ -1,5 +1,5 @@
-/* DE1: $Id: template.h 3311 2006-06-11 17:36:34Z skyjake $
- * Copyright (C) 2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+/**\file
+ * Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,7 +12,9 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Boston, MA  02110-1301  USA
  */
 
 /*
