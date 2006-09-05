@@ -565,6 +565,7 @@ extern          "C" {
         DMU_SUBSECTOR,
         DMU_SECTOR,
         DMU_PLANE,
+        DMU_SURFACE,
         DMU_BLOCKMAP,
         DMU_REJECT,
         DMU_POLYBLOCKMAP,
