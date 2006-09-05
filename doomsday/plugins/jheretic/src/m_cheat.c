@@ -1,5 +1,6 @@
-/* DE1: $Id: template.c 2645 2006-01-21 12:58:39Z skyjake $
- * Copyright (C) 1999- Activision
+/**\file
+ * Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ * Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
