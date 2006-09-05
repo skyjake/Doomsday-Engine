@@ -1672,6 +1672,9 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
 
                 side->header.type = DMU_SIDE;
 
+                side->top.header.type = DMU_SURFACE;
+                side->middle.header.type = DMU_SURFACE;
+                side->bottom.header.type = DMU_SURFACE;
                 memset(side->top.rgba, 0xff, 3);
                 memset(side->middle.rgba, 0xff, 4);
                 memset(side->bottom.rgba, 0xff, 3);
@@ -1764,10 +1767,12 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
 
                     sec->planes[j]->header.type = DMU_PLANE;
 
+                    sec->planes[j]->surface.header.type = DMU_SURFACE;
                     sec->planes[j]->surface.isflat = true;
                     memset(sec->planes[j]->surface.rgba, 0xff, 3);
                     memset(sec->planes[j]->glowrgb, 0xff, 3);
                     sec->planes[j]->glow = 0;
+                    sec->planes[j]->surface.flags = 0;
 
                     // The back pointer (temporary)
                     sec->planes[j]->sector = &map->sectors[k];
