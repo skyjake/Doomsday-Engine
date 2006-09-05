@@ -39,6 +39,7 @@
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
+#include "de_misc.h"
 
 #include "m_vector.h"
 
@@ -1317,6 +1318,7 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
     line_t *neighbor;
     float   open, sideOpen[2];
     int     i, pln;
+    float vec[3];
 
     if(!rendFakeRadio || LevelFullBright)
         return;
@@ -1342,10 +1344,18 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
 
         sector = R_GetShadowSector(shadow);
 
-        for(pln = 0; pln < sector->planecount; pln++)
+        vec[VX] = vx - subsector->midpoint.x;
+        vec[VY] = vz - subsector->midpoint.y;
+
+        for(pln = 0; pln < subsector->sector->planecount; pln++)
         {
+            vec[VZ] = vy - SECT_PLANE_HEIGHT(subsector->sector, pln);
+            // Don't bother with planes facing away from the camera.
+            if(M_DotProduct(vec, subsector->sector->planes[pln]->surface.normal) < 0)
+                continue;
+
             // Glowing surfaces or missing textures shouldn't have shadows.
-            if(!Rend_RadioNonGlowingFlat(sector, pln))
+            if(!Rend_RadioNonGlowingFlat(subsector->sector, pln))
                 continue;
 
             open =
