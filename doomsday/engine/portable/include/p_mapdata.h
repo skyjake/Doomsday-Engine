@@ -83,7 +83,7 @@ typedef struct {
 #define SDF_BLENDMIDTOTOP       0x02
 #define SDF_BLENDMIDTOBOTTOM    0x04
 #define SDF_BLENDBOTTOMTOMID    0x08
-#define SDF_MIDTEXUPPER         0x10
+//#define SDF_MIDTEXUPPER         0x10
 
 // Runtime map data objects, such as vertices, sectors, and subsectors all
 // have this header as their first member. This makes it possible to treat

@@ -2298,6 +2298,9 @@ void R_UpdateSurface(surface_t *current, boolean forceUpdate)
         }
 
         old->texture = current->texture;
+
+        if(current->texture && (oldTexFlags & SUF_TEXFIX))
+            current->flags &= ~SUF_TEXFIX;
     }
     else if((texFlags & TXF_GLOW) != (oldTexFlags & TXF_GLOW))
     {

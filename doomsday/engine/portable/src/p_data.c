@@ -434,13 +434,13 @@ void P_PlaneChanged(sector_t *sector, int plane)
                     front->top.flags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
-                    if(front->middle.texture)
+                   /* if(front->middle.texture)
                     {
                         front->flags |= SDF_MIDTEXUPPER;
                         front->top.texture = front->middle.texture;
                         front->top.isflat = front->middle.isflat;
                     }
-                    else
+                    else*/
                     {
                         front->top.texture =
                             front->sector->planes[PLN_CEILING]->surface.texture;
@@ -464,13 +464,13 @@ void P_PlaneChanged(sector_t *sector, int plane)
                     back->top.flags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
-                    if(front->middle.texture)
+                   /* if(front->middle.texture)
                     {
                         back->flags |= SDF_MIDTEXUPPER;
                         back->top.texture = back->middle.texture;
                         back->top.isflat = back->middle.isflat;
                     }
-                    else
+                    else*/
                     {
                         back->top.texture =
                             back->sector->planes[PLN_CEILING]->surface.texture;

@@ -1194,8 +1194,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
 
         // Quite probably a masked texture. Won't be drawn if a visible
         // top or bottom texture is missing.
-        if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide) &&
-           !(side->flags & SDF_MIDTEXUPPER))
+        if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide) /*&&
+           !(side->flags & SDF_MIDTEXUPPER)*/)
         {
             // Use actual (smoothed) sector heights (non-linked).
             float   rbceil = SECT_CEIL(seg->backsector);
@@ -1317,7 +1317,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
 
                 quad.flags = 0;
 
-                if(side->flags & SDF_MIDTEXUPPER)
+               /* if(side->flags & SDF_MIDTEXUPPER)
                 {
                     // DOOM.EXE rendering hack.
                     // Mid texture uppers use a relative offset to the lower
@@ -1350,7 +1350,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                     else
                         isVisible = false;
                 }
-                else
+                else*/
                 {
                     vTL[VZ] = vTR[VZ] = fceil;
                     vBL[VZ] = vBR[VZ] = bceil;
@@ -1430,7 +1430,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             // An obvious hack, what to do though??
         }
         else if((bceil <= ffloor &&
-                    ((side->top.texture != 0 && !(side->flags & SDF_MIDTEXUPPER)) ||
+                    ((side->top.texture != 0 /* && !(side->flags & SDF_MIDTEXUPPER)*/) ||
                      (side->middle.texture != 0))) ||
                 (bfloor >= fceil &&
                     (side->bottom.texture != 0 || side->middle.texture !=0)))
@@ -1440,7 +1440,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         }
         else if(backsecSkyFix ||
                 (bsh == 0 && bfloor > ffloor && bceil < fceil &&
-                (side->top.texture != 0 && !(side->flags & SDF_MIDTEXUPPER)) &&
+                (side->top.texture != 0 /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
                 (side->bottom.texture != 0)))
         {
             // A zero height back segment

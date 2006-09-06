@@ -88,7 +88,7 @@ static int  usingDMUAPIver;     // Version of the DMU API the game expects.
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Convert DMU enum constant into a string for error/debug messages.
  */
 const char* DMU_Str(int prop)
@@ -251,7 +251,7 @@ const char* DMU_Str(int prop)
     return propStr;
 }
 
-/*
+/**
  * Determines the type of the map data object.
  *
  * @param ptr  Pointer to a map data object.
@@ -281,7 +281,7 @@ static int DMU_GetType(const void* ptr)
     return DMU_NONE;
 }
 
-/*
+/**
  * Automatically detect and convert property constants that act as aliases.
  * Property constant aliases are "alternative names" for other constants
  * that relate to properties easily reached through indirection of the base
@@ -355,7 +355,7 @@ static boolean DMU_ConvertAliases(setargs_t* args)
     return false;
 }
 
-/*
+/**
  * Initializes a setargs struct.
  *
  * @param type  Type of the map data object (e.g., DMU_LINE).
@@ -372,7 +372,7 @@ static void InitArgs(setargs_t* args, int type, int prop)
     DMU_ConvertAliases(args);
 }
 
-/*
+/**
  * Initializes the dummy arrays with a fixed number of dummies.
  */
 void P_InitMapUpdate(void)
@@ -398,7 +398,7 @@ void P_InitMapUpdate(void)
     dummySectors = Z_Calloc(dummyCount * sizeof(dummysector_t), PU_STATIC, NULL);
 }
 
-/*
+/**
  * Allocates a new dummy object.
  *
  * @param type  DMU type of the dummy object.
@@ -448,7 +448,7 @@ void* P_AllocDummy(int type, void* extraData)
     return 0;
 }
 
-/*
+/**
  * Frees a dummy object.
  */
 void P_FreeDummy(void* dummy)
@@ -471,9 +471,9 @@ void P_FreeDummy(void* dummy)
     }
 }
 
-/*
+/**
  * Determines the type of a dummy object. For extra safety (in a debug build)
- * it would be possible to look through the dummy arrays as make sure the
+ * it would be possible to look through the dummy arrays and make sure the
  * pointer refers to a real dummy.
  */
 int P_DummyType(void* dummy)
@@ -496,7 +496,7 @@ int P_DummyType(void* dummy)
     return DMU_NONE;
 }
 
-/*
+/**
  * Determines if a map data object is a dummy.
  */
 boolean P_IsDummy(void* dummy)
@@ -504,7 +504,7 @@ boolean P_IsDummy(void* dummy)
     return P_DummyType(dummy) != DMU_NONE;
 }
 
-/*
+/**
  * Returns the extra data pointer of the dummy, or NULL if the object is not
  * a dummy object.
  */
@@ -524,7 +524,7 @@ void* P_DummyExtraData(void* dummy)
     return NULL;
 }
 
-/*
+/**
  * Convert pointer to index.
  */
 int P_ToIndex(const void* ptr)
@@ -569,7 +569,7 @@ int P_ToIndex(const void* ptr)
     return -1;
 }
 
-/*
+/**
  * Convert index to pointer.
  */
 void* P_ToPtr(int type, int index)
@@ -611,7 +611,7 @@ void* P_ToPtr(int type, int index)
     return NULL;
 }
 
-/*
+/**
  * Call a callback function on a selection of map data objects. The selected
  * objects will be specified by 'type' and 'index'. 'context' is passed to the
  * callback function along with a pointer to the data object. P_Callback
@@ -747,7 +747,7 @@ int P_Callback(int type, int index, void* context, int (*callback)(void* p, void
     return true;
 }
 
-/*
+/**
  * Another version of callback iteration. The set of selected objects is
  * determined by 'type' and 'ptr'. Otherwise works like P_Callback.
  */
@@ -786,7 +786,7 @@ int P_Callbackp(int type, void* ptr, void* context, int (*callback)(void* p, voi
     return true;
 }
 
-/*
+/**
  * Sets a value. Does some basic type checking so that incompatible types are
  * not assigned. Simple conversions are also done, e.g., float to fixed.
  */
@@ -979,7 +979,7 @@ static void SetValue(valuetype_t valueType, void* dst, setargs_t* args, int inde
     }
 }
 
-/*
+/**
  * Only those properties that are writable by outside parties (such as games)
  * are included here. Attempting to set a non-writable property causes a
  * fatal error.
@@ -1044,7 +1044,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_PLANE_TEXTURE:
             SetValue(DMT_SURFACE_TEXTURE, &p->surface.texture, args, 0);
-            p->surface.isflat = true;
+            p->surface.isflat = true; // Kludge
             break;
         case DMU_PLANE_OFFSET_X:
             SetValue(DMT_PLANE_OFFX, &p->surface.offx, args, 0);
@@ -1184,10 +1184,9 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_TOP_TEXTURE:
             SetValue(DMT_SURFACE_TEXTURE, &p->top.texture, args, 0);
-            p->top.isflat = false;
-            p->top.flags &= ~SUF_TEXFIX;
-            if(p->top.texture)
-                p->flags &= ~SDF_MIDTEXUPPER;
+            p->top.isflat = false; // Kludge
+           /* if(p->top.texture)
+                p->flags &= ~SDF_MIDTEXUPPER;*/
             break;
         case DMU_TOP_TEXTURE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->top.offx, args, 0);
@@ -1222,8 +1221,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_MIDDLE_TEXTURE:
             SetValue(DMT_SURFACE_TEXTURE, &p->middle.texture, args, 0);
-            p->middle.isflat = false;
-            p->middle.flags &= ~SUF_TEXFIX;
+            p->middle.isflat = false; // Kludge
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->middle.offx, args, 0);
@@ -1251,8 +1249,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_BOTTOM_TEXTURE:
             SetValue(DMT_SURFACE_TEXTURE, &p->bottom.texture, args, 0);
-            p->bottom.isflat = false;
-            p->bottom.flags &= ~SUF_TEXFIX;
+            p->bottom.isflat = false; // Kludge
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->bottom.offx, args, 0);
@@ -1433,7 +1430,7 @@ static int SetProperty(void* ptr, void* context)
     return true;
 }
 
-/*
+/**
  * Gets a value. Does some basic type checking so that incompatible types are
  * not assigned. Simple conversions are also done, e.g., float to fixed.
  */
@@ -1854,8 +1851,8 @@ static int GetProperty(void* ptr, void* context)
             if(p->top.flags & SUF_TEXFIX)
                 texture = 0;
 
-            if(p->flags & SDF_MIDTEXUPPER)
-                texture = 0;
+           /*if(p->flags & SDF_MIDTEXUPPER)
+                texture = 0;*/
 
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
@@ -1891,8 +1888,8 @@ static int GetProperty(void* ptr, void* context)
             if(p->middle.flags & SUF_TEXFIX)
                 texture = 0;
 
-            if(p->flags & SDF_MIDTEXUPPER)
-                texture = p->top.texture;
+            /*if(p->flags & SDF_MIDTEXUPPER)
+                texture = p->top.texture;*/
 
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
@@ -2268,7 +2265,7 @@ static int GetProperty(void* ptr, void* context)
 }
 
 
-/*
+/**
  * Swaps two values. Does NOT do any type checking. Both values are
  * assumed to be of the correct (and same) type.
  */
