@@ -721,7 +721,7 @@ fixed_t P_GetParticleZ(particle_t *pt)
         return pt->sector->planes[PLN_CEILING]->height - 2 * FRACUNIT;
 
     if(pt->pos[VZ] == DDMININT)
-        return FRACUNIT * (SECT_INFO(pt->sector)->planeinfo[PLN_FLOOR]->visheight + 2);
+        return FRACUNIT * (pt->sector->planes[PLN_FLOOR]->info->visheight + 2);
 
     return pt->pos[VZ];
 }

@@ -1269,9 +1269,9 @@ static int SetProperty(void* ptr, void* context)
                       DMU_Str(args->prop));
         }
 
-        R_UpdateSurface(&p->top, &info->oldtop, false);
-        R_UpdateSurface(&p->middle, &info->oldmiddle, false);
-        R_UpdateSurface(&p->bottom, &info->oldbottom, false);
+        R_UpdateSurface(&p->top, false);
+        R_UpdateSurface(&p->middle, false);
+        R_UpdateSurface(&p->bottom, false);
         break;
         }
 

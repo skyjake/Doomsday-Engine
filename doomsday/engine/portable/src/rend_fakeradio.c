@@ -1131,31 +1131,28 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
 {
     sector_t *front = (frontside ? line->frontsector : line->backsector);
     sector_t *back = (frontside ? line->backsector : line->frontsector);
-    sectorinfo_t *fInfo, *bInfo;
     side_t* fside;
     float   fz, bhz, bz;        // Front and back Z height
 
     if(!back)
         return 0;               // No backsector, this is a one-sided wall.
 
-    fInfo = SECT_INFO(front);
-    bInfo = SECT_INFO(back);
     fside = SIDE_PTR(line->sidenum[frontside? 0 : 1]);
 
     if(isCeiling)
     {
-        fz = -fInfo->planeinfo[PLN_CEILING]->visheight;
-        bz = -bInfo->planeinfo[PLN_CEILING]->visheight;
-        bhz = -bInfo->planeinfo[PLN_FLOOR]->visheight;
+        fz = -SECT_CEIL(front);
+        bz = -SECT_CEIL(back);
+        bhz = -SECT_FLOOR(back);
 
         if(fz < bz && fside->top.texture == 0)
             return 2; // Consider it fully open.
     }
     else
     {
-        fz = fInfo->planeinfo[PLN_FLOOR]->visheight;
-        bz = bInfo->planeinfo[PLN_FLOOR]->visheight;
-        bhz = bInfo->planeinfo[PLN_CEILING]->visheight;
+        fz = SECT_FLOOR(front);
+        bz = SECT_FLOOR(back);
+        bhz = SECT_CEIL(back);
 
         // If theres a missing texture and the visible heights are
         // different - never consider this edge for a plane shadow.
@@ -1166,7 +1163,7 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
     }
 
     // Is the back sector closed?
-    if(bInfo->planeinfo[PLN_FLOOR]->visheight >= bInfo->planeinfo[PLN_CEILING]->visheight)
+    if(SECT_FLOOR(back) >= SECT_CEIL(back))
     {
         if((!isCeiling &&
                 R_IsSkySurface(&front->planes[PLN_CEILING]->surface) &&

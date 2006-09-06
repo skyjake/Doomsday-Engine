@@ -897,7 +897,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
  * two into a Rend_RenderSurface.
  */
 static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
-                planeinfo_t* plane, surface_t *surface, float height, byte alpha,
+                subplaneinfo_t* plane, surface_t *surface, float height, byte alpha,
                 boolean shadow, boolean shiny,
                 boolean glow)
 {
@@ -1538,7 +1538,7 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
     }
 }
 
-void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
+void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector,
                       sectorinfo_t *sin, boolean checkSelfRef)
 {
     rendpoly_t poly;
@@ -1546,6 +1546,7 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
     int     surfaceFlags;
     float   height;
     surface_t *surface;
+    planeinfo_t *pinfo = subsector->sector->planes[plane->type]->info;
 
     // Sky planes of self-referrencing hack sectors are never rendered.
     if(checkSelfRef && sin->selfRefHack &&
@@ -1553,20 +1554,20 @@ void Rend_RenderPlane(planeinfo_t *plane, subsector_t *subsector,
         return;
 
     // Determine the height of the plane.
-    if(sin->planeinfo[plane->type]->linked)
+    if(pinfo->linked)
     {
         poly.sector = link =
-            R_GetLinkedSector(sin->planeinfo[plane->type]->linked, plane->type);
+            R_GetLinkedSector(pinfo->linked, plane->type);
 
         // This sector has an invisible plane.
-        height = SECT_INFO(link)->planeinfo[plane->type]->visheight;
+        height = SECT_PLANE_HEIGHT(link, plane->type);
 
         surface = &link->planes[plane->type]->surface;
     }
     else
     {
         poly.sector = sector;
-        height = sin->planeinfo[plane->type]->visheight;
+        height = pinfo->visheight;
         // Add the skyfix
         height += sector->skyfix[plane->type].offset;
 
@@ -1623,8 +1624,8 @@ void Rend_RenderSubsector(int ssecidx)
     sector_t *sect = ssec->sector;
     sectorinfo_t *sin = ssec->sector->info;
     int     flags = 0;
-    float   sceil = sin->planeinfo[PLN_CEILING]->visheight;
-    float  sfloor = sin->planeinfo[PLN_FLOOR]->visheight;
+    float   sceil = SECT_CEIL(sect);
+    float  sfloor = SECT_FLOOR(sect);
     lumobj_t *lumi;             // Lum Iterator, or 'snow' in Finnish. :-)
     boolean checkSelfRef[2] = {false, false};
 

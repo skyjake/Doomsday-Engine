@@ -86,15 +86,13 @@ boolean R_IsValidLink(sector_t *startsec, sector_t *destlink, int plane)
 {
     sector_t *sec = destlink;
     sector_t *link;
-    sectorinfo_t *sin;
 
     for(;;)
     {
-        sin = SECT_INFO(sec);
         // Advance to the linked sector.
-        if(!sin->planeinfo[plane]->linked)
+        if(!sec->planes[plane]->info->linked)
             break;
-        link = sin->planeinfo[plane]->linked;
+        link = sec->planes[plane]->info->linked;
 
         // Is there an illegal linkage?
         if(sec == link || startsec == link)
@@ -199,7 +197,7 @@ void R_SetSectorLinks(sector_t *sec)
     if(hackfloor)
     {
         if(floorlink_candidate == SECT_INFO(sec)->containsector)
-            sec->info->planeinfo[PLN_FLOOR]->linked = floorlink_candidate;
+            sec->planes[PLN_FLOOR]->info->linked = floorlink_candidate;
 
         /*      if(floorlink_candidate)
            Con_Printf("LF:%i->%i\n",
@@ -208,7 +206,7 @@ void R_SetSectorLinks(sector_t *sec)
     if(hackceil)
     {
         if(ceillink_candidate == SECT_INFO(sec)->containsector)
-            sec->info->planeinfo[PLN_CEILING]->linked = ceillink_candidate;
+            sec->planes[PLN_CEILING]->info->linked = ceillink_candidate;
 
         /*      if(ceillink_candidate)
            Con_Printf("LC:%i->%i\n",
@@ -964,11 +962,11 @@ void R_InitSectorInfo(void)
         sec = SECTOR_PTR(i);
         sec->info = secinfo;
 
-        sec->info->planeinfo =
-            Z_Malloc(sizeof(secplaneinfo_t*) * sec->planecount, PU_LEVEL, 0);
-
         for(k = 0; k < sec->planecount; ++k)
-            sec->info->planeinfo[k] = Z_Calloc(sizeof(secplaneinfo_t), PU_LEVEL, 0);
+        {
+            sec->planes[k]->info = Z_Calloc(sizeof(planeinfo_t), PU_LEVEL, 0);
+            sec->planes[k]->surface.info = Z_Calloc(sizeof(surfaceinfo_t), PU_LEVEL, 0);
+        }
 
         P_SectorBoundingBox(sec, sec->info->bounds);
 
@@ -1025,8 +1023,8 @@ void R_InitSectorInfo(void)
             // Link all planes permanently.
             sec->info->permanentlink = true;
             // Only floor and ceiling can be linked, not all planes inbetween.
-            sec->info->planeinfo[PLN_FLOOR]->linked = sec->info->containsector;
-            sec->info->planeinfo[PLN_CEILING]->linked = sec->info->containsector;
+            sec->planes[PLN_FLOOR]->info->linked = sec->info->containsector;
+            sec->planes[PLN_CEILING]->info->linked = sec->info->containsector;
 
             Con_Printf("Linking S%i planes permanently to S%i\n", i,
                        GET_SECTOR_IDX(sec->info->containsector));
@@ -1088,7 +1086,7 @@ void R_InitPlaneIllumination(subsector_t *sub, int planeid)
 {
     int i, j;
     subsectorinfo_t *ssecinfo = SUBSECT_INFO(sub);
-    planeinfo_t *plane = ssecinfo->planes[planeid];
+    subplaneinfo_t *plane = ssecinfo->planes[planeid];
 
     plane->illumination = Z_Calloc(ssecinfo->numvertices * sizeof(vertexillum_t),
                                    PU_LEVELSTATIC, NULL);
@@ -1181,9 +1179,9 @@ void R_InitSubsectorInfo(void)
         sub = SUBSECTOR_PTR(i);
         sub->info = info;
 
-        info->planes = Z_Malloc(sub->sector->planecount * sizeof(planeinfo_t*), PU_LEVEL, NULL);
+        info->planes = Z_Malloc(sub->sector->planecount * sizeof(subplaneinfo_t*), PU_LEVEL, NULL);
         for(k = 0; k < sub->sector->planecount; ++k)
-            info->planes[k] = Z_Calloc(sizeof(planeinfo_t), PU_LEVEL, NULL);
+            info->planes[k] = Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
 
         R_InitPlanePolys(sub);
     }
@@ -1747,6 +1745,7 @@ void R_InitLineInfo(void)
     lineinfo_t *info;
     side_t *side;
     sideinfo_t *sinfo;
+    surfaceinfo_t *sufinfo;
 
     // Allocate memory for the line info.
     info = Z_Calloc(sizeof(lineinfo_t) * numlines, PU_LEVELSTATIC, NULL);
@@ -1763,10 +1762,14 @@ void R_InitLineInfo(void)
 
     // Allocate memory for the side info.
     sinfo = Z_Calloc(sizeof(sideinfo_t) * numsides, PU_LEVELSTATIC, NULL);
-    for(i = 0; i < numsides; ++i, sinfo++)
+    sufinfo = Z_Calloc(sizeof(surfaceinfo_t) * numsides * 3, PU_LEVELSTATIC, NULL);
+    for(i = 0; i < numsides; ++i, sinfo++, sufinfo += 3)
     {
         side = SIDE_PTR(i);
         side->info = sinfo;
+        side->top.info = sufinfo;
+        side->middle.info = sufinfo + 1;
+        side->bottom.info = sufinfo + 2;
     }
 }
 
@@ -1996,9 +1999,9 @@ void R_SetupLevel(char *level_id, int flags)
         for(i = 0; i < numsides; ++i)
         {
             side = SIDE_PTR(i);
-            R_UpdateSurface(&side->top, &side->info->oldtop, false);
-            R_UpdateSurface(&side->middle, &side->info->oldmiddle, false);
-            R_UpdateSurface(&side->bottom, &side->info->oldbottom, false);
+            R_UpdateSurface(&side->top, false);
+            R_UpdateSurface(&side->middle, false);
+            R_UpdateSurface(&side->bottom, false);
         }
         return;
     }
@@ -2024,9 +2027,9 @@ void R_SetupLevel(char *level_id, int flags)
         for(i = 0; i < numsides; ++i)
         {
             side = SIDE_PTR(i);
-            R_UpdateSurface(&side->top, &side->info->oldtop, true);
-            R_UpdateSurface(&side->middle, &side->info->oldmiddle, true);
-            R_UpdateSurface(&side->bottom, &side->info->oldbottom, true);
+            R_UpdateSurface(&side->top, true);
+            R_UpdateSurface(&side->middle, true);
+            R_UpdateSurface(&side->bottom, true);
         }
 
         // Run any commands specified in Map Info.
@@ -2211,15 +2214,12 @@ sector_t *R_GetLinkedSector(sector_t *startsec, int plane)
 {
     sector_t *sec = startsec;
     sector_t *link;
-    sectorinfo_t *sin;
 
     for(;;)
     {
-        sin = SECT_INFO(sec);
-
-        if(!sin->planeinfo[plane]->linked)
+        if(!sec->planes[plane]->info->linked)
             return sec;
-        link = sin->planeinfo[plane]->linked;
+        link = sec->planes[plane]->info->linked;
 
 #ifdef _DEBUG
         if(sec == link || startsec == link)
@@ -2242,11 +2242,9 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
     for(i = 0; i < numsectors; ++i)
     {
         sector_t *sec = SECTOR_PTR(i);
-        sectorinfo_t *sInfo = SECT_INFO(sec);
 
         for(j = 0; j < sec->planecount; ++j)
-            R_UpdateSurface(&sec->planes[j]->surface, &sInfo->planeinfo[j]->oldsurface,
-                            forceUpdate);
+            R_UpdateSurface(&sec->planes[j]->surface, forceUpdate);
     }
 
     // Then all sections of all sides.
@@ -2254,15 +2252,16 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
     {
         side_t *side = SIDE_PTR(i);
 
-        R_UpdateSurface(&side->top, &side->info->oldtop, forceUpdate);
-        R_UpdateSurface(&side->middle, &side->info->oldmiddle, forceUpdate);
-        R_UpdateSurface(&side->bottom, &side->info->oldbottom, forceUpdate);
+        R_UpdateSurface(&side->top, forceUpdate);
+        R_UpdateSurface(&side->middle, forceUpdate);
+        R_UpdateSurface(&side->bottom, forceUpdate);
     }
 }
 
-void R_UpdateSurface(surface_t *current, surface_t *old, boolean forceUpdate)
+void R_UpdateSurface(surface_t *current, boolean forceUpdate)
 {
     int texFlags, oldTexFlags;
+    surfaceinfo_t *old = current->info;
 
     // Any change to the texture or glow properties?
     // TODO: Implement Decoration{ Glow{}} definitions.
@@ -2400,7 +2399,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         plane = sec->planes[i];
 
         // Surface changes?
-        R_UpdateSurface(&plane->surface, &sin->planeinfo[i]->oldsurface, forceUpdate);
+        R_UpdateSurface(&plane->surface, forceUpdate);
 
         // FIXME >
         // Now update the glow properties.
@@ -2422,7 +2421,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
         // Geometry change?
         if(forceUpdate ||
-           plane->height != sin->planeinfo[i]->oldheight[1])
+           plane->height != plane->info->oldheight[1])
         {
             ddplayer_t *player;
 
@@ -2451,8 +2450,8 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     if(!sin->permanentlink) // Assign new links
     {
         // Only floor and ceiling can be linked, not all inbetween
-        sin->planeinfo[PLN_FLOOR]->linked = NULL;
-        sin->planeinfo[PLN_CEILING]->linked = NULL;
+        sec->planes[PLN_FLOOR]->info->linked = NULL;
+        sec->planes[PLN_CEILING]->info->linked = NULL;
         R_SetSectorLinks(sec);
     }
 }

@@ -357,14 +357,14 @@ void R_NewSharpWorld(void)
         // For each plane
         for(j = 0; j < sector->planecount; ++j)
         {
-            sector->info->planeinfo[j]->oldheight[0] = sector->info->planeinfo[j]->oldheight[1];
-            sector->info->planeinfo[j]->oldheight[1] = sector->planes[j]->height;
+            sector->planes[j]->info->oldheight[0] = sector->planes[j]->info->oldheight[1];
+            sector->planes[j]->info->oldheight[1] = sector->planes[j]->height;
 
-            if(abs(sector->info->planeinfo[j]->oldheight[0] - sector->info->planeinfo[j]->oldheight[1]) >=
+            if(abs(sector->planes[j]->info->oldheight[0] - sector->planes[j]->info->oldheight[1]) >=
                MAX_SMOOTH_PLANE_MOVE)
             {
                 // Too fast: make an instantaneous jump.
-                sector->info->planeinfo[j]->oldheight[0] = sector->info->planeinfo[j]->oldheight[1];
+                sector->planes[j]->info->oldheight[0] = sector->planes[j]->info->oldheight[1];
             }
         }
     }
@@ -377,8 +377,7 @@ void R_NewSharpWorld(void)
 void R_SetupWorldFrame(void)
 {
     int i, j;
-    sector_t *sector;
-    sectorinfo_t *sin;
+    sector_t *sec;
 
     // Calculate the light range to be used for each player
     Rend_RetrieveLightSample();
@@ -390,16 +389,16 @@ void R_SetupWorldFrame(void)
         // $smoothplane: Reset the plane height trackers.
         for(i = 0; i < numsectors; i++)
         {
-            sector = SECTOR_PTR(i);
+            sec = SECTOR_PTR(i);
 
             // For each plane
-            for(j = 0; j < sector->planecount; ++j)
+            for(j = 0; j < sec->planecount; ++j)
             {
-                sector->info->planeinfo[j]->visoffset = 0;
+                sec->planes[j]->info->visoffset = 0;
 
-                sector->info->planeinfo[j]->oldheight[0] =
-                    sector->info->planeinfo[j]->oldheight[1] =
-                        sector->planes[j]->height;
+                sec->planes[j]->info->oldheight[0] =
+                    sec->planes[j]->info->oldheight[1] =
+                        sec->planes[j]->height;
             }
         }
     }
@@ -410,27 +409,26 @@ void R_SetupWorldFrame(void)
         // $smoothplane: Set the visible offsets.
         for(i = 0; i < numsectors; ++i)
         {
-            sector = SECTOR_PTR(i);
-            sin = SECT_INFO(sector);
+            sec = SECTOR_PTR(i);
 
             // For each plane.
-            for(j = 0; j < sector->planecount; ++j)
+            for(j = 0; j < sec->planecount; ++j)
             {
-                sin->planeinfo[j]->visoffset =
-                    FIX2FLT(sin->planeinfo[j]->oldheight[0] * (1 - frameTimePos) +
-                            sector->planes[j]->height * frameTimePos -
-                            sector->planes[j]->height);
+                sec->planes[j]->info->visoffset =
+                    FIX2FLT(sec->planes[j]->info->oldheight[0] * (1 - frameTimePos) +
+                            sec->planes[j]->height * frameTimePos -
+                            sec->planes[j]->height);
 
                 // Visible plane height.
-                if(!sin->planeinfo[j]->linked)
+                if(!sec->planes[j]->info->linked)
                 {
-                    sin->planeinfo[j]->visheight =
-                        FIX2FLT(sector->planes[j]->height) + sin->planeinfo[j]->visoffset;
+                    sec->planes[j]->info->visheight =
+                        FIX2FLT(sec->planes[j]->height) + sec->planes[j]->info->visoffset;
                 }
                 else
                 {
-                    sin->planeinfo[j]->visheight =
-                        FIX2FLT(R_GetLinkedSector(sin->planeinfo[j]->linked, j)->
+                    sec->planes[j]->info->visheight =
+                        FIX2FLT(R_GetLinkedSector(sec->planes[j]->info->linked, j)->
                                 planes[j]->height);
                 }
             }

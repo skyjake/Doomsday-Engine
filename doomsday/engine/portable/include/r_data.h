@@ -44,9 +44,9 @@
 #define SEG_INFO(x)     (x->info)
 #define SUBSECT_INFO(x) (x->info)
 #define SECT_INFO(x)    (x->info)
-#define SECT_FLOOR(x)   (x->info->planeinfo[PLN_FLOOR]->visheight)
-#define SECT_CEIL(x)    (x->info->planeinfo[PLN_CEILING]->visheight)
-#define SECT_PLANE_HEIGHT(x, n) (x->info->planeinfo[n]->visheight)
+#define SECT_FLOOR(x)   (x->planes[PLN_FLOOR]->info->visheight)
+#define SECT_CEIL(x)    (x->planes[PLN_CEILING]->info->visheight)
+#define SECT_PLANE_HEIGHT(x, n) (x->planes[n]->info->visheight)
 
 // Flags for decorations.
 #define DCRF_NO_IWAD    0x1        // Don't use if from IWAD.
@@ -196,13 +196,23 @@ typedef struct linkmobj_s {
     struct mobj_s  *next, *prev;
 } linkmobj_t;
 
-typedef struct {
+typedef struct surfaceinfo_s {
+    int             flags;         // SUF_ flags
+    short           texture;
+    boolean         isflat;        // true if current texture is a flat
+    float           normal[3];     // Surface normal.
+    fixed_t         texmove[2];    // Texture movement X and Y.
+    float           offx;          // Texture x offset.
+    float           offy;          // Texture y offset.
+    byte            rgba[4];       // Surface color tint
+} surfaceinfo_t;
+
+typedef struct planeinfo_s {
     fixed_t         oldheight[2];
     float           visheight;          // Visible plane height, float,
     float           visoffset;
     sector_t       *linked;             // Plane attached to another sector.
-    surface_t       oldsurface;         // Last known surface property values.
-} secplaneinfo_t;
+} planeinfo_t;
 
 typedef struct sectorinfo_s {
     sector_t       *containsector;      // Sector that contains this (if any).
@@ -219,7 +229,6 @@ typedef struct sectorinfo_s {
     int             blockcount;         // Number of gridblocks in the sector.
     int             changedblockcount;  // Number of blocks to mark changed.
     unsigned short *blocks;             // Light grid block indices.
-    secplaneinfo_t  **planeinfo;        // [sector->planecount] size
 } sectorinfo_t;
 
 typedef struct vilight_s {
@@ -242,14 +251,6 @@ typedef struct vertexillum_s {
 typedef struct biasaffection_s {
     short           source;       // Index of light source.
 } biasaffection_t;
-
-typedef struct planeinfo_s {
-    int             type;           // Plane type (ie PLN_FLOOR or PLN_CEILING)
-    vertexillum_t  *illumination;
-    biastracker_t   tracker;
-    uint            updated;
-    biasaffection_t affected[MAX_BIAS_AFFECTED];
-} planeinfo_t;
 
 // Shadowpoly flags.
 #define SHPF_FRONTSIDE  0x1
@@ -276,8 +277,16 @@ typedef struct seginfo_s {
     biasaffection_t affected[MAX_BIAS_AFFECTED];
 } seginfo_t;
 
+typedef struct subplaneinfo_s {
+    int             type;           // Plane type (ie PLN_FLOOR or PLN_CEILING)
+    vertexillum_t  *illumination;
+    biastracker_t   tracker;
+    uint            updated;
+    biasaffection_t affected[MAX_BIAS_AFFECTED];
+} subplaneinfo_t;
+
 typedef struct subsectorinfo_s {
-    planeinfo_t   **planes;
+    subplaneinfo_t **planes;
     ushort          numvertices;
     fvertex_t      *vertices;
     int             validcount;
@@ -292,10 +301,6 @@ typedef struct sideinfo_s {
     struct sector_s *proxsector[2];   // Sectors behind the neighbors.
     struct line_s  *backneighbor[2];  // Neighbour in the backsector (if any).
     struct line_s  *alignneighbor[2]; // Aligned left and right neighbours.
-
-    surface_t       oldtop;         // Last known surface property values.
-    surface_t       oldmiddle;
-    surface_t       oldbottom;
 } sideinfo_t;
 
 typedef struct lineinfo_s {
@@ -421,8 +426,7 @@ void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
 void            R_UpdateSector(sector_t* sec, boolean forceUpdate);
-void            R_UpdateSurface(surface_t *current, surface_t *old,
-                                boolean forceUpdate);
+void            R_UpdateSurface(surface_t *current, boolean forceUpdate);
 void            R_UpdateAllSurfaces(boolean forceUpdate);
 void            R_PrecacheLevel(void);
 void            R_InitAnimGroup(ded_group_t * def);

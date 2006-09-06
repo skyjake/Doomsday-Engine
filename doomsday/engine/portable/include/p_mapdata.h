@@ -115,6 +115,7 @@ struct subsectorinfo_s;
 struct sectorinfo_s;
 struct seginfo_s;
 struct planeinfo_s;
+struct surfaceinfo_s;
 
 #include "p_maptypes.h"
 

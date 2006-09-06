@@ -442,7 +442,7 @@ void SB_PlaneHasMoved(subsector_t *subsector, int plane)
 {
     int i;
     subsectorinfo_t *subInfo = SUBSECT_INFO(subsector);
-    planeinfo_t *info = subInfo->planes[plane];
+    subplaneinfo_t *info = subInfo->planes[plane];
 
     // Mark the affected lights changed.
     for(i = 0; i < MAX_BIAS_AFFECTED && info->affected[i].source >= 0; ++i)
@@ -674,7 +674,7 @@ void SB_MarkPlaneChanges(subsectorinfo_t *ssecinfo, int plane,
                          biastracker_t *allChanges)
 {
     int i;
-    planeinfo_t *pinfo = ssecinfo->planes[plane];
+    subplaneinfo_t *pinfo = ssecinfo->planes[plane];
 
     SB_TrackerApply(&pinfo->tracker, allChanges);
 

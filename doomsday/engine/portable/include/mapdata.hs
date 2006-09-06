@@ -35,6 +35,7 @@ struct subsector
 end
 
 struct surface
+    -       surfaceinfo_s *info
     INT     int         flags   // SUF_ flags
     SHORT   short       texture
     -       boolean     isflat  // true if current texture is a flat
@@ -46,6 +47,7 @@ struct surface
 end
 
 struct plane
+    -       planeinfo_s* info
     FIXED   fixed_t     height  // Current height.
     -       surface_t   surface
     FLOAT   float       glow    // Glow amount.

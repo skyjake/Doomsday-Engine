@@ -371,9 +371,9 @@ void P_PlaneChanged(sector_t *sector, int plane)
         back = SIDE_PTR(sector->Lines[i]->sidenum[1]);
 
         if(!front || !front->sector ||
-           SECT_INFO(front->sector)->planeinfo[plane]->linked ||
+           front->sector->planes[plane]->info->linked ||
            !back || !back->sector ||
-           SECT_INFO(back->sector)->planeinfo[plane]->linked)
+           back->sector->planes[plane]->info->linked)
             continue;
 
         // Do as in the original Doom if the texture has not been defined -

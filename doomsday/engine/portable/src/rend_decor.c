@@ -481,17 +481,17 @@ boolean Rend_LineDecorationBounds(line_t *line)
 /**
  * Return true if the sector is within the visible decoration 'box'.
  */
-boolean Rend_SectorDecorationBounds(sector_t *sector, sectorinfo_t *sin)
+boolean Rend_SectorDecorationBounds(sector_t *sector)
 {
     fixed_t bounds[6];
 
-    bounds[BLEFT] = FRACUNIT * sin->bounds[BLEFT];
-    bounds[BRIGHT] = FRACUNIT * sin->bounds[BRIGHT];
+    bounds[BLEFT] = FRACUNIT * sector->info->bounds[BLEFT];
+    bounds[BRIGHT] = FRACUNIT * sector->info->bounds[BRIGHT];
     // Sectorinfo has top and bottom the other way around.
-    bounds[BBOTTOM] = FRACUNIT * sin->bounds[BTOP];
-    bounds[BTOP] = FRACUNIT * sin->bounds[BBOTTOM];
-    bounds[BFLOOR] = FRACUNIT * sin->planeinfo[PLN_FLOOR]->visheight;
-    bounds[BCEILING] = FRACUNIT * sin->planeinfo[PLN_CEILING]->visheight;
+    bounds[BBOTTOM] = FRACUNIT * sector->info->bounds[BTOP];
+    bounds[BTOP] = FRACUNIT * sector->info->bounds[BBOTTOM];
+    bounds[BFLOOR] = FRACUNIT * SECT_FLOOR(sector);
+    bounds[BCEILING] = FRACUNIT * SECT_CEIL(sector);
 
     return Rend_CheckDecorationBounds(bounds, decorPlaneMaxDist);
 }
@@ -721,7 +721,7 @@ void Rend_DecorateSector(int index)
         return;
 
     // Is this sector close enough for the decorations to be visible?
-    if(!Rend_SectorDecorationBounds(sector, sector->info))
+    if(!Rend_SectorDecorationBounds(sector))
         return;
 
     for(i = 0; i < sector->planecount; ++i)

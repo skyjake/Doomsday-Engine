@@ -43,6 +43,7 @@ typedef struct subsector_s {
 
 typedef struct surface_s {
     runtime_mapdata_header_t header;
+    struct surfaceinfo_s *info;
     int                 flags;         // SUF_ flags
     short               texture;
     boolean             isflat;        // true if current texture is a flat
@@ -55,6 +56,7 @@ typedef struct surface_s {
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
+    struct planeinfo_s* info;
     fixed_t             height;        // Current height.
     surface_t           surface;
     float               glow;          // Glow amount.
