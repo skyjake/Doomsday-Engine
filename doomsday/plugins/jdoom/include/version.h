@@ -1,5 +1,6 @@
 /**\file
  * Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ * Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
