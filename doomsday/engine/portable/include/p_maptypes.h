@@ -7,12 +7,14 @@
 
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
+    struct vertexinfo_s* info;
     fixed_t             x;
     fixed_t             y;
 } vertex_t;
 
 typedef struct seg_s {
     runtime_mapdata_header_t header;
+    struct seginfo_s*   info;
     struct vertex_s*    v1;            // Start of the segment.
     struct vertex_s*    v2;            // End of the segment.
     float               length;        // Accurate length of the segment (v1 -> v2).
@@ -27,6 +29,7 @@ typedef struct seg_s {
 
 typedef struct subsector_s {
     runtime_mapdata_header_t header;
+    struct subsectorinfo_s* info;
     struct sector_s*    sector;
     int                 linecount;
     int                 firstline;
@@ -95,6 +98,7 @@ typedef struct plane_s {
 
 typedef struct sector_s {
     runtime_mapdata_header_t header;
+    struct sectorinfo_s* info;
     short               lightlevel;
     byte                rgb[3];
     int                 validcount;    // if == validcount, already checked.
@@ -113,6 +117,7 @@ typedef struct sector_s {
 
 typedef struct side_s {
     runtime_mapdata_header_t header;
+    struct sideinfo_s*  info;
     surface_t           top;
     surface_t           middle;
     surface_t           bottom;
@@ -123,6 +128,7 @@ typedef struct side_s {
 
 typedef struct line_s {
     runtime_mapdata_header_t header;
+    struct lineinfo_s*  info;
     struct vertex_s*    v1;
     struct vertex_s*    v2;
     short               flags;

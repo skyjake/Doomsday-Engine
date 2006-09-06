@@ -108,6 +108,14 @@ typedef struct skyfix_s {
     int offset;
 } skyfix_t;
 
+struct vertexinfo_s;
+struct sideinfo_s;
+struct lineinfo_s;
+struct subsectorinfo_s;
+struct sectorinfo_s;
+struct seginfo_s;
+struct planeinfo_s;
+
 #include "p_maptypes.h"
 
 /*

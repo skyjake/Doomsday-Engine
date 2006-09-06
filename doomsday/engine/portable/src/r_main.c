@@ -357,14 +357,14 @@ void R_NewSharpWorld(void)
         // For each plane
         for(j = 0; j < sector->planecount; ++j)
         {
-            secinfo[i].planeinfo[j]->oldheight[0] = secinfo[i].planeinfo[j]->oldheight[1];
-            secinfo[i].planeinfo[j]->oldheight[1] = sector->planes[j]->height;
+            sector->info->planeinfo[j]->oldheight[0] = sector->info->planeinfo[j]->oldheight[1];
+            sector->info->planeinfo[j]->oldheight[1] = sector->planes[j]->height;
 
-            if(abs(secinfo[i].planeinfo[j]->oldheight[0] - secinfo[i].planeinfo[j]->oldheight[1]) >=
+            if(abs(sector->info->planeinfo[j]->oldheight[0] - sector->info->planeinfo[j]->oldheight[1]) >=
                MAX_SMOOTH_PLANE_MOVE)
             {
                 // Too fast: make an instantaneous jump.
-                secinfo[i].planeinfo[j]->oldheight[0] = secinfo[i].planeinfo[j]->oldheight[1];
+                sector->info->planeinfo[j]->oldheight[0] = sector->info->planeinfo[j]->oldheight[1];
             }
         }
     }
@@ -395,10 +395,10 @@ void R_SetupWorldFrame(void)
             // For each plane
             for(j = 0; j < sector->planecount; ++j)
             {
-                secinfo[i].planeinfo[j]->visoffset = 0;
+                sector->info->planeinfo[j]->visoffset = 0;
 
-                secinfo[i].planeinfo[j]->oldheight[0] =
-                    secinfo[i].planeinfo[j]->oldheight[1] =
+                sector->info->planeinfo[j]->oldheight[0] =
+                    sector->info->planeinfo[j]->oldheight[1] =
                         sector->planes[j]->height;
             }
         }

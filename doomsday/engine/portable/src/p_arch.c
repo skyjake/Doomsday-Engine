@@ -1773,6 +1773,8 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
                     memset(sec->planes[j]->glowrgb, 0xff, 3);
                     sec->planes[j]->glow = 0;
                     sec->planes[j]->surface.flags = 0;
+                    sec->planes[j]->surface.offx =
+                        sec->planes[j]->surface.offy = 0;
 
                     // The back pointer (temporary)
                     sec->planes[j]->sector = &map->sectors[k];

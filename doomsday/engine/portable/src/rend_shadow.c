@@ -188,9 +188,9 @@ void Rend_RenderShadows(void)
     // Check all mobjs in all visible sectors.
     for(i = 0; i < numsectors; i++)
     {
-        if(!(secinfo[i].flags & SIF_VISIBLE))
-            continue;
         sec = SECTOR_PTR(i);
+        if(!(sec->info->flags & SIF_VISIBLE))
+            continue;
 
         // Don't render mobj shadows on sky floors.
         if(R_IsSkySurface(&sec->planes[PLN_FLOOR]->surface))

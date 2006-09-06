@@ -238,7 +238,7 @@ void P_SpawnPlaneParticleGen(ded_ptcgen_t * def, sector_t *sec,
     if(def->flags & PGF_PARTS_PER_128)
     {
         // This is rather a rough estimate of sector area.
-        box = secinfo[GET_SECTOR_IDX(sec)].bounds;
+        box = sec->info->bounds;
         width = (box[BRIGHT] - box[BLEFT]) / 128;
         height = (box[BBOTTOM] - box[BTOP]) / 128;
         gen->area = width * height;
@@ -485,7 +485,7 @@ void P_NewParticle(ptcgen_t * gen)
         // FIXME: Nothing prevents spawning on the wrong side (or inside)
         // of one-sided walls (large diagonal subsectors!).
 
-        box = secinfo[GET_SECTOR_IDX(gen->sector)].bounds;
+        box = gen->sector->info->bounds;
         for(i = 0; i < 5; i++)  // Try a couple of times (max).
         {
             subsec =

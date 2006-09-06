@@ -375,24 +375,29 @@ int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line, int side,
                          boolean leftNeighbor)
 {
     lineinfo_t *info = LINE_INFO(line);
-    sideinfo_t *sideInfo;
+    sideinfo_t *sinfo;
     int     i;
 
     if(line->sidenum[side] == NO_INDEX)
         return 0;
 
-    sideInfo = sideinfo + line->sidenum[side];
+    sinfo = SIDE_PTR(line->sidenum[side])->info;
 
-    *neighbor = sideInfo->alignneighbor[leftNeighbor ? 0 : 1];
+    *neighbor = sinfo->alignneighbor[leftNeighbor ? 0 : 1];
     if(!*neighbor)
         return 0;
 
     // We need to decide which side of the neighbor is chosen.
     for(i = 0; i < 2; i++)
     {
-        // Do the selection based on the backlink.
-        if((sideinfo + (*neighbor)->sidenum[i])->alignneighbor[leftNeighbor ? 1 : 0] == line)
-            return i;
+        if((*neighbor)->sidenum[i] != NO_INDEX)
+        {
+            sinfo = SIDE_PTR((*neighbor)->sidenum[i])->info;
+
+            // Do the selection based on the backlink.
+            if(sinfo && sinfo->alignneighbor[leftNeighbor ? 1 : 0] == line)
+                return i;
+        }
     }
 
     // This is odd... There is no link back to the first line.
@@ -483,7 +488,7 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
             {
                 edges[i].line = iter;
                 if(iter->sidenum[scanSide] != NO_INDEX)
-                    edges[i].sideInfo = sideinfo + iter->sidenum[scanSide];
+                    edges[i].sideInfo = SIDE_PTR(iter->sidenum[scanSide])->info;
                 else
                     edges[i].sideInfo = NULL;
                 edges[i].sector = scanSector;
@@ -618,7 +623,7 @@ void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
     int     i;
 
     if(line->sidenum[side] != NO_INDEX)
-        sInfo = sideinfo + line->sidenum[side];
+        sInfo = SIDE_PTR(line->sidenum[side])->info;
 
     memset(sideCorners, 0, sizeof(sideCorners));
 
@@ -669,7 +674,6 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     rendpoly_t quad, *q = &quad;
     int     i, texture = 0, sideNum;
     lineinfo_t *info;
-    sideinfo_t *sInfo;
     shadowcorner_t topCn[2], botCn[2], sideCn[2];
     edgespan_t spans[2];        // bottom, top
     edgespan_t *floorSpan = &spans[0], *ceilSpan = &spans[1];
@@ -682,17 +686,11 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     backSector = seg->backsector;
     segOffset = FIX2FLT(seg->offset);
 
-    // Choose the info of the correct side.
+    // Choose the correct side.
     if(seg->linedef->frontsector == frontSector)
-    {
         sideNum = 0;
-        sInfo = sideinfo + seg->linedef->sidenum[0];
-    }
     else
-    {
         sideNum = 1;
-        sInfo = sideinfo + seg->linedef->sidenum[1];
-    }
 
     // Determine the shadow properties on the edges of the poly.
     for(i = 0; i < 2; i++)

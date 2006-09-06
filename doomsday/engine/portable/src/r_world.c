@@ -63,12 +63,6 @@ char    currentLevelId[64];
 boolean firstFrameAfterLoad;
 boolean levelSetup;
 
-sectorinfo_t    *secinfo;
-seginfo_t       *seginfo;
-subsectorinfo_t *subsecinfo;
-lineinfo_t      *lineinfo;
-sideinfo_t      *sideinfo;
-vertexowner_t   *vertexowners;
 nodeindex_t     *linelinks;         // indices to roots
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -123,7 +117,7 @@ boolean R_IsValidLink(sector_t *startsec, sector_t *destlink, int plane)
  */
 void R_SetSectorLinks(sector_t *sec)
 {
-    int     i = GET_SECTOR_IDX(sec), k;
+    int     k;
     sector_t *back;
     boolean hackfloor, hackceil;
     side_t *sid, *frontsid, *backsid;
@@ -131,7 +125,7 @@ void R_SetSectorLinks(sector_t *sec)
     //return; //---DEBUG---
 
     // Must have a valid sector!
-    if(!sec || !sec->linecount || secinfo[i].permanentlink)
+    if(!sec || !sec->linecount || sec->info->permanentlink)
         return;                 // Can't touch permanent links.
 
     hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
@@ -147,8 +141,8 @@ void R_SetSectorLinks(sector_t *sec)
         // Check the vertex line owners for both verts.
         // We are only interested in lines that do NOT share either vertex
         // with a one-sided line (ie, its not "anchored").
-        if(vertexowners[GET_VERTEX_IDX(sec->Lines[k]->v1)].anchored ||
-           vertexowners[GET_VERTEX_IDX(sec->Lines[k]->v2)].anchored)
+        if(sec->Lines[k]->v1->info->anchored ||
+           sec->Lines[k]->v2->info->anchored)
             return;
 
         // Check which way the line is facing.
@@ -205,7 +199,7 @@ void R_SetSectorLinks(sector_t *sec)
     if(hackfloor)
     {
         if(floorlink_candidate == SECT_INFO(sec)->containsector)
-            secinfo[i].planeinfo[PLN_FLOOR]->linked = floorlink_candidate;
+            sec->info->planeinfo[PLN_FLOOR]->linked = floorlink_candidate;
 
         /*      if(floorlink_candidate)
            Con_Printf("LF:%i->%i\n",
@@ -214,7 +208,7 @@ void R_SetSectorLinks(sector_t *sec)
     if(hackceil)
     {
         if(ceillink_candidate == SECT_INFO(sec)->containsector)
-            secinfo[i].planeinfo[PLN_CEILING]->linked = ceillink_candidate;
+            sec->info->planeinfo[PLN_CEILING]->linked = ceillink_candidate;
 
         /*      if(ceillink_candidate)
            Con_Printf("LC:%i->%i\n",
@@ -718,40 +712,40 @@ void R_SubsectorPlanes(void)
     }
 }
 
-void R_SetVertexOwner(int idx, sector_t *secptr)
+void R_SetVertexOwner(vertex_t *vtx, sector_t *secptr)
 {
     int     i;
-    vertexowner_t *own;
     int    *list;
     int     sector;
 
     if(!secptr)
         return;
     sector = GET_SECTOR_IDX(secptr);
-    own = vertexowners + idx;
+
     // Has this sector been already registered?
-    for(i = 0; i < own->num; i++)
-        if(own->list[i] == sector)
+    for(i = 0; i < vtx->info->num; i++)
+        if(vtx->info->list[i] == sector)
             return;             // Yes, we can exit.
+
     // Add a new owner.
-    own->num++;
+    vtx->info->num++;
     // Allocate a new list.
-    list = Z_Malloc(sizeof(int) * own->num, PU_LEVELSTATIC, 0);
+    list = Z_Malloc(sizeof(int) * vtx->info->num, PU_LEVEL, 0);
+
     // If there are previous references, copy them.
-    if(own->num > 1)
+    if(vtx->info->num > 1)
     {
-        memcpy(list, own->list, sizeof(int) * (own->num - 1));
+        memcpy(list, vtx->info->list, sizeof(int) * (vtx->info->num - 1));
         // Free the old list.
-        Z_Free(own->list);
+        Z_Free(vtx->info->list);
     }
-    own->list = list;
-    own->list[own->num - 1] = sector;
+    vtx->info->list = list;
+    vtx->info->list[vtx->info->num - 1] = sector;
 }
 
-void R_SetVertexLineOwner(int idx, line_t *lineptr)
+void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr)
 {
     int     i;
-    vertexowner_t *own;
     int    *list;
     int     line;
 
@@ -759,30 +753,29 @@ void R_SetVertexLineOwner(int idx, line_t *lineptr)
         return;
 
     line = GET_LINE_IDX(lineptr);
-    own = vertexowners + idx;
 
     // If this is a one-sided line then this is an "anchored" vertex.
     if(!(lineptr->frontsector && lineptr->backsector))
-        own->anchored = true;
+        vtx->info->anchored = true;
 
     // Has this line been already registered?
-    for(i = 0; i < own->numlines; i++)
-        if(own->linelist[i] == line)
+    for(i = 0; i < vtx->info->numlines; ++i)
+        if(vtx->info->linelist[i] == line)
             return;             // Yes, we can exit.
 
     // Add a new owner.
-    own->numlines++;
+    vtx->info->numlines++;
     // Allocate a new list.
-    list = Z_Malloc(sizeof(int) * own->numlines, PU_LEVELSTATIC, 0);
+    list = Z_Malloc(sizeof(int) * vtx->info->numlines, PU_LEVEL, 0);
     // If there are previous references, copy them.
-    if(own->numlines > 1)
+    if(vtx->info->numlines > 1)
     {
-        memcpy(list, own->linelist, sizeof(int) * (own->numlines - 1));
+        memcpy(list, vtx->info->linelist, sizeof(int) * (vtx->info->numlines - 1));
         // Free the old list.
-        Z_Free(own->linelist);
+        Z_Free(vtx->info->linelist);
     }
-    own->linelist = list;
-    own->linelist[own->numlines - 1] = line;
+    vtx->info->linelist = list;
+    vtx->info->linelist[vtx->info->numlines - 1] = line;
 }
 
 static vertex_t *rootVtx;
@@ -836,14 +829,17 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
  */
 void R_InitVertexOwners(void)
 {
-    int     i, k, p, v[2];
+    int     i, k, p;
     sector_t      *sec;
-    vertexowner_t *own;
+    vertex_t *v[2];
+    vertexinfo_t *own;
 
     // Allocate enough memory.
-    vertexowners = Z_Malloc(sizeof(vertexowner_t) * numvertexes,
-                                   PU_LEVEL, 0);
-    memset(vertexowners, 0, sizeof(vertexowner_t) * numvertexes);
+    own = Z_Malloc(sizeof(vertexinfo_t) * numvertexes, PU_LEVELSTATIC, 0);
+    memset(own, 0, sizeof(vertexinfo_t) * numvertexes);
+
+    for(i = 0; i < numvertexes; ++i, own++)
+        VERTEX_PTR(i)->info = own;
 
     for(i = 0, sec = sectors; i < numsectors; ++i, sec++)
     {
@@ -851,8 +847,8 @@ void R_InitVertexOwners(void)
         for(k = 0; k < sec->linecount; ++k)
         {
             line_t* line = sec->Lines[k];
-            v[0] = GET_VERTEX_IDX(line->v1);
-            v[1] = GET_VERTEX_IDX(line->v2);
+            v[0] = line->v1;
+            v[1] = line->v2;
             for(p = 0; p < 2; p++)
             {
                 R_SetVertexOwner(v[p], line->frontsector);
@@ -865,11 +861,12 @@ void R_InitVertexOwners(void)
     // Sort lineowner lists for each vertex clockwise based on line angle,
     // so we can walk around the lines attached to each vertex.
     // qsort is fast enough? (need to profile large maps)
-    for(i = 0, own = vertexowners; i < numvertexes; ++i, own++)
+    for(i = 0; i < numvertexes; ++i)
     {
-        rootVtx = &vertexes[i];
-        if(own->numlines > 1)
-            qsort(own->linelist, own->numlines, sizeof(int), lineAngleSorter);
+        rootVtx = VERTEX_PTR(i);
+        if(rootVtx->info->numlines > 1)
+            qsort(rootVtx->info->linelist, rootVtx->info->numlines, sizeof(int),
+                  lineAngleSorter);
     }
 }
 
@@ -918,17 +915,17 @@ sector_t *R_GetContainingSectorOf(sector_t *sec)
     float   inner[4], outer[4];
     sector_t *other, *closest = NULL;
 
-    memcpy(inner, secinfo[GET_SECTOR_IDX(sec)].bounds, sizeof(inner));
+    memcpy(inner, sec->info->bounds, sizeof(inner));
 
     // Try all sectors that fit in the bounding box.
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         other = SECTOR_PTR(i);
         if(!other->linecount || SECT_INFO(other)->unclosed)
             continue;
         if(other == sec)
             continue;           // Don't try on self!
-        memcpy(outer, secinfo[i].bounds, sizeof(outer));
+        memcpy(outer, other->info->bounds, sizeof(outer));
         if(inner[BLEFT] >= outer[BLEFT] && inner[BRIGHT] <= outer[BRIGHT] &&
            inner[BTOP] >= outer[BTOP] && inner[BBOTTOM] <= outer[BBOTTOM])
         {
@@ -952,37 +949,38 @@ sector_t *R_GetContainingSectorOf(sector_t *sec)
 void R_InitSectorInfo(void)
 {
     int     i, k;
-    sectorinfo_t *info;
+    sectorinfo_t *secinfo;
     sector_t *sec, *other;
     line_t *lin;
     boolean dohack;
     boolean unclosed;
 
-    secinfo = Z_Calloc(sizeof(sectorinfo_t) * numsectors, PU_LEVEL, 0);
+    secinfo = Z_Calloc(sizeof(sectorinfo_t) * numsectors, PU_LEVELSTATIC, 0);
 
     // Calculate bounding boxes for all sectors.
     // Check for unclosed sectors.
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i, secinfo++)
     {
         sec = SECTOR_PTR(i);
+        sec->info = secinfo;
 
-        secinfo[i].planeinfo =
+        sec->info->planeinfo =
             Z_Malloc(sizeof(secplaneinfo_t*) * sec->planecount, PU_LEVEL, 0);
 
         for(k = 0; k < sec->planecount; ++k)
-            secinfo[i].planeinfo[k] = Z_Calloc(sizeof(secplaneinfo_t), PU_LEVEL, 0);
+            sec->info->planeinfo[k] = Z_Calloc(sizeof(secplaneinfo_t), PU_LEVEL, 0);
 
-        P_SectorBoundingBox(sec, secinfo[i].bounds);
+        P_SectorBoundingBox(sec, sec->info->bounds);
 
         if(i == 0)
         {
             // The first sector is used as is.
-            memcpy(mapBounds, secinfo[i].bounds, sizeof(mapBounds));
+            memcpy(mapBounds, sec->info->bounds, sizeof(mapBounds));
         }
         else
         {
             // Expand the bounding box.
-            M_JoinBoxes(mapBounds, secinfo[i].bounds);
+            M_JoinBoxes(mapBounds, sec->info->bounds);
         }
 
         // Detect unclosed sectors.
@@ -997,17 +995,17 @@ void R_InitSectorInfo(void)
         }
 
         if(unclosed)
-            secinfo[i].unclosed = true;
+            sec->info->unclosed = true;
     }
 
-    for(i = 0, info = secinfo; i < numsectors; i++, info++)
+    for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
         if(!sec->linecount)
             continue;
 
         // Is this sector completely contained by another?
-        info->containsector = R_GetContainingSectorOf(sec);
+        sec->info->containsector = R_GetContainingSectorOf(sec);
 
         dohack = true;
         for(k = 0; k < sec->linecount; k++)
@@ -1025,21 +1023,21 @@ void R_InitSectorInfo(void)
         if(dohack)
         {
             // Link all planes permanently.
-            info->permanentlink = true;
+            sec->info->permanentlink = true;
             // Only floor and ceiling can be linked, not all planes inbetween.
-            info->planeinfo[PLN_FLOOR]->linked = info->containsector;
-            info->planeinfo[PLN_CEILING]->linked = info->containsector;
+            sec->info->planeinfo[PLN_FLOOR]->linked = sec->info->containsector;
+            sec->info->planeinfo[PLN_CEILING]->linked = sec->info->containsector;
 
             Con_Printf("Linking S%i planes permanently to S%i\n", i,
-                       GET_SECTOR_IDX(info->containsector));
+                       GET_SECTOR_IDX(sec->info->containsector));
         }
 
         // Is this sector large enough to be a dominant light source?
-        if(info->lightsource == NULL &&
+        if(sec->info->lightsource == NULL &&
            (R_IsSkySurface(&sec->SP_ceilsurface) ||
             R_IsSkySurface(&sec->SP_floorsurface)) &&
-           info->bounds[BRIGHT] - info->bounds[BLEFT] > DOMINANT_SIZE &&
-           info->bounds[BBOTTOM] - info->bounds[BTOP] > DOMINANT_SIZE)
+           sec->info->bounds[BRIGHT] - sec->info->bounds[BLEFT] > DOMINANT_SIZE &&
+           sec->info->bounds[BBOTTOM] - sec->info->bounds[BTOP] > DOMINANT_SIZE)
         {
             // All sectors touching this one will be affected.
             for(k = 0; k < sec->linecount; k++)
@@ -1051,7 +1049,7 @@ void R_InitSectorInfo(void)
                     if(!other || other == sec)
                         continue;
                 }
-                SECT_INFO(other)->lightsource = sec;
+                other->info->lightsource = sec;
             }
         }
     }
@@ -1062,10 +1060,11 @@ void R_InitSegInfo(void)
     int i, k, j, n;
     seginfo_t *inf;
 
-    seginfo = Z_Calloc(numsegs * sizeof(seginfo_t), PU_LEVEL, NULL);
+    inf = Z_Calloc(numsegs * sizeof(seginfo_t), PU_LEVELSTATIC, NULL);
 
-    for(i = 0, inf = seginfo; i < numsegs; ++i, ++inf)
+    for(i = 0; i < numsegs; ++i, ++inf)
     {
+        SEG_PTR(i)->info = inf;
         for(k = 0; k < 4; ++k)
         {
 /*            inf->illum[0][k].front =
@@ -1171,15 +1170,16 @@ void R_InitSubsectorInfo(void)
 #ifdef _DEBUG
     Con_Printf("R_InitSubsectorInfo: %i bytes.\n", i);
 #endif
-    subsecinfo = Z_Calloc(i, PU_LEVEL, NULL);
+    info = Z_Calloc(i, PU_LEVELSTATIC, NULL);
 
 #ifdef _DEBUG
     Z_CheckHeap();
 #endif
 
-    for(i = 0, info = subsecinfo; i < numsubsectors; i++, info++)
+    for(i = 0; i < numsubsectors; ++i, info++)
     {
         sub = SUBSECTOR_PTR(i);
+        sub->info = info;
 
         info->planes = Z_Malloc(sub->sector->planecount * sizeof(planeinfo_t*), PU_LEVEL, NULL);
         for(k = 0; k < sub->sector->planecount; ++k)
@@ -1259,7 +1259,6 @@ void R_RationalizeSectors(void)
     int     i, j, k, l, m;
     int count;
     int     numroots;
-    sectorinfo_t *info;
     sector_t *sec;
     line_t *lin;
     line_t **collectedLines;
@@ -1270,7 +1269,7 @@ void R_RationalizeSectors(void)
     // Allocate some memory for the line "run" (line list).
     collectedLines = M_Malloc(maxNumLines * sizeof(line_t*));
 
-    for(i = 0, info = secinfo; i < numsectors; ++i, info++)
+    for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
         if(!sec->linecount)
@@ -1290,14 +1289,14 @@ void R_RationalizeSectors(void)
                lin->frontsector == lin->backsector &&
                lin->backsector == sec)
             {
-                vertexowner_t *ownerA, *ownerB;
+                vertexinfo_t *ownerA, *ownerB;
                 // The line properties indicate that this might be a
                 // self-referencing, hack sector.
 
                 // Make sure this line isn't isolated
                 // (ie both vertexes arn't endpoints).
-                ownerA = &vertexowners[GET_VERTEX_IDX(lin->v1)];
-                ownerB = &vertexowners[GET_VERTEX_IDX(lin->v2)];
+                ownerA = lin->v1->info;
+                ownerB = lin->v2->info;
                 if(!(ownerA->numlines == 1 && ownerB->numlines == 1))
                 {
                     // Also, this line could split a sector and both ends
@@ -1367,14 +1366,14 @@ void R_RationalizeSectors(void)
 
         if(selfRefHack)
         {
-            vertexowner_t *ownerA, *ownerB;
+            vertexinfo_t *ownerA, *ownerB;
             line_t *line;
             line_t *next;
-            vertexowner_t *owner;
+            vertexinfo_t *owner;
             boolean scanOwners, addToCollection, found;
 
             // Mark this sector as a self-referencing hack.
-            info->selfRefHack = true;
+            sec->info->selfRefHack = true;
 
             // Now look for lines connected to this root line (and any
             // subsequent lines that connect to those) that match the
@@ -1392,8 +1391,8 @@ void R_RationalizeSectors(void)
                 if(lin->validcount)
                     continue; // We've already found this hack group.
 
-                ownerA = &vertexowners[GET_VERTEX_IDX(lin->v1)];
-                ownerB = &vertexowners[GET_VERTEX_IDX(lin->v2)];
+                ownerA = lin->v1->info;
+                ownerB = lin->v2->info;
                 for(l = 0; l < 2; ++l)
                 {
                     // Clear the collectedLines list.
@@ -1428,7 +1427,7 @@ void R_RationalizeSectors(void)
                             {
                                 int n, o, p, q;
                                 line_t *lcand = NULL;
-                                vertexowner_t *vown = NULL;
+                                vertexinfo_t *vown = NULL;
 
                                 // Pick another candidate to continue line collection.
 
@@ -1445,9 +1444,9 @@ void R_RationalizeSectors(void)
                                     for(q= 0; q < 2 && !found; ++q)
                                     {
                                         if(q == 0)
-                                            vown = &vertexowners[GET_VERTEX_IDX(collectedLines[n]->v1)];
+                                            vown = collectedLines[n]->v1->info;
                                         else
-                                            vown = &vertexowners[GET_VERTEX_IDX(collectedLines[n]->v2)];
+                                            vown = collectedLines[n]->v2->info;
 
                                         if(vown && vown->numlines > 2)
                                         {
@@ -1528,10 +1527,10 @@ void R_RationalizeSectors(void)
                         if(scanOwners)
                         {
                             // Get the vertexowner info for the other vertex.
-                            if(owner - vertexowners == GET_VERTEX_IDX(line->v1))
-                                owner = &vertexowners[GET_VERTEX_IDX(line->v2)];
+                            if(owner == line->v1->info)
+                                owner = line->v2->info;
                             else
-                                owner = &vertexowners[GET_VERTEX_IDX(line->v1)];
+                                owner = line->v1->info;
 
                             j = -1; // Start from the begining with this vertex.
                         }
@@ -1743,23 +1742,32 @@ static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
  */
 void R_InitLineInfo(void)
 {
-    line_t *line;
     int     i;
+    line_t *line;
     lineinfo_t *info;
+    side_t *side;
+    sideinfo_t *sinfo;
 
     // Allocate memory for the line info.
-    lineinfo = Z_Calloc(sizeof(lineinfo_t) * numlines, PU_LEVEL, NULL);
+    info = Z_Calloc(sizeof(lineinfo_t) * numlines, PU_LEVELSTATIC, NULL);
 
     // Calculate the accurate length of each line.
-    for(i = 0, info = lineinfo; i < numlines; i++, info++)
+    for(i = 0; i < numlines; ++i, info++)
     {
         line = LINE_PTR(i);
+        line->info = info;
+
         info->length = P_AccurateDistance(line->dx, line->dy);
         info->angle = bamsAtan2(-(line->dx >> 13), line->dy >> 13);
     }
 
     // Allocate memory for the side info.
-    sideinfo = Z_Calloc(sizeof(sideinfo_t) * numsides, PU_LEVEL, NULL);
+    sinfo = Z_Calloc(sizeof(sideinfo_t) * numsides, PU_LEVELSTATIC, NULL);
+    for(i = 0; i < numsides; ++i, sinfo++)
+    {
+        side = SIDE_PTR(i);
+        side->info = sinfo;
+    }
 }
 
 /*
@@ -1772,7 +1780,7 @@ void R_InitLineNeighbors(void)
     int     i, k, j, m;
     lineinfo_t *info;
     sideinfo_t *side;
-    vertexowner_t *owner;
+    vertexinfo_t *owner;
     vertex_t *vertices[2];
 
     // Find neighbours. We'll do this sector by sector.
@@ -1785,9 +1793,8 @@ void R_InitLineNeighbors(void)
             info = LINE_INFO(line);
 
             // Which side is this?
-            side = sideinfo +
-                (line->frontsector ==
-                 sector ? line->sidenum[0] : line->sidenum[1]);
+            side = SIDE_PTR(line->frontsector == sector ? line->sidenum[0] :
+                            line->sidenum[1])->info;
 
             R_FindLineNeighbors(sector, line, side->neighbor, 0);
 
@@ -1824,13 +1831,13 @@ void R_InitLineNeighbors(void)
             // Look for aligned neighbours.  They are side-specific.
             for(j = 0; j < 2; j++)
             {
-                owner = vertexowners + GET_VERTEX_IDX(vertices[j]);
+                owner = vertices[j]->info;
                 for(m = 0; m < owner->num; m++)
                 {
                     //if(owner->list[m] == k) continue;
                     R_FindLineNeighbors(SECTOR_PTR(owner->list[m]), line,
                                         side->alignneighbor,
-                                        (side == (sideinfo + line->sidenum[0]) ? 1 : -1));
+                                        (side == SIDE_PTR(line->sidenum[0])->info ? 1 : -1));
                 }
             }
 
@@ -1862,14 +1869,14 @@ void R_InitLineNeighbors(void)
                     {
                         boolean ok, ok2;
                         ok = ok2 = false;
-                        owner = &vertexowners[GET_VERTEX_IDX(other->v1)];
+                        owner = other->v1->info;
                         for(m = 0; m < owner->num && !ok; ++m)
                             if(owner->list[m] == k) // k == sector id
                                 ok = true;
 
                         if(ok)
                         {
-                            owner = &vertexowners[GET_VERTEX_IDX(other->v2)];
+                            owner = other->v2->info;
                             for(m = 0; m < owner->num && !ok2; ++m)
                                 if(owner->list[m] == k) // k == sector id
                                     ok2 = true;
@@ -1969,7 +1976,6 @@ void R_SetupLevel(char *level_id, int flags)
     if(flags & DDSLF_AFTER_LOADING)
     {
         side_t *side;
-        sideinfo_t *sinfo;
 
         // Loading a game usually destroys all thinkers. Until a proper
         // savegame system handled by the engine is introduced we'll have
@@ -1990,17 +1996,15 @@ void R_SetupLevel(char *level_id, int flags)
         for(i = 0; i < numsides; ++i)
         {
             side = SIDE_PTR(i);
-            sinfo = SIDE_INFO(side);
-            R_UpdateSurface(&side->top, &sinfo->oldtop, false);
-            R_UpdateSurface(&side->middle, &sinfo->oldmiddle, false);
-            R_UpdateSurface(&side->bottom, &sinfo->oldbottom, false);
+            R_UpdateSurface(&side->top, &side->info->oldtop, false);
+            R_UpdateSurface(&side->middle, &side->info->oldmiddle, false);
+            R_UpdateSurface(&side->bottom, &side->info->oldbottom, false);
         }
         return;
     }
     if(flags & DDSLF_FINALIZE)
     {
         side_t *side;
-        sideinfo_t *sinfo;
 
         if(loadInStartupMode)
             Con_StartupDone();
@@ -2020,10 +2024,9 @@ void R_SetupLevel(char *level_id, int flags)
         for(i = 0; i < numsides; ++i)
         {
             side = SIDE_PTR(i);
-            sinfo = SIDE_INFO(side);
-            R_UpdateSurface(&side->top, &sinfo->oldtop, true);
-            R_UpdateSurface(&side->middle, &sinfo->oldmiddle, true);
-            R_UpdateSurface(&side->bottom, &sinfo->oldbottom, true);
+            R_UpdateSurface(&side->top, &side->info->oldtop, true);
+            R_UpdateSurface(&side->middle, &side->info->oldmiddle, true);
+            R_UpdateSurface(&side->bottom, &side->info->oldbottom, true);
         }
 
         // Run any commands specified in Map Info.
@@ -2194,12 +2197,13 @@ void R_SetupLevel(char *level_id, int flags)
 void R_ClearSectorFlags(void)
 {
     int     i;
-    sectorinfo_t *sinf;
+    sector_t *sec;
 
-    for(i = 0, sinf = secinfo; i < numsectors; i++, sinf++)
+    for(i = 0; i < numsectors; ++i)
     {
+        sec = SECTOR_PTR(i);
         // Clear all flags that can be cleared before each frame.
-        sinf->flags &= ~SIF_FRAME_CLEAR;
+        sec->info->flags &= ~SIF_FRAME_CLEAR;
     }
 }
 
@@ -2249,11 +2253,10 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
     for(i = 0; i < numsides; ++i)
     {
         side_t *side = SIDE_PTR(i);
-        sideinfo_t *sInfo = SIDE_INFO(side);
 
-        R_UpdateSurface(&side->top, &sInfo->oldtop, forceUpdate);
-        R_UpdateSurface(&side->middle, &sInfo->oldmiddle, forceUpdate);
-        R_UpdateSurface(&side->bottom, &sInfo->oldbottom, forceUpdate);
+        R_UpdateSurface(&side->top, &side->info->oldtop, forceUpdate);
+        R_UpdateSurface(&side->middle, &side->info->oldmiddle, forceUpdate);
+        R_UpdateSurface(&side->bottom, &side->info->oldbottom, forceUpdate);
     }
 }
 

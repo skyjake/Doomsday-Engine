@@ -2,11 +2,13 @@
 # Runtime map data defitions. Processed by the makedmt.py script.
 
 struct vertex
+    -       vertexinfo_s* info
     FIXED   fixed_t     x
     FIXED   fixed_t     y
 end
 
 struct seg
+    -       seginfo_s*  info
     PTR     vertex_s*   v1      // Start of the segment.
     PTR     vertex_s*   v2      // End of the segment.
     FLOAT   float       length  // Accurate length of the segment (v1 -> v2).
@@ -20,6 +22,7 @@ struct seg
 end
 
 struct subsector
+    -       subsectorinfo_s* info
     PTR     sector_s*   sector
     INT     int         linecount
     INT     int         firstline
@@ -93,6 +96,7 @@ internal
 end
 
 struct sector
+    -       sectorinfo_s* info
     SHORT   short       lightlevel
     BYTE    byte[3]     rgb
     INT     int         validcount  // if == validcount, already checked.
@@ -111,6 +115,7 @@ struct sector
 end
 
 struct side
+    -       sideinfo_s* info
     -       surface_t   top
     -       surface_t   middle
     -       surface_t   bottom
@@ -120,6 +125,7 @@ struct side
 end
 
 struct line
+    -       lineinfo_s* info
     PTR     vertex_s*   v1
     PTR     vertex_s*   v2
     SHORT   short       flags

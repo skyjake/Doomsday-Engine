@@ -39,14 +39,14 @@
 #define SECF_INVIS_FLOOR    0x1
 #define SECF_INVIS_CEILING  0x2
 
-#define LINE_INFO(x)    (lineinfo + GET_LINE_IDX(x))
-#define SIDE_INFO(x)    (sideinfo + GET_SIDE_IDX(x))
-#define SEG_INFO(x)     (seginfo + GET_SEG_IDX(x))
-#define SUBSECT_INFO(x) (subsecinfo + GET_SUBSECTOR_IDX(x))
-#define SECT_INFO(x)    (secinfo + GET_SECTOR_IDX(x))
-#define SECT_FLOOR(x)   (secinfo[GET_SECTOR_IDX(x)].planeinfo[PLN_FLOOR]->visheight)
-#define SECT_CEIL(x)    (secinfo[GET_SECTOR_IDX(x)].planeinfo[PLN_CEILING]->visheight)
-#define SECT_PLANE_HEIGHT(x, n) (secinfo[GET_SECTOR_IDX(x)].planeinfo[n]->visheight)
+#define LINE_INFO(x)    (x->info)
+#define SIDE_INFO(x)    (x->info)
+#define SEG_INFO(x)     (x->info)
+#define SUBSECT_INFO(x) (x->info)
+#define SECT_INFO(x)    (x->info)
+#define SECT_FLOOR(x)   (x->info->planeinfo[PLN_FLOOR]->visheight)
+#define SECT_CEIL(x)    (x->info->planeinfo[PLN_CEILING]->visheight)
+#define SECT_PLANE_HEIGHT(x, n) (x->info->planeinfo[n]->visheight)
 
 // Flags for decorations.
 #define DCRF_NO_IWAD    0x1        // Don't use if from IWAD.
@@ -204,7 +204,7 @@ typedef struct {
     surface_t       oldsurface;         // Last known surface property values.
 } secplaneinfo_t;
 
-typedef struct {
+typedef struct sectorinfo_s {
     sector_t       *containsector;      // Sector that contains this (if any).
     boolean         permanentlink;
     boolean         unclosed;           // An unclosed sector (some sort of fancy hack).
@@ -305,22 +305,19 @@ typedef struct lineinfo_s {
                                      // hack sector.
 } lineinfo_t;
 
-typedef struct polyblock_s {
-    polyobj_t      *polyobj;
-    struct polyblock_s *prev;
-    struct polyblock_s *next;
-} polyblock_t;
-
-typedef struct vertexowner_s {
+typedef struct vertexinfo_s {
     int             num;           // Number of sector owners.
     int            *list;          // Sector indices.
     int             numlines;      // Number of line owners.
     int            *linelist;      // Line indices.
     boolean         anchored;      // One or more of our line owners are one-sided.
-} vertexowner_t;
+} vertexinfo_t;
 
-// The sector divisions list is similar to vertexowners.
-typedef struct vertexowner_s sector_divisions_t;
+typedef struct polyblock_s {
+    polyobj_t      *polyobj;
+    struct polyblock_s *prev;
+    struct polyblock_s *next;
+} polyblock_t;
 
 typedef struct {
     byte            rgb[3];
@@ -394,12 +391,6 @@ typedef struct animgroup_s {
     animframe_t    *frames;
 } animgroup_t;
 
-extern vertexowner_t *vertexowners;
-extern sectorinfo_t *secinfo;
-extern seginfo_t *seginfo;
-extern subsectorinfo_t *subsecinfo;
-extern lineinfo_t *lineinfo;
-extern sideinfo_t *sideinfo;
 extern nodeindex_t *linelinks;
 extern long    *blockmaplump;      // offsets in blockmap are from here
 extern long    *blockmap;

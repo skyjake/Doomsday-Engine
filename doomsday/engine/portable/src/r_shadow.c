@@ -129,7 +129,7 @@ void R_ShadowDelta(pvec2_t delta, line_t *line, sector_t *frontSector)
 
 sideinfo_t *R_GetShadowLineSideInfo(shadowpoly_t *poly)
 {
-    return (sideinfo + poly->line->sidenum[poly->flags & SHPF_FRONTSIDE ? 0 : 1]);
+    return (SIDE_PTR(poly->line->sidenum[poly->flags & SHPF_FRONTSIDE ? 0 : 1])->info);
 }
 
 line_t *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left, boolean back)
@@ -509,11 +509,14 @@ int R_MakeShadowEdges(shadowpoly_t *storage)
         {
             line = sector->Lines[j];
             frontside = (line->frontsector == sector);
-            info = sideinfo + line->sidenum[frontside ? 0 : 1];
+            if(line->sidenum[frontside ? 0 : 1] != NO_INDEX)
+                info = SIDE_PTR(line->sidenum[frontside ? 0 : 1])->info;
+            else
+                info = NULL;
 
             // If the line hasn't got two neighbors, it won't get a
             // shadow.
-            if(!info->neighbor[0] || !info->neighbor[1])
+            if(!info || !info->neighbor[0] || !info->neighbor[1])
                 continue;
 
             // This side will get a shadow.  Increment counter (we'll

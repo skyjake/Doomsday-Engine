@@ -327,7 +327,7 @@ int PG_ListVisibleParticles(void)
             if(pt->stage < 0)
                 continue;
             // Is the particle's sector visible?
-            if(!(secinfo[GET_SECTOR_IDX(pt->sector)].flags & SIF_VISIBLE))
+            if(!(pt->sector->info->flags & SIF_VISIBLE))
                 continue;       // No; this particle can't be seen.
             order[m].gen = i;
             order[m].index = p;

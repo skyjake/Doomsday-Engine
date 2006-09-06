@@ -223,7 +223,7 @@ void S_CalcSectorReverbs(void)
 
         sec = SECTOR_PTR(c);
         //DD_SectorBoundingBox(sec, bbox);
-        memcpy(bbox, secinfo[c].bounds, sizeof(bbox));
+        memcpy(bbox, sec->info->bounds, sizeof(bbox));
         /*ST_Message( "sector %i: (%f,%f) - (%f,%f)\n", c,
            bbox[BLEFT], bbox[BTOP], bbox[BRIGHT], bbox[BBOTTOM]); */
 

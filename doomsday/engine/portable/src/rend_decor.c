@@ -342,7 +342,6 @@ void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
 void Rend_DecorateLineSection(line_t *line, side_t * side, surface_t *surface,
                               float top, float bottom, float texOffY)
 {
-    lineinfo_t *linfo = &lineinfo[GET_LINE_IDX(line)];
     ded_decor_t *def;
     ded_decorlight_t *lightDef;
     vertex_t *v1, *v2;
@@ -352,7 +351,7 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, surface_t *surface,
     int     i, skip[2];
 
     // Is this a valid section?
-    if(bottom > top || linfo->length == 0)
+    if(bottom > top || line->info->length == 0)
         return;
 
     // Should this be decorated at all?
@@ -372,8 +371,8 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, surface_t *surface,
 
     delta[VX] = FIX2FLT(v2->x - v1->x);
     delta[VY] = FIX2FLT(v2->y - v1->y);
-    surfaceNormal[VX] = delta[VY] / linfo->length;
-    surfaceNormal[VZ] = -delta[VX] / linfo->length;
+    surfaceNormal[VX] = delta[VY] / line->info->length;
+    surfaceNormal[VZ] = -delta[VX] / line->info->length;
     surfaceNormal[VY] = 0;
 
     // Height of the section.
@@ -415,7 +414,7 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, surface_t *surface,
                              surfTexW * lightDef->pattern_offset[VX],
                              patternW);
 
-        for(; s < linfo->length; s += patternW)
+        for(; s < line->info->length; s += patternW)
         {
             t = M_CycleIntoRange(lightDef->pos[VY] - surface->offy -
                                  surfTexH * lightDef->pattern_offset[VY] +
@@ -424,8 +423,8 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, surface_t *surface,
             for(; t < lh; t += patternH)
             {
                 // Let there be light.
-                pos[VX] = posBase[VX] + delta[VX] * s / linfo->length;
-                pos[VY] = posBase[VY] + delta[VY] * s / linfo->length;
+                pos[VX] = posBase[VX] + delta[VX] * s / line->info->length;
+                pos[VY] = posBase[VY] + delta[VY] * s / line->info->length;
                 pos[VZ] = top - t;
                 Rend_AddLightDecoration(pos, lightDef, brightMul, true,
                                         def->pregen_lightmap);
@@ -647,7 +646,7 @@ void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir, float offX,
                         float offY, ded_decor_t * def)
 {
     sector_t *sector = SECTOR_PTR(sectorIndex);
-    sectorinfo_t *sin = secinfo + sectorIndex;
+    sectorinfo_t *sin = sector->info;
     ded_decorlight_t *lightDef;
     float   pos[3], tileSize = 64, brightMul;
     int     i, skip[2];
@@ -722,7 +721,7 @@ void Rend_DecorateSector(int index)
         return;
 
     // Is this sector close enough for the decorations to be visible?
-    if(!Rend_SectorDecorationBounds(sector, &secinfo[index]))
+    if(!Rend_SectorDecorationBounds(sector, sector->info))
         return;
 
     for(i = 0; i < sector->planecount; ++i)

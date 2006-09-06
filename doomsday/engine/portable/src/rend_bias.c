@@ -426,12 +426,11 @@ static void SB_AddAffected(affection_t *aff, int k, float intensity)
 void SB_SegHasMoved(seg_t *seg)
 {
     int i;
-    seginfo_t *info = SEG_INFO(seg);
 
     // Mark the affected lights changed.
-    for(i = 0; i < MAX_BIAS_AFFECTED && info->affected[i].source >= 0; ++i)
+    for(i = 0; i < MAX_BIAS_AFFECTED && seg->info->affected[i].source >= 0; ++i)
     {
-        sources[info->affected[i].source].flags |= BLF_CHANGED;
+        sources[seg->info->affected[i].source].flags |= BLF_CHANGED;
     }
 }
 
@@ -456,9 +455,9 @@ void SB_PlaneHasMoved(subsector_t *subsector, int plane)
  * This could be enhanced so that only the lights on the right side of
  * the seg are taken into consideration.
  */
-void SB_UpdateSegAffected(int seg, rendpoly_t *poly)
+void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
 {
-    seginfo_t *info = &seginfo[seg];
+    seg_t * seg = SEG_PTR(segId);
     int i, k;
     vec2_t delta;
     source_t *src;
@@ -467,13 +466,13 @@ void SB_UpdateSegAffected(int seg, rendpoly_t *poly)
     affection_t aff;
 
     // If the data is already up to date, nothing needs to be done.
-    if(info->updated == lastChangeOnFrame || !updateAffected)
+    if(seg->info->updated == lastChangeOnFrame || !updateAffected)
         return;
 
-    info->updated = lastChangeOnFrame;
-    aff.affected = info->affected;
+    seg->info->updated = lastChangeOnFrame;
+    aff.affected = seg->info->affected;
     aff.numFound = 0;
-    memset(aff.affected, -1, sizeof(info->affected));
+    memset(aff.affected, -1, sizeof(seg->info->affected));
 
     for(k = 0, src = sources; k < numSources; ++k, ++src)
     {
@@ -492,7 +491,7 @@ void SB_UpdateSegAffected(int seg, rendpoly_t *poly)
                 distance = len;
         }
 
-        if(M_DotProduct(delta, SEG_PTR(seg)->sidedef->middle.normal) >= 0)
+        if(M_DotProduct(delta, seg->sidedef->middle.normal) >= 0)
             continue;
 
         if(distance < 1)
@@ -530,7 +529,7 @@ static float SB_Dot(source_t *src, float point[3], float normal[3])
 void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
 {
     subsector_t *subsector = SUBSECTOR_PTR(sub);
-    subsectorinfo_t *info = &subsecinfo[sub];
+    subsectorinfo_t *info = subsector->info;
     int i, k;
     vec2_t delta;
     float point[3];
@@ -697,6 +696,7 @@ void SB_BeginFrame(void)
     biastracker_t allChanges;
     int i, j, k;
     seginfo_t *sin;
+    subsector_t *sub;
     source_t *s;
 
     if(!useBias)
@@ -752,7 +752,7 @@ void SB_BeginFrame(void)
     // Apply to all segs.
     for(i = 0; i < numsegs; ++i)
     {
-        sin = &seginfo[i];
+        sin = SEG_PTR(i)->info;
 
         for(j = 0; j < 3; ++j)
             SB_TrackerApply(&sin->tracker[j], &allChanges);
@@ -771,8 +771,9 @@ void SB_BeginFrame(void)
     // Apply to all planes.
     for(i = 0; i < numsubsectors; ++i)
     {
-        for(j = 0; j < subsectors[i].sector->planecount; ++j)
-            SB_MarkPlaneChanges(&subsecinfo[i], j, &allChanges);
+        sub = SUBSECTOR_PTR(i);
+        for(j = 0; j < sub->sector->planecount; ++j)
+            SB_MarkPlaneChanges(sub->info, j, &allChanges);
     }
 }
 

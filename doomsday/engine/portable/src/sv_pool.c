@@ -139,6 +139,7 @@ static line_t **sideOwners;
 void Sv_InitPools(void)
 {
     int     i;
+    sector_t *sec;
 
     // Clients don't register anything.
     if(isClient)
@@ -165,7 +166,7 @@ void Sv_InitPools(void)
 
     // Since the level has changed, PU_LEVEL memory has been freed.
     // Reset all pools (set numbers are kept, though).
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         pools[i].owner = i;
         pools[i].resendDealer = 1;
@@ -181,26 +182,28 @@ void Sv_InitPools(void)
 
     // Find the owners of all sides.
     sideOwners = Z_Malloc(sizeof(line_t *) * numsides, PU_LEVEL, 0);
-    for(i = 0; i < numsides; i++)
+    for(i = 0; i < numsides; ++i)
     {
         sideOwners[i] = R_GetLineForSide(i);
     }
 
     // Origins of sectors.
     sectorOrigins = Z_Malloc(sizeof(origin_t) * numsectors, PU_LEVEL, 0);
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
+        sec = SECTOR_PTR(i);
+
         sectorOrigins[i].x =
-            FRACUNIT * (secinfo[i].bounds[BRIGHT] +
-                        secinfo[i].bounds[BLEFT]) / 2;
+            FRACUNIT * (sec->info->bounds[BRIGHT] +
+                        sec->info->bounds[BLEFT]) / 2;
         sectorOrigins[i].y =
-            FRACUNIT * (secinfo[i].bounds[BBOTTOM] +
-                        secinfo[i].bounds[BTOP]) / 2;
+            FRACUNIT * (sec->info->bounds[BBOTTOM] +
+                        sec->info->bounds[BTOP]) / 2;
     }
 
     // Origins of sides.
     sideOrigins = Z_Malloc(sizeof(origin_t) * numsides, PU_LEVEL, 0);
-    for(i = 0; i < numsides; i++)
+    for(i = 0; i < numsides; ++i)
     {
         // The side must be owned by a line.
         if(sideOwners[i] == NULL)

@@ -1077,7 +1077,6 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
 {
     contactfinder_data_t *light = data;
     sector_t *source, *dest;
-    lineinfo_t *info;
     float   distance;
 
     if(!line->backsector || !line->frontsector ||
@@ -1130,8 +1129,7 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
         return true;
     }
 
-    info = lineinfo + GET_LINE_IDX(line);
-    if(info->length <= 0)
+    if(line->info->length <= 0)
     {
         // This can't be a good line.
         return true;
@@ -1141,7 +1139,7 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     distance =
         (FIX2FLT(line->v1->y - light->lum->thing->pos[VY]) * FIX2FLT(line->dx) -
          FIX2FLT(line->v1->x -
-                 light->lum->thing->pos[VX]) * FIX2FLT(line->dy)) / info->length;
+                 light->lum->thing->pos[VX]) * FIX2FLT(line->dy)) / line->info->length;
 
     if((source == line->frontsector && distance < 0) ||
        (source == line->backsector && distance > 0))

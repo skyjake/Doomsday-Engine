@@ -618,8 +618,9 @@ int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
 void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg, sector_t *frontsec,
                              int mode)
 {
-    int     i, k, vtx[2];       // Vertex indices.
-    vertexowner_t *own;
+    int     i, k;
+    vertex_t *vtx[2];       // Vertexes
+    vertexinfo_t *own;
     sector_t *sec;
     float   hi, low;
     float   sceil, sfloor;
@@ -649,15 +650,15 @@ void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg, sector_t *front
         return;
     }
 
-    vtx[0] = GET_VERTEX_IDX(seg->v1);
-    vtx[1] = GET_VERTEX_IDX(seg->v2);
+    vtx[0] = seg->v1;
+    vtx[1] = seg->v2;
     quad->wall.divs[0].num = 0;
     quad->wall.divs[1].num = 0;
 
     // Check both ends.
     for(i = 0; i < 2; i++)
     {
-        own = vertexowners + vtx[i];
+        own = vtx[i]->info;
         if(own->num > 1)
         {
             // More than one sectors! The checks must be made.
@@ -868,8 +869,8 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     quad->lights = DL_GetSegLightLinks(segIndex, mode);
 
     // Do BIAS lighting for this poly.
-    SB_RendPoly(quad, surface, frontsec, seginfo[segIndex].illum[1],
-                &seginfo[segIndex].tracker[1],  seginfo[segIndex].affected,
+    SB_RendPoly(quad, surface, frontsec, seg->info->illum[1],
+                &seg->info->tracker[1],  seg->info->affected,
                 segIndex);
 
     // Smooth Texture Animation?
@@ -1620,13 +1621,11 @@ void Rend_RenderSubsector(int ssecidx)
     unsigned long j;
     seg_t  *seg;
     sector_t *sect = ssec->sector;
-    int     sectoridx = GET_SECTOR_IDX(sect);
-    sectorinfo_t *sin = secinfo + sectoridx;
+    sectorinfo_t *sin = ssec->sector->info;
     int     flags = 0;
     float   sceil = sin->planeinfo[PLN_CEILING]->visheight;
     float  sfloor = sin->planeinfo[PLN_FLOOR]->visheight;
     lumobj_t *lumi;             // Lum Iterator, or 'snow' in Finnish. :-)
-    subsectorinfo_t *subin;
     boolean checkSelfRef[2] = {false, false};
 
     if(sceil - sfloor <= 0 || ssec->numverts < 3)
@@ -1724,11 +1723,10 @@ void Rend_RenderSubsector(int ssecidx)
             Rend_RenderWallSeg(ssec->poly->segs[i], sect, RWSF_NO_RADIO);
     }
 
-    subin = &subsecinfo[ssecidx];
     // Render all planes of this sector.
     for(i = 0; i < sect->planecount; ++i)
     {
-        Rend_RenderPlane(subin->planes[i], ssec, sin, (i < 2? checkSelfRef[i] : false));
+        Rend_RenderPlane(ssec->info->planes[i], ssec, sin, (i < 2? checkSelfRef[i] : false));
     }
 }
 
@@ -2375,12 +2373,13 @@ static void Rend_RenderBoundingBoxes(void)
     // For every sector
     for(i = 0; i < numsectors; i++)
     {
+        sec = SECTOR_PTR(i);
+
         // Is it vissible?
-        if(!(secinfo[i].flags & SIF_VISIBLE))
+        if(!(sec->info->flags & SIF_VISIBLE))
             continue;
 
         // For every mobj in the sector's thinglist
-        sec = SECTOR_PTR(i);
         for(mo = sec->thinglist; mo; mo = mo->snext)
         {
             if(mo == players[consoleplayer].mo)
