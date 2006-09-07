@@ -1,6 +1,7 @@
 /**\file
  * Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  * Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ * Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  * Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
