@@ -407,7 +407,7 @@ void GL_DrawPSprite(float x, float y, float scale, int flip, int lump)
     int     w2, h2;
     float   s, t;
     int     pSprMode = 1;
-    spritelump_t *slump = spritelumps + lump;
+    spritelump_t *slump = spritelumps[lump];
 
     if(flip)
         flip = 1;               // Make sure it's zero or one.

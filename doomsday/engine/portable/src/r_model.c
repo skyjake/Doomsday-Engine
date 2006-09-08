@@ -420,7 +420,7 @@ void R_LoadModelMD2(DFILE *file, model_t *mdl)
             for(c = 0; c < 3; c++)
             {
                 frame->vertices[k].xyz[axis[c]] =
-                    pVtx->vertex[c] * FLOAT(pfr->scale[c]) + 
+                    pVtx->vertex[c] * FLOAT(pfr->scale[c]) +
                     FLOAT(pfr->translate[c]);
             }
 
@@ -896,10 +896,10 @@ void R_ScaleModelToSprite(modeldef_t * mf, int sprite, int frame)
         return;
 
     lump = spr->spriteframes[frame].lump[0];
-    off = spritelumps[lump].topoffset - spritelumps[lump].height;
+    off = spritelumps[lump]->topoffset - spritelumps[lump]->height;
     if(off < 0)
         off = 0;
-    R_ScaleModel(mf, spritelumps[lump].height, off);
+    R_ScaleModel(mf, spritelumps[lump]->height, off);
 }
 
 float R_GetModelVisualRadius(modeldef_t * mf)

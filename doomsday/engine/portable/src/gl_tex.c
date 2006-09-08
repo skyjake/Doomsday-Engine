@@ -161,7 +161,7 @@ static skintex_t *skinnames;
 static dtexinst_t *dtinstances;
 
 // The translated sprites.
-static transspr_t *transsprites;
+static transspr_t **transsprites;
 static int numtranssprites;
 
 //static boolean    gammaSupport = false;
@@ -363,7 +363,6 @@ void GL_InitTextureManager(void)
     // Should we allow using external resources with PWAD textures?
     highResWithPWAD = ArgExists("-pwadtex");
 
-    transsprites = 0;
     numtranssprites = 0;
 
     // Raw screen lump book-keeping.
@@ -849,12 +848,9 @@ void GL_ClearRuntimeTextures(void)
     // The translated sprite textures.
     for(i = 0; i < numtranssprites; ++i)
     {
-        gl.DeleteTextures(1, &transsprites[i].tex);
-        transsprites[i].tex = 0;
+        gl.DeleteTextures(1, &transsprites[i]->tex);
+        transsprites[i]->tex = 0;
     }
-
-    free(transsprites);
-    transsprites = 0;
     numtranssprites = 0;
 
     // Delete skins.
@@ -2765,15 +2761,24 @@ void GL_GetSkyTopColor(int texidx, byte *rgb)
 
 transspr_t *GL_NewTranslatedSprite(int pnum, unsigned char *table)
 {
-    transspr_t *news;
+    transspr_t **newlist, *ptr;
+    int i;
 
-    transsprites =
-        realloc(transsprites, sizeof(transspr_t) * ++numtranssprites);
-    news = transsprites + numtranssprites - 1;
-    news->patch = pnum;
-    news->tex = 0;
-    news->table = table;
-    return news;
+    newlist = Z_Malloc(sizeof(transspr_t*) * ++numtranssprites, PU_SPRITE, 0);
+    if(numtranssprites > 1)
+    {
+        for(i = 0; i < numtranssprites -1; ++i)
+            newlist[i] = transsprites[i];
+
+        Z_Free(transsprites);
+    }
+
+    transsprites = newlist;
+    ptr = transsprites[numtranssprites - 1] = Z_Calloc(sizeof(transspr_t), PU_SPRITE, 0);
+    ptr->patch = pnum;
+    ptr->tex = 0;
+    ptr->table = table;
+    return ptr;
 }
 
 transspr_t *GL_GetTranslatedSprite(int pnum, unsigned char *table)
@@ -2781,8 +2786,8 @@ transspr_t *GL_GetTranslatedSprite(int pnum, unsigned char *table)
     int     i;
 
     for(i = 0; i < numtranssprites; i++)
-        if(transsprites[i].patch == pnum && transsprites[i].table == table)
-            return transsprites + i;
+        if(transsprites[i]->patch == pnum && transsprites[i]->table == table)
+            return transsprites[i];
     return 0;
 }
 
@@ -2926,7 +2931,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
 {
     byte   *palette =
         pixelsize == 1 ? W_CacheLumpNum(pallump, PU_CACHE) : NULL;
-    spritelump_t *slump = spritelumps + pnum;
+    spritelump_t *slump = spritelumps[pnum];
     int     i, k, c, cnt = 0, poscnt = 0;
     byte    rgb[3], *src, *alphasrc = NULL;
     int     limit = 0xc0, poslimit = 0xe0, collimit = 0xc0;
@@ -3089,7 +3094,7 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
 
     if(!isPsprite)
     {
-        spritelump_t *slump = spritelumps + pnum;
+        spritelump_t *slump = spritelumps[pnum];
         patch_t *patch = W_CacheLumpNum(slump->lump, PU_CACHE);
 
         // Calculate light source properties.
@@ -3117,7 +3122,7 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
     gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
     // Determine coordinates for the texture.
-    GL_SetTexCoords(spritelumps[pnum].tc[isPsprite], image->width,
+    GL_SetTexCoords(spritelumps[pnum]->tc[isPsprite], image->width,
                     image->height);
 
     return texture;
@@ -3133,18 +3138,18 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
     if(!tspr)
     {
         filename_t resource, fileName;
-        patch_t *patch = W_CacheLumpNum(spritelumps[pnum].lump, PU_CACHE);
+        patch_t *patch = W_CacheLumpNum(spritelumps[pnum]->lump, PU_CACHE);
 
         // Compose a resource name.
         if(tclass || tmap)
         {
             sprintf(resource, "%s-table%i%i",
-                    lumpinfo[spritelumps[pnum].lump].name, tclass, tmap);
+                    lumpinfo[spritelumps[pnum]->lump].name, tclass, tmap);
         }
         else
         {
             // Not actually translated? Use the normal resource.
-            strcpy(resource, lumpinfo[spritelumps[pnum].lump].name);
+            strcpy(resource, lumpinfo[spritelumps[pnum]->lump].name);
         }
 
         if(!noHighResPatches &&
@@ -3188,7 +3193,7 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
     if(pnum < 0)
         return 0;
 
-    slump = &spritelumps[pnum];
+    slump = spritelumps[pnum];
     lumpNum = slump->lump;
 
     // Normal sprites and HUD sprites are stored separately.
@@ -3243,13 +3248,13 @@ void GL_DeleteSprite(int spritelump)
     if(spritelump < 0 || spritelump >= numspritelumps)
         return;
 
-    gl.DeleteTextures(1, &spritelumps[spritelump].tex);
-    spritelumps[spritelump].tex = 0;
+    gl.DeleteTextures(1, &spritelumps[spritelump]->tex);
+    spritelumps[spritelump]->tex = 0;
 
-    if(spritelumps[spritelump].hudtex)
+    if(spritelumps[spritelump]->hudtex)
     {
-        gl.DeleteTextures(1, &spritelumps[spritelump].hudtex);
-        spritelumps[spritelump].hudtex = 0;
+        gl.DeleteTextures(1, &spritelumps[spritelump]->hudtex);
+        spritelumps[spritelump]->hudtex = 0;
     }
 }
 
@@ -3261,7 +3266,7 @@ void GL_GetSpriteColorf(int pnum, float *rgb)
         return;
 
     for(i=0; i < 3; ++i)
-        rgb[i] = spritelumps[pnum].color.rgb[i] / 255.0f;
+        rgb[i] = spritelumps[pnum]->color.rgb[i] / 255.0f;
 }
 
 /*
@@ -3788,16 +3793,16 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
         Z_Free(flats);
         // Sprites.
         for(i = 0; i < numspritelumps; ++i)
-            if(spritelumps[i].tex)
+            if(spritelumps[i]->tex)
             {
-                gl.Bind(spritelumps[i].tex);
+                gl.Bind(spritelumps[i]->tex);
                 gl.TexParameter(DGL_MIN_FILTER, minMode);
                 gl.TexParameter(DGL_MAG_FILTER, magMode);
             }
         // Translated sprites.
         for(i = 0; i < numtranssprites; ++i)
         {
-            gl.Bind(transsprites[i].tex);
+            gl.Bind(transsprites[i]->tex);
             gl.TexParameter(DGL_MIN_FILTER, minMode);
             gl.TexParameter(DGL_MAG_FILTER, magMode);
         }

@@ -880,12 +880,12 @@ void DL_AddLuminous(mobj_t *thing)
         GL_PrepareSprite(lump, 0);
 
         // Let's see what our light should look like.
-        cf.size = cf.flareSize = spritelumps[lump].lumsize;
-        cf.xOffset = spritelumps[lump].flarex;
-        cf.yOffset = spritelumps[lump].flarey;
+        cf.size = cf.flareSize = spritelumps[lump]->lumsize;
+        cf.xOffset = spritelumps[lump]->flarex;
+        cf.yOffset = spritelumps[lump]->flarey;
 
         // X offset to the flare position.
-        xOff = cf.xOffset - spritelumps[lump].width / 2.0f;
+        xOff = cf.xOffset - spritelumps[lump]->width / 2.0f;
 
         // Does the thing have an active light definition?
         if(thing->state && thing->state->light)
@@ -906,14 +906,14 @@ void DL_AddLuminous(mobj_t *thing)
         }
 
         center =
-            spritelumps[lump].topoffset -
+            spritelumps[lump]->topoffset -
             FIX2FLT(thing->floorclip + R_GetBobOffset(thing)) -
             cf.yOffset;
 
         // Will the sprite be allowed to go inside the floor?
         mul =
-            FIX2FLT(thing->pos[VZ]) + spritelumps[lump].topoffset -
-            spritelumps[lump].height -
+            FIX2FLT(thing->pos[VZ]) + spritelumps[lump]->topoffset -
+            spritelumps[lump]->height -
             FIX2FLT(thing->subsector->sector->planes[PLN_FLOOR]->height);
         if(!(thing->ddflags & DDMF_NOFITBOTTOM) && mul < 0)
         {

@@ -432,8 +432,8 @@ void Rend_DrawMasked(void)
 // Mode zero (tc[0]) is used with regular sprites
 #define Rend_SpriteTexCoord(pnum, x, y) \
 ( \
-    gl.TexCoord2f(spritelumps[pnum].tc[0][VX] * x, \
-                  spritelumps[pnum].tc[0][VY] * y) \
+    gl.TexCoord2f(spritelumps[pnum]->tc[0][VX] * x, \
+                  spritelumps[pnum]->tc[0][VY] * y) \
 )
 
 static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist)
@@ -577,7 +577,7 @@ void Rend_RenderSprite(vissprite_t * spr)
         else
             gl.Bind(0);
     }
-    sprh = spritelumps[patch].height;
+    sprh = spritelumps[patch]->height;
 
     // Set the lighting and alpha.
     if(missileBlend && spr->data.mo.flags & DDMF_BRIGHTSHADOW)

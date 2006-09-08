@@ -609,7 +609,7 @@ void R_InitLumpTexInfo(void)
     if(lumptexinfo)
         Z_Free(lumptexinfo);
 
-    // Allocate one info per lump.
+    // Allocate one info per lump. Rather a waste...
     numlumptexinfo = numlumps;
     lumptexinfo = Z_Calloc(sizeof(*lumptexinfo) * numlumps, PU_STATIC, 0);
 }
@@ -970,7 +970,7 @@ void R_PrecacheLevel(void)
                 sf = &sprites[i].spriteframes[j];
                 for(k = 0; k < 8; k++)
                 {
-                    lump = spritelumps[sf->lump[k]].lump;
+                    lump = spritelumps[sf->lump[k]]->lump;
                     GL_BindTexture(GL_PrepareSprite(sf->lump[k], 0));
                 }
             }

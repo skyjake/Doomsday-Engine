@@ -83,7 +83,7 @@ spriteframe_t sprtemp[MAX_FRAMES];
 int     maxframe;
 char   *spritename;
 
-spritelump_t *spritelumps;
+spritelump_t **spritelumps;
 int     numspritelumps;
 
 vissprite_t vissprites[MAXVISSPRITES], *vissprite_p;
@@ -111,8 +111,10 @@ void R_InitSpriteLumps(void)
     sprintf(buf, "R_Init: Initializing %i sprites...", numspritelumps);
     Con_InitProgress(buf, numspritelumps);
 
-    for(i = 0, sl = spritelumps; i < numspritelumps; i++, sl++)
+    for(i = 0; i < numspritelumps; ++i)
     {
+        sl = spritelumps[i];
+
         if(!(i % 50))
             Con_Progress(i, PBARF_SET | PBARF_DONTSHOW);
 
@@ -131,24 +133,24 @@ void R_InitSpriteLumps(void)
  */
 int R_NewSpriteLump(int lump)
 {
-    spritelump_t *newlist, *ptr;
+    spritelump_t **newlist, *ptr;
     int     i;
 
     // Is this lump already entered?
     for(i = 0; i < numspritelumps; i++)
-        if(spritelumps[i].lump == lump)
+        if(spritelumps[i]->lump == lump)
             return i;
 
-    newlist = Z_Malloc(sizeof(spritelump_t) * ++numspritelumps, PU_SPRITE, 0);
+    newlist = Z_Malloc(sizeof(spritelump_t*) * ++numspritelumps, PU_SPRITE, 0);
     if(numspritelumps > 1)
     {
-        memcpy(newlist, spritelumps,
-               sizeof(spritelump_t) * (numspritelumps - 1));
+        for(i = 0; i < numspritelumps -1; ++i)
+            newlist[i] = spritelumps[i];
+
         Z_Free(spritelumps);
     }
     spritelumps = newlist;
-    ptr = spritelumps + numspritelumps - 1;
-    memset(ptr, 0, sizeof(spritelump_t));
+    ptr = spritelumps[numspritelumps - 1] = Z_Calloc(sizeof(spritelump_t), PU_SPRITE, 0);
     ptr->lump = lump;
     return numspritelumps - 1;
 }
@@ -356,7 +358,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo)
     }
 
     sprframe = &sprdef->spriteframes[frame];
-    sprlump = spritelumps + sprframe->lump[0];
+    sprlump = spritelumps[sprframe->lump[0]];
 
     sprinfo->numFrames = sprdef->numframes;
     sprinfo->lump = sprframe->lump[0];
@@ -708,10 +710,10 @@ void R_ProjectSprite(mobj_t *thing)
 
         //if(alwaysAlign == 2) align = true;
 
-        v1[VX] -= cosrv * spritelumps[lump].offset;
-        v1[VY] -= sinrv * spritelumps[lump].offset;
-        v2[VX] = v1[VX] + cosrv * spritelumps[lump].width;
-        v2[VY] = v1[VY] + sinrv * spritelumps[lump].width;
+        v1[VX] -= cosrv * spritelumps[lump]->offset;
+        v1[VY] -= sinrv * spritelumps[lump]->offset;
+        v2[VX] = v1[VX] + cosrv * spritelumps[lump]->width;
+        v2[VY] = v1[VY] + sinrv * spritelumps[lump]->width;
 
         if(!align && alwaysAlign != 2 && alwaysAlign != 3)
             // Check for visibility.
@@ -781,7 +783,7 @@ void R_ProjectSprite(mobj_t *thing)
     P_ThingSectorsIterator(thing, RIT_VisMobjZ, vis);
 
     vis->data.mo.gzt =
-        vis->data.mo.gz + ((fixed_t) spritelumps[lump].topoffset << FRACBITS);
+        vis->data.mo.gz + ((fixed_t) spritelumps[lump]->topoffset << FRACBITS);
 
     if(useBias)
     {
