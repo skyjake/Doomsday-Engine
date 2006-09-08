@@ -1,4 +1,8 @@
 /**\file
+ *\section Copyright and License Summary
+ * License: Raven
+ * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ *
  * Copyright © 2006 Daniel Swanson <danij@dengine.net>
  * Copyright © 1999 Activision
  *

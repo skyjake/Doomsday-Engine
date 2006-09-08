@@ -1,4 +1,8 @@
 /**\file
+ *\section Copyright and License Summary
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
  * Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  * Copyright © 2006 Daniel Swanson <danij@dengine.net>
  * Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
