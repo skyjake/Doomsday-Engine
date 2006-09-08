@@ -128,7 +128,7 @@ typedef struct {
 
 extern spritedef_t *sprites;
 extern int      numsprites;
-extern spritelump_t *spritelumps;
+extern spritelump_t **spritelumps;
 extern int      numspritelumps;
 extern int      pspOffX, pspOffY;
 extern int      alwaysAlign;
