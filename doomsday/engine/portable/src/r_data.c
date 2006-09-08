@@ -564,6 +564,9 @@ void R_UpdateTextures(void)
 
 int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
 {
+    if(!picid)
+        return 0;
+
     switch(rclass)
     {
     case RC_TEXTURE:  // picid is a texture id
