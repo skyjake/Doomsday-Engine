@@ -1,7 +1,11 @@
 /**\file
- * Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- * Copyright © 2006 Daniel Swanson <danij@dengine.net>
- * Copyright © 1998-2003 Randy Heit. <rheit@iastate.edu> (Zdoom)
+ *\section Copyright and License Summary
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
+ *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1998-2003 Randy Heit. <rheit@iastate.edu> (Zdoom)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
