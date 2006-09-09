@@ -100,7 +100,7 @@ void P_CalcHeight(player_t *player)
     // Should view bobbing be done?
     if(setz)
     {
-        if(P_IsCamera(dplay->mo)    // $ democam
+        if(P_IsCamera(dplay->mo) /*$democam*/ || (dplay->flags & DDPF_CHASECAM)
            || player->cheats & CF_NOMOMENTUM || airborne || morphed)    // Morphed players don't bob their view.
         {
             // Reduce the bob offset to zero.
@@ -141,8 +141,8 @@ void P_CalcHeight(player_t *player)
     }
 
     // Should viewheight be moved? Not if camera or we're in demo.
-    if(!(player->cheats & CF_NOMOMENTUM || P_IsCamera(pmo)  // $democam
-         || Get(DD_PLAYBACK)))
+    if(!(player->cheats & CF_NOMOMENTUM || P_IsCamera(pmo) /*$democam*/ ||
+         Get(DD_PLAYBACK)))
     {
         // Move viewheight.
         if(player->playerstate == PST_LIVE)
@@ -174,7 +174,7 @@ void P_CalcHeight(player_t *player)
 
     // During demo playback (or camera mode) the viewz will not be
     // modified any further.
-    if(!(Get(DD_PLAYBACK) || P_IsCamera(pmo)))
+    if(!(Get(DD_PLAYBACK) || P_IsCamera(pmo) || (dplay->flags & DDPF_CHASECAM)))
     {
         if(morphed)
         {

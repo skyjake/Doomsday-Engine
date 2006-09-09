@@ -469,7 +469,7 @@ void R_ProjectPlayerSprites(void)
     psp3d = false;
 
     // Cameramen have no psprites.
-    if(viewplayer->flags & DDPF_CAMERA)
+    if((viewplayer->flags & DDPF_CAMERA) || (viewplayer->flags & DDPF_CHASECAM))
         return;
 
     for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)

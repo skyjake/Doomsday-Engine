@@ -152,7 +152,8 @@ static void DL_DeleteUsed(void)
     memset(segLightLinks, 0, numsegs * sizeof(seglight_t));
     for(i=0; i < numsubsectors; ++i)
     {
-        memset(subSecLightLinks[i].planes, 0, SUBSECTOR_PTR(i)->sector->planecount * sizeof(dynlight_t*));
+        memset(subSecLightLinks[i].planes, 0,
+               SUBSECTOR_PTR(i)->sector->planecount * sizeof(dynlight_t*));
     }
 
     // Clear lumobj contacts.

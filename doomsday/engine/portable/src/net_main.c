@@ -632,7 +632,7 @@ void Net_StopGame(void)
     {
         players[i].ingame = false;
         clients[i].ready = clients[i].connected = false;
-        players[i].flags &= ~(DDPF_CAMERA | DDPF_LOCAL);
+        players[i].flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
     }
 
     // We're about to become player zero, so update it's view angles to

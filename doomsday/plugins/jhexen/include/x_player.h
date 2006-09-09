@@ -115,7 +115,9 @@ typedef struct player_s {
     uint            jumptics;      // delay the next jump for a moment
     unsigned int    worldTimer;    // total time the player's been playing
     int             update, startspot;
-    int             viewlock;      // $democam
+    // Target view to a mobj (NULL=disabled).
+    mobj_t*         viewlock;      // $democam
+    int             lockFull;
 } player_t;
 
 #endif

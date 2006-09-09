@@ -460,6 +460,14 @@ void SBE_SetHueCircle(boolean activate)
     }
 }
 
+/**
+ * Returns true if the console player is currently using the HueCircle.
+ */
+boolean SBE_UsingHueCircle(void)
+{
+    return (editActive && editHueCircle);
+}
+
 /*
  * Editor commands.
  */

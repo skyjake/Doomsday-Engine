@@ -295,6 +295,24 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
     view->x = player->mo->pos[VX] + viewxOffset;
     view->y = player->mo->pos[VY] + viewyOffset;
     view->z = player->viewz + viewzOffset;
+    if(player->flags & DDPF_CHASECAM)
+    {
+        /* STUB
+         * This needs to be fleshed out with a proper third person
+         * camera control setup. Currently we simply project the viewer's
+         * position a set distance behind the player.
+         */
+        angle_t pitch = LOOKDIR2DEG(view->pitch) / 360 * ANGLE_MAX;
+        angle_t angle = view->angle;
+        fixed_t distance = 90;
+
+        angle = view->angle >> ANGLETOFINESHIFT;
+        pitch >>= ANGLETOFINESHIFT;
+
+        view->x -= distance * finecosine[angle];
+        view->y -= distance * finesine[angle];
+        view->z -= distance * finesine[pitch];
+    }
 
     // Check that the viewz doesn't go too high or low.
     // Cameras are not restricted.
@@ -560,10 +578,12 @@ void R_RenderPlayerView(ddplayer_t *player)
     R_ProjectPlayerSprites();   // Only if 3D models exists for them.
     PG_InitForNewFrame();
 
-    // Hide the viewplayer's mobj.
-    oldFlags = player->mo->ddflags;
-    player->mo->ddflags |= DDMF_DONTDRAW;
-
+    // Hide the viewplayer's mobj?
+    if(!(player->flags & DDPF_CHASECAM))
+    {
+        oldFlags = player->mo->ddflags;
+        player->mo->ddflags |= DDMF_DONTDRAW;
+    }
     // Go to wireframe mode?
     if(renderWireframe)
         gl.Enable(DGL_WIREFRAME_MODE);
@@ -598,7 +618,8 @@ void R_RenderPlayerView(ddplayer_t *player)
         gl.Disable(DGL_WIREFRAME_MODE);
 
     // Now we can show the viewplayer's mobj again.
-    player->mo->ddflags = oldFlags;
+    if(!(player->flags & DDPF_CHASECAM))
+        player->mo->ddflags = oldFlags;
 
     // Should we be counting triangles?
     if(rendInfoTris)

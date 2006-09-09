@@ -29,5 +29,6 @@ void            SBE_EndFrame(void);
 
 void            SBE_DrawCursor(void);
 void            SBE_DrawHUD(void);
+boolean         SBE_UsingHueCircle(void);
 
 #endif

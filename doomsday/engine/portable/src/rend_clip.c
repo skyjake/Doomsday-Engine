@@ -1172,7 +1172,7 @@ int C_CheckSubsector(subsector_t *ssec)
     if(devNoCulling || P_IsInVoid(viewplayer))
         return 1;
 
-    for(i = 0; i < ssec->numverts; i++) // Angles to all corners.
+    for(i = 0; i < ssec->numverts; ++i) // Angles to all corners.
     {
         fvertex_t *vtx = ssec->verts + i;
 
@@ -1182,7 +1182,7 @@ int C_CheckSubsector(subsector_t *ssec)
                       (int) ((vtx->x - vx) * 100));
     }
     // Check each of the ranges defined by the edges.
-    for(i = 0; i < ssec->numverts - 1; i++)
+    for(i = 0; i < ssec->numverts - 1; ++i)
     {
         int     end = i + 1;
         binangle_t angLen;

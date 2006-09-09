@@ -1305,6 +1305,7 @@ typedef enum blendmode_e {
 #define DDPF_LOCAL          0x20   // Player is local (e.g. player zero).
 #define DDPF_FIXMOM         0x40   // Server: send momentum to client.
 #define DDPF_NOCLIP         0x80   // Client: don't clip movement.
+#define DDPF_CHASECAM       0x100  // Chase camera mode (third person view).
 
 #define PLAYERNAMELEN       81
 

@@ -45,9 +45,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LOCKF_FULL      0x10000
-#define LOCKF_MASK      0xff
-
 #define MESSAGETICS (4*35)
 
 // TYPES -------------------------------------------------------------------
@@ -494,8 +491,8 @@ int P_CameraZMovement(mobj_t *mo)
 void P_PlayerThinkCamera(player_t *player)
 {
     angle_t angle;
-    int     tp, full, dist;
-    mobj_t *mo, *target;
+    int     full, dist;
+    mobj_t *mo;
 
     // If this player is not a camera, get out of here.
     if(!(player->plr->flags & DDPF_CAMERA))
@@ -511,34 +508,38 @@ void P_PlayerThinkCamera(player_t *player)
     mo->flags &= ~(MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
 
     // How about viewlock?
-    if(player->viewlock & 0xff)
+    if(player->viewlock)
     {
-        full = (player->viewlock & LOCKF_FULL) != 0;
-        tp = (player->viewlock & LOCKF_MASK) - 1;
-        target = players[tp].plr->mo;
-        if(players[tp].plr->ingame && target)
+        mobj_t *target = players->viewlock;
+
+        if(!target->player || !target->player->plr->ingame)
         {
-            angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
-                                    target->pos[VX], target->pos[VY]);
-            player->plr->clAngle = angle;
-            if(full)
-            {
-                dist = P_ApproxDistance(mo->pos[VX] - target->pos[VX],
-                                        mo->pos[VY] - target->pos[VY]);
-                angle =
-                    R_PointToAngle2(0, 0,
-                                    target->pos[VZ] + target->height / 2 - mo->pos[VZ],
-                                    dist);
-                player->plr->clLookDir =
-                    -(angle / (float) ANGLE_MAX * 360.0f - 90);
-                if(player->plr->clLookDir > 180)
-                    player->plr->clLookDir -= 360;
-                player->plr->clLookDir *= 110.0f / 85.0f;
-                if(player->plr->clLookDir > 110)
-                    player->plr->clLookDir = 110;
-                if(player->plr->clLookDir < -110)
-                    player->plr->clLookDir = -110;
-            }
+            player->viewlock = NULL;
+            return;
+        }
+
+        full = player->lockFull;
+
+        angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
+                                target->pos[VX], target->pos[VY]);
+        player->plr->clAngle = angle;
+        if(full)
+        {
+            dist = P_ApproxDistance(mo->pos[VX] - target->pos[VX],
+                                    mo->pos[VY] - target->pos[VY]);
+            angle =
+                R_PointToAngle2(0, 0,
+                                target->pos[VZ] + target->height / 2 - mo->pos[VZ],
+                                dist);
+            player->plr->clLookDir =
+                -(angle / (float) ANGLE_MAX * 360.0f - 90);
+            if(player->plr->clLookDir > 180)
+                player->plr->clLookDir -= 360;
+            player->plr->clLookDir *= 110.0f / 85.0f;
+            if(player->plr->clLookDir > 110)
+                player->plr->clLookDir = 110;
+            if(player->plr->clLookDir < -110)
+                player->plr->clLookDir = -110;
         }
     }
 }
@@ -571,6 +572,26 @@ DEFCC(CCmdSetCamera)
     return true;
 }
 
+DEFCC(CCmdSetViewMode)
+{
+    int     pl = consoleplayer;
+
+    if(argc > 2)
+        return false;
+
+    if(argc == 2)
+        pl = atoi(argv[1]);
+
+    if(pl < 0 || pl >= MAXPLAYERS)
+        return false;
+
+    if(!(players[pl].plr->flags & DDPF_CHASECAM))
+        players[pl].plr->flags |= DDPF_CHASECAM;
+    else
+        players[pl].plr->flags &= ~DDPF_CHASECAM;
+    return true;
+}
+
 DEFCC(CCmdSetViewLock)
 {
     int     pl = consoleplayer, lock;
@@ -581,9 +602,9 @@ DEFCC(CCmdSetViewLock)
             return false;
         lock = atoi(argv[1]);
         if(lock)
-            players[pl].viewlock |= LOCKF_FULL;
+            players[pl].lockFull = true;
         else
-            players[pl].viewlock &= ~LOCKF_FULL;
+            players[pl].lockFull = false;
         return true;
     }
     if(argc < 2)
@@ -591,11 +612,18 @@ DEFCC(CCmdSetViewLock)
     if(argc >= 3)
         pl = atoi(argv[2]);     // Console number.
     lock = atoi(argv[1]);
-    if(lock == pl || lock < 0 || lock >= MAXPLAYERS)
-        lock = -1;
-    players[pl].viewlock &= ~LOCKF_MASK;
-    players[pl].viewlock |= lock + 1;
-    return true;
+
+    if(!(lock == pl || lock < 0 || lock >= MAXPLAYERS))
+    {
+        if(players[lock].plr->ingame && players[lock].plr->mo)
+        {
+            players[pl].viewlock = players[lock].plr->mo;
+            return true;
+        }
+    }
+
+    players[pl].viewlock = NULL;
+    return false;
 }
 
 DEFCC(CCmdMakeLocal)

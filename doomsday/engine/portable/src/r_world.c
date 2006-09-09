@@ -1912,9 +1912,9 @@ void R_InitLineNeighbors(void)
 #ifdef _DEBUG
     if(verbose >= 1)
     {
-        for(i = 0; i < numlines; i++)
+        for(i = 0; i < numlines; ++i)
         {
-            for(k = 0; k < 2; k++)
+            for(k = 0; k < 2; ++k)
             {
                 line = LINE_PTR(i);
                 side = LINE_INFO(line)->side + k;
@@ -1948,7 +1948,7 @@ void R_InitLinks(void)
 
     // Allocate the rings.
     linelinks = Z_Malloc(sizeof(*linelinks) * numlines, PU_LEVEL, 0);
-    for(i = 0; i < numlines; i++)
+    for(i = 0; i < numlines; ++i)
         linelinks[i] = NP_New(&linenodes, NP_ROOT_NODE);
 }
 

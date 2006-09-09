@@ -152,8 +152,9 @@ typedef struct player_s {
 
     int             update, startspot;
 
-    // Target view to a player (0=disabled, 1=player zero, etc.).
-    int             viewlock;      // $democam
+    // Target view to a mobj (NULL=disabled).
+    mobj_t*         viewlock;      // $democam
+    int             lockFull;
 
     int             flyheight;
 

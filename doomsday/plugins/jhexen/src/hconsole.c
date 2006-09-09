@@ -57,6 +57,7 @@ DEFCC(CCmdCheatSuicide);
 DEFCC(CCmdMakeLocal);
 DEFCC(CCmdSetCamera);
 DEFCC(CCmdSetViewLock);
+DEFCC(CCmdSetViewMode);
 
 DEFCC(CCmdCycleSpy);
 
@@ -191,6 +192,7 @@ ccmd_t  gameCCmds[] = {
     {"makecam",     CCmdSetCamera},
     {"setlock",     CCmdSetViewLock},
     {"lockmode",    CCmdSetViewLock},
+    {"viewmode",    CCmdSetViewMode},
 
     // jHexen specific
     {"invleft",     CCmdInventory},

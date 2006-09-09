@@ -215,12 +215,13 @@ void Rend_ModelViewMatrix(boolean use_angles)
     vy = FIX2FLT(viewz);
     vz = FIX2FLT(viewy);
     vang = viewangle / (float) ANGLE_MAX *360 - 90;
+    vpitch = viewpitch * 85.0 / 110.0;
 
     gl.MatrixMode(DGL_MODELVIEW);
     gl.LoadIdentity();
     if(use_angles)
     {
-        gl.Rotatef(vpitch = viewpitch * 85.0 / 110.0, 1, 0, 0);
+        gl.Rotatef(vpitch, 1, 0, 0);
         gl.Rotatef(vang, 0, 1, 0);
     }
     gl.Scalef(1, 1.2f, 1);      // This is the aspect correction.
@@ -605,7 +606,7 @@ int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
 {
     int     i;
 
-    for(i = 0; i < quad->wall.divs[side].num; i++)
+    for(i = 0; i < quad->wall.divs[side].num; ++i)
         if(quad->wall.divs[side].pos[i] == height)
             return true;
     return false;
@@ -656,13 +657,13 @@ void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg, sector_t *front
     quad->wall.divs[1].num = 0;
 
     // Check both ends.
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
         own = vtx[i]->info;
         if(own->num > 1)
         {
             // More than one sectors! The checks must be made.
-            for(k = 0; k < own->num; k++)
+            for(k = 0; k < own->num; ++k)
             {
                 sec = SECTOR_PTR(own->list[k]);
                 if(sec == frontsec)
@@ -704,7 +705,7 @@ void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg, sector_t *front
                       i ? DivSortDescend : DivSortAscend);
             }
 #ifdef RANGECHECK
-            for(k = 0; k < quad->wall.divs[i].num; k++)
+            for(k = 0; k < quad->wall.divs[i].num; ++k)
                 if(quad->wall.divs[i].pos[k] > hi || quad->wall.divs[i].pos[k] < low)
                 {
                     Con_Error("DivQuad: i=%i, pos (%f), hi (%f), "
@@ -855,13 +856,13 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     RL_VertexColors(quad, Rend_SectorLight(frontsec), colorPtr);
 
     // Alpha?
-    for(i = 0, vtx = quad->vertices; i < quad->numvertices; i++, vtx++)
+    for(i = 0, vtx = quad->vertices; i < quad->numvertices; ++i, vtx++)
         vtx->color.rgba[3] = alpha;
 
     // Bottom color (if different from top)?
     if(color2Ptr != NULL)
     {
-        for(i=0; i < 2; i++)
+        for(i=0; i < 2; ++i)
             memcpy(quad->vertices[i].color.rgba, color2Ptr, 3);
     }
 
@@ -1027,7 +1028,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     // Top wall section color offset?
     if(side->top.rgba[0] < 255 || side->top.rgba[1] < 255 || side->top.rgba[2] < 255)
     {
-        for(i=0; i < 3; i++)
+        for(i=0; i < 3; ++i)
             topColor[i] = (byte)(((side->top.rgba[i]/ 255.0f)) * sLightColor[i]);
 
         topColorPtr = topColor;
@@ -1038,7 +1039,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     // Mid wall section color offset?
     if(side->middle.rgba[0] < 255 || side->middle.rgba[1] < 255 || side->middle.rgba[2] < 255)
     {
-        for(i=0; i < 3; i++)
+        for(i=0; i < 3; ++i)
             midColor[i] = (byte)(((side->middle.rgba[i]/ 255.0f)) * sLightColor[i]);
 
         midColorPtr = midColor;
@@ -1049,7 +1050,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     // Bottom wall section color offset?
     if(side->bottom.rgba[0] < 255 || side->bottom.rgba[1] < 255 || side->bottom.rgba[2] < 255)
     {
-        for(i=0; i < 3; i++)
+        for(i=0; i < 3; ++i)
             bottomColor[i] = (byte)(((side->bottom.rgba[i]/ 255.0f)) * sLightColor[i]);
 
         bottomColorPtr = bottomColor;
@@ -1485,21 +1486,23 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
     if(devNoCulling || P_IsInVoid(viewplayer))
         return;
 
-    for(i = 0; i < sub->linecount; i++)
+    for(i = sub->linecount, seg = &segs[sub->firstline]; i > 0; --i, seg++)
     {
-        seg = SEG_PTR(sub->firstline + i);
         // Occlusions can only happen where two sectors contact.
         if(!seg->linedef || !seg->backsector)
             continue;
+
         back = seg->backsector;
         v1[VX] = FIX2FLT(seg->v1->x);
         v1[VY] = FIX2FLT(seg->v1->y);
         v2[VX] = FIX2FLT(seg->v2->x);
         v2[VY] = FIX2FLT(seg->v2->y);
+
         // Which way should it be facing?
         segfacing = Rend_SegFacingDir(v1, v2);  // 1=front
         if(forward_facing != (segfacing != 0))
             continue;
+
         backh[0] = FIX2FLT(back->planes[PLN_FLOOR]->height);
         backh[1] = FIX2FLT(back->planes[PLN_CEILING]->height);
         // Choose start and end vertices so that it's facing forward.
@@ -1514,7 +1517,8 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
             endv = v1;
         }
         // Do not create an occlusion for sky floors.
-        if(!R_IsSkySurface(&back->SP_floorsurface) || !R_IsSkySurface(&front->SP_floorsurface))
+        if(!R_IsSkySurface(&back->SP_floorsurface) ||
+           !R_IsSkySurface(&front->SP_floorsurface))
         {
             // Do the floors create an occlusion?
             if((backh[0] > fronth[0] && vy <= backh[0]) ||
@@ -1525,7 +1529,8 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
             }
         }
         // Do not create an occlusion for sky ceilings.
-        if(!R_IsSkySurface(&back->SP_ceilsurface) || !R_IsSkySurface(&front->SP_ceilsurface))
+        if(!R_IsSkySurface(&back->SP_ceilsurface) ||
+           !R_IsSkySurface(&front->SP_ceilsurface))
         {
             // Do the ceilings create an occlusion?
             if((backh[1] < fronth[1] && vy >= backh[1]) ||
@@ -1692,28 +1697,26 @@ void Rend_RenderSubsector(int ssecidx)
     for(j = ssec->linecount, seg = &segs[ssec->firstline]; j > 0;
         --j, seg++)
     {
-        if(seg->linedef != NULL)    // "minisegs" have no linedefs.
+        if(seg->linedef == NULL)    // "minisegs" have no linedefs.
+            continue;
+
+        Rend_RenderWallSeg(seg, sect, flags);
+
+        // If this is a "root" of self-referencing hack sector
+        // we should check whether the planes SHOULD be rendered.
+        if(seg->linedef->info->selfrefhackroot)
         {
-            lineinfo_t* linfo = LINE_INFO(seg->linedef);
+            // NOTE: we already KNOW its twosided.
+            // These checks are placed here instead of in the initial
+            // selfref hack test as the textures can change at any time,
+            // whilest the front/back sectors can't.
+            if(SIDE_PTR(seg->linedef->sidenum[0])->top.texture == 0 &&
+               SIDE_PTR(seg->linedef->sidenum[1])->top.texture == 0)
+                checkSelfRef[PLN_CEILING] = true;
 
-            Rend_RenderWallSeg(seg, sect, flags);
-
-            // If this is a "root" of self-referencing hack sector
-            // we should check whether the planes SHOULD be rendered.
-            if(linfo->selfrefhackroot)
-            {
-                // NOTE: we already KNOW its twosided.
-                // These checks are placed here instead of in the initial
-                // selfref hack test as the textures can change at any time,
-                // whilest the front/back sectors can't.
-                if(SIDE_PTR(seg->linedef->sidenum[0])->top.texture == 0 &&
-                   SIDE_PTR(seg->linedef->sidenum[1])->top.texture == 0)
-                    checkSelfRef[PLN_CEILING] = true;
-
-                if(SIDE_PTR(seg->linedef->sidenum[0])->bottom.texture == 0 &&
-                   SIDE_PTR(seg->linedef->sidenum[1])->bottom.texture == 0)
-                    checkSelfRef[PLN_FLOOR] = true;
-            }
+            if(SIDE_PTR(seg->linedef->sidenum[0])->bottom.texture == 0 &&
+               SIDE_PTR(seg->linedef->sidenum[1])->bottom.texture == 0)
+                checkSelfRef[PLN_FLOOR] = true;
         }
     }
 

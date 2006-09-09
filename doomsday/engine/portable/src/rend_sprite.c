@@ -106,7 +106,7 @@ void Rend_DrawPlayerSprites(void)
     byte    isFullBright = (LevelFullBright != 0);
 
     // Cameramen have no psprites.
-    if(viewplayer->flags & DDPF_CAMERA)
+    if((viewplayer->flags & DDPF_CAMERA) || (viewplayer->flags & DDPF_CHASECAM))
         return;
 
     // Clear sprite info.
