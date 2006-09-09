@@ -1,6 +1,10 @@
 /**\file
- * Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- * Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\section Copyright and License Summary
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
+ *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -766,7 +770,7 @@ void DS_Listenerv(int property, float *values)
 #if 0
 // i_DS_EAX.c
 // Playing sounds using DirectSound(3D) and EAX, if available.
-// Author: Jaakko Keränen
+// Author: Jaakko KerÃ¤nen
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
