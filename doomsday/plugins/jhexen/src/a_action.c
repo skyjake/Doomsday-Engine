@@ -1,5 +1,11 @@
-/* DE1: $Id$
- * Copyright (C) 1999- Activision
+/**\file
+ *\section Copyright and License Summary
+ * License: Raven
+ * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
+ *
+ * Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ * Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ * Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
