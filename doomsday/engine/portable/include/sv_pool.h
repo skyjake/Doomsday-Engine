@@ -246,10 +246,26 @@ typedef struct {
 } playerdelta_t;
 
 typedef struct {
+    short           texture;
+    boolean         isflat;
+    byte            rgba[4];       // Surface color tint
+    fixed_t         texmove[2];    // Texture movement X and Y.
+} dt_surface_t;
+
+typedef struct {
+    dt_surface_t    surface;
+    fixed_t         height;
+    fixed_t         target;        // Target height.
+    fixed_t         speed;         // Move speed.
+    float           glow;          // Glow amount.
+    byte            glowrgb[3];    // Glow color.
+} dt_plane_t;
+
+typedef struct {
     short           lightlevel;
     byte            rgb[3];
     int             planecount;
-    plane_t       **planes;
+    dt_plane_t      planes[2];
 } dt_sector_t;
 
 typedef struct {
@@ -262,9 +278,9 @@ typedef struct {
 } lumpdelta_t;
 
 typedef struct {
-    surface_t       top;
-    surface_t       middle;
-    surface_t       bottom;
+    dt_surface_t    top;
+    dt_surface_t    middle;
+    dt_surface_t    bottom;
     byte            lineFlags;     // note: only a byte!
     int             blendmode;
     byte            flags;         // Sidedef flags.

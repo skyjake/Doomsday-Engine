@@ -658,9 +658,9 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
     int     df = 0;
 
     // Determine which data is different.
-    if(r->SP_floorpic != s->SP_floorpic)
+    if(r->planes[PLN_FLOOR].surface.texture != s->SP_floorpic)
         df |= SDF_FLOORPIC;
-    if(r->SP_ceilpic != s->SP_ceilpic)
+    if(r->planes[PLN_CEILING].surface.texture != s->SP_ceilpic)
         df |= SDF_CEILINGPIC;
     if(r->lightlevel != s->lightlevel)
         df |= SDF_LIGHT;
@@ -671,37 +671,37 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
     if(r->rgb[2] != s->rgb[2])
         df |= SDF_COLOR_BLUE;
 
-    if(r->SP_floorrgb[0] != s->SP_floorrgb[0])
+    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->SP_floorrgb[0])
         df |= SDF_FLOOR_COLOR_RED;
-    if(r->SP_floorrgb[1] != s->SP_floorrgb[1])
+    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->SP_floorrgb[1])
         df |= SDF_FLOOR_COLOR_GREEN;
-    if(r->SP_floorrgb[2] != s->SP_floorrgb[2])
+    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->SP_floorrgb[2])
         df |= SDF_FLOOR_COLOR_BLUE;
 
-    if(r->SP_ceilrgb[0] != s->SP_ceilrgb[0])
+    if(r->planes[PLN_CEILING].surface.rgba[0] != s->SP_ceilrgb[0])
         df |= SDF_CEIL_COLOR_RED;
-    if(r->SP_ceilrgb[1] != s->SP_ceilrgb[1])
+    if(r->planes[PLN_CEILING].surface.rgba[1] != s->SP_ceilrgb[1])
         df |= SDF_CEIL_COLOR_GREEN;
-    if(r->SP_ceilrgb[2] != s->SP_ceilrgb[2])
+    if(r->planes[PLN_CEILING].surface.rgba[2] != s->SP_ceilrgb[2])
         df |= SDF_CEIL_COLOR_BLUE;
 
-    if(r->SP_floorglowrgb[0] != s->SP_floorglowrgb[0])
+    if(r->planes[PLN_FLOOR].glowrgb[0] != s->SP_floorglowrgb[0])
         df |= SDF_FLOOR_GLOW_RED;
-    if(r->SP_floorglowrgb[1] != s->SP_floorglowrgb[1])
+    if(r->planes[PLN_FLOOR].glowrgb[1] != s->SP_floorglowrgb[1])
         df |= SDF_FLOOR_GLOW_GREEN;
-    if(r->SP_floorglowrgb[2] != s->SP_floorglowrgb[2])
+    if(r->planes[PLN_FLOOR].glowrgb[2] != s->SP_floorglowrgb[2])
         df |= SDF_FLOOR_GLOW_BLUE;
 
-    if(r->SP_ceilglowrgb[0] != s->SP_ceilglowrgb[0])
+    if(r->planes[PLN_CEILING].glowrgb[0] != s->SP_ceilglowrgb[0])
         df |= SDF_CEIL_GLOW_RED;
-    if(r->SP_ceilglowrgb[1] != s->SP_ceilglowrgb[1])
+    if(r->planes[PLN_CEILING].glowrgb[1] != s->SP_ceilglowrgb[1])
         df |= SDF_CEIL_GLOW_GREEN;
-    if(r->SP_ceilglowrgb[2] != s->SP_ceilglowrgb[2])
+    if(r->planes[PLN_CEILING].glowrgb[2] != s->SP_ceilglowrgb[2])
         df |= SDF_CEIL_GLOW_BLUE;
 
-    if(r->planes[PLN_FLOOR]->glow != s->planes[PLN_FLOOR]->glow)
+    if(r->planes[PLN_FLOOR].glow != s->planes[PLN_FLOOR]->glow)
         df |= SDF_FLOOR_GLOW;
-    if(r->planes[PLN_CEILING]->glow != s->planes[PLN_CEILING]->glow)
+    if(r->planes[PLN_CEILING].glow != s->planes[PLN_CEILING]->glow)
         df |= SDF_CEIL_GLOW;
 
     // The cases where an immediate change to a plane's height is needed:
@@ -711,57 +711,57 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
     //    The clientside height should be fixed.
 
     // Should we make an immediate change in floor height?
-    if(!r->planes[PLN_FLOOR]->speed && !s->planes[PLN_FLOOR]->speed)
+    if(!r->planes[PLN_FLOOR].speed && !s->planes[PLN_FLOOR]->speed)
     {
-        if(r->planes[PLN_FLOOR]->height != s->planes[PLN_FLOOR]->height)
+        if(r->planes[PLN_FLOOR].height != s->planes[PLN_FLOOR]->height)
             df |= SDF_FLOOR_HEIGHT;
     }
     else
     {
-        if(abs(r->planes[PLN_FLOOR]->height - s->planes[PLN_FLOOR]->height) > PLANE_SKIP_LIMIT)
+        if(abs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height) > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
 
     // How about the ceiling?
-    if(!r->planes[PLN_CEILING]->speed && !s->planes[PLN_CEILING]->speed)
+    if(!r->planes[PLN_CEILING].speed && !s->planes[PLN_CEILING]->speed)
     {
-        if(r->planes[PLN_CEILING]->height != s->planes[PLN_CEILING]->height)
+        if(r->planes[PLN_CEILING].height != s->planes[PLN_CEILING]->height)
             df |= SDF_CEILING_HEIGHT;
     }
     else
     {
-        if(abs(r->planes[PLN_CEILING]->height - s->planes[PLN_CEILING]->height) > PLANE_SKIP_LIMIT)
+        if(abs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height) > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
 
     // Check planes, too.
-    if(r->planes[PLN_FLOOR]->target != s->planes[PLN_FLOOR]->target)
+    if(r->planes[PLN_FLOOR].target != s->planes[PLN_FLOOR]->target)
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(r->planes[PLN_FLOOR]->speed != s->planes[PLN_FLOOR]->speed)
+    if(r->planes[PLN_FLOOR].speed != s->planes[PLN_FLOOR]->speed)
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(r->planes[PLN_FLOOR]->surface.texmove[0] != s->planes[PLN_FLOOR]->surface.texmove[0] ||
-       r->planes[PLN_FLOOR]->surface.texmove[1] != s->planes[PLN_FLOOR]->surface.texmove[1])
+    if(r->planes[PLN_FLOOR].surface.texmove[0] != s->planes[PLN_FLOOR]->surface.texmove[0] ||
+       r->planes[PLN_FLOOR].surface.texmove[1] != s->planes[PLN_FLOOR]->surface.texmove[1])
     {
         df |= SDF_FLOOR_TEXMOVE;
     }
-    if(r->planes[PLN_CEILING]->target != s->planes[PLN_CEILING]->target)
+    if(r->planes[PLN_CEILING].target != s->planes[PLN_CEILING]->target)
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(r->planes[PLN_CEILING]->speed != s->planes[PLN_CEILING]->speed)
+    if(r->planes[PLN_CEILING].speed != s->planes[PLN_CEILING]->speed)
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
     }
-    if(r->planes[PLN_CEILING]->surface.texmove[0] != s->planes[PLN_CEILING]->surface.texmove[0]
-       || r->planes[PLN_CEILING]->surface.texmove[1] !=
+    if(r->planes[PLN_CEILING].surface.texmove[0] != s->planes[PLN_CEILING]->surface.texmove[0]
+       || r->planes[PLN_CEILING].surface.texmove[1] !=
        s->planes[PLN_CEILING]->surface.texmove[1])
     {
         df |= SDF_CEILING_TEXMOVE;
@@ -784,8 +784,8 @@ boolean Sv_RegisterCompareSector(cregister_t * reg, int number,
     {
         // The plane heights should be tracked regardless of the
         // change flags.
-        r->planes[PLN_FLOOR]->height = s->planes[PLN_FLOOR]->height;
-        r->planes[PLN_CEILING]->height = s->planes[PLN_CEILING]->height;
+        r->planes[PLN_FLOOR].height = s->planes[PLN_FLOOR]->height;
+        r->planes[PLN_CEILING].height = s->planes[PLN_CEILING]->height;
     }
 
     d->delta.flags = df;
@@ -986,7 +986,7 @@ boolean Sv_IsPlayerIgnored(int number)
  */
 void Sv_RegisterWorld(cregister_t * reg, boolean isInitial)
 {
-    int     i, j;
+    int     i;
 
     memset(reg, 0, sizeof(*reg));
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -998,12 +998,6 @@ void Sv_RegisterWorld(cregister_t * reg, boolean isInitial)
     reg->sectors = Z_Calloc(sizeof(dt_sector_t) * numsectors, PU_LEVEL, 0);
     for(i = 0; i < numsectors; i++)
     {
-        reg->sectors[i].planecount = sectors[i].planecount;
-        reg->sectors[i].planes =
-            Z_Calloc(sizeof(plane_t*) * reg->sectors[i].planecount, PU_LEVEL, 0);
-        for(j = 0; j < reg->sectors[i].planecount; ++j)
-            reg->sectors[i].planes[j] = Z_Calloc(sizeof(plane_t), PU_LEVEL, 0);
-
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
@@ -1323,33 +1317,37 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         dt_sector_t *d = &((sectordelta_t *) dest)->sector;
 
         if(sf & SDF_FLOORPIC)
-            d->SP_floorpic = s->SP_floorpic;
+            d->planes[PLN_FLOOR].surface.texture =
+                s->planes[PLN_FLOOR].surface.texture;
         if(sf & SDF_CEILINGPIC)
-            d->SP_ceilpic = s->SP_ceilpic;
+            d->planes[PLN_CEILING].surface.texture =
+                s->planes[PLN_CEILING].surface.texture;
         if(sf & SDF_LIGHT)
             d->lightlevel = s->lightlevel;
         if(sf & SDF_FLOOR_TARGET)
-            d->planes[PLN_FLOOR]->target = s->planes[PLN_FLOOR]->target;
+            d->planes[PLN_FLOOR].target = s->planes[PLN_FLOOR].target;
         if(sf & SDF_FLOOR_SPEED)
-            d->planes[PLN_FLOOR]->speed = s->planes[PLN_FLOOR]->speed;
+            d->planes[PLN_FLOOR].speed = s->planes[PLN_FLOOR].speed;
         if(sf & SDF_FLOOR_TEXMOVE)
         {
-            memcpy(d->SP_floortexmove, s->SP_floortexmove,
+            memcpy(d->planes[PLN_FLOOR].surface.texmove,
+                   s->planes[PLN_FLOOR].surface.texmove,
                    sizeof(int) * 2);
         }
         if(sf & SDF_CEILING_TARGET)
-            d->planes[PLN_CEILING]->target = s->planes[PLN_CEILING]->target;
+            d->planes[PLN_CEILING].target = s->planes[PLN_CEILING].target;
         if(sf & SDF_CEILING_SPEED)
-            d->planes[PLN_CEILING]->speed = s->planes[PLN_CEILING]->speed;
+            d->planes[PLN_CEILING].speed = s->planes[PLN_CEILING].speed;
         if(sf & SDF_CEILING_TEXMOVE)
         {
-            memcpy(d->SP_ceiltexmove, s->SP_ceiltexmove,
+            memcpy(d->planes[PLN_CEILING].surface.texmove,
+                   s->planes[PLN_CEILING].surface.texmove,
                    sizeof(int) * 2);
         }
         if(sf & SDF_FLOOR_HEIGHT)
-            d->planes[PLN_FLOOR]->height = s->planes[PLN_FLOOR]->height;
+            d->planes[PLN_FLOOR].height = s->planes[PLN_FLOOR].height;
         if(sf & SDF_CEILING_HEIGHT)
-            d->planes[PLN_CEILING]->height = s->planes[PLN_CEILING]->height;
+            d->planes[PLN_CEILING].height = s->planes[PLN_CEILING].height;
         if(sf & SDF_COLOR_RED)
             d->rgb[0] = s->rgb[0];
         if(sf & SDF_COLOR_GREEN)
@@ -1358,37 +1356,43 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
             d->rgb[2] = s->rgb[2];
 
         if(sf & SDF_FLOOR_COLOR_RED)
-            d->SP_floorrgb[0] = s->SP_floorrgb[0];
+            d->planes[PLN_FLOOR].surface.rgba[0] =
+                s->planes[PLN_FLOOR].surface.rgba[0];
         if(sf & SDF_FLOOR_COLOR_GREEN)
-            d->SP_floorrgb[1] = s->SP_floorrgb[1];
+            d->planes[PLN_FLOOR].surface.rgba[1] =
+                s->planes[PLN_FLOOR].surface.rgba[1];
         if(sf & SDF_FLOOR_COLOR_BLUE)
-            d->SP_floorrgb[2] = s->SP_floorrgb[2];
+            d->planes[PLN_FLOOR].surface.rgba[2] =
+                s->planes[PLN_FLOOR].surface.rgba[2];
 
         if(sf & SDF_CEIL_COLOR_RED)
-            d->SP_ceilrgb[0] = s->SP_ceilrgb[0];
+            d->planes[PLN_CEILING].surface.rgba[0] =
+                s->planes[PLN_CEILING].surface.rgba[0];
         if(sf & SDF_CEIL_COLOR_GREEN)
-            d->SP_ceilrgb[1] = s->SP_ceilrgb[1];
+            d->planes[PLN_CEILING].surface.rgba[1] =
+                s->planes[PLN_CEILING].surface.rgba[1];
         if(sf & SDF_CEIL_COLOR_BLUE)
-            d->SP_ceilrgb[2] = s->SP_ceilrgb[2];
+            d->planes[PLN_CEILING].surface.rgba[2] =
+                s->planes[PLN_CEILING].surface.rgba[2];
 
         if(sf & SDF_FLOOR_GLOW_RED)
-            d->planes[PLN_FLOOR]->glowrgb[0] = s->planes[PLN_FLOOR]->glowrgb[0];
+            d->planes[PLN_FLOOR].glowrgb[0] = s->planes[PLN_FLOOR].glowrgb[0];
         if(sf & SDF_FLOOR_GLOW_GREEN)
-            d->planes[PLN_FLOOR]->glowrgb[1] = s->planes[PLN_FLOOR]->glowrgb[1];
+            d->planes[PLN_FLOOR].glowrgb[1] = s->planes[PLN_FLOOR].glowrgb[1];
         if(sf & SDF_FLOOR_GLOW_BLUE)
-            d->planes[PLN_FLOOR]->glowrgb[2] = s->planes[PLN_FLOOR]->glowrgb[2];
+            d->planes[PLN_FLOOR].glowrgb[2] = s->planes[PLN_FLOOR].glowrgb[2];
 
         if(sf & SDF_CEIL_GLOW_RED)
-            d->planes[PLN_CEILING]->glowrgb[0] = s->planes[PLN_CEILING]->glowrgb[0];
+            d->planes[PLN_CEILING].glowrgb[0] = s->planes[PLN_CEILING].glowrgb[0];
         if(sf & SDF_CEIL_GLOW_GREEN)
-            d->planes[PLN_CEILING]->glowrgb[1] = s->planes[PLN_CEILING]->glowrgb[1];
+            d->planes[PLN_CEILING].glowrgb[1] = s->planes[PLN_CEILING].glowrgb[1];
         if(sf & SDF_CEIL_GLOW_BLUE)
-            d->planes[PLN_CEILING]->glowrgb[2] = s->planes[PLN_CEILING]->glowrgb[2];
+            d->planes[PLN_CEILING].glowrgb[2] = s->planes[PLN_CEILING].glowrgb[2];
 
         if(sf & SDF_FLOOR_GLOW)
-            d->planes[PLN_FLOOR]->glow = s->planes[PLN_FLOOR]->glow;
+            d->planes[PLN_FLOOR].glow = s->planes[PLN_FLOOR].glow;
         if(sf & SDF_CEIL_GLOW)
-            d->planes[PLN_CEILING]->glow = s->planes[PLN_CEILING]->glow;
+            d->planes[PLN_CEILING].glow = s->planes[PLN_CEILING].glow;
     }
     else if(src->type == DT_SIDE)
     {
