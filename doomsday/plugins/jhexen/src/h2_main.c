@@ -3,9 +3,9 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- * Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- * Copyright © 2006 Daniel Swanson <danij@dengine.net>
- * Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
