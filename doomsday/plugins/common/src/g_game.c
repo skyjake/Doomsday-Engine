@@ -49,6 +49,7 @@
 
 #include "g_controls.h"
 #include "p_mapsetup.h"
+#include "p_tick.h"
 #include "am_map.h"
 #include "hu_stuff.h"
 #include "hu_msg.h"
@@ -107,9 +108,6 @@ boolean cht_Responder(event_t *ev);
 boolean M_EditResponder(event_t *ev);
 
 void    P_InitPlayerValues(player_t *p);
-void    P_RunPlayers(void);
-boolean P_IsPaused(void);
-void    P_DoTick(void);
 
 #if __JHEXEN__
 void    P_InitSky(int map);

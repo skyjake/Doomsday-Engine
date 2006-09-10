@@ -40,6 +40,7 @@
 #include "hu_stuff.h"
 #include "hu_msg.h"
 #include "hu_lib.h"
+#include "p_tick.h" // for P_IsPaused()
 #include "g_common.h"
 #include "g_controls.h"
 #include "d_net.h"
@@ -349,6 +350,10 @@ static void HUMsg_CloseChat(void)
 static void HUMsg_TickBuffer(messagebuffer_t *msgBuff)
 {
     int i;
+
+    // Don't tick the message buffer if the game is paused.
+    if(P_IsPaused())
+        return;
 
     // Countdown to scroll-up.
     for(i = 0; i < MAX_MESSAGES; i++)

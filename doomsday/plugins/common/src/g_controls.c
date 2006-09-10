@@ -37,6 +37,7 @@
 #endif
 
 #include "g_controls.h"
+#include "p_tick.h" // for P_IsPaused()
 
 // MACROS ------------------------------------------------------------------
 
@@ -79,8 +80,6 @@ ArtifactHotkeys[] =
 #endif
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-boolean P_IsPaused(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
