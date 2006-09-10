@@ -295,7 +295,7 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
     view->x = player->mo->pos[VX] + viewxOffset;
     view->y = player->mo->pos[VY] + viewyOffset;
     view->z = player->viewz + viewzOffset;
-    if(player->flags & DDPF_CHASECAM)
+    if((player->flags & DDPF_CHASECAM) && !(player->flags & DDPF_CAMERA))
     {
         /* STUB
          * This needs to be fleshed out with a proper third person
