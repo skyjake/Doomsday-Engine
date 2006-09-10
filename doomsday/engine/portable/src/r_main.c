@@ -46,7 +46,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct viewer_s {
-    fixed_t x, y, z;
+    fixed_t pos[3];
     angle_t angle;
     float   pitch;
 } viewer_t;
@@ -111,7 +111,7 @@ static int bspFactor = 7;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Register console variables.
  */
 void R_Register(void)
@@ -133,7 +133,7 @@ void R_Register(void)
     C_VAR_INT("rend-vsync", &useVSync, 0, 0, 1);
 }
 
-/*
+/**
  * The skyflat is the special flat used for surfaces that should show
  * a view of the sky.
  */
@@ -142,7 +142,7 @@ void R_InitSkyMap(void)
     skyflatnum = R_FlatNumForName(skyflatname);
 }
 
-/*
+/**
  * Is the specified flat id the same as that used for the sky?
  *
  * @param   flat        Flat id to test.
@@ -153,7 +153,7 @@ boolean R_IsSkySurface(surface_t* surface)
     return surface->isflat && surface->texture == skyflatnum;
 }
 
-/*
+/**
  * Don't really change anything here, because i might be in the middle of
  * a refresh.  The change will take effect next refresh.
  */
@@ -165,7 +165,7 @@ void R_ViewWindow(int x, int y, int w, int h)
     viewheight = h;
 }
 
-/*
+/**
  * One-time initialization of the refresh daemon. Called by DD_Main.
  * GL has not yet been inited.
  */
@@ -187,7 +187,7 @@ void R_Init(void)
     Def_PostInit();
 }
 
-/*
+/**
  * Re-initialize almost everything.
  */
 void R_Update(void)
@@ -229,7 +229,7 @@ void R_Update(void)
 #endif
 }
 
-/*
+/**
  * Shutdown the refresh daemon.
  */
 void R_Shutdown(void)
@@ -249,40 +249,41 @@ void R_InterpolateViewer(viewer_t * start, viewer_t * end, float pos,
 {
     float   inv = 1 - pos;
 
-    out->x = inv * start->x + pos * end->x;
-    out->y = inv * start->y + pos * end->y;
-    out->z = inv * start->z + pos * end->z;
+    out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
+    out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
+    out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
 //  out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
 //  out->pitch = inv * start->pitch + pos * end->pitch;
 }
 
 void R_SetViewPos(viewer_t * v)
 {
-    viewx = v->x;
-    viewy = v->y;
-    viewz = v->z;
+    viewx = v->pos[VX];
+    viewy = v->pos[VY];
+    viewz = v->pos[VZ];
     viewangle = v->angle;
     viewpitch = v->pitch;
 }
 
-/*
+/**
  * The components whose difference is too large for interpolation will be
  * snapped to the sharp values.
  */
 void R_CheckViewerLimits(viewer_t * src, viewer_t * dst)
 {
 #define MAXMOVE (FRACUNIT*32)
-    if(abs(dst->x - src->x) > MAXMOVE || abs(dst->y - src->y) > MAXMOVE)
+    if(abs(dst->pos[VX] - src->pos[VX]) > MAXMOVE ||
+       abs(dst->pos[VY] - src->pos[VY]) > MAXMOVE)
     {
-        src->x = dst->x;
-        src->y = dst->y;
-        src->z = dst->z;
+        src->pos[VX] = dst->pos[VX];
+        src->pos[VY] = dst->pos[VY];
+        src->pos[VZ] = dst->pos[VZ];
     }
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
         src->angle = dst->angle;
 }
 
-/*
+/**
  * Retrieve the current sharp camera position.
  */
 void R_GetSharpView(viewer_t *view, ddplayer_t *player)
@@ -292,9 +293,9 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
 
     view->angle = player->clAngle + viewangleoffset;
     view->pitch = player->clLookDir;
-    view->x = player->mo->pos[VX] + viewxOffset;
-    view->y = player->mo->pos[VY] + viewyOffset;
-    view->z = player->viewz + viewzOffset;
+    view->pos[VX] = player->mo->pos[VX] + viewxOffset;
+    view->pos[VY] = player->mo->pos[VY] + viewyOffset;
+    view->pos[VZ] = player->viewz + viewzOffset;
     if((player->flags & DDPF_CHASECAM) && !(player->flags & DDPF_CAMERA))
     {
         /* STUB
@@ -309,27 +310,27 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
         angle = view->angle >> ANGLETOFINESHIFT;
         pitch >>= ANGLETOFINESHIFT;
 
-        view->x -= distance * finecosine[angle];
-        view->y -= distance * finesine[angle];
-        view->z -= distance * finesine[pitch];
+        view->pos[VX] -= distance * finecosine[angle];
+        view->pos[VY] -= distance * finesine[angle];
+        view->pos[VZ] -= distance * finesine[pitch];
     }
 
     // Check that the viewz doesn't go too high or low.
     // Cameras are not restricted.
     if(!(player->flags & DDPF_CAMERA))
     {
-        if(view->z > player->mo->ceilingz - 4 * FRACUNIT)
+        if(view->pos[VZ] > player->mo->ceilingz - 4 * FRACUNIT)
         {
-            view->z = player->mo->ceilingz - 4 * FRACUNIT;
+            view->pos[VZ] = player->mo->ceilingz - 4 * FRACUNIT;
         }
-        if(view->z < player->mo->floorz + 4 * FRACUNIT)
+        if(view->pos[VZ] < player->mo->floorz + 4 * FRACUNIT)
         {
-            view->z = player->mo->floorz + 4 * FRACUNIT;
+            view->pos[VZ] = player->mo->floorz + 4 * FRACUNIT;
         }
     }
 }
 
-/*
+/**
  * Update the sharp world data by rotating the stored values of plane
  * heights and sharp camera positions.
  */
@@ -388,7 +389,7 @@ void R_NewSharpWorld(void)
     }
 }
 
-/*
+/**
  * Prepare for rendering view(s) of the world
  * (Handles smooth plane movement).
  */
@@ -454,7 +455,7 @@ void R_SetupWorldFrame(void)
     }
 }
 
-/*
+/**
  * Prepare rendering the view of the given player.
  */
 void R_SetupFrame(ddplayer_t *player)
@@ -552,7 +553,7 @@ void R_SetupFrame(ddplayer_t *player)
     M_CrossProduct(viewfrontvec, viewupvec, viewsidevec);
 }
 
-/*
+/**
  * Draw the view of the player inside the view window.
  */
 void R_RenderPlayerView(ddplayer_t *player)
