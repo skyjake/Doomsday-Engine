@@ -81,6 +81,10 @@ MonsterMissileInfo[] =
     {MT_BRUISERSHOT, {15, 20}},
     {MT_HEADSHOT, {10, 20}},
     {MT_TROOPSHOT, {10, 20}},
+# if __DOOM64TC__
+    {MT_BRUISERSHOTRED, {15, 20}},
+    {MT_NTROSHOT, {20, 40}},
+# endif
 #elif __JHERETIC__
     {MT_IMPBALL, {10, 20}},
     {MT_MUMMYFX1, {9, 18}},
@@ -164,14 +168,7 @@ extern char *borderLumps[];
 FILE   *rndDebugfile;
 #endif
 
-// The global cfg.
-#if __JDOOM__
-jdoom_config_t cfg;
-#elif __JHERETIC__
-jheretic_config_t cfg;
-#elif __JHEXEN__
-jhexen_config_t cfg;
-#endif
+game_config_t cfg; // The global cfg.
 
 gameaction_t gameaction;
 gamestate_t gamestate = GS_DEMOSCREEN;
@@ -286,7 +283,7 @@ cvar_t gamestatusCVars[] =
 
    {"player-health", READONLYCVAR, CVT_INT, &gsvHealth, 0, 0},
    {"player-armor", READONLYCVAR, CVT_INT, &gsvArmor, 0, 0},
-   {"player-weapons-current", READONLYCVAR, CVT_INT, &gsvCurrentWeapon, 0, 0},
+   {"player-weapon-current", READONLYCVAR, CVT_INT, &gsvCurrentWeapon, 0, 0},
 
 #if __JDOOM__
    // Ammo
@@ -295,22 +292,22 @@ cvar_t gamestatusCVars[] =
    {"player-ammo-cells", READONLYCVAR, CVT_INT, &gsvAmmo[am_cell], 0, 0},
    {"player-ammo-missiles", READONLYCVAR, CVT_INT, &gsvAmmo[am_misl], 0, 0},
    // Weapons
-   {"player-weapons-fist", READONLYCVAR, CVT_INT, &gsvWeapons[wp_fist], 0, 0},
-   {"player-weapons-pistol", READONLYCVAR, CVT_INT, &gsvWeapons[wp_pistol], 0, 0},
-   {"player-weapons-shotgun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_shotgun], 0, 0},
-   {"player-weapons-chaingun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_chaingun], 0, 0},
-   {"player-weapons-mlauncher", READONLYCVAR, CVT_INT, &gsvWeapons[wp_missile], 0, 0},
-   {"player-weapons-plasmarifle", READONLYCVAR, CVT_INT, &gsvWeapons[wp_plasma], 0, 0},
-   {"player-weapons-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[wp_bfg], 0, 0},
-   {"player-weapons-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[wp_chainsaw], 0, 0},
-   {"player-weapons-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_supershotgun], 0, 0},
-   {"player-keycards-blue", READONLYCVAR, CVT_INT, &gsvKeys[it_bluecard], 0, 0},
-   {"player-keycards-yellow", READONLYCVAR, CVT_INT, &gsvKeys[it_yellowcard], 0, 0},
+   {"player-weapon-fist", READONLYCVAR, CVT_INT, &gsvWeapons[wp_fist], 0, 0},
+   {"player-weapon-pistol", READONLYCVAR, CVT_INT, &gsvWeapons[wp_pistol], 0, 0},
+   {"player-weapon-shotgun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_shotgun], 0, 0},
+   {"player-weapon-chaingun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_chaingun], 0, 0},
+   {"player-weapon-mlauncher", READONLYCVAR, CVT_INT, &gsvWeapons[wp_missile], 0, 0},
+   {"player-weapon-plasmarifle", READONLYCVAR, CVT_INT, &gsvWeapons[wp_plasma], 0, 0},
+   {"player-weapon-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[wp_bfg], 0, 0},
+   {"player-weapon-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[wp_chainsaw], 0, 0},
+   {"player-weapon-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_supershotgun], 0, 0},
    // Keys
-   {"player-keycards-red", READONLYCVAR, CVT_INT, &gsvKeys[it_redcard], 0, 0},
-   {"player-skullkeys-blue", READONLYCVAR, CVT_INT, &gsvKeys[it_blueskull], 0, 0},
-   {"player-skullkeys-yellow", READONLYCVAR, CVT_INT, &gsvKeys[it_yellowskull], 0, 0},
-   {"player-skullkeys-red", READONLYCVAR, CVT_INT, &gsvKeys[it_redskull], 0, 0},
+   {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[it_bluecard], 0, 0},
+   {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[it_yellowcard], 0, 0},
+   {"player-key-red", READONLYCVAR, CVT_INT, &gsvKeys[it_redcard], 0, 0},
+   {"player-key-blueskull", READONLYCVAR, CVT_INT, &gsvKeys[it_blueskull], 0, 0},
+   {"player-key-yellowskull", READONLYCVAR, CVT_INT, &gsvKeys[it_yellowskull], 0, 0},
+   {"player-key-redskull", READONLYCVAR, CVT_INT, &gsvKeys[it_redskull], 0, 0},
 #elif __JHERETIC__
    // Ammo
    {"player-ammo-goldwand", READONLYCVAR, CVT_INT, &gsvAmmo[am_goldwand], 0, 0},
@@ -320,88 +317,88 @@ cvar_t gamestatusCVars[] =
    {"player-ammo-phoenixrod", READONLYCVAR, CVT_INT, &gsvAmmo[am_phoenixrod], 0, 0},
    {"player-ammo-mace", READONLYCVAR, CVT_INT, &gsvAmmo[am_mace], 0, 0},
     // Weapons
-   {"player-weapons-staff", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIRST], 0, 0},
-   {"player-weapons-goldwand", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SECOND], 0, 0},
-   {"player-weapons-crossbow", READONLYCVAR, CVT_INT, &gsvWeapons[WP_THIRD], 0, 0},
-   {"player-weapons-dragonclaw", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FOURTH], 0, 0},
-   {"player-weapons-hellstaff", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIFTH], 0, 0},
-   {"player-weapons-phoenixrod", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SIXTH], 0, 0},
-   {"player-weapons-mace", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SEVENTH], 0, 0},
-   {"player-weapons-gauntlets", READONLYCVAR, CVT_INT, &gsvWeapons[WP_EIGHTH], 0, 0},
+   {"player-weapon-staff", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIRST], 0, 0},
+   {"player-weapon-goldwand", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SECOND], 0, 0},
+   {"player-weapon-crossbow", READONLYCVAR, CVT_INT, &gsvWeapons[WP_THIRD], 0, 0},
+   {"player-weapon-dragonclaw", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FOURTH], 0, 0},
+   {"player-weapon-hellstaff", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIFTH], 0, 0},
+   {"player-weapon-phoenixrod", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SIXTH], 0, 0},
+   {"player-weapon-mace", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SEVENTH], 0, 0},
+   {"player-weapon-gauntlets", READONLYCVAR, CVT_INT, &gsvWeapons[WP_EIGHTH], 0, 0},
    // Keys
-   {"player-keys-yellow", READONLYCVAR, CVT_INT, &gsvKeys[key_yellow], 0, 0},
-   {"player-keys-green", READONLYCVAR, CVT_INT, &gsvKeys[key_green], 0, 0},
-   {"player-keys-blue", READONLYCVAR, CVT_INT, &gsvKeys[key_blue], 0, 0},
+   {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[key_yellow], 0, 0},
+   {"player-key-green", READONLYCVAR, CVT_INT, &gsvKeys[key_green], 0, 0},
+   {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[key_blue], 0, 0},
    // Artifacts
-   {"player-artifacts-ring", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invulnerability], 0, 0},
-   {"player-artifacts-shadowsphere", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invisibility], 0, 0},
-   {"player-artifacts-crystalvial", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_health], 0, 0},
-   {"player-artifacts-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_superhealth], 0, 0},
-   {"player-artifacts-tomeofpower", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_tomeofpower], 0, 0},
-   {"player-artifacts-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_torch], 0, 0},
-   {"player-artifacts-firebomb", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_firebomb], 0, 0},
-   {"player-artifacts-egg", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_egg], 0, 0},
-   {"player-artifacts-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_fly], 0, 0},
-   {"player-artifacts-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleport], 0, 0},
+   {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invulnerability], 0, 0},
+   {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invisibility], 0, 0},
+   {"player-artifact-crystalvial", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_health], 0, 0},
+   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_superhealth], 0, 0},
+   {"player-artifact-tomeofpower", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_tomeofpower], 0, 0},
+   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_torch], 0, 0},
+   {"player-artifact-firebomb", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_firebomb], 0, 0},
+   {"player-artifact-egg", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_egg], 0, 0},
+   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_fly], 0, 0},
+   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleport], 0, 0},
 #elif __JHEXEN__
    // Mana
    {"player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[MANA_1], 0, 0},
    {"player-mana-green", READONLYCVAR, CVT_INT, &gsvAmmo[MANA_2], 0, 0},
    // Keys
-   {"player-keys-steel", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_1], 0, 0},
-   {"player-keys-cave", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_2], 0, 0},
-   {"player-keys-axe", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_3], 0, 0},
-   {"player-keys-fire", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_4], 0, 0},
-   {"player-keys-emerald", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_5], 0, 0},
-   {"player-keys-dungeon", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_6], 0, 0},
-   {"player-keys-silver", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_7], 0, 0},
-   {"player-keys-rusted", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_8], 0, 0},
-   {"player-keys-horn", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_9], 0, 0},
-   {"player-keys-swamp", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_A], 0, 0},
-   {"player-keys-castle", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_B], 0, 0},
+   {"player-key-steel", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_1], 0, 0},
+   {"player-key-cave", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_2], 0, 0},
+   {"player-key-axe", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_3], 0, 0},
+   {"player-key-fire", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_4], 0, 0},
+   {"player-key-emerald", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_5], 0, 0},
+   {"player-key-dungeon", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_6], 0, 0},
+   {"player-key-silver", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_7], 0, 0},
+   {"player-key-rusted", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_8], 0, 0},
+   {"player-key-horn", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_9], 0, 0},
+   {"player-key-swamp", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_A], 0, 0},
+   {"player-key-castle", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_B], 0, 0},
    // Weapons
-   {"player-weapons-first", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIRST], 0, 0},
-   {"player-weapons-second", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SECOND], 0, 0},
-   {"player-weapons-third", READONLYCVAR, CVT_INT, &gsvWeapons[WP_THIRD], 0, 0},
-   {"player-weapons-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FOURTH], 0, 0},
+   {"player-weapon-first", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIRST], 0, 0},
+   {"player-weapon-second", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SECOND], 0, 0},
+   {"player-weapon-third", READONLYCVAR, CVT_INT, &gsvWeapons[WP_THIRD], 0, 0},
+   {"player-weapon-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FOURTH], 0, 0},
    // Weapon Pieces
-   {"player-weapons-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0},
-   {"player-weapons-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0},
-   {"player-weapons-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0},
-   {"player-weapons-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0},
+   {"player-weapon-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0},
+   {"player-weapon-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0},
+   {"player-weapon-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0},
+   {"player-weapon-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0},
    // Artifacts
-   {"player-artifacts-defender", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invulnerability], 0, 0},
-   {"player-artifacts-quartzflask", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_health], 0, 0},
-   {"player-artifacts-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_superhealth], 0, 0},
-   {"player-artifacts-mysticambit", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_healingradius], 0, 0},
-   {"player-artifacts-darkservant", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_summon], 0, 0},
-   {"player-artifacts-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_torch], 0, 0},
-   {"player-artifacts-porkalator", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_egg], 0, 0},
-   {"player-artifacts-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_fly], 0, 0},
-   {"player-artifacts-repulsion", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_blastradius], 0, 0},
-   {"player-artifacts-flechette", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_poisonbag], 0, 0},
-   {"player-artifacts-banishment", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleportother], 0, 0},
-   {"player-artifacts-speed", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_speed], 0, 0},
-   {"player-artifacts-might", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_boostmana], 0, 0},
-   {"player-artifacts-bracers", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_boostarmor], 0, 0},
-   {"player-artifacts-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleport], 0, 0},
-   {"player-artifacts-skull", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzskull], 0, 0},
-   {"player-artifacts-heart", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgembig], 0, 0},
-   {"player-artifacts-ruby", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemred], 0, 0},
-   {"player-artifacts-emerald1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemgreen1], 0, 0},
-   {"player-artifacts-emerald2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemgreen2], 0, 0},
-   {"player-artifacts-sapphire1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemblue1], 0, 0},
-   {"player-artifacts-sapphire2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemblue2], 0, 0},
-   {"player-artifacts-daemoncodex", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzbook1], 0, 0},
-   {"player-artifacts-liberoscura", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzbook2], 0, 0},
-   {"player-artifacts-flamemask", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzskull2], 0, 0},
-   {"player-artifacts-glaiveseal", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzfweapon], 0, 0},
-   {"player-artifacts-holyrelic", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzcweapon], 0, 0},
-   {"player-artifacts-sigilmagus", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzmweapon], 0, 0},
-   {"player-artifacts-gear1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear1], 0, 0},
-   {"player-artifacts-gear2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear2], 0, 0},
-   {"player-artifacts-gear3", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear3], 0, 0},
-   {"player-artifacts-gear4", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear4], 0, 0},
+   {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invulnerability], 0, 0},
+   {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_health], 0, 0},
+   {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_superhealth], 0, 0},
+   {"player-artifact-mysticambit", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_healingradius], 0, 0},
+   {"player-artifact-darkservant", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_summon], 0, 0},
+   {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_torch], 0, 0},
+   {"player-artifact-porkalator", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_egg], 0, 0},
+   {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_fly], 0, 0},
+   {"player-artifact-repulsion", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_blastradius], 0, 0},
+   {"player-artifact-flechette", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_poisonbag], 0, 0},
+   {"player-artifact-banishment", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleportother], 0, 0},
+   {"player-artifact-speed", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_speed], 0, 0},
+   {"player-artifact-might", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_boostmana], 0, 0},
+   {"player-artifact-bracers", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_boostarmor], 0, 0},
+   {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleport], 0, 0},
+   {"player-artifact-skull", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzskull], 0, 0},
+   {"player-artifact-heart", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgembig], 0, 0},
+   {"player-artifact-ruby", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemred], 0, 0},
+   {"player-artifact-emerald1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemgreen1], 0, 0},
+   {"player-artifact-emerald2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemgreen2], 0, 0},
+   {"player-artifact-sapphire1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemblue1], 0, 0},
+   {"player-artifact-sapphire2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgemblue2], 0, 0},
+   {"player-artifact-daemoncodex", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzbook1], 0, 0},
+   {"player-artifact-liberoscura", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzbook2], 0, 0},
+   {"player-artifact-flamemask", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzskull2], 0, 0},
+   {"player-artifact-glaiveseal", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzfweapon], 0, 0},
+   {"player-artifact-holyrelic", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzcweapon], 0, 0},
+   {"player-artifact-sigilmagus", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzmweapon], 0, 0},
+   {"player-artifact-gear1", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear1], 0, 0},
+   {"player-artifact-gear2", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear2], 0, 0},
+   {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear3], 0, 0},
+   {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_puzzgear4], 0, 0},
 #endif
    {NULL}
 };
@@ -1513,15 +1510,63 @@ void G_DoCompleted(void)
 #endif
 
 #if __JDOOM__
+# if !__DOOM64TC__
     if(gamemode != commercial && gamemap == 9)
     {
         for(i = 0; i < MAXPLAYERS; i++)
             players[i].didsecret = true;
     }
+# endif
 
     wminfo.didsecret = players[consoleplayer].didsecret;
     wminfo.last = gamemap - 1;
 
+# if __DOOM64TC__
+    if(secretexit)
+    {
+        if(gameepisode = 0)
+        {
+            switch(gamemap)
+            {
+            case 15: wminfo.next = 30; break;
+            case 31: wminfo.next = 34; break;
+            case 9:  wminfo.next = 33; break;
+            case 1:  wminfo.next = 31; break;
+            case 20: wminfo.next = 32; break;
+            case 38: wminfo.next = 0; break;
+            }
+        }
+        else // episode 1
+        {
+            if(gamemap == 3)
+                wminfo.next = 7;
+        }
+    }
+    else
+    {
+        if(gameepisode == 0)
+        {
+            switch(gamemap)
+            {
+            case 31: wminfo.next = 15; break;
+            case 35: wminfo.next = 15; break;
+            case 33: wminfo.next = 20; break;
+            case 34: wminfo.next = 9; break;
+            case 32: wminfo.next = 37; break;
+            case 37: wminfo.next = 35; break;
+            case 38: wminfo.next = 0; break;
+            default: wminfo.next = gamemap;
+            }
+        }
+        else
+        {
+            if(gamemap == 8)
+                wminfo.next = 3;
+            else
+                wminfo.next = gamemap;
+        }
+    }
+# else
     // wminfo.next is 0 biased, unlike gamemap
     if(gamemode == commercial)
     {
@@ -1572,6 +1617,7 @@ void G_DoCompleted(void)
         else
             wminfo.next = gamemap;  // go to next level
     }
+# endif
 
     // Is there an overide for wminfo.next? (eg from an XG line)
     if(nextmap > 0)

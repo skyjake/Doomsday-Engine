@@ -1235,11 +1235,13 @@ void P_PlayerThinkWeapons(player_t *player)
         //  (read: not in the middle of an attack).
         newweapon = cmd->changeWeapon - 1;
 #if __JDOOM__
+# if !__DOOM64TC__
         if(gamemode != commercial && newweapon == wp_supershotgun)
         {
             // In non-Doom II, supershotgun is the same as normal shotgun.
             newweapon = wp_shotgun;
         }
+# endif
 #endif
         if(player->weaponowned[newweapon] && newweapon != player->readyweapon)
         {
@@ -1484,6 +1486,205 @@ void P_PlayerThinkPowers(player_t *player)
         P_PoisonDamage(player, player->poisoner, 1, true);
     }
 #endif // __JHEXEN__
+
+#if __DOOM64TC__
+    if(player->powers[pw_unsee])
+    {
+        player->powers[pw_unsee]--;
+
+        if(!player->powers[pw_unsee])
+            P_SetMessage(player, UNSEEOFF, false);
+    }
+
+    // Hacks and kludges illustrated.
+    // DJS - There MUST be a better way to do this...
+    if(player->helltime)
+    {
+        int i;
+
+        if(player->helltime == 450)
+        {
+            // imp
+            for(i = S_TROO_RUN1; i <= S_TROO_DIE4; ++i)
+                states[i].tics += 12;
+            for(i = S_TROO_XDIE1; i<=S_TROO_XDIE7; ++i)
+                states[i].tics += 12;
+
+            // possguy
+            for(i = S_POSS_RUN1; i <= S_POSS_DIE4; ++i)
+                states[i].tics += 12;
+            for(i = S_POSS_XDIE1; i <= S_POSS_XDIE8; ++i)
+                states[i].tics += 12;
+
+            // sposguy
+            for(i = S_SPOS_RUN1; i <= S_SPOS_DIE4; ++i)
+                states[i].tics += 12;
+            for(i = S_SPOS_XDIE1; i <= S_SPOS_XDIE8; ++i)
+                states[i].tics += 12;
+
+            // fattso
+            for(i = S_FATT_RUN1; i <= S_FATT_DIE9; ++i)
+                states[i].tics += 12;
+
+            // sargeant
+            for(i = S_SARG_RUN1; i <= S_SARG_DIE5; ++i)
+                states[i].tics += 12;
+
+            // head
+            for(i = S_HEAD_RUN1; i <= S_HEAD_DIE5; ++i)
+                states[i].tics += 12;
+
+            // baron
+            for(i = S_BOSS_RUN1; i <= S_BOSS_DIE6; ++i)
+                states[i].tics += 12;
+
+            // knight
+            for(i = S_BOS2_RUN1; i <= S_BOS2_DIE6; ++i)
+                states[i].tics += 12;
+
+            // baby
+            for(i = S_BSPI_RUN1; i <= S_BSPI_DIE6; ++i)
+                states[i].tics += 12;
+
+            // cyborg
+            for(i = S_CYBER_RUN1; i <= S_CYBER_DIE9; ++i)
+                states[i].tics += 12;
+
+            // painelemental
+            for(i = S_PAIN_RUN1; i <= S_PAIN_DIE6; ++i)
+                states[i].tics += 12;
+
+            // bitch
+            for(i = S_MOTH_RUN1; i <= S_MOTH_ATK5; ++i)
+                states[i].tics += 12;
+
+            // additional frames
+            for(i = S_SAR2_RUN1; i <= S_SAR2_DIE5; ++i)
+                states[i].tics += 12;
+            for(i = S_NTRO_RUN1; i <= S_NTRO_DIE4; ++i)
+                states[i].tics += 12;
+            for(i = S_NTRO_XDIE1; i <= S_NTRO_XDIE7; ++i)
+                states[i].tics += 12;
+
+            for(i = S_HED2_RUN1; i <= S_HED2_DIE5; ++i)
+                states[i].tics += 12;
+            for(i = S_POSC_RUN1; i <= S_POSC_DIE4; ++i)
+                states[i].tics += 12;
+            for(i = S_POSC_XDIE1; i <= S_POSC_XDIE8; ++i)
+                states[i].tics += 12;
+            for(i = S_BSGI_RUN1; i <= S_BSGI_DIE6; ++i)
+                states[i].tics += 12;
+            for(i = S_STALK_RUN1; i <= S_STALK_DIE10; ++i)
+                states[i].tics += 12;
+
+            // projectiles
+            mobjinfo[MT_TROOPSHOT].speed -= 7 * FRACUNIT;
+            mobjinfo[MT_HEADSHOT].speed -= 7 * FRACUNIT;
+            mobjinfo[MT_ARACHPLAZ].speed -= 7 * FRACUNIT;
+            mobjinfo[MT_BRUISERSHOTRED].speed -= 7 * FRACUNIT;
+            mobjinfo[MT_NTROSHOT].speed -= 13 * FRACUNIT;
+            mobjinfo[MT_BRUISERSHOT].speed -= 7 * FRACUNIT;
+            mobjinfo[MT_TRACER].speed -= 7 * FRACUNIT;
+            mobjinfo[MT_FIREEND].speed -= 7 * FRACUNIT;
+            mobjinfo[MT_BITCHBALL].speed -= 7 * FRACUNIT;
+            mobjinfo[MT_ACIDMISSILE].speed -= 7 * FRACUNIT;
+            mobjinfo[MT_CYBERROCKET].speed -= 15 * FRACUNIT;
+        }
+        else if(player->helltime == 1)
+        {
+            // imp
+            for(i = S_TROO_RUN1; i <= S_TROO_DIE4; ++i)
+                states[i].tics -= 12;
+            for(i = S_TROO_XDIE1; i <= S_TROO_XDIE7; i++)
+                states[i].tics -= 12;
+
+            // possguy
+            for(i = S_POSS_RUN1; i <= S_POSS_DIE4; i++)
+                states[i].tics -= 12;
+            for(i = S_POSS_XDIE1; i <= S_POSS_XDIE8; i++)
+                states[i].tics -= 12;
+
+            // sposguy
+            for(i = S_SPOS_RUN1; i <= S_SPOS_DIE4; i++)
+                states[i].tics -= 12;
+            for(i = S_SPOS_XDIE1; i <= S_SPOS_XDIE8; i++)
+                states[i].tics -= 12;
+
+            // fattso
+            for(i = S_FATT_RUN1; i <= S_FATT_DIE9; i++)
+                states[i].tics -= 12;
+
+            // sargeant
+            for(i = S_SARG_RUN1; i <= S_SARG_DIE5; i++)
+                states[i].tics -= 12;
+
+            // head
+            for(i = S_HEAD_RUN1; i <= S_HEAD_DIE5; i++)
+                states[i].tics -= 12;
+
+            // baron
+            for(i = S_BOSS_RUN1; i <= S_BOSS_DIE6; i++)
+                states[i].tics -= 12;
+
+            // knight
+            for(i = S_BOS2_RUN1; i <= S_BOS2_DIE6; i++)
+                states[i].tics -= 12;
+
+            // baby
+            for(i = S_BSPI_RUN1; i <= S_BSPI_DIE6; i++)
+                states[i].tics -= 12;
+
+            // cyborg
+            for(i = S_CYBER_RUN1; i <= S_CYBER_DIE9; i++)
+                states[i].tics -= 12;
+
+            // painelemental
+            for(i = S_PAIN_RUN1; i <= S_PAIN_DIE6; i++)
+                states[i].tics -= 12;
+
+            // bitch
+            for(i = S_MOTH_RUN1; i <= S_MOTH_ATK5; i++)
+                states[i].tics -= 12;
+
+            // additional frames
+            for(i = S_SAR2_RUN1; i <= S_SAR2_DIE5; i++)
+                states[i].tics -= 12;
+            for(i = S_NTRO_RUN1; i <= S_NTRO_DIE4; i++)
+                states[i].tics -= 12;
+            for(i = S_NTRO_XDIE1; i <= S_NTRO_XDIE7; i++)
+                states[i].tics -= 12;
+
+            for(i = S_HED2_RUN1; i <= S_HED2_DIE5; i++)
+                states[i].tics -= 12;
+            for(i = S_POSC_RUN1; i <= S_POSC_DIE4; i++)
+                states[i].tics -= 12;
+            for(i = S_POSC_XDIE1; i <= S_POSC_XDIE8; i++)
+                states[i].tics -= 12;
+            for(i = S_BSGI_RUN1; i <= S_BSGI_DIE6; i++)
+                states[i].tics -= 12;
+            for(i = S_STALK_RUN1; i <= S_STALK_DIE10; i++)
+                states[i].tics -= 12;
+
+            // projectiles
+            mobjinfo[MT_TROOPSHOT].speed += 7 * FRACUNIT;
+            mobjinfo[MT_HEADSHOT].speed += 7 * FRACUNIT;
+            mobjinfo[MT_ARACHPLAZ].speed += 7 * FRACUNIT;
+            mobjinfo[MT_BRUISERSHOTRED].speed += 7 * FRACUNIT;
+            mobjinfo[MT_NTROSHOT].speed += 13 * FRACUNIT;
+            mobjinfo[MT_BRUISERSHOT].speed += 7 * FRACUNIT;
+            mobjinfo[MT_TRACER].speed += 7 * FRACUNIT;
+            mobjinfo[MT_FIREEND].speed += 7 * FRACUNIT;
+            mobjinfo[MT_BITCHBALL].speed += 7 * FRACUNIT;
+            mobjinfo[MT_ACIDMISSILE].speed += 7 * FRACUNIT;
+            mobjinfo[MT_CYBERROCKET].speed += 15 * FRACUNIT;
+        }
+        player->helltime--;
+    }
+    if(player->devicetime < 450)
+    {
+        player->devicetime++;
+    }
+#endif
 }
 
 /**

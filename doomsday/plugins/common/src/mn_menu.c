@@ -116,8 +116,10 @@ void M_SfxVol(int option, void *data);
 void M_WeaponOrder(int option, void *data);
 void M_MusicVol(int option, void *data);
 void M_SizeDisplay(int option, void *data);
+#if !__DOOM64TC__
 void M_SizeStatusBar(int option, void *data);
 void M_StatusBarAlpha(int option, void *data);
+#endif
 void M_HUDRed(int option, void *data);
 void M_HUDGreen(int option, void *data);
 void M_HUDBlue(int option, void *data);
@@ -143,6 +145,10 @@ void M_DoSave(int slot);
 void M_DoLoad(int slot);
 static void M_QuickSave(void);
 static void M_QuickLoad(void);
+
+#if __DOOM64TC__
+void M_WeaponRecoil(int option, void *data);
+#endif
 
 void M_DrawMainMenu(void);
 void M_DrawReadThis1(void);
@@ -820,7 +826,16 @@ Menu_t  ReadDef3 = {
 #endif
 
 static MenuItem_t HUDItems[] = {
-#ifdef __JDOOM__
+#if __DOOM64TC__
+    {ITT_EFUNC, 0, "show ammo :", M_ToggleVar, 0, NULL, "hud-ammo" },
+    {ITT_EFUNC, 0, "show armor :", M_ToggleVar, 0, NULL, "hud-armor" },
+    {ITT_EFUNC, 0, "show power keys :", M_ToggleVar, 0, NULL, "hud-power" },
+    {ITT_EFUNC, 0, "show health :", M_ToggleVar, 0, NULL,"hud-health" },
+    {ITT_EFUNC, 0, "show keys :", M_ToggleVar, 0, NULL, "hud-keys" },
+
+    {ITT_LRFUNC, 0, "scale", M_HUDScale, 0},
+    {ITT_EFUNC, 0, "   HUD color", SCColorWidget, 5},
+#elif __JDOOM__
     {ITT_EFUNC, 0, "show ammo :", M_ToggleVar, 0, NULL, "hud-ammo" },
     {ITT_EFUNC, 0, "show armor :", M_ToggleVar, 0, NULL, "hud-armor" },
     {ITT_EFUNC, 0, "show face :", M_ToggleVar, 0, NULL, "hud-face" },
@@ -833,24 +848,26 @@ static MenuItem_t HUDItems[] = {
     {ITT_EFUNC, 0, "MESSAGES :", M_ChangeMessages, 0},
     {ITT_LRFUNC, 0, "CROSSHAIR :", M_Xhair, 0},
     {ITT_LRFUNC, 0, "CROSSHAIR SIZE :", M_XhairSize, 0},
-#ifndef __JDOOM__
+#if !__JDOOM__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
     {ITT_LRFUNC, 0, "SCREEN SIZE", M_SizeDisplay, 0},
-#ifndef __JDOOM__
+#if !__JDOOM__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
+#if !__DOOM64TC__
     {ITT_LRFUNC, 0, "STATUS BAR SIZE", M_SizeStatusBar, 0},
-#ifndef __JDOOM__
+# if !__JDOOM__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
-#endif
+# endif
     {ITT_LRFUNC, 0, "STATUS BAR ALPHA :", M_StatusBarAlpha, 0},
-#ifndef __JDOOM__
+# if !__JDOOM__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
+# endif
 #endif
 #if __JHEXEN__ || __JSTRIFE__
     {ITT_INERT, 0, "FULLSCREEN HUD",    NULL, 0},
@@ -874,6 +891,37 @@ static MenuItem_t HUDItems[] = {
     {ITT_LRFUNC, 0, "SCALE", M_HUDScale, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0}
+#endif
+};
+
+static Menu_t HUDDef = {
+#ifndef __JDOOM__
+    64, 30,
+#else
+    70, 40,
+#endif
+    M_DrawHUDMenu,
+#if __JHEXEN__ || __JSTRIFE__
+    23, HUDItems,
+#elif __JHERETIC__
+    25, HUDItems,
+#elif __DOOM64TC__
+    11, HUDItems,
+#elif __JDOOM__
+    13, HUDItems,
+#endif
+    0, MENU_OPTIONS, 0,
+    hu_font_a,
+    cfg.menuColor2,
+    LINEHEIGHT_A,
+#if __JHEXEN__ || __JSTRIFE__
+    0, 15        // 21
+#elif __JHERETIC__
+    0, 15        // 23
+#elif __DOOM64TC__
+    0, 11
+#elif __JDOOM__
+    0, 13
 #endif
 };
 
@@ -916,33 +964,6 @@ Menu_t ControlsDef = {
 };
 #endif
 
-static Menu_t HUDDef = {
-#ifndef __JDOOM__
-    64, 30,
-#else
-    70, 40,
-#endif
-    M_DrawHUDMenu,
-#if __JHEXEN__ || __JSTRIFE__
-    23, HUDItems,
-#elif __JHERETIC__
-    25, HUDItems,
-#elif __JDOOM__
-    13, HUDItems,
-#endif
-    0, MENU_OPTIONS, 0,
-    hu_font_a,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
-#if __JHEXEN__ || __JSTRIFE__
-    0, 15        // 21
-#elif __JHERETIC__
-    0, 15        // 23
-#elif __JDOOM__
-    0, 13
-#endif
-};
-
 static MenuItem_t WeaponItems[] = {
     {ITT_EMPTY, 0, "Use left/right to move", NULL, 0 },
     {ITT_EMPTY, 0, "item up/down the list." , NULL, 0 },
@@ -961,6 +982,9 @@ static MenuItem_t WeaponItems[] = {
 #if __JDOOM__
     {ITT_LRFUNC, 0, "9 :", M_WeaponOrder, 8 << NUMWEAPONS },
 #endif
+#if __DOOM64TC__
+    {ITT_LRFUNC, 0, "10 :", M_WeaponOrder, 9 << NUMWEAPONS },
+#endif
     {ITT_EFUNC, 0, "Use with Next/Previous :", M_ToggleVar, 0, NULL, "player-weapon-nextmode"},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_LRFUNC, 0, "AUTOSWITCH :", M_AutoSwitch, 0},
@@ -976,7 +1000,9 @@ static Menu_t WeaponDef = {
     78, 44,
 #endif
     M_DrawWeaponMenu,
-#ifdef __JDOOM__
+#if __DOOM64TC__
+    18, WeaponItems,
+#elif __JDOOM__
     17, WeaponItems,
 #elif __JHERETIC__
     15, WeaponItems,
@@ -987,7 +1013,9 @@ static Menu_t WeaponDef = {
     hu_font_a,
     cfg.menuColor2,
     LINEHEIGHT_A,
-#ifdef __JDOOM__
+#ifdef __DOOM64TC__
+    0, 18
+#elif __JDOOM__
     0, 17
 #elif __JHERETIC__
     0, 15
@@ -1002,6 +1030,10 @@ static MenuItem_t GameplayItems[] = {
     {ITT_EFUNC, 0, "USE AUTOAIM :", M_ToggleVar, 0, NULL, "ctl-aim-noauto"},
 #if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
     {ITT_EFUNC, 0, "ALLOW JUMPING :", M_ToggleVar, 0, NULL, "player-jump"},
+#endif
+
+#if __DOOM64TC__
+    { ITT_EFUNC, 0, "WEAPON RECOIL : ", M_WeaponRecoil, 0 },
 #endif
 
 #if __JDOOM__ || __JHERETIC__
@@ -1057,7 +1089,9 @@ static Menu_t GameplayDef = {
     30, 40,
 #endif
     M_DrawGameplay,
-#if __JDOOM__
+#if __DOOM64TC__
+    18, GameplayItems,
+#elif __JDOOM__
     17, GameplayItems,
 #else
     12, GameplayItems,
@@ -1066,7 +1100,9 @@ static Menu_t GameplayDef = {
     hu_font_a,
     cfg.menuColor2,
     LINEHEIGHT_A,
-#if __JDOOM__
+#if __DOOM64TC__
+    0, 18
+#elif __JDOOM__
     0, 17
 #else
     0, 12
@@ -2865,35 +2901,39 @@ void M_DrawGameplay(void)
     M_WriteMenuText(menu, idx++, yesno[cfg.noAutoAim != 0]);
 #else
 
-#ifdef __JHERETIC__
+# if __JHERETIC__
     M_DrawTitle("GAMEPLAY", 4);
-#else
+# else
     M_DrawTitle("GAMEPLAY", menu->y - 20);
-#endif
+# endif
 
     M_WriteMenuText(menu, idx++, yesno[cfg.alwaysRun != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.lookSpring != 0]);
     M_WriteMenuText(menu, idx++, yesno[!cfg.noAutoAim]);
     M_WriteMenuText(menu, idx++, yesno[cfg.jumpEnabled != 0]);
-
+# if __DOOM64TC__
+    M_WriteMenuText(menu, idx++, yesno[cfg.weaponRecoil != 0]);
+    idx = 7;
+# else
     idx = 6;
-#ifdef __JDOOM__
+# endif
+# if __JDOOM__
     M_WriteMenuText(menu, idx++, yesno[cfg.anybossdeath != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.raiseghosts != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.maxskulls != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.allowskullsinwalls != 0]);
-#endif
-#if __JDOOM__ || __JHERETIC__
+# endif
+# if __JDOOM__ || __JHERETIC__
     M_WriteMenuText(menu, idx++, yesno[cfg.monstersStuckInDoors != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.avoidDropoffs != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.fallOff != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.slidingCorpses != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.moveBlock != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.wallRunNorthOnly != 0]);
-#endif
-#if __JDOOM__
+# endif
+# if __JDOOM__
     M_WriteMenuText(menu, idx++, yesno[cfg.zombiesCanExit != 0]);
-#endif
+# endif
 #endif
 }
 
@@ -3049,7 +3089,11 @@ void M_DrawHUDMenu(void)
 #elif __JDOOM__
     M_WriteMenuText(menu, 0, yesno[cfg.hudShown[HUD_AMMO]]);
     M_WriteMenuText(menu, 1, yesno[cfg.hudShown[HUD_ARMOR]]);
+# if __DOOM64TC__
+    M_WriteMenuText(menu, 2, yesno[cfg.hudShown[HUD_POWER]]);
+# else
     M_WriteMenuText(menu, 2, yesno[cfg.hudShown[HUD_FACE]]);
+# endif
     M_WriteMenuText(menu, 3, yesno[cfg.hudShown[HUD_HEALTH]]);
     M_WriteMenuText(menu, 4, yesno[cfg.hudShown[HUD_KEYS]]);
     M_DrawSlider(menu, 5, 10, cfg.hudScale * 10 - 3 + .5f);
@@ -3058,8 +3102,10 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, 8, xhairnames[cfg.xhair]);
     M_DrawSlider(menu, 9, 9, cfg.xhairSize);
     M_DrawSlider(menu, 10, 11, cfg.screenblocks - 3 );
+# if !__DOOM64TC__
     M_DrawSlider(menu, 11, 20, cfg.sbarscale - 1);
     M_DrawSlider(menu, 12, 11, cfg.statusbarAlpha * 10 + .25f);
+# endif
 #endif
 }
 
@@ -3166,12 +3212,19 @@ void M_XhairAlpha(int option, void *data)
 }
 #endif
 
+#if __DOOM64TC__
+void M_WeaponRecoil(int option, void *data)
+{
+    cfg.weaponRecoil = !cfg.weaponRecoil;
+}
+#endif
+
 //---------------------------------------------------------------------------
 //
 // PROC M_SizeStatusBar
 //
 //---------------------------------------------------------------------------
-
+#if !__DOOM64TC__
 void M_SizeStatusBar(int option, void *data)
 {
     if(option == RIGHT_DIR)
@@ -3189,6 +3242,7 @@ void M_StatusBarAlpha(int option, void *data)
 {
     M_FloatMod10(&cfg.statusbarAlpha, option);
 }
+#endif
 
 //===========================================================================
 // M_WGCurrentColor

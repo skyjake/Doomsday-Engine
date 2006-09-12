@@ -216,8 +216,10 @@ void P_SetupForMapData(int type, int num)
  */
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 {
-#if !__JHEXEN__
+#if !__DOOM64TC__
+# if __JDOOM__ || __JHERETIC__
     int     i, flags;
+# endif
 #endif
     char    levelId[9];
 
@@ -277,6 +279,9 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     // FIXME: This applies only to DOOM format maps but the game doesn't
     // know what format the map is in (and shouldn't really) but the
     // engine doesn't know if the game wants to do this...
+# if !__DOOM64TC__
+    // DJS - Can't do this with Doom64TC as it has used the ML_INVALID bit
+    // for another purpose... doh!
     for(i = 0; i < numlines; ++i)
     {
         flags = P_GetInt(DMU_LINE, i, DMU_FLAGS);
@@ -286,6 +291,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
             P_SetInt(DMU_LINE, i, DMU_FLAGS, flags);
         }
     }
+# endif
 #endif
 
 #if __JHERETIC__
@@ -439,6 +445,31 @@ static void P_FinalizeLevel(void)
                     P_SetFloatp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, yoff + 1.0f);
             }
         }
+#if __DOOM64TC__
+        // kaiser - convert the unused xg linetypes to the new line type.
+        // DJS - Mega kludge. Update the wad instead!
+        switch(P_XLine(line)->special)
+        {
+        case 2011:
+            P_XLine(line)->special = 415;
+            break;
+
+        case 2012:
+            P_XLine(line)->special = 0;
+            break;
+
+        case 2013:
+            P_XLine(line)->special = 0;
+            break;
+
+        case 432:
+            P_SetSectorColor(line);
+            break;
+
+        default:
+            break;
+        }
+#endif
     }
     }
 

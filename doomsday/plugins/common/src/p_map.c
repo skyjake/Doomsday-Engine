@@ -53,6 +53,10 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+#if __DOOM64TC__
+static void CheckMissileImpact(mobj_t *mobj);
+#endif
+
 #if __JHERETIC__
 static void     CheckMissileImpact(mobj_t *mobj);
 #elif __JHEXEN__
@@ -175,7 +179,11 @@ static boolean PIT_StompThing(mobj_t *mo, void *data)
         return true;
     }
 
-#if __JDOOM__
+#if __DOOM64TC__ || __WOLFTC__
+    // monsters don't stomp things
+    if(!tmthing->player)
+        return false;
+#elif __JDOOM__
     // monsters don't stomp things except on boss level
     if(!tmthing->player && gamemap != 30)
         return false;
@@ -936,6 +944,14 @@ static boolean PIT_CheckLine(line_t *ld, void *data)
         }
     }
 
+#if __DOOM64TC__
+    if((tmthing->flags & MF_MISSILE))
+    {
+        if(P_GetIntp(ld, DMU_FLAGS) & ML_BLOCKALL)  // explicitly blocking everything
+            return tmunstuck && !untouched(ld);  // killough $unstuck: allow escape
+    }
+#endif
+
     // set openrange, opentop, openbottom
     P_LineOpening(ld);
 
@@ -1257,6 +1273,15 @@ static boolean P_TryMove2(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
         }
 #endif
 
+#if __DOOM64TC__
+        if(!(thing->flags & MF_TELEPORT) && thing->type != MT_SPAWNFIRE
+            && tmfloorz - thing->pos[VZ] > 24 * FRACUNIT)
+        { // Too big a step up
+            CheckMissileImpact(thing);
+            return false;
+        }
+#endif
+
 #if __JHEXEN__
         // must stay within a sector of a certain floor type?
         if((thing->flags2 & MF2_CANTLEAVEFLOORPIC) &&
@@ -1427,6 +1452,11 @@ static boolean PTR_ShootTraverse(intercept_t * in)
         xline = P_XLine(li);
         if(xline->special)
             P_ActivateLine(li, shootthing, 0, SPAC_IMPACT);
+
+#if __DOOM64TC__
+        if(P_GetIntp(li, DMU_FLAGS) & ML_BLOCKALL) // d64tc
+            goto hitline;
+#endif
 
         if(!(P_GetIntp(li, DMU_FLAGS) & ML_TWOSIDED))
             goto hitline;
@@ -1995,7 +2025,6 @@ static boolean PTR_UseTraverse(intercept_t * in)
         return false;       // don't use back side
 #endif
 
-
     P_ActivateLine(in->d.line, usething, side, SPAC_USE);
 
 #if !__JHEXEN__
@@ -2166,6 +2195,11 @@ static boolean PTR_SlideTraverse(intercept_t * in)
 
         goto isblocking;
     }
+
+#if __DOOM64TC__
+    if(P_GetIntp(li, DMU_FLAGS) & ML_BLOCKALL)  // d64tc
+        goto isblocking;
+#endif
 
     P_LineOpening(li); // set openrange, opentop, openbottom
 
@@ -2363,7 +2397,12 @@ static boolean PIT_ChangeSector(mobj_t *thing, void *data)
             }
         }
 #else
-# if __JDOOM__
+# if __DOOM64TC__
+        // kaiser - the def file is too fucked up..
+        // DJS - FIXME!
+        P_SetMobjState(thing, S_HEADCANDLES + 3);
+        S_StartSound(sfx_slop, thing);
+# elif __JDOOM__
         P_SetMobjState(thing, S_GIBS);
 # endif
         thing->flags &= ~MF_SOLID;
@@ -2460,7 +2499,7 @@ boolean P_TestMobjLocation(mobj_t *mobj)
 }
 #endif
 
-#if __JHERETIC__
+#if __DOOM64TC__ || __JHERETIC__
 static void CheckMissileImpact(mobj_t *mobj)
 {
     line_t* ld;

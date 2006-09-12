@@ -26,6 +26,9 @@ typedef enum {
 #if __JDOOM__
     tc_glow,
     tc_flicker,
+# if __DOOM64TC__
+    tc_blink,
+# endif
 #else
     tc_glow,
 #endif

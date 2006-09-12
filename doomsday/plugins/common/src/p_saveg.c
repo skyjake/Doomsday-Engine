@@ -47,7 +47,16 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __WOLFTC__
+#if __DOOM64TC__
+# define MY_SAVE_MAGIC         0x1D6420F4
+# define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
+# define MY_SAVE_VERSION       5
+# define SAVESTRINGSIZE        24
+# define CONSISTENCY           0x2c
+# define SAVEGAMENAME          "D64Sav"
+# define CLIENTSAVEGAMENAME    "D64Cl"
+# define SAVEGAMEEXTENSION     "6sg"
+#elif __WOLFTC__
 # define MY_SAVE_MAGIC         0x1A8AFF08
 # define MY_CLIENT_SAVE_MAGIC  0x2A8AFF08
 # define MY_SAVE_VERSION       5
@@ -106,6 +115,9 @@ typedef struct playerheader_s {
     int     numweapons;
     int     numammotypes;
     int     numpsprites;
+#if __DOOM64TC__
+    int     numartifacts;
+#endif
 } playerheader_t;
 
 // Thinker Save flags
@@ -146,6 +158,11 @@ static int  SV_ReadGlow(glow_t* glow);
 #if __JDOOM__
 static void SV_WriteFlicker(fireflicker_t* flicker);
 static int  SV_ReadFlicker(fireflicker_t* flicker);
+#endif
+
+#if __DOOM64TC__
+static void SV_WriteBlink(lightblink_t* flicker);
+static int  SV_ReadBlink(lightblink_t* flicker);
 #endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -262,6 +279,16 @@ static thinkerinfo_t thinkerInfo[] = {
       SV_WriteFlicker,
       SV_ReadFlicker,
       sizeof(fireflicker_t)
+    },
+#endif
+#if __DOOM64TC__
+    {
+      tc_blink,
+      T_LightBlink,
+      TSF_SPECIAL,
+      SV_WriteBlink,
+      SV_ReadBlink,
+      sizeof(lightblink_t)
     },
 #endif
     // Terminator
@@ -483,8 +510,24 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(pl->armorpoints);
     SV_WriteLong(pl->armortype);
 
+#if __DOOM64TC__
+    SV_WriteLong(pl->laserpw); // d64tc
+    SV_WriteLong(pl->lasericon1); // added in outcast
+    SV_WriteLong(pl->lasericon2); // added in outcast
+    SV_WriteLong(pl->lasericon3); // added in outcast
+    SV_WriteLong(pl->outcastcycle); // added in outcast
+    SV_WriteLong(pl->helltime); // added in outcast
+    SV_WriteLong(pl->devicetime); // added in outcast
+#endif
+
     SV_Write(pl->powers, playerHeader.numpowers * 4);
+#if __DOOM64TC__
+    //SV_WriteLong(cheatenable); // added in outcast
+#endif
     SV_Write(pl->keys, playerHeader.numkeys * 4);
+#if __DOOM64TC__
+    SV_Write(pl->artifacts, playerHeader.numartifacts * 4);
+#endif
     SV_WriteLong(pl->backpack);
 
     SV_Write(pl->frags, playerHeader.numfrags * 4);
@@ -551,8 +594,23 @@ static void SV_ReadPlayer(player_t *pl)
     pl->armorpoints = SV_ReadLong();
     pl->armortype = SV_ReadLong();
 
+#if __DOOM64TC__
+    pl->laserpw = SV_ReadLong(); // d64tc
+    pl->lasericon1 = SV_ReadLong(); // added in outcast
+    pl->lasericon2 = SV_ReadLong(); // added in outcast
+    pl->lasericon3 = SV_ReadLong(); // added in outcast
+    pl->outcastcycle = SV_ReadLong(); // added in outcast
+    pl->helltime = SV_ReadLong(); // added in outcast
+    pl->devicetime = SV_ReadLong(); // added in outcast
+#endif
     SV_Read(pl->powers, playerHeader.numpowers * 4);
+#if __DOOM64TC__
+    /*cheatenable =*/ SV_ReadLong(); // added in outcast
+#endif
     SV_Read(pl->keys, playerHeader.numkeys * 4);
+#if __DOOM64TC__
+    SV_Read(pl->artifacts, playerHeader.numartifacts * 4);
+#endif
     pl->backpack = SV_ReadLong();
 
     SV_Read(pl->frags, playerHeader.numfrags * 4);
@@ -696,6 +754,11 @@ static void SV_WriteMobj(mobj_t *mobj)
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
     SV_WriteLong(mo.reactiontime);
+
+#if __DOOM64TC__
+    SV_WriteLong(mo.floatswitch); // added in outcast
+    SV_WriteLong(mo.floattics); // added in outcast
+#endif
 
     // If >0, the target will be chased
     // no matter what (even if shot)
@@ -858,6 +921,11 @@ static int SV_ReadMobj(thinker_t *th)
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
     mo->reactiontime = SV_ReadLong();
+
+#if __DOOM64TC__
+    mo->floatswitch = SV_ReadLong(); // added in outcast
+    mo->floattics = SV_ReadLong(); // added in outcast
+#endif
 
     // If >0, the target will be chased
     // no matter what (even if shot)
@@ -1337,6 +1405,9 @@ static void P_ArchivePlayerHeader(void)
     ph->numweapons = NUMWEAPONS;
     ph->numammotypes = NUMAMMO;
     ph->numpsprites = NUMPSPRITES;
+#if __DOOM64TC__
+    ph->numartifacts = NUMARTIFACTS;
+#endif
 
     SV_WriteLong(ph->numpowers);
     SV_WriteLong(ph->numkeys);
@@ -1344,6 +1415,9 @@ static void P_ArchivePlayerHeader(void)
     SV_WriteLong(ph->numweapons);
     SV_WriteLong(ph->numammotypes);
     SV_WriteLong(ph->numpsprites);
+#if __DOOM64TC__
+    SV_WriteLong(ph->numartifacts);
+#endif
 }
 
 /*
@@ -1362,6 +1436,9 @@ static void P_UnArchivePlayerHeader(void)
         playerHeader.numweapons = SV_ReadLong();
         playerHeader.numammotypes = SV_ReadLong();
         playerHeader.numpsprites = SV_ReadLong();
+#if __DOOM64TC__
+        playerHeader.numartifacts = SV_ReadLong();
+#endif
     }
     else // The old format didn't save the counts.
     {
@@ -2058,6 +2135,53 @@ static int SV_ReadFlicker(fireflicker_t* flicker)
     flicker->minlight = SV_ReadLong();
 
     flicker->thinker.function = T_FireFlicker;
+    return true; // Add this thinker.
+}
+#endif
+
+#if __DOOM64TC__
+static void SV_WriteBlink(lightblink_t *blink)
+{
+    SV_WriteByte(tc_blink);
+
+    SV_WriteByte(1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    SV_WriteLong(P_ToIndex(blink->sector));
+
+    SV_WriteLong(blink->count);
+    SV_WriteLong(blink->maxlight);
+    SV_WriteLong(blink->minlight);
+    SV_WriteLong(blink->maxtime);
+    SV_WriteLong(blink->mintime);
+}
+
+/*
+ * T_LightBlink was added to save games in ver5,
+ * therefore we don't have an old format to support
+ */
+static int SV_ReadBlink(lightblink_t *blink)
+{
+    sector_t* sector;
+    /*int ver =*/ SV_ReadByte(); // version byte.
+
+    // Note: the thinker class byte has already been read.
+    sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+
+    if(!sector)
+        Con_Error("tc_lightblink: bad sector number\n");
+
+    blink->sector = sector;
+
+    blink->count = SV_ReadLong();
+    blink->maxlight = SV_ReadLong();
+    blink->minlight = SV_ReadLong();
+    blink->maxtime = SV_ReadLong();
+    blink->mintime = SV_ReadLong();
+
+    blink->thinker.function = T_LightBlink;
     return true; // Add this thinker.
 }
 #endif

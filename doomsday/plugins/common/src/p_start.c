@@ -116,7 +116,8 @@ void P_Init(void)
 
     megaspherehealth = 200;
 
-    soulspherehealth = 100;
+    //soulspherehealth = 100; // d64tc
+    soulspherehealth = 50;
     soulspherelimit = 200;
 
     armorpoints[0] = 100;

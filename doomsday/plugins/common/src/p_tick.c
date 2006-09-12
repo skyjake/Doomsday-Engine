@@ -157,6 +157,10 @@ void P_DoTick(void)
     P_RunThinkers();
     P_UpdateSpecials();
 
+#if __DOOM64TC__
+    P_ThunderSector();
+#endif
+
 #if __JDOOM__ || __JSTRIFE__
     P_RespawnSpecials();
 #elif __JHERETIC__

@@ -35,7 +35,7 @@
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
-#  include "jstrife.h
+#  include "jstrife.h"
 #endif
 
 #include "hu_stuff.h"
@@ -333,9 +333,11 @@ void DrawGameSetupMenu(void)
 
 #if __JDOOM__ || __JHERETIC__
 
-#  ifdef __JDOOM__
+# if __JDOOM__
+#  if !__DOOM64TC__
     if(gamemode != commercial)
 #  endif
+# endif
     {
         sprintf(buf, "%i", cfg.netEpisode);
         M_WriteMenuText(menu, idx++, buf);
@@ -348,14 +350,14 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, boolText[cfg.netRespawn]);
     M_WriteMenuText(menu, idx++, boolText[cfg.netJumping]);
 
-#  if __JDOOM__
+# if __JDOOM__
     M_WriteMenuText(menu, idx++, boolText[cfg.netBFGFreeLook]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopDamage]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopWeapons]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noCoopAnything]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noNetBFG]);
     M_WriteMenuText(menu, idx++, boolText[cfg.noTeamDamage]);
-#  endif                        // __JDOOM__
+# endif                        // __JDOOM__
 #elif __JHEXEN__ || __JSTRIFE__
 
     sprintf(buf, "%i", cfg.netMap);
@@ -470,6 +472,7 @@ void SCEnterMultiplayerMenu(int option, void *data)
 
     // Choose the correct items for the Game Setup menu.
 #ifdef __JDOOM__
+# if !__DOOM64TC__
     if(gamemode == commercial)
     {
         GameSetupMenu.items = GameSetupItems2;
@@ -477,6 +480,7 @@ void SCEnterMultiplayerMenu(int option, void *data)
             NUM_GAMESETUP_ITEMS - 1;
     }
     else
+# endif
 #endif
     {
         GameSetupMenu.items = GameSetupItems1;
@@ -522,7 +526,20 @@ void SCEnterJoinMenu(int option, void *data)
 void SCEnterGameSetup(int option, void *data)
 {
     // See to it that the episode and mission numbers are correct.
-#ifdef __JDOOM__
+#if __DOOM64TC__
+    if(cfg.netEpisode > 2)
+        cfg.netEpisode = 2;
+    if(cfg.netEpisode == 1)
+    {
+        if(cfg.netMap > 39)
+            cfg.netMap = 39;
+    }
+    else
+    {
+        if(cfg.netMap > 7)
+            cfg.netMap = 7;
+    }
+#elif __JDOOM__
     if(gamemode == commercial)
     {
         cfg.netEpisode = 1;
@@ -589,7 +606,17 @@ void SCGameSetupDeathmatch(int option, void *data)
 
 void SCGameSetupEpisode(int option, void *data)
 {
-#ifdef __JDOOM__
+#if __DOOM64TC__
+    if(option == RIGHT_DIR)
+    {
+        if(cfg.netEpisode < 2)
+            cfg.netEpisode++;
+    }
+    else if(cfg.netEpisode > 1)
+    {
+        cfg.netEpisode--;
+    }
+#elif __JDOOM__
     if(gamemode == shareware)
     {
         cfg.netEpisode = 1;
@@ -604,7 +631,7 @@ void SCGameSetupEpisode(int option, void *data)
     {
         cfg.netEpisode--;
     }
-#elif defined(__JHERETIC__)
+#elif __JHERETIC__
     if(shareware)
     {
         cfg.netEpisode = 1;
@@ -627,13 +654,16 @@ void SCGameSetupMission(int option, void *data)
 {
     if(option == RIGHT_DIR)
     {
-#ifdef __JDOOM__
+#if __DOOM64TC__
+        if(cfg.netMap < (cfg.netEpisode == 1? 39 : 7))
+            cfg.netMap++;
+#elif __JDOOM__
         if(cfg.netMap < (gamemode == commercial ? 32 : 9))
             cfg.netMap++;
-#elif defined __JHERETIC__
+#elif __JHERETIC__
         if(cfg.netMap < 9)
             cfg.netMap++;
-#elif defined __JHEXEN__ || __JSTRIFE__
+#elif __JHEXEN__ || __JSTRIFE__
         if(cfg.netMap < 31)
             cfg.netMap++;
 #endif

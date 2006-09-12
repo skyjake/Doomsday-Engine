@@ -306,7 +306,13 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
 {
     weapontype_t *list;
     int lvl, i;
-#if __JDOOM__
+#if __DOOM64TC__
+    static weapontype_t  wp_list[] = {
+        wp_fist, wp_pistol, wp_shotgun, wp_supershotgun, wp_chaingun,
+        wp_missile, wp_plasma, wp_bfg, wp_chainsaw, wp_unmaker
+    };
+
+#elif __JDOOM__
     static weapontype_t  wp_list[] = {
         wp_fist, wp_pistol, wp_shotgun, wp_supershotgun, wp_chaingun,
         wp_missile, wp_plasma, wp_bfg, wp_chainsaw
@@ -747,5 +753,22 @@ DEFCC(CCmdSpawnMobj)
     {
         mo->angle = ((int) (strtod(argv[5], 0) / 360 * FRACUNIT)) << 16;
     }
+
+#if __DOOM64TC__
+    // d64tc > kaiser - another cheesy hack!!!
+    if(mo->type == MT_DART || mo->type == MT_RDART)
+    {
+        S_StartSound(sfx_skeswg, mo); // we got darts! spawn skeswg sound!
+    }
+    else
+    {
+        mo->translucency = 255;
+
+        S_StartSound(sfx_itmbk, mo); // if not dart, then spawn itmbk sound
+        mo->intflags = MIF_FADE;
+        mo->translucency = 255;
+    }
+    // << d64tc
+#endif
     return true;
 }
