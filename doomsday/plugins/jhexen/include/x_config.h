@@ -65,6 +65,10 @@ typedef struct {
     int             xhair, xhairSize;
     byte            xhairColor[4];
 
+    int             sbarscale;
+    float           statusbarAlpha;
+    float           statusbarCounterAlpha;
+
     int             msgCount;
     float           msgScale;
     int             msgUptime;
