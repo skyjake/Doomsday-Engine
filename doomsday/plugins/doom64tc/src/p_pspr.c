@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
@@ -20,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -246,6 +247,19 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
         if(psp->state == &states[wminfo->readystate] && wminfo->readysound)
             S_StartSound(wminfo->readysound, player->plr->mo);
 
+        // d64tc >
+        // DJS - FIXME!
+        if(player->readyweapon == wp_unmaker)
+        {
+            if(actions[A_WEAPON10].on &&
+               (player->artifacts[it_helltime] || player->artifacts[it_float]))
+            {
+                player->outcastcycle++;
+                player->pendingweapon = wp_unmaker;
+            }
+        }
+        // < d64tc
+
         // check for change
         //  if player is dead, put the weapon away
         if(player->pendingweapon != WP_NOCHANGE || !player->health)
@@ -337,6 +351,9 @@ void C_DECL A_Lower(player_t *player, pspdef_t * psp)
         return;
     }
 
+    if(player->readyweapon == wp_plasma) // d64tc
+        P_SetPsprite(player, ps_flash, S_NULL);
+
     // The old weapon has been lowered off the screen,
     // so change the weapon and start raising it
     if(!player->health)
@@ -370,6 +387,50 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
+
+    // d64tc >
+    if(player->readyweapon == wp_plasma)
+    {
+        P_SetPsprite(player, ps_flash, S_PLASMASHOCK1);
+    }
+    else if(player->readyweapon == wp_unmaker)
+    {
+        if(player->artifacts[it_helltime] ||
+            (player->artifacts[it_helltime] && player->artifacts[it_float]))
+        {
+            if(player->outcastcycle == 1 && player->artifacts[it_helltime])
+            {
+                P_SetPsprite(player, ps_flash, S_HTIMEBLINK1);
+            }
+            else if(player->outcastcycle == 2 && player->artifacts[it_float])
+            {
+                P_SetPsprite(player, ps_flash, S_LDBLINK1);
+            }
+            else
+            {
+                player->outcastcycle = 0;
+                P_SetPsprite(player, ps_flash, S_NULL);
+            }
+        }
+
+        if(player->artifacts[it_float] && !player->artifacts[it_helltime])
+        {
+            if(player->outcastcycle == 1 && player->artifacts[it_float])
+            {
+                P_SetPsprite(player, ps_flash, S_LDBLINK1);
+            }
+            else
+            {
+                player->outcastcycle = 0;
+                P_SetPsprite(player, ps_flash, S_NULL);
+            }
+        }
+    }
+    else
+    {
+        P_SetPsprite(player, ps_flash, S_NULL);
+    }
+    // < d64tc
 
     psp->sy -= RAISESPEED;
 
@@ -410,8 +471,10 @@ void C_DECL A_Punch(player_t *player, pspdef_t * psp)
 
     angle = player->plr->mo->angle;
     angle += (P_Random() - P_Random()) << 18;
-    slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
-    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
+    //slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
+    //P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
+    slope = P_AimLineAttack(player->plr->mo, angle, PLRMELEERANGE); // d64tc
+    P_LineAttack(player->plr->mo, angle, PLRMELEERANGE, slope, damage); // d64tc
 
     // turn to face target
     if(linetarget)
@@ -439,8 +502,10 @@ void C_DECL A_Saw(player_t *player, pspdef_t * psp)
     angle += (P_Random() - P_Random()) << 18;
 
     // use meleerange + 1 se the puff doesn't skip the flash
-    slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE + 1);
-    P_LineAttack(player->plr->mo, angle, MELEERANGE + 1, slope, damage);
+    //slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE + 1); // d64tc
+    slope = P_AimLineAttack(player->plr->mo, angle, PLRMELEERANGE + 1); // d64tc
+    //P_LineAttack(player->plr->mo, angle, MELEERANGE + 1, slope, damage);
+    P_LineAttack(player->plr->mo, angle, PLRMELEERANGE + 1, slope, damage); // d64tc
 
     if(!linetarget)
     {
@@ -457,15 +522,15 @@ void C_DECL A_Saw(player_t *player, pspdef_t * psp)
                         linetarget->pos[VX], linetarget->pos[VY]);
     if(angle - player->plr->mo->angle > ANG180)
     {
-        if(angle - player->plr->mo->angle < -ANG90 / 20)
-            player->plr->mo->angle = angle + ANG90 / 21;
+        if(angle - player->plr->mo->angle < -ANG90 / 32) // d64tc was "/ 20"
+            player->plr->mo->angle = angle + ANG90 / 32; // d64tc was "/ 21"
         else
             player->plr->mo->angle -= ANG90 / 20;
     }
     else
     {
-        if(angle - player->plr->mo->angle > ANG90 / 20)
-            player->plr->mo->angle = angle - ANG90 / 21;
+        if(angle - player->plr->mo->angle > ANG90 / 32) // d64tc was "/ 20"
+            player->plr->mo->angle = angle - ANG90 / 32; // d64tc was "/ 21"
         else
             player->plr->mo->angle += ANG90 / 20;
     }
@@ -479,6 +544,40 @@ void C_DECL A_FireMissile(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
     P_SpawnPlayerMissile(player->plr->mo, MT_ROCKET);
+
+    // d64tc >
+    if (cfg.weaponRecoil)
+    {
+        angle_t angle = player->plr->mo->angle + ANG180;
+
+        angle >>= ANGLETOFINESHIFT;
+        player->plr->mo->momx += FixedMul(4 * FRACUNIT, finecosine[angle]);
+        player->plr->mo->momy += FixedMul(4 * FRACUNIT, finesine[angle]);
+    }
+    // < d64tc
+}
+
+/**
+ * d64tc: Spawns a smoke sprite during the missle attack
+ */
+void C_DECL A_Rocketpuff(mobj_t *smoke)
+{
+    if(!smoke)
+        return;
+
+    P_SpawnMobj(smoke->pos[VX], smoke->pos[VY], smoke->pos[VZ], MT_ROCKETPUFF);
+
+    if(smoke->type == MT_GRENADE)
+    {
+        smoke->reactiontime -= 8;
+        if(smoke->reactiontime <= 0)
+        {
+            smoke->momx = smoke->momy = smoke->momz = 0;
+
+            P_SetMobjState(smoke, smoke->info->deathstate);
+            S_StartSound(smoke->info->deathsound, smoke);
+        }
+    }
 }
 
 void C_DECL A_FireBFG(player_t *player, pspdef_t * psp)
@@ -498,11 +597,253 @@ void C_DECL A_FirePlasma(player_t *player, pspdef_t * psp)
                  weaponinfo[player->readyweapon][player->class].mode[0].flashstate +
                  (P_Random() & 1));
 
+    P_SetPsprite(player, ps_flash, S_NULL); // d64tc wha?
+
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
 
     P_SpawnPlayerMissile(player->plr->mo, MT_PLASMA);
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_DrawPlasmaTube(player_t *player, pspdef_t *psp)
+{
+    P_SetPsprite(player, ps_flash, S_PLASMASHOCK1);
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_PlasmaBuzz(player_t *player)
+{
+    S_StartSound(sfx_psidl, player->plr->mo);
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_Lasersmoke(mobj_t *spark)
+{
+    P_SpawnMobj(spark->pos[VX], spark->pos[VY], spark->pos[VZ], MT_LASERDUST);
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_RevealFloater(mobj_t *mo)
+{
+    mobj_t *mo2;
+    fixed_t pos[3];
+
+    memcpy(pos, mo->pos, sizeof(pos));
+    pos[VX] += ((P_Random() % 63) - 32) * FRACUNIT;
+    pos[VY] += ((P_Random() % 63) - 32) * FRACUNIT;
+
+    mo2 = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_LASERDUST);
+
+    mo2->flags &= ~MF_NOGRAVITY;
+    mo->reactiontime--;
+    // DJS - Is this ever true? We've just spawned it so it will be -1...
+    // FIXME?
+    if(mo->reactiontime == 0)
+    {
+        P_SetMobjState(mo, S_TBALLX1);
+    }
+}
+
+/**
+ * d64tc
+ */
+void A_SpawnFloater(player_t *player)
+{
+    angle_t ang;
+    mobj_t *mo, *floater;
+    fixed_t pos[3];
+
+    if(!player || !player->plr->mo)
+        return;
+
+    mo = player->plr->mo;
+    ang = mo->angle >> ANGLETOFINESHIFT;
+
+    memcpy(pos, mo->pos, sizeof(pos));
+    pos[VX] += FixedMul(mo->radius * 4, finecosine[ang]);
+    pos[VY] += FixedMul(mo->radius * 4, finesine[ang]);
+
+    floater = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_FLOATER);
+
+    if(floater)
+    {
+        floater->angle = mo->angle;
+        floater->momz += 1 * FRACUNIT;
+    }
+}
+
+/**
+ * d64tc
+ * kaiser - thanks to jow for giving me a jumpstart :)
+ * DJS - TODO: Split into multiple firing modes.
+ */
+void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
+{
+    mobj_t *pmo;
+
+    if(player->outcastcycle == 1 && player->artifacts[it_helltime])
+    {
+        P_SetPsprite(player, ps_flash, S_HTIMEBLINK3);
+    }
+    else if((player->outcastcycle == 2 && player->artifacts[it_float]) ||
+            (player->outcastcycle == 1 &&
+             (player->artifacts[it_float] && !(player->artifacts[it_helltime]))
+            ))
+    {
+        P_SetPsprite(player, ps_flash, S_LDBLINK3);
+    }
+    else
+    {
+        P_SetPsprite(player, ps_flash,
+                     weaponinfo[player->readyweapon][player->class].mode[0].flashstate);
+    }
+
+    if(IS_CLIENT)
+        return;
+
+    if(player->outcastcycle == 1 && player->artifacts[it_helltime] &&
+       !player->helltime)
+    {
+        if(player->health >= 20)
+        {
+            if(!(player->cheats & CF_GODMODE))
+            {
+                player->health -= 20;
+            }
+
+            player->helltime = 450;
+
+            P_SetMessage(player, HELLTIMEON, false);
+            S_StartSound(sfx_htime, player->plr->mo);
+        }
+        else
+        {
+            P_SetMessage(player, HELLTIMEWEAK, false);
+        }
+
+    }
+    else if((player->outcastcycle == 2 && player->artifacts[it_float]) ||
+            (player->outcastcycle == 1 &&
+             (player->artifacts[it_float] && !(player->artifacts[it_helltime]))
+            ))
+    {
+        if(player->devicetime < 80)
+        {
+            P_SetMessage(player, UNMAKERCHARGE, false);
+            return;
+        }
+
+        if(player->devicetime >= 81)
+            player->devicetime -= 80;
+
+        if(player->devicetime)
+        {
+            A_SpawnFloater(player);
+            S_StartSound(sfx_itmbk, player->plr->mo);
+        }
+    }
+    else
+    {
+        P_ShotAmmo(player);
+
+        pmo = player->plr->mo;
+        player->update |= PSF_AMMO;
+
+        if(player->laserpw == 0)
+        {
+            P_SpawnPlayerMissile(player->plr->mo, MT_LASERSHOTWEAK);
+        }
+        else if(player->laserpw == 1)
+        {
+            P_SpawnPlayerMissile(player->plr->mo, MT_LASERSHOT);
+        }
+        else if(player->laserpw == 2)
+        {
+            P_ShotAmmo(player); // adds an extra ammo subtractor
+
+            P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle - (ANG45 / 8));
+            P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle + (ANG45 / 8));
+        }
+        else if(player->laserpw == 3)
+        {
+            P_ShotAmmo(player); //adds another subtractor, now consumes 3 cells!
+            P_ShotAmmo(player);
+
+            P_SpawnPlayerMissile(pmo, MT_LASERSHOT);
+            P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle - (ANG45 / 6));
+            P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle + (ANG45 / 6));
+        }
+    }
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_FireDoubleLaser(player_t *player, pspdef_t *psp)
+{
+    mobj_t *pmo;
+
+    P_ShotAmmo(player);
+
+    pmo = player->plr->mo;
+    player->update |= PSF_AMMO;
+
+    if(IS_CLIENT)
+        return;
+
+    P_SpawnPlayerMissile(pmo, MT_LASERSHOT);
+    P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle - (ANG45 / 8));
+    P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle + (ANG45 / 8));
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_FireDoubleLaser1(player_t *player, pspdef_t *psp)
+{
+    mobj_t *pmo;
+
+    P_ShotAmmo(player);
+
+    pmo = player->plr->mo;
+    player->update |= PSF_AMMO;
+
+    if(IS_CLIENT)
+        return;
+
+    P_SpawnPlayerMissile(pmo, MT_LASERSHOT);
+    P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle - (ANG45 / 4));
+    P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle + (ANG45 / 4));
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_FireDoubleLaser2(player_t *player, pspdef_t *psp)
+{
+    mobj_t *pmo;
+
+    P_ShotAmmo(player);
+
+    pmo = player->plr->mo;
+    player->update |= PSF_AMMO;
+
+    if(IS_CLIENT)
+        return;
+
+    P_SpawnPlayerMissile(pmo, MT_LASERSHOT);
+    P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle - (ANG45 / 3));
+    P_SPMAngle(pmo, MT_LASERSHOT, pmo->angle + (ANG45 / 3));
 }
 
 /*
@@ -601,6 +942,18 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t * psp)
 
     P_BulletSlope(player->plr->mo);
 
+    // d64tc >
+    if(cfg.weaponRecoil)
+    {
+        player->plr->mo->angle += ANG90/90;
+        angle = player->plr->mo->angle + ANG180;
+        angle >>= ANGLETOFINESHIFT;
+
+        player->plr->mo->momx += FixedMul(4 * FRACUNIT, finecosine[angle]);
+        player->plr->mo->momy += FixedMul(4 * FRACUNIT, finesine[angle]);
+    }
+    // < d64tc
+
     for(i = 0; i < 20; i++)
     {
         damage = 5 * (P_Random() % 3 + 1);
@@ -611,7 +964,7 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t * psp)
     }
 }
 
-void C_DECL A_FireCGun(player_t *player, pspdef_t * psp)
+void C_DECL A_FireCGun(player_t *player, pspdef_t *psp)
 {
     S_StartSound(sfx_pistol, player->plr->mo);
 
@@ -627,7 +980,16 @@ void C_DECL A_FireCGun(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
+    psp->sx = ((P_Random() & 8) - 2) * FRACUNIT; // d64tc
+
     P_BulletSlope(player->plr->mo);
+
+    // d64tc >
+    if(cfg.weaponRecoil)
+    {
+        player->plr->mo->angle += ANG90/256; //nice little recoil effect there
+    }
+    // < d64tc
 
     P_GunShot(player->plr->mo, !player->refire);
 }

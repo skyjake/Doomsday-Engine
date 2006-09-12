@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -22,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -36,6 +37,7 @@
 
 #include "d_net.h"
 #include "dmu_lib.h"
+#include "p_mapsetup.h" // d64tc
 
 // MACROS ------------------------------------------------------------------
 
@@ -282,6 +284,192 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
     }
 }
 
+/**
+ * d64tc
+ * DJS - What the heck is this used for??
+ * FIXME: Use XG instead. We do not want hardcoded kludges like this.
+ *        Now that we have line data references in XG this kind of thing
+ *        can be done there much more easily.
+ */
+int EV_DestoryLineShield(line_t* line)
+{
+    int         i, k, tag, flags;
+    sector_t   *sec;
+    line_t     *li;
+    xline_t    *xline;
+
+    if(!line)
+        return false;
+
+    tag = P_XLine(line)->tag;
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(P_XSector(sec)->tag != tag)
+            continue; // wrong sector.
+
+        for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
+        {
+            li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
+            xline = P_XLine(li);
+            if(xline->tag != 999 || !xline->special ||
+               !(P_GetIntp(li, DMU_FLAGS) & ML_TWOSIDED))
+                continue;
+
+            xline->special = 0;
+
+            P_SetIntp(li, DMU_SIDE0_OF_LINE | DMU_MIDDLE_TEXTURE, 0);
+            P_SetIntp(li, DMU_SIDE1_OF_LINE | DMU_MIDDLE_TEXTURE, 0);
+
+            flags = P_GetIntp(li, DMU_FLAGS);
+            flags &= ~ML_BLOCKING;
+            P_SetIntp(li, DMU_FLAGS, flags);
+        }
+    }
+
+    return true;
+}
+
+/**
+ * d64tc
+ * DJS - What the heck is this used for??
+ * FIXME: Use XG instead. We do not want hardcoded kludges like this.
+ *        Now that we have line data references in XG this kind of thing
+ *        can be done there much more easily.
+ */
+int EV_SwitchTextureFree(line_t* line)
+{
+    int         i, k, tag, flags;
+    sector_t   *sec;
+    line_t     *li;
+    xline_t    *xline;
+
+    if(!line)
+        return false;
+
+    tag = P_XLine(line)->tag;
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(P_XSector(sec)->tag != tag)
+            continue; // wrong sector.
+
+        for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
+        {
+            li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
+            xline = P_XLine(li);
+            if(xline->special != 418)
+                continue;
+
+            P_SetIntp(li, DMU_SIDE0_OF_LINE | DMU_MIDDLE_TEXTURE, xline->tag);
+
+            // If there is a back side, set that too.
+            if(P_GetPtrp(li, DMU_SIDE1) != NULL)
+                P_SetIntp(li, DMU_SIDE1_OF_LINE | DMU_MIDDLE_TEXTURE,
+                          xline->tag);
+
+            flags = P_GetIntp(li, DMU_FLAGS);
+            flags &= ~ML_BLOCKING;
+            P_SetIntp(li, DMU_FLAGS, flags);
+        }
+    }
+
+    return true;
+}
+
+/**
+ * d64tc
+ * DJS - What the heck is this used for??
+ * FIXME: Use XG instead. We do not want hardcoded kludges like this.
+ *        Now that we have line data references in XG this kind of thing
+ *        can be done there much more easily.
+ */
+int EV_ActivateSpecial(line_t *line)
+{
+    int         i, k, tag;
+    int         bitmip;
+    sector_t   *sec;
+    line_t     *li;
+    xline_t    *xline;
+    side_t     *back;
+
+    if(!line)
+        return false;
+
+    back = P_GetPtrp(line, DMU_SIDE1);
+    if(!back)
+        return false; // We need a twosided line
+
+    tag = P_XLine(line)->tag;
+    bitmip = P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_Y);
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(P_XSector(sec)->tag != tag)
+            continue; // wrong sector.
+
+        for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
+        {
+            li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
+            xline = P_XLine(li);
+            if(xline->special != 418)
+                continue;
+
+            if(bitmip == 0)
+                xline->special = P_XSector(sec)->tag;
+            else
+                xline->special = bitmip;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * d64tc
+ * FIXME: Use XG instead. We do not want hardcoded kludges like this.
+ *        Now that we have line data references in XG this kind of thing
+ *        can be done there much more easily.
+ */
+void P_SetSectorColor(line_t *line)
+{
+    int         i, tag;
+    side_t     *front, *back;
+    sector_t   *sec;
+    byte        rgb[4];
+
+    if(!line)
+        return;
+
+    front = P_GetPtrp(line, DMU_SIDE0);
+    back = P_GetPtrp(line, DMU_SIDE0);
+
+    if(!back)
+        return; // We need a twosided line.
+
+    // Determine the color based on line texture offsets!?
+    rgb[0] = (byte) P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_X);
+    rgb[1] = (byte) P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_Y);
+    rgb[2] = (byte) P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_X);
+
+    rgb[0] = CLAMP(rgb[0], 0, 255);
+    rgb[1] = CLAMP(rgb[1], 0, 255);
+    rgb[2] = CLAMP(rgb[2], 0, 255);
+
+    tag = P_XLine(line)->tag;
+    for(i = 0; i < numsectors; ++i)
+    {
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(P_XSector(sec)->tag != tag)
+            continue; // wrong sector.
+
+        P_SetBytepv(sec, DMU_COLOR, rgb);
+    }
+}
+
 /*
  * Called when a thing uses a special line.
  * Only the front sides of lines are usable.
@@ -348,6 +536,9 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
 
     case 117:                   // Blazing door raise
     case 118:                   // Blazing door open
+    case 525: // d64tc
+    case 526: // d64tc
+    case 527: // d64tc
         EV_VerticalDoor(line, thing);
         break;
 
@@ -664,7 +855,7 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
         // BlzOpenDoor RED
     case 136:
         // BlzOpenDoor YELLOW
-        if(EV_DoLockedDoor(line, blazeOpen, thing))
+        if(EV_DoLockedDoor(line, blazeRaise, thing)) // d64tc was "blazeOpen"
             P_ChangeSwitchTexture(line, 1);
         break;
 
@@ -680,6 +871,57 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
         P_ChangeSwitchTexture(line, 1);
         break;
 
+    case 343: // d64tc - BlzOpenDoor LaserPowerup 1
+    case 344: // d64tc - BlzOpenDoor LaserPowerup 2
+    case 345: // d64tc - BlzOpenDoor LaserPowerup 3
+        if(EV_DoLockedDoor(line, blazeOpen, thing))
+            P_ChangeSwitchTexture(line, 0);
+        break;
+
+    case 414: // d64tc
+        if(EV_DoPlat(line, upWaitDownStay, 1))
+            P_ChangeSwitchTexture(line, 1);
+        break;
+
+    case 416: // d64tc
+        if(EV_DoSplitDoor(line, lowerToEight, raiseToHighest))
+            P_ChangeSwitchTexture(line, 0);
+        break;
+
+    case 417: // d64tc
+        if(EV_DestoryLineShield(line))
+            P_ChangeSwitchTexture(line, 0);
+        break;
+
+    case 419: // d64tc
+        if(EV_SwitchTextureFree(line))
+            P_ChangeSwitchTexture(line, 0);
+        break;
+
+    case 421: // d64tc
+        if(EV_ActivateSpecial(line))
+            P_ChangeSwitchTexture(line, 0);
+        break;
+
+    case 424: // d64tc
+        if(EV_DoCeiling(line, customCeiling))
+            P_ChangeSwitchTexture(line, 1);
+        break;
+
+    case 425: // d64tc
+        if(EV_DoCeiling(line, customCeiling))
+            P_ChangeSwitchTexture(line, 0);
+        break;
+
+    case 428: // d64tc
+        if(EV_DoFloor(line, customFloor))
+            P_ChangeSwitchTexture(line, 1);
+        break;
+
+    case 429: // d64tc
+        if(EV_DoFloor(line, customFloor))
+            P_ChangeSwitchTexture(line, 0);
+        break;
     }
 
     return true;

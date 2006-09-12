@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -22,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -89,6 +90,7 @@ void T_MoveCeiling(ceiling_t * ceiling)
             switch (ceiling->type)
             {
             case raiseToHighest:
+            case customCeiling: //d64tc
                 P_RemoveActiveCeiling(ceiling);
                 break;
 
@@ -137,6 +139,7 @@ void T_MoveCeiling(ceiling_t * ceiling)
 
             case lowerAndCrush:
             case lowerToFloor:
+            case customCeiling: //d64tc
                 P_RemoveActiveCeiling(ceiling);
                 break;
 
@@ -229,14 +232,44 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
             if(type != lowerToFloor)
                 ceiling->bottomheight += 8 * FRACUNIT;
             ceiling->direction = -1;
-            ceiling->speed = CEILSPEED;
+            //ceiling->speed = CEILSPEED;
+            ceiling->speed = CEILSPEED * 8; // d64tc
             break;
 
         case raiseToHighest:
             ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
+            ceiling->topheight -= 8*FRACUNIT;   // d64tc
             ceiling->direction = 1;
             ceiling->speed = CEILSPEED;
             break;
+
+        case customCeiling: // d64tc
+            {
+            //bitmip? wha?
+            side_t *front = P_GetPtrp(line, DMU_SIDE0);
+            side_t *back = P_GetPtrp(line, DMU_SIDE1);
+            int bitmipL = 0;
+            int bitmipR = 0;
+
+            bitmipL = P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS;
+            if(back)
+                bitmipR = P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS;
+
+            if(bitmipR > 0)
+            {
+                ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
+                ceiling->direction = 1;
+                ceiling->speed = CEILSPEED * bitmipL;
+                ceiling->topheight -= bitmipR * FRACUNIT;
+            }
+            else
+            {
+                ceiling->bottomheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
+                ceiling->bottomheight -= bitmipR * FRACUNIT;
+                ceiling->direction = -1;
+                ceiling->speed = CEILSPEED * bitmipL;
+            }
+            }
         }
 
         ceiling->tag = xsec->tag;

@@ -3,9 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -251,6 +252,19 @@ void P_GiveKey(player_t *player, card_t card)
     ST_HUDUnHide(HUE_ON_PICKUP_KEY);
 }
 
+/**
+ * d64tc
+ */
+boolean P_GiveArtifact(player_t *player, laserpw_t artifact)
+{
+    if(player->artifacts[artifact])
+        return false;
+
+    player->bonuscount = BONUSADD;
+    player->artifacts[artifact] = 1;
+    return true;
+}
+
 void P_GiveBackpack(player_t *player)
 {
     int     i;
@@ -304,6 +318,10 @@ boolean P_GivePower(player_t *player, int power)
     case pw_strength:
         P_GiveBody(player, maxhealth);
         player->powers[power] = 1;
+        break;
+
+    case pw_unsee: // d64tc
+        player->powers[power] = UNSEETICS;
         break;
 
     default:
@@ -386,7 +404,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 
         // bonus items
     case SPR_BON1:
-        player->health++;       // can go over 100%
+        //player->health++;       // can go over 100%
+        player->health += 2;      // d64tc can go over 100%
         if(player->health > healthlimit)
             player->health = healthlimit;
         player->plr->mo->health = player->health;
@@ -398,7 +417,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         break;
 
     case SPR_BON2:
-        player->armorpoints++;  // can go over 100%
+        //player->armorpoints++;  // can go over 100%
+        player->armorpoints += 2; // d64tc can go over 100%
         if(player->armorpoints > armorpoints[1])    // 200
             player->armorpoints = armorpoints[1];
         if(!player->armortype)
@@ -407,6 +427,26 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         P_SetMessage(player, GOTARMBONUS, false);
 
         // Maybe unhide the HUD?
+        ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+        break;
+
+    case SPR_BON3: // d64tc
+        player->health += 2;
+        if(player->health > healthlimit)
+            player->health = healthlimit;
+        player->plr->mo->health = player->health;
+
+        player->armorpoints += 2;
+        if(player->armorpoints > armorpoints[1]) // 200
+            player->armorpoints = armorpoints[1];
+        if(!player->armortype)
+            player->armortype = armorclass[0];
+
+        player->update |= PSF_HEALTH | PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
+        P_SetMessage(player, GOTHELLBONUS, false);
+
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
         ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
         break;
 
@@ -555,6 +595,64 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         sound = sfx_getpow;
         break;
 
+    case SPR_RMAP: // d64tc
+        if(!P_GivePower(player, pw_radar))
+            return;
+
+        P_SetMessage(player, GOTRADAR, false);
+        sound = sfx_getpow;
+        break;
+
+    case SPR_DETH: // d64tc
+        P_Massacre();
+        P_SetMessage(player, ALLALONE, false);
+        sound = sfx_getpow;
+        break;
+
+    case SPR_SEEA: // d64tc
+        if(!P_GivePower(player, pw_unsee))
+            return;
+
+        P_SetMessage(player, GOTUNSEE, false);
+        sound = sfx_getpow;
+        break;
+
+    case SPR_POW4: // d64tc
+        if(player->weaponowned[wp_unmaker])
+        {
+            if(!P_GiveArtifact(player, it_float))
+                return;
+
+            P_SetMessage(player, GOTFLOATER, false);
+            sound = sfx_getpow;
+        }
+        else
+        {
+            if(!(leveltime & 0x1f))
+                P_SetMessage(player, NGOTUNMAKER, false);
+
+            return; //Don't destroy item, can be collected later by other players
+        }
+        break;
+
+    case SPR_POW5: // d64tc
+        if(player->weaponowned[wp_unmaker])
+        {
+            if(!P_GiveArtifact(player, it_helltime))
+                return;
+
+            P_SetMessage(player, GOTHELLTIME, false);
+            sound = sfx_getpow;
+        }
+        else
+        {
+            if(!(leveltime & 0x1f))
+                P_SetMessage(player, NGOTUNMAKER, false);
+
+            return; //Don't destroy item, can be collected later by other players
+        }
+        break;
+
     case SPR_PVIS:
         if(!P_GivePower(player, pw_infrared))
             return;
@@ -673,6 +771,68 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         sound = sfx_wpnup;
         break;
 
+    case SPR_LGUN: // d64tc
+        if(!P_GiveWeapon(player, wp_unmaker, special->flags & MF_DROPPED))
+            return;
+
+        P_SetMessage(player, GOTUNMAKER, false);
+        sound = sfx_wpnup;
+        break;
+
+    case SPR_POW1: // d64tc
+        if(player->lasericon1 == 0)
+        {
+            P_GiveArtifact(player, it_laserpw1);
+
+            player->laserpw += 1;
+            player->lasericon1 = 1;
+            P_SetMessage(player, GOTPOWERUP1, false);
+        }
+        else
+        {
+            if(!(leveltime & 0x1f))
+                P_SetMessage(player, NGOTPOWERUP1, false);
+
+            return; //Don't destroy item, can be collected later by other players
+        }
+        break;
+
+    case SPR_POW2: // d64tc
+        if(player->lasericon2 == 0)
+        {
+            P_GiveArtifact(player, it_laserpw2);
+
+            player->laserpw += 1;
+            player->lasericon2 = 1;
+            P_SetMessage(player, GOTPOWERUP2, false);
+        }
+        else
+        {
+            if(!(leveltime & 0x1f))
+                P_SetMessage(player, NGOTPOWERUP2, false);
+
+            return; //Don't destroy item, can be collected later by other players
+        }
+        break;
+
+    case SPR_POW3: // d64tc
+        if(player->lasericon3 == 0)
+        {
+            P_GiveArtifact(player, it_laserpw3);
+
+            player->laserpw += 1;
+            player->lasericon3 = 1;
+            P_SetMessage(player, GOTPOWERUP3, false);
+        }
+        else
+        {
+            if(!(leveltime & 0x1f))
+                P_SetMessage(player, NGOTPOWERUP3, false);
+
+            return; //Don't destroy item, can be collected later by other players
+        }
+        break;
+
     default:
         Con_Error("P_SpecialThing: Unknown gettable thing");
     }
@@ -690,7 +850,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 {
     mobjtype_t item;
     mobj_t *mo;
-    angle_t angle;
+    //angle_t angle; d64tc
 
     if(!target) // nothing to kill
         return;
@@ -703,7 +863,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     target->flags |= MF_CORPSE | MF_DROPOFF;
     target->flags2 &= ~MF2_PASSMOBJ;
     target->corpsetics = 0;
-    target->height >>= 2;
+    // target->height >>= 2; // d64tc
 
     if(source && source->player)
     {
@@ -773,6 +933,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     {
     case MT_WOLFSS:
     case MT_POSSESSED:
+    //case MT_TROOP: // d64tc
         item = MT_CLIP;
         break;
 
@@ -780,7 +941,8 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         item = MT_SHOTGUN;
         break;
 
-    case MT_CHAINGUY:
+    //case MT_CHAINGUY:
+    case MT_CHAINGUNGUY: // d64tc
         item = MT_CHAINGUN;
         break;
 
@@ -790,9 +952,16 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 
     // Don't drop at the exact same place, causes Z flickering with
     // 3D sprites.
+    /* d64tc
     angle = M_Random() << (24 - ANGLETOFINESHIFT);
     mo = P_SpawnMobj(target->pos[VX] + 3 * finecosine[angle],
                      target->pos[VY] + 3 * finesine[angle], ONFLOORZ, item);
+    */
+
+    mo = P_SpawnMobj(target->pos[VX] + ((M_Random() - M_Random()) << 12),
+                     target->pos[VY] + ((M_Random() - M_Random()) << 12),
+                     ONFLOORZ, item);
+
     mo->flags |= MF_DROPPED;    // special versions of items
 }
 
@@ -844,6 +1013,33 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     player = target->player;
     if(player && gameskill == sk_baby)
         damage >>= 1;           // take half damage in trainer mode
+
+    // d64tc >
+    if(inflictor && inflictor->type == MT_FIREEND)
+    {   // Special for Motherdemon attack
+#if 0
+        // DJS - This was originally in a sub routine called P_TouchMotherFire
+        //       but due to the fact that <code>player</code> was not initialized
+        //       this likely does not work the way kaiser expected it to.
+        //       What would actually happen is not certain but I would guess it
+        //       would most likely simply return without doing anything at all.
+        // TODO: SHOULD this be fixed? Or is something implemented elsewhere
+        //       which does what this was attempting to do?
+        int         damage;
+        player_t   *player;
+
+        if(player = target->player)
+        {
+            damage = ((P_Random() % 10) + 1) * 8;
+
+            P_DamageMobj(target, NULL, NULL, damage);
+            player->plr->mo->momz = FRACUNIT * 16;
+            player->jumptics = 24;
+        }
+#endif
+        return;
+    }
+    // < d64tc
 
     // use the cvar damage multiplier netMobDamageModifier
     // only if the inflictor is not a player

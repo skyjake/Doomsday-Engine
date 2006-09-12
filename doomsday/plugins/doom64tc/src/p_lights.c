@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -22,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -81,7 +82,7 @@ void P_SpawnFireFlicker(sector_t *sector)
 
     // Note that we are resetting sector attributes.
     // Nothing special about it during gameplay.
-    P_XSector(sector)->special = 0;
+    //P_XSector(sector)->special = 0; // d64tc
 
     flick = Z_Malloc(sizeof(*flick), PU_LEVSPEC, 0);
 
@@ -95,7 +96,7 @@ void P_SpawnFireFlicker(sector_t *sector)
     flick->count = 4;
 }
 
-/*
+/**
  * Broken light flashing.
  */
 void T_LightFlash(lightflash_t * flash)
@@ -128,7 +129,7 @@ void P_SpawnLightFlash(sector_t *sector)
     lightflash_t *flash;
 
     // nothing special about it during gameplay
-    P_XSector(sector)->special = 0;
+    //P_XSector(sector)->special = 0; // d64tc
 
     flash = Z_Malloc(sizeof(*flash), PU_LEVSPEC, 0);
 
@@ -142,6 +143,49 @@ void P_SpawnLightFlash(sector_t *sector)
     flash->maxtime = 64;
     flash->mintime = 7;
     flash->count = (P_Random() & flash->maxtime) + 1;
+}
+
+/**
+ * d64tc
+ */
+void T_LightBlink(lightblink_t* flash)
+{
+    int     lightlevel = P_GetIntp(flash->sector, DMU_LIGHT_LEVEL);
+
+    if(--flash->count)
+        return;
+
+    if(lightlevel == flash->maxlight)
+    {
+        P_SetIntp(flash->sector, DMU_LIGHT_LEVEL, flash->minlight);
+        flash->count = flash->mintime;
+    }
+    else
+    {
+        P_SetIntp(flash->sector, DMU_LIGHT_LEVEL, flash->maxlight);
+        flash->count = flash->maxtime;
+    }
+
+}
+
+/**
+ * d64tc
+ * DJS - FIXME?: make new thinker lightblink_t
+ */
+void P_SpawnLightBlink(sector_t *sector)
+{
+    lightblink_t *blink;
+
+    blink = Z_Malloc(sizeof(*blink), PU_LEVSPEC, 0);
+
+    P_AddThinker(&blink->thinker);
+
+    blink->thinker.function = T_LightBlink;
+    blink->sector = sector;
+    blink->maxlight = P_GetIntp(sector, DMU_LIGHT_LEVEL);
+
+    blink->minlight = 0;
+    blink->maxtime = blink->mintime = blink->count = 4;
 }
 
 /*
@@ -339,5 +383,5 @@ void P_SpawnGlowingLight(sector_t *sector)
     g->thinker.function = T_Glow;
     g->direction = -1;
 
-    P_XSector(sector)->special = 0;
+    // P_XSector(sector)->special = 0; // d64tc
 }

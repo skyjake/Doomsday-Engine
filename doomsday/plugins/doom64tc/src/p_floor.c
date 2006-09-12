@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -22,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -277,7 +278,7 @@ void T_MoveFloor(floormove_t * floor)
         }
         P_RemoveThinker(&floor->thinker);
 
-        S_SectorSound(floor->sector, SORG_FLOOR, sfx_pstop);
+        // S_SectorSound(floor->sector, SORG_FLOOR, sfx_pstop); // d64tc
     }
 }
 
@@ -295,6 +296,16 @@ int EV_DoFloor(line_t *line, floor_e floortype)
     sector_t *frontsector;
     line_t  *ln;
     floormove_t *floor;
+
+    // d64tc > bitmip? wha?
+    int bitmipL = 0, bitmipR = 0;
+    side_t *front = P_GetPtrp(line, DMU_SIDE0);
+    side_t *back  = P_GetPtrp(line, DMU_SIDE1);
+
+    bitmipL = P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS;
+    if(back)
+        bitmipR = P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS;
+    // < d64tc
 
     secnum = -1;
     rtn = 0;
@@ -320,14 +331,16 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case lowerFloor:
             floor->direction = -1;
             floor->sector = sec;
-            floor->speed = FLOORSPEED;
+            //floor->speed = FLOORSPEED;
+            floor->speed = FLOORSPEED * 4; // d64tc
             floor->floordestheight = P_FindHighestFloorSurrounding(sec);
             break;
 
         case lowerFloorToLowest:
             floor->direction = -1;
             floor->sector = sec;
-            floor->speed = FLOORSPEED;
+            //floor->speed = FLOORSPEED;
+            floor->speed = FLOORSPEED * 4; // d64tc
             floor->floordestheight = P_FindLowestFloorSurrounding(sec);
             break;
 
@@ -341,12 +354,56 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                 floor->floordestheight += 8 * FRACUNIT;
             break;
 
+        case lowerToEight: // d64tc
+            floor->direction = -1;
+            floor->sector = sec;
+            floor->speed = FLOORSPEED;
+            floor->floordestheight = P_FindHighestFloorSurrounding(sec);
+            if(floor->floordestheight != P_GetFixedp(sec,
+                                                     DMU_FLOOR_HEIGHT))
+                floor->floordestheight += 8 * FRACUNIT;
+            break;
+
+        case customFloor: // d64tc
+            if(bitmipR > 0)
+            {
+                floor->direction = -1;
+                floor->sector = sec;
+                floor->speed = FLOORSPEED * bitmipL;
+                floor->floordestheight = P_FindHighestFloorSurrounding(sec);
+
+                if(floor->floordestheight != P_GetFixedp(sec,
+                                                         DMU_FLOOR_HEIGHT))
+                    floor->floordestheight += (bitmipR * FRACUNIT);
+            }
+            else
+            {
+                floor->direction = 1;
+                floor->sector = sec;
+                floor->speed = FLOORSPEED * bitmipL;
+                floor->floordestheight =
+                    P_GetFixedp(floor->sector, DMU_FLOOR_HEIGHT) - bitmipR * FRACUNIT;
+            }
+            break;
+
+        case customChangeSec: // d64tc
+            floor->direction = 1;
+            floor->sector = sec;
+            floor->speed = FLOORSPEED * 16;
+            floor->floordestheight = P_GetFixedp(floor->sector, DMU_FLOOR_HEIGHT);
+
+            // KLUDGE: fake the engine into accepting this special
+            P_XSector(sec)->special = bitmipR;
+            // < KLUDGE
+            break;
+
         case raiseFloorCrush:
             floor->crush = true;
         case raiseFloor:
             floor->direction = 1;
             floor->sector = sec;
-            floor->speed = FLOORSPEED;
+            //floor->speed = FLOORSPEED;
+            floor->speed = FLOORSPEED * 4; // d64tc
             floor->floordestheight = P_FindLowestCeilingSurrounding(sec);
 
             if(floor->floordestheight >
@@ -361,7 +418,8 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case raiseFloorTurbo:
             floor->direction = 1;
             floor->sector = sec;
-            floor->speed = FLOORSPEED * 4;
+            //floor->speed = FLOORSPEED * 4;
+            floor->speed = FLOORSPEED * 8; // d64tc
             floor->floordestheight =
                 P_FindNextHighestFloor(sec, P_GetFixedp(sec,
                                                         DMU_FLOOR_HEIGHT));
@@ -370,7 +428,8 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case raiseFloorToNearest:
             floor->direction = 1;
             floor->sector = sec;
-            floor->speed = FLOORSPEED;
+            //floor->speed = FLOORSPEED;
+            floor->speed = FLOORSPEED * 8; // d64tc
             floor->floordestheight =
                 P_FindNextHighestFloor(sec, P_GetFixedp(sec,
                                                         DMU_FLOOR_HEIGHT));
@@ -379,7 +438,8 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case raiseFloor24:
             floor->direction = 1;
             floor->sector = sec;
-            floor->speed = FLOORSPEED;
+            //floor->speed = FLOORSPEED;
+            floor->speed = FLOORSPEED * 8; // d64tc
             floor->floordestheight =
                 P_GetFixedp(floor->sector,
                             DMU_FLOOR_HEIGHT) + 24 * FRACUNIT;
@@ -397,7 +457,8 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case raiseFloor24AndChange:
             floor->direction = 1;
             floor->sector = sec;
-            floor->speed = FLOORSPEED;
+            //floor->speed = FLOORSPEED;
+            floor->speed = FLOORSPEED * 8; // d64tc
             floor->floordestheight =
                 P_GetFixedp(floor->sector,
                             DMU_FLOOR_HEIGHT) + 24 * FRACUNIT;
@@ -408,6 +469,15 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                       P_GetIntp(frontsector, DMU_FLOOR_TEXTURE));
 
             xsec->special = P_XSector(frontsector)->special;
+            break;
+
+        case raiseFloor32: // d64tc
+            floor->direction = 1;
+            floor->sector = sec;
+            floor->speed = FLOORSPEED * 8;
+            floor->floordestheight =
+                P_GetFixedp(floor->sector,
+                            DMU_FLOOR_HEIGHT) + 32 * FRACUNIT;
             break;
 
         case raiseToTexture:

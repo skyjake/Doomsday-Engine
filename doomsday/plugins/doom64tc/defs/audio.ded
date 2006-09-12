@@ -1175,8 +1175,8 @@ Sound {
 }
 
 Sound {
-  ID = "mthact";
-  Lump = "DSMTHACT";
+  ID = "mthpai";
+  Lump = "DSMTHPAI";
   Link pitch = -1;
   Link volume = -1;
   Priority = 80;
@@ -1184,8 +1184,8 @@ Sound {
 }
 
 Sound {
-  ID = "mthpai";
-  Lump = "DSMTHPAI";
+  ID = "mthact";
+  Lump = "DSMTHACT";
   Link pitch = -1;
   Link volume = -1;
   Priority = 80;

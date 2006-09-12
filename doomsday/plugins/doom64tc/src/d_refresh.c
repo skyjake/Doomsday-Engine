@@ -3,9 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -258,10 +259,8 @@ void D_Display(void)
     else
     {
         int w = cfg.setblocks * 32;
-        int h = cfg.setblocks * (200 - ST_HEIGHT * cfg.sbarscale / 20) / 10;
-        R_SetViewWindowTarget(160 - (w >> 1),
-                              (200 - ST_HEIGHT * cfg.sbarscale / 20 - h) >> 1,
-                              w, h);
+        int h = cfg.setblocks * 20;
+        R_SetViewWindowTarget(160 - (w >> 1), (100 - (h >> 1)), w, h);
     }
 
     {

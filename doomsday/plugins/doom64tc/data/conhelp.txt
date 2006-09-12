@@ -378,9 +378,6 @@ desc = Current health ammount.
 [player-armor]
 desc = Current armor ammount.
 
-[player-weapons-current]
-desc = Current weapon (id)
-
 [player-ammo-bullets]
 desc = Current number of bullets.
 
@@ -393,50 +390,56 @@ desc = Current number of cells.
 [player-ammo-missiles]
 desc = Current number of missiles.
 
-[player-weapons-fist]
-desc = 1 = Player has fist.
+[player-weapon-current]
+desc = Current weapon (id)
 
-[player-weapons-pistol]
-desc = 1 = Player has pistol.
+[player-weapon-fist]
+desc = 1= Player has fist.
 
-[player-weapons-shotgun]
-desc = 1 = Player has shotgun.
+[player-weapon-pistol]
+desc = 1= Player has pistol.
 
-[player-weapons-chaingun]
-desc = 1 = Player has chaingun.
+[player-weapon-shotgun]
+desc = 1= Player has shotgun.
 
-[player-weapons-mlauncher]
-desc = 1 = Player has missile launcher.
+[player-weapon-chaingun]
+desc = 1= Player has chaingun.
 
-[player-weapons-plasmarifle]
-desc = 1 = Player has plasma rifle.
+[player-weapon-mlauncher]
+desc = 1= Player has missile launcher.
 
-[player-weapons-bfg]
-desc = 1 = Player has BFG.
+[player-weapon-plasmarifle]
+desc = 1= Player has plasma rifle.
 
-[player-weapons-chainsaw]
-desc = 1 = Player has chainsaw.
+[player-weapon-bfg]
+desc = 1= Player has BFG.
 
-[player-weapons-sshotgun]
-desc = 1 = Player has super shotgun.
+[player-weapon-chainsaw]
+desc = 1= Player has chainsaw.
 
-[player-keycards-blue]
-desc = 1 = Player has blue keycard.
+[player-weapon-sshotgun]
+desc = 1= Player has super shotgun.
 
-[player-keycards-yellow]
-desc = 1 = Player has yellow keycard.
+[player-weapon-recoil]
+desc = 1= Weapon recoil active (shake/push-back).
 
-[player-keycards-red]
-desc = 1 = Player has red keycard.
+[player-key-blue]
+desc = 1= Player has blue keycard.
 
-[player-skullkeys-blue]
-desc = 1 = Player has blue skullkey.
+[player-key-yellow]
+desc = 1= Player has yellow keycard.
 
-[player-skullkeys-yellow]
-desc = 1 = Player has yellow skullkey.
+[player-key-red]
+desc = 1= Player has red keycard.
 
-[player-skullkeys-red]
-desc = 1 = Player has red skullkey.
+[player-key-blueskull]
+desc = 1= Player has blue skullkey.
+
+[player-key-yellowskull]
+desc = 1= Player has yellow skullkey.
+
+[player-key-redskull]
+desc = 1= Player has red skullkey.
 
 [chat-macro0]
 desc = Chat macro 1.
@@ -647,6 +650,9 @@ desc = 1=Show ammo in HUD.
 
 [hud-keys]
 desc = 1=Show keys in HUD.
+
+[hud-power]
+desc = 1=Show power in HUD.
 
 [hud-frags]
 desc = 1=Show deathmatch frags in HUD.

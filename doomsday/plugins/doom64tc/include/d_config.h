@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -28,11 +28,11 @@
  * Global settings. Most of these are console variables.
  */
 
-#ifndef __JDOOM_SETTINGS_H__
-#define __JDOOM_SETTINGS_H__
+#ifndef __DOOM64TC_SETTINGS_H__
+#define __DOOM64TC_SETTINGS_H__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __DOOM64TC__
+#  error "Using Doom64tc headers without __DOOM64TC__"
 #endif
 
 #include "doomdef.h"
@@ -43,7 +43,7 @@ enum {
     HUD_AMMO,
     HUD_KEYS,
     HUD_FRAGS,
-    HUD_FACE,
+    HUD_POWER, // d64tc
     NUMHUDDISPLAYS
 };
 
@@ -112,6 +112,7 @@ typedef struct jdoom_config_s {
     byte            berserkAutoSwitch;
     int             weaponOrder[NUMWEAPONS];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
+    byte            weaponRecoil; // d64tc
     byte            secretMsg;
     int             plrViewHeight;
     byte            levelTitle, hideAuthorIdSoft;
@@ -198,9 +199,9 @@ typedef struct jdoom_config_s {
     byte            netColor;
 
     int             PlayerColor[MAXPLAYERS];
-} jdoom_config_t;
+} game_config_t;
 
-extern jdoom_config_t cfg;
+extern game_config_t cfg;
 
 // Other variables.
 extern int      screenblocks;

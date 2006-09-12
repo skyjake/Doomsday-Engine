@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -83,16 +84,30 @@ extern thing_t* things;
 // Set if already seen, thus drawn in automap.
 #define ML_MAPPED       256
 
+// FIXME! DJS - This is important!
+// Doom64tc unfortunetly used non standard values for the line flags
+// it implemented from BOOM. It will make life simpler if we simply
+// update the Doom64TC IWAD rather than carry this on much further as
+// once Doom64TC is released with 1.9.0 I imagine we'll see a bunch
+// PWADs start cropping up.
+
 // Allows a USE action to pass through a line with a special
-#define ML_PASSUSE    512
+//#define ML_PASSUSE    512
 
 // If set allows any mobj to trigger the line's special
-#define ML_ALLTRIGGER 1024
+//#define ML_ALLTRIGGER 1024
 
 // If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
 // ML_BLOCKING -> ML_MAPPED inc will persist.
-#define ML_INVALID    2048
-#define VALIDMASK     0x000001ff
+//#define ML_INVALID    2048
+//#define VALIDMASK     0x000001ff
+
+// Anything can use line if this is set - kaiser
+#define ML_ALLTRIGGER   512
+
+#define ML_PASSUSE      1024
+
+#define ML_BLOCKALL     2048
 
 //
 // Thing attributes.
@@ -113,14 +128,28 @@ extern thing_t* things;
 // Appears in Multiplayer game modes only
 #define MTF_NOTSINGLE    16
 
+// d64tc FIXME:
+// DJS - Unfortunetly Doom64TC has already used the thing bits for
+// other purposes so we should update the IWAD! No doubt that some
+// of these can be pruned anyway...
+
 // Doesn't appear in Deathmatch
-#define MTF_NOTDM    32
+//#define MTF_NOTDM    32
 
 // Doesn't appear in Coop
-#define MTF_NOTCOOP    64
+//#define MTF_NOTCOOP    64
 
 // THING is invulnerble and inert
-#define MTF_DORMANT    512
+//#define MTF_DORMANT    512
+
+// Forces a MF_SPAWNCEILING enemies (d64 custom) to spawn on floor
+#define MTF_FORCECEILING    32
+#define MTF_WALKOFF         64
+#define MTF_TRANSLUCENT     128
+#define MTF_RESPAWN         256
+#define MTF_SPAWNPLAYERZ    512
+#define MTF_FLOAT           1024
+
 
 // Special activation types
 #define SPAC_CROSS      0          // when player crosses line

@@ -3,7 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -140,10 +142,23 @@ typedef enum {
     sfx_skesit,                    // 106
     sfx_skeatk,                    // 107
     sfx_radio,                     // 108
-    sfx_wsplash,                   // 109
-    sfx_nsplash,                   // 110
-    sfx_blurb,                     // 111
-    NUMSFX                         // 112
+    //sfx_wsplash, // d64tc
+    //sfx_nsplash, // d64tc
+    //sfx_blurb, // d64tc
+    // d64tc >
+    sfx_psidl,
+    sfx_laser,
+    sfx_mthatk,
+    sfx_mthsit,
+    sfx_mthpai,
+    sfx_mthact,
+    sfx_mthdth,
+    sfx_stlkst,
+    sfx_stlkpn,
+    sfx_stlktp,
+    sfx_htime,
+    // < d64tc
+    NUMSFX
 } sfxenum_t;
 
 // Music.

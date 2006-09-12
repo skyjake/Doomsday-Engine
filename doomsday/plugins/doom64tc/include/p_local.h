@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -56,17 +57,17 @@
 
 
 #define MAXHEALTH       maxhealth  //100
-#define VIEWHEIGHT      (41*FRACUNIT)
+#define VIEWHEIGHT      (54*FRACUNIT) // d64tc was "41*FRACUNIT"
 
 #define TOCENTER        -8
 
 // player radius for movement checking
-#define PLAYERRADIUS    16*FRACUNIT
+#define PLAYERRADIUS    (25*FRACUNIT) // d64tc was "16*FRACUNIT"
 
 // MAXRADIUS is for precalculated sector block boxes
 // the spider demon is larger,
 // but we do not have any moving sectors nearby
-#define MAXRADIUS       32*FRACUNIT
+#define MAXRADIUS       (32*FRACUNIT)
 
 #define GRAVITY     ((IS_NETGAME && cfg.netGravity != -1)? \
                      (fixed_t) (((float) cfg.netGravity / 100) * FRACUNIT) : Get(DD_GRAVITY)) //FRACUNIT
@@ -74,7 +75,11 @@
 
 #define USERANGE        (64*FRACUNIT)
 #define MELEERANGE      (64*FRACUNIT)
+#define PLRMELEERANGE   (80*FRACUNIT)   // d64tc wide player radius
 #define MISSILERANGE    (32*64*FRACUNIT)
+
+#define ACIDRANGE       (296*FRACUNIT)  // d64tc
+#define JUMPGRAVITY     (8*FRACUNIT/NEWTICRATERATIO) // d64tc
 
 // follow a player exlusively for 3 seconds
 #define BASETHRESHOLD       100
@@ -148,6 +153,10 @@ void            P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
 void            P_SpawnPlayer(thing_t * mthing, int pnum);
 mobj_t         *P_SpawnTeleFog(int x, int y);
 
+mobj_t         *P_SpawnMotherMissile(fixed_t x, fixed_t y, fixed_t z,
+                                     mobj_t *source, mobj_t *dest,
+                                     mobjtype_t type); // d64tc
+
 void            P_SetDoomsdayFlags(mobj_t *mo);
 
 void            P_HitFloor(mobj_t *mo);
@@ -199,5 +208,11 @@ void            P_DamageMobj2(mobj_t *target, mobj_t *inflictor,
                               mobj_t *source, int damage, boolean stomping);
 
 void            P_ExplodeMissile(mobj_t *mo);
+
+// d64tc >
+mobj_t         *P_SPMAngle(mobj_t *source, mobjtype_t type, angle_t angle);
+
+void            P_BounceMissile(mobj_t*);
+// < d64tc
 
 #endif

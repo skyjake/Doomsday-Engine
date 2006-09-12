@@ -166,6 +166,11 @@ Text {
 }
 
 Text {
+  ID = "GOTHELLBONUS";
+  Text = "Picked up a hell potion.";
+}
+
+Text {
   ID = "GOTSTIM";
   Text = "Picked up a stimpack.";
 }
@@ -238,6 +243,21 @@ Text {
 Text {
   ID = "GOTMAP";
   Text = "Computer Area Map";
+}
+
+Text {
+  ID = "GOTRADAR";
+  Text = "Radar";
+}
+
+Text {
+  ID = "GOTUNSEE";
+  Text = "You've gone totally invisible!";
+}
+
+Text {
+  ID = "UNSEEOFF";
+  Text = "The Unseer has worn off";
 }
 
 Text {
@@ -336,6 +356,16 @@ Text {
 }
 
 Text {
+  ID = "NGOTUNMAKER";
+  Text = "You need the Unmaker!";
+}
+
+Text {
+  ID = "UNMAKERCHARGE";
+  Text = "Your Unmaker must recharge!";
+}
+
+Text {
   ID = "GOTPOWERUP1";
   Text = "You have a feeling that it wasn't meant to be touched..";
 }
@@ -363,6 +393,26 @@ Text {
 Text {
   ID = "NGOTPOWERUP3";
   Text = "You don't have the ability to touch this...";
+}
+
+Text {
+  ID = "GOTFLOATER";
+  Text = "Levitation Device!";
+}
+
+Text {
+  ID = "GOTHELLTIME";
+  Text = "Hell Time!";
+}
+
+Text {
+  ID = "HELLTIMEON";
+  Text = "Hell Time actived!";
+}
+
+Text {
+  ID = "HELLTIMEWEAK";
+  Text = "You are too weak to activate Hell Time.";
 }
 
 Text {
@@ -398,6 +448,11 @@ Text {
 Text {
   ID = "PD_YELLOWK";
   Text = "You need a yellow key to open this door";
+}
+
+Text {
+  ID = "ALLALONE";
+  Text = "You are now alone...";
 }
 
 Text {

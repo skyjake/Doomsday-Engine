@@ -3,8 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -73,7 +75,7 @@ void C_DECL A_FireShotgun2();
 void C_DECL A_GunFlash();
 void C_DECL A_HeadAttack();
 void C_DECL A_Hoof();
-void C_DECL A_KeenDie();
+//void C_DECL A_KeenDie();
 void C_DECL A_Light0();
 void C_DECL A_Light1();
 void C_DECL A_Light2();
@@ -110,5 +112,45 @@ void C_DECL A_VileStart();
 void C_DECL A_VileTarget();
 void C_DECL A_WeaponReady();
 void C_DECL A_XScream();
+
+//d64tc
+void C_DECL A_BruisredAttack();
+void C_DECL A_CposPanLeft();
+void C_DECL A_CposPanRight();
+void C_DECL A_DrawPlasmaTube();
+void C_DECL A_PlasmaBuzz();
+void C_DECL A_Lasersmoke();
+void C_DECL A_RevealFloater();
+void C_DECL A_FireSingleLaser();
+void C_DECL A_FireDoubleLaser();
+void C_DECL A_FireDoubleLaser1();
+void C_DECL A_FireDoubleLaser2();
+void C_DECL A_PossSpecial();
+void C_DECL A_SposSpecial();
+void C_DECL A_TrooSpecial();
+void C_DECL A_NtroSpecial();
+void C_DECL A_SargSpecial();
+void C_DECL A_Sar2Special();
+void C_DECL A_HeadSpecial();
+void C_DECL A_Hed2Special();
+void C_DECL A_SkulSpecial();
+void C_DECL A_Bos2Special();
+void C_DECL A_BossSpecial();
+void C_DECL A_PainSpecial();
+void C_DECL A_FattSpecial();
+void C_DECL A_BabySpecial();
+void C_DECL A_CybrSpecial();
+void C_DECL A_BitchSpecial();
+void C_DECL A_Rocketpuff();
+void C_DECL A_BossExplode();
+void C_DECL A_SpitAcid();
+void C_DECL A_AcidCharge();
+void C_DECL A_TroopClaw();
+void C_DECL A_NtroopAttack();
+void C_DECL A_MotherFloorFire();
+void C_DECL A_MotherMissle();
+void C_DECL A_SetFloorFire();
+void C_DECL A_MotherBallExplode();
+void C_DECL A_BitchTracerPuff();
 
 #endif

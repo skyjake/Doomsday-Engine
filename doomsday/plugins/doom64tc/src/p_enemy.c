@@ -3,11 +3,12 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright Â© 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -49,8 +50,12 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define FATSPREAD   (ANG90/8)
-#define SKULLSPEED  (20*FRACUNIT)
+#define FATSPREAD               (ANG90/8)
+#define FAT_DELTAANGLE          (85*ANGLE_1) // d64tc
+#define FAT_ARM_EXTENSION_SHORT (32*FRACUNIT) // d64tc
+#define FAT_ARM_EXTENSION_LONG  (16*FRACUNIT) // d64tc
+#define FAT_ARM_HEIGHT          (64*FRACUNIT) // d64tc
+#define SKULLSPEED              (20*FRACUNIT)
 
 // TYPES -------------------------------------------------------------------
 
@@ -194,7 +199,8 @@ boolean P_CheckMeleeRange(mobj_t *actor)
             P_ApproxDistance(dist, (pl->pos[VZ] + (pl->height >> 1)) -
                                    (actor->pos[VZ] + (actor->height >> 1)));
 
-    range = (MELEERANGE - 20 * FRACUNIT + pl->info->radius);
+    //range = (MELEERANGE - 20 * FRACUNIT + pl->info->radius);
+    range = (MELEERANGE - 14 * FRACUNIT + pl->info->radius); // d64tc
     if(dist >= range)
         return false;
 
@@ -238,14 +244,14 @@ boolean P_CheckMissileRange(mobj_t *actor)
             return false;       // too far away
     }
 
-#if 0
+/* No Revenant in d64tc.
     if(actor->type == MT_UNDEAD)
     {
         if(dist < 196)
             return false;       // close for fist attack
         dist >>= 1;
     }
-#endif
+*/
 
     if(actor->type == MT_CYBORG || actor->type == MT_SPIDER ||
        actor->type == MT_SKULL)
@@ -559,6 +565,9 @@ boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
         player = &players[actor->lastlook];
 
+        if(player->powers[pw_unsee]) // d64tc
+            continue;
+
         if(player->health <= 0)
             continue;           // dead
 
@@ -597,6 +606,9 @@ int P_Massacre(void)
     if(gamestate != GS_LEVEL)
         return 0;
 
+    if(gamemap == 38) // d64tc
+        return 0; // can't do this in Hectic -kaiser
+
     for(think = thinkercap.next; think != &thinkercap; think = think->next)
     {
         if(think->function != P_MobjThinker)
@@ -614,14 +626,23 @@ int P_Massacre(void)
     return count;
 }
 
+// > DOOM64TC Specific ---------------------------------------------------------
+
 /*
- * DOOM II special, map 32. Uses special tag 666.
+ * DJS - This stuff all appears to be duplications of the exact same routine...
+ *       We can do better than this.
+ * TODO: Without having yet looked at the state definitions - my initial thoughts
+ *       are to replace all of this with a single XG line definition.
  */
-void C_DECL A_KeenDie(mobj_t *mo)
+
+/*
+ * used for special stuff. works only per monster!!! samuel...
+ */
+void C_DECL A_PossSpecial(mobj_t* mo)
 {
     thinker_t *th;
     mobj_t *mo2;
-    line_t* dummyLine;
+    line_t *dummyLine;
 
     A_Fall(mo);
 
@@ -641,8 +662,493 @@ void C_DECL A_KeenDie(mobj_t *mo)
     }
 
     dummyLine = P_AllocDummyLine();
-    P_XLine(dummyLine)->tag = 666;
-    EV_DoDoor(dummyLine, open);
+    P_XLine(dummyLine)->tag = 4444;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_SposSpecial(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4445;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_TrooSpecial(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4446;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_NtroSpecial(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4447;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_SargSpecial(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4448;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_Sar2Special(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4449;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_HeadSpecial(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4450;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_Hed2Special(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4451;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_SkulSpecial(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4452;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_Bos2Special(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4453;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_BossSpecial(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4454;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_PainSpecial(mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4455;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_FattSpecial (mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4456;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_BabySpecial (mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4457;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+/*
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_CybrSpecial (mobj_t* mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    P_XLine(dummyLine)->tag = 4458;
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
+    P_FreeDummyLine(dummyLine);
+}
+
+// < DOOM64TC Specific ----------------------------------------------------
+
+/*
+ * d64tc: Formerly A_KeenDie(mobj_t *mo).
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_BitchSpecial(mobj_t *mo)
+{
+    thinker_t *th;
+    mobj_t *mo2;
+    line_t *dummyLine;
+
+    A_Fall(mo);
+
+    // scan the remaining thinkers
+    // to see if all Keens are dead
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+            continue;
+
+        mo2 = (mobj_t *) th;
+        if(mo2 != mo && mo2->type == mo->type && mo2->health > 0)
+        {
+            // other Keen not dead
+            return;
+        }
+    }
+
+    dummyLine = P_AllocDummyLine();
+    //P_XLine(dummyLine)->tag = 666;
+    P_XLine(dummyLine)->tag = 4459;
+    //EV_DoDoor(dummyLine, open);
+    EV_DoDoor(dummyLine, lowerFloorToLowest);
     P_FreeDummyLine(dummyLine);
 }
 
@@ -714,6 +1220,18 @@ void C_DECL A_Look(mobj_t *actor)
 void C_DECL A_Chase(mobj_t *actor)
 {
     int     delta;
+
+    // d64tc >
+    if(actor->flags & MF_FLOAT)
+    {
+        int r = P_Random();
+
+        if(r < 64)
+            actor->momz += FRACUNIT;
+        else if(r < 128)
+            actor->momz -= FRACUNIT;
+    }
+    // < d64tc
 
     if(actor->reactiontime)
         actor->reactiontime--;
@@ -866,36 +1384,67 @@ void C_DECL A_SPosAttack(mobj_t *actor)
     }
 }
 
+/**
+ * d64tc
+ */
+void C_DECL A_CposPanLeft(mobj_t* actor)
+{
+    actor->angle = actor->angle + ANG90/4;
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_CposPanRight(mobj_t* actor)
+{
+    actor->angle = actor->angle - ANG90/4;
+}
+
 void C_DECL A_CPosAttack(mobj_t *actor)
 {
     int     angle;
     int     bangle;
     int     damage;
     int     slope;
+    int     r; // d64tc
 
     if(!actor->target)
         return;
 
-    S_StartSound(sfx_shotgn, actor);
+    //S_StartSound(sfx_shotgn, actor);
+    S_StartSound(sfx_pistol, actor); // d64tc
     A_FaceTarget(actor);
     bangle = actor->angle;
     slope = P_AimLineAttack(actor, bangle, MISSILERANGE);
 
     angle = bangle + ((P_Random() - P_Random()) << 20);
     damage = ((P_Random() % 5) + 1) * 3;
+
+    // d64tc >
+    r = P_Random();
+    if(r < 64)
+        A_CposPanLeft(actor);
+    else if(r < 128)
+        A_CposPanRight(actor);
+    // < d64tc
+
     P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
 }
 
 void C_DECL A_CPosRefire(mobj_t *actor)
 {
+    if(!actor->target) // d64tc
+        return;
+
     // keep firing unless target got out of sight
     A_FaceTarget(actor);
 
-    if(P_Random() < 40)
+    if(P_Random() < 30) // d64tc: was "if(P_Random() < 40)"
         return;
 
+    // d64tc: Added "|| P_Random() < 40"
     if(!actor->target || actor->target->health <= 0 ||
-       !P_CheckSight(actor, actor->target))
+       !P_CheckSight(actor, actor->target) || P_Random() < 40)
     {
         P_SetMobjState(actor, actor->info->seestate);
     }
@@ -916,6 +1465,51 @@ void C_DECL A_SpidRefire(mobj_t *actor)
     }
 }
 
+/**
+ * d64tc: BspiAttack. Throw projectile.
+ */
+void BabyFire(mobj_t *actor, int type, boolean right)
+{
+#define BSPISPREAD                  (ANG90/8) //its cheap but it works
+#define BABY_DELTAANGLE             (85*ANGLE_1)
+#define BABY_ARM_EXTENSION_SHORT    (18*FRACUNIT)
+#define BABY_ARM_HEIGHT             (24*FRACUNIT)
+
+    mobj_t *mo;
+    angle_t ang;
+    fixed_t pos[3];
+
+    ang = actor->angle;
+    if(right)
+        ang += BABY_DELTAANGLE;
+    else
+        ang -= BABY_DELTAANGLE;
+    ang >>= ANGLETOFINESHIFT;
+
+    memcpy(pos, actor->pos, sizeof(pos));
+    pos[VX] += FixedMul(BABY_ARM_EXTENSION_SHORT, finecosine[ang]);
+    pos[VY] += FixedMul(BABY_ARM_EXTENSION_SHORT, finesine[ang]);
+    pos[VZ] -= actor->floorclip + BABY_ARM_HEIGHT;
+
+    mo = P_SpawnMotherMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target,
+                              type);
+
+    if(right)
+        mo->angle += BSPISPREAD/6;
+    else
+        mo->angle -= BSPISPREAD/6;
+
+    ang = mo->angle >> ANGLETOFINESHIFT;
+    mo->momx = FixedMul(mo->info->speed, finecosine[ang]);
+    mo->momy = FixedMul(mo->info->speed, finesine[ang]);
+
+#undef BSPISPREAD
+#undef BABY_DELTAANGLE
+#undef BABY_ARM_EXTENSION_SHORT
+#undef BABY_ARM_HEIGHT
+}
+
+/*
 void C_DECL A_BspiAttack(mobj_t *actor)
 {
     if(!actor->target)
@@ -926,7 +1520,38 @@ void C_DECL A_BspiAttack(mobj_t *actor)
     // launch a missile
     P_SpawnMissile(actor, actor->target, MT_ARACHPLAZ);
 }
+*/
 
+/**
+ * d64tc: Modified to shoot two plasmaballs while aligned to cannon
+ *        should of been like this in Doom 2!
+ */
+void C_DECL A_BspiAttack(mobj_t* actor)
+{
+    int type = P_Random() % 2;
+
+    switch(type)
+    {
+    case 0:
+        if(actor->type == MT_BABY || actor->info->doomednum == 234)
+            type = MT_ARACHPLAZ;
+        else if(actor->type == MT_NIGHTCRAWLER)
+            type = MT_GRENADE;
+        break;
+
+    case 1:
+        if(actor->type == MT_BABY || actor->info->doomednum == 234)
+            type = MT_ARACHPLAZ;
+        else if(actor->type == MT_NIGHTCRAWLER)
+            type = MT_GRENADE;
+        break;
+    }
+
+    BabyFire(actor, type, false);
+    BabyFire(actor, type, true);
+}
+
+/*
 void C_DECL A_TroopAttack(mobj_t *actor)
 {
     int     damage;
@@ -945,6 +1570,182 @@ void C_DECL A_TroopAttack(mobj_t *actor)
 
     // launch a missile
     P_SpawnMissile(actor, actor->target, MT_TROOPSHOT);
+}
+*/
+
+/**
+ * d64tc: Modified version.
+ */
+void C_DECL A_TroopAttack(mobj_t* actor)
+{
+    if(!actor->target)
+        return;
+
+    A_FaceTarget(actor);
+    // launch a missile
+    P_SpawnMissile(actor, actor->target, MT_TROOPSHOT);
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_TroopClaw(mobj_t* actor)
+{
+    int     damage;
+
+    if(!actor->target)
+        return;
+
+    A_FaceTarget(actor);
+    if(P_CheckMeleeRange(actor))
+    {
+        S_StartSound(sfx_claw, actor);
+        damage = (P_Random() % 8 + 1) * 3;
+        P_DamageMobj(actor->target, actor, actor, damage);
+        return;
+    }
+
+}
+
+void C_DECL A_NtroopAttack (mobj_t* actor)
+{
+    if (!actor->target)
+        return;
+
+    A_FaceTarget (actor);
+    // launch a missile
+    P_SpawnMissile (actor, actor->target, MT_NTROSHOT);
+}
+
+#define FIRESPREAD  (ANG90/8) //its cheap but it works
+void C_DECL A_MotherFloorFire  (mobj_t *actor)
+{
+    mobj_t *mo;
+    int     an;
+
+    if (!actor->target)
+    return;
+
+    A_FaceTarget (actor);
+
+    S_StartSound(sfx_mthatk, actor);
+    mo = P_SpawnMissile(actor, actor->target, MT_FIREEND);
+    mo = P_SpawnMissile (actor, actor->target, MT_FIREEND);
+    mo->angle -= FIRESPREAD*4;
+    an = mo->angle >> ANGLETOFINESHIFT;
+    mo->momx = FixedMul (mo->info->speed, finecosine[an]);
+    mo->momy = FixedMul (mo->info->speed, finesine[an]);
+
+    mo = P_SpawnMissile (actor, actor->target, MT_FIREEND);
+    mo->angle += FIRESPREAD*4;
+    an = mo->angle >> ANGLETOFINESHIFT;
+    mo->momx = FixedMul (mo->info->speed, finecosine[an]);
+    mo->momy = FixedMul (mo->info->speed, finesine[an]);
+}
+
+/**
+ * d64tc: Mother Demon, projectile attack. Used for all four fireballs.
+ */
+void MotherFire(mobj_t *actor, int type, angle_t angle, fixed_t distance,
+                fixed_t height)
+{
+    angle_t ang;
+    fixed_t pos[3];
+
+    ang = actor->angle + angle;
+    ang >>= ANGLETOFINESHIFT;
+
+    memcpy(pos, actor->pos, sizeof(pos));
+    pos[VX] += FixedMul(distance, finecosine[ang]);
+    pos[VY] += FixedMul(distance, finesine[ang]);
+    pos[VZ] += -actor->floorclip + height;
+
+    P_SpawnMotherMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target, type);
+}
+
+/**
+ * d64tc: MotherDemon's Missle Attack code
+ */
+void C_DECL A_MotherMissle(mobj_t* actor)
+{
+#define MOTHER_DELTAANGLE           (85*ANGLE_1)
+#define MOTHER_ARM_EXTENSION_SHORT  (40*FRACUNIT)
+#define MOTHER_ARM_EXTENSION_LONG   (55*FRACUNIT)
+#define MOTHER_ARM1_HEIGHT          (128*FRACUNIT)
+#define MOTHER_ARM2_HEIGHT          (128*FRACUNIT)
+#define MOTHER_ARM3_HEIGHT          (64*FRACUNIT)
+#define MOTHER_ARM4_HEIGHT          (64*FRACUNIT)
+
+    // Fire 4 missiles at once.
+    MotherFire(actor, MT_BITCHBALL, -MOTHER_DELTAANGLE, MOTHER_ARM_EXTENSION_SHORT,
+               MOTHER_ARM1_HEIGHT);
+    MotherFire(actor, MT_BITCHBALL, MOTHER_DELTAANGLE, MOTHER_ARM_EXTENSION_SHORT,
+               MOTHER_ARM2_HEIGHT);
+    MotherFire(actor, MT_BITCHBALL, -MOTHER_DELTAANGLE, MOTHER_ARM_EXTENSION_LONG,
+               MOTHER_ARM3_HEIGHT);
+    MotherFire(actor, MT_BITCHBALL, MOTHER_DELTAANGLE, MOTHER_ARM_EXTENSION_LONG,
+               MOTHER_ARM4_HEIGHT);
+
+#undef MOTHER_DELTAANGLE
+#undef MOTHER_ARM_EXTENSION_SHORT
+#undef MOTHER_ARM_EXTENSION_LONG
+#undef MOTHER_ARM1_HEIGHT
+#undef MOTHER_ARM2_HEIGHT
+#undef MOTHER_ARM3_HEIGHT
+#undef MOTHER_ARM4_HEIGHT
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_SetFloorFire(mobj_t *actor)
+{
+    mobj_t *mo;
+    fixed_t pos[3];
+
+    actor->pos[VZ] = actor->floorz; // DJS - why?
+
+    memcpy(pos, actor->pos, sizeof(pos));
+    pos[VX] += (P_Random() - P_Random()) << 10;
+    pos[VY] += (P_Random() - P_Random()) << 10;
+    pos[VZ]  = ONFLOORZ;
+
+    mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_SPAWNFIRE);
+    mo->target = actor->target;
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_MotherBallExplode(mobj_t *spread)
+{
+    int     i;
+    angle_t angle;
+    mobj_t *shard;
+
+    for(i = 0; i < 8; ++i)
+    {
+        shard = P_SpawnMobj(spread->pos[VX], spread->pos[VY], spread->pos[VZ],
+                            MT_HEADSHOT);
+        angle = i * ANG45;
+        shard->target = spread->target;
+        shard->angle  = angle;
+
+        angle >>= ANGLETOFINESHIFT;
+        shard->momx = FixedMul(shard->info->speed, finecosine[angle]);
+        shard->momy = FixedMul(shard->info->speed, finesine[angle]);
+    }
+}
+
+/**
+ * d64tc: spawns a smoke sprite during the missle attack
+ */
+void C_DECL A_BitchTracerPuff(mobj_t *smoke)
+{
+    if(!smoke)
+        return;
+
+    P_SpawnMobj(smoke->pos[VX], smoke->pos[VY], smoke->pos[VZ], MT_MOTHERPUFF);
 }
 
 void C_DECL A_SargAttack(mobj_t *actor)
@@ -981,6 +1782,7 @@ void C_DECL A_HeadAttack(mobj_t *actor)
     P_SpawnMissile(actor, actor->target, MT_HEADSHOT);
 }
 
+/*
 void C_DECL A_CyberAttack(mobj_t *actor)
 {
     if(!actor->target)
@@ -988,6 +1790,35 @@ void C_DECL A_CyberAttack(mobj_t *actor)
 
     A_FaceTarget(actor);
     P_SpawnMissile(actor, actor->target, MT_ROCKET);
+}
+*/
+
+/**
+ * d64tc
+ */
+void C_DECL A_CyberAttack(mobj_t* actor)
+{
+#define CYBER_DELTAANGLE            (85*ANGLE_1)
+#define CYBER_ARM_EXTENSION_SHORT   (35*FRACUNIT)
+#define CYBER_ARM1_HEIGHT           (68*FRACUNIT)
+
+    angle_t ang;
+    fixed_t pos[3];
+
+    // this aligns the rocket to the d64tc cyberdemon's rocket launcher.
+    ang = (actor->angle + CYBER_DELTAANGLE) >> ANGLETOFINESHIFT;
+
+    memcpy(pos, actor->pos, sizeof(pos));
+    pos[VX] += FixedMul(CYBER_ARM_EXTENSION_SHORT, finecosine[ang]);
+    pos[VY] += FixedMul(CYBER_ARM_EXTENSION_SHORT, finesine[ang]);
+    pos[VZ] += -actor->floorclip + CYBER_ARM1_HEIGHT;
+
+    P_SpawnMotherMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target,
+                         MT_CYBERROCKET);
+
+#undef CYBER_DELTAANGLE
+#undef CYBER_ARM_EXTENSION_SHORT
+#undef CYBER_ARM1_HEIGHT
 }
 
 void C_DECL A_BruisAttack(mobj_t *actor)
@@ -1009,6 +1840,29 @@ void C_DECL A_BruisAttack(mobj_t *actor)
     P_SpawnMissile(actor, actor->target, MT_BRUISERSHOT);
 }
 
+/**
+ * d64tc Special Bruiser shot for Baron
+ */
+void C_DECL A_BruisredAttack(mobj_t* actor)
+{
+    int     damage;
+
+    if(!actor->target)
+        return;
+
+    if(P_CheckMeleeRange(actor))
+    {
+        S_StartSound(sfx_claw, actor);
+        damage = (P_Random() % 8 + 1) * 10;
+        P_DamageMobj(actor->target, actor, actor, damage);
+        return;
+    }
+
+    // launch a missile
+    P_SpawnMissile(actor, actor->target, MT_BRUISERSHOTRED);
+}
+
+/*
 void C_DECL A_SkelMissile(mobj_t *actor)
 {
     mobj_t *mo;
@@ -1024,6 +1878,68 @@ void C_DECL A_SkelMissile(mobj_t *actor)
     mo->pos[VX] += mo->momx;
     mo->pos[VY] += mo->momy;
     mo->tracer = actor->target;
+}
+*/
+
+/**
+ * kaiser - Too lazy to add a new action, instead I'll just borrow this one.
+ * DJS - yup you are lazy :P
+ *
+ * TODO:    Implement this properly as two seperate actions.
+ */
+void C_DECL A_SkelMissile(mobj_t* actor)
+{
+    mobj_t  *mo;
+
+    if(actor->type == MT_STALKER)
+    {
+        if(!((actor->flags & MF_SOLID) && (actor->flags & MF_SHOOTABLE)))
+        {
+            actor->flags |= MF_SOLID;
+            actor->flags |= MF_SHOOTABLE;
+
+            P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_HFOG);
+            S_StartSound(sfx_stlktp, actor);
+            return;
+        }
+
+        if(!actor->target)
+            return;
+
+        if(P_Random() < 64)
+        {
+            P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_HFOG);
+
+            S_StartSound(sfx_stlktp, actor);
+            P_SetMobjState(actor, S_STALK_HIDE);
+            actor->flags &= ~MF_SOLID;
+            actor->flags &= ~MF_SHOOTABLE;
+
+            memcpy(actor->pos, actor->target->pos, sizeof(actor->pos));
+            actor->pos[VZ] += 32;
+        }
+        else
+        {
+            A_FaceTarget(actor);
+            mo = P_SpawnMissile(actor, actor->target, MT_TRACER);
+
+            mo->pos[VX] += mo->momx;
+            mo->pos[VY] += mo->momy;
+            mo->tracer = actor->target;
+        }
+    }
+    else
+    {
+        if(!actor->target)
+            return;
+
+        A_FaceTarget(actor);
+        mo = P_SpawnMissile(actor, actor->target, MT_TRACER);
+
+        mo->pos[VX] += mo->momx;
+        mo->pos[VY] += mo->momy;
+        mo->tracer = actor->target;
+    }
 }
 
 void C_DECL A_Tracer(mobj_t *actor)
@@ -1357,6 +2273,33 @@ void C_DECL A_FatRaise(mobj_t *actor)
     S_StartSound(sfx_manatk, actor);
 }
 
+/*
+ * d64tc: Used for mancubus projectile.
+ */
+void FatFire(mobj_t *actor, int type, int spread, int angle,
+             fixed_t distance, fixed_t height)
+{
+    mobj_t *mo;
+    angle_t ang;
+    fixed_t pos[3];
+
+    ang = (actor->angle + angle) >> ANGLETOFINESHIFT;
+
+    memcpy(pos, actor->pos, sizeof(pos));
+    pos[VX] += FixedMul(distance, finecosine[ang]);
+    pos[VY] += FixedMul(distance, finesine[ang]);
+    pos[VZ] += -actor->floorclip + height;
+
+    mo = P_SpawnMotherMissile(pos[VX], pos[VY], pos[VZ], actor, actor->target,
+                              type);
+
+    mo->angle += spread;
+    ang = mo->angle >> ANGLETOFINESHIFT;
+    mo->momx = FixedMul(mo->info->speed, finecosine[ang]);
+    mo->momy = FixedMul(mo->info->speed, finesine[ang]);
+}
+
+/*
 void C_DECL A_FatAttack1(mobj_t *actor)
 {
     mobj_t *mo;
@@ -1373,7 +2316,20 @@ void C_DECL A_FatAttack1(mobj_t *actor)
     mo->momx = FixedMul(mo->info->speed, finecosine[an]);
     mo->momy = FixedMul(mo->info->speed, finesine[an]);
 }
+*/
 
+/**
+ * d64tc
+ */
+void C_DECL A_FatAttack1(mobj_t *actor)
+{
+    FatFire(actor, MT_FATSHOT, -(FATSPREAD / 4), -FAT_DELTAANGLE,
+            FAT_ARM_EXTENSION_SHORT, FAT_ARM_HEIGHT);
+    FatFire(actor, MT_FATSHOT, FATSPREAD * 1.5, FAT_DELTAANGLE,
+            FAT_ARM_EXTENSION_LONG, FAT_ARM_HEIGHT);
+}
+
+/*
 void C_DECL A_FatAttack2(mobj_t *actor)
 {
     mobj_t *mo;
@@ -1390,7 +2346,20 @@ void C_DECL A_FatAttack2(mobj_t *actor)
     mo->momx = FixedMul(mo->info->speed, finecosine[an]);
     mo->momy = FixedMul(mo->info->speed, finesine[an]);
 }
+*/
 
+/**
+ * d64tc
+ */
+void C_DECL A_FatAttack2(mobj_t *actor)
+{
+    FatFire(actor, MT_FATSHOT, -(FATSPREAD * 1.5), -FAT_DELTAANGLE,
+            FAT_ARM_EXTENSION_LONG, FAT_ARM_HEIGHT);
+    FatFire(actor, MT_FATSHOT, FATSPREAD / 4, FAT_DELTAANGLE,
+            FAT_ARM_EXTENSION_SHORT, FAT_ARM_HEIGHT);
+}
+
+/*
 void C_DECL A_FatAttack3(mobj_t *actor)
 {
     mobj_t *mo;
@@ -1409,6 +2378,18 @@ void C_DECL A_FatAttack3(mobj_t *actor)
     an = mo->angle >> ANGLETOFINESHIFT;
     mo->momx = FixedMul(mo->info->speed, finecosine[an]);
     mo->momy = FixedMul(mo->info->speed, finesine[an]);
+}
+*/
+
+/**
+ * d64tc
+ */
+void C_DECL A_FatAttack3(mobj_t *actor)
+{
+    FatFire(actor, MT_FATSHOT, FATSPREAD / 4, FAT_DELTAANGLE,
+            FAT_ARM_EXTENSION_SHORT, FAT_ARM_HEIGHT);
+    FatFire(actor, MT_FATSHOT, -(FATSPREAD / 4), -FAT_DELTAANGLE,
+            FAT_ARM_EXTENSION_SHORT, FAT_ARM_HEIGHT);
 }
 
 /*
@@ -1534,7 +2515,7 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
     A_SkullAttack(newmobj);
 }
 
-/*
+/**
  * PainElemental Attack:
  * Spawn a lost soul and launch it at the target
  */
@@ -1544,7 +2525,11 @@ void C_DECL A_PainAttack(mobj_t *actor)
         return;
 
     A_FaceTarget(actor);
-    A_PainShootSkull(actor, actor->angle);
+    //A_PainShootSkull(actor, actor->angle);
+
+    // d64tc - Shoots two lost souls from left and right side.
+    A_PainShootSkull(actor, actor->angle + ANG270);
+    A_PainShootSkull(actor, actor->angle + ANG90);
 }
 
 void C_DECL A_PainDie(mobj_t *actor)
@@ -1553,6 +2538,41 @@ void C_DECL A_PainDie(mobj_t *actor)
     A_PainShootSkull(actor, actor->angle + ANG90);
     A_PainShootSkull(actor, actor->angle + ANG180);
     A_PainShootSkull(actor, actor->angle + ANG270);
+}
+
+/**
+ * d64tc: Rocket Trail Puff
+ * kaiser - Current Rocket Puff code unknown because I know squat.
+ *          A fixed version of the pain attack code.
+ */
+void A_Rocketshootpuff(mobj_t *actor, angle_t angle)
+{
+    angle_t     an;
+    int         prestep;
+    fixed_t     pos[3];
+    mobj_t     *mo;
+
+    // okay, there's playe for another one
+    an = angle >> ANGLETOFINESHIFT;
+
+    prestep = 4 * FRACUNIT + 3 *
+              (actor->info->radius + mobjinfo[MT_ROCKETPUFF].radius) / 2;
+
+    memcpy(pos, actor->pos, sizeof(pos));
+    pos[VX] += FixedMul(prestep, finecosine[an]);
+    pos[VY] += FixedMul(prestep, finesine[an]);
+    pos[VZ] += 8 * FRACUNIT;
+
+    mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_ROCKETPUFF);
+
+    // Check for movements.
+    // killough $dropoff_fix
+    if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY], false, false))
+    {
+        // kill it immediately
+        P_DamageMobj(mo, actor, actor, 10000);
+        return;
+    }
 }
 
 void C_DECL A_Scream(mobj_t *actor)
@@ -1581,13 +2601,161 @@ void C_DECL A_Scream(mobj_t *actor)
     }
 
     // Check for bosses.
-    if(actor->type == MT_SPIDER || actor->type == MT_CYBORG)
+    if(actor->type == MT_SPIDER || actor->type == MT_CYBORG ||
+       actor->type == MT_BITCH) // d64tc added "|| actor->type == MT_BITCH"
     {
         // full volume
         S_StartSound(sound | DDSF_NO_ATTENUATION, NULL);
+        actor->reactiontime += 30;  // d64tc
     }
     else
         S_StartSound(sound, actor);
+
+    // d64tc >
+    if(actor->type == MT_ACID)
+    {
+        int     i;
+        mobj_t *mo = NULL;
+
+        for(i = 0; i < 16; ++i)
+        {
+            mo = P_SpawnMissile(actor, actor, MT_ACIDMISSILE);
+            if(mo)
+            {
+                mo->momx = (P_Random() - 128) << 11;
+                mo->momy = (P_Random() - 128) << 11;
+                mo->momz = FRACUNIT * 10 + (P_Random() << 10);
+                mo->target = actor;
+            }
+        }
+    }
+    // < d64tc
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_BossExplode(mobj_t *actor)
+{
+    mobj_t *mo;
+    fixed_t pos[3];
+
+    memcpy(pos, actor->pos, sizeof(pos));
+    pos[VX] += (P_Random() - 128) << 11;
+    pos[VY] += (P_Random() - 128) << 11;
+    pos[VZ] += actor->height >> 1;
+
+    mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_KABOOM);
+    if(mo)
+    {
+        S_StartSound(sfx_barexp, mo);
+        mo->momx = (P_Random() - 128) << 11;
+        mo->momy = (P_Random() - 128) << 11;
+        mo->target = actor;
+    }
+
+    actor->reactiontime--;
+    if(actor->reactiontime <= 0)
+    {
+        P_SetMobjState(actor, actor->info->deathstate + 2);
+    }
+}
+
+/**
+ * d64tc
+ */
+boolean P_CheckAcidRange(mobj_t *actor)
+{
+    fixed_t dist;
+
+    if(!actor->target)
+        return false;
+
+    dist = P_ApproxDistance(actor->target->pos[VX] - actor->pos[VX],
+                            actor->target->pos[VY] - actor->pos[VY]);
+
+    dist = P_ApproxDistance(dist, (actor->target->pos[VZ] + (actor->target->height >> 1)) -
+                                  (actor->pos[VZ] + (actor->height >> 1)));
+
+    if(dist >= ACIDRANGE - 14 * FRACUNIT + actor->target->info->radius)
+        return false;
+
+    if(!P_CheckSight(actor, actor->target))
+        return false;
+
+    return true;
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_SpitAcid(mobj_t* actor)
+{
+    int     i;
+    angle_t an;
+    mobj_t *mo;
+
+    if(!actor->target)
+        return;
+
+    if(P_CheckAcidRange(actor))
+    {
+        A_FaceTarget(actor);
+        S_StartSound(sfx_sgtatk, actor);
+
+        for(i = 0; i < 16; ++i)
+        {
+            mo = P_SpawnMissile(actor, actor->target, MT_ACIDMISSILE);
+            if(mo)
+            {
+                mo->angle = actor->angle;
+                an = mo->angle >> ANGLETOFINESHIFT;
+
+                mo->momx = FixedMul(mo->info->speed, finecosine[an]) +
+                           P_Random() % 3 * FRACUNIT;
+                mo->momy = FixedMul(mo->info->speed, finesine[an]) +
+                           P_Random() % 3 * FRACUNIT;
+                mo->momz = FRACUNIT * 4 + (P_Random() << 10);
+
+                mo->target = actor;
+            }
+        }
+
+        actor->info->speed = 7 * FRACUNIT;
+
+        for(i= S_ACID_RUN1; i <= S_ACID_RUN8; ++i)
+            states[i].tics = 3;
+    }
+    else
+    {
+        P_SetMobjState(actor, actor->info->seestate);
+    }
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_AcidCharge(mobj_t *actor)
+{
+    int     i;
+
+    if(!actor->target)
+        return;
+
+    if(!(P_CheckAcidRange(actor)))
+    {
+        A_FaceTarget(actor);
+        A_Chase(actor);
+
+        for(i = S_ACID_RUN1; i <= S_ACID_RUN8; ++i)
+            states[i].tics = 1;
+
+        actor->info->speed = 15 * FRACUNIT;
+    }
+    else
+    {
+        P_SetMobjState(actor, actor->info->missilestate + 1);
+    }
 }
 
 void C_DECL A_XScream(mobj_t *actor)
@@ -1613,11 +2781,24 @@ void C_DECL A_Fall(mobj_t *actor)
 
 void C_DECL A_Explode(mobj_t *thingy)
 {
-    P_RadiusAttack(thingy, thingy->target, 128);
+    // d64tc >
+    int radius;
+
+    if(thingy->type == MT_GRENADE)
+        radius = 48;
+    else
+        radius = 128;
+    // < d64tc
+
+    //P_RadiusAttack(thingy, thingy->target, 128); // d64tc
+    P_RadiusAttack(thingy, thingy->target, radius);
 }
 
-/*
+/**
  * Possibly trigger special effects if on first boss level
+ *
+ * kaiser - Removed exit special at end to allow MT_FATSO to properly
+ *          work in Map33 for d64tc.
  */
 void C_DECL A_BossDeath(mobj_t *mo)
 {
@@ -1630,13 +2811,26 @@ void C_DECL A_BossDeath(mobj_t *mo)
     if(bossKilled)
         return;
 
-    if(gamemode == commercial)
+    //if(gamemode == commercial) // d64tc
     {
+        /* d64tc
         if(gamemap != 7)
             return;
         if((mo->type != MT_FATSO) && (mo->type != MT_BABY))
             return;
+        */
+
+        // d64tc >
+        if((gamemap != 1) && (gamemap != 30) && (gamemap != 32) &&
+           (gamemap != 33) && (gamemap != 35))
+            return;
+
+        if((mo->type != MT_BITCH) && (mo->type != MT_CYBORG) &&
+           (mo->type != MT_BARREL) && (mo->type != MT_FATSO))
+            return;
+        // < d64tc
     }
+/* d64tc >
     else
     {
         switch (gameepisode)
@@ -1701,6 +2895,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         }
 
     }
+< d64tc */
 
     // make sure there is a player alive for victory
     for(i = 0; i < MAXPLAYERS; i++)
@@ -1725,6 +2920,53 @@ void C_DECL A_BossDeath(mobj_t *mo)
         }
     }
 
+    // d64tc >
+    if(gamemap == 1)
+    {
+        if(mo->type == MT_BARREL)
+        {
+            dummyLine = P_AllocDummyLine();
+            P_XLine(dummyLine)->tag = 666;
+            EV_DoFloor(dummyLine, blazeRaise);
+
+            P_FreeDummyLine(dummyLine);
+            return;
+        }
+    }
+    else if(gamemap == 30)
+    {
+        if(mo->type == MT_BITCH)
+        {
+            G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        }
+    }
+    else if(gamemap == 32 || gamemap == 33)
+    {
+        if(mo->type == MT_CYBORG)
+        {
+            dummyLine = P_AllocDummyLine();
+            P_XLine(dummyLine)->tag = 666;
+            EV_DoFloor(dummyLine, blazeRaise);
+
+            P_FreeDummyLine(dummyLine);
+            return;
+        }
+
+        if(mo->type == MT_FATSO)
+        {
+            G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        }
+    }
+    else if(gamemap == 35)
+    {
+        if(mo->type == MT_CYBORG)
+        {
+            G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+        }
+    }
+    // < d64tc
+
+/* d64tc >
     // victory!
     if(gamemode == commercial)
     {
@@ -1790,6 +3032,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
     }
 
     G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
+*/
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -2006,8 +3249,8 @@ void C_DECL A_SpawnFly(mobj_t *mo)
         type = MT_HEAD;
     else if(r < 162)
         type = MT_VILE;
-//    else if(r < 172)
-//        type = MT_UNDEAD;
+    else if(r < 172)
+        type = MT_NIGHTMARECACO; // d64tc was "MT_UNDEAD"
     else if(r < 192)
         type = MT_BABY;
     else if(r < 222)

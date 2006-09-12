@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -170,6 +171,11 @@
 
 #define MF_NOTDMATCH        0x02000000  // (p) not spawned in deathmatch mode (e.g. key cards).
 
+// FIXME: DJS - d64tc used this without knowing it was already in use by the
+// the color translation stuff. We'll resolve this by first seeing what it actually
+// does and if usefull we can move it to a free value and implement in the other games.
+#define MF_FLOATER          0x04000000
+
 #define MF_TRANSLATION      0x0c000000  // (i) if 0x4 0x8 or 0xc, use a translation
 #define MF_TRANSSHIFT       26          // (N/A) table for player colormaps
 
@@ -216,6 +222,7 @@
 // Internal mobj flags cannot be set using an external definition.
 
 #define MIF_FALLING         0x00000001  // $dropoff_fix: Object is falling from a ledge.
+#define MIF_FADE            0x00000002  // d64tc
 
 /*
  * end mobj flags
@@ -278,6 +285,8 @@ typedef struct mobj_s {
     int             turntime;      // $visangle-facetarget
     int             corpsetics;    // $vanish: how long has this been dead?
 
+    int             floattics; // d64tc
+    int             floatswitch; // d64tc
 } mobj_t;
 
 void        P_RespawnSpecials(void);

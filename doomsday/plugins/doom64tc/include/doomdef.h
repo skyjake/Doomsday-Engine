@@ -6,6 +6,7 @@
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -187,6 +188,22 @@ typedef enum {
     NUMKEYS
 } card_t;
 
+// doom64tc >
+//
+// Laser Powerups
+//
+typedef enum
+{
+    it_laserpw1,
+    it_laserpw2,
+    it_laserpw3,
+    it_helltime,
+    it_float,
+
+    NUMARTIFACTS
+} laserpw_t;
+// < doom64tc
+
 // The defined weapons,
 //  including a marker indicating
 //  user has not changed weapon.
@@ -200,7 +217,7 @@ typedef enum {
     wp_bfg,
     wp_chainsaw,
     wp_supershotgun,
-
+    wp_unmaker, // d64tc
     NUMWEAPONS,
 
     // No pending weapon change.
@@ -228,6 +245,8 @@ typedef enum {
     pw_allmap,
     pw_infrared,
     pw_flight,
+    pw_radar, // d64tc
+    pw_unsee, // d64tc
     NUMPOWERS
 } powertype_t;
 
@@ -240,7 +259,8 @@ typedef enum {
     INVULNTICS = (30 * TICRATE),
     INVISTICS = (60 * TICRATE),
     INFRATICS = (120 * TICRATE),
-    IRONTICS = (60 * TICRATE)
+    IRONTICS = (60 * TICRATE),
+    UNSEETICS = (30*TICRATE) // d64tc
 } powerduration_t;
 
 enum { VX, VY, VZ };               // Vertex indices.

@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -62,6 +63,7 @@ void            P_SpawnSpecials(void);
 
 // every tic
 void            P_UpdateSpecials(void);
+void            P_ThunderSector(void); // d64tc
 
 // when needed
 int             P_GetTerrainType(sector_t* sec, int plane);
@@ -115,6 +117,16 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     int             count;
+    int             maxlight;
+    int             minlight;
+    int             maxtime;
+    int             mintime;
+} lightblink_t;
+
+typedef struct {
+    thinker_t       thinker;
+    sector_t       *sector;
+    int             count;
     int             minlight;
     int             maxlight;
     int             darktime;
@@ -134,13 +146,16 @@ typedef struct {
 #define FASTDARK            15
 #define SLOWDARK            35
 
-void T_FireFlicker(fireflicker_t * flick);
+void T_FireFlicker(fireflicker_t *flick);
 void P_SpawnFireFlicker(sector_t *sector);
 
-void T_LightFlash(lightflash_t * flash);
+void T_LightFlash(lightflash_t *flash);
 void P_SpawnLightFlash(sector_t *sector);
 
-void T_StrobeFlash(strobe_t * flash);
+void T_LightBlink(lightblink_t *flash); // d64tc
+void P_SpawnLightBlink(sector_t *sector); // d64tc
+
+void T_StrobeFlash(strobe_t *flash);
 void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync);
 
 void EV_StartLightStrobing(line_t *line);
@@ -148,7 +163,7 @@ void EV_TurnTagLightsOff(line_t *line);
 
 void EV_LightTurnOn(line_t *line, int bright);
 
-void T_Glow(glow_t * g);
+void T_Glow(glow_t *g);
 void P_SpawnGlowingLight(sector_t *sector);
 
 //
@@ -206,9 +221,12 @@ typedef enum {
 typedef enum {
     perpetualRaise,
     downWaitUpStay,
+    upWaitDownStay, //d64tc kaiser - outcast
+    downWaitUpDoor, //d64tc kaiser - outcast
     raiseAndChange,
     raiseToNearestAndChange,
-    blazeDWUS
+    blazeDWUS,
+    blazeDWUSplus16 //d64tc
 } plattype_e;
 
 typedef struct {
@@ -260,6 +278,9 @@ typedef enum {
     raiseIn5Mins,
     blazeRaise,
     blazeOpen,
+    instantOpen,    //d64tc kaiser
+    instantClose, //d64tc kaiser
+    instantRaise, //d64tc kaiser
     blazeClose
 } vldoor_e;
 
@@ -291,6 +312,15 @@ void            T_VerticalDoor(vldoor_t * door);
 void            P_SpawnDoorCloseIn30(sector_t *sec);
 void            P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum);
 
+// d64tc >
+int             EV_DoSplitDoor(line_t * line, int ftype, int ctype);
+int             EV_DestoryLineShield(line_t *line);
+int             EV_SwitchTextureFree(line_t *line);
+int             EV_ActivateSpecial(line_t *line);
+void            P_SetSectorColor(line_t *line);
+int             EV_AnimateDoor(line_t *line, mobj_t *thing);
+// < d64tc
+
 //
 // P_CEILNG
 //
@@ -300,7 +330,8 @@ typedef enum {
     lowerAndCrush,
     crushAndRaise,
     fastCrushAndRaise,
-    silentCrushAndRaise
+    silentCrushAndRaise,
+    customCeiling // d64tc
 } ceiling_e;
 
 typedef struct {
@@ -354,6 +385,10 @@ typedef enum {
     // lower floor to highest surrounding floor VERY FAST
     turboLower,
 
+    lowerToEight, // d64tc
+    customFloor, // d64tc
+    customChangeSec, // d64tc
+
     // raise floor to lowest surrounding CEILING
     raiseFloor,
 
@@ -374,7 +409,8 @@ typedef enum {
     // raise to next highest floor, turbo-speed
     raiseFloorTurbo,
     donutRaise,
-    raiseFloor512
+    raiseFloor512,
+    raiseFloor32 // d64tc
 } floor_e;
 
 typedef enum {
@@ -413,6 +449,9 @@ void            T_MoveFloor(floormove_t * floor);
 // P_TELEPT
 //
 #define         TELEFOGHEIGHT 0
-int             EV_Teleport(line_t *line, int side, mobj_t *thing);
+int             EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog);
+
+int             EV_FadeSpawn(line_t *line, mobj_t *thing); // d64tc
+int             EV_FadeAway(line_t *line, mobj_t *thing); // d64tc
 
 #endif

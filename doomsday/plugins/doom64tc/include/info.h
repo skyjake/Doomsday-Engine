@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,13 +18,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
 /*
  * Sprite, state, mobjtype and text identifiers
- * Generated with DED Manager 1.1
  */
 
 #ifndef __INFO_CONSTANTS_H__
@@ -1783,6 +1783,7 @@ typedef enum {
     TXT_GOTMEGA,
     TXT_GOTHTHBONUS,
     TXT_GOTARMBONUS,
+    TXT_GOTHELLBONUS,
     TXT_GOTSTIM,
     TXT_GOTMEDINEED,
     TXT_GOTMEDIKIT,
@@ -1798,6 +1799,9 @@ typedef enum {
     TXT_GOTINVIS,
     TXT_GOTSUIT,
     TXT_GOTMAP,
+    TXT_GOTRADAR,
+    TXT_GOTUNSEE,
+    TXT_UNSEEOFF,
     TXT_GOTVISOR,
     TXT_GOTMSPHERE,
     TXT_GOTCLIP,
@@ -1817,12 +1821,18 @@ typedef enum {
     TXT_GOTSHOTGUN,
     TXT_GOTSHOTGUN2,
     TXT_GOTUNMAKER,
+    TXT_NGOTUNMAKER,
+    TXT_UNMAKERCHARGE,
     TXT_GOTPOWERUP1,
     TXT_NGOTPOWERUP1,
     TXT_GOTPOWERUP2,
     TXT_NGOTPOWERUP2,
     TXT_GOTPOWERUP3,
     TXT_NGOTPOWERUP3,
+    TXT_GOTFLOATER,
+    TXT_GOTHELLTIME,
+    TXT_HELLTIMEON,
+    TXT_HELLTIMEWEAK,
     TXT_PD_OPNPOWERUP,
     TXT_PD_BLUEO,
     TXT_PD_REDO,
@@ -1830,6 +1840,7 @@ typedef enum {
     TXT_PD_BLUEK,
     TXT_PD_REDK,
     TXT_PD_YELLOWK,
+    TXT_ALLALONE,
     TXT_GGSAVED,
     TXT_HUSTR_MSGU,
     TXT_HUSTR_E1M01,

@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
@@ -20,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -179,6 +180,7 @@ cvar_t hudCVars[] =
     {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1},
     {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1},
     {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1},
+    {"hud-power", 0, CVT_BYTE, &cfg.hudShown[HUD_POWER], 0, 1},
 
     // HUD displays
     {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
@@ -537,6 +539,71 @@ Draw_BeginZoom(0.75f, pos , h_height - 2);
         }
 Draw_EndZoom();
     }
+
+    // d64tc > Laser artifacts
+    if(cfg.hudShown[HUD_POWER])
+    {
+        if(plr->lasericon1 == 1)
+        {
+            ST_drawHUDSprite(SPR_POW1, 2, h_height - 24, HOT_BLEFT, iconalpha);
+            ST_HUDSpriteSize(SPR_POW1, &w, &h);
+            pos = 64;
+        }
+        if(plr->lasericon2 == 1)
+        {
+            ST_drawHUDSprite(SPR_POW2, 2, h_height - 64, HOT_BLEFT, iconalpha);
+            ST_HUDSpriteSize(SPR_POW2, &w, &h);
+            pos = 64;
+        }
+        if(plr->lasericon3 == 1)
+        {
+            ST_drawHUDSprite(SPR_POW3, 2, h_height - 104, HOT_BLEFT, iconalpha);
+            ST_HUDSpriteSize(SPR_POW3, &w, &h);
+            pos = 64;
+        }
+
+        if(plr->artifacts[it_helltime])
+        {
+            ST_drawHUDSprite(SPR_POW5, 2, h_height - 144, HOT_BLEFT, iconalpha);
+            ST_HUDSpriteSize(SPR_POW5, &w, &h);
+            if(plr->helltime)
+            {
+                for(i = 0; i < plr->helltime; ++i)
+                {
+                    ST_drawHUDSprite(SPR_STHT, 48 + i, h_height - 24, HOT_BLEFT,
+                                     iconalpha);
+                }
+            }
+            pos = 64;
+        }
+
+        if(plr->artifacts[it_float])
+        {
+            ST_drawHUDSprite(SPR_POW4, 2, h_height - 184, HOT_BLEFT, iconalpha);
+            ST_HUDSpriteSize(SPR_POW4, &w, &h);
+
+            if(plr->devicetime &&
+               ((plr->outcastcycle == 2 && plr->artifacts[it_float]) ||
+                (plr->outcastcycle == 1 && plr->artifacts[it_float] &&
+                 !(plr->artifacts[it_helltime]))))
+            {
+                for(i = 0; i < plr->devicetime; ++i)
+                {
+                    ST_drawHUDSprite(SPR_STDT, 48 + i, h_height - 32, HOT_BLEFT,
+                                     iconalpha);
+                }
+            }
+            pos = 64;
+        }
+
+        if(plr->powers[pw_unsee])
+        {
+            ST_drawHUDSprite(SPR_SEEA, 2, h_height - 300, HOT_BLEFT, iconalpha);
+            ST_HUDSpriteSize(SPR_SEEA, &w, &h);
+            pos = 64;
+        }
+    }
+    // < d64tc
 
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();

@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -22,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -82,7 +83,8 @@ void T_PlatRaise(plat_t * plat)
         {
             plat->count = plat->wait;
             plat->status = down;
-            S_SectorSound(plat->sector, SORG_FLOOR, sfx_pstart);
+            if(plat->type != downWaitUpDoor) // d64tc added test
+                S_SectorSound(plat->sector, SORG_FLOOR, sfx_pstart);
         }
         else
         {
@@ -100,6 +102,8 @@ void T_PlatRaise(plat_t * plat)
                     break;
 
                 case raiseAndChange:
+                case blazeDWUSplus16: // d64tc
+                case downWaitUpDoor: // d64tc
                 case raiseToNearestAndChange:
                     P_RemoveActivePlat(plat);
                     break;
@@ -119,6 +123,17 @@ void T_PlatRaise(plat_t * plat)
         {
             plat->count = plat->wait;
             plat->status = waiting;
+
+            // d64tc >
+            switch(plat->type)
+            {
+            case upWaitDownStay:
+                P_RemoveActivePlat(plat);
+                break;
+            default:
+                break;
+            }
+            // < d64tc
             S_SectorSound(plat->sector, SORG_FLOOR, sfx_pstop);
         }
         break;
@@ -233,6 +248,34 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
             plat->status = down;
 
             S_SectorSound(sec, SORG_FLOOR, sfx_pstart);
+            break;
+
+        case upWaitDownStay: // d64tc
+            plat->speed = PLATSPEED * 8;
+            plat->high = P_FindHighestFloorSurrounding(sec);
+
+            if(plat->high < floorheight)
+                plat->high = floorheight;
+
+            plat->low = floorheight;
+            plat->wait = 35 * PLATWAIT;
+            plat->status = up;
+
+            S_SectorSound(sec, SORG_FLOOR, sfx_pstart);
+            break;
+
+        case downWaitUpDoor: // d64tc
+            plat->speed = PLATSPEED * 8;
+            plat->low = P_FindLowestFloorSurrounding(sec);
+
+            if(plat->low > floorheight)
+                plat->low = floorheight;
+            if(plat->low != floorheight)
+                plat->low += 6 * FRACUNIT;
+
+            plat->high = floorheight;
+            plat->wait = 50 * PLATWAIT;
+            plat->status = down;
             break;
 
         case blazeDWUS:

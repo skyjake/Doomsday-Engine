@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -179,6 +180,21 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
      0,            // ready sound
      S_DSGUN1,
      S_DSGUNFLASH1
+    }
+   },
+   {
+    { // UNMAKER
+     GM_COMMERCIAL,
+     {0, 0, 1, 0}, // type: clip | shell | cell | misl
+     {0, 0, 1, 0}, // pershot: clip | shell | cell | misl
+     true,         // autofire when raised if fire held
+     S_UNKFUP,
+     0,            // raise sound id
+     S_UNKFDOWN,
+     S_UNKF1,
+     0,            // ready sound
+     S_UNKF2,
+     S_NULL
     }
    }
 };

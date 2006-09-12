@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -22,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -70,6 +71,9 @@ void T_VerticalDoor(vldoor_t * door)
         {
             switch (door->type)
             {
+            case instantRaise:  //d64tc
+                door->direction = -1;
+                break;
             case blazeRaise:
                 door->direction = -1;   // time to go back down
                 S_SectorSound(door->sector, SORG_CEILING, sfx_bdcls);
@@ -119,6 +123,12 @@ void T_VerticalDoor(vldoor_t * door)
         {
             switch (door->type)
             {
+            case instantRaise:  //d64tc
+            case instantClose:  //d64tc
+                P_XSector(door->sector)->specialdata = NULL;
+                P_RemoveThinker(&door->thinker);  // unlink and free
+                break;
+
             case blazeRaise:
             case blazeClose:
                 xsec->specialdata = NULL;
@@ -175,6 +185,16 @@ void T_VerticalDoor(vldoor_t * door)
         {
             switch (door->type)
             {
+            case instantRaise:  //d64tc
+                door->direction = 0;
+                /*
+                 * skip topwait and began the countdown
+                 * that way there won't be a big delay when the
+                 * animation starts -kaiser
+                 */
+                door->topcountdown = 160;
+                break;
+
             case blazeRaise:
             case normal:
                 door->direction = 0;    // wait at top
@@ -242,6 +262,39 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
         if(!p->keys[it_yellowcard] && !p->keys[it_yellowskull])
         {
             P_SetMessage(p, PD_YELLOWO, false);
+            S_StartSound(sfx_oof, p->plr->mo);
+            return 0;
+        }
+        break;
+
+    case 343: // d64tc
+        if(!p)
+            return 0;
+        if(!p->artifacts[it_laserpw1])
+        {
+            P_SetMessage(p, PD_OPNPOWERUP, false);
+            S_StartSound(sfx_oof, p->plr->mo);
+            return 0;
+        }
+        break;
+
+    case 344: // d64tc
+        if(!p)
+            return 0;
+        if(!p->artifacts[it_laserpw2])
+        {
+            P_SetMessage(p, PD_OPNPOWERUP, false);
+            S_StartSound(sfx_oof, p->plr->mo);
+            return 0;
+        }
+        break;
+
+    case 345: // d64tc
+        if(!p)
+            return 0;
+        if(!p->artifacts[it_laserpw3])
+        {
+            P_SetMessage(p, PD_OPNPOWERUP, false);
             S_StartSound(sfx_oof, p->plr->mo);
             return 0;
         }
@@ -358,6 +411,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
     {
     case 26:
     case 32:
+    case 525: // d64tc
         // Blue Lock
         if(!player)
             return;
@@ -372,6 +426,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 
     case 27:
     case 34:
+    case 526: // d64tc
         // Yellow Lock
         if(!player)
             return;
@@ -386,6 +441,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 
     case 28:
     case 33:
+    case 527: // d64tc
         // Red Lock
         if(!player)
             return;
@@ -410,6 +466,9 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
         case 27:
         case 28:
         case 117:
+        case 525: // d64tc
+        case 526: // d64tc
+        case 527: // d64tc
             // ONLY FOR "RAISE" DOORS, NOT "OPEN"s
             if(door->direction == -1)
                 door->direction = 1;    // go back up
@@ -429,6 +488,9 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
     {
     case 117:
     case 118:
+    case 525: // d64tc
+    case 526: // d64tc
+    case 527: // d64tc
         // BLAZING DOOR RAISE/OPEN
         S_SectorSound(sec, SORG_CEILING, sfx_bdopn);
         break;
@@ -473,6 +535,9 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
         break;
 
     case 117:                   // blazing door raise
+    case 525: // d64tc
+    case 526: // d64tc
+    case 527: // d64tc
         door->type = blazeRaise;
         door->speed = VDOORSPEED * 4;
         break;
@@ -527,4 +592,26 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
     door->topheight -= 4 * FRACUNIT;
     door->topwait = VDOORWAIT;
     door->topcountdown = 5 * 60 * 35;
+}
+
+/**
+ * kaiser - Implemented for doom64tc.
+ */
+int EV_DoSplitDoor(line_t * line, int ftype, int ctype)
+{
+    boolean floor;
+    boolean ceiling;
+    int secnum;
+    sector_t *sec;
+
+    floor = EV_DoFloor(line, ftype);
+    secnum = -1;
+    while ((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    {
+        sec = P_ToPtr(DMU_SECTOR, secnum);
+        P_XSector(sec)->specialdata = 0;
+    }
+
+    ceiling = EV_DoCeiling(line, ctype);
+    return floor || ceiling;
 }

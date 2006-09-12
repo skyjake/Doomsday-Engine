@@ -3,9 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -526,6 +527,8 @@ void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
         case MT_TROOPSHOT:
         case MT_HEADSHOT:
         case MT_BRUISERSHOT:
+        case MT_BRUISERSHOTRED: // d64tc
+        case MT_NTROSHOT: // d64tc
             return;
             break;
 
@@ -538,11 +541,13 @@ void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
         {
         case 39:                // TELEPORT TRIGGER
         case 97:                // TELEPORT RETRIGGER
+        case 993: // d64tc
         case 125:               // TELEPORT MONSTERONLY TRIGGER
         case 126:               // TELEPORT MONSTERONLY RETRIGGER
         case 4:             // RAISE DOOR
         case 10:                // PLAT DOWN-WAIT-UP-STAY TRIGGER
         case 88:                // PLAT DOWN-WAIT-UP-STAY RETRIGGER
+        case 415: // d64tc
             ok = 1;
             break;
         }
@@ -675,9 +680,70 @@ void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
         P_XLine(line)->special = 0;
         break;
 
+    case 420: // d64tc
+        EV_DoSplitDoor(line, lowerToEight, raiseToHighest);
+        P_XLine(line)->special = 0;
+        break;
+
+    case 430: // d64tc
+        EV_DoFloor(line, customFloor);
+        break;
+
+    case 431: // d64tc
+        EV_DoFloor(line, customFloor);
+        P_XLine(line)->special = 0;
+        break;
+
+    case 426: // d64tc
+        EV_DoCeiling(line, customCeiling);
+        break;
+
+    case 427: // d64tc
+        EV_DoCeiling(line, customCeiling);
+        P_XLine(line)->special = 0;
+        break;
+
+    case 991: // d64tc
+        // TELEPORT!
+        EV_FadeSpawn(line, thing);
+        P_XLine(line)->special = 0;
+        break;
+
+    case 993: // d64tc
+        if(!thing->player)
+            EV_FadeSpawn(line, thing);
+        P_XLine(line)->special = 0;
+        break;
+
+    case 992: // d64tc
+        // Lower Ceiling to Floor
+        if(EV_DoCeiling(line, lowerToFloor))
+            P_ChangeSwitchTexture(line, 0);
+        break;
+
+    case 994: // d64tc
+        // FIXME: DJS - Might as well do this in XG.
+        // Also, export this text string to DED.
+        P_SetMessage(thing->player, "You've found a secret area!", false);
+        thing->player->secretcount++;
+        P_XLine(line)->special = 0;
+        break;
+
+    case 995: // d64tc
+        // FIXME: DJS - Might as well do this in XG.
+        P_SetMessage(thing->player, "You've found a shrine!", false);
+        P_XLine(line)->special = 0;
+        break;
+
+    case 998: // d64tc
+        // BE GONE!
+        EV_FadeAway(line, thing);
+        P_XLine(line)->special = 0;
+        break;
+
     case 39:
         // TELEPORT!
-        EV_Teleport(line, side, thing);
+        EV_Teleport(line, side, thing, true);
         P_XLine(line)->special = 0;
         break;
 
@@ -786,7 +852,7 @@ void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
         // TELEPORT MonsterONLY
         if(!thing->player)
         {
-            EV_Teleport(line, side, thing);
+            EV_Teleport(line, side, thing, true);
             P_XLine(line)->special = 0;
         }
         break;
@@ -879,6 +945,19 @@ void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
         EV_DoPlat(line, downWaitUpStay, 0);
         break;
 
+    case 415: // d64tc
+        if(thing->player)
+            EV_DoPlat(line, upWaitDownStay, 0);
+        break;
+
+    case 422: // d64tc
+        EV_ActivateSpecial(line);
+        break;
+
+//  case 430: // d64tc
+    //  EV_DestoryLineShield(line);
+    //  break;
+
     case 89:
         // Platform Stop
         EV_StopPlat(line);
@@ -923,7 +1002,13 @@ void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
 
     case 97:
         // TELEPORT!
-        EV_Teleport(line, side, thing);
+        EV_Teleport(line, side, thing, true);
+        break;
+
+    case 423: // d64tc
+        // TELEPORT! (no fog)
+        // FIXME: DJS - might as well do this in XG.
+        EV_Teleport(line, side, thing, false);
         break;
 
     case 98:
@@ -954,7 +1039,7 @@ void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
     case 126:
         // TELEPORT MonsterONLY.
         if(!thing->player)
-            EV_Teleport(line, side, thing);
+            EV_Teleport(line, side, thing, true);
         break;
 
     case 128:
@@ -965,6 +1050,13 @@ void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
     case 129:
         // Raise Floor Turbo
         EV_DoFloor(line, raiseFloorTurbo);
+        break;
+
+    case 155: // d64tc
+        // Raise Floor 512
+        // FIXME: DJS - again, might as well do this in XG.
+        if(EV_DoFloor(line, raiseFloor32))
+            P_ChangeSwitchTexture(line, 0);
         break;
     }
 }
@@ -1009,6 +1101,12 @@ void P_ShootSpecialLine(mobj_t *thing, line_t *line)
         // RAISE FLOOR NEAR AND CHANGE
         EV_DoPlat(line, raiseToNearestAndChange, 0);
         P_ChangeSwitchTexture(line, 0);
+        break;
+
+    case 191: // d64tc
+        // LOWER FLOOR WAIT RAISE
+        EV_DoPlat(line, blazeDWUS, 0);
+        P_ChangeSwitchTexture(line, 1);
         break;
     }
 }
@@ -1060,10 +1158,10 @@ void P_PlayerInSpecialSector(player_t *player)
         if(cfg.secretMsg)
         {
             P_SetMessage(player, "You've found a secret area!", false);
-            S_ConsoleSound(sfx_getpow, 0, player - players);
+            // S_ConsoleSound(sfx_getpow, 0, player - players); // d64tc
         }
         break;
-
+/*
     case 11:
         // EXIT SUPER DAMAGE! (for E1M8 finale)
         player->cheats &= ~CF_GODMODE;
@@ -1074,19 +1172,25 @@ void P_PlayerInSpecialSector(player_t *player)
         if(player->health <= 10)
             G_LeaveLevel(G_GetLevelNumber(gameepisode, gamemap), 0, false);
         break;
+*/
+    case 11: // d64tc
+        // SUPER CHEAT REMOVER!!        //kaiser 9/8/03
+        player->cheats &= ~CF_GODMODE;
+        player->cheats &= ~CF_NOCLIP;
+        player->laserpw = 0;
+        break;
 
     default:
         break;
     }
 }
 
-/*
+/**
  * Animate planes, scroll walls, etc.
  */
 void P_UpdateSpecials(void)
 {
-    int     i;
-    int     x;
+    int     i, x, y; // d64tc added <code>y</code>
     line_t *line;
     side_t *side;
 
@@ -1104,6 +1208,82 @@ void P_UpdateSpecials(void)
             side = P_GetPtrp(line, DMU_SIDE0);
 
             // EFFECT FIRSTCOL SCROLL +
+            x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x += FRACUNIT);
+            x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x += FRACUNIT);
+            x = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x += FRACUNIT);
+            break;
+
+        case 150: // d64tc
+            side = P_GetPtrp(line, DMU_SIDE0);
+
+            // EFFECT FIRSTCOL SCROLL -
+            x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x -= FRACUNIT);
+            x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x -= FRACUNIT);
+            x = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x -= FRACUNIT);
+            break;
+
+        case 2561: // d64tc
+            // Scroll_Texture_Up
+            side = P_GetPtrp(line, DMU_SIDE0);
+
+            // EFFECT FIRSTCOL SCROLL +
+            y = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y, y += FRACUNIT);
+            y = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, y += FRACUNIT);
+            y = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, y += FRACUNIT);
+            break;
+
+        case 2562: // d64tc
+            // Scroll_Texture_Down
+            side = P_GetPtrp(line, DMU_SIDE0);
+
+            // EFFECT FIRSTCOL SCROLL +
+            y = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y, y -= FRACUNIT);
+            y = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, y -= FRACUNIT);
+            y = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, y -= FRACUNIT);
+            break;
+
+        case 2080: // d64tc
+            // Scroll Up/Right
+            side = P_GetPtrp(line, DMU_SIDE0);
+
+            y = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y, y += FRACUNIT);
+            y = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, y += FRACUNIT);
+            y = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, y += FRACUNIT);
+
+            x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x -= FRACUNIT);
+            x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x -= FRACUNIT);
+            x = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x -= FRACUNIT);
+            break;
+
+        case 2614: // d64tc
+            // Scroll Up/Left
+            side = P_GetPtrp(line, DMU_SIDE0);
+
+            y = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y, y += FRACUNIT);
+            y = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, y += FRACUNIT);
+            y = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y);
+            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, y += FRACUNIT);
+
             x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
             P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x += FRACUNIT);
             x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
@@ -1161,6 +1341,31 @@ void P_UpdateSpecials(void)
         }
     }
 
+}
+
+/**
+ * d64tc
+ */
+void P_ThunderSector(void)
+{
+    int         i;
+    sector_t   *sec;
+
+    if(!(P_Random() < 10))
+        return;
+
+    for(i= 0; i < numsectors; ++i)
+    {
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(P_XSector(sec)->tag == 20000)
+        {
+            if(!(leveltime & 32))
+            {
+                P_SetBytep(sec, DMU_LIGHT_LEVEL, 255);
+                S_StartSound(sfx_sssit, P_GetPtrp(sec, DMU_SOUND_ORIGIN));
+            }
+        }
+    }
 }
 
 int EV_DoDonut(line_t *line)
@@ -1261,6 +1466,36 @@ void P_SpawnSpecials(void)
             continue;
         }
 
+        // d64tc >
+        // DJS - yet more hacks! Why use the tag?
+        switch(P_XSector(sector)->tag)
+        {
+        case 10000:
+        case 10001:
+        case 10002:
+        case 10003:
+        case 10004:
+            P_SpawnGlowingLight(sector);
+            break;
+
+        case 11000:
+            P_SpawnLightFlash(sector);
+            break;
+
+        case 12000:
+            P_SpawnFireFlicker(sector);
+            break;
+
+        case 13000:
+            P_SpawnLightBlink(sector);
+            break;
+
+        case 20000:
+            P_SpawnGlowingLight(sector);
+            break;
+        }
+        // < d64tc
+
         switch (P_XSector(sector)->special)
         {
         case 1:
@@ -1326,10 +1561,20 @@ void P_SpawnSpecials(void)
     {
         switch (xlines[i].special)
         {
-        case 48:
-            // EFFECT FIRSTCOL SCROLL+
+        case 48: // EFFECT FIRSTCOL SCROLL+
+        case 150: // d64tc: wall scroll right
+        case 2561: // d64tc: wall scroll up
+        case 2562: // d64tc: wall scroll down
+        case 2080: // d64tc: wall scroll up/right
+        case 2614: // d64tc: wall scroll up/left
             linespeciallist[numlinespecials] = P_ToPtr(DMU_LINE, i);
             numlinespecials++;
+            break;
+
+        case 994: // d64tc
+            // kaiser - be sure to have that linedef count the secrets.
+            // FIXME: DJS - secret lines??
+            totalsecret++;
             break;
         }
     }

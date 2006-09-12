@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
@@ -20,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -110,6 +111,11 @@ unsigned char cheat_mypos_seq[] = {
     0xb2, 0x26, 0xb6, 0xba, 0x2a, 0xf6, 0xea, 0xff  // idmypos
 };
 
+// d64tc
+unsigned char cheat_laser_seq[] = {
+    0x26, 0x26, 0xea, 0x36, 0xb2, 0xa2, 0xff    // ddslia
+};
+
 unsigned char cheat_amap_seq[] = { 0xb2, 0x26, 0x26, 0x2e, 0xff };  // iddt
 
 // Now what?
@@ -133,6 +139,7 @@ cheatseq_t cheat_powerup[7] = {
 cheatseq_t cheat_choppers = { cheat_choppers_seq, 0 };
 cheatseq_t cheat_clev = { cheat_clev_seq, 0 };
 cheatseq_t cheat_mypos = { cheat_mypos_seq, 0 };
+cheatseq_t cheat_laser = { cheat_laser_seq, 0 }; // d64tc
 
 cheatseq_t cheat_amap = { cheat_amap_seq, 0 };
 
@@ -231,6 +238,11 @@ boolean cht_Responder(event_t *ev)
             else if(cht_CheckCheat(&cheat_mypos, ev->data1))
             {
                 cht_PosFunc(plyr);
+            }
+            // 'ddslia' for laser powerups // d64tc
+            else if(cht_CheckCheat(&cheat_laser, ev->data1))
+            {
+                cht_LaserFunc(plyr);
             }
         }
 
@@ -484,6 +496,46 @@ void cht_PosFunc(player_t *plyr)
             players[consoleplayer].plr->mo->pos[VY],
             players[consoleplayer].plr->mo->pos[VZ]);
     P_SetMessage(plyr, buf, false);
+}
+
+/**
+ * d64tc
+ * kaiser - laser powerup cheat code ddslia for all laser powerups.
+ * Each time the player enters the code, player gains a powerup.
+ * when entered again, player recieves next powerup.
+ */
+void cht_LaserFunc(player_t *plyr)
+{
+    if(plyr->laserpw == 0)
+    {
+        P_SetMessage(plyr, STSTR_BEHOLDX, false);
+        plyr->laserpw += 1;
+        plyr->lasericon1 = 1;
+
+        P_GiveArtifact(plyr, it_laserpw1);
+    }
+    else if(plyr->laserpw == 1)
+    {
+        P_SetMessage(plyr, STSTR_BEHOLDX, false);
+        plyr->laserpw += 1;
+        plyr->lasericon2 = 1;
+
+        P_GiveArtifact(plyr, it_laserpw2);
+    }
+    else if(plyr->laserpw == 2)
+    {
+        P_SetMessage(plyr, STSTR_BEHOLDX, false);
+        plyr->laserpw += 1;
+        plyr->lasericon3 = 1;
+
+        P_GiveArtifact(plyr, it_laserpw3);
+    }
+
+    if(plyr->laserpw == 3)
+    {
+        plyr->laserpw = 3;
+        P_SetMessage(plyr, STSTR_BEHOLDX, false); // no more!
+    }
 }
 
 static void CheatDebugFunc(player_t *player, cheat_t * cheat)

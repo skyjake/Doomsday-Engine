@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -146,6 +147,19 @@ typedef struct player_s {
     int             lockFull;
 
     int             flyheight;
+
+    // d64tc >
+    int             laserpw;
+    int             lasericon1;
+    int             lasericon2;
+    int             lasericon3;
+    int             artifacts[NUMARTIFACTS];
+
+    int             helltime;
+    int             devicetime;
+
+    int             outcastcycle;   // for the two powerups - kaiser
+    // < d64tc
 } player_t;
 
 //

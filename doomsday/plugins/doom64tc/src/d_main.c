@@ -6,6 +6,7 @@
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
@@ -21,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -89,7 +90,7 @@ char   *pagename;
 
 // The patches used in drawing the view border
 char *borderLumps[] = {
-    "FLOOR7_2",
+    "FTILEABC",
     "brdr_t",
     "brdr_r",
     "brdr_b",
@@ -254,7 +255,6 @@ void D_PreInit(void)
     cfg.povLookAround = true;
     cfg.joyaxis[0] = JOYAXIS_TURN;
     cfg.joyaxis[1] = JOYAXIS_MOVE;
-    cfg.sbarscale = 20;         // Full size.
     cfg.screenblocks = cfg.setblocks = 10;
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;
@@ -274,7 +274,7 @@ void D_PreInit(void)
     cfg.hudShown[HUD_AMMO] = true;
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_FRAGS] = true;
-    cfg.hudShown[HUD_FACE] = false;
+    cfg.hudShown[HUD_POWER] = true;
     cfg.hudScale = .6f;
     cfg.hudColor[0] = 1;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
@@ -297,7 +297,7 @@ void D_PreInit(void)
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
     cfg.netGravity = -1;        // use map default
-    cfg.plrViewHeight = 41;
+    cfg.plrViewHeight = 54;
     cfg.levelTitle = true;
     cfg.hideAuthorIdSoft = true;
     cfg.menuColor[0] = 1;
@@ -312,9 +312,6 @@ void D_PreInit(void)
     cfg.avoidDropoffs = false;
     cfg.moveBlock = false;
     cfg.fallOff = true;
-
-    cfg.statusbarAlpha = 1;
-    cfg.statusbarCounterAlpha = 1;
 
 /*    cfg.automapPos = 5;
     cfg.automapWidth = 1.0f;
@@ -374,12 +371,9 @@ void D_PreInit(void)
     cfg.weaponOrder[6] = wp_missile;
     cfg.weaponOrder[7] = wp_bfg;
     cfg.weaponOrder[8] = wp_fist;
+    cfg.weaponRecoil = true;
 
     cfg.berserkAutoSwitch = true;
-
-    // Doom2 has a different border background.
-    if(gamemode == commercial)
-        borderLumps[0] = "GRNROCK";
 
     // Do the common pre init routine;
     G_PreInit();
