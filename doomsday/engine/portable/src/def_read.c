@@ -1586,20 +1586,25 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 READLABEL;
                 if(ISLABEL("Texture") || ISLABEL("Flat"))
                 {
+                    ded_group_member_t *memb;
+
                     grp->is_texture = ISLABEL("Texture");
-                    if(sub == DED_GROUP_NUM_MEMBERS)
+
+                    if(sub >= grp->count.num)
                     {
-                        SetError("Too many group members.");
-                        retval = false;
-                        goto ded_end_read;
+                        // Allocate new stage.
+                        sub = DED_AddGroupMember(grp);
                     }
+
+                    memb = &grp->members[sub];
+
                     FINDBEGIN;
                     for(;;)
                     {
                         READLABEL;
-                        RV_STR("ID", grp->members[sub].name)
-                        RV_FLT("Tics", grp->members[sub].tics)
-                        RV_FLT("Random", grp->members[sub].random_tics)
+                        RV_STR("ID", memb->name)
+                        RV_FLT("Tics", memb->tics)
+                        RV_FLT("Random", memb->random_tics)
                         RV_END
                         CHECKSC;
                     }
@@ -1609,7 +1614,6 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_END
                 CHECKSC;
             }
-            grp->count = sub;
         }
         if(ISTOKEN("LumpFormat"))     // Binary Lump Format
         {

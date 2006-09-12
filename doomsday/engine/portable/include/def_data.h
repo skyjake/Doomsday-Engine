@@ -515,13 +515,13 @@ extern          "C" {
         float           random_tics;
     } ded_group_member_t;
 
-#define DED_GROUP_NUM_MEMBERS   64
+//#define DED_GROUP_NUM_MEMBERS 64
 
     typedef struct ded_group_s {
         int             is_texture; // Group of textures?
         ded_flags_t     flags;
-        int             count;
-        ded_group_member_t members[DED_GROUP_NUM_MEMBERS];
+        ded_count_t     count;
+        ded_group_member_t *members; //[DED_GROUP_NUM_MEMBERS]
     } ded_group_t;
 
     // The ded_t structure encapsulates all the data one definition file
@@ -657,6 +657,7 @@ extern          "C" {
     int             DED_AddDecoration(ded_t * ded);
     int             DED_AddReflection(ded_t * ded);
     int             DED_AddGroup(ded_t * ded);
+    int             DED_AddGroupMember(ded_group_t *grp);
     int             DED_AddSector(ded_t * ded, int id);
     int             DED_AddLine(ded_t * ded, int id);
     int             DED_AddLumpFormat(ded_t * ded);

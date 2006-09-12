@@ -309,7 +309,7 @@ void R_InitAnimGroup(ded_group_t * def)
 
     type = (def->is_texture ? DD_TEXTURE : DD_FLAT);
 
-    for(i = 0; i < def->count; i++)
+    for(i = 0; i < def->count.num; ++i)
     {
         if(def->is_texture)
         {

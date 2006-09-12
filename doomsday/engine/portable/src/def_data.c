@@ -118,6 +118,10 @@ void DED_Destroy(ded_t * ded)
     }
     free(ded->values);
     free(ded->decorations);
+    for(i = 0; i < ded->count.groups.num; i++)
+    {
+        free(ded->groups[i].members);
+    }
     free(ded->groups);
     free(ded->sectors);
     for(i = 0; i < ded->count.ptcgens.num; i++)
@@ -526,6 +530,15 @@ void DED_RemoveGroup(ded_t * ded, int index)
 {
     DED_DelEntry(index, (void **) &ded->groups, &ded->count.groups,
                  sizeof(ded_group_t));
+}
+
+int DED_AddGroupMember(ded_group_t *grp)
+{
+    ded_group_member_t *memb = DED_NewEntry((void **) &grp->members,
+                                         &grp->count,
+                                         sizeof(ded_group_member_t));
+
+    return memb - grp->members;
 }
 
 int DED_AddSector(ded_t * ded, int id)
