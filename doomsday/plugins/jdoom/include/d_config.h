@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -198,9 +198,9 @@ typedef struct jdoom_config_s {
     byte            netColor;
 
     int             PlayerColor[MAXPLAYERS];
-} jdoom_config_t;
+} game_config_t;
 
-extern jdoom_config_t cfg;
+extern game_config_t cfg;
 
 // Other variables.
 extern int      screenblocks;

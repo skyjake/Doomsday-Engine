@@ -384,7 +384,7 @@ desc = Current health ammount.
 [player-armor]
 desc = Current armor ammount.
 
-[player-weapons-current]
+[player-weapon-current]
 desc = Current weapon (id)
 
 [player-mana-blue]
@@ -393,158 +393,158 @@ desc = Current amount of blue mana.
 [player-mana-green]
 desc = Current ammount of green mana.
 
-[player-keys-steel]
-desc = 1 = Player has steel key.
+[player-key-steel]
+desc = 1= Player has steel key.
 
-[player-keys-cave]
-desc = 1 = Player has cave key.
+[player-key-cave]
+desc = 1= Player has cave key.
 
-[player-keys-axe]
-desc = 1 = Player has axe key.
+[player-key-axe]
+desc = 1= Player has axe key.
 
-[player-keys-fire]
-desc = 1 = Player has fire key.
+[player-key-fire]
+desc = 1= Player has fire key.
 
-[player-keys-emerald]
-desc = 1 = Player has emerald key.
+[player-key-emerald]
+desc = 1= Player has emerald key.
 
-[player-keys-dungeon]
-desc = 1 = Player has dungeon key.
+[player-key-dungeon]
+desc = 1= Player has dungeon key.
 
-[player-keys-silver]
-desc = 1 = Player has silver key.
+[player-key-silver]
+desc = 1= Player has silver key.
 
-[player-keys-rusted]
-desc = 1 = Player has rusted key.
+[player-key-rusted]
+desc = 1= Player has rusted key.
 
-[player-keys-horn]
-desc = 1 = Player has horn key.
+[player-key-horn]
+desc = 1= Player has horn key.
 
-[player-keys-swamp]
-desc = 1 = Player has swamp key.
+[player-key-swamp]
+desc = 1= Player has swamp key.
 
-[player-keys-castle]
-desc = 1 = Player has castle key.
+[player-key-castle]
+desc = 1= Player has castle key.
 
-[player-weapons-first]
-desc = 1 = Player has first weapon.
+[player-weapon-first]
+desc = 1= Player has first weapon.
 
-[player-weapons-second]
-desc = 1 = Player has second weapon.
+[player-weapon-second]
+desc = 1= Player has second weapon.
 
-[player-weapons-third]
-desc = 1 = Player has third weapon.
+[player-weapon-third]
+desc = 1= Player has third weapon.
 
-[player-weapons-fourth]
-desc = 1 = Player has fourth weapon.
+[player-weapon-fourth]
+desc = 1= Player has fourth weapon.
 
-[player-weapons-piece1]
-desc = 1 = Player has piece 1.
+[player-weapon-piece1]
+desc = 1= Player has piece 1.
 
-[player-weapons-piece2]
-desc = 1 = Player has piece 2.
+[player-weapon-piece2]
+desc = 1= Player has piece 2.
 
-[player-weapons-piece3]
-desc = 1 = Player has piece 3.
+[player-weapon-piece3]
+desc = 1= Player has piece 3.
 
-[player-weapons-allpieces]
-desc = 1 = Player has all pieces.
+[player-weapon-allpieces]
+desc = 1= Player has all pieces.
 
-[player-artifacts-defender]
+[player-artifact-defender]
 desc = Current number of Icons Of The Defender.
 
-[player-artifacts-quartzflask]
+[player-artifact-quartzflask]
 desc = Current number of Quartz Flasks.
 
-[player-artifacts-mysticurn]
+[player-artifact-mysticurn]
 desc = Current number of Mystic Urn artifacts.
 
-[player-artifacts-mysticambit]
+[player-artifact-mysticambit]
 desc = Current number of Mystic Ambit Incantations.
 
-[player-artifacts-darkservant]
+[player-artifact-darkservant]
 desc = Current number of Dark Servant artifacts.
 
-[player-artifacts-torch]
+[player-artifact-torch]
 desc = Current number of torches.
 
-[player-artifacts-porkalator]
+[player-artifact-porkalator]
 desc = Current number of Porkalaor artifacts.
 
-[player-artifacts-wings]
+[player-artifact-wings]
 desc = Current number of Wings of Wrath artifacts.
 
-[player-artifacts-repulsion]
+[player-artifact-repulsion]
 desc = Current number of Discs Of Repulsion.
 
-[player-artifacts-flechette]
+[player-artifact-flechette]
 desc = Current number of Flechettes.
 
-[player-artifacts-banishment]
+[player-artifact-banishment]
 desc = Current number of Banishment Devices.
 
-[player-artifacts-speed]
+[player-artifact-speed]
 desc = Current number of Boots of Speed.
 
-[player-artifacts-might]
+[player-artifact-might]
 desc = Current number of Kraters Of Might.
 
-[player-artifacts-bracers]
+[player-artifact-bracers]
 desc = Current number of Dragonskin Bracers.
 
-[player-artifacts-chaosdevice]
+[player-artifact-chaosdevice]
 desc = Current number of Chaos Devices.
 
-[player-artifacts-skull]
-desc = 1 = Player has Yorick's Skull.
+[player-artifact-skull]
+desc = 1= Player has Yorick's Skull.
 
-[player-artifacts-heart]
-desc = 1 = Player has Heart Of D'Sparil.
+[player-artifact-heart]
+desc = 1= Player has Heart Of D'Sparil.
 
-[player-artifacts-ruby]
-desc = 1 = Player has Ruby Planet.
+[player-artifact-ruby]
+desc = 1= Player has Ruby Planet.
 
-[player-artifacts-emerald1]
-desc = 1 = Player has Emerald Planet 1.
+[player-artifact-emerald1]
+desc = 1= Player has Emerald Planet 1.
 
-[player-artifacts-emerald2]
-desc = 1 = Player has Emerald Planet 2.
+[player-artifact-emerald2]
+desc = 1= Player has Emerald Planet 2.
 
-[player-artifacts-sapphire1]
-desc = 1 = Player has Sapphire Planet 1.
+[player-artifact-sapphire1]
+desc = 1= Player has Sapphire Planet 1.
 
-[player-artifacts-sapphire2]
-desc = 1 = Player has Sapphire Planet 2.
+[player-artifact-sapphire2]
+desc = 1= Player has Sapphire Planet 2.
 
-[player-artifacts-daemoncodex]
-desc = 1 = Player has Daemon Codex.
+[player-artifact-daemoncodex]
+desc = 1= Player has Daemon Codex.
 
-[player-artifacts-liberoscura]
-desc = 1 = Player has Liber Oscura.
+[player-artifact-liberoscura]
+desc = 1= Player has Liber Oscura.
 
-[player-artifacts-flamemask]
-desc = 1 = Player has Flame Mask.
+[player-artifact-flamemask]
+desc = 1= Player has Flame Mask.
 
-[player-artifacts-glaiveseal]
-desc = 1 = Player has Glaive Seal.
+[player-artifact-glaiveseal]
+desc = 1= Player has Glaive Seal.
 
-[player-artifacts-holyrelic]
-desc = 1 = Player has Holy Relic.
+[player-artifact-holyrelic]
+desc = 1= Player has Holy Relic.
 
-[player-artifacts-sigilmagus]
-desc = 1 = Player has Sigil of the Magus.
+[player-artifact-sigilmagus]
+desc = 1= Player has Sigil of the Magus.
 
-[player-artifacts-gear1]
-desc = 1 = Player has Clock Gear 1.
+[player-artifact-gear1]
+desc = 1= Player has Clock Gear 1.
 
-[player-artifacts-gear2]
-desc = 1 = Player has Clock Gear 2.
+[player-artifact-gear2]
+desc = 1= Player has Clock Gear 2.
 
-[player-artifacts-gear3]
-desc = 1 = Player has Clock Gear 3.
+[player-artifact-gear3]
+desc = 1= Player has Clock Gear 3.
 
-[player-artifacts-gear4]
-desc = 1 = Player has Clock Gear 4.
+[player-artifact-gear4]
+desc = 1= Player has Clock Gear 4.
 
 [chat-macro0]
 desc = Chat macro 1.

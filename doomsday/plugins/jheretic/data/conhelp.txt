@@ -384,7 +384,7 @@ desc = Current health ammount.
 [player-armor]
 desc = Current armor ammount.
 
-[player-weapons-current]
+[player-weapon-current]
 desc = Current weapon (id)
 
 [player-ammo-goldwand]
@@ -405,67 +405,67 @@ desc = Current amount of ammo for the Phoenix Rod.
 [player-ammo-mace]
 desc = Current amount of ammo for the mace.
 
-[player-weapons-staff]
-desc = 1 = Player has staff.
+[player-weapon-staff]
+desc = 1= Player has staff.
 
-[player-weapons-goldwand]
-desc = 1 = Player has goldwand.
+[player-weapon-goldwand]
+desc = 1= Player has goldwand.
 
-[player-weapons-crossbow]
-desc = 1 = Player has crossbow.
+[player-weapon-crossbow]
+desc = 1= Player has crossbow.
 
-[player-weapons-dragonclaw]
-desc = 1 = Player has the Dragon Claw.
+[player-weapon-dragonclaw]
+desc = 1= Player has the Dragon Claw.
 
-[player-weapons-hellstaff]
-desc = 1 = Player has the Hell Staff.
+[player-weapon-hellstaff]
+desc = 1= Player has the Hell Staff.
 
-[player-weapons-phoenixrod]
-desc = 1 = Player has the Phoenix Rod.
+[player-weapon-phoenixrod]
+desc = 1= Player has the Phoenix Rod.
 
-[player-weapons-mace]
-desc = 1 = Player has mace.
+[player-weapon-mace]
+desc = 1= Player has mace.
 
-[player-weapons-gauntlets]
-desc = 1 = Player has gauntlets.
+[player-weapon-gauntlets]
+desc = 1= Player has gauntlets.
 
-[player-keys-yellow]
-desc = 1 = Player has yellow key.
+[player-key-yellow]
+desc = 1= Player has yellow key.
 
-[player-keys-green]
-desc = 1 = Player has green key.
+[player-key-green]
+desc = 1= Player has green key.
 
-[player-keys-blue]
-desc = 1 = Player has blue key.
+[player-key-blue]
+desc = 1= Player has blue key.
 
-[player-artifacts-ring]
+[player-artifact-ring]
 desc = Current number of Rings of Invincibility.
 
-[player-artifacts-shadowsphere]
+[player-artifact-shadowsphere]
 desc = Current number of Shadowsphere artifacts.
 
-[player-artifacts-crystalvial]
+[player-artifact-crystalvial]
 desc = Current number of Crystal Vials.
 
-[player-artifacts-mysticurn]
+[player-artifact-mysticurn]
 desc = Current number of Mystic Urn artifacts.
 
-[player-artifacts-tomeofpower]
+[player-artifact-tomeofpower]
 desc = Current number of Tome of Power artifacts.
 
-[player-artifacts-torch]
+[player-artifact-torch]
 desc = Current number of torches.
 
-[player-artifacts-firebomb]
+[player-artifact-firebomb]
 desc = Current number of Time Bombs Of The Ancients.
 
-[player-artifacts-egg]
+[player-artifact-egg]
 desc = Current number of Morph Ovum artifacts.
 
-[player-artifacts-wings]
+[player-artifact-wings]
 desc = Current number of Wings of Wrath artifacts.
 
-[player-artifacts-chaosdevice]
+[player-artifact-chaosdevice]
 desc = Current number of Chaos Devices.
 
 [chat-macro0]

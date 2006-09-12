@@ -39,7 +39,6 @@ typedef struct {
     int             mlookInverseY;
     int             echoMsg;
     int             translucentIceCorpse;
-    int             sbarscale;
 
     byte            netMap, netClass, netColor, netSkill;
     byte            netEpisode;    // unused in Hexen
@@ -76,8 +75,6 @@ typedef struct {
     byte            weaponAutoSwitch;
     int             weaponOrder[NUMWEAPONS];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
-    float           statusbarAlpha;
-    float           statusbarCounterAlpha;
     float           inventoryTimer; // Number of seconds until the invetory auto-hides.
 
     // Automap stuff.
@@ -121,9 +118,9 @@ typedef struct {
 
     pclass_t        PlayerClass[MAXPLAYERS];
     byte            PlayerColor[MAXPLAYERS];
-} jhexen_config_t;
+} game_config_t;
 
-extern jhexen_config_t cfg;
+extern game_config_t cfg;
 
 extern char     SavePath[];
 

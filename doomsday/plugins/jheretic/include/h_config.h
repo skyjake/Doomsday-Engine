@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -196,9 +196,9 @@ typedef struct jheretic_config_s {
     int             inventoryNextOnUnuse;
     int             tomeCounter, tomeSound;
     byte            fastMonsters;
-} jheretic_config_t;
+} game_config_t;
 
-extern jheretic_config_t cfg;      // in g_game.c
+extern game_config_t cfg;      // in g_game.c
 
 int             GetDefInt(char *def, int *returned_value);
 
