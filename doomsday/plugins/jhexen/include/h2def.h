@@ -743,7 +743,6 @@ struct xline_s *P_XLine(line_t* line);
 struct xsector_s *P_XSector(sector_t* sector);
 struct xsector_s* P_XSectorOfSubsector(subsector_t* sub);
 
-void            P_Ticker(void);
 
 // called by C_Ticker
 // can call G_PlayerExited
