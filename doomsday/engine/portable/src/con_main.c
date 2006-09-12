@@ -335,6 +335,7 @@ char   *TrimmedFloat(float val)
 void Con_SetString(const char *name, char *text, byte override)
 {
     cvar_t *cvar = Con_GetVariable(name);
+    boolean changed = false;
 
     if(!cvar)
         return;
@@ -347,6 +348,9 @@ void Con_SetString(const char *name, char *text, byte override)
 
     if(cvar->type == CVT_CHARPTR)
     {
+        if(CV_CHARPTR(cvar) && !stricmp(text, CV_CHARPTR(cvar)))
+            changed = true;
+
         // Free the old string, if one exists.
         if(cvar->flags & CVF_CAN_FREE && CV_CHARPTR(cvar))
             free(CV_CHARPTR(cvar));
@@ -356,7 +360,7 @@ void Con_SetString(const char *name, char *text, byte override)
         strcpy(CV_CHARPTR(cvar), text);
 
         // Make the change notification callback
-        if(cvar->notifyChanged != NULL)
+        if(cvar->notifyChanged != NULL && changed)
             cvar->notifyChanged(cvar);
     }
     else
@@ -380,6 +384,7 @@ cvar_t *Con_GetVariable(const char *name)
 void Con_SetInteger(const char *name, int value, byte override)
 {
     cvar_t *var = Con_GetVariable(name);
+    boolean changed = false;
 
     if(!var)
         return;
@@ -391,20 +396,36 @@ void Con_SetInteger(const char *name, int value, byte override)
     }
 
     if(var->type == CVT_INT)
+    {
+        if(CV_INT(var) != value)
+            changed = true;
+
         CV_INT(var) = value;
+    }
     if(var->type == CVT_BYTE)
+    {
+        if(CV_BYTE(var) != value)
+            changed = true;
+
         CV_BYTE(var) = value;
+    }
     if(var->type == CVT_FLOAT)
+    {
+        if(CV_FLOAT(var) != value)
+            changed = true;
+
         CV_FLOAT(var) = value;
+    }
 
     // Make the change notification callback
-    if(var->notifyChanged != NULL)
+    if(var->notifyChanged != NULL && changed)
         var->notifyChanged(var);
 }
 
 void Con_SetFloat(const char *name, float value, byte override)
 {
     cvar_t *var = Con_GetVariable(name);
+    boolean changed = false;
 
     if(!var)
         return;
@@ -416,14 +437,29 @@ void Con_SetFloat(const char *name, float value, byte override)
     }
 
     if(var->type == CVT_INT)
+    {
+        if(CV_INT(var) != (int) value)
+            changed = true;
+
         CV_INT(var) = (int) value;
+    }
     if(var->type == CVT_BYTE)
+    {
+        if(CV_BYTE(var) != (byte) value)
+            changed = true;
+
         CV_BYTE(var) = (byte) value;
+    }
     if(var->type == CVT_FLOAT)
+    {
+        if(CV_FLOAT(var) != value)
+            changed = true;
+
         CV_FLOAT(var) = value;
+    }
 
     // Make the change notification callback
-    if(var->notifyChanged != NULL)
+    if(var->notifyChanged != NULL && changed)
         var->notifyChanged(var);
 }
 
