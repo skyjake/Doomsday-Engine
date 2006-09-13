@@ -2924,7 +2924,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         {
             dummyLine = P_AllocDummyLine();
             P_XLine(dummyLine)->tag = 666;
-            EV_DoFloor(dummyLine, blazeRaise);
+            EV_DoDoor(dummyLine, blazeRaise);
 
             P_FreeDummyLine(dummyLine);
             return;
@@ -2943,7 +2943,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         {
             dummyLine = P_AllocDummyLine();
             P_XLine(dummyLine)->tag = 666;
-            EV_DoFloor(dummyLine, blazeRaise);
+            EV_DoDoor(dummyLine, blazeRaise);
 
             P_FreeDummyLine(dummyLine);
             return;
