@@ -931,8 +931,6 @@ void P_MobjThinker(mobj_t *mobj)
     }
     else if(!IS_CLIENT)
     {
-        P_RespawnSpecials(); // d64tc
-
         // check for nightmare respawn
         if(!(mobj->flags & MF_COUNTKILL))
             return;
