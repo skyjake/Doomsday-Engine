@@ -258,7 +258,13 @@ const char* DMU_Str(int prop)
  */
 static int DMU_GetType(const void* ptr)
 {
-    int type = ((const runtime_mapdata_header_t*)ptr)->type;
+    int type;
+
+    type = P_DummyType((void*)ptr);
+    if(type != DMU_NONE)
+        return type;
+
+    type = ((const runtime_mapdata_header_t*)ptr)->type;
 
     // Make sure it's valid.
     switch(type)
@@ -1007,18 +1013,43 @@ static int SetProperty(void* ptr, void* context)
         else if(args->type == DMU_SECTOR)
         {
             sector_t* sec = (sector_t*)ptr;
+
             if(args->aliases & DMU_FLOOR_OF_SECTOR)
+            {
+                if(!sec->planes[PLN_FLOOR])
+                    Con_Error("SetProperty: Sector %i does not have a "
+                              "floor plane!", P_ToIndex(sec));
+
                 p = sec->planes[PLN_FLOOR];
+            }
             else
+            {
+                if(!sec->planes[PLN_FLOOR])
+                    Con_Error("SetProperty: Sector %i does not have a "
+                              "ceiling plane!", P_ToIndex(sec));
+
                 p = sec->planes[PLN_CEILING];
+            }
         }
         else if(args->type == DMU_SUBSECTOR)
         {
             sector_t* sec = ((subsector_t*)ptr)->sector;
             if(args->aliases & DMU_FLOOR_OF_SECTOR)
+            {
+                if(!sec->planes[PLN_FLOOR])
+                    Con_Error("SetProperty: Sector %i does not have a "
+                              "floor plane!", P_ToIndex(sec));
+
                 p = sec->planes[PLN_FLOOR];
+            }
             else
+            {
+                if(!sec->planes[PLN_FLOOR])
+                    Con_Error("SetProperty: Sector %i does not have a "
+                              "ceiling plane!", P_ToIndex(sec));
+
                 p = sec->planes[PLN_CEILING];
+            }
         }
         else
             Con_Error("SetProperty: Invalid args.\n");
@@ -1673,9 +1704,21 @@ static int GetProperty(void* ptr, void* context)
         {
             sector_t* sec = (sector_t*)ptr;
             if(args->aliases & DMU_FLOOR_OF_SECTOR)
+            {
+                if(!sec->planes[PLN_FLOOR])
+                    Con_Error("SetProperty: Sector %i does not have a "
+                              "floor plane!", P_ToIndex(sec));
+
                 p = sec->planes[PLN_FLOOR];
+            }
             else
+            {
+                if(!sec->planes[PLN_FLOOR])
+                    Con_Error("SetProperty: Sector %i does not have a "
+                              "ceiling plane!", P_ToIndex(sec));
+
                 p = sec->planes[PLN_CEILING];
+            }
         }
         else if(args->type == DMU_SUBSECTOR)
         {
