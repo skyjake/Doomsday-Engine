@@ -287,7 +287,6 @@ int EV_FadeSpawn(line_t *line, mobj_t *thing)
         if(P_XSector(tagsec)->tag != tag)
             continue;
 
-        th = thinkercap.next;
         for(th = thinkercap.next; th != &thinkercap; th = th->next)
         {
             if(th->function != P_MobjThinker)
