@@ -606,9 +606,6 @@ int P_Massacre(void)
     if(gamestate != GS_LEVEL)
         return 0;
 
-    if(gamemap == 38) // d64tc
-        return 0; // can't do this in Hectic -kaiser
-
     for(think = thinkercap.next; think != &thinkercap; think = think->next)
     {
         if(think->function != P_MobjThinker)
