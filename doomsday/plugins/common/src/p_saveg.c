@@ -605,7 +605,7 @@ static void SV_ReadPlayer(player_t *pl)
 #endif
     SV_Read(pl->powers, playerHeader.numpowers * 4);
 #if __DOOM64TC__
-    /*cheatenable =*/ SV_ReadLong(); // added in outcast
+    //cheatenable = SV_ReadLong(); // added in outcast
 #endif
     SV_Read(pl->keys, playerHeader.numkeys * 4);
 #if __DOOM64TC__
