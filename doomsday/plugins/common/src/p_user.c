@@ -971,12 +971,12 @@ boolean P_PlayerThinkDeath(player_t *player)
 
 void P_PlayerThinkMorph(player_t *player)
 {
-#if __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__
     if(player->morphTics)
     {
         P_MorphThink(player);
         if(!--player->morphTics)
-        {                       // Attempt to undo the pig
+        {                       // Attempt to undo the pig/chicken
             P_UndoPlayerMorph(player);
         }
     }
@@ -1224,7 +1224,7 @@ void P_PlayerThinkWeapons(player_t *player)
     }
 
     // Check for weapon change.
-#if __JHEXEN__
+#if __JHERETIC__ || __JHEXEN__
     if(cmd->changeWeapon && !player->morphTics)
 #else
     if(cmd->changeWeapon)
