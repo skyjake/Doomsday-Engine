@@ -1428,7 +1428,14 @@ void G_LeaveLevel(int map, int position, boolean secret)
  */
 boolean G_IfVictory(void)
 {
-#if __JDOOM__
+#if __DOOM64TC__
+    if((gameepisode == 1 && gamemap == 30) ||
+       (gameepisode == 2 && gamemap == 7))
+    {
+        gameaction = ga_victory;
+        return true;
+    }
+#elif __JDOOM__
     if((gamemap == 8) && (gamemode != commercial))
     {
         gameaction = ga_victory;
