@@ -2975,10 +2975,13 @@ void M_DrawWeaponMenu(void)
 #elif __JHERETIC__
     M_WriteMenuText(menu, 12, yesno[cfg.weaponNextMode]);
     M_WriteMenuText(menu, 14, autoswitch[cfg.weaponAutoSwitch]);
+#elif __DOOM64TC__
+    M_WriteMenuText(menu, 14, yesno[cfg.weaponNextMode]);
+    M_WriteMenuText(menu, 16, autoswitch[cfg.weaponAutoSwitch]);
+    M_WriteMenuText(menu, 17, yesno[berserkAutoSwitch != 0]);
 #elif __JDOOM__
     M_WriteMenuText(menu, 13, yesno[cfg.weaponNextMode]);
     M_WriteMenuText(menu, 15, autoswitch[cfg.weaponAutoSwitch]);
-
     M_WriteMenuText(menu, 16, yesno[berserkAutoSwitch != 0]);
 #endif
 }
@@ -3885,7 +3888,11 @@ void M_SizeDisplay(int option, void *data)
 
     if(option == RIGHT_DIR)
     {
+#if __DOOM64TC__
+        if(cfg.screenblocks < 11)
+#else
         if(cfg.screenblocks < 13)
+#endif
         {
             cfg.screenblocks++;
         }

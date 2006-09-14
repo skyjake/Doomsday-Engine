@@ -87,7 +87,6 @@ typedef struct jdoom_config_s {
     int             screenblocks;
     byte            deathLookUp; // look up when killed
     int             slidingCorpses;
-    int             sbarscale;
     byte            echoMsg;
     float           menuScale;
     int             menuEffects;
@@ -104,8 +103,8 @@ typedef struct jdoom_config_s {
     float           hudScale;      // How to scale HUD data?
     float           hudColor[4];
     float           hudIconAlpha;
-    float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
-    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
+    float           hudTimer; // Number of seconds until the hud auto-hides.
+    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud unhides.
     byte            usePatchReplacement;
     byte            moveCheckZ;    // if true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;
@@ -125,9 +124,6 @@ typedef struct jdoom_config_s {
     byte            noNetBFG;
     byte            coopRespawnItems;
     byte            respawnMonstersNightmare;
-
-    float           statusbarAlpha;
-    float           statusbarCounterAlpha;
 
     // Compatibility options.
     // TODO: Put these into an array so we can use a bit array to change

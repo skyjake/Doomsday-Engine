@@ -1192,6 +1192,7 @@ void AM_Ticker(void)
  */
 void AM_clearFB(int color)
 {
+#if !__DOOM64TC__
     float   scaler;
 
     scaler = cfg.sbarscale / 20.0f;
@@ -1207,7 +1208,7 @@ void AM_clearFB(int color)
         GL_DrawCutRectTiled(0, finit_height, 320, BORDEROFFSET, 16, BORDEROFFSET, 0, 0, 160 - 160 * scaler + 1,
                         finit_height, 320 * scaler - 2, BORDEROFFSET);
     }
-
+#endif
 }
 
 /*
@@ -2359,7 +2360,7 @@ void AM_drawLevelName(void)
 
         x = (sx0+(sx1 * .5f) - (M_StringWidth((char*)lname, hu_font_a) * .5f));
         y = (sy0+sy1);
-
+#if !__DOOM64TC__
         if(cfg.setblocks <= 11 || cfg.automapHudDisplay == 2)
         {   // We may need to adjust for the height of the statusbar
             otherY = FIXYTOSCREENY(ST_Y);
@@ -2369,6 +2370,7 @@ void AM_drawLevelName(void)
                 y = otherY;
         }
         else if(cfg.setblocks == 12)
+#endif
         {   // We may need to adjust for the height of the HUD icons.
             otherY = y;
             otherY += -(y * (cfg.hudScale / 10.0f));
@@ -2463,9 +2465,12 @@ void AM_drawFragsTable(void)
     }
 
     // Start drawing from the top.
-    for(y =
-        HU_TITLEY + 32 * (20 - cfg.sbarscale) / 20 - (inCount - 1) * LINEHEIGHT_A, i = 0;
-        i < inCount; i++, y += LINEHEIGHT_A)
+# if __DOOM64TC__
+    y = HU_TITLEY + 32 * (inCount - 1) * LINEHEIGHT_A;
+# else
+    y = HU_TITLEY + 32 * (20 - cfg.sbarscale) / 20 - (inCount - 1) * LINEHEIGHT_A;
+#endif
+    for(i = 0; i < inCount; i++, y += LINEHEIGHT_A)
     {
         // Find the largest.
         for(max = FRAGS_DRAWN + 1, k = 0; k < MAXPLAYERS; k++)

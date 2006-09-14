@@ -233,7 +233,7 @@ void G_IdentifyVersion(void)
     // A client can't connect unless the same game mode is used.
     memset(gameModeString, 0, sizeof(gameModeString));
 
-    strcpy(gameModeString, "doom1");
+    strcpy(gameModeString, "doom64tc");
 }
 
 /*
@@ -268,7 +268,7 @@ void D_PreInit(void)
     cfg.flashcolor[1] = .9f;
     cfg.flashcolor[2] = 1;
     cfg.flashspeed = 4;
-    cfg.turningSkull = true;
+    cfg.turningSkull = false;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
     cfg.hudShown[HUD_AMMO] = true;
@@ -278,8 +278,8 @@ void D_PreInit(void)
     cfg.hudScale = .6f;
     cfg.hudColor[0] = 1;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
-    cfg.hudColor[3] = 1;
-    cfg.hudIconAlpha = 1;
+    cfg.hudColor[3] = 0.75f;
+    cfg.hudIconAlpha = 0.5f;
     cfg.xhairSize = 1;
     for(i = 0; i < 4; i++)
         cfg.xhairColor[i] = 255;
@@ -346,14 +346,13 @@ void D_PreInit(void)
     cfg.counterCheatScale = .7f; //From jHeretic
 
     cfg.msgShow = true;
-    cfg.msgCount = 4;
+    cfg.msgCount = 1;
     cfg.msgScale = .8f;
     cfg.msgUptime = 5 * TICSPERSEC;
     cfg.msgAlign = ALIGN_LEFT;
     cfg.msgBlink = 5;
 
-    cfg.msgColor[0] = 1;
-    cfg.msgColor[1] = cfg.msgColor[2] = 0;
+    cfg.msgColor[0] = cfg.msgColor[1] = cfg.msgColor[2] = 1;
 
     cfg.killMessages = true;
     cfg.bobWeapon = 1;
@@ -362,15 +361,16 @@ void D_PreInit(void)
     cfg.cameraNoClip = true;
     cfg.respawnMonstersNightmare = true;
 
-    cfg.weaponOrder[0] = wp_plasma;
-    cfg.weaponOrder[1] = wp_supershotgun;
-    cfg.weaponOrder[2] = wp_chaingun;
-    cfg.weaponOrder[3] = wp_shotgun;
-    cfg.weaponOrder[4] = wp_pistol;
-    cfg.weaponOrder[5] = wp_chainsaw;
-    cfg.weaponOrder[6] = wp_missile;
-    cfg.weaponOrder[7] = wp_bfg;
-    cfg.weaponOrder[8] = wp_fist;
+    cfg.weaponOrder[0] = wp_unmaker;
+    cfg.weaponOrder[1] = wp_plasma;
+    cfg.weaponOrder[2] = wp_supershotgun;
+    cfg.weaponOrder[3] = wp_chaingun;
+    cfg.weaponOrder[4] = wp_shotgun;
+    cfg.weaponOrder[5] = wp_pistol;
+    cfg.weaponOrder[6] = wp_chainsaw;
+    cfg.weaponOrder[7] = wp_missile;
+    cfg.weaponOrder[8] = wp_bfg;
+    cfg.weaponOrder[9] = wp_fist;
     cfg.weaponRecoil = true;
 
     cfg.berserkAutoSwitch = true;

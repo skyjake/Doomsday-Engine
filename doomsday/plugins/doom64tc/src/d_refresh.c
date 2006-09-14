@@ -331,7 +331,7 @@ void D_Display(void)
                     if(true == (viewheight == 200))
                     {
                         // Fullscreen. Which mode?
-                        ST_Drawer(cfg.setblocks - 10 , redrawsbar);
+                        ST_Drawer(cfg.setblocks - 8, redrawsbar);
                     }
                     else
                     {
@@ -347,7 +347,7 @@ void D_Display(void)
         // Need to update the borders?
         if(oldgamestate != GS_LEVEL ||
             ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
-                cfg.sbarscale < 20 || !R_IsFullScreenViewWindow() ||
+                !R_IsFullScreenViewWindow() ||
                 (automapactive && cfg.automapHudDisplay == 0 ))))
         {
             // Update the borders.

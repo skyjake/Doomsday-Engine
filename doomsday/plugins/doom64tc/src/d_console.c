@@ -90,7 +90,7 @@ cvar_t  gameCVars[] = {
     {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
 
 // View/Refresh
-    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 13},
+    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenblocks, 3, 11},
     {"hud-title", 0, CVT_BYTE, &cfg.levelTitle, 0, 1},
     {"hud-title-noidsoft", 0, CVT_BYTE, &cfg.hideAuthorIdSoft, 0, 1},
 
@@ -319,7 +319,7 @@ DEFCC(CCmdScreenShot)
  */
 DEFCC(CCmdViewSize)
 {
-    int     min = 3, max = 13, *val = &cfg.screenblocks;
+    int     min = 3, max = 11, *val = &cfg.screenblocks;
 
     if(argc != 2)
     {

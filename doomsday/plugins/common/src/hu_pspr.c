@@ -86,10 +86,11 @@ int HU_PSpriteYOffset(player_t *pl)
 {
 #if __JDOOM__
     int     offy = FRACUNIT * (cfg.plrViewHeight - 41) * 2;
-
+# if !__DOOM64TC__
     // If the status bar is visible, the sprite is moved up a bit.
     if(Get(DD_VIEWWINDOW_HEIGHT) < 200)
         offy -= FRACUNIT * ((ST_HEIGHT * cfg.sbarscale) / (2 * 20) - 1);
+# endif
     return offy;
 
 #else

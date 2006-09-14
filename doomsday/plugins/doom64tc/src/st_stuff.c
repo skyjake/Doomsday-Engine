@@ -55,6 +55,9 @@
 #define ST_FRAGSY           171
 #define ST_FRAGSWIDTH       2
 
+#define HUDBORDERX          20
+#define HUDBORDERY          24
+
 // TYPES -------------------------------------------------------------------
 
 typedef enum hotloc_e {
@@ -165,8 +168,6 @@ cvar_t hudCVars[] =
 {
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
-
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.sbarscale, 1, 20},
 
     // HUD colour + alpha
     {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
@@ -455,13 +456,13 @@ void ST_doFullscreenStuff(void)
     if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
     {
         // Display the frag counter.
-        i = 199 - 8;
-        if(cfg.hudShown[HUD_HEALTH] || cfg.hudShown[HUD_AMMO])
+        i = 199 - HUDBORDERY;
+        if(cfg.hudShown[HUD_HEALTH])
         {
             i -= 18 * cfg.hudScale;
         }
         sprintf(buf, "FRAGS:%i", st_fragscount);
-        M_WriteText2(2, i, buf, hu_font_a, cfg.hudColor[0], cfg.hudColor[1],
+        M_WriteText2(HUDBORDERX, i, buf, hu_font_a, cfg.hudColor[0], cfg.hudColor[1],
                      cfg.hudColor[2], textalpha);
     }
 
@@ -473,13 +474,83 @@ void ST_doFullscreenStuff(void)
     // draw the visible HUD data, first health
     if(cfg.hudShown[HUD_HEALTH])
     {
-        ST_drawHUDSprite(SPR_STIM, 2, h_height - 2, HOT_BLEFT, iconalpha);
-        ST_HUDSpriteSize(SPR_STIM, &w, &h);
-        sprintf(buf, "%i%%", plr->health);
-        M_WriteText2(w + 4, h_height - 14, buf, hu_font_b, cfg.hudColor[0],
-                     cfg.hudColor[1], cfg.hudColor[2], textalpha);
-        pos = 60;
+        sprintf(buf, "HEALTH");
+        pos = M_StringWidth(buf, hu_font_a)/2;
+        M_WriteText2(HUDBORDERX, h_height - HUDBORDERY - SHORT(hu_font[0].height) - 4,
+                     buf, hu_font_a, 1, 1, 1, iconalpha);
+
+        sprintf(buf, "%i", plr->health);
+        M_WriteText2(HUDBORDERX + pos - (M_StringWidth(buf, hu_font_b)/2),
+                     h_height - HUDBORDERY, buf, hu_font_b,
+                     cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
     }
+
+    // d64tc > Laser artifacts
+    if(cfg.hudShown[HUD_POWER])
+    {
+        if(plr->lasericon1 == 1)
+        {
+            spr = SPR_POW1;
+            ST_HUDSpriteSize(spr, &w, &h);
+            pos -= w/2;
+            ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 44,
+                             HOT_BLEFT, iconalpha);
+        }
+        if(plr->lasericon2 == 1)
+        {
+            spr = SPR_POW2;
+            ST_HUDSpriteSize(spr, &w, &h);
+            ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 84,
+                             HOT_BLEFT, iconalpha);
+        }
+        if(plr->lasericon3 == 1)
+        {
+            spr = SPR_POW3;
+            ST_HUDSpriteSize(spr, &w, &h);
+            ST_drawHUDSprite(spr, HUDBORDERX + pos, h_height - 124,
+                             HOT_BLEFT, iconalpha);
+        }
+
+        if(plr->artifacts[it_helltime])
+        {
+            ST_drawHUDSprite(SPR_POW5, HUDBORDERX + pos, h_height - 164,
+                             HOT_BLEFT, iconalpha);
+            ST_HUDSpriteSize(SPR_POW5, &w, &h);
+            if(plr->helltime)
+            {
+                for(i = 0; i < plr->helltime; ++i)
+                {
+                    ST_drawHUDSprite(SPR_STHT, HUDBORDERX + 48 + i,
+                                     h_height - 44, HOT_BLEFT, iconalpha);
+                }
+            }
+        }
+
+        if(plr->artifacts[it_float])
+        {
+            ST_drawHUDSprite(SPR_POW4, HUDBORDERX, h_height - 184, HOT_BLEFT, iconalpha);
+            ST_HUDSpriteSize(SPR_POW4, &w, &h);
+
+            if(plr->devicetime &&
+               ((plr->outcastcycle == 2 && plr->artifacts[it_float]) ||
+                (plr->outcastcycle == 1 && plr->artifacts[it_float] &&
+                 !(plr->artifacts[it_helltime]))))
+            {
+                for(i = 0; i < plr->devicetime; ++i)
+                {
+                    ST_drawHUDSprite(SPR_STDT, HUDBORDERX + 48 + i, h_height - 32,
+                                     HOT_BLEFT, iconalpha);
+                }
+            }
+        }
+
+        if(plr->powers[pw_unsee])
+        {
+            ST_drawHUDSprite(SPR_SEEA, HUDBORDERX, h_height - 300, HOT_BLEFT, iconalpha);
+            ST_HUDSpriteSize(SPR_SEEA, &w, &h);
+        }
+    }
+    // < d64tc
 
     if(cfg.hudShown[HUD_AMMO])
     {
@@ -492,11 +563,9 @@ void ST_doFullscreenStuff(void)
             if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])
                 continue;
 
-            spr = ammo_sprite[ammotype];
-            ST_drawHUDSprite(spr, pos + 2, h_height - 2, HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(spr, &w, &h);
             sprintf(buf, "%i", plr->ammo[ammotype]);
-            M_WriteText2(pos + w + 4, h_height - 14, buf, hu_font_b,
+            pos = (h_width/2) - (M_StringWidth(buf, hu_font_b)/2);
+            M_WriteText2(pos, h_height - HUDBORDERY, buf, hu_font_b,
                          cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
             break;
         }
@@ -505,20 +574,24 @@ void ST_doFullscreenStuff(void)
     pos = h_width - 1;
     if(cfg.hudShown[HUD_ARMOR])
     {
-        sprintf(buf, "%i%%", plr->armorpoints);
-        spr = plr->armortype == 2 ? SPR_ARM2 : SPR_ARM1;
-        ST_drawHUDSprite(spr, h_width - 49, h_height - 2, HOT_BRIGHT, iconalpha);
-        ST_HUDSpriteSize(spr, &w, &h);
+        sprintf(buf, "ARMOR");
+        w = M_StringWidth(buf, hu_font_a);
+        M_WriteText2(h_width - w - HUDBORDERX,
+                     h_height - HUDBORDERY - SHORT(hu_font[0].height) - 4,
+                     buf, hu_font_a, 1, 1, 1, iconalpha);
 
-        M_WriteText2(h_width - M_StringWidth(buf, hu_font_b) - 2, h_height - 14, buf, hu_font_b,
-                     cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
-        pos = h_width - w - 52;
+        sprintf(buf, "%i", plr->armorpoints);
+        M_WriteText2(h_width - (w/2) - (M_StringWidth(buf, hu_font_b)/2) - HUDBORDERX,
+                     h_height - HUDBORDERY,
+                     buf, hu_font_b, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
+                     textalpha);
+        pos = h_width * 0.25;
     }
 
     // Keys  | use a bit of extra scale
     if(cfg.hudShown[HUD_KEYS])
     {
-Draw_BeginZoom(0.75f, pos , h_height - 2);
+Draw_BeginZoom(0.75f, pos , h_height - HUDBORDERY);
         for(i = 0; i < 3; i++)
         {
             spr = 0;
@@ -532,78 +605,13 @@ Draw_BeginZoom(0.75f, pos , h_height - 2);
                 spr = i == 0 ? SPR_RSKU : i == 1 ? SPR_YSKU : SPR_BSKU;
             if(spr)
             {
-                ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BRIGHT,iconalpha);
+                ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BLEFT, iconalpha);
                 ST_HUDSpriteSize(spr, &w, &h);
                 pos -= w + 2;
             }
         }
 Draw_EndZoom();
     }
-
-    // d64tc > Laser artifacts
-    if(cfg.hudShown[HUD_POWER])
-    {
-        if(plr->lasericon1 == 1)
-        {
-            ST_drawHUDSprite(SPR_POW1, 2, h_height - 24, HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(SPR_POW1, &w, &h);
-            pos = 64;
-        }
-        if(plr->lasericon2 == 1)
-        {
-            ST_drawHUDSprite(SPR_POW2, 2, h_height - 64, HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(SPR_POW2, &w, &h);
-            pos = 64;
-        }
-        if(plr->lasericon3 == 1)
-        {
-            ST_drawHUDSprite(SPR_POW3, 2, h_height - 104, HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(SPR_POW3, &w, &h);
-            pos = 64;
-        }
-
-        if(plr->artifacts[it_helltime])
-        {
-            ST_drawHUDSprite(SPR_POW5, 2, h_height - 144, HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(SPR_POW5, &w, &h);
-            if(plr->helltime)
-            {
-                for(i = 0; i < plr->helltime; ++i)
-                {
-                    ST_drawHUDSprite(SPR_STHT, 48 + i, h_height - 24, HOT_BLEFT,
-                                     iconalpha);
-                }
-            }
-            pos = 64;
-        }
-
-        if(plr->artifacts[it_float])
-        {
-            ST_drawHUDSprite(SPR_POW4, 2, h_height - 184, HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(SPR_POW4, &w, &h);
-
-            if(plr->devicetime &&
-               ((plr->outcastcycle == 2 && plr->artifacts[it_float]) ||
-                (plr->outcastcycle == 1 && plr->artifacts[it_float] &&
-                 !(plr->artifacts[it_helltime]))))
-            {
-                for(i = 0; i < plr->devicetime; ++i)
-                {
-                    ST_drawHUDSprite(SPR_STDT, 48 + i, h_height - 32, HOT_BLEFT,
-                                     iconalpha);
-                }
-            }
-            pos = 64;
-        }
-
-        if(plr->powers[pw_unsee])
-        {
-            ST_drawHUDSprite(SPR_SEEA, 2, h_height - 300, HOT_BLEFT, iconalpha);
-            ST_HUDSpriteSize(SPR_SEEA, &w, &h);
-            pos = 64;
-        }
-    }
-    // < d64tc
 
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();
