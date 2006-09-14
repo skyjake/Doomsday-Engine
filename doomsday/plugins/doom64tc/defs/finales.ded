@@ -50,7 +50,7 @@ InFine
 
 Finale
 {
-  Before = "MAP11";
+  Before = "E1M11";
   Script {
     music "read_m"
     flat BLANK
@@ -63,7 +63,7 @@ Finale
 
 Finale
 {
-  Before = "MAP21";
+  Before = "E1M21";
   Script {
     music "read_m"
     flat BLANK
@@ -76,7 +76,7 @@ Finale
 
 Finale
 {
-  Before = "MAP32";
+  Before = "E1M32";
   Script {
     music "read_m"
     flat BLANK
@@ -90,7 +90,7 @@ Finale
 # This is the actual finale of DOOM II.
 Finale
 {
-  After = "MAP30";
+  After = "E1M30";
   Script {
     noskip; # This is the end, no more levels after this.
     music "read_m";
@@ -348,7 +348,7 @@ Finale
 # Secret level 1.
 Finale
 {
-  Before = "MAP31";
+  Before = "E1M31";
   Script {
     music "read_m";
     flat BLANK;
@@ -362,7 +362,7 @@ Finale
 # Secret level 2.
 Finale
 {
-  Before = "MAP33";
+  Before = "E1M33";
   Script {
     music "read_m";
     flat BLANK;
@@ -375,7 +375,7 @@ Finale
 
 Finale
 {
-  Before = "MAP34";
+  Before = "E1M34";
   Script {
     music "read_m";
     flat BLANK;
@@ -388,7 +388,7 @@ Finale
 
 Finale
 {
-  Before = "MAP35";
+  Before = "E1M35";
   Script {
     music "read_m";
     flat BLANK;
@@ -401,7 +401,7 @@ Finale
 
 Finale
 {
-  Before = "MAP38";
+  Before = "E1M38";
   Script {
     music "read_m";
     flat BLANK;
@@ -414,7 +414,7 @@ Finale
 
 Finale
 {
-  Before = "MAP46";
+  Before = "E2M07";
   Script {
     music "read_m";
     flat BLANK;
@@ -427,7 +427,7 @@ Finale
 
 Finale
 {
-  After = "MAP45";
+  After = "E2M06";
   Script {
     noskip; # This is the end, no more levels after this.
     music "read_m";
