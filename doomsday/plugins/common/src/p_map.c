@@ -1598,7 +1598,13 @@ static boolean PTR_ShootTraverse(intercept_t * in)
 
     // check angles to see if the thing can be aimed at
     dist = FixedMul(attackrange, in->frac);
-    thingtopslope = FixedDiv(th->pos[VZ] + th->height - tracepos[VZ], dist);
+    {
+        fixed_t dz = th->pos[VZ];
+        if(!(th->player && (th->player->plr->flags & DDPF_CAMERA)))
+            dz += th->height;
+        dz -= tracepos[VZ];
+        thingtopslope = FixedDiv(dz, dist);
+    }
 
     if(thingtopslope < aimslope)
         return true;            // shot over the thing
@@ -1751,18 +1757,24 @@ static boolean PTR_AimTraverse(intercept_t *in)
 
     // check angles to see if the thing can be aimed at
     dist = FixedMul(attackrange, in->frac);
+    {
+        fixed_t posz = th->pos[VZ];
 
-    thingtopslope = FixedDiv(th->pos[VZ] + th->height - shootz, dist);
-    if(thingtopslope < bottomslope)
-        return true;            // shot over the thing
+        if(!(th->player && (th->player->plr->flags & DDPF_CAMERA)))
+            posz += th->height;
+
+        thingtopslope = FixedDiv(posz - shootz, dist);
+
+        if(thingtopslope < bottomslope)
+            return true;            // shot over the thing
 
     // Too far below?
 // $addtocfg $limitautoaimZ:
 #if __JHEXEN__
-    if(th->pos[VZ] + th->height < shootz - FixedDiv(attackrange, 1.2 * FRACUNIT))
-        return true;
+        if(posz < shootz - FixedDiv(attackrange, 1.2 * FRACUNIT))
+            return true;
 #endif
-
+    }
     thingbottomslope = FixedDiv(th->pos[VZ] - shootz, dist);
     if(thingbottomslope > topslope)
         return true;            // shot under the thing
@@ -1796,7 +1808,23 @@ fixed_t P_AimLineAttack(mobj_t *t1, angle_t angle, fixed_t distance)
 
     x2 = t1->pos[VX] + (distance >> FRACBITS) * finecosine[angle];
     y2 = t1->pos[VY] + (distance >> FRACBITS) * finesine[angle];
-    shootz = t1->pos[VZ] + (t1->height >> 1) + 8 * FRACUNIT;
+
+    // Determine the z trace origin.
+    shootz = t1->pos[VZ];
+#if __JHEXEN__
+    if(t1->player &&
+      (t1->player->class == PCLASS_FIGHTER ||
+       t1->player->class == PCLASS_CLERIC ||
+       t1->player->class == PCLASS_MAGE))
+#else
+    if(t1->player && t1->type == MT_PLAYER)
+#endif
+    {
+        if(!(t1->player->plr->flags & DDPF_CAMERA))
+            shootz += (cfg.plrViewHeight - 5) * FRACUNIT;
+    }
+    else
+        shootz += (t1->height >> 1) + 8 * FRACUNIT;
 
 #if __JDOOM__
     topslope = 60 * FRACUNIT;
@@ -1841,8 +1869,9 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope,
 
     x2 = t1->pos[VX] + (distance >> FRACBITS) * finecosine[angle];
     y2 = t1->pos[VY] + (distance >> FRACBITS) * finesine[angle];
-    shootz = t1->pos[VZ] + (t1->height >> 1) + 8 * FRACUNIT;
 
+    // Determine the z trace origin.
+    shootz = t1->pos[VZ];
 #if __JHEXEN__
     if(t1->player &&
       (t1->player->class == PCLASS_FIGHTER ||
@@ -1852,8 +1881,11 @@ void P_LineAttack(mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope,
     if(t1->player && t1->type == MT_PLAYER)
 #endif
     {
-        shootz = t1->pos[VZ] + (cfg.plrViewHeight - 5) * FRACUNIT;
+        if(!(t1->player->plr->flags & DDPF_CAMERA))
+            shootz += (cfg.plrViewHeight - 5) * FRACUNIT;
     }
+    else
+        shootz += (t1->height >> 1) + 8 * FRACUNIT;
 
     shootz -= t1->floorclip;
     attackrange = distance;

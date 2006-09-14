@@ -487,7 +487,9 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
         return false;           // Cameramen don't exist!
 
     // Check precisely.
-    sightzstart = t1->pos[VZ] + t1->height - (t1->height >> 2);
+    sightzstart = t1->pos[VZ];
+    if(!(t1->dplayer && t1->dplayer->flags & DDPF_CAMERA))
+        sightzstart += t1->height + -(t1->height >> 2);
     topslope = (t2->pos[VZ] + t2->height) - sightzstart;
     bottomslope = (t2->pos[VZ]) - sightzstart;
 
