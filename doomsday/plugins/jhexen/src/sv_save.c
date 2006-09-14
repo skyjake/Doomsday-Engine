@@ -101,7 +101,8 @@ typedef enum gamearchivesegment_e {
     ASEG_SOUNDS,
     ASEG_MISC,
     ASEG_END,
-    ASEG_TEX_ARCHIVE
+    ASEG_TEX_ARCHIVE,
+    ASEG_MAP_HEADER2
 } gamearchivesegment_t;
 
 typedef enum thinkclass_e {
@@ -433,7 +434,10 @@ void SV_HxSaveMap(boolean savePlayers)
     OpenStreamOut(fileName);
 
     // Place a header marker
-    StreamOutLong(ASEG_MAP_HEADER);
+    StreamOutLong(ASEG_MAP_HEADER2);
+
+    // Write a version byte
+    StreamOutByte(MY_SAVE_VERSION);
 
     // Write the level timer
     StreamOutLong(leveltime);
@@ -829,6 +833,7 @@ boolean SV_HxRebornSlotAvailable(void)
 
 void SV_HxLoadMap(void)
 {
+    int     segType;
     char    fileName[100];
 
 #ifdef _DEBUG
@@ -856,7 +861,20 @@ void SV_HxLoadMap(void)
     M_ReadFile(fileName, &SaveBuffer);
     SavePtr.b = SaveBuffer;
 
-    AssertSegment(ASEG_MAP_HEADER);
+    segType = GET_LONG;
+    if(segType == ASEG_MAP_HEADER2)
+    {
+        saveVersion = GET_BYTE;
+    }
+    else if(segType == ASEG_MAP_HEADER)
+    {
+        saveVersion = 2;
+    }
+    else
+    {
+        Con_Error("Corrupt save game: Segment [%d] failed alignment check",
+                  ASEG_MAP_HEADER);
+    }
 
     // Read the level timer
     leveltime = GET_LONG;
