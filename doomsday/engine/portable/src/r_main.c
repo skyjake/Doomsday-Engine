@@ -568,6 +568,7 @@ void R_RenderPlayerView(ddplayer_t *player)
         // loading still left to do that we have been unable to
         // predetermine.
         firstFrameAfterLoad = false;
+        Rend_InitPlayerLightRanges();
         DD_ResetTimer();
     }
 

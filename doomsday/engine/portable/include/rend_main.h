@@ -70,4 +70,5 @@ void            Rend_ApplyLightAdaptation(int* lightvalue);
 int             Rend_GetLightAdaptVal(int lightvalue);
 
 void            Rend_CalcLightRangeModMatrix(struct cvar_s* unused);
+void            Rend_InitPlayerLightRanges(void);
 #endif

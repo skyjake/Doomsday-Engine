@@ -1928,6 +1928,33 @@ void Rend_CalcLightRangeModMatrix(cvar_t* unused)
     }
 }
 
+/**
+ * Initializes the light range of all players.
+ */
+void Rend_InitPlayerLightRanges(void)
+{
+    int i;
+    sector_t *sec;
+    ddplayer_t *player;
+
+    for(i=0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].ingame)
+            continue;
+
+        player = &players[i];
+        if(!player->mo || !player->mo->subsector)
+            continue;
+
+        sec = player->mo->subsector->sector;
+
+        playerLightRange[i] = (MOD_RANGE/2) - 1;
+        playerLastLightSample[i].value =
+            playerLastLightSample[i].currentlight = sec->lightlevel;
+        playerLastLightSample[i].sector = sec;
+    }
+}
+
 /*
  * Grabs the light value of the sector each player is currently
  * in and chooses an appropriate light range.
@@ -2098,7 +2125,7 @@ void Rend_RetrieveLightSample(void)
 void Rend_ApplyLightAdaptation(int* lightvar)
 {
     // The default range.
-    int range = MOD_RANGE / 2;
+    int range = (MOD_RANGE/2) - 1;
     int lightval;
 
     if(lightvar == NULL)
