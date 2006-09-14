@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -57,6 +57,7 @@
 #define CURSORPREF      "M_SKULL%d"
 #define SKULLBASELMP    "M_SKL00"
 #define NUMCURSORS      2
+#define MENUCURSOR_TICSPERFRAME 8
 
 #define NUMSAVESLOTS    8
 

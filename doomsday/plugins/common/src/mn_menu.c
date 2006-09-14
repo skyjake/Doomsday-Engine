@@ -1441,7 +1441,7 @@ void MN_Init(void)
     mfAlpha = 0;
     itemOn = currentMenu->lastOn;
     whichSkull = 0;
-    skullAnimCounter = 10;
+    skullAnimCounter = MENUCURSOR_TICSPERFRAME;
     messageToPrint = 0;
     messageString = NULL;
     messageLastMenuActive = menuactive;
@@ -1610,8 +1610,8 @@ void MN_Ticker(void)
     if(--skullAnimCounter <= 0)
     {
         whichSkull++;
-        skullAnimCounter = 8;
-        if (whichSkull > cursors-1)
+        skullAnimCounter = MENUCURSOR_TICSPERFRAME;
+        if(whichSkull > cursors-1)
             whichSkull = 0;
     }
 

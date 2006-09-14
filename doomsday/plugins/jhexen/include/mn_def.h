@@ -28,6 +28,7 @@
 #define CURSORPREF      "M_SLCTR%d"
 #define SKULLBASELMP    "FBULA0"
 #define NUMCURSORS      2
+#define MENUCURSOR_TICSPERFRAME 8
 
 #define NUMSAVESLOTS    6
 
