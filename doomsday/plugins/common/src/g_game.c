@@ -1531,7 +1531,7 @@ void G_DoCompleted(void)
 # if __DOOM64TC__
     if(secretexit)
     {
-        if(gameepisode = 0)
+        if(gameepisode = 1)
         {
             switch(gamemap)
             {
@@ -1543,7 +1543,7 @@ void G_DoCompleted(void)
             case 38: wminfo.next = 0; break;
             }
         }
-        else // episode 1
+        else // episode 2
         {
             if(gamemap == 3)
                 wminfo.next = 7;
@@ -1551,7 +1551,7 @@ void G_DoCompleted(void)
     }
     else
     {
-        if(gameepisode == 0)
+        if(gameepisode == 1)
         {
             switch(gamemap)
             {
