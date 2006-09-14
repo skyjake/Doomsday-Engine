@@ -502,7 +502,14 @@ void P_PlayerThinkCamera(player_t *player)
 
     // If this player is not a camera, get out of here.
     if(!(player->plr->flags & DDPF_CAMERA))
+    {
+        player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE);
+        player->cheats &= ~CF_GODMODE;
+
+        if(cfg.cameraNoClip)
+            player->cheats &= ~CF_NOCLIP;
         return;
+    }
 
     mo = player->plr->mo;
     player->cheats |= CF_GODMODE;
