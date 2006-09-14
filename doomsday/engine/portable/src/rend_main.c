@@ -2154,7 +2154,7 @@ void Rend_ApplyLightAdaptation(int* lightvar)
  */
 int Rend_GetLightAdaptVal(int lightvalue)
 {
-    int range = MOD_RANGE / 2;
+    int range = (MOD_RANGE/2) - 1;
     int lightval = lightvalue;
 
     if(lightval > 255)
