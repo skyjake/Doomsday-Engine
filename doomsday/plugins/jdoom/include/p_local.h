@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -144,7 +144,6 @@ mobj_t         *P_SpawnCustomPuff(fixed_t x, fixed_t y, fixed_t z,
 void            P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
 void            P_RipperBlood(mobj_t *mo);
 mobj_t         *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
-void            P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
 void            P_SpawnPlayer(thing_t * mthing, int pnum);
 mobj_t         *P_SpawnTeleFog(int x, int y);
 

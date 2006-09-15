@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -488,7 +488,7 @@ void C_DECL A_FireMissile(player_t *player, pspdef_t * psp)
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
-    P_SpawnPlayerMissile(player->plr->mo, MT_ROCKET);
+    P_SpawnMissile(player->plr->mo, NULL, MT_ROCKET);
 }
 
 void C_DECL A_FireBFG(player_t *player, pspdef_t * psp)
@@ -497,7 +497,7 @@ void C_DECL A_FireBFG(player_t *player, pspdef_t * psp)
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
-    P_SpawnPlayerMissile(player->plr->mo, MT_BFG);
+    P_SpawnMissile(player->plr->mo, NULL, MT_BFG);
 }
 
 void C_DECL A_FirePlasma(player_t *player, pspdef_t * psp)
@@ -512,7 +512,7 @@ void C_DECL A_FirePlasma(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_PLASMA);
+    P_SpawnMissile(player->plr->mo, NULL, MT_PLASMA);
 }
 
 /*

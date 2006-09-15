@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -90,7 +90,7 @@ int     iquetail;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Returns true if the mobj is still present.
  */
 boolean P_SetMobjState(mobj_t *mobj, statenum_t state)
@@ -161,7 +161,9 @@ void P_FloorBounceMissile(mobj_t *mo)
     P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
 }
 
-// Returns the ground friction factor for the mobj.
+/**
+ * Returns the ground friction factor for the mobj.
+ */
 fixed_t P_GetMobjFriction(mobj_t *mo)
 {
     if(mo->flags2 & MF2_FLY && !(mo->pos[VZ] <= mo->floorz) &&
@@ -682,9 +684,11 @@ void P_MobjThinker(mobj_t *mobj)
     if(mobj->type == MT_LIGHTSOURCE)
     {
         if(mobj->movedir > 0)
-            mobj->pos[VZ] = P_GetFixedp(mobj->subsector, DMU_FLOOR_HEIGHT) + mobj->movedir;
+            mobj->pos[VZ] = P_GetFixedp(mobj->subsector, DMU_FLOOR_HEIGHT) +
+                            mobj->movedir;
         else
-            mobj->pos[VZ] = P_GetFixedp(mobj->subsector, DMU_CEILING_HEIGHT) + mobj->movedir;
+            mobj->pos[VZ] = P_GetFixedp(mobj->subsector, DMU_CEILING_HEIGHT) +
+                            mobj->movedir;
         return;
     }
 #endif
@@ -823,7 +827,7 @@ void P_MobjThinker(mobj_t *mobj)
     }
 }
 
-/*
+/**
  * Spawns a mobj of "type" at the specified position.
  */
 mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
@@ -1015,7 +1019,7 @@ void P_RespawnSpecials(void)
     iquetail = (iquetail + 1) & (ITEMQUESIZE - 1);
 }
 
-/*
+/**
  * Called when a player is spawned on the level.
  * Most of the player structure stays unchanged between levels.
  */
@@ -1103,7 +1107,7 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
     }
 }
 
-/*
+/**
  * Spawns the passed thing into the world.
  */
 void P_SpawnMapThing(thing_t *th)
@@ -1289,7 +1293,7 @@ void P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage)
         P_SetMobjState(th, S_BLOOD3);
 }
 
-/*
+/**
  * Moves the missile forward a bit and possibly explodes it right there.
  */
 void P_CheckMissileSpawn(mobj_t *th)
@@ -1308,116 +1312,92 @@ void P_CheckMissileSpawn(mobj_t *th)
         P_ExplodeMissile(th);
 }
 
+/**
+ * Tries to aim at a nearby monster if <code>source</code> is a player.
+ * Else aim is taken at <code>dest</code>.
+ * @param   source      The mobj doing the shooting.
+ * @param   dest        The mobj being shot at. Can be <code>NULL</code>
+ *                      if <code>source</code> is a player.
+ * @param   type        The type of mobj to be shot.
+ * @return              Pointer to the newly spawned missile.
+ */
 mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 {
-    fixed_t z;
-    mobj_t *th;
-    angle_t an;
-    int     dist, dist3;
-
-    z = source->pos[VZ] + 4 * 8 * FRACUNIT;
-
-    z -= source->floorclip;
-    th = P_SpawnMobj(source->pos[VX], source->pos[VY], z, type);
-
-    if(th->info->seesound)
-        S_StartSound(th->info->seesound, th);
-
-    th->target = source;        // where it came from
-    an = R_PointToAngle2(source->pos[VX], source->pos[VY],
-                         dest->pos[VX], dest->pos[VY]);
-
-    // fuzzy player
-    if(dest->flags & MF_SHADOW)
-        an += (P_Random() - P_Random()) << 20;
-
-    th->angle = an;
-    an >>= ANGLETOFINESHIFT;
-    th->momx = FixedMul(th->info->speed, finecosine[an]);
-    th->momy = FixedMul(th->info->speed, finesine[an]);
-
-    dist = P_ApproxDistance(dest->pos[VX] - source->pos[VX],
-                            dest->pos[VY] - source->pos[VY]);
-    //dist3 = P_ApproxDistance (dist, dest->pos[VZ] - source->pos[VZ]);
-    dist = dist / th->info->speed;
-
-    if(dist < 1)
-        dist = 1;
-
-    th->momz = (dest->pos[VZ] - source->pos[VZ]) / dist;
-
-    // Make sure the speed is right (in 3D).
-    dist3 = P_ApproxDistance(th->momx, th->momy);
-    dist3 = P_ApproxDistance(dist3, th->momz);
-    if(!dist3)
-        dist3 = 1;
-    dist = FixedDiv(th->info->speed, dist3);
-
-    th->momx = FixedMul(th->momx, dist);
-    th->momy = FixedMul(th->momy, dist);
-    th->momz = FixedMul(th->momz, dist);
-
-    P_CheckMissileSpawn(th);
-
-    return th;
-}
-
-/*
- * Tries to aim at a nearby monster
- */
-void P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type)
-{
-    mobj_t *th;
-    angle_t an;
     fixed_t pos[3];
+    mobj_t *th;
+    angle_t an;
     fixed_t dist;
-    fixed_t slope;              //, scale;
-
-    //  float fSlope;
-
-    // see which target is to be aimed at
-    an = source->angle;
-    slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
-    if(!cfg.noAutoAim)
-        if(!linetarget)
-        {
-            an += 1 << 26;
-            slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
-
-            if(!linetarget)
-            {
-                an -= 2 << 26;
-                slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
-            }
-
-            if(!linetarget)
-            {
-                an = source->angle;
-                //if(!INCOMPAT_OK) slope = 0;
-            }
-        }
+    fixed_t slope;
 
     memcpy(pos, source->pos, sizeof(pos));
-    pos[VZ] += 4 * 8 * FRACUNIT;
-
+    if(source->player)
+    {
+        if(!(source->player->plr->flags & DDPF_CAMERA))
+            pos[VZ] += 4 * 8 * FRACUNIT; // what about view height?
+    }
+    else
+        pos[VZ] += 4 * 8 * FRACUNIT;
     pos[VZ] -= source->floorclip;
 
     th = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type);
 
     if(th->info->seesound)
-        //S_NetAvoidStartSound(th, th->info->seesound, source->player);
         S_StartSound(th->info->seesound, th);
 
-    th->target = source;
-    th->angle = an;
-    th->momx = FixedMul(th->info->speed, finecosine[an >> ANGLETOFINESHIFT]);
-    th->momy = FixedMul(th->info->speed, finesine[an >> ANGLETOFINESHIFT]);
+    // see which target is to be aimed at
+    if(source->player)
+    {
+        an = source->angle;
+        slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+        if(!cfg.noAutoAim)
+            if(!linetarget)
+            {
+                an += 1 << 26;
+                slope =
+                    P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
 
-    // Allow free-aim with the BFG in deathmatch?
-    if(deathmatch && cfg.netBFGFreeLook == 0 && type == MT_BFG)
-        th->momz = 0;
+                if(!linetarget)
+                {
+                    an -= 2 << 26;
+                    slope =
+                        P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+                }
+
+                if(!linetarget)
+                    an = source->angle;
+            }
+    }
     else
-        th->momz = FixedMul(th->info->speed, slope);
+    {
+        an = R_PointToAngle2(pos[VX], pos[VY],
+                             dest->pos[VX], dest->pos[VY]);
+        // fuzzy player
+        if(dest->flags & MF_SHADOW)
+            an += (P_Random() - P_Random()) << 20;
+    }
+
+    th->target = source;        // where it came from
+    th->angle = an;
+    an >>= ANGLETOFINESHIFT;
+    th->momx = FixedMul(th->info->speed, finecosine[an]);
+    th->momy = FixedMul(th->info->speed, finesine[an]);
+
+    if(source->player)
+    {   // Allow free-aim with the BFG in deathmatch?
+        if(deathmatch && cfg.netBFGFreeLook == 0 && type == MT_BFG)
+            th->momz = 0;
+        else
+            th->momz = FixedMul(th->info->speed, slope);
+    }
+    else
+    {
+        dist = P_ApproxDistance(dest->pos[VX] - pos[VX],
+                                dest->pos[VY] - pos[VY]);
+        dist = dist / th->info->speed;
+        if(dist < 1)
+            dist = 1;
+        th->momz = (dest->pos[VZ] - source->pos[VZ]) / dist;
+    }
 
     // Make sure the speed is right (in 3D).
     dist = P_ApproxDistance(P_ApproxDistance(th->momx, th->momy), th->momz);
@@ -1429,4 +1409,5 @@ void P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type)
     th->momz = FixedMul(th->momz, dist);
 
     P_CheckMissileSpawn(th);
+    return th;
 }
