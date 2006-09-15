@@ -1295,8 +1295,11 @@ void P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage)
 
 /**
  * Moves the missile forward a bit and possibly explodes it right there.
+ * @param   th  The missile to be checked.
+ * @return      <code>true</code> if the missile is at a valid location
+ *              else <code>false</code>.
  */
-void P_CheckMissileSpawn(mobj_t *th)
+boolean P_CheckMissileSpawn(mobj_t *th)
 {
     th->tics -= P_Random() & 3;
     if(th->tics < 1)
@@ -1309,7 +1312,12 @@ void P_CheckMissileSpawn(mobj_t *th)
     th->pos[VZ] += (th->momz >> 1);
 
     if(!P_TryMove(th, th->pos[VX], th->pos[VY], false, false))
+    {
         P_ExplodeMissile(th);
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -1328,15 +1336,28 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
     angle_t an;
     fixed_t dist;
     fixed_t slope;
+    fixed_t spawnZOff;
 
     memcpy(pos, source->pos, sizeof(pos));
+    // Type specific offset to spawn height z.
+    switch(type)
+    {
+    case MT_TRACER:            // Revenant Tracer Missile.
+        spawnZOff = 16 + 32 * FRACUNIT;
+        break;
+
+    default:
+        spawnZOff = 32 * FRACUNIT;
+        break;
+    }
+
     if(source->player)
     {
         if(!(source->player->plr->flags & DDPF_CAMERA))
-            pos[VZ] += 4 * 8 * FRACUNIT; // what about view height?
+            pos[VZ] += spawnZOff; // what about view height?
     }
     else
-        pos[VZ] += 4 * 8 * FRACUNIT;
+        pos[VZ] += spawnZOff;
     pos[VZ] -= source->floorclip;
 
     th = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type);
@@ -1353,14 +1374,12 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
             if(!linetarget)
             {
                 an += 1 << 26;
-                slope =
-                    P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+                slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
 
                 if(!linetarget)
                 {
                     an -= 2 << 26;
-                    slope =
-                        P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+                    slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
                 }
 
                 if(!linetarget)
@@ -1408,6 +1427,5 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
     th->momy = FixedMul(th->momy, dist);
     th->momz = FixedMul(th->momz, dist);
 
-    P_CheckMissileSpawn(th);
-    return th;
+    return (P_CheckMissileSpawn(th) ? th : NULL);
 }
