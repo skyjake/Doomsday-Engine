@@ -221,8 +221,6 @@ boolean         P_CheckMissileSpawn(mobj_t *missile);
 mobj_t         *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
 mobj_t         *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type,
                                     angle_t angle, fixed_t momz);
-mobj_t         *P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
-mobj_t         *P_SPMAngle(mobj_t *source, mobjtype_t type, angle_t angle);
 void            P_SpawnPlayer(thing_t * mthing, int plrnum);
 void            P_ZMovement(mobj_t *mo);
 mobj_t         *P_SpawnTeleFog(int x, int y);

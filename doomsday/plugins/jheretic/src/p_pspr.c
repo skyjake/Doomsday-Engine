@@ -1286,7 +1286,7 @@ void C_DECL A_FireBlasterPL2(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    mo = P_SpawnPlayerMissile(player->plr->mo, MT_BLASTERFX1);
+    mo = P_SpawnMissile(player->plr->mo, NULL, MT_BLASTERFX1);
     if(mo)
     {
         mo->thinker.function = P_BlasterMobjThinker;
@@ -1395,8 +1395,9 @@ void C_DECL A_FireMacePL1(player_t *player, pspdef_t * psp)
         return;
 
     ball =
-        P_SPMAngle(player->plr->mo, MT_MACEFX1,
-                   player->plr->mo->angle + (((P_Random() & 7) - 4) << 24));
+        P_SpawnMissileAngle(player->plr->mo, MT_MACEFX1,
+                   player->plr->mo->angle + (((P_Random() & 7) - 4) << 24),
+                   -12345);
     if(ball)
     {
         ball->special1 = 16;    // tics till dropoff
@@ -1507,7 +1508,7 @@ void C_DECL A_FireMacePL2(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    mo = P_SpawnPlayerMissile(player->plr->mo, MT_MACEFX4);
+    mo = P_SpawnMissile(player->plr->mo, NULL, MT_MACEFX4);
     if(mo)
     {
         mo->momx += player->plr->mo->momx;
@@ -1612,9 +1613,9 @@ void C_DECL A_FireCrossbowPL1(player_t *player, pspdef_t * psp)
     P_ShotAmmo(player);
     if(IS_CLIENT)
         return;
-    P_SpawnPlayerMissile(pmo, MT_CRBOWFX1);
-    P_SPMAngle(pmo, MT_CRBOWFX3, pmo->angle - (ANG45 / 10));
-    P_SPMAngle(pmo, MT_CRBOWFX3, pmo->angle + (ANG45 / 10));
+    P_SpawnMissile(pmo, NULL, MT_CRBOWFX1);
+    P_SpawnMissileAngle(pmo, MT_CRBOWFX3, pmo->angle - (ANG45 / 10), -12345);
+    P_SpawnMissileAngle(pmo, MT_CRBOWFX3, pmo->angle + (ANG45 / 10), -12345);
 }
 
 void C_DECL A_FireCrossbowPL2(player_t *player, pspdef_t * psp)
@@ -1625,11 +1626,11 @@ void C_DECL A_FireCrossbowPL2(player_t *player, pspdef_t * psp)
     P_ShotAmmo(player);
     if(IS_CLIENT)
         return;
-    P_SpawnPlayerMissile(pmo, MT_CRBOWFX2);
-    P_SPMAngle(pmo, MT_CRBOWFX2, pmo->angle - (ANG45 / 10));
-    P_SPMAngle(pmo, MT_CRBOWFX2, pmo->angle + (ANG45 / 10));
-    P_SPMAngle(pmo, MT_CRBOWFX3, pmo->angle - (ANG45 / 5));
-    P_SPMAngle(pmo, MT_CRBOWFX3, pmo->angle + (ANG45 / 5));
+    P_SpawnMissile(pmo, NULL, MT_CRBOWFX2);
+    P_SpawnMissileAngle(pmo, MT_CRBOWFX2, pmo->angle - (ANG45 / 10), -12345);
+    P_SpawnMissileAngle(pmo, MT_CRBOWFX2, pmo->angle + (ANG45 / 10), -12345);
+    P_SpawnMissileAngle(pmo, MT_CRBOWFX3, pmo->angle - (ANG45 / 5), -12345);
+    P_SpawnMissileAngle(pmo, MT_CRBOWFX3, pmo->angle + (ANG45 / 5), -12345);
 }
 
 void C_DECL A_BoltSpark(mobj_t *bolt)
@@ -1656,7 +1657,7 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    mo = P_SpawnPlayerMissile(player->plr->mo, MT_HORNRODFX1);
+    mo = P_SpawnMissile(player->plr->mo, NULL, MT_HORNRODFX1);
     // Randomize the first frame
     if(mo && P_Random() > 128)
     {
@@ -1675,9 +1676,9 @@ void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_HORNRODFX2);
+    P_SpawnMissile(player->plr->mo, NULL, MT_HORNRODFX2);
     // Use MissileMobj instead of the return value from
-    // P_SpawnPlayerMissile because we need to give info to the mobj
+    // P_SpawnMissile because we need to give info to the mobj
     // even if it exploded immediately.
     if(IS_NETGAME)
     {                           // Multi-player game
@@ -1820,8 +1821,7 @@ void C_DECL A_FirePhoenixPL1(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_PHOENIXFX1);
-    //P_SpawnPlayerMissile(player->plr->mo, MT_MNTRFX2);
+    P_SpawnMissile(player->plr->mo, NULL, MT_PHOENIXFX1);
     angle = player->plr->mo->angle + ANG180;
     angle >>= ANGLETOFINESHIFT;
     player->plr->mo->momx += FixedMul(4 * FRACUNIT, finecosine[angle]);

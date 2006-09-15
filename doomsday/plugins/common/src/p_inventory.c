@@ -432,11 +432,18 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
 # endif
     case arti_egg:
         mo = player->plr->mo;
-        P_SpawnPlayerMissile(mo, MT_EGGFX);
+        P_SpawnMissile(mo, NULL, MT_EGGFX);
+# if __JHEXEN__
         P_SPMAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 6));
         P_SPMAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 6));
         P_SPMAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 3));
         P_SPMAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 3));
+# else
+        P_SpawnMissileAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 6), -12345);
+        P_SpawnMissileAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 6), -12345);
+        P_SpawnMissileAngle(mo, MT_EGGFX, mo->angle - (ANG45 / 3), -12345);
+        P_SpawnMissileAngle(mo, MT_EGGFX, mo->angle + (ANG45 / 3), -12345);
+# endif
         break;
     case arti_teleport:
         P_ArtiTele(player);

@@ -1563,9 +1563,18 @@ boolean P_CheckMissileSpawn(mobj_t *missile)
 
     // move a little forward so an angle can be computed if it
     // immediately explodes
-    missile->pos[VX] += (missile->momx >> 1);
-    missile->pos[VY] += (missile->momy >> 1);
-    missile->pos[VZ] += (missile->momz >> 1);
+    if(missile->type == MT_BLASTERFX1)
+    {                           // Ultra-fast ripper spawning missile
+        missile->pos[VX] += (missile->momx >> 3);
+        missile->pos[VY] += (missile->momy >> 3);
+        missile->pos[VZ] += (missile->momz >> 3);
+    }
+    else
+    {
+        missile->pos[VX] += (missile->momx >> 1);
+        missile->pos[VY] += (missile->momy >> 1);
+        missile->pos[VZ] += (missile->momz >> 1);
+    }
     if(!P_TryMove(missile, missile->pos[VX], missile->pos[VY], false, false))
     {
         P_ExplodeMissile(missile);
@@ -1580,57 +1589,122 @@ boolean P_CheckMissileSpawn(mobj_t *missile)
  */
 mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 {
-    fixed_t z;
-    mobj_t *th;
-    angle_t an;
-    int     dist;
+    fixed_t     pos[3];
+    mobj_t     *th;
+    angle_t     an;
+    fixed_t     dist;
+    fixed_t     slope;
+    fixed_t     spawnZOff;
+    float       movfactor = 1;
 
-    switch (type)
+    memcpy(pos, source->pos, sizeof(pos));
+
+    // Type specific offset to spawn height z.
+    if(source->player)
     {
-    case MT_MNTRFX1:            // Minotaur swing attack missile
-        z = source->pos[VZ] + 40 * FRACUNIT;
-        break;
-    case MT_MNTRFX2:            // Minotaur floor fire missile
-        z = ONFLOORZ + source->floorclip;
-        break;
-    case MT_SRCRFX1:            // Sorcerer Demon fireball
-        z = source->pos[VZ] + 48 * FRACUNIT;
-        break;
-    case MT_KNIGHTAXE:          // Knight normal axe
-    case MT_REDAXE:         // Knight red power axe
-        z = source->pos[VZ] + 36 * FRACUNIT;
-        break;
-    default:
-        z = source->pos[VZ] + 32 * FRACUNIT;
-        break;
+        // Try to find a target
+        an = source->angle;
+        slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+        if(!cfg.noAutoAim)
+            if(!linetarget)
+            {
+                an += 1 << 26;
+                slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+                if(!linetarget)
+                {
+                    an -= 2 << 26;
+                    slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+                }
+
+                if(!linetarget)
+                {
+                    float   fangle = LOOKDIR2RAD(source->player->plr->lookdir);
+
+                    an = source->angle;
+                    slope = FRACUNIT * sin(fangle) / 1.2;
+                    movfactor = cos(fangle);
+                }
+            }
+
+        if(!(source->player->plr->flags & DDPF_CAMERA))
+            spawnZOff = (cfg.plrViewHeight - 9) * FRACUNIT +
+                   (((int) source->player->plr->lookdir) << FRACBITS) / 173;
+    }
+    else
+    {
+        switch(type)
+        {
+        case MT_MNTRFX1:        // Minotaur swing attack missile
+            spawnZOff = 40 * FRACUNIT;
+            break;
+
+        case MT_SRCRFX1:        // Sorcerer Demon fireball
+            spawnZOff = 48 * FRACUNIT;
+            break;
+
+        case MT_KNIGHTAXE:      // Knight normal axe
+        case MT_REDAXE:         // Knight red power axe
+            spawnZOff = 36 * FRACUNIT;
+            break;
+
+        default:
+            spawnZOff = 32 * FRACUNIT;
+            break;
+        }
     }
 
-    z -= source->floorclip;
-    th = P_SpawnMobj(source->pos[VX], source->pos[VY], z, type);
+    if(type == MT_MNTRFX2)      // always exactly on the floor.
+        pos[VZ] = ONFLOORZ;
+    else
+    {
+        pos[VZ] += spawnZOff;
+        pos[VZ] -= source->floorclip;
+    }
+
+    th = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type);
+
     if(th->info->seesound)
-    {
         S_StartSound(th->info->seesound, th);
+
+    if(!source->player)
+    {
+        an = R_PointToAngle2(pos[VX], pos[VY],
+                             dest->pos[VX], dest->pos[VY]);
+        // fuzzy player
+        if(dest->flags & MF_SHADOW)
+            an += (P_Random() - P_Random()) << 21; // note << 20 in jDoom
     }
 
-    th->target = source;        // Originator
-    an = R_PointToAngle2(source->pos[VX], source->pos[VY],
-                         dest->pos[VX], dest->pos[VY]);
-    if(dest->flags & MF_SHADOW)
-    {                           // Invisible target
-        an += (P_Random() - P_Random()) << 21;
-    }
-
+    th->target = source;        // where it came from
     th->angle = an;
     an >>= ANGLETOFINESHIFT;
     th->momx = FixedMul(th->info->speed, finecosine[an]);
     th->momy = FixedMul(th->info->speed, finesine[an]);
-    dist = P_ApproxDistance(dest->pos[VX] - source->pos[VX],
-                            dest->pos[VY] - source->pos[VY]);
-    dist = dist / th->info->speed;
-    if(dist < 1)
-        dist = 1;
 
-    th->momz = (dest->pos[VZ] - source->pos[VZ]) / dist;
+    if(source->player)
+    {
+        th->momx *= movfactor;
+        th->momy *= movfactor;
+
+        th->momz = FixedMul(th->info->speed, slope);
+    }
+    else
+    {
+        dist = P_ApproxDistance(dest->pos[VX] - pos[VX],
+                                dest->pos[VY] - pos[VY]);
+        dist = dist / th->info->speed;
+        if(dist < 1)
+            dist = 1;
+        th->momz = (dest->pos[VZ] - source->pos[VZ]) / dist;
+    }
+
+#if __JHERETIC__
+    // Set this global ptr as we need access to the mobj even if it
+    // explodes instantly in order to assign values to it.
+    // This is a bit of a kludge really...
+    MissileMobj = th;
+#endif
+
     return (P_CheckMissileSpawn(th) ? th : NULL);
 }
 
@@ -1641,164 +1715,101 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 mobj_t *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle,
                             fixed_t momz)
 {
-    fixed_t z;
-    mobj_t *mo;
-
-    switch (type)
-    {
-    case MT_MNTRFX1:            // Minotaur swing attack missile
-        z = source->pos[VZ] + 40 * FRACUNIT;
-        break;
-    case MT_MNTRFX2:            // Minotaur floor fire missile
-        z = ONFLOORZ + source->floorclip;
-        break;
-    case MT_SRCRFX1:            // Sorcerer Demon fireball
-        z = source->pos[VZ] + 48 * FRACUNIT;
-        break;
-    default:
-        z = source->pos[VZ] + 32 * FRACUNIT;
-        break;
-    }
-
-    z -= source->floorclip;
-    mo = P_SpawnMobj(source->pos[VX], source->pos[VY], z, type);
-    if(mo->info->seesound)
-        S_StartSound(mo->info->seesound, mo);
-
-    mo->target = source;        // Originator
-    mo->angle = angle;
-    angle >>= ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[angle]);
-    mo->momy = FixedMul(mo->info->speed, finesine[angle]);
-    mo->momz = momz;
-    return (P_CheckMissileSpawn(mo) ? mo : NULL);
-}
-
-/*
- * Tries to aim at a nearby monster
- */
-mobj_t *P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type)
-{
-    angle_t an;
-    fixed_t pos[3], slope;
-    float   fangle = LOOKDIR2RAD(source->player->plr->lookdir), movfactor = 1;
-    boolean dontAim =
-        cfg.noAutoAim /*&& !demorecording && !demoplayback && !IS_NETGAME */ ;
-
-    // Try to find a target
-    an = source->angle;
-    slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
-    if(!linetarget || dontAim)
-    {
-        an += 1 << 26;
-        slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
-        if(!linetarget)
-        {
-            an -= 2 << 26;
-            slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
-        }
-        if(!linetarget || dontAim)
-        {
-            an = source->angle;
-            /*if(demoplayback || demorecording)
-               slope = (((int)source->player->plr->lookdir)<<FRACBITS)/173;
-               else
-               { */
-            slope = FRACUNIT * sin(fangle) / 1.2;
-            movfactor = cos(fangle);
-            //  }
-        }
-    }
+    fixed_t     pos[3];
+    mobj_t     *th;
+    angle_t     an;
+    fixed_t     slope;
+    fixed_t     spawnZOff;
+    float       movfactor = 1;
 
     memcpy(pos, source->pos, sizeof(pos));
-    pos[VZ] += (cfg.plrViewHeight - 9) * FRACUNIT +
-               (((int) source->player->plr->lookdir) << FRACBITS) / 173;
 
-    pos[VZ] -= source->floorclip;
+    an = angle;
+    if(source->player)
+    {
+        // Try to find a target
+        slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+        if(!cfg.noAutoAim)
+            if(!linetarget)
+            {
+                an += 1 << 26;
+                slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+                if(!linetarget)
+                {
+                    an -= 2 << 26;
+                    slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
+                }
 
-    MissileMobj = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type);
+                if(!linetarget)
+                {
+                    float   fangle = LOOKDIR2RAD(source->player->plr->lookdir);
+                    an = angle;
 
-    if(MissileMobj->info->seesound)
-        S_StartSound(MissileMobj->info->seesound, MissileMobj);
+                    slope = FRACUNIT * sin(fangle) / 1.2;
+                    movfactor = cos(fangle);
+                }
+            }
 
-    MissileMobj->target = source;
-    MissileMobj->angle = an;
-    MissileMobj->momx =
-        movfactor * FixedMul(MissileMobj->info->speed,
-                             finecosine[an >> ANGLETOFINESHIFT]);
-    MissileMobj->momy =
-        movfactor * FixedMul(MissileMobj->info->speed,
-                             finesine[an >> ANGLETOFINESHIFT]);
-    MissileMobj->momz = FixedMul(MissileMobj->info->speed, slope);
-    if(MissileMobj->type == MT_BLASTERFX1)
-    {                           // Ultra-fast ripper spawning missile
-        MissileMobj->pos[VX] += (MissileMobj->momx >> 3);
-        MissileMobj->pos[VY] += (MissileMobj->momy >> 3);
-        MissileMobj->pos[VZ] += (MissileMobj->momz >> 3);
+        if(!(source->player->plr->flags & DDPF_CAMERA))
+            spawnZOff = (cfg.plrViewHeight - 9) * FRACUNIT +
+                        (((int) source->player->plr->lookdir) << FRACBITS) / 173;
     }
     else
-    {                           // Normal missile
-        MissileMobj->pos[VX] += (MissileMobj->momx >> 1);
-        MissileMobj->pos[VY] += (MissileMobj->momy >> 1);
-        MissileMobj->pos[VZ] += (MissileMobj->momz >> 1);
-    }
-
-    if(!P_TryMove(MissileMobj, MissileMobj->pos[VX], MissileMobj->pos[VY], false, false))
-    {                           // Exploded immediately
-        P_ExplodeMissile(MissileMobj);
-        return (NULL);
-    }
-    return (MissileMobj);
-}
-
-mobj_t *P_SPMAngle(mobj_t *source, mobjtype_t type, angle_t angle)
-{
-    mobj_t *th;
-    angle_t an;
-    fixed_t pos[3], slope;
-    float   fangle = LOOKDIR2RAD(source->player->plr->lookdir), movfactor = 1;
-    boolean dontAim = cfg.noAutoAim;
-
-    // see which target is to be aimed at
-    an = angle;
-    slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
-    if(!linetarget || dontAim)
     {
-        an += 1 << 26;
-        slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
-        if(!linetarget)
+        // Type specific offset to spawn height z.
+        switch(type)
         {
-            an -= 2 << 26;
-            slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
-        }
-        if(!linetarget || dontAim)
-        {
-            an = angle;
+        case MT_MNTRFX1:        // Minotaur swing attack missile
+            spawnZOff = 40 * FRACUNIT;
+            break;
 
-            slope = FRACUNIT * sin(fangle) / 1.2;
-            movfactor = cos(fangle);
+        case MT_SRCRFX1:        // Sorcerer Demon fireball
+            spawnZOff = 48 * FRACUNIT;
+            break;
+
+        case MT_KNIGHTAXE:      // Knight normal axe
+        case MT_REDAXE:         // Knight red power axe
+            spawnZOff = 36 * FRACUNIT;
+            break;
+
+        default:
+            spawnZOff = 32 * FRACUNIT;
+            break;
         }
     }
 
-    memcpy(pos, source->pos, sizeof(pos));
-    pos[VZ] += (cfg.plrViewHeight - 9) * FRACUNIT +
-               (((int) source->player->plr->lookdir) << FRACBITS) / 173;
-    pos[VZ] -= source->floorclip;
+    if(type == MT_MNTRFX2)      // always exactly on the floor.
+        pos[VZ] = ONFLOORZ;
+    else
+    {
+        pos[VZ] += spawnZOff;
+        pos[VZ] -= source->floorclip;
+    }
 
     th = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type);
 
     if(th->info->seesound)
         S_StartSound(th->info->seesound, th);
 
-    th->target = source;
+    th->target = source;        // where it came from
     th->angle = an;
-    th->momx =
-        movfactor * FixedMul(th->info->speed,
-                             finecosine[an >> ANGLETOFINESHIFT]);
-    th->momy =
-        movfactor * FixedMul(th->info->speed,
-                             finesine[an >> ANGLETOFINESHIFT]);
-    th->momz = FixedMul(th->info->speed, slope);
+    an >>= ANGLETOFINESHIFT;
+    th->momx = FixedMul(th->info->speed, finecosine[an]);
+    th->momy = FixedMul(th->info->speed, finesine[an]);
+
+    if(source->player)
+    {
+        // Correct the speed in 3D.
+        th->momx *= movfactor;
+        th->momy *= movfactor;
+
+        th->momz = FixedMul(th->info->speed, slope);
+    }
+    else
+    {
+        th->momz = momz;
+    }
+
     return (P_CheckMissileSpawn(th) ? th : NULL);
 }
 
