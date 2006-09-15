@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -1015,13 +1015,13 @@ void C_DECL A_SkelMissile(mobj_t *actor)
         return;
 
     A_FaceTarget(actor);
-    actor->pos[VZ] += 16 * FRACUNIT;  // so missile spawns higher
     mo = P_SpawnMissile(actor, actor->target, MT_TRACER);
-    actor->pos[VZ] -= 16 * FRACUNIT;  // back to normal
-
-    mo->pos[VX] += mo->momx;
-    mo->pos[VY] += mo->momy;
-    mo->tracer = actor->target;
+    if(mo)
+    {
+        mo->pos[VX] += mo->momx;
+        mo->pos[VY] += mo->momy;
+        mo->tracer = actor->target;
+    }
 }
 
 void C_DECL A_Tracer(mobj_t *actor)
@@ -1366,10 +1366,13 @@ void C_DECL A_FatAttack1(mobj_t *actor)
     P_SpawnMissile(actor, actor->target, MT_FATSHOT);
 
     mo = P_SpawnMissile(actor, actor->target, MT_FATSHOT);
-    mo->angle += FATSPREAD;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle += FATSPREAD;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 void C_DECL A_FatAttack2(mobj_t *actor)
@@ -1383,10 +1386,13 @@ void C_DECL A_FatAttack2(mobj_t *actor)
     P_SpawnMissile(actor, actor->target, MT_FATSHOT);
 
     mo = P_SpawnMissile(actor, actor->target, MT_FATSHOT);
-    mo->angle -= FATSPREAD * 2;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle -= FATSPREAD * 2;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 void C_DECL A_FatAttack3(mobj_t *actor)
@@ -1397,16 +1403,22 @@ void C_DECL A_FatAttack3(mobj_t *actor)
     A_FaceTarget(actor);
 
     mo = P_SpawnMissile(actor, actor->target, MT_FATSHOT);
-    mo->angle -= FATSPREAD / 2;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle -= FATSPREAD / 2;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 
     mo = P_SpawnMissile(actor, actor->target, MT_FATSHOT);
-    mo->angle += FATSPREAD / 2;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle += FATSPREAD / 2;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 /*
@@ -1982,9 +1994,12 @@ void C_DECL A_BrainSpit(mobj_t *mo)
 
     // spawn brain missile
     newmobj = P_SpawnMissile(mo, targ, MT_SPAWNSHOT);
-    newmobj->target = targ;
-    newmobj->reactiontime =
-        ((targ->pos[VY] - mo->pos[VY]) / newmobj->momy) / newmobj->state->tics;
+    if(newmobj)
+    {
+        newmobj->target = targ;
+        newmobj->reactiontime =
+            ((targ->pos[VY] - mo->pos[VY]) / newmobj->momy) / newmobj->state->tics;
+    }
 
     S_StartSound(sfx_bospit, NULL);
 }
@@ -2681,19 +2696,13 @@ void C_DECL A_DeathKnightAttack1(mobj_t *actor)
 
 void C_DECL A_DeathKnightAttack2(mobj_t *actor)
 {
-    mobj_t *mo;
-    mobj_t *mo2;
-
     if(!actor->target)
         return;
 
     A_FaceTarget(actor);
-    actor->pos[VX] += 16 * FRACUNIT;  // Right Missile A
     actor->pos[VZ] += 8 * FRACUNIT;   // Right Missile B
-    mo = P_SpawnMissile(actor, actor->target, MT_WROCKET);
-    actor->pos[VX] -= 32 * FRACUNIT;  // Left Missile
-    mo2 = P_SpawnMissile(actor, actor->target, MT_WROCKET);
-    actor->pos[VX] += 16 * FRACUNIT;  // back to original position
+    P_SpawnMissile(actor, actor->target, MT_WROCKET);
+    P_SpawnMissile(actor, actor->target, MT_WROCKET);
     actor->pos[VZ] -= 8 * FRACUNIT;   // back to original position
     P_NewChaseDir(actor);
 }
@@ -2728,16 +2737,22 @@ void C_DECL A_AngelAttack2(mobj_t *actor)
     P_SpawnMissile(actor, actor->target, MT_ANGMISSILE2);
 
     mo = P_SpawnMissile(actor, actor->target, MT_ANGMISSILE2);
-    mo->angle += FATSPREAD;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle += FATSPREAD;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 
     mo = P_SpawnMissile(actor, actor->target, MT_ANGMISSILE2);
-    mo->angle -= FATSPREAD;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle -= FATSPREAD;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 //
@@ -2820,13 +2835,17 @@ void C_DECL A_RobotAttack(mobj_t *actor)
         return;
 
     A_FaceTarget(actor);
+
     actor->pos[VZ] += 16 * FRACUNIT;  // so missile spawns higher
     mo = P_SpawnMissile(actor, actor->target, MT_ROBOTPROJECTILE);
     actor->pos[VZ] -= 16 * FRACUNIT;  // back to normal
 
-    mo->pos[VX] += mo->momx;
-    mo->pos[VY] += mo->momy;
-    mo->tracer = actor->target;
+    if(mo)
+    {
+        mo->pos[VX] += mo->momx;
+        mo->pos[VY] += mo->momy;
+        mo->tracer = actor->target;
+    }
 }
 
 //
@@ -2835,9 +2854,7 @@ void C_DECL A_RobotAttack(mobj_t *actor)
 
 void C_DECL A_DevilAttack1(mobj_t *actor)
 {
-    mobj_t *mo;
-
-    mo = P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_SPIRIT);
+    P_SpawnMobj(actor->pos[VX], actor->pos[VY], actor->pos[VZ], MT_SPIRIT);
 }
 
 //
@@ -2870,16 +2887,22 @@ void C_DECL A_DevilAttack3(mobj_t *actor)
     P_SpawnMissile(actor, actor->target, MT_DEVMISSILE2);
 
     mo = P_SpawnMissile(actor, actor->target, MT_DEVMISSILE2);
-    mo->angle += FATSPREAD;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle += FATSPREAD;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 
     mo = P_SpawnMissile(actor, actor->target, MT_DEVMISSILE2);
-    mo->angle -= FATSPREAD;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle -= FATSPREAD;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 //
@@ -2889,25 +2912,31 @@ void C_DECL A_DevilAttack3(mobj_t *actor)
 void C_DECL A_MBatAttack(mobj_t *actor)
 {
     mobj_t *mo;
-    mobj_t *mo2;
 
     if(!actor->target)
         return;
 
     A_FaceTarget(actor);
+
     actor->pos[VZ] -= 24 * FRACUNIT; // Since Bats start at ceiling height
-    actor->pos[VX] -= 10 * FRACUNIT; // Left Missile
     mo = P_SpawnMissile(actor, actor->target, MT_ROBOTPROJECTILE);
-    actor->pos[VX] += 20 * FRACUNIT; // Right Missile
-    mo2 = P_SpawnMissile(actor, actor->target, MT_ROBOTPROJECTILE);
-    actor->pos[VX] -= 10 * FRACUNIT; // Centre Bat
     actor->pos[VZ] += 24 * FRACUNIT; // Back to Normal
-    mo->pos[VX] += mo->momx;
-    mo->pos[VY] += mo->momy;
-    mo->tracer = actor->target;
-    mo2->pos[VX] += mo->momx;
-    mo2->pos[VY] += mo->momy;
-    mo2->tracer = actor->target;
+    if(mo)
+    {
+        mo->pos[VX] += mo->momx;
+        mo->pos[VY] += mo->momy;
+        mo->tracer = actor->target;
+    }
+
+    actor->pos[VZ] -= 24 * FRACUNIT; // Since Bats start at ceiling height
+    mo = P_SpawnMissile(actor, actor->target, MT_ROBOTPROJECTILE);
+    actor->pos[VZ] += 24 * FRACUNIT; // Back to Normal
+    if(mo)
+    {
+        mo->pos[VX] += mo->momx;
+        mo->pos[VY] += mo->momy;
+        mo->tracer = actor->target;
+    }
 }
 
 //
@@ -2948,36 +2977,47 @@ void C_DECL A_CatMissle2(mobj_t *actor)
 void C_DECL A_NemesisAttack(mobj_t *actor)
 {
     mobj_t *mo;
-    mobj_t *mo2;
-    mobj_t *mo3;
-    mobj_t *mo4;
 
     if(!actor->target)
         return;
 
     A_FaceTarget(actor);
+
     actor->pos[VZ] += 16 * FRACUNIT;  // top missile
     mo = P_SpawnMissile(actor, actor->target, MT_NEMESISMISSILE);
-    actor->pos[VZ] -= 32 * FRACUNIT;  // bottom missle
-    mo2 = P_SpawnMissile(actor, actor->target, MT_NEMESISMISSILE);
+    actor->pos[VZ] -= 16 * FRACUNIT;  // bottom missle
+    if(mo)
+    {
+        mo->pos[VX] += mo->momx;
+        mo->pos[VY] += mo->momy;
+        mo->tracer = actor->target;
+    }
+
+    actor->pos[VZ] -= 16 * FRACUNIT;  // top missile
+    mo = P_SpawnMissile(actor, actor->target, MT_NEMESISMISSILE);
     actor->pos[VZ] += 16 * FRACUNIT;  // right missile A
-    actor->pos[VX] += 16 * FRACUNIT;  // right missile B
-    mo3 = P_SpawnMissile(actor, actor->target, MT_NEMESISMISSILE);
-    actor->pos[VX] -= 32 * FRACUNIT;  // left missile
-    mo4 = P_SpawnMissile(actor, actor->target, MT_NEMESISMISSILE);
-    actor->pos[VX] += 16 * FRACUNIT;  // back to original position
-    mo->pos[VX] += mo->momx;
-    mo->pos[VY] += mo->momy;
-    mo->tracer = actor->target;
-    mo2->pos[VX] += mo->momx;
-    mo2->pos[VY] += mo->momy;
-    mo2->tracer = actor->target;
-    mo3->pos[VX] += mo->momx;
-    mo3->pos[VY] += mo->momy;
-    mo3->tracer = actor->target;
-    mo4->pos[VX] += mo->momx;
-    mo4->pos[VY] += mo->momy;
-    mo4->tracer = actor->target;
+    if(mo)
+    {
+        mo->pos[VX] += mo->momx;
+        mo->pos[VY] += mo->momy;
+        mo->tracer = actor->target;
+    }
+
+    mo = P_SpawnMissile(actor, actor->target, MT_NEMESISMISSILE);
+    if(mo)
+    {
+        mo->pos[VX] += mo->momx;
+        mo->pos[VY] += mo->momy;
+        mo->tracer = actor->target;
+    }
+
+    mo = P_SpawnMissile(actor, actor->target, MT_NEMESISMISSILE);
+    if(mo)
+    {
+        mo->pos[VX] += mo->momx;
+        mo->pos[VY] += mo->momy;
+        mo->tracer = actor->target;
+    }
 }
 
 void C_DECL A_Tracking(mobj_t *actor)
@@ -3067,32 +3107,40 @@ void C_DECL A_MadDocAttack(mobj_t *actor)
 
 void C_DECL A_BioBlasterAttack(mobj_t *actor)
 {
-    mobj_t *mo;
-    mobj_t *mo2;
-    mobj_t *mo3;
-    mobj_t *mo4;
-    mobj_t *mo5;
-    mobj_t *mo6;
-
     if(!actor->target)
         return;
 
     A_FaceTarget(actor);
+
+    // DJS - NOTE:
+    // Vermil, if you want to change X/Y spawn location of a projectile
+    // you must rotate the point about the center of the mobj and not
+    // just a linear X/Y adjustment. Otherwise, when the mobj rotates
+    // the spawn location will stay fixed as if it were facing EAST.
+
+    actor->pos[VZ] += 12 * FRACUNIT;  // top left missile
+    P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
+    actor->pos[VZ] -= 12 * FRACUNIT;
+
     actor->pos[VZ] += 12 * FRACUNIT;  // top right missile
-    actor->pos[VX] += 16 * FRACUNIT;  //
-    mo = P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
-    actor->pos[VX] -= 32 * FRACUNIT;  // top left missle
-    mo2 = P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
-    actor->pos[VZ] -= 8 * FRACUNIT;   // middle left missile
-    mo3 = P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
-    actor->pos[VX] += 32 * FRACUNIT;  // middle right missle
-    mo4 = P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
-    actor->pos[VZ] -= 8 * FRACUNIT;   // bottom right missile
-    mo5 = P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
-    actor->pos[VX] -= 32 * FRACUNIT;  // bottom left missle
-    mo6 = P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
-    actor->pos[VZ] += 4 * FRACUNIT;   // Original position
-    actor->pos[VX] += 16 * FRACUNIT;  //
+    P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
+    actor->pos[VZ] -= 12 * FRACUNIT;
+
+    actor->pos[VZ] += 4 * FRACUNIT;   // middle left missile
+    P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
+    actor->pos[VZ] -= 4 * FRACUNIT;
+
+    actor->pos[VZ] += 4 * FRACUNIT;   // middle right missile
+    P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
+    actor->pos[VZ] -= 4 * FRACUNIT;
+
+    actor->pos[VZ] -= 4 * FRACUNIT;   // bottom left missile
+    P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
+    actor->pos[VZ] += 4 * FRACUNIT;
+
+    actor->pos[VZ] -= 4 * FRACUNIT;   // bottom right missile
+    P_SpawnMissile(actor, actor->target, MT_BIOBLASTERPROJECTILE);
+    actor->pos[VZ] += 4 * FRACUNIT;
 }
 
 //
@@ -3142,10 +3190,13 @@ void C_DECL A_OmegaAttack1(mobj_t *actor)
     P_SpawnMissile(actor, actor->target, MT_DKMISSILE);
 
     mo = P_SpawnMissile(actor, actor->target, MT_DKMISSILE);
-    mo->angle += FATSPREAD;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle += FATSPREAD;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 void C_DECL A_OmegaAttack2(mobj_t *actor)
@@ -3159,10 +3210,13 @@ void C_DECL A_OmegaAttack2(mobj_t *actor)
     P_SpawnMissile(actor, actor->target, MT_DKMISSILE);
 
     mo = P_SpawnMissile(actor, actor->target, MT_DKMISSILE);
-    mo->angle -= FATSPREAD * 2;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle -= FATSPREAD * 2;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 void C_DECL A_OmegaAttack3(mobj_t *actor)
@@ -3172,16 +3226,22 @@ void C_DECL A_OmegaAttack3(mobj_t *actor)
 
     A_FaceTarget(actor);
     mo = P_SpawnMissile(actor, actor->target, MT_DKMISSILE);
-    mo->angle -= FATSPREAD / 2;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle -= FATSPREAD / 2;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 
     mo = P_SpawnMissile(actor, actor->target, MT_DKMISSILE);
-    mo->angle += FATSPREAD / 2;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    if(mo)
+    {
+        mo->angle += FATSPREAD / 2;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 //
@@ -3194,17 +3254,23 @@ void C_DECL A_DrakeAttack1(mobj_t *actor)
     int     an;
 
     A_FaceTarget(actor);
-    actor->pos[VZ] += 160 * FRACUNIT; // Up
     // Change direction  to ...
     actor->angle += FATSPREAD;
-    P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
 
-    mo = P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
-    mo->angle += FATSPREAD;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    actor->pos[VZ] += 160 * FRACUNIT; // Up
+    P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
     actor->pos[VZ] -= 160 * FRACUNIT; // back to original position
+
+    actor->pos[VZ] += 160 * FRACUNIT; // Up
+    mo = P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
+    actor->pos[VZ] -= 160 * FRACUNIT; // back to original position
+    if(mo)
+    {
+        mo->angle += FATSPREAD;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 void C_DECL A_DrakeAttack2(mobj_t *actor)
@@ -3213,17 +3279,24 @@ void C_DECL A_DrakeAttack2(mobj_t *actor)
     int     an;
 
     A_FaceTarget(actor);
-    actor->pos[VZ] += 160 * FRACUNIT; // Up
+
     // Now here choose opposite deviation.
     actor->angle -= FATSPREAD;
-    P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
 
-    mo = P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
-    mo->angle -= FATSPREAD * 2;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    actor->pos[VZ] += 160 * FRACUNIT; // Up
+    P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
     actor->pos[VZ] -= 160 * FRACUNIT; // back to original position
+
+    actor->pos[VZ] += 160 * FRACUNIT; // Up
+    mo = P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
+    actor->pos[VZ] -= 160 * FRACUNIT; // back to original position
+    if(mo)
+    {
+        mo->angle -= FATSPREAD * 2;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 void C_DECL A_DrakeAttack3(mobj_t *actor)
@@ -3232,19 +3305,28 @@ void C_DECL A_DrakeAttack3(mobj_t *actor)
     int     an;
 
     A_FaceTarget(actor);
+
     actor->pos[VZ] += 160 * FRACUNIT; // Up
     mo = P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
-    mo->angle -= FATSPREAD / 2;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    actor->pos[VZ] -= 160 * FRACUNIT; // back to original position
+    if(mo)
+    {
+        mo->angle -= FATSPREAD / 2;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
+
 
     mo = P_SpawnMissile(actor, actor->target, MT_DRAKEMISSILE);
-    mo->angle += FATSPREAD / 2;
-    an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul(mo->info->speed, finesine[an]);
     actor->pos[VZ] -= 160 * FRACUNIT; // back to original position
+    if(mo)
+    {
+        mo->angle += FATSPREAD / 2;
+        an = mo->angle >> ANGLETOFINESHIFT;
+        mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+        mo->momy = FixedMul(mo->info->speed, finesine[an]);
+    }
 }
 
 //
@@ -4562,9 +4644,12 @@ void C_DECL A_PacmanSwastika(mobj_t *mo)
 
     // spawn brain missile
     newmobj = P_SpawnMissile(mo, targ, MT_PACMANSWASTIKA);
-    newmobj->target = targ;
-    newmobj->reactiontime =
-        ((targ->pos[VY] - mo->pos[VY]) / newmobj->momy) / newmobj->state->tics;
+    if(newmobj)
+    {
+        newmobj->target = targ;
+        newmobj->reactiontime =
+            ((targ->pos[VY] - mo->pos[VY]) / newmobj->momy) / newmobj->state->tics;
+    }
 }
 
 void C_DECL A_PacmanBJHead(mobj_t *mo)
@@ -4583,9 +4668,12 @@ void C_DECL A_PacmanBJHead(mobj_t *mo)
 
     // spawn brain missile
     newmobj = P_SpawnMissile(mo, targ, MT_PACMANBJHEAD);
-    newmobj->target = targ;
-    newmobj->reactiontime =
-        ((targ->pos[VY] - mo->pos[VY]) / newmobj->momy) / newmobj->state->tics;
+    if(newmobj)
+    {
+        newmobj->target = targ;
+        newmobj->reactiontime =
+            ((targ->pos[VY] - mo->pos[VY]) / newmobj->momy) / newmobj->state->tics;
+    }
 }
 
 //
@@ -5082,18 +5170,13 @@ void C_DECL A_FireRedBlobMissile(mobj_t *actor)
 //
 void C_DECL A_MotherBlobAttack(mobj_t *actor)
 {
-    mobj_t *mo;
-    mobj_t *mo2;
-
     if(!actor->target)
         return;
 
     A_FaceTarget(actor);
-    actor->pos[VX] += 24 * FRACUNIT;  // Right Missile
-    mo = P_SpawnMissile(actor, actor->target, MT_REDBLOBMISSILE);
-    actor->pos[VX] -= 48 * FRACUNIT;  // Left Missile
-    mo2 = P_SpawnMissile(actor, actor->target, MT_REDBLOBMISSILE);
-    actor->pos[VX] += 24 * FRACUNIT;  // back to original position
+
+    P_SpawnMissile(actor, actor->target, MT_REDBLOBMISSILE);
+    P_SpawnMissile(actor, actor->target, MT_REDBLOBMISSILE);
 }
 
 //

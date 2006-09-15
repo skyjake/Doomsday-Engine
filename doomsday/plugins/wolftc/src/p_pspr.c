@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -478,7 +478,7 @@ void C_DECL A_FireMissile(player_t *player, pspdef_t * psp)
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
-    P_SpawnPlayerMissile(player->plr->mo, MT_ROCKET);
+    P_SpawnMissile(player->plr->mo, NULL, MT_ROCKET);
 }
 
 void C_DECL A_FireBFG(player_t *player, pspdef_t * psp)
@@ -487,7 +487,7 @@ void C_DECL A_FireBFG(player_t *player, pspdef_t * psp)
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
-    P_SpawnPlayerMissile(player->plr->mo, MT_BFG);
+    P_SpawnMissile(player->plr->mo, NULL, MT_BFG);
 }
 
 void C_DECL A_FirePlasma(player_t *player, pspdef_t * psp)
@@ -502,7 +502,7 @@ void C_DECL A_FirePlasma(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_PLASMA);
+    P_SpawnMissile(player->plr->mo, NULL, MT_PLASMA);
 }
 
 /*
@@ -1036,7 +1036,7 @@ void C_DECL A_FireUPistol(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_UPISTOLMISSILE);
+    P_SpawnMissile(player->plr->mo, NULL, MT_UPISTOLMISSILE);
 }
 
 //
@@ -1201,7 +1201,7 @@ void C_DECL A_FireUMachineGun(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_UMACHINEGUNMISSILE);
+    P_SpawnMissile(player->plr->mo, NULL, MT_UMACHINEGUNMISSILE);
 }
 
 //
@@ -1418,7 +1418,7 @@ void C_DECL A_FireUGattlingGun(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_UCHAINGUNMISSILE);
+    P_SpawnMissile(player->plr->mo, NULL, MT_UCHAINGUNMISSILE);
 }
 
 //
@@ -1571,7 +1571,7 @@ void C_DECL A_FireMSyringe(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_MULTIPLAYERSYRINGE);
+    P_SpawnMissile(player->plr->mo, NULL, MT_MULTIPLAYERSYRINGE);
 }
 
 //
@@ -1584,7 +1584,7 @@ void C_DECL A_FireWMissile(player_t *player, pspdef_t * psp)
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
-    P_SpawnPlayerMissile(player->plr->mo, MT_WROCKET);
+    P_SpawnMissile(player->plr->mo, NULL, MT_WROCKET);
 }
 
 //
@@ -1597,7 +1597,7 @@ void C_DECL A_FireLMissile(player_t *player, pspdef_t * psp)
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
-    P_SpawnPlayerMissile(player->plr->mo, MT_LROCKET);
+    P_SpawnMissile(player->plr->mo, NULL, MT_LROCKET);
 }
 
 //
@@ -1610,7 +1610,7 @@ void C_DECL A_FireCMissile(player_t *player, pspdef_t * psp)
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
-    P_SpawnPlayerMissile(player->plr->mo, MT_CROCKET);
+    P_SpawnMissile(player->plr->mo, NULL, MT_CROCKET);
 }
 
 //
@@ -1629,7 +1629,7 @@ void C_DECL A_FireFlame(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_FLAMETHROWERMISSILE);
+    P_SpawnMissile(player->plr->mo, NULL, MT_FLAMETHROWERMISSILE);
 }
 
 //
@@ -1648,7 +1648,7 @@ void C_DECL A_FireCFlame(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_CONSOLEFLAMETHROWERMISSILE);
+    P_SpawnMissile(player->plr->mo, NULL, MT_CONSOLEFLAMETHROWERMISSILE);
 }
 
 //
@@ -1667,7 +1667,7 @@ void C_DECL A_Fire3Flame(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_3D0FLAMETHROWERMISSILE);
+    P_SpawnMissile(player->plr->mo, NULL, MT_3D0FLAMETHROWERMISSILE);
 }
 
 //
@@ -1686,7 +1686,7 @@ void C_DECL A_FireCMissile1(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_CATAPMISSILE1);
+    P_SpawnMissile(player->plr->mo, NULL, MT_CATAPMISSILE1);
 }
 
 //
@@ -1705,7 +1705,7 @@ void C_DECL A_FireCMissile2(player_t *player, pspdef_t * psp)
     if(IS_CLIENT)
         return;
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_CATAPMISSILE2);
+    P_SpawnMissile(player->plr->mo, NULL, MT_CATAPMISSILE2);
 }
 
 //
@@ -1718,7 +1718,7 @@ void C_DECL A_FireCMissile2NA(player_t *player, pspdef_t * psp)
                  weaponinfo[player->readyweapon][player->class].mode[0].flashstate +
                  (P_Random() & 1));
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_CATAPMISSILE2);
+    P_SpawnMissile(player->plr->mo, NULL, MT_CATAPMISSILE2);
 }
 
 
@@ -1732,7 +1732,7 @@ void C_DECL A_FireCMissile3(player_t *player, pspdef_t * psp)
                  weaponinfo[player->readyweapon][player->class].mode[0].flashstate +
                  (P_Random() & 1));
 
-    P_SpawnPlayerMissile(player->plr->mo, MT_CATAPMISSILE2);
+    P_SpawnMissile(player->plr->mo, NULL, MT_CATAPMISSILE2);
 }
 
 //
