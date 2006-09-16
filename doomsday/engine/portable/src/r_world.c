@@ -1917,16 +1917,14 @@ void R_InitLineNeighbors(void)
             for(k = 0; k < 2; ++k)
             {
                 line = LINE_PTR(i);
-                side = SIDE_PTR(line->sidenum[k])->info;
-                if(side->alignneighbor[0] || side->alignneighbor[1])
-                    Con_Printf("Line %i/%i: l=%i r=%i\n", i, k,
-                               side->alignneighbor[0] ? GET_LINE_IDX(side->
-                                                                     alignneighbor
-                                                                     [0]) : -1,
-                               side->alignneighbor[1] ? GET_LINE_IDX(side->
-                                                                     alignneighbor
-                                                                     [1]) :
-                               -1);
+                if(line->sidenum[k] >= 0)
+                {
+                    side = SIDE_PTR(line->sidenum[k])->info;
+                    if(side->alignneighbor[0] || side->alignneighbor[1])
+                        Con_Printf("Line %i/%i: l=%i r=%i\n", i, k,
+                                   side->alignneighbor[0] ? GET_LINE_IDX(side->alignneighbor[0]) : -1,
+                                   side->alignneighbor[1] ? GET_LINE_IDX(side->alignneighbor[1]) : -1);
+                }
             }
         }
     }
