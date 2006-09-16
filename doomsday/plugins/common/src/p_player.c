@@ -504,10 +504,6 @@ void P_PlayerThinkCamera(player_t *player)
     if(!(player->plr->flags & DDPF_CAMERA))
     {
         player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE);
-        player->cheats &= ~CF_GODMODE;
-
-        if(cfg.cameraNoClip)
-            player->cheats &= ~CF_NOCLIP;
         return;
     }
 
@@ -581,6 +577,13 @@ DEFCC(CCmdSetCamera)
         // Is now a camera.
         if(player->plr->mo)
             player->plr->mo->pos[VZ] += player->plr->viewheight;
+    }
+    else
+    {
+        player->cheats &= ~CF_GODMODE;
+
+        if(cfg.cameraNoClip)
+            player->cheats &= ~CF_NOCLIP;
     }
     return true;
 }
