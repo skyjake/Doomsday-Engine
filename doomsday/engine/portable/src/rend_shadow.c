@@ -198,6 +198,7 @@ void Rend_RenderShadows(void)
 
         for(mo = sec->thinglist; mo; mo = mo->snext)
         {
+            if(!mo->state) continue;
             // Should this mobj have a shadow?
             if((mo->state->flags & STF_FULLBRIGHT) || (mo->ddflags & DDMF_DONTDRAW) ||
                (mo->ddflags & DDMF_ALWAYSLIT))
