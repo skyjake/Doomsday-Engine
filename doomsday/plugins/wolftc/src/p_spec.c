@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -77,7 +77,7 @@ extern boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(int linenum, int side, mobj_t *thing);
+static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing);
 static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -483,7 +483,7 @@ boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
     switch(actType)
     {
     case SPAC_CROSS:
-        P_CrossSpecialLine(P_ToIndex(ld), side, mo);
+        P_CrossSpecialLine(ld, side, mo);
         return true;
 
     case SPAC_USE:
@@ -505,9 +505,8 @@ boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with
  * a non 0 special.
  */
-void P_CrossSpecialLine(int linenum, int side, mobj_t *thing)
+void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
 {
-    line_t *line = P_ToPtr(DMU_LINE, linenum);
     int     ok;
 
     // Extended functionality overrides old.
