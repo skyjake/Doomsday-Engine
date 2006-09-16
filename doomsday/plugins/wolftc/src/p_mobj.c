@@ -1325,43 +1325,18 @@ boolean P_CheckMissileSpawn(mobj_t *th)
  */
 mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 {
-    fixed_t pos[3];
-    mobj_t *th;
-    angle_t an;
-    fixed_t dist;
-    fixed_t slope;
-    fixed_t spawnZOff;
+    fixed_t     pos[3];
+    mobj_t     *th;
+    angle_t     an;
+    fixed_t     dist;
+    fixed_t     slope;
+    fixed_t     spawnZOff = 0;
 
     memcpy(pos, source->pos, sizeof(pos));
-    // Type specific offset to spawn height z.
-    switch(type)
-    {
-    case MT_TRACER:            // Revenant Tracer Missile.
-        spawnZOff = 16 + 32 * FRACUNIT;
-        break;
-
-    default:
-        spawnZOff = 32 * FRACUNIT;
-        break;
-    }
 
     if(source->player)
     {
-        if(!(source->player->plr->flags & DDPF_CAMERA))
-            pos[VZ] += spawnZOff; // what about view height?
-    }
-    else
-        pos[VZ] += spawnZOff;
-    pos[VZ] -= source->floorclip;
-
-    th = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type);
-
-    if(th->info->seesound)
-        S_StartSound(th->info->seesound, th);
-
-    // see which target is to be aimed at
-    if(source->player)
-    {
+        // see which target is to be aimed at
         an = source->angle;
         slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
         if(!cfg.noAutoAim)
@@ -1379,8 +1354,35 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
                 if(!linetarget)
                     an = source->angle;
             }
+
+        if(!(source->player->plr->flags & DDPF_CAMERA))
+            spawnZOff = (cfg.plrViewHeight - 9) * FRACUNIT +
+                        (((int) source->player->plr->lookdir) << FRACBITS) / 173;
     }
     else
+    {
+        // Type specific offset to spawn height z.
+        switch(type)
+        {
+        case MT_TRACER:            // Revenant Tracer Missile.
+            spawnZOff = 16 + 32 * FRACUNIT;
+            break;
+
+        default:
+            spawnZOff = 32 * FRACUNIT;
+            break;
+        }
+    }
+
+    pos[VZ] += spawnZOff;
+    pos[VZ] -= source->floorclip;
+
+    th = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type);
+
+    if(th->info->seesound)
+        S_StartSound(th->info->seesound, th);
+
+    if(!source->player)
     {
         an = R_PointToAngle2(pos[VX], pos[VY],
                              dest->pos[VX], dest->pos[VY]);
