@@ -260,7 +260,7 @@ void Cl_Frame2Received(int packetType)
 
 #ifdef _DEBUG
         deltaCount = Msg_ReadLong();
-        Con_Message("Set contains %i deltas.\n", deltaCount);
+        VERBOSE2( Con_Message("Set contains %i deltas.\n", deltaCount) );
 #endif
         
 		// Read and process the message.
