@@ -56,7 +56,7 @@
  ./../../engine/portable/src/r_draw.c
  ./../../engine/portable/src/r_data.c
  ./../../engine/portable/src/r_lgrid.c
- ./../../engine/portable/src/p_tick.c
+ ./../../engine/portable/src/p_ticker.c
  ./../../engine/portable/src/p_think.c
  ./../../engine/portable/src/p_sight.c
  ./../../engine/portable/src/p_polyob.c
