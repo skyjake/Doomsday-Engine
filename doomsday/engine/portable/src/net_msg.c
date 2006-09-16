@@ -70,12 +70,17 @@ void Msg_WriteShort(short w)
     netBuffer.cursor += 2;
 }
 
-/*
+/**
  * Only 15 bits can be used for the number because the high bit of the
  * lower byte is used to determine whether the upper byte follows or not.
  */
 void Msg_WritePackedShort(short w)
 {
+    if(w < 0)
+    {
+        Con_Error("Msg_WritePackedShort: Cannot write %i.\n", w);
+    }
+    
     if(w < 0x80)                // Can the number be represented with 7 bits?
         Msg_WriteByte(w);
     else
@@ -136,7 +141,7 @@ short Msg_ReadShort(void)
  */
 short Msg_ReadPackedShort(void)
 {
-    short   pack = *netBuffer.cursor++;
+    ushort  pack = *netBuffer.cursor++;
 
     if(pack & 0x80)
     {
