@@ -409,7 +409,7 @@
 		B0F17858087C5A230051F24A /* p_polyob.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC45906B3FA91005824AD /* p_polyob.h */; };
 		B0F17859087C5A230051F24A /* p_sight.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC45A06B3FA91005824AD /* p_sight.h */; };
 		B0F1785A087C5A230051F24A /* p_think.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC45B06B3FA91005824AD /* p_think.h */; };
-		B0F1785B087C5A230051F24A /* p_tick.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC45C06B3FA91005824AD /* p_tick.h */; };
+		B0F1785B087C5A230051F24A /* p_ticker.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC45C06B3FA91005824AD /* p_ticker.h */; };
 		B0F1785C087C5A230051F24A /* png.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC45D06B3FA91005824AD /* png.h */; };
 		B0F1785D087C5A230051F24A /* pngconf.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC45E06B3FA91005824AD /* pngconf.h */; };
 		B0F1785E087C5A230051F24A /* r_data.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC45F06B3FA91005824AD /* r_data.h */; };
@@ -532,7 +532,7 @@
 		B0F178DD087C5A230051F24A /* p_polyob.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC88606B41788005824AD /* p_polyob.c */; };
 		B0F178DE087C5A230051F24A /* p_sight.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC88706B41788005824AD /* p_sight.c */; };
 		B0F178DF087C5A230051F24A /* p_think.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC88806B41788005824AD /* p_think.c */; };
-		B0F178E0087C5A230051F24A /* p_tick.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC88906B41788005824AD /* p_tick.c */; };
+		B0F178E0087C5A230051F24A /* p_ticker.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC88906B41788005824AD /* p_ticker.c */; };
 		B0F178E1087C5A230051F24A /* r_data.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC88A06B41788005824AD /* r_data.c */; };
 		B0F178E2087C5A230051F24A /* r_draw.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC88B06B41788005824AD /* r_draw.c */; };
 		B0F178E3087C5A230051F24A /* r_extres.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC88C06B41788005824AD /* r_extres.c */; };
@@ -939,7 +939,7 @@
 		B02AC45906B3FA91005824AD /* p_polyob.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_polyob.h; path = ../../engine/portable/include/p_polyob.h; sourceTree = SOURCE_ROOT; };
 		B02AC45A06B3FA91005824AD /* p_sight.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_sight.h; path = ../../engine/portable/include/p_sight.h; sourceTree = SOURCE_ROOT; };
 		B02AC45B06B3FA91005824AD /* p_think.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_think.h; path = ../../engine/portable/include/p_think.h; sourceTree = SOURCE_ROOT; };
-		B02AC45C06B3FA91005824AD /* p_tick.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_tick.h; path = ../../engine/portable/include/p_tick.h; sourceTree = SOURCE_ROOT; };
+		B02AC45C06B3FA91005824AD /* p_ticker.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_ticker.h; path = ../../engine/portable/include/p_ticker.h; sourceTree = SOURCE_ROOT; };
 		B02AC45D06B3FA91005824AD /* png.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = png.h; path = ../../external/libpng/portable/include/png.h; sourceTree = SOURCE_ROOT; };
 		B02AC45E06B3FA91005824AD /* pngconf.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = pngconf.h; path = ../../external/libpng/portable/include/pngconf.h; sourceTree = SOURCE_ROOT; };
 		B02AC45F06B3FA91005824AD /* r_data.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = r_data.h; path = ../../engine/portable/include/r_data.h; sourceTree = SOURCE_ROOT; };
@@ -1056,7 +1056,7 @@
 		B02AC88606B41788005824AD /* p_polyob.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = p_polyob.c; path = ../../engine/portable/src/p_polyob.c; sourceTree = SOURCE_ROOT; };
 		B02AC88706B41788005824AD /* p_sight.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = p_sight.c; path = ../../engine/portable/src/p_sight.c; sourceTree = SOURCE_ROOT; };
 		B02AC88806B41788005824AD /* p_think.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = p_think.c; path = ../../engine/portable/src/p_think.c; sourceTree = SOURCE_ROOT; };
-		B02AC88906B41788005824AD /* p_tick.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = p_tick.c; path = ../../engine/portable/src/p_tick.c; sourceTree = SOURCE_ROOT; };
+		B02AC88906B41788005824AD /* p_ticker.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = p_ticker.c; path = ../../engine/portable/src/p_ticker.c; sourceTree = SOURCE_ROOT; };
 		B02AC88A06B41788005824AD /* r_data.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = r_data.c; path = ../../engine/portable/src/r_data.c; sourceTree = SOURCE_ROOT; };
 		B02AC88B06B41788005824AD /* r_draw.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = r_draw.c; path = ../../engine/portable/src/r_draw.c; sourceTree = SOURCE_ROOT; };
 		B02AC88C06B41788005824AD /* r_extres.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = r_extres.c; path = ../../engine/portable/src/r_extres.c; sourceTree = SOURCE_ROOT; };
@@ -1156,6 +1156,8 @@
 		B0A8094D06F1F45D007AEB2E /* Readme.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Readme.rtf; sourceTree = "<group>"; };
 		B0A904F80A452FAA00DD2583 /* cl_oldworld.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_oldworld.c; path = ../../engine/portable/src/cl_oldworld.c; sourceTree = SOURCE_ROOT; };
 		B0A905540A45357D00DD2583 /* cl_oldframe.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cl_oldframe.c; path = ../../engine/portable/src/cl_oldframe.c; sourceTree = SOURCE_ROOT; };
+		B0A9757A0ABC322500788090 /* p_map.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_map.h; path = ../../plugins/common/include/p_map.h; sourceTree = SOURCE_ROOT; };
+		B0A9757B0ABC322500788090 /* p_tick.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = p_tick.h; path = ../../plugins/common/include/p_tick.h; sourceTree = SOURCE_ROOT; };
 		B0AC1EF60A8F11800095D788 /* p_map.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = p_map.c; path = ../../plugins/common/src/p_map.c; sourceTree = SOURCE_ROOT; };
 		B0AC1EFB0A8F11EA0095D788 /* g_controls.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = g_controls.h; path = ../../plugins/common/include/g_controls.h; sourceTree = SOURCE_ROOT; };
 		B0AC1EFC0A8F11EA0095D788 /* m_argv.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = m_argv.h; path = ../../plugins/common/include/m_argv.h; sourceTree = SOURCE_ROOT; };
@@ -1532,7 +1534,7 @@
 				B02AC88606B41788005824AD /* p_polyob.c */,
 				B02AC88706B41788005824AD /* p_sight.c */,
 				B02AC88806B41788005824AD /* p_think.c */,
-				B02AC88906B41788005824AD /* p_tick.c */,
+				B02AC88906B41788005824AD /* p_ticker.c */,
 				B02AC88A06B41788005824AD /* r_data.c */,
 				B02AC88B06B41788005824AD /* r_draw.c */,
 				B02AC88C06B41788005824AD /* r_extres.c */,
@@ -1640,6 +1642,8 @@
 		B018334307E6078E00217C5A /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B0A9757A0ABC322500788090 /* p_map.h */,
+				B0A9757B0ABC322500788090 /* p_tick.h */,
 				B0AC1EFB0A8F11EA0095D788 /* g_controls.h */,
 				B0AC1EFC0A8F11EA0095D788 /* m_argv.h */,
 				B0AC1EFD0A8F11EA0095D788 /* p_inventory.h */,
@@ -1910,7 +1914,7 @@
 				B02AC45906B3FA91005824AD /* p_polyob.h */,
 				B02AC45A06B3FA91005824AD /* p_sight.h */,
 				B02AC45B06B3FA91005824AD /* p_think.h */,
-				B02AC45C06B3FA91005824AD /* p_tick.h */,
+				B02AC45C06B3FA91005824AD /* p_ticker.h */,
 				B02AC45D06B3FA91005824AD /* png.h */,
 				B02AC45E06B3FA91005824AD /* pngconf.h */,
 				B02AC45F06B3FA91005824AD /* r_data.h */,
@@ -2291,7 +2295,7 @@
 				B0F17858087C5A230051F24A /* p_polyob.h in Headers */,
 				B0F17859087C5A230051F24A /* p_sight.h in Headers */,
 				B0F1785A087C5A230051F24A /* p_think.h in Headers */,
-				B0F1785B087C5A230051F24A /* p_tick.h in Headers */,
+				B0F1785B087C5A230051F24A /* p_ticker.h in Headers */,
 				B0F1785C087C5A230051F24A /* png.h in Headers */,
 				B0F1785D087C5A230051F24A /* pngconf.h in Headers */,
 				B0F1785E087C5A230051F24A /* r_data.h in Headers */,
@@ -3005,7 +3009,7 @@
 				B0F178DD087C5A230051F24A /* p_polyob.c in Sources */,
 				B0F178DE087C5A230051F24A /* p_sight.c in Sources */,
 				B0F178DF087C5A230051F24A /* p_think.c in Sources */,
-				B0F178E0087C5A230051F24A /* p_tick.c in Sources */,
+				B0F178E0087C5A230051F24A /* p_ticker.c in Sources */,
 				B0F178E1087C5A230051F24A /* r_data.c in Sources */,
 				B0F178E2087C5A230051F24A /* r_draw.c in Sources */,
 				B0F178E3087C5A230051F24A /* r_extres.c in Sources */,
@@ -3429,7 +3433,6 @@
 				SECTORDER_FLAGS = "";
 				USER_HEADER_SEARCH_PATHS = "";
 				WARNING_CFLAGS = (
-					"-Wmost",
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
 				);
@@ -3765,7 +3768,6 @@
 				PRODUCT_NAME = jHeretic;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = (
-					"-Wmost",
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
 				);
@@ -3850,6 +3852,7 @@
 		B01078310856208A000BF0D8 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_WARN_ABOUT_POINTER_SIGNEDNESS = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.3;
 				SDKROOT = /Developer/SDKs/MacOSX10.3.9.sdk;
 			};
@@ -3981,7 +3984,6 @@
 				PRODUCT_NAME = jHexen;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = (
-					"-Wmost",
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
 				);
@@ -4110,7 +4112,6 @@
 				PRODUCT_NAME = Doomsday;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = (
-					"-Wmost",
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
 				);

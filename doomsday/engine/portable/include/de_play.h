@@ -35,6 +35,6 @@
 #include "p_particle.h"
 #include "p_polyob.h"
 #include "p_sight.h"
-#include "p_tick.h"
+#include "p_ticker.h"
 
 #endif

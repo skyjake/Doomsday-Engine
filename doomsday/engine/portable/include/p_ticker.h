@@ -16,11 +16,11 @@
  */
 
 /*
- * p_tick.h: Timed Playsim Events
+ * p_ticker.h: Timed Playsim Events
  */
 
-#ifndef __DOOMSDAY_PLAY_TICK_H__
-#define __DOOMSDAY_PLAY_TICK_H__
+#ifndef __DOOMSDAY_PLAY_TICKER_H__
+#define __DOOMSDAY_PLAY_TICKER_H__
 
 void            P_Ticker(timespan_t time);
 

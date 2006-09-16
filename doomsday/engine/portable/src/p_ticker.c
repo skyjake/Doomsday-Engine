@@ -16,7 +16,7 @@
  */
 
 /*
- * p_tick.c: Timed Playsim Events
+ * p_ticker.c: Timed Playsim Events
  */
 
 // HEADER FILES ------------------------------------------------------------
