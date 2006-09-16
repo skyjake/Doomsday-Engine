@@ -1909,7 +1909,7 @@ void R_InitLineNeighbors(void)
         }
     }
 
-#ifdef _DEBUG
+#if _DEBUG
     if(verbose >= 1)
     {
         for(i = 0; i < numlines; ++i)
@@ -1917,7 +1917,7 @@ void R_InitLineNeighbors(void)
             for(k = 0; k < 2; ++k)
             {
                 line = LINE_PTR(i);
-                side = LINE_INFO(line)->side + k;
+                side = SIDE_PTR(line->sidenum[k])->info;
                 if(side->alignneighbor[0] || side->alignneighbor[1])
                     Con_Printf("Line %i/%i: l=%i r=%i\n", i, k,
                                side->alignneighbor[0] ? GET_LINE_IDX(side->
