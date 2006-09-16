@@ -1583,9 +1583,14 @@ boolean P_CheckMissileSpawn(mobj_t *missile)
     return (true);
 }
 
-/*
- * Returns NULL if the missile exploded immediately, otherwise returns
- * a mobj_t pointer to the missile.
+/**
+ * Tries to aim at a nearby monster if <code>source</code> is a player.
+ * Else aim is taken at <code>dest</code>.
+ * @param   source      The mobj doing the shooting.
+ * @param   dest        The mobj being shot at. Can be <code>NULL</code>
+ *                      if <code>source</code> is a player.
+ * @param   type        The type of mobj to be shot.
+ * @return              Pointer to the newly spawned missile.
  */
 mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 {
@@ -1594,15 +1599,13 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
     angle_t     an;
     fixed_t     dist;
     fixed_t     slope;
-    fixed_t     spawnZOff;
-    float       movfactor = 1;
+    fixed_t     spawnZOff = 0;
 
     memcpy(pos, source->pos, sizeof(pos));
 
-    // Type specific offset to spawn height z.
     if(source->player)
     {
-        // Try to find a target
+        // see which target is to be aimed at
         an = source->angle;
         slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT);
         if(!cfg.noAutoAim)
@@ -1617,13 +1620,7 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
                 }
 
                 if(!linetarget)
-                {
-                    float   fangle = LOOKDIR2RAD(source->player->plr->lookdir);
-
                     an = source->angle;
-                    slope = FRACUNIT * sin(fangle) / 1.2;
-                    movfactor = cos(fangle);
-                }
             }
 
         if(!(source->player->plr->flags & DDPF_CAMERA))
@@ -1632,6 +1629,7 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
     }
     else
     {
+        // Type specific offset to spawn height z.
         switch(type)
         {
         case MT_MNTRFX1:        // Minotaur swing attack missile
@@ -1683,9 +1681,6 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 
     if(source->player)
     {
-        th->momx *= movfactor;
-        th->momy *= movfactor;
-
         th->momz = FixedMul(th->info->speed, slope);
     }
     else
@@ -1698,6 +1693,15 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
         th->momz = (dest->pos[VZ] - source->pos[VZ]) / dist;
     }
 
+    // Make sure the speed is right (in 3D).
+    dist = P_ApproxDistance(P_ApproxDistance(th->momx, th->momy), th->momz);
+    if(!dist)
+        dist = 1;
+    dist = FixedDiv(th->info->speed, dist);
+    th->momx = FixedMul(th->momx, dist);
+    th->momy = FixedMul(th->momy, dist);
+    th->momz = FixedMul(th->momz, dist);
+
 #if __JHERETIC__
     // Set this global ptr as we need access to the mobj even if it
     // explodes instantly in order to assign values to it.
@@ -1708,9 +1712,15 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
     return (P_CheckMissileSpawn(th) ? th : NULL);
 }
 
-/*
- * Returns NULL if the missile exploded immediately, otherwise returns
- * a mobj_t pointer to the missile.
+/**
+ * Tries to aim at a nearby monster if <code>source</code> is a player.
+ * Else aim is the angle of the source mobj. Z angle is specified with
+ * <code>momz</code>
+ * @param   source      The mobj doing the shooting.
+ * @param   type        The type of mobj to be shot.
+ * @param   angle       The X/Y angle to shoot the missile in.
+ * @param   momz        The Z momentum of the missile to be spawned.
+ * @return              Pointer to the newly spawned missile.
  */
 mobj_t *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle,
                             fixed_t momz)
@@ -1718,9 +1728,9 @@ mobj_t *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle,
     fixed_t     pos[3];
     mobj_t     *th;
     angle_t     an;
+    fixed_t     dist;
     fixed_t     slope;
-    fixed_t     spawnZOff;
-    float       movfactor = 1;
+    fixed_t     spawnZOff = 0;
 
     memcpy(pos, source->pos, sizeof(pos));
 
@@ -1741,13 +1751,7 @@ mobj_t *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle,
                 }
 
                 if(!linetarget)
-                {
-                    float   fangle = LOOKDIR2RAD(source->player->plr->lookdir);
                     an = angle;
-
-                    slope = FRACUNIT * sin(fangle) / 1.2;
-                    movfactor = cos(fangle);
-                }
             }
 
         if(!(source->player->plr->flags & DDPF_CAMERA))
@@ -1797,18 +1801,30 @@ mobj_t *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle,
     th->momx = FixedMul(th->info->speed, finecosine[an]);
     th->momy = FixedMul(th->info->speed, finesine[an]);
 
-    if(source->player)
+    if(source->player && momz == -12345)
     {
-        // Correct the speed in 3D.
-        th->momx *= movfactor;
-        th->momy *= movfactor;
-
         th->momz = FixedMul(th->info->speed, slope);
+
+        // Make sure the speed is right (in 3D).
+        dist = P_ApproxDistance(P_ApproxDistance(th->momx, th->momy), th->momz);
+        if(!dist)
+            dist = 1;
+        dist = FixedDiv(th->info->speed, dist);
+        th->momx = FixedMul(th->momx, dist);
+        th->momy = FixedMul(th->momy, dist);
+        th->momz = FixedMul(th->momz, dist);
     }
     else
     {
         th->momz = momz;
     }
+
+#if __JHERETIC__
+    // Set this global ptr as we need access to the mobj even if it
+    // explodes instantly in order to assign values to it.
+    // This is a bit of a kludge really...
+    MissileMobj = th;
+#endif
 
     return (P_CheckMissileSpawn(th) ? th : NULL);
 }

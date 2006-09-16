@@ -1150,23 +1150,24 @@ void P_BulletSlope(mobj_t *mo)
     // see which target is to be aimed at
     an = mo->angle;
     bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
-    if(!linetarget || dontAim)
-    {
-        an += 1 << 26;
-        bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
+    if(!cfg.noAutoAim)
         if(!linetarget)
         {
-            an -= 2 << 26;
+            an += 1 << 26;
             bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
-        }
-        if(!linetarget || dontAim)
-        {
-            an += 2 << 26;
+            if(!linetarget)
+            {
+                an -= 2 << 26;
+                bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
+            }
 
-            bulletslope =
-                FRACUNIT * (tan(LOOKDIR2RAD(mo->dplayer->lookdir)) / 1.2);
+            if(!linetarget)
+            {
+                an += 2 << 26;
+                bulletslope =
+                    FRACUNIT * (tan(LOOKDIR2RAD(mo->dplayer->lookdir)) / 1.2);
+            }
         }
-    }
 }
 
 void C_DECL A_BeakAttackPL1(player_t *player, pspdef_t * psp)
