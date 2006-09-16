@@ -441,17 +441,38 @@ void Sv_RegisterPlayer(dt_player_t * reg, int number)
     memcpy(reg->psp, p->psprites, sizeof(ddpsprite_t) * 2);
 }
 
-/*
+/**
  * Store the state of the sector into the register-sector.
  * Called at register init and after each delta generation.
+ *
+ * @param   reg     The sector register to be initialized.
+ * @param   number  The world sector number to be registered.
  */
 void Sv_RegisterSector(dt_sector_t * reg, int number)
 {
-    sector_t *sec = SECTOR_PTR(number);
+    int         i;
+    sector_t   *sec = SECTOR_PTR(number);
 
     reg->lightlevel = sec->lightlevel;
     memcpy(reg->rgb, sec->rgb, 3);
-    memcpy(reg->planes, sec->planes, sizeof(sec->planes));
+    for(i = 0; i < 2; ++i) // number of planes in sector.
+    {
+        // Plane properties
+        reg->planes[i].height = sec->planes[i]->height;
+        reg->planes[i].target = sec->planes[i]->target;
+        reg->planes[i].speed = sec->planes[i]->speed;
+        reg->planes[i].glow = sec->planes[i]->glow;
+        memcpy(reg->planes[i].glowrgb, sec->planes[i]->glowrgb,
+               sizeof(reg->planes[i].glowrgb));
+
+        // Surface properties
+        reg->planes[i].surface.texture = sec->planes[i]->surface.texture;
+        reg->planes[i].surface.isflat = sec->planes[i]->surface.isflat;
+        memcpy(reg->planes[i].surface.rgba, sec->planes[i]->surface.rgba,
+               sizeof(reg->planes[i].surface.rgba));
+        reg->planes[i].surface.texmove[0] = sec->planes[i]->surface.texmove[0];
+        reg->planes[i].surface.texmove[1] = sec->planes[i]->surface.texmove[1];
+    }
 }
 
 /*
