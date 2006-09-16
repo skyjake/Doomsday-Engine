@@ -448,76 +448,101 @@ void H2_EndFrame(void)
     /*  S_UpdateSounds(players[displayplayer].plr->mo); */
 }
 
-/*
-   //==========================================================================
-   //
-   // H2_PageTicker
-   //
-   //==========================================================================
-
-   void H2_PageTicker(void)
-   {
-   if(--pagetic < 0)
-   {
-   H2_AdvanceDemo();
-   }
-   }
-
-   //==========================================================================
-   //
-   // H2_DoAdvanceDemo
-   //
-   //==========================================================================
-
-   void H2_DoAdvanceDemo(void)
-   {
-   players[consoleplayer].playerstate = PST_LIVE; // don't reborn
-   advancedemo = false;
-   usergame = false; // can't save/end game here
-   paused = false;
-   gameaction = ga_nothing;
-   demosequence = (demosequence+1)%7;
-   switch(demosequence)
-   {
-   case 0:
-   pagetic = 280;
-   gamestate = GS_DEMOSCREEN;
-   pagename = "TITLE";
-   S_StartMusic("hexen", true);
-   break;
-   case 1:
-   pagetic = 210;
-   gamestate = GS_DEMOSCREEN;
-   pagename = "TITLE";
-   break;
-   case 2:
-   GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
-   G_DeferedPlayDemo("demo1");
-   break;
-   case 3:
-   pagetic = 200;
-   gamestate = GS_DEMOSCREEN;
-   pagename = "CREDIT";
-   break;
-   case 4:
-   GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
-   G_DeferedPlayDemo("demo2");
-   break;
-   case 5:
-   pagetic = 200;
-   gamestate = GS_DEMOSCREEN;
-   pagename = "CREDIT";
-   break;
-   case 6:
-   GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
-   G_DeferedPlayDemo("demo3");
-   break;
-   }
-   }
+/**
+ * Updates ddflags of all visible mobjs (in sectorlinks).
+ * Not strictly necessary (in single player games at least) but here
+ * we tell the engine about light-emitting objects, special effects,
+ * object properties (solid, local, low/nograv, etc.), color translation
+ * and other interesting little details.
  */
+void R_SetAllDoomsdayFlags(void)
+{
+    int     i, Class;
+    int     sectorCount = DD_GetInteger(DD_SECTOR_COUNT);
+    mobj_t *mo;
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
+    // Only visible things are in the sector thinglists, so this is good.
+    for(i = 0; i < sectorCount; i++)
+        for(mo = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); mo; mo = mo->snext)
+        {
+            if(IS_CLIENT && mo->ddflags & DDMF_REMOTE)
+                continue;
+
+            // Reset the flags for a new frame.
+            mo->ddflags &= DDMF_CLEAR_MASK;
+
+            if(mo->flags & MF_LOCAL)
+                mo->ddflags |= DDMF_LOCAL;
+            if(mo->flags & MF_SOLID)
+                mo->ddflags |= DDMF_SOLID;
+            if(mo->flags & MF_MISSILE)
+                mo->ddflags |= DDMF_MISSILE;
+            if(mo->flags2 & MF2_FLY)
+                mo->ddflags |= DDMF_FLY | DDMF_NOGRAVITY;
+            if(mo->flags2 & MF2_FLOATBOB)
+                mo->ddflags |= DDMF_BOB | DDMF_NOGRAVITY;
+            if(mo->flags2 & MF2_LOGRAV)
+                mo->ddflags |= DDMF_LOWGRAVITY;
+            if(mo->flags & MF_NOGRAVITY /* || mo->flags2 & MF2_FLY */ )
+                mo->ddflags |= DDMF_NOGRAVITY;
+
+            // $democam: cameramen are invisible
+            if(P_IsCamera(mo))
+                mo->ddflags |= DDMF_DONTDRAW;
+
+            // Choose which ddflags to set.
+            if(mo->flags2 & MF2_DONTDRAW)
+            {
+                mo->ddflags |= DDMF_DONTDRAW;
+                continue;       // No point in checking the other flags.
+            }
+
+            if((mo->flags & MF_BRIGHTSHADOW) == MF_BRIGHTSHADOW)
+                mo->ddflags |= DDMF_BRIGHTSHADOW;
+            else
+            {
+                if(mo->flags & MF_SHADOW)
+                    mo->ddflags |= DDMF_SHADOW;
+                if(mo->flags & MF_ALTSHADOW ||
+                   (cfg.translucentIceCorpse && mo->flags & MF_ICECORPSE))
+                    mo->ddflags |= DDMF_ALTSHADOW;
+            }
+
+            if((mo->flags & MF_VIEWALIGN && !(mo->flags & MF_MISSILE)) ||
+               mo->flags & MF_FLOAT || (mo->flags & MF_MISSILE &&
+                                        !(mo->flags & MF_VIEWALIGN)))
+                mo->ddflags |= DDMF_VIEWALIGN;
+
+            mo->ddflags |= mo->flags & MF_TRANSLATION;
+
+            // Which translation table to use?
+            if(mo->flags & MF_TRANSLATION)
+            {
+                if(mo->player)
+                {
+                    Class = mo->player->class;
+                }
+                else
+                {
+                    Class = mo->special1;
+                }
+                if(Class > 2)
+                {
+                    Class = 0;
+                }
+                // The last two bits.
+                mo->ddflags |= Class << DDMF_CLASSTRSHIFT;
+            }
+
+            // An offset for the light emitted by this object.
+            /*          Class = MobjLightOffsets[mo->type];
+               if(Class < 0) Class = 8-Class;
+               // Class must now be in range 0-15.
+               mo->ddflags |= Class << DDMF_LIGHTOFFSETSHIFT; */
+
+            // The Mage's ice shards need to be a bit smaller.
+            // This'll make them half the normal size.
+            if(mo->type == MT_SHARDFX1)
+                mo->ddflags |= 2 << DDMF_LIGHTSCALESHIFT;
+        }
+}
