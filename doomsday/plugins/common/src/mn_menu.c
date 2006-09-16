@@ -2898,7 +2898,7 @@ void M_DrawGameplay(void)
     M_DrawTitle("GAMEPLAY", 0);
     M_WriteMenuText(menu, idx++, yesno[cfg.alwaysRun != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.lookSpring != 0]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.noAutoAim != 0]);
+    M_WriteMenuText(menu, idx++, yesno[!cfg.noAutoAim]);
 #else
 
 # if __JHERETIC__
