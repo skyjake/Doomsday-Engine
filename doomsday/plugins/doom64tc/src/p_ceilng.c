@@ -196,8 +196,8 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
     while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
     {
         sec = P_ToPtr(DMU_SECTOR, secnum);
+        xsec = P_XSector(sec);
 
-        xsec = &xsectors[secnum];
         if(xsec->specialdata)
             continue;
 

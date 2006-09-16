@@ -355,8 +355,11 @@ void XS_SetSectorType(struct sector_s *sec, int special)
 
 void XS_Init(void)
 {
-    int     i;
-    int count = DD_GetInteger(DD_SECTOR_COUNT);
+    int         i;
+    int         count = DD_GetInteger(DD_SECTOR_COUNT);
+    byte        tmprgb[3];
+    sector_t   *sec;
+    xsector_t  *xsec;
 
     // Allocate stair builder data.
 
@@ -366,21 +369,21 @@ void XS_Init(void)
     /*  // Clients rely on the server, they don't do XG themselves.
        if(IS_CLIENT) return; */
 
-    for(i = 0; i < count; i++)
+    for(i = 0; i < count; ++i)
     {
-        xsector_t *xsec = &xsectors[i];
-        byte tmprgb[3];
+        sec = P_ToPtr(DMU_SECTOR, i);
+        xsec = P_XSector(sec);
 
-        P_GetBytev(DMU_SECTOR, i, DMU_COLOR, tmprgb);
+        P_GetBytepv(sec, DMU_COLOR, tmprgb);
 
-        xsec->origfloor = P_GetFixed(DMU_SECTOR, i, DMU_FLOOR_HEIGHT);
-        xsec->origceiling = P_GetFixed(DMU_SECTOR, i, DMU_CEILING_HEIGHT);
-        xsec->origlight = P_GetInt(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
+        xsec->origfloor = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
+        xsec->origceiling = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
+        xsec->origlight = P_GetIntp(sec, DMU_LIGHT_LEVEL);
 
         memcpy(xsec->origrgb, tmprgb, 3);
 
         // Initialize the XG data for this sector.
-        XS_SetSectorType(P_ToPtr(DMU_SECTOR, i), xsec->special);
+        XS_SetSectorType(sec, xsec->special);
     }
 }
 
@@ -826,27 +829,28 @@ int XS_TextureHeight(line_t *line, int part)
  */
 sector_t *XS_FindTagged(int tag)
 {
-    int     k;
-    int     foundcount = 0;
-    int     retsectorid = -1;
-    sector_t *retsector;
+    int         k;
+    int         foundcount = 0;
+    int         retsectorid = -1;
+    sector_t   *sec, *retsector;
 
     retsector = NULL;
 
-    for(k = 0; k < numsectors; k++)
+    for(k = 0; k < numsectors; ++k)
     {
-        if(xsectors[k].tag == tag)
+        sec = P_ToPtr(DMU_SECTOR, k);
+        if(P_XSector(sec)->tag == tag)
         {
             if(xgDev)
             {
                 if(!foundcount)
                 {
-                    retsector = P_ToPtr(DMU_SECTOR, k);
+                    retsector = sec;
                     retsectorid = k;
                 }
             }
             else
-                return P_ToPtr(DMU_SECTOR, k);
+                return sec;
 
             foundcount++;
         }
@@ -872,28 +876,31 @@ sector_t *XS_FindTagged(int tag)
  */
 sector_t *XS_FindActTagged(int tag)
 {
-    int     k;
-    int     foundcount = 0;
-    int     retsectorid = -1;
-    sector_t *retsector;
+    int         k;
+    int         foundcount = 0;
+    int         retsectorid = -1;
+    sector_t   *sec, *retsector;
+    xsector_t  *xsec;
 
     retsector = NULL;
 
-    for(k = 0; k < numsectors; k++)
+    for(k = 0; k < numsectors; ++k)
     {
-        if(xsectors[k].xg)
-            if(xsectors[k].xg->info.act_tag == tag)
+        sec = P_ToPtr(DMU_SECTOR, k);
+        xsec = P_XSector(sec);
+        if(xsec->xg)
+            if(xsec->xg->info.act_tag == tag)
             {
                 if(xgDev)
                 {
                     if(!foundcount)
                     {
-                        retsector = P_ToPtr(DMU_SECTOR, k);
+                        retsector = sec;
                         retsectorid = k;
                     }
                 }
                 else
-                    return P_ToPtr(DMU_SECTOR, k);
+                    return sec;
 
                 foundcount++;
             }
@@ -2640,13 +2647,16 @@ void XS_Think(sector_t *sector)
 
 void XS_Ticker(void)
 {
-    int     i;
+    int         i;
+    sector_t   *sec;
 
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
-        if(!xsectors[i].xg)
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(!P_XSector(sec)->xg)
             continue;           // Normal sector.
-        XS_Think(P_ToPtr(DMU_SECTOR, i));
+
+        XS_Think(sec);
     }
 }
 
@@ -2696,15 +2706,19 @@ int XS_ThrustMul(struct sector_s *sector)
  */
 void XS_Update(void)
 {
-    int     i;
+    int         i;
+    xsector_t  *xsec;
 
     // It's all PU_LEVEL memory, so we can just lose it.
-    for(i = 0; i < numsectors; i++)
-        if(xsectors[i].xg)
+    for(i = 0; i < numsectors; ++i)
+    {
+        xsec = P_XSector(P_ToPtr(DMU_SECTOR, i));
+        if(xsec->xg)
         {
-            xsectors[i].xg = NULL;
-            xsectors[i].special = 0;
+            xsec->xg = NULL;
+            xsec->special = 0;
         }
+    }
 }
 
 #if 0 // no longer supported in 1.8.7
@@ -2783,14 +2797,18 @@ DEFCC(CCmdMovePlane)
     }
     else if(!stricmp(argv[1], "tag") && argc >= 3)
     {
+        sector_t *sec;
         p = 3;
         // Find the first sector with the tag.
-        for(i = 0; i < numsectors; i++)
-            if(xsectors[i].tag == (short) strtol(argv[2], 0, 0))
+        for(i = 0; i < numsectors; ++i)
+        {
+            sec = P_ToPtr(DMU_SECTOR, i);
+            if(P_XSector(sec)->tag == (short) strtol(argv[2], 0, 0))
             {
-                sector = P_ToPtr(DMU_SECTOR, i);
+                sector = sec;
                 break;
             }
+        }
     }
 
     floorheight = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);

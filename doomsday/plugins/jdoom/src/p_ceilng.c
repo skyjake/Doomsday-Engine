@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -193,8 +193,8 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
     while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
     {
         sec = P_ToPtr(DMU_SECTOR, secnum);
+        xsec = P_XSector(sec);
 
-        xsec = &xsectors[secnum];
         if(xsec->specialdata)
             continue;
 

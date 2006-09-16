@@ -445,9 +445,8 @@ int P_FindSectorFromLineTag(line_t *line, int start)
 
     xline = P_XLine(line);
 
-
-    for(i = start + 1; i < numsectors; i++)
-        if(xsectors[i].tag == xline->tag)
+    for(i = start + 1; i < numsectors; ++i)
+        if(P_XSector(P_ToPtr(DMU_SECTOR, i))->tag == xline->tag)
             return i;
 
     return -1;
@@ -552,7 +551,7 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
         }
 
         // Anything can trigger this line!
-        if(P_GetInt(DMU_LINE, linenum, DMU_FLAGS) & ML_ALLTRIGGER)
+        if(P_GetIntp(line, DMU_FLAGS) & ML_ALLTRIGGER)
             ok = 1;
 
         if(!ok)
@@ -1436,17 +1435,17 @@ int EV_DoDonut(line_t *line)
     return rtn;
 }
 
-/*
- * After the map has been loaded, scan for specials that spawn thinkers
- * Parses command line parameters (FIXME: use global state variables).
+/**
+ * After the map has been loaded, scan for specials that spawn thinkers.
  */
 void P_SpawnSpecials(void)
 {
-    sector_t *sector;
-    int     i;
+    int         i;
+    line_t     *line;
+    sector_t   *sector;
 
     //  Init special SECTORs.
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         sector = P_ToPtr(DMU_SECTOR, i);
 
@@ -1556,9 +1555,11 @@ void P_SpawnSpecials(void)
 
     //  Init line EFFECTs
     numlinespecials = 0;
-    for(i = 0; i < numlines; i++)
+    for(i = 0; i < numlines; ++i)
     {
-        switch (xlines[i].special)
+        line = P_ToPtr(DMU_LINE, i);
+
+        switch (P_XLine(line)->special)
         {
         case 48: // EFFECT FIRSTCOL SCROLL+
         case 150: // d64tc: wall scroll right
@@ -1566,7 +1567,7 @@ void P_SpawnSpecials(void)
         case 2562: // d64tc: wall scroll down
         case 2080: // d64tc: wall scroll up/right
         case 2614: // d64tc: wall scroll up/left
-            linespeciallist[numlinespecials] = P_ToPtr(DMU_LINE, i);
+            linespeciallist[numlinespecials] = line;
             numlinespecials++;
             break;
 
@@ -1583,7 +1584,7 @@ void P_SpawnSpecials(void)
     P_RemoveAllActivePlats();     // killough
 
     // FIXME: Remove fixed limit
-    for(i = 0; i < MAXBUTTONS; i++)
+    for(i = 0; i < MAXBUTTONS; ++i)
         memset(&buttonlist[i], 0, sizeof(button_t));
 
     // Init extended generalized lines and sectors.

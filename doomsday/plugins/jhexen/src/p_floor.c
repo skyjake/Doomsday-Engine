@@ -327,16 +327,18 @@ int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
     int     rtn;
     floormove_t *floor = NULL;
     sector_t *sec;
+    xsector_t *xsec;
 
     secnum = -1;
     rtn = 0;
     while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
     {
-        //      ALREADY MOVING?  IF SO, KEEP GOING...
-        if(xsectors[secnum].specialdata)
-            continue;
-
         sec = P_ToPtr(DMU_SECTOR, secnum);
+        xsec = P_XSector(sec);
+
+        //      ALREADY MOVING?  IF SO, KEEP GOING...
+        if(xsec->specialdata)
+            continue;
 
         //
         //      new floor thinker
@@ -345,7 +347,7 @@ int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
         floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
         memset(floor, 0, sizeof(*floor));
         P_AddThinker(&floor->thinker);
-        xsectors[secnum].specialdata = floor;
+        xsec->specialdata = floor;
         floor->thinker.function = T_MoveFloor;
         floor->type = floortype;
         floor->crush = 0;
@@ -370,50 +372,48 @@ int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
         case FLEV_LOWERFLOORBYVALUE:
             floor->direction = -1;
             floor->sector = sec;
-            floor->floordestheight =
-                P_GetFixed(DMU_SECTOR, secnum, DMU_FLOOR_HEIGHT) -
+            floor->floordestheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT) -
                 args[2] * FRACUNIT;
             break;
         case FLEV_LOWERTIMES8INSTANT:
         case FLEV_LOWERBYVALUETIMES8:
             floor->direction = -1;
             floor->sector = sec;
-            floor->floordestheight =
-                P_GetFixed(DMU_SECTOR, secnum, DMU_FLOOR_HEIGHT) -
+            floor->floordestheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT) -
                 args[2] * FRACUNIT * 8;
             break;
         case FLEV_RAISEFLOORCRUSH:
             floor->crush = args[2]; // arg[2] = crushing value
             floor->direction = 1;
             floor->sector = sec;
-            floor->floordestheight =
-                P_GetFixed(DMU_SECTOR, secnum, DMU_CEILING_HEIGHT) - 8 * FRACUNIT;
+            floor->floordestheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT) -
+                8 * FRACUNIT;
             break;
         case FLEV_RAISEFLOOR:
             floor->direction = 1;
             floor->sector = sec;
             floor->floordestheight = P_FindLowestCeilingSurrounding(sec);
-            if(floor->floordestheight > P_GetFixed(DMU_SECTOR, secnum, DMU_CEILING_HEIGHT))
-                floor->floordestheight = P_GetFixed(DMU_SECTOR, secnum, DMU_CEILING_HEIGHT);
+            if(floor->floordestheight > P_GetFixedp(sec, DMU_CEILING_HEIGHT))
+                floor->floordestheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
             break;
         case FLEV_RAISEFLOORTONEAREST:
             floor->direction = 1;
             floor->sector = sec;
             floor->floordestheight =
-                P_FindNextHighestFloor(sec, P_GetFixed(DMU_SECTOR, secnum, DMU_FLOOR_HEIGHT));
+                P_FindNextHighestFloor(sec, P_GetFixedp(sec, DMU_FLOOR_HEIGHT));
             break;
         case FLEV_RAISEFLOORBYVALUE:
             floor->direction = 1;
             floor->sector = sec;
-            floor->floordestheight =
-                P_GetFixed(DMU_SECTOR, secnum, DMU_FLOOR_HEIGHT) + args[2] * FRACUNIT;
+            floor->floordestheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT) +
+                args[2] * FRACUNIT;
             break;
         case FLEV_RAISETIMES8INSTANT:
         case FLEV_RAISEBYVALUETIMES8:
             floor->direction = 1;
             floor->sector = sec;
-            floor->floordestheight =
-                P_GetFixed(DMU_SECTOR, secnum, DMU_FLOOR_HEIGHT) + args[2] * FRACUNIT * 8;
+            floor->floordestheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT) +
+                args[2] * FRACUNIT * 8;
             break;
         case FLEV_MOVETOVALUETIMES8:
             floor->sector = sec;
@@ -422,11 +422,11 @@ int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
             {
                 floor->floordestheight = -floor->floordestheight;
             }
-            if(floor->floordestheight > P_GetFixed(DMU_SECTOR, secnum, DMU_FLOOR_HEIGHT))
+            if(floor->floordestheight > P_GetFixedp(sec, DMU_FLOOR_HEIGHT))
             {
                 floor->direction = 1;
             }
-            else if(floor->floordestheight < P_GetFixed(DMU_SECTOR, secnum, DMU_FLOOR_HEIGHT))
+            else if(floor->floordestheight < P_GetFixedp(sec, DMU_FLOOR_HEIGHT))
             {
                 floor->direction = -1;
             }
@@ -465,7 +465,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
         secnum = -1;
         while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
         {
-            xsectors[secnum].specialdata = NULL;
+            P_XSector(P_ToPtr(DMU_SECTOR, secnum))->specialdata = NULL;
         }
         ceiling = EV_DoCeiling(line, args, CLEV_RAISEBYVALUE);
     }
@@ -475,7 +475,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
         secnum = -1;
         while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
         {
-            xsectors[secnum].specialdata = NULL;
+            P_XSector(P_ToPtr(DMU_SECTOR, secnum))->specialdata = NULL;
         }
         ceiling = EV_DoCeiling(line, args, CLEV_LOWERBYVALUE);
     }
@@ -682,15 +682,15 @@ int EV_BuildStairs(line_t *line, byte *args, int direction,
     while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
     {
         sec = P_ToPtr(DMU_SECTOR, secnum);
-        Texture = P_GetInt(DMU_SECTOR, secnum, DMU_FLOOR_TEXTURE);
+        Texture = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
         StartHeight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
 
         // ALREADY MOVING?  IF SO, KEEP GOING...
-        if(xsectors[secnum].specialdata)
+        if(P_XSector(sec)->specialdata)
             continue;
 
         QueueStairSector(sec, 0, P_GetFixedp(sec, DMU_FLOOR_HEIGHT));
-        xsectors[secnum].special = 0;
+        P_XSector(sec)->special = 0;
     }
     while((qSec = DequeueStairSector(&type, &height)) != NULL)
     {
@@ -984,17 +984,17 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
     while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
     {
         sector = P_ToPtr(DMU_SECTOR, sectorIndex);
-        if(xsectors[sectorIndex].specialdata)
+        if(P_XSector(sector)->specialdata)
         {                       // Already busy with another thinker
             continue;
         }
 
         retCode = true;
         waggle = Z_Malloc(sizeof(*waggle), PU_LEVSPEC, 0);
-        xsectors[sectorIndex].specialdata = waggle;
+        P_XSector(sector)->specialdata = waggle;
         waggle->thinker.function = T_FloorWaggle;
         waggle->sector = sector;
-        waggle->originalHeight = P_GetFixed(DMU_SECTOR, sectorIndex, DMU_FLOOR_HEIGHT);
+        waggle->originalHeight = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
         waggle->accumulator = offset * FRACUNIT;
         waggle->accDelta = speed << 10;
         waggle->scale = 0;

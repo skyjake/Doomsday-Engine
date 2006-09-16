@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -301,7 +301,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
     while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
     {
         sec = P_ToPtr(DMU_SECTOR, secnum);
-        xsec = &xsectors[secnum];
+        xsec = P_XSector(sec);
         // ALREADY MOVING?  IF SO, KEEP GOING...
         if(xsec->specialdata)
             continue;
@@ -501,31 +501,28 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 
 int EV_BuildStairs(line_t *line, stair_e type)
 {
-    int     secnum;
-    int     height;
-    int     i;
-    int     newsecnum;
-    int     texture;
-    int     ok;
-    int     rtn;
-    line_t  *ln;
-    xsector_t *xsec;
-    sector_t *sec;
-    sector_t *tsec;
-
+    int         secnum;
+    int         height;
+    int         i;
+    int         newsecnum;
+    int         texture;
+    int         ok;
+    int         rtn;
+    line_t     *ln;
+    xsector_t  *xsec;
+    sector_t   *sec, *tsec;
     floormove_t *floor;
-
-    fixed_t stairsize = 0;
-    fixed_t speed = 0;
+    fixed_t     stairsize = 0;
+    fixed_t     speed = 0;
 
     secnum = -1;
     rtn = 0;
     while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
     {
-        // ALREADY MOVING?  IF SO, KEEP GOING...
         sec = P_ToPtr(DMU_SECTOR, secnum);
-        xsec = &xsectors[secnum];
+        xsec = P_XSector(sec);
 
+        // ALREADY MOVING?  IF SO, KEEP GOING...
         if(xsec->specialdata)
             continue;
 
@@ -581,7 +578,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
                 height += stairsize;
 
-                if(xsectors[newsecnum].specialdata)
+                if(P_XSector(tsec)->specialdata)
                     continue;
 
                 sec = tsec;
@@ -590,7 +587,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
                 P_AddThinker(&floor->thinker);
 
-                xsectors[newsecnum].specialdata = floor;
+                P_XSector(tsec)->specialdata = floor;
                 floor->thinker.function = T_MoveFloor;
                 floor->direction = 1;
                 floor->sector = sec;

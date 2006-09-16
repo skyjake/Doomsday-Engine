@@ -2433,18 +2433,21 @@ static void P_UnArchiveBrain(void)
 
 static void P_ArchiveSoundTargets(void)
 {
-    int     i;
+    int         i;
+    xsector_t  *xsec;
 
     // Write the total number
     SV_WriteLong(numSoundTargets);
 
     // Write the mobj references using the mobj archive.
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
-        if(xsectors[i].soundtarget)
+        xsec = P_XSector(P_ToPtr(DMU_SECTOR, i));
+
+        if(xsec->soundtarget)
         {
             SV_WriteLong(i);
-            SV_WriteShort(SV_ThingArchiveNum(xsectors[i].soundtarget));
+            SV_WriteShort(SV_ThingArchiveNum(xsec->soundtarget));
         }
     }
 }
@@ -2463,14 +2466,15 @@ static void P_UnArchiveSoundTargets(void)
     numsoundtargets = SV_ReadLong();
 
     // Read in the sound targets.
-    for(i = 0; i < numsoundtargets; i++)
+    for(i = 0; i < numsoundtargets; ++i)
     {
         secid = SV_ReadLong();
 
         if(secid > numsectors)
             Con_Error("P_UnArchiveSoundTargets: bad sector number\n");
 
-        xsectors[secid].soundtarget = SV_GetArchiveThing(SV_ReadShort());
+        P_XSector(P_ToPtr(DMU_SECTOR, secid))->soundtarget =
+            SV_GetArchiveThing(SV_ReadShort());
     }
 }
 

@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -61,15 +61,15 @@ mobj_t *P_SpawnTeleFog(int x, int y)
 
 int EV_Teleport(line_t *line, int side, mobj_t *thing)
 {
-    int     i;
-    int     tag;
-    mobj_t *m;
-    mobj_t *fog;
-    unsigned an;
-    thinker_t *thinker;
-    sector_t *sector;
-    fixed_t oldpos[3];
-    fixed_t aboveFloor;
+    int         i;
+    int         tag;
+    mobj_t     *m;
+    mobj_t     *fog;
+    unsigned    an;
+    thinker_t  *th;
+    sector_t   *sec;
+    fixed_t     oldpos[3];
+    fixed_t     aboveFloor;
 
     if(thing->flags2 & MF2_NOTELEPORT)
         return false;
@@ -81,28 +81,25 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
 
     tag = P_XLine(line)->tag;
 
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
-        if(xsectors[i].tag == tag)
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(P_XSector(sec)->tag == tag)
         {
-            thinker = thinkercap.next;
-            for(thinker = thinkercap.next; thinker != &thinkercap;
-                thinker = thinker->next)
+            for(th = thinkercap.next; th != &thinkercap; th = th->next)
             {
                 // not a mobj
-                if(thinker->function != P_MobjThinker)
+                if(th->function != P_MobjThinker)
                     continue;
 
-                m = (mobj_t *) thinker;
+                m = (mobj_t *) th;
 
                 // not a teleportman
                 if(m->type != MT_TELEPORTMAN)
                     continue;
 
-                sector = P_GetPtrp(m->subsector, DMU_SECTOR);
-                // wrong sector
-                if(P_ToIndex(sector) != i)
-                    continue;
+                if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
+                    continue; // wrong sector
 
                 memcpy(oldpos, thing->pos, sizeof(thing->pos));
                 aboveFloor = thing->pos[VZ] - thing->floorz;

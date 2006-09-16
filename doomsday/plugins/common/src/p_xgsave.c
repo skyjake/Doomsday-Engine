@@ -266,22 +266,25 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     return true; // Add this thinker.
 }
 
-/*
+/**
  * This is called after all thinkers have been loaded.
  * We need to set the correct pointers to the line activators.
  */
 void XL_UnArchiveLines(void)
 {
-    xline_t *line;
-    mobj_t *activator;
-    int     i;
+    int         i;
+    xline_t    *xline;
+    mobj_t     *activator;
 
-    for(i = 0, line = xlines; i < numlines; i++, line++)
-        if(line->xg)
+    for(i = 0; i < numlines; ++i)
+    {
+        xline = P_XLine(P_ToPtr(DMU_LINE, i));
+        if(xline->xg)
         {
-            activator = SV_GetArchiveThing((int) line->xg->activator);
-            line->xg->activator = (activator ? activator : &dummything);
+            activator = SV_GetArchiveThing((int) xline->xg->activator);
+            xline->xg->activator = (activator ? activator : &dummything);
         }
+    }
 }
 
 #endif

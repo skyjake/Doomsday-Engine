@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -97,9 +97,6 @@ typedef struct xline_s {
     // Extended generalized lines.
     xgline_t       *xg;
 } xline_t;
-
-extern xsector_t *xsectors;
-extern xline_t *xlines;
 
 xline_t*    P_XLine(line_t* line);
 xsector_t*  P_XSector(sector_t* sector);

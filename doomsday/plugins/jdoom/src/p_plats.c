@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -146,12 +146,13 @@ void T_PlatRaise(plat_t * plat)
  */
 int EV_DoPlat(line_t *line, plattype_e type, int amount)
 {
-    plat_t *plat;
-    int     secnum;
-    int     rtn;
-    fixed_t floorheight;
-    sector_t *sec;
-    sector_t*   frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    plat_t     *plat;
+    int         secnum;
+    int         rtn;
+    fixed_t     floorheight;
+    sector_t   *sec;
+    sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    xsector_t  *xsec;
 
     secnum = -1;
     rtn = 0;
@@ -170,8 +171,9 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
     while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
     {
         sec = P_ToPtr(DMU_SECTOR, secnum);
+        xsec = P_XSector(sec);
 
-        if(xsectors[secnum].specialdata)
+        if(xsec->specialdata)
             continue;
 
         // Find lowest & highest floors around sector
@@ -180,16 +182,16 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
         P_AddThinker(&plat->thinker);
 
         plat->type = type;
-        plat->sector = P_ToPtr(DMU_SECTOR, secnum);
+        plat->sector = sec;
 
-        xsectors[secnum].specialdata = plat;
+        xsec->specialdata = plat;
 
         plat->thinker.function = (actionf_p1) T_PlatRaise;
         plat->crush = false;
 
         plat->tag = P_XLine(line)->tag;
 
-        floorheight = P_GetFixed(DMU_SECTOR, secnum, DMU_FLOOR_HEIGHT);
+        floorheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
         switch(type)
         {
         case raiseToNearestAndChange:
@@ -203,7 +205,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
             plat->wait = 0;
             plat->status = up;
             // NO MORE DAMAGE, IF APPLICABLE
-            xsectors[secnum].special = 0;
+            xsec->special = 0;
 
             S_SectorSound(sec, SORG_FLOOR, sfx_stnmov);
             break;

@@ -667,7 +667,7 @@ static boolean TagBusy(int tag)
     sectorIndex = -1;
     while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
     {
-        if(xsectors[sectorIndex].specialdata)
+        if(P_XSector(P_ToPtr(DMU_SECTOR, sectorIndex))->specialdata)
         {
             return true;
         }

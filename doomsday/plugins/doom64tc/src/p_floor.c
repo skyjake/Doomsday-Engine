@@ -312,7 +312,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
     while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
     {
         sec = P_ToPtr(DMU_SECTOR, secnum);
-        xsec = &xsectors[secnum];
+        xsec = P_XSector(sec);
         // ALREADY MOVING?  IF SO, KEEP GOING...
         if(xsec->specialdata)
             continue;
@@ -594,7 +594,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
     {
         // ALREADY MOVING?  IF SO, KEEP GOING...
         sec = P_ToPtr(DMU_SECTOR, secnum);
-        xsec = &xsectors[secnum];
+        xsec = P_XSector(sec);
 
         if(xsec->specialdata)
             continue;
@@ -651,7 +651,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
                 height += stairsize;
 
-                if(xsectors[newsecnum].specialdata)
+                if(P_XSector(tsec)->specialdata)
                     continue;
 
                 sec = tsec;
@@ -660,7 +660,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
                 P_AddThinker(&floor->thinker);
 
-                xsectors[newsecnum].specialdata = floor;
+                P_XSector(tsec)->specialdata = floor;
                 floor->thinker.function = T_MoveFloor;
                 floor->direction = 1;
                 floor->sector = sec;

@@ -240,42 +240,52 @@ void P_v13_UnArchivePlayers(void)
 
 void P_v13_UnArchiveWorld(void)
 {
-    int     i, j;
-    fixed_t offx, offy;
-    short  *get;
-    int     firstflat = W_CheckNumForName("F_START") + 1;
+    int         i, j;
+    fixed_t     offx, offy;
+    short      *get;
+    int         firstflat = W_CheckNumForName("F_START") + 1;
+    sector_t   *sec;
+    xsector_t  *xsec;
+    line_t     *line;
+    xline_t    *xline;
 
     get = (short *) save_p;
 
     // do sectors
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
-        P_SetFixed(DMU_SECTOR, i, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
-        P_SetFixed(DMU_SECTOR, i, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
-        P_SetInt(DMU_SECTOR, i, DMU_FLOOR_TEXTURE, *get++ + firstflat);
-        P_SetInt(DMU_SECTOR, i, DMU_CEILING_TEXTURE, *get++ + firstflat);
-        P_SetInt(DMU_SECTOR, i, DMU_LIGHT_LEVEL, *get++);
-        xsectors[i].special = *get++;  // needed?
-        xsectors[i].tag = *get++;      // needed?
-        xsectors[i].specialdata = 0;
-        xsectors[i].soundtarget = 0;
+        sec = P_ToPtr(DMU_SECTOR, i);
+        xsec = P_XSector(sec);
+
+        P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
+        P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
+        P_SetIntp(sec, DMU_FLOOR_TEXTURE, *get++ + firstflat);
+        P_SetIntp(sec, DMU_CEILING_TEXTURE, *get++ + firstflat);
+        P_SetIntp(sec, DMU_LIGHT_LEVEL, *get++);
+        xsec->special = *get++;  // needed?
+        xsec->tag = *get++;      // needed?
+        xsec->specialdata = 0;
+        xsec->soundtarget = 0;
     }
 
     // do lines
-    for(i = 0; i < numlines; i++)
+    for(i = 0; i < numlines; ++i)
     {
-        P_SetInt(DMU_LINE, i, DMU_FLAGS, *get++);
-        xlines[i].special = *get++;
-        xlines[i].tag = *get++;
+        line = P_ToPtr(DMU_LINE, i);
+        xline = P_XLine(line);
+
+        P_SetIntp(line, DMU_FLAGS, *get++);
+        xline->special = *get++;
+        xline->tag = *get++;
 
         for(j = 0; j < 2; j++)
         {
             side_t* sdef;
 
             if(j == 0)
-                sdef = P_GetPtr(DMU_LINE, i, DMU_SIDE0);
+                sdef = P_GetPtrp(line, DMU_SIDE0);
             else
-                sdef = P_GetPtr(DMU_LINE, i, DMU_SIDE1);
+                sdef = P_GetPtrp(line, DMU_SIDE1);
 
             if(!sdef)
                 continue;
@@ -403,7 +413,7 @@ void P_v13_UnArchiveSpecials(void)
 
             ceiling->sector = P_ToPtr(DMU_SECTOR, (int) ceiling->sector);
 
-            xsectors[P_ToIndex(ceiling->sector)].specialdata = T_MoveCeiling;
+            P_XSector(ceiling->sector)->specialdata = T_MoveCeiling;
 
             if(ceiling->thinker.function)
                 ceiling->thinker.function = T_MoveCeiling;
@@ -419,7 +429,7 @@ void P_v13_UnArchiveSpecials(void)
 
             door->sector = P_ToPtr(DMU_SECTOR, (int) door->sector);
 
-            xsectors[P_ToIndex(door->sector)].specialdata = T_VerticalDoor;
+            P_XSector(door->sector)->specialdata = T_VerticalDoor;
             door->thinker.function = T_VerticalDoor;
             P_AddThinker(&door->thinker);
             break;
@@ -430,7 +440,7 @@ void P_v13_UnArchiveSpecials(void)
             save_p += sizeof(*floor);
 
             floor->sector = P_ToPtr(DMU_SECTOR, (int) floor->sector);
-            xsectors[P_ToIndex(floor->sector)].specialdata = T_MoveFloor;
+            P_XSector(floor->sector)->specialdata = T_MoveFloor;
             floor->thinker.function = T_MoveFloor;
 
             P_AddThinker(&floor->thinker);
@@ -442,7 +452,7 @@ void P_v13_UnArchiveSpecials(void)
             save_p += sizeof(*plat);
 
             plat->sector = P_ToPtr(DMU_SECTOR, (int) plat->sector);
-            xsectors[P_ToIndex(plat->sector)].specialdata = T_PlatRaise;
+            P_XSector(plat->sector)->specialdata = T_PlatRaise;
 
             if(plat->thinker.function)
                 plat->thinker.function = T_PlatRaise;

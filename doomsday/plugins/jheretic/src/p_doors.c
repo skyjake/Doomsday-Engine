@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -189,7 +189,7 @@ int EV_DoDoor(line_t *line, vldoor_e type)
     while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
     {
         sec = P_ToPtr(DMU_SECTOR, secnum);
-        xsec = &xsectors[secnum];
+        xsec = P_XSector(sec);
 
         if(xsec->specialdata)
             continue;

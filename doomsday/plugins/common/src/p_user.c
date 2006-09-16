@@ -865,7 +865,7 @@ void P_ClientSideThink(void)
 */
 
 #if __JHEXEN__
-/*    if(xsectors[P_GetIntp(mo->subsector, DMU_SECTOR)].special)
+/*    if(P_XSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(pl);
 */
     // Set consoleplayer thrust multiplier.

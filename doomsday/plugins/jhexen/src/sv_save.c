@@ -1241,7 +1241,7 @@ void ArchiveWorld(void)
     for(i = 0; i < DD_GetInteger(DD_SECTOR_COUNT); i++)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = &xsectors[i];
+        xsec = P_XSector(sec);
 
         StreamOutByte(2); // write a version byte.
 
@@ -1264,7 +1264,7 @@ void ArchiveWorld(void)
     for(i = 0; i < DD_GetInteger(DD_LINE_COUNT); i++)
     {
         li = P_ToPtr(DMU_LINE, i);
-        xli = &xlines[i];
+        xli = P_XLine(li);
 
         StreamOutByte(2); // write a version byte.
 
@@ -1339,7 +1339,7 @@ void UnarchiveWorld(void)
         ch = GET_WORD;
 
         sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = &xsectors[i];
+        xsec = P_XSector(sec);
 
         P_SetIntp(sec, DMU_FLOOR_HEIGHT, fh);
         P_SetIntp(sec, DMU_CEILING_HEIGHT, ch);
@@ -1372,7 +1372,7 @@ void UnarchiveWorld(void)
     for(i = 0; i < DD_GetInteger(DD_LINE_COUNT); i++)
     {
         li = P_ToPtr(DMU_LINE, i);
-        xli = &xlines[i];
+        xli = P_XLine(li);
 
         ver = 1;
         if(saveVersion >= 3)

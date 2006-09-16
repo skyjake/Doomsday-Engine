@@ -317,7 +317,7 @@ int EV_DoDoor(line_t *line, vldoor_e type)
     while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
     {
         sec = P_ToPtr(DMU_SECTOR, secnum);
-        xsec = &xsectors[secnum];
+        xsec = P_XSector(sec);
 
         if(xsec->specialdata)
             continue;

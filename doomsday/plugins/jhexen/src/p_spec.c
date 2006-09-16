@@ -48,6 +48,7 @@
 #include "p_inventory.h"
 #include "p_player.h"
 #include "p_map.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -66,6 +67,9 @@ static boolean CheckedLockedDoor(mobj_t *mo, byte lock);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+short   numlinespecials;
+line_t *linespeciallist[MAXLINEANIMS];
 
 int    *TerrainTypes = 0;
 struct terraindef_s {
@@ -411,14 +415,11 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
 int P_FindSectorFromTag(int tag, int start)
 {
     int     i;
-    int     numsectors = DD_GetInteger(DD_SECTOR_COUNT);
 
-    for(i = start + 1; i < numsectors; i++)
+    for(i = start + 1; i < numsectors; ++i)
     {
-        if(xsectors[i].tag == tag)
-        {
+        if(P_XSector(P_ToPtr(DMU_SECTOR, i))->tag == tag)
             return i;
-        }
     }
     return -1;
 }
@@ -470,7 +471,7 @@ boolean EV_SectorSoundChange(byte *args)
     rtn = false;
     while((secNum = P_FindSectorFromTag(args[0], secNum)) >= 0)
     {
-        xsectors[secNum].seqType = args[1];
+        P_XSector(P_ToPtr(DMU_SECTOR, secNum))->seqType = args[1];
         rtn = true;
     }
     return rtn;
@@ -1101,29 +1102,22 @@ void P_UpdateSpecials(void)
 
    ==============================================================================
  */
-/*
-   ================================================================================
-   = P_SpawnSpecials
-   =
-   = After the map has been loaded, scan for specials that
-   = spawn thinkers
-   =
-   ===============================================================================
+
+/**
+ * After the map has been loaded, scan for specials that spawn thinkers.
  */
-
-short   numlinespecials;
-line_t *linespeciallist[MAXLINEANIMS];
-
 void P_SpawnSpecials(void)
 {
-    sector_t *sector;
-    xsector_t *xsector;
-    int     i;
+    int         i;
+    line_t     *line;
+    xline_t    *xline;
+    sector_t   *sector;
+    xsector_t  *xsector;
 
     //
     //      Init special SECTORs
     //
-    for(i = 0; i < DD_GetInteger(DD_SECTOR_COUNT); i++)
+    for(i = 0; i < numsectors; ++i)
     {
         sector = P_ToPtr(DMU_SECTOR, i);
         xsector = P_XSector(sector);
@@ -1186,29 +1180,33 @@ void P_SpawnSpecials(void)
     //
     numlinespecials = 0;
     TaggedLineCount = 0;
-    for(i = 0; i < DD_GetInteger(DD_LINE_COUNT); i++)
+    for(i = 0; i < numlines; ++i)
     {
-        switch (xlines[i].special)
+        line = P_ToPtr(DMU_LINE, i);
+        xline = P_XLine(line);
+
+        switch (xline->special)
         {
         case 100:               // Scroll_Texture_Left
         case 101:               // Scroll_Texture_Right
         case 102:               // Scroll_Texture_Up
         case 103:               // Scroll_Texture_Down
-            linespeciallist[numlinespecials] = P_ToPtr(DMU_LINE, i);
+            linespeciallist[numlinespecials] = line;
             numlinespecials++;
             break;
+
         case 121:               // Line_SetIdentification
-            if(xlines[i].arg1)
+            if(xline->arg1)
             {
                 if(TaggedLineCount == MAX_TAGGED_LINES)
                 {
                     Con_Error("P_SpawnSpecials: MAX_TAGGED_LINES "
                               "(%d) exceeded.", MAX_TAGGED_LINES);
                 }
-                TaggedLines[TaggedLineCount].line = P_ToPtr(DMU_LINE, i);
-                TaggedLines[TaggedLineCount++].lineTag = xlines[i].arg1;
+                TaggedLines[TaggedLineCount].line = line;
+                TaggedLines[TaggedLineCount++].lineTag = xline->arg1;
             }
-            xlines[i].special = 0;
+            xline->special = 0;
             break;
         }
     }
@@ -1216,11 +1214,11 @@ void P_SpawnSpecials(void)
     //
     //      Init other misc stuff
     //
-    for(i = 0; i < MAXCEILINGS; i++)
+    for(i = 0; i < MAXCEILINGS; ++i)
         activeceilings[i] = NULL;
-    for(i = 0; i < MAXPLATS; i++)
+    for(i = 0; i < MAXPLATS; ++i)
         activeplats[i] = NULL;
-    for(i = 0; i < MAXBUTTONS; i++)
+    for(i = 0; i < MAXBUTTONS; ++i)
         memset(&buttonlist[i], 0, sizeof(button_t));
 
     /*

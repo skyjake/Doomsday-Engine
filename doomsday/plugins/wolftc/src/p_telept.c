@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -84,7 +84,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
 
     for(i = 0; i < numsectors; i++)
     {
-        if(xsectors[i].tag == tag)
+        if(P_XSector(P_ToPtr(DMU_SECTOR, i))->tag == tag)
         {
             thinker = thinkercap.next;
             for(thinker = thinkercap.next; thinker != &thinkercap;
@@ -102,7 +102,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
 
                 sector = P_GetPtrp(m->subsector, DMU_SECTOR);
                 // wrong sector
-                if(P_ToIndex(sector) != i)
+                if(sector != P_ToPtr(DMU_SECTOR, i))
                     continue;
 
                 memcpy(oldpos, thing->pos, sizeof(thing->pos));

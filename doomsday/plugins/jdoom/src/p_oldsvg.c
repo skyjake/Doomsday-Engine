@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -255,35 +255,45 @@ void P_v19_UnArchivePlayers(void)
 
 void P_v19_UnArchiveWorld(void)
 {
-    int     i, j;
-    fixed_t offx, offy;
-    short  *get;
-    int     firstflat = W_CheckNumForName("F_START") + 1;
+    int         i, j;
+    fixed_t     offx, offy;
+    short      *get;
+    int         firstflat = W_CheckNumForName("F_START") + 1;
+    sector_t   *sec;
+    xsector_t  *xsec;
+    line_t     *line;
+    xline_t    *xline;
 
     get = (short *) save_p;
 
     // do sectors
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
-        P_SetFixed(DMU_SECTOR, i, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
-        P_SetFixed(DMU_SECTOR, i, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
-        P_SetInt(DMU_SECTOR, i, DMU_FLOOR_TEXTURE, *get++ + firstflat);
-        P_SetInt(DMU_SECTOR, i, DMU_CEILING_TEXTURE, *get++ + firstflat);
-        P_SetInt(DMU_SECTOR, i, DMU_LIGHT_LEVEL, *get++);
-        xsectors[i].special = *get++;  // needed?
-        xsectors[i].tag = *get++;      // needed?
-        xsectors[i].specialdata = 0;
-        xsectors[i].soundtarget = 0;
+        sec = P_ToPtr(DMU_SECTOR, i);
+        xsec = P_XSector(sec);
+
+        P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
+        P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
+        P_SetIntp(sec, DMU_FLOOR_TEXTURE, *get++ + firstflat);
+        P_SetIntp(sec, DMU_CEILING_TEXTURE, *get++ + firstflat);
+        P_SetIntp(sec, DMU_LIGHT_LEVEL, *get++);
+        xsec->special = *get++;  // needed?
+        xsec->tag = *get++;      // needed?
+        xsec->specialdata = 0;
+        xsec->soundtarget = 0;
     }
 
     // do lines
-    for(i = 0; i < numlines; i++)
+    for(i = 0; i < numlines; ++i)
     {
-        P_SetInt(DMU_LINE, i, DMU_FLAGS, *get++);
-        xlines[i].special = *get++;
-        xlines[i].tag = *get++;
+        line = P_ToPtr(DMU_LINE, i);
+        xline = P_XLine(line);
 
-        for(j = 0; j < 2; j++)
+        P_SetIntp(line, DMU_FLAGS, *get++);
+        xline->special = *get++;
+        xline->tag = *get++;
+
+        for(j = 0; j < 2; ++j)
         {
             side_t* sdef;
 

@@ -90,9 +90,6 @@ typedef struct xline_s {
     short           useon;    // d64tc
 } xline_t;
 
-extern xsector_t *xsectors;
-extern xline_t *xlines;
-
 xline_t*    P_XLine(line_t* line);
 xsector_t*  P_XSector(sector_t* sector);
 xsector_t*  P_XSectorOfSubsector(subsector_t* sub);

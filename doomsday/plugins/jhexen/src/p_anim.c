@@ -14,6 +14,8 @@
 
 #include "jhexen.h"
 
+#include "p_mapsetup.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define ANIM_SCRIPT_NAME "ANIMDEFS"
@@ -170,7 +172,7 @@ static void P_LightningFlash(void)
         if(LightningFlash)
         {
             tempLight = LightningLightLevels;
-            for(i = 0; i < DD_GetInteger(DD_SECTOR_COUNT); i++)
+            for(i = 0; i < numsectors; i++)
             {
                 tempSec = P_ToPtr(DMU_SECTOR, i);
                 if(P_GetIntp(tempSec, DMU_CEILING_TEXTURE) == skyflatnum ||
@@ -189,7 +191,7 @@ static void P_LightningFlash(void)
         else
         {                       // remove the alternate lightning flash special
             tempLight = LightningLightLevels;
-            for(i = 0; i < DD_GetInteger(DD_SECTOR_COUNT); i++)
+            for(i = 0; i < numsectors; i++)
             {
                 tempSec = P_ToPtr(DMU_SECTOR, i);
                 if(P_GetIntp(tempSec, DMU_CEILING_TEXTURE) == skyflatnum ||
@@ -209,7 +211,7 @@ static void P_LightningFlash(void)
     flashLight = 200 + (P_Random() & 31);
     tempLight = LightningLightLevels;
     foundSec = false;
-    for(i = 0; i < DD_GetInteger(DD_SECTOR_COUNT); i++)
+    for(i = 0; i < numsectors; i++)
     {
         tempSec = P_ToPtr(DMU_SECTOR, i);
         if(P_GetIntp(tempSec, DMU_CEILING_TEXTURE) == skyflatnum ||
@@ -312,8 +314,10 @@ void P_ForceLightning(void)
 
 void P_InitLightning(void)
 {
-    int     i;
-    int     secCount;
+    int         i;
+    int         secCount;
+    sector_t   *sec;
+    xsector_t  *xsec;
 
     if(!P_GetMapLightning(gamemap))
     {
@@ -323,11 +327,13 @@ void P_InitLightning(void)
     }
     LightningFlash = 0;
     secCount = 0;
-    for(i = 0; i < DD_GetInteger(DD_SECTOR_COUNT); i++)
+    for(i = 0; i < numsectors; ++i)
     {
-        if(P_GetInt(DMU_SECTOR, i, DMU_CEILING_TEXTURE) == skyflatnum ||
-           xsectors[i].special == LIGHTNING_SPECIAL ||
-           xsectors[i].special == LIGHTNING_SPECIAL2)
+        sec = P_ToPtr(DMU_SECTOR, i);
+        xsec = P_XSector(sec);
+        if(P_GetIntp(sec, DMU_CEILING_TEXTURE) == skyflatnum ||
+           xsec->special == LIGHTNING_SPECIAL ||
+           xsec->special == LIGHTNING_SPECIAL2)
         {
             secCount++;
         }

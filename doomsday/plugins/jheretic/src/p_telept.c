@@ -168,11 +168,11 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
 
 boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
 {
-    int     i;
-    int     tag;
-    mobj_t *m;
-    thinker_t *thinker;
-    sector_t *sector;
+    int         i;
+    int         tag;
+    mobj_t     *m;
+    thinker_t  *th;
+    sector_t   *sec;
 
     if(thing->flags2 & MF2_NOTELEPORT)
         return false;
@@ -183,34 +183,31 @@ boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
         return 0;
 
     tag = P_XLine(line)->tag;
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
-        if(xsectors[i].tag == tag)
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(P_XSector(sec)->tag == tag)
         {
-            thinker = thinkercap.next;
-            for(thinker = thinkercap.next; thinker != &thinkercap;
-                thinker = thinker->next)
+            th = thinkercap.next;
+            for(th = thinkercap.next; th != &thinkercap; th = th->next)
             {
-                // Not a mobj
-                if(thinker->function != P_MobjThinker)
-                    continue;
+                if(th->function != P_MobjThinker)
+                    continue; // Not a mobj
 
-                m = (mobj_t *) thinker;
+                m = (mobj_t *) th;
 
-                // Not a teleportman
                 if(m->type != MT_TELEPORTMAN)
-                    continue;
+                    continue; // Not a teleportman
 
-                sector = P_GetPtrp(m->subsector, DMU_SECTOR);
-                // wrong sector
-                if(P_ToIndex(sector) != i)
-                    continue;
+                if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
+                    continue; // wrong sector
 
-                return (P_Teleport(thing, m->pos[VX], m->pos[VY], m->angle));
+                return P_Teleport(thing, m->pos[VX], m->pos[VY], m->angle);
             }
         }
     }
-    return (false);
+
+    return false;
 }
 
 #if __JHERETIC__ || __JHEXEN__
