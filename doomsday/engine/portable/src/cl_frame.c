@@ -198,9 +198,14 @@ uint Cl_ConvertSetToOrdinal(byte set)
 void Cl_Frame2Received(int packetType)
 {
 	byte    set = Msg_ReadByte(), oldSet, resend, deltaType;
+    int     deltaCount = 0;
 	byte    resendAcks[300];
 	int     i, numResendAcks = 0;
 	boolean skip = false;
+#ifdef _DEBUG
+    int     startOffset;
+    int     deltaLength;
+#endif
 
 	// All frames that arrive before the first frame are ignored.
 	// They are most likely from the wrong map.
@@ -246,15 +251,35 @@ void Cl_Frame2Received(int packetType)
 	// or ack arrives too late).
 	if(!Cl_HistoryCheck(set))
 	{
+        int readCount = 0;
+        
 		// It isn't yet in the history, so add it there.
 		Cl_HistoryAdd(set);
 
         VERBOSE2( Con_Printf("Starting to process deltas in set %i.\n", set) );
 
+#ifdef _DEBUG
+        deltaCount = Msg_ReadLong();
+        Con_Message("Set contains %i deltas.\n", deltaCount);
+#endif
+        
 		// Read and process the message.
 		while(!Msg_End())
 		{
+#ifdef _DEBUG
+            /*Con_Message("Starting to read delta %i of %i...\n", ++readCount,
+                        deltaCount);*/
+            
+            // Check length field.
+            startOffset = Msg_Offset();
+            deltaLength = Msg_ReadLong();       
+            //Con_Message("Incoming delta length %i bytes.\n", deltaLength);
+#endif
+            
 			deltaType = Msg_ReadByte();
+#ifdef _DEBUG
+            //Con_Message("  Delta type is %i.\n", deltaType & ~DT_RESENT);
+#endif
 			skip = false;
             
             VERBOSE2( Con_Printf("Received delta %i.\n", deltaType & ~DT_RESENT) );
@@ -296,7 +321,7 @@ void Cl_Frame2Received(int packetType)
             {
                 VERBOSE2( Con_Printf("  Not resent.\n") );
             }
-
+                       
 			switch (deltaType)
 			{
 			case DT_CREATE_MOBJ:
@@ -343,8 +368,18 @@ void Cl_Frame2Received(int packetType)
 				Con_Error("Cl_Frame2Received: Unknown delta type %i.\n",
 						  deltaType);
 			}
-		}
 
+#ifdef _DEBUG
+            // Check that we didn't misread.
+            if(Msg_Offset() - startOffset != deltaLength)
+            {
+                Con_Error("Cl_Frame2Received: Misinterpreted delta! Real length was "
+                          "%i bytes, but we read %i bytes.\n",
+                          deltaLength, Msg_Offset() - startOffset);
+            }
+#endif
+        }
+        
 		// We have now received a frame.
 		gotframe = true;
 

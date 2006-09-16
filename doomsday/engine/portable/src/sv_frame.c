@@ -688,6 +688,13 @@ void Sv_WriteSoundDelta(const void *deltaPtr)
  */
 void Sv_WriteDeltaHeader(byte type, const delta_t * delta)
 {
+#ifdef _DEBUG
+    if(type >= NUM_DELTA_TYPES)
+    {
+        Con_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
+    }
+#endif
+
     if(delta->state == DELTA_UNACKED)
     {
         // Flag this as Resent.
@@ -718,7 +725,17 @@ void Sv_WriteDeltaHeader(byte type, const delta_t * delta)
 void Sv_WriteDelta(const delta_t * delta)
 {
     byte    type = delta->type;
+#ifdef _DEBUG
+    int     lengthOffset;
+    int     endOffset;
+#endif
 
+#ifdef _DEBUG
+    // Extra length field in debug builds.
+    lengthOffset = Msg_Offset();
+    Msg_WriteLong(0);
+#endif
+    
     // Null mobj deltas are special.
     if(type == DT_MOBJ)
     {
@@ -727,7 +744,11 @@ void Sv_WriteDelta(const delta_t * delta)
             // This'll be the entire delta. No more data is needed.
             Sv_WriteDeltaHeader(DT_NULL_MOBJ, delta);
             Msg_WriteShort(delta->id);
+#ifdef _DEBUG
+            goto writeDeltaLength;
+#else
             return;
+#endif
         }
 
 #if 0
@@ -746,7 +767,7 @@ void Sv_WriteDelta(const delta_t * delta)
 
     // First the type of the delta.
     Sv_WriteDeltaHeader(type, delta);
-
+    
     switch (delta->type)
     {
     case DT_MOBJ:
@@ -783,6 +804,15 @@ void Sv_WriteDelta(const delta_t * delta)
     default:
         Con_Error("Sv_WriteDelta: Unknown delta type %i.\n", delta->type);
     }
+    
+#ifdef _DEBUG
+writeDeltaLength:
+    // Update the length of the delta.
+    endOffset = Msg_Offset();
+    Msg_SetOffset(lengthOffset);
+    Msg_WriteLong(endOffset - lengthOffset);
+    Msg_SetOffset(endOffset);
+#endif
 }
 
 /*
@@ -825,6 +855,9 @@ void Sv_SendFrame(int playerNumber)
     int     maxFrameSize, lastStart;
     byte    oldResend;
     delta_t *delta;
+    int     deltaCount = 0;
+    int     endOffset = 0;
+    int     deltaCountOffset = 0;
 
     // Does the send queue allow us to send this packet?
     // Bandwidth rating is updated during the check.
@@ -858,6 +891,12 @@ void Sv_SendFrame(int playerNumber)
     // duplicates.
     Msg_WriteByte(pool->setDealer);
 
+    // The number of deltas in the packet will be here.
+    deltaCountOffset = Msg_Offset();
+#ifdef _DEBUG
+    Msg_WriteLong(0);
+#endif
+    
     /*#ifdef _DEBUG
        Con_Printf("set%i\n", pool->setDealer);
        #endif */
@@ -895,6 +934,9 @@ void Sv_SendFrame(int playerNumber)
                 pool->resendDealer = oldResend;
             break;
         }
+        
+        // Successfully written, increment counter.
+        deltaCount++;
 
         /*#ifdef _DEBUG
            if(delta->state == DELTA_UNACKED)
@@ -916,6 +958,14 @@ void Sv_SendFrame(int playerNumber)
         }
     }
 
+    // Update the number of deltas included in the packet.
+#ifdef _DEBUG
+    endOffset = Msg_Offset();
+    Msg_SetOffset(deltaCountOffset);
+    Msg_WriteLong(deltaCount);
+    Msg_SetOffset(endOffset);
+#endif
+    
     // The psv_first_frame2 packet is sent Ordered, which means it'll
     // always arrive in the correct order when compared to the other
     // game setup packets.
