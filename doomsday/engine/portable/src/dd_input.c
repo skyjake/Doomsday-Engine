@@ -66,7 +66,7 @@ typedef struct repeater_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     mouseFilter = 1;        // No filtering by default.
+int     mouseFilter = 1;        // Filtering on by default.
 int     mouseInverseY = false;
 int     mouseWheelSensi = 10;   // I'm shooting in the dark here.
 unsigned int  mouseFreq = 0;
