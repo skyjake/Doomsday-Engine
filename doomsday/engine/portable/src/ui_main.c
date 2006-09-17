@@ -436,8 +436,8 @@ int UI_Responder(event_t *ev)
     case EV_MOUSE_AXIS:
         if(ev->data1 || ev->data2)
             ui_moved = true;
-        ui_cx += ev->data1;
-        ui_cy += ev->data2;
+        ui_cx += ev->data1 / DD_MICKEY_ACCURACY;
+        ui_cy += ev->data2 / DD_MICKEY_ACCURACY;
         if(ui_cx < 0)
             ui_cx = 0;
         if(ui_cy < 0)
