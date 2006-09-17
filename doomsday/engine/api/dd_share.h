@@ -110,6 +110,7 @@ extern          "C" {
 #define MAX_OF(x, y)            ((x) > (y)? (x) : (y))
 #define MIN_OF(x, y)            ((x) < (y)? (x) : (y))
 #define MINMAX_OF(a, x, b)      ((x) < (a)? (a) : (x) > (b)? (b) : (x))
+#define SIGN_OF(x)              ((x) > 0? +1 : (x) < 0? -1 : 0)
 
     typedef enum // Value types.
     {
@@ -505,6 +506,8 @@ extern          "C" {
     // The mouse wheel is considered two extra mouse buttons.
 #define DDMB_MWHEELUP       0x1000
 #define DDMB_MWHEELDOWN     0x2000
+    
+#define DD_MICKEY_ACCURACY  1000
 
     //------------------------------------------------------------------------
     //
@@ -907,7 +910,8 @@ extern          "C" {
     byte            halofactor;         /* strength of halo */ \
     byte            translucency;       /* default = 0 = opaque */ \
     short           vistarget;          /* -1 = mobj is becoming less visible, */ \
-                                        /* 0 = no change, 2= mobj is becoming more visible */
+                                        /* 0 = no change, 2= mobj is becoming more visible */ \
+    int             reactiontime;       /* if not zero, freeze controls */
 
 
     typedef struct ddmobj_base_s {
@@ -1313,6 +1317,8 @@ typedef enum blendmode_e {
 #define DDPF_FIXMOM         0x40   // Server: send momentum to client.
 #define DDPF_NOCLIP         0x80   // Client: don't clip movement.
 #define DDPF_CHASECAM       0x100  // Chase camera mode (third person view).
+#define DDPF_INTERYAW       0x200  // Interpolate view yaw angles (used with locking).
+#define DDPF_INTERPITCH     0x400  // Interpolate view pitch angles (used with locking).
 
 #define PLAYERNAMELEN       81
 
@@ -1347,6 +1353,12 @@ typedef enum blendmode_e {
 
     struct mobj_s;
 
+    typedef struct fixcounters_s {
+        int             angles;
+        int             pos;
+        int             mom;
+    } fixcounters_t;
+
     typedef struct ddplayer_s {
         struct mobj_s  *mo;        // pointer to a (game specific) mobj
         fixed_t         viewz;     // focal origin above r.z
@@ -1361,8 +1373,10 @@ typedef enum blendmode_e {
                                    /// be used for anything critical).
         int             flags;
         int             filter;    // RGBA filter for the camera
-        int             clAngle;   // client side
-        float           clLookDir; // client side
+        //int             clAngle;   // client side
+        //float           clLookDir; // client side
+        fixcounters_t    fixcounter;
+        fixcounters_t    fixacked;
         angle_t         lastangle; // For calculating turndeltas.
         ddpsprite_t     psprites[DDMAXPSPRITES];    // Player sprites.
         void           *extradata; // Pointer to any game-specific data.
