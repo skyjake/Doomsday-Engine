@@ -323,7 +323,7 @@ D_CMD(Chat)
                 break;
             }
     }
-    Msg_Begin(pkt_chat);
+    Msg_Begin(PKT_CHAT);
     Msg_WriteByte(consoleplayer);
     Msg_WriteShort(mask);
     Msg_Write(buffer, strlen(buffer) + 1);
@@ -383,7 +383,7 @@ void Net_SendCommands(void)
     // packed commands.
     msg = (byte *) gx.NetPlayerEvent(1, DDPE_WRITE_COMMANDS, cmd);
 
-    Msg_Begin(pcl_commands);
+    Msg_Begin(PCL_COMMANDS);
     Msg_Write(msg + 2, *(ushort *) msg);
 
     // Send the packet to the server, i.e. player zero.
@@ -476,7 +476,7 @@ void Net_Update(void)
         mobj_t *mo = players[consoleplayer].mo;
 
         coordTimer = net_coordtime; // 35/2
-        Msg_Begin(pkt_coords);
+        Msg_Begin(PKT_COORDS);
         Msg_WriteShort(mo->pos[VX] >> 16);
         Msg_WriteShort(mo->pos[VY] >> 16);
         if(mo->pos[VZ] == mo->floorz)
@@ -613,7 +613,7 @@ void Net_StopGame(void)
     {
         // We are an open server. This means we should inform all the
         // connected clients that the server is about to close.
-        Msg_Begin(psv_server_close);
+        Msg_Begin(PSV_SERVER_CLOSE);
         Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
         N_FlushOutgoing();
     }
@@ -646,8 +646,9 @@ void Net_StopGame(void)
     // match our current ones.
     if(players[0].mo)
     {
-        players[0].mo->angle = players[consoleplayer].clAngle;
-        players[0].lookdir = players[consoleplayer].clLookDir;
+        /* $unifiedangles */
+        players[0].mo->angle = players[consoleplayer].mo->angle;
+        players[0].lookdir = players[consoleplayer].lookdir;
     }
     consoleplayer = displayplayer = 0;
     players[0].ingame = true;
@@ -1121,7 +1122,7 @@ D_CMD(SetName)
         strcpy(clients[0].name, info.name);
 
     Net_SendPacket(DDSP_CONFIRM | (isClient ? 0 : DDSP_ALL_PLAYERS),
-                   pkt_player_info, &info, sizeof(info));
+                   PKT_PLAYER_INFO, &info, sizeof(info));
     return true;
 }
 

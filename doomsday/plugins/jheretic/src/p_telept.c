@@ -106,10 +106,10 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
         {
             thing->pos[VZ] = thing->floorz;
             player->plr->viewz = thing->pos[VZ] + player->plr->viewheight;
-            player->plr->clLookDir = 0;
+            //player->plr->clLookDir = 0; /* $unifiedangles */
             player->plr->lookdir = 0;
         }
-        player->plr->clAngle = angle;
+        //player->plr->clAngle = angle; /* $unifiedangles */
         player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     }
     else if(thing->flags & MF_MISSILE)

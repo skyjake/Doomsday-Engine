@@ -123,13 +123,13 @@ void Cl_CleanUp()
 
 /*
  * Sends a hello packet.
- * pcl_hello2 includes the Game ID (16 chars).
+ * PCL_HELLO2 includes the Game ID (16 chars).
  */
 void Cl_SendHello(void)
 {
     char    buf[16];
 
-    Msg_Begin(pcl_hello2);
+    Msg_Begin(PCL_HELLO2);
     Msg_WriteLong(clientID);
 
     // The game mode is included in the hello packet.
@@ -151,7 +151,7 @@ void Cl_AnswerHandshake(handshake_packet_t * pShake)
     shake.gameTime = LONG(shake.gameTime);
 
     // Immediately send an acknowledgement.
-    Msg_Begin(pcl_ack_shake);
+    Msg_Begin(PCL_ACK_SHAKE);
     Net_SendBuffer(0, SPF_ORDERED);
 
     // Check the version number.
@@ -255,24 +255,24 @@ void Cl_GetPackets(void)
 
             switch (netBuffer.msg.type)
             {
-            case psv_frame:
+            case PSV_FRAME:
                 Cl_FrameReceived();
                 break;
 
-            case psv_first_frame2:
-            case psv_frame2:
+            case PSV_FIRST_FRAME2:
+            case PSV_FRAME2:
                 Cl_Frame2Received(netBuffer.msg.type);
                 break;
 
-            case pkt_coords:
+            case PKT_COORDS:
                 Cl_CoordsReceived();
                 break;
 
-            case psv_sound:
+            case PSV_SOUND:
                 Cl_Sound();
                 break;
 
-            case psv_filter:
+            case PSV_FILTER:
                 players[consoleplayer].filter = Msg_ReadLong();
                 break;
 
@@ -285,59 +285,63 @@ void Cl_GetPackets(void)
         // How about the rest?
         switch (netBuffer.msg.type)
         {
-        case pkt_democam:
-        case pkt_democam_resume:
+        case PSV_PLAYER_FIX:
+            Cl_HandlePlayerFix();
+            break;        
+            
+        case PKT_DEMOCAM:
+        case PKT_DEMOCAM_RESUME:
             Demo_ReadLocalCamera();
             break;
 
-        case pkt_ping:
+        case PKT_PING:
             Net_PingResponse();
             break;
 
-        case psv_sync:
+        case PSV_SYNC:
             // The server updates our time. Latency has been taken into
             // account, so...
             gameTime = Msg_ReadLong() / 100.0;
-            Con_Printf("psv_sync: gameTime=%.3f\n", gameTime);
+            Con_Printf("PSV_SYNC: gameTime=%.3f\n", gameTime);
             DD_ResetTimer();
             break;
 
-        case psv_handshake:
+        case PSV_HANDSHAKE:
             Cl_AnswerHandshake((handshake_packet_t *) netBuffer.msg.data);
             break;
 
-        case pkt_player_info:
+        case PKT_PLAYER_INFO:
             Cl_HandlePlayerInfo((playerinfo_packet_t *) netBuffer.msg.data);
             break;
 
-        case psv_player_exit:
+        case PSV_PLAYER_EXIT:
             Cl_PlayerLeaves(Msg_ReadByte());
             break;
 
-        case pkt_chat:
+        case PKT_CHAT:
             Net_ShowChatMessage();
             gx.NetPlayerEvent(netBuffer.msg.data[0], DDPE_CHAT_MESSAGE,
                               netBuffer.msg.data + 3);
             break;
 
-        case psv_server_close:  // We should quit?
+        case PSV_SERVER_CLOSE:  // We should quit?
             netLoggedIn = false;
             Con_Execute(CMDS_SPKT, "net disconnect", true);
             break;
 
-        case psv_console_text:
+        case PSV_CONSOLE_TEXT:
             i = Msg_ReadLong();
             Con_FPrintf(i, (char*)netBuffer.cursor);
             break;
 
-        case pkt_login:
+        case PKT_LOGIN:
             // Server responds to our login request. Let's see if we
             // were successful.
             netLoggedIn = Msg_ReadByte();
             break;
 
         default:
-            if(netBuffer.msg.type >= pkt_game_marker)
+            if(netBuffer.msg.type >= PKT_GAME_MARKER)
             {
                 gx.HandlePacket(netBuffer.player, netBuffer.msg.type,
                                 netBuffer.msg.data, netBuffer.length);
@@ -368,7 +372,7 @@ void Cl_Ticker(void)
 
     Cl_LocalCommand();
     Cl_PredictMovement();
-    Cl_MovePsprites();
+    //Cl_MovePsprites();
 
     // Clients don't send commands on every tic (over the network).
     if(++ticSendTimer > CLIENT_TICCMD_INTERVAL)
@@ -386,7 +390,7 @@ D_CMD(Login)
     // Only clients can log in.
     if(!isClient)
         return false;
-    Msg_Begin(pkt_login);
+    Msg_Begin(PKT_LOGIN);
     // Write the password.
     if(argc == 1)
         Msg_WriteByte(0);       // No password given!

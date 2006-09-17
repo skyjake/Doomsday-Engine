@@ -1056,9 +1056,13 @@ void ClearPlayer(player_t *p)
     ddplayer->extradata = p;
     // Restore the playeringame data.
     ddplayer->ingame = playeringame;
-    ddplayer->flags = flags;
+    ddplayer->flags = flags & ~(DDPF_INTERYAW | DDPF_INTERPITCH);
     // Don't clear the start spot.
     p->startspot = start;
+    
+    ddplayer->fixacked.angles = 
+        ddplayer->fixacked.pos = 
+        ddplayer->fixacked.mom = -1;
 }
 
 /*
@@ -1739,13 +1743,15 @@ void G_DoSingleReborn(void)
 void G_LoadGame(int slot)
 {
     GameLoadSlot = slot;
+    gameaction = ga_loadgame;
+}
 #else
 void G_LoadGame(char *name)
 {
     strcpy(savename, name);
-#endif
     gameaction = ga_loadgame;
 }
+#endif
 
 /*
  * Called by G_Ticker based on gameaction.

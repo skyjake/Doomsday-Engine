@@ -54,7 +54,7 @@
 
 /*
  * Read a sound delta from the message buffer and play it.
- * Only used with psv_frame2 packets.
+ * Only used with PSV_FRAME2 packets.
  */
 void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 {
@@ -230,7 +230,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 }
 
 /*
- * Called when a psv_frame sound packet is received.
+ * Called when a PSV_FRAME sound packet is received.
  */
 void Cl_Sound(void)
 {

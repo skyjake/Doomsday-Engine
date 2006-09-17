@@ -103,6 +103,8 @@ static viewer_t lastSharpView[2];
 static boolean resetNextViewer = true;
 
 static byte showFrameTimePos = false;
+static byte showViewAngleDeltas = false;
+static byte showViewPosDeltas = false;
 
 // BSP cvars.
 int bspBuild = true;
@@ -131,6 +133,10 @@ void R_Register(void)
     C_VAR_INT("con-show-during-setup", &loadInStartupMode, 0, 0, 1);
 
     C_VAR_INT("rend-vsync", &useVSync, 0, 0, 1);
+    
+    C_VAR_BYTE("rend-info-deltas-angles", &showViewAngleDeltas, 0, 0, 1);
+    
+    C_VAR_BYTE("rend-info-deltas-pos", &showViewPosDeltas, 0, 0, 1);
 }
 
 /**
@@ -244,19 +250,20 @@ void R_ResetViewer(void)
     resetNextViewer = 1;
 }
 
-void R_InterpolateViewer(viewer_t * start, viewer_t * end, float pos,
-                         viewer_t * out)
+void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos,
+                         viewer_t *out)
 {
     float   inv = 1 - pos;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
     out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
-//  out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
-//  out->pitch = inv * start->pitch + pos * end->pitch;
+
+    out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
+    out->pitch = inv * start->pitch + pos * end->pitch;
 }
 
-void R_SetViewPos(viewer_t * v)
+void R_SetViewPos(viewer_t *v)
 {
     viewx = v->pos[VX];
     viewy = v->pos[VY];
@@ -269,7 +276,7 @@ void R_SetViewPos(viewer_t * v)
  * The components whose difference is too large for interpolation will be
  * snapped to the sharp values.
  */
-void R_CheckViewerLimits(viewer_t * src, viewer_t * dst)
+void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 {
 #define MAXMOVE (FRACUNIT*32)
     if(abs(dst->pos[VX] - src->pos[VX]) > MAXMOVE ||
@@ -291,8 +298,9 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
     if(player->mo == NULL)
         return;
 
-    view->angle = player->clAngle + viewangleoffset;
-    view->pitch = player->clLookDir;
+    /* $unifiedangles */
+    view->angle = player->mo->angle + viewangleoffset;
+    view->pitch = player->lookdir;
     view->pos[VX] = player->mo->pos[VX] + viewxOffset;
     view->pos[VY] = player->mo->pos[VY] + viewyOffset;
     view->pos[VZ] = player->viewz + viewzOffset;
@@ -494,29 +502,54 @@ void R_SetupFrame(ddplayer_t *player)
         R_InterpolateViewer(lastSharpView, &sharpView, frameTimePos,
                             &smoothView);
 
-        // Always use the latest view angles known to us.
-        smoothView.angle = sharpView.angle;
-        smoothView.pitch = sharpView.pitch;
+        // Use the latest view angles known to us, if the interpolation flags
+        // are not set. The interpolation flags are used when the view angles
+        // are updated during the sharp tics and need to be smoothed out here.
+        // For example, view locking (dead or camera setlock).
+        if(!(player->flags & DDPF_INTERYAW))
+            smoothView.angle = sharpView.angle;
+        if(!(player->flags & DDPF_INTERPITCH))
+            smoothView.pitch = sharpView.pitch;
         R_SetViewPos(&smoothView);
 
-#if 0
+        // Monitor smoothness of yaw/pitch changes.
+        if(showViewAngleDeltas)
+        {
+            static double oldtime = 0;
+            static float oldyaw, oldpitch;
+            float yaw = (double)smoothView.angle / ANGLE_MAX * 360;
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
+                        "Rdx=%-10.3f Rdy=%-10.3f\n",
+                        SECONDS_TO_TICKS(gameTime),
+                        frameTimePos,
+                        sysTime - oldtime,
+                        yaw - oldyaw,
+                        smoothView.pitch - oldpitch,
+                        (yaw - oldyaw) / (sysTime - oldtime),
+                        (smoothView.pitch - oldpitch) / (sysTime - oldtime)); 
+            oldyaw = yaw;
+            oldpitch = smoothView.pitch;
+            oldtime = sysTime;
+        }
+
         // The Rdx and Rdy should stay constant when moving.
+        if(showViewPosDeltas)
         {
             static double oldtime = 0;
             static fixed_t oldx, oldy;
-            fprintf(outFile, "F=%.3f dt=%-5.3f dx=%-5.3f dy=%-5.3f "
-                    "Rdx=%-5.3f Rdy=%-5.3f\n",
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
+                    "Rdx=%-10.3f Rdy=%-10.3f\n",
+                    SECONDS_TO_TICKS(gameTime),
                     frameTimePos,
-                    nowTime - oldtime,
-                    FIX2FLT(smoothView.x - oldx),
-                    FIX2FLT(smoothView.y - oldy),
-                    FIX2FLT(smoothView.x - oldx) / (nowTime - oldtime),
-                    FIX2FLT(smoothView.y - oldy) / (nowTime - oldtime));
-            oldx = smoothView.x;
-            oldy = smoothView.y;
-            oldtime = nowTime;
+                    sysTime - oldtime,
+                    FIX2FLT(smoothView.pos[0] - oldx),
+                    FIX2FLT(smoothView.pos[1] - oldy),
+                    FIX2FLT(smoothView.pos[0] - oldx) / (sysTime - oldtime),
+                    FIX2FLT(smoothView.pos[1] - oldy) / (sysTime - oldtime));
+            oldx = smoothView.pos[VX];
+            oldy = smoothView.pos[VY];
+            oldtime = sysTime;
         }
-#endif
     }
 
     if(showFrameTimePos)

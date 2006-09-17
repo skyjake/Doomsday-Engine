@@ -413,7 +413,7 @@ int Cl_ReadLumpDelta(void)
 }
 
 /*
- * Reads a sector delta from the psv_frame2 message buffer and applies it
+ * Reads a sector delta from the PSV_FRAME2 message buffer and applies it
  * to the world.
  */
 void Cl_ReadSectorDelta2(int deltaType, boolean skip)

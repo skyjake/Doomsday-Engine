@@ -338,24 +338,34 @@ void P_CheckPlayerJump(player_t *player)
 
 void P_MovePlayer(player_t *player)
 {
+    ddplayer_t *dp = player->plr;
     mobj_t *plrmo = player->plr->mo;
     ticcmd_t *cmd = &player->cmd;
 
     //  player->plr->mo->angle += (cmd->angleturn<<16);
 
     // Change the angle if possible.
-    if(!(player->plr->flags & DDPF_FIXANGLES))
+    /* $unifiedangles */
+    if(IS_SERVER && player != &players[0])
     {
-        plrmo->angle = cmd->angle << 16;
-        player->plr->lookdir = cmd->pitch / (float) DDMAXSHORT *110;
+        if(dp->fixcounter.angles == dp->fixacked.angles)  // all acked?
+        {
+#ifdef _DEBUG
+            VERBOSE2( Con_Message("Server accepts client %i angle from command (ang=%i).\n",
+                                  player - players, cmd->angle) );
+#endif
+            // Accept the client's version of the angles.
+            plrmo->angle = cmd->angle << 16;
+            dp->lookdir = cmd->pitch / (float) DDMAXSHORT *110;
+        }
     }
 
     // Do not let the player control movement if not onground.
-    onground =  P_IsPlayerOnGround(player);
-    if(player->plr->flags & DDPF_CAMERA)    // $democam
+    onground = P_IsPlayerOnGround(player);
+    if(dp->flags & DDPF_CAMERA)    // $democam
     {
         // Cameramen have a 3D thrusters!
-        P_Thrust3D(player, player->plr->mo->angle, player->plr->lookdir,
+        P_Thrust3D(player, plrmo->angle, dp->lookdir,
                    cmd->forwardMove * 2048, cmd->sideMove * 2048);
     }
     else
@@ -367,14 +377,12 @@ void P_MovePlayer(player_t *player)
 
         if(cmd->forwardMove && movemul)
         {
-            P_Thrust(player, player->plr->mo->angle,
-                     cmd->forwardMove * movemul);
+            P_Thrust(player, plrmo->angle, cmd->forwardMove * movemul);
         }
 
         if(cmd->sideMove && movemul)
         {
-            P_Thrust(player, player->plr->mo->angle - ANG90,
-                     cmd->sideMove * movemul);
+            P_Thrust(player, plrmo->angle - ANG90, cmd->sideMove * movemul);
         }
 
         if((cmd->forwardMove || cmd->sideMove) &&
@@ -444,6 +452,7 @@ void P_DeathThink(player_t *player)
                     lookDelta = 6;
                 }
                 player->plr->lookdir += lookDelta;
+                player->plr->flags |= DDPF_INTERPITCH;
             }
         }
     }
@@ -470,6 +479,7 @@ void P_DeathThink(player_t *player)
         if(abs((int) player->plr->lookdir) < 6)
             player->plr->lookdir = 0;
 #endif
+        player->plr->flags |= DDPF_INTERPITCH;
     }
 
 #if __JHEXEN__
@@ -526,6 +536,8 @@ void P_DeathThink(player_t *player)
             player->plr->mo->angle += ANG5; // Turn clockwise
         else
             player->plr->mo->angle -= ANG5; // Turn counter clockwise
+        
+        player->plr->flags |= DDPF_INTERYAW;
 #endif
     }
     else
@@ -888,8 +900,8 @@ void P_ClientSideThink(void)
 #endif
 
     // Update view angles. The server fixes them if necessary.
-    mo->angle = dpl->clAngle;
-    dpl->lookdir = dpl->clLookDir;
+    /*mo->angle = dpl->clAngle;
+    dpl->lookdir = dpl->clLookDir;*/ /* $unifiedangles */
 }
 
 void P_PlayerThinkState(player_t *player)
@@ -927,6 +939,12 @@ void P_PlayerThinkState(player_t *player)
     else
     {
         plrmo->reactiontime = 0;
+    }
+    
+    if(player->playerstate != PST_DEAD)
+    {
+        // Clear the view angle interpolation flags by default.
+        player->plr->flags &= ~(DDPF_INTERYAW | DDPF_INTERPITCH);
     }
 }
 

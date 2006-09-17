@@ -368,8 +368,8 @@ void P_v19_UnArchiveThinkers(void)
                 mobj->player = &players[pnum];
                 mobj->dplayer = mobj->player->plr;
                 mobj->dplayer->mo = mobj;
-                mobj->dplayer->clAngle = mobj->angle;
-                mobj->dplayer->clLookDir = 0;
+                //mobj->dplayer->clAngle = mobj->angle; /* $unifiedangles */
+                mobj->dplayer->lookdir = 0; /* $unifiedangles */
             }
             P_SetThingPosition(mobj);
             mobj->info = &mobjinfo[mobj->type];

@@ -1921,7 +1921,7 @@ void AM_drawPlayers(void)
 
     if(!IS_NETGAME)
     {
-        ang = plr->plr->clAngle;
+        ang = plr->plr->mo->angle;/* $unifiedangles */
 #if __JDOOM__
         if(cheating)
             AM_drawLineCharacter(cheat_player_arrow, NUMCHEATPLYRLINES, size, ang,
@@ -1932,7 +1932,7 @@ void AM_drawPlayers(void)
                                  FIX2FLT(plr->plr->mo->pos[VX]),
                                  FIX2FLT(plr->plr->mo->pos[VY]));
 #else
-        AM_drawLineCharacter(player_arrow, NUMPLYRLINES, size, plr->plr->clAngle,    //mo->angle,
+        AM_drawLineCharacter(player_arrow, NUMPLYRLINES, size, plr->plr->mo->angle, /* $unifiedangles */
                              WHITE, FIX2FLT(plr->plr->mo->pos[VX]),
                              FIX2FLT(plr->plr->mo->pos[VY]));
 #endif
@@ -1970,8 +1970,7 @@ void AM_drawPlayers(void)
             color = their_colors[cfg.PlayerColor[i]];
 
         AM_drawLineCharacter(player_arrow, NUMPLYRLINES, size,
-                             consoleplayer ==
-                             i ? p->plr->clAngle : p->plr->mo->angle, color,
+                             p->plr->mo->angle, color,/* $unifiedangles */
                              FIX2FLT(p->plr->mo->pos[VX]),
                              FIX2FLT(p->plr->mo->pos[VY]));
     }
@@ -2200,7 +2199,7 @@ void AM_GL_SetupState()
     //gl.Scalef( extrascale, extrascale , 0);
 
     if(cfg.automapRotate && followplayer)    // Rotate map?
-        gl.Rotatef(plr->plr->clAngle / (float) ANGLE_MAX * 360 - 90, 0, 0, 1);
+        gl.Rotatef(plr->plr->mo->angle / (float) ANGLE_MAX * 360 - 90, 0, 0, 1); /* $unifiedangles */
 
     gl.Translatef(-(winx+(winw / 2.0f)), -(winy+(winh /2.0f)), 0);
 }

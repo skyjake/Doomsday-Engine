@@ -282,7 +282,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         if(IS_SERVER)
             P_DealPlayerStarts(0);
     }
-    // DDPE_CHAT_MESSAGE occurs when a pkt_chat is received.
+    // DDPE_CHAT_MESSAGE occurs when a PKT_CHAT is received.
     // Here we will only display the message (if not a local message).
     else if(peType == DDPE_CHAT_MESSAGE && plrNumber != consoleplayer)
     {

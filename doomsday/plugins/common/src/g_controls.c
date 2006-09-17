@@ -118,8 +118,8 @@ float   turnheld;
 float   lookheld;
 
 // mouse values are used once
-int     mousex;
-int     mousey;
+float   mousex;
+float   mousey;
 
 int     dclicktime;
 int     dclickstate;
@@ -289,23 +289,16 @@ char G_MakeLookDelta(float offset)
 #endif
 
 /*
- * Turn client angle.  If 'elapsed' is negative, the turn delta is
- * considered an immediate change.
+ * Turn client angle.
  */
 static void G_AdjustAngle(player_t *player, int turn, float elapsed)
 {
-    fixed_t delta = 0;
-
-    if(!player->plr->mo ||
-        player->playerstate == PST_DEAD)
+    if(!player->plr->mo || player->playerstate == PST_DEAD ||
+       player->viewlock)
         return; // Sorry, can't help you, pal.
 
-    delta = (fixed_t) (turn << FRACBITS);
-
-    if(elapsed > 0)
-        delta = FixedMul(delta, FLT2FIX(cfg.turnSpeed * elapsed * 35.f));
-
-    player->plr->clAngle += delta;
+    /* $unifiedangles */
+    player->plr->mo->angle += FLT2FIX(cfg.turnSpeed * elapsed * 35.f * turn);
 }
 
 static void G_AdjustLookDir(player_t *player, int look, float elapsed)
@@ -320,7 +313,7 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
         }
         else
         {
-            ddplr->clLookDir += cfg.lookSpeed * look * elapsed * 35;
+            ddplr->lookdir += cfg.lookSpeed * look * elapsed * 35; /* $unifiedangles */
         }
     }
 
@@ -328,17 +321,18 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
     {
         float step = 8 * elapsed * 35;
 
-        if(ddplr->clLookDir > step)
+        /* $unifiedangles */
+        if(ddplr->lookdir > step)
         {
-            ddplr->clLookDir -= step;
+            ddplr->lookdir -= step;
         }
-        else if(ddplr->clLookDir < -step)
+        else if(ddplr->lookdir < -step)
         {
-            ddplr->clLookDir += step;
+            ddplr->lookdir += step;
         }
         else
         {
-            ddplr->clLookDir = 0;
+            ddplr->lookdir = 0;
             player->centering = false;
         }
     }
@@ -380,16 +374,20 @@ void G_LookAround(void)
 
 static void G_SetCmdViewAngles(ticcmd_t *cmd, player_t *pl)
 {
-    // These will be sent to the server (or P_MovePlayer).
-    cmd->angle = pl->plr->clAngle >> 16;
+    if(pl->plr->mo)
+    {
+        // These will be sent to the server (or P_MovePlayer).
+        cmd->angle = pl->plr->mo->angle >> 16; /* $unifiedangles */
+    }
 
     // Clamp it. 110 corresponds 85 degrees.
-    if(pl->plr->clLookDir > 110)
-        pl->plr->clLookDir = 110;
-    if(pl->plr->clLookDir < -110)
-        pl->plr->clLookDir = -110;
+    /* $unifiedangles */
+    if(pl->plr->lookdir > 110)
+        pl->plr->lookdir = 110;
+    if(pl->plr->lookdir < -110)
+        pl->plr->lookdir = -110;
 
-    cmd->pitch = pl->plr->clLookDir / 110 * DDMAXSHORT;
+    cmd->pitch = pl->plr->lookdir / 110 * DDMAXSHORT;
 }
 
 /*
@@ -869,12 +867,14 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     // Mouse strafe and turn (X axis).
     if(strafe)
         side += mousex * 2;
-    else
+    else if(mousex)
     {
-        //turn -= mousex * 8;
         // Mouse angle changes are immediate.
-        if(!pausestate)
-            G_AdjustAngle(cplr, mousex * -8, -1);
+        if(!pausestate && players[consoleplayer].plr->mo && 
+           players[consoleplayer].playerstate != PST_DEAD)
+        {
+            players[consoleplayer].plr->mo->angle += FLT2FIX(mousex * -8); //G_AdjustAngle(cplr, mousex * -8, 1);
+        }
     }
 
     if(!pausestate)
@@ -890,21 +890,21 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         else
         {
             float adj =
-                (((mousey * 8) << 16) / (float) ANGLE_180) * 180 *
+                (FLT2FIX(mousey * 8) / (float) ANGLE_180) * 180 *
                 110.0 / 85.0;
 
             if(cfg.mlookInverseY)
                 adj = -adj;
-            cplr->plr->clLookDir += adj;
+            cplr->plr->lookdir += adj; /* $unifiedangles */
         }
         if(cfg.usejlook)
         {
-            if(cfg.jlookDeltaMode)
-                cplr->plr->clLookDir +=
+            if(cfg.jlookDeltaMode) /* $unifiedangles */
+                cplr->plr->lookdir +=
                     joylook / 20.0f * cfg.lookSpeed *
                     (cfg.jlookInverseY ? -1 : 1) * elapsedTics;
             else
-                cplr->plr->clLookDir =
+                cplr->plr->lookdir =
                     joylook * 1.1f * (cfg.jlookInverseY ? -1 : 1);
         }
     }
@@ -973,8 +973,8 @@ boolean G_AdjustControlState(event_t* ev)
         return false;           // always let key events filter down
 
     case EV_MOUSE_AXIS:
-        mousex += ev->data1 * (1 + cfg.mouseSensiX/5.0f);
-        mousey += ev->data2 * (1 + cfg.mouseSensiY/5.0f);
+        mousex += (float)(ev->data1 * (1 + cfg.mouseSensiX/5.0f)) / DD_MICKEY_ACCURACY;
+        mousey += (float)(ev->data2 * (1 + cfg.mouseSensiY/5.0f)) / DD_MICKEY_ACCURACY;
         return true;            // eat events
 
     case EV_MOUSE_BUTTON:
@@ -1024,5 +1024,5 @@ boolean G_AdjustControlState(event_t* ev)
  */
 void G_ResetMousePos(void)
 {
-    mousex = mousey = 0;
+    mousex = mousey = 0.f;
 }

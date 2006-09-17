@@ -63,7 +63,7 @@
  * Reads a sector delta from the message buffer and applies it to
  * the world. Returns false only if the end marker is found.
  *
- * THIS FUNCTION IS NOW OBSOLETE (only used with psv_frame packets)
+ * THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets)
  */
 int Cl_ReadSectorDelta(void)
 {
@@ -170,7 +170,7 @@ int Cl_ReadSectorDelta(void)
  * Reads a side delta from the message buffer and applies it to
  * the world. Returns false only if the end marker is found.
  *
- * THIS FUNCTION IS NOW OBSOLETE (only used with psv_frame packets)
+ * THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets)
  */
 int Cl_ReadSideDelta(void)
 {
@@ -254,7 +254,7 @@ int Cl_ReadSideDelta(void)
  * Reads a poly delta from the message buffer and applies it to
  * the world. Returns false only if the end marker is found.
  *
- * THIS FUNCTION IS NOW OBSOLETE (only used with psv_frame packets)
+ * THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets)
  */
 int Cl_ReadPolyDelta(void)
 {

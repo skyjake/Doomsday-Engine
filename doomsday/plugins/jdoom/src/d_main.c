@@ -341,7 +341,7 @@ void G_IdentifyVersion(void)
     D_IdentifyFromData();
 
     // The game mode string is returned in DD_Get(DD_GAME_MODE).
-    // It is sent out in netgames, and the pcl_hello2 packet contains it.
+    // It is sent out in netgames, and the PCL_HELLO2 packet contains it.
     // A client can't connect unless the same game mode is used.
     memset(gameModeString, 0, sizeof(gameModeString));
 

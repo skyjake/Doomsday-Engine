@@ -101,7 +101,7 @@ void Net_SendPing(int player, int count)
         }
     }
     // Send a new ping.
-    Msg_Begin(pkt_ping);
+    Msg_Begin(PKT_PING);
     cl->ping.sent = Sys_GetRealTime();
     Msg_WriteLong(cl->ping.sent);
 

@@ -520,7 +520,7 @@ void P_PlayerThinkCamera(player_t *player)
     if(player->viewlock)
     {
         mobj_t *target = players->viewlock;
-
+        
         if(!target->player || !target->player->plr->ingame)
         {
             player->viewlock = NULL;
@@ -531,7 +531,12 @@ void P_PlayerThinkCamera(player_t *player)
 
         angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
                                 target->pos[VX], target->pos[VY]);
-        player->plr->clAngle = angle;
+        //player->plr->flags |= DDPF_FIXANGLES;
+        /* $unifiedangles */
+        mo->angle = angle;
+        //player->plr->clAngle = angle;
+        player->plr->flags |= DDPF_INTERYAW;
+
         if(full)
         {
             dist = P_ApproxDistance(mo->pos[VX] - target->pos[VX],
@@ -540,15 +545,18 @@ void P_PlayerThinkCamera(player_t *player)
                 R_PointToAngle2(0, 0,
                                 target->pos[VZ] + target->height / 2 - mo->pos[VZ],
                                 dist);
-            player->plr->clLookDir =
+            //player->plr->clLookDir =
+            player->plr->lookdir =
                 -(angle / (float) ANGLE_MAX * 360.0f - 90);
-            if(player->plr->clLookDir > 180)
-                player->plr->clLookDir -= 360;
-            player->plr->clLookDir *= 110.0f / 85.0f;
-            if(player->plr->clLookDir > 110)
-                player->plr->clLookDir = 110;
-            if(player->plr->clLookDir < -110)
-                player->plr->clLookDir = -110;
+            if(player->plr->lookdir > 180)
+                player->plr->lookdir -= 360;
+            player->plr->lookdir *= 110.0f / 85.0f;
+            if(player->plr->lookdir > 110)
+                player->plr->lookdir = 110;
+            if(player->plr->lookdir < -110)
+                player->plr->lookdir = -110;
+
+            player->plr->flags |= DDPF_INTERPITCH;
         }
     }
 }

@@ -49,7 +49,7 @@ void            Sv_PlayerLeaves(unsigned int nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);
 void            Sv_SendText(int to, int con_flags, char *text);
-void            Sv_FixLocalAngles();
+//void            Sv_FixLocalAngles(boolean clearFixAnglesFlag);
 void            Sv_Ticker(void);
 int             Sv_Latency(byte cmdtime);
 void            Sv_Kick(int who);
@@ -58,6 +58,7 @@ int             Sv_InfoToString(serverinfo_t *info, ddstring_t * msg);
 boolean         Sv_StringToInfo(const char *valuePair, serverinfo_t *info);
 int             Sv_GetNumPlayers(void);
 int             Sv_GetNumConnected(void);
+void            Sv_PlaceThing(struct mobj_s* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor);
 
 boolean         Sv_CheckBandwidth(int playerNumber);
 

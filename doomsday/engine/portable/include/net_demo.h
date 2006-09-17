@@ -35,7 +35,7 @@ void            Demo_PauseRecording(int playernum);
 void            Demo_ResumeRecording(int playernum);
 void            Demo_WritePacket(int playernum);
 void            Demo_BroadcastPacket(void);
-void            Demo_ReadLocalCamera(void);	// pkt_democam
+void            Demo_ReadLocalCamera(void);	// PKT_DEMOCAM
 
 boolean         Demo_BeginPlayback(char *filename);
 boolean         Demo_ReadPacket(void);

@@ -1920,8 +1920,7 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
             {
                 thing->pos[VZ] = thing->floorz;
                 thing->dplayer->viewz = thing->pos[VZ] + thing->dplayer->viewheight;
-                thing->dplayer->clLookDir = 0;
-                thing->dplayer->lookdir = 0;
+                thing->dplayer->lookdir = 0;/* $unifiedangles */
             }
 #if __JHERETIC__
             if(!thing->player->powers[pw_weaponlevel2])
@@ -1930,7 +1929,7 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
                 thing->reactiontime = 18;  // Freeze player for about .5 sec
             }
 
-            thing->dplayer->clAngle = thing->angle;
+            //thing->dplayer->clAngle = thing->angle; /* $unifiedangles */
             thing->dplayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     }
 #if __JHERETIC__

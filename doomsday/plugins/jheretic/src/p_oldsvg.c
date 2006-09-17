@@ -345,8 +345,8 @@ void P_v13_UnArchiveThinkers(void)
                 mobj->player = &players[(int) mobj->player - 1];
                 mobj->player->plr->mo = mobj;
                 mobj->player->plr->mo->dplayer = mobj->player->plr;
-                mobj->player->plr->clAngle = mobj->angle;
-                mobj->player->plr->clLookDir = mobj->player->plr->lookdir;
+                //mobj->player->plr->clAngle = mobj->angle; /* $unifiedangles */
+                //mobj->player->plr->clLookDir = mobj->player->plr->lookdir; /* $unifiedangles */
             }
             P_SetThingPosition(mobj);
             mobj->info = &mobjinfo[mobj->type];

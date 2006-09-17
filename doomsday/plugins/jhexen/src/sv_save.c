@@ -2623,7 +2623,7 @@ void SV_LoadClient(unsigned int gameid)
        P_SetThingPosition(mo);
        mo->floorz = SV_ReadLong();
        mo->ceilingz = SV_ReadLong();
-       mo->angle = cpl->plr->clAngle = SV_ReadLong();
+       mo->angle = SV_ReadLong();
        cpl->plr->clLookDir = SV_ReadFloat();
        SV_ReadPlayer(cpl);
 

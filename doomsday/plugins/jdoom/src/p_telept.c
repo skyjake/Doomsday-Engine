@@ -155,11 +155,11 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
                     }
                     else
                     {
-                        thing->dplayer->clLookDir = 0;
+                        //thing->dplayer->clLookDir = 0; /* $unifiedangles */
                         thing->dplayer->lookdir = 0;
                     }
 
-                    thing->dplayer->clAngle = thing->angle;
+                    //thing->dplayer->clAngle = thing->angle; /* $unifiedangles */
                     thing->dplayer->flags |=
                         DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
                 }

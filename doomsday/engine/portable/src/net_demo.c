@@ -227,7 +227,7 @@ void Demo_WritePacket(int playerNum)
         return;
     if(!inf->canwrite)
     {
-        if(netBuffer.msg.type != psv_handshake)
+        if(netBuffer.msg.type != PSV_HANDSHAKE)
             return;
         // The handshake has arrived. Now we can begin writing.
         inf->canwrite = true;
@@ -235,7 +235,7 @@ void Demo_WritePacket(int playerNum)
     if(clients[playerNum].recordPaused)
     {
         // Some types of packet are not written in record-paused mode.
-        if(netBuffer.msg.type == psv_sound ||
+        if(netBuffer.msg.type == PSV_SOUND ||
            netBuffer.msg.type == DDPT_MESSAGE)
             return;
     }
@@ -398,19 +398,6 @@ boolean Demo_ReadPacket(void)
     // Read the next packet time.
     ptime = lzGetC(playdemo);
 
-    // Calculate view angle deltas.
-    /*  viewangle_delta = (hdr.angle << 16) - players[consoleplayer].clAngle;
-       lookdir_delta = (hdr.lookdir * 110.0f / DDMAXSHORT)
-       - players[consoleplayer].clLookDir; */
-
-    // How many tics to next frame?
-    /*  tics = Net_TimeDelta(ptime, nowtime - readinfo.begintime);
-       if(tics)
-       {
-       viewangle_delta /= tics;
-       lookdir_delta /= tics;
-       } */
-
     return true;
 }
 
@@ -427,7 +414,7 @@ void Demo_WriteLocalCamera(int plnum)
     if(!mo)
         return;
 
-    Msg_Begin(clients[plnum].recordPaused ? pkt_democam_resume : pkt_democam);
+    Msg_Begin(clients[plnum].recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
     // Flags.
     flags = (mo->pos[VZ] <= mo->floorz ? LCAMF_ONGROUND : 0)  // On ground?
         | (incfov ? LCAMF_FOV : 0);
@@ -446,8 +433,8 @@ void Demo_WriteLocalCamera(int plnum)
     z = players[plnum].viewz;
     Msg_WriteShort(z >> 16);
     Msg_WriteByte(z >> 8);
-    Msg_WriteShort(players[plnum].clAngle >> 16);
-    Msg_WriteShort(players[plnum].clLookDir / 110 * DDMAXSHORT);
+    Msg_WriteShort(mo->angle /*players[plnum].clAngle*/ >> 16); /* $unifiedangles */
+    Msg_WriteShort(players[plnum].lookdir / 110 * DDMAXSHORT /* $unifiedangles */);
     // Field of view is optional.
     if(incfov)
     {
@@ -474,7 +461,7 @@ void Demo_ReadLocalCamera(void)
     if(!mo)
         return;
 
-    if(netBuffer.msg.type == pkt_democam_resume)
+    if(netBuffer.msg.type == PKT_DEMOCAM_RESUME)
     {
         intertics = 1;
     }
@@ -511,15 +498,19 @@ void Demo_ReadLocalCamera(void)
     if(intertics == 1 || demo_framez == 1)
     {
         // Immediate change.
-        pl->clAngle = dang;
-        pl->clLookDir = dlook;
+        /*pl->clAngle = dang;
+        pl->clLookDir = dlook;*/
+        pl->mo->angle = dang;
+        pl->lookdir = dlook;
+        /* $unifiedangles */
         viewangle_delta = 0;
         lookdir_delta = 0;
     }
     else
     {
-        viewangle_delta = (dang - pl->clAngle) / intertics;
-        lookdir_delta = (dlook - pl->clLookDir) / intertics;
+        viewangle_delta = (dang - pl->mo->angle) / intertics;
+        lookdir_delta = (dlook - pl->lookdir) / intertics;
+        /* $unifiedangles */
     }
 
     // The first one gets no delta.
@@ -560,8 +551,9 @@ void Demo_Ticker(timespan_t time)
     // Only playback is handled.
     if(playback)
     {
-        pl->clAngle += viewangle_delta;
-        pl->clLookDir += lookdir_delta;
+        pl->mo->angle += viewangle_delta;
+        pl->lookdir += lookdir_delta;
+        /* $unifiedangles */
         // Move player (i.e. camera).
         Cl_MoveLocalPlayer(pos_delta[VX], pos_delta[VY], demo_framez + demo_z,
                            demo_onground);

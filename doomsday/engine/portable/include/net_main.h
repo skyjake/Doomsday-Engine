@@ -57,48 +57,50 @@
 #define	MAX_CLMOBJS		80
 
 // Packet types. 
-// pkt = sent by anybody
-// psv = sent by server
-// pcl = sent by client
+// PKT = sent by anybody
+// PSV = sent by server
+// PCL = sent by client
 enum {
 	// Messages and responses.
-	pcl_hello = 0,
-	pkt_ok,
-	pkt_cancel,
-	pkt_player_info,
-	pkt_chat,
-	pkt_ticcmd,
-	pkt_ping,
-	psv_handshake,
-	psv_server_close,
-	psv_frame,
-	psv_player_exit,			   /* 10 */
-	psv_console_text,
-	pcl_ack_shake,
-	psv_sync,
-	psv_filter,
-	pkt_command,
-	pkt_login,
-	pcl_ack_sets,
-	pkt_coords,
-	pkt_democam,
-	pkt_democam_resume,			   /* 20 */
-	pcl_hello2,					   // Includes game ID
-	psv_frame2,					   // Frame packet v2
-	psv_first_frame2,			   // First psv_frame2 after map change 
-	psv_sound2,
-	psv_stop_sound,
-	pcl_acks,
+	PCL_HELLO = 0,
+	PKT_OK = 1,
+	PKT_CANCEL = 2,                 // unused?
+	PKT_PLAYER_INFO = 3,
+	PKT_CHAT = 4,
+	PKT_TICCMD = 5,                 // unused?
+	PKT_PING = 6,
+	PSV_HANDSHAKE = 7,
+	PSV_SERVER_CLOSE = 8,
+	PSV_FRAME = 9,                  // obsolete
+	PSV_PLAYER_EXIT = 10,
+	PSV_CONSOLE_TEXT = 11,
+	PCL_ACK_SHAKE = 12,
+	PSV_SYNC = 13,
+	PSV_FILTER = 14,                // unused?
+	PKT_COMMAND = 15,
+	PKT_LOGIN = 16,
+	PCL_ACK_SETS = 17,
+	PKT_COORDS = 18,
+	PKT_DEMOCAM = 19,
+	PKT_DEMOCAM_RESUME = 20,
+	PCL_HELLO2 = 21,                // Includes game ID
+	PSV_FRAME2 = 22,                // Frame packet v2
+	PSV_FIRST_FRAME2 = 23,          // First PSV_FRAME2 after map change 
+	PSV_SOUND2 = 24,                // unused?
+	PSV_STOP_SOUND = 25,
+	PCL_ACKS = 26,
+    PSV_PLAYER_FIX = 27,            // Fix angles/pos/mom.
+    PCL_ACK_PLAYER_FIX = 28,        // Acknowledge player fix. /* 28 */
 
-	pcl_commands = DDPT_COMMANDS,  // 32; ticcmds (handled by game)
+	PCL_COMMANDS = DDPT_COMMANDS,   // 32; ticcmds (handled by game)
 
 	// Game specific events.
-	pkt_game_marker = DDPT_FIRST_GAME_EVENT	// 64
+	PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT	// 64
 };
 
 // Use the number defined in dd_share.h for sound packets. 
 // This is for backwards compatibility.
-#define psv_sound			71	   /* DDPT_SOUND */
+#define PSV_SOUND			71	   /* DDPT_SOUND */
 
 #define RESENDCOUNT			10
 #define HANDSHAKECOUNT		17

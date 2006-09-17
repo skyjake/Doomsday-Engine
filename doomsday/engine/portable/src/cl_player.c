@@ -112,7 +112,7 @@ void Cl_LocalCommand(void)
 
     s->forwardMove = cl->lastCmd->forwardMove * 2048;
     s->sideMove = cl->lastCmd->sideMove * 2048;
-    s->angle = pl->clAngle;
+    s->angle = pl->mo->angle; //pl->clAngle; /* $unifiedangles */
     s->turnDelta = 0;
 }
 
@@ -121,7 +121,7 @@ void Cl_LocalCommand(void)
  * it to the player in question. Returns false only if the list of
  * deltas ends.
  *
- * THIS FUNCTION IS NOW OBSOLETE (only used with psv_frame packets)
+ * THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME packets)
  */
 int Cl_ReadPlayerDelta(void)
 {
@@ -193,7 +193,7 @@ int Cl_ReadPlayerDelta(void)
     if(df & PDF_SIDEMOVE)
         s->sideMove = (char) Msg_ReadByte() * 2048;
     if(df & PDF_ANGLE)
-        s->angle = Msg_ReadByte() << 24;
+        /*s->angle =*/ Msg_ReadByte() << 24;
     if(df & PDF_TURNDELTA)
     {
         s->turnDelta = ((char) Msg_ReadByte() << 24) / 16;
@@ -209,9 +209,9 @@ int Cl_ReadPlayerDelta(void)
     if(df & PDF_FILTER)
         pl->filter = Msg_ReadLong();
     if(df & PDF_CLYAW)          // Only sent when Fixangles is used.
-        pl->clAngle = Msg_ReadShort() << 16;
+        /*pl->clAngle = */ Msg_ReadShort() << 16; /* $unifiedangles */
     if(df & PDF_CLPITCH)        // Only sent when Fixangles is used.
-        pl->clLookDir = Msg_ReadShort() * 110.0 / DDMAXSHORT;
+        /*pl->clLookDir =*/ Msg_ReadShort() * 110.0 / DDMAXSHORT; /* $unifiedangles */
     if(df & PDF_PSPRITES)
     {
         for(i = 0; i < 2; i++)
@@ -303,7 +303,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
         fixed_t air_thrust = FRACUNIT / 32;
         boolean airborne = (mo->pos[VZ] > mo->floorz && !(mo->ddflags & DDMF_FLY));
 
-        if(!(pl->flags & DDPF_DEAD))    // Dead players do not move willfully.
+        if(!(pl->flags & DDPF_DEAD) && !mo->reactiontime)    // Dead players do not move willfully.
         {
             int     mul = (airborne ? air_thrust : cplr_thrust_mul);
 
@@ -314,7 +314,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
         }
         // Turn delta on move prediction angle.
         st->angle += st->turnDelta;
-        mo->angle += st->turnDelta;
+        //mo->angle += st->turnDelta;
     }
 
     // Mirror changes in the (hidden) client mobj.
@@ -332,6 +332,7 @@ void Cl_UpdatePlayerPos(ddplayer_t *pl)
 
     if(!playerstate[num].cmo || !pl->mo)
         return;                 // Must have a mobj!
+      
     clmo = &playerstate[num].cmo->mo;
     mo = pl->mo;
     clmo->angle = mo->angle;
@@ -360,6 +361,112 @@ void Cl_CoordsReceived(void)
     fixtics = fixspeed;
     xfix /= fixspeed;
     yfix /= fixspeed;
+}
+
+void Cl_HandlePlayerFix(void)
+{
+    ddplayer_t* plr = &players[consoleplayer];
+    int fixes = Msg_ReadLong();
+    angle_t angle;
+    float lookdir;
+    fixed_t pos[3];
+    mobj_t *mo = plr->mo;
+    clmobj_t *clmo = playerstate[consoleplayer].cmo;
+       
+    if(fixes & 1) // fix angles?
+    {
+        plr->fixcounter.angles = plr->fixacked.angles = Msg_ReadLong();
+        angle = Msg_ReadLong();
+        lookdir = FIX2FLT(Msg_ReadLong());
+
+#ifdef _DEBUG
+        Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
+                    plr->fixacked.angles, FIX2FLT(angle), lookdir);
+#endif
+        if(mo)
+        {
+#ifdef _DEBUG
+            Con_Message("  Applying to mobj %p...\n", mo);
+#endif
+            mo->angle = angle;
+            plr->lookdir = lookdir;
+        }
+        if(clmo)
+        {
+#ifdef _DEBUG
+            Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
+#endif
+            clmo->mo.angle = angle;
+        }       
+    }
+
+    if(fixes & 2) // fix pos?
+    {
+        plr->fixcounter.pos = plr->fixacked.pos = Msg_ReadLong();
+        pos[0] = Msg_ReadLong();
+        pos[1] = Msg_ReadLong();
+        pos[2] = Msg_ReadLong();
+        
+#ifdef _DEBUG
+        Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
+                    plr->fixacked.pos, FIX2FLT(pos[0]),
+                    FIX2FLT(pos[1]), FIX2FLT(pos[2]));
+#endif
+        if(mo)
+        {
+#ifdef _DEBUG
+            Con_Message("  Applying to mobj %p...\n", mo);
+#endif
+            Sv_PlaceThing(mo, pos[0], pos[1], pos[2], false);
+            mo->reactiontime = 18;
+        }
+        if(clmo)
+        {
+#ifdef _DEBUG
+            Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
+#endif
+            Cl_UpdatePlayerPos(plr);
+        }       
+    }
+
+    if(fixes & 4) // fix momentum?
+    {
+        plr->fixcounter.mom = plr->fixacked.mom = Msg_ReadLong();
+        pos[0] = Msg_ReadLong();
+        pos[1] = Msg_ReadLong();
+        pos[2] = Msg_ReadLong();
+        
+#ifdef _DEBUG
+        Con_Message("Cl_HandlePlayerFix: Fix momentum %i. Mom=%f, %f, %f\n",
+                    plr->fixacked.mom, FIX2FLT(pos[0]),
+                    FIX2FLT(pos[1]), FIX2FLT(pos[2]));
+#endif
+        if(mo)
+        {
+#ifdef _DEBUG
+            Con_Message("  Applying to mobj %p...\n", mo);
+#endif
+            mo->momx = pos[0];
+            mo->momy = pos[1];
+            mo->momz = pos[2];
+        }
+        if(clmo)
+        {
+#ifdef _DEBUG
+            Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
+#endif
+            clmo->mo.momx = pos[0];
+            clmo->mo.momy = pos[1];
+            clmo->mo.momz = pos[2];
+        }       
+    }
+    
+    // Send an acknowledgement.
+    Msg_Begin(PCL_ACK_PLAYER_FIX);
+    Msg_WriteLong(plr->fixacked.angles);
+    Msg_WriteLong(plr->fixacked.pos);
+    Msg_WriteLong(plr->fixacked.mom);
+    Net_SendBuffer(0, SPF_ORDERED | SPF_CONFIRM);
 }
 
 /*
@@ -422,6 +529,7 @@ void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
 /*
  * Animates the player sprites based on their states (up, down, etc.)
  */
+/*
 void Cl_MovePsprites(void)
 {
     ddplayer_t *pl = players + consoleplayer;
@@ -475,10 +583,10 @@ void Cl_MovePsprites(void)
     // The other psprite gets the same coords.
     psp[1].x = psp->x;
     psp[1].y = psp->y;
-}
+}*/
 
 /*
- * Reads a single psv_frame2 player delta from the message buffer and
+ * Reads a single PSV_FRAME2 player delta from the message buffer and
  * applies it to the player in question.
  */
 void Cl_ReadPlayerDelta2(boolean skip)
@@ -560,12 +668,23 @@ void Cl_ReadPlayerDelta2(boolean skip)
                 // Replace the hidden client mobj with the real player mobj.
                 Cl_UpdateRealPlayerMobj(pl->mo, &s->cmo->mo, 0xffffffff);
             }
+            else
+            {
+                // Update the new client mobj's information from the real
+                // mobj, which is already known.
+                s->cmo->mo.pos[VX] = pl->mo->pos[VX];
+                s->cmo->mo.pos[VY] = pl->mo->pos[VY];
+                s->cmo->mo.pos[VZ] = pl->mo->pos[VZ];
+                s->cmo->mo.angle = pl->mo->angle;
+                Cl_UpdatePlayerPos(pl);
+            }
 
 #if _DEBUG
             Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, s->mobjId,
                         old);
-            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.pos[VX],
-                        s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
+            Con_Message("  x=%x y=%x z=%x fz=%x cz=%x\n", s->cmo->mo.pos[VX],
+                        s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
+                        s->cmo->mo.floorz, s->cmo->mo.ceilingz);
             Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
                         s->cmo->mo.dplayer - players, s->mobjId);
 #endif
@@ -576,7 +695,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
     if(df & PDF_SIDEMOVE)
         s->sideMove = (char) Msg_ReadByte() * 2048;
     if(df & PDF_ANGLE)
-        s->angle = Msg_ReadByte() << 24;
+        /*s->angle =*/ Msg_ReadByte() << 24;
     if(df & PDF_TURNDELTA)
     {
         s->turnDelta = ((char) Msg_ReadByte() << 24) / 16;
@@ -592,9 +711,9 @@ void Cl_ReadPlayerDelta2(boolean skip)
     if(df & PDF_FILTER)
         pl->filter = Msg_ReadLong();
     if(df & PDF_CLYAW)          // Only sent when Fixangles is used.
-        pl->clAngle = Msg_ReadShort() << 16;
+        /*pl->clAngle =*/ Msg_ReadShort() << 16; /* $unifiedangles */
     if(df & PDF_CLPITCH)        // Only sent when Fixangles is used.
-        pl->clLookDir = Msg_ReadShort() * 110.0 / DDMAXSHORT;
+        /*pl->clLookDir =*/ Msg_ReadShort() * 110.0 / DDMAXSHORT; /* $unifiedangles */
     if(df & PDF_PSPRITES)
     {
         for(i = 0; i < 2; i++)

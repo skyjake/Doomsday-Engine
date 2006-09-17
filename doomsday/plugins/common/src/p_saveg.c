@@ -1025,8 +1025,8 @@ static int SV_ReadMobj(thinker_t *th)
         mo->player = &players[pnum];
         mo->dplayer = mo->player->plr;
         mo->dplayer->mo = mo;
-        mo->dplayer->clAngle = mo->angle;
-        mo->dplayer->clLookDir = 0;
+        //mo->dplayer->clAngle = mo->angle; /* $unifiedangles */
+        mo->dplayer->lookdir = 0; /* $unifiedangles */
     }
 
     if(mo->dplayer && !mo->dplayer->ingame)
@@ -2788,8 +2788,8 @@ void SV_SaveClient(unsigned int gameid)
     SV_WriteLong(mo->pos[VZ]);
     SV_WriteLong(mo->floorz);
     SV_WriteLong(mo->ceilingz);
-    SV_WriteLong(pl->plr->clAngle);
-    SV_WriteFloat(pl->plr->clLookDir);
+    SV_WriteLong(mo->angle); /* $unifiedangles */
+    SV_WriteFloat(pl->plr->lookdir); /* $unifiedangles */
     P_ArchivePlayerHeader();
     SV_WritePlayer(consoleplayer);
 
@@ -2847,8 +2847,8 @@ void SV_LoadClient(unsigned int gameid)
     P_SetThingPosition(mo);
     mo->floorz = SV_ReadLong();
     mo->ceilingz = SV_ReadLong();
-    mo->angle = cpl->plr->clAngle = SV_ReadLong();
-    cpl->plr->clLookDir = SV_ReadFloat();
+    mo->angle = SV_ReadLong(); /* $unifiedangles */
+    cpl->plr->lookdir = SV_ReadFloat(); /* $unifiedangles */
     P_UnArchivePlayerHeader();
     SV_ReadPlayer(cpl);
 

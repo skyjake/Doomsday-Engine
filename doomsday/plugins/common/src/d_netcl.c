@@ -225,7 +225,7 @@ void NetCl_UpdateGameState(byte *data)
             mo->pos[VY] = NetCl_ReadShort() << 16;
             mo->pos[VZ] = NetCl_ReadShort() << 16;
             P_SetThingPosition(mo);
-            pl->plr->clAngle = mo->angle = NetCl_ReadShort() << 16;
+            mo->angle = NetCl_ReadShort() << 16; /* $unifiedangles */
             pl->plr->viewz = mo->pos[VZ] + pl->plr->viewheight;
             // Update floorz and ceilingz.
 #ifdef __JDOOM__

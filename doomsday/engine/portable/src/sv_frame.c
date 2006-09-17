@@ -347,8 +347,8 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
         Msg_WriteByte(d->forwardMove);
     if(df & PDF_SIDEMOVE)
         Msg_WriteByte(d->sideMove);
-    if(df & PDF_ANGLE)
-        Msg_WriteByte(d->angle >> 24);
+    /*if(df & PDF_ANGLE)
+        Msg_WriteByte(d->angle >> 24);*/
     if(df & PDF_TURNDELTA)
         Msg_WriteByte((d->turnDelta * 16) >> 24);
     if(df & PDF_FRICTION)
@@ -366,10 +366,10 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
     }
     if(df & PDF_FILTER)
         Msg_WriteLong(d->filter);
-    if(df & PDF_CLYAW)
+/*    if(df & PDF_CLYAW)
         Msg_WriteShort(d->clYaw >> 16);
     if(df & PDF_CLPITCH)
-        Msg_WriteShort(d->clPitch / 110 * DDMAXSHORT);
+        Msg_WriteShort(d->clPitch / 110 * DDMAXSHORT);*/ /* $unifiedangles */
     if(df & PDF_PSPRITES)       // Only set if there's something to write.
     {
         for(i = 0; i < 2; i++)
@@ -884,7 +884,7 @@ void Sv_SendFrame(int playerNumber)
 
     // If this is the first frame after a map change, use the special
     // first frame packet type.
-    Msg_Begin(pool->isFirst ? psv_first_frame2 : psv_frame2);
+    Msg_Begin(pool->isFirst ? PSV_FIRST_FRAME2 : PSV_FRAME2);
 
     // The first byte contains the set number, which identifies this
     // frame. The client will keep track of the numbers to detect
@@ -966,7 +966,7 @@ void Sv_SendFrame(int playerNumber)
     Msg_SetOffset(endOffset);
 #endif
     
-    // The psv_first_frame2 packet is sent Ordered, which means it'll
+    // The PSV_FIRST_FRAME2 packet is sent Ordered, which means it'll
     // always arrive in the correct order when compared to the other
     // game setup packets.
     Net_SendBuffer(playerNumber, pool->isFirst ? SPF_ORDERED : 0);

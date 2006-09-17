@@ -1543,8 +1543,8 @@ void P_SpawnPlayer(thing_t * mthing, int playernum)
         //mobj->flags |= (mthing->type-1)<<MF_TRANSSHIFT;
         mobj->flags |= p->colormap << MF_TRANSSHIFT;
     }
-    p->plr->clAngle = mobj->angle = ANG45 * (mthing->angle / 45);
-    p->plr->clLookDir = 0;
+    mobj->angle = ANG45 * (mthing->angle / 45); /* $unifiedangles */
+    p->plr->lookdir = 0;/* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     mobj->player = p;
     mobj->dplayer = p->plr;

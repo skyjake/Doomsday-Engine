@@ -285,7 +285,9 @@ int Sv_Latency(byte cmdtime)
 /*
  * For local players.
  */
-void Sv_FixLocalAngles()
+/* $unifiedangles */
+/*
+void Sv_FixLocalAngles(boolean clearFixAnglesFlag)
 {
     ddplayer_t *pl;
     int     i;
@@ -302,12 +304,19 @@ void Sv_FixLocalAngles()
 
         if(pl->flags & DDPF_FIXANGLES)
         {
-            pl->flags &= ~DDPF_FIXANGLES;
-            pl->clAngle = pl->mo->angle;
-            pl->clLookDir = pl->lookdir;
+            if(clearFixAnglesFlag)
+            {
+                pl->flags &= ~DDPF_FIXANGLES;
+            }
+            else
+            {
+                pl->clAngle = pl->mo->angle;
+                pl->clLookDir = pl->lookdir;
+            }
         }
     }
 }
+*/
 
 void Sv_HandlePacket(void)
 {
@@ -322,8 +331,8 @@ void Sv_HandlePacket(void)
 
     switch (netBuffer.msg.type)
     {
-    case pcl_hello:
-    case pcl_hello2:
+    case PCL_HELLO:
+    case PCL_HELLO2:
         // Get the ID of the client.
         id = Msg_ReadLong();
         Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n", from,
@@ -351,7 +360,7 @@ void Sv_HandlePacket(void)
         // This is OK.
         sender->id = id;
 
-        if(netBuffer.msg.type == pcl_hello2)
+        if(netBuffer.msg.type == PCL_HELLO2)
         {
             // Check the game mode (max 16 chars).
             Msg_Read(buf, 16);
@@ -391,7 +400,7 @@ void Sv_HandlePacket(void)
         }
         break;
 
-    case pkt_ok:
+    case PKT_OK:
         // The client says it's ready to receive frames.
         sender->ready = true;
 #ifdef _DEBUG
@@ -404,7 +413,7 @@ void Sv_HandlePacket(void)
             // and sends its regards.
             sender->handshake = false;
             // Send a clock sync message.
-            Msg_Begin(psv_sync);
+            Msg_Begin(PSV_SYNC);
             Msg_WriteLong(SECONDS_TO_TICKS(gameTime) +
                           (sender->shakePing * 35) / 2000);
             // Send reliably, although if it has to be resent, the tics
@@ -415,7 +424,7 @@ void Sv_HandlePacket(void)
         }
         break;
 
-    case pkt_chat:
+    case PKT_CHAT:
         // The first byte contains the sender.
         msgfrom = Msg_ReadByte();
         // Is the message for us?
@@ -430,7 +439,7 @@ void Sv_HandlePacket(void)
             gx.NetPlayerEvent(msgfrom, DDPE_CHAT_MESSAGE, msg);
         }
         // Servers relay chat messages to all the recipients.
-        Msg_Begin(pkt_chat);
+        Msg_Begin(PKT_CHAT);
         Msg_WriteByte(msgfrom);
         Msg_WriteShort(mask);
         Msg_Write(msg, strlen(msg) + 1);
@@ -442,12 +451,12 @@ void Sv_HandlePacket(void)
         M_Free(msg);
         break;
 
-    case pkt_player_info:
+    case PKT_PLAYER_INFO:
         Msg_Read(&info, sizeof(info));
         Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, "%s renamed to %s.\n",
                     sender->name, info.name);
         strcpy(sender->name, info.name);
-        Net_SendPacket(DDSP_CONFIRM | DDSP_ALL_PLAYERS, pkt_player_info, &info,
+        Net_SendPacket(DDSP_CONFIRM | DDSP_ALL_PLAYERS, PKT_PLAYER_INFO, &info,
                        sizeof(info));
         break;
     }
@@ -477,7 +486,7 @@ void Sv_Login(void)
     Con_Printf("Sv_Login: %s (client %i) logged in.\n",
                clients[net_remoteuser].name, net_remoteuser);
     // Send a confirmation packet to the client.
-    Msg_Begin(pkt_login);
+    Msg_Begin(PKT_LOGIN);
     Msg_WriteByte(true);        // Yes, you're logged in.
     Net_SendBuffer(net_remoteuser, SPF_ORDERED);
 }
@@ -524,7 +533,7 @@ void Sv_GetPackets(void)
     {
         switch (netBuffer.msg.type)
         {
-        case pcl_commands:
+        case PCL_COMMANDS:
             // Determine who sent this packet.
             netconsole = netBuffer.player;
             if(netconsole < 0 || netconsole >= MAXPLAYERS)
@@ -573,7 +582,7 @@ void Sv_GetPackets(void)
             }
             break;
 
-        case pcl_ack_sets:
+        case PCL_ACK_SETS:
             // The client is acknowledging that it has received a number of
             // delta sets.
             while(!Msg_End())
@@ -582,7 +591,7 @@ void Sv_GetPackets(void)
             }
             break;
 
-        case pcl_acks:
+        case PCL_ACKS:
             // The client is acknowledging both entire sets and resent deltas.
             // The first byte contains the acked set.
             Sv_AckDeltaSet(netBuffer.player, Msg_ReadByte(), 0);
@@ -594,11 +603,11 @@ void Sv_GetPackets(void)
             }
             break;
 
-        case pkt_coords:
+        case PKT_COORDS:
             Sv_ClientCoords(netBuffer.player);
             break;
 
-        case pcl_ack_shake:
+        case PCL_ACK_SHAKE:
             // The client has acknowledged our handshake.
             // Note the time (this isn't perfectly accurate, though).
             netconsole = netBuffer.player;
@@ -615,28 +624,47 @@ void Sv_GetPackets(void)
             Net_SetInitialAckTime(netconsole, 2 * sender->shakePing);
             break;
 
-        case pkt_ping:
+        case PCL_ACK_PLAYER_FIX:
+        {
+            fixcounters_t* acked = &players[netBuffer.player].fixacked;
+            acked->angles = Msg_ReadLong();
+            acked->pos = Msg_ReadLong();
+            acked->mom = Msg_ReadLong();
+#ifdef _DEBUG
+            Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
+                        netBuffer.player, 
+                        acked->angles, 
+                        players[netBuffer.player].fixcounter.angles,
+                        acked->pos, 
+                        players[netBuffer.player].fixcounter.pos,
+                        acked->mom, 
+                        players[netBuffer.player].fixcounter.mom);
+#endif
+            break;
+        }
+            
+        case PKT_PING:
             Net_PingResponse();
             break;
 
-        case pcl_hello:
-        case pcl_hello2:
-        case pkt_ok:
-        case pkt_chat:
-        case pkt_player_info:
+        case PCL_HELLO:
+        case PCL_HELLO2:
+        case PKT_OK:
+        case PKT_CHAT:
+        case PKT_PLAYER_INFO:
             Sv_HandlePacket();
             break;
 
-        case pkt_login:
+        case PKT_LOGIN:
             Sv_Login();
             break;
 
-        case pkt_command:
+        case PKT_COMMAND:
             Sv_ExecuteCommand();
             break;
 
         default:
-            if(netBuffer.msg.type >= pkt_game_marker)
+            if(netBuffer.msg.type >= PKT_GAME_MARKER)
             {
                 // A client has sent a game specific packet.
                 gx.HandlePacket(netBuffer.player, netBuffer.msg.type,
@@ -667,7 +695,11 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
             clients[i].viewConsole = i;
             clients[i].lastTransmit = -1;
             strncpy(clients[i].name, name, PLAYERNAMELEN);
-
+            
+            players[i].fixacked.angles = 
+                players[i].fixacked.pos = 
+                players[i].fixacked.mom = -1;
+                        
             Sv_InitPoolForClient(i);
 
             VERBOSE(Con_Printf
@@ -732,7 +764,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
         gx.NetPlayerEvent(pNumber, DDPE_EXIT, NULL);
 
         // Inform other clients about this.
-        Msg_Begin(psv_player_exit);
+        Msg_Begin(PSV_PLAYER_EXIT);
         Msg_WriteByte(pNumber);
         Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
     }
@@ -761,7 +793,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
         if(clients[i].connected)
             shake.playerMask |= 1 << i;
     shake.playerMask = USHORT(shake.playerMask);
-    Net_SendPacket(playernum | DDSP_ORDERED, psv_handshake, &shake,
+    Net_SendPacket(playernum | DDSP_ORDERED, PSV_HANDSHAKE, &shake,
                    sizeof(shake));
 
 #if _DEBUG
@@ -784,7 +816,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
         {
             info.console = i;
             strcpy(info.name, clients[i].name);
-            Net_SendPacket(playernum | DDSP_ORDERED, pkt_player_info, &info,
+            Net_SendPacket(playernum | DDSP_ORDERED, PKT_PLAYER_INFO, &info,
                            sizeof(info));
         }
         // Send the new player's info to other players.
@@ -792,7 +824,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
         {
             info.console = playernum;
             strcpy(info.name, clients[playernum].name);
-            Net_SendPacket(i | DDSP_CONFIRM, pkt_player_info, &info,
+            Net_SendPacket(i | DDSP_CONFIRM, PKT_PLAYER_INFO, &info,
                            sizeof(info));
         }
     }
@@ -855,7 +887,7 @@ void Sv_StartNetGame()
 
 void Sv_SendText(int to, int con_flags, char *text)
 {
-    Msg_Begin(psv_console_text);
+    Msg_Begin(PSV_CONSOLE_TEXT);
     Msg_WriteLong(con_flags & ~CBLF_TRANSMIT);
     Msg_Write(text, strlen(text) + 1);
     Net_SendBuffer(to, SPF_ORDERED);
@@ -863,37 +895,117 @@ void Sv_SendText(int to, int con_flags, char *text)
 
 /*
  * Asks a client to disconnect. Clients will immediately disconnect
- * after receiving the psv_server_close message.
+ * after receiving the PSV_SERVER_CLOSE message.
  */
 void Sv_Kick(int who)
 {
     if(!clients[who].connected)
         return;
     Sv_SendText(who, SV_CONSOLE_FLAGS, "You were kicked out!\n");
-    Msg_Begin(psv_server_close);
+    Msg_Begin(PSV_SERVER_CLOSE);
     Net_SendBuffer(who, SPF_ORDERED);
     //players[who].ingame = false;
+}
+
+void Sv_SendPlayerFixes(ddplayer_t* player)
+{
+    int fixes = 0;
+    
+    if(!(player->flags & (DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM)))
+    {
+        // Nothing to fix.
+        return;
+    }
+    
+    // Start writing a player fix message.
+    Msg_Begin(PSV_PLAYER_FIX);
+
+    // Indicate what is included in the message.
+    if(player->flags & DDPF_FIXANGLES)
+        fixes |= 1;
+    if(player->flags & DDPF_FIXPOS)
+        fixes |= 2;
+    if(player->flags & DDPF_FIXMOM)
+        fixes |= 4;
+    
+    Msg_WriteLong(fixes);
+    
+    // Increment counters.
+    if(player->flags & DDPF_FIXANGLES)
+    {
+        Msg_WriteLong(++player->fixcounter.angles);
+        Msg_WriteLong(player->mo->angle);
+        Msg_WriteLong(FLT2FIX(player->lookdir));
+        
+#ifdef _DEBUG
+        Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%i lookdir=%f\n",
+                    player->fixcounter.angles, FIX2FLT(player->mo->angle),
+                    player->lookdir);
+#endif
+    }
+    
+    if(player->flags & DDPF_FIXPOS)
+    {
+        Msg_WriteLong(++player->fixcounter.pos);
+        Msg_WriteLong(player->mo->pos[VX]);
+        Msg_WriteLong(player->mo->pos[VY]);        
+        Msg_WriteLong(player->mo->pos[VZ]);    
+        
+#ifdef _DEBUG
+        Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
+                    player->fixcounter.pos, 
+                    FIX2FLT(player->mo->pos[VX]),
+                    FIX2FLT(player->mo->pos[VY]),
+                    FIX2FLT(player->mo->pos[VZ]));
+#endif
+    }
+    
+    if(player->flags & DDPF_FIXMOM)
+    {
+        Msg_WriteLong(++player->fixcounter.mom);
+        Msg_WriteLong(player->mo->momx);
+        Msg_WriteLong(player->mo->momy);
+        Msg_WriteLong(player->mo->momz);
+
+#ifdef _DEBUG
+        Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
+                    player->fixcounter.mom, 
+                    FIX2FLT(player->mo->momx),
+                    FIX2FLT(player->mo->momy),
+                    FIX2FLT(player->mo->momz));
+#endif
+    }
+
+    // Send the fix message.
+    Net_SendBuffer(player - players, SPF_ORDERED | SPF_CONFIRM);
+
+    player->flags &= ~(DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM);
 }
 
 void Sv_Ticker(void)
 {
     //static trigger_t fixed = { 1.0 / 35 };
     int     i;
+    ddplayer_t *plr;
 
     //if(!M_CheckTrigger(&fixed, time)) return;
 
     // Note last angles for all players.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0, plr = players; i < MAXPLAYERS; i++, plr++)
     {
-        if(!players[i].ingame || !players[i].mo)
+        if(!plr->ingame || !plr->mo)
             continue;
-        players[i].lastangle = players[i].mo->angle;
+        
+        plr->lastangle = plr->mo->angle;
 
         if(clients[i].bwrAdjustTime > 0)
         {
             // BWR adjust time tics away.
             clients[i].bwrAdjustTime--;
         }
+        
+        // Increment counter, send new data.
+        Sv_SendPlayerFixes(plr);    
     }
 }
 
@@ -976,8 +1088,26 @@ boolean Sv_CheckBandwidth(int playerNumber)
     return qSize <= 10 * limit;
 }
 
+void Sv_PlaceThing(mobj_t* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor)
+{
+    P_CheckPosXYZ(mo, x, y, z);
+
+    P_UnlinkThing(mo);
+    mo->pos[VX] = x;
+    mo->pos[VY] = y;
+    mo->pos[VZ] = z;
+    P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+    mo->floorz = tmpFloorZ;
+    mo->ceilingz = tmpCeilingZ;
+
+    if(onFloor)
+    {
+        mo->pos[VZ] = mo->floorz;
+    }    
+}
+
 /*
- * Reads a pkt_coords packet from the message buffer. We trust the
+ * Reads a PKT_COORDS packet from the message buffer. We trust the
  * client's position and change ours to match it. The client better not
  * be cheating.
  */
@@ -1005,19 +1135,10 @@ void Sv_ClientCoords(int playerNum)
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid.
-    if(!(players[playerNum].flags & DDPF_FIXPOS) && P_CheckPosXYZ(mo, clx, cly, clz))   // But it must be a valid pos.
+    if(players[playerNum].fixcounter.pos == players[playerNum].fixacked.pos && 
+       P_CheckPosXYZ(mo, clx, cly, clz))   // But it must be a valid pos.
     {
-        P_UnlinkThing(mo);
-        mo->pos[VX] = clx;
-        mo->pos[VY] = cly;
-        mo->pos[VZ] = clz;
-        P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-        mo->floorz = tmpFloorZ;
-        mo->ceilingz = tmpCeilingZ;
-        if(onFloor)
-        {
-            mo->pos[VZ] = mo->floorz;
-        }
+        Sv_PlaceThing(mo, clx, cly, clz, onFloor);
     }
 }
 
@@ -1033,7 +1154,7 @@ D_CMD(Logout)
     // is logged in and types "logout".
     Sv_SendText(net_remoteuser, SV_CONSOLE_FLAGS, "Goodbye...\n");
     // Send a logout packet.
-    Msg_Begin(pkt_login);
+    Msg_Begin(PKT_LOGIN);
     Msg_WriteByte(false);       // You're outta here.
     Net_SendBuffer(net_remoteuser, SPF_ORDERED);
     net_remoteuser = 0;

@@ -830,7 +830,7 @@ void Con_Send(const char *command, int silent)
 {
     unsigned short len = strlen(command) + 1;
 
-    Msg_Begin(pkt_command);
+    Msg_Begin(PKT_COMMAND);
     // Mark high bit for silent commands.
     Msg_WriteShort(len | (silent ? 0x8000 : 0));
     Msg_Write(command, len);

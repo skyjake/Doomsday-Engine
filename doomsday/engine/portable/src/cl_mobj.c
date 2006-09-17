@@ -335,10 +335,19 @@ void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
         P_LinkThing(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
     mo->pos[VZ] = clmo->pos[VZ];
-    mo->momx = clmo->momx;
-    mo->momy = clmo->momy;
-    mo->momz = clmo->momz;
-    mo->angle = clmo->angle;
+    if(flags & MDF_MOM_X)
+        mo->momx = clmo->momx;
+    if(flags & MDF_MOM_Y)
+        mo->momy = clmo->momy;
+    if(flags & MDF_MOM_Z)
+        mo->momz = clmo->momz;
+    if(flags & MDF_ANGLE)
+    {
+        mo->angle = clmo->angle;
+#ifdef _DEBUG
+        Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle);
+#endif
+    }        
     mo->sprite = clmo->sprite;
     mo->frame = clmo->frame;
     //mo->nextframe = clmo->nextframe;
@@ -364,7 +373,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
  * For client mobjs that belong to players, updates the real player mobj.
  * Returns false only if the list of deltas ends.
  *
- * THIS FUNCTION IS NOW OBSOLETE (only used with old psv_frame packets)
+ * THIS FUNCTION IS NOW OBSOLETE (only used with old PSV_FRAME packets)
  */
 int Cl_ReadMobjDelta(void)
 {
@@ -766,7 +775,7 @@ void Cl_PredictMovement(void)
         }
     }
 #ifdef _DEBUG
-    if(verbose)
+    if(verbose >= 2)
     {
         static int timer = 0;
 
@@ -853,7 +862,7 @@ boolean Cl_RevealMobj(clmobj_t *cmo)
 }
 
 /*
- * Reads a single mobj psv_frame2 delta from the message buffer and
+ * Reads a single mobj PSV_FRAME2 delta from the message buffer and
  * applies it to the client mobj in question.
  *
  * For client mobjs that belong to players, updates the real player mobj.
@@ -1079,7 +1088,7 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
 }
 
 /*
- * Null mobjs deltas have their own type in a psv_frame2 packet.
+ * Null mobjs deltas have their own type in a PSV_FRAME2 packet.
  * Here we remove the mobj in question.
  */
 void Cl_ReadNullMobjDelta2(boolean skip)

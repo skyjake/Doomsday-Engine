@@ -620,8 +620,8 @@ boolean Sv_RegisterComparePlayer(cregister_t * reg, int number,
         df |= PDF_FORWARDMOVE;
     if(r->sideMove != s->sideMove)
         df |= PDF_SIDEMOVE;
-    if(r->angle != s->angle)
-        df |= PDF_ANGLE;
+    /*if(r->angle != s->angle)
+        df |= PDF_ANGLE;*/
     if(r->turnDelta != s->turnDelta)
         df |= PDF_TURNDELTA;
     if(r->friction != s->friction)
@@ -632,10 +632,10 @@ boolean Sv_RegisterComparePlayer(cregister_t * reg, int number,
     }
     if(r->filter != s->filter)
         df |= PDF_FILTER;
-    if(r->clYaw != s->clYaw)
+/*    if(r->clYaw != s->clYaw)
         df |= PDF_CLYAW;
     if(r->clPitch != s->clPitch)
-        df |= PDF_CLPITCH;
+        df |= PDF_CLPITCH;*/
 
     /*
     // The player sprites are a bit more complicated to check.
@@ -1287,8 +1287,8 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
             d->forwardMove = s->forwardMove;
         if(sf & PDF_SIDEMOVE)
             d->sideMove = s->sideMove;
-        if(sf & PDF_ANGLE)
-            d->angle = s->angle;
+        /*if(sf & PDF_ANGLE)
+            d->angle = s->angle;*/
         if(sf & PDF_TURNDELTA)
             d->turnDelta = s->turnDelta;
         if(sf & PDF_FRICTION)
@@ -1300,10 +1300,10 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         }
         if(sf & PDF_FILTER)
             d->filter = s->filter;
-        if(sf & PDF_CLYAW)
+/*        if(sf & PDF_CLYAW)
             d->clYaw = s->clYaw;
         if(sf & PDF_CLPITCH)
-            d->clPitch = s->clPitch;
+            d->clPitch = s->clPitch; */ /* $unifiedangles */
         if(sf & PDF_PSPRITES)
         {
             int     i;
@@ -1815,15 +1815,12 @@ int Sv_ExcludeDelta(pool_t * pool, const void *deltaPtr)
             // This is the mobj the owner of the pool uses as a camera.
             flags &= ~MDF_CAMERA_EXCLUDE;
 
-            // We may have to exclude the pos/mom.
-            if(!(player->flags & DDPF_FIXPOS))
-            {
-                flags &= ~MDF_POS;
-            }
-            if(!(player->flags & DDPF_FIXMOM))
-            {
-                flags &= ~MDF_MOM;
-            }
+            // This information is sent in the PSV_PLAYER_FIX packet,
+            // but only under specific circumstances. Most of the time
+            // the client is responsible for updating its own pos/mom/angle.
+            flags &= ~MDF_POS;
+            flags &= ~MDF_MOM;
+            flags &= ~MDF_ANGLE;
         }
 
         // What about missiles? We might be allowed to exclude some
@@ -1852,6 +1849,8 @@ int Sv_ExcludeDelta(pool_t * pool, const void *deltaPtr)
             // All information does not need to be sent.
             flags &= ~PDF_CAMERA_EXCLUDE;
 
+            /* $unifiedangles */
+            /*
             if(!(player->flags & DDPF_FIXANGLES))
             {
                 // Fixangles means that the server overrides the clientside
@@ -1859,6 +1858,7 @@ int Sv_ExcludeDelta(pool_t * pool, const void *deltaPtr)
                 // exclude them here.
                 flags &= ~(PDF_CLYAW | PDF_CLPITCH);
             }
+             */
         }
         else
         {
@@ -2243,11 +2243,12 @@ void Sv_NewPlayerDeltas(cregister_t * reg, boolean doUpdate, pool_t ** targets)
         // What about forced deltas?
         if(Sv_IsPoolTargeted(&pools[i], targets))
         {
+#if 0
             if(players[i].flags & DDPF_FIXANGLES)
             {
                 Sv_NewDelta(&player, DT_PLAYER, i);
                 Sv_RegisterPlayer(&player.player, i);
-                player.delta.flags = PDF_CLYAW | PDF_CLPITCH;
+                //player.delta.flags = PDF_CLYAW | PDF_CLPITCH; /* $unifiedangles */
 
                 // Once added to the pool, the information will not get lost.
                 Sv_AddDelta(&pools[i], &player);
@@ -2278,6 +2279,7 @@ void Sv_NewPlayerDeltas(cregister_t * reg, boolean doUpdate, pool_t ** targets)
                 // Doing this once is enough.
                 players[i].flags &= ~(DDPF_FIXPOS | DDPF_FIXMOM);
             }
+#endif            
         }
     }
 }

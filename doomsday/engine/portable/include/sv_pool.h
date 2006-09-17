@@ -39,7 +39,7 @@ typedef enum {
     DT_POLY_SOUND = 9,
     DT_SECTOR = 10,                 // Flags in a packed long.
 
-    // Special types: (only in the psv_frame2 packet when written to message)
+    // Special types: (only in the PSV_FRAME2 packet when written to message)
     DT_NULL_MOBJ = 11,              // Mobj was removed (just type and ID).
     DT_CREATE_MOBJ = 12,            // Regular DT_MOBJ, but the mobj was just created.
 

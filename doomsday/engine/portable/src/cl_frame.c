@@ -50,8 +50,8 @@ extern int gotframe;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-// Set to true when the psv_first_frame2 packet is received.
-// Until then, all psv_frame2 packets are ignored (they must be
+// Set to true when the PSV_FIRST_FRAME2 packet is received.
+// Until then, all PSV_FRAME2 packets are ignored (they must be
 // from the wrong map).
 boolean gotFirstFrame;
 
@@ -110,7 +110,7 @@ void Cl_ResetFrame(void)
 {
 	gotframe = false;
 
-	// All frames received before the psv_first_frame2 are ignored.
+	// All frames received before the PSV_FIRST_FRAME2 are ignored.
 	// They must be from the wrong map.
 	gotFirstFrame = false;
 }
@@ -199,7 +199,7 @@ uint Cl_ConvertSetToOrdinal(byte set)
 }
 
 /*
- * Read a psv_frame2/psv_first_frame2 packet.
+ * Read a PSV_FRAME2/PSV_FIRST_FRAME2 packet.
  */
 void Cl_Frame2Received(int packetType)
 {
@@ -215,7 +215,7 @@ void Cl_Frame2Received(int packetType)
 
 	// All frames that arrive before the first frame are ignored.
 	// They are most likely from the wrong map.
-	if(packetType == psv_first_frame2)
+	if(packetType == PSV_FIRST_FRAME2)
 	{
 		gotFirstFrame = true;
 #ifdef _DEBUG
@@ -236,7 +236,7 @@ void Cl_Frame2Received(int packetType)
     VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
 #endif
 
-    if(packetType != psv_first_frame2)
+    if(packetType != PSV_FIRST_FRAME2)
     {
         // If this is not the first frame, it will be ignored if it arrives 
         // out of order.
@@ -396,7 +396,7 @@ void Cl_Frame2Received(int packetType)
 	if(numResendAcks == 0)
 	{
 		// Acknowledge the set.
-		Msg_Begin(pcl_ack_sets);
+		Msg_Begin(PCL_ACK_SETS);
 		Msg_WriteByte(set);
         
 #ifdef _DEBUG
@@ -407,7 +407,7 @@ void Cl_Frame2Received(int packetType)
 	else
 	{
 		// Acknowledge the set and the resent deltas.
-		Msg_Begin(pcl_acks);
+		Msg_Begin(PCL_ACKS);
 		Msg_WriteByte(set);
 #ifdef _DEBUG
         VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "

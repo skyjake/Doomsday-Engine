@@ -66,9 +66,9 @@ static byte acks[MAX_ACKS];
 // CODE --------------------------------------------------------------------
 
 /*
- * Read and ack a psv_frame delta set.
+ * Read and ack a PSV_FRAME delta set.
  *
- * THIS FUNCTION IS OBSOLETE (psv_frame is no longer used)
+ * THIS FUNCTION IS OBSOLETE (PSV_FRAME is no longer used)
  */
 void Cl_ReadDeltaSet(void)
 {
@@ -94,10 +94,10 @@ void Cl_ReadDeltaSet(void)
 }
 
 /*
- * Reads a psv_frame packet from the message buffer and applies the deltas
+ * Reads a PSV_FRAME packet from the message buffer and applies the deltas
  * in it. Also acks the sets in the packet immediately.
  *
- * THIS FUNCTION IS OBSOLETE (psv_frame is no longer used)
+ * THIS FUNCTION IS OBSOLETE (PSV_FRAME is no longer used)
  */
 void Cl_FrameReceived(void)
 {
@@ -119,7 +119,7 @@ void Cl_FrameReceived(void)
 		Cl_ReadDeltaSet();
 
 	// Acknowledge all sets.
-	Msg_Begin(pcl_ack_sets);
+	Msg_Begin(PCL_ACK_SETS);
 	for(i = 0; i < num_acks; i++)
 		Msg_WriteByte(acks[i]);
 	Net_SendBuffer(0, 0);

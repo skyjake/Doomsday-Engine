@@ -232,7 +232,6 @@ typedef struct mobj_s {
     int             movecount;     // when 0, select a new dir
     struct mobj_s  *target;        // thing being chased/attacked (or NULL)
     // also the originator for missiles
-    int             reactiontime;  // if non 0, don't attack yet
     // used by player to freeze a bit after
     // teleporting
     int             threshold;     // if > 0, the target will be chased
