@@ -253,11 +253,17 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 {
     player_t *pl = &players[plrNum];
     unsigned int flags;
+    int     oldstate = pl->playerstate;
     byte    b;
     int     i, k;
 
     if(!Get(DD_GAME_READY))
+    {
+#ifdef _DEBUG
+        Con_Message("NetCl_UpdatePlayerState2: Discarded because game isn't ready.\n");
+#endif
         return;
+    }
 
     NetCl_SetReadBuffer(data);
     flags = NetCl_ReadLong();
@@ -276,12 +282,23 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 #if __JDOOM__ || __JHERETIC__
         pl->armortype = b >> 4;
 #endif
+        
+#ifdef _DEBUG
+        Con_Message("NetCl_UpdatePlayerState2: New state = %i\n", 
+                    pl->playerstate);
+#endif
+        
         // Set or clear the DEAD flag for this player.
         if(pl->playerstate == PST_LIVE)
             pl->plr->flags &= ~DDPF_DEAD;
         else
             pl->plr->flags |= DDPF_DEAD;
 
+        //if(pl->playerstate != oldstate)
+        {
+            P_SetupPsprites(pl);
+        }
+        
         pl->cheats = NetCl_ReadByte();
 
         // Set or clear the NOCLIP flag.
@@ -321,6 +338,11 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             pl->plr->flags &= ~DDPF_DEAD;
         else
             pl->plr->flags |= DDPF_DEAD;
+        
+        //if(oldstate != pl->playerstate) // && oldstate == PST_DEAD)
+        {
+            P_SetupPsprites(pl);
+        }
     }
     if(flags & PSF_HEALTH)
     {
@@ -454,7 +476,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             pl->readyweapon = b >> 4;
 
 #if _DEBUG
-            Con_Message("NetCl_UpdPlSt: rdyw=%i\n", pl->readyweapon);
+            Con_Message("NetCl_UpdatePlayerState: readyweapon=%i\n", pl->readyweapon);
 #endif
         }
     }
@@ -476,11 +498,6 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         localQuakeHappening[plrNum] = NetCl_ReadByte();
     }
 #endif
-
-    if(oldstate != pl->playerstate && oldstate == PST_DEAD)
-    {
-        P_SetupPsprites(pl);
-    }
 }
 
 void NetCl_UpdatePSpriteState(byte *data)

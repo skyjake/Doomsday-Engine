@@ -2014,6 +2014,10 @@ void P_SetupPsprites(player_t *player)
 {
     int     i;
 
+#ifdef _DEBUG
+    Con_Message("P_SetupPsprites: Player %i.\n", player - players);
+#endif
+    
     // Remove all psprites
     for(i = 0; i < NUMPSPRITES; i++)
     {
