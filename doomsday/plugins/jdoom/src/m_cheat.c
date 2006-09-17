@@ -806,8 +806,8 @@ DEFCC(CCmdCheatMassacre)
 
 DEFCC(CCmdCheatWhere)
 {
-    if(!can_cheat())
-        return false;           // Can't cheat!
+    //if(!can_cheat())
+    //    return false;           // Can't cheat!
     CheatDebugFunc(players + consoleplayer, NULL);
     return true;
 }
