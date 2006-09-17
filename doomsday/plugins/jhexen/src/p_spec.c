@@ -68,6 +68,8 @@ static boolean CheckedLockedDoor(mobj_t *mo, byte lock);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+linelist_t  *spechit; // for crossed line specials.
+
 short   numlinespecials;
 line_t *linespeciallist[MAXLINEANIMS];
 
@@ -1095,13 +1097,22 @@ void P_UpdateSpecials(void)
     }
 }
 
-/*
-   ==============================================================================
-
-   SPECIAL SPAWNING
-
-   ==============================================================================
+/**
+ *
  */
+void P_InitLineAnimList(void)
+{
+    numlinespecials = 0;
+}
+
+/**
+ *
+ */
+void P_AddLineToAnimList(line_t *line)
+{
+    linespeciallist[numlinespecials] = line;
+    numlinespecials++;
+}
 
 /**
  * After the map has been loaded, scan for specials that spawn thinkers.
@@ -1114,9 +1125,7 @@ void P_SpawnSpecials(void)
     sector_t   *sector;
     xsector_t  *xsector;
 
-    //
-    //      Init special SECTORs
-    //
+    //  Init special SECTORs.
     for(i = 0; i < numsectors; ++i)
     {
         sector = P_ToPtr(DMU_SECTOR, i);
@@ -1175,10 +1184,8 @@ void P_SpawnSpecials(void)
         }
     }
 
-    //
-    //      Init line EFFECTs
-    //
-    numlinespecials = 0;
+    // Init animating line specials.
+    P_InitLineAnimList();
     TaggedLineCount = 0;
     for(i = 0; i < numlines; ++i)
     {
@@ -1191,8 +1198,7 @@ void P_SpawnSpecials(void)
         case 101:               // Scroll_Texture_Right
         case 102:               // Scroll_Texture_Up
         case 103:               // Scroll_Texture_Down
-            linespeciallist[numlinespecials] = line;
-            numlinespecials++;
+            P_AddLineToAnimList(line);
             break;
 
         case 121:               // Line_SetIdentification

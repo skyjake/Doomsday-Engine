@@ -85,6 +85,8 @@ static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+linelist_t  *spechit; // for crossed line specials.
+
 int   numlinespecials;
 line_t *linespeciallist[MAXLINEANIMS];
 
@@ -1436,6 +1438,23 @@ int EV_DoDonut(line_t *line)
 }
 
 /**
+ *
+ */
+void P_InitLineAnimList(void)
+{
+    numlinespecials = 0;
+}
+
+/**
+ *
+ */
+void P_AddLineToAnimList(line_t *line)
+{
+    linespeciallist[numlinespecials] = line;
+    numlinespecials++;
+}
+
+/**
  * After the map has been loaded, scan for specials that spawn thinkers.
  */
 void P_SpawnSpecials(void)
@@ -1553,13 +1572,13 @@ void P_SpawnSpecials(void)
         }
     }
 
-    //  Init line EFFECTs
-    numlinespecials = 0;
+    // Init animating line specials.
+    P_InitLineAnimList();
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
 
-        switch (P_XLine(line)->special)
+        switch(P_XLine(line)->special)
         {
         case 48: // EFFECT FIRSTCOL SCROLL+
         case 150: // d64tc: wall scroll right
@@ -1567,8 +1586,7 @@ void P_SpawnSpecials(void)
         case 2562: // d64tc: wall scroll down
         case 2080: // d64tc: wall scroll up/right
         case 2614: // d64tc: wall scroll up/left
-            linespeciallist[numlinespecials] = line;
-            numlinespecials++;
+            P_AddLineToAnimList(line);
             break;
 
         case 994: // d64tc
@@ -1580,7 +1598,6 @@ void P_SpawnSpecials(void)
     }
 
     P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
-
     P_RemoveAllActivePlats();     // killough
 
     // FIXME: Remove fixed limit

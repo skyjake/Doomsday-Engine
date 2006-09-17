@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -56,8 +56,9 @@
 #include "../../jheretic/include/m_ctrl.h"
 #include "../../jheretic/include/p_local.h"
 #include "../../jheretic/include/p_oldsvg.h"
-#include "../../jheretic/include/p_setup.h"
 #include "../../jheretic/include/p_pspr.h"
+#include "../../jheretic/include/p_setup.h"
+#include "../../jheretic/include/p_spec.h"
 #include "../../jheretic/include/r_defs.h"
 #include "../../jheretic/include/soundst.h"
 #include "../../jheretic/include/st_stuff.h"

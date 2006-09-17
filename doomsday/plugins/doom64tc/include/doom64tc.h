@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -48,6 +48,7 @@
 #include "../../doom64tc/include/p_local.h"
 #include "../../doom64tc/include/p_pspr.h"
 #include "../../doom64tc/include/p_setup.h"
+#include "../../doom64tc/include/p_spec.h"
 #include "../../doom64tc/include/r_defs.h"
 #include "../../doom64tc/include/s_sound.h"
 #include "../../doom64tc/include/st_stuff.h"

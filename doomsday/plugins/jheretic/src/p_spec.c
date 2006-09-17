@@ -85,6 +85,8 @@ static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+linelist_t  *spechit; // for crossed line specials.
+
 int   numlinespecials;
 line_t *linespeciallist[MAXLINEANIMS];
 
@@ -1234,6 +1236,23 @@ int EV_DoDonut(line_t *line)
 }
 
 /**
+ *
+ */
+void P_InitLineAnimList(void)
+{
+    numlinespecials = 0;
+}
+
+/**
+ *
+ */
+void P_AddLineToAnimList(line_t *line)
+{
+    linespeciallist[numlinespecials] = line;
+    numlinespecials++;
+}
+
+/**
  * After the map has been loaded, scan for specials that spawn thinkers.
  */
 void P_SpawnSpecials(void)
@@ -1324,8 +1343,8 @@ void P_SpawnSpecials(void)
         }
     }
 
-    //  Init line EFFECTs
-    numlinespecials = 0;
+    // Init animating line specials.
+    P_InitLineAnimList();
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
@@ -1336,14 +1355,12 @@ void P_SpawnSpecials(void)
         case 99:
             // EFFECT FIRSTCOL SCROLL-
             // DJS - Heretic also has a backwards wall scroller.
-            linespeciallist[numlinespecials] = line;
-            numlinespecials++;
+            P_AddLineToAnimList(line);
             break;
         }
     }
 
     P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
-
     P_RemoveAllActivePlats();     // killough
 
     // FIXME: Remove fixed limit

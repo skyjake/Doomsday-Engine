@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -49,6 +49,7 @@
 #include "../../jdoom/include/p_oldsvg.h"
 #include "../../jdoom/include/p_pspr.h"
 #include "../../jdoom/include/p_setup.h"
+#include "../../jdoom/include/p_spec.h"
 #include "../../jdoom/include/r_defs.h"
 #include "../../jdoom/include/s_sound.h"
 #include "../../jdoom/include/st_stuff.h"

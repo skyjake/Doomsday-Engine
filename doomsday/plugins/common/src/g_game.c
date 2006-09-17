@@ -478,9 +478,10 @@ void G_PreInit(void)
     DetectIWADs();
 }
 
-/*
- *  Common Post Engine Initialization routine.
- *    Game-specific post init actions should be placed in eg D_PostInit() (for jDoom)
+/**
+ * Common Post Engine Initialization routine.
+ * Game-specific post init actions should be placed in eg D_PostInit()
+ * (for jDoom) and NOT here.
  */
 void G_PostInit(void)
 {
@@ -509,6 +510,9 @@ void G_PostInit(void)
 
     Con_Message("MN_Init: Init miscellaneous info.\n");
     MN_Init();
+
+    // Create the various line lists (spechits, anims, buttons etc).
+    spechit = P_CreateLineList();
 }
 
 /*

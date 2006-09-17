@@ -19,17 +19,27 @@
  * Compiles for jDoom/jHeretic/jHexen/WolfTC
  */
 
-#ifndef __COMMON_SPECHIT_H__
-#define __COMMON_SPECHIT_H__
+#ifndef __COMMON_LINELIST_H__
+#define __COMMON_LINELIST_H__
 
 #include "dd_api.h"
 
-int         P_AddLineToSpecHit(line_t *ld);
-line_t*     P_PopSpecHit(void);
-line_t*     P_SpecHitIterator(void);
-void        P_SpecHitResetIterator(void);
-void        P_EmptySpecHit(void);
-int         P_SpecHitSize(void);
-void        P_FreeSpecHit(void);
+typedef struct linelist_s {
+    line_t    **list;
+    int         max;
+    int         count;
+    int         rover; // used during iteration
+} linelist_t;
 
+linelist_t *P_CreateLineList(void);
+void        P_DestroyLineList(linelist_t *list);
+
+int         P_AddLineToLineList(linelist_t *list, line_t *ld);
+line_t     *P_PopLineList(linelist_t *list);
+
+line_t     *P_LineListIterator(linelist_t *list);
+void        P_LineListResetIterator(linelist_t *list);
+
+void        P_EmptyLineList(linelist_t *list);
+int         P_LineListSize(linelist_t *list);
 #endif

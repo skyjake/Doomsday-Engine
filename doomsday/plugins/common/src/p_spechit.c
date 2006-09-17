@@ -1,5 +1,9 @@
-/* DE1: $Id: def_data.c 3285 2006-06-11 08:01:30Z skyjake $
- * Copyright (C) 2003, 2004 Jaakko Keränen <jaakko.keranen@iki.fi>
+/**\file
+ *\section Copyright and License Summary
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,13 +16,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
 
-/*
- * Compiles for jDoom/jHeretic/jHexen/WolfTC
- *
- * TODO: Replace me with a standard ADT, data structure.
+/**
+ * p_linelist.c : Line lists.
+ * The lists can be traversed through iteration but otherwise act like a
+ * LIFO stack. Used for things like spechits, linespecials etc.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -37,6 +43,8 @@
 #  include "jstrife.h"
 #endif
 
+#include "p_linelist.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -53,101 +61,136 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// keep track of special lines as they are hit,
-// but don't process them until the move is proven valid
-static line_t **spechit;
-static int spechit_max = 0;
-static int numspechit = 0;
-
-static int specrover = 0;
-
 // CODE --------------------------------------------------------------------
 
-/*
- * Add the given line to spechit list.
+/**
+ * Allocate and initialize a new linelist.
  *
- * @param ld        The line_t to be added to the list.
- * @return          The index of the line within the list else -1.
+ * @return      Ptr to the new list.
  */
-int P_AddLineToSpecHit(line_t *ld)
+linelist_t *P_CreateLineList(void)
 {
-    if(!ld)
+    linelist_t *list = malloc(sizeof(linelist_t));
+
+    list->list = NULL;
+    list->count = list->max = list->rover = 0;
+
+    return list;
+}
+
+/**
+ * Free any memory used by the linelist.
+ * @param   list    Ptr to the list to be destroyed.
+ */
+void P_DestroyLineList(linelist_t *list)
+{
+    if(!list)
+        return;
+
+    if(list->count > 0)
+    {
+        free(list->list);
+        list->list = NULL;
+    }
+
+    free(list);
+    list = NULL;
+}
+
+/**
+ * Add the given line to linelist.
+ *
+ * @param   list    Ptr to the list to add <code>ld</code> too.
+ * @param   ld      The line_t to be added to the list.
+ * @return          The index of the line within <codelist</code> once
+ *                  added, ELSE <code>-1</code>.
+ */
+int P_AddLineToLineList(linelist_t *list, line_t *ld)
+{
+    if(!list || !ld)
         return -1;
 
-    if(++numspechit > spechit_max)
+    if(++list->count > list->max)
     {
-         spechit_max = (spechit_max? spechit_max * 2 : 8);
-         spechit = realloc(spechit, sizeof(line_t*) * spechit_max);
+         list->max = (list->max? list->max * 2 : 8);
+         list->list = realloc(list->list, sizeof(line_t*) * list->max);
     }
 
-    spechit[numspechit - 1] = ld;
+    list->list[list->count - 1] = ld;
 
-    return numspechit - 1;
+    return list->count - 1;
 }
 
-/*
- * Pop the top of the spechit list and return the next element.
+/**
+ * Pop the top of the linelist and return the next element.
  *
- * @return          Ptr to the next line in the list.
+ * @param   list    Ptr to the list to be pop.
+ * @return          Ptr to the next line in <code>list</code>.
  */
-line_t* P_PopSpecHit(void)
+line_t* P_PopLineList(linelist_t *list)
 {
-    if(numspechit > 0)
-        return spechit[--numspechit];
+    if(!list)
+        return NULL;
+
+    if(list->count > 0)
+        return list->list[--list->count];
     else
         return NULL;
 }
 
-/*
- * Returns the next element in the spechit list.
+/**
+ * Returns the next element in the linelist.
  *
- * @return          The next line_t in the spechit list.
+ * @param   list    Ptr to the list to iterate.
+ * @return          The next line_t in the linelist.
  */
-line_t* P_SpecHitIterator(void)
+line_t* P_LineListIterator(linelist_t *list)
 {
-    if(numspechit > 0 && specrover > 0)
-        return spechit[--specrover];
+    if(!list)
+        return NULL;
+
+    if(list->count > 0 && list->rover > 0)
+        return list->list[--list->rover];
     else
         return NULL;
 }
 
-/*
- * Returns the spechit iterator to the beginning (the end).
- */
-void P_SpecHitResetIterator(void)
-{
-    specrover = numspechit;
-}
-
-/*
- * Empty the spechit list.
- */
-void P_EmptySpecHit(void)
-{
-    numspechit = spechit_max = specrover = 0;
-}
-
-/*
- * Return the size of the spechit list.
+/**
+ * Returns the linelist iterator to the beginning (the end).
  *
- * @return          The size of the spechit list.
+ * @param   list    Ptr to the list whoose iterator to reset.
  */
-int P_SpecHitSize(void)
+void P_LineListResetIterator(linelist_t *list)
 {
-    return numspechit;
+    if(!list)
+        return;
+
+    list->rover = list->count;
 }
 
-/*
- * Free any memory used by the spechit array. Called before
- * starting a new level and befor shutdown.
+/**
+ * Empty the linelist.
+ *
+ * @param   list    Ptr to the list to empty.
  */
-void P_FreeSpecHit(void)
+void P_EmptyLineList(linelist_t *list)
 {
-    if(numspechit > 0)
-    {
-        free(spechit);
-        spechit = NULL;
-    }
+    if(!list)
+        return;
 
-    numspechit = spechit_max = specrover = 0;
+    list->count = list->max = list->rover = 0;
+}
+
+/**
+ * Return the size of the linelist.
+ *
+ * @param   list    Ptr to the list to return the size of.
+ * @return          The size of the linelist.
+ */
+int P_LineListSize(linelist_t *list)
+{
+    if(!list)
+        return 0;
+
+    return list->count;
 }

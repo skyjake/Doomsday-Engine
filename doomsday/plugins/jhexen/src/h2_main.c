@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -52,7 +52,7 @@
 #include "d_net.h"
 #include "g_update.h"
 #include "g_common.h"
-#include "p_spechit.h"
+#include "p_linelist.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -653,7 +653,7 @@ static void ExecOptionDEVMAPS(char **args, int tag)
 
 void H2_Shutdown(void)
 {
-    P_FreeSpecHit();
+    P_DestroyLineList(spechit);
 }
 
 void H2_Ticker(void)

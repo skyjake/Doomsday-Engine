@@ -51,17 +51,19 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "p_linelist.h"
+
+extern linelist_t *spechit; // for crossed line specials.
+
+// FIXME: Remove fixed limits
+#define MAXLINEANIMS    64 // Animating line specials
+
+extern short   numlinespecials;
+extern line_t *linespeciallist[MAXLINEANIMS];
+
 //#pragma pack(1)
 
 extern int     *TerrainTypes;
-
-//
-//      scrolling line specials
-//
-
-#define MAXLINEANIMS 64
-extern short    numlinespecials;
-extern line_t  *linespeciallist[MAXLINEANIMS];
 
 //      Define values for map objects
 #define MO_TELEPORTMAN 14

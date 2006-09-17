@@ -37,7 +37,7 @@
 #include "m_argv.h"
 #include "hu_stuff.h"
 #include "p_saveg.h"
-#include "p_spechit.h"
+#include "p_linelist.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -543,7 +543,7 @@ void D_PostInit(void)
 void D_Shutdown(void)
 {
     HU_UnloadData();
-    P_FreeSpecHit();
+    P_DestroyLineList(spechit);
 }
 
 void D_Ticker(void)

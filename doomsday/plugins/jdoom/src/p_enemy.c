@@ -44,7 +44,7 @@
 #include "jdoom.h"
 
 #include "dmu_lib.h"
-#include "p_spechit.h"
+#include "p_linelist.h"
 #include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
@@ -302,12 +302,12 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
             return true;
         }
 
-        if(!P_SpecHitSize())
+        if(!P_LineListSize(spechit))
             return false;
 
         actor->movedir = DI_NODIR;
         good = false;
-        while((ld = P_PopSpecHit()) != NULL)
+        while((ld = P_PopLineList(spechit)) != NULL)
         {
             // if the special is not a door that can be opened, return false
             //

@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -43,6 +43,9 @@
 
 #include "d_player.h"
 #include "r_data.h"
+#include "p_linelist.h"
+
+extern linelist_t *spechit; // for crossed line specials.
 
 //
 // End-level timer (-TIMER option)

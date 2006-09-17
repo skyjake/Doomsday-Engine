@@ -31,7 +31,7 @@
  ./../../plugins/wolftc/src/p_plats.c
  ./../../plugins/wolftc/src/p_mobj.c
  ./../../plugins/wolftc/src/p_maputl.c
- ./../../plugins/common/src/p_spechit.c
+ ./../../plugins/common/src/p_linelist.c
  ./../../plugins/common/src/p_map.c
  ./../../plugins/wolftc/src/p_lights.c
  ./../../plugins/wolftc/src/p_inter.c
