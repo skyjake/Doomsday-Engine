@@ -47,10 +47,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-// FIXME: Remove fixed limits
-
-#define MAXLINEANIMS    64 // Animating line specials
-
 // TYPES -------------------------------------------------------------------
 
 // Animating textures and planes
@@ -86,9 +82,7 @@ static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 linelist_t  *spechit; // for crossed line specials.
-
-int   numlinespecials;
-line_t *linespeciallist[MAXLINEANIMS];
+linelist_t  *linespecials; // for surfaces that tick eg wall scrollers.
 
 mobj_t  LavaInflictor; // From the HERETIC source (To be moved!)
 
@@ -1084,39 +1078,41 @@ void P_UpdateSpecials(void)
     XG_Ticker();
 
     //  ANIMATE LINE SPECIALS
-    for(i = 0; i < numlinespecials; i++)
+    if(P_LineListSize(linespecials))
     {
-        line = linespeciallist[i];
-
-        switch(P_XLine(line)->special)
+        P_LineListResetIterator(linespecials);
+        while((line = P_LineListIterator(linespecials)) != NULL)
         {
-        case 48:
-            side = P_GetPtrp(line, DMU_SIDE0);
+            switch(P_XLine(line)->special)
+            {
+            case 48:
+                side = P_GetPtrp(line, DMU_SIDE0);
 
-            // EFFECT FIRSTCOL SCROLL +
-            x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
-            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x += FRACUNIT);
-            x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
-            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x += FRACUNIT);
-            x = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
-            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x += FRACUNIT);
-            break;
+                // EFFECT FIRSTCOL SCROLL +
+                x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
+                P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x += FRACUNIT);
+                x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
+                P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x += FRACUNIT);
+                x = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
+                P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x += FRACUNIT);
+                break;
 
-        // DJS - Heretic also has a backwards wall scroller.
-        case 99:
-            side = P_GetPtrp(line, DMU_SIDE0);
+            // DJS - Heretic also has a backwards wall scroller.
+            case 99:
+                side = P_GetPtrp(line, DMU_SIDE0);
 
-            // EFFECT FIRSTCOL SCROLL +
-            x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
-            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x -= FRACUNIT);
-            x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
-            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x -= FRACUNIT);
-            x = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
-            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x -= FRACUNIT);
-            break;
+                // EFFECT FIRSTCOL SCROLL +
+                x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
+                P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x -= FRACUNIT);
+                x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
+                P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x -= FRACUNIT);
+                x = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
+                P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x -= FRACUNIT);
+                break;
 
-        default:
-            break;
+            default:
+                break;
+            }
         }
     }
 
@@ -1236,23 +1232,6 @@ int EV_DoDonut(line_t *line)
 }
 
 /**
- *
- */
-void P_InitLineAnimList(void)
-{
-    numlinespecials = 0;
-}
-
-/**
- *
- */
-void P_AddLineToAnimList(line_t *line)
-{
-    linespeciallist[numlinespecials] = line;
-    numlinespecials++;
-}
-
-/**
  * After the map has been loaded, scan for specials that spawn thinkers.
  */
 void P_SpawnSpecials(void)
@@ -1344,7 +1323,7 @@ void P_SpawnSpecials(void)
     }
 
     // Init animating line specials.
-    P_InitLineAnimList();
+    P_EmptyLineList(linespecials);
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
@@ -1355,7 +1334,7 @@ void P_SpawnSpecials(void)
         case 99:
             // EFFECT FIRSTCOL SCROLL-
             // DJS - Heretic also has a backwards wall scroller.
-            P_AddLineToAnimList(line);
+            P_AddLineToLineList(linespecials, line);
             break;
         }
     }

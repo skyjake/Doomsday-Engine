@@ -688,6 +688,7 @@ void D_Shutdown(void)
 {
     HU_UnloadData();
     P_DestroyLineList(spechit);
+    P_DestroyLineList(linespecials);
 }
 
 void D_Ticker(void)

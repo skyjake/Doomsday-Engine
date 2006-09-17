@@ -46,7 +46,7 @@
 #include "p_linelist.h"
 
 extern linelist_t *spechit; // for crossed line specials.
-
+extern linelist_t *linespecials; // for surfaces that tick eg wall scrollers.
 //
 // End-level timer (-TIMER option)
 //

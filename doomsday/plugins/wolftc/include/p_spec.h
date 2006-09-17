@@ -37,8 +37,8 @@
 #ifndef __P_SPEC__
 #define __P_SPEC__
 
-#ifndef __JDOOM__
-#  error "Using jDoom headers without __JDOOM__"
+#ifndef __WOLFTC__
+#  error "Using WolfTC headers without __WOLFTC__"
 #endif
 
 #include "d_player.h"
@@ -46,6 +46,7 @@
 #include "p_linelist.h"
 
 extern linelist_t *spechit; // for crossed line specials.
+extern linelist_t *linespecials; // for surfaces that tick eg wall scrollers.
 //
 // End-level timer (-TIMER option)
 //

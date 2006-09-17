@@ -654,6 +654,7 @@ static void ExecOptionDEVMAPS(char **args, int tag)
 void H2_Shutdown(void)
 {
     P_DestroyLineList(spechit);
+    P_DestroyLineList(linespecials);
 }
 
 void H2_Ticker(void)

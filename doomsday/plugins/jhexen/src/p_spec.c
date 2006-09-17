@@ -69,9 +69,7 @@ static boolean CheckedLockedDoor(mobj_t *mo, byte lock);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 linelist_t  *spechit; // for crossed line specials.
-
-short   numlinespecials;
-line_t *linespeciallist[MAXLINEANIMS];
+linelist_t  *linespecials; // for surfaces that tick eg wall scrollers.
 
 int    *TerrainTypes = 0;
 struct terraindef_s {
@@ -1098,23 +1096,6 @@ void P_UpdateSpecials(void)
 }
 
 /**
- *
- */
-void P_InitLineAnimList(void)
-{
-    numlinespecials = 0;
-}
-
-/**
- *
- */
-void P_AddLineToAnimList(line_t *line)
-{
-    linespeciallist[numlinespecials] = line;
-    numlinespecials++;
-}
-
-/**
  * After the map has been loaded, scan for specials that spawn thinkers.
  */
 void P_SpawnSpecials(void)
@@ -1185,7 +1166,7 @@ void P_SpawnSpecials(void)
     }
 
     // Init animating line specials.
-    P_InitLineAnimList();
+    P_EmptyLineList(linespecials);
     TaggedLineCount = 0;
     for(i = 0; i < numlines; ++i)
     {
@@ -1198,7 +1179,7 @@ void P_SpawnSpecials(void)
         case 101:               // Scroll_Texture_Right
         case 102:               // Scroll_Texture_Up
         case 103:               // Scroll_Texture_Down
-            P_AddLineToAnimList(line);
+            P_AddLineToLineList(linespecials, line);
             break;
 
         case 121:               // Line_SetIdentification

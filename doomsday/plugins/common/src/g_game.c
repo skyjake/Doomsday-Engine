@@ -513,6 +513,7 @@ void G_PostInit(void)
 
     // Create the various line lists (spechits, anims, buttons etc).
     spechit = P_CreateLineList();
+    linespecials = P_CreateLineList();
 }
 
 /*

@@ -54,12 +54,7 @@
 #include "p_linelist.h"
 
 extern linelist_t *spechit; // for crossed line specials.
-
-// FIXME: Remove fixed limits
-#define MAXLINEANIMS    64 // Animating line specials
-
-extern short   numlinespecials;
-extern line_t *linespeciallist[MAXLINEANIMS];
+extern linelist_t *linespecials; // for surfaces that tick eg wall scrollers.
 
 //#pragma pack(1)
 
