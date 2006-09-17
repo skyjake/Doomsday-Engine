@@ -1,5 +1,10 @@
-/* DE1: $Id$
- * Copyright (C) 2003, 2004 Jaakko Ker�en <jaakko.keranen@iki.fi>
+/**\file
+ *\section Copyright and License Summary
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,13 +17,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
- *
- * Based on Hexen by Raven Software, and Doom by id Software.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Boston, MA  02110-1301  USA
  */
 
-/*
- * dd_zone.c: Memory Zone
+/**
+ * Memory Zone
  *
  * There is never any space between memblocks, and there will never be
  * two contiguous free memblocks.
@@ -66,7 +71,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-/*
+/**
  * The memory is composed of multiple volumes.  New volumes are
  * allocated when necessary.
  */
@@ -98,7 +103,7 @@ typedef struct zblock_s {
 
 static memvolume_t *volumeRoot;
 
-/*
+/**
  * If false, Z_Malloc will free purgable blocks and aggressively look for
  * free memory blocks inside each memory volume before creating new volumes.
  * This leads to slower mallocing performance, but reduces memory fragmentation
@@ -110,7 +115,7 @@ static boolean  fastMalloc = false;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Conversion from string to long, with the "k" and "m" suffixes.
  */
 long superatol(char *s)
@@ -125,7 +130,7 @@ long superatol(char *s)
     return val;
 }
 
-/*
+/**
  * Enables or disables fast malloc mode. Enable for added performance during
  * map setup. Disable fast mode during other times to save memory and reduce
  * fragmentation.
@@ -137,7 +142,7 @@ void Z_EnableFastMalloc(boolean isEnabled)
     fastMalloc = isEnabled;
 }
 
-/*
+/**
  * Create a new memory volume.  The new volume is added to the list of
  * memory volumes.
  */
@@ -179,7 +184,7 @@ memvolume_t *Z_Create(size_t volumeSize)
     return vol;
 }
 
-/*
+/**
  * Initialize the memory zone.
  */
 void Z_Init(void)
@@ -188,7 +193,7 @@ void Z_Init(void)
     Z_Create(MEMORY_VOLUME_SIZE);
 }
 
-/*
+/**
  * Shut down the memory zone by destroying all the volumes.
  */
 void Z_Shutdown(void)
@@ -241,7 +246,7 @@ memblock_t *Z_GetBlock(void *ptr)
 }
 #endif
 
-/*
+/**
  * Free memory that was allocated with Z_Malloc.
  */
 void Z_Free(void *ptr)
@@ -313,7 +318,7 @@ void Z_Free(void *ptr)
     }
 }
 
-/*
+/**
  * You can pass a NULL user if the tag is < PU_PURGELEVEL.
  */
 void *Z_Malloc(size_t size, int tag, void *user)
@@ -498,7 +503,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
     }
 }
 
-/*
+/**
  * Only resizes blocks with no user. If a block with a user is
  * reallocated, the user will lose its current block and be set to
  * NULL. Does not change the tag of existing blocks.
@@ -522,7 +527,7 @@ void *Z_Realloc(void *ptr, size_t n, int mallocTag)
     return p;
 }
 
-/*
+/**
  * Free memory blocks in all volumes with a tag in the specified range.
  */
 void Z_FreeTags(int lowTag, int highTag)
@@ -549,7 +554,7 @@ void Z_FreeTags(int lowTag, int highTag)
     }
 }
 
-/*
+/**
  * Check all zone volumes for consistency.
  */
 void Z_CheckHeap(void)
@@ -608,7 +613,7 @@ void Z_CheckHeap(void)
     }
 }
 
-/*
+/**
  * Change the tag of a memory block.
  */
 void Z_ChangeTag2(void *ptr, int tag)
@@ -622,7 +627,7 @@ void Z_ChangeTag2(void *ptr, int tag)
     block->tag = tag;
 }
 
-/*
+/**
  * Change the user of a memory block.
  */
 void Z_ChangeUser(void *ptr, void *newUser)
@@ -634,7 +639,7 @@ void Z_ChangeUser(void *ptr, void *newUser)
     block->user = newUser;
 }
 
-/*
+/**
  * Get the user of a memory block.
  */
 void *Z_GetUser(void *ptr)
@@ -646,7 +651,7 @@ void *Z_GetUser(void *ptr)
     return block->user;
 }
 
-/*
+/**
  * Get the tag of a memory block.
  */
 int Z_GetTag(void *ptr)
@@ -658,7 +663,7 @@ int Z_GetTag(void *ptr)
     return block->tag;
 }
 
-/*
+/**
  * Memory allocation utility: malloc and clear.
  */
 void *Z_Calloc(size_t size, int tag, void *user)
@@ -669,7 +674,7 @@ void *Z_Calloc(size_t size, int tag, void *user)
     return ptr;
 }
 
-/*
+/**
  * Realloc and set possible new memory to zero.
  */
 void *Z_Recalloc(void *ptr, size_t n, int callocTag)
@@ -702,7 +707,7 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
     return p;
 }
 
-/*
+/**
  * Calculate the amount of unused memory in all volumes combined.
  */
 size_t Z_FreeMemory(void)
@@ -728,7 +733,7 @@ size_t Z_FreeMemory(void)
     return free;
 }
 
-/*
+/**
  * Allocate a new block of memory to be used for linear object allocations.
  * A "zblock" (its from the zone).
  *
@@ -751,7 +756,7 @@ static void Z_AddBlockToSet(zblockset_t* set)
     block->elements = Z_Malloc(block->elementSize * block->max, set->tag, NULL);
 }
 
-/*
+/**
  * Return a ptr to the next unused element in the blockset.
  *
  * @param   blockset        The blockset to return the next element from.
@@ -782,7 +787,7 @@ void *Z_BlockNewElement(zblockset_t* set)
     return element;
 }
 
-/*
+/**
  * Creates a new block memory allocator. These are used instead of many
  * calls to Z_Malloc when the number of required elements is unknown and
  * when linear allocation would be too slow.
@@ -815,7 +820,7 @@ zblockset_t *Z_BlockCreate(size_t sizeOfElement, unsigned int batchSize,
     return set;
 }
 
-/*
+/**
  * Free an entire blockset.
  * All memory allocated is released for all elements in all blocks and any
  * used for the blockset itself.
