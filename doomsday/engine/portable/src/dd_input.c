@@ -40,6 +40,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define MAX_MOUSE_FILTER 40
+
 #define KBDQUESIZE      32
 #define MAX_DOWNKEYS    16      // Most keyboards support 6 or 7.
 #define NUMKKEYS        256
@@ -64,7 +66,7 @@ typedef struct repeater_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     mouseFilter = 0;        // No filtering by default.
+int     mouseFilter = 1;        // No filtering by default.
 int     mouseInverseY = false;
 int     mouseWheelSensi = 10;   // I'm shooting in the dark here.
 unsigned int  mouseFreq = 0;
@@ -86,6 +88,8 @@ byte    keyMappings[NUMKKEYS];
 byte    shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static byte showMouseInfo = false;
 
 static event_t events[MAXEVENTS];
 static int eventhead;
@@ -194,9 +198,11 @@ void DD_RegisterInput(void)
 
     C_VAR_INT("input-mouse-y-inverse", &mouseInverseY, 0, 0, 1);
 
-    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, 10);
+    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_MOUSE_FILTER - 1);
 
     C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
+    
+    C_VAR_BYTE("input-info-mouse", &showMouseInfo, 0, 0, 1);
 }
 
 /*
@@ -420,11 +426,11 @@ static event_t *DD_GetEvent(void)
  * chain.  This gets called at least 35 times per second.  Usually
  * more frequently than that.
  */
-void DD_ProcessEvents(void)
+void DD_ProcessEvents(timespan_t ticLength)
 {
     event_t *ev;
 
-    DD_ReadMouse();
+    DD_ReadMouse(ticLength);
     DD_ReadJoystick();
     DD_ReadKeyboard();
 
@@ -632,7 +638,7 @@ void DD_ReadKeyboard(void)
  * Checks the current mouse state (axis, buttons and wheel).
  * Generates events and mickeys and posts them.
  */
-void DD_ReadMouse(void)
+void DD_ReadMouse(timespan_t ticLength)
 {
     static int mickeys[2] = { 0, 0 }; // For filtering.
 
@@ -668,9 +674,9 @@ void DD_ReadMouse(void)
 
     ev.type = EV_MOUSE_AXIS;
     ev.state = 0;
-    ev.data1 = mouse.x;
-    ev.data2 = mouse.y;
-    ev.data3 = mouse.z;
+    ev.data1 = mouse.x * DD_MICKEY_ACCURACY;
+    ev.data2 = mouse.y * DD_MICKEY_ACCURACY;
+    ev.data3 = mouse.z * DD_MICKEY_ACCURACY;
     // Don't specify a class
     ev.useclass = -1;
 
@@ -684,23 +690,58 @@ void DD_ReadMouse(void)
         if(!mouseInverseY)
             ev.data2 = -ev.data2;
 
-        // Filtering calculates the average with previous (x,y) value.
+        // Filtering ensures that mickeys are sent more evenly on each frame.
         if(mouseFilter > 0)
         {
+            int i;
+            float target[2];
+            int dirs[2];
+            int avail[2];
+            int used[2];
+
             mickeys[0] += ev.data1;
             mickeys[1] += ev.data2;
+            
+            dirs[0] = (mickeys[0] > 0? 1 : mickeys[0] < 0? -1 : 0);
+            dirs[1] = (mickeys[1] > 0? 1 : mickeys[1] < 0? -1 : 0);
+            avail[0] = abs(mickeys[0]);
+            avail[1] = abs(mickeys[1]);                
 
-            // Half of the mickeys will be posted with the event.
-            ev.data1 = (mouseFilter + abs(mickeys[0])) / (mouseFilter + 1);
-            ev.data2 = (mouseFilter + abs(mickeys[1])) / (mouseFilter + 1);
+            // Determine the target mouse velocity.
+            target[0] = avail[0] * (MAX_MOUSE_FILTER - mouseFilter);
+            target[1] = avail[1] * (MAX_MOUSE_FILTER - mouseFilter);
+                        
+            for(i = 0; i < 2; ++i)
+            {
+                // Determine the amount of mickeys to send. It depends on the
+                // current mouse velocity, and how much time has passed.
+                used[i] = target[i] * ticLength;
 
-            if(mickeys[0] < 0)
-                ev.data1 = -ev.data1;
-            if(mickeys[1] < 0)
-                ev.data2 = -ev.data2;
+                // Don't go over the available number of mickeys.
+                if(used[i] > avail[i])
+                {
+                    mickeys[i] = 0;
+                    used[i] = avail[i];
+                }
+                else
+                {
+                    // Reduce the number of available mickeys.
+                    if(mickeys[i] > 0)
+                        mickeys[i] -= used[i];
+                    else
+                        mickeys[i] += used[i];
+                }
+            }            
 
-            mickeys[0] -= ev.data1;
-            mickeys[1] -= ev.data2;
+            if(showMouseInfo)
+            {
+                Con_Message("mouse velocity = %11.1f, %11.1f\n", 
+                            target[0], target[1]);
+            }
+
+            // The actual mickeys sent in the event.
+            ev.data1 = dirs[0] * used[0];
+            ev.data2 = dirs[1] * used[1];
         }
         else
         {
