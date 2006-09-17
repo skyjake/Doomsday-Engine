@@ -1,5 +1,10 @@
-/* DE1: $Id$
- * Copyright (C) 2003, 2004 Jaakko Ker�nen <jaakko.keranen@iki.fi>
+/**\file
+ *\section Copyright and License Summary
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,14 +17,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Boston, MA  02110-1301  USA
  */
 
 /*
  * sys_sfxd_loader.c: Loader for ds*.so
  *
  * Probably won't be needed because the OpenAL sound code can be
- * staticly linked.
+ * staticly linked. (Please don't consider static linking of openal - Yagisan)
  */
 
 // HEADER FILES ------------------------------------------------------------
