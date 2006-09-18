@@ -251,10 +251,6 @@ typedef struct mobj_s {
     // also the originator for missiles.
     struct mobj_s  *target;
 
-    // Reaction time: if non 0, don't attack yet.
-    // Used by player to freeze a bit after teleporting.
-    int             reactiontime;
-
     // If >0, the target will be chased
     // no matter what (even if shot)
     int             threshold;

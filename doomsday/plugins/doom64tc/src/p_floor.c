@@ -630,14 +630,10 @@ int EV_BuildStairs(line_t *line, stair_e type)
                     continue;
 
                 tsec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
-
-                newsecnum = P_ToIndex(tsec);
-                if(secnum != newsecnum)
+                if(sec != tsec)
                     continue;
 
                 tsec = P_GetPtrp(ln, DMU_BACK_SECTOR);
-
-                newsecnum = P_ToIndex(tsec);
                 if(P_GetIntp(tsec, DMU_FLOOR_TEXTURE) != texture)
                     continue;
 
@@ -647,7 +643,6 @@ int EV_BuildStairs(line_t *line, stair_e type)
                     continue;
 
                 sec = tsec;
-                secnum = newsecnum;
                 floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
 
                 P_AddThinker(&floor->thinker);
