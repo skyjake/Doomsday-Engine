@@ -503,7 +503,7 @@ void P_PlayerThinkCamera(player_t *player)
     // If this player is not a camera, get out of here.
     if(!(player->plr->flags & DDPF_CAMERA))
     {
-        player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE);
+        player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
         return;
     }
 
@@ -520,7 +520,7 @@ void P_PlayerThinkCamera(player_t *player)
     if(player->viewlock)
     {
         mobj_t *target = players->viewlock;
-        
+
         if(!target->player || !target->player->plr->ingame)
         {
             player->viewlock = NULL;
