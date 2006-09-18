@@ -492,7 +492,7 @@ boolean HU_Responder(event_t *ev)
         return false;
     }
 
-    if(ev->type != EV_KEY && ev->state != EVS_DOWN && ev->state != EVS_REPEAT)
+    if(ev->type != EV_KEY || ev->state != EVS_DOWN)
         return false;
 
     c = (unsigned char) ev->data1;
