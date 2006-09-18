@@ -1,5 +1,5 @@
 /* DE1: $Id: template.c 2645 2006-01-21 12:58:39Z skyjake $
- * Copyright (C) 2006 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2006 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,5 +1,5 @@
 /* DE1: $Id$
- * Copyright (C) 2006 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2006 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  *                    Daniel Swanson <danij@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify
