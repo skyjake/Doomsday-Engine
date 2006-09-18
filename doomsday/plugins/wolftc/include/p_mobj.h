@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -243,10 +243,6 @@ typedef struct mobj_s {
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
     struct mobj_s  *target;
-
-    // Reaction time: if non 0, don't attack yet.
-    // Used by player to freeze a bit after teleporting.
-    int             reactiontime;
 
     // If >0, the target will be chased
     // no matter what (even if shot)

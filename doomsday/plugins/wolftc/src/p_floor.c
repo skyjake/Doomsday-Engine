@@ -514,10 +514,8 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
     while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
     {
-        // ALREADY MOVING?  IF SO, KEEP GOING...
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         xsec = P_XSector(sec);
-
+        // ALREADY MOVING?  IF SO, KEEP GOING...
         if(xsec->specialdata)
             continue;
 
