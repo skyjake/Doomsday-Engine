@@ -245,7 +245,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     }
     else if(ammo != AM_NOAMMO) // Player is about to be given some ammo.
     {
-        if(!player->ammo[ammo] || force)
+        if((!player->ammo[ammo] && cfg.ammoAutoSwitch != 0) || force)
         {   // We were down to zero, so select a new weapon.
 
             // Iterate the weapon order array and see if the player owns a
@@ -265,16 +265,25 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     continue;
 
                 // Does the weapon use this type of ammo?
-                if(winf->mode[lvl].ammotype[ammo])
-                {
-                    // FIXME: Have we got enough of ALL used ammo types?
-                    // Problem, since the ammo has not been given yet (could
-                    // be an object that gives several ammo types eg backpack)
-                    // we can't test for this with what we know!
+                if(!(winf->mode[lvl].ammotype[ammo]))
+                    continue;
 
-                    // This routine should be called AFTER the new ammo has
-                    // been given. Somewhat complex logic to decipher first...
+                // FIXME: Have we got enough of ALL used ammo types?
+                // Problem, since the ammo has not been given yet (could
+                // be an object that gives several ammo types eg backpack)
+                // we can't test for this with what we know!
+
+                // This routine should be called AFTER the new ammo has
+                // been given. Somewhat complex logic to decipher first...
+
+                if(cfg.ammoAutoSwitch == 2)
+                {   // Always change weapon mode
                     returnval = candidate;
+                    break;
+                }
+                else if(cfg.ammoAutoSwitch == 1 &&
+                        player->readyweapon == candidate)
+                {   // readyweapon has a higher priority so don't change.
                     break;
                 }
             }

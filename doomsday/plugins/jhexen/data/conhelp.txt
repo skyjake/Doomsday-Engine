@@ -786,6 +786,9 @@ desc = Player movement speed while airborne and NOT flying.
 [player-autoswitch]
 desc = Change weapon automatically when picking one up. 1=If better 2=Always
 
+[player-autoswitch-ammo]
+desc = Change weapon automatically when picking up ammo. 1=If better 2=Always
+
 [player-weapon-order0]
 desc = Weapon change order, slot 0.
 

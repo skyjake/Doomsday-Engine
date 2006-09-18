@@ -789,6 +789,9 @@ desc = Player movement speed while airborne.
 [player-autoswitch]
 desc = Change weapon automatically when picking one up. 1=If better 2=Always
 
+[player-autoswitch-ammo]
+desc = Change weapon automatically when picking up ammo. 1=If better 2=Always
+
 [player-autoswitch-berserk]
 desc = Change to fist automatically when picking up berserk pack
 

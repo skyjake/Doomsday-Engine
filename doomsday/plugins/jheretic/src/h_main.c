@@ -305,7 +305,8 @@ void H_PreInit(void)
     cfg.moveCheckZ = true;
     cfg.jumpPower = 9;
     cfg.airborneMovement = 1;
-    cfg.weaponAutoSwitch = true;
+    cfg.weaponAutoSwitch = 1; // IF BETTER
+    cfg.ammoAutoSwitch = 0; // never
     cfg.secretMsg = true;
     cfg.netJumping = true;
     cfg.netEpisode = 1;

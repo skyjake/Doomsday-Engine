@@ -108,6 +108,7 @@ typedef struct jdoom_config_s {
     byte            usePatchReplacement;
     byte            moveCheckZ;    // if true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;
+    byte            ammoAutoSwitch;
     byte            berserkAutoSwitch;
     int             weaponOrder[NUMWEAPONS];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
