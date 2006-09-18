@@ -430,22 +430,33 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
     return height;
 }
 
-/*
+/**
  * RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
  */
-int P_FindSectorFromLineTag(line_t *line, int start)
+sector_t *P_FindSectorFromLineTag(line_t *line, sector_t *start)
 {
-    int     i;
-    xline_t *xline;
+    int         i;
+    xline_t    *xline;
+    sector_t   *sec;
+
+    if(!line)
+        return NULL;
 
     xline = P_XLine(line);
 
+    if(start)
+        i = P_ToIndex(start) + 1;
+    else
+        i = 0;
 
-    for(i = start + 1; i < numsectors; ++i)
-        if(P_XSector(P_ToPtr(DMU_SECTOR, i))->tag == xline->tag)
-            return i;
+    for(; i < numsectors; ++i)
+    {
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(P_XSector(sec)->tag == xline->tag)
+            return sec;
+    }
 
-    return -1;
+    return NULL;
 }
 
 /*
@@ -1162,21 +1173,17 @@ void P_UpdateSpecials(void)
 
 int EV_DoDonut(line_t *line)
 {
-    sector_t *s1;
+    sector_t *s1 = NULL;
     sector_t *s2;
     sector_t *s3;
-    int     secnum;
     int     rtn;
     int     i;
     line_t *check;
     floormove_t *floor;
 
-    secnum = -1;
     rtn = 0;
-    while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    while((s1 = P_FindSectorFromLineTag(line, s1)) != NULL)
     {
-        s1 = P_ToPtr(DMU_SECTOR, secnum);
-
         // ALREADY MOVING?  IF SO, KEEP GOING...
         if(P_XSector(s1)->specialdata)
             continue;

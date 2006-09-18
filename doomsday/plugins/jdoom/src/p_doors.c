@@ -253,17 +253,13 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
 
 int EV_DoDoor(line_t *line, vldoor_e type)
 {
-    int     secnum, rtn;
-    xsector_t *xsec;
-    sector_t *sec;
-    vldoor_t *door;
+    int         rtn = 0;
+    xsector_t  *xsec;
+    sector_t   *sec = NULL;
+    vldoor_t   *door;
 
-    secnum = -1;
-    rtn = 0;
-
-    while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         xsec = P_XSector(sec);
 
         if(xsec->specialdata)

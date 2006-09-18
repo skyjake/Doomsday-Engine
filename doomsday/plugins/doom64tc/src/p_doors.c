@@ -306,17 +306,13 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
 
 int EV_DoDoor(line_t *line, vldoor_e type)
 {
-    int     secnum, rtn;
-    xsector_t *xsec;
-    sector_t *sec;
-    vldoor_t *door;
+    int         rtn = 0;
+    xsector_t  *xsec;
+    sector_t   *sec = NULL;
+    vldoor_t   *door;
 
-    secnum = -1;
-    rtn = 0;
-
-    while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         xsec = P_XSector(sec);
 
         if(xsec->specialdata)
@@ -599,16 +595,13 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
  */
 int EV_DoSplitDoor(line_t * line, int ftype, int ctype)
 {
-    boolean floor;
-    boolean ceiling;
-    int secnum;
-    sector_t *sec;
+    boolean     floor;
+    boolean     ceiling;
+    sector_t   *sec = NULL;
 
     floor = EV_DoFloor(line, ftype);
-    secnum = -1;
-    while ((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         P_XSector(sec)->specialdata = 0;
     }
 

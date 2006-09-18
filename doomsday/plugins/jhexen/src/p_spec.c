@@ -388,24 +388,6 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
     return height;
 }
 
-//==================================================================
-//
-//      RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
-//
-//==================================================================
-
-/*
-   int     P_FindSectorFromLineTag(line_t  *line,int start)
-   {
-   int     i;
-
-   for (i=start+1;i<numsectors;i++)
-   if (sectors[i].tag == line->arg1)
-   return i;
-   return -1;
-   }
- */
-
 //=========================================================================
 //
 // P_FindSectorFromTag

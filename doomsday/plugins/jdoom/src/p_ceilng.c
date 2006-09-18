@@ -170,14 +170,10 @@ void T_MoveCeiling(ceiling_t * ceiling)
  */
 int EV_DoCeiling(line_t *line, ceiling_e type)
 {
-    int     secnum;
-    int     rtn;
-    xsector_t *xsec;
-    sector_t *sec;
-    ceiling_t *ceiling;
-
-    secnum = -1;
-    rtn = 0;
+    int         rtn = 0;
+    xsector_t  *xsec;
+    sector_t   *sec = NULL;
+    ceiling_t  *ceiling;
 
     //  Reactivate in-stasis ceilings...for certain types.
     switch (type)
@@ -186,13 +182,14 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
     case silentCrushAndRaise:
     case crushAndRaise:
         P_ActivateInStasisCeiling(line);
+        break;
+
     default:
         break;
     }
 
-    while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         xsec = P_XSector(sec);
 
         if(xsec->specialdata)

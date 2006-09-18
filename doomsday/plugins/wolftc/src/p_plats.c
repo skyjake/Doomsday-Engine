@@ -146,15 +146,11 @@ void T_PlatRaise(plat_t * plat)
  */
 int EV_DoPlat(line_t *line, plattype_e type, int amount)
 {
-    plat_t *plat;
-    int     secnum;
-    int     rtn;
-    fixed_t floorheight;
-    sector_t *sec;
-    sector_t*   frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-
-    secnum = -1;
-    rtn = 0;
+    int         rtn = 0;
+    fixed_t     floorheight;
+    plat_t     *plat;
+    sector_t   *sec = NULL;
+    sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 
     //  Activate all <type> plats that are in_stasis
     switch (type)
@@ -167,10 +163,8 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
         break;
     }
 
-    while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
-
         if(P_XSector(sec)->specialdata)
             continue;
 

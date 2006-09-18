@@ -286,21 +286,18 @@ void T_MoveFloor(floormove_t * floor)
  */
 int EV_DoFloor(line_t *line, floor_e floortype)
 {
-    int     secnum;
-    int     rtn;
-    int     i;
-    int     bottomtexture;
-    xsector_t *xsec;
-    sector_t *sec;
-    sector_t *frontsector;
-    line_t  *ln;
+    int         i;
+    int         rtn;
+    int         bottomtexture;
+    xsector_t  *xsec;
+    sector_t   *sec = NULL;
+    sector_t   *frontsector;
+    line_t     *ln;
     floormove_t *floor;
 
-    secnum = -1;
     rtn = 0;
-    while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         xsec = P_XSector(sec);
         // ALREADY MOVING?  IF SO, KEEP GOING...
         if(xsec->specialdata)
@@ -501,25 +498,21 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 
 int EV_BuildStairs(line_t *line, stair_e type)
 {
-    int         secnum;
     int         height;
     int         i;
-    int         newsecnum;
     int         texture;
     int         ok;
     int         rtn;
     line_t     *ln;
     xsector_t  *xsec;
-    sector_t   *sec, *tsec;
+    sector_t   *sec = NULL, *tsec;
     floormove_t *floor;
     fixed_t     stairsize = 0;
     fixed_t     speed = 0;
 
-    secnum = -1;
     rtn = 0;
-    while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         xsec = P_XSector(sec);
 
         // ALREADY MOVING?  IF SO, KEEP GOING...
@@ -565,14 +558,10 @@ int EV_BuildStairs(line_t *line, stair_e type)
                     continue;
 
                 tsec = P_GetPtrp(ln, DMU_FRONT_SECTOR);
-
-                newsecnum = P_ToIndex(tsec);
-                if(secnum != newsecnum)
+                if(sec != tsec)
                     continue;
 
                 tsec = P_GetPtrp(ln, DMU_BACK_SECTOR);
-
-                newsecnum = P_ToIndex(tsec);
                 if(P_GetIntp(tsec, DMU_FLOOR_TEXTURE) != texture)
                     continue;
 
@@ -582,7 +571,6 @@ int EV_BuildStairs(line_t *line, stair_e type)
                     continue;
 
                 sec = tsec;
-                secnum = newsecnum;
                 floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
 
                 P_AddThinker(&floor->thinker);

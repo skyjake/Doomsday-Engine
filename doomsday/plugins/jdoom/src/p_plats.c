@@ -150,7 +150,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
     int         secnum;
     int         rtn;
     fixed_t     floorheight;
-    sector_t   *sec;
+    sector_t   *sec = NULL;
     sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     xsector_t  *xsec;
 
@@ -168,9 +168,8 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
         break;
     }
 
-    while((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0)
+    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         xsec = P_XSector(sec);
 
         if(xsec->specialdata)
