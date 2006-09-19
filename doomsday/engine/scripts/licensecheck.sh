@@ -86,7 +86,6 @@ do
 	if [[ "$?" = 0 ]]
 		then let GPL_SOURCE_FILES=GPL_SOURCE_FILES+1
 		let GPL_PLUS_EXCEPTION_SOURCE_FILES=GPL_PLUS_EXCEPTION_SOURCE_FILES+1
-		echo $CURRENT_FILE >> $TOP_LEVEL_DIR/gplplusexceptioncode.txt
 		echo "<tr>" >> $TOP_LEVEL_DIR/code.html
 		echo "<td>" >> $TOP_LEVEL_DIR/code.html
 		echo $CURRENT_FILE >> $TOP_LEVEL_DIR/code.html
@@ -100,7 +99,6 @@ do
 		if [[ "$?" = 0 ]]
 			then let GPL_SOURCE_FILES=GPL_SOURCE_FILES+1
 			let GPL_ONLY_SOURCE_FILES=GPL_ONLY_SOURCE_FILES+1
-			echo $CURRENT_FILE >> $TOP_LEVEL_DIR/gplcode.txt
 			echo "<tr>" >> $TOP_LEVEL_DIR/code.html
 			echo "<td>" >> $TOP_LEVEL_DIR/code.html
 			echo $CURRENT_FILE >> $TOP_LEVEL_DIR/code.html
@@ -113,7 +111,6 @@ do
 			grep -q " * License: Raven" $CURRENT_FILE 
 			if [[ "$?" = 0 ]]
 				then let RAVEN_SOURCE_FILES=RAVEN_SOURCE_FILES+1
-				echo $CURRENT_FILE >> $TOP_LEVEL_DIR/ravencode.txt
 				echo "<tr>" >> $TOP_LEVEL_DIR/code.html
 				echo "<td>" >> $TOP_LEVEL_DIR/code.html
 				echo $CURRENT_FILE >> $TOP_LEVEL_DIR/code.html
@@ -123,7 +120,6 @@ do
 				echo "</td>" >> $TOP_LEVEL_DIR/code.html
 				echo "</tr>" >> $TOP_LEVEL_DIR/code.html
 				else let UNKNOWN_SOURCE_FILES=UNKNOWN_SOURCE_FILES+1
-				echo $CURRENT_FILE >> $TOP_LEVEL_DIR/unknowncode.txt
 				echo "<tr>" >> $TOP_LEVEL_DIR/code.html
 				echo "<td>" >> $TOP_LEVEL_DIR/code.html
 				echo $CURRENT_FILE >> $TOP_LEVEL_DIR/code.html
@@ -544,19 +540,6 @@ fi
 if [[ -e $TOP_LEVEL_DIR/code.html ]]
 then rm $TOP_LEVEL_DIR/code.html
 fi
-if [[ -e $TOP_LEVEL_DIR/gplcode.txt ]]
-then rm $TOP_LEVEL_DIR/gplcode.txt
-fi
-if [[ -e $TOP_LEVEL_DIR/gplplusexceptioncode.txt ]]
-then rm $TOP_LEVEL_DIR/gplplusexceptioncode.txt
-fi
-if [[ -e $TOP_LEVEL_DIR/ravencode.txt ]]
-then rm $TOP_LEVEL_DIR/ravencode.txt
-fi
-if [[ -e $TOP_LEVEL_DIR/unknowncode.txt ]]
-then rm $TOP_LEVEL_DIR/unknowncode.txt
-fi
-
 
 echo "<html>" > $TOP_LEVEL_DIR/index.html
 echo "<head>" >> $TOP_LEVEL_DIR/index.html
@@ -585,5 +568,6 @@ else
 fi
 
 rm $TOP_LEVEL_DIR/filelist.txt
+rm $TOP_LEVEL_DIR/code.html
 echo "</body>" >> $TOP_LEVEL_DIR/index.html
 echo "</html>" >> $TOP_LEVEL_DIR/index.html
