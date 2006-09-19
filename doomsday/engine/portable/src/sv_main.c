@@ -945,7 +945,7 @@ void Sv_SendPlayerFixes(ddplayer_t* player)
         Msg_WriteLong(FLT2FIX(player->lookdir));
         
 #ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%i lookdir=%f\n",
+        Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
                     player->fixcounter.angles, FIX2FLT(player->mo->angle),
                     player->lookdir);
 #endif

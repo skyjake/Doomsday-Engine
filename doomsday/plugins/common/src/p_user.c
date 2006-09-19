@@ -485,7 +485,7 @@ void P_DeathThink(player_t *player)
 #if __JHEXEN__
     player->update |= PSF_VIEW_HEIGHT;
 #endif
-    player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+    
     P_CalcHeight(player);
 
     // In netgames we won't keep tracking the killer.
@@ -553,7 +553,14 @@ void P_DeathThink(player_t *player)
 
     if(player->cmd.use)
     {
-        P_RaiseDeadPlayer(player);
+        if(IS_CLIENT)
+        {
+            NetCl_PlayerActionRequest(player, GPA_USE);
+        }
+        else
+        {
+            P_RaiseDeadPlayer(player);
+        }
     }
 }
 
