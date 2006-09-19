@@ -1,5 +1,5 @@
 /* DE1: $Id: cl_def.h 3323 2006-06-13 17:25:33Z skyjake $
- * Copyright (C) 2005 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * Copyright (C) 2005 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
