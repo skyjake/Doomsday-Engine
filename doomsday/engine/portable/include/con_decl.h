@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -41,7 +41,7 @@
     { ccmd_t _c = { name, CCmd##fn, flags }; Con_AddCommand(&_c); }
 
 // A handy helper for declaring console commands.
-#define D_CMD(x) int CCmd##x(int src, int argc, char **argv)
+#define D_CMD(x) int CCmd##x(byte src, int argc, char **argv)
 
 /*
  * Macros for creating new console variables.

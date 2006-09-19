@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -506,7 +506,7 @@ extern          "C" {
     // The mouse wheel is considered two extra mouse buttons.
 #define DDMB_MWHEELUP       0x1000
 #define DDMB_MWHEELDOWN     0x2000
-    
+
 #define DD_MICKEY_ACCURACY  1000
 
     //------------------------------------------------------------------------
@@ -1129,13 +1129,14 @@ typedef enum blendmode_e {
     // Console command.
     typedef struct ccmd_s {
         char           *name;
-        int             (*func) (int src, int argc, char **argv);
+        int             (*func) (byte src, int argc, char **argv);
         int             flags;
     } ccmd_t;
 
     // Command sources (where the console command originated from)
     // These are sent with every (sub)ccmd so we can decide whether or not to execute.
     enum {
+        CMDS_UNKNOWN,
         CMDS_DDAY,    // Sent by the engine
         CMDS_GAME,    // Sent by the game dll
         CMDS_CONSOLE, // Sent via direct console input
@@ -1143,13 +1144,11 @@ typedef enum blendmode_e {
         CMDS_CONFIG,  // Sent via config file
         CMDS_PROFILE, // Sent via player profile
         CMDS_CMDLINE, // Sent via the command line
-        CMDS_DED,     // Sent based on a def in a DED file eg (state->execute)
-        CMDS_PKT,     // Sent from a client (in a packet)
-        CMDS_SPKT     // Sent from the server (in a packet)
+        CMDS_DED      // Sent based on a def in a DED file eg (state->execute)
     };
 
 // Helper macro for defining console command functions.
-#define DEFCC(name)     int name(int src, int argc, char **argv)
+#define DEFCC(name)     int name(byte src, int argc, char **argv)
 
 // Console command usage flags.
 // (what method(s) CAN NOT be used to invoke a ccmd (used with the CMDS codes above)).
@@ -1161,8 +1160,7 @@ typedef enum blendmode_e {
 #define CMDF_PROFILE            0x20
 #define CMDF_CMDLINE            0x40
 #define CMDF_DED                0x80
-#define CMDF_PKT                0x100  // Not implemented yet
-#define CMDF_SPKT               0x200  // Not implemented yet
+#define CMDF_CLIENT             0x100 // sent over the net from a client
 
 // Console variable flags.
 #define CVF_NO_ARCHIVE      0x1    // Not written in/read from the defaults file.

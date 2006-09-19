@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -1208,7 +1208,7 @@ void R_SetupFog(void)
     if(!mapinfo)
     {
         // Go with the defaults.
-        Con_Execute(CMDS_DDAY,"fog off", true);
+        Con_Execute(CMDS_DDAY,"fog off", true, false);
         return;
     }
 
@@ -1217,7 +1217,7 @@ void R_SetupFog(void)
     if(flags & MIF_FOG)
     {
         // Setup fog.
-        Con_Execute(CMDS_DDAY, "fog on", true);
+        Con_Execute(CMDS_DDAY, "fog on", true, false);
         Con_Executef(CMDS_DDAY, true, "fog start %f", mapinfo->fog_start);
         Con_Executef(CMDS_DDAY, true, "fog end %f", mapinfo->fog_end);
         Con_Executef(CMDS_DDAY, true, "fog density %f", mapinfo->fog_density);
@@ -1227,7 +1227,7 @@ void R_SetupFog(void)
     }
     else
     {
-        Con_Execute(CMDS_DDAY, "fog off", true);
+        Con_Execute(CMDS_DDAY, "fog off", true, false);
     }
 }
 
@@ -2039,7 +2039,7 @@ void R_SetupLevel(char *level_id, int flags)
 
         // Run any commands specified in Map Info.
         if(mapinfo && mapinfo->execute)
-            Con_Execute(CMDS_DED, mapinfo->execute, true);
+            Con_Execute(CMDS_DED, mapinfo->execute, true, false);
 
         // The level setup has been completed.  Run the special level
         // setup command, which the user may alias to do something

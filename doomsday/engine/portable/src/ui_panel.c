@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -836,7 +836,7 @@ void CP_SetRes(ui_object_t *ob)
     UI_End();
     GL_ChangeResolution(x, y, 0);
     // Reactivate the panel.
-    Con_Execute(CMDS_DDAY, "panel", true);
+    Con_Execute(CMDS_DDAY, "panel", true, false);
 }
 
 void CP_ResChanged(ui_object_t *ob)
@@ -1035,7 +1035,7 @@ D_CMD(OpenPanel)
     if(isDedicated)
         return false;
 
-    Con_Execute(CMDS_DDAY, "conclose", true);
+    Con_Execute(CMDS_DDAY, "conclose", true, false);
 
     // The help window is hidden.
     panel_help_active = false;

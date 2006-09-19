@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -774,7 +774,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         else
         {
             // Restore the old font.
-            //Con_Executef(CMDS_DDAY, true, "font name %s", oldFontName);
+            //Con_Executef(CMDS_DDAY, true, "font name %s", oldFontName, false);
             GL_Init2DState();
         }
         GL_InitRefresh(loadLightMaps, loadFlares);

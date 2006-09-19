@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -350,7 +350,7 @@ boolean B_Responder(event_t *ev)
     if(cmd != NULL)
     {
         // Found one, execute!
-        Con_Execute(CMDS_BIND, cmd, true);
+        Con_Execute(CMDS_BIND, cmd, true, false);
         return true;
     }
 

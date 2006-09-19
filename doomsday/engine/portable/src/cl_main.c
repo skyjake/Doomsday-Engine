@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -160,7 +160,7 @@ void Cl_AnswerHandshake(handshake_packet_t * pShake)
         Con_Message
             ("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
              SV_VERSION, shake.version);
-        Con_Execute(CMDS_DDAY, "net disconnect", false);
+        Con_Execute(CMDS_DDAY, "net disconnect", false, false);
         Demo_StopPlayback();
         Con_Open(true);
         return;
@@ -287,8 +287,8 @@ void Cl_GetPackets(void)
         {
         case PSV_PLAYER_FIX:
             Cl_HandlePlayerFix();
-            break;        
-            
+            break;
+
         case PKT_DEMOCAM:
         case PKT_DEMOCAM_RESUME:
             Demo_ReadLocalCamera();
@@ -326,7 +326,7 @@ void Cl_GetPackets(void)
 
         case PSV_SERVER_CLOSE:  // We should quit?
             netLoggedIn = false;
-            Con_Execute(CMDS_SPKT, "net disconnect", true);
+            Con_Execute(CMDS_DDAY, "net disconnect", true, false);
             break;
 
         case PSV_CONSOLE_TEXT:

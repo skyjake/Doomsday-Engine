@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -504,6 +504,8 @@ void Sv_Login(void)
  */
 void Sv_ExecuteCommand(void)
 {
+    int     flags;
+    byte    cmdSource;
     unsigned short len;
     boolean silent;
 
@@ -517,13 +519,30 @@ void Sv_ExecuteCommand(void)
     len = Msg_ReadShort();
     silent = (len & 0x8000) != 0;
     len &= 0x7fff;
+    switch(netBuffer.msg.type)
+    {
+    case PKT_COMMAND:
+        cmdSource = CMDS_UNKNOWN; // unknown command source.
+        break;
+
+    case PKT_COMMAND2:
+        // New format includes flags and command source.
+        // Flags are currently unused but added for future expansion.
+        flags = Msg_ReadShort();
+        cmdSource = Msg_ReadByte();
+        break;
+
+    default:
+        Con_Error("Sv_ExecuteCommand: Not a command packet!\n");
+    }
+
     // Verify using string length.
     if(strlen(netBuffer.cursor) != (unsigned) len - 1)
     {
         Con_Printf("Sv_ExecuteCommand: Damaged packet?\n");
         return;
     }
-    Con_Execute(CMDS_PKT, netBuffer.cursor, silent);
+    Con_Execute(cmdSource, netBuffer.cursor, silent, true);
 }
 
 /*
@@ -639,17 +658,17 @@ void Sv_GetPackets(void)
             acked->mom = Msg_ReadLong();
 #ifdef _DEBUG
             Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
-                        netBuffer.player, 
-                        acked->angles, 
+                        netBuffer.player,
+                        acked->angles,
                         players[netBuffer.player].fixcounter.angles,
-                        acked->pos, 
+                        acked->pos,
                         players[netBuffer.player].fixcounter.pos,
-                        acked->mom, 
+                        acked->mom,
                         players[netBuffer.player].fixcounter.mom);
 #endif
             break;
         }
-            
+
         case PKT_PING:
             Net_PingResponse();
             break;
@@ -667,6 +686,7 @@ void Sv_GetPackets(void)
             break;
 
         case PKT_COMMAND:
+        case PKT_COMMAND2:
             Sv_ExecuteCommand();
             break;
 
@@ -702,11 +722,11 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
             clients[i].viewConsole = i;
             clients[i].lastTransmit = -1;
             strncpy(clients[i].name, name, PLAYERNAMELEN);
-            
-            players[i].fixacked.angles = 
-                players[i].fixacked.pos = 
+
+            players[i].fixacked.angles =
+                players[i].fixacked.pos =
                 players[i].fixacked.mom = -1;
-                        
+
             Sv_InitPoolForClient(i);
 
             VERBOSE(Con_Printf
@@ -917,13 +937,13 @@ void Sv_Kick(int who)
 void Sv_SendPlayerFixes(ddplayer_t* player)
 {
     int fixes = 0;
-    
+
     if(!(player->flags & (DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM)))
     {
         // Nothing to fix.
         return;
     }
-    
+
     // Start writing a player fix message.
     Msg_Begin(PSV_PLAYER_FIX);
 
@@ -934,39 +954,39 @@ void Sv_SendPlayerFixes(ddplayer_t* player)
         fixes |= 2;
     if(player->flags & DDPF_FIXMOM)
         fixes |= 4;
-    
+
     Msg_WriteLong(fixes);
-    
+
     // Increment counters.
     if(player->flags & DDPF_FIXANGLES)
     {
         Msg_WriteLong(++player->fixcounter.angles);
         Msg_WriteLong(player->mo->angle);
         Msg_WriteLong(FLT2FIX(player->lookdir));
-        
+
 #ifdef _DEBUG
         Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
                     player->fixcounter.angles, FIX2FLT(player->mo->angle),
                     player->lookdir);
 #endif
     }
-    
+
     if(player->flags & DDPF_FIXPOS)
     {
         Msg_WriteLong(++player->fixcounter.pos);
         Msg_WriteLong(player->mo->pos[VX]);
-        Msg_WriteLong(player->mo->pos[VY]);        
-        Msg_WriteLong(player->mo->pos[VZ]);    
-        
+        Msg_WriteLong(player->mo->pos[VY]);
+        Msg_WriteLong(player->mo->pos[VZ]);
+
 #ifdef _DEBUG
         Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
-                    player->fixcounter.pos, 
+                    player->fixcounter.pos,
                     FIX2FLT(player->mo->pos[VX]),
                     FIX2FLT(player->mo->pos[VY]),
                     FIX2FLT(player->mo->pos[VZ]));
 #endif
     }
-    
+
     if(player->flags & DDPF_FIXMOM)
     {
         Msg_WriteLong(++player->fixcounter.mom);
@@ -976,7 +996,7 @@ void Sv_SendPlayerFixes(ddplayer_t* player)
 
 #ifdef _DEBUG
         Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
-                    player->fixcounter.mom, 
+                    player->fixcounter.mom,
                     FIX2FLT(player->mo->momx),
                     FIX2FLT(player->mo->momy),
                     FIX2FLT(player->mo->momz));
@@ -1002,7 +1022,7 @@ void Sv_Ticker(void)
     {
         if(!plr->ingame || !plr->mo)
             continue;
-        
+
         plr->lastangle = plr->mo->angle;
 
         if(clients[i].bwrAdjustTime > 0)
@@ -1010,9 +1030,9 @@ void Sv_Ticker(void)
             // BWR adjust time tics away.
             clients[i].bwrAdjustTime--;
         }
-        
+
         // Increment counter, send new data.
-        Sv_SendPlayerFixes(plr);    
+        Sv_SendPlayerFixes(plr);
     }
 }
 
@@ -1110,7 +1130,7 @@ void Sv_PlaceThing(mobj_t* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor)
     if(onFloor)
     {
         mo->pos[VZ] = mo->floorz;
-    }    
+    }
 }
 
 /*
@@ -1142,7 +1162,7 @@ void Sv_ClientCoords(int playerNum)
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid.
-    if(players[playerNum].fixcounter.pos == players[playerNum].fixacked.pos && 
+    if(players[playerNum].fixcounter.pos == players[playerNum].fixacked.pos &&
        P_CheckPosXYZ(mo, clx, cly, clz))   // But it must be a valid pos.
     {
         Sv_PlaceThing(mo, clx, cly, clz, onFloor);

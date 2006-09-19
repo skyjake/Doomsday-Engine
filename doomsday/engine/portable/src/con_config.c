@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -84,7 +84,7 @@ int Con_ParseCommands(char *fileName, int setdefault)
         if(!M_IsComment(buff))
         {
             // Execute the commands silently.
-            if(!Con_Execute(CMDS_CONFIG, buff, setdefault ? true : false))
+            if(!Con_Execute(CMDS_CONFIG, buff, (setdefault ? true : false), false))
                 Con_Message("%s(%d): error executing command\n" "  \"%s\"\n",
                             fileName, line, buff);
         }

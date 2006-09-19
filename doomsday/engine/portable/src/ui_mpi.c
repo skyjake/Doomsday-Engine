@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -391,7 +391,7 @@ void MPIStartServer(ui_object_t *ob)
     Con_SetString("net-master-address", str_masterip, true);
 
     // Start the server.
-    Con_Execute(CMDS_DDAY,"net server start", false);
+    Con_Execute(CMDS_DDAY,"net server start", false, false);
 
     UI_End();
 }
@@ -571,7 +571,7 @@ void MPIConnect(ui_object_t *ob)
 
     sprintf(buf, "net %sconnect %i", searchMode == SEARCH_MASTER ? "m" : "",
             lstit_found[lst_found.selection].data2);
-    if(Con_Execute(CMDS_DDAY,buf, false))
+    if(Con_Execute(CMDS_DDAY,buf, false, false))
     {
         // Success.
         UI_End();

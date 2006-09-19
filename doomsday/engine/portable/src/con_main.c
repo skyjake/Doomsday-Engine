@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -106,7 +106,9 @@ typedef struct calias_s {
 typedef struct execbuff_s {
     boolean used;               // Is this in use?
     timespan_t when;            // System time when to execute the command.
-    int    source;        // Where the command came from (console input, a cfg file etc..)
+    byte    source;             // Where the command came from
+                                // (console input, a cfg file etc..)
+    boolean isNetCmd;           // Command was sent over the net to us.
     char    subCmd[1024];       // A single command w/args.
 } execbuff_t;
 
@@ -131,8 +133,10 @@ typedef struct knownword_S {
 
 static void registerCommands(void);
 static void registerVariables(void);
-static int executeSubCmd(const char *subCmd, int src);
-void    Con_SplitIntoSubCommands(const char *command, timespan_t markerOffset, int src);
+static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd);
+static void Con_SplitIntoSubCommands(const char *command,
+                                     timespan_t markerOffset, byte src,
+                                     boolean isNetCmd);
 calias_t *Con_GetAlias(const char *name);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -822,17 +826,19 @@ void Con_ClearBuffer()
     bLineOff = 0;
 }
 
-/*
+/**
  * Send a console command to the server.
  * This shouldn't be called unless we're logged in with the right password.
  */
-void Con_Send(const char *command, int silent)
+void Con_Send(const char *command, byte src, int silent)
 {
     unsigned short len = strlen(command) + 1;
 
-    Msg_Begin(PKT_COMMAND);
+    Msg_Begin(PKT_COMMAND2);
     // Mark high bit for silent commands.
     Msg_WriteShort(len | (silent ? 0x8000 : 0));
+    Msg_WriteShort(0); // flags. Unused at present.
+    Msg_WriteByte(src);
     Msg_Write(command, len);
     // Send it reliably.
     Net_SendBuffer(0, SPF_ORDERED);
@@ -845,7 +851,8 @@ void Con_ClearExecBuffer()
     exBuffSize = 0;
 }
 
-void Con_QueueCmd(const char *singleCmd, timespan_t atSecond, int source)
+static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
+                         byte source, boolean isNetCmd)
 {
     execbuff_t *ptr = NULL;
     int     i;
@@ -868,6 +875,7 @@ void Con_QueueCmd(const char *singleCmd, timespan_t atSecond, int source)
     strcpy(ptr->subCmd, singleCmd);
     ptr->when = atSecond;
     ptr->source = source;
+    ptr->isNetCmd = isNetCmd;
 }
 
 void Con_Shutdown()
@@ -954,7 +962,7 @@ boolean Con_CheckExecBuffer(void)
             curExec = ptr;
             ptr->used = false;
             strcpy(storage, ptr->subCmd);
-            if(!executeSubCmd(storage, ptr->source))
+            if(!executeSubCmd(storage, ptr->source, ptr->isNetCmd))
                 ret = false;
             allDone = false;
         }
@@ -1181,7 +1189,7 @@ static void expandWithArguments(char **expCommand, cmdargs_t * args)
  * executeSubCmd
  *  The command is executed forthwith!!
  */
-static int executeSubCmd(const char *subCmd, int src)
+static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 {
     int     i;
     char    prefix;
@@ -1204,10 +1212,10 @@ static int executeSubCmd(const char *subCmd, int src)
     }
 
     // If logged in, send command to server at this point.
-    if(netLoggedIn)
+    if(!isServer && netLoggedIn)
     {
         // We have logged in on the server. Send the command there.
-        Con_Send(subCmd, ConsoleSilent);
+        Con_Send(subCmd, src, ConsoleSilent);
         return true;
     }
 
@@ -1216,15 +1224,106 @@ static int executeSubCmd(const char *subCmd, int src)
         if(!stricmp(ccmds[i].name, args.argv[0]))
         {
             // Found a match. Are we allowed to execute?
-            if((src == CMDS_DDAY && !(ccmds[i].flags & CMDF_DDAY)) ||
-               (src == CMDS_GAME && !(ccmds[i].flags & CMDF_GAME)) ||
-               (src == CMDS_CONSOLE && !(ccmds[i].flags & CMDF_CONSOLE)) ||
-               (src == CMDS_BIND && !(ccmds[i].flags & CMDF_BIND)) ||
-               (src == CMDS_CONFIG && !(ccmds[i].flags & CMDF_CONFIG)) ||
-               (src == CMDS_PROFILE && !(ccmds[i].flags & CMDF_PROFILE)) ||
-               (src == CMDS_CMDLINE && !(ccmds[i].flags & CMDF_CMDLINE)) ||
-               (src == CMDS_DED && !(ccmds[i].flags & CMDF_DED)))
+            boolean canExecute = true;
+
+            // Net commands sent to servers have extra protection.
+            if(isServer && isNetCmd)
             {
+                // Is the command permitted for use by clients?
+                if(ccmds[i].flags & CMDF_CLIENT)
+                {
+                    Con_Printf("executeSubCmd: Blocked command. A client"
+                               " attempted to use '%s'.\n"
+                               "This command is not permitted for use by clients\n",
+                               ccmds[i].name);
+                    // TODO: Tell the client!
+                    return true;
+                }
+
+                // Are ANY commands from this (remote) src permitted for use
+                // by our clients?
+
+                // NOTE:
+                // This is an interim measure to protect against abuse of the
+                // most vulnerable invocation methods.
+                // Once all console commands are updated with the correct usage
+                // flags we can then remove these restrictions or make them
+                // optional for servers.
+                //
+                // The next step will then be allowing select console commands
+                // to be executed by non-logged in clients.
+                switch(src)
+                {
+                case CMDS_UNKNOWN:
+                case CMDS_CONFIG:
+                case CMDS_PROFILE:
+                case CMDS_CMDLINE:
+                case CMDS_DED:
+                    Con_Printf("executeSubCmd: Blocked command. A client"
+                               " attempted to use '%s' via %s.\n"
+                               "This invocation method is not permitted "
+                               "by clients\n", ccmds[i].name, CMDTYPESTR(src));
+                    // TODO: Tell the client!
+                    return true;
+
+                default:
+                    break;
+                }
+            }
+
+            // Is the src permitted for this command?
+            switch(src)
+            {
+            case CMDS_UNKNOWN:
+                canExecute = false;
+                break;
+
+            case CMDS_DDAY:
+                if(ccmds[i].flags & CMDF_DDAY)
+                    canExecute = false;
+                break;
+
+            case CMDS_GAME:
+                if(ccmds[i].flags & CMDF_GAME)
+                    canExecute = false;
+                break;
+
+            case CMDS_CONSOLE:
+                if(ccmds[i].flags & CMDF_CONSOLE)
+                    canExecute = false;
+                break;
+
+            case CMDS_BIND:
+                if(ccmds[i].flags & CMDF_BIND)
+                    canExecute = false;
+                break;
+
+            case CMDS_CONFIG:
+                if(ccmds[i].flags & CMDF_CONFIG)
+                    canExecute = false;
+                break;
+
+            case CMDS_PROFILE:
+                if(ccmds[i].flags & CMDF_PROFILE)
+                    canExecute = false;
+                break;
+
+            case CMDS_CMDLINE:
+                if(ccmds[i].flags & CMDF_CMDLINE)
+                    canExecute = false;
+                break;
+
+            case CMDS_DED:
+                if(ccmds[i].flags & CMDF_DED)
+                    canExecute = false;
+                break;
+
+            default:
+                return true;
+            }
+
+            if(canExecute)
+            {   // Execute the command!
                 int     cret = ccmds[i].func(src, args.argc, args.argv);
 
                 if(cret == false)
@@ -1264,7 +1363,8 @@ static int executeSubCmd(const char *subCmd, int src)
                 }
                 else if(var->flags & CVF_READ_ONLY)
                 {
-                    Con_Printf("%s is read-only. It can't be changed (not even with force)\n", var->name);
+                    Con_Printf("%s is read-only. It can't be changed (not even "
+                               "with force)\n", var->name);
                 }
                 else if(var->type == CVT_BYTE)
                 {
@@ -1344,7 +1444,7 @@ static int executeSubCmd(const char *subCmd, int src)
             strcpy(expCommand, cal->command);
             expandWithArguments(&expCommand, &args);
             // Do it, man!
-            Con_SplitIntoSubCommands(expCommand, 0, src);
+            Con_SplitIntoSubCommands(expCommand, 0, src, isNetCmd);
             free(expCommand);
             return true;
         }
@@ -1358,7 +1458,9 @@ static int executeSubCmd(const char *subCmd, int src)
  * Splits the command into subcommands and queues them into the
  * execution buffer.
  */
-void Con_SplitIntoSubCommands(const char *command, timespan_t markerOffset, int src)
+static void Con_SplitIntoSubCommands(const char *command,
+                                     timespan_t markerOffset, byte src,
+                                     boolean isNetCmd)
 {
     int     gPos = 0, scPos = 0;
     char    subCmd[2048];
@@ -1401,32 +1503,39 @@ void Con_SplitIntoSubCommands(const char *command, timespan_t markerOffset, int 
             continue;
 
         // Queue it.
-        Con_QueueCmd(subCmd, sysTime + markerOffset, src);
+        Con_QueueCmd(subCmd, sysTime + markerOffset, src, isNetCmd);
 
         scPos = 0;
     }
 }
 
-/*
- *  Wrapper for Con_Execute
- *    Allows plugin dlls to execute a console command
+/**
+ * Wrapper for Con_Execute
+ * Allows plugin dlls to execute a console command
  */
 int DD_Execute(const char *command, int silent)
 {
-    return Con_Execute(CMDS_GAME, command, silent);
+    return Con_Execute(CMDS_GAME, command, silent, false);
 }
 
-/*
+/**
  * Returns false if a command fails.
+ *
+ * @param   src     The source of the command (e.g. DDay internal, DED etc).
+ * @param   command The command to be executed.
+ * @param   silent  Non-zero indicates not to log execution of the command.
+ * @param   netCmd  If <code>true</code> command was sent over the net.
+ *
+ * @return          Non-zero if command was executed successfully.
  */
-int Con_Execute(int src, const char *command, int silent)
+int Con_Execute(byte src, const char *command, int silent, boolean netCmd)
 {
     int     ret;
 
     if(silent)
         ConsoleSilent = true;
 
-    Con_SplitIntoSubCommands(command, 0, src);
+    Con_SplitIntoSubCommands(command, 0, src, netCmd);
     ret = Con_CheckExecBuffer();
 
     if(silent)
@@ -1435,8 +1544,8 @@ int Con_Execute(int src, const char *command, int silent)
     return ret;
 }
 
-/*
- *  exported version of Con_Executef
+/**
+ * Exported version of Con_Executef
  */
 int DD_Executef(int silent, const char *command, ...)
 {
@@ -1446,10 +1555,10 @@ int DD_Executef(int silent, const char *command, ...)
     va_start(argptr, command);
     vsprintf(buffer, command, argptr);
     va_end(argptr);
-    return Con_Execute(CMDS_GAME, buffer, silent);
+    return Con_Execute(CMDS_GAME, buffer, silent, false);
 }
 
-int Con_Executef(int src, int silent, const char *command, ...)
+int Con_Executef(byte src, int silent, const char *command, ...)
 {
     va_list argptr;
     char    buffer[4096];
@@ -1457,10 +1566,10 @@ int Con_Executef(int src, int silent, const char *command, ...)
     va_start(argptr, command);
     vsnprintf(buffer, sizeof(buffer), command, argptr);
     va_end(argptr);
-    return Con_Execute(src, buffer, silent);
+    return Con_Execute(src, buffer, silent, false);
 }
 
-static void processCmd(int src)
+static void processCmd(byte src)
 {
     DD_ClearKeyRepeaters();
 
@@ -1468,7 +1577,7 @@ static void processCmd(int src)
     addOldCmd(cmdLine);
     ocPos = numOldCmds;
 
-    Con_Execute(src, cmdLine, false);
+    Con_Execute(src, cmdLine, false, false);
 }
 
 static void updateCmdLine()
@@ -1624,7 +1733,7 @@ boolean Con_Responder(event_t *event)
     if(!conInputLock &&
        shiftDown && event->state == EVS_DOWN && event->data1 == DDKEY_ESCAPE)
     {
-        Con_Execute(CMDS_DDAY, "panel", true);
+        Con_Execute(CMDS_DDAY, "panel", true, false);
         return true;
     }
 
@@ -1884,7 +1993,7 @@ boolean Con_Responder(event_t *event)
         if(conInputLock)
             break;
 
-        Con_Execute(CMDS_DDAY, "clear", true);
+        Con_Execute(CMDS_DDAY, "clear", true, false);
         break;
 
     default:                    // Check for a character.
@@ -2852,7 +2961,7 @@ D_CMD(Wait)
     offset = strtod(argv[1], NULL) / 35;    // Offset in seconds.
     if(offset < 0)
         offset = 0;
-    Con_SplitIntoSubCommands(argv[2], offset, CMDS_CONSOLE);
+    Con_SplitIntoSubCommands(argv[2], offset, CMDS_CONSOLE, false);
     return true;
 }
 
@@ -2873,7 +2982,7 @@ D_CMD(Repeat)
     while(count-- > 0)
     {
         offset += interval;
-        Con_SplitIntoSubCommands(argv[3], offset, CMDS_CONSOLE);
+        Con_SplitIntoSubCommands(argv[3], offset, CMDS_CONSOLE, false);
     }
     return true;
 }
@@ -3044,11 +3153,11 @@ D_CMD(If)
     // Should the command be executed?
     if(isTrue)
     {
-        Con_Execute(src, argv[4], ConsoleSilent);
+        Con_Execute(src, argv[4], ConsoleSilent, false);
     }
     else if(argc == 6)
     {
-        Con_Execute(src, argv[5], ConsoleSilent);
+        Con_Execute(src, argv[5], ConsoleSilent, false);
     }
     CmdReturnValue = isTrue;
     return true;

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -32,19 +32,19 @@
 #include <stdio.h>
 #include "dd_share.h"
 
-#define MAX_ARGS	256
+#define MAX_ARGS    256
 
 typedef struct {
-	char            cmdLine[2048];
-	int             argc;
-	char           *argv[MAX_ARGS];
+    char            cmdLine[2048];
+    int             argc;
+    char           *argv[MAX_ARGS];
 } cmdargs_t;
 
 // A console buffer line.
 typedef struct {
-	int             len;		   // This is the length of the line (no term).
-	char           *text;		   // This is the text.
-	int             flags;
+    int             len;           // This is the length of the line (no term).
+    char           *text;          // This is the text.
+    int             flags;
 } cbline_t;
 
 // Console commands can set this when they need to return a custom value
@@ -72,11 +72,12 @@ boolean         Con_Responder(event_t *event);
 void            Con_Drawer(void);
 void            Con_DrawRuler(int y, int lineHeight, float alpha);
 void            Con_Printf(const char *format, ...);
-void            Con_FPrintf(int flags, const char *format, ...);	// Flagged printf.
+void            Con_FPrintf(int flags, const char *format, ...);    // Flagged printf.
 void            Con_SetFont(ddfont_t *cfont);
 cbline_t       *Con_GetBufferLine(int num);
-int             Con_Execute(int src, const char *command, int silent);
-int             Con_Executef(int src, int silent, const char *command, ...);
+int             Con_Execute(byte src, const char *command, int silent,
+                            boolean netCmd);
+int             Con_Executef(byte src, int silent, const char *command, ...);
 
 void            Con_Message(const char *message, ...);
 void            Con_Error(const char *error, ...);

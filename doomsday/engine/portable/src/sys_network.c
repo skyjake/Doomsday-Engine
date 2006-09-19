@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -447,13 +447,13 @@ boolean N_ReceiveReliably(nodeid_t from)
         if(received == -1)
         {
             SDLNet_FreePacket(packet);
-            Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)", 
+            Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)",
                         SDLNet_GetError(), strerror(errno));
-            return false;            
+            return false;
         }
         bytes += received;
     }
-        
+
     // Post the received message.
     {
         netmessage_t *msg = calloc(sizeof(netmessage_t), 1);
@@ -481,7 +481,7 @@ void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
 
     if(size <= 0 || !node->sock || !node->hasJoined)
         return;
-    
+
     if(size > SHORT(packetSize))
     {
         Con_Error("N_SendDataBufferReliably: Trying to send a too large data "
@@ -494,16 +494,16 @@ void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
         transmissionBufferSize = size + 2;
         transmissionBuffer = realloc(transmissionBuffer, size + 2);
     }
-    
+
     memcpy(transmissionBuffer, &packetSize, 2);
     memcpy(transmissionBuffer + 2, data, size);
-    
+
     result = SDLNet_TCP_Send(node->sock, transmissionBuffer, size + 2);
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %i bytes, result=%i\n", 
+    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %i bytes, result=%i\n",
                           size + 2, result) );
 #endif
-    if(result != size + 2) 
+    if(result != size + 2)
         perror("Socket error");
 
 /*    result = SDLNet_TCP_Send(node->sock, data, SHORT(packetSize));
@@ -782,7 +782,7 @@ void N_SystemInit(void)
     {
         Con_Message("N_SystemInit: %s\n", SDLNet_GetError());
     }
-    
+
     // Allocate the transmission buffer.
     transmissionBufferSize = DEFAULT_TRANSMISSION_SIZE;
     transmissionBuffer = malloc(transmissionBufferSize);
@@ -797,7 +797,7 @@ void N_SystemShutdown(void)
     free(transmissionBuffer);
     transmissionBuffer = NULL;
     transmissionBufferSize = 0;
-    
+
     N_ShutdownService();
     SDLNet_Quit();
 }
@@ -929,7 +929,8 @@ void N_ShutdownService(void)
     if(netgame)
     {
         // We seem to be shutting down while a netgame is running.
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true);
+        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
+                    true, false);
     }
 
     // Any queued messages will be destroyed.

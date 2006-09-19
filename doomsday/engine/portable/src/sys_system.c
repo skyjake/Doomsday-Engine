@@ -17,15 +17,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
-
-//**************************************************************************
-//**
-//** SYS_SYSTEM.C
-//**
-//**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -120,7 +114,7 @@ void Sys_Init(void)
     signal(SIGILL, handler);
     signal(SIGABRT, handler);
 #endif
-    
+
 #ifndef WIN32
     // We are not worried about broken pipes. When a TCP connection closes,
     // we prefer to receive an error code instead of a signal.
@@ -233,7 +227,8 @@ void Sys_Quit(void)
     // Quit netgame if one is in progress.
     if(netgame)
     {
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true);
+        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
+                    true, false);
     }
 
     Demo_StopPlayback();

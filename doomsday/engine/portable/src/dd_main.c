@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -601,7 +601,7 @@ void DD_Main(void)
                 p--;
                 break;
             }
-            Con_Execute(CMDS_CMDLINE, arg, false);
+            Con_Execute(CMDS_CMDLINE, arg, false, false);
         }
     }
 
@@ -675,7 +675,7 @@ void DD_CheckTimeDemo(void)
             char    buf[200];
 
             sprintf(buf, "playdemo %s", ArgNext());
-            Con_Execute(CMDS_CMDLINE, buf, false);
+            Con_Execute(CMDS_CMDLINE, buf, false, false);
         }
     }
 }
