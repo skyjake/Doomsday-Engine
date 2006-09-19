@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ################################################################################
 #  Copyright and License Summary
 #  License: GPL
@@ -111,7 +111,7 @@ do
 			grep -q " * License: Raven" $CURRENT_FILE 
 			if [[ "$?" = 0 ]]
 				then let RAVEN_SOURCE_FILES=RAVEN_SOURCE_FILES+1
-				echo "<tr>" >> $TOP_LEVEL_DIR/code.html
+				echo "<tr bgcolor=\"#0000ff\">" >> $TOP_LEVEL_DIR/code.html
 				echo "<td>" >> $TOP_LEVEL_DIR/code.html
 				echo $CURRENT_FILE >> $TOP_LEVEL_DIR/code.html
 				echo "</td>" >> $TOP_LEVEL_DIR/code.html
@@ -120,7 +120,7 @@ do
 				echo "</td>" >> $TOP_LEVEL_DIR/code.html
 				echo "</tr>" >> $TOP_LEVEL_DIR/code.html
 				else let UNKNOWN_SOURCE_FILES=UNKNOWN_SOURCE_FILES+1
-				echo "<tr>" >> $TOP_LEVEL_DIR/code.html
+				echo "<tr bgcolor=\"#ff0000\">" >> $TOP_LEVEL_DIR/code.html
 				echo "<td>" >> $TOP_LEVEL_DIR/code.html
 				echo $CURRENT_FILE >> $TOP_LEVEL_DIR/code.html
 				echo "</td>" >> $TOP_LEVEL_DIR/code.html
@@ -545,7 +545,7 @@ echo "<html>" > $TOP_LEVEL_DIR/index.html
 echo "<head>" >> $TOP_LEVEL_DIR/index.html
 echo "<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">" >> $TOP_LEVEL_DIR/index.html
 echo "<title>The Doomsday Engine, Project Audit Summary</title>" >> $TOP_LEVEL_DIR/index.html
-echo "<body>" >> $TOP_LEVEL_DIR/index.html
+echo "<body bgcolor=\"#ffffff\" text=\"#000000\">" >> $TOP_LEVEL_DIR/index.html
 echo "<a name=\"top\"> </a>" >> $TOP_LEVEL_DIR/index.html
 echo "<h1>The Doomsday Engine, Project Audit Summary</h1>" >> $TOP_LEVEL_DIR/index.html
 echo "<p> Last Updated `date` </p>" >> $TOP_LEVEL_DIR/index.html
