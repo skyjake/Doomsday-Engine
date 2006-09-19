@@ -1352,7 +1352,12 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                 boolean forced = args.argc == 3;
 
                 setting = true;
-                if(var->flags & CVF_PROTECTED && !forced)
+                if(var->flags & CVF_READ_ONLY)
+                {
+                    Con_Printf("%s is read-only. It can't be changed (not even "
+                               "with force)\n", var->name);
+                }
+                else if(var->flags & CVF_PROTECTED && !forced)
                 {
                     Con_Printf
                         ("%s is protected. You shouldn't change its value.\n",
@@ -1360,11 +1365,6 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     Con_Printf
                         ("Use the command: '%s force %s' to modify it anyway.\n",
                          var->name, argptr);
-                }
-                else if(var->flags & CVF_READ_ONLY)
-                {
-                    Con_Printf("%s is read-only. It can't be changed (not even "
-                               "with force)\n", var->name);
                 }
                 else if(var->type == CVT_BYTE)
                 {
