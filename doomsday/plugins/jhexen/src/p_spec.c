@@ -388,22 +388,27 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
     return height;
 }
 
-//=========================================================================
-//
-// P_FindSectorFromTag
-//
-//=========================================================================
-
-int P_FindSectorFromTag(int tag, int start)
+sector_t *P_FindSectorFromTag(int tag, sector_t *start)
 {
-    int     i;
+    int         i;
+    sector_t   *sec;
 
-    for(i = start + 1; i < numsectors; ++i)
+    if(tag < 0)
+        return NULL;
+
+    if(start != NULL)
+        i = P_ToIndex(start) + 1;
+    else
+        i = 0;
+
+    for(; i < numsectors; ++i)
     {
-        if(P_XSector(P_ToPtr(DMU_SECTOR, i))->tag == tag)
-            return i;
+        sec = P_ToPtr(DMU_SECTOR, i);
+        if(P_XSector(sec)->tag == tag)
+            return sec;
     }
-    return -1;
+
+    return NULL;
 }
 
 //==================================================================
@@ -434,26 +439,17 @@ int P_FindSectorFromTag(int tag, int start)
    }
  */
 
-//=========================================================================
-//
-// EV_SectorSoundChange
-//
-//=========================================================================
-
 boolean EV_SectorSoundChange(byte *args)
 {
-    int     secNum;
-    boolean rtn;
+    boolean     rtn = false;
+    sector_t   *sec = NULL;
 
     if(!args[0])
-    {
         return false;
-    }
-    secNum = -1;
-    rtn = false;
-    while((secNum = P_FindSectorFromTag(args[0], secNum)) >= 0)
+
+    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
     {
-        P_XSector(P_ToPtr(DMU_SECTOR, secNum))->seqType = args[1];
+        P_XSector(sec)->seqType = args[1];
         rtn = true;
     }
     return rtn;

@@ -654,23 +654,14 @@ static void ScriptFinished(int number)
     }
 }
 
-//==========================================================================
-//
-// TagBusy
-//
-//==========================================================================
-
 static boolean TagBusy(int tag)
 {
-    int     sectorIndex;
+    sector_t    *sec = NULL;
 
-    sectorIndex = -1;
-    while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
+    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
     {
-        if(P_XSector(P_ToPtr(DMU_SECTOR, sectorIndex))->specialdata)
-        {
+        if(P_XSector(sec)->specialdata)
             return true;
-        }
     }
     return false;
 }
@@ -1313,64 +1304,64 @@ static int CmdPolyWaitDirect(void)
 
 static int CmdChangeFloor(void)
 {
-    int     tag;
-    int     flat;
-    int     sectorIndex;
+    int         tag;
+    int         flat;
+    sector_t   *sec = NULL;
 
     flat = R_FlatNumForName(GetACString(Pop()));
     tag = Pop();
-    sectorIndex = -1;
-    while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
+
+    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
     {
-        P_SetInt(DMU_SECTOR, sectorIndex, DMU_FLOOR_TEXTURE, flat);
+        P_SetIntp(sec, DMU_FLOOR_TEXTURE, flat);
     }
     return SCRIPT_CONTINUE;
 }
 
 static int CmdChangeFloorDirect(void)
 {
-    int     tag;
-    int     flat;
-    int     sectorIndex;
+    int         tag;
+    int         flat;
+    sector_t   *sec = NULL;
 
     tag = LONG(*PCodePtr++);
     flat = R_FlatNumForName(GetACString(LONG(*PCodePtr++)));
-    sectorIndex = -1;
-    while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
+
+    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
     {
-        P_SetInt(DMU_SECTOR, sectorIndex, DMU_FLOOR_TEXTURE, flat);
+        P_SetIntp(sec, DMU_FLOOR_TEXTURE, flat);
     }
     return SCRIPT_CONTINUE;
 }
 
 static int CmdChangeCeiling(void)
 {
-    int     tag;
-    int     flat;
-    int     sectorIndex;
+    int         tag;
+    int         flat;
+    sector_t   *sec = NULL;
 
     flat = R_FlatNumForName(GetACString(Pop()));
     tag = Pop();
-    sectorIndex = -1;
-    while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
+
+    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
     {
-        P_SetInt(DMU_SECTOR, sectorIndex, DMU_CEILING_TEXTURE, flat);
+        P_SetIntp(sec, DMU_CEILING_TEXTURE, flat);
     }
     return SCRIPT_CONTINUE;
 }
 
 static int CmdChangeCeilingDirect(void)
 {
-    int     tag;
-    int     flat;
-    int     sectorIndex;
+    int         tag;
+    int         flat;
+    sector_t   *sec = NULL;
 
     tag = LONG(*PCodePtr++);
     flat = R_FlatNumForName(GetACString(LONG(*PCodePtr++)));
-    sectorIndex = -1;
-    while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
+
+    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
     {
-        P_SetInt(DMU_SECTOR, sectorIndex, DMU_CEILING_TEXTURE, flat);
+        P_SetIntp(sec, DMU_CEILING_TEXTURE, flat);
     }
     return SCRIPT_CONTINUE;
 }

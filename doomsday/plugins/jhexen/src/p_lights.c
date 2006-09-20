@@ -117,51 +117,49 @@ void T_Light(light_t * light)
     }
 }
 
-//============================================================================
-//
-//  EV_SpawnLight
-//
-//============================================================================
-
 boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
 {
-    light_t *light;
-    int     secNum;
-    int     arg1, arg2, arg3, arg4;
-    boolean think;
-    boolean rtn;
+    int         arg1, arg2, arg3, arg4;
+    boolean     think = false;
+    boolean     rtn = false;
+    light_t    *light;
+    sector_t   *sec = NULL;
 
     arg1 = arg[1];
     arg2 = arg[2];
     arg3 = arg[3];
     arg4 = arg[4];
 
-    secNum = -1;
-    rtn = false;
-    think = false;
-    while((secNum = P_FindSectorFromTag(arg[0], secNum)) >= 0)
+    while((sec = P_FindSectorFromTag(arg[0], sec)) != NULL)
     {
         think = false;
+        rtn = true;
+
         light = Z_Malloc(sizeof(light_t), PU_LEVSPEC, 0);
         light->type = type;
-        light->sector = P_ToPtr(DMU_SECTOR, secNum);
+        light->sector = sec;
         light->count = 0;
-        rtn = true;
+
         switch (type)
         {
         case LITE_RAISEBYVALUE:
             P_SectorModifyLight(light->sector, arg1);
             break;
+
         case LITE_LOWERBYVALUE:
             P_SectorModifyLight(light->sector, -arg1);
             break;
+
         case LITE_CHANGETOVALUE:
             P_SectorSetLight(light->sector, arg1);
             break;
+
         case LITE_FADE:
             think = true;
             light->value1 = arg1;   // destination lightlevel
-            light->value2 = FixedDiv((arg1 - P_SectorLight(light->sector)) << FRACBITS, arg2 << FRACBITS);  // delta lightlevel
+            light->value2 =
+                FixedDiv((arg1 - P_SectorLight(light->sector)) << FRACBITS,
+                         arg2 << FRACBITS);  // delta lightlevel
             if(P_SectorLight(light->sector) <= arg1)
             {
                 light->tics2 = 1;   // get brighter
@@ -171,11 +169,14 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
                 light->tics2 = -1;
             }
             break;
+
         case LITE_GLOW:
             think = true;
             light->value1 = arg1;   // upper lightlevel
             light->value2 = arg2;   // lower lightlevel
-            light->tics1 = FixedDiv((arg1 - P_SectorLight(light->sector)) << FRACBITS, arg3 << FRACBITS);   // lightlevel delta
+            light->tics1 =
+                FixedDiv((arg1 - P_SectorLight(light->sector)) << FRACBITS,
+                         arg3 << FRACBITS);   // lightlevel delta
             if(P_SectorLight(light->sector) <= arg1)
             {
                 light->tics2 = 1;   // get brighter
@@ -185,6 +186,7 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
                 light->tics2 = -1;
             }
             break;
+
         case LITE_FLICKER:
             think = true;
             light->value1 = arg1;   // upper lightlevel
@@ -192,6 +194,7 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
             P_SectorSetLight(light->sector, light->value1);
             light->count = (P_Random() & 64) + 1;
             break;
+
         case LITE_STROBE:
             think = true;
             light->value1 = arg1;   // upper lightlevel
@@ -201,10 +204,12 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
             light->count = arg3;
             P_SectorSetLight(light->sector, light->value1);
             break;
+
         default:
             rtn = false;
             break;
         }
+
         if(think)
         {
             P_AddThinker(&light->thinker);

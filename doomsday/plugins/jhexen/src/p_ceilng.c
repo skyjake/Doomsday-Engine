@@ -121,43 +121,22 @@ void T_MoveCeiling(ceiling_t * ceiling)
     }
 }
 
-//==================================================================
-//
-//              EV_DoCeiling
-//              Move a ceiling up/down and all around!
-//
-//==================================================================
+/**
+ * Move a ceiling up/down and all around!
+ */
 int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
 {
-    int     secnum, rtn;
-    sector_t *sec;
-    ceiling_t *ceiling;
+    int         rtn = 0;
+    sector_t   *sec = NULL;
+    ceiling_t  *ceiling;
 
-    secnum = -1;
-    rtn = 0;
-
-    /* Old Ceiling stasis code
-       //
-       //      Reactivate in-stasis ceilings...for certain types.
-       //
-       switch(type)
-       {
-       case CLEV_CRUSHANDRAISE:
-       P_ActivateInStasisCeiling(line);
-       default:
-       break;
-       }
-     */
-    while((secnum = P_FindSectorFromTag(arg[0], secnum)) >= 0)
+    while((sec = P_FindSectorFromTag(arg[0], sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         if(P_XSector(sec)->specialdata)
             continue;
 
-        //
-        // new door thinker
-        //
         rtn = 1;
+
         ceiling = Z_Malloc(sizeof(*ceiling), PU_LEVSPEC, 0);
         P_AddThinker(&ceiling->thinker);
         P_XSector(sec)->specialdata = ceiling;
@@ -165,6 +144,7 @@ int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
         ceiling->sector = sec;
         ceiling->crush = 0;
         ceiling->speed = arg[1] * (FRACUNIT / 8);
+
         switch (type)
         {
         case CLEV_CRUSHRAISEANDSTAY:
@@ -174,6 +154,7 @@ int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
                 (8 * FRACUNIT);
             ceiling->direction = -1;
             break;
+
         case CLEV_CRUSHANDRAISE:
             ceiling->topheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
         case CLEV_LOWERANDCRUSH:
@@ -186,20 +167,24 @@ int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
             }
             ceiling->direction = -1;
             break;
+
         case CLEV_RAISETOHIGHEST:
             ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
             ceiling->direction = 1;
             break;
+
         case CLEV_LOWERBYVALUE:
             ceiling->bottomheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT) -
                 arg[2] * FRACUNIT;
             ceiling->direction = -1;
             break;
+
         case CLEV_RAISEBYVALUE:
             ceiling->topheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT) +
                 arg[2] * FRACUNIT;
             ceiling->direction = 1;
             break;
+
         case CLEV_MOVETOVALUETIMES8:
             {
                 int     destHeight = arg[2] * FRACUNIT * 8;
@@ -224,13 +209,17 @@ int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
                 }
                 break;
             }
+
         default:
             rtn = 0;
             break;
         }
+
         ceiling->tag = P_XSector(sec)->tag;
         ceiling->type = type;
+
         P_AddActiveCeiling(ceiling);
+
         if(rtn)
         {
             SN_StartSequence(P_SectorSoundOrigin(ceiling->sector),

@@ -158,35 +158,23 @@ void T_VerticalDoor(vldoor_t * door)
     }
 }
 
-//----------------------------------------------------------------------------
-//
-// EV_DoDoor
-//
-// Move a door up/down
-//
-//----------------------------------------------------------------------------
-
+/**
+ * Move a door up/down
+ */
 int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
 {
-    int     secnum;
-    int     retcode;
-    sector_t *sec;
-    vldoor_t *door;
-    fixed_t speed;
+    int         rtn = 0;
+    fixed_t     speed;
+    sector_t   *sec = NULL;
+    vldoor_t   *door;
 
     speed = args[1] * FRACUNIT / 8;
-    secnum = -1;
-    retcode = 0;
-    while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         if(P_XSector(sec)->specialdata)
-        {
             continue;
-        }
 
-        // Add new door thinker
-        retcode = 1;
+        rtn = 1;
         door = Z_Malloc(sizeof(*door), PU_LEVSPEC, 0);
         P_AddThinker(&door->thinker);
         P_XSector(sec)->specialdata = door;
@@ -199,26 +187,31 @@ int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
             door->topheight -= 4 * FRACUNIT;
             door->direction = -1;
             break;
+
         case DREV_CLOSE30THENOPEN:
             door->topheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
             door->direction = -1;
             break;
+
         case DREV_NORMAL:
         case DREV_OPEN:
             door->direction = 1;
             door->topheight = P_FindLowestCeilingSurrounding(sec);
             door->topheight -= 4 * FRACUNIT;
             break;
+
         default:
             break;
         }
+
         door->type = type;
         door->speed = speed;
         door->topwait = args[2];    // line->arg3
         SN_StartSequence(P_SectorSoundOrigin(door->sector),
                          SEQ_DOOR_STONE + P_XSector(door->sector)->seqType);
     }
-    return (retcode);
+
+    return rtn;
 }
 
 //==================================================================

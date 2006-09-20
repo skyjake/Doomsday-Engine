@@ -128,46 +128,22 @@ void T_PlatRaise(plat_t * plat)
     }
 }
 
-//==================================================================
-//
-//      Do Platforms
-//      "amount" is only used for SOME platforms.
-//
-//==================================================================
+/**
+ * @param amount        Only used for SOME platforms.
+ */
 int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
 {
-    plat_t *plat;
-    int     secnum;
-    int     rtn;
-    sector_t *sec;
-    fixed_t floorheight;
+    int         rtn = 0;
+    fixed_t     floorheight;
+    sector_t   *sec = NULL;
+    plat_t     *plat;
 
-    secnum = -1;
-    rtn = 0;
-
-    /*
-       //
-       //      Activate all <type> plats that are in_stasis
-       //
-       switch(type)
-       {
-       case PLAT_PERPETUALRAISE:
-       P_ActivateInStasis(args[0]);
-       break;
-       default:
-       break;
-       }
-     */
-
-    while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         if(P_XSector(sec)->specialdata)
             continue;
 
-        //
         // Find lowest & highest floors around sector
-        //
         rtn = 1;
         plat = Z_Malloc(sizeof(*plat), PU_LEVSPEC, 0);
         P_AddThinker(&plat->thinker);
@@ -180,6 +156,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
         plat->tag = args[0];
         plat->speed = args[1] * (FRACUNIT / 8);
         floorheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
+
         switch (type)
         {
         case PLAT_DOWNWAITUPSTAY:
@@ -190,6 +167,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
             plat->wait = args[2];
             plat->status = PLAT_DOWN;
             break;
+
         case PLAT_DOWNBYVALUEWAITUPSTAY:
             plat->low = floorheight - args[3] * 8 * FRACUNIT;
             if(plat->low > floorheight)
@@ -198,6 +176,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
             plat->wait = args[2];
             plat->status = PLAT_DOWN;
             break;
+
         case PLAT_UPWAITDOWNSTAY:
             plat->high = P_FindHighestFloorSurrounding(sec);
             if(plat->high < floorheight)
@@ -206,6 +185,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
             plat->wait = args[2];
             plat->status = PLAT_UP;
             break;
+
         case PLAT_UPBYVALUEWAITDOWNSTAY:
             plat->high = floorheight + args[3] * 8 * FRACUNIT;
             if(plat->high < floorheight)
@@ -214,6 +194,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
             plat->wait = args[2];
             plat->status = PLAT_UP;
             break;
+
         case PLAT_PERPETUALRAISE:
             plat->low = P_FindLowestFloorSurrounding(sec) + 8 * FRACUNIT;
             if(plat->low > floorheight)
@@ -225,6 +206,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
             plat->status = P_Random() & 1;
             break;
         }
+
         P_AddActivePlat(plat);
         StartSequence(plat->sector, SEQ_PLATFORM);
     }

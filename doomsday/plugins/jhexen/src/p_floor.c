@@ -316,33 +316,22 @@ void T_MoveFloor(floormove_t * floor)
     }
 }
 
-//==================================================================
-//
-//      HANDLE FLOOR TYPES
-//
-//==================================================================
+
 int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
 {
-    int     secnum;
-    int     rtn;
+    int     rtn = 0;
     floormove_t *floor = NULL;
-    sector_t *sec;
+    sector_t *sec = NULL;
     xsector_t *xsec;
 
-    secnum = -1;
-    rtn = 0;
-    while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         xsec = P_XSector(sec);
 
-        //      ALREADY MOVING?  IF SO, KEEP GOING...
+        // ALREADY MOVING?  IF SO, KEEP GOING...
         if(xsec->specialdata)
             continue;
 
-        //
-        //      new floor thinker
-        //
         rtn = 1;
         floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
         memset(floor, 0, sizeof(*floor));
@@ -448,34 +437,26 @@ int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
     return rtn;
 }
 
-//============================================================================
-//
-// EV_DoFloorAndCeiling
-//
-//============================================================================
-
 int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
 {
-    boolean floor, ceiling;
-    int     secnum;
+    boolean     floor, ceiling;
+    sector_t   *sec = NULL;
 
     if(raise)
     {
         floor = EV_DoFloor(line, args, FLEV_RAISEFLOORBYVALUE);
-        secnum = -1;
-        while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+        while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
         {
-            P_XSector(P_ToPtr(DMU_SECTOR, secnum))->specialdata = NULL;
+            P_XSector(sec)->specialdata = NULL;
         }
         ceiling = EV_DoCeiling(line, args, CLEV_RAISEBYVALUE);
     }
     else
     {
         floor = EV_DoFloor(line, args, FLEV_LOWERFLOORBYVALUE);
-        secnum = -1;
-        while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+        while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
         {
-            P_XSector(P_ToPtr(DMU_SECTOR, secnum))->specialdata = NULL;
+            P_XSector(sec)->specialdata = NULL;
         }
         ceiling = EV_DoCeiling(line, args, CLEV_LOWERBYVALUE);
     }
@@ -641,24 +622,17 @@ static void ProcessStairSector(sector_t *sec, int type, int height,
     }
 }
 
-//==================================================================
-//
-//      BUILD A STAIRCASE!
-//
-// Direction is either positive or negative, denoting build stairs
-//      up or down.
-//==================================================================
-
+/**
+ * @param direction     Positive = up. Negative = down.
+ */
 int EV_BuildStairs(line_t *line, byte *args, int direction,
                    stairs_e stairsType)
 {
-    int     secnum;
-    int     height;
-    int     delay;
-    int     resetDelay;
-    sector_t *sec;
-    sector_t *qSec;
-    int     type;
+    int         height;
+    int         delay;
+    int         type;
+    int         resetDelay;
+    sector_t   *sec = NULL, *qSec;
 
     // Set global stairs variables
     TextureChange = 0;
@@ -676,12 +650,9 @@ int EV_BuildStairs(line_t *line, byte *args, int direction,
         TextureChange = args[4];
     }
 
-    secnum = -1;
-
     validCount++;
-    while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         Texture = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
         StartHeight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
 
@@ -725,32 +696,22 @@ void T_BuildPillar(pillar_t * pillar)
     }
 }
 
-//=========================================================================
-//
-// EV_BuildPillar
-//
-//=========================================================================
-
 int EV_BuildPillar(line_t *line, byte *args, boolean crush)
 {
-    int     secnum;
-    sector_t *sec;
-    pillar_t *pillar;
-    int     newHeight;
-    int     rtn;
+    int         rtn = 0;
+    int         newHeight;
+    sector_t   *sec = NULL;
+    pillar_t   *pillar;
 
-    rtn = 0;
-    secnum = -1;
-    while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         if(P_XSector(sec)->specialdata)
-            continue;           // already moving
+            continue; // already moving
+
         if(P_GetFixedp(sec, DMU_FLOOR_HEIGHT) ==
            P_GetFixedp(sec, DMU_CEILING_HEIGHT))
-        {                       // pillar is already closed
-            continue;
-        }
+            continue; // pillar is already closed
+
         rtn = 1;
         if(!args[2])
         {
@@ -802,31 +763,21 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
     return rtn;
 }
 
-//=========================================================================
-//
-// EV_OpenPillar
-//
-//=========================================================================
-
 int EV_OpenPillar(line_t *line, byte *args)
 {
-    int     secnum;
-    sector_t *sec;
-    pillar_t *pillar;
-    int     rtn;
+    int         rtn = 0;
+    sector_t   *sec = NULL;
+    pillar_t   *pillar;
 
-    rtn = 0;
-    secnum = -1;
-    while((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, secnum);
         if(P_XSector(sec)->specialdata)
-            continue;           // already moving
+            continue; // already moving
+
         if(P_GetFixedp(sec, DMU_FLOOR_HEIGHT) !=
            P_GetFixedp(sec, DMU_CEILING_HEIGHT))
-        {                       // pillar isn't closed
-            continue;
-        }
+            continue; // pillar isn't closed
+
         rtn = 1;
         pillar = Z_Malloc(sizeof(*pillar), PU_LEVSPEC, 0);
         P_XSector(sec)->specialdata = pillar;
@@ -965,36 +916,24 @@ void T_FloorWaggle(floorWaggle_t * waggle)
     P_ChangeSector(waggle->sector, true);
 }
 
-//==========================================================================
-//
-// EV_StartFloorWaggle
-//
-//==========================================================================
-
 boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
                             int timer)
 {
-    int     sectorIndex;
-    sector_t *sector;
+    boolean     retCode = false;
+    sector_t   *sec = NULL;
     floorWaggle_t *waggle;
-    boolean retCode;
 
-    retCode = false;
-    sectorIndex = -1;
-    while((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
+    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
     {
-        sector = P_ToPtr(DMU_SECTOR, sectorIndex);
-        if(P_XSector(sector)->specialdata)
-        {                       // Already busy with another thinker
-            continue;
-        }
+        if(P_XSector(sec)->specialdata)
+            continue; // already moving
 
         retCode = true;
         waggle = Z_Malloc(sizeof(*waggle), PU_LEVSPEC, 0);
-        P_XSector(sector)->specialdata = waggle;
+        P_XSector(sec)->specialdata = waggle;
         waggle->thinker.function = T_FloorWaggle;
-        waggle->sector = sector;
-        waggle->originalHeight = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
+        waggle->sector = sec;
+        waggle->originalHeight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
         waggle->accumulator = offset * FRACUNIT;
         waggle->accDelta = speed << 10;
         waggle->scale = 0;
