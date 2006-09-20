@@ -138,7 +138,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
     sector_t   *sec = NULL;
     plat_t     *plat;
 
-    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
+    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue;

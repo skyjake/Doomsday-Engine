@@ -204,9 +204,11 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
  */
 void EV_StartLightStrobing(line_t *line)
 {
+    int         tag;
     sector_t   *sec = NULL;
 
-    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
+    tag = P_XLine(line)->tag;
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue;

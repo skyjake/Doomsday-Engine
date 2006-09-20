@@ -169,7 +169,7 @@ int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
     vldoor_t   *door;
 
     speed = args[1] * FRACUNIT / 8;
-    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
+    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue;

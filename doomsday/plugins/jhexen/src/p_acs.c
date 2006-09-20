@@ -658,7 +658,7 @@ static boolean TagBusy(int tag)
 {
     sector_t    *sec = NULL;
 
-    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             return true;
@@ -1311,7 +1311,7 @@ static int CmdChangeFloor(void)
     flat = R_FlatNumForName(GetACString(Pop()));
     tag = Pop();
 
-    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         P_SetIntp(sec, DMU_FLOOR_TEXTURE, flat);
     }
@@ -1327,7 +1327,7 @@ static int CmdChangeFloorDirect(void)
     tag = LONG(*PCodePtr++);
     flat = R_FlatNumForName(GetACString(LONG(*PCodePtr++)));
 
-    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         P_SetIntp(sec, DMU_FLOOR_TEXTURE, flat);
     }
@@ -1343,7 +1343,7 @@ static int CmdChangeCeiling(void)
     flat = R_FlatNumForName(GetACString(Pop()));
     tag = Pop();
 
-    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         P_SetIntp(sec, DMU_CEILING_TEXTURE, flat);
     }
@@ -1359,7 +1359,7 @@ static int CmdChangeCeilingDirect(void)
     tag = LONG(*PCodePtr++);
     flat = R_FlatNumForName(GetACString(LONG(*PCodePtr++)));
 
-    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         P_SetIntp(sec, DMU_CEILING_TEXTURE, flat);
     }

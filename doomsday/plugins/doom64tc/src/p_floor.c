@@ -287,8 +287,8 @@ void T_MoveFloor(floormove_t * floor)
  */
 int EV_DoFloor(line_t *line, floor_e floortype)
 {
-    int         i;
-    int         rtn;
+    int         i, tag;
+    int         rtn = 0;
     int         bottomtexture;
     xsector_t  *xsec;
     sector_t   *sec = NULL;
@@ -306,8 +306,8 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         bitmipR = P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS;
     // < d64tc
 
-    rtn = 0;
-    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
+    tag = P_XLine(line)->tag;
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         xsec = P_XSector(sec);
         // ALREADY MOVING?  IF SO, KEEP GOING...
@@ -568,23 +568,18 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 
 int EV_BuildStairs(line_t *line, stair_e type)
 {
-    int         i;
-    int         height;
-    int         texture;
-    int         ok;
-    int         rtn;
+    int         i, ok, height, texture, tag;
+    int         rtn = 0;
+    fixed_t     stairsize = 0;
+    fixed_t     speed = 0;
     line_t     *ln;
     xsector_t  *xsec;
     sector_t   *sec = NULL;
     sector_t   *tsec;
-
     floormove_t *floor;
 
-    fixed_t stairsize = 0;
-    fixed_t speed = 0;
-
-    rtn = 0;
-    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
+    tag = P_XLine(line)->tag;
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         xsec = P_XSector(sec);
         // ALREADY MOVING?  IF SO, KEEP GOING...

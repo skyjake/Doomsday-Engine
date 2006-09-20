@@ -161,8 +161,9 @@ void T_PlatRaise(plat_t * plat)
  */
 int EV_DoPlat(line_t *line, plattype_e type, int amount)
 {
-    plat_t     *plat;
+    int         tag;
     int         rtn = 0;
+    plat_t     *plat;
     fixed_t     floorheight;
     sector_t   *sec = NULL;
     sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
@@ -179,7 +180,8 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
         break;
     }
 
-    while((sec = P_FindSectorFromLineTag(line, sec)) != NULL)
+    tag = P_XLine(line)->tag;
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         xsec = P_XSector(sec);
         if(xsec->specialdata)

@@ -324,7 +324,7 @@ int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
     sector_t *sec = NULL;
     xsector_t *xsec;
 
-    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
+    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
     {
         xsec = P_XSector(sec);
 
@@ -445,7 +445,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
     if(raise)
     {
         floor = EV_DoFloor(line, args, FLEV_RAISEFLOORBYVALUE);
-        while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
+        while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
         {
             P_XSector(sec)->specialdata = NULL;
         }
@@ -454,7 +454,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
     else
     {
         floor = EV_DoFloor(line, args, FLEV_LOWERFLOORBYVALUE);
-        while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
+        while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
         {
             P_XSector(sec)->specialdata = NULL;
         }
@@ -651,7 +651,7 @@ int EV_BuildStairs(line_t *line, byte *args, int direction,
     }
 
     validCount++;
-    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
+    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
     {
         Texture = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
         StartHeight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
@@ -703,7 +703,7 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
     sector_t   *sec = NULL;
     pillar_t   *pillar;
 
-    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
+    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue; // already moving
@@ -769,7 +769,7 @@ int EV_OpenPillar(line_t *line, byte *args)
     sector_t   *sec = NULL;
     pillar_t   *pillar;
 
-    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
+    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue; // already moving
@@ -923,7 +923,7 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
     sector_t   *sec = NULL;
     floorWaggle_t *waggle;
 
-    while((sec = P_FindSectorFromTag(tag, sec)) != NULL)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue; // already moving

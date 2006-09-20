@@ -388,7 +388,7 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
     return height;
 }
 
-sector_t *P_FindSectorFromTag(int tag, sector_t *start)
+sector_t *P_IterateTaggedSectors(int tag, sector_t *start)
 {
     int         i;
     sector_t   *sec;
@@ -447,7 +447,7 @@ boolean EV_SectorSoundChange(byte *args)
     if(!args[0])
         return false;
 
-    while((sec = P_FindSectorFromTag(args[0], sec)) != NULL)
+    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
     {
         P_XSector(sec)->seqType = args[1];
         rtn = true;
