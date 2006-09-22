@@ -23,6 +23,7 @@
  ./../../plugins/common/src/p_svtexarc.c
  ./../../plugins/common/src/p_start.c
  ./../../plugins/common/src/p_mapsetup.c
+ ./../../plugins/common/src/p_mapspec.c
  ./../../plugins/doom64tc/src/p_spec.c
  ./../../plugins/doom64tc/src/p_sound.c
  ./../../plugins/doom64tc/src/p_setup.c

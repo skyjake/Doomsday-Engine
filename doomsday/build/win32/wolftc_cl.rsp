@@ -23,6 +23,7 @@
  ./../../plugins/common/src/p_svtexarc.c
  ./../../plugins/common/src/p_start.c
  ./../../plugins/common/src/p_mapsetup.c
+ ./../../plugins/common/src/p_mapspec.c
  ./../../plugins/wolftc/src/p_spec.c
  ./../../plugins/wolftc/src/p_sound.c
  ./../../plugins/wolftc/src/p_setup.c
