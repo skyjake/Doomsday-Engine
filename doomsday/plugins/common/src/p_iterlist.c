@@ -43,7 +43,7 @@
 #  include "jstrife.h"
 #endif
 
-#include "p_linelist.h"
+#include "p_iterlist.h"
 
 // MACROS ------------------------------------------------------------------
 

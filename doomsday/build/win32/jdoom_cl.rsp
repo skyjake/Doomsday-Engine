@@ -33,7 +33,7 @@
  ./../../plugins/jdoom/src/p_oldsvg.c
  ./../../plugins/jdoom/src/p_mobj.c
  ./../../plugins/jdoom/src/p_maputl.c
- ./../../plugins/common/src/p_linelist.c
+ ./../../plugins/common/src/p_iterlist.c
  ./../../plugins/common/src/p_map.c
  ./../../plugins/jdoom/src/p_lights.c
  ./../../plugins/jdoom/src/p_inter.c

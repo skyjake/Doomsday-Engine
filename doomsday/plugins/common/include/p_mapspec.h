@@ -34,7 +34,7 @@
 #ifndef __COMMON_MAP_SPEC_H__
 #define __COMMON_MAP_SPEC_H__
 
-#include "p_linelist.h"
+#include "p_iterlist.h"
 
 extern iterlist_t *spechit; // for crossed line specials.
 extern iterlist_t *linespecials; // for surfaces that tick eg wall scrollers.
