@@ -2454,6 +2454,9 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
     sectortype_t *info;
     float   ang;
 
+    if(mo->player && (mo->player->plr->flags & DDPF_CAMERA))
+        return true; // Wind does not affect cameras.
+
     info = &(P_XSector(sec)->xg->info);
     ang = PI * info->wind_angle / 180;
 
