@@ -856,7 +856,7 @@ int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
         findLineTagged = true;
         tag = ref;
     }
-    else if(LREF_LINE_TAGGED)
+    else if(reftype == LREF_LINE_TAGGED)
     {
         findLineTagged = true;
         tag = P_XLine(line)->tag;
@@ -865,12 +865,12 @@ int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
     // References to multiple lines
     if(findLineTagged)
     {   // Use tagged line lists for these (speed).
-        linelist_t *list = P_GetLineListForTag(tag, false);
+        iterlist_t *list = P_GetLineIterListForTag(tag, false);
 
         if(list)
         {
-            P_LineListResetIterator(list);
-            while((iter = P_LineListIterator(list)) != NULL)
+            P_IterListResetIterator(list);
+            while((iter = P_IterListIterator(list)) != NULL)
             {
                 if(reftype == LREF_TAGGED)
                 {

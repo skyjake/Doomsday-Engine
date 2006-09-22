@@ -512,8 +512,8 @@ void G_PostInit(void)
     MN_Init();
 
     // Create the various line lists (spechits, anims, buttons etc).
-    spechit = P_CreateLineList();
-    linespecials = P_CreateLineList();
+    spechit = P_CreateIterList();
+    linespecials = P_CreateIterList();
 }
 
 /*

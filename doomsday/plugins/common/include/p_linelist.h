@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,32 +22,32 @@
  */
 
 /**
- * p_linelist.c : Line lists.
+ * p_iterlist.c : Object lists.
  * The lists can be traversed through iteration but otherwise act like a
  * LIFO stack. Used for things like spechits, linespecials etc.
  */
 
-#ifndef __COMMON_LINELIST_H__
-#define __COMMON_LINELIST_H__
+#ifndef __COMMON_ITERLIST_H__
+#define __COMMON_ITERLIST_H__
 
 #include "dd_api.h"
 
-typedef struct linelist_s {
-    line_t    **list;
+typedef struct iterlist_s {
+    void      **list;
     int         max;
     int         count;
     int         rover; // used during iteration
-} linelist_t;
+} iterlist_t;
 
-linelist_t *P_CreateLineList(void);
-void        P_DestroyLineList(linelist_t *list);
+iterlist_t *P_CreateIterList(void);
+void        P_DestroyIterList(iterlist_t *list);
 
-int         P_AddLineToLineList(linelist_t *list, line_t *ld);
-line_t     *P_PopLineList(linelist_t *list);
+int         P_AddObjectToIterList(iterlist_t *list, void *obj);
+void       *P_PopIterList(iterlist_t *list);
 
-line_t     *P_LineListIterator(linelist_t *list);
-void        P_LineListResetIterator(linelist_t *list);
+void       *P_IterListIterator(iterlist_t *list);
+void        P_IterListResetIterator(iterlist_t *list);
 
-void        P_EmptyLineList(linelist_t *list);
-int         P_LineListSize(linelist_t *list);
+void        P_EmptyIterList(iterlist_t *list);
+int         P_IterListSize(iterlist_t *list);
 #endif

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  */
 
 /**
- * p_linelist.c : Line lists.
+ * p_iterlist.c : Object lists.
  * The lists can be traversed through iteration but otherwise act like a
  * LIFO stack. Used for things like spechits, linespecials etc.
  */
@@ -64,13 +64,13 @@
 // CODE --------------------------------------------------------------------
 
 /**
- * Allocate and initialize a new linelist.
+ * Allocate and initialize a new iterlist.
  *
  * @return      Ptr to the new list.
  */
-linelist_t *P_CreateLineList(void)
+iterlist_t *P_CreateIterList(void)
 {
-    linelist_t *list = malloc(sizeof(linelist_t));
+    iterlist_t *list = malloc(sizeof(iterlist_t));
 
     list->list = NULL;
     list->count = list->max = list->rover = 0;
@@ -79,10 +79,11 @@ linelist_t *P_CreateLineList(void)
 }
 
 /**
- * Free any memory used by the linelist.
+ * Free any memory used by the iterlist.
+ *
  * @param   list    Ptr to the list to be destroyed.
  */
-void P_DestroyLineList(linelist_t *list)
+void P_DestroyIterList(iterlist_t *list)
 {
     if(!list)
         return;
@@ -98,36 +99,36 @@ void P_DestroyLineList(linelist_t *list)
 }
 
 /**
- * Add the given line to linelist.
+ * Add the given object to iterlist.
  *
- * @param   list    Ptr to the list to add <code>ld</code> too.
- * @param   ld      The line_t to be added to the list.
- * @return          The index of the line within <codelist</code> once
+ * @param   list    Ptr to the list to add <code>obj</code> too.
+ * @param   obj     Ptr to the object to be added to the list.
+ * @return          The index of the object within <code>list</code> once
  *                  added, ELSE <code>-1</code>.
  */
-int P_AddLineToLineList(linelist_t *list, line_t *ld)
+int P_AddObjectToIterList(iterlist_t *list, void *obj)
 {
-    if(!list || !ld)
+    if(!list || !obj)
         return -1;
 
     if(++list->count > list->max)
     {
          list->max = (list->max? list->max * 2 : 8);
-         list->list = realloc(list->list, sizeof(line_t*) * list->max);
+         list->list = realloc(list->list, sizeof(void*) * list->max);
     }
 
-    list->list[list->count - 1] = ld;
+    list->list[list->count - 1] = obj;
 
     return list->count - 1;
 }
 
 /**
- * Pop the top of the linelist and return the next element.
+ * Pop the top of the iterlist and return the next element.
  *
  * @param   list    Ptr to the list to be pop.
- * @return          Ptr to the next line in <code>list</code>.
+ * @return          Ptr to the next object in <code>list</code>.
  */
-line_t* P_PopLineList(linelist_t *list)
+void* P_PopIterList(iterlist_t *list)
 {
     if(!list)
         return NULL;
@@ -139,12 +140,12 @@ line_t* P_PopLineList(linelist_t *list)
 }
 
 /**
- * Returns the next element in the linelist.
+ * Returns the next element in the iterlist.
  *
  * @param   list    Ptr to the list to iterate.
- * @return          The next line_t in the linelist.
+ * @return          The next object in the iterlist.
  */
-line_t* P_LineListIterator(linelist_t *list)
+void* P_IterListIterator(iterlist_t *list)
 {
     if(!list)
         return NULL;
@@ -156,11 +157,11 @@ line_t* P_LineListIterator(linelist_t *list)
 }
 
 /**
- * Returns the linelist iterator to the beginning (the end).
+ * Returns the iterlist iterator to the beginning (the end).
  *
  * @param   list    Ptr to the list whoose iterator to reset.
  */
-void P_LineListResetIterator(linelist_t *list)
+void P_IterListResetIterator(iterlist_t *list)
 {
     if(!list)
         return;
@@ -169,11 +170,11 @@ void P_LineListResetIterator(linelist_t *list)
 }
 
 /**
- * Empty the linelist.
+ * Empty the iterlist.
  *
  * @param   list    Ptr to the list to empty.
  */
-void P_EmptyLineList(linelist_t *list)
+void P_EmptyIterList(iterlist_t *list)
 {
     if(!list)
         return;
@@ -182,12 +183,12 @@ void P_EmptyLineList(linelist_t *list)
 }
 
 /**
- * Return the size of the linelist.
+ * Return the size of the iterlist.
  *
  * @param   list    Ptr to the list to return the size of.
- * @return          The size of the linelist.
+ * @return          The size of the iterlist.
  */
-int P_LineListSize(linelist_t *list)
+int P_IterListSize(iterlist_t *list)
 {
     if(!list)
         return 0;

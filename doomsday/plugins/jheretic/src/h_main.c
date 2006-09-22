@@ -570,8 +570,8 @@ void H_PostInit(void)
 void H_Shutdown(void)
 {
     HU_UnloadData();
-    P_DestroyLineList(spechit);
-    P_DestroyLineList(linespecials);
+    P_DestroyIterList(spechit);
+    P_DestroyIterList(linespecials);
     P_DestroyLineTagLists();
 }
 

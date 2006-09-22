@@ -282,12 +282,12 @@ boolean P_Move(mobj_t *actor)
             return (true);
         }
 
-        if(!P_LineListSize(spechit))
+        if(!P_IterListSize(spechit))
             return false;
 
         actor->movedir = DI_NODIR;
         good = false;
-        while((ld = P_PopLineList(spechit)) != NULL)
+        while((ld = P_PopIterList(spechit)) != NULL)
         {
             // if the special isn't a door that can be opened, return false
             if(P_ActivateLine(ld, actor, 0, SPAC_USE))

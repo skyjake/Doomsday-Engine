@@ -236,7 +236,7 @@ boolean P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean alwaysstomp)
     tmfloorpic = P_GetIntp(newsubsec, DMU_FLOOR_TEXTURE);
 
     validCount++;
-    P_EmptyLineList(spechit);
+    P_EmptyIterList(spechit);
 
     // stomp on any things contacted
     P_PointToBlock(tmbbox[BOXLEFT] - MAXRADIUS, tmbbox[BOXBOTTOM] - MAXRADIUS,
@@ -768,7 +768,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *data)
                 if(thing->dplayer)
                     thing->dplayer->flags |= DDPF_FIXMOM;
             }
-            P_EmptyLineList(spechit);
+            P_EmptyIterList(spechit);
             return true;
         }
 
@@ -902,7 +902,7 @@ static boolean PIT_CheckLine(line_t *ld, void *data)
         if(tmthing->flags & MF_MISSILE)
         {                       // Missiles can trigger impact specials
             if(P_XLine(ld)->special)
-                P_AddLineToLineList(spechit, ld);
+                P_AddObjectToIterList(spechit, ld);
         }
         return false;
     }
@@ -980,7 +980,7 @@ static boolean PIT_CheckLine(line_t *ld, void *data)
 
     // if contacted a special line, add it to the list
     if(P_XLine(ld)->special)
-        P_AddLineToLineList(spechit, ld);
+        P_AddObjectToIterList(spechit, ld);
 
 #if !__JHEXEN__
     tmthing->wallhit = false;
@@ -1051,7 +1051,7 @@ boolean P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     tmfloorpic = P_GetIntp(newsec, DMU_FLOOR_TEXTURE);
 
     validCount++;
-    P_EmptyLineList(spechit);
+    P_EmptyIterList(spechit);
 
 #if __JHEXEN__
     if((tmthing->flags & MF_NOCLIP) && !(tmthing->flags & MF_SKULLFLY))
@@ -1336,7 +1336,7 @@ static boolean P_TryMove2(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
     // if any special lines were hit, do the effect
     if(!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
     {
-        while((ld = P_PopLineList(spechit)) != NULL)
+        while((ld = P_PopIterList(spechit)) != NULL)
         {
             // see if the line was crossed
             if(P_XLine(ld)->special)
@@ -1377,8 +1377,8 @@ static boolean P_TryMove2(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
             P_DamageMobj(tmthing, NULL, NULL, tmthing->info->mass >> 5);
         }
 
-        P_LineListResetIterator(spechit);
-        while((ld = P_LineListIterator(spechit)) != NULL)
+        P_IterListResetIterator(spechit);
+        while((ld = P_IterListIterator(spechit)) != NULL)
         {
             // see if the line was crossed
             side = P_PointOnLineSide(thing->pos[VX], thing->pos[VY], ld);
@@ -2536,7 +2536,7 @@ boolean P_TestMobjLocation(mobj_t *mobj)
 static void CheckMissileImpact(mobj_t *mobj)
 {
     line_t* ld;
-    int     size = P_LineListSize(spechit);
+    int     size = P_IterListSize(spechit);
 
     if(!size || !(mobj->flags & MF_MISSILE) || !mobj->target)
         return;
@@ -2544,8 +2544,8 @@ static void CheckMissileImpact(mobj_t *mobj)
     if(!mobj->target->player)
         return;
 
-    P_LineListResetIterator(spechit);
-    while((ld = P_LineListIterator(spechit)) != NULL)
+    P_IterListResetIterator(spechit);
+    while((ld = P_IterListIterator(spechit)) != NULL)
         P_ActivateLine(ld, mobj->target, 0, SPAC_IMPACT);
 }
 #endif
@@ -2659,7 +2659,7 @@ mobj_t *P_CheckOnmobj(mobj_t *thing)
     tmfloorpic = P_GetIntp(newsubsec, DMU_FLOOR_TEXTURE);
 
     validCount++;
-    P_EmptyLineList(spechit);
+    P_EmptyIterList(spechit);
 
     if(tmthing->flags & MF_NOCLIP)
         return NULL;

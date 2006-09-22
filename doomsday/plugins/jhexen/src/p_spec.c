@@ -826,7 +826,7 @@ void P_SpawnSpecials(void)
     int         i;
     line_t     *line;
     xline_t    *xline;
-    linelist_t *list;
+    iterlist_t *list;
     sector_t   *sector;
     xsector_t  *xsector;
 
@@ -858,8 +858,7 @@ void P_SpawnSpecials(void)
     }
 
     // Init animating line specials.
-    P_EmptyLineList(linespecials);
-
+    P_EmptyIterList(linespecials);
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
@@ -871,14 +870,14 @@ void P_SpawnSpecials(void)
         case 101: // Scroll_Texture_Right
         case 102: // Scroll_Texture_Up
         case 103: // Scroll_Texture_Down
-            P_AddLineToLineList(linespecials, line);
+            P_AddObjectToIterList(linespecials, line);
             break;
 
         case 121:               // Line_SetIdentification
             if(xline->arg1)
             {
-                list = P_GetLineListForTag((int) xline->arg1, true);
-                P_AddLineToLineList(list, line);
+                list = P_GetLineIterListForTag((int) xline->arg1, true);
+                P_AddObjectToIterList(list, line);
             }
             xline->special = 0;
             break;

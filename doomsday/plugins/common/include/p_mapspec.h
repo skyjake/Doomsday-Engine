@@ -36,11 +36,11 @@
 
 #include "p_linelist.h"
 
-extern linelist_t *spechit; // for crossed line specials.
-extern linelist_t *linespecials; // for surfaces that tick eg wall scrollers.
+extern iterlist_t *spechit; // for crossed line specials.
+extern iterlist_t *linespecials; // for surfaces that tick eg wall scrollers.
 
 void            P_DestroyLineTagLists(void);
-linelist_t     *P_GetLineListForTag(int tag, boolean createNewList);
+iterlist_t     *P_GetLineIterListForTag(int tag, boolean createNewList);
 
 sector_t       *P_IterateTaggedSectors(int tag, sector_t *start);
 

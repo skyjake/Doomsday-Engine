@@ -56,7 +56,7 @@
 
 typedef struct linetaglist_s {
     int         tag;
-    linelist_t *list;
+    iterlist_t *list;
 } linetaglist_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -69,8 +69,8 @@ typedef struct linetaglist_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-linelist_t  *spechit; // for crossed line specials.
-linelist_t  *linespecials; // for surfaces that tick eg wall scrollers.
+iterlist_t  *spechit; // for crossed line specials.
+iterlist_t  *linespecials; // for surfaces that tick eg wall scrollers.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -91,8 +91,8 @@ void P_DestroyLineTagLists(void)
 
     for(i = 0; i < numLineTagLists; ++i)
     {
-        P_EmptyLineList(lineTagLists[i].list);
-        P_DestroyLineList(lineTagLists[i].list);
+        P_EmptyIterList(lineTagLists[i].list);
+        P_DestroyIterList(lineTagLists[i].list);
     }
 
     free(lineTagLists);
@@ -103,7 +103,7 @@ void P_DestroyLineTagLists(void)
 /**
  *
  */
-linelist_t *P_GetLineListForTag(int tag, boolean createNewList)
+iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
 {
     int         i;
     linetaglist_t *tagList;
@@ -122,7 +122,7 @@ linelist_t *P_GetLineListForTag(int tag, boolean createNewList)
     tagList = &lineTagLists[numLineTagLists - 1];
     tagList->tag = tag;
 
-    return (tagList->list = P_CreateLineList());
+    return (tagList->list = P_CreateIterList());
 }
 
 /**

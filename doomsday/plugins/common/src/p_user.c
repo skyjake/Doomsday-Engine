@@ -485,7 +485,7 @@ void P_DeathThink(player_t *player)
 #if __JHEXEN__
     player->update |= PSF_VIEW_HEIGHT;
 #endif
-    
+
     P_CalcHeight(player);
 
     // In netgames we won't keep tracking the killer.
@@ -536,7 +536,7 @@ void P_DeathThink(player_t *player)
             player->plr->mo->angle += ANG5; // Turn clockwise
         else
             player->plr->mo->angle -= ANG5; // Turn counter clockwise
-        
+
         player->plr->flags |= DDPF_INTERYAW;
 #endif
     }
@@ -947,7 +947,7 @@ void P_PlayerThinkState(player_t *player)
     {
         plrmo->reactiontime = 0;
     }
-    
+
     if(player->playerstate != PST_DEAD)
     {
         // Clear the view angle interpolation flags by default.

@@ -980,10 +980,10 @@ void P_UpdateSpecials(void)
     XG_Ticker();
 
     //  ANIMATE LINE SPECIALS
-    if(P_LineListSize(linespecials))
+    if(P_IterListSize(linespecials))
     {
-        P_LineListResetIterator(linespecials);
-        while((line = P_LineListIterator(linespecials)) != NULL)
+        P_IterListResetIterator(linespecials);
+        while((line = P_IterListIterator(linespecials)) != NULL)
         {
             switch(P_XLine(line)->special)
             {
@@ -1154,6 +1154,8 @@ void P_SpawnSpecials(void)
 {
     int         i;
     line_t     *line;
+    xline_t    *xline;
+    iterlist_t *list;
     sector_t   *sector;
 
     //  Init special SECTORs.
@@ -1266,12 +1268,13 @@ void P_SpawnSpecials(void)
     }
 
     // Init animating line specials.
-    P_EmptyLineList(linespecials);
+    P_EmptyIterList(linespecials);
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
+        xline = P_XLine(line);
 
-        switch(P_XLine(line)->special)
+        switch(xline->special)
         {
         case 48: // EFFECT FIRSTCOL SCROLL+
         case 150: // d64tc: wall scroll right
@@ -1279,7 +1282,7 @@ void P_SpawnSpecials(void)
         case 2562: // d64tc: wall scroll down
         case 2080: // d64tc: wall scroll up/right
         case 2614: // d64tc: wall scroll up/left
-            P_AddLineToLineList(linespecials, line);
+            P_AddObjectToIterList(linespecials, line);
             break;
 
         case 994: // d64tc
@@ -1287,6 +1290,12 @@ void P_SpawnSpecials(void)
             // FIXME: DJS - secret lines??
             totalsecret++;
             break;
+        }
+
+        if(xline->tag)
+        {
+           list = P_GetLineIterListForTag(xline->tag, true);
+           P_AddObjectToIterList(list, line);
         }
     }
 

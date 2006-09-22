@@ -1685,19 +1685,19 @@ static int CmdSetLineTexture(void)
     int     side;
     int     position;
     int     texture;
-    linelist_t *list;
+    iterlist_t *list;
 
     texture = R_TextureNumForName(GetACString(Pop()));
     position = Pop();
     side = Pop();
     lineTag = Pop();
 
-    list = P_GetLineListForTag(lineTag, false);
+    list = P_GetLineIterListForTag(lineTag, false);
     if(!list)
         return SCRIPT_CONTINUE;
 
-    P_LineListResetIterator(list);
-    while((line = P_LineListIterator(list)) != NULL)
+    P_IterListResetIterator(list);
+    while((line = P_IterListIterator(list)) != NULL)
     {
         side_t* sdef = P_GetPtrp(line,
                                  (side == 0? DMU_SIDE0 : DMU_SIDE1));
@@ -1722,17 +1722,17 @@ static int CmdSetLineBlocking(void)
     line_t *line;
     int     lineTag;
     boolean blocking;
-    linelist_t *list;
+    iterlist_t *list;
 
     blocking = Pop()? ML_BLOCKING : 0;
     lineTag = Pop();
 
-    list = P_GetLineListForTag(lineTag, false);
+    list = P_GetLineIterListForTag(lineTag, false);
     if(!list)
         return SCRIPT_CONTINUE;
 
-    P_LineListResetIterator(list);
-    while((line = P_LineListIterator(list)) != NULL)
+    P_IterListResetIterator(list);
+    while((line = P_IterListIterator(list)) != NULL)
     {
         P_SetIntp(line, DMU_FLAGS,
             (P_GetIntp(line, DMU_FLAGS) & ~ML_BLOCKING) | blocking);
@@ -1745,7 +1745,7 @@ static int CmdSetLineSpecial(void)
     line_t *line;
     int     lineTag;
     int     special, arg1, arg2, arg3, arg4, arg5;
-    linelist_t *list;
+    iterlist_t *list;
 
     arg5 = Pop();
     arg4 = Pop();
@@ -1755,12 +1755,12 @@ static int CmdSetLineSpecial(void)
     special = Pop();
     lineTag = Pop();
 
-    list = P_GetLineListForTag(lineTag, false);
+    list = P_GetLineIterListForTag(lineTag, false);
     if(!list)
         return SCRIPT_CONTINUE;
 
-    P_LineListResetIterator(list);
-    while((line = P_LineListIterator(list)) != NULL)
+    P_IterListResetIterator(list);
+    while((line = P_IterListIterator(list)) != NULL)
     {
         xline_t* xline = P_XLine(line);
         xline->special = special;
