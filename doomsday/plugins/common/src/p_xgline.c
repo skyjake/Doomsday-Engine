@@ -723,23 +723,29 @@ int XL_TraversePlanes(line_t *line, int reftype, int ref, void *data,
     // References to multiple planes
     if(findSecTagged)
     {   // Use tagged sector lists for these (speed).
-        sec = NULL;
-        while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
-        {
-            xsec = P_XSector(sec);
+        iterlist_t *list;
 
-            if(reftype == LPREF_TAGGED_FLOORS || reftype == LPREF_TAGGED_CEILINGS)
+        list = P_GetSectorIterListForTag(tag, false);
+        if(list)
+        {   // Find the first sector with the tag.
+            P_IterListResetIterator(list, true);
+            while((sec = P_IterListIterator(list)) != NULL)
             {
-                if(!func(sec, reftype == LPREF_TAGGED_CEILINGS, data,
-                         context, activator))
-                    return false;
-            }
-            if(reftype == LPREF_LINE_TAGGED_FLOORS ||
-               reftype == LPREF_LINE_TAGGED_CEILINGS)
-            {
-                if(!func(sec, reftype == LPREF_LINE_TAGGED_CEILINGS, data,
-                         context, activator))
-                    return false;
+                xsec = P_XSector(sec);
+
+                if(reftype == LPREF_TAGGED_FLOORS || reftype == LPREF_TAGGED_CEILINGS)
+                {
+                    if(!func(sec, reftype == LPREF_TAGGED_CEILINGS, data,
+                             context, activator))
+                        return false;
+                }
+                if(reftype == LPREF_LINE_TAGGED_FLOORS ||
+                   reftype == LPREF_LINE_TAGGED_CEILINGS)
+                {
+                    if(!func(sec, reftype == LPREF_LINE_TAGGED_CEILINGS, data,
+                             context, activator))
+                        return false;
+                }
             }
         }
     }
@@ -869,7 +875,7 @@ int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
 
         if(list)
         {
-            P_IterListResetIterator(list);
+            P_IterListResetIterator(list, true);
             while((iter = P_IterListIterator(list)) != NULL)
             {
                 if(reftype == LREF_TAGGED)

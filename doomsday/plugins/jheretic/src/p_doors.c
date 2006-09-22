@@ -179,13 +179,18 @@ void T_VerticalDoor(vldoor_t * door)
 
 int EV_DoDoor(line_t *line, vldoor_e type)
 {
-    int         tag, rtn = 0;
+    int         rtn = 0;
     xsector_t  *xsec;
     sector_t   *sec = NULL;
     vldoor_t   *door;
+    iterlist_t *list;
 
-    tag = P_XLine(line)->tag;
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         xsec = P_XSector(sec);
         if(xsec->specialdata)

@@ -98,7 +98,7 @@ void P_AnimateSurfaces(void)
     // Update scrolling textures
     if(P_IterListSize(linespecials))
     {
-        P_IterListResetIterator(linespecials);
+        P_IterListResetIterator(linespecials, false);
         while((line = P_IterListIterator(linespecials)) != NULL)
         {
             side_t* side = 0;

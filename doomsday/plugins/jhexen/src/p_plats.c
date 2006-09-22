@@ -138,8 +138,14 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
     fixed_t     floorheight;
     sector_t   *sec = NULL;
     plat_t     *plat;
+    iterlist_t *list;
 
-    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
+    list = P_GetSectorIterListForTag((int) args[0], false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue;

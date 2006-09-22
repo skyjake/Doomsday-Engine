@@ -54,10 +54,10 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct linetaglist_s {
+typedef struct taglist_s {
     int         tag;
     iterlist_t *list;
-} linetaglist_t;
+} taglist_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -74,8 +74,11 @@ iterlist_t  *linespecials; // for surfaces that tick eg wall scrollers.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static linetaglist_t *lineTagLists = NULL;
+static taglist_t *lineTagLists = NULL;
 static int numLineTagLists = 0;
+
+static taglist_t *sectorTagLists = NULL;
+static int numSectorTagLists = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -106,7 +109,7 @@ void P_DestroyLineTagLists(void)
 iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
 {
     int         i;
-    linetaglist_t *tagList;
+    taglist_t *tagList;
 
     // Do we have an existing list for this tag?
     for(i = 0; i < numLineTagLists; ++i)
@@ -118,7 +121,7 @@ iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
 
     // Nope, we need to allocate another.
     numLineTagLists++;
-    lineTagLists = realloc(lineTagLists, sizeof(linetaglist_t) * numLineTagLists);
+    lineTagLists = realloc(lineTagLists, sizeof(taglist_t) * numLineTagLists);
     tagList = &lineTagLists[numLineTagLists - 1];
     tagList->tag = tag;
 
@@ -126,35 +129,49 @@ iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
 }
 
 /**
- * Iterates all sectors which tag equals <code>tag</code>.
  *
- * @param tag       The sector tag to match.
- * @param start     If <code>NULL</code> iteration will begin from the
- *                  the start ELSE iteration will continue from this sector
- *
- * @return          The next sector ELSE <code>NULL</code>;
  */
-sector_t *P_IterateTaggedSectors(int tag, sector_t *start)
+void P_DestroySectorTagLists(void)
 {
-    int         i;
-    sector_t   *sec;
+    int     i;
 
-    if(tag < 0)
-        return NULL;
+    if(numSectorTagLists == 0)
+        return;
 
-    if(start)
-        i = P_ToIndex(start) + 1;
-    else
-        i = 0;
-
-    for(; i < numsectors; ++i)
+    for(i = 0; i < numSectorTagLists; ++i)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        if(P_XSector(sec)->tag == tag)
-            return sec;
+        P_EmptyIterList(sectorTagLists[i].list);
+        P_DestroyIterList(sectorTagLists[i].list);
     }
 
-    return NULL;
+    free(sectorTagLists);
+    sectorTagLists = NULL;
+    numSectorTagLists = 0;
+}
+
+/**
+ *
+ */
+iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
+{
+    int         i;
+    taglist_t *tagList;
+
+    // Do we have an existing list for this tag?
+    for(i = 0; i < numSectorTagLists; ++i)
+        if(sectorTagLists[i].tag == tag)
+            return sectorTagLists[i].list;
+
+    if(!createNewList)
+        return NULL;
+
+    // Nope, we need to allocate another.
+    numSectorTagLists++;
+    sectorTagLists = realloc(sectorTagLists, sizeof(taglist_t) * numSectorTagLists);
+    tagList = &sectorTagLists[numSectorTagLists - 1];
+    tagList->tag = tag;
+
+    return (tagList->list = P_CreateIterList());
 }
 
 /**

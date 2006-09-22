@@ -42,7 +42,8 @@ extern iterlist_t *linespecials; // for surfaces that tick eg wall scrollers.
 void            P_DestroyLineTagLists(void);
 iterlist_t     *P_GetLineIterListForTag(int tag, boolean createNewList);
 
-sector_t       *P_IterateTaggedSectors(int tag, sector_t *start);
+void            P_DestroySectorTagLists(void);
+iterlist_t     *P_GetSectorIterListForTag(int tag, boolean createNewList);
 
 sector_t       *P_GetNextSector(line_t *line, sector_t *sec);
 

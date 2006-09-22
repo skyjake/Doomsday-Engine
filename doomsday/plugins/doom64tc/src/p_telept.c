@@ -62,7 +62,6 @@ mobj_t *P_SpawnTeleFog(int x, int y)
 
 int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
 {
-    int         tag;
     mobj_t     *m;
     mobj_t     *fog;
     unsigned    an;
@@ -70,6 +69,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
     sector_t   *sec = NULL;
     fixed_t     oldpos[3];
     fixed_t     aboveFloor;
+    iterlist_t *list;
 
     if(thing->flags2 & MF2_NOTELEPORT)
         return false;
@@ -79,9 +79,12 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
     if(side == 1)
         return 0;
 
-    tag = P_XLine(line)->tag;
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return 0;
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         for(th = thinkercap.next; th != &thinkercap; th = th->next)
         {
@@ -264,17 +267,20 @@ static mobjtype_t IsFadeSpawner(int doomednum)
  */
 int EV_FadeSpawn(line_t *line, mobj_t *thing)
 {
-    int         tag;
     mobj_t     *mobj, *mo;
     angle_t     an;
     thinker_t  *th;
     sector_t   *sector, *tagsec = NULL;
     fixed_t     pos[3];
     mobjtype_t  spawntype;
+    iterlist_t *list;
 
-    tag = P_XLine(line)->tag;
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return 0;
 
-    while((tagsec = P_IterateTaggedSectors(tag, tagsec)) != NULL)
+    P_IterListResetIterator(list, true);
+    while((tagsec = P_IterListIterator(list)) != NULL)
     {
         for(th = thinkercap.next; th != &thinkercap; th = th->next)
         {
@@ -330,14 +336,17 @@ int EV_FadeSpawn(line_t *line, mobj_t *thing)
  */
 int EV_FadeAway(line_t *line, mobj_t *thing)
 {
-    int         tag;
     mobj_t     *mobj;
     thinker_t  *th;
     sector_t   *sec = NULL;
+    iterlist_t *list;
 
-    tag = P_XLine(line)->tag;
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return 0;
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         for(th = thinkercap.next; th != &thinkercap; th = th->next)
         {

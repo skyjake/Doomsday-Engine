@@ -769,7 +769,6 @@ void P_PlayerInSpecialSector(player_t *player)
     // Has hitten ground.
     switch(P_XSector(sector)->special)
     {
-
     case 5:
         // LAVA DAMAGE WEAK
         if(!(leveltime & 15))
@@ -867,7 +866,7 @@ void P_UpdateSpecials(void)
     //  ANIMATE LINE SPECIALS
     if(P_IterListSize(linespecials))
     {
-        P_IterListResetIterator(linespecials);
+        P_IterListResetIterator(linespecials, false);
         while((line = P_IterListIterator(linespecials)) != NULL)
         {
             switch(P_XLine(line)->special)
@@ -917,7 +916,7 @@ void P_UpdateSpecials(void)
                 sector_t* frontsector = P_GetPtrp(buttonlist[i].line,
                                                   DMU_FRONT_SECTOR);
 
-                switch (buttonlist[i].where)
+                switch(buttonlist[i].where)
                 {
                 case top:
                     P_SetIntp(sdef, DMU_TOP_TEXTURE,
@@ -958,19 +957,28 @@ void P_SpawnSpecials(void)
     line_t     *line;
     xline_t    *xline;
     iterlist_t *list;
-    sector_t   *sector;
+    sector_t   *sec;
+    xsector_t  *xsec;
 
-    //  Init special SECTORs.
+    // Init special SECTORs.
+    P_DestroySectorTagLists();
     for(i = 0; i < numsectors; ++i)
     {
-        sector = P_ToPtr(DMU_SECTOR, i);
+        sec = P_ToPtr(DMU_SECTOR, i);
+        xsec = P_XSector(sec);
 
-        if(!P_XSector(sector)->special)
+        if(xsec->tag)
+        {
+           list = P_GetSectorIterListForTag(xsec->tag, true);
+           P_AddObjectToIterList(list, sec);
+        }
+
+        if(!xsec->special)
             continue;
 
         if(IS_CLIENT)
         {
-            switch(P_XSector(sector)->special)
+            switch(xsec->special)
             {
             case 9:
                 // SECRET SECTOR
@@ -980,32 +988,32 @@ void P_SpawnSpecials(void)
             continue;
         }
 
-        switch(P_XSector(sector)->special)
+        switch(xsec->special)
         {
         case 1:
             // FLICKERING LIGHTS
-            P_SpawnLightFlash(sector);
+            P_SpawnLightFlash(sec);
             break;
 
         case 2:
             // STROBE FAST
-            P_SpawnStrobeFlash(sector, FASTDARK, 0);
+            P_SpawnStrobeFlash(sec, FASTDARK, 0);
             break;
 
         case 3:
             // STROBE SLOW
-            P_SpawnStrobeFlash(sector, SLOWDARK, 0);
+            P_SpawnStrobeFlash(sec, SLOWDARK, 0);
             break;
 
         case 4:
             // STROBE FAST/DEATH SLIME
-            P_SpawnStrobeFlash(sector, FASTDARK, 0);
-            P_XSector(sector)->special = 4;
+            P_SpawnStrobeFlash(sec, FASTDARK, 0);
+            xsec->special = 4;
             break;
 
         case 8:
             // GLOWING LIGHT
-            P_SpawnGlowingLight(sector);
+            P_SpawnGlowingLight(sec);
             break;
 
         case 9:
@@ -1015,28 +1023,28 @@ void P_SpawnSpecials(void)
 
         case 10:
             // DOOR CLOSE IN 30 SECONDS
-            P_SpawnDoorCloseIn30(sector);
+            P_SpawnDoorCloseIn30(sec);
             break;
 
         case 12:
             // SYNC STROBE SLOW
-            P_SpawnStrobeFlash(sector, SLOWDARK, 1);
+            P_SpawnStrobeFlash(sec, SLOWDARK, 1);
             break;
 
         case 13:
             // SYNC STROBE FAST
-            P_SpawnStrobeFlash(sector, FASTDARK, 1);
+            P_SpawnStrobeFlash(sec, FASTDARK, 1);
             break;
 
         case 14:
             // DOOR RAISE IN 5 MINUTES
-            P_SpawnDoorRaiseIn5Mins(sector, i);
+            P_SpawnDoorRaiseIn5Mins(sec, i);
             break;
 
 /*
         // DJS - Heretic doesn't use these.
         case 17:
-            P_SpawnFireFlicker(sector);
+            P_SpawnFireFlicker(sec);
             break;
 */
         }
@@ -1044,6 +1052,7 @@ void P_SpawnSpecials(void)
 
     // Init animating line specials.
     P_EmptyIterList(linespecials);
+    P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
@@ -1338,7 +1347,7 @@ void P_PlayerInWindSector(player_t *player)
         2048 * 35
     };
 
-    switch (P_XSector(sector)->special)
+    switch(P_XSector(sector)->special)
     {
     case 25:
     case 26:

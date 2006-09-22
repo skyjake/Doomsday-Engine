@@ -140,28 +140,35 @@ void T_MoveCeiling(ceiling_t * ceiling)
     }
 }
 
-/*
+/**
  * Move a ceiling up/down.
  */
 int EV_DoCeiling(line_t *line, ceiling_e type)
 {
-    int         tag, rtn = 0;
+    int         rtn = 0;
     xsector_t  *xsec;
     sector_t   *sec = NULL;
     ceiling_t  *ceiling;
+    iterlist_t *list;
 
-    //  Reactivate in-stasis ceilings...for certain types.
-    switch (type)
+    // Reactivate in-stasis ceilings...for certain types.
+    switch(type)
     {
     case fastCrushAndRaise:
     case crushAndRaise:
         P_ActivateInStasisCeiling(line);
+        break;
+
     default:
         break;
     }
 
-    tag = P_XLine(line)->tag;
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         xsec = P_XSector(sec);
         if(xsec->specialdata)
@@ -176,7 +183,7 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
         ceiling->sector = sec;
         ceiling->crush = false;
 
-        switch (type)
+        switch(type)
         {
         case fastCrushAndRaise:
             ceiling->crush = true;

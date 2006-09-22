@@ -74,6 +74,7 @@ iterlist_t *P_CreateIterList(void)
 
     list->list = NULL;
     list->count = list->max = list->rover = 0;
+    list->forward = false;
 
     return list;
 }
@@ -147,26 +148,41 @@ void* P_PopIterList(iterlist_t *list)
  */
 void* P_IterListIterator(iterlist_t *list)
 {
-    if(!list)
+    if(!list || !list->count)
         return NULL;
 
-    if(list->count > 0 && list->rover > 0)
-        return list->list[--list->rover];
+    if(list->forward)
+    {
+        if(list->rover < list->count - 1)
+            return list->list[++list->rover];
+        else
+            return NULL;
+    }
     else
-        return NULL;
+    {
+        if(list->rover > 0)
+            return list->list[--list->rover];
+        else
+            return NULL;
+    }
 }
 
 /**
  * Returns the iterlist iterator to the beginning (the end).
  *
  * @param   list    Ptr to the list whoose iterator to reset.
+ * @param   forward If <code>true</code> iteration will move forwards.
  */
-void P_IterListResetIterator(iterlist_t *list)
+void P_IterListResetIterator(iterlist_t *list, boolean forward)
 {
     if(!list)
         return;
 
-    list->rover = list->count;
+    list->forward = forward;
+    if(list->forward)
+        list->rover = -1;
+    else
+        list->rover = list->count;
 }
 
 /**

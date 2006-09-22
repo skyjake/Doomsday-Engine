@@ -982,7 +982,7 @@ void P_UpdateSpecials(void)
     //  ANIMATE LINE SPECIALS
     if(P_IterListSize(linespecials))
     {
-        P_IterListResetIterator(linespecials);
+        P_IterListResetIterator(linespecials, false);
         while((line = P_IterListIterator(linespecials)) != NULL)
         {
             switch(P_XLine(line)->special)
@@ -1133,11 +1133,17 @@ void P_UpdateSpecials(void)
 void P_ThunderSector(void)
 {
     sector_t   *sec = NULL;
+    iterlist_t *list;
 
     if(!(P_Random() < 10))
         return;
 
-    while((sec = P_IterateTaggedSectors(20000, sec)) != NULL)
+    list = P_GetSectorIterListForTag(20000, false);
+    if(!list)
+        return;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         if(!(leveltime & 32))
         {
@@ -1156,19 +1162,28 @@ void P_SpawnSpecials(void)
     line_t     *line;
     xline_t    *xline;
     iterlist_t *list;
-    sector_t   *sector;
+    sector_t   *sec;
+    xsector_t  *xsec;
 
-    //  Init special SECTORs.
+    // Init special SECTORs.
+    P_DestroySectorTagLists();
     for(i = 0; i < numsectors; ++i)
     {
-        sector = P_ToPtr(DMU_SECTOR, i);
+        sec = P_ToPtr(DMU_SECTOR, i);
+        xsec = P_XSector(sec);
 
-        if(!P_XSector(sector)->special)
+        if(xsec->tag)
+        {
+           list = P_GetSectorIterListForTag(xsec->tag, true);
+           P_AddObjectToIterList(list, sec);
+        }
+
+        if(!xsec->special)
             continue;
 
         if(IS_CLIENT)
         {
-            switch (P_XSector(sector)->special)
+            switch(xsec->special)
             {
             case 9:
                 // SECRET SECTOR
@@ -1180,60 +1195,60 @@ void P_SpawnSpecials(void)
 
         // d64tc >
         // DJS - yet more hacks! Why use the tag?
-        switch(P_XSector(sector)->tag)
+        switch(xsec->tag)
         {
         case 10000:
         case 10001:
         case 10002:
         case 10003:
         case 10004:
-            P_SpawnGlowingLight(sector);
+            P_SpawnGlowingLight(sec);
             break;
 
         case 11000:
-            P_SpawnLightFlash(sector);
+            P_SpawnLightFlash(sec);
             break;
 
         case 12000:
-            P_SpawnFireFlicker(sector);
+            P_SpawnFireFlicker(sec);
             break;
 
         case 13000:
-            P_SpawnLightBlink(sector);
+            P_SpawnLightBlink(sec);
             break;
 
         case 20000:
-            P_SpawnGlowingLight(sector);
+            P_SpawnGlowingLight(sec);
             break;
         }
         // < d64tc
 
-        switch (P_XSector(sector)->special)
+        switch(xsec->special)
         {
         case 1:
             // FLICKERING LIGHTS
-            P_SpawnLightFlash(sector);
+            P_SpawnLightFlash(sec);
             break;
 
         case 2:
             // STROBE FAST
-            P_SpawnStrobeFlash(sector, FASTDARK, 0);
+            P_SpawnStrobeFlash(sec, FASTDARK, 0);
             break;
 
         case 3:
             // STROBE SLOW
-            P_SpawnStrobeFlash(sector, SLOWDARK, 0);
+            P_SpawnStrobeFlash(sec, SLOWDARK, 0);
             break;
 
         case 4:
             // STROBE FAST/DEATH SLIME
-            P_SpawnStrobeFlash(sector, FASTDARK, 0);
-            P_XSector(sector)->special = 4;
+            P_SpawnStrobeFlash(sec, FASTDARK, 0);
+            xsec->special = 4;
             break;
 
         case 8:
             // GLOWING LIGHT
-            P_SpawnGlowingLight(sector);
+            P_SpawnGlowingLight(sec);
             break;
 
         case 9:
@@ -1243,32 +1258,33 @@ void P_SpawnSpecials(void)
 
         case 10:
             // DOOR CLOSE IN 30 SECONDS
-            P_SpawnDoorCloseIn30(sector);
+            P_SpawnDoorCloseIn30(sec);
             break;
 
         case 12:
             // SYNC STROBE SLOW
-            P_SpawnStrobeFlash(sector, SLOWDARK, 1);
+            P_SpawnStrobeFlash(sec, SLOWDARK, 1);
             break;
 
         case 13:
             // SYNC STROBE FAST
-            P_SpawnStrobeFlash(sector, FASTDARK, 1);
+            P_SpawnStrobeFlash(sec, FASTDARK, 1);
             break;
 
         case 14:
             // DOOR RAISE IN 5 MINUTES
-            P_SpawnDoorRaiseIn5Mins(sector, i);
+            P_SpawnDoorRaiseIn5Mins(sec, i);
             break;
 
         case 17:
-            P_SpawnFireFlicker(sector);
+            P_SpawnFireFlicker(sec);
             break;
         }
     }
 
     // Init animating line specials.
     P_EmptyIterList(linespecials);
+    P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);

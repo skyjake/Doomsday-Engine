@@ -688,9 +688,11 @@ void D_PostInit(void)
 void D_Shutdown(void)
 {
     HU_UnloadData();
+
     P_DestroyIterList(spechit);
     P_DestroyIterList(linespecials);
     P_DestroyLineTagLists();
+    P_DestroySectorTagLists();
 }
 
 void D_Ticker(void)

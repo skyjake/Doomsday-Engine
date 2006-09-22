@@ -61,28 +61,27 @@ mobj_t *P_SpawnTeleFog(int x, int y)
 
 int EV_Teleport(line_t *line, int side, mobj_t *thing)
 {
-    int     tag;
-    mobj_t *m;
-#if 0
-    mobj_t *fog;
-    unsigned an;
-#endif
-    thinker_t *thinker;
-    sector_t *sec = NULL, *sector;
-    fixed_t oldpos[3];
-    fixed_t aboveFloor;
+    fixed_t     oldpos[3];
+    fixed_t     aboveFloor;
+    mobj_t     *m;
+    thinker_t  *thinker;
+    sector_t   *sec = NULL, *sector;
+    iterlist_t *list;
 
     if(thing->flags2 & MF2_NOTELEPORT)
-        return false;
+        return 0;
 
     // Don't teleport if hit back of line,
     //  so you can get out of teleporter.
     if(side == 1)
         return 0;
 
-    tag = P_XLine(line)->tag;
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return 0;
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         thinker = thinkercap.next;
         for(thinker = thinkercap.next; thinker != &thinkercap;

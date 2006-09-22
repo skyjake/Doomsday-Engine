@@ -37,6 +37,7 @@ typedef struct iterlist_s {
     int         max;
     int         count;
     int         rover; // used during iteration
+    boolean     forward; // if true iteration moves forward instead.
 } iterlist_t;
 
 iterlist_t *P_CreateIterList(void);
@@ -46,7 +47,7 @@ int         P_AddObjectToIterList(iterlist_t *list, void *obj);
 void       *P_PopIterList(iterlist_t *list);
 
 void       *P_IterListIterator(iterlist_t *list);
-void        P_IterListResetIterator(iterlist_t *list);
+void        P_IterListResetIterator(iterlist_t *list, boolean forward);
 
 void        P_EmptyIterList(iterlist_t *list);
 int         P_IterListSize(iterlist_t *list);

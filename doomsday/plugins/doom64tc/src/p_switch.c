@@ -294,17 +294,21 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
  */
 int EV_DestoryLineShield(line_t* line)
 {
-    int         k, tag, flags;
+    int         k, flags;
     sector_t   *sec = NULL;
     line_t     *li;
     xline_t    *xline;
+    iterlist_t *list;
 
     if(!line)
         return false;
 
-    tag = P_XLine(line)->tag;
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return false;
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
         {
@@ -337,17 +341,21 @@ int EV_DestoryLineShield(line_t* line)
  */
 int EV_SwitchTextureFree(line_t* line)
 {
-    int         k, tag, flags;
+    int         k, flags;
     sector_t   *sec = NULL;
     line_t     *li;
     xline_t    *xline;
+    iterlist_t *list;
 
     if(!line)
         return false;
 
-    tag = P_XLine(line)->tag;
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return false;
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
         {
@@ -381,12 +389,13 @@ int EV_SwitchTextureFree(line_t* line)
  */
 int EV_ActivateSpecial(line_t *line)
 {
-    int         k, tag;
+    int         k;
     int         bitmip;
     sector_t   *sec = NULL;
     line_t     *li;
     xline_t    *xline;
     side_t     *back;
+    iterlist_t *list;
 
     if(!line)
         return false;
@@ -395,10 +404,14 @@ int EV_ActivateSpecial(line_t *line)
     if(!back)
         return false; // We need a twosided line
 
-    tag = P_XLine(line)->tag;
     bitmip = P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_Y);
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return false;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
         {
@@ -425,10 +438,10 @@ int EV_ActivateSpecial(line_t *line)
  */
 void P_SetSectorColor(line_t *line)
 {
-    int         tag;
     side_t     *front, *back;
     sector_t   *sec = NULL;
     byte        rgb[4];
+    iterlist_t *list;
 
     if(!line)
         return;
@@ -448,8 +461,12 @@ void P_SetSectorColor(line_t *line)
     rgb[1] = CLAMP(rgb[1], 0, 255);
     rgb[2] = CLAMP(rgb[2], 0, 255);
 
-    tag = P_XLine(line)->tag;
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         P_SetBytepv(sec, DMU_COLOR, rgb);
     }
@@ -471,7 +488,7 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
     // Use the back sides of VERY SPECIAL lines...
     if(side)
     {
-        switch (xline->special)
+        switch(xline->special)
         {
         case 124:
             // Sliding door open&close

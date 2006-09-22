@@ -169,9 +169,16 @@ int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
     fixed_t     speed;
     sector_t   *sec = NULL;
     vldoor_t   *door;
+    iterlist_t *list;
 
     speed = args[1] * FRACUNIT / 8;
-    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
+
+    list = P_GetSectorIterListForTag((int) args[0], false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue;

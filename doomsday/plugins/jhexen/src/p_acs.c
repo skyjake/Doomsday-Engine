@@ -47,6 +47,7 @@
 
 #include "p_player.h"
 #include "p_map.h"
+#include "p_mapsetup.h"
 #include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
@@ -657,11 +658,21 @@ static void ScriptFinished(int number)
 
 static boolean TagBusy(int tag)
 {
-    sector_t    *sec = NULL;
+    int         k;
+    sector_t   *sec;
+    xsector_t  *xsec;
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    // NOTE: We can't use the sector tag lists here as we might already be
+    // in an iteration at a higher level.
+    for(k = 0; k < numsectors; ++k)
     {
-        if(P_XSector(sec)->specialdata)
+        sec = P_ToPtr(DMU_SECTOR, k);
+        xsec = P_XSector(sec);
+
+        if(xsec->tag != tag)
+            continue;
+
+        if(xsec->specialdata)
             return true;
     }
     return false;
@@ -1308,11 +1319,17 @@ static int CmdChangeFloor(void)
     int         tag;
     int         flat;
     sector_t   *sec = NULL;
+    iterlist_t *list;
 
     flat = R_FlatNumForName(GetACString(Pop()));
     tag = Pop();
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(tag, false);
+    if(!list)
+        return SCRIPT_CONTINUE;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         P_SetIntp(sec, DMU_FLOOR_TEXTURE, flat);
     }
@@ -1324,11 +1341,17 @@ static int CmdChangeFloorDirect(void)
     int         tag;
     int         flat;
     sector_t   *sec = NULL;
+    iterlist_t *list;
 
     tag = LONG(*PCodePtr++);
     flat = R_FlatNumForName(GetACString(LONG(*PCodePtr++)));
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(tag, false);
+    if(!list)
+        return SCRIPT_CONTINUE;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         P_SetIntp(sec, DMU_FLOOR_TEXTURE, flat);
     }
@@ -1340,11 +1363,17 @@ static int CmdChangeCeiling(void)
     int         tag;
     int         flat;
     sector_t   *sec = NULL;
+    iterlist_t *list;
 
     flat = R_FlatNumForName(GetACString(Pop()));
     tag = Pop();
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(tag, false);
+    if(!list)
+        return SCRIPT_CONTINUE;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         P_SetIntp(sec, DMU_CEILING_TEXTURE, flat);
     }
@@ -1356,11 +1385,17 @@ static int CmdChangeCeilingDirect(void)
     int         tag;
     int         flat;
     sector_t   *sec = NULL;
+    iterlist_t *list;
 
     tag = LONG(*PCodePtr++);
     flat = R_FlatNumForName(GetACString(LONG(*PCodePtr++)));
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(tag, false);
+    if(!list)
+        return SCRIPT_CONTINUE;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         P_SetIntp(sec, DMU_CEILING_TEXTURE, flat);
     }
@@ -1696,7 +1731,7 @@ static int CmdSetLineTexture(void)
     if(!list)
         return SCRIPT_CONTINUE;
 
-    P_IterListResetIterator(list);
+    P_IterListResetIterator(list, true);
     while((line = P_IterListIterator(list)) != NULL)
     {
         side_t* sdef = P_GetPtrp(line,
@@ -1731,7 +1766,7 @@ static int CmdSetLineBlocking(void)
     if(!list)
         return SCRIPT_CONTINUE;
 
-    P_IterListResetIterator(list);
+    P_IterListResetIterator(list, true);
     while((line = P_IterListIterator(list)) != NULL)
     {
         P_SetIntp(line, DMU_FLAGS,
@@ -1759,7 +1794,7 @@ static int CmdSetLineSpecial(void)
     if(!list)
         return SCRIPT_CONTINUE;
 
-    P_IterListResetIterator(list);
+    P_IterListResetIterator(list, true);
     while((line = P_IterListIterator(list)) != NULL)
     {
         xline_t* xline = P_XLine(line);

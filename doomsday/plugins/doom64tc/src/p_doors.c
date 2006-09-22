@@ -307,13 +307,18 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
 
 int EV_DoDoor(line_t *line, vldoor_e type)
 {
-    int         rtn = 0, tag;
+    int         rtn = 0;
     xsector_t  *xsec;
     sector_t   *sec = NULL;
     vldoor_t   *door;
+    iterlist_t *list;
 
-    tag = P_XLine(line)->tag;
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         xsec = P_XSector(sec);
 
@@ -597,13 +602,18 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
  */
 int EV_DoSplitDoor(line_t * line, int ftype, int ctype)
 {
-    int         tag;
     boolean     floor, ceiling;
     sector_t   *sec = NULL;
+    iterlist_t *list;
 
     floor = EV_DoFloor(line, ftype);
-    tag = P_XLine(line)->tag;
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return 0;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         P_XSector(sec)->specialdata = 0;
     }

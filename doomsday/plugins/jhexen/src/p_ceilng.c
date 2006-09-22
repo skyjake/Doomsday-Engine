@@ -130,8 +130,14 @@ int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
     int         rtn = 0;
     sector_t   *sec = NULL;
     ceiling_t  *ceiling;
+    iterlist_t *list;
 
-    while((sec = P_IterateTaggedSectors((int) arg[0], sec)) != NULL)
+    list = P_GetSectorIterListForTag((int) arg[0], false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue;

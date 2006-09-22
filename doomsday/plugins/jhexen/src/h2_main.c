@@ -658,6 +658,7 @@ void H2_Shutdown(void)
     P_DestroyIterList(spechit);
     P_DestroyIterList(linespecials);
     P_DestroyLineTagLists();
+    P_DestroySectorTagLists();
 }
 
 void H2_Ticker(void)

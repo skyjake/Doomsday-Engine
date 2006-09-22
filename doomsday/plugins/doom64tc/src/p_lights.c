@@ -249,11 +249,15 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
  */
 void EV_StartLightStrobing(line_t *line)
 {
-    int         tag;
     sector_t   *sec = NULL;
+    iterlist_t *list;
 
-    tag = P_XLine(line)->tag;
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         if(P_XSector(sec)->specialdata)
             continue;
@@ -266,14 +270,17 @@ void EV_TurnTagLightsOff(line_t *line)
 {
     int         j;
     int         min;
-    int         lineTag;
     int         lightlevel;
     sector_t   *sec = NULL, *tsec;
     line_t     *other;
+    iterlist_t *list;
 
-    lineTag = P_XLine(line)->tag;
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return;
 
-    while((sec = P_IterateTaggedSectors(lineTag, sec)) != NULL)
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         min = P_GetIntp(sec, DMU_LIGHT_LEVEL);
         for(j = 0; j < P_GetIntp(sec, DMU_LINE_COUNT); ++j)
@@ -297,14 +304,17 @@ void EV_TurnTagLightsOff(line_t *line)
 void EV_LightTurnOn(line_t *line, int bright)
 {
     int         j;
-    int         lineTag;
     int         lightlevel;
     sector_t   *sec = NULL, *tsec;
     line_t     *tline;
+    iterlist_t *list;
 
-    lineTag = P_XLine(line)->tag;
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return;
 
-    while((sec = P_IterateTaggedSectors(lineTag, sec)) != NULL)
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         // bright = 0 means to search
         // for highest light level

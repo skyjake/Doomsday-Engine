@@ -150,11 +150,17 @@ boolean EV_SectorSoundChange(byte *args)
 {
     boolean     rtn = false;
     sector_t   *sec = NULL;
+    iterlist_t *list;
 
     if(!args[0])
         return false;
 
-    while((sec = P_IterateTaggedSectors((int) args[0], sec)) != NULL)
+    list = P_GetSectorIterListForTag((int) args[0], false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         P_XSector(sec)->seqType = args[1];
         rtn = true;
@@ -827,31 +833,38 @@ void P_SpawnSpecials(void)
     line_t     *line;
     xline_t    *xline;
     iterlist_t *list;
-    sector_t   *sector;
-    xsector_t  *xsector;
+    sector_t   *sec;
+    xsector_t  *xsec;
 
     // Init special SECTORs.
+    P_DestroySectorTagLists();
     for(i = 0; i < numsectors; ++i)
     {
-        sector = P_ToPtr(DMU_SECTOR, i);
-        xsector = P_XSector(sector);
+        sec = P_ToPtr(DMU_SECTOR, i);
+        xsec = P_XSector(sec);
+
+        if(xsec->tag)
+        {
+           list = P_GetSectorIterListForTag(xsec->tag, true);
+           P_AddObjectToIterList(list, sec);
+        }
 
         // Clients do not spawn sector specials.
         if(IS_CLIENT)
             break;
 
-        if(!xsector->special)
+        if(!xsec->special)
             continue;
 
-        switch(xsector->special)
+        switch(xsec->special)
         {
         case 1: // Phased light
             // Hardcoded base, use sector->lightlevel as the index
-            P_SpawnPhasedLight(sector, 80, -1);
+            P_SpawnPhasedLight(sec, 80, -1);
             break;
 
         case 2:// Phased light sequence start
-            P_SpawnLightSequence(sector, 1);
+            P_SpawnLightSequence(sec, 1);
             break;
             // Specials 3 & 4 are used by the phased light sequences
         }
@@ -859,6 +872,7 @@ void P_SpawnSpecials(void)
 
     // Init animating line specials.
     P_EmptyIterList(linespecials);
+    P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
@@ -884,6 +898,7 @@ void P_SpawnSpecials(void)
         }
     }
 
+    // FIXME: Remove fixed limits
     for(i = 0; i < MAXCEILINGS; ++i)
         activeceilings[i] = NULL;
     for(i = 0; i < MAXPLATS; ++i)

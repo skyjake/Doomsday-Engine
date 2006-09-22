@@ -834,29 +834,38 @@ int XS_TextureHeight(line_t *line, int part)
 
 /**
  * Returns a pointer to the first sector with the tag.
+ *
+ * NOTE: We cannot use the tagged sector lists here as this can be called
+ * during an iteration at a higher level. Doing so would change the position
+ * of the rover which would affect the other iteration.
  */
 sector_t *XS_FindTagged(int tag)
 {
+    int         k;
     int         foundcount = 0;
     int         retsectorid = -1;
-    sector_t   *sec = NULL, *retsector;
+    sector_t   *sec, *retsector;
 
     retsector = NULL;
 
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    for(k = 0; k < numsectors; ++k)
     {
-        if(xgDev)
+        sec = P_ToPtr(DMU_SECTOR, k);
+        if(P_XSector(sec)->tag == tag)
         {
-            if(!foundcount)
+            if(xgDev)
             {
-                retsector = sec;
-                retsectorid = P_ToIndex(sec);
+                if(!foundcount)
+                {
+                    retsector = sec;
+                    retsectorid = k;
+                }
             }
-        }
-        else
-            return sec;
+            else
+                return sec;
 
-        foundcount++;
+            foundcount++;
+        }
     }
 
     if(xgDev)
@@ -2802,14 +2811,21 @@ DEFCC(CCmdMovePlane)
     }
     else if(!stricmp(argv[1], "tag") && argc >= 3)
     {
-        sector_t *sec = NULL;
+        int         tag = (short) strtol(argv[2], 0, 0);
+        sector_t   *sec = NULL;
+        iterlist_t *list;
+
         p = 3;
 
-        // Find the first sector with the tag.
-        while((sec = P_IterateTaggedSectors((short) strtol(argv[2], 0, 0), sec)) != NULL)
-        {
-            sector = sec;
-            break;
+        list = P_GetSectorIterListForTag(tag, false);
+        if(list)
+        {   // Find the first sector with the tag.
+            P_IterListResetIterator(list, true);
+            while((sec = P_IterListIterator(list)) != NULL)
+            {
+                sector = sec;
+                break;
+            }
         }
     }
 

@@ -1377,7 +1377,7 @@ static boolean P_TryMove2(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
             P_DamageMobj(tmthing, NULL, NULL, tmthing->info->mass >> 5);
         }
 
-        P_IterListResetIterator(spechit);
+        P_IterListResetIterator(spechit, false);
         while((ld = P_IterListIterator(spechit)) != NULL)
         {
             // see if the line was crossed
@@ -2544,7 +2544,7 @@ static void CheckMissileImpact(mobj_t *mobj)
     if(!mobj->target->player)
         return;
 
-    P_IterListResetIterator(spechit);
+    P_IterListResetIterator(spechit, false);
     while((ld = P_IterListIterator(spechit)) != NULL)
         P_ActivateLine(ld, mobj->target, 0, SPAC_IMPACT);
 }

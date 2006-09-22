@@ -287,7 +287,7 @@ void T_MoveFloor(floormove_t * floor)
  */
 int EV_DoFloor(line_t *line, floor_e floortype)
 {
-    int         i, tag;
+    int         i;
     int         rtn = 0;
     int         bottomtexture;
     xsector_t  *xsec;
@@ -295,9 +295,14 @@ int EV_DoFloor(line_t *line, floor_e floortype)
     sector_t   *frontsector;
     line_t     *ln;
     floormove_t *floor;
+    iterlist_t *list;
 
-    tag = P_XLine(line)->tag;
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         xsec = P_XSector(sec);
         // ALREADY MOVING?  IF SO, KEEP GOING...
@@ -499,7 +504,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 
 int EV_BuildStairs(line_t *line, stair_e type)
 {
-    int         i, ok, height, texture, tag;
+    int         i, ok, height, texture;
     int         rtn = 0;
     fixed_t     stairsize = 0;
     fixed_t     speed = 0;
@@ -507,10 +512,15 @@ int EV_BuildStairs(line_t *line, stair_e type)
     xsector_t  *xsec;
     sector_t   *sec = NULL;
     sector_t   *tsec;
-    floormove_t *floor;;
+    floormove_t *floor;
+    iterlist_t *list;
 
-    tag = P_XLine(line)->tag;
-    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((sec = P_IterListIterator(list)) != NULL)
     {
         xsec = P_XSector(sec);
         // ALREADY MOVING?  IF SO, KEEP GOING...
@@ -589,16 +599,21 @@ int EV_BuildStairs(line_t *line, stair_e type)
 
 int EV_DoDonut(line_t *line)
 {
-    int         i, tag;
+    int         i;
     int         rtn = 0;
     sector_t   *s1 = NULL;
     sector_t   *s2;
     sector_t   *s3;
     line_t     *check;
     floormove_t *floor;
+    iterlist_t *list;
 
-    tag = P_XLine(line)->tag;
-    while((s1 = P_IterateTaggedSectors(tag, s1)) != NULL)
+    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
+    if(!list)
+        return rtn;
+
+    P_IterListResetIterator(list, true);
+    while((s1 = P_IterListIterator(list)) != NULL)
     {
         // ALREADY MOVING?  IF SO, KEEP GOING...
         if(P_XSector(s1)->specialdata)
