@@ -32,6 +32,7 @@
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_map.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -61,13 +62,12 @@ mobj_t *P_SpawnTeleFog(int x, int y)
 
 int EV_Teleport(line_t *line, int side, mobj_t *thing)
 {
-    int         i;
     int         tag;
     mobj_t     *m;
     mobj_t     *fog;
     unsigned    an;
     thinker_t  *th;
-    sector_t   *sec;
+    sector_t   *sec = NULL;
     fixed_t     oldpos[3];
     fixed_t     aboveFloor;
 
@@ -81,90 +81,86 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
 
     tag = P_XLine(line)->tag;
 
-    for(i = 0; i < numsectors; ++i)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        if(P_XSector(sec)->tag == tag)
+        for(th = thinkercap.next; th != &thinkercap; th = th->next)
         {
-            for(th = thinkercap.next; th != &thinkercap; th = th->next)
+            // not a mobj
+            if(th->function != P_MobjThinker)
+                continue;
+
+            m = (mobj_t *) th;
+
+            // not a teleportman
+            if(m->type != MT_TELEPORTMAN)
+                continue;
+
+            if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
+                continue; // wrong sector
+
+            memcpy(oldpos, thing->pos, sizeof(thing->pos));
+            aboveFloor = thing->pos[VZ] - thing->floorz;
+
+            if(!P_TeleportMove(thing, m->pos[VX], m->pos[VY], false))
+                return 0;
+
+            // In Final Doom things teleported to their destination
+            // but the height wasn't set to the floor.
+            if(gamemission != pack_tnt && gamemission != pack_plut)
+                thing->pos[VZ] = thing->floorz;
+
+            // spawn teleport fog at source and destination
+            fog = P_SpawnMobj(oldpos[VX], oldpos[VY], oldpos[VZ], MT_TFOG);
+            S_StartSound(sfx_telept, fog);
+            an = m->angle >> ANGLETOFINESHIFT;
+            fog =
+                P_SpawnMobj(m->pos[VX] + 20 * finecosine[an],
+                            m->pos[VY] + 20 * finesine[an], thing->pos[VZ], MT_TFOG);
+
+            // emit sound, where?
+            S_StartSound(sfx_telept, fog);
+
+            thing->angle = m->angle;
+            if(thing->flags2 & MF2_FLOORCLIP)
             {
-                // not a mobj
-                if(th->function != P_MobjThinker)
-                    continue;
-
-                m = (mobj_t *) th;
-
-                // not a teleportman
-                if(m->type != MT_TELEPORTMAN)
-                    continue;
-
-                if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
-                    continue; // wrong sector
-
-                memcpy(oldpos, thing->pos, sizeof(thing->pos));
-                aboveFloor = thing->pos[VZ] - thing->floorz;
-
-                if(!P_TeleportMove(thing, m->pos[VX], m->pos[VY], false))
-                    return 0;
-
-                // In Final Doom things teleported to their destination
-                // but the height wasn't set to the floor.
-                if(gamemission != pack_tnt && gamemission != pack_plut)
-                    thing->pos[VZ] = thing->floorz;
-
-                // spawn teleport fog at source and destination
-                fog = P_SpawnMobj(oldpos[VX], oldpos[VY], oldpos[VZ], MT_TFOG);
-                S_StartSound(sfx_telept, fog);
-                an = m->angle >> ANGLETOFINESHIFT;
-                fog =
-                    P_SpawnMobj(m->pos[VX] + 20 * finecosine[an],
-                                m->pos[VY] + 20 * finesine[an], thing->pos[VZ], MT_TFOG);
-
-                // emit sound, where?
-                S_StartSound(sfx_telept, fog);
-
-                thing->angle = m->angle;
-                if(thing->flags2 & MF2_FLOORCLIP)
+                if(thing->pos[VZ] == P_GetFixedp(thing->subsector,
+                                           DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
+                   P_GetThingFloorType(thing) >= FLOOR_LIQUID)
                 {
-                    if(thing->pos[VZ] == P_GetFixedp(thing->subsector,
-                                               DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
-                       P_GetThingFloorType(thing) >= FLOOR_LIQUID)
-                    {
-                        thing->floorclip = 10 * FRACUNIT;
-                    }
-                    else
-                    {
-                        thing->floorclip = 0;
-                    }
+                    thing->floorclip = 10 * FRACUNIT;
                 }
-                thing->momx = thing->momy = thing->momz = 0;
-
-                // don't move for a bit
-                if(thing->player)
+                else
                 {
-                    thing->reactiontime = 18;
-                    if(thing->player->powers[pw_flight] && aboveFloor)
-                    {
-                        thing->pos[VZ] = thing->floorz + aboveFloor;
-                        if(thing->pos[VZ] + thing->height > thing->ceilingz)
-                        {
-                            thing->pos[VZ] = thing->ceilingz - thing->height;
-                        }
-                        thing->dplayer->viewz =
-                            thing->pos[VZ] + thing->dplayer->viewheight;
-                    }
-                    else
-                    {
-                        //thing->dplayer->clLookDir = 0; /* $unifiedangles */
-                        thing->dplayer->lookdir = 0;
-                    }
-
-                    //thing->dplayer->clAngle = thing->angle; /* $unifiedangles */
-                    thing->dplayer->flags |=
-                        DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+                    thing->floorclip = 0;
                 }
-                return 1;
             }
+            thing->momx = thing->momy = thing->momz = 0;
+
+            // don't move for a bit
+            if(thing->player)
+            {
+                thing->reactiontime = 18;
+                if(thing->player->powers[pw_flight] && aboveFloor)
+                {
+                    thing->pos[VZ] = thing->floorz + aboveFloor;
+                    if(thing->pos[VZ] + thing->height > thing->ceilingz)
+                    {
+                        thing->pos[VZ] = thing->ceilingz - thing->height;
+                    }
+                    thing->dplayer->viewz =
+                        thing->pos[VZ] + thing->dplayer->viewheight;
+                }
+                else
+                {
+                    //thing->dplayer->clLookDir = 0; /* $unifiedangles */
+                    thing->dplayer->lookdir = 0;
+                }
+
+                //thing->dplayer->clAngle = thing->angle; /* $unifiedangles */
+                thing->dplayer->flags |=
+                    DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+            }
+            return 1;
         }
     }
     return 0;

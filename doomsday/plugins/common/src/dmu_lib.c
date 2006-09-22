@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -147,7 +147,7 @@ void P_CopyLine(line_t* from, line_t* to)
     // Copy the extended properties too
 #if __JDOOM__ || __JHERETIC__
     xto->special = xfrom->special;
-    xto->tag = xfrom->tag;
+    //xto->tag = xfrom->tag;
     xto->specialdata = xfrom->specialdata;
     if(xfrom->xg && xto->xg)
         memcpy(xto->xg, xfrom->xg, sizeof(*xto->xg));
@@ -237,7 +237,7 @@ void P_CopySector(sector_t* from, sector_t* to)
     // Copy the extended properties too
 #if __JDOOM__ || __JHERETIC__
     xto->special = xfrom->special;
-    xto->tag = xfrom->tag;
+    //xto->tag = xfrom->tag;
     xto->soundtraversed = xfrom->soundtraversed;
     xto->soundtarget = xfrom->soundtarget;
     xto->specialdata = xfrom->specialdata;
@@ -251,7 +251,7 @@ void P_CopySector(sector_t* from, sector_t* to)
     xto->xg = xfrom->xg;
 #else
     xto->special = xfrom->special;
-    xto->tag = xfrom->tag;
+    //xto->tag = xfrom->tag;
     xto->soundtraversed = xfrom->soundtraversed;
     xto->soundtarget = xfrom->soundtarget;
     xto->seqType = xfrom->seqType;

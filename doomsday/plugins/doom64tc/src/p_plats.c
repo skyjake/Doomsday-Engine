@@ -36,6 +36,7 @@
 #include "doom64tc.h"
 
 #include "dmu_lib.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 

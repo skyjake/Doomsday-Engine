@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -58,6 +58,7 @@
 #include "p_xgsec.h"
 #include "p_player.h"
 #include "p_map.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -661,9 +662,9 @@ int XL_TraversePlanes(line_t *line, int reftype, int ref, void *data,
                       void *context, boolean travsectors, mobj_t *activator,
                       int (C_DECL *func)())
 {
-    int         i;
+    int         i, tag;
     mobj_t     *mo;
-    boolean     ok;
+    boolean     ok, findSecTagged;
     sector_t   *sec, *frontsector, *backsector;
     xsector_t  *xsec;
     char        buff[50];
@@ -705,84 +706,108 @@ int XL_TraversePlanes(line_t *line, int reftype, int ref, void *data,
     if(reftype == LPREF_INDEX_CEILING)
         return func(P_ToPtr(DMU_SECTOR, ref), true, data, context, activator);
 
-    // References to multiple planes
-    for(i = 0; i < numsectors; ++i)
+    // Can we use the tagged sector lists?
+    findSecTagged = false;
+    if(reftype == LPREF_TAGGED_FLOORS || reftype == LPREF_TAGGED_CEILINGS)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_XSector(sec);
+        findSecTagged = true;
+        tag = ref;
+    }
+    else if(reftype == LPREF_LINE_TAGGED_FLOORS ||
+            reftype == LPREF_LINE_TAGGED_CEILINGS)
+    {
+        findSecTagged = true;
+        tag = P_XLine(line)->tag;
+    }
 
-        if(reftype == LPREF_ALL_FLOORS || reftype == LPREF_ALL_CEILINGS)
+    // References to multiple planes
+    if(findSecTagged)
+    {   // Use tagged sector lists for these (speed).
+        sec = NULL;
+        while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
         {
-            if(!func(sec, reftype == LPREF_ALL_CEILINGS, data,
-                     context, activator))
-                return false;
-        }
-        if((reftype == LPREF_TAGGED_FLOORS || reftype == LPREF_TAGGED_CEILINGS)
-           && xsec->tag == ref)
-        {
-            if(!func(sec, reftype == LPREF_TAGGED_CEILINGS, data,
-                     context, activator))
-                return false;
-        }
-        if((reftype == LPREF_LINE_TAGGED_FLOORS ||
-            reftype == LPREF_LINE_TAGGED_CEILINGS) &&
-            xsec->tag == P_XLine(line)->tag)
-        {
-            if(!func(sec, reftype == LPREF_LINE_TAGGED_CEILINGS, data,
-                context, activator))
-                return false;
-        }
-        if((reftype == LPREF_ACT_TAGGED_FLOORS ||
-            reftype == LPREF_ACT_TAGGED_CEILINGS) && xsec->xg &&
-            xsec->xg->info.act_tag == ref)
-        {
-            if(!func(sec, reftype == LPREF_ACT_TAGGED_CEILINGS, data,
-               context, activator))
-               return false;
-        }
-        // Reference all sectors with (at least) one mobj of specified type inside
-        if(reftype == LPREF_THING_EXIST_FLOORS ||
-            reftype == LPREF_THING_EXIST_CEILINGS)
-        {
-            ok = true;
+            xsec = P_XSector(sec);
 
-            for(mo = P_GetPtrp(sec, DMU_THINGS); ok && mo; mo = mo->snext)
+            if(reftype == LPREF_TAGGED_FLOORS || reftype == LPREF_TAGGED_CEILINGS)
             {
-                if(mo->type == P_XLine(line)->xg->info.aparm[9])
+                if(!func(sec, reftype == LPREF_TAGGED_CEILINGS, data,
+                         context, activator))
+                    return false;
+            }
+            if(reftype == LPREF_LINE_TAGGED_FLOORS ||
+               reftype == LPREF_LINE_TAGGED_CEILINGS)
+            {
+                if(!func(sec, reftype == LPREF_LINE_TAGGED_CEILINGS, data,
+                         context, activator))
+                    return false;
+            }
+        }
+    }
+    else
+    {
+        for(i = 0; i < numsectors; ++i)
+        {
+            sec = P_ToPtr(DMU_SECTOR, i);
+            xsec = P_XSector(sec);
+
+            if(reftype == LPREF_ALL_FLOORS || reftype == LPREF_ALL_CEILINGS)
+            {
+                if(!func(sec, reftype == LPREF_ALL_CEILINGS, data,
+                         context, activator))
+                    return false;
+            }
+            if((reftype == LPREF_ACT_TAGGED_FLOORS ||
+                reftype == LPREF_ACT_TAGGED_CEILINGS) && xsec->xg &&
+                xsec->xg->info.act_tag == ref)
+            {
+                if(!func(sec, reftype == LPREF_ACT_TAGGED_CEILINGS, data,
+                   context, activator))
+                   return false;
+            }
+            // Reference all sectors with (at least) one mobj of specified type inside
+            if(reftype == LPREF_THING_EXIST_FLOORS ||
+                reftype == LPREF_THING_EXIST_CEILINGS)
+            {
+                ok = true;
+
+                for(mo = P_GetPtrp(sec, DMU_THINGS); ok && mo; mo = mo->snext)
                 {
-                    XG_Dev("  Thing of type %i found in sector id %i.",
-                           P_XLine(line)->xg->info.aparm[9], i);
+                    if(mo->type == P_XLine(line)->xg->info.aparm[9])
+                    {
+                        XG_Dev("  Thing of type %i found in sector id %i.",
+                               P_XLine(line)->xg->info.aparm[9], i);
 
-                    if(!func(sec, reftype == LPREF_THING_EXIST_CEILINGS,
-                             data, context, activator))
-                        return false;
+                        if(!func(sec, reftype == LPREF_THING_EXIST_CEILINGS,
+                                 data, context, activator))
+                            return false;
 
-                    ok = false;
+                        ok = false;
+                    }
                 }
             }
-        }
-        // Reference all sectors with NONE of the specified mobj type inside
-        if(reftype == LPREF_THING_NOEXIST_FLOORS ||
-            reftype == LPREF_THING_NOEXIST_CEILINGS)
-        {
-            ok = true;
-
-            for(mo = P_GetPtrp(sec, DMU_THINGS); ok && mo; mo = mo->snext)
+            // Reference all sectors with NONE of the specified mobj type inside
+            if(reftype == LPREF_THING_NOEXIST_FLOORS ||
+                reftype == LPREF_THING_NOEXIST_CEILINGS)
             {
-                if(mo->type != P_XLine(line)->xg->info.aparm[9])
-                    continue;
-                else
-                    ok = false;
-            }
+                ok = true;
 
-            if(ok)
-            {
-                XG_Dev("  No things of type %i found in sector id %i.",
-                       P_XLine(line)->xg->info.aparm[9], i);
+                for(mo = P_GetPtrp(sec, DMU_THINGS); ok && mo; mo = mo->snext)
+                {
+                    if(mo->type != P_XLine(line)->xg->info.aparm[9])
+                        continue;
+                    else
+                        ok = false;
+                }
 
-                if(!func(sec, reftype == LPREF_THING_NOEXIST_CEILINGS,
-                         data, context, activator))
-                    return false;
+                if(ok)
+                {
+                    XG_Dev("  No things of type %i found in sector id %i.",
+                           P_XLine(line)->xg->info.aparm[9], i);
+
+                    if(!func(sec, reftype == LPREF_THING_NOEXIST_CEILINGS,
+                             data, context, activator))
+                        return false;
+                }
             }
         }
     }
@@ -798,9 +823,11 @@ int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
                      void *context, mobj_t * activator, int (C_DECL *func)())
 {
     int         i;
+    int         tag;
     int         reftype = rtype;
     char        buff[50];
     line_t     *iter;
+    boolean     findLineTagged;
 
     // Binary XG data from DD_XGDATA uses the old flag values.
     // Add one to the ref type.
@@ -822,35 +849,62 @@ int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
     if(reftype == LREF_INDEX)
         return func(P_ToPtr(DMU_LINE, ref), true, data, context, activator);
 
-    // References to multiple lines
-    for(i = 0; i < numlines; ++i)
+    // Can we use the tagged line lists?
+    findLineTagged = false;
+    if(reftype == LREF_TAGGED)
     {
-        iter = P_ToPtr(DMU_LINE, i);
-        if(reftype == LREF_ALL)
-        {
-            if(!func(iter, true, data, context, activator))
-                return false;
-        }
-        else if(reftype == LREF_TAGGED)
-        {
-            if(P_XLine(iter)->tag == ref)
-                if(!func(iter, true, data, context, activator))
-                    return false;
-        }
-        else if(reftype == LREF_LINE_TAGGED)
-        {
-            // Ref is true if line itself should be excluded.
-            if(P_XLine(iter)->tag == P_XLine(line)->tag && (!ref || iter != line))
-                if(!func(iter, true, data, context, activator))
-                    return false;
-        }
-        else if(reftype == LREF_ACT_TAGGED)
-        {
-            xline_t *xl = P_XLine(iter);
+        findLineTagged = true;
+        tag = ref;
+    }
+    else if(LREF_LINE_TAGGED)
+    {
+        findLineTagged = true;
+        tag = P_XLine(line)->tag;
+    }
 
-            if(xl->xg && xl->xg->info.act_tag == ref)
+    // References to multiple lines
+    if(findLineTagged)
+    {   // Use tagged line lists for these (speed).
+        linelist_t *list = P_GetLineListForTag(tag, false);
+
+        if(list)
+        {
+            P_LineListResetIterator(list);
+            while((iter = P_LineListIterator(list)) != NULL)
+            {
+                if(reftype == LREF_TAGGED)
+                {
+                    if(!func(iter, true, data, context, activator))
+                        return false;
+                }
+                else if(reftype == LREF_LINE_TAGGED)
+                {
+                    // Ref is true if line itself should be excluded.
+                    if(!ref || iter != line)
+                        if(!func(iter, true, data, context, activator))
+                            return false;
+                }
+            }
+        }
+    }
+    else
+    {
+        for(i = 0; i < numlines; ++i)
+        {
+            iter = P_ToPtr(DMU_LINE, i);
+            if(reftype == LREF_ALL)
+            {
                 if(!func(iter, true, data, context, activator))
                     return false;
+            }
+            else if(reftype == LREF_ACT_TAGGED)
+            {
+                xline_t *xl = P_XLine(iter);
+
+                if(xl->xg && xl->xg->info.act_tag == ref)
+                    if(!func(iter, true, data, context, activator))
+                        return false;
+            }
         }
     }
     return true;

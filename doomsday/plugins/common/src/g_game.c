@@ -59,7 +59,7 @@
 #include "x_hair.h"
 #include "p_player.h"
 #include "r_common.h"
-
+#include "p_mapspec.h"
 #include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1059,9 +1059,9 @@ void ClearPlayer(player_t *p)
     ddplayer->flags = flags & ~(DDPF_INTERYAW | DDPF_INTERPITCH);
     // Don't clear the start spot.
     p->startspot = start;
-    
-    ddplayer->fixacked.angles = 
-        ddplayer->fixacked.pos = 
+
+    ddplayer->fixacked.angles =
+        ddplayer->fixacked.pos =
         ddplayer->fixacked.mom = -1;
 }
 

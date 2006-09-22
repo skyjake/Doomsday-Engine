@@ -37,6 +37,7 @@
 
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -180,79 +181,69 @@ void EV_StartLightStrobing(line_t *line)
 
 void EV_TurnTagLightsOff(line_t *line)
 {
-    int         i, j;
+    int         j;
     int         min;
-    int         linetag;
+    int         lineTag;
     int         lightlevel;
-    sector_t   *sec, *tsec;
+    sector_t   *sec = NULL, *tsec;
     line_t     *other;
 
-    linetag = P_XLine(line)->tag;
+    lineTag = P_XLine(line)->tag;
 
-    for(i = 0; i < numsectors; ++i)
+    while((sec = P_IterateTaggedSectors(lineTag, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-
-        if(P_XSector(sec)->tag == linetag)
+        min = P_GetIntp(sec, DMU_LIGHT_LEVEL);
+        for(j = 0; j < P_GetIntp(sec, DMU_LINE_COUNT); ++j)
         {
-            min = P_GetIntp(sec, DMU_LIGHT_LEVEL);
-            for(j = 0; j < P_GetIntp(sec, DMU_LINE_COUNT); ++j)
+            other = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | j);
+            tsec = P_GetNextSector(other, sec);
+
+            if(!tsec)
+                continue;
+
+            lightlevel = P_GetIntp(tsec, DMU_LIGHT_LEVEL);
+
+            if(lightlevel < min)
+                min = lightlevel;
+        }
+
+        P_SetIntp(sec, DMU_LIGHT_LEVEL, min);
+    }
+}
+
+void EV_LightTurnOn(line_t *line, int bright)
+{
+    int         j;
+    int         lineTag;
+    int         lightlevel;
+    sector_t   *sec = NULL, *tsec;
+    line_t     *tline;
+
+    lineTag = P_XLine(line)->tag;
+
+    while((sec = P_IterateTaggedSectors(lineTag, sec)) != NULL)
+    {
+        // bright = 0 means to search
+        // for highest light level
+        // surrounding sector
+        if(!bright)
+        {
+            for(j = 0; j < P_GetIntp(sec, DMU_LINE_COUNT); j++)
             {
-                other = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | j);
-                tsec = getNextSector(other, sec);
+                tline = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | j);
+                tsec = P_GetNextSector(tline, sec);
 
                 if(!tsec)
                     continue;
 
                 lightlevel = P_GetIntp(tsec, DMU_LIGHT_LEVEL);
 
-                if(lightlevel < min)
-                    min = lightlevel;
+                if(lightlevel > bright)
+                    bright = lightlevel;
             }
-
-            P_SetIntp(sec, DMU_LIGHT_LEVEL, min);
         }
-    }
-}
 
-void EV_LightTurnOn(line_t *line, int bright)
-{
-    int         i, j;
-    int         linetag;
-    int         lightlevel;
-    sector_t   *sec, *tsec;
-    line_t     *tline;
-
-    linetag = P_XLine(line)->tag;
-
-    for(i = 0; i < numsectors; ++i)
-    {
-        sec = P_ToPtr(DMU_SECTOR, i);
-
-        if(P_XSector(sec)->tag == linetag)
-        {
-            // bright = 0 means to search
-            // for highest light level
-            // surrounding sector
-            if(!bright)
-            {
-                for(j = 0; j < P_GetIntp(sec, DMU_LINE_COUNT); j++)
-                {
-                    tline = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | j);
-                    tsec = getNextSector(tline, sec);
-
-                    if(!tsec)
-                        continue;
-
-                    lightlevel = P_GetIntp(tsec, DMU_LIGHT_LEVEL);
-
-                    if(lightlevel > bright)
-                        bright = lightlevel;
-                }
-            }
-
-            P_SetIntp(sec, DMU_LIGHT_LEVEL, bright);
-        }
+        P_SetIntp(sec, DMU_LIGHT_LEVEL, bright);
     }
 }
 

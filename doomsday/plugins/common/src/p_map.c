@@ -37,7 +37,7 @@
 #include "d_net.h"
 #include "g_common.h"
 #include "dmu_lib.h"
-#include "p_linelist.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 

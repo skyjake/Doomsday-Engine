@@ -38,6 +38,7 @@
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "p_mapsetup.h" // d64tc
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -293,8 +294,8 @@ void P_ChangeSwitchTexture(line_t *line, int useAgain)
  */
 int EV_DestoryLineShield(line_t* line)
 {
-    int         i, k, tag, flags;
-    sector_t   *sec;
+    int         k, tag, flags;
+    sector_t   *sec = NULL;
     line_t     *li;
     xline_t    *xline;
 
@@ -303,12 +304,8 @@ int EV_DestoryLineShield(line_t* line)
 
     tag = P_XLine(line)->tag;
 
-    for(i = 0; i < numsectors; ++i)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        if(P_XSector(sec)->tag != tag)
-            continue; // wrong sector.
-
         for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
         {
             li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
@@ -340,8 +337,8 @@ int EV_DestoryLineShield(line_t* line)
  */
 int EV_SwitchTextureFree(line_t* line)
 {
-    int         i, k, tag, flags;
-    sector_t   *sec;
+    int         k, tag, flags;
+    sector_t   *sec = NULL;
     line_t     *li;
     xline_t    *xline;
 
@@ -350,12 +347,8 @@ int EV_SwitchTextureFree(line_t* line)
 
     tag = P_XLine(line)->tag;
 
-    for(i = 0; i < numsectors; ++i)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        if(P_XSector(sec)->tag != tag)
-            continue; // wrong sector.
-
         for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
         {
             li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
@@ -388,9 +381,9 @@ int EV_SwitchTextureFree(line_t* line)
  */
 int EV_ActivateSpecial(line_t *line)
 {
-    int         i, k, tag;
+    int         k, tag;
     int         bitmip;
-    sector_t   *sec;
+    sector_t   *sec = NULL;
     line_t     *li;
     xline_t    *xline;
     side_t     *back;
@@ -405,12 +398,8 @@ int EV_ActivateSpecial(line_t *line)
     tag = P_XLine(line)->tag;
     bitmip = P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_Y);
 
-    for(i = 0; i < numsectors; ++i)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        if(P_XSector(sec)->tag != tag)
-            continue; // wrong sector.
-
         for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
         {
             li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
@@ -436,9 +425,9 @@ int EV_ActivateSpecial(line_t *line)
  */
 void P_SetSectorColor(line_t *line)
 {
-    int         i, tag;
+    int         tag;
     side_t     *front, *back;
-    sector_t   *sec;
+    sector_t   *sec = NULL;
     byte        rgb[4];
 
     if(!line)
@@ -460,12 +449,8 @@ void P_SetSectorColor(line_t *line)
     rgb[2] = CLAMP(rgb[2], 0, 255);
 
     tag = P_XLine(line)->tag;
-    for(i = 0; i < numsectors; ++i)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        if(P_XSector(sec)->tag != tag)
-            continue; // wrong sector.
-
         P_SetBytepv(sec, DMU_COLOR, rgb);
     }
 }
@@ -521,7 +506,7 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
     }
 
     // do something
-    switch (xline->special)
+    switch(xline->special)
     {
         // MANUALS
     case 1:                 // Vertical Door

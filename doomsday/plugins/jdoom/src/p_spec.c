@@ -43,6 +43,7 @@
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_player.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -79,9 +80,6 @@ static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-linelist_t  *spechit; // for crossed line specials.
-linelist_t  *linespecials; // for surfaces that tick eg wall scrollers.
 
 // TODO: From jHeretic, replace!
 int    *TerrainTypes;
@@ -261,225 +259,6 @@ void P_InitPicAnims(void)
         Z_Free(animdefs);
         VERBOSE(Con_Message("P_InitPicAnims: Done.\n"));
     }
-}
-
-/*
- * Return sector_t * of sector next to current.
- * NULL if not two-sided line
- */
-sector_t *getNextSector(line_t *line, sector_t *sec)
-{
-    if(!(P_GetIntp(line, DMU_FLAGS) & ML_TWOSIDED))
-        return NULL;
-
-    if(P_GetPtrp(line, DMU_FRONT_SECTOR) == sec)
-        return P_GetPtrp(line, DMU_BACK_SECTOR);
-
-    return P_GetPtrp(line, DMU_FRONT_SECTOR);
-}
-
-/*
- * FIND LOWEST FLOOR HEIGHT IN SURROUNDING SECTORS
- */
-fixed_t P_FindLowestFloorSurrounding(sector_t *sec)
-{
-    int     i;
-    line_t *check;
-    sector_t *other;
-
-    fixed_t floor = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
-
-    for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
-    {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
-        other = getNextSector(check, sec);
-
-        if(!other)
-            continue;
-
-        if(P_GetFixedp(other, DMU_FLOOR_HEIGHT) < floor)
-            floor = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
-    }
-    return floor;
-}
-
-/*
- * FIND HIGHEST FLOOR HEIGHT IN SURROUNDING SECTORS
- */
-fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
-{
-    int     i;
-    line_t *check;
-    sector_t *other;
-    fixed_t floor = -500 * FRACUNIT;
-
-    for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
-    {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
-        other = getNextSector(check, sec);
-
-        if(!other)
-            continue;
-
-        if(P_GetFixedp(other, DMU_FLOOR_HEIGHT) > floor)
-            floor = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
-    }
-    return floor;
-}
-
-/*
- * Passed a sector and a floor height, returns the fixed point value
- * of the smallest floor height in a surrounding sector larger than
- * the floor height passed. If no such height exists the floorheight
- * passed is returned.
- *
- * DJS - Rewritten using Lee Killough's algorithm for avoiding the
- *       the fixed array.
- */
-fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
-{
-    int     i;
-    int     lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
-    line_t *check;
-    sector_t *other;
-    //fixed_t height = currentheight;
-    fixed_t otherHeight;
-    fixed_t anotherHeight;
-
-    for(i = 0; i < lineCount; i++)
-    {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
-        other = getNextSector(check, sec);
-
-        if(!other)
-            continue;
-
-        otherHeight = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
-
-        if(otherHeight > currentheight)
-        {
-            while(++i < lineCount)
-            {
-                check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
-                other = getNextSector(check, sec);
-
-                if(other)
-                {
-                    anotherHeight = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
-
-                    if(anotherHeight < otherHeight && anotherHeight > currentheight)
-                        otherHeight = anotherHeight;
-                }
-            }
-
-            return otherHeight;
-        }
-    }
-
-    return currentheight;
-}
-
-/*
- * FIND LOWEST CEILING IN THE SURROUNDING SECTORS
- */
-fixed_t P_FindLowestCeilingSurrounding(sector_t *sec)
-{
-    int     i;
-    line_t *check;
-    sector_t *other;
-    fixed_t height = MAXINT;
-
-    for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
-    {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
-        other = getNextSector(check, sec);
-
-        if(!other)
-            continue;
-
-        if(P_GetFixedp(other, DMU_CEILING_HEIGHT) < height)
-            height =
-                P_GetFixedp(other, DMU_CEILING_HEIGHT);
-
-    }
-    return height;
-}
-
-/*
- * FIND HIGHEST CEILING IN THE SURROUNDING SECTORS
- */
-fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
-{
-    int     i;
-    line_t *check;
-    sector_t *other;
-    fixed_t height = 0;
-
-    for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
-    {
-        check = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i);
-        other = getNextSector(check, sec);
-
-        if(!other)
-            continue;
-
-        if(P_GetFixedp(other, DMU_CEILING_HEIGHT) > height)
-            height =
-                P_GetFixedp(other, DMU_CEILING_HEIGHT);
-    }
-    return height;
-}
-
-/**
- * RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
- */
-sector_t *P_IterateTaggedSectors(int tag, sector_t *start)
-{
-    int         i;
-    sector_t   *sec;
-
-    if(tag < 0)
-        return NULL;
-
-    if(start)
-        i = P_ToIndex(start) + 1;
-    else
-        i = 0;
-
-    for(; i < numsectors; ++i)
-    {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        if(P_XSector(sec)->tag == tag)
-            return sec;
-    }
-
-    return NULL;
-}
-
-/*
- * Find minimum light from an adjacent sector
- */
-int P_FindMinSurroundingLight(sector_t *sector, int max)
-{
-    int     i;
-    int     min;
-
-    line_t *line;
-    sector_t *check;
-
-    min = max;
-    for(i = 0; i < P_GetIntp(sector, DMU_LINE_COUNT); ++i)
-    {
-        line = P_GetPtrp(sector, DMU_LINE_OF_SECTOR | i);
-        check = getNextSector(line, sector);
-
-        if(!check)
-            continue;
-
-        if(P_GetIntp(check, DMU_LIGHT_LEVEL) < min)
-            min = P_GetIntp(check, DMU_LIGHT_LEVEL);
-    }
-    return min;
 }
 
 boolean P_ActivateLine(line_t *ld, mobj_t *mo, int side, int actType)
@@ -1168,71 +947,6 @@ void P_UpdateSpecials(void)
 
 }
 
-int EV_DoDonut(line_t *line)
-{
-    int         i, tag;
-    int         rtn = 0;
-    sector_t   *s1 = NULL;
-    sector_t   *s2;
-    sector_t   *s3;
-    line_t     *check;
-    floormove_t *floor;
-
-    tag = P_XLine(line)->tag;
-    while((s1 = P_IterateTaggedSectors(tag, s1)) != NULL)
-    {
-        // ALREADY MOVING?  IF SO, KEEP GOING...
-        if(P_XSector(s1)->specialdata)
-            continue;
-
-        rtn = 1;
-
-        s2 = getNextSector(P_GetPtrp(s1, DMU_LINE_OF_SECTOR | 0), s1);
-        for(i = 0; i < P_GetIntp(s2, DMU_LINE_COUNT); i++)
-        {
-            check = P_GetPtrp(s2, DMU_LINE_OF_SECTOR | i);
-
-            s3 = P_GetPtrp(check, DMU_BACK_SECTOR);
-
-            if((!(P_GetIntp(check, DMU_FLAGS) & ML_TWOSIDED)) ||
-               s3 == s1)
-                continue;
-
-            //  Spawn rising slime
-            floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
-            P_AddThinker(&floor->thinker);
-
-            P_XSector(s2)->specialdata = floor;
-
-            floor->thinker.function = T_MoveFloor;
-            floor->type = donutRaise;
-            floor->crush = false;
-            floor->direction = 1;
-            floor->sector = s2;
-            floor->speed = FLOORSPEED / 2;
-            floor->texture = P_GetIntp(s3, DMU_FLOOR_TEXTURE);
-            floor->newspecial = 0;
-            floor->floordestheight = P_GetFixedp(s3, DMU_FLOOR_HEIGHT);
-
-            //  Spawn lowering donut-hole
-            floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
-            P_AddThinker(&floor->thinker);
-
-            P_XSector(s1)->specialdata = floor;
-
-            floor->thinker.function = T_MoveFloor;
-            floor->type = lowerFloor;
-            floor->crush = false;
-            floor->direction = -1;
-            floor->sector = s1;
-            floor->speed = FLOORSPEED / 2;
-            floor->floordestheight = P_GetFixedp(s3, DMU_FLOOR_HEIGHT);
-            break;
-        }
-    }
-    return rtn;
-}
-
 /**
  * After the map has been loaded, scan for specials that spawn thinkers.
  */
@@ -1240,9 +954,11 @@ void P_SpawnSpecials(void)
 {
     int         i;
     line_t     *line;
+    xline_t    *xline;
+    linelist_t *list;
     sector_t   *sector;
 
-    //  Init special SECTORs.
+    // Init special SECTORs.
     for(i = 0; i < numsectors; ++i)
     {
         sector = P_ToPtr(DMU_SECTOR, i);
@@ -1326,11 +1042,19 @@ void P_SpawnSpecials(void)
     for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
-        switch(P_XLine(line)->special)
+        xline = P_XLine(line);
+
+        switch(xline->special)
         {
         case 48: // EFFECT FIRSTCOL SCROLL+
             P_AddLineToLineList(linespecials, line);
             break;
+        }
+
+        if(xline->tag)
+        {
+           list = P_GetLineListForTag(xline->tag, true);
+           P_AddLineToLineList(list, line);
         }
     }
 

@@ -52,7 +52,7 @@
 #include "d_net.h"
 #include "g_update.h"
 #include "g_common.h"
-#include "p_linelist.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -657,6 +657,7 @@ void H2_Shutdown(void)
 {
     P_DestroyLineList(spechit);
     P_DestroyLineList(linespecials);
+    P_DestroyLineTagLists();
 }
 
 void H2_Ticker(void)

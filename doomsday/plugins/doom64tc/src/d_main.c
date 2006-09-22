@@ -37,7 +37,7 @@
 #include "m_argv.h"
 #include "hu_stuff.h"
 #include "p_saveg.h"
-#include "p_linelist.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -546,6 +546,7 @@ void D_Shutdown(void)
     HU_UnloadData();
     P_DestroyLineList(spechit);
     P_DestroyLineList(linespecials);
+    P_DestroyLineTagLists();
 }
 
 void D_Ticker(void)

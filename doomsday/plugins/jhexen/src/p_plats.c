@@ -45,6 +45,7 @@
  */
 
 #include "jhexen.h"
+#include "p_mapspec.h"
 
 plat_t *activeplats[MAXPLATS];
 

@@ -45,10 +45,6 @@
 
 #include "h_player.h"
 #include "r_data.h"
-#include "p_linelist.h"
-
-extern linelist_t *spechit; // for crossed line specials.
-extern linelist_t *linespecials; // for surfaces that tick eg wall scrollers.
 
 extern int     *TerrainTypes;
 
@@ -78,20 +74,6 @@ boolean         P_ActivateLine(line_t *ld, mobj_t *mo, int side,
 void            P_PlayerInSpecialSector(player_t *player);
 
 void            P_PlayerInWindSector(player_t *player);
-
-fixed_t         P_FindLowestFloorSurrounding(sector_t *sec);
-fixed_t         P_FindHighestFloorSurrounding(sector_t *sec);
-
-fixed_t         P_FindNextHighestFloor(sector_t *sec, int currentheight);
-
-fixed_t         P_FindLowestCeilingSurrounding(sector_t *sec);
-fixed_t         P_FindHighestCeilingSurrounding(sector_t *sec);
-
-sector_t       *P_IterateTaggedSectors(int tag, sector_t *start);
-
-int             P_FindMinSurroundingLight(sector_t *sector, int max);
-
-sector_t       *getNextSector(line_t *line, sector_t *sec);
 
 //
 //  SPECIAL

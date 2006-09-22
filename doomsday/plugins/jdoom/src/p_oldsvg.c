@@ -278,7 +278,7 @@ void P_v19_UnArchiveWorld(void)
         P_SetIntp(sec, DMU_CEILING_TEXTURE, *get++ + firstflat);
         P_SetIntp(sec, DMU_LIGHT_LEVEL, *get++);
         xsec->special = *get++;  // needed?
-        xsec->tag = *get++;      // needed?
+        /*xsec->tag =*/ *get++;      // needed?
         xsec->specialdata = 0;
         xsec->soundtarget = 0;
     }
@@ -291,7 +291,7 @@ void P_v19_UnArchiveWorld(void)
 
         P_SetIntp(line, DMU_FLAGS, *get++);
         xline->special = *get++;
-        xline->tag = *get++;
+        /*xline->tag =*/ *get++;
 
         for(j = 0; j < 2; ++j)
         {

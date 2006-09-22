@@ -35,6 +35,7 @@
 #include "jheretic.h"
 
 #include "dmu_lib.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 

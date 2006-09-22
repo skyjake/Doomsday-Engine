@@ -43,6 +43,7 @@
 
 #include "jhexen.h"
 #include "dmu_lib.h"
+#include "p_mapspec.h"
 
 void T_Light(light_t * light)
 {
@@ -301,7 +302,7 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
         P_XSector(sec)->special = LIGHT_SEQUENCE_START; // make sure that the search doesn't back up.
         for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
         {
-            tempSec = getNextSector(P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i), sec);
+            tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i), sec);
             if(!tempSec)
             {
                 continue;
@@ -339,7 +340,7 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
         index += indexDelta;
         for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
         {
-            tempSec = getNextSector(P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i), sec);
+            tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i), sec);
             if(!tempSec)
             {
                 continue;

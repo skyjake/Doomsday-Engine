@@ -1359,7 +1359,7 @@ void UnarchiveWorld(void)
         GET_DATA(rgb, 3); P_SetBytepv(sec, DMU_FLOOR_COLOR, rgb);
         GET_DATA(rgb, 3); P_SetBytepv(sec, DMU_CEILING_COLOR, rgb);
         xsec->special = GET_WORD;
-        xsec->tag = GET_WORD;
+        /*xsec->tag =*/ GET_WORD;
         xsec->seqType = GET_WORD;
         P_SetFloatp(sec, DMU_FLOOR_OFFSET_X, GET_FLOAT);
         P_SetFloatp(sec, DMU_FLOOR_OFFSET_Y, GET_FLOAT);

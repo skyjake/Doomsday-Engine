@@ -36,6 +36,7 @@
 
 #include "dmu_lib.h"
 #include "p_map.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -582,6 +583,71 @@ int EV_BuildStairs(line_t *line, stair_e type)
                 break;
             }
         } while(ok);
+    }
+    return rtn;
+}
+
+int EV_DoDonut(line_t *line)
+{
+    int         i, tag;
+    int         rtn = 0;
+    sector_t   *s1 = NULL;
+    sector_t   *s2;
+    sector_t   *s3;
+    line_t     *check;
+    floormove_t *floor;
+
+    tag = P_XLine(line)->tag;
+    while((s1 = P_IterateTaggedSectors(tag, s1)) != NULL)
+    {
+        // ALREADY MOVING?  IF SO, KEEP GOING...
+        if(P_XSector(s1)->specialdata)
+            continue;
+
+        rtn = 1;
+
+        s2 = P_GetNextSector(P_GetPtrp(s1, DMU_LINE_OF_SECTOR | 0), s1);
+        for(i = 0; i < P_GetIntp(s2, DMU_LINE_COUNT); i++)
+        {
+            check = P_GetPtrp(s2, DMU_LINE_OF_SECTOR | i);
+
+            s3 = P_GetPtrp(check, DMU_BACK_SECTOR);
+
+            if((!(P_GetIntp(check, DMU_FLAGS) & ML_TWOSIDED)) ||
+               s3 == s1)
+                continue;
+
+            //  Spawn rising slime
+            floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
+            P_AddThinker(&floor->thinker);
+
+            P_XSector(s2)->specialdata = floor;
+
+            floor->thinker.function = T_MoveFloor;
+            floor->type = donutRaise;
+            floor->crush = false;
+            floor->direction = 1;
+            floor->sector = s2;
+            floor->speed = FLOORSPEED / 2;
+            floor->texture = P_GetIntp(s3, DMU_FLOOR_TEXTURE);
+            floor->newspecial = 0;
+            floor->floordestheight = P_GetFixedp(s3, DMU_FLOOR_HEIGHT);
+
+            //  Spawn lowering donut-hole
+            floor = Z_Malloc(sizeof(*floor), PU_LEVSPEC, 0);
+            P_AddThinker(&floor->thinker);
+
+            P_XSector(s1)->specialdata = floor;
+
+            floor->thinker.function = T_MoveFloor;
+            floor->type = lowerFloor;
+            floor->crush = false;
+            floor->direction = -1;
+            floor->sector = s1;
+            floor->speed = FLOORSPEED / 2;
+            floor->floordestheight = P_GetFixedp(s3, DMU_FLOOR_HEIGHT);
+            break;
+        }
     }
     return rtn;
 }

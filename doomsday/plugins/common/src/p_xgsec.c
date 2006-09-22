@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -55,6 +55,7 @@
 #include "p_xgsec.h"
 #include "g_common.h"
 #include "p_map.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -831,36 +832,31 @@ int XS_TextureHeight(line_t *line, int part)
     return DDMAXINT;
 }
 
-/*
+/**
  * Returns a pointer to the first sector with the tag.
  */
 sector_t *XS_FindTagged(int tag)
 {
-    int         k;
     int         foundcount = 0;
     int         retsectorid = -1;
-    sector_t   *sec, *retsector;
+    sector_t   *sec = NULL, *retsector;
 
     retsector = NULL;
 
-    for(k = 0; k < numsectors; ++k)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, k);
-        if(P_XSector(sec)->tag == tag)
+        if(xgDev)
         {
-            if(xgDev)
+            if(!foundcount)
             {
-                if(!foundcount)
-                {
-                    retsector = sec;
-                    retsectorid = k;
-                }
+                retsector = sec;
+                retsectorid = P_ToIndex(sec);
             }
-            else
-                return sec;
-
-            foundcount++;
         }
+        else
+            return sec;
+
+        foundcount++;
     }
 
     if(xgDev)
@@ -2764,7 +2760,7 @@ DEFCC(CCmdMovePlane)
     boolean isOffset = false, isCrusher = false;
     sector_t *sector = NULL;
     fixed_t units = 0, speed = FRACUNIT;
-    int     i, p = 0;
+    int     p = 0;
     fixed_t floorheight, ceilingheight;
     xgplanemover_t *mover;
 
@@ -2803,17 +2799,14 @@ DEFCC(CCmdMovePlane)
     }
     else if(!stricmp(argv[1], "tag") && argc >= 3)
     {
-        sector_t *sec;
+        sector_t *sec = NULL;
         p = 3;
+
         // Find the first sector with the tag.
-        for(i = 0; i < numsectors; ++i)
+        while((sec = P_IterateTaggedSectors((short) strtol(argv[2], 0, 0), sec)) != NULL)
         {
-            sec = P_ToPtr(DMU_SECTOR, i);
-            if(P_XSector(sec)->tag == (short) strtol(argv[2], 0, 0))
-            {
-                sector = sec;
-                break;
-            }
+            sector = sec;
+            break;
         }
     }
 

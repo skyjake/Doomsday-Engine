@@ -57,7 +57,7 @@
 
 #include "jhexen.h"
 
-#include "p_linelist.h"
+#include "p_mapspec.h"
 #include "p_map.h"
 
 // MACROS ------------------------------------------------------------------

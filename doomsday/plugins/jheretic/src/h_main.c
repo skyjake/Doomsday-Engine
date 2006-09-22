@@ -40,7 +40,7 @@
 #include "hu_stuff.h"
 #include "p_saveg.h"
 #include "d_net.h"
-#include "p_linelist.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -572,6 +572,7 @@ void H_Shutdown(void)
     HU_UnloadData();
     P_DestroyLineList(spechit);
     P_DestroyLineList(linespecials);
+    P_DestroyLineTagLists();
 }
 
 void H_Ticker(void)

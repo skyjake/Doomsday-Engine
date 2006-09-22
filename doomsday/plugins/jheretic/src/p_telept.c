@@ -48,6 +48,7 @@
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_map.h"
+#include "p_mapspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -168,11 +169,10 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
 
 boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
 {
-    int         i;
     int         tag;
     mobj_t     *m;
     thinker_t  *th;
-    sector_t   *sec;
+    sector_t   *sec = NULL;
 
     if(thing->flags2 & MF2_NOTELEPORT)
         return false;
@@ -183,27 +183,23 @@ boolean EV_Teleport(line_t *line, int side, mobj_t *thing)
         return 0;
 
     tag = P_XLine(line)->tag;
-    for(i = 0; i < numsectors; ++i)
+    while((sec = P_IterateTaggedSectors(tag, sec)) != NULL)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        if(P_XSector(sec)->tag == tag)
+        th = thinkercap.next;
+        for(th = thinkercap.next; th != &thinkercap; th = th->next)
         {
-            th = thinkercap.next;
-            for(th = thinkercap.next; th != &thinkercap; th = th->next)
-            {
-                if(th->function != P_MobjThinker)
-                    continue; // Not a mobj
+            if(th->function != P_MobjThinker)
+                continue; // Not a mobj
 
-                m = (mobj_t *) th;
+            m = (mobj_t *) th;
 
-                if(m->type != MT_TELEPORTMAN)
-                    continue; // Not a teleportman
+            if(m->type != MT_TELEPORTMAN)
+                continue; // Not a teleportman
 
-                if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
-                    continue; // wrong sector
+            if(P_GetPtrp(m->subsector, DMU_SECTOR) != sec)
+                continue; // wrong sector
 
-                return P_Teleport(thing, m->pos[VX], m->pos[VY], m->angle);
-            }
+            return P_Teleport(thing, m->pos[VX], m->pos[VY], m->angle);
         }
     }
 
