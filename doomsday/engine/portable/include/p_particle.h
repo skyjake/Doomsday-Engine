@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +32,6 @@
 #include "def_data.h"
 
 #define MAX_ACTIVE_PTCGENS  256
-#define MAX_PTC_STAGES      DED_PTC_STAGES
 #define MAX_PTC_TEXTURES    32     // Maximum # of textures in particle system
 #define MAX_PTC_MODELS      100
 

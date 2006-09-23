@@ -463,7 +463,7 @@ extern          "C" {
         float           force_axis[3];  /* Rotation axis of the sphere force
                                            (+ speed). */
         float           force_origin[3];    // Offset for the force sphere.
-        ded_ptcstage_t *stages; //[DED_PTC_STAGES];
+        ded_ptcstage_t *stages;
         ded_count_t     stage_count;
     } ded_ptcgen_t;
 
