@@ -308,19 +308,17 @@ boolean P_IsPlayerOnGround(player_t *player)
  */
 void P_CheckPlayerJump(player_t *player)
 {
-    float   power;
+    float   power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
     ticcmd_t *cmd = &player->cmd;
 
     if(player->plr->flags & DDPF_CAMERA)
         return; // Cameras don't jump.
 
     // Check if we are allowed to jump.
-    if(cfg.jumpEnabled && (!IS_CLIENT || netJumpPower > 0) &&
-       P_IsPlayerOnGround(player) && cmd->jump && player->jumptics <= 0)
+    if(cfg.jumpEnabled && power > 0 && P_IsPlayerOnGround(player) && 
+       cmd->jump && player->jumptics <= 0)
     {
         // Jump, then!
-        power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
-
 #if __JHEXEN__
         if(player->morphTics) // Pigs don't jump that high.
             player->plr->mo->momz = FRACUNIT * (2 * power / 3);
