@@ -1596,30 +1596,33 @@ void C_DECL A_NtroopAttack(mobj_t *actor)
     P_SpawnMissile(actor, actor->target, MT_NTROSHOT);
 }
 
-#define FIRESPREAD  (ANG90/8) //its cheap but it works
 void C_DECL A_MotherFloorFire(mobj_t *actor)
 {
+#define FIRESPREAD  (ANG90/8) //its cheap but it works
     mobj_t *mo;
     int     an;
 
-    if (!actor->target)
-    return;
+    if(!actor->target)
+        return;
 
-    A_FaceTarget (actor);
-
+    A_FaceTarget(actor);
+#if 0
+    // DJS - Fixme!
     S_StartSound(sfx_mthatk, actor);
     mo = P_SpawnMissile(actor, actor->target, MT_FIREEND);
-    mo = P_SpawnMissile (actor, actor->target, MT_FIREEND);
+    mo = P_SpawnMissile(actor, actor->target, MT_FIREEND);
     mo->angle -= FIRESPREAD*4;
     an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul (mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul (mo->info->speed, finesine[an]);
+    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+    mo->momy = FixedMul(mo->info->speed, finesine[an]);
 
     mo = P_SpawnMissile (actor, actor->target, MT_FIREEND);
     mo->angle += FIRESPREAD*4;
     an = mo->angle >> ANGLETOFINESHIFT;
-    mo->momx = FixedMul (mo->info->speed, finecosine[an]);
-    mo->momy = FixedMul (mo->info->speed, finesine[an]);
+    mo->momx = FixedMul(mo->info->speed, finecosine[an]);
+    mo->momy = FixedMul(mo->info->speed, finesine[an]);
+#endif
+#undef FIRESPREAD
 }
 
 /**
@@ -1683,7 +1686,8 @@ void C_DECL A_SetFloorFire(mobj_t *actor)
     fixed_t pos[3];
 
     actor->pos[VZ] = actor->floorz; // DJS - why?
-
+#if 0
+    // DJS - Fixme!
     memcpy(pos, actor->pos, sizeof(pos));
     pos[VX] += (P_Random() - P_Random()) << 10;
     pos[VY] += (P_Random() - P_Random()) << 10;
@@ -1691,6 +1695,7 @@ void C_DECL A_SetFloorFire(mobj_t *actor)
 
     mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_SPAWNFIRE);
     mo->target = actor->target;
+#endif
 }
 
 /**
@@ -2941,7 +2946,8 @@ void C_DECL A_BrainSpit(mobj_t *mo)
 
     if(!numbraintargets)     // killough 4/1/98: ignore if no targets
         return;
-
+#if 0
+    // DJS - is this even used?
     brain.easy ^= 1;
     if(gameskill <= sk_easy && (!brain.easy))
         return;
@@ -2957,6 +2963,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
         ((targ->pos[VY] - mo->pos[VY]) / newmobj->momy) / newmobj->state->tics;
 
     S_StartSound(sfx_bospit, NULL);
+#endif
 }
 
 /*
@@ -2971,7 +2978,7 @@ void C_DECL A_SpawnSound(mobj_t *mo)
 void C_DECL A_SpawnFly(mobj_t *mo)
 {
     mobj_t *newmobj;
-    mobj_t *fog;
+//    mobj_t *fog;
     mobj_t *targ;
     int     r;
     mobjtype_t type;
@@ -2982,8 +2989,8 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     targ = mo->target;
 
     // First spawn teleport fog.
-    fog = P_SpawnMobj(targ->pos[VX], targ->pos[VY], targ->pos[VZ], MT_SPAWNFIRE);
-    S_StartSound(sfx_telept, fog);
+//    fog = P_SpawnMobj(targ->pos[VX], targ->pos[VY], targ->pos[VZ], MT_SPAWNFIRE);
+//    S_StartSound(sfx_telept, fog);
 
     // Randomly select monster to spawn.
     r = P_Random();

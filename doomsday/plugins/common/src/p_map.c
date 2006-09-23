@@ -1275,7 +1275,8 @@ static boolean P_TryMove2(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 #endif
 
 #if __DOOM64TC__
-        if(!(thing->flags & MF_TELEPORT) && thing->type != MT_SPAWNFIRE
+        // DJS - FIXME! Mother demon fire attack.
+        if(!(thing->flags & MF_TELEPORT) /*&& thing->type != MT_SPAWNFIRE*/
             && tmfloorz - thing->pos[VZ] > 24 * FRACUNIT)
         { // Too big a step up
             CheckMissileImpact(thing);
@@ -2380,7 +2381,7 @@ void P_SlideMove(mobj_t *mo)
         if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY]))
             goto stairstep;
 #else
-        if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY], 
+        if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY],
                       true, true))
             goto stairstep;
 #endif

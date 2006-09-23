@@ -537,6 +537,7 @@ void P_ZMovement(mobj_t *mo)
     // d64tc >
     // MotherDemon's Fire attacks can climb up/down stairs
     // DJS - FIXME!
+#if 0
     if((mo->flags & MF_MISSILE) && (mo->type == MT_FIREEND))
     {
         mo->pos[VZ] = mo->floorz;
@@ -554,6 +555,7 @@ void P_ZMovement(mobj_t *mo)
             return;
         }
     }
+#endif
     // < d64tc
 
     // The floor.
@@ -1511,8 +1513,11 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
                          dest->pos[VX], dest->pos[VY]);
 
     // d64tc >
+#if 0
+    // DJS - FIXME!
     if(type == MT_FIREEND)
          z = ONFLOORZ; // Bitch floor fire missile - kaiser
+#endif
     // < d64tc
 
     // fuzzy player

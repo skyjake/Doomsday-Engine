@@ -546,7 +546,7 @@ void C_DECL A_FireMissile(player_t *player, pspdef_t * psp)
     P_SpawnPlayerMissile(player->plr->mo, MT_ROCKET);
 
     // d64tc >
-    if (cfg.weaponRecoil)
+    if(cfg.weaponRecoil)
     {
         angle_t angle = player->plr->mo->angle + ANG180;
 

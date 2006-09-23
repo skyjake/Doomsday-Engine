@@ -315,7 +315,7 @@ void P_CheckPlayerJump(player_t *player)
         return; // Cameras don't jump.
 
     // Check if we are allowed to jump.
-    if(cfg.jumpEnabled && power > 0 && P_IsPlayerOnGround(player) && 
+    if(cfg.jumpEnabled && power > 0 && P_IsPlayerOnGround(player) &&
        cmd->jump && player->jumptics <= 0)
     {
         // Jump, then!
@@ -1608,7 +1608,6 @@ void P_PlayerThinkPowers(player_t *player)
             mobjinfo[MT_NTROSHOT].speed -= 13 * FRACUNIT;
             mobjinfo[MT_BRUISERSHOT].speed -= 7 * FRACUNIT;
             mobjinfo[MT_TRACER].speed -= 7 * FRACUNIT;
-            mobjinfo[MT_FIREEND].speed -= 7 * FRACUNIT;
             mobjinfo[MT_BITCHBALL].speed -= 7 * FRACUNIT;
             mobjinfo[MT_ACIDMISSILE].speed -= 7 * FRACUNIT;
             mobjinfo[MT_CYBERROCKET].speed -= 15 * FRACUNIT;
@@ -1696,7 +1695,6 @@ void P_PlayerThinkPowers(player_t *player)
             mobjinfo[MT_NTROSHOT].speed += 13 * FRACUNIT;
             mobjinfo[MT_BRUISERSHOT].speed += 7 * FRACUNIT;
             mobjinfo[MT_TRACER].speed += 7 * FRACUNIT;
-            mobjinfo[MT_FIREEND].speed += 7 * FRACUNIT;
             mobjinfo[MT_BITCHBALL].speed += 7 * FRACUNIT;
             mobjinfo[MT_ACIDMISSILE].speed += 7 * FRACUNIT;
             mobjinfo[MT_CYBERROCKET].speed += 15 * FRACUNIT;

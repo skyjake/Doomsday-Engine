@@ -10486,21 +10486,21 @@ State {
 }
 
 State {
-  ID = "HED2_RUN1";
-  Sprite = "HED2";
-  Frame = 0;
-  Tics = 3;
-  Action = "A_Chase";
-  Next state = "HED2_RUN2";
-}
-
-State {
   ID = "HED2_STND2";
   Sprite = "HED2";
   Frame = 1;
   Tics = 10;
   Action = "A_Look";
   Next state = "HED2_STND";
+}
+
+State {
+  ID = "HED2_RUN1";
+  Sprite = "HED2";
+  Frame = 0;
+  Tics = 3;
+  Action = "A_Chase";
+  Next state = "HED2_RUN2";
 }
 
 State {
@@ -12055,14 +12055,6 @@ State {
   Tics = 10;
   Action = "A_Look";
   Next state = "BSGI_STND";
-}
-
-State {
-  ID = "BSGI_SIGHT";
-  Sprite = "BSGI";
-  Frame = 0;
-  Tics = 20;
-  Next state = "BSGI_RUN1";
 }
 
 State {

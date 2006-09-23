@@ -1015,6 +1015,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         damage >>= 1;           // take half damage in trainer mode
 
     // d64tc >
+#if 0
     if(inflictor && inflictor->type == MT_FIREEND)
     {   // Special for Motherdemon attack
 #if 0
@@ -1039,6 +1040,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 #endif
         return;
     }
+#endif
     // < d64tc
 
     // use the cvar damage multiplier netMobDamageModifier
