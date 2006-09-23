@@ -336,8 +336,8 @@ Thing {
   Spawn state = "TROO_STND";
   See state = "TROO_RUN1";
   Pain state = "TROO_PAIN";
-  Melee state = "TROO_ATK1";
-  Missile state = "TROO_MEL1";
+  Melee state = "TROO_MEL1";
+  Missile state = "TROO_ATK1";
   Death state = "TROO_DIE1";
   Xdeath state = "TROO_XDIE1";
   Raise state = "TROO_RAISE1";
