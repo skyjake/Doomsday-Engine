@@ -72,10 +72,8 @@ actionlink_t actionlinks[] = {
     {"A_FatAttack2", A_FatAttack2},
     {"A_FatAttack3", A_FatAttack3},
     {"A_FatRaise", A_FatRaise},
-    {"A_Fire", A_Fire},
     {"A_FireBFG", A_FireBFG},
     {"A_FireCGun", A_FireCGun},
-    {"A_FireCrackle", A_FireCrackle},
     {"A_FireMissile", A_FireMissile},
     {"A_FirePistol", A_FirePistol},
     {"A_FirePlasma", A_FirePlasma},
@@ -140,7 +138,6 @@ actionlink_t actionlinks[] = {
     {"A_SpawnSound", A_SpawnSound},
     {"A_SpidRefire", A_SpidRefire},
     {"A_SPosAttack", A_SPosAttack},
-    {"A_StartFire", A_StartFire},
     {"A_Tracer", A_Tracer},
     {"A_TroopAttack", A_TroopAttack},
     {"A_TroopClaw", A_TroopClaw},               //d64tc
@@ -150,10 +147,6 @@ actionlink_t actionlinks[] = {
     {"A_SetFloorFire", A_SetFloorFire},         //d64tc
     {"A_MotherBallExplode", A_MotherBallExplode}, //d64tc
     {"A_BitchTracerPuff", A_BitchTracerPuff},   //d64tc
-    {"A_VileAttack", A_VileAttack},
-    {"A_VileChase", A_VileChase},
-    {"A_VileStart", A_VileStart},
-    {"A_VileTarget", A_VileTarget},
     {"A_WeaponReady", A_WeaponReady},
     {"A_XScream", A_XScream},
     {0, 0}

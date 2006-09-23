@@ -1041,17 +1041,19 @@ static MenuItem_t GameplayItems[] = {
 #if __JDOOM__ || __JHERETIC__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, "COMPATIBILITY", NULL, 0 },
-#  if __JDOOM__
+# if __JDOOM__
     {ITT_EFUNC, 0, "ANY BOSS TRIGGER 666 :", M_ToggleVar, 0, NULL,
         "game-anybossdeath666"},
+#  if !__DOOM64TC__
     {ITT_EFUNC, 0, "AV RESURRECTS GHOSTS :", M_ToggleVar, 0, NULL,
         "game-raiseghosts"},
+#  endif
     {ITT_EFUNC, 0, "PE LIMITED TO 20 LOST SOULS :", M_ToggleVar, 0, NULL,
         "game-maxskulls"},
     {ITT_EFUNC, 0, "LS CAN GET STUCK INSIDE WALLS :", M_ToggleVar, 0, NULL,
         "game-skullsinwalls"},
-#  endif
-#  if __JDOOM__ || __JHERETIC__
+# endif
+# if __JDOOM__ || __JHERETIC__
     {ITT_EFUNC, 0, "MONSTERS CAN GET STUCK IN DOORS :", M_ToggleVar, 0, NULL,
         "game-monsters-stuckindoors"},
     {ITT_EFUNC, 0, "SOME OBJECTS HANG OVER LEDGES :", M_ToggleVar, 0, NULL,
@@ -1064,11 +1066,11 @@ static MenuItem_t GameplayItems[] = {
         "game-objects-clipping"},
     {ITT_EFUNC, 0, "  ^IFNOT NORTHONLY WALLRUNNING :", M_ToggleVar, 0, NULL,
         "game-player-wallrun-northonly"},
-#  endif
-#  if __JDOOM__
+# endif
+# if __JDOOM__
     {ITT_EFUNC, 0, "ZOMBIE PLAYERS CAN EXIT LEVELS :", M_ToggleVar, 0, NULL,
         "game-zombiescanexit"},
-#  endif
+# endif
 #endif
 };
 
@@ -1092,7 +1094,7 @@ static Menu_t GameplayDef = {
 #endif
     M_DrawGameplay,
 #if __DOOM64TC__
-    18, GameplayItems,
+    17, GameplayItems,
 #elif __JDOOM__
     17, GameplayItems,
 #else
@@ -1103,7 +1105,7 @@ static Menu_t GameplayDef = {
     cfg.menuColor2,
     LINEHEIGHT_A,
 #if __DOOM64TC__
-    0, 18
+    0, 17
 #elif __JDOOM__
     0, 17
 #else
@@ -2921,7 +2923,9 @@ void M_DrawGameplay(void)
 # endif
 # if __JDOOM__
     M_WriteMenuText(menu, idx++, yesno[cfg.anybossdeath != 0]);
+# if !__DOOM64TC__
     M_WriteMenuText(menu, idx++, yesno[cfg.raiseghosts != 0]);
+# endif
     M_WriteMenuText(menu, idx++, yesno[cfg.maxskulls != 0]);
     M_WriteMenuText(menu, idx++, yesno[cfg.allowskullsinwalls != 0]);
 # endif

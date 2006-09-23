@@ -837,9 +837,6 @@ desc = 1=Camera players have no movement clipping.
 [player-death-lookup]
 desc = 1=Look up when killed
 
-[game-raiseghosts]
-desc = 1=Archviles raise ghosts from squished corpses (disables DOOM bug fix).
-
 [game-maxskulls]
 desc = 1=Pain Elementals can't spawn Lost Souls if more than twenty exist (original behaviour).
 

@@ -174,7 +174,6 @@ cvar_t  gameCVars[] = {
     {"player-death-lookup", 0, CVT_BYTE, &cfg.deathLookUp, 0, 1},
 
 // Compatibility options
-    {"game-raiseghosts", 0, CVT_BYTE, &cfg.raiseghosts, 0, 1},
     {"game-maxskulls", 0, CVT_BYTE, &cfg.maxskulls, 0, 1},
     {"game-skullsinwalls", 0, CVT_BYTE, &cfg.allowskullsinwalls, 0, 1},
     {"game-anybossdeath666", 0, CVT_BYTE, &cfg.anybossdeath, 0, 1},

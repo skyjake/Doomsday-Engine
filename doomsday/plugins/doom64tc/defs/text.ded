@@ -1062,11 +1062,6 @@ Text {
 }
 
 Text {
-  ID = "CC_ARCH";
-  Text = "ARCH-VILE";
-}
-
-Text {
   ID = "CC_SPIDER";
   Text = "THE SPIDER MASTERMIND";
 }
@@ -1465,32 +1460,27 @@ Text {
 
 Text {
   ID = "SKILL1";
-  Text = "I'm too young to die.";
+  Text = "Be gentle!";
 }
 
 Text {
   ID = "SKILL2";
-  Text = "Hey, not too rough.";
+  Text = "Bring it on!";
 }
 
 Text {
   ID = "SKILL3";
-  Text = "Hurt me plenty.";
+  Text = "I own Doom!";
 }
 
 Text {
   ID = "SKILL4";
-  Text = "Ultra-Violence.";
+  Text = "Watch me die!";
 }
 
 Text {
   ID = "SKILL5";
-  Text = "Nightmare!";
-}
-
-Text {
- ID = "JUMPWON";
- Text = "JUMP AWAY YOU CHEATER";
+  Text = "Hell fears me!";
 }
 
 Text {
