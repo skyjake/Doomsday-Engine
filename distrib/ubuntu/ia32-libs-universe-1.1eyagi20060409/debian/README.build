@@ -1,0 +1,6 @@
+To build a new version of this package, first edit
+sources.list.txt to point to your local mirror.
+then run ./fetch-and-build.
+
+Any new debs to be packaged, need to be added to the
+fetch-and-build script.

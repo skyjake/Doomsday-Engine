@@ -1,0 +1,9 @@
+deb http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu edgy main restricted universe multiverse
+deb-src http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu edgy main restricted universe multiverse
+
+#deb http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu edgy-updates main restricted universe multiverse
+#deb-src http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu edgy-updates main restricted universe multiverse
+
+#deb http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu edgy-security main restricted universe multiverse
+#deb-src http://10.0.0.5:3142/au.archive.ubuntu.com/ubuntu edgy-security main restricted universe multiverse
+
