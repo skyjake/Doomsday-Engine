@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -1189,16 +1189,7 @@ void WI_loadData(void)
     int     i;
     char    name[9];
 
-    if(gamemode == commercial)
-        strcpy(name, "INTERPIC");
-    else
-        sprintf(name, "WIMAP%d", wbs->epsd);
-
-    if(gamemode == retail)
-    {
-        if(wbs->epsd == 3)
-            strcpy(name, "INTERPIC");
-    }
+    strcpy(name, "INTERPIC");
 
     if(!Get(DD_NOVIDEO))
     {
@@ -1264,10 +1255,10 @@ void WI_loadData(void)
     R_CachePatch(&total, "WIMSTT");
 
     // your face
-    R_CachePatch(&star, "STFST01");
+    //R_CachePatch(&star, "STFST01");
 
     // dead face
-    R_CachePatch(&bstar, "STFDEAD0");
+    //R_CachePatch(&bstar, "STFDEAD0");
 
     for(i = 0; i < MAXPLAYERS; i++)
     {
