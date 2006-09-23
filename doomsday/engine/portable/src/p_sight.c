@@ -23,7 +23,7 @@
  */
 
 /*
- * de_play.c: Line of Sight Testing
+ * p_sight.c: Line of Sight Testing
  *
  * This uses specialized forms of the maputils routines for optimized
  * performance.
