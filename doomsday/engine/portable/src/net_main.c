@@ -99,7 +99,7 @@ byte    net_dev = false;
 byte    net_dontsleep = false;
 byte    net_ticsync = true;
 float   net_connecttime;
-int     net_coordtime = 10;
+int     net_coordtime = 17;
 float   net_connecttimeout = 10;
 
 // Local packets are stored into this buffer.
