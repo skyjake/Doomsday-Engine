@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -569,14 +569,14 @@ void R_UpdateTextures(void)
 
 int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
 {
-    if(!picid)
+    if(picid < 0)
         return 0;
 
     switch(rclass)
     {
     case RC_TEXTURE:  // picid is a texture id
         picid = texturetranslation[picid].current;
-        if(!picid)
+        if(picid < 0)
             return 0;
 
         return textures[picid]->flags;
