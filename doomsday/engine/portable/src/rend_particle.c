@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -347,7 +347,7 @@ int PG_ListVisibleParticles(void)
             if(order[m].distance < mindist)
                 continue;       // Too near.
 
-            stagetype = gen->stages[(int)pt->stage].type;
+            stagetype = gen->stages[pt->stage].type;
             if(stagetype == PTC_POINT)
             {
                 hasPoints[0] = true;
@@ -457,8 +457,8 @@ void PG_RenderParticles(int rtype, boolean with_blend)
     {
         gen = active_ptcgens[order[i].gen];
         pt = gen->ptcs + order[i].index;
-        st = &gen->stages[(int)pt->stage];
-        dst = &gen->def->stages[(int)pt->stage];
+        st = &gen->stages[pt->stage];
+        dst = &gen->def->stages[pt->stage];
 
         // Only render one type of particles.
         if((rtype == PTC_MODEL && dst->model < 0) ||
@@ -513,7 +513,8 @@ void PG_RenderParticles(int rtype, boolean with_blend)
             {
                 // This is a simplified version of sectorlight (no distance
                 // attenuation or range compression).
-                color[c] *= pt->sector->lightlevel / 255.0f;
+                if(pt->sector)
+                    color[c] *= pt->sector->lightlevel / 255.0f;
             }
         }
 

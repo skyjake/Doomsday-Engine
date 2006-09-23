@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -1094,7 +1094,7 @@ void P_PtcGenThinker(ptcgen_t * gen)
                 continue;
             }
             pt->tics =
-                def->stages[pt->stage].tics * (1 - def->stages[(int)pt->stage].
+                def->stages[pt->stage].tics * (1 - def->stages[pt->stage].
                                                variance * M_FRandom());
 
             // Change in particle angles?

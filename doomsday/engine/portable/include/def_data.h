@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -46,7 +46,6 @@ extern          "C" {
 #define DED_PATH_LEN        128
 #define DED_FUNC_LEN        255
 
-//#define DED_PTC_STAGES      32
 #define DED_MAX_SUB_MODELS  8
 
     typedef char    ded_stringid_t[DED_STRINGID_LEN + 1];
