@@ -1,3 +1,9 @@
+deng (1.8.9+1.9.0beta4-1ubuntu3) edgy; urgency=low
+
+  * Rebuild for edgy.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 24 Sep 2006 00:00:16 +1000
+
 deng (1.8.9+1.9.0beta4-1ubuntu2) dapper; urgency=low
 
   * Build scripts update.

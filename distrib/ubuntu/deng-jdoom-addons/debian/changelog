@@ -1,3 +1,9 @@
+deng-jdoom-addons (20051128-ubuntu3) edgy; urgency=low
+
+  * Rebuild for edgy.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 24 Sep 2006 00:02:09 +1000
+
 deng-jdoom-addons (20051128-ubuntu2) dapper; urgency=low
 
   * Rebuild for dapper. No updates as yet. Will need to update on beta5 release

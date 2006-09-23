@@ -1,3 +1,9 @@
+deng-jhexen-addons (20051128-ubuntu3) edgy; urgency=low
+
+  * Rebuild for edgy
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 24 Sep 2006 00:03:08 +1000
+
 deng-jhexen-addons (20051128-ubuntu2) dapper; urgency=low
 
   * Rebuild for dapper. No content changes.

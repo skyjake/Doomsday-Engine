@@ -1,3 +1,9 @@
+deng-jheretic-addons (20051129-ubuntu3) edgy; urgency=low
+
+  * Rebuild for edgy.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 24 Sep 2006 00:02:43 +1000
+
 deng-jheretic-addons (20051129-ubuntu2) dapper; urgency=low
 
   * Rebuild for Dapper.
