@@ -43,6 +43,11 @@
 // unlimited with this score.
 #define MAX_BANDWIDTH_RATING    100
 
+// When the difference between clientside and serverside positions is this
+// much, server will update its position to match the clientside position,
+// which is assumed to be correct.
+#define WARP_LIMIT              300
+
 // Maximum length of a token in the textual representation of
 // serverinfo.
 #define TOKEN_LEN 128
@@ -1118,7 +1123,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 void Sv_PlaceThing(mobj_t* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor)
 {
     P_CheckPosXYZ(mo, x, y, z);
-
+    
     P_UnlinkThing(mo);
     mo->pos[VX] = x;
     mo->pos[VY] = y;
@@ -1144,12 +1149,19 @@ void Sv_ClientCoords(int playerNum)
     mobj_t *mo = players[playerNum].mo;
     int     clx, cly, clz;
     boolean onFloor = false;
-
+#ifdef _DEBUG        
+    fixed_t oldz;
+#endif
+    
     // If mobj or player is invalid, the message is discarded.
     if(!mo || !players[playerNum].ingame ||
        players[playerNum].flags & DDPF_DEAD)
         return;
 
+#ifdef _DEBUG        
+    oldz = mo->pos[VZ];
+#endif
+    
     clx = Msg_ReadShort() << 16;
     cly = Msg_ReadShort() << 16;
     clz = Msg_ReadShort() << 16;
@@ -1165,7 +1177,18 @@ void Sv_ClientCoords(int playerNum)
     if(players[playerNum].fixcounter.pos == players[playerNum].fixacked.pos &&
        P_CheckPosXYZ(mo, clx, cly, clz))   // But it must be a valid pos.
     {
-        Sv_PlaceThing(mo, clx, cly, clz, onFloor);
+        // Large differences in the coordinates suggest that player position
+        // has been misestimated on serverside.
+       
+        // Prevent illegal stepups.
+        if(tmpFloorZ - mo->pos[VZ] <= 24*FRACUNIT || 
+           // But also allow warping the position.
+           (abs(clx - mo->pos[VX]) > WARP_LIMIT * FRACUNIT ||
+            abs(cly - mo->pos[VY]) > WARP_LIMIT * FRACUNIT || 
+            abs(clz - mo->pos[VZ]) > WARP_LIMIT * FRACUNIT))
+        {
+            Sv_PlaceThing(mo, clx, cly, clz, onFloor);
+        }
     }
 }
 

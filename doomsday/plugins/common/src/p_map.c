@@ -2327,12 +2327,44 @@ void P_SlideMove(mobj_t *mo)
         // killough $dropoff_fix
 #if __JHEXEN__
         if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY] + mo->momy))
-            P_TryMove(mo, mo->pos[VX] + mo->momx, mo->pos[VY]);
+        {
+            if(P_TryMove(mo, mo->pos[VX] + mo->momx, mo->pos[VY]))
+            {
+                // If not set to zero, the mobj will appear stuttering against
+                // the blocking surface/thing.
+                mo->momy = 0;
+            }
+            else
+            {
+                // If not set to zero, the mobj will appear stuttering against
+                // the blocking surface/thing.
+                mo->momx = mo->momy = 0;
+            }
+        }
 #else
         if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY] + mo->momy, true, true))
-            P_TryMove(mo, mo->pos[VX] + mo->momx, mo->pos[VY], true, true);
+        {
+            if(P_TryMove(mo, mo->pos[VX] + mo->momx, mo->pos[VY], true, true))
+            {
+                // If not set to zero, the mobj will appear stuttering against
+                // the blocking surface/thing.
+                mo->momy = 0;
+            }
+            else
+            {
+                // If not set to zero, the mobj will appear stuttering against
+                // the blocking surface/thing.
+                mo->momx = mo->momy = 0;
+            }
+        }
 #endif
-            return;
+        else
+        {
+            // If not set to zero, the mobj will appear stuttering against
+            // the blocking surface/thing.
+            mo->momx = 0;
+        }
+        return;
     }
 
     // fudge a bit to make sure it doesn't hit
@@ -2346,10 +2378,12 @@ void P_SlideMove(mobj_t *mo)
         // killough $dropoff_fix
 #if __JHEXEN__
         if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY]))
-#else
-        if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY], true, true))
-#endif
             goto stairstep;
+#else
+        if(!P_TryMove(mo, mo->pos[VX] + newPos[VX], mo->pos[VY] + newPos[VY], 
+                      true, true))
+            goto stairstep;
+#endif
     }
 
     // Now continue along the wall.

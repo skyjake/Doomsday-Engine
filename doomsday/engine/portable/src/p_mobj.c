@@ -216,6 +216,13 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
         overlap = true;
     }
 
+    if(abs(thing->pos[VX] - tm->x) >= blockdist ||
+       abs(thing->pos[VY] - tm->y) >= blockdist)
+    {
+        // Didn't hit it.
+        return true;
+    }
+
     if(overlap)
     {
         // How are we positioned?
@@ -245,24 +252,8 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
             return true;
         }*/
 
-        if(abs(thing->pos[VX] - tm->x) >= blockdist ||
-           abs(thing->pos[VY] - tm->y) >= blockdist)
-        {
-            // Didn't hit it.
-            return true;
-        }
-
         // We're hitting this mobj.
         blockingMobj = thing;
-    }
-    else
-    {
-        if(abs(thing->pos[VX] - tm->x) >= blockdist ||
-           abs(thing->pos[VY] - tm->y) >= blockdist)
-        {
-            // Didn't hit it.
-            return true;
-        }
     }
 
     return false;
@@ -911,7 +902,7 @@ void P_ThingZMovement(mobj_t *mo)
 
     // Adjust height.
     mo->pos[VZ] += mo->momz;
-
+    
     // Clip movement. Another thing?
     if(mo->onmobj && mo->pos[VZ] <= mo->onmobj->pos[VZ] + mo->onmobj->height)
     {
