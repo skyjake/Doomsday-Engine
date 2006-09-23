@@ -1620,7 +1620,11 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
                 }
 
                 if(!linetarget)
+                {
                     an = source->angle;
+                    slope =
+                        FRACUNIT * (tan(LOOKDIR2RAD(source->dplayer->lookdir)) / 1.2);
+                }
             }
 
         if(!(source->player->plr->flags & DDPF_CAMERA))

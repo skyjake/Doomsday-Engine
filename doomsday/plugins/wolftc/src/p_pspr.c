@@ -521,10 +521,18 @@ void P_BulletSlope(mobj_t *mo)
         {
             an += 1 << 26;
             bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
+
             if(!linetarget)
             {
                 an -= 2 << 26;
                 bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
+            }
+
+            if(!linetarget)
+            {
+                an += 2 << 26;
+                bulletslope =
+                    FRACUNIT * (tan(LOOKDIR2RAD(mo->dplayer->lookdir)) / 1.2);
             }
         }
 }

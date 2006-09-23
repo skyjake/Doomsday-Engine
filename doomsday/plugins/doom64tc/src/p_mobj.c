@@ -1581,7 +1581,8 @@ void P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type)
             if(!linetarget)
             {
                 an = source->angle;
-                //if(!INCOMPAT_OK) slope = 0;
+                slope =
+                    FRACUNIT * (tan(LOOKDIR2RAD(source->dplayer->lookdir)) / 1.2);
             }
         }
 
