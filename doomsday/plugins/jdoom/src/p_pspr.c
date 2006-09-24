@@ -36,6 +36,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "jdoom.h"
 
 #include "d_net.h"
