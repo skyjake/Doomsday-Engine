@@ -532,6 +532,187 @@ static void R_InitSkyFix(void)
     }
 }
 
+static boolean doSkyFix(sector_t *front, sector_t *back, int pln)
+{
+    int         f, b;
+    int         height;
+    boolean     adjusted = false;
+    int        *fix;
+    sector_t   *adjustSec;
+
+    // Both the front and back surfaces must be sky on this plane.
+    if(!R_IsSkySurface(&front->planes[pln]->surface) ||
+       !R_IsSkySurface(&back->planes[pln]->surface))
+        return false;
+
+    f = (front->planes[pln]->height >> FRACBITS) +
+        front->skyfix[pln].offset;
+    b = (back->planes[pln]->height >> FRACBITS) +
+        back->skyfix[pln].offset;
+
+    if(f == b)
+        return false;
+
+    if(pln == PLN_CEILING)
+    {
+        if(f < b)
+        {
+            height = b - (front->planes[pln]->height >> FRACBITS);
+            fix = &front->skyfix[pln].offset;
+            adjustSec = front;
+        }
+        else if(f > b)
+        {
+            height = f - (back->planes[pln]->height >> FRACBITS);
+            fix = &back->skyfix[pln].offset;
+            adjustSec = back;
+        }
+
+        if(height > *fix)
+        {   // Must increase skyfix.
+           *fix = height;
+            adjusted = true;
+        }
+    }
+    else // its the floor.
+    {
+        if(f > b)
+        {
+            height = b - (front->planes[pln]->height >> FRACBITS);
+            fix = &front->skyfix[pln].offset;
+            adjustSec = front;
+        }
+        else if(f < b)
+        {
+            height = f - (back->planes[pln]->height >> FRACBITS);
+            fix = &back->skyfix[pln].offset;
+            adjustSec = back;
+        }
+
+        if(height < *fix)
+        {   // Must increase skyfix.
+           *fix = height;
+            adjusted = true;
+        }
+    }
+
+    if(verbose && adjusted)
+    {
+        Con_Printf("S%i: skyfix to %i (%s=%i)\n",
+                   GET_SECTOR_IDX(adjustSec), *fix,
+                   (pln == PLN_CEILING? "ceil" : "floor"),
+                   (adjustSec->planes[pln]->height >> FRACBITS) + *fix);
+    }
+
+    return adjusted;
+}
+
+static void spreadSkyFixForNeighbors(vertexinfo_t *owner, line_t *refLine,
+                                     boolean fixFloors, boolean fixCeilings,
+                                     boolean *adjustedFloor, boolean *adjustedCeil)
+{
+    int         j, k, n, pln;
+    line_t     *rLine, *lLine;
+    boolean     doFix[2];
+    boolean    *adjusted[2];
+
+    doFix[PLN_FLOOR]   = fixFloors;
+    doFix[PLN_CEILING] = fixCeilings;
+    adjusted[PLN_FLOOR] = adjustedFloor;
+    adjusted[PLN_CEILING] = adjustedCeil;
+
+    // Find the reference line in the owner list.
+    for(j = 0; j < owner->numlines; ++j)
+        if(LINE_PTR(owner->linelist[j]) == refLine)
+            break;
+
+    // Spread will begin from the next line anti-clockwise.
+    if(j - 1 < 0)
+        lLine = LINE_PTR(owner->linelist[owner->numlines-1]);
+    else
+        lLine = LINE_PTR(owner->linelist[j-1]);
+
+    // Spread clockwise around this vertex from the reference plus one
+    // until we reach the reference again OR a single sided line.
+    n = j + 1;
+    for(k = 0; k < owner->numlines; ++k, ++n)
+    {
+        if(n >= owner->numlines)
+            n = 0;
+
+        rLine = LINE_PTR(owner->linelist[n]);
+        if(rLine != lLine)
+        {
+            for(pln = 0; pln < 2; ++pln)
+            {
+                if(!doFix[pln])
+                    continue;
+
+                if(doSkyFix(rLine->frontsector, lLine->frontsector, pln))
+                    *adjusted[pln] = true;
+
+                if(lLine->backsector)
+                if(doSkyFix(rLine->frontsector, lLine->backsector, pln))
+                    *adjusted[pln] = true;
+
+                if(rLine->backsector)
+                if(doSkyFix(rLine->backsector, lLine->frontsector, pln))
+                    *adjusted[pln] = true;
+
+                if(rLine->backsector && lLine->backsector)
+                if(doSkyFix(rLine->backsector, lLine->frontsector, pln))
+                    *adjusted[pln] = true;
+            }
+        }
+
+        if(rLine == lLine || !rLine->backsector)
+            break;
+    }
+
+    // Spread will begin from the next line clockwise.
+    if(j + 1 >= owner->numlines)
+        rLine = LINE_PTR(owner->linelist[0]);
+    else
+        rLine = LINE_PTR(owner->linelist[j+1]);
+
+    // Spread anti-clockwise around this vertex from the reference minus one
+    // until we reach the reference again OR a single sided line.
+    n = j - 1;
+    for(k = 0; k < owner->numlines; ++k, --n)
+    {
+        if(n < 0)
+            n = owner->numlines - 1;
+
+        lLine = LINE_PTR(owner->linelist[n]);
+        if(rLine != lLine)
+        {
+            for(pln = 0; pln < 2; ++pln)
+            {
+                if(!doFix[pln])
+                    continue;
+
+                if(doSkyFix(rLine->frontsector, lLine->frontsector, pln))
+                    *adjusted[pln] = true;
+
+                if(lLine->backsector)
+                if(doSkyFix(rLine->frontsector, lLine->backsector, pln))
+                    *adjusted[pln] = true;
+
+                if(rLine->backsector)
+                if(doSkyFix(rLine->backsector, lLine->frontsector, pln))
+                    *adjusted[pln] = true;
+
+                if(rLine->backsector && lLine->backsector)
+                if(doSkyFix(rLine->backsector, lLine->frontsector, pln))
+                    *adjusted[pln] = true;
+            }
+        }
+
+        if(rLine == lLine || !lLine->backsector)
+            break;
+    }
+}
+
 /**
  * Fixing the sky means that for adjacent sky sectors the lower sky
  * ceiling is lifted to match the upper sky. The raising only affects
@@ -539,8 +720,7 @@ static void R_InitSkyFix(void)
  */
 void R_SkyFix(boolean fixFloors, boolean fixCeilings)
 {
-    int        *fix;
-    int         i, f, b, pln;
+    int         i, pln;
     boolean     adjusted[2], doFix[2];
 
     if(!fixFloors && !fixCeilings)
@@ -558,82 +738,50 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
         // We need to check all the linedefs.
         for(i = 0; i < numlines; ++i)
         {
-            int         height;
             line_t     *line = LINE_PTR(i);
-            sector_t   *front = line->frontsector, *back = line->backsector;
-            sector_t   *adjustSec;
+            sector_t   *front = line->frontsector;
+            sector_t   *back = line->backsector;
 
             // The conditions: must have two sides.
             if(!front || !back)
                 continue;
 
-            for(pln = 0; pln < 2; ++pln)
+            if(front != back) // its a normal two sided line
             {
-                if(!doFix[pln])
-                    continue;
-
-                // Both the front and back surfaces must be sky on this plane.
-                if(!R_IsSkySurface(&front->planes[pln]->surface) ||
-                   !R_IsSkySurface(&back->planes[pln]->surface))
-                    continue;
-
-                f = (front->planes[pln]->height >> FRACBITS) +
-                    front->skyfix[pln].offset;
-                b = (back->planes[pln]->height >> FRACBITS) +
-                    back->skyfix[pln].offset;
-
-                if(f == b)
-                    continue;
-
-                if(pln == PLN_CEILING)
+                // Perform the skyfix as usual using the front and back sectors
+                // of THIS line for comparing.
+                for(pln = 0; pln < 2; ++pln)
                 {
-                    if(f < b)
-                    {
-                        height = b - (front->planes[pln]->height >> FRACBITS);
-                        fix = &front->skyfix[pln].offset;
-                        adjustSec = front;
-                    }
-                    else if(f > b)
-                    {
-                        height = f - (back->planes[pln]->height >> FRACBITS);
-                        fix = &back->skyfix[pln].offset;
-                        adjustSec = back;
-                    }
+                    if(!doFix[pln])
+                        continue;
 
-                    if(height > *fix)
-                    {   // Must increase skyfix.
-                       *fix = height;
+                    if(doSkyFix(front, back, pln))
                         adjusted[pln] = true;
-                    }
                 }
-                else // its the floor.
-                {
-                    if(f > b)
-                    {
-                        height = b - (front->planes[pln]->height >> FRACBITS);
-                        fix = &front->skyfix[pln].offset;
-                        adjustSec = front;
-                    }
-                    else if(f < b)
-                    {
-                        height = f - (back->planes[pln]->height >> FRACBITS);
-                        fix = &back->skyfix[pln].offset;
-                        adjustSec = back;
-                    }
+            }
+            else if(line->info->selfrefhackroot)
+            {
+                // Its a selfreferencing hack line. These will ALWAYS return
+                // the same height on the front and back so we need to find the
+                // neighbouring lines either side of this and compare the front
+                // and back sectors of those instead.
+                vertexinfo_t *ownerA, *ownerB;
 
-                    if(height < *fix)
-                    {   // Must increase skyfix.
-                       *fix = height;
-                        adjusted[pln] = true;
-                    }
-                }
+                // Walk around each vertex in each direction.
+                ownerA = line->v1->info;
+                ownerB = line->v2->info;
+                if(ownerA->numlines > 1)
+                    spreadSkyFixForNeighbors(ownerA, line,
+                                             doFix[PLN_FLOOR], doFix[PLN_CEILING],
+                                             &adjusted[PLN_FLOOR],
+                                             &adjusted[PLN_CEILING]);
 
-                if(verbose && adjusted[pln])
+                if(ownerB->numlines > 1)
                 {
-                    Con_Printf("S%i: skyfix to %i (%s=%i)\n",
-                               GET_SECTOR_IDX(adjustSec), *fix,
-                               (pln == PLN_CEILING? "ceil" : "floor"),
-                               (adjustSec->planes[pln]->height >> FRACBITS) + *fix);
+                    spreadSkyFixForNeighbors(ownerB, line,
+                                             doFix[PLN_FLOOR], doFix[PLN_CEILING],
+                                             &adjusted[PLN_FLOOR],
+                                             &adjusted[PLN_CEILING]);
                 }
             }
         }

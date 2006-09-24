@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -1066,7 +1066,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         bottomColorPtr = sLightColor;
 
     // Ceiling skyfix.
-    if(frontsec->skyfix[PLN_CEILING].offset)
+    if(frontsec->skyfix[PLN_CEILING].offset &&
+       !(frontsec->info->selfRefHack && backsec))
     {
         if(!backsec ||
            (backsec && backsec != seg->frontsector &&
@@ -1083,7 +1084,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         }
     }
     // Floor skyfix
-    if(frontsec->skyfix[PLN_FLOOR].offset < 0)
+    if(frontsec->skyfix[PLN_FLOOR].offset < 0 &&
+       !(frontsec->info->selfRefHack && backsec))
     {
         if(!backsec ||
            (backsec && backsec != seg->frontsector &&
@@ -1561,9 +1563,9 @@ void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector,
     planeinfo_t *pinfo = subsector->sector->planes[plane->type]->info;
 
     // Sky planes of self-referrencing hack sectors are never rendered.
-    if(checkSelfRef && sin->selfRefHack &&
-       R_IsSkySurface(&sector->planes[plane->type]->surface))
-        return;
+//    if(checkSelfRef && sin->selfRefHack &&
+//       R_IsSkySurface(&sector->planes[plane->type]->surface))
+//        return;
 
     // Determine the height of the plane.
     if(pinfo->linked)
