@@ -1261,15 +1261,14 @@ void R_SetupFog(void)
  */
 void R_RationalizeSectors(void)
 {
-    int     i, j, k, l, m;
-    int count;
-    int     numroots;
-    sector_t *sec;
-    line_t *lin;
-    line_t **collectedLines;
-    int      maxNumLines = 20; // Initial size of the "run" (line list).
+    int         i, j, k, l, m;
+    int         numroots;
+    sector_t   *sec;
+    line_t     *lin;
+    line_t    **collectedLines;
+    int         maxNumLines = 20; // Initial size of the "run" (line list).
     lineinfo_t *linfo;
-    boolean selfRefHack;
+    boolean     selfRefHack;
 
     // Allocate some memory for the line "run" (line list).
     collectedLines = M_Malloc(maxNumLines * sizeof(line_t*));
@@ -1311,48 +1310,80 @@ void R_RationalizeSectors(void)
                     // Test simple case - single line dividing a sector
                     if(!(ownerA->num == 1 && ownerB->num == 1))
                     {
-                        line_t *owner;
-                        boolean ok = true;
-                        boolean ok2 = true;
+                        line_t *lLine, *rLine;
+                        boolean ok = false;
+                        boolean ok2 = false;
 
-                        // Ok, need to check for neighbors.
-                        // Test all the line owners to see that they arn't
-                        // "real" twosided lines.
+                        // Ok, need to check the logical neighbors.
 
-                        // TODO: This approach is too simple. We should instead
-                        //       sort the vertexe's line owners based on angle
-                        //       after init.
-                        if(ownerA->num > 1)
+                        //Con_Message("Hack root candidate is %i\n", GET_LINE_IDX(lin));
+                        if(ownerA->numlines > 1)
                         {
-                            count = 0;
-                            for(j = 0; j < ownerA->numlines && ok; ++j)
+                            for(j = 0; j < ownerA->numlines; ++j)
                             {
-                                owner = LINE_PTR(ownerA->linelist[j]);
-                                if(owner != lin)
-                                if((owner->frontsector == sec ||
-                                    (owner->backsector && owner->backsector == sec)))
-                                {
-                                    ++count;
-                                    if(count > 1)
-                                        ok = false;
-                                }
+                                if(LINE_PTR(ownerA->linelist[j]) == lin)
+                                    break;
+                            }
+
+                            if(j + 1 >= ownerA->numlines)
+                                rLine = LINE_PTR(ownerA->linelist[0]);
+                            else
+                                rLine = LINE_PTR(ownerA->linelist[j+1]);
+                            //Con_Message(" next clockwise is %i\n", GET_LINE_IDX(rLine));
+
+                            if(j - 1 < 0)
+                                lLine = LINE_PTR(ownerA->linelist[ownerA->numlines-1]);
+                            else
+                                lLine = LINE_PTR(ownerA->linelist[j-1]);
+                            //Con_Message(" next anticlockwise is %i\n", GET_LINE_IDX(lLine));
+
+                            if(rLine == lLine)
+                                ok = true;
+                            else
+                            {
+                                if(rLine->frontsector != lLine->frontsector &&
+                                   ((!rLine->backsector || !lLine->backsector) ||
+                                    (rLine->backsector && lLine->backsector &&
+                                     rLine->backsector != lLine->backsector)) &&
+                                   (rLine->frontsector == sec || lLine->frontsector == sec ||
+                                    (rLine->backsector && rLine->backsector == sec) ||
+                                    (lLine->backsector && lLine->backsector == sec)))
+                                    ok = true;
                             }
                         }
 
-                        if(ok && ownerB->num > 1)
+                        if(ok && ownerB->numlines > 1)
                         {
-                            count = 0;
-                            for(j = 0; j < ownerB->numlines && ok2; ++j)
+                            for(j = 0; j < ownerB->numlines; ++j)
                             {
-                                owner = LINE_PTR(ownerB->linelist[j]);
-                                if(owner != lin)
-                                if((owner->frontsector == sec ||
-                                    (owner->backsector && owner->backsector == sec)))
-                                {
-                                    ++count;
-                                    if(count > 1)
-                                        ok2 = false;
-                                }
+                                if(LINE_PTR(ownerB->linelist[j]) == lin)
+                                    break;
+                            }
+
+                            if(j + 1 >= ownerB->numlines)
+                                rLine = LINE_PTR(ownerB->linelist[0]);
+                            else
+                                rLine = LINE_PTR(ownerB->linelist[j+1]);
+                            //Con_Message(" next clockwise is %i\n", GET_LINE_IDX(rLine));
+
+                            if(j - 1 < 0)
+                                lLine = LINE_PTR(ownerB->linelist[ownerB->numlines-1]);
+                            else
+                                lLine = LINE_PTR(ownerB->linelist[j-1]);
+                            //Con_Message(" next anticlockwise is %i\n", GET_LINE_IDX(lLine));
+
+                            if(rLine == lLine)
+                                ok2 = true;
+                            else
+                            {
+                                if(rLine->frontsector != lLine->frontsector &&
+                                   ((!rLine->backsector || !lLine->backsector) ||
+                                    (rLine->backsector && lLine->backsector &&
+                                     rLine->backsector != lLine->backsector)) &&
+                                   (rLine->frontsector == sec || lLine->frontsector == sec ||
+                                    (rLine->backsector && rLine->backsector == sec) ||
+                                    (lLine->backsector && lLine->backsector == sec)))
+                                    ok2 = true;
                             }
                         }
 
@@ -1371,11 +1402,12 @@ void R_RationalizeSectors(void)
 
         if(selfRefHack)
         {
+            int         count;
             vertexinfo_t *ownerA, *ownerB;
-            line_t *line;
-            line_t *next;
+            line_t     *line;
+            line_t     *next;
             vertexinfo_t *owner;
-            boolean scanOwners, addToCollection, found;
+            boolean     scanOwners, addToCollection, found;
 
             // Mark this sector as a self-referencing hack.
             sec->info->selfRefHack = true;
