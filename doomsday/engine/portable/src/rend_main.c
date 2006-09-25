@@ -1109,15 +1109,15 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
            R_IsSkySurface(&backsec->SP_floorsurface))
         {
-            if(frontsec->skyfix[PLN_FLOOR].offset < 0)
+            if(backsec->skyfix[PLN_FLOOR].offset < 0)
             {
                 quad.flags = RPF_SKY_MASK;
                 quad.tex.id = 0;
                 quad.lights = NULL;
                 quad.intertex.id = 0;
 
-                vTL[VZ] = vTR[VZ] = ffloor;
-                vBL[VZ] = vBR[VZ] = bfloor + frontsec->skyfix[PLN_FLOOR].offset;
+                vTL[VZ] = vTR[VZ] = bfloor;
+                vBL[VZ] = vBR[VZ] = bfloor + backsec->skyfix[PLN_FLOOR].offset;
 
                 RL_AddPoly(&quad);
             }
@@ -1129,14 +1129,14 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
            R_IsSkySurface(&backsec->SP_ceilsurface))
         {
-            if(frontsec->skyfix[PLN_CEILING].offset)
+            if(backsec->skyfix[PLN_CEILING].offset > 0)
             {
                 quad.flags = RPF_SKY_MASK;
                 quad.tex.id = 0;
                 quad.lights = NULL;
                 quad.intertex.id = 0;
 
-                vTL[VZ] = vTR[VZ] = fceil + frontsec->skyfix[PLN_CEILING].offset;
+                vTL[VZ] = vTR[VZ] = bceil + backsec->skyfix[PLN_CEILING].offset;
                 vBL[VZ] = vBR[VZ] = bceil;
 
                 RL_AddPoly(&quad);
@@ -1552,8 +1552,7 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
     }
 }
 
-void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector,
-                      sectorinfo_t *sin, boolean checkSelfRef)
+void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
 {
     rendpoly_t poly;
     sector_t *sector = subsector->sector, *link = NULL;
@@ -1562,19 +1561,15 @@ void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector,
     surface_t *surface;
     planeinfo_t *pinfo = subsector->sector->planes[plane->type]->info;
 
-    // Sky planes of self-referrencing hack sectors are never rendered.
-//    if(checkSelfRef && sin->selfRefHack &&
-//       R_IsSkySurface(&sector->planes[plane->type]->surface))
-//        return;
-
     // Determine the height of the plane.
     if(pinfo->linked)
     {
         poly.sector = link =
             R_GetLinkedSector(pinfo->linked, plane->type);
 
-        // This sector has an invisible plane.
         height = SECT_PLANE_HEIGHT(link, plane->type);
+        // Add the skyfix
+        height += link->skyfix[plane->type].offset;
 
         surface = &link->planes[plane->type]->surface;
     }
@@ -1590,7 +1585,7 @@ void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector,
 
     // We don't render planes for unclosed sectors when the polys would
     // be added to the skymask (a DOOM.EXE renderer hack).
-    if(sin->unclosed && R_IsSkySurface(surface))
+    if(sector->info->unclosed && R_IsSkySurface(surface))
         return;
 
     poly.flags = 0;
@@ -1631,17 +1626,15 @@ void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector,
 
 void Rend_RenderSubsector(int ssecidx)
 {
-    subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
-    int     i;
+    int         i;
     unsigned long j;
-    seg_t  *seg;
-    sector_t *sect = ssec->sector;
-    sectorinfo_t *sin = ssec->sector->info;
-    int     flags = 0;
-    float   sceil = SECT_CEIL(sect);
-    float  sfloor = SECT_FLOOR(sect);
-    lumobj_t *lumi;             // Lum Iterator, or 'snow' in Finnish. :-)
-    boolean checkSelfRef[2] = {false, false};
+    subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
+    seg_t      *seg;
+    sector_t   *sect = ssec->sector;
+    int         flags = 0;
+    float       sceil = SECT_CEIL(sect);
+    float       sfloor = SECT_FLOOR(sect);
+    lumobj_t   *lumi; // Lum Iterator, or 'snow' in Finnish. :-)
 
     if(sceil - sfloor <= 0 || ssec->numverts < 3)
     {
@@ -1661,7 +1654,7 @@ void Rend_RenderSubsector(int ssecidx)
     }
 
     // Mark the sector visible for this frame.
-    sin->flags |= SIF_VISIBLE;
+    sect->info->flags |= SIF_VISIBLE;
 
     // Retrieve the sector light color.
     sLightColor = R_GetSectorLightColor(sect);
@@ -1710,23 +1703,6 @@ void Rend_RenderSubsector(int ssecidx)
             continue;
 
         Rend_RenderWallSeg(seg, sect, flags);
-
-        // If this is a "root" of self-referencing hack sector
-        // we should check whether the planes SHOULD be rendered.
-        if(seg->linedef->info->selfrefhackroot)
-        {
-            // NOTE: we already KNOW its twosided.
-            // These checks are placed here instead of in the initial
-            // selfref hack test as the textures can change at any time,
-            // whilest the front/back sectors can't.
-            if(SIDE_PTR(seg->linedef->sidenum[0])->top.texture == 0 &&
-               SIDE_PTR(seg->linedef->sidenum[1])->top.texture == 0)
-                checkSelfRef[PLN_CEILING] = true;
-
-            if(SIDE_PTR(seg->linedef->sidenum[0])->bottom.texture == 0 &&
-               SIDE_PTR(seg->linedef->sidenum[1])->bottom.texture == 0)
-                checkSelfRef[PLN_FLOOR] = true;
-        }
     }
 
     // Is there a polyobj on board?
@@ -1738,9 +1714,7 @@ void Rend_RenderSubsector(int ssecidx)
 
     // Render all planes of this sector.
     for(i = 0; i < sect->planecount; ++i)
-    {
-        Rend_RenderPlane(ssec->info->planes[i], ssec, sin, (i < 2? checkSelfRef[i] : false));
-    }
+        Rend_RenderPlane(ssec->info->planes[i], ssec);
 }
 
 void Rend_RenderNode(uint bspnum)

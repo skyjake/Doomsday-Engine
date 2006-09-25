@@ -181,7 +181,8 @@ void R_SetSectorLinks(sector_t *sec)
             else
                 sid = backsid;
 
-            if(sid->bottom.texture || sid->middle.texture)
+            if((sid->bottom.texture && !(sid->bottom.flags & SUF_TEXFIX)) ||
+               (sid->middle.texture && !(sid->middle.flags & SUF_TEXFIX)))
                 hackfloor = false;
             else if(R_IsValidLink(sec, back, PLN_FLOOR))
                 floorlink_candidate = back;
@@ -195,7 +196,9 @@ void R_SetSectorLinks(sector_t *sec)
                 sid = frontsid;
             else
                 sid = backsid;
-            if(sid->top.texture || sid->middle.texture)
+
+            if((sid->top.texture && !(sid->top.flags & SUF_TEXFIX)) ||
+               (sid->middle.texture && !(sid->middle.flags & SUF_TEXFIX)))
                 hackceil = false;
             else if(R_IsValidLink(sec, back, PLN_CEILING))
                 ceillink_candidate = back;
