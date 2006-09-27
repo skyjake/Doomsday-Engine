@@ -1,3 +1,14 @@
+deng (1.8.9+1.9.0.beta4-2ubuntu0) edgy; urgency=low
+
+  * Update to SVN 4039
+  * New Cmake build system.
+  * Remove obsolete patches.
+  * Adjust build deps.
+  * Remove doomsday.sh
+  * Manpage is now in upstream.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Thu, 28 Sep 2006 02:05:47 +1000
+
 deng (1.8.9+1.9.0beta4-1ubuntu3) edgy; urgency=low
 
   * Rebuild for edgy.

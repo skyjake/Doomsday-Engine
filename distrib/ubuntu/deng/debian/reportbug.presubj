@@ -5,7 +5,7 @@
 
 Before filing bugs against deng please ensure that you have NOT started
 The Doomsday Engine after a crash/error as reportbug will try to copy
-the contents of $HOME/.deng/Doomsday.out to the bug report. This file is
+the contents of $HOME/.deng/doomsday.out to the bug report. This file is
 regenerated EVERY time you start The Doomsday Engine.
 
 The reportbug script will also copy the following information:
@@ -18,10 +18,10 @@ The reportbug script will also copy the following information:
     * uname -a
     * glxinfo
     * all your iwad details
-    * $HOME/.deng/Doomsday.out
-    * $HOME/.deng/jDoom.cfg (if it exists)
-    * $HOME/.deng/jHexen.cfg (if it exists)
-    * $HOME/.deng/jHeretic.cfg (if it exists)
+    * $HOME/.deng/doomsday.out
+    * $HOME/.deng/jdoom.cfg (if it exists)
+    * $HOME/.deng/jhexen.cfg (if it exists)
+    * $HOME/.deng/jheretic.cfg (if it exists)
 
           **************************************************
 	  * READ THE IMPORTANT INFORMATION ABOVE THIS LINE *
