@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -142,6 +142,39 @@ lumcontact_t **subContacts;
 int    *spreadBlocks;
 
 // CODE --------------------------------------------------------------------
+
+void DL_Register(void)
+{
+    // Cvars
+    C_VAR_INT2("rend-light-ambient", &r_ambient, 0, -255, 255,
+               Rend_CalcLightRangeModMatrix);
+
+    C_VAR_INT("rend-light", &useDynLights, 0, 0, 1);
+    C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 2);
+
+    C_VAR_FLOAT("rend-light-bright", &dlFactor, 0, 0, 1);
+    C_VAR_INT("rend-light-num", &maxDynLights, 0, 0, 8000);
+
+    C_VAR_FLOAT("rend-light-radius-scale", &dlRadFactor, 0, 0.1f, 10);
+    C_VAR_INT("rend-light-radius-max", &dlMaxRad, 0, 64, 512);
+    C_VAR_INT("rend-light-radius-min-bias", &dlMinRadForBias, 0, 128, 1024);
+    C_VAR_FLOAT("rend-light-wall-angle", &rend_light_wall_angle, CVF_NO_MAX,
+                0, 0);
+    C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
+    C_VAR_INT("rend-light-sky", &rendSkyLight, 0, 0, 1);
+
+    // Cvars (glowing surfaces)
+    C_VAR_INT("rend-glow", &r_texglow, 0, 0, 1);
+    C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
+    C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
+    C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
+    C_VAR_FLOAT("rend-glow-fog-bright", &glowFogBright, 0, 0, 1);
+
+    // Cmds
+    C_VAR_BYTE("rend-info-lums", &rendInfoLums, 0, 0, 1);
+
+    Rend_DecorRegister();
+}
 
 /**
  * Moves all used dynlight nodes to the list of unused nodes, so they

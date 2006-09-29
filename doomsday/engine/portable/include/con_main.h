@@ -73,6 +73,7 @@ void            Con_Drawer(void);
 void            Con_DrawRuler(int y, int lineHeight, float alpha);
 void            Con_Printf(const char *format, ...);
 void            Con_FPrintf(int flags, const char *format, ...);    // Flagged printf.
+int             Con_PrintFileName(const char *fn, enum filetype_e type, void *dir);
 void            Con_SetFont(ddfont_t *cfont);
 cbline_t       *Con_GetBufferLine(int num);
 int             Con_Execute(byte src, const char *command, int silent,

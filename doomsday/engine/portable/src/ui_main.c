@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -59,6 +59,8 @@ enum {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+D_CMD(UIColor);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -121,6 +123,18 @@ ui_color_t ui_colors[NUM_UI_COLORS] = {
 static boolean allowEscape; // Allow the user to exit a ui page using the escape key
 
 // CODE --------------------------------------------------------------------
+
+void UI_Register(void)
+{
+    // Cvars
+    C_VAR_INT("ui-cursor-width", &uiMouseWidth, CVF_NO_MAX, 1, 0);
+    C_VAR_INT("ui-cursor-height", &uiMouseHeight, CVF_NO_MAX, 1, 0);
+
+    // Ccmds
+    C_CMD("uicolor", UIColor);
+
+    CP_Register();
+}
 
 /*
  * Called when entering a ui page

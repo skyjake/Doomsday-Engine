@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 /*
@@ -28,11 +28,11 @@
 #ifndef __DOOMSDAY_BASEINPUT_H__
 #define __DOOMSDAY_BASEINPUT_H__
 
-#include "dd_share.h"			   // For event_t.
+#include "dd_share.h"              // For event_t.
 #include "con_decl.h"
 
 extern int      repWait1, repWait2;
-extern int      keyRepeatDelay1, keyRepeatDelay2;	// milliseconds
+extern int      keyRepeatDelay1, keyRepeatDelay2;   // milliseconds
 extern int      mouseFilter;
 extern int      mouseDisableX, mouseDisableY;
 extern int      mouseInverseY;
@@ -59,11 +59,8 @@ void            DD_ClearKeyRepeaters(void);
 byte            DD_ScanToKey(byte scan);
 byte            DD_KeyToScan(byte key);
 byte            DD_ModKey(byte key);
-int		DD_IsKeyDown(int code);
-int		DD_IsMouseBDown(int code);
-int		DD_IsJoyBDown(int code);
-
-D_CMD(KeyMap);
-D_CMD(DumpKeyMap);
+int     DD_IsKeyDown(int code);
+int     DD_IsMouseBDown(int code);
+int     DD_IsJoyBDown(int code);
 
 #endif

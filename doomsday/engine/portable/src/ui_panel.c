@@ -64,6 +64,8 @@ typedef struct cvarbutton_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(OpenPanel);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 void    CP_ClosePanel(ui_object_t *ob);
@@ -615,6 +617,16 @@ ui_object_t ob_panel[] =
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+void CP_Register(void)
+{
+    // Cvars
+    C_VAR_BYTE("ui-panel-help", &panel_show_help, 0, 0, 1);
+    C_VAR_BYTE("ui-panel-tips", &panel_show_tips, 0, 0, 1);
+
+    // Ccmds
+    C_CMD("panel", OpenPanel);
+}
 
 void CP_ClosePanel(ui_object_t *ob)
 {

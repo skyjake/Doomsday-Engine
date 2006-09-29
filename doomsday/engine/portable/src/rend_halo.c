@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -56,6 +56,24 @@ typedef struct flare_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(FlareConfig);
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern int devNoCulling;
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+int     haloMode = 5, haloBright = 35, haloSize = 50;
+int     haloRealistic = true;
+int     haloOccludeSpeed = 48;
+float   haloZMagDiv = 100, haloMinRadius = 20;
+float   haloDimStart = 10, haloDimEnd = 100;
+
+float   haloFadeMax = 0, haloFadeMin = 0, minHaloSize = 1;
+
 flare_t flares[NUM_FLARES] = {
 #if 0
     {0, 0.85f, .6f, -1 /*2 */ },    // Primary flare.
@@ -79,23 +97,6 @@ flare_t flares[NUM_FLARES] = {
    { .4f, 4 }
  */
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int devNoCulling;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-int     haloMode = 5, haloBright = 35, haloSize = 50;
-int     haloRealistic = true;
-int     haloOccludeSpeed = 48;
-float   haloZMagDiv = 100, haloMinRadius = 20;
-float   haloDimStart = 10, haloDimEnd = 100;
-
-float   haloFadeMax = 0, haloFadeMin = 0, minHaloSize = 1;
-
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -103,6 +104,14 @@ float   haloFadeMax = 0, haloFadeMin = 0, minHaloSize = 1;
 void H_Register(void)
 {
     cvar_t  cvars[] = {
+        {"rend-halo", 0, CVT_INT, &haloMode, 0, 5},
+        {"rend-halo-realistic", 0, CVT_INT, &haloRealistic, 0, 1},
+        {"rend-halo-bright", 0, CVT_INT, &haloBright, 0, 100},
+        {"rend-halo-occlusion", CVF_NO_MAX, CVT_INT, &haloOccludeSpeed, 0, 0},
+        {"rend-halo-size", 0, CVT_INT, &haloSize, 0, 100},
+        {"rend-halo-secondary-limit", CVF_NO_MAX, CVT_FLOAT, &minHaloSize, 0, 0},
+        {"rend-halo-fade-far", CVF_NO_MAX, CVT_FLOAT, &haloFadeMax, 0, 0},
+        {"rend-halo-fade-near", CVF_NO_MAX, CVT_FLOAT, &haloFadeMin, 0, 0},
         {"rend-halo-zmag-div", CVF_NO_MAX, CVT_FLOAT, &haloZMagDiv, 1, 1},
         {"rend-halo-radius-min", CVF_NO_MAX, CVT_FLOAT, &haloMinRadius, 0, 0},
         {"rend-halo-dim-near", CVF_NO_MAX, CVT_FLOAT, &haloDimStart, 0, 0},
@@ -110,6 +119,8 @@ void H_Register(void)
         {NULL}
     };
     Con_AddVariableList(cvars);
+
+    C_CMD("flareconfig", FlareConfig);
 }
 
 void H_SetupState(boolean dosetup)
@@ -132,12 +143,18 @@ void H_SetupState(boolean dosetup)
     }
 }
 
-/*
- * The caller must check that the sourcevis really has a ->light!
- * If 'primary' is true, we'll draw the primary halo, otherwise the
- * secondary ones (which won't be clipped or occluded by anything;
- * they're drawn after everything else, during a separate pass).
- * If 'primary' is false, the caller must setup the rendering state.
+/**
+ * The caller must check that <code>sourcevis</code> really has a ->light!
+ *
+ * @param sourcevis     The vissprite to receive the halo/flare(s).
+ * @param primary       If <code>true</code>, we'll draw the primary halo,
+ *                      otherwise the secondary ones (which won't be clipped
+ *                      or occluded by anything; they're drawn after
+ *                      everything else, during a separate pass).
+ *                      If <code>false</code>, the caller must setup the
+ *                      rendering state.
+ *
+ * @return              <code>true</code> if a halo was rendered.
  */
 boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
 {
@@ -418,7 +435,7 @@ boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
     return true;
 }
 
-/*
+/**
  * flareconfig list
  * flareconfig (num) pos/size/alpha/tex (val)
  */

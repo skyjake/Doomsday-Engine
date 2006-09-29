@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -29,31 +29,32 @@
 #define __DOOMSDAY_SKY_H__
 
 // Sky hemispheres.
-#define SKYHEMI_UPPER		0x1
-#define SKYHEMI_LOWER		0x2
-#define SKYHEMI_JUST_CAP	0x4	   // Just draw the top or bottom cap.
-#define SKYHEMI_FADEOUT_BG	0x8	   // Draw the fadeout bg when drawing the cap.
+#define SKYHEMI_UPPER       0x1
+#define SKYHEMI_LOWER       0x2
+#define SKYHEMI_JUST_CAP    0x4    // Just draw the top or bottom cap.
+#define SKYHEMI_FADEOUT_BG  0x8    // Draw the fadeout bg when drawing the cap.
 
 typedef struct {
-	float           rgb[3];		   // The RGB values.
-	short           set, use;	   // Is this set? Should be used?
-	float           limit;		   // .3 by default.
+    float           rgb[3];        // The RGB values.
+    short           set, use;      // Is this set? Should be used?
+    float           limit;         // .3 by default.
 } fadeout_t;
 
 // Sky layer flags.
-#define SLF_ENABLED		0x1		   // Layer enabled.
-#define SLF_MASKED		0x2		   // Mask the layer texture.
+#define SLF_ENABLED     0x1        // Layer enabled.
+#define SLF_MASKED      0x2        // Mask the layer texture.
 
 typedef struct {
-	int             flags;
-	int             texture;	   // Not the OpenGL texture.
-	float           offset;
-	fadeout_t       fadeout;
+    int             flags;
+    int             texture;       // Not the OpenGL texture.
+    float           offset;
+    fadeout_t       fadeout;
 } skylayer_t;
 
-extern int      skyDetail, skyRows, simpleSky;
-extern float    skyDist;
-extern int      r_fullsky;
+extern int      skyDetail;
+
+// Initialization
+void            Rend_SkyRegister(void);
 
 // Functions:
 void            Rend_InitSky();

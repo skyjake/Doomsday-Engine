@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -34,13 +34,14 @@
 // Music preference. If multiple resources are available, this setting
 // is used to determine which one to use (mus < ext < cd).
 enum {
-	MUSP_MUS,
-	MUSP_EXT,
-	MUSP_CD
+    MUSP_MUS,
+    MUSP_EXT,
+    MUSP_CD
 };
 
 extern int      mus_preference;
 
+void            Mus_Register(void);
 boolean         Mus_Init(void);
 void            Mus_Shutdown(void);
 void            Mus_SetVolume(float vol);
@@ -48,10 +49,5 @@ void            Mus_Pause(boolean do_pause);
 void            Mus_StartFrame(void);
 int             Mus_Start(ded_music_t * def, boolean looped);
 void            Mus_Stop(void);
-
-// Console commands.
-D_CMD(PlayMusic);
-D_CMD(PlayExt);
-D_CMD(StopMusic);
 
 #endif

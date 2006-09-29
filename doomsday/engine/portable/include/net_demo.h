@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -32,6 +33,8 @@
 
 extern int      playback;
 
+void            Demo_Register(void);
+
 void            Demo_Init(void);
 void            Demo_Ticker(timespan_t time);
 
@@ -41,17 +44,10 @@ void            Demo_PauseRecording(int playernum);
 void            Demo_ResumeRecording(int playernum);
 void            Demo_WritePacket(int playernum);
 void            Demo_BroadcastPacket(void);
-void            Demo_ReadLocalCamera(void);	// PKT_DEMOCAM
+void            Demo_ReadLocalCamera(void); // PKT_DEMOCAM
 
 boolean         Demo_BeginPlayback(char *filename);
 boolean         Demo_ReadPacket(void);
 void            Demo_StopPlayback(void);
-
-// Console commands.
-D_CMD(PlayDemo);
-D_CMD(RecordDemo);
-D_CMD(PauseDemo);
-D_CMD(StopDemo);
-D_CMD(DemoLump);
 
 #endif

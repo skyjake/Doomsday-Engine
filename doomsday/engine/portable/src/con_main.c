@@ -131,8 +131,7 @@ typedef struct knownword_S {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void registerCommands(void);
-static void registerVariables(void);
+static void Con_Register(void);
 static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd);
 static void Con_SplitIntoSubCommands(const char *command,
                                      timespan_t markerOffset, byte src,
@@ -141,7 +140,6 @@ calias_t *Con_GetAlias(const char *name);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern byte paletted;    // Use GL_EXT_paletted_texture
 extern int freezeRLs;
 
 extern bindclass_t *bindClasses;
@@ -317,7 +315,7 @@ void PrepareCmdArgs(cmdargs_t * cargs, const char *lpCmdLine)
     }
 }
 
-char   *TrimmedFloat(float val)
+char *TrimmedFloat(float val)
 {
     char   *ptr = trimmedFloatBuffer;
 
@@ -578,18 +576,21 @@ void Con_Init()
     exBuffSize = 0;
 
     // Register the engine commands and variables.
-    registerCommands();
-    registerVariables();
-
     DD_RegisterLoop();
     DD_RegisterInput();
+    DD_RegisterVFS();
+    Con_Register();
     R_Register();
+    S_Register();
     SBE_Register(); // for bias editor
     Rend_Register();
     GL_Register();
     Net_Register();
     I_Register();
     H_Register();
+    DAM_Register();
+    UI_Register();
+    Demo_Register();
 }
 
 void Con_MaxLineLength(void)
@@ -2498,6 +2499,19 @@ void Con_FPrintf(int flags, const char *format, ...)    // Flagged printf
 }
 
 /*
+ * Prints a file name to the console.
+ * This is a f_forall_func_t.
+ */
+int Con_PrintFileName(const char *fn, filetype_t type, void *dir)
+{
+    // Exclude the path.
+    Con_Printf("  %s\n", fn + strlen(dir));
+
+    // Continue the listing.
+    return true;
+}
+
+/*
  * As you can see, several commands can be handled inside one command function.
  */
 D_CMD(Console)
@@ -2672,117 +2686,6 @@ void Con_Open(int yes)
     }
 }
 
-/*
- * What is this kind of a routine doing in Console.c?
- */
-void UpdateEngineState()
-{
-    // Update refresh.
-    Con_Message("Updating state...\n");
-
-    // Update the dir/WAD translations.
-    F_InitDirec();
-
-    gx.UpdateState(DD_PRE);
-    R_Update();
-
-    // Reset the anim groups (if in-game)
-    R_ResetAnimGroups();
-
-    //DJS - Why do we need to recheck sidedef textures at this time?
-    //P_ValidateLevel();
-
-    gx.UpdateState(DD_POST);
-}
-
-D_CMD(LoadFile)
-{
-    //extern int RegisteredSong;
-    int     i, succeeded = false;
-
-    if(argc == 1)
-    {
-        Con_Printf("Usage: load (file) ...\n");
-        return true;
-    }
-    for(i = 1; i < argc; i++)
-    {
-        Con_Message("Loading %s...\n", argv[i]);
-        if(W_AddFile(argv[i], true))
-        {
-            Con_Message("OK\n");
-            succeeded = true;   // At least one has been loaded.
-        }
-        else
-            Con_Message("Failed!\n");
-    }
-    // We only need to update if something was actually loaded.
-    if(succeeded)
-    {
-        // Update the lumpcache.
-        //W_UpdateCache();
-        // The new wad may contain lumps that alter the current ones
-        // in use.
-        UpdateEngineState();
-    }
-    return true;
-}
-
-D_CMD(UnloadFile)
-{
-    //extern int RegisteredSong;
-    int     i, succeeded = false;
-
-    if(argc == 1)
-    {
-        Con_Printf("Usage: unload (file) ...\n");
-        return true;
-    }
-    for(i = 1; i < argc; i++)
-    {
-        Con_Message("Unloading %s...\n", argv[i]);
-        if(W_RemoveFile(argv[i]))
-        {
-            Con_Message("OK\n");
-            succeeded = true;
-        }
-        else
-            Con_Message("Failed!\n");
-    }
-    if(succeeded)
-        UpdateEngineState();
-    return true;
-}
-
-D_CMD(ListFiles)
-{
-    extern int numrecords;
-    extern filerecord_t *records;
-    int     i;
-
-    for(i = 0; i < numrecords; i++)
-    {
-        Con_Printf("%s (%d lump%s%s)", records[i].filename,
-                   records[i].numlumps, records[i].numlumps != 1 ? "s" : "",
-                   !(records[i].flags & FRF_RUNTIME) ? ", startup" : "");
-        if(records[i].iwad)
-            Con_Printf(" [%08x]", W_CRCNumberForRecord(i));
-        Con_Printf("\n");
-    }
-
-    Con_Printf("Total: %d lumps in %d files.\n", numlumps, numrecords);
-    return true;
-}
-
-D_CMD(ResetLumps)
-{
-    GL_SetFilter(0);
-    W_Reset();
-    Con_Message("Only startup files remain.\n");
-    UpdateEngineState();
-    return true;
-}
-
 D_CMD(BackgroundTurn)
 {
     if(argc != 2)
@@ -2795,44 +2698,6 @@ D_CMD(BackgroundTurn)
     consoleTurn = atoi(argv[1]);
     if(!consoleTurn)
         funnyAng = 0;
-    return true;
-}
-
-D_CMD(Dump)
-{
-    char    fname[100];
-    FILE   *file;
-    int     lump;
-    byte   *lumpPtr;
-
-    if(argc != 2)
-    {
-        Con_Printf("Usage: dump (name)\n");
-        Con_Printf("Writes out the specified lump to (name).dum.\n");
-        return true;
-    }
-    if(W_CheckNumForName(argv[1]) == -1)
-    {
-        Con_Printf("No such lump.\n");
-        return false;
-    }
-    lump = W_GetNumForName(argv[1]);
-    lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
-
-    sprintf(fname, "%s.dum", argv[1]);
-    file = fopen(fname, "wb");
-    if(!file)
-    {
-        Con_Printf("Couldn't open %s for writing. %s\n", fname,
-                   strerror(errno));
-        Z_ChangeTag(lumpPtr, PU_CACHE);
-        return false;
-    }
-    fwrite(lumpPtr, 1, lumpinfo[lump].size, file);
-    fclose(file);
-    Z_ChangeTag(lumpPtr, PU_CACHE);
-
-    Con_Printf("%s dumped to %s.\n", argv[1], fname);
     return true;
 }
 
@@ -2901,33 +2766,6 @@ D_CMD(Alias)
     Con_Alias(argv[1], argc == 3 ? argv[2] : NULL);
     if(argc != 3)
         Con_Printf("Alias '%s' deleted.\n", argv[1]);
-    return true;
-}
-
-D_CMD(SetGamma)
-{
-    int     newlevel;
-
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (0-4)\n", argv[0]);
-        return true;
-    }
-    newlevel = strtol(argv[1], NULL, 0);
-    // Clamp it to the min and max.
-    if(newlevel < 0)
-        newlevel = 0;
-    if(newlevel > 4)
-        newlevel = 4;
-    // Only reload textures if it's necessary.
-    if(newlevel != usegamma)
-    {
-        usegamma = newlevel;
-        GL_UpdateGamma();
-        Con_Printf("Gamma correction set to level %d.\n", usegamma);
-    }
-    else
-        Con_Printf("Gamma correction already set to %d.\n", usegamma);
     return true;
 }
 
@@ -3164,52 +3002,6 @@ D_CMD(If)
 }
 
 /*
- * Prints a file name to the console.
- * This is a f_forall_func_t.
- */
-int Con_PrintFileName(const char *fn, filetype_t type, void *dir)
-{
-    // Exclude the path.
-    Con_Printf("  %s\n", fn + strlen(dir));
-
-    // Continue the listing.
-    return true;
-}
-
-/*
- * Print contents of directories as Doomsday sees them.
- */
-D_CMD(Dir)
-{
-    char    dir[256], pattern[256];
-    int     i;
-
-    if(argc == 1)
-    {
-        Con_Printf("Usage: %s (dirs)\n", argv[0]);
-        Con_Printf("Prints the contents of one or more directories.\n");
-        Con_Printf("Virtual files are listed, too.\n");
-        Con_Printf("Paths are relative to the base path:\n");
-        Con_Printf("  %s\n", ddBasePath);
-        return true;
-    }
-
-    for(i = 1; i < argc; i++)
-    {
-        M_PrependBasePath(argv[i], dir);
-        Dir_ValidDir(dir);
-        Dir_MakeAbsolute(dir);
-        Con_Printf("Directory: %s\n", dir);
-
-        // Make the pattern.
-        sprintf(pattern, "%s*", dir);
-        F_ForAll(pattern, dir, Con_PrintFileName);
-    }
-
-    return true;
-}
-
-/*
  * Print a 'global' message (to stdout and the console).
  */
 void Con_Message(const char *message, ...)
@@ -3340,122 +3132,60 @@ D_CMD(OpenClose)
     return true;
 }
 
-D_CMD(SkyDetail);
-D_CMD(Fog);
 D_CMD(Bind);
 D_CMD(ListBindings);
 D_CMD(ListBindClasses);
 D_CMD(EnableBindClass);
-D_CMD(SetGamma);
-D_CMD(SetRes);
-D_CMD(Chat);
 D_CMD(DeleteBind);
-D_CMD(FlareConfig);
 D_CMD(ListActs);
 D_CMD(ClearBindings);
-D_CMD(Ping);
-D_CMD(Login);
-D_CMD(Logout);
 
 #ifdef _DEBUG
 D_CMD(TranslateFont);
 #endif
 
-// Register console commands.  The names should be in LOWER CASE.
-static void registerCommands(void)
+static void Con_Register(void)
 {
-    C_CMD("actions", ListActs);
     C_CMD("add", AddSub);
     C_CMD("after", Wait);
     C_CMD("alias", Alias);
     C_CMD("bgturn", BackgroundTurn);
     C_CMD("bind", Bind);
     C_CMD("bindr", Bind);
-    C_CMD("chat", Chat);
-    C_CMD("chatnum", Chat);
-    C_CMD("chatto", Chat);
     C_CMD("clear", Console);
     C_CMD("clearbinds", ClearBindings);
     C_CMD("conclose", OpenClose);
-    C_CMD("conlocp", MakeCamera);
-    C_CMD("connect", Connect);
     C_CMD("conopen", OpenClose);
     C_CMD("contoggle", OpenClose);
     C_CMD("dec", AddSub);
     C_CMD("delbind", DeleteBind);
-    C_CMD("demolump", DemoLump);
-    C_CMD("dir", Dir);
-    C_CMD("dump", Dump);
-    C_CMD("dumpkeymap", DumpKeyMap);
     C_CMD("echo", Echo);
     C_CMD("enablebindclass", EnableBindClass);
     C_CMD("exec", Parse);
-    C_CMD("flareconfig", FlareConfig);
-    C_CMD("fog", Fog);
     C_CMD("font", Font);
     C_CMD("help", Console);
-    C_CMD("huffman", HuffmanStats);
     C_CMD("if", If);
     C_CMD("inc", AddSub);
-    C_CMD("keymap", KeyMap);
-    C_CMD("kick", Kick);
+    C_CMD("listactions", ListActs);
     C_CMD("listaliases", ListAliases);
     C_CMD("listbindings", ListBindings);
     C_CMD("listbindclasses", ListBindClasses);
     C_CMD("listcmds", ListCmds);
-    C_CMD("listfiles", ListFiles);
-    C_CMD("listmaps", ListMaps);
-    C_CMD("listmobjs", ListMobjs);
+    C_CMD("listmobjtypes", ListMobjs);
     C_CMD("listvars", ListVars);
-    C_CMD("load", LoadFile);
-    C_CMD("login", Login);
-    C_CMD("logout", Logout);
-    C_CMD("lowres", LowRes);
-    C_CMD("ls", Dir);
-    C_CMD("mipmap", MipMap);
-    C_CMD("net", Net);
-    C_CMD("panel", OpenPanel);
-    C_CMD("pausedemo", PauseDemo);
-    C_CMD("ping", Ping);
-    C_CMD("playdemo", PlayDemo);
-    C_CMD("playext", PlayExt);
-    C_CMD("playmusic", PlayMusic);
-    C_CMD("playsound", PlaySound);
     C_CMD("quit!", Quit);
-    C_CMD("recorddemo", RecordDemo);
     C_CMD("repeat", Repeat);
-    C_CMD("reset", ResetLumps);
     C_CMD("safebind", Bind);
     C_CMD("safebindr", Bind);
-    C_CMD("say", Chat);
-    C_CMD("saynum", Chat);
-    C_CMD("sayto", Chat);
-    C_CMD("setcon", SetConsole);
-    C_CMD("setgamma", SetGamma);
-    C_CMD("setname", SetName);
-    C_CMD("setres", SetRes);
-    C_CMD("settics", SetTicks);
-    C_CMD("setvidramp", UpdateGammaRamp);
-    C_CMD("skydetail", SkyDetail);
-    C_CMD("skyrows", SkyDetail);
-    C_CMD("smoothscr", SmoothRaw);
-    C_CMD("stopdemo", StopDemo);
-    C_CMD("stopmusic", StopMusic);
     C_CMD("sub", AddSub);
-    C_CMD("texreset", ResetTextures);
     C_CMD("toggle", Toggle);
-    C_CMD("uicolor", UIColor);
-    C_CMD("unload", UnloadFile);
     C_CMD("version", Version);
     C_CMD("write", WriteConsole);
 
 #ifdef _DEBUG
     C_CMD("translatefont", TranslateFont);
 #endif
-}
 
-static void registerVariables(void)
-{
     // Console
     C_VAR_INT("con-alpha", &consoleAlpha, 0, 0, 100);
     C_VAR_INT("con-light", &consoleLight, 0, 0, 100);
@@ -3469,150 +3199,6 @@ static void registerVariables(void)
     C_VAR_BYTE("con-text-shadow", &consoleShadowText, 0, 0, 1);
     C_VAR_FLOAT("con-move-speed", &consoleMoveSpeed, 0, 0, 1);
 
-    // User Interface
-    C_VAR_BYTE("ui-panel-help", &panel_show_help, 0, 0, 1);
-    C_VAR_BYTE("ui-panel-tips", &panel_show_tips, 0, 0, 1);
-    C_VAR_INT("ui-cursor-width", &uiMouseWidth, CVF_NO_MAX, 1, 0);
-    C_VAR_INT("ui-cursor-height", &uiMouseHeight, CVF_NO_MAX, 1, 0);
-
-    // Video
-    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0);
-    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX, 240, 0);
-    C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6);
-    C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10);
-    C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
-
-    // Render
-    C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1);
-    C_VAR_INT("rend-dev-framecount", &framecount,
-              CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
-    // * Render-Info
-    C_VAR_BYTE("rend-info-lums", &rendInfoLums, 0, 0, 1);
-    // * Render-Light
-    C_VAR_INT2("rend-light-ambient", &r_ambient, 0, -255, 255,
-               Rend_CalcLightRangeModMatrix);
-
-    C_VAR_INT("rend-light", &useDynLights, 0, 0, 1);
-    C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 2);
-
-    C_VAR_FLOAT("rend-light-bright", &dlFactor, 0, 0, 1);
-    C_VAR_INT("rend-light-num", &maxDynLights, 0, 0, 8000);
-
-    C_VAR_FLOAT("rend-light-radius-scale", &dlRadFactor, 0, 0.1f, 10);
-    C_VAR_INT("rend-light-radius-max", &dlMaxRad, 0, 64, 512);
-    C_VAR_INT("rend-light-radius-min-bias", &dlMinRadForBias, 0, 128, 1024);
-    C_VAR_FLOAT("rend-light-wall-angle", &rend_light_wall_angle, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
-    // * Render-Light-Decor
-    C_VAR_BYTE("rend-light-decor", &useDecorations, 0, 0, 1);
-    C_VAR_FLOAT("rend-light-decor-plane-far", &decorPlaneMaxDist, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-light-decor-wall-far", &decorWallMaxDist, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-light-decor-plane-bright", &decorPlaneFactor, 0, 0, 10);
-    C_VAR_FLOAT("rend-light-decor-wall-bright", &decorWallFactor, 0, 0, 10);
-    C_VAR_FLOAT("rend-light-decor-angle", &decorFadeAngle, 0, 0, 1);
-    C_VAR_INT("rend-light-sky", &rendSkyLight, 0, 0, 1);
-    // * Render-Glow
-    C_VAR_INT("rend-glow", &r_texglow, 0, 0, 1);
-    C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
-    C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
-    C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
-    C_VAR_FLOAT("rend-glow-fog-bright", &glowFogBright, 0, 0, 1);
-    // * Render-Halo
-    C_VAR_INT("rend-halo", &haloMode, 0, 0, 5);
-    C_VAR_INT("rend-halo-realistic", &haloRealistic, 0, 0, 1);
-    C_VAR_INT("rend-halo-bright", &haloBright, 0, 0, 100);
-    C_VAR_INT("rend-halo-occlusion", &haloOccludeSpeed, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-halo-size", &haloSize, 0, 0, 100);
-    C_VAR_FLOAT("rend-halo-secondary-limit", &minHaloSize, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-halo-fade-far", &haloFadeMax, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-halo-fade-near", &haloFadeMin, CVF_NO_MAX, 0, 0);
-    // * Render-Texture
-    C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT2("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4, GL_DoTexReset);
-    C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5, GL_DoTexReset);
-    C_VAR_BYTE2("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1, GL_DoTexReset);
-    C_VAR_BYTE2("rend-tex-external-always", &loadExtAlways, 0, 0, 1, GL_DoTexReset);
-    C_VAR_INT2("rend-tex-quality", &texQuality, 0, 0, 8, GL_DoTexReset);
-    C_VAR_INT2("rend-tex-filter-sprite", &filterSprites, 0, 0, 1, GL_DoTexReset);
-    C_VAR_INT2("rend-tex-filter-raw", &linearRaw, CVF_PROTECTED, 0, 1, GL_DoTexReset);
-    C_VAR_INT2("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1, GL_DoTexReset);
-    C_VAR_INT2("rend-tex-filter-mag", &texMagMode, 0, 0, 1, GL_DoTexReset);
-    C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1);
-    C_VAR_FLOAT("rend-tex-detail-scale", &detailScale, CVF_NO_MIN | CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-tex-detail-strength", &detailFactor, 0, 0, 10);
-    C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
-    // * Render-Sky
-    C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7);
-    C_VAR_INT("rend-sky-rows", &skyRows, CVF_PROTECTED, 1, 8);
-    C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0);
-    C_VAR_INT("rend-sky-full", &r_fullsky, 0, 0, 1);
-    C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2);
-    // * Render-Sprite
-    C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90);
-    C_VAR_INT("rend-sprite-noz", &r_nospritez, 0, 0, 1);
-    C_VAR_BYTE("rend-sprite-precache", &r_precache_sprites, 0, 0, 1);
-    C_VAR_INT("rend-sprite-align", &alwaysAlign, 0, 0, 3);
-    C_VAR_INT("rend-sprite-blend", &missileBlend, 0, 0, 1);
-    C_VAR_INT("rend-sprite-lit", &litSprites, 0, 0, 1);
-    C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
-
-    // * Render-Model
-    C_VAR_INT("rend-model", &useModels, CVF_NO_MAX, 0, 1);
-    C_VAR_INT("rend-model-lights", &modelLight, 0, 0, 10);
-    C_VAR_INT("rend-model-inter", &frameInter, 0, 0, 1);
-    C_VAR_FLOAT("rend-model-aspect", &rModelAspectMod, CVF_NO_MAX | CVF_NO_MIN, 0, 0);
-    C_VAR_INT("rend-model-distance", &r_maxmodelz, CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE("rend-model-precache", &r_precache_skins, 0, 0, 1);
-    C_VAR_FLOAT("rend-model-lod", &rend_model_lod, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-model-mirror-hud", &mirrorHudModels, 0, 0, 1);
-    C_VAR_FLOAT("rend-model-spin-speed", &modelSpinSpeed,
-                CVF_NO_MAX | CVF_NO_MIN, 0, 0);
-    C_VAR_INT("rend-model-shiny-multitex", &modelShinyMultitex, 0, 0, 1);
-    // * Render-HUD
-    C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-hud-fov-shift", &weaponFOVShift, CVF_NO_MAX, 0, 1);
-    // * Render-Mobj
-    C_VAR_INT("rend-mobj-smooth-move", &r_use_srvo, 0, 0, 2);
-    C_VAR_INT("rend-mobj-smooth-turn", &r_use_srvo_angle, 0, 0, 1);
-    // * Rend-Particle
-    C_VAR_INT("rend-particle", &r_use_particles, 0, 0, 1);
-    C_VAR_INT("rend-particle-max", &r_max_particles, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-particle-rate", &r_particle_spawn_rate, 0, 0, 5);
-    C_VAR_FLOAT("rend-particle-diffuse", &rend_particle_diffuse, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-particle-visible-near", &rend_particle_nearlimit, CVF_NO_MAX, 0, 0);
-    // * Rend-Shadow
-    C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1);
-    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 1);
-    C_VAR_INT("rend-shadow-far", &shadowMaxDist, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-shadow-radius-max", &shadowMaxRad, CVF_NO_MAX, 0, 0);
-
-    // Server
-    C_VAR_CHARPTR("server-name", &serverName, 0, 0, 0);
-    C_VAR_CHARPTR("server-info", &serverInfo, 0, 0, 0);
-    C_VAR_INT("server-public", &masterAware, 0, 0, 1);
-
-    // Network
-    C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
-    C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
-    C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
-    C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0);
-
-    // Sound
-    C_VAR_INT("sound-volume", &sfx_volume, 0, 0, 255);
-    C_VAR_INT("sound-info", &sound_info, 0, 0, 1);
-    C_VAR_INT("sound-rate", &sound_rate, 0, 11025, 44100);
-    C_VAR_INT("sound-16bit", &sound_16bit, 0, 0, 1);
-    C_VAR_INT("sound-3d", &sound_3dmode, 0, 0, 1);
-    C_VAR_FLOAT("sound-reverb-volume", &sfx_reverb_strength, 0, 0, 10);
-
-    // Music
-    C_VAR_INT("music-volume", &mus_volume, 0, 0, 255);
-    C_VAR_INT("music-source", &mus_preference, 0, 0, 2);
-
     // File
     C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0);
-
-    // Misc
-    C_VAR_INT("blockmap-build", &createBMap, 0, 0, 2);
-    C_VAR_INT("reject-build", &createReject, 0, 0, 2);
 }

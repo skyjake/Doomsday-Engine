@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -52,6 +52,7 @@
 #include "de_misc.h"
 
 #include "r_extres.h"
+#include "gl_draw.h" // for GL_SetFilter()
 
 // MACROS ------------------------------------------------------------------
 
@@ -76,6 +77,14 @@ typedef struct {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+D_CMD(Dir);
+D_CMD(Dump);
+D_CMD(ListFiles);
+D_CMD(ListMaps);
+D_CMD(LoadFile);
+D_CMD(ResetLumps);
+D_CMD(UnloadFile);
 
 int     MarkerForGroup(char *name, boolean begin);
 char    retname[9];
@@ -123,6 +132,18 @@ static void **AuxiliaryLumpCache;
 boolean AuxiliaryOpened = false;
 
 // CODE --------------------------------------------------------------------
+
+void DD_RegisterVFS(void)
+{
+    C_CMD("dir", Dir);
+    C_CMD("dump", Dump);
+    C_CMD("listfiles", ListFiles);
+    C_CMD("listmaps", ListMaps);
+    C_CMD("load", LoadFile);
+    C_CMD("ls", Dir);
+    C_CMD("reset", ResetLumps);
+    C_CMD("unload", UnloadFile);
+}
 
 static void convertSlashes(char *modifiableBuffer)
 {
@@ -746,7 +767,7 @@ void W_InitMultipleFiles(char **filenames)
     // Count number of files.
     for(ptr = filenames; *ptr; ptr++, numLoaded++);
     loaded = calloc(numLoaded, 1);
-    
+
     iwadLoaded = false;
 
     // Open all the files, load headers, and count lumps
@@ -764,7 +785,7 @@ void W_InitMultipleFiles(char **filenames)
             loaded[ptr - filenames] = true;
             W_AddFile(*ptr, false);
         }
-    
+
     // IWAD(s) must be loaded before other WADs. Let's see if one has been
     // specified with -iwad or -file options.
     for(ptr = filenames; *ptr; ptr++)
@@ -790,7 +811,7 @@ void W_InitMultipleFiles(char **filenames)
     // Bookkeeping no longer needed.
     free(loaded);
     loaded = NULL;
-    
+
     if(!numlumps)
     {
         Con_Error("W_InitMultipleFiles: no files found.\n");
@@ -1458,5 +1479,164 @@ D_CMD(ListMaps)
 {
     Con_Printf("Loaded maps:\n");
     W_PrintMapList();
+    return true;
+}
+
+D_CMD(LoadFile)
+{
+    //extern int RegisteredSong;
+    int     i, succeeded = false;
+
+    if(argc == 1)
+    {
+        Con_Printf("Usage: load (file) ...\n");
+        return true;
+    }
+    for(i = 1; i < argc; i++)
+    {
+        Con_Message("Loading %s...\n", argv[i]);
+        if(W_AddFile(argv[i], true))
+        {
+            Con_Message("OK\n");
+            succeeded = true;   // At least one has been loaded.
+        }
+        else
+            Con_Message("Failed!\n");
+    }
+    // We only need to update if something was actually loaded.
+    if(succeeded)
+    {
+        // Update the lumpcache.
+        //W_UpdateCache();
+        // The new wad may contain lumps that alter the current ones
+        // in use.
+        DD_UpdateEngineState();
+    }
+    return true;
+}
+
+D_CMD(UnloadFile)
+{
+    //extern int RegisteredSong;
+    int     i, succeeded = false;
+
+    if(argc == 1)
+    {
+        Con_Printf("Usage: unload (file) ...\n");
+        return true;
+    }
+    for(i = 1; i < argc; i++)
+    {
+        Con_Message("Unloading %s...\n", argv[i]);
+        if(W_RemoveFile(argv[i]))
+        {
+            Con_Message("OK\n");
+            succeeded = true;
+        }
+        else
+            Con_Message("Failed!\n");
+    }
+    if(succeeded)
+        DD_UpdateEngineState();
+    return true;
+}
+
+D_CMD(Dump)
+{
+    char    fname[100];
+    FILE   *file;
+    int     lump;
+    byte   *lumpPtr;
+
+    if(argc != 2)
+    {
+        Con_Printf("Usage: dump (name)\n");
+        Con_Printf("Writes out the specified lump to (name).dum.\n");
+        return true;
+    }
+    if(W_CheckNumForName(argv[1]) == -1)
+    {
+        Con_Printf("No such lump.\n");
+        return false;
+    }
+    lump = W_GetNumForName(argv[1]);
+    lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+
+    sprintf(fname, "%s.dum", argv[1]);
+    file = fopen(fname, "wb");
+    if(!file)
+    {
+        Con_Printf("Couldn't open %s for writing. %s\n", fname,
+                   strerror(errno));
+        Z_ChangeTag(lumpPtr, PU_CACHE);
+        return false;
+    }
+    fwrite(lumpPtr, 1, lumpinfo[lump].size, file);
+    fclose(file);
+    Z_ChangeTag(lumpPtr, PU_CACHE);
+
+    Con_Printf("%s dumped to %s.\n", argv[1], fname);
+    return true;
+}
+
+/*
+ * Print contents of directories as Doomsday sees them.
+ */
+D_CMD(Dir)
+{
+    char    dir[256], pattern[256];
+    int     i;
+
+    if(argc == 1)
+    {
+        Con_Printf("Usage: %s (dirs)\n", argv[0]);
+        Con_Printf("Prints the contents of one or more directories.\n");
+        Con_Printf("Virtual files are listed, too.\n");
+        Con_Printf("Paths are relative to the base path:\n");
+        Con_Printf("  %s\n", ddBasePath);
+        return true;
+    }
+
+    for(i = 1; i < argc; i++)
+    {
+        M_PrependBasePath(argv[i], dir);
+        Dir_ValidDir(dir);
+        Dir_MakeAbsolute(dir);
+        Con_Printf("Directory: %s\n", dir);
+
+        // Make the pattern.
+        sprintf(pattern, "%s*", dir);
+        F_ForAll(pattern, dir, Con_PrintFileName);
+    }
+
+    return true;
+}
+
+D_CMD(ListFiles)
+{
+    extern int numrecords;
+    extern filerecord_t *records;
+    int     i;
+
+    for(i = 0; i < numrecords; i++)
+    {
+        Con_Printf("%s (%d lump%s%s)", records[i].filename,
+                   records[i].numlumps, records[i].numlumps != 1 ? "s" : "",
+                   !(records[i].flags & FRF_RUNTIME) ? ", startup" : "");
+        if(records[i].iwad)
+            Con_Printf(" [%08x]", W_CRCNumberForRecord(i));
+        Con_Printf("\n");
+    }
+
+    Con_Printf("Total: %d lumps in %d files.\n", numlumps, numrecords);
+    return true;
+}
+
+D_CMD(ResetLumps)
+{
+    GL_SetFilter(0);
+    W_Reset();
+    Con_Message("Only startup files remain.\n");
+    DD_UpdateEngineState();
     return true;
 }

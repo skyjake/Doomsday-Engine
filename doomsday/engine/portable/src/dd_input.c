@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -59,6 +59,9 @@ typedef struct repeater_s {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+D_CMD(KeyMap);
+D_CMD(DumpKeyMap);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -180,29 +183,26 @@ static float oldPOV = IJOY_POV_CENTER;
 
 void DD_RegisterInput(void)
 {
+    // Cvars
     C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
-
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
-
     C_VAR_BYTE("input-key-show-scancodes", &showScanCodes, 0, 0, 1);
 
     C_VAR_INT("input-joy-sensi", &joySensitivity, 0, 0, 9);
-
     C_VAR_INT("input-joy-deadzone", &joyDeadZone, 0, 0, 90);
 
     C_VAR_INT("input-mouse-wheel-sensi", &mouseWheelSensi, CVF_NO_MAX, 0, 0);
-
     C_VAR_INT("input-mouse-x-disable", &mouseDisableX, 0, 0, 1);
-
     C_VAR_INT("input-mouse-y-disable", &mouseDisableY, 0, 0, 1);
-
     C_VAR_INT("input-mouse-y-inverse", &mouseInverseY, 0, 0, 1);
-
-    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_MOUSE_FILTER - 1);
-
+    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_MOUSE_FILTER-1);
     C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
-    
+
     C_VAR_BYTE("input-info-mouse", &showMouseInfo, 0, 0, 1);
+
+    // Ccmds
+    C_CMD("dumpkeymap", DumpKeyMap);
+    C_CMD("keymap", KeyMap);
 }
 
 /*
@@ -701,16 +701,16 @@ void DD_ReadMouse(timespan_t ticLength)
 
             mickeys[0] += ev.data1;
             mickeys[1] += ev.data2;
-            
+
             dirs[0] = (mickeys[0] > 0? 1 : mickeys[0] < 0? -1 : 0);
             dirs[1] = (mickeys[1] > 0? 1 : mickeys[1] < 0? -1 : 0);
             avail[0] = abs(mickeys[0]);
-            avail[1] = abs(mickeys[1]);                
+            avail[1] = abs(mickeys[1]);
 
             // Determine the target mouse velocity.
             target[0] = avail[0] * (MAX_MOUSE_FILTER - mouseFilter);
             target[1] = avail[1] * (MAX_MOUSE_FILTER - mouseFilter);
-                        
+
             for(i = 0; i < 2; ++i)
             {
                 // Determine the amount of mickeys to send. It depends on the
@@ -731,11 +731,11 @@ void DD_ReadMouse(timespan_t ticLength)
                     else
                         mickeys[i] += used[i];
                 }
-            }            
+            }
 
             if(showMouseInfo)
             {
-                Con_Message("mouse velocity = %11.1f, %11.1f\n", 
+                Con_Message("mouse velocity = %11.1f, %11.1f\n",
                             target[0], target[1]);
             }
 

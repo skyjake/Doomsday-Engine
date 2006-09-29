@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -530,6 +530,12 @@ static glbuildinfo_t *glBuilderInfo;
 static gamemap_t* currentMap = NULL;
 
 // CODE --------------------------------------------------------------------
+
+void DAM_Register(void)
+{
+    C_VAR_INT("blockmap-build", &createBMap, 0, 0, 2);
+    C_VAR_INT("reject-build", &createReject, 0, 0, 2);
+}
 
 /*
  * Convert enum constant into a string for error/debug messages.

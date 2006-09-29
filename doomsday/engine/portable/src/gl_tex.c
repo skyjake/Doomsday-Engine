@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -88,6 +88,11 @@ typedef struct dtexinst_s {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+D_CMD(LowRes);
+D_CMD(ResetTextures);
+D_CMD(MipMap);
+D_CMD(SmoothRaw);
 
 void    averageColorIdx(rgbcol_t * sprcol, byte *data, int w, int h,
                         byte *palette, boolean has_alpha);
@@ -184,6 +189,40 @@ static int glmode[6] =          // Indexed by 'mipmapping'.
 };
 
 // CODE --------------------------------------------------------------------
+
+void GL_TexRegister(void)
+{
+    // Cvars
+    C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT2("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4,
+               GL_DoTexReset);
+    C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5,
+               GL_DoTexReset);
+    C_VAR_BYTE2("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1,
+                GL_DoTexReset);
+    C_VAR_BYTE2("rend-tex-external-always", &loadExtAlways, 0, 0, 1,
+                GL_DoTexReset);
+    C_VAR_INT2("rend-tex-quality", &texQuality, 0, 0, 8,
+               GL_DoTexReset);
+    C_VAR_INT2("rend-tex-filter-sprite", &filterSprites, 0, 0, 1,
+               GL_DoTexReset);
+    C_VAR_INT2("rend-tex-filter-raw", &linearRaw, CVF_PROTECTED, 0, 1,
+               GL_DoTexReset);
+    C_VAR_INT2("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1,
+               GL_DoTexReset);
+    C_VAR_INT2("rend-tex-filter-mag", &texMagMode, 0, 0, 1, GL_DoTexReset);
+    C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1);
+    C_VAR_FLOAT("rend-tex-detail-scale", &detailScale,
+                CVF_NO_MIN | CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-tex-detail-strength", &detailFactor, 0, 0, 10);
+    C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
+
+    // Ccmds
+    C_CMD("lowres", LowRes);
+    C_CMD("mipmap", MipMap);
+    C_CMD("smoothscr", SmoothRaw);
+    C_CMD("texreset", ResetTextures);
+}
 
 /*
  * Finds the power of 2 that is equal to or greater than

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -28,9 +28,9 @@
 #ifndef __DOOMSDAY_RENDER_SPRITE_H__
 #define __DOOMSDAY_RENDER_SPRITE_H__
 
-extern float    maxSpriteAngle;
 extern byte     noSpriteTrans;
 
+void            Rend_SpriteRegister(void);
 void            Rend_DrawMasked(void);
 void            Rend_DrawPlayerSprites(void);
 void            Rend_Draw3DPlayerSprites(void);

@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -74,6 +75,12 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(DemoLump);
+D_CMD(PauseDemo);
+D_CMD(PlayDemo);
+D_CMD(RecordDemo);
+D_CMD(StopDemo);
+
 void    Demo_WriteLocalCamera(int plnum);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -103,6 +110,16 @@ static float start_fov;
 static int demostarttic;
 
 // CODE --------------------------------------------------------------------
+
+void Demo_Register(void)
+{
+    // Ccmds
+    C_CMD("demolump", DemoLump);
+    C_CMD("pausedemo", PauseDemo);
+    C_CMD("playdemo", PlayDemo);
+    C_CMD("recorddemo", RecordDemo);
+    C_CMD("stopdemo", StopDemo);
+}
 
 void Demo_Init(void)
 {

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -105,6 +105,7 @@ extern DGLuint  flareTexNames[NUM_FLARE_TEXTURES];
 
 int             CeilPow2(int num);
 
+void            GL_TexRegister(void);
 void            GL_InitTextureManager(void);
 void            GL_ShutdownTextureManager(void);
 void            GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlareMaps);
@@ -191,11 +192,4 @@ unsigned int    GL_PrepareShinySkin(modeldef_t * md, int sub);
 
 // Loads the shiny texture and the mask texture, if they aren't yet loaded.
 boolean         GL_LoadReflectionMap(ded_reflection_t *ref);
-
-// Console commands.
-D_CMD(LowRes);
-D_CMD(ResetTextures);
-D_CMD(MipMap);
-D_CMD(SmoothRaw);
-
 #endif

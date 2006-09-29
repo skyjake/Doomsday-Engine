@@ -60,10 +60,23 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+D_CMD(Ping); // in net_ping.c
+D_CMD(Login); // in cl_main.c
+D_CMD(Logout); // in sv_main.c
+
 void    R_DrawLightRange(void);
 int     Sv_GetRegisteredMobj(pool_t *, thid_t, mobjdelta_t *);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+D_CMD(Connect);
+D_CMD(Chat);
+D_CMD(Kick);
+D_CMD(MakeCamera);
+D_CMD(Net);
+D_CMD(SetConsole);
+D_CMD(SetName);
+D_CMD(SetTicks);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -114,15 +127,47 @@ static int coordTimer = 0;
 
 void Net_Register(void)
 {
+    // Cvars
     C_VAR_BYTE("net-queue-show", &monitorSendQueue, 0, 0, 1);
     C_VAR_BYTE("net-dev", &net_dev, 0, 0, 1);
     C_VAR_BYTE("net-nosleep", &net_dontsleep, 0, 0, 1);
+    C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
+    C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
+    C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0);
+    C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
+
+    // Cvars (client)
     C_VAR_INT("client-pos-interval", &net_coordtime, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("client-connect-timeout", &net_connecttimeout, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("client-connect-timeout", &net_connecttimeout, CVF_NO_MAX,
+                0, 0);
+
+    // Cvars (server)
+    C_VAR_CHARPTR("server-name", &serverName, 0, 0, 0);
+    C_VAR_CHARPTR("server-info", &serverInfo, 0, 0, 0);
+    C_VAR_INT("server-public", &masterAware, 0, 0, 1);
     C_VAR_CHARPTR("server-password", &net_password, 0, 0, 0);
     C_VAR_BYTE("server-latencies", &net_showlatencies, 0, 0, 1);
     C_VAR_INT("server-frame-interval", &frameInterval, CVF_NO_MAX, 0, 0);
     C_VAR_INT("server-player-limit", &sv_maxPlayers, 0, 0, MAXPLAYERS);
+
+    // Ccmds
+    C_CMD("chat", Chat);
+    C_CMD("chatnum", Chat);
+    C_CMD("chatto", Chat);
+    C_CMD("conlocp", MakeCamera);
+    C_CMD("connect", Connect);
+    C_CMD("huffman", HuffmanStats);
+    C_CMD("kick", Kick);
+    C_CMD("login", Login);
+    C_CMD("logout", Logout);
+    C_CMD("net", Net);
+    C_CMD("ping", Ping);
+    C_CMD("say", Chat);
+    C_CMD("saynum", Chat);
+    C_CMD("sayto", Chat);
+    C_CMD("setname", SetName);
+    C_CMD("setcon", SetConsole);
+    C_CMD("settics", SetTicks);
 
     N_Register();
 }
@@ -265,93 +310,6 @@ void Net_ShowChatMessage()
     // let's unwrap and show it.
     Con_FPrintf(CBLF_GREEN, "%s: %s\n", clients[netBuffer.msg.data[0]].name,
                 netBuffer.msg.data + 3);
-}
-
-/*
- * All arguments are sent out as a chat message.
- */
-D_CMD(Chat)
-{
-    char    buffer[100];
-    int     i, mode = !stricmp(argv[0], "chat") ||
-        !stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum") ||
-        !stricmp(argv[0], "sayNum") ? 1 : 2;
-    unsigned short mask = 0;
-
-    if(argc == 1)
-    {
-        Con_Printf("Usage: %s %s(text)\n", argv[0],
-                   !mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
-        Con_Printf("Chat messages are max. 80 characters long.\n");
-        Con_Printf("Use quotes to get around arg processing.\n");
-        return true;
-    }
-
-    // Chatting is only possible when connected.
-    if(!netgame)
-        return false;
-
-    // Too few arguments?
-    if(mode && argc < 3)
-        return false;
-
-    // Assemble the chat message.
-    strcpy(buffer, argv[!mode ? 1 : 2]);
-    for(i = (!mode ? 2 : 3); i < argc; i++)
-    {
-        strcat(buffer, " ");
-        strncat(buffer, argv[i], 80 - (strlen(buffer) + strlen(argv[i]) + 1));
-    }
-    buffer[80] = 0;
-
-    // Send the message.
-    switch (mode)
-    {
-    case 0:                 // chat
-        mask = ~0;
-        break;
-
-    case 1:                 // chatNum
-        mask = 1 << atoi(argv[1]);
-        break;
-
-    case 2:                 // chatTo
-        for(i = 0; i < MAXPLAYERS; i++)
-            if(!stricmp(clients[i].name, argv[1]))
-            {
-                mask = 1 << i;
-                break;
-            }
-    }
-    Msg_Begin(PKT_CHAT);
-    Msg_WriteByte(consoleplayer);
-    Msg_WriteShort(mask);
-    Msg_Write(buffer, strlen(buffer) + 1);
-
-    if(!isClient)
-    {
-        if(mask == (unsigned short) ~0)
-        {
-            Net_SendBuffer(NSP_BROADCAST, SPF_ORDERED);
-        }
-        else
-        {
-            for(i = 1; i < MAXPLAYERS; i++)
-                if(players[i].ingame && mask & (1 << i))
-                    Net_SendBuffer(i, SPF_ORDERED);
-        }
-    }
-    else
-    {
-        Net_SendBuffer(0, SPF_ORDERED);
-    }
-
-    // Show the message locally.
-    Net_ShowChatMessage();
-
-    // Inform the game, too.
-    gx.NetPlayerEvent(consoleplayer, DDPE_CHAT_MESSAGE, buffer);
-    return true;
 }
 
 /*
@@ -1060,6 +1018,93 @@ void Net_PrintServerInfo(int index, serverinfo_t *info)
                        info->data[1], info->data[2]);
         }
     }
+}
+
+/**
+ * All arguments are sent out as a chat message.
+ */
+D_CMD(Chat)
+{
+    char    buffer[100];
+    int     i, mode = !stricmp(argv[0], "chat") ||
+        !stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum") ||
+        !stricmp(argv[0], "sayNum") ? 1 : 2;
+    unsigned short mask = 0;
+
+    if(argc == 1)
+    {
+        Con_Printf("Usage: %s %s(text)\n", argv[0],
+                   !mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
+        Con_Printf("Chat messages are max. 80 characters long.\n");
+        Con_Printf("Use quotes to get around arg processing.\n");
+        return true;
+    }
+
+    // Chatting is only possible when connected.
+    if(!netgame)
+        return false;
+
+    // Too few arguments?
+    if(mode && argc < 3)
+        return false;
+
+    // Assemble the chat message.
+    strcpy(buffer, argv[!mode ? 1 : 2]);
+    for(i = (!mode ? 2 : 3); i < argc; i++)
+    {
+        strcat(buffer, " ");
+        strncat(buffer, argv[i], 80 - (strlen(buffer) + strlen(argv[i]) + 1));
+    }
+    buffer[80] = 0;
+
+    // Send the message.
+    switch (mode)
+    {
+    case 0:                 // chat
+        mask = ~0;
+        break;
+
+    case 1:                 // chatNum
+        mask = 1 << atoi(argv[1]);
+        break;
+
+    case 2:                 // chatTo
+        for(i = 0; i < MAXPLAYERS; i++)
+            if(!stricmp(clients[i].name, argv[1]))
+            {
+                mask = 1 << i;
+                break;
+            }
+    }
+    Msg_Begin(PKT_CHAT);
+    Msg_WriteByte(consoleplayer);
+    Msg_WriteShort(mask);
+    Msg_Write(buffer, strlen(buffer) + 1);
+
+    if(!isClient)
+    {
+        if(mask == (unsigned short) ~0)
+        {
+            Net_SendBuffer(NSP_BROADCAST, SPF_ORDERED);
+        }
+        else
+        {
+            for(i = 1; i < MAXPLAYERS; i++)
+                if(players[i].ingame && mask & (1 << i))
+                    Net_SendBuffer(i, SPF_ORDERED);
+        }
+    }
+    else
+    {
+        Net_SendBuffer(0, SPF_ORDERED);
+    }
+
+    // Show the message locally.
+    Net_ShowChatMessage();
+
+    // Inform the game, too.
+    gx.NetPlayerEvent(consoleplayer, DDPE_CHAT_MESSAGE, buffer);
+    return true;
 }
 
 D_CMD(Kick)

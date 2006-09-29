@@ -174,10 +174,15 @@ void Rend_Register(void)
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
 
     RL_Register();
+    DL_Register();
     SB_Register();
     LG_Register();
     Rend_ModelRegister();
+    Rend_ParticleRegister();
     Rend_RadioRegister();
+    Rend_ShadowRegister();
+    Rend_SkyRegister();
+    Rend_SpriteRegister();
 }
 
 float Rend_SignedPointDist2D(float c[2])

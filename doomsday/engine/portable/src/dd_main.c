@@ -699,6 +699,29 @@ void DD_AddStartupWAD(const char *file)
     wadfiles[i] = new;
 }
 
+/**
+ * What is this kind of a routine doing in Console.c?
+ */
+void DD_UpdateEngineState(void)
+{
+    // Update refresh.
+    Con_Message("Updating state...\n");
+
+    // Update the dir/WAD translations.
+    F_InitDirec();
+
+    gx.UpdateState(DD_PRE);
+    R_Update();
+
+    // Reset the anim groups (if in-game)
+    R_ResetAnimGroups();
+
+    //DJS - Why do we need to recheck sidedef textures at this time?
+    //P_ValidateLevel();
+
+    gx.UpdateState(DD_POST);
+}
+
 /*
  * Queries are a (poor) way to extend the API without adding new functions.
  */

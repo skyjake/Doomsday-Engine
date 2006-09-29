@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -188,6 +188,8 @@ extern ui_color_t ui_colors[];
 extern int      uiMouseWidth;
 extern int      uiMouseHeight;
 
+void            UI_Register(void);
+
 // Functions.
 void            UI_Init(boolean halttime, boolean tckui, boolean tckframe,
                         boolean drwgame, boolean mousemod, boolean noescape);
@@ -277,8 +279,5 @@ int             UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
                                  ui_color_t * color, float alpha);
 void            UI_DrawHelpBox(int x, int y, int w, int h, float alpha,
                                char *text);
-
-// Console commands.
-D_CMD(UIColor);
 
 #endif

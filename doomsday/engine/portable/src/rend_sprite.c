@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -65,7 +65,19 @@ static vissprite_t *slSpr;
 
 // CODE --------------------------------------------------------------------
 
-/*
+void Rend_SpriteRegister(void)
+{
+    // Cvars
+    C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90);
+    C_VAR_INT("rend-sprite-noz", &r_nospritez, 0, 0, 1);
+    C_VAR_BYTE("rend-sprite-precache", &r_precache_sprites, 0, 0, 1);
+    C_VAR_INT("rend-sprite-align", &alwaysAlign, 0, 0, 3);
+    C_VAR_INT("rend-sprite-blend", &missileBlend, 0, 0, 1);
+    C_VAR_INT("rend-sprite-lit", &litSprites, 0, 0, 1);
+    C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
+}
+
+/**
  * Fog is turned off while rendering. It's not feasible to think that the
  * fog would obstruct the player's view of his own weapon.
  */
@@ -96,7 +108,7 @@ void Rend_Draw3DPlayerSprites(void)
         gl.Enable(DGL_FOG);
 }
 
-/*
+/**
  * Draws 2D player sprites. If they were already drawn 3D, this
  * won't do anything.
  */
@@ -217,7 +229,7 @@ void Rend_DrawPlayerSprites(void)
     }
 }
 
-/*
+/**
  * A sort of a sprite, I guess... Masked walls must be rendered sorted
  * with sprites, so no artifacts appear when sprites are seen behind
  * masked walls.
@@ -356,7 +368,7 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
     GL_BlendMode(BM_NORMAL);
 }
 
-/*
+/**
  * Render sprites, 3D models, masked wall segments and halos, ordered
  * back to front. Halos are rendered with Z-buffer tests and writes
  * disabled, so they don't go into walls or interfere with real objects.

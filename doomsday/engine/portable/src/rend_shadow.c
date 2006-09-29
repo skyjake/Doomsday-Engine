@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -49,20 +49,35 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     useShadows = true;
-int     shadowMaxRad = 80;
-int     shadowMaxDist = 1000;
-float   shadowFactor = 0.5f;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int     useShadows = true;
+static int     shadowMaxRad = 80;
+static int     shadowMaxDist = 1000;
+static float   shadowFactor = 0.5f;
 
 // CODE --------------------------------------------------------------------
 
-/*
+void Rend_ShadowRegister(void)
+{
+    // Cvars
+    C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1);
+    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 1);
+    C_VAR_INT("rend-shadow-far", &shadowMaxDist, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-shadow-radius-max", &shadowMaxRad, CVF_NO_MAX, 0, 0);
+}
+
+/**
  * This is called for each sector a shadow-caster is touching.
- * The highest floor height will be searched.
+ * The highest floor height will be searched and if larger than the
+ * value of <code>data</code> it will be written back.
+ *
+ * @param sector    The sector to search the floor height of.
+ * @param data      Ptr to a float containing the height to compare.
+ *
+ * @return          <code>true</code> if iteration should continue.
  */
-boolean Rend_ShadowIterator(sector_t *sector, void *data)
+static boolean Rend_ShadowIterator(sector_t *sector, void *data)
 {
     float  *height = data;
     float   floor = SECT_FLOOR(sector);
@@ -72,7 +87,7 @@ boolean Rend_ShadowIterator(sector_t *sector, void *data)
     return true;                // Continue iteration.
 }
 
-void Rend_ProcessThingShadow(mobj_t *mo)
+static void Rend_ProcessThingShadow(mobj_t *mo)
 {
     fixed_t moz;
     float   height, moh, halfmoh, color, pos[2], floor;

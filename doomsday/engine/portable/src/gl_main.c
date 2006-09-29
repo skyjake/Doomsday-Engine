@@ -74,6 +74,10 @@ typedef unsigned short gramp_t[3 * 256];
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(Fog);
+D_CMD(SetGamma);
+D_CMD(SetRes);
+
 void    GL_SetGamma(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -124,7 +128,33 @@ static int fogModeDefault = 0;
 
 void GL_Register(void)
 {
+    // Cvars
+    C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1);
+    C_VAR_INT("rend-dev-framecount", &framecount,
+              CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
     C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2);
+    // * Render-HUD
+    C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX,
+                0, 0);
+    C_VAR_FLOAT("rend-hud-fov-shift", &weaponFOVShift, CVF_NO_MAX, 0, 1);
+    // * Render-Mobj
+    C_VAR_INT("rend-mobj-smooth-move", &r_use_srvo, 0, 0, 2);
+    C_VAR_INT("rend-mobj-smooth-turn", &r_use_srvo_angle, 0, 0, 1);
+
+    // * video
+    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0);
+    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX, 240, 0);
+    C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6);
+    C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10);
+    C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
+
+    // Ccmds
+    C_CMD("fog", Fog);
+    C_CMD("setgamma", SetGamma);
+    C_CMD("setres", SetRes);
+    C_CMD("setvidramp", UpdateGammaRamp);
+
+    GL_TexRegister();
 }
 
 boolean GL_IsInited(void)
@@ -132,7 +162,7 @@ boolean GL_IsInited(void)
     return initGLOk;
 }
 
-/*
+/**
  * This update stuff is really old-fashioned...
  */
 void GL_Update(int flags)
@@ -154,7 +184,7 @@ void GL_Update(int flags)
         GL_DoUpdate();
 }
 
-/*
+/**
  * Swaps buffers / blits the back buffer to the front.
  */
 void GL_DoUpdate(void)
@@ -179,7 +209,7 @@ void GL_DoUpdate(void)
     r_framecounter++;
 }
 
-/*
+/**
  * On Win32, use the gamma ramp functions in the Win32 API.  On Linux,
  * use the XFree86-VidMode extension.
  */
@@ -283,7 +313,7 @@ void GL_SetGammaRamp(unsigned short *ramp)
 #endif
 }
 
-/*
+/**
  * Gamma      - non-linear factor (curvature; >1.0 multiplies)
  * Contrast   - steepness
  * Brightness - uniform offset
@@ -333,7 +363,7 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
     }
 }
 
-/*
+/**
  * Updates the gamma ramp based on vid_gamma, vid_contrast and vid_bright.
  */
 void GL_SetGamma(void)
@@ -458,7 +488,7 @@ void GL_ShutdownVarFont(void)
     varFontInited = false;
 }
 
-/*
+/**
  * One-time initialization of DGL and the renderer.
  */
 void GL_Init(void)
@@ -549,7 +579,7 @@ void GL_Init(void)
     initGLOk = true;
 }
 
-/*
+/**
  * Initializes the graphics library for refresh. Also called at update.
  * Loadmaps can be loaded after all definitions have been read.
  */
@@ -559,7 +589,7 @@ void GL_InitRefresh(boolean loadLightMaps, boolean loadFlares)
     GL_LoadSystemTextures(loadLightMaps, loadFlares);
 }
 
-/*
+/**
  * Called once at final shutdown.
  */
 void GL_ShutdownRefresh(void)
@@ -568,7 +598,7 @@ void GL_ShutdownRefresh(void)
     GL_DestroySkinNames();
 }
 
-/*
+/**
  * Kills the graphics library for good.
  */
 void GL_Shutdown(void)
@@ -593,7 +623,7 @@ void GL_Shutdown(void)
     initGLOk = false;
 }
 
-/*
+/**
  * Initializes the renderer to 2D state.
  */
 void GL_Init2DState(void)
@@ -730,7 +760,7 @@ void GL_UseFog(int yes)
     // Otherwise we won't do a thing.
 }
 
-/*
+/**
  * This needs to be called twice: first shutdown, then restore.
  * GL is reset back to the state it was right after initialization.
  * Lightmaps and flares can be loaded after defs have been loaded
@@ -788,7 +818,7 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
     }
 }
 
-/*
+/**
  * Changes the resolution to the specified one.
  * The change is carried out by SHUTTING DOWN the rendering DLL and then
  * restarting it. All textures will be lost in the process.
@@ -824,7 +854,7 @@ int GL_ChangeResolution(int w, int h, int bits)
     return true;
 }
 
-/*
+/**
  * Copies the current contents of the frame buffer and returns a pointer
  * to data containing 24-bit RGB triplets. The caller must free the
  * returned buffer using free()!
@@ -837,7 +867,7 @@ unsigned char *GL_GrabScreen(void)
     return buffer;
 }
 
-/*
+/**
  * Set the GL blending mode.
  */
 void GL_BlendMode(blendmode_t mode)
@@ -891,7 +921,7 @@ void GL_BlendMode(blendmode_t mode)
     }
 }
 
-/*
+/**
  * Change graphics mode resolution.
  */
 D_CMD(SetRes)
@@ -912,7 +942,46 @@ D_CMD(SetRes)
 
 D_CMD(UpdateGammaRamp)
 {
+    if(isDedicated)
+    {
+        Con_Printf("Impossible in dedicated mode.\n");
+        return false;
+    }
+
     GL_SetGamma();
     Con_Printf("Gamma ramp set.\n");
+    return true;
+}
+
+D_CMD(SetGamma)
+{
+    int     newlevel;
+
+    if(isDedicated)
+    {
+        Con_Printf("Impossible in dedicated mode.\n");
+        return false;
+    }
+
+    if(argc != 2)
+    {
+        Con_Printf("Usage: %s (0-4)\n", argv[0]);
+        return true;
+    }
+    newlevel = strtol(argv[1], NULL, 0);
+    // Clamp it to the min and max.
+    if(newlevel < 0)
+        newlevel = 0;
+    if(newlevel > 4)
+        newlevel = 4;
+    // Only reload textures if it's necessary.
+    if(newlevel != usegamma)
+    {
+        usegamma = newlevel;
+        GL_UpdateGamma();
+        Con_Printf("Gamma correction set to level %d.\n", usegamma);
+    }
+    else
+        Con_Printf("Gamma correction already set to %d.\n", usegamma);
     return true;
 }

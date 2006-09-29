@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -51,6 +51,10 @@ typedef struct interface_info_s {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+D_CMD(PlayMusic);
+D_CMD(PlayExt);
+D_CMD(StopMusic);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -89,9 +93,22 @@ static interface_info_t interfaces[] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Initialize the Mus module and choose the interfaces to use. Returns
- * true if no errors occur.
+void Mus_Register(void)
+{
+    // Cvars
+    C_VAR_INT("music-volume", &mus_volume, 0, 0, 255);
+    C_VAR_INT("music-source", &mus_preference, 0, 0, 2);
+
+    // Ccmds
+    C_CMD("playext", PlayExt);
+    C_CMD("playmusic", PlayMusic);
+    C_CMD("stopmusic", StopMusic);
+}
+
+/**
+ * Initialize the Mus module and choose the interfaces to use.
+ *
+ * @return      <code>true</true> if no errors occur.
  */
 boolean Mus_Init(void)
 {
@@ -190,7 +207,7 @@ void Mus_Shutdown(void)
     icd = 0;
 }
 
-/*
+/**
  * Called on each frame by S_StartFrame.
  */
 void Mus_StartFrame(void)
@@ -206,7 +223,7 @@ void Mus_StartFrame(void)
             (*interfaces[i].ip)->Update();
 }
 
-/*
+/**
  * Set the general music volume. Affects all music played by all
  * interfaces.
  */
@@ -223,7 +240,7 @@ void Mus_SetVolume(float vol)
             (*interfaces[i].ip)->Set(MUSIP_VOLUME, vol);
 }
 
-/*
+/**
  * Pauses or resumes the music.
  */
 void Mus_Pause(boolean do_pause)
@@ -254,8 +271,9 @@ void Mus_Stop(void)
             (*interfaces[i].ip)->Stop();
 }
 
-/*
- * @return: boolean         (true) if the specified lump contains a MUS song.
+/**
+ * @return:         <code>true</code> if the specified lump contains
+ *                  a MUS song.
  */
 boolean Mus_IsMUSLump(int lump)
 {
@@ -267,10 +285,10 @@ boolean Mus_IsMUSLump(int lump)
     return !strncmp(buf, "MUS\x01a", 4);
 }
 
-/*
+/**
  * The lump may contain non-MUS data.
  *
- * @return: int             (true) if successful.
+ * @return:         Non-zero if successful.
  */
 int Mus_GetMUS(ded_music_t * def)
 {
@@ -293,11 +311,11 @@ int Mus_GetMUS(ded_music_t * def)
     return true;
 }
 
-/*
+/**
  * Load a song file.
  * Songs can be either in external files or non-MUS lumps.
  *
- * @return: int             (true) if an external file of that name exists.
+ * @return:         Non-zero if an external file of that name exists.
  */
 int Mus_GetExt(ded_music_t * def, char *path)
 {
@@ -366,8 +384,8 @@ int Mus_GetExt(ded_music_t * def, char *path)
     return true;
 }
 
-/*
- * @return: int         The track number if successful else zero.
+/**
+ * @return:         The track number if successful else zero.
  */
 int Mus_GetCD(ded_music_t * def)
 {
@@ -380,11 +398,12 @@ int Mus_GetCD(ded_music_t * def)
     return 0;
 }
 
-/*
+/**
  * Start playing a song. The chosen interface depends on what's available
- * and what kind of resources have been associated with the song. Returns
- * true if the song is successfully played. Any previously playing song
- * is stopped.
+ * and what kind of resources have been associated with the song.
+ * Any previously playing song is stopped.
+ *
+ * @return          Non-zero if the song is successfully played.
  */
 int Mus_Start(ded_music_t * def, boolean looped)
 {
@@ -456,7 +475,7 @@ int Mus_Start(ded_music_t * def, boolean looped)
     return false;
 }
 
-/*
+/**
  * CCmd: Play a music track.
  */
 D_CMD(PlayMusic)

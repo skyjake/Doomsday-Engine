@@ -212,9 +212,6 @@ desc = The Tab key is used to complete words in the console. The console knows h
 #
 # CONSOLE COMMANDS
 #
-[actions]
-desc = List all action commands.
-
 [add]
 desc = Add something to a cvar.
 
@@ -358,6 +355,9 @@ desc = Load a DKM keymap file.
 
 [kick]
 desc = Kick client out of the game.
+
+[listactions]
+desc = List all action commands.
 
 [listaliases]
 desc = List all aliases and their expanded forms.

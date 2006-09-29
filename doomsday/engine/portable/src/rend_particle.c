@@ -87,6 +87,18 @@ static boolean hasModels;
 
 // CODE --------------------------------------------------------------------
 
+void Rend_ParticleRegister(void)
+{
+    // Cvars
+    C_VAR_INT("rend-particle", &r_use_particles, 0, 0, 1);
+    C_VAR_INT("rend-particle-max", &r_max_particles, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-particle-rate", &r_particle_spawn_rate, 0, 0, 5);
+    C_VAR_FLOAT("rend-particle-diffuse", &rend_particle_diffuse,
+                CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-particle-visible-near", &rend_particle_nearlimit,
+              CVF_NO_MAX, 0, 0);
+}
+
 static fixed_t PG_PointDist(fixed_t c[3])
 {
     fixed_t dist = FixedMul(viewy - c[VY], -viewsin)    //viewsidex

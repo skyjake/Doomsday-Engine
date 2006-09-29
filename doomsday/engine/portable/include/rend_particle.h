@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -30,9 +30,8 @@
 
 extern int      r_use_particles, r_max_particles;
 extern float    r_particle_spawn_rate;
-extern int      rend_particle_nearlimit;
-extern float    rend_particle_diffuse;
 
+void            Rend_ParticleRegister(void);
 void            PG_InitTextures(void);
 void            PG_ShutdownTextures(void);
 void            PG_InitForLevel(void);

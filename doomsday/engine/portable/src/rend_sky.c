@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -55,6 +55,8 @@ typedef struct skyvertex_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(SkyDetail);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -87,6 +89,20 @@ static boolean yflip;
 static fadeout_t *currentFO;
 
 // CODE --------------------------------------------------------------------
+
+void Rend_SkyRegister(void)
+{
+    // Cvars
+    C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7);
+    C_VAR_INT("rend-sky-rows", &skyRows, CVF_PROTECTED, 1, 8);
+    C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0);
+    C_VAR_INT("rend-sky-full", &r_fullsky, 0, 0, 1);
+    C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2);
+
+    // Ccmds
+    C_CMD("skydetail", SkyDetail);
+    C_CMD("skyrows", SkyDetail);
+}
 
 void Rend_RenderSkyModels(void)
 {

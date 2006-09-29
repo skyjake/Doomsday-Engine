@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -31,39 +32,42 @@
 #include "sys_file.h"
 #include "con_decl.h"
 
-#define RECORD_FILENAMELEN	256
+#define RECORD_FILENAMELEN  256
 
 // File record flags.
-#define	FRF_RUNTIME		0x1		   // Loaded at runtime (for reset).
+#define FRF_RUNTIME     0x1        // Loaded at runtime (for reset).
 
-#define AUXILIARY_BASE	1000000000
+#define AUXILIARY_BASE  1000000000
 
-enum							   // Lump Grouping Tags
+enum                               // Lump Grouping Tags
 {
-	LGT_NONE = 0,
-	LGT_FLATS,
-	LGT_SPRITES,
-	NUM_LGTAGS
+    LGT_NONE = 0,
+    LGT_FLATS,
+    LGT_SPRITES,
+    NUM_LGTAGS
 };
 
 typedef struct {
-	char            filename[RECORD_FILENAMELEN];	// Full filename (every '\' -> '/').
-	int             numlumps;	   // Number of lumps.
-	int             flags;
-	DFILE          *handle;		   // File handle.
-	char            iwad;
+    char            filename[RECORD_FILENAMELEN];   // Full filename (every '\' -> '/').
+    int             numlumps;      // Number of lumps.
+    int             flags;
+    DFILE          *handle;        // File handle.
+    char            iwad;
 } filerecord_t;
 
 typedef struct {
-	char            name[9];	   // End in \0.
-	DFILE          *handle;
-	int             position, size;
-	int             sent;
-	char            group;		   // Lump grouping tag (LGT_*).
+    char            name[9];       // End in \0.
+    DFILE          *handle;
+    int             position, size;
+    int             sent;
+    char            group;         // Lump grouping tag (LGT_*).
 } lumpinfo_t;
 
+extern char    *defaultWads;       // A list of wad names, whitespace in between (in .cfg).
 extern lumpinfo_t *lumpinfo;
 extern int      numlumps;
+
+void            DD_RegisterVFS(void);
 
 void            W_InitMultipleFiles(char **filenames);
 void            W_EndStartup(void);
@@ -73,7 +77,7 @@ int             W_LumpLength(int lump);
 const char     *W_LumpName(int lump);
 void            W_ReadLump(int lump, void *dest);
 void            W_ReadLumpSection(int lump, void *dest, int startoffset,
-								  int length);
+                                  int length);
 void           *W_CacheLumpNum(int lump, int tag);
 void           *W_CacheLumpName(char *name, int tag);
 boolean         W_AddFile(const char *filename, boolean allowDuplicate);
@@ -89,7 +93,5 @@ unsigned int    W_CRCNumber(void);
 void            W_GetIWADFileName(char *buf, int bufSize);
 void            W_GetPWADFileNames(char *buf, int bufSize, char separator);
 void            W_PrintMapList(void);
-
-D_CMD(ListMaps);
 
 #endif

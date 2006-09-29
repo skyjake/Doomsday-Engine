@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -109,6 +109,7 @@ typedef struct mapdatalumpinfo_s {
     int     length;
 } mapdatalumpinfo_t;
 
+void        DAM_Register(void);
 void        P_InitMapDataFormats(void);
 boolean     P_LoadMapData(char *levelId);
 boolean     P_GLNodeDataPresent(void);

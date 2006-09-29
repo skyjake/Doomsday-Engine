@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -75,6 +75,19 @@ static decorsource_t *sourceFirst, *sourceLast, *sourceCursor;
 static float surfaceNormal[3];
 
 // CODE --------------------------------------------------------------------
+
+void Rend_DecorRegister(void)
+{
+    C_VAR_BYTE("rend-light-decor", &useDecorations, 0, 0, 1);
+    C_VAR_FLOAT("rend-light-decor-plane-far", &decorPlaneMaxDist, CVF_NO_MAX,
+                0, 0);
+    C_VAR_FLOAT("rend-light-decor-wall-far", &decorWallMaxDist, CVF_NO_MAX,
+                0, 0);
+    C_VAR_FLOAT("rend-light-decor-plane-bright", &decorPlaneFactor, 0, 0,
+                10);
+    C_VAR_FLOAT("rend-light-decor-wall-bright", &decorWallFactor, 0, 0, 10);
+    C_VAR_FLOAT("rend-light-decor-angle", &decorFadeAngle, 0, 0, 1);
+}
 
 /**
  * Returns a pointer to the surface decoration, if any.

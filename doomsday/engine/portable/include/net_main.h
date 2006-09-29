@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -297,14 +297,5 @@ char           *Net_GetPlayerName(int player);
 ident_t         Net_GetPlayerID(int player);
 
 void            Net_PrintServerInfo(int index, serverinfo_t *info);
-
-// Console commands.
-D_CMD(Kick);
-D_CMD(SetName);
-D_CMD(SetTicks);
-D_CMD(MakeCamera);
-D_CMD(SetConsole);
-D_CMD(Connect);
-D_CMD(Net);
 
 #endif
