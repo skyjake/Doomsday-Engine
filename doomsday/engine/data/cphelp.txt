@@ -377,7 +377,7 @@ desc = List all the loaded data files and show information about them.
 [listmaps]
 desc = List all loaded maps.
 
-[listmobjs]
+[listmobjtypes]
 desc = List all known mobj types.
 
 [listvars]
