@@ -1660,7 +1660,7 @@ boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
 void DL_ClipInSubsector(int ssecidx)
 {
     subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
-    lumobj_t *lumi;
+    lumobj_t *lumi; // Lum Iterator, or 'snow' in Finnish. :-)
 
     // Determine which dynamic light sources in the subsector get clipped.
     for(lumi = dlSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)

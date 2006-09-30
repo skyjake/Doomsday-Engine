@@ -1639,7 +1639,6 @@ void Rend_RenderSubsector(int ssecidx)
     int         flags = 0;
     float       sceil = SECT_CEIL(sect);
     float       sfloor = SECT_FLOOR(sect);
-    lumobj_t   *lumi; // Lum Iterator, or 'snow' in Finnish. :-)
 
     if(sceil - sfloor <= 0 || ssec->numverts < 3)
     {
