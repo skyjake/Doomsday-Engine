@@ -725,17 +725,14 @@ desc = 1=Always render the full sky sphere.
 [rend-sky-simple]
 desc = Sky rendering mode: 0=normal, 1=quads.
 
+[rend-sprite-align]
+desc = 1=Always align sprites with the view plane. 2=Align to camera, unless slant > r_maxSpriteAngle.
+
 [rend-sprite-align-angle]
 desc = Maximum angle for slanted sprites (spralign 2).
 
-[rend-sprite-noz]
-desc = 1=Don't write sprites in the Z buffer.
-
-[rend-sprite-precache]
-desc = 1=Precache sprites at level setup (slow).
-
-[rend-sprite-align]
-desc = 1=Always align sprites with the view plane. 2=Align to camera, unless slant > r_maxSpriteAngle.
+[rend-sprite-alpha]
+desc = 1=Enable variable translucency on sprites.
 
 [rend-sprite-blend]
 desc = 1=Use additive blending for explosions.
@@ -745,6 +742,12 @@ desc = 1=Sprites lit using dynamic lights.
 
 [rend-sprite-mode]
 desc = 1=Draw sprites and masked walls with hard edges.
+
+[rend-sprite-noz]
+desc = 1=Don't write sprites in the Z buffer.
+
+[rend-sprite-precache]
+desc = 1=Precache sprites at level setup (slow).
 
 [rend-model]
 desc = Render using 3D models when possible.

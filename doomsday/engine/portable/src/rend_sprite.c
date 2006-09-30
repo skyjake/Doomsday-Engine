@@ -63,18 +63,21 @@ static byte *slRGB1, *slRGB2;
 static fvertex_t slViewVec;
 static vissprite_t *slSpr;
 
+static int useSpriteAlpha = 1;
+
 // CODE --------------------------------------------------------------------
 
 void Rend_SpriteRegister(void)
 {
     // Cvars
-    C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90);
-    C_VAR_INT("rend-sprite-noz", &r_nospritez, 0, 0, 1);
-    C_VAR_BYTE("rend-sprite-precache", &r_precache_sprites, 0, 0, 1);
     C_VAR_INT("rend-sprite-align", &alwaysAlign, 0, 0, 3);
+    C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90);
+    C_VAR_INT("rend-sprite-alpha", &useSpriteAlpha, 0, 0, 1);
     C_VAR_INT("rend-sprite-blend", &missileBlend, 0, 0, 1);
     C_VAR_INT("rend-sprite-lit", &litSprites, 0, 0, 1);
     C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
+    C_VAR_INT("rend-sprite-noz", &r_nospritez, 0, 0, 1);
+    C_VAR_BYTE("rend-sprite-precache", &r_precache_sprites, 0, 0, 1);
 }
 
 /**
@@ -599,21 +602,28 @@ void Rend_RenderSprite(vissprite_t * spr)
     sprh = spritelumps[patch]->height;
 
     // Set the lighting and alpha.
-    if(missileBlend && spr->data.mo.flags & DDMF_BRIGHTSHADOW)
+    if(useSpriteAlpha)
     {
-        alpha = 204;            // 80 %.
-        additiveBlending = true;
+        if(missileBlend && spr->data.mo.flags & DDMF_BRIGHTSHADOW)
+        {
+            alpha = 204;            // 80 %.
+        }
+        else if(spr->data.mo.flags & DDMF_SHADOW)
+            alpha = 51;             // One third.
+        else if(spr->data.mo.flags & DDMF_ALTSHADOW)
+            alpha = 160;            // Two thirds.
+        else
+            alpha = 255;
+
+        // Sprite has a custom alpha multiplier?
+        if(spr->data.mo.alpha >= 0)
+            alpha *= spr->data.mo.alpha;
     }
-    else if(spr->data.mo.flags & DDMF_SHADOW)
-        alpha = 51;             //85;        // One third.
-    else if(spr->data.mo.flags & DDMF_ALTSHADOW)
-        alpha = 160;            // Two thirds.
     else
         alpha = 255;
 
-    // Sprite has a custom alpha multiplier?
-    if(spr->data.mo.alpha >= 0)
-        alpha *= spr->data.mo.alpha;
+    if(missileBlend && spr->data.mo.flags & DDMF_BRIGHTSHADOW)
+        additiveBlending = true;
 
     if(spr->data.mo.lightlevel < 0)
     {
@@ -787,7 +797,7 @@ void Rend_RenderSprite(vissprite_t * spr)
         // Change the blending mode.
         gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
     }
-    else if(noSpriteTrans)
+    else if(noSpriteTrans && alpha >= 250)
     {
         // Use the "no translucency" blending mode.
         GL_BlendMode(BM_ZEROALPHA);
