@@ -18,10 +18,6 @@ REM ---- DirectX:
 SET DX_INC=D:\sdk\dx8\include
 SET DX_LIB=D:\sdk\dx8\lib
 
-REM ---- FMOD:
-SET FMOD_INC=D:\sdk\fmod\api\inc
-SET FMOD_LIB=D:\sdk\fmod\api\lib
-
 REM ---- Creative Labs EAX:
 SET EAX_INC=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Include
 SET EAX_LIB=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Libs

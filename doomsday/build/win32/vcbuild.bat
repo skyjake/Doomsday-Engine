@@ -61,7 +61,7 @@ CALL vcconfig.bat
 :: -- Compiler and linker options.
 SET DEFINES=/D "ZLIB_DLL" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS"
 SET DLLDEFINES=/D "_USRDLL" /D "_WINDLL" %DEFINES%
-SET INCS=/I "%FMOD_INC%" /I "%EAX_INC%" /I "%SDL_INC%" /I "%SDLNET_INC%" /I "%DX_INC%" /I "%PLATFORM_INC%" /I "./../../engine/api"
+SET INCS=/I "%EAX_INC%" /I "%SDL_INC%" /I "%SDLNET_INC%" /I "%DX_INC%" /I "%PLATFORM_INC%" /I "./../../engine/api"
 SET INCS_ENGINE_API=/I "./../../engine/api"
 SET INCS_ENGINE_PORTABLE=/I "./../../engine/portable/include"
 SET INCS_ENGINE_WIN32=/I "./../../engine/win32/include"
@@ -69,7 +69,7 @@ SET INCS_LZSS_PORTABLE=/I "./../../external/lzss/portable/include"
 SET INCS_LIBPNG_PORTABLE=/I "./../../external/libpng/portable/include"
 SET INCS_ZLIB=/I "./../../external/zlib/include"
 SET INCS_PLUGIN_COMMON=/I "./../../plugins/common/include"
-SET LIBS=/LIBPATH:"./Lib" /LIBPATH:"%DX_LIB%" /LIBPATH:"%EAX_LIB%" /LIBPATH:"%SDL_LIB%" /LIBPATH:"%SDLNET_LIB%" /LIBPATH:"%FMOD_LIB%" /LIBPATH:"%PLATFORM_LIB%" /LIBPATH:"./%BIN_DIR%"
+SET LIBS=/LIBPATH:"./Lib" /LIBPATH:"%DX_LIB%" /LIBPATH:"%EAX_LIB%" /LIBPATH:"%SDL_LIB%" /LIBPATH:"%SDLNET_LIB%" /LIBPATH:"%PLATFORM_LIB%" /LIBPATH:"./%BIN_DIR%"
 SET FLAGS=/Ob1 /Oi /Ot /Oy /GF /FD /EHsc /MT /GS /Gy /Fo"./Obj/Release/" /Fd"./Obj/Release/" /W3 /Gz /Gs
 SET LFLAGS=/INCREMENTAL:NO /SUBSYSTEM:WINDOWS /MACHINE:I386 
 SET EXTERNAL=./../../external
@@ -145,7 +145,7 @@ GOTO DONE
 :Doomsday
 CALL vcbuild checkdmt
 ECHO Compiling Doomsday.exe (Engine)...
-cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% sdl_net.lib sdl.lib wsock32.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib fmodvc.lib %EXTERNAL%/lzss/win32/lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/LZSS.lib gdi32.lib ole32.lib user32.lib
+cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% sdl_net.lib sdl.lib wsock32.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/LZSS.lib gdi32.lib ole32.lib user32.lib
 GOTO Done
 
 

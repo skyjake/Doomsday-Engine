@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +40,6 @@
 #ifdef WIN32
 #  include "sys_sfxd_ds.h"
 #  include "sys_musd_win.h"
-#  include "sys_musd_fmod.h"
 #endif
 
 #endif

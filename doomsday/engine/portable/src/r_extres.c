@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,9 +96,8 @@ static const char *classExtension[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
     {".png", ".tga", ".pcx", NULL},
     {".png", ".tga", ".pcx", NULL},
 
-    // Extension doesn't matter with music, FMOD will either recognize
-    // it or not.
-    {".mp3", ".ogg", ".wav", ".xm", ".s3m", ".mod", ".it", ".mid", NULL},
+    // Extension doesn't matter with music.
+    {".ogg", ".mp3", ".wav", ".mod", ".mid", NULL},
 
     // Only WAV files for sound effects.
     {".wav", NULL},

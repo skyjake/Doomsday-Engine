@@ -91,7 +91,6 @@
  ./../../engine/portable/src/sys_sfxd_dummy.c
  ./../../engine/win32/src/sys_sfxd_ds.c
  ./../../engine/win32/src/sys_musd_win.c
- ./../../engine/win32/src/sys_musd_fmod.c
  ./../../engine/portable/src/sys_timer.c
  ./../../engine/portable/src/sys_system.c
  ./../../engine/win32/src/sys_stwin.c

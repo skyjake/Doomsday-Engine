@@ -128,21 +128,8 @@ boolean Mus_Init(void)
     {
         Con_Message("Mus_Init: Failed to initialize Win driver.\n");
     }
-
-    // Can we use FMOD?
-    if(!ArgExists("-nofmod") && musd_fmod.Init())
-    {
-        // FMOD has been successfully initialized.
-        // We get the CD and Ext interfaces.
-        iext = &musd_fmod_iext;
-        icd = &musd_fmod_icd;
-    }
-    else
-    {
-        // FMOD is either disabled or the init failed.
-        // Must rely on Windows, then, without an Ext interface.
-        icd = &musd_win_icd;
-    }
+	// Must rely on Windows without an Ext interface.
+	icd = &musd_win_icd;
 #endif
 #ifdef UNIX
     // The available interfaces have already been loaded.
@@ -194,7 +181,6 @@ void Mus_Shutdown(void)
 
     // Shut down the drivers. They shut down their interfaces automatically.
 #ifdef WIN32
-    musd_fmod.Shutdown();
     musd_win.Shutdown();
 #endif
 #ifdef UNIX
@@ -338,8 +324,7 @@ int Mus_GetExt(ded_music_t * def, char *path)
             if(path)
             {
                 // Because the song can be in a virtual file, we must buffer
-                // it ourselves. Otherwise FMOD might not be able to load
-                // the song.
+                // it ourselves.
                 DFILE  *file = F_Open(buf, "rb");
 
                 ptr = iext->SongBuffer(len = F_Length(file));
@@ -359,7 +344,7 @@ int Mus_GetExt(ded_music_t * def, char *path)
     if(R_FindResource(RC_MUSIC, def->lumpname, NULL, path))
     {
         // We must read the song into a buffer, because the path may
-        // be a virtual file and FMOD doesn't know anything about those.
+        // be a virtual file and the audio driver may not know anything about those.
         DFILE  *file = F_Open(path, "rb");
 
         ptr = iext->SongBuffer(len = F_Length(file));
