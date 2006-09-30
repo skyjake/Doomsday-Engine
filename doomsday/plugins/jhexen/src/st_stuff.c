@@ -141,7 +141,6 @@ extern boolean hu_showallfrags; // in hu_stuff.c currently
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-int     curpos;
 int     inventoryTics;
 boolean inventory = false;
 
@@ -265,8 +264,6 @@ static boolean st_fragson;
 static boolean st_blended = false;
 
 static int HealthMarker;
-static player_t *CPlayer;
-
 
 static int FontBNumBase;
 int lu_palette;
@@ -723,14 +720,14 @@ void ST_updateWidgets(void)
         oldarti = -1;           // so that the correct artifact fills in after the flash
     }
     else if(oldarti != plr->readyArtifact ||
-            oldartiCount != plr->inventory[inv_ptr].count)
+            oldartiCount != plr->inventory[plr->inv_ptr].count)
     {
         if(plr->readyArtifact > 0)
         {
             st_artici = plr->readyArtifact + 5;
         }
         oldarti = plr->readyArtifact;
-        oldartiCount = plr->inventory[inv_ptr].count;
+        oldartiCount = plr->inventory[plr->inv_ptr].count;
     }
 
     // Armor
@@ -809,7 +806,7 @@ void ST_updateWidgets(void)
 
     // update the inventory
 
-    x = inv_ptr - curpos;
+    x = plr->inv_ptr - plr->curpos;
 
     for(i = 0; i < NUMVISINVSLOTS; i++)
     {
@@ -835,13 +832,14 @@ void ST_Ticker(void)
 {
     int     delta;
     int     curHealth;
+    player_t *plr = &players[consoleplayer];
 
-    if(!players[consoleplayer].plr->mo)
+    if(!plr->plr->mo)
         return;
 
     ST_updateWidgets();
 
-    curHealth = players[consoleplayer].plr->mo->health;
+    curHealth = plr->plr->mo->health;
     if(curHealth < 0)
     {
         curHealth = 0;
@@ -876,8 +874,7 @@ void ST_Ticker(void)
     // turn inventory off after a certain amount of time
     if(inventory && !(--inventoryTics))
     {
-        players[consoleplayer].readyArtifact =
-            players[consoleplayer].inventory[inv_ptr].type;
+        plr->readyArtifact = plr->inventory[plr->inv_ptr].type;
         inventory = false;
     }
 }
@@ -1144,6 +1141,7 @@ void ST_refreshBackground(void)
 {
     int x, y, w, h;
     float cw, cw2, ch;
+    player_t *plyr = &players[consoleplayer];
 
     if(st_blended && ((cfg.statusbarAlpha < 1.0f) && (cfg.statusbarAlpha > 0.0f)))
     {
@@ -1318,7 +1316,7 @@ void ST_refreshBackground(void)
             {
                 GL_DrawPatch(38, 162, PatchNumSTATBAR.lump);
 
-                if(CPlayer->pieces == 7)
+                if(plyr->pieces == 7)
                 {
                     GL_DrawPatch(190, 162, PatchNumWEAPONFULL.lump);
 
@@ -1379,9 +1377,9 @@ void ST_doRefresh(void)
 void ST_Drawer(int fullscreenmode, boolean refresh )
 {
     st_firsttime = st_firsttime || refresh;
-    st_statusbaron = (fullscreenmode < 2) || ( automapactive && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
-
-    CPlayer = &players[consoleplayer];
+    st_statusbaron = (fullscreenmode < 2) ||
+                      (automapactive &&
+                       (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
 
     // Do palette shifts
     ST_doPaletteStuff(false);
@@ -1444,6 +1442,7 @@ static void DrawAnimatedIcons(void)
     int     frame;
     static boolean hitCenterFrame;
     float iconalpha = (st_statusbaron? 1: hudalpha) - ( 1 - cfg.hudIconAlpha);
+    player_t *plyr = &players[consoleplayer];
 
     //  extern int screenblocks;
 
@@ -1455,13 +1454,13 @@ static void DrawAnimatedIcons(void)
     Draw_BeginZoom(cfg.hudScale, 2, 2);
 
     // Wings of wrath
-    if(CPlayer->powers[pw_flight])
+    if(plyr->powers[pw_flight])
     {
-        if(CPlayer->powers[pw_flight] > BLINKTHRESHOLD ||
-           !(CPlayer->powers[pw_flight] & 16))
+        if(plyr->powers[pw_flight] > BLINKTHRESHOLD ||
+           !(plyr->powers[pw_flight] & 16))
         {
             frame = (leveltime / 3) & 15;
-            if(CPlayer->plr->mo->flags2 & MF2_FLY)
+            if(plyr->plr->mo->flags2 & MF2_FLY)
             {
                 if(hitCenterFrame && (frame != 15 && frame != 0))
                 {
@@ -1491,10 +1490,10 @@ static void DrawAnimatedIcons(void)
     }
 
     // Speed Boots
-    if(CPlayer->powers[pw_speed])
+    if(plyr->powers[pw_speed])
     {
-        if(CPlayer->powers[pw_speed] > BLINKTHRESHOLD ||
-           !(CPlayer->powers[pw_speed] & 16))
+        if(plyr->powers[pw_speed] > BLINKTHRESHOLD ||
+           !(plyr->powers[pw_speed] & 16))
         {
             frame = (leveltime / 3) & 15;
             GL_DrawPatchLitAlpha(60 + leftoff, 19, 1, iconalpha, SpinSpeedLump.lump + frame);
@@ -1507,10 +1506,10 @@ static void DrawAnimatedIcons(void)
     Draw_BeginZoom(cfg.hudScale, 318, 2);
 
     // Defensive power
-    if(CPlayer->powers[pw_invulnerability])
+    if(plyr->powers[pw_invulnerability])
     {
-        if(CPlayer->powers[pw_invulnerability] > BLINKTHRESHOLD ||
-           !(CPlayer->powers[pw_invulnerability] & 16))
+        if(plyr->powers[pw_invulnerability] > BLINKTHRESHOLD ||
+           !(plyr->powers[pw_invulnerability] & 16))
         {
             frame = (leveltime / 3) & 15;
             GL_DrawPatchLitAlpha(260, 19, 1, iconalpha, SpinDefenseLump.lump + frame);
@@ -1519,10 +1518,10 @@ static void DrawAnimatedIcons(void)
     }
 
     // Minotaur Active
-    if(CPlayer->powers[pw_minotaur])
+    if(plyr->powers[pw_minotaur])
     {
-        if(CPlayer->powers[pw_minotaur] > BLINKTHRESHOLD ||
-           !(CPlayer->powers[pw_minotaur] & 16))
+        if(plyr->powers[pw_minotaur] > BLINKTHRESHOLD ||
+           !(plyr->powers[pw_minotaur] & 16))
         {
             frame = (leveltime / 3) & 15;
             GL_DrawPatchLitAlpha(300, 19, 1, iconalpha, SpinMinotaurLump.lump + frame);
@@ -1546,6 +1545,7 @@ void ST_doPaletteStuff(boolean forceChange)
 {
     static int sb_palette = 0;
     int     palette;
+    player_t *plyr = &players[consoleplayer];
 
     if(forceChange)
     {
@@ -1553,36 +1553,36 @@ void ST_doPaletteStuff(boolean forceChange)
     }
     if(gamestate == GS_LEVEL)
     {
-        CPlayer = &players[consoleplayer];
-        if(CPlayer->poisoncount)
+        plyr = &players[consoleplayer];
+        if(plyr->poisoncount)
         {
             palette = 0;
-            palette = (CPlayer->poisoncount + 7) >> 3;
+            palette = (plyr->poisoncount + 7) >> 3;
             if(palette >= NUMPOISONPALS)
             {
                 palette = NUMPOISONPALS - 1;
             }
             palette += STARTPOISONPALS;
         }
-        else if(CPlayer->damagecount)
+        else if(plyr->damagecount)
         {
-            palette = (CPlayer->damagecount + 7) >> 3;
+            palette = (plyr->damagecount + 7) >> 3;
             if(palette >= NUMREDPALS)
             {
                 palette = NUMREDPALS - 1;
             }
             palette += STARTREDPALS;
         }
-        else if(CPlayer->bonuscount)
+        else if(plyr->bonuscount)
         {
-            palette = (CPlayer->bonuscount + 7) >> 3;
+            palette = (plyr->bonuscount + 7) >> 3;
             if(palette >= NUMBONUSPALS)
             {
                 palette = NUMBONUSPALS - 1;
             }
             palette += STARTBONUSPALS;
         }
-        else if(CPlayer->plr->mo->flags2 & MF2_ICEDAMAGE)
+        else if(plyr->plr->mo->flags2 & MF2_ICEDAMAGE)
         {                       // Frozen player
             palette = STARTICEPAL;
         }
@@ -1599,7 +1599,7 @@ void ST_doPaletteStuff(boolean forceChange)
     {
         sb_palette = palette;
         // $democam
-        CPlayer->plr->filter = R_GetFilterColor(palette);
+        plyr->plr->filter = R_GetFilterColor(palette);
     }
 }
 
@@ -1746,9 +1746,9 @@ void ST_drawWidgets(boolean refresh)
         STlib_updateNum(&w_armor, refresh);
 
         // current artifact
-        if(CPlayer->readyArtifact > 0){
+        if(plyr->readyArtifact > 0){
             STlib_updateMultIcon(&w_artici, refresh);
-            if(!ArtifactFlash && CPlayer->inventory[inv_ptr].count > 1)
+            if(!ArtifactFlash && plyr->inventory[plyr->inv_ptr].count > 1)
                 STlib_updateNum(&w_articount, refresh);
         }
 
@@ -1774,8 +1774,8 @@ void ST_drawWidgets(boolean refresh)
 
         // Draw the mana bars
         GL_SetNoTexture();
-        GL_DrawRect(95, 165, 3, 22 - (22 * CPlayer->ammo[0]) / MAX_MANA, 0, 0, 0, cfg.statusbarAlpha);
-        GL_DrawRect(103, 165, 3, 22 - (22 * CPlayer->ammo[1]) / MAX_MANA, 0, 0, 0, cfg.statusbarAlpha);
+        GL_DrawRect(95, 165, 3, 22 - (22 * plyr->ammo[0]) / MAX_MANA, 0, 0, 0, cfg.statusbarAlpha);
+        GL_DrawRect(103, 165, 3, 22 - (22 * plyr->ammo[1]) / MAX_MANA, 0, 0, 0, cfg.statusbarAlpha);
 
         } else {
         DrawKeyBar();
@@ -1785,7 +1785,7 @@ void ST_drawWidgets(boolean refresh)
     else
     {   // Draw Inventory
 
-        x = inv_ptr - curpos;
+        x = plyr->inv_ptr - plyr->curpos;
 
         for(i = 0; i < NUMVISINVSLOTS; i++){
             if( plyr->inventory[x + i].type != arti_none)
@@ -1798,14 +1798,14 @@ void ST_drawWidgets(boolean refresh)
         }
 
         // Draw selector box
-        GL_DrawPatch(ST_INVENTORYX + curpos * 31, 163, PatchNumSELECTBOX.lump);
+        GL_DrawPatch(ST_INVENTORYX + plyr->curpos * 31, 163, PatchNumSELECTBOX.lump);
 
         // Draw more left indicator
         if(x != 0)
             GL_DrawPatchLitAlpha(42, 163, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchNumINVLFGEM1.lump : PatchNumINVLFGEM2.lump);
 
         // Draw more right indicator
-        if(CPlayer->inventorySlotNum - x > 7)
+        if(plyr->inventorySlotNum - x > 7)
             GL_DrawPatchLitAlpha(269, 163, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchNumINVRTGEM1.lump : PatchNumINVRTGEM2.lump);
     }
 }
@@ -1821,34 +1821,35 @@ void DrawKeyBar(void)
     int     i;
     int     xPosition;
     int     temp;
+    player_t *plyr = &players[consoleplayer];
 
     xPosition = 46;
     for(i = 0; i < NUMKEYS && xPosition <= 126; i++)
     {
-        if(CPlayer->keys & (1 << i))
+        if(plyr->keys & (1 << i))
         {
             GL_DrawPatchLitAlpha(xPosition, 163, 1, cfg.statusbarCounterAlpha, W_GetNumForName("keyslot1") + i);
             xPosition += 20;
         }
     }
     temp =
-        PCLASS_INFO(CPlayer->class)->autoarmorsave + CPlayer->armorpoints[ARMOR_ARMOR] +
-        CPlayer->armorpoints[ARMOR_SHIELD] +
-        CPlayer->armorpoints[ARMOR_HELMET] +
-        CPlayer->armorpoints[ARMOR_AMULET];
+        PCLASS_INFO(plyr->class)->autoarmorsave + plyr->armorpoints[ARMOR_ARMOR] +
+        plyr->armorpoints[ARMOR_SHIELD] +
+        plyr->armorpoints[ARMOR_HELMET] +
+        plyr->armorpoints[ARMOR_AMULET];
     for(i = 0; i < NUMARMOR; i++)
     {
-        if(!CPlayer->armorpoints[i])
+        if(!plyr->armorpoints[i])
         {
             continue;
         }
-        if(CPlayer->armorpoints[i] <= (PCLASS_INFO(CPlayer->class)->armorincrement[i] >> 2))
+        if(plyr->armorpoints[i] <= (PCLASS_INFO(plyr->class)->armorincrement[i] >> 2))
         {
             GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, cfg.statusbarCounterAlpha * 0.3,
                              W_GetNumForName("armslot1") + i);
         }
-        else if(CPlayer->armorpoints[i] <=
-                (PCLASS_INFO(CPlayer->class)->armorincrement[i] >> 1))
+        else if(plyr->armorpoints[i] <=
+                (PCLASS_INFO(plyr->class)->armorincrement[i] >> 1))
         {
             GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, cfg.statusbarCounterAlpha * 0.6,
                                 W_GetNumForName("armslot1") + i);
@@ -1875,17 +1876,17 @@ static void DrawWeaponPieces(void)
         GL_DrawPatchLitAlpha(190, 162, 1, cfg.statusbarCounterAlpha, PatchNumWEAPONFULL.lump);
     else
     {
-        if(CPlayer->pieces & WPIECE1)
+        if(plyr->pieces & WPIECE1)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.PlayerClass[consoleplayer])->piecex[0], 162,
                             1, cfg.statusbarCounterAlpha, PatchNumPIECE1.lump);
         }
-        if(CPlayer->pieces & WPIECE2)
+        if(plyr->pieces & WPIECE2)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.PlayerClass[consoleplayer])->piecex[1], 162,
                             1, cfg.statusbarCounterAlpha, PatchNumPIECE2.lump);
         }
-        if(CPlayer->pieces & WPIECE3)
+        if(plyr->pieces & WPIECE3)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.PlayerClass[consoleplayer])->piecex[2], 162,
                             1, cfg.statusbarCounterAlpha, PatchNumPIECE3.lump);
@@ -1906,6 +1907,7 @@ void ST_doFullscreenStuff(void)
     int     temp;
     float textalpha = hudalpha - ( 1 - cfg.hudColor[3]);
     float iconalpha = hudalpha - ( 1 - cfg.hudIconAlpha);
+    player_t *plyr = &players[consoleplayer];
 
 #ifdef DEMOCAM
     if(demoplayback && democam.mode)
@@ -1915,14 +1917,15 @@ void ST_doFullscreenStuff(void)
     if(cfg.hudShown[HUD_HEALTH])
     {
     Draw_BeginZoom(cfg.hudScale, 5, 198);
-    if(CPlayer->plr->mo->health > 0)
+    if(plyr->plr->mo->health > 0)
     {
-        DrBNumber(CPlayer->plr->mo->health, 5, 180,
-                      cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        DrBNumber(plyr->plr->mo->health, 5, 180,
+                  cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
     }
     else
     {
-        DrBNumber(0, 5, 180, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        DrBNumber(0, 5, 180, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
+                  textalpha);
     }
     Draw_EndZoom();
     }
@@ -1935,26 +1938,26 @@ void ST_doFullscreenStuff(void)
         int     ypos = cfg.hudShown[HUD_MANA] == 2 ? 152 : 2;
 
         for(i = 0; i < 2; i++)
-            if(CPlayer->ammo[i] == 0)
+            if(plyr->ammo[i] == 0)
                 patches[i] = dim[i];
-        if(CPlayer->readyweapon == WP_FIRST)
+        if(plyr->readyweapon == WP_FIRST)
         {
             for(i = 0; i < 2; i++)
                 patches[i] = dim[i];
         }
-        if(CPlayer->readyweapon == WP_SECOND)
+        if(plyr->readyweapon == WP_SECOND)
         {
             if(!patches[0])
                 patches[0] = bright[0];
             patches[1] = dim[1];
         }
-        if(CPlayer->readyweapon == WP_THIRD)
+        if(plyr->readyweapon == WP_THIRD)
         {
             patches[0] = dim[0];
             if(!patches[1])
                 patches[1] = bright[1];
         }
-        if(CPlayer->readyweapon == WP_FOURTH)
+        if(plyr->readyweapon == WP_FOURTH)
         {
             for(i = 0; i < 2; i++)
                 if(!patches[i])
@@ -1964,7 +1967,7 @@ void ST_doFullscreenStuff(void)
         for(i = 0; i < 2; i++)
         {
             GL_DrawPatchLitAlpha(2, ypos + i * 13, 1, iconalpha, patches[i]);
-            DrINumber(CPlayer->ammo[i], 18, ypos + i * 13, 1, 1, 1, textalpha);
+            DrINumber(plyr->ammo[i], 18, ypos + i * 13, 1, 1, 1, textalpha);
         }
         Draw_EndZoom();
     }
@@ -1976,7 +1979,7 @@ void ST_doFullscreenStuff(void)
         {
             if(players[i].plr->ingame)
             {
-                temp += CPlayer->frags[i];
+                temp += plyr->frags[i];
             }
         }
         Draw_BeginZoom(cfg.hudScale, 2, 198);
@@ -1986,15 +1989,16 @@ void ST_doFullscreenStuff(void)
     if(!inventory)
     {
         if(cfg.hudShown[HUD_ARTI]){
-            if(CPlayer->readyArtifact > 0)
+            if(plyr->readyArtifact > 0)
             {
                     Draw_BeginZoom(cfg.hudScale, 318, 198);
                 GL_DrawPatchLitAlpha(286, 170, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
                 GL_DrawPatchLitAlpha(284, 169, 1, iconalpha,
-                         W_GetNumForName(artifactlist[CPlayer->readyArtifact+5]));
-                if(CPlayer->inventory[inv_ptr].count > 1)
+                         W_GetNumForName(artifactlist[plyr->readyArtifact+5]));
+                if(plyr->inventory[plyr->inv_ptr].count > 1)
                 {
-                    DrSmallNumber(CPlayer->inventory[inv_ptr].count, 302, 192, 1, 1, 1, textalpha);
+                    DrSmallNumber(plyr->inventory[plyr->inv_ptr].count,
+                                  302, 192, 1, 1, 1, textalpha);
                 }
                     Draw_EndZoom();
             }
@@ -2007,32 +2011,32 @@ void ST_doFullscreenStuff(void)
         invScale = MINMAX_OF(0.25f, cfg.hudScale - 0.25f, 0.8f);
 
         Draw_BeginZoom(invScale, 160, 198);
-        x = inv_ptr - curpos;
+        x = plyr->inv_ptr - plyr->curpos;
         for(i = 0; i < 7; i++)
         {
             GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
-            if(CPlayer->inventorySlotNum > x + i &&
-               CPlayer->inventory[x + i].type != arti_none)
+            if(plyr->inventorySlotNum > x + i &&
+               plyr->inventory[x + i].type != arti_none)
             {
-                GL_DrawPatchLitAlpha(49 + i * 31, 167, 1, i==curpos? hudalpha : iconalpha,
-                             W_GetNumForName(artifactlist[CPlayer->inventory
+                GL_DrawPatchLitAlpha(49 + i * 31, 167, 1, i==plyr->curpos? hudalpha : iconalpha,
+                             W_GetNumForName(artifactlist[plyr->inventory
                                                        [x + i].type+5]));
 
-                if(CPlayer->inventory[x + i].count > 1)
+                if(plyr->inventory[x + i].count > 1)
                 {
-                    DrSmallNumber(CPlayer->inventory[x + i].count, 66 + i * 31,
-                                  188,1, 1, 1, i==curpos? hudalpha : textalpha/2);
+                    DrSmallNumber(plyr->inventory[x + i].count, 66 + i * 31,
+                                  188,1, 1, 1, i==plyr->curpos? hudalpha : textalpha/2);
                 }
             }
         }
-        GL_DrawPatchLitAlpha(50 + curpos * 31, 167, 1, hudalpha,PatchNumSELECTBOX.lump);
+        GL_DrawPatchLitAlpha(50 + plyr->curpos * 31, 167, 1, hudalpha,PatchNumSELECTBOX.lump);
         if(x != 0)
         {
             GL_DrawPatchLitAlpha(40, 167, 1, iconalpha,
                          !(leveltime & 4) ? PatchNumINVLFGEM1.lump :
                          PatchNumINVLFGEM2.lump);
         }
-        if(CPlayer->inventorySlotNum - x > 7)
+        if(plyr->inventorySlotNum - x > 7)
         {
             GL_DrawPatchLitAlpha(268, 167, 1, iconalpha,
                          !(leveltime & 4) ? PatchNumINVRTGEM1.lump :

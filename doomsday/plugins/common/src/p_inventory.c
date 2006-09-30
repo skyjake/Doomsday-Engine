@@ -76,7 +76,6 @@ boolean     P_UsePuzzleItem(player_t *player, int itemType);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int             inv_ptr;
 boolean         usearti = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -150,13 +149,13 @@ boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
         player->readyArtifact = arti;
     }
 #if __JHEXEN__
-    else if(player == &players[consoleplayer] && slidePointer && i <= inv_ptr)
+    else if(slidePointer && i <= player->inv_ptr)
     {
-        inv_ptr++;
-        curpos++;
-        if(curpos > 6)
+        player->inv_ptr++;
+        player->curpos++;
+        if(player->curpos > 6)
         {
-            curpos = 6;
+            player->curpos = 6;
         }
     }
 #else
@@ -174,30 +173,30 @@ boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
 # if __JHERETIC__
 void P_InventoryCheckReadyArtifact(player_t *player)
 {
-    if(!player || player != &players[consoleplayer])
+    if(!player)
         return;
 
-    if(!player->inventory[inv_ptr].count)
+    if(!player->inventory[player->inv_ptr].count)
     {
         // Set position markers and get next readyArtifact
-        inv_ptr--;
-        if(inv_ptr < 6)
+        player->inv_ptr--;
+        if(player->inv_ptr < 6)
         {
-            curpos--;
-            if(curpos < 0)
+            player->curpos--;
+            if(player->curpos < 0)
             {
-                curpos = 0;
+                player->curpos = 0;
             }
         }
-        if(inv_ptr >= player->inventorySlotNum)
+        if(player->inv_ptr >= player->inventorySlotNum)
         {
-            inv_ptr = player->inventorySlotNum - 1;
+            player->inv_ptr = player->inventorySlotNum - 1;
         }
-        if(inv_ptr < 0)
+        if(player->inv_ptr < 0)
         {
-            inv_ptr = 0;
+            player->inv_ptr = 0;
         }
-        player->readyArtifact = player->inventory[inv_ptr].type;
+        player->readyArtifact = player->inventory[player->inv_ptr].type;
 
         if(!player->inventorySlotNum)
             player->readyArtifact = arti_none;
@@ -207,31 +206,31 @@ void P_InventoryCheckReadyArtifact(player_t *player)
 
 void P_InventoryNextArtifact(player_t *player)
 {
-    if(!player || player != &players[consoleplayer])
+    if(!player)
         return;
 
-    inv_ptr--;
-    if(inv_ptr < 6)
+    player->inv_ptr--;
+    if(player->inv_ptr < 6)
     {
-        curpos--;
-        if(curpos < 0)
+        player->curpos--;
+        if(player->curpos < 0)
         {
-            curpos = 0;
+            player->curpos = 0;
         }
     }
-    if(inv_ptr < 0)
+    if(player->inv_ptr < 0)
     {
-        inv_ptr = player->inventorySlotNum - 1;
-        if(inv_ptr < 6)
+        player->inv_ptr = player->inventorySlotNum - 1;
+        if(player->inv_ptr < 6)
         {
-            curpos = inv_ptr;
+            player->curpos = player->inv_ptr;
         }
         else
         {
-            curpos = 6;
+            player->curpos = 6;
         }
     }
-    player->readyArtifact = player->inventory[inv_ptr].type;
+    player->readyArtifact = player->inventory[player->inv_ptr].type;
 }
 
 void P_InventoryRemoveArtifact(player_t *player, int slot)
@@ -257,24 +256,22 @@ void P_InventoryRemoveArtifact(player_t *player, int slot)
 
         player->inventorySlotNum--;
 
-        if(player == &players[consoleplayer])
-        {   // Set position markers and get next readyArtifact
-            inv_ptr--;
-            if(inv_ptr < 6)
-            {
-                curpos--;
-                if(curpos < 0)
-                    curpos = 0;
-            }
-
-            if(inv_ptr >= player->inventorySlotNum)
-                inv_ptr = player->inventorySlotNum - 1;
-
-            if(inv_ptr < 0)
-                inv_ptr = 0;
-
-            player->readyArtifact = player->inventory[inv_ptr].type;
+        // Set position markers and get next readyArtifact
+        player->inv_ptr--;
+        if(player->inv_ptr < 6)
+        {
+            player->curpos--;
+            if(player->curpos < 0)
+                player->curpos = 0;
         }
+
+        if(player->inv_ptr >= player->inventorySlotNum)
+            player->inv_ptr = player->inventorySlotNum - 1;
+
+        if(player->inv_ptr < 0)
+            player->inv_ptr = 0;
+
+        player->readyArtifact = player->inventory[player->inv_ptr].type;
     }
 }
 
@@ -330,6 +327,15 @@ boolean P_InventoryUseArtifact(player_t *player, artitype_e arti)
 # endif
 
     return success;
+}
+
+void P_InventoryResetCursor(player_t *player)
+{
+    if(!player)
+        return;
+
+    player->inv_ptr = 0;
+    player->curpos = 0;
 }
 
 /*
@@ -607,35 +613,35 @@ static boolean P_InventoryMove(player_t *plr, int dir)
 
     if(dir == 0)
     {
-        inv_ptr--;
-        if(inv_ptr < 0)
+        plr->inv_ptr--;
+        if(plr->inv_ptr < 0)
         {
-            inv_ptr = 0;
+            plr->inv_ptr = 0;
         }
         else
         {
-            curpos--;
-            if(curpos < 0)
+            plr->curpos--;
+            if(plr->curpos < 0)
             {
-                curpos = 0;
+                plr->curpos = 0;
             }
         }
     }
     else
     {
-        inv_ptr++;
-        if(inv_ptr >= plr->inventorySlotNum)
+        plr->inv_ptr++;
+        if(plr->inv_ptr >= plr->inventorySlotNum)
         {
-            inv_ptr--;
-            if(inv_ptr < 0)
-                inv_ptr = 0;
+            plr->inv_ptr--;
+            if(plr->inv_ptr < 0)
+                plr->inv_ptr = 0;
         }
         else
         {
-            curpos++;
-            if(curpos > 6)
+            plr->curpos++;
+            if(plr->curpos > 6)
             {
-                curpos = 6;
+                plr->curpos = 6;
             }
         }
     }
@@ -647,7 +653,24 @@ static boolean P_InventoryMove(player_t *plr, int dir)
  */
 DEFCC(CCmdInventory)
 {
-    P_InventoryMove(players + consoleplayer, !stricmp(argv[0], "invright"));
+    int     player = consoleplayer;
+
+    if(argc > 2)
+    {
+        Con_Printf("Usage: %s (player)\n", argv[0]);
+        Con_Printf("If player is not specified, will default to consoleplayer.\n");
+        return true;
+    }
+
+    if(argc == 2)
+        player = strtol(argv[1], NULL, 0);
+
+    if(player < 0)
+        player = 0;
+    if(player > MAXPLAYERS -1)
+        player = MAXPLAYERS -1;
+
+    P_InventoryMove(&players[player], !stricmp(argv[0], "invright"));
     return true;
 }
 #endif

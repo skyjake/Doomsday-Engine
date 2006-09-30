@@ -633,7 +633,7 @@ boolean G_Responder(event_t *ev)
     {                           // flag to denote that it's okay to use an artifact
         if(!ST_IsInventoryVisible())
         {
-            plr->readyArtifact = plr->inventory[inv_ptr].type;
+            plr->readyArtifact = plr->inventory[plr->inv_ptr].type;
         }
         usearti = true;
     }
@@ -1157,13 +1157,12 @@ void G_PlayerReborn(int player)
 #endif
 
 #if !__JDOOM__
+    P_InventoryResetCursor(p);
     if(p == &players[consoleplayer])
     {
 #  if __JHEXEN__ || __JSTRIFE__
         SB_state = -1;          // refresh the status bar
 #  endif
-        inv_ptr = 0;            // reset the inventory pointer
-        curpos = 0;
     }
 #endif
 

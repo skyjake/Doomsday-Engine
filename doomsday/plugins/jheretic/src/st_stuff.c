@@ -146,7 +146,6 @@ extern boolean hu_showallfrags; // in hu_stuff.c currently
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     curpos;
 int     inventoryTics;
 boolean inventory = false;
 
@@ -559,7 +558,7 @@ void ST_updateWidgets(void)
         oldarti = -1;           // so that the correct artifact fills in after the flash
     }
     else if(oldarti != plr->readyArtifact ||
-            oldartiCount != plr->inventory[inv_ptr].count)
+            oldartiCount != plr->inventory[plr->inv_ptr].count)
     {
 
         if(plr->readyArtifact > 0)
@@ -568,11 +567,11 @@ void ST_updateWidgets(void)
         }
 
         oldarti = plr->readyArtifact;
-        oldartiCount = plr->inventory[inv_ptr].count;
+        oldartiCount = plr->inventory[plr->inv_ptr].count;
     }
 
     // update the inventory
-    x = inv_ptr - curpos;
+    x = plr->inv_ptr - plr->curpos;
     for(i = 0; i < NUMVISINVSLOTS; i++)
     {
         st_invslot[i] = plr->inventory[x + i].type +5;  // plus 5 for useartifact patches
@@ -725,6 +724,7 @@ void ST_Ticker(void)
     int     delta;
     int     curHealth;
     static int tomePlay = 0;
+    player_t *plyr = &players[consoleplayer];
 
     ST_updateWidgets();
 
@@ -732,7 +732,7 @@ void ST_Ticker(void)
     {
         ChainWiggle = P_Random() & 1;
     }
-    curHealth = players[consoleplayer].plr->mo->health;
+    curHealth = plyr->plr->mo->health;
     if(curHealth < 0)
     {
         curHealth = 0;
@@ -764,10 +764,10 @@ void ST_Ticker(void)
         HealthMarker += delta;
     }
     // Tome of Power countdown sound.
-    if(players[consoleplayer].powers[pw_weaponlevel2] &&
-       players[consoleplayer].powers[pw_weaponlevel2] < cfg.tomeSound * 35)
+    if(plyr->powers[pw_weaponlevel2] &&
+       plyr->powers[pw_weaponlevel2] < cfg.tomeSound * 35)
     {
-        int     timeleft = players[consoleplayer].powers[pw_weaponlevel2] / 35;
+        int     timeleft = plyr->powers[pw_weaponlevel2] / 35;
 
         if(tomePlay != timeleft)
         {
@@ -779,8 +779,7 @@ void ST_Ticker(void)
     // turn inventory off after a certain amount of time
     if(inventory && !(--inventoryTics))
     {
-        players[consoleplayer].readyArtifact =
-            players[consoleplayer].inventory[inv_ptr].type;
+        plyr->readyArtifact = plyr->inventory[plyr->inv_ptr].type;
         inventory = false;
     }
 }
@@ -1323,14 +1322,14 @@ void ST_drawWidgets(boolean refresh)
         if(plyr->readyArtifact > 0)
         {
             STlib_updateMultIcon(&w_artici, refresh);
-            if(!ArtifactFlash && plyr->inventory[inv_ptr].count > 1)
+            if(!ArtifactFlash && plyr->inventory[plyr->inv_ptr].count > 1)
                 STlib_updateNum(&w_articount, refresh);
         }
     }
     else
     {   // Draw Inventory
 
-        x = inv_ptr - curpos;
+        x = plyr->inv_ptr - plyr->curpos;
 
         for(i = 0; i < NUMVISINVSLOTS; i++){
             if( plyr->inventory[x + i].type != arti_none)
@@ -1343,7 +1342,7 @@ void ST_drawWidgets(boolean refresh)
         }
 
         // Draw selector box
-        GL_DrawPatch(ST_INVENTORYX + curpos * 31, 189, PatchSELECTBOX.lump);
+        GL_DrawPatch(ST_INVENTORYX + plyr->curpos * 31, 189, PatchSELECTBOX.lump);
 
         // Draw more left indicator
         if(x != 0)
@@ -1461,7 +1460,7 @@ void ST_doFullscreenStuff(void)
             GL_DrawPatchLitAlpha(286, 166, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
             GL_DrawPatchLitAlpha(286, 166, 1, iconalpha,
                          W_GetNumForName(artifactlist[plyr->readyArtifact + 5]));  //plus 5 for useartifact flashes
-            DrSmallNumber(plyr->inventory[inv_ptr].count, 307, 188, 1, 1, 1, textalpha);
+            DrSmallNumber(plyr->inventory[plyr->inv_ptr].count, 307, 188, 1, 1, 1, textalpha);
             Draw_EndZoom();
         }
     }
@@ -1472,20 +1471,20 @@ void ST_doFullscreenStuff(void)
         invScale = MINMAX_OF(0.25f, cfg.hudScale - 0.25f, 0.8f);
 
         Draw_BeginZoom(invScale, 160, 198);
-        x = inv_ptr - curpos;
+        x = plyr->inv_ptr - plyr->curpos;
         for(i = 0; i < 7; i++)
         {
             GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, iconalpha/2, W_GetNumForName("ARTIBOX"));
             if(plyr->inventorySlotNum > x + i &&
                plyr->inventory[x + i].type != arti_none)
             {
-                GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, i==curpos? hudalpha : iconalpha,
+                GL_DrawPatchLitAlpha(50 + i * 31, 168, 1, i==plyr->curpos? hudalpha : iconalpha,
                              W_GetNumForName(artifactlist[plyr->inventory[x + i].
                                               type +5])); //plus 5 for useartifact flashes
-                DrSmallNumber(plyr->inventory[x + i].count, 69 + i * 31, 190, 1, 1, 1, i==curpos? hudalpha : textalpha/2);
+                DrSmallNumber(plyr->inventory[x + i].count, 69 + i * 31, 190, 1, 1, 1, i==plyr->curpos? hudalpha : textalpha/2);
             }
         }
-        GL_DrawPatchLitAlpha(50 + curpos * 31, 197, 1, hudalpha, PatchSELECTBOX.lump);
+        GL_DrawPatchLitAlpha(50 + plyr->curpos * 31, 197, 1, hudalpha, PatchSELECTBOX.lump);
         if(x != 0)
         {
             GL_DrawPatchLitAlpha(38, 167, 1, iconalpha,

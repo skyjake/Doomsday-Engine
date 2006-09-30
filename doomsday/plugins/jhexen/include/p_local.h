@@ -252,8 +252,6 @@ void C_DECL     A_BridgeRemove(mobj_t *actor);
 
 // ***** ST_STUFF *****
 
-extern int      curpos;
-
 void            ST_Inventory(boolean show);
 boolean         ST_IsInventoryVisible(void);
 

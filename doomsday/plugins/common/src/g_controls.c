@@ -610,7 +610,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     {
         if(actions[A_SPEED].on && artiskip)
         {
-            if(players[consoleplayer].inventory[inv_ptr].type != arti_none)
+            if(cplr->inventory[cplr->inv_ptr].type != arti_none)
             {
                 actions[A_USEARTIFACT].on = false;
 
@@ -621,14 +621,12 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         {
             if(ST_IsInventoryVisible())
             {
-                players[consoleplayer].readyArtifact =
-                    players[consoleplayer].inventory[inv_ptr].type;
+                cplr->readyArtifact = cplr->inventory[cplr->inv_ptr].type;
 
                 ST_Inventory(false); // close the inventory
 
                 if(cfg.chooseAndUse)
-                    cmd->arti =
-                        players[consoleplayer].inventory[inv_ptr].type;
+                    cmd->arti = cplr->inventory[cplr->inv_ptr].type;
                 else
                     cmd->arti = 0;
 
@@ -636,7 +634,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
             }
             else if(usearti)
             {
-                cmd->arti = players[consoleplayer].inventory[inv_ptr].type;
+                cmd->arti = cplr->inventory[cplr->inv_ptr].type;
                 usearti = false;
             }
         }
@@ -870,7 +868,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     else if(mousex)
     {
         // Mouse angle changes are immediate.
-        if(!pausestate && players[consoleplayer].plr->mo && 
+        if(!pausestate && players[consoleplayer].plr->mo &&
            players[consoleplayer].playerstate != PST_DEAD)
         {
             players[consoleplayer].plr->mo->angle += FLT2FIX(mousex * -8); //G_AdjustAngle(cplr, mousex * -8, 1);

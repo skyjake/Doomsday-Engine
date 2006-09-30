@@ -288,8 +288,6 @@ void            Draw_EndZoom(void);
 
 // ***** ST_STUFF *****
 
-extern int      curpos;
-
 void            ST_Inventory(boolean show);
 boolean         ST_IsInventoryVisible(void);
 

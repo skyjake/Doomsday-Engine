@@ -54,9 +54,10 @@
 
 extern boolean artiskip;
 extern boolean usearti;
-extern int inv_ptr;
 
 boolean         P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo);
+
+void            P_InventoryResetCursor(player_t *player);
 
 void            P_InventoryRemoveArtifact(player_t *player, int slot);
 boolean         P_InventoryUseArtifact(player_t *player, artitype_e arti);

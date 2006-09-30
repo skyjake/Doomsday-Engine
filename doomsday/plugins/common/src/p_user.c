@@ -571,10 +571,10 @@ void P_RaiseDeadPlayer(player_t *player)
 {
     player->playerstate = PST_REBORN;
 #if __JHERETIC__ || __JHEXEN__
+    P_InventoryResetCursor(player);
+
     if(player == &players[consoleplayer])
     {
-        inv_ptr = 0;
-        curpos = 0;
         R_SetFilter(0);
     }
 

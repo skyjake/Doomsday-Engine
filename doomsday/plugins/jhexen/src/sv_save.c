@@ -52,6 +52,7 @@
 #include "p_mapsetup.h"
 #include "p_player.h"
 #include "p_map.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -536,23 +537,20 @@ void SV_HxLoadGame(int slot)
     Z_Free(TargetPlayerAddrs);
 
     // Restore player structs
-    inv_ptr = 0;
-    curpos = 0;
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         mobj = players[i].plr->mo;
         players[i] = playerBackup[i];
         players[i].plr->mo = mobj;
-        if(i == consoleplayer)
-        {
-            players[i].readyArtifact = players[i].inventory[inv_ptr].type;
-        }
+        players[i].readyArtifact = players[i].inventory[players[i].inv_ptr].type;
+
+        P_InventoryResetCursor(&players[i]);
     }
 
     //Con_Printf("SaveToReal: ");
 
     // Kick out players who do not belong here.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->ingame)
             continue;
@@ -626,10 +624,6 @@ void SV_HxMapTeleport(int map, int position)
     char    fileName[100];
     player_t playerBackup[MAXPLAYERS];
     mobj_t *targetPlayerMobj;
-
-    //  mobj_t *mobj;
-    int     inventoryPtr;
-    int     currentInvPos;
     boolean rClass;
     boolean playerWasReborn;
     boolean oldWeaponowned[NUMWEAPONS];
@@ -654,12 +648,8 @@ void SV_HxMapTeleport(int map, int position)
     randomclass = false;
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        playerBackup[i] = players[i];
+        memcpy(&playerBackup[i], &players[i], sizeof(player_t));
     }
-
-    // Save some globals that get trashed during the load
-    inventoryPtr = inv_ptr;
-    currentInvPos = curpos;
 
     // Only SV_HxLoadMap() uses TargetPlayerAddrs, so it's NULLed here
     // for the following check (player mobj redirection)
@@ -695,7 +685,7 @@ void SV_HxMapTeleport(int map, int position)
         {
             continue;
         }
-        players[i] = playerBackup[i];
+        memcpy(&players[i], &playerBackup[i], sizeof(player_t));
         P_ClearMessage(&players[i]);
         players[i].attacker = NULL;
         players[i].poisoner = NULL;
@@ -779,10 +769,6 @@ void SV_HxMapTeleport(int map, int position)
                            players[i].plr->mo->pos[VY], true);
         }
     }
-
-    // Restore trashed globals
-    inv_ptr = inventoryPtr;
-    curpos = currentInvPos;
 
     // Launch waiting scripts
     if(!deathmatch)
