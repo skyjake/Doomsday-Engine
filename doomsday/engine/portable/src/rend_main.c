@@ -1673,17 +1673,7 @@ void Rend_RenderSubsector(int ssecidx)
     Rend_RadioSubsectorEdges(ssec);
 
     Rend_OccludeSubsector(ssec, false);
-    // Determine which dynamic light sources in the subsector get clipped.
-    for(lumi = dlSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
-    {
-        lumi->flags &= ~LUMF_CLIPPED;
-        // FIXME: Determine the exact centerpoint of the light in
-        // DL_AddLuminous!
-        if(!C_IsPointVisible
-           (FIX2FLT(lumi->thing->pos[VX]), FIX2FLT(lumi->thing->pos[VY]),
-            FIX2FLT(lumi->thing->pos[VZ]) + lumi->center))
-            lumi->flags |= LUMF_CLIPPED;    // Won't have a halo.
-    }
+    DL_ClipInSubsector(ssecidx);
     Rend_OccludeSubsector(ssec, true);
 
     if(ssec->poly)

@@ -108,6 +108,8 @@ int     numLuminous = 0, maxLuminous = 0;
 int     dlMaxRad = 256;         // Dynamic lights maximum radius.
 float   dlRadFactor = 3;
 int     maxDynLights = 0;
+int     useMobjAutoLights = true; // Enable automaticaly calculated lights
+                                  // attached to mobjs.
 
 //int       clipLights = 1;
 byte    rendInfoLums = false;
@@ -118,28 +120,28 @@ int     dlMinRadForBias = 136; // Lights smaller than this will NEVER
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Dynlight nodes.
-dynlight_t *dynFirst, *dynCursor;
+static dynlight_t *dynFirst, *dynCursor;
 
-lumobj_t **dlBlockLinks = 0;
-vertex_t dlBlockOrig;
-int     dlBlockWidth, dlBlockHeight;    // In 128 blocks.
-lumobj_t **dlSubLinks = 0;
+static lumobj_t **dlBlockLinks = 0;
+static vertex_t dlBlockOrig;
+static int     dlBlockWidth, dlBlockHeight;    // In 128 blocks.
+static lumobj_t **dlSubLinks = 0;
 
 // A list of dynlight nodes for each surface (seg, subsector-planes[]).
 // The segs are indexed by seg index, subSecs are indexed by
 // subsector index.
-seglight_t *segLightLinks;
-subseclight_t *subSecLightLinks;
+static seglight_t *segLightLinks;
+static subseclight_t *subSecLightLinks;
 
 // List of unused and used lumobj-subsector contacts.
-lumcontact_t *contFirst, *contCursor;
+static lumcontact_t *contFirst, *contCursor;
 
 // List of lumobj contacts for each subsector.
-lumcontact_t **subContacts;
+static lumcontact_t **subContacts;
 
 // A framecount for each block. Used to prevent multiple processing of
 // a block during one frame.
-int    *spreadBlocks;
+static int    *spreadBlocks;
 
 // CODE --------------------------------------------------------------------
 
@@ -162,6 +164,8 @@ void DL_Register(void)
                 0, 0);
     C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
     C_VAR_INT("rend-light-sky", &rendSkyLight, 0, 0, 1);
+
+    C_VAR_INT("rend-mobj-light-auto", &useMobjAutoLights, 0, 0, 1);
 
     // Cvars (glowing surfaces)
     C_VAR_INT("rend-glow", &r_texglow, 0, 0, 1);
@@ -898,7 +902,8 @@ void DL_AddLuminous(mobj_t *thing)
     {
         // Are the automatically calculated light values for fullbright
         // sprite frames in use?
-        if(thing->state && (thing->state->flags & STF_NOAUTOLIGHT) &&
+        if(thing->state &&
+           (!useMobjAutoLights || (thing->state->flags & STF_NOAUTOLIGHT)) &&
            !thing->state->light)
            return;
 
@@ -1645,6 +1650,29 @@ boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
             return false;
     }
     return true;
+}
+
+/**
+ * Clip lights by subsector.
+ *
+ * @param ssecidx       Subsector index in which lights will be clipped.
+ */
+void DL_ClipInSubsector(int ssecidx)
+{
+    subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
+    lumobj_t *lumi;
+
+    // Determine which dynamic light sources in the subsector get clipped.
+    for(lumi = dlSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
+    {
+        lumi->flags &= ~LUMF_CLIPPED;
+        // FIXME: Determine the exact centerpoint of the light in
+        // DL_AddLuminous!
+        if(!C_IsPointVisible
+           (FIX2FLT(lumi->thing->pos[VX]), FIX2FLT(lumi->thing->pos[VY]),
+            FIX2FLT(lumi->thing->pos[VZ]) + lumi->center))
+            lumi->flags |= LUMF_CLIPPED;    // Won't have a halo.
+    }
 }
 
 /**

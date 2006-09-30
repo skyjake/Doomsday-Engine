@@ -782,6 +782,9 @@ desc = Scaling of player weapon (x,y) offset.
 [rend-hud-fov-shift]
 desc = When FOV > 90 player weapon is shifted downward.
 
+[rend-mobj-light-auto]
+desc = 1=Enable automatically calculated lights on mobjs.
+
 [rend-mobj-smooth-move]
 desc = 1=Use short-range visual offsets for models. 2=Use SRVO for sprites, too (unjags actor movement).
 

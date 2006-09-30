@@ -80,7 +80,6 @@ typedef struct dynlight_s {
 
 extern boolean  dlInited;
 extern lumobj_t *luminousList;
-extern lumobj_t **dlSubLinks;
 extern int      numLuminous;
 extern int      useDynLights;
 extern int      maxDynLights, dlBlend, dlMaxRad;
@@ -119,6 +118,7 @@ boolean         DL_BoxIterator(fixed_t box[4], void *ptr,
 int             Rend_SubsectorClipper(fvertex_t * out, subsector_t *sub,
                                       float x, float y, float radius);
 
+void            DL_ClipInSubsector(int ssecidx);
 void            DL_ClipBySight(int ssecidx);
 
 #endif
