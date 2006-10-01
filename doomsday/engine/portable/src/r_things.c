@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -466,7 +466,7 @@ void R_ProjectDecoration(mobj_t *source)
  */
 void R_ProjectPlayerSprites(void)
 {
-    int     i;
+    int     i, j;
     modeldef_t *mf, *nextmf;
     ddpsprite_t *psp;
     vissprite_t *vis;
@@ -478,7 +478,7 @@ void R_ProjectPlayerSprites(void)
     if((viewplayer->flags & DDPF_CAMERA) || (viewplayer->flags & DDPF_CHASECAM))
         return;
 
-    for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
+    for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
     {
         vis = vispsprites + i;
         psp->flags &= ~DDPSPF_RENDERED;
@@ -516,10 +516,43 @@ void R_ProjectPlayerSprites(void)
         // 32 is the raised weapon height.
         vis->data.mo.gzt = vis->data.mo.gz = viewz;
         vis->data.mo.viewaligned = true;
-        vis->data.mo.secfloor = -1.0e6;
-        vis->data.mo.secceil = 1.0e6;
+        vis->data.mo.secfloor = SECT_FLOOR(viewplayer->mo->subsector->sector);
+        vis->data.mo.secceil = SECT_CEIL(viewplayer->mo->subsector->sector);
         vis->data.mo.class = 0;
         vis->data.mo.floorclip = 0;
+
+        // Glowing floor and ceiling.
+        vis->data.mo.hasglow = false;
+        if(useWallGlow)
+        {
+            sector_t *sect = viewplayer->mo->subsector->sector;
+
+            if(sect->planes[PLN_CEILING]->glow)
+            {
+                memcpy(vis->data.mo.ceilglow, sect->planes[PLN_CEILING]->glowrgb, 3);
+                for(j = 0; j < 3; ++j)
+                    vis->data.mo.ceilglow[j] *= dlFactor;
+                vis->data.mo.hasglow = true;
+                vis->data.mo.ceilglowamount = sect->planes[PLN_CEILING]->glow;
+            }
+            else
+            {
+                memset(vis->data.mo.ceilglow, 0, sizeof(vis->data.mo.ceilglow));
+            }
+            if(sect->planes[PLN_FLOOR]->glow)
+            {
+                memcpy(vis->data.mo.floorglow, sect->planes[PLN_FLOOR]->glowrgb, 3);
+                for(j = 0; j < 3; ++j)
+                    vis->data.mo.floorglow[j] *= dlFactor;
+                vis->data.mo.hasglow = true;
+                vis->data.mo.floorglowamount = sect->planes[PLN_FLOOR]->glow;
+            }
+            else
+            {
+                memset(vis->data.mo.floorglow, 0, sizeof(vis->data.mo.floorglow));
+            }
+        }
+
         // Offsets to rotation angles.
         vis->data.mo.v2[VX] = psp->x * weaponOffsetScale - 90;
         vis->data.mo.v2[VY] =
