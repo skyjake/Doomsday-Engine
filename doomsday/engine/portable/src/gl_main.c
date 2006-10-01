@@ -138,8 +138,8 @@ void GL_Register(void)
                 0, 0);
     C_VAR_FLOAT("rend-hud-fov-shift", &weaponFOVShift, CVF_NO_MAX, 0, 1);
     // * Render-Mobj
-    C_VAR_INT("rend-mobj-smooth-move", &r_use_srvo, 0, 0, 2);
-    C_VAR_INT("rend-mobj-smooth-turn", &r_use_srvo_angle, 0, 0, 1);
+    C_VAR_INT("rend-mobj-smooth-move", &useSRVO, 0, 0, 2);
+    C_VAR_INT("rend-mobj-smooth-turn", &useSRVOAngle, 0, 0, 1);
 
     // * video
     C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0);

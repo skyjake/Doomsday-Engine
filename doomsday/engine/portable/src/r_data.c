@@ -932,8 +932,8 @@ void R_PrecacheLevel(void)
         }
 
     // Precache sprites.
-    spritepresent = M_Malloc(numsprites);
-    memset(spritepresent, 0, numsprites);
+    spritepresent = M_Malloc(numSprites);
+    memset(spritepresent, 0, numSprites);
 
     for(th = thinkercap.next, mocount = 0; th != &thinkercap; th = th->next)
     {
@@ -963,9 +963,9 @@ void R_PrecacheLevel(void)
 
     if(r_precache_sprites)
     {
-        for(i = 0; i < numsprites; i++)
+        for(i = 0; i < numSprites; i++)
         {
-            if(i % SAFEDIV(numsprites, 10) == 0)
+            if(i % SAFEDIV(numSprites, 10) == 0)
                 Con_Progress(1, PBARF_DONTSHOW);
 
             if(!spritepresent[i] || !useModels)

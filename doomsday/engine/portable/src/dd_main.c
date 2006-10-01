@@ -785,7 +785,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&mouseInverseY, &mouseInverseY},
     {&usegamma, 0},
     {&queryResult, 0},
-    {&LevelFullBright, &LevelFullBright},
+    {&levelFullBright, &levelFullBright},
     {&CmdReturnValue, 0},
     {&gameReady, &gameReady},
     {&openrange, 0},

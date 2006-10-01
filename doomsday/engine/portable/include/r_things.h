@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -132,16 +132,16 @@ typedef struct {
 } spritelump_t;
 
 extern spritedef_t *sprites;
-extern int      numsprites;
+extern int      numSprites;
 extern spritelump_t **spritelumps;
-extern int      numspritelumps;
+extern int      numSpriteLumps;
 extern int      pspOffX, pspOffY;
 extern int      alwaysAlign;
 extern float    weaponOffsetScale, weaponFOVShift;
 extern int      weaponOffsetScaleY;
 extern float    modelSpinSpeed;
-extern int      r_maxmodelz, r_nospritez;
-extern int      r_use_srvo, r_use_srvo_angle;
+extern int      maxModelDistance, noSpriteZWrite;
+extern int      useSRVO, useSRVOAngle;
 extern vissprite_t vissprites[MAXVISSPRITES], *vissprite_p;
 extern vissprite_t vispsprites[DDMAXPSPRITES];
 extern vissprite_t vsprsortedhead;

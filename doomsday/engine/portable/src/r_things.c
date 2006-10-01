@@ -73,36 +73,35 @@ int     weaponOffsetScaleY = 1000;
 float   weaponFOVShift = 45;
 float   modelSpinSpeed = 1;
 int     alwaysAlign = 0;
-int     r_nospritez = false;
+int     noSpriteZWrite = false;
 int     pspOffX = 0, pspOffY = 0;
-int     r_use_srvo = 2, r_use_srvo_angle = true;
-
-                // srvo1 = models only, srvo2 = sprites + models
+// srvo1 = models only, srvo2 = sprites + models
+int     useSRVO = 2, useSRVOAngle = true;
 
 int     psp3d;
 
 // variables used to look up and range check thing_t sprites patches
 spritedef_t *sprites = 0;
-int     numsprites;
-
-spriteframe_t sprtemp[MAX_FRAMES];
-int     maxframe;
-char   *spritename;
+int     numSprites;
 
 spritelump_t **spritelumps;
-int     numspritelumps;
+int     numSpriteLumps;
 
 vissprite_t vissprites[MAXVISSPRITES], *vissprite_p;
 vissprite_t vispsprites[DDMAXPSPRITES];
-vissprite_t overflowsprite;
-int     newvissprite;
 
-int     r_maxmodelz = 1500;
+int     maxModelDistance = 1500;
 
-int     LevelFullBright = false;
+int     levelFullBright = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static spriteframe_t sprtemp[MAX_FRAMES];
+static int     maxFrame;
+static char   *spriteName;
+
+static vissprite_t overflowSprite;
+static int     newVisSprite;
 static mobj_t *projectedThing;  // Used during RIT_VisMobjZ
 
 // CODE --------------------------------------------------------------------
@@ -114,10 +113,10 @@ void R_InitSpriteLumps(void)
     int     i;
     char    buf[64];
 
-    sprintf(buf, "R_Init: Initializing %i sprites...", numspritelumps);
-    Con_InitProgress(buf, numspritelumps);
+    sprintf(buf, "R_Init: Initializing %i sprites...", numSpriteLumps);
+    Con_InitProgress(buf, numSpriteLumps);
 
-    for(i = 0; i < numspritelumps; ++i)
+    for(i = 0; i < numSpriteLumps; ++i)
     {
         sl = spritelumps[i];
 
@@ -143,22 +142,22 @@ int R_NewSpriteLump(int lump)
     int     i;
 
     // Is this lump already entered?
-    for(i = 0; i < numspritelumps; i++)
+    for(i = 0; i < numSpriteLumps; i++)
         if(spritelumps[i]->lump == lump)
             return i;
 
-    newlist = Z_Malloc(sizeof(spritelump_t*) * ++numspritelumps, PU_SPRITE, 0);
-    if(numspritelumps > 1)
+    newlist = Z_Malloc(sizeof(spritelump_t*) * ++numSpriteLumps, PU_SPRITE, 0);
+    if(numSpriteLumps > 1)
     {
-        for(i = 0; i < numspritelumps -1; ++i)
+        for(i = 0; i < numSpriteLumps -1; ++i)
             newlist[i] = spritelumps[i];
 
         Z_Free(spritelumps);
     }
     spritelumps = newlist;
-    ptr = spritelumps[numspritelumps - 1] = Z_Calloc(sizeof(spritelump_t), PU_SPRITE, 0);
+    ptr = spritelumps[numSpriteLumps - 1] = Z_Calloc(sizeof(spritelump_t), PU_SPRITE, 0);
     ptr->lump = lump;
-    return numspritelumps - 1;
+    return numSpriteLumps - 1;
 }
 
 /*
@@ -174,18 +173,18 @@ void R_InstallSpriteLump(int lump, unsigned frame, unsigned rotation,
         //Con_Error ("R_InstallSpriteLump: Bad frame characters in lump %i", lump);
         return;
 
-    if((int) frame > maxframe)
-        maxframe = frame;
+    if((int) frame > maxFrame)
+        maxFrame = frame;
 
     if(rotation == 0)
     {
         // The lump should be used for all rotations.
         /*      if(sprtemp[frame].rotate == false)
            Con_Error ("R_InitSprites: Sprite %s frame %c has multip rot=0 lump",
-           spritename, 'A'+frame);
+           spriteName, 'A'+frame);
            if (sprtemp[frame].rotate == true)
            Con_Error ("R_InitSprites: Sprite %s frame %c has rotations and a rot=0 lump"
-           , spritename, 'A'+frame); */
+           , spriteName, 'A'+frame); */
 
         sprtemp[frame].rotate = false;
         for(r = 0; r < 8; r++)
@@ -199,14 +198,14 @@ void R_InstallSpriteLump(int lump, unsigned frame, unsigned rotation,
     // the lump is only used for one rotation
     /*  if (sprtemp[frame].rotate == false)
        Con_Error ("R_InitSprites: Sprite %s frame %c has rotations and a rot=0 lump"
-       , spritename, 'A'+frame); */
+       , spriteName, 'A'+frame); */
 
     sprtemp[frame].rotate = true;
 
     rotation--;                 // make 0 based
     /*  if(sprtemp[frame].lump[rotation] != -1)
        Con_Error ("R_InitSprites: Sprite %s : %c : %c has two lumps mapped to it"
-       ,spritename, 'A'+frame, '1'+rotation); */
+       ,spriteName, 'A'+frame, '1'+rotation); */
 
     sprtemp[frame].lump[rotation] = splump; //lump - firstspritelump;
     sprtemp[frame].flip[rotation] = (byte) flipped;
@@ -227,24 +226,24 @@ void R_InitSpriteDefs(void)
     int     i, l, intname, frame, rotation;
     boolean in_sprite_block;
 
-    numspritelumps = 0;
-    numsprites = count_sprnames.num;
+    numSpriteLumps = 0;
+    numSprites = count_sprnames.num;
 
     // Check that some sprites are defined.
-    if(!numsprites)
+    if(!numSprites)
         return;
 
-    sprites = Z_Malloc(numsprites * sizeof(*sprites), PU_SPRITE, NULL);
+    sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_SPRITE, NULL);
 
     // Scan all the lump names for each of the names, noting the highest
     // frame letter. Just compare 4 characters as ints.
-    for(i = 0; i < numsprites; i++)
+    for(i = 0; i < numSprites; i++)
     {
-        spritename = sprnames[i].name;
+        spriteName = sprnames[i].name;
         memset(sprtemp, -1, sizeof(sprtemp));
 
-        maxframe = -1;
-        intname = *(int *) spritename;
+        maxFrame = -1;
+        intname = *(int *) spriteName;
 
         //
         // scan the lumps, filling in the frames for whatever is found
@@ -294,20 +293,20 @@ void R_InitSpriteDefs(void)
         //
         // check the frames that were found for completeness
         //
-        if(maxframe == -1)
+        if(maxFrame == -1)
         {
             sprites[i].numframes = 0;
             //Con_Error ("R_InitSprites: No lumps found for sprite %s", namelist[i]);
         }
 
-        maxframe++;
-        for(frame = 0; frame < maxframe; frame++)
+        maxFrame++;
+        for(frame = 0; frame < maxFrame; frame++)
         {
             switch ((int) sprtemp[frame].rotate)
             {
             case -1:            // no rotations were found for that frame at all
                 Con_Error("R_InitSprites: No patches found for %s frame %c",
-                          spritename, frame + 'A');
+                          spriteName, frame + 'A');
             case 0:         // only the first rotation is needed
                 break;
 
@@ -315,29 +314,29 @@ void R_InitSpriteDefs(void)
                 for(rotation = 0; rotation < 8; rotation++)
                     if(sprtemp[frame].lump[rotation] == -1)
                         Con_Error("R_InitSprites: Sprite %s frame %c is "
-                                  "missing rotations", spritename,
+                                  "missing rotations", spriteName,
                                   frame + 'A');
             }
         }
 
         // The model definitions might have a larger max frame for this
         // sprite.
-        /*highframe = R_GetMaxMDefSpriteFrame(spritename) + 1;
-           if(highframe > maxframe)
+        /*highframe = R_GetMaxMDefSpriteFrame(spriteName) + 1;
+           if(highframe > maxFrame)
            {
-           maxframe = highframe;
-           for(l=0; l<maxframe; l++)
+           maxFrame = highframe;
+           for(l=0; l<maxFrame; l++)
            for(frame=0; frame<8; frame++)
            if(sprtemp[l].lump[frame] == -1)
            sprtemp[l].lump[frame] = 0;
            } */
 
         // Allocate space for the frames present and copy sprtemp to it.
-        sprites[i].numframes = maxframe;
+        sprites[i].numframes = maxFrame;
         sprites[i].spriteframes =
-            Z_Malloc(maxframe * sizeof(spriteframe_t), PU_SPRITE, NULL);
+            Z_Malloc(maxFrame * sizeof(spriteframe_t), PU_SPRITE, NULL);
         memcpy(sprites[i].spriteframes, sprtemp,
-               maxframe * sizeof(spriteframe_t));
+               maxFrame * sizeof(spriteframe_t));
         // The possible model frames are initialized elsewhere.
         //sprites[i].modeldef = -1;
     }
@@ -350,7 +349,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo)
     spritelump_t *sprlump;
 
 #ifdef RANGECHECK
-    if((unsigned) sprite >= (unsigned) numsprites)
+    if((unsigned) sprite >= (unsigned) numSprites)
         Con_Error("R_GetSpriteInfo: invalid sprite number %i.\n", sprite);
 #endif
 
@@ -431,7 +430,7 @@ void R_ClearSprites(void)
 vissprite_t *R_NewVisSprite(void)
 {
     if(vissprite_p == &vissprites[MAXVISSPRITES])
-        return &overflowsprite;
+        return &overflowSprite;
     vissprite_p++;
     return vissprite_p - 1;
 }
@@ -683,7 +682,7 @@ void R_ProjectSprite(mobj_t *thing)
     // Decide which patch to use for sprite relative to player.
 
 #ifdef RANGECHECK
-    if((unsigned) thing->sprite >= (unsigned) numsprites)
+    if((unsigned) thing->sprite >= (unsigned) numSprites)
     {
         Con_Error("R_ProjectSprite: invalid sprite number %i\n",
                   thing->sprite);
@@ -707,8 +706,8 @@ void R_ProjectSprite(mobj_t *thing)
     if(useModels)
     {
         interp = R_CheckModelFor(thing, &mf, &nextmf);
-        if(mf && !(mf->flags & MFF_NO_DISTANCE_CHECK) && r_maxmodelz &&
-           distance > r_maxmodelz)
+        if(mf && !(mf->flags & MFF_NO_DISTANCE_CHECK) && maxModelDistance &&
+           distance > maxModelDistance)
         {
             // Don't use a 3D model.
             mf = nextmf = NULL;
@@ -890,7 +889,7 @@ void R_ProjectSprite(mobj_t *thing)
         }
         else
         {
-            vis->data.mo.yaw = (r_use_srvo_angle && !netgame &&
+            vis->data.mo.yaw = (useSRVOAngle && !netgame &&
                                 !playback ? (thing->visangle << 16) : thing->
                                 angle) / (float) ANGLE_MAX *-360;
         }
@@ -922,7 +921,7 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.patch = lump;
 
     // Set light level.
-    if((LevelFullBright || thing->state->flags & STF_FULLBRIGHT) &&
+    if((levelFullBright || thing->state->flags & STF_FULLBRIGHT) &&
        (!mf || !(mf->sub[0].flags & MFF_DIM)))
     {
         vis->data.mo.lightlevel = -1;
@@ -961,8 +960,8 @@ void R_ProjectSprite(mobj_t *thing)
     memset(vis->data.mo.visoff, 0, sizeof(vis->data.mo.visoff));
 
     // Short-range visual offsets.
-    if((vis->data.mo.mf && r_use_srvo > 0) ||
-       (!vis->data.mo.mf && r_use_srvo > 1))
+    if((vis->data.mo.mf && useSRVO > 0) ||
+       (!vis->data.mo.mf && useSRVO > 1))
     {
         if(thing->state && thing->tics >= 0)
         {

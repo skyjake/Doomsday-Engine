@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -685,7 +685,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     edgespan_t spans[2];        // bottom, top
     edgespan_t *floorSpan = &spans[0], *ceilSpan = &spans[1];
 
-    if(!rendFakeRadio || LevelFullBright || shadowSize <= 0 ||  // Disabled?
+    if(!rendFakeRadio || levelFullBright || shadowSize <= 0 ||  // Disabled?
        origQuad->flags & RPF_GLOW || seg->linedef == NULL)
         return;
 
@@ -1322,7 +1322,7 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
     int     i, pln;
     float vec[3];
 
-    if(!rendFakeRadio || LevelFullBright)
+    if(!rendFakeRadio || levelFullBright)
         return;
 
     info = SUBSECT_INFO(subsector);

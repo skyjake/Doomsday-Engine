@@ -521,7 +521,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
         for(c = 0; c < 4; c++)
         {
             color[c] = dst->color[c] * inv_mark + next_dst->color[c] * mark;
-            if(!(st->flags & PTCF_BRIGHT) && c < 3 && !LevelFullBright)
+            if(!(st->flags & PTCF_BRIGHT) && c < 3 && !levelFullBright)
             {
                 // This is a simplified version of sectorlight (no distance
                 // attenuation or range compression).
@@ -618,7 +618,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
             {
                 vis.data.mo.pitch = pt->pitch / 32768.0f * 180;
             }
-            if(st->flags & PTCF_BRIGHT || LevelFullBright)
+            if(st->flags & PTCF_BRIGHT || levelFullBright)
                 vis.data.mo.lightlevel = -1;    // Fullbright.
             else
                 vis.data.mo.lightlevel = pt->sector->lightlevel;

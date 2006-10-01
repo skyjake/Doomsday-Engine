@@ -1471,7 +1471,7 @@ int Rend_SectorLight(sector_t *sec)
 {
     int     i;
 
-    i = LevelFullBright ? 255 : sec->lightlevel;
+    i = levelFullBright ? 255 : sec->lightlevel;
 
     // Apply light adaptation
     Rend_ApplyLightAdaptation(&i);
@@ -1964,7 +1964,7 @@ void Rend_RetrieveLightSample(void)
         sub = player->mo->subsector;
 
         // In some circumstances we should disable light adaptation.
-        if(LevelFullBright || P_IsInVoid(player))
+        if(levelFullBright || P_IsInVoid(player))
         {
             playerLightRange[i] = midpoint;
             continue;

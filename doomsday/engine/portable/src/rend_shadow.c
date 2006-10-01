@@ -103,7 +103,7 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
         return;
 
     // Apply a Short Range Visual Offset?
-    if(r_use_srvo && mo->state && mo->tics >= 0)
+    if(useSRVO && mo->state && mo->tics >= 0)
     {
         float   mul = mo->tics / (float) mo->state->tics;
 

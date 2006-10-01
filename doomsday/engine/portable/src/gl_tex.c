@@ -888,7 +888,7 @@ void GL_ClearRuntimeTextures(void)
     // Textures and sprite lumps.
     for(i = 0; i < numtextures; ++i)
         GL_DeleteTexture(i);
-    for(i = 0; i < numspritelumps; ++i)
+    for(i = 0; i < numSpriteLumps; ++i)
         GL_DeleteSprite(i);
 
     // The translated sprite textures.
@@ -3291,7 +3291,7 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
 
 void GL_DeleteSprite(int spritelump)
 {
-    if(spritelump < 0 || spritelump >= numspritelumps)
+    if(spritelump < 0 || spritelump >= numSpriteLumps)
         return;
 
     gl.DeleteTextures(1, &spritelumps[spritelump]->tex);
@@ -3308,7 +3308,7 @@ void GL_GetSpriteColorf(int pnum, float *rgb)
 {
     int i;
 
-    if(pnum > numspritelumps - 1)
+    if(pnum > numSpriteLumps - 1)
         return;
 
     for(i=0; i < 3; ++i)
@@ -3838,7 +3838,7 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
             }
         Z_Free(flats);
         // Sprites.
-        for(i = 0; i < numspritelumps; ++i)
+        for(i = 0; i < numSpriteLumps; ++i)
             if(spritelumps[i]->tex)
             {
                 gl.Bind(spritelumps[i]->tex);

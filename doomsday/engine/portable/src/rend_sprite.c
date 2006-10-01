@@ -79,7 +79,7 @@ void Rend_SpriteRegister(void)
     C_VAR_INT("rend-sprite-blend", &missileBlend, 0, 0, 1);
     C_VAR_INT("rend-sprite-lit", &litSprites, 0, 0, 1);
     C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
-    C_VAR_INT("rend-sprite-noz", &r_nospritez, 0, 0, 1);
+    C_VAR_INT("rend-sprite-noz", &noSpriteZWrite, 0, 0, 1);
     C_VAR_BYTE("rend-sprite-precache", &r_precache_sprites, 0, 0, 1);
 }
 
@@ -179,7 +179,7 @@ void Rend_DrawPlayerSprites(void)
     float   offy = pspOffY / 16.0f;
     float   offScaleY = weaponOffsetScaleY / 1000.0f;
     byte    somethingVisible = false;
-    byte    isFullBright = (LevelFullBright != 0);
+    byte    isFullBright = (levelFullBright != 0);
     rendpoly_t tempquad;
 
     // Cameramen have no psprites.
@@ -543,10 +543,10 @@ void Rend_DrawMasked(void)
                     {
                         // Render an old fashioned sprite.
                         // Ah, the nostalgia...
-                        if(r_nospritez)
+                        if(noSpriteZWrite)
                             gl.Disable(DGL_DEPTH_WRITE);
                         Rend_RenderSprite(spr);
-                        if(r_nospritez)
+                        if(noSpriteZWrite)
                             gl.Enable(DGL_DEPTH_WRITE);
                     }
                 }
