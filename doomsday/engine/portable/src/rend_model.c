@@ -105,10 +105,6 @@ static mlight_t lights[MAX_MODEL_LIGHTS] = {
 };
 static int numLights;
 
-// Parameters for the modelLighter.
-// Global variables as parameters. Urgh.
-static vissprite_t *mlSpr;
-
 // Fixed-size vertex arrays for the model.
 static gl_vertex_t modelVertices[MAX_VERTS];
 static gl_vertex_t modelNormals[MAX_VERTS];
@@ -182,10 +178,11 @@ float Mod_Lerp(float start, float end, float pos)
 /**
  * Iterator for processing light sources around a model.
  */
-boolean Mod_LightIterator(lumobj_t * lum, fixed_t xyDist)
+boolean Mod_LightIterator(lumobj_t * lum, fixed_t xyDist, void *data)
 {
+    vissprite_t *spr = (vissprite_t*) data;
     fixed_t zDist =
-        ((mlSpr->data.mo.gz + mlSpr->data.mo.gzt) >> 1) -
+        ((spr->data.mo.gz + spr->data.mo.gzt) >> 1) -
         (lum->thing->pos[VZ] + FRACUNIT * lum->center);
     fixed_t dist = P_ApproxDistance(xyDist, zDist);
     int     i, maxIndex = 0;
@@ -1134,10 +1131,9 @@ void Rend_RenderModel(vissprite_t * spr)
         for(i = numLights; i < MAX_MODEL_LIGHTS; ++i)
             lights[i].dist = DDMAXINT;
 
-        mlSpr = spr;
         DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx,
                           spr->data.mo.gy, dlMaxRad << FRACBITS,
-                          Mod_LightIterator);
+                          spr, Mod_LightIterator);
     }
 
     // Don't use too many lights.

@@ -435,6 +435,47 @@ vissprite_t *R_NewVisSprite(void)
     return vissprite_p - 1;
 }
 
+static void R_ApplyPlaneGlowsToVisSprite(vissprite_t *vis, sector_t *sect)
+{
+    int     c;
+
+    vis->data.mo.hasglow = false;
+    if(!useWallGlow)
+        return;
+
+    // Do ceiling.
+    if(sect->planes[PLN_CEILING]->glow)
+    {
+        memcpy(vis->data.mo.ceilglow, sect->planes[PLN_CEILING]->glowrgb, 3);
+
+        for(c = 0; c < 3; ++c)
+            vis->data.mo.ceilglow[c] *= dlFactor;
+
+        vis->data.mo.hasglow = true;
+        vis->data.mo.ceilglowamount = sect->planes[PLN_CEILING]->glow;
+    }
+    else
+    {
+        memset(vis->data.mo.ceilglow, 0, sizeof(vis->data.mo.ceilglow));
+    }
+
+    // Do floor.
+    if(sect->planes[PLN_FLOOR]->glow)
+    {
+        memcpy(vis->data.mo.floorglow, sect->planes[PLN_FLOOR]->glowrgb, 3);
+
+        for(c = 0; c < 3; ++c)
+            vis->data.mo.floorglow[c] *= dlFactor;
+
+        vis->data.mo.hasglow = true;
+        vis->data.mo.floorglowamount = sect->planes[PLN_FLOOR]->glow;
+    }
+    else
+    {
+        memset(vis->data.mo.floorglow, 0, sizeof(vis->data.mo.floorglow));
+    }
+}
+
 void R_ProjectDecoration(mobj_t *source)
 {
     float   v1[2];
@@ -465,7 +506,7 @@ void R_ProjectDecoration(mobj_t *source)
  */
 void R_ProjectPlayerSprites(void)
 {
-    int     i, j;
+    int     i;
     angle_t ang;
     modeldef_t *mf, *nextmf;
     ddpsprite_t *psp;
@@ -501,36 +542,7 @@ void R_ProjectPlayerSprites(void)
         vis->data.mo.floorclip = 0;
 
         // Glowing floor and ceiling.
-        vis->data.mo.hasglow = false;
-        if(useWallGlow)
-        {
-            sector_t *sect = viewplayer->mo->subsector->sector;
-
-            if(sect->planes[PLN_CEILING]->glow)
-            {
-                memcpy(vis->data.mo.ceilglow, sect->planes[PLN_CEILING]->glowrgb, 3);
-                for(j = 0; j < 3; ++j)
-                    vis->data.mo.ceilglow[j] *= dlFactor;
-                vis->data.mo.hasglow = true;
-                vis->data.mo.ceilglowamount = sect->planes[PLN_CEILING]->glow;
-            }
-            else
-            {
-                memset(vis->data.mo.ceilglow, 0, sizeof(vis->data.mo.ceilglow));
-            }
-            if(sect->planes[PLN_FLOOR]->glow)
-            {
-                memcpy(vis->data.mo.floorglow, sect->planes[PLN_FLOOR]->glowrgb, 3);
-                for(j = 0; j < 3; ++j)
-                    vis->data.mo.floorglow[j] *= dlFactor;
-                vis->data.mo.hasglow = true;
-                vis->data.mo.floorglowamount = sect->planes[PLN_FLOOR]->glow;
-            }
-            else
-            {
-                memset(vis->data.mo.floorglow, 0, sizeof(vis->data.mo.floorglow));
-            }
-        }
+        R_ApplyPlaneGlowsToVisSprite(vis, viewplayer->mo->subsector->sector);
 
         if(!useModels || !psp->stateptr)
             continue;
@@ -981,34 +993,7 @@ void R_ProjectSprite(mobj_t *thing)
     }
 
     // Glowing floor and ceiling.
-    vis->data.mo.hasglow = false;
-    if(useWallGlow)
-    {
-        if(sect->planes[PLN_CEILING]->glow)
-        {
-            memcpy(vis->data.mo.ceilglow, sect->planes[PLN_CEILING]->glowrgb, 3);
-            for(i = 0; i < 3; i++)
-                vis->data.mo.ceilglow[i] *= dlFactor;
-            vis->data.mo.hasglow = true;
-            vis->data.mo.ceilglowamount = sect->planes[PLN_CEILING]->glow;
-        }
-        else
-        {
-            memset(vis->data.mo.ceilglow, 0, sizeof(vis->data.mo.ceilglow));
-        }
-        if(sect->planes[PLN_FLOOR]->glow)
-        {
-            memcpy(vis->data.mo.floorglow, sect->planes[PLN_FLOOR]->glowrgb, 3);
-            for(i = 0; i < 3; i++)
-                vis->data.mo.floorglow[i] *= dlFactor;
-            vis->data.mo.hasglow = true;
-            vis->data.mo.floorglowamount = sect->planes[PLN_FLOOR]->glow;
-        }
-        else
-        {
-            memset(vis->data.mo.floorglow, 0, sizeof(vis->data.mo.floorglow));
-        }
-    }
+    R_ApplyPlaneGlowsToVisSprite(vis, sect);
 }
 
 void R_AddSprites(sector_t *sec)

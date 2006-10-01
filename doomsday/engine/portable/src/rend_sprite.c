@@ -41,6 +41,12 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct spritelighterdata_s {
+    vissprite_t *spr;
+    byte        *rgb1, *rgb2;
+    fvertex_t    viewvec;
+} spritelighterdata_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -48,7 +54,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul);
-static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist);
+static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -60,11 +66,6 @@ float   maxSpriteAngle = 60;
 byte    noSpriteTrans = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// The colors to modify when sprites are lit.
-static byte *slRGB1, *slRGB2;
-static fvertex_t slViewVec;
-static vissprite_t *slSpr;
 
 static int useSpriteAlpha = 1;
 
@@ -102,7 +103,7 @@ void Rend_Draw3DPlayerSprites(void)
     if(usingFog)
         gl.Disable(DGL_FOG);
 
-    for(i = 0; i < DDMAXPSPRITES; i++)
+    for(i = 0; i < DDMAXPSPRITES; ++i)
     {
         if(!vispsprites[i].type)
             continue;           // Not used.
@@ -114,8 +115,75 @@ void Rend_Draw3DPlayerSprites(void)
         gl.Enable(DGL_FOG);
 }
 
-void Rend_DrawPSprite(float x, float y, byte *color1, byte *color2,
-                      float scale, int flip, int lump)
+static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
+{
+    spritelighterdata_t data;
+    float   len;
+
+    memcpy(&quad->vertices[1].color, &quad->vertices[0].color, 3);
+
+    data.spr = spr;
+    data.rgb1 = quad->vertices[0].color.rgba;
+    data.rgb2 = quad->vertices[1].color.rgba;
+
+    data.viewvec.x = FIX2FLT(spr->data.mo.gx - viewx);
+    data.viewvec.y = FIX2FLT(spr->data.mo.gy - viewy);
+
+    len = sqrt(data.viewvec.x * data.viewvec.x +
+               data.viewvec.y * data.viewvec.y);
+    if(len)
+    {
+        data.viewvec.x /= len;
+        data.viewvec.y /= len;
+        DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx,
+                          spr->data.mo.gy, dlMaxRad << FRACBITS,
+                          &data, Rend_SpriteLighter);
+    }
+
+    // Check floor and ceiling for glow. They count as ambient light.
+    if(spr->data.mo.hasglow)
+    {
+        int     v;
+        float   glowHeight;
+
+        // Floor glow
+        glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.floorglowamount)
+                      * glowHeightFactor;
+        // Don't make too small or too large glows.
+        if(glowHeight > 2)
+        {
+            if(glowHeight > glowHeightMax)
+                glowHeight = glowHeightMax;
+
+            len =
+                1 - (FIX2FLT(spr->data.mo.gz) -
+                     spr->data.mo.secfloor) / glowHeight;
+            for(v = 0; v < 2; ++v)
+                Rend_ScaledAmbientLight(quad->vertices[v].color.rgba,
+                                        spr->data.mo.floorglow, len);
+        }
+
+        // Ceiling glow
+        glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.ceilglowamount)
+                      * glowHeightFactor;
+        // Don't make too small or too large glows.
+        if(glowHeight > 2)
+        {
+            if(glowHeight > glowHeightMax)
+                glowHeight = glowHeightMax;
+
+            len =
+                1 - (spr->data.mo.secceil -
+                     FIX2FLT(spr->data.mo.gzt)) / glowHeight;
+            for(v = 0; v < 2; ++v)
+                Rend_ScaledAmbientLight(quad->vertices[v].color.rgba,
+                                        spr->data.mo.ceilglow, len);
+        }
+    }
+}
+
+static void Rend_DrawPSprite(float x, float y, byte *color1, byte *color2,
+                             float scale, int flip, int lump)
 {
     int     w, h;
     int     w2, h2;
@@ -285,70 +353,8 @@ void Rend_DrawPlayerSprites(void)
 
             // Add extra light using dynamic lights.
             if(litSprites)
-            {
-                float   len;
-                vissprite_t *spr = vispsprites + i;
+                Rend_DoLightSprite(vispsprites +i, &tempquad);
 
-                memcpy(&tempquad.vertices[1].color, &tempquad.vertices[0].color,
-                       3);
-                // Global variables as parameters... ugly.
-                slSpr = spr;
-                slRGB1 = tempquad.vertices[0].color.rgba;
-                slRGB2 = tempquad.vertices[1].color.rgba;
-
-                slViewVec.x = FIX2FLT(spr->data.mo.gx - viewx);
-                slViewVec.y = FIX2FLT(spr->data.mo.gy - viewy);
-
-                len = sqrt(slViewVec.x * slViewVec.x + slViewVec.y * slViewVec.y);
-                if(len)
-                {
-                    slViewVec.x /= len;
-                    slViewVec.y /= len;
-                    DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx,
-                                      spr->data.mo.gy, dlMaxRad << FRACBITS,
-                                      Rend_SpriteLighter);
-                }
-                // Check floor and ceiling for glow. They count as ambient light.
-                if(spr->data.mo.hasglow)
-                {
-                    int     v;
-                    float   glowHeight;
-
-                    // Floor glow
-                    glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.floorglowamount)
-                                  * glowHeightFactor;
-                    // Don't make too small or too large glows.
-                    if(glowHeight > 2)
-                    {
-                        if(glowHeight > glowHeightMax)
-                            glowHeight = glowHeightMax;
-
-                        len =
-                            1 - (FIX2FLT(spr->data.mo.gz) -
-                                 spr->data.mo.secfloor) / glowHeight;
-                        for(v = 0; v < 2; ++v)
-                            Rend_ScaledAmbientLight(tempquad.vertices[v].color.rgba,
-                                                    spr->data.mo.floorglow, len);
-                    }
-
-                    // Ceiling glow
-                    glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.ceilglowamount)
-                                  * glowHeightFactor;
-                    // Don't make too small or too large glows.
-                    if(glowHeight > 2)
-                    {
-                        if(glowHeight > glowHeightMax)
-                            glowHeight = glowHeightMax;
-
-                        len =
-                            1 - (spr->data.mo.secceil -
-                                 FIX2FLT(spr->data.mo.gzt)) / glowHeight;
-                        for(v = 0; v < 2; ++v)
-                            Rend_ScaledAmbientLight(tempquad.vertices[v].color.rgba,
-                                                    spr->data.mo.ceilglow, len);
-                    }
-                }
-            }
             tempquad.vertices[0].color.rgba[CA] =
                 tempquad.vertices[1].color.rgba[CA] = rgba[CA];
 
@@ -588,29 +594,32 @@ void Rend_DrawMasked(void)
                   spritelumps[pnum]->tc[0][VY] * y) \
 )
 
-static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist)
+static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
 {
     int     i, temp;
     float   fdist = FIX2FLT(dist) * 1.2f; // Pretend the light is a bit further away.
+    spritelighterdata_t *slData = (spritelighterdata_t*) data;
     fvertex_t lightVec = {
-        FIX2FLT(slSpr->data.mo.gx - lum->thing->pos[VX]),
-        FIX2FLT(slSpr->data.mo.gy - lum->thing->pos[VY])
+        FIX2FLT(slData->spr->data.mo.gx - lum->thing->pos[VX]),
+        FIX2FLT(slData->spr->data.mo.gy - lum->thing->pos[VY])
     };
     float   directness, side, inleft, inright, zfactor;
 
     if(!fdist)
         return true;
-    if(slRGB1[0] == 0xff && slRGB1[1] == 0xff && slRGB1[2] == 0xff &&
-       slRGB2[0] == 0xff && slRGB2[1] == 0xff && slRGB2[2] == 0xff)
+    if(slData->rgb1[0] == 0xff && slData->rgb1[1] == 0xff && slData->rgb1[2] == 0xff &&
+       slData->rgb2[0] == 0xff && slData->rgb2[1] == 0xff && slData->rgb2[2] == 0xff)
         return false;           // No point in continuing, light is already white.
 
     zfactor =
-        (FIX2FLT(slSpr->data.mo.gz + slSpr->data.mo.gzt) / 2 -
+        (FIX2FLT(slData->spr->data.mo.gz + slData->spr->data.mo.gzt) / 2 -
          (FIX2FLT(lum->thing->pos[VZ]) + lum->center)) / dlMaxRad;
+
     if(zfactor < 0)
         zfactor = -zfactor;
     if(zfactor > 1)
         return true;            // Too high or low.
+
     zfactor = 1 - zfactor;
     // Enlarge the full-lit area.
     zfactor *= 2;
@@ -629,8 +638,8 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist)
     zfactor *= fdist;
 
     // Now the view vector and light vector are normalized.
-    directness = slViewVec.x * lightVec.x + slViewVec.y * lightVec.y;   // Dot product.
-    side = -slViewVec.y * lightVec.x + slViewVec.x * lightVec.y;
+    directness = slData->viewvec.x * lightVec.x + slData->viewvec.y * lightVec.y;   // Dot product.
+    side = -slData->viewvec.y * lightVec.x + slData->viewvec.x * lightVec.y;
     // If side > 0, the light comes from the right.
     if(directness > 0)
     {
@@ -664,22 +673,22 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist)
     inleft *= zfactor;
     if(inleft > 0)
     {
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
         {
-            temp = slRGB1[i] + inleft * lum->rgb[i];
+            temp = slData->rgb1[i] + inleft * lum->rgb[i];
             if(temp > 0xff)
                 temp = 0xff;
-            slRGB1[i] = temp;
+            slData->rgb1[i] = temp;
         }
     }
     if(inright > 0)
     {
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
         {
-            temp = slRGB2[i] + inright * lum->rgb[i];
+            temp = slData->rgb2[i] + inright * lum->rgb[i];
             if(temp > 0xff)
                 temp = 0xff;
-            slRGB2[i] = temp;
+            slData->rgb2[i] = temp;
         }
     }
     return true;
@@ -693,16 +702,17 @@ static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul)
         mul = 0;
     if(mul > 1)
         mul = 1;
-    for(i = 0; i < 3; i++)
+
+    for(i = 0; i < 3; ++i)
         if(out[i] < ambient[i] * mul)
             out[i] = ambient[i] * mul;
 }
 
-void Rend_RenderSprite(vissprite_t * spr)
+void Rend_RenderSprite(vissprite_t *spr)
 {
     int     patch = spr->data.mo.patch;
     float   bot, top;
-    int     i, sprh;
+    int     sprh;
     float   v1[2];
     DGLubyte alpha;
     boolean additiveBlending = false, flip, restoreMatrix = false;
@@ -774,68 +784,10 @@ void Rend_RenderSprite(vissprite_t * spr)
 
         // Add extra light using dynamic lights.
         if(litSprites)
-        {
-            float   len;
+            Rend_DoLightSprite(spr, &tempquad);
 
-            memcpy(&tempquad.vertices[1].color, &tempquad.vertices[0].color,
-                   3);
-            // Global variables as parameters... ugly.
-            slSpr = spr;
-            slRGB1 = tempquad.vertices[0].color.rgba;
-            slRGB2 = tempquad.vertices[1].color.rgba;
-            slViewVec.x = FIX2FLT(spr->data.mo.gx - viewx);
-            slViewVec.y = FIX2FLT(spr->data.mo.gy - viewy);
-            len = sqrt(slViewVec.x * slViewVec.x + slViewVec.y * slViewVec.y);
-            if(len)
-            {
-                slViewVec.x /= len;
-                slViewVec.y /= len;
-                DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx,
-                                  spr->data.mo.gy, dlMaxRad << FRACBITS,
-                                  Rend_SpriteLighter);
-            }
-            // Check floor and ceiling for glow. They count as ambient light.
-            if(spr->data.mo.hasglow)
-            {
-                float glowHeight;
-
-                // Floor glow
-                glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.floorglowamount)
-                              * glowHeightFactor;
-                // Don't make too small or too large glows.
-                if(glowHeight > 2)
-                {
-                    if(glowHeight > glowHeightMax)
-                        glowHeight = glowHeightMax;
-
-                    len =
-                        1 - (FIX2FLT(spr->data.mo.gz) -
-                             spr->data.mo.secfloor) / glowHeight;
-                    for(i = 0; i < 2; i++)
-                        Rend_ScaledAmbientLight(tempquad.vertices[i].color.rgba,
-                                                spr->data.mo.floorglow, len);
-                }
-
-                // Ceiling glow
-                glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.ceilglowamount)
-                              * glowHeightFactor;
-                // Don't make too small or too large glows.
-                if(glowHeight > 2)
-                {
-                    if(glowHeight > glowHeightMax)
-                        glowHeight = glowHeightMax;
-
-                    len =
-                        1 - (spr->data.mo.secceil -
-                             FIX2FLT(spr->data.mo.gzt)) / glowHeight;
-                    for(i = 0; i < 2; i++)
-                        Rend_ScaledAmbientLight(tempquad.vertices[i].color.rgba,
-                                                spr->data.mo.ceilglow, len);
-                }
-            }
-        }
-        tempquad.vertices[0].color.rgba[CA] = alpha;
-        tempquad.vertices[1].color.rgba[CA] = alpha;
+        tempquad.vertices[0].color.rgba[CA] =
+            tempquad.vertices[1].color.rgba[CA] = alpha;
         gl.Color4ubv(tempquad.vertices[0].color.rgba);
     }
 

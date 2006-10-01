@@ -110,8 +110,8 @@ dynlight_t     *DL_GetSubSecLightLinks(int ssec, int plane);
 
 // Helpers.
 boolean         DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
-                                  fixed_t radius, boolean (*func) (lumobj_t *,
-                                                                   fixed_t));
+                                  fixed_t radius, void *data,
+                                  boolean (*func) (lumobj_t *, fixed_t, void *data));
 boolean         DL_BoxIterator(fixed_t box[4], void *ptr,
                                boolean (*func) (lumobj_t *, void *));
 

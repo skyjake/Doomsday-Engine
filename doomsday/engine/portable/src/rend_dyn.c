@@ -1632,8 +1632,8 @@ void DL_InitForNewFrame(void)
  * 'subsector' is the subsector in which (x,y) resides.
  */
 boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
-                          fixed_t radius, boolean (*func) (lumobj_t *,
-                                                           fixed_t))
+                          fixed_t radius, void *data,
+                          boolean (*func) (lumobj_t *, fixed_t, void *data))
 {
     lumcontact_t *con;
     fixed_t dist;
@@ -1646,7 +1646,7 @@ boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
         dist = P_ApproxDistance(con->lum->thing->pos[VX] - x,
                                 con->lum->thing->pos[VY] - y);
 
-        if(dist <= radius && !func(con->lum, dist))
+        if(dist <= radius && !func(con->lum, dist, data))
             return false;
     }
     return true;
