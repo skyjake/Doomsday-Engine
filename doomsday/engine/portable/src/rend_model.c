@@ -171,7 +171,7 @@ static void scaleFloatRgb(float *out, byte *in, float mul)
     scaleAmbientRgb(out, in, mul);
 }
 
-/*
+/**
  * Linear interpolation between two values.
  */
 float Mod_Lerp(float start, float end, float pos)
@@ -179,7 +179,7 @@ float Mod_Lerp(float start, float end, float pos)
     return end * pos + start * (1 - pos);
 }
 
-/*
+/**
  * Iterator for processing light sources around a model.
  */
 boolean Mod_LightIterator(lumobj_t * lum, fixed_t xyDist)
@@ -198,7 +198,7 @@ boolean Mod_LightIterator(lumobj_t * lum, fixed_t xyDist)
 
     // See if this lumobj is close enough to make it to the list.
     // (In most cases it should be the case.)
-    for(i = 1, light = lights + 1; i < modelLight; i++, light++)
+    for(i = 1, light = lights + 1; i < modelLight; ++i, light++)
     {
         if(light->dist > maxDist)
         {
@@ -219,7 +219,7 @@ boolean Mod_LightIterator(lumobj_t * lum, fixed_t xyDist)
     return true;
 }
 
-/*
+/**
  * Return a pointer to the visible model frame.
  */
 model_frame_t *Mod_GetVisibleFrame(modeldef_t * mf, int subnumber, int mobjid)
@@ -239,7 +239,7 @@ model_frame_t *Mod_GetVisibleFrame(modeldef_t * mf, int subnumber, int mobjid)
     return mdl->frames + index;
 }
 
-/*
+/**
  * Render a set of GL commands using the given data.
  */
 void Mod_RenderCommands(rendcmd_t mode, void *glCommands, uint numVertices,
@@ -255,7 +255,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, uint numVertices,
     gl.DisableArrays(true, true, DGL_ALL_BITS);
 
     // Load the vertex array.
-    switch (mode)
+    switch(mode)
     {
     case RC_OTHER_COORDS:
         coords[0] = texCoords;
@@ -304,7 +304,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, uint numVertices,
     }
 }
 
-/*
+/**
  * Interpolate linearly between two sets of vertices.
  */
 void Mod_LerpVertices(float pos, int count, model_vertex_t * start,
@@ -347,7 +347,7 @@ void Mod_LerpVertices(float pos, int count, model_vertex_t * start,
     }
 }
 
-/*
+/**
  * Negate all Z coordinates.
  */
 void Mod_MirrorVertices(int count, gl_vertex_t * v, int axis)
@@ -356,7 +356,7 @@ void Mod_MirrorVertices(int count, gl_vertex_t * v, int axis)
         v->xyz[axis] = -v->xyz[axis];
 }
 
-/*
+/**
  * Calculate vertex lighting.
  */
 void Mod_VertexColors(int count, gl_color_t * out, gl_vertex_t * normal,
@@ -366,7 +366,7 @@ void Mod_VertexColors(int count, gl_color_t * out, gl_vertex_t * normal,
     float   color[3], extra[3], *dest, dot;
     mlight_t *light;
 
-    for(i = 0; i < count; i++, out++, normal++)
+    for(i = 0; i < count; ++i, out++, normal++)
     {
         if(vertexUsage && !(vertexUsage[i] & (1 << activeLod)))
             continue;
@@ -376,10 +376,11 @@ void Mod_VertexColors(int count, gl_color_t * out, gl_vertex_t * normal,
         memset(extra, 0, sizeof(extra));
 
         // Add light from each source.
-        for(k = 0, light = lights; k < numLights; k++, light++)
+        for(k = 0, light = lights; k < numLights; ++k, light++)
         {
             if(!light->used)
                 continue;
+
             dot = DOTPROD(light->vector, normal->xyz);
             //dot *= 1.2f; // Looks-good factor :-).
             if(light->lum)
@@ -418,7 +419,7 @@ void Mod_VertexColors(int count, gl_color_t * out, gl_vertex_t * normal,
         }
 
         // Check for ambient and convert to ubyte.
-        for(k = 0; k < 3; k++)
+        for(k = 0; k < 3; ++k)
         {
             if(color[k] < ambient[k])
                 color[k] = ambient[k];
@@ -435,7 +436,7 @@ void Mod_VertexColors(int count, gl_color_t * out, gl_vertex_t * normal,
     }
 }
 
-/*
+/**
  * Set all the colors in the array to bright white.
  */
 void Mod_FullBrightVertexColors(int count, gl_color_t * colors, byte alpha)
@@ -447,7 +448,7 @@ void Mod_FullBrightVertexColors(int count, gl_color_t * colors, byte alpha)
     }
 }
 
-/*
+/**
  * Set all the colors into the array to the same values.
  */
 void Mod_FixedVertexColors(int count, gl_color_t * colors, float *color)
@@ -460,7 +461,7 @@ void Mod_FixedVertexColors(int count, gl_color_t * colors, float *color)
         memcpy(colors->rgba, rgba, 4);
 }
 
-/*
+/**
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
 void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
@@ -471,7 +472,7 @@ void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
     float   u, v;
     float   rotatedNormal[3];
 
-    for(i = 0; i < count; i++, coords++, normals++)
+    for(i = 0; i < count; ++i, coords++, normals++)
     {
         if(vertexUsage && !(vertexUsage[i] & (1 << activeLod)))
             continue;
@@ -494,7 +495,7 @@ void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
     }
 }
 
-/*
+/**
  * Render a submodel from the vissprite.
  */
 void Mod_RenderSubModel(vissprite_t * spr, int number)
@@ -761,10 +762,11 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 
         // Calculate color for light sources nearby.
         // Rotate light vectors to model's space.
-        for(i = 0, light = lights; i < numLights; i++, light++)
+        for(i = 0, light = lights; i < numLights; ++i, light++)
         {
             if(!light->used)
                 continue;
+
             if(light->lum)
             {
                 dist = FIX2FLT(light->dist);
@@ -791,7 +793,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 
                 // Calculate the normalized direction vector,
                 // pointing out of the model.
-                for(c = 0; c < 3; c++)
+                for(c = 0; c < 3; ++c)
                 {
                     light->vector[c] =
                         (lightCenter[c] - modelCenter[c]) / dist;
@@ -875,12 +877,12 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
         // Shiny color.
         if(subFlags & MFF_SHINY_LIT)
         {
-            for(c = 0; c < 3; c++)
+            for(c = 0; c < 3; ++c)
                 color[c] = ambient[c] * shinyColor[c];
         }
         else
         {
-            for(c = 0; c < 3; c++)
+            for(c = 0; c < 3; ++c)
                 color[c] = shinyColor[c];
         }
         color[3] = shininess;
@@ -967,7 +969,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
         gl.SetInteger(DGL_MODULATE_TEXTURE, 10);
         RL_BindTo(1, shinyTexture);
         // Multiply by shininess.
-        for(c = 0; c < 3; c++)
+        for(c = 0; c < 3; ++c)
             color[c] *= color[3];
         gl.SetFloatv(DGL_ENV_COLOR, color);
         RL_BindTo(0, skinTexture);
@@ -996,7 +998,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
     GL_BlendMode(BM_NORMAL);
 }
 
-/*
+/**
  * Setup the light/dark factors and dot product offset for glow lights.
  */
 void Mod_GlowLightSetup(mlight_t * light)
@@ -1006,7 +1008,7 @@ void Mod_GlowLightSetup(mlight_t * light)
     light->offset = .3f;
 }
 
-/*
+/**
  * Render all the submodels of a model.
  */
 void Rend_RenderModel(vissprite_t * spr)
@@ -1032,7 +1034,7 @@ void Rend_RenderModel(vissprite_t * spr)
     RL_VertexColors(&quad, lightLevel, spr->data.mo.rgb);
 
     // Determine the ambient light affecting the model.
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
         ambientColor[i] = quad.vertices[0].color.rgba[i] / 255.0f;
 
     if(modelLight)
@@ -1044,7 +1046,7 @@ void Rend_RenderModel(vissprite_t * spr)
         lights[0].used = true;
 
         // Set the correct intensity.
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
         {
             lights->worldVector[i] = worldLight[i];
             lights->color[i] = ambientColor[i];
@@ -1072,8 +1074,8 @@ void Rend_RenderModel(vissprite_t * spr)
         {
             float glowHeight;
 
-            // Floor glow
-            glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.floorglowamount)
+            // Ceiling glow
+            glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.ceilglowamount)
                           * glowHeightFactor;
             // Don't make too small or too large glows.
             if(glowHeight > 2)
@@ -1097,8 +1099,8 @@ void Rend_RenderModel(vissprite_t * spr)
                 }
             }
 
-            // Ceiling glow
-            glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.ceilglowamount)
+            // Floor glow
+            glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.floorglowamount)
                           * glowHeightFactor;
             // Don't make too small or too large glows.
             if(glowHeight > 2)
@@ -1129,8 +1131,9 @@ void Rend_RenderModel(vissprite_t * spr)
     {
         // Find the nearest sources of light. They will be used to
         // light the vertices. First initialize the array.
-        for(i = numLights; i < MAX_MODEL_LIGHTS; i++)
+        for(i = numLights; i < MAX_MODEL_LIGHTS; ++i)
             lights[i].dist = DDMAXINT;
+
         mlSpr = spr;
         DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx,
                           spr->data.mo.gy, dlMaxRad << FRACBITS,
@@ -1142,7 +1145,7 @@ void Rend_RenderModel(vissprite_t * spr)
         numLights = modelLight;
 
     // Render all the models associated with the vissprite.
-    for(i = 0; i < MAX_FRAME_MODELS; i++)
+    for(i = 0; i < MAX_FRAME_MODELS; ++i)
         if(mf->sub[i].model)
         {
             boolean disableZ = (mf->flags & MFF_DISABLE_Z_WRITE ||
