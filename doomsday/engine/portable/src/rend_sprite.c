@@ -47,6 +47,9 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul);
+static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -111,6 +114,57 @@ void Rend_Draw3DPlayerSprites(void)
         gl.Enable(DGL_FOG);
 }
 
+void Rend_DrawPSprite(float x, float y, byte *color1, byte *color2,
+                      float scale, int flip, int lump)
+{
+    int     w, h;
+    int     w2, h2;
+    float   s, t;
+    int     pSprMode = 1;
+    spritelump_t *slump = spritelumps[lump];
+
+    if(flip)
+        flip = 1;               // Make sure it's zero or one.
+
+    if(renderTextures)
+        GL_SetSprite(lump, pSprMode);
+    else
+        gl.Bind(0);
+
+    w = slump->width;
+    h = slump->height;
+    w2 = CeilPow2(w);
+    h2 = CeilPow2(h);
+
+    // Let's calculate texture coordinates.
+    // To remove a possible edge artifact, move the corner a bit up/left.
+    s = slump->tc[pSprMode][VX] - 0.4f / w2;
+    t = slump->tc[pSprMode][VY] - 0.4f / h2;
+
+    gl.Begin(DGL_QUADS);
+
+    gl.Color4ubv(color1);
+
+    gl.TexCoord2f(flip * s, 0);
+    gl.Vertex2f(x, y);
+
+    if(litSprites)
+        gl.Color4ubv(color2);
+
+    gl.TexCoord2f(!flip * s, 0);
+    gl.Vertex2f(x + w * scale, y);
+
+    gl.TexCoord2f(!flip * s, t);
+    gl.Vertex2f(x + w * scale, y + h * scale);
+
+    if(litSprites)
+        gl.Color4ubv(color1);
+
+    gl.TexCoord2f(flip * s, t);
+    gl.Vertex2f(x, y + h * scale);
+    gl.End();
+}
+
 /**
  * Draws 2D player sprites. If they were already drawn 3D, this
  * won't do anything.
@@ -119,13 +173,14 @@ void Rend_DrawPlayerSprites(void)
 {
     spriteinfo_t info[DDMAXPSPRITES];
     ddpsprite_t *psp;
-    int     i;
+    int     i, c;
     sector_t *sec = viewplayer->mo->subsector->sector;
     float   offx = pspOffX / 16.0f;
     float   offy = pspOffY / 16.0f;
     float   offScaleY = weaponOffsetScaleY / 1000.0f;
     byte    somethingVisible = false;
     byte    isFullBright = (LevelFullBright != 0);
+    rendpoly_t tempquad;
 
     // Cameramen have no psprites.
     if((viewplayer->flags & DDPF_CAMERA) || (viewplayer->flags & DDPF_CHASECAM))
@@ -135,7 +190,7 @@ void Rend_DrawPlayerSprites(void)
     memset(info, 0, sizeof(info));
 
     // Check for fullbright.
-    for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; i++, psp++)
+    for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
     {
         // Should this psprite be drawn?
         if(psp->flags & DDPSPF_RENDERED || !psp->stateptr)
@@ -181,6 +236,7 @@ void Rend_DrawPlayerSprites(void)
     {
         const byte *secRGB = R_GetSectorLightColor(sec);
         byte  secbRGB[3];
+        byte  rgba[4];
 
         if(useBias)
         {
@@ -191,43 +247,117 @@ void Rend_DrawPlayerSprites(void)
             LG_Evaluate(point, secbRGB);
         }
 
+        tempquad.numvertices = 1;
+        tempquad.vertices[0].dist = 1;
+        tempquad.isWall = false;
+
         // Draw as separate sprites.
-        for(i = 0; i < DDMAXPSPRITES; i++)
+        for(i = 0; i < DDMAXPSPRITES; ++i)
         {
+            int light = (int)(psp[i].light * 255.0f);
+
             if(!info[i].realLump)
                 continue;       // This doesn't exist.
 
-            if(isFullBright)
+            Rend_ApplyLightAdaptation(&light);
+
+            for(c = 0; c < 3; ++c)
             {
-                GL_SetColorAndAlpha(1, 1, 1, psp[i].alpha);
-            }
-            else
-            {
-                if(useBias)
+                if(isFullBright)
                 {
-                    GL_SetColorAndAlpha(1.0f * (secbRGB[CR] / 255.0f),
-                                        1.0f * (secbRGB[CG] / 255.0f),
-                                        1.0f * (secbRGB[CB] / 255.0f),
-                                        psp[i].alpha);
+                    rgba[c] = 255;
                 }
                 else
                 {
-                    int light = (int)(psp[i].light * 255.0f);
-                    float lval;
-
-                    Rend_ApplyLightAdaptation(&light);
-                    lval = light / 255.0f;
-                    GL_SetColorAndAlpha(lval * (secRGB[CR] / 255.0f),
-                                        lval * (secRGB[CG] / 255.0f),
-                                        lval * (secRGB[CB] / 255.0f),
-                                        psp[i].alpha);
+                    if(useBias)
+                    {
+                        rgba[c] = (byte) (255 * (secbRGB[c] / 255.0f));
+                    }
+                    else
+                    {
+                        rgba[c] = (byte) (light * (secRGB[c] / 255.0f));
+                    }
                 }
             }
+            rgba[CA] = (byte)(psp[i].alpha * 255.0f);
 
-            GL_DrawPSprite(psp[i].x - info[i].offset + offx,
+            RL_VertexColors(&tempquad, light, rgba);
+
+            // Add extra light using dynamic lights.
+            if(litSprites)
+            {
+                float   len;
+                vissprite_t *spr = vispsprites + i;
+
+                memcpy(&tempquad.vertices[1].color, &tempquad.vertices[0].color,
+                       3);
+                // Global variables as parameters... ugly.
+                slSpr = spr;
+                slRGB1 = tempquad.vertices[0].color.rgba;
+                slRGB2 = tempquad.vertices[1].color.rgba;
+
+                slViewVec.x = FIX2FLT(spr->data.mo.gx - viewx);
+                slViewVec.y = FIX2FLT(spr->data.mo.gy - viewy);
+
+                len = sqrt(slViewVec.x * slViewVec.x + slViewVec.y * slViewVec.y);
+                if(len)
+                {
+                    slViewVec.x /= len;
+                    slViewVec.y /= len;
+                    DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx,
+                                      spr->data.mo.gy, dlMaxRad << FRACBITS,
+                                      Rend_SpriteLighter);
+                }
+                // Check floor and ceiling for glow. They count as ambient light.
+                if(spr->data.mo.hasglow)
+                {
+                    int     v;
+                    float   glowHeight;
+
+                    // Floor glow
+                    glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.floorglowamount)
+                                  * glowHeightFactor;
+                    // Don't make too small or too large glows.
+                    if(glowHeight > 2)
+                    {
+                        if(glowHeight > glowHeightMax)
+                            glowHeight = glowHeightMax;
+
+                        len =
+                            1 - (FIX2FLT(spr->data.mo.gz) -
+                                 spr->data.mo.secfloor) / glowHeight;
+                        for(v = 0; v < 2; ++v)
+                            Rend_ScaledAmbientLight(tempquad.vertices[v].color.rgba,
+                                                    spr->data.mo.floorglow, len);
+                    }
+
+                    // Ceiling glow
+                    glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.ceilglowamount)
+                                  * glowHeightFactor;
+                    // Don't make too small or too large glows.
+                    if(glowHeight > 2)
+                    {
+                        if(glowHeight > glowHeightMax)
+                            glowHeight = glowHeightMax;
+
+                        len =
+                            1 - (spr->data.mo.secceil -
+                                 FIX2FLT(spr->data.mo.gzt)) / glowHeight;
+                        for(v = 0; v < 2; ++v)
+                            Rend_ScaledAmbientLight(tempquad.vertices[v].color.rgba,
+                                                    spr->data.mo.ceilglow, len);
+                    }
+                }
+            }
+            tempquad.vertices[0].color.rgba[CA] =
+                tempquad.vertices[1].color.rgba[CA] = rgba[CA];
+
+            Rend_DrawPSprite(psp[i].x - info[i].offset + offx,
                            offScaleY * psp[i].y + (1 - offScaleY) * 32 -
-                           info[i].topOffset + offy, 1, info[i].flip,
-                           info[i].lump);
+                           info[i].topOffset + offy,
+                           &tempquad.vertices[0].color.rgba[0],
+                           &tempquad.vertices[1].color.rgba[0],
+                           1, info[i].flip, info[i].lump);
         }
     }
 }
@@ -555,7 +685,7 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist)
     return true;
 }
 
-void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul)
+static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul)
 {
     int     i;
 

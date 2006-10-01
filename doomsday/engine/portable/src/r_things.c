@@ -467,6 +467,7 @@ void R_ProjectDecoration(mobj_t *source)
 void R_ProjectPlayerSprites(void)
 {
     int     i, j;
+    angle_t ang;
     modeldef_t *mf, *nextmf;
     ddpsprite_t *psp;
     vissprite_t *vis;
@@ -483,39 +484,18 @@ void R_ProjectPlayerSprites(void)
         vis = vispsprites + i;
         psp->flags &= ~DDPSPF_RENDERED;
         vis->type = false;
-        if(!useModels || !psp->stateptr)
-            continue;
 
-        // Is there a model for this frame?
-        // Setup a dummy for the call to R_CheckModelFor.
-        dummy.state = psp->stateptr;
-        dummy.tics = psp->tics;
-
-        vis->data.mo.inter = R_CheckModelFor(&dummy, &mf, &nextmf);
-        if(!mf)
-        {
-            // No, draw a 2D sprite instead (in Rend_DrawPlayerSprites).
-            continue;
-        }
-        // Mark this sprite rendered.
-        psp->flags |= DDPSPF_RENDERED;
-
-        // There are 3D psprites.
-        psp3d = true;
-
-        vis->type = VSPR_HUD_MODEL; // it's a psprite
         vis->distance = 4;
         vis->data.mo.subsector = viewplayer->mo->subsector;
-        vis->data.mo.mf = mf;
-        vis->data.mo.nextmf = nextmf;
         vis->data.mo.flags = 0;
-        vis->data.mo.gx = viewx;
-        vis->data.mo.gy = viewy;
-        vis->data.mo.v1[VX] = FIX2FLT(viewx);
-        vis->data.mo.v1[VY] = FIX2FLT(viewy);
+        // Adjust the vector slightly so an angle can be calculated.
+        ang = viewangle >>ANGLETOFINESHIFT;
+        vis->data.mo.gx = viewx + (2 * finecosine[ang]);
+        vis->data.mo.gy = viewy + (2 * finesine[ang]);
+        vis->data.mo.v1[VX] = FIX2FLT(vis->data.mo.gx);
+        vis->data.mo.v1[VY] = FIX2FLT(vis->data.mo.gy);
         // 32 is the raised weapon height.
         vis->data.mo.gzt = vis->data.mo.gz = viewz;
-        vis->data.mo.viewaligned = true;
         vis->data.mo.secfloor = SECT_FLOOR(viewplayer->mo->subsector->sector);
         vis->data.mo.secceil = SECT_CEIL(viewplayer->mo->subsector->sector);
         vis->data.mo.class = 0;
@@ -552,6 +532,36 @@ void R_ProjectPlayerSprites(void)
                 memset(vis->data.mo.floorglow, 0, sizeof(vis->data.mo.floorglow));
             }
         }
+
+        if(!useModels || !psp->stateptr)
+            continue;
+
+        // Is there a model for this frame?
+        // Setup a dummy for the call to R_CheckModelFor.
+        dummy.state = psp->stateptr;
+        dummy.tics = psp->tics;
+
+        vis->data.mo.inter = R_CheckModelFor(&dummy, &mf, &nextmf);
+        if(!mf)
+        {
+            // No, draw a 2D sprite instead (in Rend_DrawPlayerSprites).
+            continue;
+        }
+        vis->type = VSPR_HUD_MODEL; // it's a psprite
+        vis->data.mo.mf = mf;
+        vis->data.mo.nextmf = nextmf;
+        vis->data.mo.viewaligned = true;
+        // Use the exact center with HUD models.
+        vis->data.mo.gx = viewx;
+        vis->data.mo.gy = viewy;
+        vis->data.mo.v1[VX] = FIX2FLT(viewx);
+        vis->data.mo.v1[VY] = FIX2FLT(viewy);
+
+        // Mark this sprite rendered.
+        psp->flags |= DDPSPF_RENDERED;
+
+        // There are 3D psprites.
+        psp3d = true;
 
         // Offsets to rotation angles.
         vis->data.mo.v2[VX] = psp->x * weaponOffsetScale - 90;
