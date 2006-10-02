@@ -329,25 +329,31 @@ void Rend_DrawPlayerSprites(void)
 
             Rend_ApplyLightAdaptation(&light);
 
-            for(c = 0; c < 3; ++c)
+            if(isFullBright)
             {
-                if(isFullBright)
+                memset(&rgba, 255, 3);
+            }
+            else if(useBias)
+            {
+                memcpy(&rgba, &secbRGB, 3);
+            }
+            else
+            {
+                float lval;
+
+                for(c = 0; c < 3; ++c)
                 {
-                    rgba[c] = 255;
-                }
-                else
-                {
-                    if(useBias)
-                    {
-                        rgba[c] = (byte) (255 * (secbRGB[c] / 255.0f));
-                    }
-                    else
-                    {
-                        rgba[c] = (byte) (light * (secRGB[c] / 255.0f));
-                    }
+                    lval = light * (secRGB[c] / 255.0f);
+
+                    if(lval < 0)
+                        lval = 0;
+                    if(lval > 255)
+                        lval = 255;
+
+                    rgba[c] = (byte) lval;
                 }
             }
-            rgba[CA] = (byte)(psp[i].alpha * 255.0f);
+            rgba[CA] = psp[i].alpha * 255.0f;
 
             RL_VertexColors(&tempquad, light, rgba);
 
