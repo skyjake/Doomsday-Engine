@@ -621,6 +621,9 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
         (FIX2FLT(slData->spr->data.mo.gz + slData->spr->data.mo.gzt) / 2 -
          (FIX2FLT(lum->thing->pos[VZ]) + lum->center)) / dlMaxRad;
 
+    // Round out the "shape" of light to be more spherical.
+    zfactor *= 8;
+
     if(zfactor < 0)
         zfactor = -zfactor;
     if(zfactor > 1)
@@ -628,7 +631,7 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
 
     zfactor = 1 - zfactor;
     // Enlarge the full-lit area.
-    zfactor *= 2;
+    zfactor *= 4;
     if(zfactor > 1)
         zfactor = 1;
 
