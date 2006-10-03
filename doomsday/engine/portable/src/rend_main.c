@@ -857,7 +857,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
         Con_Error("Rend_RenderWallSection: Invalid wall section mode %i", mode);
     }
 
-    if(glow && r_texglow)        // Make it fullbright?
+    if(glow && glowingTextures)        // Make it fullbright?
         quad->flags |= RPF_GLOW;
 
     // Check for neighborhood division?
@@ -918,7 +918,7 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
     int subIndex = GET_SUBSECTOR_IDX(subsector);
     rendpoly_vertex_t *vtx;
 
-    if(glow && r_texglow)        // Make it fullbright?
+    if(glow && glowingTextures)        // Make it fullbright?
         poly->flags |= RPF_GLOW;
 
     // Surface color/light.

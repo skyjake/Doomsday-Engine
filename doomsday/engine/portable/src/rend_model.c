@@ -127,7 +127,7 @@ void Rend_ModelRegister(void)
     C_VAR_FLOAT("rend-model-aspect", &rModelAspectMod,
                 CVF_NO_MAX | CVF_NO_MIN, 0, 0);
     C_VAR_INT("rend-model-distance", &maxModelDistance, CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE("rend-model-precache", &r_precache_skins, 0, 0, 1);
+    C_VAR_BYTE("rend-model-precache", &precacheSkins, 0, 0, 1);
     C_VAR_FLOAT("rend-model-lod", &rend_model_lod, CVF_NO_MAX, 0, 0);
     C_VAR_INT("rend-model-mirror-hud", &mirrorHudModels, 0, 0, 1);
     C_VAR_FLOAT("rend-model-spin-speed", &modelSpinSpeed,

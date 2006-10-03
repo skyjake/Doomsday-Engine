@@ -426,8 +426,8 @@ extern translation_t *texturetranslation;   // for global animation
 extern int      numgroups;
 extern animgroup_t *groups;
 extern int      levelFullBright;
-extern int      r_texglow;
-extern byte     r_precache_sprites, r_precache_skins;
+extern int      glowingTextures;
+extern byte     precacheSprites, precacheSkins;
 
 void            R_InitData(void);
 void            R_UpdateData(void);

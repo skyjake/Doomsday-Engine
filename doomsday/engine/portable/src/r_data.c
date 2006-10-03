@@ -61,9 +61,8 @@ extern boolean levelSetup; // we are currently setting up a level
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte    r_precache_skins = true;
-byte    r_precache_sprites = false;
-//byte    r_unload_unneeded = false;
+byte    precacheSkins = true;
+byte    precacheSprites = false;
 
 lumptexinfo_t *lumptexinfo = 0;
 int     numlumptexinfo = 0;
@@ -76,7 +75,7 @@ int     numgroups;
 animgroup_t *groups;
 
 // Glowing textures are always rendered fullbright.
-int     r_texglow = true;
+int     glowingTextures = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -96,7 +95,7 @@ flat_t **R_CollectFlats(int *count)
     flat_t *f, **array;
 
     // First count the number of flats.
-    for(num = 0, i = 0; i < FLAT_HASH_SIZE; i++)
+    for(num = 0, i = 0; i < FLAT_HASH_SIZE; ++i)
         for(f = flathash[i].first; f; f = f->next)
             num++;
 
@@ -108,7 +107,7 @@ flat_t **R_CollectFlats(int *count)
     array = Z_Malloc(sizeof(flat_t *) * (num + 1), PU_STATIC, NULL);
 
     // Collect the pointers.
-    for(num = 0, i = 0; i < FLAT_HASH_SIZE; i++)
+    for(num = 0, i = 0; i < FLAT_HASH_SIZE; ++i)
         for(f = flathash[i].first; f; f = f->next)
             array[num++] = f;
 
@@ -295,7 +294,7 @@ boolean R_IsInAnimGroup(int groupNum, int type, int number)
     }
 
     // Is it in there?
-    for(i = 0; i < group->count; i++)
+    for(i = 0; i < group->count; ++i)
     {
         if(group->frames[i].number == number)
             return true;
@@ -348,10 +347,10 @@ void R_ResetAnimGroups(void)
     int     i;
     animgroup_t *group;
 
-    for(i = 0, group = groups; i < numgroups; i++, group++)
+    for(i = 0, group = groups; i < numgroups; ++i, group++)
     {
         // The Precache groups are not intended for animation.
-        if(group->flags & AGF_PRECACHE || !group->count)
+        if((group->flags & AGF_PRECACHE) || !group->count)
             continue;
 
         group->timer = 0;
@@ -374,14 +373,14 @@ void R_InitSwitchAnimGroups(void)
 {
     int     i, k, group;
 
-    for(i = 0; i < numtextures; i++)
+    for(i = 0; i < numtextures; ++i)
     {
         // Is this a switch texture?
         if(strnicmp(textures[i]->name, "SW1", 3))
             continue;
 
         // Find the corresponding SW2.
-        for(k = 0; k < numtextures; k++)
+        for(k = 0; k < numtextures; ++k)
         {
             // Could this be it?
             if(strnicmp(textures[k]->name, "SW2", 3))
@@ -426,7 +425,7 @@ void R_InitTextures(void)
     nummappatches = LONG(*((int *) names));
     name_p = names + 4;
     patchlookup = Z_Malloc(nummappatches * sizeof(*patchlookup), PU_STATIC, 0);
-    for(i = 0; i < nummappatches; i++)
+    for(i = 0; i < nummappatches; ++i)
     {
         strncpy(name, name_p + i * 8, 8);
         patchlookup[i] = W_CheckNumForName(name);
@@ -459,7 +458,7 @@ void R_InitTextures(void)
     sprintf(buf, "R_Init: Initializing %i textures...", numtextures);
     Con_InitProgress(buf, numtextures);
 
-    for(i = 0; i < numtextures; i++, directory++)
+    for(i = 0; i < numtextures; ++i, directory++)
     {
         Con_Progress(1, PBARF_DONTSHOW);
 
@@ -494,7 +493,7 @@ void R_InitTextures(void)
             mpatch = &mtexture->patches[0];
             patch = &texture->patches[0];
 
-            for(j = 0; j < texture->patchcount; j++, mpatch++, patch++)
+            for(j = 0; j < texture->patchcount; ++j, mpatch++, patch++)
             {
                 strncpy(name, name_p + SHORT(mpatch->patch) * 8, 8);
                 patch->originx = SHORT(mpatch->originx);
@@ -525,7 +524,7 @@ void R_InitTextures(void)
             smpatch = &smtexture->patches[0];
             patch = &texture->patches[0];
 
-            for(j = 0; j < texture->patchcount; j++, smpatch++, patch++)
+            for(j = 0; j < texture->patchcount; ++j, smpatch++, patch++)
             {
                 patch->originx = SHORT(smpatch->originx);
                 patch->originy = SHORT(smpatch->originy);
@@ -548,7 +547,7 @@ void R_InitTextures(void)
     // Translation table for global animation.
     texturetranslation =
         Z_Malloc(sizeof(translation_t) * (numtextures + 1), PU_REFRESHTEX, 0);
-    for(i = 0; i < numtextures; i++)
+    for(i = 0; i < numtextures; ++i)
     {
         texturetranslation[i].current = texturetranslation[i].next = i;
         texturetranslation[i].inter = 0;
@@ -649,7 +648,7 @@ void R_InitTranslationTables(void)
         Z_Malloc(256 * 3 * ( /*MAXPLAYERS*/ 8 - 1) + 255, PU_REFRESHTRANS, 0);
     translationtables = (byte *) (((int) translationtables + 255) & ~255);
 
-    for(i = 0; i < 3 * ( /*MAXPLAYERS*/ 8 - 1); i++)
+    for(i = 0; i < 3 * ( /*MAXPLAYERS*/ 8 - 1); ++i)
     {
         // If this can't be found, it's reasonable to expect that the game dll
         // will initialize the translation tables as it wishes.
@@ -691,7 +690,7 @@ int R_CheckTextureNumForName(char *name)
     if(name[0] == '-')          // no texture marker
         return 0;
 
-    for(i = 0; i < numtextures; i++)
+    for(i = 0; i < numtextures; ++i)
         if(!strncasecmp(textures[i]->name, name, 8))
             return i;
 
@@ -733,7 +732,7 @@ boolean R_IsCustomTexture(int texture)
         return true;
 
     // Go through the patches.
-    for(i = 0; i < textures[texture]->patchcount; i++)
+    for(i = 0; i < textures[texture]->patchcount; ++i)
     {
         if(!W_IsFromIWAD(textures[texture]->patches[i].patch))
             return true;
@@ -798,12 +797,12 @@ void R_PrecacheFlat(int num)
     if(f->ingroup)
     {
         // The flat belongs in one or more animgroups.
-        for(i = 0; i < numgroups; i++)
+        for(i = 0; i < numgroups; ++i)
         {
             if(R_IsInAnimGroup(groups[i].id, DD_FLAT, num))
             {
                 // Precache this group.
-                for(k = 0; k < groups[i].count; k++)
+                for(k = 0; k < groups[i].count; ++k)
                     GL_PrepareFlat(groups[i].frames[k].number);
             }
         }
@@ -825,12 +824,12 @@ void R_PrecacheTexture(int num)
     if(textures[num]->ingroup)
     {
         // The texture belongs in one or more animgroups.
-        for(i = 0; i < numgroups; i++)
+        for(i = 0; i < numgroups; ++i)
         {
             if(R_IsInAnimGroup(groups[i].id, DD_TEXTURE, num))
             {
                 // Precache this group.
-                for(k = 0; k < groups[i].count; k++)
+                for(k = 0; k < groups[i].count; ++k)
                     GL_PrepareTexture(groups[i].frames[k].number);
             }
         }
@@ -875,7 +874,7 @@ void R_PrecacheLevel(void)
     texturepresent = M_Malloc(numtextures);
     memset(texturepresent, 0, numtextures);
 
-    for(i = 0; i < numsides; i++)
+    for(i = 0; i < numsides; ++i)
     {
         side = SIDE_PTR(i);
 
@@ -905,7 +904,7 @@ void R_PrecacheLevel(void)
     }
 
     // Precache flats.
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
 
@@ -923,7 +922,7 @@ void R_PrecacheLevel(void)
 
     // FIXME: Precache sky textures!
 
-    for(i = 0; i < numtextures; i++)
+    for(i = 0; i < numtextures; ++i)
         if(texturepresent[i])
         {
             R_PrecacheTexture(i);
@@ -932,19 +931,28 @@ void R_PrecacheLevel(void)
         }
 
     // Precache sprites.
-    spritepresent = M_Malloc(numSprites);
-    memset(spritepresent, 0, numSprites);
-
-    for(th = thinkercap.next, mocount = 0; th != &thinkercap; th = th->next)
+    if(precacheSprites)
     {
-        if(th->function != gx.MobjThinker)
-            continue;
-        spritepresent[((mobj_t *) th)->sprite] = 1;
-        mocount++;
+        spritepresent = M_Malloc(numSprites);
+        memset(spritepresent, 0, numSprites);
     }
 
+    if(precacheSprites || (useModels && precacheSkins))
+        for(th = thinkercap.next, mocount = 0; th != &thinkercap;
+            th = th->next)
+        {
+            if(th->function != gx.MobjThinker)
+                continue;
+
+            if(precacheSprites)
+                spritepresent[((mobj_t *) th)->sprite] = 1;
+
+            mocount++;
+        }
+
+
     // Precache skins?
-    if(useModels && r_precache_skins)
+    if(useModels && precacheSkins)
     {
         for(i = 0, th = thinkercap.next; th != &thinkercap; th = th->next)
         {
@@ -961,29 +969,32 @@ void R_PrecacheLevel(void)
     // Sky models usually have big skins.
     R_PrecacheSky();
 
-    if(r_precache_sprites)
+    if(precacheSprites)
     {
-        for(i = 0; i < numSprites; i++)
+        for(i = 0; i < numSprites; ++i)
         {
             if(i % SAFEDIV(numSprites, 10) == 0)
                 Con_Progress(1, PBARF_DONTSHOW);
 
             if(!spritepresent[i] || !useModels)
                 continue;
-            for(j = 0; j < sprites[i].numframes; j++)
+
+            for(j = 0; j < sprites[i].numframes; ++j)
             {
                 sf = &sprites[i].spriteframes[j];
-                for(k = 0; k < 8; k++)
+
+                for(k = 0; k < 8; ++k)
                 {
                     lump = spritelumps[sf->lump[k]]->lump;
                     GL_BindTexture(GL_PrepareSprite(sf->lump[k], 0));
                 }
             }
         }
+
+        M_Free(spritepresent);
     }
 
     M_Free(texturepresent);
-    M_Free(spritepresent);
 
     if(verbose)
     {
@@ -1019,10 +1030,10 @@ void R_AnimateAnimGroups(void)
     if(clientPaused)
         return;
 
-    for(i = 0, group = groups; i < numgroups; i++, group++)
+    for(i = 0, group = groups; i < numgroups; ++i, group++)
     {
         // The Precache groups are not intended for animation.
-        if(group->flags & AGF_PRECACHE || !group->count)
+        if((group->flags & AGF_PRECACHE) || !group->count)
             continue;
 
         isTexture = (group->flags & AGF_TEXTURE) != 0;
@@ -1032,6 +1043,7 @@ void R_AnimateAnimGroups(void)
             // Advance to next frame.
             group->index = (group->index + 1) % group->count;
             timer = group->frames[group->index].tics;
+
             if(group->frames[group->index].random)
             {
                 timer += M_Random() % (group->frames[group->index].random + 1);
@@ -1039,7 +1051,7 @@ void R_AnimateAnimGroups(void)
             group->timer = group->maxtimer = timer;
 
             // Update texture/flat translations.
-            for(k = 0; k < group->count; k++)
+            for(k = 0; k < group->count; ++k)
             {
                 int     real, current, next;
 
@@ -1071,7 +1083,7 @@ void R_AnimateAnimGroups(void)
         else
         {
             // Update the interpolation point of animated group members.
-            for(k = 0; k < group->count; k++)
+            for(k = 0; k < group->count; ++k)
             {
                 xlat = R_GetTranslation(isTexture, group->frames[k].number);
 
@@ -1100,7 +1112,7 @@ void R_GenerateDecorMap(ded_decor_t * def)
 {
     int     i, count;
 
-    for(i = 0, count = 0; i < DED_DECOR_NUM_LIGHTS; i++)
+    for(i = 0, count = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
     {
         if(!R_IsValidLightDecoration(def->lights + i))
             continue;

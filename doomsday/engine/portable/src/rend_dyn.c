@@ -168,7 +168,7 @@ void DL_Register(void)
     C_VAR_INT("rend-mobj-light-auto", &useMobjAutoLights, 0, 0, 1);
 
     // Cvars (glowing surfaces)
-    C_VAR_INT("rend-glow", &r_texglow, 0, 0, 1);
+    C_VAR_INT("rend-glow", &glowingTextures, 0, 0, 1);
     C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
     C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
     C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);

@@ -83,7 +83,7 @@ void Rend_SpriteRegister(void)
     C_VAR_INT("rend-sprite-lit", &litSprites, 0, 0, 1);
     C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
     C_VAR_INT("rend-sprite-noz", &noSpriteZWrite, 0, 0, 1);
-    C_VAR_BYTE("rend-sprite-precache", &r_precache_sprites, 0, 0, 1);
+    C_VAR_BYTE("rend-sprite-precache", &precacheSprites, 0, 0, 1);
 }
 
 /**
