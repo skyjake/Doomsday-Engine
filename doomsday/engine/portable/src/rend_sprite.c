@@ -58,6 +58,8 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern boolean willRenderSprites;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 float   maxSpriteAngle = 60;
@@ -155,9 +157,9 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
             if(glowHeight > glowHeightMax)
                 glowHeight = glowHeightMax;
 
-            len =
-                1 - (FIX2FLT(spr->data.mo.gz) -
-                     spr->data.mo.secfloor) / glowHeight;
+            len = 1 - (FIX2FLT(spr->data.mo.gz) -
+                       spr->data.mo.secfloor) / glowHeight;
+
             for(v = 0; v < 2; ++v)
                 Rend_ScaledAmbientLight(quad->vertices[v].color.rgba,
                                         spr->data.mo.floorglow, len);
@@ -172,9 +174,9 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
             if(glowHeight > glowHeightMax)
                 glowHeight = glowHeightMax;
 
-            len =
-                1 - (spr->data.mo.secceil -
-                     FIX2FLT(spr->data.mo.gzt)) / glowHeight;
+            len = 1 - (spr->data.mo.secceil -
+                       FIX2FLT(spr->data.mo.gzt)) / glowHeight;
+
             for(v = 0; v < 2; ++v)
                 Rend_ScaledAmbientLight(quad->vertices[v].color.rgba,
                                         spr->data.mo.ceilglow, len);
@@ -203,34 +205,56 @@ static void Rend_DrawPSprite(float x, float y, byte *color1, byte *color2,
     h = slump->height;
     w2 = CeilPow2(w);
     h2 = CeilPow2(h);
+    w *= scale;
+    h *= scale;
 
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
     s = slump->tc[pSprMode][VX] - 0.4f / w2;
     t = slump->tc[pSprMode][VY] - 0.4f / h2;
 
-    gl.Begin(DGL_QUADS);
-
-    gl.Color4ubv(color1);
-
-    gl.TexCoord2f(flip * s, 0);
-    gl.Vertex2f(x, y);
-
     if(litSprites)
-        gl.Color4ubv(color2);
+    {
+        gl.Begin(DGL_QUADS);
 
-    gl.TexCoord2f(!flip * s, 0);
-    gl.Vertex2f(x + w * scale, y);
-
-    gl.TexCoord2f(!flip * s, t);
-    gl.Vertex2f(x + w * scale, y + h * scale);
-
-    if(litSprites)
         gl.Color4ubv(color1);
 
-    gl.TexCoord2f(flip * s, t);
-    gl.Vertex2f(x, y + h * scale);
-    gl.End();
+        gl.TexCoord2f(flip * s, 0);
+        gl.Vertex2f(x, y);
+
+        gl.Color4ubv(color2);
+
+        gl.TexCoord2f(!flip * s, 0);
+        gl.Vertex2f(x + w, y);
+
+        gl.TexCoord2f(!flip * s, t);
+        gl.Vertex2f(x + w, y + h);
+
+        gl.Color4ubv(color1);
+
+        gl.TexCoord2f(flip * s, t);
+        gl.Vertex2f(x, y + h);
+        gl.End();
+    }
+    else
+    {
+        gl.Begin(DGL_QUADS);
+
+        gl.Color4ubv(color1);
+
+        gl.TexCoord2f(flip * s, 0);
+        gl.Vertex2f(x, y);
+
+        gl.TexCoord2f(!flip * s, 0);
+        gl.Vertex2f(x + w, y);
+
+        gl.TexCoord2f(!flip * s, t);
+        gl.Vertex2f(x + w, y + h);
+
+        gl.TexCoord2f(flip * s, t);
+        gl.Vertex2f(x, y + h);
+        gl.End();
+    }
 }
 
 /**
@@ -261,7 +285,7 @@ void Rend_DrawPlayerSprites(void)
     for(i = 0, psp = viewplayer->psprites; i < DDMAXPSPRITES; ++i, psp++)
     {
         // Should this psprite be drawn?
-        if(psp->flags & DDPSPF_RENDERED || !psp->stateptr)
+        if((psp->flags & DDPSPF_RENDERED) || !psp->stateptr)
             continue;           // No...
 
         // If one of the psprites is fullbright, both are.
@@ -434,6 +458,7 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
         {
             gl.SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL ? 1 : 0);
         }
+
         if(vis->data.wall.texc[0][VX] < 0 || vis->data.wall.texc[0][VX] > 1 ||
            vis->data.wall.texc[1][VX] < 0 || vis->data.wall.texc[1][VX] > 1)
         {
@@ -452,63 +477,91 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
     // lots of masked walls, but since 3D models and sprites must be
     // rendered interleaved with masked walls, there's not much that can be
     // done about this.
-
-    gl.Begin(DGL_QUADS);
-
-    gl.Color4ubv(vis->data.wall.vertices[0].color);
-    gl.MultiTexCoord2f(normal, vis->data.wall.texc[0][VX],
-                       vis->data.wall.texc[1][VY]);
     if(withDyn)
     {
+        gl.Begin(DGL_QUADS);
+
+        gl.Color4ubv(vis->data.wall.vertices[0].color);
+        gl.MultiTexCoord2f(normal, vis->data.wall.texc[0][VX],
+                           vis->data.wall.texc[1][VY]);
+
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[0],
                            vis->data.wall.light->t[1]);
-    }
-    gl.Vertex3f(vis->data.wall.vertices[0].pos[VX],
-                vis->data.wall.vertices[0].pos[VZ],
-                vis->data.wall.vertices[0].pos[VY]);
 
-    gl.MultiTexCoord2fv(normal, vis->data.wall.texc[0]);
-    if(withDyn)
-    {
+        gl.Vertex3f(vis->data.wall.vertices[0].pos[VX],
+                    vis->data.wall.vertices[0].pos[VZ],
+                    vis->data.wall.vertices[0].pos[VY]);
+
+        gl.MultiTexCoord2fv(normal, vis->data.wall.texc[0]);
+
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[0],
                            vis->data.wall.light->t[0]);
-    }
-    gl.Vertex3f(vis->data.wall.vertices[2].pos[VX],
-                vis->data.wall.vertices[2].pos[VZ],
-                vis->data.wall.vertices[2].pos[VY]);
 
-    gl.Color4ubv(vis->data.wall.vertices[1].color);
-    gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
-                       vis->data.wall.texc[0][VY]);
-    if(withDyn)
-    {
+        gl.Vertex3f(vis->data.wall.vertices[2].pos[VX],
+                    vis->data.wall.vertices[2].pos[VZ],
+                    vis->data.wall.vertices[2].pos[VY]);
+
+        gl.Color4ubv(vis->data.wall.vertices[1].color);
+        gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
+                           vis->data.wall.texc[0][VY]);
+
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[1],
                            vis->data.wall.light->t[0]);
-    }
-    gl.Vertex3f(vis->data.wall.vertices[3].pos[VX],
-                vis->data.wall.vertices[3].pos[VZ],
-                vis->data.wall.vertices[3].pos[VY]);
 
-    gl.MultiTexCoord2fv(normal, vis->data.wall.texc[1]);
-    if(withDyn)
-    {
+        gl.Vertex3f(vis->data.wall.vertices[3].pos[VX],
+                    vis->data.wall.vertices[3].pos[VZ],
+                    vis->data.wall.vertices[3].pos[VY]);
+
+        gl.MultiTexCoord2fv(normal, vis->data.wall.texc[1]);
+
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[1],
                            vis->data.wall.light->t[1]);
-    }
-    gl.Vertex3f(vis->data.wall.vertices[1].pos[VX],
-                vis->data.wall.vertices[1].pos[VZ],
-                vis->data.wall.vertices[1].pos[VY]);
 
-    gl.End();
+        gl.Vertex3f(vis->data.wall.vertices[1].pos[VX],
+                    vis->data.wall.vertices[1].pos[VZ],
+                    vis->data.wall.vertices[1].pos[VY]);
 
-    if(withDyn)
-    {
+        gl.End();
+
         // Restore normal GL state.
         RL_SelectTexUnits(1);
         gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
         gl.DisableArrays(true, true, 0x1);
     }
+    else
+    {
+        gl.Begin(DGL_QUADS);
 
+        gl.Color4ubv(vis->data.wall.vertices[0].color);
+        gl.MultiTexCoord2f(normal, vis->data.wall.texc[0][VX],
+                           vis->data.wall.texc[1][VY]);
+
+        gl.Vertex3f(vis->data.wall.vertices[0].pos[VX],
+                    vis->data.wall.vertices[0].pos[VZ],
+                    vis->data.wall.vertices[0].pos[VY]);
+
+        gl.MultiTexCoord2fv(normal, vis->data.wall.texc[0]);
+
+        gl.Vertex3f(vis->data.wall.vertices[2].pos[VX],
+                    vis->data.wall.vertices[2].pos[VZ],
+                    vis->data.wall.vertices[2].pos[VY]);
+
+        gl.Color4ubv(vis->data.wall.vertices[1].color);
+        gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
+                           vis->data.wall.texc[0][VY]);
+
+        gl.Vertex3f(vis->data.wall.vertices[3].pos[VX],
+                    vis->data.wall.vertices[3].pos[VZ],
+                    vis->data.wall.vertices[3].pos[VY]);
+
+        gl.MultiTexCoord2fv(normal, vis->data.wall.texc[1]);
+
+        gl.Vertex3f(vis->data.wall.vertices[1].pos[VX],
+                    vis->data.wall.vertices[1].pos[VZ],
+                    vis->data.wall.vertices[1].pos[VY]);
+
+        gl.End();
+    }
 
     GL_BlendMode(BM_NORMAL);
 }
@@ -525,7 +578,6 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
  */
 void Rend_DrawMasked(void)
 {
-    extern boolean willRenderSprites;
     boolean haloDrawn = false;
     vissprite_t *spr;
 
@@ -545,9 +597,8 @@ void Rend_DrawMasked(void)
                 // Depth writing is once again needed.
                 Rend_RenderMaskedWall(spr);
             }
-            else
+            else // This is a mobj.
             {
-                // This is a mobj.
                 // There might be a model for this sprite, let's see.
                 if(!spr->data.mo.mf)
                 {
@@ -562,10 +613,11 @@ void Rend_DrawMasked(void)
                             gl.Enable(DGL_DEPTH_WRITE);
                     }
                 }
-                else            // It's a sprite and it has a modelframe (it's a 3D model).
+                else // It's a sprite and it has a modelframe (it's a 3D model).
                 {
                     Rend_RenderModel(spr);
                 }
+
                 // How about a halo?
                 if(spr->data.mo.light)
                 {
@@ -706,15 +758,19 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
 static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul)
 {
     int     i;
+    int     val;
 
     if(mul < 0)
         mul = 0;
-    if(mul > 1)
+    else if(mul > 1)
         mul = 1;
 
     for(i = 0; i < 3; ++i)
-        if(out[i] < ambient[i] * mul)
-            out[i] = ambient[i] * mul;
+    {
+        val = ambient[i] * mul;
+        if(out[i] < val)
+            out[i] = val;
+    }
 }
 
 void Rend_RenderSprite(vissprite_t *spr)
@@ -728,32 +784,33 @@ void Rend_RenderSprite(vissprite_t *spr)
     boolean usingSRVO = false, restoreZ = false;
     rendpoly_t tempquad;
 
-    // Do we need to translate any of the colors?
-    if(spr->data.mo.flags & DDMF_TRANSLATION)
+    if(!renderTextures)
     {
-        // We need to prepare a translated version of the sprite.
-        if(renderTextures)
-        GL_SetTranslatedSprite(patch,
-                               (spr->data.mo.
-                                flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT,
-                               spr->data.mo.class);
-        else
-            gl.Bind(0);
+        gl.Bind(0);
     }
     else
     {
-        // Set the texture. No translation required.
-        if(renderTextures)
-            GL_SetSprite(patch, 0);
+        // Do we need to translate any of the colors?
+        if(spr->data.mo.flags & DDMF_TRANSLATION)
+        {
+            // We need to prepare a translated version of the sprite.
+            GL_SetTranslatedSprite(patch,
+                                   (spr->data.mo.
+                                    flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT,
+                                   spr->data.mo.class);
+        }
         else
-            gl.Bind(0);
+        {
+            // Set the texture. No translation required.
+            GL_SetSprite(patch, 0);
+        }
     }
     sprh = spritelumps[patch]->height;
 
     // Set the lighting and alpha.
     if(useSpriteAlpha)
     {
-        if(missileBlend && spr->data.mo.flags & DDMF_BRIGHTSHADOW)
+        if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
         {
             alpha = 204;            // 80 %.
         }
@@ -771,7 +828,7 @@ void Rend_RenderSprite(vissprite_t *spr)
     else
         alpha = 255;
 
-    if(missileBlend && spr->data.mo.flags & DDMF_BRIGHTSHADOW)
+    if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
         additiveBlending = true;
 
     if(spr->data.mo.lightlevel < 0)
@@ -807,7 +864,7 @@ void Rend_RenderSprite(vissprite_t *spr)
     if(sprh < spr->data.mo.secceil - spr->data.mo.secfloor)
     {
         // Check top.
-        if(spr->data.mo.flags & DDMF_FITTOP && top > spr->data.mo.secceil)
+        if((spr->data.mo.flags & DDMF_FITTOP) && top > spr->data.mo.secceil)
             top = spr->data.mo.secceil;
         // Check bottom.
         if(spr->data.mo.flooradjust &&
@@ -836,14 +893,15 @@ void Rend_RenderSprite(vissprite_t *spr)
     // Do we need to do some aligning?
     if(spr->data.mo.viewaligned || alwaysAlign >= 2)
     {
-        float   centerx = FIX2FLT(spr->data.mo.gx), centery =
-            FIX2FLT(spr->data.mo.gy);
-        float   centerz = (top + bot) / 2;
+        float   centerx = FIX2FLT(spr->data.mo.gx);
+        float   centery = FIX2FLT(spr->data.mo.gy);
+        float   centerz = (top + bot) * .5f;
 
         // We must set up a modelview transformation matrix.
         restoreMatrix = true;
         gl.MatrixMode(DGL_MODELVIEW);
         gl.PushMatrix();
+
         // Rotate around the center of the sprite.
         gl.Translatef(centerx, centerz, centery);
         if(!spr->data.mo.viewaligned)
@@ -856,14 +914,17 @@ void Rend_RenderSprite(vissprite_t *spr)
                 float   dx = centerx - vx, dy = centery - vz;
                 float   spriteAngle =
                     BANG2DEG(bamsAtan2(centerz - vy, sqrt(dx * dx + dy * dy)));
+
                 if(spriteAngle > 180)
                     spriteAngle -= 360;
+
                 if(fabs(spriteAngle) > maxSpriteAngle)
                 {
                     float   turnAngle =
-                        spriteAngle >
+                        (spriteAngle >
                         0 ? spriteAngle - maxSpriteAngle : spriteAngle +
-                        maxSpriteAngle;
+                        maxSpriteAngle);
+
                     // Rotate along the sprite edge.
                     gl.Rotatef(turnAngle, s_dx, 0, s_dy);
                 }
@@ -872,7 +933,7 @@ void Rend_RenderSprite(vissprite_t *spr)
             {
                 // This'll do, for now... Really it should notice both the
                 // sprite angle and vpitch.
-                gl.Rotatef(vpitch / 2, s_dx, 0, s_dy);
+                gl.Rotatef(vpitch * .5f, s_dx, 0, s_dy);
             }
         }
         else
