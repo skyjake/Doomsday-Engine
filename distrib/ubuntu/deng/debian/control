@@ -7,9 +7,9 @@ Standards-Version: 3.6.2
 
 Package: deng
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, timidity, freepats
 Provides: doom-engine, heretic-engine, hexen-engine
-Recommends: timidity, freepats, reportbug
+Recommends: reportbug
 Suggests: deng-iwad-doomu-installer, deng-iwad-doom2-installer, deng-iwad-plutonia-installer, deng-iwad-tnt-installer,
  deng-iwad-heretic-installer, deng-iwad-hexen-installer, deng-iwad-hexendd-installer, deng-jdoom-rp-core,
  deng-jdoom-rp-decorations, deng-jdoom-rp-effects, deng-jdoom-rp-hud, deng-jdoom-rp-items, deng-jdoom-rp-monsters,
