@@ -27,13 +27,13 @@ if [ -e /proc/driver/nvidia/agp/status ]
 fi
 if [ -e /proc/dri/0/name ]
     then
-    echo "[DRINFO]------------------------------- /proc/driver/nvidia/agp/card ---------------" >&3
+    echo "[DRINFO]------------------------------- /proc/dri/0/name  -------------------------" >&3
     cat /proc/dri/0/name >&3
     echo  >&3
 fi
 if [ -e /proc/dri/0/vm ]
     then
-    echo "[DRINFO]------------------------------- /proc/driver/nvidia/agp/host-bridge --------" >&3
+    echo "[DRINFO]------------------------------- /proc/dri/0/vm -----------------------------" >&3
     cat /proc/dri/0/vm >&3
     echo  >&3
 fi

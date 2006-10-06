@@ -1,0 +1,17 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 01jdoom.ded-debian-hook.dpatch by Jamie Jones <jamie_jones_au@yahoo.com.au>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad deng-1.8.9+1.9.0.beta4~/plugins/jdoom/defs/jdoom.ded deng-1.8.9+1.9.0.beta4/plugins/jdoom/defs/jdoom.ded
+--- deng-1.8.9+1.9.0.beta4~/plugins/jdoom/defs/jdoom.ded	2006-09-26 09:59:33.000000000 +1000
++++ deng-1.8.9+1.9.0.beta4/plugins/jdoom/defs/jdoom.ded	2006-10-07 01:00:05.249025673 +1000
+@@ -26,5 +26,6 @@
+ Include "values.ded";
+ Include "models.ded";
+ Include "user.ded";
++Include "jdoom-debian.ded";
+ 
+ IncludeIf Not -noauto "auto\*.ded";

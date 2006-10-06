@@ -1,0 +1,17 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 03jhexen.ded-debian-hook.dpatch by Jamie Jones <jamie_jones_au@yahoo.com.au>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad deng-1.8.9+1.9.0.beta4~/plugins/jhexen/defs/jhexen.ded deng-1.8.9+1.9.0.beta4/plugins/jhexen/defs/jhexen.ded
+--- deng-1.8.9+1.9.0.beta4~/plugins/jhexen/defs/jhexen.ded	2006-09-26 09:59:33.000000000 +1000
++++ deng-1.8.9+1.9.0.beta4/plugins/jhexen/defs/jhexen.ded	2006-10-07 01:09:35.703859632 +1000
+@@ -25,5 +25,6 @@
+ Include "values.ded";
+ Include "models.ded";
+ Include "user.ded";
++Include "jhexen-debian.ded";
+ 
+ IncludeIf Not -noauto "auto\*.ded";
