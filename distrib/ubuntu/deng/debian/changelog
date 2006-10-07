@@ -1,3 +1,9 @@
+deng (1.8.9+1.9.0.beta4+svn.4039-0ubuntu0) edgy; urgency=low
+
+  * Repack. Last update was borked :(
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sat,  7 Oct 2006 17:17:48 +1000
+
 deng (1.8.9+1.9.0.beta4-2ubuntu0) edgy; urgency=low
 
   * Update to SVN 4039

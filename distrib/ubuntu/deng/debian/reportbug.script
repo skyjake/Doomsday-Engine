@@ -83,7 +83,7 @@ then ls -l /usr/share/games/doom/iwad/doom/doom.wad  >&3
 fi
 
 if [ -e /usr/share/games/doom/doom1.wad ]
-	ls -l /usr/share/games/doom/doom1.wad >&3
+then ls -l /usr/share/games/doom/doom1.wad >&3
 	filesize=`ls -l /usr/share/games/doom/doom1.wad`
 	set -- $filesize
 	shift
@@ -122,7 +122,7 @@ if [ -e /usr/share/games/doom/doom1.wad ]
 fi
 
 if [ -e /usr/share/games/doom/iwad/doomu/doomu.wad ]
-	ls -l /usr/share/games/doom/iwad/doomu/doomu.wad >&3
+then ls -l /usr/share/games/doom/iwad/doomu/doomu.wad >&3
 	filesize=`ls -l /usr/share/games/doom/iwad/doomu/doomu.wad`
 	set -- $filesize
 	shift
@@ -155,7 +155,7 @@ if [ -e /usr/share/games/doom/iwad/doomu/doomu.wad ]
 fi
 
 if [ -e /usr/share/games/doom/iwad/doom2/doom2.wad ]
-	ls -l /usr/share/games/doom/iwad/doom2/doom2.wad >&3
+then ls -l /usr/share/games/doom/iwad/doom2/doom2.wad >&3
 	filesize=`ls -l /usr/share/games/doom/iwad/doom2/doom2.wad`
 	set -- $filesize
 	shift
@@ -177,6 +177,7 @@ if [ -e /usr/share/games/doom/iwad/doom2/doom2.wad ]
 		;;
 		17923632 )
 		echo "Freedoom v0.3" >&3
+		;;
 		18267000 )
 		echo "Freedoom v0.4.1" >&3
 		;;
@@ -187,7 +188,7 @@ if [ -e /usr/share/games/doom/iwad/doom2/doom2.wad ]
 fi
 
 if [ -e /usr/share/games/doom/iwad/tnt/tnt.wad ]
-	ls -l /usr/share/games/doom/iwad/tnt/tnt.wad >&3
+then ls -l /usr/share/games/doom/iwad/tnt/tnt.wad >&3
 	filesize=`ls -l /usr/share/games/doom/iwad/tnt/tnt.wad`
 	set -- $filesize
 	shift
@@ -205,7 +206,7 @@ if [ -e /usr/share/games/doom/iwad/tnt/tnt.wad ]
 fi
 
 if [ -e /usr/share/games/doom/iwad/plutonia/plutonia.wad ]
-	ls -l /usr/share/games/doom/iwad/plutonia/plutonia.wad >&3
+then ls -l /usr/share/games/doom/iwad/plutonia/plutonia.wad >&3
 	filesize=`ls -l /usr/share/games/doom/iwad/plutonia/plutonia.wad`
 	set -- $filesize
 	shift
@@ -220,11 +221,11 @@ if [ -e /usr/share/games/doom/iwad/plutonia/plutonia.wad ]
 		echo "Unknown plutonia.wad" >&3
 		;;
 		esac
-
+fi
 
 
 if [ -e /usr/share/games/doom/iwad/heretic/heretic.wad ]
-	ls -l /usr/share/games/doom/iwad/heretic/heretic.wad >&3
+then ls -l /usr/share/games/doom/iwad/heretic/heretic.wad >&3
 	filesize=`ls -l /usr/share/games/doom/iwad/heretic/heretic.wad`
 	set -- $filesize
 	shift
@@ -249,7 +250,7 @@ fi
 
 
 if [ -e /usr/share/games/doom/iwad/heretic1/heretic1.wad ]
-	ls -l /usr/share/games/doom/iwad/heretic1/heretic1.wad >&3
+then ls -l /usr/share/games/doom/iwad/heretic1/heretic1.wad >&3
 	filesize=`ls -l /usr/share/games/doom/iwad/heretic/heretic1.wad`
 	set -- $filesize
 	shift
@@ -270,7 +271,7 @@ if [ -e /usr/share/games/doom/iwad/heretic1/heretic1.wad ]
 fi
 
 if [ -e /usr/share/games/doom/iwad/hexen/hexen.wad ]
-	ls -l /usr/share/games/doom/iwad/hexen/hexen.wad >&3
+then ls -l /usr/share/games/doom/iwad/hexen/hexen.wad >&3
 	filesize=`ls -l /usr/share/games/doom/iwad/hexen/hexen.wad`
 	set -- $filesize
 	shift
@@ -291,7 +292,7 @@ if [ -e /usr/share/games/doom/iwad/hexen/hexen.wad ]
 fi
 
 if [ -e /usr/share/games/doom/iwad/hexdd/hexdd.wad ]
-	ls -l /usr/share/games/doom/iwad/hexdd/hexdd.wad >&3
+then ls -l /usr/share/games/doom/iwad/hexdd/hexdd.wad >&3
 	filesize=`ls -l /usr/share/games/doom/iwad/hexdd/hexdd.wad`
 		case $1 in
 		4429700 )
@@ -303,6 +304,7 @@ if [ -e /usr/share/games/doom/iwad/hexdd/hexdd.wad ]
 		* )
 		echo "Unknown hexdd.wad" >&3
 		;;
+		esac
 fi
 echo >&3
 echo "[DOOMSDAYINFO]------------------------- doomsday.out --------------------------------" >&3

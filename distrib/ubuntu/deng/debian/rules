@@ -25,7 +25,7 @@ else
 ## -ftree-vectorize try to rearange code to be SIMD friendly. Needs sse or sse2
 ## -ftree-vectorizer-verbose=5 debugging info for me.
 
-	CFLAGS += -fgcse-after-reload -fomit-frame-pointer -ffast-math -ftree-vectorize -ftree-vectorizer-verbose=5
+	CFLAGS += -fgcse-after-reload -fomit-frame-pointer -ffast-math -ftree-vectorize -ftree-vectorizer-verbose=5 -Q
 
 #These cflags below break gcc :)
 #	CFLAGS += -O2 -fPIC -fweb -ffast-math -funswitch-loops -fgcse-after-reload -fomit-frame-pointer -fgcse-lm -fgcse-sm -fgcse-las -ftree-loop-linear -ftree-loop-im -ftree-loop-ivcanon -fivopts -ftree-vectorize -ftracer -fvariable-expansion-in-unroller
@@ -48,8 +48,14 @@ ifneq "$(DEBIAN_ARCH)" "amd64"
 config.status:
 	mkdir -p builddir
 	dh_testdir
+# We need out patches to be slipstreamed into the .pk3s that will be generated, so insert them here
+# These are legacy upgrade hooks. Will need to remove them once the snowberry transistion is complete
+	cp debian/jdoom-debian.ded plugins/jdoom/defs
+	cp debian/jheretic-debian.ded plugins/jheretic/defs
+	cp debian/jhexen-debian.ded plugins/jhexen/defs
+#
 	# Add here commands to configure the package.
-	cd builddir &&  export CFLAGS="$(CFLAGS)" && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/games -DBUILDJDOOM=ON -DBUILDJHERETIC=ON -DBUILDJHEXEN=ON -DBUILDWOLFTC=ON -DBUILDDOOM64TC=ON -DBUILDOPENGL=ON -DBUILDOPENAL=ON -DBUILDSDLMIXER=ON -DBUILDFIXEDASM=ON -DBUILDDOX=OFF
+	cd builddir &&  export CFLAGS="$(CFLAGS)" && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/games -DBUILDJDOOM=ON -DBUILDJHERETIC=ON -DBUILDJHEXEN=ON -DBUILDWOLFTC=ON -DBUILDDOOM64TC=ON -DBUILDOPENGL=ON -DBUILDOPENAL=ON -DBUILDSDLMIXER=ON -DBUILDFIXEDASM=ON -DBUILDDOX=OFF -Ddatadir=/usr/share/games/deng
 
 build: build-stamp
 
@@ -83,12 +89,7 @@ install: build
 	install -m 644 debian/reportbug.control debian/deng/usr/share/bug/deng/control
 	install -m 644 debian/reportbug.presubj debian/deng/usr/share/bug/deng/presubj
 	install -m 755 debian/reportbug.script debian/deng/usr/share/bug/deng/script
-	mkdir -p debian/deng/usr/share/games/deng/defs/jdoom
-	install -m 644 debian/jdoom-debian.ded debian/deng/usr/share/games/deng/defs/jdoom
-	mkdir -p debian/deng/usr/share/games/deng/defs/jhexen
-	install -m 644 debian/jhexen-debian.ded debian/deng/usr/share/games/deng/defs/jhexen
-	mkdir -p debian/deng/usr/share/games/deng/defs/jheretic
-	install -m 644 debian/jheretic-debian.ded debian/deng/usr/share/games/deng/defs/jheretic
+
 	uudecode debian/deng.png.uue > debian/deng/usr/share/pixmaps/deng.png
 
 
@@ -103,6 +104,8 @@ binary-indep: build install
 binary-arch: build install
 	dh_testdir
 	dh_testroot
+	dh_buildinfo
+	dh_installchangelogs engine/doc/changelog.txt
 	dh_installdocs
 	dh_installman engine/doc/doomsday.6
 	dh_link
@@ -110,6 +113,12 @@ binary-arch: build install
 	dh_compress
 	dh_fixperms
 	chmod 644 debian/deng/usr/games/lib/*
+	chmod 644 debian/deng/usr/share/games/deng/data/*.pk3
+	chmod 644 debian/deng/usr/share/games/deng/data/doom64tc/*.pk3
+	chmod 644 debian/deng/usr/share/games/deng/data/jdoom/*.pk3
+	chmod 644 debian/deng/usr/share/games/deng/data/jheretic/*.pk3
+	chmod 644 debian/deng/usr/share/games/deng/data/jhexen/*.pk3
+	chmod 644 debian/deng/usr/share/games/deng/data/wolftc/*.pk3
 	dh_installdeb
 	dh_shlibdeps debian/deng/usr/games/lib/* debian/deng/usr/games/bin/*
 	dh_gencontrol
