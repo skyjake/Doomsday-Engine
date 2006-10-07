@@ -49,8 +49,7 @@ config.status:
 	mkdir -p builddir
 	dh_testdir
 	# Add here commands to configure the package.
-	CFLAGS="$(CFLAGS)"
-	cd builddir && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/games
+	cd builddir &&  export CFLAGS="$(CFLAGS)" && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/games -DBUILDJDOOM=ON -DBUILDJHERETIC=ON -DBUILDJHEXEN=ON -DBUILDWOLFTC=ON -DBUILDDOOM64TC=ON -DBUILDOPENGL=ON -DBUILDOPENAL=ON -DBUILDSDLMIXER=ON -DBUILDFIXEDASM=ON -DBUILDDOX=OFF
 
 build: build-stamp
 
