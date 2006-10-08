@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -44,8 +44,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LOOPi(n)    for(i = 0; i < (n); i++)
-#define LOOPk(n)    for(k = 0; k < (n); k++)
+#define LOOPi(n)    for(i = 0; i < (n); ++i)
+#define LOOPk(n)    for(k = 0; k < (n); ++k)
 
 // Legacy frame flags.
 #define FF_FULLBRIGHT       0x8000 // flag in thing->frame
@@ -104,7 +104,7 @@ xgclass_t *xgClassLinks;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Retrieves the XG Class list from the Game.
  * XGFunc links are provided by the Game, who owns the actual
  * XG classes and their functions.
@@ -120,7 +120,7 @@ static int GetXGClasses(void)
     return 1;
 }
 
-/*
+/**
  * Initializes the definition databases.
  */
 void Def_Init(void)
@@ -172,20 +172,20 @@ void Def_Init(void)
     if(ArgCheckWith("-def", 1))
     {
         // Find the next empty place.
-        for(c = 0; dedFiles[c] && c < MAX_READ; c++);
-        while(c < MAX_READ)
-        {
-            char   *arg = ArgNext();
+        for(c = 0; dedFiles[c] && c < MAX_READ; ++c);
+            while(c < MAX_READ)
+            {
+                char   *arg = ArgNext();
 
-            if(!arg || arg[0] == '-')
-                break;
-            // Add it to the list.
-            dedFiles[c++] = arg;
-        }
+                if(!arg || arg[0] == '-')
+                    break;
+                // Add it to the list.
+                dedFiles[c++] = arg;
+            }
     }
 }
 
-/*
+/**
  * Destroy databases.
  */
 void Def_Destroy(void)
@@ -209,7 +209,7 @@ void Def_Destroy(void)
     mapinfo = NULL;
 }
 
-/*
+/**
  * Guesses the location of the Defs Auto directory based on main DED
  * file.
  */
@@ -228,7 +228,7 @@ void Def_GetAutoPath(char *path)
     strcpy(lastSlash + 1, "auto" DIR_SEP_STR);
 }
 
-/*
+/**
  * Returns the number of the given sprite, or -1 if it doesn't exist.
  */
 int Def_GetSpriteNum(char *name)
@@ -238,7 +238,7 @@ int Def_GetSpriteNum(char *name)
     if(!name || !name[0])
         return -1;
 
-    for(i = 0; i < count_sprnames.num; i++)
+    for(i = 0; i < count_sprnames.num; ++i)
         if(!stricmp(sprnames[i].name, name))
             return i;
     return -1;
@@ -251,7 +251,7 @@ int Def_GetMobjNum(char *id)
     if(!id || !id[0])
         return -1;
 
-    for(i = 0; i < defs.count.mobjs.num; i++)
+    for(i = 0; i < defs.count.mobjs.num; ++i)
         if(!strcmp(defs.mobjs[i].id, id))
             return i;
     return -1;
@@ -279,7 +279,7 @@ int Def_GetStateNum(char *id)
     if(!id || !id[0])
         return -1;
 
-    for(i = 0; i < defs.count.states.num; i++)
+    for(i = 0; i < defs.count.states.num; ++i)
         if(!strcmp(defs.states[i].id, id))
             return i;
     return -1;
@@ -292,7 +292,7 @@ int Def_GetModelNum(const char *id)
     if(!id[0])
         return -1;
 
-    for(i = 0; i < defs.count.models.num; i++)
+    for(i = 0; i < defs.count.models.num; ++i)
         if(!strcmp(defs.models[i].id, id))
             return i;
     return -1;
@@ -305,7 +305,7 @@ int Def_GetSoundNum(char *id)
     if(!id || !id[0])
         return -1;
 
-    for(i = 0; i < defs.count.sounds.num; i++)
+    for(i = 0; i < defs.count.sounds.num; ++i)
     {
         if(!strcmp(defs.sounds[i].id, id))
             return i;
@@ -313,7 +313,7 @@ int Def_GetSoundNum(char *id)
     return -1;
 }
 
-/*
+/**
  * Looks up a sound using the Name key. If the name is not found, returns
  * the NULL sound index (zero).
  */
@@ -324,7 +324,7 @@ int Def_GetSoundNumForName(char *name)
     if(!name || !name[0])
         return -1;
 
-    for(i = 0; i < defs.count.sounds.num; i++)
+    for(i = 0; i < defs.count.sounds.num; ++i)
         if(!stricmp(defs.sounds[i].name, name))
             return i;
     return 0;
@@ -337,7 +337,7 @@ int Def_GetMusicNum(char *id)
     if(!id || !id[0])
         return -1;
 
-    for(i = 0; i < defs.count.music.num; i++)
+    for(i = 0; i < defs.count.music.num; ++i)
         if(!strcmp(defs.music[i].id, id))
             return i;
     return -1;
@@ -407,7 +407,7 @@ ded_decor_t *Def_GetDecoration(int number, boolean is_texture, boolean has_ext)
     return 0;
 }
 
-/*
+/**
  * Currently reflections cannot specify any conditions when it is
  * appropriate to use them: if a high-resolution texture or a custom
  * patch overrides the texture that the reflection was meant to be
@@ -460,7 +460,7 @@ int Def_GetFlagValue(char *flag)
     return 0;
 }
 
-/*
+/**
  * Attempts to retrieve a flag by its prefix and value.
  * Returns a ptr to the text string of the first flag it
  * finds that matches the criteria, else NULL.
@@ -508,7 +508,7 @@ int Def_GetTextNumForName(char *name)
     return -1;
 }
 
-/*
+/**
  * Escape sequences are un-escaped (\n, \r, \t, \s, \_).
  */
 void Def_InitTextDef(ddtext_t *txt, char *str)
@@ -517,7 +517,7 @@ void Def_InitTextDef(ddtext_t *txt, char *str)
 
     if(!str)
         str = "";               // Handle null pointers with "".
-    txt->text = calloc(strlen(str) + 1, 1);
+    txt->text = M_Calloc(strlen(str) + 1);
     for(out = txt->text, in = str; *in; out++, in++)
     {
         if(*in == '\\')
@@ -538,10 +538,10 @@ void Def_InitTextDef(ddtext_t *txt, char *str)
         *out = *in;
     }
     // Adjust buffer to fix exactly.
-    txt->text = realloc(txt->text, strlen(txt->text) + 1);
+    txt->text = M_Realloc(txt->text, strlen(txt->text) + 1);
 }
 
-/*
+/**
  * Callback for DD_ReadProcessDED.
  */
 int Def_ReadDEDFile(const char *fn, filetype_t type, void *parm)
@@ -595,7 +595,7 @@ void Def_ReadProcessDED(const char *fileName)
     }
 }
 
-/*
+/**
  * Prints a count with a 2-space indentation.
  */
 void Def_CountMsg(int count, const char *label)
@@ -605,14 +605,14 @@ void Def_CountMsg(int count, const char *label)
     Con_Message("%5i %s\n", count, label);
 }
 
-/*
+/**
  * Reads all DD_DEFNS lumps found in the lumpinfo.
  */
 void Def_ReadLumpDefs(void)
 {
     int     i, c;
 
-    for(i = 0, c = 0; i < numlumps; i++)
+    for(i = 0, c = 0; i < numlumps; ++i)
         if(!strnicmp(lumpinfo[i].name, "DD_DEFNS", 8))
         {
             c++;
@@ -630,7 +630,7 @@ void Def_ReadLumpDefs(void)
     }
 }
 
-/*
+/**
  * Uses gettingFor. Initializes the state-owners information.
  */
 int Def_StateForMobj(char *state_id)
@@ -645,8 +645,8 @@ int Def_StateForMobj(char *state_id)
     if(num > 0)
     {
         stateowners[num] = gettingFor;
-        // Span forward at most 'count' states, or until we hit a
-        // state with an owner, or the NULL state.
+        // Scan forward at most 'count' states, or until we hit a state with
+        // an owner, or the NULL state.
         for(st = states[num].nextstate; st > 0 && count-- && !stateowners[st];
             st = states[st].nextstate)
         {
@@ -672,7 +672,7 @@ int Def_GetIntValue(char *val, int *returned_val)
     return false;
 }
 
-/*
+/**
  * Reads the specified definition files, and creates the sprite name,
  * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
  */
@@ -697,7 +697,7 @@ void Def_Read(void)
     // Reset file IDs so previously seen files can be processed again.
     M_ResetFileIDs();
 
-    for(i = 0; dedFiles[i]; i++)
+    for(i = 0; dedFiles[i]; ++i)
     {
         Con_Message("Reading definition file: %s\n", M_Pretty(dedFiles[i]));
         Def_ReadProcessDED(dedFiles[i]);
@@ -716,14 +716,14 @@ void Def_Read(void)
     // Sprite names.
     DED_NewEntries((void **) &sprnames, &count_sprnames, sizeof(*sprnames),
                    defs.count.sprites.num);
-    for(i = 0; i < count_sprnames.num; i++)
+    for(i = 0; i < count_sprnames.num; ++i)
         strcpy(sprnames[i].name, defs.sprites[i].id);
     Def_CountMsg(count_sprnames.num, "sprite names");
 
     // States.
     DED_NewEntries((void **) &states, &count_states, sizeof(*states),
                    defs.count.states.num);
-    for(i = 0; i < count_states.num; i++)
+    for(i = 0; i < count_states.num; ++i)
     {
         ded_state_t *dst = defs.states + i;
 
@@ -746,14 +746,14 @@ void Def_Read(void)
         st->tics = dst->tics;
         st->action = Def_GetActionPtr(dst->action);
         st->nextstate = Def_GetStateNum(dst->nextstate);
-        for(k = 0; k < NUM_STATE_MISC; k++)
+        for(k = 0; k < NUM_STATE_MISC; ++k)
             st->misc[k] = dst->misc[k];
 
         // Replace the older execute string.
         if(dst != dstNew)
         {
             if(dstNew->execute)
-                free(dstNew->execute);
+                M_Free(dstNew->execute);
             dstNew->execute = dst->execute;
             dst->execute = NULL;
         }
@@ -766,7 +766,7 @@ void Def_Read(void)
     // Mobj info.
     DED_NewEntries((void **) &mobjinfo, &count_mobjinfo, sizeof(*mobjinfo),
                    defs.count.mobjs.num);
-    for(i = 0; i < count_mobjinfo.num; i++)
+    for(i = 0; i < count_mobjinfo.num; ++i)
     {
         ded_mobj_t *dmo = defs.mobjs + i;
 
@@ -800,14 +800,14 @@ void Def_Read(void)
         mo->flags = dmo->flags[0];
         mo->flags2 = dmo->flags[1];
         mo->flags3 = dmo->flags[2];
-        for(k = 0; k < NUM_MOBJ_MISC; k++)
+        for(k = 0; k < NUM_MOBJ_MISC; ++k)
             mo->misc[k] = dmo->misc[k];
     }
     Def_CountMsg(count_mobjinfo.num, "things");
     Def_CountMsg(defs.count.models.num, "models");
 
     // Dynamic lights. Update the sprite numbers.
-    for(i = 0; i < defs.count.lights.num; i++)
+    for(i = 0; i < defs.count.lights.num; ++i)
     {
         k = Def_GetStateNum(defs.lights[i].state);
         if(k < 0)
@@ -827,7 +827,7 @@ void Def_Read(void)
     // Sound effects.
     DED_NewEntries((void **) &sounds, &count_sounds, sizeof(*sounds),
                    defs.count.sounds.num);
-    for(i = 0; i < count_sounds.num; i++)
+    for(i = 0; i < count_sounds.num; ++i)
     {
         ded_sound_t *snd = defs.sounds + i;
 
@@ -851,7 +851,7 @@ void Def_Read(void)
     Def_CountMsg(count_sounds.num, "sound effects");
 
     // Music.
-    for(i = 0; i < defs.count.music.num; i++)
+    for(i = 0; i < defs.count.music.num; ++i)
     {
         ded_music_t *mus = defs.music + i;
 
@@ -860,6 +860,7 @@ void Def_Read(void)
 
         if(earliest == mus)
             continue;
+
         strcpy(earliest->lumpname, mus->lumpname);
         strcpy(earliest->path.path, mus->path.path);
         earliest->cdtrack = mus->cdtrack;
@@ -869,29 +870,33 @@ void Def_Read(void)
     // Text.
     DED_NewEntries((void **) &texts, &count_texts, sizeof(*texts),
                    defs.count.text.num);
-    for(i = 0; i < count_texts.num; i++)
+
+    for(i = 0; i < count_texts.num; ++i)
         Def_InitTextDef(texts + i, defs.text[i].text);
+
     // Handle duplicate strings.
-    for(i = 0; i < count_texts.num; i++)
+    for(i = 0; i < count_texts.num; ++i)
     {
         if(!texts[i].text)
             continue;
-        for(k = i + 1; k < count_texts.num; k++)
+
+        for(k = i + 1; k < count_texts.num; ++k)
             if(!strcmp(defs.text[i].id, defs.text[k].id) && texts[k].text)
             {
                 // Update the earlier string.
                 texts[i].text =
-                    realloc(texts[i].text, strlen(texts[k].text) + 1);
+                    M_Realloc(texts[i].text, strlen(texts[k].text) + 1);
                 strcpy(texts[i].text, texts[k].text);
+
                 // Free the later string, it isn't used (>NUMTEXT).
-                free(texts[k].text);
+                M_Free(texts[k].text);
                 texts[k].text = 0;
             }
     }
     Def_CountMsg(count_texts.num, "text strings");
 
     // Particle generators.
-    for(i = 0; i < defs.count.ptcgens.num; i++)
+    for(i = 0; i < defs.count.ptcgens.num; ++i)
     {
         ded_ptcgen_t *pg = defs.ptcgens + i;
         int     st = Def_GetStateNum(pg->state);
@@ -905,7 +910,7 @@ void Def_Read(void)
         pg->damage_num = Def_GetMobjNum(pg->damage);
 
         // Figure out embedded sound ID numbers.
-        for(k = 0; k < pg->stage_count.num; k++)
+        for(k = 0; k < pg->stage_count.num; ++k)
         {
             if(pg->stages[k].sound.name[0])
             {
@@ -936,6 +941,7 @@ void Def_Read(void)
             {
                 ded_ptcgen_t *temp =
                     ((ded_ptcgen_t *) states[st].ptrigger)->state_next;
+
                 ((ded_ptcgen_t *) states[st].ptrigger)->state_next = NULL;
                 states[st].ptrigger = temp;
             }
@@ -984,7 +990,7 @@ void Def_Read(void)
     defsInited = true;
 }
 
-/*
+/**
  * Initialize definitions that must be initialized when engine init is
  * complete (called from R_Init).
  */
@@ -997,18 +1003,20 @@ void Def_PostInit(void)
     ded_ptcstage_t *st;
 
     // Particle generators: model setup.
-    for(i = 0, gen = defs.ptcgens; i < defs.count.ptcgens.num; i++, gen++)
+    for(i = 0, gen = defs.ptcgens; i < defs.count.ptcgens.num; ++i, gen++)
     {
-        for(k = 0, st = gen->stages; k < gen->stage_count.num; k++, st++)
+        for(k = 0, st = gen->stages; k < gen->stage_count.num; ++k, st++)
         {
             if(st->type < PTC_MODEL || st->type >= PTC_MODEL + MAX_PTC_MODELS)
                 continue;
+
             sprintf(name, "Particle%02i", st->type - PTC_MODEL);
             if(!(modef = R_CheckIDModelFor(name)) || modef->sub[0].model <= 0)
             {
                 st->model = -1;
                 continue;
             }
+
             st->model = modef - models;
             st->frame =
                 R_ModelFrameNumForName(modef->sub[0].model, st->frame_name);
@@ -1029,7 +1037,7 @@ void Def_PostInit(void)
     DED_DelArray((void **) &details, &count_details);
     DED_NewEntries((void **) &details, &count_details, sizeof(*details),
                    defs.count.details.num);
-    for(i = 0; i < defs.count.details.num; i++)
+    for(i = 0; i < defs.count.details.num; ++i)
     {
         details[i].wall_texture =
             R_CheckTextureNumForName(defs.details[i].wall);
@@ -1040,7 +1048,7 @@ void Def_PostInit(void)
     }
 
     // Surface decorations.
-    for(i = 0; i < defs.count.decorations.num; i++)
+    for(i = 0; i < defs.count.decorations.num; ++i)
     {
         ded_decor_t *decor = defs.decorations + i;
 
@@ -1108,7 +1116,7 @@ void Def_PostInit(void)
     }
 
     // Animation groups.
-    for(i = 0; i < defs.count.groups.num; i++)
+    for(i = 0; i < defs.count.groups.num; ++i)
     {
         R_InitAnimGroup(defs.groups + i);
     }
@@ -1119,6 +1127,7 @@ void Def_SetLightMap(ded_lightmap_t * map, const char *id,
 {
     if(stricmp(map->id, id))
         return;                 // Not the same lightmap?
+
     map->tex = texture;
 }
 
@@ -1128,19 +1137,21 @@ void Def_LightMapLoaded(const char *id, unsigned int texture)
     ded_decor_t *decor;
 
     // Load lightmaps.
-    for(i = 0; i < defs.count.lights.num; i++)
+    for(i = 0; i < defs.count.lights.num; ++i)
     {
         Def_SetLightMap(&defs.lights[i].up, id, texture);
         Def_SetLightMap(&defs.lights[i].down, id, texture);
         Def_SetLightMap(&defs.lights[i].sides, id, texture);
     }
+
     for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        i++, decor++)
+        ++i, decor++)
     {
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; k++)
+        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
             if(!R_IsValidLightDecoration(&decor->lights[k]))
                 break;
+
             Def_SetLightMap(&decor->lights[k].up, id, texture);
             Def_SetLightMap(&decor->lights[k].down, id, texture);
             Def_SetLightMap(&decor->lights[k].sides, id, texture);
@@ -1154,6 +1165,7 @@ void Def_SetFlareMap(ded_flaremap_t * map, const char *id,
 {
     if(stricmp(map->id, id))
         return;                 // Not the same lightmap?
+
     map->tex = texture;
     map->disabled = disabled;
     map->custom = custom;
@@ -1165,25 +1177,27 @@ void Def_FlareMapLoaded(const char *id, unsigned int texture,
     int     i, k;
     ded_decor_t *decor;
 
-    for(i = 0; i < defs.count.lights.num; i++)
+    for(i = 0; i < defs.count.lights.num; ++i)
     {
         Def_SetFlareMap(&defs.lights[i].flare, id, texture, disabled,
                         custom);
     }
+
     for(i = 0, decor = defs.decorations; i < defs.count.decorations.num;
-        i++, decor++)
+        ++i, decor++)
     {
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; k++)
+        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
             if(!R_IsValidLightDecoration(&decor->lights[k]))
                 break;
+
             Def_SetFlareMap(&decor->lights[k].flare, id, texture,
                             disabled, custom);
         }
     }
 }
 
-/*
+/**
  * Can we reach 'snew' if we start searching from 'sold'?
  * Take a maximum of 16 steps.
  */
@@ -1194,13 +1208,16 @@ boolean Def_SameStateSequence(state_t * snew, state_t * sold)
 
     if(!snew || !sold)
         return false;
+
     if(snew == sold)
         return true;            // Trivial.
+
     for(it = sold->nextstate; it >= 0 && it != start && count < 16;
-        it = states[it].nextstate, count++)
+        it = states[it].nextstate, ++count)
     {
         if(it == target)
             return true;
+
         if(it == states[it].nextstate)
             break;
     }
@@ -1208,8 +1225,9 @@ boolean Def_SameStateSequence(state_t * snew, state_t * sold)
 }
 
 #if 0
-/*
- * Returns true if the mobj (in mobjinfo) has the given state.
+/**
+ * @return          <code>true</code> if the mobj (in mobjinfo) has the
+ *                  given state.
  */
 boolean DD_HasMobjState(int mobj_num, int state_num)
 {
@@ -1227,7 +1245,7 @@ boolean DD_HasMobjState(int mobj_num, int state_num)
         mo->raisestate
     };
 
-    for(i = 0; i < 8; i++)
+    for(i = 0; i < 8; ++i)
         if(statelist[i] > 0 &&
            DD_SameStateSequence(target, states + statelist[i]))
             return true;
@@ -1243,7 +1261,7 @@ static int Friendly(int num)
     return num;
 }
 
-/*
+/**
  * Converts a DED line type to the internal format.
  * Bit of a nuisance really...
  */
@@ -1262,13 +1280,15 @@ void Def_CopyLineType(linetype_t * l, ded_linetype_t * def)
     l->act_count = def->act_count;
     l->act_time = def->act_time;
     l->act_tag = def->act_tag;
-    for(i = 0; i < 10; i++)
+
+    for(i = 0; i < 10; ++i)
     {
         if(i == 9)
             l->aparm[i] = Def_GetMobjNum(def->aparm9);
         else
             l->aparm[i] = def->aparm[i];
     }
+
     l->ticker_start = def->ticker_start;
     l->ticker_end = def->ticker_end;
     l->ticker_interval = def->ticker_interval;
@@ -1292,12 +1312,13 @@ void Def_CopyLineType(linetype_t * l, ded_linetype_t * def)
 
     // Some of the parameters might be strings depending on the line class.
     // Find the right mapping table.
-    for(k = 0; k < 20; k++)
+    for(k = 0; k < 20; ++k)
     {
         temp = 0;
         a = xgClassLinks[l->line_class].iparm[k].map;
         if(a < 0)
             continue;
+
         if(a & MAP_SND)
         {
             l->iparm[k] = Friendly(Def_GetSoundNum(def->iparm_str[k]));
@@ -1386,8 +1407,8 @@ void Def_CopySectorType(sectortype_t * s, ded_sectortype_t * def)
     LOOPi(2) s->ceil_interval[i] = def->ceil_interval[i];
 }
 
-/*
- * Returns true if the definition was found.
+/**
+ * @return          <code>true</code> if the definition was found.
  */
 int Def_Get(int type, char *id, void *out)
 {
@@ -1396,7 +1417,7 @@ int Def_Get(int type, char *id, void *out)
     ddmapinfo_t *mout;
     finalescript_t *fin;
 
-    switch (type)
+    switch(type)
     {
     case DD_DEF_MOBJ:
         return Def_GetMobjNum(id);
@@ -1430,6 +1451,7 @@ int Def_Get(int type, char *id, void *out)
         map = Def_GetMapInfo(id);
         if(!map)
             return false;
+
         mout = (ddmapinfo_t *) out;
         mout->name = map->name;
         mout->author = map->author;
@@ -1441,7 +1463,7 @@ int Def_Get(int type, char *id, void *out)
         break;
 
     case DD_DEF_TEXT:
-        for(i = 0; i < defs.count.text.num; i++)
+        for(i = 0; i < defs.count.text.num; ++i)
             if(!stricmp(defs.text[i].id, id))
             {
                 if(out)
@@ -1523,7 +1545,7 @@ int Def_Get(int type, char *id, void *out)
     return true;
 }
 
-/*
+/**
  * This is supposed to be the main interface for outside parties to
  * modify definitions (unless they want to do it manually with dedfile.h).
  */
@@ -1537,12 +1559,16 @@ int Def_Set(int type, int index, int value, void *ptr)
     case DD_DEF_SOUND:
         if(index < 0 || index >= count_sounds.num)
             Con_Error("Def_Set: Sound index %i is invalid.\n", index);
-        switch (value)
+
+        switch(value)
         {
         case DD_LUMP:
             S_StopSound(index, 0);
             strcpy(sounds[index].lumpname, ptr);
             sounds[index].lumpnum = W_CheckNumForName(sounds[index].lumpname);
+            break;
+
+        default:
             break;
         }
         break;
@@ -1560,8 +1586,9 @@ int Def_Set(int type, int index, int value, void *ptr)
         }
         else
             Con_Error("Def_Set: Music index %i is invalid.\n", index);
+
         // Which key to set?
-        switch (value)
+        switch(value)
         {
         case DD_ID:
             if(ptr)
@@ -1576,7 +1603,11 @@ int Def_Set(int type, int index, int value, void *ptr)
         case DD_CD_TRACK:
             musdef->cdtrack = *(int *) ptr;
             break;
+
+        default:
+            break;
         }
+
         // If the def was just created, return its index.
         if(index == DD_NEW)
             return musdef - defs.music;
@@ -1588,8 +1619,8 @@ int Def_Set(int type, int index, int value, void *ptr)
     return true;
 }
 
-/*
- * Prints a list of all the registered mobjs to the console
+/**
+ * Prints a list of all the registered mobjs to the console.
  * FIXME: Does this belong here?
  */
 D_CMD(ListMobjs)
@@ -1598,7 +1629,7 @@ D_CMD(ListMobjs)
 
     Con_Printf("Registered Mobjs (ID | Name):\n");
 
-    for(i = 0; i < defs.count.mobjs.num; i++)
+    for(i = 0; i < defs.count.mobjs.num; ++i)
     {
         if(defs.mobjs[i].name[0])
             Con_Printf(" %s | %s\n", defs.mobjs[i].id, defs.mobjs[i].name);

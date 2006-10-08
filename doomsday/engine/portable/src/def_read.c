@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -102,9 +102,9 @@
 #define RV_UINT(lab, X) if(ISLABEL(lab)) { READUINT(X); } else
 #define RV_FLT(lab, X)  if(ISLABEL(lab)) { READFLT(X); } else
 #define RV_VEC(lab, X, N)   if(ISLABEL(lab)) { int b; FINDBEGIN; \
-                        for(b=0; b<N; b++) {READFLT(X[b])} ReadToken(); } else
+                        for(b=0; b<N; ++b) {READFLT(X[b])} ReadToken(); } else
 #define RV_IVEC(lab, X, N)  if(ISLABEL(lab)) { int b; FINDBEGIN; \
-                        for(b=0; b<N; b++) {READINT(X[b])} ReadToken(); } else
+                        for(b=0; b<N; ++b) {READINT(X[b])} ReadToken(); } else
 #define RV_NBVEC(lab, X, N) if(ISLABEL(lab)) { READNBYTEVEC(X,N); } else
 #define RV_STR(lab, X)  if(ISLABEL(lab)) { READSTR(X); } else
 #define RV_STR_INT(lab, S, I)   if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
@@ -144,54 +144,48 @@ extern xgclass_t *xgClassLinks;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char    token[128];
 char    dedReadError[512];
-char    unreadToken[128];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static dedsource_t sourceStack[MAX_RECUR_DEPTH];
 static dedsource_t *source;     // Points to the current source.
 
+static char    token[128];
+static char    unreadToken[128];
+
 // CODE --------------------------------------------------------------------
 
-char   *sdup(const char *str)
+static char *sdup(const char *str)
 {
     char   *newstr;
 
     if(!str)
         return NULL;
-    newstr = malloc(strlen(str) + 1);
+    newstr = M_Malloc(strlen(str) + 1);
     strcpy(newstr, str);
     return newstr;
 }
 
-//==========================================================================
-// SetError
-//==========================================================================
-void SetError(char *str)
+static void SetError(char *str)
 {
     sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
             source ? source->fileName : "?", source ? source->lineNumber : 0,
             str);
 }
 
-//==========================================================================
-// SetError2
-//==========================================================================
-void SetError2(char *str, char *more)
+static void SetError2(char *str, char *more)
 {
     sprintf(dedReadError, "Error in %s:\n  Line %i: %s (%s)",
             source ? source->fileName : "?", source ? source->lineNumber : 0,
             str, more);
 }
 
-//==========================================================================
-// FGetC
-//      Reads a single character from the input file. Increments the line
-//      number counter if necessary.
-//==========================================================================
-int FGetC()
+/**
+ * Reads a single character from the input file. Increments the line
+ * number counter if necessary.
+ */
+static int FGetC(void)
 {
     int     ch = (unsigned char) *source->pos;
 
@@ -206,11 +200,10 @@ int FGetC()
     return ch;
 }
 
-//==========================================================================
-// FUngetC
-//      Undoes an FGetC.
-//==========================================================================
-int FUngetC(int ch)
+/**
+ * Undoes an FGetC.
+ */
+static int FUngetC(int ch)
 {
     if(source->atEnd)
         return 0;
@@ -221,11 +214,10 @@ int FUngetC(int ch)
     return ch;
 }
 
-//==========================================================================
-// SkipComment
-//      Reads stuff until a newline is found.
-//==========================================================================
-void SkipComment()
+/**
+ * Reads stuff until a newline is found.
+ */
+static void SkipComment(void)
 {
     int     ch = FGetC();
     boolean seq = false;
@@ -253,10 +245,7 @@ void SkipComment()
     }
 }
 
-//==========================================================================
-// ReadToken
-//==========================================================================
-int ReadToken()
+static int ReadToken(void)
 {
     int     ch;
     char   *out = token;
@@ -282,6 +271,7 @@ int ReadToken()
         if(source->atEnd)
             return false;
     }
+
     // Always store the first character.
     *out++ = ch;
     if(STOPCHAR(ch))
@@ -290,6 +280,7 @@ int ReadToken()
         *out = 0;
         return true;
     }
+
     while(!STOPCHAR(ch) && !source->atEnd)
     {
         // Store the character in the buffer.
@@ -297,27 +288,26 @@ int ReadToken()
         *out++ = ch;
     }
     *(out - 1) = 0;             // End token.
+
     // Put the last read character back in the stream.
     FUngetC(ch);
     return true;
 }
 
-//===========================================================================
-// UnreadToken
-//===========================================================================
-void UnreadToken(const char *token)
+static void UnreadToken(const char *token)
 {
     // The next time ReadToken() is called, this is returned.
     strcpy(unreadToken, token);
 }
 
-//==========================================================================
-// ReadStringEx
-//      Current pos in the file is at the first ".
-//      Does not expand escape sequences, only checks for \".
-//      Returns true if successful.
-//==========================================================================
-int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
+/**
+ * Current pos in the file is at the first ".
+ * Does not expand escape sequences, only checks for \".
+ *
+ * @return          <code>true</code> if successful.
+ */
+static int ReadStringEx(char *dest, int maxlen, boolean inside,
+                        boolean doubleq)
 {
     char   *ptr = dest;
     int     ch, esc = false, newl = false;
@@ -334,6 +324,7 @@ int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
     {
         if(source->atEnd)
             return false;
+
         // If a newline is found, skip all whitespace that follows.
         if(newl)
         {
@@ -348,6 +339,7 @@ int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
                 newl = false;
             }
         }
+
         // An escape character?
         if(!esc && ch == '\\')
             esc = true;
@@ -361,6 +353,7 @@ int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
         }
         if(ch == '\n')
             newl = true;
+
         // Store the character in the buffer.
         if(ptr - dest < maxlen && !esc && !newl)
         {
@@ -368,6 +361,7 @@ int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
             if(doubleq && ch == '"')
                 *ptr++ = '"';
         }
+
         // Read the next character, please.
         ch = FGetC();
     }
@@ -376,19 +370,15 @@ int ReadStringEx(char *dest, int maxlen, boolean inside, boolean doubleq)
     return true;
 }
 
-//===========================================================================
-// ReadString
-//===========================================================================
-int ReadString(char *dest, int maxlen)
+static int ReadString(char *dest, int maxlen)
 {
     return ReadStringEx(dest, maxlen, false, false);
 }
 
-//===========================================================================
-// ReadAnyString
-//      Read a string of (pretty much) any length.
-//===========================================================================
-int ReadAnyString(char **dest)
+/**
+ * Read a string of (pretty much) any length.
+ */
+static int ReadAnyString(char **dest)
 {
     char    buffer[0x20000];
 
@@ -397,26 +387,23 @@ int ReadAnyString(char **dest)
 
     // Get rid of the old string.
     if(*dest)
-        free(*dest);
+        M_Free(*dest);
 
     // Make sure it doesn't overflow.
     buffer[sizeof(buffer) - 1] = 0;
 
     // Make a copy.
-    *dest = malloc(strlen(buffer) + 1);
+    *dest = M_Malloc(strlen(buffer) + 1);
     strcpy(*dest, buffer);
     return true;
 }
 
-//===========================================================================
-// ReadNByteVector
-//===========================================================================
-int ReadNByteVector(unsigned char *dest, int max)
+static int ReadNByteVector(unsigned char *dest, int max)
 {
     int     i;
 
     FINDBEGIN;
-    for(i = 0; i < max; i++)
+    for(i = 0; i < max; ++i)
     {
         ReadToken();
         if(ISTOKEN("}"))
@@ -427,11 +414,10 @@ int ReadNByteVector(unsigned char *dest, int max)
     return true;
 }
 
-//==========================================================================
-// ReadByte
-//      Returns true if successful.
-//==========================================================================
-int ReadByte(unsigned char *dest)
+/**
+ * @return          <code>true</code> if successful.
+ */
+static int ReadByte(unsigned char *dest)
 {
     ReadToken();
     if(ISTOKEN(";"))
@@ -443,11 +429,10 @@ int ReadByte(unsigned char *dest)
     return true;
 }
 
-//==========================================================================
-// ReadInt
-//      Returns true if successful.
-//==========================================================================
-int ReadInt(int *dest, int unsign)
+/**
+ * @return          <code>true</code> if successful.
+ */
+static int ReadInt(int *dest, int unsign)
 {
     ReadToken();
     if(ISTOKEN(";"))
@@ -459,11 +444,10 @@ int ReadInt(int *dest, int unsign)
     return true;
 }
 
-//==========================================================================
-// ReadFloat
-//      Returns true if successful.
-//==========================================================================
-int ReadFloat(float *dest)
+/**
+ * @return          <code>true</code> if successful.
+ */
+static int ReadFloat(float *dest)
 {
     ReadToken();
     if(ISTOKEN(";"))
@@ -475,10 +459,7 @@ int ReadFloat(float *dest)
     return true;
 }
 
-//===========================================================================
-// ReadFlags
-//===========================================================================
-int ReadFlags(unsigned int *dest, const char *prefix)
+static int ReadFlags(unsigned int *dest, const char *prefix)
 {
     char    flag[1024];
 
@@ -492,6 +473,7 @@ int ReadFlags(unsigned int *dest, const char *prefix)
         // The old format.
         if(!ReadString(flag, sizeof(flag)))
             return false;
+
         *dest = Def_EvalFlags(flag);
         return true;
     }
@@ -509,10 +491,12 @@ int ReadFlags(unsigned int *dest, const char *prefix)
         {
             strcpy(flag, token);
         }
+
         *dest |= Def_EvalFlags(flag);
 
         if(!ReadToken())
             break;
+
         if(!ISTOKEN("|"))       // | is required for multiple flags.
         {
             UnreadToken(token);
@@ -522,11 +506,10 @@ int ReadFlags(unsigned int *dest, const char *prefix)
     return true;
 }
 
-//==========================================================================
-// ReadLabel
-//      Returns true if successful.
-//==========================================================================
-int ReadLabel(char *label)
+/**
+ * @return          <code>true</code> if successful.
+ */
+static int ReadLabel(char *label)
 {
     strcpy(label, "");
     for(;;)
@@ -553,6 +536,7 @@ int ReadLabel(char *label)
         }
         if(ISTOKEN("=") || ISTOKEN("{"))
             break;
+
         if(label[0])
             strcat(label, " ");
         strcat(label, token);
@@ -560,10 +544,7 @@ int ReadLabel(char *label)
     return true;
 }
 
-//===========================================================================
-// DED_Include
-//===========================================================================
-void DED_Include(ded_t * ded, char *fileName, directory_t * dir)
+static void DED_Include(ded_t * ded, char *fileName, directory_t * dir)
 {
     char    tmp[256], path[256];
 
@@ -580,10 +561,7 @@ void DED_Include(ded_t * ded, char *fileName, directory_t * dir)
     strcpy(token, "");
 }
 
-//===========================================================================
-// DED_InitReader
-//===========================================================================
-void DED_InitReader(char *buffer, const char *fileName)
+static void DED_InitReader(char *buffer, const char *fileName)
 {
     if(source && source - sourceStack >= MAX_RECUR_DEPTH)
     {
@@ -608,10 +586,7 @@ void DED_InitReader(char *buffer, const char *fileName)
     source->version = DED_VERSION;
 }
 
-//===========================================================================
-// DED_CloseReader
-//===========================================================================
-void DED_CloseReader(void)
+static void DED_CloseReader(void)
 {
     if(source == sourceStack)
     {
@@ -624,12 +599,11 @@ void DED_CloseReader(void)
     }
 }
 
-//===========================================================================
-// DED_CheckCondition
-//      Return true if the condition passes. The condition token can be a
-//      command line option or a game mode.
-//===========================================================================
-boolean DED_CheckCondition(const char *cond, boolean expected)
+/**
+ * Return true if the condition passes. The condition token can be a
+ * command line option or a game mode.
+ */
+static boolean DED_CheckCondition(const char *cond, boolean expected)
 {
     boolean value = false;
 
@@ -647,15 +621,15 @@ boolean DED_CheckCondition(const char *cond, boolean expected)
     return value == expected;
 }
 
-//==========================================================================
-// DED_ReadData
-//      Reads definitions from the given buffer.
-//      The definition is being loaded from 'sourcefile' (DED or WAD).
-//      The buffer must be null-terminated.
-//      'sourceFile' is just FYI.
-//==========================================================================
+/**
+ * Reads definitions from the given buffer.
+ * The definition is being loaded from @sourcefile (DED or WAD).
+ *
+ * @param buffer        The data to be read, must be null-terminated.
+ * @param sourceFile    Just FYI.
+ */
 /* *INDENT-OFF* */
-int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
+static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
 {
     char dummy[128];
     int dummyInt;
@@ -1024,7 +998,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(!strcmp(mdl->sprite.id, "-"))    strcpy(mdl->sprite.id,  prevmdl->sprite.id);
                 //if(!strcmp(mdl->group, "-"))      strcpy(mdl->group,      prevmdl->group);
                 //if(!strcmp(mdl->flags, "-"))      strcpy(mdl->flags,      prevmdl->flags);
-                for(i = 0; i < DED_MAX_SUB_MODELS; i++)
+                for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
                 {
                     if(!strcmp(mdl->sub[i].filename.path, "-")) strcpy(mdl->sub[i].filename.path,   prevmdl->sub[i].filename.path);
                     if(!strcmp(mdl->sub[i].frame, "-"))         strcpy(mdl->sub[i].frame,           prevmdl->sub[i].frame);
@@ -1088,7 +1062,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 // Should we copy the previous definition?
                 memcpy(mi, ded->mapinfo + prev_mapinfo_idx, sizeof(*mi));
                 mi->execute = sdup(mi->execute);
-                for(m = 0; m < NUM_SKY_MODELS; m++)
+                for(m = 0; m < NUM_SKY_MODELS; ++m)
                 {
                     mi->sky_models[m].execute
                         = sdup(mi->sky_models[m].execute);
@@ -1177,16 +1151,18 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Text"))
                 {
                     // Allocate a 'huge' buffer.
-                    char *temp = malloc(0x10000);
+                    char *temp = M_Malloc(0x10000);
+
                     if(ReadString(temp, 0xffff))
                     {
                         int len = strlen(temp) + 1;
-                        ded->text[idx].text = realloc(temp, len);
+
+                        ded->text[idx].text = M_Realloc(temp, len);
                         //memcpy(ded->text[idx].text, temp, len);
                     }
                     else
                     {
-                        free(temp);
+                        M_Free(temp);
                         SetError("Syntax error in text value.");
                         retval = false;
                         goto ded_end_read;
@@ -1209,7 +1185,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 {
                     // A new texture name.
                     tn = DED_NewEntry((void**)&ded->tenviron[idx].textures,
-                        &ded->tenviron[idx].count, sizeof(*tn));
+                                      &ded->tenviron[idx].count, sizeof(*tn));
                     FINDBEGIN;
                     for(;;)
                     {
@@ -1226,7 +1202,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
         if(ISTOKEN("Values")) // String Values
         {
             depth = 0;
-            rootstr = calloc(1, 1); // A null string.
+            rootstr = M_Calloc(1); // A null string.
             FINDBEGIN;
             for(;;)
             {
@@ -1241,23 +1217,26 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISTOKEN("="))
                 {
                     // Define a new string.
-                    char *temp = malloc(0x1000);    // A 'huge' buffer.
+                    char *temp = M_Malloc(0x1000);    // A 'huge' buffer.
+
                     if(ReadString(temp, 0xffff))
                     {
                         // Reallocate the buffer down to actual string length.
-                        temp = realloc(temp, strlen(temp) + 1);
+                        temp = M_Realloc(temp, strlen(temp) + 1);
+
                         // Get a new value entry.
                         idx = DED_AddValue(ded, 0);
                         val = ded->values + idx;
                         val->text = temp;
+
                         // Compose the identifier.
-                        val->id = malloc(strlen(rootstr) + strlen(label) + 1);
+                        val->id = M_Malloc(strlen(rootstr) + strlen(label) + 1);
                         strcpy(val->id, rootstr);
                         strcat(val->id, label);
                     }
                     else
                     {
-                        free(temp);
+                        M_Free(temp);
                         SetError("Syntax error in string value.");
                         retval = false;
                         goto ded_end_read;
@@ -1266,7 +1245,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 else if(ISTOKEN("{"))
                 {
                     // Begin a new group.
-                    rootstr = realloc(rootstr, strlen(rootstr)
+                    rootstr = M_Realloc(rootstr, strlen(rootstr)
                         + strlen(label) + 2);
                     strcat(rootstr, label);
                     strcat(rootstr, "|");   // The separator.
@@ -1277,7 +1256,9 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 else if(ISTOKEN("}"))
                 {
                     // End group.
-                    if(!depth) break;   // End root depth.
+                    if(!depth)
+                        break;   // End root depth.
+
                     // Decrease level and modify roostr.
                     depth--;
                     sub = strlen(rootstr);
@@ -1286,12 +1267,12 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     if(ptr)
                     {
                         ptr[1] = 0;
-                        rootstr = realloc(rootstr, strlen(rootstr) + 1);
+                        rootstr = M_Realloc(rootstr, strlen(rootstr) + 1);
                     }
                     else
                     {
                         // Back to level zero.
-                        rootstr = realloc(rootstr, 1);
+                        rootstr = M_Realloc(rootstr, 1);
                         *rootstr = 0;
                     }
                 }
@@ -1304,7 +1285,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 }
                 CHECKSC;
             }
-            free(rootstr);
+            M_Free(rootstr);
             rootstr = 0;
         }
         if(ISTOKEN("Detail")) // Detail Texture
@@ -1394,8 +1375,8 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 // Duplicate the stages array.
                 if(ded->ptcgens[prev_gendef_idx].stages)
                 {
-                    gen->stages = malloc(sizeof(ded_ptcstage_t) *
-                                         gen->stage_count.max);
+                    gen->stages = M_Malloc(sizeof(ded_ptcstage_t) *
+                                           gen->stage_count.max);
                     memcpy(gen->stages, ded->ptcgens[prev_gendef_idx].stages,
                            sizeof(ded_ptcstage_t) * gen->stage_count.num);
                 }
@@ -1493,14 +1474,19 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 if(ISLABEL("Script"))
                 {
                     // Allocate an "enormous" 64K buffer.
-                    char *temp = calloc(0x10000, 1), *ptr;
-                    if(fin->script) free(fin->script);
+                    char *temp = M_Calloc(0x10000), *ptr;
+
+                    if(fin->script)
+                        M_Free(fin->script);
+
                     FINDBEGIN;
                     ptr = temp;
                     ReadToken();
                     while(!ISTOKEN("}") && !source->atEnd)
                     {
-                        if(ptr != temp) *ptr++ = ' ';
+                        if(ptr != temp)
+                            *ptr++ = ' ';
+
                         strcpy(ptr, token);
                         ptr += strlen(token);
                         if(ISTOKEN("\""))
@@ -1511,7 +1497,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         }
                         ReadToken();
                     }
-                    fin->script = realloc(temp, strlen(temp) + 1);
+                    fin->script = M_Realloc(temp, strlen(temp) + 1);
                 }
                 else RV_END
                 CHECKSC;
@@ -1528,7 +1514,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             {
                 // Should we copy the previous definition?
                 memcpy(decor, ded->decorations + prev_decordef_idx,
-                    sizeof(*decor));
+                       sizeof(*decor));
             }
             FINDBEGIN;
             for(;;)
@@ -1716,8 +1702,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             if(prev_linetype_idx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
-                memcpy(l, ded->lines + prev_linetype_idx,
-                    sizeof(*l));
+                memcpy(l, ded->lines + prev_linetype_idx, sizeof(*l));
             }
 
             FINDBEGIN;
@@ -1878,7 +1863,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             {
                 // Should we copy the previous definition?
                 memcpy(sec, ded->sectors + prev_sectortype_idx,
-                    sizeof(*sec));
+                       sizeof(*sec));
             }
 
             FINDBEGIN;
@@ -1960,7 +1945,7 @@ int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
     }
 
 ded_end_read:
-    free(rootstr);
+    M_Free(rootstr);
 
     // Free the source stack entry we were using.
     DED_CloseReader();
@@ -1969,10 +1954,9 @@ ded_end_read:
 }
 /* *INDENT-ON* */
 
-//===========================================================================
-// DED_Read
-//      Returns true if the file was successfully loaded.
-//===========================================================================
+/**
+ * @return          <code>true</code> if the file was successfully loaded.
+ */
 int DED_Read(ded_t *ded, const char *sPathName)
 {
     DFILE  *file;
@@ -1982,29 +1966,34 @@ int DED_Read(ded_t *ded, const char *sPathName)
     char    translated[256];
 
     M_TranslatePath(sPathName, translated);
+
     if((file = F_Open(translated, "rb")) == NULL)
     {
         SetError("File can't be opened for reading.");
         return false;
     }
+
     // Allocate a large enough buffer and read the file.
     F_Seek(file, 0, SEEK_END);
     len = F_Tell(file);
     F_Rewind(file);
-    defData = calloc(len + 1, 1);
+
+    defData = M_Calloc(len + 1);
     F_Read(defData, len, file);
     F_Close(file);
+
     // Parse the definitions.
     result = DED_ReadData(ded, defData, translated);
+
     // Now we can free the buffer.
-    free(defData);
+    M_Free(defData);
+
     return result;
 }
 
-//===========================================================================
-// DED_ReadLump
-//      Reads definitions from the given lump.
-//===========================================================================
+/**
+ * Reads definitions from the given lump.
+ */
 int DED_ReadLump(ded_t * ded, int lump)
 {
     int     result;
@@ -2014,9 +2003,8 @@ int DED_ReadLump(ded_t * ded, int lump)
         SetError("Bad lump number.");
         return false;
     }
-    result =
-        DED_ReadData(ded, W_CacheLumpNum(lump, PU_STATIC),
-                     W_LumpSourceFile(lump));
+    result = DED_ReadData(ded, W_CacheLumpNum(lump, PU_STATIC),
+                          W_LumpSourceFile(lump));
     W_ChangeCacheTag(lump, PU_CACHE);
     return result;
 }
