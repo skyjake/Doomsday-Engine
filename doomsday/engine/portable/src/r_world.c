@@ -53,8 +53,8 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    R_PrepareSubsector(subsector_t *sub);
-void    R_FindLineNeighbors(sector_t *sector, line_t *line,
+static void    R_PrepareSubsector(subsector_t *sub);
+static void    R_FindLineNeighbors(sector_t *sector, line_t *line,
                             struct line_s **neighbors, int alignment);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
