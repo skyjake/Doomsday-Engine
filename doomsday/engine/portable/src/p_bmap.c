@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -74,16 +74,17 @@ static vec2_t blockSize;
 
 void P_InitSubsectorBlockMap(void)
 {
-    int     i, xl, xh, yl, yh, x, y;
+    uint        startTime = Sys_GetRealTime();
+
+    int         i, xl, xh, yl, yh, x, y;
     subsector_t *sub, **ptr;
-    uint    startTime = Sys_GetRealTime();
     subsecnode_t *iter, *next;
     subsecmap_t *map, *block;
-    vec2_t  bounds[2], point, dims;
-    vertex_t *vtx;
+    vec2_t      bounds[2], point, dims;
+    vertex_t   *vtx;
 
     // Figure out the dimensions of the blockmap.
-    for(i = 0; i < numvertexes; i++)
+    for(i = 0; i < numvertexes; ++i)
     {
         vtx = VERTEX_PTR(i);
         V2_Set(point, FIX2FLT(vtx->x), FIX2FLT(vtx->y));
@@ -107,12 +108,11 @@ void P_InitSubsectorBlockMap(void)
                  0);
 
     // We'll construct the links using nodes.
-    map = calloc(subMapWidth * subMapHeight, sizeof(subsecmap_t));
+    map = M_Calloc(sizeof(subsecmap_t) * subMapWidth * subMapHeight);
 
     // Process all the subsectors in the map.
-    for(i = 0; i < numsubsectors; i++)
+    for(i = 0, sub = subsectors; i < numsubsectors; sub++, ++i)
     {
-        sub = SUBSECTOR_PTR(i);
         if(!sub->sector)
             continue;
 
@@ -122,8 +122,8 @@ void P_InitSubsectorBlockMap(void)
         yl = Y_TO_BLOCK(sub->bbox[0].y);
         yh = Y_TO_BLOCK(sub->bbox[1].y);
 
-        for(x = xl; x <= xh; x++)
-            for(y = yl; y <= yh; y++)
+        for(x = xl; x <= xh; ++x)
+            for(y = yl; y <= yh; ++y)
             {
                 if(x < 0 || y < 0 || x >= subMapWidth || y >= subMapHeight)
                 {
@@ -132,7 +132,7 @@ void P_InitSubsectorBlockMap(void)
                 }
 
                 // Create a new node.
-                iter = malloc(sizeof(subsecnode_t));
+                iter = M_Malloc(sizeof(subsecnode_t));
                 iter->subsector = sub;
 
                 // Link to the temporary map.
@@ -144,12 +144,12 @@ void P_InitSubsectorBlockMap(void)
     }
 
     // Create the actual links by 'hardening' the lists into arrays.
-    for(i = 0, block = map; i < subMapWidth * subMapHeight; i++, block++)
+    for(i = 0, block = map; i < subMapWidth * subMapHeight; ++i, block++)
         if(block->count > 0)
         {
             // An NULL-terminated array of pointers to subsectors.
             ptr = subMap[i] =
-                Z_Malloc((block->count + 1) * sizeof(subsector_t *), 
+                Z_Malloc((block->count + 1) * sizeof(subsector_t *),
                          PU_LEVELSTATIC, NULL);
 
             // Copy pointers to the array, delete the nodes.
@@ -158,7 +158,7 @@ void P_InitSubsectorBlockMap(void)
                 *ptr++ = iter->subsector;
                 // Kill the node.
                 next = iter->next;
-                free(iter);
+                M_Free(iter);
             }
 
             // Terminate.
@@ -166,7 +166,7 @@ void P_InitSubsectorBlockMap(void)
         }
 
     // Free the temporary link map.
-    free(map);
+    M_Free(map);
 
     // How much time did we spend?
     VERBOSE(Con_Message
@@ -177,7 +177,7 @@ void P_InitSubsectorBlockMap(void)
              subMapWidth, subMapHeight));
 }
 
-/*
+/**
  * Allocates and clears the polyobj blockmap.
  * Normal blockmap must already be initialized when this is called.
  */
@@ -193,7 +193,7 @@ void P_InitPolyBlockMap(void)
     memset(polyblockmap, 0, bmapwidth * bmapheight * sizeof(polyblock_t *));
 }
 
-/*
+/**
  * The validcount flags are used to avoid checking lines that are marked
  * in multiple mapblocks, so increment validcount before the first call
  * to P_BlockLinesIterator, then make one or more calls to it.
@@ -201,12 +201,12 @@ void P_InitPolyBlockMap(void)
 boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
                              void *data)
 {
-    int     offset;
-    long  *list;
-    line_t *ld;
-    int     i;
+    int         i;
+    int         offset;
+    long       *list;
+    line_t     *ld;
     polyblock_t *polyLink, *polyNext;
-    seg_t **tempSeg;
+    seg_t     **tempSeg;
 
     if(x < 0 || y < 0 || x >= bmapwidth || y >= bmapheight)
         return true;
@@ -223,14 +223,15 @@ boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
             {
                 polyLink->polyobj->validcount = validcount;
                 tempSeg = polyLink->polyobj->segs;
-                for(i = 0; i < polyLink->polyobj->numsegs; i++, tempSeg++)
+                for(i = 0; i < polyLink->polyobj->numsegs; ++i, tempSeg++)
                 {
-                    if((*tempSeg)->linedef->validcount == validcount)
+                    ld = (*tempSeg)->linedef;
+                    if(ld->validcount == validcount)
                     {
                         continue;
                     }
-                    (*tempSeg)->linedef->validcount = validcount;
-                    if(!func((*tempSeg)->linedef, data))
+                    ld->validcount = validcount;
+                    if(!func(ld, data))
                     {
                         return false;
                     }
@@ -256,7 +257,7 @@ boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
     return true;                // everything was checked
 }
 
-/*
+/**
  * The validcount flags are used to avoid checking polys
  * that are marked in multiple mapblocks, so increment validcount
  * before the first call, then make one or more calls to it.
@@ -288,7 +289,7 @@ boolean P_BlockPolyobjsIterator(int x, int y,
     return true;
 }
 
-/*
+/**
  * Same as the fixed-point version of this routine, but the bounding box
  * is specified using an vec2_t array (see m_vector.c).
  */
@@ -296,10 +297,10 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
                                 boolean (*func) (subsector_t *, void *),
                                 void *parm)
 {
+    static int  localValidCount = 0;
+    int         xl, xh, yl, yh, x, y;
     subsector_t *sub, **iter;
     subsectorinfo_t *info;
-    static int localValidCount = 0;
-    int     xl, xh, yl, yh, x, y;
 
     // This is only used here.
     localValidCount++;
@@ -310,9 +311,9 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
     yl = Y_TO_BLOCK(box[0][VY]);
     yh = Y_TO_BLOCK(box[1][VY]);
 
-    for(x = xl; x <= xh; x++)
+    for(x = xl; x <= xh; ++x)
     {
-        for(y = yl; y <= yh; y++)
+        for(y = yl; y <= yh; ++y)
         {
             if(x < 0 || y < 0 || x >= subMapWidth || y >= subMapHeight)
                 continue;
@@ -349,7 +350,7 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
     return true;
 }
 
-/*
+/**
  * Returns false only if the iterator func returns false.
  */
 boolean P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
