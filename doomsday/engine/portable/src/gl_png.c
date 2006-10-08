@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -66,7 +67,7 @@ void PNGAPI user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
     VERBOSE(Con_Message("PNG-Warning: %s\n", warning_msg));
 }
 
-/*
+/**
  * libpng calls this to read from files.
  */
 void PNGAPI my_read_data(png_structp read_ptr, png_bytep data,
@@ -75,7 +76,7 @@ void PNGAPI my_read_data(png_structp read_ptr, png_bytep data,
     F_Read(data, length, png_get_io_ptr(read_ptr));
 }
 
-/*
+/**
  * Reads the given PNG image and returns a pointer to a planar RGB or
  * RGBA buffer. Width and height are set, and pixelSize is either 3 (RGB)
  * or 4 (RGBA). The caller must free the allocated buffer with Z_Free.
@@ -143,7 +144,7 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
     // FIXME: Why not load directly into it?
     retbuf = M_Malloc(4 * png_info->width * png_info->height);
     rows = png_get_rows(png_ptr, png_info);
-    for(i = 0; i < *height; i++)
+    for(i = 0; i < *height; ++i)
     {
         if(png_info->channels >= 3)
         {
@@ -152,7 +153,7 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
         }
         else                    // Paletted image.
         {
-            for(k = 0; k < *width; k++)
+            for(k = 0; k < *width; ++k)
             {
                 pixel = retbuf + ((*pixelSize) * (i * png_info->width + k));
                 off = k * png_info->channels;

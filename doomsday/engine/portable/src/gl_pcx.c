@@ -3,7 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1997-2006 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -52,7 +54,7 @@
 // CODE --------------------------------------------------------------------
 
 /*
- * Returns true if successful.
+ * @return              <code>true</code> if successful.
  */
 int PCX_MemoryGetSize(void *imageData, int *w, int *h)
 {
@@ -75,13 +77,15 @@ int PCX_GetSize(const char *fn, int *w, int *h)
 
     if(!file)
         return false;
+
     F_Read(&hdr, sizeof(hdr), file);
     F_Close(file);
+
     return PCX_MemoryGetSize(&hdr, w, h);
 }
 
-/*
- * Returns true if the data is a PCX image (probably).
+/**
+ * @return              <code>true</code> if a PCX image (probably).
  */
 int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
                    byte *outBuffer)
@@ -89,9 +93,10 @@ int PCX_MemoryLoad(byte *imgdata, int len, int buf_w, int buf_h,
     return PCX_MemoryAllocLoad(imgdata, len, &buf_w, &buf_h, outBuffer) != 0;
 }
 
-/*
- * Returns true if the data is a PCX image (probably).
- * If outBuffer is NULL, a new buffer is allocated with M_Malloc.
+/**
+ * @param outBuffer     If <code>NULL</code>, a new buffer is allocated.
+ *
+ * @return              <code>true<code> if a PCX image (probably).
  */
 byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
                             byte *outBuffer)
@@ -132,7 +137,7 @@ byte   *PCX_MemoryAllocLoad(byte *imgdata, int len, int *buf_w, int *buf_h,
 
     pix = outBuffer;
 
-    for(y = 0; y <= ymax; y++, pix += (xmax + 1) * 3)
+    for(y = 0; y <= ymax; ++y, pix += (xmax + 1) * 3)
     {
         for(x = 0; x <= xmax;)
         {
@@ -165,7 +170,7 @@ void PCX_Load(const char *fn, int buf_w, int buf_h, byte *outBuffer)
     PCX_AllocLoad(fn, &buf_w, &buf_h, outBuffer);
 }
 
-/*
+/**
  * PCX loader, partly borrowed from the Q2 utils source (lbmlib.c).
  */
 byte   *PCX_AllocLoad(const char *fn, int *buf_w, int *buf_h, byte *outBuffer)

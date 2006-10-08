@@ -461,7 +461,7 @@ void GL_ShutdownTextureManager()
     GL_ClearTextureMemory();
 
     // Destroy all bookkeeping -- into the shredder, I say!!
-    free(skytop_colors);
+    M_Free(skytop_colors);
     skytop_colors = 0;
     num_skytop_colors = 0;
 
@@ -473,7 +473,7 @@ void GL_ShutdownTextureManager()
  */
 void GL_DestroySkinNames(void)
 {
-    free(skinnames);
+    M_Free(skinnames);
     skinnames = 0;
     numskinnames = 0;
 }
@@ -1025,7 +1025,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
             if(informat == 2)
                 a = in[numPixels * inSize];
             if(outformat == 4)
-                out[3] = a;
+                out[3] = (byte) a;
         }
     }
     // Conversion from RGB(A) to pal8(a), using pal18to8.
@@ -1040,7 +1040,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
             if(informat == 4)
                 a = in[3];
             if(outformat == 2)
-                out[numPixels * outSize] = a;
+                out[numPixels * outSize] = (byte) a;
         }
     }
     else if(informat == 3 && outformat == 4)
@@ -1088,11 +1088,11 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
             col2 = col1 + inStride;
             weight = inPos & 0xffff;
             invWeight = 0x10000 - weight;
-            out[0] = (col1[0] * invWeight + col2[0] * weight) >> 16;
-            out[1] = (col1[1] * invWeight + col2[1] * weight) >> 16;
-            out[2] = (col1[2] * invWeight + col2[2] * weight) >> 16;
+            out[0] = (byte)((col1[0] * invWeight + col2[0] * weight) >> 16);
+            out[1] = (byte)((col1[1] * invWeight + col2[1] * weight) >> 16);
+            out[2] = (byte)((col1[2] * invWeight + col2[2] * weight) >> 16);
             if(comps == 4)
-                out[3] = (col1[3] * invWeight + col2[3] * weight) >> 16;
+                out[3] = (byte)((col1[3] * invWeight + col2[3] * weight) >> 16);
         }
 
         // The last pixel.
@@ -1109,11 +1109,11 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
         {
             if((int) (i * inToOutScale) != outpos)
             {
-                outpos = (int) i *inToOutScale;
+                outpos = (int) (i * inToOutScale);
 
                 for(c = 0; c < comps; ++c)
                 {
-                    out[c] = cumul[c] / count;
+                    out[c] = (byte)(cumul[c] / count);
                     cumul[c] = 0;
                 }
                 count = 0;
@@ -1126,14 +1126,14 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
         // Fill in the last pixel, too.
         if(count)
             for(c = 0; c < comps; ++c)
-                out[c] = cumul[c] / count;
+                out[c] = (byte)(cumul[c] / count);
     }
     else
     {
         // No need for scaling.
         if(comps == 3)
         {
-            for(i = outLen; i > 0; i--, out += outStride, in += inStride)
+            for(i = outLen; i > 0; --i, out += outStride, in += inStride)
             {
                 out[0] = in[0];
                 out[1] = in[1];
@@ -1202,7 +1202,7 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
         out = in;
         for(x = 0; x < outDim; ++x, in += comps * 2)
             for(c = 0; c < comps; ++c, out++)
-                *out = (in[c] + in[comps + c]) >> 1;
+                *out = (byte)((in[c] + in[comps + c]) >> 1);
     }
     else                        // Unconstrained, 2x2 -> 1x1 reduction?
     {
@@ -1211,8 +1211,8 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
             for(x = 0; x < outW; ++x, in += comps * 2)
                 for(c = 0; c < comps; ++c, out++)
                     *out =
-                        (in[c] + in[comps + c] + in[comps * width + c] +
-                         in[comps * (width + 1) + c]) >> 2;
+                        (byte)((in[c] + in[comps + c] + in[comps * width + c] +
+                               in[comps * (width + 1) + c]) >> 2);
     }
 }
 
@@ -1659,7 +1659,7 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
 /*
  * No translation is done.
  */
-unsigned int GL_BindTexFlat(flat_t * fl)
+DGLuint GL_BindTexFlat(flat_t * fl)
 {
     DGLuint name;
     byte   *flatptr;
@@ -1671,7 +1671,6 @@ unsigned int GL_BindTexFlat(flat_t * fl)
 
     if(lump < 0 || lump >= numlumps)
     {
-        // The sky flat is not a real flat at all.
         GL_BindTexture(0);
         return 0;
     }
@@ -2489,8 +2488,8 @@ void GL_SetTexture(int idx)
     gl.Bind(GL_PrepareTexture(idx));
 }
 
-int LineAverageRGB(byte *imgdata, int width, int height, int line, byte *rgb,
-                   byte *palette, boolean has_alpha)
+static int LineAverageRGB(byte *imgdata, int width, int height, int line,
+                          byte *rgb, byte *palette, boolean has_alpha)
 {
     byte   *start = imgdata + width * line;
     byte   *alphaStart = start + width * height;
@@ -2516,7 +2515,7 @@ int LineAverageRGB(byte *imgdata, int width, int height, int line, byte *rgb,
 
     // We're going to make it!
     for(c = 0; c < 3; ++c)
-        rgb[c] = integerRGB[c] / count;
+        rgb[c] = (byte) (integerRGB[c] / count);
     return 1;                   // Successful.
 }
 
@@ -2647,7 +2646,7 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
            }
            }
            } */
-        for(i = 0; i < tex->patchcount; i++)
+        for(i = 0; i < tex->patchcount; ++i)
         {
             DrawRealPatch(imgdata, palette, tex->width, tex->height,
                           W_CacheLumpNum(tex->patches[i].patch, PU_CACHE),
@@ -2776,7 +2775,7 @@ skycol_t *GL_GetSkyColor(int texidx)
 
     // There was no skycol for the specified texidx!
     skytop_colors =
-        realloc(skytop_colors, sizeof(skycol_t) * ++num_skytop_colors);
+        M_Realloc(skytop_colors, sizeof(skycol_t) * ++num_skytop_colors);
     skycol = skytop_colors + num_skytop_colors - 1;
     skycol->texidx = texidx;
 
@@ -2831,29 +2830,32 @@ transspr_t *GL_GetTranslatedSprite(int pnum, unsigned char *table)
 {
     int     i;
 
-    for(i = 0; i < numtranssprites; i++)
+    for(i = 0; i < numtranssprites; ++i)
         if(transsprites[i]->patch == pnum && transsprites[i]->table == table)
             return transsprites[i];
     return 0;
 }
 
-/*
+/**
  * The given RGB color is scaled uniformly so that the highest component
  * becomes one.
  */
-int amplify(byte *rgb)
+static void amplify(byte *rgb)
 {
     int     i, max = 0;
 
     for(i = 0; i < 3; ++i)
         if(rgb[i] > max)
             max = rgb[i];
+
+    if(!max || max == 255)
+        return;
+
     if(max)
     {
         for(i = 0; i < 3; ++i)
-            rgb[i] *= 255.0f / max;
+            rgb[i] = (byte)(rgb[i] * 255.0f / max);
     }
-    return max;
 }
 
 /*
@@ -2883,9 +2885,9 @@ void averageColorIdx(rgbcol_t * col, byte *data, int w, int h, byte *palette,
     }
     if(!count)
         return;                 // Line added by GMJ 22/07/01
-    col->rgb[0] = r / count;
-    col->rgb[1] = g / count;
-    col->rgb[2] = b / count;
+    col->rgb[0] = (byte)(r / count);
+    col->rgb[1] = (byte)(g / count);
+    col->rgb[2] = (byte)(b / count);
 
     // Make it glow (average colors are used with flares and dynlights).
     amplify(col->rgb);
@@ -2898,6 +2900,7 @@ void averageColorRGB(rgbcol_t * col, byte *data, int w, int h)
 
     if(!count)
         return;
+
     memset(cumul, 0, sizeof(cumul));
     for(i = 0; i < count; ++i)
     {
@@ -2905,8 +2908,10 @@ void averageColorRGB(rgbcol_t * col, byte *data, int w, int h)
         cumul[1] += *data++;
         cumul[2] += *data++;
     }
+
     for(i = 0; i < 3; ++i)
-        col->rgb[i] = cumul[i] / count;
+        col->rgb[i] = (byte)(cumul[i] / count);
+
     amplify(col->rgb);
 }
 
@@ -3077,14 +3082,14 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         {
             // Low-intensity color average.
             for(c = 0; c < 3; ++c)
-                sprcol->rgb[c] = lowavg[c] / lowcnt;
+                sprcol->rgb[c] = (byte)(lowavg[c] / lowcnt);
         }
     }
     else
     {
         // High-intensity color average.
         for(c = 0; c < 3; ++c)
-            sprcol->rgb[c] = average[c] / avcnt;
+            sprcol->rgb[c] = (byte)(average[c] / avcnt);
     }
 
 #ifdef _DEBUG
@@ -3331,7 +3336,7 @@ void GL_SetTranslatedSprite(int pnum, int tmap, int tclass)
 
 void GL_NewRawLump(int lump)
 {
-    rawlumps = realloc(rawlumps, sizeof(int) * ++numrawlumps);
+    rawlumps = M_Realloc(rawlumps, sizeof(int) * ++numrawlumps);
     rawlumps[numrawlumps - 1] = lump;
 }
 
@@ -3914,7 +3919,7 @@ void GL_DeleteRawImages(void)
         lumptexinfo[rawlumps[i]].tex[0] = lumptexinfo[rawlumps[i]].tex[1] = 0;
     }
 
-    free(rawlumps);
+    M_Free(rawlumps);
     rawlumps = 0;
     numrawlumps = 0;
 }
@@ -3984,7 +3989,7 @@ skintex_t *GL_GetSkinTex(const char *skin)
             return skinnames + i;
 
     // We must allocate a new skintex_t.
-    skinnames = realloc(skinnames, sizeof(*skinnames) * ++numskinnames);
+    skinnames = M_Realloc(skinnames, sizeof(*skinnames) * ++numskinnames);
     st = skinnames + (numskinnames - 1);
     strcpy(st->path, realpath);
     st->tex = 0;                // Not yet prepared.
