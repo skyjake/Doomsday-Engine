@@ -34,6 +34,14 @@
 
 #define MAX_ARGS    256
 
+#define OBSOLETE        CVF_NO_ARCHIVE|CVF_HIDE
+
+// Macros for accessing the console command values through the void ptr.
+#define CV_INT(var)     (*(int*) var->ptr)
+#define CV_BYTE(var)    (*(byte*) var->ptr)
+#define CV_FLOAT(var)   (*(float*) var->ptr)
+#define CV_CHARPTR(var) (*(char**) var->ptr)
+
 typedef struct {
     char            cmdLine[2048];
     int             argc;
@@ -47,35 +55,75 @@ typedef struct {
     int             flags;
 } cbline_t;
 
+// A console buffer.
+typedef struct {
+    cbline_t *cbuffer;             // This is the buffer.
+    int     bufferLines;           // How many lines are there in the buffer?
+    int     maxBufferLines;        // Maximum number of lines in the buffer.
+    int     maxLineLen;            // Maximum length of a line.
+    int     bPos;                  // Where the write cursor is? (which line)
+    int     bFirst;                // The first visible line.
+    int     bLineOff;              // How many lines from bPos? (+vislines)
+} cbuffer_t;
+
+typedef enum {
+    WT_CCMD,
+    WT_CVAR,
+    WT_CVARREADONLY,
+    WT_ALIAS,
+    WT_BINDCLASS
+} knownwordtype_t;
+
+typedef struct knownword_S {
+    char    word[64];           // 64 chars MAX for words.
+    knownwordtype_t type;
+} knownword_t;
+
+typedef struct calias_s {
+    char   *name;
+    char   *command;
+} calias_t;
+
 // Console commands can set this when they need to return a custom value
 // e.g. for the game dll.
 extern int      CmdReturnValue;
-
-extern int      consoleAlpha, consoleLight;
-extern byte     consoleDump, consoleShowFPS, consoleShadowText;
+extern ddfont_t Cfont;
+extern byte     consoleDump;
 
 void            Con_Init();
 void            Con_Shutdown();
+void            Con_DestroyDatabases(void);
 void            Con_WriteAliasesToFile(FILE * file);
 void            Con_MaxLineLength(void);
 void            Con_Open(int yes);
+boolean         Con_IsActive(void);
+boolean         Con_IsLocked(void);
+boolean         Con_InputMode(void);
+int             Con_CursorPosition(void);
+char           *Con_GetCommandLine(void);
+cbuffer_t      *Con_GetConsoleBuffer(void);
 void            Con_AddCommand(ccmd_t *cmd);
 void            Con_AddVariable(cvar_t *var);
 void            Con_AddCommandList(ccmd_t *cmdlist);
 void            Con_AddVariableList(cvar_t *varlist);
+calias_t       *Con_AddAlias(char *aName, char *command);
+void            Con_DeleteAlias(calias_t *cal);
+void            Con_PrintCVar(cvar_t *var, char *prefix);
 ccmd_t         *Con_GetCommand(const char *name);
 boolean         Con_IsValidCommand(const char *name);
+calias_t       *Con_GetAlias(const char *name);
 boolean         Con_IsSpecialChar(int ch);
 void            Con_UpdateKnownWords(void);
+knownword_t   **Con_CollectKnownWordsMatchingWord(char *word,
+                                                  unsigned int  *count);
 void            Con_Ticker(timespan_t time);
 boolean         Con_Responder(event_t *event);
-void            Con_Drawer(void);
-void            Con_DrawRuler(int y, int lineHeight, float alpha);
 void            Con_Printf(const char *format, ...);
 void            Con_FPrintf(int flags, const char *format, ...);    // Flagged printf.
 int             Con_PrintFileName(const char *fn, enum filetype_e type, void *dir);
 void            Con_SetFont(ddfont_t *cfont);
-cbline_t       *Con_GetBufferLine(int num);
+float           Con_FontScaleY(void);
+cbline_t       *Con_GetBufferLine(cbuffer_t *buffer, int num);
 int             Con_Execute(byte src, const char *command, int silent,
                             boolean netCmd);
 int             Con_Executef(byte src, int silent, const char *command, ...);

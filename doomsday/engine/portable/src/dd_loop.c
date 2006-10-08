@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -33,6 +33,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
+#include "de_render.h"
 #include "de_refresh.h"
 #include "de_play.h"
 #include "de_graphics.h"
@@ -210,7 +211,7 @@ void DD_DrawAndBlit(void)
     }
 
     // Draw console.
-    Con_Drawer();
+    Rend_Console();
 
     // End the sequence.
     gl.End();
@@ -285,7 +286,7 @@ void DD_Ticker(timespan_t time)
             // have been in effect for any fractional ticks since they were
             // set.
             //Sv_FixLocalAngles(true /* just clear flags; don't apply */);
-            
+
             gx.Ticker( /* time */ );    // Game DLL.
 
             // Server ticks.  These are placed here because
@@ -306,7 +307,7 @@ void DD_Ticker(timespan_t time)
             // We can't sent FixAngles messages to ourselves, so it's
             // done here.
             //Sv_FixLocalAngles(false /* apply only; don't clear flag */);
-            
+
             R_NewSharpWorld();
         }
 
@@ -404,7 +405,7 @@ void DD_RunTics(void)
     {
         ticLength = MIN_OF(MAX_FRAME_TIME, frameTime);
         frameTime -= ticLength;
-       
+
         // Process input events.
         DD_ProcessEvents(ticLength);
 

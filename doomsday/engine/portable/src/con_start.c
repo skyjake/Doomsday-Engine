@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -42,6 +42,8 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+extern void Con_DrawRuler(int y, int lineHeight, float alpha);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -211,6 +213,7 @@ void Con_DrawStartupScreen(int show)
 {
     int     i, vislines, y, x, st;
     int     topy;
+    cbuffer_t *buffer;
 
     // Print the messages in the console.
     if(!startupScreen || ui_active)
@@ -229,15 +232,16 @@ void Con_DrawStartupScreen(int show)
     vislines = (glScreenHeight - topy + fontHgt / 2) / fontHgt;
     y = topy;
 
-    st = bufferLines - vislines;
+    buffer = Con_GetConsoleBuffer();
+    st = buffer->bufferLines - vislines;
     // Show the last line, too, if there's something.
-    if(Con_GetBufferLine(bufferLines - 1)->len)
+    if(Con_GetBufferLine(buffer, buffer->bufferLines - 1)->len)
         st++;
     if(st < 0)
         st = 0;
-    for(i = 0; i < vislines && st + i < bufferLines; i++)
+    for(i = 0; i < vislines && st + i < buffer->bufferLines; i++)
     {
-        cbline_t *line = Con_GetBufferLine(st + i);
+        cbline_t *line = Con_GetBufferLine(buffer, st + i);
 
         if(!line)
             break;
