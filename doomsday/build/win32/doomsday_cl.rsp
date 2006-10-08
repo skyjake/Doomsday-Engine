@@ -31,6 +31,7 @@
  ./../../engine/portable/src/gl_hq2x.c
  ./../../engine/portable/src/gl_font.c
  ./../../engine/portable/src/gl_draw.c
+ ./../../engine/portable/src/rend_console.c
  ./../../engine/portable/src/rend_bias.c
  ./../../engine/portable/src/edit_bias.c
  ./../../engine/portable/src/rend_sprite.c
@@ -104,6 +105,7 @@
  ./../../engine/portable/src/sys_direc.c
  ./../../engine/win32/src/sys_console.c
  ./../../engine/portable/src/con_start.c
+ ./../../engine/portable/src/con_data.c
  ./../../engine/portable/src/con_main.c
  ./../../engine/portable/src/con_config.c
  ./../../engine/portable/src/con_bind.c

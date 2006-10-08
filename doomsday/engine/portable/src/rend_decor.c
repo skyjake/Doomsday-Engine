@@ -618,7 +618,7 @@ void Rend_DecorateLine(int index)
         // textures, this looks a bit silly.
         /*if(line->sidenum[0] >= 0 && (side = SIDE_PTR(line->sidenum[0]))->midtexture)
         {
-            rendpoly_t quad;
+            rendpoly_t *quad = R_AllocRendPoly(RP_QUAD, true, 4);
 
             // If there is an opening, process it.
             if(side->middle.texture.isflat)
@@ -626,15 +626,16 @@ void Rend_DecorateLine(int index)
             else
                 GL_GetTextureInfo(side->middle.texture);
 
-            quad.top = MIN_OF(frontCeil, backCeil);
-            quad.bottom = MAX_OF(frontFloor, backFloor);
-            quad.texoffy = FIX2FLT(side->textureoffset);
-            if(Rend_MidTexturePos(&quad.top, &quad.bottom, &quad.texoffy, 0,
+            quad->top = MIN_OF(frontCeil, backCeil);
+            quad->bottom = MAX_OF(frontFloor, backFloor);
+            quad->texoffy = FIX2FLT(side->textureoffset);
+            if(Rend_MidTexturePos(&quad->top, &quad->bottom, &quad->texoffy, 0,
                                   (line->flags & ML_DONTPEGBOTTOM) != 0))
             {
                 Rend_DecorateLineSection(line, side, &side->middle,
-                                         quad.top, quad.bottom, quad.texoffy);
+                                         quad->top, quad->bottom, quad->texoffy);
             }
+            R_FreeRendPoly(quad);
         }*/
     }
     else

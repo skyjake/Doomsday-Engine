@@ -272,7 +272,7 @@ void Rend_DrawPlayerSprites(void)
     float   offScaleY = weaponOffsetScaleY / 1000.0f;
     byte    somethingVisible = false;
     byte    isFullBright = (levelFullBright != 0);
-    rendpoly_t tempquad;
+    rendpoly_t *tempquad = NULL;
 
     // Cameramen have no psprites.
     if((viewplayer->flags & DDPF_CAMERA) || (viewplayer->flags & DDPF_CHASECAM))
@@ -339,9 +339,8 @@ void Rend_DrawPlayerSprites(void)
             LG_Evaluate(point, secbRGB);
         }
 
-        tempquad.numvertices = 1;
-        tempquad.vertices[0].dist = 1;
-        tempquad.isWall = false;
+        tempquad = R_AllocRendPoly(RP_NONE, false, 2);
+        tempquad->vertices[0].dist = tempquad->vertices[1].dist = 1;
 
         // Draw as separate sprites.
         for(i = 0; i < DDMAXPSPRITES; ++i)
@@ -379,22 +378,23 @@ void Rend_DrawPlayerSprites(void)
             }
             rgba[CA] = psp[i].alpha * 255.0f;
 
-            RL_VertexColors(&tempquad, light, rgba);
+            RL_VertexColors(tempquad, light, rgba);
 
             // Add extra light using dynamic lights.
             if(litSprites)
-                Rend_DoLightSprite(vispsprites +i, &tempquad);
+                Rend_DoLightSprite(vispsprites +i, tempquad);
 
-            tempquad.vertices[0].color.rgba[CA] =
-                tempquad.vertices[1].color.rgba[CA] = rgba[CA];
+            tempquad->vertices[0].color.rgba[CA] =
+                tempquad->vertices[1].color.rgba[CA] = rgba[CA];
 
             Rend_DrawPSprite(psp[i].x - info[i].offset + offx,
                            offScaleY * psp[i].y + (1 - offScaleY) * 32 -
                            info[i].topOffset + offy,
-                           &tempquad.vertices[0].color.rgba[0],
-                           &tempquad.vertices[1].color.rgba[0],
+                           &tempquad->vertices[0].color.rgba[0],
+                           &tempquad->vertices[1].color.rgba[0],
                            1, info[i].flip, info[i].lump);
         }
+        R_FreeRendPoly(tempquad);
     }
 }
 
@@ -782,7 +782,7 @@ void Rend_RenderSprite(vissprite_t *spr)
     DGLubyte alpha;
     boolean additiveBlending = false, flip, restoreMatrix = false;
     boolean usingSRVO = false, restoreZ = false;
-    rendpoly_t tempquad;
+    rendpoly_t *tempquad = NULL;
 
     if(!renderTextures)
     {
@@ -842,19 +842,20 @@ void Rend_RenderSprite(vissprite_t *spr)
 
         v1[VX] = Q_FIX2FLT(spr->data.mo.gx);
         v1[VY] = Q_FIX2FLT(spr->data.mo.gy);
-        tempquad.vertices[0].dist = Rend_PointDist2D(v1);
-        tempquad.numvertices = 1;
-        tempquad.isWall = false;
 
-        RL_VertexColors(&tempquad, lightLevel, spr->data.mo.rgb);
+        tempquad = R_AllocRendPoly(RP_NONE, false, 2);
+        tempquad->vertices[0].dist =
+            tempquad->vertices[1].dist = Rend_PointDist2D(v1);
+
+        RL_VertexColors(tempquad, lightLevel, spr->data.mo.rgb);
 
         // Add extra light using dynamic lights.
         if(litSprites)
-            Rend_DoLightSprite(spr, &tempquad);
+            Rend_DoLightSprite(spr, tempquad);
 
-        tempquad.vertices[0].color.rgba[CA] =
-            tempquad.vertices[1].color.rgba[CA] = alpha;
-        gl.Color4ubv(tempquad.vertices[0].color.rgba);
+        tempquad->vertices[0].color.rgba[CA] =
+            tempquad->vertices[1].color.rgba[CA] = alpha;
+        gl.Color4ubv(tempquad->vertices[0].color.rgba);
     }
 
     // We must find the correct positioning using the sector floor and ceiling
@@ -972,7 +973,7 @@ void Rend_RenderSprite(vissprite_t *spr)
         Rend_SpriteTexCoord (patch, flip, 0);
         gl.Vertex3f(spr->data.mo.v1[VX], top, spr->data.mo.v1[VY]);
 
-        gl.Color4ubv(tempquad.vertices[1].color.rgba);
+        gl.Color4ubv(tempquad->vertices[1].color.rgba);
 
         Rend_SpriteTexCoord (patch, !flip, 0);
         gl.Vertex3f(spr->data.mo.v2[VX], top, spr->data.mo.v2[VY]);
@@ -1001,9 +1002,9 @@ void Rend_RenderSprite(vissprite_t *spr)
 
        // Draw a "test mirroring".
        gl.Begin(DGL_QUADS);
-       gl.Color4ub(tempquad.vertices[0].color.rgba[0],
-       tempquad.vertices[0].color.rgba[1],
-       tempquad.vertices[0].color.rgba[2],
+       gl.Color4ub(tempquad->vertices[0].color.rgba[0],
+       tempquad->vertices[0].color.rgba[1],
+       tempquad->vertices[0].color.rgba[2],
        alpha/3);
        gl.TexCoord2f(flip, 0);
        gl.Vertex3f(spr->data.mo.v1[VX], 2*spr->data.mo.secfloor - top, spr->data.mo.v1[VY]);
@@ -1038,4 +1039,6 @@ void Rend_RenderSprite(vissprite_t *spr)
         // Enable Z-writing again.
         gl.Enable(DGL_DEPTH_WRITE);
     }
+    if(tempquad)
+        R_FreeRendPoly(tempquad);
 }

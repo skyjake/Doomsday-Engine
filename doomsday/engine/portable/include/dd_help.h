@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -30,14 +30,14 @@
 
 // Help string types.
 enum {
-	HST_DESCRIPTION,
-	HST_CONSOLE_VARIABLE,
-	HST_DEFAULT_VALUE
+    HST_DESCRIPTION,
+    HST_CONSOLE_VARIABLE,
+    HST_DEFAULT_VALUE
 };
 
 void            DD_InitHelp(void);
 void            DD_ShutdownHelp(void);
-void           *DH_Find(char *id);
+void           *DH_Find(const char *id);
 char           *DH_GetString(void *found, int type);
 
 #endif

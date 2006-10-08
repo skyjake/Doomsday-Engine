@@ -678,7 +678,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
 {
     sector_t *backSector;
     float   bFloor, bCeil, limit, size, segOffset;
-    rendpoly_t quad, *q = &quad;
+    rendpoly_t *quad;
     int     i, texture = 0, sideNum;
     lineinfo_t *info;
     shadowcorner_t topCn[2], botCn[2], sideCn[2];
@@ -724,25 +724,27 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     // DJS - Re above:
     // Unfortunetly, in practice this doesn't seem to make much
     // difference. On my system I gain about +1.4FPS on average.
-    memcpy(q, origQuad, sizeof(rendpoly_t));
+    quad = R_AllocRendPoly(RP_QUAD, true, 4);
+    memcpy(quad, origQuad, sizeof(rendpoly_t));
 
     // Init the quad.
-    q->flags = RPF_SHADOW;
-    q->texoffx = segOffset;
-    q->texoffy = 0;
-    q->tex.id = GL_PrepareLSTexture(LST_RADIO_CC);
-    q->tex.detail = NULL;
-    q->tex.width = info->length;
-    q->tex.height = shadowSize;
-    q->lights = NULL;
-    q->intertex.id = 0;
-    q->intertex.detail = NULL;
+    quad->flags = RPF_SHADOW;
+    quad->texoffx = segOffset;
+    quad->texoffy = 0;
+    quad->tex.id = GL_PrepareLSTexture(LST_RADIO_CC);
+    quad->tex.detail = NULL;
+    quad->tex.width = info->length;
+    quad->tex.height = shadowSize;
+    quad->lights = NULL;
+    quad->intertex.id = 0;
+    quad->intertex.detail = NULL;
 
     // Fade the shadow out if the height is below the min height.
-    if(q->vertices[2].pos[VZ] - q->vertices[0].pos[VZ] < EDGE_OPEN_THRESHOLD)
-        Rend_RadioSetColor(q, shadowDark * ((q->vertices[2].pos[VZ] - q->vertices[0].pos[VZ]) / EDGE_OPEN_THRESHOLD));
+    if(quad->vertices[2].pos[VZ] - quad->vertices[0].pos[VZ] < EDGE_OPEN_THRESHOLD)
+        Rend_RadioSetColor(quad, shadowDark *
+                              ((quad->vertices[2].pos[VZ] - quad->vertices[0].pos[VZ]) / EDGE_OPEN_THRESHOLD));
     else
-        Rend_RadioSetColor(q, shadowDark);
+        Rend_RadioSetColor(quad, shadowDark);
 
     /*
      * Top Shadow
@@ -750,16 +752,16 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     // The top shadow will reach this far down.
     size = shadowSize + Rend_RadioLongWallBonus(ceilSpan->length);
     limit = fCeil - size;
-    if((q->vertices[2].pos[VZ] > limit && q->vertices[0].pos[VZ] < fCeil) &&
+    if((quad->vertices[2].pos[VZ] > limit && quad->vertices[0].pos[VZ] < fCeil) &&
        Rend_RadioNonGlowingFlat(frontSector, PLN_CEILING))
     {
-        Rend_RadioTexCoordY(q, size);
+        Rend_RadioTexCoordY(quad, size);
         texture = LST_RADIO_OO;
         // Corners without a neighbour backsector
         if(sideCn[0].corner == -1 || sideCn[1].corner == -1)
         {   // At least one corner faces outwards
             texture = LST_RADIO_OO;
-            Rend_RadioTexCoordX(q, ceilSpan->length, ceilSpan->shift);
+            Rend_RadioTexCoordX(quad, ceilSpan->length, ceilSpan->shift);
 
             if((sideCn[0].corner == -1 && sideCn[1].corner == -1) ||
                (topCn[0].corner == -1 && topCn[1].corner == -1) )
@@ -770,7 +772,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
             {   // right corner faces outwards
                 if(-topCn[0].pOffset < 0 && botCn[0].pHeight < fCeil)
                 {// Must flip horizontally!
-                    Rend_RadioTexCoordX(q, -ceilSpan->length, ceilSpan->shift);
+                    Rend_RadioTexCoordX(quad, -ceilSpan->length, ceilSpan->shift);
                     texture = LST_RADIO_OE;
                 }
             }
@@ -784,7 +786,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         }
         else
         {   // Corners WITH a neighbour backsector
-            Rend_RadioTexCoordX(q, ceilSpan->length, ceilSpan->shift);
+            Rend_RadioTexCoordX(quad, ceilSpan->length, ceilSpan->shift);
             if(topCn[0].corner == -1 && topCn[1].corner == -1)
             {   // Both corners face outwards
                 texture = LST_RADIO_OO;//CC;
@@ -812,14 +814,14 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                             if(-topCn[0].pOffset < INDIFF)
                                 texture = LST_RADIO_OE;
                             else
-                                Rend_RadioTexCoordY(q, -topCn[0].pOffset);
+                                Rend_RadioTexCoordY(quad, -topCn[0].pOffset);
                         }
                     }
                     else if(-topCn[0].pOffset < 0 && -topCn[1].pOffset >= 0)
                     {
                         // Must flip horizontally!
                         texture = LST_RADIO_CO;
-                        Rend_RadioTexCoordX(q, -ceilSpan->length, ceilSpan->shift);
+                        Rend_RadioTexCoordX(quad, -ceilSpan->length, ceilSpan->shift);
 
                         // The shadow can't go over the higher edge.
                         if(size > -topCn[1].pOffset)
@@ -827,7 +829,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                             if(-topCn[1].pOffset < INDIFF)
                                 texture = LST_RADIO_OE;
                             else
-                                Rend_RadioTexCoordY(q, -topCn[1].pOffset);
+                                Rend_RadioTexCoordY(quad, -topCn[1].pOffset);
                         }
                     }
                 }
@@ -837,7 +839,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                     {
                         // Must flip horizontally!
                         texture = LST_RADIO_OE;
-                        Rend_RadioTexCoordX(q, -floorSpan->length,
+                        Rend_RadioTexCoordX(quad, -floorSpan->length,
                                             floorSpan->shift);
                     }
                     else if(-topCn[1].pOffset < -MINDIFF)
@@ -852,7 +854,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                     texture = LST_RADIO_OO;
 
                 // Must flip horizontally!
-                Rend_RadioTexCoordX(q, -ceilSpan->length, ceilSpan->shift);
+                Rend_RadioTexCoordX(quad, -ceilSpan->length, ceilSpan->shift);
             }
             else if(topCn[1].corner <= MIN_OPEN)
             {
@@ -867,8 +869,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
             }
         }
 
-        q->tex.id = GL_PrepareLSTexture(texture);
-        RL_AddPoly(q);
+        quad->tex.id = GL_PrepareLSTexture(texture);
+        RL_AddPoly(quad);
     }
 
     /*
@@ -876,16 +878,16 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
      */
     size = shadowSize + Rend_RadioLongWallBonus(floorSpan->length) / 2;
     limit = fFloor + size;
-    if((q->vertices[0].pos[VZ] < limit && q->vertices[2].pos[VZ] > fFloor) &&
+    if((quad->vertices[0].pos[VZ] < limit && quad->vertices[2].pos[VZ] > fFloor) &&
        Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR))
     {
-        Rend_RadioTexCoordY(q, -size);
+        Rend_RadioTexCoordY(quad, -size);
         texture = LST_RADIO_OO;
         // Corners without a neighbour backsector
         if(sideCn[0].corner == -1 || sideCn[1].corner == -1)
         {   // At least one corner faces outwards
             texture = LST_RADIO_OO;
-            Rend_RadioTexCoordX(q, floorSpan->length, floorSpan->shift);
+            Rend_RadioTexCoordX(quad, floorSpan->length, floorSpan->shift);
 
             if((sideCn[0].corner == -1 && sideCn[1].corner == -1) ||
                (botCn[0].corner == -1 && botCn[1].corner == -1) )
@@ -896,7 +898,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
             {
                 if(botCn[0].pOffset < 0 && topCn[0].pHeight > fFloor)
                 {   // Must flip horizontally!
-                    Rend_RadioTexCoordX(q, -floorSpan->length, floorSpan->shift);
+                    Rend_RadioTexCoordX(quad, -floorSpan->length, floorSpan->shift);
                     texture = LST_RADIO_OE;
                 }
             }
@@ -910,7 +912,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         }
         else
         {   // Corners WITH a neighbour backsector
-            Rend_RadioTexCoordX(q, floorSpan->length, floorSpan->shift);
+            Rend_RadioTexCoordX(quad, floorSpan->length, floorSpan->shift);
             if(botCn[0].corner == -1 && botCn[1].corner == -1)
             {   // Both corners face outwards
                 texture = LST_RADIO_OO;//CC;
@@ -939,14 +941,14 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                             if(botCn[0].pOffset < INDIFF)
                                 texture = LST_RADIO_OE;
                             else
-                                Rend_RadioTexCoordY(q, -botCn[0].pOffset);
+                                Rend_RadioTexCoordY(quad, -botCn[0].pOffset);
                         }
                     }
                     else if(botCn[0].pOffset < 0 && botCn[1].pOffset >= 0)
                     {
                         // Must flip horizontally!
                         texture = LST_RADIO_CO;
-                        Rend_RadioTexCoordX(q, -floorSpan->length,
+                        Rend_RadioTexCoordX(quad, -floorSpan->length,
                                             floorSpan->shift);
 
                         if(size > botCn[1].pOffset)
@@ -954,7 +956,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                             if(botCn[1].pOffset < INDIFF)
                                 texture = LST_RADIO_OE;
                             else
-                                Rend_RadioTexCoordY(q, -botCn[1].pOffset);
+                                Rend_RadioTexCoordY(quad, -botCn[1].pOffset);
                         }
                     }
                 }
@@ -964,7 +966,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                     {
                         // Must flip horizontally!
                         texture = LST_RADIO_OE;
-                        Rend_RadioTexCoordX(q, -floorSpan->length,
+                        Rend_RadioTexCoordX(quad, -floorSpan->length,
                                             floorSpan->shift);
                     }
                     else if(botCn[1].pOffset < -MINDIFF)
@@ -979,7 +981,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                     texture = LST_RADIO_OO;
 
                 // Must flip horizontally!
-                Rend_RadioTexCoordX(q, -floorSpan->length, floorSpan->shift);
+                Rend_RadioTexCoordX(quad, -floorSpan->length, floorSpan->shift);
             }
             else if(botCn[1].corner <= MIN_OPEN)  // Left Corner is closed
             {
@@ -994,15 +996,18 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
             }
         }
 
-        q->tex.id = GL_PrepareLSTexture(texture);
-        RL_AddPoly(q);
+        quad->tex.id = GL_PrepareLSTexture(texture);
+        RL_AddPoly(quad);
     }
 
     // Walls with glowing floor & ceiling get no side shadows.
     // Is there anything better we can do?
     if(!(Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR)) &&
        !(Rend_RadioNonGlowingFlat(frontSector, PLN_CEILING)))
+    {
+        R_FreeRendPoly(quad);
         return;
+    }
 
     /*
      * Left/Right Shadows
@@ -1010,26 +1015,26 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     size = shadowSize + Rend_RadioLongWallBonus(info->length);
     for(i = 0; i < 2; ++i)
     {
-        q->flags |= RPF_HORIZONTAL;
-        q->texoffy = q->vertices[0].pos[VZ] - fFloor;
-        q->tex.height = fCeil - fFloor;
+        quad->flags |= RPF_HORIZONTAL;
+        quad->texoffy = quad->vertices[0].pos[VZ] - fFloor;
+        quad->tex.height = fCeil - fFloor;
 
         // Left Shadow
         if(i == 0)
         {
             if(sideCn[0].corner > 0 && segOffset < size)
             {
-                q->texoffx = segOffset;
+                quad->texoffx = segOffset;
                 // Make sure the shadow isn't too big
                 if(size > info->length)
                 {
                     if(sideCn[1].corner <= MIN_OPEN)
-                        q->tex.width = info->length;
+                        quad->tex.width = info->length;
                     else
-                        q->tex.width = info->length/2;
+                        quad->tex.width = info->length/2;
                 }
                 else
-                    q->tex.width = size;
+                    quad->tex.width = size;
             }
             else
                 continue;  // Don't draw a left shadow
@@ -1038,17 +1043,17 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         {
             if(sideCn[1].corner > 0 && segOffset + seg->length > info->length - size)
             {
-                q->texoffx = -info->length + segOffset;
+                quad->texoffx = -info->length + segOffset;
                 // Make sure the shadow isn't too big
                 if(size > info->length)
                 {
                     if(sideCn[0].corner <= MIN_OPEN)
-                        q->tex.width = -info->length;
+                        quad->tex.width = -info->length;
                     else
-                        q->tex.width = -(info->length/2);
+                        quad->tex.width = -(info->length/2);
                 }
                 else
-                    q->tex.width = -size;
+                    quad->tex.width = -size;
             }
             else
                 continue;  // Don't draw a right shadow
@@ -1065,8 +1070,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                 }
                 else if(!(Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR)))
                 {
-                    q->texoffy = q->vertices[0].pos[VZ] - fCeil;
-                    q->tex.height = -(fCeil - fFloor);
+                    quad->texoffy = quad->vertices[0].pos[VZ] - fCeil;
+                    quad->tex.height = -(fCeil - fFloor);
                     texture = LST_RADIO_CO;
                 }
                 else
@@ -1081,8 +1086,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                 }
                 else if(!(Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR)))
                 {
-                    q->texoffy = q->vertices[0].pos[VZ] - fCeil;
-                    q->tex.height = -(fCeil - fFloor);
+                    quad->texoffy = quad->vertices[0].pos[VZ] - fCeil;
+                    quad->tex.height = -(fCeil - fFloor);
                     texture = LST_RADIO_CO;
                 }
                 else
@@ -1097,8 +1102,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                 }
                 else if(!(Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR)))
                 {
-                    q->texoffy = q->vertices[0].pos[VZ] - fCeil;
-                    q->tex.height = -(fCeil - fFloor);
+                    quad->texoffy = quad->vertices[0].pos[VZ] - fCeil;
+                    quad->tex.height = -(fCeil - fFloor);
                     texture = LST_RADIO_CO;
                 }
                 else
@@ -1109,7 +1114,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         {
             if(!(Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR)))
             {
-                Rend_RadioTexCoordY(q, -(fCeil - fFloor));
+                Rend_RadioTexCoordY(quad, -(fCeil - fFloor));
                 texture = LST_RADIO_CO;
             }
             else if(!(Rend_RadioNonGlowingFlat(frontSector, PLN_CEILING)))
@@ -1118,11 +1123,12 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                 texture = LST_RADIO_CC;
         }
 
-        q->tex.id = GL_PrepareLSTexture(texture);
+        quad->tex.id = GL_PrepareLSTexture(texture);
 
-        Rend_RadioSetColor(q, sideCn[i].corner * shadowDark);
-        RL_AddPoly(q);
+        Rend_RadioSetColor(quad, sideCn[i].corner * shadowDark);
+        RL_AddPoly(quad);
     }
+    R_FreeRendPoly(quad);
 }
 
 /*
@@ -1212,7 +1218,7 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
 void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
                              float darkness, float sideOpen[2])
 {
-    rendpoly_t q;
+    rendpoly_t *q;
     rendpoly_vertex_t *vtx;
     sector_t *sector;
     float   z, pos;
@@ -1258,19 +1264,16 @@ void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     }
 
     // Initialize the rendpoly.
-    q.type = RP_FLAT;
-    q.isWall = false;
-    q.flags = RPF_SHADOW;
-    memset(&q.tex, 0, sizeof(q.tex));
-    memset(&q.intertex, 0, sizeof(q.intertex));
-    q.interpos = 0;
-    q.lights = NULL;
-    q.sector = NULL;
+    q = R_AllocRendPoly(RP_FLAT, false, 4);
+    q->flags = RPF_SHADOW;
+    memset(&q->tex, 0, sizeof(q->tex));
+    memset(&q->intertex, 0, sizeof(q->intertex));
+    q->interpos = 0;
+    q->lights = NULL;
+    q->sector = NULL;
+    memset(q->vertices, 0, q->numvertices * sizeof(rendpoly_vertex_t));
 
-    q.numvertices = 4;
-    memset(q.vertices, 0, q.numvertices * sizeof(rendpoly_vertex_t));
-
-    vtx = q.vertices;
+    vtx = q->vertices;
     idx = (isCeiling ? ceilIndices : floorIndices);
 
     // Left outer corner.
@@ -1301,7 +1304,8 @@ void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     vtx[idx[3]].pos[VY] = vtx[idx[0]].pos[VY] + inner[0][VY];
     vtx[idx[3]].pos[VZ] = z;
 
-    RL_AddPoly(&q);
+    RL_AddPoly(q);
+    R_FreeRendPoly(q);
 }
 
 /*

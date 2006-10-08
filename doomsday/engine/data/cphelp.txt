@@ -576,13 +576,16 @@ desc = 1=Render player view in wireframe mode.
 desc = Frame counter.
 
 [rend-info-lums]
-desc = =Print lumobj count after rendering a frame.
+desc = 1=Print lumobj count after rendering a frame.
 
-[rend-light-ambient]
-desc = Ambient light level.
+[rend-info-rendpolys]
+desc = 1=Print rendpoly pool state after rendering a frame.
 
 [rend-light]
 desc = 1=Render dynamic lights.
+
+[rend-light-ambient]
+desc = Ambient light level.
 
 [rend-light-blend]
 desc = Dynamic lights color blending mode: 0=normal, 1=additive, 2=no blending.

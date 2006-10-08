@@ -135,7 +135,6 @@ typedef struct glcommand_vertex_s {
     int             index;
 } glcommand_vertex_t;
 
-#define RL_MAX_POLY_SIDES   64
 #define RL_MAX_DIVS         64
 
 // Rendpoly flags.
@@ -163,6 +162,14 @@ typedef struct {
     float           dist;          // Distance to the vertex.
 } rendpoly_vertex_t;
 
+typedef struct rendpoly_wall_s {
+    float           length;
+    struct div_t {
+        byte        num;
+        float       pos[RL_MAX_DIVS];
+    } divs[2];                     // For wall segments (two vertices).
+} rendpoly_wall_t;
+
 // rendpoly_t is only for convenience; the data written in the rendering
 // list data buffer is taken from this struct.
 typedef struct rendpoly_s {
@@ -181,16 +188,9 @@ typedef struct rendpoly_s {
 
     // The geometry:
     byte            numvertices;   // Number of vertices for the poly.
-    rendpoly_vertex_t vertices[RL_MAX_POLY_SIDES];
+    rendpoly_vertex_t *vertices;
 
-    // Wall specific data
-    struct rendpoly_wall_s {
-        float           length;
-        struct div_t {
-            byte            num;
-            float           pos[RL_MAX_DIVS];
-        } divs[2];                     // For wall segments (two vertices).
-    } wall;
+    rendpoly_wall_t *wall;         // Wall specific data if any.
 } rendpoly_t;
 
 // This is the dummy mobj_t used for blockring roots.
@@ -428,6 +428,12 @@ extern animgroup_t *groups;
 extern int      levelFullBright;
 extern int      glowingTextures;
 extern byte     precacheSprites, precacheSkins;
+
+void            R_InitRendPolyPool(void);
+rendpoly_t     *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
+                                unsigned int numverts);
+void            R_FreeRendPoly(rendpoly_t *poly);
+void            R_InfoRendPolys(void);
 
 void            R_InitData(void);
 void            R_UpdateData(void);

@@ -1011,7 +1011,7 @@ void Mod_GlowLightSetup(mlight_t * light)
 void Rend_RenderModel(vissprite_t * spr)
 {
     modeldef_t *mf = spr->data.mo.mf;
-    rendpoly_t quad;
+    rendpoly_t *quad;
     int     i;
     int     lightLevel = spr->data.mo.lightlevel;
     float   dist;
@@ -1023,16 +1023,17 @@ void Rend_RenderModel(vissprite_t * spr)
     numLights = 0;
 
     // This way the distance darkening has an effect.
-    quad.vertices[0].dist = Rend_PointDist2D(spr->data.mo.v1);
-    quad.numvertices = 1;
-    quad.isWall = false;
+    quad = R_AllocRendPoly(RP_NONE, false, 1);
+    quad->vertices[0].dist = Rend_PointDist2D(spr->data.mo.v1);
 
     Rend_ApplyLightAdaptation(&lightLevel);
-    RL_VertexColors(&quad, lightLevel, spr->data.mo.rgb);
+    RL_VertexColors(quad, lightLevel, spr->data.mo.rgb);
 
     // Determine the ambient light affecting the model.
     for(i = 0; i < 3; ++i)
-        ambientColor[i] = quad.vertices[0].color.rgba[i] / 255.0f;
+        ambientColor[i] = quad->vertices[0].color.rgba[i] / 255.0f;
+
+    R_FreeRendPoly(quad);
 
     if(modelLight)
     {

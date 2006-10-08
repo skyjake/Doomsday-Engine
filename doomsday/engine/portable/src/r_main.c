@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -69,6 +69,8 @@ void    Rend_RetrieveLightSample(void);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern byte rendInfoRPolys;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -125,25 +127,22 @@ static int bspFactor = 7;
  */
 void R_Register(void)
 {
-    C_VAR_INT("rend-info-tris", &rendInfoTris, 0, 0, 1);
-
-    C_VAR_BYTE("rend-info-frametime", &showFrameTimePos, 0, 0, 1);
-
-    C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, CVF_HIDE, 0, 1);
 
     C_VAR_INT("bsp-build", &bspBuild, 0, 0, 1);
-
     C_VAR_INT("bsp-cache", &bspCache, 0, 0, 1);
-
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 
     C_VAR_INT("con-show-during-setup", &loadInStartupMode, 0, 0, 1);
 
-    C_VAR_INT("rend-vsync", &useVSync, 0, 0, 1);
-    
+    C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, CVF_HIDE, 0, 1);
+
     C_VAR_BYTE("rend-info-deltas-angles", &showViewAngleDeltas, 0, 0, 1);
-    
     C_VAR_BYTE("rend-info-deltas-pos", &showViewPosDeltas, 0, 0, 1);
+    C_VAR_BYTE("rend-info-frametime", &showFrameTimePos, 0, 0, 1);
+    C_VAR_BYTE("rend-info-rendpolys", &rendInfoRPolys, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT("rend-info-tris", &rendInfoTris, 0, 0, 1);
+
+//    C_VAR_INT("rend-vsync", &useVSync, 0, 0, 1);
 }
 
 /**
@@ -533,7 +532,7 @@ void R_SetupFrame(ddplayer_t *player)
                         yaw - oldyaw,
                         smoothView.pitch - oldpitch,
                         (yaw - oldyaw) / (sysTime - oldtime),
-                        (smoothView.pitch - oldpitch) / (sysTime - oldtime)); 
+                        (smoothView.pitch - oldpitch) / (sysTime - oldtime));
             oldyaw = yaw;
             oldpitch = smoothView.pitch;
             oldtime = sysTime;
@@ -675,6 +674,8 @@ void R_RenderPlayerView(ddplayer_t *player)
     {
         Con_Printf("LumObjs: %-4i\n", numLuminous);
     }
+
+    R_InfoRendPolys();
 
     // View border?
     if(BorderNeedRefresh)

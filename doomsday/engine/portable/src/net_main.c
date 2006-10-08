@@ -44,6 +44,7 @@
 #include "de_ui.h"
 
 #include "rend_bias.h"
+#include "rend_console.h"
 #include "r_lgrid.h"
 
 // MACROS ------------------------------------------------------------------
@@ -816,24 +817,7 @@ void Net_Drawer(void)
            FR_TextOut(buf, 10, 10+10*(i+1));
            } */
     }
-    if(consoleShowFPS)
-    {
-        int     x, y = 30, w, h;
-
-        // If the ui is active draw the counter a bit further down
-        if(ui_active)
-            y += 20;
-
-        sprintf(buf, "%.1f FPS", DD_GetFrameRate());
-        w = FR_TextWidth(buf) + 16;
-        h = FR_TextHeight(buf) + 16;
-        x = glScreenWidth - w - 10;
-        UI_GradientEx(x, y, w, h, 6, UI_COL(UIC_BG_MEDIUM),
-                      UI_COL(UIC_BG_LIGHT), .5f, .5f);
-        UI_DrawRectEx(x, y, w, h, 6, false, UI_COL(UIC_BRD_HI), NULL, .5f, -1);
-        UI_Color(UI_COL(UIC_TEXT));
-        UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_COL(UIC_TITLE), 1);
-    }
+    Rend_ConsoleFPS();
 
     // Restore original matrix.
     gl.MatrixMode(DGL_PROJECTION);

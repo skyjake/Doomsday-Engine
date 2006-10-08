@@ -93,7 +93,7 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
     float   height, moh, halfmoh, color, pos[2], floor;
     sector_t *sec = mo->subsector->sector;
     int     radius, i;
-    rendpoly_t poly;
+    rendpoly_t *poly;
     float   distance;
 
     // Is this too far?
@@ -165,37 +165,36 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
         return;
 
     // Prepare the poly.
-    memset(&poly, 0, sizeof(poly));
-    poly.type = RP_FLAT;
-    poly.flags = RPF_SHADOW;
-    poly.isWall = false;
-    poly.tex.id = GL_PrepareLSTexture(LST_DYNAMIC);
-    poly.tex.width = poly.tex.height = radius * 2;
-    poly.texoffx = -pos[VX] + radius;
-    poly.texoffy = -pos[VY] - radius;
+    poly = R_AllocRendPoly(RP_FLAT, false, 4);
+    poly->flags = RPF_SHADOW;
+    poly->tex.id = GL_PrepareLSTexture(LST_DYNAMIC);
+    poly->tex.width = poly->tex.height = radius * 2;
+    poly->texoffx = -pos[VX] + radius;
+    poly->texoffy = -pos[VY] - radius;
     floor += 0.2f;    // A bit above the floor.
 
-    poly.numvertices = 4;
-    poly.vertices[0].pos[VX] = pos[VX] - radius;
-    poly.vertices[0].pos[VY] = pos[VY] + radius;
-    poly.vertices[0].pos[VZ] = floor;
-    poly.vertices[1].pos[VX] = pos[VX] + radius;
-    poly.vertices[1].pos[VY] = pos[VY] + radius;
-    poly.vertices[1].pos[VZ] = floor;
-    poly.vertices[2].pos[VX] = pos[VX] + radius;
-    poly.vertices[2].pos[VY] = pos[VY] - radius;
-    poly.vertices[2].pos[VZ] = floor;
-    poly.vertices[3].pos[VX] = pos[VX] - radius;
-    poly.vertices[3].pos[VY] = pos[VY] - radius;
-    poly.vertices[3].pos[VZ] = floor;
-    for(i = 0; i < 4; i++)
+    poly->vertices[0].pos[VX] = pos[VX] - radius;
+    poly->vertices[0].pos[VY] = pos[VY] + radius;
+    poly->vertices[0].pos[VZ] = floor;
+    poly->vertices[1].pos[VX] = pos[VX] + radius;
+    poly->vertices[1].pos[VY] = pos[VY] + radius;
+    poly->vertices[1].pos[VZ] = floor;
+    poly->vertices[2].pos[VX] = pos[VX] + radius;
+    poly->vertices[2].pos[VY] = pos[VY] - radius;
+    poly->vertices[2].pos[VZ] = floor;
+    poly->vertices[3].pos[VX] = pos[VX] - radius;
+    poly->vertices[3].pos[VY] = pos[VY] - radius;
+    poly->vertices[3].pos[VZ] = floor;
+
+    for(i = 0; i < 4; ++i)
     {
         // Shadows are black.
-        memset(poly.vertices[i].color.rgba, 0, 3);
-        poly.vertices[i].color.rgba[3] = color * 255;
+        memset(poly->vertices[i].color.rgba, 0, 3);
+        poly->vertices[i].color.rgba[3] = color * 255;
     }
 
-    RL_AddPoly(&poly);
+    RL_AddPoly(poly);
+    R_FreeRendPoly(poly);
 }
 
 void Rend_RenderShadows(void)

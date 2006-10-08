@@ -103,8 +103,6 @@ void            DL_InitForNewFrame();
 int             DL_NewLuminous(void);
 lumobj_t       *DL_GetLuminous(int index);
 void            DL_ProcessSubsector(subsector_t *ssec);
-void            DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg,
-                                  sector_t *frontsector);
 dynlight_t     *DL_GetSegLightLinks(int seg, int whichpart);
 dynlight_t     *DL_GetSubSecLightLinks(int ssec, int plane);
 

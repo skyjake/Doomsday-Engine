@@ -47,6 +47,12 @@ typedef struct flathash_s {
     flat_t *first;
 } flathash_t;
 
+typedef struct {
+    boolean     inUse;
+    unsigned int numVerts;
+    rendpoly_t  poly;
+} rendpolydata_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -77,9 +83,197 @@ animgroup_t *groups;
 // Glowing textures are always rendered fullbright.
 int     glowingTextures = true;
 
+byte rendInfoRPolys = 0;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static unsigned int numrendpolys = 0;
+static unsigned int maxrendpolys = 0;
+static rendpolydata_t **rendPolys;
+
 // CODE --------------------------------------------------------------------
+
+void R_InfoRendPolys(void)
+{
+    unsigned int i;
+
+    if(!rendInfoRPolys)
+        return;
+
+    Con_Printf("RP Count: %-4i\n", numrendpolys);
+
+    for(i = 0; i < numrendpolys; ++i)
+    {
+        Con_Printf("RP: %-4i %c %c (vtxs=%i)\n", i,
+                   rendPolys[i]->inUse? 'Y':'N',
+                   rendPolys[i]->poly.isWall? 'w':'p',
+                   rendPolys[i]->numVerts);
+    }
+}
+
+/**
+ * Called at the start of each level.
+ */
+void R_InitRendPolyPool(void)
+{
+    int         i;
+    rendpoly_t *p;
+
+    numrendpolys = maxrendpolys = 0;
+    rendPolys = NULL;
+
+    // Allocate the common ones to get us started.
+    p = R_AllocRendPoly(RP_QUAD, true, 4); // wall
+    R_FreeRendPoly(p); // mark unused.
+
+    // sprites/models use rendpolys with 1/2 vtxs to unify lighting.
+    for(i = 1; i < 16; ++i)
+    {
+        p = R_AllocRendPoly(i < 3? RP_NONE:RP_FLAT, false, i);
+        R_FreeRendPoly(p); // mark unused.
+    }
+}
+
+/**
+ * Re-uses existing rendpolys whenever possible, there are a few conditions
+ * which prevent this:
+ *
+ * There is no unused rendpoly which:
+ * a) has enough vertices.
+ * b) matches the "isWall" specification.
+ *
+ * @param numverts  The number of verts required.
+ * @param isWall    <code>true</code>= wall data is required.
+ *
+ * @return          Ptr to a suitable rendpoly.
+ */
+static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
+{
+    unsigned int    idx;
+    rendpoly_t     *p;
+    boolean         found = false;
+
+    for(idx = 0; idx < maxrendpolys; ++idx)
+    {
+        if(rendPolys[idx]->inUse)
+            continue;
+
+        if(rendPolys[idx]->numVerts == numverts &&
+           rendPolys[idx]->poly.isWall == isWall)
+        {
+            // Use this one.
+            rendPolys[idx]->inUse = true;
+            return &rendPolys[idx]->poly;
+        }
+        else if(rendPolys[idx]->numVerts == 0)
+        {
+            // There is an unused one but we haven't allocated verts yet.
+            numrendpolys++;
+            found = true;
+            break;
+        }
+    }
+
+    if(!found)
+    {
+        // We may need to allocate more.
+        if(++numrendpolys > maxrendpolys)
+        {
+            unsigned int i, newCount;
+            rendpolydata_t *newPolyData, *ptr;
+
+            maxrendpolys = (maxrendpolys > 0? maxrendpolys * 2 : 8);
+
+            rendPolys =
+                Z_Realloc(rendPolys, sizeof(rendpolydata_t*) * maxrendpolys,
+                          PU_LEVEL);
+
+            newCount = maxrendpolys - numrendpolys + 1;
+
+            newPolyData =
+                Z_Malloc(sizeof(rendpolydata_t) * newCount, PU_LEVEL, 0);
+
+            ptr = newPolyData;
+            for(i = numrendpolys-1; i < maxrendpolys; ++i, ptr++)
+            {
+                ptr->inUse = false;
+                ptr->numVerts = 0;
+                rendPolys[i] = ptr;
+            }
+        }
+        idx = numrendpolys - 1;
+    }
+
+    p = &rendPolys[idx]->poly;
+    rendPolys[idx]->inUse = true;
+    rendPolys[idx]->numVerts = numverts;
+
+    p->numvertices = numverts;
+    p->vertices = Z_Malloc(sizeof(rendpoly_vertex_t) * p->numvertices,
+                           PU_LEVEL, 0);
+    p->isWall = isWall;
+
+    if(p->isWall) // Its a wall so allocate the wall data.
+        p->wall = Z_Malloc(sizeof(rendpoly_wall_t), PU_LEVEL, 0);
+    else
+        p->wall = NULL;
+
+    return p;
+}
+
+/**
+ * Retrieves a suitable rendpoly. Possibly allocates a new one if necessary.
+ *
+ * @param type      The type of the poly to create.
+ * @param isWall    <code>true</code>= wall data is required for this poly.
+ * @param numverts  The number of verts required.
+ *
+ * @return          Ptr to a suitable rendpoly.
+ */
+rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
+                            unsigned int numverts)
+{
+    rendpoly_t *poly = R_NewRendPoly(numverts, isWall);
+
+    poly->type = type;
+
+    poly->flags = 0;
+    poly->texoffx = 0;
+    poly->texoffy = 0;
+    poly->interpos = 0;
+    poly->lights = 0;
+    poly->decorlightmap = 0;
+    poly->sector = 0;
+    poly->blendmode = BM_NORMAL;
+
+    return poly;
+}
+
+/**
+ * Doesn't actually free anything. Instead, mark it as unused ready for the
+ * next time a rendpoly with this number of verts is needed.
+ *
+ * @param poly      Ptr to the poly to mark unused.
+ */
+void R_FreeRendPoly(rendpoly_t *poly)
+{
+    unsigned int i;
+
+    if(!poly)
+        return;
+
+    for(i = 0; i < numrendpolys; ++i)
+    {
+        if(&rendPolys[i]->poly == poly)
+        {
+            rendPolys[i]->inUse = false;
+            return;
+        }
+    }
+#if _DEBUG
+    Con_Message("R_FreeRendPoly: Dangling poly ptr!\n");
+#endif
+}
 
 void R_ShutdownData(void)
 {
