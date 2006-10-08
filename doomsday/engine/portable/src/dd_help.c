@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -68,10 +68,12 @@ static helpnode_t helpRoot;
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Create and link.
+/**
+ * Create and link a new help node.
+ *
+ * @return          Ptr to the newly created helpnode.
  */
-helpnode_t* DH_NewNode(void)
+static helpnode_t* DH_NewNode(void)
 {
     helpnode_t *n = calloc(sizeof(*n), 1);
 
@@ -81,10 +83,12 @@ helpnode_t* DH_NewNode(void)
     return n;
 }
 
-/*
- * Unlink and destroy.
+/**
+ * Unlink the helpnode from the dlist and destroy it.
+ *
+ * @param   node    Ptr to the node to be destroyed.
  */
-void DH_DeleteNode(helpnode_t * node)
+static void DH_DeleteNode(helpnode_t * node)
 {
     int     i;
 
@@ -92,12 +96,21 @@ void DH_DeleteNode(helpnode_t * node)
     node->next->prev = node->prev;
     // Free all memory associated with the node.
     free(node->id);
-    for(i = 0; i < MAX_STRINGS; i++)
+
+    for(i = 0; i < MAX_STRINGS; ++i)
         free(node->str[i].text);
+
     free(node);
 }
 
-int DH_ReadStrings(char *fileName)
+/**
+ * Parses the given file looking for help strings.
+ *
+ * @param fileName      Path to the file to be read.
+ *
+ * @return              Non-zero if the file was read successfully.
+ */
+static int DH_ReadStrings(char *fileName)
 {
     DFILE  *file = F_Open(fileName, "rt");
     char    line[2048], *ptr, *eol, *end;
@@ -115,10 +128,12 @@ int DH_ReadStrings(char *fileName)
         M_ReadLine(line, sizeof(line), file);
         if(M_IsComment(line))
             continue;
+
         // Where does the line begin?
         ptr = M_SkipWhite(line);
         if(!*ptr)
             continue;           // An empty line.
+
         eol = ptr + strlen(ptr);    // End of line.
         // A new node?
         if(*ptr == '[')
@@ -127,6 +142,7 @@ int DH_ReadStrings(char *fileName)
             count = 0;
             if(!(end = strchr(ptr, ']')))
                 end = eol;
+
             node->id = calloc(end - ptr, 1);
             strncpy(node->id, ptr + 1, end - ptr - 1);
         }
@@ -136,6 +152,7 @@ int DH_ReadStrings(char *fileName)
 
             if(count == MAX_STRINGS)
                 continue;       // No more room.
+
             count++;
             // The type of the string.
             if(!strnicmp(ptr, "des", 3))
@@ -145,6 +162,7 @@ int DH_ReadStrings(char *fileName)
             else if(!strnicmp(ptr, "def", 3))
                 hst->type = HST_DEFAULT_VALUE;
             ptr = M_SkipWhite(end + 1);
+
             // The value may be split over multiple lines.
             // 64 kb should be quite enough.
             length = 0, hst->text = malloc(0x10000);
@@ -178,6 +196,7 @@ int DH_ReadStrings(char *fileName)
                     hst->text[length++] = *ptr++;
                 }
             }
+
             // Resize the memory to fit the text.
             hst->text[length] = 0;
             hst->text = realloc(hst->text, length + 1);
@@ -189,21 +208,50 @@ int DH_ReadStrings(char *fileName)
     return true;
 }
 
-/*
+/**
  * Finds a node matching the ID. Use DH_GetString to read strings from it.
+ *
+ * @param id        Help node ID to be searched for.
+ *
+ * @return          Ptr to the helpnode if matched ELSE <code>NULL</code>.
  */
-void* DH_Find(char *id)
+void* DH_Find(const char *id)
 {
     helpnode_t *n;
+    unsigned int length;
 
     if(!helpInited)
         return NULL;
+
+    length = strlen(id);
     for(n = helpRoot.next; n != &helpRoot; n = n->next)
-        if(!strnicmp(id, n->id, strlen(/*n->*/id)))
+    {
+        // DJS:
+        // Don't compare unless the string is long enough.
+        // This also stops us returning a false positive when a substring
+        // matches the search string e.g. [rend-light] != [rend-light-ambient]
+        if(strlen(n->id) < length)
+            continue;
+
+        if(!strnicmp(id, n->id, length))
             return n;
+    }
+
     return NULL;
 }
 
+/**
+ * Return a string from within the helpnode. Strings are stored internally
+ * and indexed by their type (e.g. HST_DESCRIPTION).
+ *
+ * @param foundNode The helpnode to return the string from.
+ * @param type      The string type (index) to look for within the node.
+ *
+ * @return          Ptr to the found string ELSE <code>NULL</code>. Note,
+ *                  may also return <code>NULL</code> if passed an invalid
+ *                  helpnode ptr OR the help string database has not be
+ *                  initialized yet.
+ */
 char* DH_GetString(void *foundNode, int type)
 {
     helpnode_t *n = foundNode;
@@ -211,12 +259,18 @@ char* DH_GetString(void *foundNode, int type)
 
     if(!n || !helpInited)
         return NULL;
-    for(i = 0; i < MAX_STRINGS; i++)
+
+    for(i = 0; i < MAX_STRINGS; ++i)
         if(n->str[i].text && n->str[i].type == type)
             return n->str[i].text;
+
     return NULL;
 }
 
+/**
+ * Initializes the help string database. After which, attempts to read
+ * help strings from both the engine and game-specific help string files.
+ */
 void DD_InitHelp(void)
 {
     char    helpFileName[256];
@@ -241,10 +295,15 @@ void DD_InitHelp(void)
     helpInited = true;
 }
 
+/**
+ * Shuts down the help string database. Frees all storage and destroys
+ * database itself.
+ */
 void DD_ShutdownHelp(void)
 {
     if(!helpInited)
         return;
+
     helpInited = false;
     // Delete all the nodes.
     while(helpRoot.next != &helpRoot)
