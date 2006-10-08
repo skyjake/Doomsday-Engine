@@ -40,6 +40,7 @@
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_graphics.h"
+#include "de_misc.h"
 
 #include "def_main.h"
 #include "m_profiler.h"
@@ -1491,7 +1492,7 @@ void RL_EndWrite(rendlist_t * list)
 void RL_WriteDynLight(rendlist_t * list, dynlight_t *dyn, primhdr_t * prim,
                       rendpoly_t *poly)
 {
-    int     num;
+    unsigned int num;
     uint    i, base;
     gl_texcoord_t *tc;
     gl_color_t *col;
