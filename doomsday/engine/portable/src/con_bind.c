@@ -179,7 +179,7 @@ void B_RegisterBindClasses(void)
 {
     int    i;
 
-    for(i = 0; ddBindClasses[i].name; i++)
+    for(i = 0; ddBindClasses[i].name; ++i)
         DD_AddBindClass(ddBindClasses + i);
 }
 
@@ -367,7 +367,7 @@ binding_t *B_GetBinding(event_t *event, boolean create_new)
 
     // We'll first have to search through the existing bindings
     // to see if there already is one for this event.
-    for(i = 0; i < numBinds; i++)
+    for(i = 0; i < numBinds; ++i)
     {
         if(B_EventMatch(event->type, event->data1, binds[i].type,
                         binds[i].data1))
@@ -378,10 +378,10 @@ binding_t *B_GetBinding(event_t *event, boolean create_new)
         return NULL;
 
     // Hmm, no luck there. Let's create a new binding_t.
-    binds = realloc(binds, sizeof(binding_t) * (numBinds + 1));
+    binds = M_Realloc(binds, sizeof(binding_t) * (numBinds + 1));
     newb = binds + numBinds++;
     memset(newb, 0, sizeof(*newb));
-    newb->commands = malloc(sizeof(command_t) * maxBindClasses);
+    newb->commands = M_Malloc(sizeof(command_t) * maxBindClasses);
 
     for(i = 0; i < maxBindClasses; ++i)
         for(j = 0; j < 3; ++j)
@@ -407,11 +407,11 @@ void B_DeleteBindingIdx(int index)
         for(k = 0; k < 3; ++k)
             if(binds[index].commands[i].command[k])
             {
-                free(binds[index].commands[i].command[k]);
+                M_Free(binds[index].commands[i].command[k]);
                 binds[index].commands[i].command[k] = NULL;
             }
 
-    free(binds[index].commands);
+    M_Free(binds[index].commands);
 
     if(index < numBinds - 1) // If not the last one, do some rollback.
     {
@@ -442,7 +442,7 @@ void B_Bind(event_t *event, char *command, int bindClass)
         else
         {
             // clear the command in bindClass only
-            for(i = 0; i < numBindClasses; i++)
+            for(i = 0; i < numBindClasses; ++i)
                 for(k = 0; k < 3; ++k)
                     if(bnd->commands[i].command[k])
                     {
@@ -556,7 +556,7 @@ static char *shortNameForKey(int ddkey)
 {
     int     i;
 
-    for(i = 0; keyNames[i].key; i++)
+    for(i = 0; keyNames[i].key; ++i)
         if(ddkey == keyNames[i].key)
             return keyNames[i].name;
     return NULL;
@@ -569,7 +569,7 @@ static int getByShortName(const char *key)
 {
     int     i;
 
-    for(i = 0; keyNames[i].key; i++)
+    for(i = 0; keyNames[i].key; ++i)
         if(!strnicmp(key, keyNames[i].name, strlen(keyNames[i].name)))
             return keyNames[i].key;
     return 0;
@@ -582,7 +582,7 @@ static int buttonNumber(int flags)
 {
     int     i;
 
-    for(i = 0; i < 32; i++)
+    for(i = 0; i < 32; ++i)
         if(flags & (1 << i))
             return i;
     return -1;
@@ -639,7 +639,7 @@ static void B_EventBuilder(char *buff, event_t *ev)
         ev->type = EV_POV;
         ev->state = (prefix == '+' ? EVS_DOWN : EVS_UP);
         ev->data1 = -1;
-        for(i = 0; povDirNames[i]; i++)
+        for(i = 0; povDirNames[i]; ++i)
             if(!stricmp(begin + 3, povDirNames[i]))
             {
                 ev->data1 = i;
@@ -733,7 +733,7 @@ D_CMD(Bind)
     {
         Con_Printf("Usage: %s (class) (event) (cmd)\n", argv[0]);
         Con_Printf("Binding Classes:\n");
-        for(i = 0; i < numBindClasses; i++)
+        for(i = 0; i < numBindClasses; ++i)
             Con_Printf("  %s\n", bindClasses[i].name);
         return true;
     }
@@ -782,7 +782,7 @@ D_CMD(Bind)
 
         // We're clearing a binding. If no prefix has been given,
         // all event states (+, - and *) are all cleared.
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
         {
             sprintf(buff, "%c%s", prefixes[i], evntptr);
             B_EventBuilder(buff, &event);
@@ -1200,7 +1200,7 @@ void B_WriteToFile(FILE * file)
     for(k = 0; k < numBindClasses; ++k)
     {
         count = 0;
-        for(i = 0; i < numBinds; i++)
+        for(i = 0; i < numBinds; ++i)
         {
             for(j = 0; j < 3; ++j)
             {
@@ -1237,7 +1237,7 @@ int B_BindingsForCommand(char *command, char *buffer, int bindClass)
     if(bindClass > numBindClasses)
         return count;
 
-    for(i = 0; i < numBinds; i++)
+    for(i = 0; i < numBinds; ++i)
     {
         if(bindClass == -1) // check all bindclasses
         {
