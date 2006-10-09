@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,7 +69,7 @@ float   decorFadeAngle = .1f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int numSources;
+static int numDecorLightSources;
 static decorsource_t *sourceFirst, *sourceLast, *sourceCursor;
 
 // Lights near surfaces get dimmer if the angle is too small.
@@ -117,7 +118,7 @@ ded_decor_t *Rend_GetGraphicResourceDecoration(int id, boolean isFlat)
  */
 void Rend_ClearDecorations(void)
 {
-    numSources = 0;
+    numDecorLightSources = 0;
     sourceCursor = sourceFirst;
 }
 
@@ -133,7 +134,7 @@ void Rend_ProjectDecorations(void)
     if(!haloMode)
         return;
 
-    //for(i = 0; i < numSources; i++)
+    //for(i = 0; i < numDecorLightSources; i++)
     for(src = sourceFirst; src != sourceCursor; src = src->next)
     {
         lumobj_t *lum = DL_GetLuminous(src->thing.light);
@@ -153,10 +154,10 @@ decorsource_t *Rend_NewLightDecorationSource(void)
 {
     decorsource_t *src;
 
-    if(numSources > MAX_SOURCES)
+    if(numDecorLightSources > MAX_SOURCES)
         return NULL;
 
-    numSources++;
+    numDecorLightSources++;
 
     // If the cursor is NULL, new sources must be allocated.
     if(!sourceCursor)
