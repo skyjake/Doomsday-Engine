@@ -231,7 +231,6 @@ ENDIF (APPLE)
 IF (NOT BUILDDEDICATED)
 	IF (BUILDOPENGL)
 		FIND_PACKAGE(OpenGL REQUIRED)
-		##INCLUDE (${CMAKE_ROOT}/Modules/FindOpenGL.cmake)
 	ENDIF (BUILDOPENGL)
 ENDIF (NOT BUILDDEDICATED)
 
@@ -241,43 +240,34 @@ FIND_PACKAGE(SDL REQUIRED)
 IF (NOT BUILDDEDICATED)
 	IF (BUILDSDLMIXER)
 		FIND_PACKAGE(SDL_mixer REQUIRED)
-		##INCLUDE (${CMAKE_ROOT}/Modules/FindSDL_mixer.cmake)
 	ENDIF (BUILDSDLMIXER)
 ENDIF (NOT BUILDDEDICATED)
 
 FIND_PACKAGE(SDL_net REQUIRED)
-##INCLUDE (${CMAKE_ROOT}/Modules/FindSDL_net.cmake)
 
 FIND_PACKAGE(ZLIB REQUIRED)
-##INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindZLIB.cmake)
 
 FIND_PACKAGE(PNG REQUIRED)
-##INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindPNG.cmake)
 
 FIND_PACKAGE(PythonInterp REQUIRED)
-##INCLUDE (${CMAKE_ROOT}/Modules/FindPythonInterp.cmake)
 
 IF (UNIX)
 	FIND_PACKAGE(Curses REQUIRED)
-	##INCLUDE (${CMAKE_ROOT}/Modules/FindCurses.cmake)
 ENDIF (UNIX)
 
 IF (WIN32)
 	FIND_PACKAGE(DX_Dinput REQUIRED)
-	##INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindDX_Dinput.cmake)
 ENDIF (WIN32)
 
 IF (NOT BUILDDEDICATED)
 	IF (UNIX)
 		IF (NOT APPLE)
 			FIND_PACKAGE(X11 REQUIRED)
-			##INCLUDE (${CMAKE_ROOT}/Modules/FindX11.cmake)
 		ENDIF (NOT APPLE)
 	ENDIF (UNIX)
 
 	IF (BUILDOPENAL)
 		FIND_PACKAGE(OpenAL REQUIRED)
-		##INCLUDE (${CMAKE_SOURCE_DIR}/build/cmake/FindOpenAL.cmake)
 	ENDIF (BUILDOPENAL)
 ENDIF (NOT BUILDDEDICATED)
 
@@ -299,7 +289,6 @@ IF (UNIX)
 ENDIF (UNIX)
 
 FIND_PACKAGE(Doxygen)
-##INCLUDE (${CMAKE_ROOT}/Modules/FindDoxygen.cmake)
 
 ################################################################################
 ######################## Cpack - Generate packages and source tarballs  ########
