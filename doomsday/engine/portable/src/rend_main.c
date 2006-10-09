@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,7 +80,9 @@ int     useShinySurfaces = true;
 float   vx, vy, vz, vang, vpitch;
 float   viewsidex, viewsidey;
 
-boolean willRenderSprites = true, freezeRLs = false;
+boolean willRenderSprites = true;
+boolean freezeRLs = false;
+
 int     missileBlend = 1;
 int     litSprites = 1;
 int     r_ambient = 0;

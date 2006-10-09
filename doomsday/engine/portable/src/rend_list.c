@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -189,7 +190,7 @@ extern int useDynLights, dlBlend, simpleSky;
 extern boolean usingFog;
 extern float maxLightDist;
 
-extern int freezeRLs;
+extern boolean freezeRLs;
 extern int skyflatnum;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------

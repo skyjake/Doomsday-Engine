@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +61,7 @@ void SBE_MenuSave(ui_object_t *ob);
 
 extern int gamedrawhud;
 extern int numSources;
-extern int freezeRLs;
+extern boolean freezeRLs;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
