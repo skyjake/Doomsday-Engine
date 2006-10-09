@@ -97,15 +97,7 @@ OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
 OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 OPTION (BUILDDOX "Build doxygen documentation. Default OFF" OFF)
-IF (UNIX)
-	IF (NOT APPLE)
-		IF (NOT WIN32)
-			IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-				OPTION (PROFILEDENG "Profile the Doomsday main executable. Default OFF" OFF)
-			ENDIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-		ENDIF (NOT WIN32)
-	ENDIF (NOT APPLE)
-ENDIF (UNIX)
+
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
 	MESSAGE( FATAL_ERROR
@@ -622,11 +614,6 @@ IF (WIN32)
 	TARGET_LINK_LIBRARIES (deng ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} wsock32 winmm gdi32 ole32 user32
 	${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
 ENDIF (WIN32)
-
-IF (PROFILEDENG)
-	SET_SOURCE_FILES_PROPERTIES( ${DENG_SOURCES}  PROPERTIES COMPILE_FLAGS "-pg" )
-	SET_TARGET_PROPERTIES( doomsday PROPERTIES LINK_FLAGS "-pg" )
-ENDIF (PROFILEDENG)
 
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
