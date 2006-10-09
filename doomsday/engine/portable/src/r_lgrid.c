@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -90,7 +91,7 @@ static boolean  needsUpdate = true;
 static int      lgShowDebug = false;
 static float    lgDebugSize = 1.5f;
 
-static int      blockSize = 31;
+static int      lgBlockSize = 31;
 static vertex_t lgOrigin;
 static int      lgBlockWidth;
 static int      lgBlockHeight;
@@ -111,7 +112,7 @@ void LG_Register(void)
 
     C_VAR_FLOAT("rend-bias-grid-debug-size", &lgDebugSize, 0, .1f, 100);
 
-    C_VAR_INT("rend-bias-grid-blocksize", &blockSize, 0, 8, 1024);
+    C_VAR_INT("rend-bias-grid-blocksize", &lgBlockSize, 0, 8, 1024);
 
     C_VAR_INT("rend-bias-grid-multisample", &lgMXSample, 0, 0, 7);
 }
@@ -186,8 +187,8 @@ void LG_Init(void)
     width = max.x - lgOrigin.x;
     height = max.y - lgOrigin.y;
 
-    lgBlockWidth = ((width / blockSize) >> FRACBITS) + 1;
-    lgBlockHeight = ((height / blockSize) >> FRACBITS) + 1;
+    lgBlockWidth = ((width / lgBlockSize) >> FRACBITS) + 1;
+    lgBlockHeight = ((height / lgBlockSize) >> FRACBITS) + 1;
 
     // Clamp the multisample factor.
     if(lgMXSample > MSFACTORS)
@@ -247,14 +248,14 @@ void LG_Init(void)
 
     if(center == 0)
     {   // Zero is the center so do that first.
-        samplePoints[0].x = (blockSize << (FRACBITS - 1));
-        samplePoints[0].y = (blockSize << (FRACBITS - 1));
+        samplePoints[0].x = (lgBlockSize << (FRACBITS - 1));
+        samplePoints[0].y = (lgBlockSize << (FRACBITS - 1));
     }
     if(numSamples > 1)
     {
 #define round(x) ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
 
-        float bSize = (float) blockSize / (size-1);
+        float bSize = (float) lgBlockSize / (size-1);
 
         // Is there an offset?
         if(center == 0)
@@ -280,13 +281,13 @@ void LG_Init(void)
     // Acquire the sectors at ALL the sample points.
     for(y = 0; y < lgBlockHeight; ++y)
     {
-        yOff = y * (blockSize << FRACBITS);
+        yOff = y * (lgBlockSize << FRACBITS);
         for(x = 0; x < lgBlockWidth; ++x)
         {
             int blk = (x + y * lgBlockWidth);
             int idx;
 
-            xOff = x * (blockSize << FRACBITS);
+            xOff = x * (lgBlockSize << FRACBITS);
 
             n = 0;
             if(center == 0)
@@ -383,10 +384,10 @@ void LG_Init(void)
     // Initialize the grid.
     for(block = grid, y = 0; y < lgBlockHeight; ++y)
     {
-        yOff = y * (blockSize << FRACBITS);
+        yOff = y * (lgBlockSize << FRACBITS);
         for(x = 0; x < lgBlockWidth; ++x, ++block)
         {
-            xOff = x * (blockSize << FRACBITS);
+            xOff = x * (lgBlockSize << FRACBITS);
 
             // Pick the sector at each of the sample points.
             // TODO: We don't actually need the blkSampleSectors array
@@ -820,8 +821,8 @@ void LG_Evaluate(const float *point, byte *color)
         return;
     }
 
-    x = ((FLT2FIX(point[VX]) - lgOrigin.x) / blockSize) >> FRACBITS;
-    y = ((FLT2FIX(point[VY]) - lgOrigin.y) / blockSize) >> FRACBITS;
+    x = ((FLT2FIX(point[VX]) - lgOrigin.x) / lgBlockSize) >> FRACBITS;
+    y = ((FLT2FIX(point[VY]) - lgOrigin.y) / lgBlockSize) >> FRACBITS;
     x = MINMAX_OF(1, x, lgBlockWidth - 2);
     y = MINMAX_OF(1, y, lgBlockHeight - 2);
 
