@@ -65,7 +65,13 @@ INCLUDE_DIRECTORIES ( include )
 
 FILE(GLOB JHERETIC_SOURCES src/*.c)
 
-ADD_LIBRARY (jheretic SHARED ${JHERETIC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+IF (ENABLEMAO)
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jheretic_mao.c ${JHERETIC_SOURCES} ${COMMON_PLUGIN_SOURCES})
+	ADD_LIBRARY (jheretic SHARED ${CMAKE_BINARY_DIR}/_jheretic_mao.c )
+ELSE (ENABLEMAO)
+	ADD_LIBRARY (jheretic SHARED ${JHERETIC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+ENDIF (ENABLEMAO)
+
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jheretic

@@ -64,7 +64,13 @@ INCLUDE_DIRECTORIES ( include )
 
 FILE(GLOB JDOOM_SOURCES src/*.c)
 
-ADD_LIBRARY (jdoom SHARED ${JDOOM_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+IF (ENABLEMAO)
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jdoom_mao.c ${JDOOM_SOURCES} ${COMMON_PLUGIN_SOURCES})
+	ADD_LIBRARY (jdoom SHARED ${CMAKE_BINARY_DIR}/_jdoom_mao.c )
+ELSE (ENABLEMAO)
+	ADD_LIBRARY (jdoom SHARED ${JDOOM_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+ENDIF (ENABLEMAO)
+
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jdoom
