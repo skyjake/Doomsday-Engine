@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,7 +117,7 @@ filerecord_t *records = 0;
 static boolean loadingForStartup = true;
 static boolean iwadLoaded = false;
 
-static grouping_t groups[] = {
+static grouping_t wadgroups[] = {
     {"", ""},
     {"F_START", "F_END"},       // Flats
     {"S_START", "S_END"}        // Sprites
@@ -435,8 +436,8 @@ int MarkerForGroup(char *name, boolean begin)
     int     i;
 
     for(i = 1; i < NUM_LGTAGS; i++)
-        if(!strnicmp(name, begin ? groups[i].start : groups[i].end, 8) ||
-           !strnicmp(name + 1, begin ? groups[i].start : groups[i].end, 7))
+        if(!strnicmp(name, begin ? wadgroups[i].start : wadgroups[i].end, 8) ||
+           !strnicmp(name + 1, begin ? wadgroups[i].start : wadgroups[i].end, 7))
             return i;
 
     // No matches...
@@ -486,7 +487,7 @@ void W_InsertLumps(filelump_t * fileinfo, filerecord_t * rec)
                 num = i - groupFirst;
 
                 // Find the existing group.
-                to = W_ScanForName(groups[inside].end, 0);
+                to = W_ScanForName(wadgroups[inside].end, 0);
                 if(to < 0)
                 {
                     // There is no existing group. Include the start
