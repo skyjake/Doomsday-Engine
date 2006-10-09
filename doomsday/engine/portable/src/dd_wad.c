@@ -117,7 +117,7 @@ filerecord_t *records = 0;
 static boolean loadingForStartup = true;
 static boolean iwadLoaded = false;
 
-static grouping_t wadgroups[] = {
+static grouping_t lumpgroups[] = {
     {"", ""},
     {"F_START", "F_END"},       // Flats
     {"S_START", "S_END"}        // Sprites
@@ -436,8 +436,8 @@ int MarkerForGroup(char *name, boolean begin)
     int     i;
 
     for(i = 1; i < NUM_LGTAGS; i++)
-        if(!strnicmp(name, begin ? wadgroups[i].start : wadgroups[i].end, 8) ||
-           !strnicmp(name + 1, begin ? wadgroups[i].start : wadgroups[i].end, 7))
+        if(!strnicmp(name, begin ? lumpgroups[i].start : lumpgroups[i].end, 8) ||
+           !strnicmp(name + 1, begin ? lumpgroups[i].start : lumpgroups[i].end, 7))
             return i;
 
     // No matches...
@@ -487,7 +487,7 @@ void W_InsertLumps(filelump_t * fileinfo, filerecord_t * rec)
                 num = i - groupFirst;
 
                 // Find the existing group.
-                to = W_ScanForName(wadgroups[inside].end, 0);
+                to = W_ScanForName(lumpgroups[inside].end, 0);
                 if(to < 0)
                 {
                     // There is no existing group. Include the start
