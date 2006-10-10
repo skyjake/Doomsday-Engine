@@ -63,11 +63,44 @@ ADD_DEFINITIONS (-D__JHERETIC__ )
 
 INCLUDE_DIRECTORIES ( include )
 
-FILE(GLOB JHERETIC_SOURCES src/*.c)
+IF (ENABLEMAO)
+	SET (JHERETIC_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jheretic/src/acfnlink.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/h_api.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/h_refresh.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/m_cheat.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_ceilng.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_enemy.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_inter.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_maputl.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_pspr.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_sound.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_switch.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/tables.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/h_action.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/h_console.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/h_main.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/g_ctrl.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_doors.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_floor.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_lights.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_plats.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_setup.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_spec.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/st_stuff.c )
+ELSE (ENABLEMAO)
+	FILE(GLOB JHERETIC_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jheretic/src/*.c )
+ENDIF (ENABLEMAO)
 
 IF (ENABLEMAO)
-	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jheretic_mao.c ${JHERETIC_SOURCES} ${COMMON_PLUGIN_SOURCES})
-	ADD_LIBRARY (jheretic SHARED ${CMAKE_BINARY_DIR}/_jheretic_mao.c )
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jheretic_mao.c ${JHERETIC_SOURCES} )
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jheretic_common.c ${COMMON_PLUGIN_SOURCES} )
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jheretic_mobj.c
+ 	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_mobj.c ${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_telept.c )
+
+	ADD_LIBRARY (jheretic SHARED ${CMAKE_BINARY_DIR}/_jheretic_mao.c ${CMAKE_BINARY_DIR}/_jheretic_common.c
+	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_oldsvg.c ${CMAKE_SOURCE_DIR}/plugins/jheretic/src/m_random.c
+	${CMAKE_BINARY_DIR}/_jheretic_mobj.c )
+
 ELSE (ENABLEMAO)
 	ADD_LIBRARY (jheretic SHARED ${JHERETIC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 ENDIF (ENABLEMAO)
