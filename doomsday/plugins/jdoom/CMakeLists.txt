@@ -62,11 +62,46 @@ ADD_DEFINITIONS (-D__JDOOM__ )
 
 INCLUDE_DIRECTORIES ( include )
 
-FILE(GLOB JDOOM_SOURCES src/*.c)
+IF (ENABLEMAO)
+	SET (JDOOM_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jdoom/src/acfnlink.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/d_api.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/d_items.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/d_refresh.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/m_cheat.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_ceilng.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_enemy.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_inter.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_maputl.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_pspr.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_sound.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_switch.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/tables.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/d_action.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/d_console.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/d_main.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/g_ctrl.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_doors.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_floor.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_lights.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_plats.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_setup.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_spec.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/st_stuff.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/wi_stuff.c )
+ELSE (ENABLEMAO)
+	FILE(GLOB JDOOM_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jdoom/src/*.c )
+ENDIF (ENABLEMAO)
 
 IF (ENABLEMAO)
-	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jdoom_mao.c ${JDOOM_SOURCES} ${COMMON_PLUGIN_SOURCES})
-	ADD_LIBRARY (jdoom SHARED ${CMAKE_BINARY_DIR}/_jdoom_mao.c )
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jdoom_mao.c ${JDOOM_SOURCES} )
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jdoom_common.c ${COMMON_PLUGIN_SOURCES} )
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jdoom_mobj.c
+ 	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_mobj.c ${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_telept.c )
+
+	ADD_LIBRARY (jdoom SHARED ${CMAKE_BINARY_DIR}/_jdoom_mao.c ${CMAKE_BINARY_DIR}/_jdoom_common.c
+	${CMAKE_SOURCE_DIR}/plugins/jdoom/src/p_oldsvg.c ${CMAKE_SOURCE_DIR}/plugins/jdoom/src/m_random.c
+	${CMAKE_BINARY_DIR}/_jdoom_mobj.c )
+
 ELSE (ENABLEMAO)
 	ADD_LIBRARY (jdoom SHARED ${JDOOM_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 ENDIF (ENABLEMAO)
