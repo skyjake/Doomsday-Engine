@@ -76,11 +76,51 @@ ADD_DEFINITIONS (-D__JHEXEN__ )
 
 INCLUDE_DIRECTORIES ( include )
 
-FILE(GLOB JHEXEN_SOURCES src/*.c)
+IF (ENABLEMAO)
+	SET (JHEXEN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jhexen/src/a_action.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/h2_actn.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/hrefresh.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/m_misc.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_ceilng.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_floor.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_maputl.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_plats.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_spec.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_things.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/s_sound.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/tables.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/acfnlink.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/in_lude.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_acs.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_doors.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_inter.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_pspr.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_switch.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/sc_man.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/st_stuff.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/x_api.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/g_ctrl.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/hconsole.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/m_cheat.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_anim.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_enemy.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_lights.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/po_man.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_setup.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/sn_sonix.c )
+ELSE (ENABLEMAO)
+	FILE(GLOB JHEXEN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jhexen/src/*.c)
+ENDIF (ENABLEMAO)
 
 IF (ENABLEMAO)
-	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jhexen_mao.c ${JHEXEN_SOURCES} ${LZSS_SOURCES} ${COMMON_PLUGIN_SOURCES} )
-	ADD_LIBRARY (jhexen SHARED ${CMAKE_BINARY_DIR}/_jhexen_mao.c )
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jhexen_mao.c ${JHEXEN_SOURCES} )
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jhexen_common.c ${COMMON_PLUGIN_SOURCES} )	
+	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jhexen_mobj.c ${CMAKE_SOURCE_DIR}/plugins/jhexen/src/h2_main.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_mobj.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_telept.c
+	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/sv_save.c )
+	ADD_LIBRARY (jhexen SHARED ${CMAKE_BINARY_DIR}/_jhexen_common.c
+	${CMAKE_BINARY_DIR}/_jhexen_mao.c  ${CMAKE_BINARY_DIR}/_jhexen_mobj.c ${LZSS_SOURCES})
 ELSE (ENABLEMAO)
 	ADD_LIBRARY (jhexen SHARED ${JHEXEN_SOURCES} ${LZSS_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 ENDIF (ENABLEMAO)
