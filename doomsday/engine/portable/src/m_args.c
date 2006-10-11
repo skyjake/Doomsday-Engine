@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -75,7 +76,7 @@ static int last_match;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Parses the given command line.
  */
 int ArgParse(int mode, const char *cmdline)
@@ -167,7 +168,7 @@ int ArgParse(int mode, const char *cmdline)
                 i = ftell(file);
                 rewind(file);
 
-                if((response = calloc(i + 1, 1)) == NULL)
+                if((response = M_Calloc(i + 1)) == NULL)
                     Con_Error("ArgParse: failed on alloc of %d bytes.",
                               i + 1);
 
@@ -176,7 +177,7 @@ int ArgParse(int mode, const char *cmdline)
                 count +=
                     ArgParse(mode == PM_COUNT ? PM_COUNT : PM_NORMAL_REC,
                              response);
-                free(response);
+                M_Free(response);
             }
         }
         else if(!strcmp(word, "--"))    // End of arguments.
@@ -190,7 +191,7 @@ int ArgParse(int mode, const char *cmdline)
             if(mode != PM_COUNT)
             {
                 // Allocate memory for the argument and copy it to the list.
-                args[arg_pos] = malloc(strlen(word) + 1);
+                args[arg_pos] = M_Malloc(strlen(word) + 1);
                 strcpy(args[arg_pos++], word);
             }
         }
@@ -198,7 +199,7 @@ int ArgParse(int mode, const char *cmdline)
     return count;
 }
 
-/*
+/**
  * Initializes the command line arguments list.
  */
 void ArgInit(const char *cmdline)
@@ -211,35 +212,35 @@ void ArgInit(const char *cmdline)
     num_args = ArgParse(PM_COUNT, cmdline);
 
     // Allocate memory for the list.
-    args = calloc(num_args, sizeof(char *));
+    args = M_Calloc(num_args * sizeof(char *));
 
     // Then create the actual list of arguments.
     ArgParse(PM_NORMAL, cmdline);
 }
 
-/*
+/**
  * Frees the memory allocated for the command line.
  */
 void ArgShutdown(void)
 {
     int     i;
 
-    for(i = 0; i < num_args; i++)
-        free(args[i]);
-    free(args);
+    for(i = 0; i < num_args; ++i)
+        M_Free(args[i]);
+    M_Free(args);
     args = NULL;
     num_args = 0;
-    for(i = 0; i < num_names; i++)
-        free(names[i]);
+    for(i = 0; i < num_names; ++i)
+        M_Free(names[i]);
     memset(names, 0, sizeof(names));
     num_names = 0;
 }
 
-/*
+/**
  * Registers a short name for a long arg name.
  * The short name can then be used on the command line and CheckParm
  * will know to match occurances of the short name with the long name.
-*/
+ */
 void ArgAbbreviate(char *longname, char *shortname)
 {
     argname_t *name;
@@ -247,7 +248,7 @@ void ArgAbbreviate(char *longname, char *shortname)
     if(num_names == MAX_ARG_NAMES)
         return;
 
-    if((name = calloc(1, sizeof(*name))) == NULL)
+    if((name = M_Calloc(sizeof(*name))) == NULL)
         Con_Error("ArgAbbreviate: calloc failed on allocation of %d bytes.",
                   sizeof(*name));
 
@@ -256,7 +257,7 @@ void ArgAbbreviate(char *longname, char *shortname)
     strncpy(name->short_name, shortname, sizeof(name->short_name) - 1);
 }
 
-/*
+/**
  * Returns the number of arguments on the command line.
  */
 int Argc(void)
@@ -264,7 +265,7 @@ int Argc(void)
     return num_args;
 }
 
-/*
+/**
  * Returns a pointer to the i'th argument.
  */
 char *Argv(int i)
@@ -274,24 +275,24 @@ char *Argv(int i)
     return args[i];
 }
 
-/*
+/**
  * Returns a pointer to the i'th argument's pointer.
  */
-char  **ArgvPtr(int i)
+char **ArgvPtr(int i)
 {
     if(i < 0 || i >= num_args)
         Con_Error("ArgvPtr: There is no arg %i.\n", i);
     return &args[i];
 }
 
-char   *ArgNext(void)
+char *ArgNext(void)
 {
     if(!last_match || last_match >= Argc() - 1)
         return NULL;
     return args[++last_match];
 }
 
-/*
+/**
  * Returns true if the two parameters are equivalent according to the
  * abbreviations.
  */
@@ -303,7 +304,7 @@ int ArgRecognize(char *first, char *second)
     if(!stricmp(first, second))
         return true;
 
-    for(k = 0; k < num_names; k++)
+    for(k = 0; k < num_names; ++k)
     {
         if(stricmp(first, names[k]->long_name))
             continue;
@@ -314,7 +315,7 @@ int ArgRecognize(char *first, char *second)
     return false;
 }
 
-/*
+/**
  * Checks for the given parameter in the program's command line arguments.
  * Returns the argument number (1 to argc-1) or 0 if not present.
  */
@@ -322,7 +323,7 @@ int ArgCheck(char *check)
 {
     int     i;
 
-    for(i = 1; i < num_args; i++)
+    for(i = 1; i < num_args; ++i)
     {
         // Check the short names for this arg, too.
         if(ArgRecognize(check, args[i]))
@@ -331,7 +332,7 @@ int ArgCheck(char *check)
     return last_match = 0;
 }
 
-/*
+/**
  * Checks for the given parameter in the program's command line arguments
  * and it is followed by N other arguments.
  * Returns the argument number (1 to argc-1) or 0 if not present.
@@ -345,7 +346,7 @@ int ArgCheckWith(char *check, int num)
     return i;
 }
 
-/*
+/**
  * Returns true if the given argument begins with a hyphen.
  */
 int ArgIsOption(int i)
@@ -355,7 +356,7 @@ int ArgIsOption(int i)
     return args[i][0] == '-';
 }
 
-/*
+/**
  * Returns true if the given parameter exists in the program's command
  * line arguments, false if not.
  */

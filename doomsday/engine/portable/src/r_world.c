@@ -547,10 +547,10 @@ static void R_InitSkyFix(void)
 static boolean doSkyFix(sector_t *front, sector_t *back, int pln)
 {
     int         f, b;
-    int         height;
+    int         height = 0;
     boolean     adjusted = false;
-    int        *fix;
-    sector_t   *adjustSec;
+    int        *fix = NULL;
+    sector_t   *adjustSec = NULL;
 
     // Both the front and back surfaces must be sky on this plane.
     if(!R_IsSkySurface(&front->planes[pln]->surface) ||
@@ -816,10 +816,10 @@ static float TriangleArea(fvertex_t * o, fvertex_t * s, fvertex_t * t)
 /**
  * Returns true if 'base' is a good tri-fan base.
  */
-static int R_TestTriFan(subsector_t *sub, int base)
+static int R_TestTriFan(subsector_t *sub, int base, int num)
 {
 #define TRIFAN_LIMIT    0.1
-    int         i, a, b, num = sub->numverts;
+    int         i, a, b;
     fvertex_t   *verts = sub->verts;
 
     if(num == 3)
@@ -846,40 +846,41 @@ static int R_TestTriFan(subsector_t *sub, int base)
 static void R_SubsectorPlanes(void)
 {
     int         i;
-    unsigned int k, num, bufSize = 0;
+    unsigned int k, num, bufSize = 64;
     subsector_t *sub;
     fvertex_t  *verts;
-    fvertex_t  *buf;
+    fvertex_t  *vbuf;
     size_t      size = sizeof(fvertex_t);
     boolean     valid;
 
-    buf = M_Malloc(size * 64);
+    vbuf = M_Malloc(size * bufSize);
 
     for(i = 0, sub = subsectors; i < numsubsectors; sub++, ++i)
     {
         num = sub->numverts;
         verts = sub->verts;
 
-        if(num > bufSize)
+        if(num >= bufSize - 2)
         {
             bufSize = num;
-            buf = M_Realloc(buf, size * bufSize);
+            vbuf = M_Realloc(vbuf, size * (bufSize));
         }
 
         // We need to find a good tri-fan base vertex.
         // (One that doesn't generate zero-area triangles).
         // We'll test each one and pick the first good one.
+        valid = false;
         for(k = 0; k < num; ++k)
         {
-            if(R_TestTriFan(sub, k))
+            if(R_TestTriFan(sub, k, num))
             {
                 // Yes! This'll do nicely. Change the order of the
                 // vertices so that k comes first.
                 if(k)           // Need to change?
                 {
-                    memcpy(buf, verts, size * num);
-                    memcpy(verts, &buf[k], size * (num - k));
-                    memcpy(&verts[num - k], buf, size * k);
+                    memcpy(vbuf, verts, size * num);
+                    memcpy(verts, &vbuf[k], size * (num - k));
+                    memcpy(&verts[num - k], vbuf, size * k);
                 }
                 valid = true;
                 break;
@@ -895,7 +896,7 @@ static void R_SubsectorPlanes(void)
         }
     }
 
-    M_Free(buf);
+    M_Free(vbuf);
 }
 
 static void R_SetVertexOwner(vertex_t *vtx, sector_t *secptr)
@@ -2613,7 +2614,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         sin->oldlightlevel = sec->lightlevel;
         memcpy(sin->oldrgb, sec->rgb, 3);
 
-        LG_SectorChanged(sec, sin);
+        LG_SectorChanged(sec);
     }
     else
     {

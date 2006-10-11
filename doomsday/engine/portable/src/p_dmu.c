@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -1057,8 +1057,6 @@ static int SetProperty(void* ptr, void* context)
                 p = sec->planes[PLN_CEILING];
             }
         }
-        else
-            Con_Error("SetProperty: Invalid args.\n");
 
         switch(args->prop)
         {
@@ -1198,7 +1196,6 @@ static int SetProperty(void* ptr, void* context)
     case DMU_SIDE:
         {
         side_t* p = ptr;
-        sideinfo_t *info = SIDE_INFO(p);
 
         switch(args->prop)
         {
@@ -1734,8 +1731,6 @@ static int GetProperty(void* ptr, void* context)
             else
                 p = sec->planes[PLN_CEILING];
         }
-        else
-            Con_Error("GetProperty: Invalid args.\n");
 
         switch(args->prop)
         {
@@ -1810,8 +1805,6 @@ static int GetProperty(void* ptr, void* context)
             p = ptr;
         else if(args->type == DMU_SUBSECTOR)
             p = ((subsector_t*)ptr)->sector;
-        else
-            Con_Error("GetProperty: Invalid args.\n");
 
         switch(args->prop)
         {
@@ -1885,8 +1878,6 @@ static int GetProperty(void* ptr, void* context)
                 p = SIDE_PTR(line->sidenum[1]);
             }
         }
-        else
-            Con_Error("GetProperty: Invalid args.\n");
 
         switch(args->prop)
         {

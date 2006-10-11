@@ -599,7 +599,7 @@ void R_RenderPlayerView(ddplayer_t *player)
 {
     extern boolean firstFrameAfterLoad, freezeRLs;
     extern int psp3d, modelTriCount;
-    int     i, oldFlags;
+    int     i, oldFlags = 0;
 
     if(firstFrameAfterLoad)
     {

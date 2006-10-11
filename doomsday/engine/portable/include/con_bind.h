@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -43,12 +43,17 @@ typedef struct {
     command_t  *commands;
 } binding_t;
 
-void            B_Bind(event_t *event, char *command, int bindClass);
+void            B_Init(void);
+void            B_Bind(event_t *event, char *command,
+                       unsigned int bindClass);
 void            DD_AddBindClass(struct bindclass_s *);
-boolean         B_SetBindClass(int classID, int type);
+boolean         B_SetBindClass(unsigned int classID, unsigned int type);
 void            B_RegisterBindClasses(void);
-int             B_BindingsForCommand(char *command, char *buffer, int bindClass);
-void            B_ClearBinding(char *command, int bindClass);
+int             B_BindingsForCommand(char *command, char *buffer,
+                                     unsigned int bindClass,
+                                     boolean allClasses);
+void            B_ClearBinding(char *command, unsigned int bindClass,
+                               boolean allClasses);
 boolean         B_Responder(event_t *ev);
 void            B_WriteToFile(FILE * file);
 void            B_Shutdown();

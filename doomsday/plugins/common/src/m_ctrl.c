@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -130,7 +130,7 @@ void M_DrawControlsMenu(void)
         else
             strcpy(controlCmd, ctrl->command);
         // Let's gather all the bindings for this command in all bind classes.
-        if(!B_BindingsForCommand(controlCmd, buff, -1))
+        if(!B_BindingsForCommand(controlCmd, buff, 0, true))
             strcpy(buff, "NONE");
 
         // Now we must interpret what the bindings string says.
@@ -219,7 +219,7 @@ int D_PrivilegedResponder(event_t *event)
         memset(buff, 0, sizeof(buff));
 
         // Check for bindings in this class only?
-        if(B_BindingsForCommand(cmd, buff, grabbing->bindClass))
+        if(B_BindingsForCommand(cmd, buff, grabbing->bindClass, false))
             if(findtoken(buff, evname, " "))    // Get rid of it?
             {
                 del = true;

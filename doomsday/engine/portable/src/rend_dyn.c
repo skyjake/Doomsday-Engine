@@ -1374,6 +1374,7 @@ static void DL_LinkLuminous(void)
 /**
  * Returns true if the texture is already used in the list of dynlights.
  */
+#if 0 // currently unused
 static boolean DL_IsTexUsed(dynlight_t *node, DGLuint texture)
 {
     for(; node; node = node->next)
@@ -1381,6 +1382,7 @@ static boolean DL_IsTexUsed(dynlight_t *node, DGLuint texture)
             return true;
     return false;
 }
+#endif
 
 /**
  * Process the given lumobj to maybe add a dynamic light for the plane.
@@ -1659,7 +1661,6 @@ boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
  */
 void DL_ClipInSubsector(int ssecidx)
 {
-    subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
     lumobj_t   *lumi; // Lum Iterator, or 'snow' in Finnish. :-)
 
     // Determine which dynamic light sources in the subsector get clipped.

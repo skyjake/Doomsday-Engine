@@ -5,6 +5,7 @@ NAME			"DOOMSDAY"
 ; Other free ordinals:
 ; 77 formaly P_LoadBlockMap
 ; 78 formaly P_LoadReject
+; 232 formaly R_SetAnimGroup
 
 EXPORTS
 	Plug_AddHook			@1 NONAME
@@ -254,7 +255,6 @@ EXPORTS
 	R_TextureNameForNum			@98 NONAME
 	R_SetFlatTranslation		@99 NONAME
 	R_SetTextureTranslation		@100 NONAME
-	R_SetAnimGroup				@232 NONAME
 	R_PointToAngle2				@101 NONAME
 	R_PointInSubsector			@102 NONAME
 	R_CreateAnimGroup			@241 NONAME

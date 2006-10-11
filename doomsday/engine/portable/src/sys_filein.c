@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -102,7 +103,7 @@ static unsigned int vdMappingsMax;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Returns true if the string matches the pattern.
  * This is a case-insensitive test.
  * I do hope this algorithm works like it should...
@@ -138,7 +139,7 @@ int F_MatchName(const char *string, const char *pattern)
     return *st == 0;
 }
 
-/*
+/**
  * Skips all whitespace except newlines.
  */
 char *F_SkipSpace(char *ptr)
@@ -157,15 +158,20 @@ char *F_FindNewline(char *ptr)
 
 int F_GetDirecIdx(char *exact_path)
 {
-    int     i;
+    int         i;
+    boolean     found;
 
-    for(i = 0; direc[i].path; i++)
+    for(i = 0, found = false; direc[i].path && !found; ++i)
         if(!stricmp(direc[i].path, exact_path))
-            return i;
-    return -1;
+            found = true;
+
+    if(found)
+        return i;
+    else
+        return -1;
 }
 
-/*
+/**
  * The path names are converted to full paths before adding to the table.
  */
 void F_AddDirec(char *lumpname, char *symbolic_path)
@@ -177,7 +183,7 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
     if(!lumpname[0] || !symbolic_path[0])
         return;
 
-    for(i = 0; direc[i].path && i < MAX_LUMPDIRS; i++);
+    for(i = 0; direc[i].path && i < MAX_LUMPDIRS; ++i);
     if(i == MAX_LUMPDIRS)
     {
         // FIXME: Why no dynamic allocation?
@@ -202,7 +208,7 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
     if(i >= 0)
     {
         // Already exists!
-        free(full);
+        M_Free(full);
         ld = direc + i;
         full = ld->path;
     }
@@ -216,7 +222,7 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
     }
 }
 
-/*
+/**
  * The path names are converted to full paths before adding to the table.
  * Files in the source directory are mapped to the target directory.
  */
@@ -242,7 +248,7 @@ void F_AddMapping(const char* source, const char* destination)
         if(vdMappingsMax < vdMappingsCount)
             vdMappingsMax = 2*vdMappingsCount;
 
-        vdMappings = realloc(vdMappings, sizeof(vdmapping_t) * vdMappingsMax);
+        vdMappings = M_Realloc(vdMappings, sizeof(vdmapping_t) * vdMappingsMax);
     }
 
     // Fill in the info into the array.
@@ -254,7 +260,7 @@ void F_AddMapping(const char* source, const char* destination)
                         vd->source, vd->target));
 }
 
-/*
+/**
  * LUMPNAM0 \Path\In\The\Base.ext
  * LUMPNAM1 Path\In\The\RuntimeDir.ext
  *  :
@@ -306,17 +312,18 @@ void F_ParseDirecData(char *buffer)
 void F_InitMapping(void)
 {
     int     i;
+    int     argC = Argc();
 
     F_ResetMapping();
 
     // Create virtual directory mappings by processing all -vdmap
     // options.
-    for(i = 0; i < Argc(); i++)
+    for(i = 0; i < argC; ++i)
     {
         if(stricmp(Argv(i), "-vdmap"))
             continue; // This is not the option we're looking for.
 
-        if(i < Argc() - 1 && !ArgIsOption(i + 1) && !ArgIsOption(i + 2))
+        if(i < argC - 1 && !ArgIsOption(i + 1) && !ArgIsOption(i + 2))
         {
             F_AddMapping(Argv(i + 1), Argv(i + 2));
             i += 2;
@@ -324,14 +331,14 @@ void F_InitMapping(void)
     }
 }
 
-/*
+/**
  * Initialize the WAD/dir translations. Called after WADs have been read.
  */
 void F_InitDirec(void)
 {
     static boolean alreadyInited = false;
     int     i, len;
-    byte   *buf;
+    char   *buf;
 
     if(alreadyInited)
     {
@@ -341,7 +348,7 @@ void F_InitDirec(void)
     }
 
     // Add the contents of all DD_DIREC lumps.
-    for(i = 0; i < numlumps; i++)
+    for(i = 0; i < numlumps; ++i)
         if(!strnicmp(lumpinfo[i].name, "DD_DIREC", 8))
         {
             // Make a copy of it so we can make it end in a null.
@@ -363,11 +370,11 @@ void F_ResetMapping(void)
     // Free the allocated memory.
     for(i = 0; i < vdMappingsCount; ++i)
     {
-        free(vdMappings[i].source);
-        free(vdMappings[i].target);
+        M_Free(vdMappings[i].source);
+        M_Free(vdMappings[i].target);
     }
 
-    free(vdMappings);
+    M_Free(vdMappings);
     vdMappings = NULL;
     vdMappingsCount = vdMappingsMax = 0;
 }
@@ -376,23 +383,23 @@ void F_ResetDirec(void)
 {
     int     i;
 
-    for(i = 0; direc[i].path; i++)
+    for(i = 0; direc[i].path; ++i)
         if(direc[i].path)
-            free(direc[i].path);    // Allocated by _fullpath.
+            M_Free(direc[i].path);    // Allocated by _fullpath.
 }
 
 void F_CloseAll(void)
 {
     unsigned int     i;
 
-    for(i = 0; i < filesCount; i++)
+    for(i = 0; i < filesCount; ++i)
         //if(files[i].file->flags.open)
         if(files[i].file != NULL)
         {
             F_Close(files[i].file);
         }
 
-    free(files);
+    M_Free(files);
     files = NULL;
     filesCount = 0;
 }
@@ -404,7 +411,7 @@ void F_ShutdownDirec(void)
     F_CloseAll();
 }
 
-/*
+/**
  * Returns true if the file can be opened for reading.
  */
 int F_Access(const char *path)
@@ -421,13 +428,19 @@ int F_Access(const char *path)
 DFILE *F_GetFreeFile(void)
 {
     unsigned int     i, oldCount;
+    boolean     found;
+    filehandle_t *fhdl;
 
-    for(i = 0; i < filesCount; i++)
-        if(files[i].file == NULL)
-        {
-            files[i].file = calloc(1, sizeof(DFILE));
-            return files[i].file;
-        }
+    for(i = 0, found = false, fhdl = files; i < filesCount && !found;
+        fhdl++, ++i)
+        if(fhdl->file == NULL)
+            found = true;
+
+    if(found)
+    {
+        fhdl->file = M_Calloc(sizeof(DFILE));
+        return fhdl->file;
+    }
 
     oldCount = filesCount;
 
@@ -436,19 +449,19 @@ DFILE *F_GetFreeFile(void)
     if(filesCount < 16)
         filesCount = 16;
 
-    files = realloc(files, sizeof(filehandle_t) * filesCount);
+    files = M_Realloc(files, sizeof(filehandle_t) * filesCount);
 
     // Clear the new handles.
     for(i = oldCount; i < filesCount; ++i)
     {
-        memset(files + i, 0, sizeof(filehandle_t));
+        memset(&files[i], 0, sizeof(filehandle_t));
     }
 
-    files[oldCount].file = calloc(1, sizeof(DFILE));
+    files[oldCount].file = M_Calloc(sizeof(DFILE));
     return files[oldCount].file;
 }
 
-/*
+/**
  * Frees the memory allocated to the handle.
  */
 void F_Release(DFILE *file)
@@ -461,7 +474,7 @@ void F_Release(DFILE *file)
             files[i].file = NULL;
 
     // File was allocated in F_GetFreeFile.
-    free(file);
+    M_Free(file);
 }
 
 DFILE *F_OpenLump(const char *name, boolean dontBuffer)
@@ -488,7 +501,7 @@ DFILE *F_OpenLump(const char *name, boolean dontBuffer)
     return file;
 }
 
-/*
+/**
  * This only works on real files.
  */
 static unsigned int F_GetLastModified(const char *path)
@@ -506,7 +519,7 @@ static unsigned int F_GetLastModified(const char *path)
 #endif
 }
 
-/*
+/**
  * Returns true if the mapping matched the path.
  */
 boolean F_MapPath(const char *path, vdmapping_t *vd, char *mapped)
@@ -577,7 +590,7 @@ void F_TranslateZipFileName(const char *zipFileName, char *translated)
     M_PrependBasePath(zipFileName, translated);
 }
 
-/*
+/**
  * Zip data is buffered like lump data.
  */
 DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
@@ -600,7 +613,7 @@ DFILE *F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
     return file;
 }
 
-/*
+/**
  * Opens the given file (will be translated) or lump for reading.
  * "t" = text mode (with real files, lumps are always binary)
  * "b" = binary
@@ -631,7 +644,7 @@ DFILE *F_Open(const char *path, const char *mode)
         if(foundZip)
             return F_OpenZip(foundZip, dontBuffer);
 
-        for(i = 0; direc[i].path; i++)
+        for(i = 0; direc[i].path; ++i)
             if(!stricmp(full, direc[i].path))
                 return F_OpenLump(direc[i].lump, dontBuffer);
     }
@@ -661,7 +674,7 @@ void F_Close(DFILE *file)
     F_Release(file);
 }
 
-/*
+/**
  * Returns the number of bytes read (up to 'count').
  */
 int F_Read(void *dest, int count, DFILE *file)
@@ -711,7 +724,7 @@ int F_Tell(DFILE *file)
     return file->pos - (char *) file->data;
 }
 
-/*
+/**
  * Returns the current position in the file, before the move, as an offset
  * from the beginning of the file.
  */
@@ -741,7 +754,7 @@ void F_Rewind(DFILE *file)
     F_Seek(file, 0, SEEK_SET);
 }
 
-/*
+/**
  * Returns the length of the file, in bytes.  Stream position is not
  * affected.
  */
@@ -758,7 +771,7 @@ int F_Length(DFILE *file)
     return length;
 }
 
-/*
+/**
  * Returns the time when the file was last modified, as seconds since
  * the Epoch.  Returns zero if the file is not found.
  */
@@ -775,7 +788,7 @@ unsigned int F_LastModified(const char *fileName)
     return modified;
 }
 
-/*
+/**
  * Returns the number of times the char appears in the path.
  */
 int F_CountPathChars(const char *path, char ch)
@@ -788,7 +801,7 @@ int F_CountPathChars(const char *path, char ch)
     return count;
 }
 
-/*
+/**
  * Returns true to stop searching when forall_func returns false.
  */
 int F_ZipFinderForAll(const char *zipFileName, void *parm)
@@ -809,7 +822,7 @@ static int C_DECL F_EntrySorter(const void* a, const void* b)
                    ((const foundentry_t*)b)->name);
 }
 
-/*
+/**
  * Descends into 'physical' subdirectories.
  */
 int F_ForAllDescend(const char *pattern, const char *path, void *parm,
@@ -827,7 +840,7 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
     // paths mapped to the current path.
     count = 0;
     max = 16;
-    found = malloc(max * sizeof(*found));
+    found = M_Malloc(max * sizeof(*found));
 
     for(i = -1; i < (int)vdMappingsCount; ++i)
     {
@@ -860,7 +873,7 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
                     if(count >= max)
                     {
                         max *= 2;
-                        found = realloc(found, sizeof(*found) * max);
+                        found = M_Realloc(found, sizeof(*found) * max);
                     }
                     memset(&found[count], 0, sizeof(*found));
                     strncpy(found[count].name, fd.name,
@@ -888,7 +901,7 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
             strcat(fn, DIR_SEP_STR);
             if(!F_ForAllDescend(pattern, fn, parm, func))
             {
-                free(found);
+                M_Free(found);
                 return false;
             }
         }
@@ -900,7 +913,7 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
                 // If the callback returns false, stop immediately.
                 if(!func(fn, FT_NORMAL, parm))
                 {
-                    free(found);
+                    M_Free(found);
                     return false;
                 }
             }
@@ -908,11 +921,11 @@ int F_ForAllDescend(const char *pattern, const char *path, void *parm,
     }
 
     // Free the memory allocate for the list of found entries.
-    free(found);
+    M_Free(found);
     return true;
 }
 
-/*
+/**
  * Parm is passed on to the callback, which is called for each file
  * matching the filespec. Absolute path names are given to the callback.
  * Zip directory, DD_DIREC and the real files are scanned.
@@ -939,7 +952,7 @@ int F_ForAll(const char *filespec, void *parm, f_forall_func_t func)
     }
 
     // Check through the dir/WAD direcs.
-    for(i = 0; direc[i].path; i++)
+    for(i = 0; direc[i].path; ++i)
         if(F_MatchName(direc[i].path, fn))
             if(!func(direc[i].path, FT_NORMAL, parm))
                 //if(!F_ForAllCaller(specdir.path, direc[i].path, func, parm))

@@ -277,7 +277,10 @@ typedef struct shadowlink_s {
     shadowpoly_t   *poly;
 } shadowlink_t;
 
+#define SEGINF_FACINGFRONT 0x0001
+
 typedef struct seginfo_s {
+    short           flags;
     biastracker_t   tracker[3]; // 0=top, 1=middle, 2=bottom
     vertexillum_t   illum[3][4];
     uint            updated;
@@ -456,7 +459,6 @@ int             R_TextureNumForName(char *name);
 char           *R_TextureNameForNum(int num);
 int             R_SetFlatTranslation(int flat, int translateTo);
 int             R_SetTextureTranslation(int tex, int translateTo);
-void            R_SetAnimGroup(int type, int number, int group);
 boolean         R_IsCustomTexture(int texture);
 boolean         R_IsAllowedDecoration(ded_decor_t * def, int index,
                                       boolean hasExternal);

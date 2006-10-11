@@ -136,7 +136,7 @@ void Rend_ModelRegister(void)
     C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor, 0, 0, 10);
 }
 
-static float __inline qatan2(float y, float x)
+static __inline float qatan2(float y, float x)
 {
     float   ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
 
@@ -239,7 +239,7 @@ model_frame_t *Mod_GetVisibleFrame(modeldef_t * mf, int subnumber, int mobjid)
 /**
  * Render a set of GL commands using the given data.
  */
-void Mod_RenderCommands(rendcmd_t mode, void *glCommands, uint numVertices,
+void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
                         gl_vertex_t * vertices, gl_color_t * colors,
                         gl_texcoord_t * texCoords)
 {
@@ -912,7 +912,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
             RL_Bind(skinTexture);
 
             Mod_RenderCommands(RC_COMMAND_COORDS,
-                               mdl->lods[activeLod].glCommands, numVerts,
+                               mdl->lods[activeLod].glCommands, /*numVerts,*/
                                modelVertices, modelColors, NULL);
         }
 
@@ -939,7 +939,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
                 RL_BindTo(0, skinTexture);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
-                                   mdl->lods[activeLod].glCommands, numVerts,
+                                   mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
 
                 RL_SelectTexUnits(1);
@@ -951,7 +951,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
                 RL_SelectTexUnits(1);
                 RL_Bind(shinyTexture);
                 Mod_RenderCommands(RC_OTHER_COORDS,
-                                   mdl->lods[activeLod].glCommands, numVerts,
+                                   mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
             }
         }
@@ -972,7 +972,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
         RL_BindTo(0, skinTexture);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
-                           numVerts, modelVertices, modelColors,
+                           /*numVerts,*/ modelVertices, modelColors,
                            modelTexCoords);
 
         RL_SelectTexUnits(1);

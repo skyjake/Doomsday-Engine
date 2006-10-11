@@ -209,7 +209,8 @@ void UI_End(void)
         rel.type = EV_KEY;
         rel.state = EVS_UP;
         rel.data1 = DDKEY_RSHIFT;
-        rel.useclass = -1;
+        rel.noclass = true;
+        rel.useclass = 0;
         DD_PostEvent(&rel);
     }
 }

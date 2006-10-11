@@ -332,7 +332,7 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
     rendpoly_vertex_t *vtx;
     boolean usewhite;
 
-    if(poly->isWall)  // A quad?
+    if(poly->isWall && rend_light_wall_angle && !useBias)  // A quad?
     {
         // Do a lighting adjustment based on orientation.
         lightlevel +=
@@ -398,10 +398,11 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
 void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
                      subsector_t *subsector)
 {
-    int     i, num, vid, sectorlight;
+    int         i, num, vid, sectorlight;
     const byte *pLightColor;
-    byte    vColor[] = { 0, 0, 0, 0};
+    byte        vColor[] = { 0, 0, 0, 0};
     subsectorinfo_t *ssecinfo = SUBSECT_INFO(subsector);
+    surface_t  *surface = &poly->sector->planes[plane->type]->surface;
 
     poly->numvertices = ssecinfo->numvertices;
 
@@ -428,14 +429,14 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
     pLightColor = R_GetSectorLightColor(poly->sector);
 
     // Calculate the color for each vertex, blended with plane color?
-    if(poly->sector->planes[plane->type]->surface.rgba[0] < 255 ||
-       poly->sector->planes[plane->type]->surface.rgba[1] < 255 ||
-       poly->sector->planes[plane->type]->surface.rgba[2] < 255 )
+    if(surface->rgba[0] < 255 ||
+       surface->rgba[1] < 255 ||
+       surface->rgba[2] < 255 )
     {
         // Blend sector light+color+planecolor
         for(i = 0; i < 3; ++i)
         {
-            vColor[i] = (byte) (((poly->sector->planes[plane->type]->surface.rgba[i]/ 255.0f)) * pLightColor[i]);
+            vColor[i] = (byte) (((surface->rgba[i]/ 255.0f)) * pLightColor[i]);
         }
 
         RL_VertexColors(poly, sectorlight, vColor);
@@ -908,8 +909,7 @@ static float RL_ShinyVertical(float dy, float dx)
     return ( (atan(dy/dx) / (PI/2)) + 1 ) / 2;
 }
 
-void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
-                           gltexture_t *tex)
+void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly)
 {
     vec2_t surface, normal, projected, s, reflected;
     vec2_t view;
@@ -1130,7 +1130,7 @@ void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
     if(poly->flags & RPF_SHINY)
     {
         // Shiny environmental texture coordinates.
-        RL_QuadShinyTexCoords(&texCoords[TCA_MAIN][base], poly, &poly->tex);
+        RL_QuadShinyTexCoords(&texCoords[TCA_MAIN][base], poly);
 
         // Mask texture coordinates.
         if(list->intertex.id)
@@ -1221,7 +1221,7 @@ void RL_WriteDivQuad(rendlist_t * list, rendpoly_t *poly)
     if(poly->flags & RPF_SHINY)
     {
         // Shiny environmental texture coordinates.
-        RL_QuadShinyTexCoords(&texCoords[TCA_MAIN][base], poly, &poly->tex);
+        RL_QuadShinyTexCoords(&texCoords[TCA_MAIN][base], poly);
         if(list->intertex.id)
         {
             RL_QuadTexCoords(&texCoords[TCA_BLEND][base], poly, &poly->tex);

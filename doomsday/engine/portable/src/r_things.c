@@ -101,7 +101,6 @@ static int     maxFrame;
 static char   *spriteName;
 
 static vissprite_t overflowSprite;
-static int     newVisSprite;
 static mobj_t *projectedThing;  // Used during RIT_VisMobjZ
 
 // CODE --------------------------------------------------------------------

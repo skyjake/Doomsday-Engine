@@ -214,7 +214,7 @@ void DD_DumpKeyMappings(char *fileName)
     int     i;
 
     file = fopen(fileName, "wt");
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         fprintf(file, "%03i\t", i);
         fprintf(file, !isspace(keyMappings[i]) &&
@@ -222,7 +222,7 @@ void DD_DumpKeyMappings(char *fileName)
     }
 
     fprintf(file, "\n+Shift\n");
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         if(shiftKeyMappings[i] == i)
             continue;
@@ -233,7 +233,7 @@ void DD_DumpKeyMappings(char *fileName)
     }
 
     fprintf(file, "-Shift\n\n+Alt\n");
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         if(altKeyMappings[i] == i)
             continue;
@@ -252,7 +252,7 @@ void DD_DefaultKeyMapping(void)
 {
     int     i;
 
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         keyMappings[i] = scantokey[i];
         shiftKeyMappings[i] = i >= 32 && i <= 127 &&
@@ -513,7 +513,7 @@ byte DD_KeyToScan(byte key)
 {
     int     i;
 
-    for(i = 0; i < NUMKKEYS; i++)
+    for(i = 0; i < NUMKKEYS; ++i)
         if(keyMappings[i] == key)
             return i;
     return 0;
@@ -548,9 +548,9 @@ void DD_ReadKeyboard(void)
     ev.type  = EV_KEY;
     ev.state = EVS_REPEAT;
 
-    // Don't specify a class
-    ev.useclass = -1;
-    for(i = 0; i < MAX_DOWNKEYS; i++)
+    ev.noclass = true; // Don't specify a class
+    ev.useclass = 0; // initialize with something
+    for(i = 0; i < MAX_DOWNKEYS; ++i)
     {
         repeater_t *rep = keyReps + i;
 
@@ -580,7 +580,7 @@ void DD_ReadKeyboard(void)
     numkeyevs = I_GetKeyEvents(keyevs, KBDQUESIZE);
 
     // Translate them to Doomsday keys.
-    for(i = 0; i < numkeyevs; i++)
+    for(i = 0; i < numkeyevs; ++i)
     {
         keyevent_t *ke = keyevs + i;
 
@@ -612,7 +612,7 @@ void DD_ReadKeyboard(void)
         if(ev.state == EVS_DOWN)
         {
             // Find an empty repeater.
-            for(k = 0; k < MAX_DOWNKEYS; k++)
+            for(k = 0; k < MAX_DOWNKEYS; ++k)
                 if(!keyReps[k].key)
                 {
                     keyReps[k].key = ev.data1;
@@ -624,7 +624,7 @@ void DD_ReadKeyboard(void)
         else if(ev.state == EVS_UP)
         {
             // Clear any repeaters with this key.
-            for(k = 0; k < MAX_DOWNKEYS; k++)
+            for(k = 0; k < MAX_DOWNKEYS; ++k)
                 if(keyReps[k].key == ev.data1)
                     keyReps[k].key = 0;
         }
@@ -677,8 +677,8 @@ void DD_ReadMouse(timespan_t ticLength)
     ev.data1 = mouse.x * DD_MICKEY_ACCURACY;
     ev.data2 = mouse.y * DD_MICKEY_ACCURACY;
     ev.data3 = mouse.z * DD_MICKEY_ACCURACY;
-    // Don't specify a class
-    ev.useclass = -1;
+    ev.noclass = true; // Don't specify a class
+    ev.useclass = 0; // initialize with something
 
     // Mouse axis data may be modified if not in UI mode.
     if(allowMouseMod)
@@ -826,12 +826,12 @@ void DD_ReadJoystick(void)
 
     bstate = 0;
     // Check the buttons.
-    for(i = 0; i < IJOY_MAXBUTTONS; i++)
+    for(i = 0; i < IJOY_MAXBUTTONS; ++i)
         if(state.buttons[i])
             bstate |= 1 << i;   // Set the bits.
 
-    // Don't specify a class
-    ev.useclass = -1;
+    ev.noclass = true; // Don't specify a class
+    ev.useclass = 0; // initialize with something
     ev.state = 0;
 
     // Check for button state changes.

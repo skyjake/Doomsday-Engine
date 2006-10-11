@@ -112,7 +112,7 @@ void Mus_Register(void)
  */
 boolean Mus_Init(void)
 {
-    int     i;
+    unsigned int    i;
 
     if(isDedicated || mus_avail || ArgExists("-nomusic"))
         return true;
@@ -128,8 +128,8 @@ boolean Mus_Init(void)
     {
         Con_Message("Mus_Init: Failed to initialize Win driver.\n");
     }
-	// Must rely on Windows without an Ext interface.
-	icd = &musd_win_icd;
+    // Must rely on Windows without an Ext interface.
+    icd = &musd_win_icd;
 #endif
 #ifdef UNIX
     // The available interfaces have already been loaded.
@@ -142,7 +142,7 @@ boolean Mus_Init(void)
 #endif
 
     // Initialize the chosen interfaces.
-    for(i = 0; i < NUM_INTERFACES; i++)
+    for(i = 0; i < NUM_INTERFACES; ++i)
         if(*interfaces[i].ip && !(*interfaces[i].ip)->Init())
         {
             Con_Message("Mus_Init: Failed to initialize %s interface.\n",
@@ -157,7 +157,7 @@ boolean Mus_Init(void)
         char    buf[40];
 
         Con_Printf("Mus_Init: Interfaces:");
-        for(i = 0; i < NUM_INTERFACES; i++)
+        for(i = 0; i < NUM_INTERFACES; ++i)
             if(*interfaces[i].ip)
             {
                 if(!(*interfaces[i].ip)->Get(MUSIP_ID, buf))
@@ -198,13 +198,13 @@ void Mus_Shutdown(void)
  */
 void Mus_StartFrame(void)
 {
-    int     i;
+    unsigned int    i;
 
     if(!mus_avail)
         return;
 
     // Update all interfaces.
-    for(i = 0; i < NUM_INTERFACES; i++)
+    for(i = 0; i < NUM_INTERFACES; ++i)
         if(*interfaces[i].ip)
             (*interfaces[i].ip)->Update();
 }
@@ -215,13 +215,13 @@ void Mus_StartFrame(void)
  */
 void Mus_SetVolume(float vol)
 {
-    int     i;
+    unsigned int    i;
 
     if(!mus_avail)
         return;
 
     // Set volume of all available interfaces.
-    for(i = 0; i < NUM_INTERFACES; i++)
+    for(i = 0; i < NUM_INTERFACES; ++i)
         if(*interfaces[i].ip)
             (*interfaces[i].ip)->Set(MUSIP_VOLUME, vol);
 }
@@ -231,20 +231,20 @@ void Mus_SetVolume(float vol)
  */
 void Mus_Pause(boolean do_pause)
 {
-    int     i;
+    unsigned int    i;
 
     if(!mus_avail)
         return;
 
     // Pause all interfaces.
-    for(i = 0; i < NUM_INTERFACES; i++)
+    for(i = 0; i < NUM_INTERFACES; ++i)
         if(*interfaces[i].ip)
             (*interfaces[i].ip)->Pause(do_pause);
 }
 
 void Mus_Stop(void)
 {
-    int     i;
+    unsigned int    i;
 
     if(!mus_avail)
         return;
@@ -252,7 +252,7 @@ void Mus_Stop(void)
     current_song = -1;
 
     // Stop all interfaces.
-    for(i = 0; i < NUM_INTERFACES; i++)
+    for(i = 0; i < NUM_INTERFACES; ++i)
         if(*interfaces[i].ip)
             (*interfaces[i].ip)->Stop();
 }
@@ -426,9 +426,9 @@ int Mus_Start(ded_music_t * def, boolean looped)
     }
 
     // Try to start the song.
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
     {
-        switch (order[i])
+        switch(order[i])
         {
         case MUSP_CD:
             if(Mus_GetCD(def))

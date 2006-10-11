@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -295,12 +295,15 @@ void R_LinkShadow(shadowpoly_t *poly, subsector_t *subsector)
 boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
 {
     shadowpoly_t *poly = parm;
+#if 0
     vec2_t  corners[4], a, b, mid;
     int     i, j;
+#endif
 
     R_LinkShadow(poly, subsector);
-    return true;
+    return true; // DJS - is this meant to be here?
 
+#if 0 // currently unused
     // Use the extended points, they are wider than inoffsets.
     V2_Set(corners[0], FIX2FLT(poly->outer[0]->x), FIX2FLT(poly->outer[0]->y));
     V2_Set(corners[1], FIX2FLT(poly->outer[1]->x), FIX2FLT(poly->outer[1]->y));
@@ -360,6 +363,7 @@ boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
     // Continue with the iteration, maybe some other subsectors will
     // contact it.
     return true;
+#endif
 }
 
 /*

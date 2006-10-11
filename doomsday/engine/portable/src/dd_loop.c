@@ -413,7 +413,7 @@ void DD_RunTics(void)
         DD_Ticker(ticLength);
 
         // The netcode gets to tick, too.
-        Net_Ticker(ticLength);
+        Net_Ticker(/*ticLength*/);
 
         // Various global variables are used for counting time.
         DD_AdvanceTime(ticLength);

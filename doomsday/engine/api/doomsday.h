@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -145,9 +145,10 @@ extern          "C" {
     void            B_FormEventString(char *buff, evtype_t type, evstate_t state,
                                       int data1);
     int             B_BindingsForCommand(char *command, char *buffer,
-                                         int bindClass);
+                                         unsigned int classID,
+                                         boolean allClasses);
     void            DD_AddBindClass(struct bindclass_s *);
-    boolean         DD_SetBindClass(int classID, int type);
+    boolean         DD_SetBindClass(unsigned int classID, int type);
 
     // System.
     void            Sys_TicksPerSecond(float num);
@@ -339,7 +340,6 @@ extern          "C" {
     char           *R_TextureNameForNum(int num);
     int             R_SetFlatTranslation(int flat, int translate_to);
     int             R_SetTextureTranslation(int tex, int translate_to);
-    void            R_SetAnimGroup(int type, int number, int group);
     int             R_CreateAnimGroup(int type, int flags);
     void            R_AddToAnimGroup(int groupNum, int number, int tics,
                                      int randomTics);

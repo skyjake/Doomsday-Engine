@@ -381,7 +381,6 @@ void Rend_RadioTexCoordY(rendpoly_t *q, float size)
 int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line, int side,
                          boolean leftNeighbor)
 {
-    lineinfo_t *info = LINE_INFO(line);
     sideinfo_t *sinfo;
     int     i;
 

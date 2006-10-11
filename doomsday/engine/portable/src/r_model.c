@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -115,7 +115,7 @@ int R_FindModelFor(const char *filename)
 /*
  * Allocates a new model. Returns the index.
  */
-int R_NewModelFor(const char *filename)
+int R_NewModelFor(void /*const char *filename*/)
 {
     int     i;
 
@@ -607,7 +607,7 @@ int R_LoadModel(char *origfn)
             return 0;
         }
         // Allocate a new model_t.
-        if((index = R_NewModelFor(filename)) < 0)
+        if((index = R_NewModelFor(/*filename*/)) < 0)
         {
             F_Close(file);
             return 0;           // Bugger.

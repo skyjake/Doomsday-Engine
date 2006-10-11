@@ -544,7 +544,7 @@ static int ReadLabel(char *label)
     return true;
 }
 
-static void DED_Include(ded_t * ded, char *fileName, directory_t * dir)
+static void DED_Include(char *fileName, directory_t * dir)
 {
     char    tmp[256], path[256];
 
@@ -708,7 +708,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             READSTR(tmp);
             CHECKSC;
 
-            DED_Include(ded, tmp, &fileDir);
+            DED_Include(tmp, &fileDir);
             strcpy(label, "");
         }
         if(ISTOKEN("IncludeIf")) // An optional include.
@@ -725,7 +725,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 READSTR(tmp);
                 CHECKSC;
 
-                DED_Include(ded, tmp, &fileDir);
+                DED_Include(tmp, &fileDir);
                 strcpy(label, "");
             }
             else

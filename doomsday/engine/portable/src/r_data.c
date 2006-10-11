@@ -380,29 +380,6 @@ int R_SetTextureTranslation(int tex, int translateTo)
 }
 
 /*
- * Textures/flats in the same animation group are precached at the same
- * time. 'type' can be either DD_TEXTURE or DD_FLAT.
- */
-void R_SetAnimGroup(int type, int number, int group)
-{
-    /*  flat_t *flat;
-
-       switch(type)
-       {
-       case DD_TEXTURE:
-       if(number < 0 || number >= numtextures) break;
-       textures[number]->group = group;
-       break;
-
-       case DD_FLAT:
-       if(number < 0 || number >= numlumps) break;
-       flat = R_GetFlat(number);
-       flat->group = group;
-       break;
-       } */
-}
-
-/*
  * Create a new animation group. Returns the group number.
  * This function is exported and accessible from DLLs.
  */
@@ -1045,7 +1022,7 @@ void R_PrecacheTexture(int num)
 void R_PrecacheLevel(void)
 {
     char   *texturepresent;
-    char   *spritepresent;
+    char   *spritepresent = NULL;
     int     i, j, k, lump, mocount;
     thinker_t *th;
     spriteframe_t *sf;

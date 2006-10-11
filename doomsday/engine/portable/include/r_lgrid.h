@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -32,7 +32,7 @@
 
 void            LG_Register(void);
 void            LG_Init(void);
-void            LG_SectorChanged(sector_t *sector, sectorinfo_t *info);
+void            LG_SectorChanged(sector_t *sector);
 void            LG_Update(void);
 void            LG_Evaluate(const float *point, byte *color);
 void            LG_Debug(void);

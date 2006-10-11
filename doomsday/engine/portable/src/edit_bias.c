@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -47,7 +47,7 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern void Con_ClearActions(void);
-extern boolean B_SetBindClass(int classID, int type);
+extern boolean B_SetBindClass(unsigned int classID, int type);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -448,7 +448,7 @@ void SBE_SetHueCircle(boolean activate)
 {
     int i;
 
-    if(activate == editHueCircle)
+    if((signed) activate == editHueCircle)
         return; // No change in state.
 
     if(activate && SBE_GetGrabbed() == NULL)

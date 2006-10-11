@@ -358,6 +358,43 @@ static void Rend_ShinySurfaceColor(gl_rgba_t *color, ded_reflection_t *ref)
     color->rgba[3] = (DGLubyte) (ref->shininess * 255);
 }
 
+static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
+                                                 short *height)
+{
+    ded_reflection_t *ref = NULL;
+
+    // Figure out what kind of surface properties have been defined
+    // for the texture or flat in question.
+    if(suf->isflat)
+    {
+        flat_t *flat = R_GetFlat(suf->texture);
+
+        if(flat->translation.current != suf->texture)
+        {
+            // The flat is currently translated to another one.
+            flat = R_GetFlat(flat->translation.current);
+        }
+
+        ref = flat->reflection;
+        if(width)
+            *width = 64;
+        if(height)
+            *height = 64;
+    }
+    else
+    {
+        texture_t *texptr = textures[texturetranslation[suf->texture].current];
+
+        ref = texptr->reflection;
+        if(width)
+            *width = texptr->width;
+        if(height)
+            *height = texptr->height;
+    }
+
+    return ref;
+}
+
 /*
  * Pre: As we modify param poly quite a bit it is the responsibility of
  *      the caller to ensure this is OK (ie if not it should pass us a
@@ -367,56 +404,10 @@ static void Rend_ShinySurfaceColor(gl_rgba_t *color, ded_reflection_t *ref)
  * @param   isFlat      (TRUE) = param texture is a flat.
  * @param   poly        The poly to add the shiny poly for.
  */
-void Rend_AddShinyPoly(int texture, boolean isFlat, rendpoly_t *poly)
+static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
+                              short width, short height)
 {
-    int i;
-    ded_reflection_t *ref = NULL;
-    short width = 0;
-    short height = 0;
-
-    if(!useShinySurfaces)
-    {
-        // Shiny surfaces are not enabled.
-        return;
-    }
-
-    // Figure out what kind of surface properties have been defined
-    // for the texture or flat in question.
-    if(isFlat)
-    {
-        flat_t *flat = R_GetFlat(texture);
-
-        if(flat->translation.current != texture)
-        {
-            // The flat is currently translated to another one.
-            flat = R_GetFlat(flat->translation.current);
-        }
-
-        ref = flat->reflection;
-        width = 64;
-        height = 64;
-    }
-    else
-    {
-        texture_t *texptr = textures[texturetranslation[texture].current];
-
-        ref = texptr->reflection;
-        width = texptr->width;
-        height = texptr->height;
-    }
-
-    if(ref == NULL)
-    {
-        // The surface doesn't shine.
-        return;
-    }
-
-    // Make sure the texture has been loaded.
-    if(!GL_LoadReflectionMap(ref))
-    {
-        // Can't shine because there is no shiny map.
-        return;
-    }
+    int     i;
 
     // Make it a shiny polygon.
     poly->lights = NULL;
@@ -792,6 +783,10 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
     return (visible[0] || visible[1]);
 }
 
+#define RPF2_SHADOW 0x0001
+#define RPF2_SHINY  0x0002
+#define RPF2_GLOW   0x0004
+
 /*
  * Called by Rend_RenderWallSeg to render ALL wall sections.
  *
@@ -799,8 +794,7 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
  */
 static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *side,
                             sector_t *frontsec, surface_t *surface,
-                            int mode, byte alpha,
-                            boolean shadow, boolean shiny, boolean glow)
+                            int mode, byte alpha, short flags)
 {
     int  i;
     int  segIndex = GET_SEG_IDX(seg);
@@ -862,7 +856,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
         Con_Error("Rend_RenderWallSection: Invalid wall section mode %i", mode);
     }
 
-    if(glow && glowingTextures)        // Make it fullbright?
+    if((flags & RPF2_GLOW) && glowingTextures)        // Make it fullbright?
         quad->flags |= RPF_GLOW;
 
     // Check for neighborhood division?
@@ -896,20 +890,29 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     // Add the poly to the appropriate list
     RL_AddPoly(quad);
 
-    if(shadow)      // Render Fakeradio polys for this seg?
+    if(flags & RPF2_SHADOW)      // Render Fakeradio polys for this seg?
         Rend_RadioWallSection(seg, quad);
 
-    if(shiny)       // Render Shiny polys for this seg?
+    if((flags & RPF2_SHINY) && useShinySurfaces) // Render Shiny polys for this seg?
     {
-        rendpoly_t *q = R_AllocRendPoly(RP_QUAD, true, 4);
+        ded_reflection_t *ref;
+        short width = 0;
+        short height = 0;
 
-        // We're going to modify the polygon quite a bit.
-        memcpy(q, quad, sizeof(rendpoly_t));
-        memcpy(q->vertices, quad->vertices, sizeof(rendpoly_vertex_t) * q->numvertices);
+        if((ref = Rend_ShinyDefForSurface(surface, &width, &height)) != NULL)
+            if(GL_LoadReflectionMap(ref)) // Make sure the texture has been loaded.
+            {
+                // We're going to modify the polygon quite a bit...
+                rendpoly_t *q = R_AllocRendPoly(RP_QUAD, true, 4);
 
-        Rend_AddShinyPoly(surface->texture, surface->isflat, q);
+                memcpy(q, quad, sizeof(rendpoly_t));
+                memcpy(q->vertices, quad->vertices,
+                       sizeof(rendpoly_vertex_t) * q->numvertices);
 
-        R_FreeRendPoly(q);
+                Rend_AddShinyPoly(q, ref, width, height);
+
+                R_FreeRendPoly(q);
+            }
     }
 }
 
@@ -918,15 +921,14 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
  * two into a Rend_RenderSurface.
  */
 static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
-                subplaneinfo_t* plane, surface_t *surface, float height, byte alpha,
-                boolean shadow, boolean shiny,
-                boolean glow)
+                               subplaneinfo_t* plane, surface_t *surface,
+                               float height, byte alpha, short flags)
 {
     int i;
     int subIndex = GET_SUBSECTOR_IDX(subsector);
     rendpoly_vertex_t *vtx;
 
-    if(glow && glowingTextures)        // Make it fullbright?
+    if((flags & RPF2_GLOW) && glowingTextures)        // Make it fullbright?
         poly->flags |= RPF_GLOW;
 
     // Surface color/light.
@@ -954,38 +956,41 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
     // Add the poly to the appropriate list
     RL_AddPoly(poly);
 
-    //if(shadow)      // Fakeradio uses a seperate algorithm for planes.
+    //if(flags & RPF2_SHADOW)  // Fakeradio uses a seperate algorithm for planes.
 
-    // Add a shine to this flat existence.
-    if(shiny)
+    if((flags & RPF2_SHINY) && useShinySurfaces) // Render Shiny polys for this seg?
     {
-        Rend_AddShinyPoly(surface->texture, surface->isflat, poly);
+        ded_reflection_t *ref;
+        short width = 0;
+        short height = 0;
+
+        if((ref = Rend_ShinyDefForSurface(surface, &width, &height)) != NULL)
+            if(GL_LoadReflectionMap(ref)) // Make sure the texture has been loaded.
+            {
+                Rend_AddShinyPoly(poly, ref, width, height);
+            }
     }
 }
 
-/*
+/**
  * The sector height should've been checked by now.
  * This seriously needs to be rewritten! Witness the accumulation of hacks
  * on kludges...
  */
 void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
 {
-    int i;
-    int surfaceFlags;
-    int solidSeg = false; // -1 means NEVER.
-    sector_t *backsec;
-    surface_t *surface;
-    side_t *sid, *backsid, *side;
-    line_t *ldef;
-    float   ffloor, fceil, bfloor, bceil, fsh, bsh;
+    int         i;
+    int         surfaceFlags;
+    int         solidSeg = false; // -1 means NEVER.
+    sector_t   *backsec;
+    surface_t  *surface;
+    side_t     *sid, *backsid, *side;
+    line_t     *ldef;
+    float       ffloor, fceil, bfloor, bceil, fsh, bsh;
     rendpoly_t *quad;
-    float  *vBL, *vBR, *vTL, *vTR;
-    boolean backSide = true;
-    boolean backsecSkyFix = false;
-
-    // Let's first check which way this seg is facing.
-    if(!Rend_FixedSegFacingDir(seg))
-        return;
+    float      *vBL, *vBR, *vTL, *vTR;
+    boolean     backSide = true;
+    boolean     backsecSkyFix = false;
 
     backsec = seg->backsector;
     sid = SIDE_PTR(seg->linedef->sidenum[0]);
@@ -1171,6 +1176,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             // Is there a visible surface?
             if(surfaceFlags != -1)
             {
+                short tempflags = 0;
+
                 // Fill in the remaining quad data.
                 quad->flags = 0;
                 vTL[VZ] = vTR[VZ] = fceil;
@@ -1181,11 +1188,15 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 if(ldef->flags & ML_DONTPEGBOTTOM)
                     quad->texoffy += texh - fsh;
 
+                if(!(flags & RWSF_NO_RADIO))
+                    tempflags |= RPF2_SHADOW;
+                if(surface->texture != -1)
+                    tempflags |= RPF2_SHINY;
+                if(surfaceFlags & SUF_GLOW)
+                    tempflags |= RPF2_GLOW;
+
                 Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_MIDDLE,
-                          /*Alpha*/    255,
-                          /*Shadow?*/  !(flags & RWSF_NO_RADIO),
-                          /*Shiny?*/   (surface->texture != -1),
-                          /*Glow?*/    (surfaceFlags & SUF_GLOW));
+                          /*Alpha*/    255, tempflags);
             }
             else
             {
@@ -1307,11 +1318,19 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                     else
                         quad->flags = 0;
 
-                    Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_MIDDLE,
-                              /*Alpha*/    alpha,
-                              /*Shadow?*/  (solidSeg && !(flags & RWSF_NO_RADIO) && !texmask),
-                              /*Shiny?*/   (solidSeg && surface->texture != -1 && !texmask),
-                              /*Glow?*/    (surfaceFlags & SUF_GLOW));
+                    {
+                        short tempflags = 0;
+
+                        if(solidSeg && !(flags & RWSF_NO_RADIO) && !texmask)
+                            tempflags |= RPF2_SHADOW;
+                        if(solidSeg && surface->texture != -1 && !texmask)
+                            tempflags |= RPF2_SHINY;
+                        if(surfaceFlags & SUF_GLOW)
+                            tempflags |= RPF2_GLOW;
+
+                        Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_MIDDLE,
+                                  /*Alpha*/    alpha, tempflags);
+                    }
                 }
             }
         }
@@ -1390,11 +1409,19 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                 }
 
                 if(isVisible)
-                Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_TOP,
-                          /*Alpha*/    alpha,
-                          /*Shadow?*/  !(flags & RWSF_NO_RADIO),
-                          /*Shiny?*/   (surface->texture != -1),
-                          /*Glow?*/    (surfaceFlags & SUF_GLOW));
+                {
+                    short tempflags = 0;
+
+                    if(!(flags & RWSF_NO_RADIO))
+                        tempflags |= RPF2_SHADOW;
+                    if(surface->texture != -1)
+                        tempflags |= RPF2_SHINY;
+                    if(surfaceFlags & SUF_GLOW)
+                        tempflags |= RPF2_GLOW;
+
+                    Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_TOP,
+                              /*Alpha*/    alpha, tempflags);
+                }
             }
         }
 
@@ -1410,6 +1437,7 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
             // Is there a visible surface?
             if(surfaceFlags != -1)
             {
+                short tempflags = 0;
                 // Calculate texture coordinates.
                 quad->texoffx = side->bottom.offx + FIX2FLT(seg->offset);
                 quad->texoffy = side->bottom.offy;
@@ -1426,11 +1454,15 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
                     vTL[VZ] = vTR[VZ] = fceil;
                 }
 
+                if(!(flags & RWSF_NO_RADIO))
+                    tempflags |= RPF2_SHADOW;
+                if(surface->texture != -1)
+                    tempflags |= RPF2_SHINY;
+                if(surfaceFlags & SUF_GLOW)
+                    tempflags |= RPF2_GLOW;
+
                 Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_BOTTOM,
-                          /*Alpha*/    255,
-                          /*Shadow?*/  !(flags & RWSF_NO_RADIO),
-                          /*Shiny?*/   (surface->texture != -1),
-                          /*Glow?*/    (surfaceFlags & SUF_GLOW));
+                          /*Alpha*/    255, tempflags);
             }
         }
     }
@@ -1490,6 +1522,31 @@ int Rend_SectorLight(sector_t *sec)
     return i;
 }
 
+static void Rend_MarkSegsFacingFront(subsector_t *sub)
+{
+    int     i;
+    float   v1[2], v2[2];
+    seg_t  *seg;
+
+    for(i = sub->linecount, seg = &segs[sub->firstline]; i > 0; --i, seg++)
+    {
+        // Occlusions can only happen where two sectors contact.
+        if(!seg->linedef)
+            continue;
+
+        v1[VX] = FIX2FLT(seg->v1->x);
+        v1[VY] = FIX2FLT(seg->v1->y);
+        v2[VX] = FIX2FLT(seg->v2->x);
+        v2[VY] = FIX2FLT(seg->v2->y);
+
+        // Which way should it be facing?
+        if(Rend_SegFacingDir(v1, v2))  // 1=front
+            seg->info->flags |= SEGINF_FACINGFRONT;
+        else
+            seg->info->flags &= ~SEGINF_FACINGFRONT;
+     }
+}
+
 /*
  * Creates new occlusion planes from the subsector's sides.
  * Before testing, occlude subsector's backfaces. After testing occlude
@@ -1499,17 +1556,16 @@ int Rend_SectorLight(sector_t *sec)
 void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 {
     sector_t *front = sub->sector, *back;
-    int     segfacing;
     int     i;
     float   v1[2], v2[2], fronth[2], backh[2];
     float  *startv, *endv;
     seg_t  *seg;
 
-    fronth[0] = FIX2FLT(front->planes[PLN_FLOOR]->height);
-    fronth[1] = FIX2FLT(front->planes[PLN_CEILING]->height);
-
     if(devNoCulling || P_IsInVoid(viewplayer))
         return;
+
+    fronth[0] = FIX2FLT(front->planes[PLN_FLOOR]->height);
+    fronth[1] = FIX2FLT(front->planes[PLN_CEILING]->height);
 
     for(i = sub->linecount, seg = &segs[sub->firstline]; i > 0; --i, seg++)
     {
@@ -1517,17 +1573,15 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
         if(!seg->linedef || !seg->backsector)
             continue;
 
-        back = seg->backsector;
+        if(forward_facing != (seg->info->flags & SEGINF_FACINGFRONT))
+            continue;
+
         v1[VX] = FIX2FLT(seg->v1->x);
         v1[VY] = FIX2FLT(seg->v1->y);
         v2[VX] = FIX2FLT(seg->v2->x);
         v2[VY] = FIX2FLT(seg->v2->y);
 
-        // Which way should it be facing?
-        segfacing = Rend_SegFacingDir(v1, v2);  // 1=front
-        if(forward_facing != (segfacing != 0))
-            continue;
-
+        back = seg->backsector;
         backh[0] = FIX2FLT(back->planes[PLN_FLOOR]->height);
         backh[1] = FIX2FLT(back->planes[PLN_CEILING]->height);
         // Choose start and end vertices so that it's facing forward.
@@ -1616,13 +1670,15 @@ void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
        (plane->type == PLN_CEILING && vy < height))
     {
         rendpoly_t *poly =
-            R_AllocRendPoly(RP_FLAT, false, subsector->numverts);
+            R_AllocRendPoly(RP_FLAT, false, subsector->info->numvertices);
 
         surfaceFlags = Rend_PrepareTextureForPoly(poly, surface);
 
         // Is there a visible surface?
         if(surfaceFlags != -1)
         {
+            short tempflags = 0;
+
             // Fill in the remaining quad data.
             poly->flags = flags;
             poly->sector = polySector;
@@ -1634,11 +1690,13 @@ void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
                 poly->texoffy = sector->planes[plane->type]->surface.offy;
             }
 
+            if(surface->texture != -1)
+                tempflags |= RPF2_SHINY;
+            if(surfaceFlags & SUF_GLOW)
+                tempflags |= RPF2_GLOW;
+
             Rend_DoRenderPlane(poly, subsector, plane, surface, height,
-                /*Alpha*/    255,
-                /*Shadow?*/  false, // unused
-                /*Shiny?*/   (surface->texture != -1),
-                /*Glow?*/    (surfaceFlags & SUF_GLOW));
+                /*Alpha*/      255, tempflags);
         }
 
         R_FreeRendPoly(poly);
@@ -1687,6 +1745,8 @@ void Rend_RenderSubsector(int ssecidx)
     Rend_RadioInitForSector(sect);
     Rend_RadioSubsectorEdges(ssec);
 
+    Rend_MarkSegsFacingFront(ssec);
+
     Rend_OccludeSubsector(ssec, false);
     DL_ClipInSubsector(ssecidx);
     Rend_OccludeSubsector(ssec, true);
@@ -1712,14 +1772,19 @@ void Rend_RenderSubsector(int ssecidx)
         if(seg->linedef == NULL)    // "minisegs" have no linedefs.
             continue;
 
-        Rend_RenderWallSeg(seg, sect, flags);
+        // Let's first check which way this seg is facing.
+        if(seg->info->flags & SEGINF_FACINGFRONT)
+            Rend_RenderWallSeg(seg, sect, flags);
     }
 
     // Is there a polyobj on board?
     if(ssec->poly)
     {
         for(i = 0; i < ssec->poly->numsegs; ++i)
-            Rend_RenderWallSeg(ssec->poly->segs[i], sect, RWSF_NO_RADIO);
+        {
+            if(Rend_FixedSegFacingDir(seg))
+                Rend_RenderWallSeg(ssec->poly->segs[i], sect, RWSF_NO_RADIO);
+        }
     }
 
     // Render all planes of this sector.

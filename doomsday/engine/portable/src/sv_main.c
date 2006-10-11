@@ -136,7 +136,7 @@ void Sv_GetInfo(serverinfo_t *info)
  */
 int Sv_InfoToString(serverinfo_t *info, ddstring_t * msg)
 {
-    int     i;
+    unsigned int i;
 
     Str_Appendf(msg, "port:%i\n", info->port);
     Str_Appendf(msg, "name:%s\n", info->name);
@@ -153,7 +153,7 @@ int Sv_InfoToString(serverinfo_t *info, ddstring_t * msg)
     Str_Appendf(msg, "maxp:%i\n", info->maxPlayers);
     Str_Appendf(msg, "open:%i\n", info->canJoin);
     Str_Appendf(msg, "plrn:%s\n", info->clientNames);
-    for(i = 0; i < sizeof(info->data) / sizeof(info->data[0]); i++)
+    for(i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
     {
         Str_Appendf(msg, "data%i:%x\n", i, info->data[i]);
     }
@@ -539,6 +539,7 @@ void Sv_ExecuteCommand(void)
 
     default:
         Con_Error("Sv_ExecuteCommand: Not a command packet!\n");
+        return; // shutup compiler
     }
 
     // Verify using string length.
@@ -1123,7 +1124,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 void Sv_PlaceThing(mobj_t* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor)
 {
     P_CheckPosXYZ(mo, x, y, z);
-    
+
     P_UnlinkThing(mo);
     mo->pos[VX] = x;
     mo->pos[VY] = y;
@@ -1149,19 +1150,19 @@ void Sv_ClientCoords(int playerNum)
     mobj_t *mo = players[playerNum].mo;
     int     clx, cly, clz;
     boolean onFloor = false;
-#ifdef _DEBUG        
+#ifdef _DEBUG
     fixed_t oldz;
 #endif
-    
+
     // If mobj or player is invalid, the message is discarded.
     if(!mo || !players[playerNum].ingame ||
        players[playerNum].flags & DDPF_DEAD)
         return;
 
-#ifdef _DEBUG        
+#ifdef _DEBUG
     oldz = mo->pos[VZ];
 #endif
-    
+
     clx = Msg_ReadShort() << 16;
     cly = Msg_ReadShort() << 16;
     clz = Msg_ReadShort() << 16;
@@ -1179,12 +1180,12 @@ void Sv_ClientCoords(int playerNum)
     {
         // Large differences in the coordinates suggest that player position
         // has been misestimated on serverside.
-       
+
         // Prevent illegal stepups.
-        if(tmpFloorZ - mo->pos[VZ] <= 24*FRACUNIT || 
+        if(tmpFloorZ - mo->pos[VZ] <= 24*FRACUNIT ||
            // But also allow warping the position.
            (abs(clx - mo->pos[VX]) > WARP_LIMIT * FRACUNIT ||
-            abs(cly - mo->pos[VY]) > WARP_LIMIT * FRACUNIT || 
+            abs(cly - mo->pos[VY]) > WARP_LIMIT * FRACUNIT ||
             abs(clz - mo->pos[VZ]) > WARP_LIMIT * FRACUNIT))
         {
             Sv_PlaceThing(mo, clx, cly, clz, onFloor);

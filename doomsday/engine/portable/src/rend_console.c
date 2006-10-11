@@ -34,6 +34,8 @@
 #include "de_refresh.h"
 #include "de_ui.h"
 
+#include "math.h"
+
 #ifdef TextOut
 // Windows has its own TextOut.
 #  undef TextOut
@@ -195,6 +197,7 @@ void Con_DrawRuler(int y, int lineHeight, float alpha)
  * Draw a 'side' text in the console. This is intended for extra
  * information about the current game mode.
  */
+#if 0 // currently unused
 static void drawSideText(const char *text, int line, float alpha)
 {
     char    buf[300];
@@ -229,6 +232,7 @@ static void drawSideText(const char *text, int line, float alpha)
         Cfont.TextOut(buf, ssw - Cfont.Width(buf) - 3, y / Cfont.sizeY);
     }
 }
+#endif
 
 void Rend_ConsoleToggleFullscreen(void)
 {
@@ -251,8 +255,6 @@ void Rend_ConsoleOpen(int yes)
 
 void Rend_ConsoleMove(int numLines)
 {
-    int l = 0;
-
     if(numLines == 0)
         return;
 

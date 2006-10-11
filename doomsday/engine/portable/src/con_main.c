@@ -182,7 +182,7 @@ static int complPos;            // Where is the completion cursor?
 
 static knownword_t **matchedWords;
 static unsigned int matchedWordCount;
-static unsigned int lastCompletion; // The last completed known word match.
+static int lastCompletion;  // The last completed known word match.
 
 static boolean finishCompletion; // An autocomplete has taken place that must
                                  // be completed ASAP.
@@ -391,6 +391,8 @@ char *TrimmedFloat(float val)
 void Con_Init(void)
 {
     cbuffer_t *buffer = &cBuffer;
+
+    B_Init();
 
     ConsoleActive = false;
     ConsoleInited = true;
@@ -1137,6 +1139,8 @@ static int completeWord(int mode)
         // Completion Mode 1: Cycle through the possible completions.
         unsigned int idx;
 
+        // fix me: signed/unsigned mismatch
+        // use another var to note when lastCompletion is not valid.
         if(lastCompletion == -1 ||
            lastCompletion + 1 >= matchedWordCount)
             idx = 0;

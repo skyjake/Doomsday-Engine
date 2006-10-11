@@ -334,7 +334,7 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
         bright = -0.8f;
 
     // Init the ramp as a line with the steepness defined by contrast.
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
         ideal[i] = i * contrast - (contrast - 1) * 127;
 
     // Apply the gamma curve.
@@ -343,16 +343,16 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
         if(gamma <= 0.1f)
             gamma = 0.1f;
         norm = pow(255, 1 / gamma - 1); // Normalizing factor.
-        for(i = 0; i < 256; i++)
+        for(i = 0; i < 256; ++i)
             ideal[i] = pow(ideal[i], 1 / gamma) / norm;
     }
 
     // The last step is to add the brightness offset.
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
         ideal[i] += bright * 128;
 
     // Clamp it and write the ramp table.
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         ideal[i] *= 0x100;      // Byte => word
         if(ideal[i] < 0)
@@ -409,7 +409,6 @@ const char* GL_ChooseVariableFont(glfontstyle_t style)
                 glScreenHeight < MED_LIMIT ? "normalbold18" :
                 "normalbold24");
     }
-    return "normal18";
 }
 
 void GL_InitFont(void)

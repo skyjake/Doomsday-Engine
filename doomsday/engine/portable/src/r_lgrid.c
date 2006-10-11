@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -571,7 +571,7 @@ static void LG_ApplySector(gridblock_t *block, const byte *color, int level,
 /*
  * Called when a sector has changed its light level.
  */
-void LG_SectorChanged(sector_t *sector, sectorinfo_t *info)
+void LG_SectorChanged(sector_t *sector)
 {
     int     i, n;
 
@@ -579,16 +579,16 @@ void LG_SectorChanged(sector_t *sector, sectorinfo_t *info)
         return;
 
     // Mark changed blocks and contributors.
-    for(i = 0; i < info->changedblockcount; ++i)
+    for(i = 0; i < sector->info->changedblockcount; ++i)
     {
-        n = info->blocks[i];
+        n = sector->info->blocks[i];
         grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
         // The color will be recalculated.
         memset(grid[n].rgb, 0, 3);
     }
-    for(; i < info->blockcount; ++i)
+    for(; i < sector->info->blockcount; ++i)
     {
-        grid[info->blocks[i]].flags |= GBF_CONTRIBUTOR;
+        grid[sector->info->blocks[i]].flags |= GBF_CONTRIBUTOR;
     }
 
     needsUpdate = true;

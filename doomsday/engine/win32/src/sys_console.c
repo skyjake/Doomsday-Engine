@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -67,7 +67,7 @@ static int needNewLine = false;
 
 // CODE --------------------------------------------------------------------
 
-void Sys_ConInit()
+void Sys_ConInit(void)
 {
     char    title[256];
 
@@ -99,11 +99,11 @@ void Sys_ConInit()
     Sys_ConUpdateCmdLine("");
 }
 
-void Sys_ConShutdown()
+void Sys_ConShutdown(void)
 {
 }
 
-void Sys_ConPostEvents()
+void Sys_ConPostEvents(void)
 {
     event_t ev;
     DWORD   num, read;
@@ -117,7 +117,7 @@ void Sys_ConPostEvents()
     ReadConsoleInput(hcInput, rec, MAXRECS, &read);
     for(ptr = rec; read > 0; read--, ptr++)
     {
-Con_Message("Sys_ConPostEvents\n");
+//Con_Message("Sys_ConPostEvents\n");
         if(ptr->EventType != KEY_EVENT)
             continue;
         key = &ptr->Event.KeyEvent;
@@ -129,9 +129,10 @@ Con_Message("Sys_ConPostEvents\n");
             ev.data1 = DDKEY_DOWNARROW;
         else
             ev.data1 = DD_ScanToKey(key->wVirtualScanCode);
-        ev.useclass = -1;
+        ev.noclass = true;
+        ev.useclass = 0; // initialize with something
         DD_PostEvent(&ev);
-Con_Message("Sys_ConPostEvents: Done\n");
+//Con_Message("Sys_ConPostEvents: Done\n");
     }
 }
 
@@ -144,7 +145,7 @@ void Sys_ConSetCursor(int x, int y)
     SetConsoleCursorPosition(hcScreen, pos);
 }
 
-void Sys_ConScrollLine()
+void Sys_ConScrollLine(void)
 {
     SMALL_RECT src;
     COORD   dest;
@@ -270,7 +271,7 @@ void Sys_ConUpdateCmdLine(char *text)
 
     line[0].Char.AsciiChar = '>';
     line[0].Attributes = CMDLINE_ATTRIB;
-    for(i = 0, ch = line + 1; i < LINELEN - 1; i++, ch++)
+    for(i = 0, ch = line + 1; i < LINELEN - 1; ++i, ch++)
     {
         if(i < strlen(text))
             ch->Char.AsciiChar = text[i];

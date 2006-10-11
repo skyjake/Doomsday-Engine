@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -93,7 +93,7 @@ cmhash_t cmHash[HASH_SIZE];
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Returns a pointer to the hash chain with the specified id.
  */
 cmhash_t *Cl_MobjHash(thid_t id)
@@ -101,7 +101,7 @@ cmhash_t *Cl_MobjHash(thid_t id)
     return &cmHash[(uint) id % HASH_SIZE];
 }
 
-/*
+/**
  * Links the clmobj into the client mobj hash table.
  */
 void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
@@ -125,7 +125,7 @@ void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
     }
 }
 
-/*
+/**
  * Unlinks the clmobj from the client mobj hash table.
  */
 void Cl_UnlinkMobj(clmobj_t *cmo)
@@ -150,7 +150,7 @@ void Cl_UnlinkMobj(clmobj_t *cmo)
         cmo->prev->next = cmo->next;
 }
 
-/*
+/**
  * Searches through the client mobj hash table and returns the clmobj
  * with the specified ID, if that exists.
  */
@@ -170,7 +170,7 @@ clmobj_t *Cl_FindMobj(thid_t id)
     return NULL;
 }
 
-/*
+/**
  * Aborts and returns false if the callback returns false.
  * Otherwise returns true.
  */
@@ -179,7 +179,7 @@ boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
     clmobj_t *cmo;
     int     i;
 
-    for(i = 0; i < HASH_SIZE; i++)
+    for(i = 0; i < HASH_SIZE; ++i)
     {
         for(cmo = cmHash[i].first; cmo; cmo = cmo->next)
         {
@@ -190,7 +190,7 @@ boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
     return true;
 }
 
-/*
+/**
  * Unlinks the thing from sectorlinks and if the object is solid,
  * the blockmap.
  */
@@ -199,7 +199,7 @@ void Cl_UnsetThingPosition(clmobj_t *cmo)
     P_UnlinkThing(&cmo->mo);
 }
 
-/*
+/**
  * Links the thing into sectorlinks and if the object is solid, the
  * blockmap. Linking to sectorlinks makes the thing visible and linking
  * to the blockmap makes it possible to interact with it (collide).
@@ -209,7 +209,7 @@ void Cl_SetThingPosition(clmobj_t *cmo)
 {
     mobj_t *thing = &cmo->mo;
 
-    if(cmo->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE) || thing->dplayer)
+    if((cmo->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE)) || thing->dplayer)
     {
         // We do not yet have all the details about Hidden mobjs.
         // The server hasn't sent us a Create Mobj delta for them.
@@ -222,7 +222,7 @@ void Cl_SetThingPosition(clmobj_t *cmo)
                 (thing->ddflags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
 }
 
-/*
+/**
  * Change the state of a mobj.
  */
 void Cl_SetThingState(mobj_t *mo, int stnum)
@@ -244,7 +244,7 @@ void Cl_SetThingState(mobj_t *mo, int stnum)
         mo->type = 0;
 }
 
-/*
+/**
  * Updates floorz and ceilingz of the mobj.
  */
 void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
@@ -311,7 +311,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 #endif
 }
 
-/*
+/**
  * Make the real player mobj identical with the client mobj.
  * The client mobj is always unlinked. Only the *real* mobj is visible.
  * (The real mobj was created by the Game.)
@@ -347,7 +347,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
 #ifdef _DEBUG
         Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle);
 #endif
-    }        
+    }
     mo->sprite = clmo->sprite;
     mo->frame = clmo->frame;
     //mo->nextframe = clmo->nextframe;
@@ -367,7 +367,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
     //if(flags & MDF_FLAGS) CON_Printf("Cl_RMD: ddf=%x\n", mo->ddflags);
 }
 
-/*
+/**
  * Reads a single mobj delta from the message buffer and applies
  * it to the client mobj in question.
  * For client mobjs that belong to players, updates the real player mobj.
@@ -525,10 +525,10 @@ int Cl_ReadMobjDelta(void)
     return true;
 }
 
-/*
+/**
  * Initialize clientside data.
  */
-void Cl_InitClientMobjs()
+void Cl_InitClientMobjs(void)
 {
     //previousTime = gameTime;
 
@@ -538,16 +538,16 @@ void Cl_InitClientMobjs()
     Cl_InitPlayers();
 }
 
-/*
+/**
  * Called when the client is shut down. Unlinks everything from the
  * sectors and the blockmap and clears the clmobj list.
  */
-void Cl_DestroyClientMobjs()
+void Cl_DestroyClientMobjs(void)
 {
     clmobj_t *cmo;
     int     i;
 
-    for(i = 0; i < HASH_SIZE; i++)
+    for(i = 0; i < HASH_SIZE; ++i)
     {
         for(cmo = cmHash[i].first; cmo; cmo = cmo->next)
         {
@@ -560,7 +560,7 @@ void Cl_DestroyClientMobjs()
     Cl_Reset();
 }
 
-/*
+/**
  * Reset the client status. Called when the level changes.
  */
 void Cl_Reset(void)
@@ -574,7 +574,7 @@ void Cl_Reset(void)
     Cl_InitPlayers();
 }
 
-/*
+/**
  * The client mobj is moved linearly, with collision checking.
  */
 void Cl_MoveThing(clmobj_t *cmo)
@@ -669,7 +669,7 @@ void Cl_MoveThing(clmobj_t *cmo)
     }
 }
 
-/*
+/**
  * Decrement tics counter and changes the state of the thing if necessary.
  */
 void Cl_AnimateThing(mobj_t *mo)
@@ -699,7 +699,7 @@ void Cl_AnimateThing(mobj_t *mo)
     }
 }
 
-/*
+/**
  * All client mobjs are moved and animated using the data we have.
  * 'forward' parameter is currently unused.
  */
@@ -719,14 +719,14 @@ void Cl_PredictMovement(void)
     predicted_tics++;
 
     // Move all client mobjs.
-    for(i = 0; i < HASH_SIZE; i++)
+    for(i = 0; i < HASH_SIZE; ++i)
     {
         for(cmo = cmHash[i].first; cmo; cmo = next)
         {
             next = cmo->next;
             moCount++;
 
-            if(cmo->mo.dplayer != &ddplayers[consoleplayer] && 
+            if(cmo->mo.dplayer != &ddplayers[consoleplayer] &&
                cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN) /*||
                cmo->mo.ddflags & DDMF_MISSILE*/)
             {
@@ -788,7 +788,7 @@ void Cl_PredictMovement(void)
 #endif
 }
 
-/*
+/**
  * Create a new client mobj.
  */
 clmobj_t *Cl_CreateMobj(thid_t id)
@@ -803,7 +803,7 @@ clmobj_t *Cl_CreateMobj(thid_t id)
     return cmo;
 }
 
-/*
+/**
  * Destroys the client mobj.
  */
 void Cl_DestroyMobj(clmobj_t *cmo)
@@ -818,7 +818,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
     Z_Free(cmo);
 }
 
-/*
+/**
  * Call for Hidden client mobjs to make then visible.
  * If a sound is waiting, it's now played.
  *
@@ -827,7 +827,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
 boolean Cl_RevealMobj(clmobj_t *cmo)
 {
     // Check that we know enough about the clmobj.
-    if(cmo->mo.dplayer != &ddplayers[consoleplayer] && 
+    if(cmo->mo.dplayer != &ddplayers[consoleplayer] &&
        (!(cmo->flags & CLMF_KNOWN_X) ||
         !(cmo->flags & CLMF_KNOWN_Y) ||
         !(cmo->flags & CLMF_KNOWN_Z) ||
@@ -836,7 +836,7 @@ boolean Cl_RevealMobj(clmobj_t *cmo)
         // Don't reveal just yet. We lack a vital piece of information.
         return false;
     }
-    
+
     /*#ifdef _DEBUG
        Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
        #endif */
@@ -851,23 +851,23 @@ boolean Cl_RevealMobj(clmobj_t *cmo)
         cmo->flags &= ~CLMF_SOUND;
         S_StartSoundAtVolume(cmo->sound, &cmo->mo, cmo->volume);
     }
-    
+
 #ifdef _DEBUG
-    VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n", 
-                         cmo->mo.thinker.id, cmo->mo.state, 
+    VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
+                         cmo->mo.thinker.id, cmo->mo.state,
                          cmo->mo.state - states) );
 #endif
 
     return true;
 }
 
-/*
+/**
  * Reads a single mobj PSV_FRAME2 delta from the message buffer and
  * applies it to the client mobj in question.
  *
  * For client mobjs that belong to players, updates the real player mobj.
  */
-void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
+void Cl_ReadMobjDelta2(boolean skip)
 {
     boolean needsLinking = false, justCreated = false;
     clmobj_t *cmo = NULL;
@@ -918,7 +918,7 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
         }
 
         d = &cmo->mo;
-        
+
         /*if(d->dplayer && d->dplayer == &ddplayers[consoleplayer])
         {
             // Mark the local player known.
@@ -926,7 +926,7 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
         }*/
 
         // Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-        if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && 
+        if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) &&
            !justCreated && !d->dplayer)
         {
             needsLinking = true;
@@ -953,7 +953,7 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
     if(df & MDF_POS_Z)
     {
         d->pos[VZ] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
-        if(cmo) 
+        if(cmo)
         {
             cmo->flags |= CLMF_KNOWN_Z;
 
@@ -1060,9 +1060,9 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
         // This'll update floorz and ceilingz.
         Cl_CheckMobj(cmo, justCreated);
     }
-    
-    // If the clmobj is Hidden (or Nulled), it will not be linked back to 
-    // the world until it's officially Created. (Otherwise, partially updated 
+
+    // If the clmobj is Hidden (or Nulled), it will not be linked back to
+    // the world until it's officially Created. (Otherwise, partially updated
     // mobjs may be visible for a while.)
     if(!(cmo->flags & (CLMF_HIDDEN | CLMF_NULLED)))
     {
@@ -1081,7 +1081,7 @@ void Cl_ReadMobjDelta2(boolean allowCreate, boolean skip)
     }
 }
 
-/*
+/**
  * Null mobjs deltas have their own type in a PSV_FRAME2 packet.
  * Here we remove the mobj in question.
  */

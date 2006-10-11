@@ -482,13 +482,15 @@ extern          "C" {
         EV_JOY_AXIS,               // Joystick main axes (xyz + Rxyz)
         EV_JOY_SLIDER,             // Joystick sliders
         EV_JOY_BUTTON,
-        EV_POV
+        EV_POV,
+        NUM_EVENT_TYPES
     } evtype_t;
 
     typedef enum {
         EVS_DOWN,
         EVS_UP,
         EVS_REPEAT,
+        NUM_EVENT_STATES
     } evstate_t;
 
     typedef struct {
@@ -500,7 +502,8 @@ extern          "C" {
         int             data4;
         int             data5;
         int             data6;
-        int             useclass;   // use a specific bindclass command
+        unsigned int    useclass;   // use a specific bindclass command
+        boolean         noclass;
     } event_t;
 
     // The mouse wheel is considered two extra mouse buttons.
@@ -1118,12 +1121,14 @@ typedef enum blendmode_e {
         NUM_DDBINDCLASSES
     };
 
+#define BCF_ABSOLUTE    0x00000001
+
     // Bind Class
     typedef struct bindclass_s {
         char           *name;
-        int             id;
+        unsigned int    id;
         int             active;
-        int             absolute;
+        int             flags;
     } bindclass_t;
 
     // Console command.

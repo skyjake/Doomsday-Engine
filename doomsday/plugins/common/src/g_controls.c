@@ -98,10 +98,10 @@ extern float   turbomul;               // multiplier for turbo
 bindclass_t BindClasses[] = {
     {"map",             GBC_CLASS1,     0, 0},
     {"mapfollowoff",    GBC_CLASS2,     0, 0},
-    {"menu",            GBC_CLASS3,     0, 1},
+    {"menu",            GBC_CLASS3,     0, BCF_ABSOLUTE},
     {"menuhotkey",      GBC_MENUHOTKEY, 1, 0},
     {"chat",            GBC_CHAT,       0, 0},
-    {"message",         GBC_MESSAGE,    0, 1},
+    {"message",         GBC_MESSAGE,    0, BCF_ABSOLUTE},
     {NULL}
 };
 
@@ -224,7 +224,7 @@ void G_DefaultBindings(void)
         // If this command is bound to something, skip it.
         sprintf(cmd, "%s%s", ctr->flags & CLF_ACTION ? "+" : "", ctr->command);
         memset(buff, 0, sizeof(buff));
-        if(B_BindingsForCommand(cmd, buff, -1))
+        if(B_BindingsForCommand(cmd, buff, 0, true))
             continue;
 
         // This Control has no bindings, set it to the default.

@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -742,7 +742,7 @@ void Sv_WriteDelta(const delta_t * delta)
     lengthOffset = Msg_Offset();
     Msg_WriteLong(0);
 #endif
-    
+
     // Null mobj deltas are special.
     if(type == DT_MOBJ)
     {
@@ -774,7 +774,7 @@ void Sv_WriteDelta(const delta_t * delta)
 
     // First the type of the delta.
     Sv_WriteDeltaHeader(type, delta);
-    
+
     switch (delta->type)
     {
     case DT_MOBJ:
@@ -811,7 +811,7 @@ void Sv_WriteDelta(const delta_t * delta)
     default:
         Con_Error("Sv_WriteDelta: Unknown delta type %i.\n", delta->type);
     }
-    
+
 #ifdef _DEBUG
 writeDeltaLength:
     // Update the length of the delta.
@@ -863,7 +863,9 @@ void Sv_SendFrame(int playerNumber)
     byte    oldResend;
     delta_t *delta;
     int     deltaCount = 0;
+#if _DEBUG
     int     endOffset = 0;
+#endif
     int     deltaCountOffset = 0;
 
     // Does the send queue allow us to send this packet?
@@ -903,7 +905,7 @@ void Sv_SendFrame(int playerNumber)
 #ifdef _DEBUG
     Msg_WriteLong(0);
 #endif
-    
+
     /*#ifdef _DEBUG
        Con_Printf("set%i\n", pool->setDealer);
        #endif */
@@ -941,7 +943,7 @@ void Sv_SendFrame(int playerNumber)
                 pool->resendDealer = oldResend;
             break;
         }
-        
+
         // Successfully written, increment counter.
         deltaCount++;
 
@@ -972,7 +974,7 @@ void Sv_SendFrame(int playerNumber)
     Msg_WriteLong(deltaCount);
     Msg_SetOffset(endOffset);
 #endif
-    
+
     // The PSV_FIRST_FRAME2 packet is sent Ordered, which means it'll
     // always arrive in the correct order when compared to the other
     // game setup packets.

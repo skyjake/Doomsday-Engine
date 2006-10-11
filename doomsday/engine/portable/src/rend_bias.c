@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -634,7 +634,7 @@ int SB_TrackerCheck(biastracker_t *tracker, int index)
  */
 void SB_TrackerApply(biastracker_t *dest, const biastracker_t *src)
 {
-    int i;
+    unsigned int i;
 
     for(i = 0; i < sizeof(dest->changes)/sizeof(dest->changes[0]); ++i)
     {
@@ -647,7 +647,7 @@ void SB_TrackerApply(biastracker_t *dest, const biastracker_t *src)
  */
 void SB_TrackerClear(biastracker_t *dest, const biastracker_t *src)
 {
-    int i;
+    unsigned int i;
 
     for(i = 0; i < sizeof(dest->changes)/sizeof(dest->changes[0]); ++i)
     {

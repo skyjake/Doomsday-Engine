@@ -1781,7 +1781,7 @@ DGLuint GL_PrepareDDTexture(ddtexture_t which)
         "bbox"
     };
 
-    if(which >= 0 && which < NUM_DD_TEXTURES)
+    if(which < NUM_DD_TEXTURES)
     {
         if(!ddTextures[which])
         {
@@ -1822,7 +1822,7 @@ void GL_SetFlat(int idx)
  *
  * Modified to allow taller masked textures - GMJ Aug 2002
  */
-static int DrawRealPatch(byte *buffer, byte *palette, int texwidth,
+static int DrawRealPatch(byte *buffer, /*byte *palette,*/ int texwidth,
                          int texheight, patch_t *patch, int origx, int origy,
                          boolean maskZero, unsigned char *transtable,
                          boolean checkForAlpha)
@@ -1993,7 +1993,8 @@ void GL_ConvertToAlpha(image_t * image, boolean makeWhite)
 byte   *GL_LoadImage(image_t * img, const char *imagefn, boolean useModelPath)
 {
     DFILE  *file;
-    byte   *ckdest, ext[40], *in, *out;
+    byte   *ckdest, *in, *out;
+    char    ext[40];
     int     format, i, numpx;
 
     // Clear any old values.
@@ -2304,7 +2305,7 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
         }
         // Draw the patch in the buffer.
         alphaChannel =
-            DrawRealPatch(buffer, palette, width, height, patch,
+            DrawRealPatch(buffer, /*palette,*/ width, height, patch,
                           tex->patches[i].originx, tex->patches[i].originy,
                           false, 0, i == tex->patchcount - 1);
     }
@@ -2648,7 +2649,7 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
            } */
         for(i = 0; i < tex->patchcount; ++i)
         {
-            DrawRealPatch(imgdata, palette, tex->width, tex->height,
+            DrawRealPatch(imgdata, /*palette,*/ tex->width, tex->height,
                           W_CacheLumpNum(tex->patches[i].patch, PU_CACHE),
                           tex->patches[i].originx, tex->patches[i].originy,
                           zeroMask, 0, false);
@@ -2672,7 +2673,7 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
         // Allocate a large enough buffer.
         numpels = tex->width * bufHeight;
         imgdata = M_Calloc(2 * numpels);
-        DrawRealPatch(imgdata, palette, tex->width, bufHeight, patch, 0, 0,
+        DrawRealPatch(imgdata, /*palette,*/ tex->width, bufHeight, patch, 0, 0,
                       zeroMask, 0, false);
     }
     if(zeroMask && filloutlines)
@@ -3217,7 +3218,7 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
             image.pixelSize = 1;
             image.pixels = M_Calloc(2 * image.width * image.height);
 
-            DrawRealPatch(image.pixels, W_CacheLumpNum(pallump, PU_CACHE),
+            DrawRealPatch(image.pixels, /*W_CacheLumpNum(pallump, PU_CACHE),*/
                           image.width, image.height, patch, 0, 0, false, table,
                           false);
         }
@@ -3282,7 +3283,7 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
             image.pixels = M_Calloc(2 * image.width * image.height);
             image.pixelSize = 1;
 
-            DrawRealPatch(image.pixels, W_CacheLumpNum(pallump, PU_CACHE),
+            DrawRealPatch(image.pixels, /*W_CacheLumpNum(pallump, PU_CACHE),*/
                           image.width, image.height, patch, 0, 0, false, 0,
                           false);
         }
@@ -3536,7 +3537,7 @@ void GL_PrepareLumpPatch(int lump)
     buffer = M_Calloc(2 * numpels);
 
     alphaChannel =
-        DrawRealPatch(buffer, W_CacheLumpNum(pallump, PU_CACHE),
+        DrawRealPatch(buffer, /*W_CacheLumpNum(pallump, PU_CACHE),*/
                       SHORT(patch->width), SHORT(patch->height), patch,
                       0, 0, false, 0, true);
     if(filloutlines)
@@ -3773,7 +3774,7 @@ DGLuint GL_PrepareLSTexture(lightingtex_t which)
 DGLuint GL_PrepareFlareTexture(flaretex_t flare)
 {
     // There are three flare textures.
-    if(flare < 0 || flare >= NUM_FLARE_TEXTURES)
+    if(flare >= NUM_FLARE_TEXTURES)
         return 0;
 
     if(!flaretexnames[flare])

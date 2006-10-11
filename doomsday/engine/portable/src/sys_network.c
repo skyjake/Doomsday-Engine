@@ -425,6 +425,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     TCPsocket sock = netNodes[from].sock;
     UDPpacket *packet = NULL;
     int     bytes = 0;
+    boolean error, read;
 
     // TODO: What if we get one byte? How come we are here if there's nothing
     // to receive?
@@ -441,7 +442,9 @@ boolean N_ReceiveReliably(nodeid_t from)
     // Read the entire packet's data.
     packet = SDLNet_AllocPacket(size);
     bytes = 0;
-    while(bytes < size)
+    read = false;
+    error = false;
+    while(!read)
     {
         int received = SDLNet_TCP_Recv(sock, packet->data + bytes, size);
         if(received == -1)
@@ -449,10 +452,15 @@ boolean N_ReceiveReliably(nodeid_t from)
             SDLNet_FreePacket(packet);
             Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)",
                         SDLNet_GetError(), strerror(errno));
-            return false;
+            error = true;
+            read = true;
         }
         bytes += received;
+        if(!(bytes < size))
+            read = true;
     }
+    if(error)
+        return false;
 
     // Post the received message.
     {
@@ -822,19 +830,23 @@ Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
 {
     Uint16  port = (!preferPort ? defaultPort : preferPort);
     int     tries = 1000;
+    boolean found;
 
     *sock = NULL;
 
     // Try opening the port, advance to next one if the opening fails.
-    for(; tries > 0; tries--)
+    for(found = false; tries > 0 && !found; --tries)
     {
         if((*sock = SDLNet_UDP_Open(port)) == NULL)
             port++;
         else
-            return port;
+            found = true;
     }
-    // Failure!
-    return 0;
+
+    if(found)
+        return port;
+    else
+        return 0; // Failure!
 }
 
 /*
@@ -947,7 +959,7 @@ void N_ShutdownService(void)
         serverSock = NULL;
 
         // Clear the client nodes.
-        for(i = 0; i < MAX_NODES; i++)
+        for(i = 0; i < MAX_NODES; ++i)
             N_TerminateNode(i);
 
         // Free the socket set.
@@ -1060,17 +1072,19 @@ void N_TerminateNode(nodeid_t id)
     memset(node, 0, sizeof(*node));
 }
 
-/*
+/**
  * Registers a new TCP socket as a client node.  There can only be a
  * limited number of nodes at a time.  This is only used by a server.
  */
 static boolean N_RegisterNewSocket(TCPsocket sock)
 {
-    int     i;
-    netnode_t *node;
+    int         i;
+    netnode_t  *node;
+    boolean     found;
 
     // Find a free node.
-    for(i = 1, node = netNodes + 1; i < MAX_NODES; i++, node++)
+    for(i = 1, node = netNodes + 1, found = false;
+        i < MAX_NODES && !found; i++, node++)
         if(!node->sock)
         {
             // This'll do.
@@ -1082,10 +1096,10 @@ static boolean N_RegisterNewSocket(TCPsocket sock)
             // Add this socket to the set of client sockets.
             SDLNet_TCP_AddSocket(sockSet, sock);
 
-            return true;
+            found = true;
         }
-    // There were no free nodes.
-    return false;
+
+    return found;
 }
 
 /*

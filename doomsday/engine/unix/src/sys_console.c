@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -190,6 +190,8 @@ void Sys_ConPostEvents(void)
 
         ev.type = EV_KEY;
         ev.state = EVS_DOWN;
+        ev.noclass = true;
+        ev.useclass = 0; // initialize with something
         ev.data1 = Sys_ConTranslateKey(key);
         DD_PostEvent(&ev);
 
@@ -306,6 +308,7 @@ void Sys_ConUpdateCmdLine(char *text)
     unsigned int i;
     char    line[LINELEN], *ch;
     int     maxX = Sys_ConGetScreenSize(VX);
+    int     length;
 
     if(text == NULL)
     {
@@ -329,7 +332,8 @@ void Sys_ConUpdateCmdLine(char *text)
         wmove(winCommand, 0, 0);
 
         // Can't print longer than the window.
-        waddnstr(winCommand, line, MIN_OF(maxX, strlen(text) + 1));
+        length = strlen(text);
+        waddnstr(winCommand, line, MIN_OF(maxX, length + 1));
         wclrtoeol(winCommand);
     }
     wrefresh(winCommand);
