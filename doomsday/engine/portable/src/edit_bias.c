@@ -47,7 +47,7 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern void Con_ClearActions(void);
-extern boolean B_SetBindClass(unsigned int classID, int type);
+extern boolean B_SetBindClass(unsigned int classID, unsigned int type);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -302,7 +302,7 @@ static void SBE_Begin(void)
     editActive = true;
     editGrabbed = -1;
     // Enable the biaseditor binding class
-    B_SetBindClass(DDBC_BIASEDITOR, true);
+    B_SetBindClass(DDBC_BIASEDITOR, 1);
     Con_Printf("Bias light editor: ON\n");
 }
 
@@ -312,7 +312,7 @@ static void SBE_End(void)
     gamedrawhud = true;
     editActive = false;
     // Disable the biaseditor binding class
-    B_SetBindClass(DDBC_BIASEDITOR, false);
+    B_SetBindClass(DDBC_BIASEDITOR, 0);
     Con_Printf("Bias light editor: OFF\n");
 }
 
