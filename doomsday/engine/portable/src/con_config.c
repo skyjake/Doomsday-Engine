@@ -55,7 +55,7 @@ static char    cfgFile[256];
 
 // CODE --------------------------------------------------------------------
 
-int Con_ParseCommands(char *fileName, int setdefault)
+boolean Con_ParseCommands(char *fileName, boolean setdefault)
 {
     DFILE  *file;
     char    buff[512];
@@ -81,7 +81,7 @@ int Con_ParseCommands(char *fileName, int setdefault)
         if(!M_IsComment(buff))
         {
             // Execute the commands silently.
-            if(!Con_Execute(CMDS_CONFIG, buff, (setdefault ? true : false), false))
+            if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
                 Con_Message("%s(%d): error executing command\n" "  \"%s\"\n",
                             fileName, line, buff);
         }

@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -31,44 +31,44 @@
 #include "con_decl.h"
 
 // Send Packet flags:
-#define SPF_REBOUND		0x00020000 // Write only to local loopback
-#define SPF_DONT_SEND	0x00040000 // Don't really send out anything
-#define SPF_CONFIRM		0x40000000 // Make sure it's received
-#define SPF_ORDERED		0x80000000 // Send in order & confirm
+#define SPF_REBOUND     0x00020000 // Write only to local loopback
+#define SPF_DONT_SEND   0x00040000 // Don't really send out anything
+#define SPF_CONFIRM     0x40000000 // Make sure it's received
+#define SPF_ORDERED     0x80000000 // Send in order & confirm
 
-#define NETBUFFER_MAXDATA	32768
+#define NETBUFFER_MAXDATA   32768
 
 // Each network node is identified by a number.
 typedef unsigned int nodeid_t;
 
 // Incoming messages are stored in netmessage_s structs.
 typedef struct netmessage_s {
-	struct netmessage_s *next;
-	nodeid_t        sender;
-	int             player;		   // Set in N_GetMessage().
-	unsigned int    size;
-	byte           *data;
-	void           *handle;
+    struct netmessage_s *next;
+    nodeid_t        sender;
+    int             player;        // Set in N_GetMessage().
+    unsigned int    size;
+    byte           *data;
+    void           *handle;
 } netmessage_t;
 
 typedef unsigned short msgid_t;
 
 #pragma pack(1)
 typedef struct {
-	msgid_t         id;             // Unused.
-	byte            type;           // Type of the message.
-	byte            data[NETBUFFER_MAXDATA];
+    msgid_t         id;             // Unused.
+    byte            type;           // Type of the message.
+    byte            data[NETBUFFER_MAXDATA];
 } netdata_t;
 #pragma pack()
 
 typedef struct netbuffer_s {
-	int             player;         // Recipient or sender.
-	int             length;         // Number of bytes in the data buffer.
-	int             headerLength;   // 1 byte at the moment.
+    int             player;         // Recipient or sender.
+    int             length;         // Number of bytes in the data buffer.
+    int             headerLength;   // 1 byte at the moment.
 
-	byte           *cursor;         // Points into the data buffer.
+    byte           *cursor;         // Points into the data buffer.
 
-	netdata_t       msg;            // The data buffer for sending and
+    netdata_t       msg;            // The data buffer for sending and
                                     // receiving packets.
 } netbuffer_t;
 
@@ -90,7 +90,5 @@ int             N_IdentifyPlayer(nodeid_t id);
 void            N_PrintBufferInfo(void);
 void            N_PrintHuffmanStats(void);
 void            N_PostMessage(netmessage_t * msg);
-
-D_CMD(HuffmanStats);
 
 #endif

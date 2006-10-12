@@ -61,9 +61,10 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-D_CMD(Ping); // in net_ping.c
+D_CMD(HuffmanStats); // in net_buf.c
 D_CMD(Login); // in cl_main.c
 D_CMD(Logout); // in sv_main.c
+D_CMD(Ping); // in net_ping.c
 
 void    R_DrawLightRange(void);
 int     Sv_GetRegisteredMobj(pool_t *, thid_t, mobjdelta_t *);

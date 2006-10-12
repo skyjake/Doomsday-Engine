@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 #include "dd_share.h"
+#include "de_system.h"
 
 #define MAX_ARGS    256
 
@@ -120,7 +121,7 @@ void            Con_Ticker(timespan_t time);
 boolean         Con_Responder(event_t *event);
 void            Con_Printf(const char *format, ...);
 void            Con_FPrintf(int flags, const char *format, ...);    // Flagged printf.
-int             Con_PrintFileName(const char *fn, enum filetype_e type, void *dir);
+int             Con_PrintFileName(const char *fn, filetype_t type, void *dir);
 void            Con_SetFont(ddfont_t *cfont);
 float           Con_FontScaleY(void);
 cbline_t       *Con_GetBufferLine(cbuffer_t *buffer, int num);
