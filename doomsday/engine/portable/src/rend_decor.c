@@ -69,7 +69,7 @@ float   decorFadeAngle = .1f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int numDecorLightSources;
+static unsigned int numDecorLightSources;
 static decorsource_t *sourceFirst, *sourceLast, *sourceCursor;
 
 // Lights near surfaces get dimmer if the angle is too small.
@@ -93,7 +93,7 @@ void Rend_DecorRegister(void)
 /**
  * Returns a pointer to the surface decoration, if any.
  */
-ded_decor_t *Rend_GetGraphicResourceDecoration(int id, boolean isFlat)
+static ded_decor_t *Rend_GetGraphicResourceDecoration(int id, boolean isFlat)
 {
     if(!id)
         return NULL;
@@ -116,7 +116,7 @@ ded_decor_t *Rend_GetGraphicResourceDecoration(int id, boolean isFlat)
 /**
  * Clears the list of decoration dummies.
  */
-void Rend_ClearDecorations(void)
+static void Rend_ClearDecorations(void)
 {
     numDecorLightSources = 0;
     sourceCursor = sourceFirst;
@@ -150,7 +150,7 @@ void Rend_ProjectDecorations(void)
 /**
  * Create a new source for a light decoration.
  */
-decorsource_t *Rend_NewLightDecorationSource(void)
+static decorsource_t *Rend_NewLightDecorationSource(void)
 {
     decorsource_t *src;
 
@@ -189,16 +189,16 @@ decorsource_t *Rend_NewLightDecorationSource(void)
  * A light decoration is created in the specified coordinates.
  * Does largely the same thing as DL_AddLuminous().
  */
-void Rend_AddLightDecoration(float pos[3], ded_decorlight_t * def,
-                             float brightness, boolean isWall,
-                             DGLuint decorMap)
+static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
+                                    float brightness, boolean isWall,
+                                    DGLuint decorMap)
 {
     decorsource_t *source;
-    lumobj_t *lum;
-    float   distance = Rend_PointDist3D(pos);
-    float   fadeMul = 1, flareMul = 1;
-    float   maxDist = (isWall ? decorWallMaxDist : decorPlaneMaxDist);
-    int     i;
+    lumobj_t   *lum;
+    float       distance = Rend_PointDist3D(pos);
+    float       fadeMul = 1, flareMul = 1;
+    float       maxDist = (isWall ? decorWallMaxDist : decorPlaneMaxDist);
+    unsigned int i;
 
     // Is the point in range?
     if(distance > maxDist)
@@ -295,7 +295,8 @@ void Rend_AddLightDecoration(float pos[3], ded_decorlight_t * def,
 
     // Approximate the distance.
     lum->distance =
-        P_ApproxDistance3(source->thing.pos[VX] - viewx, source->thing.pos[VY] - viewy,
+        P_ApproxDistance3(source->thing.pos[VX] - viewx,
+                          source->thing.pos[VY] - viewy,
                           source->thing.pos[VZ] - viewz);
 }
 
@@ -303,20 +304,19 @@ void Rend_AddLightDecoration(float pos[3], ded_decorlight_t * def,
  * Returns true if the view point is close enough to the bounding box
  * so that there could be visible decorations inside.
  */
-boolean Rend_CheckDecorationBounds(fixed_t bounds[6], float fMaxDist)
+static boolean Rend_CheckDecorationBounds(fixed_t bounds[6], float fMaxDist)
 {
     fixed_t maxDist = FRACUNIT * fMaxDist;
 
-    return viewx > bounds[BLEFT] - maxDist && viewx < bounds[BRIGHT] + maxDist
+    return viewx > bounds[BLEFT] - maxDist   && viewx < bounds[BRIGHT] + maxDist
         && viewy > bounds[BBOTTOM] - maxDist && viewy < bounds[BTOP] + maxDist
-        && viewz > bounds[BFLOOR] - maxDist &&
-        viewz < bounds[BCEILING] + maxDist;
+        && viewz > bounds[BFLOOR] - maxDist  && viewz < bounds[BCEILING] + maxDist;
 }
 
 /**
  * Returns > 0 if the sector lightlevel passes the limit condition.
  */
-float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t * lightDef)
+static float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t *lightDef)
 {
     int    lightlevel;
     float   factor;
@@ -344,9 +344,9 @@ float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t * lightDef)
 /**
  * Determine proper skip values.
  */
-void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
+static void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
 {
-    int     k;
+    unsigned int k;
 
     for(k = 0; k < 2; ++k)
     {
@@ -360,23 +360,26 @@ void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
 /**
  * Generate decorations for the specified section of a line.
  */
-void Rend_DecorateLineSection(line_t *line, side_t * side, surface_t *surface,
-                              float top, float bottom, float texOffY)
+static void Rend_DecorateLineSection(line_t *line, side_t *side,
+                                     surface_t *surface, float top,
+                                     float bottom, float texOffY)
 {
     ded_decor_t *def;
     ded_decorlight_t *lightDef;
-    vertex_t *v1, *v2;
-    float   lh, s, t;           // Horizontal and vertical offset.
-    float   posBase[2], delta[2], pos[3], brightMul;
-    float   surfTexW, surfTexH, patternW, patternH;
-    int     i, skip[2];
+    vertex_t   *v1, *v2;
+    float       lh, s, t;           // Horizontal and vertical offset.
+    float       posBase[2], delta[2], pos[3], brightMul;
+    float       surfTexW, surfTexH, patternW, patternH;
+    int         skip[2];
+    unsigned int i;
 
     // Is this a valid section?
     if(bottom > top || line->info->length == 0)
         return;
 
     // Should this be decorated at all?
-    if(!(def = Rend_GetGraphicResourceDecoration(surface->texture, surface->isflat)))
+    if(!(def = Rend_GetGraphicResourceDecoration(surface->texture,
+                                                 surface->isflat)))
         return;
 
     v1 = line->v1;
@@ -457,7 +460,7 @@ void Rend_DecorateLineSection(line_t *line, side_t * side, surface_t *surface,
 /**
  * Returns the side that faces the sector (if any).
  */
-side_t *R_GetSectorSide(line_t *line, sector_t *sector)
+static side_t *R_GetSectorSide(line_t *line, sector_t *sector)
 {
     side_t *side = SIDE_PTR(line->sidenum[0]);
 
@@ -471,19 +474,19 @@ side_t *R_GetSectorSide(line_t *line, sector_t *sector)
 /**
  * Return true if the line is within the visible decoration 'box'.
  */
-boolean Rend_LineDecorationBounds(line_t *line)
+static boolean Rend_LineDecorationBounds(line_t *line)
 {
-    fixed_t bounds[6];
-    sector_t *sector;
+    fixed_t     bounds[6];
+    sector_t   *sector;
 
-    bounds[BLEFT] = line->bbox[BOXLEFT];
-    bounds[BRIGHT] = line->bbox[BOXRIGHT];
-    bounds[BTOP] = line->bbox[BOXTOP];
+    bounds[BLEFT]   = line->bbox[BOXLEFT];
+    bounds[BRIGHT]  = line->bbox[BOXRIGHT];
+    bounds[BTOP]    = line->bbox[BOXTOP];
     bounds[BBOTTOM] = line->bbox[BOXBOTTOM];
 
     // Figure out the highest and lowest Z height.
     sector = line->frontsector;
-    bounds[BFLOOR] = sector->planes[PLN_FLOOR]->height;
+    bounds[BFLOOR]   = sector->planes[PLN_FLOOR]->height;
     bounds[BCEILING] = sector->planes[PLN_CEILING]->height;
 
     // Is the other sector higher/lower?
@@ -502,16 +505,17 @@ boolean Rend_LineDecorationBounds(line_t *line)
 /**
  * Return true if the sector is within the visible decoration 'box'.
  */
-boolean Rend_SectorDecorationBounds(sector_t *sector)
+static boolean Rend_SectorDecorationBounds(sector_t *sector)
 {
-    fixed_t bounds[6];
+    fixed_t     bounds[6];
 
-    bounds[BLEFT] = FRACUNIT * sector->info->bounds[BLEFT];
-    bounds[BRIGHT] = FRACUNIT * sector->info->bounds[BRIGHT];
+    bounds[BLEFT]    = FRACUNIT * sector->info->bounds[BLEFT];
+    bounds[BRIGHT]   = FRACUNIT * sector->info->bounds[BRIGHT];
+
     // Sectorinfo has top and bottom the other way around.
-    bounds[BBOTTOM] = FRACUNIT * sector->info->bounds[BTOP];
-    bounds[BTOP] = FRACUNIT * sector->info->bounds[BBOTTOM];
-    bounds[BFLOOR] = FRACUNIT * SECT_FLOOR(sector);
+    bounds[BBOTTOM]  = FRACUNIT * sector->info->bounds[BTOP];
+    bounds[BTOP]     = FRACUNIT * sector->info->bounds[BBOTTOM];
+    bounds[BFLOOR]   = FRACUNIT * SECT_FLOOR(sector);
     bounds[BCEILING] = FRACUNIT * SECT_CEIL(sector);
 
     return Rend_CheckDecorationBounds(bounds, decorPlaneMaxDist);
@@ -521,27 +525,25 @@ boolean Rend_SectorDecorationBounds(sector_t *sector)
  * Generate decorations for upper, middle and bottom parts of the line,
  * on both sides.
  */
-void Rend_DecorateLine(int index)
+static void Rend_DecorateLine(int index)
 {
-    line_t *line = LINE_PTR(index);
-    side_t *side;
-    sector_t *highSector, *lowSector;
-
-    /*  int frontSectorIndex = -1, backSectorIndex = -1; */
-    float   frontCeil, frontFloor, backCeil, backFloor;
+    line_t     *line = LINE_PTR(index);
+    side_t     *side;
+    sector_t   *highSector, *lowSector;
+    float       frontCeil, frontFloor, backCeil, backFloor;
 
     // Only the lines within the decoration visibility bounding box
     // are processed.
     if(!Rend_LineDecorationBounds(line))
         return;
 
-    frontCeil = SECT_CEIL(line->frontsector);
+    frontCeil  = SECT_CEIL(line->frontsector);
     frontFloor = SECT_FLOOR(line->frontsector);
 
     // Do we have a double-sided line?
     if(line->backsector)
     {
-        backCeil = SECT_CEIL(line->backsector);
+        backCeil  = SECT_CEIL(line->backsector);
         backFloor = SECT_FLOOR(line->backsector);
 
         // Is there a top section visible on either side?
@@ -552,11 +554,11 @@ void Rend_DecorateLine(int index)
             if(frontCeil > backCeil)
             {
                 highSector = line->frontsector;
-                lowSector = line->backsector;
+                lowSector  = line->backsector;
             }
             else
             {
-                lowSector = line->frontsector;
+                lowSector  = line->frontsector;
                 highSector = line->backsector;
             }
 
@@ -587,11 +589,11 @@ void Rend_DecorateLine(int index)
             if(frontFloor > backFloor)
             {
                 highSector = line->frontsector;
-                lowSector = line->backsector;
+                lowSector  = line->backsector;
             }
             else
             {
-                lowSector = line->frontsector;
+                lowSector  = line->frontsector;
                 highSector = line->backsector;
             }
 
@@ -664,14 +666,15 @@ void Rend_DecorateLine(int index)
 /**
  * Generate decorations for a plane.
  */
-void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir, float offX,
-                        float offY, ded_decor_t * def)
+static void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir,
+                               float offX, float offY, ded_decor_t *def)
 {
-    sector_t *sector = SECTOR_PTR(sectorIndex);
+    sector_t   *sector = SECTOR_PTR(sectorIndex);
     sectorinfo_t *sin = sector->info;
     ded_decorlight_t *lightDef;
-    float   pos[3], tileSize = 64, brightMul;
-    int     i, skip[2];
+    float       pos[3], tileSize = 64, brightMul;
+    int         skip[2];
+    unsigned int i;
 
     surfaceNormal[VX] = 0;
     surfaceNormal[VY] = elevateDir;
@@ -703,6 +706,7 @@ void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir, float offX,
         {
             if(pos[VY] < sin->bounds[BTOP])
                 continue;
+
             pos[VX] =
                 (int) (sin->bounds[BLEFT] / tileSize) * tileSize - offX +
                 lightDef->pos[VX] - lightDef->pattern_offset[VX] * tileSize;
@@ -731,11 +735,11 @@ void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir, float offX,
 /**
  * Generate decorations for the planes of the sector.
  */
-void Rend_DecorateSector(int index)
+static void Rend_DecorateSector(int index)
 {
-    int i;
-    plane_t *pln;
-    sector_t *sector = SECTOR_PTR(index);
+    int         i;
+    plane_t    *pln;
+    sector_t   *sector = SECTOR_PTR(index);
     ded_decor_t *def;
 
     // The sector must have height if it wants decorations.
@@ -749,10 +753,12 @@ void Rend_DecorateSector(int index)
     for(i = 0; i < sector->planecount; ++i)
     {
         pln = sector->planes[i];
-        def = Rend_GetGraphicResourceDecoration(pln->surface.texture, pln->surface.isflat);
+        def = Rend_GetGraphicResourceDecoration(pln->surface.texture,
+                                                pln->surface.isflat);
 
         if(def != NULL) // The surface is decorated.
-            Rend_DecoratePlane(index, SECT_PLANE_HEIGHT(sector, i), pln->surface.normal[VZ],
+            Rend_DecoratePlane(index, SECT_PLANE_HEIGHT(sector, i),
+                               pln->surface.normal[VZ],
                                pln->surface.offx, pln->surface.offy, def);
     }
 }
