@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,8 +29,8 @@
 #ifndef __DGL_PARTICLES_H__
 #define __DGL_PARTICLES_H__
 
-extern int      r_use_particles, r_max_particles;
-extern float    r_particle_spawn_rate;
+extern int      useParticles, maxParticles;
+extern float    particleSpawnRate;
 
 void            Rend_ParticleRegister(void);
 void            PG_InitTextures(void);

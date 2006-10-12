@@ -51,7 +51,7 @@ typedef struct pglink_s {
 } pglink_t;
 
 typedef struct {
-    unsigned char gen;          // Index of the generator (active_ptcgens)
+    unsigned char gen;          // Index of the generator (activePtcGens)
     short   index;
     fixed_t distance;
 } porder_t;
@@ -60,28 +60,28 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    M_RotateVector(float vec[3], float yaw, float pitch);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern float vang, vpitch;
 
+extern ptcgen_t *activePtcGens[MAX_ACTIVE_PTCGENS];
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 DGLuint ptctexname[NUM_TEX_NAMES];
-int     rend_particle_nearlimit = 0;
-float   rend_particle_diffuse = 4;
+int     particleNearLimit = 0;
+float   particleDiffuse = 4;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static pglink_t **pgLinks;      // Array of pointers to pgLinks in pgStore.
 static pglink_t *pgStore;
-static int pgCursor, pgMax;
+static unsigned int pgCursor, pgMax;
 static uint orderSize;
 static porder_t *order;
-static int numParts;
+static unsigned int numParts;
 static boolean hasPoints[NUM_TEX_NAMES], hasLines, hasNoBlend, hasBlend;
 static boolean hasModels;
 
@@ -90,12 +90,12 @@ static boolean hasModels;
 void Rend_ParticleRegister(void)
 {
     // Cvars
-    C_VAR_INT("rend-particle", &r_use_particles, 0, 0, 1);
-    C_VAR_INT("rend-particle-max", &r_max_particles, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-particle-rate", &r_particle_spawn_rate, 0, 0, 5);
-    C_VAR_FLOAT("rend-particle-diffuse", &rend_particle_diffuse,
+    C_VAR_INT("rend-particle", &useParticles, 0, 0, 1);
+    C_VAR_INT("rend-particle-max", &maxParticles, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-particle-rate", &particleSpawnRate, 0, 0, 5);
+    C_VAR_FLOAT("rend-particle-diffuse", &particleDiffuse,
                 CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-particle-visible-near", &rend_particle_nearlimit,
+    C_VAR_INT("rend-particle-visible-near", &particleNearLimit,
               CVF_NO_MAX, 0, 0);
 }
 
@@ -113,7 +113,7 @@ static fixed_t PG_PointDist(fixed_t c[3])
        c[VZ] - viewz); */
 }
 
-/*
+/**
  * The particle texture is a modification of the dynlight texture.
  */
 void PG_InitTextures(void)
@@ -139,7 +139,7 @@ void PG_InitTextures(void)
     // Load any custom particle textures. They are loaded from the
     // highres texture directory and are named "ParticleNN.(tga|png|pcx)".
     // The first is "Particle00". (based on Leesz' textured particles mod)
-    for(i = 0; i < MAX_PTC_TEXTURES; i++)
+    for(i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
         char    filename[80];
         image_t image;
@@ -203,14 +203,14 @@ void PG_InitForLevel(void)
     pgStore = Z_Malloc(sizeof(pglink_t) * pgMax, PU_LEVEL, 0);
     pgCursor = 0;
 
-    memset(active_ptcgens, 0, sizeof(active_ptcgens));
+    memset(activePtcGens, 0, sizeof(activePtcGens));
 
     // Allocate a small ordering buffer.
     orderSize = 256;
     order = Z_Malloc(sizeof(porder_t) * orderSize, PU_LEVEL, 0);
 }
 
-/*
+/**
  * Returns an unused link from the pgStore.
  */
 static pglink_t *PG_GetLink(void)
@@ -224,7 +224,7 @@ static pglink_t *PG_GetLink(void)
     return &pgStore[pgCursor++];
 }
 
-void PG_LinkPtcGen(ptcgen_t * gen, sector_t *sector)
+static void PG_LinkPtcGen(ptcgen_t *gen, sector_t *sector)
 {
     int     si = GET_SECTOR_IDX(sector);
     pglink_t *link;
@@ -234,40 +234,43 @@ void PG_LinkPtcGen(ptcgen_t * gen, sector_t *sector)
     for(it = pgLinks[si]; it; it = it->next)
         if(it->gen == gen)
             return;             // No, no...
+
     // We need a new PG link.
     link = PG_GetLink();
     if(!link)
         return;                 // Out of links!
+
     link->gen = gen;
     link->next = pgLinks[si];
     pgLinks[si] = link;
 }
 
-/*
+/**
  * Init all active particle generators for a new frame.
  */
 void PG_InitForNewFrame(void)
 {
-    int     i, k;
-    ptcgen_t *gen;
+    unsigned int i;
+    int         k;
+    ptcgen_t   *gen;
 
     // Clear the PG links.
     memset(pgLinks, 0, sizeof(pglink_t *) * numsectors);
     pgCursor = 0;
 
     // Clear all visibility flags.
-    for(i = 0; i < MAX_ACTIVE_PTCGENS; i++)
-        if((gen = active_ptcgens[i]) != NULL)
+    for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
+        if((gen = activePtcGens[i]) != NULL)
         {
             gen->flags &= ~PGF_VISIBLE;
             // FIXME: Overkill?
-            for(k = 0; k < gen->count; k++)
+            for(k = 0; k < gen->count; ++k)
                 if(gen->ptcs[k].stage >= 0)
                     PG_LinkPtcGen(gen, gen->ptcs[k].sector);
         }
 }
 
-/*
+/**
  * The given sector is visible. All PGs in it should be rendered.
  * Scans PG links.
  */
@@ -279,10 +282,10 @@ void PG_SectorIsVisible(sector_t *sector)
         it->gen->flags |= PGF_VISIBLE;
 }
 
-/*
+/**
  * Sorts in descending order.
  */
-int C_DECL PG_Sorter(const void *pt1, const void *pt2)
+static int C_DECL PG_Sorter(const void *pt1, const void *pt2)
 {
     if(((porder_t *) pt1)->distance > ((porder_t *) pt2)->distance)
         return -1;
@@ -292,23 +295,24 @@ int C_DECL PG_Sorter(const void *pt1, const void *pt2)
     return 0;
 }
 
-/*
+/**
  * Allocate more memory for the particle ordering buffer, if necessary.
  */
-void PG_CheckOrderBuffer(uint max)
+static void PG_CheckOrderBuffer(uint max)
 {
     while(max > orderSize)
         orderSize *= 2;
     order = Z_Realloc(order, sizeof(*order) * orderSize, PU_LEVEL);
 }
 
-/*
- * Returns true iff there are particles to render.
+/**
+ * Returns true if there are particles to render.
  */
-int PG_ListVisibleParticles(void)
+static int PG_ListVisibleParticles(void)
 {
-    int     i, p, m, stagetype;
-    fixed_t maxdist, mindist = FRACUNIT * rend_particle_nearlimit;
+    unsigned int i, m;
+    int     p, stagetype;
+    fixed_t maxdist, mindist = FRACUNIT * particleNearLimit;
     ptcgen_t *gen;
     ded_ptcgen_t *def;
     particle_t *pt;
@@ -317,12 +321,13 @@ int PG_ListVisibleParticles(void)
     memset(hasPoints, 0, sizeof(hasPoints));
 
     // First count how many particles are in the visible generators.
-    for(i = 0, numParts = 0; i < MAX_ACTIVE_PTCGENS; i++)
+    for(i = 0, numParts = 0; i < MAX_ACTIVE_PTCGENS; ++i)
     {
-        gen = active_ptcgens[i];
+        gen = activePtcGens[i];
         if(!gen || !(gen->flags & PGF_VISIBLE))
             continue;
-        for(p = 0; p < gen->count; p++)
+
+        for(p = 0; p < gen->count; ++p)
             if(gen->ptcs[p].stage >= 0)
                 numParts++;
     }
@@ -334,20 +339,22 @@ int PG_ListVisibleParticles(void)
 
     // Fill in the order list and see what kind of particles we'll
     // need to render.
-    for(i = 0, m = 0; i < MAX_ACTIVE_PTCGENS; i++)
+    for(i = 0, m = 0; i < MAX_ACTIVE_PTCGENS; ++i)
     {
-        gen = active_ptcgens[i];
+        gen = activePtcGens[i];
         if(!gen || !(gen->flags & PGF_VISIBLE))
             continue;
+
         def = gen->def;
         maxdist = FRACUNIT * def->maxdist;
-        for(p = 0, pt = gen->ptcs; p < gen->count; p++, pt++)
+        for(p = 0, pt = gen->ptcs; p < gen->count; ++p, pt++)
         {
             if(pt->stage < 0)
                 continue;
             // Is the particle's sector visible?
             if(!(pt->sector->info->flags & SIF_VISIBLE))
                 continue;       // No; this particle can't be seen.
+
             order[m].gen = i;
             order[m].index = p;
             order[m].distance = PG_PointDist(pt->pos);
@@ -400,9 +407,9 @@ int PG_ListVisibleParticles(void)
     return true;
 }
 
-void PG_RenderParticles(int rtype, boolean with_blend)
+static void PG_RenderParticles(int rtype, boolean withBlend)
 {
-    float   leftoff[3], rightoff[3], mark, inv_mark;
+    float   leftoff[3], rightoff[3], mark, invMark;
     float   size, color[4], center[3];
     float   dist, maxdist;
     float   line[2], projected[2];
@@ -410,13 +417,14 @@ void PG_RenderParticles(int rtype, boolean with_blend)
     ptcgen_t *gen;
     ptcstage_t *st;
     particle_t *pt;
-    ded_ptcstage_t *dst, *next_dst;
-    int     i, c;
-    int     using_texture = -1;
-    int     prim_type = DGL_QUADS;
-    blendmode_t mode = BM_NORMAL, new_mode;
+    ded_ptcstage_t *dst, *nextDst;
+    unsigned int i;
+    int     c;
+    int     usingTexture = -1;
+    int     primType = DGL_QUADS;
+    blendmode_t mode = BM_NORMAL, newMode;
     vissprite_t vis;
-    boolean flatonplane, flatonwall, nearplane, nearwall;
+    boolean flatOnPlane, flatOnWall, nearPlane, nearWall;
 
     if(rtype == PTC_MODEL)
     {
@@ -425,49 +433,50 @@ void PG_RenderParticles(int rtype, boolean with_blend)
     }
 
     // viewsidevec points to the left.
-    for(i = 0; i < 3; i++)
+    for(c = 0; c < 3; ++c)
     {
-        leftoff[i] = viewupvec[i] + viewsidevec[i];
-        rightoff[i] = viewupvec[i] - viewsidevec[i];
+        leftoff[c]  = viewupvec[c] + viewsidevec[c];
+        rightoff[c] = viewupvec[c] - viewsidevec[c];
     }
 
     // Should we use a texture?
     if(rtype == PTC_POINT)
-        using_texture = 0;
+        usingTexture = 0;
     else if(rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES)
-        using_texture = rtype - PTC_TEXTURE + 1;
+        usingTexture = rtype - PTC_TEXTURE + 1;
 
     if(rtype == PTC_MODEL)
     {
         gl.Enable(DGL_DEPTH_WRITE);
         gl.Enable(DGL_DEPTH_TEST);
     }
-    else if(using_texture >= 0)
+    else if(usingTexture >= 0)
     {
         gl.Disable(DGL_DEPTH_WRITE);
         gl.Disable(DGL_CULL_FACE);
-        gl.Bind(renderTextures ? ptctexname[using_texture] : 0);
+        gl.Bind(renderTextures ? ptctexname[usingTexture] : 0);
         gl.Func(DGL_DEPTH_TEST, DGL_LEQUAL, 0);
-        gl.Begin(prim_type = DGL_QUADS);
+        gl.Begin(primType = DGL_QUADS);
     }
     else
     {
         gl.Disable(DGL_TEXTURING);  // Lines don't use textures.
-        gl.Begin(prim_type = DGL_LINES);
+        gl.Begin(primType = DGL_LINES);
     }
 
     // How many particles can we render?
-    if(r_max_particles)
+    if(maxParticles)
     {
-        i = numParts - r_max_particles;
+        i = numParts - maxParticles;
         if(i < 0)
             i = 0;
     }
     else
         i = 0;
-    for(; i < numParts; i++)
+
+    for(; i < numParts; ++i)
     {
-        gen = active_ptcgens[order[i].gen];
+        gen = activePtcGens[order[i].gen];
         pt = gen->ptcs + order[i].index;
         st = &gen->stages[pt->stage];
         dst = &gen->def->stages[pt->stage];
@@ -478,22 +487,22 @@ void PG_RenderParticles(int rtype, boolean with_blend)
         {
             continue;
         }
-        if(!(gen->flags & PGF_ADD_BLEND) == with_blend)
+        if(!(gen->flags & PGF_ADD_BLEND) == withBlend)
             continue;
 
-        if(rtype != PTC_MODEL && !with_blend)
+        if(rtype != PTC_MODEL && !withBlend)
         {
             // We may need to change the blending mode.
-            new_mode =
+            newMode =
                 (gen->flags & PGF_SUB_BLEND ? BM_SUBTRACT : gen->
                  flags & PGF_REVSUB_BLEND ? BM_REVERSE_SUBTRACT : gen->
                  flags & PGF_MUL_BLEND ? BM_MUL : gen->
                  flags & PGF_INVMUL_BLEND ? BM_INVERSE_MUL : BM_NORMAL);
-            if(new_mode != mode)
+            if(newMode != mode)
             {
                 gl.End();
-                GL_BlendMode(mode = new_mode);
-                gl.Begin(prim_type);
+                GL_BlendMode(mode = newMode);
+                gl.Begin(primType);
             }
         }
 
@@ -502,25 +511,25 @@ void PG_RenderParticles(int rtype, boolean with_blend)
            !gen->stages[pt->stage + 1].type)
         {
             // There is no "next stage". Use the current one.
-            next_dst = gen->def->stages + pt->stage;
+            nextDst = gen->def->stages + pt->stage;
         }
         else
-            next_dst = gen->def->stages + (pt->stage + 1);
+            nextDst = gen->def->stages + (pt->stage + 1);
 
         // Where is intermark?
-        inv_mark = pt->tics / (float) dst->tics;
-        mark = 1 - inv_mark;
+        invMark = pt->tics / (float) dst->tics;
+        mark = 1 - invMark;
 
         // Calculate size and color.
         size =
             P_GetParticleRadius(dst,
-                                order[i].index) * inv_mark +
-            P_GetParticleRadius(next_dst, order[i].index) * mark;
+                                order[i].index) * invMark +
+            P_GetParticleRadius(nextDst, order[i].index) * mark;
         if(!size)
             continue;           // Infinitely small.
-        for(c = 0; c < 4; c++)
+        for(c = 0; c < 4; ++c)
         {
-            color[c] = dst->color[c] * inv_mark + next_dst->color[c] * mark;
+            color[c] = dst->color[c] * invMark + nextDst->color[c] * mark;
             if(!(st->flags & PTCF_BRIGHT) && c < 3 && !levelFullBright)
             {
                 // This is a simplified version of sectorlight (no distance
@@ -532,6 +541,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 
         maxdist = gen->def->maxdist;
         dist = FIX2FLT(order[i].distance);
+
         // Far diffuse?
         if(maxdist)
         {
@@ -539,10 +549,10 @@ void PG_RenderParticles(int rtype, boolean with_blend)
                 color[3] *= 1 - (dist - maxdist * .75f) / (maxdist * .25f);
         }
         // Near diffuse?
-        if(rend_particle_diffuse > 0)
+        if(particleDiffuse > 0)
         {
-            if(dist < rend_particle_diffuse * size)
-                color[3] -= 1 - dist / (rend_particle_diffuse * size);
+            if(dist < particleDiffuse * size)
+                color[3] -= 1 - dist / (particleDiffuse * size);
         }
 
         // Fully transparent?
@@ -551,23 +561,23 @@ void PG_RenderParticles(int rtype, boolean with_blend)
 
         gl.Color4fv(color);
 
-        nearplane = (pt->sector &&
+        nearPlane = (pt->sector &&
                      (pt->sector->planes[PLN_FLOOR]->height + 2 * FRACUNIT >= pt->pos[VZ] ||
                       pt->sector->planes[PLN_CEILING]->height - 2 * FRACUNIT <= pt->pos[VZ]));
-        flatonplane = (st->flags & PTCF_PLANE_FLAT && nearplane);
+        flatOnPlane = (st->flags & PTCF_PLANE_FLAT && nearPlane);
 
-        nearwall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
-        flatonwall = (st->flags & PTCF_WALL_FLAT && nearwall);
+        nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
+        flatOnWall = (st->flags & PTCF_WALL_FLAT && nearWall);
 
         center[VX] = FIX2FLT(pt->pos[VX]);
         center[VZ] = FIX2FLT(pt->pos[VY]);
         center[VY] = FIX2FLT(P_GetParticleZ(pt));
 
-        if(!flatonplane && !flatonwall)
+        if(!flatOnPlane && !flatOnWall)
         {
             center[VX] += frameTimePos * FIX2FLT(pt->mov[VX]);
             center[VZ] += frameTimePos * FIX2FLT(pt->mov[VY]);
-            if(!nearplane) center[VY] += frameTimePos * FIX2FLT(pt->mov[VZ]);
+            if(!nearPlane) center[VY] += frameTimePos * FIX2FLT(pt->mov[VZ]);
         }
 
         // Model particles are rendered using the normal model rendering
@@ -630,10 +640,10 @@ void PG_RenderParticles(int rtype, boolean with_blend)
         }
 
         // The vertices, please.
-        if(using_texture >= 0)
+        if(usingTexture >= 0)
         {
             // Should the particle be flat against a plane?
-            if(flatonplane)
+            if(flatOnPlane)
             {
                 gl.TexCoord2f(0, 0);
                 gl.Vertex3f(center[VX] - size, center[VY], center[VZ] - size);
@@ -648,7 +658,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
                 gl.Vertex3f(center[VX] - size, center[VY], center[VZ] + size);
             }
             // Flat against a wall, then?
-            else if(flatonwall)
+            else if(flatOnWall)
             {
                 // There will be a slight approximation on the XY plane since
                 // the particles aren't that accurate when it comes to wall
@@ -716,7 +726,7 @@ void PG_RenderParticles(int rtype, boolean with_blend)
     {
         gl.End();
 
-        if(using_texture >= 0)
+        if(usingTexture >= 0)
         {
             gl.Enable(DGL_DEPTH_WRITE);
             gl.Enable(DGL_CULL_FACE);
@@ -728,40 +738,40 @@ void PG_RenderParticles(int rtype, boolean with_blend)
         }
     }
 
-    if(!with_blend)
+    if(!withBlend)
     {
         // We may have rendered subtractive stuff.
         GL_BlendMode(BM_NORMAL);
     }
 }
 
-void PG_RenderPass(boolean use_blending)
+static void PG_RenderPass(boolean useBlending)
 {
     int     i;
 
     // Set blending mode.
-    if(use_blending)
+    if(useBlending)
         GL_BlendMode(BM_ADD);
 
     if(hasModels)
-        PG_RenderParticles(PTC_MODEL, use_blending);
+        PG_RenderParticles(PTC_MODEL, useBlending);
 
     if(hasLines)
-        PG_RenderParticles(PTC_LINE, use_blending);
+        PG_RenderParticles(PTC_LINE, useBlending);
 
-    for(i = 0; i < NUM_TEX_NAMES; i++)
+    for(i = 0; i < NUM_TEX_NAMES; ++i)
         if(hasPoints[i])
         {
             PG_RenderParticles(!i ? PTC_POINT : PTC_TEXTURE + i - 1,
-                               use_blending);
+                               useBlending);
         }
 
     // Restore blending mode.
-    if(use_blending)
+    if(useBlending)
         GL_BlendMode(BM_NORMAL);
 }
 
-/*
+/**
  * Render all the visible particle generators.
  * We must render all particles ordered back->front, or otherwise
  * particles from one generator will obscure particles from another.
@@ -769,7 +779,7 @@ void PG_RenderPass(boolean use_blending)
  */
 void PG_Render(void)
 {
-    if(!r_use_particles)
+    if(!useParticles)
         return;
     if(!PG_ListVisibleParticles())
         return;                 // No visible particles at all?
@@ -779,6 +789,7 @@ void PG_Render(void)
     {
         PG_RenderPass(false);
     }
+
     if(hasBlend)
     {
         // A second pass with additive blending.

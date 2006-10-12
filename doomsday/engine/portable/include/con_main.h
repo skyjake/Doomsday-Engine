@@ -90,8 +90,8 @@ extern int      CmdReturnValue;
 extern ddfont_t Cfont;
 extern byte     consoleDump;
 
-void            Con_Init();
-void            Con_Shutdown();
+void            Con_Init(void);
+void            Con_Shutdown(void);
 void            Con_DestroyDatabases(void);
 void            Con_WriteAliasesToFile(FILE * file);
 void            Con_MaxLineLength(void);
@@ -106,7 +106,7 @@ void            Con_AddCommand(ccmd_t *cmd);
 void            Con_AddVariable(cvar_t *var);
 void            Con_AddCommandList(ccmd_t *cmdlist);
 void            Con_AddVariableList(cvar_t *varlist);
-calias_t       *Con_AddAlias(char *aName, char *command);
+calias_t       *Con_AddAlias(const char *aName, const char *command);
 void            Con_DeleteAlias(calias_t *cal);
 void            Con_PrintCVar(cvar_t *var, char *prefix);
 ccmd_t         *Con_GetCommand(const char *name);
@@ -114,7 +114,7 @@ boolean         Con_IsValidCommand(const char *name);
 calias_t       *Con_GetAlias(const char *name);
 boolean         Con_IsSpecialChar(int ch);
 void            Con_UpdateKnownWords(void);
-knownword_t   **Con_CollectKnownWordsMatchingWord(char *word,
+knownword_t   **Con_CollectKnownWordsMatchingWord(const char *word,
                                                   unsigned int  *count);
 void            Con_Ticker(timespan_t time);
 boolean         Con_Responder(event_t *event);
@@ -131,6 +131,8 @@ int             Con_Executef(byte src, int silent, const char *command, ...);
 void            Con_Message(const char *message, ...);
 void            Con_Error(const char *error, ...);
 cvar_t         *Con_GetVariable(const char *name);
+cvar_t         *Con_GetVariableIDX(unsigned int idx);
+unsigned int    Con_CVarCount(void);
 int             Con_GetInteger(const char *name);
 float           Con_GetFloat(const char *name);
 byte            Con_GetByte(const char *name);
