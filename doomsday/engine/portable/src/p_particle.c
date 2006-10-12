@@ -54,10 +54,11 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high);
 void    P_PtcGenThinker(ptcgen_t * gen);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
