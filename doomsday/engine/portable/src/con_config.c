@@ -49,15 +49,12 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char    cfgFile[256];
+static char    cfgFile[256];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Con_ParseCommands
- */
 int Con_ParseCommands(char *fileName, int setdefault)
 {
     DFILE  *file;
@@ -90,26 +87,26 @@ int Con_ParseCommands(char *fileName, int setdefault)
         }
         if(deof(file))
             break;
+
         line++;
     }
+
     F_Close(file);
     return true;
 }
 
-/*
- * Con_WriteState
- *  Writes the state of the console (variables, bindings, aliases) into the
- *  given file, overwriting the previous contents.
+/**
+ * Writes the state of the console (variables, bindings, aliases) into the
+ * given file, overwriting the previous contents.
  */
 boolean Con_WriteState(const char *fileName)
 {
-    extern cvar_t *cvars;
-    extern int numCVars;
-    int     i;
-    cvar_t *var;
-    FILE   *file;
-    char    *str;
-    void *ccmd_help;
+    unsigned int i;
+    cvar_t     *var;
+    FILE       *file;
+    char       *str;
+    void       *ccmd_help;
+    unsigned int numCVars = Con_CVarCount();
 
     VERBOSE(Con_Printf("Con_WriteState: %s\n", fileName));
 
@@ -130,9 +127,9 @@ boolean Con_WriteState(const char *fileName)
     fprintf(file, "#\n# CONSOLE VARIABLES\n#\n\n");
 
     // We'll write all the console variables that are flagged for archiving.
-    for(i = 0; i < numCVars; i++)
+    for(i = 0; i < numCVars; ++i)
     {
-        var = cvars + i;
+        var = Con_GetVariableIDX(i);
         if(var->type == CVT_NULL || var->flags & CVF_NO_ARCHIVE)
             continue;
 
@@ -169,10 +166,9 @@ boolean Con_WriteState(const char *fileName)
     return true;
 }
 
-/*
- * Con_SaveDefaults
- *  Saves all bindings, aliases and archiveable console variables.
- *  The output file is a collection of console commands.
+/**
+ * Saves all bindings, aliases and archiveable console variables.
+ * The output file is a collection of console commands.
  */
 void Con_SaveDefaults(void)
 {
@@ -190,6 +186,8 @@ D_CMD(WriteConsole)
         Con_Message("Saves console variables, bindings and aliases.\n");
         return true;
     }
+
     Con_Message("Writing to %s...\n", argv[1]);
-    return !!Con_WriteState(argv[1]);
+
+    return !Con_WriteState(argv[1]);
 }

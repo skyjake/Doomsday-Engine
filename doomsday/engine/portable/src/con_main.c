@@ -182,7 +182,8 @@ static int complPos;            // Where is the completion cursor?
 
 static knownword_t **matchedWords;
 static unsigned int matchedWordCount;
-static int lastCompletion;  // The last completed known word match.
+static unsigned int lastCompletion;  // The last completed known word match.
+static boolean matchedWordListGood;
 
 static boolean finishCompletion; // An autocomplete has taken place that must
                                  // be completed ASAP.
@@ -401,7 +402,7 @@ void Con_Init(void)
     Rend_ConsoleInit();
 
     complPos = 0;
-    lastCompletion = -1;
+    matchedWordListGood = false;
 
     // The buffer.
     buffer->cbuffer = 0;
@@ -595,13 +596,13 @@ void Con_Ticker(timespan_t time)
         knownword_t *word = matchedWords[lastCompletion];
 
         // Add a trailing space if the word is NOT a cmd or alias.
-        if(lastCompletion != -1 &&
+        if(matchedWordListGood &&
            word->type != WT_CCMD && word->type != WT_ALIAS)
         {
             strcat(cmdLine, " ");
             cmdCursor++;
         }
-        lastCompletion = -1;
+        matchedWordListGood = false;
         finishCompletion = false;
     }
 
@@ -1094,6 +1095,7 @@ static int completeWord(int mode)
     char    unambiguous[256];
     char   *completion = 0;     // Pointer to the completed word.
     cvar_t *cvar;
+    boolean justUpdated;
 
     if(mode == 1)
         cp = complPos - 1;
@@ -1121,12 +1123,17 @@ static int completeWord(int mode)
 
     // Can we use the previous valid matched word list?
     // If yes we will use it, else perform a new search.
-    if(lastCompletion == -1)
+    justUpdated = false;
+    if(!matchedWordListGood)
     {
         Con_DestroyMatchedWordList();
 
         matchedWords =
             Con_CollectKnownWordsMatchingWord(word, &matchedWordCount);
+
+        matchedWordListGood = true;
+        lastCompletion = 0;
+        justUpdated = true;
     }
 
     if(!matchedWordCount)
@@ -1141,8 +1148,7 @@ static int completeWord(int mode)
 
         // fix me: signed/unsigned mismatch
         // use another var to note when lastCompletion is not valid.
-        if(lastCompletion == -1 ||
-           lastCompletion + 1 >= matchedWordCount)
+        if(justUpdated || lastCompletion + 1 >= matchedWordCount)
             idx = 0;
         else
             idx = lastCompletion + 1;
@@ -1295,7 +1301,7 @@ static void updateCmdLine()
     else
         strcpy(cmdLine, oldCmds[ocPos].text);
     cmdCursor = complPos = strlen(cmdLine);
-    lastCompletion = -1;
+    matchedWordListGood = false;
     if(isDedicated)
         Sys_ConUpdateCmdLine(cmdLine);
 }
@@ -1466,7 +1472,7 @@ boolean Con_Responder(event_t *event)
         memset(cmdLine, 0, sizeof(cmdLine));
         cmdCursor = 0;
         complPos = 0;
-        lastCompletion = -1;
+        matchedWordListGood = false;
         Rend_ConsoleCursorResetBlink();
         if(isDedicated)
             Sys_ConUpdateCmdLine(cmdLine);
@@ -1488,7 +1494,7 @@ boolean Con_Responder(event_t *event)
             memmove(cmdLine + cmdCursor, cmdLine + cmdCursor + 1,
                     sizeof(cmdLine) - cmdCursor + 1);
             complPos = cmdCursor;
-            lastCompletion = -1;
+            matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
             if(isDedicated)
                 Sys_ConUpdateCmdLine(cmdLine);
@@ -1505,7 +1511,7 @@ boolean Con_Responder(event_t *event)
                     sizeof(cmdLine) - cmdCursor);
             --cmdCursor;
             complPos = cmdCursor;
-            lastCompletion = -1;
+            matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
             if(isDedicated)
                 Sys_ConUpdateCmdLine(cmdLine);
@@ -1529,7 +1535,7 @@ boolean Con_Responder(event_t *event)
         completions = completeWord(mode);
 
         if((completions == 1 || (mode == 1 && completions >= 1)) &&
-           lastCompletion != -1)
+           matchedWordListGood)
         {
             // Finish the completion ASAP.
             finishCompletion = true;
@@ -1576,7 +1582,7 @@ boolean Con_Responder(event_t *event)
                             oldCmds[pos].text + cmdCursor, 1);
                     ++cmdCursor;
                     ocPos = pos;
-                    lastCompletion = -1;
+                    matchedWordListGood = false;
                     if(isDedicated)
                         Sys_ConUpdateCmdLine(cmdLine);
                 }
@@ -1615,7 +1621,7 @@ boolean Con_Responder(event_t *event)
             memset(cmdLine, 0, sizeof(cmdLine));
             cmdCursor = 0;
             complPos = 0;
-            lastCompletion = -1;
+            matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
             if(isDedicated)
                 Sys_ConUpdateCmdLine(cmdLine);
@@ -1636,7 +1642,7 @@ boolean Con_Responder(event_t *event)
         if(cmdCursor < buffer->maxLineLen)
             ++cmdCursor;
         complPos = cmdCursor;   //strlen(cmdLine);
-        lastCompletion = -1;
+        matchedWordListGood = false;
         Rend_ConsoleCursorResetBlink();
 
         if(isDedicated)

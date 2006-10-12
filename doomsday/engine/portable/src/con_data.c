@@ -55,20 +55,19 @@ static int C_DECL knownWordListSorter(const void *e1, const void *e2);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern bindclass_t *bindClasses;
-extern int numBindClasses;
+extern unsigned int numBindClasses;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-cvar_t *cvars = NULL;
-int numCVars = 0; // accessed in con_config.c
-ccmd_t *ccmds = NULL;
-calias_t *caliases = NULL;
+static cvar_t *cvars = NULL;
+static ccmd_t *ccmds = NULL;
+static calias_t *caliases = NULL;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int maxCVars;
-static int numCCmds = 0, maxCCmds;
-static int numCAliases = 0;
+static unsigned int numCVars = 0, maxCVars = 0;
+static unsigned int numCCmds = 0, maxCCmds = 0;
+static unsigned int numCAliases = 0;
 
 // The list of known words (for completion).
 static knownword_t *knownWords = NULL;
@@ -282,8 +281,11 @@ void Con_AddVariable(cvar_t *var)
 cvar_t *Con_GetVariable(const char *name)
 {
     int     result;
-    int     bottomIdx, topIdx, pivot;
+    unsigned int bottomIdx, topIdx, pivot;
     cvar_t *var;
+
+    if(numCVars == 0)
+        return NULL;
 
     bottomIdx = 0;
     topIdx = numCVars-1;
@@ -296,14 +298,32 @@ cvar_t *Con_GetVariable(const char *name)
         result = stricmp(var->name, name);
         if(result == 0)
             return var;
-        else if(result > 0)
-            topIdx = pivot - 1;
         else
-            bottomIdx = pivot + 1;
+        {
+            if(result > 0)
+            {
+                if(pivot == 0)
+                    return NULL;
+
+                topIdx = pivot - 1;
+            }
+            else
+                bottomIdx = pivot + 1;
+        }
     }
 
     // No match...
     return NULL;
+}
+
+cvar_t *Con_GetVariableIDX(unsigned int idx)
+{
+    return &cvars[idx];
+}
+
+unsigned int Con_CVarCount(void)
+{
+    return numCVars;
 }
 
 void Con_PrintCVar(cvar_t *var, char *prefix)
@@ -369,8 +389,11 @@ void Con_AddCommand(ccmd_t *cmd)
 ccmd_t *Con_GetCommand(const char *name)
 {
     int     result;
-    int     bottomIdx, topIdx, pivot;
+    unsigned int bottomIdx, topIdx, pivot;
     ccmd_t *cmd;
+
+    if(numCCmds == 0)
+        return NULL;
 
     bottomIdx = 0;
     topIdx = numCCmds-1;
@@ -383,10 +406,18 @@ ccmd_t *Con_GetCommand(const char *name)
         result = stricmp(cmd->name, name);
         if(result == 0)
             return cmd;
-        else if(result > 0)
-            topIdx = pivot - 1;
         else
-            bottomIdx = pivot + 1;
+        {
+            if(result > 0)
+            {
+                if(pivot == 0)
+                    return NULL;
+
+                topIdx = pivot - 1;
+            }
+            else
+                bottomIdx = pivot + 1;
+        }
     }
 
     // No match...
@@ -407,8 +438,11 @@ boolean Con_IsValidCommand(const char *name)
 calias_t *Con_GetAlias(const char *name)
 {
     int     result;
-    int     bottomIdx, topIdx, pivot;
+    unsigned int bottomIdx, topIdx, pivot;
     calias_t *cal;
+
+    if(numCAliases == 0)
+        return NULL;
 
     bottomIdx = 0;
     topIdx = numCAliases-1;
@@ -421,17 +455,25 @@ calias_t *Con_GetAlias(const char *name)
         result = stricmp(cal->name, name);
         if(result == 0)
             return cal;
-        else if(result > 0)
-            topIdx = pivot - 1;
         else
-            bottomIdx = pivot + 1;
+        {
+            if(result > 0)
+            {
+                if(pivot == 0)
+                    return NULL;
+
+                topIdx = pivot - 1;
+            }
+            else
+                bottomIdx = pivot + 1;
+        }
     }
 
     // No match...
     return NULL;
 }
 
-calias_t *Con_AddAlias(char *aName, char *command)
+calias_t *Con_AddAlias(const char *aName, const char *command)
 {
     calias_t *cal;
 
@@ -451,7 +493,7 @@ calias_t *Con_AddAlias(char *aName, char *command)
 
 void Con_DeleteAlias(calias_t *cal)
 {
-    int idx = cal - caliases;
+    unsigned int idx = cal - caliases;
 
     M_Free(cal->name);
     M_Free(cal->command);
@@ -468,8 +510,8 @@ void Con_DeleteAlias(calias_t *cal)
  */
 void Con_WriteAliasesToFile(FILE * file)
 {
-    int     i;
-    calias_t *cal;
+    unsigned int    i;
+    calias_t       *cal;
 
     for(i = 0, cal = caliases; i < numCAliases; ++i, cal++)
     {
@@ -496,16 +538,16 @@ static int C_DECL knownWordListSorter(const void *e1, const void *e2)
  */
 void Con_UpdateKnownWords(void)
 {
-    int     i, c, known_vars;
-    int     len;
+    unsigned int i, c, knownVars;
+    unsigned int len;
 
     // Count the number of visible console variables.
-    for(i = known_vars = 0; i < numCVars; ++i)
+    for(i = knownVars = 0; i < numCVars; ++i)
         if(!(cvars[i].flags & CVF_HIDE))
-            known_vars++;
+            knownVars++;
 
     // Fill the known words table.
-    numKnownWords = numCCmds + known_vars + numCAliases + numBindClasses;
+    numKnownWords = numCCmds + knownVars + numCAliases + numBindClasses;
     knownWords = M_Realloc(knownWords, len =
                          sizeof(knownword_t) * numKnownWords);
     memset(knownWords, 0, len);
@@ -550,7 +592,7 @@ void Con_UpdateKnownWords(void)
  * @return          A NULL-terminated array of pointers to all the known
  *                  words which match (at least partially) @param word.
  */
-knownword_t **Con_CollectKnownWordsMatchingWord(char *word,
+knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
                                                 unsigned int *count)
 {
     unsigned int i, num = 0, num2 = 0;
@@ -594,8 +636,8 @@ knownword_t **Con_CollectKnownWordsMatchingWord(char *word,
 
 void Con_DestroyDatabases(void)
 {
-    int     i, k;
-    char   *ptr;
+    unsigned int i, k;
+    char        *ptr;
 
     // Free the data of the data cvars.
     for(i = 0; i < numCVars; ++i)
@@ -638,9 +680,9 @@ void Con_DestroyDatabases(void)
 
 D_CMD(ListCmds)
 {
-    int     i;
-    char    *str;
-    void *ccmd_help;
+    unsigned int i;
+    char       *str;
+    void       *ccmd_help;
 
     Con_Printf("Console commands:\n");
     for(i = 0; i < numCCmds; ++i)
@@ -660,7 +702,7 @@ D_CMD(ListCmds)
 
 D_CMD(ListVars)
 {
-    int     i;
+    unsigned int i;
 
     Con_Printf("Console variables:\n");
     for(i = 0; i < numCVars; ++i)
@@ -678,7 +720,7 @@ D_CMD(ListVars)
 
 D_CMD(ListAliases)
 {
-    int     i;
+    unsigned int i;
 
     Con_Printf("Aliases:\n");
     for(i = 0; i < numCAliases; ++i)
@@ -687,7 +729,7 @@ D_CMD(ListAliases)
             if(strnicmp(caliases[i].name, argv[1], strlen(argv[1])))
                 continue;
 
-        Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s == %s\n", caliases[i].name,
+        Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s == %s\n", caliases[i].name,
                      caliases[i].command);
     }
     return true;

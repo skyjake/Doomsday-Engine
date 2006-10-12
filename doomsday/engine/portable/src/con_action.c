@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -44,24 +45,18 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-action_t *ddactions = NULL;     // Pointer to the actions list.
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+action_t *ddactions = NULL;     // Pointer to the actions list.
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Con_DefineActions
- */
 void Con_DefineActions(action_t *acts)
 {
     // Store a pointer to the list of actions.
     ddactions = acts;
 }
 
-/*
- * Con_ClearActions
- */
 void Con_ClearActions(void)
 {
     action_t *act;
@@ -70,12 +65,16 @@ void Con_ClearActions(void)
         act->on = false;
 }
 
-/*
+/**
  * The command begins with a '+' or a '-'.
- * Returns true if the action was changed successfully.
- * If has_prefix is false, the state of the action is negated.
+ *
+ * @param cmd           The action command to search for.
+ * @param hasPrefix     If <code>false</code> the state of the action is
+ *                      negated.
+ * @return              <code>true</code> if the action was changed
+ *                      successfully.
  */
-int Con_ActionCommand(char *cmd, boolean has_prefix)
+boolean Con_ActionCommand(const char *cmd, boolean hasPrefix)
 {
     char    prefix = cmd[0];
     int     v1, v2;
@@ -85,7 +84,7 @@ int Con_ActionCommand(char *cmd, boolean has_prefix)
     if(ddactions == NULL)
         return false;
 
-    strncpy(name8, cmd + (has_prefix ? 1 : 0), 8);
+    strncpy(name8, cmd + (hasPrefix ? 1 : 0), 8);
     v1 = *(int *) name8;
     v2 = *(int *) &name8[4];
 
@@ -95,17 +94,18 @@ int Con_ActionCommand(char *cmd, boolean has_prefix)
         if(v1 == *(int *) act->name && v2 == *(int *) &act->name[4])
         {
             // This is a match!
-            if(has_prefix)
+            if(hasPrefix)
                 act->on = prefix == '+' ? true : false;
             else
                 act->on = !act->on;
             return true;
         }
     }
+
     return false;
 }
 
-/*
+/**
  * Prints a list of the action names registered by the game DLL.
  */
 D_CMD(ListActs)
@@ -115,5 +115,6 @@ D_CMD(ListActs)
     Con_Message("Action commands registered by the game DLL:\n");
     for(act = ddactions; act->name[0]; act++)
         Con_Message("  %s\n", act->name);
+
     return true;
 }
