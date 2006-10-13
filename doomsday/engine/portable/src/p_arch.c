@@ -2364,11 +2364,11 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         switch(prop->property)
         {
         case DAM_X:
-            ReadValue(map, DMT_VERTEX_X, &p->x, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_VERTEX_X, &p->pos[VX], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_Y:
-            ReadValue(map, DMT_VERTEX_Y, &p->y, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_VERTEX_Y, &p->pos[VY], buffer + prop->offset, prop, idx);
             break;
 
         default:
@@ -2836,18 +2836,18 @@ static void P_ProcessSegs(gamemap_t* map, int version)
             {
                 if(side == 0)
                     seg->offset =
-                        FRACUNIT * AccurateDistance(seg->v1->x - ldef->v1->x,
-                                                    seg->v1->y - ldef->v1->y);
+                        FRACUNIT * AccurateDistance(seg->v1->pos[VX] - ldef->v1->pos[VX],
+                                                    seg->v1->pos[VY] - ldef->v1->pos[VY]);
                 else
                     seg->offset =
-                        FRACUNIT * AccurateDistance(seg->v1->x - ldef->v2->x,
-                                                    seg->v1->y - ldef->v2->y);
+                        FRACUNIT * AccurateDistance(seg->v1->pos[VX] - ldef->v2->pos[VX],
+                                                    seg->v1->pos[VY] - ldef->v2->pos[VY]);
             }
 
             if(seg->angle == -1)
                 seg->angle =
-                    bamsAtan2((seg->v2->y - seg->v1->y) >> FRACBITS,
-                              (seg->v2->x - seg->v1->x) >> FRACBITS) << FRACBITS;
+                    bamsAtan2((seg->v2->pos[VY] - seg->v1->pos[VY]) >> FRACBITS,
+                              (seg->v2->pos[VX] - seg->v1->pos[VX]) >> FRACBITS) << FRACBITS;
         }
         else
         {
@@ -2860,8 +2860,8 @@ static void P_ProcessSegs(gamemap_t* map, int version)
 
         // Calculate the length of the segment. We need this for
         // the texture coordinates. -jk
-        seg->length =
-            AccurateDistance(seg->v2->x - seg->v1->x, seg->v2->y - seg->v1->y);
+        seg->length = AccurateDistance(seg->v2->pos[VX] - seg->v1->pos[VX],
+                                       seg->v2->pos[VY] - seg->v1->pos[VY]);
 
         if(version == 0 && seg->length == 0)
             seg->length = 0.01f; // Hmm...
@@ -2873,9 +2873,9 @@ static void P_ProcessSegs(gamemap_t* map, int version)
             surface_t *surface = &seg->sidedef->top;
 
             surface->normal[VY] =
-                (FIX2FLT(seg->v1->x) - FIX2FLT(seg->v2->x)) / seg->length;
+                (FIX2FLT(seg->v1->pos[VX]) - FIX2FLT(seg->v2->pos[VX])) / seg->length;
             surface->normal[VX] =
-                (FIX2FLT(seg->v2->y) - FIX2FLT(seg->v1->y)) / seg->length;
+                (FIX2FLT(seg->v2->pos[VY]) - FIX2FLT(seg->v1->pos[VY])) / seg->length;
             surface->normal[VZ] = 0;
 
             // All surfaces of a sidedef have the same normal.
@@ -2910,8 +2910,8 @@ static void P_FinishLineDefs(gamemap_t* map)
 
         v1 = ld->v1;
         v2 = ld->v2;
-        ld->dx = v2->x - v1->x;
-        ld->dy = v2->y - v1->y;
+        ld->dx = v2->pos[VX] - v1->pos[VX];
+        ld->dy = v2->pos[VY] - v1->pos[VY];
 
         if(!ld->dx)
             ld->slopetype = ST_VERTICAL;
@@ -2925,26 +2925,26 @@ static void P_FinishLineDefs(gamemap_t* map)
                 ld->slopetype = ST_NEGATIVE;
         }
 
-        if(v1->x < v2->x)
+        if(v1->pos[VX] < v2->pos[VX])
         {
-            ld->bbox[BOXLEFT] = v1->x;
-            ld->bbox[BOXRIGHT] = v2->x;
+            ld->bbox[BOXLEFT]   = v1->pos[VX];
+            ld->bbox[BOXRIGHT]  = v2->pos[VX];
         }
         else
         {
-            ld->bbox[BOXLEFT] = v2->x;
-            ld->bbox[BOXRIGHT] = v1->x;
+            ld->bbox[BOXLEFT]   = v2->pos[VX];
+            ld->bbox[BOXRIGHT]  = v1->pos[VX];
         }
 
-        if(v1->y < v2->y)
+        if(v1->pos[VY] < v2->pos[VY])
         {
-            ld->bbox[BOXBOTTOM] = v1->y;
-            ld->bbox[BOXTOP] = v2->y;
+            ld->bbox[BOXBOTTOM] = v1->pos[VY];
+            ld->bbox[BOXTOP]    = v2->pos[VY];
         }
         else
         {
-            ld->bbox[BOXBOTTOM] = v2->y;
-            ld->bbox[BOXTOP] = v1->y;
+            ld->bbox[BOXBOTTOM] = v2->pos[VY];
+            ld->bbox[BOXTOP]    = v1->pos[VY];
         }
 
         if(ld->sidenum[0] >= 0 && ld->sidenum[0] < map->numsides)
@@ -3140,8 +3140,8 @@ static void P_GroupLines(gamemap_t* map)
             for(k = sec->linecount; k ; --k)
             {
                 li = sec->Lines[sec->linecount - k];
-                M_AddToBox(bbox, li->v1->x, li->v1->y);
-                M_AddToBox(bbox, li->v2->x, li->v2->y);
+                M_AddToBox(bbox, li->v1->pos[VX], li->v1->pos[VY]);
+                M_AddToBox(bbox, li->v2->pos[VX], li->v2->pos[VY]);
             }
         }
         else // Its a "benign sector"
@@ -3154,19 +3154,18 @@ static void P_GroupLines(gamemap_t* map)
         }
 
         // set the degenmobj_t to the middle of the bounding box
-        sec->soundorg.x = (bbox[BOXRIGHT] + bbox[BOXLEFT]) / 2;
-        sec->soundorg.y = (bbox[BOXTOP] + bbox[BOXBOTTOM]) / 2;
+        sec->soundorg.pos[VX] = (bbox[BOXRIGHT] + bbox[BOXLEFT]) / 2;
+        sec->soundorg.pos[VY] = (bbox[BOXTOP] + bbox[BOXBOTTOM]) / 2;
 
         // set the z height of the sector sound origin
-        sec->soundorg.z = (sec->planes[PLN_CEILING]->height - sec->planes[PLN_FLOOR]->height) / 2;
+        sec->soundorg.pos[VZ] = (sec->planes[PLN_CEILING]->height - sec->planes[PLN_FLOOR]->height) / 2;
 
         // set the position of the sound origin for all plane sound origins.
         for(k = 0; k < sec->planecount; ++k)
         {
-            sec->planes[k]->soundorg.x = sec->soundorg.x;
-            sec->planes[k]->soundorg.y = sec->soundorg.y;
-
-            sec->planes[k]->soundorg.z = sec->planes[k]->height;
+            sec->planes[k]->soundorg.pos[VX] = sec->soundorg.pos[VX];
+            sec->planes[k]->soundorg.pos[VY] = sec->soundorg.pos[VY];
+            sec->planes[k]->soundorg.pos[VZ] = sec->planes[k]->height;
         }
 
         // adjust bounding box to map blocks
@@ -3245,7 +3244,7 @@ static void P_CreateBlockMap(gamemap_t* map)
     for(i = 0; i < map->numvertexes; ++i)
     {
         vtx = &map->vertexes[i];
-        V2_Set(point, FIX2FLT(vtx->x), FIX2FLT(vtx->y));
+        V2_Set(point, FIX2FLT(vtx->pos[VX]), FIX2FLT(vtx->pos[VY]));
         if(!i)
             V2_InitBox(bounds, point);
         else
@@ -3294,10 +3293,10 @@ static void P_CreateBlockMap(gamemap_t* map)
     for(i = 0; i < map->numlines; i++)
     {
         line_t *line = &map->lines[i];
-        int v1[2] = {line->v1->x >> FRACBITS,
-                     line->v1->y >> FRACBITS};
-        int v2[2] = {line->v2->x >> FRACBITS,
-                     line->v2->y >> FRACBITS};
+        int v1[2] = {line->v1->pos[VX] >> FRACBITS,
+                     line->v1->pos[VY] >> FRACBITS};
+        int v2[2] = {line->v2->pos[VX] >> FRACBITS,
+                     line->v2->pos[VY] >> FRACBITS};
         int dx = v2[VX] - v1[VX];
         int dy = v2[VY] - v1[VY];
         int vert = !dx;

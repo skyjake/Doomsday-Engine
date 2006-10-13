@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -353,7 +353,7 @@ typedef struct deltalink_s {
  */
 typedef struct ownerinfo_s {
     struct pool_s  *pool;
-    fixed_t         x, y, z;       // Distance is the most important factor
+    fixed_t         pos[3];       // Distance is the most important factor
     angle_t         angle;         // Angle can change rapidly => not very important
     fixed_t         speed;
     uint            ackThreshold;  // Expected ack time in milliseconds

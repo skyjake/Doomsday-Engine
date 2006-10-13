@@ -432,12 +432,12 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
         // Calculate the boundaries.
         for(i = 0, bound = boundaries; i < count; i++, bound++)
         {
-            V2_SetFixed(bound->left, polys[i].outer[0]->x,
-                        polys[i].outer[0]->y);
+            V2_SetFixed(bound->left, polys[i].outer[0]->pos[VX],
+                        polys[i].outer[0]->pos[VY]);
             V2_Sum(bound->a, polys[i].inoffset[0], bound->left);
 
-            V2_SetFixed(bound->right, polys[i].outer[1]->x,
-                        polys[i].outer[1]->y);
+            V2_SetFixed(bound->right, polys[i].outer[1]->pos[VX],
+                        polys[i].outer[1]->pos[VY]);
             V2_Sum(bound->b, polys[i].inoffset[1], bound->right);
         }
         memset(overlaps, 0, count);
@@ -460,8 +460,8 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
                 if((overlaps[i] & OVERLAP_ALL) == OVERLAP_ALL)
                     break;
 
-                V2_SetFixed(a, line->v1->x, line->v1->y);
-                V2_SetFixed(b, line->v2->x, line->v2->y);
+                V2_SetFixed(a, line->v1->pos[VX], line->v1->pos[VY]);
+                V2_SetFixed(b, line->v2->pos[VX], line->v2->pos[VY]);
 
                 // Try the left edge of the shadow.
                 V2_Intercept2(bound->left, bound->a, a /*other->left */ ,
@@ -597,14 +597,14 @@ void R_InitSectorShadows(void)
 
     for(i = 0, poly = shadows; i < maxCount; i++, poly++)
     {
-        V2_Set(point, FIX2FLT(poly->outer[0]->x), FIX2FLT(poly->outer[0]->y));
+        V2_Set(point, FIX2FLT(poly->outer[0]->pos[VX]), FIX2FLT(poly->outer[0]->pos[VY]));
         V2_InitBox(bounds, point);
 
         // Use the extended points, they are wider than inoffsets.
         V2_Sum(point, point, poly->extoffset[0]);
         V2_AddToBox(bounds, point);
 
-        V2_Set(point, FIX2FLT(poly->outer[1]->x), FIX2FLT(poly->outer[1]->y));
+        V2_Set(point, FIX2FLT(poly->outer[1]->pos[VX]), FIX2FLT(poly->outer[1]->pos[VY]));
         V2_AddToBox(bounds, point);
 
         V2_Sum(point, point, poly->extoffset[1]);

@@ -881,51 +881,51 @@ void AM_initVariables(void)
 #ifdef __JDOOM__
             if(mo->type == MT_MISC4)
             {
-                KeyPoints[0].x = mo->pos[VX];
-                KeyPoints[0].y = mo->pos[VY];
+                KeyPoints[0].pos[VX] = mo->pos[VX];
+                KeyPoints[0].pos[VY] = mo->pos[VY];
             }
             if(mo->type == MT_MISC5)
             {
-                KeyPoints[1].x = mo->pos[VX];
-                KeyPoints[1].y = mo->pos[VY];
+                KeyPoints[1].pos[VX] = mo->pos[VX];
+                KeyPoints[1].pos[VY] = mo->pos[VY];
             }
             if(mo->type == MT_MISC6)
             {
-                KeyPoints[2].x = mo->pos[VX];
-                KeyPoints[2].y = mo->pos[VY];
+                KeyPoints[2].pos[VX] = mo->pos[VX];
+                KeyPoints[2].pos[VY] = mo->pos[VY];
             }
             if(mo->type == MT_MISC7)
             {
-                KeyPoints[3].x = mo->pos[VX];
-                KeyPoints[3].y = mo->pos[VY];
+                KeyPoints[3].pos[VX] = mo->pos[VX];
+                KeyPoints[3].pos[VY] = mo->pos[VY];
             }
             if(mo->type == MT_MISC8)
             {
-                KeyPoints[4].x = mo->pos[VX];
-                KeyPoints[4].y = mo->pos[VY];
+                KeyPoints[4].pos[VX] = mo->pos[VX];
+                KeyPoints[4].pos[VY] = mo->pos[VY];
             }
             if(mo->type == MT_MISC9)
             {
-                KeyPoints[5].x = mo->pos[VX];
-                KeyPoints[5].y = mo->pos[VY];
+                KeyPoints[5].pos[VX] = mo->pos[VX];
+                KeyPoints[5].pos[VY] = mo->pos[VY];
             }
 #elif __JHERETIC__              // NB - Should really put the keys into a struct for neatness.
                                 // name of the vector object, object keyname, colour etc.
                                 // could easily display other objects on the map then...
             if(mo->type == MT_CKEY)
             {
-                KeyPoints[0].x = mo->pos[VX];
-                KeyPoints[0].y = mo->pos[VY];
+                KeyPoints[0].pos[VX] = mo->pos[VX];
+                KeyPoints[0].pos[VY] = mo->pos[VY];
             }
             else if(mo->type == MT_BKYY)
             {
-                KeyPoints[1].x = mo->pos[VX];
-                KeyPoints[1].y = mo->pos[VY];
+                KeyPoints[1].pos[VX] = mo->pos[VX];
+                KeyPoints[1].pos[VY] = mo->pos[VY];
             }
             else if(mo->type == MT_AKYY)
             {
-                KeyPoints[2].x = mo->pos[VX];
-                KeyPoints[2].y = mo->pos[VY];
+                KeyPoints[2].pos[VX] = mo->pos[VX];
+                KeyPoints[2].pos[VY] = mo->pos[VY];
             }
 #endif                                // FIXME: Keys in jHexen!
         }
@@ -2034,10 +2034,10 @@ void AM_drawKeys(void)
     gl.Begin(DGL_LINES);
 
     for (i=0; i< NUMBEROFKEYS; i++){
-        if(KeyPoints[i].x != 0 || KeyPoints[i].y != 0)
+        if(KeyPoints[i].pos[VX] != 0 || KeyPoints[i].pos[VY] != 0)
         {
             AM_drawLineCharacter(keysquare, NUMKEYSQUARELINES, size, 0, keycolors[i],
-                                 FIX2FLT(KeyPoints[i].x), FIX2FLT(KeyPoints[i].y));
+                                 FIX2FLT(KeyPoints[i].pos[VX]), FIX2FLT(KeyPoints[i].pos[VY]));
         }
     }
     gl.End();

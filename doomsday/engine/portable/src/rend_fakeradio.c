@@ -1276,8 +1276,8 @@ void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     idx = (isCeiling ? ceilIndices : floorIndices);
 
     // Left outer corner.
-    vtx[idx[0]].pos[VX] = FIX2FLT(shadow->outer[0]->x);
-    vtx[idx[0]].pos[VY] = FIX2FLT(shadow->outer[0]->y);
+    vtx[idx[0]].pos[VX] = FIX2FLT(shadow->outer[0]->pos[VX]);
+    vtx[idx[0]].pos[VY] = FIX2FLT(shadow->outer[0]->pos[VY]);
     vtx[idx[0]].pos[VZ] = z;
     vtx[idx[0]].color.rgba[CA] = (DGLubyte) (255 * darkness);   // Black.
 
@@ -1285,8 +1285,8 @@ void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
         vtx[idx[0]].color.rgba[CA] *= 1 - sideOpen[0];
 
     // Right outer corner.
-    vtx[idx[1]].pos[VX] = FIX2FLT(shadow->outer[1]->x);
-    vtx[idx[1]].pos[VY] = FIX2FLT(shadow->outer[1]->y);
+    vtx[idx[1]].pos[VX] = FIX2FLT(shadow->outer[1]->pos[VX]);
+    vtx[idx[1]].pos[VY] = FIX2FLT(shadow->outer[1]->pos[VY]);
     vtx[idx[1]].pos[VZ] = z;
     vtx[idx[1]].color.rgba[CA] = (DGLubyte) (255 * darkness);
 
@@ -1349,8 +1349,8 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
 
         sector = R_GetShadowSector(shadow);
 
-        vec[VX] = vx - subsector->midpoint.x;
-        vec[VY] = vz - subsector->midpoint.y;
+        vec[VX] = vx - subsector->midpoint.pos[VX];
+        vec[VY] = vz - subsector->midpoint.pos[VY];
 
         for(pln = 0; pln < subsector->sector->planecount; pln++)
         {

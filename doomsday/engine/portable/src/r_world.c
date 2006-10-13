@@ -309,8 +309,8 @@ static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
 
         if(previdx < 0)
             previdx = num - 1;
-        if(points[i].x == points[previdx].x &&
-           points[i].y == points[previdx].y)
+        if(points[i].pos[VX] == points[previdx].pos[VX] &&
+           points[i].pos[VY] == points[previdx].pos[VY])
         {
             // This point (i) must be removed.
             memmove(points + i, points + i + 1,
@@ -337,8 +337,8 @@ static void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
     {
         if(i < num)
         {
-            clip->x = FIX2FLT(list[num - i - 1].x);
-            clip->y = FIX2FLT(list[num - i - 1].y);
+            clip->pos[VX] = FIX2FLT(list[num - i - 1].pos[VX]);
+            clip->pos[VY] = FIX2FLT(list[num - i - 1].pos[VY]);
             clip->dx = FIX2FLT(list[num - i - 1].dx);
             clip->dy = FIX2FLT(list[num - i - 1].dy);
         }
@@ -346,10 +346,10 @@ static void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
         {
             seg_t  *seg = SEG_PTR(ssec->firstline + i - num);
 
-            clip->x = FIX2FLT(seg->v1->x);
-            clip->y = FIX2FLT(seg->v1->y);
-            clip->dx = FIX2FLT(seg->v2->x - seg->v1->x);
-            clip->dy = FIX2FLT(seg->v2->y - seg->v1->y);
+            clip->pos[VX] = FIX2FLT(seg->v1->pos[VX]);
+            clip->pos[VY] = FIX2FLT(seg->v1->pos[VY]);
+            clip->dx = FIX2FLT(seg->v2->pos[VX] - seg->v1->pos[VX]);
+            clip->dy = FIX2FLT(seg->v2->pos[VY] - seg->v1->pos[VY]);
         }
     }
 
@@ -357,17 +357,17 @@ static void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
     numedgepoints = 4;
     edgepoints = M_Malloc(numedgepoints * sizeof(fvertex_t));
 
-    edgepoints[0].x = -32768;
-    edgepoints[0].y = 32768;
+    edgepoints[0].pos[VX] = -32768;
+    edgepoints[0].pos[VY] = 32768;
 
-    edgepoints[1].x = 32768;
-    edgepoints[1].y = 32768;
+    edgepoints[1].pos[VX] = 32768;
+    edgepoints[1].pos[VY] = 32768;
 
-    edgepoints[2].x = 32768;
-    edgepoints[2].y = -32768;
+    edgepoints[2].pos[VX] = 32768;
+    edgepoints[2].pos[VY] = -32768;
 
-    edgepoints[3].x = -32768;
-    edgepoints[3].y = -32768;
+    edgepoints[3].pos[VX] = -32768;
+    edgepoints[3].pos[VY] = -32768;
 
     // Do some clipping, <snip> <snip>
     edgepoints = edgeClipper(&numedgepoints, edgepoints, numclippers, clippers);
@@ -404,25 +404,25 @@ static void R_PrepareSubsector(subsector_t *sub)
     fvertex_t  *vtx = sub->verts;
 
     // Find the center point. First calculate the bounding box.
-    sub->bbox[0].x = sub->bbox[1].x = sub->midpoint.x = vtx->x;
-    sub->bbox[0].y = sub->bbox[1].y = sub->midpoint.y = vtx->y;
+    sub->bbox[0].pos[VX] = sub->bbox[1].pos[VX] = sub->midpoint.pos[VX] = vtx->pos[VX];
+    sub->bbox[0].pos[VY] = sub->bbox[1].pos[VY] = sub->midpoint.pos[VY] = vtx->pos[VY];
 
     for(j = 1, vtx++; j < num; ++j, vtx++)
     {
-        if(vtx->x < sub->bbox[0].x)
-            sub->bbox[0].x = vtx->x;
-        if(vtx->y < sub->bbox[0].y)
-            sub->bbox[0].y = vtx->y;
-        if(vtx->x > sub->bbox[1].x)
-            sub->bbox[1].x = vtx->x;
-        if(vtx->y > sub->bbox[1].y)
-            sub->bbox[1].y = vtx->y;
+        if(vtx->pos[VX] < sub->bbox[0].pos[VX])
+            sub->bbox[0].pos[VX] = vtx->pos[VX];
+        if(vtx->pos[VY] < sub->bbox[0].pos[VY])
+            sub->bbox[0].pos[VY] = vtx->pos[VY];
+        if(vtx->pos[VX] > sub->bbox[1].pos[VX])
+            sub->bbox[1].pos[VX] = vtx->pos[VX];
+        if(vtx->pos[VY] > sub->bbox[1].pos[VY])
+            sub->bbox[1].pos[VY] = vtx->pos[VY];
 
-        sub->midpoint.x += vtx->x;
-        sub->midpoint.y += vtx->y;
+        sub->midpoint.pos[VX] += vtx->pos[VX];
+        sub->midpoint.pos[VY] += vtx->pos[VY];
     }
-    sub->midpoint.x /= num;
-    sub->midpoint.y /= num;
+    sub->midpoint.pos[VX] /= num;
+    sub->midpoint.pos[VY] /= num;
 }
 
 static void R_PolygonizeWithoutCarving(void)
@@ -442,8 +442,8 @@ static void R_PolygonizeWithoutCarving(void)
         seg = SEG_PTR(sub->firstline);
         for(j = 0; j < num; ++j, seg++, vtx++)
         {
-            vtx->x = FIX2FLT(seg->v1->x);
-            vtx->y = FIX2FLT(seg->v1->y);
+            vtx->pos[VX] = FIX2FLT(seg->v1->pos[VX]);
+            vtx->pos[VY] = FIX2FLT(seg->v1->pos[VY]);
         }
 
         R_PrepareSubsector(sub);
@@ -483,8 +483,8 @@ void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
         memcpy(childlist, divlines, numdivlines * sizeof(divline_t));
 
     dl = childlist + numdivlines;
-    dl->x = nod->x;
-    dl->y = nod->y;
+    dl->pos[VX] = nod->x;
+    dl->pos[VY] = nod->y;
     // The right child gets the original line (LEFT side clipped).
     dl->dx = nod->dx;
     dl->dy = nod->dy;
@@ -801,11 +801,18 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
     while(adjusted[PLN_FLOOR] || adjusted[PLN_CEILING]);
 }
 
-static float TriangleArea(fvertex_t * o, fvertex_t * s, fvertex_t * t)
+static float TriangleArea(fvertex_t *o, fvertex_t *s, fvertex_t *t)
 {
-    fvertex_t a = { s->x - o->x, s->y - o->y };
-    fvertex_t b = { t->x - o->x, t->y - o->y };
-    float   area = (a.x * b.y - b.x * a.y) / 2;
+    fvertex_t a, b;
+    float   area;
+
+    a.pos[VX] = s->pos[VX] - o->pos[VX];
+    a.pos[VY] = s->pos[VY] - o->pos[VY];
+
+    b.pos[VX] = t->pos[VX] - o->pos[VX];
+    b.pos[VY] = t->pos[VY] - o->pos[VY];
+
+    area = (a.pos[VX] * b.pos[VY] - b.pos[VX] * a.pos[VY]) / 2;
 
     if(area < 0)
         return -area;
@@ -981,25 +988,25 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
 
     if(lineA->v1 == rootVtx)
     {
-        dx = lineA->v2->x - rootVtx->x;
-        dy = lineA->v2->y - rootVtx->y;
+        dx = lineA->v2->pos[VX] - rootVtx->pos[VX];
+        dy = lineA->v2->pos[VY] - rootVtx->pos[VY];
     }
     else
     {
-        dx = lineA->v1->x - rootVtx->x;
-        dy = lineA->v1->y - rootVtx->y;
+        dx = lineA->v1->pos[VX] - rootVtx->pos[VX];
+        dy = lineA->v1->pos[VY] - rootVtx->pos[VY];
     }
     angleA = bamsAtan2(-(dx >> 13), dy >> 13);
 
     if(lineB->v1 == rootVtx)
     {
-        dx = lineB->v2->x - rootVtx->x;
-        dy = lineB->v2->y - rootVtx->y;
+        dx = lineB->v2->pos[VX] - rootVtx->pos[VX];
+        dy = lineB->v2->pos[VY] - rootVtx->pos[VY];
     }
     else
     {
-        dx = lineB->v1->x - rootVtx->x;
-        dy = lineB->v1->y - rootVtx->y;
+        dx = lineB->v1->pos[VX] - rootVtx->pos[VX];
+        dy = lineB->v1->pos[VY] - rootVtx->pos[VY];
     }
     angleB = bamsAtan2(-(dx >> 13), dy >> 13);
 
@@ -2768,7 +2775,7 @@ const byte *R_GetSectorLightColor(sector_t *sector)
  */
 void R_GetMapSize(vertex_t *min, vertex_t *max)
 {
-/*    byte *ptr;
+/*  byte *ptr;
     int i;
     fixed_t x;
     fixed_t y;
@@ -2778,22 +2785,23 @@ void R_GetMapSize(vertex_t *min, vertex_t *max)
 
     for(i = 1, ptr = vertexes + VTXSIZE; i < numvertexes; i++, ptr += VTXSIZE)
     {
-        x = ((vertex_t *) ptr)->x;
-        y = ((vertex_t *) ptr)->y;
+        x = ((vertex_t *) ptr)->pos[VX];
+        y = ((vertex_t *) ptr)->pos[VY];
 
-        if(x < min->x)
-            min->x = x;
-        if(x > max->x)
-            max->x = x;
-        if(y < min->y)
-            min->y = y;
-        if(y > max->y)
-            max->y = y;
-            }*/
+        if(x < min->pos[VX])
+            min->pos[VX] = x;
+        if(x > max->pos[VX])
+            max->pos[VX] = x;
+        if(y < min->pos[VY])
+            min->pos[VY] = y;
+        if(y > max->pos[VY])
+            max->pos[VY] = y;
+    }
+*/
 
-    min->x = FRACUNIT * mapBounds[BLEFT];
-    min->y = FRACUNIT * mapBounds[BTOP];
+    min->pos[VX] = FRACUNIT * mapBounds[BLEFT];
+    min->pos[VY] = FRACUNIT * mapBounds[BTOP];
 
-    max->x = FRACUNIT * mapBounds[BRIGHT];
-    max->y = FRACUNIT * mapBounds[BBOTTOM];
+    max->pos[VX] = FRACUNIT * mapBounds[BRIGHT];
+    max->pos[VY] = FRACUNIT * mapBounds[BBOTTOM];
 }

@@ -274,8 +274,8 @@ void P_GiveKey(player_t *player, keytype_t key)
     if(player == &players[consoleplayer])
     {
         playerkeys |= 1 << key;
-        KeyPoints[key].x = 0;
-        KeyPoints[key].y = 0;
+        KeyPoints[key].pos[VX] = 0;
+        KeyPoints[key].pos[VY] = 0;
     }
 
     player->bonuscount = BONUSADD;

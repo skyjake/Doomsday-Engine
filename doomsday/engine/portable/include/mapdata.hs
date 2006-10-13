@@ -3,8 +3,12 @@
 
 struct vertex
     -       vertexinfo_s* info
-    FIXED   fixed_t     x
-    FIXED   fixed_t     y
+    -       fixed_t[2]    pos
+end
+
+public
+#define DMT_VERTEX_X            DDVT_FIXED
+#define DMT_VERTEX_Y            DDVT_FIXED
 end
 
 struct seg

@@ -416,8 +416,8 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
     num = ssecinfo->numvertices;
     for(i = 0; i < num; ++i)
     {
-        poly->vertices[i].pos[VX] = ssecinfo->vertices[vid].x;
-        poly->vertices[i].pos[VY] = ssecinfo->vertices[vid].y;
+        poly->vertices[i].pos[VX] = ssecinfo->vertices[vid].pos[VX];
+        poly->vertices[i].pos[VY] = ssecinfo->vertices[vid].pos[VY];
         poly->vertices[i].pos[VZ] = height;
 
         poly->vertices[i].dist = Rend_PointDist2D(poly->vertices[i].pos);

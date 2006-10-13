@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -272,9 +272,9 @@ int Cl_ReadPolyDelta(void)
     df = Msg_ReadPackedShort();
 
     if(df & PODF_DEST_X)
-        po->dest.x = (Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8);
+        po->dest.pos[VX] = (Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8);
     if(df & PODF_DEST_Y)
-        po->dest.y = (Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8);
+        po->dest.pos[VY] = (Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8);
     if(df & PODF_SPEED)
         po->speed = Msg_ReadShort() << 8;
     if(df & PODF_DEST_ANGLE)

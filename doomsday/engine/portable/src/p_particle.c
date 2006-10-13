@@ -525,13 +525,13 @@ static void P_NewParticle(ptcgen_t *gen)
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.
         {
             pt->pos[VX] =
-                FRACUNIT * (subsec->bbox[0].x +
-                            M_FRandom() * (subsec->bbox[1].x -
-                                           subsec->bbox[0].x));
+                FRACUNIT * (subsec->bbox[0].pos[VX] +
+                            M_FRandom() * (subsec->bbox[1].pos[VX] -
+                                           subsec->bbox[0].pos[VX]));
             pt->pos[VY] =
-                FRACUNIT * (subsec->bbox[0].y +
-                            M_FRandom() * (subsec->bbox[1].y -
-                                           subsec->bbox[0].y));
+                FRACUNIT * (subsec->bbox[0].pos[VY] +
+                            M_FRandom() * (subsec->bbox[1].pos[VY] -
+                                           subsec->bbox[0].pos[VY]));
             if(R_PointInSubsector(pt->pos[VX], pt->pos[VY]) == subsec)
                 break;          // This is a good place.
         }
@@ -626,8 +626,8 @@ boolean PIT_CheckLinePtc(line_t *ld, void *data)
     sector_t   *front, *back;
 
     // Setup the bounding box for the line.
-    ORDER(ld->v1->x, ld->v2->x, bbox[BOXLEFT], bbox[BOXRIGHT]);
-    ORDER(ld->v1->y, ld->v2->y, bbox[BOXBOTTOM], bbox[BOXTOP]);
+    ORDER(ld->v1->pos[VX], ld->v2->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
+    ORDER(ld->v1->pos[VY], ld->v2->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
 
     if(mbox[BOXRIGHT] <= bbox[BOXLEFT] || mbox[BOXLEFT] >= bbox[BOXRIGHT] ||
        mbox[BOXTOP] <= bbox[BOXBOTTOM] || mbox[BOXBOTTOM] >= bbox[BOXTOP])

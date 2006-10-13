@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -99,8 +99,7 @@ typedef struct runtime_mapdata_header_s {
 } runtime_mapdata_header_t;
 
 typedef struct fvertex_s {
-    float           x;
-    float           y;
+    float           pos[2];
 } fvertex_t;
 
 enum {
@@ -123,122 +122,6 @@ struct planeinfo_s;
 struct surfaceinfo_s;
 
 #include "p_maptypes.h"
-
-/*
-typedef struct vertex_s {
-    runtime_mapdata_header_t header;
-    fixed_t         x;
-    fixed_t         y;
-} vertex_t;
-
-typedef struct seg_s {
-    runtime_mapdata_header_t header;
-    vertex_t       *v1, *v2;
-    float           length;    // Accurate length of the segment (v1 -> v2).
-    fixed_t         offset;
-    struct side_s  *sidedef;
-    struct line_s  *linedef;
-    struct sector_s *frontsector;
-    struct sector_s *backsector;    // NULL for one sided lines
-    byte            flags;
-    angle_t         angle;
-} seg_t;
-
-typedef struct subsector_s {
-    runtime_mapdata_header_t header;
-    struct sector_s *sector;
-    int             linecount;
-    int             firstline;
-    struct polyobj_s *poly;    // NULL if there is no polyobj
-    // Sorted edge vertices for rendering floors and ceilings.
-    char            numverts;
-    fvertex_t      *verts;     // A list of edge vertices.
-    fvertex_t       bbox[2];   // Min and max points.
-    fvertex_t       midpoint;  // Center of vertices.
-    byte            flags;
-} subsector_t;
-
-typedef struct sector_s {
-    runtime_mapdata_header_t header;
-    fixed_t         floorheight, ceilingheight;
-    short           floorpic, ceilingpic;
-    short           lightlevel;
-    byte            rgb[3];
-    byte            floorrgb[3], ceilingrgb[3];
-    int             validcount;    // if == validcount, already checked
-    struct mobj_s  *thinglist;     // list of mobjs in sector
-    int             linecount;
-    struct line_s **Lines;         // [linecount] size
-    float           flooroffx, flooroffy;   // floor texture offset
-    float           ceiloffx, ceiloffy; // ceiling texture offset
-    // Plane glows
-    byte            floorglowrgb[3], ceilingglowrgb[3];
-    float           floorglow, ceilingglow;
-    int             skyfix;        // Offset to ceiling height
-    // rendering w/sky.
-    float           reverb[NUM_REVERB_DATA];
-    int             blockbox[4];   // mapblock bounding box for
-    // height changes
-    plane_t         planes[2];     // PLN_*
-    degenmobj_t     soundorg;      // origin for any sounds
-    degenmobj_t     floorsoundorg, ceilingsoundorg;
-    // played by the sector
-} sector_t;
-
-typedef struct side_s {
-    runtime_mapdata_header_t header;
-    fixed_t         textureoffset; // add this to the calculated texture col
-    fixed_t         rowoffset;     // add this to the calculated texture top
-    short           toptexture, bottomtexture, midtexture;
-    byte            toprgb[3], bottomrgb[3], midrgba[4];
-    blendmode_t     blendmode;
-    short           flags;
-    sector_t        *sector;
-} side_t;
-
-typedef struct line_s {
-    runtime_mapdata_header_t header;
-    vertex_t       *v1;
-    vertex_t       *v2;
-    short           flags;
-    sector_t       *frontsector;
-    sector_t       *backsector;
-    fixed_t         dx;
-    fixed_t         dy;
-    slopetype_t     slopetype;
-    int             validcount;
-    int             sidenum[2];
-    fixed_t         bbox[4];
-} line_t;
-
-typedef struct polyobj_s {
-    runtime_mapdata_header_t header;
-    int             numsegs;
-    seg_t         **segs;
-    int             validcount;
-    degenmobj_t     startSpot;
-    angle_t         angle;
-    ddvertex_t     *originalPts;   // used as the base for the rotations
-    ddvertex_t     *prevPts;       // use to restore the old point values
-    int             tag;           // reference tag assigned in HereticEd
-    fixed_t         bbox[4];
-    vertex_t        dest;
-    int             speed;         // Destination XY and speed.
-    angle_t         destAngle;     // Destination angle.
-    angle_t         angleSpeed;    // Rotation speed.
-    boolean         crush;         // should the polyobj attempt to crush mobjs?
-    int             seqType;
-    fixed_t         size;          // polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
-    void           *specialdata;   // pointer a thinker, if the poly is moving
-} polyobj_t;
-
-typedef struct {
-    runtime_mapdata_header_t header;
-    fixed_t         x, y, dx, dy;  // partition line
-    fixed_t         bbox[2][4];    // bounding box for each child
-    int             children[2];   // if NF_SUBSECTOR its a subsector
-} node_t;
-*/
 
 /*
  * The map data arrays are accessible globally inside the engine.

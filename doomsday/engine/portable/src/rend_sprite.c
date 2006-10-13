@@ -128,15 +128,15 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
     data.rgb1 = quad->vertices[0].color.rgba;
     data.rgb2 = quad->vertices[1].color.rgba;
 
-    data.viewvec.x = FIX2FLT(spr->data.mo.gx - viewx);
-    data.viewvec.y = FIX2FLT(spr->data.mo.gy - viewy);
+    data.viewvec.pos[VX] = FIX2FLT(spr->data.mo.gx - viewx);
+    data.viewvec.pos[VY] = FIX2FLT(spr->data.mo.gy - viewy);
 
-    len = sqrt(data.viewvec.x * data.viewvec.x +
-               data.viewvec.y * data.viewvec.y);
+    len = sqrt(data.viewvec.pos[VX] * data.viewvec.pos[VX] +
+               data.viewvec.pos[VY] * data.viewvec.pos[VY]);
     if(len)
     {
-        data.viewvec.x /= len;
-        data.viewvec.y /= len;
+        data.viewvec.pos[VX] /= len;
+        data.viewvec.pos[VY] /= len;
         DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx,
                           spr->data.mo.gy, dlMaxRad << FRACBITS,
                           &data, Rend_SpriteLighter);
@@ -687,8 +687,8 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
     if(zfactor > 1)
         zfactor = 1;
 
-    lightVec.x /= fdist;
-    lightVec.y /= fdist;
+    lightVec.pos[VX] /= fdist;
+    lightVec.pos[VY] /= fdist;
 
     // Also include the effect of the distance to zfactor.
     fdist /= (lum->radius * 2) /*dlMaxRad */ ;
@@ -699,8 +699,10 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
     zfactor *= fdist;
 
     // Now the view vector and light vector are normalized.
-    directness = slData->viewvec.x * lightVec.x + slData->viewvec.y * lightVec.y;   // Dot product.
-    side = -slData->viewvec.y * lightVec.x + slData->viewvec.x * lightVec.y;
+    directness = slData->viewvec.pos[VX] * lightVec.pos[VX] +
+                 slData->viewvec.pos[VY] * lightVec.pos[VY];   // Dot product.
+    side = -slData->viewvec.pos[VY] * lightVec.pos[VX] +
+            slData->viewvec.pos[VX] * lightVec.pos[VY];
     // If side > 0, the light comes from the right.
     if(directness > 0)
     {

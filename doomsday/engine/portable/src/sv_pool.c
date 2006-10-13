@@ -94,7 +94,7 @@ typedef struct cregister_s {
  * Each entity (mobj, sector, side, etc.) has an origin the world.
  */
 typedef struct origin_s {
-    fixed_t x, y;
+    fixed_t pos[2];
 } origin_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -200,10 +200,10 @@ void Sv_InitPools(void)
     {
         sec = SECTOR_PTR(i);
 
-        sectorOrigins[i].x =
+        sectorOrigins[i].pos[VX] =
             FRACUNIT * (sec->info->bounds[BRIGHT] +
                         sec->info->bounds[BLEFT]) / 2;
-        sectorOrigins[i].y =
+        sectorOrigins[i].pos[VY] =
             FRACUNIT * (sec->info->bounds[BBOTTOM] +
                         sec->info->bounds[BTOP]) / 2;
     }
@@ -216,8 +216,8 @@ void Sv_InitPools(void)
         if(sideOwners[i] == NULL)
             continue;
 
-        sideOrigins[i].x = sideOwners[i]->v1->x + sideOwners[i]->dx / 2;
-        sideOrigins[i].y = sideOwners[i]->v1->y + sideOwners[i]->dy / 2;
+        sideOrigins[i].pos[VX] = sideOwners[i]->v1->pos[VX] + sideOwners[i]->dx / 2;
+        sideOrigins[i].pos[VY] = sideOwners[i]->v1->pos[VY] + sideOwners[i]->dy / 2;
     }
 
     // Store the current state of the world into both the registers.
@@ -511,8 +511,8 @@ void Sv_RegisterPoly(dt_poly_t *reg, int number)
 {
     polyobj_t *poly = PO_PTR(number);
 
-    reg->dest.x = poly->dest.x;
-    reg->dest.y = poly->dest.y;
+    reg->dest.pos[VX] = poly->dest.pos[VX];
+    reg->dest.pos[VY] = poly->dest.pos[VY];
     reg->speed = poly->speed;
     reg->destAngle = poly->destAngle;
     reg->angleSpeed = poly->angleSpeed;
@@ -972,9 +972,9 @@ boolean Sv_RegisterComparePoly(cregister_t *reg, int number, polydelta_t *d)
     Sv_RegisterPoly(&d->po, number);
 
     // What is different?
-    if(r->dest.x != s->dest.x)
+    if(r->dest.pos[VX] != s->dest.pos[VX])
         df |= PODF_DEST_X;
-    if(r->dest.y != s->dest.y)
+    if(r->dest.pos[VY] != s->dest.pos[VY])
         df |= PODF_DEST_Y;
     if(r->speed != s->speed)
         df |= PODF_SPEED;
@@ -1061,9 +1061,9 @@ void Sv_UpdateOwnerInfo(pool_t *pool)
 
     if(player->mo)
     {
-        info->x = player->mo->pos[VX];
-        info->y = player->mo->pos[VY];
-        info->z = player->mo->pos[VZ];
+        info->pos[VX] = player->mo->pos[VX];
+        info->pos[VY] = player->mo->pos[VY];
+        info->pos[VZ] = player->mo->pos[VZ];
         info->angle = player->mo->angle;
         info->speed = P_ApproxDistance(player->mo->momx, player->mo->momy);
     }
@@ -1471,9 +1471,9 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         dt_poly_t *d = &((polydelta_t *) dest)->po;
 
         if(sf & PODF_DEST_X)
-            d->dest.x = s->dest.x;
+            d->dest.pos[VX] = s->dest.pos[VX];
         if(sf & PODF_DEST_Y)
-            d->dest.y = s->dest.y;
+            d->dest.pos[VY] = s->dest.pos[VY];
         if(sf & PODF_SPEED)
             d->speed = s->speed;
         if(sf & PODF_DEST_ANGLE)
@@ -1603,8 +1603,8 @@ fixed_t Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
             z = mo->ceilingz - mo->height;
     }
 
-    return P_ApproxDistance3(info->x - mo->pos[VX], info->y - mo->pos[VY],
-                             info->z - (z + mo->height / 2));
+    return P_ApproxDistance3(info->pos[VX] - mo->pos[VX], info->pos[VY] - mo->pos[VY],
+                             info->pos[VZ] - (z + mo->height / 2));
 }
 
 /**
@@ -1614,9 +1614,9 @@ fixed_t Sv_SectorDistance(int index, const ownerinfo_t *info)
 {
     sector_t *sector = SECTOR_PTR(index);
 
-    return P_ApproxDistance3(info->x - sectorOrigins[index].x,
-                             info->y - sectorOrigins[index].y,
-                             info->z -
+    return P_ApproxDistance3(info->pos[VX] - sectorOrigins[index].pos[VX],
+                             info->pos[VY] - sectorOrigins[index].pos[VY],
+                             info->pos[VZ] -
                              ((sector->planes[PLN_CEILING]->height +
                                sector->planes[PLN_FLOOR]->height) / 2));
 }
@@ -1659,16 +1659,16 @@ fixed_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if(delta->type == DT_SIDE)
     {
-        return P_ApproxDistance(info->x - sideOrigins[delta->id].x,
-                                info->y - sideOrigins[delta->id].y);
+        return P_ApproxDistance(info->pos[VX] - sideOrigins[delta->id].pos[VX],
+                                info->pos[VY] - sideOrigins[delta->id].pos[VY]);
     }
 
     if(delta->type == DT_POLY)
     {
         polyobj_t *po = PO_PTR(delta->id);
 
-        return P_ApproxDistance(info->x - po->startSpot.x,
-                                info->y - po->startSpot.y);
+        return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
+                                info->pos[VY] - po->startSpot.pos[VY]);
     }
 
     if(delta->type == DT_MOBJ_SOUND)
@@ -1687,8 +1687,8 @@ fixed_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
     {
         polyobj_t *po = PO_PTR(delta->id);
 
-        return P_ApproxDistance(info->x - po->startSpot.x,
-                                info->y - po->startSpot.y);
+        return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
+                                info->pos[VY] - po->startSpot.pos[VY]);
     }
 
     // Unknown distance.

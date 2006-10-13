@@ -67,7 +67,7 @@ int     po_NumPolyobjs;
 void PO_Allocate(void)
 {
     int i;
-    
+
     polyobjs = Z_Malloc(po_NumPolyobjs * sizeof(polyobj_t), PU_LEVEL, 0);
     memset(polyobjs, 0, po_NumPolyobjs * sizeof(polyobj_t));
 
@@ -106,30 +106,30 @@ void UpdateSegBBox(seg_t *seg)
 
     line = seg->linedef;
 
-    if(seg->v1->x < seg->v2->x)
+    if(seg->v1->pos[VX] < seg->v2->pos[VX])
     {
-        line->bbox[BOXLEFT] = seg->v1->x;
-        line->bbox[BOXRIGHT] = seg->v2->x;
+        line->bbox[BOXLEFT]  = seg->v1->pos[VX];
+        line->bbox[BOXRIGHT] = seg->v2->pos[VX];
     }
     else
     {
-        line->bbox[BOXLEFT] = seg->v2->x;
-        line->bbox[BOXRIGHT] = seg->v1->x;
+        line->bbox[BOXLEFT]  = seg->v2->pos[VX];
+        line->bbox[BOXRIGHT] = seg->v1->pos[VX];
     }
-    if(seg->v1->y < seg->v2->y)
+    if(seg->v1->pos[VY] < seg->v2->pos[VY])
     {
-        line->bbox[BOXBOTTOM] = seg->v1->y;
-        line->bbox[BOXTOP] = seg->v2->y;
+        line->bbox[BOXBOTTOM] = seg->v1->pos[VY];
+        line->bbox[BOXTOP]    = seg->v2->pos[VY];
     }
     else
     {
-        line->bbox[BOXBOTTOM] = seg->v2->y;
-        line->bbox[BOXTOP] = seg->v1->y;
+        line->bbox[BOXBOTTOM] = seg->v2->pos[VY];
+        line->bbox[BOXTOP]    = seg->v1->pos[VY];
     }
 
     // Update the line's slopetype
-    line->dx = line->v2->x - line->v1->x;
-    line->dy = line->v2->y - line->v1->y;
+    line->dx = line->v2->pos[VX] - line->v1->pos[VX];
+    line->dy = line->v2->pos[VY] - line->v1->pos[VY];
     if(!line->dx)
     {
         line->slopetype = ST_VERTICAL;
@@ -180,10 +180,10 @@ boolean PO_MovePolyobj(int num, int x, int y)
     {
         if((*segList)->linedef->validcount != validcount)
         {
-            (*segList)->linedef->bbox[BOXTOP] += y;
+            (*segList)->linedef->bbox[BOXTOP]    += y;
             (*segList)->linedef->bbox[BOXBOTTOM] += y;
-            (*segList)->linedef->bbox[BOXLEFT] += x;
-            (*segList)->linedef->bbox[BOXRIGHT] += x;
+            (*segList)->linedef->bbox[BOXLEFT]   += x;
+            (*segList)->linedef->bbox[BOXRIGHT]  += x;
             (*segList)->linedef->validcount = validcount;
         }
         for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
@@ -195,11 +195,11 @@ boolean PO_MovePolyobj(int num, int x, int y)
         }
         if(veryTempSeg == segList)
         {
-            (*segList)->v1->x += x;
-            (*segList)->v1->y += y;
+            (*segList)->v1->pos[VX] += x;
+            (*segList)->v1->pos[VY] += y;
         }
-        (*prevPts).x += x;      // previous points are unique for each seg
-        (*prevPts).y += y;
+        (*prevPts).pos[VX] += x;      // previous points are unique for each seg
+        (*prevPts).pos[VY] += y;
     }
     segList = po->segs;
     for(count = po->numsegs; count; count--, segList++)
@@ -219,10 +219,10 @@ boolean PO_MovePolyobj(int num, int x, int y)
         {
             if((*segList)->linedef->validcount != validcount)
             {
-                (*segList)->linedef->bbox[BOXTOP] -= y;
+                (*segList)->linedef->bbox[BOXTOP]    -= y;
                 (*segList)->linedef->bbox[BOXBOTTOM] -= y;
-                (*segList)->linedef->bbox[BOXLEFT] -= x;
-                (*segList)->linedef->bbox[BOXRIGHT] -= x;
+                (*segList)->linedef->bbox[BOXLEFT]   -= x;
+                (*segList)->linedef->bbox[BOXRIGHT]  -= x;
                 (*segList)->linedef->validcount = validcount;
             }
             for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
@@ -234,19 +234,19 @@ boolean PO_MovePolyobj(int num, int x, int y)
             }
             if(veryTempSeg == segList)
             {
-                (*segList)->v1->x -= x;
-                (*segList)->v1->y -= y;
+                (*segList)->v1->pos[VX] -= x;
+                (*segList)->v1->pos[VY] -= y;
             }
-            (*prevPts).x -= x;
-            (*prevPts).y -= y;
+            (*prevPts).pos[VX] -= x;
+            (*prevPts).pos[VY] -= y;
             segList++;
             prevPts++;
         }
         PO_LinkPolyobj(po);
         return false;
     }
-    po->startSpot.x += x;
-    po->startSpot.y += y;
+    po->startSpot.pos[VX] += x;
+    po->startSpot.pos[VY] += y;
     PO_LinkPolyobj(po);
 
     // A change has occured.
@@ -302,12 +302,12 @@ boolean PO_RotatePolyobj(int num, angle_t angle)
     for(count = po->numsegs; count;
         count--, segList++, originalPts++, prevPts++)
     {
-        prevPts->x = (*segList)->v1->x;
-        prevPts->y = (*segList)->v1->y;
-        (*segList)->v1->x = originalPts->x;
-        (*segList)->v1->y = originalPts->y;
-        RotatePt(an, &(*segList)->v1->x, &(*segList)->v1->y, po->startSpot.x,
-                 po->startSpot.y);
+        prevPts->pos[VX] = (*segList)->v1->pos[VX];
+        prevPts->pos[VY] = (*segList)->v1->pos[VY];
+        (*segList)->v1->pos[VX] = originalPts->pos[VX];
+        (*segList)->v1->pos[VY] = originalPts->pos[VY];
+        RotatePt(an, &(*segList)->v1->pos[VX], &(*segList)->v1->pos[VY],
+                 po->startSpot.pos[VX], po->startSpot.pos[VY]);
     }
     segList = po->segs;
     blocked = false;
@@ -331,8 +331,8 @@ boolean PO_RotatePolyobj(int num, angle_t angle)
         prevPts = po->prevPts;
         for(count = po->numsegs; count; count--, segList++, prevPts++)
         {
-            (*segList)->v1->x = prevPts->x;
-            (*segList)->v1->y = prevPts->y;
+            (*segList)->v1->pos[VX] = prevPts->pos[VX];
+            (*segList)->v1->pos[VY] = prevPts->pos[VY];
         }
         segList = po->segs;
         validcount++;
@@ -394,31 +394,31 @@ void PO_LinkPolyobj(polyobj_t * po)
 
     // calculate the polyobj bbox
     tempSeg = po->segs;
-    rightX = leftX = (*tempSeg)->v1->x;
-    topY = bottomY = (*tempSeg)->v1->y;
+    rightX = leftX = (*tempSeg)->v1->pos[VX];
+    topY = bottomY = (*tempSeg)->v1->pos[VY];
 
     for(i = 0; i < po->numsegs; i++, tempSeg++)
     {
-        if((*tempSeg)->v1->x > rightX)
+        if((*tempSeg)->v1->pos[VX] > rightX)
         {
-            rightX = (*tempSeg)->v1->x;
+            rightX = (*tempSeg)->v1->pos[VX];
         }
-        if((*tempSeg)->v1->x < leftX)
+        if((*tempSeg)->v1->pos[VX] < leftX)
         {
-            leftX = (*tempSeg)->v1->x;
+            leftX = (*tempSeg)->v1->pos[VX];
         }
-        if((*tempSeg)->v1->y > topY)
+        if((*tempSeg)->v1->pos[VY] > topY)
         {
-            topY = (*tempSeg)->v1->y;
+            topY = (*tempSeg)->v1->pos[VY];
         }
-        if((*tempSeg)->v1->y < bottomY)
+        if((*tempSeg)->v1->pos[VY] < bottomY)
         {
-            bottomY = (*tempSeg)->v1->y;
+            bottomY = (*tempSeg)->v1->pos[VY];
         }
     }
-    po->bbox[BOXRIGHT] = (rightX - bmaporgx) >> MAPBLOCKSHIFT;
-    po->bbox[BOXLEFT] = (leftX - bmaporgx) >> MAPBLOCKSHIFT;
-    po->bbox[BOXTOP] = (topY - bmaporgy) >> MAPBLOCKSHIFT;
+    po->bbox[BOXRIGHT]  = (rightX - bmaporgx)  >> MAPBLOCKSHIFT;
+    po->bbox[BOXLEFT]   = (leftX - bmaporgx)   >> MAPBLOCKSHIFT;
+    po->bbox[BOXTOP]    = (topY - bmaporgy)    >> MAPBLOCKSHIFT;
     po->bbox[BOXBOTTOM] = (bottomY - bmaporgy) >> MAPBLOCKSHIFT;
     // add the polyobj to each blockmap section
     for(j = po->bbox[BOXBOTTOM] * bmapwidth; j <= po->bbox[BOXTOP] * bmapwidth;
@@ -475,21 +475,21 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po)
 
     ld = seg->linedef;
 
-    top = (ld->bbox[BOXTOP] - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
+    top    = (ld->bbox[BOXTOP]    - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
     bottom = (ld->bbox[BOXBOTTOM] - bmaporgy - MAXRADIUS) >> MAPBLOCKSHIFT;
-    left = (ld->bbox[BOXLEFT] - bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
-    right = (ld->bbox[BOXRIGHT] - bmaporgx + MAXRADIUS) >> MAPBLOCKSHIFT;
+    left   = (ld->bbox[BOXLEFT]   - bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
+    right  = (ld->bbox[BOXRIGHT]  - bmaporgx + MAXRADIUS) >> MAPBLOCKSHIFT;
 
     blocked = false;
 
     bottom = bottom < 0 ? 0 : bottom;
     bottom = bottom >= bmapheight ? bmapheight - 1 : bottom;
-    top = top < 0 ? 0 : top;
-    top = top >= bmapheight ? bmapheight - 1 : top;
-    left = left < 0 ? 0 : left;
-    left = left >= bmapwidth ? bmapwidth - 1 : left;
-    right = right < 0 ? 0 : right;
-    right = right >= bmapwidth ? bmapwidth - 1 : right;
+    top    = top    < 0 ? 0 : top;
+    top    = top    >= bmapheight ? bmapheight - 1 : top;
+    left   = left   < 0 ? 0 : left;
+    left   = left   >= bmapwidth ?  bmapwidth  - 1 : left;
+    right  = right  < 0 ? 0 : right;
+    right  = right  >= bmapwidth ?  bmapwidth  - 1 : right;
 
     for(j = bottom * bmapwidth; j <= top * bmapwidth; j += bmapwidth)
     {
@@ -500,14 +500,14 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po)
             {
                 if(mobj->ddflags & DDMF_SOLID || mobj->dplayer)
                 {
-                    tmbbox[BOXTOP] = mobj->pos[VY] + mobj->radius;
+                    tmbbox[BOXTOP]    = mobj->pos[VY] + mobj->radius;
                     tmbbox[BOXBOTTOM] = mobj->pos[VY] - mobj->radius;
-                    tmbbox[BOXLEFT] = mobj->pos[VX] - mobj->radius;
-                    tmbbox[BOXRIGHT] = mobj->pos[VX] + mobj->radius;
+                    tmbbox[BOXLEFT]   = mobj->pos[VX] - mobj->radius;
+                    tmbbox[BOXRIGHT]  = mobj->pos[VX] + mobj->radius;
 
-                    if(tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
-                       tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
-                       tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
+                    if(tmbbox[BOXRIGHT]  <= ld->bbox[BOXLEFT] ||
+                       tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT] ||
+                       tmbbox[BOXTOP]    <= ld->bbox[BOXBOTTOM] ||
                        tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
                     {
                         continue;

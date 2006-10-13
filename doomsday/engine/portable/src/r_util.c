@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -315,10 +315,10 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
         vi = sector->Lines[i]->v1;
         vj = sector->Lines[i]->v2;
 
-        if((vi->y < y && vj->y >= y) || (vj->y < y && vi->y >= y))
+        if((vi->pos[VY] < y && vj->pos[VY] >= y) || (vj->pos[VY] < y && vi->pos[VY] >= y))
         {
-            if(vi->x +
-               FixedMul(FixedDiv(y - vi->y, vj->y - vi->y), vj->x - vi->x) < x)
+            if(vi->pos[VX] +
+               FixedMul(FixedDiv(y - vi->pos[VY], vj->pos[VY] - vi->pos[VY]), vj->pos[VX] - vi->pos[VX]) < x)
             {
                 // Toggle oddness.
                 isOdd = !isOdd;
@@ -365,16 +365,17 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
         vi = &subsector->verts[i];
         vj = &subsector->verts[(i + 1) % subsector->numverts];
 
-        if(((vi->y - fy) * (vj->x - vi->x) -
-            (vi->x - fx) * (vj->y - vi->y)) < 0)
+        if(((vi->pos[VY] - fy) * (vj->pos[VX] - vi->pos[VX]) -
+            (vi->pos[VX] - fx) * (vj->pos[VY] - vi->pos[VY])) < 0)
         {
             // Outside the subsector's edges.
             return false;
         }
 
-/*      if((vi->y < fy && vj->y >= fy) || (vj->y < fy && vi->y >= fy))
+/*      if((vi->pos[VY] < fy && vj->pos[VY] >= fy) || (vj->pos[VY] < fy && vi->pos[VY] >= fy))
         {
-            if(vi->x + (((fy - vi->y)/(vj->y - vi->y)) * (vj->x - vi->x)) < fx)
+            if(vi->pos[VX] + (((fy - vi->pos[VY])/(vj->pos[VY] - vi->pos[VY])) *
+                              (vj->pos[VX] - vi->pos[VX])) < fx)
             {
                 // Toggle oddness.
                 isOdd = !isOdd;

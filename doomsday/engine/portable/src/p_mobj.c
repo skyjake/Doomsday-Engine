@@ -147,12 +147,11 @@ static boolean PIT_CheckLine(line_t *ld, void *parm)
     fixed_t bbox[4];
 
     // Setup the bounding box for the line.
-    ORDER(ld->v1->x, ld->v2->x, bbox[BOXLEFT], bbox[BOXRIGHT]);
-    ORDER(ld->v1->y, ld->v2->y, bbox[BOXBOTTOM], bbox[BOXTOP]);
+    ORDER(ld->v1->pos[VX], ld->v2->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
+    ORDER(ld->v1->pos[VY], ld->v2->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
 
-    if(tm->box[BOXRIGHT] <= bbox[BOXLEFT] || tm->box[BOXLEFT] >= bbox[BOXRIGHT]
-       || tm->box[BOXTOP] <= bbox[BOXBOTTOM] ||
-       tm->box[BOXBOTTOM] >= bbox[BOXTOP])
+    if(tm->box[BOXRIGHT] <= bbox[BOXLEFT] || tm->box[BOXLEFT] >= bbox[BOXRIGHT] ||
+       tm->box[BOXTOP] <= bbox[BOXBOTTOM] || tm->box[BOXBOTTOM] >= bbox[BOXTOP])
         return true;
 
     if(P_BoxOnLineSide(tm->box, ld) != -1)
@@ -902,7 +901,7 @@ void P_ThingZMovement(mobj_t *mo)
 
     // Adjust height.
     mo->pos[VZ] += mo->momz;
-    
+
     // Clip movement. Another thing?
     if(mo->onmobj && mo->pos[VZ] <= mo->onmobj->pos[VZ] + mo->onmobj->height)
     {

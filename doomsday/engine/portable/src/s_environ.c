@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -81,9 +81,9 @@ int S_TextureTypeForName(char *name)
     int     i, k;
     ded_tenviron_t *env;
 
-    for(i = 0, env = defs.tenviron; i < defs.count.tenviron.num; i++, env++)
+    for(i = 0, env = defs.tenviron; i < defs.count.tenviron.num; ++i, env++)
     {
-        for(k = 0; k < env->count.num; k++)
+        for(k = 0; k < env->count.num; ++k)
             if(!stricmp(env->textures[k].str, name))
             {
                 // A match!
@@ -118,33 +118,29 @@ void S_CalcSectorReverbs(void)
     sub_reverb = M_Malloc(sizeof(subreverb_t) * numsubsectors);
     memset(sub_reverb, 0, sizeof(subreverb_t) * numsubsectors);
 
+/*
+#if _DEBUG
+Con_Message("%d bytes; sub_reverb: %p\n", sizeof(subreverb_t) * numsubsectors, sub_reverb);
+#endif
+*/
     // First determine each subsectors' individual characteristics.
-    //ST_Message("%d bytes; sub_reverb: %p\n", sizeof(subreverb_t) * numsubsectors, sub_reverb);
-    for(c = 0; c < numsubsectors; c++)
+    for(c = 0; c < numsubsectors; ++c)
     {
         sub = SUBSECTOR_PTR(c);
         rev = &sub_reverb[c];
         // Space is the rough volume of the subsector (bounding box).
         rev->data[SRD_SPACE] =
             ((sub->sector->planes[PLN_CEILING]->height -
-              sub->sector->planes[PLN_FLOOR]->height) >> FRACBITS) * (sub->bbox[1].x -
-                                                        sub->bbox[0].x) *
-            (sub->bbox[1].y - sub->bbox[0].y);
-
-        //gi.Message( "sub %i: volume %f Mu\n", c, volume/1e6);
-        /*
-           i = (int) (volume/1e4);
-           if(i < 5) i = 5;
-           if(i > 255) i = 255;
-           sub->reverb[SSRD_SPACE] = i;
-         */
+              sub->sector->planes[PLN_FLOOR]->height) >> FRACBITS) * (sub->bbox[1].pos[VX] -
+                                                        sub->bbox[0].pos[VX]) *
+            (sub->bbox[1].pos[VY] - sub->bbox[0].pos[VY]);
 
         // The other reverb properties can be found out by taking a look at the
         // walls surrounding the subsector (floors and ceilings are currently
         // ignored).
         total = metal = rock = wood = cloth = 0;
         seg = (seg_t *) segs;
-        for(j = 0; j < sub->linecount; j++, seg++)
+        for(j = 0; j < sub->linecount; ++j, seg++)
         {
             if(!seg->linedef || !seg->sidedef || !seg->sidedef->middle.texture)
                 continue;
@@ -212,58 +208,78 @@ void S_CalcSectorReverbs(void)
             i = 255;
         rev->data[SRD_DAMPING] = i;
 
-        /*ST_Message( "sub %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n", c, rev->data[SRD_VOLUME],
-           rev->data[SRD_SPACE], rev->data[SRD_DECAY], rev->data[SRD_DAMPING]); */
+/*
+#if _DEBUG
+Con_Message("sub %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n", c, rev->data[SRD_VOLUME],
+            rev->data[SRD_SPACE], rev->data[SRD_DECAY], rev->data[SRD_DAMPING]);
+#endif
+*/
     }
-    /*  ST_Message("sub_reverb: %p\n", sub_reverb);
-       for(c=0; c<numsubsectors; c++)
-       {
-       rev = &sub_reverb[c];
-       ST_Message( "sub %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n", c, rev->data[SRD_VOLUME],
-       rev->data[SRD_SPACE], rev->data[SRD_DECAY], rev->data[SRD_DAMPING]);
-       } */
 
-    for(c = 0; c < numsectors; c++)
+/*
+#if _DEBUG
+Con_Message("sub_reverb: %p\n", sub_reverb);
+for(c=0; c < numsubsectors; ++c)
+{
+    rev = &sub_reverb[c];
+    Con_Message("sub %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n", c, rev->data[SRD_VOLUME],
+                rev->data[SRD_SPACE], rev->data[SRD_DECAY], rev->data[SRD_DAMPING]);
+}
+#endif
+*/
+
+    for(c = 0; c < numsectors; ++c)
     {
         float   bbox[4], spaceScatter;
         unsigned int sectorSpace;
 
         sec = SECTOR_PTR(c);
-        //DD_SectorBoundingBox(sec, bbox);
         memcpy(bbox, sec->info->bounds, sizeof(bbox));
-        /*ST_Message( "sector %i: (%f,%f) - (%f,%f)\n", c,
-           bbox[BLEFT], bbox[BTOP], bbox[BRIGHT], bbox[BBOTTOM]); */
+/*
+#if _DEBUG
+Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
+            bbox[BLEFT], bbox[BTOP], bbox[BRIGHT], bbox[BBOTTOM]);
+#endif
+*/
 
         sectorSpace =
             ((sec->planes[PLN_CEILING]->height -
               sec->planes[PLN_FLOOR]->height) >> FRACBITS) * (bbox[BRIGHT] -
                                                 bbox[BLEFT]) * (bbox[BBOTTOM] -
                                                                 bbox[BTOP]);
-
-        //ST_Message("sector %i: secsp:%i\n", c, sectorSpace);
-
-        bbox[BLEFT] -= 128;
-        bbox[BRIGHT] += 128;
-        bbox[BTOP] -= 128;
+/*
+#if _DEBUG
+Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
+#endif
+*/
+        bbox[BLEFT]   -= 128;
+        bbox[BRIGHT]  += 128;
+        bbox[BTOP]    -= 128;
         bbox[BBOTTOM] += 128;
 
-        for(k = 0, i = 0; i < numsubsectors; i++)
+        for(k = 0, i = 0; i < numsubsectors; ++i)
         {
             sub = SUBSECTOR_PTR(i);
             rev = sub_reverb + i;
             // Is this subsector close enough?
             if(sub->sector == sec || // subsector is IN this sector
-               (sub->midpoint.x > bbox[BLEFT] && sub->midpoint.x < bbox[BRIGHT]
-                && sub->midpoint.y > bbox[BTOP] &&
-                sub->midpoint.y < bbox[BBOTTOM]))
+               (sub->midpoint.pos[VX] > bbox[BLEFT] &&
+                sub->midpoint.pos[VX] < bbox[BRIGHT] &&
+                sub->midpoint.pos[VY] > bbox[BTOP] &&
+                sub->midpoint.pos[VY] < bbox[BBOTTOM]))
             {
-                //ST_Message( "- sub %i within, own:%i\n", i, sub->sector == sec);
+/*
+#if _DEBUG
+Con_Message( "- sub %i within, own:%i\n", i, sub->sector == sec);
+#endif
+*/
                 k++;
-                sec->reverb[SRD_SPACE] += rev->data[SRD_SPACE];
-                sec->reverb[SRD_VOLUME] +=
-                    rev->data[SRD_VOLUME] / 255.0f * rev->data[SRD_SPACE];
-                sec->reverb[SRD_DECAY] +=
-                    rev->data[SRD_DECAY] / 255.0f * rev->data[SRD_SPACE];
+                sec->reverb[SRD_SPACE]   += rev->data[SRD_SPACE];
+
+                sec->reverb[SRD_VOLUME]  +=
+                    rev->data[SRD_VOLUME]  / 255.0f * rev->data[SRD_SPACE];
+                sec->reverb[SRD_DECAY]   +=
+                    rev->data[SRD_DECAY]   / 255.0f * rev->data[SRD_SPACE];
                 sec->reverb[SRD_DAMPING] +=
                     rev->data[SRD_DAMPING] / 255.0f * rev->data[SRD_SPACE];
             }
@@ -272,25 +288,17 @@ void S_CalcSectorReverbs(void)
         {
             spaceScatter = sectorSpace / sec->reverb[SRD_SPACE];
             // These three are weighted by the space.
-            sec->reverb[SRD_VOLUME] /= sec->reverb[SRD_SPACE];
-            sec->reverb[SRD_DECAY] /= sec->reverb[SRD_SPACE];
+            sec->reverb[SRD_VOLUME]  /= sec->reverb[SRD_SPACE];
+            sec->reverb[SRD_DECAY]   /= sec->reverb[SRD_SPACE];
             sec->reverb[SRD_DAMPING] /= sec->reverb[SRD_SPACE];
-            /*          ST_Message("sector %i: sp:%f vol:%f dec:%f dam:%f\n",
-               c,
-               sec->reverb[SRD_SPACE],
-               sec->reverb[SRD_VOLUME],
-               sec->reverb[SRD_DECAY],
-               sec->reverb[SRD_DAMPING]); */
         }
         else
         {
             spaceScatter = 0;
-            sec->reverb[SRD_VOLUME] = .2f;
-            sec->reverb[SRD_DECAY] = .4f;
+            sec->reverb[SRD_VOLUME]  = .2f;
+            sec->reverb[SRD_DECAY]   = .4f;
             sec->reverb[SRD_DAMPING] = 1;
         }
-        /*ST_Message( "sector %i: secSp:%fM revSp:%fM scatter: %f\n",
-           c, sectorSpace/1e6f, sec->reverb[SRD_SPACE]/1e6f, spaceScatter); */
 
         // If the space is scattered, the reverb effect lessens.
         sec->reverb[SRD_SPACE] /= spaceScatter > .8 ? 10 : spaceScatter >
@@ -317,13 +325,10 @@ void S_CalcSectorReverbs(void)
             // Large spaces have automatically a bit more audible reverb.
             sec->reverb[SRD_VOLUME] += sec->reverb[SRD_SPACE] / 4;
         }
+
         if(sec->reverb[SRD_VOLUME] > 1)
             sec->reverb[SRD_VOLUME] = 1;
-        /*      sec->reverbDecay /= k/2.0f;
-           sec->reverbDamping /= k; */
     }
 
     M_Free(sub_reverb);
-
-    //gi.Message( "P_CalcSectorReverbs: end at %i\n", gi.GetTime());
 }

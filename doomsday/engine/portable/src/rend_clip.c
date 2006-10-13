@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -1184,9 +1184,8 @@ int C_CheckSubsector(subsector_t *ssec)
         fvertex_t *vtx = ssec->verts + i;
 
         // Shift for more accuracy.
-        anglist[i] =
-            bamsAtan2((int) ((vtx->y - vz) * 100),
-                      (int) ((vtx->x - vx) * 100));
+        anglist[i] = bamsAtan2((int) ((vtx->pos[VY] - vz) * 100),
+                               (int) ((vtx->pos[VX] - vx) * 100));
     }
     // Check each of the ranges defined by the edges.
     for(i = 0; i < ssec->numverts - 1; ++i)

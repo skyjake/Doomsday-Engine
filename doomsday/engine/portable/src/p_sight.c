@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -136,14 +136,14 @@ boolean P_SightBlockLinesIterator(int x, int y)
                         continue;
                     }
                     ld->validcount = validcount;
-                    s1 = P_PointOnDivlineSide(ld->v1->x, ld->v1->y, &strace);
-                    s2 = P_PointOnDivlineSide(ld->v2->x, ld->v2->y, &strace);
+                    s1 = P_PointOnDivlineSide(ld->v1->pos[VX], ld->v1->pos[VY], &strace);
+                    s2 = P_PointOnDivlineSide(ld->v2->pos[VX], ld->v2->pos[VY], &strace);
                     if(s1 == s2)
                         continue;   // line isn't crossed
                     P_MakeDivline(ld, &dl);
-                    s1 = P_PointOnDivlineSide(strace.x, strace.y, &dl);
-                    s2 = P_PointOnDivlineSide(strace.x + strace.dx,
-                                              strace.y + strace.dy, &dl);
+                    s1 = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
+                    s2 = P_PointOnDivlineSide(strace.pos[VX] + strace.dx,
+                                              strace.pos[VY] + strace.dy, &dl);
                     if(s1 == s2)
                         continue;   // line isn't crossed
 
@@ -171,13 +171,13 @@ boolean P_SightBlockLinesIterator(int x, int y)
             continue;           // line has already been checked
         ld->validcount = validcount;
 
-        s1 = P_PointOnDivlineSide(ld->v1->x, ld->v1->y, &strace);
-        s2 = P_PointOnDivlineSide(ld->v2->x, ld->v2->y, &strace);
+        s1 = P_PointOnDivlineSide(ld->v1->pos[VX], ld->v1->pos[VY], &strace);
+        s2 = P_PointOnDivlineSide(ld->v2->pos[VX], ld->v2->pos[VY], &strace);
         if(s1 == s2)
             continue;           // line isn't crossed
         P_MakeDivline(ld, &dl);
-        s1 = P_PointOnDivlineSide(strace.x, strace.y, &dl);
-        s2 = P_PointOnDivlineSide(strace.x + strace.dx, strace.y + strace.dy,
+        s1 = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
+        s2 = P_PointOnDivlineSide(strace.pos[VX] + strace.dx, strace.pos[VY] + strace.dy,
                                   &dl);
         if(s1 == s2)
             continue;           // line isn't crossed
@@ -217,8 +217,8 @@ boolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
     if(((y1 - bmaporgy) & (MAPBLOCKSIZE - 1)) == 0)
         y1 += FRACUNIT;         // don't side exactly on a line
 
-    strace.x = x1;
-    strace.y = y1;
+    strace.pos[VX] = x1;
+    strace.pos[VY] = y1;
     strace.dx = x2 - x1;
     strace.dy = y2 - y1;
 

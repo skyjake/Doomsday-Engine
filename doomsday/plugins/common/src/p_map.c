@@ -1444,8 +1444,8 @@ static boolean PTR_ShootTraverse(intercept_t * in)
     fixed_t cfloor, cceil;
     int     divisor;
 
-    tracepos[VX] = trace->x;
-    tracepos[VY] = trace->y;
+    tracepos[VX] = trace->pos[VX];
+    tracepos[VY] = trace->pos[VY];
     tracepos[VZ] = shootz;
 
     if(in->isaline)

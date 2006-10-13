@@ -3,8 +3,9 @@
 #ifndef __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__
 #define __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__
 
-#define DMT_VERTEX_X DDVT_FIXED
-#define DMT_VERTEX_Y DDVT_FIXED
+
+#define DMT_VERTEX_X            DDVT_FIXED
+#define DMT_VERTEX_Y            DDVT_FIXED
 
 #define DMT_SEG_V1 DDVT_PTR            // Start of the segment.
 #define DMT_SEG_V2 DDVT_PTR            // End of the segment.

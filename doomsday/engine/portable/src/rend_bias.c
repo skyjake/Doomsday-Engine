@@ -585,8 +585,8 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
         for(i = 0; i < subsector->sector->planecount; ++i)
         {
             // Estimate the effect on this plane.
-            point[VX] = subsector->midpoint.x;
-            point[VY] = subsector->midpoint.y;
+            point[VX] = subsector->midpoint.pos[VX];
+            point[VY] = subsector->midpoint.pos[VY];
             point[VZ] = FIX2FLT(subsector->sector->planes[i]->height);
 
             dot = SB_Dot(src, point, subsector->sector->planes[i]->surface.normal);

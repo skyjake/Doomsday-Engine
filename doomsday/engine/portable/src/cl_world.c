@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -275,8 +275,8 @@ void Cl_PolyMoverThinker(polymover_t * mover)
     if(mover->move)
     {
         // How much to go?
-        dx = poly->dest.x - poly->startSpot.x;
-        dy = poly->dest.y - poly->startSpot.y;
+        dx = poly->dest.pos[VX] - poly->startSpot.pos[VX];
+        dy = poly->dest.pos[VY] - poly->startSpot.pos[VY];
         dist = P_ApproxDistance(dx, dy);
         if(dist <= poly->speed || !poly->speed)
         {
@@ -482,11 +482,11 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     if(df & SDF_CEILING_HEIGHT)
     {
         fixed_t height = Msg_ReadShort() << 16;
-        if(!skip) 
+        if(!skip)
         {
             sec->planes[PLN_CEILING]->height = height;
             wasChanged = true;
-            
+
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute ceiling height=%f%s\n",
                                 num, FIX2FLT(sec->SP_ceilheight), skip? " --SKIPPED!--" : "") );
         }
@@ -798,9 +798,9 @@ void Cl_ReadPolyDelta2(boolean skip)
     po = PO_PTR(num);
 
     if(df & PODF_DEST_X)
-        po->dest.x = destX;
+        po->dest.pos[VX] = destX;
     if(df & PODF_DEST_Y)
-        po->dest.y = destY;
+        po->dest.pos[VY] = destY;
     if(df & PODF_SPEED)
         po->speed = speed;
     if(df & PODF_DEST_ANGLE)

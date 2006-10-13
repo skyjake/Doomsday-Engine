@@ -736,13 +736,13 @@ extern          "C" {
     // Fixed-point vertex position. Utility struct for the game, not
     // used by the engine.
     typedef struct ddvertex_s {
-        fixed_t         x, y;
+        fixed_t         pos[2];
     } ddvertex_t;
 
     // Floating-point vertex position. Utility struct for the game,
     // not used by the engine.
     typedef struct ddvertexf_s {
-        float           x, y;
+        float           pos[2];
     } ddvertexf_t;
 
     // SetupLevel flags.
@@ -762,17 +762,17 @@ extern          "C" {
     // each sector has a degenmobj_t in it's center for sound origin purposes
     typedef struct {
         thinker_t       thinker;   // not used for anything
-        fixed_t         x, y, z;
+        fixed_t         pos[3];
     } degenmobj_t;
 
 #define DDSUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
 
     typedef struct {
-        fixed_t         x, y, dx, dy;
+        fixed_t         pos[2], dx, dy;
     } divline_t;
 
     typedef struct {
-        float           x, y, dx, dy;
+        float           pos[2], dx, dy;
     } fdivline_t;
 
     // For PathTraverse.

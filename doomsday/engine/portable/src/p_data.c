@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -366,10 +366,10 @@ void P_PlaneChanged(sector_t *sector, int plane)
     side_t *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
-    sector->planes[plane]->soundorg.z = sector->planes[plane]->height;
+    sector->planes[plane]->soundorg.pos[VZ] = sector->planes[plane]->height;
 
     if(plane == PLN_FLOOR || plane == PLN_CEILING)
-        sector->soundorg.z = (sector->SP_ceilheight - sector->SP_floorheight) / 2;
+        sector->soundorg.pos[VZ] = (sector->SP_ceilheight - sector->SP_floorheight) / 2;
 
     for(i = 0; i < sector->linecount; ++i)
     {

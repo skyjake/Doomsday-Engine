@@ -105,12 +105,12 @@ void PO_SetDestination(polyobj_t *poly, fixed_t dist, angle_t angle,
 {
     ddvertex_t startSpot;
 
-    P_GetFixedpv(poly, DMU_START_SPOT_XY, &startSpot.x);
+    P_GetFixedpv(poly, DMU_START_SPOT_XY, startSpot.pos);
 
     P_SetFixedp(poly, DMU_DESTINATION_X,
-                startSpot.x + FixedMul(dist, finecosine[angle]));
+                startSpot.pos[VX] + FixedMul(dist, finecosine[angle]));
     P_SetFixedp(poly, DMU_DESTINATION_Y,
-                startSpot.y + FixedMul(dist, finesine[angle]));
+                startSpot.pos[VY] + FixedMul(dist, finesine[angle]));
     P_SetFixedp(poly, DMU_SPEED, speed);
 }
 
@@ -744,7 +744,7 @@ static void InitBlockMap(void)
     int     topY, bottomY;
     int     numPolyObjs = DD_GetInteger(DD_POLYOBJ_COUNT);
 
-    for(i = 0; i < numPolyObjs; i++)
+    for(i = 0; i < numPolyObjs; ++i)
     {
         PO_LinkPolyobj(P_ToPtr(DMU_POLYOBJ, i));
 
@@ -753,25 +753,25 @@ static void InitBlockMap(void)
         segList = P_GetPtr(DMU_POLYOBJ, i, DMU_SEG_LIST);
         leftX = rightX = P_GetFixedp(*segList, DMU_VERTEX1_X);
         topY = bottomY = P_GetFixedp(*segList, DMU_VERTEX1_Y);
-        for(j = 0; j < P_GetInt(DMU_POLYOBJ, i, DMU_SEG_COUNT); j++, segList++)
+        for(j = 0; j < P_GetInt(DMU_POLYOBJ, i, DMU_SEG_COUNT); ++j, segList++)
         {
             ddvertex_t v1;
-            P_GetFixedpv(*segList, DMU_VERTEX1_XY, &v1.x);
-            if(v1.x < leftX)
+            P_GetFixedpv(*segList, DMU_VERTEX1_XY, v1.pos);
+            if(v1.pos[VX] < leftX)
             {
-                leftX = v1.x;
+                leftX = v1.pos[VX];
             }
-            if(v1.x > rightX)
+            if(v1.pos[VX] > rightX)
             {
-                rightX = v1.x;
+                rightX = v1.pos[VX];
             }
-            if(v1.y < bottomY)
+            if(v1.pos[VY] < bottomY)
             {
-                bottomY = v1.y;
+                bottomY = v1.pos[VY];
             }
-            if(v1.y > topY)
+            if(v1.pos[VY] > topY)
             {
-                topY = v1.y;
+                topY = v1.pos[VY];
             }
         }
         area = ((rightX >> FRACBITS) -
@@ -1016,20 +1016,20 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
 
     tempSeg = P_GetPtrp(po, DMU_SEG_LIST);
     tempPt = P_GetPtrp(po, DMU_ORIGINAL_POINTS);
-    avg.x = 0;
-    avg.y = 0;
+    avg.pos[VX] = 0;
+    avg.pos[VY] = 0;
 
     validCount++;
-    for(i = 0; i < poNumSegs; i++, tempSeg++, tempPt++)
+    for(i = 0; i < poNumSegs; ++i, tempSeg++, tempPt++)
     {
         line_t* linedef = P_GetPtrp(*tempSeg, DMU_LINE);
         if(P_GetIntp(linedef, DMU_VALID_COUNT) != validCount)
         {
             fixed_t *bbox = P_GetPtrp(linedef, DMU_BOUNDING_BOX);
-            bbox[BOXTOP] -= deltaY;
+            bbox[BOXTOP]    -= deltaY;
             bbox[BOXBOTTOM] -= deltaY;
-            bbox[BOXLEFT] -= deltaX;
-            bbox[BOXRIGHT] -= deltaX;
+            bbox[BOXLEFT]   -= deltaX;
+            bbox[BOXRIGHT]  -= deltaX;
             P_SetIntp(linedef, DMU_VALID_COUNT, validCount);
         }
         for(veryTempSeg = P_GetPtrp(po, DMU_SEG_LIST);
@@ -1049,18 +1049,18 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
             v1[1] -= deltaY;
             P_SetFixedpv(*tempSeg, DMU_VERTEX1_XY, v1);
         }
-        avg.x += P_GetIntp(*tempSeg, DMU_VERTEX1_X);
-        avg.y += P_GetIntp(*tempSeg, DMU_VERTEX1_Y);
+        avg.pos[VX] += P_GetIntp(*tempSeg, DMU_VERTEX1_X);
+        avg.pos[VY] += P_GetIntp(*tempSeg, DMU_VERTEX1_Y);
         // the original Pts are based off the startSpot Pt, and are
         // unique to each seg, not each linedef
-        tempPt->x = P_GetFixedp(*tempSeg, DMU_VERTEX1_X) -
-                    P_GetFixedp(po, DMU_START_SPOT_X);
-        tempPt->y = P_GetFixedp(*tempSeg, DMU_VERTEX1_Y) -
-                    P_GetFixedp(po, DMU_START_SPOT_Y);
+        tempPt->pos[VX] = P_GetFixedp(*tempSeg, DMU_VERTEX1_X) -
+                            P_GetFixedp(po, DMU_START_SPOT_X);
+        tempPt->pos[VY] = P_GetFixedp(*tempSeg, DMU_VERTEX1_Y) -
+                            P_GetFixedp(po, DMU_START_SPOT_Y);
     }
-    avg.x /= poNumSegs;
-    avg.y /= poNumSegs;
-    sub = R_PointInSubsector(avg.x << FRACBITS, avg.y << FRACBITS);
+    avg.pos[VX] /= poNumSegs;
+    avg.pos[VY] /= poNumSegs;
+    sub = R_PointInSubsector(avg.pos[VX] << FRACBITS, avg.pos[VY] << FRACBITS);
     if(P_GetPtrp(sub, DMU_POLYOBJ) != NULL)
     {
         Con_Message("PO_TranslateToStartSpot: Warning: Multiple polyobjs in a single subsector\n"
@@ -1097,7 +1097,7 @@ void PO_Init(int lump)
     //Con_Message( "Find startSpot points.\n");
 
     // Find the startSpot points, and spawn each polyobj
-    for(i = 0; i < numthings; i++, mt++)
+    for(i = 0; i < numthings; ++i, mt++)
     {
         x = mt->x;
         y = mt->y;
@@ -1117,7 +1117,7 @@ void PO_Init(int lump)
     }
 
     mt = things;
-    for(i = 0; i < numthings; i++, mt++)
+    for(i = 0; i < numthings; ++i, mt++)
     {
         x = mt->x;
         y = mt->y;
@@ -1131,7 +1131,7 @@ void PO_Init(int lump)
     }
 
     // check for a startspot without an anchor point
-    for(i = 0; i < DD_GetInteger(DD_POLYOBJ_COUNT); i++)
+    for(i = 0; i < DD_GetInteger(DD_POLYOBJ_COUNT); ++i)
     {
         if(!P_GetPtr(DMU_POLYOBJ, i, DMU_ORIGINAL_POINTS))
         {

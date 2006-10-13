@@ -88,7 +88,7 @@ void P_InitSubsectorBlockMap(void)
     for(i = 0; i < numvertexes; ++i)
     {
         vtx = VERTEX_PTR(i);
-        V2_Set(point, FIX2FLT(vtx->x), FIX2FLT(vtx->y));
+        V2_Set(point, FIX2FLT(vtx->pos[VX]), FIX2FLT(vtx->pos[VY]));
         if(!i)
             V2_InitBox(bounds, point);
         else
@@ -118,10 +118,10 @@ void P_InitSubsectorBlockMap(void)
             continue;
 
         // Blockcoords to link to.
-        xl = X_TO_BLOCK(sub->bbox[0].x);
-        xh = X_TO_BLOCK(sub->bbox[1].x);
-        yl = Y_TO_BLOCK(sub->bbox[0].y);
-        yh = Y_TO_BLOCK(sub->bbox[1].y);
+        xl = X_TO_BLOCK(sub->bbox[0].pos[VX]);
+        xh = X_TO_BLOCK(sub->bbox[1].pos[VX]);
+        yl = Y_TO_BLOCK(sub->bbox[0].pos[VY]);
+        yh = Y_TO_BLOCK(sub->bbox[1].pos[VY]);
 
         for(x = xl; x <= xh; ++x)
             for(y = yl; y <= yh; ++y)
@@ -336,10 +336,10 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
                         continue;
 
                     // Check the bounds.
-                    if(sub->bbox[1].x < box[0][VX] ||
-                       sub->bbox[0].x > box[1][VX] ||
-                       sub->bbox[1].y < box[0][VY] ||
-                       sub->bbox[0].y > box[1][VY])
+                    if(sub->bbox[1].pos[VX] < box[0][VX] ||
+                       sub->bbox[0].pos[VX] > box[1][VX] ||
+                       sub->bbox[1].pos[VY] < box[0][VY] ||
+                       sub->bbox[0].pos[VY] > box[1][VY])
                         continue;
 
                     if(!func(sub, parm))

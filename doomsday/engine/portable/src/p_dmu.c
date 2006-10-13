@@ -1134,24 +1134,24 @@ static int SetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_VERTEX1_X:
-            SetValue(DMT_VERTEX_X, &p->v1->x, args, 0);
+            SetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
             break;
         case DMU_VERTEX1_Y:
-            SetValue(DMT_VERTEX_Y, &p->v1->y, args, 0);
+            SetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 0);
             break;
         case DMU_VERTEX1_XY:
-            SetValue(DMT_VERTEX_X, &p->v1->x, args, 0);
-            SetValue(DMT_VERTEX_Y, &p->v1->y, args, 1);
+            SetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
+            SetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 1);
             break;
         case DMU_VERTEX2_X:
-            SetValue(DMT_VERTEX_X, &p->v2->x, args, 0);
+            SetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
             break;
         case DMU_VERTEX2_Y:
-            SetValue(DMT_VERTEX_Y, &p->v2->y, args, 0);
+            SetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 0);
             break;
         case DMU_VERTEX2_XY:
-            SetValue(DMT_VERTEX_X, &p->v2->x, args, 0);
-            SetValue(DMT_VERTEX_Y, &p->v2->y, args, 1);
+            SetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
+            SetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 1);
             break;
         case DMU_FLAGS:
             SetValue(DMT_SEG_FLAGS, &p->flags, args, 0);
@@ -1389,24 +1389,24 @@ static int SetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_START_SPOT_X:
-            SetValue(DDVT_FIXED, &p->startSpot.x, args, 0);
+            SetValue(DDVT_FIXED, &p->startSpot.pos[VX], args, 0);
             break;
         case DMU_START_SPOT_Y:
-            SetValue(DDVT_FIXED, &p->startSpot.y, args, 0);
+            SetValue(DDVT_FIXED, &p->startSpot.pos[VY], args, 0);
             break;
         case DMU_START_SPOT_XY:
-            SetValue(DDVT_FIXED, &p->startSpot.x, args, 0);
-            SetValue(DDVT_FIXED, &p->startSpot.y, args, 1);
+            SetValue(DDVT_FIXED, &p->startSpot.pos[VX], args, 0);
+            SetValue(DDVT_FIXED, &p->startSpot.pos[VY], args, 1);
             break;
         case DMU_DESTINATION_X:
-            SetValue(DDVT_FIXED, &p->dest.x, args, 0);
+            SetValue(DDVT_FIXED, &p->dest.pos[VX], args, 0);
             break;
         case DMU_DESTINATION_Y:
-            SetValue(DDVT_FIXED, &p->dest.y, args, 0);
+            SetValue(DDVT_FIXED, &p->dest.pos[VY], args, 0);
             break;
         case DMU_DESTINATION_XY:
-            SetValue(DDVT_FIXED, &p->dest.x, args, 0);
-            SetValue(DDVT_FIXED, &p->dest.y, args, 1);
+            SetValue(DDVT_FIXED, &p->dest.pos[VX], args, 0);
+            SetValue(DDVT_FIXED, &p->dest.pos[VY], args, 1);
             break;
         case DMU_ORIGINAL_POINTS:
             SetValue(DDVT_PTR, &p->originalPts, args, 0);
@@ -2016,14 +2016,14 @@ static int GetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_X:
-            GetValue(DMT_VERTEX_X, &p->x, args, 0);
+            GetValue(DMT_VERTEX_X, &p->pos[VX], args, 0);
             break;
         case DMU_Y:
-            GetValue(DMT_VERTEX_Y, &p->y, args, 0);
+            GetValue(DMT_VERTEX_Y, &p->pos[VY], args, 0);
             break;
         case DMU_XY:
-            GetValue(DMT_VERTEX_X, &p->x, args, 0);
-            GetValue(DMT_VERTEX_Y, &p->y, args, 1);
+            GetValue(DMT_VERTEX_X, &p->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->pos[VY], args, 1);
             break;
         default:
             Con_Error("GetProperty: DMU_VERTEX has no property %s.\n",
@@ -2041,27 +2041,27 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SEG_V1, &p->v1, args, 0);
             break;
         case DMU_VERTEX1_X:
-            GetValue(DMT_VERTEX_X, &p->v1->x, args, 0);
+            GetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
             break;
         case DMU_VERTEX1_Y:
-            GetValue(DMT_VERTEX_Y, &p->v1->y, args, 0);
+            GetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 0);
             break;
         case DMU_VERTEX1_XY:
-            GetValue(DMT_VERTEX_X, &p->v1->x, args, 0);
-            GetValue(DMT_VERTEX_Y, &p->v1->y, args, 1);
+            GetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 1);
             break;
         case DMU_VERTEX2:
             GetValue(DMT_SEG_V2, &p->v2, args, 0);
             break;
         case DMU_VERTEX2_X:
-            GetValue(DMT_VERTEX_X, &p->v2->x, args, 0);
+            GetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
             break;
         case DMU_VERTEX2_Y:
-            GetValue(DMT_VERTEX_Y, &p->v2->y, args, 0);
+            GetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 0);
             break;
         case DMU_VERTEX2_XY:
-            GetValue(DMT_VERTEX_X, &p->v2->x, args, 0);
-            GetValue(DMT_VERTEX_Y, &p->v2->y, args, 1);
+            GetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 1);
             break;
         case DMU_LENGTH:
             GetValue(DMT_SEG_LENGTH, &p->length, args, 0);
@@ -2102,27 +2102,27 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_LINE_V1, &p->v1, args, 0);
             break;
         case DMU_VERTEX1_X:
-            GetValue(DMT_VERTEX_X, &p->v1->x, args, 0);
+            GetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
             break;
         case DMU_VERTEX1_Y:
-            GetValue(DMT_VERTEX_Y, &p->v1->y, args, 0);
+            GetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 0);
             break;
         case DMU_VERTEX1_XY:
-            GetValue(DMT_VERTEX_X, &p->v1->x, args, 0);
-            GetValue(DMT_VERTEX_Y, &p->v1->y, args, 1);
+            GetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 1);
             break;
         case DMU_VERTEX2:
             GetValue(DMT_LINE_V2, &p->v2, args, 0);
             break;
         case DMU_VERTEX2_X:
-            GetValue(DMT_VERTEX_X, &p->v2->x, args, 0);
+            GetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
             break;
         case DMU_VERTEX2_Y:
-            GetValue(DMT_VERTEX_Y, &p->v2->y, args, 0);
+            GetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 0);
             break;
         case DMU_VERTEX2_XY:
-            GetValue(DMT_VERTEX_X, &p->v2->x, args, 0);
-            GetValue(DMT_VERTEX_Y, &p->v2->y, args, 1);
+            GetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 1);
             break;
         case DMU_DX:
             GetValue(DMT_LINE_DX, &p->dx, args, 0);
@@ -2247,14 +2247,14 @@ static int GetProperty(void* ptr, void* context)
             break;
         }
         case DMU_START_SPOT_X:
-            GetValue(DDVT_FIXED, &p->startSpot.x, args, 0);
+            GetValue(DDVT_FIXED, &p->startSpot.pos[VX], args, 0);
             break;
         case DMU_START_SPOT_Y:
-            GetValue(DDVT_FIXED, &p->startSpot.y, args, 0);
+            GetValue(DDVT_FIXED, &p->startSpot.pos[VY], args, 0);
             break;
         case DMU_START_SPOT_XY:
-            GetValue(DDVT_FIXED, &p->startSpot.x, args, 0);
-            GetValue(DDVT_FIXED, &p->startSpot.y, args, 1);
+            GetValue(DDVT_FIXED, &p->startSpot.pos[VX], args, 0);
+            GetValue(DDVT_FIXED, &p->startSpot.pos[VY], args, 1);
             break;
         case DMU_ORIGINAL_POINTS:
             GetValue(DDVT_PTR, &p->originalPts, args, 0);

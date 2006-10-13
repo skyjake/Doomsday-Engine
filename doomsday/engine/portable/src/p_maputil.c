@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -162,7 +162,7 @@ float P_MobjPointDistancef(mobj_t *start, mobj_t *end, float *fixpoint)
 #ifdef WIN32
 #  pragma optimize("g", off)
 #endif
-int P_FloatPointOnLineSide(fvertex_t * pnt, fdivline_t * dline)
+int P_FloatPointOnLineSide(fvertex_t *pnt, fdivline_t *dline)
 {
     /*
        (AY-CY)(BX-AX)-(AX-CX)(BY-AY)
@@ -174,18 +174,18 @@ int P_FloatPointOnLineSide(fvertex_t * pnt, fdivline_t * dline)
        If s=0      C is on AB
      */
     // We'll return false if the point c is on the left side.
-    return ((dline->y - pnt->y) * dline->dx -
-            (dline->x - pnt->x) * dline->dy >= 0);
+    return ((dline->pos[VY] - pnt->pos[VY]) * dline->dx -
+            (dline->pos[VX] - pnt->pos[VX]) * dline->dy >= 0);
 }
 
 /*
  * Lines start, end and fdiv must intersect.
  */
-float P_FloatInterceptVertex(fvertex_t * start, fvertex_t * end,
-                             fdivline_t * fdiv, fvertex_t * inter)
+float P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
+                             fdivline_t *fdiv, fvertex_t *inter)
 {
-    float   ax = start->x, ay = start->y, bx = end->x, by = end->y;
-    float   cx = fdiv->x, cy = fdiv->y, dx = cx + fdiv->dx, dy = cy + fdiv->dy;
+    float   ax = start->pos[VX], ay = start->pos[VY], bx = end->pos[VX], by = end->pos[VY];
+    float   cx = fdiv->pos[VX], cy = fdiv->pos[VY], dx = cx + fdiv->dx, dy = cy + fdiv->dy;
 
     /*
        (YA-YC)(XD-XC)-(XA-XC)(YD-YC)
@@ -201,8 +201,8 @@ float P_FloatInterceptVertex(fvertex_t * start, fvertex_t * end,
        XI=XA+r(XB-XA)
        YI=YA+r(YB-YA)
      */
-    inter->x = ax + r * (bx - ax);
-    inter->y = ay + r * (by - ay);
+    inter->pos[VX] = ax + r * (bx - ax);
+    inter->pos[VY] = ay + r * (by - ay);
     return r;
 }
 #ifdef WIN32
@@ -215,27 +215,28 @@ float P_FloatInterceptVertex(fvertex_t * start, fvertex_t * end,
  */
 void P_SectorBoundingBox(sector_t *sec, float *bbox)
 {
-    float   x, y;
+    float   pos[2];
     int     i;
     line_t *li;
 
     if(!sec->linecount)
         return;
-    bbox[BLEFT] = bbox[BRIGHT] = sec->Lines[0]->v1->x >> FRACBITS;
-    bbox[BTOP] = bbox[BBOTTOM] = sec->Lines[0]->v1->y >> FRACBITS;
+    bbox[BLEFT] = bbox[BRIGHT]  = sec->Lines[0]->v1->pos[VX] >> FRACBITS;
+    bbox[BTOP]  = bbox[BBOTTOM] = sec->Lines[0]->v1->pos[VY] >> FRACBITS;
     for(i = 1; i < sec->linecount; i++)
     {
         li = sec->Lines[i];
-        x = li->v1->x >> FRACBITS;
-        y = li->v1->y >> FRACBITS;
-        if(x < bbox[BLEFT])
-            bbox[BLEFT] = x;
-        if(x > bbox[BRIGHT])
-            bbox[BRIGHT] = x;
-        if(y < bbox[BTOP])
-            bbox[BTOP] = y;
-        if(y > bbox[BBOTTOM])
-            bbox[BBOTTOM] = y;
+        pos[VX] = li->v1->pos[VX] >> FRACBITS;
+        pos[VY] = li->v1->pos[VY] >> FRACBITS;
+
+        if(pos[VX] < bbox[BLEFT])
+            bbox[BLEFT]   = pos[VX];
+        if(pos[VX] > bbox[BRIGHT])
+            bbox[BRIGHT]  = pos[VX];
+        if(pos[VY] < bbox[BTOP])
+            bbox[BTOP]    = pos[VY];
+        if(pos[VY] > bbox[BBOTTOM])
+            bbox[BBOTTOM] = pos[VY];
     }
 }
 
@@ -244,11 +245,11 @@ void P_SectorBoundingBox(sector_t *sec, float *bbox)
  */
 int P_PointOnLineSide(fixed_t x, fixed_t y, line_t *line)
 {
-    return !line->dx ? x <= line->v1->x ? line->dy > 0 : line->dy <
-        0 : !line->dy ? y <= line->v1->y ? line->dx < 0 : line->dx >
-        0 : FixedMul(y - line->v1->y,
+    return  !line->dx ? x <= line->v1->pos[VX] ? line->dy > 0 : line->dy <
+        0 : !line->dy ? y <= line->v1->pos[VY] ? line->dx < 0 : line->dx >
+        0 : FixedMul(y - line->v1->pos[VY],
                      line->dx >> FRACBITS) >= FixedMul(line->dy >> FRACBITS,
-                                                       x - line->v1->x);
+                                                       x - line->v1->pos[VX]);
 }
 
 /*
@@ -264,48 +265,39 @@ int P_BoxOnLineSide(fixed_t *tmbox, line_t *ld)
 
     default:                    // shut up compiler warnings -- killough
     case ST_HORIZONTAL:
-        return (tmbox[BOXBOTTOM] > ld->v1->y) == (p =
-                                                  tmbox[BOXTOP] >
-                                                  ld->v1->y) ? p ^ (ld->dx <
-                                                                    0) : -1;
+        return (tmbox[BOXBOTTOM] > ld->v1->pos[VY]) ==
+                (p = tmbox[BOXTOP] > ld->v1->pos[VY]) ? p ^ (ld->dx < 0) : -1;
+
     case ST_VERTICAL:
-        return (tmbox[BOXLEFT] < ld->v1->x) == (p =
-                                                tmbox[BOXRIGHT] <
-                                                ld->v1->x) ? p ^ (ld->dy <
-                                                                  0) : -1;
+        return (tmbox[BOXLEFT] < ld->v1->pos[VX]) ==
+                (p = tmbox[BOXRIGHT] < ld->v1->pos[VX]) ? p ^ (ld->dy < 0) : -1;
+
     case ST_POSITIVE:
-        return P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], ld) == (p =
-                                                                            P_PointOnLineSide
-                                                                            (tmbox
-                                                                             [BOXLEFT],
-                                                                             tmbox
-                                                                             [BOXTOP],
-                                                                             ld))
-            ? p : -1;
+        return P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], ld) ==
+                (p = P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXTOP], ld)) ? p : -1;
+
     case ST_NEGATIVE:
         return (P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXBOTTOM], ld)) ==
-            (p =
-             P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXTOP], ld)) ? p : -1;
+                (p = P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXTOP], ld)) ? p : -1;
     }
 }
 
 /*
  * Returns 0 or 1
  */
-int P_PointOnDivlineSide(fixed_t x, fixed_t y, divline_t * line)
+int P_PointOnDivlineSide(fixed_t x, fixed_t y, divline_t *line)
 {
-    return !line->dx ? x <= line->x ? line->dy > 0 : line->dy <
-        0 : !line->dy ? y <= line->y ? line->dx < 0 : line->dx >
-        0 : (line->dy ^ line->dx ^ (x -= line->x) ^ (y -= line->y)) <
-        0 ? (line->dy ^ x) < 0 : FixedMul(y >> 8,
-                                          line->dx >> 8) >=
+    return  !line->dx ? x <= line->pos[VX] ? line->dy > 0 : line->dy <
+        0 : !line->dy ? y <= line->pos[VY] ? line->dx < 0 : line->dx >
+        0 : (line->dy ^ line->dx ^ (x -= line->pos[VX]) ^ (y -= line->pos[VY])) <
+        0 ? (line->dy ^ x) < 0 : FixedMul(y >> 8, line->dx >> 8) >=
         FixedMul(line->dy >> 8, x >> 8);
 }
 
-void P_MakeDivline(line_t *li, divline_t * dl)
+void P_MakeDivline(line_t *li, divline_t *dl)
 {
-    dl->x = li->v1->x;
-    dl->y = li->v1->y;
+    dl->pos[VX] = li->v1->pos[VX];
+    dl->pos[VY] = li->v1->pos[VY];
     dl->dx = li->dx;
     dl->dy = li->dy;
 }
@@ -315,13 +307,13 @@ void P_MakeDivline(line_t *li, divline_t * dl)
  *
  * This is only called by the addthings and addlines traversers
  */
-fixed_t P_InterceptVector(divline_t * v2, divline_t * v1)
+fixed_t P_InterceptVector(divline_t *v2, divline_t *v1)
 {
     fixed_t den =
         FixedMul(v1->dy >> 8, v2->dx) - FixedMul(v1->dx >> 8, v2->dy);
     return den ?
-        FixedDiv((FixedMul((v1->x - v2->x) >> 8, v1->dy) +
-                  FixedMul((v2->y - v1->y) >> 8, v1->dx)), den) : 0;
+        FixedDiv((FixedMul((v1->pos[VX] - v2->pos[VX]) >> 8, v1->dy) +
+                  FixedMul((v2->pos[VY] - v1->pos[VY]) >> 8, v1->dx)), den) : 0;
 }
 
 /*
@@ -472,12 +464,12 @@ boolean PIT_LinkToLines(line_t *ld, void *parm)
     nodeindex_t nix;
 
     // Setup the bounding box for the line.
-    ORDER(ld->v1->x, ld->v2->x, bbox[BOXLEFT], bbox[BOXRIGHT]);
-    ORDER(ld->v1->y, ld->v2->y, bbox[BOXBOTTOM], bbox[BOXTOP]);
+    ORDER(ld->v1->pos[VX], ld->v2->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
+    ORDER(ld->v1->pos[VY], ld->v2->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
 
-    if(data->box[BOXRIGHT] <= bbox[BOXLEFT] ||
-       data->box[BOXLEFT] >= bbox[BOXRIGHT] ||
-       data->box[BOXTOP] <= bbox[BOXBOTTOM] ||
+    if(data->box[BOXRIGHT]  <= bbox[BOXLEFT] ||
+       data->box[BOXLEFT]   >= bbox[BOXRIGHT] ||
+       data->box[BOXTOP]    <= bbox[BOXBOTTOM] ||
        data->box[BOXBOTTOM] >= bbox[BOXTOP])
         // Bounding boxes do not overlap.
         return true;
@@ -518,19 +510,19 @@ void P_LinkToLines(mobj_t *thing)
 
     // Set up a line iterator for doing the linking.
     data.thing = thing;
-    data.box[BOXTOP] = thing->pos[VY] + thing->radius;
+    data.box[BOXTOP]    = thing->pos[VY] + thing->radius;
     data.box[BOXBOTTOM] = thing->pos[VY] - thing->radius;
-    data.box[BOXRIGHT] = thing->pos[VX] + thing->radius;
-    data.box[BOXLEFT] = thing->pos[VX] - thing->radius;
+    data.box[BOXRIGHT]  = thing->pos[VX] + thing->radius;
+    data.box[BOXLEFT]   = thing->pos[VX] - thing->radius;
 
-    xl = (data.box[BOXLEFT] - bmaporgx) >> MAPBLOCKSHIFT;
-    xh = (data.box[BOXRIGHT] - bmaporgx) >> MAPBLOCKSHIFT;
+    xl = (data.box[BOXLEFT]   - bmaporgx) >> MAPBLOCKSHIFT;
+    xh = (data.box[BOXRIGHT]  - bmaporgx) >> MAPBLOCKSHIFT;
     yl = (data.box[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
-    yh = (data.box[BOXTOP] - bmaporgy) >> MAPBLOCKSHIFT;
+    yh = (data.box[BOXTOP]    - bmaporgy) >> MAPBLOCKSHIFT;
 
     validcount++;
-    for(bx = xl; bx <= xh; bx++)
-        for(by = yl; by <= yh; by++)
+    for(bx = xl; bx <= xh; ++bx)
+        for(by = yl; by <= yh; ++by)
             P_BlockLinesIterator(bx, by, PIT_LinkToLines, &data);
 }
 
@@ -637,6 +629,7 @@ boolean P_ThingLinesIterator(mobj_t *thing, boolean (*func) (line_t *, void *),
     for(nix = tn[thing->lineroot].next; nix != thing->lineroot;
         nix = tn[nix].next)
         *end++ = tn[nix].ptr;
+
     DO_LINKS(it, end);
     return true;
 }
@@ -729,7 +722,7 @@ boolean P_SectorTouchingThingsIterator(sector_t *sector,
         *end++ = mo;
     }
     // Then check the sector's lines.
-    for(i = 0; i < sector->linecount; i++)
+    for(i = 0; i < sector->linecount; ++i)
     {
         li = sector->Lines[i];
         // Iterate all mobjs on the line.
@@ -763,13 +756,13 @@ boolean PIT_AddLineIntercepts(line_t *ld, void *data)
     if(trace.dx > FRACUNIT * 16 || trace.dy > FRACUNIT * 16 ||
        trace.dx < -FRACUNIT * 16 || trace.dy < -FRACUNIT * 16)
     {
-        s1 = P_PointOnDivlineSide(ld->v1->x, ld->v1->y, &trace);
-        s2 = P_PointOnDivlineSide(ld->v2->x, ld->v2->y, &trace);
+        s1 = P_PointOnDivlineSide(ld->v1->pos[VX], ld->v1->pos[VY], &trace);
+        s2 = P_PointOnDivlineSide(ld->v2->pos[VX], ld->v2->pos[VY], &trace);
     }
     else
     {
-        s1 = P_PointOnLineSide(trace.x, trace.y, ld);
-        s2 = P_PointOnLineSide(trace.x + trace.dx, trace.y + trace.dy, ld);
+        s1 = P_PointOnLineSide(trace.pos[VX], trace.pos[VY], ld);
+        s2 = P_PointOnLineSide(trace.pos[VX] + trace.dx, trace.pos[VY] + trace.dy, ld);
     }
     if(s1 == s2)
         return true;            // line isn't crossed
@@ -827,8 +820,8 @@ boolean PIT_AddThingIntercepts(mobj_t *thing, void *data)
     if(s1 == s2)
         return true;            // line isn't crossed
 
-    dl.x = x1;
-    dl.y = y1;
+    dl.pos[VX] = x1;
+    dl.pos[VY] = y1;
     dl.dx = x2 - x1;
     dl.dy = y2 - y1;
 
@@ -848,7 +841,7 @@ boolean PIT_AddThingIntercepts(mobj_t *thing, void *data)
 boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
                        int flags, boolean (*trav) (intercept_t *))
 {
-    fixed_t xt1, yt1, xt2, yt2;
+    fixed_t t1[2], t2[2];
     fixed_t xstep, ystep;
     fixed_t partial;
     fixed_t xintercept, yintercept;
@@ -865,28 +858,28 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
         x1 += FRACUNIT;         // don't side exactly on a line
     if(((y1 - bmaporgy) & (MAPBLOCKSIZE - 1)) == 0)
         y1 += FRACUNIT;         // don't side exactly on a line
-    trace.x = x1;
-    trace.y = y1;
+    trace.pos[VX] = x1;
+    trace.pos[VY] = y1;
     trace.dx = x2 - x1;
     trace.dy = y2 - y1;
 
     x1 -= bmaporgx;
     y1 -= bmaporgy;
-    xt1 = x1 >> MAPBLOCKSHIFT;
-    yt1 = y1 >> MAPBLOCKSHIFT;
+    t1[VX] = x1 >> MAPBLOCKSHIFT;
+    t1[VY] = y1 >> MAPBLOCKSHIFT;
 
     x2 -= bmaporgx;
     y2 -= bmaporgy;
-    xt2 = x2 >> MAPBLOCKSHIFT;
-    yt2 = y2 >> MAPBLOCKSHIFT;
+    t2[VX] = x2 >> MAPBLOCKSHIFT;
+    t2[VY] = y2 >> MAPBLOCKSHIFT;
 
-    if(xt2 > xt1)
+    if(t2[VX] > t1[VX])
     {
         mapxstep = 1;
         partial = FRACUNIT - ((x1 >> MAPBTOFRAC) & (FRACUNIT - 1));
         ystep = FixedDiv(y2 - y1, abs(x2 - x1));
     }
-    else if(xt2 < xt1)
+    else if(t2[VX] < t1[VX])
     {
         mapxstep = -1;
         partial = (x1 >> MAPBTOFRAC) & (FRACUNIT - 1);
@@ -900,13 +893,13 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
     }
     yintercept = (y1 >> MAPBTOFRAC) + FixedMul(partial, ystep);
 
-    if(yt2 > yt1)
+    if(t2[VY] > t1[VY])
     {
         mapystep = 1;
         partial = FRACUNIT - ((y1 >> MAPBTOFRAC) & (FRACUNIT - 1));
         xstep = FixedDiv(x2 - x1, abs(y2 - y1));
     }
-    else if(yt2 < yt1)
+    else if(t2[VY] < t1[VY])
     {
         mapystep = -1;
         partial = (y1 >> MAPBTOFRAC) & (FRACUNIT - 1);
@@ -923,10 +916,10 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
     //
     // step through map blocks
     // Count is present to prevent a round off error from skipping the break
-    mapx = xt1;
-    mapy = yt1;
+    mapx = t1[VX];
+    mapy = t1[VY];
 
-    for(count = 0; count < 64; count++)
+    for(count = 0; count < 64; ++count)
     {
         if(flags & PT_ADDLINES)
         {
@@ -939,7 +932,7 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
                 return false;   // early out
         }
 
-        if(mapx == xt2 && mapy == yt2)
+        if(mapx == t2[VX] && mapy == t2[VY])
             break;
 
         if((yintercept >> FRACBITS) == mapy)

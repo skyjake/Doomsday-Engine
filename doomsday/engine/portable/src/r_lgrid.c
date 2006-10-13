@@ -167,7 +167,7 @@ void LG_Init(void)
     gridblock_t *block;
     int      *sampleResults = 0;
     int       n, size, numSamples, center, best;
-    fixed_t   xOff, yOff;
+    fixed_t   off[2];
     vertex_t *samplePoints = 0, sample;
 
     sector_t **ssamples;
@@ -184,10 +184,10 @@ void LG_Init(void)
     // Allocate the grid.
     R_GetMapSize(&lgOrigin, &max);
 
-    width = max.x - lgOrigin.x;
-    height = max.y - lgOrigin.y;
+    width  = max.pos[VX] - lgOrigin.pos[VX];
+    height = max.pos[VY] - lgOrigin.pos[VY];
 
-    lgBlockWidth = ((width / lgBlockSize) >> FRACBITS) + 1;
+    lgBlockWidth  = ((width / lgBlockSize) >> FRACBITS) + 1;
     lgBlockHeight = ((height / lgBlockSize) >> FRACBITS) + 1;
 
     // Clamp the multisample factor.
@@ -248,8 +248,8 @@ void LG_Init(void)
 
     if(center == 0)
     {   // Zero is the center so do that first.
-        samplePoints[0].x = (lgBlockSize << (FRACBITS - 1));
-        samplePoints[0].y = (lgBlockSize << (FRACBITS - 1));
+        samplePoints[0].pos[VX] = (lgBlockSize << (FRACBITS - 1));
+        samplePoints[0].pos[VY] = (lgBlockSize << (FRACBITS - 1));
     }
     if(numSamples > 1)
     {
@@ -266,28 +266,30 @@ void LG_Init(void)
         for(y = 0; y < size; ++y)
             for(x = 0; x < size; ++x, ++n)
             {
-                samplePoints[n].x = FLT2FIX(round(x * bSize));
-                samplePoints[n].y = FLT2FIX(round(y * bSize));
+                samplePoints[n].pos[VX] = FLT2FIX(round(x * bSize));
+                samplePoints[n].pos[VY] = FLT2FIX(round(y * bSize));
             }
     }
 
-/*  // For DEBUG
+/*
+#if _DEBUG
     for(n = 0; n < numSamples; ++n)
         Con_Message(" %i of %i %i(%f %f)\n",
                     n, numSamples, (n == center)? 1 : 0,
-                    FIX2FLT(samplePoints[n].x), FIX2FLT(samplePoints[n].y));
+                    FIX2FLT(samplePoints[n].pos[VX]), FIX2FLT(samplePoints[n].pos[VY]));
+#endif
 */
 
     // Acquire the sectors at ALL the sample points.
     for(y = 0; y < lgBlockHeight; ++y)
     {
-        yOff = y * (lgBlockSize << FRACBITS);
+        off[VY] = y * (lgBlockSize << FRACBITS);
         for(x = 0; x < lgBlockWidth; ++x)
         {
             int blk = (x + y * lgBlockWidth);
             int idx;
 
-            xOff = x * (lgBlockSize << FRACBITS);
+            off[VX] = x * (lgBlockSize << FRACBITS);
 
             n = 0;
             if(center == 0)
@@ -296,12 +298,12 @@ void LG_Init(void)
                 // of the samples for this block).
                 idx = blk * (numSamples);
 
-                sample.x = lgOrigin.x + xOff + samplePoints[0].x;
-                sample.y = lgOrigin.y + yOff + samplePoints[0].y;
+                sample.pos[VX] = lgOrigin.pos[VX] + off[VX] + samplePoints[0].pos[VX];
+                sample.pos[VY] = lgOrigin.pos[VY] + off[VY] + samplePoints[0].pos[VY];
 
                 ssamples[idx] =
-                    R_PointInSubsector(sample.x, sample.y)->sector;
-                if(!R_IsPointInSector2(sample.x, sample.y, ssamples[idx]))
+                    R_PointInSubsector(sample.pos[VX], sample.pos[VY])->sector;
+                if(!R_IsPointInSector2(sample.pos[VX], sample.pos[VY], ssamples[idx]))
                    ssamples[idx] = NULL;
 
                 n++; // Offset the index in the samplePoints array bellow.
@@ -345,12 +347,12 @@ void LG_Init(void)
                     }
                     else
                     {   // We haven't sampled this point yet.
-                        sample.x = lgOrigin.x + xOff + samplePoints[n].x;
-                        sample.y = lgOrigin.y + yOff + samplePoints[n].y;
+                        sample.pos[VX] = lgOrigin.pos[VX] + off[VX] + samplePoints[n].pos[VX];
+                        sample.pos[VY] = lgOrigin.pos[VY] + off[VY] + samplePoints[n].pos[VY];
 
                         ssamples[idx] =
-                            R_PointInSubsector(sample.x, sample.y)->sector;
-                        if(!R_IsPointInSector2(sample.x, sample.y, ssamples[idx]))
+                            R_PointInSubsector(sample.pos[VX], sample.pos[VY])->sector;
+                        if(!R_IsPointInSector2(sample.pos[VX], sample.pos[VY], ssamples[idx]))
                            ssamples[idx] = NULL;
                     }
                 }
@@ -384,10 +386,10 @@ void LG_Init(void)
     // Initialize the grid.
     for(block = grid, y = 0; y < lgBlockHeight; ++y)
     {
-        yOff = y * (lgBlockSize << FRACBITS);
+        off[VY] = y * (lgBlockSize << FRACBITS);
         for(x = 0; x < lgBlockWidth; ++x, ++block)
         {
-            xOff = x * (lgBlockSize << FRACBITS);
+            off[VX] = x * (lgBlockSize << FRACBITS);
 
             // Pick the sector at each of the sample points.
             // TODO: We don't actually need the blkSampleSectors array
@@ -821,8 +823,8 @@ void LG_Evaluate(const float *point, byte *color)
         return;
     }
 
-    x = ((FLT2FIX(point[VX]) - lgOrigin.x) / lgBlockSize) >> FRACBITS;
-    y = ((FLT2FIX(point[VY]) - lgOrigin.y) / lgBlockSize) >> FRACBITS;
+    x = ((FLT2FIX(point[VX]) - lgOrigin.pos[VX]) / lgBlockSize) >> FRACBITS;
+    y = ((FLT2FIX(point[VY]) - lgOrigin.pos[VY]) / lgBlockSize) >> FRACBITS;
     x = MINMAX_OF(1, x, lgBlockWidth - 2);
     y = MINMAX_OF(1, y, lgBlockHeight - 2);
 

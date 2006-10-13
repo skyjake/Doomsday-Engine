@@ -8,8 +8,7 @@
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
     struct vertexinfo_s* info;
-    fixed_t             x;
-    fixed_t             y;
+    fixed_t             pos[2];
 } vertex_t;
 
 typedef struct seg_s {

@@ -669,7 +669,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 // Z-fighting.
                 fixline[VX] = pt->contact->dx;
                 fixline[VY] = pt->contact->dy;
-                M_ProjectPointOnLinef(pt->pos, &pt->contact->v1->x, fixline, 1,
+                M_ProjectPointOnLinef(pt->pos, &pt->contact->v1->pos[VX], fixline, 1,
                                       projected);
 
                 P_LineUnitVector(pt->contact, line);

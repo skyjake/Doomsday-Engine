@@ -42,8 +42,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define X_TO_DLBX(cx)           ( ((cx) - dlBlockOrig.x) >> (FRACBITS+7) )
-#define Y_TO_DLBY(cy)           ( ((cy) - dlBlockOrig.y) >> (FRACBITS+7) )
+#define X_TO_DLBX(cx)           ( ((cx) - dlBlockOrig.pos[VX]) >> (FRACBITS+7) )
+#define Y_TO_DLBY(cy)           ( ((cy) - dlBlockOrig.pos[VY]) >> (FRACBITS+7) )
 #define DLB_ROOT_DLBXY(bx, by)  (dlBlockLinks + bx + by*dlBlockWidth)
 #define LUM_FACTOR(dist)    (1.5f - 1.5f*(dist)/lum->radius)
 
@@ -377,10 +377,10 @@ void DL_InitLinks(void)
 
     // Origin has fixed-point coordinates.
     memcpy(&dlBlockOrig, &min, sizeof(min));
-    max.x -= min.x;
-    max.y -= min.y;
-    dlBlockWidth = (max.x >> (FRACBITS + 7)) + 1;
-    dlBlockHeight = (max.y >> (FRACBITS + 7)) + 1;
+    max.pos[VX] -= min.pos[VX];
+    max.pos[VY] -= min.pos[VY];
+    dlBlockWidth  = (max.pos[VX] >> (FRACBITS + 7)) + 1;
+    dlBlockHeight = (max.pos[VY] >> (FRACBITS + 7)) + 1;
 
     // Blocklinks is a table of lumobj_t pointers.
     dlBlockLinks =
@@ -501,10 +501,10 @@ static void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
     if(!present)
         return;
 
-    pos[0][VX] = FIX2FLT(seg->v1->x);
-    pos[0][VY] = FIX2FLT(seg->v1->y);
-    pos[1][VX] = FIX2FLT(seg->v2->x);
-    pos[1][VY] = FIX2FLT(seg->v2->y);
+    pos[0][VX] = FIX2FLT(seg->v1->pos[VX]);
+    pos[0][VY] = FIX2FLT(seg->v1->pos[VY]);
+    pos[1][VX] = FIX2FLT(seg->v2->pos[VX]);
+    pos[1][VY] = FIX2FLT(seg->v2->pos[VY]);
 
     // We will only calculate light placement for segs that are facing
     // the viewpoint.
@@ -695,10 +695,10 @@ static void DL_ProcessWallGlow(seg_t *seg, sector_t *sect)
     boolean     backSide = false;
 
     // Check if this segment is actually facing our way.
-    v1[VX] = FIX2FLT(seg->v1->x);
-    v1[VY] = FIX2FLT(seg->v1->y);
-    v2[VX] = FIX2FLT(seg->v2->x);
-    v2[VY] = FIX2FLT(seg->v2->y);
+    v1[VX] = FIX2FLT(seg->v1->pos[VX]);
+    v1[VY] = FIX2FLT(seg->v1->pos[VY]);
+    v2[VX] = FIX2FLT(seg->v2->pos[VX]);
+    v2[VY] = FIX2FLT(seg->v2->pos[VY]);
     if(!Rend_SegFacingDir(v1, v2))
         return;                 // Nope...
 
@@ -771,7 +771,7 @@ void DL_Clear(void)
 
     M_Free(dlBlockLinks);
     dlBlockLinks = 0;
-    dlBlockOrig.x = dlBlockOrig.y = 0;
+    dlBlockOrig.pos[VX] = dlBlockOrig.pos[VY] = 0;
     dlBlockWidth = dlBlockHeight = 0;
 }
 
@@ -1177,9 +1177,9 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
 
     // Calculate distance to line.
     distance =
-        (FIX2FLT(line->v1->y - light->lum->thing->pos[VY]) * FIX2FLT(line->dx) -
-         FIX2FLT(line->v1->x -
-                 light->lum->thing->pos[VX]) * FIX2FLT(line->dy)) / line->info->length;
+        (FIX2FLT(line->v1->pos[VY] - light->lum->thing->pos[VY]) * FIX2FLT(line->dx) -
+         FIX2FLT(line->v1->pos[VX] - light->lum->thing->pos[VX]) * FIX2FLT(line->dy))
+         / line->info->length;
 
     if((source == line->frontsector && distance < 0) ||
        (source == line->backsector && distance > 0))
@@ -1274,10 +1274,10 @@ static void DL_SpreadBlocks(subsector_t *subsector)
     int     xl, xh, yl, yh, x, y, *count;
     lumobj_t *iter;
 
-    xl = X_TO_DLBX(FLT2FIX(subsector->bbox[0].x - dlMaxRad));
-    xh = X_TO_DLBX(FLT2FIX(subsector->bbox[1].x + dlMaxRad));
-    yl = Y_TO_DLBY(FLT2FIX(subsector->bbox[0].y - dlMaxRad));
-    yh = Y_TO_DLBY(FLT2FIX(subsector->bbox[1].y + dlMaxRad));
+    xl = X_TO_DLBX(FLT2FIX(subsector->bbox[0].pos[VX] - dlMaxRad));
+    xh = X_TO_DLBX(FLT2FIX(subsector->bbox[1].pos[VX] + dlMaxRad));
+    yl = Y_TO_DLBY(FLT2FIX(subsector->bbox[0].pos[VY] - dlMaxRad));
+    yh = Y_TO_DLBY(FLT2FIX(subsector->bbox[1].pos[VY] + dlMaxRad));
 
     // Are we completely outside the blockmap?
     if(xh < 0 || xl >= dlBlockWidth || yh < 0 || yl >= dlBlockHeight)
@@ -1707,10 +1707,10 @@ void DL_ClipBySight(int ssecidx)
         for(i = 0; i < num; ++i)
         {
             seg = ssec->poly->segs[i];
-            v1[VX] = FIX2FLT(seg->v1->x);
-            v1[VY] = FIX2FLT(seg->v1->y);
-            v2[VX] = FIX2FLT(seg->v2->x);
-            v2[VY] = FIX2FLT(seg->v2->y);
+            v1[VX] = FIX2FLT(seg->v1->pos[VX]);
+            v1[VY] = FIX2FLT(seg->v1->pos[VY]);
+            v2[VX] = FIX2FLT(seg->v2->pos[VX]);
+            v2[VY] = FIX2FLT(seg->v2->pos[VY]);
 
             // Ignore segs facing the wrong way.
             if(!Rend_SegFacingDir(v1, v2))
