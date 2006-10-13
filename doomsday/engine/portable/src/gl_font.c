@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -60,8 +60,8 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void* FR_ReadFormat0(DFILE* file, jfrfont_t* font);
-static void* FR_ReadFormat2(DFILE* file, jfrfont_t* font);
+static void* FR_ReadFormat0(DFILE *file, jfrfont_t *font);
+static void* FR_ReadFormat2(DFILE *file, jfrfont_t *font);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -81,10 +81,10 @@ static char fontpath[256] = "";
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Returns zero if there are no errors.
  */
-int FR_Init()
+int FR_Init(void)
 {
     if(initFROk)
         return -1;              // No reinitializations...
@@ -109,7 +109,7 @@ int FR_Init()
     return 0;
 }
 
-/*
+/**
  * Destroys the font with the index.
  */
 static void FR_DestroyFontIdx(int idx)
@@ -120,12 +120,12 @@ static void FR_DestroyFontIdx(int idx)
     memmove(fonts + idx, fonts + idx + 1,
             sizeof(jfrfont_t) * (numFonts - idx - 1));
     numFonts--;
-    fonts = realloc(fonts, sizeof(jfrfont_t) * numFonts);
+    fonts = M_Realloc(fonts, sizeof(jfrfont_t) * numFonts);
     if(currentFontIndex == idx)
         currentFontIndex = -1;
 }
 
-void FR_Shutdown()
+void FR_Shutdown(void)
 {
     // Destroy all fonts.
     while(numFonts)
@@ -165,9 +165,10 @@ int FR_GetFontIdx(int id)
 {
     int     i;
 
-    for(i = 0; i < numFonts; i++)
+    for(i = 0; i < numFonts; ++i)
         if(fonts[i].id == id)
             return i;
+
     Con_Printf("FR_GetFontIdx: Unknown ID %i.\n", id);
     return -1;
 }
@@ -190,13 +191,14 @@ jfrfont_t *FR_GetFont(int id)
     return fonts + idx;
 }
 
-static int FR_GetMaxId()
+static int FR_GetMaxId(void)
 {
     int     i, grid = 0;
 
-    for(i = 0; i < numFonts; i++)
+    for(i = 0; i < numFonts; ++i)
         if(fonts[i].id > grid)
             grid = fonts[i].id;
+
     return grid;
 }
 
@@ -205,10 +207,11 @@ static int findPow2(int num)
     int     cumul = 1;
 
     for(; num > cumul; cumul *= 2);
+
     return cumul;
 }
 
-int FR_SaveFont(char *filename, jfrfont_t * font, unsigned int *image)
+static int FR_SaveFont(char *filename, jfrfont_t *font, unsigned int *image)
 {
     FILE   *file = fopen(filename, "wb");
     int     i, c, bit, numPels;
@@ -224,7 +227,7 @@ int FR_SaveFont(char *filename, jfrfont_t * font, unsigned int *image)
     OutShort(file, MAX_CHARS);  // Number of characters.
 
     // Characters.
-    for(i = 0; i < MAX_CHARS; i++)
+    for(i = 0; i < MAX_CHARS; ++i)
     {
         OutShort(file, font->chars[i].x);
         OutShort(file, font->chars[i].y);
@@ -235,9 +238,9 @@ int FR_SaveFont(char *filename, jfrfont_t * font, unsigned int *image)
     // Write a zero to indicate the data is in bitmap format (0,1).
     OutByte(file, 0);
     numPels = font->texWidth * font->texHeight;
-    for(c = i = 0; i < (numPels + 7) / 8; i++)
+    for(c = i = 0; i < (numPels + 7) / 8; ++i)
     {
-        for(mask = 0, bit = 7; bit >= 0; bit--, c++)
+        for(mask = 0, bit = 7; bit >= 0; bit--, ++c)
             mask |= (c < numPels ? image[c] != 0 : false) << bit;
         OutByte(file, mask);
     }
@@ -246,19 +249,19 @@ int FR_SaveFont(char *filename, jfrfont_t * font, unsigned int *image)
     return true;
 }
 
-int FR_NewFont(void)
+static int FR_NewFont(void)
 {
     jfrfont_t *font;
 
     currentFontIndex = numFonts;
-    fonts = realloc(fonts, sizeof(jfrfont_t) * ++numFonts);
+    fonts = M_Realloc(fonts, sizeof(jfrfont_t) * ++numFonts);
     font = fonts + currentFontIndex;
     memset(font, 0, sizeof(jfrfont_t));
     font->id = FR_GetMaxId() + 1;
     return currentFontIndex;
 }
 
-/*
+/**
  * Prepares a font from a file. If the given file is not found,
  * prepares the corresponding GDI font.
  */
@@ -296,7 +299,7 @@ int FR_PrepareFont(const char *name)
 #ifdef WIN32
         int i;
         // No luck...
-        for(i = 0; fontmapper[i].name; i++)
+        for(i = 0; fontmapper[i].name; ++i)
             if(!stricmp(fontmapper[i].name, name))
             {
                 if(verbose)
@@ -375,7 +378,7 @@ int FR_PrepareFont(const char *name)
         gl.TexImage(DGL_RGBA, font->texWidth, font->texHeight, 0, image);
         gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
         gl.TexParameter(DGL_MAG_FILTER, DGL_NEAREST);
-        free(image); image = 0;
+        M_Free(image); image = 0;
 
         F_Close(file);
     }
@@ -384,7 +387,7 @@ int FR_PrepareFont(const char *name)
     return true;
 }
 
-static void* FR_ReadFormat0(DFILE* file, jfrfont_t* font)
+static void* FR_ReadFormat0(DFILE *file, jfrfont_t*font)
 {
     int     numChars = 0;
     int     i;
@@ -405,7 +408,7 @@ static void* FR_ReadFormat0(DFILE* file, jfrfont_t* font)
     numChars = InShort(file);
     VERBOSE2(Con_Printf("FR_PrepareFont: Dimensions %i x %i, with %i chars.\n",
                         font->texWidth, font->texHeight, numChars));
-    for(i = 0; i < numChars; i++)
+    for(i = 0; i < numChars; ++i)
     {
         ch = &font->chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
         ch->x = InShort(file);
@@ -423,11 +426,11 @@ static void* FR_ReadFormat0(DFILE* file, jfrfont_t* font)
     }
 
     numPels = font->texWidth * font->texHeight;
-    image = calloc(numPels, sizeof(int));
-    for(c = i = 0; i < (numPels + 7) / 8; i++)
+    image = M_Calloc(numPels * sizeof(int));
+    for(c = i = 0; i < (numPels + 7) / 8; ++i)
     {
         mask = InByte(file);
-        for(bit = 7; bit >= 0; bit--, c++)
+        for(bit = 7; bit >= 0; bit--, ++c)
         {
             if(c >= numPels)
                 break;
@@ -438,7 +441,7 @@ static void* FR_ReadFormat0(DFILE* file, jfrfont_t* font)
     return image;
 }
 
-static void* FR_ReadFormat2(DFILE* file, jfrfont_t* font)
+static void* FR_ReadFormat2(DFILE *file, jfrfont_t *font)
 {
     int     i;
     int     glyphCount = 0;
@@ -486,7 +489,7 @@ static void* FR_ReadFormat2(DFILE* file, jfrfont_t* font)
 
     // Read the bitmap.
     numPels = font->texWidth * font->texHeight;
-    image = ptr = calloc(numPels, 4);
+    image = ptr = M_Calloc(numPels * 4);
     if(bitmapFormat == 0)
     {
         for(i = 0; i < numPels; ++i)
@@ -512,7 +515,7 @@ static void* FR_ReadFormat2(DFILE* file, jfrfont_t* font)
     return image;
 }
 
-/*
+/**
  * Prepare a GDI font. Select it as the current font.
  */
 #ifdef WIN32
@@ -535,7 +538,7 @@ int FR_PrepareGDIFont(HFONT hfont)
     SelectObject(hdc, hfont);
     // Let's first find out the sizes of all the characters.
     // Then we can decide how large a texture we need.
-    for(i = 0, x = 0, y = 0, maxh = 0; i < 256; i++)
+    for(i = 0, x = 0, y = 0, maxh = 0; i < 256; ++i)
     {
         jfrchar_t *fc = font->chars + i;
         SIZE    size;
@@ -564,7 +567,7 @@ int FR_PrepareGDIFont(HFONT hfont)
     rect.bottom = bmpHeight;
     FillRect(hdc, &rect, GetStockObject(BLACK_BRUSH));
     // Print all the characters.
-    for(i = 0, x = 0, y = 0, maxh = 0; i < 256; i++)
+    for(i = 0, x = 0, y = 0, maxh = 0; i < 256; ++i)
     {
         jfrchar_t *fc = font->chars + i;
         byte    ch[2] = { i, 0 };
@@ -581,14 +584,19 @@ int FR_PrepareGDIFont(HFONT hfont)
         maxh = max(maxh, fc->h);
         x += fc->w + 1;
     }
+
     // Now we can make a version that DGL can read.
     imgWidth = findPow2(bmpWidth);
     imgHeight = findPow2(bmpHeight);
-    //  printf( "font: %d x %d\n", imgWidth, imgHeight);
-    image = malloc(4 * imgWidth * imgHeight);
+/*
+#if _DEBUG
+Con_Printf( "font: %d x %d\n", imgWidth, imgHeight);
+#endif
+*/
+    image = M_Malloc(4 * imgWidth * imgHeight);
     memset(image, 0, 4 * imgWidth * imgHeight);
-    for(y = 0; y < bmpHeight; y++)
-        for(x = 0; x < bmpWidth; x++)
+    for(y = 0; y < bmpHeight; ++y)
+        for(x = 0; x < bmpWidth; ++x)
             if(GetPixel(hdc, x, y))
             {
                 image[x + y * imgWidth] = 0xffffffff;
@@ -596,8 +604,10 @@ int FR_PrepareGDIFont(HFONT hfont)
                    image[x+1 + (y+1)*imgWidth] = 0xff000000; */
             }
 
-    /*saveTGA24_rgba8888("ddfont.tga", bmpWidth, bmpHeight,
-       (unsigned char*)image); */
+/*
+saveTGA24_rgba8888("ddfont.tga", bmpWidth, bmpHeight,
+                   (unsigned char*)image);
+ */
 
     font->texWidth = imgWidth;
     font->texHeight = imgHeight;
@@ -618,14 +628,14 @@ int FR_PrepareGDIFont(HFONT hfont)
     gl.TexParameter(DGL_MAG_FILTER, DGL_NEAREST);
 
     // We no longer need these.
-    free(image);
+    M_Free(image);
     DeleteObject(hbmp);
     DeleteDC(hdc);
     return 0;
 }
 #endif                          // WIN32
 
-/*
+/**
  * Change the current font.
  */
 void FR_SetFont(int id)
@@ -645,6 +655,7 @@ int FR_CharWidth(int ch)
 {
     if(currentFontIndex == -1)
         return 0;
+
     return fonts[currentFontIndex].chars[ch].w -
         fonts[currentFontIndex].marginWidth * 2;
 }
@@ -658,7 +669,7 @@ int FR_TextWidth(char *text)
         return 0;
 
     // Just add them together.
-    for(cf = fonts + currentFontIndex, i = 0; i < len; i++)
+    for(cf = fonts + currentFontIndex, i = 0; i < len; ++i)
         width += cf->chars[(byte) text[i]].w - 2*cf->marginWidth;
 
     return width;
@@ -675,7 +686,7 @@ int FR_TextHeight(char *text)
     cf = fonts + currentFontIndex;
 
     // Find the greatest height.
-    for(len = strlen(text), i = 0; i < len; i++)
+    for(len = strlen(text), i = 0; i < len; ++i)
         height = MAX_OF(height, cf->chars[(byte) text[i]].h - 2*cf->marginHeight);
 
     return height;
@@ -693,6 +704,7 @@ int FR_SingleLineHeight(char *text)
     {
         return cf->ascent;
     }
+
     return cf->chars[(byte)text[0]].h - 2*cf->marginHeight;
 }
 
@@ -710,14 +722,15 @@ int FR_GlyphTopToAscent(char *text)
     return cf->lineHeight - cf->ascent;
 }
 
-int FR_GetCurrent()
+int FR_GetCurrent(void)
 {
     if(currentFontIndex == -1)
         return 0;
+
     return fonts[currentFontIndex].id;
 }
 
-/*
+/**
  * (x,y) is the upper left corner. Returns the length.
  */
 int FR_CustomShadowTextOut(char *text, int x, int y, int shadowX, int shadowY,
@@ -767,7 +780,7 @@ int FR_CustomShadowTextOut(char *text, int x, int y, int shadowX, int shadowY,
         x += shadowX;
         y += shadowY;
 
-        for(i = 0; i < len; i++)
+        for(i = 0; i < len; ++i)
         {
             // First draw the shadow.
             jfrchar_t *ch = cf->chars + (byte) text[i];
@@ -798,7 +811,7 @@ int FR_CustomShadowTextOut(char *text, int x, int y, int shadowX, int shadowY,
     x -= cf->marginWidth;
     y -= cf->marginHeight;
 
-    for(i = 0; i < len; i++)
+    for(i = 0; i < len; ++i)
     {
         jfrchar_t *ch = cf->chars + (byte) text[i];
 
