@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,7 +69,7 @@ boolean novideo;                // if true, stay in text mode for debugging
 // CODE --------------------------------------------------------------------
 
 #ifdef WIN32
-/*
+/**
  * Borrowed from Lee Killough.
  */
 static void C_DECL handler(int s)
@@ -83,7 +84,7 @@ static void C_DECL handler(int s)
 }
 #endif
 
-/*
+/**
  * Initialize machine state.
  */
 void Sys_Init(void)
@@ -122,7 +123,7 @@ void Sys_Init(void)
 #endif
 }
 
-/*
+/**
  * Return to default system state.
  */
 void Sys_Shutdown(void)
@@ -219,7 +220,7 @@ void Sys_ShowWindow(boolean show)
 #endif
 }
 
-/*
+/**
  * Shut everything down and quit the program.
  */
 void Sys_Quit(void)
@@ -256,7 +257,7 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 #endif
 }
 
-/*
+/**
  * Opens the given file in a suitable text editor.
  */
 void Sys_OpenTextEditor(const char *filename)
@@ -267,7 +268,7 @@ void Sys_OpenTextEditor(const char *filename)
 #endif
 }
 
-/*
+/**
  * Priority can be -3...3, with zero being the normal priority.
  * Returns a handle to the started thread.
  */
@@ -305,7 +306,7 @@ int Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority)
 #endif
 }
 
-/*
+/**
  * Suspends or resumes the execution of a thread.
  */
 void Sys_SuspendThread(int handle, boolean dopause)
@@ -322,7 +323,7 @@ void Sys_SuspendThread(int handle, boolean dopause)
 #endif
 }
 
-/*
+/**
  * Returns the return value of the thread.
  */
 int Sys_WaitThread(int handle)
@@ -376,7 +377,7 @@ void Sys_Unlock(int handle)
     SDL_mutexV((SDL_mutex *) handle);
 }
 
-/*
+/**
  * Create a new semaphore. Returns a handle.
  */
 semaphore_t Sem_Create(unsigned int initialValue)
@@ -392,7 +393,7 @@ void Sem_Destroy(semaphore_t semaphore)
     }
 }
 
-/*
+/**
  * "Proberen" a semaphore. Blocks until the successful.
  */
 void Sem_P(semaphore_t semaphore)
@@ -403,7 +404,7 @@ void Sem_P(semaphore_t semaphore)
     }
 }
 
-/*
+/**
  * "Verhogen" a semaphore. Returns immediately.
  */
 void Sem_V(semaphore_t semaphore)
