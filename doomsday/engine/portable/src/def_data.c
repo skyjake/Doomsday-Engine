@@ -6,7 +6,7 @@
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is M_Free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "de_misc.h"
 
 #include "def_data.h"
 #include "gl_main.h"
@@ -48,7 +50,7 @@ void *DED_NewEntries(void **ptr, ded_count_t * cnt, int elem_size, int count)
         cnt->max *= 2;          // Double the size of the array.
         if(cnt->num > cnt->max)
             cnt->max = cnt->num;
-        *ptr = realloc(*ptr, elem_size * cnt->max);
+        *ptr = M_Realloc(*ptr, elem_size * cnt->max);
     }
     np = (char *) *ptr + (cnt->num - count) * elem_size;
     memset(np, 0, elem_size * count);   // Clear the new entries.
@@ -71,13 +73,13 @@ void DED_DelEntry(int index, void **ptr, ded_count_t * cnt, int elem_size)
     if(--cnt->num < cnt->max / 2)
     {
         cnt->max /= 2;
-        *ptr = realloc(*ptr, elem_size * cnt->max);
+        *ptr = M_Realloc(*ptr, elem_size * cnt->max);
     }
 }
 
 void DED_DelArray(void **ptr, ded_count_t * cnt)
 {
-    free(*ptr);
+    M_Free(*ptr);
     *ptr = 0;
     cnt->num = cnt->max = 0;
 }
@@ -99,56 +101,56 @@ void DED_Destroy(ded_t * ded)
 {
     int     i;
 
-    free(ded->flags);
-    free(ded->mobjs);
-    free(ded->states);
-    free(ded->sprites);
-    free(ded->lights);
-    free(ded->models);
-    free(ded->sounds);
-    free(ded->music);
-    free(ded->mapinfo);
+    M_Free(ded->flags);
+    M_Free(ded->mobjs);
+    M_Free(ded->states);
+    M_Free(ded->sprites);
+    M_Free(ded->lights);
+    M_Free(ded->models);
+    M_Free(ded->sounds);
+    M_Free(ded->music);
+    M_Free(ded->mapinfo);
     for(i = 0; i < ded->count.text.num; i++)
     {
-        free(ded->text[i].text);
+        M_Free(ded->text[i].text);
     }
-    free(ded->text);
+    M_Free(ded->text);
     for(i = 0; i < ded->count.tenviron.num; i++)
     {
-        free(ded->tenviron[i].textures);
+        M_Free(ded->tenviron[i].textures);
     }
-    free(ded->tenviron);
+    M_Free(ded->tenviron);
     for(i = 0; i < ded->count.values.num; i++)
     {
-        free(ded->values[i].id);
-        free(ded->values[i].text);
+        M_Free(ded->values[i].id);
+        M_Free(ded->values[i].text);
     }
-    free(ded->values);
-    free(ded->decorations);
+    M_Free(ded->values);
+    M_Free(ded->decorations);
     for(i = 0; i < ded->count.groups.num; i++)
     {
-        free(ded->groups[i].members);
+        M_Free(ded->groups[i].members);
     }
-    free(ded->groups);
-    free(ded->sectors);
+    M_Free(ded->groups);
+    M_Free(ded->sectors);
     for(i = 0; i < ded->count.ptcgens.num; i++)
     {
-        free(ded->ptcgens[i].stages);
+        M_Free(ded->ptcgens[i].stages);
     }
-    free(ded->ptcgens);
-    free(ded->finales);
+    M_Free(ded->ptcgens);
+    M_Free(ded->finales);
 
     for(i = 0; i < ded->count.xgclasses.num; i++)
     {
-        free(ded->xgclasses[i].properties);
+        M_Free(ded->xgclasses[i].properties);
     }
-    free(ded->xgclasses);
+    M_Free(ded->xgclasses);
 
     for(i = 0; i < ded->count.lumpformats.num; i++)
     {
-        free(ded->lumpformats[i].members);
+        M_Free(ded->lumpformats[i].members);
     }
-    free(ded->lumpformats);
+    M_Free(ded->lumpformats);
 }
 
 int DED_AddMobj(ded_t * ded, char *idstr)
@@ -250,7 +252,7 @@ int DED_AddModel(ded_t * ded, char *spr)
 
 void DED_RemoveModel(ded_t * ded, int index)
 {
-    //free(ded->models[index].frames);
+    //M_Free(ded->models[index].frames);
     DED_DelEntry(index, (void **) &ded->models, &ded->count.models,
                  sizeof(ded_model_t));
 }
@@ -371,7 +373,7 @@ int DED_AddText(ded_t * ded, char *id)
 
 void DED_RemoveText(ded_t * ded, int index)
 {
-    free(ded->text[index].text);
+    M_Free(ded->text[index].text);
     DED_DelEntry(index, (void **) &ded->text, &ded->count.text,
                  sizeof(ded_text_t));
 }
@@ -388,7 +390,7 @@ int DED_AddTexEnviron(ded_t * ded, char *id)
 
 void DED_RemoveTexEnviron(ded_t * ded, int index)
 {
-    free(ded->tenviron[index].textures);
+    M_Free(ded->tenviron[index].textures);
     DED_DelEntry(index, (void **) &ded->tenviron, &ded->count.tenviron,
                  sizeof(ded_tenviron_t));
 }
@@ -400,7 +402,7 @@ int DED_AddValue(ded_t * ded, const char *id)
 
     if(id)
     {
-        val->id = malloc(strlen(id) + 1);
+        val->id = M_Malloc(strlen(id) + 1);
         strcpy(val->id, id);
     }
     return val - ded->values;
@@ -408,8 +410,8 @@ int DED_AddValue(ded_t * ded, const char *id)
 
 void DED_RemoveValue(ded_t * ded, int index)
 {
-    free(ded->values[index].id);
-    free(ded->values[index].text);
+    M_Free(ded->values[index].id);
+    M_Free(ded->values[index].text);
     DED_DelEntry(index, (void **) &ded->values, &ded->count.values,
                  sizeof(ded_value_t));
 }
@@ -476,7 +478,7 @@ int DED_AddFinale(ded_t * ded)
 
 void DED_RemoveFinale(ded_t * ded, int index)
 {
-    free(ded->finales[index].script);
+    M_Free(ded->finales[index].script);
     DED_DelEntry(index, (void **) &ded->finales, &ded->count.finales,
                  sizeof(ded_finale_t));
 }

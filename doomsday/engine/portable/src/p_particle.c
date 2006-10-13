@@ -220,10 +220,9 @@ void P_SpawnParticleGen(ded_ptcgen_t *def, mobj_t *source)
         return;
 /*
 #if _DEBUG
-ST_Message("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)\n",
-def->state, def - defs.ptcgens,
-defs.states[source->state - states].id,
-defs.mobjs[source->type].id, source);
+Con_Message("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)\n",
+            def->state, def - defs.ptcgens, defs.states[source->state-states].id,
+            defs.mobjs[source->type].id, source);
 #endif
 */
 
@@ -973,16 +972,16 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     tmpx2 = x;
     tmpy1 = pt->pos[VY];
     tmpy2 = y;
-    mbox[BOXTOP] = MAX_OF(y, pt->pos[VY]) + st->radius;
+    mbox[BOXTOP]    = MAX_OF(y, pt->pos[VY]) + st->radius;
     mbox[BOXBOTTOM] = MIN_OF(y, pt->pos[VY]) - st->radius;
-    mbox[BOXRIGHT] = MAX_OF(x, pt->pos[VX]) + st->radius;
-    mbox[BOXLEFT] = MIN_OF(x, pt->pos[VX]) - st->radius;
+    mbox[BOXRIGHT]  = MAX_OF(x, pt->pos[VX]) + st->radius;
+    mbox[BOXLEFT]   = MIN_OF(x, pt->pos[VX]) - st->radius;
 
     // Iterate the lines in the contacted blocks.
-    xl = (mbox[BOXLEFT] - bmaporgx) >> MAPBLOCKSHIFT;
-    xh = (mbox[BOXRIGHT] - bmaporgx) >> MAPBLOCKSHIFT;
+    xl = (mbox[BOXLEFT]   - bmaporgx) >> MAPBLOCKSHIFT;
+    xh = (mbox[BOXRIGHT]  - bmaporgx) >> MAPBLOCKSHIFT;
     yl = (mbox[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
-    yh = (mbox[BOXTOP] - bmaporgy) >> MAPBLOCKSHIFT;
+    yh = (mbox[BOXTOP]    - bmaporgy) >> MAPBLOCKSHIFT;
 
     validcount++;
     for(bx = xl; bx <= xh; ++bx)

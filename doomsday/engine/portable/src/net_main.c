@@ -190,8 +190,8 @@ void Net_Shutdown(void)
     Net_DestroyArrays();
 }
 
-/*
- * Returns the name of the specified player.
+/**
+ * @return          The name of the specified player.
  */
 char   *Net_GetPlayerName(int player)
 {
@@ -205,7 +205,7 @@ ident_t Net_GetPlayerID(int player)
     return clients[player].id;
 }
 
-/*
+/**
  * Sends the contents of the netBuffer.
  */
 void Net_SendBuffer(int to_player, int sp_flags)
@@ -236,8 +236,8 @@ void Net_SendBuffer(int to_player, int sp_flags)
     N_SendPacket(sp_flags);
 }
 
-/*
- * Returns false if there are no packets waiting.
+/**
+ * @return         <code>false</code> if there are no packets waiting.
  */
 boolean Net_GetPacket(void)
 {
@@ -272,7 +272,7 @@ boolean Net_GetPacket(void)
     return true;
 }
 
-/*
+/**
  * This is the public interface of the message sender.
  */
 void Net_SendPacket(int to_player, int type, void *data, int length)
@@ -303,10 +303,10 @@ void Net_SendPacket(int to_player, int type, void *data, int length)
     }
 }
 
-/*
+/**
  * Prints the message in the console.
  */
-void Net_ShowChatMessage()
+void Net_ShowChatMessage(void)
 {
     // The current packet in the netBuffer is a chat message,
     // let's unwrap and show it.
@@ -314,7 +314,7 @@ void Net_ShowChatMessage()
                 netBuffer.msg.data + 3);
 }
 
-/*
+/**
  * After a long period with no updates (map setup), calling this will
  * reset the tictimer so that no time seems to have passed.
  */
@@ -323,7 +323,7 @@ void Net_ResetTimer(void)
     firstNetUpdate = true;
 }
 
-/*
+/**
  * Send the local player(s) ticcmds to the server.
  */
 void Net_SendCommands(void)
@@ -356,7 +356,7 @@ void Net_SendCommands(void)
     memset(cmd, 0, TICCMD_SIZE);
 }
 
-/*
+/**
  * Handle incoming packets, clients send ticcmds and coordinates to
  * the server.
  */
@@ -460,7 +460,7 @@ void Net_Update(void)
         Sv_GetPackets();
 }
 
-/*
+/**
  * Build a ticcmd for the local player.
  */
 void Net_BuildLocalCommands(timespan_t time)
@@ -488,7 +488,7 @@ void Net_BuildLocalCommands(timespan_t time)
     gx.MergeTicCmd(clients[consoleplayer].aggregateCmd, cmd);
 }
 
-/*
+/**
  * Called from Net_Init to initialize the ticcmd arrays.
  */
 void Net_AllocArrays(void)
@@ -498,19 +498,19 @@ void Net_AllocArrays(void)
 #if 0
     // Local ticcmds are stored into this array before they're copied
     // to netplayer[0]'s ticcmds buffer.
-    localticcmds = calloc(LOCALTICS, TICCMD_SIZE);
+    localticcmds = M_Calloc(LOCALTICS * TICCMD_SIZE);
     numlocal = 0;               // Nothing in the buffer.
 #endif
 
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         memset(clients + i, 0, sizeof(clients[i]));
         // The server stores ticcmds sent by the clients to these
         // buffers.
-        clients[i].ticCmds = calloc(BACKUPTICS, TICCMD_SIZE);
+        clients[i].ticCmds = M_Calloc(BACKUPTICS * TICCMD_SIZE);
         // The last cmd that was executed is stored here.
-        clients[i].lastCmd = calloc(1, TICCMD_SIZE);
-        clients[i].aggregateCmd = calloc(1, TICCMD_SIZE);
+        clients[i].lastCmd = M_Calloc(TICCMD_SIZE);
+        clients[i].aggregateCmd = M_Calloc(TICCMD_SIZE);
         clients[i].runTime = -1;
     }
 }
@@ -520,22 +520,22 @@ void Net_DestroyArrays(void)
     int     i;
 
 #if 0
-    free(localticcmds);
+    M_Free(localticcmds);
     localticcmds = NULL;
 #endif
 
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        free(clients[i].ticCmds);
-        free(clients[i].lastCmd);
-        free(clients[i].aggregateCmd);
+        M_Free(clients[i].ticCmds);
+        M_Free(clients[i].lastCmd);
+        M_Free(clients[i].aggregateCmd);
         clients[i].ticCmds = NULL;
         clients[i].lastCmd = NULL;
         clients[i].aggregateCmd = NULL;
     }
 }
 
-/*
+/**
  * This is the network one-time initialization.
  * (into single-player mode)
  */
@@ -595,7 +595,7 @@ void Net_StopGame(void)
     netLoggedIn = false;
 
     // All remote players are forgotten.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         players[i].ingame = false;
         clients[i].ready = clients[i].connected = false;
@@ -618,7 +618,9 @@ void Net_StopGame(void)
     players[0].flags |= DDPF_LOCAL;
 }
 
-// Returns delta based on 'now' (- future, + past).
+/**
+ * @return          Delta based on 'now' (- future, + past).
+ */
 int Net_TimeDelta(byte now, byte then)
 {
     int     delta;
@@ -639,7 +641,7 @@ int Net_TimeDelta(byte now, byte then)
     return delta;
 }
 
-/*
+/**
  * This is a bit complicated and quite possibly unnecessarily so. The
  * idea is, however, that because the ticcmds sent by clients arrive in
  * bursts, we'll preserve the motion by 'executing' the commands in the
@@ -677,30 +679,37 @@ int Net_GetTicCmd(void *pCmd, int player)
     return true;
 
 #if 0
-    //Con_Printf("GetTicCmd: Cl=%i, GT=%i (%i)...\n", player, gametic, (byte)gametic);
+/*
+#if _DEBUG
+Con_Printf("GetTicCmd: Cl=%i, GT=%i (%i)...\n", player, gametic, (byte)gametic);
 
-    // Check the lag stress.
-    /*  if(cl->lagStress > net_stressmargin)
-       {
-       // Command lag should be increased, we're running out of cmds.
-       cl->lagStress -= net_stressmargin;
-       memcpy(cmd, cl->lastcmd, TICCMD_SIZE);   // Repeat lastcmd.
-       //Con_Printf("  Increasing lag\n");
-       return true;
-       }
-       else if(cl->lagStress < -net_stressmargin)
-       {
-       // Command lag should be decreased.
-       cl->lagStress += net_stressmargin;
-       cl->runTime++;
-       //Con_Printf("  Decreasing lag\n");
-       } */
-
+// Check the lag stress.
+if(cl->lagStress > net_stressmargin)
+{
+   // Command lag should be increased, we're running out of cmds.
+   cl->lagStress -= net_stressmargin;
+   memcpy(cmd, cl->lastcmd, TICCMD_SIZE);   // Repeat lastcmd.
+   Con_Printf("  Increasing lag\n");
+   return true;
+}
+else if(cl->lagStress < -net_stressmargin)
+{
+   // Command lag should be decreased.
+   cl->lagStress += net_stressmargin;
+   cl->runTime++;
+   Con_Printf("  Decreasing lag\n");
+}
+#endif
+*/
     for(;;)
     {
         if(Net_TimeDelta(gametic, cl->runTime) <= 0)
         {
-            //Con_Printf("  Running in the future! Rt=%i\n", cl->runTime);
+/*
+#if _DEBUG
+Con_Printf("  Running in the future! Rt=%i\n", cl->runTime);
+#endif
+*/
             future = true;
             //cl->lagStress++;
         }
@@ -717,29 +726,41 @@ int Net_GetTicCmd(void *pCmd, int player)
             // Runtime advances.
             if(!future)
                 cl->runTime++;
-            //Con_Printf("  Out of Cmds! Rt set to %i\n", cl->runTime);
+/*
+#if _DEBUG
+Con_Printf("  Out of Cmds! Rt set to %i\n", cl->runTime);
+#endif
+*/
             return false;
         }
+
         // There's at least one command in the buffer.
         // There will be one less tic in the buffer after this.
         cl->numtics--;
         memcpy(cmd, &cl->ticcmds[TICCMD_IDX(cl->firsttic++)], TICCMD_SIZE);
+
         // Make sure the firsttic iterator is in range.
         if(cl->firsttic >= BACKUPTICS)
             cl->firsttic = 0;
         // Do we need to do any merging?
         if(doMerge && gx.DiscardTicCmd)
             gx.DiscardTicCmd(cl->lastcmd, cmd);
+
         // This is the new last command.
         memcpy(cl->lastcmd, cmd, TICCMD_SIZE);
         // Check that the command is valid (not if its tick has already passed).
         if(Net_TimeDelta(cl->runTime, cmd->time) >= 0)
         {
-            //Con_Printf("  Obsolete Cmd! Rt=%i Ct=%i\n", cl->runTime, cmd->time);
+/*
+#if _DEBUG
+Con_Printf("  Obsolete Cmd! Rt=%i Ct=%i\n", cl->runTime, cmd->time);
+#endif
+*/
             // Cmd is too old. Go to next command and merge this one with it.
             doMerge = true;
             continue;
         }
+
         cl->runTime = cmd->time;
         // Note command lag.
         cl->lag = Sv_Latency(cmd->time);
@@ -747,14 +768,18 @@ int Net_GetTicCmd(void *pCmd, int player)
         // always running exactly synced with the server, i.e. itself.
         if(player && cl->numtics > 1)
             cl->lagStress--;
-        //Con_Printf("  CmdLag=%i\n", cl->lag);
+/*
+#if _DEBUG
+Con_Printf("  CmdLag=%i\n", cl->lag);
+#endif
+*/
         break;
     }
     return true;
 #endif
 }
 
-/*
+/**
  * Does drawing for the engine's HUD, not just the net.
  */
 void Net_Drawer(void)
@@ -763,7 +788,7 @@ void Net_Drawer(void)
     int     i, c;
     boolean show_blink_r = false;
 
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].ingame && clients[i].recording)
             show_blink_r = true;
 
@@ -825,7 +850,7 @@ void Net_Drawer(void)
     gl.PopMatrix();
 }
 
-/*
+/**
  * Maintain the ack threshold average.
  */
 void Net_SetAckTime(int clientNumber, uint period)
@@ -842,7 +867,7 @@ void Net_SetAckTime(int clientNumber, uint period)
 #endif
 }
 
-/*
+/**
  * Returns the average ack time of the client.
  */
 uint Net_GetAckTime(int clientNumber)
@@ -854,7 +879,7 @@ uint Net_GetAckTime(int clientNumber)
 
     // Find the smallest and largest so that they can be ignored.
     smallest = largest = client->ackTimes[0];
-    for(i = 0; i < NUM_ACK_TIMES; i++)
+    for(i = 0; i < NUM_ACK_TIMES; ++i)
     {
         if(client->ackTimes[i] < smallest)
             smallest = client->ackTimes[i];
@@ -864,7 +889,7 @@ uint Net_GetAckTime(int clientNumber)
     }
 
     // Calculate the average.
-    for(i = 0; i < NUM_ACK_TIMES; i++)
+    for(i = 0; i < NUM_ACK_TIMES; ++i)
     {
         if(client->ackTimes[i] != largest && client->ackTimes[i] != smallest)
         {
@@ -882,20 +907,20 @@ uint Net_GetAckTime(int clientNumber)
     }
 }
 
-/*
+/**
  * Sets all the ack times. Used to initial the ack times for new clients.
  */
 void Net_SetInitialAckTime(int clientNumber, uint period)
 {
     int     i;
 
-    for(i = 0; i < NUM_ACK_TIMES; i++)
+    for(i = 0; i < NUM_ACK_TIMES; ++i)
     {
         clients[clientNumber].ackTimes[i] = period;
     }
 }
 
-/*
+/**
  * The ack threshold is the maximum period of time to wait before
  * deciding an ack is not coming. The minimum threshold is 50 ms.
  */
@@ -925,7 +950,7 @@ void Net_Ticker(void /*timespan_t time*/)
         if(printTimer++ > TICSPERSEC)
         {
             printTimer = 0;
-            for(i = 0; i < MAXPLAYERS; i++)
+            for(i = 0; i < MAXPLAYERS; ++i)
             {
                 if(Sv_IsFrameTarget(i))
                 {
@@ -949,7 +974,7 @@ void Net_Ticker(void /*timespan_t time*/)
         return;
 
     // Check the pingers.
-    for(i = 0, cl = clients; i < MAXPLAYERS; i++, cl++)
+    for(i = 0, cl = clients; i < MAXPLAYERS; ++i, cl++)
     {
         // Clients can only ping the server.
         if((isClient && i) || i == consoleplayer)
@@ -966,7 +991,7 @@ void Net_Ticker(void /*timespan_t time*/)
     }
 }
 
-/*
+/**
  * Prints server/host information into the console. The header line is
  * printed if 'info' is NULL.
  */
@@ -1035,7 +1060,7 @@ D_CMD(Chat)
 
     // Assemble the chat message.
     strcpy(buffer, argv[!mode ? 1 : 2]);
-    for(i = (!mode ? 2 : 3); i < argc; i++)
+    for(i = (!mode ? 2 : 3); i < argc; ++i)
     {
         strcat(buffer, " ");
         strncat(buffer, argv[i], 80 - (strlen(buffer) + strlen(argv[i]) + 1));
@@ -1188,9 +1213,9 @@ D_CMD(MakeCamera)
        Sv_InitPoolForClient(cp);
        mo = Z_Malloc(sizeof(mobj_t), PU_LEVEL, 0);
        memset(mo, 0, sizeof(*mo));
-       mo->x = conp->mo->x;
-       mo->y = conp->mo->y;
-       mo->z = conp->mo->z;
+       mo->pos[VX] = conp->mo->pos[VX];
+       mo->pos[VY] = conp->mo->pos[VY];
+       mo->pos[VZ] = conp->mo->pos[VZ];
        mo->subsector = conp->mo->subsector;
        players[cp].mo = mo;
        displayplayer = cp; */
@@ -1314,7 +1339,7 @@ D_CMD(Connect)
     return returnValue;
 }
 
-/*
+/**
  * The 'net' console command.
  */
 D_CMD(Net)
@@ -1390,7 +1415,7 @@ D_CMD(Net)
             if(isServer)
             {
                 Con_Printf("Clients:\n");
-                for(i = 0; i < MAXPLAYERS; i++)
+                for(i = 0; i < MAXPLAYERS; ++i)
                 {
                     if(!clients[i].connected)
                         continue;

@@ -59,7 +59,7 @@ static zblockset_t *shadowLinksBlockSet;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Line1 and line2 are the (dx,dy)s for two lines, connected at the
  * origin (0,0).  Dist1 and dist2 are the distances from these lines.
  * The returned point (in 'point') is dist1 away from line1 and dist2
@@ -147,7 +147,7 @@ line_t *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left, boolean back)
     return neighbors[left ? 0 : 1];
 }
 
-/*
+/**
  * Returns a pointer to the sector the shadow polygon belongs in.
  */
 sector_t *R_GetShadowSector(shadowpoly_t *poly)
@@ -156,7 +156,7 @@ sector_t *R_GetShadowSector(shadowpoly_t *poly)
         line->backsector;
 }
 
-/*
+/**
  * Returns a pointer to the sector in the left/right proximity.
  */
 sector_t *R_GetShadowProximity(shadowpoly_t *poly, boolean left)
@@ -166,7 +166,7 @@ sector_t *R_GetShadowProximity(shadowpoly_t *poly, boolean left)
     return side->proxsector[left ? 0 : 1];
 }
 
-/*
+/**
  * May return false when dealing with backneighbors.
  */
 boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
@@ -190,7 +190,7 @@ boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
     return true;
 }
 
-/*
+/**
  * Returns the width (world units) of the shadow edge.  It is scaled
  * depending on the length of the edge.
  */
@@ -217,7 +217,7 @@ float R_ShadowEdgeWidth(const pvec2_t edge)
     return normalWidth;
 }
 
-/*
+/**
  * Sets the shadow edge offsets.  If the associated line does not have
  * neighbors, it can't have a shadow.
  */
@@ -226,7 +226,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
     vec2_t  left, right;
     int     side;
 
-    for(side = 0; side < 2; side++) // left and right
+    for(side = 0; side < 2; ++side) // left and right
     {
         // The inside corner.
         R_ShadowCornerDeltas(left, right, poly, side == 0, false);
@@ -260,7 +260,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
      */
 }
 
-/*
+/**
  * Link a shadowpoly to a subsector.
  */
 void R_LinkShadow(shadowpoly_t *poly, subsector_t *subsector)
@@ -269,14 +269,14 @@ void R_LinkShadow(shadowpoly_t *poly, subsector_t *subsector)
     shadowlink_t *link;
 
 #ifdef _DEBUG
-    // Check the links for dupes!
-    {
-        shadowlink_t *i;
+// Check the links for dupes!
+{
+shadowlink_t *i;
 
-        for(i = info->shadows; i; i = i->next)
-            if(i->poly == poly)
-                Con_Error("R_LinkShadow: Already here!!\n");
-    }
+for(i = info->shadows; i; i = i->next)
+    if(i->poly == poly)
+        Con_Error("R_LinkShadow: Already here!!\n");
+}
 #endif
 
     // We'll need to allocate a new link.
@@ -288,7 +288,7 @@ void R_LinkShadow(shadowpoly_t *poly, subsector_t *subsector)
     link->poly = poly;
 }
 
-/*
+/**
  * If the shadow polygon (parm) contacts the subsector, link the poly
  * to the subsector's shadow list.
  */
@@ -305,15 +305,15 @@ boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
 
 #if 0 // currently unused
     // Use the extended points, they are wider than inoffsets.
-    V2_Set(corners[0], FIX2FLT(poly->outer[0]->x), FIX2FLT(poly->outer[0]->y));
-    V2_Set(corners[1], FIX2FLT(poly->outer[1]->x), FIX2FLT(poly->outer[1]->y));
+    V2_Set(corners[0], FIX2FLT(poly->outer[0]->pos[VX]), FIX2FLT(poly->outer[0]->pos[VY]));
+    V2_Set(corners[1], FIX2FLT(poly->outer[1]->pos[VX]), FIX2FLT(poly->outer[1]->pos[VY]));
     V2_Sum(corners[2], corners[1], poly->extoffset[1]);
     V2_Sum(corners[3], corners[0], poly->extoffset[0]);
 
     V2_Sum(mid, corners[0], corners[2]);
     V2_Scale(mid, .5f);
 
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
     {
         V2_Subtract(corners[i], corners[i], mid);
         V2_Scale(corners[i], .995f);
@@ -321,7 +321,7 @@ boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
     }
 
     // Any of the corner points in the subsector?
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
     {
         if(R_PointInSubsector
            (FRACUNIT * corners[i][VX], FRACUNIT * corners[i][VY]) == subsector)
@@ -336,13 +336,13 @@ boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
     // the shadow's corners are outside a subsector, but the shadow
     // still contacts the subsector.
 
-    for(j = 0; j < subsector->numverts; j++)
+    for(j = 0; j < subsector->numverts; ++j)
     {
         V2_Set(a, subsector->verts[j].x, subsector->verts[j].y);
         V2_Set(b, subsector->verts[(j + 1) % subsector->numverts].x,
                subsector->verts[(j + 1) % subsector->numverts].y);
 
-        for(i = 0; i < 4; i++)
+        for(i = 0; i < 4; ++i)
         {
             /*          k = V2_Intercept(a, b, corners[i], corners[(i + 1) % 4], NULL);
                m = V2_Intercept(corners[i], corners[(i + 1) % 4], a, b, NULL);
@@ -419,18 +419,18 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
     if(!count)
         return;
 
-    boundaries = malloc(sizeof(*boundaries) * count);
-    overlaps = malloc(count);
+    boundaries = M_Malloc(sizeof(*boundaries) * count);
+    overlaps = M_Malloc(count);
 
     // We don't want to stay here forever.
-    for(tries = 0; tries < 100 && !done; tries++)
+    for(tries = 0; tries < 100 && !done; ++tries)
     {
         // We will set this to false if we notice that overlaps still
         // exist.
         done = true;
 
         // Calculate the boundaries.
-        for(i = 0, bound = boundaries; i < count; i++, bound++)
+        for(i = 0, bound = boundaries; i < count; ++i, bound++)
         {
             V2_SetFixed(bound->left, polys[i].outer[0]->pos[VX],
                         polys[i].outer[0]->pos[VY]);
@@ -443,11 +443,11 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
         memset(overlaps, 0, count);
 
         // Find the overlaps.
-        for(i = 0, bound = boundaries; i < count; i++, bound++)
+        for(i = 0, bound = boundaries; i < count; ++i, bound++)
         {
-            /*for(k = 0, other = boundaries; k < count; k++, other++) */
+            /*for(k = 0, other = boundaries; k < count; ++k, other++) */
 
-            for(k = 0; k < sector->linecount; k++)
+            for(k = 0; k < sector->linecount; ++k)
             {
                 //if(i == k) continue;
                 line = sector->Lines[k];
@@ -478,7 +478,7 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
         }
 
         // Adjust the overlapping inner points.
-        for(i = 0, bound = boundaries; i < count; i++, bound++)
+        for(i = 0, bound = boundaries; i < count; ++i, bound++)
         {
             if(overlaps[i] & OVERLAP_LEFT)
             {
@@ -493,11 +493,11 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
         }
     }
 
-    free(boundaries);
-    free(overlaps);
+    M_Free(boundaries);
+    M_Free(overlaps);
 }
 
-/*
+/**
  * New shadowpolys will be allocated from the storage.  If it is NULL,
  * the number of polys required is returned.
  */
@@ -510,13 +510,13 @@ int R_MakeShadowEdges(shadowpoly_t *storage)
     boolean frontside;
     shadowpoly_t *poly, *sectorFirst, *allocator = storage;
 
-    for(i = 0, counter = 0; i < numsectors; i++)
+    for(i = 0, counter = 0; i < numsectors; ++i)
     {
         sector = SECTOR_PTR(i);
         sectorFirst = allocator;
 
         // Iterate all the lines of the sector.
-        for(j = 0; j < sector->linecount; j++)
+        for(j = 0; j < sector->linecount; ++j)
         {
             line = sector->Lines[j];
             frontside = (line->frontsector == sector);
@@ -561,7 +561,7 @@ int R_MakeShadowEdges(shadowpoly_t *storage)
     return counter;
 }
 
-/*
+/**
  * Calculate sector edge shadow points, create the shadow polygons and
  * link them to the subsectors.
  */
@@ -595,7 +595,7 @@ void R_InitSectorShadows(void)
      */
     shadowLinksBlockSet = Z_BlockCreate(sizeof(shadowlink_t), 1024, PU_LEVEL);
 
-    for(i = 0, poly = shadows; i < maxCount; i++, poly++)
+    for(i = 0, poly = shadows; i < maxCount; ++i, poly++)
     {
         V2_Set(point, FIX2FLT(poly->outer[0]->pos[VX]), FIX2FLT(poly->outer[0]->pos[VY]));
         V2_InitBox(bounds, point);

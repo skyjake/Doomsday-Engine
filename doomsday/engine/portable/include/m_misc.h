@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -28,6 +28,7 @@
 #ifndef __DOOMSDAY_MISCELLAN_H__
 #define __DOOMSDAY_MISCELLAN_H__
 
+#include "dd_types.h"
 #include "sys_file.h"
 
 #define MAX_READ    8192

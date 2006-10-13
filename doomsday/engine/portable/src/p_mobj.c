@@ -61,7 +61,7 @@ typedef struct {
     mobj_t *thing;
     fixed_t box[4];
     int     flags;
-    fixed_t x, y, z, height;
+    fixed_t pos[3], height;
     fixed_t floorz, ceilingz, dropoffz;
 } checkpos_data_t;
 
@@ -105,7 +105,7 @@ static fixed_t tmpYMove;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * 'statenum' must be a valid state (not null!).
  */
 void P_SetState(mobj_t *mobj, int statenum)
@@ -138,7 +138,7 @@ void P_SetState(mobj_t *mobj, int statenum)
         Con_Execute(CMDS_DED, defs.states[statenum].execute, true, false);
 }
 
-/*
+/**
  * Adjusts tmpFloorZ and tmpCeilingZ as lines are contacted.
  */
 static boolean PIT_CheckLine(line_t *ld, void *parm)
@@ -199,15 +199,15 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
     blockdist = thing->radius + tm->thing->radius;
 
     // Only players can move under or over other things.
-    if(tm->z != DDMAXINT && (tm->thing->dplayer /* || thing->dplayer */
+    if(tm->pos[VZ] != DDMAXINT && (tm->thing->dplayer /* || thing->dplayer */
                              || thing->ddflags & DDMF_NOGRAVITY))
     {
-        if(thing->pos[VZ] > tm->z + tm->height)
+        if(thing->pos[VZ] > tm->pos[VZ] + tm->height)
         {
             // We're under it.
             return true;
         }
-        else if(thing->pos[VZ] + thing->height < tm->z)
+        else if(thing->pos[VZ] + thing->height < tm->pos[VZ])
         {
             // We're over it.
             return true;
@@ -215,8 +215,8 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
         overlap = true;
     }
 
-    if(abs(thing->pos[VX] - tm->x) >= blockdist ||
-       abs(thing->pos[VY] - tm->y) >= blockdist)
+    if(abs(thing->pos[VX] - tm->pos[VX]) >= blockdist ||
+       abs(thing->pos[VY] - tm->pos[VY]) >= blockdist)
     {
         // Didn't hit it.
         return true;
@@ -225,7 +225,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
     if(overlap)
     {
         // How are we positioned?
-        if(tm->z >= thing->pos[VZ] + thing->height - 24 * FRACUNIT)
+        if(tm->pos[VZ] >= thing->pos[VZ] + thing->height - 24 * FRACUNIT)
         {
             // Above, allowing stepup.
             tm->thing->onmobj = thing;
@@ -241,7 +241,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
         if(tm->thing->dplayer &&
            P_ApproxDistance(tm->thing->pos[VX] - thing->pos[VX],
                             tm->thing->pos[VY] - thing->pos[VY]) <
-           P_ApproxDistance(tm->x - thing->pos[VX], tm->y - thing->pos[VY]) &&
+           P_ApproxDistance(tm->pos[VX] - thing->pos[VX], tm->pos[VY] - thing->pos[VY]) &&
            tm->thing->momz > -12 * FRACUNIT)
         {
             // The current distance is smaller than the new one would be.
@@ -258,7 +258,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
     return false;
 }
 
-/*
+/**
  * Returns true if it the thing can be positioned in the coordinates.
  */
 boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
@@ -277,14 +277,14 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     // Prepare the data struct.
     data.thing = thing;
     data.flags = thing->ddflags;
-    data.x = x;
-    data.y = y;
-    data.z = z;
+    data.pos[VX] = x;
+    data.pos[VY] = y;
+    data.pos[VZ] = z;
     data.height = thing->height;
-    data.box[BOXTOP] = y + thing->radius;
+    data.box[BOXTOP]    = y + thing->radius;
     data.box[BOXBOTTOM] = y - thing->radius;
-    data.box[BOXRIGHT] = x + thing->radius;
-    data.box[BOXLEFT] = x - thing->radius;
+    data.box[BOXRIGHT]  = x + thing->radius;
+    data.box[BOXLEFT]   = x - thing->radius;
 
     newsubsec = R_PointInSubsector(x, y);
 
@@ -302,15 +302,15 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     // because mobj_ts are grouped into mapblocks
     // based on their origin point, and can overlap
     // into adjacent blocks by up to MAXRADIUS units.
-    xl = (data.box[BOXLEFT] - bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
-    xh = (data.box[BOXRIGHT] - bmaporgx + MAXRADIUS) >> MAPBLOCKSHIFT;
+    xl = (data.box[BOXLEFT]   - bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
+    xh = (data.box[BOXRIGHT]  - bmaporgx + MAXRADIUS) >> MAPBLOCKSHIFT;
     yl = (data.box[BOXBOTTOM] - bmaporgy - MAXRADIUS) >> MAPBLOCKSHIFT;
-    yh = (data.box[BOXTOP] - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
+    yh = (data.box[BOXTOP]    - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
 
     if(!dontHitMobjs)
     {
-        for(bx = xl; bx <= xh; bx++)
-            for(by = yl; by <= yh; by++)
+        for(bx = xl; bx <= xh; ++bx)
+            for(by = yl; by <= yh; ++by)
                 if(!P_BlockThingsIterator(bx, by, PIT_CheckThing, &data))
                 {
                     result = false;
@@ -319,13 +319,13 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     }
 
     // check lines
-    xl = (data.box[BOXLEFT] - bmaporgx) >> MAPBLOCKSHIFT;
-    xh = (data.box[BOXRIGHT] - bmaporgx) >> MAPBLOCKSHIFT;
+    xl = (data.box[BOXLEFT]   - bmaporgx) >> MAPBLOCKSHIFT;
+    xh = (data.box[BOXRIGHT]  - bmaporgx) >> MAPBLOCKSHIFT;
     yl = (data.box[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
-    yh = (data.box[BOXTOP] - bmaporgy) >> MAPBLOCKSHIFT;
+    yh = (data.box[BOXTOP]    - bmaporgy) >> MAPBLOCKSHIFT;
 
-    for(bx = xl; bx <= xh; bx++)
-        for(by = yl; by <= yh; by++)
+    for(bx = xl; bx <= xh; ++bx)
+        for(by = yl; by <= yh; ++by)
             if(!P_BlockLinesIterator(bx, by, PIT_CheckLine, &data))
             {
                 result = false;
@@ -339,7 +339,7 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     return result;
 }
 
-/*
+/**
  * Returns true if the thing can be positioned in the coordinates
  * (x,y), assuming traditional 2D Doom item placement rules.
  */
@@ -348,7 +348,7 @@ boolean P_CheckPosXY(mobj_t *thing, fixed_t x, fixed_t y)
     return P_CheckPosXYZ(thing, x, y, DDMAXINT);
 }
 
-/*
+/**
  * Attempt to move to a new (x,y,z) position.  Returns true if the
  * move was successful. Both lines and things are checked for
  * collisions.
@@ -417,12 +417,11 @@ boolean P_TryMoveXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     return true;
 }
 
-/*
+/**
  * Try to do the given move. Returns true if nothing was hit.
  */
 boolean P_StepMove(mobj_t *thing, fixed_t dx, fixed_t dy, fixed_t dz)
 {
-    /*  fixed_t x = thing->x, y = thing->y, z = thing->z; */
     fixed_t stepX, stepY, stepZ;
     boolean notHit = true;
 
@@ -480,7 +479,7 @@ boolean P_StepMove(mobj_t *thing, fixed_t dx, fixed_t dy, fixed_t dz)
     return notHit;
 }
 
-/*
+/**
  * Takes a valid thing and adjusts the thing->floorz, thing->ceilingz,
  * and possibly thing->z.  This is called for all nearby monsters
  * whenever a sector changes height.  If the thing doesn't fit, the z
@@ -526,7 +525,7 @@ static boolean P_HeightClip(mobj_t *thing)
     return true;
 }
 
-/*
+/**
  * Do we THINK the given (camera) player is currently in the void.
  * The method used to test this is to compare the position of the mobj
  * each time it is linked into a subsector.
@@ -536,7 +535,7 @@ static boolean P_HeightClip(mobj_t *thing)
  *
  * @return boolean      (TRUE) If the player is thought to be in the void.
  */
-boolean P_IsInVoid(ddplayer_t* player)
+boolean P_IsInVoid(ddplayer_t *player)
 {
     if(!player)
         return false;
@@ -552,7 +551,7 @@ boolean P_IsInVoid(ddplayer_t* player)
     return false;
 }
 
-/*
+/**
  * Allows the player to slide along any angled walls.
  * Adjusts the xmove / ymove so that the next move will
  * slide along the wall.
@@ -600,7 +599,7 @@ static void P_WallMomSlide(line_t *ld)
     tmpYMove = FixedMul(newlen, finesine[lineangle]);
 }
 
-static boolean PTR_SlideTraverse(intercept_t * in)
+static boolean PTR_SlideTraverse(intercept_t *in)
 {
     line_t *li;
 
@@ -647,7 +646,7 @@ static boolean PTR_SlideTraverse(intercept_t * in)
     return false;               // stop
 }
 
-/*
+/**
  * The momx / momy move is bad, so try to slide along a wall.
  * Find the first line hit, move flush to it, and slide along it
  *
@@ -746,7 +745,7 @@ static void P_ThingSlidingMove(mobj_t *mo)
     }
 }
 
-/*
+/**
  * After modifying a sectors floor or ceiling height, call this routine
  * to adjust the positions of all things that touch the sector.
  *
@@ -761,7 +760,7 @@ static boolean PIT_SectorPlanesChanged(mobj_t *thing, void *data)
     return true;
 }
 
-/*
+/**
  * Called whenever a sector's planes are moved.  This will update the
  * things inside the sector and do crushing.
  */
@@ -781,7 +780,7 @@ void P_ThingMovement(mobj_t *mo)
     P_ThingMovement2(mo, NULL);
 }
 
-/*
+/**
  * Playmove can be NULL. It's only used with player mobjs.
  */
 void P_ThingMovement2(mobj_t *mo, void *pstate)
