@@ -189,6 +189,7 @@ void Rend_Register(void)
     Rend_ConsoleRegister();
 }
 
+#if 0 // unused atm
 float Rend_SignedPointDist2D(float c[2])
 {
     /*          (YA-YC)(XB-XA)-(XA-XC)(YB-YA)
@@ -198,8 +199,9 @@ float Rend_SignedPointDist2D(float c[2])
      */
     return (vz - c[VY]) * viewsidex - (vx - c[VX]) * viewsidey;
 }
+#endif
 
-/*
+/**
  * Approximated! The Z axis aspect ratio is corrected.
  */
 float Rend_PointDist3D(float c[3])
@@ -215,7 +217,7 @@ void Rend_Init(void)
     Rend_CalcLightRangeModMatrix(NULL);
 }
 
-/*
+/**
  * Used to be called before starting a new level.
  */
 void Rend_Reset(void)
@@ -225,7 +227,7 @@ void Rend_Reset(void)
     DL_Clear();
 }
 
-void Rend_ModelViewMatrix(boolean use_angles)
+void Rend_ModelViewMatrix(boolean useAngles)
 {
     vx = FIX2FLT(viewx);
     vy = FIX2FLT(viewz);
@@ -235,7 +237,7 @@ void Rend_ModelViewMatrix(boolean use_angles)
 
     gl.MatrixMode(DGL_MODELVIEW);
     gl.LoadIdentity();
-    if(use_angles)
+    if(useAngles)
     {
         gl.Rotatef(vpitch, 1, 0, 0);
         gl.Rotatef(vang, 0, 1, 0);
@@ -244,8 +246,8 @@ void Rend_ModelViewMatrix(boolean use_angles)
     gl.Translatef(-vx, -vy, -vz);
 }
 
-#if 0
-/*
+#if 0 // unused atm
+/**
  * Models the effect of distance to the light level. Extralight (torch)
  * is also noted. This is meant to be used for white light only
  * (a light level).
@@ -294,20 +296,23 @@ int R_AttenuateLevel(int lightlevel, float distance)
 }
 #endif
 
-int Rend_SegFacingDir(float v1[2], float v2[2])
+static __inline int Rend_SegFacingDir(float v1[2], float v2[2])
 {
     // The dot product. (1 if facing front.)
     return (v1[VY] - v2[VY]) * (v1[VX] - vx) + (v2[VX] - v1[VX]) * (v1[VY] -
                                                                     vz) > 0;
 }
 
-int Rend_FixedSegFacingDir(const seg_t *seg)
+#if 0 // unused atm
+static int Rend_FixedSegFacingDir(const seg_t *seg)
 {
     // The dot product. (1 if facing front.)
     return FIX2FLT(seg->v1->pos[VY] - seg->v2->pos[VY]) * FIX2FLT(seg->v1->pos[VX] - viewx) +
            FIX2FLT(seg->v2->pos[VX] - seg->v1->pos[VX]) * FIX2FLT(seg->v1->pos[VY] - viewy) > 0;
 }
+#endif
 
+#if 0 // unused atm
 int Rend_SegFacingPoint(float v1[2], float v2[2], float pnt[2])
 {
     float   nx = v1[VY] - v2[VY], ny = v2[VX] - v1[VX];
@@ -318,6 +323,7 @@ int Rend_SegFacingPoint(float v1[2], float v2[2], float pnt[2])
         return 1;               // Facing front.
     return 0;                   // Facing away.
 }
+#endif
 
 static int C_DECL DivSortAscend(const void *e1, const void *e2)
 {
@@ -395,7 +401,7 @@ static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
     return ref;
 }
 
-/*
+/**
  * Pre: As we modify param poly quite a bit it is the responsibility of
  *      the caller to ensure this is OK (ie if not it should pass us a
  *      copy instead (eg wall segs)).
@@ -553,7 +559,7 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
     return true;
 }
 
-/*
+/**
  * Prepares the correct flat/texture for the passed poly.
  *
  * @param poly:     Ptr to the poly to apply the texture to.
@@ -563,7 +569,7 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
  * @return int      (-1) If the texture reference is invalid.
  *                  Else return the surface flags for this poly.
  */
-int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
+static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
 {
     if(surface->texture == 0)
         return -1;
@@ -609,7 +615,7 @@ int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
 /**
  * Returns true if the quad has a division at the specified height.
  */
-int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
+static int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
 {
     int     i;
     int     num = quad->wall->divs[side].num;
@@ -624,8 +630,8 @@ int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
  * Division will only happen if it must be done.
  * Converts quads to divquads.
  */
-void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
-                             sector_t *frontsec, int mode)
+static void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
+                                    sector_t *frontsec, int mode)
 {
     int     i, k;
     vertex_t *vtx[2];       // Vertexes
@@ -713,19 +719,19 @@ void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
                       i ? DivSortDescend : DivSortAscend);
             }
 #ifdef RANGECHECK
-            for(k = 0; k < quad->wall->divs[i].num; ++k)
-                if(quad->wall->divs[i].pos[k] > hi || quad->wall->divs[i].pos[k] < low)
-                {
-                    Con_Error("DivQuad: i=%i, pos (%f), hi (%f), "
-                              "low (%f), num=%i\n", i, quad->wall->divs[i].pos[k],
-                              hi, low, quad->wall->divs[i].num);
-                }
+for(k = 0; k < quad->wall->divs[i].num; ++k)
+    if(quad->wall->divs[i].pos[k] > hi || quad->wall->divs[i].pos[k] < low)
+    {
+        Con_Error("DivQuad: i=%i, pos (%f), hi (%f), "
+                  "low (%f), num=%i\n", i, quad->wall->divs[i].pos[k],
+                  hi, low, quad->wall->divs[i].num);
+    }
 #endif
         }
     }
 }
 
-/*
+/**
  * Calculates the placement for a middle texture (top, bottom, offset).
  * Texture must be prepared so texh is known.
  * texoffy may be NULL.
@@ -787,7 +793,7 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
 #define RPF2_SHINY  0x0002
 #define RPF2_GLOW   0x0004
 
-/*
+/**
  * Called by Rend_RenderWallSeg to render ALL wall sections.
  *
  * TODO: Combine all the boolean (hint) parameters into a single flags var.
@@ -916,7 +922,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     }
 }
 
-/*
+/**
  * Same as above but for planes. Ultimately we should consider merging the
  * two into a Rend_RenderSurface.
  */
@@ -977,7 +983,8 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
  * This seriously needs to be rewritten! Witness the accumulation of hacks
  * on kludges...
  */
-void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
+static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
+                               int flags)
 {
     int         i;
     int         surfaceFlags;
@@ -1008,7 +1015,8 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
         side = backsid;
 
     if(backsec && backsec == seg->frontsector &&
-       side->top.texture == 0 && side->bottom.texture == 0 && side->middle.texture == 0)
+       side->top.texture == 0 && side->bottom.texture == 0 &&
+       side->middle.texture == 0)
        return; // Ugh... an obvious wall seg hack. Best take no chances...
 
     ffloor = SECT_FLOOR(frontsec);
@@ -1043,8 +1051,10 @@ void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec, int flags)
     vBR[VY] = vTR[VY] = FIX2FLT(seg->v2->pos[VY]);
 
     // Calculate the distances.
-    quad->vertices[0].dist = quad->vertices[2].dist = Rend_PointDist2D(vBL);
-    quad->vertices[1].dist = quad->vertices[3].dist = Rend_PointDist2D(vBR);
+    quad->vertices[0].dist =
+        quad->vertices[2].dist = Rend_PointDist2D(vBL);
+    quad->vertices[1].dist =
+        quad->vertices[3].dist = Rend_PointDist2D(vBR);
 
     quad->wall->length = seg->length;
 
@@ -1545,15 +1555,34 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
         else
             seg->info->flags &= ~SEGINF_FACINGFRONT;
      }
+
+    if(sub->poly)
+    {
+        for(i = 0; i < sub->poly->numsegs; ++i)
+        {
+            seg = sub->poly->segs[i];
+
+            v1[VX] = FIX2FLT(seg->v1->pos[VX]);
+            v1[VY] = FIX2FLT(seg->v1->pos[VY]);
+            v2[VX] = FIX2FLT(seg->v2->pos[VX]);
+            v2[VY] = FIX2FLT(seg->v2->pos[VY]);
+
+            // Which way should it be facing?
+            if(Rend_SegFacingDir(v1, v2))  // 1=front
+                seg->info->flags |= SEGINF_FACINGFRONT;
+            else
+                seg->info->flags &= ~SEGINF_FACINGFRONT;
+        }
+    }
 }
 
-/*
+/**
  * Creates new occlusion planes from the subsector's sides.
  * Before testing, occlude subsector's backfaces. After testing occlude
  * the remaining faces, i.e. the forward facing segs. This is done before
  * rendering segs, so solid segments cut out all unnecessary oranges.
  */
-void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
+static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 {
     sector_t *front = sub->sector, *back;
     int     i;
@@ -1622,7 +1651,7 @@ void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
     }
 }
 
-void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
+static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
 {
     sector_t   *sector = subsector->sector, *link = NULL;
     int         surfaceFlags;
@@ -1703,7 +1732,7 @@ void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     }
 }
 
-void Rend_RenderSubsector(int ssecidx)
+static void Rend_RenderSubsector(int ssecidx)
 {
     int         i;
     unsigned long j;
@@ -1782,8 +1811,11 @@ void Rend_RenderSubsector(int ssecidx)
     {
         for(i = 0; i < ssec->poly->numsegs; ++i)
         {
-            if(Rend_FixedSegFacingDir(seg))
-                Rend_RenderWallSeg(ssec->poly->segs[i], sect, RWSF_NO_RADIO);
+            seg = ssec->poly->segs[i];
+
+            // Let's first check which way this seg is facing.
+            if(seg->info->flags & SEGINF_FACINGFRONT)
+                Rend_RenderWallSeg(seg, sect, RWSF_NO_RADIO);
         }
     }
 
@@ -1792,7 +1824,7 @@ void Rend_RenderSubsector(int ssecidx)
         Rend_RenderPlane(ssec->info->planes[i], ssec);
 }
 
-void Rend_RenderNode(uint bspnum)
+static void Rend_RenderNode(uint bspnum)
 {
     node_t *bsp;
     int     side;
@@ -1894,7 +1926,7 @@ void Rend_RenderMap(void)
     SBE_DrawCursor();
 }
 
-/*
+/**
  * Updates the lightRangeModMatrix which is used to applify sector light to
  * help compensate for the differences between the OpenGL lighting equation,
  * the software Doom lighting model and the light grid (ambient lighting).
@@ -2012,7 +2044,7 @@ void Rend_InitPlayerLightRanges(void)
     }
 }
 
-/*
+/**
  * Grabs the light value of the sector each player is currently
  * in and chooses an appropriate light range.
  *
@@ -2032,7 +2064,7 @@ void Rend_RetrieveLightSample(void)
     unsigned int currentTime = Sys_GetRealTime();
 
     midpoint = MOD_RANGE / 2;
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].ingame)
             continue;
@@ -2158,7 +2190,7 @@ void Rend_RetrieveLightSample(void)
     }
 }
 
-/*
+/**
  * Applies the offset from the lightRangeModMatrix to the given light value.
  *
  * The range chosen is that of the current viewplayer.
@@ -2202,7 +2234,7 @@ void Rend_ApplyLightAdaptation(int* lightvar)
     *lightvar += lightRangeModMatrix[range][lightval];
 }
 
-/*
+/**
  * Same as above but instead of applying light adaptation to the var directly
  * it returns the light adaptation value for the passed light value.
  *
@@ -2239,7 +2271,7 @@ static void DrawRangeBox(int x, int y, int w, int h, ui_color_t *c)
 #define bHeight ((bWidth / MOD_RANGE) * 255.0f)
 #define BORDER 20
 
-/*
+/**
  * Draws the lightRangeModMatrix (for debug)
  */
 void R_DrawLightRange(void)
@@ -2313,7 +2345,7 @@ void R_DrawLightRange(void)
     gl.PopMatrix();
 }
 
-/*
+/**
  * Draws a textured cube using the currently bound gl texture.
  * Used to draw mobj bounding boxes.
  *
@@ -2381,7 +2413,7 @@ void Rend_DrawBBox(float pos3f[3], float w, float l, float h, float color3f[3],
     gl.PopMatrix();
 }
 
-/*
+/**
  * Draws a textured triangle using the currently bound gl texture.
  * Used to draw mobj angle direction arrow.
  *
@@ -2423,7 +2455,7 @@ void Rend_DrawArrow(float pos3f[3], angle_t a, float s, float color3f[3],
     gl.PopMatrix();
 }
 
-/*
+/**
  * Renders bounding boxes for all mobj's (linked in sec->thinglist, except
  * the console player) in all sectors that are currently marked as vissible.
  *
@@ -2503,7 +2535,6 @@ static void Rend_RenderBoundingBoxes(void)
         gl.Enable(DGL_FOG);
 }
 
-// Console commands.
 D_CMD(Fog)
 {
     int     i;

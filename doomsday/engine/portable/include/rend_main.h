@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -63,9 +63,8 @@ void            Rend_ModelViewMatrix(boolean use_angles);
 #define Rend_PointDist2D(c) (fabs((vz-c[VY])*viewsidex - (vx-c[VX])*viewsidey))
 
 float           Rend_PointDist3D(float c[3]);
-float           Rend_SignedPointDist2D(float c[2]);
+//float           Rend_SignedPointDist2D(float c[2]);
 int             Rend_SectorLight(sector_t *sec);
-int             Rend_SegFacingDir(float v1[2], float v2[2]);
 int             Rend_MidTexturePos(float *bottomleft, float *bottomright,
                                    float *topleft, float *topright,
                                    float *texoffy, float tcyoff,

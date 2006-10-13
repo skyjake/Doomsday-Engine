@@ -501,15 +501,15 @@ static void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
     if(!present)
         return;
 
+    // We will only calculate light placement for segs that are facing
+    // the viewpoint.
+    if(!(seg->info->flags & SEGINF_FACINGFRONT))
+        return;
+
     pos[0][VX] = FIX2FLT(seg->v1->pos[VX]);
     pos[0][VY] = FIX2FLT(seg->v1->pos[VY]);
     pos[1][VX] = FIX2FLT(seg->v2->pos[VX]);
     pos[1][VY] = FIX2FLT(seg->v2->pos[VY]);
-
-    // We will only calculate light placement for segs that are facing
-    // the viewpoint.
-    if(!Rend_SegFacingDir(pos[0], pos[1]))
-        return;
 
     pntLight[VX] = FIX2FLT(lum->thing->pos[VX]);
     pntLight[VY] = FIX2FLT(lum->thing->pos[VY]);
@@ -691,15 +691,10 @@ static void DL_ProcessWallGlow(seg_t *seg, sector_t *sect)
     side_t     *sdef = seg->sidedef;
     float       fceil, ffloor, bceil, bfloor;
     float       opentop, openbottom;    //, top, bottom;
-    float       v1[2], v2[2];
     boolean     backSide = false;
 
     // Check if this segment is actually facing our way.
-    v1[VX] = FIX2FLT(seg->v1->pos[VX]);
-    v1[VY] = FIX2FLT(seg->v1->pos[VY]);
-    v2[VX] = FIX2FLT(seg->v2->pos[VX]);
-    v2[VY] = FIX2FLT(seg->v2->pos[VY]);
-    if(!Rend_SegFacingDir(v1, v2))
+    if(!(seg->info->flags & SEGINF_FACINGFRONT))
         return;                 // Nope...
 
     // Which side?
@@ -1707,14 +1702,15 @@ void DL_ClipBySight(int ssecidx)
         for(i = 0; i < num; ++i)
         {
             seg = ssec->poly->segs[i];
+
+            // Ignore segs facing the wrong way.
+            if(!(seg->info->flags & SEGINF_FACINGFRONT))
+                continue;
+
             v1[VX] = FIX2FLT(seg->v1->pos[VX]);
             v1[VY] = FIX2FLT(seg->v1->pos[VY]);
             v2[VX] = FIX2FLT(seg->v2->pos[VX]);
             v2[VY] = FIX2FLT(seg->v2->pos[VY]);
-
-            // Ignore segs facing the wrong way.
-            if(!Rend_SegFacingDir(v1, v2))
-                continue;
 
             V2_Set(source, FIX2FLT(lumi->thing->pos[VX]),
                    FIX2FLT(lumi->thing->pos[VY]));
