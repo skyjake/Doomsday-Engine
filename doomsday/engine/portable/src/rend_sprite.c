@@ -657,10 +657,7 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
     int     i, temp;
     float   fdist = FIX2FLT(dist) * 1.2f; // Pretend the light is a bit further away.
     spritelighterdata_t *slData = (spritelighterdata_t*) data;
-    fvertex_t lightVec = {
-        FIX2FLT(slData->spr->data.mo.gx - lum->thing->pos[VX]),
-        FIX2FLT(slData->spr->data.mo.gy - lum->thing->pos[VY])
-    };
+    fvertex_t lightVec;
     float   directness, side, inleft, inright, zfactor;
 
     if(!fdist)
@@ -687,6 +684,8 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
     if(zfactor > 1)
         zfactor = 1;
 
+    lightVec.pos[VX]  = FIX2FLT(slData->spr->data.mo.gx - lum->thing->pos[VX]);
+    lightVec.pos[VY]  = FIX2FLT(slData->spr->data.mo.gy - lum->thing->pos[VY]);
     lightVec.pos[VX] /= fdist;
     lightVec.pos[VY] /= fdist;
 

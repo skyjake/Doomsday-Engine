@@ -639,68 +639,68 @@ extern          "C" {
     } ded_t;
 
     // Routines for managing DED files.
-    void            DED_Init(ded_t * ded);
-    void            DED_Destroy(ded_t * ded);
-    int             DED_Read(ded_t * ded, const char *sPathName);
-    int             DED_ReadLump(ded_t * ded, int lump);
+    void            DED_Init(ded_t *ded);
+    void            DED_Destroy(ded_t *ded);
+    int             DED_Read(ded_t *ded, const char *sPathName);
+    int             DED_ReadLump(ded_t *ded, int lump);
 
-    int             DED_AddFlag(ded_t * ded, char *name, char *text, int value);
-    int             DED_AddMobj(ded_t * ded, char *idstr);
-    int             DED_AddState(ded_t * ded, char *id);
-    int             DED_AddSprite(ded_t * ded, const char *name);
-    int             DED_AddLight(ded_t * ded, const char *stateid);
-    int             DED_AddModel(ded_t * ded, char *spr);
-    int             DED_AddSound(ded_t * ded, char *id);
-    int             DED_AddMusic(ded_t * ded, char *id);
-    int             DED_AddMapInfo(ded_t * ded, char *str);
-    int             DED_AddText(ded_t * ded, char *id);
-    int             DED_AddTexEnviron(ded_t * ded, char *id);
-    int             DED_AddValue(ded_t * ded, const char *id);
-    int             DED_AddDetail(ded_t * ded, const char *lumpname);
-    int             DED_AddPtcGen(ded_t * ded, const char *state);
+    int             DED_AddFlag(ded_t *ded, char *name, char *text, int value);
+    int             DED_AddMobj(ded_t *ded, char *idstr);
+    int             DED_AddState(ded_t *ded, char *id);
+    int             DED_AddSprite(ded_t *ded, const char *name);
+    int             DED_AddLight(ded_t *ded, const char *stateid);
+    int             DED_AddModel(ded_t *ded, char *spr);
+    int             DED_AddSound(ded_t *ded, char *id);
+    int             DED_AddMusic(ded_t *ded, char *id);
+    int             DED_AddMapInfo(ded_t *ded, char *str);
+    int             DED_AddText(ded_t *ded, char *id);
+    int             DED_AddTexEnviron(ded_t *ded, char *id);
+    int             DED_AddValue(ded_t *ded, const char *id);
+    int             DED_AddDetail(ded_t *ded, const char *lumpname);
+    int             DED_AddPtcGen(ded_t *ded, const char *state);
     int             DED_AddPtcGenStage(ded_ptcgen_t *gen);
-    int             DED_AddFinale(ded_t * ded);
-    int             DED_AddDecoration(ded_t * ded);
-    int             DED_AddReflection(ded_t * ded);
-    int             DED_AddGroup(ded_t * ded);
+    int             DED_AddFinale(ded_t *ded);
+    int             DED_AddDecoration(ded_t *ded);
+    int             DED_AddReflection(ded_t *ded);
+    int             DED_AddGroup(ded_t *ded);
     int             DED_AddGroupMember(ded_group_t *grp);
-    int             DED_AddSector(ded_t * ded, int id);
-    int             DED_AddLine(ded_t * ded, int id);
-    int             DED_AddLumpFormat(ded_t * ded);
+    int             DED_AddSector(ded_t *ded, int id);
+    int             DED_AddLine(ded_t *ded, int id);
+    int             DED_AddLumpFormat(ded_t *ded);
     int             DED_AddLumpFormatMember(ded_lumpformat_t *lmpf);
-    int             DED_AddXGClass(ded_t * ded);
+    int             DED_AddXGClass(ded_t *ded);
     int             DED_AddXGClassProperty(ded_xgclass_t *xgc);
 
-    void            DED_RemoveFlag(ded_t * ded, int index);
-    void            DED_RemoveMobj(ded_t * ded, int index);
-    void            DED_RemoveState(ded_t * ded, int index);
-    void            DED_RemoveSprite(ded_t * ded, int index);
-    void            DED_RemoveLight(ded_t * ded, int index);
-    void            DED_RemoveModel(ded_t * ded, int index);
-    void            DED_RemoveSound(ded_t * ded, int index);
-    void            DED_RemoveMusic(ded_t * ded, int index);
-    void            DED_RemoveMapInfo(ded_t * ded, int index);
-    void            DED_RemoveText(ded_t * ded, int index);
-    void            DED_RemoveTexEnviron(ded_t * ded, int index);
-    void            DED_RemoveValue(ded_t * ded, int index);
-    void            DED_RemoveDetail(ded_t * ded, int index);
-    void            DED_RemovePtcGen(ded_t * ded, int index);
-    void            DED_RemoveFinale(ded_t * ded, int index);
-    void            DED_RemoveDecoration(ded_t * ded, int index);
-    void            DED_RemoveReflection(ded_t * ded, int index);
-    void            DED_RemoveGroup(ded_t * ded, int index);
-    void            DED_RemoveSector(ded_t * ded, int index);
-    void            DED_RemoveLine(ded_t * ded, int index);
-    void            DED_RemoveXGClass(ded_t * ded, int index);
-    void            DED_RemoveLumpFormat(ded_t * ded, int index);
+    void            DED_RemoveFlag(ded_t *ded, int index);
+    void            DED_RemoveMobj(ded_t *ded, int index);
+    void            DED_RemoveState(ded_t *ded, int index);
+    void            DED_RemoveSprite(ded_t *ded, int index);
+    void            DED_RemoveLight(ded_t *ded, int index);
+    void            DED_RemoveModel(ded_t *ded, int index);
+    void            DED_RemoveSound(ded_t *ded, int index);
+    void            DED_RemoveMusic(ded_t *ded, int index);
+    void            DED_RemoveMapInfo(ded_t *ded, int index);
+    void            DED_RemoveText(ded_t *ded, int index);
+    void            DED_RemoveTexEnviron(ded_t *ded, int index);
+    void            DED_RemoveValue(ded_t *ded, int index);
+    void            DED_RemoveDetail(ded_t *ded, int index);
+    void            DED_RemovePtcGen(ded_t *ded, int index);
+    void            DED_RemoveFinale(ded_t *ded, int index);
+    void            DED_RemoveDecoration(ded_t *ded, int index);
+    void            DED_RemoveReflection(ded_t *ded, int index);
+    void            DED_RemoveGroup(ded_t *ded, int index);
+    void            DED_RemoveSector(ded_t *ded, int index);
+    void            DED_RemoveLine(ded_t *ded, int index);
+    void            DED_RemoveXGClass(ded_t *ded, int index);
+    void            DED_RemoveLumpFormat(ded_t *ded, int index);
 
-    void           *DED_NewEntries(void **ptr, ded_count_t * cnt,
-                                   int elem_size, int count);
-    void           *DED_NewEntry(void **ptr, ded_count_t * cnt, int elem_size);
-    void            DED_DelEntry(int index, void **ptr, ded_count_t * cnt,
-                                 int elem_size);
-    void            DED_DelArray(void **ptr, ded_count_t * cnt);
-    void            DED_ZCount(ded_count_t * c);
+    void           *DED_NewEntries(void **ptr, ded_count_t *cnt,
+                                   size_t elemSize, int count);
+    void           *DED_NewEntry(void **ptr, ded_count_t *cnt, size_t elemSize);
+    void            DED_DelEntry(int index, void **ptr, ded_count_t *cnt,
+                                 size_t elemSize);
+    void            DED_DelArray(void **ptr, ded_count_t *cnt);
+    void            DED_ZCount(ded_count_t *c);
 
     extern char     dedReadError[];
 

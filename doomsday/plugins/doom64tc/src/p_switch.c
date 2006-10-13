@@ -457,10 +457,6 @@ void P_SetSectorColor(line_t *line)
     rgb[1] = (byte) P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_Y);
     rgb[2] = (byte) P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_X);
 
-    rgb[0] = CLAMP(rgb[0], 0, 255);
-    rgb[1] = CLAMP(rgb[1], 0, 255);
-    rgb[2] = CLAMP(rgb[2], 0, 255);
-
     list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
     if(!list)
         return;

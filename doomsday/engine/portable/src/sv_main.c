@@ -1167,7 +1167,7 @@ void Sv_ClientCoords(int playerNum)
     cly = Msg_ReadShort() << 16;
     clz = Msg_ReadShort() << 16;
 
-    if(clz == (DDMININT & 0xffff0000))
+    if((unsigned) clz == (DDMININT & 0xffff0000))
     {
         clz = mo->floorz;
         onFloor = true;

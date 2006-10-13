@@ -622,9 +622,9 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
     unsigned short num;
-    int     df, toptexture, midtexture, bottomtexture, blendmode;
-    byte    lineFlags, sideFlags;
-    byte    toprgb[3], midrgba[3], bottomrgb[2];
+    int     df, toptexture = 0, midtexture = 0, bottomtexture = 0, blendmode = 0;
+    byte    lineFlags = 0, sideFlags = 0;
+    byte    toprgb[3], midrgba[4], bottomrgb[3];
     side_t *sid;
 
     // First read all the data.
@@ -766,7 +766,7 @@ void Cl_ReadPolyDelta2(boolean skip)
     int     df;
     unsigned short num;
     polyobj_t *po;
-    int     destX, destY, speed, destAngle, angleSpeed;
+    int     destX = 0, destY = 0, speed = 0, destAngle = 0, angleSpeed = 0;
 
     num = Msg_ReadPackedShort();
 

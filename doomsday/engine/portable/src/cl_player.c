@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -127,6 +127,7 @@ int Cl_ReadPlayerDelta(void)
 {
     int     df, psdf, i, idx;
     int     num = Msg_ReadByte();
+    short   junk;
     playerstate_t *s;
     ddplayer_t *pl;
     ddpsprite_t *psp;
@@ -193,7 +194,8 @@ int Cl_ReadPlayerDelta(void)
     if(df & PDF_SIDEMOVE)
         s->sideMove = (char) Msg_ReadByte() * 2048;
     if(df & PDF_ANGLE)
-        /*s->angle =*/ Msg_ReadByte() << 24;
+        //s->angle = Msg_ReadByte() << 24;
+        junk = Msg_ReadByte(); /* $unifiedangles */
     if(df & PDF_TURNDELTA)
     {
         s->turnDelta = ((char) Msg_ReadByte() << 24) / 16;
@@ -209,12 +211,14 @@ int Cl_ReadPlayerDelta(void)
     if(df & PDF_FILTER)
         pl->filter = Msg_ReadLong();
     if(df & PDF_CLYAW)          // Only sent when Fixangles is used.
-        /*pl->clAngle = */ Msg_ReadShort() << 16; /* $unifiedangles */
+        //pl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */
+        junk = Msg_ReadShort();
     if(df & PDF_CLPITCH)        // Only sent when Fixangles is used.
-        /*pl->clLookDir =*/ Msg_ReadShort() * 110.0 / DDMAXSHORT; /* $unifiedangles */
+        //pl->clLookDir = Msg_ReadShort() * 110.0 / DDMAXSHORT; /* $unifiedangles */
+        junk = Msg_ReadShort();
     if(df & PDF_PSPRITES)
     {
-        for(i = 0; i < 2; i++)
+        for(i = 0; i < 2; ++i)
         {
             // First the flags.
             psdf = Msg_ReadByte();
@@ -332,7 +336,7 @@ void Cl_UpdatePlayerPos(ddplayer_t *pl)
 
     if(!playerstate[num].cmo || !pl->mo)
         return;                 // Must have a mobj!
-      
+
     clmo = &playerstate[num].cmo->mo;
     mo = pl->mo;
     clmo->angle = mo->angle;
@@ -372,7 +376,7 @@ void Cl_HandlePlayerFix(void)
     fixed_t pos[3];
     mobj_t *mo = plr->mo;
     clmobj_t *clmo = playerstate[consoleplayer].cmo;
-       
+
     if(fixes & 1) // fix angles?
     {
         plr->fixcounter.angles = plr->fixacked.angles = Msg_ReadLong();
@@ -397,7 +401,7 @@ void Cl_HandlePlayerFix(void)
             Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
 #endif
             clmo->mo.angle = angle;
-        }       
+        }
     }
 
     if(fixes & 2) // fix pos?
@@ -406,7 +410,7 @@ void Cl_HandlePlayerFix(void)
         pos[0] = Msg_ReadLong();
         pos[1] = Msg_ReadLong();
         pos[2] = Msg_ReadLong();
-        
+
 #ifdef _DEBUG
         Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
                     plr->fixacked.pos, FIX2FLT(pos[0]),
@@ -426,7 +430,7 @@ void Cl_HandlePlayerFix(void)
             Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
 #endif
             Cl_UpdatePlayerPos(plr);
-        }       
+        }
     }
 
     if(fixes & 4) // fix momentum?
@@ -435,7 +439,7 @@ void Cl_HandlePlayerFix(void)
         pos[0] = Msg_ReadLong();
         pos[1] = Msg_ReadLong();
         pos[2] = Msg_ReadLong();
-        
+
 #ifdef _DEBUG
         Con_Message("Cl_HandlePlayerFix: Fix momentum %i. Mom=%f, %f, %f\n",
                     plr->fixacked.mom, FIX2FLT(pos[0]),
@@ -458,9 +462,9 @@ void Cl_HandlePlayerFix(void)
             clmo->mo.momx = pos[0];
             clmo->mo.momy = pos[1];
             clmo->mo.momz = pos[2];
-        }       
+        }
     }
-    
+
     // Send an acknowledgement.
     Msg_Begin(PCL_ACK_PLAYER_FIX);
     Msg_WriteLong(plr->fixacked.angles);
@@ -598,6 +602,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
     static playerstate_t dummyState;
     static ddplayer_t dummyPlayer;
     int     num, newId;
+    short   junk;
 
     // The first byte consists of a player number and some flags.
     num = Msg_ReadByte();
@@ -695,7 +700,8 @@ void Cl_ReadPlayerDelta2(boolean skip)
     if(df & PDF_SIDEMOVE)
         s->sideMove = (char) Msg_ReadByte() * 2048;
     if(df & PDF_ANGLE)
-        /*s->angle =*/ Msg_ReadByte() << 24;
+        //s->angle = Msg_ReadByte() << 24;
+        junk = Msg_ReadByte();
     if(df & PDF_TURNDELTA)
     {
         s->turnDelta = ((char) Msg_ReadByte() << 24) / 16;
@@ -711,9 +717,11 @@ void Cl_ReadPlayerDelta2(boolean skip)
     if(df & PDF_FILTER)
         pl->filter = Msg_ReadLong();
     if(df & PDF_CLYAW)          // Only sent when Fixangles is used.
-        /*pl->clAngle =*/ Msg_ReadShort() << 16; /* $unifiedangles */
+        //pl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */
+        junk = Msg_ReadShort();
     if(df & PDF_CLPITCH)        // Only sent when Fixangles is used.
-        /*pl->clLookDir =*/ Msg_ReadShort() * 110.0 / DDMAXSHORT; /* $unifiedangles */
+        ///pl->clLookDir = Msg_ReadShort() * 110.0 / DDMAXSHORT; /* $unifiedangles */
+        junk = Msg_ReadShort();
     if(df & PDF_PSPRITES)
     {
         for(i = 0; i < 2; i++)

@@ -1075,7 +1075,7 @@ D_CMD(Bind)
     int     repeat = !stricmp(argv[0], "bindr") ||
         !stricmp(argv[0], "safebindr");
     int     safe = !strnicmp(argv[0], "safe", 4);
-    unsigned int bc;
+    unsigned int bc = 0;
     unsigned int i;
     binding_t *existing;
 
@@ -1208,7 +1208,7 @@ D_CMD(ClearBindings)
 D_CMD(DeleteBind)
 {
     int     j;
-    unsigned int i, bc;
+    unsigned int i, bc = 0;
     int     start = 1;
     char   *cmdptr = argv[1];
     boolean bcSpecified;

@@ -770,7 +770,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&viewxOffset, &viewxOffset},
     {&viewyOffset, &viewyOffset},
     {&viewzOffset, &viewzOffset},
-    {&viewangle, &viewangle},
+    {(int *) &viewangle, (int *) &viewangle},
     {&viewangleoffset, &viewangleoffset},
     {&consoleplayer, &consoleplayer},
     {&displayplayer, &displayplayer},

@@ -1800,19 +1800,19 @@ void UI_DrawTitle(ui_page_t* page)
     }
 }
 
-void UI_Shade(int x, int y, int w, int h, int border, ui_color_t * main,
-              ui_color_t * secondary, float alpha, float bottom_alpha)
+void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
+              ui_color_t *secondary, float alpha, float bottomAlpha)
 {
     float   s[2][2] = { {0, 1}, {1, 0} };
     float   t[2][2] = { {0, 1}, {1, 0} };
     ui_color_t *color;
-    int     i;
+    unsigned int i;
     float  *u, *v;
     boolean flip = false;
     float   beta = 1;
 
     alpha *= ui_alpha;
-    bottom_alpha *= ui_alpha;
+    bottomAlpha *= ui_alpha;
 
     if(border < 0)
     {
@@ -1820,16 +1820,17 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t * main,
         border = -border;
     }
     border = 0;
-    if(bottom_alpha < 0)
-        bottom_alpha = alpha;
+    if(bottomAlpha < 0)
+        bottomAlpha = alpha;
 
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
     gl.Bind(ui_textures[UITEX_SHADE]);
     gl.Begin(DGL_QUADS);
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
         if(!secondary)
             continue;
+
         color = (i == 0 ? main : secondary);
         u = (i == flip ? s[0] : s[1]);
         v = (i == flip ? t[0] : t[1]);
@@ -1841,43 +1842,44 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t * main,
         gl.Vertex2f(x + border, y + border);
         gl.TexCoord2f(u[1], v[0]);
         gl.Vertex2f(x + w - border, y + border);
-        UI_ColorA(color, bottom_alpha * beta);
+        UI_ColorA(color, bottomAlpha * beta);
         gl.TexCoord2f(u[1], v[1]);
         gl.Vertex2f(x + w - border, y + h - border);
         gl.TexCoord2f(u[0], v[1]);
         gl.Vertex2f(x + border, y + h - border);
     }
+
     gl.End();
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
 
-void UI_Gradient(int x, int y, int w, int h, ui_color_t * top,
-                 ui_color_t * bottom, float top_alpha, float bottom_alpha)
+void UI_Gradient(int x, int y, int w, int h, ui_color_t *top,
+                 ui_color_t *bottom, float topAlpha, float bottomAlpha)
 {
-    UI_GradientEx(x, y, w, h, 0, top, bottom, top_alpha, bottom_alpha);
+    UI_GradientEx(x, y, w, h, 0, top, bottom, topAlpha, bottomAlpha);
 }
 
-void UI_GradientEx(int x, int y, int w, int h, int border, ui_color_t * top,
-                   ui_color_t * bottom, float top_alpha, float bottom_alpha)
+void UI_GradientEx(int x, int y, int w, int h, int border, ui_color_t *top,
+                   ui_color_t *bottom, float topAlpha, float bottomAlpha)
 {
-    UI_DrawRectEx(x, y, w, h, border, true, top, bottom, top_alpha,
-                  bottom_alpha);
+    UI_DrawRectEx(x, y, w, h, border, true, top, bottom, topAlpha,
+                  bottomAlpha);
 }
 
-void UI_HorizGradient(int x, int y, int w, int h, ui_color_t * left,
-                      ui_color_t * right, float left_alpha, float right_alpha)
+void UI_HorizGradient(int x, int y, int w, int h, ui_color_t *left,
+                      ui_color_t *right, float leftAlpha, float rightAlpha)
 {
-    left_alpha *= ui_alpha;
-    right_alpha *= ui_alpha;
+    leftAlpha *= ui_alpha;
+    rightAlpha *= ui_alpha;
 
     gl.Bind(ui_textures[UITEX_HINT]);
     gl.Begin(DGL_QUADS);
-    UI_ColorA(left, left_alpha);
+    UI_ColorA(left, leftAlpha);
     gl.TexCoord2f(0, 1);
     gl.Vertex2f(x, y + h);
     gl.TexCoord2f(0, 0);
     gl.Vertex2f(x, y);
-    UI_ColorA(right ? right : left, right_alpha);
+    UI_ColorA(right ? right : left, rightAlpha);
     gl.TexCoord2f(1, 0);
     gl.Vertex2f(x + w, y);
     gl.TexCoord2f(1, 1);
@@ -1885,17 +1887,17 @@ void UI_HorizGradient(int x, int y, int w, int h, ui_color_t * left,
     gl.End();
 }
 
-void UI_Line(int x1, int y1, int x2, int y2, ui_color_t * start,
-             ui_color_t * end, float start_alpha, float end_alpha)
+void UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start,
+             ui_color_t *end, float startAlpha, float endAlpha)
 {
-    start_alpha *= ui_alpha;
-    end_alpha *= ui_alpha;
+    startAlpha *= ui_alpha;
+    endAlpha *= ui_alpha;
 
     gl.Disable(DGL_TEXTURING);
     gl.Begin(DGL_LINES);
-    UI_ColorA(start, start_alpha);
+    UI_ColorA(start, startAlpha);
     gl.Vertex2f(x1, y1);
-    UI_ColorA(end ? end : start, end_alpha);
+    UI_ColorA(end ? end : start, endAlpha);
     gl.Vertex2f(x2, y2);
     gl.End();
     gl.Enable(DGL_TEXTURING);
@@ -1912,16 +1914,16 @@ void UI_TextOut(char *text, int x, int y)
 /*
  * Draw shadowed text.
  */
-void UI_TextOutEx(char *text, int x, int y, int horiz_center, int vert_center,
-                  ui_color_t * color, float alpha)
+void UI_TextOutEx(char *text, int x, int y, int horizCenter, int vertCenter,
+                  ui_color_t *color, float alpha)
 {
     alpha *= ui_alpha;
     if(alpha <= 0) return;
 
     // Center, if requested.
-    if(horiz_center)
+    if(horizCenter)
         x -= FR_TextWidth(text) / 2;
-    if(vert_center)
+    if(vertCenter)
     {
         //y -= FR_TextHeight(text) / 2;
         y -= FR_SingleLineHeight(text)/2 + FR_GlyphTopToAscent(text);
@@ -1944,7 +1946,7 @@ int UI_TextOutWrap(char *text, int x, int y, int w, int h)
  * last word.
  */
 int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
-                     ui_color_t * color, float alpha)
+                     ui_color_t *color, float alpha)
 {
     char    word[2048], *wp = word;
     int     len, tx = x, ty = y;
@@ -2006,14 +2008,15 @@ int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
 }
 
 void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
-                   ui_color_t * top, ui_color_t * bottom, float alpha,
-                   float bottom_alpha)
+                   ui_color_t *top, ui_color_t *bottom, float alpha,
+                   float bottomAlpha)
 {
     float   s[2] = { 0, 1 }, t[2] = { 0, 1 };
 
     alpha *= ui_alpha;
-    bottom_alpha *= ui_alpha;
-    if(alpha <= 0 && bottom_alpha <= 0) return;
+    bottomAlpha *= ui_alpha;
+    if(alpha <= 0 && bottomAlpha <= 0)
+        return;
 
     if(brd < 0)
     {
@@ -2021,8 +2024,8 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
         s[0] = t[0] = 1;
         s[1] = t[1] = 0;
     }
-    if(bottom_alpha < 0)
-        bottom_alpha = alpha;
+    if(bottomAlpha < 0)
+        bottomAlpha = alpha;
     if(!bottom)
         bottom = top;
 
@@ -2035,7 +2038,7 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
         UI_ColorA(top, alpha);
         gl.Vertex2f(x + brd, y + brd);
         gl.Vertex2f(x + w - brd, y + brd);
-        UI_ColorA(bottom, bottom_alpha);
+        UI_ColorA(bottom, bottomAlpha);
         gl.Vertex2f(x + w - brd, y + h - brd);
         gl.Vertex2f(x + brd, y + h - brd);
     }
@@ -2079,7 +2082,7 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
         gl.Vertex2f(x + w - brd, y + brd);
         gl.TexCoord2f(s[1], 0.5f);
         gl.Vertex2f(x + w, y + brd);
-        UI_ColorA(bottom, bottom_alpha);
+        UI_ColorA(bottom, bottomAlpha);
         gl.TexCoord2f(s[1], 0.5f);
         gl.Vertex2f(x + w, y + h - brd);
         gl.TexCoord2f(0.5f, 0.5f);
@@ -2117,7 +2120,7 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
         gl.Vertex2f(x, y + brd);
         gl.TexCoord2f(0.5f, 0.5f);
         gl.Vertex2f(x + brd, y + brd);
-        UI_ColorA(bottom, bottom_alpha);
+        UI_ColorA(bottom, bottomAlpha);
         gl.TexCoord2f(0.5f, 0.5f);
         gl.Vertex2f(x + brd, y + h - brd);
         gl.TexCoord2f(s[0], 0.5f);
@@ -2126,14 +2129,14 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
     gl.End();
 }
 
-void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t * color,
+void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t *color,
                  float alpha)
 {
     UI_DrawRectEx(x, y, w, h, brd, false, color, NULL, alpha, alpha);
 }
 
-void UI_DrawTriangle(int x, int y, int radius, ui_color_t * hi,
-                     ui_color_t * med, ui_color_t * low, float alpha)
+void UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi,
+                     ui_color_t *med, ui_color_t *low, float alpha)
 {
     float   xrad = radius * .866f;  // cos(60)
     float   yrad = radius / 2;  // sin(60)
@@ -2176,14 +2179,15 @@ void UI_DrawTriangle(int x, int y, int radius, ui_color_t * hi,
  * A horizontal triangle, pointing left or right. Positive radius
  * means left.
  */
-void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t * hi,
-                          ui_color_t * med, ui_color_t * low, float alpha)
+void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t *hi,
+                          ui_color_t *med, ui_color_t *low, float alpha)
 {
     float   yrad = radius * .866f;  // cos(60)
     float   xrad = radius / 2;  // sin(60)
 
     alpha *= ui_alpha;
-    if(alpha <= 0) return;
+    if(alpha <= 0)
+        return;
 
     gl.Disable(DGL_TEXTURING);
     gl.Begin(DGL_TRIANGLES);
@@ -2219,13 +2223,13 @@ void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t * hi,
     gl.Enable(DGL_TEXTURING);
 }
 
-void UI_DefaultButtonBackground(ui_color_t * col, boolean down)
+void UI_DefaultButtonBackground(ui_color_t *col, boolean down)
 {
     UI_MixColors(UI_COL(UIC_TEXT), UI_COL(UIC_SHADOW), col, down ? .1f : .5f);
 }
 
 void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
-                   ui_color_t * background, boolean down, boolean disabled,
+                   ui_color_t *background, boolean down, boolean disabled,
                    int arrow)
 {
     int     inside = MIN_OF(w - brd * 2, h - brd * 2);

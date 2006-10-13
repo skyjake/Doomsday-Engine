@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -82,7 +83,7 @@ static void WRead(void **ptr, void **dest, int length)
     *(char**) ptr += length;
 }
 
-/*
+/**
  * The returned buffer contains the wave data. If NULL is returned, the
  * loading obviously failed. The caller must free the sample data using
  * Z_Free when it's no longer needed. The WAV file must have only one
@@ -107,9 +108,9 @@ void *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
 
     // Correct endianness.
     riff_header->len = ULONG(riff_header->len);
-    
+
     // Check that it's really a WAVE file.
-    if(strncmp(data, "WAVE", 4))
+    if(strncmp((char *) data, "WAVE", 4))
     {
         Con_Message("WAV_MemoryLoad: Not WAVE data.\n");
         return NULL;
@@ -124,14 +125,14 @@ void *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
 
         // Correct endianness.
         riff_chunk->len = ULONG(riff_chunk->len);
-        
+
         // What have we got here?
         if(!strncmp(riff_chunk->id, "fmt ", 4))
         {
             // Read format chunk.
             WRead((void **) &data, (void **) &wave_format,
                   sizeof(*wave_format));
-            
+
             // Correct endianness.
             wave_format->wFormatTag = USHORT(wave_format->wFormatTag);
             wave_format->wChannels = USHORT(wave_format->wChannels);
@@ -139,7 +140,7 @@ void *WAV_MemoryLoad(byte *data, int datalength, int *bits, int *rate,
             wave_format->dwAvgBytesPerSec = ULONG(wave_format->dwAvgBytesPerSec);
             wave_format->wBlockAlign = USHORT(wave_format->wBlockAlign);
             wave_format->wBitsPerSample = USHORT(wave_format->wBitsPerSample);
-            
+
             // Check that it's a format we know how to read.
             if(wave_format->wFormatTag != WAVE_FORMAT_PCM)
             {
@@ -234,7 +235,7 @@ void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
     return sampledata;
 }
 
-/*
+/**
  * @return: int         (true) if the "RIFF" and "WAVE" strings are found.
  */
 int WAV_CheckFormat(char *data)

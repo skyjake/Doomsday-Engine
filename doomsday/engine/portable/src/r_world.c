@@ -1656,10 +1656,11 @@ void R_RationalizeSectors(void)
                             if(line == collectedLines[m])
                             {
                                 int n, o, p, q;
-                                line_t *lcand = NULL;
-                                vertexinfo_t *vown = NULL;
+                                line_t *lcand;
+                                vertexinfo_t *vown;
 
                                 // Pick another candidate to continue line collection.
+                                pickNewCandiate:;
 
                                 // Logic: Work backwards through the collected line
                                 // list, checking the number of line owners of each
@@ -1667,7 +1668,8 @@ void R_RationalizeSectors(void)
                                 // the lines to see if it would be a good place to
                                 // recommence line collection (a self-referencing line,
                                 // same sector).
-                                pickNewCandiate:;
+                                lcand = NULL;
+                                vown = NULL;
                                 found = false;
                                 for(n = count-1; n >= 0 && !found; --n)
                                 {

@@ -2280,7 +2280,7 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 {
     int     i, len;
     boolean alphaChannel = false;
-    byte   *palette = W_CacheLumpNum(pallump, PU_STATIC);
+    //byte   *palette = W_CacheLumpNum(pallump, PU_STATIC);
     patch_t *patch;
 
     len = width * height;
@@ -2622,7 +2622,7 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
 {
     texture_t *tex = textures[idx];
     byte   *imgdata;
-    byte   *palette = W_CacheLumpNum(pallump, PU_CACHE);
+    //byte   *palette = W_CacheLumpNum(pallump, PU_CACHE);
     int     i, numpels;
 
     *width = tex->width;
