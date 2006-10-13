@@ -204,12 +204,12 @@ boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
     occlusionfactor = (1 + occlusionfactor) / 2;
 
     // viewsidevec is to the left.
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
     {
         leftoff[i] = viewupvec[i] + viewsidevec[i];
         rightoff[i] = viewupvec[i] - viewsidevec[i];
         // Convert the color to floating point.
-        color[i] = lum->rgb[i] / 255.0f;
+        color[i] = lum->rgb[i] * reciprocal255;
     }
 
     // Setup the proper DGL state.

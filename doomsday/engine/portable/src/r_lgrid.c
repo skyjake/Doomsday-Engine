@@ -551,7 +551,7 @@ static void LG_ApplySector(gridblock_t *block, const byte *color, int level,
 
     for(i = 0; i < 3; ++i)
     {
-        int c = color[i] * level / 255;
+        int c = color[i] * level * reciprocal255;
         c = MINMAX_OF(0, c, 255);
 
         if(block->rgb[i] + c > 255)

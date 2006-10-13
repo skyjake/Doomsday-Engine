@@ -962,7 +962,7 @@ void R_ProjectSprite(mobj_t *thing)
     else
     {
         if(thing->translucency)
-            vis->data.mo.alpha = 1 - thing->translucency / 255.0f;
+            vis->data.mo.alpha = 1 - thing->translucency * reciprocal255;
         else
             vis->data.mo.alpha = -1;
     }

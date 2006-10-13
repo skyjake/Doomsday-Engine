@@ -1062,7 +1062,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
     if(side->top.rgba[0] < 255 || side->top.rgba[1] < 255 || side->top.rgba[2] < 255)
     {
         for(i=0; i < 3; ++i)
-            topColor[i] = (byte)(((side->top.rgba[i]/ 255.0f)) * sLightColor[i]);
+            topColor[i] = (byte)(((side->top.rgba[i] * reciprocal255)) * sLightColor[i]);
 
         topColorPtr = topColor;
     }
@@ -1073,7 +1073,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
     if(side->middle.rgba[0] < 255 || side->middle.rgba[1] < 255 || side->middle.rgba[2] < 255)
     {
         for(i=0; i < 3; ++i)
-            midColor[i] = (byte)(((side->middle.rgba[i]/ 255.0f)) * sLightColor[i]);
+            midColor[i] = (byte)(((side->middle.rgba[i] * reciprocal255)) * sLightColor[i]);
 
         midColorPtr = midColor;
     }
@@ -1084,7 +1084,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
     if(side->bottom.rgba[0] < 255 || side->bottom.rgba[1] < 255 || side->bottom.rgba[2] < 255)
     {
         for(i=0; i < 3; ++i)
-            bottomColor[i] = (byte)(((side->bottom.rgba[i]/ 255.0f)) * sLightColor[i]);
+            bottomColor[i] = (byte)(((side->bottom.rgba[i] * reciprocal255)) * sLightColor[i]);
 
         bottomColorPtr = bottomColor;
     }

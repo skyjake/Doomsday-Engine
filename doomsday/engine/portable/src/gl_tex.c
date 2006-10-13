@@ -3318,7 +3318,7 @@ void GL_GetSpriteColorf(int pnum, float *rgb)
         return;
 
     for(i=0; i < 3; ++i)
-        rgb[i] = spritelumps[pnum]->color.rgb[i] / 255.0f;
+        rgb[i] = spritelumps[pnum]->color.rgb[i] * reciprocal255;
 }
 
 /*

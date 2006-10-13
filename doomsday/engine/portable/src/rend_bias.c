@@ -1138,7 +1138,7 @@ void SB_EvalPoint(gl_rgba_t *light,
         SB_AmbientLight(point, light);
 /*
     for(i=0; i < 3; i++)
-    light->rgba[i] = (byte)(((Srgba.rgba[i]/ 255.0f)) * light->rgba[i]);
+    light->rgba[i] = (byte)(((Srgba.rgba[i] * reciprocal255)) * light->rgba[i]);
 
     light->rgba[3] = Srgba.rgba[3];
 */
@@ -1312,7 +1312,7 @@ void SB_EvalPoint(gl_rgba_t *light,
     SB_AmbientLight(point, light);
 /*
     for(i=0; i < 3; i++)
-    light->rgba[i] = (byte)(((Srgba.rgba[i]/ 255.0f)) * light->rgba[i]);
+    light->rgba[i] = (byte)(((Srgba.rgba[i] * reciprocal255)) * light->rgba[i]);
 
     light->rgba[3] = Srgba.rgba[3];
 */

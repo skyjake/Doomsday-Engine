@@ -788,6 +788,8 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
                 lightCenter[VZ] = FIX2FLT(light->lum->thing->pos[VZ]) +
                     light->lum->center;
 
+                intensity *= reciprocal255;
+
                 // Calculate the normalized direction vector,
                 // pointing out of the model.
                 for(c = 0; c < 3; ++c)
@@ -795,7 +797,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
                     light->vector[c] =
                         (lightCenter[c] - modelCenter[c]) / dist;
                     // ...and the color of the light.
-                    light->color[c] = light->lum->rgb[c] / 255.0f * intensity;
+                    light->color[c] = light->lum->rgb[c] * intensity;
                 }
             }
             else

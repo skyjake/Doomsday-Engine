@@ -366,7 +366,7 @@ void Rend_DrawPlayerSprites(void)
 
                 for(c = 0; c < 3; ++c)
                 {
-                    lval = light * (secRGB[c] / 255.0f);
+                    lval = light * (secRGB[c] * reciprocal255);
 
                     if(lval < 0)
                         lval = 0;

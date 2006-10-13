@@ -286,17 +286,17 @@ static void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high)
     {
         // The simple, cubic algorithm.
         for(i = 0; i < 3; ++i)
-            pos[i] += (high * (M_Random() - M_Random())) / 255;
+            pos[i] += (high * (M_Random() - M_Random())) * reciprocal255;
     }
     else
     {
         // The more complicated, spherical algorithm.
-        off = ((high - low) * (M_Random() - M_Random())) / 255;
+        off = ((high - low) * (M_Random() - M_Random())) * reciprocal255;
         off += off < 0 ? -low : low;
 
         theta = M_Random() << (24 - ANGLETOFINESHIFT);
         phi =
-            acos(2 * (M_Random() / 255.0f) -
+            acos(2 * (M_Random() * reciprocal255) -
                  1) / PI * (ANGLE_180 >> ANGLETOFINESHIFT);
 
         vec[VZ] = FixedMul(finecosine[phi], FRACUNIT * 0.8333);

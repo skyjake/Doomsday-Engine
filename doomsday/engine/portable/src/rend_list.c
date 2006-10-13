@@ -345,7 +345,7 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
             lightlevel = 255;
     }
 
-    light = lightlevel / 255.0f;
+    light = lightlevel * reciprocal255;
     num = poly->numvertices;
     for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
     {
@@ -436,7 +436,7 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
         // Blend sector light+color+planecolor
         for(i = 0; i < 3; ++i)
         {
-            vColor[i] = (byte) (((surface->rgba[i]/ 255.0f)) * pLightColor[i]);
+            vColor[i] = (byte) (((surface->rgba[i] * reciprocal255)) * pLightColor[i]);
         }
 
         RL_VertexColors(poly, sectorlight, vColor);
@@ -1691,7 +1691,7 @@ void RL_FloatRGB(byte *rgb, float *dest)
 
     for(i = 0; i < 3; ++i)
     {
-        dest[i] = rgb[i] / 255.0f;
+        dest[i] = ((float)rgb[i]) * reciprocal255;
     }
     dest[3] = 1;
 }

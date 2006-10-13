@@ -112,6 +112,11 @@ extern          "C" {
 #define MINMAX_OF(a, x, b)      ((x) < (a)? (a) : (x) > (b)? (b) : (x))
 #define SIGN_OF(x)              ((x) > 0? +1 : (x) < 0? -1 : 0)
 
+// Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
+// Note that this should err on the side of being < 1/255 to prevent result
+// exceeding 255 (e.g. 255 * reciprocal255).
+#define reciprocal255   0.003921568627f
+
     typedef enum // Value types.
     {
         DDVT_NONE = -1, // Not a read/writeable value type.
