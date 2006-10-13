@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -37,55 +37,56 @@
 
 #ifdef WIN32
 // Disable annoying MSVC warnings.
-// 4761: integral size mismatch in argument 
+// 4761: integral size mismatch in argument
 // 4244: conversion from 'type1' to 'type2', possible loss of data
 #pragma warning (disable:4761 4244)
 #endif
 
 // Important definitions.
-#define MAXPLAYERS			DDMAXPLAYERS
-#define players				ddplayers
+#define MAXPLAYERS          DDMAXPLAYERS
+#define players             ddplayers
 
 // if rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
 #ifndef NORANGECHECKING
-#	define RANGECHECK
+#   define RANGECHECK
 #endif
 
 #ifndef DOOMSDAY_VER_ID
-#	ifdef _DEBUG
-#		define DOOMSDAY_VER_ID "+D DGL"
-#	else
-#		define DOOMSDAY_VER_ID "DGL"
-#	endif
+#   ifdef _DEBUG
+#       define DOOMSDAY_VER_ID "+D DGL"
+#   else
+#       define DOOMSDAY_VER_ID "DGL"
+#   endif
 #endif
 
 #ifdef RANGECHECK
-#	define DOOMSDAY_VERSIONTEXT "Version "DOOMSDAY_VERSION_TEXT" +R "__DATE__" ("DOOMSDAY_VER_ID")"
+#   define DOOMSDAY_VERSIONTEXT "Version "DOOMSDAY_VERSION_TEXT" +R "__DATE__" ("DOOMSDAY_VER_ID")"
 #else
-#	define DOOMSDAY_VERSIONTEXT "Version "DOOMSDAY_VERSION_TEXT" "__DATE__" ("DOOMSDAY_VER_ID")"
+#   define DOOMSDAY_VERSIONTEXT "Version "DOOMSDAY_VERSION_TEXT" "__DATE__" ("DOOMSDAY_VER_ID")"
 #endif
 
-#define SAFEDIV(x,y)	(!(y) || !((x)/(y))? 1 : (x)/(y))
-#define ORDER(x,y,a,b)	( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
-#define LAST_CHAR(str)	(str[strlen(str) - 1])
+#define SAFEDIV(x,y)    (!(y) || !((x)/(y))? 1 : (x)/(y))
+#define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
+#define LAST_CHAR(str)  (str[strlen(str) - 1])
 
 #define ASSERT_NOT_64BIT() {if( sizeof(void*)!=sizeof(int) ) Con_Error("Pointer size assumption in "__FILE__" at line %i.\n", __LINE__);}
 
-#define MAXEVENTS		64
-#define	SBARHEIGHT		39		   // status bar height at bottom of screen
-#define PI				3.141592657
+#define MAXEVENTS       64
+#define SBARHEIGHT      39         // status bar height at bottom of screen
+//#define PI            3.141592657     // Why the small inaccuracy?
+#define PI              3.14159265359
 
 #define SECONDS_TO_TICKS(sec) ((int)(sec*35))
 
 // Heap relations.
-#define HEAP_PARENT(i)	(((i) + 1)/2 - 1)
-#define HEAP_LEFT(i)	(2*(i) + 1)
-#define HEAP_RIGHT(i)	(2*(i) + 2)
+#define HEAP_PARENT(i)  (((i) + 1)/2 - 1)
+#define HEAP_LEFT(i)    (2*(i) + 1)
+#define HEAP_RIGHT(i)   (2*(i) + 2)
 
 enum { BLEFT, BTOP, BRIGHT, BBOTTOM, BFLOOR, BCEILING };
-enum { VX, VY, VZ };			   // Vertex indices.
-enum { CR, CG, CB, CA };		   // Color indices.
+enum { VX, VY, VZ };               // Vertex indices.
+enum { CR, CG, CB, CA };           // Color indices.
 
 // dd_pinit.c
 extern game_export_t __gx;
