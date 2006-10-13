@@ -341,7 +341,7 @@ void Sv_HandlePacket(void)
     char   *msg;
     char    buf[17];
 
-    switch (netBuffer.msg.type)
+    switch(netBuffer.msg.type)
     {
     case PCL_HELLO:
     case PCL_HELLO2:
@@ -443,7 +443,7 @@ void Sv_HandlePacket(void)
         mask = Msg_ReadShort();
         // Copy the message into a buffer.
         msg = M_Malloc(netBuffer.length - 3);
-        strcpy(msg, netBuffer.cursor);
+        strcpy(msg, (char *) netBuffer.cursor);
         // Message for us? Show it locally.
         if(mask & 1)
         {
@@ -487,7 +487,7 @@ void Sv_Login(void)
         return;
     }
     // Check the password.
-    if(strcmp(netBuffer.cursor, net_password))
+    if(strcmp((char *) netBuffer.cursor, net_password))
     {
         Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS,
                     "Sv_Login: Invalid password.\n");
@@ -543,12 +543,12 @@ void Sv_ExecuteCommand(void)
     }
 
     // Verify using string length.
-    if(strlen(netBuffer.cursor) != (unsigned) len - 1)
+    if(strlen((char *) netBuffer.cursor) != (unsigned) len - 1)
     {
         Con_Printf("Sv_ExecuteCommand: Damaged packet?\n");
         return;
     }
-    Con_Execute(cmdSource, netBuffer.cursor, silent, true);
+    Con_Execute(cmdSource, (char *) netBuffer.cursor, silent, true);
 }
 
 /*
@@ -563,7 +563,7 @@ void Sv_GetPackets(void)
 
     while(Net_GetPacket())
     {
-        switch (netBuffer.msg.type)
+        switch(netBuffer.msg.type)
         {
         case PCL_COMMANDS:
             // Determine who sent this packet.
@@ -663,14 +663,14 @@ void Sv_GetPackets(void)
             acked->pos = Msg_ReadLong();
             acked->mom = Msg_ReadLong();
 #ifdef _DEBUG
-            Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
-                        netBuffer.player,
-                        acked->angles,
-                        players[netBuffer.player].fixcounter.angles,
-                        acked->pos,
-                        players[netBuffer.player].fixcounter.pos,
-                        acked->mom,
-                        players[netBuffer.player].fixcounter.mom);
+Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
+            netBuffer.player,
+            acked->angles,
+            players[netBuffer.player].fixcounter.angles,
+            acked->pos,
+            players[netBuffer.player].fixcounter.pos,
+            acked->mom,
+            players[netBuffer.player].fixcounter.mom);
 #endif
             break;
         }

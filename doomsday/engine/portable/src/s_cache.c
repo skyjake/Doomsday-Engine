@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -513,10 +513,10 @@ sfxsample_t *Sfx_Cache(int id)
 
     // Get the sound decription.
     info = S_GetSoundInfo(id, NULL, NULL);
-    if(!info) 
+    if(!info)
     {
         Con_Message("Sfx_Cache: Warning: Sound info for ID %i is missing.\n", id);
-        return NULL;        
+        return NULL;
     }
 
     VERBOSE2(Con_Message("Sfx_Cache: Caching sound %i (%s).\n", id, info->id));
@@ -588,7 +588,7 @@ sfxsample_t *Sfx_Cache(int id)
             // Load as WAV, then.
             if(!
                (samp.data =
-                WAV_MemoryLoad((char *) sp, W_LumpLength(info->lumpnum),
+                WAV_MemoryLoad((byte *) sp, W_LumpLength(info->lumpnum),
                                &samp.bytesper, &samp.rate, &samp.numsamples)))
             {
                 // Abort...

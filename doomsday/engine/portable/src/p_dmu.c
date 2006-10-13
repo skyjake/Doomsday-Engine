@@ -2304,7 +2304,7 @@ static int GetProperty(void* ptr, void* context)
     return false;
 }
 
-
+#if 0 // unused atm
 /**
  * Swaps two values. Does NOT do any type checking. Both values are
  * assumed to be of the correct (and same) type.
@@ -2379,6 +2379,7 @@ static void SwapValue(valuetype_t valueType, void* src, void* dst)
         Con_Error("SwapValue: unknown value type %s.\n", DMU_Str(valueType));
     }
 }
+#endif
 
 void P_SetBool(int type, int index, int prop, boolean param)
 {

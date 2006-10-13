@@ -104,13 +104,13 @@ int ArgParse(int mode, const char *cmdline)
         // Hello" My"Friend means "Hello MyFriend"
 
         // Skip initial whitespace.
-        cmd = M_SkipWhite(cmd);
+        cmd = M_SkipWhite((char *) cmd);
 
         // Check for response files.
         if(*cmd == '@')
         {
             is_response = true;
-            cmd = M_SkipWhite(cmd + 1);
+            cmd = M_SkipWhite((char *)(cmd + 1));
         }
         else
         {
