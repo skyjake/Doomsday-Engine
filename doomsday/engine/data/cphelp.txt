@@ -672,7 +672,7 @@ desc = Distance at which halos are no longer visible.
 desc = Distance to begin fading halos.
 
 [rend-tex]
-desc = 1=Render with textures.
+desc = 1=Render with textures. 2=Render with gray texture.
 
 [rend-tex-gamma]
 desc = The gamma correction level (0-4).

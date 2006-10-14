@@ -577,6 +577,15 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
     if(R_IsSkySurface(surface))
         return 0;
 
+    if(renderTextures == 2)
+    {   // For lighting debug, render all world surfaces using the gray texture.
+        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_GRAY);
+        poly->tex.width = texw;
+        poly->tex.height = texh;
+        poly->tex.detail = texdetail;
+        return surface->flags & ~SUF_TEXFIX;
+    }
+
     if((surface->flags & SUF_TEXFIX) && devNoTexFix)
     {   // For debug, render the "missing" texture instead of the texture
         // chosen for surfaces to fix the HOMs.
@@ -587,7 +596,7 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
         return 0 | SUF_GLOW; // Make it stand out
     }
 
-    if(surface->texture == -1) // An unknown texture, draw the "unknown" graphic
+    if(surface->texture == -1) // An unknown texture, draw the "unknown" graphic.
     {
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN);
         poly->tex.width = texw;
@@ -607,8 +616,8 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
         poly->tex.height = texh;
         poly->tex.detail = texdetail;
 
-        // Return the parameters for this surface texture.
-        return surface->flags;
+        // Return the parameters for this surface.
+        return surface->flags | SUF_BLEND;
     }
 }
 
@@ -792,6 +801,7 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
 #define RPF2_SHADOW 0x0001
 #define RPF2_SHINY  0x0002
 #define RPF2_GLOW   0x0004
+#define RPF2_BLEND  0x0008
 
 /**
  * Called by Rend_RenderWallSeg to render ALL wall sections.
@@ -799,8 +809,8 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
  * TODO: Combine all the boolean (hint) parameters into a single flags var.
  */
 static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *side,
-                            sector_t *frontsec, surface_t *surface,
-                            int mode, byte alpha, short flags)
+                                   sector_t *frontsec, surface_t *surface,
+                                   int mode, byte alpha, short flags)
 {
     int  i;
     int  segIndex = GET_SEG_IDX(seg);
@@ -892,7 +902,9 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
                 segIndex);
 
     // Smooth Texture Animation?
-    Rend_PolyTexBlend(surface, quad);
+    if(flags & RPF2_BLEND)
+        Rend_PolyTexBlend(surface, quad);
+
     // Add the poly to the appropriate list
     RL_AddPoly(quad);
 
@@ -958,7 +970,9 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
                 &plane->tracker, plane->affected, subIndex);
 
     // Smooth Texture Animation?
-    Rend_PolyTexBlend(surface, poly);
+    if(flags & RPF2_BLEND)
+        Rend_PolyTexBlend(surface, poly);
+
     // Add the poly to the appropriate list
     RL_AddPoly(poly);
 
@@ -1204,6 +1218,8 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
                     tempflags |= RPF2_SHINY;
                 if(surfaceFlags & SUF_GLOW)
                     tempflags |= RPF2_GLOW;
+                if(surfaceFlags & SUF_BLEND)
+                    tempflags |= RPF2_BLEND;
 
                 Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_MIDDLE,
                           /*Alpha*/    255, tempflags);
@@ -1337,6 +1353,8 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
                             tempflags |= RPF2_SHINY;
                         if(surfaceFlags & SUF_GLOW)
                             tempflags |= RPF2_GLOW;
+                        if(surfaceFlags & SUF_BLEND)
+                            tempflags |= RPF2_BLEND;
 
                         Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_MIDDLE,
                                   /*Alpha*/    alpha, tempflags);
@@ -1428,6 +1446,8 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
                         tempflags |= RPF2_SHINY;
                     if(surfaceFlags & SUF_GLOW)
                         tempflags |= RPF2_GLOW;
+                    if(surfaceFlags & SUF_BLEND)
+                        tempflags |= RPF2_BLEND;
 
                     Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_TOP,
                               /*Alpha*/    alpha, tempflags);
@@ -1470,6 +1490,8 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
                     tempflags |= RPF2_SHINY;
                 if(surfaceFlags & SUF_GLOW)
                     tempflags |= RPF2_GLOW;
+                if(surfaceFlags & SUF_BLEND)
+                    tempflags |= RPF2_BLEND;
 
                 Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_BOTTOM,
                           /*Alpha*/    255, tempflags);
@@ -1707,6 +1729,8 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
                 tempflags |= RPF2_SHINY;
             if(surfaceFlags & SUF_GLOW)
                 tempflags |= RPF2_GLOW;
+            if(surfaceFlags & SUF_BLEND)
+                tempflags |= RPF2_BLEND;
 
             Rend_DoRenderPlane(poly, subsector, plane, surface, height,
                 /*Alpha*/      255, tempflags);

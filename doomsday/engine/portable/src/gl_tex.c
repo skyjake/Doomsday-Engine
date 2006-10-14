@@ -193,7 +193,7 @@ static int glmode[6] =          // Indexed by 'mipmapping'.
 void GL_TexRegister(void)
 {
     // Cvars
-    C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 2);
     C_VAR_INT2("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4,
                GL_DoTexReset);
     C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5,
@@ -743,6 +743,7 @@ void GL_LoadDDTextures(void)
     GL_PrepareDDTexture(DDT_UNKNOWN);
     GL_PrepareDDTexture(DDT_MISSING);
     GL_PrepareDDTexture(DDT_BBOX);
+    GL_PrepareDDTexture(DDT_GRAY);
 }
 
 void GL_ClearDDTextures(void)
@@ -1778,7 +1779,8 @@ DGLuint GL_PrepareDDTexture(ddtexture_t which)
     static const char *ddTexNames[NUM_DD_TEXTURES] = {
         "unknown",
         "missing",
-        "bbox"
+        "bbox",
+        "gray"
     };
 
     if(which < NUM_DD_TEXTURES)
@@ -1788,6 +1790,10 @@ DGLuint GL_PrepareDDTexture(ddtexture_t which)
             ddTextures[which] =
                 GL_LoadGraphics2(RC_GRAPHICS, ddTexNames[which], LGM_NORMAL,
                                  DGL_TRUE, false);
+
+            if(!ddTextures[which])
+                Con_Error("GL_PrepareDDTexture: \"%s\" not found!\n",
+                          ddTexNames[which]);
         }
     }
     else

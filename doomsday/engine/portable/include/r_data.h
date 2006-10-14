@@ -64,6 +64,7 @@
 #define SUF_TEXFIX      0x1        // Current texture is a fix replacement
                                    // (not sent to clients, returned via DMU etc)
 #define SUF_GLOW        0x2        // Surface glows (full bright).
+#define SUF_BLEND       0x4        // Surface possibly has a blended texture.
 
 // Texture flags.
 #define TXF_MASKED      0x1

@@ -87,6 +87,7 @@ typedef enum ddtexture_e {
     DDT_UNKNOWN,          // Drawn if a texture/flat is unknown
     DDT_MISSING,          // Drawn in place of HOMs in dev mode.
     DDT_BBOX,             // Drawn when rendering bounding boxes
+    DDT_GRAY,             // For lighting debug.
     NUM_DD_TEXTURES
 } ddtexture_t;
 
