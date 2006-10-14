@@ -104,12 +104,12 @@ void Rend_RadioRegister(void)
     C_VAR_FLOAT("rend-fakeradio-darkness", &rendFakeRadioDarkness, 0, 0, 2);
 }
 
-float Rend_RadioShadowDarkness(int lightlevel)
+static __inline float Rend_RadioShadowDarkness(int lightlevel)
 {
     return (.65f - lightlevel / 850.0f) * rendFakeRadioDarkness;
 }
 
-/*
+/**
  * Before calling the other rendering routines, this must be called to
  * initialize the state of the FakeRadio renderer.
  */
@@ -143,21 +143,21 @@ void Rend_RadioInitForSector(sector_t *sector)
     shadowDark = Rend_RadioShadowDarkness(sectorlight) *.8f;
 }
 
-/*
- * Returns true if the specified flat is non-glowing, i.e. not glowing
- * or a sky.
+/**
+ * @return      <code>true</code> if the specified flat is non-glowing, i.e.
+ *              not glowing or a sky.
  */
-boolean Rend_RadioNonGlowingFlat(sector_t* sector, int plane)
+static __inline boolean Rend_RadioNonGlowingFlat(sector_t* sector, int plane)
 {
     return !(sector->planes[plane]->surface.texture <= 0 ||
              sector->planes[plane]->glow ||
              R_IsSkySurface(&sector->planes[plane]->surface));
 }
 
-/*
+/**
  * Set the vertex colors in the rendpoly.
  */
-void Rend_RadioSetColor(rendpoly_t *q, float darkness)
+static void Rend_RadioSetColor(rendpoly_t *q, float darkness)
 {
     int     i;
 
@@ -167,7 +167,7 @@ void Rend_RadioSetColor(rendpoly_t *q, float darkness)
     if(darkness > 1)
         darkness = 1;
 
-    for(i = 0; i < q->numvertices; i++)
+    for(i = 0; i < q->numvertices; ++i)
     {
         // Shadows are black.
         memset(q->vertices[i].color.rgba, 0, 3);
@@ -175,24 +175,30 @@ void Rend_RadioSetColor(rendpoly_t *q, float darkness)
     }
 }
 
-/*
+/**
  * Returns true if there is open space in the sector.
  */
-boolean Rend_IsSectorOpen(sector_t *sector)
+static __inline boolean Rend_IsSectorOpen(sector_t *sector)
 {
-    return sector &&
-        sector->planes[PLN_CEILING]->height > sector->planes[PLN_FLOOR]->height;
+    return (sector &&
+            sector->planes[PLN_CEILING]->height >
+                sector->planes[PLN_FLOOR]->height);
 }
 
-boolean Rend_DoesMidTextureFillGap(line_t* line, boolean frontside)
+/**
+ * FIXME: No need to do this each frame. Set a flag in side_t->flags to
+ *        denote this. Is sensitive to plane heights, surface properties
+ *        (e.g. alpha) and surface texture properties.
+ */
+static boolean Rend_DoesMidTextureFillGap(line_t *line, boolean frontside)
 {
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
     if(line->backsector)
     {
-        sector_t *front = (frontside ? line->frontsector : line->backsector);
-        sector_t *back = (frontside ? line->backsector : line->frontsector);
+        sector_t *front = (frontside ? line->frontsector:line->backsector);
+        sector_t *back = (frontside ? line->backsector:line->frontsector);
         side_t* side = (frontside ? SIDE_PTR(line->sidenum[0]) :
                         SIDE_PTR(line->sidenum[1]));
 
@@ -251,10 +257,11 @@ boolean Rend_DoesMidTextureFillGap(line_t* line, boolean frontside)
     return false;
 }
 
-/*
+/**
  * Returns the corner shadow factor.
  */
-float Rend_RadioLineCorner(line_t *self, line_t *other, const sector_t *mySector)
+static float Rend_RadioLineCorner(line_t *self, line_t *other,
+                                  const sector_t *mySector)
 {
     lineinfo_t *selfInfo = LINE_INFO(self);
     lineinfo_t *otherInfo = LINE_INFO(other);
@@ -350,11 +357,12 @@ float Rend_RadioLineCorner(line_t *self, line_t *other, const sector_t *mySector
     return (float) diff / BANG_90;
 }
 
-/*
+/**
  * Set the rendpoly's X offset and texture size.  A negative length
  * implies that the texture is flipped horizontally.
  */
-void Rend_RadioTexCoordX(rendpoly_t *q, float lineLength, float segOffset)
+static void Rend_RadioTexCoordX(rendpoly_t *q, float lineLength,
+                                float segOffset)
 {
     q->tex.width = lineLength;
     if(lineLength > 0)
@@ -363,11 +371,11 @@ void Rend_RadioTexCoordX(rendpoly_t *q, float lineLength, float segOffset)
         q->texoffx = lineLength + segOffset;
 }
 
-/*
+/**
  * Set the rendpoly's Y offset and texture size.  A negative size
  * implies that the texture is flipped vertically.
  */
-void Rend_RadioTexCoordY(rendpoly_t *q, float size)
+static void Rend_RadioTexCoordY(rendpoly_t *q, float size)
 {
     if((q->tex.height = size) > 0)
         q->texoffy = fCeil - q->vertices[2].pos[VZ];
@@ -375,11 +383,11 @@ void Rend_RadioTexCoordY(rendpoly_t *q, float size)
         q->texoffy = fFloor - q->vertices[2].pos[VZ];
 }
 
-/*
+/**
  * Returns the side number (0, 1) of the neighbour line.
  */
-int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line, int side,
-                         boolean leftNeighbor)
+static int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line,
+                                int side, boolean leftNeighbor)
 {
     sideinfo_t *sinfo;
     int     i;
@@ -394,7 +402,7 @@ int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line, int side,
         return 0;
 
     // We need to decide which side of the neighbor is chosen.
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
         if((*neighbor)->sidenum[i] != NO_INDEX)
         {
@@ -412,20 +420,21 @@ int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line, int side,
     return 0;
 }
 
-/*
- * Scan a set of aligned neighbours.  Scans simultaneously both the
- * top and bottom edges.  Looks a bit complicated, but that's because
- * the algorithm must handle both the left and right directions, and
- * scans the top and bottom edges at the same time.
+/**
+ * Scan a set of aligned neighbours.  Scans simultaneously both the top and
+ * bottom edges.  Looks a bit complicated, but that's because the algorithm
+ * must handle both the left and right directions, and scans the top and
+ * bottom edges at the same time.
  *
  * TODO: DJS
- *       We should stop the scan when a hack sector is encountered,
- *       at which point we should implicitly set the corner to -1.
+ *       We should stop the scan when a hack sector is encountered, at which
+ *       point we should implicitly set the corner to -1.
  *       Clean this up... I've made a bit of mess.
  */
-void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
-                             line_t *line, int side, edgespan_t spans[2],
-                             boolean toLeft)
+static void Rend_RadioScanNeighbors(shadowcorner_t top[2],
+                                    shadowcorner_t bottom[2], line_t *line,
+                                    unsigned int side, edgespan_t spans[2],
+                                    boolean toLeft)
 {
     struct edge_s {
         boolean done;
@@ -438,8 +447,8 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
     line_t *iter;
     lineinfo_t *nInfo;
     sector_t *scanSector;
-    int     scanSide;
-    int     i, nIdx = (toLeft ? 0 : 1); // neighbour index
+    unsigned int i, scanSide;
+    int     nIdx = (toLeft ? 0 : 1); // neighbour index
     float   gap[2];
     float   iFFloor, iFCeil;
     float   iBFloor, iBCeil;
@@ -455,22 +464,29 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 
     for(iter = line, scanSide = side; !(edges[0].done && edges[1].done);)
     {
-        scanSector = (scanSide == 0 ? iter->frontsector : iter->backsector);
+        scanSector = (scanSide==0? iter->frontsector : iter->backsector);
 
         // Should we stop?
         if(iter != line)
         {
-            if(SECT_FLOOR(scanSector) != fFloor || !Rend_IsSectorOpen(scanSector))
-                edges[0].done = true;
-            if(SECT_CEIL(scanSector) != fCeil || !Rend_IsSectorOpen(scanSector))
-                edges[1].done = true;
+            if(!Rend_IsSectorOpen(scanSector))
+            {
+                edges[0].done = edges[1].done = true;
+            }
+            else
+            {
+                if(SECT_FLOOR(scanSector) != fFloor)
+                    edges[0].done = true;
+                if(SECT_CEIL(scanSector) != fCeil)
+                    edges[1].done = true;
+            }
+
             if(edges[0].done && edges[1].done)
                 break;
 
             // Look out for loops.
             if(iter->validcount == validcount)
                 break;
-
             iter->validcount = validcount;
         }
 
@@ -490,63 +506,63 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
         // We'll do the bottom and top simultaneously.
         for(i = 0; i < 2; ++i)
         {
-            if(!edges[i].done)
+            if(edges[i].done)
+                continue;
+
+            edges[i].line = iter;
+            if(iter->sidenum[scanSide] != NO_INDEX)
+                edges[i].sideInfo = SIDE_PTR(iter->sidenum[scanSide])->info;
+            else
+                edges[i].sideInfo = NULL;
+            edges[i].sector = scanSector;
+
+            if(iter == line)
+                continue;
+
+            if(i==0)  // Bottom
             {
-                edges[i].line = iter;
-                if(iter->sidenum[scanSide] != NO_INDEX)
-                    edges[i].sideInfo = SIDE_PTR(iter->sidenum[scanSide])->info;
-                else
-                    edges[i].sideInfo = NULL;
-                edges[i].sector = scanSector;
+                closed = false;
+                if(side == 0 && iter->backsector != NULL)
+                    if(iBCeil <= fFloor)
+                        closed = true;  // compared to "this" sector anyway
 
-                if(iter != line)
+                if((side == 0 && iter->backsector == line->frontsector &&
+                    iFFloor <= fFloor) ||
+                   (side == 1 && iter->backsector == line->backsector &&
+                    iFFloor <= fFloor) ||
+                   (side == 0 && closed == false && iter->backsector != NULL &&
+                    iter->backsector != line->frontsector && iBFloor <= fFloor &&
+                    Rend_IsSectorOpen(iter->backsector)))
                 {
-                    if(i==0)  // Bottom
-                    {
-                        closed = false;
-                        if(side == 0 && iter->backsector != NULL)
-                            if(iBCeil <= fFloor)
-                                closed = true;  // compared to "this" sector anyway
+                    gap[i] += nInfo->length;  // Should we just mark it done instead?
+                }
+                else
+                {
+                    edges[i].length += nInfo->length + gap[i];
+                    gap[i] = 0;
+                }
+            }
+            else  // Top
+            {
+                closed = false;
+                if(side == 0 && iter->backsector != NULL)
+                    if(iBFloor >= fCeil)
+                        closed = true;  // compared to "this" sector anyway
 
-                        if((side == 0 && iter->backsector == line->frontsector &&
-                            iFFloor <= fFloor) ||
-                           (side == 1 && iter->backsector == line->backsector &&
-                            iFFloor <= fFloor) ||
-                           (side == 0 && closed == false && iter->backsector != NULL &&
-                            iter->backsector != line->frontsector && iBFloor <= fFloor &&
-                            Rend_IsSectorOpen(iter->backsector)))
-                        {
-                            gap[i] += nInfo->length;  // Should we just mark it done instead?
-                        }
-                        else
-                        {
-                            edges[i].length += nInfo->length + gap[i];
-                            gap[i] = 0;
-                        }
-                    }
-                    else  // Top
-                    {
-                        closed = false;
-                        if(side == 0 && iter->backsector != NULL)
-                            if(iBFloor >= fCeil)
-                                closed = true;  // compared to "this" sector anyway
-
-                        if((side == 0 && iter->backsector == line->frontsector &&
-                            iFCeil >= fCeil) ||
-                           (side == 1 && iter->backsector == line->backsector &&
-                            iFCeil >= fCeil) ||
-                            (side == 0 && closed == false && iter->backsector != NULL &&
-                            iter->backsector != line->frontsector && iBCeil >= fCeil &&
-                            Rend_IsSectorOpen(iter->backsector)))
-                        {
-                            gap[i] += nInfo->length;  // Should we just mark it done instead?
-                        }
-                        else
-                        {
-                            edges[i].length += nInfo->length + gap[i];
-                            gap[i] = 0;
-                        }
-                    }
+                if((side == 0 && iter->backsector == line->frontsector &&
+                    iFCeil >= fCeil) ||
+                   (side == 1 && iter->backsector == line->backsector &&
+                    iFCeil >= fCeil) ||
+                    (side == 0 && closed == false && iter->backsector != NULL &&
+                    iter->backsector != line->frontsector && iBCeil >= fCeil &&
+                    Rend_IsSectorOpen(iter->backsector)))
+                {
+                    gap[i] += nInfo->length;  // Should we just mark it done instead?
+                }
+                else
+                {
+                    edges[i].length += nInfo->length + gap[i];
+                    gap[i] = 0;
                 }
             }
         }
@@ -558,7 +574,7 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
             break;
     }
 
-    for(i = 0; i < 2; i++)      // 0=bottom, 1=top
+    for(i = 0; i < 2; ++i)      // 0=bottom, 1=top
     {
         shadowcorner_t *corner = (i == 0 ? &bottom[nIdx] : &top[nIdx]);
 
@@ -607,26 +623,25 @@ void Rend_RadioScanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
     }
 }
 
-/*
- * To determine the dimensions of a shadow, we'll need to scan edges.
- * Edges are composed of aligned lines.  It's important to note that
- * the scanning is done separately for the top/bottom edges (both in
- * the left and right direction) and the left/right edges.
+/**
+ * To determine the dimensions of a shadow, we'll need to scan edges. Edges
+ * are composed of aligned lines.  It's important to note that the scanning
+ * is done separately for the top/bottom edges (both in the left and right
+ * direction) and the left/right edges.
  *
- * The length of the top/bottom edges are returned in the array
- * 'spans'.
+ * The length of the top/bottom edges are returned in the array 'spans'.
  *
- * This may look like a complicated operation (performed for all wall
- * polys) but in most cases this won't take long.  Aligned neighbours
- * are relatively rare.
+ * This may look like a complicated operation (performed for all wall polys)
+ * but in most cases this won't take long. Aligned neighbours are relatively
+ * rare.
  */
-void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
-                         shadowcorner_t bottomCorners[2],
-                         shadowcorner_t sideCorners[2], line_t *line, int side,
-                         edgespan_t spans[2])
+static void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
+                                shadowcorner_t bottomCorners[2],
+                                shadowcorner_t sideCorners[2], line_t *line,
+                                unsigned int side, edgespan_t spans[2])
 {
     sideinfo_t *sInfo = NULL;
-    int     i;
+    unsigned int i;
 
     if(line->sidenum[side] != NO_INDEX)
         sInfo = SIDE_PTR(line->sidenum[side])->info;
@@ -634,7 +649,7 @@ void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
     memset(sideCorners, 0, sizeof(sideCorners));
 
     // Find the sidecorners first: left and right neighbour.
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
         if(sInfo && sInfo->neighbor[i] && !sInfo->pretendneighbor[i])
         {
@@ -650,11 +665,11 @@ void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
     }
 }
 
-/*
- * Long walls get slightly larger shadows. The bonus will simply be
- * added to the shadow size for the wall in question.
+/**
+ * Long walls get slightly larger shadows. The bonus will simply be added
+ * to the shadow size for the wall in question.
  */
-float Rend_RadioLongWallBonus(float span)
+static float Rend_RadioLongWallBonus(float span)
 {
     float   limit;
 
@@ -668,10 +683,10 @@ float Rend_RadioLongWallBonus(float span)
     return 0;
 }
 
-/*
- * Create the appropriate FakeRadio shadow polygons for the wall
- * segment.  The quad must be initialized with all the necessary data
- * (normally comes directly from Rend_RenderWallSeg()).
+/**
+ * Create the appropriate FakeRadio shadow polygons for the wall segment.
+ * The quad must be initialized with all the necessary data (normally comes
+ * directly from Rend_RenderWallSeg()).
  */
 void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
 {
@@ -699,7 +714,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         sideNum = 1;
 
     // Determine the shadow properties on the edges of the poly.
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
         spans[i].length = info->length;
         spans[i].shift = segOffset;
@@ -716,15 +731,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     else
         bFloor = bCeil = 0;
 
-    // FIXME: rendpoly_t is quite large and this gets called *many*
-    // times. Better to copy less stuff, or do something more
-    // clever... Like, only pass the geometry part of rendpoly_t.
-
-    // DJS - Re above:
-    // Unfortunetly, in practice this doesn't seem to make much
-    // difference. On my system I gain about +1.4FPS on average.
     quad = R_AllocRendPoly(RP_QUAD, true, 4);
-    memcpy(quad, origQuad, sizeof(rendpoly_t));
+    R_MemcpyRendPoly(quad, origQuad);
 
     // Init the quad.
     quad->flags = RPF_SHADOW;
@@ -1130,16 +1138,16 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     R_FreeRendPoly(quad);
 }
 
-/*
+/**
  * Returns a value in the range of 0...2, which depicts how open the
- * specified edge is.  Zero means that the edge is completely closed:
- * it is facing a wall or is relatively distant from the edge on the
- * other side.  Values between zero and one describe how near the
- * other edge is.  An openness value of one means that the other edge
- * is at the same height as this one.  2 means that the other edge is
- * past our height ("clearly open").
+ * specified edge is. Zero means that the edge is completely closed: it is
+ * facing a wall or is relatively distant from the edge on the other side.
+ * Values between zero and one describe how near the other edge is. An
+ * openness value of one means that the other edge is at the same height as
+ * this one. 2 means that the other edge is past our height ("clearly open").
  */
-float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
+static float Rend_RadioEdgeOpenness(line_t *line, boolean frontside,
+                                    boolean isCeiling)
 {
     sector_t *front = (frontside ? line->frontsector : line->backsector);
     sector_t *back = (frontside ? line->backsector : line->frontsector);
@@ -1210,12 +1218,12 @@ float Rend_RadioEdgeOpenness(line_t *line, boolean frontside, boolean isCeiling)
     return 2;
 }
 
-/*
- * Calculate the corner coordinates and add a new shadow polygon to
- * the rendering lists.
+/**
+ * Calculate the corner coordinates and add a new shadow polygon to the
+ * rendering lists.
  */
-void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
-                             float darkness, float sideOpen[2])
+static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
+                                    float darkness, float sideOpen[2])
 {
     rendpoly_t *q;
     rendpoly_vertex_t *vtx;
@@ -1240,7 +1248,7 @@ void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     darkness *= shadowDark;
 
     // Determine the inner shadow corners.
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
         pos = sideOpen[i];
         if(pos < 1)             // Nearly closed.
@@ -1307,12 +1315,12 @@ void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     R_FreeRendPoly(q);
 }
 
-/*
+/**
  * Render the shadowpolygons linked to the subsector, if they haven't
  * already been rendered.
  *
- * Don't use the global radio state in here, the subsector can be part
- * of any sector, not the one chosen for wall rendering.
+ * Don't use the global radio state in here, the subsector can be part of
+ * any sector, not the one chosen for wall rendering.
  */
 void Rend_RadioSubsectorEdges(subsector_t *subsector)
 {
@@ -1352,15 +1360,17 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
         vec[VX] = vx - subsector->midpoint.pos[VX];
         vec[VY] = vz - subsector->midpoint.pos[VY];
 
-        for(pln = 0; pln < subsector->sector->planecount; pln++)
+        for(pln = 0; pln < subsector->sector->planecount; ++pln)
         {
             vec[VZ] = vy - SECT_PLANE_HEIGHT(subsector->sector, pln);
-            // Don't bother with planes facing away from the camera.
-            if(M_DotProduct(vec, subsector->sector->planes[pln]->surface.normal) < 0)
-                continue;
 
             // Glowing surfaces or missing textures shouldn't have shadows.
-            if(!Rend_RadioNonGlowingFlat(subsector->sector, pln))
+            if((subsector->sector->planes[pln]->surface.flags & SUF_NO_RADIO) ||
+               !Rend_RadioNonGlowingFlat(subsector->sector, pln))
+                continue;
+
+            // Don't bother with planes facing away from the camera.
+            if(M_DotProduct(vec, subsector->sector->planes[pln]->surface.normal) < 0)
                 continue;
 
             open =
@@ -1371,7 +1381,7 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
                 continue;
 
             // What about the neighbours?
-            for(i = 0; i < 2; i++)
+            for(i = 0; i < 2; ++i)
             {
                 neighbor = R_GetShadowNeighbor(shadow, i == 0, false);
                 sideOpen[i] =

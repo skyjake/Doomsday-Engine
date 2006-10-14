@@ -53,6 +53,7 @@ typedef struct surface_s {
     float               offx;          // Texture x offset.
     float               offy;          // Texture y offset.
     byte                rgba[4];       // Surface color tint
+    struct translation_s* xlat;
 } surface_t;
 
 typedef struct plane_s {

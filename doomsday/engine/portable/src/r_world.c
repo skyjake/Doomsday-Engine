@@ -2235,6 +2235,9 @@ void R_SetupLevel(char *level_id, int flags)
             R_UpdateSurface(&side->middle, false);
             R_UpdateSurface(&side->bottom, false);
         }
+
+        // We don't render fakeradio on polyobjects...
+        PO_SetupPolyobjs();
         return;
     }
     if(flags & DDSLF_FINALIZE)
@@ -2263,6 +2266,9 @@ void R_SetupLevel(char *level_id, int flags)
             R_UpdateSurface(&side->middle, true);
             R_UpdateSurface(&side->bottom, true);
         }
+
+        // We don't render fakeradio on polyobjects...
+        PO_SetupPolyobjs();
 
         // Run any commands specified in Map Info.
         if(mapinfo && mapinfo->execute)
@@ -2505,6 +2511,13 @@ void R_UpdateSurface(surface_t *current, boolean forceUpdate)
     oldTexFlags =
         R_GraphicResourceFlags((old->isflat? RC_FLAT : RC_TEXTURE),
                                old->texture);
+
+    if(forceUpdate ||
+       current->isflat != old->isflat)
+    {
+        old->isflat = current->isflat;
+    }
+
     // FIXME >
     // Update glowing status?
     // The order of these tests is important.
@@ -2533,8 +2546,20 @@ void R_UpdateSurface(surface_t *current, boolean forceUpdate)
 
         old->texture = current->texture;
 
+        // No longer a missing texture fix?
         if(current->texture && (oldTexFlags & SUF_TEXFIX))
             current->flags &= ~SUF_TEXFIX;
+
+        // Update the surface's blended texture.
+        if(current->isflat)
+            current->xlat = &R_GetFlat(current->texture)->translation;
+        else
+            current->xlat = &texturetranslation[current->texture];
+
+        if(current->xlat && current->texture)
+            current->flags |= SUF_BLEND;
+        else
+            current->flags &= ~SUF_BLEND;
     }
     else if((texFlags & TXF_GLOW) != (oldTexFlags & TXF_GLOW))
     {
@@ -2564,12 +2589,6 @@ void R_UpdateSurface(surface_t *current, boolean forceUpdate)
        current->flags != old->flags)
     {
         old->flags = current->flags;
-    }
-
-    if(forceUpdate ||
-       current->isflat != old->isflat)
-    {
-        old->isflat = current->isflat;
     }
 
     if(forceUpdate ||

@@ -48,9 +48,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-// FakeRadio should not be rendered.
-#define RWSF_NO_RADIO 0x100
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -362,6 +359,11 @@ static void Rend_ShinySurfaceColor(gl_rgba_t *color, ded_reflection_t *ref)
     }
 
     color->rgba[3] = (DGLubyte) (ref->shininess * 255);
+/*
+Con_Printf("shiny = %i %i %i %i\n",
+           (int) color->rgba[0], (int) color->rgba[1], (int) color->rgba[2],
+           (int) color->rgba[3]);
+*/
 }
 
 static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
@@ -373,29 +375,48 @@ static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
     // for the texture or flat in question.
     if(suf->isflat)
     {
-        flat_t *flat = R_GetFlat(suf->texture);
+        flat_t *flat;
 
-        if(flat->translation.current != suf->texture)
+        if(suf->xlat && suf->xlat->current != suf->texture)
         {
             // The flat is currently translated to another one.
-            flat = R_GetFlat(flat->translation.current);
+            flat = R_GetFlat(suf->xlat->current);
+        }
+        else
+        {
+            flat = R_GetFlat(suf->texture);
         }
 
         ref = flat->reflection;
-        if(width)
-            *width = 64;
-        if(height)
-            *height = 64;
+        if(ref)
+        {
+            if(width)
+                *width = 64;
+            if(height)
+                *height = 64;
+        }
     }
     else
     {
-        texture_t *texptr = textures[texturetranslation[suf->texture].current];
+        texture_t *texptr;
+
+        if(suf->xlat)
+        {
+            texptr = textures[suf->xlat->current];
+        }
+        else
+        {
+            texptr = textures[suf->texture];
+        }
 
         ref = texptr->reflection;
-        if(width)
-            *width = texptr->width;
-        if(height)
-            *height = texptr->height;
+        if(ref)
+        {
+            if(width)
+                *width = texptr->width;
+            if(height)
+                *height = texptr->height;
+        }
     }
 
     return ref;
@@ -448,15 +469,7 @@ static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
 
 static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly)
 {
-    translation_t *xlat = NULL;
-
-    if(surface->texture >= 0)
-    {
-        if(surface->isflat)
-            xlat = &R_GetFlat(surface->texture)->translation;
-        else
-            xlat = &texturetranslation[surface->texture];
-    }
+    translation_t *xlat = surface->xlat;
 
     // If fog is active, inter=0 is accepted as well. Otherwise flickering
     // may occur if the rendering passes don't match for blended and
@@ -583,7 +596,7 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
         poly->tex.width = texw;
         poly->tex.height = texh;
         poly->tex.detail = texdetail;
-        return surface->flags & ~SUF_TEXFIX;
+        return surface->flags & ~(SUF_TEXFIX|SUF_BLEND);
     }
 
     if((surface->flags & SUF_TEXFIX) && devNoTexFix)
@@ -617,7 +630,7 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
         poly->tex.detail = texdetail;
 
         // Return the parameters for this surface.
-        return surface->flags | SUF_BLEND;
+        return surface->flags;
     }
 }
 
@@ -922,11 +935,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
             {
                 // We're going to modify the polygon quite a bit...
                 rendpoly_t *q = R_AllocRendPoly(RP_QUAD, true, 4);
-
-                memcpy(q, quad, sizeof(rendpoly_t));
-                memcpy(q->vertices, quad->vertices,
-                       sizeof(rendpoly_vertex_t) * q->numvertices);
-
+                R_MemcpyRendPoly(q, quad);
                 Rend_AddShinyPoly(q, ref, width, height);
 
                 R_FreeRendPoly(q);
@@ -997,8 +1006,7 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
  * This seriously needs to be rewritten! Witness the accumulation of hacks
  * on kludges...
  */
-static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
-                               int flags)
+static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
 {
     int         i;
     int         surfaceFlags;
@@ -1212,7 +1220,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
                 if(ldef->flags & ML_DONTPEGBOTTOM)
                     quad->texoffy += texh - fsh;
 
-                if(!(flags & RWSF_NO_RADIO))
+                if(!(surfaceFlags & SUF_NO_RADIO))
                     tempflags |= RPF2_SHADOW;
                 if(surface->texture != -1)
                     tempflags |= RPF2_SHINY;
@@ -1347,7 +1355,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
                     {
                         short tempflags = 0;
 
-                        if(solidSeg && !(flags & RWSF_NO_RADIO) && !texmask)
+                        if(solidSeg && !(surfaceFlags & SUF_NO_RADIO) && !texmask)
                             tempflags |= RPF2_SHADOW;
                         if(solidSeg && surface->texture != -1 && !texmask)
                             tempflags |= RPF2_SHINY;
@@ -1440,7 +1448,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
                 {
                     short tempflags = 0;
 
-                    if(!(flags & RWSF_NO_RADIO))
+                    if(!(surfaceFlags & SUF_NO_RADIO))
                         tempflags |= RPF2_SHADOW;
                     if(surface->texture != -1)
                         tempflags |= RPF2_SHINY;
@@ -1484,7 +1492,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
                     vTL[VZ] = vTR[VZ] = fceil;
                 }
 
-                if(!(flags & RWSF_NO_RADIO))
+                if(!(surfaceFlags & SUF_NO_RADIO))
                     tempflags |= RPF2_SHADOW;
                 if(surface->texture != -1)
                     tempflags |= RPF2_SHINY;
@@ -1747,7 +1755,6 @@ static void Rend_RenderSubsector(int ssecidx)
     subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
     seg_t      *seg;
     sector_t   *sect = ssec->sector;
-    int         flags = 0;
     float       sceil = SECT_CEIL(sect);
     float       sfloor = SECT_FLOOR(sect);
 
@@ -1811,7 +1818,7 @@ static void Rend_RenderSubsector(int ssecidx)
 
         // Let's first check which way this seg is facing.
         if(seg->info->flags & SEGINF_FACINGFRONT)
-            Rend_RenderWallSeg(seg, sect, flags);
+            Rend_RenderWallSeg(seg, sect);
     }
 
     // Is there a polyobj on board?
@@ -1823,7 +1830,7 @@ static void Rend_RenderSubsector(int ssecidx)
 
             // Let's first check which way this seg is facing.
             if(seg->info->flags & SEGINF_FACINGFRONT)
-                Rend_RenderWallSeg(seg, sect, RWSF_NO_RADIO);
+                Rend_RenderWallSeg(seg, sect);
         }
     }
 

@@ -275,6 +275,30 @@ void R_FreeRendPoly(rendpoly_t *poly)
 #endif
 }
 
+void R_MemcpyRendPoly(rendpoly_t *dest, rendpoly_t *src)
+{
+    unsigned int i;
+
+    if(!dest || !src)
+        return;
+
+    memcpy(&dest->tex, &src->tex, sizeof(gltexture_t));
+    memcpy(&dest->intertex, &src->intertex, sizeof(gltexture_t));
+    if(dest->wall && src->wall)
+        memcpy(&dest->wall, &src->wall, sizeof(rendpoly_wall_t));
+    dest->texoffx = src->texoffx;
+    dest->texoffy = src->texoffy;
+    dest->flags = src->flags;
+    dest->interpos = src->interpos;
+    dest->sector = src->sector;
+    dest->blendmode = src->interpos;
+    dest->lights = src->lights;
+    dest->decorlightmap = src->decorlightmap;
+    dest->type = src->type;
+    for(i = 0; i < dest->numvertices; ++i)
+        memcpy(&dest->vertices[i], &src->vertices[i], sizeof(rendpoly_vertex_t));
+}
+
 void R_ShutdownData(void)
 {
 }

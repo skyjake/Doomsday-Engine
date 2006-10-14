@@ -1,5 +1,10 @@
-/* DE1: $Id$
- * Copyright (C) 2003, 2004 Jaakko Ker�nen <jaakko.keranen@iki.fi>
+/**\file
+ *\section Copyright and License Summary
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,15 +17,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
- *
- * Based on Hexen by Raven Software.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
 
 /*
  * p_polyob.c: Polygon Objects
  *
  * Polyobj translation and rotation.
+ * Based on Hexen by Raven Software.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -61,7 +67,7 @@ int     po_NumPolyobjs;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Allocate memory for polyobjs.
  */
 void PO_Allocate(void)
@@ -78,7 +84,7 @@ void PO_Allocate(void)
     }
 }
 
-/*
+/**
  * The po_callback is called when a polyobj hits a mobj.
  */
 void PO_SetCallback(void (*func) (mobj_t *, void *, void *))
@@ -90,7 +96,7 @@ polyobj_t *GetPolyobj(int polyNum)
 {
     int     i;
 
-    for(i = 0; i < po_NumPolyobjs; i++)
+    for(i = 0; i < po_NumPolyobjs; ++i)
     {
         if(PO_PTR(i)->tag == polyNum)
         {
@@ -155,6 +161,44 @@ void UpdateSegBBox(seg_t *seg)
         else
         {
             line->slopetype = ST_NEGATIVE;
+        }
+    }
+}
+
+/**
+ * Called at the start of the level after all the structures needed for
+ * refresh have been setup.
+ */
+void PO_SetupPolyobjs(void)
+{
+    int         i, j, k, num;
+    seg_t     **segList;
+    line_t     *line;
+    side_t     *side;
+
+    for(i = 0; i < po_NumPolyobjs; ++i)
+    {
+        segList = polyobjs[i].segs;
+        num = polyobjs[i].numsegs;
+        for(j = 0; j < num; ++j, segList++)
+        {
+            UpdateSegFVtxs(*segList);
+            if((*segList)->linedef)
+            {
+                line = (*segList)->linedef;
+
+                for(k = 0; k < 2; ++k)
+                {
+                    if(line->sidenum[k] != NO_INDEX)
+                    {
+                        side = SIDE_PTR(line->sidenum[k]);
+
+                        side->top.flags |= SUF_NO_RADIO;
+                        side->middle.flags |= SUF_NO_RADIO;
+                        side->bottom.flags |= SUF_NO_RADIO;
+                    }
+                }
+            }
         }
     }
 }
@@ -247,6 +291,7 @@ boolean PO_MovePolyobj(int num, int x, int y)
             }
             (*prevPts).pos[VX] -= x;
             (*prevPts).pos[VY] -= y;
+
             segList++;
             prevPts++;
         }
@@ -329,7 +374,6 @@ boolean PO_RotatePolyobj(int num, angle_t angle)
         if((*segList)->linedef->validcount != validcount)
         {
             UpdateSegBBox(*segList);
-            UpdateSegFVtxs(*segList);
             (*segList)->linedef->validcount = validcount;
         }
         (*segList)->angle += angle;
@@ -350,7 +394,6 @@ boolean PO_RotatePolyobj(int num, angle_t angle)
             if((*segList)->linedef->validcount != validcount)
             {
                 UpdateSegBBox(*segList);
-                UpdateSegFVtxs(*segList);
                 (*segList)->linedef->validcount = validcount;
             }
             (*segList)->angle -= angle;
@@ -371,10 +414,10 @@ void PO_UnLinkPolyobj(polyobj_t * po)
     int     index;
 
     // remove the polyobj from each blockmap section
-    for(j = po->bbox[BOXBOTTOM]; j <= po->bbox[BOXTOP]; j++)
+    for(j = po->bbox[BOXBOTTOM]; j <= po->bbox[BOXTOP]; ++j)
     {
         index = j * bmapwidth;
-        for(i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; i++)
+        for(i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; ++i)
         {
             if(i >= 0 && i < bmapwidth && j >= 0 && j < bmapheight)
             {
@@ -407,8 +450,12 @@ void PO_LinkPolyobj(polyobj_t * po)
     rightX = leftX = (*tempSeg)->v1->pos[VX];
     topY = bottomY = (*tempSeg)->v1->pos[VY];
 
-    for(i = 0; i < po->numsegs; i++, tempSeg++)
+    for(i = 0; i < po->numsegs; ++i, tempSeg++)
     {
+        // FIXME: This doesn't belong here. As we plan to change how
+        // polyobjects are handled significantly; it can stay here for now.
+        UpdateSegFVtxs(*tempSeg);
+
         if((*tempSeg)->v1->pos[VX] > rightX)
         {
             rightX = (*tempSeg)->v1->pos[VX];
@@ -426,15 +473,15 @@ void PO_LinkPolyobj(polyobj_t * po)
             bottomY = (*tempSeg)->v1->pos[VY];
         }
     }
-    po->bbox[BOXRIGHT]  = (rightX - bmaporgx)  >> MAPBLOCKSHIFT;
-    po->bbox[BOXLEFT]   = (leftX - bmaporgx)   >> MAPBLOCKSHIFT;
-    po->bbox[BOXTOP]    = (topY - bmaporgy)    >> MAPBLOCKSHIFT;
+    po->bbox[BOXRIGHT]  = (rightX  - bmaporgx) >> MAPBLOCKSHIFT;
+    po->bbox[BOXLEFT]   = (leftX   - bmaporgx) >> MAPBLOCKSHIFT;
+    po->bbox[BOXTOP]    = (topY    - bmaporgy) >> MAPBLOCKSHIFT;
     po->bbox[BOXBOTTOM] = (bottomY - bmaporgy) >> MAPBLOCKSHIFT;
     // add the polyobj to each blockmap section
     for(j = po->bbox[BOXBOTTOM] * bmapwidth; j <= po->bbox[BOXTOP] * bmapwidth;
         j += bmapwidth)
     {
-        for(i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; i++)
+        for(i = po->bbox[BOXLEFT]; i <= po->bbox[BOXRIGHT]; ++i)
         {
             if(i >= 0 && i < bmapwidth && j >= 0 && j < bmapheight * bmapwidth)
             {
@@ -503,7 +550,7 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po)
 
     for(j = bottom * bmapwidth; j <= top * bmapwidth; j += bmapwidth)
     {
-        for(i = left; i <= right; i++)
+        for(i = left; i <= right; ++i)
         {
             root = (mobj_t *) &blockrings[j + i];
             for(mobj = root->bnext; mobj != root; mobj = mobj->bnext)
@@ -536,7 +583,7 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po)
     return blocked;
 }
 
-/*
+/**
  * Returns the index of the polyobj that owns the degenmobj.
  * Returns -1 if nothing is found.
  */
@@ -544,7 +591,7 @@ int PO_GetNumForDegen(void *degenMobj)
 {
     int     i;
 
-    for(i = 0; i < po_NumPolyobjs; i++)
+    for(i = 0; i < po_NumPolyobjs; ++i)
     {
         if(&PO_PTR(i)->startSpot == degenMobj)
         {

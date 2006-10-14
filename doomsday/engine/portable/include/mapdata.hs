@@ -50,6 +50,7 @@ struct surface
     FLOAT   float       offx	// Texture x offset.
     FLOAT   float       offy	// Texture y offset.
     BYTE    byte[4]     rgba    // Surface color tint
+    -       translation_s* xlat
 end
 
 struct plane

@@ -56,27 +56,28 @@
 #define SECT_PLANE_HEIGHT(x, n) (x->planes[n]->info->visheight)
 
 // Flags for decorations.
-#define DCRF_NO_IWAD    0x1        // Don't use if from IWAD.
-#define DCRF_PWAD       0x2        // Can use if from PWAD.
-#define DCRF_EXTERNAL   0x4        // Can use if from external resource.
+#define DCRF_NO_IWAD    0x1         // Don't use if from IWAD.
+#define DCRF_PWAD       0x2         // Can use if from PWAD.
+#define DCRF_EXTERNAL   0x4         // Can use if from external resource.
 
 // Surface flags.
-#define SUF_TEXFIX      0x1        // Current texture is a fix replacement
-                                   // (not sent to clients, returned via DMU etc)
-#define SUF_GLOW        0x2        // Surface glows (full bright).
-#define SUF_BLEND       0x4        // Surface possibly has a blended texture.
+#define SUF_TEXFIX      0x1         // Current texture is a fix replacement
+                                    // (not sent to clients, returned via DMU etc).
+#define SUF_GLOW        0x2         // Surface glows (full bright).
+#define SUF_BLEND       0x4         // Surface possibly has a blended texture.
+#define SUF_NO_RADIO    0x8         // No fakeradio for this surface.
 
 // Texture flags.
 #define TXF_MASKED      0x1
-#define TXF_GLOW        0x2        // For lava etc, textures that glow.
-#define TXF_PTCGEN      0x8        // Ptcgen def has been determined.
+#define TXF_GLOW        0x2         // For lava etc, textures that glow.
+#define TXF_PTCGEN      0x8         // Ptcgen def has been determined.
 
 // Animation group flags.
 #define AGF_SMOOTH      0x1
 #define AGF_FIRST_ONLY  0x2
 #define AGF_TEXTURE     0x1000
 #define AGF_FLAT        0x2000
-#define AGF_PRECACHE    0x4000     // Group is just for precaching.
+#define AGF_PRECACHE    0x4000      // Group is just for precaching.
 
 // Texture definition
 typedef struct {
@@ -437,6 +438,7 @@ void            R_InitRendPolyPool(void);
 rendpoly_t     *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
                                 unsigned int numverts);
 void            R_FreeRendPoly(rendpoly_t *poly);
+void            R_MemcpyRendPoly(rendpoly_t *dest, rendpoly_t *src);
 void            R_InfoRendPolys(void);
 
 void            R_InitData(void);
