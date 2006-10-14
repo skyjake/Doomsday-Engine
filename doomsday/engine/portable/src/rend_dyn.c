@@ -506,10 +506,10 @@ static void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
     if(!(seg->info->flags & SEGINF_FACINGFRONT))
         return;
 
-    pos[0][VX] = FIX2FLT(seg->v1->pos[VX]);
-    pos[0][VY] = FIX2FLT(seg->v1->pos[VY]);
-    pos[1][VX] = FIX2FLT(seg->v2->pos[VX]);
-    pos[1][VY] = FIX2FLT(seg->v2->pos[VY]);
+    pos[0][VX] = seg->fv1.pos[VX];
+    pos[0][VY] = seg->fv1.pos[VY];
+    pos[1][VX] = seg->fv2.pos[VX];
+    pos[1][VY] = seg->fv2.pos[VY];
 
     pntLight[VX] = FIX2FLT(lum->thing->pos[VX]);
     pntLight[VY] = FIX2FLT(lum->thing->pos[VY]);
@@ -1681,7 +1681,7 @@ void DL_ClipInSubsector(int ssecidx)
 void DL_ClipBySight(int ssecidx)
 {
     int         i, num;
-    vec2_t      v1, v2, eye, source;
+    vec2_t      eye, source;
     subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
     lumobj_t   *lumi;
     seg_t      *seg;
@@ -1707,15 +1707,10 @@ void DL_ClipBySight(int ssecidx)
             if(!(seg->info->flags & SEGINF_FACINGFRONT))
                 continue;
 
-            v1[VX] = FIX2FLT(seg->v1->pos[VX]);
-            v1[VY] = FIX2FLT(seg->v1->pos[VY]);
-            v2[VX] = FIX2FLT(seg->v2->pos[VX]);
-            v2[VY] = FIX2FLT(seg->v2->pos[VY]);
-
             V2_Set(source, FIX2FLT(lumi->thing->pos[VX]),
                    FIX2FLT(lumi->thing->pos[VY]));
 
-            if(V2_Intercept2(source, eye, v1, v2, NULL, NULL, NULL))
+            if(V2_Intercept2(source, eye, seg->fv1.pos, seg->fv2.pos, NULL, NULL, NULL))
             {
                 lumi->flags |= LUMF_CLIPPED;
             }

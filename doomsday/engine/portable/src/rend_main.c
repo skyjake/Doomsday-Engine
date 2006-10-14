@@ -307,8 +307,8 @@ static __inline int Rend_SegFacingDir(float v1[2], float v2[2])
 static int Rend_FixedSegFacingDir(const seg_t *seg)
 {
     // The dot product. (1 if facing front.)
-    return FIX2FLT(seg->v1->pos[VY] - seg->v2->pos[VY]) * FIX2FLT(seg->v1->pos[VX] - viewx) +
-           FIX2FLT(seg->v2->pos[VX] - seg->v1->pos[VX]) * FIX2FLT(seg->v1->pos[VY] - viewy) > 0;
+    return((seg->fv1.pos[VY] - seg->fv2.pos[VY]) * (seg->fv1.pos[VX] - viewx) +
+           (seg->fv2.pos[VX] - seg->fv1.pos[VX]) * (seg->fv1.pos[VY] - viewy)) > 0;
 }
 #endif
 
@@ -1045,10 +1045,10 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
     vTR = quad->vertices[3].pos;
 
     // Get the start and end vertices, left then right. Top and bottom.
-    vBL[VX] = vTL[VX] = FIX2FLT(seg->v1->pos[VX]);
-    vBL[VY] = vTL[VY] = FIX2FLT(seg->v1->pos[VY]);
-    vBR[VX] = vTR[VX] = FIX2FLT(seg->v2->pos[VX]);
-    vBR[VY] = vTR[VY] = FIX2FLT(seg->v2->pos[VY]);
+    vBL[VX] = vTL[VX] = seg->fv1.pos[VX];
+    vBL[VY] = vTL[VY] = seg->fv1.pos[VY];
+    vBR[VX] = vTR[VX] = seg->fv2.pos[VX];
+    vBR[VY] = vTR[VY] = seg->fv2.pos[VY];
 
     // Calculate the distances.
     quad->vertices[0].dist =
@@ -1285,11 +1285,11 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec,
                                 float a[2], b[2], c[2];
                                 float distance;
 
-                                a[VX] = FIX2FLT(ldef->v1->pos[VX]);
-                                a[VY] = FIX2FLT(ldef->v1->pos[VY]);
+                                a[VX] = seg->fv1.pos[VX];
+                                a[VY] = seg->fv1.pos[VY];
 
-                                b[VX] = FIX2FLT(ldef->v2->pos[VX]);
-                                b[VY] = FIX2FLT(ldef->v2->pos[VY]);
+                                b[VX] = seg->fv2.pos[VX];
+                                b[VY] = seg->fv2.pos[VY];
 
                                 c[VX] = FIX2FLT(mo->pos[VX]);
                                 c[VY] = FIX2FLT(mo->pos[VY]);
@@ -1535,7 +1535,6 @@ int Rend_SectorLight(sector_t *sec)
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
 {
     int     i;
-    float   v1[2], v2[2];
     seg_t  *seg;
 
     for(i = sub->linecount, seg = &segs[sub->firstline]; i > 0; --i, seg++)
@@ -1544,13 +1543,8 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
         if(!seg->linedef)
             continue;
 
-        v1[VX] = FIX2FLT(seg->v1->pos[VX]);
-        v1[VY] = FIX2FLT(seg->v1->pos[VY]);
-        v2[VX] = FIX2FLT(seg->v2->pos[VX]);
-        v2[VY] = FIX2FLT(seg->v2->pos[VY]);
-
         // Which way should it be facing?
-        if(Rend_SegFacingDir(v1, v2))  // 1=front
+        if(Rend_SegFacingDir(seg->fv1.pos, seg->fv2.pos))  // 1=front
             seg->info->flags |= SEGINF_FACINGFRONT;
         else
             seg->info->flags &= ~SEGINF_FACINGFRONT;
@@ -1562,13 +1556,8 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
         {
             seg = sub->poly->segs[i];
 
-            v1[VX] = FIX2FLT(seg->v1->pos[VX]);
-            v1[VY] = FIX2FLT(seg->v1->pos[VY]);
-            v2[VX] = FIX2FLT(seg->v2->pos[VX]);
-            v2[VY] = FIX2FLT(seg->v2->pos[VY]);
-
             // Which way should it be facing?
-            if(Rend_SegFacingDir(v1, v2))  // 1=front
+            if(Rend_SegFacingDir(seg->fv1.pos, seg->fv2.pos))  // 1=front
                 seg->info->flags |= SEGINF_FACINGFRONT;
             else
                 seg->info->flags &= ~SEGINF_FACINGFRONT;
@@ -1586,7 +1575,7 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 {
     sector_t *front = sub->sector, *back;
     int     i;
-    float   v1[2], v2[2], fronth[2], backh[2];
+    float   fronth[2], backh[2];
     float  *startv, *endv;
     seg_t  *seg;
 
@@ -1605,24 +1594,19 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
         if(forward_facing != (seg->info->flags & SEGINF_FACINGFRONT))
             continue;
 
-        v1[VX] = FIX2FLT(seg->v1->pos[VX]);
-        v1[VY] = FIX2FLT(seg->v1->pos[VY]);
-        v2[VX] = FIX2FLT(seg->v2->pos[VX]);
-        v2[VY] = FIX2FLT(seg->v2->pos[VY]);
-
         back = seg->backsector;
         backh[0] = FIX2FLT(back->planes[PLN_FLOOR]->height);
         backh[1] = FIX2FLT(back->planes[PLN_CEILING]->height);
         // Choose start and end vertices so that it's facing forward.
         if(forward_facing)
         {
-            startv = v1;
-            endv = v2;
+            startv = seg->fv1.pos;
+            endv   = seg->fv2.pos;
         }
         else
         {
-            startv = v2;
-            endv = v1;
+            startv = seg->fv2.pos;
+            endv   = seg->fv1.pos;
         }
         // Do not create an occlusion for sky floors.
         if(!R_IsSkySurface(&back->SP_floorsurface) ||

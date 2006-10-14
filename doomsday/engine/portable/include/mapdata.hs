@@ -15,6 +15,8 @@ struct seg
     -       seginfo_s*  info
     PTR     vertex_s*   v1      // Start of the segment.
     PTR     vertex_s*   v2      // End of the segment.
+    -       fvertex_s   fv1     // Start of the segment (float).
+    -       fvertex_s   fv2     // End of the segment (float).
     FLOAT   float       length  // Accurate length of the segment (v1 -> v2).
     FIXED   fixed_t     offset
     PTR     side_s*     sidedef

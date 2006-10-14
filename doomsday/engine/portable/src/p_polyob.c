@@ -100,6 +100,14 @@ polyobj_t *GetPolyobj(int polyNum)
     return NULL;
 }
 
+static void UpdateSegFVtxs(seg_t *seg)
+{
+    seg->fv1.pos[VX] = FIX2FLT(seg->v1->pos[VX]);
+    seg->fv1.pos[VY] = FIX2FLT(seg->v1->pos[VY]);
+    seg->fv2.pos[VX] = FIX2FLT(seg->v2->pos[VX]);
+    seg->fv2.pos[VY] = FIX2FLT(seg->v2->pos[VY]);
+}
+
 void UpdateSegBBox(seg_t *seg)
 {
     line_t *line;
@@ -321,6 +329,7 @@ boolean PO_RotatePolyobj(int num, angle_t angle)
         if((*segList)->linedef->validcount != validcount)
         {
             UpdateSegBBox(*segList);
+            UpdateSegFVtxs(*segList);
             (*segList)->linedef->validcount = validcount;
         }
         (*segList)->angle += angle;
@@ -341,6 +350,7 @@ boolean PO_RotatePolyobj(int num, angle_t angle)
             if((*segList)->linedef->validcount != validcount)
             {
                 UpdateSegBBox(*segList);
+                UpdateSegFVtxs(*segList);
                 (*segList)->linedef->validcount = validcount;
             }
             (*segList)->angle -= angle;

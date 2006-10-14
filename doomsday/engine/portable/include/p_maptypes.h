@@ -16,6 +16,8 @@ typedef struct seg_s {
     struct seginfo_s*   info;
     struct vertex_s*    v1;            // Start of the segment.
     struct vertex_s*    v2;            // End of the segment.
+    struct fvertex_s    fv1;           // Start of the segment (float).
+    struct fvertex_s    fv2;           // End of the segment (float).
     float               length;        // Accurate length of the segment (v1 -> v2).
     fixed_t             offset;
     struct side_s*      sidedef;

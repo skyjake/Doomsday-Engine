@@ -323,7 +323,7 @@ static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
     return points;
 }
 
-static void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
+static void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
 {
     int         i, numedgepoints;
     int         numclippers = num + ssec->linecount;
@@ -346,10 +346,10 @@ static void R_ConvexClipper(subsector_t *ssec, int num, divline_t * list)
         {
             seg_t  *seg = SEG_PTR(ssec->firstline + i - num);
 
-            clip->pos[VX] = FIX2FLT(seg->v1->pos[VX]);
-            clip->pos[VY] = FIX2FLT(seg->v1->pos[VY]);
-            clip->dx = FIX2FLT(seg->v2->pos[VX] - seg->v1->pos[VX]);
-            clip->dy = FIX2FLT(seg->v2->pos[VY] - seg->v1->pos[VY]);
+            clip->pos[VX] = seg->fv1.pos[VX];
+            clip->pos[VY] = seg->fv1.pos[VY];
+            clip->dx = seg->fv2.pos[VX] - seg->fv1.pos[VX];
+            clip->dy = seg->fv2.pos[VY] - seg->fv1.pos[VY];
         }
     }
 
@@ -442,8 +442,8 @@ static void R_PolygonizeWithoutCarving(void)
         seg = SEG_PTR(sub->firstline);
         for(j = 0; j < num; ++j, seg++, vtx++)
         {
-            vtx->pos[VX] = FIX2FLT(seg->v1->pos[VX]);
-            vtx->pos[VY] = FIX2FLT(seg->v1->pos[VY]);
+            vtx->pos[VX] = seg->fv1.pos[VX];
+            vtx->pos[VY] = seg->fv1.pos[VY];
         }
 
         R_PrepareSubsector(sub);

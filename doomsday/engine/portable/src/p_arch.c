@@ -2851,12 +2851,19 @@ static void P_ProcessSegs(gamemap_t* map, int version)
         }
         else
         {
-
             seg->linedef = NULL;
             seg->sidedef = NULL;
             seg->frontsector = NULL;
             seg->backsector = NULL;
         }
+
+        // Convert the vertex positions to float and store alongside the
+        // fixed versions. Use these instead of constantly converting between
+        // fixed<>float as required.
+        seg->fv1.pos[VX] = FIX2FLT(seg->v1->pos[VX]);
+        seg->fv1.pos[VY] = FIX2FLT(seg->v1->pos[VY]);
+        seg->fv2.pos[VX] = FIX2FLT(seg->v2->pos[VX]);
+        seg->fv2.pos[VY] = FIX2FLT(seg->v2->pos[VY]);
 
         // Calculate the length of the segment. We need this for
         // the texture coordinates. -jk
@@ -2872,10 +2879,8 @@ static void P_ProcessSegs(gamemap_t* map, int version)
         {
             surface_t *surface = &seg->sidedef->top;
 
-            surface->normal[VY] =
-                (FIX2FLT(seg->v1->pos[VX]) - FIX2FLT(seg->v2->pos[VX])) / seg->length;
-            surface->normal[VX] =
-                (FIX2FLT(seg->v2->pos[VY]) - FIX2FLT(seg->v1->pos[VY])) / seg->length;
+            surface->normal[VY] = (seg->fv1.pos[VX] - seg->fv2.pos[VX]) / seg->length;
+            surface->normal[VX] = (seg->fv2.pos[VY] - seg->fv1.pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
 
             // All surfaces of a sidedef have the same normal.
