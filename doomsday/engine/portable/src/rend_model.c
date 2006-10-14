@@ -95,7 +95,8 @@ float   rend_model_lod = 256;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static float worldLight[3] = { .267261f, .534522f, .801783f };
+//static float worldLight[3] = { .267261f, .534522f, .801783f };
+static float worldLight[3] = { .200445f, .400891f, .601336f };
 static float ceilingLight[3] = { 0, 0, 1 };
 static float floorLight[3] = { 0, 0, -1 };
 
@@ -151,14 +152,19 @@ static __inline float qatan2(float y, float x)
 static void scaleAmbientRgb(float *out, byte *in, float mul)
 {
     int     i;
+    float   val;
 
     if(mul < 0)
         mul = 0;
     if(mul > 1)
         mul = 1;
     for(i = 0; i < 3; i++)
-        if(out[i] < in[i] * mul / 255)
-            out[i] = in[i] * mul / 255;
+    {
+        val = in[i] * mul / 255;
+
+        if(out[i] < val)
+            out[i] = val;
+    }
 }
 
 static void scaleFloatRgb(float *out, byte *in, float mul)
@@ -889,7 +895,11 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
         shinyTexture = GL_PrepareShinySkin(mf, number);
     }
 
-    skinTexture = GL_PrepareSkin(mdl, useSkin);
+    if(renderTextures == 2 && spr->type != VSPR_SKY_MODEL)
+        // For lighting debug, render all solid surfaces using the gray texture.
+        skinTexture = GL_PrepareDDTexture(DDT_GRAY);
+    else
+        skinTexture = GL_PrepareSkin(mdl, useSkin);
 
     // If we mirror the model, triangles have a different orientation.
     if(zSign < 0)
@@ -1028,12 +1038,12 @@ void Rend_RenderModel(vissprite_t * spr)
     quad = R_AllocRendPoly(RP_NONE, false, 1);
     quad->vertices[0].dist = Rend_PointDist2D(spr->data.mo.v1);
 
-    Rend_ApplyLightAdaptation(&lightLevel);
+    // Note: Light adaptation has already been applied
     RL_VertexColors(quad, lightLevel, spr->data.mo.rgb);
 
     // Determine the ambient light affecting the model.
     for(i = 0; i < 3; ++i)
-        ambientColor[i] = quad->vertices[0].color.rgba[i] / 255.0f;
+        ambientColor[i] = quad->vertices[0].color.rgba[i] * reciprocal255;
 
     R_FreeRendPoly(quad);
 

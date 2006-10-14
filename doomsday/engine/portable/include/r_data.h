@@ -305,7 +305,12 @@ typedef struct subsectorinfo_s {
     shadowlink_t   *shadows;
 } subsectorinfo_t;
 
+#define SIDEINF_TOPPVIS     0x0001
+#define SIDEINF_MIDDLEPVIS  0x0002
+#define SIDEINF_BOTTOMPVIS  0x0004
+
 typedef struct sideinfo_s {
+    short           flags;
     struct line_s  *neighbor[2];      // Left and right neighbour.
     boolean         pretendneighbor[2]; // Neighbor is not a "real" neighbor
                                       // (it does not share a line with this

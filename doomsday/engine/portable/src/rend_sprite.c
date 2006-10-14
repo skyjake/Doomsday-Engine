@@ -196,8 +196,11 @@ static void Rend_DrawPSprite(float x, float y, byte *color1, byte *color2,
     if(flip)
         flip = 1;               // Make sure it's zero or one.
 
-    if(renderTextures)
+    if(renderTextures == 1)
         GL_SetSprite(lump, pSprMode);
+    else if(renderTextures == 2)
+        // For lighting debug, render all solid surfaces using the gray texture.
+        GL_BindTexture(GL_PrepareDDTexture(DDT_GRAY));
     else
         gl.Bind(0);
 
@@ -785,11 +788,7 @@ void Rend_RenderSprite(vissprite_t *spr)
     boolean usingSRVO = false, restoreZ = false;
     rendpoly_t *tempquad = NULL;
 
-    if(!renderTextures)
-    {
-        gl.Bind(0);
-    }
-    else
+    if(renderTextures == 1)
     {
         // Do we need to translate any of the colors?
         if(spr->data.mo.flags & DDMF_TRANSLATION)
@@ -806,6 +805,12 @@ void Rend_RenderSprite(vissprite_t *spr)
             GL_SetSprite(patch, 0);
         }
     }
+    else if(renderTextures == 2)
+        // For lighting debug, render all solid surfaces using the gray texture.
+        GL_BindTexture(GL_PrepareDDTexture(DDT_GRAY));
+    else
+        gl.Bind(0);
+
     sprh = spritelumps[patch]->height;
 
     // Set the lighting and alpha.
@@ -839,7 +844,7 @@ void Rend_RenderSprite(vissprite_t *spr)
     else
     {
         int lightLevel = spr->data.mo.lightlevel;
-        Rend_ApplyLightAdaptation(&lightLevel);
+        // Note: light adaptation has already been applied.
 
         v1[VX] = Q_FIX2FLT(spr->data.mo.gx);
         v1[VY] = Q_FIX2FLT(spr->data.mo.gy);

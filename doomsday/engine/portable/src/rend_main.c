@@ -467,14 +467,15 @@ static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
     RL_AddPoly(poly);
 }
 
-static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly)
+static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
+                              boolean enabled)
 {
     translation_t *xlat = surface->xlat;
 
     // If fog is active, inter=0 is accepted as well. Otherwise flickering
     // may occur if the rendering passes don't match for blended and
     // unblended surfaces.
-    if(!xlat || !smoothTexAnim || numTexUnits < 2 ||
+    if(!enabled || !xlat || !smoothTexAnim || numTexUnits < 2 ||
        xlat->current == xlat->next || (!usingFog && xlat->inter < 0) ||
        ((surface->flags & SUF_TEXFIX) && devNoTexFix))
     {
@@ -499,6 +500,8 @@ static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly)
 boolean Rend_IsWallSectionPVisible(line_t* line, int section,
                                    boolean backside)
 {
+    side_t* side;
+
     if(!line)
         return false; // huh?
 
@@ -506,70 +509,101 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
     if(line->sidenum[backside] == NO_INDEX)
         return false;
 
-    // Non middle section of a single-sided line?
-    if(section != SEG_MIDDLE && line->sidenum[1] == NO_INDEX)
-        return false;
-
+    side = SIDE_PTR(line->sidenum[backside]);
     switch(section)
     {
+    case SEG_TOP:
+        return side->info->flags & SIDEINF_TOPPVIS;
+
     case SEG_MIDDLE:
+        return side->info->flags & SIDEINF_MIDDLEPVIS;
+
+    case SEG_BOTTOM:
+        return side->info->flags & SIDEINF_BOTTOMPVIS;
+    default:
+        return false; // shutup compiler.
+    }
+}
+
+static void Rend_MarkSegSectionsPVisible(seg_t *seg)
+{
+    int i;
+    side_t *side;
+    line_t *line;
+
+    if(!seg || !seg->linedef)
+        return; // huh?
+
+    line = seg->linedef;
+    for(i = 0; i < 2; ++i)
+    {
+        // Missing side?
+        if(line->sidenum[i] == NO_INDEX)
+            continue;
+
+        side = SIDE_PTR(line->sidenum[i]);
+        side->info->flags |=
+            (SIDEINF_TOPPVIS|SIDEINF_MIDDLEPVIS|SIDEINF_BOTTOMPVIS);
+
         // A two sided line?
         if(line->sidenum[0] != NO_INDEX && line->sidenum[1] != NO_INDEX)
         {
-            side_t* side = SIDE_PTR(line->sidenum[backside]);
-
             // Check middle texture
             if(!(side->middle.texture || side->middle.texture == -1))
-                return false;
+                side->info->flags &= ~SIDEINF_MIDDLEPVIS;
 
             // Check alpha
             if(side->middle.rgba[3] == 0)
-                return false;
+                side->info->flags &= ~SIDEINF_MIDDLEPVIS;
 
             // Check Y placement?
         }
-        break;
 
-    case SEG_TOP:
-        if(R_IsSkySurface(&line->backsector->SP_ceilsurface) &&
-           R_IsSkySurface(&line->frontsector->SP_ceilsurface))
-           return false;
-
-        if(backside)
-        {
-            if(SECT_CEIL(line->backsector) <= SECT_CEIL(line->frontsector))
-                return false;
-        }
+        // Top
+        if(!line->backsector)
+            side->info->flags &= ~(SIDEINF_TOPPVIS|SIDEINF_BOTTOMPVIS);
         else
         {
-            if(SECT_CEIL(line->frontsector) <= SECT_CEIL(line->backsector))
-                return false;
-        }
-        break;
+            if(R_IsSkySurface(&line->backsector->SP_ceilsurface) &&
+               R_IsSkySurface(&line->frontsector->SP_ceilsurface))
+               side->info->flags &= ~SIDEINF_TOPPVIS;
+            else
+            {
+                if(i)
+                {
+                    if(SECT_CEIL(line->backsector) <=
+                       SECT_CEIL(line->frontsector))
+                        side->info->flags &= ~SIDEINF_TOPPVIS;
+                }
+                else
+                {
+                    if(SECT_CEIL(line->frontsector) <=
+                       SECT_CEIL(line->backsector))
+                        side->info->flags &= ~SIDEINF_TOPPVIS;
+                }
+            }
 
-    case SEG_BOTTOM:
-        if(R_IsSkySurface(&line->backsector->SP_floorsurface) &&
-           R_IsSkySurface(&line->frontsector->SP_floorsurface))
-           return false;
-
-        if(backside)
-        {
-            if(SECT_FLOOR(line->backsector) >= SECT_FLOOR(line->frontsector))
-                return false;
+            // Bottom
+            if(R_IsSkySurface(&line->backsector->SP_floorsurface) &&
+               R_IsSkySurface(&line->frontsector->SP_floorsurface))
+               side->info->flags &= ~SIDEINF_BOTTOMPVIS;
+            else
+            {
+                if(i)
+                {
+                    if(SECT_FLOOR(line->backsector) >=
+                       SECT_FLOOR(line->frontsector))
+                        side->info->flags &= ~SIDEINF_BOTTOMPVIS;
+                }
+                else
+                {
+                    if(SECT_FLOOR(line->frontsector) >=
+                       SECT_FLOOR(line->backsector))
+                        side->info->flags &= ~SIDEINF_BOTTOMPVIS;
+                }
+            }
         }
-        else
-        {
-            if(SECT_FLOOR(line->frontsector) >= SECT_FLOOR(line->backsector))
-                return false;
-        }
-        break;
-
-    default:
-        Con_Error("Rend_IsWallSectionPVisible: Invalid wall section %i\n",
-                  section);
     }
-
-    return true;
 }
 
 /**
@@ -584,54 +618,47 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
  */
 static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
 {
+    int flags;
+
     if(surface->texture == 0)
         return -1;
 
     if(R_IsSkySurface(surface))
         return 0;
 
+    // Prepare the flat/texture
     if(renderTextures == 2)
-    {   // For lighting debug, render all world surfaces using the gray texture.
+    {   // For lighting debug, render all solid surfaces using the gray texture.
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_GRAY);
-        poly->tex.width = texw;
-        poly->tex.height = texh;
-        poly->tex.detail = texdetail;
-        return surface->flags & ~(SUF_TEXFIX|SUF_BLEND);
+        flags = surface->flags & ~(SUF_TEXFIX|SUF_BLEND);
     }
-
-    if((surface->flags & SUF_TEXFIX) && devNoTexFix)
+    else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
     {   // For debug, render the "missing" texture instead of the texture
         // chosen for surfaces to fix the HOMs.
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_MISSING);
-        poly->tex.width = texw;
-        poly->tex.height = texh;
-        poly->tex.detail = texdetail;
-        return 0 | SUF_GLOW; // Make it stand out
+        flags = SUF_GLOW; // Make it stand out
     }
-
-    if(surface->texture == -1) // An unknown texture, draw the "unknown" graphic.
-    {
+    else if(surface->texture == -1)
+    {   // An unknown texture, draw the "unknown" graphic.
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN);
-        poly->tex.width = texw;
-        poly->tex.height = texh;
-        poly->tex.detail = texdetail;
-        return 0 | SUF_GLOW; // Make it stand out
+        flags = SUF_GLOW; // Make it stand out
     }
     else
     {
-        // Prepare the flat/texture
         if(surface->isflat)
             poly->tex.id = curtex = GL_PrepareFlat(surface->texture);
         else
             poly->tex.id = curtex = GL_PrepareTexture(surface->texture);
 
-        poly->tex.width = texw;
-        poly->tex.height = texh;
-        poly->tex.detail = texdetail;
-
-        // Return the parameters for this surface.
-        return surface->flags;
+        flags = surface->flags;
     }
+
+    poly->tex.width = texw;
+    poly->tex.height = texh;
+    poly->tex.detail = texdetail;
+
+    // Return the parameters for this surface.
+    return flags;
 }
 
 /**
@@ -915,8 +942,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
                 segIndex);
 
     // Smooth Texture Animation?
-    if(flags & RPF2_BLEND)
-        Rend_PolyTexBlend(surface, quad);
+    Rend_PolyTexBlend(surface, quad, (flags & RPF2_BLEND));
 
     // Add the poly to the appropriate list
     RL_AddPoly(quad);
@@ -979,8 +1005,7 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
                 &plane->tracker, plane->affected, subIndex);
 
     // Smooth Texture Animation?
-    if(flags & RPF2_BLEND)
-        Rend_PolyTexBlend(surface, poly);
+    Rend_PolyTexBlend(surface, poly, (flags & RPF2_BLEND));
 
     // Add the poly to the appropriate list
     RL_AddPoly(poly);
@@ -1578,6 +1603,8 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
             seg->info->flags |= SEGINF_FACINGFRONT;
         else
             seg->info->flags &= ~SEGINF_FACINGFRONT;
+
+        Rend_MarkSegSectionsPVisible(seg);
      }
 
     if(sub->poly)
@@ -1591,6 +1618,8 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
                 seg->info->flags |= SEGINF_FACINGFRONT;
             else
                 seg->info->flags &= ~SEGINF_FACINGFRONT;
+
+            Rend_MarkSegSectionsPVisible(seg);
         }
     }
 }

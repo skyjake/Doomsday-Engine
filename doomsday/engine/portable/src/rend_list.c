@@ -1067,8 +1067,8 @@ void RL_FlatShinyTexCoords(gl_texcoord_t *tc, float xy[2], float height)
     tc->st[1] = RL_ShinyVertical(vy - height, distance);
 }
 
-void RL_FlatDetailTexCoords(gl_texcoord_t * tc, float xy[2], rendpoly_t *poly,
-                            gltexture_t * tex)
+void RL_FlatDetailTexCoords(gl_texcoord_t *tc, float xy[2], rendpoly_t *poly,
+                            gltexture_t *tex)
 {
     tc->st[0] =
         (xy[VX] +
