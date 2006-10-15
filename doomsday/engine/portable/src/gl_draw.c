@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -365,7 +365,7 @@ void GL_SetColor2(int palidx, float alpha)
     }
     else
     {
-        PalIdxToRGB(W_CacheLumpNum(pallump, PU_CACHE), palidx, rgb);
+        PalIdxToRGB(GL_GetPalette(), palidx, rgb);
         if(alpha < 0)
             alpha = 0;
         if(alpha > 1)

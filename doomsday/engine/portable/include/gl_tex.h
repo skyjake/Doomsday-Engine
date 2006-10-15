@@ -23,174 +23,49 @@
  */
 
 /*
- * gl_tex.h: Texture Management
+ * gl_tex.h: Texture Manipulation Algorithms.
  */
 
 #ifndef __DOOMSDAY_TEXTURES_H__
 #define __DOOMSDAY_TEXTURES_H__
 
-#include "r_data.h"
-#include "r_model.h"
-#include "r_extres.h"
-#include "con_decl.h"
-#include "gl_model.h"
-
-/*
- * This structure is used with GL_LoadImage. When it is no longer needed
- * it must be discarded with GL_DestroyImage.
- */
-typedef struct image_s {
-    char            fileName[256];
-    int             width;
-    int             height;
-    int             pixelSize;
-    boolean         isMasked;
-    int             originalBits;  // Bits per pixel in the image file.
-    byte           *pixels;
-} image_t;
-
-/*
- * Processing modes for GL_LoadGraphics.
- */
-typedef enum gfxmode_e {
-    LGM_NORMAL = 0,
-    LGM_GRAYSCALE = 1,
-    LGM_GRAYSCALE_ALPHA = 2,
-    LGM_WHITE_ALPHA = 3
-} gfxmode_t;
-
-/*
- * Textures used in the lighting system.
- */
-typedef enum lightingtex_e {
-    LST_DYNAMIC,                   // Round dynamic light
-    LST_GRADIENT,                  // Top-down gradient
-    LST_RADIO_CO,                  // FakeRadio closed/open corner shadow
-    LST_RADIO_CC,                  // FakeRadio closed/closed corner shadow
-    LST_RADIO_OO,                  // FakeRadio open/open shadow
-    LST_RADIO_OE,                  // FakeRadio open/edge shadow
-    NUM_LIGHTING_TEXTURES
-} lightingtex_t;
-
-typedef enum flaretex_e {
-    FXT_FLARE,                     // (flare)
-    FXT_BRFLARE,                   // (brFlare)
-    FXT_BIGFLARE,                  // (bigFlare)
-    NUM_FLARE_TEXTURES
-} flaretex_t;
-
-/*
- * Textures used in world rendering.
- * eg a surface with a missing tex/flat is drawn using the "missing" graphic
- */
-typedef enum ddtexture_e {
-    DDT_UNKNOWN,          // Drawn if a texture/flat is unknown
-    DDT_MISSING,          // Drawn in place of HOMs in dev mode.
-    DDT_BBOX,             // Drawn when rendering bounding boxes
-    DDT_GRAY,             // For lighting debug.
-    NUM_DD_TEXTURES
-} ddtexture_t;
-
-extern int      mipmapping, linearRaw, texQuality, filterSprites;
-extern int      texMagMode;
-extern int      useSmartFilter;
-extern byte     loadExtAlways;
-extern int      texMagMode;
-extern float    texw, texh;
-extern int      texmask;
-extern detailinfo_t *texdetail;
-extern unsigned int curtex;
-extern int      pallump;
-extern DGLuint  lightingTexNames[NUM_LIGHTING_TEXTURES];
-extern DGLuint  flareTexNames[NUM_FLARE_TEXTURES];
+#include "gl_texmanager.h"
 
 int             CeilPow2(int num);
 
-void            GL_TexRegister(void);
-void            GL_InitTextureManager(void);
-void            GL_ShutdownTextureManager(void);
-void            GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlareMaps);
-void            GL_ClearTextureMemory(void);
-void            GL_ClearRuntimeTextures(void);
-void            GL_ClearSystemTextures(void);
-void            GL_DoTexReset(cvar_t *unused);
-int             GL_InitPalettedTexture(void);
-void            GL_DestroySkinNames(void);
-void            GL_ResetLumpTexData(void);
-void            GL_UpdateGamma(void);
-void            GL_DownMipmap32(byte *in, int width, int height, int comps);
-unsigned int    GL_BindTexFlat(struct flat_s *fl);
-void            GL_SetFlat(int idx);
-void            GL_BindTexture(DGLuint texname);
-void            GL_TextureFilterMode(int target, int parm);
-boolean         GL_IsColorKeyed(const char *path);
-boolean         GL_ColorKey(byte *color);
-void            GL_DoColorKeying(byte *rgbaBuf, int width);
-void            GL_LowRes();
-void            PalIdxToRGB(byte *pal, int idx, byte *rgb);
-void            TranslatePatch(struct patch_s *patch, byte *transTable);
-void            GL_ConvertToLuminance(image_t * image);
-void            GL_ConvertToAlpha(image_t * image, boolean makeWhite);
+boolean         GL_OptimalSize(int width, int height, int *optWidth,
+                               int *optHeight, boolean noStretch);
+void            GL_ConvertBuffer(int width, int height, int informat,
+                                 int outformat, byte *in, byte *out,
+                                 byte *palette, boolean gamma);
 void            GL_ScaleBuffer32(byte *in, int inWidth, int inHeight,
                                  byte *out, int outWidth, int outHeight,
                                  int comps);
-byte           *GL_LoadImage(image_t * img, const char *imagefn,
-                             boolean useModelPath);
-byte           *GL_LoadImageCK(image_t * img, const char *imagefn,
-                               boolean useModelPath);
-void            GL_DestroyImage(image_t * img);
-byte           *GL_LoadTexture(image_t * img, char *name);
-DGLuint         GL_LoadGraphics(const char *name, gfxmode_t mode);
-DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                                 gfxmode_t mode, int useMipmap, boolean clamped);
-DGLuint         GL_GetTextureInfo(int index);
-DGLuint         GL_GetTextureInfo2(int index, boolean translate);
-DGLuint         GL_PrepareTexture(int idx);
-DGLuint         GL_PrepareTexture2(int idx, boolean translate);
-DGLuint         GL_PrepareFlat(int idx);
-DGLuint         GL_PrepareFlat2(int idx, boolean translate);
-DGLuint         GL_PrepareLSTexture(lightingtex_t which);
-DGLuint         GL_PrepareFlareTexture(flaretex_t flare);
-DGLuint         GL_PrepareSky(int idx, boolean zeroMask);
-DGLuint         GL_PrepareSky2(int idx, boolean zeroMask, boolean translate);
-DGLuint         GL_PrepareDDTexture(ddtexture_t idx);
-unsigned int    GL_PrepareSprite(int pnum, int spriteMode);
-void            GL_SetTexture(int idx);
-void            GL_GetSkyTopColor(int texidx, byte *rgb);
-void            GL_SetSprite(int pnum, int spriteType);
-void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
-void            GL_GetSpriteColorf(int pnum, float *rgb);
-void            GL_GetFlatColor(int fnum, unsigned char *rgb);
-void            GL_GetTextureColor(int texid, unsigned char *rgb);
-void            GL_NewSplitTex(int lump, DGLuint part2name);
-DGLuint         GL_GetOtherPart(int lump);
-void            GL_SetPatch(int lump);  // No mipmaps are generated.
-void            GL_SetNoTexture(void);
-int             GL_GetLumpTexWidth(int lump);
-int             GL_GetLumpTexHeight(int lump);
+void            GL_DownMipmap32(byte *in, int width, int height, int comps);
+void            GL_ConvertToAlpha(image_t *image, boolean makeWhite);
+void            GL_ConvertToLuminance(image_t *image);
+void            GL_CalcLuminance(int pnum, byte *buffer, int width,
+                                 int height, int pixelsize);
+boolean         GL_ColorKey(byte *color);
+void            GL_DoColorKeying(byte *rgbaBuf, int width);
 int             GL_ValidTexHeight2(int width, int height);
-void            GL_UpdateTexParams(int mipmode);
-void            GL_UpdateRawScreenParams(int smoothing);
-void            GL_DeleteRawImages(void);
-void            GL_DeleteSprite(int spritelump);
-int             GL_GetSkinTexIndex(const char *skin);
 
-// Part is either 1 or 2. Part 0 means only the left side is loaded.
-// No splittex is created in that case. Once a raw image is loaded
-// as part 0 it must be deleted before the other part is loaded at the
-// next loading.
-unsigned int    GL_SetRawImage(int lump, int part);
+void            pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest,
+                       int destWidth, int destHeight, int alpha, int srcRegX,
+                       int srcRegY, int destRegX, int destRegY, int regWidth,
+                       int regHeight);
+void            PalIdxToRGB(byte *pal, int idx, byte *rgb);
+void            averageColorIdx(rgbcol_t *col, byte *data, int w, int h,
+                                byte *palette, boolean hasAlpha);
+void            averageColorRGB(rgbcol_t *col, byte *data, int w, int h);
+int             LineAverageRGB(byte *imgdata, int width, int height, int line,
+                               byte *rgb, byte *palette, boolean hasAlpha);
+void            ColorOutlines(byte *buffer, int width, int height);
+int             DrawRealPatch(byte *buffer, int texwidth, int texheight,
+                              patch_t *patch, int origx, int origy,
+                              boolean maskZero, unsigned char *transtable,
+                              boolean checkForAlpha);
+void            DeSaturate(byte *buffer, byte *palette, int width, int height);
+void            CalculatePal18to8(byte *dest, byte *palette);
 
-// Returns the real DGL texture, if such exists
-unsigned int    GL_GetTextureName(int texidx);
-
-// Only for textures (not for flats, sprites, etc.)
-void            GL_DeleteTexture(int texidx);
-
-// Load the skin texture and prepare it for rendering.
-unsigned int    GL_PrepareSkin(model_t * mdl, int skin);
-unsigned int    GL_PrepareShinySkin(modeldef_t * md, int sub);
-
-// Loads the shiny texture and the mask texture, if they aren't yet loaded.
-boolean         GL_LoadReflectionMap(ded_reflection_t *ref);
 #endif

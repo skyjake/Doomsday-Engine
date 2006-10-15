@@ -101,10 +101,8 @@ int     glScreenWidth = 640, glScreenHeight = 480, glScreenBits = 32;
 
 // The default resolution (config file).
 int     defResX = 640, defResY = 480, defBPP = 0;
-int     glMaxTexSize;
 int     numTexUnits;
 boolean envModAdd;              // TexEnv: modulate and add is available.
-int     ratioLimit = 0;         // Zero if none.
 int     test3dfx = 0;
 int     r_framecounter;         // Used only for statistics.
 int     r_detail = true;        // Render detail textures (if available).

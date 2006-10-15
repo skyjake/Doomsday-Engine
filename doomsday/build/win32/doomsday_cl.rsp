@@ -23,6 +23,7 @@
  ./../../engine/portable/src/s_logic.c
  ./../../engine/portable/src/s_environ.c
  ./../../engine/portable/src/s_cache.c
+ ./../../engine/portable/src/gl_texmanager.c
  ./../../engine/portable/src/gl_tga.c
  ./../../engine/portable/src/gl_tex.c
  ./../../engine/portable/src/gl_png.c

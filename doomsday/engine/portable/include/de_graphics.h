@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -31,6 +31,7 @@
 #include "dglib.h"
 #include "gl_main.h"
 #include "gl_draw.h"
+#include "gl_texmanager.h"
 #include "gl_tex.h"
 #include "gl_hq2x.h"
 #include "gl_font.h"
