@@ -679,6 +679,26 @@ void GL_ConvertToAlpha(image_t * image, boolean makeWhite)
     image->pixelSize = 2;
 }
 
+boolean ImageHasAlpha(image_t *img)
+{
+    unsigned int i, size;
+    boolean hasAlpha = false;
+    byte    *in;
+
+    if(img->pixelSize == 4)
+    {
+        size = img->width * img->height;
+        for(i = 0, in = img->pixels; i < size; ++i, in += 4)
+            if(in[3] < 255)
+            {
+                hasAlpha = true;
+                break;
+            }
+    }
+
+    return hasAlpha;
+}
+
 int LineAverageRGB(byte *imgdata, int width, int height, int line,
                    byte *rgb, byte *palette, boolean has_alpha)
 {
@@ -1084,7 +1104,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
 /**
  * Returns true if the given color is either (0,255,255) or (255,0,255).
  */
-boolean GL_ColorKey(byte *color)
+static boolean ColorKey(byte *color)
 {
     return color[CB] == 0xff && ((color[CR] == 0xff && color[CG] == 0) ||
                                  (color[CR] == 0 && color[CG] == 0xff));
@@ -1093,11 +1113,57 @@ boolean GL_ColorKey(byte *color)
 /**
  * Buffer must be RGBA. Doesn't touch the non-keyed pixels.
  */
-void GL_DoColorKeying(byte *rgbaBuf, int width)
+static void DoColorKeying(byte *rgbaBuf, unsigned int width)
 {
-    int     i;
+    unsigned int i;
 
     for(i = 0; i < width; ++i, rgbaBuf += 4)
-        if(GL_ColorKey(rgbaBuf))
+        if(ColorKey(rgbaBuf))
             rgbaBuf[3] = rgbaBuf[2] = rgbaBuf[1] = rgbaBuf[0] = 0;
+}
+
+/**
+ * Take the input buffer and convert to color keyed. A new buffer may
+ * be needed if the input buffer has three color components.
+ *
+ * @return          If the in buffer wasn't large enough will return a ptr
+ *                  to the newly allocated buffer which must be freed with
+ *                  M_Free().
+ */
+byte *GL_ApplyColorKeying(byte *buf, unsigned int pixelSize,
+                          unsigned int width, unsigned int height)
+{
+    unsigned int i;
+    byte       *ckdest, *in, *out;
+    unsigned int numpx;
+
+    numpx = width * height;
+
+    // We must allocate a new buffer if the loaded image has three
+    // color components.
+    if(pixelSize < 4)
+    {
+        ckdest = M_Malloc(4 * width * height);
+        for(in = buf, out = ckdest, i = 0; i < numpx;
+            ++i, in += pixelSize, out += 4)
+        {
+            if(ColorKey(in))
+                memset(out, 0, 4);  // Totally black.
+            else
+            {
+                memcpy(out, in, 3); // The color itself.
+                out[CA] = 255;  // Opaque.
+            }
+        }
+
+        return ckdest;
+    }
+    else                    // We can do the keying in-buffer.
+    {
+        // This preserves the alpha values of non-keyed pixels.
+        for(i = 0; i < height; ++i)
+            DoColorKeying(buf + 4 * i * width, height);
+    }
+
+    return NULL;
 }

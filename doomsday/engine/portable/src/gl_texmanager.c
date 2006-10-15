@@ -354,7 +354,7 @@ byte *GL_GetPal18to8(void)
 
 /*
  * Initializes the paletted texture extension.
- * Returns true iff successful.
+ * Returns true if successful.
  */
 int GL_InitPalettedTexture(void)
 {
@@ -378,7 +378,7 @@ int GL_InitPalettedTexture(void)
 /*
  * Lightmaps should be monochrome images.
  */
-void GL_LoadLightMap(ded_lightmap_t * map)
+void GL_LoadLightMap(ded_lightmap_t *map)
 {
     image_t image;
     filename_t resource;
@@ -430,7 +430,7 @@ void GL_LoadLightMap(ded_lightmap_t * map)
     }
 }
 
-void GL_DeleteLightMap(ded_lightmap_t * map)
+void GL_DeleteLightMap(ded_lightmap_t *map)
 {
     if(map->tex != lightingTexNames[LST_DYNAMIC])
     {
@@ -442,7 +442,7 @@ void GL_DeleteLightMap(ded_lightmap_t * map)
 /*
  * Flaremaps are normally monochrome images but we'll allow full color.
  */
-void GL_LoadFlareMap(ded_flaremap_t * map, int oldidx)
+void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
 {
     image_t image;
     filename_t resource;
@@ -1393,12 +1393,11 @@ DGLuint GL_PrepareDDTexture(ddtexture_t which)
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-byte   *GL_LoadImage(image_t * img, const char *imagefn, boolean useModelPath)
+byte *GL_LoadImage(image_t *img, const char *imagefn, boolean useModelPath)
 {
     DFILE  *file;
-    byte   *ckdest, *in, *out;
     char    ext[40];
-    int     format, i, numpx;
+    int     format;
 
     // Clear any old values.
     memset(img, 0, sizeof(*img));
@@ -1462,50 +1461,27 @@ byte   *GL_LoadImage(image_t * img, const char *imagefn, boolean useModelPath)
             ("LoadImage: %s (%ix%i)\n", M_Pretty(img->fileName), img->width,
              img->height));
 
-    numpx = img->width * img->height;
-
     // How about some color-keying?
     if(GL_IsColorKeyed(img->fileName))
     {
-        // We must allocate a new buffer if the loaded image has three
-        // color componenets.
-        if(img->pixelSize < 4)
+        byte *out;
+
+        out = GL_ApplyColorKeying(img->pixels, img->pixelSize, img->width,
+                                  img->height);
+        if(out)
         {
-            ckdest = M_Malloc(4 * img->width * img->height);
-            for(in = img->pixels, out = ckdest, i = 0; i < numpx;
-                ++i, in += img->pixelSize, out += 4)
-            {
-                if(GL_ColorKey(in))
-                    memset(out, 0, 4);  // Totally black.
-                else
-                {
-                    memcpy(out, in, 3); // The color itself.
-                    out[CA] = 255;  // Opaque.
-                }
-            }
+            // Had to allocate a larger buffer, free the old and attach the new.
             M_Free(img->pixels);
-            img->pixels = ckdest;
+            img->pixels = out;
         }
-        else                    // We can do the keying in-buffer.
-        {
-            // This preserves the alpha values of non-keyed pixels.
-            for(i = 0; i < img->height; ++i)
-                GL_DoColorKeying(img->pixels + 4 * i * img->width, img->width);
-        }
+
         // Color keying is done; now we have 4 bytes per pixel.
         img->pixelSize = 4;
         img->originalBits = 32; // Effectively...
     }
 
     // Any alpha pixels?
-    img->isMasked = false;
-    if(img->pixelSize == 4)
-        for(i = 0, in = img->pixels; i < numpx; ++i, in += 4)
-            if(in[3] < 255)
-            {
-                img->isMasked = true;
-                break;
-            }
+    img->isMasked = ImageHasAlpha(img);
 
     return img->pixels;
 }
@@ -1514,7 +1490,7 @@ byte   *GL_LoadImage(image_t * img, const char *imagefn, boolean useModelPath)
  * First sees if there is a color-keyed version of the given image. If
  * there is it is loaded. Otherwise the 'regular' version is loaded.
  */
-byte   *GL_LoadImageCK(image_t * img, const char *name, boolean useModelPath)
+byte *GL_LoadImageCK(image_t * img, const char *name, boolean useModelPath)
 {
     char    keyFileName[256];
     byte   *pixels;

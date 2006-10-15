@@ -46,8 +46,8 @@ void            GL_ConvertToAlpha(image_t *image, boolean makeWhite);
 void            GL_ConvertToLuminance(image_t *image);
 void            GL_CalcLuminance(int pnum, byte *buffer, int width,
                                  int height, int pixelsize);
-boolean         GL_ColorKey(byte *color);
-void            GL_DoColorKeying(byte *rgbaBuf, int width);
+byte*           GL_ApplyColorKeying(byte *buf, unsigned int pixelSize,
+                                    unsigned int width, unsigned int height);
 int             GL_ValidTexHeight2(int width, int height);
 
 void            pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest,
@@ -67,5 +67,6 @@ int             DrawRealPatch(byte *buffer, int texwidth, int texheight,
                               boolean checkForAlpha);
 void            DeSaturate(byte *buffer, byte *palette, int width, int height);
 void            CalculatePal18to8(byte *dest, byte *palette);
+boolean         ImageHasAlpha(image_t *image);
 
 #endif
