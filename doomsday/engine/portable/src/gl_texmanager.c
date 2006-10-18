@@ -216,10 +216,10 @@ void GL_TexRegister(void)
     C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
 
     // Ccmds
-    C_CMD("lowres", LowRes);
-    C_CMD("mipmap", MipMap);
-    C_CMD("smoothscr", SmoothRaw);
-    C_CMD("texreset", ResetTextures);
+    C_CMD("lowres", "", LowRes);
+    C_CMD("mipmap", "i", MipMap);
+    C_CMD("smoothscr", "i", SmoothRaw);
+    C_CMD("texreset", "", ResetTextures);
 }
 
 /*
@@ -3146,31 +3146,12 @@ D_CMD(ResetTextures)
 
 D_CMD(MipMap)
 {
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (0-5)\n", argv[0]);
-        Con_Printf("0 = GL_NEAREST\n");
-        Con_Printf("1 = GL_LINEAR\n");
-        Con_Printf("2 = GL_NEAREST_MIPMAP_NEAREST\n");
-        Con_Printf("3 = GL_LINEAR_MIPMAP_NEAREST\n");
-        Con_Printf("4 = GL_NEAREST_MIPMAP_LINEAR\n");
-        Con_Printf("5 = GL_LINEAR_MIPMAP_LINEAR\n");
-        return true;
-    }
     GL_UpdateTexParams(strtol(argv[1], NULL, 0));
     return true;
 }
 
 D_CMD(SmoothRaw)
 {
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (0-1)\n", argv[0]);
-        Con_Printf("Set the rendering mode of fullscreen images.\n");
-        Con_Printf("0 = GL_NEAREST\n");
-        Con_Printf("1 = GL_LINEAR\n");
-        return true;
-    }
     GL_UpdateRawScreenParams(strtol(argv[1], NULL, 0));
     return true;
 }

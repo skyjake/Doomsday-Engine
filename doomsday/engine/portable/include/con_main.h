@@ -67,6 +67,16 @@ typedef struct {
     int     bLineOff;              // How many lines from bPos? (+vislines)
 } cbuffer_t;
 
+// Doomsday's internal representation of registered ccmds.
+#define MAX_REQUIRED_CCMD_PARAMS 32  // surely enough?
+typedef struct {
+    const char     *name;
+    cvartype_t      params[MAX_REQUIRED_CCMD_PARAMS];
+    int           (*func) (byte src, int argc, char **argv);
+    int             flags;
+    int             minArgs, maxArgs;
+} ddccmd_t;
+
 typedef enum {
     WT_CCMD,
     WT_CVAR,
@@ -110,8 +120,9 @@ void            Con_AddVariableList(cvar_t *varlist);
 calias_t       *Con_AddAlias(const char *aName, const char *command);
 void            Con_DeleteAlias(calias_t *cal);
 void            Con_PrintCVar(cvar_t *var, char *prefix);
-ccmd_t         *Con_GetCommand(const char *name);
+ddccmd_t       *Con_GetCommand(const char *name);
 boolean         Con_IsValidCommand(const char *name);
+void            Con_PrintCCmdUsage(ddccmd_t *ccmd);
 calias_t       *Con_GetAlias(const char *name);
 boolean         Con_IsSpecialChar(int ch);
 void            Con_UpdateKnownWords(void);

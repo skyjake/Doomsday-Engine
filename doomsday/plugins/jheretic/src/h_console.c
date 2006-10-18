@@ -187,44 +187,44 @@ cvar_t  gameCVars[] = {
 
 //  Console commands
 ccmd_t  gameCCmds[] = {
-    {"spy",        CCmdCycleSpy},
-    {"screenshot", CCmdScreenShot},
-    {"viewsize",   CCmdViewSize},
-    {"pause",      CCmdPause},
+    {"spy",        "",      CCmdCycleSpy},
+    {"screenshot", "",      CCmdScreenShot},
+    {"viewsize",   "i",     CCmdViewSize},
+    {"pause",      "",      CCmdPause},
 
     // $cheats
-    {"cheat",      CCmdCheat},
-    {"god",        CCmdCheatGod},
-    {"noclip",     CCmdCheatClip},
-    {"warp",       CCmdCheatWarp},
-    {"reveal",     CCmdCheatReveal},
-    {"give",       CCmdCheatGive},
-    {"kill",       CCmdCheatMassacre},
-    {"exitlevel",  CCmdCheatExitLevel},
-    {"suicide",    CCmdCheatSuicide},
-    {"where",      CCmdCheatWhere},
+    {"cheat",      "s",     CCmdCheat},
+    {"god",        "",      CCmdCheatGod},
+    {"noclip",     "",      CCmdCheatClip},
+    {"warp",       NULL,    CCmdCheatWarp},
+    {"reveal",     "i",     CCmdCheatReveal},
+    {"give",       NULL,    CCmdCheatGive},
+    {"kill",       "",      CCmdCheatMassacre},
+    {"exitlevel",  "",      CCmdCheatExitLevel},
+    {"suicide",    "",      CCmdCheatSuicide},
+    {"where",      "",      CCmdCheatWhere},
 
-    {"hereticfont",CCmdHereticFont},
+    {"hereticfont","",      CCmdHereticFont},
 
     // $infine
-    {"startinf",   CCmdStartInFine},
-    {"stopinf",    CCmdStopInFine},
-    {"stopfinale", CCmdStopInFine},
+    {"startinf",   "s",     CCmdStartInFine},
+    {"stopinf",    "",      CCmdStopInFine},
+    {"stopfinale", "",      CCmdStopInFine},
 
-    {"spawnmobj",  CCmdSpawnMobj},
-    {"coord",      CCmdPrintPlayerCoords},
+    {"spawnmobj",  NULL,    CCmdSpawnMobj},
+    {"coord",      "",      CCmdPrintPlayerCoords},
 
     // $democam
-    {"makelocp",   CCmdMakeLocal},
-    {"makecam",    CCmdSetCamera},
-    {"setlock",    CCmdSetViewLock},
-    {"lockmode",   CCmdSetViewLock},
-    {"viewmode",    CCmdSetViewMode},
+    {"makelocp",   "i",     CCmdMakeLocal},
+    {"makecam",    "i",     CCmdSetCamera},
+    {"setlock",    NULL,    CCmdSetViewLock},
+    {"lockmode",   "i",     CCmdSetViewLock},
+    {"viewmode",   NULL,    CCmdSetViewMode},
 
     // Heretic specific
-    {"invleft",    CCmdInventory},
-    {"invright",   CCmdInventory},
-    {"chicken",    CCmdCheatPig},
+    {"invleft",    NULL,    CCmdInventory},
+    {"invright",   NULL,    CCmdInventory},
+    {"chicken",    "",      CCmdCheatPig},
     {NULL}
 };
 

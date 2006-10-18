@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -707,11 +707,7 @@ DEFCC(CCmdStartInFine)
 
     if(fi_active)
         return false;
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (script-id)\n", argv[0]);
-        return true;
-    }
+
     if(!Def_Get(DD_DEF_FINALE, argv[1], &script))
     {
         Con_Printf("Script \"%s\" is not defined.\n", argv[1]);

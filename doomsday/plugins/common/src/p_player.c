@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -582,9 +582,6 @@ DEFCC(CCmdSetCamera)
     int     p;
     player_t* player;
 
-    if(argc < 2)
-        return false;
-
     p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
@@ -638,8 +635,6 @@ DEFCC(CCmdSetViewLock)
 
     if(!stricmp(argv[0], "lockmode"))
     {
-        if(argc < 2)
-            return false;
         lock = atoi(argv[1]);
         if(lock)
             players[pl].lockFull = true;
@@ -677,8 +672,6 @@ DEFCC(CCmdMakeLocal)
         return false;
     }
 
-    if(argc < 2)
-        return false;
     p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {

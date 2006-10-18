@@ -136,14 +136,14 @@ boolean AuxiliaryOpened = false;
 
 void DD_RegisterVFS(void)
 {
-    C_CMD("dir", Dir);
-    C_CMD("dump", Dump);
-    C_CMD("listfiles", ListFiles);
-    C_CMD("listmaps", ListMaps);
-    C_CMD("load", LoadFile);
-    C_CMD("ls", Dir);
-    C_CMD("reset", ResetLumps);
-    C_CMD("unload", UnloadFile);
+    C_CMD("dir", "s*", Dir);
+    C_CMD("dump", "s", Dump);
+    C_CMD("listfiles", "", ListFiles);
+    C_CMD("listmaps", "", ListMaps);
+    C_CMD("load", "ss", LoadFile);
+    C_CMD("ls", "s*", Dir);
+    C_CMD("reset", "", ResetLumps);
+    C_CMD("unload", "s*", UnloadFile);
 }
 
 static void convertSlashes(char *modifiableBuffer)
@@ -1488,11 +1488,6 @@ D_CMD(LoadFile)
     //extern int RegisteredSong;
     int     i, succeeded = false;
 
-    if(argc == 1)
-    {
-        Con_Printf("Usage: load (file) ...\n");
-        return true;
-    }
     for(i = 1; i < argc; i++)
     {
         Con_Message("Loading %s...\n", argv[i]);
@@ -1521,11 +1516,6 @@ D_CMD(UnloadFile)
     //extern int RegisteredSong;
     int     i, succeeded = false;
 
-    if(argc == 1)
-    {
-        Con_Printf("Usage: unload (file) ...\n");
-        return true;
-    }
     for(i = 1; i < argc; i++)
     {
         Con_Message("Unloading %s...\n", argv[i]);
@@ -1549,12 +1539,6 @@ D_CMD(Dump)
     int     lump;
     byte   *lumpPtr;
 
-    if(argc != 2)
-    {
-        Con_Printf("Usage: dump (name)\n");
-        Con_Printf("Writes out the specified lump to (name).dum.\n");
-        return true;
-    }
     if(W_CheckNumForName(argv[1]) == -1)
     {
         Con_Printf("No such lump.\n");
@@ -1587,16 +1571,6 @@ D_CMD(Dir)
 {
     char    dir[256], pattern[256];
     int     i;
-
-    if(argc == 1)
-    {
-        Con_Printf("Usage: %s (dirs)\n", argv[0]);
-        Con_Printf("Prints the contents of one or more directories.\n");
-        Con_Printf("Virtual files are listed, too.\n");
-        Con_Printf("Paths are relative to the base path:\n");
-        Con_Printf("  %s\n", ddBasePath);
-        return true;
-    }
 
     for(i = 1; i < argc; i++)
     {

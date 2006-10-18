@@ -81,7 +81,7 @@ static float funnyAng;
 
 void Rend_ConsoleRegister(void)
 {
-    C_CMD("bgturn", BackgroundTurn);
+    C_CMD("bgturn", "i", BackgroundTurn);
 
     C_VAR_INT("con-alpha", &consoleAlpha, 0, 0, 100);
     C_VAR_INT("con-light", &consoleLight, 0, 0, 100);
@@ -529,13 +529,6 @@ void Rend_Console(void)
 
 D_CMD(BackgroundTurn)
 {
-    if(argc != 2)
-    {
-        Con_Printf("Usage: bgturn (speed)\n");
-        Con_Printf("Negative speeds are allowed. Default: 20.\n");
-        Con_Printf("Current bgturn = %d.\n", consoleTurn);
-        return true;
-    }
     consoleTurn = atoi(argv[1]);
     if(!consoleTurn)
         funnyAng = 0;

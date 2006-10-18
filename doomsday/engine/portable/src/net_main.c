@@ -153,23 +153,23 @@ void Net_Register(void)
     C_VAR_INT("server-player-limit", &sv_maxPlayers, 0, 0, MAXPLAYERS);
 
     // Ccmds
-    C_CMD("chat", Chat);
-    C_CMD("chatnum", Chat);
-    C_CMD("chatto", Chat);
-    C_CMD("conlocp", MakeCamera);
-    C_CMD("connect", Connect);
-    C_CMD("huffman", HuffmanStats);
-    C_CMD("kick", Kick);
-    C_CMD("login", Login);
-    C_CMD("logout", Logout);
-    C_CMD("net", Net);
-    C_CMD("ping", Ping);
-    C_CMD("say", Chat);
-    C_CMD("saynum", Chat);
-    C_CMD("sayto", Chat);
-    C_CMD("setname", SetName);
-    C_CMD("setcon", SetConsole);
-    C_CMD("settics", SetTicks);
+    C_CMD("chat", NULL, Chat);
+    C_CMD("chatnum", NULL, Chat);
+    C_CMD("chatto", NULL, Chat);
+    C_CMD("conlocp", "i", MakeCamera);
+    C_CMD("connect", NULL, Connect);
+    C_CMD("huffman", "", HuffmanStats);
+    C_CMD("kick", "i", Kick);
+    C_CMD("login", NULL, Login);
+    C_CMD("logout", "", Logout);
+    C_CMD("net", NULL, Net);
+    C_CMD("ping", NULL, Ping);
+    C_CMD("say", NULL, Chat);
+    C_CMD("saynum", NULL, Chat);
+    C_CMD("sayto", NULL, Chat);
+    C_CMD("setname", "s", SetName);
+    C_CMD("setcon", "i", SetConsole);
+    C_CMD("settics", "i", SetTicks);
 
     N_Register();
 }
@@ -1121,13 +1121,6 @@ D_CMD(Kick)
 {
     int     num;
 
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (num)\n", argv[0]);
-        Con_Printf
-            ("Server can use this command to kick clients out of the game.\n");
-        return true;
-    }
     if(!netgame)
     {
         Con_Printf("This is not a netgame.\n");
@@ -1157,12 +1150,6 @@ D_CMD(SetName)
 {
     playerinfo_packet_t info;
 
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (name)\n", argv[0]);
-        Con_Printf("Use quotes to include spaces in the name.\n");
-        return true;
-    }
     Con_SetString("net-name", argv[1], false);
     if(!netgame)
         return true;
@@ -1185,12 +1172,6 @@ D_CMD(SetTicks)
 {
 //  extern double lastSharpFrameTime;
 
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (tics)\n", argv[0]);
-        Con_Printf("Sets the number of game tics per second.\n");
-        return true;
-    }
     firstNetUpdate = true;
     Sys_TicksPerSecond(strtod(argv[1], 0));
 //  lastSharpFrameTime = Sys_GetTimef();
@@ -1223,8 +1204,6 @@ D_CMD(MakeCamera)
     // Create a new local player.
     int     cp;
 
-    if(argc < 2)
-        return true;
     cp = atoi(argv[1]);
     if(cp < 0 || cp >= MAXPLAYERS)
         return false;
@@ -1246,8 +1225,6 @@ D_CMD(SetConsole)
 {
     int     cp;
 
-    if(argc < 2)
-        return false;
     cp = atoi(argv[1]);
     if(players[cp].ingame)
         consoleplayer = displayplayer = cp;

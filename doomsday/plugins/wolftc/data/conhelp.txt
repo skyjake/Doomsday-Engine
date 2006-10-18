@@ -4,9 +4,11 @@
 
 [setcolor]
 desc = Set player color.
+inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.
 
 [setmap]
 desc = Set map.
+inf = Params: setmap (episode) (map)\nFor example, 'setmap 1 7'.
 
 [setclass]
 desc = Set player class.
@@ -85,13 +87,15 @@ desc = Takes a screenshot. Saved to DOOMnn.TGA.
     
 [viewsize]
 desc = View size adjustment.
-    
+inf = Params: viewsize (size)\nFor example, 'viewsize 10'.\nSize can be: +, -, (num).
+
 [pause]
 desc = Pause the game.
     
 [cheat]
-desc = Issue a cheat code using the original Doom cheats.
-    
+desc = Issue a cheat code using the original Wolfenstein cheats.
+inf = Params: cheat (cheat)
+
 [god]
 desc = God mode.
 
@@ -103,7 +107,8 @@ desc = Warp to another map.
     
 [reveal]
 desc = Map cheat.
-    
+inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=map+things\n 4=show subsectors
+
 [give]
 desc = Gives you weapons, ammo, power-ups, etc.
     
@@ -121,7 +126,8 @@ desc = Use the Doom font in the console.
     
 [startinf]
 desc = Start an InFine script.
-    
+inf = Params: startinf (script-id)\nFor example, 'startinf coolscript'.
+
 [stopinf]
 desc = Stop the currently playing interlude/finale.
     
@@ -136,70 +142,75 @@ desc = Print the coordinates of the consoleplayer.
 
 [makelocp]
 desc = Make local player.
-    
+inf = Params: makelocp (playernum)\nFor example, 'makelocp 1'.
+
 [makecam]
 desc = Toggle camera mode.
-    
+inf = Params: makecam (playernum)\nFor example, 'makecam 1'.
+
 [setlock]
 desc = Set camera viewlock.
 
 [lockmode]
 desc = Set camera viewlock mode.
+inf = Params: lockmode (0-1).
 
 [sbsize]
 desc = Status bar size adjustment.
+inf = Params: sbsize (size)\nFor example, 'sbsize +'.\nSize can be: +, -, (num).
 
 [showhud]
 desc = Show the HUD if hidden.
-    
+
 [movefloor]
 desc = Move a sector's floor plane.
-    
+
 [moveceil]
 desc = Move a sector's ceiling plane.
 
 [movesec]
 desc = Move a sector's both planes.
-    
+
 [crosshair]
 desc = Crosshair setup.
-        
+
 [chatcomplete]
 desc = Send the chat message and exit chat mode.
-	
+
 [chatdelete]
 desc = Delete a character from the chat buffer.
-	
+
 [chatcancel]
 desc = Exit chat mode without sending the message.
-	
+
 [chatsendmacro]
 desc = Send a chat macro.
-	
+
 [beginchat]
 desc = Begin chat mode.
-	
+
 [msgrefresh]
 desc = Show last HUD message.
 
 [message]
 desc = Show a local game message.
-    
+inf = Params: message (msg)\nFor example, 'message "this is a message"'.
+
 [automap]
 desc = Show automap.
-    
+
 [follow]
 desc = Toggle Follow mode in the automap.
-    
+
 [rotate]
 desc = Toggle Rotate mode in the automap.
-    
+
 [addmark]
 desc = Add a mark in the automap.
-    
+
 [clearmarks]
 desc = Clear all marks in the automap.
-    
+
 [grid]
 desc = Toggle the grid in the automap.
 

@@ -625,7 +625,7 @@ void CP_Register(void)
     C_VAR_BYTE("ui-panel-tips", &panel_show_tips, 0, 0, 1);
 
     // Ccmds
-    C_CMD("panel", OpenPanel);
+    C_CMD("panel", NULL, OpenPanel);
 }
 
 void CP_ClosePanel(ui_object_t *ob)

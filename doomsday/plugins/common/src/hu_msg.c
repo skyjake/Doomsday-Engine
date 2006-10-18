@@ -250,13 +250,13 @@ cvar_t msgCVars[] = {
 
 // Console commands for the message buffer
 ccmd_t  msgCCmds[] = {
-    {"chatcomplete",    CCmdMsgAction},
-    {"chatdelete",      CCmdMsgAction},
-    {"chatcancel",      CCmdMsgAction},
-    {"chatsendmacro",   CCmdMsgAction},
-    {"beginchat",       CCmdMsgAction},
-    {"msgrefresh",      CCmdMsgAction},
-    {"message",      CCmdLocalMessage},
+    {"chatcomplete",    "",     CCmdMsgAction},
+    {"chatdelete",      "",     CCmdMsgAction},
+    {"chatcancel",      "",     CCmdMsgAction},
+    {"chatsendmacro",   NULL,   CCmdMsgAction},
+    {"beginchat",       NULL,   CCmdMsgAction},
+    {"msgrefresh",      "",     CCmdMsgAction},
+    {"message",         "s",    CCmdLocalMessage},
     {NULL}
 };
 
@@ -780,11 +780,6 @@ DEFCC(CCmdMsgAction)
  */
 DEFCC(CCmdLocalMessage)
 {
-    if(argc != 2)
-    {
-        Con_Printf("%s (msg)\n", argv[0]);
-        return true;
-    }
     D_NetMessageNoSound(argv[1]);
     return true;
 }

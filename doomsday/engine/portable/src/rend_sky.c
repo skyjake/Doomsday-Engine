@@ -100,8 +100,8 @@ void Rend_SkyRegister(void)
     C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2);
 
     // Ccmds
-    C_CMD("skydetail", SkyDetail);
-    C_CMD("skyrows", SkyDetail);
+    C_CMD("skydetail", "i", SkyDetail);
+    C_CMD("skyrows", "i", SkyDetail);
 }
 
 void Rend_RenderSkyModels(void)
@@ -592,23 +592,10 @@ D_CMD(SkyDetail)
 {
     if(!stricmp(argv[0], "skydetail"))
     {
-        if(argc != 2)
-        {
-            Con_Printf("Usage: skydetail (num)\n");
-            Con_Printf
-                ("(num) is the number of sky sphere quadrant subdivisions.\n");
-            return true;
-        }
         Rend_SkyDetail(strtol(argv[1], NULL, 0), skyRows);
     }
     else if(!stricmp(argv[0], "skyrows"))
     {
-        if(argc != 2)
-        {
-            Con_Printf("Usage: skyrows (num)\n");
-            Con_Printf("(num) is the number of sky sphere rows.\n");
-            return true;
-        }
         Rend_SkyDetail(skyDetail, strtol(argv[1], NULL, 0));
     }
     return true;

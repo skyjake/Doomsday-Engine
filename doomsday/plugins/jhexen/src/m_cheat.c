@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -1045,12 +1045,6 @@ DEFCC(CCmdCheat)
 {
     unsigned int i;
 
-    if(argc != 2)
-    {
-        // Usage information.
-        Con_Printf("Usage: cheat (cheat)\nFor example, 'cheat visit21'.\n");
-        return true;
-    }
     // Give each of the characters in argument two to the SB event handler.
     for(i = 0; i < strlen(argv[1]); i++)
     {
@@ -1247,12 +1241,7 @@ DEFCC(CCmdCheatShadowcaster)
 
     if(!canCheat())
         return false;           // Can't cheat!
-    if(argc != 2)
-    {
-        Con_Printf("Usage: class (0-2)\n");
-        Con_Printf("0=Fighter, 1=Cleric, 2=Mage.\n");
-        return true;
-    }
+
     cheat.args[0] = atoi(argv[1]) + '0';
     CheatClassFunc2(players + consoleplayer, &cheat);
     return true;
@@ -1273,11 +1262,7 @@ DEFCC(CCmdCheatRunScript)
 
     if(!canCheat())
         return false;           // Can't cheat!
-    if(argc != 2)
-    {
-        Con_Printf("Usage: runscript (1-99)\n");
-        return true;
-    }
+
     num = atoi(argv[1]);
     cheat.args[0] = num / 10 + '0';
     cheat.args[1] = num % 10 + '0';
@@ -1291,12 +1276,7 @@ DEFCC(CCmdCheatReveal)
 
     if(!canCheat())
         return false;           // Can't cheat!
-    if(argc != 2)
-    {
-        Con_Printf("Usage: reveal (0-4)\n");
-        Con_Printf("0=nothing, 1=show unseen, 2=full map, 3=map+things, 4=show subsectors\n");
-        return true;
-    }
+
     // Reset them (for 'nothing'). :-)
     cheating = 0;
     players[consoleplayer].powers[pw_allmap] = false;

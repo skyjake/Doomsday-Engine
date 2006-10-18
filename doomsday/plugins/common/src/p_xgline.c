@@ -397,9 +397,9 @@ cvar_t xgCVars[] =
 
 ccmd_t  xgCCmds[] =
 {
-    {"movefloor",  CCmdMovePlane},
-    {"moveceil",   CCmdMovePlane},
-    {"movesec",    CCmdMovePlane},
+    {"movefloor",  NULL, CCmdMovePlane},
+    {"moveceil",   NULL, CCmdMovePlane},
+    {"movesec",    NULL, CCmdMovePlane},
     {NULL}
 };
 

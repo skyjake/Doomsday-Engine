@@ -201,8 +201,8 @@ void DD_RegisterInput(void)
     C_VAR_BYTE("input-info-mouse", &showMouseInfo, 0, 0, 1);
 
     // Ccmds
-    C_CMD("dumpkeymap", DumpKeyMap);
-    C_CMD("keymap", KeyMap);
+    C_CMD("dumpkeymap", "s", DumpKeyMap);
+    C_CMD("keymap", "s", KeyMap);
 }
 
 /*
@@ -290,11 +290,6 @@ int DD_KeyOrCode(char *token)
  */
 D_CMD(DumpKeyMap)
 {
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (file)\n", argv[0]);
-        return true;
-    }
     DD_DumpKeyMappings(argv[1]);
     Con_Printf("The current keymap was dumped to %s.\n", argv[1]);
     return true;
@@ -310,11 +305,6 @@ D_CMD(KeyMap)
     boolean shiftMode = false, altMode = false;
     int     key, mapTo, lineNumber = 0;
 
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (dkm-file)\n", argv[0]);
-        return true;
-    }
     // Try with and without .DKM.
     strcpy(line, argv[1]);
     if(!F_Access(line))

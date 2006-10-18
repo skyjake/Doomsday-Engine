@@ -60,7 +60,7 @@ extern unsigned int numBindClasses;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 static cvar_t *cvars = NULL;
-static ccmd_t *ccmds = NULL;
+static ddccmd_t *ccmds = NULL;
 static calias_t *caliases = NULL;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -366,31 +366,147 @@ void Con_AddCommandList(ccmd_t *cmdlist)
 
 void Con_AddCommand(ccmd_t *cmd)
 {
+    ddccmd_t *newCmd;
+
+    if(!cmd->name)
+        Con_Error("Con_AddCommand: CCmd missing a name.");
+/*
+#if _DEBUG
+Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
+            cmd->params, cmd->flags);
+#endif
+*/
     if(Con_GetCommand(cmd->name))
         Con_Error("Con_AddCommand: A CCmd by the name \"%s\" "
-                  "is already registered", cmd->name);
+                  "is already registered.", cmd->name);
 
+    // Have we ran out of available ddcmd_t's?
     if(++numCCmds > maxCCmds)
-    {
+    {   // Allocate some more.
         maxCCmds *= 2;
         if(maxCCmds < numCCmds)
             maxCCmds = numCCmds;
-        ccmds = M_Realloc(ccmds, sizeof(ccmd_t) * maxCCmds);
+        ccmds = M_Realloc(ccmds, sizeof(ddccmd_t) * maxCCmds);
     }
-    memcpy(ccmds + numCCmds - 1, cmd, sizeof(ccmd_t));
+    newCmd = &ccmds[numCCmds - 1];
+
+    // Copy the properties.
+    newCmd->name   = cmd->name;
+    newCmd->func   = cmd->func;
+    newCmd->flags  = cmd->flags;
+
+    // Decode the usage string if present.
+    if(cmd->params != NULL)
+    {
+        int         minArgs;
+        char        c;
+        unsigned int l, len;
+        cvartype_t  type;
+        boolean     unlimitedArgs;
+
+        len = strlen(cmd->params);
+        minArgs = 0;
+        unlimitedArgs = false;
+        for(l=0; l < len; ++l)
+        {
+            c = cmd->params[l];
+            switch(c)
+            {
+            // Supported parameter type symbols:
+            case 'b': type = CVT_BYTE;     break;
+            case 'i': type = CVT_INT;      break;
+            case 'f': type = CVT_FLOAT;    break;
+            case 's': type = CVT_CHARPTR;  break;
+
+            // Special symbols:
+            case '*':
+                // Variable arg list.
+                if(l != len-1)
+                    Con_Error("Con_AddCommand: CCmd \"%s\": '*' character "
+                              "not last in usage string: \"%s\".",
+                              newCmd->name, cmd->params);
+
+                unlimitedArgs = true;
+                type = CVT_NULL; // not a real parameter.
+                break;
+
+            // Erroneous symbol:
+            default:
+                Con_Error("Con_AddCommand: CCmd \"%s\": Invalid character "
+                          "'%c' in usage string: \"%s\".", newCmd->name, c,
+                          cmd->params);
+            }
+
+            if(type == CVT_NULL)
+                continue; // not a real parameter ...next?
+
+            if(minArgs >= MAX_REQUIRED_CCMD_PARAMS)
+                Con_Error("Con_AddCommand: CCmd \"%s\": Too many parameters. "
+                          "Limit is %i.", newCmd->name,
+                          MAX_REQUIRED_CCMD_PARAMS);
+
+            // Copy the parameter type into the buffer.
+            newCmd->params[minArgs++] = type;
+        }
+
+        // Set the min/max parameter counts for this ccmd.
+        if(unlimitedArgs)
+        {
+            newCmd->maxArgs = -1;
+            if(minArgs == 0)
+                newCmd->minArgs = -1;
+            else
+                newCmd->minArgs = minArgs;
+        }
+        else
+            newCmd->minArgs = newCmd->maxArgs = minArgs;
+
+/*
+#if _DEBUG
+{
+int i;
+Con_Message("Con_AddCommand: CCmd \"%s\": minArgs %i, maxArgs %i: \"",
+            newCmd->name, newCmd->minArgs, newCmd->maxArgs);
+for(i = 0; i < newCmd->minArgs; ++i)
+{
+    switch(newCmd->params[i])
+    {
+    case CVT_BYTE:    c = 'b'; break;
+    case CVT_INT:     c = 'i'; break;
+    case CVT_FLOAT:   c = 'f'; break;
+    case CVT_CHARPTR: c = 's'; break;
+    }
+    Con_Printf("%c", c);
+}
+Con_Printf("\".\n");
+}
+#endif
+*/
+    }
+    else // it's usage is NOT validated by Doomsday.
+    {
+        newCmd->minArgs = newCmd->maxArgs = -1;
+/*
+#if _DEBUG
+if(cmd->params == NULL)
+  Con_Message("Con_AddCommand: CCmd \"%s\" will not have it's usage "
+              "validated.\n", newCmd->name);
+#endif
+*/
+    }
 
     // Sort them.
-    qsort(ccmds, numCCmds, sizeof(ccmd_t), wordListSorter);
+    qsort(ccmds, numCCmds, sizeof(ddccmd_t), wordListSorter);
 }
 
 /**
- * Returns a pointer to the ccmd_t with the specified name, or NULL.
+ * @return          Ptr to the ddccmd_t with the specified name, or NULL.
  */
-ccmd_t *Con_GetCommand(const char *name)
+ddccmd_t *Con_GetCommand(const char *name)
 {
     int     result;
     unsigned int bottomIdx, topIdx, pivot;
-    ccmd_t *cmd;
+    ddccmd_t *cmd;
 
     if(numCCmds == 0)
         return NULL;
@@ -430,6 +546,46 @@ ccmd_t *Con_GetCommand(const char *name)
 boolean Con_IsValidCommand(const char *name)
 {
     return Con_GetCommand(name) || Con_GetAlias(name);
+}
+
+/**
+ * Outputs the usage information for the given ccmd to the console
+ * if the ccmd's usage is validated by Doomsday.
+ *
+ * @param ccmd          Ptr to the ccmd to print the usage info for.
+ */
+void Con_PrintCCmdUsage(ddccmd_t *ccmd)
+{
+    int         i;
+    char       *str;
+    void       *ccmd_help;
+
+    if(!ccmd || ccmd->minArgs == ccmd->maxArgs == -1)
+        return;
+
+    ccmd_help = DH_Find(ccmd->name);
+
+    // Print the expected form for this ccmd.
+    Con_Printf("Usage:  %s", ccmd->name);
+    for(i = 0; i < ccmd->minArgs; ++i)
+    {
+        switch(ccmd->params[i])
+        {
+        case CVT_BYTE:      Con_Printf(" (byte)");      break;
+        case CVT_INT:       Con_Printf(" (int)");       break;
+        case CVT_FLOAT:     Con_Printf(" (float)");     break;
+        case CVT_CHARPTR:   Con_Printf(" (string)");    break;
+        }
+    }
+    if(ccmd->maxArgs == -1)
+        Con_Printf(" ...");
+    Con_Printf("\n");
+
+    // Check for extra info about this ccmd's usage.
+    if((str = DH_GetString(ccmd_help, HST_INFO)))
+    {
+        Con_Printf("%s\n", str);
+    }
 }
 
 /**

@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,9 +33,12 @@
 enum {
     HST_DESCRIPTION,
     HST_CONSOLE_VARIABLE,
-    HST_DEFAULT_VALUE
+    HST_DEFAULT_VALUE,
+    HST_INFO,
+    NUM_HELPSTRING_TYPES
 };
 
+void            DH_Register(void);
 void            DD_InitHelp(void);
 void            DD_ShutdownHelp(void);
 void           *DH_Find(const char *id);

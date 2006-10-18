@@ -192,43 +192,43 @@ static boolean finishCompletion; // An autocomplete has taken place that must
 
 static void Con_Register(void)
 {
-    C_CMD("add", AddSub);
-    C_CMD("after", Wait);
-    C_CMD("alias", Alias);
-    C_CMD("bind", Bind);
-    C_CMD("bindr", Bind);
-    C_CMD("clear", Console);
-    C_CMD("clearbinds", ClearBindings);
-    C_CMD("conclose", OpenClose);
-    C_CMD("conopen", OpenClose);
-    C_CMD("contoggle", OpenClose);
-    C_CMD("dec", AddSub);
-    C_CMD("delbind", DeleteBind);
-    C_CMD("echo", Echo);
-    C_CMD("enablebindclass", EnableBindClass);
-    C_CMD("exec", Parse);
-    C_CMD("font", Font);
-    C_CMD("help", Console);
-    C_CMD("if", If);
-    C_CMD("inc", AddSub);
-    C_CMD("listactions", ListActs);
-    C_CMD("listaliases", ListAliases);
-    C_CMD("listbindings", ListBindings);
-    C_CMD("listbindclasses", ListBindClasses);
-    C_CMD("listcmds", ListCmds);
-    C_CMD("listmobjtypes", ListMobjs);
-    C_CMD("listvars", ListVars);
-    C_CMD("quit!", Quit);
-    C_CMD("repeat", Repeat);
-    C_CMD("safebind", Bind);
-    C_CMD("safebindr", Bind);
-    C_CMD("sub", AddSub);
-    C_CMD("toggle", Toggle);
-    C_CMD("version", Version);
-    C_CMD("write", WriteConsole);
+    C_CMD("add",            NULL,   AddSub);
+    C_CMD("after",          "is",   Wait);
+    C_CMD("alias",          NULL,   Alias);
+    C_CMD("bind",           NULL,   Bind);
+    C_CMD("bindr",          NULL,   Bind);
+    C_CMD("clear",          NULL,   Console);
+    C_CMD("clearbinds",     "",     ClearBindings);
+    C_CMD("conclose",       "",     OpenClose);
+    C_CMD("conopen",        "",     OpenClose);
+    C_CMD("contoggle",      "",     OpenClose);
+    C_CMD("dec",            NULL,   AddSub);
+    C_CMD("delbind",        NULL,   DeleteBind);
+    C_CMD("echo",           "s*",   Echo);
+    C_CMD("enablebindclass", NULL,  EnableBindClass);
+    C_CMD("exec",           "s*",   Parse);
+    C_CMD("font",           NULL,   Font);
+    C_CMD("help",           NULL,   Console);
+    C_CMD("if",             NULL,   If);
+    C_CMD("inc",            NULL,   AddSub);
+    C_CMD("listactions",    "",     ListActs);
+    C_CMD("listaliases",    NULL,   ListAliases);
+    C_CMD("listbindings",   NULL,   ListBindings);
+    C_CMD("listbindclasses", "",    ListBindClasses);
+    C_CMD("listcmds",       NULL,   ListCmds);
+    C_CMD("listmobjtypes",  "",     ListMobjs);
+    C_CMD("listvars",       NULL,   ListVars);
+    C_CMD("quit!",          "",     Quit);
+    C_CMD("repeat",         "ifs",  Repeat);
+    C_CMD("safebind",       NULL,   Bind);
+    C_CMD("safebindr",      NULL,   Bind);
+    C_CMD("sub",            NULL,   AddSub);
+    C_CMD("toggle",         "s",    Toggle);
+    C_CMD("version",        "",     Version);
+    C_CMD("write",          "s",    WriteConsole);
 
 #ifdef _DEBUG
-    C_CMD("translatefont", TranslateFont);
+    C_CMD("translatefont", "ss", TranslateFont);
 #endif
 
     // Console
@@ -273,7 +273,7 @@ int Con_CursorPosition(void)
     return cmdCursor;
 }
 
-void PrepareCmdArgs(cmdargs_t * cargs, const char *lpCmdLine)
+void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 {
     int     i, len = strlen(lpCmdLine);
 
@@ -429,6 +429,7 @@ void Con_Init(void)
     DD_RegisterInput();
     DD_RegisterVFS();
     Con_Register();
+    DH_Register();
     R_Register();
     S_Register();
     SBE_Register(); // for bias editor
@@ -541,9 +542,9 @@ static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
     ptr->isNetCmd = isNetCmd;
 }
 
-/*
+/**
  * The execbuffer is used to schedule commands for later.
- * Returns false if an executed command fails.
+ * @return          <code>false</code> if an executed command fails.
  */
 boolean Con_CheckExecBuffer(void)
 {
@@ -596,18 +597,30 @@ void Con_Ticker(timespan_t time)
         knownword_t *word = matchedWords[lastCompletion];
 
         // Add a trailing space if the word is NOT a cmd or alias.
-        if(matchedWordListGood &&
-           word->type != WT_CCMD && word->type != WT_ALIAS)
+        if(matchedWordListGood && word->type != WT_ALIAS)
         {
-            strcat(cmdLine, " ");
-            cmdCursor++;
+            boolean doit = true;
+
+            if(word->type == WT_CCMD)
+            {
+                ddccmd_t *ccmd = Con_GetCommand(word->word);
+                if(ccmd)
+                    if(!(ccmd->minArgs == ccmd->maxArgs == -1) &&
+                       ccmd->minArgs == 0)
+                        doit = false;
+            }
+
+            if(doit)
+            {
+                strcat(cmdLine, " ");
+                cmdCursor++;
+            }
         }
         matchedWordListGood = false;
         finishCompletion = false;
     }
 
     Con_CheckExecBuffer();
-
     Rend_ConsoleTicker(time);
 
     if(!ConsoleActive)
@@ -644,7 +657,7 @@ cbline_t *Con_GetBufferLine(cbuffer_t *buffer, int num)
     return buffer->cbuffer + num;
 }
 
-static void addLineText(cbuffer_t *buffer, cbline_t * line, char *txt)
+static void addLineText(cbuffer_t *buffer, cbline_t *line, char *txt)
 {
     int     newLen = line->len + strlen(txt);
 
@@ -677,12 +690,11 @@ static void addOldCmd(const char *txt)
     strcpy(line->text, txt);
 }
 
-/*
- * expandWithArguments
- *  expCommand gets reallocated in the expansion process.
- *  This could be bit more clever.
+/**
+ * expCommand gets reallocated in the expansion process.
+ * This could be bit more clever.
  */
-static void expandWithArguments(char **expCommand, cmdargs_t * args)
+static void expandWithArguments(char **expCommand, cmdargs_t *args)
 {
     char   *text = *expCommand;
     int     size = strlen(text) + 1;
@@ -731,15 +743,82 @@ static void expandWithArguments(char **expCommand, cmdargs_t * args)
     }
 }
 
-/*
- * executeSubCmd
- *  The command is executed forthwith!!
+static boolean isStringValidInt(const char *str)
+{
+    unsigned int i, len;
+    const char *c;
+    boolean  isBad;
+
+    if(!str)
+        return false;
+
+    len = strlen(str);
+    if(len == 0)
+        return false;
+
+    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
+    {
+        if(i != 0 && *c == '-')
+            isBad = true;       // sign is in the wrong place.
+        else if(*c < '0' || *c > '9')
+            isBad = true;       // non-numeric character.
+    }
+
+    return !isBad;
+}
+
+static boolean isStringValidByte(const char *str)
+{
+    if(isStringValidInt(str))
+    {
+        int val = atoi(str);
+
+        if(!(val < 0 || val > 255))
+            return true;
+    }
+
+    return false;
+}
+
+static boolean isStringValidFloat(const char *str)
+{
+    unsigned int i, len;
+    const char *c;
+    boolean  isBad, foundDP = false;
+
+    if(!str)
+        return false;
+
+    len = strlen(str);
+    if(len == 0)
+        return false;
+
+    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
+    {
+        if(i != 0 && *c == '-')
+            isBad = true;       // sign is in the wrong place.
+        else if(*c == '.')
+        {
+            if(foundDP)
+                isBad = true;   // multiple decimal places??
+            else
+                foundDP = true;
+        }
+        else if(*c < '0' || *c > '9')
+            isBad = true;       // other non-numeric character.
+    }
+
+    return !isBad;
+}
+
+/**
+ * The command is executed forthwith!!
  */
 static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 {
     char    prefix;
     cmdargs_t args;
-    ccmd_t  *ccmd;
+    ddccmd_t *ccmd;
     cvar_t  *cvar;
     calias_t *cal;
 
@@ -870,6 +949,47 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             return true;
         }
 
+        if(!canExecute)
+        {
+            Con_Printf("Error: '%s' cannot be executed via %s.\n",
+                       ccmd->name, CMDTYPESTR(src));
+            return true;
+        }
+
+        // Are we validating the arguments?
+        if(!(ccmd->minArgs == ccmd->maxArgs == -1))
+        {
+            int         i;
+            boolean     invalidArgs = false;
+
+            // Do we have the right number of arguments?
+            if(args.argc-1 < ccmd->minArgs)
+                invalidArgs = true;
+            else if(ccmd->maxArgs != -1 && args.argc-1 > ccmd->maxArgs)
+                invalidArgs = true;
+            else
+            {
+                // We can only validate the minimum number of arguments,
+                // currently. We cannot yet validate non-required args.
+                for(i = 0; i < ccmd->minArgs && !invalidArgs; ++i)
+                {
+                    if(ccmd->params[i] == CVT_BYTE)
+                        invalidArgs = !isStringValidByte(args.argv[i+1]);
+                    else if(ccmd->params[i] == CVT_INT)
+                        invalidArgs = !isStringValidInt(args.argv[i+1]);
+                    else if(ccmd->params[i] == CVT_FLOAT)
+                        invalidArgs = !isStringValidFloat(args.argv[i+1]);
+                    // Strings are always valid by this point.
+                }
+            }
+
+            if(invalidArgs)
+            {
+                Con_PrintCCmdUsage(ccmd);
+                canExecute = false;
+            }
+        }
+
         if(canExecute)
         {   // Execute the command!
             int     cret = ccmd->func(src, args.argc, args.argv);
@@ -881,8 +1001,6 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         }
         else
         {
-            Con_Printf("Error: '%s' cannot be executed via %s.\n",
-                       ccmd->name, CMDTYPESTR(src));
             return true;
         }
     }
@@ -1002,7 +1120,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     return false;
 }
 
-/*
+/**
  * Splits the command into subcommands and queues them into the
  * execution buffer.
  */
@@ -1294,7 +1412,7 @@ static void processCmd(byte src)
     Con_Execute(src, cmdLine, false, false);
 }
 
-static void updateCmdLine()
+static void updateCmdLine(void)
 {
     if(ocPos == numOldCmds)
         memset(cmdLine, 0, sizeof(cmdLine));
@@ -1329,8 +1447,8 @@ void Con_Open(int yes)
     }
 }
 
-/*
- * Returns true if the event is eaten.
+/**
+ * @return      <code>true</code> if the event is eaten.
  */
 boolean Con_Responder(event_t *event)
 {
@@ -1708,7 +1826,7 @@ static void Con_AddRuler2(cbuffer_t *buffer)
     }
 }
 
-/*
+/**
  * A ruler line will be added into the console. bPos is moved down by 1.
  */
 void Con_AddRuler(void)
@@ -1812,7 +1930,9 @@ void conPrintf(cbuffer_t *buffer, int flags, const char *format, va_list args)
     }
 }
 
-// Print into the buffer.
+/**
+ * Print into the buffer.
+ */
 void Con_Printf(const char *format, ...)
 {
     va_list args;
@@ -1837,7 +1957,7 @@ void Con_FPrintf(int flags, const char *format, ...)    // Flagged printf
     va_end(args);
 }
 
-/*
+/**
  * Prints a file name to the console.
  * This is a f_forall_func_t.
  */
@@ -1850,7 +1970,7 @@ int Con_PrintFileName(const char *fn, filetype_t type, void *dir)
     return true;
 }
 
-/*
+/**
  * Print a 'global' message (to stdout and the console).
  */
 void Con_Message(const char *message, ...)
@@ -1886,7 +2006,7 @@ void Con_Message(const char *message, ...)
     Con_DrawStartupScreen(true);
 }
 
-/*
+/**
  * Print an error message and quit.
  */
 void Con_Error(const char *error, ...)
@@ -1984,7 +2104,7 @@ void Con_Shutdown(void)
     Con_ClearExecBuffer();
 }
 
-/*
+/**
  * As you can see, several commands can be handled inside one command function.
  */
 D_CMD(Console)
@@ -1995,7 +2115,7 @@ D_CMD(Console)
         {
             char   *str;
             void   *ccmd_help;
-            ccmd_t *ccmd;
+            ddccmd_t *ccmd;
             cvar_t *cvar;
 
             if(!stricmp(argv[1], "(what)"))
@@ -2008,12 +2128,16 @@ D_CMD(Console)
             ccmd = Con_GetCommand(argv[1]);
             if(ccmd != NULL)
             {
+                boolean found = false;
                 ccmd_help = DH_Find(ccmd->name);
+
                 if((str = DH_GetString(ccmd_help, HST_DESCRIPTION)))
                 {
                     Con_Printf("%s\n", str);
-                    return true;
+                    found = true;
                 }
+                Con_PrintCCmdUsage(ccmd);
+                return found;
             }
 
             cvar = Con_GetVariable(argv[1]);
@@ -2102,11 +2226,6 @@ D_CMD(Parse)
 {
     int     i;
 
-    if(argc == 1)
-    {
-        Con_Printf("Usage: %s (file) ...\n", argv[0]);
-        return true;
-    }
     for(i = 1; i < argc; ++i)
     {
         Con_Printf("Parsing %s.\n", argv[i]);
@@ -2119,12 +2238,6 @@ D_CMD(Wait)
 {
     timespan_t offset;
 
-    if(argc != 3)
-    {
-        Con_Printf("Usage: %s (tics) (cmd)\n", argv[0]);
-        Con_Printf("For example, '%s 35 \"echo End\"'.\n", argv[0]);
-        return true;
-    }
     offset = strtod(argv[1], NULL) / 35;    // Offset in seconds.
     if(offset < 0)
         offset = 0;
@@ -2137,12 +2250,6 @@ D_CMD(Repeat)
     int     count;
     timespan_t interval, offset;
 
-    if(argc != 4)
-    {
-        Con_Printf("Usage: %s (count) (interval) (cmd)\n", argv[0]);
-        Con_Printf("For example, '%s 10 35 \"screenshot\".\n", argv[0]);
-        return true;
-    }
     count = atoi(argv[1]);
     interval = strtod(argv[2], NULL) / 35;  // In seconds.
     offset = 0;
@@ -2163,7 +2270,7 @@ D_CMD(Echo)
     return true;
 }
 
-/*
+/**
  * Rather messy, wouldn't you say?
  */
 D_CMD(AddSub)
@@ -2217,22 +2324,16 @@ D_CMD(AddSub)
     return true;
 }
 
-/*
+/**
  * Toggle the value of a variable between zero and nonzero.
  */
 D_CMD(Toggle)
 {
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (cvar)\n", argv[0]);
-        return true;
-    }
-
     Con_SetInteger(argv[1], Con_GetInteger(argv[1]) ? 0 : 1, false);
     return true;
 }
 
-/*
+/**
  * Execute a command if the condition passes.
  */
 D_CMD(If)
@@ -2330,7 +2431,7 @@ D_CMD(If)
     return true;
 }
 
-/*
+/**
  * Console command to open/close the console prompt.
  */
 D_CMD(OpenClose)

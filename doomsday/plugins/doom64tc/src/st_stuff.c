@@ -202,7 +202,7 @@ cvar_t hudCVars[] =
 
 // Console commands for the HUD/Status bar
 ccmd_t  hudCCmds[] = {
-    {"showhud",     CCmdHUDShow},
+    {"showhud",     "",     CCmdHUDShow},
     {NULL}
 };
 

@@ -147,10 +147,10 @@ void GL_Register(void)
     C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
 
     // Ccmds
-    C_CMD("fog", Fog);
-    C_CMD("setgamma", SetGamma);
-    C_CMD("setres", SetRes);
-    C_CMD("setvidramp", UpdateGammaRamp);
+    C_CMD("fog", NULL, Fog);
+    C_CMD("setgamma", "i", SetGamma);
+    C_CMD("setres", "ii", SetRes);
+    C_CMD("setvidramp", "", UpdateGammaRamp);
 
     GL_TexRegister();
 }
@@ -928,12 +928,7 @@ D_CMD(SetRes)
         Con_Printf("Impossible in dedicated mode.\n");
         return false;
     }
-    if(argc < 3)
-    {
-        Con_Printf("Usage: %s (width) (height)\n", argv[0]);
-        Con_Printf("Changes display mode resolution.\n");
-        return true;
-    }
+
     return GL_ChangeResolution(atoi(argv[1]), atoi(argv[2]), 0);
 }
 
@@ -960,11 +955,6 @@ D_CMD(SetGamma)
         return false;
     }
 
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (0-4)\n", argv[0]);
-        return true;
-    }
     newlevel = strtol(argv[1], NULL, 0);
     // Clamp it to the min and max.
     if(newlevel < 0)
@@ -980,5 +970,84 @@ D_CMD(SetGamma)
     }
     else
         Con_Printf("Gamma correction already set to %d.\n", usegamma);
+    return true;
+}
+
+D_CMD(Fog)
+{
+    int     i;
+
+    if(isDedicated)
+    {
+        Con_Printf("Fog not supported in dedicated mode.\n");
+        return false;
+    }
+    if(argc == 1)
+    {
+        Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);
+        Con_Printf("Commands: on, off, mode, color, start, end, density.\n");
+        Con_Printf("Modes: linear, exp, exp2.\n");
+        //Con_Printf( "Hints: fastest, nicest, dontcare.\n");
+        Con_Printf("Color is given as RGB (0-255).\n");
+        Con_Printf
+            ("Start and end are for linear fog, density for exponential.\n");
+        return true;
+    }
+    if(!stricmp(argv[1], "on"))
+    {
+        GL_UseFog(true);
+        Con_Printf("Fog is now active.\n");
+    }
+    else if(!stricmp(argv[1], "off"))
+    {
+        GL_UseFog(false);
+        Con_Printf("Fog is now disabled.\n");
+    }
+    else if(!stricmp(argv[1], "mode") && argc == 3)
+    {
+        if(!stricmp(argv[2], "linear"))
+        {
+            gl.Fog(DGL_FOG_MODE, DGL_LINEAR);
+            Con_Printf("Fog mode set to linear.\n");
+        }
+        else if(!stricmp(argv[2], "exp"))
+        {
+            gl.Fog(DGL_FOG_MODE, DGL_EXP);
+            Con_Printf("Fog mode set to exp.\n");
+        }
+        else if(!stricmp(argv[2], "exp2"))
+        {
+            gl.Fog(DGL_FOG_MODE, DGL_EXP2);
+            Con_Printf("Fog mode set to exp2.\n");
+        }
+        else
+            return false;
+    }
+    else if(!stricmp(argv[1], "color") && argc == 5)
+    {
+        for(i = 0; i < 3; i++)
+            fogColor[i] = strtol(argv[2 + i], NULL, 0) /*/255.0f */ ;
+        fogColor[3] = 255;
+        gl.Fogv(DGL_FOG_COLOR, fogColor);
+        Con_Printf("Fog color set.\n");
+    }
+    else if(!stricmp(argv[1], "start") && argc == 3)
+    {
+        gl.Fog(DGL_FOG_START, strtod(argv[2], NULL));
+        Con_Printf("Fog start distance set.\n");
+    }
+    else if(!stricmp(argv[1], "end") && argc == 3)
+    {
+        gl.Fog(DGL_FOG_END, strtod(argv[2], NULL));
+        Con_Printf("Fog end distance set.\n");
+    }
+    else if(!stricmp(argv[1], "density") && argc == 3)
+    {
+        gl.Fog(DGL_FOG_DENSITY, strtod(argv[2], NULL));
+        Con_Printf("Fog density set.\n");
+    }
+    else
+        return false;
+    // Exit with a success.
     return true;
 }

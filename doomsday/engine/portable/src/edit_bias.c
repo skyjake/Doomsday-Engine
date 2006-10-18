@@ -130,20 +130,20 @@ void SBE_Register(void)
     C_VAR_INT("edit-bias-show-indices", &editShowIndices, 0, 0, 1);
 
     // Commands for light editing.
-    C_CMD("bledit", BLEditor);
-    C_CMD("blquit", BLEditor);
-    C_CMD("blclear", BLEditor);
-    C_CMD("blsave", BLEditor);
-    C_CMD("blnew", BLEditor);
-    C_CMD("bldel", BLEditor);
-    C_CMD("bllock", BLEditor);
-    C_CMD("blunlock", BLEditor);
-    C_CMD("blgrab", BLEditor);
-    C_CMD("bldup", BLEditor);
-    C_CMD("blc", BLEditor);
-    C_CMD("bli", BLEditor);
-    C_CMD("blhue", BLEditor);
-    C_CMD("blmenu", BLEditor);
+    C_CMD("bledit", "", BLEditor);
+    C_CMD("blquit", "", BLEditor);
+    C_CMD("blclear", "", BLEditor);
+    C_CMD("blsave", NULL, BLEditor);
+    C_CMD("blnew", "", BLEditor);
+    C_CMD("bldel", "", BLEditor);
+    C_CMD("bllock", "", BLEditor);
+    C_CMD("blunlock", "", BLEditor);
+    C_CMD("blgrab", "", BLEditor);
+    C_CMD("bldup", "", BLEditor);
+    C_CMD("blc", "fff", BLEditor);
+    C_CMD("bli", NULL, BLEditor);
+    C_CMD("blhue", NULL, BLEditor);
+    C_CMD("blmenu", "", BLEditor);
 }
 
 /*

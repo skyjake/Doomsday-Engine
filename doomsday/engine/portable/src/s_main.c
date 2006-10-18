@@ -84,7 +84,7 @@ void S_Register(void)
     C_VAR_FLOAT("sound-reverb-volume", &sfx_reverb_strength, 0, 0, 10);
 
     // Ccmds
-    C_CMD("playsound", PlaySound);
+    C_CMD("playsound", NULL, PlaySound);
 
     Mus_Register();
 }

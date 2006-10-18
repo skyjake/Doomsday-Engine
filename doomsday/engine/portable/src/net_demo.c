@@ -114,11 +114,11 @@ static int demostarttic;
 void Demo_Register(void)
 {
     // Ccmds
-    C_CMD("demolump", DemoLump);
-    C_CMD("pausedemo", PauseDemo);
-    C_CMD("playdemo", PlayDemo);
-    C_CMD("recorddemo", RecordDemo);
-    C_CMD("stopdemo", StopDemo);
+    C_CMD("demolump", "ss", DemoLump);
+    C_CMD("pausedemo", NULL, PauseDemo);
+    C_CMD("playdemo", "s", PlayDemo);
+    C_CMD("recorddemo", NULL, RecordDemo);
+    C_CMD("stopdemo", NULL, StopDemo);
 }
 
 void Demo_Init(void)
@@ -593,11 +593,6 @@ void Demo_Ticker(timespan_t time)
 
 D_CMD(PlayDemo)
 {
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (fileName)\n", argv[0]);
-        return true;
-    }
     Con_Printf("Playing demo \"%s\"...\n", argv[1]);
     return Demo_BeginPlayback(argv[1]);
 }
@@ -685,13 +680,6 @@ D_CMD(DemoLump)
 {
     char    buf[64];
 
-    if(argc != 3)
-    {
-        Con_Printf("Usage: %s (demofile) (lumpfile)\n", argv[0]);
-        Con_Printf
-            ("Writes a 64-byte reference lump for the given demo file.\n");
-        return true;
-    }
     memset(buf, 0, sizeof(buf));
     strncpy(buf, argv[1], 64);
     return M_WriteFile(argv[2], buf, 64);

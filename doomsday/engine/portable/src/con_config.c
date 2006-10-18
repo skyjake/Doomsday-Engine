@@ -175,18 +175,8 @@ void Con_SaveDefaults(void)
     Con_WriteState(cfgFile);
 }
 
-/*
- * CCmdWriteConsole
- */
 D_CMD(WriteConsole)
 {
-    if(argc != 2)
-    {
-        Con_Message("Usage: %s (filename)\n", argv[0]);
-        Con_Message("Saves console variables, bindings and aliases.\n");
-        return true;
-    }
-
     Con_Message("Writing to %s...\n", argv[1]);
 
     return !Con_WriteState(argv[1]);

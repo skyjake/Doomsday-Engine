@@ -180,49 +180,46 @@ cvar_t  gameCVars[] = {
 
 //  Console commands
 ccmd_t  gameCCmds[] = {
-    {"spy",         CCmdCycleSpy},
-    {"screenshot",  CCmdScreenShot},
-    {"viewsize",    CCmdViewSize},
-    {"pause",       CCmdPause},
+    {"spy",         "",     CCmdCycleSpy},
+    {"screenshot",  "",     CCmdScreenShot},
+    {"viewsize",    "s",    CCmdViewSize},
+    {"pause",       "",     CCmdPause},
 
     // $cheats
-    {"cheat",       CCmdCheat},
-    {"god",         CCmdCheatGod},
-    {"noclip",      CCmdCheatClip},
-    {"warp",        CCmdCheatWarp},
-    {"reveal",      CCmdCheatReveal},
-    {"give",        CCmdCheatGive},
-    {"kill",        CCmdCheatMassacre},
-    {"suicide",     CCmdCheatSuicide},
-    {"where",       CCmdCheatWhere},
+    {"cheat",       "s",    CCmdCheat},
+    {"god",         "",     CCmdCheatGod},
+    {"noclip",      "",     CCmdCheatClip},
+    {"warp",        "i",    CCmdCheatWarp},
+    {"reveal",      "i",    CCmdCheatReveal},
+    {"give",        NULL,   CCmdCheatGive},
+    {"kill",        "",     CCmdCheatMassacre},
+    {"suicide",     "",     CCmdCheatSuicide},
+    {"where",       "",     CCmdCheatWhere},
 
-    {"hexenfont",   CCmdHexenFont},
+    {"hexenfont",   "",     CCmdHexenFont},
 
     // $infine
-    {"startinf",    CCmdStartInFine},
-    {"stopinf",     CCmdStopInFine},
-    {"stopfinale",  CCmdStopInFine},
+    {"startinf",    "s",    CCmdStartInFine},
+    {"stopinf",     "",     CCmdStopInFine},
+    {"stopfinale",  "",     CCmdStopInFine},
 
-    {"spawnmobj",   CCmdSpawnMobj},
-    {"coord",       CCmdPrintPlayerCoords},
+    {"spawnmobj",   NULL,   CCmdSpawnMobj},
+    {"coord",       "",     CCmdPrintPlayerCoords},
 
     // $democam
-    {"makelocp",    CCmdMakeLocal},
-    {"makecam",     CCmdSetCamera},
-    {"setlock",     CCmdSetViewLock},
-    {"lockmode",    CCmdSetViewLock},
-    {"viewmode",    CCmdSetViewMode},
+    {"makelocp",    "i",    CCmdMakeLocal},
+    {"makecam",     "i",    CCmdSetCamera},
+    {"setlock",     NULL,   CCmdSetViewLock},
+    {"lockmode",    "i",    CCmdSetViewLock},
+    {"viewmode",    NULL,   CCmdSetViewMode},
 
     // jHexen specific
-    {"invleft",     CCmdInventory},
-    {"invright",    CCmdInventory},
-    {"pig",         CCmdCheatPig},
-    {"runscript",   CCmdCheatRunScript},
-    {"scriptinfo",  CCmdScriptInfo},
-    {"class",       CCmdCheatShadowcaster},
-#ifdef DEMOCAM
-    {"demomode",    CCmdSetDemoMode},
-#endif
+    {"invleft",     NULL,   CCmdInventory},
+    {"invright",    NULL,   CCmdInventory},
+    {"pig",         "",     CCmdCheatPig},
+    {"runscript",   "i",    CCmdCheatRunScript},
+    {"scriptinfo",  NULL,   CCmdScriptInfo},
+    {"class",       "i",    CCmdCheatShadowcaster},
     {NULL}
 };
 
@@ -230,20 +227,20 @@ ccmd_t  gameCCmds[] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Add the console variables and commands.
  */
-void G_ConsoleRegistration()
+void G_ConsoleRegistration(void)
 {
-    int     i;
+    unsigned int i;
 
-    for(i = 0; gameCVars[i].name; i++)
-        Con_AddVariable(gameCVars + i);
-    for(i = 0; gameCCmds[i].name; i++)
-        Con_AddCommand(gameCCmds + i);
+    for(i = 0; gameCVars[i].name; ++i)
+        Con_AddVariable(&gameCVars[i]);
+    for(i = 0; gameCCmds[i].name; ++i)
+        Con_AddCommand(&gameCCmds[i]);
 }
 
-/*
+/**
  * Settings for console background drawing.
  * Called EVERY FRAME by the console drawer.
  */
@@ -265,7 +262,7 @@ void H2_ConsoleBg(int *width, int *height)
     }
 }
 
-/*
+/**
  * Draw (char *) text in the game's font.
  * Called by the console drawer.
  */
@@ -280,7 +277,7 @@ int ConTextOut(char *text, int x, int y)
     return 0;
 }
 
-/*
+/**
  * Get the visual width of (char*) text in the game's font.
  */
 int ConTextWidth(char *text)
@@ -288,7 +285,7 @@ int ConTextWidth(char *text)
     return M_StringWidth(text, hu_font_a);
 }
 
-/*
+/**
  * Custom filter when drawing text in the game's font.
  */
 void ConTextFilter(char *text)
@@ -296,7 +293,7 @@ void ConTextFilter(char *text)
     strupr(text);
 }
 
-/*
+/**
  * Console command to take a screenshot (duh).
  */
 DEFCC(CCmdScreenShot)
@@ -305,7 +302,7 @@ DEFCC(CCmdScreenShot)
     return true;
 }
 
-/*
+/**
  * Console command to change the size of the view window.
  */
 DEFCC(CCmdViewSize)
@@ -338,7 +335,7 @@ DEFCC(CCmdViewSize)
     return true;
 }
 
-/*
+/**
  * Console command to pause the game (when not in the menu).
  */
 DEFCC(CCmdPause)
@@ -351,7 +348,7 @@ DEFCC(CCmdPause)
     return true;
 }
 
-/*
+/**
  * Configure the console to use the game's font.
  */
 DEFCC(CCmdHexenFont)

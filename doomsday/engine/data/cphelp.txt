@@ -217,12 +217,14 @@ desc = Add something to a cvar.
 
 [after]
 desc = Execute the specified command after a delay.
+inf = Params: after (tics) (cmd)\nFor example, 'after 35 "echo End"'.
 
 [alias]
 desc = Create aliases for a (set of) console commands.
 
 [bgturn]
 desc = Set console background rotation speed.
+inf = Params: bgturn (speed)\nFor example, 'bgturn 20'.\nNegative speeds are allowed.
 
 [bind]
 desc = Bind a console command to an event.
@@ -262,6 +264,7 @@ desc = Duplicate current/specified light, grab it.
 
 [blc]
 desc = Set color of light at cursor.
+inf = Params: blc (red) (green) (blue)\nFor example, 'blc 1 0.5 0.2'.
 
 [bli]
 desc = Set intensity of light at cursor.
@@ -292,6 +295,7 @@ desc = Close the console prompt.
 
 [conlocp]
 desc = Connect a local player.
+inf = Params: conlocp (playernum)\nFor example, 'conlocp 1'.
 
 [connect]
 desc = Connect to a server using TCP/IP.
@@ -310,24 +314,30 @@ desc = Deletes all bindings to the given console command.
 
 [demolump]
 desc = Write a reference lump file for a demo.
+inf = Params: demolump (demofile) (lumpfile)\nFor example, 'demolump demo1.dmo DEMO1'.
 
 [dir]
 desc = Print contents of directories.
+inf = Params: dir (dirs) ...\nFor example, 'dir data\'.\nVirtual files are listed, too.\nPaths are relative to the base path.
 
 [dump]
 desc = Dump a data lump currently loaded in memory.
+inf = Params: dump (name)\nFor example, 'dump PLAYPAL'.
 
 [dumpkeymap]
 desc = Write the current keymap to a file.
+inf = Params: dumpkeymap (file)\nFor example, 'dumpkeymap finnish.dkm'.
 
 [echo]
 desc = Echo the parameters on separate lines.
+inf = Params: echo (cmd) ...\nFor example, 'echo "hello world"'.
 
 [enablebindclass]
 desc = Enable a binding class.
 
 [exec]
 desc = Loads and executes a file containing console commands.
+inf = Params: exec (file) ...\nFor example, 'exec "myconfig.cfg"'.
 
 [flareconfig]
 desc = Configure lens flares.
@@ -352,9 +362,11 @@ desc = Add 1 to a cvar.
 
 [keymap]
 desc = Load a DKM keymap file.
+inf = Params: keymap (dkm-file)\nFor example, 'keymap finnish'.
 
 [kick]
-desc = Kick client out of the game.
+desc = Kick client out of the game (server only).
+inf = Params: kick (playernum)\nFor example, 'kick 1'.
 
 [listactions]
 desc = List all action commands.
@@ -384,7 +396,8 @@ desc = List all known mobj types.
 desc = List all console variables and their values.
 
 [load]
-desc = Load a data file (a WAD or a lump).
+desc = Load data file(s) (a WAD or a lump).
+inf = Params: load (file) ...\nFor example, 'load mylevel.wad'.
 
 [login]
 desc = Log in to server console.
@@ -397,9 +410,11 @@ desc = Select the poorest rendering quality.
 
 [ls]
 desc = Print contents of directories.
+inf = Params: ls (dirs) ...\nFor example, 'ls data\'.\nVirtual files are listed, too.\nPaths are relative to the base path.
 
 [mipmap]
 desc = Set the mipmapping mode.
+inf = Params: mipmap (0-5)\n0 = GL_NEAREST\n1 = GL_LINEAR\n2 = GL_NEAREST_MIPMAP_NEAREST\n3 = GL_LINEAR_MIPMAP_NEAREST\n4 = GL_NEAREST_MIPMAP_LINEAR\n5 = GL_LINEAR_MIPMAP_LINEAR
 
 [net]
 desc = Network setup and control.
@@ -415,9 +430,11 @@ desc = Ping the server (or a player if you're the server).
 
 [playdemo]
 desc = Play a demo.
+inf = Params: playdemo (fileName)\nFor example, 'playdemo demo1.dmo'.
 
 [playext]
 desc = Play an external music file.
+inf = Params: playext (filename)\nFor example, 'playext coolmusic.mp3'.
 
 [playmusic]
 desc = Play a  an external music file or a CD track.
@@ -433,6 +450,7 @@ desc = Start recording a demo.
 
 [repeat]
 desc = Repeat a command at given intervals.
+inf = Params: repeat (count) (interval) (cmd)\nFor example, 'repeat 10 35 "screenshot"'.
 
 [reset]
 desc = Reset the data files into what they were at startup.
@@ -454,30 +472,38 @@ desc = Send a chat message to the specified player.
 
 [setcon]
 desc = Set console and viewplayer.
+inf = Params: setcon (playernum)\nFor example, 'setcon 1'.
 
 [setgamma]
 desc = Set the gamma correction level.
+inf = Params: setgamma (0-4).
 
 [setname]
 desc = Set your name.
+inf = Params: setname (name)\nFor example, 'setname "my name"'.
 
 [setres]
 desc = Change video mode resolution or window size.
+inf = Params: setres (width) (height)\nFor example, 'setres 1024 768'.
 
 [settics]
 desc = Set number of game tics per second (default: 35).
+inf = Params: settics (tics)\nFor example, 'settics 15'.
 
 [setvidramp]
 desc = Update display's hardware gamma ramp.
 
 [skydetail]
 desc = Set the number of sky sphere quadrant subdivisions.
+inf = Params: skydetail (num)\nFor example, 'skydetail 4'.
 
 [skyrows]
 desc = Set the number of sky sphere rows.
+inf = Params: skyrows (num)\nFor example, 'skyrows 8'.
 
 [smoothscr]
 desc = Set the rendering mode of fullscreen images.
+inf = Params: smoothscr (0-1)\n0 = GL_NEAREST\n1 = GL_LINEAR
 
 [stopdemo]
 desc = Stop currently playing demo.
@@ -493,18 +519,22 @@ desc = Force a texture reload.
 
 [toggle]
 desc = Toggle the value of a cvar between zero and nonzero.
+inf = Params: toggle (cvar)\nFor example, 'toggle rend-light'.
 
 [uicolor]
 desc = Change Doomsday user interface colors.
+inf = Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 1 1 1'.\nPossible objects are:\n text, shadow, bglight, bgmed, bgdark,\n borhigh, bormed, borlow, help
 
 [unload]
 desc = Unload a data file from memory.
+inf = Params: unload (file) ...\nFor example, 'unload mylevel.wad'.
 
 [version]
 desc = Show detailed version information.
 
 [write]
-desc = Write  bindings and aliases to a file.
+desc = Write bindings and aliases to a file.
+inf = Params: write (filename)\nFor example, 'write myconfig.cfg'.
 
 #
 # CONSOLE VARIABLES

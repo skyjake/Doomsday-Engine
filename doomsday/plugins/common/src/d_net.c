@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -81,13 +81,17 @@ float   netJumpPower = 9;
 
 // Net code related console commands
 ccmd_t netCCmds[] = {
-    {"setcolor", CCmdSetColor},
-    {"setmap", CCmdSetMap},
-#if __JHEXEN__
-    {"setclass", CCmdSetClass},
+    {"setcolor", "i", CCmdSetColor},
+#if __JDOOM__ || __JHERETIC__
+    {"setmap", "ii", CCmdSetMap},
+#else
+    {"setmap", "i", CCmdSetMap},
 #endif
-    {"startcycle", CCmdMapCycle},
-    {"endcycle", CCmdMapCycle},
+#if __JHEXEN__
+    {"setclass", "i", CCmdSetClass},
+#endif
+    {"startcycle", "", CCmdMapCycle},
+    {"endcycle", "", CCmdMapCycle},
     {NULL}
 };
 
@@ -607,12 +611,6 @@ DEFCC(CCmdSetColor)
     int     numColors = 4;
 #endif
 
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (color)\n", argv[0]);
-        Con_Printf("Color #%i uses the player number as color.\n", numColors);
-        return true;
-    }
     cfg.netColor = atoi(argv[1]);
     if(IS_SERVER)               // Player zero?
     {
@@ -661,11 +659,6 @@ DEFCC(CCmdSetColor)
 #if __JHEXEN__
 DEFCC(CCmdSetClass)
 {
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (0-2)\n", argv[0]);
-        return true;
-    }
     cfg.netClass = atoi(argv[1]);
     if(cfg.netClass > 2)
         cfg.netClass = 2;

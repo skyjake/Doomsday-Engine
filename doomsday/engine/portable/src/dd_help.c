@@ -55,6 +55,8 @@ typedef struct helpnode_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(LoadHelp);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -68,14 +70,19 @@ static helpnode_t helpRoot;
 
 // CODE --------------------------------------------------------------------
 
+void DH_Register(void)
+{
+    C_CMD("loadhelp",          "",    LoadHelp);
+}
+
 /**
  * Create and link a new help node.
  *
- * @return          Ptr to the newly created helpnode.
+ * @return              Ptr to the newly created helpnode.
  */
 static helpnode_t* DH_NewNode(void)
 {
-    helpnode_t *n = calloc(sizeof(*n), 1);
+    helpnode_t *n = M_Calloc(sizeof(*n));
 
     n->next = &helpRoot;
     n->prev = helpRoot.prev;
@@ -86,7 +93,7 @@ static helpnode_t* DH_NewNode(void)
 /**
  * Unlink the helpnode from the dlist and destroy it.
  *
- * @param   node    Ptr to the node to be destroyed.
+ * @param   node        Ptr to the node to be destroyed.
  */
 static void DH_DeleteNode(helpnode_t * node)
 {
@@ -95,12 +102,12 @@ static void DH_DeleteNode(helpnode_t * node)
     node->prev->next = node->next;
     node->next->prev = node->prev;
     // Free all memory associated with the node.
-    free(node->id);
+    M_Free(node->id);
 
     for(i = 0; i < MAX_STRINGS; ++i)
-        free(node->str[i].text);
+        M_Free(node->str[i].text);
 
-    free(node);
+    M_Free(node);
 }
 
 /**
@@ -143,7 +150,7 @@ static int DH_ReadStrings(char *fileName)
             if(!(end = strchr(ptr, ']')))
                 end = eol;
 
-            node->id = calloc(end - ptr, 1);
+            node->id = M_Calloc(end - ptr);
             strncpy(node->id, ptr + 1, end - ptr - 1);
         }
         else if(node && (end = strchr(ptr, '=')))   // It must be a key?
@@ -161,11 +168,13 @@ static int DH_ReadStrings(char *fileName)
                 hst->type = HST_CONSOLE_VARIABLE;
             else if(!strnicmp(ptr, "def", 3))
                 hst->type = HST_DEFAULT_VALUE;
+            else if(!strnicmp(ptr , "inf", 3))
+                hst->type = HST_INFO;
             ptr = M_SkipWhite(end + 1);
 
             // The value may be split over multiple lines.
             // 64 kb should be quite enough.
-            length = 0, hst->text = malloc(0x10000);
+            length = 0, hst->text = M_Malloc(0x10000);
             while(*ptr)
             {
                 // Backslash escapes.
@@ -199,7 +208,7 @@ static int DH_ReadStrings(char *fileName)
 
             // Resize the memory to fit the text.
             hst->text[length] = 0;
-            hst->text = realloc(hst->text, length + 1);
+            hst->text = M_Realloc(hst->text, length + 1);
         }
     }
 
@@ -211,9 +220,9 @@ static int DH_ReadStrings(char *fileName)
 /**
  * Finds a node matching the ID. Use DH_GetString to read strings from it.
  *
- * @param id        Help node ID to be searched for.
+ * @param id            Help node ID to be searched for.
  *
- * @return          Ptr to the helpnode if matched ELSE <code>NULL</code>.
+ * @return              Ptr to helpnode if matched ELSE <code>NULL</code>.
  */
 void* DH_Find(const char *id)
 {
@@ -229,7 +238,8 @@ void* DH_Find(const char *id)
         // DJS:
         // Don't compare unless the string is long enough.
         // This also stops us returning a false positive when a substring
-        // matches the search string e.g. [rend-light] != [rend-light-ambient]
+        // matches the search string e.g.
+        // [rend-light] != [rend-light-ambient]
         if(strlen(n->id) < length)
             continue;
 
@@ -244,20 +254,20 @@ void* DH_Find(const char *id)
  * Return a string from within the helpnode. Strings are stored internally
  * and indexed by their type (e.g. HST_DESCRIPTION).
  *
- * @param foundNode The helpnode to return the string from.
- * @param type      The string type (index) to look for within the node.
+ * @param foundNode     The helpnode to return the string from.
+ * @param type          The string type (index) to look for within the node.
  *
- * @return          Ptr to the found string ELSE <code>NULL</code>. Note,
- *                  may also return <code>NULL</code> if passed an invalid
- *                  helpnode ptr OR the help string database has not be
- *                  initialized yet.
+ * @return              Ptr to the found string ELSE <code>NULL</code>. Note,
+ *                      may also return <code>NULL</code> if passed an
+ *                      invalid helpnode ptr OR the help string database has
+ *                      not beeen initialized yet.
  */
 char* DH_GetString(void *foundNode, int type)
 {
     helpnode_t *n = foundNode;
     int     i;
 
-    if(!n || !helpInited)
+    if(!n || !helpInited || type < 0 || type > NUM_HELPSTRING_TYPES)
         return NULL;
 
     for(i = 0; i < MAX_STRINGS; ++i)
@@ -308,4 +318,11 @@ void DD_ShutdownHelp(void)
     // Delete all the nodes.
     while(helpRoot.next != &helpRoot)
         DH_DeleteNode(helpRoot.next);
+}
+
+D_CMD(LoadHelp)
+{
+    DD_ShutdownHelp();
+    DD_InitHelp();
+    return true;
 }

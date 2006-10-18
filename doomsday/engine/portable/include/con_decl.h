@@ -34,11 +34,11 @@
 /*
  * Macros for creating new console commands.
  */
-#define C_CMD(name, fn) \
-    { ccmd_t _c = { name, CCmd##fn, 0 }; Con_AddCommand(&_c); }
+#define C_CMD(name, params, fn) \
+    { ccmd_t _c = { name, params, CCmd##fn, 0 }; Con_AddCommand(&_c); }
 
-#define C_CMD_FLAGS(name, fn, flags) \
-    { ccmd_t _c = { name, CCmd##fn, flags }; Con_AddCommand(&_c); }
+#define C_CMD_FLAGS(name, params, fn, flags) \
+    { ccmd_t _c = { name, params, CCmd##fn, flags }; Con_AddCommand(&_c); }
 
 // A handy helper for declaring console commands.
 #define D_CMD(x) int CCmd##x(byte src, int argc, char **argv)

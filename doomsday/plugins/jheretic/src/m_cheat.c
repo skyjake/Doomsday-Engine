@@ -731,12 +731,6 @@ DEFCC(CCmdCheat)
 {
     unsigned int i;
 
-    if(argc != 2)
-    {
-        // Usage information.
-        Con_Printf("Usage: cheat (cheat)\nFor example, 'cheat engage21'.\n");
-        return true;
-    }
     // Give each of the characters in argument two to the SB event handler.
     for(i = 0; i < strlen(argv[1]); i++)
     {
@@ -935,12 +929,7 @@ DEFCC(CCmdCheatReveal)
 
     if(!canCheat())
         return false;           // Can't cheat!
-    if(argc != 2)
-    {
-        Con_Printf("Usage: reveal (0-4)\n");
-        Con_Printf("0=nothing, 1=show unseen, 2=full map, 3=map+things, 4=show subsectors\n");
-        return true;
-    }
+
     // Reset them (for 'nothing'). :-)
     cheating = 0;
     players[consoleplayer].powers[pw_allmap] = false;

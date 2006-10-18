@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -401,8 +401,8 @@ cvar_t hudCVars[] =
 
 // Console commands for the HUD/Status bar
 ccmd_t  hudCCmds[] = {
-    {"sbsize",      CCmdStatusBarSize},
-    {"showhud",     CCmdHUDShow},
+    {"sbsize",      "s",    CCmdStatusBarSize},
+    {"showhud",     "",     CCmdHUDShow},
     {NULL}
 };
 
@@ -1469,13 +1469,6 @@ DEFCC(CCmdHUDShow)
 DEFCC(CCmdStatusBarSize)
 {
     int     min = 1, max = 20, *val = &cfg.sbarscale;
-
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (size)\n", argv[0]);
-        Con_Printf("Size can be: +, -, (num).\n");
-        return true;
-    }
 
     if(!stricmp(argv[1], "+"))
         (*val)++;

@@ -131,7 +131,7 @@ void UI_Register(void)
     C_VAR_INT("ui-cursor-height", &uiMouseHeight, CVF_NO_MAX, 1, 0);
 
     // Ccmds
-    C_CMD("uicolor", UIColor);
+    C_CMD("uicolor", "sfff", UIColor);
 
     CP_Register();
 }
@@ -2338,16 +2338,7 @@ D_CMD(UIColor)
     };
     int     i;
 
-    if(argc != 5)
-    {
-        Con_Printf("%s (object) (red) (green) (blue)\n", argv[0]);
-        Con_Printf("Possible objects are:\n");
-        Con_Printf(" text, shadow, bglight, bgmed, bgdark,\n"
-                   " borhigh, bormed, borlow, help\n");
-        Con_Printf("Color values must be in range 0..1.\n");
-        return true;
-    }
-    for(i = 0; objects[i]; i++)
+    for(i = 0; objects[i]; ++i)
         if(!stricmp(argv[1], objects[i]))
         {
             ui_colors[i].red = strtod(argv[2], 0);
