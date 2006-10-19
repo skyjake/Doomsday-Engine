@@ -1,4 +1,4 @@
-# Doxyfile 1.4.6
+# Doxyfile 1.4.7
 
 #---------------------------------------------------------------------------
 # Project related configuration options
@@ -6,7 +6,7 @@
 PROJECT_NAME           = deng
 PROJECT_NUMBER         = 
 OUTPUT_DIRECTORY       = ./doxygen/all
-CREATE_SUBDIRS         = NO
+CREATE_SUBDIRS         = YES
 OUTPUT_LANGUAGE        = English
 USE_WINDOWS_ENCODING   = NO
 BRIEF_MEMBER_DESC      = YES
@@ -67,7 +67,7 @@ GENERATE_DEPRECATEDLIST= YES
 ENABLED_SECTIONS       = 
 MAX_INITIALIZER_LINES  = 30
 SHOW_USED_FILES        = YES
-SHOW_DIRECTORIES       = NO
+SHOW_DIRECTORIES       = YES
 FILE_VERSION_FILTER    = 
 #---------------------------------------------------------------------------
 # configuration options related to warning and progress messages
@@ -139,10 +139,11 @@ FILTER_SOURCE_FILES    = NO
 # configuration options related to source browsing
 #---------------------------------------------------------------------------
 SOURCE_BROWSER         = YES
-INLINE_SOURCES         = NO
+INLINE_SOURCES         = YES
 STRIP_CODE_COMMENTS    = YES
-REFERENCED_BY_RELATION = NO
-REFERENCES_RELATION    = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+REFERENCES_LINK_SOURCE = YES
 USE_HTAGS              = NO
 VERBATIM_HEADERS       = NO
 #---------------------------------------------------------------------------
@@ -157,7 +158,7 @@ IGNORE_PREFIX          =
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
-HTML_HEADER            = 
+HTML_HEADER            = ./doxygen/header.html
 HTML_FOOTER            = 
 HTML_STYLESHEET        = 
 HTML_ALIGN_MEMBERS     = YES
