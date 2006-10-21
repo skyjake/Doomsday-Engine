@@ -214,23 +214,25 @@ typedef struct {
 } switchlist_t;
 
 typedef enum {
-    SWTCH_TOP,
-    SWTCH_MIDDLE,
-    SWTCH_BOTTOM
+    top,
+    middle,
+    bottom
 } bwhere_e;
 
-typedef struct {
+typedef struct button_s {
     line_t         *line;
     bwhere_e        where;
     int             btexture;
     int             btimer;
     mobj_t         *soundorg;
+
+    struct button_s *next;
 } button_t;
 
-#define MAXBUTTONS 16              // 4 players, 4 buttons each at once, max.
 #define BUTTONTIME 35              // 1 second
 
-extern button_t buttonlist[MAXBUTTONS];
+extern button_t *buttonlist;
+void            P_FreeButtons(void);
 
 void            P_ChangeSwitchTexture(line_t *line, int useAgain);
 void            P_InitSwitchList(void);

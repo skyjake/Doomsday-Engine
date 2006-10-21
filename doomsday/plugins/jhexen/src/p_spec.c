@@ -791,37 +791,59 @@ void P_PlayerOnSpecialFlat(player_t *player, int floorType)
 
 void P_UpdateSpecials(void)
 {
-    int         i;
+    button_t *button;
 
-    // Handle buttons
-    for(i = 0; i < MAXBUTTONS; ++i)
+    //  DO BUTTONS
+    for(button = buttonlist; button; button = button->next)
     {
-        if(buttonlist[i].btimer)
+        if(button->btimer)
         {
-            buttonlist[i].btimer--;
-            if(!buttonlist[i].btimer)
+            button->btimer--;
+            if(!button->btimer)
             {
-                side_t* sdef = P_GetPtrp(buttonlist[i].line, DMU_SIDE0);
+                side_t     *sdef = P_GetPtrp(button->line, DMU_SIDE0);
+                sector_t   *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
-                switch(buttonlist[i].where)
+                switch(button->where)
                 {
-                case SWTCH_TOP:
-                    P_SetIntp(sdef, DMU_TOP_TEXTURE, buttonlist[i].btexture);
+                case top:
+                    P_SetIntp(sdef, DMU_TOP_TEXTURE, button->btexture);
                     break;
 
-                case SWTCH_MIDDLE:
-                    P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, buttonlist[i].btexture);
+                case middle:
+                    P_SetIntp(sdef, DMU_MIDDLE_TEXTURE, button->btexture);
                     break;
 
-                case SWTCH_BOTTOM:
-                    P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, buttonlist[i].btexture);
+                case bottom:
+                    P_SetIntp(sdef, DMU_BOTTOM_TEXTURE, button->btexture);
                     break;
+
+                default:
+                    Con_Error("P_UpdateSpecials: Unknown sidedef section \"%d\".",
+                              button->where);
                 }
 
-                memset(&buttonlist[i], 0, sizeof(button_t));
+                button->line = NULL;
+                button->where = 0;
+                button->btexture = 0;
+                button->soundorg = NULL;
             }
         }
     }
+}
+
+void P_FreeButtons(void)
+{
+    button_t *button, *np;
+
+    button = buttonlist;
+    while(button != NULL)
+    {
+        np = button->next;
+        free(button);
+        button = np;
+    }
+    buttonlist = NULL;
 }
 
 /**
@@ -903,6 +925,6 @@ void P_SpawnSpecials(void)
         activeceilings[i] = NULL;
     for(i = 0; i < MAXPLATS; ++i)
         activeplats[i] = NULL;
-    for(i = 0; i < MAXBUTTONS; ++i)
-        memset(&buttonlist[i], 0, sizeof(button_t));
+
+    P_FreeButtons();
 }

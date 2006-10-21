@@ -54,7 +54,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-button_t buttonlist[MAXBUTTONS];
+button_t *buttonlist;
 
 // This array is treated as a hardcoded replacement for data that can be loaded
 // from a lump, so we need to use little-endian byte ordering.
@@ -182,7 +182,7 @@ void P_InitSwitchList(void)
     switchlist[index] = -1;
 }
 
-/*
+/**
  * Start a button (retriggerable switch) counting down till it turns off.
  *
  * Passed the linedef the button is on, which texture on the sidedef contains
@@ -191,30 +191,43 @@ void P_InitSwitchList(void)
  */
 void P_StartButton(line_t *line, bwhere_e w, int texture, int time)
 {
-    int     i;
+    button_t *button;
 
     // See if button is already pressed
-    for(i = 0; i < MAXBUTTONS; ++i)
+    for(button = buttonlist; button; button = button->next)
     {
-        if(buttonlist[i].btimer && buttonlist[i].line == line)
+        if(button->btimer && button->line == line)
             return;
     }
 
-    for(i = 0; i < MAXBUTTONS; i++)
+    for(button = buttonlist; button; button = button->next)
     {
-        if(!buttonlist[i].btimer) // use first unused element of list
+        if(!button->btimer) // use first unused element of list
         {
-            buttonlist[i].line = line;
-            buttonlist[i].where = w;
-            buttonlist[i].btexture = texture;
-            buttonlist[i].btimer = time;
-            buttonlist[i].soundorg =
+            button->line = line;
+            button->where = w;
+            button->btexture = texture;
+            button->btimer = time;
+            button->soundorg =
                 P_GetPtrp(P_GetPtrp(line, DMU_FRONT_SECTOR), DMU_SOUND_ORIGIN);
             return;
         }
     }
 
-    Con_Error("P_StartButton: no button slots left!");
+    button = malloc(sizeof(button_t));
+    button->line = line;
+    button->where = w;
+    button->btexture = texture;
+    button->btimer = time;
+    button->soundorg =
+        P_GetPtrp(P_GetPtrp(line, DMU_FRONT_SECTOR), DMU_SOUND_ORIGIN);
+
+    if(buttonlist)
+        button->next = buttonlist;
+    else
+        button->next = NULL;
+
+    buttonlist = button;
 }
 
 /*

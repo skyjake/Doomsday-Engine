@@ -150,22 +150,21 @@ typedef enum {
     bottom
 } bwhere_e;
 
-typedef struct {
+typedef struct button_s {
     line_t         *line;
     bwhere_e        where;
     int             btexture;
     int             btimer;
     mobj_t         *soundorg;
 
+    struct button_s *next;
 } button_t;
-
- // 4 players, 4 buttons each at once, max.
-#define MAXBUTTONS  16
 
  // 1 second, in ticks.
 #define BUTTONTIME  35
 
-extern button_t buttonlist[MAXBUTTONS];
+extern button_t *buttonlist;
+void            P_FreeButtons(void);
 
 void            P_ChangeSwitchTexture(line_t *line, int useAgain);
 
