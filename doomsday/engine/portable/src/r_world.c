@@ -2398,13 +2398,13 @@ void R_SetupLevel(char *level_id, int flags)
     if(mapinfo)
     {
         mapgravity = mapinfo->gravity * FRACUNIT;
-        r_ambient = mapinfo->ambient * 255;
+        mapambient = mapinfo->ambient * 255;
     }
     else
     {
         // No map info found, set some basic stuff.
         mapgravity = FRACUNIT;
-        r_ambient = 0;
+        mapambient = 0;
     }
 
     // Invalidate old cmds.

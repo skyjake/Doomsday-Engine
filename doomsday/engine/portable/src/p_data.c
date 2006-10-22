@@ -139,6 +139,7 @@ nodepile_t  thingnodes, linenodes;  // all kinds of wacky links
 
 ded_mapinfo_t *mapinfo = 0;         // Current mapinfo.
 fixed_t     mapgravity;             // Gravity for the current map.
+int         mapambient;             // Ambient lightlevel for the current map.
 
 /*
  * Value types for the DMU constants.

@@ -50,6 +50,13 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct {
+    int value;
+    int currentlight;
+    sector_t *sector;
+    unsigned int updateTime;
+} lightsample_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -82,25 +89,23 @@ boolean freezeRLs = false;
 
 int     missileBlend = 1;
 int     litSprites = 1;
-int     r_ambient = 0;
+// Ambient lighting, r_ambient is used within the renderer, ambientLight is
+// used to store the value of the ambient light cvar. ambientLight is used
+// The value chosen for r_ambient occurs in Rend_CalcLightRangeModMatrix
+// for convenience (since we would have to recalculate the matrix anyway).
+int     r_ambient = 0, ambientLight = 0;
 
 int     viewpw, viewph;         // Viewport size, in pixels.
 int     viewpx, viewpy;         // Viewpoint top left corner, in pixels.
 
 float   yfov;
 
-int    gamedrawhud = 1;    // Set to zero when we advise that the HUD should not be drawn
+int     gamedrawhud = 1;    // Set to zero when we advise that the HUD
+                            // should not be drawn
 
 extern DGLuint ddTextures[];
 
 int     playerLightRange[MAXPLAYERS];
-
-typedef struct {
-    int value;
-    int currentlight;
-    sector_t *sector;
-    unsigned int updateTime;
-} lightsample_t;
 
 lightsample_t playerLastLightSample[MAXPLAYERS];
 
@@ -143,34 +148,29 @@ static byte devNoTexFix = 0;
 void Rend_Register(void)
 {
     C_VAR_INT("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
-
-    C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling, CVF_NO_ARCHIVE, 0, 1);
-
+    C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling,CVF_NO_ARCHIVE,0,1);
     C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, 0, 0, 1);
-
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
-
     C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
-
     C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
-
-    C_VAR_FLOAT2("rend-light-compression", &r_lightcompression, 0, -100, 100,
+    C_VAR_FLOAT2("rend-light-compression", &r_lightcompression,0, -100, 100,
                  Rend_CalcLightRangeModMatrix);
-
     C_VAR_FLOAT("rend-light-adaptation", &r_lightAdapt, 0, 0, 1);
-
-    C_VAR_FLOAT2("rend-light-adaptation-mul", &r_lightAdaptMul, CVF_PROTECTED, 0, 1,
-                 Rend_CalcLightRangeModMatrix);
-
-    C_VAR_FLOAT2("rend-light-adaptation-ramp", &r_lightAdaptRamp, CVF_PROTECTED, 0, 1,
-                 Rend_CalcLightRangeModMatrix);
-
-    C_VAR_INT("rend-light-adaptation-darktime", &r_lightAdaptDarkTime, 0, 0, 200);
-
-    C_VAR_INT("rend-light-adaptation-brighttime", &r_lightAdaptBrightTime, 0, 0, 200);
-
-    C_VAR_INT("rend-dev-light-modmatrix", &debugLightModMatrix, CVF_NO_ARCHIVE, 0, 1);
-
+    C_VAR_FLOAT2("rend-light-adaptation-mul", &r_lightAdaptMul,
+                 CVF_PROTECTED, 0, 1, Rend_CalcLightRangeModMatrix);
+    C_VAR_FLOAT2("rend-light-adaptation-ramp", &r_lightAdaptRamp,
+                 CVF_PROTECTED, 0, 1, Rend_CalcLightRangeModMatrix);
+    C_VAR_INT("rend-light-adaptation-darktime", &r_lightAdaptDarkTime,
+              0, 0, 200);
+    C_VAR_INT("rend-light-adaptation-brighttime", &r_lightAdaptBrightTime,
+              0, 0, 200);
+    C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255,
+               Rend_CalcLightRangeModMatrix);
+    C_VAR_INT("rend-light-sky", &rendSkyLight, 0, 0, 1);
+    C_VAR_FLOAT("rend-light-wall-angle", &rend_light_wall_angle, CVF_NO_MAX,
+                0, 0);
+    C_VAR_INT("rend-dev-light-modmatrix", &debugLightModMatrix,
+              CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
 
     RL_Register();
@@ -1990,6 +1990,11 @@ void Rend_CalcLightRangeModMatrix(cvar_t* unused)
     int mid = MOD_RANGE / 2;
     float f, mod, factor;
     double multiplier, mx;
+
+    if(mapambient > ambientLight)
+        r_ambient = mapambient;
+    else
+        r_ambient = ambientLight;
 
     memset(lightRangeModMatrix, 0, (sizeof(byte) * 255) * MOD_RANGE);
 

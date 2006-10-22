@@ -157,8 +157,6 @@ void DL_Register(void)
     C_VAR_BYTE("rend-info-lums", &rendInfoLums, 0, 0, 1);
 
     C_VAR_INT("rend-light", &useDynLights, 0, 0, 1);
-    C_VAR_INT2("rend-light-ambient", &r_ambient, 0, 0, 255,
-               Rend_CalcLightRangeModMatrix);
     C_VAR_INT("rend-light-blend", &dlBlend, 0, 0, 2);
 
     C_VAR_FLOAT("rend-light-bright", &dlFactor, 0, 0, 1);
@@ -167,13 +165,8 @@ void DL_Register(void)
     C_VAR_FLOAT("rend-light-radius-scale", &dlRadFactor, 0, 0.1f, 10);
     C_VAR_INT("rend-light-radius-max", &dlMaxRad, 0, 64, 512);
     C_VAR_INT("rend-light-radius-min-bias", &dlMinRadForBias, 0, 128, 1024);
-    C_VAR_INT("rend-light-sky", &rendSkyLight, 0, 0, 1);
-    C_VAR_FLOAT("rend-light-wall-angle", &rend_light_wall_angle, CVF_NO_MAX,
-                0, 0);
     C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
-
     C_VAR_INT("rend-mobj-light-auto", &useMobjAutoLights, 0, 0, 1);
-
     Rend_DecorRegister();
 }
 
