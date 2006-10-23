@@ -282,12 +282,17 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
         vis->data.wall.vertices[i].pos[VX] = poly->vertices[i].pos[VX];
         vis->data.wall.vertices[i].pos[VY] = poly->vertices[i].pos[VY];
         vis->data.wall.vertices[i].pos[VZ] = poly->vertices[i].pos[VZ];
-        for(c = 0; c < 4; ++c)
+
+        if(poly->flags & RPF_GLOW)
+            memset(&vis->data.wall.vertices[i].color, 255, 4 * 4);
+        else
         {
-            vis->data.wall.vertices[i].color[c] =
-                poly->vertices[i].color.rgba[c];
+            for(c = 0; c < 4; ++c)
+            {
+                vis->data.wall.vertices[i].color[c] =
+                    poly->vertices[i].color.rgba[c];
+            }
         }
-        //vis->data.wall.vertices[i].color[3] = 255; // Alpha.
     }
     vis->data.wall.texc[0][VX] = poly->texoffx / (float) poly->tex.width;
     vis->data.wall.texc[1][VX] =
@@ -299,8 +304,8 @@ void RL_AddMaskedPoly(rendpoly_t *poly)
     vis->data.wall.blendmode = poly->blendmode;
 
     // FIXME: Semitransparent masked polys arn't lit atm
-    if(poly->lights && numTexUnits > 1 && envModAdd &&
-       poly->vertices[0].color.rgba[3] == 255)
+    if(!(poly->flags & RPF_GLOW) && poly->lights && numTexUnits > 1 &&
+       envModAdd && poly->vertices[0].color.rgba[3] == 255)
     {
         // Choose the brightest light.
         memcpy(brightest, poly->lights->color, 3);
