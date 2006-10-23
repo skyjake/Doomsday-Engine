@@ -1869,7 +1869,7 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
     thinker_t *thinker;
     unsigned an;
     fixed_t oldpos[3];
-    fixed_t aboveFloor;
+    fixed_t thfloorz, thceilz, aboveFloor;
     fixed_t fogDelta = 0;
 
     // don't teleport things marked noteleport!
@@ -1901,6 +1901,8 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         break;
     }
 
+    thfloorz = P_GetFixedp(thing->subsector, DMU_FLOOR_HEIGHT);
+    thceilz  = P_GetFixedp(thing->subsector, DMU_CEILING_HEIGHT);
     if(ok)
     {   // we can teleport
         XG_Dev("XSTrav_Teleport: Sector %i, %s, %s%s", P_ToIndex(sector),
@@ -1908,7 +1910,7 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
                 info->iparm[4]? " Stomp" : "");
 
         memcpy(oldpos, thing->pos, sizeof(thing->pos));
-        aboveFloor = thing->pos[VZ] - thing->floorz;
+        aboveFloor = thing->pos[VZ] - thfloorz;
 
         if(!P_TeleportMove(thing, mo->pos[VX], mo->pos[VY], (info->iparm[4] > 0? 1 : 0)))
         {
@@ -1921,16 +1923,16 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         {
             if(thing->player->plr->mo->flags2 & MF2_FLY && aboveFloor)
             {
-                thing->pos[VZ] = thing->floorz + aboveFloor;
-                if(thing->pos[VZ] + thing->height > thing->ceilingz)
+                thing->pos[VZ] = thfloorz + aboveFloor;
+                if(thing->pos[VZ] + thing->height > thceilz)
                 {
-                    thing->pos[VZ] = thing->ceilingz - thing->height;
+                    thing->pos[VZ] = thceilz - thing->height;
                 }
                 thing->dplayer->viewz = thing->pos[VZ] + thing->dplayer->viewheight;
             }
             else
             {
-                thing->pos[VZ] = thing->floorz;
+                thing->pos[VZ] = thfloorz;
                 thing->dplayer->viewz = thing->pos[VZ] + thing->dplayer->viewheight;
                 thing->dplayer->lookdir = 0;/* $unifiedangles */
             }
@@ -1943,20 +1945,20 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
 
             //thing->dplayer->clAngle = thing->angle; /* $unifiedangles */
             thing->dplayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
-    }
-#if __JHERETIC__
-    else if(thing->flags & MF_MISSILE)
-    {
-        thing->pos[VZ] = thing->floorz + aboveFloor;
-        if(thing->pos[VZ] + thing->height > thing->ceilingz)
-        {
-            thing->pos[VZ] = thing->ceilingz - thing->height;
         }
-    }
+#if __JHERETIC__
+        else if(thing->flags & MF_MISSILE)
+        {
+            thing->pos[VZ] = thfloorz + aboveFloor;
+            if(thing->pos[VZ] + thing->height > thceilz)
+            {
+                thing->pos[VZ] = thceilz - thing->height;
+            }
+        }
 #endif
         else
         {
-            thing->pos[VZ] = thing->floorz;
+            thing->pos[VZ] = thfloorz;
         }
 
         // Spawn flash at the old position?
@@ -2482,10 +2484,13 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
        (info->flags & STF_MONSTER_WIND && mo->flags & MF_COUNTKILL) ||
        (info->flags & STF_MISSILE_WIND && mo->flags & MF_MISSILE))
     {
+        fixed_t thfloorz = P_GetFixedp(mo->subsector, DMU_FLOOR_HEIGHT);
+        fixed_t thceilz  = P_GetFixedp(mo->subsector, DMU_CEILING_HEIGHT);
+
         if(!(info->flags & (STF_FLOOR_WIND | STF_CEILING_WIND)) ||
-           (info->flags & STF_FLOOR_WIND && mo->pos[VZ] <= mo->floorz) ||
+           (info->flags & STF_FLOOR_WIND && mo->pos[VZ] <= thfloorz) ||
            (info->flags & STF_CEILING_WIND &&
-            mo->pos[VZ] + mo->height >= mo->ceilingz))
+            mo->pos[VZ] + mo->height >= thceilz))
         {
             // Apply vertical wind.
             mo->momz += FRACUNIT * info->vertical_wind;
