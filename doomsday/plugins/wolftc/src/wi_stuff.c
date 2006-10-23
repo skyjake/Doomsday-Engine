@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -1280,7 +1280,7 @@ void WI_updateStats(void)
         cnt_items[0] = (plrs[me].sitems * 100) / wbs->maxitems;
         cnt_secret[0] = (plrs[me].ssecret * 100) / wbs->maxsecret;
         cnt_time = plrs[me].stime / TICRATE;
-        if(cnt_par != -1)
+        if(wbs->partime != -1)
             cnt_par = wbs->partime / TICRATE;
         S_LocalSound(sfx_intcmp, 0);
         sp_state = 10;
@@ -1409,7 +1409,7 @@ void WI_drawStats(void)
                  ALIGN_LEFT);
     WI_drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cnt_time);
 
-    if(wbs->epsd < 3 && cnt_par != -1)
+    if(wbs->epsd < 3 && wbs->partime != -1)
     {
         WI_DrawPatch(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, par.lump,
                      NULL, false, ALIGN_LEFT);
