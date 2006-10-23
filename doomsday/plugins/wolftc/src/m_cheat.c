@@ -331,7 +331,7 @@ void cht_GodFunc(player_t *plyr)
 {
     plyr->cheats ^= CF_GODMODE;
     plyr->update |= PSF_STATE;
-    if(plyr->cheats & CF_GODMODE)
+    if(P_GetPlayerCheats(plyr) & CF_GODMODE)
     {
         if(plyr->plr->mo)
             plyr->plr->mo->health = maxhealth;
@@ -339,7 +339,7 @@ void cht_GodFunc(player_t *plyr)
         plyr->update |= PSF_HEALTH;
     }
     P_SetMessage(plyr,
-                 ((plyr->cheats & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), false);
+                 ((P_GetPlayerCheats(plyr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), false);
 }
 
 void cht_SuicideFunc(player_t *plyr)
@@ -439,7 +439,7 @@ void cht_NoClipFunc(player_t *plyr)
 {
     plyr->cheats ^= CF_NOCLIP;
     plyr->update |= PSF_STATE;
-    P_SetMessage(plyr, ((plyr->cheats & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), false);
+    P_SetMessage(plyr, ((P_GetPlayerCheats(plyr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), false);
 }
 
 boolean cht_WarpFunc(player_t *plyr, char *buf)

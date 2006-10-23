@@ -41,6 +41,8 @@
 #include "st_lib.h"
 #include "hu_stuff.h"
 
+#include "p_player.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8)           \
@@ -722,7 +724,7 @@ void ST_updateFaceWidget(void)
     if(priority < 5)
     {
         // invulnerability
-        if((plyr->cheats & CF_GODMODE) || plyr->powers[pw_invulnerability])
+        if((P_GetPlayerCheats(plyr) & CF_GODMODE) || plyr->powers[pw_invulnerability])
         {
             priority = 4;
 

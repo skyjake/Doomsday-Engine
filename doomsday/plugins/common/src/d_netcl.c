@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -289,12 +289,12 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 #if __JDOOM__ || __JHERETIC__
         pl->armortype = b >> 4;
 #endif
-        
+
 #ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState2: New state = %i\n", 
+        Con_Message("NetCl_UpdatePlayerState2: New state = %i\n",
                     pl->playerstate);
 #endif
-        
+
         // Set or clear the DEAD flag for this player.
         if(pl->playerstate == PST_LIVE)
             pl->plr->flags &= ~DDPF_DEAD;
@@ -305,11 +305,11 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
         {
             P_SetupPsprites(pl);
         }
-        
+
         pl->cheats = NetCl_ReadByte();
 
         // Set or clear the NOCLIP flag.
-        if(pl->cheats & CF_NOCLIP)
+        if(P_GetPlayerCheats(pl) & CF_NOCLIP)
             pl->plr->flags |= DDPF_NOCLIP;
         else
             pl->plr->flags &= ~DDPF_NOCLIP;
@@ -345,7 +345,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             pl->plr->flags &= ~DDPF_DEAD;
         else
             pl->plr->flags |= DDPF_DEAD;
-        
+
         //if(oldstate != pl->playerstate) // && oldstate == PST_DEAD)
         {
             P_SetupPsprites(pl);

@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -917,7 +917,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         // Below certain threshold,
         // ignore damage in GOD mode, or with INVUL power.
         if(damage < 1000 &&
-           ((player->cheats & CF_GODMODE) ||
+           ((P_GetPlayerCheats(player) & CF_GODMODE) ||
             player->powers[pw_invulnerability]))
         {
             return;

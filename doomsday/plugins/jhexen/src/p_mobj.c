@@ -53,6 +53,7 @@
 #include "../../../engine/portable/include/m_bams.h" // for BANG2RAD
 
 #include "p_map.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -695,7 +696,7 @@ void P_XYMovement(mobj_t *mo)
 
     // Friction
 
-    if(player && player->cheats & CF_NOMOMENTUM)
+    if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
     {                           // Debug option for no sliding at all
         mo->momx = mo->momy = 0;
         return;

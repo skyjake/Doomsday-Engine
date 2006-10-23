@@ -54,6 +54,7 @@
 #include "hu_stuff.h"
 #include "g_common.h"
 #include "p_map.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -456,7 +457,7 @@ void P_XYMovement(mobj_t *mo)
     } while(xmove | ymove);
 
     // slow down
-    if(player && player->cheats & CF_NOMOMENTUM)
+    if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
     {
         // debug option for no sliding at all
         mo->momx = mo->momy = 0;

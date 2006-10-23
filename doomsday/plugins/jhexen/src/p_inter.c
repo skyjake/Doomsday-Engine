@@ -1774,7 +1774,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         target->player->update |= PSF_HEALTH;
 
         if(damage < 1000 &&
-           ((target->player->cheats & CF_GODMODE) ||
+           ((P_GetPlayerCheats(target->player) & CF_GODMODE) ||
             target->player->powers[pw_invulnerability]))
         {
             return;
@@ -2143,7 +2143,7 @@ void P_FallingDamage(player_t *player)
 
 void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
 {
-    if((player->cheats & CF_GODMODE) || player->powers[pw_invulnerability])
+    if((P_GetPlayerCheats(player) & CF_GODMODE) || player->powers[pw_invulnerability])
         return;
 
     player->poisoncount += poison;
@@ -2181,7 +2181,7 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
         damage >>= 1;
     }
     if(damage < 1000 &&
-       ((player->cheats & CF_GODMODE) || player->powers[pw_invulnerability]))
+       ((P_GetPlayerCheats(player) & CF_GODMODE) || player->powers[pw_invulnerability]))
     {
         return;
     }

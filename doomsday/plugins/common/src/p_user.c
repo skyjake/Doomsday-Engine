@@ -956,7 +956,7 @@ void P_PlayerThinkState(player_t *player)
 void P_PlayerThinkCheat(player_t *player)
 {
     // fixme: do this in the cheat code
-    if(player->cheats & CF_NOCLIP)
+    if(P_GetPlayerCheats(player) & CF_NOCLIP)
         player->plr->mo->flags |= MF_NOCLIP;
     else
         player->plr->mo->flags &= ~MF_NOCLIP;

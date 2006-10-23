@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -41,6 +41,7 @@
 #endif
 
 int         P_GetPlayerNum(player_t *player);
+int         P_GetPlayerCheats(player_t *player);
 
 weapontype_t P_PlayerFindWeapon(player_t *player, boolean next);
 weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,

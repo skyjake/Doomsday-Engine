@@ -716,7 +716,7 @@ void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
     {
         if(player->health >= 20)
         {
-            if(!(player->cheats & CF_GODMODE))
+            if(!(P_GetPlayerCheats(player) & CF_GODMODE))
             {
                 player->health -= 20;
             }

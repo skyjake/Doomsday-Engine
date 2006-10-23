@@ -1262,7 +1262,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     if(player)
     {
         if(damage < 1000 &&
-           ((player->cheats & CF_GODMODE) ||
+           ((P_GetPlayerCheats(player) & CF_GODMODE) ||
             player->powers[pw_invulnerability]))
         {
             return;

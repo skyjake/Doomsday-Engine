@@ -47,6 +47,7 @@
 #include "hu_stuff.h"
 #include "d_net.h"
 #include "p_inventory.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -924,6 +925,8 @@ static void ShadeChain(void)
  */
 void ST_refreshBackground(void)
 {
+    player_t *pl = &players[consoleplayer];
+
     if(st_blended && ((cfg.statusbarAlpha < 1.0f) && (cfg.statusbarAlpha > 0.0f)))
     {
         gl.Color4f(1, 1, 1, cfg.statusbarAlpha);
@@ -941,7 +944,7 @@ void ST_refreshBackground(void)
         GL_DrawCutRectTiled(34, 191, 248, 9, 320, 42, 34, 33, 0, 191, 16, 8);
 
         // faces
-        if(players[consoleplayer].cheats & CF_GODMODE)
+        if(P_GetPlayerCheats(pl) & CF_GODMODE)
         {
             // If GOD mode we need to cut windows
             GL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 16, 167, 16, 8);
@@ -949,7 +952,9 @@ void ST_refreshBackground(void)
 
             GL_DrawPatch_CS(16, 167, W_GetNumForName("GOD1"));
             GL_DrawPatch_CS(287, 167, W_GetNumForName("GOD2"));
-        } else {
+        }
+        else
+        {
             GL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 0, 158, 0, 0);
             GL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 0, 158, 0, 0);
         }
@@ -961,7 +966,9 @@ void ST_refreshBackground(void)
 
         DrawChain();
 
-    } else if(cfg.statusbarAlpha != 0.0f){
+    }
+    else if(cfg.statusbarAlpha != 0.0f)
+    {
         // we can just render the full thing as normal
 
         // topbits
@@ -971,7 +978,7 @@ void ST_refreshBackground(void)
         // faces
         GL_DrawPatch(0, 158, PatchBARBACK.lump);
 
-        if(players[consoleplayer].cheats & CF_GODMODE)
+        if(P_GetPlayerCheats(pl) & CF_GODMODE)
         {
             GL_DrawPatch(16, 167, W_GetNumForName("GOD1"));
             GL_DrawPatch(287, 167, W_GetNumForName("GOD2"));

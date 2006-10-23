@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -42,8 +42,9 @@
 #  include "jstrife.h"
 #endif
 
-// MACROS ------------------------------------------------------------------
+#include "p_player.h"
 
+// MACROS ------------------------------------------------------------------
 
 #define VIEW_HEIGHT  (cfg.plrViewHeight << FRACBITS)
 
@@ -108,7 +109,7 @@ void P_CalcHeight(player_t *player)
     if(setz)
     {
         if(P_IsCamera(dplay->mo) /*$democam*/ || (dplay->flags & DDPF_CHASECAM)
-           || player->cheats & CF_NOMOMENTUM || airborne || morphed)    // Morphed players don't bob their view.
+           || (P_GetPlayerCheats(player) & CF_NOMOMENTUM) || airborne || morphed)    // Morphed players don't bob their view.
         {
             // Reduce the bob offset to zero.
             target = 0;
@@ -148,7 +149,7 @@ void P_CalcHeight(player_t *player)
     }
 
     // Should viewheight be moved? Not if camera or we're in demo.
-    if(!(player->cheats & CF_NOMOMENTUM || P_IsCamera(pmo) /*$democam*/ ||
+    if(!((P_GetPlayerCheats(player) & CF_NOMOMENTUM) || P_IsCamera(pmo) /*$democam*/ ||
          Get(DD_PLAYBACK)))
     {
         // Move viewheight.

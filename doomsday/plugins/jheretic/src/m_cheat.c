@@ -460,7 +460,7 @@ static void CheatGodFunc(player_t *player, Cheat_t * cheat)
 {
     player->cheats ^= CF_GODMODE;
     player->update |= PSF_STATE;
-    if(player->cheats & CF_GODMODE)
+    if(P_GetPlayerCheats(player) & CF_GODMODE)
     {
         P_SetMessage(player, TXT_CHEATGODON, false);
     }
@@ -474,7 +474,7 @@ static void CheatNoClipFunc(player_t *player, Cheat_t * cheat)
 {
     player->cheats ^= CF_NOCLIP;
     player->update |= PSF_STATE;
-    if(player->cheats & CF_NOCLIP)
+    if(P_GetPlayerCheats(player) & CF_NOCLIP)
     {
         P_SetMessage(player, TXT_CHEATNOCLIPON, false);
     }

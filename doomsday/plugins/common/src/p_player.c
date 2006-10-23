@@ -70,11 +70,12 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Return the number of the given player.
+/**
  * NOTE: Why not simply (player - players)?
  *
  * @param player        The player to work with.
+ *
+ * @return              Number of the given player.
  */
 int P_GetPlayerNum(player_t *player)
 {
@@ -84,22 +85,45 @@ int P_GetPlayerNum(player_t *player)
     {
         if(player == &players[i])
         {
-            return (i);
+            return i;
         }
     }
-    return (0);
+    return 0;
 }
 
-/*
+/**
+ * Return a bit field for the current player's cheats.
+ *
+ * @param               The player to work with.
+ *
+ * @return              Cheats active for the given player in a bitfield.
+ */
+int P_GetPlayerCheats(player_t *player)
+{
+    if(!player)
+    {
+        return 0;
+    }
+    else
+    {
+        if(player->plr->flags & DDPF_CAMERA)
+            return (player->cheats |
+                    (CF_GODMODE | cfg.cameraNoClip? CF_NOCLIP : 0));
+        else
+            return player->cheats;
+    }
+}
+
+/**
  * Subtract the appropriate amount of ammo from the player for firing
  * the current ready weapon.
  *
- * @param player            The player doing the firing.
+ * @param player        The player doing the firing.
  */
 void P_ShotAmmo(player_t *player)
 {
-    ammotype_t i;
-    int lvl;
+    ammotype_t  i;
+    int         lvl;
     weaponinfo_t *win = &weaponinfo[player->readyweapon][player->class];
 
 #if __JHERETIC__
@@ -108,7 +132,7 @@ void P_ShotAmmo(player_t *player)
     lvl = 0;
 #endif
 
-    for(i = 0; i < NUMAMMO; i++)
+    for(i = 0; i < NUMAMMO; ++i)
     {
         if(!win->mode[lvl].ammotype[i])
             continue;   // Weapon does not take this ammo
@@ -127,7 +151,7 @@ void P_ShotAmmo(player_t *player)
     }
 }
 
-/*
+/**
  * Decides if an automatic weapon change should occur and does it.
  *
  * Called when:
@@ -311,7 +335,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     return returnval;
 }
 
-/*
+/**
  * Return the next weapon for the given player. Can return the existing
  * weapon if no other valid choices. Preferences are NOT user selectable.
  *
@@ -391,7 +415,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
     return list[i];
 }
 
-/*
+/**
  * Send a message to the given player and maybe echos it to the console.
  *
  * @param player        The player to send the message to.
@@ -411,7 +435,7 @@ void P_SetMessage(player_t *pl, char *msg, boolean noHide)
 }
 
 #if __JHEXEN__ || __JSTRIFE__
-/*
+/**
  * Send a yellow message to the given player and maybe echos it to the console.
  *
  * @param player        The player to send the message to.
@@ -507,7 +531,7 @@ int P_CameraZMovement(mobj_t *mo)
     return true;
 }
 
-/*
+/**
  * Set appropriate parameters for a camera.
  */
 void P_PlayerThinkCamera(player_t *player)
@@ -524,10 +548,6 @@ void P_PlayerThinkCamera(player_t *player)
     }
 
     mo = player->plr->mo;
-    player->cheats |= CF_GODMODE;
-
-    if(cfg.cameraNoClip)
-        player->cheats |= CF_NOCLIP;
 
     player->plr->viewheight = 0;
     mo->flags &= ~(MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
@@ -599,13 +619,7 @@ DEFCC(CCmdSetCamera)
         if(player->plr->mo)
             player->plr->mo->pos[VZ] += player->plr->viewheight;
     }
-    else
-    {
-        player->cheats &= ~CF_GODMODE;
 
-        if(cfg.cameraNoClip)
-            player->cheats &= ~CF_NOCLIP;
-    }
     return true;
 }
 
@@ -691,7 +705,7 @@ DEFCC(CCmdMakeLocal)
     return true;
 }
 
-/*
+/**
  * Print the console player's coordinates.
  */
 DEFCC(CCmdPrintPlayerCoords)
@@ -726,10 +740,6 @@ DEFCC(CCmdCycleSpy)
     return true;
 }
 
-/*
- * CCmdSpawnMobj
- *  Spawns a mobj of the given type at (x,y,z).
- */
 DEFCC(CCmdSpawnMobj)
 {
     int     type;
