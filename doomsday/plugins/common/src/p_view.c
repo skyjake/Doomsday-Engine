@@ -178,7 +178,7 @@ void P_CalcHeight(player_t *player)
     }
 
     // Set the player's eye-level Z coordinate.
-    dplay->viewz = pmo->pos[VZ] + dplay->viewheight;
+    dplay->viewz = pmo->pos[VZ] + (P_IsCamera(pmo)? 0 : dplay->viewheight);
 
     // During demo playback (or camera mode) the viewz will not be
     // modified any further.

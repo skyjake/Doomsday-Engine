@@ -1030,6 +1030,7 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
     fixed_t pos[3];
     mobj_t *mobj;
     int     i;
+    int     viewHeight;
 
     if(pnum < 0)
         pnum = 0;
@@ -1085,9 +1086,14 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
     p->plr->extralight = 0;
     p->plr->fixedcolormap = 0;
     p->plr->lookdir = 0;
-    p->plr->viewheight = (cfg.plrViewHeight << FRACBITS);
+    viewHeight = (cfg.plrViewHeight << FRACBITS);
     if(p->plr->flags & DDPF_CAMERA)
-        p->plr->mo->pos[VZ] += p->plr->viewheight;
+    {
+        p->plr->mo->pos[VZ] += viewHeight;
+        p->plr->viewheight = 0;
+    }
+    else
+        p->plr->viewheight = viewHeight;
 
     p->class = PCLASS_PLAYER;
 

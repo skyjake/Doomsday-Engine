@@ -1187,6 +1187,7 @@ void P_SpawnPlayer(thing_t * mthing, int plrnum)
     fixed_t pos[3];
     mobj_t *mobj;
     int     i;
+    int     viewHeight;
     extern int playerkeys;
 
     if(!players[plrnum].plr->ingame)
@@ -1235,10 +1236,15 @@ void P_SpawnPlayer(thing_t * mthing, int plrnum)
     p->rain2 = NULL;
     p->plr->extralight = 0;
     p->plr->fixedcolormap = 0;
-    p->plr->viewheight = (cfg.plrViewHeight << FRACBITS);
+    viewHeight = (cfg.plrViewHeight << FRACBITS);
     if(p->plr->flags & DDPF_CAMERA)
-            p->plr->mo->pos[VZ] += p->plr->viewheight;
-    p->plr->viewz = mobj->pos[VZ] + p->plr->viewheight;
+    {
+        p->plr->mo->pos[VZ] += viewHeight;
+        p->plr->viewheight = 0;
+    }
+    else
+        p->plr->viewheight = viewHeight;
+
     P_SetupPsprites(p);         // setup gun psprite
 
     p->class = PCLASS_PLAYER;

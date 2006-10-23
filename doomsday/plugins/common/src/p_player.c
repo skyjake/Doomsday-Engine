@@ -536,8 +536,6 @@ int P_CameraZMovement(mobj_t *mo)
  */
 void P_PlayerThinkCamera(player_t *player)
 {
-    angle_t angle;
-    int     full, dist;
     mobj_t *mo;
 
     // If this player is not a camera, get out of here.
@@ -549,12 +547,13 @@ void P_PlayerThinkCamera(player_t *player)
 
     mo = player->plr->mo;
 
-    player->plr->viewheight = 0;
     mo->flags &= ~(MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
 
     // How about viewlock?
     if(player->viewlock)
     {
+        angle_t angle;
+        int     full, dist;
         mobj_t *target = players->viewlock;
 
         if(!target->player || !target->player->plr->ingame)
@@ -613,12 +612,17 @@ DEFCC(CCmdSetCamera)
 
     player->plr->flags ^= DDPF_CAMERA;
 
-    if(player->plr->ingame && player->plr->flags & DDPF_CAMERA)
-    {
-        // Is now a camera.
-        if(player->plr->mo)
-            player->plr->mo->pos[VZ] += player->plr->viewheight;
-    }
+    if(player->plr->ingame)
+        if(player->plr->flags & DDPF_CAMERA)
+        {   // Is now a camera.
+            if(player->plr->mo)
+                player->plr->mo->pos[VZ] += player->plr->viewheight;
+        }
+        else
+        {   // Is now a "real" player.
+            if(player->plr->mo)
+                player->plr->mo->pos[VZ] -= player->plr->viewheight;
+        }
 
     return true;
 }
