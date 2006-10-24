@@ -141,6 +141,7 @@ DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char *name,
                                  gfxmode_t mode, int useMipmap, boolean clamped);
 DGLuint         GL_GetTextureInfo(int index);
 DGLuint         GL_GetTextureInfo2(int index, boolean translate);
+DGLuint         GL_GetFlatInfo(int idx, boolean translate);
 DGLuint         GL_PrepareTexture(int idx);
 DGLuint         GL_PrepareTexture2(int idx, boolean translate);
 DGLuint         GL_PrepareFlat(int idx);

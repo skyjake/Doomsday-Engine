@@ -1346,10 +1346,7 @@ unsigned int GL_PrepareFlat2(int idx, boolean translate)
         // The flat isn't yet bound with OpenGL.
         lumptexinfo[flat->lump].tex[0] = GL_BindTexFlat(flat);
     }
-    texw = texh = 64;
-    texmask = false;
-    texdetail = (r_detail && flat->detail.tex ? &flat->detail : 0);
-    return lumptexinfo[flat->lump].tex[0];
+    return GL_GetFlatInfo(idx, translate);
 }
 
 /*
@@ -2982,6 +2979,29 @@ DGLuint GL_GetTextureInfo2(int index, boolean translate)
     texmask = tex->masked;
     texdetail = (r_detail && tex->detail.tex ? &tex->detail : 0);
     return tex->tex;
+}
+
+/*
+ * Returns the flat name, if it has been prepared.
+ */
+DGLuint GL_GetFlatInfo(int idx, boolean translate)
+{
+    flat_t *flat = R_GetFlat(idx);
+
+    if(!flat)
+        return 0;
+
+    // Translate the flat.
+    if(translate && flat->translation.current != idx)
+    {
+        flat = R_GetFlat(flat->translation.current);
+    }
+
+    // Set the global texture info variables.
+    texw = texh = 64;
+    texmask = false;
+    texdetail = (r_detail && flat->detail.tex ? &flat->detail : 0);
+    return lumptexinfo[flat->lump].tex[0];
 }
 
 /**

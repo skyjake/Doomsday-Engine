@@ -179,8 +179,6 @@ vissprite_t *R_NewVisSprite(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    RL_SetupState(listmode_t mode, rendlist_t * list);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -266,7 +264,7 @@ void RL_Register(void)
  * of sprites. This is necessary because all masked polygons must be
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
-void RL_AddMaskedPoly(rendpoly_t *poly)
+static void RL_AddMaskedPoly(rendpoly_t *poly)
 {
     vissprite_t *vis = R_NewVisSprite();
     byte    brightest[3];
@@ -500,7 +498,7 @@ void RL_BindTo(int unit, DGLuint texture)
     gl.Bind(renderTextures ? texture : 0);
 }
 
-void RL_ClearHash(listhash_t * hash)
+static void RL_ClearHash(listhash_t *hash)
 {
     memset(hash, 0, sizeof(listhash_t) * RL_HASH_SIZE);
 }
@@ -519,12 +517,12 @@ void RL_Init(void)
     memset(&skyMaskList, 0, sizeof(skyMaskList));
 }
 
-void RL_ClearVertices(void)
+static void RL_ClearVertices(void)
 {
     numVertices = 0;
 }
 
-void RL_DestroyVertices(void)
+static void RL_DestroyVertices(void)
 {
     int     i;
 
@@ -543,7 +541,7 @@ void RL_DestroyVertices(void)
 /**
  * Allocate vertices from the global vertex array.
  */
-uint RL_AllocateVertices(uint count)
+static uint RL_AllocateVertices(uint count)
 {
     uint    i, base = numVertices;
 
@@ -571,7 +569,7 @@ uint RL_AllocateVertices(uint count)
     return base;
 }
 
-void RL_DestroyList(rendlist_t * rl)
+static void RL_DestroyList(rendlist_t *rl)
 {
     // All the list data will be destroyed.
     if(rl->data)
@@ -583,14 +581,14 @@ void RL_DestroyList(rendlist_t * rl)
 #endif
 
     rl->cursor = NULL;
-    rl->tex.detail = NULL;
+    //rl->tex.detail = NULL;
     rl->intertex.detail = NULL;
     rl->last = NULL;
     rl->size = 0;
     rl->flags = 0;
 }
 
-void RL_DeleteHash(listhash_t * hash)
+static void RL_DeleteHash(listhash_t *hash)
 {
     int     i;
     rendlist_t *list, *next;
@@ -631,12 +629,12 @@ void RL_DeleteLists(void)
 /**
  * Set the R/W cursor to the beginning.
  */
-void RL_RewindList(rendlist_t * rl)
+static void RL_RewindList(rendlist_t *rl)
 {
     rl->cursor = rl->data;
     rl->last = NULL;
     rl->flags = 0;
-    rl->tex.detail = NULL;
+    //rl->tex.detail = NULL;
     rl->intertex.detail = NULL;
 
     // The interpolation target must be explicitly set (in RL_AddPoly).
@@ -644,7 +642,7 @@ void RL_RewindList(rendlist_t * rl)
     rl->interpos = 0;
 }
 
-void RL_RewindHash(listhash_t * hash)
+static void RL_RewindHash(listhash_t *hash)
 {
     int     i;
     rendlist_t *list;
@@ -676,7 +674,7 @@ void RL_ClearLists(void)
     skyhemispheres = 0;
 }
 
-rendlist_t *RL_CreateList(listhash_t * hash)
+static rendlist_t *RL_CreateList(listhash_t *hash)
 {
     rendlist_t *list = Z_Calloc(sizeof(rendlist_t), PU_STATIC, 0);
 
@@ -688,7 +686,7 @@ rendlist_t *RL_CreateList(listhash_t * hash)
     return list;
 }
 
-rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
+static rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
 {
     listhash_t *hash, *table;
     rendlist_t *dest, *convertable = NULL;
@@ -717,7 +715,8 @@ rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
     hash = &table[poly->tex.id % RL_HASH_SIZE];
     for(dest = hash->first; dest; dest = dest->next)
     {
-        if(dest->tex.id == poly->tex.id)
+        if(dest->tex.id == poly->tex.id &&
+           dest->tex.detail == poly->tex.detail)
         {
             if(!poly->intertex.id && !dest->intertex.id)
             {
@@ -734,7 +733,8 @@ rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
 
             // Possibly an exact match?
             if(poly->intertex.id == dest->intertex.id &&
-               poly->interpos == dest->interpos)
+               poly->interpos == dest->interpos &&
+               poly->intertex.detail == dest->intertex.detail)
             {
                 return dest;
             }
@@ -758,6 +758,7 @@ rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
     dest->tex.id = poly->tex.id;
     dest->tex.width = poly->tex.width;
     dest->tex.height = poly->tex.height;
+    dest->tex.detail = poly->tex.detail;
 
     if(poly->intertex.id)
     {
@@ -768,7 +769,7 @@ rendlist_t *RL_GetListFor(rendpoly_t *poly, boolean useLights)
     return dest;
 }
 
-rendlist_t *RL_GetLightListFor(DGLuint texture)
+static rendlist_t *RL_GetLightListFor(DGLuint texture)
 {
     listhash_t *hash;
     rendlist_t *dest;
@@ -791,7 +792,7 @@ rendlist_t *RL_GetLightListFor(DGLuint texture)
 /**
  * Returns a pointer to the start of the allocated data.
  */
-void *RL_AllocateData(rendlist_t *list, int bytes)
+static void *RL_AllocateData(rendlist_t *list, int bytes)
 {
     int     required;
     int     startOffset = list->cursor - list->data;
@@ -859,7 +860,7 @@ void *RL_AllocateData(rendlist_t *list, int bytes)
     return list->data + startOffset;
 }
 
-void RL_AllocateIndices(rendlist_t * list, int numIndices)
+static void RL_AllocateIndices(rendlist_t *list, int numIndices)
 {
     void   *indices;
 
@@ -870,7 +871,7 @@ void RL_AllocateIndices(rendlist_t * list, int numIndices)
     list->last->indices = indices;
 }
 
-void RL_QuadTexCoords(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
+static void RL_QuadTexCoords(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *tex)
 {
     float   width, height;
 
@@ -914,7 +915,7 @@ static float RL_ShinyVertical(float dy, float dx)
     return ( (atan(dy/dx) / (PI/2)) + 1 ) / 2;
 }
 
-void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly)
+static void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly)
 {
     vec2_t surface, normal, projected, s, reflected;
     vec2_t view;
@@ -974,8 +975,8 @@ void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly)
     }
 }
 
-void RL_QuadDetailTexCoords(gl_texcoord_t * tc, rendpoly_t *poly,
-                            gltexture_t * tex)
+static void RL_QuadDetailTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
+                            gltexture_t *tex)
 {
     float   mul = tex->detail->scale * detailScale;
 
@@ -994,7 +995,7 @@ void RL_QuadDetailTexCoords(gl_texcoord_t * tc, rendpoly_t *poly,
     tc[3].st[0] *= mul;
 }
 
-void RL_QuadColors(gl_color_t * color, rendpoly_t *poly)
+static void RL_QuadColors(gl_color_t *color, rendpoly_t *poly)
 {
     if(poly->flags & RPF_SKY_MASK)
     {
@@ -1025,7 +1026,7 @@ void RL_QuadColors(gl_color_t * color, rendpoly_t *poly)
         255;
 }
 
-void RL_QuadVertices(gl_vertex_t * v, rendpoly_t *poly)
+static void RL_QuadVertices(gl_vertex_t *v, rendpoly_t *poly)
 {
     v[0].xyz[0] = v[3].xyz[0] = poly->vertices[0].pos[VX];
     v[0].xyz[1] = poly->vertices[2].pos[VZ];
@@ -1037,7 +1038,7 @@ void RL_QuadVertices(gl_vertex_t * v, rendpoly_t *poly)
     v[1].xyz[2] = v[2].xyz[2] = poly->vertices[1].pos[VY];
 }
 
-void RL_QuadLightCoords(gl_texcoord_t * tc, dynlight_t *dyn)
+static void RL_QuadLightCoords(gl_texcoord_t *tc, dynlight_t *dyn)
 {
     tc[0].st[0] = tc[3].st[0] = dyn->s[0];
     tc[0].st[1] = tc[1].st[1] = dyn->t[0];
@@ -1045,7 +1046,7 @@ void RL_QuadLightCoords(gl_texcoord_t * tc, dynlight_t *dyn)
     tc[2].st[1] = tc[3].st[1] = dyn->t[1];
 }
 
-void RL_FlatShinyTexCoords(gl_texcoord_t *tc, float xy[2], float height)
+static void RL_FlatShinyTexCoords(gl_texcoord_t *tc, float xy[2], float height)
 {
     vec2_t view, start;
     float distance;
@@ -1072,8 +1073,8 @@ void RL_FlatShinyTexCoords(gl_texcoord_t *tc, float xy[2], float height)
     tc->st[1] = RL_ShinyVertical(vy - height, distance);
 }
 
-void RL_FlatDetailTexCoords(gl_texcoord_t *tc, float xy[2], rendpoly_t *poly,
-                            gltexture_t *tex)
+static void RL_FlatDetailTexCoords(gl_texcoord_t *tc, float xy[2], rendpoly_t *poly,
+                                   gltexture_t *tex)
 {
     tc->st[0] =
         (xy[VX] +
@@ -1089,8 +1090,8 @@ void RL_FlatDetailTexCoords(gl_texcoord_t *tc, float xy[2], rendpoly_t *poly,
 /**
  * Inter = 0 in the bottom. Only 's' is affected.
  */
-void RL_InterpolateTexCoordS(gl_texcoord_t * tc, uint index, uint top,
-                             uint bottom, float inter)
+static void RL_InterpolateTexCoordS(gl_texcoord_t *tc, uint index, uint top,
+                                    uint bottom, float inter)
 {
     // Start working with the bottom.
     memcpy(&tc[index], &tc[bottom], sizeof(gl_texcoord_t));
@@ -1101,8 +1102,8 @@ void RL_InterpolateTexCoordS(gl_texcoord_t * tc, uint index, uint top,
 /**
  * Inter = 0 in the bottom. Only 't' is affected.
  */
-void RL_InterpolateTexCoordT(gl_texcoord_t * tc, uint index, uint top,
-                             uint bottom, float inter)
+static void RL_InterpolateTexCoordT(gl_texcoord_t *tc, uint index, uint top,
+                                    uint bottom, float inter)
 {
     // Start working with the bottom.
     memcpy(&tc[index], &tc[bottom], sizeof(gl_texcoord_t));
@@ -1110,7 +1111,7 @@ void RL_InterpolateTexCoordT(gl_texcoord_t * tc, uint index, uint top,
     tc[index].st[1] += (tc[top].st[1] - tc[bottom].st[1]) * inter;
 }
 
-void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
+static void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
 {
     uint    base;
     primhdr_t *hdr = NULL;
@@ -1181,7 +1182,7 @@ void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
     }
 }
 
-void RL_WriteDivQuad(rendlist_t * list, rendpoly_t *poly)
+static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 {
     gl_vertex_t *v;
     uint    base;
@@ -1364,7 +1365,7 @@ void RL_WriteDivQuad(rendlist_t * list, rendpoly_t *poly)
     }
 }
 
-void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
+static void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
 {
     rendpoly_vertex_t *vtx;
     gl_color_t *col;
@@ -1484,7 +1485,7 @@ void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
     }
 }
 
-void RL_EndWrite(rendlist_t * list)
+static void RL_EndWrite(rendlist_t *list)
 {
     // The primitive has been written, update the size in the header.
     list->last->size = list->cursor - (byte *) list->last;
@@ -1495,8 +1496,8 @@ void RL_EndWrite(rendlist_t * list)
     *(int *) list->cursor = 0;
 }
 
-void RL_WriteDynLight(rendlist_t * list, dynlight_t *dyn, primhdr_t * prim,
-                      rendpoly_t *poly)
+static void RL_WriteDynLight(rendlist_t *list, dynlight_t *dyn, primhdr_t *prim,
+                             rendpoly_t *poly)
 {
     unsigned int num;
     uint    i, base;
@@ -1645,10 +1646,6 @@ void RL_AddPoly(rendpoly_t *poly)
     // Find/create a rendering list for the polygon's texture.
     li = RL_GetListFor(poly, useLights);
 
-    // The entire list will use the same detail textures.
-    li->tex.detail = poly->tex.detail;
-    li->intertex.detail = poly->intertex.detail;
-
     // This becomes the new last primitive.
     li->last = hdr = RL_AllocateData(li, sizeof(primhdr_t));
 
@@ -1705,7 +1702,7 @@ void RL_FloatRGB(byte *rgb, float *dest)
  * Draws the privitives that match the conditions. If no condition bits
  * are given, all primitives are considered eligible.
  */
-void RL_DrawPrimitives(int conditions, rendlist_t * list)
+static void RL_DrawPrimitives(int conditions, rendlist_t *list)
 {
     primhdr_t *hdr;
     float   color[4];
@@ -1775,7 +1772,7 @@ void RL_DrawPrimitives(int conditions, rendlist_t * list)
     }
 }
 
-void RL_BlendState(rendlist_t * list, int modMode)
+static void RL_BlendState(rendlist_t *list, int modMode)
 {
 #ifdef _DEBUG
     if(numTexUnits < 2)
@@ -1791,7 +1788,7 @@ void RL_BlendState(rendlist_t * list, int modMode)
     gl.SetInteger(DGL_ENV_ALPHA, list->interpos * 256);
 }
 
-void RL_DetailFogState(void)
+static void RL_DetailFogState(void)
 {
     // The fog color alpha is probably meaningless?
     byte    midGray[4] = { 0x80, 0x80, 0x80, fogColor[3] };
@@ -1804,7 +1801,7 @@ void RL_DetailFogState(void)
  * Set per-list GL state.
  * Returns the conditions to select primitives.
  */
-int RL_SetupListState(listmode_t mode, rendlist_t * list)
+static int RL_SetupListState(listmode_t mode, rendlist_t *list)
 {
     switch (mode)
     {
@@ -1990,7 +1987,7 @@ int RL_SetupListState(listmode_t mode, rendlist_t * list)
     return DCF_SKIP;
 }
 
-void RL_FinishListState(listmode_t mode, rendlist_t *list)
+static void RL_FinishListState(listmode_t mode, rendlist_t *list)
 {
     switch (mode)
     {
@@ -2017,7 +2014,7 @@ void RL_FinishListState(listmode_t mode, rendlist_t *list)
 /**
  * Setup GL state for an entire rendering pass (compassing multiple lists).
  */
-void RL_SetupPassState(listmode_t mode)
+static void RL_SetupPassState(listmode_t mode)
 {
     switch (mode)
     {
@@ -2299,7 +2296,7 @@ void RL_SetupPassState(listmode_t mode)
 /**
  * Renders the given lists. They must not be empty.
  */
-void RL_RenderLists(listmode_t mode, rendlist_t ** lists, int num)
+static void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 {
     int     i;
 
@@ -2326,7 +2323,7 @@ void RL_RenderLists(listmode_t mode, rendlist_t ** lists, int num)
 /**
  * Extracts a selection of lists from the hash.
  */
-uint RL_CollectLists(listhash_t * table, rendlist_t ** lists)
+static uint RL_CollectLists(listhash_t *table, rendlist_t **lists)
 {
     rendlist_t *it;
     uint    i, count = 0;
@@ -2354,7 +2351,7 @@ uint RL_CollectLists(listhash_t * table, rendlist_t ** lists)
     return count;
 }
 
-void RL_LockVertices(void)
+static void RL_LockVertices(void)
 {
     // We're only locking the vertex and color arrays, so disable the
     // texcoord arrays for now. Every pass will enable/disable the texcoords
@@ -2365,7 +2362,7 @@ void RL_LockVertices(void)
     gl.Arrays(vertices, colors, 0, NULL, 0 /*numVertices */ );
 }
 
-void RL_UnlockVertices(void)
+static void RL_UnlockVertices(void)
 {
     // Nothing was locked.
     //gl.UnlockArrays();

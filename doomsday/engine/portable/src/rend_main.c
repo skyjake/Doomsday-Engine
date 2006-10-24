@@ -477,7 +477,8 @@ static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
     // unblended surfaces.
     if(!enabled || !xlat || !smoothTexAnim || numTexUnits < 2 ||
        xlat->current == xlat->next || (!usingFog && xlat->inter < 0) ||
-       ((surface->flags & SUF_TEXFIX) && devNoTexFix))
+       ((surface->flags & SUF_TEXFIX) && devNoTexFix) ||
+       renderTextures == 2)
     {
         // No blending for you, my friend.
         memset(&poly->intertex, 0, sizeof(poly->intertex));
@@ -630,6 +631,13 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
     if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_GRAY);
+
+        // We need the properties of the real flat/texture.
+        if(surface->isflat)
+            GL_GetFlatInfo(surface->texture, true);
+        else
+            GL_GetTextureInfo2(surface->texture, true);
+
         flags = surface->flags & ~(SUF_TEXFIX|SUF_BLEND);
     }
     else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
@@ -646,9 +654,9 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
     else
     {
         if(surface->isflat)
-            poly->tex.id = curtex = GL_PrepareFlat(surface->texture);
+            poly->tex.id = curtex = GL_PrepareFlat2(surface->texture, true);
         else
-            poly->tex.id = curtex = GL_PrepareTexture(surface->texture);
+            poly->tex.id = curtex = GL_PrepareTexture2(surface->texture, true);
 
         flags = surface->flags;
     }
