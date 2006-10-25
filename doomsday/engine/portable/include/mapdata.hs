@@ -34,7 +34,7 @@ struct subsector
     INT     int         firstline
     PTR     polyobj_s*  poly    // NULL, if there is no polyobj.
     BYTE    byte        flags
-    -       char        numverts
+    -       short       numverts
     -       fvertex_t*  verts   // A sorted list of edge vertices.
     -       fvertex_t   bbox[2] // Min and max points.
     -       fvertex_t   midpoint    // Center of vertices.
