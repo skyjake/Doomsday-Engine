@@ -189,9 +189,9 @@ void PO_SetupPolyobjs(void)
 
                 for(k = 0; k < 2; ++k)
                 {
-                    if(line->sidenum[k] != NO_INDEX)
+                    if(line->sides[k])
                     {
-                        side = SIDE_PTR(line->sidenum[k]);
+                        side = line->sides[k];
 
                         side->top.flags |= SUF_NO_RADIO;
                         side->middle.flags |= SUF_NO_RADIO;

@@ -199,8 +199,7 @@ static boolean Rend_DoesMidTextureFillGap(line_t *line, boolean frontside)
     {
         sector_t *front = (frontside ? line->frontsector:line->backsector);
         sector_t *back = (frontside ? line->backsector:line->frontsector);
-        side_t* side = (frontside ? SIDE_PTR(line->sidenum[0]) :
-                        SIDE_PTR(line->sidenum[1]));
+        side_t* side = (frontside ? line->sides[0]:line->sides[1]);
 
         if(side->middle.texture != 0)
         {
@@ -392,10 +391,10 @@ static int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line,
     sideinfo_t *sinfo;
     int     i;
 
-    if(line->sidenum[side] == NO_INDEX)
+    if(!line->sides[side])
         return 0;
 
-    sinfo = SIDE_PTR(line->sidenum[side])->info;
+    sinfo = line->sides[side]->info;
 
     *neighbor = sinfo->alignneighbor[leftNeighbor ? 0 : 1];
     if(!*neighbor)
@@ -404,9 +403,9 @@ static int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line,
     // We need to decide which side of the neighbor is chosen.
     for(i = 0; i < 2; ++i)
     {
-        if((*neighbor)->sidenum[i] != NO_INDEX)
+        if((*neighbor)->sides[i])
         {
-            sinfo = SIDE_PTR((*neighbor)->sidenum[i])->info;
+            sinfo = (*neighbor)->sides[i]->info;
 
             // Do the selection based on the backlink.
             if(sinfo && sinfo->alignneighbor[leftNeighbor ? 1 : 0] == line)
@@ -510,8 +509,8 @@ static void Rend_RadioScanNeighbors(shadowcorner_t top[2],
                 continue;
 
             edges[i].line = iter;
-            if(iter->sidenum[scanSide] != NO_INDEX)
-                edges[i].sideInfo = SIDE_PTR(iter->sidenum[scanSide])->info;
+            if(iter->sides[scanSide])
+                edges[i].sideInfo = iter->sides[scanSide]->info;
             else
                 edges[i].sideInfo = NULL;
             edges[i].sector = scanSector;
@@ -643,8 +642,8 @@ static void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
     sideinfo_t *sInfo = NULL;
     unsigned int i;
 
-    if(line->sidenum[side] != NO_INDEX)
-        sInfo = SIDE_PTR(line->sidenum[side])->info;
+    if(line->sides[side])
+        sInfo = line->sides[side]->info;
 
     memset(sideCorners, 0, sizeof(sideCorners));
 
@@ -1157,7 +1156,7 @@ static float Rend_RadioEdgeOpenness(line_t *line, boolean frontside,
     if(!back)
         return 0;               // No backsector, this is a one-sided wall.
 
-    fside = SIDE_PTR(line->sidenum[frontside? 0 : 1]);
+    fside = line->sides[frontside? 0 : 1];
 
     if(isCeiling)
     {

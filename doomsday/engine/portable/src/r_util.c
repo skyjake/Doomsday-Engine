@@ -277,9 +277,9 @@ line_t *R_GetLineForSide(int sideNumber)
     if(!sector)
         return NULL;
 
-    for(i = 0; i < sector->linecount; i++)
-        if(sector->Lines[i]->sidenum[0] == sideNumber ||
-           sector->Lines[i]->sidenum[1] == sideNumber)
+    for(i = 0; i < sector->linecount; ++i)
+        if(sector->Lines[i]->sides[0] == side ||
+           sector->Lines[i]->sides[1] == side)
         {
             return sector->Lines[i];
         }

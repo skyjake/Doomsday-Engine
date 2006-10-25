@@ -144,7 +144,7 @@ struct line
     FIXED   fixed_t     dy
     INT     slopetype_t slopetype
     INT     int         validcount
-    INT     int[2]      sidenum
+    PTR     side_s*[2]  sides
     FIXED   fixed_t[4]  bbox
 end
 

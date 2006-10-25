@@ -445,7 +445,7 @@ static void DL_ProcessWallSeg(lumobj_t * lum, seg_t *seg, sector_t *frontsec)
         return;
 
     // Which side?
-    if(SIDE_PTR(seg->linedef->sidenum[0]) != seg->sidedef)
+    if(seg->linedef->sides[0] != seg->sidedef)
         backSide = true;
 
     if(backsec)
@@ -691,7 +691,7 @@ static void DL_ProcessWallGlow(seg_t *seg, sector_t *sect)
         return;                 // Nope...
 
     // Which side?
-    if(SIDE_PTR(seg->linedef->sidenum[0]) != seg->sidedef)
+    if(seg->linedef->sides[0] != seg->sidedef)
         backSide = true;
 
     // Visible plane heights.

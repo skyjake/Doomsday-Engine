@@ -154,15 +154,15 @@ static void R_SetSectorLinks(sector_t *sec)
             return;
 
         // Check which way the line is facing.
-        sid = SIDE_PTR(lin->sidenum[0]);
+        sid = lin->sides[0];
         if(sid->sector == sec)
         {
             frontsid = sid;
-            backsid = SIDE_PTR(lin->sidenum[1]);
+            backsid = lin->sides[1];
         }
         else
         {
-            frontsid = SIDE_PTR(lin->sidenum[1]);
+            frontsid = lin->sides[1];
             backsid = sid;
         }
         back = backsid->sector;
@@ -2030,8 +2030,8 @@ void R_InitLineNeighbors(void)
             info = LINE_INFO(line);
 
             // Which side is this?
-            side = SIDE_PTR(line->frontsector == sector ? line->sidenum[0] :
-                            line->sidenum[1])->info;
+            side = (line->frontsector == sector ? line->sides[0] :
+                            line->sides[1])->info;
 
             R_FindLineNeighbors(sector, line, side->neighbor, 0);
 
@@ -2074,7 +2074,7 @@ void R_InitLineNeighbors(void)
                     //if(owner->list[m] == k) continue;
                     R_FindLineNeighbors(SECTOR_PTR(owner->list[m]), line,
                                         side->alignneighbor,
-                                        (side == SIDE_PTR(line->sidenum[0])->info ? 1 : -1));
+                                        (side == line->sides[0]->info ? 1 : -1));
                 }
             }
 

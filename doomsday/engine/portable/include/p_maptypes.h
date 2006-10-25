@@ -142,7 +142,7 @@ typedef struct line_s {
     fixed_t             dy;
     slopetype_t         slopetype;
     int                 validcount;
-    int                 sidenum[2];
+    struct side_s*      sides[2];
     fixed_t             bbox[4];
 } line_t;
 

@@ -386,7 +386,7 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
     v2 = line->v2;
 
     // Let's see which sidedef is present.
-    if(line->sidenum[1] != NO_INDEX && SIDE_PTR(line->sidenum[1]) == side)
+    if(line->sides[1] && line->sides[1] == side)
     {
         // Flip vertices, this is the backside.
         v1 = line->v2;
@@ -462,11 +462,11 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
  */
 static side_t *R_GetSectorSide(line_t *line, sector_t *sector)
 {
-    side_t *side = SIDE_PTR(line->sidenum[0]);
+    side_t *side = line->sides[0];
 
     // Swap if that wasn't the right one.
     if(side->sector != sector)
-        return SIDE_PTR(line->sidenum[1]);
+        return line->sides[1];
 
     return side;
 }
@@ -645,8 +645,7 @@ static void Rend_DecorateLine(int index)
     {
         // This is a single-sided line. We only need to worry about the
         // middle texture.
-        side =
-            SIDE_PTR(line->sidenum[0] != NO_INDEX ? line->sidenum[0] : line->sidenum[1]);
+        side = (line->sides[0]? line->sides[0] : line->sides[1]);
 
         if(side->middle.texture > 0)
         {

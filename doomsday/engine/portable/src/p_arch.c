@@ -2174,7 +2174,7 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
     // Furthermore, once we have a way to convert internal member to property
     // we should no longer need these special case constants (eg DDVT_SECT_PTR).
     else if(valueType == DDVT_SECT_PTR || valueType == DDVT_VERT_PTR ||
-            valueType == DDVT_LINE_PTR)
+            valueType == DDVT_LINE_PTR || valueType == DDVT_SIDE_PTR)
     {
         int idx = NO_INDEX;
 
@@ -2212,6 +2212,7 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
             Con_Error("ReadValue: %s incompatible with value type %s.\n",
                       valueType == DDVT_SECT_PTR? "DDVT_SECT_PTR" :
                       valueType == DDVT_VERT_PTR? "DDVT_VERT_PTR" :
+                      valueType == DDVT_SIDE_PTR? "DDVT_SIDE_PTR" :
                       "DDVT_LINE_PTR", value_Str(prop->size));
         }
 
@@ -2222,6 +2223,16 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
             line_t** d = dst;
             if(idx >= 0 && idx < map->numlines)
                 *d = &map->lines[idx];
+            else
+                *d = NULL;
+            break;
+            }
+
+        case DDVT_SIDE_PTR:
+            {
+            side_t** d = dst;
+            if(idx >= 0 && idx < map->numsides)
+                *d = &map->sides[idx];
             else
                 *d = NULL;
             break;
@@ -2399,11 +2410,11 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
             break;
 
         case DAM_SIDE0:
-            ReadValue(map, DMT_LINE_SIDENUM, &p->sidenum[0], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_SIDE_PTR, &p->sides[0], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_SIDE1:
-            ReadValue(map, DMT_LINE_SIDENUM, &p->sidenum[1], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_SIDE_PTR, &p->sides[1], buffer + prop->offset, prop, idx);
             break;
 
         default:
@@ -2818,13 +2829,12 @@ static void P_ProcessSegs(gamemap_t* map, int version)
         if(seg->linedef)
         {
             ldef = seg->linedef;
-            seg->sidedef = &map->sides[ldef->sidenum[side]];
-            seg->frontsector = map->sides[ldef->sidenum[side]].sector;
+            seg->sidedef = ldef->sides[side];
+            seg->frontsector = ldef->sides[side]->sector;
 
-            if((ldef->flags & ML_TWOSIDED) &&
-               (ldef->sidenum[side ^ 1] != NO_INDEX))
+            if((ldef->flags & ML_TWOSIDED) && ldef->sides[side ^ 1])
             {
-                seg->backsector = map->sides[ldef->sidenum[side ^ 1]].sector;
+                seg->backsector = ldef->sides[side ^ 1]->sector;
             }
             else
             {
@@ -2952,13 +2962,13 @@ static void P_FinishLineDefs(gamemap_t* map)
             ld->bbox[BOXTOP]    = v1->pos[VY];
         }
 
-        if(ld->sidenum[0] >= 0 && ld->sidenum[0] < map->numsides)
-            ld->frontsector = map->sides[ld->sidenum[0]].sector;
+        if(ld->sides[0])
+            ld->frontsector = ld->sides[0]->sector;
         else
             ld->frontsector = 0;
 
-        if(ld->sidenum[1] >= 0 && ld->sidenum[1] < map->numsides)
-            ld->backsector = map->sides[ld->sidenum[1]].sector;
+        if(ld->sides[1])
+            ld->backsector = ld->sides[1]->sector;
         else
             ld->backsector = 0;
 

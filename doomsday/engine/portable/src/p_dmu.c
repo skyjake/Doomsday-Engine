@@ -431,8 +431,8 @@ void* P_AllocDummy(int type, void* extraData)
                 dummyLines[i].inUse = true;
                 dummyLines[i].extraData = extraData;
                 dummyLines[i].line.header.type = DMU_LINE;
-                dummyLines[i].line.sidenum[0] = -1;
-                dummyLines[i].line.sidenum[1] = -1;
+                dummyLines[i].line.sides[0] =
+                    dummyLines[i].line.sides[1] = NULL;
                 return &dummyLines[i];
             }
         }
@@ -1175,10 +1175,10 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_LINE_BACKSECTOR, &p->backsector, args, 0);
             break;
         case DMU_SIDE0:
-            SetValue(DMT_LINE_SIDENUM, &p->sidenum[0], args, 0);
+            SetValue(DMT_LINE_SIDES, &p->sides[0], args, 0);
             break;
         case DMU_SIDE1:
-            SetValue(DMT_LINE_SIDENUM, &p->sidenum[1], args, 0);
+            SetValue(DMT_LINE_SIDES, &p->sides[1], args, 0);
             break;
         case DMU_VALID_COUNT:
             SetValue(DMT_LINE_VALIDCOUNT, &p->validcount, args, 0);
@@ -1868,14 +1868,14 @@ static int GetProperty(void* ptr, void* context)
         {
             line_t* line = (line_t*)ptr;
             if(args->modifiers & DMU_SIDE0_OF_LINE)
-                p = SIDE_PTR(line->sidenum[0]);
+                p = line->sides[0];
             else
             {
-                if(line->sidenum[1] == NO_INDEX)
+                if(!line->sides[1])
                     Con_Error("GetProperty: Line %d does not have a back side.\n",
                               GET_LINE_IDX(line));
 
-                p = SIDE_PTR(line->sidenum[1]);
+                p = line->sides[1];
             }
         }
 
@@ -2160,17 +2160,12 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
             break;
         case DMU_SIDE0:
-        {
-            side_t* sidePtr = (p->sidenum[0] == NO_INDEX? NULL : SIDE_PTR(p->sidenum[0]));
-            GetValue(DDVT_PTR, &sidePtr, args, 0);
+            GetValue(DDVT_PTR, &p->sides[0], args, 0);
             break;
-        }
         case DMU_SIDE1:
-        {
-            side_t* sidePtr = (p->sidenum[1] == NO_INDEX? NULL : SIDE_PTR(p->sidenum[1]));
-            GetValue(DDVT_PTR, &sidePtr, args, 0);
+            GetValue(DDVT_PTR, &p->sides[1], args, 0);
             break;
-        }
+
         case DMU_BOUNDING_BOX:
             if(args->valueType == DDVT_PTR)
             {

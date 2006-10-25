@@ -374,8 +374,8 @@ void P_PlaneChanged(sector_t *sector, int plane)
 
     for(i = 0; i < sector->linecount; ++i)
     {
-        front = SIDE_PTR(sector->Lines[i]->sidenum[0]);
-        back = SIDE_PTR(sector->Lines[i]->sidenum[1]);
+        front = sector->Lines[i]->sides[0];
+        back  = sector->Lines[i]->sides[1];
 
         if(!front || !front->sector ||
            front->sector->planes[plane]->info->linked ||

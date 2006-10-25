@@ -507,10 +507,10 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
         return false; // huh?
 
     // Missing side?
-    if(line->sidenum[backside] == NO_INDEX)
+    if(!line->sides[backside])
         return false;
 
-    side = SIDE_PTR(line->sidenum[backside]);
+    side = line->sides[backside];
     switch(section)
     {
     case SEG_TOP:
@@ -539,15 +539,15 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
     for(i = 0; i < 2; ++i)
     {
         // Missing side?
-        if(line->sidenum[i] == NO_INDEX)
+        if(!line->sides[i])
             continue;
 
-        side = SIDE_PTR(line->sidenum[i]);
+        side = line->sides[i];
         side->info->flags |=
             (SIDEINF_TOPPVIS|SIDEINF_MIDDLEPVIS|SIDEINF_BOTTOMPVIS);
 
         // A two sided line?
-        if(line->sidenum[0] != NO_INDEX && line->sidenum[1] != NO_INDEX)
+        if(line->sides[0] && line->sides[1])
         {
             // Check middle texture
             if(!(side->middle.texture || side->middle.texture == -1))
@@ -1055,8 +1055,8 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
     boolean     backsecSkyFix = false;
 
     backsec = seg->backsector;
-    sid = SIDE_PTR(seg->linedef->sidenum[0]);
-    backsid = SIDE_PTR(seg->linedef->sidenum[1]);
+    sid = seg->linedef->sides[0];
+    backsid = seg->linedef->sides[1];
     ldef = seg->linedef;
     ldef->flags |= ML_MAPPED; // This line is now seen in the map.
 
