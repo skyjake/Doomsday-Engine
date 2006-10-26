@@ -841,6 +841,10 @@ void R_InitTranslationTables(void)
     // Allocate translation tables
     translationtables =
         Z_Malloc(256 * 3 * ( /*MAXPLAYERS*/ 8 - 1) + 255, PU_REFRESHTRANS, 0);
+    /* r_data.c:844: warning: cast from pointer to integer of different size
+       r_data.c:844: warning: cast to pointer from integer of different size */
+
+    ASSERT_NOT_64BIT();
     translationtables = (byte *) (((int) translationtables + 255) & ~255);
 
     for(i = 0; i < 3 * ( /*MAXPLAYERS*/ 8 - 1); ++i)

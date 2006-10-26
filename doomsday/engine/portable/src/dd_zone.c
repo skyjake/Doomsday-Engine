@@ -622,6 +622,9 @@ void Z_ChangeTag2(void *ptr, int tag)
 
     if(block->id != ZONEID)
         Con_Error("Z_ChangeTag: modifying a block without ZONEID");
+
+    /* dd_zone.c:625: warning: cast from pointer to integer of different size */
+    ASSERT_NOT_64BIT();
     if(tag >= PU_PURGELEVEL && (unsigned) block->user < 0x100)
         Con_Error("Z_ChangeTag: an owner is required for purgable blocks");
     block->tag = tag;

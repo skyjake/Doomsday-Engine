@@ -1438,6 +1438,8 @@ int Def_Get(int type, char *id, void *out)
         return Def_GetSoundNumForName(id);
 
     case DD_DEF_SOUND_LUMPNAME:
+	/* def_main.c:1441: warning: cast from pointer to integer of different size */
+	ASSERT_NOT_64BIT();
         i = (int) id;
         if(i < 0 || i >= count_sounds.num)
             return false;
