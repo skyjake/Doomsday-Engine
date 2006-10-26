@@ -3090,18 +3090,18 @@ static void P_GroupLines(gamemap_t* map)
 
     Con_Message(" Build line and subsector tables\n");
     // build line tables for each sector
-    linebuffer = Z_Malloc(numUniqueLines * sizeof(line_t), PU_LEVEL, NULL);
+    linebuffer = Z_Malloc(numUniqueLines * sizeof(line_t*), PU_LEVELSTATIC, NULL);
     linebptr = linebuffer;
-    linesInSector = Z_Malloc(map->numsectors * sizeof(int), PU_LEVEL, NULL);
+    linesInSector = M_Malloc(map->numsectors * sizeof(int));
     memset(linesInSector, 0, map->numsectors * sizeof(int));
 
     // build subsector tables for each sector
-    ssecbuffer = Z_Malloc(map->numsubsectors * sizeof(int), PU_LEVEL, NULL);
+    ssecbuffer = Z_Malloc(map->numsubsectors * sizeof(subsector_t*), PU_LEVELSTATIC, NULL);
     ssecbptr = ssecbuffer;
-    ssecsInSector = Z_Malloc(map->numsectors * sizeof(int), PU_LEVEL, NULL);
+    ssecsInSector = M_Malloc(map->numsectors * sizeof(int));
     memset(ssecsInSector, 0, map->numsectors * sizeof(int));
 
-    for(i = 0, sec = map->sectors; i < map->numsectors; i++, sec++)
+    for(i = 0, sec = map->sectors; i < map->numsectors; ++i, sec++)
     {
         if(sec->linecount > 0)
         {
@@ -3116,7 +3116,7 @@ static void P_GroupLines(gamemap_t* map)
         }
     }
 
-    for(k = 0, li = map->lines; k < map->numlines; k++, li++)
+    for(k = 0, li = map->lines; k < map->numlines; ++k, li++)
     {
         if(li->frontsector != NULL)
         {
@@ -3131,7 +3131,7 @@ static void P_GroupLines(gamemap_t* map)
         }
     }
 
-    for(i = 0, ss = map->subsectors; i < map->numsubsectors; i++, ss++)
+    for(i = 0, ss = map->subsectors; i < map->numsubsectors; ++i, ss++)
     {
         if(ss->sector != NULL)
         {
@@ -3200,6 +3200,9 @@ static void P_GroupLines(gamemap_t* map)
         block = block < 0 ? 0 : block;
         sec->blockbox[BOXLEFT] = block;
     }
+
+    M_Free(linesInSector);
+    M_Free(ssecsInSector);
 }
 
 /*
@@ -3483,7 +3486,7 @@ static void P_CreateBlockMap(gamemap_t* map)
     // Create the blockmap lump
     map->blockmaplump =
         Z_Malloc(sizeof(*map->blockmaplump) * (4 + numBlocks + linetotal),
-                 PU_LEVEL, 0);
+                 PU_LEVELSTATIC, 0);
     // blockmap header
     map->blockmaplump[0] = map->bmaporgx = FLT2FIX(bMapOrigin[VX]);
     map->blockmaplump[1] = map->bmaporgy = FLT2FIX(bMapOrigin[VY]);
@@ -3558,7 +3561,7 @@ static boolean P_LoadBlockMap(gamemap_t* map, mapdatalumpinfo_t* maplump)
         wadBlockMapLump = (short *) maplump->lumpp;
 
         map->blockmaplump =
-            Z_Malloc(sizeof(*map->blockmaplump) * count, PU_LEVEL, 0);
+            Z_Malloc(sizeof(*map->blockmaplump) * count, PU_LEVELSTATIC, 0);
 
         // Expand WAD blockmap into larger internal one, by treating all
         // offsets except -1 as unsigned and zero-extending them. This
@@ -3600,7 +3603,7 @@ static void P_CreateReject(gamemap_t* map)
     if(createReject)
     {
         // Simply generate an empty REJECT LUT for now.
-        map->rejectmatrix = Z_Malloc(requiredLength, PU_LEVEL, 0);
+        map->rejectmatrix = Z_Malloc(requiredLength, PU_LEVELSTATIC, 0);
         memset(map->rejectmatrix, 0, requiredLength);
         // TODO: Generate valid REJECT for the map.
     }
@@ -3681,7 +3684,7 @@ static boolean P_LoadReject(gamemap_t* map, mapdatalumpinfo_t* maplump)
         if(maplump->lumpp == NULL)
             maplump->lumpp = (byte *) W_CacheLumpNum(maplump->lumpNum, PU_STATIC);
 
-        map->rejectmatrix = Z_Malloc(maplump->length, PU_LEVEL, 0);
+        map->rejectmatrix = Z_Malloc(maplump->length, PU_LEVELSTATIC, 0);
         memcpy(map->rejectmatrix, maplump->lumpp, maplump->length);
     }
 
