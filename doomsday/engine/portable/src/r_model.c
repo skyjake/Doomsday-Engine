@@ -740,9 +740,11 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t ** modef, modeldef_t ** nextmodef)
         if(duration == 0)
             duration = 1;
         if(offset == -1)
-	    /* r_model.c:743: warning: cast from pointer to integer of different size */
-	    ASSERT_NOT_64BIT();
+        {
+            /* r_model.c:743: warning: cast from pointer to integer of different size */
+            ASSERT_NOT_64BIT();
             offset = M_CycleIntoRange(THING_TO_ID(mo), duration);
+        }
         interp = M_CycleIntoRange(levelTime / duration + offset, 1);
         worldTime = true;
     }
