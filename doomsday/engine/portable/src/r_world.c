@@ -906,72 +906,6 @@ static void R_SubsectorPlanes(void)
     M_Free(vbuf);
 }
 
-static void R_SetVertexOwner(vertex_t *vtx, sector_t *secptr)
-{
-    int     i;
-    int    *list;
-    int     sector;
-
-    if(!secptr)
-        return;
-    sector = GET_SECTOR_IDX(secptr);
-
-    // Has this sector been already registered?
-    for(i = 0; i < vtx->info->num; ++i)
-        if(vtx->info->list[i] == sector)
-            return;             // Yes, we can exit.
-
-    // Add a new owner.
-    vtx->info->num++;
-    // Allocate a new list.
-    list = Z_Malloc(sizeof(int) * vtx->info->num, PU_LEVEL, 0);
-
-    // If there are previous references, copy them.
-    if(vtx->info->num > 1)
-    {
-        memcpy(list, vtx->info->list, sizeof(int) * (vtx->info->num - 1));
-        // Free the old list.
-        Z_Free(vtx->info->list);
-    }
-    vtx->info->list = list;
-    vtx->info->list[vtx->info->num - 1] = sector;
-}
-
-static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr)
-{
-    int     i;
-    int    *list;
-    int     line;
-
-    if(!lineptr)
-        return;
-
-    line = GET_LINE_IDX(lineptr);
-
-    // If this is a one-sided line then this is an "anchored" vertex.
-    if(!(lineptr->frontsector && lineptr->backsector))
-        vtx->info->anchored = true;
-
-    // Has this line been already registered?
-    for(i = 0; i < vtx->info->numlines; ++i)
-        if(vtx->info->linelist[i] == line)
-            return;             // Yes, we can exit.
-
-    // Add a new owner.
-    vtx->info->numlines++;
-    // Allocate a new list.
-    list = Z_Malloc(sizeof(int) * vtx->info->numlines, PU_LEVEL, 0);
-    // If there are previous references, copy them.
-    if(vtx->info->numlines > 1)
-    {
-        memcpy(list, vtx->info->linelist, sizeof(int) * (vtx->info->numlines - 1));
-        // Free the old list.
-        Z_Free(vtx->info->linelist);
-    }
-    vtx->info->linelist = list;
-    vtx->info->linelist[vtx->info->numlines - 1] = line;
-}
-
 static vertex_t *rootVtx;
 /**
  * Compares the angles of two lines that share a common vertex.
@@ -1013,6 +947,74 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
     return (angleB - angleA);
 }
 
+typedef struct ownernode_s {
+    void *data;
+    struct ownernode_s* next;
+} ownernode_t;
+
+typedef struct {
+    ownernode_t *head;
+    int         count;
+} ownerlist_t;
+
+static void R_SetVertexLineOwner(vertex_t *vtx, ownerlist_t *ownerList,
+                                 line_t *lineptr)
+{
+    int     i;
+    ownernode_t *node;
+
+    if(!lineptr)
+        return;
+
+    // If this is a one-sided line then this is an "anchored" vertex.
+    if(!(lineptr->frontsector && lineptr->backsector))
+        vtx->info->anchored = true;
+
+    // Has this line been already registered?
+    if(ownerList->count)
+    {
+        for(i = 0, node = ownerList->head; i < ownerList->count; ++i,
+            node = node->next)
+            if((line_t*) node->data == lineptr)
+                return;             // Yes, we can exit.
+    }
+
+    // Add a new owner.
+    ownerList->count++;
+
+    node = M_Malloc(sizeof(ownernode_t));
+    node->data = lineptr;
+    node->next = ownerList->head;
+    ownerList->head = node;
+}
+
+static void R_SetVertexOwner(vertex_t *vtx, ownerlist_t *ownerList,
+                             sector_t *secptr)
+{
+    int     i;
+    ownernode_t *node;
+
+    if(!secptr)
+        return;
+
+    // Has this sector been already registered?
+    if(ownerList->count)
+    {
+        for(i = 0, node = ownerList->head; i < ownerList->count; ++i,
+            node = node->next)
+            if((sector_t*) node->data == secptr)
+                return;             // Yes, we can exit.
+    }
+
+    // Add a new owner.
+    ownerList->count++;
+
+    node = M_Malloc(sizeof(ownernode_t));
+    node->data = secptr;
+    node->next = ownerList->head;
+    ownerList->head = node;
+}
+
 /**
  * Generates an array of sector references for each vertex. The list
  * includes all the sectors the vertex belongs to.
@@ -1028,13 +1030,20 @@ static void R_InitVertexOwners(void)
     line_t         *line;
     vertex_t       *v[2];
     vertexinfo_t   *own;
+    ownerlist_t    *vtxSecOwnerLists, *vtxLineOwnerLists;
 
-    // Allocate enough memory.
+    // Allocate enough memory for the vertex info.
     own = Z_Malloc(sizeof(vertexinfo_t) * numvertexes, PU_LEVELSTATIC, 0);
     memset(own, 0, sizeof(vertexinfo_t) * numvertexes);
 
     for(i = 0; i < numvertexes; ++i, own++)
         VERTEX_PTR(i)->info = own;
+
+    // Allocate memory for vertex owner processing.
+    vtxSecOwnerLists = M_Malloc(sizeof(ownerlist_t) * numvertexes);
+    memset(vtxSecOwnerLists, 0, sizeof(ownerlist_t) * numvertexes);
+    vtxLineOwnerLists = M_Malloc(sizeof(ownerlist_t) * numvertexes);
+    memset(vtxLineOwnerLists, 0, sizeof(ownerlist_t) * numvertexes);
 
     for(i = 0, sec = sectors; i < numsectors; ++i, sec++)
     {
@@ -1047,12 +1056,49 @@ static void R_InitVertexOwners(void)
 
             for(p = 0; p < 2; ++p)
             {
-                R_SetVertexOwner(v[p], line->frontsector);
-                R_SetVertexOwner(v[p], line->backsector);
-                R_SetVertexLineOwner(v[p], line);
+                int idx = GET_VERTEX_IDX(v[p]);
+
+                R_SetVertexOwner(v[p], &vtxSecOwnerLists[idx], line->frontsector);
+                R_SetVertexOwner(v[p], &vtxSecOwnerLists[idx], line->backsector);
+                R_SetVertexLineOwner(v[p], &vtxLineOwnerLists[idx], line);
             }
         }
     }
+
+    // Now "harden" the linked lists into arrays of indices and free as we go.
+    for(i = 0; i < numvertexes; ++i)
+    {
+        vertex_t   *v = VERTEX_PTR(i);
+        int        *ptr;
+        ownernode_t *node, *p;
+
+        // Sector owners:
+        v->info->num = vtxSecOwnerLists[i].count;
+        v->info->list = Z_Malloc(v->info->num * sizeof(int), PU_LEVELSTATIC, 0);
+        for(k = 0, ptr = v->info->list, node = vtxSecOwnerLists[i].head;
+            k < v->info->num; ++k, ptr++)
+        {
+            p = node->next;
+            *ptr = GET_SECTOR_IDX((sector_t*) node->data);
+            M_Free(node);
+            node = p;
+        }
+
+        // Line owners:
+        v->info->numlines = vtxLineOwnerLists[i].count;
+        v->info->linelist =
+            Z_Malloc(v->info->numlines * sizeof(int), PU_LEVELSTATIC, 0);
+        for(k = 0, ptr = v->info->linelist, node = vtxLineOwnerLists[i].head;
+            k < v->info->numlines; ++k, ptr++)
+        {
+            p = node->next;
+            *ptr = GET_LINE_IDX((line_t*) node->data);
+            M_Free(node);
+            node = p;
+        }
+    }
+    M_Free(vtxSecOwnerLists);
+    M_Free(vtxLineOwnerLists);
 
     // Sort lineowner lists for each vertex clockwise based on line angle,
     // so we can walk around the lines attached to each vertex.
