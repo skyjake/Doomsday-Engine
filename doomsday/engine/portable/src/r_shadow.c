@@ -201,9 +201,14 @@ float R_ShadowEdgeWidth(const pvec2_t edge)
     float   maxWidth = 60;
     float   w;
 
+#if 0
+    // DJS - This isn't working particularly well, it creates very uneven
+    // looking edges most of the time and it looks better disabled IMHO.
+
     // A short edge?
     if(length < normalWidth * 2)
         return length / 2;
+#endif
 
     // A long edge?
     if(length > 600)

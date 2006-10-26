@@ -49,6 +49,16 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct ownernode_s {
+    void *data;
+    struct ownernode_s* next;
+} ownernode_t;
+
+typedef struct {
+    ownernode_t *head;
+    int         count;
+} ownerlist_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -73,6 +83,8 @@ boolean levelSetup;
 nodeindex_t     *linelinks;         // indices to roots
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static vertex_t *rootVtx; // used when sorting vertex line owners.
 
 static boolean noSkyColorGiven;
 static byte skyColorRGB[4], balancedRGB[4];
@@ -450,7 +462,7 @@ static void R_PolygonizeWithoutCarving(void)
     }
 }
 
-/*
+/**
  * Recursively polygonizes all ceilings and floors.
  */
 void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
@@ -476,7 +488,7 @@ void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
     nod = NODE_PTR(bspnode);
 
     // Allocate a new list for each child.
-    childlist = malloc(childlistsize * sizeof(divline_t));
+    childlist = M_Malloc(childlistsize * sizeof(divline_t));
 
     // Copy the previous lines, from the parent nodes.
     if(divlines)
@@ -497,7 +509,7 @@ void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
     R_CreateFloorsAndCeilings(nod->children[1], childlistsize, childlist);
 
     // We are finishing with this node, free the allocated list.
-    free(childlist);
+    M_Free(childlist);
 }
 
 /**
@@ -906,7 +918,6 @@ static void R_SubsectorPlanes(void)
     M_Free(vbuf);
 }
 
-static vertex_t *rootVtx;
 /**
  * Compares the angles of two lines that share a common vertex.
  *
@@ -946,16 +957,6 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
 
     return (angleB - angleA);
 }
-
-typedef struct ownernode_s {
-    void *data;
-    struct ownernode_s* next;
-} ownernode_t;
-
-typedef struct {
-    ownernode_t *head;
-    int         count;
-} ownerlist_t;
 
 static void R_SetVertexLineOwner(vertex_t *vtx, ownerlist_t *ownerList,
                                  line_t *lineptr)
@@ -1438,8 +1439,8 @@ void R_InitSubsectorInfo(void)
 #endif
 }
 
-/*
- *  Mapinfo must be set.
+/**
+ * Mapinfo must be set.
  */
 void R_SetupFog(void)
 {
@@ -1471,7 +1472,7 @@ void R_SetupFog(void)
     }
 }
 
-/*
+/**
  * Scans all sectors for any supported DOOM.exe renderer hacks.
  * Updates sectorinfo accordingly.
  *
@@ -1988,7 +1989,7 @@ static boolean R_IsEquivalent(line_t *a, line_t *b)
             (a->v1 == b->v2 && a->v2 == b->v1));
 }
 
-/*
+/**
  * Browse through the lines in backSector.  The backNeighbor is the
  * line that 1) isn't realNeighbor and 2) connects to commonVertex.
  */
@@ -1999,7 +2000,7 @@ static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
     int     i;
     line_t *line;
 
-    for(i = 0; i < backSector->linecount; i++)
+    for(i = 0; i < backSector->linecount; ++i)
     {
         line = backSector->Lines[i];
         if(R_IsEquivalent(line, realNeighbor) || R_IsEquivalent(line, self))
@@ -2015,7 +2016,7 @@ static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
     }
 }
 
-/*
+/**
  * Calculate accurate lengths for all lines.
  */
 void R_InitLineInfo(void)
@@ -2042,7 +2043,8 @@ void R_InitLineInfo(void)
 
     // Allocate memory for the side info.
     sinfo = Z_Calloc(sizeof(sideinfo_t) * numsides, PU_LEVELSTATIC, NULL);
-    sufinfo = Z_Calloc(sizeof(surfaceinfo_t) * numsides * 3, PU_LEVELSTATIC, NULL);
+    sufinfo =
+        Z_Calloc(sizeof(surfaceinfo_t) * numsides * 3, PU_LEVELSTATIC, NULL);
     for(i = 0; i < numsides; ++i, sinfo++, sufinfo += 3)
     {
         side = SIDE_PTR(i);
@@ -2053,27 +2055,27 @@ void R_InitLineInfo(void)
     }
 }
 
-/*
+/**
  * Find line neighbours, which will be used in the FakeRadio calculations.
  */
 void R_InitLineNeighbors(void)
 {
-    line_t *line, *other;
-    sector_t *sector;
-    int     i, k, j, m;
+    int         i, k, j, m;
+    line_t     *line, *other;
+    sector_t   *sector;
     lineinfo_t *info;
     sideinfo_t *side;
+    vertex_t   *vertices[2];
     vertexinfo_t *owner;
-    vertex_t *vertices[2];
 
     // Find neighbours. We'll do this sector by sector.
-    for(k = 0; k < numsectors; k++)
+    for(k = 0; k < numsectors; ++k)
     {
         sector = SECTOR_PTR(k);
-        for(i = 0; i < sector->linecount; i++)
+        for(i = 0; i < sector->linecount; ++i)
         {
             line = sector->Lines[i];
-            info = LINE_INFO(line);
+            info = line->info;
 
             // Which side is this?
             side = (line->frontsector == sector ? line->sides[0] :
@@ -2084,12 +2086,12 @@ void R_InitLineNeighbors(void)
             R_OrderVertices(line, sector, vertices);
 
             // Figure out the sectors in the proximity.
-            for(j = 0; j < 2; j++)
+            for(j = 0; j < 2; ++j)
             {
                 // Neighbour must be two-sided.
                 if(side->neighbor[j] && side->neighbor[j]->frontsector &&
                    side->neighbor[j]->backsector &&
-                   !LINE_INFO(side->neighbor[j])->selfrefhackroot)
+                   !side->neighbor[j]->info->selfrefhackroot)
                 {
                     side->proxsector[j] =
                         (side->neighbor[j]->frontsector ==
@@ -2102,8 +2104,11 @@ void R_InitLineNeighbors(void)
                     R_FindBackNeighbor(side->proxsector[j], line,
                                        side->neighbor[j], vertices[j],
                                        &side->backneighbor[j]);
-
-                    /*assert(side->backneighbor[j] != line); */
+/*
+#if _DEBUG
+assert(side->backneighbor[j] != line);
+#endif
+*/
                 }
                 else
                 {
@@ -2112,25 +2117,16 @@ void R_InitLineNeighbors(void)
             }
 
             // Look for aligned neighbours.  They are side-specific.
-            for(j = 0; j < 2; j++)
+            for(j = 0; j < 2; ++j)
             {
                 owner = vertices[j]->info;
-                for(m = 0; m < owner->num; m++)
+                for(m = 0; m < owner->num; ++m)
                 {
-                    //if(owner->list[m] == k) continue;
                     R_FindLineNeighbors(SECTOR_PTR(owner->list[m]), line,
                                         side->alignneighbor,
-                                        (side == line->sides[0]->info ? 1 : -1));
+                                        (side ==line->sides[0]->info?1:-1));
                 }
             }
-
-            /*          // How about the other sector?
-               if(!line->backsector || !line->frontsector)
-               continue; // Single-sided.
-
-               R_FindLineNeighbors(line->frontsector == sector?
-               line->backsector : line->frontsector,
-               line, info->backneighbor); */
 
             // Attempt to find "pretend" neighbors for this line, if "real"
             // ones have not been found.
@@ -2140,17 +2136,19 @@ void R_InitLineNeighbors(void)
             // Pretend neighbors are selfrefhackroot lines but BOTH vertices
             // are owned by this sector and ONE of the vertexes is owned by
             // this line.
-            if((!side->neighbor[0] || !side->neighbor[1]) && !info->selfrefhackroot)
+            if((!side->neighbor[0] || !side->neighbor[1]) &&
+               !info->selfrefhackroot)
             {
+                boolean ok, ok2;
+
                 // Check all lines.
                 for(j = 0; j < numlines; ++j)
                 {
                     other = LINE_PTR(j);
-                    if(LINE_INFO(other)->selfrefhackroot &&
+                    if(other->info->selfrefhackroot &&
                         (other->v1 == line->v1 || other->v1 == line->v2 ||
                          other->v2 == line->v1 || other->v2 == line->v2))
                     {
-                        boolean ok, ok2;
                         ok = ok2 = false;
                         owner = other->v1->info;
                         for(m = 0; m < owner->num && !ok; ++m)
@@ -2168,11 +2166,12 @@ void R_InitLineNeighbors(void)
                         if(ok && ok2)
                         {
 #if _DEBUG
-                            VERBOSE2(Con_Message("L%i is a pretend neighbor to L%i\n",
-                                         GET_LINE_IDX(other), GET_LINE_IDX(line)));
+VERBOSE2(Con_Message("L%i is a pretend neighbor to L%i\n",
+             GET_LINE_IDX(other), GET_LINE_IDX(line)));
 #endif
 
-                            if(other->v1 == vertices[0] || other->v2 == vertices[0])
+                            if(other->v1 == vertices[0] ||
+                               other->v2 == vertices[0])
                             {
                                 side->neighbor[0] = other;
                                 side->pretendneighbor[0] = true;
@@ -2190,24 +2189,26 @@ void R_InitLineNeighbors(void)
     }
 
 #if _DEBUG
-    if(verbose >= 1)
+if(verbose >= 1)
+{
+    for(i = 0; i < numlines; ++i)
     {
-        for(i = 0; i < numlines; ++i)
+        line = LINE_PTR(i);
+        for(k = 0; k < 2; ++k)
         {
-            for(k = 0; k < 2; ++k)
-            {
-                line = LINE_PTR(i);
-                if(line->sidenum[k] >= 0)
-                {
-                    side = SIDE_PTR(line->sidenum[k])->info;
-                    if(side->alignneighbor[0] || side->alignneighbor[1])
-                        Con_Printf("Line %i/%i: l=%i r=%i\n", i, k,
-                                   side->alignneighbor[0] ? GET_LINE_IDX(side->alignneighbor[0]) : -1,
-                                   side->alignneighbor[1] ? GET_LINE_IDX(side->alignneighbor[1]) : -1);
-                }
-            }
+            if(!line->sides[k])
+                continue;
+
+            side = line->sides[k]->info;
+            if(side->alignneighbor[0] || side->alignneighbor[1])
+                Con_Printf("Line %i/%i: l=%i r=%i\n", i, k,
+                           (side->alignneighbor[0] ?
+                            GET_LINE_IDX(side->alignneighbor[0]) : -1),
+                           (side->alignneighbor[1] ?
+                            GET_LINE_IDX(side->alignneighbor[1]) : -1));
         }
     }
+}
 #endif
 }
 
@@ -2230,7 +2231,7 @@ void R_InitLinks(void)
         linelinks[i] = NP_New(&linenodes, NP_ROOT_NODE);
 }
 
-/*
+/**
  * This routine is called from the Game to polygonize the current
  * level.  Creates floors and ceilings and fixes the adjacent sky
  * sector heights.  Creates a big enough dlBlockLinks.  Reads mapinfo
@@ -2758,7 +2759,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     }
 }
 
-/*
+/**
  * All links will be updated every frame (sectorheights may change at
  * any time without notice).
  */
@@ -2767,7 +2768,7 @@ void R_UpdatePlanes(void)
     // Nothing to do.
 }
 
-/*
+/**
  * This ID is the name of the lump tag that marks the beginning of map
  * data, e.g. "MAP03" or "E2M8".
  */
@@ -2776,7 +2777,7 @@ const char *R_GetCurrentLevelID(void)
     return currentLevelId;
 }
 
-/*
+/**
  * Return the 'unique' identifier of the map.  This identifier
  * contains information about the map tag (E3M3), the WAD that
  * contains the map (DOOM.IWAD), and the game mode (doom-ultimate).
@@ -2800,7 +2801,7 @@ const char *R_GetUniqueLevelID(void)
     return uid;
 }
 
-/*
+/**
  * Sector light color may be affected by the sky light color.
  */
 const byte *R_GetSectorLightColor(sector_t *sector)
