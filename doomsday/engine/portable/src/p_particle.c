@@ -48,6 +48,8 @@
 #define VECSUB(a,b)         ( a[VX]-=b[VX], a[VY]-=b[VY] )
 #define VECCPY(a,b)         ( a[VX]=b[VX], a[VY]=b[VY] )
 
+#define GENERATOR_TO_ID(gen)    ((int) gen)
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -747,12 +749,13 @@ fixed_t P_GetParticleZ(particle_t *pt)
 static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
 {
     ded_ptcstage_t *stDef = gen->def->stages + pt->stage;
-    /* p_particle.c:750: warning: cast from pointer to integer of different size */
-    ASSERT_NOT_64BIT();
-    uint        index = pt - gen->ptcs + (int) gen / 8; // DJS - skyjake, what does this do?
+    uint        index = pt - gen->ptcs + GENERATOR_TO_ID(gen) / 8; // DJS - skyjake, what does this do?
     static int  yawSigns[4] = { 1, 1, -1, -1 };
     static int  pitchSigns[4] = { 1, -1, 1, -1 };
     int         yawSign, pitchSign;
+
+    /* p_particle.c:750: warning: cast from pointer to integer of different size */
+    ASSERT_NOT_64BIT();
 
     yawSign = yawSigns[index % 4];
     pitchSign = pitchSigns[index % 4];
