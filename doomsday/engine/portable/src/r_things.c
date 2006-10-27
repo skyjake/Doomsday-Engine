@@ -892,7 +892,7 @@ void R_ProjectSprite(mobj_t *thing)
         }
         else if(mf->sub[0].flags & MFF_SPIN)
         {
-	/*r_things.c:895: warning: cast from pointer to integer of different size */
+	/*r_things.c: warning: cast from pointer to integer of different size ie -> vis->data.mo.yaw = modelSpinSpeed * 70 * levelTime + (int) thing % 360;*/
 	ASSERT_NOT_64BIT();
             vis->data.mo.yaw =
                 modelSpinSpeed * 70 * levelTime + (int) thing % 360;
@@ -911,7 +911,7 @@ void R_ProjectSprite(mobj_t *thing)
         // How about a unique offset?
         if(mf->sub[0].flags & MFF_IDANGLE)
         {
-	/*r_things.c:912: warning: cast from pointer to integer of different size */
+	/*r_things.c: warning: cast from pointer to integer of different size ie -> vis->data.mo.yaw += THING_TO_ID(thing) % 360 */
 	ASSERT_NOT_64BIT();
             // Multiply with an arbitrary factor.
             vis->data.mo.yaw += THING_TO_ID(thing) % 360;
@@ -1103,7 +1103,7 @@ fixed_t R_GetBobOffset(mobj_t *mo)
 {
     if(mo->ddflags & DDMF_BOB)
     {
-	/* r_things.c:1101: warning: cast from pointer to integer of different size */
+	/* r_things.c: warning: cast from pointer to integer of different size ie -> FRACUNIT * (sin(THING_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) * 8)*/
 	ASSERT_NOT_64BIT();
         return FRACUNIT * (sin(THING_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) *
                            8);
