@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -355,35 +356,27 @@ int Sys_WaitThread(int handle)
 #endif
 }
 
-int Sys_CreateMutex(const char *name)
+intptr_t Sys_CreateMutex(const char *name)
 {
-    /* sys_system.c: warning: cast from pointer to integer of different size ie -> return (int) SDL_CreateMutex(); */
-    ASSERT_NOT_64BIT();
-    return (int) SDL_CreateMutex();
+    return (intptr_t) SDL_CreateMutex();
 }
 
-void Sys_DestroyMutex(int handle)
+void Sys_DestroyMutex(intptr_t handle)
 {
-    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_DestroyMutex((SDL_mutex *) handle) */
-    ASSERT_NOT_64BIT();
     if(!handle)
         return;
     SDL_DestroyMutex((SDL_mutex *) handle);
 }
 
-void Sys_Lock(int handle)
+void Sys_Lock(intptr_t handle)
 {
-    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_mutexP((SDL_mutex *) handle) */
-    ASSERT_NOT_64BIT();
     if(!handle)
         return;
     SDL_mutexP((SDL_mutex *) handle);
 }
 
-void Sys_Unlock(int handle)
+void Sys_Unlock(intptr_t handle)
 {
-    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_mutexV((SDL_mutex *) handle) */
-    ASSERT_NOT_64BIT();
     if(!handle)
         return;
     SDL_mutexV((SDL_mutex *) handle);

@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,10 +55,10 @@ int             Sys_StartThread(systhreadfunc_t startpos, void *parm,
 void            Sys_SuspendThread(int handle, boolean dopause);
 int             Sys_WaitThread(int handle);
 
-int             Sys_CreateMutex(const char *name);	// returns the mutex handle
-void            Sys_DestroyMutex(int mutexHandle);
-void            Sys_Lock(int mutexHandle);
-void            Sys_Unlock(int mutexHandle);
+intptr_t        Sys_CreateMutex(const char *name);	// returns the mutex handle
+void            Sys_DestroyMutex(intptr_t mutexHandle);
+void            Sys_Lock(intptr_t mutexHandle);
+void            Sys_Unlock(intptr_t mutexHandle);
 
 semaphore_t     Sem_Create(unsigned int initialValue);	// returns handle
 void            Sem_Destroy(semaphore_t semaphore);

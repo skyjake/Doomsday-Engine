@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -146,7 +147,7 @@ boolean netServerMode = false;
 static TCPsocket serverSock;
 static volatile UDPsocket inSock;
 static Uint16 recvUDPPort;
-static int mutexInSock;
+static intptr_t mutexInSock;
 static netnode_t netNodes[MAX_NODES];
 static SDLNet_SocketSet sockSet;
 static int hReceiver, hTransmitter;
