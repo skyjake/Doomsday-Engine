@@ -143,6 +143,10 @@ static lumcontact_t **subContacts;
 // a block during one frame.
 static int    *spreadBlocks;
 
+// Used when iterating planes.
+static int maxPlanes = 0;
+static planeitervars_t *planeVars;
+
 // CODE --------------------------------------------------------------------
 
 void DL_Register(void)
@@ -761,6 +765,10 @@ void DL_Clear(void)
     dlBlockLinks = 0;
     dlBlockOrig.pos[VX] = dlBlockOrig.pos[VY] = 0;
     dlBlockWidth = dlBlockHeight = 0;
+
+    if(planeVars)
+        M_Free(planeVars);
+    maxPlanes = 0;
 }
 
 void DL_ClearForFrame(void)
@@ -799,9 +807,9 @@ int DL_NewLuminous(void)
     {
         maxLuminous *= 2;
 
-        // The first time, allocate eight lumobjs.
+        // The first time, allocate thirty two lumobjs.
         if(!maxLuminous)
-            maxLuminous = 8;
+            maxLuminous = 32;
 
         newList = Z_Malloc(sizeof(lumobj_t) * maxLuminous, PU_STATIC, 0);
 
@@ -1507,10 +1515,18 @@ void DL_ProcessSubsector(subsector_t *ssec)
     lumcontact_t *con;
     sector_t   *sect = ssec->sector;
     subsectorinfo_t *ssInfo;
-    planeitervars_t *planeVars, *pVars;
+    planeitervars_t *pVars;
 
-    // FIXME: NOT optimal
-    planeVars = M_Malloc(sect->planecount * sizeof(planeitervars_t));
+    if(sect->planecount > maxPlanes)
+    {
+        maxPlanes *= 2;
+
+        if(!maxPlanes)
+            maxPlanes = 2;
+
+        planeVars =
+            M_Realloc(planeVars, maxPlanes * sizeof(planeitervars_t));
+    }
 
     // First make sure we know which lumobjs are contacting us.
     DL_SpreadBlocks(ssec);
@@ -1522,6 +1538,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
     {
         pVars->height = SECT_PLANE_HEIGHT(sect, pln);
         pVars->isLit = (!R_IsSkySurface(&sect->planes[pln]->surface));
+        pVars->decorMap = 0;
 
         // View height might prevent us from seeing the light.
         if(ssInfo->planes[pln]->type == PLN_FLOOR)
@@ -1583,8 +1600,6 @@ void DL_ProcessSubsector(subsector_t *ssec)
             }
         }
     }
-
-    M_Free(planeVars);
 }
 
 /**
