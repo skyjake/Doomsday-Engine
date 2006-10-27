@@ -2481,8 +2481,8 @@ void XL_DoChain(line_t *line, int chain, boolean activating, mobj_t *act_thing)
     // Copy all properties to the dummy
     P_CopyLine(line, dummyLine);
 
-    P_SetIntp(dummyLine, DMU_SIDE0, -1);
-    P_SetIntp(dummyLine, DMU_SIDE1, -1);
+    P_SetPtrp(dummyLine, DMU_SIDE0, NULL);
+    P_SetPtrp(dummyLine, DMU_SIDE1, NULL);
 
     xdummyLine->xg->active = !activating;
 

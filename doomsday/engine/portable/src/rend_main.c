@@ -387,6 +387,9 @@ static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
             flat = R_GetFlat(suf->texture);
         }
 
+        if(!flat)
+            return NULL;
+
         ref = flat->reflection;
         if(ref)
         {
@@ -1524,12 +1527,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
         return; // NEVER (we have a hole we couldn't fix).
     }
 
-    if(solidSeg)
-    {
-        // We KNOW we can make it solid.
-        C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
-    }
-    else // We'll have to determine whether we can...
+    if(!solidSeg) // We'll have to determine whether we can...
     {
         if(backsec == seg->frontsector)
         {
@@ -1552,10 +1550,10 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
             // A zero height back segment
             solidSeg = true;
         }
-
-        if(solidSeg)
-            C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
     }
+
+    if(solidSeg)
+        C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
 
     R_FreeRendPoly(quad);
 }
