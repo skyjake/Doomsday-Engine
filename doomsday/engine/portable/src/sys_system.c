@@ -302,6 +302,8 @@ int Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority)
     }
     return (int) handle;
 #else
+    /* sys_system.c: warning: cast from pointer to integer of different size ie -> return (int) SDL_CreateThread(startpos, parm) */
+    ASSERT_NOT_64BIT();
     return (int) SDL_CreateThread(startpos, parm);
 #endif
 }
@@ -346,6 +348,8 @@ int Sys_WaitThread(int handle)
 #else
     int     result;
 
+    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_WaitThread((SDL_Thread *) handle, &result) */
+    ASSERT_NOT_64BIT();
     SDL_WaitThread((SDL_Thread *) handle, &result);
     return result;
 #endif
@@ -353,11 +357,15 @@ int Sys_WaitThread(int handle)
 
 int Sys_CreateMutex(const char *name)
 {
+    /* sys_system.c: warning: cast from pointer to integer of different size ie -> return (int) SDL_CreateMutex(); */
+    ASSERT_NOT_64BIT();
     return (int) SDL_CreateMutex();
 }
 
 void Sys_DestroyMutex(int handle)
 {
+    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_DestroyMutex((SDL_mutex *) handle) */
+    ASSERT_NOT_64BIT();
     if(!handle)
         return;
     SDL_DestroyMutex((SDL_mutex *) handle);
@@ -365,6 +373,8 @@ void Sys_DestroyMutex(int handle)
 
 void Sys_Lock(int handle)
 {
+    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_mutexP((SDL_mutex *) handle) */
+    ASSERT_NOT_64BIT();
     if(!handle)
         return;
     SDL_mutexP((SDL_mutex *) handle);
@@ -372,6 +382,8 @@ void Sys_Lock(int handle)
 
 void Sys_Unlock(int handle)
 {
+    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_mutexV((SDL_mutex *) handle) */
+    ASSERT_NOT_64BIT();
     if(!handle)
         return;
     SDL_mutexV((SDL_mutex *) handle);
@@ -382,11 +394,15 @@ void Sys_Unlock(int handle)
  */
 semaphore_t Sem_Create(unsigned int initialValue)
 {
+    /* sys_system.c: warning: cast from pointer to integer of different size ie -> return (semaphore_t) SDL_CreateSemaphore(initialValue) */
+    ASSERT_NOT_64BIT();
     return (semaphore_t) SDL_CreateSemaphore(initialValue);
 }
 
 void Sem_Destroy(semaphore_t semaphore)
 {
+    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_DestroySemaphore((SDL_sem *) semaphore) */
+    ASSERT_NOT_64BIT();
     if(semaphore)
     {
         SDL_DestroySemaphore((SDL_sem *) semaphore);
@@ -398,6 +414,8 @@ void Sem_Destroy(semaphore_t semaphore)
  */
 void Sem_P(semaphore_t semaphore)
 {
+    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_SemWait((SDL_sem *) semaphore) */
+    ASSERT_NOT_64BIT();
     if(semaphore)
     {
         SDL_SemWait((SDL_sem *) semaphore);
@@ -409,6 +427,8 @@ void Sem_P(semaphore_t semaphore)
  */
 void Sem_V(semaphore_t semaphore)
 {
+    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_SemPost((SDL_sem *) semaphore) */
+    ASSERT_NOT_64BIT();
     if(semaphore)
     {
         SDL_SemPost((SDL_sem *) semaphore);
