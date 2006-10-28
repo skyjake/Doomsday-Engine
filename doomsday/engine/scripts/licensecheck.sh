@@ -136,7 +136,6 @@ do
 	echo "<td>" >> $TOP_LEVEL_DIR/code.html
 	echo `file -b $CURRENT_FILE` >> $TOP_LEVEL_DIR/code.html
 	echo "</td>" >> $TOP_LEVEL_DIR/code.html
-	echo "<td>" >> $TOP_LEVEL_DIR/code.html
 
 	echo "<td>" >> $TOP_LEVEL_DIR/code.html
 	grep "Copyright" $CURRENT_FILE | sed 's/*\\section Copyright and License Summary//g' > cp1.txt
