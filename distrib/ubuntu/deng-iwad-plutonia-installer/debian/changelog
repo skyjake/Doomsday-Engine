@@ -1,3 +1,9 @@
+deng-iwad-plutonia-installer (1.1ubuntu5) edgy; urgency=low
+
+  * Edgy release
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 29 Oct 2006 03:49:44 +1100
+
 deng-iwad-plutonia-installer (1.1ubuntu4) dapper; urgency=low
 
   * Less verbose output from glbsp

@@ -1,3 +1,9 @@
+deng-iwad-hexendd-installer (1.1ubuntu4) edgy; urgency=low
+
+  * Edgy release
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 29 Oct 2006 03:48:55 +1100
+
 deng-iwad-hexendd-installer (1.1ubuntu3) dapper; urgency=low
 
   * Install to draft Doom Policy locations.
