@@ -55,10 +55,10 @@ boolean alwaysDrawSphere = false;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * The sky models are set up using the data in the definition.
  */
-void R_SetupSkyModels(ded_mapinfo_t * info)
+void R_SetupSkyModels(ded_mapinfo_t *info)
 {
     int     i;
     ded_skymodel_t *def;
@@ -74,7 +74,7 @@ void R_SetupSkyModels(ded_mapinfo_t * info)
     skyModelsInited = false;
 
     for(i = 0, def = info->sky_models, sky = skyModels; i < NUM_SKY_MODELS;
-        i++, def++, sky++)
+        ++i, def++, sky++)
     {
         // Is the model ID set?
         if((sky->model = R_CheckIDModelFor(def->id)) == NULL)
@@ -90,7 +90,7 @@ void R_SetupSkyModels(ded_mapinfo_t * info)
     }
 }
 
-/*
+/**
  * Prepare all sky model skins.
  */
 void R_PrecacheSky(void)
@@ -101,7 +101,7 @@ void R_PrecacheSky(void)
     if(!skyModelsInited)
         return;
 
-    for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
+    for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; ++i, sky++)
     {
         if(!sky->def)
             continue;
@@ -109,7 +109,7 @@ void R_PrecacheSky(void)
     }
 }
 
-/*
+/**
  * Animate sky models.
  */
 void R_SkyTicker(void)
@@ -120,7 +120,7 @@ void R_SkyTicker(void)
     if(!skyModelsInited || clientPaused)
         return;
 
-    for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; i++, sky++)
+    for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; ++i, sky++)
     {
         if(!sky->def)
             continue;

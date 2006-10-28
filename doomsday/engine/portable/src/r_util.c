@@ -57,17 +57,17 @@ extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Which side of the node does the point lie?
  *
  * @param x         X coordinate to test.
  * @param y         Y coordinate to test.
  * @return int      (0) if the front. OR (1) the back.
  */
-int R_PointOnSide(fixed_t x, fixed_t y, node_t * node)
+int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
 {
-    fixed_t dx, dy;
-    fixed_t left, right;
+    fixed_t     dx, dy;
+    fixed_t     left, right;
 
     if(!node->dx)
     {
@@ -150,7 +150,7 @@ int R_PointOnSide(fixed_t x, fixed_t y, node_t * node)
 
 int R_SlopeDiv(unsigned num, unsigned den)
 {
-    unsigned ans;
+    unsigned    ans;
 
     if(den < 512)
         return SLOPERANGE;
@@ -158,7 +158,7 @@ int R_SlopeDiv(unsigned num, unsigned den)
     return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
-/*
+/**
  * To get a global angle from cartesian coordinates, the coordinates are
  * flipped until they are in the first octant of the coordinate system, then
  * the y (<=x) is scaled and divided by x to get a tangent (slope) value
@@ -176,6 +176,7 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
     y -= viewy;
     if((!x) && (!y))
         return 0;
+
     if(x >= 0)
     {                           // x >=0
         if(y >= 0)
@@ -226,9 +227,9 @@ angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 
 fixed_t R_PointToDist(fixed_t x, fixed_t y)
 {
-    int     angle;
-    fixed_t dx, dy, temp;
-    fixed_t dist;
+    int         angle;
+    fixed_t     dx, dy, temp;
+    fixed_t     dist;
 
     dx = abs(x - viewx);
     dy = abs(y - viewy);
@@ -250,8 +251,8 @@ fixed_t R_PointToDist(fixed_t x, fixed_t y)
 
 subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 {
-    node_t *node = 0;
-    uint    nodenum = 0;
+    node_t     *node = 0;
+    uint        nodenum = 0;
 
     if(!numnodes)               // single subsector is a special case
         return (subsector_t *) subsectors;
@@ -269,9 +270,9 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
 
 line_t *R_GetLineForSide(int sideNumber)
 {
-    side_t *side = SIDE_PTR(sideNumber);
-    sector_t *sector = side->sector;
-    int     i;
+    side_t     *side = SIDE_PTR(sideNumber);
+    sector_t   *sector = side->sector;
+    int         i;
 
     // All sides may not have a sector.
     if(!sector)
@@ -287,7 +288,7 @@ line_t *R_GetLineForSide(int sideNumber)
     return NULL;
 }
 
-/*
+/**
  * Is the point inside the sector, according to the edge lines of the
  * subsector. Uses the well-known algorithm described here:
  * http://www.alienryderflex.com/polygon/
@@ -300,11 +301,11 @@ line_t *R_GetLineForSide(int sideNumber)
  */
 boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 {
-    int     i;
-    boolean isOdd = false;
-    vertex_t *vi, *vj;
+    int         i;
+    boolean     isOdd = false;
+    vertex_t   *vi, *vj;
 
-    for(i = 0; i < sector->linecount; i++)
+    for(i = 0; i < sector->linecount; ++i)
     {
         // Skip lines that aren't sector boundaries.
         if(sector->Lines[i]->frontsector == sector &&
@@ -315,10 +316,12 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
         vi = sector->Lines[i]->v1;
         vj = sector->Lines[i]->v2;
 
-        if((vi->pos[VY] < y && vj->pos[VY] >= y) || (vj->pos[VY] < y && vi->pos[VY] >= y))
+        if((vi->pos[VY] < y && vj->pos[VY] >= y) ||
+           (vj->pos[VY] < y && vi->pos[VY] >= y))
         {
             if(vi->pos[VX] +
-               FixedMul(FixedDiv(y - vi->pos[VY], vj->pos[VY] - vi->pos[VY]), vj->pos[VX] - vi->pos[VX]) < x)
+               FixedMul(FixedDiv(y - vi->pos[VY], vj->pos[VY] - vi->pos[VY]),
+                        vj->pos[VX] - vi->pos[VX]) < x)
             {
                 // Toggle oddness.
                 isOdd = !isOdd;
@@ -330,7 +333,7 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
     return isOdd;
 }
 
-/*
+/**
  * Is the point inside the sector, according to the edge lines of the
  * subsector. Uses the well-known algorithm described here:
  * http://www.alienryderflex.com/polygon/
@@ -345,10 +348,10 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
  */
 boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
 {
-    int     i;
+    int         i;
     subsector_t *subsector;
-    fvertex_t *vi, *vj;
-    float fx, fy;
+    fvertex_t  *vi, *vj;
+    float       fx, fy;
 
     subsector = R_PointInSubsector(x, y);
     if(subsector->sector != sector)
@@ -360,7 +363,7 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
     fx = FIX2FLT(x);
     fy = FIX2FLT(y);
 
-    for(i = 0; i < subsector->numverts; i++)
+    for(i = 0; i < subsector->numverts; ++i)
     {
         vi = &subsector->verts[i];
         vj = &subsector->verts[(i + 1) % subsector->numverts];
@@ -372,7 +375,8 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
             return false;
         }
 
-/*      if((vi->pos[VY] < fy && vj->pos[VY] >= fy) || (vj->pos[VY] < fy && vi->pos[VY] >= fy))
+/*      if((vi->pos[VY] < fy && vj->pos[VY] >= fy) ||
+           (vj->pos[VY] < fy && vi->pos[VY] >= fy))
         {
             if(vi->pos[VX] + (((fy - vi->pos[VY])/(vj->pos[VY] - vi->pos[VY])) *
                               (vj->pos[VX] - vi->pos[VX])) < fx)
@@ -380,14 +384,15 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
                 // Toggle oddness.
                 isOdd = !isOdd;
             }
-            }*/
+        }
+*/
     }
 
     // All tests passed.
     return true;
 }
 
-/*
+/**
  * Returns the index of the sector who owns the given degenmobj.
  *
  * @param degenmobj     degenmobj to search for.
@@ -396,11 +401,11 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
  */
 int R_GetSectorNumForDegen(void *degenmobj)
 {
-    int     i, k;
-    sector_t *sec;
+    int         i, k;
+    sector_t   *sec;
 
     // Check all sectors; find where the sound is coming from.
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
 

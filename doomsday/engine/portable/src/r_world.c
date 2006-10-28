@@ -244,282 +244,6 @@ static void R_SetSectorLinks(sector_t *sec)
 #endif
 
 /**
- * Returns a pointer to the list of points. It must be used.
- */
-static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
-                              int numclippers, fdivline_t * clippers)
-{
-    unsigned char *sidelist;
-    int     i, k, num = *numpoints, sidelistSize = 64;
-
-    sidelist = M_Malloc(sizeof(unsigned char) * sidelistSize);
-
-    // We'll clip the polygon with each of the divlines. The left side of
-    // each divline is discarded.
-    for(i = 0; i < numclippers; ++i)
-    {
-        fdivline_t *curclip = clippers + i;
-
-        // First we'll determine the side of each vertex. Points are allowed
-        // to be on the line.
-        for(k = 0; k < num; ++k)
-        {
-            sidelist[k] = P_FloatPointOnLineSide(points + k, curclip);
-        }
-
-        for(k = 0; k < num; ++k)
-        {
-            int     startIdx = k, endIdx = k + 1;
-
-            // Check the end index.
-            if(endIdx == num)
-                endIdx = 0;     // Wrap-around.
-
-            // Clipping will happen when the ends are on different sides.
-            if(sidelist[startIdx] != sidelist[endIdx])
-            {
-                fvertex_t newvert;
-
-                // Find the intersection point of intersecting lines.
-                P_FloatInterceptVertex(points + startIdx, points + endIdx,
-                                       curclip, &newvert);
-
-                // Add the new vertex. Also modify the sidelist.
-                points =
-                    (fvertex_t *) M_Realloc(points, (++num) * sizeof(fvertex_t));
-                if(num >= sidelistSize)
-                {
-                    sidelistSize *= 2;
-                    sidelist = M_Realloc(sidelist, sizeof(unsigned char) * sidelistSize);
-                }
-
-                // Make room for the new vertex.
-                memmove(points + endIdx + 1, points + endIdx,
-                        (num - endIdx - 1) * sizeof(fvertex_t));
-                memcpy(points + endIdx, &newvert, sizeof(newvert));
-
-                memmove(sidelist + endIdx + 1, sidelist + endIdx,
-                        num - endIdx - 1);
-                sidelist[endIdx] = 1;
-
-                // Skip over the new vertex.
-                k++;
-            }
-        }
-
-        // Now we must discard the points that are on the wrong side.
-        for(k = 0; k < num; ++k)
-            if(!sidelist[k])
-            {
-                memmove(points + k, points + k + 1,
-                        (num - k - 1) * sizeof(fvertex_t));
-                memmove(sidelist + k, sidelist + k + 1, num - k - 1);
-                num--;
-                k--;
-            }
-    }
-
-    // Screen out consecutive identical points.
-    for(i = 0; i < num; ++i)
-    {
-        int     previdx = i - 1;
-
-        if(previdx < 0)
-            previdx = num - 1;
-        if(points[i].pos[VX] == points[previdx].pos[VX] &&
-           points[i].pos[VY] == points[previdx].pos[VY])
-        {
-            // This point (i) must be removed.
-            memmove(points + i, points + i + 1,
-                    sizeof(fvertex_t) * (num - i - 1));
-            num--;
-            i--;
-        }
-    }
-    *numpoints = num;
-
-    M_Free(sidelist);
-    return points;
-}
-
-static void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
-{
-    int         i, numedgepoints;
-    int         numclippers = num + ssec->linecount;
-    fvertex_t  *edgepoints;
-    fdivline_t *clippers, *clip;
-
-    clippers = Z_Malloc(numclippers * sizeof(fdivline_t), PU_STATIC, 0);
-
-    // Convert the divlines to float, in reverse order.
-    for(i = 0, clip = clippers; i < numclippers; clip++, ++i)
-    {
-        if(i < num)
-        {
-            clip->pos[VX] = FIX2FLT(list[num - i - 1].pos[VX]);
-            clip->pos[VY] = FIX2FLT(list[num - i - 1].pos[VY]);
-            clip->dx = FIX2FLT(list[num - i - 1].dx);
-            clip->dy = FIX2FLT(list[num - i - 1].dy);
-        }
-        else
-        {
-            seg_t  *seg = SEG_PTR(ssec->firstline + i - num);
-
-            clip->pos[VX] = seg->fv1.pos[VX];
-            clip->pos[VY] = seg->fv1.pos[VY];
-            clip->dx = seg->fv2.pos[VX] - seg->fv1.pos[VX];
-            clip->dy = seg->fv2.pos[VY] - seg->fv1.pos[VY];
-        }
-    }
-
-    // Setup the 'worldwide' polygon.
-    numedgepoints = 4;
-    edgepoints = M_Malloc(numedgepoints * sizeof(fvertex_t));
-
-    edgepoints[0].pos[VX] = -32768;
-    edgepoints[0].pos[VY] = 32768;
-
-    edgepoints[1].pos[VX] = 32768;
-    edgepoints[1].pos[VY] = 32768;
-
-    edgepoints[2].pos[VX] = 32768;
-    edgepoints[2].pos[VY] = -32768;
-
-    edgepoints[3].pos[VX] = -32768;
-    edgepoints[3].pos[VY] = -32768;
-
-    // Do some clipping, <snip> <snip>
-    edgepoints = edgeClipper(&numedgepoints, edgepoints, numclippers, clippers);
-
-    if(!numedgepoints)
-    {
-        int idx = GET_SUBSECTOR_IDX(ssec);
-
-        printf("All clipped away: subsector %i\n", idx);
-        ssec->numverts = 0;
-        ssec->verts = 0;
-        //ssec->origverts = 0;
-        //ssec->diffverts = 0;
-    }
-    else
-    {
-        // We need these with dynamic lights.
-        ssec->verts = Z_Malloc(sizeof(fvertex_t) * numedgepoints,
-                               PU_LEVELSTATIC, 0);
-        memcpy(ssec->verts, edgepoints, sizeof(fvertex_t) * numedgepoints);
-        ssec->numverts = numedgepoints;
-
-        R_PrepareSubsector(ssec);
-    }
-
-    // We're done, free the edgepoints memory.
-    M_Free(edgepoints);
-    Z_Free(clippers);
-}
-
-static void R_PrepareSubsector(subsector_t *sub)
-{
-    int     j,  num = sub->numverts;
-    fvertex_t  *vtx = sub->verts;
-
-    // Find the center point. First calculate the bounding box.
-    sub->bbox[0].pos[VX] = sub->bbox[1].pos[VX] = sub->midpoint.pos[VX] = vtx->pos[VX];
-    sub->bbox[0].pos[VY] = sub->bbox[1].pos[VY] = sub->midpoint.pos[VY] = vtx->pos[VY];
-
-    for(j = 1, vtx++; j < num; ++j, vtx++)
-    {
-        if(vtx->pos[VX] < sub->bbox[0].pos[VX])
-            sub->bbox[0].pos[VX] = vtx->pos[VX];
-        if(vtx->pos[VY] < sub->bbox[0].pos[VY])
-            sub->bbox[0].pos[VY] = vtx->pos[VY];
-        if(vtx->pos[VX] > sub->bbox[1].pos[VX])
-            sub->bbox[1].pos[VX] = vtx->pos[VX];
-        if(vtx->pos[VY] > sub->bbox[1].pos[VY])
-            sub->bbox[1].pos[VY] = vtx->pos[VY];
-
-        sub->midpoint.pos[VX] += vtx->pos[VX];
-        sub->midpoint.pos[VY] += vtx->pos[VY];
-    }
-    sub->midpoint.pos[VX] /= num;
-    sub->midpoint.pos[VY] /= num;
-}
-
-static void R_PolygonizeWithoutCarving(void)
-{
-    int         i, j, num;
-    fvertex_t   *vtx;
-    subsector_t *sub;
-    seg_t      *seg;
-
-    for(i = numsubsectors -1; i >= 0; --i)
-    {
-        sub = SUBSECTOR_PTR(i);
-        num = sub->numverts = sub->linecount;
-        vtx = sub->verts =
-            Z_Malloc(sizeof(fvertex_t) * sub->linecount, PU_LEVELSTATIC, 0);
-
-        seg = SEG_PTR(sub->firstline);
-        for(j = 0; j < num; ++j, seg++, vtx++)
-        {
-            vtx->pos[VX] = seg->fv1.pos[VX];
-            vtx->pos[VY] = seg->fv1.pos[VY];
-        }
-
-        R_PrepareSubsector(sub);
-    }
-}
-
-/**
- * Recursively polygonizes all ceilings and floors.
- */
-void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
-                               divline_t * divlines)
-{
-    node_t *nod;
-    divline_t *childlist, *dl;
-    int     childlistsize = numdivlines + 1;
-
-    // If this is a subsector we are dealing with, begin carving with the
-    // given list.
-    if(bspnode & NF_SUBSECTOR)
-    {
-        // We have arrived at a subsector. The divline list contains all
-        // the partition lines that carve out the subsector.
-        R_ConvexClipper(SUBSECTOR_PTR(bspnode & ~NF_SUBSECTOR),
-                        numdivlines, divlines);
-        // This leaf is done.
-        return;
-    }
-
-    // Get a pointer to the node.
-    nod = NODE_PTR(bspnode);
-
-    // Allocate a new list for each child.
-    childlist = M_Malloc(childlistsize * sizeof(divline_t));
-
-    // Copy the previous lines, from the parent nodes.
-    if(divlines)
-        memcpy(childlist, divlines, numdivlines * sizeof(divline_t));
-
-    dl = childlist + numdivlines;
-    dl->pos[VX] = nod->x;
-    dl->pos[VY] = nod->y;
-    // The right child gets the original line (LEFT side clipped).
-    dl->dx = nod->dx;
-    dl->dy = nod->dy;
-    R_CreateFloorsAndCeilings(nod->children[0], childlistsize, childlist);
-
-    // The left side. We must reverse the line, otherwise the wrong
-    // side would get clipped.
-    dl->dx = -nod->dx;
-    dl->dy = -nod->dy;
-    R_CreateFloorsAndCeilings(nod->children[1], childlistsize, childlist);
-
-    // We are finishing with this node, free the allocated list.
-    M_Free(childlist);
-}
-
-/**
  * Initialize the skyfix. In practice all this does is to check for things
  * intersecting ceilings and if so: raises the sky fix for the sector a
  * bit to accommodate them.
@@ -818,6 +542,282 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
         }
     }
     while(adjusted[PLN_FLOOR] || adjusted[PLN_CEILING]);
+}
+
+static void R_PrepareSubsector(subsector_t *sub)
+{
+    int     j,  num = sub->numverts;
+    fvertex_t  *vtx = sub->verts;
+
+    // Find the center point. First calculate the bounding box.
+    sub->bbox[0].pos[VX] = sub->bbox[1].pos[VX] = sub->midpoint.pos[VX] = vtx->pos[VX];
+    sub->bbox[0].pos[VY] = sub->bbox[1].pos[VY] = sub->midpoint.pos[VY] = vtx->pos[VY];
+
+    for(j = 1, vtx++; j < num; ++j, vtx++)
+    {
+        if(vtx->pos[VX] < sub->bbox[0].pos[VX])
+            sub->bbox[0].pos[VX] = vtx->pos[VX];
+        if(vtx->pos[VY] < sub->bbox[0].pos[VY])
+            sub->bbox[0].pos[VY] = vtx->pos[VY];
+        if(vtx->pos[VX] > sub->bbox[1].pos[VX])
+            sub->bbox[1].pos[VX] = vtx->pos[VX];
+        if(vtx->pos[VY] > sub->bbox[1].pos[VY])
+            sub->bbox[1].pos[VY] = vtx->pos[VY];
+
+        sub->midpoint.pos[VX] += vtx->pos[VX];
+        sub->midpoint.pos[VY] += vtx->pos[VY];
+    }
+    sub->midpoint.pos[VX] /= num;
+    sub->midpoint.pos[VY] /= num;
+}
+
+static void R_PolygonizeWithoutCarving(void)
+{
+    int         i, j, num;
+    fvertex_t   *vtx;
+    subsector_t *sub;
+    seg_t      *seg;
+
+    for(i = numsubsectors -1; i >= 0; --i)
+    {
+        sub = SUBSECTOR_PTR(i);
+        num = sub->numverts = sub->linecount;
+        vtx = sub->verts =
+            Z_Malloc(sizeof(fvertex_t) * sub->linecount, PU_LEVELSTATIC, 0);
+
+        seg = SEG_PTR(sub->firstline);
+        for(j = 0; j < num; ++j, seg++, vtx++)
+        {
+            vtx->pos[VX] = seg->fv1.pos[VX];
+            vtx->pos[VY] = seg->fv1.pos[VY];
+        }
+
+        R_PrepareSubsector(sub);
+    }
+}
+
+/**
+ * Returns a pointer to the list of points. It must be used.
+ */
+static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
+                              int numclippers, fdivline_t * clippers)
+{
+    unsigned char *sidelist;
+    int     i, k, num = *numpoints, sidelistSize = 64;
+
+    sidelist = M_Malloc(sizeof(unsigned char) * sidelistSize);
+
+    // We'll clip the polygon with each of the divlines. The left side of
+    // each divline is discarded.
+    for(i = 0; i < numclippers; ++i)
+    {
+        fdivline_t *curclip = clippers + i;
+
+        // First we'll determine the side of each vertex. Points are allowed
+        // to be on the line.
+        for(k = 0; k < num; ++k)
+        {
+            sidelist[k] = P_FloatPointOnLineSide(points + k, curclip);
+        }
+
+        for(k = 0; k < num; ++k)
+        {
+            int     startIdx = k, endIdx = k + 1;
+
+            // Check the end index.
+            if(endIdx == num)
+                endIdx = 0;     // Wrap-around.
+
+            // Clipping will happen when the ends are on different sides.
+            if(sidelist[startIdx] != sidelist[endIdx])
+            {
+                fvertex_t newvert;
+
+                // Find the intersection point of intersecting lines.
+                P_FloatInterceptVertex(points + startIdx, points + endIdx,
+                                       curclip, &newvert);
+
+                // Add the new vertex. Also modify the sidelist.
+                points =
+                    (fvertex_t *) M_Realloc(points, (++num) * sizeof(fvertex_t));
+                if(num >= sidelistSize)
+                {
+                    sidelistSize *= 2;
+                    sidelist = M_Realloc(sidelist, sizeof(unsigned char) * sidelistSize);
+                }
+
+                // Make room for the new vertex.
+                memmove(points + endIdx + 1, points + endIdx,
+                        (num - endIdx - 1) * sizeof(fvertex_t));
+                memcpy(points + endIdx, &newvert, sizeof(newvert));
+
+                memmove(sidelist + endIdx + 1, sidelist + endIdx,
+                        num - endIdx - 1);
+                sidelist[endIdx] = 1;
+
+                // Skip over the new vertex.
+                k++;
+            }
+        }
+
+        // Now we must discard the points that are on the wrong side.
+        for(k = 0; k < num; ++k)
+            if(!sidelist[k])
+            {
+                memmove(points + k, points + k + 1,
+                        (num - k - 1) * sizeof(fvertex_t));
+                memmove(sidelist + k, sidelist + k + 1, num - k - 1);
+                num--;
+                k--;
+            }
+    }
+
+    // Screen out consecutive identical points.
+    for(i = 0; i < num; ++i)
+    {
+        int     previdx = i - 1;
+
+        if(previdx < 0)
+            previdx = num - 1;
+        if(points[i].pos[VX] == points[previdx].pos[VX] &&
+           points[i].pos[VY] == points[previdx].pos[VY])
+        {
+            // This point (i) must be removed.
+            memmove(points + i, points + i + 1,
+                    sizeof(fvertex_t) * (num - i - 1));
+            num--;
+            i--;
+        }
+    }
+    *numpoints = num;
+
+    M_Free(sidelist);
+    return points;
+}
+
+static void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
+{
+    int         i, numedgepoints;
+    int         numclippers = num + ssec->linecount;
+    fvertex_t  *edgepoints;
+    fdivline_t *clippers, *clip;
+
+    clippers = Z_Malloc(numclippers * sizeof(fdivline_t), PU_STATIC, 0);
+
+    // Convert the divlines to float, in reverse order.
+    for(i = 0, clip = clippers; i < numclippers; clip++, ++i)
+    {
+        if(i < num)
+        {
+            clip->pos[VX] = FIX2FLT(list[num - i - 1].pos[VX]);
+            clip->pos[VY] = FIX2FLT(list[num - i - 1].pos[VY]);
+            clip->dx = FIX2FLT(list[num - i - 1].dx);
+            clip->dy = FIX2FLT(list[num - i - 1].dy);
+        }
+        else
+        {
+            seg_t  *seg = SEG_PTR(ssec->firstline + i - num);
+
+            clip->pos[VX] = seg->fv1.pos[VX];
+            clip->pos[VY] = seg->fv1.pos[VY];
+            clip->dx = seg->fv2.pos[VX] - seg->fv1.pos[VX];
+            clip->dy = seg->fv2.pos[VY] - seg->fv1.pos[VY];
+        }
+    }
+
+    // Setup the 'worldwide' polygon.
+    numedgepoints = 4;
+    edgepoints = M_Malloc(numedgepoints * sizeof(fvertex_t));
+
+    edgepoints[0].pos[VX] = -32768;
+    edgepoints[0].pos[VY] = 32768;
+
+    edgepoints[1].pos[VX] = 32768;
+    edgepoints[1].pos[VY] = 32768;
+
+    edgepoints[2].pos[VX] = 32768;
+    edgepoints[2].pos[VY] = -32768;
+
+    edgepoints[3].pos[VX] = -32768;
+    edgepoints[3].pos[VY] = -32768;
+
+    // Do some clipping, <snip> <snip>
+    edgepoints = edgeClipper(&numedgepoints, edgepoints, numclippers, clippers);
+
+    if(!numedgepoints)
+    {
+        int idx = GET_SUBSECTOR_IDX(ssec);
+
+        printf("All clipped away: subsector %i\n", idx);
+        ssec->numverts = 0;
+        ssec->verts = 0;
+        //ssec->origverts = 0;
+        //ssec->diffverts = 0;
+    }
+    else
+    {
+        // We need these with dynamic lights.
+        ssec->verts = Z_Malloc(sizeof(fvertex_t) * numedgepoints,
+                               PU_LEVELSTATIC, 0);
+        memcpy(ssec->verts, edgepoints, sizeof(fvertex_t) * numedgepoints);
+        ssec->numverts = numedgepoints;
+
+        R_PrepareSubsector(ssec);
+    }
+
+    // We're done, free the edgepoints memory.
+    M_Free(edgepoints);
+    Z_Free(clippers);
+}
+
+/**
+ * Recursively polygonizes all ceilings and floors.
+ */
+void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
+                               divline_t * divlines)
+{
+    node_t *nod;
+    divline_t *childlist, *dl;
+    int     childlistsize = numdivlines + 1;
+
+    // If this is a subsector we are dealing with, begin carving with the
+    // given list.
+    if(bspnode & NF_SUBSECTOR)
+    {
+        // We have arrived at a subsector. The divline list contains all
+        // the partition lines that carve out the subsector.
+        R_ConvexClipper(SUBSECTOR_PTR(bspnode & ~NF_SUBSECTOR),
+                        numdivlines, divlines);
+        // This leaf is done.
+        return;
+    }
+
+    // Get a pointer to the node.
+    nod = NODE_PTR(bspnode);
+
+    // Allocate a new list for each child.
+    childlist = M_Malloc(childlistsize * sizeof(divline_t));
+
+    // Copy the previous lines, from the parent nodes.
+    if(divlines)
+        memcpy(childlist, divlines, numdivlines * sizeof(divline_t));
+
+    dl = childlist + numdivlines;
+    dl->pos[VX] = nod->x;
+    dl->pos[VY] = nod->y;
+    // The right child gets the original line (LEFT side clipped).
+    dl->dx = nod->dx;
+    dl->dy = nod->dy;
+    R_CreateFloorsAndCeilings(nod->children[0], childlistsize, childlist);
+
+    // The left side. We must reverse the line, otherwise the wrong
+    // side would get clipped.
+    dl->dx = -nod->dx;
+    dl->dy = -nod->dy;
+    R_CreateFloorsAndCeilings(nod->children[1], childlistsize, childlist);
+
+    // We are finishing with this node, free the allocated list.
+    M_Free(childlist);
 }
 
 static float TriangleArea(fvertex_t *o, fvertex_t *s, fvertex_t *t)
@@ -1447,39 +1447,6 @@ void R_InitSubsectorInfo(void)
 }
 
 /**
- * Mapinfo must be set.
- */
-void R_SetupFog(void)
-{
-    int     flags;
-
-    if(!mapinfo)
-    {
-        // Go with the defaults.
-        Con_Execute(CMDS_DDAY,"fog off", true, false);
-        return;
-    }
-
-    // Check the flags.
-    flags = mapinfo->flags;
-    if(flags & MIF_FOG)
-    {
-        // Setup fog.
-        Con_Execute(CMDS_DDAY, "fog on", true, false);
-        Con_Executef(CMDS_DDAY, true, "fog start %f", mapinfo->fog_start);
-        Con_Executef(CMDS_DDAY, true, "fog end %f", mapinfo->fog_end);
-        Con_Executef(CMDS_DDAY, true, "fog density %f", mapinfo->fog_density);
-        Con_Executef(CMDS_DDAY, true, "fog color %.0f %.0f %.0f",
-                     mapinfo->fog_color[0] * 255, mapinfo->fog_color[1] * 255,
-                     mapinfo->fog_color[2] * 255);
-    }
-    else
-    {
-        Con_Execute(CMDS_DDAY, "fog off", true, false);
-    }
-}
-
-/**
  * Scans all sectors for any supported DOOM.exe renderer hacks.
  * Updates sectorinfo accordingly.
  *
@@ -1833,6 +1800,39 @@ void R_RationalizeSectors(void)
 /**
  * Mapinfo must be set.
  */
+void R_SetupFog(void)
+{
+    int     flags;
+
+    if(!mapinfo)
+    {
+        // Go with the defaults.
+        Con_Execute(CMDS_DDAY,"fog off", true, false);
+        return;
+    }
+
+    // Check the flags.
+    flags = mapinfo->flags;
+    if(flags & MIF_FOG)
+    {
+        // Setup fog.
+        Con_Execute(CMDS_DDAY, "fog on", true, false);
+        Con_Executef(CMDS_DDAY, true, "fog start %f", mapinfo->fog_start);
+        Con_Executef(CMDS_DDAY, true, "fog end %f", mapinfo->fog_end);
+        Con_Executef(CMDS_DDAY, true, "fog density %f", mapinfo->fog_density);
+        Con_Executef(CMDS_DDAY, true, "fog color %.0f %.0f %.0f",
+                     mapinfo->fog_color[0] * 255, mapinfo->fog_color[1] * 255,
+                     mapinfo->fog_color[2] * 255);
+    }
+    else
+    {
+        Con_Execute(CMDS_DDAY, "fog off", true, false);
+    }
+}
+
+/**
+ * Mapinfo must be set.
+ */
 void R_SetupSky(void)
 {
     int     i, k;
@@ -2004,8 +2004,8 @@ static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
                                line_t *realNeighbor, vertex_t *commonVertex,
                                line_t **backNeighbor)
 {
-    int     i;
-    line_t *line;
+    int         i;
+    line_t     *line;
 
     for(i = 0; i < backSector->linecount; ++i)
     {
@@ -2028,10 +2028,10 @@ static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
  */
 void R_InitLineInfo(void)
 {
-    int     i;
-    line_t *line;
+    int         i;
+    line_t     *line;
     lineinfo_t *info;
-    side_t *side;
+    side_t     *side;
     sideinfo_t *sinfo;
     surfaceinfo_t *sufinfo;
 
@@ -2221,7 +2221,7 @@ if(verbose >= 1)
 
 void R_InitLinks(void)
 {
-    int i;
+    int         i;
 
     Con_Message("R_InitLinks: Initializing\n");
 
@@ -2233,7 +2233,7 @@ void R_InitLinks(void)
     NP_Init(&linenodes, numlines + 1000);
 
     // Allocate the rings.
-    linelinks = Z_Malloc(sizeof(*linelinks) * numlines, PU_LEVEL, 0);
+    linelinks = Z_Malloc(sizeof(*linelinks) * numlines, PU_LEVELSTATIC, 0);
     for(i = 0; i < numlines; ++i)
         linelinks[i] = NP_New(&linenodes, NP_ROOT_NODE);
 }
@@ -2246,7 +2246,7 @@ void R_InitLinks(void)
  */
 void R_SetupLevel(char *level_id, int flags)
 {
-    int     i;
+    int         i;
 
     if(flags & DDSLF_INITIALIZE)
     {
@@ -2351,7 +2351,7 @@ void R_SetupLevel(char *level_id, int flags)
         DD_ResetTimer();
 
         // Kill all local commands.
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(i = 0; i < MAXPLAYERS; ++i)
         {
             clients[i].numTics = 0;
         }
@@ -2375,7 +2375,7 @@ void R_SetupLevel(char *level_id, int flags)
     {
         // Whenever the map changes, remote players must tell us when
         // they're ready to begin receiving frames.
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(i = 0; i < MAXPLAYERS; ++i)
         {
             if(!(players[i].flags & DDPF_LOCAL) && clients[i].connected)
             {
@@ -2464,7 +2464,7 @@ void R_SetupLevel(char *level_id, int flags)
     // Invalidate old cmds.
     if(isServer)
     {
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].ingame)
                 clients[i].runTime = SECONDS_TO_TICKS(gameTime);
     }
@@ -2493,8 +2493,8 @@ void R_SetupLevel(char *level_id, int flags)
 
 void R_ClearSectorFlags(void)
 {
-    int     i;
-    sector_t *sec;
+    int         i;
+    sector_t   *sec;
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -2506,8 +2506,8 @@ void R_ClearSectorFlags(void)
 
 sector_t *R_GetLinkedSector(sector_t *startsec, int plane)
 {
-    sector_t *sec = startsec;
-    sector_t *link;
+    sector_t   *sec = startsec;
+    sector_t   *link;
 
     for(;;)
     {
@@ -2530,7 +2530,7 @@ sector_t *R_GetLinkedSector(sector_t *startsec, int plane)
 
 void R_UpdateAllSurfaces(boolean forceUpdate)
 {
-    int i, j;
+    int         i, j;
 
     // First, all planes of all sectors.
     for(i = 0; i < numsectors; ++i)
@@ -2554,7 +2554,7 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
 
 void R_UpdateSurface(surface_t *current, boolean forceUpdate)
 {
-    int texFlags, oldTexFlags;
+    int         texFlags, oldTexFlags;
     surfaceinfo_t *old = current->info;
 
     // Any change to the texture or glow properties?
@@ -2794,8 +2794,8 @@ const char *R_GetCurrentLevelID(void)
 const char *R_GetUniqueLevelID(void)
 {
     static char uid[256];
-    filename_t base;
-    int lump = W_GetNumForName((char*)R_GetCurrentLevelID());
+    filename_t  base;
+    int         lump = W_GetNumForName((char*)R_GetCurrentLevelID());
 
     M_ExtractFileBase(W_LumpSourceFile(lump), base);
 
@@ -2813,13 +2813,14 @@ const char *R_GetUniqueLevelID(void)
  */
 const byte *R_GetSectorLightColor(sector_t *sector)
 {
-    sector_t *src;
-    int     i;
+    sector_t   *src;
+    int         i;
 
     if(!rendSkyLight || noSkyColorGiven)
         return sector->rgb;     // The sector's real color.
 
-    if(!R_IsSkySurface(&sector->SP_ceilsurface) && !R_IsSkySurface(&sector->SP_floorsurface))
+    if(!R_IsSkySurface(&sector->SP_ceilsurface) &&
+       !R_IsSkySurface(&sector->SP_floorsurface))
     {
         // A dominant light source affects this sector?
         src = SECT_INFO(sector)->lightsource;
@@ -2845,7 +2846,7 @@ const byte *R_GetSectorLightColor(sector_t *sector)
     return skyColorRGB;
 }
 
-/*
+/**
  * Calculate the size of the entire map.
  */
 void R_GetMapSize(vertex_t *min, vertex_t *max)
@@ -2858,7 +2859,8 @@ void R_GetMapSize(vertex_t *min, vertex_t *max)
     memcpy(min, vertexes, sizeof(min));
     memcpy(max, vertexes, sizeof(max));
 
-    for(i = 1, ptr = vertexes + VTXSIZE; i < numvertexes; i++, ptr += VTXSIZE)
+    for(i = 1, ptr = vertexes + VTXSIZE; i < numvertexes;
+        i++, ptr += VTXSIZE)
     {
         x = ((vertex_t *) ptr)->pos[VX];
         y = ((vertex_t *) ptr)->pos[VY];
