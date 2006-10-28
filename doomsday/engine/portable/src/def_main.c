@@ -1017,7 +1017,7 @@ void Def_PostInit(void)
                 continue;
             }
 
-            st->model = modef - models;
+            st->model = modef - modefs;
             st->frame =
                 R_ModelFrameNumForName(modef->sub[0].model, st->frame_name);
             if(st->end_frame_name[0])
@@ -1438,8 +1438,8 @@ int Def_Get(int type, char *id, void *out)
         return Def_GetSoundNumForName(id);
 
     case DD_DEF_SOUND_LUMPNAME:
-	/* def_main.c: warning: cast from pointer to integer of different size ie -> i = (int) id */
-	ASSERT_NOT_64BIT();
+    /* def_main.c: warning: cast from pointer to integer of different size ie -> i = (int) id */
+    ASSERT_NOT_64BIT();
         i = (int) id;
         if(i < 0 || i >= count_sounds.num)
             return false;

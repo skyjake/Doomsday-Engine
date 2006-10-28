@@ -597,7 +597,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             vis.data.mo.v1[0] = center[VX];
             vis.data.mo.v1[1] = center[VZ];
             vis.data.mo.v2[0] = size;   // Extra scaling factor.
-            vis.data.mo.mf = &models[dst->model];
+            vis.data.mo.mf = &modefs[dst->model];
             if(dst->end_frame < 0)
             {
                 frame = dst->frame;
