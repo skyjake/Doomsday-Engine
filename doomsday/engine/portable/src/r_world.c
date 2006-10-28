@@ -249,8 +249,10 @@ static void R_SetSectorLinks(sector_t *sec)
 static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
                               int numclippers, fdivline_t * clippers)
 {
-    unsigned char sidelist[MAX_POLY_SIDES];
-    int     i, k, num = *numpoints;
+    unsigned char *sidelist;
+    int     i, k, num = *numpoints, sidelistSize = 64;
+
+    sidelist = M_Malloc(sizeof(unsigned char) * sidelistSize);
 
     // We'll clip the polygon with each of the divlines. The left side of
     // each divline is discarded.
@@ -285,8 +287,11 @@ static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
                 // Add the new vertex. Also modify the sidelist.
                 points =
                     (fvertex_t *) M_Realloc(points, (++num) * sizeof(fvertex_t));
-                if(num >= MAX_POLY_SIDES)
-                    Con_Error("Too many points in clipper.\n");
+                if(num >= sidelistSize)
+                {
+                    sidelistSize *= 2;
+                    sidelist = M_Realloc(sidelist, sizeof(unsigned char) * sidelistSize);
+                }
 
                 // Make room for the new vertex.
                 memmove(points + endIdx + 1, points + endIdx,
@@ -332,6 +337,8 @@ static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
         }
     }
     *numpoints = num;
+
+    M_Free(sidelist);
     return points;
 }
 

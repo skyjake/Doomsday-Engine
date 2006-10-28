@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -53,20 +54,21 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Initialize (alloc) the nodepile with n nodes.
  *
  * @param pile      Ptr to the pile to be initialized.
  * @param initial   Number of nodes to allocate.
  */
-void NP_Init(nodepile_t * pile, int initial)
+void NP_Init(nodepile_t *pile, int initial)
 {
-    int     size;
+    int         size;
 
     // Allocate room for at least two nodes.
     // Node zero is never used.
     if(initial < 2)
         initial = 2;
+
     size = sizeof(*pile->nodes) * initial;
     pile->nodes = Z_Calloc(size, PU_LEVEL, 0);
     pile->count = initial;
@@ -74,7 +76,7 @@ void NP_Init(nodepile_t * pile, int initial)
     pile->pos = 1;
 }
 
-/*
+/**
  * Adds a new node to a node pile.
  * Pos always has the index of the next node to check when allocating
  * a new node. Pos shouldn't be accessed outside this routine because its
@@ -83,70 +85,75 @@ void NP_Init(nodepile_t * pile, int initial)
  * @param pile      Ptr to nodepile to add the node to.
  * @param ptr       Data to attach to the new node.
  */
-nodeindex_t NP_New(nodepile_t * pile, void *ptr)
+nodeindex_t NP_New(nodepile_t *pile, void *ptr)
 {
     linknode_t *node;
     linknode_t *end = pile->nodes + pile->count;
-    int     i, newcount;
+    int         i, newcount;
     linknode_t *newlist;
+    boolean     found = false;
 
     pile->pos %= pile->count;
     node = pile->nodes + pile->pos++;
 
     // Scan for an unused node, starting from current pos.
-    for(i = 0; i < pile->count - 1; i++, node++, pile->pos++)
+    for(i = 0; i < pile->count - 1; ++i, node++, pile->pos++)
     {
         if(node == end)
             node = pile->nodes + 1; // Wrap back to #1.
         if(!node->ptr)
         {
             // This is the one!
-            goto got_it;
+            found = true;
+            break;
         }
     }
 
-    // Damned, we ran out of nodes. Let's allocate more.
-    if(pile->count == NP_MAX_NODES)
+    if(!found)
     {
-        // This happens *theoretically* only in freakishly complex
-        // maps with lots and lots of mobjs.
-        Con_Error("NP_New: Out of linknodes! Contact the developer.\n");
+        // Damned, we ran out of nodes. Let's allocate more.
+        if(pile->count == NP_MAX_NODES)
+        {
+            // This happens *theoretically* only in freakishly complex
+            // maps with lots and lots of mobjs.
+            Con_Error("NP_New: Out of linknodes! Contact the developer.\n");
+        }
+
+        // Double the number of nodes, but add at most 1024.
+        if(pile->count >= 1024)
+            newcount = pile->count + 1024;
+        else
+            newcount = pile->count * 2;
+        if(newcount > NP_MAX_NODES)
+            newcount = NP_MAX_NODES;
+
+        newlist = Z_Malloc(sizeof(*newlist) * newcount, PU_LEVEL, 0);
+        memcpy(newlist, pile->nodes, sizeof(*pile->nodes) * pile->count);
+        memset(newlist + pile->count, 0,
+               (newcount - pile->count) * sizeof(*newlist));
+
+        // Get rid of the old list and start using the new one.
+        Z_Free(pile->nodes);
+        pile->nodes = newlist;
+        pile->pos = pile->count + 1;
+        node = pile->nodes + pile->count;
+        pile->count = newcount;
     }
 
-    // Double the number of nodes, but add at most 1024.
-    if(pile->count >= 1024)
-        newcount = pile->count + 1024;
-    else
-        newcount = pile->count * 2;
-    if(newcount > NP_MAX_NODES)
-        newcount = NP_MAX_NODES;
-    newlist = Z_Malloc(sizeof(*newlist) * newcount, PU_LEVEL, 0);
-    memcpy(newlist, pile->nodes, sizeof(*pile->nodes) * pile->count);
-    memset(newlist + pile->count, 0,
-           (newcount - pile->count) * sizeof(*newlist));
-
-    // Get rid of the old list and start using the new one.
-    Z_Free(pile->nodes);
-    pile->nodes = newlist;
-    pile->pos = pile->count + 1;
-    node = pile->nodes + pile->count;
-    pile->count = newcount;
-
-  got_it:
     node->ptr = ptr;
     // Make it point to itself by default (a root, basically).
     node->next = node->prev = node - pile->nodes;
     return node->next;          // Well, node's index, really.
 }
 
-/*
+/**
  * Links the node to the beginning of the ring.
  *
  * @param pile      Nodepile ring to work with.
  * @param node      Node to be linked.
  * @param root      The root node to link the node to.
  */
-void NP_Link(nodepile_t * pile, nodeindex_t node, nodeindex_t root)
+void NP_Link(nodepile_t *pile, nodeindex_t node, nodeindex_t root)
 {
     linknode_t *nd = pile->nodes;
 
@@ -155,13 +162,13 @@ void NP_Link(nodepile_t * pile, nodeindex_t node, nodeindex_t root)
     nd[root].next = nd[nd[node].next].prev = node;
 }
 
-/*
+/**
  * Unlink a node from the ring (make it a root node)
  *
  * @param pile      Nodepile ring to work with.
  * @param node      Node to be unlinked.
  */
-void NP_Unlink(nodepile_t * pile, nodeindex_t node)
+void NP_Unlink(nodepile_t *pile, nodeindex_t node)
 {
     linknode_t *nd = pile->nodes;
 
@@ -173,10 +180,10 @@ void NP_Unlink(nodepile_t * pile, nodeindex_t node)
 }
 
 #if 0 // This is now a macro.
-/*
+/**
  * Caller must unlink first.
  */
-void NP_Dismiss(nodepile_t * pile, nodeindex_t node)
+void NP_Dismiss(nodepile_t *pile, nodeindex_t node)
 {
     pile->nodes[node].ptr = 0;
 }

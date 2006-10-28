@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -68,7 +68,7 @@ boolean P_IsMobjThinker(think_t thinker)
 void P_ClearMobjIDs(void)
 {
     memset(idtable, 0, sizeof(idtable));
-    idtable[0] |= 1;            // ID zero is always "used" (it's not a valid ID).
+    idtable[0] |= 1;      // ID zero is always "used" (it's not a valid ID).
 }
 
 boolean P_IsUsedMobjID(thid_t id)
@@ -78,7 +78,7 @@ boolean P_IsUsedMobjID(thid_t id)
 
 void P_SetMobjID(thid_t id, boolean state)
 {
-    int     c = id >> 5, bit = 1 << (id & 31);  //(id % 32);
+    int         c = id >> 5, bit = 1 << (id & 31);  //(id % 32);
 
     if(state)
         idtable[c] |= bit;
@@ -98,7 +98,7 @@ thid_t P_NewMobjID(void)
 
 void P_RunThinkers(void)
 {
-    thinker_t *current, *next;
+    thinker_t  *current, *next;
 
     current = thinkercap.next;
     while(current != &thinkercap)
@@ -132,7 +132,7 @@ void P_InitThinkers(void)
     P_ClearMobjIDs();
 }
 
-/*
+/**
  * Adds a new thinker at the end of the list.
  */
 void P_AddThinker(thinker_t *thinker)
@@ -156,7 +156,7 @@ void P_AddThinker(thinker_t *thinker)
     }
 }
 
-/*
+/**
  * Deallocation is lazy -- it will not actually be freed until its
  * thinking turn comes up.
  */

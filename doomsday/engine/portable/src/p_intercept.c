@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -55,7 +56,7 @@ static int maxIntercepts = 0;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Empties the intercepts array and makes sure it has been allocated.
  */
 void P_ClearIntercepts(void)
@@ -69,7 +70,7 @@ void P_ClearIntercepts(void)
     intercept_p = intercepts;
 }
 
-/*
+/**
  * You must clear intercepts before the first time this is called.
  * The intercepts array grows if necessary. Returns a pointer to the new
  * intercept.
@@ -92,13 +93,13 @@ intercept_t *P_AddIntercept(fixed_t frac, boolean isaline, void *ptr)
     return intercept_p++;
 }
 
-/*
+/**
  * Returns true if the traverser function returns true for all lines.
  */
 boolean P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)
 {
     intercept_t *in = NULL;
-    int     count = intercept_p - intercepts;
+    int         count = intercept_p - intercepts;
 
     while(count--)
     {
@@ -117,16 +118,16 @@ boolean P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)
     return true;                // everything was traversed
 }
 
-/*
+/**
  * Returns true if the traverser function returns true for all lines.
  */
-boolean P_SightTraverseIntercepts(divline_t * strace,
+boolean P_SightTraverseIntercepts(divline_t *strace,
                                   boolean (*func) (intercept_t *))
 {
-    int     count;
-    fixed_t dist;
+    int         count;
+    fixed_t     dist;
     intercept_t *scan, *in;
-    divline_t dl;
+    divline_t   dl;
 
     count = intercept_p - intercepts;
 
@@ -148,7 +149,8 @@ boolean P_SightTraverseIntercepts(divline_t * strace,
                 dist = scan->frac;
                 in = scan;
             }
-        if(!in) continue;       // huh?
+        if(!in)
+            continue;           // huh?
 
         if(!func(in))
             return false;       // don't bother going farther

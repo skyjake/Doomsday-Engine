@@ -39,7 +39,9 @@
 
 // Helper Routines -------------------------------------------------------
 
-// Returns a pointer to the new block of memory.
+/**
+ * @return          Pointer to the new block of memory.
+ */
 void *DED_NewEntries(void **ptr, ded_count_t *cnt, size_t elemSize, int count)
 {
     void   *np;
@@ -52,12 +54,15 @@ void *DED_NewEntries(void **ptr, ded_count_t *cnt, size_t elemSize, int count)
             cnt->max = cnt->num;
         *ptr = M_Realloc(*ptr, elemSize * cnt->max);
     }
+
     np = (char *) *ptr + (cnt->num - count) * elemSize;
     memset(np, 0, elemSize * count);   // Clear the new entries.
     return np;
 }
 
-// Returns a pointer to the new block of memory.
+/**
+ * @return          Pointer to the new block of memory.
+ */
 void *DED_NewEntry(void **ptr, ded_count_t *cnt, size_t elemSize)
 {
     return DED_NewEntries(ptr, cnt, elemSize, 1);
@@ -67,9 +72,11 @@ void DED_DelEntry(int index, void **ptr, ded_count_t *cnt, size_t elemSize)
 {
     if(index < 0 || index >= cnt->num)
         return;                 // Can't do that!
+
     memmove((char *) *ptr + elemSize * index,
             (char *) *ptr + elemSize * (index + 1),
             elemSize * (cnt->num - index - 1));
+
     if(--cnt->num < cnt->max / 2)
     {
         cnt->max /= 2;
@@ -260,7 +267,6 @@ int DED_AddModel(ded_t *ded, char *spr)
 
 void DED_RemoveModel(ded_t *ded, int index)
 {
-    //M_Free(ded->models[index].frames);
     DED_DelEntry(index, (void **) &ded->models, &ded->count.models,
                  sizeof(ded_model_t));
 }

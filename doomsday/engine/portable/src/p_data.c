@@ -141,158 +141,6 @@ ded_mapinfo_t *mapinfo = 0;         // Current mapinfo.
 fixed_t     mapgravity;             // Gravity for the current map.
 int         mapambient;             // Ambient lightlevel for the current map.
 
-/*
- * Value types for the DMU constants.
- *
- * Each DMU constant (declared in dd_share.h) requires an
- * entry in this table.
- * The existing indices MUST NOT change and MUST match their
- * DMU constant indices. Add new DMU constants to the end.
- *
- * Not all DMU constants have a value type, in which case
- * they should be entered using the special case: "DDVT_NONE"
- */
-
-// FIXME: This way of initializing the array is unsafe considering changes
-// to the DMU constants. Maybe use a similar type of array as in p_dmu.c for
-// DMU_Str, but used for initializing propertyTypes[] in P_Init.
-
-/*
-const valuetype_t propertyTypes[] = {
-    DDVT_NONE,        // DMU_NONE = 0
-
-    DDVT_PTR,         // DMU_VERTEX = 1
-    DDVT_PTR,         // DMU_SEG
-    DDVT_PTR,         // DMU_LINE
-    DDVT_PTR,         // DMU_SIDE
-    DDVT_PTR,         // DMU_NODE
-    DDVT_PTR,         // DMU_SUBSECTOR
-    DDVT_PTR,         // DMU_SECTOR
-    DDVT_NONE,        // DMU_BLOCKMAP
-    DDVT_NONE,        // DMU_REJEC
-    DDVT_NONE,        // DMU_POLYBLOCKMAP
-    DDVT_PTR,         // DMU_POLYOBJ
-
-    DDVT_PTR,         // DMU_LINE_BY_TAG
-    DDVT_PTR,         // DMU_SECTOR_BY_TAG
-
-    DDVT_PTR,         // DMU_LINE_BY_ACT_TAG
-    DDVT_PTR,         // DMU_SECTOR_BY_ACT_TAG
-
-    DDVT_NONE,        // unused1
-    DDVT_NONE,        // unused2
-    DDVT_NONE,        // unused2
-
-    DDVT_FIXED,       // DMU_X
-    DDVT_FIXED,       // DMU_Y
-    DDVT_FIXED,       // DMU_XY
-
-    DDVT_PTR,         // DMU_VERTEX1
-    DDVT_PTR,         // DMU_VERTEX2
-    DDVT_FIXED,       // DMU_VERTEX1_X
-    DDVT_FIXED,       // DMU_VERTEX1_Y
-    DDVT_FIXED,       // DMU_VERTEX1_XY
-    DDVT_FIXED,       // DMU_VERTEX2_X
-    DDVT_FIXED,       // DMU_VERTEX2_Y
-    DDVT_FIXED,       // DMU_VERTEX2_XY
-
-    DDVT_PTR,         // DMU_FRONT_SECTOR
-    DDVT_PTR,         // DMU_BACK_SECTOR
-    DDVT_PTR,         // DMU_SIDE0
-    DDVT_PTR,         // DMU_SIDE1
-    DDVT_INT,         // DMU_FLAGS
-    DDVT_FIXED,       // DMU_DX
-    DDVT_FIXED,       // DMU_DY
-    DDVT_FIXED,       // DMU_LENGTH
-    DDVT_INT,         // DMU_SLOPE_TYPE
-    DDVT_ANGLE,       // DMU_ANGLE
-    DDVT_FIXED,       // DMU_OFFSET
-    DDVT_FLAT_INDEX,  // DMU_TOP_TEXTURE
-    DDVT_BYTE,        // DMU_TOP_COLOR
-    DDVT_BYTE,        // DMU_TOP_COLOR_RED
-    DDVT_BYTE,        // DMU_TOP_COLOR_GREEN
-    DDVT_BYTE,        // DMU_TOP_COLOR_BLUE
-    DDVT_FLAT_INDEX,  // DMU_MIDDLE_TEXTURE
-    DDVT_BYTE,        // DMU_MIDDLE_COLOR
-    DDVT_BYTE,        // DMU_MIDDLE_COLOR_RED
-    DDVT_BYTE,        // DMU_MIDDLE_COLOR_GREEN
-    DDVT_BYTE,        // DMU_MIDDLE_COLOR_BLUE
-    DDVT_BYTE,        // DMU_MIDDLE_COLOR_ALPHA
-    DDVT_BLENDMODE,   // DMU_MIDDLE_BLENDMODE
-    DDVT_FLAT_INDEX,  // DMU_BOTTOM_TEXTURE
-    DDVT_BYTE,        // DMU_BOTTOM_COLOR
-    DDVT_BYTE,        // DMU_BOTTOM_COLOR_RED
-    DDVT_BYTE,        // DMU_BOTTOM_COLOR_GREEN
-    DDVT_BYTE,        // DMU_BOTTOM_COLOR_BLUE
-    DDVT_FIXED,       // DMU_TEXTURE_OFFSET_X
-    DDVT_FIXED,       // DMU_TEXTURE_OFFSET_Y
-    DDVT_FIXED,       // DMU_TEXTURE_OFFSET_XY
-    DDVT_INT,         // DMU_VALID_COUNT
-
-    DDVT_INT,         // DMU_LINE_COUNT
-    DDVT_BYTE,        // DMU_COLOR
-    DDVT_BYTE,        // DMU_COLOR_RED
-    DDVT_BYTE,        // DMU_COLOR_GREEN
-    DDVT_BYTE,        // DMU_COLOR_BLUE
-    DDVT_SHORT,       // DMU_LIGHT_LEVEL
-    DDVT_PTR,         // DMU_THINGS
-    DDVT_FIXED,       // DMU_BOUNDING_BOX
-    DDVT_PTR,         // DMU_SOUND_ORIGIN
-    DDVT_FLOAT,       // DMU_SOUND_REVERB
-
-    DDVT_FIXED,       // DMU_FLOOR_HEIGHT
-    DDVT_FLAT_INDEX,  // DMU_FLOOR_TEXTURE
-    DDVT_FLOAT,       // DMU_FLOOR_OFFSET_X
-    DDVT_FLOAT,       // DMU_FLOOR_OFFSET_Y
-    DDVT_FLOAT,       // DMU_FLOOR_OFFSET_XY
-    DDVT_INT,         // DMU_FLOOR_TARGET
-    DDVT_INT,         // DMU_FLOOR_SPEED
-    DDVT_BYTE,        // DMU_FLOOR_COLOR
-    DDVT_BYTE,        // DMU_FLOOR_COLOR_RED
-    DDVT_BYTE,        // DMU_FLOOR_COLOR_GREEN
-    DDVT_BYTE,        // DMU_FLOOR_COLOR_BLUE
-    DDVT_INT,         // DMU_FLOOR_TEXTURE_MOVE_X
-    DDVT_INT,         // DMU_FLOOR_TEXTURE_MOVE_Y
-    DDVT_INT,         // DMU_FLOOR_TEXTURE_MOVE_XY
-    DDVT_PTR,         // DMU_FLOOR_SOUND_ORIGIN
-
-    DDVT_FIXED,       // DMU_CEILING_HEIGHT
-    DDVT_FLAT_INDEX,  // DMU_CEILING_TEXTURE
-    DDVT_FLOAT,       // DMU_CEILING_OFFSET_X
-    DDVT_FLOAT,       // DMU_CEILING_OFFSET_Y
-    DDVT_FLOAT,       // DMU_CEILING_OFFSET_XY
-    DDVT_INT,         // DMU_CEILING_TARGET
-    DDVT_INT,         // DMU_CEILING_SPEED
-    DDVT_BYTE,        // DMU_CEILING_COLOR
-    DDVT_BYTE,        // DMU_CEILING_COLOR_RED
-    DDVT_BYTE,        // DMU_CEILING_COLOR_GREEN
-    DDVT_BYTE,        // DMU_CEILING_COLOR_BLUE
-    DDVT_INT,         // DMU_CEILING_TEXTURE_MOVE_X
-    DDVT_INT,         // DMU_CEILING_TEXTURE_MOVE_Y
-    DDVT_INT,         // DMU_CEILING_TEXTURE_MOVE_XY
-    DDVT_PTR,         // DMU_CEILING_SOUND_ORIGIN
-
-    DDVT_PTR,         // DMU_SEG_LIST
-    DDVT_INT,         // DMU_SEG_COUNT
-    DDVT_INT,         // DMU_TAG
-    DDVT_PTR,         // DMU_ORIGINAL_POINTS
-    DDVT_PTR,         // DMU_PREVIOUS_POINTS
-    DDVT_PTR,         // DMU_START_SPOT
-    DDVT_FIXED,       // DMU_START_SPOT_X
-    DDVT_FIXED,       // DMU_START_SPOT_Y
-    DDVT_FIXED,       // DMU_START_SPOT_XY
-    DDVT_FIXED,       // DMU_DESTINATION_X
-    DDVT_FIXED,       // DMU_DESTINATION_Y
-    DDVT_FIXED,       // DMU_DESTINATION_XY
-    DDVT_ANGLE,       // DMU_DESTINATION_ANGLE
-    DDVT_INT,         // DMU_SPEED
-    DDVT_ANGLE,       // DMU_ANGLE_SPEED
-    DDVT_INT,         // DMU_SEQUENCE_TYPE
-    DDVT_BOOL,        // DMU_CRUSH
-    DDVT_PTR          // DMU_SPECIAL_DATA
-};
-*/
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // for sector->linecount
@@ -310,7 +158,7 @@ static badtex_t *badTexNames = NULL;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Convert propertyType enum constant into a string for error/debug messages.
  */
 const char* value_Str(int val)
@@ -339,7 +187,7 @@ const char* value_Str(int val)
         { DDVT_SEG_PTR, "DDVT_SEG_PTR" },
         { 0, NULL }
     };
-    int i;
+    int         i;
 
     for(i = 0; valuetypes[i].str; ++i)
         if(valuetypes[i].val == val)
@@ -355,22 +203,22 @@ void P_InitData(void)
     P_InitMapUpdate();
 }
 
-/*
+/**
  * TODO: Consolidate with R_UpdatePlanes?
  */
 void P_PlaneChanged(sector_t *sector, int plane)
 {
-    int i;
-    int k;
+    int         i, k;
     subsector_t *sub;
-    seg_t *seg;
-    side_t *front = NULL, *back = NULL;
+    seg_t      *seg;
+    side_t     *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
     sector->planes[plane]->soundorg.pos[VZ] = sector->planes[plane]->height;
 
     if(plane == PLN_FLOOR || plane == PLN_CEILING)
-        sector->soundorg.pos[VZ] = (sector->SP_ceilheight - sector->SP_floorheight) / 2;
+        sector->soundorg.pos[VZ] =
+            (sector->SP_ceilheight - sector->SP_floorheight) / 2;
 
     for(i = 0; i < sector->linecount; ++i)
     {
@@ -513,7 +361,7 @@ void P_PlaneChanged(sector_t *sector, int plane)
     }
 }
 
-/*
+/**
  * When a change is made, this must be called to inform the engine of
  * it.  Repercussions include notifications to the renderer, network...
  */
@@ -529,8 +377,8 @@ void P_CeilingChanged(sector_t *sector)
 
 void P_PolyobjChanged(polyobj_t *po)
 {
-    seg_t **seg = po->segs;
-    int i;
+    int         i;
+    seg_t     **seg = po->segs;
 
     for(i = 0; i < po->numsegs; ++i, ++seg)
     {
@@ -539,7 +387,7 @@ void P_PolyobjChanged(polyobj_t *po)
     }
 }
 
-/*
+/**
  * Begin the process of loading a new map.
  * Can be accessed by the games via the public API.
  *
@@ -575,7 +423,7 @@ boolean P_LoadMap(char *levelId)
     }
 }
 
-/*
+/**
  * If we encountered any problems during setup - announce them
  * to the user. If the errors couldn't be repaired or we cant
  * continue safely - an error dialog is presented.
@@ -583,14 +431,14 @@ boolean P_LoadMap(char *levelId)
  * TODO: latter on this will be expanded to check for various
  *       doom.exe renderer hacks and other stuff.
  *
- * @param silent - don't announce non-critical errors
- * @return boolean  (True) We can continue setting up the level.
+ * @param silent        (True) Don't announce non-critical errors.
+ *
+ * @return boolean      (True) We can continue setting up the level.
  */
 boolean P_CheckLevel(char *levelID, boolean silent)
 {
-    int i, printCount;
-    boolean canContinue = !numMissingFronts;
-//    boolean hasErrors = (numBadTexNames != 0 || numMissingFronts != 0);
+    int         i, printCount;
+    boolean     canContinue = !numMissingFronts;
 
     Con_Message("P_CheckLevel: Checking %s for errors...\n", levelID);
 
@@ -647,26 +495,24 @@ boolean P_CheckLevel(char *levelID, boolean silent)
     return true;
 }
 
-/*
+/**
  * Checks texture *name to see if it is a valid name.
  * Or decompose it into a colormap reference, color value etc...
  *
- * Returns the id of the texture else -1. If we are currently
- * doing level setup and the name isn't valid - add the name
- * to the "bad textures" list so it can be presented to the
- * user (in P_CheckMap()) instead of loads of duplicate missing
- * texture messages from Doomsday.
+ * Returns the id of the texture else -1. If we are currently doing level
+ * setup and the name isn't valid - add the name to the "bad textures" list
+ * so it can be presented to the user (in P_CheckMap()) instead of loads of
+ * duplicate missing texture messages from Doomsday.
  *
- * @param planeTex: true = *name comes from a map data field
- *                         intended for plane textures (Flats)
+ * @param planeTex      <code>true</code> @name comes from a map data field
+ *                      intended for plane textures (Flats).
  */
 int P_CheckTexture(char *name, boolean planeTex, int dataType,
                    unsigned int element, int property)
 {
-    int i;
-    int id;
-    char namet[9];
-    boolean known = false;
+    int         i, id;
+    char        namet[9];
+    boolean     known = false;
 
     if(planeTex)
         id = R_FlatNumForName(name);
@@ -726,12 +572,12 @@ int P_CheckTexture(char *name, boolean planeTex, int dataType,
     return id;
 }
 
-/*
+/**
  * Frees memory we allocated for bad texture name collection.
  */
 static void P_FreeBadTexList(void)
 {
-    int i;
+    int         i;
 
     if(badTexNames != NULL)
     {

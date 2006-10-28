@@ -78,8 +78,6 @@ typedef struct {
 #define ML_DONTPEGBOTTOM    0x0010
 #define ML_MAPPED           0x0100 // set if already drawn in automap
 
-#define MAX_POLY_SIDES      64     // A subsector has at most this many edges.
-
 // Node flags.
 #define NF_SUBSECTOR    0x80000000
 

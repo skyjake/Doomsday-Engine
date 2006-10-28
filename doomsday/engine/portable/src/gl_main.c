@@ -376,7 +376,7 @@ void GL_SetGamma(void)
     GL_SetGammaRamp(myramp);
 }
 
-const char* GL_ChooseFixedFont()
+const char* GL_ChooseFixedFont(void)
 {
     if(glScreenHeight < 300)
         return "console11";
