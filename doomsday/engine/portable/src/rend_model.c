@@ -139,7 +139,7 @@ void Rend_ModelRegister(void)
 
 static __inline float qatan2(float y, float x)
 {
-    float   ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
+    float       ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
 
     if(ang > PI)
         ang -= 2 * (float) PI;
@@ -151,14 +151,14 @@ static __inline float qatan2(float y, float x)
 
 static void scaleAmbientRgb(float *out, byte *in, float mul)
 {
-    int     i;
-    float   val;
+    int         i;
+    float       val;
 
     if(mul < 0)
         mul = 0;
     if(mul > 1)
         mul = 1;
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
     {
         val = in[i] * mul / 255;
 
@@ -176,7 +176,7 @@ static void scaleFloatRgb(float *out, byte *in, float mul)
 /**
  * Linear interpolation between two values.
  */
-float Mod_Lerp(float start, float end, float pos)
+float __inline Mod_Lerp(float start, float end, float pos)
 {
     return end * pos + start * (1 - pos);
 }
@@ -184,16 +184,16 @@ float Mod_Lerp(float start, float end, float pos)
 /**
  * Iterator for processing light sources around a model.
  */
-boolean Mod_LightIterator(lumobj_t * lum, fixed_t xyDist, void *data)
+boolean Mod_LightIterator(lumobj_t *lum, fixed_t xyDist, void *data)
 {
     vissprite_t *spr = (vissprite_t*) data;
-    fixed_t zDist =
+    fixed_t     zDist =
         ((spr->data.mo.gz + spr->data.mo.gzt) >> 1) -
         (lum->thing->pos[VZ] + FRACUNIT * lum->center);
     fixed_t dist = P_ApproxDistance(xyDist, zDist);
-    int     i, maxIndex = 0;
-    fixed_t maxDist = -1;
-    mlight_t *light;
+    int         i, maxIndex = 0;
+    fixed_t     maxDist = -1;
+    mlight_t   *light;
 
     // If the light is too far away, skip it.
     if(dist > (dlMaxRad << FRACBITS))
@@ -225,10 +225,10 @@ boolean Mod_LightIterator(lumobj_t * lum, fixed_t xyDist, void *data)
 /**
  * Return a pointer to the visible model frame.
  */
-model_frame_t *Mod_GetVisibleFrame(modeldef_t * mf, int subnumber, int mobjid)
+model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
 {
-    model_t *mdl = modellist[mf->sub[subnumber].model];
-    int     index = mf->sub[subnumber].frame;
+    model_t    *mdl = modellist[mf->sub[subnumber].model];
+    int         index = mf->sub[subnumber].frame;
 
     if(mf->flags & MFF_IDFRAME)
     {
@@ -246,13 +246,13 @@ model_frame_t *Mod_GetVisibleFrame(modeldef_t * mf, int subnumber, int mobjid)
  * Render a set of GL commands using the given data.
  */
 void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
-                        gl_vertex_t * vertices, gl_color_t * colors,
-                        gl_texcoord_t * texCoords)
+                        gl_vertex_t *vertices, gl_color_t *colors,
+                        gl_texcoord_t *texCoords)
 {
-    byte   *pos;
+    byte       *pos;
     glcommand_vertex_t *v;
-    int     count;
-    void   *coords[2];
+    int         count;
+    void       *coords[2];
 
     // Disable all vertex arrays.
     gl.DisableArrays(true, true, DGL_ALL_BITS);
@@ -310,15 +310,15 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
 /**
  * Interpolate linearly between two sets of vertices.
  */
-void Mod_LerpVertices(float pos, int count, model_vertex_t * start,
-                      model_vertex_t * end, gl_vertex_t * out)
+void Mod_LerpVertices(float pos, int count, model_vertex_t *start,
+                      model_vertex_t *end, gl_vertex_t *out)
 {
-    int     i;
-    float   inv;
+    int         i;
+    float       inv;
 
     if(start == end || pos == 0)
     {
-        for(i = 0; i < count; i++, start++, out++)
+        for(i = 0; i < count; ++i, start++, out++)
         {
             out->xyz[0] = start->xyz[0];
             out->xyz[1] = start->xyz[1];
@@ -331,7 +331,7 @@ void Mod_LerpVertices(float pos, int count, model_vertex_t * start,
 
     if(vertexUsage)
     {
-        for(i = 0; i < count; i++, start++, end++, out++)
+        for(i = 0; i < count; ++i, start++, end++, out++)
             if(vertexUsage[i] & (1 << activeLod))
             {
                 out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
@@ -341,7 +341,7 @@ void Mod_LerpVertices(float pos, int count, model_vertex_t * start,
     }
     else
     {
-        for(i = 0; i < count; i++, start++, end++, out++)
+        for(i = 0; i < count; ++i, start++, end++, out++)
         {
             out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
             out->xyz[1] = inv * start->xyz[1] + pos * end->xyz[1];
@@ -353,7 +353,7 @@ void Mod_LerpVertices(float pos, int count, model_vertex_t * start,
 /**
  * Negate all Z coordinates.
  */
-void Mod_MirrorVertices(int count, gl_vertex_t * v, int axis)
+void Mod_MirrorVertices(int count, gl_vertex_t *v, int axis)
 {
     for(; count-- > 0; v++)
         v->xyz[axis] = -v->xyz[axis];
@@ -362,12 +362,12 @@ void Mod_MirrorVertices(int count, gl_vertex_t * v, int axis)
 /**
  * Calculate vertex lighting.
  */
-void Mod_VertexColors(int count, gl_color_t * out, gl_vertex_t * normal,
+void Mod_VertexColors(int count, gl_color_t *out, gl_vertex_t *normal,
                       byte alpha, float ambient[3])
 {
-    int     i, k;
-    float   color[3], extra[3], *dest, dot;
-    mlight_t *light;
+    int         i, k;
+    float       color[3], extra[3], *dest, dot;
+    mlight_t   *light;
 
     for(i = 0; i < count; ++i, out++, normal++)
     {
@@ -442,7 +442,7 @@ void Mod_VertexColors(int count, gl_color_t * out, gl_vertex_t * normal,
 /**
  * Set all the colors in the array to bright white.
  */
-void Mod_FullBrightVertexColors(int count, gl_color_t * colors, byte alpha)
+void Mod_FullBrightVertexColors(int count, gl_color_t *colors, byte alpha)
 {
     for(; count-- > 0; colors++)
     {
@@ -454,11 +454,10 @@ void Mod_FullBrightVertexColors(int count, gl_color_t * colors, byte alpha)
 /**
  * Set all the colors into the array to the same values.
  */
-void Mod_FixedVertexColors(int count, gl_color_t * colors, float *color)
+void Mod_FixedVertexColors(int count, gl_color_t *colors, float *color)
 {
-    byte    rgba[4] = { color[0] * 255, color[1] * 255, color[2] * 255,
-        color[3] * 255
-    };
+    byte        rgba[4] =
+            {color[0] * 255, color[1] * 255, color[2] * 255, color[3] * 255};
 
     for(; count-- > 0; colors++)
         memcpy(colors->rgba, rgba, 4);
@@ -467,13 +466,13 @@ void Mod_FixedVertexColors(int count, gl_color_t * colors, float *color)
 /**
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
-void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
+void Mod_ShinyCoords(int count, gl_texcoord_t *coords, gl_vertex_t *normals,
                      float normYaw, float normPitch, float shinyAng,
                      float shinyPnt, float reactSpeed)
 {
-    int     i;
-    float   u, v;
-    float   rotatedNormal[3];
+    int         i;
+    float       u, v;
+    float       rotatedNormal[3];
 
     for(i = 0; i < count; ++i, coords++, normals++)
     {
@@ -501,32 +500,32 @@ void Mod_ShinyCoords(int count, gl_texcoord_t* coords, gl_vertex_t* normals,
 /**
  * Render a submodel from the vissprite.
  */
-void Mod_RenderSubModel(vissprite_t * spr, int number)
+void Mod_RenderSubModel(vissprite_t *spr, int number)
 {
     modeldef_t *mf = spr->data.mo.mf, *mfNext = spr->data.mo.nextmf;
     submodeldef_t *smf = &mf->sub[number];
-    model_t *mdl = modellist[smf->model];
+    model_t    *mdl = modellist[smf->model];
     model_frame_t *frame = Mod_GetVisibleFrame(mf, number, spr->data.mo.id);
     model_frame_t *nextFrame = NULL;
 
     //int mainFlags = mf->flags;
-    int     subFlags = smf->flags;
-    int     numVerts;
-    int     useSkin;
-    int     i, c;
-    float   inter, endPos, offset;
-    float   yawAngle, pitchAngle;
-    float   alpha, customAlpha;
-    float   dist, intensity, lightCenter[3], delta[3], color[4];
-    float   ambient[3];
-    float   shininess, *shinyColor;
-    float   normYaw, normPitch, shinyAng, shinyPnt;
-    mlight_t *light;
-    byte    byteAlpha;
+    int         subFlags = smf->flags;
+    int         numVerts;
+    int         useSkin;
+    int         i, c;
+    float       inter, endPos, offset;
+    float       yawAngle, pitchAngle;
+    float       alpha, customAlpha;
+    float       dist, intensity, lightCenter[3], delta[3], color[4];
+    float       ambient[3];
+    float       shininess, *shinyColor;
+    float       normYaw, normPitch, shinyAng, shinyPnt;
+    mlight_t   *light;
+    byte        byteAlpha;
     blendmode_t blending = mf->def->sub[number].blendmode;
-    DGLuint skinTexture = 0, shinyTexture = 0;
-    int     zSign = (spr->type == VSPR_HUD_MODEL &&
-                     mirrorHudModels != 0 ? -1 : 1);
+    DGLuint     skinTexture = 0, shinyTexture = 0;
+    int         zSign = (spr->type == VSPR_HUD_MODEL &&
+                            mirrorHudModels != 0 ? -1 : 1);
 
     if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0)
     {
@@ -1010,7 +1009,7 @@ void Mod_RenderSubModel(vissprite_t * spr, int number)
 /**
  * Setup the light/dark factors and dot product offset for glow lights.
  */
-void Mod_GlowLightSetup(mlight_t * light)
+void Mod_GlowLightSetup(mlight_t *light)
 {
     light->lightSide = 1;
     light->darkSide = 0;
@@ -1020,14 +1019,14 @@ void Mod_GlowLightSetup(mlight_t * light)
 /**
  * Render all the submodels of a model.
  */
-void Rend_RenderModel(vissprite_t * spr)
+void Rend_RenderModel(vissprite_t *spr)
 {
     modeldef_t *mf = spr->data.mo.mf;
     rendpoly_t *quad;
-    int     i;
-    int     lightLevel = spr->data.mo.lightlevel;
-    float   dist;
-    mlight_t *light;
+    int         i;
+    int         lightLevel = spr->data.mo.lightlevel;
+    float       dist;
+    mlight_t   *light;
 
     if(!mf)
         return;

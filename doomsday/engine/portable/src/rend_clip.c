@@ -1140,7 +1140,7 @@ int C_CheckViewRelSeg(float x1, float y1, float x2, float y2)
     float       dx2 = x2 - vx;
     float       dy2 = y2 - vz;
 
-    if(devNoCulling || P_IsInVoid(viewplayer))
+    if(devNoCulling)
         return 1;
 
     return C_SafeCheckRange(bamsAtan2((int) (dy2 * 100), (int) (dx2 * 100)),
@@ -1179,7 +1179,7 @@ int C_CheckSubsector(subsector_t *ssec)
 {
     int         i;
 
-    if(devNoCulling || P_IsInVoid(viewplayer))
+    if(devNoCulling)
         return 1;
 
     // Do we need to resize the angle list buffer?
@@ -1241,7 +1241,7 @@ int C_CheckSubsector(subsector_t *ssec)
  */
 boolean C_IsFull(void)
 {
-    if(devNoCulling || P_IsInVoid(viewplayer))
+    if(devNoCulling)
         return false;
 
     return clipHead && clipHead->start == 0 && clipHead->end == BANG_MAX;

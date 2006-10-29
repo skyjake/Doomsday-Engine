@@ -1190,7 +1190,8 @@ static void Rend_RenderSSWallSeg(const seg_t *seg, sector_t *frontsec)
     }
 
     // We KNOW we can make it solid.
-    C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
+    if(!P_IsInVoid(viewplayer))
+        C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
 
     R_FreeRendPoly(quad);
 }
@@ -1552,7 +1553,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
         }
     }
 
-    if(solidSeg)
+    if(solidSeg && !P_IsInVoid(viewplayer))
         C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
 
     R_FreeRendPoly(quad);
