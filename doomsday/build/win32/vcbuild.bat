@@ -86,6 +86,14 @@ IF "%1" == "" GOTO TheEnd
 GOTO %1
 
 
+:: *** Build options
+:_D
+SET DEBUGDEFINES=/D "_DEBUG"
+GOTO Done
+:_P
+SET PROFILEDEFINES=/D "DD_PROFILE"
+GOTO Done
+
 :: *** Cleanup and build all targets.
 :All
 CALL vcbuild cleanup res dmt doomsday dpdehread dpmapload dropengl drd3d dsa3d dscompat jdoom jheretic jhexen wolftc doom64tc
@@ -145,7 +153,7 @@ GOTO DONE
 :Doomsday
 CALL vcbuild checkdmt
 ECHO Compiling Doomsday.exe (Engine)...
-cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% sdl_net.lib sdl.lib wsock32.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/LZSS.lib gdi32.lib ole32.lib user32.lib
+cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% %DEBUGDEFINES% %PROFILEDEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% sdl_net.lib sdl.lib wsock32.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/LZSS.lib gdi32.lib ole32.lib user32.lib
 GOTO Done
 
 
