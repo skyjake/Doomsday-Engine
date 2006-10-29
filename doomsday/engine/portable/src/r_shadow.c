@@ -572,9 +572,11 @@ int R_MakeShadowEdges(shadowpoly_t *storage)
  */
 void R_InitSectorShadows(void)
 {
-    int     i, maxCount;
+    uint        startTime = Sys_GetRealTime();
+
+    int         i, maxCount;
     shadowpoly_t *shadows, *poly;
-    vec2_t  bounds[2], point;
+    vec2_t      bounds[2], point;
 
     // Find out the number of shadowpolys we'll require.
     maxCount = R_MakeShadowEdges(NULL);
@@ -618,4 +620,9 @@ void R_InitSectorShadows(void)
         P_SubsectorBoxIteratorv(bounds, R_GetShadowSector(poly),
                                 RIT_ShadowSubsectorLinker, poly);
     }
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_InitSectorShadows: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 }

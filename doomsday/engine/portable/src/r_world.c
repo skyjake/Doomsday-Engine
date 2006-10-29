@@ -573,10 +573,12 @@ static void R_PrepareSubsector(subsector_t *sub)
 
 static void R_PolygonizeWithoutCarving(void)
 {
+    uint        startTime = Sys_GetRealTime();
+
     int         i, j, num;
     fvertex_t   *vtx;
     subsector_t *sub;
-    seg_t      *seg;
+    seg_t       *seg;
 
     for(i = numsubsectors -1; i >= 0; --i)
     {
@@ -594,6 +596,11 @@ static void R_PolygonizeWithoutCarving(void)
 
         R_PrepareSubsector(sub);
     }
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_PolygonizeWithoutCarving: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
 /**
@@ -1033,6 +1040,8 @@ static void R_SetVertexOwner(vertex_t *vtx, ownerlist_t *ownerList,
  */
 static void R_InitVertexOwners(void)
 {
+    uint            startTime = Sys_GetRealTime();
+
     int             i, k, p;
     sector_t       *sec;
     line_t         *line;
@@ -1118,6 +1127,11 @@ static void R_InitVertexOwners(void)
             qsort(rootVtx->info->linelist, rootVtx->info->numlines, sizeof(int),
                   lineAngleSorter);
     }
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_InitVertexOwners: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
 /*boolean DD_SubContainTest(sector_t *innersec, sector_t *outersec)
@@ -1476,6 +1490,8 @@ void R_InitSubsectorInfo(void)
  */
 void R_RationalizeSectors(void)
 {
+    uint        startTime = Sys_GetRealTime();
+
     int         i, j, k, l, m;
     int         numroots;
     sector_t   *sec;
@@ -1795,6 +1811,11 @@ void R_RationalizeSectors(void)
 
     // Free temporary storage.
     M_Free(collectedLines);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_RationalizeSectors: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
 /**
@@ -2067,6 +2088,8 @@ void R_InitLineInfo(void)
  */
 void R_InitLineNeighbors(void)
 {
+    uint        startTime = Sys_GetRealTime();
+
     int         i, k, j, m;
     line_t     *line, *other;
     sector_t   *sector;
@@ -2195,6 +2218,11 @@ VERBOSE2(Con_Message("L%i is a pretend neighbor to L%i\n",
         }
     }
 
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_InitLineNeighbors: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
+
 #if _DEBUG
 if(verbose >= 1)
 {
@@ -2246,6 +2274,7 @@ void R_InitLinks(void)
  */
 void R_SetupLevel(char *level_id, int flags)
 {
+    uint        startTime;
     int         i;
 
     if(flags & DDSLF_INITIALIZE)
@@ -2428,8 +2457,13 @@ void R_SetupLevel(char *level_id, int flags)
 
     Con_Progress(10, 0);
 
+    startTime = Sys_GetRealTime();
     R_InitSkyFix();
     R_SkyFix(true, true); // fix floors and ceilings.
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_SetupLevel: Initial SkyFix Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 
     S_CalcSectorReverbs();
 
@@ -2471,8 +2505,13 @@ void R_SetupLevel(char *level_id, int flags)
 
     // Spawn all type-triggered particle generators.
     // Let's hope there aren't too many...
+    startTime = Sys_GetRealTime();
     P_SpawnTypeParticleGens();
     P_SpawnMapParticleGens(level_id);
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_SetupLevel: Spawn Generators Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 
     // Make sure that the next frame doesn't use a filtered viewer.
     R_ResetViewer();

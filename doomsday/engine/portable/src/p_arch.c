@@ -3053,24 +3053,26 @@ static void P_ReadSideDefTextures(gamemap_t* map, int lump)
  */
 static void P_GroupLines(gamemap_t* map)
 {
-    int     *linesInSector;
-    int     *ssecsInSector;
-    int     block;
-    int     i, k;
-    int     secid;
-    int     j;
+    uint        startTime = Sys_GetRealTime();
 
-    line_t **linebuffer;
-    line_t **linebptr;
-    line_t  *li;
+    int        *linesInSector;
+    int        *ssecsInSector;
+    int         block;
+    int         i, k;
+    int         secid;
+    int         j;
+
+    line_t    **linebuffer;
+    line_t    **linebptr;
+    line_t     *li;
 
     subsector_t **ssecbuffer;
     subsector_t **ssecbptr;
     subsector_t *ss;
 
-    sector_t *sec;
-    seg_t  *seg;
-    fixed_t bbox[4];
+    sector_t   *sec;
+    seg_t      *seg;
+    fixed_t     bbox[4];
 
     Con_Message("Group lines\n");
     Con_Message(" Sector look up\n");
@@ -3081,7 +3083,9 @@ static void P_GroupLines(gamemap_t* map)
         for(j = 0; j < ss->linecount; j++, seg++)
             if(seg->sidedef)
             {
-                ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
+#if _DEBUG
+ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
+#endif
                 ss->sector = seg->sidedef->sector;
                 ss->sector->subscount++;
                 break;
@@ -3203,6 +3207,11 @@ static void P_GroupLines(gamemap_t* map)
 
     M_Free(linesInSector);
     M_Free(ssecsInSector);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("P_GroupLines: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
 /*

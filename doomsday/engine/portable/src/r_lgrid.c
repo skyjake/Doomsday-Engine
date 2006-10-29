@@ -149,6 +149,8 @@ static void AddIndexBit(int x, int y, uint *bitfield, int *count)
  */
 void LG_Init(void)
 {
+    uint        startTime = Sys_GetRealTime();
+
 #define MSFACTORS 7
     // Diagonal in maze arrangement of natural numbers.
     // Up to 65 samples per-block(!)
@@ -529,6 +531,11 @@ void LG_Init(void)
 
     M_Free(indexBitfield);
     M_Free(contributorBitfield);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("LG_Init: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
 /*

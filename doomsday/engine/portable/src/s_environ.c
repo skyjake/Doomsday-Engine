@@ -106,6 +106,8 @@ int S_TextureTypeForName(char *name)
  */
 void S_CalcSectorReverbs(void)
 {
+    uint        startTime = Sys_GetRealTime();
+
     int     i, c, type, k;
     int     j;
     subsector_t *sub;
@@ -331,4 +333,9 @@ Con_Message( "- sub %i within, own:%i\n", i, sub->sector == sec);
     }
 
     M_Free(sub_reverb);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("S_CalcSectorReverbs: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
 }
