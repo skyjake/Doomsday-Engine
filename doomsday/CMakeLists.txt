@@ -100,8 +100,8 @@ SET(BUILD_SHARED_LIBS ON)
 OPTION (BUILDJDOOM "Optionally build the jDoom plugin. Default ON" ON)
 OPTION (BUILDJHERETIC "Optionally build the jHeretic plugin. Default ON" ON)
 OPTION (BUILDJHEXEN "Optionally build the jHexen plugin. Default ON" ON)
-OPTION (BUILDWOLFTC "Optionally build the WolfTC plugin. Default OFF" ON)
-OPTION (BUILDDOOM64TC "Optionally build the Doom64TC plugin. Default OFF" ON)
+OPTION (BUILDWOLFTC "Optionally build the WolfTC plugin. Default OFF" OFF)
+OPTION (BUILDDOOM64TC "Optionally build the Doom64TC plugin. Default OFF" OFF)
 OPTION (BUILDJSTRIFE "Optionally build the jStrife plugin. Default OFF" OFF)
 OPTION (BUILDOPENGL "Optionally build the OpenGL renderer. Default ON" ON)
 OPTION (BUILDSDLMIXER "Optionally build the SDLMixer plugin. Default ON" ON)
@@ -109,6 +109,17 @@ OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 OPTION (BUILDDOX "Build doxygen documentation. Default OFF" OFF)
 OPTION (ENABLEMAO "Combine all source files in a module and build it at once. Default OFF" OFF)
+OPTION (ENABLEDEBUG "Turn on internal debugging features. Default OFF" OFF)
+OPTION (DISABLERANGECHECKING "Turn off internal range checking features. Default ON" ON)
+OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
+
+MARK_AS_ADVANCED (BUILDJSTRIFE)
+MARK_AS_ADVANCED (BUILDWOLFTC)
+MARK_AS_ADVANCED (BUILDDOOM64TC)
+MARK_AS_ADVANCED (ENABLEMAO)
+MARK_AS_ADVANCED (ENABLEDEBUG)
+MARK_AS_ADVANCED (ENABLEPROFILE)
+MARK_AS_ADVANCED (DISABLERANGECHECKING)
 
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
@@ -350,7 +361,18 @@ INCLUDE(${CMAKE_ROOT}/Modules/CPack.cmake)
 
 ################################################################################
 ######################## Set Common Definitions  ###############################
-##ADD_DEFINITIONS (-DNORANGECHECKING)
+
+IF (DISABLERANGECHECKING)
+	ADD_DEFINITIONS (-DNORANGECHECKING)
+ENDIF (DISABLERANGECHECKING)
+
+IF (ENABLEDEBUG)
+	ADD_DEFINITIONS (-D_DEBUG )
+ENDIF (ENABLEDEBUG)
+
+IF (ENABLEPROFILE)
+	ADD_DEFINITIONS (-DDD_PROFILE )
+ENDIF (ENABLEPROFILE)
 
 IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 	IF (CMAKE_SYSTEM_MACHINE MATCHES "i.86" OR MAKE_SYSTEM_MACHINE MATCHES "x86")
