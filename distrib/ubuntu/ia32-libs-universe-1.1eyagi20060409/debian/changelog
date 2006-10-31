@@ -1,3 +1,9 @@
+ia32-libs-universe (1.1eyagi20060409-10) edgy; urgency=low
+
+  * Sync libs.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sat, 28 Oct 2006 20:25:08 +1000
+
 ia32-libs-universe (1.1eyagi20060409-9) edgy; urgency=low
 
   * Remove some confilcts with newer packages.
