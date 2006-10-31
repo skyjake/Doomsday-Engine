@@ -200,11 +200,11 @@ config.status:
 
 # On i386 we have some assmembler code we will enable.
 ifeq "$(DEBIAN_ARCH)" "i386"
-	cd builddir &&  export CFLAGS="$(CFLAGS)" && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/games -DBUILDJDOOM=ON -DBUILDJHERETIC=ON -DBUILDJHEXEN=ON -DBUILDWOLFTC=ON -DBUILDDOOM64TC=ON -DBUILDOPENGL=ON -DBUILDOPENAL=ON -DBUILDSDLMIXER=ON -DBUILDFIXEDASM=ON -DBUILDDOX=OFF -Ddatadir=/usr/share/games/deng
+	cd builddir &&  export CFLAGS="$(CFLAGS)" && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/games -DBUILDJDOOM=ON -DBUILDJHERETIC=ON -DBUILDJHEXEN=ON -DBUILDWOLFTC=ON -DBUILDDOOM64TC=ON -DBUILDOPENGL=ON -DBUILDOPENAL=ON -DBUILDSDLMIXER=ON -DBUILDFIXEDASM=ON -DBUILDDOX=OFF -Ddatadir=/usr/share/games/deng -Dbindir=/usr/games -Dlibdir=/usr/lib/games/deng
 endif
 # Otherwise use the "slow" C alternative.
 ifneq "$(DEBIAN_ARCH)" "i386"
-	cd builddir &&  export CFLAGS="$(CFLAGS)" && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/games -DBUILDJDOOM=ON -DBUILDJHERETIC=ON -DBUILDJHEXEN=ON -DBUILDWOLFTC=ON -DBUILDDOOM64TC=ON -DBUILDOPENGL=ON -DBUILDOPENAL=ON -DBUILDSDLMIXER=ON -DBUILDFIXEDASM=OFF -DBUILDDOX=OFF -Ddatadir=/usr/share/games/deng
+	cd builddir &&  export CFLAGS="$(CFLAGS)" && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/games -DBUILDJDOOM=ON -DBUILDJHERETIC=ON -DBUILDJHEXEN=ON -DBUILDWOLFTC=ON -DBUILDDOOM64TC=ON -DBUILDOPENGL=ON -DBUILDOPENAL=ON -DBUILDSDLMIXER=ON -DBUILDFIXEDASM=OFF -DBUILDDOX=OFF -Ddatadir=/usr/share/games/deng -Dbindir=/usr/games -Dlibdir=/usr/lib/games/deng
 endif
 
 build: build-stamp

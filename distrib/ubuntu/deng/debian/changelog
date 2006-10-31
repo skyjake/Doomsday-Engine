@@ -1,3 +1,41 @@
+deng (1.8.9+1.9.0.beta4+svn.4145-0ubuntu3) edgy; urgency=low
+
+  * Yet more FHS fixes.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 29 Oct 2006 21:59:27 +1100
+
+deng (1.8.9+1.9.0.beta4+svn.4145-0ubuntu2) edgy; urgency=low
+
+  * Really fix FHS errors this time.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 29 Oct 2006 19:45:47 +1100
+
+deng (1.8.9+1.9.0.beta4+svn.4145-0ubuntu1) edgy; urgency=low
+
+  * FHS fixes.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 29 Oct 2006 18:23:00 +1100
+
+deng (1.8.9+1.9.0.beta4+svn.4145-0ubuntu0) edgy; urgency=low
+
+  * Well, it was a badly broken svn that escaped into the wild, so update
+    to todays as it works better. 
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sat, 28 Oct 2006 19:07:10 +0000
+
+deng (1.8.9+1.9.0.beta4+svn.4039-0ubuntu2) edgy; urgency=low
+
+  * Fix amd64 builds.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 29 Oct 2006 04:50:48 +1100
+
+deng (1.8.9+1.9.0.beta4+svn.4039-0ubuntu1) edgy; urgency=low
+
+  * Rebuild agains edgys libs. Seems I acidently let the last one into
+    the wild on or around October 28, and already bug reports are comming in.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sun, 29 Oct 2006 03:42:29 +1100
+
 deng (1.8.9+1.9.0.beta4+svn.4039-0ubuntu0) edgy; urgency=low
 
   * Repack. Last update was borked :(
