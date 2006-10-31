@@ -262,7 +262,7 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
-	chmod 644 debian/deng/usr/games/lib/*
+	chmod 644 debian/deng/usr/lib/games/deng/*
 	chmod 644 debian/deng/usr/share/games/deng/data/*.pk3
 	chmod 644 debian/deng/usr/share/games/deng/data/doom64tc/*.pk3
 	chmod 644 debian/deng/usr/share/games/deng/data/jdoom/*.pk3
@@ -270,7 +270,7 @@ binary-arch: build install
 	chmod 644 debian/deng/usr/share/games/deng/data/jhexen/*.pk3
 	chmod 644 debian/deng/usr/share/games/deng/data/wolftc/*.pk3
 	dh_installdeb
-	dh_shlibdeps debian/deng/usr/games/lib/* debian/deng/usr/games/bin/*
+	dh_shlibdeps debian/deng/usr/lib/games/deng/* debian/deng/usr/games/bin/*
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb

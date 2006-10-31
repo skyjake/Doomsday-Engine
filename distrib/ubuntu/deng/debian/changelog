@@ -1,3 +1,16 @@
+deng (1.8.9+1.9.0.beta4+svn.4145-0ubuntu5) edgy; urgency=low
+
+  * Fix shlib generation.
+  * Fix libs permissions.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Tue, 31 Oct 2006 17:57:54 +0000
+
+deng (1.8.9+1.9.0.beta4+svn.4145-0ubuntu4) edgy; urgency=low
+
+  * Adjust recommends.
+
+ -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Wed,  1 Nov 2006 04:18:57 +1100
+
 deng (1.8.9+1.9.0.beta4+svn.4145-0ubuntu3) edgy; urgency=low
 
   * Yet more FHS fixes.
