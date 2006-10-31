@@ -74,11 +74,6 @@
 #define TIMEBOMB_STARTDATE  268    // initial date (9/26)
 #define TIMEBOMB_ENDDATE    301    // end date (10/29)
 
-// if rangecheck is undefined, most parameter validation debugging code
-// will not be compiled
-#ifndef NORANGECHECKING
-#define RANGECHECK
-#endif
 
 // all exterior data is defined here
 #include "xddefs.h"

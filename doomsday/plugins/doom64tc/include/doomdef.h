@@ -109,10 +109,6 @@ typedef enum {
     none
 } GameMission_t;
 
-// If rangecheck is undefined,
-// most parameter validation debugging code will not be compiled
-#define RANGECHECK
-
 // Defines suck. C sucks.
 // C++ might sucks for OOP, but it sure is a better C.
 // So there.
