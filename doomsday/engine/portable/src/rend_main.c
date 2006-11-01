@@ -673,16 +673,20 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
 }
 
 /**
- * Returns true if the quad has a division at the specified height.
+ * @return          <code>true</code> if the quad has a division at the
+ *                  specified height.
  */
 static int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
 {
-    int     i;
-    int     num = quad->wall->divs[side].num;
+    uint    i, num;
+    walldiv_t  *div;
 
+    div = &quad->wall->divs[side];
+    num = div->num;
     for(i = 0; i < num; ++i)
-        if(quad->wall->divs[side].pos[i] == height)
+        if(div->pos[i] == height)
             return true;
+
     return false;
 }
 
@@ -693,12 +697,14 @@ static int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
 static void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
                                     sector_t *frontsec, int mode)
 {
-    int     i, k;
+    uint    i;
+    int     k;
     vertex_t *vtx[2];       // Vertexes
     vertexinfo_t *own;
     sector_t *sec;
     float   hi, low;
     float   sceil, sfloor;
+    walldiv_t *div;
 
     switch(mode)
     {
@@ -734,57 +740,63 @@ static void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
     for(i = 0; i < 2; ++i)
     {
         own = vtx[i]->info;
+        div = &quad->wall->divs[i];
         if(own->num > 1)
         {
+            boolean isDone;
+
             // More than one sectors! The checks must be made.
-            for(k = 0; k < own->num; ++k)
+            isDone = false;
+            for(k = 0; !isDone && k < own->num; ++k)
             {
                 sec = SECTOR_PTR(own->list[k]);
-                if(sec == frontsec)
-                    continue;   // Skip this sector.
-                if(sec == seg->backsector)
-                    continue;
-
-                sceil = SECT_CEIL(sec);
-                sfloor = SECT_FLOOR(sec);
-
-                // Divide at the sector's ceiling height?
-                if(sceil > low && sceil < hi)
+                if(!(sec == frontsec || sec == seg->backsector))
                 {
-                    quad->type = RP_DIVQUAD;
-                    if(!Rend_CheckDiv(quad, i, sceil))
-                        quad->wall->divs[i].pos[quad->wall->divs[i].num++] = sceil;
-                }
-                // Do we need to break?
-                if(quad->wall->divs[i].num == RL_MAX_DIVS)
-                    break;
+                    sceil = SECT_CEIL(sec);
+                    sfloor = SECT_FLOOR(sec);
 
-                // Divide at the sector's floor height?
-                if(sfloor > low && sfloor < hi)
-                {
-                    quad->type = RP_DIVQUAD;
-                    if(!Rend_CheckDiv(quad, i, sfloor))
-                        quad->wall->divs[i].pos[quad->wall->divs[i].num++] = sfloor;
+                    // Divide at the sector's ceiling height?
+                    if(sceil > low && sceil < hi)
+                    {
+                        quad->type = RP_DIVQUAD;
+                        if(!Rend_CheckDiv(quad, i, sceil))
+                            div->pos[div->num++] = sceil;
+                    }
+
+                    // Have we reached the div limit?
+                    if(div->num == RL_MAX_DIVS)
+                        isDone = true;
+                    else
+                    {
+                        // Divide at the sector's floor height?
+                        if(sfloor > low && sfloor < hi)
+                        {
+                            quad->type = RP_DIVQUAD;
+                            if(!Rend_CheckDiv(quad, i, sfloor))
+                                div->pos[div->num++] = sfloor;
+                        }
+
+                        // Have we reached the div limit?
+                        if(div->num == RL_MAX_DIVS)
+                            isDone = true;
+                    }
                 }
-                // Do we need to break?
-                if(quad->wall->divs[i].num == RL_MAX_DIVS)
-                    break;
             }
+
             // We need to sort the divisions for the renderer.
-            if(quad->wall->divs[i].num > 1)
+            if(div->num > 1)
             {
                 // Sorting is required. This shouldn't take too long...
                 // There seldom are more than one or two divisions.
-                qsort(quad->wall->divs[i].pos, quad->wall->divs[i].num, sizeof(float),
-                      i ? DivSortDescend : DivSortAscend);
+                qsort(div->pos, div->num, sizeof(float),
+                      i!=0 ? DivSortDescend : DivSortAscend);
             }
 #ifdef RANGECHECK
-for(k = 0; k < quad->wall->divs[i].num; ++k)
-    if(quad->wall->divs[i].pos[k] > hi || quad->wall->divs[i].pos[k] < low)
+for(k = 0; k < div->num; ++k)
+    if(div->pos[k] > hi || div->pos[k] < low)
     {
-        Con_Error("DivQuad: i=%i, pos (%f), hi (%f), "
-                  "low (%f), num=%i\n", i, quad->wall->divs[i].pos[k],
-                  hi, low, quad->wall->divs[i].num);
+        Con_Error("DivQuad: i=%i, pos (%f), hi (%f), low (%f), num=%i\n",
+                  i, div->pos[k], hi, low, div->num);
     }
 #endif
         }
@@ -945,7 +957,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     }
 
     // Dynamic lights.
-    quad->lights = DL_GetSegLightLinks(segIndex, mode);
+    quad->lights = DL_GetSegSectionLightLinks(segIndex, mode);
 
     // Do BIAS lighting for this poly.
     SB_RendPoly(quad, surface, frontsec, seg->info->illum[1],
@@ -1009,7 +1021,7 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
         skyhemispheres |= (plane->type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
     }
     else
-        poly->lights = DL_GetSubSecLightLinks(subIndex, plane->type);
+        poly->lights = DL_GetSubSecPlaneLightLinks(subIndex, plane->type);
 
     // Do BIAS lighting for this poly.
     SB_RendPoly(poly, surface, subsector->sector, plane->illumination,
@@ -2079,6 +2091,7 @@ void Rend_RenderMap(void)
         DL_ClearForFrame();     // Zeroes the links.
         LG_Update();
         SB_BeginFrame();
+        Rend_RadioInitForFrame();
 
         // Generate surface decorations for the frame.
         Rend_InitDecorationsForFrame();

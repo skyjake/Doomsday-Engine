@@ -52,6 +52,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+BEGIN_PROF_TIMERS()
+  PROF_RADIO_SUBSECTOR
+END_PROF_TIMERS()
+
 #define MIN_OPEN .1f
 #define EDGE_OPEN_THRESHOLD 8   // world units (Z axis)
 
@@ -107,6 +111,21 @@ void Rend_RadioRegister(void)
 static __inline float Rend_RadioShadowDarkness(int lightlevel)
 {
     return (.65f - lightlevel / 850.0f) * rendFakeRadioDarkness;
+}
+
+void Rend_RadioInitForFrame(void)
+{
+#ifdef DD_PROFILE
+{
+    static int t;
+
+    if(++t > 40)
+    {
+        t = 0;
+        PRINT_PROF(PROF_RADIO_SUBSECTOR);
+    }
+}
+#endif
 }
 
 /**
@@ -1337,6 +1356,8 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
 
     info = SUBSECT_INFO(subsector);
 
+BEGIN_PROF( PROF_RADIO_SUBSECTOR );
+
     // We need to check all the shadowpolys linked to this subsector.
     for(link = info->shadows; link != NULL; link = link->next)
     {
@@ -1392,4 +1413,6 @@ void Rend_RadioSubsectorEdges(subsector_t *subsector)
             Rend_RadioAddShadowEdge(shadow, pln, 1 - open, sideOpen);
         }
     }
+
+END_PROF( PROF_RADIO_SUBSECTOR );
 }

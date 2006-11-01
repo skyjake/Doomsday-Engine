@@ -48,6 +48,18 @@
 
 // MACROS ------------------------------------------------------------------
 
+BEGIN_PROF_TIMERS()
+  PROF_RL_ADD_POLY,
+  PROF_RL_GET_LIST,
+  PROF_RL_RENDER_ALL,
+  PROF_RL_RENDER_NORMAL,
+  PROF_RL_RENDER_LIGHT,
+  PROF_RL_RENDER_MASKED,
+  PROF_RL_RENDER_SHINY,
+  PROF_RL_RENDER_SHADOW,
+  PROF_RL_RENDER_SKYMASK
+END_PROF_TIMERS()
+
 #define MAX_TEX_UNITS       8   // Only two used, actually.
 #define RL_HASH_SIZE        128
 
@@ -127,7 +139,7 @@ enum {
 typedef struct primhdr_s {
     // RL_AddPoly expects that size is the first thing in the header.
     // Must be an offset since the list is sometimes reallocated.
-    int     size;               // Size of this primitive (zero = n/a).
+    uint    size;               // Size of this primitive (zero = n/a).
 
     // Generic data, common to all polys.
     primtype_t type;
@@ -167,11 +179,15 @@ typedef struct rendlist_s {
     int     flags;
     gltexture_t tex, intertex;
     float   interpos;           // 0 = primary, 1 = secondary texture
-    int     size;               // Number of bytes allocated for the data.
+    size_t  size;               // Number of bytes allocated for the data.
     byte   *data;               // Data for a number of polygons (The List).
     byte   *cursor;             // A pointer to data, for reading/writing.
     primhdr_t *last;            // Pointer to the last primitive (or NULL).
 } rendlist_t;
+
+typedef struct listhash_s {
+    rendlist_t *first, *last;
+} listhash_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -207,17 +223,6 @@ float   detailFactor = .5f;
 //float             detailMaxDist = 256;
 float   detailScale = 4;
 
-float   blackColor[4] = { 0, 0, 0, 0 };
-
-typedef struct listhash_s {
-    rendlist_t *first, *last;
-} listhash_t;
-
-// Maximum number of dynamic lights stored in the global vertex array.
-// Primitives with this many lights can be rendered with a single pass.
-// The rest are allocated from the rendering list.
-int     maxArrayLights = 1;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 /**
@@ -249,6 +254,8 @@ static rendlist_t skyMaskList;
 
 static boolean rendSky;
 static byte debugSky = false;
+
+static float blackColor[4] = { 0, 0, 0, 0 };
 
 // CODE --------------------------------------------------------------------
 
@@ -624,6 +631,16 @@ void RL_DeleteLists(void)
 #ifdef _DEBUG
     Z_CheckHeap();
 #endif
+
+PRINT_PROF( PROF_RL_ADD_POLY );
+PRINT_PROF( PROF_RL_GET_LIST );
+PRINT_PROF( PROF_RL_RENDER_ALL );
+PRINT_PROF( PROF_RL_RENDER_NORMAL );
+PRINT_PROF( PROF_RL_RENDER_LIGHT );
+PRINT_PROF( PROF_RL_RENDER_MASKED );
+PRINT_PROF( PROF_RL_RENDER_SHADOW );
+PRINT_PROF( PROF_RL_RENDER_SHINY );
+PRINT_PROF( PROF_RL_RENDER_SKYMASK );
 }
 
 /**
@@ -794,7 +811,7 @@ static rendlist_t *RL_GetLightListFor(DGLuint texture)
  */
 static void *RL_AllocateData(rendlist_t *list, int bytes)
 {
-    int     required;
+    size_t  required;
     int     startOffset = list->cursor - list->data;
     primhdr_t *hdr;
 
@@ -836,8 +853,11 @@ static void *RL_AllocateData(rendlist_t *list, int bytes)
         // Restore in-list pointers.
         if(oldData)
         {
-            for(hdr = (primhdr_t *) list->data;;
-                hdr = (primhdr_t *) ((byte *) hdr + hdr->size))
+            boolean isDone;
+
+            hdr = (primhdr_t *) list->data;
+            isDone = false;
+            while(!isDone)
             {
                 if(hdr->indices != NULL)
                 {
@@ -848,8 +868,10 @@ static void *RL_AllocateData(rendlist_t *list, int bytes)
 
                 // Check here in the end; primitive composition may be
                 // in progress.
-                if(!hdr->size)
-                    break;
+                if(hdr->size != 0)
+                    hdr = (primhdr_t *) ((byte *) hdr + hdr->size);
+                else
+                    isDone = true;
             }
         }
     }
@@ -920,7 +942,7 @@ static void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly)
     vec2_t surface, normal, projected, s, reflected;
     vec2_t view;
     float distance, angle, prevAngle = 0;
-    int i;
+    unsigned int i;
 
     // Quad surface vector.
     V2_Set(surface,
@@ -1185,9 +1207,9 @@ static void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
 static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
 {
     gl_vertex_t *v;
-    uint    base;
+    uint    i, base;
     uint    sideBase[2];
-    int     i, side, other, index, top, bottom, div, c;
+    int     side, other, index, top, bottom, div, c;
     float   z, height[2], inter;
     primhdr_t *hdr = NULL;
 
@@ -1272,7 +1294,7 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
     // Set the rest of the indices and init the division vertices.
     for(side = 0; side < 2; ++side) // Left->right is side zero.
     {
-        int num;
+        unsigned int num;
 
         other = !side;
 
@@ -1372,7 +1394,7 @@ static void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
     gl_texcoord_t *tc;
     gl_vertex_t *v;
     uint    base;
-    int     i, num;
+    unsigned int i, num;
 
     // A flat is composed of N triangles, where N = poly->numvertices - 2.
     list->last->primSize = poly->numvertices;
@@ -1499,8 +1521,7 @@ static void RL_EndWrite(rendlist_t *list)
 static void RL_WriteDynLight(rendlist_t *list, dynlight_t *dyn, primhdr_t *prim,
                              rendpoly_t *poly)
 {
-    unsigned int num;
-    uint    i, base;
+    uint    i, num, base;
     gl_texcoord_t *tc;
     gl_color_t *col;
     void   *ptr;
@@ -1611,6 +1632,8 @@ void RL_AddPoly(rendpoly_t *poly)
         return;
     }
 
+BEGIN_PROF( PROF_RL_ADD_POLY );
+
     // In debugSky mode we render all polys destined for the skymask as
     // regular world polys (with a few obvious properties).
     if((poly->flags & RPF_SKY_MASK) && debugSky)
@@ -1643,8 +1666,12 @@ void RL_AddPoly(rendpoly_t *poly)
         }
     }
 
+BEGIN_PROF( PROF_RL_GET_LIST );
+
     // Find/create a rendering list for the polygon's texture.
     li = RL_GetListFor(poly, useLights);
+
+END_PROF( PROF_RL_GET_LIST );
 
     // This becomes the new last primitive.
     li->last = hdr = RL_AllocateData(li, sizeof(primhdr_t));
@@ -1679,17 +1706,32 @@ void RL_AddPoly(rendpoly_t *poly)
     // the surface. Multitexturing may be used for the first light, so
     // it's skipped.
     if(useLights)
+    {
+        rendlist_t *dynList, *lastDynList = NULL;
+        DGLuint     lastDynTexture = 0;
+
         for(dyn = (IS_MTEX_LIGHTS ? li->last->light->next : li->last->light);
             dyn; dyn = dyn->next)
         {
-            RL_WriteDynLight(RL_GetLightListFor(dyn->texture), dyn, li->last,
-                             poly);
+            // If the texture is the same as the last, the list will be too.
+            if(lastDynTexture == dyn->texture)
+                dynList = lastDynList;
+            else
+            {
+                dynList = lastDynList = RL_GetLightListFor(dyn->texture);
+                lastDynTexture = dyn->texture;
+            }
+
+            RL_WriteDynLight(dynList, dyn, li->last, poly);
         }
+    }
+
+END_PROF( PROF_RL_ADD_POLY );
 }
 
 void RL_FloatRGB(byte *rgb, float *dest)
 {
-    int     i;
+    unsigned int i;
 
     for(i = 0; i < 3; ++i)
     {
@@ -1704,79 +1746,98 @@ void RL_FloatRGB(byte *rgb, float *dest)
  */
 static void RL_DrawPrimitives(int conditions, rendlist_t *list)
 {
-    primhdr_t *hdr;
-    float   color[4];
-    boolean bypass = false;
+    primhdr_t  *hdr;
+    float       color[4];
+    boolean     skip, bypass = false;
 
     // Should we just skip all this?
     if(conditions & DCF_SKIP)
         return;
 
-    // Is blending allowed?
-    if((conditions & DCF_NO_BLEND) && list->intertex.id)
-        return;
-
-    // Should all blended primitives be included?
-    if((conditions & DCF_BLEND) && list->intertex.id)
+    if(list->intertex.id)
     {
-        // The other conditions will be bypassed.
-        bypass = true;
+        // Is blending allowed?
+        if(conditions & DCF_NO_BLEND)
+            return;
+
+        // Should all blended primitives be included?
+        if(conditions & DCF_BLEND)
+        {
+            // The other conditions will be bypassed.
+            bypass = true;
+        }
+    }
+
+    // Check conditions dependant on primitive-specific values once before
+    // entering the loop. If none of the conditions are true for this list
+    // then we can bypass the skip tests completely during iteration.
+    if(!bypass)
+    {
+        if(!(conditions & DCF_JUST_ONE_LIGHT) &&
+           !(conditions & DCF_MANY_LIGHTS))
+            bypass = true;
     }
 
     // Compile our list of indices.
-    for(hdr = (primhdr_t *) list->data; hdr->size;
-        hdr = (primhdr_t *) ((byte *) hdr + hdr->size))
+    hdr = (primhdr_t *) list->data;
+    skip = false;
+    while(hdr->size != 0)
     {
         // Check for skip conditions.
         if(!bypass)
         {
+            skip = false;
             if((conditions & DCF_JUST_ONE_LIGHT) && hdr->light->next)
-                continue;
-
-            if((conditions & DCF_MANY_LIGHTS) && !hdr->light->next)
-                continue;
+                skip = true;
+            else if((conditions & DCF_MANY_LIGHTS) && !hdr->light->next)
+                skip = true;
         }
 
-        if(conditions & DCF_SET_LIGHT_ENV)
+        if(!skip)
         {
-            // Use the correct texture and color for the light.
-            gl.SetInteger(DGL_ACTIVE_TEXTURE,
-                          conditions & DCF_SET_LIGHT_ENV0 ? 0 : 1);
-            RL_Bind(hdr->light->texture);
-            RL_FloatRGB(hdr->light->color, color);
-            gl.SetFloatv(DGL_ENV_COLOR, color);
-            // Make sure the light is not repeated.
-            gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-            gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+            if(conditions & DCF_SET_LIGHT_ENV)
+            {
+                // Use the correct texture and color for the light.
+                gl.SetInteger(DGL_ACTIVE_TEXTURE,
+                              conditions & DCF_SET_LIGHT_ENV0 ? 0 : 1);
+                RL_Bind(hdr->light->texture);
+                RL_FloatRGB(hdr->light->color, color);
+                gl.SetFloatv(DGL_ENV_COLOR, color);
+                // Make sure the light is not repeated.
+                gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
+                gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+            }
+
+            if(conditions & DCF_SET_BLEND_MODE)
+            {
+                // Primitive-specific blending.  Not used in all lists.
+                GL_BlendMode(hdr->blendMode);
+            }
+
+            // Render a primitive (or two) as a triangle fan.
+            if(hdr->type == PT_FAN)
+            {
+                gl.DrawElements(DGL_TRIANGLE_FAN, hdr->numIndices, hdr->indices);
+            }
+            else if(hdr->type == PT_DOUBLE_FAN)
+            {
+                gl.DrawElements(DGL_TRIANGLE_FAN, hdr->beginOther, hdr->indices);
+
+                gl.DrawElements(DGL_TRIANGLE_FAN,
+                                hdr->numIndices - hdr->beginOther,
+                                hdr->indices + hdr->beginOther);
+            }
         }
 
-        if(conditions & DCF_SET_BLEND_MODE)
-        {
-            // Primitive-specific blending.  Not used in all lists.
-            GL_BlendMode(hdr->blendMode);
-        }
-
-        // Render a primitive (or two) as a triangle fan.
-        if(hdr->type == PT_FAN)
-        {
-            gl.DrawElements(DGL_TRIANGLE_FAN, hdr->numIndices, hdr->indices);
-        }
-        else if(hdr->type == PT_DOUBLE_FAN)
-        {
-            gl.DrawElements(DGL_TRIANGLE_FAN, hdr->beginOther, hdr->indices);
-
-            gl.DrawElements(DGL_TRIANGLE_FAN,
-                            hdr->numIndices - hdr->beginOther,
-                            hdr->indices + hdr->beginOther);
-        }
+        hdr = (primhdr_t *) ((byte *) hdr + hdr->size);
     }
 }
 
 static void RL_BlendState(rendlist_t *list, int modMode)
 {
 #ifdef _DEBUG
-    if(numTexUnits < 2)
-        Con_Error("RL_BlendState: Not enough texture units.\n");
+if(numTexUnits < 2)
+    Con_Error("RL_BlendState: Not enough texture units.\n");
 #endif
 
     RL_SelectTexUnits(2);
@@ -2296,13 +2357,14 @@ static void RL_SetupPassState(listmode_t mode)
 /**
  * Renders the given lists. They must not be empty.
  */
-static void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
+static void RL_RenderLists(listmode_t mode, rendlist_t **lists, unsigned int num)
 {
-    int     i;
+    unsigned int     i;
+    rendlist_t      *list;
 
     // If the first list is empty, we do nothing. Normally we expect
     // all lists to contain something.
-    if(!num || lists[0]->last == NULL)
+    if(num == 0 || lists[0]->last == NULL)
         return;
 
     // Setup GL state that's common to all the lists in this mode.
@@ -2311,12 +2373,14 @@ static void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
     // Draw each given list.
     for(i = 0; i < num; ++i)
     {
+        list = lists[i];
+
         // Setup GL state for this list, and
         // draw the necessary subset of primitives on the list.
-        RL_DrawPrimitives(RL_SetupListState(mode, lists[i]), lists[i]);
+        RL_DrawPrimitives(RL_SetupListState(mode, list), list);
 
         // Some modes require cleanup.
-        RL_FinishListState(mode, lists[i]);
+        RL_FinishListState(mode, list);
     }
 }
 
@@ -2326,9 +2390,10 @@ static void RL_RenderLists(listmode_t mode, rendlist_t **lists, int num)
 static uint RL_CollectLists(listhash_t *table, rendlist_t **lists)
 {
     rendlist_t *it;
-    uint    i, count = 0;
+    uint    i, count;
 
     // Collect a list of rendering lists.
+    count = 0;
     for(i = 0; i < RL_HASH_SIZE; ++i)
     {
         for(it = table[i].first; it; it = it->next)
@@ -2339,10 +2404,9 @@ static uint RL_CollectLists(listhash_t *table, rendlist_t **lists)
                 if(count == MAX_RLISTS)
                 {
 #ifdef _DEBUG
-                    Con_Error("RL_CollectLists: Ran out of MAX_RLISTS.\n");
-#else
-                    return count;
+Con_Error("RL_CollectLists: Ran out of MAX_RLISTS.\n");
 #endif
+                    return count;
                 }
                 lists[count++] = it;
             }
@@ -2379,6 +2443,8 @@ void RL_RenderAllLists(void)
     rendlist_t *lists[MAX_RLISTS];
     uint    count;
 
+BEGIN_PROF( PROF_RL_RENDER_ALL );
+
     if(!freezeRLs) // only update when lists arn't frozen
         rendSky = !P_IsInVoid(viewplayer);
 
@@ -2396,8 +2462,10 @@ void RL_RenderAllLists(void)
 
     // FIXME: As we arn't rendering the sky when in the void we have
     //        have no need to render the skymask.
+BEGIN_PROF( PROF_RL_RENDER_SKYMASK );
     if(rendSky)
         RL_RenderLists(LM_SKYMASK, lists, 1);
+END_PROF( PROF_RL_RENDER_SKYMASK );
 
     // Render the real surfaces of the visible world.
 
@@ -2405,6 +2473,8 @@ void RL_RenderAllLists(void)
      * Unlit Primitives
      */
     // Collect all normal lists.
+BEGIN_PROF( PROF_RL_RENDER_NORMAL );
+
     count = RL_CollectLists(plainHash, lists);
     if(IS_MTEX_DETAILS)
     {
@@ -2419,11 +2489,14 @@ void RL_RenderAllLists(void)
         // Blending is done during this pass.
         RL_RenderLists(LM_ALL, lists, count);
     }
+END_PROF( PROF_RL_RENDER_NORMAL );
 
     /*
      * Lit Primitives
      */
     // Then the lit primitives.
+BEGIN_PROF( PROF_RL_RENDER_LIGHT );
+
     count = RL_CollectLists(litHash, lists);
 
     // If multitexturing is available, we'll use it to our advantage
@@ -2488,6 +2561,8 @@ void RL_RenderAllLists(void)
     if(dlBlend != 2)
         RL_RenderLists(LM_LIGHTS, lists, count);
 
+END_PROF( PROF_RL_RENDER_LIGHT );
+
     /*
      * Texture Modulation Pass
      */
@@ -2550,6 +2625,8 @@ void RL_RenderAllLists(void)
     //
     // Walls with holes (so called 'masked textures') cannot be
     // shiny.
+BEGIN_PROF( PROF_RL_RENDER_SHINY );
+
     count = RL_CollectLists(shinyHash, lists);
     if(numTexUnits > 1)
     {
@@ -2561,6 +2638,7 @@ void RL_RenderAllLists(void)
     {
         RL_RenderLists(LM_ALL_SHINY, lists, count);
     }
+END_PROF( PROF_RL_RENDER_SHINY );
 
     /*
      * Shadow Pass: Objects and FakeRadio
@@ -2569,9 +2647,13 @@ void RL_RenderAllLists(void)
         int     oldr = renderTextures;
 
         renderTextures = true;
+BEGIN_PROF( PROF_RL_RENDER_SHADOW );
+
         count = RL_CollectLists(shadowHash, lists);
 
         RL_RenderLists(LM_SHADOW, lists, count);
+
+END_PROF( PROF_RL_RENDER_SHADOW );
 
         renderTextures = oldr;
     }
@@ -2600,8 +2682,13 @@ void RL_RenderAllLists(void)
     }
 
     // Draw masked walls, sprites and models.
+BEGIN_PROF( PROF_RL_RENDER_MASKED );
+
     Rend_DrawMasked();
 
     // Draw particles.
     PG_Render();
+
+END_PROF( PROF_RL_RENDER_MASKED );
+END_PROF( PROF_RL_RENDER_ALL );
 }

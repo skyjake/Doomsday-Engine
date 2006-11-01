@@ -134,7 +134,6 @@ void Rend_ProjectDecorations(void)
     if(!haloMode)
         return;
 
-    //for(i = 0; i < numDecorLightSources; i++)
     for(src = sourceFirst; src != sourceCursor; src = src->next)
     {
         lumobj_t *lum = DL_GetLuminous(src->thing.light);

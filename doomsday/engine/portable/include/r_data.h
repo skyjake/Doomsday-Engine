@@ -164,12 +164,14 @@ typedef struct {
     float           dist;          // Distance to the vertex.
 } rendpoly_vertex_t;
 
+typedef struct walldiv_s {
+    unsigned int    num;
+    float           pos[RL_MAX_DIVS];
+} walldiv_t;
+
 typedef struct rendpoly_wall_s {
     float           length;
-    struct div_t {
-        byte        num;
-        float       pos[RL_MAX_DIVS];
-    } divs[2];                     // For wall segments (two vertices).
+    walldiv_t       divs[2];       // For wall segments (two vertices).
 } rendpoly_wall_t;
 
 // rendpoly_t is only for convenience; the data written in the rendering

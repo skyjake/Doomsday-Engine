@@ -176,3 +176,8 @@ struct node
     -       fixed_t[2][4] bbox      // Bounding box for each child.
     -       uint[2]     children    // If NF_SUBSECTOR it's a subsector.
 end
+
+public
+#define DMT_NODE_BBOX           DDVT_FIXED
+#define DMT_NODE_CHILDREN       DDVT_UINT
+end

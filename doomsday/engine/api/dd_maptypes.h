@@ -90,4 +90,7 @@
 #define DMT_NODE_DX DDVT_FIXED         // Partition line.
 #define DMT_NODE_DY DDVT_FIXED         // Partition line.
 
+#define DMT_NODE_BBOX           DDVT_FIXED
+#define DMT_NODE_CHILDREN       DDVT_UINT
+
 #endif

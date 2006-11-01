@@ -672,7 +672,7 @@ void R_RenderPlayerView(ddplayer_t *player)
     }
     if(rendInfoLums)
     {
-        Con_Printf("LumObjs: %-4i\n", numLuminous);
+        Con_Printf("LumObjs: %-4i\n", DL_GetNumLuminous());
     }
 
     R_InfoRendPolys();

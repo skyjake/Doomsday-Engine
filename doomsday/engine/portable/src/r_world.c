@@ -2445,7 +2445,7 @@ void R_SetupLevel(char *level_id, int flags)
     R_InitSubsectorInfo();
     R_InitLineInfo();
 
-    // Compose the vertex owners array.
+    // Compose the vertex owner arrays.
     R_InitVertexOwners();
 
     // Init blockmap for searching subsectors.
@@ -2467,7 +2467,7 @@ void R_SetupLevel(char *level_id, int flags)
 
     S_CalcSectorReverbs();
 
-    DL_InitLinks();
+    DL_InitForMap();
 
     Cl_Reset();
     RL_DeleteLists();

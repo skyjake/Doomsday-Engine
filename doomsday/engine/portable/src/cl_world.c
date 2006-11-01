@@ -81,7 +81,7 @@ short  *xlat_lump;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Allocates and inits the lump translation array. Clients use this
  * to make sure lump (e.g. flats) references are correct (in case the
  * server and the client are using different WAD configurations and
@@ -96,7 +96,7 @@ void Cl_InitTranslations(void)
 
     xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_REFRESHTEX, 0);
     memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
-    for(i = 0; i < numlumps; i++)
+    for(i = 0; i < numlumps; ++i)
         xlat_lump[i] = i;       // Identity translation.
 }
 
@@ -113,7 +113,7 @@ void Cl_SetLumpTranslation(short lumpnum, char *name)
     }
 }
 
-/*
+/**
  * This is a fail-safe operation.
  */
 short Cl_TranslateLump(short lump)
@@ -123,7 +123,7 @@ short Cl_TranslateLump(short lump)
     return xlat_lump[lump];
 }
 
-/*
+/**
  * Clears the arrays that track active plane and polyobj mover thinkers.
  */
 void Cl_InitMovers(void)
@@ -132,11 +132,11 @@ void Cl_InitMovers(void)
     memset(activepolys, 0, sizeof(activepolys));
 }
 
-void Cl_RemoveActiveMover(mover_t * mover)
+void Cl_RemoveActiveMover(mover_t *mover)
 {
     int     i;
 
-    for(i = 0; i < MAX_MOVERS; i++)
+    for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] == mover)
         {
             P_RemoveThinker(&mover->thinker);
@@ -145,14 +145,14 @@ void Cl_RemoveActiveMover(mover_t * mover)
         }
 }
 
-/*
+/**
  * Removes the given polymover from the active polys array.
  */
-void Cl_RemoveActivePoly(polymover_t * mover)
+void Cl_RemoveActivePoly(polymover_t *mover)
 {
     int     i;
 
-    for(i = 0; i < MAX_MOVERS; i++)
+    for(i = 0; i < MAX_MOVERS; ++i)
         if(activepolys[i] == mover)
         {
             P_RemoveThinker(&mover->thinker);
@@ -161,10 +161,10 @@ void Cl_RemoveActivePoly(polymover_t * mover)
         }
 }
 
-/*
+/**
  * Plane mover.
  */
-void Cl_MoverThinker(mover_t * mover)
+void Cl_MoverThinker(mover_t *mover)
 {
     fixed_t *current = mover->current, original = *current;
     boolean remove = false;
@@ -224,7 +224,7 @@ void Cl_AddMover(int sectornum, clmovertype_t type, fixed_t dest, fixed_t speed)
     sector = SECTOR_PTR(sectornum);
 
     // Remove any existing movers for the same plane.
-    for(i = 0; i < MAX_MOVERS; i++)
+    for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] && activemovers[i]->sector == sector &&
            activemovers[i]->type == type)
         {
@@ -242,7 +242,7 @@ void Cl_AddMover(int sectornum, clmovertype_t type, fixed_t dest, fixed_t speed)
        } */
 
     // Add a new mover.
-    for(i = 0; i < MAX_MOVERS; i++)
+    for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] == NULL)
         {
             // Allocate a new mover_t thinker.
@@ -267,7 +267,7 @@ void Cl_AddMover(int sectornum, clmovertype_t type, fixed_t dest, fixed_t speed)
         }
 }
 
-void Cl_PolyMoverThinker(polymover_t * mover)
+void Cl_PolyMoverThinker(polymover_t *mover)
 {
     polyobj_t *poly = mover->poly;
     int     dx, dy, dist;
@@ -320,7 +320,7 @@ polymover_t *Cl_FindActivePoly(int number)
 {
     int     i;
 
-    for(i = 0; i < MAX_MOVERS; i++)
+    for(i = 0; i < MAX_MOVERS; ++i)
         if(activepolys[i] && activepolys[i]->number == number)
             return activepolys[i];
     return NULL;
@@ -355,14 +355,14 @@ void Cl_SetPolyMover(int number, int move, int rotate)
         mover->rotate = true;
 }
 
-/*
+/**
  * Removes all the active movers.
  */
 void Cl_RemoveMovers(void)
 {
     int     i;
 
-    for(i = 0; i < MAX_MOVERS; i++)
+    for(i = 0; i < MAX_MOVERS; ++i)
     {
         if(activemovers[i])
         {
@@ -381,7 +381,7 @@ mover_t *Cl_GetActiveMover(int sectornum, clmovertype_t type)
 {
     int     i;
 
-    for(i = 0; i < MAX_MOVERS; i++)
+    for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] && activemovers[i]->sectornum == sectornum &&
            activemovers[i]->type == type)
         {
@@ -390,8 +390,8 @@ mover_t *Cl_GetActiveMover(int sectornum, clmovertype_t type)
     return NULL;
 }
 
-/*
- * Returns false iff the end marker is found (lump index zero).
+/**
+ * Returns false if the end marker is found (lump index zero).
  */
 int Cl_ReadLumpDelta(void)
 {
@@ -412,7 +412,7 @@ int Cl_ReadLumpDelta(void)
     return true;
 }
 
-/*
+/**
  * Reads a sector delta from the PSV_FRAME2 message buffer and applies it
  * to the world.
  */
@@ -616,7 +616,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     }
 }
 
-/*
+/**
  * Reads a side delta from the message buffer and applies it to the world.
  */
 void Cl_ReadSideDelta2(int deltaType, boolean skip)
@@ -757,7 +757,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     }
 }
 
-/*
+/**
  * Reads a poly delta from the message buffer and applies it to
  * the world.
  */

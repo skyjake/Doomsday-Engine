@@ -913,7 +913,7 @@ extern          "C" {
     short           visangle;           /* visual angle ("angle-servo") */ \
     int             selector;           /* multipurpose info */ \
     int             validcount;         /* used in iterating */ \
-    int             light;              /* index+1 of the lumobj/bias source, or 0 */ \
+    unsigned int    light;              /* index+1 of the lumobj/bias source, or 0 */ \
     boolean         usingBias;          /* if true, "light" is the bias source index+1 */ \
     byte            halofactor;         /* strength of halo */ \
     byte            translucency;       /* default = 0 = opaque */ \

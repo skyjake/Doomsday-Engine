@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +47,7 @@ typedef struct lumobj_s            // For dynamic lighting.
 {
     struct lumobj_s *next;         // Next in the same DL block, or NULL.
     struct lumobj_s *ssNext;       // Next in the same subsector, or NULL.
+
     int             flags;
     mobj_t         *thing;
     float           center;        // Offset to center from mobj Z.
@@ -69,6 +71,7 @@ typedef struct lumobj_s            // For dynamic lighting.
  */
 typedef struct dynlight_s {
     struct dynlight_s *next, *nextUsed;
+
     int             flags;
     float           s[2], t[2];
     byte            color[3];
@@ -79,10 +82,8 @@ typedef struct dynlight_s {
 #define DYNF_PREGEN_DECOR   0x1    // Pregen RGB lightmap for a light decoration.
 
 extern boolean  dlInited;
-extern lumobj_t *luminousList;
-extern int      numLuminous;
 extern int      useDynLights;
-extern int      maxDynLights, dlBlend, dlMaxRad;
+extern int      dlBlend, dlMaxRad;
 extern float    dlRadFactor, dlFactor;
 extern int      useWallGlow, glowHeightMax;
 extern float    glowHeightFactor;
@@ -94,27 +95,23 @@ extern int      dlMinRadForBias;
 void            DL_Register(void);
 
 // Setup.
-void            DL_InitLinks();
-void            DL_Clear();        // 'Physically' destroy the tables.
+void            DL_InitForMap(void);
+void            DL_Clear(void);        // 'Physically' destroy the tables.
 
 // Action.
-void            DL_ClearForFrame();
-void            DL_InitForNewFrame();
-int             DL_NewLuminous(void);
-lumobj_t       *DL_GetLuminous(int index);
+void            DL_ClearForFrame(void);
+void            DL_InitForNewFrame(void);
+unsigned int    DL_NewLuminous(void);
+lumobj_t*       DL_GetLuminous(unsigned int index);
+unsigned int    DL_GetNumLuminous(void);
 void            DL_ProcessSubsector(subsector_t *ssec);
-dynlight_t     *DL_GetSegLightLinks(int seg, int whichpart);
-dynlight_t     *DL_GetSubSecLightLinks(int ssec, int plane);
+dynlight_t*     DL_GetSegSectionLightLinks(int segidx, int section);
+dynlight_t*     DL_GetSubSecPlaneLightLinks(int ssecidx, int plane);
 
 // Helpers.
 boolean         DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
                                   fixed_t radius, void *data,
                                   boolean (*func) (lumobj_t *, fixed_t, void *data));
-boolean         DL_BoxIterator(fixed_t box[4], void *ptr,
-                               boolean (*func) (lumobj_t *, void *));
-
-int             Rend_SubsectorClipper(fvertex_t * out, subsector_t *sub,
-                                      float x, float y, float radius);
 
 void            DL_ClipInSubsector(int ssecidx);
 void            DL_ClipBySight(int ssecidx);
