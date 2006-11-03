@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,7 +82,7 @@ static sfxchannel_t *channels;
 static mobj_t *listener;
 static sector_t *listener_sector = 0;
 
-static int refresh_handle;
+static SDL_Thread *refresh_handle;
 static volatile boolean allowrefresh, refreshing;
 
 static byte refmonitor = 0;
@@ -1023,8 +1024,7 @@ void Sfx_StartRefresh(void)
 {
     refreshing = false;
     allowrefresh = true;
-    // Create a high-priority thread for the channel refresh.
-    refresh_handle = Sys_StartThread(Sfx_ChannelRefreshThread, NULL, 3);
+    refresh_handle = Sys_StartThread(Sfx_ChannelRefreshThread, NULL);
     if(!refresh_handle)
         Con_Error("Sfx_StartRefresh: Failed to start refresh.\n");
 }

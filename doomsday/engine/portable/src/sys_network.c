@@ -48,8 +48,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-/* The randomized transmitted is only used for simulating a poor
- * network connection. */
+/** The randomized transmitted is only used for simulating a poor
+ * network connection.
+ */
 /*
 #undef TRANSMIT_RANDOMIZER
 #define RANDOMIZER_DROP_PERCENT 1
@@ -59,8 +60,9 @@
 #define RANDOMIZER_DROP_PERCENT 25
 #define RANDOMIZER_MAX_DELAY    500
 
-/* Defining PRINT_PACKETS will cause the UDP transmitter and receiver
- * to print a message each time they send or receive a packet. */
+/** Defining PRINT_PACKETS will cause the UDP transmitter and receiver
+ * to print a message each time they send or receive a packet.
+ */
 #undef PRINT_PACKETS
 
 #define MAX_NODES                   32
@@ -69,7 +71,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-/*
+/**
  * Each network node has a send queue. The queue contains a number of
  * sqpacks.
  */
@@ -83,7 +85,7 @@ typedef struct sqpack_s {
 #endif
 } sqpack_t;
 
-/*
+/**
  * On serverside, each client has its own network node. A node
  * represents the TCP connection between the client and the server. On
  * clientside, the node zero is used always.
@@ -100,14 +102,14 @@ typedef struct netnode_s {
     IPaddress addr;
 
     // Send queue statistics.
-    int     mutex;
+    long     mutex;
     uint    numWaiting;
     uint    bytesWaiting;
 } netnode_t;
 
 typedef struct sendqueue_s {
-    semaphore_t waiting;
-    int     mutex;
+    long    waiting;
+    long    mutex;
     sqpack_t *first, *last;
     boolean online;             // Set to false to make transmitter stop.
 } sendqueue_t;
@@ -150,7 +152,8 @@ static Uint16 recvUDPPort;
 static intptr_t mutexInSock;
 static netnode_t netNodes[MAX_NODES];
 static SDLNet_SocketSet sockSet;
-static int hReceiver, hTransmitter;
+static SDL_Thread *hTransmitter;
+static SDL_Thread *hReceiver;
 static sendqueue_t sendQ;
 static foundhost_t located;
 static volatile boolean stopReceiver;
@@ -167,7 +170,7 @@ void N_Register(void)
     C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0);
 }
 
-/*
+/**
  * Free any packets still waiting in the queue.
  */
 static void N_ClearQueue(sendqueue_t *q)
@@ -182,7 +185,7 @@ static void N_ClearQueue(sendqueue_t *q)
     }
 }
 
-/*
+/**
  * Send the packet using UDP.  If the packet is associated with no
  * node, nothing will be sent because we don't know the destination
  * address.
@@ -215,7 +218,7 @@ static void N_UDPSend(sqpack_t * pack)
 }
 
 #ifdef TRANSMIT_RANDOMIZER
-/*
+/**
  * The randomized version of the UDP transmitter.  This can be used to
  * simulate a real-life connection where UDP packets are received
  * sometimes in the wrong order or get lost entirely.
@@ -266,7 +269,7 @@ static int N_UDPTransmitter(void *parm)
 
 #else                           /* !TRANSMIT_RANDOMIZER */
 
-/*
+/**
  * A UDP transmitter thread takes messages off a network node's send
  * queue and sends them one by one. On serverside, each client has its
  * own transmitter thread.
@@ -318,7 +321,7 @@ static int N_UDPTransmitter(void *parm)
 }
 #endif
 
-/*
+/**
  * The UDP receiver thread waits for UDP packets and places them into
  * the incoming message buffer. The UDP receiver is started when the
  * TCP/IP service is initialized. The thread is stopped when the
@@ -402,7 +405,7 @@ static int N_UDPReceiver(void *parm)
     return 0;
 }
 
-/*
+/**
  * Free a message buffer.
  */
 void N_ReturnBuffer(void *handle)
@@ -412,7 +415,7 @@ void N_ReturnBuffer(void *handle)
     SDLNet_FreePacket(handle);
 }
 
-/*
+/**
  * Read a packet from the TCP connection and put it in the incoming
  * packet queue.  This function blocks until the entire packet has
  * been read, so large packets should be avoided during normal
@@ -478,7 +481,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     return true;
 }
 
-/*
+/**
  * Send the data buffer over the control link, which is a TCP
  * connection.
  */
@@ -522,7 +525,7 @@ void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
 #endif*/
 }
 
-/*
+/**
  * Send the buffer to the destination. For clients, the server is the
  * only possible destination (doesn't depend on the value of
  * 'destination').
@@ -630,7 +633,7 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
     Sem_V(sendQ.waiting);
 }
 
-/*
+/**
  * Returns the number of messages waiting in the player's send queue.
  */
 uint N_GetSendQueueCount(int player)
@@ -644,7 +647,7 @@ uint N_GetSendQueueCount(int player)
     return count;
 }
 
-/*
+/**
  * Returns the number of bytes waiting in the player's send queue.
  */
 uint N_GetSendQueueSize(int player)
@@ -658,7 +661,7 @@ uint N_GetSendQueueSize(int player)
     return bytes;
 }
 
-/*
+/**
  * Blocks until all the send queues have been emptied.
  */
 void N_FlushOutgoing(void)
@@ -678,7 +681,7 @@ void N_FlushOutgoing(void)
     }
 }
 
-/*
+/**
  * Initialize the transmitter thread and the send queue.
  */
 static void N_StartTransmitter(sendqueue_t *q)
@@ -689,10 +692,10 @@ static void N_StartTransmitter(sendqueue_t *q)
     q->first = NULL;
     q->last = NULL;
 
-    hTransmitter = Sys_StartThread(N_UDPTransmitter, q, 0);
+    hTransmitter = Sys_StartThread(N_UDPTransmitter, q);
 }
 
-/*
+/**
  * Blocks until the transmitter thread has been exited.
  */
 static void N_StopTransmitter(sendqueue_t *q)
@@ -712,24 +715,25 @@ static void N_StopTransmitter(sendqueue_t *q)
 
     // Wait until the transmitter thread finishes.
     Sys_WaitThread(hTransmitter);
-    hTransmitter = 0;
+    hTransmitter = NULL;
 
     // Destroy the semaphores.
     Sem_Destroy(q->waiting);
     Sem_Destroy(q->mutex);
 }
 
-/*
+/**
  * Start the UDP receiver thread.
  */
 static void N_StartReceiver(void)
 {
     stopReceiver = false;
     mutexInSock = Sys_CreateMutex("UDPIncomingMutex");
-    hReceiver = Sys_StartThread(N_UDPReceiver, NULL, 0);
+    SDL_Thread *hReceiver;
+    hReceiver = Sys_StartThread(N_UDPReceiver, NULL);
 }
 
-/*
+/**
  * Blocks until the UDP receiver thread has exited.
  */
 static void N_StopReceiver(void)
@@ -749,7 +753,7 @@ static void N_StopReceiver(void)
     mutexInSock = 0;
 }
 
-/*
+/**
  * Bind or unbind the address to/from the incoming UDP socket.  When
  * the address is bound, packets from it will be accepted.
  */
@@ -770,7 +774,7 @@ void N_BindIncoming(IPaddress *addr, nodeid_t id)
     Sys_Unlock(mutexInSock);
 }
 
-/*
+/**
  * Initialize the low-level network subsystem. This is called always
  * during startup (via Sys_Init()).
  */
@@ -797,7 +801,7 @@ void N_SystemInit(void)
     transmissionBuffer = malloc(transmissionBufferSize);
 }
 
-/*
+/**
  * Shut down the low-level network interface. Called during engine
  * shutdown (not before).
  */
@@ -811,7 +815,7 @@ void N_SystemShutdown(void)
     SDLNet_Quit();
 }
 
-/*
+/**
  * Convert an IPaddress to a string.
  */
 void N_IPToString(char *buf, IPaddress *ip)
@@ -822,7 +826,7 @@ void N_IPToString(char *buf, IPaddress *ip)
             (host >> 8) & 0xff, host & 0xff, SDLNet_Read16(&ip->port));
 }
 
-/*
+/**
  * Opens an UDP socket.  The used port number is returned.  If the
  * socket cannot be opened, 'sock' is set to NULL.  'defaultPort'
  * should never be zero.
@@ -850,7 +854,7 @@ Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
         return 0; // Failure!
 }
 
-/*
+/**
  * Initialize the chosen service provider each in server or client
  * mode.  If a service provider has already been initialized, it will
  * be shut down first.  Returns true if successful.
@@ -929,7 +933,7 @@ boolean N_InitService(boolean inServerMode)
     return true;
 }
 
-/*
+/**
  * Shut down the TCP/IP network services.
  */
 void N_ShutdownService(void)
@@ -977,7 +981,7 @@ void N_ShutdownService(void)
     netServerMode = false;
 }
 
-/*
+/**
  * Returns true if the low-level network routines have been initialized
  * and are expected to be working.
  */
@@ -986,7 +990,7 @@ boolean N_IsAvailable(void)
     return netIsActive;
 }
 
-/*
+/**
  * Returns true if the internet is available.
  */
 boolean N_UsingInternet(void)
@@ -1012,7 +1016,7 @@ const char *N_GetProtocolName(void)
     return "TCP/IP";
 }
 
-/*
+/**
  * Returns the player name associated with the given network node.
  */
 boolean N_GetNodeName(nodeid_t id, char *name)
@@ -1026,7 +1030,7 @@ boolean N_GetNodeName(nodeid_t id, char *name)
     return true;
 }
 
-/*
+/**
  * The client is removed from the game immediately. This is used when
  * the server needs to terminate a client's connection abnormally.
  */
@@ -1103,7 +1107,7 @@ static boolean N_RegisterNewSocket(TCPsocket sock)
     return found;
 }
 
-/*
+/**
  * A network node wishes to become a real client. Returns true if we
  * allow this.
  */
@@ -1160,7 +1164,7 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
     return true;
 }
 
-/*
+/**
  * Maybe it would be wisest to run this in a separate thread?
  */
 boolean N_LookForHosts(const char *address, int port)
@@ -1245,7 +1249,7 @@ boolean N_LookForHosts(const char *address, int port)
     }
 }
 
-/*
+/**
  * Connect a client to the server identified with 'index'.  We enter
  * clientside mode during this routine.
  */
@@ -1328,7 +1332,7 @@ boolean N_Connect(int index)
     return true;
 }
 
-/*
+/**
  * Disconnect from the server.
  */
 boolean N_Disconnect(void)
@@ -1422,7 +1426,7 @@ boolean N_ServerClose(void)
     return true;
 }
 
-/*
+/**
  * Validate and process the command, which has been sent by a remote
  * agent. Anyone is free to connect to a server using telnet and issue
  * queries.
@@ -1514,7 +1518,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     return true;
 }
 
-/*
+/**
  * Poll all TCP sockets for activity.  Client commands are processed.
  * The logic ain't very pretty, but hopefully functional.
  */
@@ -1604,7 +1608,7 @@ void N_Listen(void)
     }
 }
 
-/*
+/**
  * Called from "net info".
  */
 void N_PrintInfo(void)

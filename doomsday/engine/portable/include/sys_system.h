@@ -30,9 +30,9 @@
 #define __DOOMSDAY_SYSTEM_H__
 
 #include "dd_types.h"
+#include <SDL_thread.h>
 
 typedef int     (*systhreadfunc_t) (void *parm);
-typedef int     semaphore_t;
 
 extern boolean  novideo;
 
@@ -50,19 +50,18 @@ void            Sys_OpenTextEditor(const char *filename);
 void            Sys_ShowWindow(boolean hide);
 
 // Threads:
-int             Sys_StartThread(systhreadfunc_t startpos, void *parm,
-								int priority);
+SDL_Thread *    Sys_StartThread(systhreadfunc_t startpos, void *parm );
 void            Sys_SuspendThread(int handle, boolean dopause);
-int             Sys_WaitThread(int handle);
+int             Sys_WaitThread(SDL_Thread *handle);
 
 intptr_t        Sys_CreateMutex(const char *name);	// returns the mutex handle
 void            Sys_DestroyMutex(intptr_t mutexHandle);
 void            Sys_Lock(intptr_t mutexHandle);
 void            Sys_Unlock(intptr_t mutexHandle);
 
-semaphore_t     Sem_Create(unsigned int initialValue);	// returns handle
-void            Sem_Destroy(semaphore_t semaphore);
-void            Sem_P(semaphore_t semaphore);
-void            Sem_V(semaphore_t semaphore);
+long		Sem_Create(uint32_t initialValue);	// returns handle
+void            Sem_Destroy(long semaphore);
+void            Sem_P(long semaphore);
+void            Sem_V(long semaphore);
 
 #endif

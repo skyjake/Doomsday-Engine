@@ -270,43 +270,18 @@ void Sys_OpenTextEditor(const char *filename)
 }
 
 /**
- * Priority can be -3...3, with zero being the normal priority.
- * Returns a handle to the started thread.
+ * Utilises SDL Threads on ALL systems.
+ * Returns the SDL_thread structure as handle to the started thread.
  */
-int Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority)
+SDL_Thread * Sys_StartThread(systhreadfunc_t startpos, void *parm )
 {
-#ifdef WIN32
-    HANDLE  handle;
-    DWORD   id;
-
-    // Use 512 Kb for the stack (too much/little?).
-    handle = CreateThread(0, 0x80000, startpos, parm, 0, &id);
-    if(!handle)
-    {
-        Con_Message("Sys_StartThread: Failed to start new thread (%x).\n",
-                    GetLastError());
-        return 0;
+    SDL_Thread *thread;
+    thread = SDL_CreateThread(startpos, parm);
+    if ( thread == NULL ) {
+	Con_Message("Sys_StartThread: Failed to start new thread (%s).\n", SDL_GetError());
+	return 0;
     }
-    // Set thread priority, if needed.
-    if(priority && priority <= 3 && priority >= -3)
-    {
-        int     prios[] = {
-            THREAD_PRIORITY_IDLE,
-            THREAD_PRIORITY_LOWEST,
-            THREAD_PRIORITY_BELOW_NORMAL,
-            THREAD_PRIORITY_NORMAL,
-            THREAD_PRIORITY_ABOVE_NORMAL,
-            THREAD_PRIORITY_HIGHEST,
-            THREAD_PRIORITY_TIME_CRITICAL
-        };
-        SetThreadPriority(handle, prios[priority + 3]);
-    }
-    return (int) handle;
-#else
-    /* sys_system.c: warning: cast from pointer to integer of different size ie -> return (int) SDL_CreateThread(startpos, parm) */
-    ASSERT_NOT_64BIT();
-    return (int) SDL_CreateThread(startpos, parm);
-#endif
+    return (thread);
 }
 
 /**
@@ -314,46 +289,17 @@ int Sys_StartThread(systhreadfunc_t startpos, void *parm, int priority)
  */
 void Sys_SuspendThread(int handle, boolean dopause)
 {
-#ifdef WIN32
-    if(dopause)
-    {
-        SuspendThread((HANDLE) handle);
-    }
-    else
-    {
-        ResumeThread((HANDLE) handle);
-    }
-#endif
+
 }
 
 /**
  * Returns the return value of the thread.
  */
-int Sys_WaitThread(int handle)
+int Sys_WaitThread(SDL_Thread *handle)
 {
-#ifdef WIN32
-    DWORD   exitCode = 0;
-
-    do
-    {
-        // Sleep for a while so the loop ain't so busy.
-        Sys_Sleep(5);
-
-        if(!GetExitCodeThread((HANDLE) handle, &exitCode))
-        {
-            // An error occured!
-            return 0;
-        }
-    } while(exitCode == STILL_ACTIVE);
-    return exitCode;
-#else
     int     result;
-
-    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_WaitThread((SDL_Thread *) handle, &result) */
-    ASSERT_NOT_64BIT();
     SDL_WaitThread((SDL_Thread *) handle, &result);
     return result;
-#endif
 }
 
 intptr_t Sys_CreateMutex(const char *name)
@@ -385,17 +331,13 @@ void Sys_Unlock(intptr_t handle)
 /**
  * Create a new semaphore. Returns a handle.
  */
-semaphore_t Sem_Create(unsigned int initialValue)
+long Sem_Create(uint32_t initialValue)
 {
-    /* sys_system.c: warning: cast from pointer to integer of different size ie -> return (semaphore_t) SDL_CreateSemaphore(initialValue) */
-    ASSERT_NOT_64BIT();
-    return (semaphore_t) SDL_CreateSemaphore(initialValue);
+    return (long) SDL_CreateSemaphore(initialValue);
 }
 
-void Sem_Destroy(semaphore_t semaphore)
+void Sem_Destroy(long semaphore)
 {
-    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_DestroySemaphore((SDL_sem *) semaphore) */
-    ASSERT_NOT_64BIT();
     if(semaphore)
     {
         SDL_DestroySemaphore((SDL_sem *) semaphore);
@@ -405,10 +347,8 @@ void Sem_Destroy(semaphore_t semaphore)
 /**
  * "Proberen" a semaphore. Blocks until the successful.
  */
-void Sem_P(semaphore_t semaphore)
+void Sem_P(long semaphore)
 {
-    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_SemWait((SDL_sem *) semaphore) */
-    ASSERT_NOT_64BIT();
     if(semaphore)
     {
         SDL_SemWait((SDL_sem *) semaphore);
@@ -418,10 +358,8 @@ void Sem_P(semaphore_t semaphore)
 /**
  * "Verhogen" a semaphore. Returns immediately.
  */
-void Sem_V(semaphore_t semaphore)
+void Sem_V(long semaphore)
 {
-    /* sys_system.c: warning: cast to pointer from integer of different size ie -> SDL_SemPost((SDL_sem *) semaphore) */
-    ASSERT_NOT_64BIT();
     if(semaphore)
     {
         SDL_SemPost((SDL_sem *) semaphore);
