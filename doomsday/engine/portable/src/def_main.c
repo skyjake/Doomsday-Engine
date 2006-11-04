@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1438,9 +1439,7 @@ int Def_Get(int type, char *id, void *out)
         return Def_GetSoundNumForName(id);
 
     case DD_DEF_SOUND_LUMPNAME:
-    /* def_main.c: warning: cast from pointer to integer of different size ie -> i = (int) id */
-    ASSERT_NOT_64BIT();
-        i = (int) id;
+        i = (long) id;
         if(i < 0 || i >= count_sounds.num)
             return false;
         strcpy(out, sounds[i].lumpname);
