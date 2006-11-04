@@ -755,9 +755,6 @@ static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
     static int  pitchSigns[4] = { 1, -1, 1, -1 };
     int         yawSign, pitchSign;
 
-    /* p_particle.c: warning: cast from pointer to integer of different size ie -> uint index = pt - gen->ptcs + GENERATOR_TO_ID(gen) / 8*/
-    ASSERT_NOT_64BIT();
-
     yawSign = yawSigns[index % 4];
     pitchSign = pitchSigns[index % 4];
 
