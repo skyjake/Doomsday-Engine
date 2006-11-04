@@ -734,8 +734,6 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
             duration = 1;
         if(offset == -1)
         {
-            /* r_model.c: warning: cast from pointer to integer of different size ie -> offset = M_CycleIntoRange(THING_TO_ID(mo), duration)*/
-            ASSERT_NOT_64BIT();
             offset = M_CycleIntoRange(THING_TO_ID(mo), duration);
         }
         interp = M_CycleIntoRange(levelTime / duration + offset, 1);

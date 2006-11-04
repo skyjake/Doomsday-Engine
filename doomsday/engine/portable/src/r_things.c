@@ -740,8 +740,6 @@ void R_ProjectSprite(mobj_t *thing)
         lump = sprframe->lump[0];
         flip = (boolean) sprframe->flip[0];
     }
-    /* r_model.c:743: warning: cast from pointer to integer of different size */
-    ASSERT_NOT_64BIT();
     // Align to the view plane?
     if(thing->ddflags & DDMF_VIEWALIGN)
         align = true;
@@ -892,10 +890,7 @@ void R_ProjectSprite(mobj_t *thing)
         }
         else if(mf->sub[0].flags & MFF_SPIN)
         {
-    /*r_things.c: warning: cast from pointer to integer of different size ie -> vis->data.mo.yaw = modelSpinSpeed * 70 * levelTime + (int) thing % 360;*/
-    ASSERT_NOT_64BIT();
-            vis->data.mo.yaw =
-                modelSpinSpeed * 70 * levelTime + (int) thing % 360;
+            vis->data.mo.yaw = modelSpinSpeed * 70 * levelTime + (long) thing % 360;
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
         {
@@ -911,8 +906,6 @@ void R_ProjectSprite(mobj_t *thing)
         // How about a unique offset?
         if(mf->sub[0].flags & MFF_IDANGLE)
         {
-    /*r_things.c: warning: cast from pointer to integer of different size ie -> vis->data.mo.yaw += THING_TO_ID(thing) % 360 */
-    ASSERT_NOT_64BIT();
             // Multiply with an arbitrary factor.
             vis->data.mo.yaw += THING_TO_ID(thing) % 360;
         }
@@ -1103,10 +1096,7 @@ fixed_t R_GetBobOffset(mobj_t *mo)
 {
     if(mo->ddflags & DDMF_BOB)
     {
-    /* r_things.c: warning: cast from pointer to integer of different size ie -> FRACUNIT * (sin(THING_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) * 8)*/
-    ASSERT_NOT_64BIT();
-        return FRACUNIT * (sin(THING_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) *
-                           8);
+        return FRACUNIT * (sin(THING_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }
