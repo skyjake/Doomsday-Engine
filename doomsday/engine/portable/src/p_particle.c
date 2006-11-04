@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +49,7 @@
 #define VECSUB(a,b)         ( a[VX]-=b[VX], a[VY]-=b[VY] )
 #define VECCPY(a,b)         ( a[VX]=b[VX], a[VY]=b[VY] )
 
-#define GENERATOR_TO_ID(gen)    ((int) gen)
+#define GENERATOR_TO_ID(gen)    ((long) gen)
 
 // TYPES -------------------------------------------------------------------
 
