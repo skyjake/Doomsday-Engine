@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -623,9 +624,7 @@ void Z_ChangeTag2(void *ptr, int tag)
     if(block->id != ZONEID)
         Con_Error("Z_ChangeTag: modifying a block without ZONEID");
 
-    /* dd_zone.c: warning: cast from pointer to integer of different size ie -> if(tag >= PU_PURGELEVEL && (unsigned) block->user < 0x100)*/
-    ASSERT_NOT_64BIT();
-    if(tag >= PU_PURGELEVEL && (unsigned) block->user < 0x100)
+    if(tag >= PU_PURGELEVEL && (unsigned long) block->user < 0x100)
         Con_Error("Z_ChangeTag: an owner is required for purgable blocks");
     block->tag = tag;
 }
