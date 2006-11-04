@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -839,13 +840,9 @@ void R_InitTranslationTables(void)
     byte   *transLump;
 
     // Allocate translation tables
-    translationtables =
-        Z_Malloc(256 * 3 * ( /*MAXPLAYERS*/ 8 - 1) + 255, PU_REFRESHTRANS, 0);
-    /* r_data.c: warning: cast from pointer to integer of different size
-       r_data.c: warning: cast to pointer from integer of different size ie -> translationtables = (byte *) (((int) translationtables + 255) & ~255);*/
+    translationtables = Z_Malloc(256 * 3 * ( /*MAXPLAYERS*/ 8 - 1) + 255, PU_REFRESHTRANS, 0);
 
-    ASSERT_NOT_64BIT();
-    translationtables = (byte *) (((int) translationtables + 255) & ~255);
+    translationtables = (byte *) (((long) translationtables + 255) & ~255);
 
     for(i = 0; i < 3 * ( /*MAXPLAYERS*/ 8 - 1); ++i)
     {
