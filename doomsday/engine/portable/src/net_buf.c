@@ -82,7 +82,7 @@ static uint numSentBytes;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Initialize the low-level network subsystem. This is called always
  * during startup (via Sys_Init()).
  */
@@ -98,7 +98,7 @@ void N_Init(void)
     N_SystemInit();             // Platform dependent stuff.
 }
 
-/*
+/**
  * Shut down the low-level network interface. Called during engine
  * shutdown (not before).
  */
@@ -120,7 +120,7 @@ void N_Shutdown(void)
     }
 }
 
-/*
+/**
  * Acquire or release ownership of the message queue mutex.
  * Returns true if successful.
  */
@@ -133,13 +133,13 @@ boolean N_LockQueue(boolean doAcquire)
     return true;
 }
 
-/*
+/**
  * Adds the given netmessage_s to the queue of received messages.
  * Before calling this, allocate the message using malloc().  We use a
  * mutex to synchronize access to the message queue.  This is called
  * in the network receiver thread.
  */
-void N_PostMessage(netmessage_t * msg)
+void N_PostMessage(netmessage_t *msg)
 {
     N_LockQueue(true);
 
@@ -162,7 +162,7 @@ void N_PostMessage(netmessage_t * msg)
     N_LockQueue(false);
 }
 
-/*
+/**
  * Extracts the next message from the queue of received messages.
  * Returns NULL if no message is found. The caller must release the
  * message when it's no longer needed, using N_ReleaseMessage().  We
@@ -197,19 +197,19 @@ netmessage_t *N_GetMessage(void)
     return msg;
 }
 
-/*
+/**
  * Frees the message.
  */
-void N_ReleaseMessage(netmessage_t * msg)
+void N_ReleaseMessage(netmessage_t *msg)
 {
     if(msg->handle)
     {
         N_ReturnBuffer(msg->handle);
     }
-    free(msg);
+    M_Free(msg);
 }
 
-/*
+/**
  * Empties the message buffers.
  */
 void N_ClearMessages(void)
@@ -223,7 +223,7 @@ void N_ClearMessages(void)
     msgHead = msgTail = NULL;
 }
 
-/*
+/**
  * Send the data in the netbuffer. The message is sent using an
  * unreliable, nonsequential (i.e. fast) method.
  *
@@ -233,7 +233,7 @@ void N_ClearMessages(void)
 void N_SendPacket(int flags)
 {
     //  sentmessage_t *sentMsg;
-    int     i, dest = 0;
+    uint    i, dest = 0;
     void   *data;
     uint    size;
 
@@ -260,7 +260,7 @@ void N_SendPacket(int flags)
         else
         {
             // Broadcast to all non-local players, using recursive calls.
-            for(i = 0; i < MAXPLAYERS; i++)
+            for(i = 0; i < MAXPLAYERS; ++i)
             {
                 netBuffer.player = i;
                 N_SendPacket(flags);
@@ -302,18 +302,18 @@ void N_SendPacket(int flags)
     }
 }
 
-/*
+/**
  * Returns the player number that corresponds the DPNID.
  */
 int N_IdentifyPlayer(nodeid_t id)
 {
-    int     i;
+    uint     i;
 
     if(netServerMode)
     {
         // What is the corresponding player number? Only the server keeps
         // a list of all the IDs.
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(i = 0; i < MAXPLAYERS; ++i)
             if(clients[i].nodeID == id)
                 return i;
 
@@ -325,7 +325,7 @@ int N_IdentifyPlayer(nodeid_t id)
     return 0;
 }
 
-/*
+/**
  * Returns the next message waiting in the incoming message queue.
  * Confirmations are handled here.
  *
@@ -364,7 +364,7 @@ netmessage_t *N_GetNextMessage(void)
     return NULL;
 }
 
-/*
+/**
  * A message is extracted from the message queue. Returns true if a message
  * is successfully extracted.
  */
@@ -407,7 +407,7 @@ boolean N_GetPacket(void)
     return true;
 }
 
-/*
+/**
  * Print low-level information about the network buffer.
  */
 void N_PrintBufferInfo(void)
@@ -415,7 +415,7 @@ void N_PrintBufferInfo(void)
     N_PrintHuffmanStats();
 }
 
-/*
+/**
  * Print status information about the workings of Huffman compression
  * in the network buffer.
  */

@@ -181,7 +181,7 @@ static void N_ClearQueue(sendqueue_t *q)
     {
         q->first = pack->next;
         SDLNet_FreePacket(pack->packet);
-        free(pack);
+        M_Free(pack);
     }
 }
 
@@ -190,7 +190,7 @@ static void N_ClearQueue(sendqueue_t *q)
  * node, nothing will be sent because we don't know the destination
  * address.
  */
-static void N_UDPSend(sqpack_t * pack)
+static void N_UDPSend(sqpack_t *pack)
 {
     if(!pack->node)
         return;
@@ -223,7 +223,7 @@ static void N_UDPSend(sqpack_t * pack)
  * simulate a real-life connection where UDP packets are received
  * sometimes in the wrong order or get lost entirely.
  */
-static int N_UDPTransmitter(void *parm)
+static int C_DECL N_UDPTransmitter(void *parm)
 {
     sendqueue_t *q = parm;
     sqpack_t *pack;
@@ -254,7 +254,7 @@ static int N_UDPTransmitter(void *parm)
 
             // Now that the packet has been sent, we can discard the data.
             SDLNet_FreePacket(pack->packet);
-            free(pack);
+            M_Free(pack);
         }
 
         Sem_V(q->mutex);
@@ -276,7 +276,7 @@ static int N_UDPTransmitter(void *parm)
  *
  * 'parm' is a pointer to the network node of this transmitter.
  */
-static int N_UDPTransmitter(void *parm)
+static int C_DECL N_UDPTransmitter(void *parm)
 {
     sendqueue_t *q = parm;
     sqpack_t *pack;
@@ -312,7 +312,7 @@ static int N_UDPTransmitter(void *parm)
 
         // Now that the packet has been sent, we can discard the data.
         SDLNet_FreePacket(pack->packet);
-        free(pack);
+        M_Free(pack);
     }
 
     // Free any packets still waiting in the queue.
@@ -327,7 +327,7 @@ static int N_UDPTransmitter(void *parm)
  * TCP/IP service is initialized. The thread is stopped when the
  * service is shut down.
  */
-static int N_UDPReceiver(void *parm)
+static int C_DECL N_UDPReceiver(void *parm)
 {
     SDLNet_SocketSet set;
     UDPpacket *packet = NULL;
@@ -377,7 +377,7 @@ static int N_UDPReceiver(void *parm)
                     continue;
 
                 // Successfully received a packet.
-                msg = (netmessage_t *) calloc(sizeof(netmessage_t), 1);
+                msg = (netmessage_t *) M_Calloc(sizeof(netmessage_t));
 
                 msg->sender = packet->channel;
                 msg->data = packet->data;
@@ -468,7 +468,7 @@ boolean N_ReceiveReliably(nodeid_t from)
 
     // Post the received message.
     {
-        netmessage_t *msg = calloc(sizeof(netmessage_t), 1);
+        netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
 
         msg->sender = from;
         msg->data = packet->data;
@@ -504,7 +504,7 @@ void N_SendDataBufferReliably(void *data, int size, nodeid_t destination)
     if(transmissionBufferSize < size + 2)
     {
         transmissionBufferSize = size + 2;
-        transmissionBuffer = realloc(transmissionBuffer, size + 2);
+        transmissionBuffer = M_Realloc(transmissionBuffer, size + 2);
     }
 
     memcpy(transmissionBuffer, &packetSize, 2);
@@ -559,7 +559,7 @@ void N_SendDataBuffer(void *data, uint size, nodeid_t destination)
     //#endif
 
     // This memory is freed after the packet is sent.
-    pack = malloc(sizeof(sqpack_t));
+    pack = M_Malloc(sizeof(sqpack_t));
     p = pack->packet = SDLNet_AllocPacket(size);
 
     // The destination node.
@@ -673,7 +673,7 @@ void N_FlushOutgoing(void)
     {
         allClear = true;
 
-        for(i = 0; i < DDMAXPLAYERS; i++)
+        for(i = 0; i < DDMAXPLAYERS; ++i)
             if(netNodes[i].hasJoined && N_GetSendQueueCount(i))
                 allClear = false;
 
@@ -700,7 +700,7 @@ static void N_StartTransmitter(sendqueue_t *q)
  */
 static void N_StopTransmitter(sendqueue_t *q)
 {
-    int     i;
+    uint    i;
 
     if(!hTransmitter)
         return;
@@ -729,7 +729,6 @@ static void N_StartReceiver(void)
 {
     stopReceiver = false;
     mutexInSock = Sys_CreateMutex("UDPIncomingMutex");
-    SDL_Thread *hReceiver;
     hReceiver = Sys_StartThread(N_UDPReceiver, NULL);
 }
 
@@ -798,7 +797,7 @@ void N_SystemInit(void)
 
     // Allocate the transmission buffer.
     transmissionBufferSize = DEFAULT_TRANSMISSION_SIZE;
-    transmissionBuffer = malloc(transmissionBufferSize);
+    transmissionBuffer = M_Malloc(transmissionBufferSize);
 }
 
 /**
@@ -807,7 +806,7 @@ void N_SystemInit(void)
  */
 void N_SystemShutdown(void)
 {
-    free(transmissionBuffer);
+    M_Free(transmissionBuffer);
     transmissionBuffer = NULL;
     transmissionBufferSize = 0;
 
@@ -833,14 +832,15 @@ void N_IPToString(char *buf, IPaddress *ip)
  */
 Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
 {
-    Uint16  port = (!preferPort ? defaultPort : preferPort);
-    int     tries = 1000;
-    boolean found;
+    Uint16      port = (!preferPort ? defaultPort : preferPort);
+    int         tries;
+    boolean     found;
 
     *sock = NULL;
 
     // Try opening the port, advance to next one if the opening fails.
-    for(found = false; tries > 0 && !found; --tries)
+    found = false;
+    for(tries = 1000; tries > 0 && !found; --tries)
     {
         if((*sock = SDLNet_UDP_Open(port)) == NULL)
             port++;
@@ -938,7 +938,7 @@ boolean N_InitService(boolean inServerMode)
  */
 void N_ShutdownService(void)
 {
-    int     i;
+    uint        i;
 
     if(!N_IsAvailable())
         return;                 // Nothing to do.
@@ -1083,13 +1083,13 @@ void N_TerminateNode(nodeid_t id)
  */
 static boolean N_RegisterNewSocket(TCPsocket sock)
 {
-    int         i;
+    uint        i;
     netnode_t  *node;
     boolean     found;
 
     // Find a free node.
     for(i = 1, node = netNodes + 1, found = false;
-        i < MAX_NODES && !found; i++, node++)
+        i < MAX_NODES && !found; ++i, node++)
         if(!node->sock)
         {
             // This'll do.
@@ -1169,9 +1169,10 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
  */
 boolean N_LookForHosts(const char *address, int port)
 {
-    TCPsocket sock;
-    char    buf[256];
+    TCPsocket   sock;
+    char        buf[256];
     ddstring_t *response;
+    boolean     isDone;
 
     // We must be a client.
     if(!N_IsAvailable() || netServerMode)
@@ -1201,13 +1202,26 @@ boolean N_LookForHosts(const char *address, int port)
     // Let's listen to the reply.
     memset(buf, 0, sizeof(buf));
     response = Str_New();
-    while(!strstr(Str_Text(response), "END\n"))
+    isDone = false;
+    while(!isDone)
     {
-        int     result = SDLNet_TCP_Recv(sock, buf, sizeof(buf) - 1);
+        int     result;
 
-        if(result <= 0)
-            break;              // Terminated?
-        Str_Appendf(response, buf);
+        if(strstr(Str_Text(response), "END\n"))
+        {
+            result = SDLNet_TCP_Recv(sock, buf, sizeof(buf) - 1);
+
+            if(result > 0)
+            {
+                Str_Appendf(response, buf);
+            }
+            else // Terminated.
+            {
+                isDone = true;
+            }
+        }
+        else
+            isDone = true;
     }
 
     // Close the connection; that was all the information we need.
@@ -1547,42 +1561,42 @@ void N_Listen(void)
         // Any activity on the client sockets? (Don't wait.)
         if(SDLNet_CheckSockets(sockSet, 0) > 0)
         {
-            for(i = 0; i < MAX_NODES; i++)
+            for(i = 0; i < MAX_NODES; ++i)
             {
                 node = netNodes + i;
 
                 // Does this socket have got any activity?
-                if(!SDLNet_SocketReady(node->sock))
-                    continue;
-
-                if(!node->hasJoined)
+                if(SDLNet_SocketReady(node->sock))
                 {
-                    result = SDLNet_TCP_Recv(node->sock, buf, sizeof(buf));
-                    if(result <= 0)
+                    if(!node->hasJoined)
                     {
-                        // Close this socket & node.
-                        VERBOSE2(Con_Message
-                                 ("N_Listen: Connection closed on "
-                                  "node %i.\n", i));
-                        N_TerminateNode(i);
+                        result = SDLNet_TCP_Recv(node->sock, buf, sizeof(buf));
+                        if(result <= 0)
+                        {
+                            // Close this socket & node.
+                            VERBOSE2(Con_Message
+                                     ("N_Listen: Connection closed on "
+                                      "node %i.\n", i));
+                            N_TerminateNode(i);
+                        }
+                        else
+                        {
+                            // FIXME: Read into a buffer, execute when newline
+                            // received.
+
+                            // Process the command; we will need to answer, or
+                            // do something else.
+                            N_DoNodeCommand(i, buf, result);
+                        }
                     }
                     else
                     {
-                        // FIXME: Read into a buffer, execute when newline
-                        // received.
-
-                        // Process the command; we will need to answer, or
-                        // do something else.
-                        N_DoNodeCommand(i, buf, result);
-                    }
-                }
-                else
-                {
-                    if(!N_ReceiveReliably(i))
-                    {
-                        Con_Message("N_Listen: Connection closed on "
-                                    "node %i.\n", i);
-                        N_TerminateNode(i);
+                        if(!N_ReceiveReliably(i))
+                        {
+                            Con_Message("N_Listen: Connection closed on "
+                                        "node %i.\n", i);
+                            N_TerminateNode(i);
+                        }
                     }
                 }
             }

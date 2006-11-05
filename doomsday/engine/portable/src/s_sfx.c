@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -98,7 +98,7 @@ static byte refmonitor = 0;
  *
  * FIXME: Use a real mutex, will you?
  */
-int Sfx_ChannelRefreshThread(void *parm)
+int C_DECL Sfx_ChannelRefreshThread(void *parm)
 {
     sfxchannel_t *ch;
     int     i;

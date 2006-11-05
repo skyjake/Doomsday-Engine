@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -92,34 +92,34 @@ static int numServers;
 
 // CODE --------------------------------------------------------------------
 
-void N_MasterClearList(void)
+static void N_MasterClearList(void)
 {
     numServers = 0;
     while(servers)
     {
         serverlist_t *next = servers->next;
 
-        free(servers);
+        M_Free(servers);
         servers = next;
     }
 }
 
-serverlist_t *N_MasterNewServer(void)
+static serverlist_t *N_MasterNewServer(void)
 {
     serverlist_t *node;
 
     numServers++;
-    node = calloc(sizeof(serverlist_t), 1);
+    node = M_Calloc(sizeof(serverlist_t));
     node->next = servers;
     servers = node;
     return node;
 }
 
-/*
+/**
  * A thread. Announcement info received as the parameter. The info must be
  * allocated from the heap. We will free it when it's no longer needed.
  */
-int N_MasterSendAnnouncement(void *parm)
+static int C_DECL N_MasterSendAnnouncement(void *parm)
 {
     serverinfo_t *info = parm;
     socket_t s;
@@ -154,7 +154,7 @@ int N_MasterSendAnnouncement(void *parm)
     length = Sv_InfoToString(info, &msg);
 
     // Free the serverinfo, it's no longer needed.
-    free(info);
+    M_Free(info);
 
     // Write an HTTP POST request with our info.
     N_SockPrintf(s, "POST %s HTTP/1.1\n", masterPath);
@@ -185,59 +185,75 @@ int N_MasterSendAnnouncement(void *parm)
         !strncmp(buf, responseOK, strlen(responseOK));
 }
 
-/*
+/**
  * Response is an HTTP response with the chunked transfer encoding.
  * Output is the plain body of the response.
  */
-void N_MasterDecodeChunked(ddstring_t * response, ddstring_t * out)
+static void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
 {
     ddstring_t line;
     const char *pos = Str_Text(response);
     boolean foundChunked = false;
+    boolean done;
     int     length;
 
     // Skip to the body.
     Str_Init(&line);
-    while(*pos)
+    if(*pos)
     {
-        pos = Str_GetLine(&line, pos);
+        done = false;
+        while(!done)
+        {
+            pos = Str_GetLine(&line, pos);
 
-        // Let's make sure the encoding is chunked.
-        // RFC 2068 says that HTTP/1.1 clients must ignore encodings
-        // they don't understand.
-        if(!stricmp(Str_Text(&line), "Transfer-Encoding: chunked"))
-            foundChunked = true;
+            // Let's make sure the encoding is chunked.
+            // RFC 2068 says that HTTP/1.1 clients must ignore encodings
+            // they don't understand.
+            if(!stricmp(Str_Text(&line), "Transfer-Encoding: chunked"))
+                foundChunked = true;
 
-        // The first break indicates the end of the headers.
-        if(!Str_Length(&line))
-            break;
+            // The first break indicates the end of the headers.
+            if(!Str_Length(&line))
+                done = true;
+
+            if(!*pos)
+                done = true;
+        }
     }
-    if(foundChunked)
+
+    if(foundChunked && *pos)
     {
         // Decode the body.
-        while(*pos)
+        done = false;
+        while(!done)
         {
             // The first line of the chunk is the length.
             pos = Str_GetLine(&line, pos);
             length = strtol(Str_Text(&line), 0, 16);
-            if(!length)
-                break;          // No more chunks.
+            if(length)
+            {
+                // Append the chunk data to the output.
+                Str_PartAppend(out, pos, 0, length);
+                pos += length;
 
-            // Append the chunk data to the output.
-            Str_PartAppend(out, pos, 0, length);
-            pos += length;
-
-            // A newline ends the chunk.
-            pos = (const char *) M_SkipLine((char *) pos);
+                // A newline ends the chunk.
+                pos = (const char *) M_SkipLine((char *) pos);
+                if(!*pos)
+                    done = true;
+            }
+            else // No more chunks.
+            {
+                done = true;
+            }
         }
     }
     Str_Free(&line);
 }
 
-/*
+/**
  * Parses a list of servers from the response.
  */
-void N_MasterParseResponse(ddstring_t * response)
+static void N_MasterParseResponse(ddstring_t *response)
 {
     ddstring_t msg, line;
     const char *pos;
@@ -263,37 +279,40 @@ void N_MasterParseResponse(ddstring_t * response)
     // label:value
     // One or more empty lines separate servers.
     pos = Str_Text(&msg);
-    while(*pos)
+    if(*pos)
     {
-        pos = Str_GetLine(&line, pos);
-
-        if(Str_Length(&line) && !info)
+        boolean isDone = false;
+        while(!isDone)
         {
-            // A new server begins.
-            info = &N_MasterNewServer()->info;
-        }
-        else if(!Str_Length(&line) && info)
-        {
-            // No more current server.
-            info = NULL;
-            continue;
-        }
+            pos = Str_GetLine(&line, pos);
 
-        // If there is no current server, skip everything.
-        if(!info)
-            continue;
+            if(Str_Length(&line) && !info)
+            {
+                // A new server begins.
+                info = &N_MasterNewServer()->info;
+            }
+            else if(!Str_Length(&line) && info)
+            {
+                // No more current server.
+                info = NULL;
+            }
 
-        Sv_StringToInfo(Str_Text(&line), info);
+            if(info)
+                Sv_StringToInfo(Str_Text(&line), info);
+
+            if(!*pos)
+                isDone = true;
+        }
     }
 
     Str_Free(&line);
     Str_Free(&msg);
 }
 
-/*
+/**
  * A thread.
  */
-int N_MasterSendRequest(void *parm)
+static int C_DECL N_MasterSendRequest(void *parm)
 {
     struct hostent *host;
     socket_t s;
@@ -358,7 +377,7 @@ void N_MasterShutdown(void)
     N_MasterClearList();
 }
 
-/*
+/**
  * Sends a server announcement to the master. The announcement includes
  * our IP address and other information.
  */
@@ -383,7 +402,7 @@ void N_MasterAnnounceServer(boolean isOpen)
 
     // The info is not freed in this function, but in
     // N_MasterSendAnnouncement().
-    info = calloc(sizeof(serverinfo_t), 1);
+    info = M_Calloc(sizeof(serverinfo_t));
 
     // Let's figure out what we want to tell about ourselves.
     Sv_GetInfo(info);
@@ -394,7 +413,7 @@ void N_MasterAnnounceServer(boolean isOpen)
     Sys_StartThread(N_MasterSendAnnouncement, info);
 }
 
-/*
+/**
  * Requests the list of open servers from the master.
  */
 void N_MasterRequestList(void)
@@ -416,7 +435,7 @@ void N_MasterRequestList(void)
     Sys_StartThread(N_MasterSendRequest, NULL);
 }
 
-/*
+/**
  * Returns information about the server #N. If 'info' is NULL, returns
  * the number of known servers. Otherwise returns true if the server
  * index was valid and data was returned.

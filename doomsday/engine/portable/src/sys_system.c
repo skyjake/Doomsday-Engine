@@ -273,15 +273,20 @@ void Sys_OpenTextEditor(const char *filename)
  * Utilises SDL Threads on ALL systems.
  * Returns the SDL_thread structure as handle to the started thread.
  */
-SDL_Thread * Sys_StartThread(systhreadfunc_t startpos, void *parm )
+SDL_Thread* Sys_StartThread(systhreadfunc_t startpos, void *parm)
 {
-    SDL_Thread *thread;
+    SDL_Thread* thread;
+
     thread = SDL_CreateThread(startpos, parm);
-    if ( thread == NULL ) {
-	Con_Message("Sys_StartThread: Failed to start new thread (%s).\n", SDL_GetError());
-	return 0;
+
+    if(thread == NULL)
+    {
+        Con_Message("Sys_StartThread: Failed to start new thread (%s).\n",
+                    SDL_GetError());
+        return 0;
     }
-    return (thread);
+
+    return thread;
 }
 
 /**
