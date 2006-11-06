@@ -99,75 +99,85 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
     png_ptr =
         png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, user_error_fn,
                                user_warning_fn);
-    if(!png_ptr)
-        goto pngstop;
-
-    png_info = png_create_info_struct(png_ptr);
-    if(!png_info)
-        goto pngstop;
-
-    end_info = png_create_info_struct(png_ptr);
-    if(!end_info)
-        goto pngstop;
-
-    if(setjmp(png_jmpbuf(png_ptr)))
-        goto pngstop;
-    //png_init_io(png_ptr, file);
-    png_set_read_fn(png_ptr, file, my_read_data);
-
-    png_read_png(png_ptr, png_info, PNG_TRANSFORM_IDENTITY, NULL);
-
-    // Check if it can be used.
-    if(png_info->bit_depth != 8)
+    if(png_ptr)
     {
-        Con_Message("PNG_Load: Bit depth must be 8.\n");
-        goto pngstop;
-    }
-    if(!png_info->width || !png_info->height)
-    {
-        Con_Message("PNG_Load: Bad file? Size is zero.\n");
-        goto pngstop;
-    }
-
-    // Information about the image.
-    *width = png_info->width;
-    *height = png_info->height;
-    *pixelSize = png_info->channels;
-
-    // Paletted images have three color components per pixel.
-    if(*pixelSize == 1)
-        *pixelSize = 3;
-    if(*pixelSize == 2)
-        *pixelSize = 4;         // With alpha channel.
-
-    // OK, let's copy it into Doomsday's buffer.
-    // FIXME: Why not load directly into it?
-    retbuf = M_Malloc(4 * png_info->width * png_info->height);
-    rows = png_get_rows(png_ptr, png_info);
-    for(i = 0; i < *height; ++i)
-    {
-        if(png_info->channels >= 3)
+        png_info = png_create_info_struct(png_ptr);
+        if(png_info)
         {
-            memcpy(retbuf + i * (*pixelSize) * png_info->width, rows[i],
-                   (*pixelSize) * png_info->width);
-        }
-        else                    // Paletted image.
-        {
-            for(k = 0; k < *width; ++k)
+            end_info = png_create_info_struct(png_ptr);
+            if(end_info)
             {
-                pixel = retbuf + ((*pixelSize) * (i * png_info->width + k));
-                off = k * png_info->channels;
-                pixel[0] = png_info->palette[rows[i][off]].red;
-                pixel[1] = png_info->palette[rows[i][off]].green;
-                pixel[2] = png_info->palette[rows[i][off]].blue;
-                if(png_info->channels == 2) // Alpha data.
-                    pixel[3] = rows[i][off + 1];
+                if(!setjmp(png_jmpbuf(png_ptr)))
+                {
+                    boolean     canLoad;
+
+                    //png_init_io(png_ptr, file);
+                    png_set_read_fn(png_ptr, file, my_read_data);
+
+                    png_read_png(png_ptr, png_info,
+                                 PNG_TRANSFORM_IDENTITY, NULL);
+
+                    // Check if it can be used.
+                    canLoad = true;
+                    if(png_info->bit_depth != 8)
+                    {
+                        Con_Message("PNG_Load: Bit depth must be 8.\n");
+                        canLoad = false;
+                    }
+                    else if(!png_info->width || !png_info->height)
+                    {
+                        Con_Message("PNG_Load: Bad file? Size is zero.\n");
+                        canLoad = false;
+                    }
+
+                    if(canLoad)
+                    {
+                        // Information about the image.
+                        *width = png_info->width;
+                        *height = png_info->height;
+                        *pixelSize = png_info->channels;
+
+                        // Paletted images have three color components
+                        // per pixel.
+                        if(*pixelSize == 1)
+                            *pixelSize = 3;
+                        if(*pixelSize == 2)
+                            *pixelSize = 4;       // With alpha channel.
+
+                        // OK, let's copy it into Doomsday's buffer.
+                        // FIXME: Why not load directly into it?
+                        retbuf =
+                            M_Malloc(4 * png_info->width * png_info->height);
+                        rows = png_get_rows(png_ptr, png_info);
+                        for(i = 0; i < *height; ++i)
+                        {
+                            if(png_info->channels >= 3)
+                            {
+                                memcpy(retbuf + i * (*pixelSize) * png_info->width,
+                                       rows[i], (*pixelSize) * png_info->width);
+                            }
+                            else                    // Paletted image.
+                            {
+                                for(k = 0; k < *width; ++k)
+                                {
+                                    pixel = retbuf + ((*pixelSize) *
+                                                (i * png_info->width + k));
+                                    off = k * png_info->channels;
+                                    pixel[0] = png_info->palette[rows[i][off]].red;
+                                    pixel[1] = png_info->palette[rows[i][off]].green;
+                                    pixel[2] = png_info->palette[rows[i][off]].blue;
+                                    if(png_info->channels == 2) // Alpha data.
+                                        pixel[3] = rows[i][off + 1];
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     // Shutdown.
-  pngstop:
     png_destroy_read_struct(&png_ptr, &png_info, &end_info);
     F_Close(file);
     return retbuf;

@@ -356,11 +356,7 @@ void Net_SendCommands(void)
     memset(cmd, 0, TICCMD_SIZE);
 }
 
-/**
- * Handle incoming packets, clients send ticcmds and coordinates to
- * the server.
- */
-void Net_Update(void)
+static void Net_DoUpdate(void)
 {
     static int lastTime = 0;
 
@@ -381,13 +377,13 @@ void Net_Update(void)
     }
     newTics = nowTime - lastTime;
     if(newTics <= 0)
-        goto listen;            // Nothing new to update.
+        return;            // Nothing new to update.
 
     lastTime = nowTime;
 
 #if 0
     // Build new ticcmds for console player.
-    for(i = 0; i < newtics; i++)
+    for(i = 0; i < newtics; ++i)
     {
         DD_ProcessEvents();
 
@@ -425,7 +421,7 @@ void Net_Update(void)
 
     // This is as far as dedicated servers go.
     if(isDedicated)
-        goto listen;
+        return;
 
     // Clients will periodically send their coordinates to the server so
     // any prediction errors can be fixed. Client movement is almost
@@ -450,8 +446,16 @@ void Net_Update(void)
         }
         Net_SendBuffer(0, 0);
     }
+}
 
-  listen:
+/**
+ * Handle incoming packets, clients send ticcmds and coordinates to
+ * the server.
+ */
+void Net_Update(void)
+{
+    Net_DoUpdate();
+
     // Listen for packets. Call the correct packet handler.
     N_Listen();
     if(isClient)
@@ -813,15 +817,18 @@ void Net_Drawer(void)
     if(show_blink_r && SECONDS_TO_TICKS(gameTime) & 8)
     {
         strcpy(buf, "[");
-        for(i = c = 0; i < MAXPLAYERS; i++)
+        for(i = c = 0; i < MAXPLAYERS; ++i)
         {
-            if(!players[i].ingame || !clients[i].recording)
-                continue;
-            if(c++)
-                strcat(buf, ",");
-            sprintf(tmp, "%i:%s", i, clients[i].recordPaused ? "-P-" : "REC");
-            strcat(buf, tmp);
+            if(!(!players[i].ingame || !clients[i].recording))
+            {
+                // This is a "real" player (or camera).
+                if(c++)
+                    strcat(buf, ",");
+                sprintf(tmp, "%i:%s", i, clients[i].recordPaused ? "-P-" : "REC");
+                strcat(buf, tmp);
+            }
         }
+
         strcat(buf, "]");
         i = glScreenWidth - FR_TextWidth(buf);
         //gl.Color3f(0, 0, 0);
@@ -834,7 +841,7 @@ void Net_Drawer(void)
         /*      gl.Color3f(1, 1, 1);
            sprintf(buf, "G%i", gametic);
            FR_TextOut(buf, 10, 10);
-           for(i = 0, cl = clients; i<MAXPLAYERS; i++, cl++)
+           for(i = 0, cl = clients; i<MAXPLAYERS; ++i, cl++)
            if(players[i].ingame)
            {
            sprintf(buf, "%02i:%+04i[%+03i](%02d/%03i) pf:%x", i, cl->lag,
@@ -977,15 +984,16 @@ void Net_Ticker(void /*timespan_t time*/)
     for(i = 0, cl = clients; i < MAXPLAYERS; ++i, cl++)
     {
         // Clients can only ping the server.
-        if((isClient && i) || i == consoleplayer)
-            continue;
-        if(cl->ping.sent)
+        if(!(isClient && i) && i != consoleplayer)
         {
-            // The pinger is active.
-            if(Sys_GetRealTime() - cl->ping.sent > PING_TIMEOUT)    // Timed out?
+            if(cl->ping.sent)
             {
-                cl->ping.times[cl->ping.current] = -1;
-                Net_SendPing(i, 0);
+                // The pinger is active.
+                if(Sys_GetRealTime() - cl->ping.sent > PING_TIMEOUT)    // Timed out?
+                {
+                    cl->ping.times[cl->ping.current] = -1;
+                    Net_SendPing(i, 0);
+                }
             }
         }
     }
@@ -1079,12 +1087,16 @@ D_CMD(Chat)
         break;
 
     case 2:                 // chatTo
-        for(i = 0; i < MAXPLAYERS; i++)
+        {
+        boolean     found = false;
+
+        for(i = 0; i < MAXPLAYERS && !found; ++i)
             if(!stricmp(clients[i].name, argv[1]))
             {
                 mask = 1 << i;
-                break;
+                found = true;
             }
+        }
     }
     Msg_Begin(PKT_CHAT);
     Msg_WriteByte(consoleplayer);
@@ -1099,7 +1111,7 @@ D_CMD(Chat)
         }
         else
         {
-            for(i = 1; i < MAXPLAYERS; i++)
+            for(i = 1; i < MAXPLAYERS; ++i)
                 if(players[i].ingame && mask & (1 << i))
                     Net_SendBuffer(i, SPF_ORDERED);
         }
@@ -1283,34 +1295,47 @@ D_CMD(Connect)
     Con_Message("");
 
     // Make sure TCP/IP is active.
-    if(!N_InitService(false))
+    if(N_InitService(false))
+    {
+        boolean     isDone;
+
+        Con_Message("Connecting to %s...\n", buf);
+
+        // Start searching at the specified location.
+        N_LookForHosts(buf, port);
+
+        startTime = Sys_GetSeconds();
+        isDone = false;
+        while(!isDone)
+        {
+            if(N_GetHostInfo(0, &info))
+            {
+                // Found something!
+                Net_PrintServerInfo(0, NULL);
+                Net_PrintServerInfo(0, &info);
+                Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
+
+                returnValue = true;
+                isDone = true;
+            }
+            else
+            {
+                // Nothing yet, should we wait a while longer?
+                if(Sys_GetSeconds() - startTime >= net_connecttimeout)
+                    isDone = true;
+                else
+                    Sys_Sleep(250); // Wait a while.
+            }
+        }
+
+        if(!returnValue)
+            Con_Printf("No response from %s.\n", buf);
+    }
+    else
     {
         Con_Message("TCP/IP not available.\n");
-        goto endConnect;
     }
 
-    Con_Message("Connecting to %s...\n", buf);
-
-    // Start searching at the specified location.
-    N_LookForHosts(buf, port);
-
-    for(startTime = Sys_GetSeconds();
-        Sys_GetSeconds() - startTime < net_connecttimeout; Sys_Sleep(250))
-    {
-        if(!N_GetHostInfo(0, &info))
-            continue;
-
-        // Found something!
-        Net_PrintServerInfo(0, NULL);
-        Net_PrintServerInfo(0, &info);
-        Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
-
-        returnValue = true;
-        goto endConnect;
-    }
-    Con_Printf("No response from %s.\n", buf);
-
-  endConnect:
     if(needCloseStartup)
         Con_StartupDone();
     return returnValue;
@@ -1394,11 +1419,10 @@ D_CMD(Net)
                 Con_Printf("Clients:\n");
                 for(i = 0; i < MAXPLAYERS; ++i)
                 {
-                    if(!clients[i].connected)
-                        continue;
-                    Con_Printf("%i: node %x, entered at %i (ingame:%i)\n", i,
-                               clients[i].nodeID, clients[i].enterTime,
-                               players[i].ingame);
+                    if(clients[i].connected)
+                        Con_Printf("%i: node %x, entered at %i (ingame:%i)\n", i,
+                                   clients[i].nodeID, clients[i].enterTime,
+                                   players[i].ingame);
                 }
             }
 

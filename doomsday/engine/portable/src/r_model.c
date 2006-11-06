@@ -681,15 +681,19 @@ static modeldef_t *GetStateModel(state_t *st, int select)
 
     if(select)
     {
+        boolean     found;
+
         // Choose the correct selector, or selector zero if the given
         // one not available.
-        for(iter = modef; iter; iter = iter->selectnext)
+        found = false;
+        for(iter = modef; iter && !found; iter = iter->selectnext)
             if(iter->select == mosel)
             {
                 modef = iter;
-                break;
+                found = true;
             }
     }
+
     return modef;
 }
 
@@ -778,43 +782,71 @@ if(mo->dplayer)
     }
     else if(st->nextstate > 0)  // Check next state.
     {
-        int     max = 20;       // Let's not be here forever...
+        int         max;
+        boolean     foundNext;
+        state_t    *it;
 
         // Find the appropriate state based on interrange.
-        state_t *it = states + st->nextstate;
-
+        it = states + st->nextstate;
+        foundNext = false;
         if((*modef)->interrange[1] < 1)
         {
+            boolean     stopScan;
+
             // Current modef doesn't interpolate to the end, find the
             // proper destination modef (it isn't just the next one).
             // Scan the states that follow (and interlinks of each).
-            while(max-- &&
-                  (!it->model ||
-                   GetStateModel(it, mo->selector)->interrange[0] > 0) &&
-                  it->nextstate > 0)
+            stopScan = false;
+            max = 20; // Let's not be here forever...
+            while(!stopScan)
             {
-                // Scan interlinks, then go to the next state.
-                if((mdit = GetStateModel(it, mo->selector)) && mdit->internext)
+                if(!((!it->model || GetStateModel(it, mo->selector)->interrange[0] > 0) &&
+                     it->nextstate > 0))
                 {
-                    for(;;)
+                    stopScan = true;
+                }
+                else
+                {
+                    // Scan interlinks, then go to the next state.
+                    if((mdit = GetStateModel(it, mo->selector)) && mdit->internext)
                     {
-                        mdit = mdit->internext;
-                        if(!mdit)
-                            break;
-
-                        if(mdit->interrange[0] <= 0)    // A new beginning?
+                        boolean isDone = false;
+                        while(!isDone)
                         {
-                            *nextmodef = mdit;
-                            goto found_next;
+                            mdit = mdit->internext;
+                            if(mdit)
+                            {
+                                if(mdit->interrange[0] <= 0)    // A new beginning?
+                                {
+                                    *nextmodef = mdit;
+                                    foundNext = true;
+                                }
+                            }
+
+                            if(!mdit || foundNext)
+                            {
+                                isDone = true;
+                            }
                         }
                     }
+
+                    if(foundNext)
+                    {
+                        stopScan = true;
+                    }
+                    else
+                    {
+                        it = states + it->nextstate;
+                    }
                 }
-                it = states + it->nextstate;
+
+                if(max-- <= 0)
+                    stopScan = true;
             }
             // FIXME: What about max == -1? What should 'it' be then?
         }
-        *nextmodef = GetStateModel(it, mo->selector);
-      found_next:;
+        if(!foundNext)
+            *nextmodef = GetStateModel(it, mo->selector);
     }
 
     // Is this group disabled?
@@ -1152,20 +1184,21 @@ static void R_SetupModel(ded_model_t *def)
     // Calculate the particle offset for each submodel.
     for(i = 0, sub = modef->sub; i < MAX_FRAME_MODELS; ++i, sub++)
     {
-        if(!sub->model)
+        if(sub->model)
+        {
+            R_GetModelBounds(sub->model, sub->frame, min, max);
+
+            // Apply the various scalings and offsets.
+            for(k = 0; k < 3; ++k)
+            {
+                modef->ptcoffset[i][k] =
+                    ((max[k] + min[k]) / 2 + sub->offset[k]) * modef->scale[k] +
+                    modef->offset[k];
+            }
+        }
+        else
         {
             memset(modef->ptcoffset[i], 0, sizeof(modef->ptcoffset[i]));
-            continue;
-        }
-
-        R_GetModelBounds(sub->model, sub->frame, min, max);
-
-        // Apply the various scalings and offsets.
-        for(k = 0; k < 3; ++k)
-        {
-            modef->ptcoffset[i][k] =
-                ((max[k] + min[k]) / 2 + sub->offset[k]) * modef->scale[k] +
-                modef->offset[k];
         }
     }
 

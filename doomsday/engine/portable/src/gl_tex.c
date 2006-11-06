@@ -553,40 +553,39 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
             else
                 top = column->topdelta;
 
-            if(!column->length)
-                goto nextpost;
-
-            y = origy + top;
-            dest1 = destTop + y * texwidth;
-            dest2 = destAlphaTop + y * texwidth;
-
-            count = column->length;
-            while(count--)
+            if(column->length > 0)
             {
-                unsigned char palidx = *source++;
+                y = origy + top;
+                dest1 = destTop + y * texwidth;
+                dest2 = destAlphaTop + y * texwidth;
 
-                // Do we need to make a translation?
-                if(transtable)
-                    palidx = transtable[palidx];
-
-                // Is the destination within bounds?
-                if(y >= 0 && y < texheight)
+                count = column->length;
+                while(count--)
                 {
-                    if(!maskZero || palidx)
-                        *dest1 = palidx;
+                    unsigned char palidx = *source++;
 
-                    if(maskZero)
-                        *dest2 = palidx ? 0xff : 0;
-                    else
-                        *dest2 = 0xff;
+                    // Do we need to make a translation?
+                    if(transtable)
+                        palidx = transtable[palidx];
+
+                    // Is the destination within bounds?
+                    if(y >= 0 && y < texheight)
+                    {
+                        if(!maskZero || palidx)
+                            *dest1 = palidx;
+
+                        if(maskZero)
+                            *dest2 = palidx ? 0xff : 0;
+                        else
+                            *dest2 = 0xff;
+                    }
+
+                    // One row down.
+                    dest1 += texwidth;
+                    dest2 += texwidth;
+                    y++;
                 }
-
-                // One row down.
-                dest1 += texwidth;
-                dest2 += texwidth;
-                y++;
             }
-          nextpost:
             column = (column_t *) ((byte *) column + column->length + 4);
         }
     }

@@ -325,9 +325,10 @@ void Z_Free(void *ptr)
  */
 void *Z_Malloc(size_t size, int tag, void *user)
 {
-    size_t  extra;
-    memblock_t *start, *rover, *new, *base;
-    memvolume_t *volume;
+    size_t          extra;
+    memblock_t     *start, *rover, *new, *base;
+    memvolume_t    *volume;
+    boolean         gotoNextVolume;
 
     if(!size)
     {
@@ -364,143 +365,163 @@ void *Z_Malloc(size_t size, int tag, void *user)
         if(!base->prev->user)
             base = base->prev;
 
+        gotoNextVolume = false;
         if(fastMalloc)
         {
             // In fast malloc mode, if the rover block isn't large enough,
             // just give up and move to the next volume right away.
             if(base->user || base->size < size)
             {
-                goto nextVolume;
+                gotoNextVolume = true;
             }
         }
 
-        rover = base;
-        start = base->prev;
-
-        // If the start is in a sequence, move it to the beginning of the
-        // entire sequence. Sequences are handled as a single unpurgable entity,
-        // so we can stop checking at its start.
-        if(start->seq_first)
+        if(!gotoNextVolume)
         {
-            start = start->seq_first;
-        }
+            boolean     isDone;
 
-        do
-        {
-            if(rover == start)
+            rover = base;
+            start = base->prev;
+
+            // If the start is in a sequence, move it to the beginning of the
+            // entire sequence. Sequences are handled as a single unpurgable entity,
+            // so we can stop checking at its start.
+            if(start->seq_first)
             {
-                // Scanned all the way around the list.
-                // Move over to the next volume.
-                goto nextVolume;
+                start = start->seq_first;
             }
-            if(rover->user)
+
+            isDone = false;
+            do
             {
-                if(rover->tag < PU_PURGELEVEL)
+                if(rover != start)
                 {
-                    if(rover->seq_first)
+                    if(rover->user)
                     {
-                        // This block is part of a sequence of blocks, none of
-                        // which can be purged. Skip the entire sequence.
-                        base = rover = rover->seq_first->seq_last->next;
+                        if(rover->tag < PU_PURGELEVEL)
+                        {
+                            if(rover->seq_first)
+                            {
+                                // This block is part of a sequence of blocks, none of
+                                // which can be purged. Skip the entire sequence.
+                                base = rover = rover->seq_first->seq_last->next;
+                            }
+                            else
+                            {
+                                // Hit a block that can't be purged, so move base
+                                // past it.
+                                base = rover = rover->next;
+                            }
+                        }
+                        else
+                        {
+                            // Free the rover block (adding the size to base).
+                            base = base->prev;  // the rover can be the base block
+#ifdef FAKE_MEMORY_ZONE
+                            Z_Free(rover->area);
+#else
+                            Z_Free((byte *) rover + sizeof(memblock_t));
+#endif
+                            base = base->next;
+                            rover = base->next;
+                        }
                     }
                     else
                     {
-                        // Hit a block that can't be purged, so move base
-                        // past it.
-                        base = rover = rover->next;
+                        rover = rover->next;
                     }
                 }
                 else
                 {
-                    // Free the rover block (adding the size to base).
-                    base = base->prev;  // the rover can be the base block
-#ifdef FAKE_MEMORY_ZONE
-                    Z_Free(rover->area);
-#else
-                    Z_Free((byte *) rover + sizeof(memblock_t));
-#endif
-                    base = base->next;
-                    rover = base->next;
+                    // Scanned all the way around the list.
+                    // Move over to the next volume.
+                    gotoNextVolume = true;
                 }
-            }
-            else
+
+                // Have we finished?
+                if(gotoNextVolume)
+                    isDone = true;
+                else
+                    isDone = !(base->user || base->size < size);
+            } while(!isDone);
+
+            // At this point we've found/created a big enough block or we are
+            // skipping this volume entirely.
+
+            if(!gotoNextVolume)
             {
-                rover = rover->next;
-            }
-        } while(base->user || base->size < size);
-
-        // Found a block big enough.
-        extra = base->size - size;
-        if(extra > MINFRAGMENT)
-        {
-            // There will be a free fragment after the allocated
-            // block.
-            new = (memblock_t *) ((byte *) base + size);
-            new->size = extra;
-            new->user = NULL;       // free block
-            new->tag = 0;
-            new->volume = NULL;
-            new->prev = base;
-            new->next = base->next;
-            new->next->prev = new;
-            new->seq_first = new->seq_last = NULL;
-            base->next = new;
-            base->size = size;
-        }
+                // Found a block big enough.
+                extra = base->size - size;
+                if(extra > MINFRAGMENT)
+                {
+                    // There will be a free fragment after the allocated
+                    // block.
+                    new = (memblock_t *) ((byte *) base + size);
+                    new->size = extra;
+                    new->user = NULL;       // free block
+                    new->tag = 0;
+                    new->volume = NULL;
+                    new->prev = base;
+                    new->next = base->next;
+                    new->next->prev = new;
+                    new->seq_first = new->seq_last = NULL;
+                    base->next = new;
+                    base->size = size;
+                }
 
 #ifdef FAKE_MEMORY_ZONE
-        base->area = M_Malloc(size - sizeof(memblock_t));
+                base->area = M_Malloc(size - sizeof(memblock_t));
 #endif
 
-        if(user)
-        {
-            base->user = user;      // mark as an in use block
+                if(user)
+                {
+                    base->user = user;      // mark as an in use block
 #ifdef FAKE_MEMORY_ZONE
-            *(void **) user = base->area;
+                    *(void **) user = base->area;
 #else
-            *(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
+                    *(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
 #endif
-        }
-        else
-        {
-            if(tag >= PU_PURGELEVEL)
-                Con_Error("Z_Malloc: an owner is required for "
-                          "purgable blocks.\n");
-            base->user = (void *) 2;    // mark as in use, but unowned
-        }
-        base->tag = tag;
+                }
+                else
+                {
+                    if(tag >= PU_PURGELEVEL)
+                        Con_Error("Z_Malloc: an owner is required for "
+                                  "purgable blocks.\n");
+                    base->user = (void *) 2;    // mark as in use, but unowned
+                }
+                base->tag = tag;
 
-        if(tag == PU_LEVELSTATIC)
-        {
-            // Level-statics are linked into unpurgable sequences so they can
-            // be skipped en masse.
-            base->seq_first = base;
-            base->seq_last = base;
-            if(base->prev->seq_first)
-            {
-                base->seq_first = base->prev->seq_first;
-                base->seq_first->seq_last = base;
-            }
-        }
-        else
-        {
-            // Not part of a sequence.
-            base->seq_last = base->seq_first = NULL;
-        }
+                if(tag == PU_LEVELSTATIC)
+                {
+                    // Level-statics are linked into unpurgable sequences so they can
+                    // be skipped en masse.
+                    base->seq_first = base;
+                    base->seq_last = base;
+                    if(base->prev->seq_first)
+                    {
+                        base->seq_first = base->prev->seq_first;
+                        base->seq_first->seq_last = base;
+                    }
+                }
+                else
+                {
+                    // Not part of a sequence.
+                    base->seq_last = base->seq_first = NULL;
+                }
 
-        // next allocation will start looking here
-        volume->zone->rover = base->next;
+                // next allocation will start looking here
+                volume->zone->rover = base->next;
 
-        base->volume = volume;
-        base->id = ZONEID;
+                base->volume = volume;
+                base->id = ZONEID;
 
 #ifdef FAKE_MEMORY_ZONE
-        return base->area;
+                return base->area;
 #else
-        return (void *) ((byte *) base + sizeof(memblock_t));
+                return (void *) ((byte *) base + sizeof(memblock_t));
 #endif
-
-    nextVolume:;
+            }
+        }
         // Move to the next volume.
     }
 }
@@ -544,14 +565,15 @@ void Z_FreeTags(int lowTag, int highTag)
             block = next)
         {
             next = block->next;     // get link before freeing
-            if(!block->user)
-                continue;           // free block
-            if(block->tag >= lowTag && block->tag <= highTag)
+            if(block->user)
+            {
+                if(block->tag >= lowTag && block->tag <= highTag)
 #ifdef FAKE_MEMORY_ZONE
-                Z_Free(block->area);
+                    Z_Free(block->area);
 #else
-                Z_Free((byte *) block + sizeof(memblock_t));
+                    Z_Free((byte *) block + sizeof(memblock_t));
 #endif
+            }
         }
     }
 }
@@ -563,6 +585,7 @@ void Z_CheckHeap(void)
 {
     memvolume_t *volume;
     memblock_t *block;
+    boolean     isDone;
 
 #ifdef _DEBUG
     VERBOSE2( printf("Z_CheckHeap\n") );
@@ -570,47 +593,53 @@ void Z_CheckHeap(void)
 
     for(volume = volumeRoot; volume; volume = volume->next)
     {
-        for(block = volume->zone->blocklist.next; ; block = block->next)
+        block = volume->zone->blocklist.next;
+        isDone = false;
+        while(!isDone)
         {
-            if(block->next == &volume->zone->blocklist)
-                break;              // all blocks have been hit
-            if(block->size == 0)
-                Con_Error("Z_CheckHeap: zero-size block\n");
-            if((byte *) block + block->size != (byte *) block->next)
-                Con_Error("Z_CheckHeap: block size does not touch the "
-                          "next block\n");
-            if(block->next->prev != block)
-                Con_Error("Z_CheckHeap: next block doesn't have proper "
-                          "back link\n");
-            if(!block->user && !block->next->user)
-                Con_Error("Z_CheckHeap: two consecutive free blocks\n");
-            if(block->user == (void **) -1)
-                Con_Error("Z_CheckHeap: bad user pointer %p\n", block->user);
+            if(block->next != &volume->zone->blocklist)
+            {
+                if(block->size == 0)
+                    Con_Error("Z_CheckHeap: zero-size block\n");
+                if((byte *) block + block->size != (byte *) block->next)
+                    Con_Error("Z_CheckHeap: block size does not touch the "
+                              "next block\n");
+                if(block->next->prev != block)
+                    Con_Error("Z_CheckHeap: next block doesn't have proper "
+                              "back link\n");
+                if(!block->user && !block->next->user)
+                    Con_Error("Z_CheckHeap: two consecutive free blocks\n");
+                if(block->user == (void **) -1)
+                    Con_Error("Z_CheckHeap: bad user pointer %p\n", block->user);
 
-            /*
-            if(block->seq_first == block)
-            {
-                // This is the first.
-                printf("sequence begins at (%p): start=%p, end=%p\n", block,
-                       block->seq_first, block->seq_last);
-            }
-             */
-            if(block->seq_first)
-            {
-                //printf("  seq member (%p): start=%p\n", block, block->seq_first);
-                if(block->seq_first->seq_last == block)
+                /*
+                if(block->seq_first == block)
                 {
-                    //printf("  -=- last member of seq %p -=-\n", block->seq_first);
+                    // This is the first.
+                    printf("sequence begins at (%p): start=%p, end=%p\n", block,
+                           block->seq_first, block->seq_last);
                 }
-                else
+                 */
+                if(block->seq_first)
                 {
-                    if(block->next->seq_first != block->seq_first)
+                    //printf("  seq member (%p): start=%p\n", block, block->seq_first);
+                    if(block->seq_first->seq_last == block)
                     {
-                        Con_Error("Z_CheckHeap: disconnected sequence\n");
+                        //printf("  -=- last member of seq %p -=-\n", block->seq_first);
+                    }
+                    else
+                    {
+                        if(block->next->seq_first != block->seq_first)
+                        {
+                            Con_Error("Z_CheckHeap: disconnected sequence\n");
+                        }
                     }
                 }
-            }
 
+                block = block->next;
+            }
+            else
+                isDone = true; // all blocks have been hit
         }
     }
 }

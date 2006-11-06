@@ -556,78 +556,115 @@ void C_OcclusionLister(char *title)
 #endif
 
 /**
+ * Attempts to merge the two given occnodes.
+ *
+ * @return      0: Could not be merged.
+ *              1: orange was merged into other.
+ *              2: other was merged into orange.
+ */
+static int C_TryMergeOccludes(occnode_t *orange, occnode_t *other)
+{
+    binangle_t  crossAngle;
+    float       cross[3];
+
+    // We can't test this steep planes.
+    if(!orange->normal[VZ])
+        return 0;
+
+    // Where do they cross?
+    M_CrossProduct(orange->normal, other->normal, cross);
+    if(!cross[VX] && !cross[VY] && !cross[VZ])
+    {
+        // These two planes are exactly the same! Remove one.
+        C_RemoveOcclusionRange(orange);
+        return 1;
+    }
+
+    // The cross angle must be outside the range.
+    crossAngle = bamsAtan2((int) cross[VY], (int) cross[VX]);
+    if(crossAngle >= orange->start && crossAngle <= orange->end)
+        return 0;       // Crosses inside the range, can't do a thing.
+
+    // FIXME: Isn't it possible to consistently determine which
+    // direction the cross vector is pointing to?
+    crossAngle += BANG_180;
+    if(crossAngle >= orange->start && crossAngle <= orange->end)
+        return 0;       // Crosses inside the range, can't do a thing.
+
+    // Now we must determine which plane occludes which.
+    // Pick a point in the middle of the range.
+    crossAngle = (orange->start + orange->end) >> (1 + BAMS_BITS - 13);
+    cross[VX] = 100 * FIX2FLT(finecosine[crossAngle]);
+    cross[VY] = 100 * FIX2FLT(finesine[crossAngle]);
+    // z = -(A*x+B*y)/C
+    cross[VZ] =
+        -(orange->normal[VX] * cross[VX] +
+          orange->normal[VY] * cross[VY]) / orange->normal[VZ];
+
+    // Is orange occluded by the other one?
+    if(M_DotProduct(cross, other->normal) < 0)
+    {
+        // No; then the other one is occluded by us.
+        // Remove it instead.
+        C_RemoveOcclusionRange(other);
+        return 2;
+    }
+    else
+    {
+        C_RemoveOcclusionRange(orange);
+        return 1;
+    }
+}
+
+/**
  * Try to merge oranges with matching ranges. (Quite a number may be
  * produced as a result of the cuts.)
  */
 void C_MergeOccludes(void)
 {
     occnode_t  *orange, *next, *other;
-    binangle_t  crossAngle;
-    float       cross[3];
+    boolean     stopScan, isDone;
 
-    for(orange = occHead; orange && orange->next; orange = next)
+    orange = occHead;
+    stopScan = false;
+    while(!stopScan)
     {
-        next = orange->next;
-
-        // Find a good one to test with.
-        for(other = next; other; other = other->next)
+        if(orange && orange->next)
         {
-            if(orange->start != other->start)
-                break;
-            if(orange->end != other->end ||
-               (other->flags & OCNF_TOPHALF) != (orange->flags & OCNF_TOPHALF))
-                continue;
-            goto try_merge;
-        }
-        continue;
+            next = orange->next;
 
-      try_merge:
-        // We can't test this steep planes.
-        if(!orange->normal[VZ])
-            continue;
+            // Find a good one to test with.
+            isDone = false;
+            other = orange->next;
+            while(!isDone)
+            {
+                if(other && orange->start == other->start)
+                {
+                    if(orange->end == other->end &&
+                        (other->flags & OCNF_TOPHALF) ==
+                        (orange->flags & OCNF_TOPHALF))
+                    {
+                        // It is a candidate for merging.
+                        int result = C_TryMergeOccludes(orange, other);
+                        if(result == 2)
+                            next = next->next;
 
-        // Where do they cross?
-        M_CrossProduct(orange->normal, other->normal, cross);
-        if(!cross[VX] && !cross[VY] && !cross[VZ])
-        {
-            // These two planes are exactly the same! Remove one.
-            C_RemoveOcclusionRange(orange);
-            continue;
-        }
+                        isDone = true;
+                    }
+                    else
+                    {
+                        // Move on to the next candidate.
+                        other = other->next;
+                    }
+                }
+                else
+                    isDone = true;
+            }
 
-        // The cross angle must be outside the range.
-        crossAngle = bamsAtan2((int) cross[VY], (int) cross[VX]);
-        if(crossAngle >= orange->start && crossAngle <= orange->end)
-            continue;           // Crosses inside the range, can't do a thing.
-        // FIXME: Isn't it possible to consistently determine which
-        // direction the cross vector is pointing to?
-        crossAngle += BANG_180;
-        if(crossAngle >= orange->start && crossAngle <= orange->end)
-            continue;           // Crosses inside the range, can't do a thing.
-
-        // Now we must determine which plane occludes which.
-        // Pick a point in the middle of the range.
-        crossAngle = (orange->start + orange->end) >> (1 + BAMS_BITS - 13);
-        cross[VX] = 100 * FIX2FLT(finecosine[crossAngle]);
-        cross[VY] = 100 * FIX2FLT(finesine[crossAngle]);
-        // z = -(A*x+B*y)/C
-        cross[VZ] =
-            -(orange->normal[VX] * cross[VX] +
-              orange->normal[VY] * cross[VY]) / orange->normal[VZ];
-
-        // Is orange occluded by the other one?
-        if(M_DotProduct(cross, other->normal) < 0)
-        {
-            // No; then the other one is occluded by us.
-            // Remove it instead.
-            if(next == other)
-                next = next->next;
-            C_RemoveOcclusionRange(other);
+            orange = next;
         }
         else
-        {
-            C_RemoveOcclusionRange(orange);
-        }
+            stopScan = true;
     }
 }
 
@@ -637,99 +674,128 @@ void C_MergeOccludes(void)
 void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
 {
     occnode_t  *orange, *next, *after, *part;
+    boolean     isDone;
 
 #if _DEBUG
-    C_OrangeRanger(1);
+C_OrangeRanger(1);
 #endif
 
     // Find the node after which it's OK to add oranges cut in half.
     // (Must preserve the ascending order of the start angles.)
     after = NULL;
-    for(orange = occHead; orange; orange = orange->next)
+    orange = occHead;
+    isDone = false;
+    while(!isDone)
     {
         // We want the orange with the smallest start angle, but one that
         // starts after the cut range has ended.
-        if(orange->start < endAngle)
+        if(orange && orange->start < endAngle)
+        {
             after = orange;
+        }
         else
-            break;
+            isDone = true;
+
+        if(!isDone)
+            orange = orange->next;
     }
 
-    for(orange = occHead; orange; orange = next)
+    orange = occHead;
+    isDone = false;
+    while(!isDone)
     {
-        // In case orange is removed, take a copy of the next one.
-        next = orange->next;
-
-        // Does the cut range miss this orange?
-        if(startAngle > orange->end)
-            continue;
-        if(orange->start >= endAngle)
-            break;              // No more possible cuts.
-
-        // Check if the cut range completely includes this orange.
-        if(orange->start >= startAngle && orange->end <= endAngle)
+        if(orange)
         {
-            // Fully contained; this orange will be removed.
-            C_RemoveOcclusionRange(orange);
-            continue;
-        }
+            // In case orange is removed, take a copy of the next one.
+            next = orange->next;
 
-        // Three other options:
-        // 1) The cut range contains the beginning of the orange.
-        if(orange->start >= startAngle && orange->start < endAngle)
-        {
-            // Cut away the beginning of this orange.
-            orange->start = endAngle;
-            // Even thought the start angle is modified, we don't need to
-            // move this orange anywhere. This is because after the cut there
-            // will be no oranges beginning inside the cut range.
-            continue;
-        }
-
-        // 2) The cut range contains the end of the orange.
-        if(orange->end > startAngle && orange->end <= endAngle)
-        {
-            // Cut away the end of this orange.
-            orange->end = startAngle;
-            continue;
-        }
-
-        // 3) The orange contains the whole cut range.
-        if(startAngle > orange->start && endAngle < orange->end)
-        {
-            // The orange gets cut in two parts. Create a new orange that
-            // represents the end, and add it after the 'after' node, or to
-            // the head of the list.
-            part =
-                C_NewOcclusionRange(endAngle, orange->end, orange->normal,
-                                    (orange->flags & OCNF_TOPHALF) != 0);
-            part->prev = after;
-            if(after)
+            // Does the cut range include this orange?
+            if(startAngle <= orange->end)
             {
-                part->next = after->next;
-                after->next = part;
+                if(orange->start < endAngle)
+                {
+#define C_O_RELATIONSHIP(start, startangle, end, endangle) (( \
+                    (start >= startAngle && end   <= endAngle)?  0: \
+                    (start >= startAngle && start <  endAngle)?  1: \
+                    (end    > startAngle && end   <= endAngle)?  2: \
+                    (start <= startAngle && end   >= endAngle)?  3: -1))
+
+                    // Four options:
+                    switch(C_O_RELATIONSHIP(orange->start, startAngle,
+                                            orange->end, endAngle))
+                    {
+                    case 0: // The cut range completely includes this orange.
+
+                        // Fully contained; this orange will be removed.
+                        C_RemoveOcclusionRange(orange);
+                        break;
+
+                    case 1: // The cut range contains the beginning of the orange.
+
+                        // Cut away the beginning of this orange.
+                        orange->start = endAngle;
+                        // Even thought the start angle is modified, we don't need to
+                        // move this orange anywhere. This is because after the cut there
+                        // will be no oranges beginning inside the cut range.
+                        break;
+
+                    case 2: // The cut range contains the end of the orange.
+
+                        // Cut away the end of this orange.
+                        orange->end = startAngle;
+                        break;
+
+                    case 3: // The orange contains the whole cut range.
+
+                        // The orange gets cut in two parts. Create a new orange that
+                        // represents the end, and add it after the 'after' node, or to
+                        // the head of the list.
+                        part =
+                            C_NewOcclusionRange(endAngle, orange->end, orange->normal,
+                                                (orange->flags & OCNF_TOPHALF) != 0);
+                        part->prev = after;
+                        if(after)
+                        {
+                            part->next = after->next;
+                            after->next = part;
+                        }
+                        else
+                        {
+                            // Add to the head.
+                            part->next = occHead;
+                            occHead = part;
+                        }
+
+                        if(part->next)
+                            part->next->prev = part;
+
+                        // Modify the start part.
+                        orange->end = startAngle;
+                        break;
+
+                    default: // No meaningful relationship (in this context).
+                        break;
+                    }
+                }
+                else
+                    isDone = true; // No more possible cuts.
             }
-            else
-            {
-                // Add to the head.
-                part->next = occHead;
-                occHead = part;
-            }
-            if(part->next)
-                part->next->prev = part;
-            // Modify the start part.
-            orange->end = startAngle;
+
+            if(!isDone)
+                orange = next;
         }
+        else
+            isDone = true;
     }
 
 #if _DEBUG
-    C_OrangeRanger(2);
+C_OrangeRanger(2);
 #endif
 
     C_MergeOccludes();
 
 #if _DEBUG
-    C_OrangeRanger(6);
+C_OrangeRanger(6);
 #endif
 }
 
@@ -890,15 +956,16 @@ boolean C_IsPointOccluded(float *viewrelpoint)
 
     for(orange = occHead; orange; orange = orange->next)
     {
-        if(angle < orange->start || angle > orange->end)
-            continue;
-        if(orange->start > angle)
-            return false;       // No more possibilities.
+        if(angle >= orange->start && angle <= orange->end)
+        {
+            if(orange->start > angle)
+                return false;       // No more possibilities.
 
-        // On which side of the occlusion plane is it? The positive side
-        // is the occluded one.
-        if(M_DotProduct(viewrelpoint, orange->normal) > 0)
-            return true;        // Occluded!
+            // On which side of the occlusion plane is it? The positive side
+            // is the occluded one.
+            if(M_DotProduct(viewrelpoint, orange->normal) > 0)
+                return true;        // Occluded!
+        }
     }
 
     // No orange occluded the point.

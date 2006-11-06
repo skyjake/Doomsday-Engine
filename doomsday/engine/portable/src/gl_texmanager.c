@@ -2244,62 +2244,61 @@ void GL_SetRawImageLump(int lump, int part)
         image = lumpdata;
     }
 
-    // Two pieces:
-    dat1 = M_Malloc(comps * 256 * 256);
-    dat2 = M_Malloc(comps * 64 * 256);
-
-    if(height < 200 && part == 2)
-        goto dont_load;         // What is this?!
-    if(height < 200)
-        assumedWidth = 256;
-
-    memset(dat1, 0, comps * 256 * 256);
-    memset(dat2, 0, comps * 64 * 256);
-    palette = GL_GetPalette();
-
-    // Image data loaded, divide it into two parts.
-    for(k = 0; k < height; ++k)
-        for(i = 0; i < 256; ++i)
-        {
-            idx = k * assumedWidth + i;
-            // Part one.
-            for(c = 0; c < comps; ++c)
-                dat1[(k * 256 + i) * comps + c] = image[idx * comps + c];
-            // We can setup part two at the same time.
-            if(i < 64 && part)
-                for(c = 0; c < comps; ++c)
-                {
-                    dat2[(k * 64 + i) * comps + c] =
-                        image[(idx + 256) * comps + c];
-                }
-        }
-
-    // Upload part one.
-    info->tex[0] =
-        GL_UploadTexture(dat1, 256, assumedWidth < 320 ? height : 256, false,
-                         false, rgbdata, false);
-    GL_SetRawImageParams();
-
-    if(part)
+    if(!(height < 200 && part == 2))
     {
-        // And the other part.
-        info->tex[1] =
-            GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false);
+        if(height < 200)
+            assumedWidth = 256;
+
+        // Two pieces:
+        dat1 = M_Malloc(comps * 256 * 256);
+        dat2 = M_Malloc(comps * 64 * 256);
+        memset(dat1, 0, comps * 256 * 256);
+        memset(dat2, 0, comps * 64 * 256);
+        palette = GL_GetPalette();
+
+        // Image data loaded, divide it into two parts.
+        for(k = 0; k < height; ++k)
+            for(i = 0; i < 256; ++i)
+            {
+                idx = k * assumedWidth + i;
+                // Part one.
+                for(c = 0; c < comps; ++c)
+                    dat1[(k * 256 + i) * comps + c] = image[idx * comps + c];
+                // We can setup part two at the same time.
+                if(i < 64 && part)
+                    for(c = 0; c < comps; ++c)
+                    {
+                        dat2[(k * 64 + i) * comps + c] =
+                            image[(idx + 256) * comps + c];
+                    }
+            }
+
+        // Upload part one.
+        info->tex[0] =
+            GL_UploadTexture(dat1, 256, assumedWidth < 320 ? height : 256, false,
+                             false, rgbdata, false);
         GL_SetRawImageParams();
 
-        // Add it to the list.
-        GL_NewRawLump(lump);
+        if(part)
+        {
+            // And the other part.
+            info->tex[1] =
+                GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false);
+            GL_SetRawImageParams();
+
+            // Add it to the list.
+            GL_NewRawLump(lump);
+        }
+
+        info->width[0] = 256;
+        info->width[1] = 64;
+        info->height = height;
+        M_Free(dat1);
+        M_Free(dat2);
     }
 
-    info->width[0] = 256;
-    info->width[1] = 64;
-    info->height = height;
-
-  dont_load:
     if(need_free_image)
         M_Free(image);
-    M_Free(dat1);
-    M_Free(dat2);
     W_ChangeCacheTag(lump, PU_CACHE);
 }
 
