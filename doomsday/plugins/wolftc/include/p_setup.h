@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -129,8 +129,8 @@ enum {
     DAM_PROPERTY_COUNT
 };
 
-int             P_HandleMapDataProperty(int id, int dtype, int prop, int type, void *data);
-int             P_HandleMapDataPropertyValue(int id, int dtype, int prop, int type, void *data);
+int             P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data);
+int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop, int type, void *data);
 
 void            P_Init(void);
 

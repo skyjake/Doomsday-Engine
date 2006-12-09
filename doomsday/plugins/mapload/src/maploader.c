@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -59,7 +60,7 @@ typedef struct {
 
 typedef struct {
     int     filepos;
-    int     size;
+    size_t  size;
     char    name[8];
 } wadlump_t;
 
@@ -67,7 +68,7 @@ static int LoadLumpsHook(int hookType, int parm, void *data);
 
 static const char *bspDir = "bspcache\\";
 
-/*
+/**
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
@@ -77,7 +78,7 @@ void DP_Initialize(void)
 }
 
 #ifdef WIN32
-/*
+/**
  * Windows calls this when the DLL is loaded.
  */
 BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -93,7 +94,7 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 #endif
 
-/*
+/**
  * Compose the path where to put the temporary data and built GL BSP
  * data.
  */
@@ -112,7 +113,7 @@ static void GetWorkDir(char *dir, int mainLump)
         identifier ^= sourceFile[i] << ((i * 3) % 11);
 
     // The work directory path is relative to the runtime directory.
-    sprintf(dir, "%s%s\\%s-%04X\\", bspDir, 
+    sprintf(dir, "%s%s\\%s-%04X\\", bspDir,
             (const char*) gex->GetVariable(DD_GAME_MODE),
             base, identifier);
 
@@ -120,7 +121,7 @@ static void GetWorkDir(char *dir, int mainLump)
     //Con_Message("BSP work: %s\n", dir);
 }
 
-/*
+/**
  * Returns true if the lump is a map data lump.
  */
 static boolean IsMapLump(int lump)
@@ -144,7 +145,7 @@ static boolean IsMapLump(int lump)
     return false;
 }
 
-/*
+/**
  * Write all the lumps of the specified map to a WAD file.
  */
 static void DumpMap(int mainLump, const char *fileName)
@@ -199,10 +200,11 @@ static void DumpMap(int mainLump, const char *fileName)
     fclose(file);
 }
 
-// Fatal errors are called as a last resort when something serious
-// goes wrong, e.g. out of memory.  This routine should show the
-// error to the user and abort the program.
-//
+/**
+ * Fatal errors are called as a last resort when something serious
+ * goes wrong, e.g. out of memory.  This routine should show the
+ * error to the user and abort the program.
+ */
 static void fatal_error(const char *str, ...)
 {
     char buffer[2000];
@@ -215,10 +217,11 @@ static void fatal_error(const char *str, ...)
     Con_Error(buffer);
 }
 
-// The print_msg routine is used to display the various messages
-// that occur, e.g. "Building GL nodes on MAP01" and that kind of
-// thing.
-//
+/**
+ * The print_msg routine is used to display the various messages
+ * that occur, e.g. "Building GL nodes on MAP01" and that kind of
+ * thing.
+ */
 static void print_msg(const char *str, ...)
 {
     char buffer[2000];
@@ -231,44 +234,48 @@ static void print_msg(const char *str, ...)
     Con_Message(buffer);
 }
 
-// This routine is called frequently whilst building the nodes, and
-// can be used to keep a GUI responsive to user input.  Many
-// toolkits have a "do iteration" or "check events" type of function
-// that this can call.  Avoid anything that sleeps though, or it'll
-// slow down the build process unnecessarily.
-//
+/**
+ * This routine is called frequently whilst building the nodes, and
+ * can be used to keep a GUI responsive to user input.  Many
+ * toolkits have a "do iteration" or "check events" type of function
+ * that this can call.  Avoid anything that sleeps though, or it'll
+ * slow down the build process unnecessarily.
+ */
 static void ticker(void)
 {
 }
 
-// These display routines is used for tasks that can show a progress
-// bar, namely: building nodes, loading the wad, and saving the wad.
-// The command line version could show a percentage value, or even
-// draw a bar using characters.
-
-// Display_open is called at the beginning, and `type' holds the
-// type of progress (and determines how many bars to display).
-// Returns TRUE if all went well, or FALSE if it failed (in which
-// case the other routines should do nothing when called).
-//
+/**
+ * These display routines is used for tasks that can show a progress
+ * bar, namely: building nodes, loading the wad, and saving the wad.
+ * The command line version could show a percentage value, or even
+ * draw a bar using characters.
+ *
+ * Display_open is called at the beginning, and `type' holds the
+ * type of progress (and determines how many bars to display).
+ * Returns TRUE if all went well, or FALSE if it failed (in which
+ * case the other routines should do nothing when called).
+ */
 static boolean_g display_open(displaytype_e type)
 {
     return FALSE;
 }
 
-// For GUI versions this can be used to set the title of the
-// progress window.  OK to ignore it (e.g. command line version).
-//
+/**
+ * For GUI versions this can be used to set the title of the
+ * progress window.  OK to ignore it (e.g. command line version).
+ */
 static void display_setTitle(const char *str)
 {
 }
 
-// The next three routines control the appearance of each progress
-// bar.  Display_setBarText is called to change the message above
-// the bar.  Display_setBarLimit sets the integer limit of the
-// progress (the target value), and display_setBar sets the current
-// value (which will count up from 0 to the limit, inclusive).
-//
+/**
+ * The next three routines control the appearance of each progress
+ * bar.  Display_setBarText is called to change the message above
+ * the bar.  Display_setBarLimit sets the integer limit of the
+ * progress (the target value), and display_setBar sets the current
+ * value (which will count up from 0 to the limit, inclusive).
+ */
 static void display_setBar(int barnum, int count)
 {
 }
@@ -281,15 +288,16 @@ static void display_setBarText(int barnum, const char *str)
 {
 }
 
-// The display_close routine is called when the task is finished,
-// and should remove the progress indicator/window from the screen.
-//
+/**
+ * The display_close routine is called when the task is finished,
+ * and should remove the progress indicator/window from the screen.
+ */
 static void display_close(void)
 {
 }
 
 
-/*
+/**
  * This function is called when Doomsday is loading a map.  'parm' is
  * the index number of the map lump identifier.  'data' points to an
  * array of integers, which will be used to return the lump numbers

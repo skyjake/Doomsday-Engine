@@ -2425,7 +2425,7 @@ static void CopySaveSlot(int sourceSlot, int destSlot)
 
 static void CopyFile(char *sourceName, char *destName)
 {
-    int     length;
+    size_t  length;
     byte   *buffer;
     LZFILE *outf;
 

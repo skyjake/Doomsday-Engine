@@ -255,7 +255,7 @@ void P_v19_UnArchivePlayers(void)
 
 void P_v19_UnArchiveWorld(void)
 {
-    int         i, j;
+    uint        i, j;
     fixed_t     offx, offy;
     short      *get;
     int         firstflat = W_CheckNumForName("F_START") + 1;
@@ -534,7 +534,7 @@ void P_v19_UnArchiveSpecials(void)
 
 void SV_v19_LoadGame(char *savename)
 {
-    int     length;
+    size_t  length;
     int     i;
     int     a, b, c;
     char    vcheck[VERSIONSIZE];

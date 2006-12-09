@@ -209,7 +209,7 @@ static void InitStats(void)
 #if 0
     int     oldCluster;
     char   *msgLumpName;
-    int     msgSize;
+    size_t  msgSize;
     int     msgLump;
     extern int LeaveMap;
 #endif

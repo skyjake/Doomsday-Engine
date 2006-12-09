@@ -68,7 +68,7 @@ extern xline_t   *xlines;
  * @param *data:    ptr to the data value (has already been expanded, size
  *                  converted and endian converted where necessary).
  */
-int P_HandleMapDataProperty(int id, int dtype, int prop, int type, void *data)
+int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
 {
     switch(prop)
     {
@@ -123,7 +123,7 @@ int P_HandleMapDataProperty(int id, int dtype, int prop, int type, void *data)
  * @param *data:    ptr to the data value (has already been expanded, size
  *                  converted and endian converted where necessary).
  */
-int P_HandleMapDataPropertyValue(int id, int dtype, int prop,
+int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
                                  int type, void *data)
 {
     switch(dtype)
@@ -170,7 +170,7 @@ int P_HandleMapDataPropertyValue(int id, int dtype, int prop,
  * @param type      Map data object type eg DMU_SECTOR.
  * @param data      Any relevant data for this report (currently unused).
  */
-int P_HandleMapObjectStatusReport(int code, int id, int dtype, void *data)
+int P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data)
 {
     switch(code)
     {

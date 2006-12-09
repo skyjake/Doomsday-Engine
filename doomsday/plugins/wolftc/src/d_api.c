@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -65,7 +65,7 @@ void    G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime);
 void    G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src);
 
 // Map Data
-void    P_SetupForMapData(int type, int num);
+void    P_SetupForMapData(int type, uint num);
 
 // Map Objects
 fixed_t P_GetMobjFriction(struct mobj_s *mo);
@@ -88,9 +88,9 @@ int     D_NetWorldEvent(int type, int parm, void *data);
 
 // Handlers
 void    D_HandlePacket(int fromplayer, int type, void *data, int length);
-int     P_HandleMapDataProperty(int id, int dtype, int prop, int type, void *data);
-int     P_HandleMapDataPropertyValue(int id, int dtype, int prop, int type, void *data);
-int     P_HandleMapObjectStatusReport(int code, int id, int dtype, void *data);
+int     P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data);
+int     P_HandleMapDataPropertyValue(uint id, int dtype, int prop, int type, void *data);
+int     P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data);
 
 // Shutdown
 void    D_Shutdown(void);

@@ -962,7 +962,7 @@ void P_FreeButtons(void)
  */
 void P_SpawnSpecials(void)
 {
-    int         i;
+    uint        i;
     line_t     *line;
     xline_t    *xline;
     iterlist_t *list;
