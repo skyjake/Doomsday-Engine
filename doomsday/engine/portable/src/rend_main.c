@@ -870,7 +870,7 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
  */
 static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
                                    sector_t *frontsec, surface_t *surface,
-                                   int mode, byte alpha, short flags)
+                                   segsection_t section, byte alpha, short flags)
 {
     uint        i;
     uint        segIndex = GET_SEG_IDX(seg);

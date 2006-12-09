@@ -105,7 +105,7 @@ unsigned int    DL_NewLuminous(void);
 lumobj_t*       DL_GetLuminous(unsigned int index);
 unsigned int    DL_GetNumLuminous(void);
 void            DL_ProcessSubsector(subsector_t *ssec);
-dynlight_t*     DL_GetSegSectionLightLinks(uint segidx, int section);
+dynlight_t*     DL_GetSegSectionLightLinks(uint segidx, segsection_t section);
 dynlight_t*     DL_GetSubSecPlaneLightLinks(uint ssecidx, uint plane);
 
 // Helpers.
