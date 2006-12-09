@@ -147,8 +147,8 @@ static boolean PIT_CheckLine(line_t *ld, void *parm)
     fixed_t bbox[4];
 
     // Setup the bounding box for the line.
-    ORDER(ld->v1->pos[VX], ld->v2->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
-    ORDER(ld->v1->pos[VY], ld->v2->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
+    ORDER(ld->v[0]->pos[VX], ld->v[1]->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
+    ORDER(ld->v[0]->pos[VY], ld->v[1]->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
 
     if(tm->box[BOXRIGHT] <= bbox[BOXLEFT] || tm->box[BOXLEFT] >= bbox[BOXRIGHT] ||
        tm->box[BOXTOP] <= bbox[BOXBOTTOM] || tm->box[BOXBOTTOM] >= bbox[BOXTOP])
@@ -160,7 +160,7 @@ static boolean PIT_CheckLine(line_t *ld, void *parm)
     // A line has been hit.
     tm->thing->wallhit = true;
 
-    if(!ld->backsector)
+    if(!ld->L_backsector)
         return false;           // One sided line, can't go through.
 
     if(!(tm->thing->ddflags & DDMF_MISSILE))

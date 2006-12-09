@@ -224,7 +224,7 @@ void R_Update(void)
     GL_LoadSystemTextures(true, true);
     Def_PostInit();
     R_InitModels();             // Defs might've changed.
-    for(i = 0; i < DDMAXPLAYERS; i++)
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         // States have changed, the states are unknown.
         players[i].psprites[0].stateptr = players[i].psprites[1].stateptr =
@@ -350,11 +350,13 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
  */
 void R_NewSharpWorld(void)
 {
-    int i, j;
-    sector_t *sector;
-    viewer_t sharpView;
+    uint        i, j;
+    sector_t   *sector;
+    plane_t    *plane;
+    viewer_t    sharpView;
 
-    if(!viewplayer) return;
+    if(!viewplayer)
+        return;
 
     if(resetNextViewer)
         resetNextViewer = 2;
@@ -390,14 +392,15 @@ void R_NewSharpWorld(void)
         // For each plane
         for(j = 0; j < sector->planecount; ++j)
         {
-            sector->planes[j]->info->oldheight[0] = sector->planes[j]->info->oldheight[1];
-            sector->planes[j]->info->oldheight[1] = sector->planes[j]->height;
+            plane = sector->planes[j];
+            plane->oldheight[0] = plane->oldheight[1];
+            plane->oldheight[1] = plane->height;
 
-            if(abs(sector->planes[j]->info->oldheight[0] - sector->planes[j]->info->oldheight[1]) >=
+            if(abs(plane->oldheight[0] - plane->oldheight[1]) >=
                MAX_SMOOTH_PLANE_MOVE)
             {
                 // Too fast: make an instantaneous jump.
-                sector->planes[j]->info->oldheight[0] = sector->planes[j]->info->oldheight[1];
+                plane->oldheight[0] = plane->oldheight[1];
             }
         }
     }
@@ -409,8 +412,9 @@ void R_NewSharpWorld(void)
  */
 void R_SetupWorldFrame(void)
 {
-    int i, j;
-    sector_t *sec;
+    uint        i, j;
+    sector_t   *sec;
+    plane_t    *plane;
 
     // Calculate the light range to be used for each player
     Rend_RetrieveLightSample();
@@ -420,18 +424,17 @@ void R_SetupWorldFrame(void)
     if(resetNextViewer)
     {
         // $smoothplane: Reset the plane height trackers.
-        for(i = 0; i < numsectors; i++)
+        for(i = 0; i < numsectors; ++i)
         {
             sec = SECTOR_PTR(i);
 
             // For each plane
             for(j = 0; j < sec->planecount; ++j)
             {
-                sec->planes[j]->info->visoffset = 0;
+                plane = sec->planes[j];
 
-                sec->planes[j]->info->oldheight[0] =
-                    sec->planes[j]->info->oldheight[1] =
-                        sec->planes[j]->height;
+                plane->visoffset = 0;
+                plane->oldheight[0] = plane->oldheight[1] = plane->height;
             }
         }
     }
@@ -447,22 +450,23 @@ void R_SetupWorldFrame(void)
             // For each plane.
             for(j = 0; j < sec->planecount; ++j)
             {
-                sec->planes[j]->info->visoffset =
-                    FIX2FLT(sec->planes[j]->info->oldheight[0] * (1 - frameTimePos) +
-                            sec->planes[j]->height * frameTimePos -
-                            sec->planes[j]->height);
+                plane = sec->planes[j];
+
+                plane->visoffset =
+                    FIX2FLT(plane->oldheight[0] * (1 - frameTimePos) +
+                            plane->height * frameTimePos -
+                            plane->height);
 
                 // Visible plane height.
-                if(!sec->planes[j]->info->linked)
+                if(!plane->linked)
                 {
-                    sec->planes[j]->info->visheight =
-                        FIX2FLT(sec->planes[j]->height) + sec->planes[j]->info->visoffset;
+                    plane->visheight =
+                        FIX2FLT(plane->height) + plane->visoffset;
                 }
                 else
                 {
-                    sec->planes[j]->info->visheight =
-                        FIX2FLT(R_GetLinkedSector(sec->planes[j]->info->linked, j)->
-                                planes[j]->height);
+                    plane->visheight =
+                        FIX2FLT(R_GetLinkedSector(plane->linked, j)->planes[j]->height);
                 }
             }
         }

@@ -77,14 +77,16 @@ boolean PTR_SightTraverse(intercept_t * in)
     if(openbottom >= opentop)   // quick test for totally closed doors
         return false;           // stop
 
-    if(li->frontsector->planes[PLN_FLOOR]->height != li->backsector->planes[PLN_FLOOR]->height)
+    if(li->L_frontsector->planes[PLN_FLOOR]->height !=
+         li->L_backsector->planes[PLN_FLOOR]->height)
     {
         slope = FixedDiv(openbottom - sightzstart, in->frac);
         if(slope > bottomslope)
             bottomslope = slope;
     }
 
-    if(li->frontsector->planes[PLN_CEILING]->height != li->backsector->planes[PLN_CEILING]->height)
+    if(li->L_frontsector->planes[PLN_CEILING]->height !=
+         li->L_backsector->planes[PLN_CEILING]->height)
     {
         slope = FixedDiv(opentop - sightzstart, in->frac);
         if(slope < topslope)
@@ -99,14 +101,14 @@ boolean PTR_SightTraverse(intercept_t * in)
 
 boolean P_SightBlockLinesIterator(int x, int y)
 {
-    int     offset;
-    long  *list;
-    line_t *ld;
-    int     s1, s2;
-    divline_t dl;
+    int         offset;
+    long       *list;
+    line_t     *ld;
+    int         s[2];
+    divline_t   dl;
     polyblock_t *polyLink;
-    seg_t **segList;
-    int     i;
+    seg_t     **segList;
+    uint        i;
 
     if(x < 0 || y < 0 || x >= bmapwidth || y >= bmapheight)
     {
@@ -128,27 +130,28 @@ boolean P_SightBlockLinesIterator(int x, int y)
             if(polyLink->polyobj->validcount != validcount)
             {
                 segList = polyLink->polyobj->segs;
-                for(i = 0; i < polyLink->polyobj->numsegs; i++, segList++)
+                for(i = 0; i < polyLink->polyobj->numsegs; ++i, segList++)
                 {
                     ld = (*segList)->linedef;
                     if(ld->validcount == validcount)
-                    {
                         continue;
-                    }
+
                     ld->validcount = validcount;
-                    s1 = P_PointOnDivlineSide(ld->v1->pos[VX], ld->v1->pos[VY], &strace);
-                    s2 = P_PointOnDivlineSide(ld->v2->pos[VX], ld->v2->pos[VY], &strace);
-                    if(s1 == s2)
+
+                    s[0] = P_PointOnDivlineSide(ld->v[0]->pos[VX], ld->v[0]->pos[VY], &strace);
+                    s[1] = P_PointOnDivlineSide(ld->v[1]->pos[VX], ld->v[1]->pos[VY], &strace);
+                    if(s[0] == s[1])
                         continue;   // line isn't crossed
+
                     P_MakeDivline(ld, &dl);
-                    s1 = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
-                    s2 = P_PointOnDivlineSide(strace.pos[VX] + strace.dx,
-                                              strace.pos[VY] + strace.dy, &dl);
-                    if(s1 == s2)
+                    s[0] = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
+                    s[1] = P_PointOnDivlineSide(strace.pos[VX] + strace.dx,
+                                                strace.pos[VY] + strace.dy, &dl);
+                    if(s[0] == s[1])
                         continue;   // line isn't crossed
 
                     // try to early out the check
-                    if(!ld->backsector)
+                    if(!ld->L_backsector)
                         return false;   // stop checking
 
                     // store the line for later intersection testing
@@ -169,21 +172,23 @@ boolean P_SightBlockLinesIterator(int x, int y)
         ld = LINE_PTR(*list);
         if(ld->validcount == validcount)
             continue;           // line has already been checked
+
         ld->validcount = validcount;
 
-        s1 = P_PointOnDivlineSide(ld->v1->pos[VX], ld->v1->pos[VY], &strace);
-        s2 = P_PointOnDivlineSide(ld->v2->pos[VX], ld->v2->pos[VY], &strace);
-        if(s1 == s2)
+        s[0] = P_PointOnDivlineSide(ld->v[0]->pos[VX], ld->v[0]->pos[VY], &strace);
+        s[1] = P_PointOnDivlineSide(ld->v[1]->pos[VX], ld->v[1]->pos[VY], &strace);
+        if(s[0] == s[1])
             continue;           // line isn't crossed
+
         P_MakeDivline(ld, &dl);
-        s1 = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
-        s2 = P_PointOnDivlineSide(strace.pos[VX] + strace.dx, strace.pos[VY] + strace.dy,
+        s[0] = P_PointOnDivlineSide(strace.pos[VX], strace.pos[VY], &dl);
+        s[1] = P_PointOnDivlineSide(strace.pos[VX] + strace.dx, strace.pos[VY] + strace.dy,
                                   &dl);
-        if(s1 == s2)
+        if(s[0] == s[1])
             continue;           // line isn't crossed
 
         // try to early out the check
-        if(!ld->backsector)
+        if(!ld->L_backsector)
             return false;       // stop checking
 
         // store the line for later intersection testing

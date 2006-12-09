@@ -2832,6 +2832,7 @@ skintex_t *GL_GetSkinTex(const char *skin)
         return NULL;
 
     // Convert the given skin file to a full pathname.
+    // FIXME: Why is this done here and not during init??
     _fullpath(realpath, skin, 255);
 
     for(i = 0; i < numskinnames; ++i)
@@ -3111,7 +3112,8 @@ D_CMD(LowRes)
 D_CMD(TranslateFont)
 {
     char    name[32];
-    int     i, lump, size;
+    int     i, lump;
+    size_t  size;
     patch_t *patch;
     byte    redToWhite[256];
 

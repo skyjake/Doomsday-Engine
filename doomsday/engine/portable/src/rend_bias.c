@@ -214,9 +214,10 @@ int SB_ToIndex(source_t* source)
  */
 void SB_Delete(int which)
 {
-    int i;
-    sector_t *seciter;
-    boolean   done;
+    int         i;
+    uint        j;
+    sector_t   *seciter;
+    boolean     done;
 
     if(which < 0 || which > numSources)
         return; // Very odd...
@@ -237,11 +238,11 @@ void SB_Delete(int which)
     // Check to see if a mobj had acquired this source for it's own use.
     // You never know what trick the user might be trying pull :-)
     done = false;
-    for(i = 0; i < numsectors && !done; ++i)
+    for(j = 0; j < numsectors && !done; ++j)
     {
         mobj_t *iter;
 
-        seciter = SECTOR_PTR(i);
+        seciter = SECTOR_PTR(j);
         for(iter = seciter->thinglist; iter && !done; iter = iter->snext)
         {
             if(iter->usingBias && iter->light == which + 1)
@@ -260,8 +261,8 @@ void SB_Delete(int which)
  */
 void SB_Clear(void)
 {
-    int i;
-    sector_t *seciter;
+    uint        i;
+    sector_t   *seciter;
 
     while(numSources-- > 0)
         sources[numSources].flags |= BLF_CHANGED;
@@ -401,9 +402,9 @@ void HSVtoRGB(float *rgb, float h, float s, float v)
     }
 }
 
-static void SB_AddAffected(affection_t *aff, int k, float intensity)
+static void SB_AddAffected(affection_t *aff, uint k, float intensity)
 {
-    int i, worst;
+    uint i, worst;
 
     if(aff->numFound < MAX_BIAS_AFFECTED)
     {
@@ -432,12 +433,12 @@ static void SB_AddAffected(affection_t *aff, int k, float intensity)
  */
 void SB_SegHasMoved(seg_t *seg)
 {
-    int i;
+    int     i;
 
     // Mark the affected lights changed.
-    for(i = 0; i < MAX_BIAS_AFFECTED && seg->info->affected[i].source >= 0; ++i)
+    for(i = 0; i < MAX_BIAS_AFFECTED && seg->affected[i].source >= 0; ++i)
     {
-        sources[seg->info->affected[i].source].flags |= BLF_CHANGED;
+        sources[seg->affected[i].source].flags |= BLF_CHANGED;
     }
 }
 
@@ -445,11 +446,10 @@ void SB_SegHasMoved(seg_t *seg)
  * This must be called when a plane has moved.  Set 'theCeiling' to
  * true if the plane is a ceiling plane.
  */
-void SB_PlaneHasMoved(subsector_t *subsector, int plane)
+void SB_PlaneHasMoved(subsector_t *subsector, uint plane)
 {
-    int i;
-    subsectorinfo_t *subInfo = SUBSECT_INFO(subsector);
-    subplaneinfo_t *info = subInfo->planes[plane];
+    int     i;
+    subplaneinfo_t *info = subsector->planes[plane];
 
     // Mark the affected lights changed.
     for(i = 0; i < MAX_BIAS_AFFECTED && info->affected[i].source >= 0; ++i)
@@ -473,13 +473,13 @@ void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
     affection_t aff;
 
     // If the data is already up to date, nothing needs to be done.
-    if(seg->info->updated == lastChangeOnFrame || !updateAffected)
+    if(seg->updated == lastChangeOnFrame || !updateAffected)
         return;
 
-    seg->info->updated = lastChangeOnFrame;
-    aff.affected = seg->info->affected;
+    seg->updated = lastChangeOnFrame;
+    aff.affected = seg->affected;
     aff.numFound = 0;
-    memset(aff.affected, -1, sizeof(seg->info->affected));
+    memset(aff.affected, -1, sizeof(seg->affected));
 
     for(k = 0, src = sources; k < numSources; ++k, ++src)
     {
@@ -498,7 +498,7 @@ void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
                 distance = len;
         }
 
-        if(M_DotProduct(delta, seg->sidedef->middle.normal) >= 0)
+        if(M_DotProduct(delta, seg->sidedef->SW_middlenormal) >= 0)
             continue;
 
         if(distance < 1)
@@ -533,20 +533,20 @@ static float SB_Dot(source_t *src, float point[3], float normal[3])
  * This could be enhanced so that only the lights on the right side of
  * the plane are taken into consideration.
  */
-void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
+void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
 {
     subsector_t *subsector = SUBSECTOR_PTR(sub);
-    subsectorinfo_t *info = subsector->info;
-    int i, k;
-    vec2_t delta;
-    float point[3];
-    source_t *src;
-    float distance = 0, len, dot;
-    float intensity;
+    int         i;
+    uint        k;
+    vec2_t      delta;
+    float       point[3];
+    source_t   *src;
+    float       distance = 0, len, dot;
+    float       intensity;
     affection_t *aff;
 
     // If the data is already up to date, nothing needs to be done.
-    if(info->planes[PLN_FLOOR]->updated == lastChangeOnFrame || !updateAffected)
+    if(subsector->planes[PLN_FLOOR]->updated == lastChangeOnFrame || !updateAffected)
         return;
 
     // FIXME: NOT optimal.
@@ -555,41 +555,41 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
     // For each plane.
     for(k = 0; k < subsector->sector->planecount; ++k)
     {
-        info->planes[k]->updated = lastChangeOnFrame;
-        aff[k].affected = info->planes[k]->affected;
+        subsector->planes[k]->updated = lastChangeOnFrame;
+        aff[k].affected = subsector->planes[k]->affected;
         aff[k].numFound = 0;
-        memset(aff[k].affected, -1, sizeof(info->planes[k]->affected));
+        memset(aff[k].affected, -1, sizeof(subsector->planes[k]->affected));
     }
 
-    for(k = 0, src = sources; k < numSources; ++k, ++src)
+    for(i = 0, src = sources; i < numSources; ++i, ++src)
     {
         if(src->intensity <= 0)
             continue;
 
         // Calculate minimum 2D distance to the subsector.
         // FIXME: This is probably too accurate an estimate.
-        for(i = 0; i < poly->numvertices; ++i)
+        for(k = 0; k < poly->numvertices; ++k)
         {
             V2_Set(delta,
-                   poly->vertices[i].pos[VX] - src->pos[VX],
-                   poly->vertices[i].pos[VY] - src->pos[VY]);
+                   poly->vertices[k].pos[VX] - src->pos[VX],
+                   poly->vertices[k].pos[VY] - src->pos[VY]);
             len = V2_Length(delta);
 
-            if(i == 0 || len < distance)
+            if(k == 0 || len < distance)
                 distance = len;
         }
         if(distance < 1)
             distance = 1;
 
         // For each plane
-        for(i = 0; i < subsector->sector->planecount; ++i)
+        for(k = 0; k < subsector->sector->planecount; ++k)
         {
             // Estimate the effect on this plane.
             point[VX] = subsector->midpoint.pos[VX];
             point[VY] = subsector->midpoint.pos[VY];
-            point[VZ] = FIX2FLT(subsector->sector->planes[i]->height);
+            point[VZ] = FIX2FLT(subsector->sector->planes[k]->height);
 
-            dot = SB_Dot(src, point, subsector->sector->planes[i]->surface.normal);
+            dot = SB_Dot(src, point, subsector->sector->planes[k]->surface.normal);
             if(dot <= 0)
                 continue;
 
@@ -599,7 +599,7 @@ void SB_UpdateSubsectorAffected(int sub, rendpoly_t *poly)
             if(intensity < biasIgnoreLimit)
                 continue;
 
-            SB_AddAffected(&aff[i], k, intensity);
+            SB_AddAffected(&aff[k], i, intensity);
         }
     }
 
@@ -629,7 +629,7 @@ int SB_TrackerCheck(biastracker_t *tracker, int index)
     return (tracker->changes[index >> 5] & (1 << (index & 0x1f))) != 0;
 }
 
-/*
+/**
  * Copies changes from src to dest.
  */
 void SB_TrackerApply(biastracker_t *dest, const biastracker_t *src)
@@ -642,7 +642,7 @@ void SB_TrackerApply(biastracker_t *dest, const biastracker_t *src)
     }
 }
 
-/*
+/**
  * Clears changes of src from dest.
  */
 void SB_TrackerClear(biastracker_t *dest, const biastracker_t *src)
@@ -655,45 +655,47 @@ void SB_TrackerClear(biastracker_t *dest, const biastracker_t *src)
     }
 }
 
-/*
+/**
  * Tests against trackChanged.
  */
 static boolean SB_ChangeInAffected(biasaffection_t *affected,
                                    biastracker_t *changed)
 {
-    int i;
+    uint        i;
 
     for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
     {
-        if(affected[i].source < 0) break;
+        if(affected[i].source < 0)
+            break;
+
         if(SB_TrackerCheck(changed, affected[i].source))
             return true;
     }
     return false;
 }
 
-/*
+/**
  * This is done in the beginning of the frame when a light source has
  * changed.  The planes that the change affects will need to be
  * re-evaluated.
  */
-void SB_MarkPlaneChanges(subsectorinfo_t *ssecinfo, int plane,
+void SB_MarkPlaneChanges(subsector_t *ssec, uint plane,
                          biastracker_t *allChanges)
 {
-    int i;
-    subplaneinfo_t *pinfo = ssecinfo->planes[plane];
+    uint        i;
+    subplaneinfo_t *pinfo = ssec->planes[plane];
 
     SB_TrackerApply(&pinfo->tracker, allChanges);
 
     if(SB_ChangeInAffected(pinfo->affected, allChanges))
     {
         // Mark the illumination unseen to force an update.
-        for(i = 0; i < ssecinfo->numvertices; ++i)
+        for(i = 0; i < ssec->numvertices; ++i)
             pinfo->illumination[i].flags |= VIF_STILL_UNSEEN;
     }
 }
 
-/*
+/**
  * Do initial processing that needs to be done before rendering a
  * frame.  Changed lights cause the tracker bits to the set for all
  * segs and planes.
@@ -701,10 +703,10 @@ void SB_MarkPlaneChanges(subsectorinfo_t *ssecinfo, int plane,
 void SB_BeginFrame(void)
 {
     biastracker_t allChanges;
-    int i, j, k;
-    seginfo_t *sin;
+    int         l;
+    uint        i, j, k;
     subsector_t *sub;
-    source_t *s;
+    source_t   *s;
 
     if(!useBias)
         return;
@@ -714,7 +716,7 @@ void SB_BeginFrame(void)
 
     // Check which sources have changed.
     memset(&allChanges, 0, sizeof(allChanges));
-    for(i = 0, s = sources; i < numSources; ++i, ++s)
+    for(l = 0, s = sources; l < numSources; ++l, ++s)
     {
         if(s->sectorLevel[1] > 0 || s->sectorLevel[0] > 0)
         {
@@ -740,16 +742,16 @@ void SB_BeginFrame(void)
             }
 
             if(s->intensity != oldIntensity)
-                sources[i].flags |= BLF_CHANGED;
+                sources[l].flags |= BLF_CHANGED;
         }
 
-        if(sources[i].flags & BLF_CHANGED)
+        if(sources[l].flags & BLF_CHANGED)
         {
-            SB_TrackerMark(&allChanges, i);
-            sources[i].flags &= ~BLF_CHANGED;
+            SB_TrackerMark(&allChanges, l);
+            sources[l].flags &= ~BLF_CHANGED;
 
             // This is used for interpolation.
-            sources[i].lastUpdateTime = currentTimeSB;
+            sources[l].lastUpdateTime = currentTimeSB;
 
             // Recalculate which sources affect which surfaces.
             lastChangeOnFrame = framecount;
@@ -759,19 +761,19 @@ void SB_BeginFrame(void)
     // Apply to all segs.
     for(i = 0; i < numsegs; ++i)
     {
-        sin = SEG_PTR(i)->info;
+        seg_t *seg = SEG_PTR(i);
 
         for(j = 0; j < 3; ++j)
-            SB_TrackerApply(&sin->tracker[j], &allChanges);
+            SB_TrackerApply(&seg->tracker[j], &allChanges);
 
         // Everything that is affected by the changed lights will need
         // an update.
-        if(SB_ChangeInAffected(sin->affected, &allChanges))
+        if(SB_ChangeInAffected(seg->affected, &allChanges))
         {
             // Mark the illumination unseen to force an update.
             for(j = 0; j < 3; ++j)
                 for(k = 0; k < 4; ++k)
-                    sin->illum[j][k].flags |= VIF_STILL_UNSEEN;
+                    seg->illum[j][k].flags |= VIF_STILL_UNSEEN;
         }
     }
 
@@ -779,8 +781,9 @@ void SB_BeginFrame(void)
     for(i = 0; i < numsubsectors; ++i)
     {
         sub = SUBSECTOR_PTR(i);
+
         for(j = 0; j < sub->sector->planecount; ++j)
-            SB_MarkPlaneChanges(sub->info, j, &allChanges);
+            SB_MarkPlaneChanges(sub, j, &allChanges);
     }
 }
 
@@ -871,11 +874,11 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
 void SB_RendPoly(struct rendpoly_s *poly, surface_t *surface,
                  sector_t *sector, struct vertexillum_s *illumination,
                  biastracker_t *tracker, struct biasaffection_s *affected,
-                 int mapElementIndex)
+                 uint mapElementIndex)
 {
-    float pos[3];
-    int i;
-    boolean forced;
+    float       pos[3];
+    uint        i;
+    boolean     forced;
 
     if(!useBias)
         return;
@@ -958,12 +961,12 @@ void SB_RendPoly(struct rendpoly_s *poly, surface_t *surface,
     SB_TrackerClear(tracker, &trackApplied);
 }
 
-/*
+/**
  * Interpolate between current and destination.
  */
 void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
 {
-    int i;
+    uint        i;
 
     if(!(illum->flags & VIF_LERP))
     {

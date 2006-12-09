@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -90,14 +90,14 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else if(type == DT_SECTOR_SOUND)
     {
-        int     index = (ushort) Msg_ReadShort();
+        uint     index = (ushort) Msg_ReadShort();
 
         if(index < numsectors)
             sector = SECTOR_PTR(index);
     }
     else                        /* DT_POLY_SOUND */
     {
-        int     index = (ushort) Msg_ReadShort();
+        uint     index = (ushort) Msg_ReadShort();
 
         if(index < po_NumPolyobjs)
         {
@@ -234,11 +234,11 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
  */
 void Cl_Sound(void)
 {
-    int     sound, volume = 127;
-    float   pos[3];
-    byte    flags;
-    int     num;
-    mobj_t *mo = NULL;
+    int         sound, volume = 127;
+    float       pos[3];
+    byte        flags;
+    uint        num;
+    mobj_t     *mo = NULL;
 
     flags = Msg_ReadByte();
 
@@ -283,7 +283,7 @@ void Cl_Sound(void)
     }
     else if(flags & SNDF_SECTOR)
     {
-        num = Msg_ReadPackedShort();
+        num = (ushort) Msg_ReadPackedShort();
         if(num < 0 || num >= numsectors)
         {
             Con_Message("Cl_Sound: Invalid sector number %i.\n", num);

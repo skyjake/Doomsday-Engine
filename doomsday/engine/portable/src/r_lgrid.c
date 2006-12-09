@@ -154,26 +154,27 @@ void LG_Init(void)
 #define MSFACTORS 7
     // Diagonal in maze arrangement of natural numbers.
     // Up to 65 samples per-block(!)
-    static int multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
+    static int  multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
 
-    vertex_t max;
-    fixed_t width;
-    fixed_t height;
-    int     i;
-    int     a, b, x, y;
-    int     count;
-    int     changedCount;
-    size_t  bitfieldSize;
-    uint   *indexBitfield = 0;
-    uint   *contributorBitfield = 0;
+    vertex_t    max;
+    fixed_t     width;
+    fixed_t     height;
+    int         i;
+    int         a, b, x, y;
+    int         count;
+    int         changedCount;
+    size_t      bitfieldSize;
+    uint       *indexBitfield = 0;
+    uint       *contributorBitfield = 0;
     gridblock_t *block;
-    int      *sampleResults = 0;
-    int       n, size, numSamples, center, best;
-    fixed_t   off[2];
-    vertex_t *samplePoints = 0, sample;
+    int        *sampleResults = 0;
+    int         n, size, numSamples, center, best;
+    uint        s;
+    fixed_t     off[2];
+    vertex_t   *samplePoints = 0, sample;
 
-    sector_t **ssamples;
-    sector_t **blkSampleSectors;
+    sector_t  **ssamples;
+    sector_t  **blkSampleSectors;
 
     if(!lgEnabled)
     {
@@ -444,10 +445,9 @@ void LG_Init(void)
         M_Free(sampleResults);
 
     // Find the blocks of all sectors.
-    for(i = 0; i < numsectors; ++i)
+    for(s = 0; s < numsectors; ++s)
     {
-        sector_t *sector = SECTOR_PTR(i);
-        sectorinfo_t *info = SECT_INFO(sector);
+        sector_t *sector = SECTOR_PTR(s);
 
         // Clear the bitfields.
         memset(indexBitfield, 0, bitfieldSize);
@@ -511,18 +511,18 @@ void LG_Init(void)
 
         VERBOSE2(Con_Message("  Sector %i: %i / %i\n", i, changedCount, count));
 
-        info->changedblockcount = changedCount;
-        info->blockcount = changedCount + count;
+        sector->changedblockcount = changedCount;
+        sector->blockcount = changedCount + count;
 
-        info->blocks = Z_Malloc(sizeof(unsigned short) * info->blockcount,
-                                PU_LEVELSTATIC, 0);
+        sector->blocks = Z_Malloc(sizeof(unsigned short) * sector->blockcount,
+                                  PU_LEVELSTATIC, 0);
         for(x = 0, a = 0, b = changedCount; x < lgBlockWidth * lgBlockHeight;
             ++x)
         {
             if(HasIndexBit(x, 0, indexBitfield))
-                info->blocks[a++] = x;
+                sector->blocks[a++] = x;
             else if(HasIndexBit(x, 0, contributorBitfield))
-                info->blocks[b++] = x;
+                sector->blocks[b++] = x;
         }
 
         assert(a == changedCount);
@@ -582,22 +582,23 @@ static void LG_ApplySector(gridblock_t *block, const byte *color, int level,
  */
 void LG_SectorChanged(sector_t *sector)
 {
-    int     i, n;
+    uint        i;
+    unsigned short n;
 
     if(!lgInited)
         return;
 
     // Mark changed blocks and contributors.
-    for(i = 0; i < sector->info->changedblockcount; ++i)
+    for(i = 0; i < sector->changedblockcount; ++i)
     {
-        n = sector->info->blocks[i];
+        n = sector->blocks[i];
         grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
         // The color will be recalculated.
         memset(grid[n].rgb, 0, 3);
     }
-    for(; i < sector->info->blockcount; ++i)
+    for(; i < sector->blockcount; ++i)
     {
-        grid[sector->info->blocks[i]].flags |= GBF_CONTRIBUTOR;
+        grid[sector->blocks[i]].flags |= GBF_CONTRIBUTOR;
     }
 
     needsUpdate = true;

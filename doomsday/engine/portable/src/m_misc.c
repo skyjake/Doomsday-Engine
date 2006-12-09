@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -74,7 +74,7 @@ typedef struct file_identifier_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int FileReader(char const *name, byte **buffer, int mallocType);
+static size_t FileReader(char const *name, byte **buffer, int mallocType);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -82,8 +82,8 @@ static int FileReader(char const *name, byte **buffer, int mallocType);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int numReadFiles = 0;
-static int maxReadFiles = 0;
+static uint numReadFiles = 0;
+static uint maxReadFiles = 0;
 static file_identifier_t *readFiles = NULL;
 
 // CODE --------------------------------------------------------------------
@@ -108,7 +108,7 @@ void M_Free(void *ptr)
     free(ptr);
 }
 
-/*
+/**
  * Resets the array of known file IDs. The next time M_CheckFileID() is
  * called on a file, it passes.
  */
@@ -117,14 +117,17 @@ void M_ResetFileIDs(void)
     numReadFiles = 0;
 }
 
-/*
- * Returns true if the given file can be read, or false if it has already
- * been read. Maintains a list of identifiers already seen.
+/**
+ * Maintains a list of identifiers already seen.
+ *
+ * @return          <code>true</code> if the given file can be read, or
+ *                  false if it has already been read.
  */
 boolean M_CheckFileID(const char *path)
 {
     byte    id[16];
-    int     i;
+    uint    i;
+    boolean alreadySeen;
 
     if(!F_Access(path))
     {
@@ -132,18 +135,24 @@ boolean M_CheckFileID(const char *path)
             Con_Message("CheckFile: %s not found.\n", path);
         return false;
     }
-    
+
     // Calculate the identifier.
     Dir_FileID(path, id);
-    
-    for(i = 0; i < numReadFiles; i++)
-    {    
+
+    alreadySeen = false;
+    i = 0;
+    while(i < numReadFiles && !alreadySeen)
+    {
         if(!memcmp(readFiles[i].hash, id, 16))
         {
             // This identifier has already been encountered.
-            return false;
-        }            
+            alreadySeen = true;
+        }
+        i++;
     }
+
+    if(alreadySeen)
+        return false;
 
     // Allocate a new entry.
     numReadFiles++;
@@ -153,10 +162,10 @@ boolean M_CheckFileID(const char *path)
             maxReadFiles = 16;
         else
             maxReadFiles *= 2;
-        
+
         readFiles = realloc(readFiles, sizeof(readFiles[0]) * maxReadFiles);
     }
-            
+
     memcpy(readFiles[numReadFiles - 1].hash, id, 16);
     return true;
 }
@@ -210,7 +219,7 @@ char *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
     return buf;
 }
 
-/*
+/**
  * A limit has not been specified for the maximum length of the base,
  * so let's assume it can be a long one.
  */
@@ -219,7 +228,7 @@ void M_ExtractFileBase(const char *path, char *dest)
     M_ExtractFileBase2(path, dest, 255, 0);
 }
 
-/*
+/**
  * This has been modified to work with filenames of all sizes.
  */
 void M_ExtractFileBase2(const char *path, char *dest, int max, int ignore)
@@ -250,20 +259,25 @@ void M_ExtractFileBase2(const char *path, char *dest, int max, int ignore)
     *dest++ = 0;
 }
 
-void M_ReadLine(char *buffer, int len, DFILE * file)
+void M_ReadLine(char *buffer, int len, DFILE *file)
 {
     int     p;
     char    ch;
+    boolean isDone;
 
     memset(buffer, 0, len);
-    for(p = 0; p < len - 1;)    // Make the last null stay there.
+    p = 0;
+    isDone = false;
+    while(p < len - 1 && !isDone)    // Make the last null stay there.
     {
         ch = F_GetC(file);
-        if(ch == '\r')
-            continue;
-        if(deof(file) || ch == '\n')
-            break;
-        buffer[p++] = ch;
+        if(ch != '\r')
+        {
+            if(deof(file) || ch == '\n')
+                isDone = true;
+            else
+                buffer[p++] = ch;
+        }
     }
 }
 
@@ -315,8 +329,8 @@ float M_FRandom(void)
     return (M_Random() | (M_Random() << 8)) / 65535.0f;
 }
 
-/*
- * Returns the value mod length (length > 0).
+/**
+ * @return          value mod length (length > 0).
  */
 float M_CycleIntoRange(float value, float length)
 {
@@ -331,8 +345,10 @@ float M_CycleIntoRange(float value, float length)
     return value;
 }
 
-/*
- * Normalize a vector. Returns the former length.
+/**
+ * Normalize a vector.
+ *
+ * @return          The former length.
  */
 float M_Normalize(float *a)
 {
@@ -347,7 +363,7 @@ float M_Normalize(float *a)
     return len;
 }
 
-/*
+/**
  * For convenience.
  */
 float M_Distance(float *a, float *b)
@@ -373,7 +389,7 @@ void M_Scale(float *dest, const float *a, float scale)
     dest[VZ] = a[VZ] * scale;
 }
 
-/*
+/**
  * Cross product of two vectors.
  */
 void M_CrossProduct(float *a, float *b, float *out)
@@ -383,7 +399,7 @@ void M_CrossProduct(float *a, float *b, float *out)
     out[VZ] = a[VX] * b[VY] - a[VY] * b[VX];
 }
 
-/*
+/**
  * Cross product of two vectors composed of three points.
  */
 void M_PointCrossProduct(float *v1, float *v2, float *v3, float *out)
@@ -399,7 +415,7 @@ void M_PointCrossProduct(float *v1, float *v2, float *v3, float *out)
     M_CrossProduct(a, b, out);
 }
 
-/*
+/**
  * First yaw, then pitch. Two consecutive 2D rotations.
  * Probably could be done a bit more efficiently.
  */
@@ -430,7 +446,7 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
     }
 }
 
-/*
+/**
  * Line a -> b, point c. The line must be exactly one unit long!
  */
 float M_PointUnitLineDistance(float *a, float *b, float *c)
@@ -440,7 +456,7 @@ float M_PointUnitLineDistance(float *a, float *b, float *c)
               (a[VX] - c[VX]) * (b[VY] - a[VY])));
 }
 
-/*
+/**
  * Line a -> b, point c.
  */
 float M_PointLineDistance(float *a, float *b, float *c)
@@ -457,7 +473,7 @@ float M_PointLineDistance(float *a, float *b, float *c)
               (a[VX] - c[VX]) * (b[VY] - a[VY])) / len);
 }
 
-/*
+/**
  * Input is fixed, output is floating point. Gap is the distance left
  * between the line and the projected point.
  */
@@ -538,9 +554,10 @@ void M_JoinBoxes(float bbox[4], const float other[4])
 #  define O_BINARY 0
 #endif
 
-boolean M_WriteFile(char const *name, void *source, int length)
+boolean M_WriteFile(char const *name, void *source, size_t length)
 {
-    int     handle, count;
+    int     handle;
+    size_t  count;
 
     handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
     if(handle == -1)
@@ -554,28 +571,29 @@ boolean M_WriteFile(char const *name, void *source, int length)
     return true;
 }
 
-/*
+/**
  * Read a file into a buffer allocated using Z_Malloc().
  */
-int M_ReadFile(char const *name, byte **buffer)
+size_t M_ReadFile(char const *name, byte **buffer)
 {
     return FileReader(name, buffer, MALLOC_ZONE);
 }
 
-/*
+/**
  * Read a file into a buffer allocated using malloc().
  */
-int M_ReadFileCLib(char const *name, byte **buffer)
+size_t M_ReadFileCLib(char const *name, byte **buffer)
 {
     return FileReader(name, buffer, MALLOC_CLIB);
 }
 
-static int FileReader(char const *name, byte **buffer, int mallocType)
+static size_t FileReader(char const *name, byte **buffer, int mallocType)
 {
-    int     handle, count, length;
-    struct stat fileinfo;
-    byte   *buf;
-    LZFILE *file;
+    int         handle;
+    size_t      count, length;
+    struct      stat fileinfo;
+    byte       *buf;
+    LZFILE     *file;
 
     // First try with LZSS.
     if((file = lzOpen((char *) name, "rp")) != NULL)
@@ -603,7 +621,7 @@ static int FileReader(char const *name, byte **buffer, int mallocType)
             }
             else
             {
-                byte   *newbuf = realloc(buf, length + count);
+                byte   *newbuf = M_Realloc(buf, length + count);
 
                 if(newbuf == NULL)
                     Con_Error("FileReader: realloc failed.");
@@ -635,7 +653,7 @@ static int FileReader(char const *name, byte **buffer, int mallocType)
     }
     else
     {                           // Use c library memory allocation
-        buf = malloc(length);
+        buf = M_Malloc(length);
         if(buf == NULL)
         {
             Con_Error("Couldn't malloc buffer %d for file %s.\n", length,
@@ -672,9 +690,9 @@ void M_ForceUppercase(char *text)
     }
 }
 
-void M_WriteCommented(FILE * file, const char *text)
+void M_WriteCommented(FILE *file, const char *text)
 {
-    char   *buff = malloc(strlen(text) + 1), *line;
+    char   *buff = M_Malloc(strlen(text) + 1), *line;
 
     strcpy(buff, text);
     line = strtok(buff, "\n");
@@ -683,13 +701,13 @@ void M_WriteCommented(FILE * file, const char *text)
         fprintf(file, "# %s\n", line);
         line = strtok(NULL, "\n");
     }
-    free(buff);
+    M_Free(buff);
 }
 
-/*
+/**
  * The caller must provide the opening and closing quotes.
  */
-void M_WriteTextEsc(FILE * file, char *text)
+void M_WriteTextEsc(FILE *file, char *text)
 {
     int     i;
 
@@ -701,7 +719,7 @@ void M_WriteTextEsc(FILE * file, char *text)
     }
 }
 
-/*
+/**
  * Gives an estimation of distance (not exact)
  */
 #if 0
@@ -735,7 +753,7 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
     return M_ApproxDistancef(M_ApproxDistancef(dx, dy), dz);
 }
 
-/*
+/**
  * Writes a Targa file of the specified depth.
  */
 int M_ScreenShot(char *filename, int bits)
@@ -773,7 +791,7 @@ void M_PrependBasePath(const char *path, char *newpath)
     }
 }
 
-/*
+/**
  * If the base path is found in the beginning of the path, it is removed.
  */
 void M_RemoveBasePath(const char *absPath, char *newPath)
@@ -790,7 +808,7 @@ void M_RemoveBasePath(const char *absPath, char *newPath)
     }
 }
 
-/*
+/**
  * Expands >.
  */
 void M_TranslatePath(const char *path, char *translated)
@@ -813,7 +831,7 @@ void M_TranslatePath(const char *path, char *translated)
     Dir_FixSlashes(translated);
 }
 
-/*
+/**
  * Also checks for '>'.
  * The file must be a *real* file!
  */
@@ -825,10 +843,11 @@ int M_FileExists(const char *file)
     return !access(buf, 4);     // Read permission?
 }
 
-/*
+/**
  * Check that the given directory exists. If it doesn't, create it.
  * The path must be relative!
- * Return true if the directory already exists.
+ *
+ * @return          <code>true</code> if the directory already exists.
  */
 boolean M_CheckPath(char *path)
 {
@@ -845,7 +864,7 @@ boolean M_CheckPath(char *path)
     // Check and create the path in segments.
     ptr = full;
     memset(buf, 0, sizeof(buf));
-    for(;;)
+    do
     {
         endptr = strchr(ptr, DIR_SEP_CHAR);
         if(!endptr)
@@ -863,13 +882,13 @@ boolean M_CheckPath(char *path)
         }
         strcat(buf, DIR_SEP_STR);
         ptr = endptr + 1;
-        if(!endptr)
-            break;
-    }
+
+    } while(endptr);
+
     return false;
 }
 
-/*
+/**
  * The dot is not included in the returned extension.
  * The extension can be at most 10 characters long.
  */
@@ -884,7 +903,7 @@ void M_GetFileExt(const char *path, char *ext)
     strlwr(ext);
 }
 
-/*
+/**
  * The new extension must not include a dot.
  */
 void M_ReplaceFileExt(char *path, char *newext)
@@ -902,7 +921,7 @@ void M_ReplaceFileExt(char *path, char *newext)
     }
 }
 
-/*
+/**
  * Return a prettier copy of the original path.
  */
 const char *M_Pretty(const char *path)
@@ -924,7 +943,7 @@ const char *M_Pretty(const char *path)
     return path;
 }
 
-/*
+/**
  * Concatenates src to dest as a quoted string.  " is escaped to \".
  * Returns dest.
  */
@@ -950,10 +969,10 @@ char* M_StrCatQuoted(char *dest, char *src)
     return dest;
 }
 
-/*
+/**
  * Advances time and return true if the trigger is triggered.
  */
-boolean M_CheckTrigger(trigger_t * trigger, timespan_t advanceTime)
+boolean M_CheckTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
     trigger->accum += advanceTime;
 
@@ -967,7 +986,7 @@ boolean M_CheckTrigger(trigger_t * trigger, timespan_t advanceTime)
     return false;
 }
 
-/*
+/**
  * Calculate CRC-32 for an arbitrary data buffer.
  */
 uint M_CRC32(byte *data, uint length)
@@ -1070,7 +1089,7 @@ uint M_CRC32(byte *data, uint length)
     unsigned int i;
     unsigned long crc32 = 0;
 
-    for(i = 0; i < length; i++)
+    for(i = 0; i < length; ++i)
     {
         crc32 = crc32_tab[(crc32 ^ data[i]) & 0xff] ^ (crc32 >> 8);
     }

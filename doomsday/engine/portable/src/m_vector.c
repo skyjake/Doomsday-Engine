@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -50,7 +51,7 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Set the vector's x and y components.
  */
 void V2_Set(pvec2_t vec, vectorcomp_t x, vectorcomp_t y)
@@ -65,7 +66,7 @@ void V2_SetFixed(pvec2_t vec, fixed_t x, fixed_t y)
     vec[VY] = FIX2FLT(y);
 }
 
-/*
+/**
  * 2-dimensional vector length.
  */
 float V2_Length(const pvec2_t vec)
@@ -75,7 +76,7 @@ float V2_Length(const pvec2_t vec)
     return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY]);
 }
 
-/*
+/**
  * The distance between two points.
  */
 float V2_Distance(const pvec2_t a, const pvec2_t b)
@@ -86,9 +87,10 @@ float V2_Distance(const pvec2_t a, const pvec2_t b)
     return V2_Length(vec);
 }
 
-/*
- * Normalize a 2-dimensional vector.  Returns the length of the
- * vector.
+/**
+ * Normalize a 2-dimensional vector.
+ *
+ * @return          The length of the vector.
  */
 float V2_Normalize(float *vec)
 {
@@ -102,7 +104,7 @@ float V2_Normalize(float *vec)
     return len;
 }
 
-/*
+/**
  * Make a copy of the source vector.
  */
 void V2_Copy(pvec2_t dest, const pvec2_t src)
@@ -111,7 +113,7 @@ void V2_Copy(pvec2_t dest, const pvec2_t src)
     dest[VY] = src[VY];
 }
 
-/*
+/**
  * Multiply the vector by the scalar.
  */
 void V2_Scale(pvec2_t vec, float scalar)
@@ -120,7 +122,7 @@ void V2_Scale(pvec2_t vec, float scalar)
     vec[VY] *= scalar;
 }
 
-/*
+/**
  * Calculate the sum of two 2-dimensional vectors.
  */
 void V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
@@ -129,7 +131,7 @@ void V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
     dest[VY] = src1[VY] + src2[VY];
 }
 
-/*
+/**
  * Subtract src1 from src2, return result in 'dest'.
  */
 void V2_Subtract(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
@@ -138,7 +140,7 @@ void V2_Subtract(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
     dest[VY] = src1[VY] - src2[VY];
 }
 
-/*
+/**
  * Calculate the dot product of the two vectors.
  */
 float V2_DotProduct(const pvec2_t a, const pvec2_t b)
@@ -146,20 +148,22 @@ float V2_DotProduct(const pvec2_t a, const pvec2_t b)
     return a[VX] * b[VX] + a[VY] * b[VY];
 }
 
-/*
+/**
  * Calculate the scalar projection of 'a' onto 'b': dot(a,b)/len(b)
  */
 float V2_ScalarProject(const pvec2_t a, const pvec2_t b)
 {
-    float   dot = V2_DotProduct(a, b);
+    float   dot;
     float   len = V2_Length(b);
 
     if(len == 0)
         return 0;
+
+    dot = V2_DotProduct(a, b);
     return dot / len;
 }
 
-/*
+/**
  * Project 'a' onto 'b' and store the resulting vector to 'dest':
  * dot(a,b)/dot(b,b)*b
  */
@@ -176,8 +180,8 @@ void V2_Project(pvec2_t dest, const pvec2_t a, const pvec2_t b)
     V2_Scale(dest, V2_DotProduct(a, b) / div);
 }
 
-/*
- * Returns true if the two vectors are parallel.
+/**
+ * @return          <code>true</code> if the two vectors are parallel.
  */
 boolean V2_IsParallel(const pvec2_t a, const pvec2_t b)
 {
@@ -196,18 +200,19 @@ boolean V2_IsParallel(const pvec2_t a, const pvec2_t b)
     return dot > EPSILON || dot < -EPSILON;
 }
 
-/*
- * Returns true if the vector is a zero vector.
+/**
+ * @return          <code>true</code> if the vector is a zero vector.
  */
 boolean V2_IsZero(const pvec2_t vec)
 {
     return vec[VX] == 0 && vec[VY] == 0;
 }
 
-/*
+/**
  * Determine where the two lines cross each other.  Notice that the
- * lines are defined with a point and a vector.  Returns a scaling
- * factor for the first line.
+ * lines are defined with a point and a vector.
+ *
+ * @return          A scaling factor for the first line.
  */
 float V2_Intersection(const pvec2_t p1, const pvec2_t delta1, const pvec2_t p2,
                       const pvec2_t delta2, pvec2_t point)
@@ -240,7 +245,7 @@ float V2_Intersection(const pvec2_t p1, const pvec2_t delta1, const pvec2_t p2,
     if(point)
     {
         // Calculate the intersection point.
-        for(i = 0; i < 2; i++)
+        for(i = 0; i < 2; ++i)
             point[i] = p1[i] + r * delta1[i];
     }
 
@@ -248,7 +253,7 @@ float V2_Intersection(const pvec2_t p1, const pvec2_t delta1, const pvec2_t p2,
     return r;
 }
 
-/*
+/**
  * Intersection of lines a->b and c->d.  Unlike V2_Intersection(), the
  * arguments are all points.
  */
@@ -261,8 +266,8 @@ float V2_Intercept(const pvec2_t a, const pvec2_t b, const pvec2_t c,
     return V2_Intersection(a, ab, c, cd, point);
 }
 
-/*
- * Returns true if the two lines intercept.
+/**
+ * @return          <code>true</code> if the two lines intercept.
  */
 boolean V2_Intercept2(const pvec2_t a, const pvec2_t b, const pvec2_t c,
                       const pvec2_t d, pvec2_t point, float *abFrac,
@@ -281,20 +286,20 @@ boolean V2_Intercept2(const pvec2_t a, const pvec2_t b, const pvec2_t c,
     return (ab >= 0 && ab <= 1 && cd >= 0 && cd <= 1);
 }
 
-/*
+/**
  * Linear interpolation between a and b, by c.
  */
 void V2_Lerp(pvec2_t dest, const pvec2_t a, const pvec2_t b, float c)
 {
-    int     i;
+    uint    i;
 
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
         dest[i] = a[i] + c * (b[i] - a[i]);
     }
 }
 
-/*
+/**
  * Left/top is the min-point.  Right/bottom is the max-point.
  */
 void V2_InitBox(arvec2_t box, const pvec2_t point)

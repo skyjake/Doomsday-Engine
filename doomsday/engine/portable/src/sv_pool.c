@@ -145,8 +145,8 @@ static line_t **sideOwners;
  */
 void Sv_InitPools(void)
 {
-    int     i;
-    sector_t *sec;
+    uint        i;
+    sector_t   *sec;
 
     // Clients don't register anything.
     if(isClient)
@@ -201,11 +201,11 @@ void Sv_InitPools(void)
         sec = SECTOR_PTR(i);
 
         sectorOrigins[i].pos[VX] =
-            FRACUNIT * (sec->info->bounds[BRIGHT] +
-                        sec->info->bounds[BLEFT]) / 2;
+            FRACUNIT * (sec->bounds[BRIGHT] +
+                        sec->bounds[BLEFT]) / 2;
         sectorOrigins[i].pos[VY] =
-            FRACUNIT * (sec->info->bounds[BBOTTOM] +
-                        sec->info->bounds[BTOP]) / 2;
+            FRACUNIT * (sec->bounds[BBOTTOM] +
+                        sec->bounds[BTOP]) / 2;
     }
 
     // Origins of sides.
@@ -216,8 +216,8 @@ void Sv_InitPools(void)
         if(sideOwners[i] == NULL)
             continue;
 
-        sideOrigins[i].pos[VX] = sideOwners[i]->v1->pos[VX] + sideOwners[i]->dx / 2;
-        sideOrigins[i].pos[VY] = sideOwners[i]->v1->pos[VY] + sideOwners[i]->dy / 2;
+        sideOrigins[i].pos[VX] = sideOwners[i]->L_v1->pos[VX] + sideOwners[i]->dx / 2;
+        sideOrigins[i].pos[VY] = sideOwners[i]->L_v1->pos[VY] + sideOwners[i]->dy / 2;
     }
 
     // Store the current state of the world into both the registers.
@@ -428,7 +428,7 @@ void Sv_RegisterResetMobj(dt_mobj_t *reg)
  * Store the state of the player into the register-player.
  * Called at register init and after each delta generation cycle.
  */
-void Sv_RegisterPlayer(dt_player_t *reg, int number)
+void Sv_RegisterPlayer(dt_player_t *reg, uint number)
 {
     ddplayer_t *p = players + number;
     client_t *c = clients + number;
@@ -455,13 +455,14 @@ void Sv_RegisterPlayer(dt_player_t *reg, int number)
  * @param   reg     The sector register to be initialized.
  * @param   number  The world sector number to be registered.
  */
-void Sv_RegisterSector(dt_sector_t *reg, int number)
+void Sv_RegisterSector(dt_sector_t *reg, uint number)
 {
-    int         i;
+    uint        i;
     sector_t   *sec = SECTOR_PTR(number);
 
     reg->lightlevel = sec->lightlevel;
     memcpy(reg->rgb, sec->rgb, 3);
+    // FIXME: $nplanes
     for(i = 0; i < 2; ++i) // number of planes in sector.
     {
         // Plane properties
@@ -486,19 +487,19 @@ void Sv_RegisterSector(dt_sector_t *reg, int number)
  * Store the state of the side into the register-side.
  * Called at register init and after each delta generation.
  */
-void Sv_RegisterSide(dt_side_t *reg, int number)
+void Sv_RegisterSide(dt_side_t *reg, uint number)
 {
     side_t *side = SIDE_PTR(number);
     line_t *line = sideOwners[number];
 
-    reg->top.texture = side->top.texture;
-    reg->middle.texture = side->middle.texture;
-    reg->bottom.texture = side->bottom.texture;
+    reg->top.texture = side->SW_toppic;
+    reg->middle.texture = side->SW_middlepic;
+    reg->bottom.texture = side->SW_bottompic;
     reg->lineFlags = (line ? line->flags & 0xff : 0);
 
-    memcpy(reg->top.rgba, side->top.rgba, 3);
-    memcpy(reg->middle.rgba, side->middle.rgba, 4);
-    memcpy(reg->bottom.rgba, side->bottom.rgba, 3);
+    memcpy(reg->top.rgba, side->SW_toprgba, 3);
+    memcpy(reg->middle.rgba, side->SW_middlergba, 4);
+    memcpy(reg->bottom.rgba, side->SW_bottomrgba, 3);
     reg->blendmode = side->blendmode;
     reg->flags = side->flags & 0xff;
 }
@@ -507,7 +508,7 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
  * Store the state of the polyobj into the register-poly.
  * Called at register init and after each delta generation.
  */
-void Sv_RegisterPoly(dt_poly_t *reg, int number)
+void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 {
     polyobj_t *poly = PO_PTR(number);
 
@@ -609,7 +610,7 @@ boolean Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s,
 /**
  * Returns true if the result is not void.
  */
-boolean Sv_RegisterComparePlayer(cregister_t *reg, int number,
+boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
                                  playerdelta_t *d)
 {
     const dt_player_t *r = &reg->players[number];
@@ -678,7 +679,7 @@ boolean Sv_RegisterComparePlayer(cregister_t *reg, int number,
 /**
  * Returns true if the result is not void.
  */
-boolean Sv_RegisterCompareSector(cregister_t *reg, int number,
+boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
                                  sectordelta_t *d, byte doUpdate)
 {
     dt_sector_t *r = &reg->sectors[number];
@@ -823,7 +824,7 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, int number,
 /**
  * Returns true if the result is not void.
  */
-boolean Sv_RegisterCompareSide(cregister_t *reg, int number, sidedelta_t *d,
+boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
                                byte doUpdate)
 {
     const side_t *s = SIDE_PTR(number);
@@ -833,25 +834,25 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, int number, sidedelta_t *d,
     byte    lineFlags = (line ? line->flags & 0xff : 0);
     byte    sideFlags = s->flags & 0xff;
 
-    if(r->top.texture != s->top.texture && !(s->top.flags & SUF_TEXFIX))
+    if(r->top.texture != s->SW_toppic && !(s->SW_topflags & SUF_TEXFIX))
     {
         df |= SIDF_TOPTEX;
         if(doUpdate)
-            r->top.texture = s->top.texture;
+            r->top.texture = s->SW_toppic;
     }
 
-    if(r->middle.texture != s->middle.texture && !(s->middle.flags & SUF_TEXFIX))
+    if(r->middle.texture != s->SW_middlepic && !(s->SW_middleflags & SUF_TEXFIX))
     {
         df |= SIDF_MIDTEX;
         if(doUpdate)
-            r->middle.texture = s->middle.texture;
+            r->middle.texture = s->SW_middlepic;
     }
 
-    if(r->bottom.texture != s->bottom.texture && !(s->bottom.flags & SUF_TEXFIX))
+    if(r->bottom.texture != s->SW_bottompic && !(s->SW_bottomflags & SUF_TEXFIX))
     {
         df |= SIDF_BOTTOMTEX;
         if(doUpdate)
-            r->bottom.texture = s->bottom.texture;
+            r->bottom.texture = s->SW_bottompic;
     }
 
     if(r->lineFlags != lineFlags)
@@ -861,74 +862,74 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, int number, sidedelta_t *d,
             r->lineFlags = lineFlags;
     }
 
-    if(r->top.rgba[0] != s->top.rgba[0])
+    if(r->top.rgba[0] != s->SW_toprgba[0])
     {
         df |= SIDF_TOP_COLOR_RED;
         if(doUpdate)
-            r->top.rgba[0] = s->top.rgba[0];
+            r->top.rgba[0] = s->SW_toprgba[0];
     }
 
-    if(r->top.rgba[1] != s->top.rgba[1])
+    if(r->top.rgba[1] != s->SW_toprgba[1])
     {
         df |= SIDF_TOP_COLOR_GREEN;
         if(doUpdate)
-            r->top.rgba[1] = s->top.rgba[1];
+            r->top.rgba[1] = s->SW_toprgba[1];
     }
 
-    if(r->top.rgba[2] != s->top.rgba[2])
+    if(r->top.rgba[2] != s->SW_toprgba[2])
     {
         df |= SIDF_TOP_COLOR_BLUE;
         if(doUpdate)
-            r->top.rgba[3] = s->top.rgba[3];
+            r->top.rgba[3] = s->SW_toprgba[3];
     }
 
-    if(r->middle.rgba[0] != s->middle.rgba[0])
+    if(r->middle.rgba[0] != s->SW_middlergba[0])
     {
         df |= SIDF_MID_COLOR_RED;
         if(doUpdate)
-            r->middle.rgba[0] = s->middle.rgba[0];
+            r->middle.rgba[0] = s->SW_middlergba[0];
     }
 
-    if(r->middle.rgba[1] != s->middle.rgba[1])
+    if(r->middle.rgba[1] != s->SW_middlergba[1])
     {
         df |= SIDF_MID_COLOR_GREEN;
         if(doUpdate)
-            r->middle.rgba[1] = s->middle.rgba[1];
+            r->middle.rgba[1] = s->SW_middlergba[1];
     }
 
-    if(r->middle.rgba[2] != s->middle.rgba[2])
+    if(r->middle.rgba[2] != s->SW_middlergba[2])
     {
         df |= SIDF_MID_COLOR_BLUE;
         if(doUpdate)
-            r->middle.rgba[3] = s->middle.rgba[3];
+            r->middle.rgba[3] = s->SW_middlergba[3];
     }
 
-    if(r->middle.rgba[3] != s->middle.rgba[3])
+    if(r->middle.rgba[3] != s->SW_middlergba[3])
     {
         df |= SIDF_MID_COLOR_ALPHA;
         if(doUpdate)
-            r->middle.rgba[3] = s->middle.rgba[3];
+            r->middle.rgba[3] = s->SW_middlergba[3];
     }
 
-    if(r->bottom.rgba[0] != s->bottom.rgba[0])
+    if(r->bottom.rgba[0] != s->SW_bottomrgba[0])
     {
         df |= SIDF_BOTTOM_COLOR_RED;
         if(doUpdate)
-            r->bottom.rgba[0] = s->bottom.rgba[0];
+            r->bottom.rgba[0] = s->SW_bottomrgba[0];
     }
 
-    if(r->bottom.rgba[1] != s->bottom.rgba[1])
+    if(r->bottom.rgba[1] != s->SW_bottomrgba[1])
     {
         df |= SIDF_BOTTOM_COLOR_GREEN;
         if(doUpdate)
-            r->bottom.rgba[1] = s->bottom.rgba[1];
+            r->bottom.rgba[1] = s->SW_bottomrgba[1];
     }
 
-    if(r->bottom.rgba[2] != s->bottom.rgba[2])
+    if(r->bottom.rgba[2] != s->SW_bottomrgba[2])
     {
         df |= SIDF_BOTTOM_COLOR_BLUE;
         if(doUpdate)
-            r->bottom.rgba[3] = s->bottom.rgba[3];
+            r->bottom.rgba[3] = s->SW_bottomrgba[3];
     }
 
     if(r->blendmode != s->blendmode)
@@ -961,7 +962,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, int number, sidedelta_t *d,
 /**
  * Returns true if the result is not void.
  */
-boolean Sv_RegisterComparePoly(cregister_t *reg, int number, polydelta_t *d)
+boolean Sv_RegisterComparePoly(cregister_t *reg, uint number, polydelta_t *d)
 {
     const dt_poly_t *r = &reg->polys[number];
     dt_poly_t *s = &d->po;
@@ -998,7 +999,7 @@ boolean Sv_IsMobjIgnored(mobj_t *mo)
 /**
  * Returns true if the player can be excluded from delta processing.
  */
-boolean Sv_IsPlayerIgnored(int number)
+boolean Sv_IsPlayerIgnored(uint number)
 {
     return !players[number].ingame;
 }
@@ -1014,7 +1015,7 @@ boolean Sv_IsPlayerIgnored(int number)
  */
 void Sv_RegisterWorld(cregister_t *reg, boolean isInitial)
 {
-    int     i;
+    uint        i;
 
     memset(reg, 0, sizeof(*reg));
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -1170,11 +1171,11 @@ boolean Sv_IsSameDelta(const void *delta1, const void *delta2)
 /**
  * Makes a copy of the delta.
  */
-void   *Sv_CopyDelta(void *deltaPtr)
+void *Sv_CopyDelta(void *deltaPtr)
 {
-    void   *newDelta;
-    delta_t *delta = deltaPtr;
-    int     size =
+    void       *newDelta;
+    delta_t    *delta = deltaPtr;
+    size_t      size =
         (delta->type == DT_MOBJ ? sizeof(mobjdelta_t) : delta->type ==
          DT_PLAYER ? sizeof(playerdelta_t) : delta->type ==
          DT_SECTOR ? sizeof(sectordelta_t) : delta->type ==
@@ -1313,7 +1314,7 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
             d->clPitch = s->clPitch; */ /* $unifiedangles */
         if(sf & PDF_PSPRITES)
         {
-            int     i;
+            uint    i;
 
             for(i = 0; i < 2; ++i)
             {
@@ -2037,7 +2038,7 @@ void Sv_PoolMobjRemoved(pool_t *pool, thid_t id)
 void Sv_MobjRemoved(thid_t id)
 {
     reg_mobj_t *mo = Sv_RegisterFindMobj(&worldRegister, id);
-    int     i;
+    uint        i;
 
     if(mo)
     {
@@ -2064,7 +2065,7 @@ void Sv_MobjRemoved(thid_t id)
  * Otherwise he'll not get all the data if he reconnects before the map
  * is changed.
  */
-void Sv_PlayerRemoved(int playerNumber)
+void Sv_PlayerRemoved(uint playerNumber)
 {
     dt_player_t *p = &worldRegister.players[playerNumber];
 
@@ -2214,7 +2215,7 @@ void Sv_NewMobjDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
     playerdelta_t player;
-    int     i;
+    uint        i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -2297,7 +2298,7 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 void Sv_NewSectorDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
     sectordelta_t delta;
-    int     i;
+    uint        i;
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -2315,10 +2316,10 @@ void Sv_NewSectorDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
  */
 void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
-    static int numShifts = 2;
-    static int shift = 0;
+    static uint numShifts = 2;
+    static uint shift = 0;
     sidedelta_t delta;
-    int     i, start, end;
+    uint        i, start, end;
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
@@ -2356,7 +2357,7 @@ void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
     polydelta_t delta;
-    int     i;
+    uint        i;
 
     for(i = 0; i < po_NumPolyobjs; ++i)
     {
@@ -2384,8 +2385,8 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
  * ASSUME: No two sounds with the same ID play at the same time from the
  *         same origin.
  */
-void Sv_NewSoundDelta(int soundId, mobj_t *emitter, int sourceSector,
-                      int sourcePoly, float volume, boolean isRepeating,
+void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
+                      polyobj_t *sourcePoly, float volume, boolean isRepeating,
                       int clientsMask)
 {
     pool_t *targets[MAXPLAYERS + 1];
@@ -2397,25 +2398,25 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, int sourceSector,
     // Determine the target pools.
     Sv_GetTargetPools(targets, clientsMask);
 
-    if(sourceSector >= 0)
+    if(sourceSector != NULL)
     {
         type = DT_SECTOR_SOUND;
-        id = sourceSector;
+        id = GET_SECTOR_IDX(sourceSector);
 
         // Clients need to know which emitter to use.
         if(emitter)
         {
-            if(emitter == (mobj_t*) &SECTOR_PTR(sourceSector)->planes[PLN_FLOOR]->soundorg)
+            if(emitter == (mobj_t*) &sourceSector->planes[PLN_FLOOR]->soundorg)
                 df |= SNDDF_FLOOR;
-            else if(emitter == (mobj_t*) &SECTOR_PTR(sourceSector)->planes[PLN_CEILING]->soundorg)
+            else if(emitter == (mobj_t*) &sourceSector->planes[PLN_CEILING]->soundorg)
                 df |= SNDDF_CEILING;
             // else client assumes sector->soundorg
         }
     }
-    else if(sourcePoly >= 0)
+    else if(sourcePoly != NULL)
     {
         type = DT_POLY_SOUND;
-        id = sourcePoly;
+        id = GET_POLYOBJ_IDX(sourcePoly);
     }
     else if(emitter)
     {
@@ -2444,7 +2445,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, int sourceSector,
 /**
  * Returns true if the client should receive frames.
  */
-boolean Sv_IsFrameTarget(int number)
+boolean Sv_IsFrameTarget(uint number)
 {
     // Local players receive frames only when they're recording a demo.
     // Clients must tell us they are ready before we can begin sending.
@@ -2595,8 +2596,9 @@ void Sv_PoolQueueAdd(pool_t *pool, delta_t *delta)
  */
 delta_t *Sv_PoolQueueExtract(pool_t *pool)
 {
-    delta_t *max;
-    int     i = 0, left, right, big;
+    delta_t    *max;
+    int         i, left, right, big;
+    boolean     isDone;
 
     if(!pool->queueSize)
     {
@@ -2611,7 +2613,9 @@ delta_t *Sv_PoolQueueExtract(pool_t *pool)
     pool->queue[0] = pool->queue[--pool->queueSize];
 
     // Heapify the heap. This is O(log n).
-    while(true)
+    i = 0;
+    isDone = false;
+    while(!isDone)
     {
         left = HEAP_LEFT(i);
         right = HEAP_RIGHT(i);
@@ -2630,15 +2634,17 @@ delta_t *Sv_PoolQueueExtract(pool_t *pool)
         }
 
         // Can we stop now?
-        if(big == i)
+        if(big != i)
+        {
+            // Exchange and continue.
+            Sv_PoolQueueExchange(pool, i, big);
+            i = big;
+        }
+        else
         {
             // Heapifying is complete.
-            break;
+            isDone = true;
         }
-
-        // Exchange and continue.
-        Sv_PoolQueueExchange(pool, i, big);
-        i = big;
     }
 
     return max;
@@ -2859,7 +2865,7 @@ void Sv_AckDelta(pool_t *pool, delta_t *delta)
  * Clients ack deltas to tell the server they've received them.
  * If 'resent' is nonzero, ignore 'set' and ack by resend ID.
  */
-void Sv_AckDeltaSet(int clientNumber, int set, byte resent)
+void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
 {
     pool_t *pool = &pools[clientNumber];
     delta_t *delta, *next = NULL;
@@ -2897,13 +2903,14 @@ void Sv_AckDeltaSet(int clientNumber, int set, byte resent)
 /**
  * Debugging metric.
  */
-int Sv_CountUnackedDeltas(int clientNumber)
+uint Sv_CountUnackedDeltas(uint clientNumber)
 {
-    pool_t *pool = Sv_GetPool(clientNumber);
-    delta_t *delta;
-    int i, count = 0;
+    uint        i, count;
+    pool_t     *pool = Sv_GetPool(clientNumber);
+    delta_t    *delta;
 
     // Iterate through the entire hash table.
+    count = 0;
     for(i = 0; i < POOL_HASH_SIZE; ++i)
     {
         for(delta = pool->hash[i].first; delta; delta = delta->next)

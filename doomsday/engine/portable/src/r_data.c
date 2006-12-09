@@ -272,7 +272,7 @@ void R_FreeRendPoly(rendpoly_t *poly)
         }
     }
 #if _DEBUG
-    Con_Message("R_FreeRendPoly: Dangling poly ptr!\n");
+Con_Message("R_FreeRendPoly: Dangling poly ptr!\n");
 #endif
 }
 
@@ -304,7 +304,7 @@ void R_ShutdownData(void)
 {
 }
 
-/*
+/**
  * Returns a NULL-terminated array of pointers to all the flats.
  * The array must be freed with Z_Free.
  */
@@ -336,7 +336,7 @@ flat_t **R_CollectFlats(int *count)
     return array;
 }
 
-/*
+/**
  * Returns a flat_t* for the given lump, if one already exists.
  */
 flat_t *R_FindFlat(int lumpnum)
@@ -353,7 +353,7 @@ flat_t *R_FindFlat(int lumpnum)
     return NULL;
 }
 
-/*
+/**
  * Get a flat_t data structure for a flat specified with a WAD lump
  * number.  Allocates a new flat_t if it hasn't been loaded yet.
  */
@@ -404,7 +404,7 @@ int R_SetTextureTranslation(int tex, int translateTo)
     return old;
 }
 
-/*
+/**
  * Create a new animation group. Returns the group number.
  * This function is exported and accessible from DLLs.
  */
@@ -439,7 +439,7 @@ animgroup_t *R_GetAnimGroup(int number)
     return groups + number;
 }
 
-/*
+/**
  * This function is exported and accessible from DLLs.
  */
 void R_AddToAnimGroup(int groupNum, int number, int tics, int randomTics)
@@ -498,10 +498,10 @@ boolean R_IsInAnimGroup(int groupNum, int type, int number)
     return false;
 }
 
-/*
+/**
  * Initialize an entire animation using the data in the definition.
  */
-void R_InitAnimGroup(ded_group_t * def)
+void R_InitAnimGroup(ded_group_t *def)
 {
     int     i;
     int     groupNumber = 0;
@@ -534,7 +534,7 @@ void R_InitAnimGroup(ded_group_t * def)
     }
 }
 
-/*
+/**
  * All animation groups are reseted back to their original state.
  * Called when setting up a map.
  */
@@ -561,7 +561,7 @@ void R_ResetAnimGroups(void)
     R_AnimateAnimGroups();
 }
 
-/*
+/**
  * Assigns switch texture pairs (SW1/SW2) to their own texture precaching
  * groups. This'll allow them to be precached at the same time.
  */
@@ -594,7 +594,7 @@ void R_InitSwitchAnimGroups(void)
     }
 }
 
-/*
+/**
  * Initializes the texture list with the textures from the world map.
  */
 void R_InitTextures(void)
@@ -610,7 +610,7 @@ void R_InitTextures(void)
     char    name[9], *names, *name_p;
     int    *patchlookup;
     int     nummappatches;
-    int     offset, maxoff, maxoff2;
+    size_t  offset, maxoff, maxoff2;
     int     numtextures1, numtextures2;
     int    *directory;
     char    buf[64];
@@ -702,7 +702,9 @@ void R_InitTextures(void)
                 }
             }
 
-        } else if(gamedataformat == 3){  // strife format
+        }
+        else if(gamedataformat == 3)
+        {   // strife format
             smtexture = (strifemaptexture_t *) ((byte *) maptex + offset);
 
             texture = textures[i] =
@@ -814,7 +816,7 @@ void R_InitLumpTexInfo(void)
     lumptexinfo = Z_Calloc(sizeof(*lumptexinfo) * numlumps, PU_STATIC, 0);
 }
 
-/*
+/**
  * Locates all the lumps that will be used by all views.
  * Must be called after W_Init.
  */
@@ -904,14 +906,14 @@ int R_TextureNumForName(char *name)
     return i;
 }
 
-char   *R_TextureNameForNum(int num)
+char *R_TextureNameForNum(int num)
 {
     if(num < 0 || num > numtextures - 1)
         return NULL;
     return textures[num]->name;
 }
 
-/*
+/**
  * Returns true if the texture is probably not from the original game.
  */
 boolean R_IsCustomTexture(int texture)
@@ -938,32 +940,25 @@ boolean R_IsCustomTexture(int texture)
     return false;
 }
 
-/*
+/**
  * Returns true if the given light decoration definition is valid.
  */
-boolean R_IsValidLightDecoration(ded_decorlight_t * lightDef)
+boolean R_IsValidLightDecoration(ded_decorlight_t *lightDef)
 {
     return lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
         lightDef->color[2] != 0;
 }
 
-/*
+/**
  * Returns true if the given decoration works under the specified
  * circumstances.
  */
-boolean R_IsAllowedDecoration(ded_decor_t * def, int index,
-                              boolean hasExternal)
+boolean R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal)
 {
     if(hasExternal)
     {
         return (def->flags & DCRF_EXTERNAL) != 0;
     }
-    /*  else if(def->flags & DCRF_EXTERNAL)
-       {
-       // If the decoration is marked for external resources, and there
-       // are none present, disallow using this decoration.
-       return false;
-       } */
 
     if(def->is_texture)
     {
@@ -980,7 +975,7 @@ boolean R_IsAllowedDecoration(ded_decor_t * def, int index,
     return (def->flags & DCRF_PWAD) != 0;
 }
 
-/*
+/**
  * Prepares the specified flat and all the other flats in the same
  * animation group. Has the consequence that all lumps inside the
  * F_START...F_END block obtain a flat_t record.
@@ -1009,7 +1004,7 @@ void R_PrecacheFlat(int num)
     }
 }
 
-/*
+/**
  * Prepares the specified texture and all the other textures in the
  * same animation group.
  */
@@ -1037,7 +1032,7 @@ void R_PrecacheTexture(int num)
     }
 }
 
-/*
+/**
  * Prepare all relevant skins, textures, flats and sprites.
  * Doesn't unload anything, though (so that if there's enough
  * texture memory it will be used more efficiently). That much trust
@@ -1048,9 +1043,9 @@ void R_PrecacheLevel(void)
 {
     char   *texturepresent;
     char   *spritepresent = NULL;
-    int     i, j, k, lump, mocount;
+    uint    i, j;
+    int     k, lump, mocount;
     thinker_t *th;
-    spriteframe_t *sf;
     sector_t *sec;
     side_t *side;
     float   starttime;
@@ -1074,28 +1069,28 @@ void R_PrecacheLevel(void)
     {
         side = SIDE_PTR(i);
 
-        if(side->top.texture != -1)
+        if(side->SW_toppic != -1)
         {
-            if(side->top.isflat)
-                R_PrecacheFlat(side->top.texture);
+            if(side->SW_topisflat)
+                R_PrecacheFlat(side->SW_toppic);
             else
-                texturepresent[side->top.texture] = 1;
+                texturepresent[side->SW_toppic] = 1;
         }
 
-        if(side->middle.texture != -1)
+        if(side->SW_middlepic != -1)
         {
-            if(side->middle.isflat)
-                R_PrecacheFlat(side->middle.texture);
+            if(side->SW_middleisflat)
+                R_PrecacheFlat(side->SW_middlepic);
             else
-                texturepresent[side->middle.texture] = 1;
+                texturepresent[side->SW_middlepic] = 1;
         }
 
-        if(side->bottom.texture != -1)
+        if(side->SW_bottompic != -1)
         {
-            if(side->bottom.isflat)
-                R_PrecacheFlat(side->bottom.texture);
+            if(side->SW_bottomisflat)
+                R_PrecacheFlat(side->SW_bottompic);
             else
-                texturepresent[side->bottom.texture] = 1;
+                texturepresent[side->SW_bottompic] = 1;
         }
     }
 
@@ -1118,11 +1113,11 @@ void R_PrecacheLevel(void)
 
     // FIXME: Precache sky textures!
 
-    for(i = 0; i < numtextures; ++i)
-        if(texturepresent[i])
+    for(k = 0; k < numtextures; ++k)
+        if(texturepresent[k])
         {
-            R_PrecacheTexture(i);
-            if(i % SAFEDIV(numtextures, 10) == 0)
+            R_PrecacheTexture(k);
+            if(k % SAFEDIV(numtextures, 10) == 0)
                 Con_Progress(1, PBARF_DONTSHOW);
         }
 
@@ -1150,12 +1145,12 @@ void R_PrecacheLevel(void)
     // Precache skins?
     if(useModels && precacheSkins)
     {
-        for(i = 0, th = thinkercap.next; th != &thinkercap; th = th->next)
+        for(k = 0, th = thinkercap.next; th != &thinkercap; th = th->next)
         {
             if(th->function != gx.MobjThinker)
                 continue;
             // Advance progress bar.
-            if(++i % SAFEDIV(mocount, 10) == 0)
+            if(++k % SAFEDIV(mocount, 10) == 0)
                 Con_Progress(2, PBARF_DONTSHOW);
             // Precache all the skins for the mobj.
             R_PrecacheSkinsForMobj((mobj_t *) th);
@@ -1167,22 +1162,25 @@ void R_PrecacheLevel(void)
 
     if(precacheSprites)
     {
-        for(i = 0; i < numSprites; ++i)
+        int     s, f, l;
+        spriteframe_t *sf;
+
+        for(s = 0; s < numSprites; ++s)
         {
-            if(i % SAFEDIV(numSprites, 10) == 0)
+            if(s % SAFEDIV(numSprites, 10) == 0)
                 Con_Progress(1, PBARF_DONTSHOW);
 
-            if(!spritepresent[i] || !useModels)
+            if(!spritepresent[s] || !useModels)
                 continue;
 
-            for(j = 0; j < sprites[i].numframes; ++j)
+            for(f = 0; f < sprites[s].numframes; ++f)
             {
-                sf = &sprites[i].spriteframes[j];
+                sf = &sprites[s].spriteframes[f];
 
-                for(k = 0; k < 8; ++k)
+                for(l = 0; l < 8; ++l)
                 {
-                    lump = spritelumps[sf->lump[k]]->lump;
-                    GL_BindTexture(GL_PrepareSprite(sf->lump[k], 0));
+                    lump = spritelumps[sf->lump[l]]->lump;
+                    GL_BindTexture(GL_PrepareSprite(sf->lump[l], 0));
                 }
             }
         }
@@ -1257,15 +1255,12 @@ void R_AnimateAnimGroups(void)
                 next =
                     group->frames[(group->index + k + 1) %
                                   group->count].number;
-
-                /*#ifdef _DEBUG
-                   if(isTexture)
-                   {
-                   Con_Printf("real=%i cur=%i next=%i\n", real,
-                   current, next);
-                   }
-                   #endif */
-
+/*
+#ifdef _DEBUG
+if(isTexture)
+    Con_Printf("real=%i cur=%i next=%i\n", real, current, next);
+#endif
+*/
                 xlat = R_GetTranslation(isTexture, real);
                 xlat->current = current;
                 xlat->next = next;
@@ -1300,11 +1295,11 @@ void R_AnimateAnimGroups(void)
     }
 }
 
-/*
+/**
  * If necessary and possible, generate an RGB lightmap texture for the
  * decoration's light sources.
  */
-void R_GenerateDecorMap(ded_decor_t * def)
+void R_GenerateDecorMap(ded_decor_t *def)
 {
     int     i, count;
 

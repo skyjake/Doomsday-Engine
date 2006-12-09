@@ -59,7 +59,7 @@ typedef struct dummysector_s {
 
 typedef struct setargs_s {
     int type;
-    int prop;
+    uint prop;
     int modifiers;              // Property modifiers (e.g., line of sector)
     int aliases;                // Property aliases (non-public modifiers)
                                 // (eg., floor of sector)
@@ -83,7 +83,7 @@ typedef struct setargs_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     dummyCount = 8;         // Number of dummies to allocate (per type).
+uint    dummyCount = 8;         // Number of dummies to allocate (per type).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -97,16 +97,15 @@ static int  usingDMUAPIver;     // Version of the DMU API the game expects.
 /**
  * Convert DMU enum constant into a string for error/debug messages.
  */
-const char* DMU_Str(int prop)
+const char* DMU_Str(uint prop)
 {
     static char propStr[40];
     struct prop_s {
-        int prop;
+        uint prop;
         const char* str;
     } props[] =
     {
-        { DMU_ALL, "DMU_ALL" },
-        { 0, "(invalid)" },
+        { DMU_NONE, "(invalid)" },
         { DMU_VERTEX, "DMU_VERTEX" },
         { DMU_SEG, "DMU_SEG" },
         { DMU_LINE, "DMU_LINE" },
@@ -247,7 +246,7 @@ const char* DMU_Str(int prop)
         { DMU_SPECIAL_DATA, "DMU_SPECIAL_DATA" },
         { 0, NULL }
     };
-    int i;
+    uint        i;
 
     for(i = 0; props[i].str; ++i)
         if(props[i].prop == prop)
@@ -373,7 +372,7 @@ static boolean DMU_ConvertAliases(setargs_t* args)
  * @param type  Type of the map data object (e.g., DMU_LINE).
  * @param prop  Property of the map data object.
  */
-static void InitArgs(setargs_t* args, int type, int prop)
+static void InitArgs(setargs_t* args, int type, uint prop)
 {
     memset(args, 0, sizeof(*args));
     args->type = type;
@@ -419,7 +418,7 @@ void P_InitMapUpdate(void)
  */
 void* P_AllocDummy(int type, void* extraData)
 {
-    int i;
+    uint        i;
 
     switch(type)
     {
@@ -539,11 +538,11 @@ void* P_DummyExtraData(void* dummy)
 /**
  * Convert pointer to index.
  */
-int P_ToIndex(const void* ptr)
+uint P_ToIndex(const void* ptr)
 {
     if(!ptr)
     {
-        return -1;
+        return 0;
     }
 
     switch(DMU_GetType(ptr))
@@ -578,13 +577,13 @@ int P_ToIndex(const void* ptr)
     default:
         Con_Error("P_ToIndex: Unknown type %s.\n", DMU_Str(DMU_GetType(ptr)));
     }
-    return -1;
+    return 0;
 }
 
 /**
  * Convert index to pointer.
  */
-void* P_ToPtr(int type, int index)
+void* P_ToPtr(int type, uint index)
 {
     switch(type)
     {
@@ -631,106 +630,48 @@ void* P_ToPtr(int type, int index)
  * is returned when the callback function returns false; in this case, the
  * iteration is aborted immediately when the callback function returns false.
  */
-int P_Callback(int type, int index, void* context, int (*callback)(void* p, void* ctx))
+int P_Callback(int type, uint index, void* context, int (*callback)(void* p, void* ctx))
 {
-    int i;
-
     switch(type)
     {
     case DMU_VERTEX:
-        if(index >= 0 && index < numvertexes)
-        {
+        if(index < numvertexes)
             return callback(VERTEX_PTR(index), context);
-        }
-        else if(index == DMU_ALL)
-        {
-            for(i = 0; i < numvertexes; ++i)
-                if(!callback(VERTEX_PTR(i), context)) return false;
-        }
         break;
 
     case DMU_SEG:
-        if(index >= 0 && index < numsegs)
-        {
+        if(index < numsegs)
             return callback(SEG_PTR(index), context);
-        }
-        else if(index == DMU_ALL)
-        {
-            for(i = 0; i < numsegs; ++i)
-                if(!callback(SEG_PTR(i), context)) return false;
-        }
         break;
 
     case DMU_LINE:
-        if(index >= 0 && index < numlines)
-        {
+        if(index < numlines)
             return callback(LINE_PTR(index), context);
-        }
-        else if(index == DMU_ALL)
-        {
-            for(i = 0; i < numlines; ++i)
-                if(!callback(LINE_PTR(i), context)) return false;
-        }
         break;
 
     case DMU_SIDE:
-        if(index >= 0 && index < numsides)
-        {
+        if(index < numsides)
             return callback(SIDE_PTR(index), context);
-        }
-        else if(index == DMU_ALL)
-        {
-            for(i = 0; i < numsides; ++i)
-                if(!callback(SIDE_PTR(i), context)) return false;
-        }
         break;
 
     case DMU_NODE:
-        if(index >= 0 && index < numnodes)
-        {
+        if(index < numnodes)
             return callback(NODE_PTR(index), context);
-        }
-        else if(index == DMU_ALL)
-        {
-            for(i = 0; i < numnodes; ++i)
-                if(!callback(NODE_PTR(i), context)) return false;
-        }
         break;
 
     case DMU_SUBSECTOR:
-        if(index >= 0 && index < numsubsectors)
-        {
+        if(index < numsubsectors)
             return callback(SUBSECTOR_PTR(index), context);
-        }
-        else if(index == DMU_ALL)
-        {
-            for(i = 0; i < numsubsectors; ++i)
-                if(!callback(SUBSECTOR_PTR(i), context)) return false;
-        }
         break;
 
     case DMU_SECTOR:
-        if(index >= 0 && index < numsectors)
-        {
+        if(index < numsectors)
             return callback(SECTOR_PTR(index), context);
-        }
-        else if(index == DMU_ALL)
-        {
-            for(i = 0; i < numsectors; ++i)
-                if(!callback(SECTOR_PTR(i), context)) return false;
-        }
         break;
 
     case DMU_POLYOBJ:
-        if(index >= 0 && index < po_NumPolyobjs)
-        {
+        if(index < po_NumPolyobjs)
             return callback(PO_PTR(index), context);
-        }
-        else if(index == DMU_ALL)
-        {
-            for(i = 0; i < po_NumPolyobjs; i++)
-                if(!callback(PO_PTR(i), context)) return false;
-        }
         break;
 
     case DMU_PLANE:
@@ -753,6 +694,77 @@ int P_Callback(int type, int index, void* context, int (*callback)(void* p, void
 
     default:
         Con_Error("P_Callback: Type %s unknown (index %i).\n", DMU_Str(type), index);
+    }
+
+    // Successfully completed.
+    return true;
+}
+
+/**
+ * Call a callback function on all map data objects of a given type.
+ * 'context' is passed to the callback function along with a pointer to the
+ * data object.
+ *
+ * @return          <code>true</code> if all the calls to the callback function
+ *                  return <code>true</code>.
+ *                  <code>false</code> is returned when the callback function
+ *                  returns <code>false</code?; in this case, the iteration is
+ *                  aborted immediately when the callback function returns
+ *                  <code>false</code>.
+ */
+int P_CallbackAll(int type, void* context, int (*callback)(void* p, void* ctx))
+{
+    uint        i;
+
+    switch(type)
+    {
+    case DMU_VERTEX:
+        for(i = 0; i < numvertexes; ++i)
+            if(!callback(VERTEX_PTR(i), context)) return false;
+        break;
+
+    case DMU_SEG:
+        for(i = 0; i < numsegs; ++i)
+            if(!callback(SEG_PTR(i), context)) return false;
+        break;
+
+    case DMU_LINE:
+        for(i = 0; i < numlines; ++i)
+            if(!callback(LINE_PTR(i), context)) return false;
+        break;
+
+    case DMU_SIDE:
+        for(i = 0; i < numsides; ++i)
+            if(!callback(SIDE_PTR(i), context)) return false;
+        break;
+
+    case DMU_NODE:
+        for(i = 0; i < numnodes; ++i)
+            if(!callback(NODE_PTR(i), context)) return false;
+        break;
+
+    case DMU_SUBSECTOR:
+        for(i = 0; i < numsubsectors; ++i)
+            if(!callback(SUBSECTOR_PTR(i), context)) return false;
+        break;
+
+    case DMU_SECTOR:
+        for(i = 0; i < numsectors; ++i)
+            if(!callback(SECTOR_PTR(i), context)) return false;
+        break;
+
+    case DMU_POLYOBJ:
+        for(i = 0; i < po_NumPolyobjs; i++)
+            if(!callback(PO_PTR(i), context)) return false;
+        break;
+
+    case DMU_PLANE:
+        Con_Error("P_CallbackAll: %s not implemented yet.\n",
+                  DMU_Str(type));
+        break;
+
+    default:
+        Con_Error("P_CallbackAll: Type %s unknown.\n", DMU_Str(type));
     }
 
     // Successfully completed.
@@ -802,7 +814,7 @@ int P_Callbackp(int type, void* ptr, void* context, int (*callback)(void* p, voi
  * Sets a value. Does some basic type checking so that incompatible types are
  * not assigned. Simple conversions are also done, e.g., float to fixed.
  */
-static void SetValue(valuetype_t valueType, void* dst, setargs_t* args, int index)
+static void SetValue(valuetype_t valueType, void* dst, setargs_t* args, uint index)
 {
     if(valueType == DDVT_FIXED)
     {
@@ -1134,24 +1146,24 @@ static int SetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_VERTEX1_X:
-            SetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
+            SetValue(DMT_VERTEX_X, &p->SG_v1->pos[VX], args, 0);
             break;
         case DMU_VERTEX1_Y:
-            SetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 0);
+            SetValue(DMT_VERTEX_Y, &p->SG_v1->pos[VY], args, 0);
             break;
         case DMU_VERTEX1_XY:
-            SetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
-            SetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 1);
+            SetValue(DMT_VERTEX_X, &p->SG_v1->pos[VX], args, 0);
+            SetValue(DMT_VERTEX_Y, &p->SG_v1->pos[VY], args, 1);
             break;
         case DMU_VERTEX2_X:
-            SetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
+            SetValue(DMT_VERTEX_X, &p->SG_v2->pos[VX], args, 0);
             break;
         case DMU_VERTEX2_Y:
-            SetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 0);
+            SetValue(DMT_VERTEX_Y, &p->SG_v2->pos[VY], args, 0);
             break;
         case DMU_VERTEX2_XY:
-            SetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
-            SetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 1);
+            SetValue(DMT_VERTEX_X, &p->SG_v2->pos[VX], args, 0);
+            SetValue(DMT_VERTEX_Y, &p->SG_v2->pos[VY], args, 1);
             break;
         case DMU_FLAGS:
             SetValue(DMT_SEG_FLAGS, &p->flags, args, 0);
@@ -1169,16 +1181,16 @@ static int SetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_FRONT_SECTOR:
-            SetValue(DMT_LINE_FRONTSECTOR, &p->frontsector, args, 0);
+            SetValue(DMT_LINE_SEC, &p->L_frontsector, args, 0);
             break;
         case DMU_BACK_SECTOR:
-            SetValue(DMT_LINE_BACKSECTOR, &p->backsector, args, 0);
+            SetValue(DMT_LINE_SEC, &p->L_backsector, args, 0);
             break;
         case DMU_SIDE0:
-            SetValue(DMT_LINE_SIDES, &p->sides[0], args, 0);
+            SetValue(DMT_LINE_SIDES, &p->L_frontside, args, 0);
             break;
         case DMU_SIDE1:
-            SetValue(DMT_LINE_SIDES, &p->sides[1], args, 0);
+            SetValue(DMT_LINE_SIDES, &p->L_backside, args, 0);
             break;
         case DMU_VALID_COUNT:
             SetValue(DMT_LINE_VALIDCOUNT, &p->validcount, args, 0);
@@ -1203,106 +1215,106 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SIDE_FLAGS, &p->flags, args, 0);
             break;
         case DMU_TOP_COLOR:
-            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
-            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 1);
-            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[2], args, 2);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[1], args, 1);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 2);
             break;
         case DMU_TOP_COLOR_RED:
-            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[0], args, 0);
             break;
         case DMU_TOP_COLOR_GREEN:
-            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[1], args, 0);
             break;
         case DMU_TOP_COLOR_BLUE:
-            SetValue(DMT_SURFACE_RGBA, &p->top.rgba[2], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 0);
             break;
         case DMU_TOP_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->top.texture, args, 0);
-            p->top.isflat = false; // Kludge
-           /* if(p->top.texture)
+            SetValue(DMT_SURFACE_TEXTURE, &p->SW_toppic, args, 0);
+            p->SW_topisflat = false; // Kludge
+           /* if(p->SW_toppic)
                 p->flags &= ~SDF_MIDTEXUPPER;*/
             break;
         case DMU_TOP_TEXTURE_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFX, &p->top.offx, args, 0);
+            SetValue(DMT_SURFACE_OFFX, &p->SW_topoffx, args, 0);
             break;
         case DMU_TOP_TEXTURE_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFY, &p->top.offy, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->SW_topoffy, args, 0);
             break;
         case DMU_TOP_TEXTURE_OFFSET_XY:
-            SetValue(DMT_SURFACE_OFFX, &p->top.offx, args, 0);
-            SetValue(DMT_SURFACE_OFFY, &p->top.offy, args, 1);
+            SetValue(DMT_SURFACE_OFFX, &p->SW_topoffx, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->SW_topoffy, args, 1);
             break;
         case DMU_MIDDLE_COLOR:
-            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
-            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[1], args, 1);
-            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[2], args, 2);
-            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[3], args, 3);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[1], args, 1);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[2], args, 2);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 3);
             break;
         case DMU_MIDDLE_COLOR_RED:
-            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[0], args, 0);
             break;
         case DMU_MIDDLE_COLOR_GREEN:
-            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[1], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[1], args, 0);
             break;
         case DMU_MIDDLE_COLOR_BLUE:
-            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[2], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[2], args, 0);
             break;
         case DMU_MIDDLE_COLOR_ALPHA:
-            SetValue(DMT_SURFACE_RGBA, &p->middle.rgba[3], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 0);
             break;
         case DMU_MIDDLE_BLENDMODE:
             SetValue(DMT_SIDE_BLENDMODE, &p->blendmode, args, 0);
             break;
         case DMU_MIDDLE_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->middle.texture, args, 0);
-            p->middle.isflat = false; // Kludge
+            SetValue(DMT_SURFACE_TEXTURE, &p->SW_middlepic, args, 0);
+            p->SW_middleisflat = false; // Kludge
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFX, &p->middle.offx, args, 0);
+            SetValue(DMT_SURFACE_OFFX, &p->SW_middleoffx, args, 0);
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFY, &p->middle.offy, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->SW_middleoffy, args, 0);
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_XY:
-            SetValue(DMT_SURFACE_OFFX, &p->middle.offx, args, 0);
-            SetValue(DMT_SURFACE_OFFY, &p->middle.offy, args, 1);
+            SetValue(DMT_SURFACE_OFFX, &p->SW_middleoffx, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->SW_middleoffy, args, 1);
             break;
         case DMU_BOTTOM_COLOR:
-            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
-            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 1);
-            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[2], args, 2);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[1], args, 1);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 2);
             break;
         case DMU_BOTTOM_COLOR_RED:
-            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[0], args, 0);
             break;
         case DMU_BOTTOM_COLOR_GREEN:
-            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[1], args, 0);
             break;
         case DMU_BOTTOM_COLOR_BLUE:
-            SetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[2], args, 0);
+            SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 0);
             break;
         case DMU_BOTTOM_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->bottom.texture, args, 0);
-            p->bottom.isflat = false; // Kludge
+            SetValue(DMT_SURFACE_TEXTURE, &p->SW_bottompic, args, 0);
+            p->SW_bottomisflat = false; // Kludge
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_X:
-            SetValue(DMT_SURFACE_OFFX, &p->bottom.offx, args, 0);
+            SetValue(DMT_SURFACE_OFFX, &p->SW_bottomoffx, args, 0);
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_Y:
-            SetValue(DMT_SURFACE_OFFY, &p->bottom.offy, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->SW_bottomoffy, args, 0);
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_XY:
-            SetValue(DMT_SURFACE_OFFX, &p->bottom.offx, args, 0);
-            SetValue(DMT_SURFACE_OFFY, &p->bottom.offy, args, 1);
+            SetValue(DMT_SURFACE_OFFX, &p->SW_bottomoffx, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->SW_bottomoffy, args, 1);
             break;
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_SIDE.\n",
                       DMU_Str(args->prop));
         }
 
-        R_UpdateSurface(&p->top, false);
-        R_UpdateSurface(&p->middle, false);
-        R_UpdateSurface(&p->bottom, false);
+        R_UpdateSurface(&p->SW_topsurface, false);
+        R_UpdateSurface(&p->SW_middlesurface, false);
+        R_UpdateSurface(&p->SW_bottomsurface, false);
         break;
         }
 
@@ -1351,7 +1363,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_SOUND_REVERB:
         {
-            int i;
+            uint        i;
             for(i = 0; i < NUM_REVERB_DATA; ++i)
             {
                 SetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i);
@@ -1374,7 +1386,7 @@ static int SetProperty(void* ptr, void* context)
         polyobj_t* p = ptr;
         if(args->modifiers & DMU_SEG_OF_POLYOBJ)
         {
-            if(args->prop >= 0 && args->prop < p->numsegs)
+            if(args->prop < p->numsegs)
             {
                 SetValue(DDVT_PTR, &p->segs[args->prop], args, 0);
                 break;
@@ -1468,7 +1480,8 @@ static int SetProperty(void* ptr, void* context)
  * Gets a value. Does some basic type checking so that incompatible types are
  * not assigned. Simple conversions are also done, e.g., float to fixed.
  */
-static void GetValue(valuetype_t valueType, const void* src, setargs_t* args, int index)
+static void GetValue(valuetype_t valueType, const void* src, setargs_t* args,
+                     uint index)
 {
     if(valueType == DDVT_FIXED)
     {
@@ -1668,7 +1681,7 @@ static int GetProperty(void* ptr, void* context)
        (args->modifiers & DMU_LINE_OF_SECTOR))
     {
         sector_t* p = ptr;
-        if(args->prop < 0 || args->prop >= p->linecount)
+        if(args->prop >= p->linecount)
         {
             Con_Error("GetProperty: DMU_LINE_OF_SECTOR %i does not exist.\n",
                       args->prop);
@@ -1682,7 +1695,7 @@ static int GetProperty(void* ptr, void* context)
     {
         subsector_t* p = ptr;
         seg_t* segptr;
-        if(args->prop < 0 || args->prop >= p->linecount)
+        if(args->prop >= p->linecount)
         {
             Con_Error("GetProperty: DMU_SEG_OF_SECTOR %i does not exist.\n",
                       args->prop);
@@ -1833,7 +1846,7 @@ static int GetProperty(void* ptr, void* context)
         }
         case DMU_SOUND_REVERB:
         {
-            int i;
+            uint        i;
             for(i = 0; i < NUM_REVERB_DATA; ++i)
             {
                 GetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i);
@@ -1841,8 +1854,14 @@ static int GetProperty(void* ptr, void* context)
             break;
         }
         case DMU_LINE_COUNT:
-            GetValue(DMT_SECTOR_LINECOUNT, &p->linecount, args, 0);
+        {
+            // FIXME:
+            //GetValue(DMT_SECTOR_LINECOUNT, &p->linecount, args, 0);
+
+            int val = (int) p->linecount;
+            GetValue(DDVT_INT, &val, args, 0);
             break;
+        }
         case DMU_THINGS:
             GetValue(DMT_SECTOR_THINGLIST, &p->thinglist, args, 0);
             break;
@@ -1886,9 +1905,9 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_TOP_TEXTURE:
             {
-            short texture = p->top.texture;
+            short texture = p->SW_toppic;
 
-            if(p->top.flags & SUF_TEXFIX)
+            if(p->SW_topflags & SUF_TEXFIX)
                 texture = 0;
 
            /*if(p->flags & SDF_MIDTEXUPPER)
@@ -1898,106 +1917,106 @@ static int GetProperty(void* ptr, void* context)
             break;
             }
         case DMU_TOP_TEXTURE_OFFSET_X:
-            GetValue(DMT_SURFACE_OFFX, &p->top.offx, args, 0);
+            GetValue(DMT_SURFACE_OFFX, &p->SW_topoffx, args, 0);
             break;
         case DMU_TOP_TEXTURE_OFFSET_Y:
-            GetValue(DMT_SURFACE_OFFY, &p->top.offy, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->SW_topoffy, args, 0);
             break;
         case DMU_TOP_TEXTURE_OFFSET_XY:
-            GetValue(DMT_SURFACE_OFFX, &p->top.offx, args, 0);
-            GetValue(DMT_SURFACE_OFFY, &p->top.offy, args, 1);
+            GetValue(DMT_SURFACE_OFFX, &p->SW_topoffx, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->SW_topoffy, args, 1);
             break;
         case DMU_TOP_COLOR:
-            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
-            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 1);
-            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[2], args, 2);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[1], args, 1);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 2);
             break;
         case DMU_TOP_COLOR_RED:
-            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[0], args, 0);
             break;
         case DMU_TOP_COLOR_GREEN:
-            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[1], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[1], args, 0);
             break;
         case DMU_TOP_COLOR_BLUE:
-            GetValue(DMT_SURFACE_RGBA, &p->top.rgba[2], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 0);
             break;
         case DMU_MIDDLE_TEXTURE:
             {
-            short texture = p->middle.texture;
+            short texture = p->SW_middlepic;
 
-            if(p->middle.flags & SUF_TEXFIX)
+            if(p->SW_middleflags & SUF_TEXFIX)
                 texture = 0;
 
             /*if(p->flags & SDF_MIDTEXUPPER)
-                texture = p->top.texture;*/
+                texture = p->SW_toppic;*/
 
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
             }
         case DMU_MIDDLE_TEXTURE_OFFSET_X:
-            GetValue(DMT_SURFACE_OFFX, &p->middle.offx, args, 0);
+            GetValue(DMT_SURFACE_OFFX, &p->SW_middleoffx, args, 0);
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_Y:
-            GetValue(DMT_SURFACE_OFFY, &p->middle.offy, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->SW_middleoffy, args, 0);
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_XY:
-            GetValue(DMT_SURFACE_OFFX, &p->middle.offx, args, 0);
-            GetValue(DMT_SURFACE_OFFY, &p->middle.offy, args, 1);
+            GetValue(DMT_SURFACE_OFFX, &p->SW_middleoffx, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->SW_middleoffy, args, 1);
             break;
         case DMU_MIDDLE_COLOR:
-            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
-            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[1], args, 1);
-            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[2], args, 2);
-            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[3], args, 3);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[1], args, 1);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[2], args, 2);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 3);
             break;
         case DMU_MIDDLE_COLOR_RED:
-            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[0], args, 0);
             break;
         case DMU_MIDDLE_COLOR_GREEN:
-            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[1], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[1], args, 0);
             break;
         case DMU_MIDDLE_COLOR_BLUE:
-            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[2], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[2], args, 0);
             break;
         case DMU_MIDDLE_COLOR_ALPHA:
-            GetValue(DMT_SURFACE_RGBA, &p->middle.rgba[3], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 0);
             break;
         case DMU_MIDDLE_BLENDMODE:
             GetValue(DMT_SIDE_BLENDMODE, &p->blendmode, args, 0);
             break;
         case DMU_BOTTOM_TEXTURE:
             {
-            short texture = p->bottom.texture;
+            short texture = p->SW_bottompic;
 
-            if(p->bottom.flags & SUF_TEXFIX)
+            if(p->SW_bottomflags & SUF_TEXFIX)
                 texture = 0;
 
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
             }
         case DMU_BOTTOM_TEXTURE_OFFSET_X:
-            GetValue(DMT_SURFACE_OFFX, &p->bottom.offx, args, 0);
+            GetValue(DMT_SURFACE_OFFX, &p->SW_bottomoffx, args, 0);
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_Y:
-            GetValue(DMT_SURFACE_OFFY, &p->bottom.offy, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->SW_bottomoffy, args, 0);
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_XY:
-            GetValue(DMT_SURFACE_OFFX, &p->bottom.offx, args, 0);
-            GetValue(DMT_SURFACE_OFFY, &p->bottom.offy, args, 1);
+            GetValue(DMT_SURFACE_OFFX, &p->SW_bottomoffx, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->SW_bottomoffy, args, 1);
             break;
         case DMU_BOTTOM_COLOR:
-            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
-            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 1);
-            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[2], args, 2);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[1], args, 1);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 2);
             break;
         case DMU_BOTTOM_COLOR_RED:
-            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[0], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[0], args, 0);
             break;
         case DMU_BOTTOM_COLOR_GREEN:
-            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[1], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[1], args, 0);
             break;
         case DMU_BOTTOM_COLOR_BLUE:
-            GetValue(DMT_SURFACE_RGBA, &p->bottom.rgba[2], args, 0);
+            GetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 0);
             break;
         case DMU_FLAGS:
             GetValue(DMT_SIDE_FLAGS, &p->flags, args, 0);
@@ -2038,30 +2057,30 @@ static int GetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_VERTEX1:
-            GetValue(DMT_SEG_V1, &p->v1, args, 0);
+            GetValue(DMT_SEG_V, &p->SG_v1, args, 0);
             break;
         case DMU_VERTEX1_X:
-            GetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_X, &p->SG_v1->pos[VX], args, 0);
             break;
         case DMU_VERTEX1_Y:
-            GetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->SG_v1->pos[VY], args, 0);
             break;
         case DMU_VERTEX1_XY:
-            GetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
-            GetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 1);
+            GetValue(DMT_VERTEX_X, &p->SG_v1->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->SG_v1->pos[VY], args, 1);
             break;
         case DMU_VERTEX2:
-            GetValue(DMT_SEG_V2, &p->v2, args, 0);
+            GetValue(DMT_SEG_V, &p->SG_v2, args, 0);
             break;
         case DMU_VERTEX2_X:
-            GetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_X, &p->SG_v2->pos[VX], args, 0);
             break;
         case DMU_VERTEX2_Y:
-            GetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->SG_v2->pos[VY], args, 0);
             break;
         case DMU_VERTEX2_XY:
-            GetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
-            GetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 1);
+            GetValue(DMT_VERTEX_X, &p->SG_v2->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->SG_v2->pos[VY], args, 1);
             break;
         case DMU_LENGTH:
             GetValue(DMT_SEG_LENGTH, &p->length, args, 0);
@@ -2076,10 +2095,10 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SEG_LINEDEF, &p->linedef, args, 0);
             break;
         case DMU_FRONT_SECTOR:
-            GetValue(DMT_SEG_FRONTSECTOR, &p->frontsector, args, 0);
+            GetValue(DMT_SEG_SEC, &p->SG_frontsector, args, 0);
             break;
         case DMU_BACK_SECTOR:
-            GetValue(DMT_SEG_BACKSECTOR, &p->backsector, args, 0);
+            GetValue(DMT_SEG_SEC, &p->SG_backsector, args, 0);
             break;
         case DMU_FLAGS:
             GetValue(DMT_SEG_FLAGS, &p->flags, args, 0);
@@ -2099,30 +2118,30 @@ static int GetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_VERTEX1:
-            GetValue(DMT_LINE_V1, &p->v1, args, 0);
+            GetValue(DMT_LINE_V, &p->L_v1, args, 0);
             break;
         case DMU_VERTEX1_X:
-            GetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_X, &p->L_v1->pos[VX], args, 0);
             break;
         case DMU_VERTEX1_Y:
-            GetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->L_v1->pos[VY], args, 0);
             break;
         case DMU_VERTEX1_XY:
-            GetValue(DMT_VERTEX_X, &p->v1->pos[VX], args, 0);
-            GetValue(DMT_VERTEX_Y, &p->v1->pos[VY], args, 1);
+            GetValue(DMT_VERTEX_X, &p->L_v1->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->L_v1->pos[VY], args, 1);
             break;
         case DMU_VERTEX2:
-            GetValue(DMT_LINE_V2, &p->v2, args, 0);
+            GetValue(DMT_LINE_V, &p->L_v2, args, 0);
             break;
         case DMU_VERTEX2_X:
-            GetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_X, &p->L_v2->pos[VX], args, 0);
             break;
         case DMU_VERTEX2_Y:
-            GetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->L_v2->pos[VY], args, 0);
             break;
         case DMU_VERTEX2_XY:
-            GetValue(DMT_VERTEX_X, &p->v2->pos[VX], args, 0);
-            GetValue(DMT_VERTEX_Y, &p->v2->pos[VY], args, 1);
+            GetValue(DMT_VERTEX_X, &p->L_v2->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_Y, &p->L_v2->pos[VY], args, 1);
             break;
         case DMU_DX:
             GetValue(DMT_LINE_DX, &p->dx, args, 0);
@@ -2131,11 +2150,8 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_LINE_DY, &p->dy, args, 0);
             break;
         case DMU_LENGTH:
-        {
-            lineinfo_t* info = LINE_INFO(p);
-            GetValue(DDVT_FLOAT, &info->length, args, 0);
+            GetValue(DDVT_FLOAT, &p->length, args, 0);
             break;
-        }
         /*
         case DMU_ANGLE:
         {
@@ -2151,19 +2167,19 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_LINE_SLOPETYPE, &p->slopetype, args, 0);
             break;
         case DMU_FRONT_SECTOR:
-            GetValue(DMT_LINE_FRONTSECTOR, &p->frontsector, args, 0);
+            GetValue(DMT_LINE_SEC, &p->L_frontsector, args, 0);
             break;
         case DMU_BACK_SECTOR:
-            GetValue(DMT_LINE_BACKSECTOR, &p->backsector, args, 0);
+            GetValue(DMT_LINE_SEC, &p->L_backsector, args, 0);
             break;
         case DMU_FLAGS:
             GetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
             break;
         case DMU_SIDE0:
-            GetValue(DDVT_PTR, &p->sides[0], args, 0);
+            GetValue(DDVT_PTR, &p->L_frontside, args, 0);
             break;
         case DMU_SIDE1:
-            GetValue(DDVT_PTR, &p->sides[1], args, 0);
+            GetValue(DDVT_PTR, &p->L_backside, args, 0);
             break;
 
         case DMU_BOUNDING_BOX:
@@ -2207,8 +2223,13 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SUBSECTOR_POLY, &p->poly, args, 0);
             break;
         case DMU_LINE_COUNT:
-            GetValue(DMT_SUBSECTOR_LINECOUNT, &p->linecount, args, 0);
+        {
+            // FIXME:
+            //GetValue(DMT_SUBSECTOR_LINECOUNT, &p->linecount, args, 0);
+            int val = (int) p->linecount;
+            GetValue(DDVT_INT, &val, args, 0);
             break;
+        }
         default:
             Con_Error("GetProperty: DMU_SUBSECTOR has no property %s.\n",
                       DMU_Str(args->prop));
@@ -2221,7 +2242,7 @@ static int GetProperty(void* ptr, void* context)
         polyobj_t* p = ptr;
         if(args->modifiers & DMU_SEG_OF_POLYOBJ)
         {
-            if(args->prop >= 0 && args->prop < p->numsegs)
+            if(args->prop < p->numsegs)
             {
                 GetValue(DDVT_PTR, &p->segs[args->prop], args, 0);
                 break;
@@ -2376,7 +2397,7 @@ static void SwapValue(valuetype_t valueType, void* src, void* dst)
 }
 #endif
 
-void P_SetBool(int type, int index, int prop, boolean param)
+void P_SetBool(int type, uint index, uint prop, boolean param)
 {
     setargs_t args;
 
@@ -2388,7 +2409,7 @@ void P_SetBool(int type, int index, int prop, boolean param)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetByte(int type, int index, int prop, byte param)
+void P_SetByte(int type, uint index, uint prop, byte param)
 {
     setargs_t args;
 
@@ -2398,7 +2419,7 @@ void P_SetByte(int type, int index, int prop, byte param)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetInt(int type, int index, int prop, int param)
+void P_SetInt(int type, uint index, uint prop, int param)
 {
     setargs_t args;
 
@@ -2408,7 +2429,7 @@ void P_SetInt(int type, int index, int prop, int param)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetFixed(int type, int index, int prop, fixed_t param)
+void P_SetFixed(int type, uint index, uint prop, fixed_t param)
 {
     setargs_t args;
 
@@ -2418,7 +2439,7 @@ void P_SetFixed(int type, int index, int prop, fixed_t param)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetAngle(int type, int index, int prop, angle_t param)
+void P_SetAngle(int type, uint index, uint prop, angle_t param)
 {
     setargs_t args;
 
@@ -2428,7 +2449,7 @@ void P_SetAngle(int type, int index, int prop, angle_t param)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetFloat(int type, int index, int prop, float param)
+void P_SetFloat(int type, uint index, uint prop, float param)
 {
     setargs_t args;
 
@@ -2438,7 +2459,7 @@ void P_SetFloat(int type, int index, int prop, float param)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetPtr(int type, int index, int prop, void* param)
+void P_SetPtr(int type, uint index, uint prop, void* param)
 {
     setargs_t args;
 
@@ -2448,7 +2469,7 @@ void P_SetPtr(int type, int index, int prop, void* param)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetBoolv(int type, int index, int prop, boolean* params)
+void P_SetBoolv(int type, uint index, uint prop, boolean* params)
 {
     setargs_t args;
 
@@ -2458,7 +2479,7 @@ void P_SetBoolv(int type, int index, int prop, boolean* params)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetBytev(int type, int index, int prop, byte* params)
+void P_SetBytev(int type, uint index, uint prop, byte* params)
 {
     setargs_t args;
 
@@ -2468,7 +2489,7 @@ void P_SetBytev(int type, int index, int prop, byte* params)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetIntv(int type, int index, int prop, int* params)
+void P_SetIntv(int type, uint index, uint prop, int* params)
 {
     setargs_t args;
 
@@ -2478,7 +2499,7 @@ void P_SetIntv(int type, int index, int prop, int* params)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetFixedv(int type, int index, int prop, fixed_t* params)
+void P_SetFixedv(int type, uint index, uint prop, fixed_t* params)
 {
     setargs_t args;
 
@@ -2488,7 +2509,7 @@ void P_SetFixedv(int type, int index, int prop, fixed_t* params)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetAnglev(int type, int index, int prop, angle_t* params)
+void P_SetAnglev(int type, uint index, uint prop, angle_t* params)
 {
     setargs_t args;
 
@@ -2498,7 +2519,7 @@ void P_SetAnglev(int type, int index, int prop, angle_t* params)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetFloatv(int type, int index, int prop, float* params)
+void P_SetFloatv(int type, uint index, uint prop, float* params)
 {
     setargs_t args;
 
@@ -2508,7 +2529,7 @@ void P_SetFloatv(int type, int index, int prop, float* params)
     P_Callback(type, index, &args, SetProperty);
 }
 
-void P_SetPtrv(int type, int index, int prop, void* params)
+void P_SetPtrv(int type, uint index, uint prop, void* params)
 {
     setargs_t args;
 
@@ -2520,7 +2541,7 @@ void P_SetPtrv(int type, int index, int prop, void* params)
 
 /* pointer-based write functions */
 
-void P_SetBoolp(void* ptr, int prop, boolean param)
+void P_SetBoolp(void* ptr, uint prop, boolean param)
 {
     setargs_t args;
 
@@ -2532,7 +2553,7 @@ void P_SetBoolp(void* ptr, int prop, boolean param)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetBytep(void* ptr, int prop, byte param)
+void P_SetBytep(void* ptr, uint prop, byte param)
 {
     setargs_t args;
 
@@ -2542,7 +2563,7 @@ void P_SetBytep(void* ptr, int prop, byte param)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetIntp(void* ptr, int prop, int param)
+void P_SetIntp(void* ptr, uint prop, int param)
 {
     setargs_t args;
 
@@ -2552,7 +2573,7 @@ void P_SetIntp(void* ptr, int prop, int param)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetFixedp(void* ptr, int prop, fixed_t param)
+void P_SetFixedp(void* ptr, uint prop, fixed_t param)
 {
     setargs_t args;
 
@@ -2562,7 +2583,7 @@ void P_SetFixedp(void* ptr, int prop, fixed_t param)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetAnglep(void* ptr, int prop, angle_t param)
+void P_SetAnglep(void* ptr, uint prop, angle_t param)
 {
     setargs_t args;
 
@@ -2572,7 +2593,7 @@ void P_SetAnglep(void* ptr, int prop, angle_t param)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetFloatp(void* ptr, int prop, float param)
+void P_SetFloatp(void* ptr, uint prop, float param)
 {
     setargs_t args;
 
@@ -2582,7 +2603,7 @@ void P_SetFloatp(void* ptr, int prop, float param)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetPtrp(void* ptr, int prop, void* param)
+void P_SetPtrp(void* ptr, uint prop, void* param)
 {
     setargs_t args;
 
@@ -2592,7 +2613,7 @@ void P_SetPtrp(void* ptr, int prop, void* param)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetBoolpv(void* ptr, int prop, boolean* params)
+void P_SetBoolpv(void* ptr, uint prop, boolean* params)
 {
     setargs_t args;
 
@@ -2602,7 +2623,7 @@ void P_SetBoolpv(void* ptr, int prop, boolean* params)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetBytepv(void* ptr, int prop, byte* params)
+void P_SetBytepv(void* ptr, uint prop, byte* params)
 {
     setargs_t args;
 
@@ -2612,7 +2633,7 @@ void P_SetBytepv(void* ptr, int prop, byte* params)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetIntpv(void* ptr, int prop, int* params)
+void P_SetIntpv(void* ptr, uint prop, int* params)
 {
     setargs_t args;
 
@@ -2622,7 +2643,7 @@ void P_SetIntpv(void* ptr, int prop, int* params)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetFixedpv(void* ptr, int prop, fixed_t* params)
+void P_SetFixedpv(void* ptr, uint prop, fixed_t* params)
 {
     setargs_t args;
 
@@ -2632,7 +2653,7 @@ void P_SetFixedpv(void* ptr, int prop, fixed_t* params)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetAnglepv(void* ptr, int prop, angle_t* params)
+void P_SetAnglepv(void* ptr, uint prop, angle_t* params)
 {
     setargs_t args;
 
@@ -2642,7 +2663,7 @@ void P_SetAnglepv(void* ptr, int prop, angle_t* params)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetFloatpv(void* ptr, int prop, float* params)
+void P_SetFloatpv(void* ptr, uint prop, float* params)
 {
     setargs_t args;
 
@@ -2652,7 +2673,7 @@ void P_SetFloatpv(void* ptr, int prop, float* params)
     P_Callbackp(args.type, ptr, &args, SetProperty);
 }
 
-void P_SetPtrpv(void* ptr, int prop, void* params)
+void P_SetPtrpv(void* ptr, uint prop, void* params)
 {
     setargs_t args;
 
@@ -2664,7 +2685,7 @@ void P_SetPtrpv(void* ptr, int prop, void* params)
 
 /* index-based read functions */
 
-boolean P_GetBool(int type, int index, int prop)
+boolean P_GetBool(int type, uint index, uint prop)
 {
     setargs_t args;
     boolean returnValue = false;
@@ -2676,7 +2697,7 @@ boolean P_GetBool(int type, int index, int prop)
     return returnValue;
 }
 
-byte P_GetByte(int type, int index, int prop)
+byte P_GetByte(int type, uint index, uint prop)
 {
     setargs_t args;
     byte returnValue = 0;
@@ -2688,7 +2709,7 @@ byte P_GetByte(int type, int index, int prop)
     return returnValue;
 }
 
-int P_GetInt(int type, int index, int prop)
+int P_GetInt(int type, uint index, uint prop)
 {
     setargs_t args;
     int returnValue = 0;
@@ -2700,7 +2721,7 @@ int P_GetInt(int type, int index, int prop)
     return returnValue;
 }
 
-fixed_t P_GetFixed(int type, int index, int prop)
+fixed_t P_GetFixed(int type, uint index, uint prop)
 {
     setargs_t args;
     fixed_t returnValue = 0;
@@ -2712,7 +2733,7 @@ fixed_t P_GetFixed(int type, int index, int prop)
     return returnValue;
 }
 
-angle_t P_GetAngle(int type, int index, int prop)
+angle_t P_GetAngle(int type, uint index, uint prop)
 {
     setargs_t args;
     angle_t returnValue = 0;
@@ -2724,7 +2745,7 @@ angle_t P_GetAngle(int type, int index, int prop)
     return returnValue;
 }
 
-float P_GetFloat(int type, int index, int prop)
+float P_GetFloat(int type, uint index, uint prop)
 {
     setargs_t args;
     float returnValue = 0;
@@ -2736,7 +2757,7 @@ float P_GetFloat(int type, int index, int prop)
     return returnValue;
 }
 
-void* P_GetPtr(int type, int index, int prop)
+void* P_GetPtr(int type, uint index, uint prop)
 {
     setargs_t args;
     void* returnValue = NULL;
@@ -2748,7 +2769,7 @@ void* P_GetPtr(int type, int index, int prop)
     return returnValue;
 }
 
-void P_GetBoolv(int type, int index, int prop, boolean* params)
+void P_GetBoolv(int type, uint index, uint prop, boolean* params)
 {
     setargs_t args;
 
@@ -2758,7 +2779,7 @@ void P_GetBoolv(int type, int index, int prop, boolean* params)
     P_Callback(type, index, &args, GetProperty);
 }
 
-void P_GetBytev(int type, int index, int prop, byte* params)
+void P_GetBytev(int type, uint index, uint prop, byte* params)
 {
     setargs_t args;
 
@@ -2768,7 +2789,7 @@ void P_GetBytev(int type, int index, int prop, byte* params)
     P_Callback(type, index, &args, GetProperty);
 }
 
-void P_GetIntv(int type, int index, int prop, int* params)
+void P_GetIntv(int type, uint index, uint prop, int* params)
 {
     setargs_t args;
 
@@ -2778,7 +2799,7 @@ void P_GetIntv(int type, int index, int prop, int* params)
     P_Callback(type, index, &args, GetProperty);
 }
 
-void P_GetFixedv(int type, int index, int prop, fixed_t* params)
+void P_GetFixedv(int type, uint index, uint prop, fixed_t* params)
 {
     setargs_t args;
 
@@ -2788,7 +2809,7 @@ void P_GetFixedv(int type, int index, int prop, fixed_t* params)
     P_Callback(type, index, &args, GetProperty);
 }
 
-void P_GetAnglev(int type, int index, int prop, angle_t* params)
+void P_GetAnglev(int type, uint index, uint prop, angle_t* params)
 {
     setargs_t args;
 
@@ -2798,7 +2819,7 @@ void P_GetAnglev(int type, int index, int prop, angle_t* params)
     P_Callback(type, index, &args, GetProperty);
 }
 
-void P_GetFloatv(int type, int index, int prop, float* params)
+void P_GetFloatv(int type, uint index, uint prop, float* params)
 {
     setargs_t args;
 
@@ -2808,7 +2829,7 @@ void P_GetFloatv(int type, int index, int prop, float* params)
     P_Callback(type, index, &args, GetProperty);
 }
 
-void P_GetPtrv(int type, int index, int prop, void* params)
+void P_GetPtrv(int type, uint index, uint prop, void* params)
 {
     setargs_t args;
 
@@ -2820,7 +2841,7 @@ void P_GetPtrv(int type, int index, int prop, void* params)
 
 /* pointer-based read functions */
 
-boolean P_GetBoolp(void* ptr, int prop)
+boolean P_GetBoolp(void* ptr, uint prop)
 {
     setargs_t args;
     boolean returnValue = false;
@@ -2832,7 +2853,7 @@ boolean P_GetBoolp(void* ptr, int prop)
     return returnValue;
 }
 
-byte P_GetBytep(void* ptr, int prop)
+byte P_GetBytep(void* ptr, uint prop)
 {
     setargs_t args;
     byte returnValue = 0;
@@ -2844,7 +2865,7 @@ byte P_GetBytep(void* ptr, int prop)
     return returnValue;
 }
 
-int P_GetIntp(void* ptr, int prop)
+int P_GetIntp(void* ptr, uint prop)
 {
     setargs_t args;
     int returnValue = 0;
@@ -2856,7 +2877,7 @@ int P_GetIntp(void* ptr, int prop)
     return returnValue;
 }
 
-fixed_t P_GetFixedp(void* ptr, int prop)
+fixed_t P_GetFixedp(void* ptr, uint prop)
 {
     setargs_t args;
     fixed_t returnValue = 0;
@@ -2868,7 +2889,7 @@ fixed_t P_GetFixedp(void* ptr, int prop)
     return returnValue;
 }
 
-angle_t P_GetAnglep(void* ptr, int prop)
+angle_t P_GetAnglep(void* ptr, uint prop)
 {
     setargs_t args;
     angle_t returnValue = 0;
@@ -2880,7 +2901,7 @@ angle_t P_GetAnglep(void* ptr, int prop)
     return returnValue;
 }
 
-float P_GetFloatp(void* ptr, int prop)
+float P_GetFloatp(void* ptr, uint prop)
 {
     setargs_t args;
     float returnValue = 0;
@@ -2892,7 +2913,7 @@ float P_GetFloatp(void* ptr, int prop)
     return returnValue;
 }
 
-void* P_GetPtrp(void* ptr, int prop)
+void* P_GetPtrp(void* ptr, uint prop)
 {
     setargs_t args;
     void* returnValue = NULL;
@@ -2904,7 +2925,7 @@ void* P_GetPtrp(void* ptr, int prop)
     return returnValue;
 }
 
-void P_GetBoolpv(void* ptr, int prop, boolean* params)
+void P_GetBoolpv(void* ptr, uint prop, boolean* params)
 {
     setargs_t args;
 
@@ -2914,7 +2935,7 @@ void P_GetBoolpv(void* ptr, int prop, boolean* params)
     P_Callbackp(args.type, ptr, &args, GetProperty);
 }
 
-void P_GetBytepv(void* ptr, int prop, byte* params)
+void P_GetBytepv(void* ptr, uint prop, byte* params)
 {
     setargs_t args;
 
@@ -2924,7 +2945,7 @@ void P_GetBytepv(void* ptr, int prop, byte* params)
     P_Callbackp(args.type, ptr, &args, GetProperty);
 }
 
-void P_GetIntpv(void* ptr, int prop, int* params)
+void P_GetIntpv(void* ptr, uint prop, int* params)
 {
     setargs_t args;
 
@@ -2934,7 +2955,7 @@ void P_GetIntpv(void* ptr, int prop, int* params)
     P_Callbackp(args.type, ptr, &args, GetProperty);
 }
 
-void P_GetFixedpv(void* ptr, int prop, fixed_t* params)
+void P_GetFixedpv(void* ptr, uint prop, fixed_t* params)
 {
     setargs_t args;
 
@@ -2944,7 +2965,7 @@ void P_GetFixedpv(void* ptr, int prop, fixed_t* params)
     P_Callbackp(args.type, ptr, &args, GetProperty);
 }
 
-void P_GetAnglepv(void* ptr, int prop, angle_t* params)
+void P_GetAnglepv(void* ptr, uint prop, angle_t* params)
 {
     setargs_t args;
 
@@ -2954,7 +2975,7 @@ void P_GetAnglepv(void* ptr, int prop, angle_t* params)
     P_Callbackp(args.type, ptr, &args, GetProperty);
 }
 
-void P_GetFloatpv(void* ptr, int prop, float* params)
+void P_GetFloatpv(void* ptr, uint prop, float* params)
 {
     setargs_t args;
 
@@ -2964,7 +2985,7 @@ void P_GetFloatpv(void* ptr, int prop, float* params)
     P_Callbackp(args.type, ptr, &args, GetProperty);
 }
 
-void P_GetPtrpv(void* ptr, int prop, void* params)
+void P_GetPtrpv(void* ptr, uint prop, void* params)
 {
     setargs_t args;
 
@@ -2974,7 +2995,7 @@ void P_GetPtrpv(void* ptr, int prop, void* params)
     P_Callbackp(args.type, ptr, &args, GetProperty);
 }
 
-void P_Copy(int type, int prop, int fromIndex, int toIndex)
+void P_Copy(int type, uint prop, uint fromIndex, uint toIndex)
 {
 //    setargs_t args;
 //    int ptype = propertyTypes[prop];
@@ -3062,7 +3083,7 @@ void P_Copy(int type, int prop, int fromIndex, int toIndex)
 #endif
 }
 
-void P_Copyp(int prop, void* from, void* to)
+void P_Copyp(uint prop, void* from, void* to)
 {
 #if 0
     int type = DMU_GetType(from);
@@ -3158,7 +3179,7 @@ void P_Copyp(int prop, void* from, void* to)
 #endif
 }
 
-void P_Swap(int type, int prop, int fromIndex, int toIndex)
+void P_Swap(int type, uint prop, uint fromIndex, uint toIndex)
 {
 //    setargs_t argsA, argsB;
 //    int ptype = propertyTypes[prop];
@@ -3284,7 +3305,7 @@ void P_Swap(int type, int prop, int fromIndex, int toIndex)
 #endif
 }
 
-void P_Swapp(int prop, void* from, void* to)
+void P_Swapp(uint prop, void* from, void* to)
 {
 #if 0
     int type = DMU_GetType(from);

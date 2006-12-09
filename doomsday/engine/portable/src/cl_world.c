@@ -48,7 +48,7 @@
 typedef struct {
     thinker_t thinker;
     sector_t *sector;
-    int     sectornum;
+    uint    sectornum;
     clmovertype_t type;
     fixed_t *current;
     fixed_t destination;
@@ -57,7 +57,7 @@ typedef struct {
 
 typedef struct {
     thinker_t thinker;
-    int     number;
+    uint    number;
     polyobj_t *poly;
     boolean move;
     boolean rotate;
@@ -206,7 +206,7 @@ void Cl_MoverThinker(mover_t *mover)
     }
 }
 
-void Cl_AddMover(int sectornum, clmovertype_t type, fixed_t dest, fixed_t speed)
+void Cl_AddMover(uint sectornum, clmovertype_t type, fixed_t dest, fixed_t speed)
 {
     sector_t *sector;
     int     i;
@@ -340,7 +340,7 @@ polymover_t *Cl_NewPolyMover(int number)
     return mover;
 }
 
-void Cl_SetPolyMover(int number, int move, int rotate)
+void Cl_SetPolyMover(uint number, int move, int rotate)
 {
     polymover_t *mover;
 
@@ -377,7 +377,7 @@ void Cl_RemoveMovers(void)
     }
 }
 
-mover_t *Cl_GetActiveMover(int sectornum, clmovertype_t type)
+mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
 {
     int     i;
 
@@ -694,12 +694,12 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     sid = SIDE_PTR(num);
 
     if(df & SIDF_TOPTEX)
-        sid->top.texture = toptexture;
+        sid->SW_toppic = toptexture;
     if(df & SIDF_MIDTEX)
-        sid->middle.texture = midtexture;
+        sid->SW_middlepic = midtexture;
     if(df & SIDF_BOTTOMTEX)
     {
-        sid->bottom.texture = bottomtexture;
+        sid->SW_bottompic = bottomtexture;
 
 #ifdef _DEBUG
         Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num,
@@ -708,27 +708,27 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        sid->top.rgba[0] = toprgb[0];
+        sid->SW_toprgba[0] = toprgb[0];
     if(df & SIDF_TOP_COLOR_GREEN)
-        sid->top.rgba[1] = toprgb[1];
+        sid->SW_toprgba[1] = toprgb[1];
     if(df & SIDF_TOP_COLOR_BLUE)
-        sid->top.rgba[2] = toprgb[2];
+        sid->SW_toprgba[2] = toprgb[2];
 
     if(df & SIDF_MID_COLOR_RED)
-        sid->middle.rgba[0] = midrgba[0];
+        sid->SW_middlergba[0] = midrgba[0];
     if(df & SIDF_MID_COLOR_GREEN)
-        sid->middle.rgba[1] = midrgba[1];
+        sid->SW_middlergba[1] = midrgba[1];
     if(df & SIDF_MID_COLOR_BLUE)
-        sid->middle.rgba[2] = midrgba[2];
+        sid->SW_middlergba[2] = midrgba[2];
     if(df & SIDF_MID_COLOR_ALPHA)
-        sid->middle.rgba[3] = midrgba[3];
+        sid->SW_middlergba[3] = midrgba[3];
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        sid->bottom.rgba[0] = bottomrgb[0];
+        sid->SW_bottomrgba[0] = bottomrgb[0];
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        sid->bottom.rgba[1] = bottomrgb[1];
+        sid->SW_bottomrgba[1] = bottomrgb[1];
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        sid->bottom.rgba[2] = bottomrgb[2];
+        sid->SW_bottomrgba[2] = bottomrgb[2];
 
     if(df & SIDF_MID_BLENDMODE)
         sid->blendmode = blendmode;

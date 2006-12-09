@@ -411,23 +411,22 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
     int         i, num, vid, sectorlight;
     const byte *pLightColor;
     byte        vColor[] = { 0, 0, 0, 0};
-    subsectorinfo_t *ssecinfo = SUBSECT_INFO(subsector);
     surface_t  *surface = &poly->sector->planes[plane->type]->surface;
 
-    poly->numvertices = ssecinfo->numvertices;
+    poly->numvertices = subsector->numvertices;
 
     // Copy the vertices in reverse order for ceilings (flip faces).
     if(plane->type == PLN_CEILING)
-        vid = ssecinfo->numvertices - 1;
+        vid = subsector->numvertices - 1;
     else
         vid = 0;
 
     // Calculate the distance to each vertex.
-    num = ssecinfo->numvertices;
+    num = subsector->numvertices;
     for(i = 0; i < num; ++i)
     {
-        poly->vertices[i].pos[VX] = ssecinfo->vertices[vid].pos[VX];
-        poly->vertices[i].pos[VY] = ssecinfo->vertices[vid].pos[VY];
+        poly->vertices[i].pos[VX] = subsector->vertices[vid].pos[VX];
+        poly->vertices[i].pos[VY] = subsector->vertices[vid].pos[VY];
         poly->vertices[i].pos[VZ] = height;
 
         poly->vertices[i].dist = Rend_PointDist2D(poly->vertices[i].pos);

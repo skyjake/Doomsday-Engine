@@ -122,7 +122,7 @@ void R_CornerNormalPoint(const pvec2_t line1, float dist1, const pvec2_t line2,
 
 void R_ShadowDelta(pvec2_t delta, line_t *line, sector_t *frontSector)
 {
-    if(line->frontsector == frontSector)
+    if(line->L_frontsector == frontSector)
     {
         delta[VX] = FIX2FLT(line->dx);
         delta[VY] = FIX2FLT(line->dy);
@@ -134,14 +134,14 @@ void R_ShadowDelta(pvec2_t delta, line_t *line, sector_t *frontSector)
     }
 }
 
-sideinfo_t *R_GetShadowLineSideInfo(shadowpoly_t *poly)
+side_t *R_GetShadowLineSide(shadowpoly_t *poly)
 {
-    return (poly->line->sides[poly->flags & SHPF_FRONTSIDE ? 0 : 1]->info);
+    return (poly->line->sides[poly->flags & SHPF_FRONTSIDE ? FRONT : BACK]);
 }
 
 line_t *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left, boolean back)
 {
-    sideinfo_t *side = R_GetShadowLineSideInfo(poly);
+    side_t *side = R_GetShadowLineSide(poly);
     line_t **neighbors = (back ? side->backneighbor : side->neighbor);
 
     return neighbors[left ? 0 : 1];
@@ -152,8 +152,7 @@ line_t *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left, boolean back)
  */
 sector_t *R_GetShadowSector(shadowpoly_t *poly)
 {
-    return poly->flags & SHPF_FRONTSIDE ? poly->line->frontsector : poly->
-        line->backsector;
+    return (poly->line->sec[poly->flags & SHPF_FRONTSIDE ? FRONT : BACK]);
 }
 
 /**
@@ -161,7 +160,7 @@ sector_t *R_GetShadowSector(shadowpoly_t *poly)
  */
 sector_t *R_GetShadowProximity(shadowpoly_t *poly, boolean left)
 {
-    sideinfo_t *side = R_GetShadowLineSideInfo(poly);
+    side_t *side = R_GetShadowLineSide(poly);
 
     return side->proxsector[left ? 0 : 1];
 }
@@ -270,7 +269,6 @@ void R_ShadowEdges(shadowpoly_t *poly)
  */
 void R_LinkShadow(shadowpoly_t *poly, subsector_t *subsector)
 {
-    subsectorinfo_t *info = SUBSECT_INFO(subsector);
     shadowlink_t *link;
 
 #ifdef _DEBUG
@@ -278,7 +276,7 @@ void R_LinkShadow(shadowpoly_t *poly, subsector_t *subsector)
 {
 shadowlink_t *i;
 
-for(i = info->shadows; i; i = i->next)
+for(i = subsector->shadows; i; i = i->next)
     if(i->poly == poly)
         Con_Error("R_LinkShadow: Already here!!\n");
 }
@@ -288,8 +286,8 @@ for(i = info->shadows; i; i = i->next)
     link = Z_BlockNewElement(shadowLinksBlockSet);
 
     // The links are stored into a linked list.
-    link->next = info->shadows;
-    info->shadows = link;
+    link->next = subsector->shadows;
+    subsector->shadows = link;
     link->poly = poly;
 }
 
@@ -412,13 +410,14 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
 #define OVERLAP_RIGHT   0x02
 #define OVERLAP_ALL     (OVERLAP_LEFT | OVERLAP_RIGHT)
 #define EPSILON         .01f
-    boolean done = false;
-    int     i, k, tries;
+    boolean     done;
+    int         i, tries;
+    uint        k;
     boundary_t *boundaries, *bound; //, *other;
-    byte   *overlaps;
-    float   s, t;
-    vec2_t  a, b;
-    line_t *line;
+    byte       *overlaps;
+    float       s, t;
+    vec2_t      a, b;
+    line_t     *line;
 
     // Were any polygons provided?
     if(!count)
@@ -428,6 +427,7 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
     overlaps = M_Malloc(count);
 
     // We don't want to stay here forever.
+    done = false;
     for(tries = 0; tries < 100 && !done; ++tries)
     {
         // We will set this to false if we notice that overlaps still
@@ -459,14 +459,14 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
                 if(polys[i].line == line)
                     continue;
 
-                if(LINE_INFO(line)->selfrefhackroot)
+                if(line->selfrefhackroot)
                     continue;
 
                 if((overlaps[i] & OVERLAP_ALL) == OVERLAP_ALL)
                     break;
 
-                V2_SetFixed(a, line->v1->pos[VX], line->v1->pos[VY]);
-                V2_SetFixed(b, line->v2->pos[VX], line->v2->pos[VY]);
+                V2_SetFixed(a, line->v[0]->pos[VX], line->v[0]->pos[VY]);
+                V2_SetFixed(b, line->v[1]->pos[VX], line->v[1]->pos[VY]);
 
                 // Try the left edge of the shadow.
                 V2_Intercept2(bound->left, bound->a, a /*other->left */ ,
@@ -506,13 +506,13 @@ void R_ResolveOverlaps(shadowpoly_t *polys, int count, sector_t *sector)
  * New shadowpolys will be allocated from the storage.  If it is NULL,
  * the number of polys required is returned.
  */
-int R_MakeShadowEdges(shadowpoly_t *storage)
+uint R_MakeShadowEdges(shadowpoly_t *storage)
 {
-    int     i, j, counter;
-    sector_t *sector;
-    line_t *line;
-    sideinfo_t *info;
-    boolean frontside;
+    uint        i, j, counter;
+    sector_t   *sector;
+    line_t     *line;
+    side_t     *side;
+    boolean     frontside;
     shadowpoly_t *poly, *sectorFirst, *allocator = storage;
 
     for(i = 0, counter = 0; i < numsectors; ++i)
@@ -524,15 +524,12 @@ int R_MakeShadowEdges(shadowpoly_t *storage)
         for(j = 0; j < sector->linecount; ++j)
         {
             line = sector->Lines[j];
-            frontside = (line->frontsector == sector);
-            if(line->sides[frontside ? 0 : 1])
-                info = line->sides[frontside ? 0 : 1]->info;
-            else
-                info = NULL;
+            frontside = (line->L_frontsector == sector);
+            side = line->sides[frontside ? FRONT:BACK];
 
             // If the line hasn't got two neighbors, it won't get a
             // shadow.
-            if(!info || !info->neighbor[0] || !info->neighbor[1])
+            if(!side || !side->neighbor[0] || !side->neighbor[1])
                 continue;
 
             // This side will get a shadow.  Increment counter (we'll
@@ -574,7 +571,7 @@ void R_InitSectorShadows(void)
 {
     uint        startTime = Sys_GetRealTime();
 
-    int         i, maxCount;
+    uint        i, maxCount;
     shadowpoly_t *shadows, *poly;
     vec2_t      bounds[2], point;
 

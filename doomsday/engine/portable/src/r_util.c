@@ -72,14 +72,16 @@ int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
     if(!node->dx)
     {
         if(x <= node->x)
-            return node->dy > 0;
-        return node->dy < 0;
+            return (node->dy > 0? 1:0);
+        else
+            return (node->dy < 0? 1:0);
     }
     if(!node->dy)
     {
         if(y <= node->y)
-            return node->dx < 0;
-        return node->dx > 0;
+            return (node->dx < 0? 1:0);
+        else
+            return (node->dx > 0? 1:0);
     }
 
     dx = (x - node->x);
@@ -90,7 +92,8 @@ int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
     {
         if((node->dy ^ dx) & 0x80000000)
             return 1;           // (left is negative)
-        return 0;
+        else
+            return 0;
     }
 
     left = FixedMul(node->dy >> FRACBITS, dx);
@@ -98,7 +101,8 @@ int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
 
     if(right < left)
         return 0;               // front side
-    return 1;                   // back side
+    else
+        return 1;               // back side
 }
 
 /*
@@ -182,7 +186,7 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
         if(y >= 0)
         {                       // y>= 0
             if(x > y)
-                return tantoangle[R_SlopeDiv(y, x)];    // octant 0
+                return tantoangle[R_SlopeDiv(y, x)];                // octant 0
             else
                 return ANG90 - 1 - tantoangle[R_SlopeDiv(x, y)];    // octant 1
         }
@@ -190,9 +194,9 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
         {                       // y<0
             y = -y;
             if(x > y)
-                return -tantoangle[R_SlopeDiv(y, x)];   // octant 8
+                return -tantoangle[R_SlopeDiv(y, x)];               // octant 8
             else
-                return ANG270 + tantoangle[R_SlopeDiv(x, y)];   // octant 7
+                return ANG270 + tantoangle[R_SlopeDiv(x, y)];       // octant 7
         }
     }
     else
@@ -203,13 +207,13 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
             if(x > y)
                 return ANG180 - 1 - tantoangle[R_SlopeDiv(y, x)];   // octant 3
             else
-                return ANG90 + tantoangle[R_SlopeDiv(x, y)];    // octant 2
+                return ANG90 + tantoangle[R_SlopeDiv(x, y)];        // octant 2
         }
         else
         {                       // y<0
             y = -y;
             if(x > y)
-                return ANG180 + tantoangle[R_SlopeDiv(y, x)];   // octant 4
+                return ANG180 + tantoangle[R_SlopeDiv(y, x)];       // octant 4
             else
                 return ANG270 - 1 - tantoangle[R_SlopeDiv(x, y)];   // octant 5
         }
@@ -268,11 +272,11 @@ subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
     return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
 }
 
-line_t *R_GetLineForSide(int sideNumber)
+line_t *R_GetLineForSide(uint sideNumber)
 {
+    uint        i;
     side_t     *side = SIDE_PTR(sideNumber);
     sector_t   *sector = side->sector;
-    int         i;
 
     // All sides may not have a sector.
     if(!sector)
@@ -301,27 +305,26 @@ line_t *R_GetLineForSide(int sideNumber)
  */
 boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 {
-    int         i;
+#define VI      (sector->Lines[i]->v[0])
+#define VJ      (sector->Lines[i]->v[1])
+
+    uint        i;
     boolean     isOdd = false;
-    vertex_t   *vi, *vj;
 
     for(i = 0; i < sector->linecount; ++i)
     {
         // Skip lines that aren't sector boundaries.
-        if(sector->Lines[i]->frontsector == sector &&
-           sector->Lines[i]->backsector == sector)
+        if(sector->Lines[i]->L_frontsector == sector &&
+           sector->Lines[i]->L_backsector == sector)
             continue;
 
         // It shouldn't matter whether the line faces inward or outward.
-        vi = sector->Lines[i]->v1;
-        vj = sector->Lines[i]->v2;
-
-        if((vi->pos[VY] < y && vj->pos[VY] >= y) ||
-           (vj->pos[VY] < y && vi->pos[VY] >= y))
+        if((VI->pos[VY] < y && VJ->pos[VY] >= y) ||
+           (VJ->pos[VY] < y && VI->pos[VY] >= y))
         {
-            if(vi->pos[VX] +
-               FixedMul(FixedDiv(y - vi->pos[VY], vj->pos[VY] - vi->pos[VY]),
-                        vj->pos[VX] - vi->pos[VX]) < x)
+            if(VI->pos[VX] +
+               FixedMul(FixedDiv(y - VI->pos[VY], VJ->pos[VY] - VI->pos[VY]),
+                        VJ->pos[VX] - VI->pos[VX]) < x)
             {
                 // Toggle oddness.
                 isOdd = !isOdd;
@@ -331,6 +334,9 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 
     // The point is inside if the number of crossed nodes is odd.
     return isOdd;
+
+#undef VI
+#undef VJ
 }
 
 /**
@@ -348,7 +354,7 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
  */
 boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
 {
-    int         i;
+    uint        i;
     subsector_t *subsector;
     fvertex_t  *vi, *vj;
     float       fx, fy;
@@ -393,15 +399,16 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
 }
 
 /**
- * Returns the index of the sector who owns the given degenmobj.
+ * Returns a ptr to the sector which owns the given degenmobj.
  *
  * @param degenmobj     degenmobj to search for.
  *
- * @return int          Sector number where the degenmobj resides else -1.
+ * @return              Ptr to the Sector where the degenmobj resides,
+ *                      else <code>NULL</code>.
  */
-int R_GetSectorNumForDegen(void *degenmobj)
+sector_t *R_GetSectorForDegen(void *degenmobj)
 {
-    int         i, k;
+    uint        i, k;
     sector_t   *sec;
 
     // Check all sectors; find where the sound is coming from.
@@ -410,15 +417,15 @@ int R_GetSectorNumForDegen(void *degenmobj)
         sec = SECTOR_PTR(i);
 
         if(degenmobj == &sec->soundorg)
-            return i;
+            return sec;
         else
         {   // Check the planes of this sector
-            for(k=0; k < sec->planecount; ++k)
+            for(k = 0; k < sec->planecount; ++k)
                 if(degenmobj == &sec->planes[k]->soundorg)
                 {
-                    return i;
+                    return sec;
                 }
         }
     }
-    return -1;
+    return NULL;
 }

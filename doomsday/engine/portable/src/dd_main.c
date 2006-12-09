@@ -136,7 +136,7 @@ static char *wadfiles[MAXWADFILES];
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Adds the given IWAD to the list of default IWADs.
  */
 void DD_AddIWAD(const char *path)
@@ -147,7 +147,7 @@ void DD_AddIWAD(const char *path)
     while(iwadlist[i])
         i++;
     M_TranslatePath(path, buf);
-    iwadlist[i] = calloc(strlen(buf) + 1, 1);   // This mem is not freed?
+    iwadlist[i] = M_Calloc(strlen(buf) + 1);   // This mem is not freed?
     strcpy(iwadlist[i], buf);
 }
 
@@ -155,7 +155,7 @@ void DD_AddIWAD(const char *path)
 static void AddToWadList(char *list)
 {
     int     len = strlen(list);
-    char   *buffer = malloc(len + 1), *token;
+    char   *buffer = M_Malloc(len + 1), *token;
 
     strcpy(buffer, list);
     token = strtok(buffer, ATWSEPS);
@@ -164,14 +164,13 @@ static void AddToWadList(char *list)
         DD_AddStartupWAD(token /*, false */ );
         token = strtok(NULL, ATWSEPS);
     }
-    free(buffer);
+    M_Free(buffer);
 }
 
-/*
+/**
  * (f_forall_func_t)
  */
-static int autoDataAdder(const char *fileName, filetype_t type,
-                         void *ptr)
+static int autoDataAdder(const char *fileName, filetype_t type, void *ptr)
 {
     autoload_t *data = ptr;
 
@@ -193,7 +192,7 @@ static int autoDataAdder(const char *fileName, filetype_t type,
     return true;
 }
 
-/*
+/**
  * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data
  * directory are added to the wadfiles list.  Returns the number of new
  * files that were loaded.
@@ -209,12 +208,12 @@ int DD_AddAutoData(boolean loadFiles)
         NULL
     };
     char    pattern[256];
-    int     i;
+    uint    i;
 
     data.loadFiles = loadFiles;
     data.count = 0;
 
-    for(i = 0; extensions[i]; i++)
+    for(i = 0; extensions[i]; ++i)
     {
         sprintf(pattern, "%sauto\\*.%s", R_GetDataPath(), extensions[i]);
         Dir_FixSlashes(pattern);
@@ -230,7 +229,7 @@ void DD_SetConfigFile(char *filename)
     Dir_FixSlashes(configFileName);
 }
 
-/*
+/**
  * Set the primary DED file, which is included immediately after
  * Doomsday.ded.
  */
@@ -240,7 +239,7 @@ void DD_SetDefsFile(char *filename)
     Dir_FixSlashes(topDefsFileName);
 }
 
-/*
+/**
  * Sets the level of verbosity that was requested using the -verbose
  * option(s).
  */
@@ -253,7 +252,7 @@ void DD_Verbosity(void)
             verbose++;
 }
 
-/*
+/**
  * Define Auto mappings for the runtime directory.
  */
 void DD_DefineBuiltinVDM(void)
@@ -288,7 +287,7 @@ void DD_AutoLoad(void)
     }
 }
 
-/*
+/**
  * Engine and game initialization. When complete, starts the game loop.
  * What a mess...
  */
@@ -302,15 +301,16 @@ void DD_Main(void)
     DD_Verbosity();
 
 #ifdef UNIX
-    #ifndef MACOSX
-        if (getenv("HOME")) {
+#   ifndef MACOSX
+        if(getenv("HOME"))
+        {
             filename_t homeDir;
             sprintf(homeDir, "%s/.deng", getenv("HOME"));
             M_CheckPath(homeDir);
             Dir_MakeDir(homeDir, &ddRuntimeDir);
             userdir_ok = Dir_ChDir(&ddRuntimeDir);
         }
-    #endif
+#   endif
 #endif
 
     // The -userdir option sets the working directory.
@@ -336,11 +336,11 @@ void DD_Main(void)
     // The base path is always the same and depends on the build
     // configuration.  Usually this is something like
     // "/usr/share/deng/".
-#ifdef MACOSX
+#   ifdef MACOSX
     strcpy(ddBasePath, "./");
-#else
+#   else
     strcpy(ddBasePath, DENG_BASE_DIR);
-#endif
+#   endif
 #endif
 
 #ifdef WIN32
@@ -680,7 +680,7 @@ void DD_CheckTimeDemo(void)
     }
 }
 
-/*
+/**
  * This is a 'public' WAD file addition routine. The caller can put a
  * greater-than character (>) in front of the name to prepend the base
  * path to the file name (providing it's a relative path).
@@ -694,7 +694,7 @@ void DD_AddStartupWAD(const char *file)
     while(wadfiles[i])
         i++;
     M_TranslatePath(file, temp);
-    new = calloc(strlen(temp) + 1, 1);  // This is never freed?
+    new = M_Calloc(strlen(temp) + 1);  // This is never freed?
     strcat(new, temp);
     wadfiles[i] = new;
 }
@@ -722,7 +722,7 @@ void DD_UpdateEngineState(void)
     gx.UpdateState(DD_POST);
 }
 
-/*
+/**
  * Queries are a (poor) way to extend the API without adding new functions.
  */
 void DD_CheckQuery(int query, int parm)
@@ -814,7 +814,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 };
 /* *INDENT-ON* */
 
-/*
+/**
  * Get a 32-bit integer value.
  */
 int DD_GetInteger(int ddvalue)
@@ -908,7 +908,7 @@ int DD_GetInteger(int ddvalue)
     return *ddValues[ddvalue].readPtr;
 }
 
-/*
+/**
  * Set a 32-bit integer value.
  */
 void DD_SetInteger(int ddvalue, int parm)
@@ -973,7 +973,7 @@ void DD_SetInteger(int ddvalue, int parm)
         *ddValues[ddvalue].writePtr = parm;
 }
 
-/*
+/**
  * Get a pointer to the value of a variable. Not all variables support
  * this. Added for 64-bit support.
  */
@@ -984,6 +984,33 @@ void* DD_GetVariable(int ddvalue)
         // How about some specials?
         switch (ddvalue)
         {
+        case DD_SECTOR_COUNT:
+            return &numsectors;
+
+        case DD_LINE_COUNT:
+            return &numlines;
+
+        case DD_SIDE_COUNT:
+            return &numsides;
+
+        case DD_VERTEX_COUNT:
+            return &numvertexes;
+
+        case DD_POLYOBJ_COUNT:
+            return &po_NumPolyobjs;
+
+        case DD_SEG_COUNT:
+            return &numsegs;
+
+        case DD_SUBSECTOR_COUNT:
+            return &numsubsectors;
+
+        case DD_NODE_COUNT:
+            return &numnodes;
+
+        case DD_THING_COUNT:
+            return &numthings;
+
         case DD_GAME_EXPORTS:
             return &gx;
 
@@ -1021,7 +1048,7 @@ void* DD_GetVariable(int ddvalue)
     return ddValues[ddvalue].writePtr;
 }
 
-/*
+/**
  * Set the value of a variable. The pointer can point to any data, its
  * interpretation depends on the variable. Added for 64-bit support.
  */
@@ -1038,7 +1065,7 @@ void DD_SetVariable(int ddvalue, void *parm)
     }
 }
 
-/*
+/**
  * Gets the data of a player.
  */
 ddplayer_t *DD_GetPlayer(int number)
@@ -1047,7 +1074,7 @@ ddplayer_t *DD_GetPlayer(int number)
 }
 
 #ifdef UNIX
-/*
+/**
  * Some routines are not available on the *nix platform.
  */
 char *strupr(char *string)

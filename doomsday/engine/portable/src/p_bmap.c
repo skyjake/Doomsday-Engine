@@ -77,7 +77,8 @@ void P_InitSubsectorBlockMap(void)
 {
     uint        startTime = Sys_GetRealTime();
 
-    int         i, xl, xh, yl, yh, x, y;
+    int         j, xl, xh, yl, yh, x, y;
+    uint        i;
     subsector_t *sub, **ptr;
     subsecnode_t *iter, *next;
     subsecmap_t *map, *block;
@@ -100,7 +101,7 @@ void P_InitSubsectorBlockMap(void)
     V2_Copy(subMapOrigin, bounds[0]);   // min point
     V2_Subtract(dims, bounds[1], bounds[0]);
 
-    subMapWidth = ceil(dims[VX] / blockSize[VX]) + 1;
+    subMapWidth  = ceil(dims[VX] / blockSize[VX]) + 1;
     subMapHeight = ceil(dims[VY] / blockSize[VY]) + 1;
 
     // The subsector blockmap is tagged as PU_LEVEL.
@@ -145,11 +146,11 @@ void P_InitSubsectorBlockMap(void)
     }
 
     // Create the actual links by 'hardening' the lists into arrays.
-    for(i = 0, block = map; i < subMapWidth * subMapHeight; ++i, block++)
+    for(j = 0, block = map; j < subMapWidth * subMapHeight; ++j, block++)
         if(block->count > 0)
         {
             // An NULL-terminated array of pointers to subsectors.
-            ptr = subMap[i] =
+            ptr = subMap[j] =
                 Z_Malloc((block->count + 1) * sizeof(subsector_t *),
                          PU_LEVELSTATIC, NULL);
 
@@ -202,7 +203,7 @@ void P_InitPolyBlockMap(void)
 boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
                              void *data)
 {
-    int         i;
+    uint        i;
     int         offset;
     long       *list;
     line_t     *ld;
@@ -228,14 +229,12 @@ boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
                 {
                     ld = (*tempSeg)->linedef;
                     if(ld->validcount == validcount)
-                    {
                         continue;
-                    }
+
                     ld->validcount = validcount;
+
                     if(!func(ld, data))
-                    {
                         return false;
-                    }
                 }
             }
         }
@@ -249,6 +248,7 @@ boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
         ld = LINE_PTR(*list);
         if(ld->validcount == validcount)
             continue;           // line has already been checked
+
         ld->validcount = validcount;
 
         if(!func(ld, data))
@@ -301,7 +301,6 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
     static int  localValidCount = 0;
     int         xl, xh, yl, yh, x, y;
     subsector_t *sub, **iter;
-    subsectorinfo_t *info;
 
     // This is only used here.
     localValidCount++;
@@ -325,11 +324,10 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
             for(; *iter; iter++)
             {
                 sub = *iter;
-                info = SUBSECT_INFO(sub);
 
-                if(info->validcount != localValidCount)
+                if(sub->validcount != localValidCount)
                 {
-                    info->validcount = localValidCount;
+                    sub->validcount = localValidCount;
 
                     // Check the sector restriction.
                     if(sector && sub->sector != sector)
@@ -352,7 +350,8 @@ boolean P_SubsectorBoxIteratorv(arvec2_t box, sector_t *sector,
 }
 
 /**
- * Returns false only if the iterator func returns false.
+ * @return          <code>false</code>i f the iterator func returns
+ *                  <code>false</code>.
  */
 boolean P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
                                boolean (*func) (subsector_t *, void *),

@@ -108,8 +108,8 @@ void S_CalcSectorReverbs(void)
 {
     uint        startTime = Sys_GetRealTime();
 
-    int     i, c, type, k;
-    int     j;
+    int     i, type;
+    uint    c, j, k;
     subsector_t *sub;
     sector_t *sec;
     seg_t  *seg;
@@ -144,18 +144,18 @@ Con_Message("%d bytes; sub_reverb: %p\n", sizeof(subreverb_t) * numsubsectors, s
         seg = (seg_t *) segs;
         for(j = 0; j < sub->linecount; ++j, seg++)
         {
-            if(!seg->linedef || !seg->sidedef || !seg->sidedef->middle.texture)
+            if(!seg->linedef || !seg->sidedef || !seg->sidedef->SW_middlepic)
                 continue;
             total += seg->length;
             // The texture of the seg determines its type.
-            if(seg->sidedef->middle.texture == -1)
+            if(seg->sidedef->SW_middlepic == -1)
             {
                 type = TEXTYPE_WOOD;
             }
             else
                 type =
                     S_TextureTypeForName(R_TextureNameForNum
-                                         (seg->sidedef->middle.texture));
+                                         (seg->sidedef->SW_middlepic));
             switch (type)
             {
             case TEXTYPE_METAL:
@@ -236,7 +236,7 @@ for(c=0; c < numsubsectors; ++c)
         unsigned int sectorSpace;
 
         sec = SECTOR_PTR(c);
-        memcpy(bbox, sec->info->bounds, sizeof(bbox));
+        memcpy(bbox, sec->bounds, sizeof(bbox));
 /*
 #if _DEBUG
 Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
@@ -245,10 +245,8 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
 */
 
         sectorSpace =
-            ((sec->planes[PLN_CEILING]->height -
-              sec->planes[PLN_FLOOR]->height) >> FRACBITS) * (bbox[BRIGHT] -
-                                                bbox[BLEFT]) * (bbox[BBOTTOM] -
-                                                                bbox[BTOP]);
+            ((sec->SP_ceilheight - sec->SP_floorheight) >> FRACBITS) *
+             (bbox[BRIGHT] - bbox[BLEFT]) * (bbox[BBOTTOM] - bbox[BTOP]);
 /*
 #if _DEBUG
 Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
@@ -259,10 +257,10 @@ Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
         bbox[BTOP]    -= 128;
         bbox[BBOTTOM] += 128;
 
-        for(k = 0, i = 0; i < numsubsectors; ++i)
+        for(i = 0, k = 0; k < numsubsectors; ++k)
         {
-            sub = SUBSECTOR_PTR(i);
-            rev = sub_reverb + i;
+            sub = SUBSECTOR_PTR(k);
+            rev = sub_reverb + k;
             // Is this subsector close enough?
             if(sub->sector == sec || // subsector is IN this sector
                (sub->midpoint.pos[VX] > bbox[BLEFT] &&
@@ -272,10 +270,10 @@ Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
             {
 /*
 #if _DEBUG
-Con_Message( "- sub %i within, own:%i\n", i, sub->sector == sec);
+Con_Message( "- sub %i within, own:%i\n", k, sub->sector == sec);
 #endif
 */
-                k++;
+                i++;
                 sec->reverb[SRD_SPACE]   += rev->data[SRD_SPACE];
 
                 sec->reverb[SRD_VOLUME]  +=

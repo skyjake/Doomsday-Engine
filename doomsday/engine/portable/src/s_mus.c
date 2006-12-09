@@ -229,7 +229,7 @@ void Mus_SetVolume(float vol)
 /**
  * Pauses or resumes the music.
  */
-void Mus_Pause(boolean do_pause)
+void Mus_Pause(boolean doPause)
 {
     unsigned int    i;
 
@@ -239,7 +239,7 @@ void Mus_Pause(boolean do_pause)
     // Pause all interfaces.
     for(i = 0; i < NUM_INTERFACES; ++i)
         if(*interfaces[i].ip)
-            (*interfaces[i].ip)->Pause(do_pause);
+            (*interfaces[i].ip)->Pause(doPause);
 }
 
 void Mus_Stop(void)
@@ -276,10 +276,11 @@ boolean Mus_IsMUSLump(int lump)
  *
  * @return:         Non-zero if successful.
  */
-int Mus_GetMUS(ded_music_t * def)
+int Mus_GetMUS(ded_music_t *def)
 {
-    int     len, lumpnum;
-    void   *ptr;
+    int         lumpnum;
+    size_t      len;
+    void       *ptr;
 
     if(!mus_avail || !imus)
         return false;
@@ -303,11 +304,12 @@ int Mus_GetMUS(ded_music_t * def)
  *
  * @return:         Non-zero if an external file of that name exists.
  */
-int Mus_GetExt(ded_music_t * def, char *path)
+int Mus_GetExt(ded_music_t *def, char *path)
 {
-    char    buf[300];
-    int     lumpnum, len;
-    void   *ptr;
+    char        buf[300];
+    int         lumpnum;
+    size_t      len;
+    void       *ptr;
 
     if(!mus_avail || !iext)
         return false;
@@ -372,7 +374,7 @@ int Mus_GetExt(ded_music_t * def, char *path)
 /**
  * @return:         The track number if successful else zero.
  */
-int Mus_GetCD(ded_music_t * def)
+int Mus_GetCD(ded_music_t *def)
 {
     if(!mus_avail || !icd)
         return 0;
@@ -390,7 +392,7 @@ int Mus_GetCD(ded_music_t * def)
  *
  * @return          Non-zero if the song is successfully played.
  */
-int Mus_Start(ded_music_t * def, boolean looped)
+int Mus_Start(ded_music_t *def, boolean looped)
 {
     char    path[300];
     int     order[3], i, song_id = def - defs.music;
@@ -465,9 +467,10 @@ int Mus_Start(ded_music_t * def, boolean looped)
  */
 D_CMD(PlayMusic)
 {
-    int     i, len;
-    void   *ptr;
-    char    buf[300];
+    int         i;
+    size_t      len;
+    void       *ptr;
+    char        buf[300];
 
     if(!mus_avail)
     {

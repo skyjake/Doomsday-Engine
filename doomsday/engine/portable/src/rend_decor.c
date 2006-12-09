@@ -365,7 +365,7 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
 {
     ded_decor_t *def;
     ded_decorlight_t *lightDef;
-    vertex_t   *v1, *v2;
+    vertex_t   *v[2];
     float       lh, s, t;           // Horizontal and vertical offset.
     float       posBase[2], delta[2], pos[3], brightMul;
     float       surfTexW, surfTexH, patternW, patternH;
@@ -373,7 +373,7 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
     unsigned int i;
 
     // Is this a valid section?
-    if(bottom > top || line->info->length == 0)
+    if(bottom > top || line->length == 0)
         return;
 
     // Should this be decorated at all?
@@ -381,21 +381,23 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
                                                  surface->isflat)))
         return;
 
-    v1 = line->v1;
-    v2 = line->v2;
-
     // Let's see which sidedef is present.
     if(line->sides[1] && line->sides[1] == side)
     {
         // Flip vertices, this is the backside.
-        v1 = line->v2;
-        v2 = line->v1;
+        v[0] = line->L_v2;
+        v[1] = line->L_v1;
+    }
+    else
+    {
+        v[0] = line->L_v1;
+        v[1] = line->L_v2;
     }
 
-    delta[VX] = FIX2FLT(v2->pos[VX] - v1->pos[VX]);
-    delta[VY] = FIX2FLT(v2->pos[VY] - v1->pos[VY]);
-    surfaceNormal[VX] = delta[VY] / line->info->length;
-    surfaceNormal[VZ] = -delta[VX] / line->info->length;
+    delta[VX] = FIX2FLT(v[1]->pos[VX] - v[0]->pos[VX]);
+    delta[VY] = FIX2FLT(v[1]->pos[VY] - v[0]->pos[VY]);
+    surfaceNormal[VX] = delta[VY] / line->length;
+    surfaceNormal[VZ] = -delta[VX] / line->length;
     surfaceNormal[VY] = 0;
 
     // Height of the section.
@@ -426,8 +428,8 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
         // Skip must be at least one.
         Rend_DecorationPatternSkip(lightDef, skip);
 
-        posBase[VX] = FIX2FLT(v1->pos[VX]) + lightDef->elevation * surfaceNormal[VX];
-        posBase[VY] = FIX2FLT(v1->pos[VY]) + lightDef->elevation * surfaceNormal[VZ];
+        posBase[VX] = FIX2FLT(v[0]->pos[VX]) + lightDef->elevation * surfaceNormal[VX];
+        posBase[VY] = FIX2FLT(v[0]->pos[VY]) + lightDef->elevation * surfaceNormal[VZ];
 
         patternW = surfTexW * skip[VX];
         patternH = surfTexH * skip[VY];
@@ -437,7 +439,7 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
                              surfTexW * lightDef->pattern_offset[VX],
                              patternW);
 
-        for(; s < line->info->length; s += patternW)
+        for(; s < line->length; s += patternW)
         {
             t = M_CycleIntoRange(lightDef->pos[VY] - surface->offy -
                                  surfTexH * lightDef->pattern_offset[VY] +
@@ -446,8 +448,8 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
             for(; t < lh; t += patternH)
             {
                 // Let there be light.
-                pos[VX] = posBase[VX] + delta[VX] * s / line->info->length;
-                pos[VY] = posBase[VY] + delta[VY] * s / line->info->length;
+                pos[VX] = posBase[VX] + delta[VX] * s / line->length;
+                pos[VY] = posBase[VY] + delta[VY] * s / line->length;
                 pos[VZ] = top - t;
                 Rend_AddLightDecoration(pos, lightDef, brightMul, true,
                                         def->pregen_lightmap);
@@ -484,18 +486,18 @@ static boolean Rend_LineDecorationBounds(line_t *line)
     bounds[BBOTTOM] = line->bbox[BOXBOTTOM];
 
     // Figure out the highest and lowest Z height.
-    sector = line->frontsector;
-    bounds[BFLOOR]   = sector->planes[PLN_FLOOR]->height;
-    bounds[BCEILING] = sector->planes[PLN_CEILING]->height;
+    sector = line->L_frontsector;
+    bounds[BFLOOR]   = sector->SP_floorheight;
+    bounds[BCEILING] = sector->SP_ceilheight;
 
     // Is the other sector higher/lower?
-    if((sector = line->backsector) != NULL)
+    if((sector = line->L_backsector) != NULL)
     {
-        if(sector->planes[PLN_FLOOR]->height < bounds[BFLOOR])
-            bounds[BFLOOR] = sector->planes[PLN_FLOOR]->height;
+        if(sector->SP_floorheight < bounds[BFLOOR])
+            bounds[BFLOOR] = sector->SP_floorheight;
 
-        if(sector->planes[PLN_CEILING]->height > bounds[BCEILING])
-            bounds[BCEILING] = sector->planes[PLN_CEILING]->height;
+        if(sector->SP_ceilheight > bounds[BCEILING])
+            bounds[BCEILING] = sector->SP_ceilheight;
     }
 
     return Rend_CheckDecorationBounds(bounds, decorWallMaxDist);
@@ -508,14 +510,14 @@ static boolean Rend_SectorDecorationBounds(sector_t *sector)
 {
     fixed_t     bounds[6];
 
-    bounds[BLEFT]    = FRACUNIT * sector->info->bounds[BLEFT];
-    bounds[BRIGHT]   = FRACUNIT * sector->info->bounds[BRIGHT];
+    bounds[BLEFT]    = FRACUNIT * sector->bounds[BLEFT];
+    bounds[BRIGHT]   = FRACUNIT * sector->bounds[BRIGHT];
 
     // Sectorinfo has top and bottom the other way around.
-    bounds[BBOTTOM]  = FRACUNIT * sector->info->bounds[BTOP];
-    bounds[BTOP]     = FRACUNIT * sector->info->bounds[BBOTTOM];
-    bounds[BFLOOR]   = FRACUNIT * SECT_FLOOR(sector);
-    bounds[BCEILING] = FRACUNIT * SECT_CEIL(sector);
+    bounds[BBOTTOM]  = FRACUNIT * sector->bounds[BTOP];
+    bounds[BTOP]     = FRACUNIT * sector->bounds[BBOTTOM];
+    bounds[BFLOOR]   = FRACUNIT * sector->SP_floorvisheight;
+    bounds[BCEILING] = FRACUNIT * sector->SP_ceilvisheight;
 
     return Rend_CheckDecorationBounds(bounds, decorPlaneMaxDist);
 }
@@ -536,105 +538,105 @@ static void Rend_DecorateLine(int index)
     if(!Rend_LineDecorationBounds(line))
         return;
 
-    frontCeil  = SECT_CEIL(line->frontsector);
-    frontFloor = SECT_FLOOR(line->frontsector);
+    frontCeil  = line->L_frontsector->SP_ceilvisheight;
+    frontFloor = line->L_frontsector->SP_floorvisheight;
 
     // Do we have a double-sided line?
-    if(line->backsector)
+    if(line->L_backsector)
     {
-        backCeil  = SECT_CEIL(line->backsector);
-        backFloor = SECT_FLOOR(line->backsector);
+        backCeil  = line->L_backsector->SP_ceilvisheight;
+        backFloor = line->L_backsector->SP_floorvisheight;
 
         // Is there a top section visible on either side?
         if(backCeil != frontCeil &&
-           (!R_IsSkySurface(&line->backsector->SP_ceilsurface) ||
-            !R_IsSkySurface(&line->frontsector->SP_ceilsurface)))
+           (!R_IsSkySurface(&line->L_backsector->SP_ceilsurface) ||
+            !R_IsSkySurface(&line->L_frontsector->SP_ceilsurface)))
         {
             if(frontCeil > backCeil)
             {
-                highSector = line->frontsector;
-                lowSector  = line->backsector;
+                highSector = line->L_frontsector;
+                lowSector  = line->L_backsector;
             }
             else
             {
-                lowSector  = line->frontsector;
-                highSector = line->backsector;
+                lowSector  = line->L_frontsector;
+                highSector = line->L_backsector;
             }
 
             // Figure out the right side.
             side = R_GetSectorSide(line, highSector);
 
-            if(side->top.texture > 0)
+            if(side->SW_toppic > 0)
             {
-                if(side->top.isflat)
-                    GL_PrepareFlat2(side->top.texture, true);
+                if(side->SW_topisflat)
+                    GL_PrepareFlat2(side->SW_toppic, true);
                 else
-                    GL_GetTextureInfo(side->top.texture);
+                    GL_GetTextureInfo(side->SW_toppic);
 
-                Rend_DecorateLineSection(line, side, &side->top,
-                                         SECT_CEIL(highSector),
-                                         SECT_CEIL(lowSector),
+                Rend_DecorateLineSection(line, side, &side->SW_topsurface,
+                                         highSector->SP_ceilvisheight,
+                                         lowSector->SP_ceilvisheight,
                                          line->flags & ML_DONTPEGTOP ? 0 : -texh +
-                                         (SECT_CEIL(highSector) -
-                                          SECT_CEIL(lowSector)));
+                                         (highSector->SP_ceilvisheight -
+                                          lowSector->SP_ceilvisheight));
             }
         }
 
         // Is there a bottom section visible?
         if(backFloor != frontFloor &&
-           (!R_IsSkySurface(&line->backsector->SP_floorsurface) ||
-            !R_IsSkySurface(&line->frontsector->SP_floorsurface)))
+           (!R_IsSkySurface(&line->L_backsector->SP_floorsurface) ||
+            !R_IsSkySurface(&line->L_frontsector->SP_floorsurface)))
         {
             if(frontFloor > backFloor)
             {
-                highSector = line->frontsector;
-                lowSector  = line->backsector;
+                highSector = line->L_frontsector;
+                lowSector  = line->L_backsector;
             }
             else
             {
-                lowSector  = line->frontsector;
-                highSector = line->backsector;
+                lowSector  = line->L_frontsector;
+                highSector = line->L_backsector;
             }
 
             // Figure out the right side.
             side = R_GetSectorSide(line, lowSector);
 
-            if(side->bottom.texture > 0)
+            if(side->SW_bottompic > 0)
             {
-                if(side->bottom.isflat)
-                    GL_PrepareFlat2(side->bottom.texture, true);
+                if(side->SW_bottomisflat)
+                    GL_PrepareFlat2(side->SW_bottompic, true);
                 else
-                    GL_GetTextureInfo(side->bottom.texture);
+                    GL_GetTextureInfo(side->SW_bottompic);
 
-                Rend_DecorateLineSection(line, side, &side->bottom,
-                                         SECT_FLOOR(highSector),
-                                         SECT_FLOOR(lowSector),
+                Rend_DecorateLineSection(line, side, &side->SW_bottomsurface,
+                                         highSector->SP_floorvisheight,
+                                         lowSector->SP_floorvisheight,
                                          line->flags & ML_DONTPEGBOTTOM ?
-                                         SECT_FLOOR(highSector) -
-                                         SECT_CEIL(lowSector) : 0);
+                                         highSector->SP_floorvisheight -
+                                         lowSector->SP_ceilvisheight : 0);
             }
         }
 
         // 2-sided middle texture?
         // FIXME: Since halos aren't usually clipped by 2-sided middle
         // textures, this looks a bit silly.
-        /*if(line->sidenum[0] >= 0 && (side = SIDE_PTR(line->sidenum[0]))->midtexture)
+        /*if(line->L_frontside && side = line->L_frontside->SW_middlepic)
         {
             rendpoly_t *quad = R_AllocRendPoly(RP_QUAD, true, 4);
 
             // If there is an opening, process it.
-            if(side->middle.texture.isflat)
-                GL_PrepareFlat2(side->middle.texture, true);
+            if(side->SW_middleisflat)
+                GL_PrepareFlat2(side->SW_middlepic, true);
             else
-                GL_GetTextureInfo(side->middle.texture);
+                GL_GetTextureInfo(side->SW_middlepic);
 
             quad->top = MIN_OF(frontCeil, backCeil);
             quad->bottom = MAX_OF(frontFloor, backFloor);
-            quad->texoffy = FIX2FLT(side->textureoffset);
+            quad->texoffy = FIX2FLT(side->SW_middleoffy);
             if(Rend_MidTexturePos(&quad->top, &quad->bottom, &quad->texoffy, 0,
                                   (line->flags & ML_DONTPEGBOTTOM) != 0))
             {
-                Rend_DecorateLineSection(line, side, &side->middle,
+                Rend_DecorateLineSection(line, side, &side->SW_middlesurface,
                                          quad->top, quad->bottom, quad->texoffy);
             }
             R_FreeRendPoly(quad);
@@ -644,16 +646,16 @@ static void Rend_DecorateLine(int index)
     {
         // This is a single-sided line. We only need to worry about the
         // middle texture.
-        side = (line->sides[0]? line->sides[0] : line->sides[1]);
+        side = line->sides[line->L_frontside? FRONT:BACK];
 
-        if(side->middle.texture > 0)
+        if(side->SW_middlepic > 0)
         {
-            if(side->middle.isflat)
-                GL_PrepareFlat2(side->middle.texture, true);
+            if(side->SW_middleisflat)
+                GL_PrepareFlat2(side->SW_middlepic, true);
             else
-                GL_GetTextureInfo(side->middle.texture);
+                GL_GetTextureInfo(side->SW_middlepic);
 
-            Rend_DecorateLineSection(line, side, &side->middle, frontCeil,
+            Rend_DecorateLineSection(line, side, &side->SW_middlesurface, frontCeil,
                                      frontFloor,
                                      line->flags & ML_DONTPEGBOTTOM ? -texh +
                                      (frontCeil - frontFloor) : 0);
@@ -664,11 +666,10 @@ static void Rend_DecorateLine(int index)
 /**
  * Generate decorations for a plane.
  */
-static void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir,
+static void Rend_DecoratePlane(uint sectorIndex, float z, float elevateDir,
                                float offX, float offY, ded_decor_t *def)
 {
     sector_t   *sector = SECTOR_PTR(sectorIndex);
-    sectorinfo_t *sin = sector->info;
     ded_decorlight_t *lightDef;
     float       pos[3], tileSize = 64, brightMul;
     int         skip[2];
@@ -695,26 +696,26 @@ static void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir,
         Rend_DecorationPatternSkip(lightDef, skip);
 
         pos[VY] =
-            (int) (sin->bounds[BTOP] / tileSize) * tileSize - offY -
+            (int) (sector->bounds[BTOP] / tileSize) * tileSize - offY -
             lightDef->pos[VY] - lightDef->pattern_offset[VY] * tileSize;
-        while(pos[VY] > sin->bounds[BTOP])
+        while(pos[VY] > sector->bounds[BTOP])
             pos[VY] -= tileSize * skip[VY];
 
-        for(; pos[VY] < sin->bounds[BBOTTOM]; pos[VY] += tileSize * skip[VY])
+        for(; pos[VY] < sector->bounds[BBOTTOM]; pos[VY] += tileSize * skip[VY])
         {
-            if(pos[VY] < sin->bounds[BTOP])
+            if(pos[VY] < sector->bounds[BTOP])
                 continue;
 
             pos[VX] =
-                (int) (sin->bounds[BLEFT] / tileSize) * tileSize - offX +
+                (int) (sector->bounds[BLEFT] / tileSize) * tileSize - offX +
                 lightDef->pos[VX] - lightDef->pattern_offset[VX] * tileSize;
-            while(pos[VX] > sin->bounds[BLEFT])
+            while(pos[VX] > sector->bounds[BLEFT])
                 pos[VX] -= tileSize * skip[VX];
 
-            for(; pos[VX] < sin->bounds[BRIGHT];
+            for(; pos[VX] < sector->bounds[BRIGHT];
                 pos[VX] += tileSize * skip[VX])
             {
-                if(pos[VX] < sin->bounds[BLEFT])
+                if(pos[VX] < sector->bounds[BLEFT])
                     continue;
 
                 // The point must be inside the correct sector.
@@ -733,15 +734,15 @@ static void Rend_DecoratePlane(int sectorIndex, float z, float elevateDir,
 /**
  * Generate decorations for the planes of the sector.
  */
-static void Rend_DecorateSector(int index)
+static void Rend_DecorateSector(uint index)
 {
-    int         i;
+    uint        i;
     plane_t    *pln;
     sector_t   *sector = SECTOR_PTR(index);
     ded_decor_t *def;
 
     // The sector must have height if it wants decorations.
-    if(sector->planes[PLN_CEILING]->height <= sector->planes[PLN_FLOOR]->height)
+    if(sector->SP_ceilheight <= sector->SP_floorheight)
         return;
 
     // Is this sector close enough for the decorations to be visible?
@@ -766,7 +767,7 @@ static void Rend_DecorateSector(int index)
  */
 void Rend_InitDecorationsForFrame(void)
 {
-    int     i;
+    uint    i;
 
     Rend_ClearDecorations();
 

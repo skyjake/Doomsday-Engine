@@ -352,7 +352,7 @@ static int PG_ListVisibleParticles(void)
             if(pt->stage < 0)
                 continue;
             // Is the particle's sector visible?
-            if(!(pt->sector->info->flags & SIF_VISIBLE))
+            if(!(pt->sector->frameflags & SIF_VISIBLE))
                 continue;       // No; this particle can't be seen.
 
             order[m].gen = i;
@@ -669,7 +669,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 // Z-fighting.
                 fixline[VX] = pt->contact->dx;
                 fixline[VY] = pt->contact->dy;
-                M_ProjectPointOnLinef(pt->pos, &pt->contact->v1->pos[VX], fixline, 1,
+                M_ProjectPointOnLinef(pt->pos, &pt->contact->L_v1->pos[VX], fixline, 1,
                                       projected);
 
                 P_LineUnitVector(pt->contact, line);

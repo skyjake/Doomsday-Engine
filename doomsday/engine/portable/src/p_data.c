@@ -67,7 +67,7 @@ enum {
 typedef struct {
     char *name;
     boolean planeTex;
-    int count;
+    uint count;
 } badtex_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -88,25 +88,25 @@ extern boolean levelSetup;
  * These map data arrays are internal to the engine.
  */
 
-int         numvertexes;
+uint        numvertexes;
 vertex_t   *vertexes;
 
-int         numsegs;
+uint        numsegs;
 seg_t      *segs;
 
-int         numsectors;
+uint        numsectors;
 sector_t   *sectors;
 
-int         numsubsectors;
+uint        numsubsectors;
 subsector_t *subsectors;
 
-int         numnodes;
+uint        numnodes;
 node_t     *nodes;
 
-int         numlines;
+uint        numlines;
 line_t     *lines;
 
-int         numsides;
+uint        numsides;
 side_t     *sides;
 
 // Should we generate new blockmap data if its invalid?
@@ -144,16 +144,16 @@ int         mapambient;             // Ambient lightlevel for the current map.
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // for sector->linecount
-int numUniqueLines;
+uint numUniqueLines;
 
 // The following is used in error fixing/detection/reporting:
 // missing sidedefs
-int numMissingFronts = 0;
-int *missingFronts = NULL;
+uint numMissingFronts = 0;
+uint *missingFronts = NULL;
 
 // bad texture list
-static int numBadTexNames = 0;
-static int maxBadTexNames = 0;
+static uint numBadTexNames = 0;
+static uint maxBadTexNames = 0;
 static badtex_t *badTexNames = NULL;
 
 // CODE --------------------------------------------------------------------
@@ -187,7 +187,7 @@ const char* value_Str(int val)
         { DDVT_SEG_PTR, "DDVT_SEG_PTR" },
         { 0, NULL }
     };
-    int         i;
+    uint        i;
 
     for(i = 0; valuetypes[i].str; ++i)
         if(valuetypes[i].val == val)
@@ -206,9 +206,9 @@ void P_InitData(void)
 /**
  * TODO: Consolidate with R_UpdatePlanes?
  */
-void P_PlaneChanged(sector_t *sector, int plane)
+void P_PlaneChanged(sector_t *sector, uint plane)
 {
-    int         i, k;
+    uint        i, k;
     subsector_t *sub;
     seg_t      *seg;
     side_t     *front = NULL, *back = NULL;
@@ -226,9 +226,9 @@ void P_PlaneChanged(sector_t *sector, int plane)
         back  = sector->Lines[i]->sides[1];
 
         if(!front || !front->sector ||
-           front->sector->planes[plane]->info->linked ||
+           front->sector->planes[plane]->linked ||
            !back || !back->sector ||
-           back->sector->planes[plane]->info->linked)
+           back->sector->planes[plane]->linked)
             continue;
 
         // Do as in the original Doom if the texture has not been defined -
@@ -238,43 +238,43 @@ void P_PlaneChanged(sector_t *sector, int plane)
         {
             // Check for missing lowers.
             if(front->sector->SP_floorheight < back->sector->SP_floorheight &&
-               front->bottom.texture == 0)
+               front->SW_bottompic == 0)
             {
                 if(!R_IsSkySurface(&front->sector->SP_floorsurface))
                 {
-                    front->bottom.flags |= SUF_TEXFIX;
+                    front->SW_bottomflags |= SUF_TEXFIX;
 
-                    front->bottom.texture =
-                        front->sector->planes[PLN_FLOOR]->surface.texture;
+                    front->SW_bottompic =
+                        front->sector->SP_floorpic;
 
-                    front->bottom.isflat =
-                        front->sector->planes[PLN_FLOOR]->surface.isflat;
+                    front->SW_bottomisflat =
+                        front->sector->SP_floorisflat;
                 }
 
-                if(back->bottom.flags & SUF_TEXFIX)
+                if(back->SW_bottomflags & SUF_TEXFIX)
                 {
-                    back->bottom.flags &= ~SUF_TEXFIX;
-                    back->bottom.texture = 0;
+                    back->SW_bottomflags &= ~SUF_TEXFIX;
+                    back->SW_bottompic = 0;
                 }
             }
             else if(front->sector->SP_floorheight > back->sector->SP_floorheight &&
-               back->bottom.texture == 0)
+               back->SW_bottompic == 0)
             {
                 if(!R_IsSkySurface(&back->sector->SP_floorsurface))
                 {
-                    back->bottom.flags |= SUF_TEXFIX;
+                    back->SW_bottomflags |= SUF_TEXFIX;
 
-                    back->bottom.texture =
-                        back->sector->planes[PLN_FLOOR]->surface.texture;
+                    back->SW_bottompic =
+                        back->sector->SP_floorpic;
 
-                    back->bottom.isflat =
-                        back->sector->planes[PLN_FLOOR]->surface.isflat;
+                    back->SW_bottomisflat =
+                        back->sector->SP_floorisflat;
                 }
 
-                if(front->bottom.flags & SUF_TEXFIX)
+                if(front->SW_bottomflags & SUF_TEXFIX)
                 {
-                    front->bottom.flags &= ~SUF_TEXFIX;
-                    front->bottom.texture = 0;
+                    front->SW_bottomflags &= ~SUF_TEXFIX;
+                    front->SW_bottompic = 0;
                 }
             }
         }
@@ -282,63 +282,63 @@ void P_PlaneChanged(sector_t *sector, int plane)
         {
             // Check for missing uppers.
             if(front->sector->SP_ceilheight > back->sector->SP_ceilheight &&
-               front->top.texture == 0)
+               front->SW_toppic == 0)
             {
                 if(!R_IsSkySurface(&front->sector->SP_ceilsurface))
                 {
-                    front->top.flags |= SUF_TEXFIX;
+                    front->SW_topflags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
-                   /* if(front->middle.texture)
+                   /* if(front->SW_middlepic)
                     {
                         front->flags |= SDF_MIDTEXUPPER;
-                        front->top.texture = front->middle.texture;
-                        front->top.isflat = front->middle.isflat;
+                        front->SW_toppic = front->SW_middlepic;
+                        front->SW_topisflat = front->SW_middleisflat;
                     }
                     else*/
                     {
-                        front->top.texture =
-                            front->sector->planes[PLN_CEILING]->surface.texture;
+                        front->SW_toppic =
+                            front->sector->SP_ceilpic;
 
-                        front->top.isflat =
-                            front->sector->planes[PLN_CEILING]->surface.isflat;
+                        front->SW_topisflat =
+                            front->sector->SP_ceilisflat;
                     }
                 }
 
-                if(back->top.flags & SUF_TEXFIX)
+                if(back->SW_topflags & SUF_TEXFIX)
                 {
-                    back->top.flags &= ~SUF_TEXFIX;
-                    back->top.texture = 0;
+                    back->SW_topflags &= ~SUF_TEXFIX;
+                    back->SW_toppic = 0;
                 }
             }
             else if(front->sector->SP_ceilheight < back->sector->SP_ceilheight &&
-               back->top.texture == 0)
+               back->SW_toppic == 0)
             {
                 if(!R_IsSkySurface(&back->sector->SP_ceilsurface))
                 {
-                    back->top.flags |= SUF_TEXFIX;
+                    back->SW_topflags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
-                   /* if(front->middle.texture)
+                   /* if(front->SW_middlepic)
                     {
                         back->flags |= SDF_MIDTEXUPPER;
-                        back->top.texture = back->middle.texture;
-                        back->top.isflat = back->middle.isflat;
+                        back->SW_toppic = back->SW_middlepic;
+                        back->SW_topisflat = back->SW_middleisflat;
                     }
                     else*/
                     {
-                        back->top.texture =
-                            back->sector->planes[PLN_CEILING]->surface.texture;
+                        back->SW_toppic =
+                            back->sector->SP_ceilpic;
 
-                        back->top.isflat =
-                            back->sector->planes[PLN_CEILING]->surface.isflat;
+                        back->SW_topisflat =
+                            back->sector->SP_ceilisflat;
                     }
                 }
 
-                if(front->top.flags & SUF_TEXFIX)
+                if(front->SW_topflags & SUF_TEXFIX)
                 {
-                    front->top.flags &= ~SUF_TEXFIX;
-                    front->top.texture = 0;
+                    front->SW_topflags &= ~SUF_TEXFIX;
+                    front->SW_toppic = 0;
                 }
             }
         }
@@ -377,7 +377,7 @@ void P_CeilingChanged(sector_t *sector)
 
 void P_PolyobjChanged(polyobj_t *po)
 {
-    int         i;
+    uint        i;
     seg_t     **seg = po->segs;
 
     for(i = 0; i < po->numsegs; ++i, ++seg)
@@ -437,7 +437,7 @@ boolean P_LoadMap(char *levelId)
  */
 boolean P_CheckLevel(char *levelID, boolean silent)
 {
-    int         i, printCount;
+    uint        i, printCount;
     boolean     canContinue = !numMissingFronts;
 
     Con_Message("P_CheckLevel: Checking %s for errors...\n", levelID);
@@ -450,7 +450,7 @@ boolean P_CheckLevel(char *levelID, boolean silent)
                     numMissingFronts);
 
         printCount = 0;
-        for(i = numlines -1; i >=0; --i)
+        for(i = 0; i < numlines; ++i)
         {
             if(missingFronts[i] == 1)
             {
@@ -472,7 +472,7 @@ boolean P_CheckLevel(char *levelID, boolean silent)
     {
         Con_Message("  [110] %d bad texture name(s):\n", numBadTexNames);
 
-        for(i = numBadTexNames -1; i >= 0; --i)
+        for(i = 0; i < numBadTexNames; ++i)
             Con_Message("   Found %d unknown %s \"%s\"\n", badTexNames[i].count,
                         (badTexNames[i].planeTex)? "Flat" : "Texture",
                         badTexNames[i].name);
@@ -510,7 +510,8 @@ boolean P_CheckLevel(char *levelID, boolean silent)
 int P_CheckTexture(char *name, boolean planeTex, int dataType,
                    unsigned int element, int property)
 {
-    int         i, id;
+    int         id;
+    uint        i;
     char        namet[9];
     boolean     known = false;
 
@@ -536,7 +537,7 @@ int P_CheckTexture(char *name, boolean planeTex, int dataType,
         // Do we already know about it?
         if(numBadTexNames > 0)
         {
-            for(i = numBadTexNames -1; i >= 0 && !known; --i)
+            for(i = 0; i < numBadTexNames && !known; ++i)
             {
                 if(!strcmp(badTexNames[i].name, namet) &&
                     badTexNames[i].planeTex == planeTex)
@@ -577,13 +578,13 @@ int P_CheckTexture(char *name, boolean planeTex, int dataType,
  */
 static void P_FreeBadTexList(void)
 {
-    int         i;
+    uint        i;
 
     if(badTexNames != NULL)
     {
-        for(i= numBadTexNames -1; i >= 0; --i)
+        for(i = 0; i < numBadTexNames; ++i)
         {
-            free(badTexNames[i].name);
+            M_Free(badTexNames[i].name);
             badTexNames[i].name = NULL;
         }
 

@@ -49,6 +49,7 @@
 
 // TYPES -------------------------------------------------------------------
 
+// These are currently only used for vertex, sector owners.
 typedef struct ownernode_s {
     void *data;
     struct ownernode_s* next;
@@ -56,7 +57,7 @@ typedef struct ownernode_s {
 
 typedef struct {
     ownernode_t *head;
-    int         count;
+    uint        count;
 } ownerlist_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -65,9 +66,11 @@ typedef struct {
 
 static void    R_PrepareSubsector(subsector_t *sub);
 static void    R_FindLineNeighbors(sector_t *sector, line_t *line,
-                            struct line_s **neighbors, int alignment);
+                                   struct line_s **neighbors, int alignment);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static lineowner_t* R_GetVtxLineOwner(vertex_t *vtx, line_t *line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -110,9 +113,9 @@ static boolean R_IsValidLink(sector_t *startsec, sector_t *destlink,
     for(;;)
     {
         // Advance to the linked sector.
-        if(!sec->planes[plane]->info->linked)
+        if(!sec->planes[plane]->linked)
             break;
-        link = sec->planes[plane]->info->linked;
+        link = sec->planes[plane]->linked;
 
         // Is there an illegal linkage?
         if(sec == link || startsec == link)
@@ -136,16 +139,15 @@ static boolean R_IsValidLink(sector_t *startsec, sector_t *destlink,
  */
 static void R_SetSectorLinks(sector_t *sec)
 {
-    int         k;
+    uint        k;
     sector_t   *back;
     line_t     *lin;
     boolean     hackfloor, hackceil;
     side_t     *sid, *frontsid, *backsid;
     sector_t   *floorlink_candidate = 0, *ceillink_candidate = 0;
-    //return; //---DEBUG---
 
     // Must have a valid sector!
-    if(!sec || !sec->linecount || sec->info->permanentlink)
+    if(!sec || !sec->linecount || sec->permanentlink)
         return;                 // Can't touch permanent links.
 
     hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
@@ -156,25 +158,25 @@ static void R_SetSectorLinks(sector_t *sec)
         if(!hackfloor && !hackceil)
             break;
         // We are only interested in two-sided lines.
-        if(!(lin->frontsector && lin->backsector))
+        if(!(lin->L_frontsector && lin->L_backsector))
             continue;
 
         // Check the vertex line owners for both verts.
         // We are only interested in lines that do NOT share either vertex
         // with a one-sided line (ie, its not "anchored").
-        if(lin->v1->info->anchored || lin->v2->info->anchored)
+        if(lin->L_v1->anchored || lin->L_v2->anchored)
             return;
 
         // Check which way the line is facing.
-        sid = lin->sides[0];
+        sid = lin->L_frontside;
         if(sid->sector == sec)
         {
             frontsid = sid;
-            backsid = lin->sides[1];
+            backsid = lin->L_backside;
         }
         else
         {
-            frontsid = lin->sides[1];
+            frontsid = lin->L_backside;
             backsid = sid;
         }
         back = backsid->sector;
@@ -182,38 +184,38 @@ static void R_SetSectorLinks(sector_t *sec)
             return;
 
         // Check that there is something on the other side.
-        if(back->planes[PLN_CEILING]->height == back->planes[PLN_FLOOR]->height)
+        if(back->SP_ceilheight == back->SP_floorheight)
             return;
         // Check the conditions that prevent the invis plane.
-        if(back->planes[PLN_FLOOR]->height == sec->planes[PLN_FLOOR]->height)
+        if(back->SP_floorheight == sec->SP_floorheight)
         {
             hackfloor = false;
         }
         else
         {
-            if(back->planes[PLN_FLOOR]->height > sec->planes[PLN_FLOOR]->height)
+            if(back->SP_floorheight > sec->SP_floorheight)
                 sid = frontsid;
             else
                 sid = backsid;
 
-            if((sid->bottom.texture && !(sid->bottom.flags & SUF_TEXFIX)) ||
-               (sid->middle.texture && !(sid->middle.flags & SUF_TEXFIX)))
+            if((sid->SW_bottompic && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
+               (sid->SW_middlepic && !(sid->SW_middleflags & SUF_TEXFIX)))
                 hackfloor = false;
             else if(R_IsValidLink(sec, back, PLN_FLOOR))
                 floorlink_candidate = back;
         }
 
-        if(back->planes[PLN_CEILING]->height == sec->planes[PLN_CEILING]->height)
+        if(back->SP_ceilheight == sec->SP_ceilheight)
             hackceil = false;
         else
         {
-            if(back->planes[PLN_CEILING]->height < sec->planes[PLN_CEILING]->height)
+            if(back->SP_ceilheight < sec->SP_ceilheight)
                 sid = frontsid;
             else
                 sid = backsid;
 
-            if((sid->top.texture && !(sid->top.flags & SUF_TEXFIX)) ||
-               (sid->middle.texture && !(sid->middle.flags & SUF_TEXFIX)))
+            if((sid->SW_toppic && !(sid->SW_topflags & SUF_TEXFIX)) ||
+               (sid->SW_middlepic && !(sid->SW_middleflags & SUF_TEXFIX)))
                 hackceil = false;
             else if(R_IsValidLink(sec, back, PLN_CEILING))
                 ceillink_candidate = back;
@@ -221,8 +223,8 @@ static void R_SetSectorLinks(sector_t *sec)
     }
     if(hackfloor)
     {
-        if(floorlink_candidate == SECT_INFO(sec)->containsector)
-            sec->planes[PLN_FLOOR]->info->linked = floorlink_candidate;
+        if(floorlink_candidate == sec->containsector)
+            sec->planes[PLN_FLOOR]->linked = floorlink_candidate;
 
         /*      if(floorlink_candidate)
            Con_Printf("LF:%i->%i\n",
@@ -230,8 +232,8 @@ static void R_SetSectorLinks(sector_t *sec)
     }
     if(hackceil)
     {
-        if(ceillink_candidate == SECT_INFO(sec)->containsector)
-            sec->planes[PLN_CEILING]->info->linked = ceillink_candidate;
+        if(ceillink_candidate == sec->containsector)
+            sec->planes[PLN_CEILING]->linked = ceillink_candidate;
 
         /*      if(ceillink_candidate)
            Con_Printf("LC:%i->%i\n",
@@ -250,8 +252,9 @@ static void R_SetSectorLinks(sector_t *sec)
  */
 static void R_InitSkyFix(void)
 {
-    int         i, f, b;
+    int         f, b;
     int        *fix;
+    uint        i;
     mobj_t     *it;
     sector_t   *sec;
 
@@ -287,7 +290,7 @@ static void R_InitSkyFix(void)
     }
 }
 
-static boolean doSkyFix(sector_t *front, sector_t *back, int pln)
+static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
 {
     int         f, b;
     int         height = 0;
@@ -362,12 +365,12 @@ static boolean doSkyFix(sector_t *front, sector_t *back, int pln)
     return adjusted;
 }
 
-static void spreadSkyFixForNeighbors(vertexinfo_t *owner, line_t *refLine,
+static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
                                      boolean fixFloors, boolean fixCeilings,
                                      boolean *adjustedFloor, boolean *adjustedCeil)
 {
-    int         j, k, n, pln;
-    line_t     *rLine, *lLine;
+    uint        pln;
+    lineowner_t *base, *lOwner, *rOwner;
     boolean     doFix[2];
     boolean    *adjusted[2];
 
@@ -377,95 +380,83 @@ static void spreadSkyFixForNeighbors(vertexinfo_t *owner, line_t *refLine,
     adjusted[PLN_CEILING] = adjustedCeil;
 
     // Find the reference line in the owner list.
-    for(j = 0; j < owner->numlines; ++j)
-        if(LINE_PTR(owner->linelist[j]) == refLine)
-            break;
+    base = R_GetVtxLineOwner(vtx, refLine);
 
     // Spread will begin from the next line anti-clockwise.
-    if(j - 1 < 0)
-        lLine = LINE_PTR(owner->linelist[owner->numlines-1]);
-    else
-        lLine = LINE_PTR(owner->linelist[j-1]);
+    lOwner = base->prev;
 
     // Spread clockwise around this vertex from the reference plus one
     // until we reach the reference again OR a single sided line.
-    n = j + 1;
-    for(k = 0; k < owner->numlines; ++k, ++n)
+    rOwner = base->next;
+    do
     {
-        if(n >= owner->numlines)
-            n = 0;
-
-        rLine = LINE_PTR(owner->linelist[n]);
-        if(rLine != lLine)
+        if(rOwner != lOwner)
         {
             for(pln = 0; pln < 2; ++pln)
             {
                 if(!doFix[pln])
                     continue;
 
-                if(doSkyFix(rLine->frontsector, lLine->frontsector, pln))
+                if(doSkyFix(rOwner->line->L_frontsector, lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(lLine->backsector)
-                if(doSkyFix(rLine->frontsector, lLine->backsector, pln))
+                if(lOwner->line->L_backsector)
+                if(doSkyFix(rOwner->line->L_frontsector, lOwner->line->L_backsector, pln))
                     *adjusted[pln] = true;
 
-                if(rLine->backsector)
-                if(doSkyFix(rLine->backsector, lLine->frontsector, pln))
+                if(rOwner->line->L_backsector)
+                if(doSkyFix(rOwner->line->L_backsector, lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(rLine->backsector && lLine->backsector)
-                if(doSkyFix(rLine->backsector, lLine->frontsector, pln))
+                if(rOwner->line->L_backsector && lOwner->line->L_backsector)
+                if(doSkyFix(rOwner->line->L_backsector, lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
             }
         }
 
-        if(rLine == lLine || !rLine->backsector)
+        if(!rOwner->line->L_backsector)
             break;
-    }
+
+        rOwner = rOwner->next;
+    } while(rOwner != base);
 
     // Spread will begin from the next line clockwise.
-    if(j + 1 >= owner->numlines)
-        rLine = LINE_PTR(owner->linelist[0]);
-    else
-        rLine = LINE_PTR(owner->linelist[j+1]);
+    rOwner = base->next;
 
     // Spread anti-clockwise around this vertex from the reference minus one
     // until we reach the reference again OR a single sided line.
-    n = j - 1;
-    for(k = 0; k < owner->numlines; ++k, --n)
+    lOwner = base->prev;
+    do
     {
-        if(n < 0)
-            n = owner->numlines - 1;
-
-        lLine = LINE_PTR(owner->linelist[n]);
-        if(rLine != lLine)
+        if(rOwner != lOwner)
         {
             for(pln = 0; pln < 2; ++pln)
             {
                 if(!doFix[pln])
                     continue;
 
-                if(doSkyFix(rLine->frontsector, lLine->frontsector, pln))
+                if(doSkyFix(rOwner->line->L_frontsector, lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(lLine->backsector)
-                if(doSkyFix(rLine->frontsector, lLine->backsector, pln))
+                if(lOwner->line->L_backsector)
+                if(doSkyFix(rOwner->line->L_frontsector, lOwner->line->L_backsector, pln))
                     *adjusted[pln] = true;
 
-                if(rLine->backsector)
-                if(doSkyFix(rLine->backsector, lLine->frontsector, pln))
+                if(rOwner->line->L_backsector)
+                if(doSkyFix(rOwner->line->L_backsector, lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(rLine->backsector && lLine->backsector)
-                if(doSkyFix(rLine->backsector, lLine->frontsector, pln))
+                if(rOwner->line->L_backsector && lOwner->line->L_backsector)
+                if(doSkyFix(rOwner->line->L_backsector, lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
             }
         }
 
-        if(rLine == lLine || !lLine->backsector)
+        if(!lOwner->line->L_backsector)
             break;
-    }
+
+        lOwner = lOwner->prev;
+    } while(lOwner != base);
 }
 
 /**
@@ -475,7 +466,7 @@ static void spreadSkyFixForNeighbors(vertexinfo_t *owner, line_t *refLine,
  */
 void R_SkyFix(boolean fixFloors, boolean fixCeilings)
 {
-    int         i, pln;
+    uint        i, pln;
     boolean     adjusted[2], doFix[2];
 
     if(!fixFloors && !fixCeilings)
@@ -494,8 +485,8 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
         for(i = 0; i < numlines; ++i)
         {
             line_t     *line = LINE_PTR(i);
-            sector_t   *front = line->frontsector;
-            sector_t   *back = line->backsector;
+            sector_t   *front = line->L_frontsector;
+            sector_t   *back = line->L_backsector;
 
             // The conditions: must have two sides.
             if(!front || !back)
@@ -507,37 +498,26 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                 // of THIS line for comparing.
                 for(pln = 0; pln < 2; ++pln)
                 {
-                    if(!doFix[pln])
-                        continue;
-
-                    if(doSkyFix(front, back, pln))
-                        adjusted[pln] = true;
+                    if(doFix[pln])
+                        if(doSkyFix(front, back, pln))
+                            adjusted[pln] = true;
                 }
             }
-            else if(line->info->selfrefhackroot)
+            else if(line->selfrefhackroot)
             {
                 // Its a selfreferencing hack line. These will ALWAYS return
                 // the same height on the front and back so we need to find the
                 // neighbouring lines either side of this and compare the front
                 // and back sectors of those instead.
-                vertexinfo_t *ownerA, *ownerB;
+                uint        j;
 
                 // Walk around each vertex in each direction.
-                ownerA = line->v1->info;
-                ownerB = line->v2->info;
-                if(ownerA->numlines > 1)
-                    spreadSkyFixForNeighbors(ownerA, line,
-                                             doFix[PLN_FLOOR], doFix[PLN_CEILING],
-                                             &adjusted[PLN_FLOOR],
-                                             &adjusted[PLN_CEILING]);
-
-                if(ownerB->numlines > 1)
-                {
-                    spreadSkyFixForNeighbors(ownerB, line,
-                                             doFix[PLN_FLOOR], doFix[PLN_CEILING],
-                                             &adjusted[PLN_FLOOR],
-                                             &adjusted[PLN_CEILING]);
-                }
+                for(j = 0; j < 2; ++j)
+                    if(line->v[j]->numlineowners > 1)
+                        spreadSkyFixForNeighbors(line->v[j], line,
+                                                 doFix[PLN_FLOOR], doFix[PLN_CEILING],
+                                                 &adjusted[PLN_FLOOR],
+                                                 &adjusted[PLN_CEILING]);
             }
         }
     }
@@ -546,7 +526,7 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
 
 static void R_PrepareSubsector(subsector_t *sub)
 {
-    int     j,  num = sub->numverts;
+    uint        j, num = sub->numverts;
     fvertex_t  *vtx = sub->verts;
 
     // Find the center point. First calculate the bounding box.
@@ -575,12 +555,12 @@ static void R_PolygonizeWithoutCarving(void)
 {
     uint        startTime = Sys_GetRealTime();
 
-    int         i, j, num;
-    fvertex_t   *vtx;
+    uint        i, j, num;
+    fvertex_t  *vtx;
     subsector_t *sub;
-    seg_t       *seg;
+    seg_t      *seg;
 
-    for(i = numsubsectors -1; i >= 0; --i)
+    for(i = 0; i < numsubsectors; ++i)
     {
         sub = SUBSECTOR_PTR(i);
         num = sub->numverts = sub->linecount;
@@ -590,8 +570,8 @@ static void R_PolygonizeWithoutCarving(void)
         seg = SEG_PTR(sub->firstline);
         for(j = 0; j < num; ++j, seg++, vtx++)
         {
-            vtx->pos[VX] = seg->fv1.pos[VX];
-            vtx->pos[VY] = seg->fv1.pos[VY];
+            vtx->pos[VX] = seg->fv[0].pos[VX];
+            vtx->pos[VY] = seg->fv[0].pos[VY];
         }
 
         R_PrepareSubsector(sub);
@@ -606,11 +586,11 @@ static void R_PolygonizeWithoutCarving(void)
 /**
  * Returns a pointer to the list of points. It must be used.
  */
-static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
-                              int numclippers, fdivline_t * clippers)
+static fvertex_t *edgeClipper(uint *numpoints, fvertex_t *points,
+                              uint numclippers, fdivline_t *clippers)
 {
     unsigned char *sidelist;
-    int     i, k, num = *numpoints, sidelistSize = 64;
+    uint        i, k, num = *numpoints, sidelistSize = 64;
 
     sidelist = M_Malloc(sizeof(unsigned char) * sidelistSize);
 
@@ -682,7 +662,7 @@ static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
     // Screen out consecutive identical points.
     for(i = 0; i < num; ++i)
     {
-        int     previdx = i - 1;
+        long    previdx = i - 1;
 
         if(previdx < 0)
             previdx = num - 1;
@@ -702,14 +682,14 @@ static fvertex_t *edgeClipper(int *numpoints, fvertex_t * points,
     return points;
 }
 
-static void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
+static void R_ConvexClipper(subsector_t *ssec, uint num, divline_t *list)
 {
-    int         i, numedgepoints;
-    int         numclippers = num + ssec->linecount;
+    uint        i, numedgepoints;
+    uint        numclippers = num + ssec->linecount;
     fvertex_t  *edgepoints;
     fdivline_t *clippers, *clip;
 
-    clippers = Z_Malloc(numclippers * sizeof(fdivline_t), PU_STATIC, 0);
+    clippers = M_Malloc(numclippers * sizeof(fdivline_t));
 
     // Convert the divlines to float, in reverse order.
     for(i = 0, clip = clippers; i < numclippers; clip++, ++i)
@@ -725,10 +705,10 @@ static void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
         {
             seg_t  *seg = SEG_PTR(ssec->firstline + i - num);
 
-            clip->pos[VX] = seg->fv1.pos[VX];
-            clip->pos[VY] = seg->fv1.pos[VY];
-            clip->dx = seg->fv2.pos[VX] - seg->fv1.pos[VX];
-            clip->dy = seg->fv2.pos[VY] - seg->fv1.pos[VY];
+            clip->pos[VX] = seg->fv[0].pos[VX];
+            clip->pos[VY] = seg->fv[0].pos[VY];
+            clip->dx = seg->fv[1].pos[VX] - seg->fv[0].pos[VX];
+            clip->dy = seg->fv[1].pos[VY] - seg->fv[0].pos[VY];
         }
     }
 
@@ -774,18 +754,18 @@ static void R_ConvexClipper(subsector_t *ssec, int num, divline_t *list)
 
     // We're done, free the edgepoints memory.
     M_Free(edgepoints);
-    Z_Free(clippers);
+    M_Free(clippers);
 }
 
 /**
  * Recursively polygonizes all ceilings and floors.
  */
-void R_CreateFloorsAndCeilings(uint bspnode, int numdivlines,
-                               divline_t * divlines)
+void R_CreateFloorsAndCeilings(uint bspnode, uint numdivlines,
+                               divline_t *divlines)
 {
-    node_t *nod;
+    node_t     *nod;
     divline_t *childlist, *dl;
-    int     childlistsize = numdivlines + 1;
+    uint        childlistsize = numdivlines + 1;
 
     // If this is a subsector we are dealing with, begin carving with the
     // given list.
@@ -849,11 +829,11 @@ static float TriangleArea(fvertex_t *o, fvertex_t *s, fvertex_t *t)
 /**
  * Returns true if 'base' is a good tri-fan base.
  */
-static int R_TestTriFan(subsector_t *sub, int base, int num)
+static boolean R_TestTriFan(subsector_t *sub, uint base, uint num)
 {
 #define TRIFAN_LIMIT    0.1
-    int         i, a, b;
-    fvertex_t   *verts = sub->verts;
+    uint        i, a, b;
+    fvertex_t  *verts = sub->verts;
 
     if(num == 3)
         return true;            // They're all valid.
@@ -878,8 +858,7 @@ static int R_TestTriFan(subsector_t *sub, int base, int num)
 
 static void R_SubsectorPlanes(void)
 {
-    int         i;
-    unsigned int k, num, bufSize = 64;
+    uint        i, k, num, bufSize = 64;
     subsector_t *sub;
     fvertex_t  *verts;
     fvertex_t  *vbuf;
@@ -936,77 +915,162 @@ static void R_SubsectorPlanes(void)
  * Compares the angles of two lines that share a common vertex.
  *
  * pre: rootVtx must point to the vertex common between a and b
- *      which are (int*) line indexs.
+ *      which are (lineowner_t*) ptrs.
  */
 static int C_DECL lineAngleSorter(const void *a, const void *b)
 {
-    fixed_t dx, dy;
-    binangle_t angleA, angleB;
-    line_t *lineA = LINE_PTR(*(int *)a);
-    line_t *lineB = LINE_PTR(*(int *)b);
+    uint        i;
+    fixed_t     dx, dy;
+    binangle_t  angles[2];
+    line_t     *lines[2] = {((lineowner_t *)a)->line,
+                            ((lineowner_t *)b)->line};
 
-    if(lineA->v1 == rootVtx)
+    for(i = 0; i < 2; ++i)
     {
-        dx = lineA->v2->pos[VX] - rootVtx->pos[VX];
-        dy = lineA->v2->pos[VY] - rootVtx->pos[VY];
+        if(lines[i]->L_v1 == rootVtx)
+        {
+            dx = lines[i]->L_v2->pos[VX] - rootVtx->pos[VX];
+            dy = lines[i]->L_v2->pos[VY] - rootVtx->pos[VY];
+        }
+        else
+        {
+            dx = lines[i]->L_v1->pos[VX] - rootVtx->pos[VX];
+            dy = lines[i]->L_v1->pos[VY] - rootVtx->pos[VY];
+        }
+        angles[i] = bamsAtan2(-(dx >> 13), dy >> 13);
     }
-    else
-    {
-        dx = lineA->v1->pos[VX] - rootVtx->pos[VX];
-        dy = lineA->v1->pos[VY] - rootVtx->pos[VY];
-    }
-    angleA = bamsAtan2(-(dx >> 13), dy >> 13);
 
-    if(lineB->v1 == rootVtx)
-    {
-        dx = lineB->v2->pos[VX] - rootVtx->pos[VX];
-        dy = lineB->v2->pos[VY] - rootVtx->pos[VY];
-    }
-    else
-    {
-        dx = lineB->v1->pos[VX] - rootVtx->pos[VX];
-        dy = lineB->v1->pos[VY] - rootVtx->pos[VY];
-    }
-    angleB = bamsAtan2(-(dx >> 13), dy >> 13);
-
-    return (angleB - angleA);
+    return (angles[1] - angles[0]);
 }
 
-static void R_SetVertexLineOwner(vertex_t *vtx, ownerlist_t *ownerList,
-                                 line_t *lineptr)
+/**
+ * Merge left and right line owner lists into a new list.
+ *
+ * @return          Ptr to the newly merged list.
+ */
+static lineowner_t *mergeLineOwners(lineowner_t *left, lineowner_t *right,
+                                    int (C_DECL *compare) (const void *a,
+                                                           const void *b))
 {
-    int     i;
-    ownernode_t *node;
+    lineowner_t tmp, *np;
+
+    np = &tmp;
+    tmp.next = np;
+    while(left != NULL && right != NULL)
+    {
+        if(compare(left, right) <= 0)
+        {
+            np->next = left;
+            np = left;
+
+            left = left->next;
+        }
+        else
+        {
+            np->next = right;
+            np = right;
+
+            right = right->next;
+        }
+    }
+
+    // At least one of these lists is now empty.
+    if(left)
+        np->next = left;
+    if(right)
+        np->next = right;
+
+    // Is the list empty?
+    if(tmp.next == &tmp)
+        return NULL;
+
+    return tmp.next;
+}
+
+static lineowner_t *splitLineOwners(lineowner_t *list)
+{
+    lineowner_t *lista, *listb, *listc;
+
+    if(!list)
+        return NULL;
+
+    lista = listb = listc = list;
+    do
+    {
+        listc = listb;
+        listb = listb->next;
+        lista = lista->next;
+        if(lista != NULL)
+            lista = lista->next;
+    } while(lista);
+
+    listc->next = NULL;
+    return listb;
+}
+
+/**
+ * This routine uses a recursive mergesort algorithm; O(NlogN)
+ */
+static lineowner_t *sortLineOwners(lineowner_t *list,
+                                   int (C_DECL *compare) (const void *a,
+                                                          const void *b))
+{
+    lineowner_t *p;
+
+    if(list && list->next)
+    {
+        p = splitLineOwners(list);
+
+        // Sort both halves and merge them back.
+        list = mergeLineOwners(sortLineOwners(list, compare),
+                               sortLineOwners(p, compare), compare);
+    }
+    return list;
+}
+
+static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr)
+{
+    lineowner_t *p, *newOwner;
 
     if(!lineptr)
         return;
 
     // If this is a one-sided line then this is an "anchored" vertex.
-    if(!(lineptr->frontsector && lineptr->backsector))
-        vtx->info->anchored = true;
+    if(!(lineptr->L_frontsector && lineptr->L_backsector))
+        vtx->anchored = true;
 
-    // Has this line been already registered?
-    if(ownerList->count)
+    // Has this line already been registered with this vertex?
+    if(vtx->numlineowners != 0)
     {
-        for(i = 0, node = ownerList->head; i < ownerList->count; ++i,
-            node = node->next)
-            if((line_t*) node->data == lineptr)
+        p = vtx->lineowners;
+        while(p)
+        {
+            if(p->line == lineptr)
                 return;             // Yes, we can exit.
+
+            p = p->next;
+        }
     }
 
-    // Add a new owner.
-    ownerList->count++;
+    //Add a new owner.
+    vtx->numlineowners++;
 
-    node = M_Malloc(sizeof(ownernode_t));
-    node->data = lineptr;
-    node->next = ownerList->head;
-    ownerList->head = node;
+    newOwner = Z_Malloc(sizeof(lineowner_t), PU_LEVELSTATIC, 0);
+    newOwner->line = lineptr;
+
+    // Link it in.
+    // NOTE: We don't bother linking everything at this stage since we'll
+    // be sorting the lists anyway. After which we'll finish the job by
+    // setting the prev and circular links.
+    // So, for now this is only linked singlely, forward.
+    newOwner->next = vtx->lineowners;
+    vtx->lineowners = newOwner;
 }
 
-static void R_SetVertexOwner(vertex_t *vtx, ownerlist_t *ownerList,
-                             sector_t *secptr)
+static void R_SetVertexSectorOwner(vertex_t *vtx, ownerlist_t *ownerList,
+                                   sector_t *secptr)
 {
-    int     i;
+    uint        i;
     ownernode_t *node;
 
     if(!secptr)
@@ -1038,29 +1102,18 @@ static void R_SetVertexOwner(vertex_t *vtx, ownerlist_t *ownerList,
  * includes all the lines the vertex belongs to sorted by angle.
  * (the list is arranged in clockwise order, east = 0).
  */
-static void R_InitVertexOwners(void)
+static void R_BuildVertexOwners(void)
 {
     uint            startTime = Sys_GetRealTime();
 
-    int             i, k, p;
+    uint            i, k, p;
     sector_t       *sec;
     line_t         *line;
-    vertex_t       *v[2];
-    vertexinfo_t   *own;
-    ownerlist_t    *vtxSecOwnerLists, *vtxLineOwnerLists;
+    ownerlist_t    *vtxSecOwnerLists;
 
-    // Allocate enough memory for the vertex info.
-    own = Z_Malloc(sizeof(vertexinfo_t) * numvertexes, PU_LEVELSTATIC, 0);
-    memset(own, 0, sizeof(vertexinfo_t) * numvertexes);
-
-    for(i = 0; i < numvertexes; ++i, own++)
-        VERTEX_PTR(i)->info = own;
-
-    // Allocate memory for vertex owner processing.
+    // Allocate memory for vertex sector owner processing.
     vtxSecOwnerLists = M_Malloc(sizeof(ownerlist_t) * numvertexes);
     memset(vtxSecOwnerLists, 0, sizeof(ownerlist_t) * numvertexes);
-    vtxLineOwnerLists = M_Malloc(sizeof(ownerlist_t) * numvertexes);
-    memset(vtxLineOwnerLists, 0, sizeof(ownerlist_t) * numvertexes);
 
     for(i = 0, sec = sectors; i < numsectors; ++i, sec++)
     {
@@ -1068,75 +1121,123 @@ static void R_InitVertexOwners(void)
         for(k = 0; k < sec->linecount; ++k)
         {
             line = sec->Lines[k];
-            v[0] = line->v1;
-            v[1] = line->v2;
 
             for(p = 0; p < 2; ++p)
             {
-                int idx = GET_VERTEX_IDX(v[p]);
+                uint idx = GET_VERTEX_IDX(line->v[p]);
 
-                R_SetVertexOwner(v[p], &vtxSecOwnerLists[idx], line->frontsector);
-                R_SetVertexOwner(v[p], &vtxSecOwnerLists[idx], line->backsector);
-                R_SetVertexLineOwner(v[p], &vtxLineOwnerLists[idx], line);
+                R_SetVertexSectorOwner(line->v[p], &vtxSecOwnerLists[idx],
+                                       line->L_frontsector);
+                R_SetVertexSectorOwner(line->v[p], &vtxSecOwnerLists[idx],
+                                       line->L_backsector);
+
+                R_SetVertexLineOwner(line->v[p], line);
             }
         }
     }
 
-    // Now "harden" the linked lists into arrays of indices and free as we go.
+    // Now "harden" the sector owner linked lists into arrays and free as we go.
+    // We also need to sort line owners and then finish the rings.
     for(i = 0; i < numvertexes; ++i)
     {
         vertex_t   *v = VERTEX_PTR(i);
-        int        *ptr;
-        ownernode_t *node, *p;
 
         // Sector owners:
-        v->info->num = vtxSecOwnerLists[i].count;
-        v->info->list = Z_Malloc(v->info->num * sizeof(int), PU_LEVELSTATIC, 0);
-        for(k = 0, ptr = v->info->list, node = vtxSecOwnerLists[i].head;
-            k < v->info->num; ++k, ptr++)
+        v->numsecowners = vtxSecOwnerLists[i].count;
+        if(v->numsecowners != 0)
         {
-            p = node->next;
-            *ptr = GET_SECTOR_IDX((sector_t*) node->data);
-            M_Free(node);
-            node = p;
+            uint       *ptr;
+            ownernode_t *node, *p;
+
+            v->secowners =
+                Z_Malloc(v->numsecowners * sizeof(uint), PU_LEVELSTATIC, 0);
+            for(k = 0, ptr = v->secowners, node = vtxSecOwnerLists[i].head;
+                k < v->numsecowners; ++k, ptr++)
+            {
+                p = node->next;
+                *ptr = GET_SECTOR_IDX((sector_t*) node->data);
+                M_Free(node);
+                node = p;
+            }
         }
 
         // Line owners:
-        v->info->numlines = vtxLineOwnerLists[i].count;
-        v->info->linelist =
-            Z_Malloc(v->info->numlines * sizeof(int), PU_LEVELSTATIC, 0);
-        for(k = 0, ptr = v->info->linelist, node = vtxLineOwnerLists[i].head;
-            k < v->info->numlines; ++k, ptr++)
+        if(v->numlineowners != 0)
         {
-            p = node->next;
-            *ptr = GET_LINE_IDX((line_t*) node->data);
-            M_Free(node);
-            node = p;
+            lineowner_t *p, *last;
+
+            // Sort them so that they are ordered clockwise based on angle.
+            rootVtx = v;
+            v->lineowners =
+                sortLineOwners(v->lineowners, lineAngleSorter);
+
+            // Finish the linking job
+            // They are only singly linked atm, we need them to be doubly and
+            // circularly linked.
+            last = v->lineowners;
+            p = last->next;
+            while(p)
+            {
+                p->prev = last;
+                last = p;
+                p = p->next;
+            }
+            last->next = v->lineowners;
+            v->lineowners->prev = last;
+
+#if _DEBUG
+{
+// For checking the line owner link rings are formed correctly.
+lineowner_t *base;
+uint        idx;
+
+Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners);
+p = base = v->lineowners;
+idx = 0;
+do
+{
+    Con_Message("  %i: p = %i, this = %i, n = %i\n", idx,
+                GET_LINE_IDX(p->prev->line),
+                GET_LINE_IDX(p->line),
+                GET_LINE_IDX(p->next->line));
+    p = p->next;
+    idx++;
+} while(p != base);
+}
+#endif
         }
     }
     M_Free(vtxSecOwnerLists);
-    M_Free(vtxLineOwnerLists);
-
-    // Sort lineowner lists for each vertex clockwise based on line angle,
-    // so we can walk around the lines attached to each vertex.
-    // qsort is fast enough? (need to profile large maps)
-    for(i = 0; i < numvertexes; ++i)
-    {
-        rootVtx = VERTEX_PTR(i);
-        if(rootVtx->info->numlines > 1)
-            qsort(rootVtx->info->linelist, rootVtx->info->numlines, sizeof(int),
-                  lineAngleSorter);
-    }
 
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("R_InitVertexOwners: Done in %.2f seconds.\n",
+            ("R_BuildVertexOwners: Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
+}
+
+/**
+ * @return          Ptr to the lineowner for this line for this vertex else
+ *                  <code>NULL</code>.
+ */
+static lineowner_t* R_GetVtxLineOwner(vertex_t *vtx, line_t *line)
+{
+    lineowner_t *p, *base;
+
+    p = base = vtx->lineowners;
+    do
+    {
+        if(p->line == line)
+            return p;
+
+        p = p->next;
+    } while(p != base);
+
+    return NULL;
 }
 
 /*boolean DD_SubContainTest(sector_t *innersec, sector_t *outersec)
    {
-   int i, k;
+   uint i, k;
    boolean contained;
    float in[4], out[4];
    subsector_t *isub, *osub;
@@ -1174,22 +1275,22 @@ static void R_InitVertexOwners(void)
  */
 static sector_t *R_GetContainingSectorOf(sector_t *sec)
 {
-    int         i;
+    uint        i;
     float       cdiff = -1, diff;
     float       inner[4], outer[4];
     sector_t   *other, *closest = NULL;
 
-    memcpy(inner, sec->info->bounds, sizeof(inner));
+    memcpy(inner, sec->bounds, sizeof(inner));
 
     // Try all sectors that fit in the bounding box.
     for(i = 0, other = sectors; i < numsectors; other++, ++i)
     {
-        if(!other->linecount || SECT_INFO(other)->unclosed)
+        if(!other->linecount || other->unclosed)
             continue;
         if(other == sec)
             continue;           // Don't try on self!
 
-        memcpy(outer, other->info->bounds, sizeof(outer));
+        memcpy(outer, other->bounds, sizeof(outer));
         if(inner[BLEFT]  >= outer[BLEFT] &&
            inner[BRIGHT] <= outer[BRIGHT] &&
            inner[BTOP]   >= outer[BTOP] &&
@@ -1212,44 +1313,33 @@ static sector_t *R_GetContainingSectorOf(sector_t *sec)
     return closest;
 }
 
-static void R_InitSectorInfo(void)
+static void R_BuildSectorLinks(void)
 {
-    int         i, k;
-    sectorinfo_t *secinfo;
+    uint        i, k;
     sector_t   *sec, *other;
     line_t     *lin;
     boolean     dohack, unclosed;
 
-    secinfo = Z_Calloc(sizeof(sectorinfo_t) * numsectors, PU_LEVELSTATIC, 0);
-
     // Calculate bounding boxes for all sectors.
     // Check for unclosed sectors.
-    for(i = 0, sec = sectors; i < numsectors; ++i, sec++, secinfo++)
+    for(i = 0, sec = sectors; i < numsectors; ++i, sec++)
     {
-        sec->info = secinfo;
-
-        for(k = 0; k < sec->planecount; ++k)
-        {
-            sec->planes[k]->info = Z_Calloc(sizeof(planeinfo_t), PU_LEVEL, 0);
-            sec->planes[k]->surface.info = Z_Calloc(sizeof(surfaceinfo_t), PU_LEVEL, 0);
-        }
-
-        P_SectorBoundingBox(sec, sec->info->bounds);
+        P_SectorBoundingBox(sec, sec->bounds);
 
         if(i == 0)
         {
             // The first sector is used as is.
-            memcpy(mapBounds, sec->info->bounds, sizeof(mapBounds));
+            memcpy(mapBounds, sec->bounds, sizeof(mapBounds));
         }
         else
         {
             // Expand the bounding box.
-            M_JoinBoxes(mapBounds, sec->info->bounds);
+            M_JoinBoxes(mapBounds, sec->bounds);
         }
 
         // Detect unclosed sectors.
         unclosed = false;
-        if(!(SECTOR_PTR(i)->linecount >= 3))
+        if(sec->linecount < 3)
             unclosed = true;
         else
         {
@@ -1259,7 +1349,7 @@ static void R_InitSectorInfo(void)
         }
 
         if(unclosed)
-            sec->info->unclosed = true;
+            sec->unclosed = true;
     }
 
     for(i = 0, sec = sectors; i < numsectors; sec++, ++i)
@@ -1268,14 +1358,14 @@ static void R_InitSectorInfo(void)
             continue;
 
         // Is this sector completely contained by another?
-        sec->info->containsector = R_GetContainingSectorOf(sec);
+        sec->containsector = R_GetContainingSectorOf(sec);
 
         dohack = true;
         for(k = 0; k < sec->linecount; ++k)
         {
             lin = sec->Lines[k];
-            if(!lin->frontsector || !lin->backsector ||
-                lin->frontsector != lin->backsector)
+            if(!lin->L_frontsector || !lin->L_backsector ||
+                lin->L_frontsector != lin->L_backsector)
             {
                 dohack = false;
                 break;
@@ -1285,77 +1375,45 @@ static void R_InitSectorInfo(void)
         if(dohack)
         {
             // Link all planes permanently.
-            sec->info->permanentlink = true;
+            sec->permanentlink = true;
             // Only floor and ceiling can be linked, not all planes inbetween.
-            sec->planes[PLN_FLOOR]->info->linked = sec->info->containsector;
-            sec->planes[PLN_CEILING]->info->linked = sec->info->containsector;
+            sec->SP_floorlinked = sec->containsector;
+            sec->SP_ceillinked = sec->containsector;
 
             Con_Printf("Linking S%i planes permanently to S%i\n", i,
-                       GET_SECTOR_IDX(sec->info->containsector));
+                       GET_SECTOR_IDX(sec->containsector));
         }
 
         // Is this sector large enough to be a dominant light source?
-        if(sec->info->lightsource == NULL &&
+        if(sec->lightsource == NULL &&
            (R_IsSkySurface(&sec->SP_ceilsurface) ||
             R_IsSkySurface(&sec->SP_floorsurface)) &&
-           sec->info->bounds[BRIGHT] - sec->info->bounds[BLEFT] > DOMINANT_SIZE &&
-           sec->info->bounds[BBOTTOM] - sec->info->bounds[BTOP] > DOMINANT_SIZE)
+           sec->bounds[BRIGHT] - sec->bounds[BLEFT] > DOMINANT_SIZE &&
+           sec->bounds[BBOTTOM] - sec->bounds[BTOP] > DOMINANT_SIZE)
         {
             // All sectors touching this one will be affected.
             for(k = 0; k < sec->linecount; ++k)
             {
                 lin = sec->Lines[k];
-                other = lin->frontsector;
+                other = lin->L_frontsector;
                 if(!other || other == sec)
                 {
-                    other = lin->backsector;
+                    other = lin->L_backsector;
                     if(!other || other == sec)
                         continue;
                 }
-                other->info->lightsource = sec;
+                other->lightsource = sec;
             }
         }
     }
 }
 
-static void R_InitSegInfo(void)
+static void R_InitPlaneIllumination(subsector_t *sub, uint planeid)
 {
-    int         i, k, j, n;
-    seg_t      *seg;
-    seginfo_t  *inf;
+    uint        i, j, num;
+    subplaneinfo_t *plane = sub->planes[planeid];
 
-    inf = Z_Calloc(numsegs * sizeof(seginfo_t), PU_LEVELSTATIC, NULL);
-
-    for(i = 0, seg = segs; i < numsegs; ++i, seg++, inf++)
-    {
-        seg->info = inf;
-        for(k = 0; k < 4; ++k)
-        {
-/*            inf->illum[0][k].front =
-                inf->illum[1][k].front =
-                inf->illum[2][k].front = SEG_PTR(i)->frontsector;*/
-
-            for(j = 0; j < 3; ++j)
-            {
-                inf->illum[j][k].flags = VIF_STILL_UNSEEN;
-
-                for(n = 0; n < MAX_BIAS_AFFECTED; ++n)
-                {
-                    inf->illum[j][k].casted[n].source = -1;
-                }
-            }
-        }
-    }
-}
-
-static void R_InitPlaneIllumination(subsector_t *sub, int planeid)
-{
-    int         i, j;
-    int         num;
-    subsectorinfo_t *ssecinfo = SUBSECT_INFO(sub);
-    subplaneinfo_t *plane = ssecinfo->planes[planeid];
-
-    num = ssecinfo->numvertices;
+    num = sub->numvertices;
 
     plane->illumination =
         Z_Calloc(num * sizeof(vertexillum_t), PU_LEVELSTATIC, NULL);
@@ -1371,9 +1429,8 @@ static void R_InitPlaneIllumination(subsector_t *sub, int planeid)
 
 static void R_InitPlanePolys(subsector_t *subsector)
 {
-    int         numvrts, i;
+    uint        numvrts, i;
     fvertex_t  *vrts, *vtx, *pv;
-    subsectorinfo_t *ssecinfo = SUBSECT_INFO(subsector);
 
     // Take the subsector's vertices.
     numvrts = subsector->numverts;
@@ -1383,23 +1440,23 @@ static void R_InitPlanePolys(subsector_t *subsector)
     if(subsector->flags & DDSUBF_MIDPOINT)
     {
         // Triangle fan base is the midpoint of the subsector.
-        ssecinfo->numvertices = 2 + numvrts;
-        ssecinfo->vertices =
-            Z_Malloc(sizeof(fvertex_t) * ssecinfo->numvertices, PU_LEVELSTATIC, 0);
+        subsector->numvertices = 2 + numvrts;
+        subsector->vertices =
+            Z_Malloc(sizeof(fvertex_t) * subsector->numvertices, PU_LEVELSTATIC, 0);
 
-        memcpy(ssecinfo->vertices, &subsector->midpoint, sizeof(fvertex_t));
+        memcpy(subsector->vertices, &subsector->midpoint, sizeof(fvertex_t));
 
         vtx = vrts;
-        pv = ssecinfo->vertices + 1;
+        pv = subsector->vertices + 1;
     }
     else
     {
-        ssecinfo->numvertices = numvrts;
-        ssecinfo->vertices =
-            Z_Malloc(sizeof(fvertex_t) * ssecinfo->numvertices, PU_LEVELSTATIC, 0);
+        subsector->numvertices = numvrts;
+        subsector->vertices =
+            Z_Malloc(sizeof(fvertex_t) * subsector->numvertices, PU_LEVELSTATIC, 0);
 
         // The first vertex is always the same: vertex zero.
-        pv = ssecinfo->vertices;
+        pv = subsector->vertices;
         memcpy(pv, &vrts[0], sizeof(*pv));
 
         vtx = vrts + 1;
@@ -1408,13 +1465,13 @@ static void R_InitPlanePolys(subsector_t *subsector)
     }
 
     // Add the rest of the vertices.
-    for(; numvrts > 0; numvrts--, vtx++, pv++)
+    for(i = 0; i < numvrts; ++i, vtx++, pv++)
         memcpy(pv, vtx, sizeof(*vtx));
 
     if(subsector->flags & DDSUBF_MIDPOINT)
     {
         // Re-add the first vertex so the triangle fan wraps around.
-        memcpy(pv, &ssecinfo->vertices[1], sizeof(*pv));
+        memcpy(pv, &subsector->vertices[1], sizeof(*pv));
     }
 
     // Initialize the illumination for the subsector.
@@ -1423,34 +1480,27 @@ static void R_InitPlanePolys(subsector_t *subsector)
 
     // FIXME: $nplanes
     // Initialize the plane types.
-    ssecinfo->planes[PLN_FLOOR]->type = PLN_FLOOR;
-    ssecinfo->planes[PLN_CEILING]->type = PLN_CEILING;
+    subsector->planes[PLN_FLOOR]->type = PLN_FLOOR;
+    subsector->planes[PLN_CEILING]->type = PLN_CEILING;
 }
 
-void R_InitSubsectorInfo(void)
+static void R_BuildSubsectorPolys(void)
 {
-    int     i, k;
+    uint        i, k;
     subsector_t *sub;
-    subsectorinfo_t *info;
-
-    i = sizeof(subsectorinfo_t) * numsubsectors;
-#ifdef _DEBUG
-    Con_Printf("R_InitSubsectorInfo: %i bytes.\n", i);
-#endif
-    info = Z_Calloc(i, PU_LEVELSTATIC, NULL);
 
 #ifdef _DEBUG
-    Z_CheckHeap();
+    Con_Printf("R_BuildSubsectorPolys\n");
 #endif
 
-    for(i = 0; i < numsubsectors; ++i, info++)
+    for(i = 0; i < numsubsectors; ++i)
     {
         sub = SUBSECTOR_PTR(i);
-        sub->info = info;
 
-        info->planes = Z_Malloc(sub->sector->planecount * sizeof(subplaneinfo_t*), PU_LEVEL, NULL);
+        sub->planes = Z_Malloc(sub->sector->planecount * sizeof(subplaneinfo_t*),
+                               PU_LEVEL, NULL);
         for(k = 0; k < sub->sector->planecount; ++k)
-            info->planes[k] = Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
+            sub->planes[k] = Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
 
         R_InitPlanePolys(sub);
     }
@@ -1458,6 +1508,109 @@ void R_InitSubsectorInfo(void)
 #ifdef _DEBUG
     Z_CheckHeap();
 #endif
+}
+
+/**
+ * Determines if the given sector is made up of any self-referencing
+ * "root"-lines and marks them as such.
+ *
+ * @return              The number of "root"-lines found ELSE 0.
+ */
+static uint MarkSecSelfRefRootLines(sector_t *sec)
+{
+    uint        i;
+    uint        numroots;
+    vertex_t   *vtx[2];
+    line_t     *lin;
+
+    numroots = 0;
+    for(i = 0; i < sec->linecount; ++i)
+    {
+        lin = sec->Lines[i];
+
+        if(lin->L_frontsector && lin->L_backsector &&
+           lin->L_frontsector == lin->L_backsector &&
+           lin->L_backsector == sec)
+        {
+            // The line properties indicate that this might be a
+            // self-referencing, hack sector.
+
+            // Make sure this line isn't isolated
+            // (ie both vertexes arn't endpoints).
+            vtx[0] = lin->L_v1;
+            vtx[1] = lin->L_v2;
+            if(!(vtx[0]->numlineowners == 1 && vtx[1]->numlineowners == 1))
+            {
+                // Also, this line could split a sector and both ends
+                // COULD be vertexes that make up the sector outline.
+                // So, check all line owners of each vertex.
+
+                // Test simple case - single line dividing a sector
+                if(!(vtx[0]->numsecowners == 1 && vtx[1]->numsecowners == 1))
+                {
+                    lineowner_t *base;
+                    line_t      *lOwner, *rOwner;
+                    boolean ok = false;
+                    boolean ok2 = false;
+
+                    // Ok, need to check the logical neighbors.
+
+                    //Con_Message("Hack root candidate is %i\n", GET_LINE_IDX(lin));
+                    if(vtx[0]->numlineowners > 1)
+                    {
+                        base = R_GetVtxLineOwner(vtx[0], lin);
+                        lOwner = base->prev->line;
+                        rOwner = base->next->line;
+
+                        if(rOwner == lOwner)
+                            ok = true;
+                        else
+                        {
+                            if(rOwner->L_frontsector != lOwner->L_frontsector &&
+                               ((!rOwner->L_backsector || !lOwner->L_backsector) ||
+                                (rOwner->L_backsector && lOwner->L_backsector &&
+                                 rOwner->L_backsector != lOwner->L_backsector)) &&
+                               (rOwner->L_frontsector == sec || lOwner->L_frontsector == sec ||
+                                (rOwner->L_backsector && rOwner->L_backsector == sec) ||
+                                (lOwner->L_backsector && lOwner->L_backsector == sec)))
+                                ok = true;
+                        }
+                    }
+
+                    if(ok && vtx[1]->numlineowners > 1)
+                    {
+                        base = R_GetVtxLineOwner(vtx[1], lin);
+                        lOwner = base->prev->line;
+                        rOwner = base->next->line;
+
+                        if(rOwner == lOwner)
+                            ok2 = true;
+                        else
+                        {
+                            if(rOwner->L_frontsector != lOwner->L_frontsector &&
+                               ((!rOwner->L_backsector || !lOwner->L_backsector) ||
+                                (rOwner->L_backsector && lOwner->L_backsector &&
+                                 rOwner->L_backsector != lOwner->L_backsector)) &&
+                               (rOwner->L_frontsector == sec || lOwner->L_frontsector == sec ||
+                                (rOwner->L_backsector && rOwner->L_backsector == sec) ||
+                                (lOwner->L_backsector && lOwner->L_backsector == sec)))
+                                ok2 = true;
+                        }
+                    }
+
+                    if(ok && ok2)
+                    {
+                        lin->selfrefhackroot = true;
+                        VERBOSE2(Con_Message("L%i selfref root to S%i\n",
+                                    GET_LINE_IDX(lin), GET_SECTOR_IDX(sec)));
+                        ++numroots;
+                    }
+                }
+            }
+        }
+    }
+
+    return numroots;
 }
 
 /**
@@ -1469,7 +1622,7 @@ void R_InitSubsectorInfo(void)
  *
  * NOTE: Self-referencing sectors where all lines in the sector
  *       are self-referencing are NOT handled by this algorthim.
- *       Those kind of hacks are detected in R_InitSectorInfo().
+ *       Those kind of hacks are detected in R_BuildSectorLinks().
  *
  * TODO: DJS - We need to collect subsectors into "mutually
  * exclusive groups" and instead of linking whole sectors to
@@ -1492,14 +1645,11 @@ void R_RationalizeSectors(void)
 {
     uint        startTime = Sys_GetRealTime();
 
-    int         i, j, k, l, m;
-    int         numroots;
+    uint        i, k, l, m;
     sector_t   *sec;
     line_t     *lin;
     line_t    **collectedLines;
-    int         maxNumLines = 20; // Initial size of the "run" (line list).
-    lineinfo_t *linfo;
-    boolean     selfRefHack;
+    uint        maxNumLines = 20; // Initial size of the "run" (line list).
 
     // Allocate some memory for the line "run" (line list).
     collectedLines = M_Malloc(maxNumLines * sizeof(line_t*));
@@ -1510,137 +1660,15 @@ void R_RationalizeSectors(void)
             continue;
 
         // Detect self-referencing "root" lines.
-        // NOTE: We need to find ALL of them.
-        selfRefHack = false;
-        numroots = 0;
-
-        for(k = 0; k < sec->linecount; ++k)
+        if(MarkSecSelfRefRootLines(sec) != 0)
         {
-            lin = sec->Lines[k];
-            linfo = lin->info;
-
-            if(lin->frontsector && lin->backsector &&
-               lin->frontsector == lin->backsector &&
-               lin->backsector == sec)
-            {
-                vertexinfo_t *ownerA, *ownerB;
-                // The line properties indicate that this might be a
-                // self-referencing, hack sector.
-
-                // Make sure this line isn't isolated
-                // (ie both vertexes arn't endpoints).
-                ownerA = lin->v1->info;
-                ownerB = lin->v2->info;
-                if(!(ownerA->numlines == 1 && ownerB->numlines == 1))
-                {
-                    // Also, this line could split a sector and both ends
-                    // COULD be vertexes that make up the sector outline.
-                    // So, check all line owners of each vertex.
-
-                    // Test simple case - single line dividing a sector
-                    if(!(ownerA->num == 1 && ownerB->num == 1))
-                    {
-                        line_t *lLine, *rLine;
-                        boolean ok = false;
-                        boolean ok2 = false;
-
-                        // Ok, need to check the logical neighbors.
-
-                        //Con_Message("Hack root candidate is %i\n", GET_LINE_IDX(lin));
-                        if(ownerA->numlines > 1)
-                        {
-                            for(j = 0; j < ownerA->numlines; ++j)
-                            {
-                                if(LINE_PTR(ownerA->linelist[j]) == lin)
-                                    break;
-                            }
-
-                            if(j + 1 >= ownerA->numlines)
-                                rLine = LINE_PTR(ownerA->linelist[0]);
-                            else
-                                rLine = LINE_PTR(ownerA->linelist[j+1]);
-                            //Con_Message(" next clockwise is %i\n", GET_LINE_IDX(rLine));
-
-                            if(j - 1 < 0)
-                                lLine = LINE_PTR(ownerA->linelist[ownerA->numlines-1]);
-                            else
-                                lLine = LINE_PTR(ownerA->linelist[j-1]);
-                            //Con_Message(" next anticlockwise is %i\n", GET_LINE_IDX(lLine));
-
-                            if(rLine == lLine)
-                                ok = true;
-                            else
-                            {
-                                if(rLine->frontsector != lLine->frontsector &&
-                                   ((!rLine->backsector || !lLine->backsector) ||
-                                    (rLine->backsector && lLine->backsector &&
-                                     rLine->backsector != lLine->backsector)) &&
-                                   (rLine->frontsector == sec || lLine->frontsector == sec ||
-                                    (rLine->backsector && rLine->backsector == sec) ||
-                                    (lLine->backsector && lLine->backsector == sec)))
-                                    ok = true;
-                            }
-                        }
-
-                        if(ok && ownerB->numlines > 1)
-                        {
-                            for(j = 0; j < ownerB->numlines; ++j)
-                            {
-                                if(LINE_PTR(ownerB->linelist[j]) == lin)
-                                    break;
-                            }
-
-                            if(j + 1 >= ownerB->numlines)
-                                rLine = LINE_PTR(ownerB->linelist[0]);
-                            else
-                                rLine = LINE_PTR(ownerB->linelist[j+1]);
-                            //Con_Message(" next clockwise is %i\n", GET_LINE_IDX(rLine));
-
-                            if(j - 1 < 0)
-                                lLine = LINE_PTR(ownerB->linelist[ownerB->numlines-1]);
-                            else
-                                lLine = LINE_PTR(ownerB->linelist[j-1]);
-                            //Con_Message(" next anticlockwise is %i\n", GET_LINE_IDX(lLine));
-
-                            if(rLine == lLine)
-                                ok2 = true;
-                            else
-                            {
-                                if(rLine->frontsector != lLine->frontsector &&
-                                   ((!rLine->backsector || !lLine->backsector) ||
-                                    (rLine->backsector && lLine->backsector &&
-                                     rLine->backsector != lLine->backsector)) &&
-                                   (rLine->frontsector == sec || lLine->frontsector == sec ||
-                                    (rLine->backsector && rLine->backsector == sec) ||
-                                    (lLine->backsector && lLine->backsector == sec)))
-                                    ok2 = true;
-                            }
-                        }
-
-                        if(ok && ok2)
-                        {
-                            selfRefHack = true;
-                            linfo->selfrefhackroot = true;
-                            VERBOSE2(Con_Message("L%i selfref root to S%i\n",
-                                        GET_LINE_IDX(lin), GET_SECTOR_IDX(sec)));
-                            ++numroots;
-                        }
-                    }
-                }
-            }
-        }
-
-        if(selfRefHack)
-        {
-            int         count;
-            vertexinfo_t *ownerA, *ownerB;
-            line_t     *line;
-            line_t     *next;
-            vertexinfo_t *owner;
-            boolean     scanOwners, addToCollection, found;
+            uint        count;
+            line_t     *line, *next;
+            vertex_t   *vtx;
+            boolean     scanOwners, rescanVtx, addToCollection, found;
 
             // Mark this sector as a self-referencing hack.
-            sec->info->selfRefHack = true;
+            sec->selfRefHack = true;
 
             // Now look for lines connected to this root line (and any
             // subsequent lines that connect to those) that match the
@@ -1651,17 +1679,17 @@ void R_RationalizeSectors(void)
             for(k = 0; k < sec->linecount; ++k)
             {
                 lin = sec->Lines[k];
-                linfo = lin->info;
-                if(!linfo->selfrefhackroot)
+
+                if(!lin->selfrefhackroot)
                     continue;
 
                 if(lin->validcount)
                     continue; // We've already found this hack group.
 
-                ownerA = lin->v1->info;
-                ownerB = lin->v2->info;
                 for(l = 0; l < 2; ++l)
                 {
+                    lineowner_t *p, *base;
+
                     // Clear the collectedLines list.
                     memset(collectedLines, 0, sizeof(collectedLines));
                     count = 0;
@@ -1669,141 +1697,161 @@ void R_RationalizeSectors(void)
                     line = lin;
                     scanOwners = true;
 
-                    if(l == 0)
-                        owner = ownerA;
-                    else
-                        owner = ownerB;
+                    vtx = lin->v[l];
 
-                    for(j = 0; j < owner->numlines && scanOwners; ++j)
+                    p = base = vtx->lineowners;
+                    do
                     {
-                        next = LINE_PTR(owner->linelist[j]);
-                        if(next == line || next == lin)
-                            continue;
+                        next = p->line;
 
-                        line = next;
-
-                        if(!(line->frontsector == sec &&
-                           (line->backsector && line->backsector == sec)))
-                            continue;
-
-                        // Is this line already in the current run? (self collision)
-                        addToCollection = true;
-                        for(m = 0; m < count && addToCollection; ++m)
+                        rescanVtx = false;
+                        if(next != line && next != lin)
                         {
-                            if(line == collectedLines[m])
+                            line = next;
+
+                            if(line->L_frontsector == sec &&
+                               (line->L_backsector && line->L_backsector == sec))
                             {
-                                int n, o, p, q;
-                                line_t *lcand;
-                                vertexinfo_t *vown;
-
-                                // Pick another candidate to continue line collection.
-                                pickNewCandiate:;
-
-                                // Logic: Work backwards through the collected line
-                                // list, checking the number of line owners of each
-                                // vertex. If we find one with >2 line owners - check
-                                // the lines to see if it would be a good place to
-                                // recommence line collection (a self-referencing line,
-                                // same sector).
-                                lcand = NULL;
-                                vown = NULL;
-                                found = false;
-                                for(n = count-1; n >= 0 && !found; --n)
+                                // Is this line already in the current run? (self collision)
+                                addToCollection = true;
+                                for(m = 0; m < count && addToCollection; ++m)
                                 {
-                                    for(q= 0; q < 2 && !found; ++q)
+                                    if(line == collectedLines[m])
                                     {
-                                        if(q == 0)
-                                            vown = collectedLines[n]->v1->info;
-                                        else
-                                            vown = collectedLines[n]->v2->info;
+                                        int         n, q;
+                                        uint        o;
+                                        line_t     *lcand, *cline;
+                                        vertex_t   *vcand;
+                                        lineowner_t *p2, *base2;
 
-                                        if(vown && vown->numlines > 2)
+                                        // Pick another candidate to continue line collection.
+                                        pickNewCandiate:;
+
+                                        // Logic: Work backwards through the collected line
+                                        // list, checking the number of line owners of each
+                                        // vertex. If we find one with >2 line owners - check
+                                        // the lines to see if it would be a good place to
+                                        // recommence line collection (a self-referencing line,
+                                        // same sector).
+                                        lcand = NULL;
+                                        vcand = NULL;
+                                        found = false;
+                                        n = count - 1;
+                                        while(n >= 0 && !found)
                                         {
-                                            for(o = 0; o <= vown->numlines && !found; ++o)
+                                            cline = collectedLines[n];
+
+                                            o = 0;
+                                            while(o < 2 && !found)
                                             {
-                                                lcand = LINE_PTR(vown->linelist[o]);
-                                                if(lcand &&
-                                                   lcand->frontsector && lcand->backsector &&
-                                                   lcand->frontsector == lcand->backsector &&
-                                                   lcand->frontsector == sec)
+                                                vcand = cline->v[o];
+
+                                                if(vcand->numlineowners > 2)
                                                 {
-                                                    // Have we already collected it?
-                                                    found = true;
-                                                    for(p = count-1; p >=0  && found; --p)
-                                                        if(lcand == collectedLines[p])
-                                                            found = false; // no good
+                                                    p2 = base2 = vcand->lineowners;
+                                                    do
+                                                    {
+                                                        lcand = p->line;
+
+                                                        if(lcand &&
+                                                           lcand->L_frontsector && lcand->L_backsector &&
+                                                           lcand->L_frontsector == lcand->L_backsector &&
+                                                           lcand->L_frontsector == sec)
+                                                        {
+                                                            // Have we already collected it?
+                                                            found = true;
+                                                            q = count - 1;
+                                                            while(q >= 0 && found)
+                                                            {
+                                                                if(lcand == collectedLines[q])
+                                                                    found = false; // no good
+
+                                                                if(found)
+                                                                    q--;
+                                                            }
+                                                        }
+
+                                                        if(!found)
+                                                            p2 = p2->next;
+                                                    } while(!found && p2 != base);
                                                 }
+
+                                                if(!found)
+                                                    o++;
                                             }
-                                        }
-                                    }
-                                }
 
-                                if(found)
-                                {
-                                    // Found a suitable one.
-                                    line = lcand;
-                                    owner = vown;
-                                    addToCollection = true;
-                                }
-                                else
-                                {
-                                    // We've found all the lines involved in
-                                    // this self-ref hack.
-                                    if(count >= 1)
-                                    {
-                                        // Promote all lines in the collection
-                                        // to self-referencing root lines.
-                                        while(count--)
+                                            if(!found)
+                                                n--;
+                                        }
+
+                                        if(found)
                                         {
-                                            LINE_INFO(collectedLines[count])->selfrefhackroot = true;
-                                            VERBOSE2(Con_Message("  L%i selfref root to S%i\n",
-                                                                 GET_LINE_IDX(collectedLines[count]),
-                                                                 GET_SECTOR_IDX(sec)));
+                                            // Found a suitable one.
+                                            line = lcand;
+                                            vtx = vcand;
+                                            addToCollection = true;
+                                        }
+                                        else
+                                        {
+                                            // We've found all the lines involved in
+                                            // this self-ref hack. Promote all lines in the collection
+                                            // to self-referencing root lines.
+                                            for(o = 0; o < count; ++o)
+                                            {
+                                                collectedLines[o]->selfrefhackroot = true;
+                                                VERBOSE2(Con_Message("  L%i selfref root to S%i\n",
+                                                                     GET_LINE_IDX(collectedLines[o]),
+                                                                     GET_SECTOR_IDX(sec)));
 
-                                            // Use validcount to mark them as done.
-                                            collectedLines[count]->validcount = true;
+                                                // Use validcount to mark them as done.
+                                                collectedLines[o]->validcount = true;
+                                            }
+
+                                            // We are done with this group, don't collect.
+                                            addToCollection = false;
+
+                                            // We are done with this vertex for this root.
+                                            scanOwners = false;
+                                            count = 0;
                                         }
                                     }
-                                    // We are done with this group, don't collect.
-                                    addToCollection = false;
+                                }
 
-                                    // We are done with this vertex for this root.
-                                    scanOwners = false;
-                                    count = 0;
+                                if(addToCollection)
+                                {
+                                    if(++count > maxNumLines)
+                                    {
+                                        // Allocate some more memory.
+                                        maxNumLines *= 2;
+                                        if(maxNumLines < count)
+                                            maxNumLines = count;
+
+                                        collectedLines =
+                                            M_Realloc(collectedLines, sizeof(line_t*) * maxNumLines);
+                                    }
+
+                                    collectedLines[count-1] = line;
+
+                                    if(line->selfrefhackroot)
+                                        goto pickNewCandiate;
+                                }
+
+                                if(scanOwners)
+                                {
+                                    // Get the vertex info for the other vertex.
+                                    if(vtx == line->L_v1)
+                                        vtx = line->L_v2;
+                                    else
+                                        vtx = line->L_v1;
+
+                                    rescanVtx = true; // Start from the begining with this vertex.
                                 }
                             }
                         }
 
-                        if(addToCollection)
-                        {
-                            if(++count > maxNumLines)
-                            {
-                                // Allocate some more memory.
-                                maxNumLines *= 2;
-                                if(maxNumLines < count)
-                                    maxNumLines = count;
-
-                                collectedLines =
-                                    M_Realloc(collectedLines, sizeof(line_t*) * maxNumLines);
-                            }
-
-                            collectedLines[count-1] = line;
-
-                            if(LINE_INFO(line)->selfrefhackroot)
-                                goto pickNewCandiate;
-                        }
-
-                        if(scanOwners)
-                        {
-                            // Get the vertexowner info for the other vertex.
-                            if(owner == line->v1->info)
-                                owner = line->v2->info;
-                            else
-                                owner = line->v1->info;
-
-                            j = -1; // Start from the begining with this vertex.
-                        }
-                    }
+                        if(!rescanVtx)
+                            p = p->next;
+                    } while(p != base && scanOwners);
                 }
             }
         }
@@ -1941,15 +1989,15 @@ void R_SetupSky(void)
  */
 void R_OrderVertices(line_t *line, const sector_t *sector, vertex_t *verts[2])
 {
-    if(sector == line->frontsector)
+    if(sector == line->L_frontsector)
     {
-        verts[0] = line->v1;
-        verts[1] = line->v2;
+        verts[0] = line->v[0];
+        verts[1] = line->v[1];
     }
     else
     {
-        verts[0] = line->v2;
-        verts[1] = line->v1;
+        verts[0] = line->v[1];
+        verts[1] = line->v[0];
     }
 }
 
@@ -1960,7 +2008,7 @@ void R_OrderVertices(line_t *line, const sector_t *sector, vertex_t *verts[2])
 static void R_FindLineNeighbors(sector_t *sector, line_t *line,
                                 line_t **neighbors, int alignment)
 {
-    int         j;
+    uint        j;
     line_t     *other;
     vertex_t   *vtx[2];
 
@@ -1976,14 +2024,14 @@ static void R_FindLineNeighbors(sector_t *sector, line_t *line,
             continue;
 
         // Is this a valid neighbour?
-        if(other->frontsector == other->backsector)
+        if(other->L_frontsector == other->L_backsector)
             continue;
 
         // Do we need to test the line alignment?
         if(alignment)
         {
 #define SEP 10
-            binangle_t diff = LINE_INFO(line)->angle - LINE_INFO(other)->angle;
+            binangle_t diff = line->angle - other->angle;
 
             /*if(!(diff < SEP && diff > BANG_MAX - SEP) &&
                !(diff < BANG_180 + SEP && diff > BANG_180 - SEP))
@@ -1991,18 +2039,18 @@ static void R_FindLineNeighbors(sector_t *sector, line_t *line,
 
             if(alignment < 0)
                 diff -= BANG_180;
-            if(other->frontsector != sector)
+            if(other->L_frontsector != sector)
                 diff -= BANG_180;
             if(!(diff < SEP || diff > BANG_MAX - SEP))
                 continue;       // Misaligned.
         }
 
         // It's our 'left' neighbour if it shares v1.
-        if(other->v1 == vtx[0] || other->v2 == vtx[0])
+        if(other->v[0] == vtx[0] || other->v[1] == vtx[0])
             neighbors[0] = other;
 
         // It's our 'right' neighbour if it shares v2.
-        if(other->v1 == vtx[1] || other->v2 == vtx[1])
+        if(other->v[0] == vtx[1] || other->v[1] == vtx[1])
             neighbors[1] = other;
 
         // Do we have everything we want?
@@ -2013,8 +2061,8 @@ static void R_FindLineNeighbors(sector_t *sector, line_t *line,
 
 static boolean R_IsEquivalent(line_t *a, line_t *b)
 {
-    return ((a->v1 == b->v1 && a->v2 == b->v2) ||
-            (a->v1 == b->v2 && a->v2 == b->v1));
+    return ((a->v[0] == b->v[0] && a->v[1] == b->v[1]) ||
+            (a->v[0] == b->v[1] && a->v[1] == b->v[0]));
 }
 
 /**
@@ -2025,7 +2073,7 @@ static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
                                line_t *realNeighbor, vertex_t *commonVertex,
                                line_t **backNeighbor)
 {
-    int         i;
+    uint        i;
     line_t     *line;
 
     for(i = 0; i < backSector->linecount; ++i)
@@ -2033,53 +2081,14 @@ static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
         line = backSector->Lines[i];
         if(R_IsEquivalent(line, realNeighbor) || R_IsEquivalent(line, self))
             continue;
-        if(LINE_INFO(line)->selfrefhackroot)
+        if(line->selfrefhackroot)
             continue;
 
-        if(line->v1 == commonVertex || line->v2 == commonVertex)
+        if(line->L_v1 == commonVertex || line->L_v2 == commonVertex)
         {
             *backNeighbor = line;
             return;
         }
-    }
-}
-
-/**
- * Calculate accurate lengths for all lines.
- */
-void R_InitLineInfo(void)
-{
-    int         i;
-    line_t     *line;
-    lineinfo_t *info;
-    side_t     *side;
-    sideinfo_t *sinfo;
-    surfaceinfo_t *sufinfo;
-
-    // Allocate memory for the line info.
-    info = Z_Calloc(sizeof(lineinfo_t) * numlines, PU_LEVELSTATIC, NULL);
-
-    // Calculate the accurate length of each line.
-    for(i = 0; i < numlines; ++i, info++)
-    {
-        line = LINE_PTR(i);
-        line->info = info;
-
-        info->length = P_AccurateDistance(line->dx, line->dy);
-        info->angle = bamsAtan2(-(line->dx >> 13), line->dy >> 13);
-    }
-
-    // Allocate memory for the side info.
-    sinfo = Z_Calloc(sizeof(sideinfo_t) * numsides, PU_LEVELSTATIC, NULL);
-    sufinfo =
-        Z_Calloc(sizeof(surfaceinfo_t) * numsides * 3, PU_LEVELSTATIC, NULL);
-    for(i = 0; i < numsides; ++i, sinfo++, sufinfo += 3)
-    {
-        side = SIDE_PTR(i);
-        side->info = sinfo;
-        side->top.info = sufinfo;
-        side->middle.info = sufinfo + 1;
-        side->bottom.info = sufinfo + 2;
     }
 }
 
@@ -2090,13 +2099,11 @@ void R_InitLineNeighbors(void)
 {
     uint        startTime = Sys_GetRealTime();
 
-    int         i, k, j, m;
+    uint        i, k, j, m;
     line_t     *line, *other;
     sector_t   *sector;
-    lineinfo_t *info;
-    sideinfo_t *side;
-    vertex_t   *vertices[2];
-    vertexinfo_t *owner;
+    side_t     *side;
+    vertex_t   *vertices[2], *vtx;
 
     // Find neighbours. We'll do this sector by sector.
     for(k = 0; k < numsectors; ++k)
@@ -2105,11 +2112,9 @@ void R_InitLineNeighbors(void)
         for(i = 0; i < sector->linecount; ++i)
         {
             line = sector->Lines[i];
-            info = line->info;
 
             // Which side is this?
-            side = (line->frontsector == sector ? line->sides[0] :
-                            line->sides[1])->info;
+            side = line->sides[line->L_frontsector == sector? FRONT:BACK];
 
             R_FindLineNeighbors(sector, line, side->neighbor, 0);
 
@@ -2119,14 +2124,12 @@ void R_InitLineNeighbors(void)
             for(j = 0; j < 2; ++j)
             {
                 // Neighbour must be two-sided.
-                if(side->neighbor[j] && side->neighbor[j]->frontsector &&
-                   side->neighbor[j]->backsector &&
-                   !side->neighbor[j]->info->selfrefhackroot)
+                if(side->neighbor[j] && side->neighbor[j]->L_frontsector &&
+                   side->neighbor[j]->L_backsector &&
+                   !side->neighbor[j]->selfrefhackroot)
                 {
                     side->proxsector[j] =
-                        (side->neighbor[j]->frontsector ==
-                         sector ? side->neighbor[j]->backsector : side->
-                         neighbor[j]->frontsector);
+                        side->neighbor[j]->sec[side->neighbor[j]->L_frontsector == sector ? BACK:FRONT];
 
                     // Find the backneighbour.  They are the
                     // neighbouring lines in the backsectors of the
@@ -2149,12 +2152,12 @@ assert(side->backneighbor[j] != line);
             // Look for aligned neighbours.  They are side-specific.
             for(j = 0; j < 2; ++j)
             {
-                owner = vertices[j]->info;
-                for(m = 0; m < owner->num; ++m)
+                vtx = vertices[j];
+                for(m = 0; m < vtx->numsecowners; ++m)
                 {
-                    R_FindLineNeighbors(SECTOR_PTR(owner->list[m]), line,
+                    R_FindLineNeighbors(SECTOR_PTR(vtx->secowners[m]), line,
                                         side->alignneighbor,
-                                        (side ==line->sides[0]->info?1:-1));
+                                        (side == line->L_frontside? 1:-1));
                 }
             }
 
@@ -2167,7 +2170,7 @@ assert(side->backneighbor[j] != line);
             // are owned by this sector and ONE of the vertexes is owned by
             // this line.
             if((!side->neighbor[0] || !side->neighbor[1]) &&
-               !info->selfrefhackroot)
+               !line->selfrefhackroot)
             {
                 boolean ok, ok2;
 
@@ -2175,21 +2178,21 @@ assert(side->backneighbor[j] != line);
                 for(j = 0; j < numlines; ++j)
                 {
                     other = LINE_PTR(j);
-                    if(other->info->selfrefhackroot &&
-                        (other->v1 == line->v1 || other->v1 == line->v2 ||
-                         other->v2 == line->v1 || other->v2 == line->v2))
+                    if(other->selfrefhackroot &&
+                        (other->L_v1 == line->L_v1 || other->L_v1 == line->L_v2 ||
+                         other->L_v2 == line->L_v1 || other->L_v2 == line->L_v2))
                     {
                         ok = ok2 = false;
-                        owner = other->v1->info;
-                        for(m = 0; m < owner->num && !ok; ++m)
-                            if(owner->list[m] == k) // k == sector id
+                        vtx = other->L_v1;
+                        for(m = 0; m < vtx->numsecowners && !ok; ++m)
+                            if(vtx->secowners[m] == k) // k == sector id
                                 ok = true;
 
                         if(ok)
                         {
-                            owner = other->v2->info;
-                            for(m = 0; m < owner->num && !ok2; ++m)
-                                if(owner->list[m] == k) // k == sector id
+                            vtx = other->L_v2;
+                            for(m = 0; m < vtx->numsecowners && !ok2; ++m)
+                                if(vtx->secowners[m] == k) // k == sector id
                                     ok2 = true;
                         }
 
@@ -2200,8 +2203,8 @@ VERBOSE2(Con_Message("L%i is a pretend neighbor to L%i\n",
              GET_LINE_IDX(other), GET_LINE_IDX(line)));
 #endif
 
-                            if(other->v1 == vertices[0] ||
-                               other->v2 == vertices[0])
+                            if(other->v[0] == vertices[0] ||
+                               other->v[1] == vertices[0])
                             {
                                 side->neighbor[0] = other;
                                 side->pretendneighbor[0] = true;
@@ -2234,7 +2237,7 @@ if(verbose >= 1)
             if(!line->sides[k])
                 continue;
 
-            side = line->sides[k]->info;
+            side = line->sides[k];
             if(side->alignneighbor[0] || side->alignneighbor[1])
                 Con_Printf("Line %i/%i: l=%i r=%i\n", i, k,
                            (side->alignneighbor[0] ?
@@ -2249,7 +2252,7 @@ if(verbose >= 1)
 
 void R_InitLinks(void)
 {
-    int         i;
+    uint        i;
 
     Con_Message("R_InitLinks: Initializing\n");
 
@@ -2275,7 +2278,8 @@ void R_InitLinks(void)
 void R_SetupLevel(char *level_id, int flags)
 {
     uint        startTime;
-    int         i;
+
+    uint        i;
 
     if(flags & DDSLF_INITIALIZE)
     {
@@ -2314,9 +2318,9 @@ void R_SetupLevel(char *level_id, int flags)
         for(i = 0; i < numsides; ++i)
         {
             side = SIDE_PTR(i);
-            R_UpdateSurface(&side->top, false);
-            R_UpdateSurface(&side->middle, false);
-            R_UpdateSurface(&side->bottom, false);
+            R_UpdateSurface(&side->SW_topsurface, false);
+            R_UpdateSurface(&side->SW_middlesurface, false);
+            R_UpdateSurface(&side->SW_bottomsurface, false);
         }
 
         // We don't render fakeradio on polyobjects...
@@ -2345,9 +2349,9 @@ void R_SetupLevel(char *level_id, int flags)
         for(i = 0; i < numsides; ++i)
         {
             side = SIDE_PTR(i);
-            R_UpdateSurface(&side->top, true);
-            R_UpdateSurface(&side->middle, true);
-            R_UpdateSurface(&side->bottom, true);
+            R_UpdateSurface(&side->SW_topsurface, true);
+            R_UpdateSurface(&side->SW_middlesurface, true);
+            R_UpdateSurface(&side->SW_bottomsurface, true);
         }
 
         // We don't render fakeradio on polyobjects...
@@ -2439,14 +2443,12 @@ void R_SetupLevel(char *level_id, int flags)
     // The map bounding box will be updated during sector info
     // initialization.
     memset(mapBounds, 0, sizeof(mapBounds));
-    R_InitSectorInfo();
+    R_BuildSectorLinks();
 
-    R_InitSegInfo();
-    R_InitSubsectorInfo();
-    R_InitLineInfo();
+    R_BuildSubsectorPolys();
 
     // Compose the vertex owner arrays.
-    R_InitVertexOwners();
+    R_BuildVertexOwners();
 
     // Init blockmap for searching subsectors.
     P_InitSubsectorBlockMap();
@@ -2532,27 +2534,27 @@ void R_SetupLevel(char *level_id, int flags)
 
 void R_ClearSectorFlags(void)
 {
-    int         i;
+    uint        i;
     sector_t   *sec;
 
     for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
         // Clear all flags that can be cleared before each frame.
-        sec->info->flags &= ~SIF_FRAME_CLEAR;
+        sec->frameflags &= ~SIF_FRAME_CLEAR;
     }
 }
 
-sector_t *R_GetLinkedSector(sector_t *startsec, int plane)
+sector_t *R_GetLinkedSector(sector_t *startsec, uint plane)
 {
     sector_t   *sec = startsec;
     sector_t   *link;
 
     for(;;)
     {
-        if(!sec->planes[plane]->info->linked)
+        if(!sec->planes[plane]->linked)
             return sec;
-        link = sec->planes[plane]->info->linked;
+        link = sec->planes[plane]->linked;
 
 #ifdef _DEBUG
         if(sec == link || startsec == link)
@@ -2569,7 +2571,7 @@ sector_t *R_GetLinkedSector(sector_t *startsec, int plane)
 
 void R_UpdateAllSurfaces(boolean forceUpdate)
 {
-    int         i, j;
+    uint        i, j;
 
     // First, all planes of all sectors.
     for(i = 0; i < numsectors; ++i)
@@ -2585,36 +2587,35 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
     {
         side_t *side = SIDE_PTR(i);
 
-        R_UpdateSurface(&side->top, forceUpdate);
-        R_UpdateSurface(&side->middle, forceUpdate);
-        R_UpdateSurface(&side->bottom, forceUpdate);
+        R_UpdateSurface(&side->SW_topsurface, forceUpdate);
+        R_UpdateSurface(&side->SW_middlesurface, forceUpdate);
+        R_UpdateSurface(&side->SW_bottomsurface, forceUpdate);
     }
 }
 
-void R_UpdateSurface(surface_t *current, boolean forceUpdate)
+void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
 {
     int         texFlags, oldTexFlags;
-    surfaceinfo_t *old = current->info;
 
     // Any change to the texture or glow properties?
     // TODO: Implement Decoration{ Glow{}} definitions.
     texFlags =
-        R_GraphicResourceFlags((current->isflat? RC_FLAT : RC_TEXTURE),
-                               current->texture);
+        R_GraphicResourceFlags((suf->isflat? RC_FLAT : RC_TEXTURE),
+                               suf->texture);
     oldTexFlags =
-        R_GraphicResourceFlags((old->isflat? RC_FLAT : RC_TEXTURE),
-                               old->texture);
+        R_GraphicResourceFlags((suf->oldisflat? RC_FLAT : RC_TEXTURE),
+                               suf->oldtexture);
 
     if(forceUpdate ||
-       current->isflat != old->isflat)
+       suf->isflat != suf->oldisflat)
     {
-        old->isflat = current->isflat;
+        suf->oldisflat = suf->isflat;
     }
 
     // FIXME >
     // Update glowing status?
     // The order of these tests is important.
-    if(forceUpdate || (current->texture != old->texture))
+    if(forceUpdate || (suf->texture != suf->oldtexture))
     {
         // Check if the new texture is declared as glowing.
         // NOTE: Currently, we always discard the glow settings of the
@@ -2629,30 +2630,30 @@ void R_UpdateSurface(surface_t *current, boolean forceUpdate)
         if(texFlags & TXF_GLOW)
         {
             // The new texture is glowing.
-            current->flags |= SUF_GLOW;
+            suf->flags |= SUF_GLOW;
         }
-        else if(old->texture && (oldTexFlags & TXF_GLOW))
+        else if(suf->oldtexture && (oldTexFlags & TXF_GLOW))
         {
             // The old texture was glowing but the new one is not.
-            current->flags &= ~SUF_GLOW;
+            suf->flags &= ~SUF_GLOW;
         }
 
-        old->texture = current->texture;
+        suf->oldtexture = suf->texture;
 
         // No longer a missing texture fix?
-        if(current->texture && (oldTexFlags & SUF_TEXFIX))
-            current->flags &= ~SUF_TEXFIX;
+        if(suf->texture && (oldTexFlags & SUF_TEXFIX))
+            suf->flags &= ~SUF_TEXFIX;
 
         // Update the surface's blended texture.
-        if(current->isflat)
-            current->xlat = &R_GetFlat(current->texture)->translation;
+        if(suf->isflat)
+            suf->xlat = &R_GetFlat(suf->texture)->translation;
         else
-            current->xlat = &texturetranslation[current->texture];
+            suf->xlat = &texturetranslation[suf->texture];
 
-        if(current->xlat && current->texture)
-            current->flags |= SUF_BLEND;
+        if(suf->xlat && suf->texture)
+            suf->flags |= SUF_BLEND;
         else
-            current->flags &= ~SUF_BLEND;
+            suf->flags &= ~SUF_BLEND;
     }
     else if((texFlags & TXF_GLOW) != (oldTexFlags & TXF_GLOW))
     {
@@ -2668,78 +2669,77 @@ void R_UpdateSurface(surface_t *current, boolean forceUpdate)
         if(!(texFlags & TXF_GLOW) && (oldTexFlags & TXF_GLOW))
         {
             // The current flat is no longer glowing
-            current->flags &= ~SUF_GLOW;
+            suf->flags &= ~SUF_GLOW;
         }
         else if((texFlags & TXF_GLOW) && !(oldTexFlags & TXF_GLOW))
         {
             // The current flat is now glowing
-            current->flags |= SUF_GLOW;
+            suf->flags |= SUF_GLOW;
         }
     }
     // < FIXME
 
     if(forceUpdate ||
-       current->flags != old->flags)
+       suf->flags != suf->oldflags)
     {
-        old->flags = current->flags;
+        suf->oldflags = suf->flags;
     }
 
     if(forceUpdate ||
-       (current->texmove[0] != old->texmove[0] ||
-        current->texmove[1] != old->texmove[1]))
+       (suf->texmove[0] != suf->oldtexmove[0] ||
+        suf->texmove[1] != suf->oldtexmove[1]))
     {
-        old->texmove[0] = current->texmove[0];
-        old->texmove[1] = current->texmove[1];
+        suf->oldtexmove[0] = suf->texmove[0];
+        suf->oldtexmove[1] = suf->texmove[1];
     }
 
     if(forceUpdate ||
-       (current->offx != old->offx))
+       (suf->offx != suf->oldoffx))
     {
-        old->offx = current->offx;
+        suf->oldoffx = suf->offx;
     }
 
     if(forceUpdate ||
-       (current->offy != old->offy))
+       (suf->offy != suf->oldoffy))
     {
-        old->offy = current->offy;
+        suf->oldoffy = suf->offy;
     }
 
     // Surface color change?
     if(forceUpdate ||
-       (current->rgba[0] != old->rgba[0] ||
-        current->rgba[1] != old->rgba[1] ||
-        current->rgba[2] != old->rgba[2] ||
-        current->rgba[3] != old->rgba[3]))
+       (suf->rgba[0] != suf->oldrgba[0] ||
+        suf->rgba[1] != suf->oldrgba[1] ||
+        suf->rgba[2] != suf->oldrgba[2] ||
+        suf->rgba[3] != suf->oldrgba[3]))
     {
         // TODO: when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
-        memcpy(old->rgba, current->rgba, 4);
+        memcpy(suf->oldrgba, suf->rgba, 4);
     }
 }
 
 void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 {
-    int          i, j;
-    plane_t      *plane;
-    sectorinfo_t *sin = SECT_INFO(sec);
+    uint        i, j;
+    plane_t    *plane;
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
-       (sec->lightlevel != sin->oldlightlevel ||
-        sec->rgb[0] != sin->oldrgb[0] ||
-        sec->rgb[1] != sin->oldrgb[1] ||
-        sec->rgb[2] != sin->oldrgb[2]))
+       (sec->lightlevel != sec->oldlightlevel ||
+        sec->rgb[0] != sec->oldrgb[0] ||
+        sec->rgb[1] != sec->oldrgb[1] ||
+        sec->rgb[2] != sec->oldrgb[2]))
     {
-        sin->flags |= SIF_LIGHT_CHANGED;
-        sin->oldlightlevel = sec->lightlevel;
-        memcpy(sin->oldrgb, sec->rgb, 3);
+        sec->frameflags |= SIF_LIGHT_CHANGED;
+        sec->oldlightlevel = sec->lightlevel;
+        memcpy(sec->oldrgb, sec->rgb, 3);
 
         LG_SectorChanged(sec);
     }
     else
     {
-        sin->flags &= ~SIF_LIGHT_CHANGED;
+        sec->frameflags &= ~SIF_LIGHT_CHANGED;
     }
 
     // For each plane.
@@ -2770,7 +2770,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
         // Geometry change?
         if(forceUpdate ||
-           plane->height != plane->info->oldheight[1])
+           plane->height != plane->oldheight[1])
         {
             ddplayer_t *player;
 
@@ -2796,11 +2796,11 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         }
     }
 
-    if(!sin->permanentlink) // Assign new links
+    if(!sec->permanentlink) // Assign new links
     {
         // Only floor and ceiling can be linked, not all inbetween
-        sec->planes[PLN_FLOOR]->info->linked = NULL;
-        sec->planes[PLN_CEILING]->info->linked = NULL;
+        sec->SP_floorlinked = NULL;
+        sec->SP_ceillinked = NULL;
         R_SetSectorLinks(sec);
     }
 }
@@ -2853,7 +2853,7 @@ const char *R_GetUniqueLevelID(void)
 const byte *R_GetSectorLightColor(sector_t *sector)
 {
     sector_t   *src;
-    int         i;
+    uint        i;
 
     if(!rendSkyLight || noSkyColorGiven)
         return sector->rgb;     // The sector's real color.
@@ -2862,7 +2862,7 @@ const byte *R_GetSectorLightColor(sector_t *sector)
        !R_IsSkySurface(&sector->SP_floorsurface))
     {
         // A dominant light source affects this sector?
-        src = SECT_INFO(sector)->lightsource;
+        src = sector->lightsource;
         if(src && src->lightlevel >= sector->lightlevel)
         {
             // The color shines here, too.
@@ -2876,7 +2876,7 @@ const byte *R_GetSectorLightColor(sector_t *sector)
         }
         else
         {
-            for(i = 0; i < 3; i++)
+            for(i = 0; i < 3; ++i)
                 balancedRGB[i] = (byte) (sector->rgb[i] * skyColorBalance);
             return balancedRGB;
         }
@@ -2891,7 +2891,7 @@ const byte *R_GetSectorLightColor(sector_t *sector)
 void R_GetMapSize(vertex_t *min, vertex_t *max)
 {
 /*  byte *ptr;
-    int i;
+    uint i;
     fixed_t x;
     fixed_t y;
 

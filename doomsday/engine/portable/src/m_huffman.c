@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -158,10 +159,10 @@ static huffbuffer_t huffEnc, huffDec;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Exchange two nodes in the queue.
  */
-void Huff_QueueExchange(huffqueue_t * queue, int index1, int index2)
+static void Huff_QueueExchange(huffqueue_t *queue, int index1, int index2)
 {
     huffnode_t *temp = queue->nodes[index1];
 
@@ -169,10 +170,10 @@ void Huff_QueueExchange(huffqueue_t * queue, int index1, int index2)
     queue->nodes[index2] = temp;
 }
 
-/*
+/**
  * Insert a node into a priority queue.
  */
-void Huff_QueueInsert(huffqueue_t * queue, huffnode_t * node)
+static void Huff_QueueInsert(huffqueue_t *queue, huffnode_t *node)
 {
     int     i, parent;
 
@@ -197,10 +198,10 @@ void Huff_QueueInsert(huffqueue_t * queue, huffnode_t * node)
     }
 }
 
-/*
+/**
  * Extract the smallest node from the queue.
  */
-huffnode_t *Huff_QueueExtract(huffqueue_t * queue)
+static huffnode_t *Huff_QueueExtract(huffqueue_t *queue)
 {
     huffnode_t *min;
     int     i, left, right, small;
@@ -251,10 +252,10 @@ huffnode_t *Huff_QueueExtract(huffqueue_t * queue)
     return min;
 }
 
-/*
+/**
  * Recursively builds the Huffman code lookup for the node's subtree.
  */
-void Huff_BuildLookup(huffnode_t * node, uint code, uint length)
+static void Huff_BuildLookup(huffnode_t *node, uint code, uint length)
 {
     if(!node->left && !node->right)
     {
@@ -282,11 +283,11 @@ void Huff_BuildLookup(huffnode_t * node, uint code, uint length)
     }
 }
 
-/*
+/**
  * Checks if the encoding/decoding buffer can hold the given number of
  * bytes. If not, reallocates the buffer.
  */
-void Huff_CheckBuffer(huffbuffer_t * buffer, uint neededSize)
+static void Huff_CheckBuffer(huffbuffer_t *buffer, uint neededSize)
 {
     byte *tempbuffer;
 
@@ -296,14 +297,14 @@ void Huff_CheckBuffer(huffbuffer_t * buffer, uint neededSize)
         if(!buffer->size)
             buffer->size = 0x2000;
 
-        if((tempbuffer = realloc(buffer->data, buffer->size)) == NULL)
+        if((tempbuffer = M_Realloc(buffer->data, buffer->size)) == NULL)
             Con_Error("Huff_CheckBuffer: realloc failed.");
 
         buffer->data = tempbuffer;
     }
 }
 
-/*
+/**
  * Build the Huffman tree and initialize the code lookup.
  * (CLR 2nd Ed, p. 388)
  */
@@ -315,7 +316,7 @@ void Huff_Init(void)
 
     // Initialize the priority queue that holds the remaining nodes.
     queue.count = 0;
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         // These are the leaves of the tree.
         node = M_Calloc(sizeof(huffnode_t));
@@ -325,7 +326,7 @@ void Huff_Init(void)
     }
 
     // Build the tree.
-    for(i = 0; i < 255; i++)
+    for(i = 0; i < 255; ++i)
     {
         node = M_Calloc(sizeof(huffnode_t));
         node->left = Huff_QueueExtract(&queue);
@@ -350,14 +351,14 @@ void Huff_Init(void)
         double  huffBits = 0;
 
         Con_Printf("Huffman codes:\n");
-        for(i = 0; i < 256; i++)
+        for(i = 0; i < 256; ++i)
         {
             uint    k;
 
             realBits += freqs[i] * 8;
             huffBits += freqs[i] * huffCodes[i].length;
             Con_Printf("%03i: (%07i) ", i, (int) (6e6 * freqs[i]));
-            for(k = 0; k < huffCodes[i].length; k++)
+            for(k = 0; k < huffCodes[i].length; ++k)
             {
                 Con_Printf("%c", huffCodes[i].code & (1 << k) ? '1' : '0');
             }
@@ -368,10 +369,10 @@ void Huff_Init(void)
     }
 }
 
-/*
+/**
  * Recursively frees the node and its subtree.
  */
-void Huff_DestroyNode(huffnode_t * node)
+static void Huff_DestroyNode(huffnode_t *node)
 {
     if(node)
     {
@@ -381,16 +382,16 @@ void Huff_DestroyNode(huffnode_t * node)
     }
 }
 
-/*
+/**
  * Free the buffer.
  */
-void Huff_DestroyBuffer(huffbuffer_t * buffer)
+static void Huff_DestroyBuffer(huffbuffer_t *buffer)
 {
-    free(buffer->data);
+    M_Free(buffer->data);
     memset(buffer, 0, sizeof(*buffer));
 }
 
-/*
+/**
  * Free all resources allocated here.
  */
 void Huff_Shutdown(void)
@@ -403,12 +404,12 @@ void Huff_Shutdown(void)
     Huff_DestroyBuffer(&huffDec);
 }
 
-/*
+/**
  * Encode the data using Huffman codes. Returns a pointer to the encoded
  * block of bits. The number of bytes in the encoded data is returned
  * in 'encodedSize'.
  */
-void   *Huff_Encode(byte *data, uint size, uint *encodedSize)
+void *Huff_Encode(byte *data, uint size, uint *encodedSize)
 {
     int     remaining, fits;
     byte   *out, bit;
@@ -427,7 +428,7 @@ void   *Huff_Encode(byte *data, uint size, uint *encodedSize)
     out = huffEnc.data;
     *out = 0;
 
-    for(i = 0; i < size; i++)
+    for(i = 0; i < size; ++i)
     {
         remaining = huffCodes[data[i]].length;
         code = huffCodes[data[i]].code;
@@ -466,29 +467,32 @@ void   *Huff_Encode(byte *data, uint size, uint *encodedSize)
     // The number of valid bits - 1 in the last byte.
     huffEnc.data[0] |= bit - 1;
 
-    /*#ifdef _DEBUG
-       {
-       // Test decode.
-       byte *backup = malloc(huffDec.size);
-       uint decsize;
-       memcpy(backup, huffDec.data, huffDec.size);
-       Huff_Decode(huffEnc.data, *encodedSize, &decsize);
-       if(decsize != size || memcmp(huffDec.data, data, size))
-       {
-       Con_Error("Huff_Encode: Data corruption!\n");
-       }
-       memcpy(huffDec.data, backup, huffDec.size);
-       free(backup);
-       }
-       #endif */
+/*
+#ifdef _DEBUG
+{
+// Test decode.
+byte *backup = M_Malloc(huffDec.size);
+uint decsize;
+
+memcpy(backup, huffDec.data, huffDec.size);
+Huff_Decode(huffEnc.data, *encodedSize, &decsize);
+if(decsize != size || memcmp(huffDec.data, data, size))
+{
+    Con_Error("Huff_Encode: Data corruption!\n");
+}
+memcpy(huffDec.data, backup, huffDec.size);
+M_Free(backup);
+}
+#endif
+*/
 
     return huffEnc.data;
 }
 
-/*
+/**
  * Decode using the Huffman tree. Returns a pointer to the decoded data.
  */
-byte   *Huff_Decode(void *data, uint size, uint *decodedSize)
+byte *Huff_Decode(void *data, uint size, uint *decodedSize)
 {
     huffnode_t *node;
     uint    outBytes = 0;

@@ -73,7 +73,7 @@ typedef struct seglight_s {
 } seglight_t;
 
 typedef struct subseclight_s {
-    int planeCount;
+    uint planeCount;
     dynlight_t **planes;
 } subseclight_t;
 
@@ -150,7 +150,7 @@ static lumcontact_t **subContacts;
 static int *spreadBlocks;
 
 // Used when iterating planes.
-static int maxPlanes = 0;
+static uint maxPlanes = 0;
 static planeitervars_t *planeVars;
 
 // CODE --------------------------------------------------------------------
@@ -186,7 +186,7 @@ void DL_Register(void)
  */
 static void DL_DeleteUsed(void)
 {
-    int         i;
+    uint        i;
 
     // Start reusing nodes from the first one in the list.
     dynCursor = dynFirst;
@@ -194,7 +194,7 @@ static void DL_DeleteUsed(void)
 
     // Clear the surface light links.
     memset(segLightLinks, 0, numsegs * sizeof(seglight_t));
-    for(i=0; i < numsubsectors; ++i)
+    for(i = 0; i < numsubsectors; ++i)
     {
         if(subSecLightLinks[i].planeCount)
             memset(subSecLightLinks[i].planes, 0,
@@ -262,7 +262,7 @@ static void __inline DL_Link(dynlight_t *dyn, dynlight_t **list, unsigned int in
     list[index] = dyn;
 }
 
-static void DL_LinkToSubSecPlane(dynlight_t *dyn, int index, int plane)
+static void DL_LinkToSubSecPlane(dynlight_t *dyn, uint index, uint plane)
 {
     DL_Link(dyn, &subSecLightLinks[index].planes[plane], 0);
 }
@@ -270,12 +270,12 @@ static void DL_LinkToSubSecPlane(dynlight_t *dyn, int index, int plane)
 /**
  * Returns a pointer to the list of dynlights for the subsector plane.
  */
-dynlight_t *DL_GetSubSecPlaneLightLinks(int ssec, int plane)
+dynlight_t *DL_GetSubSecPlaneLightLinks(uint ssec, uint plane)
 {
     return subSecLightLinks[ssec].planes[plane];
 }
 
-static void DL_LinkToSegSection(dynlight_t *dyn, int index, int segPart)
+static void DL_LinkToSegSection(dynlight_t *dyn, uint index, segsection_t segPart)
 {
     DL_Link(dyn, &segLightLinks[index].wallSection[segPart], 0);
 }
@@ -283,7 +283,7 @@ static void DL_LinkToSegSection(dynlight_t *dyn, int index, int segPart)
 /**
  * Returns a pointer to the list of dynlights for the segment part.
  */
-dynlight_t *DL_GetSegSectionLightLinks(int seg, int section)
+dynlight_t *DL_GetSegSectionLightLinks(uint seg, segsection_t section)
 {
     return segLightLinks[seg].wallSection[section];
 }
@@ -380,7 +380,7 @@ static void DL_ComputeLightColor(lumobj_t *lum, DGLubyte *outRGB, float light)
 
 void DL_InitForMap(void)
 {
-    int         i;
+    uint        i;
     vertex_t    min, max;
 
     // First initialize the subsector links (root pointers).
@@ -443,32 +443,32 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 #define STOP    0x2
 #define SBOTTOM 0x4
     int         present = 0;
-    sector_t   *backsec = seg->backsector;
+    sector_t   *backsec = seg->SG_backsector;
     side_t     *sdef = seg->sidedef;
     float       pos[2][2], s[2], t[2];
     float       dist, pntLight[2];
     float       fceil, ffloor, bceil, bfloor;
     float       top[2], bottom[2];
     dynlight_t *dyn;
-    int         segindex = GET_SEG_IDX(seg);
+    uint        segindex = GET_SEG_IDX(seg);
     boolean     backSide = false;
     DGLubyte    lumRGB[3];
 
-    fceil = SECT_CEIL(frontsec);
-    ffloor = SECT_FLOOR(frontsec);
+    fceil  = frontsec->SP_ceilvisheight;
+    ffloor = frontsec->SP_floorvisheight;
 
     // A zero-volume sector?
     if(fceil <= ffloor)
         return;
 
     // Which side?
-    if(seg->linedef->sides[0] != seg->sidedef)
+    if(seg->linedef->L_frontside != seg->sidedef)
         backSide = true;
 
     if(backsec)
     {
-        bceil = SECT_CEIL(backsec);
-        bfloor = SECT_FLOOR(backsec);
+        bceil  = backsec->SP_ceilvisheight;
+        bfloor = backsec->SP_floorvisheight;
     }
     else
     {
@@ -483,12 +483,12 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
         if(backsec)
         {
             // Check the middle texture's mask status.
-            if(sdef->middle.texture > 0)
+            if(sdef->SW_middlepic > 0)
             {
-                if(sdef->middle.isflat)
-                    GL_PrepareFlat2(sdef->middle.texture, true);
+                if(sdef->SW_middleisflat)
+                    GL_PrepareFlat2(sdef->SW_middlepic, true);
                 else
-                    GL_GetTextureInfo(sdef->middle.texture);
+                    GL_GetTextureInfo(sdef->SW_middlepic);
             }
             /*if(texmask)
                {
@@ -513,13 +513,13 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
 
     // We will only calculate light placement for segs that are facing
     // the viewpoint.
-    if(!(seg->info->flags & SEGINF_FACINGFRONT))
+    if(!(seg->frameflags & SEGINF_FACINGFRONT))
         return;
 
-    pos[0][VX] = seg->fv1.pos[VX];
-    pos[0][VY] = seg->fv1.pos[VY];
-    pos[1][VX] = seg->fv2.pos[VX];
-    pos[1][VY] = seg->fv2.pos[VY];
+    pos[0][VX] = seg->fv[0].pos[VX];
+    pos[0][VY] = seg->fv[0].pos[VY];
+    pos[1][VX] = seg->fv[1].pos[VX];
+    pos[1][VY] = seg->fv[1].pos[VY];
 
     pntLight[VX] = FIX2FLT(lum->thing->pos[VX]);
     pntLight[VY] = FIX2FLT(lum->thing->pos[VY]);
@@ -554,7 +554,7 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
             bottom[0] = bottom[1] = (ffloor > bfloor ? ffloor : bfloor);
 
             Rend_MidTexturePos(&bottom[0], &bottom[1], &top[0], &top[1],
-                               NULL, sdef->middle.offy,
+                               NULL, sdef->SW_middleoffy,
                                seg->linedef ? (seg->linedef->
                                                flags & ML_DONTPEGBOTTOM) !=
                                0 : false);
@@ -606,13 +606,12 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
  * Generates one dynlight node per segplane glow. The light is attached to
  * the appropriate seg part.
  */
-static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, int part,
+static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, segsection_t part,
                                                     float segtop, float segbottom,
                                                     boolean glow_floor,
                                                     boolean glow_ceil)
 {
-    int         g, segindex = GET_SEG_IDX(seg);
-    unsigned int i;
+    uint        i, g, segindex;
     float       ceil, floor, top, bottom, s[2], t[2];
     float       glowHeight;
     dynlight_t *dyn;
@@ -622,24 +621,21 @@ static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, int part,
     if(segtop <= segbottom)
         return;                 // No height.
 
-    ceil = SECT_CEIL(sect);
-    floor = SECT_FLOOR(sect);
+    ceil  = sect->SP_ceilvisheight;
+    floor = sect->SP_floorvisheight;
 
     if(segtop > ceil)
         segtop = ceil;
     if(segbottom < floor)
         segbottom = floor;
 
+    segindex = GET_SEG_IDX(seg);
+    // FIXME: $nplanes
     for(g = 0; g < 2; ++g)
     {
         // Only do what's told.
         if((g == PLN_CEILING && !glow_ceil) || (g == PLN_FLOOR && !glow_floor))
             continue;
-
-        // Calculate texture coords for the light.
-        // The horizontal direction is easy.
-        s[0] = 0;
-        s[1] = 1;
 
         glowHeight =
             (MAX_GLOWHEIGHT * sect->planes[g]->glow) * glowHeightFactor;
@@ -651,6 +647,7 @@ static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, int part,
         if(glowHeight > glowHeightMax)
             glowHeight = glowHeightMax;
 
+        // Calculate texture coords for the light.
         if(g == PLN_CEILING)
         {   // Ceiling glow.
             top = ceil;
@@ -673,6 +670,10 @@ static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, int part,
             if(t[1] > 1 || t[0] < 0)
                 continue;
         }
+
+        // The horizontal direction is easy.
+        s[0] = 0;
+        s[1] = 1;
 
         dyn = DL_New(s, t);
         memcpy(dyn->color, sect->planes[g]->glowrgb, 3);
@@ -699,14 +700,14 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
 {
     boolean     do_floor = (sect->SP_floorglow > 0)? true : false;
     boolean     do_ceil = (sect->SP_ceilglow > 0)? true : false;
-    sector_t   *back = seg->backsector;
+    sector_t   *back = seg->SG_backsector;
     side_t     *sdef = seg->sidedef;
     float       fceil, ffloor, bceil, bfloor;
     float       opentop, openbottom;    //, top, bottom;
     boolean     backSide = false;
 
     // Check if this segment is actually facing our way.
-    if(!(seg->info->flags & SEGINF_FACINGFRONT))
+    if(!(seg->frameflags & SEGINF_FACINGFRONT))
         return;                 // Nope...
 
     // Which side?
@@ -714,12 +715,12 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
         backSide = true;
 
     // Visible plane heights.
-    fceil = SECT_CEIL(sect);
-    ffloor = SECT_FLOOR(sect);
+    fceil  = sect->SP_ceilvisheight;
+    ffloor = sect->SP_floorvisheight;
     if(back)
     {
-        bceil = SECT_CEIL(back);
-        bfloor = SECT_FLOOR(back);
+        bceil  = back->SP_ceilvisheight;
+        bfloor = back->SP_floorvisheight;
     }
 
     // Determine which portions of the segment get lit.
@@ -740,12 +741,12 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
         // Is there a middle?
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
         {
-            if(sdef->middle.texture > 0)
+            if(sdef->SW_middlepic > 0)
             {
-                if(sdef->middle.isflat)
-                    GL_PrepareFlat2(sdef->middle.texture, true);
+                if(sdef->SW_middleisflat)
+                    GL_PrepareFlat2(sdef->SW_middlepic, true);
                 else
-                    GL_GetTextureInfo(sdef->middle.texture);
+                    GL_GetTextureInfo(sdef->SW_middlepic);
             }
 
             if(!texmask)
@@ -1134,23 +1135,23 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     sector_t   *source, *dest;
     float       distance;
 
-    if(!line->backsector || !line->frontsector ||
-       line->frontsector == line->backsector)
+    if(!line->L_backsector || !line->L_frontsector ||
+       line->L_frontsector == line->L_backsector)
     {
         // Line must be between two different sectors.
         return true;
     }
 
     // Which way does the spread go?
-    if(line->frontsector->validcount == validcount)
+    if(line->L_frontsector->validcount == validcount)
     {
-        source = line->frontsector;
-        dest = line->backsector;
+        source = line->L_frontsector;
+        dest = line->L_backsector;
     }
-    else if(line->backsector->validcount == validcount)
+    else if(line->L_backsector->validcount == validcount)
     {
-        source = line->backsector;
-        dest = line->frontsector;
+        source = line->L_backsector;
+        dest = line->L_frontsector;
     }
     else
     {
@@ -1184,7 +1185,7 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
         return true;
     }
 
-    if(line->info->length <= 0)
+    if(line->length <= 0)
     {
         // This can't be a good line.
         return true;
@@ -1192,12 +1193,12 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
 
     // Calculate distance to line.
     distance =
-        (FIX2FLT(line->v1->pos[VY] - light->lum->thing->pos[VY]) * FIX2FLT(line->dx) -
-         FIX2FLT(line->v1->pos[VX] - light->lum->thing->pos[VX]) * FIX2FLT(line->dy))
-         / line->info->length;
+        (FIX2FLT(line->L_v1->pos[VY] - light->lum->thing->pos[VY]) * FIX2FLT(line->dx) -
+         FIX2FLT(line->L_v1->pos[VX] - light->lum->thing->pos[VX]) * FIX2FLT(line->dy))
+         / line->length;
 
-    if((source == line->frontsector && distance < 0) ||
-       (source == line->backsector && distance > 0))
+    if((source == line->L_frontsector && distance < 0) ||
+       (source == line->L_backsector && distance > 0))
     {
         // Can't spread in this direction.
         return true;
@@ -1396,10 +1397,18 @@ static void DL_LinkLuminous(void)
 #if 0 // currently unused
 static boolean DL_IsTexUsed(dynlight_t *node, DGLuint texture)
 {
-    for(; node; node = node->next)
+    boolean     found;
+
+    found = false;
+    while(node && !found)
+    {
         if(node->texture == texture)
-            return true;
-    return false;
+            found = true;
+        else
+            node = node->next;
+    }
+
+    return found;
 }
 #endif
 
@@ -1407,14 +1416,13 @@ static boolean DL_IsTexUsed(dynlight_t *node, DGLuint texture)
  * Process the given lumobj to maybe add a dynamic light for the plane.
  */
 static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
-                            int planeID, planeitervars_t *planeVars)
+                            uint planeID, planeitervars_t *planeVars)
 {
     dynlight_t *dyn;
     DGLuint     lightTex;
     float       diff, lightStrength, srcRadius;
     float       s[2], t[2];
     float       pos[3];
-    subsectorinfo_t *ssInfo;
 
     pos[VX] = FIX2FLT(lum->thing->pos[VX]);
     pos[VY] = FIX2FLT(lum->thing->pos[VY]);
@@ -1427,12 +1435,10 @@ static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
         srcRadius = 1;
 
     // Determine on which side the light is for all planes.
-    ssInfo = SUBSECT_INFO(subsector);
-
     lightTex = 0;
     lightStrength = 0;
 
-    if(ssInfo->planes[planeID]->type == PLN_FLOOR)
+    if(subsector->planes[planeID]->type == PLN_FLOOR)
     {
         if((lightTex = lum->floorTex) != 0)
         {
@@ -1458,7 +1464,7 @@ static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
         return;
 
     // Check that the height difference is tolerable.
-    if(ssInfo->planes[planeID]->type == PLN_CEILING)
+    if(subsector->planes[planeID]->type == PLN_CEILING)
         diff = planeVars->height - pos[VZ];
     else
         diff = pos[VZ] - planeVars->height;
@@ -1489,8 +1495,8 @@ static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
 
 static boolean DL_LightSegIteratorFunc(lumobj_t *lum, subsector_t *ssec)
 {
-    int     j;
-    seg_t  *seg;
+    uint        j;
+    seg_t      *seg;
 
     // The wall segments.
     for(j = 0, seg = &segs[ssec->firstline];
@@ -1532,12 +1538,11 @@ DGLuint DL_GetFlatDecorLightMap(surface_t *surface)
  */
 void DL_ProcessSubsector(subsector_t *ssec)
 {
-    int         pln, j;
-    int         num, ssecidx = GET_SUBSECTOR_IDX(ssec);
+    uint        pln, j;
+    uint        num, ssecidx = GET_SUBSECTOR_IDX(ssec);
     seg_t      *seg;
     lumcontact_t *con;
     sector_t   *sect = ssec->sector;
-    subsectorinfo_t *ssInfo;
     planeitervars_t *pVars;
 
     // Do we need to enlarge the planeVars buffer?
@@ -1571,7 +1576,6 @@ void DL_ProcessSubsector(subsector_t *ssec)
     DL_SpreadBlocks(ssec);
 
     // Check if lighting can be skipped for each plane.
-    ssInfo = SUBSECT_INFO(ssec);
     num = sect->planecount;
     for(pln = 0, pVars = planeVars; pln < num; pVars++, ++pln)
     {
@@ -1580,7 +1584,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
         pVars->decorMap = 0;
 
         // View height might prevent us from seeing the light.
-        if(ssInfo->planes[pln]->type == PLN_FLOOR)
+        if(ssec->planes[pln]->type == PLN_FLOOR)
         {
             if(vy < pVars->height)
                 pVars->isLit = false;
@@ -1648,7 +1652,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
  */
 void DL_InitForNewFrame(void)
 {
-    int         i;
+    uint        i;
     sector_t   *seciter;
     mobj_t     *iter;
 
@@ -1693,19 +1697,29 @@ boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
 {
     fixed_t     dist;
     lumcontact_t *con;
+    boolean     retVal, isDone;
 
     if(!subsector)
         return true;
 
-    for(con = subContacts[GET_SUBSECTOR_IDX(subsector)]; con; con = con->next)
+    con = subContacts[GET_SUBSECTOR_IDX(subsector)];
+    retVal = true;
+    isDone = false;
+    while(con && !isDone)
     {
         dist = P_ApproxDistance(con->lum->thing->pos[VX] - x,
                                 con->lum->thing->pos[VY] - y);
 
         if(dist <= radius && !func(con->lum, dist, data))
-            return false;
+        {
+            retVal = false;
+            isDone = true;
+        }
+        else
+            con = con->next;
     }
-    return true;
+
+    return retVal;
 }
 
 /**
@@ -1713,7 +1727,7 @@ boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
  *
  * @param ssecidx       Subsector index in which lights will be clipped.
  */
-void DL_ClipInSubsector(int ssecidx)
+void DL_ClipInSubsector(uint ssecidx)
 {
     lumobj_t   *lumi; // Lum Iterator, or 'snow' in Finnish. :-)
 
@@ -1737,7 +1751,7 @@ void DL_ClipInSubsector(int ssecidx)
  * check if the line of sight intersects any of the polyobj segs that
  * face the camera.
  */
-void DL_ClipBySight(int ssecidx)
+void DL_ClipBySight(uint ssecidx)
 {
     int         i, num;
     vec2_t      eye, source;
@@ -1753,25 +1767,26 @@ void DL_ClipBySight(int ssecidx)
     num = ssec->poly->numsegs;
     for(lumi = dlSubLinks[ssecidx]; lumi; lumi = lumi->ssNext)
     {
-        if(lumi->flags & LUMF_CLIPPED)
-            continue;
-
-        // We need to figure out if any of the polyobj's segments lies
-        // between the viewpoint and the light source.
-        for(i = 0; i < num; ++i)
+        if(!(lumi->flags & LUMF_CLIPPED))
         {
-            seg = ssec->poly->segs[i];
-
-            // Ignore segs facing the wrong way.
-            if(!(seg->info->flags & SEGINF_FACINGFRONT))
-                continue;
-
-            V2_Set(source, FIX2FLT(lumi->thing->pos[VX]),
-                   FIX2FLT(lumi->thing->pos[VY]));
-
-            if(V2_Intercept2(source, eye, seg->fv1.pos, seg->fv2.pos, NULL, NULL, NULL))
+            // We need to figure out if any of the polyobj's segments lies
+            // between the viewpoint and the light source.
+            for(i = 0; i < num; ++i)
             {
-                lumi->flags |= LUMF_CLIPPED;
+                seg = ssec->poly->segs[i];
+
+                // Ignore segs facing the wrong way.
+                if(seg->frameflags & SEGINF_FACINGFRONT)
+                {
+                    V2_Set(source, FIX2FLT(lumi->thing->pos[VX]),
+                           FIX2FLT(lumi->thing->pos[VY]));
+
+                    if(V2_Intercept2(source, eye, seg->fv[0].pos,
+                                     seg->fv[1].pos, NULL, NULL, NULL))
+                    {
+                        lumi->flags |= LUMF_CLIPPED;
+                    }
+                }
             }
         }
     }

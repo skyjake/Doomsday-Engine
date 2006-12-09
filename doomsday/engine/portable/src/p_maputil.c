@@ -209,25 +209,27 @@ float P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
 #  pragma optimize("", on)
 #endif
 
-/*
+/**
  * (0,1) = top left; (2,3) = bottom right
  * Assumes sectors are always closed.
  */
 void P_SectorBoundingBox(sector_t *sec, float *bbox)
 {
-    float   pos[2];
-    int     i;
-    line_t *li;
+    float       pos[2];
+    uint        i;
+    line_t     *li;
 
     if(!sec->linecount)
         return;
-    bbox[BLEFT] = bbox[BRIGHT]  = sec->Lines[0]->v1->pos[VX] >> FRACBITS;
-    bbox[BTOP]  = bbox[BBOTTOM] = sec->Lines[0]->v1->pos[VY] >> FRACBITS;
-    for(i = 1; i < sec->linecount; i++)
+
+    bbox[BLEFT] = bbox[BRIGHT]  = sec->Lines[0]->L_v1->pos[VX] >> FRACBITS;
+    bbox[BTOP]  = bbox[BBOTTOM] = sec->Lines[0]->L_v1->pos[VY] >> FRACBITS;
+
+    for(i = 1; i < sec->linecount; ++i)
     {
         li = sec->Lines[i];
-        pos[VX] = li->v1->pos[VX] >> FRACBITS;
-        pos[VY] = li->v1->pos[VY] >> FRACBITS;
+        pos[VX] = li->L_v1->pos[VX] >> FRACBITS;
+        pos[VY] = li->L_v1->pos[VY] >> FRACBITS;
 
         if(pos[VX] < bbox[BLEFT])
             bbox[BLEFT]   = pos[VX];
@@ -245,11 +247,11 @@ void P_SectorBoundingBox(sector_t *sec, float *bbox)
  */
 int P_PointOnLineSide(fixed_t x, fixed_t y, line_t *line)
 {
-    return  !line->dx ? x <= line->v1->pos[VX] ? line->dy > 0 : line->dy <
-        0 : !line->dy ? y <= line->v1->pos[VY] ? line->dx < 0 : line->dx >
-        0 : FixedMul(y - line->v1->pos[VY],
+    return  !line->dx ? x <= line->L_v1->pos[VX] ? line->dy > 0 : line->dy <
+        0 : !line->dy ? y <= line->L_v1->pos[VY] ? line->dx < 0 : line->dx >
+        0 : FixedMul(y - line->L_v1->pos[VY],
                      line->dx >> FRACBITS) >= FixedMul(line->dy >> FRACBITS,
-                                                       x - line->v1->pos[VX]);
+                                                       x - line->L_v1->pos[VX]);
 }
 
 /*
@@ -259,18 +261,19 @@ int P_PointOnLineSide(fixed_t x, fixed_t y, line_t *line)
  */
 int P_BoxOnLineSide(fixed_t *tmbox, line_t *ld)
 {
-    switch (ld->slopetype)
+    int         p;
+
+    switch(ld->slopetype)
     {
-        int     p;
 
     default:                    // shut up compiler warnings -- killough
     case ST_HORIZONTAL:
-        return (tmbox[BOXBOTTOM] > ld->v1->pos[VY]) ==
-                (p = tmbox[BOXTOP] > ld->v1->pos[VY]) ? p ^ (ld->dx < 0) : -1;
+        return (tmbox[BOXBOTTOM] > ld->L_v1->pos[VY]) ==
+                (p = tmbox[BOXTOP] > ld->L_v1->pos[VY]) ? p ^ (ld->dx < 0) : -1;
 
     case ST_VERTICAL:
-        return (tmbox[BOXLEFT] < ld->v1->pos[VX]) ==
-                (p = tmbox[BOXRIGHT] < ld->v1->pos[VX]) ? p ^ (ld->dy < 0) : -1;
+        return (tmbox[BOXLEFT] < ld->L_v1->pos[VX]) ==
+                (p = tmbox[BOXRIGHT] < ld->L_v1->pos[VX]) ? p ^ (ld->dy < 0) : -1;
 
     case ST_POSITIVE:
         return P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], ld) ==
@@ -296,8 +299,8 @@ int P_PointOnDivlineSide(fixed_t x, fixed_t y, divline_t *line)
 
 void P_MakeDivline(line_t *li, divline_t *dl)
 {
-    dl->pos[VX] = li->v1->pos[VX];
-    dl->pos[VY] = li->v1->pos[VY];
+    dl->pos[VX] = li->L_v1->pos[VX];
+    dl->pos[VY] = li->L_v1->pos[VY];
     dl->dx = li->dx;
     dl->dy = li->dy;
 }
@@ -324,28 +327,28 @@ void P_LineOpening(line_t *linedef)
 {
     sector_t *front, *back;
 
-    if(!linedef->backsector)
+    if(!linedef->L_backsector)
     {                           // single sided line
         openrange = 0;
         return;
     }
 
-    front = linedef->frontsector;
-    back = linedef->backsector;
+    front = linedef->L_frontsector;
+    back = linedef->L_backsector;
 
-    if(front->planes[PLN_CEILING]->height < back->planes[PLN_CEILING]->height)
-        opentop = front->planes[PLN_CEILING]->height;
+    if(front->SP_ceilheight < back->SP_ceilheight)
+        opentop = front->SP_ceilheight;
     else
-        opentop = back->planes[PLN_CEILING]->height;
-    if(front->planes[PLN_FLOOR]->height > back->planes[PLN_FLOOR]->height)
+        opentop = back->SP_ceilheight;
+    if(front->SP_floorheight > back->SP_floorheight)
     {
-        openbottom = front->planes[PLN_FLOOR]->height;
-        lowfloor = back->planes[PLN_FLOOR]->height;
+        openbottom = front->SP_floorheight;
+        lowfloor = back->SP_floorheight;
     }
     else
     {
-        openbottom = back->planes[PLN_FLOOR]->height;
-        lowfloor = front->planes[PLN_FLOOR]->height;
+        openbottom = back->SP_floorheight;
+        lowfloor = front->SP_floorheight;
     }
 
     openrange = opentop - openbottom;
@@ -460,12 +463,12 @@ void P_UnlinkThing(mobj_t *thing)
 boolean PIT_LinkToLines(line_t *ld, void *parm)
 {
     linelinker_data_t *data = parm;
-    fixed_t bbox[4];
-    nodeindex_t nix;
+    fixed_t         bbox[4];
+    nodeindex_t     nix;
 
     // Setup the bounding box for the line.
-    ORDER(ld->v1->pos[VX], ld->v2->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
-    ORDER(ld->v1->pos[VY], ld->v2->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
+    ORDER(ld->v[0]->pos[VX], ld->v[1]->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
+    ORDER(ld->v[0]->pos[VY], ld->v[1]->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
 
     if(data->box[BOXRIGHT]  <= bbox[BOXLEFT] ||
        data->box[BOXLEFT]   >= bbox[BOXRIGHT] ||
@@ -480,7 +483,7 @@ boolean PIT_LinkToLines(line_t *ld, void *parm)
 
     // One sided lines will not be linked to because a mobj
     // can't legally cross one.
-    if(!ld->backsector)
+    if(!ld->L_backsector)
         return true;
 
     // No redundant nodes will be creates since this routine is
@@ -662,14 +665,14 @@ boolean P_ThingSectorsIterator(mobj_t *thing,
         {
             ld = (line_t *) tn[nix].ptr;
             // All these lines are two-sided. Try front side.
-            sec = ld->frontsector;
+            sec = ld->L_frontsector;
             if(sec->validcount != validcount)
             {
                 *end++ = sec;
                 sec->validcount = validcount;
             }
             // And then the back side.
-            sec = ld->backsector;
+            sec = ld->L_backsector;
             if(sec->validcount != validcount)
             {
                 *end++ = sec;
@@ -694,7 +697,7 @@ boolean P_LineThingsIterator(line_t *line, boolean (*func) (mobj_t *, void *),
     return true;
 }
 
-/*
+/**
  * Increment validcount before using this. 'func' is called for each mobj
  * that is (even partly) inside the sector. This is not a 3D test, the
  * mobjs may actually be above or under the sector.
@@ -711,7 +714,7 @@ boolean P_SectorTouchingThingsIterator(sector_t *sector,
     line_t *li;
     nodeindex_t root, nix;
     linknode_t *ln = linenodes.nodes;
-    int     i;
+    uint    i;
 
     // First process the things that obviously are in the sector.
     for(mo = sector->thinglist; mo; mo = mo->snext)
@@ -748,23 +751,23 @@ boolean P_SectorTouchingThingsIterator(sector_t *sector,
  */
 boolean PIT_AddLineIntercepts(line_t *ld, void *data)
 {
-    int     s1, s2;
-    fixed_t frac;
-    divline_t dl;
+    int         s[2];
+    fixed_t     frac;
+    divline_t   dl;
 
     // avoid precision problems with two routines
     if(trace.dx > FRACUNIT * 16 || trace.dy > FRACUNIT * 16 ||
        trace.dx < -FRACUNIT * 16 || trace.dy < -FRACUNIT * 16)
     {
-        s1 = P_PointOnDivlineSide(ld->v1->pos[VX], ld->v1->pos[VY], &trace);
-        s2 = P_PointOnDivlineSide(ld->v2->pos[VX], ld->v2->pos[VY], &trace);
+        s[0] = P_PointOnDivlineSide(ld->L_v1->pos[VX], ld->L_v1->pos[VY], &trace);
+        s[1] = P_PointOnDivlineSide(ld->L_v2->pos[VX], ld->L_v2->pos[VY], &trace);
     }
     else
     {
-        s1 = P_PointOnLineSide(trace.pos[VX], trace.pos[VY], ld);
-        s2 = P_PointOnLineSide(trace.pos[VX] + trace.dx, trace.pos[VY] + trace.dy, ld);
+        s[0] = P_PointOnLineSide(trace.pos[VX], trace.pos[VY], ld);
+        s[1] = P_PointOnLineSide(trace.pos[VX] + trace.dx, trace.pos[VY] + trace.dy, ld);
     }
-    if(s1 == s2)
+    if(s[0] == s[1])
         return true;            // line isn't crossed
 
     //
@@ -776,7 +779,7 @@ boolean PIT_AddLineIntercepts(line_t *ld, void *data)
         return true;            // behind source
 
     // try to early out the check
-    if(earlyout && frac < FRACUNIT && !ld->backsector)
+    if(earlyout && frac < FRACUNIT && !ld->L_backsector)
         return false;           // stop checking
 
     P_AddIntercept(frac, true, ld);
@@ -786,11 +789,11 @@ boolean PIT_AddLineIntercepts(line_t *ld, void *data)
 
 boolean PIT_AddThingIntercepts(mobj_t *thing, void *data)
 {
-    fixed_t x1, y1, x2, y2;
-    int     s1, s2;
-    boolean tracepositive;
-    divline_t dl;
-    fixed_t frac;
+    fixed_t     x1, y1, x2, y2;
+    int         s[2];
+    boolean     tracepositive;
+    divline_t   dl;
+    fixed_t     frac;
 
     if(thing->dplayer && thing->dplayer->flags & DDPF_CAMERA)
         return true;            // $democam: ssshh, keep going, we're not here...
@@ -815,9 +818,9 @@ boolean PIT_AddThingIntercepts(mobj_t *thing, void *data)
         y2 = thing->pos[VY] + thing->radius;
     }
 
-    s1 = P_PointOnDivlineSide(x1, y1, &trace);
-    s2 = P_PointOnDivlineSide(x2, y2, &trace);
-    if(s1 == s2)
+    s[0] = P_PointOnDivlineSide(x1, y1, &trace);
+    s[1] = P_PointOnDivlineSide(x2, y2, &trace);
+    if(s[0] == s[1])
         return true;            // line isn't crossed
 
     dl.pos[VX] = x1;
@@ -841,12 +844,12 @@ boolean PIT_AddThingIntercepts(mobj_t *thing, void *data)
 boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
                        int flags, boolean (*trav) (intercept_t *))
 {
-    fixed_t t1[2], t2[2];
-    fixed_t xstep, ystep;
-    fixed_t partial;
-    fixed_t xintercept, yintercept;
-    int     mapx, mapy, mapxstep, mapystep;
-    int     count;
+    fixed_t     t1[2], t2[2];
+    fixed_t     xstep, ystep;
+    fixed_t     partial;
+    fixed_t     xintercept, yintercept;
+    int         mapx, mapy, mapxstep, mapystep;
+    uint        count;
 
     earlyout = flags & PT_EARLYOUT;
 

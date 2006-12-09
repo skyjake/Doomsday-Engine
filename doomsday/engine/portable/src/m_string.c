@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2006 Jaakko KerÃ¤nen <skyjake@dengine.net>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -57,20 +58,20 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Call this for uninitialized strings. Global variables are
  * automatically cleared, so they don't need initialization.
  */
-void Str_Init(ddstring_t * ds)
+void Str_Init(ddstring_t *ds)
 {
     memset(ds, 0, sizeof(*ds));
 }
 
-/*
+/**
  * Empty an existing string. Totally destroys it. The string is
  * considered re-initialized.
  */
-void Str_Free(ddstring_t * ds)
+void Str_Free(ddstring_t *ds)
 {
     if(ds->size)
     {
@@ -80,35 +81,35 @@ void Str_Free(ddstring_t * ds)
     memset(ds, 0, sizeof(*ds));
 }
 
-/*
+/**
  * Allocate a new uninitialized string.
  */
 ddstring_t *Str_New(void)
 {
-    return calloc(sizeof(ddstring_t), 1);
+    return M_Calloc(sizeof(ddstring_t));
 }
 
-/*
+/**
  * Destroy the string completely (free, too).
  */
-void Str_Delete(ddstring_t * ds)
+void Str_Delete(ddstring_t *ds)
 {
     Str_Free(ds);
-    free(ds);
+    M_Free(ds);
 }
 
-/*
+/**
  * Empties a string, but does not free its memory.
  */
-void Str_Clear(ddstring_t * ds)
+void Str_Clear(ddstring_t *ds)
 {
     Str_Set(ds, "");
 }
 
-/*
+/**
  * Allocates so much memory that for_length characters will fit.
  */
-void Str_Alloc(ddstring_t * ds, int for_length, int preserve)
+void Str_Alloc(ddstring_t *ds, int for_length, int preserve)
 {
     boolean old_data = false;
     char   *buf;
@@ -139,12 +140,12 @@ void Str_Alloc(ddstring_t * ds, int for_length, int preserve)
     ds->str = buf;
 }
 
-void Str_Reserve(ddstring_t * ds, int length)
+void Str_Reserve(ddstring_t *ds, int length)
 {
     Str_Alloc(ds, length, true);
 }
 
-void Str_Set(ddstring_t * ds, const char *text)
+void Str_Set(ddstring_t *ds, const char *text)
 {
     int     incoming = strlen(text);
 
@@ -153,7 +154,7 @@ void Str_Set(ddstring_t * ds, const char *text)
     ds->length = incoming;
 }
 
-void Str_Append(ddstring_t * ds, const char *append_text)
+void Str_Append(ddstring_t *ds, const char *append_text)
 {
     int     incoming = strlen(append_text);
 
@@ -166,10 +167,10 @@ void Str_Append(ddstring_t * ds, const char *append_text)
     ds->length += incoming;
 }
 
-/*
+/**
  * Append formated text.
  */
-void Str_Appendf(ddstring_t * ds, const char *format, ...)
+void Str_Appendf(ddstring_t *ds, const char *format, ...)
 {
     char    buf[1024];
     va_list args;
@@ -181,10 +182,10 @@ void Str_Appendf(ddstring_t * ds, const char *format, ...)
     Str_Append(ds, buf);
 }
 
-/*
+/**
  * Appends a portion of a string.
  */
-void Str_PartAppend(ddstring_t * dest, const char *src, int start, int count)
+void Str_PartAppend(ddstring_t *dest, const char *src, int start, int count)
 {
     Str_Alloc(dest, dest->length + count, true);
     memcpy(dest->str + dest->length, src + start, count);
@@ -194,10 +195,10 @@ void Str_PartAppend(ddstring_t * dest, const char *src, int start, int count)
     dest->str[dest->length] = 0;
 }
 
-/*
+/**
  * Prepend is not even a word, is it? It should be 'prefix'?
  */
-void Str_Prepend(ddstring_t * ds, const char *prepend_text)
+void Str_Prepend(ddstring_t *ds, const char *prepend_text)
 {
     int     incoming = strlen(prepend_text);
 
@@ -211,28 +212,28 @@ void Str_Prepend(ddstring_t * ds, const char *prepend_text)
     ds->length += incoming;
 }
 
-/*
+/**
  * This is safe for all strings.
  */
-char   *Str_Text(ddstring_t * ds)
+char *Str_Text(ddstring_t *ds)
 {
     return ds->str ? ds->str : "";
 }
 
-/*
+/**
  * This is safe for all strings.
  */
-int Str_Length(ddstring_t * ds)
+int Str_Length(ddstring_t *ds)
 {
     if(ds->length)
         return ds->length;
     return strlen(Str_Text(ds));
 }
 
-/*
+/**
  * Makes a true copy.
  */
-void Str_Copy(ddstring_t * dest, ddstring_t * src)
+void Str_Copy(ddstring_t *dest, ddstring_t *src)
 {
     Str_Free(dest);
     dest->size = src->size;
@@ -241,22 +242,31 @@ void Str_Copy(ddstring_t * dest, ddstring_t * src)
     memcpy(dest->str, src->str, src->size);
 }
 
-/*
+/**
  * Strip whitespace from beginning.
  */
-void Str_StripLeft(ddstring_t * ds)
+void Str_StripLeft(ddstring_t *ds)
 {
     int     i, num;
+    boolean isDone;
 
     if(!ds->length)
         return;
 
     // Find out how many whitespace chars are at the beginning.
-    for(i = 0, num = 0; i < ds->length; i++)
+    isDone = false;
+    i = 0;
+    num = 0;
+    while(i < ds->length && !isDone)
+    {
         if(isspace(ds->str[i]))
+        {
             num++;
+            i++;
+        }
         else
-            break;
+            isDone = true;
+    }
 
     if(num)
     {
@@ -267,40 +277,46 @@ void Str_StripLeft(ddstring_t * ds)
     }
 }
 
-/*
+/**
  * Strip whitespace from end.
  */
-void Str_StripRight(ddstring_t * ds)
+void Str_StripRight(ddstring_t *ds)
 {
     int     i;
+    boolean isDone;
 
     if(!ds->length)
         return;
 
-    for(i = ds->length - 1; i >= 0; i--)
+    i = ds->length - 1;
+    isDone = false;
+    while(i >= 0 && !isDone)
+    {
         if(isspace(ds->str[i]))
         {
             // Remove this char.
             ds->str[i] = 0;
             ds->length--;
+            i--;
         }
         else
-            break;
+            isDone = true;
+    }
 }
 
-/*
+/**
  * Strip whitespace from beginning and end.
  */
-void Str_Strip(ddstring_t * ds)
+void Str_Strip(ddstring_t *ds)
 {
     Str_StripLeft(ds);
     Str_StripRight(ds);
 }
 
-/*
+/**
  * Extract a line of text from the source.
  */
-const char *Str_GetLine(ddstring_t * ds, const char *src)
+const char *Str_GetLine(ddstring_t *ds, const char *src)
 {
     char    buf[2];
 

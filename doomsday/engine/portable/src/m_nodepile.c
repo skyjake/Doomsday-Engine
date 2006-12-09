@@ -91,13 +91,15 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
     linknode_t *end = pile->nodes + pile->count;
     int         i, newcount;
     linknode_t *newlist;
-    boolean     found = false;
+    boolean     found;
 
     pile->pos %= pile->count;
     node = pile->nodes + pile->pos++;
 
     // Scan for an unused node, starting from current pos.
-    for(i = 0; i < pile->count - 1; ++i, node++, pile->pos++)
+    i = 0;
+    found = false;
+    while(i < pile->count - 1 && !found)
     {
         if(node == end)
             node = pile->nodes + 1; // Wrap back to #1.
@@ -105,7 +107,12 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
         {
             // This is the one!
             found = true;
-            break;
+        }
+        else
+        {
+            i++;
+            node++;
+            pile->pos++;
         }
     }
 

@@ -80,7 +80,7 @@ void Rend_ShadowRegister(void)
 static boolean Rend_ShadowIterator(sector_t *sector, void *data)
 {
     float  *height = data;
-    float   floor = SECT_FLOOR(sector);
+    float   floor = sector->SP_floorvisheight;
 
     if(floor > *height)
         *height = floor;
@@ -89,12 +89,13 @@ static boolean Rend_ShadowIterator(sector_t *sector, void *data)
 
 static void Rend_ProcessThingShadow(mobj_t *mo)
 {
-    fixed_t moz;
-    float   height, moh, halfmoh, color, pos[2], floor;
-    sector_t *sec = mo->subsector->sector;
-    int     radius, i;
+    fixed_t     moz;
+    float       height, moh, halfmoh, color, pos[2], floor;
+    sector_t   *sec = mo->subsector->sector;
+    int         radius;
+    uint        i;
     rendpoly_t *poly;
-    float   distance;
+    float       distance;
 
     // Is this too far?
     pos[VX] = FIX2FLT(mo->pos[VX]);
@@ -154,7 +155,7 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
         radius = shadowMaxRad;
 
     // Figure out the visible floor height.
-    floor = SECT_FLOOR(mo->subsector->sector);
+    floor = mo->subsector->sector->SP_floorvisheight;
     P_ThingSectorsIterator(mo, Rend_ShadowIterator, &floor);
 
     if(floor >= FIX2FLT(moz + mo->height))
@@ -199,31 +200,34 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
 
 void Rend_RenderShadows(void)
 {
-    sector_t *sec;
-    mobj_t *mo;
-    int     i;
+    sector_t   *sec;
+    mobj_t     *mo;
+    uint        i;
 
     if(!useShadows)
         return;
 
     // Check all mobjs in all visible sectors.
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
-        if(!(sec->info->flags & SIF_VISIBLE))
+        if(!(sec->frameflags & SIF_VISIBLE))
             continue;
 
         // Don't render mobj shadows on sky floors.
-        if(R_IsSkySurface(&sec->planes[PLN_FLOOR]->surface))
+        if(R_IsSkySurface(&sec->SP_floorsurface))
             continue;
 
         for(mo = sec->thinglist; mo; mo = mo->snext)
         {
-            if(!mo->state) continue;
+            if(!mo->state)
+                continue;
+
             // Should this mobj have a shadow?
             if((mo->state->flags & STF_FULLBRIGHT) || (mo->ddflags & DDMF_DONTDRAW) ||
                (mo->ddflags & DDMF_ALWAYSLIT))
                 continue;
+
             Rend_ProcessThingShadow(mo);
         }
     }

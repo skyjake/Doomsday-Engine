@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -52,7 +53,7 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Tell clients to play a sound with full volume.
  */
 void Sv_Sound(int sound_id, mobj_t *origin, int toPlr)
@@ -60,23 +61,27 @@ void Sv_Sound(int sound_id, mobj_t *origin, int toPlr)
     Sv_SoundAtVolume(sound_id, origin, 1, toPlr);
 }
 
-/*
+/**
  * Finds the sector/polyobj to whom the origin mobj belong.
  */
-void Sv_IdentifySoundOrigin(mobj_t **origin, int *sector, int *poly)
+static void Sv_IdentifySoundOrigin(mobj_t **origin, sector_t **sector,
+                                   polyobj_t **poly)
 {
-    *sector = *poly = -1;
+    *sector = NULL;
+    *poly = NULL;
 
     if(*origin && !(*origin)->thinker.id)
     {
         // No mobj ID => it's not a real mobj.
-        if((*poly = PO_GetNumForDegen(*origin)) < 0)
+
+        if((*poly = PO_GetForDegen(*origin)) == NULL)
         {
             // It wasn't a polyobj degenmobj, try the sectors instead.
-            *sector = R_GetSectorNumForDegen(*origin);
+            *sector = R_GetSectorForDegen(*origin);;
         }
+
 #ifdef _DEBUG
-        if(*poly < 0 && *sector < 0)
+        if(*poly == NULL && *sector == NULL)
         {
             Con_Error("Sv_IdentifySoundOrigin: Bad mobj.\n");
         }
@@ -85,15 +90,16 @@ void Sv_IdentifySoundOrigin(mobj_t **origin, int *sector, int *poly)
     }
 }
 
-/*
+/**
  * Tell clients to play a sound.
  */
 void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin, float volume,
                       int toPlr)
 {
-    int     sound_id = (sound_id_and_flags & ~DDSF_FLAG_MASK);
-    int     sector, poly;
-    int     targetPlayers = 0;
+    int         sound_id = (sound_id_and_flags & ~DDSF_FLAG_MASK);
+    sector_t   *sector;
+    polyobj_t  *poly;
+    int         targetPlayers = 0;
 
     if(isClient || !sound_id)
         return;
@@ -119,22 +125,23 @@ void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin, float volume,
     }
 
 #ifdef _DEBUG
-    Con_Message("Sv_SoundAtVolume: Id=%i, vol=%g, targets=%x\n", 
+    Con_Message("Sv_SoundAtVolume: Id=%i, vol=%g, targets=%x\n",
                 sound_id, volume, targetPlayers);
 #endif
-    
+
     Sv_NewSoundDelta(sound_id, origin, sector, poly, volume,
                      (sound_id_and_flags & DDSF_REPEAT) != 0,
                      targetPlayers);
 }
 
-/*
+/**
  * This is called when the server needs to tell clients to stop
  * a sound.
  */
 void Sv_StopSound(int sound_id, mobj_t *origin)
 {
-    int     sector, poly;
+    sector_t   *sector;
+    polyobj_t  *poly;
 
     if(isClient)
         return;

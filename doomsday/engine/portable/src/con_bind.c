@@ -67,57 +67,57 @@ static unsigned int maxBindClasses = 0;
 static evtypebinds_t evBindTypes[NUM_EVENT_TYPES];
 
 static keyname_t keyNames[] = {
-    {DDKEY_PAUSE, "pause"},
-    {DDKEY_ESCAPE, "escape"},
-    {DDKEY_ESCAPE, "esc"},
-    {DDKEY_RIGHTARROW, "right"},
-    {DDKEY_LEFTARROW, "left"},
-    {DDKEY_UPARROW, "up"},
-    {DDKEY_DOWNARROW, "down"},
-    {DDKEY_ENTER, "enter"},
-    {DDKEY_TAB, "tab"},
-    {DDKEY_RSHIFT, "shift"},
-    {DDKEY_RCTRL, "ctrl"},
-    {DDKEY_RALT, "alt"},
-    {DDKEY_INS, "ins"},
-    {DDKEY_DEL, "del"},
-    {DDKEY_PGUP, "pgup"},
-    {DDKEY_PGDN, "pgdown"},
-    {DDKEY_PGDN, "pgdn"},
-    {DDKEY_HOME, "home"},
-    {DDKEY_END, "end"},
-    {DDKEY_BACKSPACE, "bkspc"},
-    {' ', "space"},
-    {';', "smcln"},
-    {'\"', "quote"},
-    {DDKEY_F10, "f10"},
-    {DDKEY_F11, "f11"},
-    {DDKEY_F12, "f12"},
-    {DDKEY_F1, "f1"},
-    {DDKEY_F2, "f2"},
-    {DDKEY_F3, "f3"},
-    {DDKEY_F4, "f4"},
-    {DDKEY_F5, "f5"},
-    {DDKEY_F6, "f6"},
-    {DDKEY_F7, "f7"},
-    {DDKEY_F8, "f8"},
-    {DDKEY_F9, "f9"},
-    {'`', "tilde"},
-    {DDKEY_NUMLOCK, "numlock"},
-    {DDKEY_SCROLL, "scrlock"},
-    {DDKEY_NUMPAD0, "pad0"},
-    {DDKEY_NUMPAD1, "pad1"},
-    {DDKEY_NUMPAD2, "pad2"},
-    {DDKEY_NUMPAD3, "pad3"},
-    {DDKEY_NUMPAD4, "pad4"},
-    {DDKEY_NUMPAD5, "pad5"},
-    {DDKEY_NUMPAD6, "pad6"},
-    {DDKEY_NUMPAD7, "pad7"},
-    {DDKEY_NUMPAD8, "pad8"},
-    {DDKEY_NUMPAD9, "pad9"},
-    {DDKEY_DECIMAL, "pad,"},
-    {DDKEY_SUBTRACT, "pad-"},    // not really used
-    {DDKEY_ADD, "pad+"},        // not really used
+    {DDKEY_PAUSE,       "pause"},
+    {DDKEY_ESCAPE,      "escape"},
+    {DDKEY_ESCAPE,      "esc"},
+    {DDKEY_RIGHTARROW,  "right"},
+    {DDKEY_LEFTARROW,   "left"},
+    {DDKEY_UPARROW,     "up"},
+    {DDKEY_DOWNARROW,   "down"},
+    {DDKEY_ENTER,       "enter"},
+    {DDKEY_TAB,         "tab"},
+    {DDKEY_RSHIFT,      "shift"},
+    {DDKEY_RCTRL,       "ctrl"},
+    {DDKEY_RALT,        "alt"},
+    {DDKEY_INS,         "ins"},
+    {DDKEY_DEL,         "del"},
+    {DDKEY_PGUP,        "pgup"},
+    {DDKEY_PGDN,        "pgdown"},
+    {DDKEY_PGDN,        "pgdn"},
+    {DDKEY_HOME,        "home"},
+    {DDKEY_END,         "end"},
+    {DDKEY_BACKSPACE,   "bkspc"},
+    {' ',               "space"},
+    {';',               "smcln"},
+    {'\"',              "quote"},
+    {DDKEY_F10,         "f10"},
+    {DDKEY_F11,         "f11"},
+    {DDKEY_F12,         "f12"},
+    {DDKEY_F1,          "f1"},
+    {DDKEY_F2,          "f2"},
+    {DDKEY_F3,          "f3"},
+    {DDKEY_F4,          "f4"},
+    {DDKEY_F5,          "f5"},
+    {DDKEY_F6,          "f6"},
+    {DDKEY_F7,          "f7"},
+    {DDKEY_F8,          "f8"},
+    {DDKEY_F9,          "f9"},
+    {'`',               "tilde"},
+    {DDKEY_NUMLOCK,     "numlock"},
+    {DDKEY_SCROLL,      "scrlock"},
+    {DDKEY_NUMPAD0,     "pad0"},
+    {DDKEY_NUMPAD1,     "pad1"},
+    {DDKEY_NUMPAD2,     "pad2"},
+    {DDKEY_NUMPAD3,     "pad3"},
+    {DDKEY_NUMPAD4,     "pad4"},
+    {DDKEY_NUMPAD5,     "pad5"},
+    {DDKEY_NUMPAD6,     "pad6"},
+    {DDKEY_NUMPAD7,     "pad7"},
+    {DDKEY_NUMPAD8,     "pad8"},
+    {DDKEY_NUMPAD9,     "pad9"},
+    {DDKEY_DECIMAL,     "pad,"},
+    {DDKEY_SUBTRACT,    "pad-"},    // not really used
+    {DDKEY_ADD,         "pad+"},    // not really used
 
     {0, NULL}                    // The terminator
 };
@@ -125,6 +125,8 @@ static keyname_t keyNames[] = {
 static char *povDirNames[] = {
     "F", "FR", "R", "BR", "B", "BL", "L", "FL", NULL
 };
+
+static char evStatePrefixes[NUM_EVENT_STATES] = {'+', '-', '*'};
 
 // DJS 13/05/05
 // Binding Classes
@@ -219,10 +221,20 @@ const char* EventType_Str(evtype_t type)
         { 0, NULL}
     };
     unsigned int i;
+    boolean     found;
 
-    for(i = 0; evnts[i].str; ++i)
+    i = 0;
+    found = false;
+    while(evnts[i].str && !found)
+    {
         if(evnts[i].type == type)
-            return evnts[i].str;
+            found = true;
+        else
+            i++;
+    }
+
+    if(found)
+        return evnts[i].str;
 
     sprintf(typeStr, "(unnamed %i)", type);
     return typeStr;
@@ -269,13 +281,20 @@ static binding_t *B_BindingForEvent(event_t *event)
     unsigned int i;
     binding_t  *bnd;
     evtypebinds_t *bindGroup = &evBindTypes[event->type];
+    boolean     found;
 
     bnd = bindGroup->binds;
-    for(i = 0; i < bindGroup->num; ++i)
+    i = 0;
+    found = false;
+    while(i < bindGroup->num && !found)
     {
         if(B_EventMatch(event->type, event->data1, bnd[i].data1))
-            return &bnd[i];
+            found = true;
+        else
+            i++;
     }
+    if(found)
+        return &bnd[i];
 
     return NULL;
 }
@@ -324,40 +343,55 @@ static char *B_GetCommandForEvent(event_t *ev)
     else
     {
         unsigned int idx;
-        boolean done = false;
+        boolean     done, found;
 
         // loop backwards through the active binding classes, the
         // command in the highest binding class slot that is currently
         // active is executed
-        for(k = 0; k < numBindClasses && !done; ++k)
+        k = 0;
+        found = false;
+        done = false;
+        while(k < numBindClasses && !done)
         {
             idx = numBindClasses - 1 - k;
             cmd = &bnd->commands[idx];
 
-            if(bindClasses[idx].active != 1)
-                continue;
-
-            if(cmd->command[ev->state])
+            if(bindClasses[idx].active == 1)
             {
+                if(cmd->command[ev->state])
+                {
+                    found = true;
+                    done = true;
+                }
+                else
+                {
+                    // RULE: If a repeat event does not have a
+                    // binding in BINDCLASS (k) we should ignore
+                    // commands in all lower classes IF there is NOT
+                    // a down binding for this event in this class.
+                    if(ev->state == EVS_REPEAT && cmd->command[EVS_DOWN])
+                        done = true; // do nothing
+                }
+
+                if(!done)
+                {
+                    // Should we ignore commands in lower classes?
+                    if(bindClasses[idx].flags & BCF_ABSOLUTE)
+                        done = true;
+                }
+            }
+
+            if(!done)
+                k++;
+        }
+
+        if(found)
+        {
 //#if _DEBUG
 //Con_Message("B_GetCommandForEvent: Returned (%s) \"%s\"\n",
 //            bindClasses[idx].name, cmd->command[ev->state]);
 //#endif
-                return cmd->command[ev->state];
-            }
-            else
-            {
-                // RULE: If a repeat event does not have a
-                // binding in BINDCLASS (k) we should ignore
-                // commands in all lower classes IF there is NOT
-                // a down binding for this event in this class.
-                if(ev->state == EVS_REPEAT && cmd->command[EVS_DOWN])
-                    done = true; // do nothing
-            }
-
-            // Should we ignore commands in lower classes?
-            if(bindClasses[idx].flags & BCF_ABSOLUTE)
-                done = true;
+            return cmd->command[ev->state];
         }
     }
 
@@ -423,7 +457,7 @@ static binding_t *B_GetBinding(event_t *event, boolean create_new)
     newb->commands = M_Malloc(sizeof(command_t) * maxBindClasses);
 
     for(i = 0; i < numBindClasses; ++i)
-        for(j = 0; j < 3; ++j)
+        for(j = 0; j < NUM_EVENT_STATES; ++j)
             newb->commands[i].command[j] = NULL;
 
     // Copy the event data.
@@ -444,7 +478,7 @@ static void B_DeleteBindingIdx(unsigned int index, unsigned int group)
 
     bnd = &bindGroup->binds[index];
     for(i = 0; i < numBindClasses; ++i)
-        for(k = 0; k < 3; ++k)
+        for(k = 0; k < NUM_EVENT_STATES; ++k)
             if(bnd->commands[i].command[k])
             {
                 M_Free(bnd->commands[i].command[k]);
@@ -479,7 +513,7 @@ void B_Bind(event_t *event, char *command, unsigned int bindClass)
     {
         // clear the command in bindClass only
         for(i = 0; i < numBindClasses; ++i)
-            for(k = 0; k < 3; ++k)
+            for(k = 0; k < NUM_EVENT_STATES; ++k)
                 if(bnd->commands[i].command[k])
                 {
                     if(i == bindClass && k == event->state)
@@ -524,7 +558,7 @@ void B_ClearBinding(char *command, unsigned int bindClass, boolean allClasses)
 
             for(i = 0; i < bindGroup->num; ++i)
                 for(j = 0; j < numBindClasses; ++j)
-                    for(k = 0; k < 3; ++k)
+                    for(k = 0; k < NUM_EVENT_STATES; ++k)
                         if(bnd[i].commands[j].command[k])
                             if(!stricmp(bnd[i].commands[j].command[k], command))
                                 B_DeleteBindingIdx(i--, g);
@@ -547,7 +581,7 @@ void B_ClearBinding(char *command, unsigned int bindClass, boolean allClasses)
 
                 for(j = 0; j < numBindClasses; ++j)
                 {
-                    for(k = 0; k < 3; ++k)
+                    for(k = 0; k < NUM_EVENT_STATES; ++k)
                         if(bnd[i].commands[j].command[k])
                         {
                             count++;
@@ -587,7 +621,7 @@ void B_Shutdown(void)
         {
             for(j = 0; j < numBindClasses; ++j)
             {
-                for(k = 0; k < 3; ++k)
+                for(k = 0; k < NUM_EVENT_STATES; ++k)
                     if(bnd[i].commands[j].command[k])
                         M_Free(bnd[i].commands[j].command[k]);
             }
@@ -615,31 +649,64 @@ void B_Shutdown(void)
  */
 static char *shortNameForKey(int ddkey)
 {
-    unsigned int     i;
+    unsigned int idx;
+    boolean     found;
 
-    for(i = 0; keyNames[i].key; ++i)
-        if(ddkey == keyNames[i].key)
-            return keyNames[i].name;
+    idx = 0;
+    found = false;
+    while(keyNames[idx].key && !found)
+    {
+        if(ddkey == keyNames[idx].key)
+            found = true;
+        else
+            idx++;
+    }
+
+    if(found)
+        return keyNames[idx].name;
+
     return NULL;
 }
 
 static int getByShortName(const char *key)
 {
-    unsigned int     i;
+    unsigned int idx;
+    boolean     found;
 
-    for(i = 0; keyNames[i].key; ++i)
-        if(!strnicmp(key, keyNames[i].name, strlen(keyNames[i].name)))
-            return keyNames[i].key;
+    idx = 0;
+    found = false;
+    while(keyNames[idx].key && !found)
+    {
+        if(!strnicmp(key, keyNames[idx].name, strlen(keyNames[idx].name)))
+            found = true;
+        else
+            idx++;
+    }
+
+    if(found)
+        return keyNames[idx].key;
+
     return 0;
 }
 
 static int buttonNumber(int flags)
 {
-    unsigned int     i;
+    unsigned int idx;
+    boolean     found;
 
-    for(i = 0; i < 32; ++i)
-        if(flags & (1 << i))
-            return i;
+    idx = 0;
+    found = false;
+    while(idx < 32 && !found)
+    {
+        if(flags & (1 << idx))
+            found = true;
+        else
+            idx++;
+    }
+
+    if(found)
+        return idx;
+
     return -1;
 }
 
@@ -689,17 +756,25 @@ static void B_EventBuilder(char *buff, event_t *ev)
     }
     else if(!strnicmp(begin, "pov", 3))    // A POV angle?
     {
-        unsigned int     i;
+        unsigned int idx;
+        boolean     found;
 
         ev->type  = EV_POV;
         ev->state = (prefix == '+' ? EVS_DOWN : EVS_UP);
         ev->data1 = -1;
-        for(i = 0; povDirNames[i]; ++i)
-            if(!stricmp(begin + 3, povDirNames[i]))
+
+        idx = 0;
+        found = false;
+        while(povDirNames[idx] && !found)
+        {
+            if(!stricmp(begin + 3, povDirNames[idx]))
             {
-                ev->data1 = i;
-                break;
+                ev->data1 = idx;
+                found = true;
             }
+            else
+                idx++;
+        }
     }
     else
     {
@@ -727,7 +802,6 @@ static void B_EventBuilder(char *buff, event_t *ev)
 void B_FormEventString(char *buff, evtype_t type, evstate_t state,
                        int data1)
 {
-    char    prefix[3] = {'+', '-', '*'};
     char   *begin;
 
     if(state > EVS_REPEAT)
@@ -738,28 +812,31 @@ void B_FormEventString(char *buff, evtype_t type, evstate_t state,
     case EV_KEY:
         if((begin = shortNameForKey(data1)))
         {
-            sprintf(buff, "%c%s", prefix[state], begin);
+            sprintf(buff, "%c%s", evStatePrefixes[state], begin);
         }
         else if(data1 > 32 && data1 < 128)
         {
-            sprintf(buff, "%c%c", prefix[state], data1);
+            sprintf(buff, "%c%c", evStatePrefixes[state], data1);
         }
         break;
 
     case EV_MOUSE_BUTTON:
         if(data1 & (DDMB_MWHEELUP | DDMB_MWHEELDOWN))
-            sprintf(buff, "%cMW%s", prefix[state],
+            sprintf(buff, "%cMW%s", evStatePrefixes[state],
                     data1 & DDMB_MWHEELUP ? "up" : "down");
         else
-            sprintf(buff, "%cMB%d", prefix[state], buttonNumber(data1) + 1);
+            sprintf(buff, "%cMB%d", evStatePrefixes[state],
+                    buttonNumber(data1) + 1);
         break;
 
     case EV_JOY_BUTTON:
-        sprintf(buff, "%cJB%d", prefix[state], buttonNumber(data1) + 1);
+        sprintf(buff, "%cJB%d", evStatePrefixes[state],
+                buttonNumber(data1) + 1);
         break;
 
     case EV_POV:
-        sprintf(buff, "%cPOV%s", prefix[state], povDirNames[data1]);
+        sprintf(buff, "%cPOV%s", evStatePrefixes[state],
+                povDirNames[data1]);
         break;
 
     default:
@@ -826,7 +903,8 @@ boolean DD_SetBindClass(unsigned int classID, unsigned int type)
 boolean B_SetBindClass(unsigned int classID, unsigned int type)
 {
     unsigned int i, k, g, count;
-    binding_t *bind;
+    binding_t  *bind;
+    boolean     isDone;
 
     // Change the active state of the bindClass
     switch(type)
@@ -866,8 +944,11 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
         count = 0;
         // loop through the commands for this binding,
         // count the number of commands for this binding that are for currently active
-        // bind classes with a lower id than the class being enabled/disabled (i)
-        for(k = 0; k < numBindClasses; ++k)
+        // bind classes with a lower id than the class being enabled/disabled (classID)
+        k = 0;
+        isDone = false;
+        while(k < numBindClasses && !isDone)
+        {
             if(bindClasses[k].active && bind->commands[k].command[EVS_DOWN])
             {
                 // if there is a command for this event binding in a class that is
@@ -881,11 +962,15 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
                 {
                     // don't need to que any extra events
                     count = 0;
-                    break;
+                    isDone = true;
                 }
                 else
                     count++;
             }
+
+            if(!isDone)
+                k++;
+        }
 
         if(count > 0)
         {
@@ -916,27 +1001,35 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
         // currently active command is in the class being disabled
         // and it has the highest id of the active bindClass commands
         // for this binding
-        for(k = 0; k < numBindClasses; ++k)
+        k = 0;
+        isDone = false;
+        while(k < numBindClasses && !isDone)
         {
             unsigned int idx = numBindClasses - 1 - k;
 
             if((idx > classID && bindClasses[idx].active &&
                bind->commands[idx].command[EVS_DOWN]) || idx < classID)
-                break;
-
-            if(!bindClasses[idx].active && bind->commands[idx].command[EVS_DOWN])
             {
-                event_t ev;
-                // Que an up event for this down event.
-                ev.type  = bind->type;
-                ev.data1 = bind->data1;
-                ev.state = EVS_UP;
+                isDone = true;
+            }
+            else
+            {
+                if(!bindClasses[idx].active && bind->commands[idx].command[EVS_DOWN])
+                {
+                    event_t ev;
+                    // Que an up event for this down event.
+                    ev.type  = bind->type;
+                    ev.data1 = bind->data1;
+                    ev.state = EVS_UP;
 
-                // Request a command in this class
-                ev.useclass = bindClasses[idx].id;
-                ev.noclass = false;
-                // Finally, post the event
-                DD_PostEvent(&ev);
+                    // Request a command in this class
+                    ev.useclass = bindClasses[idx].id;
+                    ev.noclass = false;
+                    // Finally, post the event
+                    DD_PostEvent(&ev);
+                }
+
+                k++;
             }
         }
     }
@@ -960,7 +1053,7 @@ void B_WriteToFile(FILE * file)
             num = evBindTypes[g].num;
             for(i = 0; i < num; ++i)
             {
-                for(j = 0; j < 3; ++j)
+                for(j = 0; j < NUM_EVENT_STATES; ++j)
                 {
                     B_FormEventString(buffer, bnd[i].type, j, bnd[i].data1);
                     if(bnd[i].commands[k].command[j])
@@ -1011,7 +1104,7 @@ int B_BindingsForCommand(char *command, char *buffer, unsigned int bindClass,
 
             for(i = 0; i < num; ++i)
                 for(k = 0; k < numBindClasses; ++k)
-                    for(j = 0; j < 3; ++j)
+                    for(j = 0; j < NUM_EVENT_STATES; ++j)
                         if(bnd[i].commands[k].command[j])
                         {
                             B_FormEventString(bindname, bnd[i].type, j, bnd[i].data1);
@@ -1034,7 +1127,7 @@ int B_BindingsForCommand(char *command, char *buffer, unsigned int bindClass,
             num = evBindTypes[g].num;
 
             for(i = 0; i < num; ++i)
-                for(j = 0; j < 3; ++j)
+                for(j = 0; j < NUM_EVENT_STATES; ++j)
                     if(bnd[i].commands[bindClass].command[j])
                     {
                         B_FormEventString(bindname, bnd[i].type, j, bnd[i].data1);
@@ -1128,14 +1221,13 @@ D_CMD(Bind)
     if((argc == 3 && !prefixGiven && bindClassGiven) ||
         ((argc == 2) && !prefixGiven && !bindClassGiven))
     {
-        char    prefixes[3] = { '+', '-', '*' };
         unsigned int     i;
 
         // We're clearing a binding. If no prefix has been given,
         // all event states (+, - and *) are all cleared.
-        for(i = 0; i < 3; ++i)
+        for(i = 0; i < NUM_EVENT_STATES; ++i)
         {
-            sprintf(buff, "%c%s", prefixes[i], evntptr);
+            sprintf(buff, "%c%s", evStatePrefixes[i], evntptr);
             B_EventBuilder(buff, &event);
             B_Bind(&event, NULL, bc);
         }
@@ -1274,14 +1366,16 @@ D_CMD(ListBindClasses)
 
 D_CMD(ListBindings)
 {
-    int     k;
-    unsigned int i, j, g, num, comcount = 0, onlythis = 0;
-    char    buffer[20];
-    binding_t *bnd;
-    unsigned int totalBinds = 0;
-    boolean specificClass = false;
+    int         k;
+    unsigned int i, j, g, num, comcount, onlythis;
+    char        buffer[20];
+    binding_t  *bnd;
+    unsigned int totalBinds;
+    boolean     specificClass, noMatch;
 
     // Are we showing bindings in a particular class only?
+    specificClass = false;
+    onlythis = 0;
     if(argc >= 2)
     {
         for(j = 0; j < numBindClasses; ++j)
@@ -1293,48 +1387,60 @@ D_CMD(ListBindings)
             }
     }
 
+    totalBinds = 0;
+    comcount = 0;
     for(g = 0; g < NUM_EVENT_TYPES; ++g)
     {
         bnd = evBindTypes[g].binds;
         num = evBindTypes[g].num;
         totalBinds += num;
 
-        // loop through the bindings
+        // loop through the bindings.
         for(i = 0; i < num; ++i)
         {
-            // loop through the bindclasses
+            // loop through the bindclasses.
             for(j = 0; j < numBindClasses; ++j)
             {
-                for(k = 0; k < 3; ++k) // for each event state
+                // for each event state.
+                for(k = 0; k < NUM_EVENT_STATES; ++k)
                 {
-                    if(!bnd[i].commands[j].command[k])
-                        continue;
-
-                    B_FormEventString(buffer, bnd[i].type, k, bnd[i].data1);
-
-                    if(argc >= 2)
+                    if(bnd[i].commands[j].command[k])
                     {
-                        if(!specificClass && strnicmp(buffer + 1, argv[1], strlen(argv[1])))
-                            continue;        // Doesn't match the search pattern.
-                        else
+                        B_FormEventString(buffer, bnd[i].type, k, bnd[i].data1);
+
+                        // Does this event match the search pattern?
+                        noMatch = false;
+                        if(argc >= 2)
                         {
-                            if(argc >= 3)
+                            if(!specificClass &&
+                                strnicmp(buffer + 1, argv[1], strlen(argv[1])))
+                                noMatch = true;
+                            else
                             {
-                                if(strnicmp(buffer + 1, argv[2], strlen(argv[2])) ||
-                                   (specificClass && j != onlythis))
-                                    continue; // Doesn't match the search pattern
+                                if(argc >= 3)
+                                {
+                                    if(strnicmp(buffer+1, argv[2], strlen(argv[2])) ||
+                                       (specificClass && j != onlythis))
+                                        noMatch = true;
+                                }
+                                else if(specificClass && j != onlythis)
+                                    noMatch = true;
                             }
-                            else if(specificClass && j != onlythis)
-                                continue;    // Doesn't match the search pattern
+                        }
+
+                        if(!noMatch)
+                        {
+                            comcount++;
+
+                            if(specificClass)
+                                Con_Printf("%-8s : %s\n", buffer,
+                                           bnd[i].commands[j].command[k]);
+                            else
+                                Con_Printf("%-8s : %s : %s\n", buffer,
+                                           bindClasses[j].name,
+                                           bnd[i].commands[j].command[k]);
                         }
                     }
-                    comcount++;
-
-                    if(specificClass)
-                        Con_Printf("%-8s : %s\n", buffer, bnd[i].commands[j].command[k]);
-                    else
-                        Con_Printf("%-8s : %s : %s\n", buffer, bindClasses[j].name,
-                                   bnd[i].commands[j].command[k]);
                 }
             }
         }
@@ -1359,7 +1465,8 @@ D_CMD(ListBindings)
  */
 D_CMD(EnableBindClass)
 {
-    unsigned int i;
+    unsigned int i, idx;
+    boolean     found;
 
     if(argc < 2 || argc > 3)
     {
@@ -1372,24 +1479,28 @@ D_CMD(EnableBindClass)
         return true;
     }
 
-    // look for a binding class with either a name or id
-    // that matches the argument
-    for(i = 0; i < numBindClasses; ++i)
+    // look for a binding class with a name that matches the argument.
+    i = 0;
+    found = false;
+    while(i < numBindClasses && !found)
     {
         if(!(stricmp(argv[1], bindClasses[i].name)))
         {
-            i = bindClasses[i].id;
-            break;
+            idx = bindClasses[i].id;
+            found = true;
         }
+        else
+            i++;
     }
 
-    if(i < numBindClasses)
+    if(!found || idx >= numBindClasses)
     {
-        if(B_SetBindClass(i, (argc == 3)? atoi(argv[2]) : 2))
-            return true;
-    }
-    else
         Con_Printf("Not a valid binding class. Enter listbindclasses.\n");
+        return false;
+    }
 
-    return false;
+    if(B_SetBindClass(idx, (argc == 3)? atoi(argv[2]) : 2))
+        return true;
+    else
+        return false;
 }

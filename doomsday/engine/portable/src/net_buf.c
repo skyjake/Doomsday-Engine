@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -122,7 +123,8 @@ void N_Shutdown(void)
 
 /**
  * Acquire or release ownership of the message queue mutex.
- * Returns true if successful.
+ *
+ * @return          <code>true</code> if successful.
  */
 boolean N_LockQueue(boolean doAcquire)
 {
@@ -164,10 +166,13 @@ void N_PostMessage(netmessage_t *msg)
 
 /**
  * Extracts the next message from the queue of received messages.
- * Returns NULL if no message is found. The caller must release the
- * message when it's no longer needed, using N_ReleaseMessage().  We
- * use a mutex to synchronize access to the message queue.  This is
+ * The caller must release the message when it's no longer needed,
+ * using N_ReleaseMessage().
+ *
+ * We use a mutex to synchronize access to the message queue. This is
  * called in the Doomsday thread.
+ *
+ * @return              <code>NULL</code> if no message is found;
  */
 netmessage_t *N_GetMessage(void)
 {
@@ -303,22 +308,29 @@ void N_SendPacket(int flags)
 }
 
 /**
- * Returns the player number that corresponds the DPNID.
+ * @return          The player number that corresponds the DPNID.
  */
-int N_IdentifyPlayer(nodeid_t id)
+uint N_IdentifyPlayer(nodeid_t id)
 {
-    uint     i;
+    uint        i;
+    boolean     found;
 
     if(netServerMode)
     {
         // What is the corresponding player number? Only the server keeps
         // a list of all the IDs.
-        for(i = 0; i < MAXPLAYERS; ++i)
+        i = 0;
+        found = false;
+        while(i < MAXPLAYERS && !found)
             if(clients[i].nodeID == id)
-                return i;
+                found = true;
+            else
+                i++;
 
-        // Bogus?
-        return -1;
+        if(found)
+            return i;
+        else
+            return -1; // Bogus?
     }
 
     // Clients receive messages only from the server.
@@ -326,47 +338,54 @@ int N_IdentifyPlayer(nodeid_t id)
 }
 
 /**
- * Returns the next message waiting in the incoming message queue.
  * Confirmations are handled here.
  *
  * NOTE: Skips all messages from unknown nodeids!
+ *
+ * @return          The next message waiting in the incoming message queue.
  */
 netmessage_t *N_GetNextMessage(void)
 {
     netmessage_t *msg;
+    boolean     found;
 
-    while((msg = N_GetMessage()) != NULL)
+    found = false;
+    while((msg = N_GetMessage()) != NULL && !found)
     {
         if(msg->player < 0)
         {
             // From an unknown ID?
             N_ReleaseMessage(msg);
-
-            /*#ifdef _DEBUG
-               Con_Printf("N_GetNextMessage: Unknown sender, skipped...\n");
-               #endif */
-            continue;
+/*
+#ifdef _DEBUG
+Con_Printf("N_GetNextMessage: Unknown sender, skipped...\n");
+#endif
+*/
         }
+        else
+        {
+            // Decode the Huffman codes. The returned buffer is static, so
+            // it doesn't need to be freed (not thread-safe, though).
+            msg->data = Huff_Decode(msg->data, msg->size, &msg->size);
 
-        // Decode the Huffman codes. The returned buffer is static, so
-        // it doesn't need to be freed (not thread-safe, though).
-        msg->data = Huff_Decode(msg->data, msg->size, &msg->size);
+            // The original packet buffer can be freed.
+            N_ReturnBuffer(msg->handle);
+            msg->handle = NULL;
 
-        // The original packet buffer can be freed.
-        N_ReturnBuffer(msg->handle);
-        msg->handle = NULL;
-
-
-        return msg;
+            found = true;
+        }
     }
 
-    // There are no more messages.
-    return NULL;
+    if(found)
+        return msg;
+    else
+        return NULL; // There are no more messages.
 }
 
 /**
- * A message is extracted from the message queue. Returns true if a message
- * is successfully extracted.
+ * An attempt is made to extract a message from the message queue.
+ *
+ * @return          <code>true</code> if a message successfull.
  */
 boolean N_GetPacket(void)
 {
@@ -387,11 +406,12 @@ boolean N_GetPacket(void)
         return false;
     }
 
-    /*
-       Con_Message("N_GetPacket: from=%x, len=%i\n", msg->sender, msg->size);
-     */
-
     // There was a packet!
+/*
+#if _DEBUG
+   Con_Message("N_GetPacket: from=%x, len=%i\n", msg->sender, msg->size);
+#endif
+*/
     netBuffer.player = msg->player;
     netBuffer.length = msg->size - netBuffer.headerLength;
     memcpy(&netBuffer.msg, msg->data,
@@ -433,7 +453,7 @@ void N_PrintHuffmanStats(void)
     }
 }
 
-/*
+/**
  * Console command for printing the Huffman efficiency.
  */
 D_CMD(HuffmanStats)

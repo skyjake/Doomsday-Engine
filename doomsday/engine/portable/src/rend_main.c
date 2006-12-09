@@ -105,7 +105,7 @@ int     gamedrawhud = 1;    // Set to zero when we advise that the HUD
 
 extern DGLuint ddTextures[];
 
-int     playerLightRange[MAXPLAYERS];
+uint    playerLightRange[MAXPLAYERS];
 
 lightsample_t playerLastLightSample[MAXPLAYERS];
 
@@ -346,7 +346,7 @@ static int C_DECL DivSortDescend(const void *e1, const void *e2)
 
 static void Rend_ShinySurfaceColor(gl_rgba_t *color, ded_reflection_t *ref)
 {
-    int i;
+    uint        i;
 
     for(i = 0; i < 3; ++i)
     {
@@ -437,7 +437,7 @@ static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
 static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
                               short width, short height)
 {
-    int     i;
+    uint        i;
 
     // Make it a shiny polygon.
     poly->lights = NULL;
@@ -501,10 +501,10 @@ static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
     poly->interpos = xlat->inter;
 }
 
-boolean Rend_IsWallSectionPVisible(line_t* line, int section,
+boolean Rend_IsWallSectionPVisible(line_t* line, segsection_t section,
                                    boolean backside)
 {
-    side_t* side;
+    side_t *side;
 
     if(!line)
         return false; // huh?
@@ -517,13 +517,13 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
     switch(section)
     {
     case SEG_TOP:
-        return side->info->flags & SIDEINF_TOPPVIS;
+        return side->frameflags & SIDEINF_TOPPVIS;
 
     case SEG_MIDDLE:
-        return side->info->flags & SIDEINF_MIDDLEPVIS;
+        return side->frameflags & SIDEINF_MIDDLEPVIS;
 
     case SEG_BOTTOM:
-        return side->info->flags & SIDEINF_BOTTOMPVIS;
+        return side->frameflags & SIDEINF_BOTTOMPVIS;
     default:
         return false; // shutup compiler.
     }
@@ -531,9 +531,9 @@ boolean Rend_IsWallSectionPVisible(line_t* line, int section,
 
 static void Rend_MarkSegSectionsPVisible(seg_t *seg)
 {
-    int i;
-    side_t *side;
-    line_t *line;
+    uint        i;
+    side_t     *side;
+    line_t     *line;
 
     if(!seg || !seg->linedef)
         return; // huh?
@@ -546,64 +546,64 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
             continue;
 
         side = line->sides[i];
-        side->info->flags |=
+        side->frameflags |=
             (SIDEINF_TOPPVIS|SIDEINF_MIDDLEPVIS|SIDEINF_BOTTOMPVIS);
 
         // A two sided line?
-        if(line->sides[0] && line->sides[1])
+        if(line->L_frontside && line->L_backside)
         {
             // Check middle texture
-            if(!(side->middle.texture || side->middle.texture == -1))
-                side->info->flags &= ~SIDEINF_MIDDLEPVIS;
+            if(!(side->SW_middlepic || side->SW_middlepic == -1))
+                side->frameflags &= ~SIDEINF_MIDDLEPVIS;
 
             // Check alpha
-            if(side->middle.rgba[3] == 0)
-                side->info->flags &= ~SIDEINF_MIDDLEPVIS;
+            if(side->SW_middlergba[3] == 0)
+                side->frameflags &= ~SIDEINF_MIDDLEPVIS;
 
             // Check Y placement?
         }
 
         // Top
-        if(!line->backsector)
-            side->info->flags &= ~(SIDEINF_TOPPVIS|SIDEINF_BOTTOMPVIS);
+        if(!line->L_backsector)
+            side->frameflags &= ~(SIDEINF_TOPPVIS|SIDEINF_BOTTOMPVIS);
         else
         {
-            if(R_IsSkySurface(&line->backsector->SP_ceilsurface) &&
-               R_IsSkySurface(&line->frontsector->SP_ceilsurface))
-               side->info->flags &= ~SIDEINF_TOPPVIS;
+            if(R_IsSkySurface(&line->L_backsector->SP_ceilsurface) &&
+               R_IsSkySurface(&line->L_frontsector->SP_ceilsurface))
+               side->frameflags &= ~SIDEINF_TOPPVIS;
             else
             {
-                if(i)
+                if(i != 0)
                 {
-                    if(SECT_CEIL(line->backsector) <=
-                       SECT_CEIL(line->frontsector))
-                        side->info->flags &= ~SIDEINF_TOPPVIS;
+                    if(line->L_backsector->SP_ceilvisheight <=
+                       line->L_frontsector->SP_ceilvisheight)
+                        side->frameflags &= ~SIDEINF_TOPPVIS;
                 }
                 else
                 {
-                    if(SECT_CEIL(line->frontsector) <=
-                       SECT_CEIL(line->backsector))
-                        side->info->flags &= ~SIDEINF_TOPPVIS;
+                    if(line->L_frontsector->SP_ceilvisheight <=
+                       line->L_backsector->SP_ceilvisheight)
+                        side->frameflags &= ~SIDEINF_TOPPVIS;
                 }
             }
 
             // Bottom
-            if(R_IsSkySurface(&line->backsector->SP_floorsurface) &&
-               R_IsSkySurface(&line->frontsector->SP_floorsurface))
-               side->info->flags &= ~SIDEINF_BOTTOMPVIS;
+            if(R_IsSkySurface(&line->L_backsector->SP_floorsurface) &&
+               R_IsSkySurface(&line->L_frontsector->SP_floorsurface))
+               side->frameflags &= ~SIDEINF_BOTTOMPVIS;
             else
             {
-                if(i)
+                if(i != 0)
                 {
-                    if(SECT_FLOOR(line->backsector) >=
-                       SECT_FLOOR(line->frontsector))
-                        side->info->flags &= ~SIDEINF_BOTTOMPVIS;
+                    if(line->L_backsector->SP_floorvisheight >=
+                       line->L_frontsector->SP_floorvisheight)
+                        side->frameflags &= ~SIDEINF_BOTTOMPVIS;
                 }
                 else
                 {
-                    if(SECT_FLOOR(line->frontsector) >=
-                       SECT_FLOOR(line->backsector))
-                        side->info->flags &= ~SIDEINF_BOTTOMPVIS;
+                    if(line->L_frontsector->SP_floorvisheight >=
+                       line->L_backsector->SP_floorvisheight)
+                        side->frameflags &= ~SIDEINF_BOTTOMPVIS;
                 }
             }
         }
@@ -622,7 +622,7 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
  */
 static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
 {
-    int flags;
+    int         flags;
 
     if(surface->texture == 0)
         return -1;
@@ -678,7 +678,7 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
  */
 static int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
 {
-    uint    i, num;
+    uint        i, num;
     walldiv_t  *div;
 
     div = &quad->wall->divs[side];
@@ -695,65 +695,61 @@ static int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
  * Converts quads to divquads.
  */
 static void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
-                                    sector_t *frontsec, int mode)
+                                    sector_t *frontsec, segsection_t mode)
 {
-    uint    i;
-    int     k;
-    vertex_t *vtx[2];       // Vertexes
-    vertexinfo_t *own;
-    sector_t *sec;
-    float   hi, low;
-    float   sceil, sfloor;
-    walldiv_t *div;
+    uint        i, k;
+    vertex_t   *vtx;
+    sector_t   *sec;
+    float       hi, low;
+    float       sceil, sfloor;
+    walldiv_t  *div;
 
     switch(mode)
     {
     case SEG_MIDDLE:
-        hi = SECT_CEIL(frontsec);
-        low = SECT_FLOOR(frontsec);
+        hi = frontsec->SP_ceilvisheight;
+        low = frontsec->SP_floorvisheight;
         break;
 
     case SEG_TOP:
-        hi = SECT_CEIL(frontsec);
-        low = SECT_CEIL(seg->backsector);
-        if(SECT_FLOOR(frontsec) > low)
-            low = SECT_FLOOR(frontsec);
+        hi = frontsec->SP_ceilvisheight;
+        low = seg->SG_backsector->SP_ceilvisheight;
+        if(frontsec->SP_floorvisheight > low)
+            low = frontsec->SP_floorvisheight;
         break;
 
     case SEG_BOTTOM:
-        hi = SECT_FLOOR(seg->backsector);
-        low = SECT_FLOOR(frontsec);
-        if(SECT_CEIL(frontsec) < hi)
-            hi = SECT_CEIL(frontsec);
+        hi = seg->SG_backsector->SP_floorvisheight;
+        low = frontsec->SP_floorvisheight;
+        if(frontsec->SP_ceilvisheight < hi)
+            hi = frontsec->SP_ceilvisheight;
         break;
 
     default:
         return;
     }
 
-    vtx[0] = seg->v1;
-    vtx[1] = seg->v2;
     quad->wall->divs[0].num = 0;
     quad->wall->divs[1].num = 0;
 
     // Check both ends.
     for(i = 0; i < 2; ++i)
     {
-        own = vtx[i]->info;
+        vtx = seg->v[i];
         div = &quad->wall->divs[i];
-        if(own->num > 1)
+        if(vtx->numsecowners > 1)
         {
             boolean isDone;
 
             // More than one sectors! The checks must be made.
             isDone = false;
-            for(k = 0; !isDone && k < own->num; ++k)
+            for(k = 0; !isDone && k < vtx->numsecowners; ++k)
             {
-                sec = SECTOR_PTR(own->list[k]);
-                if(!(sec == frontsec || sec == seg->backsector))
+                sec = SECTOR_PTR(vtx->secowners[k]);
+                if(!(sec == frontsec || sec == seg->SG_backsector))
                 {
-                    sceil = SECT_CEIL(sec);
-                    sfloor = SECT_FLOOR(sec);
+                    sceil = sec->SP_ceilvisheight;
+                    sfloor = sec->SP_floorvisheight;
 
                     // Divide at the sector's ceiling height?
                     if(sceil > low && sceil < hi)
@@ -813,9 +809,9 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
                        float *topleft, float *topright, float *texoffy,
                        float tcyoff, boolean lower_unpeg)
 {
-    int     side;
-    float   openingTop, openingBottom;
-    boolean visible[2] = {false, false};
+    int         side;
+    float       openingTop, openingBottom;
+    boolean     visible[2] = {false, false};
 
     for(side = 0; side < 2; ++side)
     {
@@ -841,7 +837,8 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
         else
         {
             *(side? topright : topleft) += tcyoff;
-            *(side? bottomright : bottomleft) = *(side? topright : topleft) - texh;
+            *(side? bottomright : bottomleft) =
+                *(side? topright : topleft) - texh;
         }
 
         // Clip it.
@@ -871,12 +868,12 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
  *
  * TODO: Combine all the boolean (hint) parameters into a single flags var.
  */
-static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *side,
+static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
                                    sector_t *frontsec, surface_t *surface,
                                    int mode, byte alpha, short flags)
 {
-    int  i;
-    int  segIndex = GET_SEG_IDX(seg);
+    uint        i;
+    uint        segIndex = GET_SEG_IDX(seg);
     rendpoly_vertex_t *vtx;
     const byte *colorPtr = NULL;
     const byte *color2Ptr = NULL;
@@ -935,11 +932,12 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
         Con_Error("Rend_RenderWallSection: Invalid wall section mode %i", mode);
     }
 
-    if((flags & RPF2_GLOW) && glowingTextures)        // Make it fullbright?
+    // Make it fullbright?
+    if((flags & RPF2_GLOW) && glowingTextures)
         quad->flags |= RPF_GLOW;
 
     // Check for neighborhood division?
-    if(!(mode == SEG_MIDDLE && seg->backsector))
+    if(!(mode == SEG_MIDDLE && seg->SG_backsector))
         Rend_WallHeightDivision(quad, seg, frontsec, mode);
 
     // Surface color/light.
@@ -960,8 +958,8 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     quad->lights = DL_GetSegSectionLightLinks(segIndex, mode);
 
     // Do BIAS lighting for this poly.
-    SB_RendPoly(quad, surface, frontsec, seg->info->illum[1],
-                &seg->info->tracker[1],  seg->info->affected,
+    SB_RendPoly(quad, surface, frontsec, seg->illum[1],
+                &seg->tracker[1],  seg->affected,
                 segIndex);
 
     // Smooth Texture Animation?
@@ -970,17 +968,21 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
     // Add the poly to the appropriate list
     RL_AddPoly(quad);
 
-    if(flags & RPF2_SHADOW)      // Render Fakeradio polys for this seg?
+    // Render Fakeradio polys for this seg?
+    if(flags & RPF2_SHADOW)
         Rend_RadioWallSection(seg, quad);
 
-    if((flags & RPF2_SHINY) && useShinySurfaces) // Render Shiny polys for this seg?
+    // Render Shiny polys for this seg?
+    if((flags & RPF2_SHINY) && useShinySurfaces)
     {
         ded_reflection_t *ref;
         short width = 0;
         short height = 0;
 
         if((ref = Rend_ShinyDefForSurface(surface, &width, &height)) != NULL)
-            if(GL_LoadReflectionMap(ref)) // Make sure the texture has been loaded.
+        {
+            // Make sure the texture has been loaded.
+            if(GL_LoadReflectionMap(ref))
             {
                 // We're going to modify the polygon quite a bit...
                 rendpoly_t *q = R_AllocRendPoly(RP_QUAD, true, 4);
@@ -989,6 +991,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, const seg_t *seg, side_t *s
 
                 R_FreeRendPoly(q);
             }
+        }
     }
 }
 
@@ -1000,8 +1003,8 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
                                subplaneinfo_t* plane, surface_t *surface,
                                float height, byte alpha, short flags)
 {
-    int i;
-    int subIndex = GET_SUBSECTOR_IDX(subsector);
+    uint        i;
+    uint        subIndex = GET_SUBSECTOR_IDX(subsector);
     rendpoly_vertex_t *vtx;
 
     if((flags & RPF2_GLOW) && glowingTextures)        // Make it fullbright?
@@ -1033,33 +1036,38 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
     // Add the poly to the appropriate list
     RL_AddPoly(poly);
 
-    //if(flags & RPF2_SHADOW)  // Fakeradio uses a seperate algorithm for planes.
+    // Fakeradio uses a seperate algorithm for planes.
+    //if(flags & RPF2_SHADOW)
 
-    if((flags & RPF2_SHINY) && useShinySurfaces) // Render Shiny polys for this seg?
+    // Render Shiny polys for this seg?
+    if((flags & RPF2_SHINY) && useShinySurfaces)
     {
         ded_reflection_t *ref;
-        short width = 0;
-        short height = 0;
+        short       width = 0;
+        short       height = 0;
 
         if((ref = Rend_ShinyDefForSurface(surface, &width, &height)) != NULL)
-            if(GL_LoadReflectionMap(ref)) // Make sure the texture has been loaded.
+        {
+            // Make sure the texture has been loaded.
+            if(GL_LoadReflectionMap(ref))
             {
                 Rend_AddShinyPoly(poly, ref, width, height);
             }
+        }
     }
 }
 
 static void Rend_SetSurfaceColorsForSide(side_t *side)
 {
-    int     i;
+    uint        i;
 
     // Top wall section color offset?
-    if(side->top.rgba[0] < 255 || side->top.rgba[1] < 255 ||
-       side->top.rgba[2] < 255)
+    if(side->SW_toprgba[0] < 255 || side->SW_toprgba[1] < 255 ||
+       side->SW_toprgba[2] < 255)
     {
-        for(i=0; i < 3; ++i)
+        for(i = 0; i < 3; ++i)
             topColor[i] =
-                (byte)(((side->top.rgba[i] * reciprocal255)) * sLightColor[i]);
+                (byte)(((side->SW_toprgba[i] * reciprocal255)) * sLightColor[i]);
 
         topColorPtr = topColor;
     }
@@ -1067,12 +1075,12 @@ static void Rend_SetSurfaceColorsForSide(side_t *side)
         topColorPtr = sLightColor;
 
     // Mid wall section color offset?
-    if(side->middle.rgba[0] < 255 || side->middle.rgba[1] < 255 ||
-       side->middle.rgba[2] < 255)
+    if(side->SW_middlergba[0] < 255 || side->SW_middlergba[1] < 255 ||
+       side->SW_middlergba[2] < 255)
     {
-        for(i=0; i < 3; ++i)
+        for(i = 0; i < 3; ++i)
             midColor[i] =
-                (byte)(((side->middle.rgba[i] * reciprocal255)) * sLightColor[i]);
+                (byte)(((side->SW_middlergba[i] * reciprocal255)) * sLightColor[i]);
 
         midColorPtr = midColor;
     }
@@ -1080,12 +1088,12 @@ static void Rend_SetSurfaceColorsForSide(side_t *side)
         midColorPtr = sLightColor;
 
     // Bottom wall section color offset?
-    if(side->bottom.rgba[0] < 255 || side->bottom.rgba[1] < 255 ||
-       side->bottom.rgba[2] < 255)
+    if(side->SW_bottomrgba[0] < 255 || side->SW_bottomrgba[1] < 255 ||
+       side->SW_bottomrgba[2] < 255)
     {
-        for(i=0; i < 3; ++i)
+        for(i = 0; i < 3; ++i)
             bottomColor[i] =
-                (byte)(((side->bottom.rgba[i] * reciprocal255)) * sLightColor[i]);
+                (byte)(((side->SW_bottomrgba[i] * reciprocal255)) * sLightColor[i]);
 
         bottomColorPtr = bottomColor;
     }
@@ -1096,7 +1104,7 @@ static void Rend_SetSurfaceColorsForSide(side_t *side)
 /**
  * Renders the given single-sided seg into the world.
  */
-static void Rend_RenderSSWallSeg(const seg_t *seg, sector_t *frontsec)
+static void Rend_RenderSSWallSeg(seg_t *seg, sector_t *frontsec)
 {
     int         surfaceFlags;
     surface_t  *surface;
@@ -1121,8 +1129,8 @@ static void Rend_RenderSSWallSeg(const seg_t *seg, sector_t *frontsec)
     else
         side = backsid;
 
-    ffloor = SECT_FLOOR(frontsec);
-    fceil = SECT_CEIL(frontsec);
+    ffloor = frontsec->SP_floorvisheight;
+    fceil = frontsec->SP_ceilvisheight;
     fsh = fceil - ffloor;
 
     // Init the quad.
@@ -1138,10 +1146,10 @@ static void Rend_RenderSSWallSeg(const seg_t *seg, sector_t *frontsec)
     vTR = quad->vertices[3].pos;
 
     // Get the start and end vertices, left then right. Top and bottom.
-    vBL[VX] = vTL[VX] = seg->fv1.pos[VX];
-    vBL[VY] = vTL[VY] = seg->fv1.pos[VY];
-    vBR[VX] = vTR[VX] = seg->fv2.pos[VX];
-    vBR[VY] = vTR[VY] = seg->fv2.pos[VY];
+    vBL[VX] = vTL[VX] = seg->fv[0].pos[VX];
+    vBL[VY] = vTL[VY] = seg->fv[0].pos[VY];
+    vBR[VX] = vTR[VX] = seg->fv[1].pos[VX];
+    vBR[VY] = vTR[VY] = seg->fv[1].pos[VY];
 
     // Calculate the distances.
     quad->vertices[0].dist =
@@ -1154,7 +1162,7 @@ static void Rend_RenderSSWallSeg(const seg_t *seg, sector_t *frontsec)
     Rend_SetSurfaceColorsForSide(side);
 
     // We only need one wall section extending from floor to ceiling.
-    surface = &side->middle;
+    surface = &side->SW_middlesurface;
     surfaceFlags = Rend_PrepareTextureForPoly(quad, surface);
 
     // Is there a visible surface?
@@ -1167,8 +1175,8 @@ static void Rend_RenderSSWallSeg(const seg_t *seg, sector_t *frontsec)
         vTL[VZ] = vTR[VZ] = fceil;
         vBL[VZ] = vBR[VZ] = ffloor;
 
-        quad->texoffx = side->middle.offx + FIX2FLT(seg->offset);
-        quad->texoffy = side->middle.offy;
+        quad->texoffx = side->SW_middleoffx + FIX2FLT(seg->offset);
+        quad->texoffy = side->SW_middleoffy;
         if(ldef->flags & ML_DONTPEGBOTTOM)
             quad->texoffy += texh - fsh;
 
@@ -1211,7 +1219,7 @@ static void Rend_RenderSSWallSeg(const seg_t *seg, sector_t *frontsec)
 /**
  * Renders wall sections for given two-sided seg.
  */
-static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
+static void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec)
 {
     int         surfaceFlags;
     int         solidSeg = false; // -1 means NEVER.
@@ -1224,7 +1232,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
     float      *vBL, *vBR, *vTL, *vTR;
     boolean     backSide = true;
 
-    backsec = seg->backsector;
+    backsec = seg->SG_backsector;
     sid = seg->linedef->sides[0];
     backsid = seg->linedef->sides[1];
     ldef = seg->linedef;
@@ -1239,17 +1247,17 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
     else
         side = backsid;
 
-    if(backsec == seg->frontsector &&
-       side->top.texture == 0 && side->bottom.texture == 0 &&
-       side->middle.texture == 0)
+    if(backsec == seg->SG_frontsector &&
+       side->SW_toppic == 0 && side->SW_bottompic == 0 &&
+       side->SW_middlepic == 0)
        return; // Ugh... an obvious wall seg hack. Best take no chances...
 
-    ffloor = SECT_FLOOR(frontsec);
-    fceil = SECT_CEIL(frontsec);
+    ffloor = frontsec->SP_floorvisheight;
+    fceil = frontsec->SP_ceilvisheight;
     fsh = fceil - ffloor;
 
-    bceil = SECT_CEIL(backsec);
-    bfloor = SECT_FLOOR(backsec);
+    bceil = backsec->SP_ceilvisheight;
+    bfloor = backsec->SP_floorvisheight;
     bsh = bceil - bfloor;
 
     // Init the quad.
@@ -1265,10 +1273,10 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
     vTR = quad->vertices[3].pos;
 
     // Get the start and end vertices, left then right. Top and bottom.
-    vBL[VX] = vTL[VX] = seg->fv1.pos[VX];
-    vBL[VY] = vTL[VY] = seg->fv1.pos[VY];
-    vBR[VX] = vTR[VX] = seg->fv2.pos[VX];
-    vBR[VY] = vTR[VY] = seg->fv2.pos[VY];
+    vBL[VX] = vTL[VX] = seg->fv[0].pos[VX];
+    vBL[VY] = vTL[VY] = seg->fv[0].pos[VY];
+    vBR[VX] = vTR[VX] = seg->fv[1].pos[VX];
+    vBR[VY] = vTR[VY] = seg->fv[1].pos[VY];
 
     // Calculate the distances.
     quad->vertices[0].dist =
@@ -1291,14 +1299,14 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
        !(side->flags & SDF_MIDTEXUPPER)*/)
     {
         // Use actual (smoothed) sector heights (non-linked).
-        float   rbceil = SECT_CEIL(seg->backsector);
-        float  rbfloor = SECT_FLOOR(seg->backsector);
-        float   rfceil = SECT_CEIL(seg->frontsector);
-        float  rffloor = SECT_FLOOR(seg->frontsector);
+        float   rbceil = seg->SG_backsector->SP_ceilvisheight;
+        float  rbfloor = seg->SG_backsector->SP_floorvisheight;
+        float   rfceil = seg->SG_frontsector->SP_ceilvisheight;
+        float  rffloor = seg->SG_frontsector->SP_floorvisheight;
         float   gaptop, gapbottom;
-        byte    alpha = side->middle.rgba[3];
+        byte    alpha = side->SW_middlergba[3];
 
-        surface = &side->middle;
+        surface = &side->SW_middlesurface;
         surfaceFlags = Rend_PrepareTextureForPoly(quad, surface);
 
         // Is there a visible surface?
@@ -1308,11 +1316,11 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
             vTL[VZ] = vTR[VZ] = gaptop    = MIN_OF(rbceil, rfceil);
             vBL[VZ] = vBR[VZ] = gapbottom = MAX_OF(rbfloor, rffloor);
 
-            quad->texoffx = side->middle.offx + FIX2FLT(seg->offset);
+            quad->texoffx = side->SW_middleoffx + FIX2FLT(seg->offset);
 
             if(Rend_MidTexturePos
                (&vBL[VZ], &vBR[VZ], &vTL[VZ], &vTR[VZ],
-                &quad->texoffy, side->middle.offy,
+                &quad->texoffy, side->SW_middleoffy,
                 0 != (ldef->flags & ML_DONTPEGBOTTOM)))
             {
                 // Should a solid segment be added here?
@@ -1336,11 +1344,11 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
                             float a[2], b[2], c[2];
                             float distance;
 
-                            a[VX] = seg->fv1.pos[VX];
-                            a[VY] = seg->fv1.pos[VY];
+                            a[VX] = seg->fv[0].pos[VX];
+                            a[VY] = seg->fv[0].pos[VY];
 
-                            b[VX] = seg->fv2.pos[VX];
-                            b[VY] = seg->fv2.pos[VY];
+                            b[VX] = seg->fv[1].pos[VX];
+                            b[VY] = seg->fv[1].pos[VY];
 
                             c[VX] = FIX2FLT(mo->pos[VX]);
                             c[VY] = FIX2FLT(mo->pos[VY]);
@@ -1404,7 +1412,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
     // Upper wall.
     if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide))
     {
-        surface = &side->top;
+        surface = &side->SW_topsurface;
         surfaceFlags = Rend_PrepareTextureForPoly(quad, surface);
 
         // Is there a visible surface?
@@ -1415,8 +1423,8 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
             float tcyoff;
 
             // Calculate texture coordinates.
-            quad->texoffx = side->top.offx + FIX2FLT(seg->offset);
-            tcyoff = side->middle.offy;
+            quad->texoffx = side->SW_topoffx + FIX2FLT(seg->offset);
+            tcyoff = side->SW_middleoffy;
 
             quad->flags = 0;
 
@@ -1444,7 +1452,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
                     else
                         quad->blendmode = sid->blendmode;
 
-                    alpha = side->middle.rgba[3];
+                    alpha = side->SW_middlergba[3];
 
                     // If alpha, masked or blended we must render as a vissprite
                     if(alpha < 255 || texmask || side->blendmode > 0)
@@ -1496,7 +1504,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
     // Lower wall.
     if(Rend_IsWallSectionPVisible(seg->linedef, SEG_BOTTOM, backSide))
     {
-        surface = &side->bottom;
+        surface = &side->SW_bottomsurface;
         surfaceFlags = Rend_PrepareTextureForPoly(quad, surface);
 
         // Is there a visible surface?
@@ -1504,8 +1512,8 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
         {
             short tempflags = 0;
             // Calculate texture coordinates.
-            quad->texoffx = side->bottom.offx + FIX2FLT(seg->offset);
-            quad->texoffy = side->bottom.offy;
+            quad->texoffx = side->SW_bottomoffx + FIX2FLT(seg->offset);
+            quad->texoffy = side->SW_bottomoffy;
             if(ldef->flags & ML_DONTPEGBOTTOM)
                 quad->texoffy += fceil - bfloor; // Align with normal middle texture.
 
@@ -1542,23 +1550,23 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
 
     if(!solidSeg) // We'll have to determine whether we can...
     {
-        if(backsec == seg->frontsector)
+        if(backsec == seg->SG_frontsector)
         {
             // An obvious hack, what to do though??
         }
         else if((bceil <= ffloor &&
-                    ((side->top.texture != 0 /* && !(side->flags & SDF_MIDTEXUPPER)*/) ||
-                     (side->middle.texture != 0))) ||
+                    ((side->SW_toppic != 0 /* && !(side->flags & SDF_MIDTEXUPPER)*/) ||
+                     (side->SW_middlepic != 0))) ||
                 (bfloor >= fceil &&
-                    (side->bottom.texture != 0 || side->middle.texture !=0)))
+                    (side->SW_bottompic != 0 || side->SW_middlepic !=0)))
         {
             // A closed gap.
             solidSeg = true;
         }
-        else if((seg->info->flags & SEGINF_BACKSECSKYFIX) ||
+        else if((seg->frameflags & SEGINF_BACKSECSKYFIX) ||
                 (bsh == 0 && bfloor > ffloor && bceil < fceil &&
-                (side->top.texture != 0 /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
-                (side->bottom.texture != 0)))
+                (side->SW_toppic != 0 /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
+                (side->SW_bottompic != 0)))
         {
             // A zero height back segment
             solidSeg = true;
@@ -1573,7 +1581,7 @@ static void Rend_RenderWallSeg(const seg_t *seg, sector_t *frontsec)
 
 int Rend_SectorLight(sector_t *sec)
 {
-    int     i;
+    int         i;
 
     i = levelFullBright ? 255 : sec->lightlevel;
 
@@ -1585,22 +1593,22 @@ int Rend_SectorLight(sector_t *sec)
 
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
 {
-    int     i;
-    seg_t  *seg;
+    uint        i;
+    seg_t      *seg;
 
-    for(i = sub->linecount, seg = &segs[sub->firstline]; i > 0; --i, seg++)
+    for(i = 0, seg = &segs[sub->firstline]; i < sub->linecount; ++i, seg++)
     {
         // Occlusions can only happen where two sectors contact.
         if(!seg->linedef)
             continue;
 
-        seg->info->flags &= ~SEGINF_BACKSECSKYFIX;
+        seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
 
         // Which way should it be facing?
-        if(Rend_SegFacingDir(seg->fv1.pos, seg->fv2.pos))  // 1=front
-            seg->info->flags |= SEGINF_FACINGFRONT;
+        if(Rend_SegFacingDir(seg->fv[0].pos, seg->fv[1].pos))  // 1=front
+            seg->frameflags |= SEGINF_FACINGFRONT;
         else
-            seg->info->flags &= ~SEGINF_FACINGFRONT;
+            seg->frameflags &= ~SEGINF_FACINGFRONT;
 
         Rend_MarkSegSectionsPVisible(seg);
      }
@@ -1611,13 +1619,13 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
         {
             seg = sub->poly->segs[i];
 
-            seg->info->flags &= ~SEGINF_BACKSECSKYFIX;
+            seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
 
             // Which way should it be facing?
-            if(Rend_SegFacingDir(seg->fv1.pos, seg->fv2.pos))  // 1=front
-                seg->info->flags |= SEGINF_FACINGFRONT;
+            if(Rend_SegFacingDir(seg->fv[0].pos, seg->fv[1].pos))  // 1=front
+                seg->frameflags |= SEGINF_FACINGFRONT;
             else
-                seg->info->flags &= ~SEGINF_FACINGFRONT;
+                seg->frameflags &= ~SEGINF_FACINGFRONT;
 
             Rend_MarkSegSectionsPVisible(seg);
         }
@@ -1630,7 +1638,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     rendpoly_t *quad;
     float      *vBL, *vBR, *vTL, *vTR;
     sector_t   *frontsec, *backsec;
-    int         j, num, pass;
+    uint        j, num, pass;
     seg_t      *seg, *list;
     side_t     *side;
 
@@ -1673,50 +1681,50 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 continue;
 
             // Let's first check which way this seg is facing.
-            if(!(seg->info->flags & SEGINF_FACINGFRONT))
+            if(!(seg->frameflags & SEGINF_FACINGFRONT))
                 continue;
 
             side = seg->sidedef;
             if(!side)
                 continue;
 
-            backsec = seg->backsector;
-            frontsec = seg->frontsector;
+            backsec = seg->SG_backsector;
+            frontsec = seg->SG_frontsector;
 
             if(backsec == frontsec &&
-               side->top.texture == 0 && side->bottom.texture == 0 &&
-               side->middle.texture == 0)
+               side->SW_toppic == 0 && side->SW_bottompic == 0 &&
+               side->SW_middlepic == 0)
                continue; // Ugh... an obvious wall seg hack. Best take no chances...
 
-            ffloor = SECT_FLOOR(frontsec);
-            fceil = SECT_CEIL(frontsec);
+            ffloor = frontsec->SP_floorvisheight;
+            fceil = frontsec->SP_ceilvisheight;
 
             if(backsec)
             {
-                bceil = SECT_CEIL(backsec);
-                bfloor = SECT_FLOOR(backsec);
+                bceil = backsec->SP_ceilvisheight;
+                bfloor = backsec->SP_floorvisheight;
                 bsh = bceil - bfloor;
             }
             else
                 bsh = bceil = bfloor = 0;
 
             // Get the start and end vertices, left then right. Top and bottom.
-            vBL[VX] = vTL[VX] = seg->fv1.pos[VX];
-            vBL[VY] = vTL[VY] = seg->fv1.pos[VY];
-            vBR[VX] = vTR[VX] = seg->fv2.pos[VX];
-            vBR[VY] = vTR[VY] = seg->fv2.pos[VY];
+            vBL[VX] = vTL[VX] = seg->fv[0].pos[VX];
+            vBL[VY] = vTL[VY] = seg->fv[0].pos[VY];
+            vBR[VX] = vTR[VX] = seg->fv[1].pos[VX];
+            vBR[VY] = vTR[VY] = seg->fv[1].pos[VY];
 
             quad->wall->length = seg->length;
             quad->sector = frontsec;
 
             // Upper/lower normal skyfixes.
-            if(!(frontsec->info->selfRefHack && backsec))
+            if(!(frontsec->selfRefHack && backsec))
             {
                 // Floor.
                 if(frontsec->skyfix[PLN_FLOOR].offset < 0)
                 {
                     if(!backsec ||
-                       (backsec && backsec != seg->frontsector &&
+                       (backsec && backsec != seg->SG_frontsector &&
                         (bfloor + backsec->skyfix[PLN_FLOOR].offset >
                          ffloor + frontsec->skyfix[PLN_FLOOR].offset)))
                     {
@@ -1731,7 +1739,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 if(frontsec->skyfix[PLN_CEILING].offset > 0)
                 {
                     if(!backsec ||
-                       (backsec && backsec != seg->frontsector &&
+                       (backsec && backsec != seg->SG_frontsector &&
                         (bceil + backsec->skyfix[PLN_CEILING].offset <
                          fceil + frontsec->skyfix[PLN_CEILING].offset)))
                     {
@@ -1759,7 +1767,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                         RL_AddPoly(quad);
                     }
                     // Ensure we add a solid view seg.
-                    seg->info->flags |= SEGINF_BACKSECSKYFIX;
+                    seg->frameflags |= SEGINF_BACKSECSKYFIX;
                 }
 
                     // Ceiling.
@@ -1774,7 +1782,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                         RL_AddPoly(quad);
                     }
                     // Ensure we add a solid view seg.
-                    seg->info->flags |= SEGINF_BACKSECSKYFIX;
+                    seg->frameflags |= SEGINF_BACKSECSKYFIX;
                 }
             }
         }
@@ -1791,11 +1799,11 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
  */
 static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 {
-    sector_t *front = sub->sector, *back;
-    int     i;
-    float   fronth[2], backh[2];
-    float  *startv, *endv;
-    seg_t  *seg;
+    uint        i;
+    float       fronth[2], backh[2];
+    float      *startv, *endv;
+    sector_t   *front = sub->sector, *back;
+    seg_t      *seg;
 
     if(devNoCulling || P_IsInVoid(viewplayer))
         return;
@@ -1803,28 +1811,28 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
     fronth[0] = FIX2FLT(front->planes[PLN_FLOOR]->height);
     fronth[1] = FIX2FLT(front->planes[PLN_CEILING]->height);
 
-    for(i = sub->linecount, seg = &segs[sub->firstline]; i > 0; --i, seg++)
+    for(i = 0, seg = &segs[sub->firstline]; i < sub->linecount; ++i, seg++)
     {
         // Occlusions can only happen where two sectors contact.
-        if(!seg->linedef || !seg->backsector)
+        if(!seg->linedef || !seg->SG_backsector)
             continue;
 
-        if(forward_facing != (seg->info->flags & SEGINF_FACINGFRONT))
+        if(forward_facing != (seg->frameflags & SEGINF_FACINGFRONT))
             continue;
 
-        back = seg->backsector;
+        back = seg->SG_backsector;
         backh[0] = FIX2FLT(back->planes[PLN_FLOOR]->height);
         backh[1] = FIX2FLT(back->planes[PLN_CEILING]->height);
         // Choose start and end vertices so that it's facing forward.
         if(forward_facing)
         {
-            startv = seg->fv1.pos;
-            endv   = seg->fv2.pos;
+            startv = seg->fv[0].pos;
+            endv   = seg->fv[1].pos;
         }
         else
         {
-            startv = seg->fv2.pos;
-            endv   = seg->fv1.pos;
+            startv = seg->fv[1].pos;
+            endv   = seg->fv[0].pos;
         }
         // Do not create an occlusion for sky floors.
         if(!R_IsSkySurface(&back->SP_floorsurface) ||
@@ -1859,15 +1867,15 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     int         surfaceFlags;
     float       height;
     surface_t  *surface;
-    planeinfo_t *pinfo = subsector->sector->planes[plane->type]->info;
+    plane_t    *splane = subsector->sector->planes[plane->type];
     int         flags;
     sector_t   *polySector;
 
     // Determine the height of the plane.
-    if(pinfo->linked)
+    if(splane->linked)
     {
         polySector = link =
-            R_GetLinkedSector(pinfo->linked, plane->type);
+            R_GetLinkedSector(splane->linked, plane->type);
 
         height = SECT_PLANE_HEIGHT(link, plane->type);
         // Add the skyfix
@@ -1878,7 +1886,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     else
     {
         polySector = sector;
-        height = pinfo->visheight;
+        height = splane->visheight;
         // Add the skyfix
         height += sector->skyfix[plane->type].offset;
 
@@ -1887,7 +1895,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
 
     // We don't render planes for unclosed sectors when the polys would
     // be added to the skymask (a DOOM.EXE renderer hack).
-    if(sector->info->unclosed && R_IsSkySurface(surface))
+    if(sector->unclosed && R_IsSkySurface(surface))
         return;
 
     flags = 0;
@@ -1901,7 +1909,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
        (plane->type == PLN_CEILING && vy < height))
     {
         rendpoly_t *poly =
-            R_AllocRendPoly(RP_FLAT, false, subsector->info->numvertices);
+            R_AllocRendPoly(RP_FLAT, false, subsector->numvertices);
 
         surfaceFlags = Rend_PrepareTextureForPoly(poly, surface);
 
@@ -1936,15 +1944,14 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     }
 }
 
-static void Rend_RenderSubsector(int ssecidx)
+static void Rend_RenderSubsector(uint ssecidx)
 {
-    int         i;
-    unsigned long j;
+    uint        i, j;
     subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
     seg_t      *seg;
     sector_t   *sect = ssec->sector;
-    float       sceil = SECT_CEIL(sect);
-    float       sfloor = SECT_FLOOR(sect);
+    float       sceil = sect->SP_ceilvisheight;
+    float       sfloor = sect->SP_floorvisheight;
 
     if(sceil - sfloor <= 0 || ssec->numverts < 3)
     {
@@ -1964,7 +1971,7 @@ static void Rend_RenderSubsector(int ssecidx)
     }
 
     // Mark the sector visible for this frame.
-    sect->info->flags |= SIF_VISIBLE;
+    sect->frameflags |= SIF_VISIBLE;
 
     // Retrieve the sector light color.
     sLightColor = R_GetSectorLightColor(sect);
@@ -2004,16 +2011,15 @@ static void Rend_RenderSubsector(int ssecidx)
         Rend_SSectSkyFixes(ssec);
 
     // Draw the walls.
-    for(j = ssec->linecount, seg = &segs[ssec->firstline]; j > 0;
-        --j, seg++)
+    for(j = 0, seg = &segs[ssec->firstline]; j < ssec->linecount; ++j, seg++)
     {
         if(seg->linedef == NULL)    // "minisegs" have no linedefs.
             continue;
 
         // Let's first check which way this seg is facing.
-        if(seg->info->flags & SEGINF_FACINGFRONT)
+        if(seg->frameflags & SEGINF_FACINGFRONT)
         {
-            if(!seg->backsector || !seg->frontsector)
+            if(!seg->SG_backsector || !seg->SG_frontsector)
                 Rend_RenderSSWallSeg(seg, sect);
             else
                 Rend_RenderWallSeg(seg, sect);
@@ -2028,21 +2034,18 @@ static void Rend_RenderSubsector(int ssecidx)
             seg = ssec->poly->segs[i];
 
             // Let's first check which way this seg is facing.
-            if(seg->info->flags & SEGINF_FACINGFRONT)
+            if(seg->frameflags & SEGINF_FACINGFRONT)
                 Rend_RenderSSWallSeg(seg, sect);
         }
     }
 
     // Render all planes of this sector.
     for(i = 0; i < sect->planecount; ++i)
-        Rend_RenderPlane(ssec->info->planes[i], ssec);
+        Rend_RenderPlane(ssec->planes[i], ssec);
 }
 
 static void Rend_RenderNode(uint bspnum)
 {
-    node_t *bsp;
-    int     side;
-
     // If the clipper is full we're pretty much done. This means no geometry
     // will be visible in the distance because every direction has already been
     // fully covered by geometry.
@@ -2056,6 +2059,9 @@ static void Rend_RenderNode(uint bspnum)
     }
     else
     {
+        node_t     *bsp;
+        int         side;
+
         // Descend deeper into the nodes.
         bsp = NODE_PTR(bspnum);
 
@@ -2157,10 +2163,10 @@ void Rend_RenderMap(void)
  */
 void Rend_CalcLightRangeModMatrix(cvar_t* unused)
 {
-    int r, j, n;
-    int mid = MOD_RANGE / 2;
-    float f, mod, factor;
-    double multiplier, mx;
+    int         r, j, n;
+    int         mid = MOD_RANGE / 2;
+    float       f, mod, factor;
+    double      multiplier, mx;
 
     if(mapambient > ambientLight)
         r_ambient = mapambient;
@@ -2242,11 +2248,11 @@ void Rend_CalcLightRangeModMatrix(cvar_t* unused)
  */
 void Rend_InitPlayerLightRanges(void)
 {
-    int i;
-    sector_t *sec;
+    uint        i;
+    sector_t   *sec;
     ddplayer_t *player;
 
-    for(i=0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].ingame)
             continue;
@@ -2273,11 +2279,10 @@ void Rend_InitPlayerLightRanges(void)
  */
 void Rend_RetrieveLightSample(void)
 {
-    int i, diff, midpoint;
-    short light;
-    float range;
-    float mod;
-    float inter;
+    uint        i;
+    int         diff, midpoint;
+    short       light;
+    float       range, mod, inter;
     ddplayer_t *player;
     subsector_t *sub;
 
@@ -2379,7 +2384,7 @@ void Rend_RetrieveLightSample(void)
         else if(range < 0)
             range = 0;
 
-        playerLightRange[i] = (int) range;
+        playerLightRange[i] = (uint) range;
 
         // Have the lighting conditions changed?
 
@@ -2434,8 +2439,8 @@ void Rend_RetrieveLightSample(void)
 void Rend_ApplyLightAdaptation(int* lightvar)
 {
     // The default range.
-    int range = (MOD_RANGE/2) - 1;
-    int lightval;
+    uint        range = (MOD_RANGE/2) - 1;
+    int         lightval;
 
     if(lightvar == NULL)
         return; // Can't apply adaptation to a NULL val ptr...
@@ -2463,8 +2468,8 @@ void Rend_ApplyLightAdaptation(int* lightvar)
  */
 int Rend_GetLightAdaptVal(int lightvalue)
 {
-    int range = (MOD_RANGE/2) - 1;
-    int lightval = lightvalue;
+    uint        range = (MOD_RANGE/2) - 1;
+    int         lightval = lightvalue;
 
     if(lightval > 255)
         lightval = 255;
@@ -2496,12 +2501,12 @@ static void DrawRangeBox(int x, int y, int w, int h, ui_color_t *c)
  */
 void R_DrawLightRange(void)
 {
-    int i, r;
-    int y;
-    char *title = "Light Range Matrix";
+    int         i, r;
+    int         y;
+    static char *title = "Light Range Matrix";
     signed short v;
-    byte a, c;
-    ui_color_t color;
+    byte        a, c;
+    ui_color_t  color;
 
     if(!debugLightModMatrix)
         return;
@@ -2577,10 +2582,12 @@ void R_DrawLightRange(void)
  * @param   color3f     Color to make the box (uniform vertex color).
  * @param   alpha       Alpha to make the box (uniform vertex color).
  * @param   br          Border amount to overlap box faces.
- * @param   alignToBase (TRUE) = Align the base of the box to the Z coordinate.
+ * @param   alignToBase If <code>true</code> align the base of the box
+ *                      to the Z coordinate.
  */
-void Rend_DrawBBox(float pos3f[3], float w, float l, float h, float color3f[3],
-                   float alpha, float br, boolean alignToBase)
+void Rend_DrawBBox(float pos3f[3], float w, float l, float h,
+                   float color3f[3], float alpha, float br,
+                   boolean alignToBase)
 {
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PushMatrix();
@@ -2684,18 +2691,18 @@ void Rend_DrawArrow(float pos3f[3], angle_t a, float s, float color3f[3],
  */
 static void Rend_RenderBoundingBoxes(void)
 {
-    mobj_t *mo;
-    int     i;
-    sector_t *sec;
-    float   size;
-    float   red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
-    float   green[3] = { 0.2f, 1, 0.2f}; // solid objects
-    float   yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
-    float   alpha;
-    float   eye[3] = {FIX2FLT(viewplayer->mo->pos[VX]),
-                      FIX2FLT(viewplayer->mo->pos[VY]),
-                      FIX2FLT(viewplayer->mo->pos[VZ])};
-    float   pos[3];
+    mobj_t     *mo;
+    uint        i;
+    sector_t   *sec;
+    float       size;
+    static float red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
+    static float green[3] = { 0.2f, 1, 0.2f}; // solid objects
+    static float yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+    float       alpha;
+    float       eye[3] = {FIX2FLT(viewplayer->mo->pos[VX]),
+                          FIX2FLT(viewplayer->mo->pos[VY]),
+                          FIX2FLT(viewplayer->mo->pos[VZ])};
+    float       pos[3];
 
     if(!devMobjBBox || netgame)
         return;
@@ -2711,12 +2718,12 @@ static void Rend_RenderBoundingBoxes(void)
     GL_BlendMode(BM_ADD);
 
     // For every sector
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
 
         // Is it vissible?
-        if(!(sec->info->flags & SIF_VISIBLE))
+        if(!(sec->frameflags & SIF_VISIBLE))
             continue;
 
         // For every mobj in the sector's thinglist

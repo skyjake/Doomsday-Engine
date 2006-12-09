@@ -256,7 +256,7 @@ static void P_SpawnPlaneParticleGen(ded_ptcgen_t *def, sector_t *sec,
     if(def->flags & PGF_PARTS_PER_128)
     {
         // This is rather a rough estimate of sector area.
-        box = sec->info->bounds;
+        box = sec->bounds;
         width = (box[BRIGHT] - box[BLEFT]) / 128;
         height = (box[BBOTTOM] - box[BTOP]) / 128;
         gen->area = width * height;
@@ -505,7 +505,7 @@ static void P_NewParticle(ptcgen_t *gen)
         // FIXME: Nothing prevents spawning on the wrong side (or inside)
         // of one-sided walls (large diagonal subsectors!).
 
-        box = gen->sector->info->bounds;
+        box = gen->sector->bounds;
         for(i = 0; i < 5; ++i)  // Try a couple of times (max).
         {
             subsec =
@@ -628,8 +628,8 @@ boolean PIT_CheckLinePtc(line_t *ld, void *data)
     sector_t   *front, *back;
 
     // Setup the bounding box for the line.
-    ORDER(ld->v1->pos[VX], ld->v2->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
-    ORDER(ld->v1->pos[VY], ld->v2->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
+    ORDER(ld->v[0]->pos[VX], ld->v[1]->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
+    ORDER(ld->v[0]->pos[VY], ld->v[1]->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
 
     if(mbox[BOXRIGHT] <= bbox[BOXLEFT] || mbox[BOXLEFT] >= bbox[BOXRIGHT] ||
        mbox[BOXTOP] <= bbox[BOXBOTTOM] || mbox[BOXBOTTOM] >= bbox[BOXTOP])
@@ -644,12 +644,12 @@ boolean PIT_CheckLinePtc(line_t *ld, void *data)
 
     // We are possibly hitting something here.
     ptcHitLine = ld;
-    if(!ld->backsector)
+    if(!ld->L_backsector)
         return false;           // Boing!
 
     // Determine the opening we have here.
-    front = ld->frontsector;
-    back = ld->backsector;
+    front = ld->L_frontsector;
+    back = ld->L_backsector;
     ceil = MIN_OF(front->planes[PLN_CEILING]->height, back->planes[PLN_CEILING]->height);
     floor = MAX_OF(front->planes[PLN_FLOOR]->height, back->planes[PLN_FLOOR]->height);
 
@@ -739,10 +739,10 @@ float P_GetParticleRadius(ded_ptcstage_t *stage_def, int ptcIDX)
 fixed_t P_GetParticleZ(particle_t *pt)
 {
     if(pt->pos[VZ] == DDMAXINT)
-        return pt->sector->planes[PLN_CEILING]->height - 2 * FRACUNIT;
+        return pt->sector->SP_ceilvisheight - 2 * FRACUNIT;
 
     if(pt->pos[VZ] == DDMININT)
-        return FRACUNIT * (pt->sector->planes[PLN_FLOOR]->info->visheight + 2);
+        return FRACUNIT * (pt->sector->SP_floorvisheight + 2);
 
     return pt->pos[VZ];
 }
@@ -942,8 +942,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            sector_t *front = pt->contact->frontsector;
-            sector_t *back = pt->contact->backsector;
+            sector_t *front = pt->contact->L_frontsector;
+            sector_t *back = pt->contact->L_backsector;
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {
@@ -1203,7 +1203,7 @@ static boolean P_HasActivePtcGen(sector_t *sector, int isCeiling)
  */
 void P_CheckPtcPlanes(void)
 {
-    int i, p, plane;
+    uint        i, p, plane;
     sector_t   *sector;
     ded_ptcgen_t *def;
 
@@ -1339,7 +1339,7 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
                              gen->vector[VZ]);
         if(len)
         {
-            int         k;
+            uint        k;
 
             for(k = 0; k < 3; ++k)
                 gen->vector[k] = FixedDiv(gen->vector[k], len);

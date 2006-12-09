@@ -84,19 +84,22 @@ int ArgParse(int mode, const char *cmdline)
 #define MAX_WORDLENGTH 512
 
     char    word[MAX_WORDLENGTH], *ptr, *response;
-    unsigned char *cmd = (unsigned char *) cmdline;
+    unsigned char *cmd;
     int     i;
     int     count = 0;
     int     ccount;
     FILE   *file;
     boolean quote = false;
-    boolean is_response;
+    boolean isResponse;
+    boolean isDone, copyC;
 
     // Init normal mode?
     if(mode == PM_NORMAL)
         arg_pos = 0;
 
-    for(; *cmd;)
+    cmd = (unsigned char *) cmdline;
+    isDone = false;
+    while(*cmd && !isDone)
     {
         // Must allow: -cmd "echo ""this is a command"""
         // But also: @"\Program Files\test.rsp\"
@@ -109,24 +112,26 @@ int ArgParse(int mode, const char *cmdline)
         // Check for response files.
         if(*cmd == '@')
         {
-            is_response = true;
+            isResponse = true;
             cmd = (unsigned char*) M_SkipWhite((char *)(cmd + 1));
         }
         else
         {
-            is_response = false;
+            isResponse = false;
         }
 
         ccount = 0;
-        for(ptr = word; *cmd && (quote || !isspace(*cmd)); cmd++, ccount++)
+        ptr = word;
+        while(*cmd && (quote || !isspace(*cmd)))
         {
+            copyC = true;
             if(!quote)
             {
                 // We're not inside quotes.
                 if(*cmd == '\"')    // Quote begins.
                 {
                     quote = true;
-                    continue;
+                    copyC = false;
                 }
             }
             else
@@ -143,20 +148,27 @@ int ArgParse(int mode, const char *cmdline)
                     else
                     {
                         quote = false;
-                        continue;
+                        copyC = false;
                     }
                 }
             }
-            if(ccount > MAX_WORDLENGTH -1)
-                Con_Error("ArgParse: too many characters in word!");
 
-            *ptr++ = *cmd;
+            if(copyC)
+            {
+                if(ccount > MAX_WORDLENGTH -1)
+                    Con_Error("ArgParse: too many characters in word!");
+
+                *ptr++ = *cmd;
+            }
+
+            cmd++;
+            ccount++;
         }
         // Append NULL to the word.
         *ptr++ = '\0';
 
         // Word has been extracted, examine it.
-        if(is_response)         // Response file?
+        if(isResponse)         // Response file?
         {
             // Try to open it.
             if((file = fopen(word, "rt")) != NULL)
@@ -182,7 +194,7 @@ int ArgParse(int mode, const char *cmdline)
         }
         else if(!strcmp(word, "--"))    // End of arguments.
         {
-            return count;
+            isDone = true;
         }
         else if(word[0])        // Make sure there *is* a word.
         {
@@ -229,7 +241,9 @@ void ArgShutdown(void)
         M_Free(args[i]);
     M_Free(args);
     args = NULL;
+
     num_args = 0;
+
     for(i = 0; i < num_names; ++i)
         M_Free(names[i]);
     memset(names, 0, sizeof(names));
@@ -258,7 +272,7 @@ void ArgAbbreviate(char *longname, char *shortname)
 }
 
 /**
- * Returns the number of arguments on the command line.
+ * @return          The number of arguments on the command line.
  */
 int Argc(void)
 {
@@ -266,7 +280,7 @@ int Argc(void)
 }
 
 /**
- * Returns a pointer to the i'th argument.
+ * @return          Pointer to the i'th argument.
  */
 char *Argv(int i)
 {
@@ -276,7 +290,7 @@ char *Argv(int i)
 }
 
 /**
- * Returns a pointer to the i'th argument's pointer.
+ * @return          Pointer to the i'th argument's pointer.
  */
 char **ArgvPtr(int i)
 {
@@ -293,49 +307,67 @@ char *ArgNext(void)
 }
 
 /**
- * Returns true if the two parameters are equivalent according to the
- * abbreviations.
+ * @return          <code>true</code> if the two parameters are equivalent
+ *                  according to the abbreviations.
  */
 int ArgRecognize(char *first, char *second)
 {
     int     k;
+    boolean match;
 
     // A simple match?
     if(!stricmp(first, second))
         return true;
 
-    for(k = 0; k < num_names; ++k)
+    match = false;
+    k = 0;
+    while(k < num_names && !match)
     {
-        if(stricmp(first, names[k]->long_name))
-            continue;
-        // names[k] now matches the first string.
-        if(!stricmp(names[k]->short_name, second))
-            return true;
+        if(!stricmp(first, names[k]->long_name))
+        {
+            // names[k] now matches the first string.
+            if(!stricmp(names[k]->short_name, second))
+                match = true;
+        }
+        k++;
     }
-    return false;
+
+    return match;
 }
 
 /**
  * Checks for the given parameter in the program's command line arguments.
- * Returns the argument number (1 to argc-1) or 0 if not present.
+ *
+ * @return          The argument number (1 to argc-1) or 0 if not present.
  */
 int ArgCheck(char *check)
 {
     int     i;
+    boolean isDone;
 
-    for(i = 1; i < num_args; ++i)
+    last_match = 0;
+    i = 1;
+    isDone = false;
+    while(i < num_args && !isDone)
     {
         // Check the short names for this arg, too.
         if(ArgRecognize(check, args[i]))
-            return last_match = i;
+        {
+            last_match = i;
+            isDone = true;
+        }
+        else
+            i++;
     }
-    return last_match = 0;
+
+    return last_match;
 }
 
 /**
  * Checks for the given parameter in the program's command line arguments
  * and it is followed by N other arguments.
- * Returns the argument number (1 to argc-1) or 0 if not present.
+ *
+ * @return          The argument number (1 to argc-1) or 0 if not present.
  */
 int ArgCheckWith(char *check, int num)
 {
@@ -347,7 +379,8 @@ int ArgCheckWith(char *check, int num)
 }
 
 /**
- * Returns true if the given argument begins with a hyphen.
+ * @return          <code>true</code> if the given argument begins with a
+ *                  hyphen.
  */
 int ArgIsOption(int i)
 {
@@ -357,8 +390,8 @@ int ArgIsOption(int i)
 }
 
 /**
- * Returns true if the given parameter exists in the program's command
- * line arguments, false if not.
+ * @return          <code>true</code> if the given parameter exists in the
+ *                  program's command line arguments else <code>false</code>.
  */
 int ArgExists(char *check)
 {

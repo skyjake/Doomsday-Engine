@@ -1082,7 +1082,7 @@ int W_GetNumForName(char *name)
 /*
  * Returns the buffer size needed to load the given lump.
  */
-int W_LumpLength(int lump)
+size_t W_LumpLength(int lump)
 {
     lump = W_Select(lump);
     if(lump >= numlumps)
@@ -1111,7 +1111,7 @@ const char *W_LumpName(int lump)
  */
 void W_ReadLump(int lump, void *dest)
 {
-    int     c;
+    size_t      c;
     lumpinfo_t *l;
 
     if(lump >= numlumps)
@@ -1128,9 +1128,9 @@ void W_ReadLump(int lump, void *dest)
     }
 }
 
-void W_ReadLumpSection(int lump, void *dest, int startoffset, int length)
+void W_ReadLumpSection(int lump, void *dest, int startoffset, size_t length)
 {
-    int     c;
+    size_t     c;
     lumpinfo_t *l;
 
     lump = W_Select(lump);

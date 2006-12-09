@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -100,7 +100,7 @@ void DD_ErrorBox(boolean error, char *format, ...)
 #endif
 }
 
-/*
+/**
  * Compose the title for the main window.
  */
 void DD_MainWindowTitle(char *title)
@@ -109,7 +109,7 @@ void DD_MainWindowTitle(char *title)
             (char *) __gx.GetVariable(DD_GAME_ID));
 }
 
-void SetGameImports(game_import_t * imp)
+void SetGameImports(game_import_t *imp)
 {
     memset(imp, 0, sizeof(*imp));
     imp->apiSize = sizeof(*imp);
@@ -125,37 +125,6 @@ void SetGameImports(game_import_t * imp)
     imp->topslope = &topslope;
     imp->bottomslope = &bottomslope;
     imp->thinkercap = &thinkercap;
-
-/*
-    imp->numvertexes = &numvertexes;
-    imp->numsegs = &numsegs;
-    imp->numsectors = &numsectors;
-    imp->numsubsectors = &numsubsectors;
-    imp->numnodes = &numnodes;
-    imp->numlines = &numlines;
-    imp->numsides = &numsides;
-    imp->numthings = &numthings;
-
-    imp->vertexes = (void **) &vertexes;
-    imp->segs = (void **) &segs;
-    imp->sectors = (void **) &sectors;
-    imp->subsectors = (void **) &subsectors;
-    imp->nodes = (void **) &nodes;
-    imp->lines = (void **) &lines;
-    imp->sides = (void **) &sides;
-    imp->things = (void **) &things;
-
-    imp->blockmaplump = &blockmaplump;
-    imp->blockmap = &blockmap;
-    imp->bmapwidth = &bmapwidth;
-    imp->bmapheight = &bmapheight;
-    imp->bmaporgx = &bmaporgx;
-    imp->bmaporgy = &bmaporgy;
-    imp->rejectmatrix = &rejectmatrix;
-    imp->polyblockmap = (void ***) &polyblockmap;
-    imp->polyobjs = (void **) &polyobjs;
-    imp->numpolyobjs = &po_NumPolyobjs;
-*/
 }
 
 void DD_InitAPI(void)
@@ -207,7 +176,7 @@ void DD_InitCommandLine(const char *cmdLine)
     ArgAbbreviate("-verbose", "-v");
 }
 
-/*
+/**
  * This is called from DD_Shutdown().
  */
 void DD_ShutdownAll(void)
@@ -226,7 +195,7 @@ void DD_ShutdownAll(void)
 #endif
 
     // Stop all demo recording.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
         Demo_StopRecording(i);
 
     Sv_Shutdown();

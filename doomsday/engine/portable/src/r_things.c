@@ -536,8 +536,8 @@ void R_ProjectPlayerSprites(void)
         vis->data.mo.v1[VY] = FIX2FLT(vis->data.mo.gy);
         // 32 is the raised weapon height.
         vis->data.mo.gzt = vis->data.mo.gz = viewz;
-        vis->data.mo.secfloor = SECT_FLOOR(viewplayer->mo->subsector->sector);
-        vis->data.mo.secceil = SECT_CEIL(viewplayer->mo->subsector->sector);
+        vis->data.mo.secfloor = viewplayer->mo->subsector->sector->SP_floorvisheight;
+        vis->data.mo.secceil = viewplayer->mo->subsector->sector->SP_ceilvisheight;
         vis->data.mo.class = 0;
         vis->data.mo.floorclip = 0;
 
@@ -645,13 +645,13 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
     if(vis->data.mo.flooradjust &&
        projectedThing->pos[VZ] == sector->planes[PLN_FLOOR]->height)
     {
-        vis->data.mo.gz = FRACUNIT * SECT_FLOOR(sector);
+        vis->data.mo.gz = FRACUNIT * sector->SP_floorvisheight;
     }
 
     if(projectedThing->pos[VZ] + projectedThing->height == sector->planes[PLN_CEILING]->height)
     {
         vis->data.mo.gz =
-            FRACUNIT * SECT_CEIL(sector) - projectedThing->height;
+            FRACUNIT * sector->SP_ceilvisheight - projectedThing->height;
     }
     return true;
 }
@@ -832,7 +832,7 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.gz = thing->pos[VZ];
 
     vis->data.mo.flooradjust =
-        (fabs(SECT_FLOOR(sect) - FIX2FLT(sect->planes[PLN_FLOOR]->height)) < 8);
+        (fabs(sect->SP_floorvisheight - FIX2FLT(sect->planes[PLN_FLOOR]->height)) < 8);
 
     // The thing's Z coordinate must match the actual visible
     // floor/ceiling height.  When using smoothing, this requires
@@ -857,9 +857,9 @@ void R_ProjectSprite(mobj_t *thing)
 
     vis->data.mo.viewaligned = align;
 
-    vis->data.mo.secfloor = SECT_FLOOR(thing->subsector->sector);
+    vis->data.mo.secfloor = thing->subsector->sector->SP_floorvisheight;
 
-    vis->data.mo.secceil = SECT_CEIL(thing->subsector->sector);
+    vis->data.mo.secceil = thing->subsector->sector->SP_ceilvisheight;
 
     if(thing->ddflags & DDMF_TRANSLATION)
         vis->data.mo.class = (thing->ddflags >> DDMF_CLASSTRSHIFT) & 0x3;
@@ -999,15 +999,14 @@ void R_AddSprites(sector_t *sec)
     fixed_t     visibleTop;
     mobj_t      *thing;
     spriteinfo_t spriteInfo;
-    sectorinfo_t *info = SECT_INFO(sec);
     boolean     raised = false;
 
     // Don't use validcount, because other parts of the renderer may
     // change it.
-    if(info->addspritecount == framecount)
+    if(sec->addspritecount == framecount)
         return;                 // already added
 
-    info->addspritecount = framecount;
+    sec->addspritecount = framecount;
 
     for(thing = sec->thinglist; thing; thing = thing->snext)
     {
@@ -1020,7 +1019,7 @@ void R_AddSprites(sector_t *sec)
 
         // Only check
         if(!(thing->dplayer && thing->dplayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-           thing->pos[VZ] <= sec->SP_ceilheight && !SECT_INFO(sec)->selfRefHack)
+           thing->pos[VZ] <= sec->SP_ceilheight && !sec->selfRefHack)
         {
             visibleTop = thing->pos[VZ] + (spriteInfo.height << FRACBITS);
 

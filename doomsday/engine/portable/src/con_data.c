@@ -283,37 +283,44 @@ cvar_t *Con_GetVariable(const char *name)
     int     result;
     unsigned int bottomIdx, topIdx, pivot;
     cvar_t *var;
+    boolean isDone;
 
     if(numCVars == 0)
         return NULL;
 
     bottomIdx = 0;
     topIdx = numCVars-1;
-
-    while(bottomIdx <= topIdx)
+    var = NULL;
+    isDone = false;
+    while(bottomIdx <= topIdx && !isDone)
     {
         pivot = bottomIdx + (topIdx - bottomIdx)/2;
-        var = &cvars[pivot];
 
-        result = stricmp(var->name, name);
+        result = stricmp(cvars[pivot].name, name);
         if(result == 0)
-            return var;
+        {
+            // Found.
+            var = &cvars[pivot];
+            isDone = true;
+        }
         else
         {
             if(result > 0)
             {
                 if(pivot == 0)
-                    return NULL;
-
-                topIdx = pivot - 1;
+                {
+                    // Not present.
+                    isDone = true;
+                }
+                else
+                    topIdx = pivot - 1;
             }
             else
                 bottomIdx = pivot + 1;
         }
     }
 
-    // No match...
-    return NULL;
+    return var;
 }
 
 cvar_t *Con_GetVariableIDX(unsigned int idx)
@@ -437,16 +444,16 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
                           cmd->params);
             }
 
-            if(type == CVT_NULL)
-                continue; // not a real parameter ...next?
+            if(type != CVT_NULL)
+            {
+                if(minArgs >= MAX_REQUIRED_CCMD_PARAMS)
+                    Con_Error("Con_AddCommand: CCmd \"%s\": Too many parameters. "
+                              "Limit is %i.", newCmd->name,
+                              MAX_REQUIRED_CCMD_PARAMS);
 
-            if(minArgs >= MAX_REQUIRED_CCMD_PARAMS)
-                Con_Error("Con_AddCommand: CCmd \"%s\": Too many parameters. "
-                          "Limit is %i.", newCmd->name,
-                          MAX_REQUIRED_CCMD_PARAMS);
-
-            // Copy the parameter type into the buffer.
-            newCmd->params[minArgs++] = type;
+                // Copy the parameter type into the buffer.
+                newCmd->params[minArgs++] = type;
+            }
         }
 
         // Set the min/max parameter counts for this ccmd.
@@ -500,48 +507,56 @@ if(cmd->params == NULL)
 }
 
 /**
- * @return          Ptr to the ddccmd_t with the specified name, or NULL.
+ * @return              Ptr to the ddccmd_t with the specified name, or NULL.
  */
 ddccmd_t *Con_GetCommand(const char *name)
 {
     int     result;
     unsigned int bottomIdx, topIdx, pivot;
     ddccmd_t *cmd;
+    boolean isDone;
 
     if(numCCmds == 0)
         return NULL;
 
     bottomIdx = 0;
     topIdx = numCCmds-1;
-
-    while(bottomIdx <= topIdx)
+    cmd = NULL;
+    isDone = false;
+    while(bottomIdx <= topIdx && !isDone)
     {
         pivot = bottomIdx + (topIdx - bottomIdx)/2;
-        cmd = &ccmds[pivot];
 
-        result = stricmp(cmd->name, name);
+        result = stricmp(ccmds[pivot].name, name);
         if(result == 0)
-            return cmd;
+        {
+            // Found.
+            cmd = &ccmds[pivot];
+            isDone = true;
+        }
         else
         {
             if(result > 0)
             {
                 if(pivot == 0)
-                    return NULL;
-
-                topIdx = pivot - 1;
+                {
+                    // Not present.
+                    isDone = true;
+                }
+                else
+                    topIdx = pivot - 1;
             }
             else
                 bottomIdx = pivot + 1;
         }
     }
 
-    // No match...
-    return NULL;
+    return cmd;
 }
 
 /**
- * Returns true if the given string is a valid command or alias.
+ * @return              <code>true</code> if the given string is a
+ *                      valid command or alias.
  */
 boolean Con_IsValidCommand(const char *name)
 {
@@ -549,8 +564,8 @@ boolean Con_IsValidCommand(const char *name)
 }
 
 /**
- * Outputs the usage information for the given ccmd to the console
- * if the ccmd's usage is validated by Doomsday.
+ * Outputs the usage information for the given ccmd to the console if the
+ * ccmd's usage is validated by Doomsday.
  *
  * @param ccmd          Ptr to the ccmd to print the usage info for.
  */
@@ -596,37 +611,44 @@ calias_t *Con_GetAlias(const char *name)
     int     result;
     unsigned int bottomIdx, topIdx, pivot;
     calias_t *cal;
+    boolean isDone;
 
     if(numCAliases == 0)
         return NULL;
 
     bottomIdx = 0;
     topIdx = numCAliases-1;
-
-    while(bottomIdx <= topIdx)
+    cal = NULL;
+    isDone = false;
+    while(bottomIdx <= topIdx && !isDone)
     {
         pivot = bottomIdx + (topIdx - bottomIdx)/2;
-        cal = &caliases[pivot];
 
-        result = stricmp(cal->name, name);
+        result = stricmp(caliases[pivot].name, name);
         if(result == 0)
-            return cal;
+        {
+            // Found.
+            cal = &caliases[pivot];
+            isDone = true;
+        }
         else
         {
             if(result > 0)
             {
                 if(pivot == 0)
-                    return NULL;
-
-                topIdx = pivot - 1;
+                {
+                    // Not present.
+                    isDone = true;
+                }
+                else
+                    topIdx = pivot - 1;
             }
             else
                 bottomIdx = pivot + 1;
         }
     }
 
-    // No match...
-    return NULL;
+    return cal;
 }
 
 calias_t *Con_AddAlias(const char *aName, const char *command)
@@ -752,7 +774,7 @@ knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
                                                 unsigned int *count)
 {
     unsigned int i, num = 0, num2 = 0;
-    unsigned int wordLength;
+    size_t      wordLength;
     knownword_t **array;
 
     wordLength = strlen(word);
@@ -775,14 +797,16 @@ knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
     array = M_Malloc(sizeof(knownword_t *) * (num + 1));
 
     // Collect the pointers.
-    for(i = 0, num2 = 0; i < numKnownWords; ++i)
+    i = 0;
+    num2 = 0;
+    do
     {
         if(!strnicmp(knownWords[i].word, word, wordLength))
             array[num2++] = &knownWords[i];
 
-        if(num2 == num)
-            break;
+        i++;
     }
+    while(num2 < num);
 
     // Terminate.
     array[num] = NULL;
@@ -793,7 +817,7 @@ knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
 void Con_DestroyDatabases(void)
 {
     unsigned int i, k;
-    char        *ptr;
+    char       *ptr;
 
     // Free the data of the data cvars.
     for(i = 0; i < numCVars; ++i)
@@ -839,19 +863,23 @@ D_CMD(ListCmds)
     unsigned int i;
     char       *str;
     void       *ccmd_help;
+    size_t      length;
+
+    if(argc > 1)
+        length = strlen(argv[1]);
 
     Con_Printf("Console commands:\n");
     for(i = 0; i < numCCmds; ++i)
     {
-        if(argc > 1)            // Is there a filter?
-            if(strnicmp(ccmds[i].name, argv[1], strlen(argv[1])))
-                continue;
-
-        ccmd_help = DH_Find(ccmds[i].name);
-        if((str = DH_GetString(ccmd_help, HST_DESCRIPTION)))
-            Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s (%s)\n", ccmds[i].name, str);
-        else
-            Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s\n", ccmds[i].name);
+        // Is there a filter?
+        if(!(argc > 1 && strnicmp(ccmds[i].name, argv[1], length)))
+        {
+            ccmd_help = DH_Find(ccmds[i].name);
+            if((str = DH_GetString(ccmd_help, HST_DESCRIPTION)))
+                Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s (%s)\n", ccmds[i].name, str);
+            else
+                Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s\n", ccmds[i].name);
+        }
     }
     return true;
 }
@@ -859,17 +887,20 @@ D_CMD(ListCmds)
 D_CMD(ListVars)
 {
     unsigned int i;
+    size_t      length;
+
+    if(argc > 1)
+        length = strlen(argv[1]);
 
     Con_Printf("Console variables:\n");
     for(i = 0; i < numCVars; ++i)
     {
-        if(cvars[i].flags & CVF_HIDE)
-            continue;
-        if(argc > 1)            // Is there a filter?
-            if(strnicmp(cvars[i].name, argv[1], strlen(argv[1])))
-                continue;
-
-        Con_PrintCVar(cvars + i, "  ");
+        if(!(cvars[i].flags & CVF_HIDE))
+        {
+            // Is there a filter?
+            if(!(argc > 1 && strnicmp(cvars[i].name, argv[1], length)))
+                Con_PrintCVar(cvars + i, "  ");
+        }
     }
     return true;
 }
@@ -877,16 +908,18 @@ D_CMD(ListVars)
 D_CMD(ListAliases)
 {
     unsigned int i;
+    size_t      length;
+
+    if(argc > 1)
+        length = strlen(argv[1]);
 
     Con_Printf("Aliases:\n");
     for(i = 0; i < numCAliases; ++i)
     {
-        if(argc > 1)            // Is there a filter?
-            if(strnicmp(caliases[i].name, argv[1], strlen(argv[1])))
-                continue;
-
-        Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s == %s\n", caliases[i].name,
-                     caliases[i].command);
+        // Is there a filter?
+        if(!(argc > 1 && strnicmp(caliases[i].name, argv[1], length)))
+            Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s == %s\n", caliases[i].name,
+                         caliases[i].command);
     }
     return true;
 }

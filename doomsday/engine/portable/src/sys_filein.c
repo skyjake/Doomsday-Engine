@@ -337,8 +337,9 @@ void F_InitMapping(void)
 void F_InitDirec(void)
 {
     static boolean alreadyInited = false;
-    int     i, len;
-    char   *buf;
+    int         i;
+    size_t      len;
+    char       *buf;
 
     if(alreadyInited)
     {

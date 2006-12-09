@@ -174,7 +174,7 @@ int Cl_ReadSectorDelta(void)
  */
 int Cl_ReadSideDelta(void)
 {
-    short   num = Msg_ReadPackedShort();
+    short   num = Msg_ReadPackedShort(); // FIXME! we support > 32768 sidedefs!
     side_t *sid;
     int     df;
 
@@ -188,11 +188,11 @@ int Cl_ReadSideDelta(void)
     df = Msg_ReadByte();
 
     if(df & SIDF_TOPTEX)
-        sid->top.texture = Msg_ReadPackedShort();
+        sid->SW_toppic = Msg_ReadPackedShort();
     if(df & SIDF_MIDTEX)
-        sid->middle.texture = Msg_ReadPackedShort();
+        sid->SW_middlepic = Msg_ReadPackedShort();
     if(df & SIDF_BOTTOMTEX)
-        sid->bottom.texture = Msg_ReadPackedShort();
+        sid->SW_bottompic = Msg_ReadPackedShort();
 
     if(df & SIDF_LINE_FLAGS)
     {
@@ -212,27 +212,27 @@ int Cl_ReadSideDelta(void)
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        sid->top.rgba[0] = Msg_ReadByte();
+        sid->SW_toprgba[0] = Msg_ReadByte();
     if(df & SIDF_TOP_COLOR_GREEN)
-        sid->top.rgba[1] = Msg_ReadByte();
+        sid->SW_toprgba[1] = Msg_ReadByte();
     if(df & SIDF_TOP_COLOR_BLUE)
-        sid->top.rgba[2] = Msg_ReadByte();
+        sid->SW_toprgba[2] = Msg_ReadByte();
 
     if(df & SIDF_MID_COLOR_RED)
-        sid->middle.rgba[0] = Msg_ReadByte();
+        sid->SW_middlergba[0] = Msg_ReadByte();
     if(df & SIDF_MID_COLOR_GREEN)
-        sid->middle.rgba[1] = Msg_ReadByte();
+        sid->SW_middlergba[1] = Msg_ReadByte();
     if(df & SIDF_MID_COLOR_BLUE)
-        sid->middle.rgba[2] = Msg_ReadByte();
+        sid->SW_middlergba[2] = Msg_ReadByte();
     if(df & SIDF_MID_COLOR_ALPHA)
-        sid->middle.rgba[3] = Msg_ReadByte();
+        sid->SW_middlergba[3] = Msg_ReadByte();
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        sid->bottom.rgba[0] = Msg_ReadByte();
+        sid->SW_bottomrgba[0] = Msg_ReadByte();
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        sid->bottom.rgba[1] = Msg_ReadByte();
+        sid->SW_bottomrgba[1] = Msg_ReadByte();
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        sid->bottom.rgba[2] = Msg_ReadByte();
+        sid->SW_bottomrgba[2] = Msg_ReadByte();
 
     if(df & SIDF_MID_BLENDMODE)
         sid->blendmode = Msg_ReadShort() << 16;
