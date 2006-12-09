@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -37,8 +38,8 @@ void            Cl_InitTranslations(void);
 void            Cl_InitMovers(void);
 void            Cl_RemoveMovers(void);
 short           Cl_TranslateLump(short lump);
-void            Cl_SetPolyMover(int number, int move, int rotate);
-void            Cl_AddMover(int sectornum, clmovertype_t type, fixed_t dest, 
+void            Cl_SetPolyMover(uint number, int move, int rotate);
+void            Cl_AddMover(uint sectornum, clmovertype_t type, fixed_t dest,
                             fixed_t speed);
 
 int             Cl_ReadSectorDelta(void);

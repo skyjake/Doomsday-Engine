@@ -31,41 +31,15 @@
 
 #include "gl_main.h"
 #include "dd_def.h"
-#include "p_mapdata.h"
 #include "p_think.h"
 #include "m_nodepile.h"
 #include "def_data.h"
-#include "rend_bias.h"
 #include "r_extres.h"
-
-#define SIF_VISIBLE         0x1    // Sector is visible on this frame.
-#define SIF_FRAME_CLEAR     0x1    // Flags to clear before each frame.
-#define SIF_LIGHT_CHANGED   0x2
-
-// Sector flags.
-#define SECF_INVIS_FLOOR    0x1
-#define SECF_INVIS_CEILING  0x2
-
-#define LINE_INFO(x)    (x->info)
-#define SIDE_INFO(x)    (x->info)
-#define SEG_INFO(x)     (x->info)
-#define SUBSECT_INFO(x) (x->info)
-#define SECT_INFO(x)    (x->info)
-#define SECT_FLOOR(x)   (x->planes[PLN_FLOOR]->info->visheight)
-#define SECT_CEIL(x)    (x->planes[PLN_CEILING]->info->visheight)
-#define SECT_PLANE_HEIGHT(x, n) (x->planes[n]->info->visheight)
 
 // Flags for decorations.
 #define DCRF_NO_IWAD    0x1         // Don't use if from IWAD.
 #define DCRF_PWAD       0x2         // Can use if from PWAD.
 #define DCRF_EXTERNAL   0x4         // Can use if from external resource.
-
-// Surface flags.
-#define SUF_TEXFIX      0x1         // Current texture is a fix replacement
-                                    // (not sent to clients, returned via DMU etc).
-#define SUF_GLOW        0x2         // Surface glows (full bright).
-#define SUF_BLEND       0x4         // Surface possibly has a blended texture.
-#define SUF_NO_RADIO    0x8         // No fakeradio for this surface.
 
 // Texture flags.
 #define TXF_MASKED      0x1
@@ -187,7 +161,7 @@ typedef struct rendpoly_s {
     float           interpos;      // Blending strength (0..1).
     struct dynlight_s *lights;     // List of lights that affect this poly.
     DGLuint         decorlightmap; // Pregen RGB lightmap for decor lights.
-    sector_t       *sector;        // The sector this poly belongs to (if any).
+    struct sector_s *sector;        // The sector this poly belongs to (if any).
     blendmode_t     blendmode;     // Primitive-specific blending mode.
 
     // The geometry:
@@ -207,62 +181,6 @@ typedef struct linkmobj_s {
     struct mobj_s  *next, *prev;
 } linkmobj_t;
 
-typedef struct surfaceinfo_s {
-    int             flags;         // SUF_ flags
-    short           texture;
-    boolean         isflat;        // true if current texture is a flat
-    float           normal[3];     // Surface normal.
-    fixed_t         texmove[2];    // Texture movement X and Y.
-    float           offx;          // Texture x offset.
-    float           offy;          // Texture y offset.
-    byte            rgba[4];       // Surface color tint
-} surfaceinfo_t;
-
-typedef struct planeinfo_s {
-    fixed_t         oldheight[2];
-    float           visheight;          // Visible plane height, float,
-    float           visoffset;
-    sector_t       *linked;             // Plane attached to another sector.
-} planeinfo_t;
-
-typedef struct sectorinfo_s {
-    sector_t       *containsector;      // Sector that contains this (if any).
-    boolean         permanentlink;
-    boolean         unclosed;           // An unclosed sector (some sort of fancy hack).
-    boolean         selfRefHack;        // A self-referencing hack sector which ISNT
-                                        // enclosed by the sector referenced.
-    float           bounds[4];          // Bounding box for the sector.
-    int             flags;
-    int             oldlightlevel;
-    byte            oldrgb[3];
-    int             addspritecount;     // frame number of last R_AddSprites
-    sector_t       *lightsource;        // Main sky light source
-    int             blockcount;         // Number of gridblocks in the sector.
-    int             changedblockcount;  // Number of blocks to mark changed.
-    unsigned short *blocks;             // Light grid block indices.
-} sectorinfo_t;
-
-typedef struct vilight_s {
-    short           source;
-    byte            rgb[4];       // Light from an affecting source.
-} vilight_t;
-
-// Vertex illumination flags.
-#define VIF_LERP         0x1      // Interpolation is in progress.
-#define VIF_STILL_UNSEEN 0x2      // The color of the vertex is still unknown.
-
-typedef struct vertexillum_s {
-    gl_rgba_t       color;        // Current color of the vertex.
-    gl_rgba_t       dest;         // Destination color of the vertex.
-    unsigned int    updatetime;   // When the value was calculated.
-    short           flags;
-    vilight_t       casted[MAX_BIAS_AFFECTED];
-} vertexillum_t;
-
-typedef struct biasaffection_s {
-    short           source;       // Index of light source.
-} biasaffection_t;
-
 // Shadowpoly flags.
 #define SHPF_FRONTSIDE  0x1
 
@@ -270,7 +188,7 @@ typedef struct shadowpoly_s {
     struct line_s  *line;
     short           flags;
     ushort          visframe;      // Last visible frame (for rendering).
-    vertex_t       *outer[2];      // Left and right.
+    struct vertex_s *outer[2];      // Left and right.
     float           inoffset[2][2]; // Offset from 'outer.'
     float           extoffset[2][2];    // Extended: offset from 'outer.'
     float           bextoffset[2][2];   // Back-extended: offset frmo 'outer.'
@@ -281,17 +199,6 @@ typedef struct shadowlink_s {
     shadowpoly_t   *poly;
 } shadowlink_t;
 
-#define SEGINF_FACINGFRONT      0x0001
-#define SEGINF_BACKSECSKYFIX    0x0002
-
-typedef struct seginfo_s {
-    short           flags;
-    biastracker_t   tracker[3]; // 0=top, 1=middle, 2=bottom
-    vertexillum_t   illum[3][4];
-    uint            updated;
-    biasaffection_t affected[MAX_BIAS_AFFECTED];
-} seginfo_t;
-
 typedef struct subplaneinfo_s {
     int             type;           // Plane type (ie PLN_FLOOR or PLN_CEILING)
     vertexillum_t  *illumination;
@@ -300,46 +207,14 @@ typedef struct subplaneinfo_s {
     biasaffection_t affected[MAX_BIAS_AFFECTED];
 } subplaneinfo_t;
 
-typedef struct subsectorinfo_s {
-    subplaneinfo_t **planes;
-    ushort          numvertices;
-    fvertex_t      *vertices;
-    int             validcount;
-    shadowlink_t   *shadows;
-} subsectorinfo_t;
-
-#define SIDEINF_TOPPVIS     0x0001
-#define SIDEINF_MIDDLEPVIS  0x0002
-#define SIDEINF_BOTTOMPVIS  0x0004
-
-typedef struct sideinfo_s {
-    short           flags;
-    struct line_s  *neighbor[2];      // Left and right neighbour.
-    boolean         pretendneighbor[2]; // Neighbor is not a "real" neighbor
-                                      // (it does not share a line with this
-                                      // side's sector).
-    struct sector_s *proxsector[2];   // Sectors behind the neighbors.
-    struct line_s  *backneighbor[2];  // Neighbour in the backsector (if any).
-    struct line_s  *alignneighbor[2]; // Aligned left and right neighbours.
-} sideinfo_t;
-
-typedef struct lineinfo_s {
-    float           length;        // Accurate length.
-    binangle_t      angle;         // Calculated from front side's normal.
-    boolean         selfrefhackroot; // This line is the root of a self-referencing
-                                     // hack sector.
-} lineinfo_t;
-
-typedef struct vertexinfo_s {
-    int             num;           // Number of sector owners.
-    int            *list;          // Sector indices.
-    int             numlines;      // Number of line owners.
-    int            *linelist;      // Line indices.
-    boolean         anchored;      // One or more of our line owners are one-sided.
-} vertexinfo_t;
+typedef struct lineowner_s {
+    struct line_s *line;
+    struct lineowner_s *prev;
+    struct lineowner_s *next;
+} lineowner_t;
 
 typedef struct polyblock_s {
-    polyobj_t      *polyobj;
+    struct polyobj_s *polyobj;
     struct polyblock_s *prev;
     struct polyblock_s *next;
 } polyblock_t;
@@ -452,11 +327,11 @@ void            R_InfoRendPolys(void);
 void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
-void            R_UpdateSector(sector_t* sec, boolean forceUpdate);
+void            R_UpdateSector(struct sector_s *sec, boolean forceUpdate);
 void            R_UpdateSurface(surface_t *current, boolean forceUpdate);
 void            R_UpdateAllSurfaces(boolean forceUpdate);
 void            R_PrecacheLevel(void);
-void            R_InitAnimGroup(ded_group_t * def);
+void            R_InitAnimGroup(ded_group_t *def);
 void            R_ResetAnimGroups(void);
 boolean         R_IsInAnimGroup(int groupNum, int type, int number);
 void            R_AnimateAnimGroups(void);
@@ -471,9 +346,9 @@ char           *R_TextureNameForNum(int num);
 int             R_SetFlatTranslation(int flat, int translateTo);
 int             R_SetTextureTranslation(int tex, int translateTo);
 boolean         R_IsCustomTexture(int texture);
-boolean         R_IsAllowedDecoration(ded_decor_t * def, int index,
+boolean         R_IsAllowedDecoration(ded_decor_t *def, int index,
                                       boolean hasExternal);
-boolean         R_IsValidLightDecoration(ded_decorlight_t * lightDef);
-void            R_GenerateDecorMap(ded_decor_t * def);
+boolean         R_IsValidLightDecoration(ded_decorlight_t *lightDef);
+void            R_GenerateDecorMap(ded_decor_t *def);
 
 #endif

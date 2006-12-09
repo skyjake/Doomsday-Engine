@@ -127,14 +127,14 @@ typedef struct ptcgen_s {
 
 extern ptcgen_t *active_ptcgens[MAX_ACTIVE_PTCGENS];
 
-void            P_SpawnParticleGen(ded_ptcgen_t * def, mobj_t *source);
+void            P_SpawnParticleGen(ded_ptcgen_t *def, mobj_t *source);
 void            P_SpawnTypeParticleGens(void);
 void            P_SpawnMapParticleGens(char *map_id);
 void            P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor,
                                          int amount);
 void            P_CheckPtcPlanes(void);
 
-float           P_GetParticleRadius(ded_ptcstage_t * stage_def, int ptc_index);
-fixed_t         P_GetParticleZ(particle_t * pt);
+float           P_GetParticleRadius(ded_ptcstage_t *stage_def, int ptc_index);
+fixed_t         P_GetParticleZ(particle_t *pt);
 
 #endif

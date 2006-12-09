@@ -32,14 +32,14 @@
 #include "p_mapdata.h"
 
 extern struct   polyobj_s *polyobjs; // list of all poly-objects on the level
-extern int      po_NumPolyobjs;
+extern uint     po_NumPolyobjs;
 
 void            PO_SetCallback(void (*func) (mobj_t *, void *, void *));
-boolean         PO_MovePolyobj(int num, int x, int y);
-boolean         PO_RotatePolyobj(int num, angle_t angle);
+boolean         PO_MovePolyobj(uint num, int x, int y);
+boolean         PO_RotatePolyobj(uint num, angle_t angle);
 void            PO_UnLinkPolyobj(polyobj_t *po);
 void            PO_LinkPolyobj(polyobj_t *po);
-int             PO_GetNumForDegen(void *degenMobj);
+polyobj_t      *PO_GetForDegen(void *degenMobj);
 void            PO_SetupPolyobjs(void);
 
 #endif

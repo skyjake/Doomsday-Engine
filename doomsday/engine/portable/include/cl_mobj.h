@@ -54,9 +54,9 @@ typedef struct clmobj_s {
     mobj_t          mo;
 } clmobj_t;
 
-void            Cl_InitClientMobjs();
+void            Cl_InitClientMobjs(void);
 void            Cl_Reset(void);
-void            Cl_DestroyClientMobjs();
+void            Cl_DestroyClientMobjs(void);
 clmobj_t       *Cl_CreateMobj(thid_t id);
 void            Cl_DestroyMobj(clmobj_t *cmo);
 boolean         Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *),

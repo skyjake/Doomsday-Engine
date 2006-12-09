@@ -58,7 +58,8 @@ typedef struct {
 typedef struct {
     char            name[9];       // End in \0.
     DFILE          *handle;
-    int             position, size;
+    int             position;
+    size_t          size;
     int             sent;
     char            group;         // Lump grouping tag (LGT_*).
 } lumpinfo_t;
@@ -73,11 +74,11 @@ void            W_InitMultipleFiles(char **filenames);
 void            W_EndStartup(void);
 int             W_CheckNumForName(char *name);
 int             W_GetNumForName(char *name);
-int             W_LumpLength(int lump);
+size_t          W_LumpLength(int lump);
 const char     *W_LumpName(int lump);
 void            W_ReadLump(int lump, void *dest);
 void            W_ReadLumpSection(int lump, void *dest, int startoffset,
-                                  int length);
+                                  size_t length);
 void           *W_CacheLumpNum(int lump, int tag);
 void           *W_CacheLumpName(char *name, int tag);
 boolean         W_AddFile(const char *filename, boolean allowDuplicate);

@@ -105,15 +105,15 @@ unsigned int    DL_NewLuminous(void);
 lumobj_t*       DL_GetLuminous(unsigned int index);
 unsigned int    DL_GetNumLuminous(void);
 void            DL_ProcessSubsector(subsector_t *ssec);
-dynlight_t*     DL_GetSegSectionLightLinks(int segidx, int section);
-dynlight_t*     DL_GetSubSecPlaneLightLinks(int ssecidx, int plane);
+dynlight_t*     DL_GetSegSectionLightLinks(uint segidx, int section);
+dynlight_t*     DL_GetSubSecPlaneLightLinks(uint ssecidx, uint plane);
 
 // Helpers.
 boolean         DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
                                   fixed_t radius, void *data,
                                   boolean (*func) (lumobj_t *, fixed_t, void *data));
 
-void            DL_ClipInSubsector(int ssecidx);
-void            DL_ClipBySight(int ssecidx);
+void            DL_ClipInSubsector(uint ssecidx);
+void            DL_ClipBySight(uint ssecidx);
 
 #endif

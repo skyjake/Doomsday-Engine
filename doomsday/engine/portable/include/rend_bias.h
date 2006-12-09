@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -29,10 +29,31 @@
 #ifndef __DOOMSDAY_RENDER_SHADOW_BIAS_H__
 #define __DOOMSDAY_RENDER_SHADOW_BIAS_H__
 
-#include "p_mapdata.h"
+#include "dglib.h"
 
 #define MAX_BIAS_LIGHTS   (8 * 32) // Hard limit due to change tracking.
 #define MAX_BIAS_AFFECTED 6
+
+typedef struct vilight_s {
+    short           source;
+    byte            rgb[4];       // Light from an affecting source.
+} vilight_t;
+
+// Vertex illumination flags.
+#define VIF_LERP         0x1      // Interpolation is in progress.
+#define VIF_STILL_UNSEEN 0x2      // The color of the vertex is still unknown.
+
+typedef struct vertexillum_s {
+    gl_rgba_t       color;        // Current color of the vertex.
+    gl_rgba_t       dest;         // Destination color of the vertex.
+    unsigned int    updatetime;   // When the value was calculated.
+    short           flags;
+    vilight_t       casted[MAX_BIAS_AFFECTED];
+} vertexillum_t;
+
+typedef struct biasaffection_s {
+    short           source;       // Index of light source.
+} biasaffection_t;
 
 // Bias light source macros.
 #define BLF_COLOR_OVERRIDE   0x00000001
@@ -53,24 +74,22 @@ typedef struct biastracker_s {
     unsigned int changes[MAX_BIAS_LIGHTS / 32];
 } biastracker_t;
 
-struct vertexillum_s;
 struct rendpoly_s;
-struct biasaffection_s;
 
 extern int      useBias; // Bias lighting enabled.
 extern unsigned int currentTimeSB;
 
 void            SB_Register(void);
 void            SB_InitForLevel(const char *uniqueId);
-void            SB_SegHasMoved(seg_t *seg);
-void            SB_PlaneHasMoved(subsector_t *subsector, int plane);
+void            SB_SegHasMoved(struct seg_s *seg);
+void            SB_PlaneHasMoved(struct subsector_s *subsector, uint plane);
 void            SB_BeginFrame(void);
 void            SB_RendPoly(struct rendpoly_s *poly,
-                            surface_t *surface, sector_t *sector,
-                            struct vertexillum_s *illumination,
+                            struct surface_s *surface, struct sector_s *sector,
+                            vertexillum_t *illumination,
                             biastracker_t *tracker,
-                            struct biasaffection_s *affected,
-                            int mapElementIndex);
+                            biasaffection_t *affected,
+                            uint mapElementIndex);
 void            SB_EndFrame(void);
 
 int             SB_NewSourceAt(float x, float y, float z, float size, int minLight,

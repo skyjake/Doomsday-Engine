@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +46,7 @@ typedef unsigned int nodeid_t;
 typedef struct netmessage_s {
     struct netmessage_s *next;
     nodeid_t        sender;
-    int             player;        // Set in N_GetMessage().
+    uint            player;        // Set in N_GetMessage().
     unsigned int    size;
     byte           *data;
     void           *handle;
@@ -62,7 +63,7 @@ typedef struct {
 #pragma pack()
 
 typedef struct netbuffer_s {
-    int             player;         // Recipient or sender.
+    uint            player;         // Recipient or sender.
     int             length;         // Number of bytes in the data buffer.
     int             headerLength;   // 1 byte at the moment.
 
@@ -86,7 +87,7 @@ void            N_Shutdown(void);
 void            N_ClearMessages(void);
 void            N_SendPacket(int flags);
 boolean         N_GetPacket(void);
-int             N_IdentifyPlayer(nodeid_t id);
+uint            N_IdentifyPlayer(nodeid_t id);
 void            N_PrintBufferInfo(void);
 void            N_PrintHuffmanStats(void);
 void            N_PostMessage(netmessage_t * msg);

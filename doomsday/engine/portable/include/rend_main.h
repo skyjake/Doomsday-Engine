@@ -33,13 +33,6 @@
 #include "rend_list.h"
 #include "r_things.h"
 
-// Parts of a wall segment.
-typedef enum segsection_e {
-    SEG_MIDDLE,
-    SEG_TOP,
-    SEG_BOTTOM
-} segsection_t;
-
 // Light mod matrix range
 #define MOD_RANGE 100
 

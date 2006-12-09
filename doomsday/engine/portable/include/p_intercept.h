@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -32,6 +33,6 @@ void            P_ClearIntercepts(void);
 intercept_t    *P_AddIntercept(fixed_t frac, boolean isaline, void *ptr);
 boolean         P_TraverseIntercepts(traverser_t func, fixed_t maxfrac);
 boolean         P_SightTraverseIntercepts(divline_t * strace,
-										  boolean (*func) (intercept_t *));
+                                          boolean (*func) (intercept_t *));
 
 #endif

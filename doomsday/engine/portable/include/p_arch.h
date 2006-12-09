@@ -106,7 +106,7 @@ typedef struct mapdatalumpinfo_s {
     mapdatalumpformat_t     *format;
     int     lumpClass;
     int     startOffset;
-    int     length;
+    size_t  length;
 } mapdatalumpinfo_t;
 
 void        DAM_Register(void);

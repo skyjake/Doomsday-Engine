@@ -38,6 +38,7 @@
 
 #include "dd_share.h"
 #include "p_arch.h"
+#include "rend_bias.h"
 
 // Ticcmd
 #define TICCMD_SIZE     gx.ticcmd_size
@@ -110,39 +111,30 @@ typedef struct skyfix_s {
     int offset;
 } skyfix_t;
 
-struct vertexinfo_s;
-struct sideinfo_s;
-struct lineinfo_s;
-struct subsectorinfo_s;
-struct sectorinfo_s;
-struct seginfo_s;
-struct planeinfo_s;
-struct surfaceinfo_s;
-
 #include "p_maptypes.h"
 
 /*
  * The map data arrays are accessible globally inside the engine.
  */
-extern int      numvertexes;
+extern uint     numvertexes;
 extern vertex_t *vertexes;
 
-extern int      numsegs;
+extern uint     numsegs;
 extern seg_t   *segs;
 
-extern int      numsectors;
+extern uint     numsectors;
 extern sector_t *sectors;
 
-extern int      numsubsectors;
+extern uint     numsubsectors;
 extern subsector_t *subsectors;
 
-extern int      numnodes;
+extern uint     numnodes;
 extern node_t  *nodes;
 
-extern int      numlines;
+extern uint     numlines;
 extern line_t  *lines;
 
-extern int      numsides;
+extern uint     numsides;
 extern side_t  *sides;
 
 extern int      numthings;
@@ -150,15 +142,15 @@ extern int      numthings;
 extern fixed_t  mapgravity;        // Gravity for the current map.
 extern int      mapambient;        // Ambient light level for the current map.
 
-extern int      numUniqueLines;
+extern uint     numUniqueLines;
 
-extern int     *missingFronts;
-extern int      numMissingFronts;
+extern uint    *missingFronts;
+extern uint     numMissingFronts;
 
 void            P_PolyobjChanged(polyobj_t *po);
 void            P_FloorChanged(sector_t *sector);
 void            P_CeilingChanged(sector_t *sector);
-void            P_PlaneChanged(sector_t *sector, int plane);
+void            P_PlaneChanged(sector_t *sector, uint plane);
 void            P_InitData(void);
 const char*     value_Str(int val);
 int             P_CheckTexture(char *name, boolean planeTex, int dataType,

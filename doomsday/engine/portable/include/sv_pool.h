@@ -271,7 +271,7 @@ typedef struct {
 typedef struct {
     short           lightlevel;
     byte            rgb[3];
-    int             planecount;
+    uint            planecount;
     dt_plane_t      planes[2];
 } dt_sector_t;
 
@@ -398,18 +398,18 @@ void            Sv_ShutdownPools(void);
 void            Sv_DrainPool(int clientNumber);
 void            Sv_InitPoolForClient(int clientNumber);
 void            Sv_MobjRemoved(thid_t id);
-void            Sv_PlayerRemoved(int clientNumber);
+void            Sv_PlayerRemoved(uint clientNumber);
 void            Sv_GenerateFrameDeltas(void);
-boolean         Sv_IsFrameTarget(int clientNumber);
+boolean         Sv_IsFrameTarget(uint clientNumber);
 uint            Sv_GetTimeStamp(void);
 pool_t         *Sv_GetPool(int clientNumber);
 void            Sv_RatePool(pool_t * pool);
 delta_t        *Sv_PoolQueueExtract(pool_t * pool);
-void            Sv_AckDeltaSet(int clientNumber, int set, byte resent);
-int             Sv_CountUnackedDeltas(int clientNumber);
+void            Sv_AckDeltaSet(uint clientNumber, int set, byte resent);
+uint            Sv_CountUnackedDeltas(uint clientNumber);
 
 void            Sv_NewSoundDelta(int soundId, mobj_t *emitter,
-                                 int sourceSector, int sourcePoly,
+                                 sector_t *sourceSector, polyobj_t *sourcePoly,
                                  float volume, boolean isRepeating,
                                  int clientsMask);
 

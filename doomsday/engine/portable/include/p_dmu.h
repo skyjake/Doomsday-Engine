@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -38,9 +38,9 @@ int         P_DummyType(void* dummy);
 boolean     P_IsDummy(void* dummy);
 void       *P_DummyExtraData(void* dummy);
 
-int         P_ToIndex(const void* ptr);
+uint        P_ToIndex(const void* ptr);
 
-const char *DMU_Str(int prop);
+const char *DMU_Str(uint prop);
 
 #ifndef NDEBUG
 # define ASSERT_DMU_TYPE(ptr, dmuType) \
