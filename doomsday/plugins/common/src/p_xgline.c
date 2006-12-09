@@ -636,8 +636,8 @@ void XL_SetLineType(line_t *line, int id)
  */
 void XL_Init(void)
 {
-    int    i;
-    line_t *line;
+    uint        i;
+    line_t     *line;
 
     memset(&dummything, 0, sizeof(dummything));
 
@@ -645,7 +645,7 @@ void XL_Init(void)
     if(IS_CLIENT)
         return;
 
-    for(i = 0; i < numlines; i++)
+    for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
         P_XLine(line)->xg = 0;
@@ -662,7 +662,7 @@ int XL_TraversePlanes(line_t *line, int reftype, int ref, void *data,
                       void *context, boolean travsectors, mobj_t *activator,
                       int (C_DECL *func)())
 {
-    int         i, tag;
+    int         tag;
     mobj_t     *mo;
     boolean     ok, findSecTagged;
     sector_t   *sec, *frontsector, *backsector;
@@ -751,6 +751,8 @@ int XL_TraversePlanes(line_t *line, int reftype, int ref, void *data,
     }
     else
     {
+        uint        i;
+
         for(i = 0; i < numsectors; ++i)
         {
             sec = P_ToPtr(DMU_SECTOR, i);
@@ -828,7 +830,7 @@ int XL_TraversePlanes(line_t *line, int reftype, int ref, void *data,
 int XL_TraverseLines(line_t *line, int rtype, int ref, void *data,
                      void *context, mobj_t * activator, int (C_DECL *func)())
 {
-    int         i;
+    uint        i;
     int         tag;
     int         reftype = rtype;
     char        buff[50];
@@ -2678,12 +2680,12 @@ void XL_Think(line_t *line)
     }
 }
 
-/*
+/**
  * Think for each extended line.
  */
  void XL_Ticker(void)
 {
-    int         i;
+    uint        i;
     line_t     *line;
 
     for(i = 0; i < numlines; ++i)
@@ -2696,15 +2698,15 @@ void XL_Think(line_t *line)
     }
 }
 
-/*
+/**
  * During update, definitions are re-read, so the pointers need to be
  * updated. However, this is a bit messy operation, prone to errors.
  * Instead, we just disable XG.
  */
 void XL_Update(void)
 {
-    int         i;
-    xline_t     *xline;
+    uint        i;
+    xline_t    *xline;
 
     // It's all PU_LEVEL memory, so we can just lose it.
     for(i = 0; i < numlines; ++i)

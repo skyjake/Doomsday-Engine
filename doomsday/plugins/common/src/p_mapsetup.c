@@ -1,5 +1,10 @@
-/* DE1: $Id$
- * Copyright (C) 2005 Jaakko Keränen <jaakko.keranen@iki.fi>
+/**\file
+ *\section Copyright and License Summary
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,7 +17,9 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
 
 /*
@@ -95,8 +102,8 @@ boolean levelSetup;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int oldNumLines;
-static int oldNumSectors;
+static uint oldNumLines;
+static uint oldNumSectors;
 
 // CODE --------------------------------------------------------------------
 
@@ -159,13 +166,13 @@ xsector_t* P_XSectorOfSubsector(subsector_t* sub)
  * @param   type        (DAM object type) The id of the data type being setup.
  * @param   num         The number of elements of "type" Doomsday is creating.
  */
-void P_SetupForMapData(int type, int num)
+void P_SetupForMapData(int type, uint num)
 {
     switch(type)
     {
     case DAM_SECTOR:
         {
-        int newnum = oldNumSectors + num;
+        uint newnum = oldNumSectors + num;
 
         if(oldNumSectors > 0)
             xsectors = Z_Realloc(xsectors, newnum * sizeof(xsector_t), PU_LEVEL);
@@ -179,7 +186,7 @@ void P_SetupForMapData(int type, int num)
 
     case DAM_LINE:
         {
-        int newnum = oldNumLines + num;
+        uint newnum = oldNumLines + num;
 
         if(oldNumLines > 0)
             xlines = Z_Realloc(xlines, newnum * sizeof(xline_t), PU_LEVEL);
@@ -193,7 +200,7 @@ void P_SetupForMapData(int type, int num)
 
     case DAM_THING:
         {
-        int oldNum = numthings;
+        uint oldNum = numthings;
 
         numthings += num;
 
@@ -218,7 +225,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 {
 #if !__DOOM64TC__
 # if __JDOOM__ || __JHERETIC__
-    int     i, flags;
+    uint    i;
+    int     flags;
 # endif
 #endif
     char    levelId[9];
@@ -421,7 +429,7 @@ static void P_FinalizeLevel(void)
     // This will hide the ugly green bright line that would otherwise be
     // visible due to texture repeating and interpolation.
     {
-    int i, k;
+    uint    i, k;
     int     lumpnum = R_TextureNumForName("NUKE24");
     int     bottomTex;
     int     midTex;
@@ -429,7 +437,7 @@ static void P_FinalizeLevel(void)
     side_t* side;
     line_t* line;
 
-    for(i = 0; i < numlines; i++)
+    for(i = 0; i < numlines; ++i)
     {
         line = P_ToPtr(DMU_LINE, i);
         for(k = 0; k < 2; k++)

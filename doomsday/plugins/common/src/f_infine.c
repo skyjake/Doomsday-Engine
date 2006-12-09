@@ -2488,7 +2488,8 @@ void FIC_TextFromDef(void)
 void FIC_TextFromLump(void)
 {
     fitext_t *tex = FI_GetText(FI_GetToken());
-    int     lnum, buflen, i, incount;
+    int     lnum, buflen;
+    size_t  i, incount;
     char   *data, *str, *out;
 
     FI_InitValue(&tex->object.x, FI_GetFloat());

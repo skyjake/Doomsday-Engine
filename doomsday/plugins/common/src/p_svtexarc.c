@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -128,12 +128,12 @@ void SV_PrepareTexture(int tex, boolean isflat, texarchive_t * arc)
  */
 void SV_InitTextureArchives(void)
 {
-    int     i;
+    uint    i;
 
     // Init flats.
     flat_archive.count = 0;
 
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_FLOOR_TEXTURE), true, &flat_archive);
         SV_PrepareTexture(P_GetInt(DMU_SECTOR, i, DMU_CEILING_TEXTURE), true, &flat_archive);
@@ -141,7 +141,7 @@ void SV_InitTextureArchives(void)
     // Init textures.
     tex_archive.count = 0;
 
-    for(i = 0; i < numsides; i++)
+    for(i = 0; i < numsides; ++i)
     {
         SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_MIDDLE_TEXTURE), false, &tex_archive);
         SV_PrepareTexture(P_GetInt(DMU_SIDE, i, DMU_TOP_TEXTURE), false, &tex_archive);

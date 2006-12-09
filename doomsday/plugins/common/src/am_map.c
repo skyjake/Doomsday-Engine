@@ -721,21 +721,21 @@ void AM_addMark(void)
 
 }
 
-/*
+/**
  * Determines bounding box of all vertices,
  * sets global variables controlling zoom range.
  */
 void AM_findMinMaxBoundaries(void)
 {
-    int     i;
-    fixed_t x, y;
-    fixed_t a;
-    fixed_t b;
+    uint        i;
+    fixed_t     x, y;
+    fixed_t     a;
+    fixed_t     b;
 
     min_x = min_y = DDMAXINT;
     max_x = max_y = -DDMAXINT;
 
-    for(i = 0; i < numvertexes; i++)
+    for(i = 0; i < numvertexes; ++i)
     {
         x = P_GetFixed(DMU_VERTEX, i, DMU_X);
         y = P_GetFixed(DMU_VERTEX, i, DMU_Y);
@@ -1710,20 +1710,21 @@ void AM_drawGrid(int color)
     gl.End();
 }
 
-/*
+/**
  * Determines visible lines, draws them. This is LineDef based, not LineSeg based.
  */
 void AM_drawWalls(boolean glowmode)
 {
-    int     i, s, subColor = 0;
-    line_t  *line;
-    xline_t *xline;
-    mline_t l;
+    int         i;
+    uint        s, subColor = 0;
+    line_t     *line;
+    xline_t    *xline;
+    mline_t     l;
     subsector_t *ssec;
-    sector_t *sec, *frontsector, *backsector;
-    seg_t *seg;
-    mapline_t templine;
-    boolean withglow = false;
+    sector_t   *sec, *frontsector, *backsector;
+    seg_t      *seg;
+    mapline_t   templine;
+    boolean     withglow = false;
 
     for(s = 0; s < numsubsectors; ++s)
     {
@@ -1981,11 +1982,11 @@ void AM_drawPlayers(void)
  */
 void AM_drawThings(int colors, int colorrange)
 {
-    int     i;
-    mobj_t *iter;
-    float size = FIX2FLT(PLAYERRADIUS);
+    uint        i;
+    mobj_t     *iter;
+    float       size = FIX2FLT(PLAYERRADIUS);
 
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         for(iter = P_GetPtr(DMU_SECTOR,i,DMU_THINGS); iter; iter = iter->snext)
         {

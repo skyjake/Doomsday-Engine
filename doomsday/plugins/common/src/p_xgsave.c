@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -207,7 +207,7 @@ void SV_ReadXGSector(struct sector_s *sec)
 
 void SV_WriteXGPlaneMover(thinker_t *th)
 {
-    int     i;
+    uint    i;
     xgplanemover_t *mov = (xgplanemover_t *) th;
 
     SV_WriteByte(tc_xgmover);
@@ -219,8 +219,8 @@ void SV_WriteXGPlaneMover(thinker_t *th)
 
 
     i = P_ToIndex(mov->origin);
-    if(i < 0 || i >= numlines)  // Is it a real line?
-        i = 0;                  // No...
+    if(i >= numlines)  // Is it a real line?
+        i = 0;         // No...
     else
         i++;
 
@@ -279,7 +279,7 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
  */
 void XL_UnArchiveLines(void)
 {
-    int         i;
+    uint        i;
     xline_t    *xline;
     mobj_t     *activator;
 

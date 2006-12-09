@@ -586,14 +586,15 @@ fixed_t P_PointLineDistance(line_t *line, fixed_t x, fixed_t y,
 void P_MoveThingsOutOfWalls(void)
 {
 #define MAXLIST 200
-    sector_t *sec;
-    mobj_t *iter;
-    int     i, k, t;
-    line_t *closestline = NULL, *li;
-    fixed_t closestdist = 0, dist, off, linelen, minrad;
-    mobj_t *tlist[MAXLIST];
+    sector_t   *sec;
+    mobj_t     *iter;
+    uint        i, l;
+    int         k, t;
+    line_t     *closestline = NULL, *li;
+    fixed_t     closestdist = 0, dist, off, linelen, minrad;
+    mobj_t     *tlist[MAXLIST];
 
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
         memset(tlist, 0, sizeof(tlist));
@@ -608,16 +609,16 @@ void P_MoveThingsOutOfWalls(void)
         }
 
         // Move the things out of walls.
-        for(t = 0; (iter = tlist[t]) != NULL; t++)
+        for(t = 0; (iter = tlist[t]) != NULL; ++t)
         {
-            int sectorLineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+            uint sectorLineCount = P_GetIntp(sec, DMU_LINE_COUNT);
 
             minrad = iter->radius / 2;
             closestline = NULL;
 
-            for(k = 0; k < sectorLineCount; k++)
+            for(l = 0; l < sectorLineCount; ++l)
             {
-                li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
+                li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | l);
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
                 linelen =
@@ -657,15 +658,16 @@ void P_MoveThingsOutOfWalls(void)
 void P_TurnGizmosAwayFromDoors(void)
 {
 #define MAXLIST 200
-    sector_t *sec;
-    mobj_t *iter;
-    int     i, k, t;
-    line_t *closestline = NULL, *li;
-    xline_t *xli;
-    fixed_t closestdist = 0, dist, off, linelen;    //, minrad;
-    mobj_t *tlist[MAXLIST];
+    sector_t   *sec;
+    mobj_t     *iter;
+    uint        i, l;
+    int         k, t;
+    line_t     *closestline = NULL, *li;
+    xline_t    *xli;
+    fixed_t     closestdist = 0, dist, off, linelen;    //, minrad;
+    mobj_t     *tlist[MAXLIST];
 
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
         memset(tlist, 0, sizeof(tlist));
@@ -680,12 +682,12 @@ void P_TurnGizmosAwayFromDoors(void)
         }
 
         // Turn to face away from the nearest door.
-        for(t = 0; (iter = tlist[t]) != NULL; t++)
+        for(t = 0; (iter = tlist[t]) != NULL; ++t)
         {
             closestline = NULL;
-            for(k = 0; k < numlines; k++)
+            for(l = 0; l < numlines; ++l)
             {
-                li = P_ToPtr(DMU_LINE, k);
+                li = P_ToPtr(DMU_LINE, l);
 
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
@@ -730,14 +732,15 @@ void P_TurnGizmosAwayFromDoors(void)
 void P_TurnTorchesToFaceWalls(void)
 {
 #define MAXLIST 200
-    sector_t *sec;
-    mobj_t *iter;
-    int     i, k, t;
-    line_t *closestline = NULL, *li;
-    fixed_t closestdist = 0, dist, off, linelen, minrad;
-    mobj_t *tlist[MAXLIST];
+    sector_t   *sec;
+    mobj_t     *iter;
+    uint        i, l;
+    int         k, t;
+    line_t     *closestline = NULL, *li;
+    fixed_t     closestdist = 0, dist, off, linelen, minrad;
+    mobj_t     *tlist[MAXLIST];
 
-    for(i = 0; i < DD_GetInteger(DD_SECTOR_COUNT); i++)
+    for(i = 0; i < numsectors; ++i)
     {
         sec = P_ToPtr(DMU_SECTOR, i);
         memset(tlist, 0, sizeof(tlist));
@@ -754,13 +757,13 @@ void P_TurnTorchesToFaceWalls(void)
         // Turn to face away from the nearest wall.
         for(t = 0; (iter = tlist[t]) != NULL; t++)
         {
-            int sectorLineCount = P_GetIntp(sec, DMU_LINE_COUNT);
+            uint sectorLineCount = P_GetIntp(sec, DMU_LINE_COUNT);
 
             minrad = iter->radius;
             closestline = NULL;
-            for(k = 0; k < sectorLineCount; k++)
+            for(l = 0; l < sectorLineCount; ++l)
             {
-                li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
+                li = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | l);
                 if(P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
                 linelen =

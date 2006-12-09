@@ -678,11 +678,12 @@ int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
     return count;
 }
 
-int FindMaxOf(int *list, int num)
+uint FindMaxOf(int *list, uint num)
 {
-    int     i, max = list[0], idx = 0;
+    uint        i, idx = 0;
+    int         max = list[0];
 
-    for(i = 1; i < num; i++)
+    for(i = 1; i < num; ++i)
         if(list[i] > max)
         {
             max = list[i];
@@ -691,11 +692,12 @@ int FindMaxOf(int *list, int num)
     return idx;
 }
 
-int FindMinOf(int *list, int num)
+uint FindMinOf(int *list, uint num)
 {
-    int     i, min = list[0], idx = 0;
+    uint        i, idx = 0;
+    int         min = list[0];
 
-    for(i = 1; i < num; i++)
+    for(i = 1; i < num; ++i)
         if(list[i] < min)
         {
             min = list[i];
@@ -841,9 +843,9 @@ int XS_TextureHeight(line_t *line, int part)
  */
 sector_t *XS_FindTagged(int tag)
 {
-    int         k;
-    int         foundcount = 0;
-    int         retsectorid = -1;
+    uint        k;
+    uint        foundcount = 0;
+    uint        retsectorid = 0;
     sector_t   *sec, *retsector;
 
     retsector = NULL;
@@ -855,7 +857,7 @@ sector_t *XS_FindTagged(int tag)
         {
             if(xgDev)
             {
-                if(!foundcount)
+                if(foundcount == 0)
                 {
                     retsector = sec;
                     retsectorid = k;
@@ -888,9 +890,9 @@ sector_t *XS_FindTagged(int tag)
  */
 sector_t *XS_FindActTagged(int tag)
 {
-    int         k;
-    int         foundcount = 0;
-    int         retsectorid = -1;
+    uint        k;
+    uint        foundcount = 0;
+    uint        retsectorid = 0;
     sector_t   *sec, *retsector;
     xsector_t  *xsec;
 
@@ -905,7 +907,7 @@ sector_t *XS_FindActTagged(int tag)
             {
                 if(xgDev)
                 {
-                    if(!foundcount)
+                    if(foundcount == 0)
                     {
                         retsector = sec;
                         retsectorid = k;
@@ -933,19 +935,20 @@ sector_t *XS_FindActTagged(int tag)
     return NULL;
 }
 
-boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
+boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
                     int *height, int *pic, sector_t **planesector)
 {
-    int     i = 0, k, num;
-    int     heights[MAX_VALS], pics[MAX_VALS];
-    sector_t *sectorlist[MAX_VALS];
-    boolean ceiling;
-    sector_t *iter;
-    xline_t *xline;
-    char    buff[50];
+    int         idx;
+    uint        num;
+    int         heights[MAX_VALS], pics[MAX_VALS];
+    sector_t   *sectorlist[MAX_VALS];
+    boolean     ceiling;
+    sector_t   *iter;
+    xline_t    *xline;
+    char        buff[50];
 
     if(refdata)
-        sprintf(buff, " : %i",refdata);
+        sprintf(buff, " : %i", *refdata);
 
     XG_Dev("XS_GetPlane: Line %i, sector %i, ref (%s(%i)%s)",
            actline ? P_ToIndex(actline) : -1, P_ToIndex(sector),
@@ -987,13 +990,13 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
 
     case SPREF_TAGGED_FLOOR:
     case SPREF_TAGGED_CEILING:
-        if(refdata == -1)
+        if(!refdata)
         {
             XG_Dev("  %s IS NOT VALID FOR THIS CLASS PARAMETER!", SPREFTYPESTR(ref));
             return false;
         }
 
-        iter = XS_FindTagged(refdata);
+        iter = XS_FindTagged(*refdata);
         if(!iter)
             return false;
         break;
@@ -1022,22 +1025,22 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
 
     case SPREF_ACT_TAGGED_FLOOR:
     case SPREF_ACT_TAGGED_CEILING:
-        if(refdata == -1)
+        if(!refdata)
         {
             XG_Dev("  %s IS NOT VALID FOR THIS CLASS PARAMETER!", SPREFTYPESTR(ref));
             return false;
         }
 
-        iter = XS_FindActTagged(refdata);
+        iter = XS_FindActTagged(*refdata);
         if(!iter)
             return false;
         break;
 
     case SPREF_INDEX_FLOOR:
     case SPREF_INDEX_CEILING:
-        if(refdata < 0 || refdata >= numsectors)
+        if(!refdata || *refdata >= numsectors)
             return false;
-        iter = P_ToPtr(DMU_SECTOR, refdata);
+        iter = P_ToPtr(DMU_SECTOR, *refdata);
         break;
 
     default:
@@ -1187,6 +1190,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
     // Texture targets?
     if(ref >= SPREF_MIN_BOTTOM_TEXTURE && ref <= SPREF_MAX_TOP_TEXTURE)
     {
+        int     i, k;
         int     part;
 
         num = 0;
@@ -1200,7 +1204,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
 
         // Get the heights of the sector's textures.
         // The heights are in real world coordinates.
-        for(i = 0, k = 0; i < P_GetIntp(sector, DMU_LINE_COUNT); i++)
+        for(i = 0, k = 0; i < P_GetIntp(sector, DMU_LINE_COUNT); ++i)
         {
             k = XS_TextureHeight(P_GetPtrp(sector, DMU_LINE_OF_SECTOR | i), part);
             if(k != DDMAXINT)
@@ -1208,17 +1212,19 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
         }
         if(!num)
             return true;
+
         // Are we looking at the min or max heights?
         if(ref >= SPREF_MIN_BOTTOM_TEXTURE && ref <= SPREF_MIN_TOP_TEXTURE)
         {
-            i = FindMinOf(heights, num);
+            idx = FindMinOf(heights, num);
             if(height)
-                *height = heights[i];
+                *height = heights[idx];
             return true;
         }
-        i = FindMaxOf(heights, num);
+
+        idx = FindMaxOf(heights, num);
         if(height)
-            *height = heights[i];
+            *height = heights[idx];
         return true;
     }
     // We need to figure out the heights of the adjoining sectors.
@@ -1242,34 +1248,29 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, int refdata,
 
     // Get the right height and pic.
     if(ref == SPREF_HIGHEST_CEILING || ref == SPREF_HIGHEST_FLOOR)
-        i = FindMaxOf(heights, num);
-
-    if(ref == SPREF_LOWEST_CEILING || ref == SPREF_LOWEST_FLOOR)
-        i = FindMinOf(heights, num);
-
-    if(ref == SPREF_NEXT_HIGHEST_CEILING)
-        i = FindNextOf(heights, num, P_GetFixedp(sector, DMU_CEILING_HEIGHT));
-
-    if(ref == SPREF_NEXT_HIGHEST_FLOOR)
-        i = FindNextOf(heights, num, P_GetFixedp(sector, DMU_FLOOR_HEIGHT));
-
-    if(ref == SPREF_NEXT_LOWEST_CEILING)
-        i = FindPrevOf(heights, num, P_GetFixedp(sector, DMU_CEILING_HEIGHT));
-
-    if(ref == SPREF_NEXT_LOWEST_FLOOR)
-        i = FindPrevOf(heights, num, P_GetFixedp(sector, DMU_FLOOR_HEIGHT));
+        idx = FindMaxOf(heights, num);
+    else if(ref == SPREF_LOWEST_CEILING || ref == SPREF_LOWEST_FLOOR)
+        idx = FindMinOf(heights, num);
+    else if(ref == SPREF_NEXT_HIGHEST_CEILING)
+        idx = FindNextOf(heights, num, P_GetFixedp(sector, DMU_CEILING_HEIGHT));
+    else if(ref == SPREF_NEXT_HIGHEST_FLOOR)
+        idx = FindNextOf(heights, num, P_GetFixedp(sector, DMU_FLOOR_HEIGHT));
+    else if(ref == SPREF_NEXT_LOWEST_CEILING)
+        idx = FindPrevOf(heights, num, P_GetFixedp(sector, DMU_CEILING_HEIGHT));
+    else if(ref == SPREF_NEXT_LOWEST_FLOOR)
+        idx = FindPrevOf(heights, num, P_GetFixedp(sector, DMU_FLOOR_HEIGHT));
 
     // The requested plane was not found.
-    if(i == -1)
+    if(idx == -1)
         return false;
 
     // Set the values.
     if(height)
-        *height = heights[i];
+        *height = heights[idx];
     if(pic)
-        *pic = pics[i];
+        *pic = pics[idx];
     if(planesector)
-        *planesector = sectorlist[i];
+        *planesector = sectorlist[idx];
     return true;
 }
 
@@ -1340,7 +1341,7 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
     mover->origin = line;
 
     // Setup the thinker and add it to the list.
-    XS_GetPlane(line, sector, info->iparm[2], -1, &mover->destination, 0, 0);
+    XS_GetPlane(line, sector, info->iparm[2], NULL, &mover->destination, 0, 0);
     mover->destination += FRACUNIT * info->fparm[2];
     mover->speed = FRACUNIT * info->fparm[0];
     mover->crushspeed = FRACUNIT * info->fparm[1];
@@ -1355,7 +1356,7 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
         mover->setflat = info->iparm[10];
     else
     {
-        if(!XS_GetPlane(line, sector, info->iparm[9], -1, 0, &mover->setflat, 0))
+        if(!XS_GetPlane(line, sector, info->iparm[9], NULL, 0, &mover->setflat, 0))
             XG_Dev("  Couldn't find suitable texture to set when move ends!");
     }
 
@@ -1383,7 +1384,7 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
         flat = info->iparm[8];
     else
     {
-        if(!XS_GetPlane(line, sector, info->iparm[7], -1, 0, &flat, 0))
+        if(!XS_GetPlane(line, sector, info->iparm[7], NULL, 0, &flat, 0))
             XG_Dev("  Couldn't find suitable texture to set when move starts!");
     }
     if(flat > 0)
@@ -1439,10 +1440,10 @@ void XS_InitStairBuilder(line_t *line)
 }
 
 boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
-                   linetype_t * info, int stepcount)
+                   linetype_t * info, uint stepcount)
 {
     static int firstheight;
-    int     secnum = P_ToIndex(sector);
+    uint    secnum = P_ToIndex(sector);
     xgplanemover_t *mover;
     float   waittime;
 
@@ -1456,7 +1457,7 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
     mover->origin = origin;
 
     // Setup the mover.
-    if(!stepcount)
+    if(stepcount != 0)
         firstheight = ceiling ? P_GetFixedp(sector, DMU_CEILING_HEIGHT) :
                                 P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
 
@@ -1489,7 +1490,7 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
     }
 
     // Do start stuff. Play sound?
-    if(!stepcount)
+    if(stepcount != 0)
     {
         // Start building start sound.
         XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[4]);
@@ -1504,15 +1505,16 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
 int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling, void *context,
                               void *context2, mobj_t *activator)
 {
-    boolean found = true;
-    int     i, k, lowest, stepcount = 0;
-    line_t *line;
-    line_t *origin = (line_t *) context;
+    boolean     found = true;
+    int         k;
+    uint        i, lowest, stepcount = 0;
+    line_t     *line;
+    line_t     *origin = (line_t *) context;
     linetype_t *info = context2;
-    sector_t *sec;
-    boolean picstop = info->iparm[2] != 0;
-    boolean spread = info->iparm[3] != 0;
-    int     mypic;
+    sector_t   *sec;
+    boolean     picstop = info->iparm[2] != 0;
+    boolean     spread = info->iparm[3] != 0;
+    int         mypic;
 
     XG_Dev("XSTrav_BuildStairs: Sector %i, %s", P_ToIndex(sector),
            ceiling ? "ceiling" : "floor");
@@ -1531,7 +1533,7 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling, void *context,
         stepcount++;
 
         // Mark the sectors of the last step as processed.
-        for(i = 0; i < numsectors; i++)
+        for(i = 0; i < numsectors; ++i)
             if(builder[i] & BL_WAS_BUILT)
             {
                 builder[i] &= ~BL_WAS_BUILT;
@@ -1541,7 +1543,7 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling, void *context,
         // Scan the sectors for the next ones to spread to.
         found = false;
         lowest = numlines;
-        for(i = 0; i < numsectors; i++)
+        for(i = 0; i < numsectors; ++i)
         {
             // Only spread from built sectors (spread only once!).
             if(!(builder[i] & BL_BUILT) || builder[i] & BL_SPREADED)
@@ -1552,7 +1554,7 @@ int C_DECL XSTrav_BuildStairs(sector_t *sector, boolean ceiling, void *context,
             // Any 2-sided lines facing the right way?
             sec = P_ToPtr(DMU_SECTOR, i);
 
-            for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); k++)
+            for(k = 0; k < P_GetIntp(sec, DMU_LINE_COUNT); ++k)
             {
                 line = P_GetPtrp(sec, DMU_LINE_OF_SECTOR | k);
 
@@ -1641,7 +1643,7 @@ int C_DECL XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling, void *cont
         pic = info->iparm[3];
     else
     {
-        if(!XS_GetPlane(line, sec, info->iparm[2], -1, 0, &pic, 0))
+        if(!XS_GetPlane(line, sec, info->iparm[2], NULL, 0, &pic, 0))
             XG_Dev("XSTrav_PlaneTexture: Sector %i, couldn't find suitable texture!",
                P_ToIndex(sec));
     }
@@ -1803,10 +1805,10 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
 int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling, void *context,
                               void *context2, mobj_t *activator)
 {
-    line_t *line = (line_t *) context;
+    line_t     *line = (line_t *) context;
     linetype_t *info = context2;
-    sector_t *from = NULL;
-    int     refdata;
+    sector_t   *from = NULL;
+    uint        refdata;
 
     // Set the spref data parameter (tag or index).
     switch (info->iparm[2])
@@ -1817,12 +1819,14 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling, void *context,
     case SPREF_INDEX_CEILING:
     case SPREF_ACT_TAGGED_FLOOR:
     case SPREF_ACT_TAGGED_CEILING:
-        refdata = info->iparm[3];
+        if(info->iparm[3] >= 0)
+            refdata = info->iparm[3];
         break;
 
     case SPREF_LINE_ACT_TAGGED_FLOOR:
     case SPREF_LINE_ACT_TAGGED_CEILING:
-        refdata = info->act_tag;
+        if(info->act_tag >= 0);
+            refdata = info->act_tag;
         break;
 
     default:
@@ -1831,7 +1835,7 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling, void *context,
     }
 
     // If can't apply to a sector, just skip it.
-    if(!XS_GetPlane(line, sector, info->iparm[2], refdata, 0, 0, &from))
+    if(!XS_GetPlane(line, sector, info->iparm[2], &refdata, 0, 0, &from))
     {
         XG_Dev("XSTrav_MimicSector: No suitable neighbor " "for %i.\n",
                P_ToIndex(sector));
@@ -2666,7 +2670,7 @@ void XS_Think(sector_t *sector)
 
 void XS_Ticker(void)
 {
-    int         i;
+    uint        i;
     sector_t   *sec;
 
     for(i = 0; i < numsectors; ++i)
@@ -2725,7 +2729,7 @@ int XS_ThrustMul(struct sector_s *sector)
  */
 void XS_Update(void)
 {
-    int         i;
+    uint        i;
     xsector_t  *xsec;
 
     // It's all PU_LEVEL memory, so we can just lose it.

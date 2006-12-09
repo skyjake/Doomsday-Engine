@@ -1,5 +1,10 @@
-/* DE1: $Id$
- * Copyright (C) 2003, 2004 Jaakko Keränen <jaakko.keranen@iki.fi>
+/**\file
+ *\section Copyright and License Summary
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,7 +17,9 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
 
 /*
@@ -24,16 +31,16 @@
 
 extern int numthings;
 
-#define numvertexes DD_GetInteger(DD_VERTEX_COUNT)
-#define numsegs     DD_GetInteger(DD_SEG_COUNT)
-#define numsectors  DD_GetInteger(DD_SECTOR_COUNT)
-#define numsubsectors DD_GetInteger(DD_SUBSECTOR_COUNT)
-#define numnodes    DD_GetInteger(DD_NODE_COUNT)
-#define numlines    DD_GetInteger(DD_LINE_COUNT)
-#define numsides    DD_GetInteger(DD_SIDE_COUNT)
+#define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
+#define numsegs     (*(uint*) DD_GetVariable(DD_SEG_COUNT))
+#define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
+#define numsubsectors (*(uint*) DD_GetVariable(DD_SUBSECTOR_COUNT))
+#define numnodes    (*(uint*) DD_GetVariable(DD_NODE_COUNT))
+#define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
+#define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
 
 #if __JHEXEN__
-#define numpolyobjs DD_GetInteger(DD_POLYOBJ_COUNT)
+#define numpolyobjs (*(uint*) DD_GetInteger(DD_POLYOBJ_COUNT))
 #endif
 
 void        P_SetupLevel(int episode, int map, int playermask, skill_t skill);

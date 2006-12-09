@@ -464,22 +464,22 @@ void SV_Read(void *data, int len)
     lzRead(data, len, savefile);
 }
 
-byte SV_ReadByte()
+byte SV_ReadByte(void)
 {
     return lzGetC(savefile);
 }
 
-short SV_ReadShort()
+short SV_ReadShort(void)
 {
     return lzGetW(savefile);
 }
 
-long SV_ReadLong()
+long SV_ReadLong(void)
 {
     return lzGetL(savefile);
 }
 
-float SV_ReadFloat()
+float SV_ReadFloat(void)
 {
     long    val = lzGetL(savefile);
     float   returnValue = 0;
@@ -1535,32 +1535,32 @@ static void P_UnArchivePlayers(boolean *infile, boolean *loaded)
  */
 static void P_ArchiveWorld(void)
 {
-    int     i;
+    uint    i;
 
     // Write the texture archives.
     SV_WriteTextureArchive();
 
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
         SV_WriteSector(P_ToPtr(DMU_SECTOR, i));
 
-    for(i = 0; i < numlines; i++)
+    for(i = 0; i < numlines; ++i)
         SV_WriteLine(P_ToPtr(DMU_LINE, i));
 }
 
 static void P_UnArchiveWorld(void)
 {
-    int     i;
+    uint    i;
 
     // Save versions >= 4 include texture archives.
     if(hdr.version >= 4)
         SV_ReadTextureArchive();
 
     // Load sectors.
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
         SV_ReadSector(P_ToPtr(DMU_SECTOR, i));
 
     // Load lines.
-    for(i = 0; i < numlines; i++)
+    for(i = 0; i < numlines; ++i)
         SV_ReadLine(P_ToPtr(DMU_LINE, i));
 }
 
@@ -2417,7 +2417,7 @@ static void P_ArchiveBrain(void)
     SV_WriteByte(numbraintargets);
     SV_WriteByte(brain.targeton);
     // Write the mobj references using the mobj archive.
-    for(i = 0; i < numbraintargets; i++)
+    for(i = 0; i < numbraintargets; ++i)
         SV_WriteShort(SV_ThingArchiveNum(braintargets[i]));
 }
 
@@ -2430,7 +2430,7 @@ static void P_UnArchiveBrain(void)
 
     numbraintargets = SV_ReadByte();
     brain.targeton = SV_ReadByte();
-    for(i = 0; i < numbraintargets; i++)
+    for(i = 0; i < numbraintargets; ++i)
         braintargets[i] = SV_GetArchiveThing(SV_ReadShort());
 
     if(gamemode == commercial)
@@ -2440,7 +2440,7 @@ static void P_UnArchiveBrain(void)
 
 static void P_ArchiveSoundTargets(void)
 {
-    int         i;
+    uint        i;
     xsector_t  *xsec;
 
     // Write the total number
@@ -2461,9 +2461,9 @@ static void P_ArchiveSoundTargets(void)
 
 static void P_UnArchiveSoundTargets(void)
 {
-    int     i;
-    int     secid;
-    int     numsoundtargets;
+    uint    i;
+    uint    secid;
+    uint    numsoundtargets;
 
     // Sound Target data was introduced in ver 5
     if(hdr.version < 5)

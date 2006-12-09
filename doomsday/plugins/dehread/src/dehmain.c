@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In Zdoom, from which this code is based, it was originally under the 3 clause
@@ -371,13 +371,9 @@ void BackupData(void)
 char    com_token[8192];
 boolean com_eof;
 
-/*
-   ==============
-   COM_Parse
-
-   Parse a token out of a string
-   From ZDoom cmdlib.cpp
-   ==============
+/**
+ * Parse a token out of a string.
+ * From ZDoom cmdlib.cpp
  */
 char   *COM_Parse(char *data)
 {
@@ -608,7 +604,7 @@ void ReplaceSpecialChars(char *str)
     *str = 0;
 }
 
-char   *skipwhite(char *str)
+char *skipwhite(char *str)
 {
     if(str)
         while(*str && isspace(*str))
@@ -626,7 +622,7 @@ void stripwhite(char *str)
     end[1] = '\0';
 }
 
-char   *igets(void)
+char *igets(void)
 {
     char   *line;
 
@@ -1152,12 +1148,11 @@ int PatchSprite(int sprNum)
     return result;
 }
 
-//===========================================================================
-// DD_Realloc
-//  CRT's realloc can't access other modules' memory, so we must ask
-//  Doomsday to reallocate memory for us.
-//===========================================================================
-void   *DD_Realloc(void *ptr, int newsize)
+/**
+ * CRT's realloc can't access other modules' memory, so we must ask
+ * Doomsday to reallocate memory for us.
+ */
+void *DD_Realloc(void *ptr, int newsize)
 {
     ded_count_t cnt;
 
@@ -1608,9 +1603,6 @@ int PatchCodePtrs(int dummy)
        return result; */
 }
 
-//===========================================================================
-// ReplaceInString
-//===========================================================================
 void ReplaceInString(char *str, char *occurance, char *replacewith)
 {
     char   *buf = calloc(strlen(str) * 2, 1);
@@ -1845,9 +1837,6 @@ int PatchStrings(int dummy)
      */
 }
 
-//===========================================================================
-// DoInclude
-//===========================================================================
 int DoInclude(int dummy)
 {
     char   *data;
@@ -1914,9 +1903,6 @@ int DoInclude(int dummy)
     return GetLine();
 }
 
-//===========================================================================
-// ApplyDEH
-//===========================================================================
 void ApplyDEH(char *patch, int length)
 {
     int     cont;
@@ -1986,14 +1972,13 @@ void ApplyDEH(char *patch, int length)
 
 }
 
-//===========================================================================
-// ReadDehackedLump
-//  Reads and applies the given lump as a DEH patch.
-//===========================================================================
+/**
+ * Reads and applies the given lump as a DEH patch.
+ */
 void ReadDehackedLump(int lumpnum)
 {
-    int     len;
-    byte   *lump;
+    size_t      len;
+    byte       *lump;
 
     Con_Message("Applying Dehacked: lump %i...\n", lumpnum);
     len = W_LumpLength(lumpnum);
@@ -2003,10 +1988,9 @@ void ReadDehackedLump(int lumpnum)
     free(lump);
 }
 
-//===========================================================================
-// ReadDehacked
-//  Reads and applies the given Dehacked patch file.
-//===========================================================================
+/**
+ * Reads and applies the given Dehacked patch file.
+ */
 void ReadDehacked(char *filename)
 {
     FILE   *file;
@@ -2031,11 +2015,10 @@ void ReadDehacked(char *filename)
     free(deh);
 }
 
-//===========================================================================
-// DefsHook
-//  This will be called after the engine has loaded all definitions but
-//  before the data they contain has been initialized.
-//===========================================================================
+/**
+ * This will be called after the engine has loaded all definitions but
+ * before the data they contain has been initialized.
+ */
 int DefsHook(int hook_type, int parm, void *data)
 {
     char    temp[256];
@@ -2071,7 +2054,7 @@ int DefsHook(int hook_type, int parm, void *data)
     return true;
 }
 
-/*
+/**
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
@@ -2081,7 +2064,7 @@ void DP_Initialize(void)
 }
 
 #ifdef WIN32
-/*
+/**
  * Windows calls this when the DLL is loaded.
  */
 BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
