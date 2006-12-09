@@ -882,7 +882,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
         return; // no point rendering transparent polys...
 
     // Select the correct colors for this surface.
-    switch(mode)
+    switch(section)
     {
     case SEG_MIDDLE:
         if(side->flags & SDF_BLENDMIDTOTOP)
@@ -929,7 +929,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
         }
         break;
     default:
-        Con_Error("Rend_RenderWallSection: Invalid wall section mode %i", mode);
+        Con_Error("Rend_RenderWallSection: Invalid wall section %i", section);
     }
 
     // Make it fullbright?
@@ -937,8 +937,8 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
         quad->flags |= RPF_GLOW;
 
     // Check for neighborhood division?
-    if(!(mode == SEG_MIDDLE && seg->SG_backsector))
-        Rend_WallHeightDivision(quad, seg, frontsec, mode);
+    if(!(section == SEG_MIDDLE && seg->SG_backsector))
+        Rend_WallHeightDivision(quad, seg, frontsec, section);
 
     // Surface color/light.
     RL_VertexColors(quad, Rend_SectorLight(frontsec), colorPtr);
@@ -955,7 +955,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
     }
 
     // Dynamic lights.
-    quad->lights = DL_GetSegSectionLightLinks(segIndex, mode);
+    quad->lights = DL_GetSegSectionLightLinks(segIndex, section);
 
     // Do BIAS lighting for this poly.
     SB_RendPoly(quad, surface, frontsec, seg->illum[1],

@@ -62,7 +62,7 @@ int             Rend_MidTexturePos(float *bottomleft, float *bottomright,
                                    float *topleft, float *topright,
                                    float *texoffy, float tcyoff,
                                    boolean lower_unpeg);
-boolean         Rend_IsWallSectionPVisible(line_t* line, int section,
+boolean         Rend_IsWallSectionPVisible(line_t* line, segsection_t section,
                                            boolean backside);
 
 void            Rend_ApplyLightAdaptation(int* lightvalue);
