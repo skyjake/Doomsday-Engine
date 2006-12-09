@@ -431,7 +431,7 @@ static void SB_AddAffected(affection_t *aff, uint k, float intensity)
  * This must be called when a plane that the seg touches is moved, or
  * when a seg in a polyobj changes position.
  */
-void SB_SegHasMoved(seg_t *seg)
+void SB_SegHasMoved(struct seg_s *seg)
 {
     int     i;
 
@@ -871,9 +871,9 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * tracker          Tracker of all the changed lights for this polygon.
  * mapElementIndex  Index of the seg or subsector in the global arrays.
  */
-void SB_RendPoly(struct rendpoly_s *poly, surface_t *surface,
-                 sector_t *sector, struct vertexillum_s *illumination,
-                 biastracker_t *tracker, struct biasaffection_s *affected,
+void SB_RendPoly(struct rendpoly_s *poly, struct surface_s *surface,
+                 struct sector_s *sector, vertexillum_t *illumination,
+                 biastracker_t *tracker, biasaffection_t *affected,
                  uint mapElementIndex)
 {
     float       pos[3];
