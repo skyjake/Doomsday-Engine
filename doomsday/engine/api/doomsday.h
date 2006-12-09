@@ -93,11 +93,11 @@ extern          "C" {
     // Base: WAD.
     int             W_CheckNumForName(char *name);
     int             W_GetNumForName(char *name);
-    int             W_LumpLength(int lump);
+    size_t          W_LumpLength(int lump);
     const char     *W_LumpName(int lump);
     void            W_ReadLump(int lump, void *dest);
     void            W_ReadLumpSection(int lump, void *dest, int startoffset,
-                                      int length);
+                                      size_t length);
     void           *W_CacheLumpNum(int lump, int tag);
     void           *W_CacheLumpName(char *name, int tag);
     void            W_ChangeCacheTag(int lump, int tag);
@@ -220,9 +220,9 @@ extern          "C" {
     boolean         P_LoadMap(char *levelID);
 
     // Play: Map Data Updates and Information Access.
-    int             P_ToIndex(const void* ptr);
-    void*           P_ToPtr(int type, int index);
-    int             P_Callback(int type, int index, void* context,
+    unsigned int    P_ToIndex(const void* ptr);
+    void*           P_ToPtr(int type, uint index);
+    int             P_Callback(int type, uint index, void* context,
                                int (*callback)(void* p, void* ctx));
     int             P_Callbackp(int type, void* ptr, void* context,
                                 int (*callback)(void* p, void* ctx));
@@ -235,83 +235,83 @@ extern          "C" {
     void           *P_DummyExtraData(void* dummy);
 
     /* property manipulation functions */
-    void            P_Copy(int type, int prop, int fromIndex, int toIndex);
-    void            P_Swap(int type, int prop, int fromIndex, int toIndex);
-    void            P_Copyp(int prop, void* from, void* to);
-    void            P_Swapp(int prop, void* from, void* to);
+    void            P_Copy(int type, uint prop, uint fromIndex, uint toIndex);
+    void            P_Swap(int type, uint prop, uint fromIndex, uint toIndex);
+    void            P_Copyp(uint prop, void* from, void* to);
+    void            P_Swapp(uint prop, void* from, void* to);
 
     /* index-based write functions */
-    void            P_SetBool(int type, int index, int prop, boolean param);
-    void            P_SetByte(int type, int index, int prop, byte param);
-    void            P_SetInt(int type, int index, int prop, int param);
-    void            P_SetFixed(int type, int index, int prop, fixed_t param);
-    void            P_SetAngle(int type, int index, int prop, angle_t param);
-    void            P_SetFloat(int type, int index, int prop, float param);
-    void            P_SetPtr(int type, int index, int prop, void* param);
+    void            P_SetBool(int type, uint index, uint prop, boolean param);
+    void            P_SetByte(int type, uint index, uint prop, byte param);
+    void            P_SetInt(int type, uint index, uint prop, int param);
+    void            P_SetFixed(int type, uint index, uint prop, fixed_t param);
+    void            P_SetAngle(int type, uint index, uint prop, angle_t param);
+    void            P_SetFloat(int type, uint index, uint prop, float param);
+    void            P_SetPtr(int type, uint index, uint prop, void* param);
 
-    void            P_SetBoolv(int type, int index, int prop, boolean* params);
-    void            P_SetBytev(int type, int index, int prop, byte* params);
-    void            P_SetIntv(int type, int index, int prop, int* params);
-    void            P_SetFixedv(int type, int index, int prop, fixed_t* params);
-    void            P_SetAnglev(int type, int index, int prop, angle_t* params);
-    void            P_SetFloatv(int type, int index, int prop, float* params);
-    void            P_SetPtrv(int type, int index, int prop, void* params);
+    void            P_SetBoolv(int type, uint index, uint prop, boolean* params);
+    void            P_SetBytev(int type, uint index, uint prop, byte* params);
+    void            P_SetIntv(int type, uint index, uint prop, int* params);
+    void            P_SetFixedv(int type, uint index, uint prop, fixed_t* params);
+    void            P_SetAnglev(int type, uint index, uint prop, angle_t* params);
+    void            P_SetFloatv(int type, uint index, uint prop, float* params);
+    void            P_SetPtrv(int type, uint index, uint prop, void* params);
 
     /* pointer-based write functions */
-    void            P_SetBoolp(void* ptr, int prop, boolean param);
-    void            P_SetBytep(void* ptr, int prop, byte param);
-    void            P_SetIntp(void* ptr, int prop, int param);
-    void            P_SetFixedp(void* ptr, int prop, fixed_t param);
-    void            P_SetAnglep(void* ptr, int prop, angle_t param);
-    void            P_SetFloatp(void* ptr, int prop, float param);
-    void            P_SetPtrp(void* ptr, int prop, void* param);
+    void            P_SetBoolp(void* ptr, uint prop, boolean param);
+    void            P_SetBytep(void* ptr, uint prop, byte param);
+    void            P_SetIntp(void* ptr, uint prop, int param);
+    void            P_SetFixedp(void* ptr, uint prop, fixed_t param);
+    void            P_SetAnglep(void* ptr, uint prop, angle_t param);
+    void            P_SetFloatp(void* ptr, uint prop, float param);
+    void            P_SetPtrp(void* ptr, uint prop, void* param);
 
-    void            P_SetBoolpv(void* ptr, int prop, boolean* params);
-    void            P_SetBytepv(void* ptr, int prop, byte* params);
-    void            P_SetIntpv(void* ptr, int prop, int* params);
-    void            P_SetFixedpv(void* ptr, int prop, fixed_t* params);
-    void            P_SetAnglepv(void* ptr, int prop, angle_t* params);
-    void            P_SetFloatpv(void* ptr, int prop, float* params);
-    void            P_SetPtrpv(void* ptr, int prop, void* params);
+    void            P_SetBoolpv(void* ptr, uint prop, boolean* params);
+    void            P_SetBytepv(void* ptr, uint prop, byte* params);
+    void            P_SetIntpv(void* ptr, uint prop, int* params);
+    void            P_SetFixedpv(void* ptr, uint prop, fixed_t* params);
+    void            P_SetAnglepv(void* ptr, uint prop, angle_t* params);
+    void            P_SetFloatpv(void* ptr, uint prop, float* params);
+    void            P_SetPtrpv(void* ptr, uint prop, void* params);
 
     /* index-based read functions */
-    boolean         P_GetBool(int type, int index, int prop);
-    byte            P_GetByte(int type, int index, int prop);
-    int             P_GetInt(int type, int index, int prop);
-    fixed_t         P_GetFixed(int type, int index, int prop);
-    angle_t         P_GetAngle(int type, int index, int prop);
-    float           P_GetFloat(int type, int index, int prop);
-    void*           P_GetPtr(int type, int index, int prop);
+    boolean         P_GetBool(int type, uint index, uint prop);
+    byte            P_GetByte(int type, uint index, uint prop);
+    int             P_GetInt(int type, uint index, uint prop);
+    fixed_t         P_GetFixed(int type, uint index, uint prop);
+    angle_t         P_GetAngle(int type, uint index, uint prop);
+    float           P_GetFloat(int type, uint index, uint prop);
+    void*           P_GetPtr(int type, uint index, uint prop);
 
-    void            P_GetBoolv(int type, int index, int prop, boolean* params);
-    void            P_GetBytev(int type, int index, int prop, byte* params);
-    void            P_GetIntv(int type, int index, int prop, int* params);
-    void            P_GetFixedv(int type, int index, int prop, fixed_t* params);
-    void            P_GetAnglev(int type, int index, int prop, angle_t* params);
-    void            P_GetFloatv(int type, int index, int prop, float* params);
-    void            P_GetPtrv(int type, int index, int prop, void* params);
+    void            P_GetBoolv(int type, uint index, uint prop, boolean* params);
+    void            P_GetBytev(int type, uint index, uint prop, byte* params);
+    void            P_GetIntv(int type, uint index, uint prop, int* params);
+    void            P_GetFixedv(int type, uint index, uint prop, fixed_t* params);
+    void            P_GetAnglev(int type, uint index, uint prop, angle_t* params);
+    void            P_GetFloatv(int type, uint index, uint prop, float* params);
+    void            P_GetPtrv(int type, uint index, uint prop, void* params);
 
     /* pointer-based read functions */
-    boolean         P_GetBoolp(void* ptr, int prop);
-    byte            P_GetBytep(void* ptr, int prop);
-    int             P_GetIntp(void* ptr, int prop);
-    fixed_t         P_GetFixedp(void* ptr, int prop);
-    angle_t         P_GetAnglep(void* ptr, int prop);
-    float           P_GetFloatp(void* ptr, int prop);
-    void*           P_GetPtrp(void* ptr, int prop);
+    boolean         P_GetBoolp(void* ptr, uint prop);
+    byte            P_GetBytep(void* ptr, uint prop);
+    int             P_GetIntp(void* ptr, uint prop);
+    fixed_t         P_GetFixedp(void* ptr, uint prop);
+    angle_t         P_GetAnglep(void* ptr, uint prop);
+    float           P_GetFloatp(void* ptr, uint prop);
+    void*           P_GetPtrp(void* ptr, uint prop);
 
-    void            P_GetBoolpv(void* ptr, int prop, boolean* params);
-    void            P_GetBytepv(void* ptr, int prop, byte* params);
-    void            P_GetIntpv(void* ptr, int prop, int* params);
-    void            P_GetFixedpv(void* ptr, int prop, fixed_t* params);
-    void            P_GetAnglepv(void* ptr, int prop, angle_t* params);
-    void            P_GetFloatpv(void* ptr, int prop, float* params);
-    void            P_GetPtrpv(void* ptr, int prop, void* params);
+    void            P_GetBoolpv(void* ptr, uint prop, boolean* params);
+    void            P_GetBytepv(void* ptr, uint prop, byte* params);
+    void            P_GetIntpv(void* ptr, uint prop, int* params);
+    void            P_GetFixedpv(void* ptr, uint prop, fixed_t* params);
+    void            P_GetAnglepv(void* ptr, uint prop, angle_t* params);
+    void            P_GetFloatpv(void* ptr, uint prop, float* params);
+    void            P_GetPtrpv(void* ptr, uint prop, void* params);
 
     // Play: Polyobjs.
     void            PO_Allocate(void);
-    boolean         PO_MovePolyobj(int num, int x, int y);
-    boolean         PO_RotatePolyobj(int num, angle_t angle);
+    boolean         PO_MovePolyobj(uint num, int x, int y);
+    boolean         PO_RotatePolyobj(uint num, angle_t angle);
     void            PO_UnLinkPolyobj(void *po);
     void            PO_LinkPolyobj(void *po);
     void            PO_SetCallback(void (*func)(struct mobj_s*, void*, void*));
@@ -437,9 +437,9 @@ extern          "C" {
     void            S_StopMusic(void);
 
     // Miscellaneous.
-    int             M_ReadFile(char const *name, byte **buffer);
-    int             M_ReadFileCLib(char const *name, byte **buffer);
-    boolean         M_WriteFile(char const *name, void *source, int length);
+    size_t          M_ReadFile(char const *name, byte **buffer);
+    size_t          M_ReadFileCLib(char const *name, byte **buffer);
+    boolean         M_WriteFile(char const *name, void *source, size_t length);
     void            M_ExtractFileBase(const char *path, char *dest);
     void            M_GetFileExt(const char *path, char *ext);
     boolean         M_CheckPath(char *path);

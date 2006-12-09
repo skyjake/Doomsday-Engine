@@ -572,7 +572,6 @@ extern          "C" {
         DMU_SEG_OF_SUBSECTOR    = 0x04000000,
         // (2 bits left)
 
-        DMU_ALL = -1,
         DMU_NONE = 0,
 
         DMU_VERTEX = 1,

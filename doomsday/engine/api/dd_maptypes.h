@@ -7,36 +7,34 @@
 #define DMT_VERTEX_X            DDVT_FIXED
 #define DMT_VERTEX_Y            DDVT_FIXED
 
-#define DMT_SEG_V1 DDVT_PTR            // Start of the segment.
-#define DMT_SEG_V2 DDVT_PTR            // End of the segment.
+#define DMT_SEG_V DDVT_PTR             // [Start, End] of the segment.
 #define DMT_SEG_LENGTH DDVT_FLOAT      // Accurate length of the segment (v1 -> v2).
 #define DMT_SEG_OFFSET DDVT_FIXED
 #define DMT_SEG_SIDEDEF DDVT_PTR
 #define DMT_SEG_LINEDEF DDVT_PTR
-#define DMT_SEG_FRONTSECTOR DDVT_PTR
-#define DMT_SEG_BACKSECTOR DDVT_PTR
+#define DMT_SEG_SEC DDVT_PTR
 #define DMT_SEG_ANGLE DDVT_ANGLE
 #define DMT_SEG_FLAGS DDVT_BYTE
 
 #define DMT_SUBSECTOR_SECTOR DDVT_PTR
-#define DMT_SUBSECTOR_LINECOUNT DDVT_INT
-#define DMT_SUBSECTOR_FIRSTLINE DDVT_INT
+#define DMT_SUBSECTOR_LINECOUNT DDVT_UINT
+#define DMT_SUBSECTOR_FIRSTLINE DDVT_UINT
 #define DMT_SUBSECTOR_POLY DDVT_PTR    // NULL, if there is no polyobj.
 #define DMT_SUBSECTOR_FLAGS DDVT_BYTE
 
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_TEXTURE DDVT_SHORT
-#define DMT_SURFACE_TEXMOVE DDVT_FIXED // Texture movement X and Y.
-#define DMT_SURFACE_OFFX DDVT_FLOAT    // Texture x offset.
-#define DMT_SURFACE_OFFY DDVT_FLOAT    // Texture y offset.
+#define DMT_SURFACE_TEXMOVE DDVT_FIXED // Texture movement X and Y
+#define DMT_SURFACE_OFFX DDVT_FLOAT    // Texture x offset
+#define DMT_SURFACE_OFFY DDVT_FLOAT    // Texture y offset
 #define DMT_SURFACE_RGBA DDVT_BYTE     // Surface color tint
 
-#define DMT_PLANE_HEIGHT DDVT_FIXED    // Current height.
-#define DMT_PLANE_GLOW DDVT_FLOAT      // Glow amount.
-#define DMT_PLANE_GLOWRGB DDVT_BYTE    // Glow color.
-#define DMT_PLANE_TARGET DDVT_FIXED    // Target height.
-#define DMT_PLANE_SPEED DDVT_FIXED     // Move speed.
-#define DMT_PLANE_SOUNDORG DDVT_PTR    // Sound origin for plane.
+#define DMT_PLANE_HEIGHT DDVT_FIXED    // Current height
+#define DMT_PLANE_GLOW DDVT_FLOAT      // Glow amount
+#define DMT_PLANE_GLOWRGB DDVT_BYTE    // Glow color
+#define DMT_PLANE_TARGET DDVT_FIXED    // Target height
+#define DMT_PLANE_SPEED DDVT_FIXED     // Move speed
+#define DMT_PLANE_SOUNDORG DDVT_PTR    // Sound origin for plane
 
 #define DMT_PLANE_SECTOR        DDVT_PTR
 #define DMT_PLANE_OFFX          DDVT_FLOAT
@@ -46,23 +44,21 @@
 #define DMT_SECTOR_RGB DDVT_BYTE
 #define DMT_SECTOR_VALIDCOUNT DDVT_INT // if == validcount, already checked.
 #define DMT_SECTOR_THINGLIST DDVT_PTR  // List of mobjs in the sector.
-#define DMT_SECTOR_LINECOUNT DDVT_INT
+#define DMT_SECTOR_LINECOUNT DDVT_UINT
 #define DMT_SECTOR_LINES DDVT_PTR      // [linecount] size.
-#define DMT_SECTOR_SUBSCOUNT DDVT_INT
+#define DMT_SECTOR_SUBSCOUNT DDVT_UINT
 #define DMT_SECTOR_SUBSECTORS DDVT_PTR // [subscount] size.
 #define DMT_SECTOR_SOUNDORG DDVT_PTR
 #define DMT_SECTOR_REVERB DDVT_FLOAT
-#define DMT_SECTOR_PLANECOUNT DDVT_INT
+#define DMT_SECTOR_PLANECOUNT DDVT_UINT
 
 #define DMT_SIDE_BLENDMODE DDVT_BLENDMODE
 #define DMT_SIDE_SECTOR DDVT_PTR
 #define DMT_SIDE_FLAGS DDVT_SHORT
 
-#define DMT_LINE_V1 DDVT_PTR
-#define DMT_LINE_V2 DDVT_PTR
+#define DMT_LINE_V DDVT_PTR
 #define DMT_LINE_FLAGS DDVT_SHORT
-#define DMT_LINE_FRONTSECTOR DDVT_PTR
-#define DMT_LINE_BACKSECTOR DDVT_PTR
+#define DMT_LINE_SEC DDVT_PTR          // [front, back] sectors.
 #define DMT_LINE_DX DDVT_FIXED
 #define DMT_LINE_DY DDVT_FIXED
 #define DMT_LINE_SLOPETYPE DDVT_INT
@@ -70,7 +66,7 @@
 #define DMT_LINE_SIDES DDVT_PTR
 #define DMT_LINE_BBOX DDVT_FIXED
 
-#define DMT_POLYOBJ_NUMSEGS DDVT_INT
+#define DMT_POLYOBJ_NUMSEGS DDVT_UINT
 #define DMT_POLYOBJ_SEGS DDVT_PTR
 #define DMT_POLYOBJ_VALIDCOUNT DDVT_INT
 #define DMT_POLYOBJ_STARTSPOT DDVT_PTR

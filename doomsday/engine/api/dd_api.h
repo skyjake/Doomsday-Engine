@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -58,36 +58,6 @@ typedef struct game_import_s {
 
     // Thinker data (DO NOT CHANGE).
     thinker_t      *thinkercap;    // The head and tail of the thinker list
-
-    /*
-    // Map data, pointers to the arrays.
-    int            *numvertexes;
-    int            *numsegs;
-    int            *numsectors;
-    int            *numsubsectors;
-    int            *numnodes;
-    int            *numlines;
-    int            *numsides;
-    int            *numthings;
-    void          **vertexes;
-    void          **segs;
-    void          **sectors;
-    void          **subsectors;
-    void          **nodes;
-    void          **lines;
-    void          **sides;
-    void          **things;
-    short         **blockmaplump;
-    short         **blockmap;
-    int            *bmapwidth;
-    int            *bmapheight;
-    int            *bmaporgx;
-    int            *bmaporgy;
-    byte          **rejectmatrix;
-    void         ***polyblockmap;
-    void          **polyobjs;
-    int            *numpolyobjs;
-    */
 } game_import_t;                   // game import == engine export
 
 /*
@@ -140,30 +110,19 @@ typedef struct {
 
     // Main structure sizes.
     int             ticcmd_size;   // sizeof(ticcmd_t)
-/*
-    int             vertex_size;   // etc.
-    int             seg_size;
-    int             sector_size;
-    int             subsector_size;
-    int             node_size;
-    int             line_size;
-    int             side_size;
-    int             thing_size;
-    int             polyobj_size;
-*/
 
     // Map data setup
     // This routine is called before any data is read
     // (with the number of items to be read) to allow the
     // game do any initialization it needs (eg create an
     // array of its own private data structures).
-    void            (*SetupForMapData)      (int type, int num);
+    void            (*SetupForMapData)      (int type, uint num);
 
     // The engine calls this when the map data element id does
     // not match any internal (engine side) map data property.
     // It is assumed that it is game specifc data and that
     // the game will handle what is done with it.
-    int             (*HandleMapDataProperty) (int id, int dtype, int prop,
+    int             (*HandleMapDataProperty) (uint id, int dtype, int prop,
                                              int type, void *data);
 
     // This routine is called when trying to assign a value read
@@ -174,13 +133,13 @@ typedef struct {
     // we don't understand but the game might).
 
     // The action code returned by the game depends on the context.
-    int             (*HandleMapDataPropertyValue) (int id, int dtype, int prop,
+    int             (*HandleMapDataPropertyValue) (uint id, int dtype, int prop,
                                                    int type, void *data);
     // Post map setup
     // The engine calls this to inform the game of any changes it is
     // making to map data object to which the game might want to
     // take further action.
-    int             (*HandleMapObjectStatusReport) (int code, int id, int dtype,
+    int             (*HandleMapObjectStatusReport) (int code, uint id, int dtype,
                                                     void *data);
 } game_export_t;
 
