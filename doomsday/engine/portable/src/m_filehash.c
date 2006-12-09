@@ -70,7 +70,7 @@ typedef struct hashentry_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void    FH_AddDirectory(const char *path);
+static void FH_AddDirectory(const char *path);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
