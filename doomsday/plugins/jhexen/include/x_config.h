@@ -112,6 +112,7 @@ typedef struct {
     byte            msgShow;
     float           msgColor[3];
     byte            weaponAutoSwitch;
+    byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
     int             weaponOrder[NUMWEAPONS];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.

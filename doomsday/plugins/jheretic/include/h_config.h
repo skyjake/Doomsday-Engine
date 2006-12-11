@@ -102,6 +102,7 @@ typedef struct jheretic_config_s {
     byte            usePatchReplacement;
     byte            moveCheckZ;    // if true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;
+    byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
     int             weaponOrder[NUMWEAPONS];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.

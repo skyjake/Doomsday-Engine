@@ -121,8 +121,8 @@ desc = Exit the current level.
 [suicide]
 desc = Kill yourself. What did you think?
     
-[doomfont]
-desc = Use the Doom font in the console.
+[wolftcfont]
+desc = Use the WolfTC font in the console.
     
 [startinf]
 desc = Start an InFine script.
@@ -800,11 +800,12 @@ desc = Player movement speed while airborne.
 [player-autoswitch]
 desc = Change weapon automatically when picking one up. 1=If better 2=Always
 
+[player-autoswitch-notfiring]
+desc = 1=Disable automatic weapon switch if firing when picking one up.
+
 [player-autoswitch-ammo]
 desc = Change weapon automatically when picking up ammo. 1=If better 2=Always
 
-[player-autoswitch-berserk]
-desc = Change to fist automatically when picking up berserk pack
 
 [player-weapon-order0]
 desc = Weapon change order, slot 0.

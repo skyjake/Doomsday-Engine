@@ -287,6 +287,7 @@ void D_PreInit(void)
     cfg.jumpPower = 9;
     cfg.airborneMovement = 1;
     cfg.weaponAutoSwitch = 1; // IF BETTER
+    cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
     cfg.secretMsg = true;
     cfg.netJumping = true;

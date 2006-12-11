@@ -154,6 +154,8 @@ cvar_t  gameCVars[] = {
     {"player-autoswitch", 0, CVT_BYTE, &cfg.weaponAutoSwitch, 0, 2},
     {"player-autoswitch-ammo", 0, CVT_BYTE, &cfg.ammoAutoSwitch, 0, 2},
     {"player-autoswitch-berserk", 0, CVT_BYTE, &cfg.berserkAutoSwitch, 0, 1},
+    {"player-autoswitch-notfiring", 0, CVT_BYTE,
+        &cfg.noWeaponAutoSwitchIfFiring, 0, 1},
 
     // Weapon Order preferences
     {"player-weapon-order0", 0, CVT_INT, &cfg.weaponOrder[0], 0, NUMWEAPONS},

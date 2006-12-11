@@ -177,8 +177,8 @@ void P_ShotAmmo(player_t *player)
 weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                                  ammotype_t ammo, boolean force)
 {
-    int i, lvl, pclass;
-    ammotype_t ammotype;
+    int         i, lvl, pclass;
+    ammotype_t  ammotype;
     weapontype_t candidate;
     weapontype_t returnval = WP_NOCHANGE;
     weaponinfo_t *winf;
@@ -244,32 +244,41 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     }
     else if(weapon != WP_NOCHANGE) // Player was given a NEW weapon.
     {
-        // Should we change weapon automatically?
-        if(cfg.weaponAutoSwitch == 2 || force)
-        {   // Always change weapon mode
+        // A forced weapon change?
+        if(force)
+        {
             returnval = weapon;
         }
-        else if(cfg.weaponAutoSwitch == 1)
-        {   // Change if better mode
+        // Is the player currently firing?
+        else if(!(player->cmd.attack && cfg.noWeaponAutoSwitchIfFiring))
+        {
+            // Should we change weapon automatically?
+            if(cfg.weaponAutoSwitch == 2)
+            {   // Always change weapon mode
+                returnval = weapon;
+            }
+            else if(cfg.weaponAutoSwitch == 1)
+            {   // Change if better mode
 
-            // Iterate the weapon order array and see if a weapon change
-            // should be made. Preferences are user selectable.
-            for(i=0; i < NUMWEAPONS; ++i)
-            {
-                candidate = cfg.weaponOrder[i];
-                winf = &weaponinfo[candidate][pclass];
+                // Iterate the weapon order array and see if a weapon change
+                // should be made. Preferences are user selectable.
+                for(i=0; i < NUMWEAPONS; ++i)
+                {
+                    candidate = cfg.weaponOrder[i];
+                    winf = &weaponinfo[candidate][pclass];
 
-                // Is candidate available in this game mode?
-                if(!(winf->mode[lvl].gamemodebits & gamemodebits))
-                    continue;
+                    // Is candidate available in this game mode?
+                    if(!(winf->mode[lvl].gamemodebits & gamemodebits))
+                        continue;
 
-                if(weapon == candidate)
-                {   // weapon has a higher priority than the readyweapon.
-                    returnval = weapon;
-                }
-                else if(player->readyweapon == candidate)
-                {   // readyweapon has a higher priority so don't change.
-                    break;
+                    if(weapon == candidate)
+                    {   // weapon has a higher priority than the readyweapon.
+                        returnval = weapon;
+                    }
+                    else if(player->readyweapon == candidate)
+                    {   // readyweapon has a higher priority so don't change.
+                        break;
+                    }
                 }
             }
         }
