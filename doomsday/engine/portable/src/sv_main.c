@@ -340,6 +340,10 @@ void Sv_HandlePacket(void)
     int     msgfrom;
     char   *msg;
     char    buf[17];
+    
+#ifdef _DEBUG
+    Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
+#endif
 
     switch(netBuffer.msg.type)
     {
@@ -347,8 +351,7 @@ void Sv_HandlePacket(void)
     case PCL_HELLO2:
         // Get the ID of the client.
         id = Msg_ReadLong();
-        Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n", from,
-                   id);
+        Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n", from, id);
 
         // Check for duplicate IDs.
         if(!pl->ingame && !sender->handshake)

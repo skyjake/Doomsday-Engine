@@ -331,7 +331,7 @@ static int C_DECL N_UDPReceiver(void *parm)
 {
     SDLNet_SocketSet set;
     UDPpacket *packet = NULL;
-
+    
     // Put the UDP socket in our socket set so we can wait for it.
     set = SDLNet_AllocSocketSet(1);
     SDLNet_UDP_AddSocket(set, inSock);
@@ -430,7 +430,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     UDPpacket *packet = NULL;
     int     bytes = 0;
     boolean error, read;
-
+    
     // TODO: What if we get one byte? How come we are here if there's nothing
     // to receive?
     if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
@@ -474,6 +474,10 @@ boolean N_ReceiveReliably(nodeid_t from)
         msg->data = packet->data;
         msg->size = size;
         msg->handle = packet;
+        
+#ifdef _DEBUG
+        VERBOSE2(Con_Message("N_ReceiveReliably: Posting message, from=%i, size=%i\n", from, size));
+#endif
 
         // The message queue will handle the message from now on.
         N_PostMessage(msg);
@@ -1207,8 +1211,9 @@ boolean N_LookForHosts(const char *address, int port)
     {
         int     result;
 
-        if(strstr(Str_Text(response), "END\n"))
+        if(!strstr(Str_Text(response), "END\n"))
         {
+            memset(buf, 0, sizeof(buf));
             result = SDLNet_TCP_Recv(sock, buf, sizeof(buf) - 1);
 
             if(result > 0)

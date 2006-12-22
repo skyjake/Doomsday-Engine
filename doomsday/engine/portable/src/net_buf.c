@@ -178,7 +178,7 @@ netmessage_t *N_GetMessage(void)
 {
     // This is the message we'll return.
     netmessage_t *msg = NULL;
-
+    
     N_LockQueue(true);
     if(msgHead != NULL)
     {
@@ -347,10 +347,8 @@ uint N_IdentifyPlayer(nodeid_t id)
 netmessage_t *N_GetNextMessage(void)
 {
     netmessage_t *msg;
-    boolean     found;
 
-    found = false;
-    while((msg = N_GetMessage()) != NULL && !found)
+    while((msg = N_GetMessage()) != NULL)
     {
         if(msg->player < 0)
         {
@@ -372,14 +370,10 @@ Con_Printf("N_GetNextMessage: Unknown sender, skipped...\n");
             N_ReturnBuffer(msg->handle);
             msg->handle = NULL;
 
-            found = true;
+            return msg;
         }
     }
-
-    if(found)
-        return msg;
-    else
-        return NULL; // There are no more messages.
+    return NULL; // There are no more messages.
 }
 
 /**
@@ -405,7 +399,7 @@ boolean N_GetPacket(void)
         // No messages at this time.
         return false;
     }
-
+    
     // There was a packet!
 /*
 #if _DEBUG

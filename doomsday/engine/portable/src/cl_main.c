@@ -127,14 +127,19 @@ void Cl_CleanUp()
  */
 void Cl_SendHello(void)
 {
-    char    buf[16];
+    char    buf[256];
 
     Msg_Begin(PCL_HELLO2);
     Msg_WriteLong(clientID);
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
-    strncpy(buf, (char *) gx.GetVariable(DD_GAME_MODE), sizeof(buf));
+    strncpy(buf, (char *) gx.GetVariable(DD_GAME_MODE), sizeof(buf) - 1);
+
+#ifdef _DEBUG
+    Con_Message("Cl_SendHello: game mode = %s\n", buf);
+#endif
+    
     Msg_Write(buf, 16);
 
     Net_SendBuffer(0, SPF_ORDERED);

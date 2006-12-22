@@ -363,11 +363,13 @@ int S_StartSound(int soundId, mobj_t *origin)
 
 /**
  * Play a world sound. The sound is sent to all players except the one who
- * owns the origin mobj. It is assumed at the owner of the origin has already
- * played the sound locally.
+ * owns the origin mobj. The server assumes that the owner of the origin plays
+ * the sound locally, which is done here, in the end of S_StartSoundEx().
  *
  * @param soundId  Id of the sound.
  * @param origin   Origin mobj for the sound.
+ *
+ * @return  Nonzero if a sound was successfully started.
  */
 int S_StartSoundEx(int soundId, mobj_t *origin)
 {
