@@ -143,4 +143,18 @@ typedef unsigned char binangle_t;
 #define DDMININT 	((int)0x80000000)	// max negative 32-bit integer
 #define DDMINLONG	((long)0x80000000)
 
+// Predeclarations for map data types. The contents of these structs is
+// declared in p_maptypes.h.
+struct node_s; 
+struct vertex_s;
+struct line_s; 
+struct side_s; 
+struct seg_s;
+struct subsector_s;
+struct sector_s;
+struct polyblock_s;
+struct polyobj_s;
+struct surface_s;
+struct plane_s; 
+
 #endif
