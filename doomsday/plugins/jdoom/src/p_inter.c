@@ -826,6 +826,13 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     // any non-player mob)
     int     damage = damageP;
 
+    if(IS_NETGAME && !stomping &&
+       D_NetDamageMobj(target, inflictor, source, damage))
+    {
+        // We're done here.
+        return;
+    }
+    
     // Clients can't harm anybody.
     if(IS_CLIENT)
         return;

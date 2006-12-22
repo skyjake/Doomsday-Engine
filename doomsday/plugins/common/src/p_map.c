@@ -1,3 +1,13 @@
+/**
+ *\section Copyright and License Summary
+ * License: GPL + jHeretic/jHexen Exception
+ *
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 1993-1996 by id Software, Inc.
+ */
+
 /* $Id: p_start.c 3509 2006-08-09 15:06:59Z danij $
  *
  * Copyright (C) 1993-1996 by id Software, Inc.
@@ -396,7 +406,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *data)
     // don't clip against self
     if(thing == tmthing)
         return true;
-
+    
     if(!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) ||
        P_IsCamera(thing) || P_IsCamera(tmthing))
         return true;
@@ -1079,7 +1089,12 @@ boolean P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
         for(bx = xl; bx <= xh; bx++)
             for(by = yl; by <= yh; by++)
                 if(!P_BlockThingsIterator(bx, by, PIT_CheckThing, 0))
-                    return false;
+                    return false;                    
+#ifdef _DEBUG
+        if(thing->onmobj)
+            Con_Message("thing->onmobj = %p (solid:%i)\n", thing->onmobj,
+                        (thing->onmobj->flags & MF_SOLID)!=0);
+#endif
 #if __JHEXEN__
     }
 #endif
@@ -2662,7 +2677,7 @@ static boolean PIT_CheckOnmobjZ(mobj_t *thing, void *data)
     return (!(thing->flags & MF_SOLID));
 }
 
-mobj_t *P_CheckOnmobj(mobj_t *thing)
+mobj_t *P_CheckOnMobj(mobj_t *thing)
 {
     int     xl, xh, yl, yh, bx, by;
     subsector_t *newsubsec;

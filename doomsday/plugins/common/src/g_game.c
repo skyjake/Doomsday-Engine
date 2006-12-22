@@ -1,3 +1,13 @@
+/**
+ *\section Copyright and License Summary
+ * License: GPL + jHeretic/jHexen Exception
+ *
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 1993-1996 by id Software, Inc.
+ */
+
 /* $Id$
  *
  * Copyright (C) 1993-1996 by id Software, Inc.
@@ -1046,7 +1056,12 @@ void ClearPlayer(player_t *p)
     int     playeringame = ddplayer->ingame;
     int     flags = ddplayer->flags;
     int     start = p->startspot;
+    fixcounters_t counter, acked;
 
+    // Restore counters.
+    counter = ddplayer->fixcounter;
+    acked = ddplayer->fixacked;
+    
     memset(p, 0, sizeof(*p));
     // Restore the pointer to ddplayer.
     p->plr = ddplayer;
@@ -1059,10 +1074,23 @@ void ClearPlayer(player_t *p)
     ddplayer->flags = flags & ~(DDPF_INTERYAW | DDPF_INTERPITCH);
     // Don't clear the start spot.
     p->startspot = start;
-
-    ddplayer->fixacked.angles =
+    // Restore counters.
+    ddplayer->fixcounter = counter;
+    ddplayer->fixacked = acked;
+    
+    ddplayer->fixcounter.angles++;
+    ddplayer->fixcounter.pos++;
+    ddplayer->fixcounter.mom++;
+    
+/*    ddplayer->fixacked.angles =
         ddplayer->fixacked.pos =
         ddplayer->fixacked.mom = -1;
+#ifdef _DEBUG
+    Con_Message("ClearPlayer: fixacked set to -1 (counts:%i, %i, %i)\n",
+                ddplayer->fixcounter.angles,
+                ddplayer->fixcounter.pos,
+                ddplayer->fixcounter.mom);
+#endif*/
 }
 
 /*

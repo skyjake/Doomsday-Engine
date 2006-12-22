@@ -598,6 +598,44 @@ void D_NetMessageNoSound(char *msg)
     D_NetMessageEx(msg, false);
 }
 
+/**
+ * Issues a damage request when a client is trying to damage another player's
+ * mobj.
+ *
+ * @return  True, if no further processing of the damage should be done.
+ *          False to process damage as normally.
+ */
+boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+                        int damage)
+{
+    if(!source || !source->player)
+    {
+        return false;
+    }
+    
+    if(IS_SERVER && source->player - players > 0)
+    {
+        // A client is trying to do damage.
+#ifdef _DEBUG
+        Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
+#endif
+        return true;
+    }
+    else if(IS_CLIENT && source->player - players == consoleplayer)
+    {
+#ifdef _DEBUG
+        Con_Message("P_DamageMobj2: Client should request damage on mobj %p.\n", target);
+#endif
+        return true;
+    }
+
+#ifdef _DEBUG
+    Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
+#endif
+    // Process as normal damage.
+    return false;
+}
+
 /*
  * Console command to change the players' colors.
  */
