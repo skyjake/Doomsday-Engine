@@ -15,6 +15,7 @@
 		B05FA5FA0A8A7C1500A9FE0E /* tree.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tree.py; path = sb/widget/tree.py; sourceTree = "<group>"; };
 		B05FA6200A8A80E900A9FE0E /* tab.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab.py; path = sb/widget/tab.py; sourceTree = "<group>"; };
 		B05FA62A0A8A81D500A9FE0E /* list.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = list.py; path = sb/widget/list.py; sourceTree = "<group>"; };
+		B083EBAE0A9857CB00E1CEED /* setting.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = setting.py; path = sb/setting.py; sourceTree = "<group>"; };
 		B0AC1B480A8CD4B60095D788 /* profile.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = profile.py; path = sb/profile.py; sourceTree = "<group>"; };
 		B0AC1B500A8CD5730095D788 /* profdb.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = profdb.py; path = sb/profdb.py; sourceTree = "<group>"; };
 		B0AC1BD30A8CDD5D0095D788 /* __init__.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = __init__.py; path = sb/__init__.py; sourceTree = "<group>"; };
@@ -74,6 +75,7 @@
 				B0E38AB30A8BB6E800C553A3 /* expressions.py */,
 				B0AC1B500A8CD5730095D788 /* profdb.py */,
 				B0AC1B480A8CD4B60095D788 /* profile.py */,
+				B083EBAE0A9857CB00E1CEED /* setting.py */,
 				B05FA5F90A8A7BFE00A9FE0E /* util */,
 				B05FA5F80A8A7BF600A9FE0E /* widget */,
 			);
