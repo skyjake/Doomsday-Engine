@@ -918,8 +918,8 @@ extern          "C" {
     byte            translucency;       /* default = 0 = opaque */ \
     short           vistarget;          /* -1 = mobj is becoming less visible, */ \
                                         /* 0 = no change, 2= mobj is becoming more visible */ \
-    int             reactiontime;       /* if not zero, freeze controls */
-
+    int             reactiontime;       /* if not zero, freeze controls */ 
+    //struct ddplayer_s *netexplayer;     /* player who should not detect the object in netgames */
 
     typedef struct ddmobj_base_s {
     DD_BASE_MOBJ_ELEMENTS()} ddmobj_base_t;
@@ -1150,7 +1150,7 @@ typedef enum blendmode_e {
         CMDS_DDAY,    // Sent by the engine
         CMDS_GAME,    // Sent by the game dll
         CMDS_CONSOLE, // Sent via direct console input
-        CMDS_BIND ,   // Sent from a binding/alias
+        CMDS_BIND,    // Sent from a binding/alias
         CMDS_CONFIG,  // Sent via config file
         CMDS_PROFILE, // Sent via player profile
         CMDS_CMDLINE, // Sent via the command line
