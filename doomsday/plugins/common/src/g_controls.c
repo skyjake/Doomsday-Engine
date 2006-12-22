@@ -1,3 +1,13 @@
+/**
+ *\section Copyright and License Summary
+ * License: GPL + jHeretic/jHexen Exception
+ *
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 1993-1996 by id Software, Inc.
+ */
+
 /* $Id$
  *
  * Copyright (C) 1993-1996 by id Software, Inc.
