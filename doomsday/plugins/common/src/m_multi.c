@@ -1,6 +1,12 @@
-/* $Id$
+/**
+ *\section Copyright and License Summary
+ * License: GPL
  *
- * Copyright (C) 1993-1996 by id Software, Inc.
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2000-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ */
+
+/* $Id$
  *
  * This source is available for distribution and/or modification
  * only under the terms of the DOOM Source Code License as
