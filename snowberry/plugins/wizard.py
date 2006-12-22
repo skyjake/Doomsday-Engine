@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-## @file Configuration Wizard
+## @file wizard.py Configuration Wizard
 
 import ui, paths, events, language, sb.util.dialog
 from sb.util.dialog import WizardPage, WizardDialog

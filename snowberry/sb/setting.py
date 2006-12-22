@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-## @file settings.py Settings and Components
+## @file setting.py Settings and Components
 ## 
 ## This module contains the classes that manage all the available
 ## settings and components.  The actual configuration with which
