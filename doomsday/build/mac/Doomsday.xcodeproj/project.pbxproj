@@ -244,6 +244,9 @@
 		B0AC1EF90A8F11800095D788 /* p_map.c in Sources */ = {isa = PBXBuildFile; fileRef = B0AC1EF60A8F11800095D788 /* p_map.c */; };
 		B0AE9D0709839BE1008EFFD0 /* p_mapsetup.c in Sources */ = {isa = PBXBuildFile; fileRef = B04027ED0982F53A00C5F03E /* p_mapsetup.c */; };
 		B0AE9D0809839BE2008EFFD0 /* p_mapsetup.c in Sources */ = {isa = PBXBuildFile; fileRef = B04027ED0982F53A00C5F03E /* p_mapsetup.c */; };
+		B0BEDB800B3B40620096F91C /* con_data.c in Sources */ = {isa = PBXBuildFile; fileRef = B0BEDB7D0B3B40620096F91C /* con_data.c */; };
+		B0BEDB810B3B40620096F91C /* gl_texmanager.c in Sources */ = {isa = PBXBuildFile; fileRef = B0BEDB7E0B3B40620096F91C /* gl_texmanager.c */; };
+		B0BEDB820B3B40620096F91C /* rend_console.c in Sources */ = {isa = PBXBuildFile; fileRef = B0BEDB7F0B3B40620096F91C /* rend_console.c */; };
 		B0C8F44C0A3F10FC00CFA4A5 /* DoomsdayRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = B0C8F4490A3F10FC00CFA4A5 /* DoomsdayRunner.m */; };
 		B0C8F44D0A3F10FC00CFA4A5 /* SDLMain.m in Sources */ = {isa = PBXBuildFile; fileRef = B0C8F44A0A3F10FC00CFA4A5 /* SDLMain.m */; };
 		B0C8F44E0A3F10FC00CFA4A5 /* StartupWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = B0C8F44B0A3F10FC00CFA4A5 /* StartupWindowController.m */; };
@@ -584,7 +587,6 @@
 		B0F1790E087C5A230051F24A /* sys_findfile.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8BB06B41788005824AD /* sys_findfile.c */; };
 		B0F1790F087C5A230051F24A /* sys_input.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8BC06B41788005824AD /* sys_input.c */; };
 		B0F17910087C5A230051F24A /* sys_mixer.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8BD06B41788005824AD /* sys_mixer.c */; };
-		B0F17911087C5A230051F24A /* sys_musd_fmod.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8BE06B41788005824AD /* sys_musd_fmod.c */; };
 		B0F17912087C5A230051F24A /* sys_network.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8BF06B41788005824AD /* sys_network.c */; };
 		B0F17913087C5A230051F24A /* sys_path.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8C006B41788005824AD /* sys_path.c */; };
 		B0F17914087C5A230051F24A /* sys_sfxd_dummy.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8C106B41788005824AD /* sys_sfxd_dummy.c */; };
@@ -1108,7 +1110,6 @@
 		B02AC8BB06B41788005824AD /* sys_findfile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_findfile.c; path = ../../engine/unix/src/sys_findfile.c; sourceTree = SOURCE_ROOT; };
 		B02AC8BC06B41788005824AD /* sys_input.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_input.c; path = ../../engine/unix/src/sys_input.c; sourceTree = SOURCE_ROOT; };
 		B02AC8BD06B41788005824AD /* sys_mixer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_mixer.c; path = ../../engine/unix/src/sys_mixer.c; sourceTree = SOURCE_ROOT; };
-		B02AC8BE06B41788005824AD /* sys_musd_fmod.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_musd_fmod.c; path = ../../engine/unix/src/sys_musd_fmod.c; sourceTree = SOURCE_ROOT; };
 		B02AC8BF06B41788005824AD /* sys_network.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_network.c; path = ../../engine/portable/src/sys_network.c; sourceTree = SOURCE_ROOT; };
 		B02AC8C006B41788005824AD /* sys_path.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_path.c; path = ../../engine/unix/src/sys_path.c; sourceTree = SOURCE_ROOT; };
 		B02AC8C106B41788005824AD /* sys_sfxd_dummy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_sfxd_dummy.c; path = ../../engine/portable/src/sys_sfxd_dummy.c; sourceTree = SOURCE_ROOT; };
@@ -1173,6 +1174,9 @@
 		B0B436BF0AA23E0100B06DCF /* packres.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = packres.py; path = ../scripts/packres.py; sourceTree = SOURCE_ROOT; };
 		B0B436C00AA23E0100B06DCF /* wadcompiler.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = wadcompiler.py; path = ../scripts/wadcompiler.py; sourceTree = SOURCE_ROOT; };
 		B0BBED3007DB998600663713 /* deng.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = deng.icns; path = ../../engine/mac/res/deng.icns; sourceTree = SOURCE_ROOT; };
+		B0BEDB7D0B3B40620096F91C /* con_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = con_data.c; path = ../../engine/portable/src/con_data.c; sourceTree = SOURCE_ROOT; };
+		B0BEDB7E0B3B40620096F91C /* gl_texmanager.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gl_texmanager.c; path = ../../engine/portable/src/gl_texmanager.c; sourceTree = SOURCE_ROOT; };
+		B0BEDB7F0B3B40620096F91C /* rend_console.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rend_console.c; path = ../../engine/portable/src/rend_console.c; sourceTree = SOURCE_ROOT; };
 		B0C8F4490A3F10FC00CFA4A5 /* DoomsdayRunner.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DoomsdayRunner.m; path = ../../engine/mac/src/DoomsdayRunner.m; sourceTree = SOURCE_ROOT; };
 		B0C8F44A0A3F10FC00CFA4A5 /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SDLMain.m; path = ../../engine/mac/src/SDLMain.m; sourceTree = SOURCE_ROOT; };
 		B0C8F44B0A3F10FC00CFA4A5 /* StartupWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = StartupWindowController.m; path = ../../engine/mac/src/StartupWindowController.m; sourceTree = SOURCE_ROOT; };
@@ -1470,6 +1474,9 @@
 		29B97315FDCFA39411CA2CEA /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B0BEDB7D0B3B40620096F91C /* con_data.c */,
+				B0BEDB7E0B3B40620096F91C /* gl_texmanager.c */,
+				B0BEDB7F0B3B40620096F91C /* rend_console.c */,
 				B0DAE5BD09823D6C000A8265 /* template.c.template */,
 				B08174000A88FD2C0081B2E1 /* m_md5.c */,
 				B0A905540A45357D00DD2583 /* cl_oldframe.c */,
@@ -1590,7 +1597,6 @@
 				B02AC8BB06B41788005824AD /* sys_findfile.c */,
 				B02AC8BC06B41788005824AD /* sys_input.c */,
 				B02AC8BD06B41788005824AD /* sys_mixer.c */,
-				B02AC8BE06B41788005824AD /* sys_musd_fmod.c */,
 				B02AC8BF06B41788005824AD /* sys_network.c */,
 				B02AC8C006B41788005824AD /* sys_path.c */,
 				B02AC8C106B41788005824AD /* sys_sfxd_dummy.c */,
@@ -3068,7 +3074,6 @@
 				B0F1790E087C5A230051F24A /* sys_findfile.c in Sources */,
 				B0F1790F087C5A230051F24A /* sys_input.c in Sources */,
 				B0F17910087C5A230051F24A /* sys_mixer.c in Sources */,
-				B0F17911087C5A230051F24A /* sys_musd_fmod.c in Sources */,
 				B0F17912087C5A230051F24A /* sys_network.c in Sources */,
 				B0F17913087C5A230051F24A /* sys_path.c in Sources */,
 				B0F17914087C5A230051F24A /* sys_sfxd_dummy.c in Sources */,
@@ -3090,6 +3095,9 @@
 				B0A904F90A452FAA00DD2583 /* cl_oldworld.c in Sources */,
 				B0A905550A45357D00DD2583 /* cl_oldframe.c in Sources */,
 				B08174010A88FD2C0081B2E1 /* m_md5.c in Sources */,
+				B0BEDB800B3B40620096F91C /* con_data.c in Sources */,
+				B0BEDB810B3B40620096F91C /* gl_texmanager.c in Sources */,
+				B0BEDB820B3B40620096F91C /* rend_console.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
