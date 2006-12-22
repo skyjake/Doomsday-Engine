@@ -1,3 +1,11 @@
+/**\file
+*\section Copyright and License Summary
+* License: GPL
+*
+*\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+*\author Copyright © 1993-1996 by id Software, Inc.
+*/
+
 /* DE1: $Id$
  * Copyright (C) 2003, 2004 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,8 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not: http://www.opensource.org/
- *
- * Based on Hexen by Raven Software, and Doom by id Software.
  */
 
 /*

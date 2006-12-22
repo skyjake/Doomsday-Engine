@@ -1,3 +1,10 @@
+/**\file
+ *\section Copyright and License Summary
+ * License: GPL
+ *
+ *\author Copyright © 2000-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ */
+
 //===========================================================================
 // SYS_MIXER.H
 //===========================================================================

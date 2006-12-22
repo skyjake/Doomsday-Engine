@@ -1,3 +1,12 @@
+/**\file
+ *\section Copyright and License Summary
+ * License: LGPL
+ *
+ *\author Copyright © 2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © Max Horn <max@quendi.de>
+ *\author Copyright © Darrell Walisser <dwaliss1@purdue.edu>
+ */
+
 /*   SDLMain.m - main entry point for our Cocoa-ized SDL app
        Initial Version: Darrell Walisser <dwaliss1@purdue.edu>
        Non-NIB-Code & other changes: Max Horn <max@quendi.de>
