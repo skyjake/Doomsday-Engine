@@ -1409,6 +1409,7 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
     }
 
     th->target = source;        // where it came from
+    //if(source->player) th->netexplayer = source->player->plr;
     th->angle = an;
     an >>= ANGLETOFINESHIFT;
     th->momx = FixedMul(th->info->speed, finecosine[an]);
