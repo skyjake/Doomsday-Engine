@@ -619,7 +619,9 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 #ifdef _DEBUG
         Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
 #endif
-        return true;
+        // TODO: Damage requests have not been fully implemented yet.
+        return false;
+        //return true;
     }
     else if(IS_CLIENT && source->player - players == consoleplayer)
     {
