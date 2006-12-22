@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-## @file tab1_summary.py Summary Tab
+## @file tab10_summary.py Summary Tab
 ##
 ## This plugin implements the Summary tab.  It displays a basic
 ## summarization of the settings in the active profile.

@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-## @file tab_maps.py Maps Tab
+## @file tab20_maps.py Maps Tab
 ##
 ## This plugin displays a list of all WAD addons that contain maps.
 ## Selections are equivalent to the Addons tab, but they are presented

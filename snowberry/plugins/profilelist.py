@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
+## @file profilelist.py Profile List
+
 import ui, events
 import sb.util.dialog
 import sb.widget.button as wg

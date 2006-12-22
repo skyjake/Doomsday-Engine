@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
+## @file tab40_settings.py Settings Tab
+
 import ui, events
 import sb.confdb as st
 import sb.profdb as pr

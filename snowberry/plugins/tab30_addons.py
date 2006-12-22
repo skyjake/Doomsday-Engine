@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-## @file tab_addons.py Addons Tab
+## @file tab30_addons.py Addons Tab
 ##
 ## This plugin handles commands and notifications from the addons
 ## tree.  It also implements the load order dialog, the addon
