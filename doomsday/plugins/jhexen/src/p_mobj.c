@@ -72,7 +72,7 @@
 
 void    G_PlayerReborn(int player);
 void    P_MarkAsLeaving(mobj_t *corpse);
-mobj_t *P_CheckOnmobj(mobj_t *thing);
+mobj_t *P_CheckOnMobj(mobj_t *thing);
 void    P_BounceWall(mobj_t *mo);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -1246,7 +1246,7 @@ void P_MobjThinker(mobj_t *mobj)
     {                           // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
         {
-            onmo = P_CheckOnmobj(mobj);
+            onmo = P_CheckOnMobj(mobj);
             if(!onmo)
             {
                 P_ZMovement(mobj);
