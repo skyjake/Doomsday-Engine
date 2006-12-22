@@ -526,7 +526,7 @@ void LG_Init(void)
         }
 
         assert(a == changedCount);
-        assert(b == info->blockcount);
+        //assert(b == info->blockcount);
     }
 
     M_Free(indexBitfield);
