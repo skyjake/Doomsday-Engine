@@ -622,6 +622,7 @@ DEFCC(CCmdSetCamera)
     player->plr->flags ^= DDPF_CAMERA;
 
     if(player->plr->ingame)
+    {
         if(player->plr->flags & DDPF_CAMERA)
         {   // Is now a camera.
             if(player->plr->mo)
@@ -632,7 +633,7 @@ DEFCC(CCmdSetCamera)
             if(player->plr->mo)
                 player->plr->mo->pos[VZ] -= player->plr->viewheight;
         }
-
+    }
     return true;
 }
 
