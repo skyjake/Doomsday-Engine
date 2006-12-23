@@ -1191,15 +1191,15 @@ static void R_BuildVertexOwners(void)
 lineowner_t *base;
 uint        idx;
 
-Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners);
+VERBOSE2( Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners) );
 p = base = v->lineowners;
 idx = 0;
 do
 {
-    Con_Message("  %i: p = %i, this = %i, n = %i\n", idx,
-                GET_LINE_IDX(p->prev->line),
-                GET_LINE_IDX(p->line),
-                GET_LINE_IDX(p->next->line));
+    VERBOSE2( Con_Message("  %i: p = %i, this = %i, n = %i\n", idx,
+                          GET_LINE_IDX(p->prev->line),
+                          GET_LINE_IDX(p->line),
+                          GET_LINE_IDX(p->next->line)) );
     p = p->next;
     idx++;
 } while(p != base);
@@ -2596,7 +2596,7 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
 void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
 {
     int         texFlags, oldTexFlags;
-
+   
     // Any change to the texture or glow properties?
     // TODO: Implement Decoration{ Glow{}} definitions.
     texFlags =
