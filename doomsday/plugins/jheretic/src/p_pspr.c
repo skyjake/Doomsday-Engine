@@ -1145,15 +1145,15 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
  */
 void P_BulletSlope(mobj_t *mo)
 {
-    angle_t an;
-    boolean dontAim = cfg.noAutoAim;
+    angle_t an = mo->angle;
 
-    // see which target is to be aimed at
-    an = mo->angle;
-    bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
-    if(!cfg.noAutoAim)
+    if(!cfg.noAutoAim) // Autoaiming enabled.
+    {
+        // See which target is to be aimed at.
+        bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
         if(!linetarget)
         {
+            // No target yet, look closer.
             an += 1 << 26;
             bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
             if(!linetarget)
@@ -1161,14 +1161,17 @@ void P_BulletSlope(mobj_t *mo)
                 an -= 2 << 26;
                 bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT);
             }
-
-            if(!linetarget)
-            {
-                an += 2 << 26;
-                bulletslope =
-                    FRACUNIT * (tan(LOOKDIR2RAD(mo->dplayer->lookdir)) / 1.2);
-            }
         }
+        if(linetarget)
+        {
+            // Found a target, we're done.
+            return;
+        }
+    }
+
+    // Fall back to manual aiming by lookdir.
+    bulletslope =
+        FRACUNIT * (tan(LOOKDIR2RAD(mo->dplayer->lookdir)) / 1.2);
 }
 
 void C_DECL A_BeakAttackPL1(player_t *player, pspdef_t * psp)
