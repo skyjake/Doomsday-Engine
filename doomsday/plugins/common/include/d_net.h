@@ -190,6 +190,8 @@ int             D_NetServerStarted(int before);
 int             D_NetConnect(int before);
 int             D_NetDisconnect(int before);
 long int        D_NetPlayerEvent(int plrNumber, int peType, void *data);
+boolean         D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+                                int damage);
 int             D_NetWorldEvent(int type, int tic, void *data);
 void            D_HandlePacket(int fromplayer, int type, void *data,
                                int length);

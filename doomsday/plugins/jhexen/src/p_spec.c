@@ -802,7 +802,7 @@ void P_UpdateSpecials(void)
             if(!button->btimer)
             {
                 side_t     *sdef = P_GetPtrp(button->line, DMU_SIDE0);
-                sector_t   *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
+                //sector_t *frontsector = P_GetPtrp(button->line, DMU_FRONT_SECTOR);
 
                 switch(button->where)
                 {

@@ -938,7 +938,7 @@ sector_t *XS_FindActTagged(int tag)
 boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
                     int *height, int *pic, sector_t **planesector)
 {
-    int         idx;
+    int         idx = 0;
     uint        num;
     int         heights[MAX_VALS], pics[MAX_VALS];
     sector_t   *sectorlist[MAX_VALS];

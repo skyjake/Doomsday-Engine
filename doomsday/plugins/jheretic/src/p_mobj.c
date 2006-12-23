@@ -1602,10 +1602,10 @@ boolean P_CheckMissileSpawn(mobj_t *missile)
 mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 {
     fixed_t     pos[3];
-    mobj_t     *th;
-    angle_t     an;
-    fixed_t     dist;
-    fixed_t     slope;
+    mobj_t     *th = 0;
+    angle_t     an = 0;
+    fixed_t     dist = 0;
+    fixed_t     slope = 0;
     fixed_t     spawnZOff = 0;
 
     memcpy(pos, source->pos, sizeof(pos));
@@ -1737,10 +1737,10 @@ mobj_t *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle,
                             fixed_t momz)
 {
     fixed_t     pos[3];
-    mobj_t     *th;
-    angle_t     an;
-    fixed_t     dist;
-    fixed_t     slope;
+    mobj_t     *th = 0;
+    angle_t     an = 0;
+    fixed_t     dist = 0;
+    fixed_t     slope = 0;
     fixed_t     spawnZOff = 0;
 
     memcpy(pos, source->pos, sizeof(pos));

@@ -260,7 +260,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 {
     player_t *pl = &players[plrNum];
     unsigned int flags;
-    int     oldstate = pl->playerstate;
+    //int     oldstate = pl->playerstate;
     byte    b;
     int     i, k;
 
@@ -322,7 +322,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     byte    b;
     unsigned short flags;
     int     i;
-    int     oldstate = pl->playerstate;
+    //int     oldstate = pl->playerstate;
     unsigned short s;
 
     if(!Get(DD_GAME_READY))
