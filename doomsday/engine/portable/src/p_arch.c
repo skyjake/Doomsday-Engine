@@ -1691,6 +1691,9 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
                 memset(side->SW_middlergba, 0xff, 4);
                 memset(side->SW_bottomrgba, 0xff, 3);
                 side->blendmode = BM_NORMAL;
+                side->SW_topsurface.isflat = side->SW_topsurface.oldisflat = false;
+                side->SW_middlesurface.isflat = side->SW_middlesurface.oldisflat = false;
+                side->SW_bottomsurface.isflat = side->SW_bottomsurface.oldisflat = false;
             }
             break;
             }
@@ -1775,19 +1778,18 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
                 // Do the planes too.
                 for(j = 0; j < sec->planecount; ++j)
                 {
-                    sec->planes[j] = Z_Malloc(sizeof(plane_t), PU_LEVEL, 0);
-
+                    sec->planes[j] = Z_Calloc(sizeof(plane_t), PU_LEVEL, 0);
                     sec->planes[j]->header.type = DMU_PLANE;
-
                     sec->planes[j]->surface.header.type = DMU_SURFACE;
                     sec->planes[j]->surface.isflat = true;
+                    sec->planes[j]->surface.oldisflat = true;
                     memset(sec->planes[j]->surface.rgba, 0xff, 3);
                     memset(sec->planes[j]->glowrgb, 0xff, 3);
                     sec->planes[j]->glow = 0;
                     sec->planes[j]->surface.flags = 0;
                     sec->planes[j]->surface.offx =
                         sec->planes[j]->surface.offy = 0;
-
+                    
                     // The back pointer (temporary)
                     sec->planes[j]->sector = &map->sectors[k];
                 }
