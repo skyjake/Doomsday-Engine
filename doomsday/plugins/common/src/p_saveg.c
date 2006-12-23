@@ -1302,7 +1302,7 @@ static void SV_ReadLine(line_t *li)
     enum lineclass_e type = 0;
 
     int     i;
-    int     ver;
+    int     ver = 0; // FIXME: Is this an appropriate default value?
     int     topTexID;
     int     bottomTexID;
     int     middleTexID;
