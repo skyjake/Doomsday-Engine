@@ -272,7 +272,7 @@ void R_FreeRendPoly(rendpoly_t *poly)
         }
     }
 #if _DEBUG
-Con_Message("R_FreeRendPoly: Dangling poly ptr!\n");
+    Con_Message("R_FreeRendPoly: Dangling poly ptr!\n");
 #endif
 }
 
@@ -359,9 +359,17 @@ flat_t *R_FindFlat(int lumpnum)
  */
 flat_t *R_GetFlat(int lumpnum)
 {
-    flat_t *f = R_FindFlat(lumpnum);
-    flathash_t *hash;
+    flat_t *f = 0;
+    flathash_t *hash = 0;
 
+    if(lumpnum >= numlumps)
+    {
+        Con_Error("R_GetFlat: lumpnum = %i out of bounds (%i).\n", 
+                  lumpnum, numlumps);
+    }
+    
+    f = R_FindFlat(lumpnum);
+    
     if(!lumpnum)
         return NULL;
 
@@ -768,10 +776,15 @@ int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
 {
     if(picid < 0)
         return 0;
-
+  
     switch(rclass)
     {
     case RC_TEXTURE:  // picid is a texture id
+        if(picid >= numtextures)
+        {
+            Con_Error("R_GraphicResourceFlags: RC_TEXTURE, picid %i out of bounds.\n",
+                      picid);                      
+        }
         picid = texturetranslation[picid].current;
         if(picid < 0)
             return 0;
