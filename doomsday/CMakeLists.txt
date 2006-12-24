@@ -110,7 +110,7 @@ OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
 OPTION (BUILDDOX "Build doxygen documentation. Default OFF" OFF)
 OPTION (ENABLEMAO "Combine all source files in a module and build it at once. Default OFF" OFF)
 OPTION (ENABLEDEBUG "Turn on internal debugging features. Default OFF" OFF)
-OPTION (DISABLERANGECHECKING "Turn off internal range checking features. Default ON" ON)
+OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default OFF" OFF)
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
 
 MARK_AS_ADVANCED (BUILDJSTRIFE)
@@ -119,7 +119,7 @@ MARK_AS_ADVANCED (BUILDDOOM64TC)
 MARK_AS_ADVANCED (ENABLEMAO)
 MARK_AS_ADVANCED (ENABLEDEBUG)
 MARK_AS_ADVANCED (ENABLEPROFILE)
-MARK_AS_ADVANCED (DISABLERANGECHECKING)
+MARK_AS_ADVANCED (ENABLERANGECHECKING)
 
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
@@ -362,9 +362,9 @@ INCLUDE(${CMAKE_ROOT}/Modules/CPack.cmake)
 ################################################################################
 ######################## Set Common Definitions  ###############################
 
-IF (DISABLERANGECHECKING)
+IF (NOT ENABLERANGECHECKING)
 	ADD_DEFINITIONS (-DNORANGECHECKING)
-ENDIF (DISABLERANGECHECKING)
+ENDIF (NOT ENABLERANGECHECKING)
 
 IF (ENABLEDEBUG)
 	ADD_DEFINITIONS (-D_DEBUG )
