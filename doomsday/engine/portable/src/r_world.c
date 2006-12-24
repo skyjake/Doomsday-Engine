@@ -788,17 +788,17 @@ void R_CreateFloorsAndCeilings(uint bspnode, uint numdivlines,
         memcpy(childlist, divlines, numdivlines * sizeof(divline_t));
 
     dl = childlist + numdivlines;
-    dl->pos[VX] = nod->x;
-    dl->pos[VY] = nod->y;
+    dl->pos[VX] = FLT2FIX(nod->x);
+    dl->pos[VY] = FLT2FIX(nod->y);
     // The right child gets the original line (LEFT side clipped).
-    dl->dx = nod->dx;
-    dl->dy = nod->dy;
+    dl->dx = FLT2FIX(nod->dx);
+    dl->dy = FLT2FIX(nod->dy);
     R_CreateFloorsAndCeilings(nod->children[0], childlistsize, childlist);
 
     // The left side. We must reverse the line, otherwise the wrong
     // side would get clipped.
-    dl->dx = -nod->dx;
-    dl->dy = -nod->dy;
+    dl->dx = -FLT2FIX(nod->dx);
+    dl->dy = -FLT2FIX(nod->dy);
     R_CreateFloorsAndCeilings(nod->children[1], childlistsize, childlist);
 
     // We are finishing with this node, free the allocated list.

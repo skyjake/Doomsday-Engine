@@ -79,10 +79,10 @@
 #define DMT_POLYOBJ_SIZE DDVT_FIXED    // polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
 #define DMT_POLYOBJ_SPECIALDATA DDVT_PTR // pointer a thinker, if the poly is moving
 
-#define DMT_NODE_X DDVT_FIXED          // Partition line.
-#define DMT_NODE_Y DDVT_FIXED          // Partition line.
-#define DMT_NODE_DX DDVT_FIXED         // Partition line.
-#define DMT_NODE_DY DDVT_FIXED         // Partition line.
+#define DMT_NODE_X DDVT_FLOAT          // Partition line.
+#define DMT_NODE_Y DDVT_FLOAT          // Partition line.
+#define DMT_NODE_DX DDVT_FLOAT         // Partition line.
+#define DMT_NODE_DY DDVT_FLOAT         // Partition line.
 
 #define DMT_NODE_BBOX           DDVT_FIXED
 #define DMT_NODE_CHILDREN       DDVT_UINT

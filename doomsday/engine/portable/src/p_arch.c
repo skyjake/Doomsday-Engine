@@ -2605,35 +2605,35 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         // TODO: the following should use DMT_NODE_?
         // Constants not defined as yet by the maptypes script.
         case DAM_BBOX_RIGHT_TOP_Y:
-            ReadValue(map, DDVT_FIXED, &p->bbox[0][0], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[0][0], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_BBOX_RIGHT_LOW_Y:
-            ReadValue(map, DDVT_FIXED, &p->bbox[0][1], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[0][1], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_BBOX_RIGHT_LOW_X:
-            ReadValue(map, DDVT_FIXED, &p->bbox[0][2], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[0][2], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_BBOX_RIGHT_TOP_X:
-            ReadValue(map, DDVT_FIXED, &p->bbox[0][3], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[0][3], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_BBOX_LEFT_TOP_Y:
-            ReadValue(map, DDVT_FIXED, &p->bbox[1][0], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[1][0], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_BBOX_LEFT_LOW_Y:
-            ReadValue(map, DDVT_FIXED, &p->bbox[1][1], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[1][1], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_BBOX_LEFT_LOW_X:
-            ReadValue(map, DDVT_FIXED, &p->bbox[1][2], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[1][2], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_BBOX_LEFT_TOP_X:
-            ReadValue(map, DDVT_FIXED, &p->bbox[1][3], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[1][3], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_CHILD_RIGHT:

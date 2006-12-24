@@ -66,38 +66,30 @@ extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
  */
 int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
 {
-    fixed_t     dx, dy;
-    fixed_t     left, right;
+    float       fx = FIX2FLT(x), fy = FIX2FLT(y);
+    float       dx, dy;
+    float       left, right;
 
     if(!node->dx)
     {
-        if(x <= node->x)
+        if(fx <= node->x)
             return (node->dy > 0? 1:0);
         else
             return (node->dy < 0? 1:0);
     }
     if(!node->dy)
     {
-        if(y <= node->y)
+        if(fy <= node->y)
             return (node->dx < 0? 1:0);
         else
             return (node->dx > 0? 1:0);
     }
 
-    dx = (x - node->x);
-    dy = (y - node->y);
+    dx = (fx - node->x);
+    dy = (fy - node->y);
 
-    // Try to quickly decide by looking at sign bits.
-    if((node->dy ^ node->dx ^ dx ^ dy) & 0x80000000)
-    {
-        if((node->dy ^ dx) & 0x80000000)
-            return 1;           // (left is negative)
-        else
-            return 0;
-    }
-
-    left = FixedMul(node->dy >> FRACBITS, dx);
-    right = FixedMul(dy, node->dx >> FRACBITS);
+    left = node->dy * dx;
+    right = dy * node->dx;
 
     if(right < left)
         return 0;               // front side

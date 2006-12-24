@@ -291,11 +291,11 @@ typedef struct polyobj_s {
 
 typedef struct node_s {
     runtime_mapdata_header_t header;
-    fixed_t             x;             // Partition line.
-    fixed_t             y;             // Partition line.
-    fixed_t             dx;            // Partition line.
-    fixed_t             dy;            // Partition line.
-    fixed_t             bbox[2][4];    // Bounding box for each child.
+    float               x;             // Partition line.
+    float               y;             // Partition line.
+    float               dx;            // Partition line.
+    float               dy;            // Partition line.
+    float               bbox[2][4];    // Bounding box for each child.
     unsigned int        children[2];   // If NF_SUBSECTOR it's a subsector.
 } node_t;
 

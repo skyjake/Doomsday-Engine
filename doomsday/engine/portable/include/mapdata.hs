@@ -296,11 +296,11 @@ struct polyobj
 end
 
 struct node
-    FIXED   fixed_t     x           // Partition line.
-    FIXED   fixed_t     y           // Partition line.
-    FIXED   fixed_t     dx          // Partition line.
-    FIXED   fixed_t     dy          // Partition line.
-    -       fixed_t[2][4] bbox      // Bounding box for each child.
+    FLOAT   float     x             // Partition line.
+    FLOAT   float     y             // Partition line.
+    FLOAT   float     dx            // Partition line.
+    FLOAT   float     dy            // Partition line.
+    -       float[2][4] bbox        // Bounding box for each child.
     -       uint[2]     children    // If NF_SUBSECTOR it's a subsector.
 end
 
