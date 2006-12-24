@@ -77,16 +77,14 @@ boolean PTR_SightTraverse(intercept_t * in)
     if(openbottom >= opentop)   // quick test for totally closed doors
         return false;           // stop
 
-    if(li->L_frontsector->planes[PLN_FLOOR]->height !=
-         li->L_backsector->planes[PLN_FLOOR]->height)
+    if(li->L_frontsector->SP_floorheight != li->L_backsector->SP_floorheight)
     {
         slope = FixedDiv(openbottom - sightzstart, in->frac);
         if(slope > bottomslope)
             bottomslope = slope;
     }
 
-    if(li->L_frontsector->planes[PLN_CEILING]->height !=
-         li->L_backsector->planes[PLN_CEILING]->height)
+    if(li->L_frontsector->SP_ceilheight != li->L_backsector->SP_ceilheight)
     {
         slope = FixedDiv(opentop - sightzstart, in->frac);
         if(slope < topslope)

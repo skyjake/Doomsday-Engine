@@ -214,11 +214,11 @@ void P_PlaneChanged(sector_t *sector, uint plane)
     side_t     *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
-    sector->planes[plane]->soundorg.pos[VZ] = sector->planes[plane]->height;
+    sector->planes[plane]->soundorg.pos[VZ] = FLT2FIX(sector->planes[plane]->height);
 
     if(plane == PLN_FLOOR || plane == PLN_CEILING)
         sector->soundorg.pos[VZ] =
-            (sector->SP_ceilheight - sector->SP_floorheight) / 2;
+            FLT2FIX((sector->SP_ceilheight - sector->SP_floorheight) / 2);
 
     for(i = 0; i < sector->linecount; ++i)
     {
@@ -258,7 +258,7 @@ void P_PlaneChanged(sector_t *sector, uint plane)
                 }
             }
             else if(front->sector->SP_floorheight > back->sector->SP_floorheight &&
-               back->SW_bottompic == 0)
+                    back->SW_bottompic == 0)
             {
                 if(!R_IsSkySurface(&back->sector->SP_floorsurface))
                 {
@@ -312,7 +312,7 @@ void P_PlaneChanged(sector_t *sector, uint plane)
                 }
             }
             else if(front->sector->SP_ceilheight < back->sector->SP_ceilheight &&
-               back->SW_toppic == 0)
+                    back->SW_toppic == 0)
             {
                 if(!R_IsSkySurface(&back->sector->SP_ceilsurface))
                 {

@@ -487,17 +487,20 @@ static boolean Rend_LineDecorationBounds(line_t *line)
 
     // Figure out the highest and lowest Z height.
     sector = line->L_frontsector;
-    bounds[BFLOOR]   = sector->SP_floorheight;
-    bounds[BCEILING] = sector->SP_ceilheight;
+    bounds[BFLOOR]   = FLT2FIX(sector->SP_floorheight);
+    bounds[BCEILING] = FLT2FIX(sector->SP_ceilheight);
 
     // Is the other sector higher/lower?
     if((sector = line->L_backsector) != NULL)
     {
-        if(sector->SP_floorheight < bounds[BFLOOR])
-            bounds[BFLOOR] = sector->SP_floorheight;
+        float bfloor = FLT2FIX(sector->SP_floorheight);
+        float bceil  = FLT2FIX(sector->SP_ceilheight);
 
-        if(sector->SP_ceilheight > bounds[BCEILING])
-            bounds[BCEILING] = sector->SP_ceilheight;
+        if(bfloor < bounds[BFLOOR])
+            bounds[BFLOOR] = bfloor;
+
+        if(bceil > bounds[BCEILING])
+            bounds[BCEILING] = bceil;
     }
 
     return Rend_CheckDecorationBounds(bounds, decorWallMaxDist);

@@ -1803,8 +1803,8 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
     if(devNoCulling || P_IsInVoid(viewplayer))
         return;
 
-    fronth[0] = FIX2FLT(front->planes[PLN_FLOOR]->height);
-    fronth[1] = FIX2FLT(front->planes[PLN_CEILING]->height);
+    fronth[0] = front->SP_floorheight;
+    fronth[1] = front->SP_ceilheight;
 
     for(i = 0, seg = &segs[sub->firstline]; i < sub->linecount; ++i, seg++)
     {
@@ -1816,8 +1816,8 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
             continue;
 
         back = seg->SG_backsector;
-        backh[0] = FIX2FLT(back->planes[PLN_FLOOR]->height);
-        backh[1] = FIX2FLT(back->planes[PLN_CEILING]->height);
+        backh[0] = back->SP_floorheight;
+        backh[1] = back->SP_ceilheight;
         // Choose start and end vertices so that it's facing forward.
         if(forward_facing)
         {

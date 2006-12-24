@@ -561,8 +561,8 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         gl.Color4fv(color);
 
         nearPlane = (pt->sector &&
-                     (pt->sector->planes[PLN_FLOOR]->height + 2 * FRACUNIT >= pt->pos[VZ] ||
-                      pt->sector->planes[PLN_CEILING]->height - 2 * FRACUNIT <= pt->pos[VZ]));
+                     (FLT2FIX(pt->sector->SP_floorheight) + 2 * FRACUNIT >= pt->pos[VZ] ||
+                      FLT2FIX(pt->sector->SP_ceilheight) - 2 * FRACUNIT <= pt->pos[VZ]));
         flatOnPlane = (st->flags & PTCF_PLANE_FLAT && nearPlane);
 
         nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);

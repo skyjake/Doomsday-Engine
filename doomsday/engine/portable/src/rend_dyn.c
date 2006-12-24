@@ -966,8 +966,7 @@ void DL_AddLuminous(mobj_t *thing)
         // Will the sprite be allowed to go inside the floor?
         mul =
             FIX2FLT(thing->pos[VZ]) + spritelumps[lump]->topoffset -
-            spritelumps[lump]->height -
-            FIX2FLT(thing->subsector->sector->planes[PLN_FLOOR]->height);
+            spritelumps[lump]->height - thing->subsector->sector->SP_floorheight;
         if(!(thing->ddflags & DDMF_NOFITBOTTOM) && mul < 0)
         {
             // Must adjust.

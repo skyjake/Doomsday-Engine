@@ -766,7 +766,7 @@ void LG_Update(void)
             // Determine the color of the ambient light in this sector.
             sector = block->sector;
             color = R_GetSectorLightColor(sector);
-            height = (sector->SP_ceilheight - sector->SP_floorheight) >> FRACBITS;
+            height = (int) (sector->SP_ceilheight - sector->SP_floorheight);
 
             if(R_IsSkySurface(&sector->SP_ceilsurface))
             {
@@ -846,14 +846,12 @@ void LG_Evaluate(const float *point, byte *color)
         if(block->bias < 0)
         {
             // Calculate Z difference to the ceiling.
-            dz = (block->sector->SP_ceilheight
-                  - FLT2FIX(point[VZ])) >> FRACBITS;
+            dz = (int) (block->sector->SP_ceilheight - point[VZ]);
         }
         else if(block->bias > 0)
         {
             // Calculate Z difference to the floor.
-            dz = (FLT2FIX(point[VZ])
-                  - block->sector->SP_floorheight) >> FRACBITS;
+            dz = (int) (point[VZ] - block->sector->SP_floorheight);
         }
 
         dz -= 50;

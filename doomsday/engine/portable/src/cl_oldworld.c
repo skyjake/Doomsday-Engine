@@ -87,11 +87,11 @@ int Cl_ReadSectorDelta(void)
     if(df & SDF_LIGHT)
         sec->lightlevel = Msg_ReadByte();
     if(df & SDF_FLOOR_TARGET)
-        sec->planes[PLN_FLOOR]->target = Msg_ReadShort() << 16;
+        sec->planes[PLN_FLOOR]->target = FIX2FLT(Msg_ReadShort() << 16);
     if(df & SDF_FLOOR_SPEED)
     {
         sec->planes[PLN_FLOOR]->speed =
-            Msg_ReadByte() << (df & SDF_FLOOR_SPEED_44 ? 12 : 15);
+            FIX2FLT((fixed_t) (Msg_ReadByte() << (df & SDF_FLOOR_SPEED_44 ? 12 : 15)));
     }
     if(df & SDF_FLOOR_TEXMOVE)
     {
@@ -99,11 +99,11 @@ int Cl_ReadSectorDelta(void)
         sec->SP_floortexmove[1] = Msg_ReadShort() << 8;
     }
     if(df & SDF_CEILING_TARGET)
-        sec->planes[PLN_CEILING]->target = Msg_ReadShort() << 16;
+        sec->planes[PLN_CEILING]->target = FIX2FLT(Msg_ReadShort() << 16);
     if(df & SDF_CEILING_SPEED)
     {
         sec->planes[PLN_CEILING]->speed =
-            Msg_ReadByte() << (df & SDF_CEILING_SPEED_44 ? 12 : 15);
+            FIX2FLT((fixed_t) (Msg_ReadByte() << (df & SDF_CEILING_SPEED_44 ? 12 : 15)));
     }
     if(df & SDF_CEILING_TEXMOVE)
     {

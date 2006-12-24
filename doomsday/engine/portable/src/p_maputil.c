@@ -345,18 +345,19 @@ void P_LineOpening(line_t *linedef)
     back = linedef->L_backsector;
 
     if(front->SP_ceilheight < back->SP_ceilheight)
-        opentop = front->SP_ceilheight;
+        opentop = FLT2FIX(front->SP_ceilheight);
     else
-        opentop = back->SP_ceilheight;
+        opentop = FLT2FIX(back->SP_ceilheight);
+
     if(front->SP_floorheight > back->SP_floorheight)
     {
-        openbottom = front->SP_floorheight;
-        lowfloor = back->SP_floorheight;
+        openbottom = FLT2FIX(front->SP_floorheight);
+        lowfloor = FLT2FIX(back->SP_floorheight);
     }
     else
     {
-        openbottom = back->SP_floorheight;
-        lowfloor = front->SP_floorheight;
+        openbottom = FLT2FIX(back->SP_floorheight);
+        lowfloor = FLT2FIX(front->SP_floorheight);
     }
 
     openrange = opentop - openbottom;

@@ -3195,14 +3195,14 @@ ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
 
         // set the z height of the sector sound origin
         sec->soundorg.pos[VZ] =
-            (sec->SP_ceilheight - sec->SP_floorheight) / 2;
+            FLT2FIX((sec->SP_ceilheight - sec->SP_floorheight) / 2);
 
         // set the position of the sound origin for all plane sound origins.
         for(k = 0; k < sec->planecount; ++k)
         {
             sec->planes[k]->soundorg.pos[VX] = sec->soundorg.pos[VX];
             sec->planes[k]->soundorg.pos[VY] = sec->soundorg.pos[VY];
-            sec->planes[k]->soundorg.pos[VZ] = sec->planes[k]->height;
+            sec->planes[k]->soundorg.pos[VZ] = FLT2FIX(sec->planes[k]->height);
         }
 
         // adjust bounding box to map blocks

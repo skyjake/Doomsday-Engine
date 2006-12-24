@@ -261,9 +261,9 @@ typedef struct {
 
 typedef struct {
     dt_surface_t    surface;
-    fixed_t         height;
-    fixed_t         target;        // Target height.
-    fixed_t         speed;         // Move speed.
+    float           height;
+    float           target;        // Target height.
+    float           speed;         // Move speed.
     float           glow;          // Glow amount.
     byte            glowrgb[3];    // Glow color.
 } dt_plane_t;

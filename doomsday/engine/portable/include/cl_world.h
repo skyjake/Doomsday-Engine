@@ -39,8 +39,8 @@ void            Cl_InitMovers(void);
 void            Cl_RemoveMovers(void);
 short           Cl_TranslateLump(short lump);
 void            Cl_SetPolyMover(uint number, int move, int rotate);
-void            Cl_AddMover(uint sectornum, clmovertype_t type, fixed_t dest,
-                            fixed_t speed);
+void            Cl_AddMover(uint sectornum, clmovertype_t type, float dest,
+                            float speed);
 
 int             Cl_ReadSectorDelta(void);
 int             Cl_ReadLumpDelta(void);

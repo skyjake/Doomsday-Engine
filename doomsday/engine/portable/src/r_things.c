@@ -643,12 +643,13 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
     assert(data != NULL);
 
     if(vis->data.mo.flooradjust &&
-       projectedThing->pos[VZ] == sector->planes[PLN_FLOOR]->height)
+       projectedThing->pos[VZ] == FLT2FIX(sector->SP_floorheight))
     {
         vis->data.mo.gz = FRACUNIT * sector->SP_floorvisheight;
     }
 
-    if(projectedThing->pos[VZ] + projectedThing->height == sector->planes[PLN_CEILING]->height)
+    if(projectedThing->pos[VZ] + projectedThing->height ==
+        FLT2FIX(sector->SP_ceilheight))
     {
         vis->data.mo.gz =
             FRACUNIT * sector->SP_ceilvisheight - projectedThing->height;
@@ -832,7 +833,7 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.gz = thing->pos[VZ];
 
     vis->data.mo.flooradjust =
-        (fabs(sect->SP_floorvisheight - FIX2FLT(sect->planes[PLN_FLOOR]->height)) < 8);
+        (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
 
     // The thing's Z coordinate must match the actual visible
     // floor/ceiling height.  When using smoothing, this requires
@@ -996,7 +997,7 @@ void R_ProjectSprite(mobj_t *thing)
 
 void R_AddSprites(sector_t *sec)
 {
-    fixed_t     visibleTop;
+    float       visibleTop;
     mobj_t      *thing;
     spriteinfo_t spriteInfo;
     boolean     raised = false;
@@ -1021,14 +1022,14 @@ void R_AddSprites(sector_t *sec)
         if(!(thing->dplayer && thing->dplayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
            thing->pos[VZ] <= sec->SP_ceilheight && !sec->selfRefHack)
         {
-            visibleTop = thing->pos[VZ] + (spriteInfo.height << FRACBITS);
+            visibleTop = FIX2FLT(thing->pos[VZ] + (spriteInfo.height << FRACBITS));
 
             if(R_IsSkySurface(&sec->SP_ceilsurface) &&
-               visibleTop > sec->SP_ceilheight + (sec->skyfix[PLN_CEILING].offset << FRACBITS))
+               visibleTop > sec->SP_ceilheight + sec->skyfix[PLN_CEILING].offset)
             {
                 // Raise sector skyfix.
                 sec->skyfix[PLN_CEILING].offset =
-                    ((visibleTop - sec->SP_ceilheight) >> FRACBITS) + 16; // Add some leeway.
+                    visibleTop - sec->SP_ceilheight + 16; // Add some leeway.
                 raised = true;
             }
         }

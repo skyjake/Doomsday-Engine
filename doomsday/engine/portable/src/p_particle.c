@@ -480,23 +480,22 @@ static void P_NewParticle(ptcgen_t *gen)
         if(gen->flags & PGF_SPACE_SPAWN)
         {
             pt->pos[VZ] =
-                gen->sector->planes[PLN_FLOOR]->height + i + FixedMul(M_Random() << 8,
-                                                        gen->sector->
-                                                        planes[PLN_CEILING]->height -
-                                                        gen->sector->
-                                                        planes[PLN_FLOOR]->height - 2 * i);
+                FLT2FIX(gen->sector->SP_floorheight) + i +
+                FixedMul(M_Random() << 8,
+                         FLT2FIX(gen->sector->SP_ceilheight -
+                                 gen->sector->SP_floorheight) - 2 * i);
         }
         else if(gen->flags & PGF_FLOOR_SPAWN ||
                 (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
                  !gen->ceiling))
         {
             // Spawn on the floor.
-            pt->pos[VZ] = gen->sector->planes[PLN_FLOOR]->height + i;
+            pt->pos[VZ] = FLT2FIX(gen->sector->SP_floorheight) + i;
         }
         else
         {
             // Spawn on the ceiling.
-            pt->pos[VZ] = gen->sector->planes[PLN_CEILING]->height - i;
+            pt->pos[VZ] = FLT2FIX(gen->sector->SP_ceilheight) - i;
         }
 
         // Choosing the XY spot is a bit more difficult.
@@ -656,8 +655,14 @@ boolean PIT_CheckLinePtc(line_t *ld, void *data)
     // Determine the opening we have here.
     front = ld->L_frontsector;
     back = ld->L_backsector;
-    ceil = MIN_OF(front->planes[PLN_CEILING]->height, back->planes[PLN_CEILING]->height);
-    floor = MAX_OF(front->planes[PLN_FLOOR]->height, back->planes[PLN_FLOOR]->height);
+    if(front->SP_ceilheight < back->SP_ceilheight)
+        ceil = FLT2FIX(front->SP_ceilheight);
+    else
+        ceil = FLT2FIX(back->SP_ceilheight);
+    if(front->SP_floorheight > back->SP_floorheight)
+        floor = FLT2FIX(front->SP_floorheight);
+    else
+        floor = FLT2FIX(back->SP_floorheight);
 
     // There is a backsector. We possibly might hit something.
     if(tmpz - tmprad < floor || tmpz + tmprad > ceil)
@@ -746,8 +751,7 @@ fixed_t P_GetParticleZ(particle_t *pt)
 {
     if(pt->pos[VZ] == DDMAXINT)
         return pt->sector->SP_ceilvisheight - 2 * FRACUNIT;
-
-    if(pt->pos[VZ] == DDMININT)
+    else if(pt->pos[VZ] == DDMININT)
         return FRACUNIT * (pt->sector->SP_floorvisheight + 2);
 
     return pt->pos[VZ];
@@ -883,7 +887,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     z = pt->pos[VZ] + pt->mov[VZ];
     if(pt->pos[VZ] != DDMININT && pt->pos[VZ] != DDMAXINT)
     {
-        if(z > pt->sector->SP_ceilheight - hardRadius)
+        if(z > FLT2FIX(pt->sector->SP_ceilheight) - hardRadius)
         {
             // The Z is through the roof!
             if(R_IsSkySurface(&pt->sector->SP_ceilsurface))
@@ -894,12 +898,12 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
             }
             if(!P_TouchParticle(pt, st, stDef, false))
                 return;
-            z = pt->sector->SP_ceilheight - hardRadius;
+            z = FLT2FIX(pt->sector->SP_ceilheight) - hardRadius;
             zBounce = true;
             hitFloor = false;
         }
         // Also check the floor.
-        if(z < pt->sector->SP_floorheight + hardRadius)
+        if(z < FLT2FIX(pt->sector->SP_floorheight) + hardRadius)
         {
             if(R_IsSkySurface(&pt->sector->SP_floorsurface))
             {
@@ -908,7 +912,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
             }
             if(!P_TouchParticle(pt, st, stDef, false))
                 return;
-            z = pt->sector->SP_floorheight + hardRadius;
+            z = FLT2FIX(pt->sector->SP_floorheight) + hardRadius;
             zBounce = true;
             hitFloor = true;
         }
@@ -953,12 +957,22 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {
+                fixed_t pz = P_GetParticleZ(pt);
+                fixed_t fz, cz;
+
+                if(front->SP_floorheight > back->SP_floorheight)
+                    fz = FLT2FIX(front->SP_floorheight);
+                else
+                    fz = FLT2FIX(back->SP_floorheight);
+
+                if(front->SP_ceilheight < back->SP_ceilheight)
+                    cz = FLT2FIX(front->SP_ceilheight);
+                else
+                    cz = FLT2FIX(back->SP_ceilheight);
+
                 // If the particle is in the opening of a 2-sided line, it's
                 // quite likely that it shouldn't be here...
-                if(P_GetParticleZ(pt) >
-                   MAX_OF(front->planes[PLN_FLOOR]->height, back->planes[PLN_FLOOR]->height) &&
-                   P_GetParticleZ(pt) < MIN_OF(front->planes[PLN_CEILING]->height,
-                                               back->planes[PLN_CEILING]->height))
+                if(pz > fz && pz < cz)
                 {
                     // Kill the particle.
                     pt->stage = -1;

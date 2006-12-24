@@ -513,8 +513,8 @@ void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
     }
 
     mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
-    mo->floorz = mo->subsector->sector->SP_floorheight;
-    mo->ceilingz = mo->subsector->sector->SP_ceilheight;
+    mo->floorz = FLT2FIX(mo->subsector->sector->SP_floorheight);
+    mo->ceilingz = FLT2FIX(mo->subsector->sector->SP_ceilheight);
 
     if(onground)
     {

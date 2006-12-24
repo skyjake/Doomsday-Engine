@@ -93,13 +93,13 @@ typedef struct surface_s {
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
-    fixed_t             height;        // Current height
-    fixed_t             oldheight[2];
+    float               height;        // Current height
+    float               oldheight[2];
     surface_t           surface;
     float               glow;          // Glow amount
     byte                glowrgb[3];    // Glow color
-    fixed_t             target;        // Target height
-    fixed_t             speed;         // Move speed
+    float               target;        // Target height
+    float               speed;         // Move speed
     degenmobj_t         soundorg;      // Sound origin for plane
     struct sector_s*    sector;        // Owner of the plane (temp)
     float               visheight;     // Visible plane height (smoothed)

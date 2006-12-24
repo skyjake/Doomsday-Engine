@@ -200,8 +200,7 @@ static void Rend_RadioSetColor(rendpoly_t *q, float darkness)
 static __inline boolean Rend_IsSectorOpen(sector_t *sector)
 {
     return (sector &&
-            sector->SP_ceilheight >
-                sector->SP_floorheight);
+            sector->SP_ceilheight > sector->SP_floorheight);
 }
 
 /**

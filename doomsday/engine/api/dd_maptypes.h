@@ -27,11 +27,11 @@
 #define DMT_SURFACE_OFFY DDVT_FLOAT    // Texture y offset
 #define DMT_SURFACE_RGBA DDVT_BYTE     // Surface color tint
 
-#define DMT_PLANE_HEIGHT DDVT_FIXED    // Current height
+#define DMT_PLANE_HEIGHT DDVT_FLOAT    // Current height
 #define DMT_PLANE_GLOW DDVT_FLOAT      // Glow amount
 #define DMT_PLANE_GLOWRGB DDVT_BYTE    // Glow color
-#define DMT_PLANE_TARGET DDVT_FIXED    // Target height
-#define DMT_PLANE_SPEED DDVT_FIXED     // Move speed
+#define DMT_PLANE_TARGET DDVT_FLOAT    // Target height
+#define DMT_PLANE_SPEED DDVT_FLOAT     // Move speed
 #define DMT_PLANE_SOUNDORG DDVT_PTR    // Sound origin for plane
 
 #define DMT_PLANE_SECTOR        DDVT_PTR

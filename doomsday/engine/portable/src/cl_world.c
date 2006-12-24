@@ -46,21 +46,21 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    thinker_t thinker;
-    sector_t *sector;
-    uint    sectornum;
+    thinker_t   thinker;
+    sector_t   *sector;
+    uint        sectornum;
     clmovertype_t type;
-    fixed_t *current;
-    fixed_t destination;
-    fixed_t speed;
+    float      *current;
+    float       destination;
+    float       speed;
 } mover_t;
 
 typedef struct {
-    thinker_t thinker;
-    uint    number;
-    polyobj_t *poly;
-    boolean move;
-    boolean rotate;
+    thinker_t   thinker;
+    uint        number;
+    polyobj_t  *poly;
+    boolean     move;
+    boolean     rotate;
 } polymover_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -166,21 +166,22 @@ void Cl_RemoveActivePoly(polymover_t *mover)
  */
 void Cl_MoverThinker(mover_t *mover)
 {
-    fixed_t *current = mover->current, original = *current;
-    boolean remove = false;
-    boolean freeMove;
+    float      *current = mover->current, original = *current;
+    boolean     remove = false;
+    boolean     freeMove;
+    float       fspeed;
 
     if(!Cl_GameReady())
         return;                 // Can we think yet?
 
     // The move is cancelled if the consoleplayer becomes obstructed.
     freeMove = Cl_IsFreeToMove(consoleplayer);
-
+    fspeed = mover->speed;
     // How's the gap?
-    if(abs(mover->destination - *current) > abs(mover->speed))
+    if(fabs(mover->destination - *current) > fabs(fspeed))
     {
         // Do the move.
-        *current += mover->speed;
+        *current += fspeed;
     }
     else
     {
@@ -206,15 +207,15 @@ void Cl_MoverThinker(mover_t *mover)
     }
 }
 
-void Cl_AddMover(uint sectornum, clmovertype_t type, fixed_t dest, fixed_t speed)
+void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
 {
-    sector_t *sector;
-    int     i;
-    mover_t *mov;
+    sector_t   *sector;
+    int         i;
+    mover_t    *mov;
 
     VERBOSE( Con_Printf("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
                         sectornum, type==MVT_FLOOR? "floor" : "ceiling",
-                        FIX2FLT(dest), FIX2FLT(speed)) );
+                        dest, speed) );
 
     if(speed == 0)
         return;
@@ -253,7 +254,7 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, fixed_t dest, fixed_t speed
             mov->sectornum = sectornum;
             mov->sector = SECTOR_PTR(sectornum);
             mov->destination = dest;
-            mov->speed = abs(speed);
+            mov->speed = speed;
             mov->current =
                 (type ==
                  MVT_FLOOR ? &mov->sector->planes[PLN_FLOOR]->height : &mov->sector->
@@ -470,13 +471,13 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->lightlevel = Msg_ReadByte();
     if(df & SDF_FLOOR_HEIGHT)
     {
-        sec->planes[PLN_FLOOR]->height = Msg_ReadShort() << 16;
+        sec->planes[PLN_FLOOR]->height = FIX2FLT(Msg_ReadShort() << 16);
         wasChanged = true;
 
         if(!skip)
         {
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute floor height=%f\n",
-                                num, FIX2FLT(sec->SP_floorheight)) );
+                                num, sec->SP_floorheight) );
         }
     }
     if(df & SDF_CEILING_HEIGHT)
@@ -484,11 +485,11 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         fixed_t height = Msg_ReadShort() << 16;
         if(!skip)
         {
-            sec->planes[PLN_CEILING]->height = height;
+            sec->planes[PLN_CEILING]->height = FIX2FLT(height);
             wasChanged = true;
 
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute ceiling height=%f%s\n",
-                                num, FIX2FLT(sec->SP_ceilheight), skip? " --SKIPPED!--" : "") );
+                                num, sec->SP_ceilheight, skip? " --SKIPPED!--" : "") );
         }
     }
     if(df & SDF_FLOOR_TARGET)
@@ -496,22 +497,22 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         fixed_t height = Msg_ReadShort() << 16;
         if(!skip)
         {
-            sec->planes[PLN_FLOOR]->target = height;
+            sec->planes[PLN_FLOOR]->target = FIX2FLT(height);
 
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor target=%f\n",
-                                num, FIX2FLT(sec->planes[PLN_FLOOR]->target)) );
+                                num, sec->planes[PLN_FLOOR]->target) );
         }
     }
     if(df & SDF_FLOOR_SPEED)
     {
-        byte speed = Msg_ReadByte();
+        fixed_t speed = Msg_ReadByte();
         if(!skip)
         {
             sec->planes[PLN_FLOOR]->speed =
-                speed << (df & SDF_FLOOR_SPEED_44 ? 12 : 15);
+                FIX2FLT(speed << (df & SDF_FLOOR_SPEED_44 ? 12 : 15));
 
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor speed=%f\n",
-                                num, FIX2FLT(sec->planes[PLN_FLOOR]->speed)) );
+                                num, sec->planes[PLN_FLOOR]->speed) );
         }
     }
     if(df & SDF_FLOOR_TEXMOVE)
@@ -529,10 +530,10 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         fixed_t target = Msg_ReadShort() << 16;
         if(!skip)
         {
-            sec->planes[PLN_CEILING]->target = target;
+            sec->planes[PLN_CEILING]->target = FIX2FLT(target);
 
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling target=%f\n",
-                                num, FIX2FLT(sec->planes[PLN_CEILING]->target)) );
+                                num, sec->planes[PLN_CEILING]->target) );
         }
     }
     if(df & SDF_CEILING_SPEED)
@@ -541,10 +542,10 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         if(!skip)
         {
             sec->planes[PLN_CEILING]->speed =
-                speed << (df & SDF_CEILING_SPEED_44 ? 12 : 15);
+                FIX2FLT(speed << (df & SDF_CEILING_SPEED_44 ? 12 : 15));
 
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling speed=%f\n",
-                                num, FIX2FLT(sec->planes[PLN_CEILING]->speed)) );
+                                num, sec->planes[PLN_CEILING]->speed) );
         }
     }
     if(df & SDF_CEILING_TEXMOVE)

@@ -437,7 +437,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     // (7.1 is too inaccurate for very slow movement)
     if(df & SDF_FLOOR_SPEED)
     {
-        spd = abs(d->planes[PLN_FLOOR].speed);
+        spd = FLT2FIX(fabs(d->planes[PLN_FLOOR].speed));
         floorspd = spd >> 15;
         if(!floorspd)
         {
@@ -447,7 +447,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     }
     if(df & SDF_CEILING_SPEED)
     {
-        spd = abs(d->planes[PLN_CEILING].speed);
+        spd = FLT2FIX(fabs(d->planes[PLN_CEILING].speed));
         ceilspd = spd >> 15;
         if(!ceilspd)
         {
@@ -474,19 +474,19 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     }
     if(df & SDF_FLOOR_HEIGHT)
     {
-        Msg_WriteShort(d->planes[PLN_FLOOR].height >> 16);
+        Msg_WriteShort(FLT2FIX(d->planes[PLN_FLOOR].height) >> 16);
     }
     if(df & SDF_CEILING_HEIGHT)
     {
 #ifdef _DEBUG
         VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
-                            delta->delta.id, FIX2FLT(d->planes[PLN_CEILING].height)) );
+                            delta->delta.id, d->planes[PLN_CEILING].height) );
 #endif
 
-        Msg_WriteShort(d->planes[PLN_CEILING].height >> 16);
+        Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].height) >> 16);
     }
     if(df & SDF_FLOOR_TARGET)
-        Msg_WriteShort(d->planes[PLN_FLOOR].target >> 16);
+        Msg_WriteShort(FLT2FIX(d->planes[PLN_FLOOR].target) >> 16);
     if(df & SDF_FLOOR_SPEED)    // 7.1/4.4 fixed-point
         Msg_WriteByte(floorspd);
     if(df & SDF_FLOOR_TEXMOVE)
@@ -495,7 +495,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
         Msg_WriteShort(d->planes[PLN_FLOOR].surface.texmove[1] >> 8);
     }
     if(df & SDF_CEILING_TARGET)
-        Msg_WriteShort(d->planes[PLN_CEILING].target >> 16);
+        Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].target) >> 16);
     if(df & SDF_CEILING_SPEED)  // 7.1/4.4 fixed-point
         Msg_WriteByte(ceilspd);
     if(df & SDF_CEILING_TEXMOVE)

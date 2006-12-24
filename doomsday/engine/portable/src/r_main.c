@@ -396,7 +396,7 @@ void R_NewSharpWorld(void)
             plane->oldheight[0] = plane->oldheight[1];
             plane->oldheight[1] = plane->height;
 
-            if(abs(plane->oldheight[0] - plane->oldheight[1]) >=
+            if(fabs(plane->oldheight[0] - plane->oldheight[1]) >=
                MAX_SMOOTH_PLANE_MOVE)
             {
                 // Too fast: make an instantaneous jump.
@@ -453,20 +453,19 @@ void R_SetupWorldFrame(void)
                 plane = sec->planes[j];
 
                 plane->visoffset =
-                    FIX2FLT(plane->oldheight[0] * (1 - frameTimePos) +
+                            plane->oldheight[0] * (1 - frameTimePos) +
                             plane->height * frameTimePos -
-                            plane->height);
+                            plane->height;
 
                 // Visible plane height.
                 if(!plane->linked)
                 {
-                    plane->visheight =
-                        FIX2FLT(plane->height) + plane->visoffset;
+                    plane->visheight = plane->height + plane->visoffset;
                 }
                 else
                 {
                     plane->visheight =
-                        FIX2FLT(R_GetLinkedSector(plane->linked, j)->planes[j]->height);
+                        R_GetLinkedSector(plane->linked, j)->planes[j]->height;
                 }
             }
         }

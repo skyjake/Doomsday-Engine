@@ -108,7 +108,7 @@ enum {
 };
 
 typedef struct skyfix_s {
-    int offset;
+    float offset;
 } skyfix_t;
 
 #include "p_maptypes.h"

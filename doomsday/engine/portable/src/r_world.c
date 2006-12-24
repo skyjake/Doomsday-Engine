@@ -252,8 +252,8 @@ static void R_SetSectorLinks(sector_t *sec)
  */
 static void R_InitSkyFix(void)
 {
-    int         f, b;
-    int        *fix;
+    float       f, b;
+    float      *fix;
     uint        i;
     mobj_t     *it;
     sector_t   *sec;
@@ -271,9 +271,9 @@ static void R_InitSkyFix(void)
         // Check that all the things in the sector fit in.
         for(it = sec->thinglist; it; it = it->snext)
         {
-            b = it->height >> FRACBITS;
-            f = (sec->SP_ceilheight >> FRACBITS) + *fix -
-                (sec->SP_floorheight >> FRACBITS);
+            b = FIX2FLT(it->height);
+            f = sec->SP_ceilheight + *fix -
+                sec->SP_floorheight;
 
             if(b > f)
             {   // Must increase skyfix.
@@ -281,9 +281,9 @@ static void R_InitSkyFix(void)
 
                 if(verbose)
                 {
-                    Con_Printf("S%i: (mo)skyfix to %i (ceil=%i)\n",
+                    Con_Printf("S%i: (mo)skyfix to %g (ceil=%g)\n",
                                GET_SECTOR_IDX(sec), *fix,
-                               (sec->SP_ceilheight >> FRACBITS) + *fix);
+                               sec->SP_ceilheight + *fix);
                 }
             }
         }
@@ -292,10 +292,10 @@ static void R_InitSkyFix(void)
 
 static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
 {
-    int         f, b;
-    int         height = 0;
+    float       f, b;
+    float       height = 0;
     boolean     adjusted = false;
-    int        *fix = NULL;
+    float      *fix = NULL;
     sector_t   *adjustSec = NULL;
 
     // Both the front and back surfaces must be sky on this plane.
@@ -303,10 +303,8 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
        !R_IsSkySurface(&back->planes[pln]->surface))
         return false;
 
-    f = (front->planes[pln]->height >> FRACBITS) +
-        front->skyfix[pln].offset;
-    b = (back->planes[pln]->height >> FRACBITS) +
-        back->skyfix[pln].offset;
+    f = front->planes[pln]->height + front->skyfix[pln].offset;
+    b = back->planes[pln]->height + back->skyfix[pln].offset;
 
     if(f == b)
         return false;
@@ -315,13 +313,13 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
     {
         if(f < b)
         {
-            height = b - (front->planes[pln]->height >> FRACBITS);
+            height = b - front->planes[pln]->height;
             fix = &front->skyfix[pln].offset;
             adjustSec = front;
         }
         else if(f > b)
         {
-            height = f - (back->planes[pln]->height >> FRACBITS);
+            height = f - back->planes[pln]->height;
             fix = &back->skyfix[pln].offset;
             adjustSec = back;
         }
@@ -336,13 +334,13 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
     {
         if(f > b)
         {
-            height = b - (front->planes[pln]->height >> FRACBITS);
+            height = b - front->planes[pln]->height;
             fix = &front->skyfix[pln].offset;
             adjustSec = front;
         }
         else if(f < b)
         {
-            height = f - (back->planes[pln]->height >> FRACBITS);
+            height = f - back->planes[pln]->height;
             fix = &back->skyfix[pln].offset;
             adjustSec = back;
         }
@@ -356,10 +354,10 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
 
     if(verbose && adjusted)
     {
-        Con_Printf("S%i: skyfix to %i (%s=%i)\n",
+        Con_Printf("S%i: skyfix to %g (%s=%g)\n",
                    GET_SECTOR_IDX(adjustSec), *fix,
                    (pln == PLN_CEILING? "ceil" : "floor"),
-                   (adjustSec->planes[pln]->height >> FRACBITS) + *fix);
+                   adjustSec->planes[pln]->height + *fix);
     }
 
     return adjusted;

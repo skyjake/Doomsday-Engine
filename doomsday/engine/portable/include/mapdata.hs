@@ -88,13 +88,13 @@ struct surface
 end
 
 struct plane
-    FIXED   fixed_t     height  // Current height
-    -       fixed_t[2]  oldheight
+    FLOAT   float       height  // Current height
+    -       float[2]    oldheight
     -       surface_t   surface
     FLOAT   float       glow    // Glow amount
     BYTE    byte[3]     glowrgb // Glow color
-    FIXED   fixed_t     target  // Target height
-    FIXED   fixed_t     speed   // Move speed
+    FLOAT   float       target  // Target height
+    FLOAT   float       speed   // Move speed
     PTR     degenmobj_t soundorg // Sound origin for plane
     -       sector_s*   sector  // Owner of the plane (temp)
     -       float       visheight // Visible plane height (smoothed)

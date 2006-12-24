@@ -132,9 +132,8 @@ Con_Message("%d bytes; sub_reverb: %p\n", sizeof(subreverb_t) * numsubsectors, s
         rev = &sub_reverb[c];
         // Space is the rough volume of the subsector (bounding box).
         rev->data[SRD_SPACE] =
-            ((sub->sector->planes[PLN_CEILING]->height -
-              sub->sector->planes[PLN_FLOOR]->height) >> FRACBITS) * (sub->bbox[1].pos[VX] -
-                                                        sub->bbox[0].pos[VX]) *
+            (int) (sub->sector->SP_ceilheight - sub->sector->SP_floorheight) *
+            (sub->bbox[1].pos[VX] - sub->bbox[0].pos[VX]) *
             (sub->bbox[1].pos[VY] - sub->bbox[0].pos[VY]);
 
         // The other reverb properties can be found out by taking a look at the
@@ -245,7 +244,7 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
 */
 
         sectorSpace =
-            ((sec->SP_ceilheight - sec->SP_floorheight) >> FRACBITS) *
+            (int) (sec->SP_ceilheight - sec->SP_floorheight) *
              (bbox[BRIGHT] - bbox[BLEFT]) * (bbox[BBOTTOM] - bbox[BTOP]);
 /*
 #if _DEBUG

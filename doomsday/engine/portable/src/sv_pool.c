@@ -747,7 +747,8 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     }
     else
     {
-        if(abs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height) > PLANE_SKIP_LIMIT)
+        if(FLT2FIX(fabs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height))
+           > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
 
@@ -759,7 +760,8 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     }
     else
     {
-        if(abs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height) > PLANE_SKIP_LIMIT)
+        if(FLT2FIX(fabs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height))
+           > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
 
@@ -1618,8 +1620,8 @@ fixed_t Sv_SectorDistance(int index, const ownerinfo_t *info)
     return P_ApproxDistance3(info->pos[VX] - sectorOrigins[index].pos[VX],
                              info->pos[VY] - sectorOrigins[index].pos[VY],
                              info->pos[VZ] -
-                             ((sector->planes[PLN_CEILING]->height +
-                               sector->planes[PLN_FLOOR]->height) / 2));
+                             (FLT2FIX(sector->planes[PLN_CEILING]->height +
+                                      sector->planes[PLN_FLOOR]->height) / 2));
 }
 
 /**
