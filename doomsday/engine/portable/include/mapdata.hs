@@ -2,17 +2,12 @@
 # Runtime map data defitions. Processed by the makedmt.py script.
 
 struct vertex
-    -       fixed_t[2]    pos
-    -       uint          numsecowners // Number of sector owners.
-    -       uint*         secowners // Sector indices [numsecowners] size.
-    -       uint          numlineowners // Number of line owners.
-    -       lineowner_s*  lineowners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
-    -       boolean       anchored // One or more of our line owners are one-sided.
-end
-
-public
-#define DMT_VERTEX_X            DDVT_FIXED
-#define DMT_VERTEX_Y            DDVT_FIXED
+    FLOAT   float[2]    pos
+    -       uint        numsecowners // Number of sector owners.
+    -       uint*       secowners // Sector indices [numsecowners] size.
+    -       uint        numlineowners // Number of line owners.
+    -       lineowner_s* lineowners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
+    -       boolean     anchored // One or more of our line owners are one-sided.
 end
 
 internal
@@ -22,8 +17,6 @@ internal
 
 #define SG_v1                   v[0]
 #define SG_v2                   v[1]
-#define SG_fv1                  fv[0]
-#define SG_fv2                  fv[1]
 #define SG_frontsector          sec[FRONT]
 #define SG_backsector           sec[BACK]
 
@@ -34,7 +27,6 @@ end
 
 struct seg
     PTR     vertex_s*[2] v      // [Start, End] of the segment.
-    -       fvertex_s[2] fv     // [Start, End] of the segment (float).
     FLOAT   float       length  // Accurate length of the segment (v1 -> v2).
     FIXED   fixed_t     offset
     PTR     side_s*     sidedef
@@ -272,8 +264,8 @@ struct line
     PTR     vertex_s*[2] v
     SHORT   short       flags
     PTR     sector_s*[2] sec        // [front, back] sectors.
-    FIXED   fixed_t     dx
-    FIXED   fixed_t     dy
+    FLOAT   float       dx
+    FLOAT   float       dy
     INT     slopetype_t slopetype
     INT     int         validcount
     PTR     side_s*[2]  sides
@@ -293,7 +285,7 @@ struct polyobj
     -       ddvertex_t* originalPts // used as the base for the rotations
     -       ddvertex_t* prevPts     // use to restore the old point values
     FIXED   fixed_t[4]  bbox
-    -       vertex_t    dest
+    -       fvertex_t   dest
     INT     int         speed       // Destination XY and speed.
     ANGLE   angle_t     destAngle   // Destination angle.
     ANGLE   angle_t     angleSpeed  // Rotation speed.

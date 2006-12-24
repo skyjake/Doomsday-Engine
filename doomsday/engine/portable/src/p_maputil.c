@@ -85,6 +85,11 @@ float P_AccurateDistance(fixed_t dx, fixed_t dy)
     return (float) sqrt(fx * fx + fy * fy);
 }
 
+float P_AccurateDistancef(float dx, float dy)
+{
+    return (float) sqrt(dx * dx + dy * dy);
+}
+
 /*
  * Gives an estimation of distance (not exact).
  */
@@ -110,13 +115,12 @@ fixed_t P_ApproxDistance3(fixed_t dx, fixed_t dy, fixed_t dz)
  */
 void P_LineUnitVector(line_t *line, float *unitvec)
 {
-    float   dx = FIX2FLT(line->dx), dy = FIX2FLT(line->dy);
-    float   len = M_ApproxDistancef(dx, dy);
+    float   len = M_ApproxDistancef(line->dx, line->dy);
 
     if(len)
     {
-        unitvec[VX] = dx / len;
-        unitvec[VY] = dy / len;
+        unitvec[VX] = line->dx / len;
+        unitvec[VY] = line->dy / len;
     }
     else
     {
@@ -222,14 +226,14 @@ void P_SectorBoundingBox(sector_t *sec, float *bbox)
     if(!sec->linecount)
         return;
 
-    bbox[BLEFT] = bbox[BRIGHT]  = sec->Lines[0]->L_v1->pos[VX] >> FRACBITS;
-    bbox[BTOP]  = bbox[BBOTTOM] = sec->Lines[0]->L_v1->pos[VY] >> FRACBITS;
+    bbox[BLEFT] = bbox[BRIGHT]  = sec->Lines[0]->L_v1->pos[VX];
+    bbox[BTOP]  = bbox[BBOTTOM] = sec->Lines[0]->L_v1->pos[VY];
 
     for(i = 1; i < sec->linecount; ++i)
     {
         li = sec->Lines[i];
-        pos[VX] = li->L_v1->pos[VX] >> FRACBITS;
-        pos[VY] = li->L_v1->pos[VY] >> FRACBITS;
+        pos[VX] = li->L_v1->pos[VX];
+        pos[VY] = li->L_v1->pos[VY];
 
         if(pos[VX] < bbox[BLEFT])
             bbox[BLEFT]   = pos[VX];
@@ -247,11 +251,11 @@ void P_SectorBoundingBox(sector_t *sec, float *bbox)
  */
 int P_PointOnLineSide(fixed_t x, fixed_t y, line_t *line)
 {
-    return  !line->dx ? x <= line->L_v1->pos[VX] ? line->dy > 0 : line->dy <
-        0 : !line->dy ? y <= line->L_v1->pos[VY] ? line->dx < 0 : line->dx >
-        0 : FixedMul(y - line->L_v1->pos[VY],
-                     line->dx >> FRACBITS) >= FixedMul(line->dy >> FRACBITS,
-                                                       x - line->L_v1->pos[VX]);
+    float       fx = FIX2FLT(x), fy = FIX2FLT(y);
+
+    return  !line->dx ? fx <= line->L_v1->pos[VX] ? line->dy > 0 : line->dy <
+        0 : !line->dy ? fy <= line->L_v1->pos[VY] ? line->dx < 0 : line->dx >
+        0 : (fy - line->L_v1->pos[VY]) * line->dx >= line->dy * (fx - line->L_v1->pos[VX]);
 }
 
 /*
@@ -268,13 +272,17 @@ int P_BoxOnLineSide(fixed_t *tmbox, line_t *ld)
 
     default:                    // shut up compiler warnings -- killough
     case ST_HORIZONTAL:
-        return (tmbox[BOXBOTTOM] > ld->L_v1->pos[VY]) ==
-                (p = tmbox[BOXTOP] > ld->L_v1->pos[VY]) ? p ^ (ld->dx < 0) : -1;
-
+    {
+        fixed_t ly = FLT2FIX(ld->L_v1->pos[VY]);
+        return (tmbox[BOXBOTTOM] > ly) ==
+                (p = tmbox[BOXTOP] > ly) ? p ^ (ld->dx < 0) : -1;
+    }
     case ST_VERTICAL:
-        return (tmbox[BOXLEFT] < ld->L_v1->pos[VX]) ==
-                (p = tmbox[BOXRIGHT] < ld->L_v1->pos[VX]) ? p ^ (ld->dy < 0) : -1;
-
+    {
+        fixed_t lx = FLT2FIX(ld->L_v1->pos[VX]);
+        return (tmbox[BOXLEFT] < lx) ==
+                (p = tmbox[BOXRIGHT] < lx) ? p ^ (ld->dy < 0) : -1;
+    }
     case ST_POSITIVE:
         return P_PointOnLineSide(tmbox[BOXRIGHT], tmbox[BOXBOTTOM], ld) ==
                 (p = P_PointOnLineSide(tmbox[BOXLEFT], tmbox[BOXTOP], ld)) ? p : -1;
@@ -299,10 +307,10 @@ int P_PointOnDivlineSide(fixed_t x, fixed_t y, divline_t *line)
 
 void P_MakeDivline(line_t *li, divline_t *dl)
 {
-    dl->pos[VX] = li->L_v1->pos[VX];
-    dl->pos[VY] = li->L_v1->pos[VY];
-    dl->dx = li->dx;
-    dl->dy = li->dy;
+    dl->pos[VX] = FLT2FIX(li->L_v1->pos[VX]);
+    dl->pos[VY] = FLT2FIX(li->L_v1->pos[VY]);
+    dl->dx = FLT2FIX(li->dx);
+    dl->dy = FLT2FIX(li->dy);
 }
 
 /*
@@ -462,13 +470,19 @@ void P_UnlinkThing(mobj_t *thing)
  */
 boolean PIT_LinkToLines(line_t *ld, void *parm)
 {
+    int         p;
     linelinker_data_t *data = parm;
-    fixed_t         bbox[4];
-    nodeindex_t     nix;
+    fixed_t     bbox[4];
+    nodeindex_t nix;
 
     // Setup the bounding box for the line.
-    ORDER(ld->v[0]->pos[VX], ld->v[1]->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
-    ORDER(ld->v[0]->pos[VY], ld->v[1]->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
+    p = (ld->v[0]->pos[VX] < ld->v[1]->pos[VX]);
+    bbox[BOXLEFT]   = FLT2FIX(ld->v[p^1]->pos[VX]);
+    bbox[BOXRIGHT]  = FLT2FIX(ld->v[p]->pos[VX]);
+
+    p = (ld->v[0]->pos[VY] < ld->v[1]->pos[VY]);
+    bbox[BOXBOTTOM] = FLT2FIX(ld->v[p^1]->pos[VY]);
+    bbox[BOXTOP]    = FLT2FIX(ld->v[p]->pos[VY]);
 
     if(data->box[BOXRIGHT]  <= bbox[BOXLEFT] ||
        data->box[BOXLEFT]   >= bbox[BOXRIGHT] ||
@@ -759,8 +773,10 @@ boolean PIT_AddLineIntercepts(line_t *ld, void *data)
     if(trace.dx > FRACUNIT * 16 || trace.dy > FRACUNIT * 16 ||
        trace.dx < -FRACUNIT * 16 || trace.dy < -FRACUNIT * 16)
     {
-        s[0] = P_PointOnDivlineSide(ld->L_v1->pos[VX], ld->L_v1->pos[VY], &trace);
-        s[1] = P_PointOnDivlineSide(ld->L_v2->pos[VX], ld->L_v2->pos[VY], &trace);
+        s[0] = P_PointOnDivlineSide(FLT2FIX(ld->L_v1->pos[VX]),
+                                    FLT2FIX(ld->L_v1->pos[VY]), &trace);
+        s[1] = P_PointOnDivlineSide(FLT2FIX(ld->L_v2->pos[VX]),
+                                    FLT2FIX(ld->L_v2->pos[VY]), &trace);
     }
     else
     {

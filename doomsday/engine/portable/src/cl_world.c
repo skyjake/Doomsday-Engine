@@ -275,8 +275,8 @@ void Cl_PolyMoverThinker(polymover_t *mover)
     if(mover->move)
     {
         // How much to go?
-        dx = poly->dest.pos[VX] - poly->startSpot.pos[VX];
-        dy = poly->dest.pos[VY] - poly->startSpot.pos[VY];
+        dx = FLT2FIX(poly->dest.pos[VX]) - poly->startSpot.pos[VX];
+        dy = FLT2FIX(poly->dest.pos[VY]) - poly->startSpot.pos[VY];
         dist = P_ApproxDistance(dx, dy);
         if(dist <= poly->speed || !poly->speed)
         {
@@ -766,7 +766,8 @@ void Cl_ReadPolyDelta2(boolean skip)
     int     df;
     unsigned short num;
     polyobj_t *po;
-    int     destX = 0, destY = 0, speed = 0, destAngle = 0, angleSpeed = 0;
+    float   destX = 0, destY = 0;
+    int     speed = 0, destAngle = 0, angleSpeed = 0;
 
     num = Msg_ReadPackedShort();
 
@@ -774,9 +775,9 @@ void Cl_ReadPolyDelta2(boolean skip)
     df = Msg_ReadByte();
 
     if(df & PODF_DEST_X)
-        destX = (Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8);
+        destX = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
     if(df & PODF_DEST_Y)
-        destY = (Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8);
+        destY = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
     if(df & PODF_SPEED)
         speed = Msg_ReadShort() << 8;
     if(df & PODF_DEST_ANGLE)

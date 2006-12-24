@@ -41,6 +41,7 @@ extern fixed_t  opentop, openbottom, openrange, lowfloor;
 extern divline_t trace;
 
 float           P_AccurateDistance(fixed_t dx, fixed_t dy);
+float           P_AccurateDistancef(float dx, float dy);
 fixed_t         P_ApproxDistance(fixed_t dx, fixed_t dy);
 fixed_t         P_ApproxDistance3(fixed_t dx, fixed_t dy, fixed_t dz);
 void            P_LineUnitVector(line_t *line, float *unitvec);

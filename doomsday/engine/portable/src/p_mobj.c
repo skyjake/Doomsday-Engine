@@ -143,12 +143,18 @@ void P_SetState(mobj_t *mobj, int statenum)
  */
 static boolean PIT_CheckLine(line_t *ld, void *parm)
 {
+    int         p;
     checkpos_data_t *tm = parm;
-    fixed_t bbox[4];
+    fixed_t     bbox[4];
 
     // Setup the bounding box for the line.
-    ORDER(ld->v[0]->pos[VX], ld->v[1]->pos[VX], bbox[BOXLEFT], bbox[BOXRIGHT]);
-    ORDER(ld->v[0]->pos[VY], ld->v[1]->pos[VY], bbox[BOXBOTTOM], bbox[BOXTOP]);
+    p = (ld->v[0]->pos[VX] < ld->v[1]->pos[VX]);
+    bbox[BOXLEFT]   = FLT2FIX(ld->v[p^1]->pos[VX]);
+    bbox[BOXRIGHT]  = FLT2FIX(ld->v[p]->pos[VX]);
+
+    p = (ld->v[0]->pos[VY] < ld->v[1]->pos[VY]);
+    bbox[BOXBOTTOM] = FLT2FIX(ld->v[p^1]->pos[VY]);
+    bbox[BOXTOP]    = FLT2FIX(ld->v[p]->pos[VY]);
 
     if(tm->box[BOXRIGHT] <= bbox[BOXLEFT] || tm->box[BOXLEFT] >= bbox[BOXRIGHT] ||
        tm->box[BOXTOP] <= bbox[BOXBOTTOM] || tm->box[BOXBOTTOM] >= bbox[BOXTOP])

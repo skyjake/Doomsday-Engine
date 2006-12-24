@@ -3,9 +3,7 @@
 #ifndef __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__
 #define __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__
 
-
-#define DMT_VERTEX_X            DDVT_FIXED
-#define DMT_VERTEX_Y            DDVT_FIXED
+#define DMT_VERTEX_POS DDVT_FLOAT
 
 #define DMT_SEG_V DDVT_PTR             // [Start, End] of the segment.
 #define DMT_SEG_LENGTH DDVT_FLOAT      // Accurate length of the segment (v1 -> v2).
@@ -59,8 +57,8 @@
 #define DMT_LINE_V DDVT_PTR
 #define DMT_LINE_FLAGS DDVT_SHORT
 #define DMT_LINE_SEC DDVT_PTR          // [front, back] sectors.
-#define DMT_LINE_DX DDVT_FIXED
-#define DMT_LINE_DY DDVT_FIXED
+#define DMT_LINE_DX DDVT_FLOAT
+#define DMT_LINE_DY DDVT_FLOAT
 #define DMT_LINE_SLOPETYPE DDVT_INT
 #define DMT_LINE_VALIDCOUNT DDVT_INT
 #define DMT_LINE_SIDES DDVT_PTR

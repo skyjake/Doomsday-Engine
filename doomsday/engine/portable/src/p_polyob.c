@@ -49,7 +49,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void UpdateSegBBox(seg_t *seg);
-static void RotatePt(int an, fixed_t *x, fixed_t *y, fixed_t startSpotX,
+static void RotatePt(int an, float *x, float *y, fixed_t startSpotX,
                      fixed_t startSpotY);
 static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po);
 
@@ -106,14 +106,6 @@ polyobj_t *GetPolyobj(uint polyNum)
     return NULL;
 }
 
-static void __inline UpdateSegFVtxs(seg_t *seg)
-{
-    seg->fv[0].pos[VX] = FIX2FLT(seg->v[0]->pos[VX]);
-    seg->fv[0].pos[VY] = FIX2FLT(seg->v[0]->pos[VY]);
-    seg->fv[1].pos[VX] = FIX2FLT(seg->v[1]->pos[VX]);
-    seg->fv[1].pos[VY] = FIX2FLT(seg->v[1]->pos[VY]);
-}
-
 void UpdateSegBBox(seg_t *seg)
 {
     line_t *line;
@@ -122,23 +114,23 @@ void UpdateSegBBox(seg_t *seg)
 
     if(seg->v[0]->pos[VX] < seg->v[1]->pos[VX])
     {
-        line->bbox[BOXLEFT]  = seg->v[0]->pos[VX];
-        line->bbox[BOXRIGHT] = seg->v[1]->pos[VX];
+        line->bbox[BOXLEFT]  = FLT2FIX(seg->v[0]->pos[VX]);
+        line->bbox[BOXRIGHT] = FLT2FIX(seg->v[1]->pos[VX]);
     }
     else
     {
-        line->bbox[BOXLEFT]  = seg->v[1]->pos[VX];
-        line->bbox[BOXRIGHT] = seg->v[0]->pos[VX];
+        line->bbox[BOXLEFT]  = FLT2FIX(seg->v[1]->pos[VX]);
+        line->bbox[BOXRIGHT] = FLT2FIX(seg->v[0]->pos[VX]);
     }
     if(seg->v[0]->pos[VY] < seg->v[1]->pos[VY])
     {
-        line->bbox[BOXBOTTOM] = seg->v[0]->pos[VY];
-        line->bbox[BOXTOP]    = seg->v[1]->pos[VY];
+        line->bbox[BOXBOTTOM] = FLT2FIX(seg->v[0]->pos[VY]);
+        line->bbox[BOXTOP]    = FLT2FIX(seg->v[1]->pos[VY]);
     }
     else
     {
-        line->bbox[BOXBOTTOM] = seg->v[1]->pos[VY];
-        line->bbox[BOXTOP]    = seg->v[0]->pos[VY];
+        line->bbox[BOXBOTTOM] = FLT2FIX(seg->v[1]->pos[VY]);
+        line->bbox[BOXTOP]    = FLT2FIX(seg->v[0]->pos[VY]);
     }
 
     // Update the line's slopetype
@@ -154,7 +146,7 @@ void UpdateSegBBox(seg_t *seg)
     }
     else
     {
-        if(FixedDiv(line->dy, line->dx) > 0)
+        if(line->dy / line->dx > 0)
         {
             line->slopetype = ST_POSITIVE;
         }
@@ -182,7 +174,6 @@ void PO_SetupPolyobjs(void)
         num = polyobjs[i].numsegs;
         for(j = 0; j < num; ++j, segList++)
         {
-            UpdateSegFVtxs(*segList);
             if((*segList)->linedef)
             {
                 line = (*segList)->linedef;
@@ -211,6 +202,7 @@ boolean PO_MovePolyobj(uint num, int x, int y)
     polyobj_t  *po;
     ddvertex_t *prevPts;
     boolean     blocked;
+    float       fx = FIX2FLT(x), fy = FIX2FLT(y);
 
     if(num & 0x80000000)
     {
@@ -247,8 +239,8 @@ boolean PO_MovePolyobj(uint num, int x, int y)
         }
         if(veryTempSeg == segList)
         {
-            (*segList)->SG_v1->pos[VX] += x;
-            (*segList)->SG_v1->pos[VY] += y;
+            (*segList)->SG_v1->pos[VX] += fx;
+            (*segList)->SG_v1->pos[VY] += fy;
         }
         (*prevPts).pos[VX] += x;      // previous points are unique for each seg
         (*prevPts).pos[VY] += y;
@@ -286,8 +278,8 @@ boolean PO_MovePolyobj(uint num, int x, int y)
             }
             if(veryTempSeg == segList)
             {
-                (*segList)->SG_v1->pos[VX] -= x;
-                (*segList)->SG_v1->pos[VY] -= y;
+                (*segList)->SG_v1->pos[VX] -= fx;
+                (*segList)->SG_v1->pos[VY] -= fy;
             }
             (*prevPts).pos[VX] -= x;
             (*prevPts).pos[VY] -= y;
@@ -308,22 +300,22 @@ boolean PO_MovePolyobj(uint num, int x, int y)
     return true;
 }
 
-static void RotatePt(int an, fixed_t *x, fixed_t *y, fixed_t startSpotX,
+static void RotatePt(int an, float *x, float *y, fixed_t startSpotX,
                      fixed_t startSpotY)
 {
     fixed_t trx, try;
     fixed_t gxt, gyt;
 
-    trx = *x;
-    try = *y;
+    trx = FLT2FIX(*x);
+    try = FLT2FIX(*y);
 
     gxt = FixedMul(trx, finecosine[an]);
     gyt = FixedMul(try, finesine[an]);
-    *x = (gxt - gyt) + startSpotX;
+    *x = FIX2FLT((gxt - gyt) + startSpotX);
 
     gxt = FixedMul(trx, finesine[an]);
     gyt = FixedMul(try, finecosine[an]);
-    *y = (gyt + gxt) + startSpotY;
+    *y = FIX2FLT((gyt + gxt) + startSpotY);
 }
 
 boolean PO_RotatePolyobj(uint num, angle_t angle)
@@ -358,10 +350,10 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
     {
         vtx = (*segList)->SG_v1;
 
-        prevPts->pos[VX] = vtx->pos[VX];
-        prevPts->pos[VY] = vtx->pos[VY];
-        vtx->pos[VX] = originalPts->pos[VX];
-        vtx->pos[VY] = originalPts->pos[VY];
+        prevPts->pos[VX] = FLT2FIX(vtx->pos[VX]);
+        prevPts->pos[VY] = FLT2FIX(vtx->pos[VY]);
+        vtx->pos[VX] = FIX2FLT(originalPts->pos[VX]);
+        vtx->pos[VY] = FIX2FLT(originalPts->pos[VY]);
 
         RotatePt(an, &vtx->pos[VX], &vtx->pos[VY],
                  po->startSpot.pos[VX], po->startSpot.pos[VY]);
@@ -390,8 +382,8 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
         {
             vtx = (*segList)->SG_v1;
 
-            vtx->pos[VX] = prevPts->pos[VX];
-            vtx->pos[VY] = prevPts->pos[VY];
+            vtx->pos[VX] = FIX2FLT(prevPts->pos[VX]);
+            vtx->pos[VY] = FIX2FLT(prevPts->pos[VY]);
         }
         segList = po->segs;
         validcount++;
@@ -455,32 +447,28 @@ void PO_LinkPolyobj(polyobj_t * po)
 
     // calculate the polyobj bbox
     tempSeg = po->segs;
-    rightX = leftX = (*tempSeg)->SG_v1->pos[VX];
-    topY = bottomY = (*tempSeg)->SG_v1->pos[VY];
+    rightX = leftX = FLT2FIX((*tempSeg)->SG_v1->pos[VX]);
+    topY = bottomY = FLT2FIX((*tempSeg)->SG_v1->pos[VY]);
 
     for(s = 0; s < po->numsegs; ++s, tempSeg++)
     {
-        // FIXME: This doesn't belong here. As we plan to change how
-        // polyobjects are handled significantly; it can stay here for now.
-        UpdateSegFVtxs(*tempSeg);
-
         vtx = (*tempSeg)->SG_v1;
 
         if(vtx->pos[VX] > rightX)
         {
-            rightX = vtx->pos[VX];
+            rightX = FLT2FIX(vtx->pos[VX]);
         }
         if(vtx->pos[VX] < leftX)
         {
-            leftX = vtx->pos[VX];
+            leftX = FLT2FIX(vtx->pos[VX]);
         }
         if(vtx->pos[VY] > topY)
         {
-            topY = vtx->pos[VY];
+            topY = FLT2FIX(vtx->pos[VY]);
         }
         if(vtx->pos[VY] < bottomY)
         {
-            bottomY = vtx->pos[VY];
+            bottomY = FLT2FIX(vtx->pos[VY]);
         }
     }
     po->bbox[BOXRIGHT]  = (rightX  - bmaporgx) >> MAPBLOCKSHIFT;

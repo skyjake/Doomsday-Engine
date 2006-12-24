@@ -367,8 +367,6 @@ static void P_CreateBlockMap(gamemap_t* map);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-float AccurateDistance(fixed_t dx, fixed_t dy);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static boolean  ReadMapData(gamemap_t* map, int doClass);
@@ -1789,7 +1787,7 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
                     sec->planes[j]->surface.flags = 0;
                     sec->planes[j]->surface.offx =
                         sec->planes[j]->surface.offy = 0;
-                    
+
                     // The back pointer (temporary)
                     sec->planes[j]->sector = &map->sectors[k];
                 }
@@ -1918,6 +1916,23 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                     *d = FIX2FLT(SHORT(*((short*)(src))) << FRACBITS);
                 else
                     *d = FIX2FLT(SHORT(*((short*)(src))));
+            }
+            break;
+
+        case 4:
+            if(flags & DT_UNSIGNED)
+            {
+                if(flags & DT_FRACBITS)
+                    *d = FIX2FLT(ULONG(*((long*)(src))) << FRACBITS);
+                else
+                    *d = FIX2FLT(ULONG(*((long*)(src))));
+            }
+            else
+            {
+                if(flags & DT_FRACBITS)
+                    *d = FIX2FLT(LONG(*((long*)(src))) << FRACBITS);
+                else
+                    *d = FIX2FLT(LONG(*((long*)(src))));
             }
             break;
 
@@ -2372,16 +2387,16 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_VERTEX:
         {
         vertex_t* p = ptr;
-        int     idx = p - map->vertexes;
+        uint    idx = p - map->vertexes;
 
         switch(prop->property)
         {
         case DAM_X:
-            ReadValue(map, DMT_VERTEX_X, &p->pos[VX], buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_VERTEX_POS, &p->pos[VX], buffer + prop->offset, prop, idx);
             break;
 
         case DAM_Y:
-            ReadValue(map, DMT_VERTEX_Y, &p->pos[VY], buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_VERTEX_POS, &p->pos[VY], buffer + prop->offset, prop, idx);
             break;
 
         default:
@@ -2393,7 +2408,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_LINE:  // Lines are read into an interim format
         {
         line_t* p = ptr;
-        int     idx = p - map->lines;
+        uint    idx = p - map->lines;
 
         switch(prop->property)
         {
@@ -2428,7 +2443,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_SIDE:
         {
         side_t* p = ptr;
-        int     idx = p - map->sides;
+        uint    idx = p - map->sides;
 
         switch(prop->property)
         {
@@ -2472,7 +2487,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_SECTOR:
         {
         sector_t* p = ptr;
-        int     idx = p - map->sectors;
+        uint    idx = p - map->sectors;
 
         switch(prop->property)
         {
@@ -2505,7 +2520,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_SEG:
         {
         seg_t* p = ptr;
-        int     idx = p - map->segs;
+        uint    idx = p - map->segs;
 
         switch(prop->property)
         {
@@ -2546,7 +2561,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_SUBSECTOR:
         {
         subsector_t* p = ptr;
-        int     idx = p - map->subsectors;
+        uint    idx = p - map->subsectors;
 
         switch(prop->property)
         {
@@ -2567,7 +2582,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_NODE:
         {
         node_t* p = ptr;
-        int     idx = p - map->nodes;
+        uint    idx = p - map->nodes;
 
         switch(prop->property)
         {
@@ -2838,18 +2853,18 @@ static void P_ProcessSegs(gamemap_t* map, int version)
             {
                 if(side == 0)
                     seg->offset =
-                        FRACUNIT * AccurateDistance(seg->v[0]->pos[VX] - ldef->v[0]->pos[VX],
-                                                    seg->v[0]->pos[VY] - ldef->v[0]->pos[VY]);
+                        FRACUNIT * P_AccurateDistancef(seg->v[0]->pos[VX] - ldef->v[0]->pos[VX],
+                                                       seg->v[0]->pos[VY] - ldef->v[0]->pos[VY]);
                 else
                     seg->offset =
-                        FRACUNIT * AccurateDistance(seg->v[0]->pos[VX] - ldef->v[1]->pos[VX],
-                                                    seg->v[0]->pos[VY] - ldef->v[1]->pos[VY]);
+                        FRACUNIT * P_AccurateDistancef(seg->v[0]->pos[VX] - ldef->v[1]->pos[VX],
+                                                       seg->v[0]->pos[VY] - ldef->v[1]->pos[VY]);
             }
 
             if(seg->angle == -1)
                 seg->angle =
-                    bamsAtan2((seg->v[1]->pos[VY] - seg->v[0]->pos[VY]) >> FRACBITS,
-                              (seg->v[1]->pos[VX] - seg->v[0]->pos[VX]) >> FRACBITS) << FRACBITS;
+                    bamsAtan2((int) (seg->v[1]->pos[VY] - seg->v[0]->pos[VY]),
+                              (int) (seg->v[1]->pos[VX] - seg->v[0]->pos[VX])) << FRACBITS;
         }
         else
         {
@@ -2859,18 +2874,10 @@ static void P_ProcessSegs(gamemap_t* map, int version)
             seg->SG_backsector = NULL;
         }
 
-        // Convert the vertex positions to float and store alongside the
-        // fixed versions. Use these instead of constantly converting between
-        // fixed<>float as required.
-        seg->fv[0].pos[VX] = FIX2FLT(seg->v[0]->pos[VX]);
-        seg->fv[0].pos[VY] = FIX2FLT(seg->v[0]->pos[VY]);
-        seg->fv[1].pos[VX] = FIX2FLT(seg->v[1]->pos[VX]);
-        seg->fv[1].pos[VY] = FIX2FLT(seg->v[1]->pos[VY]);
-
         // Calculate the length of the segment. We need this for
         // the texture coordinates. -jk
-        seg->length = AccurateDistance(seg->v[1]->pos[VX] - seg->v[0]->pos[VX],
-                                       seg->v[1]->pos[VY] - seg->v[0]->pos[VY]);
+        seg->length = P_AccurateDistancef(seg->v[1]->pos[VX] - seg->v[0]->pos[VX],
+                                          seg->v[1]->pos[VY] - seg->v[0]->pos[VY]);
 
         if(version == 0 && seg->length == 0)
             seg->length = 0.01f; // Hmm...
@@ -2881,8 +2888,8 @@ static void P_ProcessSegs(gamemap_t* map, int version)
         {
             surface_t *surface = &seg->sidedef->SW_topsurface;
 
-            surface->normal[VY] = (seg->fv[0].pos[VX] - seg->fv[1].pos[VX]) / seg->length;
-            surface->normal[VX] = (seg->fv[1].pos[VY] - seg->fv[0].pos[VY]) / seg->length;
+            surface->normal[VY] = (seg->v[0]->pos[VX] - seg->v[1]->pos[VX]) / seg->length;
+            surface->normal[VX] = (seg->v[1]->pos[VY] - seg->v[0]->pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
 
             // All surfaces of a sidedef have the same normal.
@@ -2936,8 +2943,8 @@ static void P_FinishLineDefs(gamemap_t* map)
         ld->dy = v[1]->pos[VY] - v[0]->pos[VY];
 
         // Calculate the accurate length of each line.
-        ld->length = P_AccurateDistance(ld->dx, ld->dy);
-        ld->angle = bamsAtan2(-(ld->dx >> 13), ld->dy >> 13);
+        ld->length = P_AccurateDistancef(ld->dx, ld->dy);
+        ld->angle = bamsAtan2(-(FLT2FIX(ld->dx) >> 13), FLT2FIX(ld->dy) >> 13);
 
         if(!ld->dx)
             ld->slopetype = ST_VERTICAL;
@@ -2945,7 +2952,7 @@ static void P_FinishLineDefs(gamemap_t* map)
             ld->slopetype = ST_HORIZONTAL;
         else
         {
-            if(FixedDiv(ld->dy, ld->dx) > 0)
+            if(ld->dy / ld->dx > 0)
                 ld->slopetype = ST_POSITIVE;
             else
                 ld->slopetype = ST_NEGATIVE;
@@ -2953,24 +2960,24 @@ static void P_FinishLineDefs(gamemap_t* map)
 
         if(v[0]->pos[VX] < v[1]->pos[VX])
         {
-            ld->bbox[BOXLEFT]   = v[0]->pos[VX];
-            ld->bbox[BOXRIGHT]  = v[1]->pos[VX];
+            ld->bbox[BOXLEFT]   = FLT2FIX(v[0]->pos[VX]);
+            ld->bbox[BOXRIGHT]  = FLT2FIX(v[1]->pos[VX]);
         }
         else
         {
-            ld->bbox[BOXLEFT]   = v[1]->pos[VX];
-            ld->bbox[BOXRIGHT]  = v[0]->pos[VX];
+            ld->bbox[BOXLEFT]   = FLT2FIX(v[1]->pos[VX]);
+            ld->bbox[BOXRIGHT]  = FLT2FIX(v[0]->pos[VX]);
         }
 
         if(v[0]->pos[VY] < v[1]->pos[VY])
         {
-            ld->bbox[BOXBOTTOM] = v[0]->pos[VY];
-            ld->bbox[BOXTOP]    = v[1]->pos[VY];
+            ld->bbox[BOXBOTTOM] = FLT2FIX(v[0]->pos[VY]);
+            ld->bbox[BOXTOP]    = FLT2FIX(v[1]->pos[VY]);
         }
         else
         {
-            ld->bbox[BOXBOTTOM] = v[1]->pos[VY];
-            ld->bbox[BOXTOP]    = v[0]->pos[VY];
+            ld->bbox[BOXBOTTOM] = FLT2FIX(v[1]->pos[VY]);
+            ld->bbox[BOXTOP]    = FLT2FIX(v[0]->pos[VY]);
         }
 
         if(ld->L_frontside)
@@ -3169,8 +3176,8 @@ ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
             for(k = 0; k < sec->linecount; ++k)
             {
                 li = sec->Lines[k];
-                M_AddToBox(bbox, li->v[0]->pos[VX], li->v[0]->pos[VY]);
-                M_AddToBox(bbox, li->v[1]->pos[VX], li->v[1]->pos[VY]);
+                M_AddToBox(bbox, FLT2FIX(li->v[0]->pos[VX]), FLT2FIX(li->v[0]->pos[VY]));
+                M_AddToBox(bbox, FLT2FIX(li->v[1]->pos[VX]), FLT2FIX(li->v[1]->pos[VY]));
             }
         }
         else // Its a "benign sector"
@@ -3283,7 +3290,7 @@ static void P_CreateBlockMap(gamemap_t* map)
     for(i = 0; i < map->numvertexes; ++i)
     {
         vtx = &map->vertexes[i];
-        V2_Set(point, FIX2FLT(vtx->pos[VX]), FIX2FLT(vtx->pos[VY]));
+        V2_Set(point, vtx->pos[VX], vtx->pos[VY]);
         if(!i)
             V2_InitBox(bounds, point);
         else
@@ -3332,10 +3339,10 @@ static void P_CreateBlockMap(gamemap_t* map)
     for(i = 0; i < map->numlines; ++i)
     {
         line_t *line = &map->lines[i];
-        int     v1[2] = {line->v[0]->pos[VX] >> FRACBITS,
-                         line->v[0]->pos[VY] >> FRACBITS};
-        int     v2[2] = {line->v[1]->pos[VX] >> FRACBITS,
-                         line->v[1]->pos[VY] >> FRACBITS};
+        int     v1[2] = {(int) line->v[0]->pos[VX],
+                         (int) line->v[0]->pos[VY]};
+        int     v2[2] = {(int) line->v[1]->pos[VX],
+                         (int) line->v[1]->pos[VY]};
         int     dx = v2[VX] - v1[VX];
         int     dy = v2[VY] - v1[VY];
         int     vert = !dx;
@@ -4675,11 +4682,3 @@ static void P_PrintDebugMapData(gamemap_t* map)
     }
 }
 #endif
-
-float AccurateDistance(fixed_t dx, fixed_t dy)
-{
-    float   fx = FIX2FLT(dx);
-    float   fy = FIX2FLT(dy);
-
-    return (float) sqrt(fx * fx + fy * fy);
-}

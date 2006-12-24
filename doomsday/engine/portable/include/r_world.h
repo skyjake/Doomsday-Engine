@@ -51,5 +51,5 @@ void            R_ClearSectorFlags(void);
 void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
 void            R_OrderVertices(line_t *line, const sector_t *sector,
                                 vertex_t *verts[2]);
-void            R_GetMapSize(vertex_t *min, vertex_t *max);
+void            R_GetMapSize(fixed_t *min, fixed_t *max);
 #endif

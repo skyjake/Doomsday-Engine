@@ -216,8 +216,8 @@ void Sv_InitPools(void)
         if(sideOwners[i] == NULL)
             continue;
 
-        sideOrigins[i].pos[VX] = sideOwners[i]->L_v1->pos[VX] + sideOwners[i]->dx / 2;
-        sideOrigins[i].pos[VY] = sideOwners[i]->L_v1->pos[VY] + sideOwners[i]->dy / 2;
+        sideOrigins[i].pos[VX] = FLT2FIX(sideOwners[i]->L_v1->pos[VX] + sideOwners[i]->dx / 2);
+        sideOrigins[i].pos[VY] = FLT2FIX(sideOwners[i]->L_v1->pos[VY] + sideOwners[i]->dy / 2);
     }
 
     // Store the current state of the world into both the registers.

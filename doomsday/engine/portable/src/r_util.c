@@ -310,6 +310,7 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 
     uint        i;
     boolean     isOdd = false;
+    float       fx = FIX2FLT(x), fy = FIX2FLT(y);
 
     for(i = 0; i < sector->linecount; ++i)
     {
@@ -319,12 +320,12 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
             continue;
 
         // It shouldn't matter whether the line faces inward or outward.
-        if((VI->pos[VY] < y && VJ->pos[VY] >= y) ||
-           (VJ->pos[VY] < y && VI->pos[VY] >= y))
+        if((VI->pos[VY] < fy && VJ->pos[VY] >= fy) ||
+           (VJ->pos[VY] < fy && VI->pos[VY] >= fy))
         {
             if(VI->pos[VX] +
-               FixedMul(FixedDiv(y - VI->pos[VY], VJ->pos[VY] - VI->pos[VY]),
-                        VJ->pos[VX] - VI->pos[VX]) < x)
+               (((fy - VI->pos[VY]) / (VJ->pos[VY] - VI->pos[VY])) *
+                (VJ->pos[VX] - VI->pos[VX])) < fx)
             {
                 // Toggle oddness.
                 isOdd = !isOdd;

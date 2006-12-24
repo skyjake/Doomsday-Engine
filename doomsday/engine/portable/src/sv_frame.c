@@ -627,13 +627,13 @@ void Sv_WritePolyDelta(const void *deltaPtr)
 
     if(df & PODF_DEST_X)
     {
-        Msg_WriteShort(d->dest.pos[VX] >> 16);
-        Msg_WriteByte(d->dest.pos[VX] >> 8);
+        Msg_WriteShort(FLT2FIX(d->dest.pos[VX]) >> 16);
+        Msg_WriteByte(FLT2FIX(d->dest.pos[VX]) >> 8);
     }
     if(df & PODF_DEST_Y)
     {
-        Msg_WriteShort(d->dest.pos[VY] >> 16);
-        Msg_WriteByte(d->dest.pos[VY] >> 8);
+        Msg_WriteShort(FLT2FIX(d->dest.pos[VY]) >> 16);
+        Msg_WriteByte(FLT2FIX(d->dest.pos[VY]) >> 8);
     }
     if(df & PODF_SPEED)
         Msg_WriteShort(d->speed >> 8);

@@ -570,8 +570,8 @@ static void R_PolygonizeWithoutCarving(void)
         seg = SEG_PTR(sub->firstline);
         for(j = 0; j < num; ++j, seg++, vtx++)
         {
-            vtx->pos[VX] = seg->fv[0].pos[VX];
-            vtx->pos[VY] = seg->fv[0].pos[VY];
+            vtx->pos[VX] = seg->SG_v1->pos[VX];
+            vtx->pos[VY] = seg->SG_v1->pos[VY];
         }
 
         R_PrepareSubsector(sub);
@@ -705,10 +705,10 @@ static void R_ConvexClipper(subsector_t *ssec, uint num, divline_t *list)
         {
             seg_t  *seg = SEG_PTR(ssec->firstline + i - num);
 
-            clip->pos[VX] = seg->fv[0].pos[VX];
-            clip->pos[VY] = seg->fv[0].pos[VY];
-            clip->dx = seg->fv[1].pos[VX] - seg->fv[0].pos[VX];
-            clip->dy = seg->fv[1].pos[VY] - seg->fv[0].pos[VY];
+            clip->pos[VX] = seg->SG_v1->pos[VX];
+            clip->pos[VY] = seg->SG_v1->pos[VY];
+            clip->dx = seg->SG_v2->pos[VX] - seg->SG_v1->pos[VX];
+            clip->dy = seg->SG_v2->pos[VY] - seg->SG_v1->pos[VY];
         }
     }
 
@@ -929,13 +929,13 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
     {
         if(lines[i]->L_v1 == rootVtx)
         {
-            dx = lines[i]->L_v2->pos[VX] - rootVtx->pos[VX];
-            dy = lines[i]->L_v2->pos[VY] - rootVtx->pos[VY];
+            dx = FLT2FIX(lines[i]->L_v2->pos[VX] - rootVtx->pos[VX]);
+            dy = FLT2FIX(lines[i]->L_v2->pos[VY] - rootVtx->pos[VY]);
         }
         else
         {
-            dx = lines[i]->L_v1->pos[VX] - rootVtx->pos[VX];
-            dy = lines[i]->L_v1->pos[VY] - rootVtx->pos[VY];
+            dx = FLT2FIX(lines[i]->L_v1->pos[VX] - rootVtx->pos[VX]);
+            dy = FLT2FIX(lines[i]->L_v1->pos[VY] - rootVtx->pos[VY]);
         }
         angles[i] = bamsAtan2(-(dx >> 13), dy >> 13);
     }
@@ -2596,7 +2596,7 @@ void R_UpdateAllSurfaces(boolean forceUpdate)
 void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
 {
     int         texFlags, oldTexFlags;
-   
+
     // Any change to the texture or glow properties?
     // TODO: Implement Decoration{ Glow{}} definitions.
     texFlags =
@@ -2888,36 +2888,11 @@ const byte *R_GetSectorLightColor(sector_t *sector)
 /**
  * Calculate the size of the entire map.
  */
-void R_GetMapSize(vertex_t *min, vertex_t *max)
+void R_GetMapSize(fixed_t *min, fixed_t *max)
 {
-/*  byte *ptr;
-    uint i;
-    fixed_t x;
-    fixed_t y;
+    min[VX] = FRACUNIT * mapBounds[BLEFT];
+    min[VY] = FRACUNIT * mapBounds[BTOP];
 
-    memcpy(min, vertexes, sizeof(min));
-    memcpy(max, vertexes, sizeof(max));
-
-    for(i = 1, ptr = vertexes + VTXSIZE; i < numvertexes;
-        i++, ptr += VTXSIZE)
-    {
-        x = ((vertex_t *) ptr)->pos[VX];
-        y = ((vertex_t *) ptr)->pos[VY];
-
-        if(x < min->pos[VX])
-            min->pos[VX] = x;
-        if(x > max->pos[VX])
-            max->pos[VX] = x;
-        if(y < min->pos[VY])
-            min->pos[VY] = y;
-        if(y > max->pos[VY])
-            max->pos[VY] = y;
-    }
-*/
-
-    min->pos[VX] = FRACUNIT * mapBounds[BLEFT];
-    min->pos[VY] = FRACUNIT * mapBounds[BTOP];
-
-    max->pos[VX] = FRACUNIT * mapBounds[BRIGHT];
-    max->pos[VY] = FRACUNIT * mapBounds[BBOTTOM];
+    max[VX] = FRACUNIT * mapBounds[BRIGHT];
+    max[VY] = FRACUNIT * mapBounds[BBOTTOM];
 }

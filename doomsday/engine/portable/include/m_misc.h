@@ -105,8 +105,8 @@ void            M_CrossProduct(float *a, float *b, float *out);
 void            M_PointCrossProduct(float *v1, float *v2, float *v3,
                                     float *out);
 void            M_RotateVector(float vec[3], float degYaw, float degPitch);
-void            M_ProjectPointOnLinef(fixed_t *point, fixed_t *linepoint,
-                                      fixed_t *delta, float gap,
+void            M_ProjectPointOnLine(float *point, float *linepoint,
+                                      float *delta, float gap,
                                       float *result);
 float           M_CycleIntoRange(float value, float length);
 uint            M_CRC32(byte *data, uint length);

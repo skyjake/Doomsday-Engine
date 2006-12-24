@@ -394,8 +394,8 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
         v[1] = line->L_v2;
     }
 
-    delta[VX] = FIX2FLT(v[1]->pos[VX] - v[0]->pos[VX]);
-    delta[VY] = FIX2FLT(v[1]->pos[VY] - v[0]->pos[VY]);
+    delta[VX] = v[1]->pos[VX] - v[0]->pos[VX];
+    delta[VY] = v[1]->pos[VY] - v[0]->pos[VY];
     surfaceNormal[VX] = delta[VY] / line->length;
     surfaceNormal[VZ] = -delta[VX] / line->length;
     surfaceNormal[VY] = 0;
@@ -428,8 +428,8 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
         // Skip must be at least one.
         Rend_DecorationPatternSkip(lightDef, skip);
 
-        posBase[VX] = FIX2FLT(v[0]->pos[VX]) + lightDef->elevation * surfaceNormal[VX];
-        posBase[VY] = FIX2FLT(v[0]->pos[VY]) + lightDef->elevation * surfaceNormal[VZ];
+        posBase[VX] = v[0]->pos[VX] + lightDef->elevation * surfaceNormal[VX];
+        posBase[VY] = v[0]->pos[VY] + lightDef->elevation * surfaceNormal[VZ];
 
         patternW = surfTexW * skip[VX];
         patternH = surfTexH * skip[VY];

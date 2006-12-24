@@ -48,8 +48,8 @@ BEGIN_PROF_TIMERS()
   PROF_DYN_INIT_LINK
 END_PROF_TIMERS()
 
-#define X_TO_DLBX(cx)           ( ((cx) - dlBlockOrig.pos[VX]) >> (FRACBITS+7) )
-#define Y_TO_DLBY(cy)           ( ((cy) - dlBlockOrig.pos[VY]) >> (FRACBITS+7) )
+#define X_TO_DLBX(cx)           ( ((cx) - dlBlockOrig[VX]) >> (FRACBITS+7) )
+#define Y_TO_DLBY(cy)           ( ((cy) - dlBlockOrig[VY]) >> (FRACBITS+7) )
 #define DLB_ROOT_DLBXY(bx, by)  (dlBlockLinks + bx + by*dlBlockWidth)
 #define LUM_FACTOR(dist)        (1.5f - 1.5f*(dist)/lum->radius)
 
@@ -128,7 +128,7 @@ static unsigned int numLuminous = 0, maxLuminous = 0;
 static dynlight_t *dynFirst, *dynCursor;
 
 static lumobj_t **dlBlockLinks = 0;
-static vertex_t dlBlockOrig;
+static fixed_t dlBlockOrig[3];
 static int dlBlockWidth, dlBlockHeight;    // In 128 blocks.
 
 static lumobj_t **dlSubLinks = 0;
@@ -381,20 +381,20 @@ static void DL_ComputeLightColor(lumobj_t *lum, DGLubyte *outRGB, float light)
 void DL_InitForMap(void)
 {
     uint        i;
-    vertex_t    min, max;
+    fixed_t     min[3], max[3];
 
     // First initialize the subsector links (root pointers).
     dlSubLinks = Z_Calloc(sizeof(lumobj_t*) * numsubsectors, PU_LEVEL, 0);
 
     // Then the blocklinks.
-    R_GetMapSize(&min, &max);
+    R_GetMapSize(&min[0], &max[0]);
 
     // Origin has fixed-point coordinates.
     memcpy(&dlBlockOrig, &min, sizeof(min));
-    max.pos[VX] -= min.pos[VX];
-    max.pos[VY] -= min.pos[VY];
-    dlBlockWidth  = (max.pos[VX] >> (FRACBITS + 7)) + 1;
-    dlBlockHeight = (max.pos[VY] >> (FRACBITS + 7)) + 1;
+    max[VX] -= min[VX];
+    max[VY] -= min[VY];
+    dlBlockWidth  = (max[VX] >> (FRACBITS + 7)) + 1;
+    dlBlockHeight = (max[VY] >> (FRACBITS + 7)) + 1;
 
     // Blocklinks is a table of lumobj_t pointers.
     dlBlockLinks =
@@ -445,7 +445,7 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
     int         present = 0;
     sector_t   *backsec = seg->SG_backsector;
     side_t     *sdef = seg->sidedef;
-    float       pos[2][2], s[2], t[2];
+    float       s[2], t[2];
     float       dist, pntLight[2];
     float       fceil, ffloor, bceil, bfloor;
     float       top[2], bottom[2];
@@ -516,25 +516,22 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
     if(!(seg->frameflags & SEGINF_FACINGFRONT))
         return;
 
-    pos[0][VX] = seg->fv[0].pos[VX];
-    pos[0][VY] = seg->fv[0].pos[VY];
-    pos[1][VX] = seg->fv[1].pos[VX];
-    pos[1][VY] = seg->fv[1].pos[VY];
-
     pntLight[VX] = FIX2FLT(lum->thing->pos[VX]);
     pntLight[VY] = FIX2FLT(lum->thing->pos[VY]);
 
     // Calculate distance between seg and light source.
-    dist = ((pos[0][VY] - pntLight[VY]) * (pos[1][VX] - pos[0][VX]) -
-            (pos[0][VX] - pntLight[VX]) * (pos[1][VY] - pos[0][VY])) / seg->length;
+    dist = ((seg->SG_v1->pos[VY] - pntLight[VY]) * (seg->SG_v2->pos[VX] - seg->SG_v1->pos[VX]) -
+            (seg->SG_v1->pos[VX] - pntLight[VX]) * (seg->SG_v2->pos[VY] - seg->SG_v1->pos[VY]))
+            / seg->length;
 
     // Is it close enough and on the right side?
     if(dist < 0 || dist > lum->radius)
         return; // Nope.
 
     // Do a scalar projection for the offset.
-    s[0] = (-((pos[0][VY] - pntLight[VY]) * (pos[0][VY] - pos[1][VY]) -
-              (pos[0][VX] - pntLight[VX]) * (pos[1][VX] - pos[0][VX])) / seg->length +
+    s[0] = (-((seg->SG_v1->pos[VY] - pntLight[VY]) * (seg->SG_v1->pos[VY] - seg->SG_v2->pos[VY]) -
+              (seg->SG_v1->pos[VX] - pntLight[VX]) * (seg->SG_v2->pos[VX] - seg->SG_v1->pos[VX]))
+              / seg->length +
                lum->radius) / (2 * lum->radius);
 
     s[1] = s[0] + seg->length / (2 * lum->radius);
@@ -781,7 +778,7 @@ void DL_Clear(void)
 
     M_Free(dlBlockLinks);
     dlBlockLinks = 0;
-    dlBlockOrig.pos[VX] = dlBlockOrig.pos[VY] = 0;
+    dlBlockOrig[VX] = dlBlockOrig[VY] = 0;
     dlBlockWidth = dlBlockHeight = 0;
 
     if(planeVars)
@@ -1193,8 +1190,8 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
 
     // Calculate distance to line.
     distance =
-        (FIX2FLT(line->L_v1->pos[VY] - light->lum->thing->pos[VY]) * FIX2FLT(line->dx) -
-         FIX2FLT(line->L_v1->pos[VX] - light->lum->thing->pos[VX]) * FIX2FLT(line->dy))
+        ((line->L_v1->pos[VY] - FIX2FLT(light->lum->thing->pos[VY])) * line->dx -
+         (line->L_v1->pos[VX] - FIX2FLT(light->lum->thing->pos[VX])) * line->dy)
          / line->length;
 
     if((source == line->L_frontsector && distance < 0) ||
@@ -1232,8 +1229,8 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
  */
 static void DL_FindContacts(lumobj_t *lum)
 {
-    int     firstValid = ++validcount;
-    int     xl, yl, xh, yh, bx, by;
+    int         firstValid = ++validcount;
+    int         xl, yl, xh, yh, bx, by;
     contactfinder_data_t light;
 
     // Use a slightly smaller radius than what the light really is.
@@ -1289,7 +1286,7 @@ if(!((numFinds + 1) % 1000))
 
 static void DL_SpreadBlocks(subsector_t *subsector)
 {
-    int xl, xh, yl, yh, x, y;
+    int         xl, xh, yl, yh, x, y;
     int        *count;
     lumobj_t   *iter;
 
@@ -1781,8 +1778,8 @@ void DL_ClipBySight(uint ssecidx)
                     V2_Set(source, FIX2FLT(lumi->thing->pos[VX]),
                            FIX2FLT(lumi->thing->pos[VY]));
 
-                    if(V2_Intercept2(source, eye, seg->fv[0].pos,
-                                     seg->fv[1].pos, NULL, NULL, NULL))
+                    if(V2_Intercept2(source, eye, seg->SG_v1->pos,
+                                     seg->SG_v2->pos, NULL, NULL, NULL))
                     {
                         lumi->flags |= LUMF_CLIPPED;
                     }

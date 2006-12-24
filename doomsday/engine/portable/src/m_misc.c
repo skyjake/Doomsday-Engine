@@ -474,32 +474,30 @@ float M_PointLineDistance(float *a, float *b, float *c)
 }
 
 /**
- * Input is fixed, output is floating point. Gap is the distance left
- * between the line and the projected point.
+ * Gap is the distance left between the line and the projected point.
  */
-void M_ProjectPointOnLinef(fixed_t *point, fixed_t *linepoint, fixed_t *delta,
-                           float gap, float *result)
+void M_ProjectPointOnLine(float *point, float *linepoint, float *delta,
+                          float gap, float *result)
 {
 #define DOTPROD(a,b)    (a[VX]*b[VX] + a[VY]*b[VY])
     float   pointvec[2] = {
-        FIX2FLT(point[VX] - linepoint[VX]),
-        FIX2FLT(point[VY] - linepoint[VY])
+        point[VX] - linepoint[VX],
+        point[VY] - linepoint[VY]
     };
-    float   line[2] = { FIX2FLT(delta[VX]), FIX2FLT(delta[VY]) };
-    float   div = DOTPROD(line, line);
+    float   div = DOTPROD(delta, delta);
     float   diff[2], dist;
 
     if(!div)
         return;
-    div = DOTPROD(pointvec, line) / div;
-    result[VX] = FIX2FLT(linepoint[VX]) + line[VX] * div;
-    result[VY] = FIX2FLT(linepoint[VY]) + line[VY] * div;
+    div = DOTPROD(pointvec, delta) / div;
+    result[VX] = linepoint[VX] + delta[VX] * div;
+    result[VY] = linepoint[VY] + delta[VY] * div;
 
     // If a gap should be left, there is some extra math to do.
     if(gap)
     {
-        diff[VX] = result[VX] - FIX2FLT(point[VX]);
-        diff[VY] = result[VY] - FIX2FLT(point[VY]);
+        diff[VX] = result[VX] - point[VX];
+        diff[VY] = result[VY] - point[VY];
         if((dist = M_ApproxDistancef(diff[VX], diff[VY])) != 0)
         {
             int     i;

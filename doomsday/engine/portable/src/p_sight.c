@@ -138,8 +138,10 @@ boolean P_SightBlockLinesIterator(int x, int y)
 
                     ld->validcount = validcount;
 
-                    s[0] = P_PointOnDivlineSide(ld->v[0]->pos[VX], ld->v[0]->pos[VY], &strace);
-                    s[1] = P_PointOnDivlineSide(ld->v[1]->pos[VX], ld->v[1]->pos[VY], &strace);
+                    s[0] = P_PointOnDivlineSide(FLT2FIX(ld->v[0]->pos[VX]),
+                                                FLT2FIX(ld->v[0]->pos[VY]), &strace);
+                    s[1] = P_PointOnDivlineSide(FLT2FIX(ld->v[1]->pos[VX]),
+                                                FLT2FIX(ld->v[1]->pos[VY]), &strace);
                     if(s[0] == s[1])
                         continue;   // line isn't crossed
 
@@ -175,8 +177,10 @@ boolean P_SightBlockLinesIterator(int x, int y)
 
         ld->validcount = validcount;
 
-        s[0] = P_PointOnDivlineSide(ld->v[0]->pos[VX], ld->v[0]->pos[VY], &strace);
-        s[1] = P_PointOnDivlineSide(ld->v[1]->pos[VX], ld->v[1]->pos[VY], &strace);
+        s[0] = P_PointOnDivlineSide(FLT2FIX(ld->v[0]->pos[VX]),
+                                    FLT2FIX(ld->v[0]->pos[VY]), &strace);
+        s[1] = P_PointOnDivlineSide(FLT2FIX(ld->v[1]->pos[VX]),
+                                    FLT2FIX(ld->v[1]->pos[VY]), &strace);
         if(s[0] == s[1])
             continue;           // line isn't crossed
 

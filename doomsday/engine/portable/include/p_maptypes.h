@@ -7,7 +7,7 @@
 
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
-    fixed_t             pos[2];
+    float               pos[2];
     unsigned int        numsecowners;  // Number of sector owners.
     unsigned int*       secowners;     // Sector indices [numsecowners] size.
     unsigned int        numlineowners; // Number of line owners.
@@ -21,8 +21,6 @@ typedef struct vertex_s {
 
 #define SG_v1                   v[0]
 #define SG_v2                   v[1]
-#define SG_fv1                  fv[0]
-#define SG_fv2                  fv[1]
 #define SG_frontsector          sec[FRONT]
 #define SG_backsector           sec[BACK]
 
@@ -33,7 +31,6 @@ typedef struct vertex_s {
 typedef struct seg_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];          // [Start, End] of the segment.
-    struct fvertex_s    fv[2];         // [Start, End] of the segment (float).
     float               length;        // Accurate length of the segment (v1 -> v2).
     fixed_t             offset;
     struct side_s*      sidedef;
@@ -260,8 +257,8 @@ typedef struct line_s {
     struct vertex_s*    v[2];
     short               flags;
     struct sector_s*    sec[2];        // [front, back] sectors.
-    fixed_t             dx;
-    fixed_t             dy;
+    float               dx;
+    float               dy;
     slopetype_t         slopetype;
     int                 validcount;
     struct side_s*      sides[2];
@@ -282,7 +279,7 @@ typedef struct polyobj_s {
     ddvertex_t*         originalPts;   // used as the base for the rotations
     ddvertex_t*         prevPts;       // use to restore the old point values
     fixed_t             bbox[4];
-    vertex_t            dest;
+    fvertex_t           dest;
     int                 speed;         // Destination XY and speed.
     angle_t             destAngle;     // Destination angle.
     angle_t             angleSpeed;    // Rotation speed.

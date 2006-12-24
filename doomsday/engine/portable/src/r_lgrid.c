@@ -92,7 +92,7 @@ static int      lgShowDebug = false;
 static float    lgDebugSize = 1.5f;
 
 static int      lgBlockSize = 31;
-static vertex_t lgOrigin;
+static fixed_t  lgOrigin[3];
 static int      lgBlockWidth;
 static int      lgBlockHeight;
 static gridblock_t *grid;
@@ -152,11 +152,14 @@ void LG_Init(void)
     uint        startTime = Sys_GetRealTime();
 
 #define MSFACTORS 7
+    typedef struct lgsamplepoint_s {
+        fixed_t pos[3];
+    } lgsamplepoint_t;
     // Diagonal in maze arrangement of natural numbers.
     // Up to 65 samples per-block(!)
     static int  multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
 
-    vertex_t    max;
+    fixed_t     max[3];
     fixed_t     width;
     fixed_t     height;
     int         i;
@@ -171,7 +174,7 @@ void LG_Init(void)
     int         n, size, numSamples, center, best;
     uint        s;
     fixed_t     off[2];
-    vertex_t   *samplePoints = 0, sample;
+    lgsamplepoint_t *samplePoints = 0, sample;
 
     sector_t  **ssamples;
     sector_t  **blkSampleSectors;
@@ -185,10 +188,10 @@ void LG_Init(void)
     lgInited = true;
 
     // Allocate the grid.
-    R_GetMapSize(&lgOrigin, &max);
+    R_GetMapSize(&lgOrigin[0], &max[0]);
 
-    width  = max.pos[VX] - lgOrigin.pos[VX];
-    height = max.pos[VY] - lgOrigin.pos[VY];
+    width  = max[VX] - lgOrigin[VX];
+    height = max[VY] - lgOrigin[VY];
 
     lgBlockWidth  = ((width / lgBlockSize) >> FRACBITS) + 1;
     lgBlockHeight = ((height / lgBlockSize) >> FRACBITS) + 1;
@@ -202,7 +205,7 @@ void LG_Init(void)
     numSamples = multisample[lgMXSample];
 
     // Allocate memory for sample points array.
-    samplePoints = M_Malloc(sizeof(vertex_t) * numSamples);
+    samplePoints = M_Malloc(sizeof(lgsamplepoint_t) * numSamples);
 
     // TODO: It would be possible to only allocate memory for the unique
     // sample results. And then select the appropriate sample in the loop
@@ -301,8 +304,8 @@ void LG_Init(void)
                 // of the samples for this block).
                 idx = blk * (numSamples);
 
-                sample.pos[VX] = lgOrigin.pos[VX] + off[VX] + samplePoints[0].pos[VX];
-                sample.pos[VY] = lgOrigin.pos[VY] + off[VY] + samplePoints[0].pos[VY];
+                sample.pos[VX] = lgOrigin[VX] + off[VX] + samplePoints[0].pos[VX];
+                sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].pos[VY];
 
                 ssamples[idx] =
                     R_PointInSubsector(sample.pos[VX], sample.pos[VY])->sector;
@@ -350,8 +353,8 @@ void LG_Init(void)
                     }
                     else
                     {   // We haven't sampled this point yet.
-                        sample.pos[VX] = lgOrigin.pos[VX] + off[VX] + samplePoints[n].pos[VX];
-                        sample.pos[VY] = lgOrigin.pos[VY] + off[VY] + samplePoints[n].pos[VY];
+                        sample.pos[VX] = lgOrigin[VX] + off[VX] + samplePoints[n].pos[VX];
+                        sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].pos[VY];
 
                         ssamples[idx] =
                             R_PointInSubsector(sample.pos[VX], sample.pos[VY])->sector;
@@ -831,8 +834,8 @@ void LG_Evaluate(const float *point, byte *color)
         return;
     }
 
-    x = ((FLT2FIX(point[VX]) - lgOrigin.pos[VX]) / lgBlockSize) >> FRACBITS;
-    y = ((FLT2FIX(point[VY]) - lgOrigin.pos[VY]) / lgBlockSize) >> FRACBITS;
+    x = ((FLT2FIX(point[VX]) - lgOrigin[VX]) / lgBlockSize) >> FRACBITS;
+    y = ((FLT2FIX(point[VY]) - lgOrigin[VY]) / lgBlockSize) >> FRACBITS;
     x = MINMAX_OF(1, x, lgBlockWidth - 2);
     y = MINMAX_OF(1, y, lgBlockHeight - 2);
 

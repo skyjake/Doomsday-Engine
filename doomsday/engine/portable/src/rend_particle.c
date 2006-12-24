@@ -412,8 +412,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
     float   leftoff[3], rightoff[3], mark, invMark;
     float   size, color[4], center[3];
     float   dist, maxdist;
-    float   line[2], projected[2];
-    fixed_t fixline[2];
+    float   projected[2];
     ptcgen_t *gen;
     ptcstage_t *st;
     particle_t *pt;
@@ -660,6 +659,8 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             // Flat against a wall, then?
             else if(flatOnWall)
             {
+                float line[2] = {pt->contact->dx, pt->contact->dy};
+                float pos[3];
                 // There will be a slight approximation on the XY plane since
                 // the particles aren't that accurate when it comes to wall
                 // collisions.
@@ -667,10 +668,11 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 // Calculate a new center point (project onto the wall).
                 // Also move 1 unit away from the wall to avoid the worst
                 // Z-fighting.
-                fixline[VX] = pt->contact->dx;
-                fixline[VY] = pt->contact->dy;
-                M_ProjectPointOnLinef(pt->pos, &pt->contact->L_v1->pos[VX], fixline, 1,
-                                      projected);
+                pos[VX] = FIX2FLT(pt->pos[VX]);
+                pos[VY] = FIX2FLT(pt->pos[VY]);
+                pos[VZ] = FIX2FLT(pt->pos[VZ]);
+                M_ProjectPointOnLine(pos, &pt->contact->L_v1->pos[VX], line, 1,
+                                     projected);
 
                 P_LineUnitVector(pt->contact, line);
 

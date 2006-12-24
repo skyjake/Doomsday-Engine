@@ -1291,8 +1291,8 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     idx = (isCeiling ? ceilIndices : floorIndices);
 
     // Left outer corner.
-    vtx[idx[0]].pos[VX] = FIX2FLT(shadow->outer[0]->pos[VX]);
-    vtx[idx[0]].pos[VY] = FIX2FLT(shadow->outer[0]->pos[VY]);
+    vtx[idx[0]].pos[VX] = shadow->outer[0]->pos[VX];
+    vtx[idx[0]].pos[VY] = shadow->outer[0]->pos[VY];
     vtx[idx[0]].pos[VZ] = z;
     vtx[idx[0]].color.rgba[CA] = (DGLubyte) (255 * darkness);   // Black.
 
@@ -1300,8 +1300,8 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
         vtx[idx[0]].color.rgba[CA] *= 1 - sideOpen[0];
 
     // Right outer corner.
-    vtx[idx[1]].pos[VX] = FIX2FLT(shadow->outer[1]->pos[VX]);
-    vtx[idx[1]].pos[VY] = FIX2FLT(shadow->outer[1]->pos[VY]);
+    vtx[idx[1]].pos[VX] = shadow->outer[1]->pos[VX];
+    vtx[idx[1]].pos[VY] = shadow->outer[1]->pos[VY];
     vtx[idx[1]].pos[VZ] = z;
     vtx[idx[1]].color.rgba[CA] = (DGLubyte) (255 * darkness);
 

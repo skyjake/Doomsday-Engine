@@ -1146,10 +1146,10 @@ static void Rend_RenderSSWallSeg(seg_t *seg, sector_t *frontsec)
     vTR = quad->vertices[3].pos;
 
     // Get the start and end vertices, left then right. Top and bottom.
-    vBL[VX] = vTL[VX] = seg->fv[0].pos[VX];
-    vBL[VY] = vTL[VY] = seg->fv[0].pos[VY];
-    vBR[VX] = vTR[VX] = seg->fv[1].pos[VX];
-    vBR[VY] = vTR[VY] = seg->fv[1].pos[VY];
+    vBL[VX] = vTL[VX] = seg->SG_v1->pos[VX];
+    vBL[VY] = vTL[VY] = seg->SG_v1->pos[VY];
+    vBR[VX] = vTR[VX] = seg->SG_v2->pos[VX];
+    vBR[VY] = vTR[VY] = seg->SG_v2->pos[VY];
 
     // Calculate the distances.
     quad->vertices[0].dist =
@@ -1273,10 +1273,10 @@ static void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec)
     vTR = quad->vertices[3].pos;
 
     // Get the start and end vertices, left then right. Top and bottom.
-    vBL[VX] = vTL[VX] = seg->fv[0].pos[VX];
-    vBL[VY] = vTL[VY] = seg->fv[0].pos[VY];
-    vBR[VX] = vTR[VX] = seg->fv[1].pos[VX];
-    vBR[VY] = vTR[VY] = seg->fv[1].pos[VY];
+    vBL[VX] = vTL[VX] = seg->SG_v1->pos[VX];
+    vBL[VY] = vTL[VY] = seg->SG_v1->pos[VY];
+    vBR[VX] = vTR[VX] = seg->SG_v2->pos[VX];
+    vBR[VY] = vTR[VY] = seg->SG_v2->pos[VY];
 
     // Calculate the distances.
     quad->vertices[0].dist =
@@ -1341,18 +1341,13 @@ static void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec)
                         if(mo->subsector->sector == side->sector)
                         {
                             // Calculate 2D distance to line.
-                            float a[2], b[2], c[2];
+                            float c[2];
                             float distance;
-
-                            a[VX] = seg->fv[0].pos[VX];
-                            a[VY] = seg->fv[0].pos[VY];
-
-                            b[VX] = seg->fv[1].pos[VX];
-                            b[VY] = seg->fv[1].pos[VY];
 
                             c[VX] = FIX2FLT(mo->pos[VX]);
                             c[VY] = FIX2FLT(mo->pos[VY]);
-                            distance = M_PointLineDistance(a, b, c);
+                            distance =
+                                M_PointLineDistance(seg->SG_v1->pos, seg->SG_v2->pos, c);
 
                             if(distance < (FIX2FLT(mo->radius)*.8f))
                             {
@@ -1605,7 +1600,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
         seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
 
         // Which way should it be facing?
-        if(Rend_SegFacingDir(seg->fv[0].pos, seg->fv[1].pos))  // 1=front
+        if(Rend_SegFacingDir(seg->SG_v1->pos, seg->SG_v2->pos))  // 1=front
             seg->frameflags |= SEGINF_FACINGFRONT;
         else
             seg->frameflags &= ~SEGINF_FACINGFRONT;
@@ -1622,7 +1617,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
             seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
 
             // Which way should it be facing?
-            if(Rend_SegFacingDir(seg->fv[0].pos, seg->fv[1].pos))  // 1=front
+            if(Rend_SegFacingDir(seg->SG_v1->pos, seg->SG_v2->pos))  // 1=front
                 seg->frameflags |= SEGINF_FACINGFRONT;
             else
                 seg->frameflags &= ~SEGINF_FACINGFRONT;
@@ -1709,10 +1704,10 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 bsh = bceil = bfloor = 0;
 
             // Get the start and end vertices, left then right. Top and bottom.
-            vBL[VX] = vTL[VX] = seg->fv[0].pos[VX];
-            vBL[VY] = vTL[VY] = seg->fv[0].pos[VY];
-            vBR[VX] = vTR[VX] = seg->fv[1].pos[VX];
-            vBR[VY] = vTR[VY] = seg->fv[1].pos[VY];
+            vBL[VX] = vTL[VX] = seg->SG_v1->pos[VX];
+            vBL[VY] = vTL[VY] = seg->SG_v1->pos[VY];
+            vBR[VX] = vTR[VX] = seg->SG_v2->pos[VX];
+            vBR[VY] = vTR[VY] = seg->SG_v2->pos[VY];
 
             quad->wall->length = seg->length;
             quad->sector = frontsec;
@@ -1826,13 +1821,13 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
         // Choose start and end vertices so that it's facing forward.
         if(forward_facing)
         {
-            startv = seg->fv[0].pos;
-            endv   = seg->fv[1].pos;
+            startv = seg->SG_v1->pos;
+            endv   = seg->SG_v2->pos;
         }
         else
         {
-            startv = seg->fv[1].pos;
-            endv   = seg->fv[0].pos;
+            startv = seg->SG_v2->pos;
+            endv   = seg->SG_v1->pos;
         }
         // Do not create an occlusion for sky floors.
         if(!R_IsSkySurface(&back->SP_floorsurface) ||
