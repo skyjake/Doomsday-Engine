@@ -23,7 +23,7 @@
  */
 
 /*
- * main.cpp: DGL Driver for Direct3D 8.1
+ * main.cpp: DGL Driver for Direct3D 9
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -95,7 +95,7 @@ void DP(const char *format, ...)
 //===========================================================================
 int DG_Init(int width, int height, int bpp, int mode)
 {
-    Con_Message("DG_Init: Direct3D 8.1.\n");
+    Con_Message("DG_Init: Direct3D 9.\n");
     verbose = ArgExists("-verbose");
     diagnose = ArgExists("-diag");
     useBadAlpha = ArgExists("-badtexalpha");
@@ -167,25 +167,26 @@ int DG_Grab(int x, int y, int width, int height, int format, void *buffer)
     if(format != DGL_RGB) return DGL_UNSUPPORTED;
 
     D3DDISPLAYMODE dispMode;
-    IDirect3DSurface8 *copyFront;
+    IDirect3DSurface9 *copyFront;
     D3DLOCKED_RECT lockRect;
     int i, k, winX, winY;
     byte *out, *in;
 
-    dev->GetDisplayMode(&dispMode);
+    dev->GetDisplayMode(0, &dispMode);
 
     // Create the surface that will hold a copy of the *entire* front buffer.
     // In windowed mode we must figure out where exactly the game window is
     // ourselves...
-    if(FAILED(hr = dev->CreateImageSurface(dispMode.Width, dispMode.Height,
-        D3DFMT_A8R8G8B8, &copyFront)))
+    if(FAILED(hr = dev->CreateOffscreenPlainSurface(
+        dispMode.Width, dispMode.Height,
+        D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &copyFront, NULL)))
     {
         DXError("CreateImageSurface");
         return DGL_ERROR;
     }
 
     // Make a copy of the front buffer.
-    if(FAILED(hr = dev->GetFrontBuffer(copyFront)))
+    if(FAILED(hr = dev->GetFrontBufferData(0, copyFront)))
     {
         DXError("GetFrontBuffer");
         return DGL_ERROR;

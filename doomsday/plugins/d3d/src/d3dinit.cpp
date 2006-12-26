@@ -30,6 +30,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "drd3d.h"
+#include <dxerr9.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -45,11 +46,11 @@
 
 HRESULT                 hr;
 UINT                    adapter;
-IDirect3D8              *d3d = NULL;
-IDirect3DDevice8        *dev = NULL;
+IDirect3D9              *d3d = NULL;
+IDirect3DDevice9        *dev = NULL;
 D3DDISPLAYMODE          displayMode;
 D3DPRESENT_PARAMETERS   presentParms;
-D3DCAPS8                caps;
+D3DCAPS9                caps;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -62,7 +63,8 @@ void DXError(const char *funcName)
 {
     char buf[300];
 
-    D3DXGetErrorString(hr, buf, 300);
+    memset(buf, 0, sizeof(buf));
+    strncpy(buf, DXGetErrorString9(hr), sizeof(buf) - 1);
     Con_Message("Direct3D: Call to %s failed:\n  %s\n", funcName, buf);
 }
 
@@ -74,7 +76,7 @@ void DXError(const char *funcName)
 boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
 {
     D3DDISPLAYMODE mode, fallback;
-    int i, num = d3d->GetAdapterModeCount(adapter);
+    int i, num = d3d->GetAdapterModeCount(adapter, D3DFMT_UNKNOWN);
     int targetBits = (!wantedColorDepth? window->bits : wantedColorDepth);
     int found = false;
 
@@ -91,7 +93,7 @@ boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
     }
     for(i = 0; i < num; i++)
     {
-        if(FAILED(d3d->EnumAdapterModes(adapter, i, &mode)))
+        if(FAILED(d3d->EnumAdapterModes(adapter, D3DFMT_UNKNOWN, i, &mode)))
             continue;
         // Is this perhaps the mode we're looking for?
         // (Nice indentation.)
@@ -134,10 +136,9 @@ boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
 //===========================================================================
 void PrintAdapterInfo(void)
 {
-    D3DADAPTER_IDENTIFIER8 id;
+    D3DADAPTER_IDENTIFIER9 id;
 
-    if(FAILED(d3d->GetAdapterIdentifier(adapter, D3DENUM_NO_WHQL_LEVEL,
-        &id))) return;
+    if(FAILED(d3d->GetAdapterIdentifier(adapter, 0, &id))) return;
 
     Con_Message("  Driver: %s\n", id.Driver);
     Con_Message("  Description: %s\n", id.Description);
@@ -174,7 +175,7 @@ int InitDirect3D(void)
 
     DP("InitDirect3D:");
 
-    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
     if(!d3d) return DGL_ERROR;
 
     DP("  d3d=%p", d3d);
@@ -267,7 +268,7 @@ int InitDirect3D(void)
     DC(VertexShaderVersion);
     DCi(MaxVertexShaderConst);
     DC(PixelShaderVersion);
-    DCf(MaxPixelShaderValue);
+    //DCf(MaxPixelShaderValue);
 
     // Maximums.
     maxTextures = MIN_OF(caps.MaxSimultaneousTextures, MAX_TEX_UNITS);
@@ -343,7 +344,7 @@ int InitDirect3D(void)
             Con_Message("Direct3D: Triple buffering enabled.\n");
             pp->BackBufferCount = 2;
             pp->SwapEffect = D3DSWAPEFFECT_FLIP;
-            pp->FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+            pp->PresentationInterval = D3DPRESENT_INTERVAL_ONE;
         }
 
         DP("  bbw=%i, bbh=%i bbfmt=%i", targetMode.Width,
@@ -377,7 +378,7 @@ int InitDirect3D(void)
         DXError("CreateDevice");
         return DGL_ERROR;
     }
-    dev->SetVertexShader(DRVTX_FORMAT);
+    dev->SetVertexShader(NULL);
 
     // Clear the screen with a mid-gray color.
     dev->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,

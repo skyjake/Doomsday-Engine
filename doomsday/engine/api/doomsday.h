@@ -458,15 +458,15 @@ extern          "C" {
     binangle_t      bamsAtan2(int y, int x);
 
     // Miscellaneous: Command line.
-    void            ArgAbbreviate(char *longname, char *shortname);
-    int             Argc(void);
-    char           *Argv(int i);
-    char          **ArgvPtr(int i);
-    char           *ArgNext(void);
-    int             ArgCheck(char *check);
-    int             ArgCheckWith(char *check, int num);
+    void _DECALL    ArgAbbreviate(char *longname, char *shortname);
+    int _DECALL     Argc(void);
+    char* _DECALL   Argv(int i);
+    char** _DECALL  ArgvPtr(int i);
+    char* _DECALL   ArgNext(void);
+    int _DECALL     ArgCheck(char *check);
+    int _DECALL     ArgCheckWith(char *check, int num);
     int _DECALL     ArgExists(char *check);
-    int             ArgIsOption(int i);
+    int _DECALL     ArgIsOption(int i);
 
 #ifdef __cplusplus
 }

@@ -62,7 +62,7 @@ void InitViewport(void)
 //===========================================================================
 void Viewport(const Box &box)
 {
-    D3DVIEWPORT8 vp;
+    D3DVIEWPORT9 vp;
 
     vp.X = box.x;
     vp.Y = box.y;
@@ -131,5 +131,5 @@ void DG_Scissor(int x, int y, int width, int height)
 //===========================================================================
 void DG_ZBias(int level)
 {
-    SetRS(D3DRS_ZBIAS, 2 - level);
+    SetRS(D3DRS_DEPTHBIAS, 2 - level);
 }

@@ -49,7 +49,7 @@
 typedef unsigned short  ushort;
 
 typedef struct tex_s {
-    IDirect3DTexture8 *ptr;
+    IDirect3DTexture9 *ptr;
     int     width;
     int     height;
     D3DTEXTUREFILTERTYPE minFilter, mipFilter, magFilter;
@@ -178,7 +178,7 @@ void DownMip8(byte *in, byte *fadedOut, int width, int height, float fade)
 //===========================================================================
 void LoadLevel(tex_t *tex, int level, int width, int height, byte *image)
 {
-    IDirect3DSurface8 *surface = NULL;
+    IDirect3DSurface9 *surface = NULL;
     RECT rect;
 
     rect.left = 0;
@@ -456,24 +456,24 @@ void SetTexStates(int stage, tex_t *tex, int flags)
 {
     if(flags & STSF_MIN_FILTER)
     {
-        SetTSS(stage, D3DTSS_MINFILTER, tex->minFilter);
-        SetTSS(stage, D3DTSS_MIPFILTER, tex->mipFilter);
+        SetSS(stage, D3DSAMP_MINFILTER, tex->minFilter);
+        SetSS(stage, D3DSAMP_MIPFILTER, tex->mipFilter);
     }
     if(flags & STSF_MAG_FILTER)
     {
-        SetTSS(stage, D3DTSS_MAGFILTER, tex->magFilter);
+        SetSS(stage, D3DSAMP_MAGFILTER, tex->magFilter);
     }
     if(flags & STSF_ADDRESS_U)
     {
-        SetTSS(stage, D3DTSS_ADDRESSU, tex->addressModeU);
+        SetSS(stage, D3DSAMP_ADDRESSU, tex->addressModeU);
     }
     if(flags & STSF_ADDRESS_V)
     {
-        SetTSS(stage, D3DTSS_ADDRESSV, tex->addressModeV);
+        SetSS(stage, D3DSAMP_ADDRESSV, tex->addressModeV);
     }
     if(useAnisotropic && flags & STSF_ANISOTROPY)
     {
-        SetTSS(stage, D3DTSS_MAXANISOTROPY, maxAniso);
+        SetSS(stage, D3DSAMP_MAXANISOTROPY, maxAniso);
     }
 }
 

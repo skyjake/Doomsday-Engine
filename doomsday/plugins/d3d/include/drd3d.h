@@ -29,12 +29,12 @@
 #ifndef __DRD3D_H__
 #define __DRD3D_H__
 
-#define DIRECT3D_VERSION    0x0800
+#define DIRECT3D_VERSION    0x0900
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
 #include <cstdio>
-#include <d3dx8.h>
+#include <d3dx9.h>
 
 // Warning about a function having no return value.
 #pragma warning (disable: 4035)
@@ -54,6 +54,11 @@
 # define SetTSS(s, x, y)    if(FAILED(dev->SetTextureStageState(s, x, y))) Con_Error("D3D: SetTSS %i (0x%X, 0x%X) failed!\n", s, x, y);
 #else
 # define SetTSS(s, x, y)    dev->SetTextureStageState(s, x, y)
+#endif
+#ifdef _DEBUG
+# define SetSS(s, x, y)    if(FAILED(dev->SetSamplerState(s, x, y))) Con_Error("D3D: SetSS %i (0x%X, 0x%X) failed!\n", s, x, y);
+#else
+# define SetSS(s, x, y)    dev->SetSamplerState(s, x, y)
 #endif
 
 typedef enum arraytype_e {
@@ -126,10 +131,10 @@ extern          "C" {
     //===========================================================================
     // d3dinit.cpp
     //===========================================================================
-    extern IDirect3D8 *d3d;
-    extern IDirect3DDevice8 *dev;
+    extern IDirect3D9 *d3d;
+    extern IDirect3DDevice9 *dev;
     extern HRESULT  hr;
-    extern D3DCAPS8 caps;
+    extern D3DCAPS9 caps;
 
     int             InitDirect3D(void);
     void            ShutdownDirect3D(void);

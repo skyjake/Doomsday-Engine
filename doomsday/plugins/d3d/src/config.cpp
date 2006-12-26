@@ -57,7 +57,7 @@ BOOL CALLBACK ConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                                LPARAM lParam)
 {
     int numAdapters = d3d->GetAdapterCount();
-    D3DADAPTER_IDENTIFIER8 adapterId;
+    D3DADAPTER_IDENTIFIER9 adapterId;
     int i;
     HWND it;
 
@@ -68,7 +68,7 @@ BOOL CALLBACK ConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
         it = GetDlgItem(hwndDlg, IDC_DRIVER_LIST);
         for(i = 0; i < numAdapters; i++)
         {
-            d3d->GetAdapterIdentifier(i, D3DENUM_NO_WHQL_LEVEL, &adapterId);
+            d3d->GetAdapterIdentifier(i, 0, &adapterId);
             SendMessage(it, LB_ADDSTRING, 0, (LPARAM) adapterId.Description);
             if(wantedAdapter == i)
                 SendMessage(it, LB_SETCURSEL, (WPARAM) i, 0);

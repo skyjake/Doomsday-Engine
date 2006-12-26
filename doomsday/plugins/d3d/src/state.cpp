@@ -93,6 +93,7 @@ void InitState(void)
 #define DS(cn)  dev->GetRenderState(cn, &dw); DP(#cn" = 0x%x", dw);
 #define DSf(cn) dev->GetRenderState(cn, &dw); DP(#cn" = %g", *(float*)&dw);
 
+	/*
     DS(D3DRS_ZENABLE);
     DS(D3DRS_FILLMODE);
     DS(D3DRS_SHADEMODE);
@@ -203,6 +204,7 @@ void InitState(void)
         DS(D3DTSS_ALPHAARG0);
         DS(D3DTSS_RESULTARG);
     }
+	*/
 }
 
 //===========================================================================
