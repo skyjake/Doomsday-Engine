@@ -113,7 +113,7 @@ GOTO Done
 :Res
 ECHO Generating resources for Doomsday (doomsday_res.obj)...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" ./../../engine/win32/res/Doomsday.rc
-cvtres /OUT:%OBJ_DIR%doomsday_res.obj /MACHINE:X86 ./../../engine/win32/res/Doomsday.res
+cvtres /OUT:%OBJ_DIR%\doomsday_res.obj /MACHINE:X86 ./../../engine/win32/res/Doomsday.res
 ECHO.
 ECHO Generating resources for drD3D (drD3D_res.obj)...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" ./../../plugins/d3d/res/drD3D.rc
@@ -139,11 +139,11 @@ IF NOT EXIST ../../engine/api/dd_maptypes.h GOTO DMT
 IF NOT EXIST ../../engine/portable/include/p_maptypes.h GOTO DMT
 :: TODO compare creation date&time with that of mapdata.hs
 :: If mapdata.hs is newer - recreate the headers.
-ECHO  DMT headers are upto date.
+ECHO  DMT headers are up to date.
 GOTO TheRealEnd
 
 :DMT
-CALL vcbuild script "../../engine/scripts/makedmt.py <../../engine/portable/include/mapdata.hs"
+CALL vcbuild.bat script "../../engine/scripts/makedmt.py <../../engine/portable/include/mapdata.hs"
 MOVE /Y dd_maptypes.h ../../engine/api\
 MOVE /Y p_maptypes.h ../../engine/portable/include\
 GOTO DONE
@@ -151,7 +151,7 @@ GOTO DONE
 
 :: *** Doomsday.exe
 :Doomsday
-CALL vcbuild checkdmt
+CALL vcbuild.bat checkdmt
 ECHO Compiling Doomsday.exe (Engine)...
 cl %FLAGS% %INCS% %INCS_ENGINE_WIN32% %INCS_ENGINE_PORTABLE% %INCS_LZSS_PORTABLE% %INCS_LIBPNG_PORTABLE% %INCS_ZLIB% %INCS_PLUGIN_COMMON% %DEFINES% %DEBUGDEFINES% %PROFILEDEFINES% /D "__DOOMSDAY__"  ./%OBJ_DIR%/doomsday_res.obj  @doomsday_cl.rsp    /link /OUT:"./%BIN_DIR%/Doomsday.exe" /DEF:"./../../engine/api/doomsday.def" /IMPLIB:"./%BIN_DIR%/Doomsday.lib" %LFLAGS% %LIBS% sdl_net.lib sdl.lib wsock32.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib %EXTERNAL%/libpng/win32/libpng.lib %EXTERNAL%/zlib/win32/libz.lib %EXTERNAL%/lzss/win32/LZSS.lib gdi32.lib ole32.lib user32.lib
 GOTO Done
