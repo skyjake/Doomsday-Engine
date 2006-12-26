@@ -50,6 +50,19 @@
 #define DIR_SEP_STR		"\\"
 #define DIR_WRONG_SEP_CHAR 	'/'
 
+#define stricmp _stricmp
+#define strnicmp _strnicmp
+#define open _open
+#define close _close
+#define read _read
+#define write _write
+#define access _access
+#define mkdir _mkdir
+#define strlwr _strlwr
+#define strupr _strupr
+#define strdup _strdup
+#define spawnlp _spawnlp
+
 #endif							// WIN32
 
 /*

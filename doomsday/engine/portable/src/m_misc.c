@@ -28,8 +28,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "de_platform.h"
-
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -48,14 +46,15 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
-#include "lzss.h"
 
+#include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_misc.h"
+#include "lzss.h"
 
 // MACROS ------------------------------------------------------------------
 

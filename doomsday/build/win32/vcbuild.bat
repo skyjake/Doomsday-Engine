@@ -59,7 +59,7 @@ IF NOT EXIST vcconfig.bat GOTO MissingConfig
 CALL vcconfig.bat
 
 :: -- Compiler and linker options.
-SET DEFINES=/D "ZLIB_DLL" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS"
+SET DEFINES=/D "ZLIB_DLL" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_CRT_SECURE_NO_DEPRECATE"
 SET DLLDEFINES=/D "_USRDLL" /D "_WINDLL" %DEFINES%
 SET INCS=/I "%EAX_INC%" /I "%SDL_INC%" /I "%SDLNET_INC%" /I "%DX_INC%" /I "%PLATFORM_INC%" /I "./../../engine/api"
 SET INCS_ENGINE_API=/I "./../../engine/api"
@@ -96,7 +96,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild cleanup res dmt doomsday dpdehread dpmapload dropengl drd3d dscompat jdoom jheretic jhexen wolftc doom64tc
+CALL vcbuild.bat cleanup res dmt doomsday dpdehread dpmapload dropengl drd3d dscompat jdoom jheretic jhexen wolftc doom64tc
 GOTO Done
 
 
@@ -177,7 +177,7 @@ GOTO Done
 :drD3D
 ECHO Compiling drD3D.dll (Direct3D 8.1 driver)...
 md %OBJ_DIR%\drD3D
-cl /O2 /Ob1 /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" /W3 ./%OBJ_DIR%/drD3D/drD3D_res.obj  @drd3d_cl.rsp  /link /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/d3d/api/drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" /LIBPATH:"%LIBCI_LIB%" %LIBS% ./%BIN_DIR%/doomsday.lib d3d8.lib d3dx8.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib
+cl /O2 /Ob1 /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" /W3 ./%OBJ_DIR%/drD3D/drD3D_res.obj  @drd3d_cl.rsp  /link /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/d3d/api/drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" %LIBS% ./%BIN_DIR%/doomsday.lib d3d9.lib d3dx9.lib dxerr9.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib
 GOTO Done
 
 
@@ -185,7 +185,7 @@ GOTO Done
 :drOpenGL
 ECHO Compiling drOpenGL.dll (OpenGL driver)...
 md %OBJ_DIR%\drOpenGL
-cl /O2 /Ob1 /I "%GL_INC%" /I "./../../plugins/opengl/portable/include" %INCS% %DLLDEFINES% /D "drOpenGL_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/drOpenGL/" /Fd"./%OBJ_DIR%/drOpenGL/" /W3 /Gz  @dropengl_cl.rsp  /link /OUT:"./%BIN_DIR%/drOpenGL.dll" %LFLAGS% /DLL /DEF:"./../../plugins/opengl/api/drOpenGL.def" /IMPLIB:"./%BIN_DIR%/drOpenGL.lib" %LIBS% ./%BIN_DIR%/doomsday.lib opengl32.lib glu32.lib kernel32.lib user32.lib gdi32.lib
+cl /O2 /Ob1 /I "./../../plugins/opengl/portable/include" %INCS% %DLLDEFINES% /I "%GL_INC%" /D "drOpenGL_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/drOpenGL/" /Fd"./%OBJ_DIR%/drOpenGL/" /W3 /Gz  @dropengl_cl.rsp  /link /OUT:"./%BIN_DIR%/drOpenGL.dll" %LFLAGS% /DLL /DEF:"./../../plugins/opengl/api/drOpenGL.def" /IMPLIB:"./%BIN_DIR%/drOpenGL.lib" %LIBS% ./%BIN_DIR%/doomsday.lib opengl32.lib glu32.lib kernel32.lib user32.lib gdi32.lib
 GOTO Done
 
 

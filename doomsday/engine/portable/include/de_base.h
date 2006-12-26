@@ -28,6 +28,8 @@
 #ifndef __DOOMSDAY_BASE__
 #define __DOOMSDAY_BASE__
 
+#include "de_platform.h"
+
 #include "dd_def.h"
 #include "dd_share.h"
 #include "dd_api.h"
