@@ -96,7 +96,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild cleanup res dmt doomsday dpdehread dpmapload dropengl drd3d dsa3d dscompat jdoom jheretic jhexen wolftc doom64tc
+CALL vcbuild cleanup res dmt doomsday dpdehread dpmapload dropengl drd3d dscompat jdoom jheretic jhexen wolftc doom64tc
 GOTO Done
 
 
@@ -112,13 +112,13 @@ GOTO Done
 :: Requires rc.exe and cvtres.exe from the Platform SDK.
 :Res
 ECHO Generating resources for Doomsday (doomsday_res.obj)...
-rc /i "%PLATFORM_INC%" ./../../engine/win32/res/Doomsday.rc
+rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" ./../../engine/win32/res/Doomsday.rc
 cvtres /OUT:%OBJ_DIR%doomsday_res.obj /MACHINE:X86 ./../../engine/win32/res/Doomsday.res
 ECHO.
 ECHO Generating resources for drD3D (drD3D_res.obj)...
-rc /i "%PLATFORM_INC%" ./../../plugins/d3d/res/drD3D.rc
-IF NOT EXIST %OBJ_DIR%/drD3D md %OBJ_DIR%/drD3D
-cvtres /OUT:%OBJ_DIR%/drD3D/drD3D_res.obj /MACHINE:X86 ./../../plugins/d3d/res/drD3D.res
+rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" ./../../plugins/d3d/res/drD3D.rc
+IF NOT EXIST %OBJ_DIR%\drD3D md %OBJ_DIR%\drD3D
+cvtres /OUT:%OBJ_DIR%\drD3D\drD3D_res.obj /MACHINE:X86 ./../../plugins/d3d/res/drD3D.res
 GOTO Done
 
 
@@ -191,9 +191,9 @@ GOTO Done
 
 :: *** dsA3D.dll
 :dsA3D
-ECHO Compiling dsA3D.dll (A3D SoundFX driver)...
-md %OBJ_DIR%\dsA3D
-cl /O2 /Ob1 %INCS% /I "%A3D_INC%" %DLLDEFINES% /D "DSA3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsA3D" /Fd"./%OBJ_DIR%/dsA3D" /W3 /Gz  @dsa3d_cl.rsp  /link /OUT:"./%BIN_DIR%/dsA3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/a3d/api/dsA3D.def" /IMPLIB:"./%BIN_DIR%/dsA3D.lib" %LIBS% /LIBPATH:"%A3D_LIB%" ./%BIN_DIR%/doomsday.lib ia3dutil.lib ole32.lib 
+ECHO Compiling dsA3D.dll (A3D SoundFX driver) -- SKIPPING!
+REM md %OBJ_DIR%\dsA3D
+REM cl /O2 /Ob1 %INCS% /I "%A3D_INC%" %DLLDEFINES% /D "DSA3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsA3D" /Fd"./%OBJ_DIR%/dsA3D" /W3 /Gz  @dsa3d_cl.rsp  /link /OUT:"./%BIN_DIR%/dsA3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/a3d/api/dsA3D.def" /IMPLIB:"./%BIN_DIR%/dsA3D.lib" %LIBS% /LIBPATH:"%A3D_LIB%" ./%BIN_DIR%/doomsday.lib ia3dutil.lib ole32.lib 
 GOTO Done
 
 
