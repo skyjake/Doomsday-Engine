@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -57,9 +57,6 @@ boolean     availPalTex, availMulAdd;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// DllMain
-//===========================================================================
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch(fdwReason)
@@ -71,13 +68,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-//===========================================================================
-// DP
-//  Diagnose printf.
-//===========================================================================
+/**
+ * Diagnose printf.
+ */
 void DP(const char *format, ...)
 {
-    if(!diagnose) return;
+    if(!diagnose)
+        return;
 
     va_list args;
     char buf[2048];
@@ -87,12 +84,12 @@ void DP(const char *format, ...)
     Con_Message("%s\n", buf);
 }
 
-//===========================================================================
-// DG_Init
-//  'mode' is either DGL_MODE_WINDOW or DGL_MODE_FULLSCREEN. If 'bpp' is
-//  zero, the current display color depth is used. Returns DGL_OK if
-//  successful.
-//===========================================================================
+/**
+ * @param mode          Either DGL_MODE_WINDOW or DGL_MODE_FULLSCREEN.
+ * @param bpp           If <code>0</code>, use the current display color depth.
+ *
+ * @return              <code>DGL_OK</code> if successful.
+ */
 int DG_Init(int width, int height, int bpp, int mode)
 {
     Con_Message("DG_Init: Direct3D 9.\n");
@@ -124,10 +121,9 @@ int DG_Init(int width, int height, int bpp, int mode)
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_Shutdown
-//  This is called during display mode changes and at final shutdown.
-//===========================================================================
+/**
+ * This is called during display mode changes and at final shutdown.
+ */
 void DG_Shutdown(void)
 {
     Con_Message("DG_Shutdown: Shutting down Direct3D...\n");
@@ -140,9 +136,6 @@ void DG_Shutdown(void)
     window = NULL;
 }
 
-//===========================================================================
-// DG_Clear
-//===========================================================================
 void DG_Clear(int bufferbits)
 {
     dev->Clear(0, NULL,
@@ -151,26 +144,21 @@ void DG_Clear(int bufferbits)
         0, 1, 0);
 }
 
-//===========================================================================
-// DG_Show
-//===========================================================================
 void DG_Show(void)
 {
     dev->Present(NULL, NULL, NULL, NULL);
 }
 
-//===========================================================================
-// DG_Grab
-//===========================================================================
 int DG_Grab(int x, int y, int width, int height, int format, void *buffer)
 {
-    if(format != DGL_RGB) return DGL_UNSUPPORTED;
+    if(format != DGL_RGB)
+        return DGL_UNSUPPORTED;
 
     D3DDISPLAYMODE dispMode;
     IDirect3DSurface9 *copyFront;
     D3DLOCKED_RECT lockRect;
-    int i, k, winX, winY;
-    byte *out, *in;
+    int         i, k, winX, winY;
+    byte       *out, *in;
 
     dev->GetDisplayMode(0, &dispMode);
 
@@ -222,22 +210,21 @@ int DG_Grab(int x, int y, int width, int height, int format, void *buffer)
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_ReadPixels
-//  ---DEPRECATED---
-//===========================================================================
+/**
+ * NOTE: DEPRECATED
+ */
 int DG_ReadPixels(int *inData, int format, void *pixels)
 {
     return DGL_UNSUPPORTED;
 }
 
-//===========================================================================
-// DG_Project
-//  ---DEPRECATED---
-//  The caller must provide both the in and out buffers.
-//  Returns the number of vertices returned in the out buffer. The out
-//  buffer will not include clipped vertices.
-//===========================================================================
+/**
+ * NOTE: DEPRECATED
+ *
+ * The caller must provide both the in and out buffers.
+ * @return          The number of vertices returned in the out buffer. The out
+ *                  buffer will not include clipped vertices.
+ */
 int DG_Project(int num, gl_fc3vertex_t *inVertices,
                gl_fc3vertex_t *outVertices)
 {

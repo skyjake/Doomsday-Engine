@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -53,13 +53,9 @@ typedef struct array_s {
 boolean     inSequence;
 int         primType;
 int         primOrder;
-/*int           primCount;*/
 
 // The stack is used for reordering and caching vertices before copying
 // them to a vertex buffer.
-/*int           stackPos;   // Beginning of the primitive.
-drvertex_t  stack[STACK_SIZE], currentVertex;*/
-
 int         vertexPos;
 drvertex_t  verticesStack[VERTICES_SIZE], currentVertex;
 
@@ -72,9 +68,6 @@ static array_t arrays[MAX_ARRAYS];
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// InitDraw
-//===========================================================================
 void InitDraw(void)
 {
     inSequence = false;
@@ -83,21 +76,9 @@ void InitDraw(void)
     memset(arrays, 0, sizeof(arrays));
 }
 
-/*
-//===========================================================================
-// UploadStack
-//===========================================================================
-void UploadStack(void)
-{
-    BufferVertices(stack, stackPos);
-    stackPos = 0;
-}
-*/
-
-//===========================================================================
-// VtxToBuffer
-//  Used with the immediate mode drawing functions: Begin/End/etc.
-//===========================================================================
+/**
+ * Used with the immediate mode drawing functions: Begin/End/etc.
+ */
 void VtxToBuffer(drvertex_t *vtx)
 {
     if(vertexPos == VERTICES_SIZE) return; // Stop drawing...
@@ -129,115 +110,58 @@ void VtxToBuffer(drvertex_t *vtx)
     }
 
     vertexPos++;
-
-    /*switch(primType)
-    {
-    default:
-        COPYCV(stackPos++);
-        break;
-
-    case DGL_QUADS: // Translates to an indexed list of triangles.
-        // stackPos always points to the beginning of the primitive.
-        COPYCV(stackPos + primOrder++);
-        if(primOrder == 4)
-        {
-            unsigned short first = primCount * 4, indices[6] =
-            {
-                first, first + 1, first + 3,
-                first + 1, first + 2, first + 3
-            };
-            // Quad complete, upload the vertex indices.
-            BufferIndices(indices, 6);
-            primOrder = 0;
-            stackPos += 4;
-            primCount++;
-        }
-        break;
-    }
-
-    if(stackPos == STACK_SIZE)
-    {
-        // The stack is full, let's upload it.
-        UploadStack();
-    }*/
 }
 
-//===========================================================================
-// DG_Color3ub
-//===========================================================================
 void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
     currentVertex.color = D3DCOLOR_XRGB(r, g, b);
 }
 
-//===========================================================================
-// DG_Color3ubv
-//===========================================================================
 void DG_Color3ubv(DGLubyte *data)
 {
     currentVertex.color = D3DCOLOR_XRGB(data[0], data[1], data[2]);
 }
 
-//===========================================================================
-// DG_Color4ub
-//===========================================================================
 void DG_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
     currentVertex.color = D3DCOLOR_RGBA(r, g, b, a);
 }
 
-//===========================================================================
-// DG_Color4ubv
-//===========================================================================
 void DG_Color4ubv(DGLubyte *data)
 {
     currentVertex.color = D3DCOLOR_RGBA(data[0], data[1], data[2], data[3]);
 }
 
-//===========================================================================
-// DG_Color3f
-//===========================================================================
 void DG_Color3f(float r, float g, float b)
 {
     CLAMP01(r); CLAMP01(g); CLAMP01(b);
     currentVertex.color = D3DCOLOR_COLORVALUE(r, g, b, 1);
 }
 
-//===========================================================================
-// DG_Color3fv
-//===========================================================================
 void DG_Color3fv(float *data)
 {
-    float r = data[0], g = data[1], b = data[2];
+    float       r = data[0], g = data[1], b = data[2];
+
     CLAMP01(r); CLAMP01(g); CLAMP01(b);
     currentVertex.color = D3DCOLOR_COLORVALUE(r, g, b, 1);
 }
 
-//===========================================================================
-// DG_Color4f
-//===========================================================================
 void DG_Color4f(float r, float g, float b, float a)
 {
     CLAMP01(r); CLAMP01(g); CLAMP01(b); CLAMP01(a);
     currentVertex.color = D3DCOLOR_COLORVALUE(r, g, b, a);
 }
 
-//===========================================================================
-// DG_Color4fv
-//===========================================================================
 void DG_Color4fv(float *data)
 {
-    float r = data[0], g = data[1], b = data[2], a = data[3];
+    float       r = data[0], g = data[1], b = data[2], a = data[3];
     CLAMP01(r); CLAMP01(g); CLAMP01(b); CLAMP01(a);
     currentVertex.color = D3DCOLOR_COLORVALUE(r, g, b, a);
 }
 
-//===========================================================================
-// DG_MultiTexCoord2f
-//===========================================================================
 void DG_MultiTexCoord2f(int target, float s, float t)
 {
-    float *st =
+    float      *st =
         (target == DGL_TEXTURE0? currentVertex.tex : currentVertex.tex2);
 
     st[0] = s;
@@ -245,12 +169,9 @@ void DG_MultiTexCoord2f(int target, float s, float t)
     TransformTexCoord(st);
 }
 
-//===========================================================================
-// DG_MultiTexCoord2fv
-//===========================================================================
 void DG_MultiTexCoord2fv(int target, float *data)
 {
-    float *st =
+    float      *st =
         (target == DGL_TEXTURE0? currentVertex.tex : currentVertex.tex2);
 
     st[0] = data[0];
@@ -258,25 +179,16 @@ void DG_MultiTexCoord2fv(int target, float *data)
     TransformTexCoord(st);
 }
 
-//===========================================================================
-// DG_TexCoord2f
-//===========================================================================
 void DG_TexCoord2f(float s, float t)
 {
     DG_MultiTexCoord2f(DGL_TEXTURE0, s, t);
 }
 
-//===========================================================================
-// DG_TexCoord2fv
-//===========================================================================
 void DG_TexCoord2fv(float *data)
 {
     DG_MultiTexCoord2fv(DGL_TEXTURE0, data);
 }
 
-//===========================================================================
-// DG_Vertex2f
-//===========================================================================
 void DG_Vertex2f(float x, float y)
 {
     currentVertex.pos.x = x;
@@ -285,9 +197,6 @@ void DG_Vertex2f(float x, float y)
     VtxToBuffer(&currentVertex);
 }
 
-//===========================================================================
-// DG_Vertex2fv
-//===========================================================================
 void DG_Vertex2fv(float *data)
 {
     currentVertex.pos.x = data[0];
@@ -296,9 +205,6 @@ void DG_Vertex2fv(float *data)
     VtxToBuffer(&currentVertex);
 }
 
-//===========================================================================
-// DG_Vertex3f
-//===========================================================================
 void DG_Vertex3f(float x, float y, float z)
 {
     currentVertex.pos.x = x;
@@ -307,9 +213,6 @@ void DG_Vertex3f(float x, float y, float z)
     VtxToBuffer(&currentVertex);
 }
 
-//===========================================================================
-// DG_Vertex3fv
-//===========================================================================
 void DG_Vertex3fv(float *data)
 {
     currentVertex.pos.x = data[0];
@@ -318,9 +221,6 @@ void DG_Vertex3fv(float *data)
     VtxToBuffer(&currentVertex);
 }
 
-//===========================================================================
-// DG_Vertices2ftv
-//===========================================================================
 void DG_Vertices2ftv(int num, gl_ft2vertex_t *data)
 {
     for(; num > 0; num--, data++)
@@ -330,9 +230,6 @@ void DG_Vertices2ftv(int num, gl_ft2vertex_t *data)
     }
 }
 
-//===========================================================================
-// DG_Vertices3ftv
-//===========================================================================
 void DG_Vertices3ftv(int num, gl_ft3vertex_t *data)
 {
     for(; num > 0; num--, data++)
@@ -342,9 +239,6 @@ void DG_Vertices3ftv(int num, gl_ft3vertex_t *data)
     }
 }
 
-//===========================================================================
-// DG_Vertices3fctv
-//===========================================================================
 void DG_Vertices3fctv(int num, gl_fct3vertex_t *data)
 {
     for(; num > 0; num--, data++)
@@ -355,9 +249,6 @@ void DG_Vertices3fctv(int num, gl_fct3vertex_t *data)
     }
 }
 
-//===========================================================================
-// DG_Begin
-//===========================================================================
 void DG_Begin(int mode)
 {
     if(mode == DGL_SEQUENCE)
@@ -389,13 +280,9 @@ void DG_Begin(int mode)
     primType = mode;
     indexPos = 0;
     primOrder = 0;
-    /*primCount = 0;*/
     vertexPos = 0;
 }
 
-//===========================================================================
-// PrimCount
-//===========================================================================
 int PrimCount(D3DPRIMITIVETYPE type, int verts)
 {
     switch(type)
@@ -418,9 +305,6 @@ int PrimCount(D3DPRIMITIVETYPE type, int verts)
     return 0;
 }
 
-//===========================================================================
-// DG_End
-//===========================================================================
 void DG_End(void)
 {
     if(!primType)
@@ -458,13 +342,12 @@ void DG_End(void)
     if(!inSequence) dev->EndScene();
 }
 
-//===========================================================================
-// DG_EnableArrays
-//===========================================================================
 void DG_EnableArrays(int vertices, int colors, int coords)
 {
-    if(vertices) arrays[AR_VERTEX].enabled = true;
-    if(colors) arrays[AR_COLOR].enabled = true;
+    if(vertices)
+        arrays[AR_VERTEX].enabled = true;
+    if(colors)
+        arrays[AR_COLOR].enabled = true;
 
     for(int i = 0; i < MAX_TEX_UNITS; i++)
     {
@@ -473,25 +356,23 @@ void DG_EnableArrays(int vertices, int colors, int coords)
     }
 }
 
-//===========================================================================
-// DG_DisableArrays
-//===========================================================================
 void DG_DisableArrays(int vertices, int colors, int coords)
 {
-    if(vertices) arrays[AR_VERTEX].enabled = false;
-    if(colors) arrays[AR_COLOR].enabled = false;
+    if(vertices)
+        arrays[AR_VERTEX].enabled = false;
+    if(colors)
+        arrays[AR_COLOR].enabled = false;
 
-    for(int i = 0; i < MAX_TEX_UNITS; i++)
+    for(int i = 0; i < MAX_TEX_UNITS; ++i)
     {
         if(coords & (1 << i))
             arrays[AR_TEXCOORD0 + i].enabled = false;
     }
 }
 
-//===========================================================================
-// DG_Arrays
-//  Enable, set and optionally lock all enabled arrays.
-//===========================================================================
+/**
+ * Enable, set and optionally lock all enabled arrays.
+ */
 void DG_Arrays(void *vertices, void *colors, int numCoords,
                void **coords, int lock)
 {
@@ -507,7 +388,7 @@ void DG_Arrays(void *vertices, void *colors, int numCoords,
         arrays[AR_COLOR].data = colors;
     }
 
-    for(int i = 0; i < numCoords && i < MAX_TEX_UNITS; i++)
+    for(int i = 0; i < numCoords && i < MAX_TEX_UNITS; ++i)
     {
         if(coords[i])
         {
@@ -517,20 +398,14 @@ void DG_Arrays(void *vertices, void *colors, int numCoords,
     }
 }
 
-//===========================================================================
-// DG_UnlockArrays
-//===========================================================================
 void DG_UnlockArrays(void)
 {
     // No need to lock anything.
 }
 
-//===========================================================================
-// DG_ArrayElement
-//===========================================================================
 void DG_ArrayElement(int index)
 {
-    for(int i = 0; i < MAX_TEX_UNITS; i++)
+    for(int i = 0; i < MAX_TEX_UNITS; ++i)
     {
         if(arrays[AR_TEXCOORD0 + i].enabled)
         {
@@ -546,13 +421,11 @@ void DG_ArrayElement(int index)
         DG_Vertex3fv(((gl_vertex_t*)arrays[AR_VERTEX].data)[index].xyz);
 }
 
-//===========================================================================
-// DG_DrawElements
-//===========================================================================
 void DG_DrawElements(int type, int count, unsigned int *indices)
 {
     DG_Begin(type);
-    for(int i = 0; i < count; i++)
+
+    for(int i = 0; i < count; ++i)
     {
         DG_ArrayElement(indices[i]);
     }

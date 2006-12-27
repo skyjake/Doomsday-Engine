@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -131,18 +131,18 @@ static boolean      texActive;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// DownMip8
-//  Works within the given data, reducing the size of the picture to half
-//  its original. Width and height must be powers of two.
-//===========================================================================
+/**
+ * Works within the given data, reducing the size of the picture to half
+ * its original. Width and height must be powers of two.
+ */
 void DownMip8(byte *in, byte *fadedOut, int width, int height, float fade)
 {
-    byte *out = in;
-    int x, y, outW = width >> 1, outH = height >> 1;
-    float invFade;
+    byte       *out = in;
+    int         x, y, outW = width >> 1, outH = height >> 1;
+    float       invFade;
 
-    if(fade > 1) fade = 1;
+    if(fade > 1)
+        fade = 1;
     invFade = 1 - fade;
 
     if(width == 1 && height == 1)
@@ -153,7 +153,8 @@ void DownMip8(byte *in, byte *fadedOut, int width, int height, float fade)
 
     if(!outW || !outH) // Limited, 1x2|2x1 -> 1x1 reduction?
     {
-        int outDim = width > 1? outW : outH;
+        int         outDim = width > 1? outW : outH;
+
         for(x = 0; x < outDim; x++, in += 2)
         {
             *out = (in[0] + in[1]) >> 1;
@@ -173,9 +174,6 @@ void DownMip8(byte *in, byte *fadedOut, int width, int height, float fade)
     }
 }
 
-//===========================================================================
-// LoadLevel
-//===========================================================================
 void LoadLevel(tex_t *tex, int level, int width, int height, byte *image)
 {
     IDirect3DSurface9 *surface = NULL;
@@ -201,16 +199,15 @@ void LoadLevel(tex_t *tex, int level, int width, int height, byte *image)
     surface->Release();
 }
 
-//===========================================================================
-// GenerateGrayMipmaps
-//  Copied from drOpenGL.
-//===========================================================================
-void GenerateGrayMipmaps
-    (tex_t *tex, int format, int width, int height, void *data)
+/**
+ * NOTE: Copied from drOpenGL.
+ */
+void GenerateGrayMipmaps(tex_t *tex, int format, int width, int height,
+                         void *data)
 {
-    byte *image, *in, *out, *faded;
-    int i, numLevels, w, h, size = width * height, res;
-    float invFactor = 1 - grayMipmapFactor;
+    byte       *image, *in, *out, *faded;
+    int         i, numLevels, w, h, size = width * height, res;
+    float       invFactor = 1 - grayMipmapFactor;
 
     // Buffer used for the faded texture.
     faded = (byte*) malloc(size / 4);
@@ -219,30 +216,36 @@ void GenerateGrayMipmaps
     // Initial fading.
     if(format == DGL_LUMINANCE)
     {
-        for(i = 0, in = (byte*) data, out = image; i < size; i++)
+        for(i = 0, in = (byte*) data, out = image; i < size; ++i)
         {
             // Result is clamped to [0,255].
             res = (int) (*in++ * grayMipmapFactor + 0x80 * invFactor);
-            if(res < 0) res = 0;
-            if(res > 255) res = 255;
+            if(res < 0)
+                res = 0;
+            if(res > 255)
+                res = 255;
+
             *out++ = res;
         }
     }
     else if(format == DGL_RGB)
     {
-        for(i = 0, in = (byte*) data, out = image; i < size; i++, in += 3)
+        for(i = 0, in = (byte*) data, out = image; i < size; ++i, in += 3)
         {
             // Result is clamped to [0,255].
             res = (int) (*in * grayMipmapFactor + 0x80 * invFactor);
-            if(res < 0) res = 0;
-            if(res > 255) res = 255;
+            if(res < 0)
+                res = 0;
+            if(res > 255)
+                res = 255;
+
             *out++ = res;
         }
     }
 
     // How many levels will there be?
     for(numLevels = 0, w = width, h = height; w > 1 || h > 1;
-        w >>= 1, h >>= 1, numLevels++);
+        w >>= 1, h >>= 1, ++numLevels);
 
     // Create the Direct3D Texture object.
     if(FAILED(hr = D3DXCreateTexture(dev, width, height, 0, 0, D3DFMT_L8,
@@ -263,13 +266,15 @@ void GenerateGrayMipmaps
     LoadLevel(tex, 0, width, height, image);
 
     // Generate all mipmaps levels.
-    for(i = 0, w = width, h = height; i < numLevels; i++)
+    for(i = 0, w = width, h = height; i < numLevels; ++i)
     {
         DownMip8(image, faded, w, h, (i * 1.75f)/numLevels);
 
         // Go down one level.
-        if(w > 1) w >>= 1;
-        if(h > 1) h >>= 1;
+        if(w > 1)
+            w >>= 1;
+        if(h > 1)
+            h >>= 1;
 
         LoadLevel(tex, i + 1, w, h, faded);
     }
@@ -279,9 +284,6 @@ void GenerateGrayMipmaps
     free(image);
 }
 
-//===========================================================================
-// InitTextures
-//===========================================================================
 void InitTextures(void)
 {
     useAnisotropic = ArgExists("-anifilter");
@@ -296,14 +298,13 @@ void InitTextures(void)
     ActiveTexture(0);
 }
 
-//===========================================================================
-// ShutdownTextures
-//===========================================================================
 void ShutdownTextures(void)
 {
-    for(int i = 0; i < numTexData; i++)
+    for(int i = 0; i < numTexData; ++i)
     {
-        if(!texData[i].ptr) continue; // Not used.
+        if(!texData[i].ptr)
+            continue; // Not used.
+
         // Delete this texture.
         DGLuint name = IDX_TO_NAME(i);
         DG_DeleteTextures(1, &name);
@@ -314,23 +315,19 @@ void ShutdownTextures(void)
     memset(boundTexName, 0, sizeof(boundTexName));
 }
 
-//===========================================================================
-// StageIdentity
-//  Make logical texture unit indices match texture stage indices.
-//===========================================================================
+/**
+ * Make logical texture unit indices match texture stage indices.
+ */
 void StageIdentity(void)
 {
-    for(int i = 0; i < MAX_TEX_STAGES; i++)
+    for(int i = 0; i < MAX_TEX_STAGES; ++i)
         if(unitToStage[i] != i)
             SetUnitStage(i, i);
 }
 
-//===========================================================================
-// SetUnitStage
-//===========================================================================
 void SetUnitStage(int logicalUnit, int actualStage)
 {
-    int tex = boundTexName[unitToStage[logicalUnit]];
+    int         tex = boundTexName[unitToStage[logicalUnit]];
 
     if(tex)
     {
@@ -345,17 +342,11 @@ void SetUnitStage(int logicalUnit, int actualStage)
     }
 }
 
-//===========================================================================
-// ActiveTexture
-//===========================================================================
 void ActiveTexture(int index)
 {
     currentUnit = index;
 }
 
-//===========================================================================
-// TextureOperatingMode
-//===========================================================================
 void TextureOperatingMode(int isActive)
 {
     texActive = isActive;
@@ -369,49 +360,46 @@ void TextureOperatingMode(int isActive)
     }
 }
 
-//===========================================================================
-// GetBoundTexture
-//===========================================================================
 tex_t *GetBoundTexture(int stage)
 {
-    if(!boundTexName[stage]) return NULL;
+    if(!boundTexName[stage])
+        return NULL;
+
     return texData + NAME_TO_IDX( boundTexName[stage] );
 }
 
-//===========================================================================
-// Bind
-//===========================================================================
 int Bind(int stage, DGLuint texture)
 {
-    int idx = NAME_TO_IDX(texture);
-    int previous = boundTexName[stage];
+    int         idx = NAME_TO_IDX(texture);
+    int         previous = boundTexName[stage];
 
     if(!texture)
     {
         Unbind(stage);
         return previous;
     }
-    if(!dev || idx < 0 || idx >= numTexData) return previous;
+
+    if(!dev || idx < 0 || idx >= numTexData)
+        return previous;
+
     boundTexName[stage] = texture;
     tex_t *tex = GetBoundTexture(stage);
     dev->SetTexture(stage, tex->ptr);
     SetTexStates(stage, tex, STSF_ALL);
+
     return previous;
 }
 
-//===========================================================================
-// Unbind
-//===========================================================================
 void Unbind(int stage)
 {
     boundTexName[stage] = 0;
-    if(dev) dev->SetTexture(stage, NULL);
+    if(dev)
+        dev->SetTexture(stage, NULL);
 }
 
-//===========================================================================
-// InitNewTexture
-//  Sets the properties of the texture to the default settings.
-//===========================================================================
+/**
+ * Sets the properties of the texture to the default settings.
+ */
 void InitNewTexture(tex_t *tex)
 {
     tex->width = tex->height = 0;
@@ -422,20 +410,20 @@ void InitNewTexture(tex_t *tex)
     tex->addressModeV = D3DTADDRESS_WRAP;
 }
 
-//===========================================================================
-// DG_NewTexture
-//  Creates a new texture and binds it.
-//===========================================================================
+/**
+ * Creates a new texture and binds it.
+ */
 DGLuint DG_NewTexture(void)
 {
-    int i;
+    int         i;
 
     // Try to find an unused texdata.
-    for(i = 0; i < numTexData; i++)
+    for(i = 0; i < numTexData; ++i)
         if(!texData[i].ptr)
         {
             InitNewTexture(texData + i);
             DG_Bind(IDX_TO_NAME(i));
+
             return boundTexName[CUR_STAGE];
         }
 
@@ -446,12 +434,10 @@ DGLuint DG_NewTexture(void)
     memset(texData + i, 0, i*sizeof(*texData));
     InitNewTexture(texData + i);
     DG_Bind(IDX_TO_NAME(i));
+
     return boundTexName[CUR_STAGE];
 }
 
-//===========================================================================
-// SetTexStates
-//===========================================================================
 void SetTexStates(int stage, tex_t *tex, int flags)
 {
     if(flags & STSF_MIN_FILTER)
@@ -477,25 +463,26 @@ void SetTexStates(int stage, tex_t *tex, int flags)
     }
 }
 
-//===========================================================================
-// DG_TexImage
-//  The texture data is put into a Targa image structure, so creating
-//  the texture object is easy using D3DXCreateTextureFromFileInMemory.
-//===========================================================================
+/**
+ * The texture data is put into a Targa image structure, so creating
+ * the texture object is easy using D3DXCreateTextureFromFileInMemory.
+ */
 int DG_TexImage(int format, int width, int height, int genMips, void *data)
 {
-    tex_t *tex = GetBoundTexture(CUR_STAGE);
-    byte *buffer;
+    tex_t      *tex = GetBoundTexture(CUR_STAGE);
+    byte       *buffer;
     TARGA_HEADER *hdr;
-    byte *ptr, *in, *alphaIn;
-    int i, x, y;
-    boolean hiBits = (wantedTexDepth != 16);
+    byte       *ptr, *in, *alphaIn;
+    int         i, x, y;
+    boolean     hiBits = (wantedTexDepth != 16);
 
 #if _DEBUG
-    if(!width || !height) Con_Error("DG_TexImage: No width or height!\n");
+if(!width || !height)
+    Con_Error("DG_TexImage: No width or height!\n");
 #endif
 
-    if(!tex) return DGL_ERROR; // No texture has been bound!
+    if(!tex)
+        return DGL_ERROR; // No texture has been bound!
 
     // If there is a previous texture, release it.
     if(tex->ptr)
@@ -535,7 +522,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
             hdr->colorMapEntrySize = 24;
 
             // Write the color map (BGR).
-            for(i = 0; i < 256; i++)
+            for(i = 0; i < 256; ++i)
             {
                 *ptr++ = texturePalette[i].color[CB];
                 *ptr++ = texturePalette[i].color[CG];
@@ -584,7 +571,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
                 {
                     in = (byte*)data + y*width;
                     alphaIn = in + width*height;
-                    for(x = 0; x < width; x++)
+                    for(x = 0; x < width; ++x)
                     {
                         *ptr++ = *in++;
                         *ptr++ = *alphaIn++;
@@ -603,7 +590,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
             {
                 in = (byte*)data + y*width;
                 alphaIn = in + width*height;
-                for(x = 0; x < width; x++)
+                for(x = 0; x < width; ++x)
                 {
                     *ptr++ = texturePalette[*in].color[CB];
                     *ptr++ = texturePalette[*in].color[CG];
@@ -629,7 +616,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
                 for(y = height - 1; y >= 0; y--)
                 {
                     in = (byte*)data + y*width*3;
-                    for(x = 0; x < width; x++, in += 3)
+                    for(x = 0; x < width; ++x, in += 3)
                     {
                         *ptr++ = in[CB];
                         *ptr++ = in[CG];
@@ -642,7 +629,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
                 for(y = height - 1; y >= 0; y--)
                 {
                     in = (byte*)data + y*width*4;
-                    for(x = 0; x < width; x++, in += 4)
+                    for(x = 0; x < width; ++x, in += 4)
                     {
                         *ptr++ = in[CB];
                         *ptr++ = in[CG];
@@ -656,7 +643,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
                 for(y = height - 1; y >= 0; y--)
                 {
                     in = (byte*)data + y*width;
-                    for(x = 0; x < width; x++)
+                    for(x = 0; x < width; ++x)
                     {
                         *ptr++ = *in;
                         *ptr++ = *in;
@@ -670,7 +657,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
                 {
                     in = (byte*)data + y*width;
                     alphaIn = in + width*height;
-                    for(x = 0; x < width; x++)
+                    for(x = 0; x < width; ++x)
                     {
                         *ptr++ = *in;
                         *ptr++ = *in;
@@ -697,6 +684,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
         {
             free(buffer);
             DXError("D3DXCreateTextureFromFileInMemoryEx");
+
             return DGL_ERROR;
         }
         free(buffer);
@@ -705,41 +693,39 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
     // We're done!
     dev->SetTexture(CUR_STAGE, tex->ptr);
     SetTexStates(CUR_STAGE, tex, STSF_ALL);
+
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_DeleteTextures
-//===========================================================================
 void DG_DeleteTextures(int num, DGLuint *names)
 {
-    for(int i = 0; i < num; i++)
+    for(int i = 0; i < num; ++i)
     {
         // Unbind a deleted texture.
-        for(int k = 0; k < MAX_TEX_STAGES; k++)
+        for(int k = 0; k < MAX_TEX_STAGES; ++k)
         {
             if(boundTexName[k] == names[i]) Unbind(k);
         }
 
         // Check that it's a valid name.
         int idx = NAME_TO_IDX(names[i]);
-        if(idx < 0 || idx >= numTexData) continue;
+        if(idx < 0 || idx >= numTexData)
+            continue;
 
         // Clear all data.
         tex_t *tex = &texData[idx];
-        if(tex->ptr) tex->ptr->Release();
+        if(tex->ptr)
+            tex->ptr->Release();
         memset(tex, 0, sizeof(*tex));
     }
 }
 
-//===========================================================================
-// DG_TexParameter
-//===========================================================================
 void DG_TexParameter(int pname, int param)
 {
     tex_t *tex = GetBoundTexture(CUR_STAGE);
 
-    if(!tex) return;
+    if(!tex)
+        return;
 
     switch(pname)
     {
@@ -778,23 +764,19 @@ void DG_TexParameter(int pname, int param)
     }
 }
 
-//===========================================================================
-// DG_GetTexParameterv
-//===========================================================================
+/**
+ * NOTE: Currently not needed by the engine.
+ */
 void DG_GetTexParameterv(int level, int pname, int *v)
 {
-    // Currently not needed by the engine.
 }
 
-//===========================================================================
-// DG_Palette
-//===========================================================================
 void DG_Palette(int format, void *data)
 {
-    byte *ptr = (byte*) data;
-    int size = (format == DGL_RGBA? 4 : 3);
+    byte       *ptr = (byte*) data;
+    int         size = (format == DGL_RGBA? 4 : 3);
 
-    for(int i = 0; i < 256; i++, ptr += size)
+    for(int i = 0; i < 256; ++i, ptr += size)
     {
         texturePalette[i].color[CR] = ptr[CR];
         texturePalette[i].color[CG] = ptr[CG];
@@ -803,19 +785,17 @@ void DG_Palette(int format, void *data)
     }
 }
 
-//===========================================================================
-// GetPaletteColor
-//===========================================================================
 byte *GetPaletteColor(int index)
 {
-    if(index < 0 || index > 255) return NULL;
+    if(index < 0 || index > 255)
+        return NULL;
+
     return texturePalette[index].color;
 }
 
-//===========================================================================
-// DG_Bind
-//  Returns the name of the texture that got replaced by the call.
-//===========================================================================
+/**
+ * @return          The name of the texture that got replaced by the call.
+ */
 int DG_Bind(DGLuint texture)
 {
     return Bind(CUR_STAGE, texture);

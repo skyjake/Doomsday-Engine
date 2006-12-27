@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -56,9 +56,6 @@ D3DCAPS9                caps;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// DXError
-//===========================================================================
 void DXError(const char *funcName)
 {
     char buf[300];
@@ -68,17 +65,18 @@ void DXError(const char *funcName)
     Con_Message("Direct3D: Call to %s failed:\n  %s\n", funcName, buf);
 }
 
-//===========================================================================
-// GetMode
-//  Returns a supported display mode that matches the current window
-//  configuration. Used only when running fullscreen.
-//===========================================================================
+/**
+ * Used only when running fullscreen.
+ *
+ * @return         A supported display mode that matches the current window
+ *                 configuration.
+ */
 boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
 {
     D3DDISPLAYMODE mode, fallback;
-    int i, num = d3d->GetAdapterModeCount(adapter, D3DFMT_UNKNOWN);
-    int targetBits = (!wantedColorDepth? window->bits : wantedColorDepth);
-    int found = false;
+    int         i, num = d3d->GetAdapterModeCount(adapter, D3DFMT_UNKNOWN);
+    int         targetBits = (!wantedColorDepth? window->bits : wantedColorDepth);
+    int         found = false;
 
     memset(match, 0, sizeof(*match));
     memset(&fallback, 0, sizeof(fallback));
@@ -91,10 +89,12 @@ boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
         Con_Printf("Direct3D: Requesting %i x %i x %i.\n",
             window->width, window->height, targetBits);
     }
-    for(i = 0; i < num; i++)
+
+    for(i = 0; i < num; ++i)
     {
         if(FAILED(d3d->EnumAdapterModes(adapter, D3DFMT_UNKNOWN, i, &mode)))
             continue;
+
         // Is this perhaps the mode we're looking for?
         // (Nice indentation.)
         if(mode.Width == window->width
@@ -131,9 +131,6 @@ boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
     return found;
 }
 
-//===========================================================================
-// PrintAdapterInfo
-//===========================================================================
 void PrintAdapterInfo(void)
 {
     D3DADAPTER_IDENTIFIER9 id;
@@ -144,10 +141,9 @@ void PrintAdapterInfo(void)
     Con_Message("  Description: %s\n", id.Description);
 }
 
-//===========================================================================
-// IsDepthFormatOk
-//  Copied from the DX8 documentation. Thank you Microsoft.
-//===========================================================================
+/**
+ * NOTE: Copied from the DX8 documentation. Thank you Microsoft.
+ */
 BOOL IsDepthFormatOk( D3DFORMAT DepthFormat, D3DFORMAT AdapterFormat,
                       D3DFORMAT BackBufferFormat )
 {
@@ -164,19 +160,17 @@ BOOL IsDepthFormatOk( D3DFORMAT DepthFormat, D3DFORMAT AdapterFormat,
     return SUCCEEDED( hr );
 }
 
-//===========================================================================
-// InitDirect3D
-//===========================================================================
 int InitDirect3D(void)
 {
     D3DDISPLAYMODE targetMode;
     D3DPRESENT_PARAMETERS *pp;
-    int wantedRefresh;
+    int         wantedRefresh;
 
     DP("InitDirect3D:");
 
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if(!d3d) return DGL_ERROR;
+    if(!d3d)
+        return DGL_ERROR;
 
     DP("  d3d=%p", d3d);
 
@@ -192,6 +186,7 @@ int InitDirect3D(void)
         DXError("GetAdapterDisplayMode");
         return DGL_ERROR;
     }
+
     DP("Current display mode:");
     DP("  w=%i, h=%i, rfsh=%i, fmt=%i",
         displayMode.Width, displayMode.Height,
@@ -388,14 +383,13 @@ int InitDirect3D(void)
     return DGL_OK;
 }
 
-//===========================================================================
-// ShutdownDirect3D
-//===========================================================================
 void ShutdownDirect3D(void)
 {
-    if(dev) dev->Release();
+    if(dev)
+        dev->Release();
     dev = NULL;
 
-    if(d3d) d3d->Release();
+    if(d3d)
+        d3d->Release();
     d3d = NULL;
 }

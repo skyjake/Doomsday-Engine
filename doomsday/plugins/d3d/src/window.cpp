@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -46,9 +46,6 @@
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// Window Constructor
-//===========================================================================
 Window::Window(HWND handle, int w, int h, int bt, boolean fullscreen)
 {
     x = y = 0;
@@ -63,13 +60,11 @@ Window::Window(HWND handle, int w, int h, int bt, boolean fullscreen)
     DP("  isWnd=%i, hwnd=%p", isWindow, hwnd);
 }
 
-//===========================================================================
-// UseDesktopBits
-//===========================================================================
 void Window::UseDesktopBits(void)
 {
-    HWND hDesktop = GetDesktopWindow();
-    HDC desktopHDC = GetDC(hDesktop);
+    HWND        hDesktop = GetDesktopWindow();
+    HDC         desktopHDC = GetDC(hDesktop);
+
     bits = GetDeviceCaps(desktopHDC, PLANES) * GetDeviceCaps(desktopHDC,
         BITSPIXEL);
     ReleaseDC(hDesktop, desktopHDC);
@@ -78,35 +73,40 @@ void Window::UseDesktopBits(void)
     DP("  bits=%i", bits);
 }
 
-//===========================================================================
-// Setup
-//  window, height, etc. must be set before calling this.
-//===========================================================================
+/**
+ * NOTE: Window, height, etc. must be set before calling this.
+ */
 void Window::Setup(void)
 {
-    uint realWidth = GetSystemMetrics(SM_CXSCREEN);
-    uint realHeight = GetSystemMetrics(SM_CYSCREEN);
-    int xOff, yOff;
-    RECT rect;
+    uint        realWidth = GetSystemMetrics(SM_CXSCREEN);
+    uint        realHeight = GetSystemMetrics(SM_CYSCREEN);
+    int         xOff, yOff;
+    RECT        rect;
 
     // Update our bitdepth if it's not yet known.
-    if(!bits) UseDesktopBits();
+    if(!bits)
+        UseDesktopBits();
 
     DP("Window setup:");
 
     if(isWindow)
     {
-        if(width > realWidth) width = realWidth;
-        if(height > realHeight) height = realHeight;
+        if(width > realWidth)
+            width = realWidth;
+        if(height > realHeight)
+            height = realHeight;
 
         // Center by default.
         xOff = (realWidth - width) / 2;
         yOff = (realHeight - height) / 2;
 
         // Check for modifier options.
-        if(ArgCheck("-nocenter")) xOff = yOff = 0;
-        if(ArgCheckWith("-xpos", 1)) xOff = atoi(ArgNext());
-        if(ArgCheckWith("-ypos", 1)) yOff = atoi(ArgNext());
+        if(ArgCheck("-nocenter"))
+            xOff = yOff = 0;
+        if(ArgCheckWith("-xpos", 1))
+            xOff = atoi(ArgNext());
+        if(ArgCheckWith("-ypos", 1))
+            yOff = atoi(ArgNext());
 
         LONG style = GetWindowLong(hwnd, GWL_STYLE)
             | WS_VISIBLE | WS_CAPTION
@@ -141,10 +141,10 @@ void Window::Setup(void)
     }
 }
 
-//===========================================================================
-// GetClientOrigin
-//  Returns the actual (x,y) coordinates of the game window's client area.
-//===========================================================================
+/**
+ * @return          The actual (x,y) coordinates of the game window's client
+ *                  area.
+ */
 void Window::GetClientOrigin(int &x, int &y)
 {
     POINT orig = { 0, 0 };

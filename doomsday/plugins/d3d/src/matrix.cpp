@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -57,14 +57,11 @@ static D3DXMATRIX   identityMatrix;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// InitMatrices
-//===========================================================================
 void InitMatrices(void)
 {
     msIndex = MAT_MODELVIEW;
     // Create the stack objects.
-    for(int i = 0; i < NUM_MATRIX_STACKS; i++)
+    for(int i = 0; i < NUM_MATRIX_STACKS; ++i)
     {
         if(FAILED(hr = D3DXCreateMatrixStack(0, &matStack[i])))
         {
@@ -76,9 +73,6 @@ void InitMatrices(void)
     D3DXMatrixIdentity(&identityMatrix);
 }
 
-//===========================================================================
-// ShutdownMatrices
-//===========================================================================
 void ShutdownMatrices(void)
 {
     for(int i = 0; i < NUM_MATRIX_STACKS; i++)
@@ -88,10 +82,9 @@ void ShutdownMatrices(void)
     }
 }
 
-//===========================================================================
-// ScissorProjection
-//  Updates the projection matrix.
-//===========================================================================
+/**
+ *  Updates the projection matrix.
+ */
 void ScissorProjection(void)
 {
     D3DXMATRIX mat = *matStack[MAT_PROJECTION]->GetTop(), x, res;
@@ -112,34 +105,34 @@ void ScissorProjection(void)
     dev->SetTransform(D3DTS_PROJECTION, &mat);
 }
 
-//===========================================================================
-// UploadMatrix
-//===========================================================================
 void UploadMatrix(void)
 {
     D3DTRANSFORMSTATETYPE d3dts[NUM_MATRIX_STACKS] =
     {
         D3DTS_VIEW, D3DTS_PROJECTION, D3DTS_TEXTURE0
     };
-    if(msIndex == MAT_TEXTURE) return;
+
+    if(msIndex == MAT_TEXTURE)
+        return;
+
     if(msIndex == MAT_PROJECTION && scissorActive)
         ScissorProjection();
     else
         dev->SetTransform(d3dts[msIndex], matStack[msIndex]->GetTop());
 }
 
-//===========================================================================
-// TransformTexCoord
-//  For some obscure reason I couldn't make the texture coordinate
-//  translation work correctly with the normal SetTransform(), so I have
-//  to transform the texcoords manually.
-//===========================================================================
+/**
+ * For some obscure reason I couldn't make the texture coordinate
+ * translation work correctly with the normal SetTransform(), so I have
+ * to transform the texcoords manually.
+ */
 void TransformTexCoord(float st[2])
 {
     D3DXMATRIX *mat = matStack[MAT_TEXTURE]->GetTop();
 
     // If this is an identity matrix, we don't have to do anything.
-    if(*mat == identityMatrix) return;
+    if(*mat == identityMatrix)
+        return;
 
     D3DXVECTOR3 vec(st[0], st[1], 0);
     D3DXVECTOR4 result;
@@ -148,9 +141,6 @@ void TransformTexCoord(float st[2])
     st[1] = result.y;
 }
 
-//===========================================================================
-// DG_MatrixMode
-//===========================================================================
 void DG_MatrixMode(int mode)
 {
     msIndex = (mode == DGL_MODELVIEW? MAT_MODELVIEW
@@ -159,44 +149,29 @@ void DG_MatrixMode(int mode)
         : msIndex);
 }
 
-//===========================================================================
-// DG_PushMatrix
-//===========================================================================
 void DG_PushMatrix(void)
 {
     matStack[msIndex]->Push();
 }
 
-//===========================================================================
-// DG_PopMatrix
-//===========================================================================
 void DG_PopMatrix(void)
 {
     matStack[msIndex]->Pop();
     UploadMatrix();
 }
 
-//===========================================================================
-// DG_LoadIdentity
-//===========================================================================
 void DG_LoadIdentity(void)
 {
     matStack[msIndex]->LoadIdentity();
     UploadMatrix();
 }
 
-//===========================================================================
-// DG_Translatef
-//===========================================================================
 void DG_Translatef(float x, float y, float z)
 {
     matStack[msIndex]->TranslateLocal(x, y, z);
     UploadMatrix();
 }
 
-//===========================================================================
-// DG_Rotatef
-//===========================================================================
 void DG_Rotatef(float angle, float x, float y, float z)
 {
     D3DXVECTOR3 axis(x, y, z);
@@ -204,18 +179,12 @@ void DG_Rotatef(float angle, float x, float y, float z)
     UploadMatrix();
 }
 
-//===========================================================================
-// DG_Scalef
-//===========================================================================
 void DG_Scalef(float x, float y, float z)
 {
     matStack[msIndex]->ScaleLocal(x, y, z);
     UploadMatrix();
 }
 
-//===========================================================================
-// DG_Ortho
-//===========================================================================
 void DG_Ortho(float left, float top, float right, float bottom,
               float znear, float zfar)
 {
@@ -225,9 +194,6 @@ void DG_Ortho(float left, float top, float right, float bottom,
     UploadMatrix();
 }
 
-//===========================================================================
-// DG_Perspective
-//===========================================================================
 void DG_Perspective(float fovY, float aspect, float zNear, float zFar)
 {
     D3DXMATRIX perMatrix;

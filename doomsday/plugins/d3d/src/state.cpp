@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -50,14 +50,11 @@ extern HWND     hwnd;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// InitState
-//===========================================================================
 void InitState(void)
 {
-    DWORD dw;
-    int i;
-    float f;
+    //DWORD     dw;
+    //int       i;
+    float       f;
 
     // Default alpha blending.
     SetRS(D3DRS_ALPHABLENDENABLE, TRUE);
@@ -90,10 +87,10 @@ void InitState(void)
     SetTSS(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
 
     // Default state diagnose.
+/*
 #define DS(cn)  dev->GetRenderState(cn, &dw); DP(#cn" = 0x%x", dw);
 #define DSf(cn) dev->GetRenderState(cn, &dw); DP(#cn" = %g", *(float*)&dw);
 
-	/*
     DS(D3DRS_ZENABLE);
     DS(D3DRS_FILLMODE);
     DS(D3DRS_SHADEMODE);
@@ -204,12 +201,9 @@ void InitState(void)
         DS(D3DTSS_ALPHAARG0);
         DS(D3DTSS_RESULTARG);
     }
-	*/
+    */
 }
 
-//===========================================================================
-// DG_Enable
-//===========================================================================
 int DG_Enable(int cap)
 {
     switch(cap)
@@ -272,9 +266,6 @@ int DG_Enable(int cap)
     return DGL_TRUE;
 }
 
-//===========================================================================
-// DG_Disable
-//===========================================================================
 void DG_Disable(int cap)
 {
     switch(cap)
@@ -337,23 +328,17 @@ void DG_Disable(int cap)
     }
 }
 
-//===========================================================================
-// DG_GetInteger
-//===========================================================================
 int DG_GetInteger(int name)
 {
-    int values[10];
+    int         values[10];
 
     DG_GetIntegerv(name, values);
     return values[0];
 }
 
-//===========================================================================
-// DG_GetIntegerv
-//===========================================================================
 int DG_GetIntegerv(int name, int *v)
 {
-    DWORD dw;
+    DWORD       dw;
 
     switch(name)
     {
@@ -433,9 +418,6 @@ int DG_GetIntegerv(int name, int *v)
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_SetInteger
-//===========================================================================
 int DG_SetInteger(int name, int value)
 {
     switch(name)
@@ -641,9 +623,6 @@ int DG_SetInteger(int name, int value)
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_GetString
-//===========================================================================
 char* DG_GetString(int name)
 {
     switch(name)
@@ -657,18 +636,15 @@ char* DG_GetString(int name)
     return NULL;
 }
 
-//===========================================================================
-// DG_SetFloatv
-//===========================================================================
 int DG_SetFloatv(int name, float *values)
 {
-    float color[4];
-    int i;
+    float       color[4];
+    uint        i;
 
     switch(name)
     {
     case DGL_ENV_COLOR:
-        for(i = 0; i < 4; i++)
+        for(i = 0; i < 4; ++i)
         {
             color[i] = values[i];
             CLAMP01(color[i]);
@@ -684,9 +660,6 @@ int DG_SetFloatv(int name, float *values)
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_Func
-//===========================================================================
 void DG_Func(int func, int param1, int param2)
 {
     D3DBLEND d3dBlendMode[] =
@@ -752,12 +725,9 @@ void DG_Func(int func, int param1, int param2)
     }
 }
 
-//===========================================================================
-// DG_Fog
-//===========================================================================
 void DG_Fog(int pname, float param)
 {
-    int iparam = (int) param;
+    int         iparam = (int) param;
 
     switch(pname)
     {
@@ -792,13 +762,10 @@ void DG_Fog(int pname, float param)
     }
 }
 
-//===========================================================================
-// DG_Fogv
-//===========================================================================
 void DG_Fogv(int pname, void *data)
 {
-    float   param = *(float*) data;
-    byte    *ubvparam = (byte*) data;
+    float       param = *(float*) data;
+    byte       *ubvparam = (byte*) data;
 
     switch(pname)
     {

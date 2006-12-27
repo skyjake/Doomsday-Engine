@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -48,18 +48,14 @@ Box         scissor, viewport;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// InitViewport
-//===========================================================================
 void InitViewport(void)
 {
     scissorActive = false;
 }
 
-//===========================================================================
-// Viewport
-//  Only updates the D3D viewport.
-//===========================================================================
+/**
+ * Only updates the D3D viewport.
+ */
 void Viewport(const Box &box)
 {
     D3DVIEWPORT9 vp;
@@ -73,19 +69,15 @@ void Viewport(const Box &box)
     dev->SetViewport(&vp);
 }
 
-//===========================================================================
-// UpdateScissor
-//  Updates the projection matrix and viewport.
-//===========================================================================
+/**
+ * Updates the projection matrix and viewport.
+ */
 void UpdateScissor(void)
 {
     Viewport(scissorActive? scissor : viewport);
     ScissorProjection();
 }
 
-//===========================================================================
-// EnableScissor
-//===========================================================================
 void EnableScissor(bool enable)
 {
     if(enable)
@@ -101,9 +93,6 @@ void EnableScissor(bool enable)
     }
 }
 
-//===========================================================================
-// DG_Viewport
-//===========================================================================
 void DG_Viewport(int x, int y, int width, int height)
 {
     viewport.Set(x, y, width, height);
@@ -117,18 +106,12 @@ void DG_Viewport(int x, int y, int width, int height)
     if(mustUpdateScissor) UpdateScissor();
 }
 
-//===========================================================================
-// DG_Scissor
-//===========================================================================
 void DG_Scissor(int x, int y, int width, int height)
 {
     scissor.Set(x, y, width, height);
     UpdateScissor();
 }
 
-//===========================================================================
-// DG_ZBias
-//===========================================================================
 void DG_ZBias(int level)
 {
     SetRS(D3DRS_DEPTHBIAS, 2 - level);

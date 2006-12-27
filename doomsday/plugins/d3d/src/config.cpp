@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -50,23 +50,20 @@ int     wantedZDepth = 0;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// ConfigDialogProc
-//===========================================================================
 BOOL CALLBACK ConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                                LPARAM lParam)
 {
-    int numAdapters = d3d->GetAdapterCount();
+    int         numAdapters = d3d->GetAdapterCount();
     D3DADAPTER_IDENTIFIER9 adapterId;
-    int i;
-    HWND it;
+    int         i;
+    HWND        it;
 
     switch(uMsg)
     {
     case WM_INITDIALOG:
         // Init the list boxes.
         it = GetDlgItem(hwndDlg, IDC_DRIVER_LIST);
-        for(i = 0; i < numAdapters; i++)
+        for(i = 0; i < numAdapters; ++i)
         {
             d3d->GetAdapterIdentifier(i, 0, &adapterId);
             SendMessage(it, LB_ADDSTRING, 0, (LPARAM) adapterId.Description);
@@ -129,12 +126,9 @@ BOOL CALLBACK ConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
     return FALSE;
 }
 
-//===========================================================================
-// ConfigDialog
-//===========================================================================
 int ConfigDialog(void)
 {
-    int ret;
+    int         ret;
 
     ShowCursor(TRUE);
     ShowCursor(TRUE);
@@ -145,13 +139,10 @@ int ConfigDialog(void)
     return ret;
 }
 
-//===========================================================================
-// ReadConfig
-//===========================================================================
 void ReadConfig(void)
 {
-    static int first_time = DGL_TRUE;
-    int showconf = DGL_FALSE;
+    static int  first_time = DGL_TRUE;
+    int         showconf = DGL_FALSE;
 
     DP("ReadConfig:");
 
