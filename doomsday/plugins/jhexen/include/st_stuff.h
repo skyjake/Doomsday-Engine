@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -38,6 +38,9 @@
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
+
+#include "x_player.h"
+#include "x_config.h"
 
 // Size of statusbar.
 // Now sensitive for scaling.
@@ -62,6 +65,9 @@ void    ST_Register(void);
 void    ST_Init(void);
 
 void    ST_updateGraphics(void);
+
+// Called when it might be neccessary for the hud to unhide.
+void    ST_HUDUnHide(hueevent_t event);
 
 // Called to execute the change of player class.
 void    SB_ChangePlayerClass(player_t *player, int newclass);

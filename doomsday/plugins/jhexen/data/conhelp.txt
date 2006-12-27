@@ -183,6 +183,9 @@ desc = Set demo external camera mode.
 desc = Status bar size adjustment.
 inf = Params: sbsize (size)\nFor example, 'sbsize +'.\nSize can be: +, -, (num).
 
+[showhud]
+desc = Show the HUD if hidden.
+
 [movefloor]
 desc = Move a sector's floor plane.
 
@@ -874,3 +877,30 @@ desc = Seconds before the inventory auto-hides.
 
 [hud-frags-all]
 desc = Debug: HUD shows all frags of all players.
+
+[hud-timer]
+desc = Number of seconds before the hud auto-hides.
+
+[hud-unhide-damage]
+desc = 1=Unhide the HUD when player receives damaged.
+
+[hud-unhide-pickup-health]
+desc = 1=Unhide the HUD when player collects a health item.
+
+[hud-unhide-pickup-armor]
+desc = 1=Unhide the HUD when player collects an armor item.
+
+[hud-unhide-pickup-powerup]
+desc = 1=Unhide the HUD when player collects a powerup or item of equipment.
+
+[hud-unhide-pickup-weapon]
+desc = 1=Unhide the HUD when player collects a weapon.
+
+[hud-unhide-pickup-ammo]
+desc = 1=Unhide the HUD when player collects an ammo item.
+
+[hud-unhide-pickup-key]
+desc = 1=Unhide the HUD when player collects a key.
+
+[hud-unhide-pickup-invitem]
+desc = 1=Unhide the HUD when player collects an inventory item.

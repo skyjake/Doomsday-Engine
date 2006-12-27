@@ -117,15 +117,19 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+void ST_drawWidgets(boolean refresh);
+
 // Console commands for the HUD/Statusbar
+DEFCC(CCmdHUDShow);
 DEFCC(CCmdStatusBarSize);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void DrINumber(signed int val, int x, int y, float r, float g, float b, float a);
-static void DrBNumber(signed int val, int x, int y, float Red, float Green, float Blue, float Alpha);
+static void DrINumber(signed int val, int x, int y, float r, float g,
+                      float b, float a);
+static void DrBNumber(signed int val, int x, int y, float Red, float Green,
+                      float Blue, float Alpha);
 static void DrawChain(void);
-void ST_drawWidgets(boolean refresh);
 static void DrawKeyBar(void);
 static void DrawWeaponPieces(void);
 static void ST_doFullscreenStuff(void);
@@ -133,25 +137,45 @@ static void DrawAnimatedIcons(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-//extern    sfxinfo_t   S_sfx[];
-
-extern byte *memscreen;
-
 extern boolean hu_showallfrags; // in hu_stuff.c currently
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-int     inventoryTics;
+int inventoryTics;
 boolean inventory = false;
 
-int     DebugSound;             // Debug flag for displaying sound info
-static int     ArtifactFlash;
+int DebugSound;             // Debug flag for displaying sound info
+
+int SB_state = -1;
+
+int lu_palette;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int hudHideTics;
+static float hudHideAmount;
+
+// whether to use alpha blending
+static boolean st_blended = false;
+
+static int HealthMarker;
+
+static int FontBNumBase;
+
+static int oldarti = 0;
+static int oldartiCount = 0;
+
+static int oldhealth = -1;
+
+static int ArtifactFlash;
 
 // ST_Start() has just been called
 static boolean st_firsttime;
 
 // fullscreen hud alpha value
 static float hudalpha = 0.0f;
+
+static float statusbarCounterAlpha = 0.0f;
 
 // slide statusbar amount 1.0 is fully open
 static float showbar = 0.0f;
@@ -244,57 +268,17 @@ static st_number_t w_manaACount;
 // mana B widget
 static st_number_t w_manaBCount;
 
-// used by the mana glympf and vials
-//static int     manaPatchNum1, manaPatchNum2, manaVialPatchNum1, manaVialPatchNum2;
-
- // number of frags so far in deathmatch
+// number of frags so far in deathmatch
 static int st_fragscount;
 
 // !deathmatch
 static boolean st_fragson;
-
-
-/*#ifndef __WATCOMC__
-   boolean i_CDMusic; // in Watcom, defined in i_ibm
-   #endif */
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// whether to use alpha blending
-static boolean st_blended = false;
-
-static int HealthMarker;
-
-static int FontBNumBase;
-int lu_palette;
-
-static int oldarti = 0;
-static int oldartiCount = 0;
-
-static int oldhealth = -1;
-
-/*
-   static int oldarti = 0;
-   static int oldartiCount = 0;
-   static int oldfrags = -9999;
-   static int oldmana1 = -1;
-   static int oldmana2 = -1;
-   static int oldarmor = -1;
-   static int oldlife = -1;
-   static int oldpieces = -1;
-   static int oldweapon = -1;
-   static int oldkeys = -1;
- */
 
 static dpatch_t PatchNumH2BAR;
 static dpatch_t PatchNumH2TOP;
 static dpatch_t PatchNumLFEDGE;
 static dpatch_t PatchNumRTEDGE;
 static dpatch_t PatchNumKILLS;
-//static dpatch_t PatchNumMANAVIAL1;
-//static dpatch_t PatchNumMANAVIAL2;
-//static dpatch_t PatchNumMANAVIALDIM1;
-//static dpatch_t PatchNumMANAVIALDIM2;
 static dpatch_t PatchNumMANADIM1;
 static dpatch_t PatchNumMANADIM2;
 static dpatch_t PatchNumMANABRIGHT1;
@@ -398,35 +382,46 @@ cvar_t hudCVars[] =
     {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30},
 
     {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1},
+
+    {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
+
+    {"hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1},
+    {"hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1},
+    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1},
+    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1},
+    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1},
+    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1},
+    {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1},
+    {"hud-unhide-pickup-invitem", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_INVITEM], 0, 1},
     {NULL}
 };
 
 // Console commands for the HUD/Status bar
 ccmd_t  hudCCmds[] = {
     {"sbsize",      "s",    CCmdStatusBarSize},
+    {"showhud",     "",     CCmdHUDShow},
     {NULL}
 };
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Register CVARs and CCmds for the HUD/Status bar
  */
 void ST_Register(void)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; hudCVars[i].name; i++)
+    for(i = 0; hudCVars[i].name; ++i)
         Con_AddVariable(hudCVars + i);
-    for(i = 0; hudCCmds[i].name; i++)
+    for(i = 0; hudCCmds[i].name; ++i)
         Con_AddCommand(hudCCmds + i);
 }
 
 void ST_loadGraphics(void)
 {
-    int     i;
-
-    char    namebuf[9];
+    int         i;
+    char        namebuf[9];
 
     FontBNumBase = W_GetNumForName("FONTB16");  // to be removed
 
@@ -460,32 +455,26 @@ void ST_loadGraphics(void)
     R_CachePatch(&SpinSpeedLump, "SPBOOT0");
     R_CachePatch(&SpinDefenseLump, "SPSHLD0");
 
-    for(i = 0; i < 10; i++)
+    for(i = 0; i < 10; ++i)
     {
         sprintf(namebuf, "IN%d", i);
         R_CachePatch(&PatchNumINumbers[i], namebuf);
     }
 
-    for(i = 0; i < 10; i++)
+    for(i = 0; i < 10; ++i)
     {
         sprintf(namebuf, "SMALLIN%d", i);
         R_CachePatch(&PatchNumSmNumbers[i], namebuf);
     }
 
     // artifact icons (+5 for the use-artifact flash patches)
-    for(i = 0; i < (NUMARTIFACTS + 5); i++)
+    for(i = 0; i < (NUMARTIFACTS + 5); ++i)
     {
         sprintf(namebuf, "%s", artifactlist[i]);
         R_CachePatch(&PatchARTIFACTS[i], namebuf);
     }
 
 }
-
-//==========================================================================
-//
-// SB_Init
-//
-//==========================================================================
 
 void ST_loadData(void)
 {
@@ -498,7 +487,7 @@ void ST_loadData(void)
 
 void ST_initData(void)
 {
-    int i;
+    int         i;
 
     st_firsttime = true;
 
@@ -510,7 +499,7 @@ void ST_initData(void)
     st_oldchat = st_chat = false;
     st_cursoron = false;
 
-    for(i = 0; i < NUMVISINVSLOTS; i++)
+    for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
         st_invslot[i] = 0;
         st_invslotcount[i] = 0;
@@ -521,65 +510,74 @@ void ST_initData(void)
 
 void ST_createWidgets(void)
 {
-    int i, width, temp;
-    player_t *plyr = &players[consoleplayer];
+    int         i, width, temp;
+    player_t   *plyr = &players[consoleplayer];
 
     // health num
     STlib_initNum(&w_health, ST_HEALTHX, ST_HEALTHY, PatchNumINumbers,
-                      &plyr->health, &st_statusbaron, ST_HEALTHWIDTH, &cfg.statusbarCounterAlpha);
+                  &plyr->health, &st_statusbaron, ST_HEALTHWIDTH,
+                  &statusbarCounterAlpha);
 
     // frags sum
     STlib_initNum(&w_frags, ST_FRAGSX, ST_FRAGSY, PatchNumINumbers, &st_fragscount,
-                  &st_fragson, ST_FRAGSWIDTH, &cfg.statusbarCounterAlpha);
+                  &st_fragson, ST_FRAGSWIDTH, &statusbarCounterAlpha);
 
     // armor num - should be colored later
     STlib_initNum(&w_armor, ST_ARMORX, ST_ARMORY, PatchNumINumbers,
-                      &armorlevel, &st_statusbaron, ST_ARMORWIDTH, &cfg.statusbarCounterAlpha );
+                  &armorlevel, &st_statusbaron, ST_ARMORWIDTH,
+                  &statusbarCounterAlpha );
 
     // manaA count
     STlib_initNum(&w_manaACount, ST_MANAAX, ST_MANAAY, PatchNumSmNumbers,
-                      &manaACount, &st_statusbaron, ST_MANAAWIDTH, &cfg.statusbarCounterAlpha);
+                  &manaACount, &st_statusbaron, ST_MANAAWIDTH,
+                  &statusbarCounterAlpha);
 
     // manaB count
     STlib_initNum(&w_manaBCount, ST_MANABX, ST_MANABY, PatchNumSmNumbers,
-                      &manaBCount, &st_statusbaron, ST_MANABWIDTH, &cfg.statusbarCounterAlpha);
+                  &manaBCount, &st_statusbaron, ST_MANABWIDTH,
+                  &statusbarCounterAlpha);
 
     // current mana A icon
-    STlib_initMultIcon(&w_manaAicon, ST_MANAAICONX, ST_MANAAICONY, PatchMANAAICONS, &st_manaAicon,
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+    STlib_initMultIcon(&w_manaAicon, ST_MANAAICONX, ST_MANAAICONY, PatchMANAAICONS,
+                       &st_manaAicon, &st_statusbaron, &statusbarCounterAlpha);
 
     // current mana B icon
-    STlib_initMultIcon(&w_manaBicon, ST_MANABICONX, ST_MANABICONY, PatchMANABICONS, &st_manaBicon,
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+    STlib_initMultIcon(&w_manaBicon, ST_MANABICONX, ST_MANABICONY, PatchMANABICONS,
+                       &st_manaBicon, &st_statusbaron, &statusbarCounterAlpha);
 
     // current mana A vial
-    STlib_initMultIcon(&w_manaAvial, ST_MANAAVIALX, ST_MANAAVIALY, PatchMANAAVIALS, &st_manaAvial,
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+    STlib_initMultIcon(&w_manaAvial, ST_MANAAVIALX, ST_MANAAVIALY, PatchMANAAVIALS,
+                       &st_manaAvial, &st_statusbaron, &statusbarCounterAlpha);
 
     // current mana B vial
-    STlib_initMultIcon(&w_manaBvial, ST_MANABVIALX, ST_MANABVIALY, PatchMANABVIALS, &st_manaBvial,
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+    STlib_initMultIcon(&w_manaBvial, ST_MANABVIALX, ST_MANABVIALY, PatchMANABVIALS,
+                       &st_manaBvial, &st_statusbaron, &statusbarCounterAlpha);
 
     // current artifact (stbar not inventory)
-    STlib_initMultIcon(&w_artici, ST_ARTIFACTX, ST_ARTIFACTY, PatchARTIFACTS, &st_artici,
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+    STlib_initMultIcon(&w_artici, ST_ARTIFACTX, ST_ARTIFACTY, PatchARTIFACTS,
+                       &st_artici, &st_statusbaron, &statusbarCounterAlpha);
 
     // current artifact count
     STlib_initNum(&w_articount, ST_ARTIFACTCX, ST_ARTIFACTCY, PatchNumSmNumbers,
-                      &oldartiCount, &st_statusbaron, ST_ARTIFACTCWIDTH, &cfg.statusbarCounterAlpha);
+                  &oldartiCount, &st_statusbaron, ST_ARTIFACTCWIDTH,
+                  &statusbarCounterAlpha);
 
     // inventory slots
     width = PatchARTIFACTS[5].width + 1;
     temp = 0;
 
-    for (i = 0; i < NUMVISINVSLOTS; i++){
+    for(i = 0; i < NUMVISINVSLOTS; ++i)
+    {
         // inventory slot icon
-        STlib_initMultIcon(&w_invslot[i], ST_INVENTORYX + temp , ST_INVENTORYY, PatchARTIFACTS, &st_invslot[i],
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+        STlib_initMultIcon(&w_invslot[i], ST_INVENTORYX + temp , ST_INVENTORYY,
+                           PatchARTIFACTS, &st_invslot[i],
+                           &st_statusbaron, &statusbarCounterAlpha);
 
         // inventory slot counter
-        STlib_initNum(&w_invslotcount[i], ST_INVENTORYX + temp + ST_INVCOUNTOFFX, ST_INVENTORYY + ST_INVCOUNTOFFY, PatchNumSmNumbers,
-                      &st_invslotcount[i], &st_statusbaron, ST_ARTIFACTCWIDTH, &cfg.statusbarCounterAlpha);
+        STlib_initNum(&w_invslotcount[i], ST_INVENTORYX + temp + ST_INVCOUNTOFFX,
+                      ST_INVENTORYY + ST_INVCOUNTOFFY, PatchNumSmNumbers,
+                      &st_invslotcount[i], &st_statusbaron, ST_ARTIFACTCWIDTH,
+                      &statusbarCounterAlpha);
 
         temp += width;
     }
@@ -619,6 +617,8 @@ void ST_Inventory(boolean show)
         inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
         if(inventoryTics < 1)
             inventoryTics = 1;
+
+        ST_HUDUnHide(HUE_FORCE);
     }
     else
         inventory = false;
@@ -635,16 +635,10 @@ void ST_InventoryFlashCurrent(player_t *player)
         ArtifactFlash = 4;
 }
 
-//==========================================================================
-//
-// SB_SetClassData
-//
-//==========================================================================
-
 void SB_SetClassData(void)
 {
-    int     class;
-    char    namebuf[9];
+    int         class;
+    char        namebuf[9];
 
     class = cfg.PlayerClass[consoleplayer]; // original player class (not pig)
 
@@ -656,38 +650,39 @@ void SB_SetClassData(void)
 
     switch(class)
     {
-        case 0: // fighter
-            R_CachePatch(&PatchNumPIECE1, "wpiecef1");
-            R_CachePatch(&PatchNumPIECE2, "wpiecef2");
-            R_CachePatch(&PatchNumPIECE3, "wpiecef3");
-            R_CachePatch(&PatchNumCHAIN, "chain");
-            break;
+    case 0: // fighter
+        R_CachePatch(&PatchNumPIECE1, "wpiecef1");
+        R_CachePatch(&PatchNumPIECE2, "wpiecef2");
+        R_CachePatch(&PatchNumPIECE3, "wpiecef3");
+        R_CachePatch(&PatchNumCHAIN, "chain");
+        break;
 
-        case 1: // cleric
-            R_CachePatch(&PatchNumPIECE1, "wpiecec1");
-            R_CachePatch(&PatchNumPIECE2, "wpiecec2");
-            R_CachePatch(&PatchNumPIECE3, "wpiecec3");
-            R_CachePatch(&PatchNumCHAIN, "chain2");
-            break;
+    case 1: // cleric
+        R_CachePatch(&PatchNumPIECE1, "wpiecec1");
+        R_CachePatch(&PatchNumPIECE2, "wpiecec2");
+        R_CachePatch(&PatchNumPIECE3, "wpiecec3");
+        R_CachePatch(&PatchNumCHAIN, "chain2");
+        break;
 
-        case 2: // mage
-            R_CachePatch(&PatchNumPIECE1, "wpiecem1");
-            R_CachePatch(&PatchNumPIECE2, "wpiecem2");
-            R_CachePatch(&PatchNumPIECE3, "wpiecem3");
-            R_CachePatch(&PatchNumCHAIN, "chain3");
-            break;
+    case 2: // mage
+        R_CachePatch(&PatchNumPIECE1, "wpiecem1");
+        R_CachePatch(&PatchNumPIECE2, "wpiecem2");
+        R_CachePatch(&PatchNumPIECE3, "wpiecem3");
+        R_CachePatch(&PatchNumCHAIN, "chain3");
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     if(!IS_NETGAME)
-    {                           // single player game uses red life gem (the second gem)
+    {   // single player game uses red life gem (the second gem)
         PatchNumLIFEGEM = W_GetNumForName("lifegem") + MAXPLAYERS * class + 1;
     }
     else
     {
-        PatchNumLIFEGEM = W_GetNumForName("lifegem") + MAXPLAYERS * class + consoleplayer;
+        PatchNumLIFEGEM =
+            W_GetNumForName("lifegem") + MAXPLAYERS * class + consoleplayer;
     }
 
     SB_state = -1;
@@ -696,15 +691,18 @@ void SB_SetClassData(void)
 
 void ST_updateWidgets(void)
 {
-    int     i, x;
-    player_t *plr = &players[consoleplayer];
+    int         i, x;
+    player_t   *plr = &players[consoleplayer];
+
+    statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
+    CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
 
     // used by w_frags widget
     st_fragson = deathmatch && st_statusbaron;
 
     st_fragscount = 0;
 
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->ingame)
             continue;
@@ -717,7 +715,7 @@ void ST_updateWidgets(void)
     {
         st_artici = 5 - ArtifactFlash;
         ArtifactFlash--;
-        oldarti = -1;           // so that the correct artifact fills in after the flash
+        oldarti = -1; // so that the correct artifact fills in after the flash
     }
     else if(oldarti != plr->readyArtifact ||
             oldartiCount != plr->inventory[plr->inv_ptr].count)
@@ -808,25 +806,12 @@ void ST_updateWidgets(void)
 
     x = plr->inv_ptr - plr->curpos;
 
-    for(i = 0; i < NUMVISINVSLOTS; i++)
+    for(i = 0; i < NUMVISINVSLOTS; ++i)
     {
         st_invslot[i] = plr->inventory[x + i].type +5;  // plus 5 for useartifact patches
         st_invslotcount[i] = plr->inventory[x + i].count;
     }
-
-/*
-    // get rid of chat window if up because of message
-    if(!--st_msgcounter)
-        st_chat = st_oldchat;
-*/
-
 }
-
-//==========================================================================
-//
-// SB_Ticker
-//
-//==========================================================================
 
 void ST_Ticker(void)
 {
@@ -836,6 +821,18 @@ void ST_Ticker(void)
 
     if(!plr->plr->mo)
         return;
+
+    if(cfg.hudTimer == 0)
+    {
+        hudHideTics = hudHideAmount = 0;
+    }
+    else
+    {
+        if(hudHideTics > 0)
+            hudHideTics--;
+        if(hudHideTics == 0 && cfg.hudTimer > 0 && hudHideAmount < 1)
+            hudHideAmount += 0.1f;
+    }
 
     ST_updateWidgets();
 
@@ -879,17 +876,13 @@ void ST_Ticker(void)
     }
 }
 
-//==========================================================================
-//
-// DrINumber
-//
-// Draws a three digit number.
-//
-//==========================================================================
-
-static void DrINumber(signed int val, int x, int y, float r, float g, float b, float a)
+/**
+ * Draws a three digit number.
+ */
+static void DrINumber(signed int val, int x, int y, float r, float g,
+                      float b, float a)
 {
-    int     oldval;
+    int         oldval;
 
     gl.Color4f(r,g,b,a);
 
@@ -934,18 +927,13 @@ static void DrINumber(signed int val, int x, int y, float r, float g, float b, f
 
 }
 
-//==========================================================================
-//
-// DrRedINumber
-//
-// Draws a three digit number using the red font
-//
-//==========================================================================
-
 #if 0 // UNUSED
+/**
+ * Draws a three digit number using the red font
+ */
 static void DrRedINumber(signed int val, int x, int y)
 {
-    int     oldval;
+    int         oldval;
 
     // Make sure it's a three digit number.
     if(val < -999)
@@ -972,19 +960,15 @@ static void DrRedINumber(signed int val, int x, int y)
 }
 #endif
 
-//==========================================================================
-//
-// DrBNumber
-//
-// Draws a three digit number using FontB
-//
-//==========================================================================
-
-static void DrBNumber(signed int val, int x, int y, float red, float green, float blue, float alpha)
+/**
+ * Draws a three digit number using FontB
+ */
+static void DrBNumber(signed int val, int x, int y, float red, float green,
+                      float blue, float alpha)
 {
-    patch_t *patch;
-    int     xpos;
-    int     oldval;
+    patch_t    *patch;
+    int         xpos;
+    int         oldval;
 
     // Limit to three digits.
     if(val > 999)
@@ -1001,7 +985,8 @@ static void DrBNumber(signed int val, int x, int y, float red, float green, floa
     if(val > 99)
     {
         patch = W_CacheLumpNum(FontBNumBase + val / 100, PU_CACHE);
-        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, .4f,
+        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0,
+                             alpha * .4f,
                              FontBNumBase + val / 100);
         GL_SetColorAndAlpha(red, green, blue, alpha);
         GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
@@ -1013,7 +998,8 @@ static void DrBNumber(signed int val, int x, int y, float red, float green, floa
     if(val > 9 || oldval > 99)
     {
         patch = W_CacheLumpNum(FontBNumBase + val / 10, PU_CACHE);
-        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, .4f,
+        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0,
+                             alpha * .4f,
                              FontBNumBase + val / 10);
         GL_SetColorAndAlpha(red, green, blue, alpha);
         GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
@@ -1023,22 +1009,17 @@ static void DrBNumber(signed int val, int x, int y, float red, float green, floa
     val = val % 10;
     xpos += 12;
     patch = W_CacheLumpNum(FontBNumBase + val, PU_CACHE);
-    GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, .4f,
-                             FontBNumBase + val);
+    GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0,
+                         alpha *.4f, FontBNumBase + val);
     GL_SetColorAndAlpha(red, green, blue, alpha);
     GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
                              FontBNumBase + val);
     GL_SetColorAndAlpha(1, 1, 1, 1);
 }
 
-//==========================================================================
-//
-// DrSmallNumber
-//
-// Draws a small two digit number.
-//
-//==========================================================================
-
+/**
+ * Draws a small two digit number.
+ */
 static void DrSmallNumber(int val, int x, int y, float r, float g, float b, float a)
 {
     gl.Color4f(r,g,b,a);
@@ -1064,23 +1045,19 @@ static void DrSmallNumber(int val, int x, int y, float r, float g, float b, floa
     GL_DrawPatch_CS(x + 8, y, PatchNumSmNumbers[val].lump);
 }
 
-//==========================================================================
-//
-// DrawSoundInfo
-//
-// Displays sound debugging information.
-//
-//==========================================================================
-#if 0
+#if 0 // Unused atm
+/**
+ * Displays sound debugging information.
+ */
 static void DrawSoundInfo(void)
 {
-    int     i;
+    int         i;
     SoundInfo_t s;
     ChanInfo_t *c;
-    char    text[32];
-    int     x;
-    int     y;
-    int     xPos[7] = { 1, 75, 112, 156, 200, 230, 260 };
+    char        text[32];
+    int         x;
+    int         y;
+    int         xPos[7] = { 1, 75, 112, 156, 200, 230, 260 };
 
     if(leveltime & 16)
     {
@@ -1099,7 +1076,7 @@ static void DrawSoundInfo(void)
     MN_DrTextA("ID", xPos[x++], 30);
     MN_DrTextA("PRI", xPos[x++], 30);
     MN_DrTextA("DIST", xPos[x++], 30);
-    for(i = 0; i < s.channelCount; i++)
+    for(i = 0; i < s.channelCount; ++i)
     {
         c = &s.chan[i];
         x = 0;
@@ -1110,7 +1087,6 @@ static void DrawSoundInfo(void)
             continue;
         }
         sprintf(text, "%s", c->name);
-        //M_ForceUppercase(text);
         strupr(text);
         MN_DrTextA(text, xPos[x++], y);
         sprintf(text, "%d", c->mo->type);
@@ -1124,28 +1100,28 @@ static void DrawSoundInfo(void)
         sprintf(text, "%d", S_sfx[c->id].usefulness);
         MN_DrTextA(text, xPos[x++], y);
         sprintf(text, "%d", c->distance);
-        //MN_DrTextA(text, xPos[x++], y);
     }
     GL_Update(DDUF_FULLSCREEN | DDUF_BORDER);
 }
 #endif
 
-int     SB_state = -1;
-
-/*
- *   ST_refreshBackground
- *
+/**
  *  Draws the whole statusbar backgound
  */
 void ST_refreshBackground(void)
 {
-    int x, y, w, h;
-    float cw, cw2, ch;
-    player_t *plyr = &players[consoleplayer];
+    int         x, y, w, h;
+    float       cw, cw2, ch;
+    player_t   *plyr = &players[consoleplayer];
+    float       alpha;
 
-    if(st_blended && ((cfg.statusbarAlpha < 1.0f) && (cfg.statusbarAlpha > 0.0f)))
+    alpha = cfg.statusbarAlpha - hudHideAmount;
+    // Clamp
+    CLAMP(alpha, 0.0f, 1.0f);
+
+    if(st_blended && ((alpha < 1.0f) && (alpha > 0.0f)))
     {
-        gl.Color4f(1, 1, 1, cfg.statusbarAlpha);
+        gl.Color4f(1, 1, 1, alpha);
 
         GL_SetPatch(PatchNumH2BAR.lump);
 
@@ -1277,8 +1253,9 @@ void ST_refreshBackground(void)
             {
                 GL_DrawPatch_CS(38, 162, PatchNumKEYBAR.lump);
             }
-
-        } else {
+        }
+        else
+        {
             // INVBAR
             GL_SetPatch(PatchNumINVBAR.lump);
             gl.Begin(DGL_QUADS);
@@ -1302,11 +1279,10 @@ void ST_refreshBackground(void)
         }
 
         DrawChain();
-
-    } else if (cfg.statusbarAlpha != 0){
-
+    }
+    else if(alpha != 0)
+    {
         GL_DrawPatch(0, 134, PatchNumH2BAR.lump);
-
         GL_DrawPatch(0, 134, PatchNumH2TOP.lump);
 
         if(!inventory)
@@ -1319,8 +1295,9 @@ void ST_refreshBackground(void)
                 if(plyr->pieces == 7)
                 {
                     GL_DrawPatch(190, 162, PatchNumWEAPONFULL.lump);
-
-                } else {
+                }
+                else
+                {
                     GL_DrawPatch(190, 162, PatchNumWEAPONSLOT.lump);
                 }
 
@@ -1332,7 +1309,9 @@ void ST_refreshBackground(void)
                 DrawKeyBar();
             }
 
-        } else {
+        }
+        else
+        {
             GL_DrawPatch(38, 162, PatchNumINVBAR.lump);
         }
 
@@ -1340,10 +1319,25 @@ void ST_refreshBackground(void)
     }
 }
 
-/*
- *   ST_doRefresh
+/**
+ * Unhides the current HUD display if hidden.
  *
- *  All drawing for the status bar starts and ends here
+ * @param event         The HUD Update Event type to check for triggering.
+ */
+void ST_HUDUnHide(hueevent_t event)
+{
+    if(event < HUE_FORCE || event > NUMHUDUNHIDEEVENTS)
+        return;
+
+    if(event == HUE_FORCE || cfg.hudUnHide[event])
+    {
+        hudHideTics = (cfg.hudTimer * TICSPERSEC);
+        hudHideAmount = 0;
+    }
+}
+
+/**
+ * All drawing for the status bar starts and ends here
  */
 void ST_doRefresh(void)
 {
@@ -1379,7 +1373,7 @@ void ST_Drawer(int fullscreenmode, boolean refresh )
     st_firsttime = st_firsttime || refresh;
     st_statusbaron = (fullscreenmode < 2) ||
                       (automapactive &&
-                       (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
+                       (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts
     ST_doPaletteStuff(false);
@@ -1391,22 +1385,28 @@ void ST_Drawer(int fullscreenmode, boolean refresh )
         {
             st_statusbaron = 0;
             hudalpha-=0.1f;
-        } else  if( showbar < 1.0f)
+        }
+        else if(showbar < 1.0f)
             showbar+=0.1f;
-    } else {
-        if (fullscreenmode == 3)
+    }
+    else
+    {
+        if(fullscreenmode == 3)
         {
-            if( hudalpha > 0.0f)
+            if(hudalpha > 0.0f)
             {
                 hudalpha-=0.1f;
                 fullscreenmode = 2;
             }
-        } else{
-            if( showbar > 0.0f)
+        }
+        else
+        {
+            if(showbar > 0.0f)
             {
                 showbar-=0.1f;
                 st_statusbaron = 1;
-            } else if(hudalpha < 1.0f)
+            }
+            else if(hudalpha < 1.0f)
                 hudalpha+=0.1f;
         }
     }
@@ -1417,34 +1417,29 @@ void ST_Drawer(int fullscreenmode, boolean refresh )
     else
         st_blended = 0;
 
-    if(st_statusbaron){
+    if(st_statusbaron)
+    {
         ST_doRefresh();
-    } else if (fullscreenmode != 3
+    }
+    else if(fullscreenmode != 3
 #ifdef DEMOCAM
         || (demoplayback && democam.mode)
 #endif
-                    ){
+                    )
+    {
         ST_doFullscreenStuff();
     }
 
     DrawAnimatedIcons();
 }
 
-//==========================================================================
-//
-// DrawAnimatedIcons
-//
-//==========================================================================
-
 static void DrawAnimatedIcons(void)
 {
-    int     leftoff = 0;
-    int     frame;
     static boolean hitCenterFrame;
-    float iconalpha = (st_statusbaron? 1: hudalpha) - ( 1 - cfg.hudIconAlpha);
-    player_t *plyr = &players[consoleplayer];
-
-    //  extern int screenblocks;
+    int         leftoff = 0;
+    int         frame;
+    float       iconalpha = (st_statusbaron? 1: hudalpha) - ( 1 - cfg.hudIconAlpha);
+    player_t   *plyr = &players[consoleplayer];
 
     // If the fullscreen mana is drawn, we need to move the icons on the left
     // a bit to the right.
@@ -1464,11 +1459,13 @@ static void DrawAnimatedIcons(void)
             {
                 if(hitCenterFrame && (frame != 15 && frame != 0))
                 {
-                    GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha, SpinFlylump.lump + 15);
+                    GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha,
+                                         SpinFlylump.lump + 15);
                 }
                 else
                 {
-                    GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha, SpinFlylump.lump + frame);
+                    GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha,
+                                         SpinFlylump.lump + frame);
                     hitCenterFrame = false;
                 }
             }
@@ -1476,12 +1473,14 @@ static void DrawAnimatedIcons(void)
             {
                 if(!hitCenterFrame && (frame != 15 && frame != 0))
                 {
-                    GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha, SpinFlylump.lump + frame);
+                    GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha,
+                                         SpinFlylump.lump + frame);
                     hitCenterFrame = false;
                 }
                 else
                 {
-                    GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha, SpinFlylump.lump + 15);
+                    GL_DrawPatchLitAlpha(20 + leftoff, 19, 1, iconalpha,
+                                         SpinFlylump.lump + 15);
                     hitCenterFrame = true;
                 }
             }
@@ -1496,7 +1495,8 @@ static void DrawAnimatedIcons(void)
            !(plyr->powers[pw_speed] & 16))
         {
             frame = (leveltime / 3) & 15;
-            GL_DrawPatchLitAlpha(60 + leftoff, 19, 1, iconalpha, SpinSpeedLump.lump + frame);
+            GL_DrawPatchLitAlpha(60 + leftoff, 19, 1, iconalpha,
+                                 SpinSpeedLump.lump + frame);
         }
         GL_Update(DDUF_TOP | DDUF_MESSAGES);
     }
@@ -1512,7 +1512,8 @@ static void DrawAnimatedIcons(void)
            !(plyr->powers[pw_invulnerability] & 16))
         {
             frame = (leveltime / 3) & 15;
-            GL_DrawPatchLitAlpha(260, 19, 1, iconalpha, SpinDefenseLump.lump + frame);
+            GL_DrawPatchLitAlpha(260, 19, 1, iconalpha,
+                                 SpinDefenseLump.lump + frame);
         }
         GL_Update(DDUF_TOP | DDUF_MESSAGES);
     }
@@ -1524,7 +1525,8 @@ static void DrawAnimatedIcons(void)
            !(plyr->powers[pw_minotaur] & 16))
         {
             frame = (leveltime / 3) & 15;
-            GL_DrawPatchLitAlpha(300, 19, 1, iconalpha, SpinMinotaurLump.lump + frame);
+            GL_DrawPatchLitAlpha(300, 19, 1, iconalpha,
+                                 SpinMinotaurLump.lump + frame);
         }
         GL_Update(DDUF_TOP | DDUF_MESSAGES);
     }
@@ -1532,20 +1534,15 @@ static void DrawAnimatedIcons(void)
     Draw_EndZoom();
 }
 
-//==========================================================================
-//
-// ST_doPaletteStuff
-//
-// Sets the new palette based upon the current values of
-// consoleplayer->damagecount and consoleplayer->bonuscount.
-//
-//==========================================================================
-
+/**
+ * Sets the new palette based upon the current values of
+ * consoleplayer->damagecount and consoleplayer->bonuscount.
+ */
 void ST_doPaletteStuff(boolean forceChange)
 {
-    static int sb_palette = 0;
-    int     palette;
-    player_t *plyr = &players[consoleplayer];
+    static int  sb_palette = 0;
+    int         palette;
+    player_t   *plyr = &players[consoleplayer];
 
     if(forceChange)
     {
@@ -1603,30 +1600,19 @@ void ST_doPaletteStuff(boolean forceChange)
     }
 }
 
-//==========================================================================
-//
-// DrawChain
-//
-//==========================================================================
-
 void DrawChain(void)
 {
-    float     healthPos;
-    float     gemglow;
-
-    int x, x2, y, w, w2, w3, h;
-    int gemoffset = 36;
-    float cw, cw2;
+    int         x, x2, y, w, w2, w3, h;
+    int         gemoffset = 36;
+    float       cw, cw2;
+    float       healthPos;
+    float       gemglow;
 
     healthPos = HealthMarker;
     if(healthPos < 0)
-    {
         healthPos = 0;
-    }
     if(healthPos > 100)
-    {
         healthPos = 100;
-    }
 
     gemglow = healthPos / 100;
 
@@ -1641,7 +1627,7 @@ void DrawChain(void)
 
     gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
 
-    gl.Color4f(1, 1, 1, cfg.statusbarCounterAlpha);
+    gl.Color4f(1, 1, 1, statusbarCounterAlpha);
 
     gl.Begin(DGL_QUADS);
 
@@ -1670,17 +1656,22 @@ void DrawChain(void)
     cw2 = 1;
 
     // calculate the size of the quad, position and tex coords
-    if ((x + healthPos) < x){
+    if(x + healthPos < x)
+    {
         x2 = x;
         w3 = w2 + healthPos;
         cw = (1.0f / w2) * (w2 - w3);
         cw2 = 1;
-    } else if((x + healthPos + w2) > (x + w) ){
+    }
+    else if(x + healthPos + w2 > x + w)
+    {
         x2 = x + healthPos;
         w3 = w2 - ((x + healthPos + w2) - (x + w));
         cw = 0;
         cw2 = (1.0f / w2) * (w2 - (w2 - w3));
-    } else {
+    }
+    else
+    {
         x2 = x + healthPos;
         w3 = w2;
         cw = 0;
@@ -1690,7 +1681,7 @@ void DrawChain(void)
     GL_SetPatch(PatchNumLIFEGEM);
 
     // draw the life gem
-    gl.Color4f(1, 1, 1, cfg.statusbarCounterAlpha);
+    gl.Color4f(1, 1, 1, statusbarCounterAlpha);
 
     gl.Begin(DGL_QUADS);
 
@@ -1712,82 +1703,83 @@ void DrawChain(void)
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
     gl.Bind(Get(DD_DYNLIGHT_TEXTURE));
 
-    GL_DrawRect(x + healthPos + 25, y - 3, 34, 18, 1, 0, 0, gemglow - (1 - cfg.statusbarCounterAlpha));
+    GL_DrawRect(x + healthPos + 25, y - 3, 34, 18, 1, 0, 0,
+                gemglow - (1 - statusbarCounterAlpha));
 
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 
     GL_Update(DDUF_STATBAR);
 }
 
-//==========================================================================
-//
-// ST_drawWidgets
-//
-//==========================================================================
-
 void ST_drawWidgets(boolean refresh)
 {
-    int     i;
-    int     x;
-    player_t *plyr = &players[consoleplayer];
+    int         i;
+    int         x;
+    player_t   *plyr = &players[consoleplayer];
 
     oldhealth = -1;
     if(!inventory)
     {
-        if(!automapactive){
+        if(!automapactive)
+        {
+            // Frags
+            if(deathmatch)
+                    STlib_updateNum(&w_frags, refresh);
+            else
+                    STlib_updateNum(&w_health, refresh);
 
-        // Frags
-        if(deathmatch)
-                STlib_updateNum(&w_frags, refresh);
+            // draw armor
+            STlib_updateNum(&w_armor, refresh);
+
+            // current artifact
+            if(plyr->readyArtifact > 0)
+            {
+                STlib_updateMultIcon(&w_artici, refresh);
+                if(!ArtifactFlash && plyr->inventory[plyr->inv_ptr].count > 1)
+                    STlib_updateNum(&w_articount, refresh);
+            }
+
+            // manaA count
+            if(manaACount > 0)
+                STlib_updateNum(&w_manaACount, refresh);
+
+            // manaB count
+            if(manaBCount > 0)
+                STlib_updateNum(&w_manaBCount, refresh);
+
+            // manaA icon
+            STlib_updateMultIcon(&w_manaAicon, refresh);
+
+            // manaB icon
+            STlib_updateMultIcon(&w_manaBicon, refresh);
+
+            // manaA vial
+            STlib_updateMultIcon(&w_manaAvial, refresh);
+
+            // manaB vial
+            STlib_updateMultIcon(&w_manaBvial, refresh);
+
+            // Draw the mana bars
+            GL_SetNoTexture();
+            GL_DrawRect(95, 165, 3,
+                        22 - (22 * plyr->ammo[0]) / MAX_MANA, 0, 0, 0,
+                        statusbarCounterAlpha);
+            GL_DrawRect(103, 165, 3,
+                        22 - (22 * plyr->ammo[1]) / MAX_MANA, 0, 0, 0,
+                        statusbarCounterAlpha);
+        }
         else
-                STlib_updateNum(&w_health, refresh);
-
-        // draw armor
-        STlib_updateNum(&w_armor, refresh);
-
-        // current artifact
-        if(plyr->readyArtifact > 0){
-            STlib_updateMultIcon(&w_artici, refresh);
-            if(!ArtifactFlash && plyr->inventory[plyr->inv_ptr].count > 1)
-                STlib_updateNum(&w_articount, refresh);
+        {
+            DrawKeyBar();
         }
-
-        // manaA count
-        if(manaACount > 0)
-            STlib_updateNum(&w_manaACount, refresh);
-
-        // manaB count
-        if(manaBCount > 0)
-            STlib_updateNum(&w_manaBCount, refresh);
-
-        // manaA icon
-        STlib_updateMultIcon(&w_manaAicon, refresh);
-
-        // manaB icon
-        STlib_updateMultIcon(&w_manaBicon, refresh);
-
-        // manaA vial
-        STlib_updateMultIcon(&w_manaAvial, refresh);
-
-        // manaB vial
-        STlib_updateMultIcon(&w_manaBvial, refresh);
-
-        // Draw the mana bars
-        GL_SetNoTexture();
-        GL_DrawRect(95, 165, 3, 22 - (22 * plyr->ammo[0]) / MAX_MANA, 0, 0, 0, cfg.statusbarAlpha);
-        GL_DrawRect(103, 165, 3, 22 - (22 * plyr->ammo[1]) / MAX_MANA, 0, 0, 0, cfg.statusbarAlpha);
-
-        } else {
-        DrawKeyBar();
-        }
-
     }
     else
     {   // Draw Inventory
 
         x = plyr->inv_ptr - plyr->curpos;
 
-        for(i = 0; i < NUMVISINVSLOTS; i++){
+        for(i = 0; i < NUMVISINVSLOTS; ++i)
+        {
             if( plyr->inventory[x + i].type != arti_none)
             {
                 STlib_updateMultIcon(&w_invslot[i], refresh);
@@ -1802,70 +1794,64 @@ void ST_drawWidgets(boolean refresh)
 
         // Draw more left indicator
         if(x != 0)
-            GL_DrawPatchLitAlpha(42, 163, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchNumINVLFGEM1.lump : PatchNumINVLFGEM2.lump);
+            GL_DrawPatchLitAlpha(42, 163, 1, statusbarCounterAlpha,
+                                 !(leveltime & 4) ? PatchNumINVLFGEM1.lump : PatchNumINVLFGEM2.lump);
 
         // Draw more right indicator
         if(plyr->inventorySlotNum - x > 7)
-            GL_DrawPatchLitAlpha(269, 163, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchNumINVRTGEM1.lump : PatchNumINVRTGEM2.lump);
+            GL_DrawPatchLitAlpha(269, 163, 1, statusbarCounterAlpha,
+                                 !(leveltime & 4) ? PatchNumINVRTGEM1.lump : PatchNumINVRTGEM2.lump);
     }
 }
 
-//==========================================================================
-//
-// DrawKeyBar
-//
-//==========================================================================
-
 void DrawKeyBar(void)
 {
-    int     i;
-    int     xPosition;
-    int     temp;
-    player_t *plyr = &players[consoleplayer];
+    int         i;
+    int         xPosition;
+    int         temp;
+    player_t   *plyr = &players[consoleplayer];
 
     xPosition = 46;
-    for(i = 0; i < NUMKEYS && xPosition <= 126; i++)
+    for(i = 0; i < NUMKEYS && xPosition <= 126; ++i)
     {
         if(plyr->keys & (1 << i))
         {
-            GL_DrawPatchLitAlpha(xPosition, 163, 1, cfg.statusbarCounterAlpha, W_GetNumForName("keyslot1") + i);
+            GL_DrawPatchLitAlpha(xPosition, 163, 1, statusbarCounterAlpha,
+                                 W_GetNumForName("keyslot1") + i);
             xPosition += 20;
         }
     }
+
     temp =
         PCLASS_INFO(plyr->class)->autoarmorsave + plyr->armorpoints[ARMOR_ARMOR] +
         plyr->armorpoints[ARMOR_SHIELD] +
         plyr->armorpoints[ARMOR_HELMET] +
         plyr->armorpoints[ARMOR_AMULET];
-    for(i = 0; i < NUMARMOR; i++)
+
+    for(i = 0; i < NUMARMOR; ++i)
     {
         if(!plyr->armorpoints[i])
-        {
             continue;
-        }
+
         if(plyr->armorpoints[i] <= (PCLASS_INFO(plyr->class)->armorincrement[i] >> 2))
         {
-            GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, cfg.statusbarCounterAlpha * 0.3,
+            GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, statusbarCounterAlpha * 0.3,
                              W_GetNumForName("armslot1") + i);
         }
         else if(plyr->armorpoints[i] <=
                 (PCLASS_INFO(plyr->class)->armorincrement[i] >> 1))
         {
-            GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, cfg.statusbarCounterAlpha * 0.6,
+            GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, statusbarCounterAlpha * 0.6,
                                 W_GetNumForName("armslot1") + i);
         }
         else
         {
-            GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, cfg.statusbarCounterAlpha, W_GetNumForName("armslot1") + i);
+            GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, statusbarCounterAlpha,
+                                 W_GetNumForName("armslot1") + i);
         }
     }
 }
 
-//==========================================================================
-//
-// DrawWeaponPieces
-//
-//==========================================================================
 static void DrawWeaponPieces(void)
 {
     player_t *plyr = &players[consoleplayer];
@@ -1873,41 +1859,35 @@ static void DrawWeaponPieces(void)
     GL_DrawPatchLitAlpha(190, 162, 1, cfg.statusbarAlpha, PatchNumWEAPONSLOT.lump);
 
     if(plyr->pieces == 7) // All pieces
-        GL_DrawPatchLitAlpha(190, 162, 1, cfg.statusbarCounterAlpha, PatchNumWEAPONFULL.lump);
+        GL_DrawPatchLitAlpha(190, 162, 1, statusbarCounterAlpha, PatchNumWEAPONFULL.lump);
     else
     {
         if(plyr->pieces & WPIECE1)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.PlayerClass[consoleplayer])->piecex[0], 162,
-                            1, cfg.statusbarCounterAlpha, PatchNumPIECE1.lump);
+                            1, statusbarCounterAlpha, PatchNumPIECE1.lump);
         }
         if(plyr->pieces & WPIECE2)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.PlayerClass[consoleplayer])->piecex[1], 162,
-                            1, cfg.statusbarCounterAlpha, PatchNumPIECE2.lump);
+                            1, statusbarCounterAlpha, PatchNumPIECE2.lump);
         }
         if(plyr->pieces & WPIECE3)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.PlayerClass[consoleplayer])->piecex[2], 162,
-                            1, cfg.statusbarCounterAlpha, PatchNumPIECE3.lump);
+                            1, statusbarCounterAlpha, PatchNumPIECE3.lump);
         }
     }
 }
 
-//==========================================================================
-//
-// ST_doFullscreenStuff
-//
-//==========================================================================
-
 void ST_doFullscreenStuff(void)
 {
-    int     i;
-    int     x;
-    int     temp;
-    float textalpha = hudalpha - ( 1 - cfg.hudColor[3]);
-    float iconalpha = hudalpha - ( 1 - cfg.hudIconAlpha);
-    player_t *plyr = &players[consoleplayer];
+    int         i;
+    int         x;
+    int         temp;
+    float       textalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudColor[3]);
+    float       iconalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudIconAlpha);
+    player_t   *plyr = &players[consoleplayer];
 
 #ifdef DEMOCAM
     if(demoplayback && democam.mode)
@@ -2046,11 +2026,6 @@ void ST_doFullscreenStuff(void)
     }
 }
 
-//==========================================================================
-//
-// Draw_TeleportIcon
-//
-//==========================================================================
 void Draw_TeleportIcon(void)
 {
     // Draw teleport icon and show it on screen.
@@ -2077,11 +2052,6 @@ void Draw_TeleportIcon(void)
     GL_Update(DDUF_FULLSCREEN);
 }
 
-//==========================================================================
-//
-// Draw_SaveIcon
-//
-//==========================================================================
 void Draw_SaveIcon(void)
 {
     GL_DrawPatch(100, 68, W_GetNumForName("saveicon"));
@@ -2089,11 +2059,6 @@ void Draw_SaveIcon(void)
     GL_Update(DDUF_FULLSCREEN);
 }
 
-//==========================================================================
-//
-// Draw_LoadIcon
-//
-//==========================================================================
 void Draw_LoadIcon(void)
 {
     GL_DrawPatch(100, 68, W_GetNumForName("loadicon"));
@@ -2101,7 +2066,16 @@ void Draw_LoadIcon(void)
     GL_Update(DDUF_FULLSCREEN);
 }
 
-/*
+/**
+ * Console command to show the hud if hidden.
+ */
+DEFCC(CCmdHUDShow)
+{
+    ST_HUDUnHide(HUE_FORCE);
+    return true;
+}
+
+/**
  * Console command to change the size of the status bar.
  */
 DEFCC(CCmdStatusBarSize)
@@ -2128,11 +2102,10 @@ DEFCC(CCmdStatusBarSize)
 
 ////////////////////////////////////////////////////////////////////////////
 
-//==========================================================================
-// SB_ChangePlayerClass
-//  Changes the class of the given player. Will not work if the player
-//  is currently morphed.
-//==========================================================================
+/**
+ * Changes the class of the given player. Will not work if the player
+ * is currently morphed.
+ */
 void SB_ChangePlayerClass(player_t *player, int newclass)
 {
     int     i;

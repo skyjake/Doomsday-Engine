@@ -118,42 +118,46 @@ void P_HideSpecialThing(mobj_t *thing)
 //
 //--------------------------------------------------------------------------
 
-boolean P_GiveMana(player_t *player, ammotype_t mana, int count)
+boolean P_GiveMana(player_t *player, ammotype_t ammo, int num)
 {
     int     prevMana;
 
-    //weapontype_t changeWeapon;
+    if(ammo == AM_NOAMMO || ammo == MANA_BOTH)
+        return false;
 
-    if(mana == AM_NOAMMO || mana == MANA_BOTH)
-    {
-        return (false);
-    }
-    if(mana < 0 || mana > NUMAMMO)
-    {
-        Con_Error("P_GiveMana: bad type %i", mana);
-    }
-    if(player->ammo[mana] == MAX_MANA)
-    {
-        return (false);
-    }
+    if(ammo < 0 || ammo > NUMAMMO)
+        Con_Error("P_GiveMana: bad type %i", ammo);
+
+    if(player->ammo[ammo] == MAX_MANA)
+        return false;
+
     if(gameskill == sk_baby || gameskill == sk_nightmare)
-    {                           // extra mana in baby mode and nightmare mode
-        count += count >> 1;
+    {   // extra mana in baby mode and nightmare mode
+        num += num >> 1;
     }
-    prevMana = player->ammo[mana];
+    prevMana = player->ammo[ammo];
 
-    player->ammo[mana] += count;
-    if(player->ammo[mana] > MAX_MANA)
-    {
-        player->ammo[mana] = MAX_MANA;
-    }
+    // We are about to receive some more ammo. Does the player want to
+    // change weapon automatically?
+    P_MaybeChangeWeapon(player, WP_NOCHANGE, ammo, false);
+
+    player->ammo[ammo] += num;
+    player->update |= PSF_AMMO;
+
+    if(player->ammo[ammo] > MAX_MANA)
+        player->ammo[ammo] = MAX_MANA;
+
+    // FIXME - DJS: This shouldn't be actioned from here.
     if(player->class == PCLASS_FIGHTER && player->readyweapon == WP_SECOND &&
-       mana == MANA_1 && prevMana <= 0)
+       ammo == MANA_1 && prevMana <= 0)
     {
         P_SetPsprite(player, ps_weapon, S_FAXEREADY_G);
-    }
-    player->update |= PSF_AMMO;
-    return (true);
+    } // < FIXME
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
+
+    return true;
 }
 
 //==========================================================================
@@ -232,10 +236,9 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
             gaveWeapon = true;
             player->weaponowned[weaponType] = true;
             player->update |= PSF_OWNED_WEAPONS;
-            if(weaponType > player->readyweapon)
-            {                   // Only switch to more powerful weapons
-                player->pendingweapon = weaponType;
-            }
+
+            // Should we change weapon automatically?
+            P_MaybeChangeWeapon(player, weaponType, AM_NOAMMO, false);
         }
         if(!(gaveWeapon || gaveMana))
         {                       // Player didn't need the weapon or any mana
@@ -495,6 +498,9 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
         P_SetMessage(player, GET_TXT(fourthWeaponText[matchClass]), false);
         // Play the build-sound full volume for all players
         S_StartSound(SFX_WEAPON_BUILD, NULL);
+
+        // Should we change weapon automatically?
+        P_MaybeChangeWeapon(player, WP_FOURTH, AM_NOAMMO, false);
     }
     else
     {
@@ -531,6 +537,10 @@ boolean P_GiveBody(player_t *player, int num)
     }
     player->plr->mo->health = player->health;
     player->update |= PSF_HEALTH;
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
+
     return (true);
 }
 
@@ -577,6 +587,10 @@ boolean P_GiveArmor(player_t *player, armortype_t armortype, int amount)
             return false;
         }
     }
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+
     return true;
 }
 
@@ -595,93 +609,89 @@ int P_GiveKey(player_t *player, keytype_t key)
     player->bonuscount += BONUSADD;
     player->keys |= 1 << key;
     player->update |= PSF_KEYS;
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(HUE_ON_PICKUP_KEY);
+
     return true;
 }
 
-//---------------------------------------------------------------------------
-//
-// FUNC P_GivePower
-//
-// Returns true if power accepted.
-//
-//---------------------------------------------------------------------------
-
+/**
+ * @return          <code>true,</code> if power accepted.
+ */
 boolean P_GivePower(player_t *player, powertype_t power)
 {
+    boolean     retval = false;
+
     player->update |= PSF_POWERS;
-    if(power == pw_invulnerability)
+
+    switch(power)
     {
-        if(player->powers[power] > BLINKTHRESHOLD)
-        {                       // Already have it
-            return (false);
-        }
-        player->powers[power] = INVULNTICS;
-        player->plr->mo->flags2 |= MF2_INVULNERABLE;
-        if(player->class == PCLASS_MAGE)
+    case pw_invulnerability:
+        if(!(player->powers[power] > BLINKTHRESHOLD))
         {
-            player->plr->mo->flags2 |= MF2_REFLECTIVE;
+            player->powers[power] = INVULNTICS;
+            player->plr->mo->flags2 |= MF2_INVULNERABLE;
+            if(player->class == PCLASS_MAGE)
+            {
+                player->plr->mo->flags2 |= MF2_REFLECTIVE;
+            }
+            retval = true;
         }
-        return (true);
-    }
-    if(power == pw_flight)
-    {
-        if(player->powers[power] > BLINKTHRESHOLD)
-        {                       // Already have it
-            return (false);
-        }
-        player->powers[power] = FLIGHTTICS;
-        player->plr->mo->flags2 |= MF2_FLY;
-        player->plr->mo->flags |= MF_NOGRAVITY;
-        if(player->plr->mo->pos[VZ] <= player->plr->mo->floorz)
+        break;
+
+    case pw_flight:
+        if(!(player->powers[power] > BLINKTHRESHOLD))
         {
-            player->flyheight = 10; // thrust the player in the air a bit
-            player->plr->flags |= DDPF_FIXMOM;
+            player->powers[power] = FLIGHTTICS;
+            player->plr->mo->flags2 |= MF2_FLY;
+            player->plr->mo->flags |= MF_NOGRAVITY;
+            if(player->plr->mo->pos[VZ] <= player->plr->mo->floorz)
+            {
+                player->flyheight = 10; // thrust the player in the air a bit
+                player->plr->flags |= DDPF_FIXMOM;
+            }
+            retval = true;
         }
-        return (true);
-    }
-    if(power == pw_infrared)
-    {
-        if(player->powers[power] > BLINKTHRESHOLD)
-        {                       // Already have it
-            return (false);
+        break;
+
+    case pw_infrared:
+        if(!(player->powers[power] > BLINKTHRESHOLD))
+        {
+            player->powers[power] = INFRATICS;
+            retval = true;
         }
-        player->powers[power] = INFRATICS;
-        return (true);
-    }
-    if(power == pw_speed)
-    {
-        if(player->powers[power] > BLINKTHRESHOLD)
-        {                       // Already have it
-            return (false);
+        break;
+
+    case pw_speed:
+        if(!(player->powers[power] > BLINKTHRESHOLD))
+        {
+            player->powers[power] = SPEEDTICS;
+            retval = true;
         }
-        player->powers[power] = SPEEDTICS;
-        return (true);
-    }
-    if(power == pw_minotaur)
-    {
+        break;
+
+    case pw_minotaur:
         // Doesn't matter if already have power, renew ticker
         player->powers[power] = MAULATORTICS;
-        return (true);
+        retval = true;
+        break;
+
+    default:
+        if(!(player->powers[power]))
+        {
+            player->powers[power] = 1;
+            retval = true;
+        }
+        break;
     }
-    /*
-       if(power == pw_ironfeet)
-       {
-       player->powers[power] = IRONTICS;
-       return(true);
-       }
-       if(power == pw_strength)
-       {
-       P_GiveBody(player, 100);
-       player->powers[power] = 1;
-       return(true);
-       }
-     */
-    if(player->powers[power])
+
+    if(retval)
     {
-        return (false);         // already got it
+        // Maybe unhide the HUD?
+        ST_HUDUnHide(HUE_ON_PICKUP_POWER);
     }
-    player->powers[power] = 1;
-    return (true);
+    return retval;
 }
 
 //==========================================================================
@@ -1980,9 +1990,13 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             player->damagecount = 100;  // teleport stomp does 10k points...
 
         temp = damage < 100 ? damage : 100;
+
+        // Maybe unhide the HUD?
+        if(player == &players[consoleplayer]);
+            ST_HUDUnHide(HUE_ON_DAMAGE);
+
         if(player == &players[consoleplayer])
         {
-            //          I_Tactile(40, 10, 40+temp*2);
             ST_doPaletteStuff(false);
         }
     }
@@ -2190,6 +2204,11 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
     {                           // Try to use some inventory health
         P_AutoUseHealth(player, damage - player->health + 1);
     }
+
+    // Maybe unhide the HUD?
+    if(player == &players[consoleplayer]);
+        ST_HUDUnHide(HUE_ON_DAMAGE);
+
     player->health -= damage;   // mirror mobj health here for Dave
     if(player->health < 0)
     {

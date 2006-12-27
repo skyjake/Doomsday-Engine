@@ -46,6 +46,20 @@ enum {
     HUD_ARTI
 };
 
+// Hud Unhide Events (the hud will unhide on these events if enabled).
+typedef enum {
+    HUE_FORCE = -1,
+    HUE_ON_DAMAGE,
+    HUE_ON_PICKUP_HEALTH,
+    HUE_ON_PICKUP_ARMOR,
+    HUE_ON_PICKUP_POWER,
+    HUE_ON_PICKUP_WEAPON,
+    HUE_ON_PICKUP_AMMO,
+    HUE_ON_PICKUP_KEY,
+    HUE_ON_PICKUP_INVITEM,
+    NUMHUDUNHIDEEVENTS
+} hueevent_t;
+
 // This struct should be cleaned up. Currently some of the data isn't
 // even used any more.
 
@@ -69,6 +83,8 @@ typedef struct {
     float           hudScale;
     float           hudColor[4];
     float           hudIconAlpha;
+    float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
+    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
     byte            usePatchReplacement;
     int             showFPS, lookSpring;
     int             mlookInverseY;

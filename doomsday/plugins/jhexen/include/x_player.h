@@ -50,7 +50,7 @@
 
 // In addition, the player is just a special
 // case of the generic moving object/actor.
-//#include "p_mobj.h"
+#include "h2def.h" // "p_mobj.h"
 
 #ifdef __GNUG__
 #pragma interface
