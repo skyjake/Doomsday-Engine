@@ -8,7 +8,7 @@ import py2app
 ver = file('VERSION').read().strip()
 
 name = 'Doomsday Engine'
-iconfile = 'graphics/snowberry.icns'
+iconfile = 'snowberry.icns'
 verstr = ver + '-macosx'
 
 includes = []

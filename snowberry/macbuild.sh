@@ -9,7 +9,7 @@ echo "Building version "$VERSION
 echo $VERSION > VERSION
 
 # Locations.
-DENG_DIR=/Users/jaakko/Projects/deng/doomsday
+DENG_DIR=/Volumes/deng-trunk/doomsday/build/mac
 TARGET_IMAGE=images/deng-$VERSION.dmg
 
 # Clean.
@@ -25,9 +25,9 @@ mkdir -p build/lang
 mkdir -p build/profiles
 mkdir -p build/plugins
 
-cp conf/{osx-appearance.conf,components.conf,osx-doomsday.conf,snowberry.conf} build/conf
+cp conf/{osx-appearance.conf,osx-components.conf,osx-doomsday.conf,snowberry.conf} build/conf
 cp graphics/{*.jpg,*.png,*.bmp,*.ico} build/graphics
-cp lang/english.lang build/lang
+cp lang/*.lang build/lang
 cp profiles/*.prof build/profiles
 cp plugins/tab*.py build/plugins
 cp -R plugins/{example.plugin,about.py,help.py,launcher.py,preferences.py,profilelist.py,wizard.py} build/plugins
@@ -36,8 +36,8 @@ cp -R plugins/{example.plugin,about.py,help.py,launcher.py,preferences.py,profil
 python buildapp.py py2app
 
 # Place Doomsday.app inside the bundle.
-cp -R $DENG_DIR/Build/Deployment/Doomsday.app \
-  $DENG_DIR/Build/Deployment/*.bundle "dist/Doomsday Engine.app/Contents"
+cp -R $DENG_DIR/build/Deployment/Doomsday.app \
+  $DENG_DIR/build/Deployment/*.bundle "dist/Doomsday Engine.app/Contents"
 
 # Make sure the readme is included in the image.
 cp $DENG_DIR/Readme.rtf dist
