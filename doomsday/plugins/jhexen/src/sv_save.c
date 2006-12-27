@@ -1881,7 +1881,7 @@ static void RestoreMobj(mobj_t *mobj, int ver)
     // apply the values as set in the mobjinfo.
     // Non-persistent flags might screw things up a lot worse otherwise.
     if(ver < 5)
-        mo->flags3 = mo->info->flags3;
+        mobj->flags3 = mobj->info->flags3;
 }
 
 //==========================================================================
