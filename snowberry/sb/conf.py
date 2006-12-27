@@ -41,10 +41,9 @@ class Component:
     """Components are dynamically loaded libraries that Doomsday
     loads.  Each component implements certain functionality."""
     
-    def __init__(self, id, setting):
+    def __init__(self, id, setting, option=''):
         self.id = id
-        #self.library = library
-        #self.option = option
+        self.option = option
         self.setting = setting
 
     def getId(self):
@@ -56,6 +55,10 @@ class Component:
         component.
         """
         return self.setting
+
+    def getOption(self):
+        """Returns extra options to be used with the Component."""
+        return self.option
 
 
 class Setting:

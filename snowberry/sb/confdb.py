@@ -214,7 +214,8 @@ def processSettingBlock(e):
     if e.getType() == 'component':
         # Create a new component.
         _newComponent(conf.Component(e.getName(),
-                                     e.findValue('setting')))
+                                     e.findValue('setting'),
+                                     e.findValue('option')))
 
     elif e.getType() == 'toggle':
         setting = conf.ToggleSetting(e.getName(),

@@ -238,13 +238,13 @@ def generateOptions(profile):
     # required parts of boxes).
     usedAddonIds = profile.getFinalAddons()
     usedAddons = map(lambda id: ao.get(id), usedAddonIds)
+
+    # Form the command line.
+    cmdLine = []
     
     # Determine the settings that apply to the components and
     # addons.
     effectiveSettings = st.getCompatibleSettings(profile)
-
-    # Form the command line.
-    cmdLine = []
 
     # Are there any system-specific options defined?
     if st.isDefined('common-options'):
@@ -257,6 +257,11 @@ def generateOptions(profile):
 
     userPath = paths.getUserPath(paths.RUNTIME)
     cmdLine.append('-userdir ' + paths.quote(userPath))
+
+    # Determine the components used by the profile.
+    for compId in profile.getComponents():
+        # Append the component's options to the command line as-is.
+        cmdLine.append( st.getComponent(compId).getOption() )
 
     # Resolve conflicting addons by letting the user choose between
     # them.
