@@ -1179,7 +1179,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     target->reactiontime = 0;   // we're awake now...
 
     if(source &&
-       (!target->threshold && !(source->flags2 & MF2_BOSS)) && source != target)
+       (!target->threshold && !(source->flags3 & MF3_NOINFIGHT)) && source != target)
     {
         // if not intent on another player,
         // chase after this one

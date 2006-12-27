@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -212,6 +212,10 @@
 #define MF2_FLOATBOB        0x00080000  // (p) use float bobbing z movement
 #define MF2_DONTDRAW        0X00100000  // don't generate a vissprite
 
+// --- mobj.flags3 ---
+
+#define MF3_NOINFIGHT       0x00000001  // Mobj will never be targeted for in-fighting
+
 // --- mobj.intflags --- (added in MOBJ_SAVEVERSION 6)
 // Internal mobj flags cannot be set using an external definition.
 
@@ -234,6 +238,7 @@ typedef struct mobj_s {
     int             damage;        // For missiles
     int             flags;
     int             flags2;        // Heretic flags
+    int             flags3;
     int             special1;      // Special info
     int             special2;      // Special info
     int             health;

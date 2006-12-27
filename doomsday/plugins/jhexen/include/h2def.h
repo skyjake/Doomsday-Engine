@@ -220,6 +220,7 @@ typedef struct mobj_s {
     int             damage;        // For missiles
     int             flags;
     int             flags2;        // Heretic flags
+    int             flags3;
     int             special1;      // Special info
     int             special2;      // Special info
     int             health;
@@ -346,6 +347,10 @@ typedef struct mobj_s {
 #define MF2_ICEDAMAGE       0x20000000  // does ice damage
 #define MF2_SEEKERMISSILE   0x40000000  // is a seeker (for reflection)
 #define MF2_REFLECTIVE      0x80000000  // reflects missiles
+
+// --- mobj.flags3 ---
+
+#define MF3_NOINFIGHT       0x00000001  // Mobj will never be targeted for in-fighting
 
 //=============================================================================
 

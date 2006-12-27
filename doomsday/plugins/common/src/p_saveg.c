@@ -708,6 +708,7 @@ static void SV_WriteMobj(mobj_t *mobj)
     // 6: Added flags 2 in jDoom
     // 6: Added damage
     // 7: Added generator in jHeretic
+    // 7: Added flags3
     SV_WriteByte(MOBJ_SAVEVERSION);
 
     // A version 2 features: archive number and target.
@@ -792,6 +793,7 @@ static void SV_WriteMobj(mobj_t *mobj)
 
     SV_WriteLong(mo.damage);
     SV_WriteLong(mo.flags2);
+    SV_WriteLong(mo.flags3);
 #ifdef __JHERETIC__
     SV_WriteLong(mo.special1);
     SV_WriteLong(mo.special2);
@@ -849,6 +851,14 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
         // Non-persistent flags might screw things up a lot worse otherwise.
         mo->flags2 = mo->info->flags2;
 #endif
+    }
+
+    if(ver < 7)
+    {
+        // flags3 was introduced in ver 7 so all we can do is to
+        // apply the values as set in the mobjinfo.
+        // Non-persistent flags might screw things up a lot worse otherwise.
+        mo->flags3 = mo->info->flags3;
     }
 }
 
@@ -996,6 +1006,10 @@ static int SV_ReadMobj(thinker_t *th)
     mo->damage = SV_ReadLong();
     mo->flags2 = SV_ReadLong();
 #endif
+
+    if(ver >= 7)
+        mo->flags3 = SV_ReadLong();
+    // Else flags3 will be applied from the defs.
 
 #if __JHERETIC__
     mo->special1 = SV_ReadLong();

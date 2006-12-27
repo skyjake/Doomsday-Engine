@@ -1278,7 +1278,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     target->reactiontime = 0;   // we're awake now...
 
     if(source &&
-       ((!target->threshold && !(source->flags2 & MF2_BOSS))|| target->type == MT_VILE) &&
+       ((!target->threshold && !(source->flags3 & MF3_NOINFIGHT))|| target->type == MT_VILE) &&
        source != target && source->type != MT_VILE)
     {
         // if not intent on another player,

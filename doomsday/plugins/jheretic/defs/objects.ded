@@ -60,6 +60,8 @@ Flag { ID = "mf2_telestomp"; Value = 0x40000; }
 Flag { ID = "mf2_floatbob"; Value = 0x80000; }
 Flag { ID = "mf2_dontdraw"; Value = 0x100000; }
 
+Flag { ID = "mf3_noinfight"; Value = 0x1; }
+
 Thing {
   ID = "MISC0";
   DoomEd number = 81;
@@ -3436,6 +3438,7 @@ Thing {
   Mass = 800;
   Flags = "mf_solid mf_shootable mf_countkill";
   Flags2 = "mf2_footclip mf2_passmobj mf2_boss";
+  Flags3 = "mf3_noinfight";
 }
 
 Thing {
@@ -3490,6 +3493,7 @@ Thing {
   Mass = 300;
   Flags = "mf_solid mf_shootable mf_countkill mf_dropoff";
   Flags2 = "mf2_footclip mf2_passmobj mf2_boss";
+  Flags3 = "mf3_noinfight";
 }
 
 Thing {
@@ -3621,6 +3625,7 @@ Thing {
   Damage = 7;
   Flags = "mf_solid mf_shootable mf_countkill mf_dropoff";
   Flags2 = "mf2_footclip mf2_passmobj mf2_boss";
+  Flags3 = "mf3_noinfight";
 }
 
 Thing {

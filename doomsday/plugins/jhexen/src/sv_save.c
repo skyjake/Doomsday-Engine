@@ -1476,7 +1476,8 @@ void ArchiveMobj(mobj_t *original)
     // 3: Added byte 'vistarget'
     // 4: Added long 'tracer'
     // 4: Added long 'lastenemy'
-    StreamOutByte(4);
+    // 5: Added flags3
+    StreamOutByte(5);
 
     StreamOutLong(mo->pos[VX]);
     StreamOutLong(mo->pos[VY]);
@@ -1498,6 +1499,7 @@ void ArchiveMobj(mobj_t *original)
     StreamOutLong(mo->damage);
     StreamOutLong(mo->flags);
     StreamOutLong(mo->flags2);
+    StreamOutLong(mo->flags3);
     StreamOutLong(mo->special1);
     StreamOutLong(mo->special2);
     StreamOutLong(mo->health);
@@ -1549,6 +1551,8 @@ void UnarchiveMobj(mobj_t *mo)
     mo->damage = GET_LONG;
     mo->flags = GET_LONG;
     mo->flags2 = GET_LONG;
+    if(version >= 5)
+        mo->flags3 = GET_LONG;
     mo->special1 = GET_LONG;
     mo->special2 = GET_LONG;
     mo->health = GET_LONG;
@@ -1872,6 +1876,12 @@ static void RestoreMobj(mobj_t *mobj, int ver)
     default:
         break;
     }
+
+    // flags3 was introduced in ver 5 so all we can do is to
+    // apply the values as set in the mobjinfo.
+    // Non-persistent flags might screw things up a lot worse otherwise.
+    if(ver < 5)
+        mo->flags3 = mo->info->flags3;
 }
 
 //==========================================================================

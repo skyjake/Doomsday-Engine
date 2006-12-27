@@ -1229,13 +1229,15 @@ void C_DECL A_VileChase(mobj_t *actor)
 
                     P_SetMobjState(corpsehit, info->raisestate);
 
-                    if (cfg.raiseghosts)            // DJS - raiseghosts
+                    if(cfg.raiseghosts) // DJS - raiseghosts
                     {
                         corpsehit->height <<= 2;
-                    } else {
-                                    corpsehit->height = info->height;
-                                    corpsehit->radius = info->radius;
-                    }                   // raiseghosts
+                    }
+                    else
+                    {
+                        corpsehit->height = info->height;
+                        corpsehit->radius = info->radius;
+                    } // raiseghosts
 
                     corpsehit->flags = info->flags;
                     corpsehit->health = info->spawnhealth;

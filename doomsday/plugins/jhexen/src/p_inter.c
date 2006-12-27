@@ -2085,7 +2085,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
     }
     target->reactiontime = 0;   // we're awake now...
-    if(!target->threshold && source && !(source->flags2 & MF2_BOSS) &&
+    if(!target->threshold && source && !(source->flags3 & MF3_NOINFIGHT) &&
        !(target->type == MT_BISHOP) && !(target->type == MT_MINOTAUR))
     {
         // Target actor is not intent on another actor,

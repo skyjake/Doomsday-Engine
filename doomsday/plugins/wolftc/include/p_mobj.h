@@ -212,6 +212,10 @@
 #define MF2_FLOATBOB        0x00080000  // (p) use float bobbing z movement
 #define MF2_DONTDRAW        0X00100000  // don't generate a vissprite
 
+// --- mobj.flags3 ---
+
+#define MF3_NOINFIGHT       0x00000001  // Mobj will never be targeted for in-fighting
+
 // --- mobj.intflags ---
 // Internal mobj flags cannot be set using an external definition.
 
@@ -234,6 +238,7 @@ typedef struct mobj_s {
     int             damage;        // For missiles
     int             flags;
     int             flags2;
+    int             flags3;
     int             health;
 
     // Movement direction, movement generation (zig-zagging).
