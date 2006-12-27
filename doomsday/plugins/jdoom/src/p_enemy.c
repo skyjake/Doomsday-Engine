@@ -206,7 +206,7 @@ boolean P_CheckMeleeRange(mobj_t *actor)
 
 boolean P_CheckMissileRange(mobj_t *actor)
 {
-    fixed_t dist;
+    fixed_t     dist;
 
     if(!P_CheckSight(actor, actor->target))
         return false;
@@ -225,7 +225,7 @@ boolean P_CheckMissileRange(mobj_t *actor)
     // OPTIMIZE: get this from a global checksight
     dist =
         P_ApproxDistance(actor->pos[VX] - actor->target->pos[VX],
-                         actor->pos[VX] - actor->target->pos[VY]) - 64 * FRACUNIT;
+                         actor->pos[VY] - actor->target->pos[VY]) - 64 * FRACUNIT;
 
     if(!actor->info->meleestate)
         dist -= 128 * FRACUNIT; // no melee attack, so fire more
@@ -1616,7 +1616,7 @@ void C_DECL A_Fall(mobj_t *actor)
 {
     // actor is on ground, it can be walked over
     actor->flags &= ~MF_SOLID;
-    
+
 #ifdef _DEBUG
     Con_Message("A_Fall: actor not solid any more\n");
 #endif

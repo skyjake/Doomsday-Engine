@@ -228,7 +228,7 @@ boolean P_CheckMissileRange(mobj_t *actor)
     // OPTIMIZE: get this from a global checksight
     dist =
         P_ApproxDistance(actor->pos[VX] - actor->target->pos[VX],
-                         actor->pos[VX] - actor->target->pos[VY]) - 64 * FRACUNIT;
+                         actor->pos[VY] - actor->target->pos[VY]) - 64 * FRACUNIT;
 
     if(!actor->info->meleestate)
         dist -= 128 * FRACUNIT; // no melee attack, so fire more
