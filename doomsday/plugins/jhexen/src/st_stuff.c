@@ -1854,9 +1854,14 @@ void DrawKeyBar(void)
 
 static void DrawWeaponPieces(void)
 {
-    player_t *plyr = &players[consoleplayer];
+    player_t   *plyr = &players[consoleplayer];
+    float       alpha;
 
-    GL_DrawPatchLitAlpha(190, 162, 1, cfg.statusbarAlpha, PatchNumWEAPONSLOT.lump);
+    alpha = cfg.statusbarAlpha - hudHideAmount;
+    // Clamp
+    CLAMP(alpha, 0.0f, 1.0f);
+
+    GL_DrawPatchLitAlpha(190, 162, 1, alpha, PatchNumWEAPONSLOT.lump);
 
     if(plyr->pieces == 7) // All pieces
         GL_DrawPatchLitAlpha(190, 162, 1, statusbarCounterAlpha, PatchNumWEAPONFULL.lump);
