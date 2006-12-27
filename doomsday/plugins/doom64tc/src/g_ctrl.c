@@ -167,10 +167,6 @@ const Control_t controls[] = {
     {"weapon10", CLF_ACTION, DDBC_NORMAL, '0', 0, 0},
 
     {"showhud", 0, DDBC_NORMAL, 'h', 0, 0},
-
-    // More menu controls
-    {"menunextpage", 0, GBC_CLASS3, DDKEY_PGDN, 0, 0},
-    {"menuprevpage", 0, GBC_CLASS3, DDKEY_PGUP, 0, 0},
     {"", 0, 0, 0, 0, 0}             // terminator
 };
 

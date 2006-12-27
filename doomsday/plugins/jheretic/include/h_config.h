@@ -55,6 +55,20 @@ enum {
     HUD_ARTI
 };
 
+// Hud Unhide Events (the hud will unhide on these events if enabled).
+typedef enum {
+    HUE_FORCE = -1,
+    HUE_ON_DAMAGE,
+    HUE_ON_PICKUP_HEALTH,
+    HUE_ON_PICKUP_ARMOR,
+    HUE_ON_PICKUP_POWER,
+    HUE_ON_PICKUP_WEAPON,
+    HUE_ON_PICKUP_AMMO,
+    HUE_ON_PICKUP_KEY,
+    HUE_ON_PICKUP_INVITEM,
+    NUMHUDUNHIDEEVENTS
+} hueevent_t;
+
 // WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
 
@@ -99,6 +113,8 @@ typedef struct jheretic_config_s {
     float           hudScale;      // How to scale HUD data?
     float           hudColor[4];
     float           hudIconAlpha;
+    float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
+    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
     byte            usePatchReplacement;
     byte            moveCheckZ;    // if true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;

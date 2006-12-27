@@ -129,6 +129,7 @@
 void ST_drawWidgets(boolean refresh);
 
 // Console commands for the HUD/Statusbar
+DEFCC(CCmdHUDShow);
 DEFCC(CCmdStatusBarSize);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -190,6 +191,9 @@ char    artifactlist[][10] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int hudHideTics;
+static float hudHideAmount;
+
 static boolean st_stopped = true;
 
 // slide statusbar amount 1.0 is fully open
@@ -197,6 +201,8 @@ static float showbar = 0.0f;
 
 // fullscreen hud alpha value
 static float hudalpha = 0.0f;
+
+static float statusbarCounterAlpha = 0.0f;
 
 // ST_Start() has just been called
 static boolean st_firsttime;
@@ -346,12 +352,24 @@ cvar_t hudCVars[] =
     {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30},
 
     {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1},
+
+    {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
+
+    {"hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1},
+    {"hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1},
+    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1},
+    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1},
+    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1},
+    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1},
+    {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1},
+    {"hud-unhide-pickup-invitem", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_INVITEM], 0, 1},
     {NULL}
 };
 
 // Console commands for the HUD/Status bar
 ccmd_t  hudCCmds[] = {
     {"sbsize",      "s",    CCmdStatusBarSize},
+    {"showhud",     "",     CCmdHUDShow},
     {NULL}
 };
 
@@ -509,6 +527,9 @@ void ST_updateWidgets(void)
     player_t *plr = &players[consoleplayer];
     int     lvl = (plr->powers[pw_weaponlevel2]? 1 : 0);
 
+    statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
+    CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+
     // must redirect the pointer if the ready weapon has changed.
     found = false;
     for(ammotype=0; ammotype < NUMAMMO && !found; ++ammotype)
@@ -598,7 +619,7 @@ void ST_createWidgets(void)
             continue; // Weapon does not take this ammo.
 
         STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, PatchINumbers, &plyr->ammo[ammotype],
-                      &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
+                      &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
 
         found = true;
     }
@@ -610,16 +631,16 @@ void ST_createWidgets(void)
 
         //STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, PatchINumbers,
         //              &plyr->ammo[weaponinfo[plyr->readyweapon].ammo],
-        //              &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
+        //              &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
 
         // ready weapon ammo
         STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, PatchINumbers, &largeammo,
-                      &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
+                      &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
     }
 
     // ready weapon icon
     STlib_initMultIcon(&w_ammoicon, ST_AMMOICONX, ST_AMMOICONY, PatchAMMOICONS, &st_ammoicon,
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     // the last weapon type
     w_ready.data = plyr->readyweapon;
@@ -627,33 +648,33 @@ void ST_createWidgets(void)
 
     // health num
     STlib_initNum(&w_health, ST_HEALTHX, ST_HEALTHY, PatchINumbers,
-                      &plyr->health, &st_statusbaron, ST_HEALTHWIDTH, &cfg.statusbarCounterAlpha);
+                      &plyr->health, &st_statusbaron, ST_HEALTHWIDTH, &statusbarCounterAlpha);
 
     // armor percentage - should be colored later
     STlib_initNum(&w_armor, ST_ARMORX, ST_ARMORY, PatchINumbers,
-                      &plyr->armorpoints, &st_statusbaron, ST_ARMORWIDTH, &cfg.statusbarCounterAlpha );
+                      &plyr->armorpoints, &st_statusbaron, ST_ARMORWIDTH, &statusbarCounterAlpha );
 
     // frags sum
     STlib_initNum(&w_frags, ST_FRAGSX, ST_FRAGSY, PatchINumbers, &st_fragscount,
-                  &st_fragson, ST_FRAGSWIDTH, &cfg.statusbarCounterAlpha);
+                  &st_fragson, ST_FRAGSWIDTH, &statusbarCounterAlpha);
 
     // keyboxes 0-2
     STlib_initBinIcon(&w_keyboxes[0], ST_KEY0X, ST_KEY0Y, &keys[0], &keyboxes[0],
-                       &keyboxes[0], 0, &cfg.statusbarCounterAlpha);
+                       &keyboxes[0], 0, &statusbarCounterAlpha);
 
     STlib_initBinIcon(&w_keyboxes[1], ST_KEY1X, ST_KEY1Y, &keys[1], &keyboxes[1],
-                       &keyboxes[1], 0, &cfg.statusbarCounterAlpha);
+                       &keyboxes[1], 0, &statusbarCounterAlpha);
 
     STlib_initBinIcon(&w_keyboxes[2], ST_KEY2X, ST_KEY2Y, &keys[2], &keyboxes[2],
-                       &keyboxes[2], 0, &cfg.statusbarCounterAlpha);
+                       &keyboxes[2], 0, &statusbarCounterAlpha);
 
     // current artifact (stbar not inventory)
     STlib_initMultIcon(&w_artici, ST_ARTIFACTX, ST_ARTIFACTY, PatchARTIFACTS, &st_artici,
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     // current artifact count
     STlib_initNum(&w_articount, ST_ARTIFACTCX, ST_ARTIFACTCY, PatchSmNumbers,
-                      &oldartiCount, &st_statusbaron, ST_ARTIFACTCWIDTH, &cfg.statusbarCounterAlpha);
+                      &oldartiCount, &st_statusbaron, ST_ARTIFACTCWIDTH, &statusbarCounterAlpha);
 
     // inventory slots
     width = PatchARTIFACTS[5].width + 1;
@@ -662,11 +683,11 @@ void ST_createWidgets(void)
     for (i = 0; i < NUMVISINVSLOTS; i++){
         // inventory slot icon
         STlib_initMultIcon(&w_invslot[i], ST_INVENTORYX + temp , ST_INVENTORYY, PatchARTIFACTS, &st_invslot[i],
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
         // inventory slot count
         STlib_initNum(&w_invslotcount[i], ST_INVENTORYX + temp + ST_INVCOUNTOFFX, ST_INVENTORYY + ST_INVCOUNTOFFY, PatchSmNumbers,
-                      &st_invslotcount[i], &st_statusbaron, ST_ARTIFACTCWIDTH, &cfg.statusbarCounterAlpha);
+                      &st_invslotcount[i], &st_statusbaron, ST_ARTIFACTCWIDTH, &statusbarCounterAlpha);
 
         temp += width;
     }
@@ -704,6 +725,8 @@ void ST_Inventory(boolean show)
         inventoryTics = (int) (cfg.inventoryTimer * TICSPERSEC);
         if(inventoryTics < 1)
             inventoryTics = 1;
+
+        ST_HUDUnHide(HUE_FORCE);
     }
     else
         inventory = false;
@@ -726,6 +749,18 @@ void ST_Ticker(void)
     int     curHealth;
     static int tomePlay = 0;
     player_t *plyr = &players[consoleplayer];
+
+    if(cfg.hudTimer == 0)
+    {
+        hudHideTics = hudHideAmount = 0;
+    }
+    else
+    {
+        if(hudHideTics > 0)
+            hudHideTics--;
+        if(hudHideTics == 0 && cfg.hudTimer > 0 && hudHideAmount < 1)
+            hudHideAmount += 0.1f;
+    }
 
     ST_updateWidgets();
 
@@ -839,7 +874,7 @@ static void DrBNumber(signed int val, int x, int y, float red, float green, floa
     {
         patch = W_CacheLumpNum(FontBNumBase + val / 100, PU_CACHE);
 
-        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, .4f,
+        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, alpha * .4f,
                              FontBNumBase + val / 100);
         GL_SetColorAndAlpha(red, green, blue, alpha);
         GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
@@ -852,7 +887,7 @@ static void DrBNumber(signed int val, int x, int y, float red, float green, floa
     {
         patch = W_CacheLumpNum(FontBNumBase + val / 10, PU_CACHE);
 
-        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, .4f,
+        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, alpha * .4f,
                              FontBNumBase + val / 10);
         GL_SetColorAndAlpha(red, green, blue, alpha);
         GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
@@ -863,7 +898,7 @@ static void DrBNumber(signed int val, int x, int y, float red, float green, floa
     xpos += 12;
     patch = W_CacheLumpNum(FontBNumBase + val, PU_CACHE);
 
-    GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, .4f,
+    GL_DrawPatchLitAlpha(xpos + 8 - SHORT(patch->width) / 2, y +2, 0, alpha * .4f,
                              FontBNumBase + val);
     GL_SetColorAndAlpha(red, green, blue, alpha);
     GL_DrawPatch_CS(xpos + 6 - SHORT(patch->width) / 2, y,
@@ -894,7 +929,7 @@ static void DrSmallNumber(int val, int x, int y, float r, float g, float b, floa
 
 static void ShadeChain(void)
 {
-    float shadea = (cfg.statusbarCounterAlpha + cfg.statusbarAlpha) /3;
+    float shadea = (statusbarCounterAlpha + cfg.statusbarAlpha) /3;
 
     gl.Disable(DGL_TEXTURING);
     gl.Begin(DGL_QUADS);
@@ -925,11 +960,16 @@ static void ShadeChain(void)
  */
 void ST_refreshBackground(void)
 {
-    player_t *pl = &players[consoleplayer];
+    player_t   *pl = &players[consoleplayer];
+    float       alpha;
 
-    if(st_blended && ((cfg.statusbarAlpha < 1.0f) && (cfg.statusbarAlpha > 0.0f)))
+    alpha = cfg.statusbarAlpha - hudHideAmount;
+    // Clamp
+    CLAMP(alpha, 0.0f, 1.0f);
+
+    if(st_blended && ((alpha < 1.0f) && (alpha > 0.0f)))
     {
-        gl.Color4f(1, 1, 1, cfg.statusbarAlpha);
+        gl.Color4f(1, 1, 1, alpha);
 
         // topbits
         GL_DrawPatch_CS(0, 148, PatchLTFCTOP.lump);
@@ -967,7 +1007,7 @@ void ST_refreshBackground(void)
         DrawChain();
 
     }
-    else if(cfg.statusbarAlpha != 0.0f)
+    else if(alpha != 0.0f)
     {
         // we can just render the full thing as normal
 
@@ -990,6 +1030,23 @@ void ST_refreshBackground(void)
             GL_DrawPatch(34, 160, PatchINVBAR.lump);
 
         DrawChain();
+    }
+}
+
+/*
+ * Unhides the current HUD display if hidden.
+ *
+ * @param event         The HUD Update Event type to check for triggering.
+ */
+void ST_HUDUnHide(hueevent_t event)
+{
+    if(event < HUE_FORCE || event > NUMHUDUNHIDEEVENTS)
+        return;
+
+    if(event == HUE_FORCE || cfg.hudUnHide[event])
+    {
+        hudHideTics = (cfg.hudTimer * TICSPERSEC);
+        hudHideAmount = 0;
     }
 }
 
@@ -1260,7 +1317,7 @@ void DrawChain(void)
 
         gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
 
-        gl.Color4f(1, 1, 1, cfg.statusbarCounterAlpha);
+        gl.Color4f(1, 1, 1, statusbarCounterAlpha);
 
         gl.Begin(DGL_QUADS);
 
@@ -1281,7 +1338,7 @@ void DrawChain(void)
         // draw the life gem
         healthPos = (healthPos * 256) / 102;
 
-        GL_DrawPatchLitAlpha( x + healthPos, chainY, 1, cfg.statusbarCounterAlpha, PatchLIFEGEM.lump);
+        GL_DrawPatchLitAlpha( x + healthPos, chainY, 1, statusbarCounterAlpha, PatchLIFEGEM.lump);
 
         ShadeChain();
 
@@ -1289,7 +1346,7 @@ void DrawChain(void)
         gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
         gl.Bind(Get(DD_DYNLIGHT_TEXTURE));
 
-        GL_DrawRect(x + healthPos - 11, chainY - 6, 41, 24, 1, 0, 0, gemglow - (1 - cfg.statusbarCounterAlpha));
+        GL_DrawRect(x + healthPos - 11, chainY - 6, 41, 24, 1, 0, 0, gemglow - (1 - statusbarCounterAlpha));
 
         gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
         gl.Color4f(1, 1, 1, 1);
@@ -1349,15 +1406,18 @@ void ST_drawWidgets(boolean refresh)
         }
 
         // Draw selector box
-        GL_DrawPatch(ST_INVENTORYX + plyr->curpos * 31, 189, PatchSELECTBOX.lump);
+        GL_DrawPatchLitAlpha(ST_INVENTORYX + plyr->curpos * 31, 189, 1,
+                             statusbarCounterAlpha, PatchSELECTBOX.lump);
 
         // Draw more left indicator
         if(x != 0)
-            GL_DrawPatchLitAlpha(38, 159, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchINVLFGEM1.lump : PatchINVLFGEM2.lump);
+            GL_DrawPatchLitAlpha(38, 159, 1, statusbarCounterAlpha,
+                                 !(leveltime & 4) ? PatchINVLFGEM1.lump : PatchINVLFGEM2.lump);
 
         // Draw more right indicator
         if(plyr->inventorySlotNum - x > 7)
-            GL_DrawPatchLitAlpha(269, 159, 1, cfg.statusbarCounterAlpha, !(leveltime & 4) ? PatchINVRTGEM1.lump : PatchINVRTGEM2.lump);
+            GL_DrawPatchLitAlpha(269, 159, 1, statusbarCounterAlpha,
+                                 !(leveltime & 4) ? PatchINVRTGEM1.lump : PatchINVRTGEM2.lump);
     }
 }
 
@@ -1366,8 +1426,8 @@ void ST_doFullscreenStuff(void)
     int     i;
     int     x;
     int     temp = 0;
-    float textalpha = hudalpha - ( 1 - cfg.hudColor[3]);
-    float iconalpha = hudalpha - ( 1 - cfg.hudIconAlpha);
+    float textalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudColor[3]);
+    float iconalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudIconAlpha);
     player_t *plyr = &players[consoleplayer];
 
     GL_Update(DDUF_FULLSCREEN);
@@ -1504,6 +1564,15 @@ void ST_doFullscreenStuff(void)
         }
         Draw_EndZoom();
     }
+}
+
+/*
+ * Console command to show the hud if hidden.
+ */
+DEFCC(CCmdHUDShow)
+{
+    ST_HUDUnHide(HUE_FORCE);
+    return true;
 }
 
 /*

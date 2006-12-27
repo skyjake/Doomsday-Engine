@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -164,10 +164,6 @@ const Control_t controls[] = {
     {"falldown", CLF_ACTION, DDBC_NORMAL, DDKEY_HOME, 0, 0},
 
     {"showhud", 0, DDBC_NORMAL, 'h', 0, 0},
-
-    // More menu controls
-    {"menunextpage", 0, GBC_CLASS3, DDKEY_PGDN, 0, 0},
-    {"menuprevpage", 0, GBC_CLASS3, DDKEY_PGUP, 0, 0},
     {"", 0, 0, 0, 0, 0}             // terminator
 };
 
