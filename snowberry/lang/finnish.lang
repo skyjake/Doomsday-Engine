@@ -2,7 +2,7 @@
 # The key 'language-finnish' comes from the name of this file.
 # Supposed to appear in the language selection list.
 
-language-finnish: Finnish
+language-finnish: Suomi
 
 #
 # Asetusvelho
@@ -157,7 +157,7 @@ menu-view-command-line: Näytä komentorivi
 # Välilehtien otsakkeet
 #
 tab-summary: Yhteenveto
-tab-addons: Lisäosat
+tab-addons: Lisaosat
 tab-settings: Asetukset
 general-options: Snowberry
 game-options: Peli

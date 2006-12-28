@@ -12,7 +12,7 @@
 
 # The key 'language-english' comes from the name of this file.
 # Supposed to appear in the language selection list.
-language-english: English (US)
+language-english: English (U.S.)
 
 #
 # Setup Wizard
@@ -56,7 +56,7 @@ License.</i>
 <b>Authors:</b><br>
 Antti Kopponen<br>
 Emma Kallio<br>
-Jaakko Ker&auml;nen<br>
+Jaakko Keranen<br>
 Jari Asp<br>
 Toni Kokkonen<br>
 Veikko Eeva

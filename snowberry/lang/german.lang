@@ -3,7 +3,7 @@
 # Strings for German
 # Supposed to appear in the language selection list.
 # 3rd try, 3rd version, probably with even more errors !
-language-german:Deutsch(DE)
+language-german: Deutsch
 
 #
 # Setup Wizard
@@ -43,7 +43,7 @@ License.</i> vertrieben
 <b>Authoren:</b><br>
 Antti Kopponen<br>
 Emma Kallio<br>
-Jaakko Ker&auml;nen<br>
+Jaakko Keranen<br>
 Jari Asp<br>
 Toni Kokkonen<br>
 Veikko Eeva
