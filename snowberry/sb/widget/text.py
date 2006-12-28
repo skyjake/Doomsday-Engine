@@ -33,7 +33,7 @@ from widgets import uniConv
 if host.isMac():
     from wx.lib.stattext import GenStaticText as StaticText
 else:
-    import wx.StaticText as StaticText
+    from wx import StaticText
 
 def breakLongLines(text, maxLineLength):
     """Break long lines with newline characters.
