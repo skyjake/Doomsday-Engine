@@ -86,7 +86,7 @@ def chooseFolder(prompt, default):
     return wx.DirSelector(language.translate(prompt), default)
 
 
-def createDialog(id, alignment=1, size=None):
+def createDialog(id, alignment=1, size=None, resizable=True):
     """Create an empty modal dialog box.
 
     @param id Identifier of the dialog area.  The title of the dialog
@@ -94,12 +94,13 @@ def createDialog(id, alignment=1, size=None):
 
     @return A widgets.DialogArea object.
     """
-    dialog = AreaDialog(ui.getMainPanel(), -1, id, size, alignment)
+    dialog = AreaDialog(ui.getMainPanel(), -1, id, size, alignment, resizable)
     dialog.center()
     return dialog
 
 
-def createButtonDialog(id, titleText, buttons, defaultButton=None, size=None):
+def createButtonDialog(id, titleText, buttons, defaultButton=None, size=None,
+                       resizable=True):
     """Returns the area where the caller may add the contents of the
     dialog.
 
@@ -109,7 +110,7 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None, size=None):
 
     @return Tuple (dialog, user-area)
     """
-    dialog = createDialog(id, ui.ALIGN_HORIZONTAL, size)
+    dialog = createDialog(id, ui.ALIGN_HORIZONTAL, size, resizable)
     area = dialog.getArea()
 
     area.setMinSize(400, 20)
@@ -194,10 +195,16 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None, size=None):
 class AreaDialog (wx.Dialog):
     """AreaDialog implements a wxDialog that has an Area inside it."""
 
-    def __init__(self, parent, wxId, id, size, align=ui.ALIGN_VERTICAL):
+    def __init__(self, parent, wxId, id, size, align=ui.ALIGN_VERTICAL, 
+                 resizable=True):
+                 
+        # Determine flags.
+        flags = wx.CLOSE_BOX | wx.CAPTION
+        if resizable:
+            flags |= wx.RESIZE_BORDER
+                 
         wx.Dialog.__init__(self, parent, wxId, uniConv(language.translate(id)),
-                           style=(wx.RESIZE_BORDER | wx.CLOSE_BOX |
-                                  wx.CAPTION))
+                           style=flags)
         self.dialogId = id
         self.widgetMap = {}
 

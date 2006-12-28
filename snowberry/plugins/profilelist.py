@@ -231,7 +231,7 @@ def commandHandler(event):
         dialog, area = sb.util.dialog.createButtonDialog(
             'new-profile-dialog',
             language.translate('new-profile-title'),
-            ['cancel', 'ok'], 'ok')
+            ['cancel', 'ok'], 'ok', resizable=False)
         dialog.disableWidget('ok')
 
         entry = area.createArea(alignment=ALIGN_HORIZONTAL)
@@ -239,7 +239,7 @@ def commandHandler(event):
 
         # The name of the profile.
         entry.setWeight(1)
-        entry.createText('new-profile-name')
+        entry.createText('new-profile-name', ':')
         entry.setWeight(2)
         nameField = entry.createTextField('')
 
@@ -254,7 +254,7 @@ def commandHandler(event):
         entry.setExpanding(False)
 
         entry.setWeight(1)
-        entry.createText('new-profile-game')
+        entry.createText('new-profile-game', ':')
         entry.setWeight(1)
         gameDrop = entry.createDropList('')
 
@@ -274,7 +274,7 @@ def commandHandler(event):
         dialog, area = sb.util.dialog.createButtonDialog(
             'rename-profile-dialog',
             language.translate('rename-profile-title'),
-            ['cancel', 'ok'], 'ok')
+            ['cancel', 'ok'], 'ok', resizable=False)
 
         prof = pr.getActive()
 
@@ -284,7 +284,7 @@ def commandHandler(event):
 
         # The name of the profile.
         entry.setWeight(1)
-        entry.createText('rename-profile-name')
+        entry.createText('rename-profile-name', ':')
         entry.setWeight(2)
         nameField = entry.createTextField('')
         nameField.setText(prof.getName())
@@ -306,7 +306,7 @@ def commandHandler(event):
         dialog, area = sb.util.dialog.createButtonDialog(
             'reset-profile-dialog',
             language.translate('reset-profile-title'),
-            ['no', 'yes'], 'no')
+            ['no', 'yes'], 'no', resizable=False)
 
         text = language.translate('reset-profile-query')
         message = area.createRichText(
@@ -319,7 +319,7 @@ def commandHandler(event):
         dialog, area = sb.util.dialog.createButtonDialog(
             'delete-profile-dialog',
             language.translate('delete-profile-title'),
-            ['no', 'yes'], 'no')
+            ['no', 'yes'], 'no', resizable=False)
 
         text = language.translate('delete-profile-query')
         area.createRichText(language.expand(text, pr.getActive().getName()))
@@ -332,7 +332,7 @@ def commandHandler(event):
         dialog, area = sb.util.dialog.createButtonDialog(
             'duplicate-profile-dialog',
             language.translate('duplicate-profile-title'),
-            ['cancel', 'ok'], 'ok')
+            ['cancel', 'ok'], 'ok', resizable=False)
 
         text = language.translate('duplicating-profile')
         area.setWeight(3)
@@ -344,7 +344,7 @@ def commandHandler(event):
 
         # The name of the profile.
         entry.setWeight(1)
-        entry.createText('new-profile-name')
+        entry.createText('new-profile-name', ':')
         entry.setWeight(3)
         nameField = entry.createTextField('')
         nameField.setText(pr.getActive().getName())
@@ -368,7 +368,7 @@ def commandHandler(event):
         dialog, area = sb.util.dialog.createButtonDialog(
             'unhide-profile-dialog',
             language.translate('unhide-profile-title'),
-            ['cancel', 'ok'], 'ok')
+            ['cancel', 'ok'], 'ok', resizable=False)
 
         area.setWeight(0)
         area.createText('unhiding-profiles')
