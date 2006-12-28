@@ -55,7 +55,7 @@ def breakLongLines(text, maxLineLength):
                 brokenText += text[i]
             if not skipping:
                 # Newlines are not inserted if we're skipping.
-                brokenText += '\n'
+                brokenText += "\n"
                 lineLen = 0
         else:
             brokenText += text[i]
@@ -177,7 +177,7 @@ class FormattedText (base.Widget):
         else:
             if host.isMac():
                 # It appears wxWidgets fancy text is broken on the Mac.
-                useFancy = False
+                useFancy = True #False
             else:
                 useFancy = True
             
@@ -188,6 +188,8 @@ class FormattedText (base.Widget):
                 text = text.replace('</i>', '</font>')
                 text = text.replace('<tt>', '<font family="fixed">')
                 text = text.replace('</tt>', '</font>')
+
+                text = '<font family="swiss" size="%s">' % st.getSystemString('style-normal-size') + text + '</font>'
 
                 # fancytext doesn't support non-ascii chars?
                 text = text.replace('ä', 'a')
