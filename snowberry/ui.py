@@ -324,20 +324,8 @@ class MainFrame (wx.Frame):
         # Listen to some commands.
         events.addCommandListener(self.handleCommand, ['quit'])
 
-        #self.mainPanel.Hide()
-
-        #if self.splitter:
-        #    self.splitter.Freeze()
-
-
-        #if self.helpPanel:
-        #    self.helpPanel.Freeze()
-        #    self.helpPanel.Hide()
-        #self.Hide()
-
         # Create a menu bar.
         self.menuBar = wx.MenuBar()
-        self.SetMenuBar(self.menuBar)
 
         #menu = wx.Menu()
         #menu.Append(wx.ID_ABOUT, language.translate('menu-about'))
@@ -351,25 +339,10 @@ class MainFrame (wx.Frame):
         #wx.EVT_MENU(self, wx.ID_ABOUT, self.onAbout)
 
     def show(self):
-#<<<<<<< ui.py
-        if self.splitter:
-            self.splitter.Thaw()
-            self.splitter.Refresh()
-        #self.mainPanel.Show()
-        #self.Show()
-        #if self.helpPanel:
-        #    self.helpPanel.Thaw()
-        #    self.helpPanel.Show()
+        #if self.splitter:
+        #    self.splitter.Thaw()
+        #    self.splitter.Refresh()
         pass
-#=======
-#        """Show the main window."""
-#
-#        self.mainPanel.Thaw()
-#        self.Show()
-#        if self.helpPanel:
-#            self.helpPanel.Thaw()
-#            self.helpPanel.Show()
-#>>>>>>> 1.14
 
     def updateLayout(self):
         """Update the layout of the widgets inside the main window."""
@@ -526,6 +499,8 @@ class MainFrame (wx.Frame):
                         wx.App_SetMacExitMenuItemId(wxId)
                     if itemId == 'show-snowberry-settings':
                         wx.App_SetMacPreferencesMenuItemId(wxId)
+                        
+        self.SetMenuBar(self.menuBar)                       
 
     def onPopupCommand(self, ev):
         """Called when a selection is made in the popup menu."""
@@ -550,10 +525,8 @@ class SnowberryApp (wx.App):
 
     def showMainWindow(self):
         self.updateTitle()
-        #self.mainFrame.Show()
         self.mainFrame.Thaw()
         self.mainFrame.Refresh()
-        #self.mainFrame.show()
 
 
 def getMainPanel():
