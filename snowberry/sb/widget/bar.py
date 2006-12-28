@@ -109,7 +109,7 @@ class Slider (base.Widget):
     def onCommand(self, event):
         """Handle the slider reset command."""
         
-        Widget.onCommand(self, event)
+        base.Widget.onCommand(self, event)
 
         if self.widgetId and event.hasId(self.resetCommand):
             pr.getActive().removeValue(self.widgetId)
