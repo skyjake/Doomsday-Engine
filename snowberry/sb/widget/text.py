@@ -24,6 +24,7 @@ import sys
 import wx
 import wx.html
 import wx.lib.fancytext as fancy
+from wx.lib.stattext import GenStaticText as StaticText
 import host, events, language, paths
 import sb.confdb as st
 import base
@@ -63,9 +64,9 @@ def breakLongLines(text, maxLineLength):
     return brokenText + text[-1]   
 
 
-class MyStaticText (wx.StaticText):
+class MyStaticText (StaticText):
     def __init__(self, parent, wxId, label, style=0):
-        wx.StaticText.__init__(self, parent, wxId, label, style=style)
+        StaticText.__init__(self, parent, wxId, label, style=style)
         if host.isWindows():
             # No background.
             self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
@@ -189,7 +190,8 @@ class FormattedText (base.Widget):
                 text = text.replace('<tt>', '<font family="fixed">')
                 text = text.replace('</tt>', '</font>')
 
-                text = '<font family="swiss" size="%s">' % st.getSystemString('style-normal-size') + text + '</font>'
+                text = '<font family="swiss" size="%s">' \
+                       % st.getSystemString('style-normal-size') + text + '</font>'
 
                 # fancytext doesn't support non-ascii chars?
                 text = text.replace('ä', 'a')
@@ -216,7 +218,7 @@ class FormattedText (base.Widget):
                 base.Widget.__init__(self, fancy.StaticFancyText(
                     parent, wxId, uniConv(brokenText)))
             else:
-                base.Widget.__init__(self, wx.StaticText(parent, wxId, 
+                base.Widget.__init__(self, StaticText(parent, wxId, 
                     uniConv(brokenText)))
 
             self.resizeToBestSize()
