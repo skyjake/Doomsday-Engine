@@ -190,8 +190,12 @@ class Area (base.Widget):
         """Adds empty space into the area.  The size of the empty
         space is determined by the current weight.
         """
-        ## @todo There must be a better way to do this.
-        self.createArea('')
+        if self.expanding:
+            self.containerSizer.AddStretchSpacer(self.weight)
+        else:
+            self.containerSizer.Add((0, 0), self.weight, self._getLayoutFlags(), 
+                                    self.border)
+        pass
 
     def __addWidget(self, widget):
         """Insert a new widget into the area.
@@ -559,7 +563,9 @@ class Area (base.Widget):
                                     align=sb.widget.text.Text.RIGHT)
 
         area.setWeight(0)
+        area.setBorder(2) # Space between label and setting.
         area.addSpacer()
+        area.setBorder(0)
 
         # Create the actual widget(s) for the setting.
         area.setWeight(rightWeight)
