@@ -24,12 +24,16 @@ import sys
 import wx
 import wx.html
 import wx.lib.fancytext as fancy
-from wx.lib.stattext import GenStaticText as StaticText
 import host, events, language, paths
 import sb.confdb as st
 import base
 from widgets import uniConv
 
+# Workaround for a wxWidgets StaticText bug.
+if host.isMac():
+    from wx.lib.stattext import GenStaticText as StaticText
+else:
+    import wx.StaticText as StaticText
 
 def breakLongLines(text, maxLineLength):
     """Break long lines with newline characters.
