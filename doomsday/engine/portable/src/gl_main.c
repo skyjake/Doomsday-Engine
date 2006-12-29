@@ -417,7 +417,7 @@ void GL_InitFont(void)
         glFontVariable[GLFS_NORMAL] =
         glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
 
-    Con_MaxLineLength();
+    Con_SetMaxLineLength();
 
     // Also keep the bold and light fonts loaded.
     FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD));

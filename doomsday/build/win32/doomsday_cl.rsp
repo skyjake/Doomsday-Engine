@@ -107,6 +107,7 @@
  ./../../engine/win32/src/sys_console.c
  ./../../engine/portable/src/con_start.c
  ./../../engine/portable/src/con_data.c
+ ./../../engine/portable/src/con_buffer.c
  ./../../engine/portable/src/con_main.c
  ./../../engine/portable/src/con_config.c
  ./../../engine/portable/src/con_bind.c

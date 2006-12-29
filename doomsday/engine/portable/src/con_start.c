@@ -211,9 +211,10 @@ int Con_DrawTitle(float alpha)
  */
 void Con_DrawStartupScreen(int show)
 {
-    int     i, vislines, y, x, st;
-    int     topy;
-    cbuffer_t *buffer;
+    int         i, vislines, y, x, st;
+    int         topy, numBufLines;
+    cbuffer_t  *buffer;
+    cbline_t   *line;
 
     // Print the messages in the console.
     if(!startupScreen || ui_active)
@@ -233,15 +234,17 @@ void Con_DrawStartupScreen(int show)
     y = topy;
 
     buffer = Con_GetConsoleBuffer();
-    st = buffer->bufferLines - vislines;
+    numBufLines = Con_BufferNumLines(buffer);
+    st = numBufLines - vislines;
     // Show the last line, too, if there's something.
-    if(Con_GetBufferLine(buffer, buffer->bufferLines - 1)->len)
+    line = Con_BufferGetLine(buffer, numBufLines - 1);
+    if(line && line->len)
         st++;
     if(st < 0)
         st = 0;
-    for(i = 0; i < vislines && st + i < buffer->bufferLines; i++)
+    for(i = 0; i < vislines && st + i < numBufLines; ++i)
     {
-        cbline_t *line = Con_GetBufferLine(buffer, st + i);
+        line = Con_BufferGetLine(buffer, st + i);
 
         if(!line)
             break;
@@ -251,6 +254,9 @@ void Con_DrawStartupScreen(int show)
         }
         else
         {
+            if(!line->text)
+                continue;
+
             x = line->flags & CBLF_CENTER ? (glScreenWidth -
                                              FR_TextWidth(line->text)) / 2 : 3;
             //gl.Color3f(0, 0, 0);

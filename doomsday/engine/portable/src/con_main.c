@@ -69,6 +69,8 @@
 // Needed because we can't sizeof a malloc'd block.
 #define PRBUFF_SIZE 655365
 
+#define CMDLINE_SIZE 256
+
 // Operators for the "if" command.
 enum {
     IF_EQUAL,
@@ -138,6 +140,7 @@ static void Con_SplitIntoSubCommands(const char *command,
                                      timespan_t markerOffset, byte src,
                                      boolean isNetCmd);
 
+static void Con_ClearExecBuffer(void);
 static void Con_DestroyMatchedWordList(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -157,28 +160,30 @@ int     consoleActiveKey = '`'; // Tilde.
 byte    consoleShowKeys = false;
 
 char    trimmedFloatBuffer[32]; // Returned by TrimmedFloat().
+char   *prbuff = NULL;          // Print buffer, used by conPrintf.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static cbuffer_t cBuffer;
+static cbuffer_t *histBuf = NULL; // The console history buffer (log).
+uint bLineOff; // How many lines from the last in the histBuf?
+
+static cbuffer_t *oldCmds = NULL; // The old commands buffer.
+uint ocPos;    // How many cmds from the last in the oldCmds buffer.
 
 static boolean ConsoleInited;   // Has Con_Init() been called?
 static boolean ConsoleActive;   // Is the console active?
 static timespan_t ConsoleTime;  // How many seconds has the console been open?
 
-static char cmdLine[256];       // The command line.
-static int cmdCursor;           // Position of the cursor on the command line.
+static char cmdLine[CMDLINE_SIZE]; // The command line.
+static uint cmdCursor;          // Position of the cursor on the command line.
 static boolean cmdInsMode;      // Are we in insert input mode.
-static cbline_t *oldCmds;       // The old commands buffer.
-static int numOldCmds;
-static int ocPos;               // Old commands buffer position.
 static boolean conInputLock;    // While locked, most user input is disabled.
 
 static execbuff_t *exBuff;
 static int exBuffSize;
 static execbuff_t *curExec;
 
-static int complPos;            // Where is the completion cursor?
+static uint complPos;            // Where is the completion cursor?
 
 static knownword_t **matchedWords;
 static unsigned int matchedWordCount;
@@ -265,10 +270,10 @@ char *Con_GetCommandLine(void)
 
 cbuffer_t *Con_GetConsoleBuffer(void)
 {
-    return &cBuffer;
+    return histBuf;
 }
 
-int Con_CursorPosition(void)
+uint Con_CursorPosition(void)
 {
     return cmdCursor;
 }
@@ -368,30 +373,13 @@ void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
     }
 }
 
-char *TrimmedFloat(float val)
-{
-    char   *ptr = trimmedFloatBuffer;
-
-    sprintf(ptr, "%f", val);
-    // Get rid of the extra zeros.
-    for(ptr += strlen(ptr) - 1; ptr >= trimmedFloatBuffer; ptr--)
-    {
-        if(*ptr == '0')
-            *ptr = 0;
-        else if(*ptr == '.')
-        {
-            *ptr = 0;
-            break;
-        }
-        else
-            break;
-    }
-    return trimmedFloatBuffer;
-}
-
 void Con_Init(void)
 {
-    cbuffer_t *buffer = &cBuffer;
+    histBuf = Con_NewBuffer(512, 70, 0);
+    bLineOff = 0;
+
+    oldCmds = Con_NewBuffer(0, CMDLINE_SIZE, CBF_ALWAYSFLUSH);
+    ocPos = 0; // No commands yet.
 
     B_Init();
 
@@ -404,22 +392,7 @@ void Con_Init(void)
     complPos = 0;
     matchedWordListGood = false;
 
-    // The buffer.
-    buffer->cbuffer = 0;
-    buffer->bufferLines = 0;
-    buffer->maxBufferLines = 512;       //256;
-    buffer->maxLineLen = 70;            // Should fit the screen (adjusted later).
-
     cmdCursor = 0;
-
-    // The old commands buffer.
-    oldCmds = 0;
-    numOldCmds = 0;
-    ocPos = 0;                  // No commands yet.
-
-    buffer->bPos = 0;
-    buffer->bFirst = 0;
-    buffer->bLineOff = 0;
 
     exBuff = NULL;
     exBuffSize = 0;
@@ -443,23 +416,21 @@ void Con_Init(void)
     Demo_Register();
 }
 
-static void maxLineLength(cbuffer_t *buffer)
+void Con_Shutdown(void)
 {
-    int     cw = FR_TextWidth("A");
+    // Announce
+    VERBOSE(Con_Printf("Con_Shutdown: Shuting down the console...\n"));
 
-    if(!cw)
-    {
-        buffer->maxLineLen = 70;
-        return;
-    }
-    buffer->maxLineLen = glScreenWidth / cw - 2;
-    if(buffer->maxLineLen > 250)
-        buffer->maxLineLen = 250;
-}
+    Con_DestroyBuffer(histBuf); // The console history buffer.
+    Con_DestroyBuffer(oldCmds); // The old commands buffer.
 
-void Con_MaxLineLength(void)
-{
-    maxLineLength(&cBuffer);
+    if(prbuff)
+        M_Free(prbuff); // Free the print buffer.
+
+    Con_DestroyMatchedWordList();
+    Con_DestroyDatabases();
+
+    Con_ClearExecBuffer();
 }
 
 /**
@@ -471,30 +442,11 @@ void Con_SetFont(ddfont_t *cfont)
     Cfont = *cfont;
 }
 
-static void Con_ClearBuffer(cbuffer_t *buffer)
-{
-    int     i;
-
-    if(!buffer)
-        return;
-
-    // Free the buffer.
-    for(i = 0; i < buffer->bufferLines; ++i)
-        M_Free(buffer->cbuffer[i].text);
-
-    M_Free(buffer->cbuffer);
-    buffer->cbuffer = 0;
-    buffer->bufferLines = 0;
-    buffer->bPos = 0;
-    buffer->bFirst = 0;
-    buffer->bLineOff = 0;
-}
-
 /**
  * Send a console command to the server.
  * This shouldn't be called unless we're logged in with the right password.
  */
-void Con_Send(const char *command, byte src, int silent)
+static void Con_Send(const char *command, byte src, int silent)
 {
     unsigned short len = strlen(command) + 1;
 
@@ -506,13 +458,6 @@ void Con_Send(const char *command, byte src, int silent)
     Msg_Write(command, len);
     // Send it reliably.
     Net_SendBuffer(0, SPF_ORDERED);
-}
-
-void Con_ClearExecBuffer()
-{
-    M_Free(exBuff);
-    exBuff = NULL;
-    exBuffSize = 0;
 }
 
 static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
@@ -542,11 +487,19 @@ static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
     ptr->isNetCmd = isNetCmd;
 }
 
+static void Con_ClearExecBuffer(void)
+{
+    M_Free(exBuff);
+    exBuff = NULL;
+    exBuffSize = 0;
+}
+
 /**
  * The execbuffer is used to schedule commands for later.
+ *
  * @return          <code>false</code> if an executed command fails.
  */
-boolean Con_CheckExecBuffer(void)
+static boolean Con_CheckExecBuffer(void)
 {
 #define BUFFSIZE 256
     boolean allDone;
@@ -629,65 +582,23 @@ void Con_Ticker(timespan_t time)
     ConsoleTime += time;        // Increase the ticker.
 }
 
-cbline_t *Con_GetBufferLine(cbuffer_t *buffer, int num)
+void Con_SetMaxLineLength(void)
 {
-    int     i, newLines;
+    int         cw = FR_TextWidth("A");
+    int         length;
 
-    if(!buffer || num < 0)
-        return 0;               // This is unacceptable!
-
-    // See if we already have that line.
-    if(num < buffer->bufferLines)
-        return buffer->cbuffer + num;
-
-    // Then we'll have to allocate more lines. Usually just one, though.
-    newLines = num + 1 - buffer->bufferLines;
-    buffer->bufferLines += newLines;
-    buffer->cbuffer =
-        M_Realloc(buffer->cbuffer, sizeof(cbline_t) * buffer->bufferLines);
-
-    for(i = 0; i < newLines; ++i)
+    if(!cw)
     {
-        cbline_t *line =
-            buffer->cbuffer + i + buffer->bufferLines - newLines;
-
-        memset(line, 0, sizeof(cbline_t));
+        length = 70;
+    }
+    else
+    {
+        length = glScreenWidth / cw - 2;
+        if(length > 250)
+            length = 250;
     }
 
-    return buffer->cbuffer + num;
-}
-
-static void addLineText(cbuffer_t *buffer, cbline_t *line, char *txt)
-{
-    int     newLen = line->len + strlen(txt);
-
-    if(newLen > buffer->maxLineLen)
-        //Con_Error("addLineText: Too long console line.\n");
-        return;                 // Can't do anything.
-
-    // Allocate more memory.
-    line->text = M_Realloc(line->text, newLen + 1);
-    // Copy the new text to the appropriate location.
-    strcpy(line->text + line->len, txt);
-    // Update the length of the line.
-    line->len = newLen;
-}
-
-static void addOldCmd(const char *txt)
-{
-    cbline_t *line;
-
-    if(!strcmp(txt, ""))
-        return;                 // Don't add empty commands.
-
-    // Allocate more memory.
-    oldCmds = M_Realloc(oldCmds, sizeof(cbline_t) * ++numOldCmds);
-    line = oldCmds + numOldCmds - 1;
-    // Clear the line.
-    memset(line, 0, sizeof(cbline_t));
-    line->len = strlen(txt);
-    line->text = M_Malloc(line->len + 1); // Also room for the zero in the end.
-    strcpy(line->text, txt);
+    Con_BufferSetMaxLineLength(histBuf, length);
 }
 
 /**
@@ -1132,13 +1043,15 @@ static void Con_SplitIntoSubCommands(const char *command,
     int     gPos = 0, scPos = 0;
     char    subCmd[BUFFSIZE];
     int     inQuotes = false, escape = false;
+    int     len;
 
     // Is there a command to execute?
     if(!command || command[0] == 0)
         return;
 
     // Jump over initial semicolons.
-    while(command[gPos] == ';' && command[gPos] != 0)
+    len = strlen(command);
+    while(gPos < len && command[gPos] == ';' && command[gPos] != 0)
         gPos++;
 
     subCmd[0] = subCmd[BUFFSIZE-1] = 0;
@@ -1163,7 +1076,7 @@ static void Con_SplitIntoSubCommands(const char *command,
 
         if((command[gPos] == ';' && !inQuotes) || command[gPos] == 0)
         {
-            while(command[gPos] == ';' && command[gPos] != 0)
+            while(gPos < len && command[gPos] == ';' && command[gPos] != 0)
                 gPos++;
             // The subcommand ends.
             subCmd[scPos] = 0;
@@ -1406,18 +1319,19 @@ static void processCmd(byte src)
     DD_ClearKeyRepeaters();
 
     // Add the command line to the oldCmds buffer.
-    addOldCmd(cmdLine);
-    ocPos = numOldCmds;
+    Con_BufferWrite(oldCmds, 0, cmdLine);
+    ocPos = Con_BufferNumLines(oldCmds);
 
     Con_Execute(src, cmdLine, false, false);
 }
 
 static void updateCmdLine(void)
 {
-    if(ocPos == numOldCmds)
+    if(ocPos >= Con_BufferNumLines(oldCmds))
         memset(cmdLine, 0, sizeof(cmdLine));
     else
-        strcpy(cmdLine, oldCmds[ocPos].text);
+        strncpy(cmdLine, Con_BufferGetLine(oldCmds, ocPos)->text, sizeof(cmdLine));
+
     cmdCursor = complPos = strlen(cmdLine);
     matchedWordListGood = false;
     if(isDedicated)
@@ -1452,9 +1366,6 @@ void Con_Open(int yes)
  */
 boolean Con_Responder(event_t *event)
 {
-    byte    ch;
-    cbuffer_t *buffer = &cBuffer;
-
     // The console is only interested in key events.
     if(!event->type == EV_KEY)
         return false;
@@ -1475,8 +1386,7 @@ boolean Con_Responder(event_t *event)
     if(!ConsoleActive)
     {
         // In this case we are only interested in the activation key.
-        if(event->state == EVS_DOWN &&
-           event->data1 == consoleActiveKey /* && !MenuActive */ )
+        if(event->state == EVS_DOWN && event->data1 == consoleActiveKey)
         {
             Con_Open(true);
             return true;
@@ -1493,62 +1403,75 @@ boolean Con_Responder(event_t *event)
     }
 
     // We only want keydown events.
-    if(event->state != EVS_DOWN && event->state != EVS_REPEAT)
+    if(!(event->state == EVS_DOWN || event->state == EVS_REPEAT))
         return false;
 
     // In this case the console is active and operational.
     // Check the shutdown key.
-    if(!conInputLock && event->data1 == consoleActiveKey)
+    if(!conInputLock)
     {
-        if(shiftDown)           // Shift-Tilde to fullscreen and halfscreen.
-            Rend_ConsoleToggleFullscreen();
-        else
+        if(event->data1 == consoleActiveKey)
+        {
+            if(shiftDown) // Shift-Tilde to fullscreen and halfscreen.
+                Rend_ConsoleToggleFullscreen();
+            else
+                Con_Open(false);
+            return true;
+        }
+
+        if(event->data1 == DDKEY_ESCAPE)
+        {   // Hitting Escape in the console closes it.
             Con_Open(false);
-        return true;
+            return false; // Let the menu know about this.
+        }
     }
 
-    // Hitting Escape in the console closes it.
-    if(!conInputLock && event->data1 == DDKEY_ESCAPE)
-    {
-        Con_Open(false);
-        return false;           // Let the menu know about this.
-    }
-
-    switch (event->data1)
+    switch(event->data1)
     {
     case DDKEY_UPARROW:
         if(conInputLock)
             break;
 
-        if(--ocPos < 0)
-            ocPos = 0;
+        if(ocPos > 0)
+            ocPos--;
         // Update the command line.
         updateCmdLine();
         return true;
 
     case DDKEY_DOWNARROW:
+    {
+        uint    num;
         if(conInputLock)
             break;
 
-        if(++ocPos > numOldCmds)
-            ocPos = numOldCmds;
+        num = Con_BufferNumLines(oldCmds);
+        if(ocPos < num)
+            ocPos++;
 
         updateCmdLine();
         return true;
-
+    }
     case DDKEY_PGUP:
+    {
+        uint    num;
+
         if(conInputLock)
             break;
 
-        if(shiftDown)
+        num = Con_BufferNumLines(histBuf);
+        if(num > 0)
         {
-            buffer->bLineOff += 2;
-            if(buffer->bLineOff > buffer->bPos - 1)
-                buffer->bLineOff = buffer->bPos - 1;
+            if(shiftDown)
+            {
+                bLineOff += 2;
+                if(bLineOff > num - 1)
+                    bLineOff = num - 1;
+            }
+            else
+                bLineOff = num - 1;
         }
-        else
-            buffer->bLineOff = buffer->bPos - 1;
         return true;
+    }
 
     case DDKEY_PGDN:
         if(conInputLock)
@@ -1556,12 +1479,11 @@ boolean Con_Responder(event_t *event)
 
         if(shiftDown)
         {
-            buffer->bLineOff -= 2;
-            if(buffer->bLineOff < 0)
-                buffer->bLineOff = 0;
+            if(bLineOff > 2)
+                bLineOff -= 2;
         }
         else
-            buffer->bLineOff = 0;
+            bLineOff = 0;
         return true;
 
     case DDKEY_HOME:
@@ -1627,7 +1549,7 @@ boolean Con_Responder(event_t *event)
         {
             memmove(cmdLine + cmdCursor - 1, cmdLine + cmdCursor,
                     sizeof(cmdLine) - cmdCursor);
-            --cmdCursor;
+            cmdCursor--;
             complPos = cmdCursor;
             matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
@@ -1674,7 +1596,7 @@ boolean Con_Responder(event_t *event)
             if(shiftDown)
                 cmdCursor = 0;
             else
-                --cmdCursor;
+                cmdCursor--;
         }
         complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
@@ -1684,25 +1606,25 @@ boolean Con_Responder(event_t *event)
         if(conInputLock)
             break;
 
-        if(cmdCursor < buffer->maxLineLen)
+        if(cmdCursor < CMDLINE_SIZE)
         {
             if(cmdLine[cmdCursor] == 0)
             {
-                int pos = ocPos;
+                uint        num;
+                cbline_t   *line;
 
-                if(pos == numOldCmds)
-                    pos -= 1;
-
-                if(numOldCmds > 0 &&
-                   (unsigned) cmdCursor < strlen(oldCmds[pos].text))
+                num = Con_BufferNumLines(oldCmds);
+                if(num > 0 && ocPos > 0)
                 {
-                    strncpy(cmdLine + cmdCursor,
-                            oldCmds[pos].text + cmdCursor, 1);
-                    ++cmdCursor;
-                    ocPos = pos;
-                    matchedWordListGood = false;
-                    if(isDedicated)
-                        Sys_ConUpdateCmdLine(cmdLine);
+                    line = Con_BufferGetLine(oldCmds, ocPos - 1);
+                    if(line && cmdCursor < line->len)
+                    {
+                        cmdLine[cmdCursor] = line->text[cmdCursor];
+                        cmdCursor++;
+                        matchedWordListGood = false;
+                        if(isDedicated)
+                            Sys_ConUpdateCmdLine(cmdLine);
+                    }
                 }
             }
             else
@@ -1710,7 +1632,7 @@ boolean Con_Responder(event_t *event)
                 if(shiftDown)
                     cmdCursor = strlen(cmdLine);
                 else
-                    ++cmdCursor;
+                    cmdCursor++;
             }
         }
 
@@ -1726,6 +1648,9 @@ boolean Con_Responder(event_t *event)
         break;
 
     default:                    // Check for a character.
+    {
+        byte    ch;
+
         if(conInputLock)
             break;
 
@@ -1746,7 +1671,7 @@ boolean Con_Responder(event_t *event)
             return true;
         }
 
-        if(cmdCursor < buffer->maxLineLen && !cmdInsMode)
+        if(cmdCursor < CMDLINE_SIZE && !cmdInsMode)
         {
             // Push the rest of the stuff forwards.
             memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor,
@@ -1757,8 +1682,8 @@ boolean Con_Responder(event_t *event)
         }
 
         cmdLine[cmdCursor] = ch;
-        if(cmdCursor < buffer->maxLineLen)
-            ++cmdCursor;
+        if(cmdCursor < CMDLINE_SIZE)
+            cmdCursor++;
         complPos = cmdCursor;   //strlen(cmdLine);
         matchedWordListGood = false;
         Rend_ConsoleCursorResetBlink();
@@ -1767,50 +1692,20 @@ boolean Con_Responder(event_t *event)
             Sys_ConUpdateCmdLine(cmdLine);
         return true;
     }
+    }
     // The console is very hungry for keys...
     return true;
 }
 
 /**
- * Create an alias.
+ * A ruler line will be added into the console.
  */
-void Con_Alias(char *aName, char *command)
+void Con_AddRuler(void)
 {
-    calias_t *cal = Con_GetAlias(aName);
-    boolean remove = false;
+    int         i;
 
-    // Will we remove this alias?
-    if(command == NULL)
-        remove = true;
-    else if(command[0] == 0)
-        remove = true;
+    Con_BufferWrite(histBuf, CBLF_RULER, NULL);
 
-    if(cal && remove) // This alias will be removed.
-    {
-        Con_DeleteAlias(cal);
-        return; // We're done.
-    }
-
-    // Does the alias already exist?
-    if(cal)
-    {
-        cal->command = M_Realloc(cal->command, strlen(command) + 1);
-        strcpy(cal->command, command);
-        return;
-    }
-
-    // We need to create a new alias.
-    Con_AddAlias(aName, command);
-
-    Con_UpdateKnownWords();
-}
-
-static void Con_AddRuler2(cbuffer_t *buffer)
-{
-    cbline_t *line = Con_GetBufferLine(buffer, buffer->bPos++);
-    int     i;
-
-    line->flags |= CBLF_RULER;
     if(consoleDump)
     {
         // A 70 characters long line.
@@ -1826,31 +1721,18 @@ static void Con_AddRuler2(cbuffer_t *buffer)
     }
 }
 
-/**
- * A ruler line will be added into the console. bPos is moved down by 1.
- */
-void Con_AddRuler(void)
+void conPrintf(int flags, const char *format, va_list args)
 {
-    Con_AddRuler2(&cBuffer);
-}
-
-void conPrintf(cbuffer_t *buffer, int flags, const char *format, va_list args)
-{
-    unsigned int i;
-    int     lbc;                // line buffer cursor
-    char   *prbuff, *lbuf = M_Malloc(buffer->maxLineLen + 1);
-    cbline_t *line;
-
     if(flags & CBLF_RULER)
     {
         Con_AddRuler();
         flags &= ~CBLF_RULER;
     }
 
-    // Allocate a print buffer that will surely be enough (64Kb).
-    // FIXME: No need to allocate on EVERY printf call!
-
-    prbuff = M_Malloc(PRBUFF_SIZE);
+    if(prbuff == NULL)
+        prbuff = M_Malloc(PRBUFF_SIZE);
+    else
+        memset(prbuff, 0, PRBUFF_SIZE);
 
     // Format the message to prbuff.
     vsnprintf(prbuff, PRBUFF_SIZE, format, args);
@@ -1872,61 +1754,13 @@ void conPrintf(cbuffer_t *buffer, int flags, const char *format, va_list args)
     if(isDedicated)
     {
         Sys_ConPrint(flags, prbuff);
-        M_Free(lbuf);
-        M_Free(prbuff);
-        return;
     }
-
-    // We have the text we want to add in the buffer in prbuff.
-    line = Con_GetBufferLine(buffer, buffer->bPos); // Get a pointer to the current line.
-    line->flags = flags;
-    memset(lbuf, 0, buffer->maxLineLen + 1);
-    for(i = 0, lbc = 0; i < strlen(prbuff); ++i)
+    else
     {
-        if(prbuff[i] == '\n' || lbc + line->len >= buffer->maxLineLen)  // A new line?
-        {
-            // Set the line text.
-            addLineText(buffer, line, lbuf);
-            // Clear the line write buffer.
-            memset(lbuf, 0, buffer->maxLineLen + 1);
-            lbc = 0;
-            // Get the next line.
-            line = Con_GetBufferLine(buffer, ++buffer->bPos);
-            line->flags = flags;
-            // Newlines won't get in the buffer at all.
-            if(prbuff[i] == '\n')
-                continue;
-        }
-        lbuf[lbc++] = prbuff[i];
-    }
-    // Something still in the write buffer?
-    if(lbc)
-        addLineText(buffer, line, lbuf);
+        Con_BufferWrite(histBuf, flags, prbuff);
 
-    // Clean up.
-    M_Free(lbuf);
-    M_Free(prbuff);
-
-    // Now that something new has been printed, it will be shown.
-    buffer->bLineOff = 0;
-
-    // Check if there are too many lines.
-    if(buffer->bufferLines > buffer->maxBufferLines)
-    {
-        int     rev = buffer->bufferLines - buffer->maxBufferLines;
-
-        // The first 'rev' lines get removed.
-        for(i = 0; (int) i < rev; ++i)
-            M_Free(buffer->cbuffer[i].text);
-
-        memmove(buffer->cbuffer, buffer->cbuffer + rev,
-                sizeof(cbline_t) * (buffer->bufferLines - rev));
-        buffer->cbuffer =
-            M_Realloc(buffer->cbuffer, sizeof(cbline_t) *
-                                     (buffer->bufferLines -= rev));
-
-        // Move the current position.
-        buffer->bPos -= rev;
+        // Now that something new has been printed, it will be shown.
+        bLineOff = 0;
     }
 }
 
@@ -1941,7 +1775,7 @@ void Con_Printf(const char *format, ...)
         return;
 
     va_start(args, format);
-    conPrintf(&cBuffer, CBLF_WHITE, format, args);
+    conPrintf(CBLF_WHITE, format, args);
     va_end(args);
 }
 
@@ -1953,7 +1787,7 @@ void Con_FPrintf(int flags, const char *format, ...)    // Flagged printf
         return;
 
     va_start(args, format);
-    conPrintf(&cBuffer, flags, format, args);
+    conPrintf(flags, format, args);
     va_end(args);
 }
 
@@ -2012,10 +1846,9 @@ void Con_Message(const char *message, ...)
 void Con_Error(const char *error, ...)
 {
     static boolean errorInProgress = false;
-    cbuffer_t *buffer = &cBuffer;
-    int     i;
-    char    buff[2048], err[256];
-    va_list argptr;
+    int         i, numBufLines;
+    char        buff[2048], err[256];
+    va_list     argptr;
 
     // Already in an error?
     if(!ConsoleInited || errorInProgress)
@@ -2043,14 +1876,20 @@ void Con_Error(const char *error, ...)
     fprintf(outFile, "%s\n", err);
 
     strcpy(buff, "");
-    for(i = 5; i > 1; i--)
+    if(histBuf != NULL)
     {
-        cbline_t *cbl = Con_GetBufferLine(buffer, buffer->bufferLines - i);
+        // Flush anything still in the write buffer.
+        Con_BufferFlush(histBuf);
+        numBufLines = Con_BufferNumLines(histBuf);
+        for(i = 5; i > 1; i--)
+        {
+            cbline_t *cbl = Con_BufferGetLine(histBuf, numBufLines - i);
 
-        if(!cbl || !cbl->text)
-            continue;
-        strcat(buff, cbl->text);
-        strcat(buff, "\n");
+            if(!cbl || !cbl->text)
+                continue;
+            strcat(buff, cbl->text);
+            strcat(buff, "\n");
+        }
     }
     strcat(buff, "\n");
     strcat(buff, err);
@@ -2081,27 +1920,59 @@ void Con_Error(const char *error, ...)
     exit(1);
 }
 
-void Con_Shutdown(void)
+char *TrimmedFloat(float val)
 {
-    int i;
+    char   *ptr = trimmedFloatBuffer;
 
-    // Announce
-    VERBOSE(Con_Printf("Con_Shutdown: Shuting down the console...\n"));
+    sprintf(ptr, "%f", val);
+    // Get rid of the extra zeros.
+    for(ptr += strlen(ptr) - 1; ptr >= trimmedFloatBuffer; ptr--)
+    {
+        if(*ptr == '0')
+            *ptr = 0;
+        else if(*ptr == '.')
+        {
+            *ptr = 0;
+            break;
+        }
+        else
+            break;
+    }
+    return trimmedFloatBuffer;
+}
 
-    // Free the buffer.
-    Con_ClearBuffer(&cBuffer);
+/**
+ * Create an alias.
+ */
+static void Con_Alias(char *aName, char *command)
+{
+    calias_t *cal = Con_GetAlias(aName);
+    boolean remove = false;
 
-    // Free the old commands.
-    for(i = 0; i < numOldCmds; ++i)
-        M_Free(oldCmds[i].text);
-    M_Free(oldCmds);
-    oldCmds = 0;
-    numOldCmds = 0;
+    // Will we remove this alias?
+    if(command == NULL)
+        remove = true;
+    else if(command[0] == 0)
+        remove = true;
 
-    Con_DestroyMatchedWordList();
-    Con_DestroyDatabases();
+    if(cal && remove) // This alias will be removed.
+    {
+        Con_DeleteAlias(cal);
+        return; // We're done.
+    }
 
-    Con_ClearExecBuffer();
+    // Does the alias already exist?
+    if(cal)
+    {
+        cal->command = M_Realloc(cal->command, strlen(command) + 1);
+        strcpy(cal->command, command);
+        return;
+    }
+
+    // We need to create a new alias.
+    Con_AddAlias(aName, command);
+
+    Con_UpdateKnownWords();
 }
 
 /**
@@ -2182,7 +2053,8 @@ D_CMD(Console)
     }
     else if(!stricmp(argv[0], "clear"))
     {
-        Con_ClearBuffer(&cBuffer);
+        Con_BufferClear(histBuf);
+        bLineOff = 0;
     }
     return true;
 }
@@ -2340,27 +2212,20 @@ D_CMD(If)
 {
     struct {
         const char *opstr;
-        int     op;
+        uint    op;
     } operators[] =
     {
-        {
-        "not", IF_NOT_EQUAL},
-        {
-        "=", IF_EQUAL},
-        {
-        ">", IF_GREATER},
-        {
-        "<", IF_LESS},
-        {
-        ">=", IF_GEQUAL},
-        {
-        "<=", IF_LEQUAL},
-        {
-        NULL}
+        {"not", IF_NOT_EQUAL},
+        {"=",   IF_EQUAL},
+        {">",   IF_GREATER},
+        {"<",   IF_LESS},
+        {">=",  IF_GEQUAL},
+        {"<=",  IF_LEQUAL},
+        {NULL}
     };
-    int     i, oper;
-    cvar_t *var;
-    boolean isTrue = false;
+    uint        i, oper;
+    cvar_t     *var;
+    boolean     isTrue = false;
 
     if(argc != 5 && argc != 6)
     {

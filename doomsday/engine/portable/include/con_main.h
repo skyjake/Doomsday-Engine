@@ -33,6 +33,8 @@
 #include "dd_share.h"
 #include "de_system.h"
 
+#include "con_buffer.h"
+
 #define MAX_ARGS    256
 
 #define OBSOLETE        CVF_NO_ARCHIVE|CVF_HIDE
@@ -48,24 +50,6 @@ typedef struct {
     int             argc;
     char           *argv[MAX_ARGS];
 } cmdargs_t;
-
-// A console buffer line.
-typedef struct {
-    int             len;           // This is the length of the line (no term).
-    char           *text;          // This is the text.
-    int             flags;
-} cbline_t;
-
-// A console buffer.
-typedef struct {
-    cbline_t *cbuffer;             // This is the buffer.
-    int     bufferLines;           // How many lines are there in the buffer?
-    int     maxBufferLines;        // Maximum number of lines in the buffer.
-    int     maxLineLen;            // Maximum length of a line.
-    int     bPos;                  // Where the write cursor is? (which line)
-    int     bFirst;                // The first visible line.
-    int     bLineOff;              // How many lines from bPos? (+vislines)
-} cbuffer_t;
 
 // Doomsday's internal representation of registered ccmds.
 #define MAX_REQUIRED_CCMD_PARAMS 32  // surely enough?
@@ -105,12 +89,12 @@ void            Con_Init(void);
 void            Con_Shutdown(void);
 void            Con_DestroyDatabases(void);
 void            Con_WriteAliasesToFile(FILE * file);
-void            Con_MaxLineLength(void);
+void            Con_SetMaxLineLength(void);
 void            Con_Open(int yes);
 boolean         Con_IsActive(void);
 boolean         Con_IsLocked(void);
 boolean         Con_InputMode(void);
-int             Con_CursorPosition(void);
+uint            Con_CursorPosition(void);
 char           *Con_GetCommandLine(void);
 cbuffer_t      *Con_GetConsoleBuffer(void);
 void            Con_AddCommand(ccmd_t *cmd);

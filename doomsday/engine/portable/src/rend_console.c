@@ -342,16 +342,18 @@ void Rend_ConsoleFPS(void)
  */
 void Rend_Console(void)
 {
-    int     i, k;               // Line count and buffer cursor.
-    float   x, y;
-    float   closeFade = 1;
-    float   gtosMulY = glScreenHeight / 200.0f;
-    char    buff[256], temp[256], *cmdLine;
-    float   fontScaledY;
-    int     bgX = 64, bgY = 64;
-    int     textOffsetY = 0;
-    int     cmdCursor;
-    cbuffer_t *buffer;
+    extern uint bLineOff;
+
+    int         i, k;               // Line count and buffer cursor.
+    float       x, y;
+    float       closeFade = 1;
+    float       gtosMulY = glScreenHeight / 200.0f;
+    char        buff[256], temp[256], *cmdLine;
+    float       fontScaledY;
+    int         bgX = 64, bgY = 64;
+    int         textOffsetY = 0;
+    int         cmdCursor;
+    cbuffer_t  *buffer;
 
     if(ConsoleY == 0)
         return;                 // We have nothing to do here.
@@ -436,11 +438,14 @@ void Rend_Console(void)
     gl.Color4f(1, 1, 1, closeFade);
 
     // The text in the console buffer will be drawn from the bottom up (!).
-    for(i = buffer->bPos - buffer->bLineOff - 1,
+    for(i = Con_BufferNumLines(buffer) - bLineOff - 1,
         y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
-        i >= 0 && i < buffer->bufferLines && y > -fontScaledY; i--)
+        i >= 0 && y > -fontScaledY; i--)
     {
-        cbline_t *line = buffer->cbuffer + i;
+        cbline_t *line = Con_BufferGetLine(buffer, i);
+
+        if(!line)
+            continue;
 
         if(line->flags & CBLF_RULER)
         {
@@ -450,6 +455,9 @@ void Rend_Console(void)
         }
         else
         {
+            if(!line->text)
+                continue;
+
             memset(buff, 0, sizeof(buff));
             strncpy(buff, line->text, 255);
 
@@ -470,6 +478,7 @@ void Rend_Console(void)
                 consoleSetColor(line->flags, closeFade);
             Cfont.TextOut(buff, x, y / Cfont.sizeY);
         }
+
         // Move up.
         y -= fontScaledY;
     }
