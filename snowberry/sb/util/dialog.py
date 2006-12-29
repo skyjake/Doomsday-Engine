@@ -370,7 +370,7 @@ class WizardPage (wiz.PyWizardPage):
 
         # Create the title widget.
         self.area.createText(title).setTitleStyle()
-        self.area.createLine()
+        #self.area.createLine()
 
         # Tell the wizard of us.
         wizard.addOwnedPage(self)

@@ -131,7 +131,15 @@ def handleNotify(event):
 def handleCommand(event):
     if pr.getActive() is pr.getDefaults():
         # We're not even listening when the Defaults profile is selected.
-        return;
+        dialog, area = sb.util.dialog.createButtonDialog(
+            'launcher-defaults-active',
+            language.translate('launcher-defaults-active'),
+            ['ok'], 'ok', resizable=False)
+        text = area.createText('launcher-defaults-active-text', 
+                               maxLineLength=70)
+        text.resizeToBestSize()
+        dialog.run()
+        return
 
     if event.hasId('play'):
         # Launch the game with the active profile.
@@ -144,7 +152,7 @@ def handleCommand(event):
         # Generate a command line and display it in a dialog.
         options = generateOptions(pr.getActive())
         if options == None:
-            return             
+            return
 
         # Escape any angle brackets.
         options = options.replace('<', '&lt;')

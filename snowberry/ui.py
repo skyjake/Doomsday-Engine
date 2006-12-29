@@ -63,6 +63,7 @@ BORDER_TOP_BOTTOM = (1 | 4)
 BORDER_LEFT_RIGHT = (2 | 8)
 BORDER_NOT_TOP = (2 | 4 | 8)
 BORDER_NOT_BOTTOM = (1 | 2 | 8)
+BORDER_NOT_LEFT = (1 | 2 | 4)
 BORDER_ALL = (1 | 2 | 4 | 8)
 
 # Optional areas.
@@ -459,11 +460,6 @@ class MainFrame (wx.Frame):
                 lambda x, y: cmp(language.translate('menu-' + x),
                                  language.translate('menu-' + y)))
 
-            #if len(popupMenuItems[prio]) > 0 and len(menuItems) > 0:
-            #    # Separate the priority levels.
-            #    menuItems.append('-')
-            #menuItems[prio] += popupMenuItems[prio]
-            
             # Create the menu items.
             for item in popupMenuItems[prio]:
                 if type(item) == tuple:

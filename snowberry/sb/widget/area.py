@@ -640,6 +640,7 @@ class Area (base.Widget):
             sub.setWeight(1)
             text = sub.createTextField(setting.getId())
             sub.setWeight(0)
+            sub.setBorder(4, ui.BORDER_LEFT)
             browseButton = sub.createButton('browse-button',
                                             style=sb.widget.button.Button.STYLE_MINI)
 

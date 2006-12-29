@@ -50,6 +50,7 @@ def init():
     area.setWeight(1)
 
     global mapListBox
+    area.setBorderDirs(ui.BORDER_NOT_BOTTOM)
     mapListBox = area.createList('maps-list', sb.widget.list.List.STYLE_COLUMNS)
 
     # The columns.
@@ -58,11 +59,13 @@ def init():
 
     # Some buttons in the bottom.
     area.setWeight(0)
-    area.setBorderDirs(ui.BORDER_ALL)
-    buttonArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
-    buttonArea.setBorderDirs(ui.BORDER_LEFT_RIGHT)
+    area.setBorderDirs(ui.BORDER_NOT_TOP)
+    buttonArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=4)
+    buttonArea.setBorderDirs(ui.BORDER_TOP)
     buttonArea.setWeight(0)
-    clearButton = buttonArea.createButton('maps-list-clear')
+    clearButton = buttonArea.createButton('maps-list-clear', 
+        sb.widget.button.Button.STYLE_MINI)
+    clearButton.resizeToBestSize()
 
     # Listen to our commands.
     events.addCommandListener(handleCommand, ['maps-list-clear'])

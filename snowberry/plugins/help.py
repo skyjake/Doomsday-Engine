@@ -53,7 +53,12 @@ currentSetting = None
 
 def init():
     "Create the HTML text widget into the help area."
-    helpArea = ui.getArea(ui.HELP)
+    try:
+        helpArea = ui.getArea(ui.HELP)
+    except KeyError:
+        # The Help area does not exist. We don't have much to do here.
+        return
+        
     helpArea.setExpanding(True)
     helpArea.setWeight(1)
 
@@ -95,7 +100,11 @@ def showLogo(doShow=True):
     """
     global logo
 
-    helpArea = ui.getArea(ui.HELP)
+    try:
+        helpArea = ui.getArea(ui.HELP)
+    except KeyError:
+        # No Help area.
+        return
 
     if not logo and doShow:
         logo = helpArea.createImage('help-logo')

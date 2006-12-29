@@ -61,7 +61,9 @@ def handleNotify(event):
         box = area.createArea(boxedWithTitle='addon-paths', border=3)
         box.setWeight(0)
         box.createText('addon-paths-info')
+        box.setBorderDirs(ui.BORDER_NOT_BOTTOM)
         pathList = box.createList('addon-paths-list')
+        box.setBorderDirs(ui.BORDER_NOT_TOP)
         pathList.setMinSize(100, 70)
 
         # Insert the current custom paths into the list.

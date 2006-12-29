@@ -24,6 +24,7 @@
 import ui, events
 import sb.util.dialog
 import sb.widget.button as wg
+import sb.widget.text as wt
 import sb.widget.list
 import sb.profdb as pr
 import sb.confdb as st
@@ -44,6 +45,14 @@ normalMenu = ['hide-profile',
               'duplicate-profile',
               'reset-profile',
               'delete-profile',
+              '-',
+              'new-profile',
+              'unhide-profiles']
+
+systemMenu = ['hide-profile',
+              'rename-profile',
+              'duplicate-profile',
+              'reset-profile',
               '-',
               'new-profile',
               'unhide-profiles']
@@ -142,6 +151,15 @@ def init():
                                                'hide-profile', 
                                                'unhide-profiles'])
 
+    # Commands for the menu.
+    #ui.addPopupMenuCommand(1, 'new-profile')
+    ui.addPopupMenuCommand(1, 'rename-profile')
+    ui.addPopupMenuCommand(1, 'reset-profile')
+    #ui.addPopupMenuCommand(1, 'delete-profile')
+    #ui.addPopupMenuCommand(1, 'duplicate-profile')
+    #ui.addPopupMenuCommand(1, 'hide-profile')
+    ui.addPopupMenuCommand(1, 'unhide-profiles')
+
 
 def notifyHandler(event):
     "This is called when a Notify event is broadcasted."
@@ -198,7 +216,11 @@ def notifyHandler(event):
         else:
             deleteButton.enable()
             dupeButton.enable()
-            profileList.setPopupMenu(normalMenu)
+            if pr.getActive().isSystemProfile():
+                menu = systemMenu
+            else:
+                menu = normalMenu
+            profileList.setPopupMenu(menu)
 
         # Update the banner image.
         if bannerImage:
@@ -239,7 +261,9 @@ def commandHandler(event):
 
         # The name of the profile.
         entry.setWeight(1)
-        entry.createText('new-profile-name', ':')
+        entry.setBorder(4, ui.BORDER_RIGHT)
+        entry.createText('new-profile-name', ':', align=wt.Text.RIGHT)
+        entry.setBorder(0)
         entry.setWeight(2)
         nameField = entry.createTextField('')
 
@@ -254,8 +278,10 @@ def commandHandler(event):
         entry.setExpanding(False)
 
         entry.setWeight(1)
-        entry.createText('new-profile-game', ':')
-        entry.setWeight(1)
+        entry.setBorder(4, ui.BORDER_RIGHT)
+        entry.createText('new-profile-game', ':', align=wt.Text.RIGHT)
+        entry.setBorder(0)
+        entry.setWeight(2)
         gameDrop = entry.createDropList('')
 
         for game in st.getGameComponents():
@@ -284,7 +310,9 @@ def commandHandler(event):
 
         # The name of the profile.
         entry.setWeight(1)
-        entry.createText('rename-profile-name', ':')
+        entry.setBorder(4, ui.BORDER_RIGHT)
+        entry.createText('rename-profile-name', ':', align=wt.Text.RIGHT)
+        entry.setBorder(0)
         entry.setWeight(2)
         nameField = entry.createTextField('')
         nameField.setText(prof.getName())
@@ -316,6 +344,11 @@ def commandHandler(event):
             pr.reset(pr.getActive().getId())
 
     elif event.hasId('delete-profile'):
+        # If this is a system profile, just hide it.
+        if pr.getActive().isSystemProfile():
+            pr.hide(pr.getActive().getId())
+            return
+        
         dialog, area = sb.util.dialog.createButtonDialog(
             'delete-profile-dialog',
             language.translate('delete-profile-title'),
@@ -335,7 +368,7 @@ def commandHandler(event):
             ['cancel', 'ok'], 'ok', resizable=False)
 
         text = language.translate('duplicating-profile')
-        area.setWeight(3)
+        area.setWeight(1)
         area.createRichText(language.expand(text, pr.getActive().getName()))
 
         area.setWeight(1)
@@ -344,7 +377,9 @@ def commandHandler(event):
 
         # The name of the profile.
         entry.setWeight(1)
-        entry.createText('new-profile-name', ':')
+        entry.setBorder(4, ui.BORDER_RIGHT)
+        entry.createText('new-profile-name', ':', align=wt.Text.RIGHT)
+        entry.setBorder(0)
         entry.setWeight(3)
         nameField = entry.createTextField('')
         nameField.setText(pr.getActive().getName())
@@ -374,6 +409,7 @@ def commandHandler(event):
         area.createText('unhiding-profiles')
 
         area.setWeight(3)
+        area.setBorder(0)
         profList = area.createList('', sb.widget.list.List.STYLE_CHECKBOX)
         profList.setMinSize(50, 150)
 
@@ -391,8 +427,14 @@ def commandHandler(event):
         controls = area.createArea(alignment=ALIGN_HORIZONTAL,
                                    border=2)
         controls.setWeight(0)
-        controls.createButton('unhide-select-all').addReaction(selectAll)
-        controls.createButton('unhide-clear-all').addReaction(clearAll)
+        button = controls.createButton('unhide-select-all', 
+            style=sb.widget.button.Button.STYLE_MINI)
+        button.addReaction(selectAll)
+        button.resizeToBestSize()
+        button = controls.createButton('unhide-clear-all', 
+            style=sb.widget.button.Button.STYLE_MINI)
+        button.addReaction(clearAll)
+        button.resizeToBestSize()
 
         for prof in hiddenProfiles:
             profList.addItem(prof.getId())

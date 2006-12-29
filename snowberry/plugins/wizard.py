@@ -135,15 +135,17 @@ def runWizard():
     # Language selection page.
     langPage = WizardPage(wiz, 'wizard-language')
     area = langPage.getArea()
-    area.createText('wizard-language-explanation').resizeToBestSize()
+    area.createText('wizard-language-explanation', maxLineLength=65).resizeToBestSize()
     area.createSetting(st.getSetting('language'))
 
     # Game selection.
     gamePage = ProfileWizardPage(wiz, 'wizard-games', None)
     gamePage.follows(langPage)
     area = gamePage.getArea()
-    area.createText('wizard-select-games').resizeToBestSize()
+    area.createText('wizard-select-games', maxLineLength=65).resizeToBestSize()
+    area.setBorderDirs(ui.BORDER_NOT_BOTTOM)
     games = area.createList('', style=sb.widget.list.List.STYLE_CHECKBOX)
+    area.setBorderDirs(ui.BORDER_NOT_TOP)
     games.setMinSize(50, 200)
     gamePage.setGameList(games)
 
@@ -157,10 +159,15 @@ def runWizard():
         for item in games.getItems():
             games.checkItem(item, False)
 
+    
     controls = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
     controls.setWeight(0)
-    controls.createButton('wizard-games-all').addReaction(allGames)
-    controls.createButton('wizard-games-clear').addReaction(clearGames)
+    button = controls.createButton('wizard-games-all', wg.Button.STYLE_MINI)
+    button.addReaction(allGames)
+    button.resizeToBestSize()
+    button = controls.createButton('wizard-games-clear', wg.Button.STYLE_MINI)
+    button.addReaction(clearGames)
+    button.resizeToBestSize()
 
     # The pages will be linked together.
     previousPage = gamePage
@@ -185,7 +192,7 @@ def runWizard():
             
             area = page.getArea()
 
-            area.createText('wizard-locate-iwad')
+            area.createText('wizard-locate-iwad', maxLineLength=65).resizeToBestSize()
 
             # The suggestion.
             if suggested.has_key(p.getId()):
@@ -224,8 +231,9 @@ def runWizard():
 	pathsPage.follows(previousPage)
 	area = pathsPage.getArea()
 	area.createText('wizard-addon-paths-explanation',
-                    maxLineLength=50).resizeToBestSize()
+                    maxLineLength=65).resizeToBestSize()
 
+    area.setBorderDirs(ui.BORDER_NOT_BOTTOM)
     pathList = area.createList('addon-paths-list')
     pathList.setMinSize(100, 120)
 
@@ -245,6 +253,7 @@ def runWizard():
             pathList.removeItem(selection)
 
     area.setWeight(0)
+    area.setBorderDirs(ui.BORDER_NOT_TOP)
     commands = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
     commands.setWeight(0)
 

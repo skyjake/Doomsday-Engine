@@ -51,6 +51,9 @@ class TextField (base.Widget):
         base.Widget.__init__(self, wx.TextCtrl(parent, wxId))
         self.widgetId = id
 
+        # The default font looks the best.
+        self.getWxWidget().SetFont(wx.NORMAL_FONT)
+
         # We want focus notifications.
         self.setFocusId(id)
 
@@ -150,6 +153,9 @@ class NumberField (base.Widget):
 
         # Clear the widget by default.
         self.getWxWidget().SetValue(None)
+
+        # The default font looks the best.
+        self.getWxWidget().SetFont(wx.NORMAL_FONT)
 
         # If True, a value-changed notification will cause the field
         # to change.

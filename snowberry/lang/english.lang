@@ -20,26 +20,21 @@ language-english: English (U.S.)
 run-setup-wizard: Setup Wizard
 setup-wizard: Setup Wizard
 wizard-language: Language
-wizard-language-explanation = "The Snowberry user interface supports localization.
-Select the language you want to use."
+wizard-language-explanation: The Doomsday Engine launcher has support for several languages. Select the language you would like to use.
 wizard-games: Game Profiles
 wizard-games-all: Select all
 wizard-games-clear: Clear all
-wizard-select-games =
-"Select the games you would like to set up.
-Note that you must have a copy of the original
-game installed."
-wizard-locate-iwad = "In order to play this game, you will need to locate 
-the main data file of the game."
+wizard-select-games: Select the games you would like to set up. Note that you must have a copy of the data files of the original game.
+wizard-locate-iwad: In order to play this game, you will need to locate the main data file of the game.
 wizard-locate-iwad-deathkings = "Unlike the other games, the Death Kings WAD will be
 installed as an addon. Death Kings is an extension
 to Hexen."
 wizard-suggested-iwad: Original name:
 deathkings-selection-title: Locate HEXDD.WAD
 wizard-addon-paths: Addon Folders
-wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell Snowberry to load them from their current location. Specify the folders below. The folders can be edited in Snowberry Preferences later on. If you later install addons using the Addons tab, they will be copied to Snowberry's addon folder. 
+wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell the launcher to load them from their current location. Specify the folders below. The folders can be edited in the Defaults > Settings > Launcher page later on. If you later install addons using the Addons tab, they will be copied to the launcher's addon folder. 
 wizard-launching: Launching Options
-wizard-launching-explanation: Should Snowberry be closed when a game is started?
+wizard-launching-explanation: Should the launcher be closed when a game is started?
 
 #
 # Windows and Dialogs
@@ -93,6 +88,8 @@ unhide-select-all: Select all
 unhide-clear-all: Clear all
 view-command-line-dialog: Command Line
 view-command-line-title: Previewing Command Line Options
+launcher-defaults-active: Cannot Launch with the Defaults Profile
+launcher-defaults-active-text: Sorry, it is not possible to launch a game using the Defaults profile. Select another profile and try again.
 install-addon-dialog: Addon Installer
 install-addon-title: Choose Addons to Install
 addon-dialog-folder: Folder:
@@ -227,7 +224,7 @@ tab-summary: Summary
 tab-maps: Maps
 tab-addons: Addons
 tab-settings: Settings
-general-options: Snowberry
+general-options: Launcher
 game-options: Game
 display-options: Display
 graphics-options: Graphics
