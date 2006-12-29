@@ -105,6 +105,12 @@ def _newSystemSetting(systemSetting):
     return systemSetting
 
 
+def isSettingDefined(id):
+    """Determines whether a setting with a specific identifier has been 
+    defined."""
+    return allSettings.has_key(id)
+
+
 def getSetting(id):
     """Returns the setting with the specified identifier."""
     return allSettings[id]
@@ -284,12 +290,20 @@ def processSettingBlock(e):
         else:
             opts = []
                 
-        setting = conf.ChoiceSetting(e.getName(),
-                                     e.findValue('option'),
-                                     alts, opts,
-                                     e.findValue('default'))
+        # Check what to do if existing choices are already defined.
+        existing = e.findValue('existing')
+        if existing == 'merge' and isSettingDefined(e.getName()):
+            oldSetting = getSetting(e.getName())
+            oldSetting.merge(alts, opts)
+        else:
+            # A totally new setting.
+            setting = conf.ChoiceSetting(e.getName(),
+                                         e.findValue('option'),
+                                         alts, opts,
+                                         e.findValue('default'))
+                                     
 
-    if setting:
+    if setting:    
         # Any required values?
         req = e.find('equals')
         if req and req.getType() == 'require':

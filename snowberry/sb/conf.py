@@ -351,6 +351,17 @@ class ChoiceSetting (Setting):
    
     def setSorted(self, shouldSort):
         self.sortChoices = shouldSort
+        
+    def merge(self, alts, opts):
+        """Merges the alternatives and command lines of the other choice
+        setting with this one. Merging means that duplicates are not added."""
+        
+        for alt in alts:
+            if alt not in self.alternatives:
+                self.alternatives.append(alt)
+        for cmd in opts:
+            if cmd not in self.cmdLines:
+                self.cmdLines.append(cmd)
 
 
 class FileSetting (Setting):
