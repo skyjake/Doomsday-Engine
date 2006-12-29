@@ -226,7 +226,7 @@ class NumberField (base.Widget):
                 # Get the value for the setting as it has been defined
                 # in the currently active profile.
                 value = pr.getActive().getValue(self.widgetId, False)
-                if value:
+                if value and value.getValue() != '':
                     self.setValue(int(value.getValue()))
                 else:
                     self.setValue(None)
