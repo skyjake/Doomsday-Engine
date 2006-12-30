@@ -45,7 +45,6 @@ hidden. You can make them visible with Profile -> Show..."
 # Windows and Dialogs
 #
 about-dialog: About Snowberry
-about-title: Snowberry
 about-subtitle: Extensible Launcher for the Doomsday Engine
 about-version: Version
 about-credits: Details and Credits
@@ -71,32 +70,24 @@ browse: Browse
 install: Install
 launch-message: Launching...
 new-profile-dialog: Create New Profile
-new-profile-title: New Profile
 new-profile-name: Name
 new-profile-game: Game library
 rename-profile-dialog: Rename Profile
-rename-profile-title: Renaming Profile
 rename-profile-name: New name
 reset-profile-dialog: Reset Profile
-reset-profile-title: Are You Sure?
 reset-profile-query: Are you sure you want to reset <b>%1</b> to defaults? This will clear all customized settings in the profile and deselect all the addons.
 delete-profile-dialog: Delete Profile
-delete-profile-title: Are You Sure?
 delete-profile-query: Are you sure you want to delete <b>%1</b>?
 duplicate-profile-dialog: Duplicate Profile
-duplicate-profile-title: Duplicating Profile
 duplicating-profile: You are creating a duplicate of <b>%1</b>.
 unhide-profile-dialog: Show Profiles
-unhide-profile-title: Show Hidden Profiles
 unhiding-profiles: Select one or more hidden profiles to show.
 unhide-select-all: Select all
 unhide-clear-all: Clear all
 view-command-line-dialog: Command Line
-view-command-line-title: Previewing Command Line Options
 launcher-defaults-active: Cannot Launch with the Defaults Profile
 launcher-defaults-active-text: Sorry, it is not possible to launch a game using the Defaults profile. Select another profile and try again.
 install-addon-dialog: Addon Installer
-install-addon-title: Choose Addons to Install
 addon-dialog-folder: Folder:
 addon-dialog-folder-browse: ...
 addon-dialog-folder-uninstalled: Uninstalled
@@ -115,10 +106,8 @@ addon-dialog-type-deh: DeHackEd Patch
 addon-dialog-type-manifest: Addon Manifest
 addon-dialog-add-to-custom-folders: Add to Custom Folders
 uninstall-addon-dialog: Uninstall Addon
-uninstall-addon-title: Are You Sure?
 uninstall-addon-query: Are you sure you want to uninstall <b>%1</b>?
 load-order-dialog: Load Order
-load-order-title: Addon Loading Order
 load-order-message: All addons that will be loaded:
 load-order-move-up: Up
 load-order-move-down: Down
@@ -136,7 +125,6 @@ addon-type-ded: Doomsday Engine Definitions
 addon-type-lump: Data Lump
 
 conflict-wizard: Addon Wizard
-conflict-wizard-title: Resolving Addon Conflicts
 
 category-conflict-message = "<b>%1</b> excludes the
 following addons:%2 <p>Select which of these addons should be
@@ -541,7 +529,6 @@ help-addon-part-of-box: This addon is a part of <a href="%1">%2</a>.
 # Issues
 #
 issue-dialog: Problems Detected
-issue-dialog-title: Problems Detected
 
 error-runtime-exception-during-event: Runtime Error
 error-runtime-exception-during-event-text: An unexpected error occured during the processing of event <b>%1</b>. Please report this incident to <tt>skyjake@users.sourceforge.net</tt>.<p><b>Exception:</b><p>%2<p><b>Traceback:</b><p>%3

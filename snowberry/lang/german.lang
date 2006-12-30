@@ -32,7 +32,6 @@ wizard-launching-explanation: Soll Snowberry beim Start eines Spieles beendet we
 # Windows and Dialogs
 #
 about-dialog: Über Snowberry
-about-title: Snowberry
 about-subtitle: Erweiterbares Startprogramm für die Doomsday Engine
 about-version: Version
 about-credits: Details und Dankeschöns
@@ -58,30 +57,22 @@ browse: Durchsuchen
 install: Installieren
 launch-message: Los geht's...
 new-profile-dialog: Neues Profil erstellen
-new-profile-title: Neues Profil
 new-profile-name: Name
 new-profile-game: Spiel-Dll
 rename-profile-dialog: Profil umbenennen
-rename-profile-title: Profil umbennenen
 rename-profile-name: Neuer Name
 reset-profile-dialog: Profil zurücksetzen
-reset-profile-title: Sicher?
 reset-profile-query: Sind Sie sicher, dass Sie <b>%1</b> auf die Vorgabeeinstellungen zurücksetzten möchten? Dabei werden alle Veränderungen des Profils gelöscht und alle Erweiterungen abgewählt.
 delete-profile-dialog: Profil löschen? 
-delete-profile-title: Sicher?
 delete-profile-query: Sind Sie sicher, dass Sie <b>%1</b> löschen möchten?
 duplicate-profile-dialog: Profil kopieren
-duplicate-profile-title: Profil kopieren
 duplicating-profile: Sie erstellen ein Duplikat von <b>%1</b>.
 unhide-profile-dialog: Profile anzeigen
-unhide-profile-title: Verborgene Profile anzeigen
 unhiding-profiles: Wählen Sie ein oder mehrere verborgene Profile zum Anzeigen.
 unhide-select-all: Alle wählen
 unhide-clear-all: Alle abwählen
 view-command-line-dialog: Eingabeaufforderung 
-view-command-line-title: Vorschau der Eingabeaufforderungs-Optionen
 install-addon-dialog: Installation von Erweiterungen
-install-addon-title: Wählen Sie die zu installierenden Erweiterungen
 addon-dialog-folder: Ordner:
 addon-dialog-folder-browse: ...
 addon-dialog-folder-uninstalled: Nicht installiert
@@ -99,10 +90,8 @@ addon-dialog-type-ded: Definition File
 addon-dialog-type-deh: DeHackEd Patch
 addon-dialog-type-manifest: Erweiterungs Manifest
 uninstall-addon-dialog: Erweiterung deinstallieren
-uninstall-addon-title: Sicher?
 uninstall-addon-query: Sind Sie sicher, dass Sie <b>%1</b>? deinstallieren wollen?
 load-order-dialog: Reihenfolge
-load-order-title: Ladereihenfolge der Erweiterungen
 load-order-message: Alle zu ladenden Erweiterungen:
 load-order-move-up: Nach oben
 load-order-move-down: Nach unten
@@ -120,7 +109,6 @@ addon-type-ded: Doomsday Engine Definitions
 addon-type-lump: Data Lump
 
 conflict-wizard: Erweiterungs-Wizard
-conflict-wizard-title: Erweiterungs-Konflikte beseitigen
 
 category-conflict-message = "<b>%1</b> kann nicht mit den folgenden Erweiterungen
 genutzt werden:%2 <p>Wählen Sie, welche dieser Erweiterungen geladen werden sollen."

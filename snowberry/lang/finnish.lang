@@ -38,30 +38,22 @@ reset: Reset
 browse: Selaa
 install: Asenna
 new-profile-dialog: Luo uusi profiili
-new-profile-title: Uusi profiili
 new-profile-name: Nimi
 new-profile-game: Pelikirjasto
 rename-profile-dialog: Uudelleennimeä profiili
-rename-profile-title: Profiilin uudelleennimeäminen
 rename-profile-name: Uusi nimi
 reset-profile-dialog: Resetoi profiili
-reset-profile-title: Oletko varma?
 reset-profile-query: Oletko varma, että haluat resetoida profiilin <b>%1</b> oletusarvoihin? Tämä palauttaa kaikki muutetut asetukset profiilissa alkuperäisiin arvoihinsa ja poistaa kaikkien lisäosien valinnat.
 delete-profile-dialog: Poista profiili
-delete-profile-title: Oletko varma?
 delete-profile-query: Haluatko varmasti poistaa profiilin <b>%1</b>?
 duplicate-profile-dialog: Monista profiili
-duplicate-profile-title: Profiilin monistaminen
 duplicating-profile: Olet luomassa kopion profiilista <b>%1</b>.
 unhide-profile-dialog: Näytä profiilit
-unhide-profile-title: Näytä piilotetut profiilit
 unhiding-profiles: Valitse yksi tai useampi näytettävä profiili.
 unhide-select-all: Valitse kaikki
 unhide-clear-all: Poista kaikki valinnat
 view-command-line-dialog: Komentokehote
-view-command-line-title: Komentokehoteoptioiden näyttäminen
 install-addon-dialog: Lisäosa-asentaja
-install-addon-title: Valitse asennettava lisäosa
 addon-dialog-folder: Hakemisto:
 addon-dialog-folder-browse: ...
 addon-dialog-folder-uninstalled: Asentamattomat
@@ -76,10 +68,8 @@ addon-dialog-type-pk3: Package
 addon-dialog-type-ded: Definition File
 addon-dialog-type-deh: DeHackEd Patch
 uninstall-addon-dialog: Erota lisäosa
-uninstall-addon-title: Oletko varma?
 uninstall-addon-query: Oletko varma, että haluat erottaa lisäosan <b>%1</b>?
 load-order-dialog: Latausjärjestys
-load-order-title: Lisäosien latausjärjestys
 load-order-message: Kaikki ladattavat lisäosat:
 load-order-move-up: Ylös
 load-order-move-down: Alas
@@ -87,7 +77,6 @@ load-order-move-top: Ensimmäiseksi
 load-order-move-bottom: Viimeiseksi
 
 conflict-wizard: Lisäosavelho
-conflict-wizard-title: Lisäosakonfliktien ratkaiseminen
 
 category-conflict-message = "<b>%1</b> poissulkee
 seuraavat lisäosat:%2 <p>Valitse näistä ne lisäosat, jotka ladataan."
