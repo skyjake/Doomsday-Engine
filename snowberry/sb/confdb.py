@@ -302,7 +302,6 @@ def processSettingBlock(e):
                                          alts, opts,
                                          e.findValue('default'))
                                      
-
     if setting:    
         # Any required values?
         req = e.find('equals')
