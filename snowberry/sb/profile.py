@@ -124,13 +124,17 @@ class Profile:
         self.hidden = hide
 
     def isSystemProfile(self):
-        """Checks if this profile is a system profile.  System
-        profiles can only be hidden, not removed completely.
+        """Checks if this profile is a system profile.  System profiles can 
+        only be hidden, not removed completely.
 
         @return True, if this is a system profile.
         """
-        sysProfiles = paths.getSystemPath(paths.PROFILES)
-        return os.path.exists(os.path.join(sysProfiles, self.getFileName()))
+        locations = [paths.getSystemPath(paths.PROFILES)] + \
+                     paths.getBundlePaths(paths.PROFILES)
+        for loc in locations:
+            if os.path.exists(os.path.join(loc, self.getFileName())):
+                return True
+        return False
 
     def getFileName(self):
         """Return the file name this profile uses."""

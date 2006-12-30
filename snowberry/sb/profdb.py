@@ -147,18 +147,24 @@ def save():
         f.close()
 
 
-def _listProfilesIn(path):
-    """Compose a list of profile file names in the specified location.
+def _listProfilesIn(locations):
+    """Compose a list of profile file names by reading from the specified 
+    locations.
 
-    @param path A directory path.
+    @param paths A list of directory paths.
 
     @return An array of absolute file names.
     """
     names = []
 
-    for name in os.listdir(path):
-        if paths.hasExtension('prof', name):
-            names.append(os.path.join(path, name))
+    for path in locations:
+        try:
+            for name in os.listdir(path):
+                if paths.hasExtension('prof', name):
+                    names.append(os.path.join(path, name))
+        except OSError:
+            # Such a location does not exist, ignore it.
+            pass
 
     return names
 
@@ -181,12 +187,13 @@ def restore():
     # Clear the current profile list.
     profiles = []
 
-    systemProfilePath = paths.getSystemPath(paths.PROFILES)
+    systemProfilePaths = [paths.getSystemPath(paths.PROFILES)] + \
+                          paths.getBundlePaths(paths.PROFILES)
     userProfilePath = paths.getUserPath(paths.PROFILES)
 
     # List all the system and user profiles.
-    availSystem = _listProfilesIn(systemProfilePath)
-    availUser = _listProfilesIn(userProfilePath)
+    availSystem = _listProfilesIn(systemProfilePaths)
+    availUser = _listProfilesIn([userProfilePath])
 
     # We are going to load only the profiles in the user's direcory,
     # but before that make sure that the user has an instance of each
@@ -211,7 +218,7 @@ def restore():
     # Find every profile in system's and user's profile directories.
     # Files in the user's directory augment the files in the system
     # directory.
-    for name in _listProfilesIn(userProfilePath):
+    for name in _listProfilesIn([userProfilePath]):
         load(os.path.join(userProfilePath, name), False)
     logger.show()
 
