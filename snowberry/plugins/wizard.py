@@ -272,13 +272,21 @@ def runWizard():
     area.createText('wizard-launching-explanation').resizeToBestSize()
     area.createSetting(st.getSetting('quit-on-launch'))
 
+    # List of unusable profiles, due to a missing IWAD.
+    unusableProfiles = []
+
     if wiz.run(langPage) == 'ok':
         # Show the profiles that now have an IWAD.
         for prof in profiles:
             if prof.getValue('iwad', False) != None:
                 pr.show(prof.getId())
+                if prof.getId() in unusableProfiles:
+                    unusableProfiles.remove(prof.getId())
             else:
                 pr.hide(prof.getId())
+                if prof.getId() not in unusableProfiles and \
+                   prof.getId() in games.getSelectedItems():
+                    unusableProfiles.append(prof.getId())
 
         # Install the Death Kings WAD?
         if deathKingsWad:
@@ -322,3 +330,21 @@ def runWizard():
 
     # Enable help panel updates again.
     events.send(events.Command('unfreeze'))
+    
+    # Tell the user about unusable profiles.
+    if len(unusableProfiles) > 0:
+        dialog, area = sb.util.dialog.createButtonDialog(
+            'wizard-unlaunchable-profiles',
+            ['ok'], 'ok', resizable=False)
+        # Compose a list of the unlaunchable profiles.
+        profList = ''
+        unusableProfiles.sort(lambda a, b: cmp(language.translate(a),
+                                               language.translate(b)))
+        for p in unusableProfiles:
+            profList += "\n" + language.translate(p)
+        msg = area.createText()
+        msg.setText(language.translate('wizard-unlaunchable-profiles-listed') + "\n" + 
+                    profList)
+        msg.resizeToBestSize()
+        dialog.run()
+        
