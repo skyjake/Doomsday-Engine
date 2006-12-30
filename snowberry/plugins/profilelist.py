@@ -91,7 +91,7 @@ def makeProfileHTML(profile):
            '<td width="48"><img src="' + iconPath + '"></table>'
 
     else:
-        c = 'game-other'
+        game = 'game-undefined'
         for c in profile.getComponents():
             if c[:5] == 'game-':
                 game = c
