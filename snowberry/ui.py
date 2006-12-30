@@ -287,7 +287,10 @@ class MainFrame (wx.Frame):
         # Create panels inside the profile splitter.
         self.mainPanel = MainPanel(self.profSplitter)
 
-        self.splitPos = None
+        if st.isDefined('main-split-position'):
+            self.splitPos = INITIAL_SASH_POS
+        else:
+            self.splitPos = None
         self.profSplitPos = INITIAL_PROFILE_SASH_POS
 
         # Create the help area.
