@@ -76,7 +76,8 @@ class Addon:
 
         # If no other translation is given, the identifier of the
         # addon is shown as the base name of the source.
-        language.define('english', identifier, os.path.basename(source))
+        if not language.isDefined(identifier):
+            language.define('english', identifier, os.path.basename(source))
 
     def getId(self):
         return self.id
@@ -879,6 +880,3 @@ class LumpAddon (Addon):
         metadata = 'category: gamedata/lumps'
 
         self.parseConfiguration(metadata)
-
-
-print "addon init"
