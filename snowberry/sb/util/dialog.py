@@ -289,6 +289,16 @@ class AreaDialog (wx.Dialog):
 
     def disableWidget(self, identifier):
         self.enableWidget(identifier, False)
+        
+    def focusWidget(self, identifier):
+        """Focus a widget managed by the dialog.
+        
+        @param identifier  Identifier of the widget to focus."""
+        
+        try:
+            self.widgetMap[identifier].focus()
+        except:
+            pass
 
 
 class WizardDialog (wiz.Wizard):

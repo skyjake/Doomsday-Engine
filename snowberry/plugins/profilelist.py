@@ -265,6 +265,7 @@ def commandHandler(event):
         entry.setBorder(0)
         entry.setWeight(2)
         nameField = entry.createTextField('')
+        nameField.focus()
 
         # Only enable the OK button if there is something in the name field.
         def buttonEnabler():
@@ -314,6 +315,7 @@ def commandHandler(event):
         entry.setWeight(2)
         nameField = entry.createTextField('')
         nameField.setText(prof.getName())
+        nameField.focus()
 
         # Only enable the OK button if there is something in the name
         # field.
@@ -378,6 +380,7 @@ def commandHandler(event):
         entry.setWeight(3)
         nameField = entry.createTextField('')
         nameField.setText(pr.getActive().getName())
+        nameField.focus()
 
         # Only enable the OK button if there is something in the name field.
         def buttonEnabler():

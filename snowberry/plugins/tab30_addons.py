@@ -365,6 +365,7 @@ def showLoadOrder(profile):
         'load-order-dialog',
         ['reset', '', 'cancel', 'ok'], 'ok')
 
+    dialog.focusWidget('cancel')
     area.setWeight(0)
     area.createText('load-order-message')
 
@@ -456,17 +457,20 @@ def chooseAddons(dialogId, title, actionButton):
     area.setWeight(0)
     folderArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL)
     folderArea.setExpanding(False)
-    folderArea.setBorder(2)
+    folderArea.setBorder(2, ui.BORDER_NOT_LEFT)
     folderArea.setWeight(0)
     folderArea.createText('addon-dialog-folder').resizeToBestSize()
+    folderArea.setBorderDirs(ui.BORDER_ALL)
     folderArea.setWeight(1)
     pathField = folderArea.createTextField('')
     pathField.setText(os.getcwd())
+    pathField.focus()
     folderArea.setWeight(0)
     browseButton = folderArea.createButton('addon-dialog-folder-browse',
                                            style=wg.Button.STYLE_MINI)
     folderArea.setWeight(0)
     folderArea.addSpacer()
+    folderArea.setBorderDirs(ui.BORDER_NOT_RIGHT)
     uninstButton = folderArea.createButton('addon-dialog-folder-uninstalled')
 
     def goToUninstalled():
