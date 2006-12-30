@@ -96,7 +96,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup res dmt doomsday dpdehread dpmapload dropengl drd3d dscompat jdoom jheretic jhexen wolftc doom64tc
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread dpmapload dropengl drd3d dscompat jdoom jheretic jhexen wolftc doom64tc
 GOTO Done
 
 
@@ -131,6 +131,13 @@ SET CURRENTSCRIPT=%2
 SHIFT
 GOTO Done
 
+
+:: *** Copy DLLs to the build directory, for packaging.
+:copydll
+copy %SDL_LIB%\SDL.dll .
+copy %SDLNET_LIB%\SDL_net.dll .
+copy %EAX_DLL%\eax.dll .
+GOTO Done
 
 :: *** Mapdata type headers
 :CheckDMT
