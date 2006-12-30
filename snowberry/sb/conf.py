@@ -25,8 +25,6 @@
 ## Doomsday is launched is composed of the data in the settings and
 ## components.
 
-print "entered conf.py"
-
 # Import modules required for initialization.
 import os, re, string
 import paths
