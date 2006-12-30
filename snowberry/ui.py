@@ -50,6 +50,12 @@ PREFCOMMAND = 'main-pref-command'
 TABS = 'main-tabs'
 HELP = 'main-help'
 
+# Menus.
+MENU_APP = 0
+MENU_PROFILE = 1
+MENU_TOOLS = 2
+MENU_HELP = 3
+
 # Layout alignments.
 ALIGN_HORIZONTAL = 0
 ALIGN_VERTICAL = 1
@@ -246,9 +252,20 @@ class MainFrame (wx.Frame):
         if st.isDefined('main-height'):
             initialSize = (initialSize[0], st.getSystemInteger('main-height'))
 
+        # The configuration can also specify the window position.
+        if st.isDefined('main-x') and st.isDefined('main-y'):
+            initialPos = (st.getSystemInteger('main-x'), st.getSystemInteger('main-y'))
+        else:
+            initialPos = None
+
         wx.Frame.__init__(self, None, -1, title, size=initialSize)
         #self.SetExtraStyle(wx.FRAME_EX_METAL)
         #self.Create(None, -1, title, size=initialSize)
+
+        if initialPos is not None:
+            self.MoveXY(*initialPos)
+        else:
+            self.Center()
 
         # Set the icon for the frame.
         icon = wx.Icon('graphics/snowberry.ico', wx.BITMAP_TYPE_ICO)
@@ -332,17 +349,6 @@ class MainFrame (wx.Frame):
         # Create a menu bar.
         self.menuBar = wx.MenuBar()
 
-        #menu = wx.Menu()
-        #menu.Append(wx.ID_ABOUT, language.translate('menu-about'))
-
-        #menuBar.Append(menu, language.translate('menu-game'))
-
-        # Show the menu.
-        #self.SetMenuBar(menuBar)
-
-        # Handle menu commands.
-        #wx.EVT_MENU(self, wx.ID_ABOUT, self.onAbout)
-
     def show(self):
         #if self.splitter:
         #    self.splitter.Thaw()
@@ -415,6 +421,7 @@ class MainFrame (wx.Frame):
             f.write('# This file is generated automatically.\n')
             f.write('appearance main (\n')
             f.write('  width = %i\n  height = %i\n' % winSize)
+            f.write('  x = %i\n  y = %i\n' % self.GetPositionTuple())
             if self.splitPos != None:
                 f.write('  split-position = %i\n' % self.splitPos)
             f.write('  profile-split-position = %i\n' % self.profSplitPos)
@@ -499,7 +506,11 @@ class MainFrame (wx.Frame):
                         wx.App_SetMacExitMenuItemId(wxId)
                     if itemId == 'show-snowberry-settings':
                         wx.App_SetMacPreferencesMenuItemId(wxId)
-                        
+
+        if host.isMac():
+            # Special Help menu on Mac.
+            wx.App_SetMacHelpMenuTitleName(language.translate('menu-' + str(MENU_HELP)))
+                                                                                          
         self.SetMenuBar(self.menuBar)                       
 
     def onPopupCommand(self, ev):

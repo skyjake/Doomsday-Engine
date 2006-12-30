@@ -31,7 +31,7 @@ def init():
     events.addCommandListener(handleCommand, ['about'])
     
     # Commands for the popup menu.
-    ui.addPopupMenuCommand(0, 'about')
+    ui.addPopupMenuCommand(ui.MENU_APP, 'about')
 
 
 def handleCommand(event):

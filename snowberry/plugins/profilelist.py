@@ -152,13 +152,13 @@ def init():
                                                'unhide-profiles'])
 
     # Commands for the menu.
-    #ui.addPopupMenuCommand(1, 'new-profile')
-    ui.addPopupMenuCommand(1, 'rename-profile')
-    ui.addPopupMenuCommand(1, 'reset-profile')
-    #ui.addPopupMenuCommand(1, 'delete-profile')
-    #ui.addPopupMenuCommand(1, 'duplicate-profile')
-    #ui.addPopupMenuCommand(1, 'hide-profile')
-    ui.addPopupMenuCommand(1, 'unhide-profiles')
+    #ui.addPopupMenuCommand(ui.MENU_PROFILE, 'new-profile')
+    ui.addPopupMenuCommand(ui.MENU_PROFILE, 'rename-profile')
+    ui.addPopupMenuCommand(ui.MENU_PROFILE, 'reset-profile')
+    #ui.addPopupMenuCommand(ui.MENU_PROFILE, 'delete-profile')
+    #ui.addPopupMenuCommand(ui.MENU_PROFILE, 'duplicate-profile')
+    #ui.addPopupMenuCommand(ui.MENU_PROFILE, 'hide-profile')
+    ui.addPopupMenuCommand(ui.MENU_PROFILE, 'unhide-profiles')
 
 
 def notifyHandler(event):
