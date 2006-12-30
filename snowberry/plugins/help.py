@@ -18,12 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-import string, time
-import language, events, ui
+import string, time, os, urllib
+import language, events, ui, host
 import sb.aodb as ao
 import sb.addon
 import sb.profdb as pr
 import sb.confdb as st
+import sb.util.dialog
 
 
 # An instance of the message timer.
@@ -53,10 +54,14 @@ currentSetting = None
 
 def init():
     "Create the HTML text widget into the help area."
+    
+    ui.addPopupMenuCommand(ui.MENU_HELP, 'open-documentation')
+    
     try:
         helpArea = ui.getArea(ui.HELP)
     except KeyError:
         # The Help area does not exist. We don't have much to do here.
+        events.addCommandListener(handleCommand, ['open-documentation'])
         return
         
     helpArea.setExpanding(True)
@@ -79,7 +84,8 @@ def init():
     # Register a listener.
     events.addCommandListener(handleCommand, ['help-addon-mode-brief',
                                               'help-addon-mode-detailed',
-                                              'freeze', 'unfreeze'])
+                                              'freeze', 'unfreeze',
+                                              'open-documentation'])
 
     events.addNotifyListener(handleNotify, ['show-help-text-now',
                                             'init-done',
@@ -140,7 +146,20 @@ def handleCommand(event):
     elif event.hasId('unfreeze'):
         helpDisabled = False
         updateHelpText()    
-
+        
+    elif event.hasId('open-documentation'):
+        if host.isMac():
+            cmd = 'open ' + urllib.quote(language.translate('documentation-url'), '/:?=')
+            os.system(cmd)
+        else:
+            dialog, area = sb.util.dialog.createButtonDialog(
+                'help-documentation-dialog',
+                ['ok'], 'ok', resizable=False)
+            msg = area.createFormattedText()
+            msg.setText(language.translate('documentation-url'))
+            msg.setMinSize(400, 100)
+            dialog.run()
+            
 
 def handleNotify(event):
     """This is called when somebody sends a notification.

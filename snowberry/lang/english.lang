@@ -15,6 +15,11 @@
 language-english: English (U.S.)
 
 #
+# Documentation URL
+#
+documentation-url: http://dengine.net/dew/index.php?title=Snowberry_Main_Page
+
+#
 # Setup Wizard
 #
 run-setup-wizard: Setup Wizard
@@ -184,6 +189,7 @@ preferences: Preferences
 menu-0: Snowberry
 menu-1: Profile
 menu-2: Tools
+menu-3: Help
 menu-new-profile: New...
 menu-rename-profile: Rename
 menu-reset-profile: Reset to defaults
@@ -211,6 +217,8 @@ menu-show-snowberry-settings-accel: Ctrl-,
 menu-about: About Snowberry
 menu-quit: Quit
 menu-quit-accel: Ctrl-Q
+menu-open-documentation: Snowberry Help
+menu-open-documentation-accel: Ctrl-?
 
 #
 # Tab Labels
