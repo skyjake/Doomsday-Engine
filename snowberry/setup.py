@@ -48,6 +48,12 @@ manifest = """
 </assembly>
 """
 
+opts = {
+    "py2exe": {
+        "includes": "urllib",
+    }
+}
+
 """
 installs manifest and icon into the .exe
 but icon is still needed as we open it
@@ -59,6 +65,7 @@ setup(
     version = "1.2.0",
     description = "Doomsday Engine Launcher",
     name = "Snowberry",
+    options = opts,
 
     windows = [
         {
