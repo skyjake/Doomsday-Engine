@@ -24,8 +24,6 @@
 ## from the configuration directories.  We'll expect to find both
 ## components and settings.
 
-print "entered confdb.py"
-
 # Import modules required for initialization.
 import os, re, string
 import paths
@@ -211,7 +209,8 @@ def processSettingBlock(e):
                 paths.addAddonPath(key.getValue())
             else:
                 # Regular sysConfig string.
-                sysConfig[e.getName() + '-' + key.getName()] = key.getValue()
+                fullName = e.getName() + '-' + key.getName()
+                sysConfig[fullName] = key.getValue()
         return
     
     setting = None
@@ -450,11 +449,19 @@ def getSettingGroups(addonIdentifier=None):
 def isDefined(id):
     """Checks if a certain system configuration setting has been defined.
 
-    @param id Identifier of the system configuration settings.
+    @param id Identifier of the system configuration setting.
 
     @return True, if the setting has been defined.
     """
     return sysConfig.has_key(id)
+    
+    
+def undefine(id):
+    """Undefines a certain system configuration setting.
+    
+    @param id Identifier of the system configuration setting."""
+    if isDefined(id):
+        del sysConfig[id]
 
 
 def getSystemString(id):
@@ -520,6 +527,8 @@ def saveSystemConfigSettings():
     try:
         f = file(fileName, 'w')
         f.write('# This file is generated automatically.\n')
+        f.write('configure snowberry ( previous-version = %s )\n' %
+                getSystemString('snowberry-version'))
 
         for s in systemSettings:
             parts = s.split('-')
@@ -531,13 +540,32 @@ def saveSystemConfigSettings():
         # Paths not saved.
         import traceback
         traceback.print_exc()
-  
+        
+        
+def checkUpgrade():
+    """Check the current version against the previous version."""
+    
+    if not isDefined('snowberry-previous-version'):
+        previousVersion = '1.1 or earlier'
+    else:
+        previousVersion = getSystemString('snowberry-previous-version')
+
+    currentVersion = getSystemString('snowberry-version')
+
+    if previousVersion != currentVersion:
+        if previousVersion == '1.1 or earlier':
+            # Reset some settings to their default values.
+            sysConfig['main-hide-title'] = 'yes'
+            sysConfig['main-hide-help'] = 'yes'
+            undefine('main-split-position')
+            undefine('main-profile-split-position')
+            undefine('main-width')
+            undefine('main-height')
+                        
 
 def init():
     """Initialize the module."""
     
-    print "confdb init"
-
     # Built-in settings.
     allLangs = language.getLanguages()
     lang = conf.ChoiceSetting('language', '', allLangs, [], 'english')
@@ -567,11 +595,11 @@ def init():
     if isDefined('doomsday-runtime'):
         paths.setCustomPath(paths.RUNTIME, getSystemString('doomsday-runtime'))
 
+    # Check against previous version to detect upgrades.
+    checkUpgrade()
+
     # Listen for the quit notification so we can save some settings.
     events.addNotifyListener(handleNotify, ['quit', 'widget-edited'])
-
-    print "addon paths:", paths.getAddonPaths()
-    print "confdb init done"
 
 
 # Initialize module.    
