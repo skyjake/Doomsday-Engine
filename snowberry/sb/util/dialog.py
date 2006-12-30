@@ -99,7 +99,7 @@ def createDialog(id, alignment=1, size=None, resizable=True):
     return dialog
 
 
-def createButtonDialog(id, titleText, buttons, defaultButton=None, size=None,
+def createButtonDialog(id, buttons, defaultButton=None, size=None,
                        resizable=True):
     """Returns the area where the caller may add the contents of the
     dialog.
@@ -129,18 +129,8 @@ def createButtonDialog(id, titleText, buttons, defaultButton=None, size=None,
     area.setBorderDirs(ui.BORDER_NOT_BOTTOM)
     contentArea = area.createArea(alignment=ui.ALIGN_VERTICAL, border=6)
     contentArea.setWeight(0)
-    #if titleText != None:
-    #    contentArea.setBorder(0)
-    #    titleArea = contentArea.createArea(border=6,
-    #        backgroundColor=wx.Colour(255, 255, 255))
-    #    contentArea.setBorder(6)
-    #    title = titleArea.createText('')
-    #    title.setTitleStyle()
-    #    title.setText(titleText)
-    #    title.setMinSize(400, 20)
 
-    #if host.isMac():
-    # Generous borders on the Mac.
+    # Generous borders.
     contentArea.setBorder(16)
 
     contentArea.setWeight(1)
