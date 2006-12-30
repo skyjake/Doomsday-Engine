@@ -1,6 +1,0 @@
-[Marine]
-Name = Doomsday Engine 1.8
-Info = Doomsday Engine binaries, data files and documentation.
-File = _mic_engine.exe
-Type = base
-Order = 1
