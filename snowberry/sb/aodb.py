@@ -683,8 +683,6 @@ def loadAll():
 # Module Initialization
 #
 
-print "aodb init"
-
 # Create the root category (for unclassified/generic addons).
 rootCategory = Category('')
 categories.append(rootCategory)

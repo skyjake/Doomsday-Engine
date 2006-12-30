@@ -175,6 +175,7 @@ continue: Continue...
 new-profile: +
 delete-profile: -
 duplicate-profile: Dup
+refresh-addon-database: Refresh
 install-addon: +
 uninstall-addon: -
 load-order: Load Order

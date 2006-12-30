@@ -75,6 +75,10 @@ def init():
     buttonArea.setBorderDirs(ui.BORDER_LEFT_RIGHT)
 
     buttonArea.setWeight(0)
+    
+    button = buttonArea.createButton('refresh-addon-database', wg.Button.STYLE_MINI)
+    button.resizeToBestSize()
+    
     buttonArea.createButton('install-addon', wg.Button.STYLE_MINI)
 
     global uninstallButton
@@ -111,7 +115,8 @@ def init():
                                               'expand-all-categories',
                                               'collapse-all-categories',
                                               'check-category',
-                                              'uncheck-category'])
+                                              'uncheck-category',
+                                              'refresh-addon-database'])
                                               
     # Changing the current addon in the tree is done using commands with
     # the name of the addon as an identifier.
@@ -187,7 +192,11 @@ def handleCommand(event):
     # tree.  The action will target this addon.
     selected = ''
 
-    if event.hasId('install-addon'):
+    if event.hasId('refresh-addon-database'):
+        ao.loadAll()
+        return
+
+    elif event.hasId('install-addon'):
         # Open the file selection dialog.
         for selection in \
                 chooseAddons('install-addon-dialog',
