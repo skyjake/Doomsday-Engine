@@ -75,16 +75,18 @@ def init():
     buttonArea.setBorderDirs(ui.BORDER_LEFT_RIGHT)
 
     buttonArea.setWeight(0)
-    
-    button = buttonArea.createButton('refresh-addon-database', wg.Button.STYLE_MINI)
-    button.resizeToBestSize()
-    
+
+    # Install (+) button for installing new addons.
     buttonArea.createButton('install-addon', wg.Button.STYLE_MINI)
 
     global uninstallButton
     uninstallButton = buttonArea.createButton('uninstall-addon',
                                               wg.Button.STYLE_MINI)
     uninstallButton.disable()
+
+    # The Refresh button reloads all addons.
+    button = buttonArea.createButton('refresh-addon-database', wg.Button.STYLE_MINI)
+    button.resizeToBestSize()   
 
     buttonArea.setWeight(3)
     buttonArea.addSpacer()
@@ -194,6 +196,7 @@ def handleCommand(event):
 
     if event.hasId('refresh-addon-database'):
         ao.loadAll()
+        events.send(events.Notify('addon-paths-changed'))
         return
 
     elif event.hasId('install-addon'):
@@ -218,7 +221,6 @@ def handleCommand(event):
         # Make sure the user want to uninstall.
         dialog, area = sb.util.dialog.createButtonDialog(
             'uninstall-addon-dialog',
-            language.translate('uninstall-addon-title'),
             ['no', 'yes'], 'no')
 
         #message = area.createFormattedText()
@@ -267,7 +269,6 @@ def showInspector(addon):
     
     dialog, area = sb.util.dialog.createButtonDialog(
         'addon-inspector-dialog',
-         language.translate(ident),
          ['ok'], 'ok', size=(570, 450))
 
     msg = ""
@@ -362,7 +363,6 @@ def showLoadOrder(profile):
 
     dialog, area = sb.util.dialog.createButtonDialog(
         'load-order-dialog',
-        language.translate('load-order-title'),
         ['reset', '', 'cancel', 'ok'], 'ok')
 
     area.setWeight(0)
@@ -443,9 +443,11 @@ def chooseAddons(dialogId, title, actionButton):
     @param actionButton The button that will perform the affirmative
     action of the dialog.
     """
-    dialog, area = sb.util.dialog.createButtonDialog(
-        dialogId, title,
-        ['cancel', actionButton], actionButton)
+    dialog, area = sb.util.dialog.createButtonDialog(dialogId, 
+        ['addon-dialog-add-to-custom-folders', '', 'cancel', actionButton], 
+        actionButton)
+
+    dialog.addEndCommand('addon-dialog-add-to-custom-folders')
 
     # The action button is disabled until a valid selection has been
     # made.
@@ -469,6 +471,7 @@ def chooseAddons(dialogId, title, actionButton):
 
     def goToUninstalled():
         pathField.setText(paths.getUserPath(paths.UNINSTALLED))
+        dialog.disableWidget('addon-dialog-add-to-custom-folders')
 
     uninstButton.addReaction(goToUninstalled)
 
@@ -478,7 +481,7 @@ def chooseAddons(dialogId, title, actionButton):
     foundList.setMinSize(500, 300)
 
     area.setWeight(0)
-    area.createText('addon-dialog-addons-copied')
+    area.createText('addon-dialog-addons-copied', maxLineLength=70).resizeToBestSize()
 
     def selectAction():
         dialog.enableWidget(actionButton)
@@ -533,6 +536,10 @@ def chooseAddons(dialogId, title, actionButton):
     def pathChanged():
         if os.path.exists(pathField.getText()):
             updateList()
+            if pathField.getText() != paths.getUserPath(paths.UNINSTALLED):
+                dialog.enableWidget('addon-dialog-add-to-custom-folders')
+        else:
+            dialog.disableWidget('addon-dialog-add-to-custom-folders')
 
     def browseAction():
         # Show a directory browser.
@@ -548,7 +555,8 @@ def chooseAddons(dialogId, title, actionButton):
     browseButton.addReaction(browseAction)
 
     dialog.addEndCommand(actionButton)
-    if dialog.run() == actionButton:
+    result = dialog.run()
+    if result == actionButton:
         addonFiles = map(lambda name: os.path.join(pathField.getText(), name),
                          foundList.getSelectedItems())
 
@@ -558,9 +566,15 @@ def chooseAddons(dialogId, title, actionButton):
             manifestFile = os.path.join(pathField.getText(), manifest)
             if manifest not in addonFiles and os.path.exists(manifestFile):
                 addonFiles.append(manifestFile)
-                print 'including ' + manifestFile + ' due to ' + name
+                #print 'including ' + manifestFile + ' due to ' + name
 
         return addonFiles
+
+    elif result == 'addon-dialog-add-to-custom-folders':
+        paths.addAddonPath(pathField.getText())
+        ao.loadAll()
+        events.send(events.Notify('addon-paths-changed'))
+        return []
 
     # The dialog was canceled.
     return []
