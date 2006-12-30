@@ -35,6 +35,11 @@ wizard-addon-paths: Addon Folders
 wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell the launcher to load them from their current location. Specify the folders below. The folders can be edited in the Defaults > Settings > Launcher page later on. If you later install addons using the Addons tab, they will be copied to the launcher's addon folder. 
 wizard-launching: Launching Options
 wizard-launching-explanation: Should the launcher be closed when a game is started?
+wizard-unlaunchable-profiles: Some Profiles Unlaunchable
+wizard-unlaunchable-profiles-listed = 
+"The following profiles cannot be launched at the moment.
+They are missing a game data file (IWAD) and have been
+hidden. You can make them visible with Profile -> Show..."
 
 #
 # Windows and Dialogs
@@ -97,7 +102,7 @@ addon-dialog-folder-browse: ...
 addon-dialog-folder-uninstalled: Uninstalled
 addon-dialog-browse-prompt: Choose Folder
 addon-dialog-found: Addons in the selected folder:
-addon-dialog-addons-copied: Installed addons are copied to your personal addons folder.
+addon-dialog-addons-copied: Installed addons are copied to your personal addons folder. If you want to avoid copying, add the folder to your custom addon folders.
 addon-dialog-name: Name
 addon-dialog-type: Type
 addon-dialog-type-box: Box Container
@@ -108,6 +113,7 @@ addon-dialog-type-zip: ZIP Archive
 addon-dialog-type-ded: Definition File
 addon-dialog-type-deh: DeHackEd Patch
 addon-dialog-type-manifest: Addon Manifest
+addon-dialog-add-to-custom-folders: Add to Custom Folders
 uninstall-addon-dialog: Uninstall Addon
 uninstall-addon-title: Are You Sure?
 uninstall-addon-query: Are you sure you want to uninstall <b>%1</b>?
@@ -446,29 +452,35 @@ restart-required: Changes take effect after restarting.
 #
 # Help
 #
-help-welcome = "Welcome to Snowberry. This is a launcher application 
-that lets you launch <b>Doomsday Engine</b> with ease. Select a game profile 
-from the list on the left.<p>The user interface of the launcher can be 
-modified in <b>Menu</b> -&gt; <b>Preferences</b>."
+help-welcome = "<b><font size=''+1''>Welcome to Snowberry!</font></b><p>
+This is a launcher application that lets you launch <b>Doomsday Engine</b> 
+with ease. Select a game profile from the list on the left and press <b>Play</b>.
+<p>The user interface of the launcher can be 
+modified in <b>Defaults</b> -&gt; <b>Settings</b> -&gt; 
+<b><a href=''show-snowberry-settings''>Launcher</a></b>."
 
 help-command = "To start a game, press the <b>Play</b> button."
 
 help-command-defaults = "The <b>Defaults</b> profile contains
 settings common to all profiles."
 
-help-tab-summary = "The Summary tab shows the most important information
+help-tab-summary = "<b><font size=''+1''>Summary Tab</font></b><p>
+The Summary tab shows the most important information
 about the current profile."
 
-help-tab-maps = "The Maps tab provides a quick way to select which WAD
+help-tab-maps = "<b><font size=''+1''>Maps Tab</font></b><p>
+The Maps tab provides a quick way to select which WAD
 addons to use with the current profile. The selections made here are
 reflected on the Addons tab."
 
-help-tab-addons = "Select the addons you would like to use with the
+help-tab-addons = "<b><font size=''+1''>Addons Tab</font></b><p>
+Select the addons you would like to use with the
 current profile.<p>The <b>Settings</b> button allows you to
 customize the selected addon.<p>To change the order in which addons
 are loaded, press the <b>Load Order</b> button."
 
-help-tab-settings = "The Settings tab allows you to customize the
+help-tab-settings = "<b><font size=''+1''>Settings Tab</font></b><p>
+The Settings tab allows you to customize the
 current profile and the addons you've selected for loading.
 <p>To change the default settings for all profiles,
 select the <b>Defaults</b> profile."
