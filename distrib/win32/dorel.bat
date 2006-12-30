@@ -1,29 +1,19 @@
-REM -- Does a complete Release distribution.
+REM -- Does a complete Win32 Binary Release distribution.
 
-REM -- Package Snowberry.
-c:
-cd "\Documents and Settings\jaakko\Desktop\Snowberry"
+REM -- Package a Snowberry binary.
+cd ..\..\snowberry
 call build.bat
-d:
+cd ..\distrib\win32
 
-REM -- Rebuild Docs.
-cd ..\doomsday\Doc\Ame
-call make h t
-cd ..\..\..\distrib
+REM -- Recompile resource packages.
+cd ..\..\doomsday\build\scripts
+packres.py ../win32
+cd ..\..\..\distrib\win32
 
 REM -- Recompile.
-cd ..\doomsday
-call d:\vs.net\vc7\bin\vcvars32.bat
-call vcbuild res
-call d:\vctk\vcvars32.bat
-call vcbuild all
-cd ..\distrib
+cd ..\..\doomsday\build\win32
+call vcbuild.bat all
+cd ..\..\..\distrib\win32
 
 REM -- Run the Inno Setup Compiler.
 "C:\Program Files\Inno Setup 5\Compil32.exe" /cc setup.iss
-
-REM call makedist rel
-REM call packcom e d h x 
-REM call packdist
-REM call packsetup f 
-call makesrc
