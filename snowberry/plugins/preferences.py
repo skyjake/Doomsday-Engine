@@ -75,7 +75,7 @@ def handleNotify(event):
             if selection:
                 pathList.addItem(selection)
                 pathList.selectItem(selection)
-                paths.addAddonPath(selection)
+                paths.addAddonPath(selection)                
 
         def removeAddonPath():
             selection = pathList.getSelectedItem()

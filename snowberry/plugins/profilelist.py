@@ -252,7 +252,6 @@ def commandHandler(event):
     elif event.hasId('new-profile'):
         dialog, area = sb.util.dialog.createButtonDialog(
             'new-profile-dialog',
-            language.translate('new-profile-title'),
             ['cancel', 'ok'], 'ok', resizable=False)
         dialog.disableWidget('ok')
 
@@ -299,7 +298,6 @@ def commandHandler(event):
     elif event.hasId('rename-profile'):
         dialog, area = sb.util.dialog.createButtonDialog(
             'rename-profile-dialog',
-            language.translate('rename-profile-title'),
             ['cancel', 'ok'], 'ok', resizable=False)
 
         prof = pr.getActive()
@@ -333,7 +331,6 @@ def commandHandler(event):
     elif event.hasId('reset-profile'):
         dialog, area = sb.util.dialog.createButtonDialog(
             'reset-profile-dialog',
-            language.translate('reset-profile-title'),
             ['no', 'yes'], 'no', resizable=False)
 
         text = language.translate('reset-profile-query')
@@ -351,7 +348,6 @@ def commandHandler(event):
         
         dialog, area = sb.util.dialog.createButtonDialog(
             'delete-profile-dialog',
-            language.translate('delete-profile-title'),
             ['no', 'yes'], 'no', resizable=False)
 
         text = language.translate('delete-profile-query')
@@ -364,7 +360,6 @@ def commandHandler(event):
     elif event.hasId('duplicate-profile'):
         dialog, area = sb.util.dialog.createButtonDialog(
             'duplicate-profile-dialog',
-            language.translate('duplicate-profile-title'),
             ['cancel', 'ok'], 'ok', resizable=False)
 
         text = language.translate('duplicating-profile')
@@ -402,7 +397,6 @@ def commandHandler(event):
 
         dialog, area = sb.util.dialog.createButtonDialog(
             'unhide-profile-dialog',
-            language.translate('unhide-profile-title'),
             ['cancel', 'ok'], 'ok', resizable=False)
 
         area.setWeight(0)

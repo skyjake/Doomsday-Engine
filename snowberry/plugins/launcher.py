@@ -132,8 +132,7 @@ def handleCommand(event):
     if pr.getActive() is pr.getDefaults():
         # We're not even listening when the Defaults profile is selected.
         dialog, area = sb.util.dialog.createButtonDialog(
-            'launcher-defaults-active',
-            language.translate('launcher-defaults-active'),
+            'launcher-defaults-active',            
             ['ok'], 'ok', resizable=False)
         text = area.createText('launcher-defaults-active-text', 
                                maxLineLength=70)
@@ -173,8 +172,7 @@ def handleCommand(event):
             pos += 1
 
         dialog, area = sb.util.dialog.createButtonDialog(
-            'view-command-line-dialog',
-            language.translate('view-command-line-title'),
+            'view-command-line-dialog',            
             ['ok'], 'ok')
 
         msg = area.createFormattedText()
@@ -447,7 +445,6 @@ def resolveAddonConflicts(addons, profile):
         resolving.profile = profile
         resolving.dialog, resolving.area = sb.util.dialog.createButtonDialog(
             'conflict-wizard',
-            language.translate('conflict-wizard-title'),
             ['cancel', 'continue'], 'continue')
 
         # Initialize the wizard with the first problem.

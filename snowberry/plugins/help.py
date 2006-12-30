@@ -214,7 +214,7 @@ def updateHelpText():
     """
     msg = '<html><table width="100%" height="100%" border="0" ' + \
           'cellspacing="0" cellpadding="0"><tr>' + \
-          '<td align="center">'
+          '<td align="left">'
     msg += string.join(helpFields, "<p>") + "</table></html>"
     helpText.setText(msg)
     showLogo()

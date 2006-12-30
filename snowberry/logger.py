@@ -69,7 +69,6 @@ def show():
     import sb.util.dialog
     dialog, area = sb.util.dialog.createButtonDialog(
         'issue-dialog',
-        language.translate('issue-dialog-title'),
         ['ok'], 'ok')
 
     message = area.createFormattedText()

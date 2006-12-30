@@ -44,7 +44,7 @@ def handleCommand(event):
     if event.hasId('about'):
         # Create the About dialog and show it.
         dialog, area = sb.util.dialog.createButtonDialog(
-            'about-dialog', language.translate('about-title'), ['ok'], 'ok')
+            'about-dialog', ['ok'], 'ok')
 
         content = area.createArea(alignment=ui.ALIGN_VERTICAL, border=0)
         content.setWeight(0)
@@ -53,6 +53,7 @@ def handleCommand(event):
             language.translate('about-version') + ' ' +
             st.getSystemString('snowberry-version'))
 
+        content.setBorder(16, ui.BORDER_BOTTOM)
         content.createText('about-subtitle')
 
         content.setBorder(6)
