@@ -22,8 +22,11 @@
 ##
 ## This module is the main module for the entire launcher.
 
-#import profile
 import language, ui, plugins, sb.profdb
+
+# urllib is needed by the Help plugin.
+import urllib
+
 
 def main():
     # Load all plugins.
