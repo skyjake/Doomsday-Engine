@@ -562,6 +562,7 @@ def checkUpgrade():
             # Reset some settings to their default values.
             sysConfig['main-hide-title'] = 'yes'
             sysConfig['main-hide-help'] = 'yes'
+            sysConfig['profile-large-icons'] = 'no'
             undefine('main-split-position')
             undefine('main-profile-split-position')
             undefine('main-width')
@@ -589,7 +590,7 @@ def init():
     _newSystemSetting(tog)
     tog = conf.ToggleSetting('summary-profile-change-autoselect', '', 'no', '')
     _newSystemSetting(tog)
-    tog = conf.ToggleSetting('profile-large-icons', '', 'yes', '')
+    tog = conf.ToggleSetting('profile-large-icons', '', 'no', '')
     _newSystemSetting(tog)
 
     # Load all .conf files.
