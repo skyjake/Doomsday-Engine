@@ -212,6 +212,11 @@ def processSettingBlock(e):
                 fullName = e.getName() + '-' + key.getName()
                 sysConfig[fullName] = key.getValue()
         return
+        
+    # Check for languages.
+    if e.getType() == 'language':
+        language.processLanguageBlock(e)
+        return
     
     setting = None
 
