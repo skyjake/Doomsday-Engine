@@ -194,7 +194,7 @@ class NumberField (base.Widget):
         if self.widgetId:
             if self.getWxWidget().IsInBounds():
                 v = ev.GetValue()
-                if v:
+                if v is not None:
                     newValue = str(v)
                 else:
                     newValue = ''
