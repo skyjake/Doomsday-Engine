@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-1 -*-
-# $Id: addons.py 3481 2006-08-07 21:06:40Z skyjake $
+# $Id$
 # Snowberry: Extensible Launcher for the Doomsday Engine
 #
 # Copyright (C) 2004, 2006

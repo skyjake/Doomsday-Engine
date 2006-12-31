@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-1 -*-
-# $Id: widgets.py 3545 2006-08-11 20:09:25Z skyjake $
+# $Id$
 # Snowberry: Extensible Launcher for the Doomsday Engine
 #
 # Copyright (C) 2004, 2005

@@ -14,6 +14,7 @@
 		B015323A0B42E1D6006C9D45 /* x-components.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "x-components.conf"; path = "conf/x-components.conf"; sourceTree = "<group>"; };
 		B01532430B42E263006C9D45 /* components.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = components.conf; path = conf/components.conf; sourceTree = "<group>"; };
 		B01532BA0B43C64B006C9D45 /* finnish.lang */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text; name = finnish.lang; path = lang/finnish.lang; sourceTree = "<group>"; };
+		B01539790B47ACA3006C9D45 /* win-accel.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "win-accel.conf"; path = "conf/win-accel.conf"; sourceTree = "<group>"; };
 		B05FA5230A8A3CCD00A9FE0E /* german.lang */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text; name = german.lang; path = lang/german.lang; sourceTree = "<group>"; };
 		B05FA5FA0A8A7C1500A9FE0E /* tree.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tree.py; path = sb/widget/tree.py; sourceTree = "<group>"; };
 		B05FA6200A8A80E900A9FE0E /* tab.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab.py; path = sb/widget/tab.py; sourceTree = "<group>"; };
@@ -168,6 +169,7 @@
 				B015323A0B42E1D6006C9D45 /* x-components.conf */,
 				B0F176DF087C381E0051F24A /* x-appearance.conf */,
 				B0F176E0087C381E0051F24A /* x-doomsday.conf */,
+				B01539790B47ACA3006C9D45 /* win-accel.conf */,
 			);
 			name = conf;
 			sourceTree = "<group>";
