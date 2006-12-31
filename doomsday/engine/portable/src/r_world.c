@@ -365,7 +365,8 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
 
 static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
                                      boolean fixFloors, boolean fixCeilings,
-                                     boolean *adjustedFloor, boolean *adjustedCeil)
+                                     boolean *adjustedFloor,
+                                     boolean *adjustedCeil)
 {
     uint        pln;
     lineowner_t *base, *lOwner, *rOwner;
@@ -395,19 +396,23 @@ static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
                 if(!doFix[pln])
                     continue;
 
-                if(doSkyFix(rOwner->line->L_frontsector, lOwner->line->L_frontsector, pln))
+                if(doSkyFix(rOwner->line->L_frontsector,
+                            lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
                 if(lOwner->line->L_backsector)
-                if(doSkyFix(rOwner->line->L_frontsector, lOwner->line->L_backsector, pln))
+                if(doSkyFix(rOwner->line->L_frontsector,
+                            lOwner->line->L_backsector, pln))
                     *adjusted[pln] = true;
 
                 if(rOwner->line->L_backsector)
-                if(doSkyFix(rOwner->line->L_backsector, lOwner->line->L_frontsector, pln))
+                if(doSkyFix(rOwner->line->L_backsector,
+                            lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
                 if(rOwner->line->L_backsector && lOwner->line->L_backsector)
-                if(doSkyFix(rOwner->line->L_backsector, lOwner->line->L_frontsector, pln))
+                if(doSkyFix(rOwner->line->L_backsector,
+                            lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
             }
         }
@@ -433,19 +438,23 @@ static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
                 if(!doFix[pln])
                     continue;
 
-                if(doSkyFix(rOwner->line->L_frontsector, lOwner->line->L_frontsector, pln))
+                if(doSkyFix(rOwner->line->L_frontsector,
+                            lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
                 if(lOwner->line->L_backsector)
-                if(doSkyFix(rOwner->line->L_frontsector, lOwner->line->L_backsector, pln))
+                if(doSkyFix(rOwner->line->L_frontsector,
+                            lOwner->line->L_backsector, pln))
                     *adjusted[pln] = true;
 
                 if(rOwner->line->L_backsector)
-                if(doSkyFix(rOwner->line->L_backsector, lOwner->line->L_frontsector, pln))
+                if(doSkyFix(rOwner->line->L_backsector,
+                            lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
                 if(rOwner->line->L_backsector && lOwner->line->L_backsector)
-                if(doSkyFix(rOwner->line->L_backsector, lOwner->line->L_frontsector, pln))
+                if(doSkyFix(rOwner->line->L_backsector,
+                            lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
             }
         }
@@ -513,7 +522,8 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                 for(j = 0; j < 2; ++j)
                     if(line->v[j]->numlineowners > 1)
                         spreadSkyFixForNeighbors(line->v[j], line,
-                                                 doFix[PLN_FLOOR], doFix[PLN_CEILING],
+                                                 doFix[PLN_FLOOR],
+                                                 doFix[PLN_CEILING],
                                                  &adjusted[PLN_FLOOR],
                                                  &adjusted[PLN_CEILING]);
             }
@@ -1063,6 +1073,12 @@ static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr)
     // So, for now this is only linked singlely, forward.
     newOwner->next = vtx->lineowners;
     vtx->lineowners = newOwner;
+
+    // Link the line to its respective owner node.
+    if(vtx == lineptr->L_v1)
+        lineptr->L_vo1 = newOwner;
+    else
+        lineptr->L_vo2 = newOwner;
 }
 
 static void R_SetVertexSectorOwner(vertex_t *vtx, ownerlist_t *ownerList,
@@ -1219,16 +1235,10 @@ do
  */
 static lineowner_t* R_GetVtxLineOwner(vertex_t *vtx, line_t *line)
 {
-    lineowner_t *p, *base;
-
-    p = base = vtx->lineowners;
-    do
-    {
-        if(p->line == line)
-            return p;
-
-        p = p->next;
-    } while(p != base);
+    if(vtx == line->L_v1)
+        return line->L_vo1;
+    else if(vtx == line->L_v2)
+        return line->L_vo2;
 
     return NULL;
 }

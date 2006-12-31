@@ -254,6 +254,8 @@ internal
 // Helper macros for accessing linedef data elements.
 #define L_v1                    v[0]
 #define L_v2                    v[1]
+#define L_vo1                   vo[0]
+#define L_vo2                   vo[1]
 #define L_frontsector           sec[FRONT]
 #define L_backsector            sec[BACK]
 #define L_frontside             sides[FRONT]
@@ -270,6 +272,7 @@ struct line
     INT     int         validcount
     PTR     side_s*[2]  sides
     FIXED   fixed_t[4]  bbox
+    -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
     -       float       length      // Accurate length
     -       binangle_t  angle       // Calculated from front side's normal
     -       boolean     selfrefhackroot // This line is the root of a self-referencing hack sector
