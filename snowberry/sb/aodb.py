@@ -669,6 +669,7 @@ def loadAll():
     # Load all the installed addons in the system and user addon
     # databases.
     for repository in [paths.ADDONS] + paths.getAddonPaths():
+        print "repo:", repository
         for name in paths.listFiles(repository):
             # Case insensitive.
             if re.search("(?i)^([^.#].*)\.(" + \
@@ -676,28 +677,48 @@ def loadAll():
                          os.path.basename(name)):
                 load(name)
 
+    # Load all the manifests.
+    for folder in [paths.getSystemPath(paths.MANIFESTS),
+                   paths.getUserPath(paths.MANIFESTS)] + \
+                   paths.getAddonPaths():
+        for name in paths.listFiles(folder):
+            # Case insensitive.
+            if paths.hasExtension('manifest', name):
+                loadManifest(name)
+                
+                
+def refresh():
+    """Empties the data of all loaded addons from the database and reloads
+    everything. Sends out a 'addon-database-reloaded' notification."""
+    
+    init()   
+    loadAll()
+    events.send(events.Notify('addon-database-reloaded'))
+    
+    
+def init():
+    """Initialize the addon database."""
+    
+    global categories, rootCategory, addons
+    
+    # Empty the cache.
+    categories = []
+    addons = {}
+
+    # Create the root category (for unclassified/generic addons).
+    rootCategory = Category('')
+    categories.append(rootCategory)
+    
 
 #
 # Module Initialization
 #
 
-# Create the root category (for unclassified/generic addons).
-rootCategory = Category('')
-categories.append(rootCategory)
-
 # Load the metadata cache.
+init()
 readMetaCache()
 
 loadAll()
-
-# Load all the manifests.
-for folder in [paths.getSystemPath(paths.MANIFESTS),
-               paths.getUserPath(paths.MANIFESTS)] + \
-               paths.getAddonPaths():
-    for name in paths.listFiles(folder):
-        # Case insensitive.
-        if paths.hasExtension('manifest', name):
-            loadManifest(name)
 
 # Save the updated cache.
 writeMetaCache()

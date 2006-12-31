@@ -53,6 +53,13 @@ def add(severity, identifier, *args):
     global allIssues
 
     allIssues.append((severity, identifier, list(args)))
+    
+    
+def immediate(severity, identifier, *args):
+    """Show a logger issue immediately. See logger.add() for the params."""
+    
+    add(severity, identifier, *args)
+    show()
 
 
 def show():

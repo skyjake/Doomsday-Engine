@@ -571,6 +571,9 @@ error-read-profile-text: The profile <tt>%1</tt> could not be loaded because an 
 error-read-manifest: Addon Manifest Error
 error-read-manifest-text: An error was detected in the manifest file <tt>%1</tt>.<p><b>Reason:</b><p>%2
 
+error-remove-addon-path-not-found: Internal Error
+error-remove-addon-path-not-found-text: Someone attempted to remove an addon path that has not been registered: <tt>%1</tt>
+
 warning-obsolete-plugin: Obsolete Plugin
 warning-obsolete-plugin-text: The plugin <b>%1</b> loaded from <tt>%2</tt> is from an obsolete version. You should delete this plugin. Otherwise unexpected behavior may occur.
 

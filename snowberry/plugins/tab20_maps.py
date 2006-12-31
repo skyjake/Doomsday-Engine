@@ -28,6 +28,7 @@
 import os
 import ui, events, language
 import widgets as wg
+import sb.widget.button as wb
 import sb.widget.list
 import sb.aodb as ao
 import sb.profdb as pr
@@ -61,11 +62,12 @@ def init():
     area.setWeight(0)
     area.setBorderDirs(ui.BORDER_NOT_TOP)
     buttonArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=4)
-    buttonArea.setBorderDirs(ui.BORDER_TOP)
+    buttonArea.setBorderDirs(ui.BORDER_TOP | ui.BORDER_RIGHT)
     buttonArea.setWeight(0)
-    clearButton = buttonArea.createButton('maps-list-clear', 
-        sb.widget.button.Button.STYLE_MINI)
+    clearButton = buttonArea.createButton('maps-list-clear', wb.Button.STYLE_MINI)
     clearButton.resizeToBestSize()
+    refreshButton = buttonArea.createButton('refresh-addon-database', wb.Button.STYLE_MINI)
+    refreshButton.resizeToBestSize()   
 
     # Listen to our commands.
     events.addCommandListener(handleCommand, ['maps-list-clear'])
@@ -74,7 +76,8 @@ def init():
                                             'maps-list-selected',
                                             'maps-list-deselected',
                                             'addon-attached',
-                                            'addon-detached'])
+                                            'addon-detached',
+                                            'addon-database-reloaded'])
 
     
 def handleCommand(event):
@@ -107,6 +110,9 @@ def handleNotify(event):
         listenSelections = False
         mapListBox.deselectItem(event.getAddon())
         listenSelections = True
+        
+    if event.hasId('addon-database-reloaded'):
+        refreshList()
     
 
 def refreshList():

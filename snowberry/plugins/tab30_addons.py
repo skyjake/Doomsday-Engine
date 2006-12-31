@@ -105,7 +105,7 @@ def init():
                                                   'addon-tree-selected',
                                                   'addon-installed',
                                                   'addon-uninstalled',
-                                                  'addon-paths-changed'])
+                                                  'addon-database-reloaded'])
 
     # Registering a command listener to handle the Command events sent
     # by the buttons created above.
@@ -166,7 +166,7 @@ def handleNotification(event):
         tree.populateWithAddons(pr.getActive())
         tree.selectAddon(event.addon)
 
-    elif event.hasId('addon-paths-changed'):
+    elif event.hasId('addon-database-reloaded'):
         tree.removeAll()
         tree.createCategories()
         tree.populateWithAddons(pr.getActive())
@@ -195,8 +195,7 @@ def handleCommand(event):
     selected = ''
 
     if event.hasId('refresh-addon-database'):
-        ao.loadAll()
-        events.send(events.Notify('addon-paths-changed'))
+        ao.refresh()
         return
 
     elif event.hasId('install-addon'):
@@ -576,8 +575,7 @@ def chooseAddons(dialogId, title, actionButton):
 
     elif result == 'addon-dialog-add-to-custom-folders':
         paths.addAddonPath(pathField.getText())
-        ao.loadAll()
-        events.send(events.Notify('addon-paths-changed'))
+        ao.refresh()
         return []
 
     # The dialog was canceled.

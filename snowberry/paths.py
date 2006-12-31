@@ -28,7 +28,7 @@
 ## installation directory, and also contains Doomsday.
 
 import os, re, sys
-import host, events
+import host, events, logger
 
 
 def isHomeless():
@@ -312,6 +312,8 @@ def removeAddonPath(path):
     """
     if path in addonPaths:
         addonPaths.remove(path)
+    else:
+        logger.immediate(logger.HIGH, 'error-remove-addon-path-not-found', path)
 
 
 def getAddonPaths():

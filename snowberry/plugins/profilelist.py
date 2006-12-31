@@ -58,6 +58,15 @@ systemMenu = ['hide-profile',
               'unhide-profiles']
 
 
+def iconSizeString():
+    """Determines the size of profile icons.
+    @return Size of profile icons in pixels, as a string."""
+    if st.getSystemBoolean('profile-large-icons'):
+        return '50'
+    else:
+        return '28'
+
+
 def makeHTML(name, game):
     # The icon for the game component.
     iconName = language.translate(game + '-icon')
@@ -66,10 +75,7 @@ def makeHTML(name, game):
     # The name of the game.
     gameName = language.translate(game)
 
-    if st.getSystemBoolean('profile-large-icons'):
-        iconSize = '50'
-    else:
-        iconSize = '24'
+    iconSize = iconSizeString()
     
     return '<table width="100%" border=0 cellspacing=2 cellpadding=5>' + \
            '<tr><td width="' + iconSize + '"><img width="' + iconSize + \
@@ -81,15 +87,14 @@ def makeHTML(name, game):
 
 def makeProfileHTML(profile):
     if profile is pr.getDefaults():
-        # There should be a real icon for the Defaults profile.
         iconPath = paths.findBitmap('defaults')
+        iconSize = iconSizeString()
         return '<table width="100%" border=0 cellspacing=2 cellpadding=5>' + \
-           '<tr><td align=left >' + \
-           '<font size="+1"><b>' + \
-           profile.getName() + \
-           '</b></font>' + \
-           '<td width="48"><img src="' + iconPath + '"></table>'
-
+           '<tr><td width="' + iconSize + \
+           '"><img width="%s" height="%s"' % (iconSize, iconSize) + \
+           ' src="' + iconPath + \
+           '"><td align=left><font size="+1"><b>' + profile.getName() + \
+           '</b></font></table>'
     else:
         game = 'game-undefined'
         for c in profile.getComponents():
