@@ -816,16 +816,19 @@ void ST_Ticker(void)
 {
     player_t *plyr = &players[consoleplayer];
 
-    if(cfg.hudTimer == 0)
+    if(!P_IsPaused())
     {
-        hudHideTics = hudHideAmount = 0;
-    }
-    else
-    {
-        if(hudHideTics > 0)
-            hudHideTics--;
-        if(hudHideTics == 0 && cfg.hudTimer > 0 && hudHideAmount < 1)
-            hudHideAmount += 0.1f;
+        if(cfg.hudTimer == 0)
+        {
+            hudHideTics = hudHideAmount = 0;
+        }
+        else
+        {
+            if(hudHideTics > 0)
+                hudHideTics--;
+            if(hudHideTics == 0 && cfg.hudTimer > 0 && hudHideAmount < 1)
+                hudHideAmount += 0.1f;
+        }
     }
 
     st_clock++;
