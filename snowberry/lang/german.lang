@@ -33,22 +33,6 @@ wizard-launching-explanation: Soll Snowberry beim Start eines Spieles beendet we
 #
 about-dialog: Über Snowberry
 about-subtitle: Erweiterbares Startprogramm für die Doomsday Engine
-about-version: Version
-about-credits: Details und Dankeschöns
-about-info = "<b>Webseite:</b><br><tt>http://deng.sourceforge.net/</tt>
-<p>Dieses Programm wird unter der <i>GNU General Public
-License.</i> vertrieben
-<p>
-<b>Authoren:</b><br>
-Antti Kopponen<br>
-Emma Kallio<br>
-Jaakko Keranen<br>
-Jari Asp<br>
-Toni Kokkonen<br>
-Veikko Eeva
-<p>
-<b>Mit besonderem Dank an:</b><br>
-Daniel Swanson"
 
 ok: OK
 cancel: Abbrechen

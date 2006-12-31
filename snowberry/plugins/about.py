@@ -23,12 +23,13 @@
 import ui, events, language
 import sb.util.dialog
 import widgets as wg
+import sb.widget.text as wt
 import sb.confdb as st
 
 
 def init():
     # Listen for the About button.
-    events.addCommandListener(handleCommand, ['about'])
+    events.addCommandListener(handleCommand, ['about', 'show-credits'])
     
     # Commands for the popup menu.
     ui.addPopupMenuCommand(ui.MENU_APP, 'about')
@@ -44,23 +45,43 @@ def handleCommand(event):
     if event.hasId('about'):
         # Create the About dialog and show it.
         dialog, area = sb.util.dialog.createButtonDialog(
-            'about-dialog', ['ok'], 'ok')
+            'about-dialog', ['show-credits', '', 'ok'], 'ok', resizable=False)
 
         content = area.createArea(alignment=ui.ALIGN_VERTICAL, border=0)
         content.setWeight(0)
 
-        content.createText('').setText(
+        # Big logo.
+        content.setBorder(16, ui.BORDER_BOTTOM)
+        content.createImage('about')
+
+        content.setBorder(6, ui.BORDER_BOTTOM)
+        versionText = content.createText('', align=wt.Text.MIDDLE)
+        versionText.setBoldStyle()
+        versionText.setText(
             language.translate('about-version') + ' ' +
             st.getSystemString('snowberry-version'))
+            
+        content.createText('about-subtitle', align=wt.Text.MIDDLE)
+        content.createText('about-license', align=wt.Text.MIDDLE)
+        content.createText('about-website', align=wt.Text.MIDDLE).setSmallStyle()
 
-        content.setBorder(16, ui.BORDER_BOTTOM)
-        content.createText('about-subtitle')
-
-        content.setBorder(6)
-        content.setWeight(1)
-        box = content.createArea(boxedWithTitle='about-credits')
-        info = box.createFormattedText()
-        info.setMinSize(300, 280)
-        info.setText(language.translate('about-info'))
+        #content.setBorder(6)
+        #content.setWeight(1)
+        #box = content.createArea(boxedWithTitle='about-credits')
+        #info = box.createFormattedText()
+        #info.setMinSize(300, 280)
+        #info.setText(language.translate('about-info'))
+    
+        dialog.focusWidget('ok')
+        dialog.center()
+        dialog.run()
         
+    elif event.hasId('show-credits'):
+        dialog, area = sb.util.dialog.createButtonDialog(
+            'about-credits', ['close'], 'close')
+        info = area.createFormattedText()
+        info.setMinSize(290, 230)
+        info.setText(language.translate('credits'))
+        dialog.addEndCommand('close')
+        dialog.center()
         dialog.run()

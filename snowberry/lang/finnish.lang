@@ -34,6 +34,7 @@ wizard-launching-explanation: Pitäisikö Snowberry sulkea, kun peli käynnistetään
 #
 ok: OK
 cancel: Peruuta
+close: Sulje
 reset: Reset
 browse: Selaa
 install: Asenna
