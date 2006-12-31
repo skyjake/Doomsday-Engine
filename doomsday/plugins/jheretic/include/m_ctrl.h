@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -118,15 +118,16 @@ static const MenuItem_t ControlsItems[] = {
     {ITT_EFUNC, 0, "QUICK SAVE :", SCControlConfig, 47},
     {ITT_EFUNC, 0, "END GAME :", SCControlConfig, 48},
     {ITT_EFUNC, 0, "QUIT :", SCControlConfig, 51},
-    {ITT_EFUNC, 0, "MESSAGES ON/OFF:", SCControlConfig, 49},
-    {ITT_EFUNC, 0, "GAMMA CORRECTION :", SCControlConfig, 52},
-    {ITT_EFUNC, 0, "SPY MODE :", SCControlConfig, 53},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, "SCREEN", NULL, 0},
     {ITT_EFUNC, 0, "SMALLER VIEW :", SCControlConfig, 57},
     {ITT_EFUNC, 0, "LARGER VIEW :", SCControlConfig, 56},
     {ITT_EFUNC, 0, "SMALLER STATBAR :", SCControlConfig, 59},
     {ITT_EFUNC, 0, "LARGER STATBAR :", SCControlConfig, 58},
+    {ITT_EFUNC, 0, "SHOW HUD :", SCControlConfig, 105},
+    {ITT_EFUNC, 0, "MESSAGES ON/OFF:", SCControlConfig, 49},
+    {ITT_EFUNC, 0, "SPY MODE :", SCControlConfig, 53},
+    {ITT_EFUNC, 0, "GAMMA CORRECTION :", SCControlConfig, 52},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 
     {ITT_EMPTY, 0, "AUTOMAP", NULL, 0},

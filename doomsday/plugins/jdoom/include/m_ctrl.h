@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -39,7 +39,7 @@
 
 extern const Control_t *grabbing;
 
-#define NUM_CONTROLS_ITEMS 105
+#define NUM_CONTROLS_ITEMS 106
 
 static const MenuItem_t ControlsItems[] = {
     {ITT_EMPTY, 0, "PLAYER ACTIONS", NULL, 0},
@@ -95,15 +95,16 @@ static const MenuItem_t ControlsItems[] = {
     {ITT_EFUNC, 0, "QUICK SAVE :", SCControlConfig, 32},
     {ITT_EFUNC, 0, "END GAME :", SCControlConfig, 33},
     {ITT_EFUNC, 0, "QUIT :", SCControlConfig, 36},
-    {ITT_EFUNC, 0, "MESSAGES ON/OFF:", SCControlConfig, 34},
-    {ITT_EFUNC, 0, "GAMMA CORRECTION :", SCControlConfig, 37},
-    {ITT_EFUNC, 0, "SPY MODE :", SCControlConfig, 38},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, "SCREEN", NULL, 0},
     {ITT_EFUNC, 0, "SMALLER VIEW :", SCControlConfig, 39},
     {ITT_EFUNC, 0, "LARGER VIEW :", SCControlConfig, 40},
     {ITT_EFUNC, 0, "SMALLER STATBAR :", SCControlConfig, 41},
     {ITT_EFUNC, 0, "LARGER STATBAR :", SCControlConfig, 42},
+    {ITT_EFUNC, 0, "SHOW HUD :", SCControlConfig, 92},
+    {ITT_EFUNC, 0, "MESSAGES ON/OFF:", SCControlConfig, 34},
+    {ITT_EFUNC, 0, "SPY MODE :", SCControlConfig, 38},
+    {ITT_EFUNC, 0, "GAMMA CORRECTION :", SCControlConfig, 37},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, "AUTOMAP", NULL, 0},
     {ITT_EFUNC, 0, "OPEN/CLOSE MAP :", SCControlConfig, 53},

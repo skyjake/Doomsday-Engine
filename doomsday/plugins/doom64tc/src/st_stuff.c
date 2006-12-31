@@ -42,6 +42,8 @@
 #include "st_lib.h"
 #include "hu_stuff.h"
 
+#include "p_tick.h" // for P_IsPaused
+
 // MACROS ------------------------------------------------------------------
 
 #define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8)           \

@@ -41,6 +41,7 @@
 #include "st_lib.h"
 #include "hu_stuff.h"
 
+#include "p_tick.h" // for P_IsPaused
 #include "p_player.h"
 
 // MACROS ------------------------------------------------------------------

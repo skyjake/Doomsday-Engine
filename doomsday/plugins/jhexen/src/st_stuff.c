@@ -47,6 +47,8 @@
 #include "st_lib.h"
 #include "d_net.h"
 
+#include "p_tick.h" // for P_IsPaused
+
 // MACROS ------------------------------------------------------------------
 
 // inventory

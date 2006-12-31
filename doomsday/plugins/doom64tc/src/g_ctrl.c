@@ -99,8 +99,6 @@ const Control_t controls[] = {
     // Screen controls.
     {"viewsize -", CLF_REPEAT, DDBC_NORMAL, '-', 0, 0},
     {"viewsize +", CLF_REPEAT, DDBC_NORMAL, '=', 0, 0},
-    {"sbsize -", CLF_REPEAT, DDBC_NORMAL, 0, 0, 0},
-    {"sbsize +", CLF_REPEAT, DDBC_NORMAL, 0, 0, 0},
 
     // Misc.
     {"pause", 0, DDBC_NORMAL, DDKEY_PAUSE, 0, 0},

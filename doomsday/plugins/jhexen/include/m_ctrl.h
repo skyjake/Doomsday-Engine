@@ -17,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -98,6 +98,7 @@ static const MenuItem_t ControlsItems[] = {
     {ITT_EFUNC, 0, "INVENTORY RIGHT :", SCControlConfig, 53},
     {ITT_EFUNC, 0, "USE ARTIFACT :", SCControlConfig, A_USEARTIFACT},
     {ITT_EMPTY, 0, NULL, NULL, 0},
+
     {ITT_EMPTY, 0, "MENU", NULL, 0},
     {ITT_EFUNC, 0, "OPEN/CLOSE MENU :", SCControlConfig, 84},
     {ITT_EFUNC, 0, "Cursor Up :", SCControlConfig, 78},
@@ -106,6 +107,7 @@ static const MenuItem_t ControlsItems[] = {
     {ITT_EFUNC, 0, "Cursor Right :", SCControlConfig, 81},
     {ITT_EFUNC, 0, "Accept :", SCControlConfig, 82},
     {ITT_EFUNC, 0, "Cancel :", SCControlConfig, 83},
+
     {ITT_EMPTY, 0, "MENU HOTKEYS", NULL, 0},
     {ITT_EFUNC, 0, "INFO :", SCControlConfig, 40},
     {ITT_EFUNC, 0, "SOUND MENU :", SCControlConfig, 43},
@@ -116,16 +118,19 @@ static const MenuItem_t ControlsItems[] = {
     {ITT_EFUNC, 0, "SUICIDE :", SCControlConfig, 44},
     {ITT_EFUNC, 0, "END GAME :", SCControlConfig, 46},
     {ITT_EFUNC, 0, "QUIT :", SCControlConfig, 49},
-    {ITT_EFUNC, 0, "MESSAGES ON/OFF:", SCControlConfig, 47},
-    {ITT_EFUNC, 0, "GAMMA CORRECTION :", SCControlConfig, 50},
-    {ITT_EFUNC, 0, "SPY MODE :", SCControlConfig, 51},
     {ITT_EMPTY, 0, NULL, NULL, 0},
+
     {ITT_EMPTY, 0, "SCREEN", NULL, 0},
     {ITT_EFUNC, 0, "SMALLER VIEW :", SCControlConfig, 55},
     {ITT_EFUNC, 0, "LARGER VIEW :", SCControlConfig, 54},
-    {ITT_EFUNC, 0, "SMALLER ST. BAR :", SCControlConfig, 57},
-    {ITT_EFUNC, 0, "LARGER ST. BAR :", SCControlConfig, 56},
+    {ITT_EFUNC, 0, "SMALLER STATBAR :", SCControlConfig, 57},
+    {ITT_EFUNC, 0, "LARGER STATBAR :", SCControlConfig, 56},
+    {ITT_EFUNC, 0, "SHOW HUD :", SCControlConfig, 102},
+    {ITT_EFUNC, 0, "MESSAGES ON/OFF:", SCControlConfig, 47},
+    {ITT_EFUNC, 0, "SPY MODE :", SCControlConfig, 51},
+    {ITT_EFUNC, 0, "GAMMA CORRECTION :", SCControlConfig, 50},
     {ITT_EMPTY, 0, NULL, NULL, 0},
+
     {ITT_EMPTY, 0, "AUTOMAP KEYS", NULL, 0},
     {ITT_EFUNC, 0, "OPEN/COSE MAP :", SCControlConfig, 60},
     {ITT_EFUNC, 0, "PAN UP :", SCControlConfig, 69},
