@@ -51,6 +51,7 @@ typedef struct cbnode_s {
 
 static void insertNodeAtEnd(cbuffer_t *buf, cbnode_t *newnode);
 static void removeNode(cbuffer_t *buf, cbnode_t *node);
+static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -76,16 +77,26 @@ static cbline_t *bufferNewLine(cbuffer_t *buf)
     if(!buf)
         return NULL; // This is unacceptable!
 
-    // Allocate another line.
-    buf->numLines++;
-    line = M_Malloc(sizeof(cbline_t));
+    // Do we have any unused nodes we can reuse?
+    if(buf->unused != NULL)
+    {
+        node = buf->unused;
+        buf->unused = node->next;
+        line = node->data;
+    }
+    else
+    {
+        // Allocate another line.
+        line = M_Malloc(sizeof(cbline_t));
+        node = M_Malloc(sizeof(cbnode_t));
+        node->data = line;
 
-    line->text = NULL;
+        line->text = NULL;
+    }
+    buf->numLines++;
+
     line->len = 0;
     line->flags = 0;
-
-    node = M_Malloc(sizeof(cbnode_t));
-    node->data = line;
 
     // Link it in.
     insertNodeAtEnd(buf, node);
@@ -161,6 +172,16 @@ static void insertNodeAtEnd(cbuffer_t *buf, cbnode_t *newnode)
         insertNodeAfter(buf, buf->tailptr, newnode);
 }
 
+static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node)
+{
+    if(buf->unused != NULL)
+        node->next = buf->unused;
+    else
+        node->next = NULL;
+    node->prev = NULL;
+    buf->unused = node;
+}
+
 static void removeNode(cbuffer_t *buf, cbnode_t *node)
 {
    if(node->prev == NULL)
@@ -173,7 +194,7 @@ static void removeNode(cbuffer_t *buf, cbnode_t *node)
    else
        node->next->prev = node->prev;
 
-   destroyNode(node);
+   moveNodeForReuse(buf, node);
 }
 
 /**
@@ -198,15 +219,61 @@ cbuffer_t *Con_NewBuffer(uint maxNumLines, uint maxLineLength, int flags)
     buf->flags = flags;
     buf->headptr = buf->tailptr = NULL;
     buf->numLines = 0;
-    buf->maxLines = maxNumLines;
     buf->maxLineLen = maxLineLength;
     buf->writebuf = M_Calloc(buf->maxLineLen + 1);
     buf->wbc = 0;
     buf->wbFlags = 0;
+    buf->maxLines = maxNumLines;
+    if(buf->maxLines != 0) // not unlimited.
+    {   // Might as well allocate the index now.
+        buf->index = M_Malloc(sizeof(cbline_t*) * buf->maxLines);
+        buf->indexSize = buf->maxLines;
+    }
+    else
+    {
+        buf->index = NULL;
+        buf->indexSize = 0;
+    }
+
     buf->indexGood = true; // its empty so...
-    buf->index = NULL;
+    buf->unused = NULL;
 
     return buf;
+}
+
+static void clearBuffer(cbuffer_t *buf, boolean destroy)
+{
+    cbnode_t   *n, *np;
+
+    // Free the buffer contents.
+    n = buf->headptr;
+    while(n != NULL)
+    {
+        np = n->next;
+        if(destroy)
+            destroyNode(n);
+        else
+            moveNodeForReuse(buf, n);
+        n = np;
+    }
+    buf->headptr = buf->tailptr = NULL;
+    buf->numLines = 0;
+
+    memset(buf->writebuf, 0, buf->maxLineLen + 1);
+    buf->wbc = 0;
+}
+
+/**
+ * Clear the contents of a console history buffer.
+ *
+ * @param buf               Ptr to the buffer to be cleared.
+ */
+void Con_BufferClear(cbuffer_t *buf)
+{
+    if(!buf)
+        return;
+
+    clearBuffer(buf, false);
 }
 
 /**
@@ -218,39 +285,24 @@ void Con_DestroyBuffer(cbuffer_t *buf)
 {
     if(buf)
     {
-        Con_BufferClear(buf);
+        cbnode_t *n, *np;
+
+        clearBuffer(buf, true);
         M_Free(buf->writebuf);
         if(buf->index)
             M_Free(buf->index);
+
+        // Free any unused nodes.
+        n = buf->unused;
+        while(n)
+        {
+            np = n->next;
+            destroyNode(n);
+            n = np;
+        }
+
         M_Free(buf);
     }
-}
-
-/**
- * Clear the contents of a console history buffer.
- *
- * @param buf               Ptr to the buffer to be cleared.
- */
-void Con_BufferClear(cbuffer_t *buf)
-{
-    cbnode_t   *n, *np;
-
-    if(!buf)
-        return;
-
-    // Free the buffer contents.
-    n = buf->headptr;
-    while(n != NULL)
-    {
-        np = n->next;
-        destroyNode(n);
-        n = np;
-    }
-    buf->headptr = buf->tailptr = NULL;
-    buf->numLines = 0;
-
-    memset(buf->writebuf, 0, buf->maxLineLen + 1);
-    buf->wbc = 0;
 }
 
 /**
@@ -308,8 +360,13 @@ cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx)
         uint        i;
         cbnode_t   *node;
 
-        buf->index =
-            M_Realloc(buf->index, sizeof(cbline_t*) * buf->numLines);
+        // Do we need to enlarge the index?
+        if(buf->indexSize < buf->numLines)
+        {
+            buf->index =
+                M_Realloc(buf->index, sizeof(cbline_t*) * buf->numLines);
+            buf->indexSize = buf->numLines;
+        }
 
         i = 0;
         node = buf->headptr;
@@ -348,8 +405,21 @@ void Con_BufferFlush(cbuffer_t *buf)
     // Flush the write buffer.
     //
     len = strlen(buf->writebuf);
+    if(line->text != NULL)
+    {   // We are re-using an existing line so we may not need to
+        // reallocate at all.
+        uint    exlen = strlen(line->text);
 
-    line->text = M_Malloc(len + 1);
+        if(exlen < len)
+            line->text = M_Realloc(line->text, len + 1);
+        else
+            memset(line->text, 0, exlen);
+    }
+    else
+    {
+        line->text = M_Malloc(len + 1);
+    }
+
     strcpy(line->text, buf->writebuf);
     line->text[len] = 0;
     line->len = len;

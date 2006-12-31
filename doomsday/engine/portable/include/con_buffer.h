@@ -47,8 +47,10 @@ typedef struct {
 
     void   *headptr;
     void   *tailptr;
+    void   *unused;
 
     cbline_t **index;           // Used when indexing the buffer for read.
+    uint    indexSize;
     boolean indexGood;          // If the index needs updating.
 
     char   *writebuf;           // write buffer.
