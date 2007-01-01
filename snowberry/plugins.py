@@ -22,7 +22,7 @@
 ##
 ## If a plugin init() raises an exception, the plugin is ignored.
 
-import sys, os, re
+import sys, os, re, string
 import sb.confdb as st
 import language, paths, logger
 
@@ -31,6 +31,10 @@ PLUGIN_PATH = 'plugins'
 # An array of Python statements that will initialize all loaded
 # plugins.
 initCommands = []
+
+
+def sortKey(name):
+    return paths.getBase(name).lower()
 
 
 def loadAll():
@@ -45,19 +49,26 @@ def loadAll():
     # Make the plugins directory the one where to look first.
     sys.path = [PLUGIN_PATH] + sys.path
 
+    found = []
+
     for fileName in paths.listFiles(paths.PLUGINS):
+        if paths.hasExtension('py', fileName) or \
+           (paths.hasExtension('plugin', fileName) and os.path.isdir(fileName)):
+            if fileName not in found:
+                found.append(fileName)
+                
+    # Sort alphabetically across all located plugins.
+    found.sort(key=sortKey)
+    for fileName in found:
         if paths.hasExtension('py', fileName):
-            # Single Python module.
-            loadSingle(fileName)
-        elif paths.hasExtension('plugin', fileName) and \
-             os.path.isdir(fileName):
-            # A plugin bundle.
-            loadBundle(fileName)
+            loadSingle(fileName) # Single Python module.
+        elif paths.hasExtension('plugin', fileName):            
+            loadBundle(fileName) # A plugin bundle.
 
     # Import all plugin modules.
     for cmd in initCommands:
         sys.path = cmd[2]
-        exec(cmd[0])
+        exec cmd[0]
 
     # Initialize all plugins.
     for importStatement, initStatement, searchPath in initCommands:
@@ -80,13 +91,19 @@ def loadSingle(fileName):
     @param fileName File name of the the plugin.
     """
     name = paths.getBase(fileName)
+
+    obsoletePluginNames = ['tab1_summary', 'tab2_addons', 'tab3_settings', 'tab30_addons']
     
     # Old plugin names.
-    if name == 'tab1_summary' or name == 'tab2_addons' or name == 'tab3_settings':
+    if name in obsoletePluginNames:
         logger.add(logger.MEDIUM, 'warning-obsolete-plugin', name, fileName)
     
+    sysPath = sys.path
+    if os.path.dirname(fileName) not in sysPath:
+        sysPath = [os.path.dirname(fileName)] + sys.path
+    
     # Initialization will be done after everything has been loaded.
-    initCommands.append(('import ' + name, name + '.init()', sys.path))
+    initCommands.append(('import ' + name, name + '.init()', sysPath))
 
 
 def loadBundle(path):
