@@ -671,7 +671,7 @@ boolean G_Responder(event_t *ev)
             return true;
 
         // Try the chatmode responder
-        if(HU_Responder(ev))
+        if(HUMsg_Responder(ev))
             return true;
 
         // Check for cheats
@@ -1044,7 +1044,7 @@ void G_PlayerExitMap(int player)
     p->poisoncount = 0;
 #endif
 
-    P_ClearMessage(p);
+    HUMsg_ClearMessages(p);
 }
 
 /*
@@ -1061,7 +1061,7 @@ void ClearPlayer(player_t *p)
     // Restore counters.
     counter = ddplayer->fixcounter;
     acked = ddplayer->fixacked;
-    
+
     memset(p, 0, sizeof(*p));
     // Restore the pointer to ddplayer.
     p->plr = ddplayer;
@@ -1077,11 +1077,11 @@ void ClearPlayer(player_t *p)
     // Restore counters.
     ddplayer->fixcounter = counter;
     ddplayer->fixacked = acked;
-    
+
     ddplayer->fixcounter.angles++;
     ddplayer->fixcounter.pos++;
     ddplayer->fixcounter.mom++;
-    
+
 /*    ddplayer->fixacked.angles =
         ddplayer->fixacked.pos =
         ddplayer->fixacked.mom = -1;
@@ -1686,9 +1686,6 @@ void G_DoCompleted(void)
     NetSv_Intermission(IMF_BEGIN, LeaveMap, LeavePosition);
 #endif
     gamestate = GS_INTERMISSION;
-
-    for(i = 0; i < MAXPLAYERS; i++)
-        P_ClearMessage(&players[i]);
 
 #if __JDOOM__
     WI_Start(&wminfo);

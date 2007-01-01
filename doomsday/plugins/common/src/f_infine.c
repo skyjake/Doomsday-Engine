@@ -44,6 +44,7 @@
 #  include "jstrife.h"
 #endif
 
+#include "hu_msg.h"
 #include "hu_stuff.h"
 #include "f_infine.h"
 #include "g_common.h"
@@ -400,7 +401,7 @@ void FI_ClearState(void)
 {
     int     i, c;
 
-    P_ClearMessage(&players[consoleplayer]);
+    HUMsg_ClearMessages(&players[consoleplayer]);
 
     // General game state.
     gameaction = ga_nothing;

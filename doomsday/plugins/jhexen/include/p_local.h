@@ -231,7 +231,7 @@ void            P_Validate();
 
 extern int      clipmana[NUMAMMO];
 
-void            P_ClearMessage(player_t *player);
+void            HUMsg_ClearMessages(player_t *player);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 void            P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                              int damage);

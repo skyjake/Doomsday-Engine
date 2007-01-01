@@ -194,7 +194,7 @@ void M_DrawBackgroundBox(int x, int y, int w, int h,
 
 extern EditField_t *ActiveEdit;    // in Mn_def.h
 
-extern boolean chat_on;            // in heads-up code
+extern boolean chatOn;            // in heads-up code
 
 #ifdef __JDOOM__
 extern int joyaxis[3];
@@ -4226,7 +4226,7 @@ DEFCC(CCmdMenuAction)
 
     if(!menuactive)
     {
-        if(!stricmp(argv[0], "menu") && !chat_on)   // Open menu
+        if(!stricmp(argv[0], "menu") && !chatOn)   // Open menu
         {
             M_StartControlPanel();
             S_LocalSound(menusnds[2], NULL);

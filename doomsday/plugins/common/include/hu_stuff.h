@@ -103,7 +103,6 @@ extern char    *mapnamesp[32], *mapnamest[32];
 
 void        HU_Start(void);
 void        HU_UnloadData(void);
-boolean     HU_Responder(event_t *ev);
 void        HU_Drawer(void);
 char        HU_dequeueChatChar(void);
 void        HU_Erase(void);

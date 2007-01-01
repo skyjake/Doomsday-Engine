@@ -62,13 +62,11 @@
 #define HU_INPUTX   HU_MSGX
 #define HU_INPUTY   (HU_MSGY + HU_MSGHEIGHT*(SHORT(hu_font[0].height) +1))
 
-#define IN_RANGE(x)     ((x)>=MAX_MESSAGES? (x)-MAX_MESSAGES : (x)<0? (x)+MAX_MESSAGES : (x))
+#define IN_RANGE(x) ((x)>=MAX_MESSAGES? (x)-MAX_MESSAGES : (x)<0? (x)+MAX_MESSAGES : (x))
 
 #define FLASHFADETICS  35
-#define HU_MSGREFRESH   DDKEY_ENTER
 #define HU_MSGX     0
 #define HU_MSGY     0
-#define HU_MSGWIDTH 64             // in characters
 #define HU_MSGHEIGHT    1          // in lines
 
 #define HU_MSGTIMEOUT   (4*TICRATE)
@@ -79,24 +77,24 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct message_s {
-    char    text[MAX_LINELEN];
-    int     time;
-    int     duration; // time when posted.
+    char       *text;
+    int         time;
+    int         duration; // time when posted.
 } message_t;
 
-typedef struct messagebuffer_s {
-    boolean     message_dontfuckwithme;
-    boolean     message_noecho;
+typedef struct msgbuffer_s {
+    boolean     dontfuckwithme;
+    boolean     noecho;
     message_t   messages[MAX_MESSAGES];
-    int         message_counter;
+    int         timer;
 
-    boolean     message_on;
-    boolean     message_nottobefuckedwith;
+    boolean     visible;
+    boolean     nottobefuckedwith;
 
     int         firstmsg, lastmsg, msgcount;
     float       yoffset; // Scroll-up offset.
     char       *lastmessage;
-} messagebuffer_t;
+} msgbuffer_t;
 
 #if __JHEXEN__
 enum {
@@ -120,11 +118,14 @@ DEFCC(CCmdLocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void     HUMsg_ClearBuffer(messagebuffer_t *msgBuff);
-static void     HUMsg_CloseChat(void);
-static void     HUMsg_DropLast(messagebuffer_t *msgBuff);
-static void     HUMsg_Message(messagebuffer_t *msgBuff, char *msg,
-                              int msgtics);
+static void     HU_MsgBufAddMessage(msgbuffer_t *msgBuff, char *msg,
+                                    int msgtics);
+static void     HU_MsgBufDropLast(msgbuffer_t *msgBuff);
+static void     HU_MsgBufClear(msgbuffer_t *msgBuff);
+static void     HU_MsgBufDraw(msgbuffer_t *msgBuff);
+static void     HU_MsgBufTick(msgbuffer_t *msgBuff);
+
+static void     closeChat(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -133,7 +134,7 @@ extern int actual_leveltime;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean shiftdown = false;
-boolean chat_on;
+boolean chatOn;
 
 #if __JDOOM__ || __JHERETIC__
 
@@ -163,20 +164,14 @@ int     player_names_idx[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static messagebuffer_t msgBuffer[MAXPLAYERS];
+static msgbuffer_t msgBuffer[MAXPLAYERS];
 
-static char lastmessage[HU_MAXLINELENGTH + 1];
-
-static int chat_to = 0; // 0=all, 1=player 0, etc.
-
+static int chatTo = 0; // 0=all, 1=player 0, etc.
 static hu_itext_t w_chat;
-static boolean always_off = false;
+static hu_itext_t w_chatbuffer[MAXPLAYERS];
+static boolean w_chat_always_off = false;
 
-static hu_itext_t w_inputbuffer[MAXPLAYERS];
-
-static hu_stext_t w_message[MAXPLAYERS];
-
-static const char english_shiftxform[] = {
+static const char shiftXForm[] = {
     0,
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
     11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
@@ -207,7 +202,7 @@ static const char english_shiftxform[] = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
     'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     '[',                        // shift-[
-    '!',                        // shift-backslash - OH MY GOD DOES WATCOM SUCK
+    '!',                        // shift-backslash
     ']',                        // shift-]
     '"', '_',
     '\'',                       // shift-`
@@ -217,34 +212,26 @@ static const char english_shiftxform[] = {
 };
 
 cvar_t msgCVars[] = {
-    {"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1},
-
     // Behaviour
-    {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1},
-
-#if !__JHEXEN__
-    {"msg-secret", 0, CVT_BYTE, &cfg.secretMsg, 0, 1},
-#endif
-
     {"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8},
-
-    {"msg-uptime", CVF_NO_MAX, CVT_INT, &cfg.msgUptime, 35, 0},
-
+    {"msg-echo", 0, CVT_BYTE, &cfg.echoMsg, 0, 1},
 #if __JHEXEN__
     {"msg-hub-override", 0, CVT_BYTE, &cfg.overrideHubMsg, 0, 2},
+#else
+    {"msg-secret", 0, CVT_BYTE, &cfg.secretMsg, 0, 1},
 #endif
+    {"msg-uptime", CVF_NO_MAX, CVT_INT, &cfg.msgUptime, 35, 0},
 
-    // Display style
-    {"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0},
-
+    // Display
     {"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2},
+    {"msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0},
+    {"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0},
+    {"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1},
 
-    // Colour (default, individual message may have built-in colour settings)
+    // Colour defaults
     {"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[0], 0, 1},
     {"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[1], 0, 1},
     {"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[2], 0, 1},
-
-    {"msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0},
 
     // Chat macros
     {"chat-macro0", 0, CVT_CHARPTR, &cfg.chat_macros[0], 0, 0},
@@ -262,13 +249,13 @@ cvar_t msgCVars[] = {
 
 // Console commands for the message buffer
 ccmd_t  msgCCmds[] = {
+    {"chatcancel",      "",     CCmdMsgAction},
     {"chatcomplete",    "",     CCmdMsgAction},
     {"chatdelete",      "",     CCmdMsgAction},
-    {"chatcancel",      "",     CCmdMsgAction},
     {"chatsendmacro",   NULL,   CCmdMsgAction},
     {"beginchat",       NULL,   CCmdMsgAction},
-    {"msgrefresh",      "",     CCmdMsgAction},
     {"message",         "s",    CCmdLocalMessage},
+    {"msgrefresh",      "",     CCmdMsgAction},
     {NULL}
 };
 
@@ -281,7 +268,7 @@ ccmd_t  msgCCmds[] = {
  */
 void HUMsg_Register(void)
 {
-    int     i;
+    int         i;
 
     for(i = 0; msgCVars[i].name; ++i)
         Con_AddVariable(msgCVars + i);
@@ -295,10 +282,10 @@ void HUMsg_Register(void)
  */
 void HUMsg_Init(void)
 {
-    int     i;
+    int         i;
 
     // Setup strings.
-    for(i = 0; i < 10; i++)
+    for(i = 0; i < 10; ++i)
         if(!cfg.chat_macros[i]) // Don't overwrite if already set.
             cfg.chat_macros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
 
@@ -311,90 +298,43 @@ void HUMsg_Init(void)
  */
 void HUMsg_Start(void)
 {
-    int     i;
+    int         i, j;
 
-    HUMsg_CloseChat();
+    closeChat();
 
     // Create the chat widget
     HUlib_initIText(&w_chat, HU_INPUTX, HU_INPUTY, hu_font_a, HU_FONTSTART,
-                    &chat_on);
+                    &chatOn);
 
     // Create the message and input buffers for all local players.
     // TODO: we only need buffers for active local players.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        msgBuffer[i].message_on = false;
-        msgBuffer[i].message_dontfuckwithme = false;
-        msgBuffer[i].message_nottobefuckedwith = false;
-        msgBuffer[i].msgcount = 0;
-        msgBuffer[i].yoffset = 0; // Scroll-up offset.
+        msgbuffer_t *buf = &msgBuffer[i];
 
-        // create the message widget
-        HUlib_initSText(&w_message[i], HU_MSGX, HU_MSGY, HU_MSGHEIGHT, hu_font_a,
-                        HU_FONTSTART, &msgBuffer[i].message_on);
+        buf->visible = false;
+        buf->dontfuckwithme = false;
+        buf->nottobefuckedwith = false;
+        buf->msgcount = 0;
+        buf->yoffset = 0; // Scroll-up offset.
+        buf->noecho = false;
+        buf->timer = 0;
+        buf->visible = true;
+        buf->firstmsg = 0;
+        buf->lastmsg = 0;
+        buf->lastmessage = NULL;
+
+        for(j = 0; j < MAX_MESSAGES; ++j)
+        {
+            message_t *msg = &buf->messages[j];
+
+            msg->text = NULL;
+            msg->time = 0;
+            msg->duration = 0;
+        }
 
         // create the inputbuffer widgets
-        HUlib_initIText(&w_inputbuffer[i], 0, 0, 0, 0, &always_off);
-    }
-}
-
-static void HUMsg_OpenChat(int chattarget)
-{
-    chat_on = true;
-    chat_to = chattarget;
-
-    HUlib_resetIText(&w_chat);
-
-    // Enable the chat binding class
-    DD_SetBindClass(GBC_CHAT, true);
-}
-
-static void HUMsg_CloseChat(void)
-{
-    if(chat_on)
-    {
-        chat_on = false;
-        // Disable the chat binding class
-        DD_SetBindClass(GBC_CHAT, false);
-    }
-}
-
-static void HUMsg_TickBuffer(messagebuffer_t *msgBuff)
-{
-    int i;
-
-    // Don't tick the message buffer if the game is paused.
-    if(P_IsPaused())
-        return;
-
-    // Countdown to scroll-up.
-    for(i = 0; i < MAX_MESSAGES; i++)
-        msgBuff->messages[i].time--;
-
-    if(msgBuff->msgcount)
-    {
-        msgBuff->yoffset = 0;
-        if(msgBuff->messages[msgBuff->firstmsg].time >= 0 &&
-           msgBuff->messages[msgBuff->firstmsg].time <= LINEHEIGHT_A)
-        {
-            msgBuff->yoffset =
-                LINEHEIGHT_A - msgBuff->messages[msgBuff->firstmsg].time;
-        }
-        else if(msgBuff->messages[msgBuff->firstmsg].time < 0)
-            HUMsg_DropLast(msgBuff);
-    }
-
-    // tick down message counter if message is up
-    if(msgBuff->message_counter && !--msgBuff->message_counter)
-    {
-        msgBuff->message_on = false;
-        msgBuff->message_nottobefuckedwith = false;
-    }
-
-    if(!msgBuff->message_counter)
-    {
-        // Refresh the screen when a message goes away
-        GL_Update(DDUF_TOP);
+        HUlib_initIText(&w_chatbuffer[i], 0, 0, 0, 0, &w_chat_always_off);
     }
 }
 
@@ -403,80 +343,14 @@ static void HUMsg_TickBuffer(messagebuffer_t *msgBuff)
  */
 void HUMsg_Ticker(void)
 {
-    int i;
+    int        i;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
-        HUMsg_TickBuffer(&msgBuffer[i]);
-}
-
-static void HUMsg_DrawBuffer(messagebuffer_t *msgBuff)
-{
-    int     i, m, num, y, lh = LINEHEIGHT_A, td, x;
-    int     msgTics;
-    float   col[4];
-
-    // How many messages should we print?
-    num = msgBuff->msgcount;
-
-    switch(cfg.msgAlign)
+    // Don't tick the message buffer if the game is paused.
+    if(!P_IsPaused())
     {
-    case ALIGN_LEFT:
-        x = 0;
-        break;
-
-    case ALIGN_CENTER:
-        x = 160;
-        break;
-
-    case ALIGN_RIGHT:
-        x = 320;
-        break;
-
-    default:
-        x = 0;
-        break;
+        for(i = 0; i < MAXPLAYERS; ++i)
+            HU_MsgBufTick(&msgBuffer[i]);
     }
-
-    Draw_BeginZoom(cfg.msgScale, x, 0);
-    gl.Translatef(0, -msgBuff->yoffset, 0);
-
-    // First 'num' messages starting from the last one.
-    for(y = (num - 1) * lh, m = IN_RANGE(msgBuff->lastmsg - 1); num;
-        y -= lh, num--, m = IN_RANGE(m - 1))
-    {
-        // Set colour.
-        memcpy(col, cfg.msgColor, sizeof(cfg.msgColor));
-        // Set alpha.
-        col[3] = 1;
-
-        td = cfg.msgUptime - msgBuff->messages[m].time;
-        msgTics = msgBuff->messages[m].duration - msgBuff->messages[m].time;
-        if(cfg.msgBlink && msgTics < cfg.msgBlink && (td & 2))
-        {   // Flash color.
-            col[0] = col[1] = col[2] = 1;
-        }
-        else if(cfg.msgBlink && msgTics < cfg.msgBlink + FLASHFADETICS &&
-                msgTics >= cfg.msgBlink)
-        {   // Fade color to normal.
-            for(i = 0; i < 3; ++i)
-                col[i] += (((1.0f - col[i]) / FLASHFADETICS) *
-                            (cfg.msgBlink + FLASHFADETICS - msgTics));
-        }
-        else
-        {   // Fade alpha out.
-            if(m == msgBuff->firstmsg && msgBuff->messages[m].time <= LINEHEIGHT_A)
-                col[3] = msgBuff->messages[m].time / (float) LINEHEIGHT_A *0.9f;
-        }
-
-        // draw using param text
-        // messages may use the params to override
-        // eg colour (Hexen's important messages)
-        WI_DrawParamText(x, 1 + y, msgBuff->messages[m].text, hu_font_a,
-                         col[0], col[1], col[2], col[3], false, false,
-                         cfg.msgAlign);
-    }
-
-    Draw_EndZoom();
 }
 
 void HUMsg_Drawer(void)
@@ -485,17 +359,18 @@ void HUMsg_Drawer(void)
     if(cfg.levelTitle && actual_leveltime < 6 * 35)
         return;
 
-    HUMsg_DrawBuffer(&msgBuffer[consoleplayer]);
+    if(cfg.msgShow)
+        HU_MsgBufDraw(&msgBuffer[consoleplayer]);
 
     HUlib_drawIText(&w_chat);
 }
 
-boolean HU_Responder(event_t *ev)
+boolean HUMsg_Responder(event_t *ev)
 {
-    boolean eatkey = false;
+    boolean     eatkey = false;
     unsigned char c;
 
-    if(gamestate != GS_LEVEL || !chat_on)
+    if(gamestate != GS_LEVEL || !chatOn)
         return false;
 
     if(ev->type == EV_KEY && ev->data1 == DDKEY_RSHIFT)
@@ -510,125 +385,305 @@ boolean HU_Responder(event_t *ev)
     c = (unsigned char) ev->data1;
 
     if(shiftdown || (c >= 'a' && c <= 'z'))
-        c = english_shiftxform[c];
+        c = shiftXForm[c];
 
     eatkey = HUlib_keyInIText(&w_chat, c);
 
     return eatkey;
 }
 
-void HUMsg_PlayerMessage(player_t *plr, char *message, int tics, boolean noHide,
-                         boolean yellow)
+void HUMsg_PlayerMessage(player_t *plr, char *message, int tics,
+                         boolean noHide, boolean yellow)
 {
-    messagebuffer_t *msgBuff = &msgBuffer[plr - players];
+    msgbuffer_t *msgBuff = &msgBuffer[plr - players];
 
-    if(plr != &players[consoleplayer] || !message || !tics)
+    if(!message || !tics)
         return;
 
-    if(cfg.msgShow || msgBuff->message_dontfuckwithme)
+    if(!msgBuff->nottobefuckedwith || msgBuff->dontfuckwithme)
     {
-        // display message if necessary.
-        if((message && !msgBuff->message_nottobefuckedwith) ||
-           (message && msgBuff->message_dontfuckwithme))
-        {
+        if(msgBuff->lastmessage)
             free(msgBuff->lastmessage);
 
-            if(yellow)
-            {
-                char *format = "{r=1; g=0.7; b=0.3;}";
+        if(yellow)
+        {
+            char *format = "{r=1; g=0.7; b=0.3;}";
 
-                // Alloc a new buffer.
-                msgBuff->lastmessage =
-                    malloc((strlen(message)+strlen(format)+1) * sizeof(char));
-                // Copy the format string.
-                sprintf(msgBuff->lastmessage, "%s%s", format, message);
-            }
-            else
-            {
-                // Alloc a new buffer.
-                msgBuff->lastmessage = malloc((strlen(message)+1) * sizeof(char));
-
-                // Copy the message
-                sprintf(msgBuff->lastmessage, "%s", message);
-            }
-
-            HUMsg_Message(msgBuff, msgBuff->lastmessage, tics);
-
-            msgBuff->message_on = true;
-            msgBuff->message_counter = HU_MSGTIMEOUT;
-            msgBuff->message_nottobefuckedwith = msgBuff->message_dontfuckwithme;
-            msgBuff->message_dontfuckwithme = 0;
+            // Alloc a new buffer.
+            msgBuff->lastmessage =
+                malloc((strlen(message)+strlen(format)+1) * sizeof(char));
+            // Copy the format string.
+            sprintf(msgBuff->lastmessage, "%s%s", format, message);
         }
+        else
+        {
+            // Alloc a new buffer.
+            msgBuff->lastmessage = malloc((strlen(message)+1) * sizeof(char));
+
+            // Copy the message
+            sprintf(msgBuff->lastmessage, "%s", message);
+        }
+
+        HU_MsgBufAddMessage(msgBuff, msgBuff->lastmessage, tics);
+
+        msgBuff->visible = true;
+        msgBuff->timer = HU_MSGTIMEOUT;
+        msgBuff->nottobefuckedwith = msgBuff->dontfuckwithme;
+        msgBuff->dontfuckwithme = 0;
     }
 }
 
-void P_ClearMessage(player_t *player)
+void HUMsg_ClearMessages(player_t *player)
 {
-    HUMsg_ClearBuffer(&msgBuffer[player - players]);
+    HU_MsgBufClear(&msgBuffer[player - players]);
+
     if(player == &players[consoleplayer])
+        GL_Update(DDUF_TOP);
+}
+
+/**
+ * Adds the given message to the buffer.
+ *
+ * @param buf           Ptr to the message buffer to add the message to.
+ * @param txt           The message to be added.
+ * @param tics          The length of time the message should be visible.
+ */
+static void HU_MsgBufAddMessage(msgbuffer_t *buf, char *txt, int tics)
+{
+    int        len;
+    message_t  *msg;
+
+    if(!buf)
+        return;
+
+    msg = &buf->messages[buf->lastmsg];
+
+    len = strlen(txt);
+    msg->text = realloc(msg->text, len+ 1);
+    strcpy(msg->text, txt);
+    msg->text[len] = 0;
+    msg->time = msg->duration = cfg.msgUptime + tics;
+
+    buf->lastmsg = IN_RANGE(buf->lastmsg + 1);
+
+    if(buf->msgcount == MAX_MESSAGES)
+        buf->firstmsg = buf->lastmsg;
+    else if(buf->msgcount == cfg.msgCount)
+        buf->firstmsg = IN_RANGE(buf->firstmsg + 1);
+    else
+        buf->msgcount++;
+}
+
+/**
+ * Remove the oldest message from the message buffer.
+ *
+ * @param buf           Ptr to the message buffer.
+ */
+static void HU_MsgBufDropLast(msgbuffer_t *buf)
+{
+    message_t  *msg;
+
+    if(!buf || buf->msgcount == 0)
+        return;
+
+    buf->firstmsg = IN_RANGE(buf->firstmsg + 1);
+
+    msg = &buf->messages[buf->firstmsg];
+    if(msg->time < 10)
+        msg->time = 10;
+
+    buf->msgcount--;
+}
+
+/**
+ * Empties the message buffer.
+ *
+ * @param buf           Ptr to the message buffer to clear.
+ */
+static void HU_MsgBufClear(msgbuffer_t *buf)
+{
+    int        i;
+
+    if(!buf)
+        return;
+
+    for(i = 0; i < MAX_MESSAGES; ++i)
     {
+        if(buf->messages[i].text)
+            free(buf->messages[i].text);
+    }
+
+    buf->firstmsg = buf->lastmsg = 0;
+    buf->msgcount = 0;
+}
+
+/**
+ * FIXME: This doesn't seem to work as intended.
+ *
+ * @param buf           Ptr to the message buffer to refresh.
+ */
+static void HU_MsgBufRefresh(msgbuffer_t *buf)
+{
+    if(!buf)
+        return;
+
+    buf->visible = true;
+    buf->timer = HU_MSGTIMEOUT;
+}
+
+
+/**
+ * Tick the given message buffer. Jobs include ticking messages and
+ * adjusting values used when drawing the buffer for animation.
+ *
+ * @param buf           Ptr to the message buffer to tick.
+ */
+static void HU_MsgBufTick(msgbuffer_t *buf)
+{
+    int         i;
+
+    if(!buf)
+        return;
+
+    // Countdown to scroll-up.
+    for(i = 0; i < MAX_MESSAGES; ++i)
+        if(buf->messages[i].time > 0)
+            buf->messages[i].time--;
+
+    if(buf->msgcount != 0)
+    {
+        message_t *msg = &buf->messages[buf->firstmsg];
+
+        buf->yoffset = 0;
+        if(msg->time == 0)
+        {
+            HU_MsgBufDropLast(buf);
+        }
+        else if(msg->time <= LINEHEIGHT_A)
+        {
+            buf->yoffset = LINEHEIGHT_A - msg->time;
+        }
+    }
+
+    // tick down message counter if a message is up
+    if(buf->timer > 0)
+        buf->timer--;
+
+    if(buf->timer == 0)
+    {
+        buf->visible = false;
+        buf->nottobefuckedwith = false;
+
+        // Refresh the screen when a message goes away
         GL_Update(DDUF_TOP);
     }
 }
 
 /**
- * Add a new message.
+ * Draws the contents of the given message buffer to the screen.
+ *
+ * @param buf           Ptr to the message buffer to draw.
  */
-static void HUMsg_Message(messagebuffer_t *msgBuff, char *msg, int msgtics)
+static void HU_MsgBufDraw(msgbuffer_t *buf)
 {
-    msgBuff->messages[msgBuff->lastmsg].time =
-        msgBuff->messages[msgBuff->lastmsg].duration = cfg.msgUptime + msgtics;
+    int         i, num, y, lh = LINEHEIGHT_A, x;
+    int         td, m, msgTics, blinkSpeed;
+    float       col[4];
+    message_t  *msg;
 
-    strcpy(msgBuff->messages[msgBuff->lastmsg].text, msg);
-    msgBuff->lastmsg = IN_RANGE(msgBuff->lastmsg + 1);
-
-    if(msgBuff->msgcount == MAX_MESSAGES)
-        msgBuff->firstmsg = msgBuff->lastmsg;
-    else if(msgBuff->msgcount == cfg.msgCount)
-        msgBuff->firstmsg = IN_RANGE(msgBuff->firstmsg + 1);
-    else
-        msgBuff->msgcount++;
-}
-
-/**
- * Removes the oldest message.
- */
-static void HUMsg_DropLast(messagebuffer_t *msgBuff)
-{
-    if(!msgBuff->msgcount)
+    if(!buf)
         return;
 
-    msgBuff->firstmsg = IN_RANGE(msgBuff->firstmsg + 1);
+    // How many messages should we print?
+    num = buf->msgcount;
 
-    if(msgBuff->messages[msgBuff->firstmsg].time < 10)
-        msgBuff->messages[msgBuff->firstmsg].time = 10;
-    msgBuff->msgcount--;
+    switch(cfg.msgAlign)
+    {
+    case ALIGN_LEFT:    x = 0;      break;
+    case ALIGN_CENTER:  x = 160;    break;
+    case ALIGN_RIGHT:   x = 320;    break;
+    default:            x = 0;      break;
+    }
+
+    Draw_BeginZoom(cfg.msgScale, x, 0);
+    gl.Translatef(0, -buf->yoffset, 0);
+
+    // First 'num' messages starting from the last one.
+    for(y = (num - 1) * lh, m = IN_RANGE(buf->lastmsg - 1); num;
+        y -= lh, num--, m = IN_RANGE(m - 1))
+    {
+        msg = &buf->messages[m];
+
+        // Set colour and alpha.
+        memcpy(col, cfg.msgColor, sizeof(cfg.msgColor));
+        col[3] = 1;
+
+        td = cfg.msgUptime - msg->time;
+        msgTics = msg->duration - msg->time;
+        blinkSpeed = cfg.msgBlink;
+
+        if((td & 2) && blinkSpeed != 0 && msgTics < blinkSpeed)
+        {
+            // Flash color.
+            col[0] = col[1] = col[2] = 1;
+        }
+        else if(blinkSpeed != 0 &&
+                msgTics < blinkSpeed + FLASHFADETICS &&
+                msgTics >= blinkSpeed)
+        {
+            // Fade color to normal.
+            for(i = 0; i < 3; ++i)
+                col[i] += ((1.0f - col[i]) / FLASHFADETICS) *
+                            (blinkSpeed + FLASHFADETICS - msgTics);
+        }
+        else
+        {
+            // Fade alpha out.
+            if(m == buf->firstmsg && msg->time <= LINEHEIGHT_A)
+                col[3] = msg->time / (float) LINEHEIGHT_A * 0.9f;
+        }
+
+        // draw using param text
+        // messages may use the params to override
+        // eg colour (Hexen's important messages)
+        WI_DrawParamText(x, 1 + y, msg->text, hu_font_a,
+                         col[0], col[1], col[2], col[3], false, false,
+                         cfg.msgAlign);
+    }
+
+    Draw_EndZoom();
 }
 
-static void HUMsg_ClearBuffer(messagebuffer_t *msgBuff)
+static void openChat(int plynum)
 {
-    // The message display is empty.
-    msgBuff->firstmsg = msgBuff->lastmsg = 0;
-    msgBuff->msgcount = 0;
+    chatOn = true;
+    chatTo = plynum;
+
+    HUlib_resetIText(&w_chat);
+
+    // Enable the chat binding class
+    DD_SetBindClass(GBC_CHAT, true);
 }
 
-static void HUMsg_RefreshBuffer(messagebuffer_t *msgBuff)
+static void closeChat(void)
 {
-    msgBuff->message_on = true;
-    msgBuff->message_counter = HU_MSGTIMEOUT;
+    if(chatOn)
+    {
+        chatOn = false;
+        // Disable the chat binding class
+        DD_SetBindClass(GBC_CHAT, false);
+    }
 }
 
 /**
  * Sends a string to other player(s) as a chat message.
  */
-static void HUMsg_SendMessage(char *msg)
+static void sendMessage(char *msg)
 {
-    char    buff[256];
-    int     i;
+    char        buff[256];
+    int         i;
 
-    strcpy(lastmessage, msg);
-
-    if(chat_to == HU_BROADCAST)
+    if(chatTo == HU_BROADCAST)
     {   // Send the message to the other players explicitly,
         strcpy(buff, "chat ");
         M_StrCatQuoted(buff, msg);
@@ -636,14 +691,15 @@ static void HUMsg_SendMessage(char *msg)
     }
     else
     {   // Send to all of the destination color.
-        for(i = 0; i < MAXPLAYERS; i++)
-            if(players[i].plr->ingame && cfg.PlayerColor[i] == chat_to)
+        for(i = 0; i < MAXPLAYERS; ++i)
+            if(players[i].plr->ingame && cfg.PlayerColor[i] == chatTo)
             {
                 sprintf(buff, "chatNum %d ", i);
                 M_StrCatQuoted(buff, msg);
                 DD_Execute(buff, false);
             }
     }
+
 #if __WOLFTC__
     if(gamemode == commercial)
         S_LocalSound(sfx_hudms1, 0);
@@ -660,21 +716,30 @@ static void HUMsg_SendMessage(char *msg)
 /**
  * Sets the chat buffer to a chat macro string.
  */
-static boolean HUMsg_SendMacro(int num)
+static boolean sendMacro(int num)
 {
-    if(!chat_on)
+    if(!chatOn)
         return false;
 
     if(num >= 0 && num < 9)
     {   // leave chat mode and notify that it was sent
-        if(chat_on)
-            HUMsg_CloseChat();
+        if(chatOn)
+            closeChat();
 
-        HUMsg_SendMessage(cfg.chat_macros[num]);
+        sendMessage(cfg.chat_macros[num]);
         return true;
     }
 
     return false;
+}
+
+/**
+ * Display a local game message.
+ */
+DEFCC(CCmdLocalMessage)
+{
+    D_NetMessageNoSound(argv[1]);
+    return true;
 }
 
 /**
@@ -683,21 +748,21 @@ static boolean HUMsg_SendMacro(int num)
  */
 DEFCC(CCmdMsgAction)
 {
-    int chattarget;
+    int         plynum;
 
-    if(chat_on)
+    if(chatOn)
     {
         if(!stricmp(argv[0], "chatcomplete"))  // send the message
         {
-            HUMsg_CloseChat();
+            closeChat();
             if(w_chat.l.len)
             {
-                HUMsg_SendMessage(w_chat.l.l);
+                sendMessage(w_chat.l.l);
             }
         }
         else if(!stricmp(argv[0], "chatcancel"))  // close chat
         {
-            HUMsg_CloseChat();
+            closeChat();
         }
         else if(!stricmp(argv[0], "chatdelete"))
         {
@@ -715,7 +780,7 @@ DEFCC(CCmdMsgAction)
             return true;
         }
 
-        if(!chat_on) // we need to enable chat mode first...
+        if(!chatOn) // we need to enable chat mode first...
         {
             if(IS_NETGAME)
             {
@@ -725,22 +790,22 @@ DEFCC(CCmdMsgAction)
 
             if(argc == 3)
             {
-                chattarget = atoi(argv[1]);
-                if(chattarget < 0 || chattarget > 3)
+                plynum = atoi(argv[1]);
+                if(plynum < 0 || plynum > 3)
                 {
                     // Bad destination.
                     Con_Message("Invalid player number \"%i\". Should be 0-3\n",
-                                chattarget);
+                                plynum);
                     return false;
                 }
             }
             else
-                chattarget = HU_BROADCAST;
+                plynum = HU_BROADCAST;
 
-            HUMsg_OpenChat(chattarget);
+            openChat(plynum);
         }
 
-        if(!(HUMsg_SendMacro(atoi(((argc == 3)? argv[2] : argv[1])))))
+        if(!(sendMacro(atoi(((argc == 3)? argv[2] : argv[1])))))
         {
             Con_Message("invalid macro number\n");
             return false;
@@ -750,11 +815,11 @@ DEFCC(CCmdMsgAction)
     {
         int i;
 
-        if(chat_on)
+        if(chatOn)
             return false;
 
         for(i = 0; i < MAXPLAYERS; ++i)
-            HUMsg_RefreshBuffer(&msgBuffer[i]);
+            HU_MsgBufRefresh(&msgBuffer[i]);
     }
     else if(!stricmp(argv[0], "beginchat")) // begin chat mode
     {
@@ -764,34 +829,25 @@ DEFCC(CCmdMsgAction)
             return false;
         }
 
-        if(chat_on)
+        if(chatOn)
             return false;
 
         if(argc == 2)
         {
-            chattarget = atoi(argv[1]);
-            if(chattarget < 0 || chattarget > 3)
+            plynum = atoi(argv[1]);
+            if(plynum < 0 || plynum > 3)
             {
                 // Bad destination.
                 Con_Message("Invalid player number \"%i\". Should be 0-3\n",
-                            chattarget);
+                            plynum);
                 return false;
             }
         }
         else
-            chattarget = HU_BROADCAST;
+            plynum = HU_BROADCAST;
 
-        HUMsg_OpenChat(chattarget);
+        openChat(plynum);
     }
 
-    return true;
-}
-
-/**
- * Display a local game message.
- */
-DEFCC(CCmdLocalMessage)
-{
-    D_NetMessageNoSound(argv[1]);
     return true;
 }

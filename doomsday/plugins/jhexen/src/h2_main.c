@@ -49,6 +49,7 @@
 
 #include "jhexen.h"
 
+#include "hu_msg.h"
 #include "d_net.h"
 #include "g_update.h"
 #include "g_common.h"
@@ -656,6 +657,11 @@ static void ExecOptionDEVMAPS(char **args, int tag)
 
 void H2_Shutdown(void)
 {
+    uint        i;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+        HUMsg_ClearMessages(&players[i]);
+
     P_DestroyIterList(spechit);
     P_DestroyIterList(linespecials);
     P_DestroyLineTagLists();

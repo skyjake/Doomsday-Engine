@@ -47,6 +47,7 @@
 
 #include "jhexen.h"
 
+#include "hu_msg.h"
 #include "p_svtexarc.h"
 #include "f_infine.h"
 #include "p_mapsetup.h"
@@ -686,7 +687,7 @@ void SV_HxMapTeleport(int map, int position)
             continue;
         }
         memcpy(&players[i], &playerBackup[i], sizeof(player_t));
-        P_ClearMessage(&players[i]);
+        HUMsg_ClearMessages(&players[i]);
         players[i].attacker = NULL;
         players[i].poisoner = NULL;
 
@@ -1182,7 +1183,7 @@ static void UnarchivePlayers(void)
            PlayerConverter(players+i, &tempPlayer, false); */
 
         /*      players[i].plr->mo = NULL; // Will be set when unarc thinker
-           P_ClearMessage(&players[i]);
+           HUMsg_ClearMessages(&players[i]);
            players[i].attacker = NULL;
            players[i].poisoner = NULL;
            for(j = 0; j < NUMPSPRITES; j++)

@@ -55,7 +55,6 @@ void        P_SetMessage(player_t *pl, char *msg, boolean noHide);
 #if __JHEXEN__ || __JSTRIFE__
 void        P_SetYellowMessage(player_t *pl, char *msg, boolean noHide);
 #endif
-void        P_ClearMessage(player_t *player);
 
 boolean     P_IsCamera(mobj_t *mo);
 void        P_PlayerThinkCamera(player_t *player);

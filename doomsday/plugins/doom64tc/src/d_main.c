@@ -36,6 +36,7 @@
 
 #include "m_argv.h"
 #include "hu_stuff.h"
+#include "hu_msg.h"
 #include "p_saveg.h"
 #include "p_mapspec.h"
 
@@ -544,7 +545,12 @@ void D_PostInit(void)
 
 void D_Shutdown(void)
 {
+    uint        i;
+
     HU_UnloadData();
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+        HUMsg_ClearMessages(&players[i]);
 
     P_DestroyIterList(spechit);
     P_DestroyIterList(linespecials);
