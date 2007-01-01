@@ -41,7 +41,7 @@ def init():
     events.addCommandListener(handleCommand, ['run-setup-wizard'])
     
     # Commands for the popup menu.
-    ui.addPopupMenuCommand(ui.MENU_TOOLS, 'run-setup-wizard')    
+    ui.addMenuCommand(ui.MENU_TOOLS, 'run-setup-wizard')    
 
 
 def handleNotify(event):

@@ -166,13 +166,13 @@ def init():
                                                'unhide-profiles'])
 
     # Commands for the menu.
-    #ui.addPopupMenuCommand(ui.MENU_PROFILE, 'new-profile')
-    ui.addPopupMenuCommand(ui.MENU_PROFILE, 'rename-profile')
-    ui.addPopupMenuCommand(ui.MENU_PROFILE, 'reset-profile')
-    #ui.addPopupMenuCommand(ui.MENU_PROFILE, 'delete-profile')
-    #ui.addPopupMenuCommand(ui.MENU_PROFILE, 'duplicate-profile')
-    #ui.addPopupMenuCommand(ui.MENU_PROFILE, 'hide-profile')
-    ui.addPopupMenuCommand(ui.MENU_PROFILE, 'unhide-profiles')
+    #ui.addMenuCommand(ui.MENU_PROFILE, 'new-profile')
+    ui.addMenuCommand(ui.MENU_PROFILE, 'rename-profile')
+    ui.addMenuCommand(ui.MENU_PROFILE, 'reset-profile')
+    #ui.addMenuCommand(ui.MENU_PROFILE, 'delete-profile')
+    #ui.addMenuCommand(ui.MENU_PROFILE, 'duplicate-profile')
+    #ui.addMenuCommand(ui.MENU_PROFILE, 'hide-profile')
+    ui.addMenuCommand(ui.MENU_PROFILE, 'unhide-profiles')
 
 
 def notifyHandler(event):
@@ -226,10 +226,12 @@ def notifyHandler(event):
         if pr.getActive() is pr.getDefaults():
             deleteButton.disable()
             dupeButton.disable()
+            ui.disableMenuCommand('rename-profile')
             profileList.setPopupMenu(defaultsMenu)
         else:
             deleteButton.enable()
             dupeButton.enable()
+            ui.enableMenuCommand('rename-profile')
             if pr.getActive().isSystemProfile():
                 menu = systemMenu
             else:

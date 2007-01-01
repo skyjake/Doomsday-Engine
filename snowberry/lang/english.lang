@@ -99,8 +99,6 @@ unhiding-profiles: Select one or more hidden profiles to show.
 unhide-select-all: Select all
 unhide-clear-all: Clear all
 view-command-line-dialog: Command Line
-launcher-defaults-active: Cannot Launch with the Defaults Profile
-launcher-defaults-active-text: Sorry, it is not possible to launch a game using the Defaults profile. Select another profile and try again.
 install-addon-dialog: Addon Installer
 addon-dialog-folder: Folder:
 addon-dialog-folder-browse: ...

@@ -115,29 +115,26 @@ def init():
                                               'continue'])
     
     # Commands for the popup menu.
-    ui.addPopupMenuCommand(ui.MENU_APP, 'quit')
-    ui.addPopupMenuCommand(ui.MENU_PROFILE, 'play')
-    ui.addPopupMenuCommand(ui.MENU_TOOLS, 'view-command-line')
+    ui.addMenuCommand(ui.MENU_APP, 'quit')
+    ui.addMenuCommand(ui.MENU_PROFILE, 'play')
+    ui.addMenuCommand(ui.MENU_TOOLS, 'view-command-line')
 
 
 def handleNotify(event):
     if event.hasId('active-profile-changed'):
+        # Disable or enable controls based on which profile is selected.
         if pr.getActive() is pr.getDefaults():
             playButton.disable()
+            ui.disableMenuCommand('play')
+            ui.disableMenuCommand('view-command-line')
         else:
             playButton.enable()
+            ui.enableMenuCommand('play')
+            ui.enableMenuCommand('view-command-line')
 
 
 def handleCommand(event):
     if pr.getActive() is pr.getDefaults():
-        # We're not even listening when the Defaults profile is selected.
-        dialog, area = sb.util.dialog.createButtonDialog(
-            'launcher-defaults-active',            
-            ['ok'], 'ok', resizable=False)
-        text = area.createText('launcher-defaults-active-text', 
-                               maxLineLength=70)
-        text.resizeToBestSize()
-        dialog.run()
         return
 
     if event.hasId('play'):

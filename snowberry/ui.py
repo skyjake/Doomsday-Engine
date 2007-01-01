@@ -516,6 +516,16 @@ class MainFrame (wx.Frame):
     def onPopupCommand(self, ev):
         """Called when a selection is made in the popup menu."""
         events.send(events.Command(self.menuCommandMap[ev.GetId()]))
+        
+    def getMenuItem(self, identifier):
+        """Finds a menu item.
+        @param identifier  Identifier of the menu item.
+        @return wxMenuItem, or None."""
+        
+        for item in self.menuCommandMap.keys():
+            if self.menuCommandMap[item] == identifier:
+                return self.menuBar.FindItemById(item)
+        return None
 
 
 class SnowberryApp (wx.App):
@@ -545,7 +555,7 @@ def getMainPanel():
     return mainPanel
 
 
-def addPopupMenuCommand(level, identifier, label=None):
+def addMenuCommand(level, identifier, label=None):
     """Insert a new popup menu item for the Menu button.
 
     @param level       Priority level (0, 1, 2).
@@ -566,6 +576,24 @@ def addPopupMenuCommand(level, identifier, label=None):
         popupMenuItems[level].append(identifier)
     else:
         popupMenuItems[level].append((identifier, label))
+        
+        
+def enableMenuCommand(identifier, enable=True):
+    """Enables or disables a command in the menu.
+    
+    @param identifier  Identifier of the menu item.
+    @param enable  True, if the item should be enabled. False, if disabled.
+    """
+    item = app.mainFrame.getMenuItem(identifier)
+    if item:
+        if enable:
+            item.Enable(True)
+        else:
+            item.Enable(False)
+    
+    
+def disableMenuCommand(identifier):
+    enableMenuCommand(identifier, False)
 
 
 def getArea(id):

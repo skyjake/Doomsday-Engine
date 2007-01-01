@@ -41,7 +41,7 @@ def init():
     #events.addCommandListener(handleCommand)
     
     # Commands for the popup menu.
-    ui.addPopupMenuCommand(ui.MENU_TOOLS, 'show-snowberry-settings')
+    ui.addMenuCommand(ui.MENU_TOOLS, 'show-snowberry-settings')
 
 
 def handleNotify(event):

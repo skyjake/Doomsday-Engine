@@ -33,9 +33,9 @@ def init():
     
     # Commands for the popup menu.
     if host.isMac():
-        ui.addPopupMenuCommand(ui.MENU_APP, 'about')
+        ui.addMenuCommand(ui.MENU_APP, 'about')
     else:
-        ui.addPopupMenuCommand(ui.MENU_HELP, 'about')
+        ui.addMenuCommand(ui.MENU_HELP, 'about')
         
 
 def handleCommand(event):

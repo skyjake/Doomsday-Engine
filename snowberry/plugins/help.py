@@ -55,7 +55,7 @@ currentSetting = None
 def init():
     "Create the HTML text widget into the help area."
     
-    ui.addPopupMenuCommand(ui.MENU_HELP, 'open-documentation')
+    ui.addMenuCommand(ui.MENU_HELP, 'open-documentation')
     
     try:
         helpArea = ui.getArea(ui.HELP)
