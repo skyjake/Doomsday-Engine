@@ -313,7 +313,7 @@ def runWizard():
                 wasModified = True
 
         if wasModified:
-            ao.loadAll()
+            ao.refresh()
 
         events.send(events.Notify('addon-paths-changed'))
 

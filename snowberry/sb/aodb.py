@@ -669,7 +669,6 @@ def loadAll():
     # Load all the installed addons in the system and user addon
     # databases.
     for repository in [paths.ADDONS] + paths.getAddonPaths():
-        print "repo:", repository
         for name in paths.listFiles(repository):
             # Case insensitive.
             if re.search("(?i)^([^.#].*)\.(" + \

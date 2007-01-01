@@ -20,7 +20,7 @@
 
 ## @file about.py About dialog
 
-import ui, events, language
+import ui, events, language, host
 import sb.util.dialog
 import widgets as wg
 import sb.widget.text as wt
@@ -32,8 +32,11 @@ def init():
     events.addCommandListener(handleCommand, ['about', 'show-credits'])
     
     # Commands for the popup menu.
-    ui.addPopupMenuCommand(ui.MENU_APP, 'about')
-
+    if host.isMac():
+        ui.addPopupMenuCommand(ui.MENU_APP, 'about')
+    else:
+        ui.addPopupMenuCommand(ui.MENU_HELP, 'about')
+        
 
 def handleCommand(event):
     """Handle the About command and display the About Snowberry

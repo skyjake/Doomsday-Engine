@@ -27,7 +27,7 @@
 ##
 ## FormattedTabArea and TabArea could use a common base class.
 
-import sys
+import sys, os.path
 import wx
 import wx.html
 import wx.lib.intctrl as intctrl
@@ -112,6 +112,51 @@ class IconManager:
             self.imageList.Add(bmp)
             self.bitmaps.append(identifier)
             return len(self.bitmaps) - 1
+            
+    def getBitmapPath(self, identifier, scaledSize=None):
+        """Locates a bitmap and scales it, if necessary.
+        
+        @param identifier  Bitmap identifier.
+        @param scaledSize  Tuple (width, height). If specified, determines 
+                           the size of the image. If this does not match the
+                           size of the existing image on disk, a new image 
+                           file will be created.
+        
+        @return  Path of the image file.
+        """
+        if scaledSize is None:
+            return paths.findBitmap(identifier)
+        
+        # A scaled size has been specified.
+        # Let's generate the scaled name of the bitmap.
+        ident = 'scaled%ix%i-' % scaledSize + identifier
+
+        # Try to locate an existing copy of the image.
+        imagePath = paths.findBitmap(ident)
+        
+        if imagePath != '':
+            return imagePath
+
+        # We have to generate it. First try loading the original image.
+        originalPath = paths.findBitmap(identifier)
+        if originalPath == '':
+            # No such image.
+            return ''
+
+        # Scale and save. PNG should work well with all source images.
+        image = wx.Image(originalPath)
+        originalSize = (image.GetWidth(), image.GetHeight())
+        if originalSize[0] == scaledSize[0] and originalSize[1] == scaledSize[1]:
+            # No need to scale.
+            return originalPath
+        if scaledSize[0] < originalSize[0] or scaledSize[1] < originalSize[1]:
+            # Upscale first to cause some extra blurring.
+            image.Rescale(originalSize[0]*2, originalSize[1]*2, wx.IMAGE_QUALITY_HIGH)
+        image.Rescale(scaledSize[0], scaledSize[1], wx.IMAGE_QUALITY_HIGH)
+        imagePath = os.path.join(paths.getUserPath(paths.GRAPHICS), ident + '.png')
+        image.SaveFile(imagePath, wx.BITMAP_TYPE_PNG)
+                              
+        return imagePath
 
 
 class Line (sb.widget.base.Widget):

@@ -21,7 +21,7 @@
 
 ## @file profilelist.py Profile List
 
-import ui, events
+import ui, events, widgets
 import sb.util.dialog
 import sb.widget.button as wg
 import sb.widget.text as wt
@@ -58,43 +58,51 @@ systemMenu = ['hide-profile',
               'unhide-profiles']
 
 
-def iconSizeString():
+def getIconSize():
     """Determines the size of profile icons.
     @return Size of profile icons in pixels, as a string."""
     if st.getSystemBoolean('profile-large-icons'):
-        return '50'
+        return 50
     else:
-        return '28'
+        return 27
 
 
-def makeHTML(name, game):
+def makeHTML(name, iconName, gameName=None, boldName=False):
     # The icon for the game component.
-    iconName = language.translate(game + '-icon')
-    iconPath = paths.findBitmap(iconName)
-
-    # The name of the game.
-    gameName = language.translate(game)
-
-    iconSize = iconSizeString()
+    iconSize = getIconSize()
+    iconPath = widgets.iconManager.getBitmapPath(iconName, (iconSize, iconSize))
     
-    return '<table width="100%" border=0 cellspacing=2 cellpadding=5>' + \
-           '<tr><td width="' + iconSize + '"><img width="' + iconSize + \
-           '" height="' + iconSize + '" src="' + iconPath + '"><td>' + \
-           '<font size="+1"><b>' + name + '</b></font><br>' + \
-           '<font color="#808080">' + gameName + '</font>' + \
-           '</table>'
+    if boldName:
+        nameStyle = ('<b>', '</b>')
+    else:
+        nameStyle = ('', '')
+
+    if st.getSystemBoolean('profile-large-icons'): 
+        padding = 5
+    else:
+        padding = 3
+    
+    html = '<table width="100%%" border=0 cellspacing=2 cellpadding=%i>' % padding
+    html += '<tr><td width="%i"' % iconSize + '><img width="%i"' % iconSize
+    html += ' height="%i"' % iconSize + ' src="' + iconPath + '"><td>' 
+    html += '<font size="+1">' + nameStyle[0] + name + nameStyle[1] + '</font>'
+    if gameName:
+        html += '<br><font color="#808080" size="-1">' + gameName + '</font>' 
+    html += '</table>'
+    return html 
 
 
 def makeProfileHTML(profile):
     if profile is pr.getDefaults():
-        iconPath = paths.findBitmap('defaults')
-        iconSize = iconSizeString()
-        return '<table width="100%" border=0 cellspacing=2 cellpadding=5>' + \
-           '<tr><td width="' + iconSize + \
-           '"><img width="%s" height="%s"' % (iconSize, iconSize) + \
-           ' src="' + iconPath + \
-           '"><td align=left><font size="+1"><b>' + profile.getName() + \
-           '</b></font></table>'
+        return makeHTML(profile.getName(), 'defaults', boldName=True)
+        #iconPath = paths.findBitmap('defaults')
+        #iconSize = iconSizeString()
+        #return '<table width="100%" border=0 cellspacing=2 cellpadding=5>' + \
+        #   '<tr><td width="' + iconSize + \
+        #   '"><img width="%s" height="%s"' % (iconSize, iconSize) + \
+        #   ' src="' + iconPath + \
+        #   '"><td align=left><font size="+1"><b>' + profile.getName() + \
+        #   '</b></font></table>'
     else:
         game = 'game-undefined'
         for c in profile.getComponents():
@@ -102,7 +110,8 @@ def makeProfileHTML(profile):
                 game = c
                 break
 
-        return makeHTML(profile.getName(), game)
+        return makeHTML(profile.getName(), language.translate(game + '-icon'),
+                        language.translate(game))
 
 
 def init():

@@ -452,6 +452,7 @@ main-hide-help: Hide help panel
 summary-profile-change-autoselect: Profile change shows Summary
 profile-large-icons: Large profile icons
 
+refresh-required: Remember to refresh addons.
 restart-required: Changes take effect after restarting.
 
 #

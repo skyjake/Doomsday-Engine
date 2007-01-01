@@ -98,7 +98,7 @@ def handleNotify(event):
         
         commands.setExpanding(False)
         commands.setWeight(1)
-        commands.createText('restart-required', align=wt.Text.RIGHT
+        commands.createText('refresh-required', align=wt.Text.RIGHT
                             ).setSmallStyle()
         
         # Checkboxes for hiding parts of the UI.
