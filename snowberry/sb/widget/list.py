@@ -199,6 +199,11 @@ class List (base.Widget):
 
     def deselectItem(self, identifier):
         self.selectItem(identifier, False)
+        
+    def deselectAllItems(self):
+        w = self.getWxWidget()
+        for i in range(w.GetCount()):
+            w.Deselect(i)
 
     def ensureVisible(self, identifier):
         """Makes sure an item is visible.

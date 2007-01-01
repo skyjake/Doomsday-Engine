@@ -36,8 +36,8 @@ installed as an addon. Death Kings is an extension
 to Hexen."
 wizard-suggested-iwad: Original name:
 deathkings-selection-title: Locate HEXDD.WAD
-wizard-addon-paths: Addon Folders
-wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell the launcher to load them from their current location. Specify the folders below. The folders can be edited in the Defaults > Settings > Launcher page later on. If you later install addons using the Addons tab, they will be copied to the launcher's addon folder. 
+wizard-addon-paths: My Addon Folders
+wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell the launcher to load them from their current location. Specify the folders below. The folders can be edited in the Defaults -> Settings -> Launcher page later on. If you later install addons using the Addons tab, they will be copied to the launcher's addon folder. 
 wizard-launching: Launching Options
 wizard-launching-explanation: Should the launcher be closed when a game is started?
 wizard-unlaunchable-profiles: Some Profiles Unlaunchable
@@ -105,10 +105,11 @@ view-command-line-dialog: Command Line
 install-addon-dialog: Addon Installer
 addon-dialog-folder: Folder:
 addon-dialog-folder-browse: ...
-addon-dialog-folder-uninstalled: Uninstalled
+addon-dialog-folder-uninstalled: Show Uninstalled
+addon-dialog-add-to-custom-folders: Add to My Addon Folders
 addon-dialog-browse-prompt: Choose Folder
 addon-dialog-found: Addons in the selected folder:
-addon-dialog-addons-copied: Installed addons are copied to your personal addons folder. If you want to avoid copying, add the folder to your custom addon folders.
+addon-dialog-addons-copied: Installed addons are copied to your personal addons folder. If you want to avoid copying, add the folder to your addon folders.
 addon-dialog-name: Name
 addon-dialog-type: Type
 addon-dialog-type-box: Box Container
@@ -119,7 +120,6 @@ addon-dialog-type-zip: ZIP Archive
 addon-dialog-type-ded: Definition File
 addon-dialog-type-deh: DeHackEd Patch
 addon-dialog-type-manifest: Addon Manifest
-addon-dialog-add-to-custom-folders: Add to Custom Folders
 uninstall-addon-dialog: Uninstall Addon
 uninstall-addon-query: Are you sure you want to uninstall <b>%1</b>?
 load-order-dialog: Load Order
@@ -441,11 +441,10 @@ verbosity-extra: Level 2
 
 custom-cmdline: Custom options
 
-addon-paths: Custom Addon Folders
-addon-paths-info: Additional folders to load addons from:
+addon-paths: My Addon Folders
 new-addon-path: +
 delete-addon-path: -
-addon-paths-add-prompt: Add Custom Addon Path
+addon-paths-add-prompt: Add to My Addon Paths
 
 ui-parts: User Interface
 main-hide-title: Hide title banner

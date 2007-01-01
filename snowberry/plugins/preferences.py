@@ -23,6 +23,7 @@
 import ui, events, language, paths
 import sb.widget.button as wb
 import sb.widget.text as wt
+import sb.widget.list as wl
 import sb.confdb as st
 import sb.util.dialog
 
@@ -60,11 +61,11 @@ def handleNotify(event):
 
         box = area.createArea(boxedWithTitle='addon-paths', border=3)
         box.setWeight(0)
-        box.createText('addon-paths-info')
+        #box.createText('addon-paths-info')
         box.setBorderDirs(ui.BORDER_NOT_BOTTOM)
-        pathList = box.createList('addon-paths-list')
+        pathList = box.createList('addon-paths-list', wl.List.STYLE_MULTIPLE)
         box.setBorderDirs(ui.BORDER_NOT_TOP)
-        pathList.setMinSize(100, 70)
+        pathList.setMinSize(100, 90)
 
         # Insert the current custom paths into the list.
         for p in paths.getAddonPaths():
@@ -73,13 +74,13 @@ def handleNotify(event):
         def addAddonPath():
             selection = sb.util.dialog.chooseFolder('addon-paths-add-prompt', '')
             if selection:
+                pathList.deselectAllItems()
                 pathList.addItem(selection)
                 pathList.selectItem(selection)
                 paths.addAddonPath(selection)                
 
         def removeAddonPath():
-            selection = pathList.getSelectedItem()
-            if selection:
+            for selection in pathList.getSelectedItems():
                 pathList.removeItem(selection)
                 paths.removeAddonPath(selection)
         

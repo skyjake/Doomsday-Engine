@@ -89,6 +89,13 @@ class TextField (base.Widget):
         # This does cause a reaction, though.
         self.react()
 
+    def select(self, fromPos=-1, toPos=-1):
+        """Selects a range in the text field. By default, selects everything.
+        @param fromPos  Start position for the selection.
+        @param endPos  End position for the selection.
+        """
+        self.getWxWidget().SetSelection(fromPos, toPos)
+
     def setValidator(self, validatorFunc):
         """Set the validator function.  The validator returns True if
         the text given to it is valid.  By default anything is valid.

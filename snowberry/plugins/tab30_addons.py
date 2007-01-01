@@ -444,7 +444,7 @@ def chooseAddons(dialogId, title, actionButton):
     action of the dialog.
     """
     dialog, area = sb.util.dialog.createButtonDialog(dialogId, 
-        ['addon-dialog-add-to-custom-folders', '', 'cancel', actionButton], 
+        ['cancel', actionButton], 
         actionButton)
 
     dialog.addEndCommand('addon-dialog-add-to-custom-folders')
@@ -463,18 +463,32 @@ def chooseAddons(dialogId, title, actionButton):
     folderArea.setWeight(1)
     pathField = folderArea.createTextField('')
     pathField.setText(os.getcwd())
+    pathField.select()
     pathField.focus()
     folderArea.setWeight(0)
+    folderArea.setBorderDirs(ui.BORDER_NOT_RIGHT)
     browseButton = folderArea.createButton('addon-dialog-folder-browse',
                                            style=wg.Button.STYLE_MINI)
-    folderArea.setWeight(0)
-    folderArea.addSpacer()
-    folderArea.setBorderDirs(ui.BORDER_NOT_RIGHT)
-    uninstButton = folderArea.createButton('addon-dialog-folder-uninstalled')
+    #folderArea.addSpacer()
+    #folderArea.setBorderDirs(ui.BORDER_NOT_RIGHT)
+    
+    folderCmdArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL)
+    folderCmdArea.setExpanding(False)
+    folderCmdArea.setBorder(6, ui.BORDER_NOT_TOP)
+    folderCmdArea.setWeight(1)
+    folderCmdArea.addSpacer()
+    folderCmdArea.setWeight(0)
+        
+    uninstButton = folderCmdArea.createButton('addon-dialog-folder-uninstalled')
+   
+    # Add to Custom Folders button.
+    folderCmdArea.setBorder(6, ui.BORDER_LEFT | ui.BORDER_BOTTOM)
+    addToMyButton = folderCmdArea.createButton('addon-dialog-add-to-custom-folders')
 
     def goToUninstalled():
         pathField.setText(paths.getUserPath(paths.UNINSTALLED))
-        dialog.disableWidget('addon-dialog-add-to-custom-folders')
+        pathField.select()
+        addToMyButton.disable()
 
     uninstButton.addReaction(goToUninstalled)
 
@@ -540,9 +554,9 @@ def chooseAddons(dialogId, title, actionButton):
         if os.path.exists(pathField.getText()):
             updateList()
             if pathField.getText() != paths.getUserPath(paths.UNINSTALLED):
-                dialog.enableWidget('addon-dialog-add-to-custom-folders')
+                addToMyButton.enable()
         else:
-            dialog.disableWidget('addon-dialog-add-to-custom-folders')
+            addToMyButton.disable()
 
     def browseAction():
         # Show a directory browser.
@@ -550,6 +564,7 @@ def chooseAddons(dialogId, title, actionButton):
                                                 pathField.getText())
         if len(selection):
             pathField.setText(selection)
+            pathField.select()
 
     # The initial contents of the list.
     updateList()
@@ -575,6 +590,7 @@ def chooseAddons(dialogId, title, actionButton):
 
     elif result == 'addon-dialog-add-to-custom-folders':
         paths.addAddonPath(pathField.getText())
+        events.send(events.Notify('addon-paths-changed'))
         ao.refresh()
         return []
 

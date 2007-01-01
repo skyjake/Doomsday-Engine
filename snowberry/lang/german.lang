@@ -359,7 +359,6 @@ verbosity-extra: Level 2
 custom-cmdline: Eigene Einstellungen
 
 addon-paths: Eigene Erweiterungsordner
-addon-paths-info: Weitere Order, aus denen Erweiterungen geladen werden können:
 new-addon-path: +
 delete-addon-path: -
 addon-paths-add-prompt: Eigenen Erweiterungspfad hinzufügen
