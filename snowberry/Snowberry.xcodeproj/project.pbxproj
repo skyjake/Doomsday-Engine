@@ -9,12 +9,14 @@
 /* Begin PBXFileReference section */
 		B012234808A6AE4A00A6E775 /* tab10_summary.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab10_summary.py; path = plugins/tab10_summary.py; sourceTree = "<group>"; };
 		B012234908A6AE4A00A6E775 /* tab20_maps.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab20_maps.py; path = plugins/tab20_maps.py; sourceTree = "<group>"; };
-		B012234A08A6AE4A00A6E775 /* tab30_addons.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab30_addons.py; path = plugins/tab30_addons.py; sourceTree = "<group>"; };
 		B012234B08A6AE4A00A6E775 /* tab40_settings.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab40_settings.py; path = plugins/tab40_settings.py; sourceTree = "<group>"; };
 		B015323A0B42E1D6006C9D45 /* x-components.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "x-components.conf"; path = "conf/x-components.conf"; sourceTree = "<group>"; };
 		B01532430B42E263006C9D45 /* components.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = components.conf; path = conf/components.conf; sourceTree = "<group>"; };
 		B01532BA0B43C64B006C9D45 /* finnish.lang */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text; name = finnish.lang; path = lang/finnish.lang; sourceTree = "<group>"; };
 		B01539790B47ACA3006C9D45 /* win-accel.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "win-accel.conf"; path = "conf/win-accel.conf"; sourceTree = "<group>"; };
+		B0153E440B497F59006C9D45 /* test.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test.conf; sourceTree = "<group>"; };
+		B0153E450B497F59006C9D45 /* example.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = example.py; sourceTree = "<group>"; };
+		B0153E480B497F59006C9D45 /* myprof.prof */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = myprof.prof; sourceTree = "<group>"; };
 		B05FA5230A8A3CCD00A9FE0E /* german.lang */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text; name = german.lang; path = lang/german.lang; sourceTree = "<group>"; };
 		B05FA5FA0A8A7C1500A9FE0E /* tree.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tree.py; path = sb/widget/tree.py; sourceTree = "<group>"; };
 		B05FA6200A8A80E900A9FE0E /* tab.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = tab.py; path = sb/widget/tab.py; sourceTree = "<group>"; };
@@ -35,7 +37,6 @@
 		B0E388B60A8B987400C553A3 /* aodb.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = aodb.py; path = sb/aodb.py; sourceTree = "<group>"; };
 		B0E38AB30A8BB6E800C553A3 /* expressions.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = expressions.py; path = sb/expressions.py; sourceTree = "<group>"; };
 		B0E38ABB0A8BB97F00C553A3 /* area.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = area.py; path = sb/widget/area.py; sourceTree = "<group>"; };
-		B0E38B7B0A8BC7AD00C553A3 /* example.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = example.py; path = plugins/example.plugin/Contents/example.py; sourceTree = "<group>"; };
 		B0E38BB00A8BC9BE00C553A3 /* dialog.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = dialog.py; path = sb/util/dialog.py; sourceTree = "<group>"; };
 		B0F176BD087C37940051F24A /* cfparser.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = cfparser.py; sourceTree = "<group>"; };
 		B0F176BE087C37940051F24A /* events.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = events.py; sourceTree = "<group>"; };
@@ -66,6 +67,41 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		B0153E410B497F59006C9D45 /* example.plugin */ = {
+			isa = PBXGroup;
+			children = (
+				B0153E420B497F59006C9D45 /* Contents */,
+			);
+			name = example.plugin;
+			path = plugins/example.plugin;
+			sourceTree = "<group>";
+		};
+		B0153E420B497F59006C9D45 /* Contents */ = {
+			isa = PBXGroup;
+			children = (
+				B0153E430B497F59006C9D45 /* conf */,
+				B0153E450B497F59006C9D45 /* example.py */,
+				B0153E470B497F59006C9D45 /* profiles */,
+			);
+			path = Contents;
+			sourceTree = "<group>";
+		};
+		B0153E430B497F59006C9D45 /* conf */ = {
+			isa = PBXGroup;
+			children = (
+				B0153E440B497F59006C9D45 /* test.conf */,
+			);
+			path = conf;
+			sourceTree = "<group>";
+		};
+		B0153E470B497F59006C9D45 /* profiles */ = {
+			isa = PBXGroup;
+			children = (
+				B0153E480B497F59006C9D45 /* myprof.prof */,
+			);
+			path = profiles;
+			sourceTree = "<group>";
+		};
 		B05FA5F70A8A7BEA00A9FE0E /* sb */ = {
 			isa = PBXGroup;
 			children = (
@@ -109,14 +145,6 @@
 			name = util;
 			sourceTree = "<group>";
 		};
-		B0E38B7C0A8BC7B200C553A3 /* example */ = {
-			isa = PBXGroup;
-			children = (
-				B0E38B7B0A8BC7AD00C553A3 /* example.py */,
-			);
-			name = example;
-			sourceTree = "<group>";
-		};
 		B0F176B1087C36610051F24A = {
 			isa = PBXGroup;
 			children = (
@@ -148,10 +176,9 @@
 				B0F176D2087C37FC0051F24A /* profilelist.py */,
 				B012234808A6AE4A00A6E775 /* tab10_summary.py */,
 				B012234908A6AE4A00A6E775 /* tab20_maps.py */,
-				B012234A08A6AE4A00A6E775 /* tab30_addons.py */,
 				B012234B08A6AE4A00A6E775 /* tab40_settings.py */,
 				B0F176D6087C37FC0051F24A /* wizard.py */,
-				B0E38B7C0A8BC7B200C553A3 /* example */,
+				B0153E410B497F59006C9D45 /* example.plugin */,
 			);
 			name = plugins;
 			sourceTree = "<group>";
