@@ -44,6 +44,8 @@
 		B01078830856356E000BF0D8 /* mn_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = B010785D08563447000BF0D8 /* mn_menu.c */; };
 		B010788608563581000BF0D8 /* st_lib.c in Sources */ = {isa = PBXBuildFile; fileRef = B010785E08563447000BF0D8 /* st_lib.c */; };
 		B01078D4085636E8000BF0D8 /* st_stuff.c in Sources */ = {isa = PBXBuildFile; fileRef = B01078D3085636E8000BF0D8 /* st_stuff.c */; };
+		B01538F90B46E462006C9D45 /* con_buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = B01538F80B46E462006C9D45 /* con_buffer.c */; };
+		B01538FB0B46E479006C9D45 /* con_buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = B01538FA0B46E479006C9D45 /* con_buffer.h */; };
 		B018335707E6082000217C5A /* d_net.h in Resources */ = {isa = PBXBuildFile; fileRef = B018334407E6082000217C5A /* d_net.h */; };
 		B018335807E6082000217C5A /* d_netcl.h in Resources */ = {isa = PBXBuildFile; fileRef = B018334507E6082000217C5A /* d_netcl.h */; };
 		B018335907E6082000217C5A /* d_netsv.h in Resources */ = {isa = PBXBuildFile; fileRef = B018334607E6082000217C5A /* d_netsv.h */; };
@@ -786,6 +788,8 @@
 		B013509806EDE24E007861F2 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../plugins/opengl/unix/src/main.c; sourceTree = SOURCE_ROOT; };
 		B013509E06EDE270007861F2 /* atiext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = atiext.h; path = ../../plugins/opengl/portable/include/atiext.h; sourceTree = SOURCE_ROOT; };
 		B013509F06EDE270007861F2 /* dropengl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dropengl.h; path = ../../plugins/opengl/portable/include/dropengl.h; sourceTree = SOURCE_ROOT; };
+		B01538F80B46E462006C9D45 /* con_buffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = con_buffer.c; path = ../../engine/portable/src/con_buffer.c; sourceTree = SOURCE_ROOT; };
+		B01538FA0B46E479006C9D45 /* con_buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = con_buffer.h; path = ../../engine/portable/include/con_buffer.h; sourceTree = SOURCE_ROOT; };
 		B018334407E6082000217C5A /* d_net.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = d_net.h; path = ../../plugins/common/include/d_net.h; sourceTree = SOURCE_ROOT; };
 		B018334507E6082000217C5A /* d_netcl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = d_netcl.h; path = ../../plugins/common/include/d_netcl.h; sourceTree = SOURCE_ROOT; };
 		B018334607E6082000217C5A /* d_netsv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = d_netsv.h; path = ../../plugins/common/include/d_netsv.h; sourceTree = SOURCE_ROOT; };
@@ -1474,6 +1478,7 @@
 		29B97315FDCFA39411CA2CEA /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B01538F80B46E462006C9D45 /* con_buffer.c */,
 				B0BEDB7D0B3B40620096F91C /* con_data.c */,
 				B0BEDB7E0B3B40620096F91C /* gl_texmanager.c */,
 				B0BEDB7F0B3B40620096F91C /* rend_console.c */,
@@ -1842,6 +1847,7 @@
 		B02AC73506B3FBD4005824AD /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B01538FA0B46E479006C9D45 /* con_buffer.h */,
 				B08174030A88FD5A0081B2E1 /* m_md5.h */,
 				B0C8FBE90A3F4DEF00CFA4A5 /* dd_uinit.h */,
 				B0C8FB460A3F4B4E00CFA4A5 /* sys_console.h */,
@@ -2383,6 +2389,7 @@
 				B0C8FB470A3F4B4E00CFA4A5 /* sys_console.h in Headers */,
 				B0C8FBEA0A3F4DEF00CFA4A5 /* dd_uinit.h in Headers */,
 				B08174040A88FD5A0081B2E1 /* m_md5.h in Headers */,
+				B01538FB0B46E479006C9D45 /* con_buffer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3098,6 +3105,7 @@
 				B0BEDB800B3B40620096F91C /* con_data.c in Sources */,
 				B0BEDB810B3B40620096F91C /* gl_texmanager.c in Sources */,
 				B0BEDB820B3B40620096F91C /* rend_console.c in Sources */,
+				B01538F90B46E462006C9D45 /* con_buffer.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
