@@ -66,25 +66,32 @@ def loadAll():
             loadBundle(fileName) # A plugin bundle.
 
     # Import all plugin modules.
-    for cmd in initCommands:
-        sys.path = cmd[2]
-        exec cmd[0]
+    for importStatement, initStatement, searchPath in initCommands:
+        sys.path = searchPath
+        try:
+            exec importStatement
+        except:
+            logger.add(logger.HIGH, 'error-plugin-init-failed', importStatement,
+                       logger.formatTraceback())
 
     # Initialize all plugins.
     for importStatement, initStatement, searchPath in initCommands:
         sys.path = searchPath
         try:
-            exec(initStatement)
+            exec initStatement
+        except AttributeError, ex:
+            if "'init'" not in str(ex):
+                logger.add(logger.HIGH, 'error-plugin-init-failed', initStatement,
+                           logger.formatTraceback())
         except:
             # Any problems during init cause the plugin to be ignored.
-            import traceback
-            traceback.print_exc()
-            pass
+            logger.add(logger.HIGH, 'error-plugin-init-failed', initStatement,
+                       logger.formatTraceback())
     
     sys.path = oldPath
 
 
-def loadSingle(fileName):
+def loadSingle(fileName, package=None):
     """Load a plugin that consists of a single .py module in a plugins
     directory.
 
@@ -100,10 +107,15 @@ def loadSingle(fileName):
     
     sysPath = sys.path
     if os.path.dirname(fileName) not in sysPath:
-        sysPath = [os.path.dirname(fileName)] + sys.path
-    
+        sysPath = [os.path.dirname(fileName)] + sys.path   
+        
+    if package:
+        prefix = package + '.'
+    else:
+        prefix = ''
+   
     # Initialization will be done after everything has been loaded.
-    initCommands.append(('import ' + name, name + '.init()', sysPath))
+    initCommands.append(('import ' + prefix + name, prefix + name + '.init()', sysPath))
 
 
 def loadBundle(path):
@@ -127,11 +139,13 @@ def loadBundle(path):
     # language files in the bundle.
     readBundleConfig(contentsPath)
 
-    # Load all of the .py modules in the bundle.
-    for name in os.listdir(contentsPath):
-        fullName = os.path.join(contentsPath, name)
-        if paths.hasExtension('py', fullName):
-            loadSingle(fullName)
+    # Load all of the .py modules in the bundle's Python package.
+    package = paths.getBase(path)
+    packagePath = os.path.join(contentsPath, package)
+    for name in os.listdir(packagePath):
+        fullName = os.path.join(packagePath, name)
+        if name != '__init__.py' and paths.hasExtension('py', fullName):
+            loadSingle(fullName, package)
 
     # Restore the previous module search path.
     sys.path = oldSysPath

@@ -570,6 +570,9 @@ error-read-profile-text: The profile <tt>%1</tt> could not be loaded because an 
 error-read-manifest: Addon Manifest Error
 error-read-manifest-text: An error was detected in the manifest file <tt>%1</tt>.<p><b>Reason:</b><p>%2
 
+error-plugin-init-failed: Plugin Error
+error-plugin-init-failed-text: The loading of a plugin failed, while executing <tt>%1</tt>.<p><b>Reason:</b><p>%2
+
 error-remove-addon-path-not-found: Internal Error
 error-remove-addon-path-not-found-text: Someone attempted to remove an addon path that has not been registered: <tt>%1</tt>
 
