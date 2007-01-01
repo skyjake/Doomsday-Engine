@@ -124,7 +124,10 @@ class Widget:
         self.focusId = identifier
 
     def focus(self):
-        self.getWxWidget().SetFocus()
+        try:
+            self.getWxWidget().SetFocus()
+        except:
+            pass
 
     def enable(self, doEnable=True):
         """Enable or disable the widget for user input.

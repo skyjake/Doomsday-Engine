@@ -60,7 +60,7 @@ def init():
     area.setWeight(0)
 
     global titleLabel
-    area.setBorder(16, ui.BORDER_LEFT_RIGHT)
+    area.setBorder(16, ui.BORDER_NOT_BOTTOM)
     titleLabel = area.createText('')
     titleLabel.setTitleStyle()
     
