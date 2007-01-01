@@ -54,6 +54,11 @@ typedef struct dpatch_s {
     int             lump;
 } dpatch_t;
 
+typedef enum border_e {
+    BORDERUP = 1,
+    BORDERDOWN
+} border_t;
+
 // The fonts.
 extern dpatch_t hu_font[HU_FONTSIZE];
 extern dpatch_t hu_font_a[HU_FONTSIZE], hu_font_b[HU_FONTSIZE];
@@ -84,6 +89,15 @@ void    M_DrawTitle(char *text, int y);
 
 int     M_StringWidth(char *string, dpatch_t * font);
 int     M_StringHeight(char *string, dpatch_t * font);
+void    M_DrawColorBox(int x, int y, float r, float g, float b, float a);
+void    M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
+                            float blue, float alpha, boolean background,
+                            int border);
+#ifndef __JDOOM__
+void M_DrawSlider(int x, int y, int width, int slot, float alpha);
+#else
+void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha);
+#endif
 
 void Draw_BeginZoom(float s, float originX, float originY);
 void Draw_EndZoom(void);

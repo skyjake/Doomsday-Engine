@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -100,9 +100,6 @@ extern boolean  monsterinfight;
 // Flag: true only if started as net deathmatch.
 // An enum might handle altdeath/cooperative better.
 extern boolean  deathmatch;        // only if started as net death
-
-#define snd_SfxVolume       (Get(DD_SFX_VOLUME)/17)
-#define snd_MusicVolume     (Get(DD_MUSIC_VOLUME)/17)
 
 // -------------------------
 // Status flags for refresh.
@@ -190,12 +187,6 @@ extern FILE    *debugfile;
 
 // if true, load all graphics at level load
 extern boolean  precache;
-
-// wipegamestate can be set to -1
-//  to force a wipe on the next draw
-
-
-extern int      mouseSensitivity;
 
 //?
 // debug flag to cancel adaptiveness

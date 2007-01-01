@@ -1,21 +1,26 @@
-/**
+/**\file
  *\section Copyright and License Summary
  * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2000-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
- */
-
-/* $Id$
+ *\author Copyright © 2005-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
- * This source is available for distribution and/or modification
- * only under the terms of the DOOM Source Code License as
- * published by id Software. All rights reserved.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * The source is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
- * for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
 
 /*
@@ -87,7 +92,7 @@ void    SCAcceptPlayer(int option, void *data);
 void    ResetJoinMenuItems();
 
 // Edit fields.
-void    DrawEditField(Menu_t * menu, int index, EditField_t * ef);
+void    DrawEditField(menu_t * menu, int index, editfield_t * ef);
 void    SCEditField(int efptr, void *data);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -98,32 +103,33 @@ extern float menu_alpha;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-EditField_t *ActiveEdit = NULL; // No active edit field by default.
-EditField_t plrNameEd;
+editfield_t *ActiveEdit = NULL; // No active edit field by default.
+editfield_t plrNameEd;
 int     CurrentPlrFrame = 0;
 
-MenuItem_t MultiplayerItems[] = {
+menuitem_t MultiplayerItems[] = {
     {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 },
     {ITT_EFUNC, 0, "join game", SCEnterJoinMenu, 0 },
     {ITT_EFUNC, 0, "host game", SCEnterHostMenu, 0 },
 };
 
-MenuItem_t MultiplayerServerItems[] = {
+menuitem_t MultiplayerServerItems[] = {
     {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 },
     {ITT_EFUNC, 0, "game setup", SCEnterHostMenu, 0 },
     {ITT_EFUNC, 0, "close server", SCCloseServer, 0 }
 };
 
-MenuItem_t MultiplayerClientItems[] = {
+menuitem_t MultiplayerClientItems[] = {
     {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 },
     {ITT_EFUNC, 0, "disconnect", SCEnterJoinMenu, 0 }
 };
 
-Menu_t  MultiplayerMenu = {
+menu_t  MultiplayerMenu = {
+    0,
     116, 70,
     DrawMultiplayerMenu,
     3, MultiplayerItems,
-    0, MENU_MAIN, 0,
+    0, MENU_MAIN,
     hu_font_a,cfg.menuColor2,
     LINEHEIGHT_A,
     0, 3
@@ -133,7 +139,7 @@ Menu_t  MultiplayerMenu = {
 
 #  define NUM_GAMESETUP_ITEMS       11
 
-MenuItem_t GameSetupItems1[] = {
+menuitem_t GameSetupItems1[] = {
     {ITT_LRFUNC, 0, "MAP:", SCGameSetupMission, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_LRFUNC, 0, "SKILL:", SCGameSetupSkill, 0},
@@ -153,7 +159,7 @@ MenuItem_t GameSetupItems1[] = {
 
 #    define NUM_GAMESETUP_ITEMS     12
 
-MenuItem_t GameSetupItems1[] =  // for Heretic
+menuitem_t GameSetupItems1[] =  // for Heretic
 {
     {ITT_LRFUNC, 0, "EPISODE :", SCGameSetupEpisode, 0},
     {ITT_LRFUNC, 0, "MISSION :", SCGameSetupMission, 0},
@@ -173,7 +179,7 @@ MenuItem_t GameSetupItems1[] =  // for Heretic
 
 #    define NUM_GAMESETUP_ITEMS     18
 
-MenuItem_t GameSetupItems1[] =  // for Doom 1
+menuitem_t GameSetupItems1[] =  // for Doom 1
 {
     {ITT_LRFUNC, 0, "EPISODE :", SCGameSetupEpisode, 0},
     {ITT_LRFUNC, 0, "MISSION :", SCGameSetupMission, 0},
@@ -195,7 +201,7 @@ MenuItem_t GameSetupItems1[] =  // for Doom 1
     {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
 };
 
-MenuItem_t GameSetupItems2[] =  // for Doom 2
+menuitem_t GameSetupItems2[] =  // for Doom 2
 {
     {ITT_LRFUNC, 0, "LEVEL :", SCGameSetupMission, 0},
     {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
@@ -220,7 +226,8 @@ MenuItem_t GameSetupItems2[] =  // for Doom 2
 
 #endif
 
-Menu_t  GameSetupMenu = {
+menu_t  GameSetupMenu = {
+    0,
 #  if __JDOOM__
     90, 54,
 #  elif __JHERETIC__
@@ -230,7 +237,7 @@ Menu_t  GameSetupMenu = {
 #  endif
     DrawGameSetupMenu,
     NUM_GAMESETUP_ITEMS, GameSetupItems1,
-    0, MENU_MULTIPLAYER, 0,
+    0, MENU_MULTIPLAYER,
     hu_font_a,                  //1, 0, 0,
     cfg.menuColor2,
     LINEHEIGHT_A,
@@ -245,7 +252,7 @@ Menu_t  GameSetupMenu = {
 #  define NUM_PLAYERSETUP_ITEMS 6
 #endif
 
-MenuItem_t PlayerSetupItems[] = {
+menuitem_t PlayerSetupItems[] = {
     {ITT_EFUNC, 0, "", SCEditField, 0, NULL, &plrNameEd },
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #if __JHEXEN__
@@ -258,11 +265,12 @@ MenuItem_t PlayerSetupItems[] = {
     {ITT_EFUNC, 0, "Accept Changes", SCAcceptPlayer, 0 }
 };
 
-Menu_t  PlayerSetupMenu = {
+menu_t  PlayerSetupMenu = {
+    0,
     60, 52,
     DrawPlayerSetupMenu,
     NUM_PLAYERSETUP_ITEMS, PlayerSetupItems,
-    0, MENU_MULTIPLAYER, 0,
+    0, MENU_MULTIPLAYER,
     hu_font_b, cfg.menuColor, LINEHEIGHT_B,
     0, NUM_PLAYERSETUP_ITEMS
 };
@@ -324,7 +332,7 @@ void DrawGameSetupMenu(void)
 #else
     char   *dmText[3] = { "NO", "YES", "YES" };
 #endif
-    Menu_t *menu = &GameSetupMenu;
+    menu_t *menu = &GameSetupMenu;
     int     idx;
 
 #if __JHEXEN__
@@ -407,7 +415,7 @@ static int CeilPow2(int num)
 void DrawPlayerSetupMenu(void)
 {
     spriteinfo_t sprInfo;
-    Menu_t *menu = &PlayerSetupMenu;
+    menu_t *menu = &PlayerSetupMenu;
     int     useColor = plrColor;
 
 #if __JHEXEN__
@@ -424,7 +432,7 @@ void DrawPlayerSetupMenu(void)
     DrawEditField(menu, 0, &plrNameEd);
 
     if(useColor == numColors)
-        useColor = MenuTime / 5 % numColors;
+        useColor = menuTime / 5 % numColors;
 
     // Draw the color selection as a random player frame.
     //#ifndef __JHEXEN__
@@ -510,7 +518,7 @@ void SCEnterMultiplayerMenu(int option, void *data)
 
     MultiplayerMenu.lastOn = 0;
 
-    SetMenu(MENU_MULTIPLAYER);
+    M_SetupNextMenu(&MultiplayerMenu);
 }
 
 void SCEnterHostMenu(int option, void *data)
@@ -583,7 +591,7 @@ void SCEnterGameSetup(int option, void *data)
     if(cfg.netMap > 31)
         cfg.netMap = 31;
 #endif
-    SetMenu(MENU_GAMESETUP);
+    M_SetupNextMenu(&GameSetupMenu);
 }
 
 void SCGameSetupFunc(int option, void *data)
@@ -727,7 +735,7 @@ void SCEnterPlayerSetupMenu(int option, void *data)
 #if __JHEXEN__
     plrClass = cfg.netClass;
 #endif
-    SetMenu(MENU_PLAYERSETUP);
+    M_SetupNextMenu(&PlayerSetupMenu);
 }
 
 #if __JHEXEN__
@@ -787,7 +795,7 @@ void SCAcceptPlayer(int option, void *data)
         Executef(false, "setcolor %i", plrColor);
     }
 
-    SetMenu(MENU_MULTIPLAYER);
+    M_SetupNextMenu(&MultiplayerMenu);
 }
 
 void SCGameSetupDamageMod(int option, void *data)
@@ -873,7 +881,7 @@ void Ed_MakeCursorVisible()
     }
 }
 
-void DrawEditField(Menu_t * menu, int index, EditField_t * ef)
+void DrawEditField(menu_t * menu, int index, editfield_t * ef)
 {
     int     x = menu->x, y = menu->y + menu->itemHeight * index, vis;
     char    buf[MAX_EDIT_LEN + 1], *text;
@@ -882,7 +890,7 @@ void DrawEditField(Menu_t * menu, int index, EditField_t * ef)
     M_DrawSaveLoadBorder(x + 11, y + 5);
     strcpy(buf, ef->text);
     strupr(buf);
-    if(ActiveEdit == ef && MenuTime & 0x8)
+    if(ActiveEdit == ef && menuTime & 0x8)
         strcat(buf, "_");
     text = buf + ef->firstVisible;
     vis = Ed_VisibleSlotChars(text, M_StringWidth);
@@ -893,7 +901,7 @@ void DrawEditField(Menu_t * menu, int index, EditField_t * ef)
 
 void SCEditField(int efptr, void *data)
 {
-    EditField_t *ef = data;
+    editfield_t *ef = data;
 
     // Activate this edit field.
     ActiveEdit = ef;

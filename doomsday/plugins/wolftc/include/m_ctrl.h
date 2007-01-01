@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -41,7 +41,7 @@ extern const Control_t *grabbing;
 
 #define NUM_CONTROLS_ITEMS 105
 
-static const MenuItem_t ControlsItems[] = {
+static const menuitem_t ControlsItems[] = {
     {ITT_EMPTY, 0, "PLAYER ACTIONS", NULL, 0},
     {ITT_EFUNC, 0, "LEFT :", SCControlConfig, A_TURNLEFT},
     {ITT_EFUNC, 0, "RIGHT :", SCControlConfig, A_TURNRIGHT},

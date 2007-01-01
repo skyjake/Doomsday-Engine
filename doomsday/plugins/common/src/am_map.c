@@ -1,24 +1,26 @@
 /**\file
  *\section Copyright and License Summary
  * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
+ *\author Copyright © 2005-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 1993-1996 by id Software, Inc.
- */
-
-/* $Id$
  *
- * Copyright (C) 1993-1996 by id Software, Inc.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * This source is available for distribution and/or modification
- * only under the terms of the DOOM Source Code License as
- * published by id Software. All rights reserved.
- *
- * The source is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
- * for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
  */
 
 /*
@@ -2678,7 +2680,7 @@ static void AM_drawWorldTimer(void)
 
 #ifdef __JDOOM__
 
-MenuItem_t MAPItems[] = {
+menuitem_t MAPItems[] = {
 /*    {ITT_LRFUNC, 0, "window position : ",    M_MapPosition, 0 },
     {ITT_LRFUNC, 0, "window width :       ",    M_MapWidth, 0 },
     {ITT_LRFUNC, 0, "window height :     ",    M_MapHeight, 0 },*/
@@ -2698,11 +2700,12 @@ MenuItem_t MAPItems[] = {
     {ITT_LRFUNC, 0, "line alpha :          ",    M_MapLineAlpha, 0 },
 };
 
-Menu_t MapDef = {
+menu_t MapDef = {
+    0,
     70, 40,
     M_DrawMapMenu,
     14, MAPItems,
-    0, MENU_OPTIONS, 0,
+    0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
     LINEHEIGHT_A,
@@ -2711,7 +2714,7 @@ Menu_t MapDef = {
 
 #else
 
-MenuItem_t MAPItems[] = {
+menuitem_t MAPItems[] = {
 /*    {ITT_LRFUNC, 0, "window position : ", M_MapPosition, 0 },
     {ITT_LRFUNC, 0, "window width :       ", M_MapWidth, 0 },
     {ITT_EMPTY, 0, NULL, NULL, 0 },
@@ -2740,7 +2743,8 @@ MenuItem_t MAPItems[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0 }
 };
 
-Menu_t MapDef = {
+menu_t MapDef = {
+    0,
     64, 28,
     M_DrawMapMenu,
 #if __JHERETIC__
@@ -2748,7 +2752,7 @@ Menu_t MapDef = {
 #else
     14, MAPItems,
 #endif
-    0, MENU_OPTIONS, 0,
+    0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
     LINEHEIGHT_A,
@@ -2765,7 +2769,7 @@ Menu_t MapDef = {
  */
 void M_DrawMapMenu(void)
 {
-    const Menu_t *menu = &MapDef;
+    const menu_t *menu = &MapDef;
     char   *hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
     char *yesno[2] = { "NO", "YES" };
 #if !defined(__JHEXEN__) && !defined(__JSTRIFE__)
@@ -2779,14 +2783,14 @@ void M_DrawMapMenu(void)
     M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
     M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
     M_WriteMenuText(menu, 3, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-    M_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
-    M_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
-    M_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
-    M_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
-    M_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
+    MN_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
+    MN_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
+    MN_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
+    MN_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
+    MN_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
     M_WriteMenuText(menu, 11, yesno[cfg.automapShowDoors]);
-    M_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-    M_DrawSlider(menu, 13, 11, cfg.automapLineAlpha * 10 + .5f);
+    MN_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
+    MN_DrawSlider(menu, 13, 11, cfg.automapLineAlpha * 10 + .5f);
 
 #else
 
@@ -2795,23 +2799,23 @@ void M_DrawMapMenu(void)
     M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
     M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
     M_WriteMenuText(menu, 3, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-    M_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
-    M_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
-    M_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
-    M_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
-    M_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
+    MN_DrawColorBox(menu, 5, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
+    MN_DrawColorBox(menu, 6, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
+    MN_DrawColorBox(menu, 7, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
+    MN_DrawColorBox(menu, 8, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
+    MN_DrawColorBox(menu, 9, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
     M_WriteMenuText(menu, 10, yesno[cfg.automapShowDoors]);
-    M_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-    M_DrawSlider(menu, 15, 11, cfg.automapLineAlpha * 10 + .5f);
+    MN_DrawSlider(menu, 12, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
+    MN_DrawSlider(menu, 15, 11, cfg.automapLineAlpha * 10 + .5f);
 #else
-    M_DrawColorBox(menu, 2, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
-    M_DrawColorBox(menu, 3, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
-    M_DrawColorBox(menu, 4, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
-    M_DrawColorBox(menu, 5, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
-    M_DrawColorBox(menu, 6, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
+    MN_DrawColorBox(menu, 2, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], menu_alpha);
+    MN_DrawColorBox(menu, 3, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], menu_alpha);
+    MN_DrawColorBox(menu, 4, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], menu_alpha);
+    MN_DrawColorBox(menu, 5, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], menu_alpha);
+    MN_DrawColorBox(menu, 6, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], menu_alpha);
     M_WriteMenuText(menu, 7, yesno[cfg.automapShowDoors]);
-    M_DrawSlider(menu, 9, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-    M_DrawSlider(menu, 12, 11, cfg.automapLineAlpha * 10 + .5f);
+    MN_DrawSlider(menu, 9, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
+    MN_DrawSlider(menu, 12, 11, cfg.automapLineAlpha * 10 + .5f);
 #endif
 
 #endif

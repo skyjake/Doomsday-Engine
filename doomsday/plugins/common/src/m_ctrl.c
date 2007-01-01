@@ -56,7 +56,7 @@
 
 extern float   menu_alpha;
 extern int menusnds[];
-extern Menu_t  ControlsDef;
+extern menu_t  ControlsDef;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -93,8 +93,8 @@ void M_DrawControlsMenu(void)
     int     i;
     char    controlCmd[80];
     char    buff[80], prbuff[80], *token;
-    const Menu_t *menu = &ControlsDef;
-    const MenuItem_t *item = menu->items + menu->firstItem;
+    const menu_t *menu = &ControlsDef;
+    const menuitem_t *item = menu->items + menu->firstItem;
     const Control_t *ctrl;
 
 #if __JDOOM__
@@ -110,10 +110,10 @@ void M_DrawControlsMenu(void)
     gl.Color4f( 1, 1, 1, menu_alpha);
 
     // Draw the page arrows.
-    token = (!menu->firstItem || MenuTime & 8) ? "invgeml2" : "invgeml1";
+    token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
     GL_DrawPatch_CS(menu->x, menu->y - 12, W_GetNumForName(token));
     token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
-             MenuTime & 8) ? "invgemr2" : "invgemr1";
+             menuTime & 8) ? "invgemr2" : "invgemr1";
     GL_DrawPatch_CS(312 - menu->x, menu->y - 12, W_GetNumForName(token));
 #endif
 

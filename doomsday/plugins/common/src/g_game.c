@@ -657,7 +657,7 @@ boolean G_Responder(event_t *ev)
            (ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON ||
             ev->type == EV_JOY_BUTTON))
         {
-            M_StartControlPanel();
+            M_StartMenu();
             return true;
         }
         return false;

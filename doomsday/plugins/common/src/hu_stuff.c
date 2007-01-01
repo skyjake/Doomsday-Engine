@@ -66,6 +66,7 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern char   *borderLumps[];
 extern boolean automapactive;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -84,6 +85,7 @@ boolean hu_showallfrags = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static dpatch_t borderpatches[8];
 static boolean headsupactive = false;
 
 // Code -------------------------------------------------------------------
@@ -124,6 +126,10 @@ void HU_Init(void)
 #ifdef __JDOOM__
     char    name[9];
 #endif
+
+    // Load the border patches
+    for(i = 1; i < 9; ++i)
+        R_CachePatch(&borderpatches[i-1], borderLumps[i]);
 
     // Setup strings.
 #define INIT_STRINGS(x, x_idx) \
@@ -951,6 +957,148 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
 
     gl.Color4f(1, 1, 1, a);
     GL_DrawPatch_CS(posx, y, lump);
+}
+
+/**
+ * Draws a little colour box using the background box for a border
+ */
+void M_DrawColorBox(int x, int y, float r, float g, float b, float a)
+{
+    if(a < 0)
+        a = 1;
+
+    M_DrawBackgroundBox(x, y, 2, 1, 1, 1, 1, a, false, 1);
+    GL_SetNoTexture();
+    GL_DrawRect(x-1,y-1, 4, 3, r, g, b, a);
+}
+
+/**
+ *  Draws a box using the border patches, a border is drawn outside.
+ */
+void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
+                         float blue, float alpha, boolean background, int border)
+{
+    dpatch_t    *t = 0, *b = 0, *l = 0, *r = 0, *tl = 0, *tr = 0, *br = 0, *bl = 0;
+    int         up = -1;
+
+    switch(border)
+    {
+    case BORDERUP:
+        t = &borderpatches[2];
+        b = &borderpatches[0];
+        l = &borderpatches[1];
+        r = &borderpatches[3];
+        tl = &borderpatches[6];
+        tr = &borderpatches[7];
+        br = &borderpatches[4];
+        bl = &borderpatches[5];
+
+        up = -1;
+        break;
+
+    case BORDERDOWN:
+        t = &borderpatches[0];
+        b = &borderpatches[2];
+        l = &borderpatches[3];
+        r = &borderpatches[1];
+        tl = &borderpatches[4];
+        tr = &borderpatches[5];
+        br = &borderpatches[6];
+        bl = &borderpatches[7];
+
+        up = 1;
+        break;
+
+    default:
+        break;
+    }
+
+    GL_SetColorAndAlpha(red, green, blue, alpha);
+
+    if(background)
+    {
+        GL_SetFlat(R_FlatNumForName(borderLumps[0]));
+        GL_DrawRectTiled(x, y, w, h, 64, 64);
+    }
+
+    if(border)
+    {
+        // Top
+        GL_SetPatch(t->lump);
+        GL_DrawRectTiled(x, y - SHORT(t->height), w, SHORT(t->height),
+                         up * SHORT(t->width), up * SHORT(t->height));
+        // Bottom
+        GL_SetPatch(b->lump);
+        GL_DrawRectTiled(x, y + h, w, SHORT(b->height), up * SHORT(b->width),
+                         up * SHORT(b->height));
+        // Left
+        GL_SetPatch(l->lump);
+        GL_DrawRectTiled(x - SHORT(l->width), y, SHORT(l->width), h,
+                         up * SHORT(l->width), up * SHORT(l->height));
+        // Right
+        GL_SetPatch(r->lump);
+        GL_DrawRectTiled(x + w, y, SHORT(r->width), h, up * SHORT(r->width),
+                         up * SHORT(r->height));
+
+        // Top Left
+        GL_SetPatch(tl->lump);
+        GL_DrawRectTiled(x - SHORT(tl->width), y - SHORT(tl->height),
+                         SHORT(tl->width), SHORT(tl->height),
+                         up * SHORT(tl->width), up * SHORT(tl->height));
+        // Top Right
+        GL_SetPatch(tr->lump);
+        GL_DrawRectTiled(x + w, y - SHORT(tr->height), SHORT(tr->width),
+                         SHORT(tr->height), up * SHORT(tr->width),
+                         up * SHORT(tr->height));
+        // Bottom Right
+        GL_SetPatch(br->lump);
+        GL_DrawRectTiled(x + w, y + h, SHORT(br->width), SHORT(br->height),
+                         up * SHORT(br->width), up * SHORT(br->height));
+        // Bottom Left
+        GL_SetPatch(bl->lump);
+        GL_DrawRectTiled(x - SHORT(bl->width), y + h, SHORT(bl->width),
+                         SHORT(bl->height), up * SHORT(bl->width),
+                         up * SHORT(bl->height));
+    }
+}
+
+/**
+ * Draws a menu slider control
+ */
+#ifndef __JDOOM__
+void M_DrawSlider(int x, int y, int width, int slot, float alpha)
+#else
+void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
+#endif
+{
+#ifndef __JDOOM__
+    gl.Color4f( 1, 1, 1, alpha);
+
+    GL_DrawPatch_CS(x - 32, y, W_GetNumForName("M_SLDLT"));
+    GL_DrawPatch_CS(x + width * 8, y, W_GetNumForName("M_SLDRT"));
+
+    GL_SetPatch(W_GetNumForName("M_SLDMD1"));
+    GL_DrawRectTiled(x - 1, y + 1, width * 8 + 2, 13, 8, 13);
+
+    gl.Color4f( 1, 1, 1, alpha);
+    GL_DrawPatch_CS(x + 4 + slot * 8, y + 7, W_GetNumForName("M_SLDKB"));
+#else
+    int         xx;
+    float       scale = height / 13.0f;
+
+    xx = x;
+    GL_SetPatch(W_GetNumForName("M_THERML"));
+    GL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
+    xx += 6 * scale;
+    GL_SetPatch(W_GetNumForName("M_THERM2"));    // in jdoom.wad
+    GL_DrawRectTiled(xx, y, 8 * width * scale, height, 8 * scale, height);
+    xx += 8 * width * scale;
+    GL_SetPatch(W_GetNumForName("M_THERMR"));
+    GL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
+    GL_SetPatch(W_GetNumForName("M_THERMO"));
+    GL_DrawRect(x + (6 + slot * 8) * scale, y, 6 * scale, height, 1, 1, 1,
+                alpha);
+#endif
 }
 
 void Draw_BeginZoom(float s, float originX, float originY)

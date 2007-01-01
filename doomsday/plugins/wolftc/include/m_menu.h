@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -68,7 +68,7 @@ void            M_UnloadData(void);
 
 // Called by intro code to force menu up upon a keypress,
 // does nothing if menu is already up.
-void            M_StartControlPanel(void);
+void            M_StartMenu(void);
 void            M_ClearMenus(void);
 
 void            M_StartMessage(char *string, void *routine, boolean input);

@@ -51,7 +51,7 @@ extern const Control_t *grabbing;
 
 #define NUM_CONTROLS_ITEMS 119
 
-static const MenuItem_t ControlsItems[] = {
+static const menuitem_t ControlsItems[] = {
     {ITT_EMPTY, 0, "PLAYER ACTIONS", NULL, 0},
     {ITT_EFUNC, 0, "LEFT :", SCControlConfig, A_TURNLEFT},
     {ITT_EFUNC, 0, "RIGHT :", SCControlConfig, A_TURNRIGHT},

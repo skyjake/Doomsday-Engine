@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  *
  * In addition, as a special exception, we, the authors of deng
@@ -72,10 +72,10 @@
 // Types
 
 typedef struct {
-    char    text[MAX_EDIT_LEN];
-    char    oldtext[MAX_EDIT_LEN];  // If the current edit is canceled...
-    int     firstVisible;
-} EditField_t;
+    char            text[MAX_EDIT_LEN];
+    char            oldtext[MAX_EDIT_LEN];  // If the current edit is canceled...
+    int             firstVisible;
+} editfield_t;
 
 typedef enum {
     ITT_EMPTY,
@@ -85,7 +85,7 @@ typedef enum {
     ITT_INERT,
     ITT_NAVLEFT,
     ITT_NAVRIGHT
-} ItemType_t;
+} menuitemtype_t;
 
 typedef enum {
     MENU_MAIN,
@@ -107,61 +107,58 @@ typedef enum {
     MENU_PLAYERSETUP,
     MENU_WEAPONSETUP,
     MENU_NONE
-} MenuType_t;
+} menutype_t;
 
-// menu item flags
+// Menu item flags
 #define MIF_NOTALTTXT   0x01  // don't use alt text instead of lump (M_NMARE)
 
 typedef struct {
-    ItemType_t      type;
+    menuitemtype_t  type;
     int             flags;
     char            *text;
     void            (*func) (int option, void *data);
     int             option;
     char           *lumpname;
     void           *data;
-} MenuItem_t;
+} menuitem_t;
+
+// Menu flags
+#define MNF_NOHOTKEYS   0x00000001  // hotkeys are disabled.
+#define MNF_NOSCALE     0x00000002  // menu wont be scaled (e.g. readthis).
 
 typedef struct {
+    int             flags;
     int             x;
     int             y;
     void            (*drawFunc) (void);
     int             itemCount;
-    const MenuItem_t *items;
+    const menuitem_t *items;
     int             lastOn;
-    MenuType_t      prevMenu;
-    int     noHotKeys;  // 1= hotkeys are disabled on this menu
-    dpatch_t       *font;       // Font for menu items.
-    float          *color;      // their color.
+    menutype_t      prevMenu;
+    dpatch_t       *font;           // Font for menu items.
+    float          *color;
     int             itemHeight;
     // For multipage menus.
     int             firstItem, numVisItems;
-} Menu_t;
+} menu_t;
 
-extern int      MenuTime;
+extern int      menuTime;
 extern boolean  shiftdown;
-extern Menu_t  *currentMenu;
+extern menu_t  *currentMenu;
 extern short    itemOn;
 
-void            SetMenu(MenuType_t menu);
+extern menu_t   MapDef;
 
-extern Menu_t   MapDef;
-
-extern Menu_t   ControlsDef;
+extern menu_t   ControlsDef;
 
 // Multiplayer menus.
-extern Menu_t   MultiplayerMenu;
-extern Menu_t   GameSetupMenu;
-extern Menu_t   PlayerSetupMenu;
-
-//extern Menu_t NetGameMenu;
-//extern Menu_t TCPIPMenu;
-//extern Menu_t SerialMenu;
-//extern Menu_t ModemMenu;
+extern menu_t   MultiplayerMenu;
+extern menu_t   GameSetupMenu;
+extern menu_t   PlayerSetupMenu;
 
 void            M_StartControlPanel(void);
 void            M_DrawSaveLoadBorder(int x, int y);
-void            M_WriteMenuText(const Menu_t * menu, int index, char *text);
+void            M_WriteMenuText(const menu_t * menu, int index, char *text);
 int             M_StringWidth(char *string,  dpatch_t  *font);
 int             M_StringHeight(char *string, dpatch_t *font);
 
@@ -179,10 +176,11 @@ void            DrawColorWidget();
 void            SCColorWidget(int index, void *data);
 void            M_WGCurrentColor(int option, void *data);
 
-void            M_SetupNextMenu(Menu_t * menudef);
+void            M_SetupNextMenu(menu_t * menudef);
 void            M_DrawTitle(char *text, int y);
-void            M_DrawSlider(const Menu_t * menu, int index, int width, int dot);
-void            M_DrawColorBox(const Menu_t * menu, int index, float r, float g, float b, float a);
+void    MN_DrawSlider(const menu_t * menu, int item, int width, int slot);
+void    MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
+                        float b, float a);
 void            M_ClearMenus(void);
 void            M_FloatMod10(float *variable, int option);
 
