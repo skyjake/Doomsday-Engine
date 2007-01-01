@@ -31,6 +31,7 @@ import ui, events
 import sb.profdb as pr
 import sb.confdb as st
 import sb.aodb as ao
+import sb.widget.text as wt
 import language
 from ui import ALIGN_HORIZONTAL
 
@@ -59,38 +60,48 @@ def init():
     area.setWeight(0)
 
     global titleLabel
+    area.setBorder(16, ui.BORDER_LEFT_RIGHT)
     titleLabel = area.createText('')
     titleLabel.setTitleStyle()
+    
+    area.setBorder(2, ui.BORDER_ALL)
+    area.setExpanding(False)
+    area.addSpacer()
+    area.setExpanding(True)
 
+    area.setBorder(16, ui.BORDER_NOT_TOP)
     area.createLine()
 
-    area.setBorder(10)
+    area.setBorder(8, ui.BORDER_ALL)
     addonInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
     area.setWeight(0)
     systemInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
     valuesInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
 
     # Information about addons selected into the profile.
+    addonInfo.setBorder(4, ui.BORDER_LEFT_RIGHT)
+    addonInfo.setWeight(1)
+    addonInfo.createText('loaded-addons', ':', align=wt.Text.RIGHT).setBoldStyle()
     addonInfo.setWeight(2)
-    addonInfo.createText('loaded-addons', ':').setBoldStyle()
-    addonInfo.setWeight(3)
 
     global addonListing
     addonListing = addonInfo.createText()
 
     # Values for the most important system settings.
+    systemInfo.setBorder(4, ui.BORDER_LEFT_RIGHT)
+    systemInfo.setWeight(1)
+    systemInfo.createText('system-settings', ':', align=wt.Text.RIGHT).setBoldStyle()
     systemInfo.setWeight(2)
-    systemInfo.createText('system-settings', ':').setBoldStyle()
-    systemInfo.setWeight(3)
 
     global systemSummary
     systemSummary = systemInfo.createText()
     systemSummary.setText('800x600; run in window')
 
     # Information about settings that have a value in the profile.
+    valuesInfo.setBorder(4, ui.BORDER_LEFT_RIGHT)
+    valuesInfo.setWeight(1)
+    valuesInfo.createText('custom-settings', ':', align=wt.Text.RIGHT).setBoldStyle()
     valuesInfo.setWeight(2)
-    valuesInfo.createText('custom-settings', ':').setBoldStyle()
-    valuesInfo.setWeight(3)
 
     global valuesListing
     valuesListing = valuesInfo.createText()
@@ -199,9 +210,10 @@ def updateSummary(profile):
         
         msg = language.translate(value.getId())
         if language.isDefined(value.getValue()):
-            msg += ' (' + language.translate(value.getValue()) + ')'
+            if value.getValue() != 'yes':
+                msg += ' = ' + language.translate(value.getValue()) 
         else:
-            msg += ' (' + value.getValue() + ')'
+            msg += ' = ' + value.getValue() 
         summary.append(msg)
 
     if len(summary) == 0:

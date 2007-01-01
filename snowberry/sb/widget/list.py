@@ -51,7 +51,7 @@ class List (base.Widget):
         else:
             # Normal listbox.
             if style == List.STYLE_MULTIPLE:
-                styleFlags = wx.LB_MULTIPLE
+                styleFlags = wx.LB_EXTENDED
             elif style == List.STYLE_SINGLE:
                 styleFlags = wx.LB_SINGLE
             base.Widget.__init__(self, wx.ListBox(parent, wxId, style=styleFlags))

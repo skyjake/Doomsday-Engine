@@ -68,6 +68,12 @@ def init():
     clearButton.resizeToBestSize()
     refreshButton = buttonArea.createButton('refresh-addon-database', wb.Button.STYLE_MINI)
     refreshButton.resizeToBestSize()   
+    
+    buttonArea.setWeight(1)
+    buttonArea.addSpacer()
+    buttonArea.setWeight(0)
+    buttonArea.setBorderDirs(ui.BORDER_TOP | ui.BORDER_LEFT)
+    buttonArea.createButton('show-addon-paths')   
 
     # Listen to our commands.
     events.addCommandListener(handleCommand, ['maps-list-clear'])

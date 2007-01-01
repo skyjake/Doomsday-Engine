@@ -215,7 +215,7 @@ class MainPanel (wx.Panel):
 
 
 INITIAL_SASH_POS = 180
-INITIAL_PROFILE_SASH_POS = 170
+INITIAL_PROFILE_SASH_POS = 190
 
 if st.isDefined('main-split-position'):
     INITIAL_SASH_POS = st.getSystemInteger('main-split-position')

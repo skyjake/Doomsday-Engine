@@ -95,7 +95,6 @@ def createDialog(id, alignment=1, size=None, resizable=True):
     @return A widgets.DialogArea object.
     """
     dialog = AreaDialog(ui.getMainPanel(), -1, id, size, alignment, resizable)
-    dialog.center()
     return dialog
 
 
@@ -178,7 +177,6 @@ def createButtonDialog(id, buttons, defaultButton=None, size=None,
         widget = buttonArea.createButton(button, style=style)
         dialog.identifyWidget(button, widget)
 
-    dialog.center()
     return dialog, userArea
 
 
@@ -228,9 +226,11 @@ class AreaDialog (wx.Dialog):
 
         self.Centre()
 
-    def run(self):
+    def run(self, pos=None):
         """Show the dialog as modal.  Won't return until the dialog
         has been closed.
+
+        @param pos  Tuple (x, y). Position for the dialog. Defaults to None.
 
         @return The command that closed the dialog.
         """
@@ -246,6 +246,11 @@ class AreaDialog (wx.Dialog):
 
         if self.recommendedSize is not None:
             self.SetSize(self.recommendedSize)
+
+        if pos:
+            self.MoveXY(*pos)
+        else:
+            self.Centre()
 
         # Won't return until the dialog closes.
         self.ShowModal()
@@ -365,7 +370,8 @@ class WizardPage (wiz.PyWizardPage):
         self.next = None
 
         # Create an Area inside the page.
-        self.area = sb.widget.area.Area('', self, alignment=ui.ALIGN_VERTICAL, border=6)
+        paddingArea = sb.widget.area.Area('', self, alignment=ui.ALIGN_VERTICAL, border=12)
+        self.area = paddingArea.createArea(alignment=ui.ALIGN_VERTICAL, border=6)
         self.area.setWeight(0)
 
         # Create the title widget.

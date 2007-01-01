@@ -232,7 +232,7 @@ def updateHelpText():
     the fields depend on the currently selected tabs and settings.
     """
     msg = '<html><table width="100%" height="100%" border="0" ' + \
-          'cellspacing="0" cellpadding="0"><tr>' + \
+          'cellspacing="0" cellpadding="6"><tr>' + \
           '<td align="left">'
     msg += string.join(helpFields, "<p>") + "</table></html>"
     helpText.setText(msg)

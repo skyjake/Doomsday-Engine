@@ -10,21 +10,14 @@ language-finnish: Suomi
 run-setup-wizard: Näytä asetusvelho
 setup-wizard: Asetusvelho
 wizard-language: Kieli
-wizard-language-explanation = "Snowberryn käyttöliittymä tukee lokalisointeja.
-Valitse se kieli, jota haluat käyttää."
+wizard-language-explanation: Valitse kieli, jota haluat käyttää.
 wizard-games: Peliprofiilit
 wizard-games-all: Valitse kaikki
 wizard-games-clear: Poista kaikki
-wizard-select-games =
-"Valitse ne pelit, jotka haluat ottaa käyttöön.
-Huomaa, että sinulla täytyy olla pelin alkuperäinen 
-kopio asennettuna."
-wizard-locate-iwad = "Pelataksesi tätä peliä sinun on osoitettava 
-pelin päädatatiedoston sijainti."
-wizard-locate-iwad-deathkings = "Toisin kuin muiden pelien tapauksessa, 
-Death Kings WAD-datatiedosto installoidaan lisäosana. Death Kings on 
-Hexenin laajennos."
-wizard-suggested-iwad: Alkuperäinen nimi:
+wizard-select-games: Valitse ne pelit, jotka haluat ottaa käyttöön. Huomaa, että sinulla täytyy olla pelin alkuperäinen kopio asennettuna.
+wizard-locate-iwad: Pelataksesi tätä peliä sinun on osoitettava pelin päädatatiedoston sijainti.
+wizard-locate-iwad-deathkings: Toisin kuin muiden pelien tapauksessa, Death Kings WAD-datatiedosto installoidaan lisäosana. Death Kings on Hexenin laajennos.
+wizard-suggested-iwad: Alkuperäinen nimi
 deathkings-selection-title: Etsi HEXDD.WAD
 wizard-launching: Käynnistyy
 wizard-launching-explanation: Pitäisikö Snowberry sulkea, kun peli käynnistetään?

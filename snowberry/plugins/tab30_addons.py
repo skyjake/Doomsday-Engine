@@ -70,13 +70,13 @@ def init():
 
     # The addon control buttons.
     area.setWeight(0)
-    area.setBorderDirs(ui.BORDER_ALL)
-    buttonArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
-    buttonArea.setBorderDirs(ui.BORDER_LEFT_RIGHT)
+    area.setBorderDirs(ui.BORDER_NOT_TOP)
+    buttonArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=4)
 
     buttonArea.setWeight(0)
 
     # Install (+) button for installing new addons.
+    buttonArea.setBorderDirs(ui.BORDER_TOP | ui.BORDER_RIGHT)
     buttonArea.createButton('install-addon', wg.Button.STYLE_MINI)
 
     global uninstallButton
@@ -96,7 +96,10 @@ def init():
     settingsButton = buttonArea.createButton('addon-settings')
     settingsButton.disable()
     
-    buttonArea.createButton('load-order')
+    buttonArea.setBorderDirs(ui.BORDER_TOP)
+    buttonArea.createButton('show-addon-paths')
+
+    ui.addMenuCommand(ui.MENU_TOOLS, 'load-order')
 
     # Registering a notification listener.
     events.addNotifyListener(handleNotification, ['active-profile-changed',

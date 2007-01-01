@@ -39,7 +39,7 @@ def init():
                                             'addon-paths-changed'])
 
     # Listen for the About button.
-    #events.addCommandListener(handleCommand)
+    events.addCommandListener(handleCommand, ['show-addon-paths'])
     
     # Commands for the popup menu.
     ui.addMenuCommand(ui.MENU_TOOLS, 'show-snowberry-settings')
@@ -109,8 +109,7 @@ def handleNotify(event):
         # TODO: Create widgets for all system settings?
         box.createSetting(st.getSystemSetting('main-hide-title'))
         box.createSetting(st.getSystemSetting('main-hide-help'))
-        box.createSetting(st.getSystemSetting(
-            'summary-profile-change-autoselect'))
+        box.createSetting(st.getSystemSetting('summary-profile-change-autoselect'))
         box.createSetting(st.getSystemSetting('profile-large-icons'))
         
         box.createText('restart-required', align=wt.Text.RIGHT).setSmallStyle()
@@ -127,3 +126,10 @@ def handleNotify(event):
             # is received when the pathList C++ part has already been 
             # destroyed.
             pass
+
+
+def handleCommand(event):
+    if event.hasId('show-addon-paths'):
+        events.send(events.Command('show-snowberry-settings'))
+        global pathList
+        pathList.focus()

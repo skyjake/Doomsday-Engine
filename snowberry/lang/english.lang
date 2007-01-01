@@ -31,13 +31,11 @@ wizard-games-all: Select all
 wizard-games-clear: Clear all
 wizard-select-games: Select the games you would like to set up. Note that you must have a copy of the data files of the original game.
 wizard-locate-iwad: In order to play this game, you will need to locate the main data file of the game.
-wizard-locate-iwad-deathkings = "Unlike the other games, the Death Kings WAD will be
-installed as an addon. Death Kings is an extension
-to Hexen."
-wizard-suggested-iwad: Original name:
+wizard-locate-iwad-deathkings: Unlike the other games, the Death Kings WAD will be installed as an addon. Death Kings is an extension to Hexen.
+wizard-suggested-iwad: Original name
 deathkings-selection-title: Locate HEXDD.WAD
 wizard-addon-paths: My Addon Folders
-wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell the launcher to load them from their current location. Specify the folders below. The folders can be edited in the Defaults -> Settings -> Launcher page later on. If you later install addons using the Addons tab, they will be copied to the launcher's addon folder. 
+wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell the launcher to load them from their current location. Specify the folders below. The folders can be edited in the Shared Settings -> Settings -> Launcher page later on. If you later install addons using the Addons tab, they will be copied to the launcher's addon folder. 
 wizard-launching: Launching Options
 wizard-launching-explanation: Should the launcher be closed when a game is started?
 wizard-unlaunchable-profiles: Some Profiles Unlaunchable
@@ -123,7 +121,7 @@ addon-dialog-type-manifest: Addon Manifest
 uninstall-addon-dialog: Uninstall Addon
 uninstall-addon-query: Are you sure you want to uninstall <b>%1</b>?
 load-order-dialog: Load Order
-load-order-message: All addons that will be loaded:
+load-order-message: Addons will be loaded in this order:
 load-order-move-up: Up
 load-order-move-down: Down
 load-order-move-top: First
@@ -167,7 +165,7 @@ you must also load addons that provide these required resources:"
 #
 # Profiles and Components
 #
-defaults-profile: Defaults
+defaults-profile: Shared Settings
 game-jdoom: jDoom
 game-jheretic: jHeretic
 game-jhexen: jHexen
@@ -189,6 +187,7 @@ install-addon: +
 uninstall-addon: -
 load-order: Load Order
 addon-settings: Settings
+show-addon-paths: My Folders
 about: About
 popup-menu: Menu
 preferences: Preferences
@@ -202,26 +201,26 @@ menu-2: Tools
 menu-3: Help
 menu-new-profile: New...
 menu-rename-profile: Rename
-menu-reset-profile: Reset to defaults
+menu-reset-profile: Reset to Defaults
 menu-duplicate-profile: Duplicate
 menu-delete-profile: Delete
 menu-hide-profile: Hide
 menu-unhide-profiles: Show...
 menu-uninstall-addon: Uninstall
 menu-addon-info: Info
-menu-load-order: Load order...
-menu-install-addon: Install new...
+menu-load-order: Load Order...
+menu-install-addon: Install New...
 menu-addon-settings: Settings
-menu-check-category: Check category
-menu-uncheck-category: Uncheck category
-menu-expand-all-categories: Expand all
-menu-collapse-all-categories: Collapse all
-menu-reset-slider: Reset to default
-menu-play: Launch selected game
+menu-check-category: Check Category
+menu-uncheck-category: Uncheck Category
+menu-expand-all-categories: Expand All
+menu-collapse-all-categories: Collapse All
+menu-reset-slider: Reset to Default
+menu-play: Launch Selected Game
 menu-play-accel: Ctrl-L
-menu-view-command-line: Preview command line
+menu-view-command-line: Preview Command Line
 menu-view-command-line-accel: Alt-P
-menu-run-setup-wizard: Show setup wizard
+menu-run-setup-wizard: Show Setup Wizard
 menu-show-snowberry-settings: Preferences
 menu-show-snowberry-settings-accel: Ctrl-,
 menu-about: About Snowberry
@@ -262,9 +261,8 @@ developer-options-icon: developer
 # Labels for the Summary Tab
 #
 loaded-addons: Loaded Addons
-custom-settings = "Customized
-Settings"
-system-settings: System Settings
+custom-settings: Settings
+system-settings: Configuration
 summary-run-in-window: run in window
 summary-color-depth-16: 16-bit colors
 summary-color-depth-32: 32-bit colors
@@ -462,12 +460,12 @@ help-welcome = "<b><font size=''+1''>Welcome to Snowberry!</font></b><p>
 This is a launcher application that lets you launch <b>Doomsday Engine</b> 
 with ease. Select a game profile from the list on the left and press <b>Play</b>.
 <p>The user interface of the launcher can be 
-modified in <b>Defaults</b> -&gt; <b>Settings</b> -&gt; 
+modified in <b>Shared Settings</b> -&gt; <b>Settings</b> -&gt; 
 <b><a href=''show-snowberry-settings''>Launcher</a></b>."
 
 help-command = "To start a game, press the <b>Play</b> button."
 
-help-command-defaults = "The <b>Defaults</b> profile contains
+help-command-defaults = "The <b>Shared Settings</b> profile contains
 settings common to all profiles."
 
 help-tab-summary = "<b><font size=''+1''>Summary Tab</font></b><p>
@@ -489,7 +487,7 @@ help-tab-settings = "<b><font size=''+1''>Settings Tab</font></b><p>
 The Settings tab allows you to customize the
 current profile and the addons you've selected for loading.
 <p>To change the default settings for all profiles,
-select the <b>Defaults</b> profile."
+select the <b>Shared Settings</b> profile."
 
 #
 # Settings Help

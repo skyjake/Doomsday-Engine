@@ -22,14 +22,15 @@
 
 import ui, paths, events, language, sb.util.dialog
 from sb.util.dialog import WizardPage, WizardDialog
-import sb.widget.button as wg
+import sb.widget.button as wb
+import sb.widget.text as wt
 import sb.widget.list
 import sb.confdb as st
 import sb.profdb as pr
 import sb.aodb as ao
 
 
-HAS_BEEN_RUN = 'setup-wizard-shown'
+HAS_BEEN_RUN = 'setup-wizard-shown' # see profdb.reset()
 
 
 def init():
@@ -146,7 +147,7 @@ def runWizard():
     area.setBorderDirs(ui.BORDER_NOT_BOTTOM)
     games = area.createList('', style=sb.widget.list.List.STYLE_CHECKBOX)
     area.setBorderDirs(ui.BORDER_NOT_TOP)
-    games.setMinSize(50, 200)
+    games.setMinSize(50, 180)
     gamePage.setGameList(games)
 
     def allGames():
@@ -162,10 +163,10 @@ def runWizard():
     
     controls = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
     controls.setWeight(0)
-    button = controls.createButton('wizard-games-all', wg.Button.STYLE_MINI)
+    button = controls.createButton('wizard-games-all', wb.Button.STYLE_MINI)
     button.addReaction(allGames)
     button.resizeToBestSize()
-    button = controls.createButton('wizard-games-clear', wg.Button.STYLE_MINI)
+    button = controls.createButton('wizard-games-clear', wb.Button.STYLE_MINI)
     button.addReaction(clearGames)
     button.resizeToBestSize()
 
@@ -196,24 +197,34 @@ def runWizard():
 
             # The suggestion.
             if suggested.has_key(p.getId()):
-                sug = area.createText('wizard-suggested-iwad',
-                                      ' ' + suggested[p.getId()])
+                sugArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=2)
+                sugArea.setExpanding(False)
+                sugArea.setWeight(1)
+                sugArea.createText('wizard-suggested-iwad', ':', align=wt.Text.RIGHT)
+                sugArea.setWeight(2)
+                sug = sugArea.createText('')
+                sug.setText(suggested[p.getId()])
 
             area.createSetting(st.getSetting('iwad'))
 
             if p.getId() == 'hexen-dk':
+                area.setBorder(12, ui.BORDER_ALL)
                 area.createLine()
+                area.setBorder(6, ui.BORDER_ALL)
                 area.createText('deathkings-selection-title').setHeadingStyle()
                 
                 # Death Kings is an extension to Hexen.  It uses the
                 # same Hexen IWAD, but also an addon IWAD.
-                area.createText('wizard-locate-iwad-deathkings')
+                area.createText('wizard-locate-iwad-deathkings', maxLineLength=65).resizeToBestSize()
 
-                deathKingsWad = area.createTextField('')
-
-                area.setExpanding(False)
-                area.setWeight(0)
-                browseButton = area.createButton('browse')
+                entry = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=4)
+                entry.setExpanding(False)
+                entry.setWeight(1)
+                entry.setBorderDirs(ui.BORDER_NOT_LEFT)
+                deathKingsWad = entry.createTextField('')
+                entry.setWeight(0)
+                entry.setBorderDirs(ui.BORDER_TOP_BOTTOM)
+                browseButton = entry.createButton('browse-button', wb.Button.STYLE_MINI)
 
                 def browseDeathKings():
                     # Open a file browser.
@@ -258,11 +269,11 @@ def runWizard():
     commands.setWeight(0)
 
     # Button for adding new paths.
-    button = commands.createButton('new-addon-path', wg.Button.STYLE_MINI)
+    button = commands.createButton('new-addon-path', wb.Button.STYLE_MINI)
     button.addReaction(addAddonPath)
 
     # Button for removing a path.
-    button = commands.createButton('delete-addon-path', wg.Button.STYLE_MINI)
+    button = commands.createButton('delete-addon-path', wb.Button.STYLE_MINI)
     button.addReaction(removeAddonPath)
 
     # Launch options.

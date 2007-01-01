@@ -11,17 +11,14 @@ language-german: Deutsch
 run-setup-wizard: Setup Wizard
 setup-wizard: Setup Wizard
 wizard-language: Sprache
-wizard-language-explanation = "Das Snowberry Benutzer-Interface unterstützt Mehrsprachigkeit.
-Wählen Sie die Sprache, die Sie nutzen möchten."
+wizard-language-explanation: Das Snowberry Benutzer-Interface unterstützt Mehrsprachigkeit. Wählen Sie die Sprache, die Sie nutzen möchten.
 wizard-games: Game Profile
 wizard-games-all: Alle auswählen
 wizard-games-clear: Alle abwählen
-wizard-select-games ="Wählen Sie die Spiele aus, die Sie konfigurieren möchten.
-Beachten Sie, dass die jeweiligen Orginale bereits installiert sein müssen."
-wizard-locate-iwad = "Um dieses Spiel nutzen zu können, müssen Sie die Haupt-Datei (IWAD) ausfindig machen."
-wizard-locate-iwad-deathkings = "Death Kings WAD wird -nicht wie andere Spiele- als Erweiterung installiert.
-Death Kings ist das offizielle Zusatzpack zum Spiel HeXen."
-wizard-suggested-iwad: Originalname:
+wizard-select-games: Wählen Sie die Spiele aus, die Sie konfigurieren möchten. Beachten Sie, dass die jeweiligen Orginale bereits installiert sein müssen.
+wizard-locate-iwad: Um dieses Spiel nutzen zu können, müssen Sie die Haupt-Datei (IWAD) ausfindig machen.
+wizard-locate-iwad-deathkings: Death Kings WAD wird -nicht wie andere Spiele- als Erweiterung installiert. Death Kings ist das offizielle Zusatzpack zum Spiel HeXen.
+wizard-suggested-iwad: Originalname
 deathkings-selection-title: Suche HEXDD.WAD
 wizard-addon-paths: Erweiterungsordner
 wizard-addon-paths-explanation: Falls Sie schon WAD-Dateien, Resource Packs, oder andere Erweiterungen auf einer Festplatte gespeichert haben, kann Snowberry diese von ihrem momentanen Speicherort laden. Bitte geben Sie hier die entsprechenden Ordner an. Diese Angaben können später in den Snowberry Einstellungen geändert werden. Wenn Sie später Erweiterungen mittels der Erweiterungen-Registerkarte hinzufügen, werden diese automatisch in den Erweiterungen-Ordner kopiert.

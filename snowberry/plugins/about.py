@@ -76,7 +76,6 @@ def handleCommand(event):
         #info.setText(language.translate('about-info'))
     
         dialog.focusWidget('ok')
-        dialog.center()
         dialog.run()
         
     elif event.hasId('show-credits'):
@@ -86,5 +85,4 @@ def handleCommand(event):
         info.setMinSize(290, 230)
         info.setText(language.translate('credits'))
         dialog.addEndCommand('close')
-        dialog.center()
         dialog.run()
