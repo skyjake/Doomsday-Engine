@@ -159,10 +159,8 @@ class CheckBox (base.Widget):
                     '(' + language.translate('toggle-use-default-value') + \
                     language.translate(
                     pr.getDefaults().getValue(self.widgetId).getValue()) + ')')
-                #self.indicator.getWxWidget().Show()
             else:
                 self.indicator.setText('')
-                #self.indicator.getWxWidget().Hide()
 
     def onClick(self, event):
         """Swap through the three states when the check box is clicked."""
@@ -213,7 +211,6 @@ class CheckBox (base.Widget):
                         w.Set3StateValue(wx.CHK_UNCHECKED)
                 else:
                     w.Set3StateValue(wx.CHK_UNDETERMINED)
-
                 self.updateState()
 
             elif event.hasId(self.widgetId + '-value-changed'):
@@ -221,6 +218,9 @@ class CheckBox (base.Widget):
                     w.Set3StateValue(wx.CHK_CHECKED)
                 elif event.getValue() == 'no':
                     w.Set3StateValue(wx.CHK_UNCHECKED)
+                elif event.getValue() is None:
+                    w.Set3StateValue(wx.CHK_UNDETERMINED)
+                self.updateState()
 
     def retranslate(self):
         if self.widgetId:

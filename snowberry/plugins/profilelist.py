@@ -349,14 +349,30 @@ def commandHandler(event):
     elif event.hasId('reset-profile'):
         dialog, area = sb.util.dialog.createButtonDialog(
             'reset-profile-dialog',
-            ['no', 'yes'], 'no', resizable=False)
+            ['cancel', 'reset-profile-values', 'reset-profile-addons', 
+            'reset-profile-everything'], 
+            'cancel', resizable=False)
 
         text = language.translate('reset-profile-query')
         message = area.createRichText(
             language.expand(text, pr.getActive().getName()))
 
-        if dialog.run() == 'yes':
-            pr.reset(pr.getActive().getId())
+        # Accept these as dialog-closing commands.
+        dialog.addEndCommand('reset-profile-values')
+        dialog.addEndCommand('reset-profile-addons')
+        dialog.addEndCommand('reset-profile-everything')
+        
+        result = dialog.run()
+        if result == 'cancel':
+            return
+
+        resetValues = True
+        resetAddons = True
+        if result == 'reset-profile-values':
+            resetAddons = False
+        elif result == 'reset-profile-addons':
+            resetValues = False
+        pr.reset(pr.getActive().getId(), resetValues, resetAddons)
 
     elif event.hasId('delete-profile'):
         # If this is a system profile, just hide it.

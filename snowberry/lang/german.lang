@@ -46,7 +46,6 @@ new-profile-game: Spiel-Dll
 rename-profile-dialog: Profil umbenennen
 rename-profile-name: Neuer Name
 reset-profile-dialog: Profil zurücksetzen
-reset-profile-query: Sind Sie sicher, dass Sie <b>%1</b> auf die Vorgabeeinstellungen zurücksetzten möchten? Dabei werden alle Veränderungen des Profils gelöscht und alle Erweiterungen abgewählt.
 delete-profile-dialog: Profil löschen? 
 delete-profile-query: Sind Sie sicher, dass Sie <b>%1</b> löschen möchten?
 duplicate-profile-dialog: Profil kopieren

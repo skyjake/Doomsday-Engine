@@ -440,26 +440,28 @@ def remove(identifier):
         profiles.remove(prof)
 
 
-def reset(identifier):
+def reset(identifier, resetValues=True, resetAddons=True):
     """Resetting a profile removes all values except the 'iwad' value.
 
     @param identifier Profile identifier.
+    @param resetValues  True, if the profile's values should be reset.
+    @param resetAddons  True, if the profile's addons should be reset.
     """
     prof = get(identifier)
 
-    valueIds = map(lambda v: v.getId(), prof.getAllValues())
+    if resetValues:
+        valueIds = map(lambda v: v.getId(), prof.getAllValues())
+        for id in valueIds:
+            if id != 'iwad' and id != 'game':
+                prof.removeValue(id)
 
-    for id in valueIds:
-        if id != 'iwad' and id != 'game':
-            prof.removeValue(id)
-
-    # Also detach all addons, except the Deathkings IWAD.
-    for addon in prof.getAddons():
-
-        # Huge kludge!  Reset must not render Deathkings unlaunchable.
-        # There should be a better way to declare which addons are not
-        # resetable.
-        if identifier == 'hexen-dk' and addon == 'hexdd-wad':
-            continue
+    if resetAddons:
+        # Also detach all addons, except the Deathkings IWAD.
+        for addon in prof.getAddons():
+            # Huge kludge!  Reset must not render Deathkings unlaunchable.
+            # There should be a better way to declare which addons are not
+            # resetable.
+            if identifier == 'hexen-dk' and addon == 'hexdd-wad':
+                continue
         
-        prof.removeAddon(addon)
+            prof.removeAddon(addon)

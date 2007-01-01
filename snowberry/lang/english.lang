@@ -89,7 +89,10 @@ new-profile-game: Game library
 rename-profile-dialog: Rename Profile
 rename-profile-name: New name
 reset-profile-dialog: Reset Profile
-reset-profile-query: Are you sure you want to reset <b>%1</b> to defaults? This will clear all customized settings in the profile and deselect all the addons.
+reset-profile-query: You are about to reset <b>%1</b> to defaults. Do you want to reset the values of all the settings in the profile, the addons selected for loading in the profile, or both?
+reset-profile-values: Reset Values
+reset-profile-addons: Reset Addons
+reset-profile-everything: Reset All
 delete-profile-dialog: Delete Profile
 delete-profile-query: Are you sure you want to delete <b>%1</b>?
 duplicate-profile-dialog: Duplicate Profile

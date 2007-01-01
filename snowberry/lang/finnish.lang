@@ -44,7 +44,6 @@ new-profile-game: Pelikirjasto
 rename-profile-dialog: Uudelleennimeä profiili
 rename-profile-name: Uusi nimi
 reset-profile-dialog: Resetoi profiili
-reset-profile-query: Oletko varma, että haluat resetoida profiilin <b>%1</b> oletusarvoihin? Tämä palauttaa kaikki muutetut asetukset profiilissa alkuperäisiin arvoihinsa ja poistaa kaikkien lisäosien valinnat.
 delete-profile-dialog: Poista profiili
 delete-profile-query: Haluatko varmasti poistaa profiilin <b>%1</b>?
 duplicate-profile-dialog: Monista profiili
