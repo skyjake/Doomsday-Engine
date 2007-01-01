@@ -452,7 +452,8 @@ def reset(identifier, resetValues=True, resetAddons=True):
     if resetValues:
         valueIds = map(lambda v: v.getId(), prof.getAllValues())
         for id in valueIds:
-            if id != 'iwad' and id != 'game':
+            # Some values cannot be reset.
+            if id != 'iwad' and id != 'game' and id != 'setup-wizard-shown':
                 prof.removeValue(id)
 
     if resetAddons:
