@@ -131,5 +131,4 @@ def handleNotify(event):
 def handleCommand(event):
     if event.hasId('show-addon-paths'):
         events.send(events.Command('show-snowberry-settings'))
-        global pathList
         pathList.focus()
