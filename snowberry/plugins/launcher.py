@@ -214,8 +214,8 @@ def startGame(profile):
     file(responseFile, 'w').write(options + "\n")
 
     # Execute the command line.
-    os.spawnv(os.P_NOWAIT, engineBin, [engineBin,
-                                       '@' + paths.quote(responseFile)])
+    os.spawnvp(os.P_NOWAIT, engineBin, 
+               [engineBin, '@' + paths.quote(responseFile)])
 
     # Shut down if the configuration settings say so.
     value = profile.getValue('quit-on-launch')
