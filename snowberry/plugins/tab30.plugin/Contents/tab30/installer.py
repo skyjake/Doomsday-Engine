@@ -116,12 +116,12 @@ def chooseAddons(dialogId, title, actionButton):
 
     foundList.addReaction(selectAction)
 
-    for col, width in [('name', 300), ('type', 180)]:
+    for col, width in [('name', None), ('type', 180)]:
         foundList.addColumn('addon-dialog-' + col, width)
 
     def updateList():
         # Update the found addons list.
-        foundList.removeAllItems()
+        foundList.clear()
         dialog.disableWidget(actionButton)
         extensions = ao.getAddonExtensions() + ['manifest']
 

@@ -23,6 +23,7 @@
 import wx
 import host, events, language, paths
 import sb.profdb as pr
+import sb.confdb
 from widgets import uniConv
 import base
 
@@ -44,10 +45,12 @@ class List (base.Widget):
             base.Widget.__init__(self, wx.CheckListBox(parent, wxId))
         elif style == List.STYLE_COLUMNS:
             base.Widget.__init__(self, wx.ListCtrl(parent, wxId,
-                                                   style=(wx.LC_REPORT |
-                                                          wx.SIMPLE_BORDER)))
+                                                   style=wx.LC_REPORT))
+                                                          #wx.SIMPLE_BORDER)))
+            wx.EVT_LEFT_DOWN(self.getWxWidget(), self.onLeftUp)
             wx.EVT_LIST_ITEM_SELECTED(parent, wxId, self.onItemSelected)
             wx.EVT_LIST_ITEM_DESELECTED(parent, wxId, self.onItemDeselected)
+            wx.EVT_LIST_COL_CLICK(parent, wxId, self.onColumnClick)
         else:
             # Normal listbox.
             if style == List.STYLE_MULTIPLE:
@@ -59,8 +62,54 @@ class List (base.Widget):
         # Will be used when sending notifications.
         self.widgetId = id
 
+        self.expandingColumnIndex = -1
+
         self.items = []
         self.columns = []
+        
+        wx.EVT_SIZE(self.getWxWidget(), self.onSize)
+
+    def setImageList(self, imageList):
+        self.getWxWidget().SetImageList(imageList, wx.IMAGE_LIST_SMALL)
+
+    def onLeftUp(self, ev):
+        """Handle the wxWidgets event when the user clicks on the list widget.
+
+        @param ev A wxWidgets event object.
+        """
+        w = self.getWxWidget()
+
+        item, flags = w.HitTest(ev.GetPosition())
+        if item < 0:
+            ev.Skip()
+            return
+
+        if flags & wx.LIST_HITTEST_ONITEMICON:
+            e = events.Notify(self.widgetId + '-icon-click')
+            e.item = self.items[w.GetItemData(item)]
+            events.send(e)
+           
+        ev.Skip()
+        
+    def onColumnClick(self, ev):
+        events.send(events.Notify(self.columns[ev.GetColumn()] + '-column-click'))
+        ev.Skip()
+        
+    def onSize(self, event):
+        # Resize the expanding column.
+        if self.expandingColumnIndex >= 0:
+            # This is the new width.
+            widget = self.getWxWidget()
+            width = widget.GetClientSizeTuple()[0]
+            # How much left from the other columns?
+            total = 0
+            for i in range(widget.GetColumnCount()):
+                if i != self.expandingColumnIndex: 
+                    total += widget.GetColumnWidth(i)
+            widget.SetColumnWidth(self.expandingColumnIndex, width - total - 
+                wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X))
+
+        event.Skip()    
 
     def addItem(self, identifier, isChecked=False):
         """Append a new item into the listbox.
@@ -92,25 +141,67 @@ class List (base.Widget):
                 self.items.remove(identifier)
                 break
 
+    def addColumn(self, identifier, width=None):
+        """Append a column into a list that uses the column style.
+        
+        @param identifier  Column identifier.
+        @param width  Width of the column in pixels. One of the columns
+                      can use None for width, which means it is automatically
+                      expanded to fill all available space.
+        """
+        w = self.getWxWidget()
+        numCols = w.GetColumnCount()
+        if width is None:
+            colWidth = 1
+            # This column will expand to fill all remaining space.
+            self.expandingColumnIndex = len(self.columns)
+        else:
+            colWidth = width
+            
+        self.getWxWidget().InsertColumn(numCols,
+                                        language.translate(identifier),
+                                        width=colWidth)
+        self.columns.append(identifier)
+        
     def addItemWithColumns(self, identifier, *columns):
         w = self.getWxWidget()
 
-        index = w.InsertStringItem(w.GetItemCount(), columns[0])
+        if type(columns[0]) is int:
+            # This is an image item.
+            index = w.InsertImageItem(w.GetItemCount(), columns[0])
+            #info = wx.ListItem()
+            #info.m_itemId = index
+            #info.m_col = 0
+            #info.m_mask = wx.LIST_MASK_FORMAT
+            #info.m_format = wx.LIST_FORMAT_CENTRE
+            #w.SetItem(info)
+        else:
+            index = w.InsertStringItem(w.GetItemCount(), columns[0])
+            
         for i in range(1, len(columns)):
             w.SetStringItem(index, i, columns[i])
 
+        # Put the identifier into the data.
+        w.SetItemData(index, index)
+
         self.items.append(identifier)
 
-    def addColumn(self, identifier, width=-1):
-        w = self.getWxWidget()
-        numCols = w.GetColumnCount()
-        self.getWxWidget().InsertColumn(numCols,
-                                        language.translate(identifier),
-                                        width=width)
+    def setItemImage(self, identifier, image):
+        """Sets the image of an image item.
+        
+        @param identifier  Item identifier.
+        @param image  Image index. Needs an image list.
+        """
+        try:
+            index = self.getItemIndex(identifier)
+            self.getWxWidget().SetItemImage(index, image)
+        except:
+            pass
 
-        self.columns.append(identifier)
+    def sortItems(self, callback):
+        self.getWxWidget().SortItems(callback)
 
-    def removeAllItems(self):
+    def clear(self):
         """Remove all the items in the list."""
 
         if self.style == List.STYLE_MULTIPLE or \
@@ -123,7 +214,23 @@ class List (base.Widget):
     def getItems(self):
         """Returns a list of all the item identifiers in the list."""
         return self.items
-
+        
+    def getItemImages(self):
+        """Returns a list of all the item iamges in the list. They use the same order
+        as the list returned by self.items. Only supported in the Columns style."""
+        
+        if self.style != List.STYLE_COLUMNS:
+            return None
+        
+        images = [0] * len(self.items)
+        
+        w = self.getWxWidget()
+        for i in range(w.GetItemCount()):
+            info = w.GetItem(i, 0)
+            images[w.GetItemData(i)] = info.GetImage()
+        
+        return images
+        
     def getSelectedItems(self):
         """Get the identifiers of all the selected items in the list.
         If the list was created with the List.STYLE_CHECKBOX style,
@@ -146,7 +253,7 @@ class List (base.Widget):
             for i in range(w.GetItemCount()):
                 state = w.GetItemState(i, wx.LIST_STATE_SELECTED)
                 if state & wx.LIST_STATE_SELECTED:
-                    selected.append(self.items[i])
+                    selected.append(self.items[w.GetItemData(i)])
             return selected
 
         # Compose a list of selected items.
@@ -166,6 +273,23 @@ class List (base.Widget):
         else:
             return self.items[index]
 
+    def getItemIndex(self, identifier):
+        """Does the necessary translation for sorted lists."""
+
+        w = self.getWxWidget()
+        
+        # Unsorted index.
+        index = self.items.index(identifier)
+
+        if self.style == List.STYLE_COLUMNS:
+            # Column-style lists may be sorted.
+            for i in range(w.GetItemCount()):
+                if w.GetItemData(i) == index:
+                    index = i
+                    break
+                
+        return index
+
     def selectItem(self, identifier, doSelect=True):
         """Select one item from the list.  If no identifier is
         provided, the selection is cleared."""
@@ -183,7 +307,7 @@ class List (base.Widget):
             return
         
         try:
-            index = self.items.index(identifier)
+            index = self.getItemIndex(identifier)
 
             if self.style == List.STYLE_COLUMNS:
                 # Check the one item.
@@ -202,8 +326,11 @@ class List (base.Widget):
         
     def deselectAllItems(self):
         w = self.getWxWidget()
-        for i in range(w.GetCount()):
-            w.Deselect(i)
+        if self.style == List.STYLE_COLUMNS:
+            self.selectItem(None)
+        else:
+            for i in range(w.GetCount()):
+                w.Deselect(i)
 
     def ensureVisible(self, identifier):
         """Makes sure an item is visible.
@@ -212,7 +339,7 @@ class List (base.Widget):
         """
         w = self.getWxWidget()
         try:
-            index = self.items.index(identifier)
+            index = self.getItemIndex(identifier)
             w.EnsureVisible(index)
         except:
             pass
@@ -227,7 +354,7 @@ class List (base.Widget):
         unchecked.
         """
         try:
-            index = self.items.index(identifier)
+            index = self.getItemIndex(identifier)
             self.getWxWidget().Check(index, doCheck)
         except:
             # Identifier not found?
@@ -272,7 +399,7 @@ class List (base.Widget):
         if self.widgetId and self.style == List.STYLE_COLUMNS:
             # Identifier of the selected item is sent with the
             # notification.
-            item = self.items[event.GetIndex()]
+            item = self.items[self.getWxWidget().GetItemData(event.GetIndex())]
             
             # Send a notification about the selected item.
             events.send(events.SelectNotify(self.widgetId, item))
@@ -286,7 +413,7 @@ class List (base.Widget):
         @param event  A wxWidgets event.
         """
         if self.widgetId:
-            item = self.items[event.GetIndex()]
+            item = self.items[self.getWxWidget().GetItemData(event.GetIndex())]
             events.send(events.DeselectNotify(self.widgetId, item))
 
         event.Skip()
@@ -343,11 +470,12 @@ class DropList (base.Widget):
             if event.hasId('active-profile-changed'):
                 # Get the value for the setting as it has been defined
                 # in the currently active profile.
-                value = pr.getActive().getValue(self.widgetId, False)
-                if value:
-                    self.selectItem(value.getValue())
-                else:
-                    self.selectItem('default')
+                if sb.confdb.isSettingDefined(self.widgetId):
+                    value = pr.getActive().getValue(self.widgetId, False)
+                    if value:
+                        self.selectItem(value.getValue())
+                    else:
+                        self.selectItem('default')
 
     def clear(self):
         """Delete all the items."""

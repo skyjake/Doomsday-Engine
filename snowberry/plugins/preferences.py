@@ -117,7 +117,7 @@ def handleNotify(event):
     elif event.hasId('addon-paths-changed'):
         # Insert the current custom paths into the list.
         try:
-            pathList.removeAllItems()
+            pathList.clear()
             for p in paths.getAddonPaths():
                 pathList.addItem(p)
         except:

@@ -177,6 +177,10 @@ def createButtonDialog(id, buttons, defaultButton=None, size=None,
         widget = buttonArea.createButton(button, style=style)
         dialog.identifyWidget(button, widget)
 
+    # By default, focus the default button.
+    if defaultButton:
+        dialog.focusWidget(defaultButton)
+
     return dialog, userArea
 
 

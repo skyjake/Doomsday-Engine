@@ -443,16 +443,21 @@ class Area (base.Widget):
         self.__addWidget(widget)
         return widget
 
-    def createTree(self):
+    def createTree(self, name):
         """Create a tree widget inside the area.  Initially the tree
         is empty.  The Tree class provides methods for
         populating the tree with items.
+
+        @param name Identifier of the tree widget.  Events
+        sent by the widget are formed based on this identifier.
+        For example, selection of an item causes the notification
+        '(name)-selected'.
 
         @return A widgets.Tree object.
 
         @see widgets.Tree
         """
-        widget = sb.widget.tree.Tree(self.panel, self.__getNewId())
+        widget = sb.widget.tree.Tree(self.panel, self.__getNewId(), name)
         self.__addWidget(widget)
         return widget
 

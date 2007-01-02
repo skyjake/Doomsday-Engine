@@ -71,6 +71,7 @@
 		B0F377260B4994C50097029D /* installer.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = installer.py; sourceTree = "<group>"; };
 		B0F377910B4999DC0097029D /* loadorder.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = loadorder.py; sourceTree = "<group>"; };
 		B0F377AA0B499A8E0097029D /* inspector.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = inspector.py; sourceTree = "<group>"; };
+		B0F378050B49C30A0097029D /* oldtree.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; name = oldtree.py; path = sb/widget/oldtree.py; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -104,6 +105,7 @@
 				B05FA6200A8A80E900A9FE0E /* tab.py */,
 				B0AC1D360A8D24B00095D788 /* text.py */,
 				B05FA5FA0A8A7C1500A9FE0E /* tree.py */,
+				B0F378050B49C30A0097029D /* oldtree.py */,
 			);
 			name = widget;
 			sourceTree = "<group>";

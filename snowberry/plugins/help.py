@@ -92,7 +92,7 @@ def init():
                                             'active-profile-changed',
                                             'active-profile-refreshed',
                                             'tab-selected',
-                                            'addon-tree-selected',
+                                            'addon-list-selected',
                                             'maps-list-selected',
                                             'focus-changed',
                                             'value-changed',
@@ -194,10 +194,8 @@ def handleNotify(event):
         setField(FIELD_CURRENT_TAB,
                  language.translate('help-' + event.getSelection()))
 
-    # TODO: These event types are from the Addons and Maps tabs. There
-    # should be another way to register these (not hardcoded...)
-    elif event.hasId('addon-tree-selected') or \
-             event.hasId('maps-list-selected'):
+    elif event.hasId('addon-list-selected') or \
+         event.hasId('maps-list-selected'):
         # Display information about the selected addon in the panel.
         try:
             showAddonInfo(ao.get(event.getSelection()))

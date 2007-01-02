@@ -120,6 +120,7 @@ addon-dialog-type-deh: DeHackEd Patch
 addon-dialog-type-manifest: Addon Manifest
 uninstall-addon-dialog: Uninstall Addon
 uninstall-addon-query: Are you sure you want to uninstall <b>%1</b>?
+uninstall-addon-query-several: Are you sure you want to uninstall these addons:
 load-order-dialog: Load Order
 load-order-message: Addons will be loaded in this order:
 load-order-move-up: Up
@@ -186,6 +187,7 @@ refresh-addon-database: Refresh
 install-addon: +
 uninstall-addon: -
 load-order: Load Order
+addon-info: Info
 addon-settings: Settings
 show-addon-paths: My Folders
 about: About
@@ -270,6 +272,7 @@ summary-color-depth-32: 32-bit colors
 #
 # Labels for the Maps Tab
 #
+maps-list-icon:
 maps-list-identifier: PWAD Addon
 maps-list-count: Contents
 maps-list-clear: Clear all
@@ -278,15 +281,26 @@ wad-analysis-maps: %1 map(s)
 wad-analysis-custom-textures: textures
 
 #
-# Labels for the Addons Tab
+# Addons Tab
 #
-default-addons-root: Default Addons
-available-addons-root: Compatible Addons
+addon-counter: %1 out of %2 addons 
+addon-list-check:
+addon-list-name: Name
+addon-list-version: Version
+addon-list-in-box: (in box)
+menu-addon-list-check-selected: Check Selected
+menu-addon-list-uncheck-selected: Uncheck Selected
+menu-addon-show-parent-box: Show Box
+menu-addon-show-box-category: Show Box Contents
 
-#
-# Addon Categories
-#
-category: All categories
+addon-list-filter: Filter:
+addon-list-filter-mode-all: Show all
+addon-list-filter-mode-compatible: Only compatible
+addon-list-filter-mode-pwad: Only PWADs
+addon-list-filter-mode-compatible-pwad: Only compatible PWADs
+addon-list-filter-mode-all-with-boxes: Show all (also box contents)
+
+category-tree-root: All Addons
 category-graphics: Graphics
 category-graphics-3d: 3D Resources
 category-graphics-textures: Textures
@@ -300,11 +314,6 @@ category-gamedata: Game Data
 category-gamedata-doomsday: Doomsday Game Files
 category-gamedata-primary: Primary Data Files
 category-gamedata-maps: Maps
-category-gamedata-maps-ag: A-G
-category-gamedata-maps-hm: H-M
-category-gamedata-maps-ns: N-S
-category-gamedata-maps-tz: T-Z
-category-gamedata-maps-09: 0-9
 category-gamedata-lumps: Data Lumps
 category-patches: DeHackEd Patches
 category-definitions: Doomsday Engine Definitions

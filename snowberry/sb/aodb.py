@@ -28,6 +28,7 @@
 import os, re, string, zipfile, shutil, struct
 import logger, events, paths, language, cfparser
 import addon as ao
+import sb.profdb
 
 # This is a list of all the categories that include exclusions regarding
 # the other categories. That is, some addons cannot be included in Doomsday
@@ -192,6 +193,19 @@ def getAddonExtensions():
     return ao.EXTENSIONS
 
 
+def getCategory(longId):
+    """Finds a Category by its long identifier.
+    
+    @param longId  Long category identifier.
+    
+    @return Category, or None.
+    """
+    for c in categories:
+        if c.getLongId() == longId:
+            return c
+    return None
+
+
 def getRootCategory():
     """Returns the root category.
 
@@ -217,6 +231,11 @@ def getAvailableAddons(profile):
     import sb.profdb
     return [a for a in addons.values()
             if profile is sb.profdb.getDefaults() or a.isCompatibleWith(profile)]
+
+
+def getAddonCount():
+    """Returns the number of addons in the addon database."""
+    return len(addons)
 
 
 def getAddons(func=None):
@@ -302,11 +321,19 @@ def install(sourceName):
     return identifier
 
 
-def uninstall(identifier):
+def isUninstallable(identifier):
+    """Determines whether the addon is uninstallable.
+    @param identifier  Addon identifier.
+    @return Bool."""
+    return exists(identifier) and get(identifier).getBox() == None
+    
+
+def uninstall(identifier, doNotify=False):
     """Uninstall an addon.  Uninstalling an addon causes a full reload
     of the entire addon database.
     
-    @param identifier Identifier of the addon to uninstall.
+    @param identifier  Identifier of the addon to uninstall.
+    @param doNotify  True, if a notification should be sent.
     """
     addon = get(identifier)
     path = addon.getSource()
@@ -343,12 +370,10 @@ def uninstall(identifier):
         p.dontUseAddon(identifier)
 
     # Send a notification.
-    notify = events.Notify('addon-uninstalled')
-    notify.addon = identifier
-    events.send(notify)
-    
-    # Reload all addons.
-    
+    if doNotify:
+        notify = events.Notify('addon-uninstalled')
+        notify.addon = identifier
+        events.send(notify)   
 
 
 def formIdentifier(fileName):

@@ -32,6 +32,7 @@ import sb.widget.button as wb
 import sb.widget.list
 import sb.aodb as ao
 import sb.profdb as pr
+import widgets
 
 
 MAPS = 'tab-maps'
@@ -55,8 +56,15 @@ def init():
     mapListBox = area.createList('maps-list', sb.widget.list.List.STYLE_COLUMNS)
 
     # The columns.
+    mapListBox.addColumn('maps-list-icon', 20)
     mapListBox.addColumn('maps-list-identifier', 180)
-    mapListBox.addColumn('maps-list-count', 200)
+    mapListBox.addColumn('maps-list-count')
+
+    # Prepare icons.
+    global iconManager, mapIcons
+    iconManager = widgets.IconManager(16, 16)
+    mapIcons = [iconManager.get('unchecked'), iconManager.get('checked')]
+    mapListBox.setImageList(iconManager.getImageList())
 
     # Some buttons in the bottom.
     area.setWeight(0)
@@ -110,11 +118,13 @@ def handleNotify(event):
     if event.hasId('addon-attached'):
         listenSelections = False
         mapListBox.selectItem(event.getAddon())
+        mapListBox.setItemImage(event.getAddon(), 1)
         listenSelections = True
 
     if event.hasId('addon-detached'):
         listenSelections = False
         mapListBox.deselectItem(event.getAddon())
+        mapListBox.setItemImage(event.getAddon(), 0)
         listenSelections = True
         
     if event.hasId('addon-database-reloaded'):
@@ -125,7 +135,7 @@ def refreshList():
     """Fill the maps list with addons."""
 
     # Clear the list.
-    mapListBox.removeAllItems()
+    mapListBox.clear()
 
     wads = [a for a in ao.getAvailableAddons(pr.getActive())
             if a.getType() == 'addon-type-wad' and a.isPWAD()]
@@ -140,6 +150,7 @@ def refreshList():
         else:
             visibleName = os.path.basename(wad.getContentPath())
         mapListBox.addItemWithColumns(wad.getId(),
+                                      0,
                                       visibleName,
                                       wad.getShortContentAnalysis())
 
@@ -151,6 +162,7 @@ def refreshList():
     # Also make sure the first one is visible.
     for addonId in usedAddons:
         mapListBox.selectItem(addonId)
+        mapListBox.setItemImage(addonId, 1)
         if theFirst:
             # Make sure it's visible.
             mapListBox.ensureVisible(addonId)

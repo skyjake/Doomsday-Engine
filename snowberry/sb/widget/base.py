@@ -48,6 +48,7 @@ class Widget:
         self.wxWidget = wxWidget
         self.menuItems = None
         self.focusId = ''
+        self.menuId = None
 
         # Callback functions for listening directly to changes.
         self.reactors = []
@@ -146,6 +147,13 @@ class Widget:
         """Set a minimum size for the widget."""
         self.getWxWidget().SetMinSize((width, height))
 
+    def setPopupMenuId(self, menuId):
+        """Define a popup menu identifier. When the identifier has been defined, 
+        a notification is sent just prior to showing a popup menu, allowing 
+        adapting the contents of the menu to the current situation."""
+        
+        self.menuId = menuId
+
     def setPopupMenu(self, menuItems):
         """Set a popup menu that is displayed when the widget is
         right-clicked (Ctrl-Clicked).
@@ -158,8 +166,18 @@ class Widget:
         self.menuItems = menuItems
 
     def onRightClick(self, ev):
+        # Let wxWidgets handle the event, too.
+        ev.Skip()      
+        widget = self.getWxWidget()
+        if not widget.IsEnabled():
+            return
+
+        # Request an update to the popup menu.
+        if self.menuId:
+            events.send(events.Notify(self.menuId + '-update-request'))
+
         # Display the popup menu.
-        if self.menuItems and self.getWxWidget().IsEnabled():
+        if self.menuItems:
             menu = wx.Menu()
             self.commandMap = {}
 
@@ -185,14 +203,11 @@ class Widget:
                 self.commandMap[wxId] = itemCommand
                 menu.Append(wxId,
                             widgets.uniConv(language.translate('menu-' + itemId)))
-                wx.EVT_MENU(self.getWxWidget(), wxId, self.onPopupCommand)
+                wx.EVT_MENU(widget, wxId, self.onPopupCommand)
 
             # Display the menu.  The callback gets called during this.
-            self.getWxWidget().PopupMenu(menu, ev.GetPosition())
-            menu.Destroy()
-            
-        # Let wxWidgets handle the event, too.
-        ev.Skip()      
+            widget.PopupMenu(menu, ev.GetPosition())
+            menu.Destroy()            
 
     def onPopupCommand(self, ev):
         events.send(events.Command(self.commandMap[ev.GetId()]))

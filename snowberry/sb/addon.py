@@ -408,6 +408,13 @@ class BoxAddon (Addon):
     def getRequiredParts(self):
         return self.required
 
+    def getContentCategoryLongId(self):
+        """Forms the category long identifier, in which the contents of this box 
+        will be under.
+        @return Category long id.
+        """
+        return self.getCategory().getLongId() + '-' + self.getId()
+
     def __makePath(self, name):
         return os.path.join(self.getContentPath(), name)
 
@@ -719,20 +726,6 @@ class WADAddon (Addon):
 
             if maps or episodic:
                 category += 'maps/'
-
-                # Category based on the name.
-                base = paths.getBase(self.getContentPath()).lower()
-
-                if base[0] in string.digits:
-                    category += '09/'
-                if base[0] in 'abcdefg':
-                    category += 'ag/'
-                if base[0] in 'hijklm':
-                    category += 'hm/'
-                if base[0] in 'nopqrs':
-                    category += 'ns/'
-                if base[0] in 'tuvwxyz':
-                    category += 'tz/'
             
             metadata += "category: %s\n" % category
 

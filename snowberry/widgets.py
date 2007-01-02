@@ -103,7 +103,10 @@ class IconManager:
 
         except ValueError:
             # Load it now.  Images are affected by the localisation.
-            imageName = language.translate(identifier)
+            if language.isDefined(identifier):
+                imageName = language.translate(identifier)
+            else:
+                imageName = identifier
             fileName = paths.findBitmap(imageName)
             if len(fileName) == 0:
                 # Fallback icon.

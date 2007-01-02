@@ -54,8 +54,7 @@ def init():
                                             'value-changed',
                                             'active-profile-changed',
                                             'active-profile-refreshed',
-                                            'addon-installed',
-                                            'addon-uninstalled'])
+                                            'addon-database-reloaded'])
 
     # The addon-settings command is handled here.
     events.addCommandListener(handleCommand, ['show-addon-settings',
@@ -183,7 +182,7 @@ def handleNotify(event):
 
             categoryArea.updateIcon('game-options')
 
-    elif event.hasId('addon-installed') or event.hasId('addon-uninstalled'):
+    elif event.hasId('addon-database-reloaded'):
         # Since the new addon will most likely introduce new settings,
         # we'll need to recreate the all the settings tabs.
         createWidgets()
