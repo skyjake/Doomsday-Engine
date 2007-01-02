@@ -41,18 +41,51 @@
  * http://www.ravensoft.com/
  */
 
+// HEADER FILES ------------------------------------------------------------
+
 #include "jhexen.h"
+
 #include "dmu_lib.h"
 #include "p_mapspec.h"
 
-void T_Light(light_t * light)
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int phaseTable[64] = {
+    128, 112, 96, 80, 64, 48, 32, 32,
+    16, 16, 16, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 16, 16, 16,
+    32, 32, 48, 64, 80, 96, 112, 128
+};
+
+// CODE --------------------------------------------------------------------
+
+void T_Light(light_t *light)
 {
     if(light->count)
     {
         light->count--;
         return;
     }
-    switch (light->type)
+
+    switch(light->type)
     {
     case LITE_FADE:
         P_SectorModifyLightx(light->sector, light->value2);
@@ -71,6 +104,7 @@ void T_Light(light_t * light)
             P_RemoveThinker(&light->thinker);
         }
         break;
+
     case LITE_GLOW:
         P_SectorModifyLightx(light->sector, light->tics1);
         if(light->tics2 == 1)
@@ -89,6 +123,7 @@ void T_Light(light_t * light)
             light->tics2 = 1;   // reverse direction
         }
         break;
+
     case LITE_FLICKER:
         if(P_SectorLight(light->sector) == light->value1)
         {
@@ -101,6 +136,7 @@ void T_Light(light_t * light)
             light->count = (P_Random() & 31) + 1;
         }
         break;
+
     case LITE_STROBE:
         if(P_SectorLight(light->sector) == light->value1)
         {
@@ -113,6 +149,7 @@ void T_Light(light_t * light)
             light->count = light->tics1;
         }
         break;
+
     default:
         break;
     }
@@ -230,38 +267,15 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
     return rtn;
 }
 
-//============================================================================
-//
-//  T_Phase
-//
-//============================================================================
-
-int     PhaseTable[64] = {
-    128, 112, 96, 80, 64, 48, 32, 32,
-    16, 16, 16, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 16, 16, 16,
-    32, 32, 48, 64, 80, 96, 112, 128
-};
-
-void T_Phase(phase_t * phase)
+void T_Phase(phase_t *phase)
 {
     phase->index = (phase->index + 1) & 63;
-    P_SectorSetLight(phase->sector, phase->base + PhaseTable[phase->index]);
+    P_SectorSetLight(phase->sector, phase->base + phaseTable[phase->index]);
 }
-
-//==========================================================================
-//
-// P_SpawnPhasedLight
-//
-//==========================================================================
 
 void P_SpawnPhasedLight(sector_t *sector, int base, int index)
 {
-    phase_t *phase;
+    phase_t    *phase;
 
     phase = Z_Malloc(sizeof(*phase), PU_LEVSPEC, 0);
     P_AddThinker(&phase->thinker);
@@ -275,29 +289,17 @@ void P_SpawnPhasedLight(sector_t *sector, int base, int index)
         phase->index = index & 63;
     }
     phase->base = base & 255;
-    P_SectorSetLight(phase->sector, phase->base + PhaseTable[phase->index]);
+    P_SectorSetLight(phase->sector, phase->base + phaseTable[phase->index]);
     phase->thinker.function = T_Phase;
 
     P_XSector(sector)->special = 0;
 }
 
-//==========================================================================
-//
-// P_SpawnLightSequence
-//
-//==========================================================================
-
 void P_SpawnLightSequence(sector_t *sector, int indexStep)
 {
-    sector_t *sec;
-    sector_t *nextSec;
-    sector_t *tempSec;
-    int     seqSpecial;
-    int     i;
-    int     count;
-    fixed_t index;
-    fixed_t indexDelta;
-    int     base;
+    int         i, seqSpecial, count, base;
+    fixed_t     index, indexDelta;
+    sector_t   *sec, *nextSec, *tempSec;
 
     seqSpecial = LIGHT_SEQUENCE;    // look for Light_Sequence, first
     sec = sector;
@@ -305,14 +307,14 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
     do
     {
         nextSec = NULL;
-        P_XSector(sec)->special = LIGHT_SEQUENCE_START; // make sure that the search doesn't back up.
-        for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
+        // make sure that the search doesn't back up.
+        P_XSector(sec)->special = LIGHT_SEQUENCE_START;
+        for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
         {
             tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i), sec);
             if(!tempSec)
-            {
                 continue;
-            }
+
             if(P_XSector(tempSec)->special == seqSpecial)
             {
                 if(seqSpecial == LIGHT_SEQUENCE)
@@ -344,13 +346,13 @@ void P_SpawnLightSequence(sector_t *sector, int indexStep)
         }
         P_SpawnPhasedLight(sec, base, index >> FRACBITS);
         index += indexDelta;
-        for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); i++)
+
+        for(i = 0; i < P_GetIntp(sec, DMU_LINE_COUNT); ++i)
         {
             tempSec = P_GetNextSector(P_GetPtrp(sec, DMU_LINE_OF_SECTOR | i), sec);
             if(!tempSec)
-            {
                 continue;
-            }
+
             if(P_XSector(tempSec)->special == LIGHT_SEQUENCE_START)
             {
                 nextSec = tempSec;

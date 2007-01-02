@@ -1,18 +1,41 @@
 /**\file
  *\section Copyright and License Summary
  * License: GPL + jHeretic/jHexen Exception
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ * In addition, as a special exception, we, the authors of deng
+ * give permission to link the code of our release of deng with
+ * the libjhexen and/or the libjheretic libraries (or with modified
+ * versions of it that use the same license as the libjhexen or
+ * libjheretic libraries), and distribute the linked executables.
+ * You must obey the GNU General Public License in all respects for
+ * all of the code used other than “libjhexen or libjheretic”. If
+ * you modify this file, you may extend this exception to your
+ * version of the file, but you are not obligated to do so. If you
+ * do not wish to do so, delete this exception statement from your version.
  */
 
-//**************************************************************************
-//**
-//** HREFRESH.C
-//**
-//** Hexen-specific refresh stuff.
-//**
-//**************************************************************************
+/**
+ * jHexen-specific refresh stuff.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -20,13 +43,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "jhexen.h"
+
 #include "f_infine.h"
 #include "r_common.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
+#define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
+
 #define viewheight  Get(DD_VIEWWINDOW_HEIGHT)
+
+#define SIZEFACT 4
+#define SIZEFACT2 16
 
 // TYPES -------------------------------------------------------------------
 
@@ -60,28 +91,19 @@ extern boolean dontrender;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-//int demosequence;
+boolean setsizeneeded;
+
+// wipegamestate can be set to -1 to force a wipe on the next draw
+gamestate_t wipegamestate = GS_DEMOSCREEN;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-/*static int pagetic;
-   static char *pagename; */
-
 // CODE --------------------------------------------------------------------
 
-/*
-   ==============
-   =
-   = R_SetViewSize
-   =
-   = Don't really change anything here, because i might be in the middle of
-   = a refresh.  The change will take effect next refresh.
-   =
-   ==============
+/**
+ * Don't really change anything here, because i might be in the middle of
+ * a refresh.  The change will take effect next refresh.
  */
-
-boolean setsizeneeded;
-
 void R_SetViewSize(int blocks, int detail)
 {
     setsizeneeded = true;
@@ -89,88 +111,11 @@ void R_SetViewSize(int blocks, int detail)
     GL_Update(DDUF_BORDER);
 }
 
-void R_HandleSectorSpecials()
-{
-    int     i, scrollOffset = leveltime >> 1 & 63;
-    int     sectorCount = DD_GetInteger(DD_SECTOR_COUNT);
-
-    for(i = 0; i < sectorCount; i++)
-    {
-        xsector_t* sect = P_XSector(P_ToPtr(DMU_SECTOR, i));
-        switch (sect->special)
-        {                       // Handle scrolling flats
-        case 201:
-        case 202:
-        case 203:               // Scroll_North_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
-                       (63 - scrollOffset) << (sect->special - 201));
-            break;
-        case 204:
-        case 205:
-        case 206:               // Scroll_East_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
-                       (63 - scrollOffset) << (sect->special - 204));
-            break;
-        case 207:
-        case 208:
-        case 209:               // Scroll_South_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
-                       scrollOffset << (sect->special - 207));
-            break;
-        case 210:
-        case 211:
-        case 212:               // Scroll_West_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
-                       scrollOffset << (sect->special - 210));
-            break;
-        case 213:
-        case 214:
-        case 215:               // Scroll_NorthWest_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
-                       scrollOffset << (sect->special - 213));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
-                       (63 - scrollOffset) << (sect->special - 213));
-            break;
-        case 216:
-        case 217:
-        case 218:               // Scroll_NorthEast_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
-                       (63 - scrollOffset) << (sect->special - 216));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
-                       (63 - scrollOffset) << (sect->special - 216));
-            break;
-        case 219:
-        case 220:
-        case 221:               // Scroll_SouthEast_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
-                       (63 - scrollOffset) << (sect->special - 219));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
-                       scrollOffset << (sect->special - 219));
-            break;
-        case 222:
-        case 223:
-        case 224:               // Scroll_SouthWest_xxx
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
-                       scrollOffset << (sect->special - 222));
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
-                       scrollOffset << (sect->special - 222));
-            break;
-        default:
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X, 0);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y, 0);
-            break;
-        }
-    }
-}
-
-//==========================================================================
-// R_DrawMapTitle
-//==========================================================================
 void R_DrawMapTitle(void)
 {
-    float   alpha = 1;
-    int     y = 12;
-    char   *lname, *lauthor;
+    float       alpha = 1;
+    int         y = 12;
+    char       *lname, *lauthor;
 
     if(!cfg.levelTitle || actual_leveltime > 6 * 35)
         return;
@@ -199,7 +144,8 @@ void R_DrawMapTitle(void)
     if(lname)
     {
         M_WriteText3(160 - M_StringWidth(lname, hu_font_b) / 2, y, lname,
-                    hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2], alpha, false, 0);
+                    hu_font_b, deffontRGB[0], deffontRGB[1], deffontRGB[2],
+                    alpha, false, 0);
         y += 20;
     }
 
@@ -215,25 +161,15 @@ void R_DrawMapTitle(void)
     gl.PopMatrix();
 }
 
-//==========================================================================
-//
-// G_Drawer
-//
-//==========================================================================
-
-// wipegamestate can be set to -1 to force a wipe on the next draw
-gamestate_t wipegamestate = GS_DEMOSCREEN;
-#define SIZEFACT 4
-#define SIZEFACT2 16
 void G_Drawer(void)
 {
     static boolean viewactivestate = false;
     static boolean menuactivestate = false;
-    static int fullscreenmode = 0;
+    static int  fullscreenmode = 0;
     static gamestate_t oldgamestate = -1;
-    int     py;
-    player_t *vplayer = &players[displayplayer];
-    boolean iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0;   // $democam
+    int         py;
+    player_t   *vplayer = &players[displayplayer];
+    boolean     iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0;   // $democam
 
     // $democam: can be set on every frame
     if(cfg.setblocks > 10 || iscam)
@@ -257,7 +193,7 @@ void G_Drawer(void)
     }
 
     // Do buffered drawing
-    switch (gamestate)
+    switch(gamestate)
     {
     case GS_LEVEL:
         // Clients should be a little careful about the first frames.
@@ -413,12 +349,8 @@ void G_Drawer(void)
     FI_Drawer();
 }
 
-#define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
-
 int R_GetFilterColor(int filter)
 {
-    //int rgba = 0;
-
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
         // Red?
@@ -452,7 +384,6 @@ void R_SetFilter(int filter)
 void H2_EndFrame(void)
 {
     SN_UpdateActiveSequences();
-    /*  S_UpdateSounds(players[displayplayer].plr->mo); */
 }
 
 /**
@@ -464,12 +395,12 @@ void H2_EndFrame(void)
  */
 void R_SetAllDoomsdayFlags(void)
 {
-    int     i, Class;
-    int     sectorCount = DD_GetInteger(DD_SECTOR_COUNT);
-    mobj_t *mo;
+    uint        i;
+    int         Class;
+    mobj_t     *mo;
 
     // Only visible things are in the sector thinglists, so this is good.
-    for(i = 0; i < sectorCount; i++)
+    for(i = 0; i < numsectors; ++i)
         for(mo = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); mo; mo = mo->snext)
         {
             if(IS_CLIENT && mo->ddflags & DDMF_REMOTE)

@@ -180,40 +180,32 @@ mobjtype_t TranslateThingType[] = {
 
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-//
-// EV_ThingProjectile
-//
-//==========================================================================
-
 boolean EV_ThingProjectile(byte *args, boolean gravity)
 {
-    int     tid;
-    angle_t angle;
-    int     fineAngle;
-    fixed_t speed;
-    fixed_t vspeed;
+    int         tid, fineAngle, searcher;
+    angle_t     angle;
+    fixed_t     speed, vspeed;
     mobjtype_t moType;
-    mobj_t *mobj;
-    mobj_t *newMobj;
-    int     searcher;
-    boolean success;
+    mobj_t     *mobj, *newMobj;
+    boolean     success;
 
     success = false;
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
     if(nomonsters && (mobjinfo[moType].flags & MF_COUNTKILL))
-    {                           // Don't spawn monsters if -nomonsters
+    {   // Don't spawn monsters if -nomonsters
         return false;
     }
+
     angle = (int) args[2] << 24;
     fineAngle = angle >> ANGLETOFINESHIFT;
     speed = (int) args[3] << 13;
     vspeed = (int) args[4] << 13;
     while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
     {
-        newMobj = P_SpawnMobj(mobj->pos[VX], mobj->pos[VY], mobj->pos[VZ], moType);
+        newMobj = P_SpawnMobj(mobj->pos[VX], mobj->pos[VY], mobj->pos[VZ],
+                              moType);
 
         if(newMobj->info->seesound)
             S_StartSound(newMobj->info->seesound, newMobj);
@@ -229,6 +221,7 @@ boolean EV_ThingProjectile(byte *args, boolean gravity)
             newMobj->flags &= ~MF_NOGRAVITY;
             newMobj->flags2 |= MF2_LOGRAV;
         }
+
         if(P_CheckMissileSpawn(newMobj) == true)
         {
             success = true;
@@ -237,47 +230,35 @@ boolean EV_ThingProjectile(byte *args, boolean gravity)
     return success;
 }
 
-//==========================================================================
-//
-// EV_ThingSpawn
-//
-//==========================================================================
-
 boolean EV_ThingSpawn(byte *args, boolean fog)
 {
-    int     tid;
-    angle_t angle;
-    mobj_t *mobj;
-    mobj_t *newMobj;
-    mobj_t *fogMobj;
-    mobjtype_t moType;
-    int     searcher;
-    boolean success;
-    fixed_t z;
+    int         tid, searcher;
+    angle_t     angle;
+    mobj_t     *mobj, *newMobj, *fogMobj;
+    mobjtype_t  moType;
+    boolean     success;
+    fixed_t     z;
 
     success = false;
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
     if(nomonsters && (mobjinfo[moType].flags & MF_COUNTKILL))
-    {                           // Don't spawn monsters if -nomonsters
+    {   // Don't spawn monsters if -nomonsters
         return false;
     }
+
     angle = (int) args[2] << 24;
     while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
     {
+        z = mobj->pos[VZ];
+
         if(mobjinfo[moType].flags2 & MF2_FLOATBOB)
-        {
-            z = mobj->pos[VZ] - mobj->floorz;
-        }
-        else
-        {
-            z = mobj->pos[VZ];
-        }
+            z -= mobj->floorz;
 
         newMobj = P_SpawnMobj(mobj->pos[VX], mobj->pos[VY], z, moType);
         if(P_TestMobjLocation(newMobj) == false)
-        {                       // Didn't fit
+        {   // Didn't fit
             P_RemoveMobj(newMobj);
         }
         else
@@ -290,6 +271,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
                                 mobj->pos[VZ] + TELEFOGHEIGHT, MT_TFOG);
                 S_StartSound(SFX_TELEPORT, fogMobj);
             }
+
             newMobj->flags2 |= MF2_DROPPED; // Don't respawn
             if(newMobj->flags2 & MF2_FLOATBOB)
             {
@@ -301,17 +283,11 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
     return success;
 }
 
-//==========================================================================
-//
-// EV_ThingActivate
-//
-//==========================================================================
-
 boolean EV_ThingActivate(int tid)
 {
-    mobj_t *mobj;
-    int     searcher;
-    boolean success;
+    mobj_t     *mobj;
+    int         searcher;
+    boolean     success;
 
     success = false;
     searcher = -1;
@@ -325,17 +301,11 @@ boolean EV_ThingActivate(int tid)
     return success;
 }
 
-//==========================================================================
-//
-// EV_ThingDeactivate
-//
-//==========================================================================
-
 boolean EV_ThingDeactivate(int tid)
 {
-    mobj_t *mobj;
-    int     searcher;
-    boolean success;
+    mobj_t      *mobj;
+    int         searcher;
+    boolean     success;
 
     success = false;
     searcher = -1;
@@ -349,17 +319,11 @@ boolean EV_ThingDeactivate(int tid)
     return success;
 }
 
-//==========================================================================
-//
-// EV_ThingRemove
-//
-//==========================================================================
-
 boolean EV_ThingRemove(int tid)
 {
-    mobj_t *mobj;
-    int     searcher;
-    boolean success;
+    mobj_t      *mobj;
+    int         searcher;
+    boolean     success;
 
     success = false;
     searcher = -1;
@@ -376,17 +340,11 @@ boolean EV_ThingRemove(int tid)
     return success;
 }
 
-//==========================================================================
-//
-// EV_ThingDestroy
-//
-//==========================================================================
-
 boolean EV_ThingDestroy(int tid)
 {
-    mobj_t *mobj;
-    int     searcher;
-    boolean success;
+    mobj_t      *mobj;
+    int         searcher;
+    boolean     success;
 
     success = false;
     searcher = -1;
@@ -401,30 +359,6 @@ boolean EV_ThingDestroy(int tid)
     return success;
 }
 
-//==========================================================================
-//
-// EV_ThingMove
-//
-// arg[0] = tid
-// arg[1] = speed
-// arg[2] = angle (255 = use mobj angle)
-// arg[3] = distance (pixels>>2)
-//
-//==========================================================================
-
-/*
-   boolean EV_ThingMove(byte *args)
-   {
-   return false;
-   }
- */
-
-//==========================================================================
-//
-// ActivateThing
-//
-//==========================================================================
-
 static boolean ActivateThing(mobj_t *mobj)
 {
     if(mobj->flags & MF_COUNTKILL)
@@ -437,24 +371,29 @@ static boolean ActivateThing(mobj_t *mobj)
         }
         return false;
     }
-    switch (mobj->type)
+
+    switch(mobj->type)
     {
     case MT_ZTWINEDTORCH:
     case MT_ZTWINEDTORCH_UNLIT:
         P_SetMobjState(mobj, S_ZTWINEDTORCH_1);
         S_StartSound(SFX_IGNITE, mobj);
         break;
+
     case MT_ZWALLTORCH:
     case MT_ZWALLTORCH_UNLIT:
         P_SetMobjState(mobj, S_ZWALLTORCH1);
         S_StartSound(SFX_IGNITE, mobj);
         break;
+
     case MT_ZGEMPEDESTAL:
         P_SetMobjState(mobj, S_ZGEMPEDESTAL2);
         break;
+
     case MT_ZWINGEDSTATUENOSKULL:
         P_SetMobjState(mobj, S_ZWINGEDSTATUENOSKULL2);
         break;
+
     case MT_THRUSTFLOOR_UP:
     case MT_THRUSTFLOOR_DOWN:
         if(mobj->args[0] == 0)
@@ -467,45 +406,46 @@ static boolean ActivateThing(mobj_t *mobj)
                 P_SetMobjState(mobj, S_THRUSTRAISE1);
         }
         break;
+
     case MT_ZFIREBULL:
     case MT_ZFIREBULL_UNLIT:
         P_SetMobjState(mobj, S_ZFIREBULL_BIRTH);
         S_StartSound(SFX_IGNITE, mobj);
         break;
+
     case MT_ZBELL:
         if(mobj->health > 0)
         {
             P_DamageMobj(mobj, NULL, NULL, 10); // 'ring' the bell
         }
         break;
+
     case MT_ZCAULDRON:
     case MT_ZCAULDRON_UNLIT:
         P_SetMobjState(mobj, S_ZCAULDRON1);
         S_StartSound(SFX_IGNITE, mobj);
         break;
+
     case MT_FLAME_SMALL:
         S_StartSound(SFX_IGNITE, mobj);
         P_SetMobjState(mobj, S_FLAME_SMALL1);
         break;
+
     case MT_FLAME_LARGE:
         S_StartSound(SFX_IGNITE, mobj);
         P_SetMobjState(mobj, S_FLAME_LARGE1);
         break;
+
     case MT_BAT_SPAWNER:
         P_SetMobjState(mobj, S_SPAWNBATS1);
         break;
+
     default:
         return false;
         break;
     }
     return true;
 }
-
-//==========================================================================
-//
-// DeactivateThing
-//
-//==========================================================================
 
 static boolean DeactivateThing(mobj_t *mobj)
 {
@@ -519,16 +459,19 @@ static boolean DeactivateThing(mobj_t *mobj)
         }
         return false;
     }
-    switch (mobj->type)
+
+    switch(mobj->type)
     {
     case MT_ZTWINEDTORCH:
     case MT_ZTWINEDTORCH_UNLIT:
         P_SetMobjState(mobj, S_ZTWINEDTORCH_UNLIT);
         break;
+
     case MT_ZWALLTORCH:
     case MT_ZWALLTORCH_UNLIT:
         P_SetMobjState(mobj, S_ZWALLTORCH_U);
         break;
+
     case MT_THRUSTFLOOR_UP:
     case MT_THRUSTFLOOR_DOWN:
         if(mobj->args[0] == 1)
@@ -540,23 +483,29 @@ static boolean DeactivateThing(mobj_t *mobj)
                 P_SetMobjState(mobj, S_THRUSTLOWER);
         }
         break;
+
     case MT_ZFIREBULL:
     case MT_ZFIREBULL_UNLIT:
         P_SetMobjState(mobj, S_ZFIREBULL_DEATH);
         break;
+
     case MT_ZCAULDRON:
     case MT_ZCAULDRON_UNLIT:
         P_SetMobjState(mobj, S_ZCAULDRON_U);
         break;
+
     case MT_FLAME_SMALL:
         P_SetMobjState(mobj, S_FLAME_SDORM1);
         break;
+
     case MT_FLAME_LARGE:
         P_SetMobjState(mobj, S_FLAME_LDORM1);
         break;
+
     case MT_BAT_SPAWNER:
         P_SetMobjState(mobj, S_SPAWNBATS_OFF);
         break;
+
     default:
         return false;
         break;

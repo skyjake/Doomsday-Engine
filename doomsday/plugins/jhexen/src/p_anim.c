@@ -1,22 +1,45 @@
 /**\file
  *\section Copyright and License Summary
- * License: GPL + jHeretic/jHexen Exception
+ * License: Raven
+ * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 1999 Activision
+ *
+ * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
+ * code license; you can redistribute it and/or modify it under the terms
+ * of the HERETIC / HEXEN source code license as published by Activision.
+ *
+ * THIS MATERIAL IS NOT MADE OR SUPPORTED BY ACTIVISION.
+ *
+ * WARRANTY INFORMATION.
+ * This program is provided as is. Activision and it's affiliates make no
+ * warranties of any kind, whether oral or written , express or implied,
+ * including any warranty of merchantability, fitness for a particular
+ * purpose or non-infringement, and no other representations or claims of
+ * any kind shall be binding on or obligate Activision or it's affiliates.
+ *
+ * LICENSE CONDITIONS.
+ * You shall not:
+ *
+ * 1) Exploit this Program or any of its parts commercially.
+ * 2) Use this Program, or permit use of this Program, on more than one
+ *    computer, computer terminal, or workstation at the same time.
+ * 3) Make copies of this Program or any part thereof, or make copies of
+ *    the materials accompanying this Program.
+ * 4) Use the program, or permit use of this Program, in a network,
+ *    multi-user arrangement or remote access arrangement, including any
+ *    online use, except as otherwise explicitly provided by this Program.
+ * 5) Sell, rent, lease or license any copies of this Program, without
+ *    the express prior written consent of Activision.
+ * 6) Remove, disable or circumvent any proprietary notices or labels
+ *    contained on or within the Program.
+ *
+ * You should have received a copy of the HERETIC / HEXEN source code
+ * license along with this program (Ravenlic.txt); if not:
+ * http://www.ravensoft.com/
  */
-
-//**************************************************************************
-//**
-//** p_anim.c : Heretic 2 : Raven Software, Corp.
-//**
-//** $RCSfile$
-//** $Revision$
-//** $Date$
-//** $Author$
-//**
-//**************************************************************************
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -92,16 +115,10 @@ static int *LightningLightLevels;
 
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-//
-// P_AnimateSurfaces
-//
-//==========================================================================
-
 void P_AnimateSurfaces(void)
 {
-    int     i;
-    line_t *line;
+    int         i;
+    line_t     *line;
 
     // Update scrolling textures
     if(P_IterListSize(linespecials))
@@ -164,19 +181,13 @@ void P_AnimateSurfaces(void)
     }
 }
 
-//==========================================================================
-//
-// P_LightningFlash
-//
-//==========================================================================
-
 static void P_LightningFlash(void)
 {
-    int     i;
-    sector_t *tempSec;
-    int    *tempLight;
-    boolean foundSec;
-    int     flashLight;
+    uint        i;
+    sector_t   *tempSec;
+    int        *tempLight;
+    boolean     foundSec;
+    int         flashLight;
 
     if(LightningFlash)
     {
@@ -184,7 +195,7 @@ static void P_LightningFlash(void)
         if(LightningFlash)
         {
             tempLight = LightningLightLevels;
-            for(i = 0; i < numsectors; i++)
+            for(i = 0; i < numsectors; ++i)
             {
                 tempSec = P_ToPtr(DMU_SECTOR, i);
                 if(P_GetIntp(tempSec, DMU_CEILING_TEXTURE) == skyflatnum ||
@@ -201,9 +212,9 @@ static void P_LightningFlash(void)
             }
         }
         else
-        {                       // remove the alternate lightning flash special
+        {   // remove the alternate lightning flash special
             tempLight = LightningLightLevels;
-            for(i = 0; i < numsectors; i++)
+            for(i = 0; i < numsectors; ++i)
             {
                 tempSec = P_ToPtr(DMU_SECTOR, i);
                 if(P_GetIntp(tempSec, DMU_CEILING_TEXTURE) == skyflatnum ||
@@ -214,16 +225,18 @@ static void P_LightningFlash(void)
                     tempLight++;
                 }
             }
+
             Rend_SkyParams(1, DD_DISABLE, 0);
             Rend_SkyParams(0, DD_ENABLE, 0);
         }
         return;
     }
+
     LightningFlash = (P_Random() & 7) + 8;
     flashLight = 200 + (P_Random() & 31);
     tempLight = LightningLightLevels;
     foundSec = false;
-    for(i = 0; i < numsectors; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         tempSec = P_ToPtr(DMU_SECTOR, i);
         if(P_GetIntp(tempSec, DMU_CEILING_TEXTURE) == skyflatnum ||
@@ -231,6 +244,7 @@ static void P_LightningFlash(void)
            P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
         {
             int newLevel = *tempLight = P_GetIntp(tempSec, DMU_LIGHT_LEVEL);
+
             if(P_XSector(tempSec)->special == LIGHTNING_SPECIAL)
             {
                 newLevel += 64;
@@ -251,6 +265,7 @@ static void P_LightningFlash(void)
             {
                 newLevel = flashLight;
             }
+
             if(newLevel < *tempLight)
             {
                 newLevel = *tempLight;
@@ -269,6 +284,7 @@ static void P_LightningFlash(void)
         // Set the alternate (lightning) sky.
         Rend_SkyParams(0, DD_DISABLE, 0);
         Rend_SkyParams(1, DD_ENABLE, 0);
+
         // If 3D sounds are active, position the clap somewhere above
         // the player.
         if(cfg.snd_3D && plrmo)
@@ -286,6 +302,7 @@ static void P_LightningFlash(void)
         // Make it loud!
         S_StartSound(SFX_THUNDER_CRASH | DDSF_NO_ATTENUATION, crashorigin);
     }
+
     // Calculate the next lighting flash
     if(!NextLightningFlash)
     {
@@ -307,27 +324,14 @@ static void P_LightningFlash(void)
     }
 }
 
-//==========================================================================
-//
-// P_ForceLightning
-//
-//==========================================================================
-
 void P_ForceLightning(void)
 {
     NextLightningFlash = 0;
 }
 
-//==========================================================================
-//
-// P_InitLightning
-//
-//==========================================================================
-
 void P_InitLightning(void)
 {
-    int         i;
-    int         secCount;
+    uint        i, secCount;
     sector_t   *sec;
     xsector_t  *xsec;
 
@@ -337,6 +341,7 @@ void P_InitLightning(void)
         LightningFlash = 0;
         return;
     }
+
     LightningFlash = 0;
     secCount = 0;
     for(i = 0; i < numsectors; ++i)
@@ -350,7 +355,8 @@ void P_InitLightning(void)
             secCount++;
         }
     }
-    if(secCount)
+
+    if(secCount > 0)
     {
         LevelHasLightning = true;
     }
@@ -359,26 +365,22 @@ void P_InitLightning(void)
         LevelHasLightning = false;
         return;
     }
+
     LightningLightLevels = Z_Malloc(secCount * sizeof(int), PU_LEVEL, NULL);
     NextLightningFlash = ((P_Random() & 15) + 5) * 35;  // don't flash at level start
 }
 
-//==========================================================================
-//
-// P_InitFTAnims
-//
-// Initialize flat and texture animation lists.
-//
-//==========================================================================
-
+/**
+ * Initialize flat and texture animation lists.
+ */
 void P_InitPicAnims(void)
 {
-    int     base;
-    boolean ignore;
-    boolean done;
-    int     AnimDefCount = 0;
-    int     groupNumber = 0, picBase = 0;
-    int     type = 0, index = 0;
+    int         base;
+    boolean     ignore;
+    boolean     done;
+    int         AnimDefCount = 0;
+    int         groupNumber = 0, picBase = 0;
+    int         type = 0, index = 0;
 
     SC_Open(ANIM_SCRIPT_NAME);
     while(SC_GetString())
@@ -400,6 +402,7 @@ void P_InitPicAnims(void)
             SC_ScriptError(NULL);
         }
         SC_MustGetString();     // Name
+
         ignore = false;
         if(type == ANIM_FLAT)
         {
@@ -480,9 +483,6 @@ void P_InitPicAnims(void)
     SC_Close();
 }
 
-//
-// Sky code
-//
 void P_InitSky(int map)
 {
     Sky1Texture = P_GetMapSky1Texture(map);

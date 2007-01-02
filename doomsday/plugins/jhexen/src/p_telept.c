@@ -67,9 +67,7 @@
 
 void P_ArtiTeleportOther(player_t *player)
 {
-    mobj_t *mo;
-
-    mo = P_SpawnPlayerMissile(player->plr->mo, MT_TELOTHER_FX1);
+    mobj_t     *mo = P_SpawnPlayerMissile(player->plr->mo, MT_TELOTHER_FX1);
 
     if(mo)
         mo->target = player->plr->mo;
@@ -77,12 +75,12 @@ void P_ArtiTeleportOther(player_t *player)
 
 void P_TeleportToPlayerStarts(mobj_t *victim)
 {
-    int     i, selections = 0;
-    fixed_t destX, destY;
-    angle_t destAngle;
-    thing_t *start;
+    int         i, selections = 0;
+    fixed_t     destPos[3];
+    angle_t     destAngle;
+    thing_t    *start;
 
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->ingame)
             continue;
@@ -93,30 +91,28 @@ void P_TeleportToPlayerStarts(mobj_t *victim)
     i = P_Random() % selections;
     start = P_GetPlayerStart(0, i);
 
-    destX = start->x << FRACBITS;
-    destY = start->y << FRACBITS;
+    destPos[VX] = start->x << FRACBITS;
+    destPos[VY] = start->y << FRACBITS;
     destAngle = ANG45 * (playerstarts[i].angle / 45);
 
-    P_Teleport(victim, destX, destY, destAngle, true);
-    //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
+    P_Teleport(victim, destPos[VX], destPos[VY], destAngle, true);
 }
 
 void P_TeleportToDeathmatchStarts(mobj_t *victim)
 {
-    int     i, selections;
-    fixed_t destX, destY;
-    angle_t destAngle;
+    int         i, selections;
+    fixed_t     destPos[3];
+    angle_t     destAngle;
 
     selections = deathmatch_p - deathmatchstarts;
     if(selections)
     {
         i = P_Random() % selections;
-        destX = deathmatchstarts[i].x << FRACBITS;
-        destY = deathmatchstarts[i].y << FRACBITS;
+        destPos[VX] = deathmatchstarts[i].x << FRACBITS;
+        destPos[VY] = deathmatchstarts[i].y << FRACBITS;
         destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
 
-        P_Teleport(victim, destX, destY, destAngle, true);
-        //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
+        P_Teleport(victim, destPos[VX], destPos[VY], destAngle, true);
     }
     else
     {
@@ -151,27 +147,21 @@ void P_TeleportOther(mobj_t *victim)
 
 mobj_t *P_SpawnTeleFog(int x, int y)
 {
-    subsector_t *ss = R_PointInSubsector(x, y);
+    fixed_t     fheight;
 
-    return P_SpawnMobj(x, y, P_GetFixedp(ss, DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) +
-                       TELEFOGHEIGHT, MT_TFOG);
+    fheight = P_GetFixedp(R_PointInSubsector(x, y),
+                          DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
+
+    return P_SpawnMobj(x, y, fheight + TELEFOGHEIGHT, MT_TFOG);
 }
-
-//==========================================================================
-//
-// P_Teleport
-//
-//==========================================================================
 
 boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
                    boolean useFog)
 {
-    fixed_t oldpos[3];
-    fixed_t aboveFloor;
-    fixed_t fogDelta;
-    player_t *player;
-    unsigned an;
-    mobj_t *fog;
+    fixed_t     oldpos[3], aboveFloor, fogDelta;
+    player_t   *player;
+    unsigned    an;
+    mobj_t     *fog;
 
     memcpy(oldpos, thing->pos, sizeof(oldpos));
 
@@ -214,6 +204,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
     {
         thing->pos[VZ] = thing->floorz;
     }
+
     // Spawn teleport fog at source and destination
     if(useFog)
     {
@@ -225,12 +216,14 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
             P_SpawnMobj(x + 20 * finecosine[an], y + 20 * finesine[an],
                         thing->pos[VZ] + fogDelta, MT_TFOG);
         S_StartSound(SFX_TELEPORT, fog);
+
         if(thing->player && !thing->player->powers[pw_speed])
-        {                       // Freeze player for about .5 sec
+        {   // Freeze player for about .5 sec
             thing->reactiontime = 18;
         }
         thing->angle = angle;
     }
+
     if(thing->flags2 & MF2_FLOORCLIP)
     {
         if(thing->pos[VZ] == P_GetFixedp(thing->subsector,
@@ -244,13 +237,14 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
             thing->floorclip = 0;
         }
     }
+
     if(thing->flags & MF_MISSILE)
     {
         angle >>= ANGLETOFINESHIFT;
         thing->momx = FixedMul(thing->info->speed, finecosine[angle]);
         thing->momy = FixedMul(thing->info->speed, finesine[angle]);
     }
-    else if(useFog)             // no fog doesn't alter the player's momentums
+    else if(useFog) // no fog doesn't alter the player's momentums
     {
         thing->momx = thing->momy = thing->momz = 0;
     }
@@ -261,84 +255,69 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
     return true;
 }
 
-//==========================================================================
-//
-// EV_Teleport
-//
-//==========================================================================
-
 boolean EV_Teleport(int tid, mobj_t *thing, boolean fog)
 {
-    int     i;
-    int     count;
-    mobj_t *mo = 0;
-    int     searcher;
+    int         i, count, searcher;
+    mobj_t     *mo = 0;
 
     if(!thing)
-    {                           // Teleport function called with an invalid mobj
         return false;
-    }
+
     if(thing->flags2 & MF2_NOTELEPORT)
-    {
         return false;
-    }
+
     count = 0;
     searcher = -1;
     while(P_FindMobjFromTID(tid, &searcher) != NULL)
-    {
         count++;
-    }
+
     if(count == 0)
-    {
         return false;
-    }
+
     count = 1 + (P_Random() % count);
     searcher = -1;
-    for(i = 0; i < count; i++)
+    for(i = 0; i < count; ++i)
     {
         mo = P_FindMobjFromTID(tid, &searcher);
     }
+
     if(!mo)
         Con_Error("Can't find teleport mapspot\n");
+
     return P_Teleport(thing, mo->pos[VX], mo->pos[VY], mo->angle, fog);
 }
 
 #if __JHERETIC__ || __JHEXEN__
 void P_ArtiTele(player_t *player)
 {
-    int     i;
-    int     selections;
-    fixed_t destX;
-    fixed_t destY;
-    angle_t destAngle;
+    int         i, selections;
+    fixed_t     destPos[3], destAngle;
 
     if(deathmatch)
     {
         selections = deathmatch_p - deathmatchstarts;
         i = P_Random() % selections;
-        destX = deathmatchstarts[i].x << FRACBITS;
-        destY = deathmatchstarts[i].y << FRACBITS;
+        destPos[VX] = deathmatchstarts[i].x << FRACBITS;
+        destPos[VY] = deathmatchstarts[i].y << FRACBITS;
         destAngle = ANG45 * (deathmatchstarts[i].angle / 45);
     }
     else
     {
-        // FIXME?: DJS - this doesn't seem right...
-        destX = playerstarts[0].x << FRACBITS;
-        destY = playerstarts[0].y << FRACBITS;
+        // FIXME?: DJS - this doesn't seem right... why always player 0?
+        destPos[VX] = playerstarts[0].x << FRACBITS;
+        destPos[VY] = playerstarts[0].y << FRACBITS;
         destAngle = ANG45 * (playerstarts[0].angle / 45);
     }
 
 # if __JHEXEN__
-    P_Teleport(player->plr->mo, destX, destY, destAngle, true);
+    P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle, true);
     if(player->morphTics)
     {   // Teleporting away will undo any morph effects (pig)
         P_UndoPlayerMorph(player);
     }
-    //S_StartSound(NULL, sfx_wpnup); // Full volume laugh
+
 # else
-    P_Teleport(player->plr->mo, destX, destY, destAngle);
-    /*S_StartSound(sfx_wpnup, NULL); // Full volume laugh
-       NetSv_Sound(NULL, sfx_wpnup, player-players); */
+    P_Teleport(player->plr->mo, destPos[VX], destPos[VY], destAngle);
     S_StartSound(sfx_wpnup, NULL);
 # endif
 }

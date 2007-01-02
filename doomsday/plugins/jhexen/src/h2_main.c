@@ -34,7 +34,6 @@
  * do not wish to do so, delete this exception statement from your version.
  */
 
-
 /*
  * H2_main.c: Hexen specifc Initialization.
  */
@@ -176,7 +175,7 @@ static execopt_t ExecOptions[] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Attempt to change the current game mode. Can only be done when not
  * actually in a level.
  *
@@ -218,7 +217,7 @@ boolean D_SetGameMode(GameMode_t mode)
     return true;
 }
 
-/*
+/**
  * Set the game mode string.
  */
 void G_IdentifyVersion(void)
@@ -243,7 +242,7 @@ void G_IdentifyVersion(void)
     }
 }
 
-/*
+/**
  * Check which known IWADs are found. The purpose of this routine is to
  * find out which IWADs the user lets us to know about, but we don't
  * decide which one gets loaded or even see if the WADs are actually
@@ -258,13 +257,13 @@ void DetectIWADs(void)
     DD_AddIWAD("hexen.wad");
 }
 
-/*
- *  Pre Engine Initialization routine.
- *    All game-specific actions that should take place at this time go here.
+/**
+ * Pre Engine Initialization routine.
+ * All game-specific actions that should take place at this time go here.
  */
 void H2_PreInit(void)
 {
-    int     i;
+    int         i;
 
     D_SetGameMode(indetermined);
 
@@ -386,15 +385,15 @@ void H2_PreInit(void)
     G_PreInit();
 }
 
-/*
- *  Post Engine Initialization routine.
- *    All game-specific actions that should take place at this time go here.
+/**
+ * Post Engine Initialization routine.
+ * All game-specific actions that should take place at this time go here.
  */
 void H2_PostInit(void)
 {
-    int     p;
-    int     pClass;
-    char    mapstr[6];
+    int         p;
+    int         pClass;
+    char        mapstr[6];
 
     // Common post init routine
     G_PostInit();
@@ -484,16 +483,10 @@ void H2_PostInit(void)
 
 }
 
-//==========================================================================
-//
-// HandleArgs
-//
-//==========================================================================
-
-static void HandleArgs()
+static void HandleArgs(void)
 {
-    int     p;
-    execopt_t *opt;
+    int         p;
+    execopt_t  *opt;
 
     nomonsters = ArgExists("-nomonsters");
     respawnparm = ArgExists("-respawn");
@@ -538,16 +531,9 @@ static void HandleArgs()
     }
 }
 
-//==========================================================================
-//
-// WarpCheck
-//
-//==========================================================================
-
 static void WarpCheck(void)
 {
-    int     p;
-    int     map;
+    int         p, map;
 
     p = ArgCheck("-warp");
     if(p && p < Argc() - 1)
@@ -576,50 +562,26 @@ static void WarpCheck(void)
     }
 }
 
-//==========================================================================
-//
-// ExecOptionSKILL
-//
-//==========================================================================
-
 static void ExecOptionSKILL(char **args, int tag)
 {
     startskill = args[1][0] - '1';
     autostart = true;
 }
 
-//==========================================================================
-//
-// ExecOptionPLAYDEMO
-//
-//==========================================================================
-
 static void ExecOptionPLAYDEMO(char **args, int tag)
 {
-    char    file[256];
+    char        file[256];
 
     sprintf(file, "%s.lmp", args[1]);
     DD_AddStartupWAD(file);
     Con_Message("Playing demo %s.lmp.\n", args[1]);
 }
 
-//==========================================================================
-//
-// ExecOptionSCRIPTS
-//
-//==========================================================================
-
 static void ExecOptionSCRIPTS(char **args, int tag)
 {
     sc_FileScripts = true;
     sc_ScriptsDir = args[1];
 }
-
-//==========================================================================
-//
-// ExecOptionDEVMAPS
-//
-//==========================================================================
 
 static void ExecOptionDEVMAPS(char **args, int tag)
 {
@@ -638,6 +600,7 @@ static void ExecOptionDEVMAPS(char **args, int tag)
     sc_FileScripts = true;
     sc_ScriptsDir = malloc(strlen(sc_String) + 1);
     strcpy(sc_ScriptsDir, sc_String);
+
     while(SC_GetString())
     {
         if(SC_Compare("file"))
@@ -652,7 +615,6 @@ static void ExecOptionDEVMAPS(char **args, int tag)
     }
     SC_Close();
 }
-
 
 void H2_Shutdown(void)
 {
@@ -673,28 +635,3 @@ void H2_Ticker(void)
     MN_Ticker();
     G_Ticker();
 }
-
-/*void G_ModifyDupTiccmd(ticcmd_t *cmd)
-   {
-   if(cmd->buttons & BT_SPECIAL) cmd->buttons = 0;
-   } */
-
-/*void H2_UpdateState(int step)
-   {
-   switch(step)
-   {
-   case DD_PRE:
-   // Do a sound reset.
-   S_Reset();
-   break;
-
-   case DD_POST:
-   P_Init();
-   SB_Init(); // Updates the status bar patches.
-   MN_Init();
-   S_InitScript();
-   SN_InitSequenceScript();
-   H2_SetGlowing();
-   break;
-   }
-   } */

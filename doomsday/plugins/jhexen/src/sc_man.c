@@ -92,15 +92,9 @@ static boolean AlreadyGot = false;
 
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-//
-// SC_Open
-//
-//==========================================================================
-
 void SC_Open(char *name)
 {
-    char    fileName[128];
+    char        fileName[128];
 
     if(sc_FileScripts == true)
     {
@@ -113,52 +107,31 @@ void SC_Open(char *name)
     }
 }
 
-//==========================================================================
-//
-// SC_OpenLump
-//
-// Loads a script (from the WAD files) and prepares it for parsing.
-//
-//==========================================================================
-
+/**
+ * Loads a script (from the WAD files) and prepares it for parsing.
+ */
 void SC_OpenLump(char *name)
 {
     OpenScript(name, LUMP_SCRIPT);
 }
 
-//==========================================================================
-//
-// SC_OpenFile
-//
-// Loads a script (from a file) and prepares it for parsing.  Uses the
-// zone memory allocator for memory allocation and de-allocation.
-//
-//==========================================================================
-
+/**
+ * Loads a script (from a file) and prepares it for parsing.  Uses the
+ * zone memory allocator for memory allocation and de-allocation.
+ */
 void SC_OpenFile(char *name)
 {
     OpenScript(name, FILE_ZONE_SCRIPT);
 }
 
-//==========================================================================
-//
-// SC_OpenFileCLib
-//
-// Loads a script (from a file) and prepares it for parsing.  Uses C
-// library function calls for memory allocation and de-allocation.
-//
-//==========================================================================
-
+/**
+ * Loads a script (from a file) and prepares it for parsing.  Uses C
+ * library function calls for memory allocation and de-allocation.
+ */
 void SC_OpenFileCLib(char *name)
 {
     OpenScript(name, FILE_CLIB_SCRIPT);
 }
-
-//==========================================================================
-//
-// OpenScript
-//
-//==========================================================================
 
 static void OpenScript(char *name, int type)
 {
@@ -191,12 +164,6 @@ static void OpenScript(char *name, int type)
     AlreadyGot = false;
 }
 
-//==========================================================================
-//
-// SC_Close
-//
-//==========================================================================
-
 void SC_Close(void)
 {
     if(ScriptOpen)
@@ -213,16 +180,10 @@ void SC_Close(void)
     }
 }
 
-//==========================================================================
-//
-// SC_GetString
-//
-//==========================================================================
-
 boolean SC_GetString(void)
 {
-    char   *text;
-    boolean foundToken;
+    char       *text;
+    boolean     foundToken;
 
     CheckOpen();
     if(AlreadyGot)
@@ -307,12 +268,6 @@ boolean SC_GetString(void)
     return true;
 }
 
-//==========================================================================
-//
-// SC_MustGetString
-//
-//==========================================================================
-
 void SC_MustGetString(void)
 {
     if(SC_GetString() == false)
@@ -320,12 +275,6 @@ void SC_MustGetString(void)
         SC_ScriptError("Missing string.");
     }
 }
-
-//==========================================================================
-//
-// SC_MustGetStringName
-//
-//==========================================================================
 
 void SC_MustGetStringName(char *name)
 {
@@ -336,15 +285,9 @@ void SC_MustGetStringName(char *name)
     }
 }
 
-//==========================================================================
-//
-// SC_GetNumber
-//
-//==========================================================================
-
 boolean SC_GetNumber(void)
 {
-    char   *stopper;
+    char       *stopper;
 
     CheckOpen();
     if(SC_GetString())
@@ -363,12 +306,6 @@ boolean SC_GetNumber(void)
     }
 }
 
-//==========================================================================
-//
-// SC_MustGetNumber
-//
-//==========================================================================
-
 void SC_MustGetNumber(void)
 {
     if(SC_GetNumber() == false)
@@ -377,72 +314,23 @@ void SC_MustGetNumber(void)
     }
 }
 
-//==========================================================================
-//
-// SC_UnGet
-//
-// Assumes there is a valid string in sc_String.
-//
-//==========================================================================
-
+/**
+ * Assumes there is a valid string in sc_String.
+ */
 void SC_UnGet(void)
 {
     AlreadyGot = true;
 }
 
-//==========================================================================
-//
-// SC_Check
-//
-// Returns true if another token is on the current line.
-//
-//==========================================================================
-
-/*
-   boolean SC_Check(void)
-   {
-   char *text;
-
-   CheckOpen();
-   text = ScriptPtr;
-   if(text >= ScriptEndPtr)
-   {
-   return false;
-   }
-   while(*text <= 32)
-   {
-   if(*text == '\n')
-   {
-   return false;
-   }
-   text++;
-   if(text == ScriptEndPtr)
-   {
-   return false;
-   }
-   }
-   if(*text == ASCII_COMMENT)
-   {
-   return false;
-   }
-   return true;
-   }
+/**
+ * @return              Index of the first match to sc_String from the passed
+ *                      array of strings, ELSE <code>-1</code>.
  */
-
-//==========================================================================
-//
-// SC_MatchString
-//
-// Returns the index of the first match to sc_String from the passed
-// array of strings, or -1 if not found.
-//
-//==========================================================================
-
 int SC_MatchString(char **strings)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; *strings != NULL; i++)
+    for(i = 0; *strings != NULL; ++i)
     {
         if(SC_Compare(*strings++))
         {
@@ -452,15 +340,9 @@ int SC_MatchString(char **strings)
     return -1;
 }
 
-//==========================================================================
-//
-// SC_MustMatchString
-//
-//==========================================================================
-
 int SC_MustMatchString(char **strings)
 {
-    int     i;
+    int         i;
 
     i = SC_MatchString(strings);
     if(i == -1)
@@ -469,12 +351,6 @@ int SC_MustMatchString(char **strings)
     }
     return i;
 }
-
-//==========================================================================
-//
-// SC_Compare
-//
-//==========================================================================
 
 boolean SC_Compare(char *text)
 {
@@ -485,12 +361,6 @@ boolean SC_Compare(char *text)
     return false;
 }
 
-//==========================================================================
-//
-// SC_ScriptError
-//
-//==========================================================================
-
 void SC_ScriptError(char *message)
 {
     if(message == NULL)
@@ -500,12 +370,6 @@ void SC_ScriptError(char *message)
     Con_Error("Script error, \"%s\" line %d: %s", ScriptName, sc_Line,
               message);
 }
-
-//==========================================================================
-//
-// CheckOpen
-//
-//==========================================================================
 
 static void CheckOpen(void)
 {

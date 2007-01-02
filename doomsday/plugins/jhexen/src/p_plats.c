@@ -44,32 +44,50 @@
  * a base for replacement. - Yagisan
  */
 
+// HEADER FILES ------------------------------------------------------------
+
 #include "jhexen.h"
 #include "p_mapspec.h"
 
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
 plat_t *activeplats[MAXPLATS];
 
-static void StartSequence(sector_t* sector, int seqBase)
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// CODE --------------------------------------------------------------------
+
+static void StartSequence(sector_t *sector, int seqBase)
 {
     SN_StartSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN),
                      seqBase + P_XSector(sector)->seqType);
 }
 
-static void StopSequence(sector_t* sector)
+static void StopSequence(sector_t *sector)
 {
     SN_StopSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN));
 }
 
-//==================================================================
-//
-//      Move a plat up and down
-//
-//==================================================================
-void T_PlatRaise(plat_t * plat)
+/**
+ * Move a plat up and down
+ */
+void T_PlatRaise(plat_t *plat)
 {
     result_e res;
 
-    switch (plat->status)
+    switch(plat->status)
     {
     case PLAT_UP:
         res =
@@ -86,35 +104,41 @@ void T_PlatRaise(plat_t * plat)
             plat->count = plat->wait;
             plat->status = PLAT_WAITING;
             StopSequence(plat->sector);
-            switch (plat->type)
+
+            switch(plat->type)
             {
             case PLAT_DOWNWAITUPSTAY:
             case PLAT_DOWNBYVALUEWAITUPSTAY:
                 P_RemoveActivePlat(plat);
                 break;
+
             default:
                 break;
             }
         }
         break;
+
     case PLAT_DOWN:
         res = T_MovePlane(plat->sector, plat->speed, plat->low, false, 0, -1);
         if(res == RES_PASTDEST)
         {
             plat->count = plat->wait;
             plat->status = PLAT_WAITING;
-            switch (plat->type)
+
+            switch(plat->type)
             {
             case PLAT_UPWAITDOWNSTAY:
             case PLAT_UPBYVALUEWAITDOWNSTAY:
                 P_RemoveActivePlat(plat);
                 break;
+
             default:
                 break;
             }
             StopSequence(plat->sector);
         }
         break;
+
     case PLAT_WAITING:
         if(!--plat->count)
         {
@@ -124,8 +148,6 @@ void T_PlatRaise(plat_t * plat)
                 plat->status = PLAT_DOWN;
             StartSequence(plat->sector, SEQ_PLATFORM);
         }
-        //      case PLAT_IN_STASIS:
-        //          break;
     }
 }
 
@@ -164,7 +186,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
         plat->speed = args[1] * (FRACUNIT / 8);
         floorheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
 
-        switch (type)
+        switch(type)
         {
         case PLAT_DOWNWAITUPSTAY:
             plat->low = P_FindLowestFloorSurrounding(sec) + 8 * FRACUNIT;
@@ -222,9 +244,9 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
 
 void EV_StopPlat(line_t *line, byte *args)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < MAXPLATS; i++)
+    for(i = 0; i < MAXPLATS; ++i)
     {
         if((activeplats[i])->tag == args[0])
         {
@@ -237,11 +259,11 @@ void EV_StopPlat(line_t *line, byte *args)
     }
 }
 
-void P_AddActivePlat(plat_t * plat)
+void P_AddActivePlat(plat_t *plat)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < MAXPLATS; i++)
+    for(i = 0; i < MAXPLATS; ++i)
         if(activeplats[i] == NULL)
         {
             activeplats[i] = plat;
@@ -250,11 +272,11 @@ void P_AddActivePlat(plat_t * plat)
     Con_Error("P_AddActivePlat: no more plats!");
 }
 
-void P_RemoveActivePlat(plat_t * plat)
+void P_RemoveActivePlat(plat_t *plat)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < MAXPLATS; i++)
+    for(i = 0; i < MAXPLATS; ++i)
         if(plat == activeplats[i])
         {
             P_XSector((activeplats[i])->sector)->specialdata = NULL;

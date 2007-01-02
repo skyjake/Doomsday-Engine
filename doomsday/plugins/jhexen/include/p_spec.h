@@ -93,6 +93,7 @@ void            P_AnimateSurfaces(void);
 void            P_InitPicAnims(void);
 void            P_InitLightning(void);
 void            P_ForceLightning(void);
+void            R_HandleSectorSpecials(void);
 
 /*
    ===============================================================================

@@ -52,6 +52,19 @@
 #define TEXTSPEED 3
 #define TEXTWAIT 140
 
+#define TALLY_EFFECT_TICKS 20
+#define TALLY_FINAL_X_DELTA (23*FRACUNIT)
+#define TALLY_FINAL_Y_DELTA (13*FRACUNIT)
+#define TALLY_START_XPOS (178*FRACUNIT)
+#define TALLY_STOP_XPOS (90*FRACUNIT)
+#define TALLY_START_YPOS (132*FRACUNIT)
+#define TALLY_STOP_YPOS (83*FRACUNIT)
+#define TALLY_TOP_X 85
+#define TALLY_TOP_Y 9
+#define TALLY_LEFT_X 7
+#define TALLY_LEFT_Y 71
+#define TALLY_TOTALS_X 291
+
 // TYPES -------------------------------------------------------------------
 
 typedef enum gametype_e {
@@ -62,6 +75,8 @@ typedef enum gametype_e {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+extern void AM_Stop(void);
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void    IN_Start(void);
@@ -71,8 +86,6 @@ void    IN_Drawer(void);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void WaitStop(void);
-
-//static void Stop(void);
 static void LoadPics(void);
 static void UnloadPics(void);
 static void CheckForSkip(void);
@@ -80,8 +93,6 @@ static void InitStats(void);
 static void DrDeathTally(void);
 static void DrNumber(int val, int x, int y, int wrapThresh);
 static void DrNumberBold(int val, int x, int y, int wrapThresh);
-
-//static void DrawHubText(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -114,17 +125,17 @@ static signed int totalFrags[MAXPLAYERS];
 
 static int HubCount;
 
-//static char *HubText;
+#if 0
+static char *ClusMsgLumpNames[] = {
+    "clus1msg",
+    "clus2msg",
+    "clus3msg",
+    "clus4msg",
+    "clus5msg"
+};
+#endif
 
 // CODE --------------------------------------------------------------------
-
-//========================================================================
-//
-// IN_Start
-//
-//========================================================================
-
-extern void AM_Stop(void);
 
 void IN_Start(void)
 {
@@ -147,12 +158,6 @@ void IN_Start(void)
     intertime = 0;
 }
 
-//========================================================================
-//
-// WaitStop
-//
-//========================================================================
-
 void WaitStop(void)
 {
     if(!--cnt)
@@ -165,12 +170,6 @@ void WaitStop(void)
     }
 }
 
-//========================================================================
-//
-// IN_Stop
-//
-//========================================================================
-
 void IN_Stop(void)
 {
     NetSv_Intermission(IMF_END, 0, 0);
@@ -180,43 +179,26 @@ void IN_Stop(void)
     GL_Update(DDUF_BORDER);
 }
 
-//========================================================================
-//
-// InitStats
-//
-//  Initializes the stats for single player mode
-//========================================================================
-
-#if 0
-static char *ClusMsgLumpNames[] = {
-    "clus1msg",
-    "clus2msg",
-    "clus3msg",
-    "clus4msg",
-    "clus5msg"
-};
-#endif
-
+/**
+ * Initializes the stats for single player mode
+ */
 static void InitStats(void)
 {
-    int     i;
-    int     j;
-    signed int slaughterfrags;
-    int     posnum;
-    int     slaughtercount;
-    int     playercount;
-
-#if 0
-    int     oldCluster;
-    char   *msgLumpName;
-    size_t  msgSize;
-    int     msgLump;
-    extern int LeaveMap;
-#endif
+    int         i, j;
+    signed int  slaughterfrags;
+    int         posnum;
+    int         slaughtercount;
+    int         playercount;
 
     if(!deathmatch)
     {
 #if 0
+        int     oldCluster;
+        char   *msgLumpName;
+        size_t  msgSize;
+        int     msgLump;
+        extern int LeaveMap;
+
         gametype = SINGLE;
         HubCount = 0;
         oldCluster = P_GetMapCluster(gamemap);
@@ -291,28 +273,22 @@ static void InitStats(void)
             }
         }
         if(playercount == slaughtercount)
-        {                       // don't do the slaughter stuff if everyone is equal
+        {   // don't do the slaughter stuff if everyone is equal
             slaughterboy = 0;
         }
         S_StartMusic("hub", true);
     }
 }
 
-//========================================================================
-//
-// LoadPics
-//
-//========================================================================
-
 static void LoadPics(void)
 {
-    int     i;
+    int         i;
 
     if(HubCount || gametype == DEATHMATCH)
     {
         patchINTERPICLumpRS = W_GetNumForName("INTERPIC");
         FontBLumpBase = W_GetNumForName("FONTB16");
-        for(i = 0; i < 10; i++)
+        for(i = 0; i < 10; ++i)
         {
             FontBNumbersLump[i] = FontBLumpBase + i;
         }
@@ -325,34 +301,10 @@ static void LoadPics(void)
     }
 }
 
-//========================================================================
-//
-// UnloadPics
-//
-//========================================================================
-
 static void UnloadPics(void)
 {
-    //  int i;
-
-    if(HubCount || gametype == DEATHMATCH)
-    {
-        /*      Z_ChangeTag(patchINTERPIC, PU_CACHE);
-           for(i=0; i<10; i++)
-           {
-           Z_ChangeTag(FontBNumbers[i], PU_CACHE);
-           }
-           Z_ChangeTag(FontBNegative, PU_CACHE);
-           Z_ChangeTag(FontBSlash, PU_CACHE);
-           Z_ChangeTag(FontBPercent, PU_CACHE); */
-    }
+    // Nothing to do.
 }
-
-//========================================================================
-//
-// IN_Ticker
-//
-//========================================================================
 
 void IN_Ticker(void)
 {
@@ -374,24 +326,19 @@ void IN_Ticker(void)
         NetSv_Intermission(IMF_STATE, interstate, 0);
         cnt = 10;
         skipintermission = false;
-        //S_StartSound(NULL, sfx_dorcls);
     }
 }
 
-//========================================================================
-//
-// CheckForSkip
-//
-//  Check to see if any player hit a key
-//========================================================================
-
+/**
+ * Check to see if any player hit a key
+ */
 static void CheckForSkip(void)
 {
-    int     i;
-    player_t *player;
+    int         i;
+    player_t   *player;
     static boolean triedToSkip;
 
-    for(i = 0, player = players; i < MAXPLAYERS; i++, player++)
+    for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
     {
         if(players[i].plr->ingame)
         {
@@ -422,7 +369,7 @@ static void CheckForSkip(void)
         }
     }
     if(deathmatch && intertime < 140)
-    {                           // wait for 4 seconds before allowing a skip
+    {   // wait for 4 seconds before allowing a skip
         if(skipintermission == 1)
         {
             triedToSkip = true;
@@ -439,12 +386,6 @@ static void CheckForSkip(void)
     }
 }
 
-//========================================================================
-//
-// IN_Drawer
-//
-//========================================================================
-
 void IN_Drawer(void)
 {
     if(!intermission)
@@ -458,50 +399,22 @@ void IN_Drawer(void)
     GL_Update(DDUF_FULLSCREEN);
     GL_DrawRawScreen(patchINTERPICLumpRS, 0, 0);
 
-    if(gametype == SINGLE)
-    {
-#if 0
-        if(HubCount)
-        {
-            DrawHubText();
-        }
-#endif
-    }
-    else
+    if(gametype != SINGLE)
     {
         DrDeathTally();
     }
 }
 
-//========================================================================
-//
-// DrDeathTally
-//
-//========================================================================
-
-#define TALLY_EFFECT_TICKS 20
-#define TALLY_FINAL_X_DELTA (23*FRACUNIT)
-#define TALLY_FINAL_Y_DELTA (13*FRACUNIT)
-#define TALLY_START_XPOS (178*FRACUNIT)
-#define TALLY_STOP_XPOS (90*FRACUNIT)
-#define TALLY_START_YPOS (132*FRACUNIT)
-#define TALLY_STOP_YPOS (83*FRACUNIT)
-#define TALLY_TOP_X 85
-#define TALLY_TOP_Y 9
-#define TALLY_LEFT_X 7
-#define TALLY_LEFT_Y 71
-#define TALLY_TOTALS_X 291
-
 static void DrDeathTally(void)
 {
-    int     i, j;
-    fixed_t xPos, yPos;
-    fixed_t xDelta, yDelta;
-    fixed_t xStart, scale;
-    int     x, y;
-    boolean bold;
+    int         i, j;
+    fixed_t     xPos, yPos;
+    fixed_t     xDelta, yDelta;
+    fixed_t     xStart, scale;
+    int         x, y;
+    boolean     bold;
     static boolean showTotals;
-    int     temp;
+    int         temp;
 
     GL_DrawPatch(TALLY_TOP_X, TALLY_TOP_Y, W_GetNumForName("tallytop"));
     GL_DrawPatch(TALLY_LEFT_X, TALLY_LEFT_Y, W_GetNumForName("tallylft"));
@@ -532,10 +445,11 @@ static void DrDeathTally(void)
         S_StartSound(SFX_PLATFORM_STOP, NULL);
     }
     y = yPos >> FRACBITS;
-    for(i = 0; i < MAXPLAYERS; i++)
+
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         xPos = xStart;
-        for(j = 0; j < MAXPLAYERS; j++, xPos += xDelta)
+        for(j = 0; j < MAXPLAYERS; ++j, xPos += xDelta)
         {
             x = xPos >> FRACBITS;
             bold = (i == consoleplayer || j == consoleplayer);
@@ -573,12 +487,6 @@ static void DrDeathTally(void)
     }
 }
 
-//==========================================================================
-//
-// DrNumber
-//
-//==========================================================================
-
 static void DrNumber(int val, int x, int y, int wrapThresh)
 {
     char    buff[8] = "XX";
@@ -588,14 +496,9 @@ static void DrNumber(int val, int x, int y, int wrapThresh)
         sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, hu_font_a) / 2, y, buff, hu_font_a, 1, 1, 1, 1);
+    M_WriteText2(x - M_StringWidth(buff, hu_font_a) / 2, y, buff,
+                 hu_font_a, 1, 1, 1, 1);
 }
-
-//==========================================================================
-//
-// DrNumberBold
-//
-//==========================================================================
 
 static void DrNumberBold(int val, int x, int y, int wrapThresh)
 {
@@ -606,61 +509,6 @@ static void DrNumberBold(int val, int x, int y, int wrapThresh)
         sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, hu_font_a) / 2, y, buff, hu_font_a, 1, 0.7f, 0.3f, 1);
+    M_WriteText2(x - M_StringWidth(buff, hu_font_a) / 2, y, buff,
+                 hu_font_a, 1, 0.7f, 0.3f, 1);
 }
-
-//===========================================================================
-//
-// DrawHubText
-//
-//===========================================================================
-#if 0
-static void DrawHubText(void)
-{
-    int     count;
-    char   *ch;
-    int     c;
-    int     cx, cy;
-    patch_t *w;
-
-    cy = 5;
-    cx = 10;
-    ch = HubText;
-    count = (intertime - 10) / TEXTSPEED;
-    if(count < 0)
-    {
-        count = 0;
-    }
-    for(; count; count--)
-    {
-        c = *ch++;
-        if(!c)
-        {
-            break;
-        }
-        if(c == '\n')
-        {
-            cx = 10;
-            cy += 9;
-            continue;
-        }
-        if(c < 32)
-        {
-            continue;
-        }
-        c = toupper(c);
-        if(c == 32)
-        {
-            cx += 5;
-            continue;
-        }
-        w = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
-        if(cx + w->width > SCREENWIDTH)
-        {
-            break;
-        }
-        GL_DrawPatch(cx, cy, FontABaseLump + c - 33);
-        cx += w->width;
-    }
-}
-#endif

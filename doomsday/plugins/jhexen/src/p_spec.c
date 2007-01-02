@@ -928,3 +928,86 @@ void P_SpawnSpecials(void)
 
     P_FreeButtons();
 }
+
+void R_HandleSectorSpecials(void)
+{
+    uint        i;
+    int         scrollOffset = leveltime >> 1 & 63;
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        xsector_t* sect = P_XSector(P_ToPtr(DMU_SECTOR, i));
+
+        switch(sect->special)
+        {                       // Handle scrolling flats
+        case 201:
+        case 202:
+        case 203:               // Scroll_North_xxx
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+                       (63 - scrollOffset) << (sect->special - 201));
+            break;
+
+        case 204:
+        case 205:
+        case 206:               // Scroll_East_xxx
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+                       (63 - scrollOffset) << (sect->special - 204));
+            break;
+
+        case 207:
+        case 208:
+        case 209:               // Scroll_South_xxx
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+                       scrollOffset << (sect->special - 207));
+            break;
+
+        case 210:
+        case 211:
+        case 212:               // Scroll_West_xxx
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+                       scrollOffset << (sect->special - 210));
+            break;
+
+        case 213:
+        case 214:
+        case 215:               // Scroll_NorthWest_xxx
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+                       scrollOffset << (sect->special - 213));
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+                       (63 - scrollOffset) << (sect->special - 213));
+            break;
+
+        case 216:
+        case 217:
+        case 218:               // Scroll_NorthEast_xxx
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+                       (63 - scrollOffset) << (sect->special - 216));
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+                       (63 - scrollOffset) << (sect->special - 216));
+            break;
+
+        case 219:
+        case 220:
+        case 221:               // Scroll_SouthEast_xxx
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+                       (63 - scrollOffset) << (sect->special - 219));
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+                       scrollOffset << (sect->special - 219));
+            break;
+
+        case 222:
+        case 223:
+        case 224:               // Scroll_SouthWest_xxx
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X,
+                       scrollOffset << (sect->special - 222));
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y,
+                       scrollOffset << (sect->special - 222));
+            break;
+
+        default:
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_X, 0);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_OFFSET_Y, 0);
+            break;
+        }
+    }
+}
