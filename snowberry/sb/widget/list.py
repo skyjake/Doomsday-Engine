@@ -204,8 +204,7 @@ class List (base.Widget):
     def clear(self):
         """Remove all the items in the list."""
 
-        if self.style == List.STYLE_MULTIPLE or \
-               self.style == List.STYLE_SINGLE:
+        if self.style in [List.STYLE_MULTIPLE, List.STYLE_SINGLE, List.STYLE_CHECKBOX]:
             self.getWxWidget().Clear()
         else:
             self.getWxWidget().DeleteAllItems()
