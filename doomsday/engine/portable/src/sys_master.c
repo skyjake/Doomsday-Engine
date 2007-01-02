@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -69,12 +70,14 @@ typedef struct serverlist_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void N_MasterClearList(void);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Master server info. Hardcoded defaults.
-char   *masterAddress = "www.doomsdayhq.com";
+char   *masterAddress = "www.dengine.net";
 int     masterPort = 0;         // Uses 80 by default.
 char   *masterPath = "/master.php";
 boolean masterAware = false;
@@ -86,12 +89,32 @@ static const char *responseOK = "HTTP/1.1 200";
 // This variable will be true while a communication is in progress.
 static volatile boolean communicating;
 
-// A linked list of servers retrieved from the master.
+// A linked list of servers created from info retrieved from the master.
 static serverlist_t *servers;
 static int numServers;
 
 // CODE --------------------------------------------------------------------
 
+/**
+ * Called by N_Init() while initializing the low-level network subsystem.
+ */
+void N_MasterInit(void)
+{
+    communicating = false;
+}
+
+/**
+ * Called by N_Shutdown() during engine shutdown.
+ */
+void N_MasterShutdown(void)
+{
+    // Free the server list. (What if communicating?)
+    N_MasterClearList();
+}
+
+/**
+ * Clears our copy of the server list returned by the master.
+ */
 static void N_MasterClearList(void)
 {
     numServers = 0;
@@ -104,6 +127,11 @@ static void N_MasterClearList(void)
     }
 }
 
+/**
+ * Creates a new server and links it into our copy of the server list.
+ *
+ * @return                  Ptr to the newly created server.
+ */
 static serverlist_t *N_MasterNewServer(void)
 {
     serverlist_t *node;
@@ -116,16 +144,21 @@ static serverlist_t *N_MasterNewServer(void)
 }
 
 /**
- * A thread. Announcement info received as the parameter. The info must be
- * allocated from the heap. We will free it when it's no longer needed.
+ * NOTE: The info must be allocated from the heap. We will free it when it's
+ * no longer needed.
+ *
+ * @param parm              The announcement info to be sent.
+ *
+ * @return                  <code>true</code> if the announcement was sent
+ *                          successfully and the master responds "OK".
  */
 static int C_DECL N_MasterSendAnnouncement(void *parm)
 {
     serverinfo_t *info = parm;
-    socket_t s;
+    socket_t    s;
     struct hostent *host;
-    ddstring_t msg;
-    char    buf[256];
+    ddstring_t  msg;
+    char        buf[256];
     unsigned int length;
 
     // Get host information.
@@ -186,16 +219,20 @@ static int C_DECL N_MasterSendAnnouncement(void *parm)
 }
 
 /**
- * Response is an HTTP response with the chunked transfer encoding.
- * Output is the plain body of the response.
+ * Decodes a master server response into a plain format for futher parsing.
+ *
+ * @param response          Is an HTTP response with the chunked transfer
+ *                          encoding.
+ * @param out               The ouput buffer where the decoded body of the
+ *                          response will be written to.
  */
 static void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
 {
-    ddstring_t line;
+    ddstring_t  line;
     const char *pos = Str_Text(response);
-    boolean foundChunked = false;
-    boolean done;
-    int     length;
+    boolean     foundChunked = false;
+    boolean     done;
+    int         length;
 
     // Skip to the body.
     Str_Init(&line);
@@ -251,11 +288,15 @@ static void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
 }
 
 /**
- * Parses a list of servers from the response.
+ * Attempts to parses a list of servers from the given text string.
+ *
+ * @param response          The string to be parsed.
+ *
+ * @return                  <code>true</code> if successful.
  */
-static void N_MasterParseResponse(ddstring_t *response)
+static int N_MasterParseResponse(ddstring_t *response)
 {
-    ddstring_t msg, line;
+    ddstring_t  msg, line;
     const char *pos;
     serverinfo_t *info = NULL;
 
@@ -269,7 +310,7 @@ static void N_MasterParseResponse(ddstring_t *response)
     if(strncmp(Str_Text(response), responseOK, strlen(responseOK)))
     {
         // This is not valid.
-        return;
+        return false;
     }
 
     // Extract the body of the response.
@@ -307,17 +348,21 @@ static void N_MasterParseResponse(ddstring_t *response)
 
     Str_Free(&line);
     Str_Free(&msg);
+    return true;
 }
 
 /**
- * A thread.
+ * @param parm              Not used.
+ *
+ * @return                  <code>true</code> if the request was sent
+ *                          successfully.
  */
 static int C_DECL N_MasterSendRequest(void *parm)
 {
     struct hostent *host;
-    socket_t s;
-    ddstring_t response;
-    char    buf[128];
+    socket_t    s;
+    ddstring_t  response;
+    char        buf[128];
 
     // Get host information.
     if((host = N_SockGetHost(masterAddress)) == NULL)
@@ -366,20 +411,13 @@ static int C_DECL N_MasterSendRequest(void *parm)
     return true;
 }
 
-void N_MasterInit(void)
-{
-    communicating = false;
-}
-
-void N_MasterShutdown(void)
-{
-    // Free the server list. (What if communicating?)
-    N_MasterClearList();
-}
-
 /**
- * Sends a server announcement to the master. The announcement includes
- * our IP address and other information.
+ * Sends a server announcement to the master. The announcement includes our
+ * IP address and other information.
+ *
+ * @param isOpen            If <code>true</code> then the server will be
+ *                          visible on the server list for other clients to
+ *                          find by querying the server list.
  */
 void N_MasterAnnounceServer(boolean isOpen)
 {
@@ -436,11 +474,15 @@ void N_MasterRequestList(void)
 }
 
 /**
- * Returns information about the server #N. If 'info' is NULL, returns
- * the number of known servers. Otherwise returns true if the server
- * index was valid and data was returned.
+ * Returns information about the server #N.
  *
- * @return: int             Negative if a communication is in progress.
+ * @return                  <code>0</code> if communication with the master
+ *                          is currently in progress.
+ *                          If param info is <code>NULL</code>, will return
+ *                          the number of known servers ELSE, will return
+ *                          <code>not zero</code> if param index was valid
+ *                          and the master returned info on the requested
+ *                          server.
  */
 int N_MasterGet(int index, serverinfo_t *info)
 {
