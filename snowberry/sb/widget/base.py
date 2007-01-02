@@ -57,6 +57,7 @@ class Widget:
 
         # Listen for right mouse clicks in case a popup menu should be
         # displayed.
+        wx.EVT_RIGHT_DOWN(wxWidget, self.onRightClick)
         wx.EVT_RIGHT_UP(wxWidget, self.onRightClick)
 
         # A notification is sent when the widget is entered.
@@ -167,9 +168,13 @@ class Widget:
 
     def onRightClick(self, ev):
         # Let wxWidgets handle the event, too.
-        ev.Skip()      
         widget = self.getWxWidget()
         if not widget.IsEnabled():
+            return
+            
+        # Going up or down?
+        if ev.ButtonDown():
+            # Mouse right down doesn't do anything.
             return
 
         # Request an update to the popup menu.
