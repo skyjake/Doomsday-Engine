@@ -73,10 +73,6 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-#ifdef __JHEXEN__
-void InitMapInfo(void);
-#endif
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -104,7 +100,7 @@ static int numPlayerStartsMax = 0;
 void P_Init(void)
 {
 #if __JHEXEN__
-    InitMapInfo();
+    P_InitMapInfo();
 #endif
 
     P_InitSwitchList();

@@ -80,7 +80,6 @@ void    R_DrawPlayerSprites(ddplayer_t *viewplr);
 void    G_ConsoleRegistration();
 void    SB_HandleCheatNotification(int fromplayer, void *data, int length);
 int     HU_PSpriteYOffset(player_t *pl);
-void    InitMapMusicInfo(void);
 
 // Map Data
 void    P_SetupForThings(int num);
@@ -433,7 +432,7 @@ void H2_PostInit(void)
     }
     cfg.PlayerClass[consoleplayer] = pClass;
 
-    InitMapMusicInfo();         // Init music fields in mapinfo
+    P_InitMapMusicInfo();         // Init music fields in mapinfo
 
     Con_Message("S_InitScript\n");
     S_InitScript();

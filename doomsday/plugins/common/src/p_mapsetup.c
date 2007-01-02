@@ -62,7 +62,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void    InitMapInfo(void);
 void    P_SpawnThings(void);
 void    AM_LevelInit(void);
 

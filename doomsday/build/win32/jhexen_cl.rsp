@@ -31,6 +31,7 @@
  ./../../plugins/jhexen/src/p_pspr.c
  ./../../plugins/jhexen/src/p_plats.c
  ./../../plugins/jhexen/src/p_mobj.c
+ ./../../plugins/jhexen/src/p_mapinfo.c
  ./../../plugins/jhexen/src/p_maputl.c
  ./../../plugins/common/src/p_iterlist.c
  ./../../plugins/common/src/p_map.c

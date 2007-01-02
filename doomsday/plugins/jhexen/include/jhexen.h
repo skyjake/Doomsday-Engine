@@ -49,6 +49,7 @@
 #include "../../jhexen/include/m_ctrl.h"
 #include "../../jhexen/include/mn_def.h"
 #include "../../jhexen/include/p_local.h"
+#include "../../jhexen/include/p_mapinfo.h"
 #include "../../jhexen/include/p_pspr.h"
 #include "../../jhexen/include/p_setup.h"
 #include "../../jhexen/include/p_spec.h"
