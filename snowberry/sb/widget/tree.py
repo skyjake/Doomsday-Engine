@@ -104,10 +104,10 @@ class Tree (base.Widget):
             item = w.AddRoot(language.translate(identifier))
 
         # Store the identifier as the item data.
-        w.SetPyData(item, identifier)
+        #w.SetPyData(item, identifier)
         
         self.items[identifier] = item
-        
+                
     #def onSize(self, event):
     #    w, h = self.getWxWidget().GetClientSizeTuple()
     #    self.list.SetDimensions(0, 0, w, h)        
@@ -150,17 +150,23 @@ class Tree (base.Widget):
         if pr.getActive():
             pass
 
+    def lookupItem(self, wxItemId):
+        for i in self.items.keys():
+            if self.items[i] == wxItemId:
+                return i
+        return ''
+
     def getSelectedItem(self):
         w = self.getWxWidget()
-        id = w.GetPyData(w.GetSelection())
-        if id: return id
-        return ''
+        #id = w.GetPyData(w.GetSelection())
+        id = self.lookupItem(w.GetSelection())
+        return id
     
     def onSelectionChanged(self, treeEvent):
         """Send a notification that the selection has changed in the tree."""
         
         item = treeEvent.GetItem()
-        events.send(events.SelectNotify(self.widgetId, self.getWxWidget().GetPyData(item)))
+        events.send(events.SelectNotify(self.widgetId, self.lookupItem(item)))
 
     def onItemClick(self, ev):
         """Handle the wxWidgets event when the user clicks on the tree
