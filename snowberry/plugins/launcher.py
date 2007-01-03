@@ -29,7 +29,7 @@
 # TODO: Implement a timer service so wx isn't needed here.
 
 import os, string, time
-import ui
+import ui, host
 import sb.util.dialog
 import events
 import paths
@@ -214,8 +214,12 @@ def startGame(profile):
     file(responseFile, 'w').write(options + "\n")
 
     # Execute the command line.
-    os.spawnvp(os.P_NOWAIT, engineBin, 
-               [engineBin, '@' + paths.quote(responseFile)])
+    if host.isWindows():
+        spawnFunc = os.spawnv
+    else:
+        spawnFunc = os.spawnvp
+    spawnFunc(os.P_NOWAIT, engineBin, 
+              [engineBin, '@' + paths.quote(responseFile)])
 
     # Shut down if the configuration settings say so.
     value = profile.getValue('quit-on-launch')
