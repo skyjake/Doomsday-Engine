@@ -290,6 +290,8 @@ addon-list-version: Version
 addon-list-in-box: (in box)
 menu-addon-list-check-selected: Check Selected
 menu-addon-list-uncheck-selected: Uncheck Selected
+menu-addon-list-check-all: Check All
+menu-addon-list-uncheck-all: Uncheck All
 menu-addon-show-parent-box: Show Box
 menu-addon-show-box-category: Show Box Contents
 

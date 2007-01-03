@@ -180,6 +180,8 @@ def init():
                                               'load-order',
                                               'addon-list-check-selected',
                                               'addon-list-uncheck-selected',
+                                              'addon-list-check-all',
+                                              'addon-list-uncheck-all',
                                               'addon-show-parent-box',
                                               'addon-show-box-category',
                                               'refresh-addon-database'])
@@ -483,10 +485,11 @@ def handleNotification(event):
 
         # Append the common items.
         if len(menu) > 0: menu.append('-')
-        menu += ['install-addon', 'load-order']
-        
-        if len(items) > 0:
-            menu += ['-', 'uninstall-addon']
+        menu += ['install-addon'] 
+        if len(items) > 0: menu += ['uninstall-addon']
+        menu += ['load-order']
+
+        menu += ['-', 'addon-list-check-all', 'addon-list-uncheck-all']
         
         addonList.setPopupMenu(menu)
 
@@ -643,6 +646,14 @@ def handleCommand(event):
 
     elif event.hasId('addon-list-uncheck-selected'):
         for addon in addonList.getSelectedItems():
+            pr.getActive().dontUseAddon(addon)
+
+    elif event.hasId('addon-list-check-all'):
+        for addon in addonList.getItems():
+            pr.getActive().useAddon(addon)
+
+    elif event.hasId('addon-list-uncheck-all'):
+        for addon in addonList.getItems():
             pr.getActive().dontUseAddon(addon)
             
     elif event.hasId('addon-show-parent-box'):
