@@ -82,7 +82,11 @@ void lt_dladdsearchdir(const char *searchPath)
 
 static void getBundlePath(char *path)
 {
-    if(ArgCheckWith("-appdir", 1))
+    if(ArgCheckWith("-libdir", 1))
+    {
+        strcpy(path, ArgNext());
+    }
+    else if(ArgCheckWith("-appdir", 1))
     {
         sprintf(path, "%s/%s", appDir, ArgNext());
     }
@@ -95,9 +99,10 @@ static void getBundlePath(char *path)
 #ifdef UNIX
 #ifdef DENG_LIBRARY_DIR
         sprintf(path, DENG_LIBRARY_DIR, appDir);
+#else
+        // Assume they are in the cwd.
+        strcpy(path, appDir);
 #endif
-    // There should be a fallback here, but as DENG_LIBRARY_DIR is
-    // defined by cmake there is not. FIXME
 #endif
     }
 }
@@ -109,7 +114,6 @@ int lt_dlforeachfile(const char *searchPath,
     DIR *dir = NULL;
     struct dirent *entry = NULL;
     filename_t bundlePath;
-
 
     // This is the default location where bundles are.
     getBundlePath(bundlePath);
