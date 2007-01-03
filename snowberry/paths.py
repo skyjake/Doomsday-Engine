@@ -74,9 +74,11 @@ if host.isMac():
 # This is the name of the directory under which Snowberry's files will
 # be stored in the user's home directory.
 if host.isMac():
-    SNOWBERRY_HOME_DIR = 'Snowberry'
+    SNOWBERRY_HOME_DIR = 'Doomsday Engine'
+elif host.isWindows():
+    SNOWBERRY_HOME_DIR = 'My Documents\\Doomsday Frontend'
 else:
-    SNOWBERRY_HOME_DIR = '.snowberry'
+    SNOWBERRY_HOME_DIR = '.deng'
     
 # In a homeless setup all the user data goes in the main installation folder.
 if isHomeless():
