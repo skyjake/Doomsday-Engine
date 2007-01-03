@@ -25,7 +25,7 @@ documentation-url: http://dengine.net/dew/index.php?title=Snowberry_Main_Page
 run-setup-wizard: Setup Wizard
 setup-wizard: Setup Wizard
 wizard-language: Language
-wizard-language-explanation: The Doomsday Engine launcher has support for several languages. Select the language you would like to use.
+wizard-language-explanation: This Doomsday Engine Frontend has support for several languages. Select the language you would like to use.
 wizard-games: Game Profiles
 wizard-games-all: Select all
 wizard-games-clear: Clear all
@@ -37,7 +37,7 @@ deathkings-selection-title: Locate HEXDD.WAD
 wizard-addon-paths: My Addon Folders
 wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell the launcher to load them from their current location. Specify the folders below. The folders can be edited in the Shared Settings -> Settings -> Launcher page later on. If you later install addons using the Addons tab, they will be copied to the launcher's addon folder. 
 wizard-launching: Launching Options
-wizard-launching-explanation: Should the launcher be closed when a game is started?
+wizard-launching-explanation: Should the frontend be closed when a game is started?
 wizard-unlaunchable-profiles: Some Profiles Unlaunchable
 wizard-unlaunchable-profiles-listed = 
 "The following profiles cannot be launched at the moment.
@@ -48,7 +48,7 @@ hidden. You can make them visible with Profile -> Show..."
 # Windows and Dialogs
 #
 about-dialog: About Snowberry
-about-subtitle: Extensible Launcher for the Doomsday Engine
+about-subtitle: Extensible Frontend for the Doomsday Engine
 about-version: Version
 about-license = "This program is distributed under the
 GNU General Public License."
@@ -197,7 +197,7 @@ preferences: Preferences
 #
 # Menu Items
 #
-menu-0: Snowberry
+menu-0: Frontend
 menu-1: Profile
 menu-2: Tools
 menu-3: Help
@@ -238,7 +238,7 @@ tab-summary: Summary
 tab-maps: Maps
 tab-addons: Addons
 tab-settings: Settings
-general-options: Launcher
+general-options: Frontend
 game-options: Game
 display-options: Display
 graphics-options: Graphics
@@ -468,11 +468,11 @@ restart-required: Changes take effect after restarting.
 # Help
 #
 help-welcome = "<b><font size=''+1''>Welcome to Snowberry!</font></b><p>
-This is a launcher application that lets you launch <b>Doomsday Engine</b> 
+This is a frontend application that lets you launch <b>Doomsday Engine</b> 
 with ease. Select a game profile from the list on the left and press <b>Play</b>.
-<p>The user interface of the launcher can be 
+<p>The user interface of the frontend can be 
 modified in <b>Shared Settings</b> -&gt; <b>Settings</b> -&gt; 
-<b><a href=''show-snowberry-settings''>Launcher</a></b>."
+<b><a href=''show-snowberry-settings''>Frontend</a></b>."
 
 help-command = "To start a game, press the <b>Play</b> button."
 
