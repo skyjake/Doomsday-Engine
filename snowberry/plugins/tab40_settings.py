@@ -256,7 +256,7 @@ def populateWithSettings(areaId, area, settings):
             where.setWeight(0)
 
         for s in subGroupSettings:
-            settingArea = where.createSetting(s)
+            settingArea, settingWidget = where.createSetting(s)
             if settingArea:
                 # Add it into the array of shown settings.
                 shownSettings.append((s, settingArea))

@@ -469,12 +469,15 @@ class DropList (base.Widget):
             if event.hasId('active-profile-changed'):
                 # Get the value for the setting as it has been defined
                 # in the currently active profile.
-                if sb.confdb.isSettingDefined(self.widgetId):
-                    value = pr.getActive().getValue(self.widgetId, False)
-                    if value:
-                        self.selectItem(value.getValue())
-                    else:
-                        self.selectItem('default')
+                self.getFromProfile(pr.getActive())
+
+    def getFromProfile(self, profile):
+        if sb.confdb.isSettingDefined(self.widgetId):
+            value = profile.getValue(self.widgetId, False)
+            if value:
+                self.selectItem(value.getValue())
+            else:
+                self.selectItem('default')
 
     def clear(self):
         """Delete all the items."""

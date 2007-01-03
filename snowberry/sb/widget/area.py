@@ -545,12 +545,15 @@ class Area (base.Widget):
 
         @param setting A Setting object.
 
-        @return The area which contains all the widgets of the
-        setting.
+        @return  Tuple (area, widget). The area which contains all the widgets 
+                 of the setting, and the main widget of the setting.
         """
         if setting.getType() == 'implicit':
             # No widgets for implicit settings.
-            return
+            return (None, None)
+
+        # This is the returned main widget of the setting.
+        mainWidget = None
 
         # Create a subarea for all the widgets of the setting.
         area = self.createArea(alignment=ui.ALIGN_HORIZONTAL)
@@ -583,20 +586,24 @@ class Area (base.Widget):
                              getValue() == 'yes')
             check = area.createCheckBox(setting.getId(), isChecked)
             check.setDefaultIndicator(label)
+            mainWidget = check
 
         elif setting.getType() == 'range':
             nf = area.createNumberField(setting.getId())
             nf.setRange(setting.getMinimum(), setting.getMaximum())
+            mainWidget = nf
 
         elif setting.getType() == 'slider':
             slider = area.createSlider(setting.getId())
             slider.setRange(setting.getMinimum(),
                             setting.getMaximum(),
                             setting.getStep())
+            mainWidget = slider
 
         elif setting.getType() == 'choice':
             # Create a label and a drop-down list.
             drop = area.createDropList(setting.getId())
+            mainWidget = drop
 
             # Insert the choices into the list.
             drop.addItem('default')
@@ -612,12 +619,14 @@ class Area (base.Widget):
 
         elif setting.getType() == 'text':
             text = area.createTextField(setting.getId())
+            mainWidget = text
 
         elif setting.getType() == 'file':
             # Create a text field and a button.
             sub = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=0)
             sub.setWeight(1)
             text = sub.createTextField(setting.getId())
+            mainWidget = text
             sub.setWeight(0)
             sub.setBorder(4, ui.BORDER_LEFT)
             browseButton = sub.createButton('browse-button',
@@ -641,6 +650,9 @@ class Area (base.Widget):
 
                 if len(selection) > 0:
                     pr.getActive().setValue(settingId, selection)
+                    if events.isMuted():
+                        # Update manually.
+                        text.getFromProfile(pr.getActive())
 
             browseButton.addReaction(browseAction)
 
@@ -653,6 +665,7 @@ class Area (base.Widget):
             sub = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=0)
             sub.setWeight(1)
             text = sub.createTextField(setting.getId())
+            mainWidget = text
             sub.setWeight(0)
             browseButton = sub.createButton('browse-button',
                                             style=sb.widget.button.Button.STYLE_MINI)
@@ -679,7 +692,7 @@ class Area (base.Widget):
             if setting.hasToExist():
                 text.setValidator(lambda fileName: os.path.exists(fileName))
 
-        return area
+        return (area, mainWidget)
 
 
 class MultiArea (Area):

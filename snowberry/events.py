@@ -34,7 +34,7 @@ queuedEvents = []
 
 # While muted, the sending of events is prevented. All events 
 # get discarded.
-isMuted = False
+areEventsMuted = False
 
 
 class Event:
@@ -347,14 +347,18 @@ def removeNotifyListener(callback):
 
 def mute():
     """Mutes the sending of events. While muted, all events are discarded."""
-    global isMuted
-    isMuted = True
+    global areEventsMuted
+    areEventsMuted = True
 
 
 def unmute():
     """Unmutes the sending of events. While muted, all events are discarded."""
-    global isMuted
-    isMuted = False
+    global areEventsMuted
+    areEventsMuted = False
+    
+    
+def isMuted():
+    return areEventsMuted
 
         
 def send(event):
@@ -365,7 +369,7 @@ def send(event):
     @param event The event to send.  All listeners will get the same
     event object.
     """
-    if isMuted:
+    if areEventsMuted:
         return # Discard.
 
     global sendDepth, queuedEvents
@@ -428,7 +432,7 @@ def sendAfter(event):
 
     @param event The event to send.
     """
-    if isMuted:
+    if areEventsMuted:
         return # Discard.
     
     global sendDepth, queuedEvents

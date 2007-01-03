@@ -129,7 +129,17 @@ class TextField (base.Widget):
             events.sendAfter(events.EditNotify(self.widgetId, newText))
 
         self.react()
-
+        
+    def getFromProfile(self, profile):
+        """Gets the text from a profile. Needs a widget identifier."""
+        # Get the value for the setting as it has been defined
+        # in the currently active profile.
+        value = profile.getValue(self.widgetId, False)
+        if value:
+            self.setText(value.getValue())
+        else:
+            self.setText('')
+        
     def onNotify(self, event):
         """Notification listener.
 
@@ -142,14 +152,8 @@ class TextField (base.Widget):
             self.setText(event.getValue())
 
         if self.widgetId and event.hasId('active-profile-changed'):
-            # Get the value for the setting as it has been defined
-            # in the currently active profile.
-            value = pr.getActive().getValue(self.widgetId, False)
-            if value:
-                self.setText(value.getValue())
-            else:
-                self.setText('')
-
+            self.getFromProfile(pr.getActive())
+        
 
 class NumberField (base.Widget):
     def __init__(self, parent, wxId, id):

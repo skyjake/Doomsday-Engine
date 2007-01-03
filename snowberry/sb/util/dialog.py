@@ -321,6 +321,8 @@ class WizardDialog (wiz.Wizard):
         wiz.Wizard.__init__(self, ui.getMainPanel(), self.wxId, title, bmp)
 
         self.SetBorder(0)
+        
+        self.pageReaction = None
 
         # List of all the WizardPage objects associated with this
         # wizard.  This list does NOT define the order of the pages,
@@ -328,6 +330,9 @@ class WizardDialog (wiz.Wizard):
         self.ownedPages = []
 
         wiz.EVT_WIZARD_PAGE_CHANGED(ui.getMainPanel(), self.wxId, self.onPageChange)
+
+    def setPageReaction(self, reaction):
+        self.pageReaction = reaction
 
     def addOwnedPage(self, page):
         """Add a new page into the wizard.  This is done automatically
@@ -337,7 +342,10 @@ class WizardDialog (wiz.Wizard):
         self.ownedPages.append(page)
 
     def onPageChange(self, event):
-        events.send(events.SelectNotify('wizard', event.GetPage().getId()))
+        pageId = event.GetPage().getId()
+        events.send(events.SelectNotify('wizard', pageId))
+        if self.pageReaction:
+            self.pageReaction(event.GetPage())
 
     def run(self, firstPage):
         """Open the wizard dialog starting with the given page.
@@ -390,6 +398,9 @@ class WizardPage (wiz.PyWizardPage):
 
     def getId(self):
         return self.identifier
+        
+    def update(self):
+        pass
 
     def getArea(self):
         return self.area

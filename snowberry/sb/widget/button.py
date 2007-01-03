@@ -192,6 +192,20 @@ class CheckBox (base.Widget):
         # Let wxWidgets process the event, too.
         event.Skip()
 
+    def getFromProfile(self, profile):
+        # Get the value for the setting as it has been defined
+        # in the currently active profile.
+        value = profile.getValue(self.widgetId, False)
+        w = self.getWxWidget()
+        if value:
+            if value.getValue() == 'yes':
+                w.Set3StateValue(wx.CHK_CHECKED)
+            else:
+                w.Set3StateValue(wx.CHK_UNCHECKED)
+        else:
+            w.Set3StateValue(wx.CHK_UNDETERMINED)
+        self.updateState()
+
     def onNotify(self, event):
         """Handle notifications.  When the active profile changes, the
         check box's state is updated."""
@@ -201,17 +215,7 @@ class CheckBox (base.Widget):
         if self.widgetId:
             w = self.getWxWidget()
             if event.hasId('active-profile-changed'):
-                # Get the value for the setting as it has been defined
-                # in the currently active profile.
-                value = pr.getActive().getValue(self.widgetId, False)
-                if value:
-                    if value.getValue() == 'yes':
-                        w.Set3StateValue(wx.CHK_CHECKED)
-                    else:
-                        w.Set3StateValue(wx.CHK_UNCHECKED)
-                else:
-                    w.Set3StateValue(wx.CHK_UNDETERMINED)
-                self.updateState()
+                self.getFromProfile(pr.getActive())
 
             elif event.hasId(self.widgetId + '-value-changed'):
                 if event.getValue() == 'yes':

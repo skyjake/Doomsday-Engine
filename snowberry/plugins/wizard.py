@@ -52,13 +52,6 @@ def handleNotify(event):
         # If this is the first launch ever, we'll display the wizard.
         if not pr.getDefaults().getValue(HAS_BEEN_RUN):
             runWizard()
-
-    elif event.hasId('wizard-selected'):
-        prof = pr.get(event.getSelection())
-        if prof:
-            pr.setActive(prof)
-        else:
-            pr.setActive(pr.getDefaults())
         
 
 def handleCommand(event):
@@ -74,9 +67,15 @@ class ProfileWizardPage (WizardPage):
     def __init__(self, parentWizard, identifier, gameList):
         WizardPage.__init__(self, parentWizard, identifier)
         self.gameList = gameList
+        self.iwadText = None
 
     def setGameList(self, list):
         self.gameList = list
+
+    def update(self):
+        if self.iwadText:
+            self.iwadText.getFromProfile(pr.getActive())
+            self.iwadText.select()
 
     def getAdjacent(self, theNext):
         next = self
@@ -127,6 +126,8 @@ def runWizard():
         'hexen-dk': 'HEXEN.WAD'
     }
     
+    events.mute()
+    
     # Make the Defaults profile active.
     pr.setActive(pr.getDefaults())
     
@@ -137,7 +138,8 @@ def runWizard():
     langPage = WizardPage(wiz, 'wizard-language')
     area = langPage.getArea()
     area.createText('wizard-language-explanation', maxLineLength=65).resizeToBestSize()
-    area.createSetting(st.getSetting('language'))
+    sar, languageCheckBox = area.createSetting(st.getSetting('language'))
+    languageCheckBox.getFromProfile(pr.getActive())
 
     # Game selection.
     gamePage = ProfileWizardPage(wiz, 'wizard-games', None)
@@ -205,7 +207,7 @@ def runWizard():
                 sug = sugArea.createText('')
                 sug.setText(suggested[p.getId()])
 
-            area.createSetting(st.getSetting('iwad'))
+            sar, page.iwadText = area.createSetting(st.getSetting('iwad'))
 
             if p.getId() == 'hexen-dk':
                 area.setBorder(12, ui.BORDER_ALL)
@@ -281,18 +283,26 @@ def runWizard():
     quitPage.follows(pathsPage)
     area = quitPage.getArea()
     area.createText('wizard-launching-explanation').resizeToBestSize()
-    area.createSetting(st.getSetting('quit-on-launch'))
+    sar, quitCheckBox = area.createSetting(st.getSetting('quit-on-launch'))
+    quitCheckBox.getFromProfile(pr.getActive())
 
     # List of unusable profiles, due to a missing IWAD.
     unusableProfiles = []
     
-    events.mute()
-
+    # When the page changes in the wizard, change the active profile.
+    def changeActiveProfile(page):
+        prof = pr.get(page.getId())
+        if prof:
+            pr.setActive(prof)
+        else:
+            pr.setActive(pr.getDefaults())
+        # Update page with values from the current profile.
+        page.update()
+                       
+    wiz.setPageReaction(changeActiveProfile)
+    
     if wiz.run(langPage) == 'ok':
         events.unmute()
-
-        # Update the value of quit-on-launch.
-        # --TODO!--
         
         # Show the profiles that now have an IWAD.
         for prof in profiles:
@@ -342,6 +352,8 @@ def runWizard():
     else:
         # Wizard was canceled.
         events.unmute()
+
+    pr.refresh()
 
     # This'll destroy all the pages of the wizard as well.
     wiz.destroy()
