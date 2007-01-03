@@ -118,6 +118,9 @@ def createWidgets():
     # applicable.
     populateTabs()
 
+    # Request others to create additional widgets in the tabs.
+    requestPopulation()
+
     # Redo the layout.
     ui.getArea(SETTINGS).updateLayout()
 
@@ -145,17 +148,20 @@ def handleCommand(event):
         categoryArea.selectTab('general-options')        
 
 
+def requestPopulation():
+    # Request others to create widgets in the setting tabs, if
+    # necessary.
+    for areaId, area in categoryTabs:
+        events.send(events.PopulateNotify(areaId, area))
+        area.updateLayout()
+
+
 def handleNotify(event):
     """This is called when someone sends a notification event."""
 
-    if event.hasId('init-done'):
-        # Request others to create widgets in the setting tabs, if
-        # necessary.
-        for areaId, area in categoryTabs:
-            events.send(events.PopulateNotify(areaId, area))
-            area.updateLayout()
+    #if event.hasId('init-done'):
 
-    elif (event.hasId('value-changed') or
+    if (event.hasId('value-changed') or
           event.hasId('active-profile-changed') or
           event.hasId('active-profile-refreshed')):
         # Update any settings with value dependencies.
