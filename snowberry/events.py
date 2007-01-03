@@ -32,6 +32,10 @@ sendDepth = 0
 # Events waiting to be sent (FIFO queue).
 queuedEvents = []
 
+# While muted, the sending of events is prevented. All events 
+# get discarded.
+isMuted = False
+
 
 class Event:
     def __init__(self, id):
@@ -220,6 +224,22 @@ class ProfileNotify (Notify):
         return self.profile
 
 
+class ActiveProfileNotify (Notify):
+    """ActiveProfileNotify is sent when the active profile is changed,
+    or when the active profile is refreshed."""
+    
+    def __init__(self, profile, wasChanged=True):
+        Notify.__init__(self, 'active-profile-changed')
+        self.profile = profile
+        self.changed = wasChanged
+        
+    def getProfile(self):
+        return self.profile
+        
+    def wasChanged(self):
+        return self.changed
+
+
 class LaunchNotify (Notify):
     """LaunchNotify is sent when the command line options for
     launching a game has been compiled."""
@@ -324,6 +344,18 @@ def removeNotifyListener(callback):
             # Not necessarily in this list.
             pass
 
+
+def mute():
+    """Mutes the sending of events. While muted, all events are discarded."""
+    global isMuted
+    isMuted = True
+
+
+def unmute():
+    """Unmutes the sending of events. While muted, all events are discarded."""
+    global isMuted
+    isMuted = False
+
         
 def send(event):
     """Broadcast an event to all listeners of the appropriate type.
@@ -333,6 +365,9 @@ def send(event):
     @param event The event to send.  All listeners will get the same
     event object.
     """
+    if isMuted:
+        return # Discard.
+
     global sendDepth, queuedEvents
 
     sendDepth += 1
@@ -393,6 +428,9 @@ def sendAfter(event):
 
     @param event The event to send.
     """
+    if isMuted:
+        return # Discard.
+    
     global sendDepth, queuedEvents
 
     if sendDepth > 0:

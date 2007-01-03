@@ -346,7 +346,7 @@ class WizardDialog (wiz.Wizard):
         """
         # Make sure the wizard window is large enough.
         self.FitToPage(firstPage)
-
+        
         if self.RunWizard(firstPage):
             # The wizard was successful.
             return 'ok'

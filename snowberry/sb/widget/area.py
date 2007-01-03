@@ -584,30 +584,11 @@ class Area (base.Widget):
             check = area.createCheckBox(setting.getId(), isChecked)
             check.setDefaultIndicator(label)
 
-            #drop = area.createDropList(setting.getId())
-
-            # Add all the possible choices into the list.
-            #drop.addItem('default')
-            #drop.addItem('yes')
-            #drop.addItem('no')
-
-            # By default, select the default choice.  This will get
-            # updated shortly, though.
-            #drop.selectItem('default')
-
         elif setting.getType() == 'range':
-            # Create a label and the integer edit field.
-            #area.setWeight(5)
-            #area.createText(setting.getId())
-            #area.setWeight(2)
             nf = area.createNumberField(setting.getId())
             nf.setRange(setting.getMinimum(), setting.getMaximum())
 
         elif setting.getType() == 'slider':
-            # Create a label and a slider.
-            #area.setWeight(2)
-            #area.createText(setting.getId())
-            #area.setWeight(2)
             slider = area.createSlider(setting.getId())
             slider.setRange(setting.getMinimum(),
                             setting.getMaximum(),
@@ -630,17 +611,10 @@ class Area (base.Widget):
             drop.selectItem('default')
 
         elif setting.getType() == 'text':
-            # Create a text field.
-            #area.setWeight(1)
-            #area.createText(setting.getId())
-            #area.setWeight(2)
             text = area.createTextField(setting.getId())
 
         elif setting.getType() == 'file':
             # Create a text field and a button.
-            #area.setWeight(1)
-            #area.createText(setting.getId())
-            #area.setWeight(2)
             sub = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=0)
             sub.setWeight(1)
             text = sub.createTextField(setting.getId())

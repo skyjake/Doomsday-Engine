@@ -53,7 +53,6 @@ def init():
     events.addNotifyListener(handleNotify, ['init-done',
                                             'value-changed',
                                             'active-profile-changed',
-                                            'active-profile-refreshed',
                                             'addon-database-reloaded'])
 
     # The addon-settings command is handled here.
@@ -162,8 +161,7 @@ def handleNotify(event):
     #if event.hasId('init-done'):
 
     if (event.hasId('value-changed') or
-          event.hasId('active-profile-changed') or
-          event.hasId('active-profile-refreshed')):
+          event.hasId('active-profile-changed')):
         # Update any settings with value dependencies.
         enableByRequirements(pr.getActive())
         showCompatibleAddons(pr.getActive())

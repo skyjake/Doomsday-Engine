@@ -67,11 +67,8 @@ def refresh(hasChanged=False):
     """
     ui.freeze()
     
-    if hasChanged:
-        evName = 'active-profile-changed'
-    else:
-        evName = 'active-profile-refreshed'
-    events.send(events.Notify(evName))
+    event = events.ActiveProfileNotify(active, hasChanged)
+    events.send(event)
 
     ui.unfreeze() 
 

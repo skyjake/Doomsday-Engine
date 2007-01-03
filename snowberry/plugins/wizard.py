@@ -110,7 +110,7 @@ def runWizard():
     """Run the wizard dialog."""
 
     # Make sure the help panel isn't updated during the wizard.
-    events.send(events.Command('freeze'))
+    #events.send(events.Command('freeze'))
 
     suggested = {
         'doom1': 'DOOM.WAD',
@@ -285,8 +285,15 @@ def runWizard():
 
     # List of unusable profiles, due to a missing IWAD.
     unusableProfiles = []
+    
+    events.mute()
 
     if wiz.run(langPage) == 'ok':
+        events.unmute()
+
+        # Update the value of quit-on-launch.
+        # --TODO!--
+        
         # Show the profiles that now have an IWAD.
         for prof in profiles:
             if prof.getValue('iwad', False) != None:
@@ -324,23 +331,23 @@ def runWizard():
                 wasModified = True
 
         if wasModified:
+            # Load addons from new paths.
             ao.refresh()
 
         events.send(events.Notify('addon-paths-changed'))
 
-        # TODO: Load addons from new paths.
-
         # The wizard will only be shown once automatically.
         pr.getDefaults().setValue(HAS_BEEN_RUN, 'yes', False)
+
     else:
-        # Anything to do if the wizard is canceled?
-        pass
+        # Wizard was canceled.
+        events.unmute()
 
     # This'll destroy all the pages of the wizard as well.
     wiz.destroy()
 
     # Enable help panel updates again.
-    events.send(events.Command('unfreeze'))
+    #events.send(events.Command('unfreeze'))
     
     # Tell the user about unusable profiles.
     if len(unusableProfiles) > 0:

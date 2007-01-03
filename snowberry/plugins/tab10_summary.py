@@ -108,7 +108,6 @@ def init():
 
     # Listen for active profile changes.
     events.addNotifyListener(notifyHandler, ['active-profile-changed',
-                                             'active-profile-refreshed',
                                              'value-changed',
                                              'addon-attached',
                                              'addon-detached'])
@@ -129,8 +128,7 @@ def notifyHandler(event):
     if summaryDisabled:
         return
     
-    if event.hasId('active-profile-changed') or \
-           event.hasId('active-profile-refreshed'):
+    if event.hasId('active-profile-changed'):
         p = pr.getActive()
         titleLabel.setText(p.getName())
 

@@ -90,7 +90,6 @@ def init():
     events.addNotifyListener(handleNotify, ['show-help-text-now',
                                             'init-done',
                                             'active-profile-changed',
-                                            'active-profile-refreshed',
                                             'tab-selected',
                                             'addon-list-selected',
                                             'maps-list-selected',
@@ -181,8 +180,7 @@ def handleNotify(event):
     elif event.hasId('show-help-text-now'):
         helpText.unfreeze()
                         
-    elif event.hasId('active-profile-changed') or \
-             event.hasId('active-profile-refreshed'):
+    elif event.hasId('active-profile-changed'):
         if pr.getActive() is pr.getDefaults():
             setField(FIELD_COMMAND,
                      language.translate('help-command-defaults'))

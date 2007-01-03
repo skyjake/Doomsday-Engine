@@ -158,7 +158,6 @@ def init():
     events.addNotifyListener(handleNotification, ['tab-selected', 
                                                   'addon-list-icon-click',
                                                   'active-profile-changed',
-                                                  'active-profile-refreshed',
                                                   'addon-list-popup-update-request',
                                                   'addon-attached',
                                                   'addon-detached',
@@ -454,8 +453,7 @@ def handleNotification(event):
         else:
             tabVisible = False
     
-    elif event.hasId('active-profile-changed') or \
-           event.hasId('active-profile-refreshed'):
+    elif event.hasId('active-profile-changed'):
         refreshListIfVisible()
             
         # Fill the tree with an updated listing of addons.
@@ -726,7 +724,6 @@ def oldInit():
 
     # Registering a notification listener.
     events.addNotifyListener(handleNotification, ['active-profile-changed',
-                                                  'active-profile-refreshed',
                                                   'addon-popup-request',
                                                   'addon-installed',
                                                   'addon-database-reloaded'])
