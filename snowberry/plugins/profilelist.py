@@ -373,6 +373,7 @@ def commandHandler(event):
         elif result == 'reset-profile-addons':
             resetValues = False
         pr.reset(pr.getActive().getId(), resetValues, resetAddons)
+        pr.refresh()
 
     elif event.hasId('delete-profile'):
         # If this is a system profile, just hide it.
