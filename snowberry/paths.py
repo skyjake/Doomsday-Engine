@@ -76,7 +76,7 @@ if host.isMac():
 if host.isMac():
     SNOWBERRY_HOME_DIR = 'Doomsday Engine'
 elif host.isWindows():
-    SNOWBERRY_HOME_DIR = 'My Documents\\Doomsday Frontend'
+    SNOWBERRY_HOME_DIR = os.path.join('My Documents', 'Doomsday Frontend')
 else:
     SNOWBERRY_HOME_DIR = '.deng'
     
