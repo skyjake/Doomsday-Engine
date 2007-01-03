@@ -254,7 +254,7 @@ class Area (base.Widget):
         if not self.parentArea:
             # Standalone areas are never added to a sizer.
             return
-
+        
         # Detach and destroy the sizer of this area.
         self.parentArea.getWxWidget().Detach(self.getWxWidget())
         self.getWxWidget().Destroy()
@@ -776,7 +776,9 @@ class MultiArea (Area):
             sizer = area.panel.GetContainingSizer()
             if sizer:
                 sizer.Detach(area.panel)
+
             area.destroy()
+            area.panel.Destroy()
 
             # Remove the page from the dictionary.
             del self.pages[identifier]
