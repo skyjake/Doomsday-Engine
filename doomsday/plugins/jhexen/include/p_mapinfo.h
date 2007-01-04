@@ -67,7 +67,7 @@ fixed_t         P_GetMapSky1ScrollDelta(int map);
 fixed_t         P_GetMapSky2ScrollDelta(int map);
 boolean         P_GetMapDoubleSky(int map);
 boolean         P_GetMapLightning(int map);
-boolean         P_GetMapFadeTable(int map);
+int             P_GetMapFadeTable(int map);
 char           *P_GetMapSongLump(int map);
 void            P_PutMapSongLump(int map, char *lumpName);
 int             P_GetCDStartTrack(void);

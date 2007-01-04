@@ -608,6 +608,7 @@
 		B0F17926087C5A230051F24A /* SDL.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = B0134EC306ECD8B8007861F2 /* SDL.framework */; };
 		B0F17927087C5A230051F24A /* SDL_mixer.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = B0134EC106ECD8B8007861F2 /* SDL_mixer.framework */; };
 		B0F17928087C5A230051F24A /* SDL_net.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = B0134EC206ECD8B8007861F2 /* SDL_net.framework */; };
+		B0F381020B4D6D7E0097029D /* p_mapinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = B0F381010B4D6D7E0097029D /* p_mapinfo.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1324,6 +1325,12 @@
 		B0E3D3E107903967007811F6 /* rend_bias.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rend_bias.h; path = ../../engine/portable/include/rend_bias.h; sourceTree = SOURCE_ROOT; };
 		B0F1792E087C5A240051F24A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
 		B0F1792F087C5A240051F24A /* Doomsday.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Doomsday.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0F381010B4D6D7E0097029D /* p_mapinfo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = p_mapinfo.c; path = ../../plugins/jhexen/src/p_mapinfo.c; sourceTree = SOURCE_ROOT; };
+		B0F381030B4D6D9D0097029D /* m_cheat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = m_cheat.h; path = ../../plugins/jhexen/include/m_cheat.h; sourceTree = SOURCE_ROOT; };
+		B0F381040B4D6D9D0097029D /* p_mapinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = p_mapinfo.h; path = ../../plugins/jhexen/include/p_mapinfo.h; sourceTree = SOURCE_ROOT; };
+		B0F381050B4D6D9D0097029D /* p_pspr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = p_pspr.h; path = ../../plugins/jhexen/include/p_pspr.h; sourceTree = SOURCE_ROOT; };
+		B0F381060B4D6D9D0097029D /* x_player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = x_player.h; path = ../../plugins/jhexen/include/x_player.h; sourceTree = SOURCE_ROOT; };
+		B0F381070B4D6D9D0097029D /* x_state.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = x_state.h; path = ../../plugins/jhexen/include/x_state.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1786,6 +1793,7 @@
 		B0237C2106F442BE0059676A /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B0F381010B4D6D7E0097029D /* p_mapinfo.c */,
 				B0930D620A87485E007CAEBC /* g_ctrl.c */,
 				B0930D630A87485E007CAEBC /* m_cheat.c */,
 				B0C8F81A0A3F380200CFA4A5 /* p_acs.c */,
@@ -2006,6 +2014,11 @@
 		B083A52B085CC113000D4BAB /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B0F381030B4D6D9D0097029D /* m_cheat.h */,
+				B0F381040B4D6D9D0097029D /* p_mapinfo.h */,
+				B0F381050B4D6D9D0097029D /* p_pspr.h */,
+				B0F381060B4D6D9D0097029D /* x_player.h */,
+				B0F381070B4D6D9D0097029D /* x_state.h */,
 				B0C8F8E30A3F3D2900CFA4A5 /* p_setup.h */,
 				B0C8F8770A3F3A3900CFA4A5 /* jhexen.h */,
 				B083A52C085CC153000D4BAB /* acfnlink.h */,
@@ -2848,6 +2861,7 @@
 				B0AC1EF90A8F11800095D788 /* p_map.c in Sources */,
 				B03D6E790AC55FDA0026A0BD /* p_iterlist.c in Sources */,
 				B03D6E7D0AC55FED0026A0BD /* p_mapspec.c in Sources */,
+				B0F381020B4D6D7E0097029D /* p_mapinfo.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
