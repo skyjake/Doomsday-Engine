@@ -197,7 +197,7 @@ preferences: Preferences
 #
 # Menu Items
 #
-menu-0: Frontend
+menu-0: File
 menu-1: Profile
 menu-2: Tools
 menu-3: Help
