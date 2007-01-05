@@ -32,10 +32,7 @@ def init():
     events.addCommandListener(handleCommand, ['about', 'show-credits'])
     
     # Commands for the popup menu.
-    if host.isMac():
-        ui.addMenuCommand(ui.MENU_APP, 'about')
-    else:
-        ui.addMenuCommand(ui.MENU_HELP, 'about')
+    ui.addMenuCommand(ui.MENU_HELP, 'about')
         
 
 def handleCommand(event):

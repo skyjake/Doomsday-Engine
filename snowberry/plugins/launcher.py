@@ -115,9 +115,9 @@ def init():
                                               'continue'])
     
     # Commands for the popup menu.
-    ui.addMenuCommand(ui.MENU_APP, 'quit')
-    ui.addMenuCommand(ui.MENU_PROFILE, 'play')
-    ui.addMenuCommand(ui.MENU_TOOLS, 'view-command-line')
+    ui.addMenuCommand(ui.MENU_APP, 'quit', group=ui.MENU_GROUP_APP)
+    ui.addMenuCommand(ui.MENU_PROFILE, 'play', group=ui.MENU_GROUP_LAUNCH)
+    ui.addMenuCommand(ui.MENU_TOOLS, 'view-command-line', group=ui.MENU_GROUP_LAUNCH)
 
 
 def handleNotify(event):

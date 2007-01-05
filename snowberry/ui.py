@@ -56,6 +56,14 @@ MENU_PROFILE = 1
 MENU_TOOLS = 2
 MENU_HELP = 3
 
+# Menu groups.
+MENU_GROUP_LAUNCH = 10
+MENU_GROUP_ADDON = 20
+MENU_GROUP_AODB = 30
+MENU_GROUP_PROFILE = 40
+MENU_GROUP_PROFDB = 50
+MENU_GROUP_APP = 60
+
 # Layout alignments.
 ALIGN_HORIZONTAL = 0
 ALIGN_VERTICAL = 1
@@ -88,7 +96,7 @@ uiAreas = {}
 mainPanel = None
 
 # Items for the popup menu. Up to seven menus.
-popupMenuItems = [[], [], [], [], [], [], []]
+menuItems = [[], [], [], [], [], [], []]
 
 
 class Timer (wx.Timer):
@@ -446,44 +454,44 @@ class MainFrame (wx.Frame):
             self.Close()
 
     def updateMenus(self):
-        """Create the main frame menus based on popupMenuItems array."""
+        """Create the main frame menus based on menuItems array."""
 
-        global popupMenuItems
+        global menuItems
         self.menuCommandMap = {}
-        #menuItems = {}
 
         # Array of menus. Number to wxMenu.
         self.menus = {}
 
         # Three levels of priority.
-        for prio in range(len(popupMenuItems)):
-            if len(popupMenuItems[prio]) == 0:
+        for level in range(len(menuItems)):
+            if len(menuItems[level]) == 0:
                 # No menu for this.
-                self.menus[prio] = None
+                self.menus[level] = None
                 continue
                 
-            self.menus[prio] = wx.Menu()
-            self.menuBar.Append(self.menus[prio], 
-                                language.translate("menu-" + str(prio)))
+            self.menus[level] = wx.Menu()
+            self.menuBar.Append(self.menus[level], 
+                                language.translate("menu-" + str(level)))
         
-            # Sort the items based on translated labels.
-            popupMenuItems[prio].sort(
-                lambda x, y: cmp(language.translate('menu-' + x),
-                                 language.translate('menu-' + y)))
+            # Sort the items based on groups, and append separators where necessary.
+            menuItems[level].sort(lambda x, y: cmp(x[3], y[3]))
+            separated = []
+            previousItem = None
+            for item in menuItems[level]:
+                if previousItem and previousItem[3] != item[3]:
+                    separated.append(('-', '', False, item[3]))
+                separated.append(item)
+                previousItem = item
 
             # Create the menu items.
-            for item in popupMenuItems[prio]:
-                if type(item) == tuple:
-                    itemId = item[0]
-                    itemCommand = item[1]
-                else:
-                    itemId = item
-                    itemCommand = item
-
+            for itemId, itemCommand, itemSeparate, itemGroup in separated:
                 if itemId == '-':
                     # This is just a separator.
-                    menu.AppendSeparator()
+                    self.menus[level].AppendSeparator()
                     continue
+
+                if itemSeparate and self.menus[level].GetMenuItemCount() > 0:
+                    self.menus[level].AppendSeparator()
                 
                 menuItemId = 'menu-' + itemId
                 
@@ -494,7 +502,7 @@ class MainFrame (wx.Frame):
                 # Generate a new ID for the item.
                 wxId = wx.NewId()
                 self.menuCommandMap[wxId] = itemCommand
-                self.menus[prio].Append(wxId,
+                self.menus[level].Append(wxId,
                                         uniConv(language.translate(menuItemId) + accel))
                 wx.EVT_MENU(self, wxId, self.onPopupCommand)
                 
@@ -555,16 +563,21 @@ def getMainPanel():
     return mainPanel
 
 
-def addMenuCommand(level, identifier, label=None):
+def addMenuCommand(level, identifier, label=None, pos=None, separate=False, group=''):
     """Insert a new popup menu item for the Menu button.
 
     @param level       Priority level (0, 1, 2).
     @param identifier  Identifier of the command.
-    @param label       Label for the command. If not specified, the same
-                       as the identifier.
+    @param label       Label for the command. If not specified, the same as the identifier.
+    @param pos         Position in the menu. None will cause the new item to be appended 
+                       to the end of the menu. The first item in the menu has position 0.
+    @param separate    If True and there are existing items already, add a separator.                    
+    @param group       If specified, items are sorted by this before adding to the menu.
+                       The items without a group are inserted first. Groups are separated
+                       with separators.
     """
-    global popupMenuItems
-    
+    global menuItems
+
     if host.isMac() and level == 0:
         # On the Mac, the Snowberry menu is integrated into the app menu.
         # There is no need for a level zero menu.
@@ -572,11 +585,22 @@ def addMenuCommand(level, identifier, label=None):
         # by wxPython to the app menu.
         level = 1
 
-    if(label == None):
-        popupMenuItems[level].append(identifier)
+    if label is None:
+        item = (identifier, identifier, separate, group)
     else:
-        popupMenuItems[level].append((identifier, label))
+        item = (identifier, label, separate, group)
+       
+    if pos is None:
+        menuItems[level].append(item)
+    else:
+        menuItems[level].insert(pos, item)
         
+        
+def isMenuEmpty(level):
+    """Determines whether a certain menu is currently empty.
+    @return True or False."""
+    return len(menuItems[level]) == 0
+    
         
 def enableMenuCommand(identifier, enable=True):
     """Enables or disables a command in the menu.

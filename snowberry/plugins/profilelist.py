@@ -166,13 +166,14 @@ def init():
                                                'unhide-profiles'])
 
     # Commands for the menu.
-    #ui.addMenuCommand(ui.MENU_PROFILE, 'new-profile')
-    ui.addMenuCommand(ui.MENU_PROFILE, 'rename-profile')
-    ui.addMenuCommand(ui.MENU_PROFILE, 'reset-profile')
-    #ui.addMenuCommand(ui.MENU_PROFILE, 'delete-profile')
-    #ui.addMenuCommand(ui.MENU_PROFILE, 'duplicate-profile')
-    #ui.addMenuCommand(ui.MENU_PROFILE, 'hide-profile')
-    ui.addMenuCommand(ui.MENU_PROFILE, 'unhide-profiles')
+    ui.addMenuCommand(ui.MENU_PROFILE, 'new-profile', group=ui.MENU_GROUP_PROFDB)
+    ui.addMenuCommand(ui.MENU_PROFILE, 'unhide-profiles', group=ui.MENU_GROUP_PROFDB)
+
+    ui.addMenuCommand(ui.MENU_PROFILE, 'reset-profile', group=ui.MENU_GROUP_PROFILE)
+    ui.addMenuCommand(ui.MENU_PROFILE, 'rename-profile', group=ui.MENU_GROUP_PROFILE)
+    ui.addMenuCommand(ui.MENU_PROFILE, 'duplicate-profile', group=ui.MENU_GROUP_PROFILE)
+    ui.addMenuCommand(ui.MENU_PROFILE, 'hide-profile', group=ui.MENU_GROUP_PROFILE)
+    ui.addMenuCommand(ui.MENU_PROFILE, 'delete-profile', group=ui.MENU_GROUP_PROFILE)
 
 
 def notifyHandler(event):
@@ -227,12 +228,19 @@ def notifyHandler(event):
             deleteButton.disable()
             dupeButton.disable()
             ui.disableMenuCommand('rename-profile')
+            ui.disableMenuCommand('delete-profile')
+            ui.disableMenuCommand('hide-profile')
+            ui.disableMenuCommand('duplicate-profile')
             profileList.setPopupMenu(defaultsMenu)
         else:
-            deleteButton.enable()
+            isSystem = pr.getActive().isSystemProfile()
+            deleteButton.enable(not isSystem)
             dupeButton.enable()
             ui.enableMenuCommand('rename-profile')
-            if pr.getActive().isSystemProfile():
+            ui.enableMenuCommand('delete-profile', not isSystem)
+            ui.enableMenuCommand('hide-profile')
+            ui.enableMenuCommand('duplicate-profile')
+            if isSystem:
                 menu = systemMenu
             else:
                 menu = normalMenu

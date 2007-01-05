@@ -152,7 +152,7 @@ def init():
     buttonArea.setBorderDirs(ui.BORDER_TOP)
     buttonArea.createButton('show-addon-paths')    
    
-    ui.addMenuCommand(ui.MENU_TOOLS, 'load-order')
+    ui.addMenuCommand(ui.MENU_TOOLS, 'load-order', group=ui.MENU_GROUP_AODB)
 
     # Registering a notification listener.
     events.addNotifyListener(handleNotification, ['tab-selected', 
@@ -188,7 +188,10 @@ def init():
                                               
     # Changing the current addon in the tree is done using commands with
     # the name of the addon as an identifier.
-    events.addCommandListener(handleAnyCommand)          
+    events.addCommandListener(handleAnyCommand)
+    
+    # Menu commands.
+    ui.addMenuCommand(ui.MENU_TOOLS, 'install-addon', pos=0, group=ui.MENU_GROUP_AODB)
     
          
 def refreshCategories():
@@ -483,10 +486,11 @@ def handleNotification(event):
             menu += ['addon-list-check-selected',
                      'addon-list-uncheck-selected']
 
+        if len(items) > 0: menu += ['uninstall-addon']
+
         # Append the common items.
         if len(menu) > 0: menu.append('-')
         menu += ['install-addon'] 
-        if len(items) > 0: menu += ['uninstall-addon']
         menu += ['load-order']
 
         menu += ['-', 'addon-list-check-all', 'addon-list-uncheck-all']
