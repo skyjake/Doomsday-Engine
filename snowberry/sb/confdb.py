@@ -592,6 +592,8 @@ def init():
     _newSystemSetting(tog)
     tog = conf.ToggleSetting('profile-large-icons', '', 'no', '')
     _newSystemSetting(tog)
+    tog = conf.ToggleSetting('profile-hide-buttons', '', 'no', '')
+    _newSystemSetting(tog)
 
     # Load all .conf files.
     for path in paths.listPaths(paths.CONF, False):

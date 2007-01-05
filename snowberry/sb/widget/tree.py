@@ -98,8 +98,7 @@ class Tree (base.Widget):
         w = self.getWxWidget()
         try:
             parentItem = self.items[parentId]
-            item = w.AppendItem(parentItem, 
-                language.translate(identifier))
+            item = w.AppendItem(parentItem, language.translate(identifier))
         except:
             item = w.AddRoot(language.translate(identifier))
 
@@ -183,3 +182,16 @@ class Tree (base.Widget):
         """
         tree = self.getWxWidget()
         tree.SelectItem(self.items[identifier])
+        
+    def expandItem(self, identifier, doExpand=True):
+        tree = self.getWxWidget()
+        if doExpand:
+            tree.Expand(self.items[identifier])
+        else:
+            tree.Collapse(self.items[identifier])
+
+    def collapseItem(self, identifier):
+        self.expandItem(identifier, False)
+
+    def sortItemChildren(self, identifier):
+        self.getWxWidget().SortChildren(self.items[identifier])

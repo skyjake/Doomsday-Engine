@@ -200,6 +200,7 @@ def refreshCategories():
     tree.clear()
     # Start populating from the root category.
     buildCategories(tree, 'category-tree-root', ao.getRootCategory())
+    tree.expandItem('category-tree-root')
     tree.unfreeze()
 
 
@@ -210,6 +211,8 @@ def buildCategories(tree, parentId, parentCategory):
         id = cat.getLongId()
         tree.addItem(id, parentId)
         buildCategories(tree, id, cat)    
+        
+    tree.sortItemChildren(parentId)
         
 
 def refreshListIfVisible():

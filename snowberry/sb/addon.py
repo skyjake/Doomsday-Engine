@@ -649,6 +649,9 @@ class WADAddon (Addon):
 
         # Look at the path where the WAD file is located.
         path = self.getContentPath().lower()
+        # But ignore the user addon path.
+        if path.find(paths.getUserPath(paths.ADDONS).lower()) == 0:
+            path = path[len(paths.getUserPath(paths.ADDONS)) + 1:]
 
         if 'heretic' in path or 'htic' in path:
             game = 'jheretic'
@@ -726,7 +729,21 @@ class WADAddon (Addon):
 
             if maps or episodic:
                 category += 'maps/'
-            
+
+                # Category based on the name.	 
+                base = paths.getBase(self.getContentPath()).lower()	 
+
+                if base[0] in string.digits:	 
+                    category += '09/'	 
+                if base[0] in 'abcdefg':	 
+                    category += 'ag/'	 
+                if base[0] in 'hijklm':	 
+                    category += 'hm/'	 
+                if base[0] in 'nopqrs':	 
+                    category += 'ns/'	 
+                if base[0] in 'tuvwxyz':	 
+                    category += 'tz/'	 
+             
             metadata += "category: %s\n" % category
 
         # Game component.

@@ -109,8 +109,9 @@ def handleNotify(event):
         # TODO: Create widgets for all system settings?
         box.createSetting(st.getSystemSetting('main-hide-title'))
         box.createSetting(st.getSystemSetting('main-hide-help'))
-        box.createSetting(st.getSystemSetting('summary-profile-change-autoselect'))
+        box.createSetting(st.getSystemSetting('profile-hide-buttons'))
         box.createSetting(st.getSystemSetting('profile-large-icons'))
+        box.createSetting(st.getSystemSetting('summary-profile-change-autoselect'))
         
         box.createText('restart-required', align=wt.Text.RIGHT).setSmallStyle()
 

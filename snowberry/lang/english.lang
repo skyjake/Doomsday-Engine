@@ -316,6 +316,11 @@ category-gamedata: Game Data
 category-gamedata-doomsday: Doomsday Game Files
 category-gamedata-primary: Primary Data Files
 category-gamedata-maps: Maps
+category-gamedata-maps-ag: A-G	 
+category-gamedata-maps-hm: H-M	 
+category-gamedata-maps-ns: N-S	 
+category-gamedata-maps-tz: T-Z	 
+category-gamedata-maps-09: 0-9
 category-gamedata-lumps: Data Lumps
 category-patches: DeHackEd Patches
 category-definitions: Doomsday Engine Definitions
@@ -458,6 +463,7 @@ addon-paths-add-prompt: Add to My Addon Paths
 ui-parts: User Interface
 main-hide-title: Hide title banner
 main-hide-help: Hide help panel
+profile-hide-buttons: Hide profile buttons
 summary-profile-change-autoselect: Profile change shows Summary
 profile-large-icons: Large profile icons
 

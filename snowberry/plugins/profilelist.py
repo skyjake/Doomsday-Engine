@@ -33,6 +33,8 @@ import paths
 from ui import ALIGN_HORIZONTAL
 
 profileList = None
+deleteButton = None
+dupeButton = None
 
 # If set to true, the profile list won't be updated on notifications.
 profileListDisabled = False
@@ -123,22 +125,23 @@ def init():
     global profileList
     profileList = area.createFormattedList("profile-list")
 
-    # This should be a small button.
-    area.setWeight(0)
-    area.setBorder(3)
-    controls = area.createArea(alignment=ALIGN_HORIZONTAL, border=2)
-    controls.setExpanding(False)
-    #area.setExpanding(False)
-    controls.setWeight(0)
-    controls.createButton('new-profile', wg.Button.STYLE_MINI)
+    if not st.getSystemBoolean('profile-hide-buttons'):
+        # This should be a small button.
+        area.setWeight(0)
+        area.setBorder(3)
+        controls = area.createArea(alignment=ALIGN_HORIZONTAL, border=2)
+        controls.setExpanding(False)
+        #area.setExpanding(False)
+        controls.setWeight(0)
+        controls.createButton('new-profile', wg.Button.STYLE_MINI)
 
-    global deleteButton
-    deleteButton = controls.createButton('delete-profile',
-                                         wg.Button.STYLE_MINI)
+        global deleteButton
+        deleteButton = controls.createButton('delete-profile',
+                                             wg.Button.STYLE_MINI)
 
-    global dupeButton
-    dupeButton = controls.createButton('duplicate-profile',
-                                       wg.Button.STYLE_MINI)
+        global dupeButton
+        dupeButton = controls.createButton('duplicate-profile',
+                                           wg.Button.STYLE_MINI)
 
     # Set the title graphics.
     global bannerImage
@@ -225,8 +228,8 @@ def notifyHandler(event):
         profileList.selectItem(pr.getActive().getId())
 
         if pr.getActive() is pr.getDefaults():
-            deleteButton.disable()
-            dupeButton.disable()
+            if deleteButton: deleteButton.disable()
+            if dupeButton: dupeButton.disable()
             ui.disableMenuCommand('rename-profile')
             ui.disableMenuCommand('delete-profile')
             ui.disableMenuCommand('hide-profile')
@@ -234,8 +237,8 @@ def notifyHandler(event):
             profileList.setPopupMenu(defaultsMenu)
         else:
             isSystem = pr.getActive().isSystemProfile()
-            deleteButton.enable(not isSystem)
-            dupeButton.enable()
+            if deleteButton: deleteButton.enable(not isSystem)
+            if dupeButton: dupeButton.enable()
             ui.enableMenuCommand('rename-profile')
             ui.enableMenuCommand('delete-profile', not isSystem)
             ui.enableMenuCommand('hide-profile')
