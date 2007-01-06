@@ -1,8 +1,8 @@
-ia32-libs-universe (1.1eyagi20060409-10) edgy; urgency=low
+ia32-libs-universe (1.1eyagi20060409-10) feisty; urgency=low
 
-  * Sync libs.
+  * Update for feisty.
 
- -- Jamie Jones <jamie_jones_au@yahoo.com.au>  Sat, 28 Oct 2006 20:25:08 +1000
+ -- yagisan <yagisan@doomguy.eyagiconsulting.com>  Sun,  7 Jan 2007 02:47:25 +1100
 
 ia32-libs-universe (1.1eyagi20060409-9) edgy; urgency=low
 

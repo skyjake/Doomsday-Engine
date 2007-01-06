@@ -7,8 +7,8 @@ Standards-Version: 3.6.2.0
 
 Package: ia32-libs-universe
 Architecture: amd64 ia64
-Depends: lsb-release, lib32gcc1, lib32z1, ia32-libs, lib32asound2, ia32-libs-openoffice.org,
-Suggests: ia32-libs-gtk, ia32-libs-kde, ia32-libs-sdl, ia32-libs-scim, lib32mudflap0
+Depends: lsb-release, lib32gcc1, lib32z1, ia32-libs, lib32ncurses5, ia32-libs-sdl,
+Suggests: ia32-libs-gtk, ia32-libs-kde, lib32mudflap0, lib32readline5
 Description: ia32 shared libraries for use on amd64 and ia64 systems
  This package contains runtime libraries for the ia32/i386
  architecture, configured for use on an amd64 or ia64 Ubuntu system running
