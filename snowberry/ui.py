@@ -84,6 +84,7 @@ BORDER_ALL = (1 | 2 | 4 | 8)
 # Optional areas.
 USE_TITLE_AREA = not st.getSystemBoolean('main-hide-title')
 USE_HELP_AREA = not st.getSystemBoolean('main-hide-help')
+USE_MINIMAL_PROFILE = st.getSystemBoolean('profile-minimal-mode')
 
 # A Windows kludge: background colour for tabs and the controls in them.
 tabBgColour = wx.Colour(250, 250, 250)
@@ -133,8 +134,6 @@ class MainPanel (wx.Panel):
 
         from sb.widget.area import Area
 
-        #topSizer = wx.BoxSizer(wx.HORIZONTAL)
-
         aSizer = wx.BoxSizer(wx.HORIZONTAL)
         bSizer = wx.BoxSizer(wx.VERTICAL)
         cSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -144,7 +143,6 @@ class MainPanel (wx.Panel):
         self.verticalSizer = bSizer
 
         # Title area.
-        #sizer = wx.BoxSizer(wx.VERTICAL)
         if USE_TITLE_AREA:
             titlePanel = wx.Panel(self, -1,
                                   style=wx.NO_BORDER | wx.CLIP_CHILDREN)
@@ -152,12 +150,6 @@ class MainPanel (wx.Panel):
             bSizer.Add(titlePanel, 0, wx.EXPAND)
 
         # Profile area.
-        #profilePanel = wx.Panel(self, -1, style=wx.NO_BORDER
-        #                         | wx.CLIP_CHILDREN)
-        #area = Area(PROFILES, profilePanel, ALIGN_VERTICAL, 10)
-        #_newArea(area)
-        #cSizer.Add(profilePanel, 0, wx.EXPAND)
-
         tabPanel = wx.Panel(self, -1,
                             style=wx.NO_BORDER | wx.CLIP_CHILDREN)
         tabsArea = Area(TABS, tabPanel, ALIGN_VERTICAL, 16)
@@ -186,9 +178,6 @@ class MainPanel (wx.Panel):
         area.setWeight(0)
         _newArea(area)
 
-        # Create the Menu button in the Preferences Command area.
-        #self.menuButton = area.createButton('popup-menu')
-
         eSizer.Add(prefCommandPanel, 0, wx.EXPAND)
         eSizer.Add(commandPanel, 1, wx.EXPAND)
         dSizer.Add(eSizer, 0, wx.EXPAND)
@@ -197,21 +186,8 @@ class MainPanel (wx.Panel):
         aSizer.Add(bSizer, 7, wx.EXPAND)
 
         # Help area.
-        #helpPanel = wx.Panel(self, -1, style = wx.NO_BORDER)
-        #helpPanel.SetBackgroundColour(wx.WHITE)
-        #_newArea( Area(Area.HELP, helpPanel, ALIGN_VERTICAL, border=4) )
-
-        #aSizer.Add(helpPanel, 0, wx.EXPAND)
         self.SetSizer(aSizer)
         self.SetAutoLayout(True)
-
-        # This maps panel objects to identifier strings.  Used when a
-        # notification event needs to be sent.
-        #self.tabMap = {}
-
-        # Create a TabArea into the TABS area.
-        self.tabs = tabsArea.createTabArea(
-            'tab', style=sb.widget.tab.TabArea.STYLE_BASIC)
 
     def getTabs(self):
         """Returns the TabArea widget that contains the main tabbing
@@ -294,24 +270,39 @@ class MainFrame (wx.Frame):
         if USE_HELP_AREA:
             # The help area is in a splitter.
             self.splitter = wx.SplitterWindow(self, SPLITTER_ID,
-                                              style=wx.SP_3DSASH)# |
-                                              #wx.SP_NO_XP_THEME)
+                                              style=wx.SP_3DSASH)
             self.splitter.SetMinimumPaneSize(10)
             parentWin = self.splitter
 
-        self.profSplitter = wx.SplitterWindow(parentWin, PROF_SPLITTER_ID,
-                                              style=wx.SP_3DSASH)# |
-                                              #wx.SP_NO_XP_THEME)
-        self.profSplitter.SetMinimumPaneSize(100)
+        if not USE_MINIMAL_PROFILE:
+            self.profSplitter = wx.SplitterWindow(parentWin, PROF_SPLITTER_ID,
+                                                  style=wx.SP_3DSASH)# |
+                                                  #wx.SP_NO_XP_THEME)
+            self.profSplitter.SetMinimumPaneSize(100)
 
-        # Profile panel.
-        profilePanel = wx.Panel(self.profSplitter, -1, style=wx.NO_BORDER
-                                | wx.CLIP_CHILDREN)
-        area = Area(PROFILES, profilePanel, ALIGN_VERTICAL, 10)
-        _newArea(area)
+            # Profile panel.
+            profilePanel = wx.Panel(self.profSplitter, -1, style=wx.NO_BORDER
+                                    | wx.CLIP_CHILDREN)
+            area = Area(PROFILES, profilePanel, ALIGN_VERTICAL, 10)
+            _newArea(area)
 
-        # Create panels inside the profile splitter.
-        self.mainPanel = MainPanel(self.profSplitter)
+            # Create panels inside the profile splitter.
+            self.mainPanel = MainPanel(self.profSplitter)
+        else:
+            profilePanel = None
+            
+            self.mainPanel = MainPanel(parentWin)
+
+            getArea(TABS).setWeight(0)
+            profArea = getArea(TABS).createArea(alignment=ALIGN_HORIZONTAL, border=12)
+            profArea.setId(PROFILES)
+            _newArea(profArea)
+            getArea(TABS).setWeight(1)
+            getArea(TABS).setBorderDirs(BORDER_NOT_TOP)
+
+        # Create a TabArea into the TABS area.
+        self.mainPanel.tabs = getArea(TABS).createTabArea(
+            'tab', style=sb.widget.tab.TabArea.STYLE_BASIC)
 
         if st.isDefined('main-split-position'):
             self.splitPos = INITIAL_SASH_POS
@@ -327,13 +318,17 @@ class MainFrame (wx.Frame):
             _newArea( Area(HELP, self.helpPanel, ALIGN_VERTICAL,
                            border=4) )
             # Init the splitter.
-            self.splitter.SplitVertically(self.profSplitter, self.helpPanel,
+            leftSide = self.profSplitter
+            if not leftSide:
+                leftSide = self.mainPanel
+            self.splitter.SplitVertically(leftSide, self.helpPanel,
                                           -INITIAL_SASH_POS)
         else:
             self.helpPanel = None
 
-        self.profSplitter.SplitVertically(profilePanel, self.mainPanel,
-                                          self.profSplitPos)
+        if self.profSplitter:
+            self.profSplitter.SplitVertically(profilePanel, self.mainPanel,
+                                              self.profSplitPos)
 
         # Listen for changes in the sash position.
         wx.EVT_SPLITTER_SASH_POS_CHANGED(self, SPLITTER_ID,

@@ -466,6 +466,7 @@ main-hide-help: Hide help panel
 profile-hide-buttons: Hide profile buttons
 summary-profile-change-autoselect: Profile change shows Summary
 profile-large-icons: Large profile icons
+profile-minimal-mode: Minimal profile list
 
 refresh-required: Remember to refresh addons.
 restart-required: Changes take effect after restarting.

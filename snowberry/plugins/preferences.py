@@ -24,12 +24,15 @@ import ui, events, language, paths
 import sb.widget.button as wb
 import sb.widget.text as wt
 import sb.widget.list as wl
+import sb.widget.tab as wa
 import sb.confdb as st
 import sb.util.dialog
 
 
 # List widget of custom addon paths.
 pathList = None
+
+prefTabs = None
 
 
 def init():
@@ -49,6 +52,7 @@ def handleNotify(event):
     """Handle notifications."""
 
     global pathList
+    global prefTabs
 
     if (event.hasId('populating-area') and 
         event.getAreaId() == 'general-options'):
@@ -57,10 +61,16 @@ def handleNotify(event):
         area = event.getArea()
         area.setExpanding(True)
         area.setBorder(1)
-        area.setWeight(0)
+        area.setWeight(1)
+        
+        # Tabs for different kinds of settings.
+        tabs = area.createTabArea('pref-tab', style=wa.TabArea.STYLE_BASIC)        
+        prefTabs = tabs
+        box = tabs.addTab('addon-paths')
+        box.setBorder(10)
 
-        box = area.createArea(boxedWithTitle='addon-paths', border=3)
-        box.setWeight(0)
+        #box = area.createArea(boxedWithTitle='addon-paths', border=3)
+        box.setWeight(1)
         #box.createText('addon-paths-info')
         box.setBorderDirs(ui.BORDER_NOT_BOTTOM)
         pathList = box.createList('addon-paths-list', wl.List.STYLE_MULTIPLE)
@@ -103,33 +113,32 @@ def handleNotify(event):
                             ).setSmallStyle()
         
         # Checkboxes for hiding parts of the UI.
-        box = area.createArea(boxedWithTitle='ui-parts', border=3)
+        #box = area.createArea(boxedWithTitle='ui-parts', border=3)
+        box = tabs.addTab('ui-parts')
+        box.setBorder(10)
         box.setWeight(0)
 
-        # TODO: Create widgets for all system settings?
-        box.createSetting(st.getSystemSetting('main-hide-title'))
-        box.createSetting(st.getSystemSetting('main-hide-help'))
-        box.createSetting(st.getSystemSetting('profile-hide-buttons'))
-        box.createSetting(st.getSystemSetting('profile-large-icons'))
-        box.createSetting(st.getSystemSetting('summary-profile-change-autoselect'))
-        
+        # Create widgets for all (boolean) system settings.
+        toggles = st.getSystemSettings(lambda s: s.getType() == 'toggle')
+        toggles.sort(key=lambda s: s.getId())
+        for toggle in toggles:
+            box.createSetting(toggle)
+
+        box.setWeight(1)
+        box.addSpacer()
+        box.setWeight(0)
+        box.setBorder(10)
         box.createText('restart-required', align=wt.Text.RIGHT).setSmallStyle()
 
     elif event.hasId('addon-paths-changed'):
         # Insert the current custom paths into the list.
-        #try:
         pathList.clear()
         for p in paths.getAddonPaths():
             pathList.addItem(p)
-        #except:
-            # Ignore errors in this operation. 
-            # TODO: Figure out under which circumstances this notification
-            # is received when the pathList C++ part has already been 
-            # destroyed.
-        #    pass
 
 
 def handleCommand(event):
     if event.hasId('show-addon-paths'):
         events.send(events.Command('show-snowberry-settings'))
+        prefTabs.selectTab('addon-paths')
         pathList.focus()

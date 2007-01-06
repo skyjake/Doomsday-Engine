@@ -427,7 +427,9 @@ class DropList (base.Widget):
         # Will be used when sending notifications.
         self.widgetId = id
 
-        self.items = []
+        self.items = []            
+
+        self.addSorted = False
 
         # We want focus notifications.
         self.setFocusId(id)
@@ -438,6 +440,9 @@ class DropList (base.Widget):
         # Handle item selection events.
         wx.EVT_CHOICE(parent, wxId, self.onItemSelected)
         wx.EVT_LEFT_DOWN(self.getWxWidget(), self.onLeftClick)
+
+    def setSorted(self, doSort=True):
+        self.addSorted = doSort
 
     def onLeftClick(self, event):
         if self.widgetId:
@@ -454,18 +459,23 @@ class DropList (base.Widget):
         if self.widgetId:
             newSelection = self.items[ev.GetSelection()]
 
-            if newSelection == 'default':
-                pr.getActive().removeValue(self.widgetId)
-            else:
-                pr.getActive().setValue(self.widgetId, newSelection)
+            if sb.confdb.isSettingDefined(self.widgetId):
+                # This is a setting.
+                if newSelection == 'default':
+                    pr.getActive().removeValue(self.widgetId)
+                else:
+                    pr.getActive().setValue(self.widgetId, newSelection)
 
-            # Notify everyone of the change.
-            events.send(events.EditNotify(self.widgetId, newSelection))
+                # Notify everyone of the change.
+                events.send(events.EditNotify(self.widgetId, newSelection))
+            else:
+                # Normal list.
+                events.send(events.SelectNotify(self.widgetId, newSelection))
 
     def onNotify(self, event):
         base.Widget.onNotify(self, event)
 
-        if self.widgetId:
+        if self.widgetId and sb.confdb.isSettingDefined(self.widgetId):
             if event.hasId('active-profile-changed'):
                 # Get the value for the setting as it has been defined
                 # in the currently active profile.
@@ -507,13 +517,52 @@ class DropList (base.Widget):
 
         drop.SetSelection(sel)
 
-    def addItem(self, item):
+    def addItem(self, item, toIndex=None):
         """Append a list of items into the drop-down list.
 
         @param items An array of strings.
         """
-        self.items.append(item)
-        self.getWxWidget().Append(self.__filter(language.translate(item)))
+        w = self.getWxWidget()
+        
+        try:
+            # Does this already exist?
+            index = self.items.index(item)
+            # Update label.
+            w.SetString(index, language.translate(item))
+            return
+        except:
+            pass
+            
+        if toIndex is not None:
+            # A specific index has been given.
+            self.items.insert(toIndex, item)
+            w.Insert(language.translate(item), toIndex)
+        else:
+            if self.addSorted:
+                # Need to locate the right index.
+                toIndex = 0
+                # Sort alphabetically based on identifier.
+                for i in range(len(self.items)):
+                    if cmp(item, self.items[i]) < 0:
+                        break
+                    toIndex = i + 1
+                self.items.insert(toIndex, item)
+                w.Insert(language.translate(item), toIndex)
+            else:
+                # Just append.
+                self.items.append(item)
+                w.Append(self.__filter(language.translate(item)))
+
+    def removeItem(self, item):
+        try:
+            index = self.items.index(item)
+            self.getWxWidget().Delete(index)
+            del self.items[index]
+        except:
+            pass
+
+    def hasItem(self, item):
+        return item in self.items
 
     def selectItem(self, item):
         """Change the current selection.  This does not send any

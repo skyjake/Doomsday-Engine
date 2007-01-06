@@ -126,6 +126,9 @@ class Area (base.Widget):
         # the Area.
         self.widgets = []
 
+    def setId(self, ident):
+        self.id = ident
+
     def getId(self):
         return self.id
 

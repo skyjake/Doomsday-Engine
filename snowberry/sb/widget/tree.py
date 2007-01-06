@@ -180,8 +180,21 @@ class Tree (base.Widget):
 
         @param identifier  The tree item to select.
         """
+        try:
+            tree = self.getWxWidget()
+            tree.SelectItem(self.items[identifier])
+        except:
+            # Ignore unknown identifiers.
+            pass
+        
+    def getExpandedItems(self):
+        """Returns a list of the identifiers of all expanded items."""
         tree = self.getWxWidget()
-        tree.SelectItem(self.items[identifier])
+        expanded = []
+        for identifier in self.items:
+            if tree.IsExpanded(self.items[identifier]):
+                expanded.append(identifier)
+        return expanded
         
     def expandItem(self, identifier, doExpand=True):
         tree = self.getWxWidget()

@@ -130,6 +130,15 @@ def getSettings(func=None):
         if func == None or func(s):
             filtered.append(s)
     return filtered
+    
+    
+def getSystemSettings(func=None):
+    """Returns a filtered list of system settings.
+
+    @param func If this function returns True, the system setting will be
+    included in the returned array.
+    """
+    return [s for s in systemSettings.values() if func is None or func(s)]   
 
 
 def readConfigFile(fileName):
@@ -593,6 +602,8 @@ def init():
     tog = conf.ToggleSetting('profile-large-icons', '', 'no', '')
     _newSystemSetting(tog)
     tog = conf.ToggleSetting('profile-hide-buttons', '', 'no', '')
+    _newSystemSetting(tog)
+    tog = conf.ToggleSetting('profile-minimal-mode', '', 'no', '')
     _newSystemSetting(tog)
 
     # Load all .conf files.

@@ -138,7 +138,9 @@ def notifyHandler(event):
         # Change to the Summary tab automatically.
         if event.hasId('active-profile-changed') and \
                st.getSystemBoolean('summary-profile-change-autoselect'):
-            ui.selectTab(SUMMARY)
+            if event.wasChanged(): 
+                # The profile did actually change.
+                ui.selectTab(SUMMARY)
 
     elif event.hasId('value-changed') or \
          event.hasId('addon-attached') or \

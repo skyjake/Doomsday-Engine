@@ -32,6 +32,8 @@ import language
 import paths
 from ui import ALIGN_HORIZONTAL
 
+USE_MINIMAL_MODE = st.getSystemBoolean('profile-minimal-mode')
+
 profileList = None
 deleteButton = None
 dupeButton = None
@@ -119,29 +121,42 @@ def makeProfileHTML(profile):
 def init():
     # Create the profile list and the profile control buttons.
     area = ui.getArea(ui.PROFILES)
-    area.setWeight(1)
-    area.setBorder(0) #3)
 
     global profileList
-    profileList = area.createFormattedList("profile-list")
+    
+    area.setBorder(0)
+    
+    if USE_MINIMAL_MODE:
+        area.setWeight(1)
+        area.addSpacer()
+        area.setWeight(3)
+        profileList = area.createDropList('profile-list')
+        profileList.setSorted()
+        area.setWeight(1)
+        area.addSpacer()
+        
+    else:
+        # Normal profile list mode.
+        area.setWeight(1)
+        profileList = area.createFormattedList("profile-list")
 
-    if not st.getSystemBoolean('profile-hide-buttons'):
-        # This should be a small button.
-        area.setWeight(0)
-        area.setBorder(3)
-        controls = area.createArea(alignment=ALIGN_HORIZONTAL, border=2)
-        controls.setExpanding(False)
-        #area.setExpanding(False)
-        controls.setWeight(0)
-        controls.createButton('new-profile', wg.Button.STYLE_MINI)
+        if not st.getSystemBoolean('profile-hide-buttons'):
+            # This should be a small button.
+            area.setWeight(0)
+            area.setBorder(3)
+            controls = area.createArea(alignment=ALIGN_HORIZONTAL, border=2)
+            controls.setExpanding(False)
+            #area.setExpanding(False)
+            controls.setWeight(0)
+            controls.createButton('new-profile', wg.Button.STYLE_MINI)
 
-        global deleteButton
-        deleteButton = controls.createButton('delete-profile',
-                                             wg.Button.STYLE_MINI)
+            global deleteButton
+            deleteButton = controls.createButton('delete-profile',
+                                                 wg.Button.STYLE_MINI)
 
-        global dupeButton
-        dupeButton = controls.createButton('duplicate-profile',
-                                           wg.Button.STYLE_MINI)
+            global dupeButton
+            dupeButton = controls.createButton('duplicate-profile',
+                                               wg.Button.STYLE_MINI)
 
     # Set the title graphics.
     global bannerImage
@@ -179,6 +194,13 @@ def init():
     ui.addMenuCommand(ui.MENU_PROFILE, 'delete-profile', group=ui.MENU_GROUP_PROFILE)
 
 
+def addListItem(profile, toIndex=None):
+    if not USE_MINIMAL_MODE:
+        profileList.addItem(profile.getId(), makeProfileHTML(profile), toIndex)
+    else:
+        profileList.addItem(profile.getId(), toIndex)
+
+
 def notifyHandler(event):
     "This is called when a Notify event is broadcasted."
 
@@ -188,9 +210,9 @@ def notifyHandler(event):
         pr.save()
 
     elif event.hasId('language-changed'):
-        # Just update the Defaults.
-        p = pr.getDefaults()
-        profileList.addItem(p.getId(), makeProfileHTML(p))
+        # Just update the Defaults, because it's the only profile whose name
+        # is translated.
+        addListItem(pr.getDefaults())
 
     elif event.hasId('profile-updated'):
         # A profile has been loaded or updated.  Make sure it's in the
@@ -216,12 +238,11 @@ def notifyHandler(event):
                 pr.setActive(pr.get(profileList.getSelectedItem()))
             else:
                 # Just update the item.
-                profileList.addItem(p.getId(), makeProfileHTML(p))
+                addListItem(p)
 
         elif not p.isHidden():
             # The item does not yet exist in the list.
-            profileList.addItem(p.getId(), makeProfileHTML(p),
-                                toIndex=destIndex)
+            addListItem(p, toIndex=destIndex)
 
     elif event.hasId('active-profile-changed') and not profileListDisabled:
         # Highlight the correct profile in the list.

@@ -29,6 +29,7 @@ import paths, events, ui, language, widgets
 import sb.util.dialog
 import sb.widget.button as wg
 import sb.widget.list as wl
+import sb.widget.text as wt
 import sb.profdb as pr
 import sb.confdb as st
 import sb.aodb as ao
@@ -67,12 +68,12 @@ def init():
     area.setWeight(0)
     topArea = area.createArea(alignment=ui.ALIGN_HORIZONTAL, border=0)
     topArea.setExpanding(False)
-    
+
     # Counter text.
     global countText
     topArea.setWeight(WEIGHTS[0])
-    countText = topArea.createText('')
-
+    countText = topArea.createText('', align=wt.Text.LEFT)   
+    
     # Filter selection.
     topArea.setWeight(WEIGHTS[1])
     filterArea = topArea.createArea(alignment=ui.ALIGN_HORIZONTAL, border=0)
@@ -89,7 +90,7 @@ def init():
     listFilter.addItem('addon-list-filter-mode-all')
     listFilter.addItem('addon-list-filter-mode-all-with-boxes')
     listFilter.selectItem('addon-list-filter-mode-compatible')
-    
+
     # Middle area for the category tree and the addon list.
     area.setWeight(1)
     area.setBorderDirs(ui.BORDER_LEFT_RIGHT)
@@ -166,7 +167,7 @@ def init():
                                                   'addon-database-reloaded',
                                                   'addon-list-selected',
                                                   'addon-list-deselected',
-                                                  'addon-list-filter-mode-value-changed',
+                                                  'addon-list-filter-mode-selected',
                                                   'addon-list-check-column-click',
                                                   'addon-list-name-column-click',
                                                   'addon-list-version-column-click'])
@@ -197,10 +198,14 @@ def init():
 def refreshCategories():
     """Recreates the categories of the category tree."""
     tree.freeze()
+    oldSel = tree.getSelectedItem()
+    expanded = tree.getExpandedItems()
     tree.clear()
     # Start populating from the root category.
     buildCategories(tree, 'category-tree-root', ao.getRootCategory())
     tree.expandItem('category-tree-root')
+    map(tree.expandItem, expanded)        
+    tree.selectItem(oldSel)
     tree.unfreeze()
 
 
@@ -436,7 +441,7 @@ def handleNotification(event):
     elif event.hasId('addon-attached') or event.hasId('addon-detached'):
         refreshItemInList(event.getAddon())
 
-    elif event.hasId('addon-list-filter-mode-value-changed'):
+    elif event.hasId('addon-list-filter-mode-selected'):
         refreshListIfVisible()
 
     elif event.hasId('addon-list-check-column-click') or \
