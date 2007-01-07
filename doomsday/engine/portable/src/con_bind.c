@@ -310,7 +310,7 @@ static binding_t *B_BindingForEvent(event_t *event)
 static char *B_GetCommandForEvent(event_t *ev)
 {
     binding_t *bnd;
-    command_t *cmd;
+    command_t *cmd = NULL;
     unsigned int k;
 
 //#if _DEBUG
@@ -1465,7 +1465,7 @@ D_CMD(ListBindings)
  */
 D_CMD(EnableBindClass)
 {
-    unsigned int i, idx;
+    unsigned int i, idx = 0;
     boolean     found;
 
     if(argc < 2 || argc > 3)

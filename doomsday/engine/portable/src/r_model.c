@@ -288,6 +288,7 @@ int R_FindModelFile(const char *filename, char *outfn)
 /**
  * Searches the model paths for the file and opens it.
  */
+#if 0 // unused atm
 static DFILE *R_OpenModelFile(char *filename)
 {
     char        buf[256];
@@ -296,6 +297,7 @@ static DFILE *R_OpenModelFile(char *filename)
         return F_Open(buf, "rb");
     return NULL;
 }
+#endif
 
 static void R_MissingModel(const char *fn)
 {

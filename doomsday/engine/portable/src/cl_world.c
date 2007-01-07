@@ -627,7 +627,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     unsigned short num;
     int     df, toptexture = 0, midtexture = 0, bottomtexture = 0, blendmode = 0;
     byte    lineFlags = 0, sideFlags = 0;
-    byte    toprgb[3], midrgba[4], bottomrgb[3];
+    byte    toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0}, bottomrgb[3] = {0,0,0};
     side_t *sid;
 
     // First read all the data.

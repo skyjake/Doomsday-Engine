@@ -389,7 +389,7 @@ static boolean  P_LoadBlockMap(gamemap_t* map, mapdatalumpinfo_t* maplump);
 static void     P_GroupLines(gamemap_t* map);
 
 #if _DEBUG
-static void     P_PrintDebugMapData(gamemap_t* map);
+//static void     P_PrintDebugMapData(gamemap_t* map);
 #endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------

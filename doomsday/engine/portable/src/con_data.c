@@ -408,7 +408,7 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
         int         minArgs;
         char        c;
         unsigned int l, len;
-        cvartype_t  type;
+        cvartype_t  type = CVT_NULL;
         boolean     unlimitedArgs;
 
         len = strlen(cmd->params);
@@ -575,7 +575,7 @@ void Con_PrintCCmdUsage(ddccmd_t *ccmd)
     char       *str;
     void       *ccmd_help;
 
-    if(!ccmd || ccmd->minArgs == ccmd->maxArgs == -1)
+    if(!ccmd || (ccmd->minArgs == -1 && ccmd->maxArgs == -1))
         return;
 
     ccmd_help = DH_Find(ccmd->name);
@@ -590,6 +590,8 @@ void Con_PrintCCmdUsage(ddccmd_t *ccmd)
         case CVT_INT:       Con_Printf(" (int)");       break;
         case CVT_FLOAT:     Con_Printf(" (float)");     break;
         case CVT_CHARPTR:   Con_Printf(" (string)");    break;
+        default:
+            break;
         }
     }
     if(ccmd->maxArgs == -1)
@@ -863,7 +865,7 @@ D_CMD(ListCmds)
     unsigned int i;
     char       *str;
     void       *ccmd_help;
-    size_t      length;
+    size_t      length = 0;
 
     if(argc > 1)
         length = strlen(argv[1]);
@@ -887,7 +889,7 @@ D_CMD(ListCmds)
 D_CMD(ListVars)
 {
     unsigned int i;
-    size_t      length;
+    size_t      length = 0;
 
     if(argc > 1)
         length = strlen(argv[1]);
@@ -908,7 +910,7 @@ D_CMD(ListVars)
 D_CMD(ListAliases)
 {
     unsigned int i;
-    size_t      length;
+    size_t      length = 0;
 
     if(argc > 1)
         length = strlen(argv[1]);

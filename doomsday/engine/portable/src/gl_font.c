@@ -211,6 +211,7 @@ static int findPow2(int num)
     return cumul;
 }
 
+#ifdef WIN32
 static int FR_SaveFont(char *filename, jfrfont_t *font, unsigned int *image)
 {
     FILE   *file = fopen(filename, "wb");
@@ -248,6 +249,7 @@ static int FR_SaveFont(char *filename, jfrfont_t *font, unsigned int *image)
     fclose(file);
     return true;
 }
+#endif
 
 static int FR_NewFont(void)
 {

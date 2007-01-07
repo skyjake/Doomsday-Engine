@@ -162,7 +162,7 @@ void LG_Init(void)
     fixed_t     max[3];
     fixed_t     width;
     fixed_t     height;
-    int         i;
+    int         i = 0;
     int         a, b, x, y;
     int         count;
     int         changedCount;

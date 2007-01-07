@@ -558,8 +558,7 @@ void Con_Ticker(timespan_t time)
             {
                 ddccmd_t *ccmd = Con_GetCommand(word->word);
                 if(ccmd)
-                    if(!(ccmd->minArgs == ccmd->maxArgs == -1) &&
-                       ccmd->minArgs == 0)
+                    if(ccmd->maxArgs != -1 && ccmd->minArgs == 0)
                         doit = false;
             }
 
@@ -868,7 +867,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         }
 
         // Are we validating the arguments?
-        if(!(ccmd->minArgs == ccmd->maxArgs == -1))
+        if(!(ccmd->minArgs == -1 && ccmd->maxArgs == -1))
         {
             int         i;
             boolean     invalidArgs = false;

@@ -259,7 +259,7 @@ void Cl_Frame2Received(int packetType)
     if(!Cl_HistoryCheck(set))
     {
 #ifdef _DEBUG
-        int readCount = 0;
+       //int readCount = 0;
 #endif
 
         // It isn't yet in the history, so add it there.

@@ -56,7 +56,7 @@ extern          "C" {
     typedef ded_stringid_t ded_musicid_t;
     typedef ded_stringid_t ded_funcid_t;
     typedef char    ded_func_t[DED_FUNC_LEN + 1];
-    typedef unsigned int ded_flags_t;
+    typedef int     ded_flags_t;
     typedef char   *ded_anystring_t;
 
     typedef struct ded_count_s {
