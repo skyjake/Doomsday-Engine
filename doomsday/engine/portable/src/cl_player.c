@@ -673,7 +673,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
                 // Replace the hidden client mobj with the real player mobj.
                 Cl_UpdateRealPlayerMobj(pl->mo, &s->cmo->mo, 0xffffffff);
             }
-            else
+            else if(pl->mo)
             {
                 // Update the new client mobj's information from the real
                 // mobj, which is already known.
