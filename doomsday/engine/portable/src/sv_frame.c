@@ -734,12 +734,12 @@ void Sv_WriteDeltaHeader(byte type, const delta_t * delta)
 void Sv_WriteDelta(const delta_t * delta)
 {
     byte    type = delta->type;
-#ifdef _DEBUG
+#ifdef _NETDEBUG
     int     lengthOffset;
     int     endOffset;
 #endif
 
-#ifdef _DEBUG
+#ifdef _NETDEBUG
     // Extra length field in debug builds.
     lengthOffset = Msg_Offset();
     Msg_WriteLong(0);
@@ -753,25 +753,12 @@ void Sv_WriteDelta(const delta_t * delta)
             // This'll be the entire delta. No more data is needed.
             Sv_WriteDeltaHeader(DT_NULL_MOBJ, delta);
             Msg_WriteShort(delta->id);
-#ifdef _DEBUG
+#ifdef _NETDEBUG
             goto writeDeltaLength;
 #else
             return;
 #endif
         }
-
-#if 0
-        if(delta->flags & MDFC_CREATE)
-        {
-            // This mobj was just created, let's use a different
-            // delta type number.
-            type = DT_CREATE_MOBJ;
-            /*#ifdef _DEBUG
-               Con_Printf("Written: create mo %i [%08x, s%i]\n", delta->id,
-               delta->flags, delta->state);
-               #endif */
-        }
-#endif
     }
 
     // First the type of the delta.
@@ -814,7 +801,7 @@ void Sv_WriteDelta(const delta_t * delta)
         Con_Error("Sv_WriteDelta: Unknown delta type %i.\n", delta->type);
     }
 
-#ifdef _DEBUG
+#ifdef _NETDEBUG
 writeDeltaLength:
     // Update the length of the delta.
     endOffset = Msg_Offset();

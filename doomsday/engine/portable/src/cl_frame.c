@@ -208,7 +208,7 @@ void Cl_Frame2Received(int packetType)
     byte    resendAcks[300];
     int     i, numResendAcks = 0;
     boolean skip = false;
-#ifdef _DEBUG
+#ifdef _NETDEBUG
     int     deltaCount = 0;
     int     startOffset;
     int     deltaLength;
@@ -258,16 +258,12 @@ void Cl_Frame2Received(int packetType)
     // or ack arrives too late).
     if(!Cl_HistoryCheck(set))
     {
-#ifdef _DEBUG
-       //int readCount = 0;
-#endif
-
         // It isn't yet in the history, so add it there.
         Cl_HistoryAdd(set);
 
         VERBOSE2( Con_Printf("Starting to process deltas in set %i.\n", set) );
 
-#ifdef _DEBUG
+#ifdef _NETDEBUG
         deltaCount = Msg_ReadLong();
         VERBOSE2( Con_Message("Set contains %i deltas.\n", deltaCount) );
 #endif
@@ -275,7 +271,7 @@ void Cl_Frame2Received(int packetType)
         // Read and process the message.
         while(!Msg_End())
         {
-#ifdef _DEBUG
+#ifdef _NETDEBUG
             /*Con_Message("Starting to read delta %i of %i...\n", ++readCount,
                         deltaCount);*/
 
@@ -286,7 +282,7 @@ void Cl_Frame2Received(int packetType)
 #endif
 
             deltaType = Msg_ReadByte();
-#ifdef _DEBUG
+#ifdef _NETDEBUG
             //Con_Message("  Delta type is %i.\n", deltaType & ~DT_RESENT);
 #endif
             skip = false;
@@ -378,7 +374,7 @@ void Cl_Frame2Received(int packetType)
                           deltaType);
             }
 
-#ifdef _DEBUG
+#ifdef _NETDEBUG
             // Check that we didn't misread.
             if(Msg_Offset() - startOffset != deltaLength)
             {
