@@ -1203,6 +1203,8 @@ boolean N_LookForHosts(const char *address, int port)
     // Send an INFO query.
     SDLNet_TCP_Send(sock, "INFO\n", 5);
 
+    Con_Message("Send INFO query.\n");
+    
     // Let's listen to the reply.
     memset(buf, 0, sizeof(buf));
     response = Str_New();
@@ -1214,15 +1216,18 @@ boolean N_LookForHosts(const char *address, int port)
         if(!strstr(Str_Text(response), "END\n"))
         {
             memset(buf, 0, sizeof(buf));
+            Con_Message("Waiting for response.\n");
             result = SDLNet_TCP_Recv(sock, buf, sizeof(buf) - 1);
 
             if(result > 0)
             {
                 Str_Appendf(response, buf);
+                Con_Message("Append to response: %s.\n", buf);
             }
             else // Terminated.
             {
                 isDone = true;
+                Con_Message("result <= 0 (%i)\n", result);
             }
         }
         else
@@ -1475,17 +1480,20 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
         *in && *in != '\r' && *in != '\n' && in - input < length;)
         *ch++ = *in++;
 
-    //Con_Message("N_DoNodeCommand: %s\n", command);
+    Con_Message("N_DoNodeCommand: %s\n", command);
 
     // Status query?
     if(!strcmp(command, "INFO"))
     {
+        int result = 0;
         Sv_GetInfo(&info);
         Str_Init(&msg);
         Str_Appendf(&msg, "BEGIN\n");
         Sv_InfoToString(&info, &msg);
         Str_Appendf(&msg, "END\n");
-        SDLNet_TCP_Send(sock, Str_Text(&msg), Str_Length(&msg));
+        Con_Message("Sending: %s\n", Str_Text(&msg));
+        result = SDLNet_TCP_Send(sock, Str_Text(&msg), Str_Length(&msg));
+        Con_Message("Result = %i\n", result);
         Str_Free(&msg);
     }
     else if(!strncmp(command, "JOIN ", 5) && length > 10)
