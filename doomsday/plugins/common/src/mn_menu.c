@@ -1951,7 +1951,7 @@ void M_Drawer(void)
                 WI_DrawParamText(x, y,
                                 currentMenu->items[i].text, currentMenu->font,
                                 r, g, b, menu_alpha,
-                                currentMenu->font == hu_font_b,
+                                false,
                                 cfg.usePatchReplacement? true : false,
                                 ALIGN_LEFT);
             }
