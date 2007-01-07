@@ -491,9 +491,12 @@ void P_BringUpWeapon(player_t *player)
     P_SetPsprite(player, ps_weapon, newState);
 }
 
-/*
- * Returns true if there is enough mana to shoot.  If not, selects the
- * next weapon to use.
+/**
+ * Checks if there is enough ammo to shoot with the current weapon. If not,
+ * a weapon change event is dispatched (which may or may not do anything
+ * depending on the player's config).
+ *
+ * @returns             <code>true</code> if there is enough mana to shoot.
  */
 boolean P_CheckAmmo(player_t *player)
 {
@@ -501,8 +504,16 @@ boolean P_CheckAmmo(player_t *player)
     int     count;
     boolean good;
 
+    // KLUDGE: Work around the multiple firing modes problems.
+    // We need to split the weapon firing routines and implement them as
+    // new fire modes.
+    if(player->class == PCLASS_FIGHTER || player->readyweapon == WP_FOURTH)
+        return true;
+    // < KLUDGE
+
     // Check we have enough of ALL ammo types used by this weapon.
     good = true;
+
     for(i=0; i < NUMAMMO && good; ++i)
     {
         if(!weaponinfo[player->readyweapon][player->class].mode[0].ammotype[i])
@@ -2017,7 +2028,7 @@ void P_SetupPsprites(player_t *player)
 #ifdef _DEBUG
     Con_Message("P_SetupPsprites: Player %i.\n", player - players);
 #endif
-    
+
     // Remove all psprites
     for(i = 0; i < NUMPSPRITES; i++)
     {
