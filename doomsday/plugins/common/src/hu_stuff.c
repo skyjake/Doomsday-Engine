@@ -259,13 +259,13 @@ void HU_Init(void)
     // Heretic and Hexen don't use ASCII numbering for all font patches.
     // As such we need to switch some pathches.
 
-    tmp = hu_font_a[59];
-    memcpy(&hu_font_a[59], &hu_font_a[63], sizeof(dpatch_t));
-    memcpy(&hu_font_a[63], &tmp, sizeof(dpatch_t));
+    tmp = hu_font_a[58];
+    memcpy(&hu_font_a[58], &hu_font_a[62], sizeof(dpatch_t));
+    memcpy(&hu_font_a[62], &tmp, sizeof(dpatch_t));
 
-    tmp = hu_font_b[59];
-    memcpy(&hu_font_b[59], &hu_font_b[63], sizeof(dpatch_t));
-    memcpy(&hu_font_b[63], &tmp, sizeof(dpatch_t));
+    tmp = hu_font_b[58];
+    memcpy(&hu_font_b[58], &hu_font_b[62], sizeof(dpatch_t));
+    memcpy(&hu_font_b[62], &tmp, sizeof(dpatch_t));
 
 #endif
 
