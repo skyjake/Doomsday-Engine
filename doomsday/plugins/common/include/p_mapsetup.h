@@ -40,7 +40,7 @@ extern int numthings;
 #define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
 
 #if __JHEXEN__
-#define numpolyobjs (*(uint*) DD_GetInteger(DD_POLYOBJ_COUNT))
+#define numpolyobjs (DD_GetInteger(DD_POLYOBJ_COUNT))
 #endif
 
 void        P_SetupLevel(int episode, int map, int playermask, skill_t skill);
