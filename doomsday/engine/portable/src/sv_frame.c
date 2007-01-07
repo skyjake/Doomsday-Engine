@@ -852,7 +852,7 @@ void Sv_SendFrame(int playerNumber)
     byte    oldResend;
     delta_t *delta;
     int     deltaCount = 0;
-#if _DEBUG
+#if _NETDEBUG
     int     endOffset = 0;
 #endif
     int     deltaCountOffset = 0;
@@ -891,7 +891,7 @@ void Sv_SendFrame(int playerNumber)
 
     // The number of deltas in the packet will be here.
     deltaCountOffset = Msg_Offset();
-#ifdef _DEBUG
+#ifdef _NETDEBUG
     Msg_WriteLong(0);
 #endif
 
@@ -957,7 +957,7 @@ void Sv_SendFrame(int playerNumber)
     }
 
     // Update the number of deltas included in the packet.
-#ifdef _DEBUG
+#ifdef _NETDEBUG
     endOffset = Msg_Offset();
     Msg_SetOffset(deltaCountOffset);
     Msg_WriteLong(deltaCount);
