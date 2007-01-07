@@ -129,6 +129,7 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     }
 
     // Restore the old projection matrix.
+    gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
 
     gl.MatrixMode(DGL_MODELVIEW);
