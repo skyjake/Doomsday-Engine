@@ -158,7 +158,7 @@ void M_DrawControlsMenu(void)
             spacecat(prbuff, "...");
         }
 #if __JHEXEN__
-        M_WriteText2(menu->x + 134, menu->y + (i * menu->itemHeight), prbuff,
+        M_WriteText2(menu->x + 154, menu->y + (i * menu->itemHeight), prbuff,
                         hu_font_a, 1, 0.7f, 0.3f, menu_alpha);
 #else
         M_WriteText2(menu->x + 134, menu->y + (i * menu->itemHeight), prbuff,
