@@ -410,6 +410,7 @@ void Rend_Console(void)
     gl.Rotatef(funnyAng * 3, 0, 0, 1);
     GL_DrawRectTiled(0, (int) ConsoleY * gtosMulY + 4, glScreenWidth,
                      -glScreenHeight - 4, bgX, bgY);
+    gl.MatrixMode(DGL_TEXTURE);
     gl.PopMatrix();
 
     // The border.
@@ -426,9 +427,8 @@ void Rend_Console(void)
     gl.Vertex2f(0, (int) ConsoleY * gtosMulY + 13);
     gl.End();
 
-/*    gl.MatrixMode(DGL_MODELVIEW);
+    gl.MatrixMode(DGL_MODELVIEW);
     gl.PushMatrix();
-    gl.LoadIdentity();*/
     gl.Scalef(Cfont.sizeX, Cfont.sizeY, 1);
 
     // The game & version number.
@@ -530,8 +530,8 @@ void Rend_Console(void)
     Con_DrawTitle(closeFade);
 
     // Restore the original matrices.
-/*    gl.MatrixMode(DGL_MODELVIEW);
-    gl.PopMatrix();*/
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PopMatrix();
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
 }
