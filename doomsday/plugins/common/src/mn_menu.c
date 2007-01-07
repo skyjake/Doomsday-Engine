@@ -2400,6 +2400,8 @@ void M_DrawBackground(void)
     gl.Bind(menuFogTexture);
     gl.Color3f(mfAlpha, mfAlpha, mfAlpha);
     gl.MatrixMode(DGL_TEXTURE);
+    gl.PushMatrix();
+    
     for(i = 0; i < 3; ++i)
     {
         if(i || cfg.menuFog == 1)
@@ -2493,7 +2495,7 @@ void M_DrawBackground(void)
        }
 
     gl.MatrixMode(DGL_TEXTURE);
-    gl.LoadIdentity();
+    gl.PopMatrix();
 
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
