@@ -927,6 +927,7 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
     ddvertex_t *tempPt;
     subsector_t *sub;
     polyobj_t  *po;
+    int         poNumSegs = 0;
 
     po = GetPolyobj(tag);
     if(!po)
@@ -940,11 +941,12 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
             ("TranslateToStartSpot:  Anchor point located without a "
              "StartSpot point: %d\n", tag);
     }
+    poNumSegs = P_GetIntp(po, DMU_SEG_COUNT);
 
     P_SetPtrp(po, DMU_ORIGINAL_POINTS,
-              Z_Malloc(numsegs * sizeof(ddvertex_t), PU_LEVEL, 0));
+              Z_Malloc(poNumSegs * sizeof(ddvertex_t), PU_LEVEL, 0));
     P_SetPtrp(po, DMU_PREVIOUS_POINTS,
-              Z_Malloc(numsegs * sizeof(ddvertex_t), PU_LEVEL, 0));
+              Z_Malloc(poNumSegs * sizeof(ddvertex_t), PU_LEVEL, 0));
     deltaX = originX - P_GetFixedp(po, DMU_START_SPOT_X);
     deltaY = originY - P_GetFixedp(po, DMU_START_SPOT_Y);
 
@@ -954,7 +956,7 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
     avg.pos[VY] = 0;
 
     validCount++;
-    for(i = 0; i < numsegs; ++i, tempSeg++, tempPt++)
+    for(i = 0; i < poNumSegs; ++i, tempSeg++, tempPt++)
     {
         line_t* linedef = P_GetPtrp(*tempSeg, DMU_LINE);
         if(P_GetIntp(linedef, DMU_VALID_COUNT) != validCount)
@@ -995,8 +997,8 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
                             P_GetFixedp(po, DMU_START_SPOT_Y);
     }
 
-    avg.pos[VX] /= numsegs;
-    avg.pos[VY] /= numsegs;
+    avg.pos[VX] /= poNumSegs;
+    avg.pos[VY] /= poNumSegs;
     sub = R_PointInSubsector(avg.pos[VX] << FRACBITS, avg.pos[VY] << FRACBITS);
     if(P_GetPtrp(sub, DMU_POLYOBJ) != NULL)
     {
