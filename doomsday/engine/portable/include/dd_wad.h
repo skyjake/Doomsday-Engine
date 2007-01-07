@@ -37,7 +37,7 @@
 // File record flags.
 #define FRF_RUNTIME     0x1        // Loaded at runtime (for reset).
 
-#define AUXILIARY_BASE  1000000000
+#define AUXILIARY_BASE  100000000
 
 enum                               // Lump Grouping Tags
 {
