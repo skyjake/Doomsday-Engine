@@ -163,7 +163,7 @@ float P_MobjPointDistancef(mobj_t *start, mobj_t *end, float *fixpoint)
  * Determines on which side of dline the point is. Returns true if the
  * point is on the line or on the right side.
  */
-#ifdef WIN32
+#ifdef MSVC
 #  pragma optimize("g", off)
 #endif
 int P_FloatPointOnLineSide(fvertex_t *pnt, fdivline_t *dline)
@@ -209,7 +209,7 @@ float P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
     inter->pos[VY] = ay + r * (by - ay);
     return r;
 }
-#ifdef WIN32
+#ifdef MSVC
 #  pragma optimize("", on)
 #endif
 

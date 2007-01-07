@@ -30,7 +30,7 @@
  * Moving object handling. Spawn functions.
  */
 
-#ifdef WIN32
+#ifdef MSVC
 #  pragma optimize("g", off)
 #endif
 

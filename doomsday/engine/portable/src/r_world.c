@@ -96,7 +96,7 @@ static float mapBounds[4];
 
 // CODE --------------------------------------------------------------------
 
-#ifdef _MSC_VER
+#ifdef MSVC
 #  pragma optimize("g", off)
 #endif
 
@@ -241,7 +241,7 @@ static void R_SetSectorLinks(sector_t *sec)
     }
 }
 
-#ifdef _MSC_VER
+#ifdef MSVC
 #  pragma optimize("", on)
 #endif
 

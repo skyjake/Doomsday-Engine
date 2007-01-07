@@ -46,7 +46,7 @@
  * Action functions for weapons.
  */
 
-#ifdef WIN32
+#ifdef MSVC
 // Sumtin' 'ere messes with poor ol' MSVC's head...
 #  pragma optimize("g", off)
 #endif

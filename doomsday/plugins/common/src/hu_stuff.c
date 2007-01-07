@@ -27,7 +27,7 @@
  * Heads-up displays, font handling, text drawing routines
  */
 
-#ifdef WIN32
+#ifdef MSVC
 #  pragma warning(disable:4018)
 #endif
 

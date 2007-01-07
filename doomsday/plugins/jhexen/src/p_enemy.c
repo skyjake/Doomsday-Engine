@@ -4825,7 +4825,7 @@ void C_DECL A_IceCheckHeadDone(mobj_t *actor)
 //
 //============================================================================
 
-#ifdef WIN32
+#ifdef MSVC
 #  pragma optimize("g", off)
 #endif
 void C_DECL A_FreezeDeathChunks(mobj_t *actor)
@@ -4898,7 +4898,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t *actor)
     actor->flags2 |= MF2_DONTDRAW;
 }
 
-#ifdef WIN32
+#ifdef MSVC
 #  pragma optimize("", on)
 #endif
 

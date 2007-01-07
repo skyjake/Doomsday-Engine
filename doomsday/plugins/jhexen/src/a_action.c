@@ -262,7 +262,7 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
     P_RemoveMobj(actor);
 }
 
-#ifdef WIN32
+#ifdef MSVC
 // I guess the compiler gets confused by the multitude of P_Random()s...
 #  pragma optimize("g", off)
 #endif
@@ -285,7 +285,7 @@ void C_DECL A_LeafSpawn(mobj_t *actor)
         }
     }
 }
-#ifdef WIN32
+#ifdef MSVC
 #  pragma optimize("", on)
 #endif
 
@@ -910,7 +910,7 @@ void C_DECL A_ThrustImpale(mobj_t *actor)
     PIT_ThrustSpike(actor);
 }
 
-#if _MSC_VER
+#if MSVC
 #  pragma optimize("g",off)
 #endif
 void C_DECL A_SoAExplode(mobj_t *actor)
@@ -946,7 +946,7 @@ void C_DECL A_SoAExplode(mobj_t *actor)
     S_StartSound(SFX_SUITOFARMOR_BREAK, mo);
     P_RemoveMobj(actor);
 }
-#if _MSC_VER
+#if MSVC
 #  pragma optimize("",on)
 #endif
 

@@ -31,7 +31,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef WIN32
+#ifdef MSVC
 #  pragma warning(disable:4018)
 #endif
 
