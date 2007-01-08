@@ -125,8 +125,8 @@ void Sv_SoundAtVolume(int sound_id_and_flags, mobj_t *origin, float volume,
     }
 
 #ifdef _DEBUG
-    Con_Message("Sv_SoundAtVolume: Id=%i, vol=%g, targets=%x\n",
-                sound_id, volume, targetPlayers);
+    VERBOSE( Con_Message("Sv_SoundAtVolume: Id=%i, vol=%g, targets=%x\n",
+                         sound_id, volume, targetPlayers) );
 #endif
 
     Sv_NewSoundDelta(sound_id, origin, sector, poly, volume,
