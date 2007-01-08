@@ -340,7 +340,7 @@ static int C_DECL N_UDPReceiver(void *parm)
     {
         // Most of the time we will be sleeping here, waiting for
         // incoming packets.
-        if(SDLNet_CheckSockets(set, 750) <= 0)
+        if(SDLNet_CheckSockets(set, 250) <= 0)
             continue;
 
         for(;;)
@@ -741,15 +741,13 @@ static void N_StartReceiver(void)
  */
 static void N_StopReceiver(void)
 {
-    stopReceiver = true;
-
-    // Close the incoming UDP socket.
-    SDLNet_UDP_Close(inSock);
-
     // Wait for the receiver thread the stop.
+    stopReceiver = true;
     Sys_WaitThread(hReceiver);
     hReceiver = 0;
 
+    // Close the incoming UDP socket.
+    SDLNet_UDP_Close(inSock);
     inSock = NULL;
 
     Sys_DestroyMutex(mutexInSock);
@@ -790,15 +788,6 @@ void N_SystemInit(void)
         Con_Message("N_SystemInit: Custom MTU: %i bytes.\n", maxDatagramSize);
     }
 
-    if(!SDLNet_Init())
-    {
-        VERBOSE(Con_Message("N_SystemInit: OK\n"));
-    }
-    else
-    {
-        Con_Message("N_SystemInit: %s\n", SDLNet_GetError());
-    }
-
     // Allocate the transmission buffer.
     transmissionBufferSize = DEFAULT_TRANSMISSION_SIZE;
     transmissionBuffer = M_Malloc(transmissionBufferSize);
@@ -815,7 +804,6 @@ void N_SystemShutdown(void)
     transmissionBufferSize = 0;
 
     N_ShutdownService();
-    SDLNet_Quit();
 }
 
 /**
@@ -837,25 +825,16 @@ void N_IPToString(char *buf, IPaddress *ip)
 Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
 {
     Uint16      port = (!preferPort ? defaultPort : preferPort);
-    int         tries;
-    boolean     found;
-
+    
     *sock = NULL;
-
-    // Try opening the port, advance to next one if the opening fails.
-    found = false;
-    for(tries = 1000; tries > 0 && !found; --tries)
-    {
-        if((*sock = SDLNet_UDP_Open(port)) == NULL)
-            port++;
-        else
-            found = true;
-    }
-
-    if(found)
+    if((*sock = SDLNet_UDP_Open(port)) != NULL)
         return port;
-    else
-        return 0; // Failure!
+
+#ifdef _DEBUG
+    Con_Message("N_OpenUDPSocket: Failed to open UDP socket %i.\n", port);
+    Con_Message("  (%s)\n", SDLNet_GetError());
+#endif
+    return 0; // Failure!
 }
 
 /**
@@ -876,6 +855,15 @@ boolean N_InitService(boolean inServerMode)
 
     // Get rid of the currently active service provider.
     N_ShutdownService();
+
+    if(!SDLNet_Init())
+    {
+        VERBOSE(Con_Message("N_InitService: SDLNet_Init OK\n"));
+    }
+    else
+    {
+        Con_Message("N_InitService: SDLNet_Init %s\n", SDLNet_GetError());
+    }
 
     if(inServerMode)
     {
@@ -980,6 +968,8 @@ void N_ShutdownService(void)
         // Let's forget about servers found earlier.
         located.valid = false;
     }
+
+    SDLNet_Quit();
 
     netIsActive = false;
     netServerMode = false;
