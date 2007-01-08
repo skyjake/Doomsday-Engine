@@ -108,7 +108,7 @@ int     gotframe = false;
 
 boolean firstNetUpdate = true;
 
-byte    monitorSendQueue = false;
+byte    monitorMsgQueue = false;
 byte    net_showlatencies = false;
 byte    net_dev = false;
 byte    net_dontsleep = false;
@@ -130,7 +130,7 @@ static int coordTimer = 0;
 void Net_Register(void)
 {
     // Cvars
-    C_VAR_BYTE("net-queue-show", &monitorSendQueue, 0, 0, 1);
+    C_VAR_BYTE("net-queue-show", &monitorMsgQueue, 0, 0, 1);
     C_VAR_BYTE("net-dev", &net_dev, 0, 0, 1);
     C_VAR_BYTE("net-nosleep", &net_dontsleep, 0, 0, 1);
     C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
@@ -330,6 +330,9 @@ void Net_SendCommands(void)
 {
     byte   *msg;
     ticcmd_t *cmd;
+    
+    if(isDedicated)
+        return;
 
     // Clients send their ticcmds to the server at regular intervals,
     // but significantly less often than new ticcmds are built.
