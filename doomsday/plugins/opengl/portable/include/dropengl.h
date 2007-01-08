@@ -33,6 +33,8 @@
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include <GL/gl.h>
+#  undef GL_ARB_multitexture
+#  undef GL_EXT_blend_minmax
 #  include <GL/glext.h>
 #  include <GL/glu.h>
 #  include <GL/wglext.h>
