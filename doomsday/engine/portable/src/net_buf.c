@@ -68,6 +68,7 @@ netbuffer_t netBuffer;
 
 // The message queue: list of incoming messages waiting for processing.
 static netmessage_t *msgHead, *msgTail;
+static int msgCount;
 
 // A mutex is used to protect the addition and removal of messages from
 // the message queue.
@@ -161,6 +162,9 @@ void N_PostMessage(netmessage_t *msg)
     if(msgHead == NULL)
         msgHead = msg;
 
+    // One new message available.
+    msgCount++;
+    
     N_LockQueue(false);
 }
 
@@ -191,6 +195,12 @@ netmessage_t *N_GetMessage(void)
 
         // Advance the head pointer.
         msgHead = msgHead->next;
+        
+        if(msg)
+        {
+            // One less message available.
+            msgCount--;
+        }
     }
     N_LockQueue(false);
 
@@ -226,6 +236,7 @@ void N_ClearMessages(void)
 
     // The queue is now empty.
     msgHead = msgTail = NULL;
+    msgCount = 0;
 }
 
 /**
@@ -308,7 +319,7 @@ void N_SendPacket(int flags)
 }
 
 /**
- * @return          The player number that corresponds the DPNID.
+ * @return  The player number that corresponds the DPNID.
  */
 uint N_IdentifyPlayer(nodeid_t id)
 {
@@ -354,11 +365,6 @@ netmessage_t *N_GetNextMessage(void)
         {
             // From an unknown ID?
             N_ReleaseMessage(msg);
-/*
-#ifdef _DEBUG
-Con_Printf("N_GetNextMessage: Unknown sender, skipped...\n");
-#endif
-*/
         }
         else
         {
@@ -393,6 +399,11 @@ boolean N_GetPacket(void)
 
     netBuffer.player = -1;
     netBuffer.length = 0;
+    
+    /*{extern byte monitorMsgQueue;
+    if(monitorMsgQueue)
+        Con_Message("N_GetPacket: %i messages queued.\n", msgCount);
+    }*/
 
     if((msg = N_GetNextMessage()) == NULL)
     {
