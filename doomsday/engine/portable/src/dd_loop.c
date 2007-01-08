@@ -392,7 +392,10 @@ void DD_RunTics(void)
                Sys_GetSeconds()) - lastFrameTime < 1.0 / maxFrameRate)
         {
             // Wait for a short while.
-            Sys_Sleep(2);
+            Sys_Sleep(3);
+            
+            N_Update();
+            Net_Update();
         }
     }
 
