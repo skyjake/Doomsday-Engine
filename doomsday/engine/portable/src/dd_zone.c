@@ -786,6 +786,8 @@ static void Z_AddBlockToSet(zblockset_t* set)
     block->max = set->elementsPerBlock;
     block->elementSize = set->elementSize;
     block->elements = Z_Malloc(block->elementSize * block->max, set->tag, NULL);
+
+    assert(block->count == 0);
 }
 
 /**

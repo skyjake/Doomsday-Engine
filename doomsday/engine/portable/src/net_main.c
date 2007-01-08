@@ -603,6 +603,7 @@ void Net_StopGame(void)
     {
         players[i].ingame = false;
         clients[i].ready = clients[i].connected = false;
+        clients[i].nodeID = 0;
         players[i].flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
     }
 

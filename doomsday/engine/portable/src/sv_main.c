@@ -363,7 +363,7 @@ void Sv_HandlePacket(void)
                     // Send a message to everybody.
                     Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS,
                                 "New client connection refused: Duplicate ID "
-                                "(%08x).\n", id);
+                                "(%08x). From=%i, i=%i\n", id, from, i);
                     N_TerminateClient(from);
                     break;
                 }

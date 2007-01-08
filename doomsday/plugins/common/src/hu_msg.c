@@ -403,7 +403,10 @@ void HUMsg_PlayerMessage(player_t *plr, char *message, int tics,
     if(!msgBuff->nottobefuckedwith || msgBuff->dontfuckwithme)
     {
         if(msgBuff->lastmessage)
+        {
             free(msgBuff->lastmessage);
+            msgBuff->lastmessage = NULL;
+        }
 
         if(yellow)
         {
@@ -459,7 +462,7 @@ static void HU_MsgBufAddMessage(msgbuffer_t *buf, char *txt, int tics)
     msg = &buf->messages[buf->lastmsg];
 
     len = strlen(txt);
-    msg->text = realloc(msg->text, len+ 1);
+    msg->text = realloc(msg->text, len + 1);
     strcpy(msg->text, txt);
     msg->text[len] = 0;
     msg->time = msg->duration = cfg.msgUptime + tics;
@@ -510,7 +513,10 @@ static void HU_MsgBufClear(msgbuffer_t *buf)
     for(i = 0; i < MAX_MESSAGES; ++i)
     {
         if(buf->messages[i].text)
+        {
             free(buf->messages[i].text);
+            buf->messages[i].text = NULL;
+        }
     }
 
     buf->firstmsg = buf->lastmsg = 0;

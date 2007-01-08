@@ -1263,7 +1263,10 @@ void G_DoReborn(int playernum)
 
         if(IS_CLIENT)
         {
-            G_DummySpawnPlayer(playernum);
+            if(gamestate == GS_LEVEL) 
+            {
+                G_DummySpawnPlayer(playernum);
+            }
             return;
         }
 
