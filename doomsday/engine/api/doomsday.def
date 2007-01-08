@@ -3,9 +3,9 @@ NAME			"DOOMSDAY"
 ; Highest ordinal is currently 
 ; --> 327 <--
 ; Other free ordinals:
-; 77 formaly P_LoadBlockMap
-; 78 formaly P_LoadReject
-; 232 formaly R_SetAnimGroup
+; 77 formerly P_LoadBlockMap
+; 78 formerly P_LoadReject
+; 232 formerly R_SetAnimGroup
 
 EXPORTS
 	Plug_AddHook			@1 NONAME
