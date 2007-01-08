@@ -340,10 +340,7 @@ static int C_DECL N_UDPReceiver(void *parm)
     {
         // Most of the time we will be sleeping here, waiting for
         // incoming packets.
-        if(SDLNet_CheckSockets(set, 250) <= 0)
-            continue;
-
-        for(;;)
+        while(SDLNet_CheckSockets(set, 250) > 0)
         {
             // There is activity on the socket. Allocate a new packet
             // to store the data into. The packet will be released later,
@@ -393,7 +390,7 @@ static int C_DECL N_UDPReceiver(void *parm)
             else
             {
                 Sys_Unlock(mutexInSock);
-                break;
+                continue;
             }
         }
     }
@@ -1158,6 +1155,37 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
     return true;
 }
 
+#ifdef LOOK_TIMEOUT
+// Untested -- may cause memory a segfault.
+typedef struct socket_timeout_s {
+    TCPsocket   sock;
+    int         seconds;
+    boolean     abort;
+} socket_timeout_t;
+
+/** 
+ * Closes the socket specified with parm after SOCKET_TIMEOUT seconds.
+ */
+static int C_DECL N_SocketTimeOut(void *parm)
+{
+    volatile socket_timeout_t* p = parm;
+    timespan_t elapsed = 0;
+
+    while(elapsed < p->seconds && !p->abort)
+    {
+        // Check periodically for abortion.
+        Sys_Sleep(100);
+        elapsed += .1;
+    }
+    if(!p->abort)
+    {
+        // Time to close the socket.
+        SDLNet_TCP_Close(p->sock);
+    }
+    return 0;
+}
+#endif
+
 /**
  * Maybe it would be wisest to run this in a separate thread?
  */
@@ -1167,7 +1195,11 @@ boolean N_LookForHosts(const char *address, int port)
     char        buf[256];
     ddstring_t *response;
     boolean     isDone;
-
+#ifdef LOOK_TIMEOUT
+    socket_timeout_t timeout;
+    void       *timeoutThread;
+#endif
+    
     // We must be a client.
     if(!N_IsAvailable() || netServerMode)
         return false;
@@ -1177,7 +1209,10 @@ boolean N_LookForHosts(const char *address, int port)
 
     // Get rid of previous findings.
     memset(&located, 0, sizeof(located));
-
+#ifdef LOOK_TIMEOUT
+    memset(&timeout, 0, sizeof(timeout));
+#endif
+    
     // Let's determine the address we will be looking into.
     SDLNet_ResolveHost(&located.addr, address, port);
 
@@ -1194,6 +1229,12 @@ boolean N_LookForHosts(const char *address, int port)
     SDLNet_TCP_Send(sock, "INFO\n", 5);
 
     Con_Message("Send INFO query.\n");
+    
+#ifdef LOOK_TIMEOUT
+    // Setup a timeout.
+    timeout.seconds = 5;
+    timeoutThread = Sys_StartThread(N_SocketTimeOut, &timeout);
+#endif
     
     // Let's listen to the reply.
     memset(buf, 0, sizeof(buf));
@@ -1224,6 +1265,13 @@ boolean N_LookForHosts(const char *address, int port)
             isDone = true;
     }
 
+#ifdef LOOK_TIMEOUT
+    timeout.abort = true;
+    Con_Message("Waiting for timeout thread to return.\n");
+    Sys_WaitThread(timeoutThread);
+    Con_Message("Timeout thread stopped.\n");
+#endif
+    
     // Close the connection; that was all the information we need.
     SDLNet_TCP_Close(sock);
 
