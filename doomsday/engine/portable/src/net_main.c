@@ -1421,9 +1421,10 @@ D_CMD(Net)
                 for(i = 0; i < MAXPLAYERS; ++i)
                 {
                     if(clients[i].connected)
-                        Con_Printf("%i: node %x, entered at %i (ingame:%i)\n", i,
+                        Con_Printf("%2i: %10s node %2x, entered at %07i (ingame:%i, handshake:%i)\n", 
+                                   i, clients[i].name,
                                    clients[i].nodeID, clients[i].enterTime,
-                                   players[i].ingame);
+                                   players[i].ingame, clients[i].handshake);
                 }
             }
 
