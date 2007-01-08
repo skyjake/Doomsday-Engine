@@ -129,7 +129,8 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
         player->ammo[ammo] = player->maxammo[ammo];
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
+    if(player == &players[consoleplayer])
+        ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
 
     return true;
 }
@@ -195,7 +196,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         }
 
         // Maybe unhide the HUD?
-        if(gaveweapon)
+        if(gaveweapon && player == &players[consoleplayer])
             ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
 
         return (gaveweapon || gaveammo);
@@ -227,9 +228,10 @@ boolean P_GiveBody(player_t *player, int num)
     player->plr->mo->health = player->health;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
+    if(player == &players[consoleplayer])
+        ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
 
-    return (true);
+    return true;
 }
 
 /*
@@ -248,7 +250,8 @@ boolean P_GiveArmor(player_t *player, int armortype)
     player->update |= PSF_ARMOR_TYPE | PSF_ARMOR_POINTS;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+    if(player == &players[consoleplayer])
+        ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
 
     return true;
 }
@@ -270,7 +273,8 @@ void P_GiveKey(player_t *player, keytype_t key)
     player->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(HUE_ON_PICKUP_KEY);
+    if(player == &players[consoleplayer])
+        ST_HUDUnHide(HUE_ON_PICKUP_KEY);
 }
 
 /*
@@ -344,7 +348,8 @@ boolean P_GivePower(player_t *player, powertype_t power)
     if(retval)
     {
         // Maybe unhide the HUD?
-        ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+        if(player == &players[consoleplayer])
+            ST_HUDUnHide(HUE_ON_PICKUP_POWER);
     }
     return retval;
 }

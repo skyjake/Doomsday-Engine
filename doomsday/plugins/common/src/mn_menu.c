@@ -2111,7 +2111,7 @@ boolean M_Responder(event_t *ev)
 {
     int         ch = -1;
     int         i;
-    int         cid;
+    uint        cid;
     int         firstVI, lastVI;    // first and last visible item
     boolean     skip;
 
@@ -2401,7 +2401,7 @@ void M_DrawBackground(void)
     gl.Color3f(mfAlpha, mfAlpha, mfAlpha);
     gl.MatrixMode(DGL_TEXTURE);
     gl.PushMatrix();
-    
+
     for(i = 0; i < 3; ++i)
     {
         if(i || cfg.menuFog == 1)

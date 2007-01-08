@@ -155,7 +155,8 @@ boolean P_GiveMana(player_t *player, ammotype_t ammo, int num)
     } // < FIXME
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
+    if(player == &players[consoleplayer])
+        ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
 
     return true;
 }
@@ -539,9 +540,10 @@ boolean P_GiveBody(player_t *player, int num)
     player->update |= PSF_HEALTH;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
+    if(player == &players[consoleplayer])
+        ST_HUDUnHide(HUE_ON_PICKUP_HEALTH);
 
-    return (true);
+    return true;
 }
 
 //---------------------------------------------------------------------------
@@ -589,7 +591,8 @@ boolean P_GiveArmor(player_t *player, armortype_t armortype, int amount)
     }
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+    if(player == &players[consoleplayer])
+        ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
 
     return true;
 }
@@ -611,7 +614,8 @@ int P_GiveKey(player_t *player, keytype_t key)
     player->update |= PSF_KEYS;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(HUE_ON_PICKUP_KEY);
+    if(player == &players[consoleplayer])
+        ST_HUDUnHide(HUE_ON_PICKUP_KEY);
 
     return true;
 }
@@ -689,7 +693,8 @@ boolean P_GivePower(player_t *player, powertype_t power)
     if(retval)
     {
         // Maybe unhide the HUD?
-        ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+        if(player == &players[consoleplayer])
+            ST_HUDUnHide(HUE_ON_PICKUP_POWER);
     }
     return retval;
 }

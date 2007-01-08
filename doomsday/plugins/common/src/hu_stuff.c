@@ -663,12 +663,12 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
  */
 int M_StringWidth(char *string, dpatch_t * font)
 {
-    int     i;
-    int     w = 0;
-    int     c;
-    boolean skip;
+    uint    i;
+    int         w = 0;
+    int         c;
+    boolean     skip;
 
-    for(i = 0, skip = false; i < strlen(string); i++)
+    for(i = 0, skip = false; i < strlen(string); ++i)
     {
         c = toupper(string[i]) - HU_FONTSTART;
 
@@ -694,12 +694,12 @@ int M_StringWidth(char *string, dpatch_t * font)
  */
 int M_StringHeight(char *string, dpatch_t * font)
 {
-    int     i;
+    uint    i;
     int     h;
     int     height = SHORT(font[17].height);
 
     h = height;
-    for(i = 0; i < strlen(string); i++)
+    for(i = 0; i < strlen(string); ++i)
         if(string[i] == '\n')
             h += height;
     return h;

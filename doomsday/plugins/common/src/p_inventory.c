@@ -168,7 +168,8 @@ boolean P_GiveArtifact(player_t *player, artitype_e arti, mobj_t *mo)
     player->artifactCount++;
 
     // Maybe unhide the HUD?
-    ST_HUDUnHide(HUE_ON_PICKUP_INVITEM);
+    if(player == &players[consoleplayer])
+        ST_HUDUnHide(HUE_ON_PICKUP_INVITEM);
     return true;
 }
 
