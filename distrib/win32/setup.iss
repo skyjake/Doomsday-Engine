@@ -71,6 +71,7 @@ Source: "..\..\..\snowberry\graphics\*.jpg"; DestDir: "{app}\snowberry\graphics"
 Source: "..\..\..\snowberry\graphics\*.ico"; DestDir: "{app}\snowberry\graphics"
 Source: "..\..\..\snowberry\lang\*.lang"; DestDir: "{app}\snowberry\lang"
 Source: "..\..\..\snowberry\plugins\*.py"; DestDir: "{app}\snowberry\plugins"; Excludes: "observer.py"
+Source: "..\..\..\snowberry\plugins\tab30.plugin\Contents\tab30\*.py"; DestDir: "{app}\snowberry\plugins\tab30.plugin\Contents\tab30"
 Source: "..\..\..\snowberry\profiles\*.prof"; DestDir: "{app}\snowberry\profiles"
 Source: "..\..\..\snowberry\conf\*.conf"; DestDir: "{app}\snowberry\conf"
 ; Documentation
