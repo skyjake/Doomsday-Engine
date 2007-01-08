@@ -1850,15 +1850,16 @@ void M_Drawer(void)
                 if(*(messageString + start + i) == '\n' || i > BUFSIZE-1)
                 {
                     memset(string, 0, BUFSIZE);
-                    strncpy(string, messageString + start, i);
-                    string[BUFSIZE] = 0;
+                    strncpy(string, messageString + start, MIN_OF(i, BUFSIZE));
+                    string[BUFSIZE - 1] = 0;
                     start += i + 1;
                     break;
                 }
 
             if(i == strlen(messageString + start))
             {
-                strcpy(string, messageString + start);
+                strncpy(string, messageString + start, BUFSIZE);
+                string[BUFSIZE - 1] = 0;
                 start += i;
             }
 

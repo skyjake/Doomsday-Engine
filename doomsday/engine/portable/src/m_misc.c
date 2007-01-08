@@ -254,8 +254,11 @@ void M_ExtractFileBase2(const char *path, char *dest, int max, int ignore)
             *dest++ = toupper((int) *src++);
     }
 
-    // End with a terminating null.
-    *dest++ = 0;
+    if(max > 0) // Room for a null?
+    {
+        // End with a terminating null.
+        *dest++ = 0;
+    }
 }
 
 void M_ReadLine(char *buffer, int len, DFILE *file)

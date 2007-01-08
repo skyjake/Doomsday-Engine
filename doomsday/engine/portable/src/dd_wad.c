@@ -526,7 +526,8 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
     wadinfo_t header;
     DFILE  *handle;
     unsigned int length;
-    filelump_t *fileinfo, singleinfo;
+    filelump_t singleinfo;
+    filelump_t *fileinfo;
     filelump_t *freeFileInfo;
     filerecord_t *rec;
     const char *extension;
