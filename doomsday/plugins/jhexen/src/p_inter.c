@@ -217,6 +217,10 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
         }
         player->pendingweapon = weaponType;
         remove = false;
+
+        // Maybe unhide the HUD?
+        if(player == &players[consoleplayer])
+            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
     }
     else
     {                           // Deathmatch or single player game
@@ -241,6 +245,11 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
             // Should we change weapon automatically?
             P_MaybeChangeWeapon(player, weaponType, AM_NOAMMO, false);
         }
+
+        // Maybe unhide the HUD?
+        if(gaveWeapon && player == &players[consoleplayer])
+            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+
         if(!(gaveWeapon || gaveMana))
         {                       // Player didn't need the weapon or any mana
             return;

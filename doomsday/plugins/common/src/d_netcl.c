@@ -277,9 +277,20 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 
     if(flags & PSF2_OWNED_WEAPONS)
     {
+        boolean val;
+
         k = NetCl_ReadShort();
-        for(i = 0; i < NUMWEAPONS; i++)
-            pl->weaponowned[i] = (k & (1 << i)) != 0;
+        for(i = 0; i < NUMWEAPONS; ++i)
+        {
+            val = (k & (1 << i)) != 0;
+
+            // Maybe unhide the HUD?
+            if(val == true && pl->weaponowned[i] == false &&
+               pl == &players[consoleplayer])
+                ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+
+            pl->weaponowned[i] = val;
+        }
     }
 
     if(flags & PSF2_STATE)
@@ -353,17 +364,38 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     }
     if(flags & PSF_HEALTH)
     {
-        pl->health = NetCl_ReadByte();
+        byte health = NetCl_ReadByte();
+        if(pl->health < health && pl == &players[consoleplayer])
+            ST_HUDUnHide(HUE_ON_DAMAGE);
+
+        pl->health = health;
         pl->plr->mo->health = pl->health;
     }
     if(flags & PSF_ARMOR_POINTS)
     {
+        byte    ap;
 #if __JHEXEN__
-        for(i = 0; i < NUMARMOR; i++)
-            pl->armorpoints[i] = NetCl_ReadByte();
+        for(i = 0; i < NUMARMOR; ++i)
+        {
+            ap = NetCl_ReadByte();
+
+            // Maybe unhide the HUD?
+            if(ap >= pl->armorpoints[i] &&
+                pl == &players[consoleplayer])
+                ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+
+            pl->armorpoints[i] = ap;
+        }
 #else
-        pl->armorpoints = NetCl_ReadByte();
+        ap = NetCl_ReadByte();
+
+        // Maybe unhide the HUD?
+        if(ap >= pl->armorpoints && pl == &players[consoleplayer])
+            ST_HUDUnHide(HUE_ON_PICKUP_ARMOR);
+
+        pl->armorpoints = ap;
 #endif
+
     }
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
@@ -371,7 +403,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
         pl->inventorySlotNum = NetCl_ReadByte();
         pl->artifactCount = 0;
-        for(i = 0; i < NUMINVENTORYSLOTS; i++)
+        for(i = 0; i < NUMINVENTORYSLOTS; ++i)
         {
             if(i >= pl->inventorySlotNum)
             {
@@ -383,7 +415,13 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             pl->inventory[i].type = s & 0xff;
             pl->inventory[i].count = s >> 8;
             if(pl->inventory[i].type != arti_none)
+            {
                 pl->artifactCount += pl->inventory[i].count;
+
+                // Maybe unhide the HUD?
+                if(pl == &players[consoleplayer])
+                    ST_HUDUnHide(HUE_ON_PICKUP_INVITEM);
+            }
         }
 #  if __JHERETIC__
         if(plrNum == consoleplayer)
@@ -397,33 +435,55 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         b = NetCl_ReadByte();
         // Only the non-zero powers are included in the message.
 #if __JHEXEN__ || __JSTRIFE__
-        for(i = 0; i < NUMPOWERS - 1; i++)
-            if(b & (1 << i))
-                pl->powers[i + 1] = NetCl_ReadByte() * 35;
-            else
-                pl->powers[i + 1] = 0;
+        for(i = 0; i < NUMPOWERS - 1; ++i)
+        {
+            byte val = ((b & (1 << i))? (NetCl_ReadByte() * 35) : 0);
+
+            // Maybe unhide the HUD?
+            if(val > pl->powers[i] &&
+               pl == &players[consoleplayer])
+                ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+
+            pl->powers[i + 1] = val;
+        }
 #else
-        for(i = 0; i < NUMPOWERS; i++)
+        for(i = 0; i < NUMPOWERS; ++i)
         {
 #  if __JDOOM__
             if(i == pw_ironfeet || i == pw_strength)
                 continue;
 #  endif
-            if(b & (1 << i))
-                pl->powers[i] = NetCl_ReadByte() * 35;
-            else
-                pl->powers[i] = 0;
+            {
+                int val = ((b & (1 << i))? (NetCl_ReadByte() * 35) : 0);
+
+                // Maybe unhide the HUD?
+                if(val > pl->powers[i] &&
+                   pl == &players[consoleplayer])
+                    ST_HUDUnHide(HUE_ON_PICKUP_POWER);
+
+                pl->powers[i] = val;
+            }
         }
 #endif
     }
+
     if(flags & PSF_KEYS)
     {
         b = NetCl_ReadByte();
 #if __JDOOM__ | __JHERETIC__
-        for(i = 0; i < NUMKEYS; i++)
-            pl->keys[i] = (b & (1 << i)) != 0;
+        for(i = 0; i < NUMKEYS; ++i)
+        {
+            boolean val = (b & (1 << i)) != 0;
+
+            // Maybe unhide the HUD?
+            if(pl == &players[consoleplayer])
+                ST_HUDUnHide(HUE_ON_PICKUP_KEY);
+
+            pl->keys[i] = val;
+        }
 #endif
     }
+
     if(flags & PSF_FRAGS)
     {
         memset(pl->frags, 0, sizeof(pl->frags));
@@ -440,21 +500,43 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
            Con_Printf("%i ", pl->frags[i]);
            Con_Printf("\n"); */
     }
+
     if(flags & PSF_OWNED_WEAPONS)
     {
+        boolean val;
+
         b = NetCl_ReadByte();
-        for(i = 0; i < NUMWEAPONS; i++)
-            pl->weaponowned[i] = (b & (1 << i)) != 0;
+        for(i = 0; i < NUMWEAPONS; ++i)
+        {
+            val = (b & (1 << i)) != 0;
+
+            // Maybe unhide the HUD?
+            if(val == true && pl->weaponowned[i] == false &&
+               pl == &players[consoleplayer])
+                ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+
+            pl->weaponowned[i] = val;
+        }
     }
+
     if(flags & PSF_AMMO)
     {
-        for(i = 0; i < NUMAMMO; i++)
+        for(i = 0; i < NUMAMMO; ++i)
+        {
 #if __JHEXEN__ || __JSTRIFE__
-            pl->ammo[i] = NetCl_ReadByte();
+            int val = (int) NetCl_ReadByte();
 #else
-            pl->ammo[i] = NetCl_ReadShort();
+            int val = NetCl_ReadShort();
 #endif
+            // Maybe unhide the HUD?
+            if(val > pl->ammo[i] && pl == &players[consoleplayer])
+                ST_HUDUnHide(HUE_ON_PICKUP_AMMO);
+
+            pl->ammo[i] = val;
+
+        }
     }
+
     if(flags & PSF_MAX_AMMO)
     {
 #if __JDOOM__ || __JHERETIC__                   // Hexen has no use for max ammo.

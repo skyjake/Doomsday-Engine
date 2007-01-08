@@ -149,6 +149,10 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Should we change weapon automatically?
         P_MaybeChangeWeapon(player, weapon, AM_NOAMMO, deathmatch == 1);
 
+        // Maybe unhide the HUD?
+        if(player == &players[consoleplayer])
+            ST_HUDUnHide(HUE_ON_PICKUP_WEAPON);
+
         S_ConsoleSound(sfx_wpnup, NULL, player - players);
         return false;
     }
