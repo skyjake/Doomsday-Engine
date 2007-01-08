@@ -1314,7 +1314,8 @@ void W_GetPWADFileNames(char *buf, int bufSize, char separator)
             char    temp[256];
 
             Dir_FileName(records[i].filename, temp);
-            if(!stricmp(temp + strlen(temp) - 3, "gwa"))
+            if(!stricmp(temp + strlen(temp) - 3, "gwa") ||
+               !stricmp(temp + strlen(temp) - 3, "lmp"))
                 continue;
             M_LimitedStrCat(temp, 64, separator, buf, bufSize);
         }
