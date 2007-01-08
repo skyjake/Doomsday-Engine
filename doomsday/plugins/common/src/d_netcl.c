@@ -476,7 +476,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             boolean val = (b & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
-            if(pl == &players[consoleplayer])
+            if(val && !pl->keys[i] && pl == &players[consoleplayer])
                 ST_HUDUnHide(HUE_ON_PICKUP_KEY);
 
             pl->keys[i] = val;
