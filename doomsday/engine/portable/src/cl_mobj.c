@@ -321,7 +321,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
 #if _DEBUG
     if(!mo || !clmo)
     {
-        Con_Message("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p\n", mo, clmo);
+        VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p\n", mo, clmo) );
         return;
     }
 #endif
@@ -345,7 +345,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
     {
         mo->angle = clmo->angle;
 #ifdef _DEBUG
-        Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle);
+        VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle) );
 #endif
     }
     mo->sprite = clmo->sprite;
