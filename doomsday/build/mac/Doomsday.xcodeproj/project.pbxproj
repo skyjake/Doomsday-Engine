@@ -4009,7 +4009,7 @@
 					../../plugins/jhexen/include,
 					../../plugins/common/include,
 				);
-				INFOPLIST_FILE = "/Users/jaakko/Projects/deng/doomsday/jHexen-Info.plist";
+				INFOPLIST_FILE = "jHexen-Info.plist";
 				INSTALL_PATH = /Doomsday.app/Contents/Bundles;
 				LIBRARY_STYLE = BUNDLE;
 				OPTIMIZATION_CFLAGS = "-O0";
