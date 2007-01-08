@@ -286,7 +286,7 @@ uidata_slider_t sld_light_fog_bright =
 uidata_slider_t sld_light_ambient =
     { 0, 255, 0, 1, false, "rend-light-ambient" };
 uidata_slider_t sld_light_compression =
-    { -100, 100, 0, 1, false, "rend-light-compression", "Disabled" };
+    { -100, 100, 0, 1, false, "rend-light-compression" };
 uidata_slider_t sld_glow_height = { 0, 1024, 0, 1, false, "rend-glow-height" };
 uidata_slider_t sld_glow_scale = { .1f, 10, 0, 0.1f, true, "rend-glow-scale" };
 uidata_slider_t sld_fov = { 1, 179, 0, .01f, true, "rend-camera-fov" };

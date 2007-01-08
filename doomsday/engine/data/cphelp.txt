@@ -99,6 +99,11 @@ cvar = rend-light-radius-max
 def = 256
 desc = The maximum radius a dynamic light can have. This is just a limit: to make the lights larger, you also need to increase the Dynamic light radius factor.
 
+[Light range compression]
+cvar = rend-light-compression
+def = 0
+desc = Sector light range compression. Positive values will brighten dark areas while negative values will darken light areas of the map.
+
 [Floor/ceiling glow on walls]
 cvar = rend-glow-wall
 def = Yes
