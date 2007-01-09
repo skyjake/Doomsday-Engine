@@ -196,7 +196,7 @@ class Area (base.Widget):
         if self.expanding:
             self.containerSizer.AddStretchSpacer(self.weight)
         else:
-            self.containerSizer.Add((0, 0), self.weight, self._getLayoutFlags(), 
+            self.containerSizer.Add((0, 0), self.weight, self._getLayoutFlags(),
                                     self.border)
         pass
 
@@ -257,7 +257,7 @@ class Area (base.Widget):
         if not self.parentArea:
             # Standalone areas are never added to a sizer.
             return
-        
+
         # Detach and destroy the sizer of this area.
         self.parentArea.getWxWidget().Detach(self.getWxWidget())
         self.getWxWidget().Destroy()
@@ -367,7 +367,7 @@ class Area (base.Widget):
 
         @return A widgets.Text object.
         """
-        widget = sb.widget.text.Text(self.panel, -1, name, suffix, 
+        widget = sb.widget.text.Text(self.panel, -1, name, suffix,
                                      maxLineLength, align)
         self.__addWidget(widget)
         return widget
@@ -548,7 +548,7 @@ class Area (base.Widget):
 
         @param setting A Setting object.
 
-        @return  Tuple (area, widget). The area which contains all the widgets 
+        @return  Tuple (area, widget). The area which contains all the widgets
                  of the setting, and the main widget of the setting.
         """
         if setting.getType() == 'implicit':
@@ -739,9 +739,9 @@ class MultiArea (Area):
         """
         # Create a new panel for the page.
         panel = wx.Panel(self.panel, -1, style=wx.CLIP_CHILDREN)
-        if host.isWindows():
-            panel.SetBackgroundColour(ui.tabBgColour)
-            panel.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
+        #if host.isWindows():
+        #    panel.SetBackgroundColour(ui.tabBgColour)
+        #    panel.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
 
         panel.Hide()
 
@@ -887,7 +887,7 @@ class BoxedArea (Area):
 
     def createSetting(self, setting):
         self.setBorder(AREA_BORDER_BOXED)
-        return self.doCreateSetting(setting, 
+        return self.doCreateSetting(setting,
                                     SETTING_WEIGHT_LEFT * 20 - 1,
                                     SETTING_WEIGHT_RIGHT * 20)
 
