@@ -293,6 +293,9 @@ void MPIUpdateServerInfo(ui_object_t *ob)
         MPIClearServerInfo();
         return;
     }
+    
+    if(retrieving)
+        return;
 
     success =
         (searchMode ==
