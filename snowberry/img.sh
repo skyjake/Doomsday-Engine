@@ -10,10 +10,10 @@ mkdir -p "$WC_DIR"
 hdiutil attach "$WC_DMG" -noautoopen -quiet -mountpoint "$WC_DIR"
 
 rm -rf "$WC_DIR/Doomsday Engine.app"
-rm -rf "$WC_DIR/Read Me"
+rm -rf "$WC_DIR/Read Me.rtf"
 
 ditto "dist/Doomsday Engine.app" "$WC_DIR/Doomsday Engine.app"
-ditto "../doomsday/build/mac/Read Me" "$WC_DIR/Read Me.rtf"
+ditto "../doomsday/build/mac/Read Me.rtf" "$WC_DIR/Read Me.rtf"
 
 diskutil rename "$WC_DIR" "$VOLUME_NAME"
 
