@@ -62,7 +62,7 @@ extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
  *
  * @param x         X coordinate to test.
  * @param y         Y coordinate to test.
- * @return int      (0) if the front. OR (1) the back.
+ * @return int      <code>0</code> = front, else <code>1</code> = back.
  */
 int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
 {
@@ -87,6 +87,54 @@ int R_PointOnSide(fixed_t x, fixed_t y, node_t *node)
 
     dx = (fx - node->x);
     dy = (fy - node->y);
+
+    // Try to quickly decide by looking at the signs.
+    if(node->dx < 0)
+    {
+        if(node->dy < 0)
+        {
+            if(dx < 0)
+            {
+                if(dy >= 0)
+                    return 0;
+            }
+            else if(dy < 0)
+                return 1;
+        }
+        else
+        {
+            if(dx < 0)
+            {
+                if(dy < 0)
+                    return 1;
+            }
+            else if(dy >= 0)
+                return 0;
+        }
+    }
+    else
+    {
+        if(node->dy < 0)
+        {
+            if(dx < 0)
+            {
+                if(dy < 0)
+                    return 0;
+            }
+            else if(dy >= 0)
+                return 1;
+        }
+        else
+        {
+            if(dx < 0)
+            {
+                if(dy >= 0)
+                    return 1;
+            }
+            else if(dy < 0)
+                return 0;
+        }
+    }
 
     left = node->dy * dx;
     right = dy * node->dx;
