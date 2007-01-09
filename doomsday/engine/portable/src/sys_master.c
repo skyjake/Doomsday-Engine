@@ -233,7 +233,7 @@ static void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
 {
     ddstring_t  line;
     const char *pos = Str_Text(response);
-    boolean     foundChunked = false;
+    boolean     foundChunked = true;
     boolean     done;
     int         length;
 
@@ -391,11 +391,11 @@ static int C_DECL N_MasterSendRequest(void *parm)
     }
 
     // Write a HTTP GET request.
-    N_SockPrintf(s, "GET %s?list HTTP/1.1\n", masterPath);
-    N_SockPrintf(s, "Host: %s\n", masterAddress);
+    N_SockPrintf(s, "GET %s?list HTTP/1.1\r\n", masterPath);
+    N_SockPrintf(s, "Host: %s\r\n", masterAddress);
     // We want the connection to close as soon as everything has been
     // received.
-    N_SockPrintf(s, "Connection: close\n\n\n");
+    N_SockPrintf(s, "Connection: close\r\n\r\n\r\n");
 
     // Receive the entire list.
     Str_Init(&response);
