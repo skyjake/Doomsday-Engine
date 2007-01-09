@@ -46,7 +46,9 @@ cp -R $DENG_DIR/build/Deployment/Doomsday.app \
   $DENG_DIR/build/Deployment/*.bundle "dist/Doomsday Engine.app/Contents"
 
 # Make sure the readme is included in the image.
-cp $DENG_DIR/Readme.rtf dist
+#cp $DENG_DIR/Readme.rtf dist
 
 # Create a disk image.
-hdiutil create -srcfolder dist -volname "Doomsday Engine ${VERSION}" -nouuid -noanyowners $TARGET_IMAGE
+sh img.sh $TARGET_IMAGE "Doomsday Engine ${VERSION}"
+
+#hdiutil create -srcfolder dist -volname "Doomsday Engine ${VERSION}" -nouuid -noanyowners $TARGET_IMAGE
