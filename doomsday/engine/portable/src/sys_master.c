@@ -406,7 +406,7 @@ static int C_DECL N_MasterSendRequest(void *parm)
            Sys_GetSeconds() - startTime > RESPONSE_TIMEOUT)
         {        
 #ifdef _DEBUG
-            fprintf(stderr, "timed out!\n", startTime);
+            fprintf(outFile, "timed out!\n", startTime);
 #endif
             break;
         }
@@ -415,13 +415,13 @@ static int C_DECL N_MasterSendRequest(void *parm)
         {
             startTime = Sys_GetSeconds();
 #ifdef _DEBUG
-            fprintf(stderr, "startTime = %lf\n", startTime);
+            fprintf(outFile, "startTime = %lf\n", startTime);
 #endif
         }
         if(result)
         {
 #ifdef _DEBUG
-            fprintf(stderr, "received: >>>%s<<<\n", buf);
+            fprintf(outFile, "received: >>>%s<<<\n", buf);
 #endif
             Str_Append(&response, buf);
             memset(buf, 0, sizeof(buf));
