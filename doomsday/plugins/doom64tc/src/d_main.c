@@ -359,6 +359,8 @@ void D_PreInit(void)
 
     cfg.msgColor[0] = cfg.msgColor[1] = cfg.msgColor[2] = 1;
 
+    cfg.chatBeep = 1;
+
     cfg.killMessages = true;
     cfg.bobWeapon = 1;
     cfg.bobView = 1;

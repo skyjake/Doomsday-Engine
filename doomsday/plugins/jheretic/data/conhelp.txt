@@ -482,6 +482,9 @@ desc = Current number of Wings of Wrath artifacts.
 [player-artifact-chaosdevice]
 desc = Current number of Chaos Devices.
 
+[chat-beep]
+desc = 1= Play a beep sound when a new chat message arrives.
+
 [chat-macro0]
 desc = Chat macro 1.
 

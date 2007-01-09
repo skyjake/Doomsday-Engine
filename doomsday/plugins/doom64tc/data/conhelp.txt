@@ -448,6 +448,9 @@ desc = 1= Player has yellow skullkey.
 [player-key-redskull]
 desc = 1= Player has red skullkey.
 
+[chat-beep]
+desc = 1= Play a beep sound when a new chat message arrives.
+
 [chat-macro0]
 desc = Chat macro 1.
 

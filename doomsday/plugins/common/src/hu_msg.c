@@ -244,6 +244,7 @@ cvar_t msgCVars[] = {
     {"chat-macro7", 0, CVT_CHARPTR, &cfg.chat_macros[7], 0, 0},
     {"chat-macro8", 0, CVT_CHARPTR, &cfg.chat_macros[8], 0, 0},
     {"chat-macro9", 0, CVT_CHARPTR, &cfg.chat_macros[9], 0, 0},
+    {"chat-beep", 0, CVT_BYTE, &cfg.chatBeep, 0, 1},
     {NULL}
 };
 

@@ -374,6 +374,8 @@ void H2_PreInit(void)
     cfg.msgColor[1] = deffontRGB2[1];
     cfg.msgColor[2] = deffontRGB2[2];
 
+    cfg.chatBeep = 1;
+
     cfg.weaponOrder[0] = WP_FOURTH;
     cfg.weaponOrder[1] = WP_THIRD;
     cfg.weaponOrder[2] = WP_SECOND;

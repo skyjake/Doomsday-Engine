@@ -383,6 +383,8 @@ void H_PreInit(void)
     cfg.msgColor[1] = deffontRGB2[1];
     cfg.msgColor[2] = deffontRGB2[2];
 
+    cfg.chatBeep = 1;
+
   //cfg.killMessages = true;
     cfg.bobView = 1;
     cfg.bobWeapon = 1;

@@ -168,6 +168,7 @@ typedef struct jdoom_config_s {
     float           msgColor[3];
 
     char           *chat_macros[10];
+    byte            chatBeep;
 
     int             corpseTime;
     byte            killMessages;

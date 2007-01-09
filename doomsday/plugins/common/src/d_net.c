@@ -70,6 +70,8 @@ DEFCC(CCmdSetClass);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void D_NetMessageEx(char *msg, boolean playSound);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int netSvAllowSendMsg;
@@ -108,29 +110,28 @@ cvar_t netCVars[] = {
 
 // CODE ---------------------------------------------------------------------
 
-/*
+/**
  * Register the console commands and variables of the common netcode.
  */
 void D_NetConsoleRegistration(void)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; netCCmds[i].name; i++)
+    for(i = 0; netCCmds[i].name; ++i)
         Con_AddCommand(netCCmds + i);
-    for(i = 0; netCVars[i].name; i++)
+    for(i = 0; netCVars[i].name; ++i)
         Con_AddVariable(netCVars + i);
 }
 
-/*
+/**
  * Called when the network server starts.
  *
  * Duties include:
- *      updating global state variables
- *      initializing all players' settings
+ * Updating global state variables and initializing all players' settings
  */
 int D_NetServerStarted(int before)
 {
-    int     netMap;
+    int         netMap;
 
     if(before)
         return true;
@@ -177,10 +178,11 @@ int D_NetServerStarted(int before)
     return true;
 }
 
-/*
+/**
  * Called when a network server closes.
  *
- * Duties include: Restoring global state variables
+ * Duties include:
+ * Restoring global state variables
  */
 int D_NetServerClose(int before)
 {
@@ -300,7 +302,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         int     i, num, oldecho = cfg.echoMsg;
 
         // Count the number of players.
-        for(i = num = 0; i < MAXPLAYERS; i++)
+        for(i = num = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->ingame)
                 num++;
         // If there are more than two players, include the name of
@@ -313,7 +315,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 
         // The chat message is already echoed by the console.
         cfg.echoMsg = false;
-        D_NetMessage(msgBuff);
+        D_NetMessageEx(msgBuff, (cfg.chatBeep? true : false));
         cfg.echoMsg = oldecho;
     }
     return true;
@@ -321,11 +323,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 
 int D_NetWorldEvent(int type, int parm, void *data)
 {
-    //short *ptr;
-    int     i;
-
-    //int mtype, flags;
-    //fixed_t x, y, z, momx, momy, momz;
+    int         i;
 
     switch (type)
     {
@@ -545,7 +543,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, int length)
     }
 }
 
-/*
+/**
  * Plays a (local) chat sound.
  */
 void D_ChatSound(void)
@@ -564,11 +562,13 @@ void D_ChatSound(void)
 #endif
 }
 
-/*
+/**
  * Show a message on screen, optionally accompanied
  * by Chat sound effect.
+ *
+ * @param playSound         If <code>true</code>, play the chat sound.
  */
-void D_NetMessageEx(char *msg, boolean play_sound)
+static void D_NetMessageEx(char *msg, boolean playSound)
 {
     strcpy(msgBuff, msg);
     // This is intended to be a local message.
@@ -576,22 +576,26 @@ void D_NetMessageEx(char *msg, boolean play_sound)
     netSvAllowSendMsg = false;
     P_SetMessage(players + consoleplayer, msgBuff, false);
 
-    if(play_sound)
+    if(playSound)
         D_ChatSound();
 
     netSvAllowSendMsg = true;
 }
 
-/*
- * Show message on screen, play chat sound.
+/**
+ * Show message on screen and play chat sound.
+ *
+ * @param msg               Ptr to the message to print.
  */
 void D_NetMessage(char *msg)
 {
     D_NetMessageEx(msg, true);
 }
 
-/*
+/**
  * Show message on screen.
+ *
+ * @param msg
  */
 void D_NetMessageNoSound(char *msg)
 {
@@ -602,8 +606,9 @@ void D_NetMessageNoSound(char *msg)
  * Issues a damage request when a client is trying to damage another player's
  * mobj.
  *
- * @return  True, if no further processing of the damage should be done.
- *          False to process damage as normally.
+ * @return                  If <code>true</code> no further processing of the
+ *                          damage should be done else, process the damage as
+ *                          normally.
  */
 boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                         int damage)
@@ -612,12 +617,12 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     {
         return false;
     }
-    
+
     if(IS_SERVER && source->player - players > 0)
     {
         // A client is trying to do damage.
 #ifdef _DEBUG
-        Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
+Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
 #endif
         // TODO: Damage requests have not been fully implemented yet.
         return false;
@@ -626,19 +631,19 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     else if(IS_CLIENT && source->player - players == consoleplayer)
     {
 #ifdef _DEBUG
-        Con_Message("P_DamageMobj2: Client should request damage on mobj %p.\n", target);
+Con_Message("P_DamageMobj2: Client should request damage on mobj %p.\n", target);
 #endif
         return true;
     }
 
 #ifdef _DEBUG
-    Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
+Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
 #endif
     // Process as normal damage.
     return false;
 }
 
-/*
+/**
  * Console command to change the players' colors.
  */
 DEFCC(CCmdSetColor)
@@ -693,7 +698,7 @@ DEFCC(CCmdSetColor)
     return true;
 }
 
-/*
+/**
  * Console command to change the players' class.
  */
 #if __JHEXEN__
@@ -718,7 +723,8 @@ DEFCC(CCmdSetClass)
     return true;
 }
 #endif
-/*
+
+/**
  * Console command to change the current map.
  */
 DEFCC(CCmdSetMap)

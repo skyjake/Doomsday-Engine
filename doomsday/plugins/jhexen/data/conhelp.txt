@@ -563,6 +563,9 @@ desc = 1= Player has Clock Gear 3.
 [player-artifact-gear4]
 desc = 1= Player has Clock Gear 4.
 
+[chat-beep]
+desc = 1= Play a beep sound when a new chat message arrives.
+
 [chat-macro0]
 desc = Chat macro 1.
 

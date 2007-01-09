@@ -155,6 +155,7 @@ typedef struct {
 
     int             snd_3D, messageson;
     char           *chat_macros[10];
+    byte            chatBeep;
     float           snd_ReverbFactor;
     byte            reverbDebug;
 
