@@ -480,7 +480,7 @@
 		B0F1789C087C5A230051F24A /* sys_dylib.h in Headers */ = {isa = PBXBuildFile; fileRef = B013500E06EDD51E007861F2 /* sys_dylib.h */; };
 		B0F1789D087C5A230051F24A /* rend_bias.h in Headers */ = {isa = PBXBuildFile; fileRef = B0E3D3E107903967007811F6 /* rend_bias.h */; };
 		B0F178A1087C5A230051F24A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
-		B0F178A2087C5A230051F24A /* Readme.rtf in Resources */ = {isa = PBXBuildFile; fileRef = B0A8094D06F1F45D007AEB2E /* Readme.rtf */; };
+		B0F178A2087C5A230051F24A /* Read Me.rtf in Resources */ = {isa = PBXBuildFile; fileRef = B0A8094D06F1F45D007AEB2E /* Read Me.rtf */; };
 		B0F178A3087C5A230051F24A /* deng.icns in Resources */ = {isa = PBXBuildFile; fileRef = B0BBED3007DB998600663713 /* deng.icns */; };
 		B0F178A4087C5A230051F24A /* Startup.nib in Resources */ = {isa = PBXBuildFile; fileRef = B0D73660087ACFE8000EEA69 /* Startup.nib */; };
 		B0F178A7087C5A230051F24A /* cl_frame.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC85006B41788005824AD /* cl_frame.c */; };
@@ -1166,7 +1166,7 @@
 		B0930D580A87481C007CAEBC /* m_cheat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = m_cheat.c; path = ../../plugins/jheretic/src/m_cheat.c; sourceTree = SOURCE_ROOT; };
 		B0930D620A87485E007CAEBC /* g_ctrl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = g_ctrl.c; path = ../../plugins/jhexen/src/g_ctrl.c; sourceTree = SOURCE_ROOT; };
 		B0930D630A87485E007CAEBC /* m_cheat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = m_cheat.c; path = ../../plugins/jhexen/src/m_cheat.c; sourceTree = SOURCE_ROOT; };
-		B0A8094D06F1F45D007AEB2E /* Readme.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Readme.rtf; sourceTree = "<group>"; };
+		B0A8094D06F1F45D007AEB2E /* Read Me.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = "Read Me.rtf"; sourceTree = "<group>"; };
 		B0A904F80A452FAA00DD2583 /* cl_oldworld.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cl_oldworld.c; path = ../../engine/portable/src/cl_oldworld.c; sourceTree = SOURCE_ROOT; };
 		B0A905540A45357D00DD2583 /* cl_oldframe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cl_oldframe.c; path = ../../engine/portable/src/cl_oldframe.c; sourceTree = SOURCE_ROOT; };
 		B0A9757A0ABC322500788090 /* p_map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = p_map.h; path = ../../plugins/common/include/p_map.h; sourceTree = SOURCE_ROOT; };
@@ -1458,7 +1458,7 @@
 			isa = PBXGroup;
 			children = (
 				B0C8F45B0A3F114A00CFA4A5 /* changelog.txt */,
-				B0A8094D06F1F45D007AEB2E /* Readme.rtf */,
+				B0A8094D06F1F45D007AEB2E /* Read Me.rtf */,
 				B0DAE7600982B154000A8265 /* Engine */,
 				B0DAE75E0982B10F000A8265 /* Common to All Games */,
 				B0D5B61C06EE404200B98CC8 /* jDoom */,
@@ -2692,7 +2692,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B0F178A1087C5A230051F24A /* InfoPlist.strings in Resources */,
-				B0F178A2087C5A230051F24A /* Readme.rtf in Resources */,
+				B0F178A2087C5A230051F24A /* Read Me.rtf in Resources */,
 				B0F178A3087C5A230051F24A /* deng.icns in Resources */,
 				B0F178A4087C5A230051F24A /* Startup.nib in Resources */,
 			);
