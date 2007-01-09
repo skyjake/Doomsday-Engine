@@ -786,30 +786,28 @@ DEFCC(CCmdMsgAction)
             return true;
         }
 
-        if(!chatOn) // we need to enable chat mode first...
+        if(!IS_NETGAME)
         {
-            if(IS_NETGAME)
+            Con_Message("You can't chat if not in multiplayer\n");
+            return false;
+        }
+
+        if(argc == 3)
+        {
+            plynum = atoi(argv[1]);
+            if(plynum < 0 || plynum > 3)
             {
-                Con_Message("You can't chat if not in multiplayer\n");
+                // Bad destination.
+                Con_Message("Invalid player number \"%i\". Should be 0-3\n",
+                            plynum);
                 return false;
             }
-
-            if(argc == 3)
-            {
-                plynum = atoi(argv[1]);
-                if(plynum < 0 || plynum > 3)
-                {
-                    // Bad destination.
-                    Con_Message("Invalid player number \"%i\". Should be 0-3\n",
-                                plynum);
-                    return false;
-                }
-            }
-            else
-                plynum = HU_BROADCAST;
-
-            openChat(plynum);
         }
+        else
+            plynum = HU_BROADCAST;
+
+        if(!chatOn) // we need to enable chat mode first...
+            openChat(plynum);
 
         if(!(sendMacro(atoi(((argc == 3)? argv[2] : argv[1])))))
         {
