@@ -60,7 +60,7 @@ class FormattedTabArea (FormattedList):
 
     def setMultiArea(self, multiArea):
         """Set the MultiArea that will react to the changes in the list.
-        
+
         @param multiArea The ui.MultiArea object to pair up with the
         list.
         """
@@ -85,8 +85,8 @@ class FormattedTabArea (FormattedList):
         else:
             imageName = language.translate(tabId + '-icon')
 
-        return ('<table width="100%" border=0 cellspacing=3 cellpadding=1>' + 
-                '<tr><td width=35><img width=32 height=32 ' + 
+        return ('<table width="100%" border=0 cellspacing=3 cellpadding=1>' +
+                '<tr><td width=35><img width=32 height=32 ' +
                 'src="%s"><td align="left" valign="center">%s</td>' %
                 (paths.findBitmap(imageName), language.translate(tabId)) +
                 '</table>')
@@ -146,7 +146,7 @@ class FormattedTabArea (FormattedList):
         """
         if id in self.hiddenTabs:
             self.hiddenTabs.remove(id)
-        
+
         self.multi.removePage(id)
         self.removeItem(id)
 
@@ -182,10 +182,10 @@ class FormattedTabArea (FormattedList):
             #if self.getSelectedTab() == identifier:
             #    index = min(self.getItemCount() - 1, self.getSelectedIndex() + 1)
             #    self.selectTab(self.items[index][0])
-                
+
             self.hiddenTabs.append(identifier)
             self.removeItem(identifier)
-        
+
     def onItemSelected(self, ev):
         FormattedList.onItemSelected(self, ev)
 
@@ -204,7 +204,7 @@ class FormattedTabArea (FormattedList):
 #        #tabs = self.getTabs()
 #        #self.addItem(
 
-    
+
 
 
 class TabArea (base.Widget):
@@ -226,7 +226,7 @@ class TabArea (base.Widget):
         # The formatted tab area style uses another widget entirely.
         if style == TabArea.STYLE_FORMATTED:
             raise Exception('not supported here')
-        
+
         # Create the appropriate widget.
         if style == TabArea.STYLE_ICON:
             w = wx.Listbook(parent, wxId, style=wx.LB_LEFT)
@@ -269,7 +269,7 @@ class TabArea (base.Widget):
     def clear(self):
         """When a TabArea is cleared, it must destroy all of its tabs,
         which contain subareas."""
-        
+
         self.removeAllTabs()
         base.Widget.clear(self)
 
@@ -326,7 +326,6 @@ class TabArea (base.Widget):
         tab = wx.Panel(book, -1, style=wx.CLIP_CHILDREN)
 
         if host.isWindows():
-            tab.SetBackgroundColour(ui.tabBgColour)
             tab.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
 
         # Put the new tab in the page map so that when an event
@@ -424,7 +423,7 @@ class TabArea (base.Widget):
                         book.SetSelection(index - 1)
                     elif index < book.GetPageCount() - 1:
                         book.SetSelection(index + 1)
-                
+
                 # This won't destroy the panel or its contents.
                 book.RemovePage(index)
 
@@ -465,7 +464,7 @@ class TabArea (base.Widget):
 
     def retranslate(self):
         """Retranslate the tab labels."""
-    
+
         for identifier, panel in self.panelMap:
             pageIndex = self.__getPanelIndex(panel)
             if pageIndex != None:
@@ -487,4 +486,3 @@ class TabArea (base.Widget):
         notification = events.SelectNotify(self.widgetId,
                                            self.__lookupPanel(tabPanel))
         events.send(notification)
-

@@ -739,9 +739,8 @@ class MultiArea (Area):
         """
         # Create a new panel for the page.
         panel = wx.Panel(self.panel, -1, style=wx.CLIP_CHILDREN)
-        #if host.isWindows():
-        #    panel.SetBackgroundColour(ui.tabBgColour)
-        #    panel.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
+        if host.isWindows():
+            panel.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
 
         panel.Hide()
 

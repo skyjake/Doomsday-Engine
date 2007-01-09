@@ -87,7 +87,7 @@ USE_HELP_AREA = not st.getSystemBoolean('main-hide-help')
 USE_MINIMAL_PROFILE = st.getSystemBoolean('profile-minimal-mode')
 
 # A Windows kludge: background colour for tabs and the controls in them.
-tabBgColour = wx.Colour(250, 250, 250)
+#tabBgColour = wx.Colour(250, 250, 250)
 #st.getSystemInteger('tab-background-red'),
 #                        st.getSystemInteger('tab-background-green'),
 #                        st.getSystemInteger('tab-background-blue'))
@@ -218,7 +218,7 @@ class MainFrame (wx.Frame):
         @param title  Title for the main window.
         """
         from sb.widget.area import Area
-        
+
         # Commands for the popup menu.
         self.menuCommandMap = {}
 
@@ -290,7 +290,7 @@ class MainFrame (wx.Frame):
             self.mainPanel = MainPanel(self.profSplitter)
         else:
             profilePanel = None
-            
+
             self.mainPanel = MainPanel(parentWin)
 
             getArea(TABS).setWeight(0)
@@ -463,11 +463,11 @@ class MainFrame (wx.Frame):
                 # No menu for this.
                 self.menus[level] = None
                 continue
-                
+
             self.menus[level] = wx.Menu()
-            self.menuBar.Append(self.menus[level], 
+            self.menuBar.Append(self.menus[level],
                                 language.translate("menu-" + str(level)))
-        
+
             # Sort the items based on groups, and append separators where necessary.
             menuItems[level].sort(lambda x, y: cmp(x[3], y[3]))
             separated = []
@@ -487,20 +487,20 @@ class MainFrame (wx.Frame):
 
                 if itemSeparate and self.menus[level].GetMenuItemCount() > 0:
                     self.menus[level].AppendSeparator()
-                
+
                 menuItemId = 'menu-' + itemId
-                
+
                 accel = ''
                 if language.isDefined(menuItemId + '-accel'):
                     accel = "\t" + language.translate(menuItemId + '-accel')
-                    
+
                 # Generate a new ID for the item.
                 wxId = wx.NewId()
                 self.menuCommandMap[wxId] = itemCommand
                 self.menus[level].Append(wxId,
                                         uniConv(language.translate(menuItemId) + accel))
                 wx.EVT_MENU(self, wxId, self.onPopupCommand)
-                
+
                 if host.isMac():
                     # Special menu items on Mac.
                     if itemId == 'about':
@@ -513,18 +513,18 @@ class MainFrame (wx.Frame):
         if host.isMac():
             # Special Help menu on Mac.
             wx.App_SetMacHelpMenuTitleName(language.translate('menu-' + str(MENU_HELP)))
-                                                                                          
-        self.SetMenuBar(self.menuBar)                       
+
+        self.SetMenuBar(self.menuBar)
 
     def onPopupCommand(self, ev):
         """Called when a selection is made in the popup menu."""
         events.send(events.Command(self.menuCommandMap[ev.GetId()]))
-        
+
     def getMenuItem(self, identifier):
         """Finds a menu item.
         @param identifier  Identifier of the menu item.
         @return wxMenuItem, or None."""
-        
+
         for item in self.menuCommandMap.keys():
             if self.menuCommandMap[item] == identifier:
                 return self.menuBar.FindItemById(item)
@@ -564,9 +564,9 @@ def addMenuCommand(level, identifier, label=None, pos=None, separate=False, grou
     @param level       Priority level (0, 1, 2).
     @param identifier  Identifier of the command.
     @param label       Label for the command. If not specified, the same as the identifier.
-    @param pos         Position in the menu. None will cause the new item to be appended 
+    @param pos         Position in the menu. None will cause the new item to be appended
                        to the end of the menu. The first item in the menu has position 0.
-    @param separate    If True and there are existing items already, add a separator.                    
+    @param separate    If True and there are existing items already, add a separator.
     @param group       If specified, items are sorted by this before adding to the menu.
                        The items without a group are inserted first. Groups are separated
                        with separators.
@@ -584,22 +584,22 @@ def addMenuCommand(level, identifier, label=None, pos=None, separate=False, grou
         item = (identifier, identifier, separate, group)
     else:
         item = (identifier, label, separate, group)
-       
+
     if pos is None:
         menuItems[level].append(item)
     else:
         menuItems[level].insert(pos, item)
-        
-        
+
+
 def isMenuEmpty(level):
     """Determines whether a certain menu is currently empty.
     @return True or False."""
     return len(menuItems[level]) == 0
-    
-        
+
+
 def enableMenuCommand(identifier, enable=True):
     """Enables or disables a command in the menu.
-    
+
     @param identifier  Identifier of the menu item.
     @param enable  True, if the item should be enabled. False, if disabled.
     """
@@ -609,8 +609,8 @@ def enableMenuCommand(identifier, enable=True):
             item.Enable(True)
         else:
             item.Enable(False)
-    
-    
+
+
 def disableMenuCommand(identifier):
     enableMenuCommand(identifier, False)
 
