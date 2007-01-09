@@ -325,8 +325,11 @@ const char *Str_GetLine(ddstring_t *ds, const char *src)
 
     for(Str_Clear(ds); *src && *src != '\n'; src++)
     {
-        buf[0] = *src;
-        Str_Append(ds, buf);
+        if(*src != '\r')
+        {
+            buf[0] = *src;
+            Str_Append(ds, buf);
+        }
     }
 
     // Strip whitespace around the line.
