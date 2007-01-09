@@ -282,10 +282,12 @@ void H2_PreInit(void)
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARTI] = true;
+    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+        hudUnHide[i] = 1;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
     cfg.xhairSize = 1;
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
         cfg.xhairColor[i] = 255;
     cfg.jumpEnabled = cfg.netJumping = true;     // true by default in Hexen
     cfg.jumpPower = 9;
@@ -316,7 +318,7 @@ void H2_PreInit(void)
     cfg.flashcolor[2] = .5f;
     cfg.flashspeed = 4;
     cfg.turningSkull = false;
-        cfg.hudScale = .7f;
+    cfg.hudScale = .7f;
     cfg.hudColor[0] = deffontRGB[0];    // use the default colour by default.
     cfg.hudColor[1] = deffontRGB[1];
     cfg.hudColor[2] = deffontRGB[2];

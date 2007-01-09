@@ -105,7 +105,7 @@ char *borderLumps[] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Attempt to change the current game mode. Can only be done when not
  * actually in a level.
  *
@@ -161,7 +161,7 @@ void D_GetDemoLump(int num, char *out)
             pack_plut ? 'P' : gamemission == pack_tnt ? 'T' : '2', num);
 }
 
-/*
+/**
  * Check which known IWADs are found. The purpose of this routine is to
  * find out which IWADs the user lets us to know about, but we don't
  * decide which one gets loaded or even see if the WADs are actually
@@ -192,12 +192,12 @@ void DetectIWADs(void)
         {"doom.wad", "-ultimate"},
         {0, 0}
     };
-    int     i, k;
-    boolean overridden = false;
-    char    fn[256];
+    int         i, k;
+    boolean     overridden = false;
+    char        fn[256];
 
     // First check if an overriding command line option is being used.
-    for(i = 0; iwads[i].file; i++)
+    for(i = 0; iwads[i].file; ++i)
         if(ArgExists(iwads[i].override))
         {
             overridden = true;
@@ -206,7 +206,7 @@ void DetectIWADs(void)
 
     // Tell the engine about all the possible IWADs.
     for(k = 0; paths[k]; k++)
-        for(i = 0; iwads[i].file; i++)
+        for(i = 0; iwads[i].file; ++i)
         {
             // Are we allowed to use this?
             if(overridden && !ArgExists(iwads[i].override))
@@ -224,7 +224,7 @@ boolean LumpsFound(char **list)
     return true;
 }
 
-/*
+/**
  * Checks availability of IWAD files by name, to determine whether
  * registered/commercial features  should be executed (notably loading
  * PWAD's).
@@ -274,7 +274,7 @@ void D_IdentifyFromData(void)
         {registered_lumps, registered},
         {shareware_lumps, shareware}
     };
-    int     i, num = sizeof(list) / sizeof(identify_t);
+    int         i, num = sizeof(list) / sizeof(identify_t);
 
     // First check the command line.
     if(ArgCheck("-sdoom"))
@@ -308,7 +308,7 @@ void D_IdentifyFromData(void)
     }
 
     // Now we must look at the lumps.
-    for(i = 0; i < num; i++)
+    for(i = 0; i < num; ++i)
     {
         // If all the listed lumps are found, selection is made.
         // All found?
@@ -334,7 +334,7 @@ void D_IdentifyFromData(void)
                 "** Important data might be missing! **\n\n");
 }
 
-/*
+/**
  * gamemode, gamemission and the gameModeString are set.
  */
 void G_IdentifyVersion(void)
@@ -359,13 +359,13 @@ void G_IdentifyVersion(void)
            "-");
 }
 
-/*
- *  Pre Engine Initialization routine.
- *    All game-specific actions that should take place at this time go here.
+/**
+ * Pre Engine Initialization routine.
+ * All game-specific actions that should take place at this time go here.
  */
 void D_PreInit(void)
 {
-    int     i;
+    int         i;
 
     D_SetGameMode(indetermined);
 
@@ -399,13 +399,15 @@ void D_PreInit(void)
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_FACE] = false;
+    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+        hudUnHide[i] = 1;
     cfg.hudScale = .6f;
     cfg.hudColor[0] = 1;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
     cfg.hudColor[3] = 1;
     cfg.hudIconAlpha = 1;
     cfg.xhairSize = 1;
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
         cfg.xhairColor[i] = 255;
     cfg.moveCheckZ = true;
     cfg.jumpPower = 9;
@@ -511,15 +513,15 @@ void D_PreInit(void)
     G_PreInit();
 }
 
-/*
- *  Post Engine Initialization routine.
- *    All game-specific actions that should take place at this time go here.
+/**
+ * Post Engine Initialization routine.
+ * All game-specific actions that should take place at this time go here.
  */
 void D_PostInit(void)
 {
-    int     p;
-    char    file[256];
-    char    mapstr[6];
+    int         p;
+    char        file[256];
+    char        mapstr[6];
 
     // Common post init routine
     G_PostInit();

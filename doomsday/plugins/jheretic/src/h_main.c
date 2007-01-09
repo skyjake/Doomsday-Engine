@@ -129,7 +129,7 @@ static boolean devMap;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Attempt to change the current game mode. Can only be done when not
  * actually in a level.
  *
@@ -181,12 +181,11 @@ void wadprintf(void)
 
 void D_AddFile(char *file)
 {
-    int     numwadfiles;
-    char   *new;
-
-    //  char text[256];
+    int         numwadfiles;
+    char       *new;
 
     for(numwadfiles = 0; wadfiles[numwadfiles]; numwadfiles++);
+
     new = malloc(strlen(file) + 1);
     strcpy(new, file);
     if(strlen(exrnwads) + strlen(file) < 78)
@@ -217,7 +216,7 @@ void D_AddFile(char *file)
     wadfiles[numwadfiles] = new;
 }
 
-/*
+/**
  * Check which known IWADs are found. The purpose of this routine is to
  * find out which IWADs the user lets us to know about, but we don't
  * decide which one gets loaded or even see if the WADs are actually
@@ -232,7 +231,7 @@ void DetectIWADs(void)
     DD_AddIWAD("heretic.wad");
 }
 
-/*
+/**
  * gamemode, gamemission and the gameModeString are set.
  */
 void G_IdentifyVersion(void)
@@ -252,13 +251,13 @@ void G_IdentifyVersion(void)
     }
 }
 
-/*
- *  Pre Engine Initialization routine.
- *    All game-specific actions that should take place at this time go here.
+/**
+ * Pre Engine Initialization routine.
+ * All game-specific actions that should take place at this time go here.
  */
 void H_PreInit(void)
 {
-    int i;
+    int         i;
 
     D_SetGameMode(indetermined);
 
@@ -292,6 +291,8 @@ void H_PreInit(void)
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARTI] = true;
+    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+        hudUnHide[i] = 1;
     cfg.hudScale = .7f;
     cfg.hudColor[0] = .325f;
     cfg.hudColor[1] = .686f;
@@ -299,7 +300,7 @@ void H_PreInit(void)
     cfg.hudColor[3] = 1;
     cfg.hudIconAlpha = 1;
     cfg.xhairSize = 1;
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
         cfg.xhairColor[i] = 255;
   //cfg.snd_3D = false;
   //cfg.snd_ReverbFactor = 100;
@@ -413,16 +414,15 @@ void H_PreInit(void)
     G_PreInit();
 }
 
-/*
- *  Post Engine Initialization routine.
- *    All game-specific actions that should take place at this time go here.
+/**
+ * Post Engine Initialization routine.
+ * All game-specific actions that should take place at this time go here.
  */
 void H_PostInit(void)
 {
-    int     e, m;
-    int     p;
-    char    file[256];
-    char    mapstr[6];
+    int         e, m, p;
+    char        file[256];
+    char        mapstr[6];
 
     if(W_CheckNumForName("E2M1") == -1)
         // Can't find episode 2 maps, must be the shareware WAD

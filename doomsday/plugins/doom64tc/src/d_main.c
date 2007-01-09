@@ -204,7 +204,7 @@ void D_IdentifyFromData(void)
     int     i, num = sizeof(list) / sizeof(identify_t);
 
     // Now we must look at the lumps.
-    for(i = 0; i < num; i++)
+    for(i = 0; i < num; ++i)
     {
         // If all the listed lumps are found, selection is made.
         // All found?
@@ -276,13 +276,15 @@ void D_PreInit(void)
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_POWER] = true;
+    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+        hudUnHide[i] = 1;
     cfg.hudScale = .6f;
     cfg.hudColor[0] = 1;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
     cfg.hudColor[3] = 0.75f;
     cfg.hudIconAlpha = 0.5f;
     cfg.xhairSize = 1;
-    for(i = 0; i < 4; i++)
+    for(i = 0; i < 4; ++i)
         cfg.xhairColor[i] = 255;
     cfg.moveCheckZ = true;
     cfg.jumpPower = 9;

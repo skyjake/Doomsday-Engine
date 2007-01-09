@@ -364,8 +364,9 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     }
     if(flags & PSF_HEALTH)
     {
-        byte health = NetCl_ReadByte();
-        if(pl->health < health && pl == &players[consoleplayer])
+        int health = NetCl_ReadByte();
+
+        if(health < pl->health && pl == &players[consoleplayer])
             ST_HUDUnHide(HUE_ON_DAMAGE);
 
         pl->health = health;
