@@ -50,7 +50,7 @@ manifest = """
 
 opts = {
     "py2exe": {
-        "includes": "urllib",
+        "includes": "webbrowser",
     }
 }
 
