@@ -277,7 +277,7 @@ void D_PreInit(void)
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_POWER] = true;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
-        hudUnHide[i] = 1;
+        cfg.hudUnHide[i] = 1;
     cfg.hudScale = .6f;
     cfg.hudColor[0] = 1;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;

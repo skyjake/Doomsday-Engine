@@ -283,7 +283,7 @@ void H2_PreInit(void)
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARTI] = true;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
-        hudUnHide[i] = 1;
+        cfg.hudUnHide[i] = 1;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
     cfg.xhairSize = 1;

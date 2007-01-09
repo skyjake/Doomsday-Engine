@@ -292,7 +292,7 @@ void H_PreInit(void)
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARTI] = true;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
-        hudUnHide[i] = 1;
+        cfg.hudUnHide[i] = 1;
     cfg.hudScale = .7f;
     cfg.hudColor[0] = .325f;
     cfg.hudColor[1] = .686f;
