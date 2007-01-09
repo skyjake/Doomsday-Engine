@@ -11,7 +11,7 @@ name = 'Doomsday Engine'
 iconfile = 'snowberry.icns'
 verstr = ver + '-macosx'
 
-includes = []
+includes = ['webbrowser']
 
 resources = [
     'build/addons',

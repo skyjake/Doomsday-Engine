@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not: http://www.opensource.org/
 
-import string, time, os, urllib
+import string, time, os, webbrowser
 import language, events, ui, host
 import sb.aodb as ao
 import sb.addon
@@ -147,17 +147,7 @@ def handleCommand(event):
         updateHelpText()    
         
     elif event.hasId('open-documentation'):
-        if host.isMac():
-            cmd = 'open ' + urllib.quote(language.translate('documentation-url'), '/:?=')
-            os.system(cmd)
-        else:
-            dialog, area = sb.util.dialog.createButtonDialog(
-                'help-documentation-dialog',
-                ['ok'], 'ok', resizable=False)
-            msg = area.createFormattedText()
-            msg.setText(language.translate('documentation-url'))
-            msg.setMinSize(400, 100)
-            dialog.run()
+        webbrowser.open_new(language.translate('documentation-url'))
             
 
 def handleNotify(event):

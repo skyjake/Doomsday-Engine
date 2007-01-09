@@ -24,9 +24,6 @@
 
 import language, ui, plugins, sb.profdb
 
-# urllib is needed by the Help plugin.
-import urllib
-
 
 def main():
     # Load all plugins.

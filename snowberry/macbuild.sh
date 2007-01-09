@@ -17,6 +17,12 @@ chmod -R u+w build dist
 rm -rf build dist
 rm $TARGET_IMAGE
 
+# Finalize.
+pushd .
+cd $DENG_DIR
+./finalize.sh
+popd
+
 # Copy the resource files into the correct place.
 mkdir -p build/addons
 mkdir -p build/conf
@@ -30,7 +36,7 @@ cp graphics/{*.jpg,*.png,*.bmp,*.ico} build/graphics
 cp lang/*.lang build/lang
 cp profiles/*.prof build/profiles
 cp plugins/tab*.py build/plugins
-cp -R plugins/{about.py,help.py,launcher.py,preferences.py,profilelist.py,wizard.py} build/plugins
+cp -R plugins/{tab30.plugin,about.py,help.py,launcher.py,preferences.py,profilelist.py,wizard.py} build/plugins
 
 # Build the bundle.
 python buildapp.py py2app
