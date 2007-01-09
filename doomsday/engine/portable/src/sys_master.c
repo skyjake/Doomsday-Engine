@@ -57,6 +57,9 @@
 // Communication with the master is done at 'below normal' priority.
 #define MST_PRIORITY    -1
 
+// Maximum time from the first received line of the response (seconds).
+#define RESPONSE_TIMEOUT    2
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct serverlist_s {
@@ -363,6 +366,8 @@ static int C_DECL N_MasterSendRequest(void *parm)
     socket_t    s;
     ddstring_t  response;
     char        buf[128];
+    int         result;
+    double      startTime;
 
     // Get host information.
     if((host = N_SockGetHost(masterAddress)) == NULL)
@@ -395,10 +400,32 @@ static int C_DECL N_MasterSendRequest(void *parm)
     // Receive the entire list.
     Str_Init(&response);
     memset(buf, 0, sizeof(buf));
-    while(recv(s, buf, sizeof(buf) - 1, 0) > 0)
+    while((result = recv(s, buf, sizeof(buf) - 1, 0)) >= 0)
     {
-        Str_Append(&response, buf);
-        memset(buf, 0, sizeof(buf));
+        if(!result && Str_Length(&response) > 0 && 
+           Sys_GetSeconds() - startTime > RESPONSE_TIMEOUT)
+        {        
+#ifdef _DEBUG
+            printf("timed out!\n", startTime);
+#endif
+            break;
+        }
+        
+        if(!Str_Length(&response))
+        {
+            startTime = Sys_GetSeconds();
+#ifdef _DEBUG
+            printf("startTime = %lf\n", startTime);
+#endif
+        }
+        if(result)
+        {
+#ifdef _DEBUG
+            printf("received: >>>%s<<<\n", buf);
+#endif
+            Str_Append(&response, buf);
+            memset(buf, 0, sizeof(buf));
+        }
     }
     N_SockClose(s);
 
