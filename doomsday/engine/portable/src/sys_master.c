@@ -35,14 +35,7 @@
 
 #include "de_platform.h"
 
-#ifdef WIN32
-#   include <winsock.h>
-#endif
-
-#ifdef UNIX
-#   include <sys/types.h>
-#   include <sys/socket.h>
-#endif
+#include <curl/curl.h>
 
 #include "de_base.h"
 #include "de_network.h"
@@ -54,11 +47,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-// Communication with the master is done at 'below normal' priority.
-#define MST_PRIORITY    -1
-
-// Maximum time from the first received line of the response (seconds).
-#define RESPONSE_TIMEOUT    2
+// Maximum time allowed time for a master server operation to take (seconds).
+#define RESPONSE_TIMEOUT    15
 
 // TYPES -------------------------------------------------------------------
 
@@ -87,8 +77,6 @@ boolean masterAware = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const char *responseOK = "HTTP/1.1 200";
-
 // This variable will be true while a communication is in progress.
 static volatile boolean communicating;
 
@@ -103,6 +91,9 @@ static int numServers;
  */
 void N_MasterInit(void)
 {
+	// Initialize libcurl.
+	curl_global_init(CURL_GLOBAL_WIN32);
+
     communicating = false;
 }
 
@@ -113,6 +104,9 @@ void N_MasterShutdown(void)
 {
     // Free the server list. (What if communicating?)
     N_MasterClearList();
+	
+	// Clean up libcurl.
+	curl_global_cleanup();
 }
 
 /**
@@ -147,147 +141,47 @@ static serverlist_t *N_MasterNewServer(void)
 }
 
 /**
- * NOTE: The info must be allocated from the heap. We will free it when it's
- * no longer needed.
- *
- * @param parm              The announcement info to be sent.
- *
- * @return                  <code>true</code> if the announcement was sent
- *                          successfully and the master responds "OK".
+ * Callback function that sends outgoing data with libcurl.
  */
-static int C_DECL N_MasterSendAnnouncement(void *parm)
+static size_t C_DECL N_MasterReadCallback(void *ptr, size_t size, size_t nmemb, void *stream)
 {
-    serverinfo_t *info = parm;
-    socket_t    s;
-    struct hostent *host;
-    ddstring_t  msg;
-    char        buf[256];
-    unsigned int length;
+    ddstring_t *msg = stream;
+    size_t bytes = size * nmemb;
 
-    // Get host information.
-    if((host = N_SockGetHost(masterAddress)) == NULL)
-    {
-        // Could not find the host.
-        return false;
-    }
-
-    // Create a socket.
-    if((s = N_SockNewStream()) == INVALID_SOCKET)
-    {
-        // Couldn't create a new socket.
-        return false;
-    }
-
-    // Connect.
-    if(!N_SockConnect(s, host, masterPort ? masterPort : 80))
-    {
-        // Connection failed.
-        return false;
-    }
-
-    // Convert the serverinfo into plain text.
-    Str_Init(&msg);
-    length = Sv_InfoToString(info, &msg);
-
-    // Free the serverinfo, it's no longer needed.
-    M_Free(info);
-
-    // Write an HTTP POST request with our info.
-    N_SockPrintf(s, "POST %s HTTP/1.1\n", masterPath);
-    N_SockPrintf(s, "Host: %s\n", masterAddress);
-    N_SockPrintf(s, "Connection: close\n");
-    N_SockPrintf(s, "Content-Type: application/x-deng-announce\n");
-    N_SockPrintf(s, "Content-Length: %i\n\n", length);
-    send(s, Str_Text(&msg), length, 0);
-    Str_Free(&msg);
-
-    // Wait for a response.
-    length = recv(s, buf, sizeof(buf), 0);
-    /*
-       memset(buf, 0, sizeof(buf));
-       while(recv(s, buf, sizeof(buf) - 1, 0) > 0)
-       {
-       Con_Printf("%s", buf);
-       memset(buf, 0, sizeof(buf));
-       }
-     */
-    N_SockClose(s);
-
-    // The communication ends.
-    communicating = false;
-
-    // If the master responds "OK" return true, otherwise false.
-    return length >= strlen(responseOK) &&
-        !strncmp(buf, responseOK, strlen(responseOK));
+    // Don't copy too much.
+    bytes = MIN_OF(bytes, Str_Length(msg));
+    memcpy(ptr, msg->str, bytes);
+    
+    // Remove the sent portion from the buffer.
+    Str_Set(msg, msg->str + bytes);
+    
+    // Number of bytes written to the buffer.
+    return bytes;
 }
 
 /**
- * Decodes a master server response into a plain format for futher parsing.
- *
- * @param response          Is an HTTP response with the chunked transfer
- *                          encoding.
- * @param out               The ouput buffer where the decoded body of the
- *                          response will be written to.
+ * Callback function that receives incoming data from libcurl.
  */
-static void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
+static size_t C_DECL N_MasterWriteCallback(void *ptr, size_t size, size_t nmemb, void *stream)
 {
-    ddstring_t  line;
-    const char *pos = Str_Text(response);
-    boolean     foundChunked = true;
-    boolean     done;
-    int         length;
+	ddstring_t* response = stream;
+	size_t bytes = size * nmemb;
+	size_t pos = Str_Length(response);
+	
+	// Append the new data to the response.
+	Str_Reserve(response, Str_Length(response) + bytes);
+	memcpy(response->str, ptr, bytes);
+	
+	return bytes;
+}
 
-    // Skip to the body.
-    Str_Init(&line);
-    if(*pos)
-    {
-        done = false;
-        while(!done)
-        {
-            pos = Str_GetLine(&line, pos);
-
-            // Let's make sure the encoding is chunked.
-            // RFC 2068 says that HTTP/1.1 clients must ignore encodings
-            // they don't understand.
-            if(!stricmp(Str_Text(&line), "Transfer-Encoding: chunked"))
-                foundChunked = true;
-
-            // The first break indicates the end of the headers.
-            if(!Str_Length(&line))
-                done = true;
-
-            if(!*pos)
-                done = true;
-        }
-    }
-
-    if(foundChunked && *pos)
-    {
-        // Decode the body.
-        done = false;
-        while(!done)
-        {
-            // The first line of the chunk is the length.
-            pos = Str_GetLine(&line, pos);
-            length = strtol(Str_Text(&line), 0, 16);
-            if(length)
-            {
-                // Append the chunk data to the output.
-                Str_PartAppend(out, pos, 0, length);
-                pos += length;
-
-                // A newline ends the chunk.
-                pos = (const char *) M_SkipLine((char *) pos);
-                if(!*pos)
-                    done = true;
-            }
-            else // No more chunks.
-            {
-                done = true;
-            }
-        }
-    }
-    Str_Free(&line);
+static void N_MasterGetUrl(char* url)
+{
+    sprintf(url, "http://%s:%i%s", masterAddress, 
+            (masterPort? masterPort : 80), masterPath);
+#ifdef _DEBUG
+	printf("%s\n", url);
+#endif
 }
 
 /**
@@ -297,32 +191,21 @@ static void N_MasterDecodeChunked(ddstring_t *response, ddstring_t *out)
  *
  * @return                  <code>true</code> if successful.
  */
-static int N_MasterParseResponse(ddstring_t *response)
+static int N_MasterParseResponse(ddstring_t *msg)
 {
-    ddstring_t  msg, line;
+    ddstring_t  line;
     const char *pos;
     serverinfo_t *info = NULL;
 
-    Str_Init(&msg);
     Str_Init(&line);
 
     // Clear the list of servers.
     N_MasterClearList();
 
-    // The response must be OK.
-    if(strncmp(Str_Text(response), responseOK, strlen(responseOK)))
-    {
-        // This is not valid.
-        return false;
-    }
-
-    // Extract the body of the response.
-    N_MasterDecodeChunked(response, &msg);
-
     // The syntax of the response is simple:
     // label:value
     // One or more empty lines separate servers.
-    pos = Str_Text(&msg);
+    pos = Str_Text(msg);
     if(*pos)
     {
         boolean isDone = false;
@@ -350,11 +233,13 @@ static int N_MasterParseResponse(ddstring_t *response)
     }
 
     Str_Free(&line);
-    Str_Free(&msg);
     return true;
 }
 
 /**
+ * Send a request for the list of currently available servers.
+ * This function runs as a thread.
+ *
  * @param parm              Not used.
  *
  * @return                  <code>true</code> if the request was sent
@@ -362,80 +247,130 @@ static int N_MasterParseResponse(ddstring_t *response)
  */
 static int C_DECL N_MasterSendRequest(void *parm)
 {
-    struct hostent *host;
-    socket_t    s;
     ddstring_t  response;
-    char        buf[128];
-    int         result;
-    double      startTime;
+	char		masterUrl[200];
+    char        errorBuf[CURL_ERROR_SIZE];
+    boolean		success = true;
+	CURL	   *session;
 
-    // Get host information.
-    if((host = N_SockGetHost(masterAddress)) == NULL)
-    {
-        // Could not find the host.
-        return false;
-    }
-
-    // Create a TCP stream socket.
-    if((s = N_SockNewStream()) == INVALID_SOCKET)
-    {
-        // Couldn't create a new socket.
-        return false;
-    }
-
-    // Connect.
-    if(!N_SockConnect(s, host, masterPort ? masterPort : 80))
-    {
-        // Connection failed.
-        return false;
-    }
-
-    // Write a HTTP GET request.
-    N_SockPrintf(s, "GET %s?list HTTP/1.1\r\n", masterPath);
-    N_SockPrintf(s, "Host: %s\r\n", masterAddress);
-    // We want the connection to close as soon as everything has been
-    // received.
-    N_SockPrintf(s, "Connection: close\r\n\r\n\r\n");
-
-    // Receive the entire list.
-    Str_Init(&response);
-    memset(buf, 0, sizeof(buf));
-    while((result = recv(s, buf, sizeof(buf) - 1, 0)) >= 0)
-    {
-        if(!result && Str_Length(&response) > 0 && 
-           Sys_GetSeconds() - startTime > RESPONSE_TIMEOUT)
-        {        
+	N_MasterGetUrl(masterUrl);
+	strcat(masterUrl, "?list");
+	
+	Str_Init(&response);
+	
+	// Prepare the curl session for our HTTP GET request.
+	session = curl_easy_init();
 #ifdef _DEBUG
-            fprintf(outFile, "timed out!\n", startTime);
+    curl_easy_setopt(session, CURLOPT_VERBOSE, true);
 #endif
-            break;
-        }
-        
-        if(!Str_Length(&response))
-        {
-            startTime = Sys_GetSeconds();
-#ifdef _DEBUG
-            fprintf(outFile, "startTime = %lf\n", startTime);
-#endif
-        }
-        if(result)
-        {
-#ifdef _DEBUG
-            fprintf(outFile, "received: >>>%s<<<\n", buf);
-#endif
-            Str_Append(&response, buf);
-            memset(buf, 0, sizeof(buf));
-        }
-    }
-    N_SockClose(s);
+	curl_easy_setopt(session, CURLOPT_HEADER, false);	
+	curl_easy_setopt(session, CURLOPT_WRITEFUNCTION, N_MasterWriteCallback);
+	curl_easy_setopt(session, CURLOPT_WRITEDATA, &response);
+	curl_easy_setopt(session, CURLOPT_URL, masterUrl);
+	curl_easy_setopt(session, CURLOPT_TIMEOUT, RESPONSE_TIMEOUT);
+	curl_easy_setopt(session, CURLOPT_ERRORBUFFER, errorBuf);
 
-    // Let's parse the message.
-    N_MasterParseResponse(&response);
-
+	// Perform the operation.
+	if(!curl_easy_perform(session))
+	{
+#ifdef _DEBUG
+		printf(Str_Text(&response));
+#endif
+		
+		// Let's parse the message.
+		N_MasterParseResponse(&response);
+	}
+	else
+	{
+		success = false;
+		fprintf(outFile, "N_MasterSendRequest: %s\n", errorBuf);
+	}
+	
+	// Cleanup the curl session.
+	curl_easy_cleanup(session);
+	session = NULL;
+	
     // We're done with the parsing.
     Str_Free(&response);
     communicating = false;
-    return true;
+    return success;
+}
+
+/**
+ * This function runs as a thread.
+ *
+ * NOTE: The info must be allocated from the heap. We will free it when it's
+ * no longer needed.
+ *
+ * @param parm              The announcement info to be sent.
+ *
+ * @return                  <code>true</code> if the announcement was sent
+ *                          successfully and the master responds "OK".
+ */
+static int C_DECL N_MasterSendAnnouncement(void *parm)
+{
+    serverinfo_t *info = parm;
+    ddstring_t  msg;
+	char		masterUrl[200];
+    char        errorBuf[CURL_ERROR_SIZE];
+    boolean		success = true;
+	CURL	   *session;
+    struct curl_slist* headers = 0;
+    
+    headers = curl_slist_append(0, "Content-Type: application/x-deng-announce");  
+    
+	// Post a server announcement.
+	N_MasterGetUrl(masterUrl);
+	
+    // Convert the serverinfo into plain text.
+    Str_Init(&msg);
+    Sv_InfoToString(info, &msg);
+    // Free the serverinfo, it's no longer needed.
+    M_Free(info);
+	
+	// Prepare the curl session for our HTTP POST request.
+	session = curl_easy_init();
+#ifdef _DEBUG
+    curl_easy_setopt(session, CURLOPT_VERBOSE, true);
+#endif
+    curl_easy_setopt(session, CURLOPT_POST, true);
+    curl_easy_setopt(session, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(session, CURLOPT_HEADER, false);	
+	curl_easy_setopt(session, CURLOPT_READFUNCTION, N_MasterReadCallback);
+	curl_easy_setopt(session, CURLOPT_READDATA, &msg);
+    curl_easy_setopt(session, CURLOPT_POSTFIELDSIZE, Str_Length(&msg));
+	curl_easy_setopt(session, CURLOPT_URL, masterUrl);
+	curl_easy_setopt(session, CURLOPT_TIMEOUT, RESPONSE_TIMEOUT);
+	curl_easy_setopt(session, CURLOPT_ERRORBUFFER, errorBuf);
+    
+    if(curl_easy_perform(session))
+    {
+        // Failure.
+		success = false;
+		fprintf(outFile, "N_MasterSendAnnouncement: %s\n", errorBuf);
+    }
+    
+    // Write an HTTP POST request with our info.
+    /*
+     N_SockPrintf(s, "POST %s HTTP/1.1\n", masterPath);
+     N_SockPrintf(s, "Host: %s\n", masterAddress);
+     N_SockPrintf(s, "Connection: close\n");
+     N_SockPrintf(s, \n");
+     N_SockPrintf(s, "Content-Length: %i\n\n", length);
+     send(s, Str_Text(&msg), length, 0);
+     */
+    Str_Free(&msg);
+    
+	// Cleanup the curl session.
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(session);
+    session = NULL;
+    
+    // The communication ends.
+    communicating = false;
+    
+    // If the master responds "OK" return true, otherwise false.
+    return success;
 }
 
 /**

@@ -611,6 +611,23 @@
 		B0F381020B4D6D7E0097029D /* p_mapinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = B0F381010B4D6D7E0097029D /* p_mapinfo.c */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXBuildStyle section */
+		B070BCAA0B528E77006EEE82 /* Development */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Development;
+		};
+		B070BCAB0B528E77006EEE82 /* Deployment */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+			};
+			name = Deployment;
+		};
+/* End PBXBuildStyle section */
+
 /* Begin PBXContainerItemProxy section */
 		B011A60108655A90005075A7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -2562,6 +2579,12 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = B01078300856208A000BF0D8 /* Build configuration list for PBXProject "Doomsday" */;
+			buildSettings = {
+			};
+			buildStyles = (
+				B070BCAA0B528E77006EEE82 /* Development */,
+				B070BCAB0B528E77006EEE82 /* Deployment */,
+			);
 			hasScannedForEncodings = 1;
 			mainGroup = 29B97314FDCFA39411CA2CEA /* Doomsday */;
 			projectDirPath = "";
@@ -4048,7 +4071,7 @@
 					../../plugins/jhexen/include,
 					../../plugins/common/include,
 				);
-				INFOPLIST_FILE = "/Users/jaakko/Projects/deng/doomsday/jHexen-Info.plist";
+				INFOPLIST_FILE = "jHexen-Info.plist";
 				INSTALL_PATH = /Doomsday.app/Contents/Bundles;
 				LIBRARY_STYLE = STATIC;
 				OTHER_CFLAGS = "";
@@ -4084,7 +4107,7 @@
 					../../plugins/jhexen/include,
 					../../plugins/common/include,
 				);
-				INFOPLIST_FILE = "/Users/jaakko/Projects/deng/doomsday/jHexen-Info.plist";
+				INFOPLIST_FILE = "jHexen-Info.plist";
 				INSTALL_PATH = /Doomsday.app/Contents/Bundles;
 				LIBRARY_STYLE = BUNDLE;
 				OTHER_CFLAGS = "";
@@ -4147,6 +4170,9 @@
 					"-lncurses",
 					"-lz",
 					/sw/lib/libpng12.a,
+					"-lcurl",
+					"-lssl",
+					"-lcrypto",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Doomsday;
@@ -4204,6 +4230,9 @@
 					"-lncurses",
 					"-lz",
 					/sw/lib/libpng12.a,
+					"-lcurl",
+					"-lssl",
+					"-lcrypto",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Doomsday;
@@ -4245,11 +4274,15 @@
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = (
+					"-flat_namespace",
 					"-framework",
 					SDL,
 					"-lncurses",
 					"-lz",
 					/sw/lib/libpng12.a,
+					"-lcurl",
+					"-lssl",
+					"-lcrypto",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Doomsday;
