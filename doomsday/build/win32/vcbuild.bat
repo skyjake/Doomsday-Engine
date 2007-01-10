@@ -136,6 +136,11 @@ GOTO Done
 :copydll
 copy %SDL_LIB%\SDL.dll .
 copy %SDLNET_LIB%\SDL_net.dll .
+copy %SDLMIXER_LIB%\SDL_mixer.dll .
+copy %SDLMIXER_LIB%\ogg.dll .
+copy %SDLMIXER_LIB%\smpeg.dll .
+copy %SDLMIXER_LIB%\vorbis.dll .
+copy %SDLMIXER_LIB%\vorbisfile.dll .
 copy %EAX_DLL%\eax.dll .
 GOTO Done
 
@@ -182,9 +187,9 @@ GOTO Done
 
 :: *** drD3D.dll
 :drD3D
-ECHO Compiling drD3D.dll (Direct3D 8.1 driver)...
+ECHO Compiling drD3D.dll (Direct3D 9 driver)...
 md %OBJ_DIR%\drD3D
-cl /O2 /Ob1 /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" /W3 ./%OBJ_DIR%/drD3D/drD3D_res.obj  @drd3d_cl.rsp  /link /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/d3d/api/drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" %LIBS% ./%BIN_DIR%/doomsday.lib d3d9.lib d3dx9.lib dxerr9.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib
+cl /Od /MT /EHsc /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" /W3 ./%OBJ_DIR%/drD3D/drD3D_res.obj  @drd3d_cl.rsp  /link /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/d3d/api/drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" %LIBS% ./%BIN_DIR%/doomsday.lib d3d9.lib d3dx9.lib dxerr9.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib
 GOTO Done
 
 
