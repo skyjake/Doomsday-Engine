@@ -746,7 +746,7 @@ void DG_TexParameter(int pname, int param)
         tex->magFilter = (param == DGL_NEAREST
             || param == DGL_NEAREST_MIPMAP_NEAREST
             || param == DGL_NEAREST_MIPMAP_LINEAR? D3DTEXF_POINT
-            : useAnisotropic? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR);
+            : D3DTEXF_LINEAR);
         SetTexStates(CUR_STAGE, tex, STSF_MAG_FILTER);
         break;
 

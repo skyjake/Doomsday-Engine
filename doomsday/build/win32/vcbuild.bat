@@ -189,7 +189,7 @@ GOTO Done
 :drD3D
 ECHO Compiling drD3D.dll (Direct3D 9 driver)...
 md %OBJ_DIR%\drD3D
-cl /Od /MT /EHsc /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" /W3 ./%OBJ_DIR%/drD3D/drD3D_res.obj  @drd3d_cl.rsp  /link /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/d3d/api/drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" %LIBS% ./%BIN_DIR%/doomsday.lib d3d9.lib d3dx9.lib dxerr9.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib
+cl /O2 /Gz /EHsc /MT /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" ./%OBJ_DIR%/drD3D/drD3D_res.obj  @drd3d_cl.rsp  /link  /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/d3d/api/drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" %LIBS% ./%BIN_DIR%/doomsday.lib d3d9.lib d3dx9.lib dxerr9.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib kernel32.lib
 GOTO Done
 
 
