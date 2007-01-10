@@ -42,9 +42,9 @@
 #include "doomsday.h"
 #include "dglib.h"
 
-#define DRD3D_VERSION       220
-#define DRD3D_VERSION_TEXT  "2.2."DOOMSDAY_RELEASE_NAME
-#define DRD3D_VERSION_FULL  "DGL Direct3D8 Driver Version "DRD3D_VERSION_TEXT" ("__DATE__")"
+#define DRD3D_VERSION       230
+#define DRD3D_VERSION_TEXT  "2.3."DOOMSDAY_RELEASE_NAME
+#define DRD3D_VERSION_FULL  "DGL Direct3D9 Driver Version "DRD3D_VERSION_TEXT" ("__DATE__")"
 #define MAX_TEX_UNITS       2
 #define MAX_TEX_STAGES      8
 

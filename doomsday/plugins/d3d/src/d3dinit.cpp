@@ -74,8 +74,9 @@ void DXError(const char *funcName)
 boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
 {
     D3DDISPLAYMODE mode, fallback;
-    int         i, num = d3d->GetAdapterModeCount(adapter, D3DFMT_UNKNOWN);
     int         targetBits = (!wantedColorDepth? window->bits : wantedColorDepth);
+    D3DFORMAT   assumedFormat = (targetBits > 16? D3DFMT_X8R8G8B8 : D3DFMT_R5G6B5);
+    int         i, num = d3d->GetAdapterModeCount(adapter, assumedFormat);
     int         found = false;
 
     memset(match, 0, sizeof(*match));
@@ -92,7 +93,7 @@ boolean GetMode(D3DDISPLAYMODE *match, int wantedRefresh)
 
     for(i = 0; i < num; ++i)
     {
-        if(FAILED(d3d->EnumAdapterModes(adapter, D3DFMT_UNKNOWN, i, &mode)))
+        if(FAILED(d3d->EnumAdapterModes(adapter, assumedFormat, i, &mode)))
             continue;
 
         // Is this perhaps the mode we're looking for?
@@ -374,6 +375,7 @@ int InitDirect3D(void)
         return DGL_ERROR;
     }
     dev->SetVertexShader(NULL);
+    dev->SetFVF(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX2);
 
     // Clear the screen with a mid-gray color.
     dev->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
