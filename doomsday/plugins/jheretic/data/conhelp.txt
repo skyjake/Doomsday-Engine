@@ -233,9 +233,6 @@ desc = Zoom out to the max in the automap.
 # CONSOLE VARIABLES - JHERETIC SPECIFIC
 #
 
-[MapCycle]
-desc = Map rotation sequence.
-
 [server-game-mapcycle]
 desc = Map rotation sequence.
 

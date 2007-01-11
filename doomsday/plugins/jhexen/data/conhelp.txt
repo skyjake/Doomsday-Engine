@@ -245,9 +245,6 @@ desc = Zoom out to the max in the automap.
 # CONSOLE VARIABLES - JHEXEN SPECIFIC
 #
 
-[MapCycle]
-desc = Map rotation sequence.
-
 [server-game-mapcycle]
 desc = Map rotation sequence.
 

@@ -221,9 +221,6 @@ desc = Zoom out to the max in the automap.
 # CONSOLE VARIABLES - WOLFTC SPECIFIC
 #
 
-[MapCycle]
-desc = Map rotation sequence.
-
 [server-game-mapcycle]
 desc = Map rotation sequence.
 
