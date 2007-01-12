@@ -103,11 +103,11 @@ typedef struct origin_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    Sv_RegisterWorld(cregister_t * reg, boolean isInitial);
+void    Sv_RegisterWorld(cregister_t *reg, boolean isInitial);
 void    Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id);
 boolean Sv_IsVoidDelta(const void *delta);
-void    Sv_PoolQueueClear(pool_t * pool);
-void    Sv_GenerateNewDeltas(cregister_t * reg, int clientNumber,
+void    Sv_PoolQueueClear(pool_t *pool);
+void    Sv_GenerateNewDeltas(cregister_t *reg, int clientNumber,
                              boolean doUpdate);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -218,8 +218,10 @@ void Sv_InitPools(void)
         if(sideOwners[i] == NULL)
             continue;
 
-        sideOrigins[i].pos[VX] = FLT2FIX(sideOwners[i]->L_v1->pos[VX] + sideOwners[i]->dx / 2);
-        sideOrigins[i].pos[VY] = FLT2FIX(sideOwners[i]->L_v1->pos[VY] + sideOwners[i]->dy / 2);
+        sideOrigins[i].pos[VX] =
+            FLT2FIX(sideOwners[i]->L_v1->pos[VX] + sideOwners[i]->dx / 2);
+        sideOrigins[i].pos[VY] =
+            FLT2FIX(sideOwners[i]->L_v1->pos[VY] + sideOwners[i]->dy / 2);
     }
 
     // Store the current state of the world into both the registers.
@@ -257,7 +259,7 @@ void Sv_InitPoolForClient(int clientNumber)
 }
 
 /**
- * Returns a pointer to the console's delta pool.
+ * @return              Pointer to the console's delta pool.
  */
 pool_t *Sv_GetPool(int consoleNumber)
 {
@@ -273,7 +275,7 @@ uint Sv_RegisterHashFunction(thid_t id)
 }
 
 /**
- * Returns a pointer to the register-mobj, if it already exists.
+ * @return              Pointer to the register-mobj, if it already exists.
  */
 reg_mobj_t *Sv_RegisterFindMobj(cregister_t *reg, thid_t id)
 {
@@ -359,9 +361,9 @@ void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
 }
 
 /**
- * If the mobj is on the floor, returns MININT. If the mobj is touching the
- * ceiling, returns MAXINT. Otherwise returns the Z coordinate. The maxed-out
- * coordinate is stored in the register.
+ * @return              If the mobj is on the floor; <code>MININT/code>.
+ *                      If the mobj is touching the ceiling; <code>MAXINT</code>.
+ *                      Otherwise returns the Z coordinate.
  */
 fixed_t Sv_GetMaxedMobjZ(const mobj_t *mo)
 {
@@ -522,16 +524,14 @@ void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 }
 
 /**
- * Returns true if the result is not void.
+ * @return              <code>true</code> if the result is not void.
  */
 boolean Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s,
                                mobjdelta_t *d)
 {
-    int     df;
+    int         df;
     reg_mobj_t *regMo = NULL;
     const dt_mobj_t *r = &dummyZeroMobj;
-
-    //int age = gametic - reg->gametic; // Always > 0
 
     if((regMo = Sv_RegisterFindMobj(reg, s->thinker.id)) != NULL)
     {
@@ -578,9 +578,9 @@ boolean Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s,
         df |= MDF_STATE;
 
 #ifdef _DEBUG
-        VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35))
-            Con_Message("Sv_RegisterCompareMobj: (%i) Sending state due to time.\n",
-                        s->thinker.id) );
+VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35))
+    Con_Message("Sv_RegisterCompareMobj: (%i) Sending state due to time.\n",
+                s->thinker.id) );
 #endif
 
         if(regMo) regMo->lastTimeStateSent = Sys_GetTime();
@@ -610,14 +610,14 @@ boolean Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s,
 }
 
 /**
- * Returns true if the result is not void.
+ * @return              <code>true</code> if the result is not void.
  */
 boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
                                  playerdelta_t *d)
 {
     const dt_player_t *r = &reg->players[number];
     dt_player_t *s = &d->player;
-    int     df = 0;
+    int         df = 0;
 
     // Init the delta with current data.
     Sv_NewDelta(d, DT_PLAYER, number);
@@ -679,14 +679,14 @@ boolean Sv_RegisterComparePlayer(cregister_t *reg, uint number,
 }
 
 /**
- * Returns true if the result is not void.
+ * @return              <code>true</code> if the result is not void.
  */
 boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
                                  sectordelta_t *d, byte doUpdate)
 {
     dt_sector_t *r = &reg->sectors[number];
     const sector_t *s = SECTOR_PTR(number);
-    int     df = 0;
+    int         df = 0;
 
     // Determine which data is different.
     if(r->planes[PLN_FLOOR].surface.texture != s->SP_floorpic)
@@ -826,17 +826,17 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
 }
 
 /**
- * Returns true if the result is not void.
+ * @eturn               <code>true</code> if the result is not void.
  */
 boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
                                byte doUpdate)
 {
     const side_t *s = SIDE_PTR(number);
     const line_t *line = sideOwners[number];
-    dt_side_t *r = &reg->sides[number];
-    int     df = 0;
-    byte    lineFlags = (line ? line->flags & 0xff : 0);
-    byte    sideFlags = s->flags & 0xff;
+    dt_side_t  *r = &reg->sides[number];
+    int         df = 0;
+    byte        lineFlags = (line ? line->flags & 0xff : 0);
+    byte        sideFlags = s->flags & 0xff;
 
     if(r->top.texture != s->SW_toppic && !(s->SW_topflags & SUF_TEXFIX))
     {
@@ -845,14 +845,16 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
             r->top.texture = s->SW_toppic;
     }
 
-    if(r->middle.texture != s->SW_middlepic && !(s->SW_middleflags & SUF_TEXFIX))
+    if(r->middle.texture != s->SW_middlepic &&
+       !(s->SW_middleflags & SUF_TEXFIX))
     {
         df |= SIDF_MIDTEX;
         if(doUpdate)
             r->middle.texture = s->SW_middlepic;
     }
 
-    if(r->bottom.texture != s->SW_bottompic && !(s->SW_bottomflags & SUF_TEXFIX))
+    if(r->bottom.texture != s->SW_bottompic &&
+       !(s->SW_bottomflags & SUF_TEXFIX))
     {
         df |= SIDF_BOTTOMTEX;
         if(doUpdate)
@@ -964,13 +966,14 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
 }
 
 /**
- * Returns true if the result is not void.
+ * @return              <code>true</code> if the result is not void.
  */
-boolean Sv_RegisterComparePoly(cregister_t *reg, uint number, polydelta_t *d)
+boolean Sv_RegisterComparePoly(cregister_t *reg, uint number,
+                               polydelta_t *d)
 {
     const dt_poly_t *r = &reg->polys[number];
     dt_poly_t *s = &d->po;
-    int     df = 0;
+    int         df = 0;
 
     // Init the delta with current data.
     Sv_NewDelta(d, DT_POLY, number);
@@ -993,7 +996,8 @@ boolean Sv_RegisterComparePoly(cregister_t *reg, uint number, polydelta_t *d)
 }
 
 /**
- * Returns true if the mobj can be excluded from delta processing.
+ * @return              <code>true</code> if the mobj can be excluded
+ *                      from delta processing.
  */
 boolean Sv_IsMobjIgnored(mobj_t *mo)
 {
@@ -1001,7 +1005,8 @@ boolean Sv_IsMobjIgnored(mobj_t *mo)
 }
 
 /**
- * Returns true if the player can be excluded from delta processing.
+ * @return              <code>true</code> if the player can be excluded
+ *                      from delta processing.
  */
 boolean Sv_IsPlayerIgnored(uint number)
 {
@@ -1080,7 +1085,7 @@ void Sv_UpdateOwnerInfo(pool_t *pool)
 }
 
 /**
- * Returns a timestamp that is used to track how old deltas are.
+ * @return              A timestamp that is used to track how old deltas are.
  */
 uint Sv_GetTimeStamp(void)
 {
@@ -1104,7 +1109,8 @@ void Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id)
 }
 
 /**
- * Returns true if the delta contains no information.
+ * @return              <code>true</code> if the delta contains no
+ *                      information.
  */
 boolean Sv_IsVoidDelta(const void *delta)
 {
@@ -1112,7 +1118,7 @@ boolean Sv_IsVoidDelta(const void *delta)
 }
 
 /**
- * Returns true if the delta is a Sound delta.
+ * @return              <code>true</code> if the delta is a Sound delta.
  */
 boolean Sv_IsSoundDelta(const void *delta)
 {
@@ -1123,7 +1129,8 @@ boolean Sv_IsSoundDelta(const void *delta)
 }
 
 /**
- * Returns true if the delta is a Start Sound delta.
+ * @return              <code>true</code> if the delta is a Start Sound
+ *                      delta.
  */
 boolean Sv_IsStartSoundDelta(const void *delta)
 {
@@ -1134,7 +1141,8 @@ boolean Sv_IsStartSoundDelta(const void *delta)
 }
 
 /**
- * Returns true if the delta is Stop Sound delta.
+ * @return              <code>true</code> if the delta is Stop Sound
+ *                      delta.
  */
 boolean Sv_IsStopSoundDelta(const void *delta)
 {
@@ -1145,7 +1153,8 @@ boolean Sv_IsStopSoundDelta(const void *delta)
 }
 
 /**
- * Returns true if the delta is a Null Mobj delta.
+ * @return              <code>true</code> if the delta is a Null Mobj
+ *                      delta.
  */
 boolean Sv_IsNullMobjDelta(const void *delta)
 {
@@ -1154,7 +1163,8 @@ boolean Sv_IsNullMobjDelta(const void *delta)
 }
 
 /**
- * Returns true if the delta is a Create Mobj delta.
+ * @return              <code>true</code> if the delta is a Create Mobj
+ *                      delta.
  */
 boolean Sv_IsCreateMobjDelta(const void *delta)
 {
@@ -1163,7 +1173,8 @@ boolean Sv_IsCreateMobjDelta(const void *delta)
 }
 
 /**
- * Returns true if the deltas refer to the same object.
+ * @return              <code>true</code> if the deltas refer to the
+ *                      same object.
  */
 boolean Sv_IsSameDelta(const void *delta1, const void *delta2)
 {
@@ -1504,7 +1515,9 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
 /**
  * Merges the second delta with the first one.
  * The source and destination must refer to the same entity.
- * Returns false if the result of the merge is a void delta.
+ *
+ * @return              <code>false</code? if the result of the merge is
+ *                      a void delta.
  */
 boolean Sv_MergeDelta(void *destDelta, const void *srcDelta)
 {
@@ -1575,7 +1588,7 @@ boolean Sv_MergeDelta(void *destDelta, const void *srcDelta)
 }
 
 /**
- * Returns the age of the delta, in milliseconds.
+ * @return              The age of the delta, in milliseconds.
  */
 uint Sv_DeltaAge(const delta_t *delta)
 {
@@ -1627,7 +1640,7 @@ fixed_t Sv_SectorDistance(int index, const ownerinfo_t *info)
 }
 
 /**
- * Returns the distance to the origin of the delta's entity.
+ * @return              The distance to the origin of the delta's entity.
  */
 fixed_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 {
@@ -1745,11 +1758,11 @@ void Sv_RemoveDelta(pool_t *pool, void *deltaPtr)
  */
 void Sv_DrainPool(int clientNumber)
 {
-    pool_t *pool = &pools[clientNumber];
-    delta_t *delta;
+    pool_t     *pool = &pools[clientNumber];
+    delta_t    *delta;
     misrecord_t *mis;
-    void   *next = NULL;
-    int     i;
+    void       *next = NULL;
+    int         i;
 
     // Update the number of the owner.
     pool->owner = clientNumber;
@@ -1786,8 +1799,9 @@ void Sv_DrainPool(int clientNumber)
 }
 
 /**
- * Returns the maximum distance for the sound. If the origin is any
- * farther, the delta will not be sent to the client in question.
+ * @return              The maximum distance for the sound. If the origin
+ *                      is any farther, the delta will not be sent to the
+ *                      client in question.
  */
 fixed_t Sv_GetMaxSoundDistance(const sounddelta_t *delta)
 {
@@ -1808,14 +1822,14 @@ fixed_t Sv_GetMaxSoundDistance(const sounddelta_t *delta)
 }
 
 /**
- * Returns the flags that remain after exclusion.
+ * @return              The flags that remain after exclusion.
  */
 int Sv_ExcludeDelta(pool_t *pool, const void *deltaPtr)
 {
     const delta_t *delta = deltaPtr;
     ddplayer_t *player = &players[pool->owner];
-    mobj_t *poolViewer = player->mo;
-    int     flags = delta->flags;
+    mobj_t     *poolViewer = player->mo;
+    int         flags = delta->flags;
 
     // Can we exclude information from the delta? (for this player only)
     if(delta->type == DT_MOBJ)
@@ -1909,12 +1923,12 @@ int Sv_ExcludeDelta(pool_t *pool, const void *deltaPtr)
  */
 void Sv_AddDelta(pool_t *pool, void *deltaPtr)
 {
-    delta_t *iter;
-    delta_t *next = NULL;
-    delta_t *existingNew = NULL;
-    delta_t *delta = deltaPtr;
+    delta_t    *iter;
+    delta_t    *next = NULL;
+    delta_t    *existingNew = NULL;
+    delta_t    *delta = deltaPtr;
     deltalink_t *hash = Sv_PoolHash(pool, delta->id);
-    int     flags, originalFlags;
+    int         flags, originalFlags;
 
     // Sometimes we can exclude a part of the data, if the client has no
     // use for it.
@@ -2077,7 +2091,8 @@ void Sv_PlayerRemoved(uint playerNumber)
 }
 
 /**
- * Returns true if the pool is in the targets array.
+ * @return              <code>true</code> if the pool is in the targets
+ *                      array.
  */
 boolean Sv_IsPoolTargeted(pool_t *pool, pool_t **targets)
 {
@@ -2091,11 +2106,13 @@ boolean Sv_IsPoolTargeted(pool_t *pool, pool_t **targets)
 
 /**
  * Fills the array with pointers to the pools of the connected clients,
- * if specificClient is < 0. Returns the number of pools in the list.
+ * if specificClient is < 0.
+ *
+ * @return              The number of pools in the list.
  */
 int Sv_GetTargetPools(pool_t **targets, int clientsMask)
 {
-    int     i, numTargets = 0;
+    int         i, numTargets = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -2140,7 +2157,7 @@ void Sv_NewNullDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     mobjhash_t *hash;
     reg_mobj_t *obj, *next = 0;
     mobjdelta_t null;
-    int     i;
+    int         i;
 
     for(i = 0, hash = reg->mobjs; i < REG_MOBJ_HASH_SIZE; ++i, hash++)
     {
@@ -2180,8 +2197,8 @@ void Sv_NewNullDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
  */
 void Sv_NewMobjDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
-    thinker_t *th;
-    mobj_t *mo;
+    thinker_t  *th;
+    mobj_t     *mo;
     mobjdelta_t delta;
 
     // All existing mobjs are processed.
@@ -2235,9 +2252,9 @@ void Sv_NewPlayerDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
             // flags).
             if(doUpdate && player.delta.flags & PDF_MOBJ)
             {
-                reg_mobj_t *registered = Sv_RegisterFindMobj(reg,
-                                                             reg->players[i].
-                                                             mobj);
+                reg_mobj_t *registered =
+                    Sv_RegisterFindMobj(reg, reg->players[i].mobj);
+
                 if(registered)
                 {
                     Sv_RegisterResetMobj(&registered->mo);
@@ -2368,7 +2385,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
 #ifdef _DEBUG
-            Con_Printf("Sv_NewPolyDeltas: Change in %i\n", i);
+Con_Printf("Sv_NewPolyDeltas: Change in %i\n", i);
 #endif
             Sv_AddDeltaToPools(&delta, targets);
         }
@@ -2390,14 +2407,14 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
  *         same origin.
  */
 void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
-                      polyobj_t *sourcePoly, float volume, boolean isRepeating,
-                      int clientsMask)
+                      polyobj_t *sourcePoly, float volume,
+                      boolean isRepeating, int clientsMask)
 {
-    pool_t *targets[MAXPLAYERS + 1];
+    pool_t     *targets[MAXPLAYERS + 1];
     sounddelta_t soundDelta;
-    int     type = DT_SOUND;
-    uint    id = soundId;
-    int     df = 0;
+    int         type = DT_SOUND;
+    uint        id = soundId;
+    int         df = 0;
 
     // Determine the target pools.
     Sv_GetTargetPools(targets, clientsMask);
@@ -2447,7 +2464,8 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, sector_t *sourceSector,
 }
 
 /**
- * Returns true if the client should receive frames.
+ * @return              <code>true</code> if the client should receive
+ *                      frames.
  */
 boolean Sv_IsFrameTarget(uint number)
 {
@@ -2542,7 +2560,7 @@ void Sv_PoolQueueExchange(pool_t *pool, int index1, int index2)
  */
 void Sv_PoolQueueAdd(pool_t *pool, delta_t *delta)
 {
-    int     i, parent;
+    int         i, parent;
 
     // Do we need more memory?
     if(pool->allocatedSize == pool->queueSize)
@@ -2558,13 +2576,14 @@ void Sv_PoolQueueAdd(pool_t *pool, delta_t *delta)
         }
 
         // Allocate the new queue.
-        newQueue =
-            Z_Malloc(pool->allocatedSize * sizeof(delta_t *), PU_LEVEL, 0);
+        newQueue = Z_Malloc(pool->allocatedSize * sizeof(delta_t *),
+                            PU_LEVEL, 0);
 
         // Copy the old data.
         if(pool->queue)
         {
-            memcpy(newQueue, pool->queue, sizeof(delta_t *) * pool->queueSize);
+            memcpy(newQueue, pool->queue,
+                   sizeof(delta_t *) * pool->queueSize);
 
             // Get rid of the old queue.
             Z_Free(pool->queue);
@@ -2596,7 +2615,8 @@ void Sv_PoolQueueAdd(pool_t *pool, delta_t *delta)
 
 /**
  * Extracts the delta with the highest priority from the queue.
- * Returns NULL if there are no more deltas.
+ *
+ * @return              <code>NULL</code> if there are no more deltas.
  */
 delta_t *Sv_PoolQueueExtract(pool_t *pool)
 {
@@ -2691,7 +2711,7 @@ boolean Sv_IsPostponedDelta(void *deltaPtr, ownerinfo_t *info)
                     // Must postpone this Stop Sound delta until this one
                     // has been sent.
 #ifdef _DEBUG
-                    Con_Printf("POSTPONE: Stop %i\n", delta->id);
+Con_Printf("POSTPONE: Stop %i\n", delta->id);
 #endif
                     return true;
                 }
@@ -2710,13 +2730,13 @@ boolean Sv_IsPostponedDelta(void *deltaPtr, ownerinfo_t *info)
  */
 boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
 {
-    float   score, distance, size;
-    delta_t *delta = deltaPtr;
-    int     df = delta->flags;
-    uint    age = Sv_DeltaAge(delta);
+    float       score, distance, size;
+    delta_t    *delta = deltaPtr;
+    int         df = delta->flags;
+    uint        age = Sv_DeltaAge(delta);
 
     // The importance doubles normally in 1 second.
-    float   ageScoreDouble = 1.0f;
+    float       ageScoreDouble = 1.0f;
 
     if(Sv_IsPostponedDelta(delta, info))
     {
@@ -2867,14 +2887,15 @@ void Sv_AckDelta(pool_t *pool, delta_t *delta)
 /**
  * Acknowledged deltas are removed from the pool, never to be seen again.
  * Clients ack deltas to tell the server they've received them.
- * If 'resent' is nonzero, ignore 'set' and ack by resend ID.
+ *
+ * @param resent        If nonzero, ignore 'set' and ack by resend ID.
  */
 void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
 {
-    pool_t *pool = &pools[clientNumber];
-    delta_t *delta, *next = NULL;
-    boolean ackTimeRegistered = false;
-    int     i;
+    pool_t      *pool = &pools[clientNumber];
+    delta_t    *delta, *next = NULL;
+    boolean     ackTimeRegistered = false;
+    int         i;
 
     // Iterate through the entire hash table.
     for(i = 0; i < POOL_HASH_SIZE; ++i)
@@ -2925,4 +2946,3 @@ uint Sv_CountUnackedDeltas(uint clientNumber)
     }
     return count;
 }
-

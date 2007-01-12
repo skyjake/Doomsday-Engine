@@ -94,7 +94,7 @@ cmhash_t cmHash[HASH_SIZE];
 // CODE --------------------------------------------------------------------
 
 /**
- * Returns a pointer to the hash chain with the specified id.
+ * @return              Pointer to the hash chain with the specified id.
  */
 cmhash_t *Cl_MobjHash(thid_t id)
 {
@@ -106,7 +106,7 @@ cmhash_t *Cl_MobjHash(thid_t id)
  */
 void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
 {
-    cmhash_t *hash = Cl_MobjHash(id);
+    cmhash_t   *hash = Cl_MobjHash(id);
 
     // Set the ID.
     cmo->mo.thinker.id = id;
@@ -130,16 +130,16 @@ void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
  */
 void Cl_UnlinkMobj(clmobj_t *cmo)
 {
-    cmhash_t *hash = Cl_MobjHash(cmo->mo.thinker.id);
-
-    /*#ifdef _DEBUG
-       if(cmo->flags & CLMF_HIDDEN)
-       {
-       Con_Printf("Cl_UnlinkMobj: Hidden mobj %i unlinked.\n",
-       cmo->mo.thinker.id);
-       }
-       #endif */
-
+    cmhash_t   *hash = Cl_MobjHash(cmo->mo.thinker.id);
+/*
+#ifdef _DEBUG
+if(cmo->flags & CLMF_HIDDEN)
+{
+    Con_Printf("Cl_UnlinkMobj: Hidden mobj %i unlinked.\n",
+    cmo->mo.thinker.id);
+}
+#endif
+*/
     if(hash->first == cmo)
         hash->first = cmo->next;
     if(hash->last == cmo)
@@ -156,8 +156,8 @@ void Cl_UnlinkMobj(clmobj_t *cmo)
  */
 clmobj_t *Cl_FindMobj(thid_t id)
 {
-    cmhash_t *hash = Cl_MobjHash(id);
-    clmobj_t *cmo;
+    cmhash_t   *hash = Cl_MobjHash(id);
+    clmobj_t   *cmo;
 
     // Scan the existing client mobjs.
     for(cmo = hash->first; cmo; cmo = cmo->next)
@@ -171,13 +171,15 @@ clmobj_t *Cl_FindMobj(thid_t id)
 }
 
 /**
- * Aborts and returns false if the callback returns false.
- * Otherwise returns true.
+ * Iterate the client mobj hash, exec the callback on each. Abort if callback
+ * returns <code>false</code>.
+ *
+ * @return              If the callback returns <code>false</code>.
  */
 boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
 {
-    clmobj_t *cmo;
-    int     i;
+    clmobj_t   *cmo;
+    int         i;
 
     for(i = 0; i < HASH_SIZE; ++i)
     {
@@ -249,8 +251,8 @@ void Cl_SetThingState(mobj_t *mo, int stnum)
  */
 void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 {
-    mobj_t *mo = &cmo->mo;
-    boolean onFloor = false, inCeiling = false;
+    mobj_t     *mo = &cmo->mo;
+    boolean     onFloor = false, inCeiling = false;
 
     if(mo->pos[VZ] == DDMININT)
     {
@@ -319,11 +321,11 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
 {
 #if _DEBUG
-    if(!mo || !clmo)
-    {
-        VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p\n", mo, clmo) );
-        return;
-    }
+if(!mo || !clmo)
+{
+    VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p\n", mo, clmo) );
+    return;
+}
 #endif
 
     if(flags & (MDF_POS_X | MDF_POS_Y))
@@ -345,7 +347,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
     {
         mo->angle = clmo->angle;
 #ifdef _DEBUG
-        VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle) );
+VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle) );
 #endif
     }
     mo->sprite = clmo->sprite;
@@ -377,12 +379,12 @@ void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
  */
 int Cl_ReadMobjDelta(void)
 {
-    thid_t  id = Msg_ReadShort();   // Read the ID.
-    clmobj_t *cmo;
-    boolean linked = true;
-    int     df = 0;
-    mobj_t *d;
-    boolean justCreated = false;
+    thid_t      id = Msg_ReadShort();   // Read the ID.
+    clmobj_t   *cmo;
+    boolean     linked = true;
+    int         df = 0;
+    mobj_t     *d;
+    boolean     justCreated = false;
 
     // Stop if end marker found.
     if(!id)
@@ -411,8 +413,8 @@ int Cl_ReadMobjDelta(void)
     if(!df)
     {
 #ifdef _DEBUG
-        if(justCreated)         //Con_Error("justCreated!\n");
-            Con_Printf("CL_RMD: deleted justCreated id=%i\n", id);
+if(justCreated)         //Con_Error("justCreated!\n");
+    Con_Printf("CL_RMD: deleted justCreated id=%i\n", id);
 #endif
 
         // A Null Delta. We should delete this mobj.
@@ -425,10 +427,10 @@ int Cl_ReadMobjDelta(void)
     }
 
 #ifdef _DEBUG
-    if(justCreated && (!(df & MDF_POS_X) || !(df & MDF_POS_Y)))
-    {
-        Con_Error("Cl_ReadMobjDelta: Mobj is being created without X,Y.\n");
-    }
+if(justCreated && (!(df & MDF_POS_X) || !(df & MDF_POS_Y)))
+{
+    Con_Error("Cl_ReadMobjDelta: Mobj is being created without X,Y.\n");
+}
 #endif
 
     d = &cmo->mo;
@@ -450,15 +452,11 @@ int Cl_ReadMobjDelta(void)
         d->pos[VZ] = (Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8);
 
 #ifdef _DEBUG
-    if(!d->pos[VX] && !d->pos[VY])
-    {
-        /*      if(d->type == 83)
-           {
-           d->type = d->type;
-           } */
-        Con_Printf("CL_RMD: x,y zeroed t%i(%s)\n", d->type,
-                   defs.mobjs[d->type].id);
-    }
+if(!d->pos[VX] && !d->pos[VY])
+{
+    Con_Printf("CL_RMD: x,y zeroed t%i(%s)\n", d->type,
+               defs.mobjs[d->type].id);
+}
 #endif
 
     // Momentum using 8.8 fixed point.
@@ -544,8 +542,8 @@ void Cl_InitClientMobjs(void)
  */
 void Cl_DestroyClientMobjs(void)
 {
-    clmobj_t *cmo;
-    int     i;
+    clmobj_t   *cmo;
+    int         i;
 
     for(i = 0; i < HASH_SIZE; ++i)
     {
@@ -579,8 +577,8 @@ void Cl_Reset(void)
  */
 void Cl_MoveThing(clmobj_t *cmo)
 {
-    mobj_t *mo = &cmo->mo;
-    boolean collided = false;
+    mobj_t     *mo = &cmo->mo;
+    boolean     collided = false;
 
     // First do XY movement.
     if(mo->momx || mo->momy)
@@ -701,20 +699,13 @@ void Cl_AnimateThing(mobj_t *mo)
 
 /**
  * All client mobjs are moved and animated using the data we have.
- * 'forward' parameter is currently unused.
  */
 void Cl_PredictMovement(void)
 {
-    clmobj_t *cmo, *next = NULL;
-    int     i;
-    int     moCount = 0;
-    uint    nowTime = Sys_GetRealTime();
-
-    // Only predict up to a certain number of tics.
-    /*  if(predicted_tics && predicted_tics >= predict_tics)
-       {
-       return;
-       } */
+    clmobj_t   *cmo, *next = NULL;
+    int         i;
+    int         moCount = 0;
+    uint        nowTime = Sys_GetRealTime();
 
     predicted_tics++;
 
@@ -763,8 +754,8 @@ void Cl_PredictMovement(void)
             if(cmo->mo.state == states)
             {
 #ifdef _DEBUG
-                if(!cmo->mo.thinker.id)
-                    Con_Error("No clmobj id!!!!\n");
+if(!cmo->mo.thinker.id)
+    Con_Error("No clmobj id!!!!\n");
 #endif
                 Cl_DestroyMobj(cmo);
                 continue;
@@ -775,16 +766,16 @@ void Cl_PredictMovement(void)
         }
     }
 #ifdef _DEBUG
-    if(verbose >= 2)
-    {
-        static int timer = 0;
+if(verbose >= 2)
+{
+    static int timer = 0;
 
-        if(++timer > 5 * 35)
-        {
-            timer = 0;
-            Con_Printf("moCount=%i\n", moCount);
-        }
+    if(++timer > 5 * 35)
+    {
+        timer = 0;
+        Con_Printf("moCount=%i\n", moCount);
     }
+}
 #endif
 }
 
@@ -793,7 +784,7 @@ void Cl_PredictMovement(void)
  */
 clmobj_t *Cl_CreateMobj(thid_t id)
 {
-    clmobj_t *cmo = Z_Calloc(sizeof(*cmo), PU_LEVEL, 0);
+    clmobj_t   *cmo = Z_Calloc(sizeof(*cmo), PU_LEVEL, 0);
 
     cmo->mo.ddflags |= DDMF_REMOTE;
     cmo->time = Sys_GetRealTime();
@@ -822,7 +813,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
  * Call for Hidden client mobjs to make then visible.
  * If a sound is waiting, it's now played.
  *
- * @param  Returns true if the mobj was revealed.
+ * @return              <code>true</code> if the mobj was revealed.
  */
 boolean Cl_RevealMobj(clmobj_t *cmo)
 {
@@ -836,11 +827,11 @@ boolean Cl_RevealMobj(clmobj_t *cmo)
         // Don't reveal just yet. We lack a vital piece of information.
         return false;
     }
-
-    /*#ifdef _DEBUG
-       Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
-       #endif */
-
+/*
+#ifdef _DEBUG
+Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
+#endif
+*/
     cmo->flags &= ~CLMF_HIDDEN;
 
     // Start a sound that has been queued for playing at the time
@@ -853,9 +844,9 @@ boolean Cl_RevealMobj(clmobj_t *cmo)
     }
 
 #ifdef _DEBUG
-    VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
-                         cmo->mo.thinker.id, cmo->mo.state,
-                         cmo->mo.state - states) );
+VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
+                     cmo->mo.thinker.id, cmo->mo.state,
+                     cmo->mo.state - states) );
 #endif
 
     return true;
@@ -869,14 +860,14 @@ boolean Cl_RevealMobj(clmobj_t *cmo)
  */
 void Cl_ReadMobjDelta2(boolean skip)
 {
-    boolean needsLinking = false, justCreated = false;
-    clmobj_t *cmo = NULL;
-    mobj_t *d;
+    boolean     needsLinking = false, justCreated = false;
+    clmobj_t   *cmo = NULL;
+    mobj_t     *d;
     static mobj_t dummy;
-    int     df = 0;
-    byte    moreFlags = 0, fastMom = false;
-    short   mom;
-    thid_t  id = Msg_ReadShort();   // Read the ID.
+    int         df = 0;
+    byte        moreFlags = 0, fastMom = false;
+    short       mom;
+    thid_t      id = Msg_ReadShort();   // Read the ID.
 
     // Flags.
     df = Msg_ReadShort();
@@ -1087,8 +1078,8 @@ void Cl_ReadMobjDelta2(boolean skip)
  */
 void Cl_ReadNullMobjDelta2(boolean skip)
 {
-    clmobj_t *cmo;
-    thid_t  id;
+    clmobj_t   *cmo;
+    thid_t      id;
 
     // The delta only contains an ID.
     id = Msg_ReadShort();
@@ -1097,15 +1088,15 @@ void Cl_ReadNullMobjDelta2(boolean skip)
         return;
 
 #ifdef _DEBUG
-    Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
+Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
 #endif
 
     if((cmo = Cl_FindMobj(id)) == NULL)
     {
         // Wasted bandwidth...
 #ifdef _DEBUG
-        Con_Printf("Cl_ReadNullMobjDelta2: Request to remove id %i that has "
-                   "not been received.\n", id);
+    Con_Printf("Cl_ReadNullMobjDelta2: Request to remove id %i that has "
+               "not been received.\n", id);
 #endif
         return;
     }

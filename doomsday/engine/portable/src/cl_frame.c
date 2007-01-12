@@ -128,11 +128,12 @@ void Cl_HistoryAdd(byte set)
 }
 
 /**
- * Returns true if the set is found in the recent set history.
+ * @return              <code>true</code> if the set is found in the recent
+ *                      set history.
  */
 boolean Cl_HistoryCheck(byte set)
 {
-    int     i;
+    uint        i;
 
     for(i = 0; i < SET_HISTORY_SIZE; ++i)
     {
@@ -154,11 +155,12 @@ void Cl_ResendHistoryAdd(byte id)
 }
 
 /**
- * Returns true if the resend ID is found in the history.
+ * @return              <code>true</code> if the resend ID is found in the
+ *                      history.
  */
 boolean Cl_ResendHistoryCheck(byte id)
 {
-    int     i;
+    uint        i;
 
     for(i = 0; i < RESEND_HISTORY_SIZE; ++i)
     {
@@ -169,21 +171,22 @@ boolean Cl_ResendHistoryCheck(byte id)
 }
 
 /**
- * Converts a set identifier, which ranges from 0...255, into a logical ordinal.
- * Checks for set identifier wraparounds and updates the set ordinal base
- * accordingly.
+ * Converts a set identifier, which ranges from 0...255, into a logical
+ * ordinal. Checks for set identifier wraparounds and updates the set
+ * ordinal base accordingly.
  */
 uint Cl_ConvertSetToOrdinal(byte set)
 {
-    uint ordinal = 0;
+    uint        ordinal = 0;
 
     if(latestSet > 185 && set < 70)
     {
         // We must conclude that wraparound has occured.
         setOrdinalBase += 256;
-
-        VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
-                             setOrdinalBase) );
+#if _NETDEBUG
+VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
+                     setOrdinalBase) );
+#endif
     }
     ordinal = set + setOrdinalBase;
 
@@ -204,14 +207,14 @@ uint Cl_ConvertSetToOrdinal(byte set)
  */
 void Cl_Frame2Received(int packetType)
 {
-    byte    set = Msg_ReadByte(), oldSet, resend, deltaType;
-    byte    resendAcks[300];
-    int     i, numResendAcks = 0;
-    boolean skip = false;
+    byte        set = Msg_ReadByte(), oldSet, resend, deltaType;
+    byte        resendAcks[300];
+    int         i, numResendAcks = 0;
+    boolean     skip = false;
 #ifdef _NETDEBUG
-    int     deltaCount = 0;
-    int     startOffset;
-    int     deltaLength;
+    int         deltaCount = 0;
+    int         startOffset;
+    int         deltaLength;
 #endif
 
     // All frames that arrive before the first frame are ignored.
@@ -220,7 +223,7 @@ void Cl_Frame2Received(int packetType)
     {
         gotFirstFrame = true;
 #ifdef _DEBUG
-        VERBOSE( Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set) );
+VERBOSE( Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set) );
 #endif
     }
     else if(!gotFirstFrame)
@@ -228,13 +231,13 @@ void Cl_Frame2Received(int packetType)
         // Just ignore. If this was a legitimate frame, the server will
         // send it again when it notices no ack is coming.
 #ifdef _DEBUG
-        VERBOSE( Con_Printf("==> Ignored set %i\n", set) );
+VERBOSE( Con_Printf("==> Ignored set %i\n", set) );
 #endif
         return;
     }
 
 #ifdef _DEBUG
-    VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
+VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
 #endif
 
     if(packetType != PSV_FIRST_FRAME2)
@@ -264,30 +267,30 @@ void Cl_Frame2Received(int packetType)
         VERBOSE2( Con_Printf("Starting to process deltas in set %i.\n", set) );
 
 #ifdef _NETDEBUG
-        deltaCount = Msg_ReadLong();
-        VERBOSE2( Con_Message("Set contains %i deltas.\n", deltaCount) );
+deltaCount = Msg_ReadLong();
+VERBOSE2( Con_Message("Set contains %i deltas.\n", deltaCount) );
 #endif
 
         // Read and process the message.
         while(!Msg_End())
         {
 #ifdef _NETDEBUG
-            /*Con_Message("Starting to read delta %i of %i...\n", ++readCount,
-                        deltaCount);*/
+/*Con_Message("Starting to read delta %i of %i...\n", ++readCount,
+              deltaCount);*/
 
-            // Check length field.
-            startOffset = Msg_Offset();
-            deltaLength = Msg_ReadLong();
-            //Con_Message("Incoming delta length %i bytes.\n", deltaLength);
+// Check length field.
+startOffset = Msg_Offset();
+deltaLength = Msg_ReadLong();
+//Con_Message("Incoming delta length %i bytes.\n", deltaLength);
 #endif
 
             deltaType = Msg_ReadByte();
 #ifdef _NETDEBUG
-            //Con_Message("  Delta type is %i.\n", deltaType & ~DT_RESENT);
+//Con_Message("  Delta type is %i.\n", deltaType & ~DT_RESENT);
 #endif
             skip = false;
 
-            VERBOSE2( Con_Printf("Received delta %i.\n", deltaType & ~DT_RESENT) );
+            VERBOSE2( Con_Printf("Received delta %i.\n",deltaType & ~DT_RESENT) );
 
             // Is this a resent delta?
             if(deltaType & DT_RESENT)
@@ -327,7 +330,7 @@ void Cl_Frame2Received(int packetType)
                 VERBOSE2( Con_Printf("  Not resent.\n") );
             }
 
-            switch (deltaType)
+            switch(deltaType)
             {
             case DT_CREATE_MOBJ:
                 // The mobj will be created/shown.
@@ -375,13 +378,13 @@ void Cl_Frame2Received(int packetType)
             }
 
 #ifdef _NETDEBUG
-            // Check that we didn't misread.
-            if(Msg_Offset() - startOffset != deltaLength)
-            {
-                Con_Error("Cl_Frame2Received: Misinterpreted delta! Real length was "
-                          "%i bytes, but we read %i bytes.\n",
-                          deltaLength, Msg_Offset() - startOffset);
-            }
+// Check that we didn't misread.
+if(Msg_Offset() - startOffset != deltaLength)
+{
+    Con_Error("Cl_Frame2Received: Misinterpreted delta! Real length was "
+              "%i bytes, but we read %i bytes.\n",
+              deltaLength, Msg_Offset() - startOffset);
+}
 #endif
         }
 
@@ -399,8 +402,8 @@ void Cl_Frame2Received(int packetType)
         Msg_WriteByte(set);
 
 #ifdef _DEBUG
-        VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "
-                             "Nothing was resent.\n", set) );
+VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "
+                     "Nothing was resent.\n", set) );
 #endif
     }
     else
@@ -409,20 +412,20 @@ void Cl_Frame2Received(int packetType)
         Msg_Begin(PCL_ACKS);
         Msg_WriteByte(set);
 #ifdef _DEBUG
-        VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "
-                             "Contained %i resent deltas: \n",
-                             set, numResendAcks) );
+VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "
+                     "Contained %i resent deltas: \n",
+                     set, numResendAcks) );
 #endif
         for(i = 0; i < numResendAcks; ++i)
         {
             Msg_WriteByte(resendAcks[i]);
 
 #ifdef _DEBUG
-            VERBOSE2( Con_Printf("%i ", resendAcks[i]) );
+VERBOSE2( Con_Printf("%i ", resendAcks[i]) );
 #endif
         }
 #ifdef _DEBUG
-        VERBOSE2( Con_Printf("\n") );
+VERBOSE2( Con_Printf("\n") );
 #endif
     }
     Net_SendBuffer(0, 0);

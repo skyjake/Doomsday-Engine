@@ -77,12 +77,12 @@ int     sv_maxPlayers = MAXPLAYERS;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Fills the provided struct with information about the local server.
  */
 void Sv_GetInfo(serverinfo_t *info)
 {
-    int     i;
+    int         i;
 
     memset(info, 0, sizeof(*info));
 
@@ -131,10 +131,10 @@ void Sv_GetInfo(serverinfo_t *info)
     info->wadNumber = W_CRCNumber();
 }
 
-/*
- * Returns the length of the string.
+/**
+ * @return              The length of the string.
  */
-int Sv_InfoToString(serverinfo_t *info, ddstring_t * msg)
+int Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
 {
     unsigned int i;
 
@@ -160,11 +160,12 @@ int Sv_InfoToString(serverinfo_t *info, ddstring_t * msg)
     return Str_Length(msg);
 }
 
-/*
+/**
  * Extracts the label and value from a string.  'max' is the maximum
  * allowed length of a token, including terminating \0.
  */
-static boolean Sv_Tokenize(const char *line, char *label, char *value, int max)
+static boolean Sv_Tokenize(const char *line, char *label, char *value,
+                           int max)
 {
     const char *src = line;
     const char *colon = strchr(src, ':');
@@ -186,13 +187,13 @@ static boolean Sv_Tokenize(const char *line, char *label, char *value, int max)
     return true;
 }
 
-/*
+/**
  * Converts textual data to a serverinfo struct. Returns true if the
  * label/value pair is recognized.
  */
 boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
 {
-    char    label[TOKEN_LEN], value[TOKEN_LEN];
+    char        label[TOKEN_LEN], value[TOKEN_LEN];
 
     // Extract the label and value. The maximum length of a value is
     // TOKEN_LEN. Labels are returned in lower case.
@@ -286,15 +287,15 @@ boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
     return true;
 }
 
-/*
- * Returns gametic - cmdtime.
+/**
+ * @return              gametic - cmdtime.
  */
 int Sv_Latency(byte cmdtime)
 {
     return Net_TimeDelta(SECONDS_TO_TICKS(gameTime), cmdtime);
 }
 
-/*
+/**
  * For local players.
  */
 /* $unifiedangles */
@@ -302,9 +303,9 @@ int Sv_Latency(byte cmdtime)
 void Sv_FixLocalAngles(boolean clearFixAnglesFlag)
 {
     ddplayer_t *pl;
-    int     i;
+    int         i;
 
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         pl = players + i;
         if(!pl->ingame || !(pl->flags & DDPF_LOCAL))
@@ -332,17 +333,17 @@ void Sv_FixLocalAngles(boolean clearFixAnglesFlag)
 
 void Sv_HandlePacket(void)
 {
-    ident_t id;
-    int     i, mask, from = netBuffer.player;
+    ident_t     id;
+    int         i, mask, from = netBuffer.player;
     ddplayer_t *pl = &players[from];
-    client_t *sender = &clients[from];
+    client_t   *sender = &clients[from];
     playerinfo_packet_t info;
-    int     msgfrom;
-    char   *msg;
-    char    buf[17];
-    
+    int         msgfrom;
+    char       *msg;
+    char        buf[17];
+
 #ifdef _DEBUG
-    Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
+Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
 #endif
 
     switch(netBuffer.msg.type)
@@ -351,12 +352,13 @@ void Sv_HandlePacket(void)
     case PCL_HELLO2:
         // Get the ID of the client.
         id = Msg_ReadLong();
-        Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n", from, id);
+        Con_Printf("Sv_HandlePacket: Hello from client %i (%08X).\n",
+                   from, id);
 
         // Check for duplicate IDs.
         if(!pl->ingame && !sender->handshake)
         {
-            for(i = 0; i < MAXPLAYERS; i++)
+            for(i = 0; i < MAXPLAYERS; ++i)
             {
                 if(clients[i].connected && clients[i].id == id)
                 {
@@ -419,8 +421,8 @@ void Sv_HandlePacket(void)
         // The client says it's ready to receive frames.
         sender->ready = true;
 #ifdef _DEBUG
-        Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
-                   "(%08X).\n", from, sender->id);
+Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
+           "(%08X).\n", from, sender->id);
 #endif
         if(sender->handshake)
         {
@@ -458,7 +460,7 @@ void Sv_HandlePacket(void)
         Msg_WriteByte(msgfrom);
         Msg_WriteShort(mask);
         Msg_Write(msg, strlen(msg) + 1);
-        for(i = 1; i < MAXPLAYERS; i++)
+        for(i = 1; i < MAXPLAYERS; ++i)
             if(players[i].ingame && mask & (1 << i) && i != from)
             {
                 Net_SendBuffer(i, SPF_ORDERED);
@@ -471,13 +473,13 @@ void Sv_HandlePacket(void)
         Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, "%s renamed to %s.\n",
                     sender->name, info.name);
         strcpy(sender->name, info.name);
-        Net_SendPacket(DDSP_CONFIRM | DDSP_ALL_PLAYERS, PKT_PLAYER_INFO, &info,
-                       sizeof(info));
+        Net_SendPacket(DDSP_CONFIRM | DDSP_ALL_PLAYERS, PKT_PLAYER_INFO,
+                       &info, sizeof(info));
         break;
     }
 }
 
-/*
+/**
  * Handles a login packet. If the password is OK and no other client
  * is current logged in, a response is sent.
  */
@@ -506,16 +508,16 @@ void Sv_Login(void)
     Net_SendBuffer(net_remoteuser, SPF_ORDERED);
 }
 
-/*
+/**
  * Executes the command in the message buffer.
  * Usually sent by Con_Send.
  */
 void Sv_ExecuteCommand(void)
 {
-    int     flags;
-    byte    cmdSource;
+    int         flags;
+    byte        cmdSource;
     unsigned short len;
-    boolean silent;
+    boolean     silent;
 
     if(!net_remoteuser)
     {
@@ -554,15 +556,15 @@ void Sv_ExecuteCommand(void)
     Con_Execute(cmdSource, (char *) netBuffer.cursor, silent, true);
 }
 
-/*
+/**
  * Server's packet handler.
  */
 void Sv_GetPackets(void)
 {
-    int     netconsole;
-    int     start, num, i;
-    client_t *sender;
-    byte   *unpacked;
+    int         netconsole;
+    int         start, num, i;
+    client_t   *sender;
+    byte       *unpacked;
 
     while(Net_GetPacket())
     {
@@ -608,7 +610,7 @@ void Sv_GetPackets(void)
             sender->numTics += num;
 
             // Copy as many as fits (circular buffer).
-            for(i = start; num > 0; num--, i++)
+            for(i = start; num > 0; num--, ++i)
             {
                 if(i >= BACKUPTICS)
                     i -= BACKUPTICS;
@@ -710,18 +712,18 @@ Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\
     }
 }
 
-/*
+/**
  * Assign a new console to the player. Returns true if successful.
  * Called by N_Update().
  */
 boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
 {
-    int     i;
+    int         i;
 
     Con_Message("Sv_PlayerArrives: '%s' has arrived.\n", name);
 
     // We need to find the new player a client entry.
-    for(i = 1; i < MAXPLAYERS; i++)
+    for(i = 1; i < MAXPLAYERS; ++i)
         if(!clients[i].connected)
         {
             // This'll do.
@@ -753,16 +755,16 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
     return false;
 }
 
-/*
+/**
  * Remove the specified player from the game. Called by N_Update().
  */
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
-    int     i, pNumber = -1;
-    boolean wasInGame;
+    int         i, pNumber = -1;
+    boolean     wasInGame;
 
     // First let's find out who this node actually is.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
         if(clients[i].nodeID == nodeID)
         {
             pNumber = i;
@@ -809,13 +811,12 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     clients[pNumber].id = 0;
 }
 
-
-/*
+/**
  * The player will be sent the introductory handshake packets.
  */
 void Sv_Handshake(int playernum, boolean newplayer)
 {
-    int     i;
+    int         i;
     handshake_packet_t shake;
     playerinfo_packet_t info;
 
@@ -825,7 +826,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
     shake.yourConsole = playernum; // byte
     shake.playerMask = 0;
     shake.gameTime = LONG(gameTime * 100);
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
         if(clients[i].connected)
             shake.playerMask |= 1 << i;
     shake.playerMask = USHORT(shake.playerMask);
@@ -833,7 +834,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
                    sizeof(shake));
 
 #if _DEBUG
-    Con_Message("Sv_Handshake: plmask=%x\n", USHORT(shake.playerMask));
+Con_Message("Sv_Handshake: plmask=%x\n", USHORT(shake.playerMask));
 #endif
 
     if(newplayer)
@@ -846,7 +847,7 @@ void Sv_Handshake(int playernum, boolean newplayer)
     gx.NetWorldEvent(DDWE_HANDSHAKE, playernum, (void *) newplayer);
 
     // Propagate client information.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(clients[i].connected)
         {
@@ -876,12 +877,12 @@ void Sv_Handshake(int playernum, boolean newplayer)
     players[playernum].flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
 }
 
-void Sv_StartNetGame()
+void Sv_StartNetGame(void)
 {
-    int     i;
+    int         i;
 
     // Reset all the counters and other data.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         players[i].ingame = false;
         clients[i].connected = false;
@@ -929,7 +930,7 @@ void Sv_SendText(int to, int con_flags, char *text)
     Net_SendBuffer(to, SPF_ORDERED);
 }
 
-/*
+/**
  * Asks a client to disconnect. Clients will immediately disconnect
  * after receiving the PSV_SERVER_CLOSE message.
  */
@@ -945,7 +946,7 @@ void Sv_Kick(int who)
 
 void Sv_SendPlayerFixes(ddplayer_t* player)
 {
-    int fixes = 0;
+    int         fixes = 0;
 
     if(!(player->flags & (DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM)))
     {
@@ -974,9 +975,9 @@ void Sv_SendPlayerFixes(ddplayer_t* player)
         Msg_WriteLong(FLT2FIX(player->lookdir));
 
 #ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
-                    player->fixcounter.angles, FIX2FLT(player->mo->angle),
-                    player->lookdir);
+Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
+            player->fixcounter.angles, FIX2FLT(player->mo->angle),
+            player->lookdir);
 #endif
     }
 
@@ -988,11 +989,11 @@ void Sv_SendPlayerFixes(ddplayer_t* player)
         Msg_WriteLong(player->mo->pos[VZ]);
 
 #ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
-                    player->fixcounter.pos,
-                    FIX2FLT(player->mo->pos[VX]),
-                    FIX2FLT(player->mo->pos[VY]),
-                    FIX2FLT(player->mo->pos[VZ]));
+Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
+            player->fixcounter.pos,
+            FIX2FLT(player->mo->pos[VX]),
+            FIX2FLT(player->mo->pos[VY]),
+            FIX2FLT(player->mo->pos[VZ]));
 #endif
     }
 
@@ -1004,11 +1005,11 @@ void Sv_SendPlayerFixes(ddplayer_t* player)
         Msg_WriteLong(player->mo->momz);
 
 #ifdef _DEBUG
-        Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
-                    player->fixcounter.mom,
-                    FIX2FLT(player->mo->momx),
-                    FIX2FLT(player->mo->momy),
-                    FIX2FLT(player->mo->momz));
+Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
+            player->fixcounter.mom,
+            FIX2FLT(player->mo->momx),
+            FIX2FLT(player->mo->momy),
+            FIX2FLT(player->mo->momz));
 #endif
     }
 
@@ -1020,14 +1021,11 @@ void Sv_SendPlayerFixes(ddplayer_t* player)
 
 void Sv_Ticker(void)
 {
-    //static trigger_t fixed = { 1.0 / 35 };
-    int     i;
+    int         i;
     ddplayer_t *plr;
 
-    //if(!M_CheckTrigger(&fixed, time)) return;
-
     // Note last angles for all players.
-    for(i = 0, plr = players; i < MAXPLAYERS; i++, plr++)
+    for(i = 0, plr = players; i < MAXPLAYERS; ++i, plr++)
     {
         if(!plr->ingame || !plr->mo)
             continue;
@@ -1045,18 +1043,18 @@ void Sv_Ticker(void)
     }
 }
 
-/*
- * Returns the number of players in the game.
+/**
+ * @return              The number of players in the game.
  */
 int Sv_GetNumPlayers(void)
 {
-    int     i, count;
+    int         i, count;
 
     // Clients can't count.
     if(isClient)
         return 1;
 
-    for(i = count = 0; i < MAXPLAYERS; i++)
+    for(i = count = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].ingame && players[i].mo)
             count++;
@@ -1064,12 +1062,12 @@ int Sv_GetNumPlayers(void)
     return count;
 }
 
-/*
- * Returns the number of connected clients.
+/**
+ * @return              The number of connected clients.
  */
 int Sv_GetNumConnected(void)
 {
-    int     i, count = 0;
+    int         i, count = 0;
 
     // Clients can't count.
     if(isClient)
@@ -1082,15 +1080,15 @@ int Sv_GetNumConnected(void)
     return count;
 }
 
-/*
+/**
  * The bandwidth rating is updated according to the status of the
  * player's send queue. Returns true if a new packet may be sent.
  */
 boolean Sv_CheckBandwidth(int playerNumber)
 {
-    client_t *client = &clients[playerNumber];
-    uint    qSize = N_GetSendQueueSize(playerNumber);
-    uint    limit = 400;        /*Sv_GetMaxFrameSize(playerNumber); */
+    client_t   *client = &clients[playerNumber];
+    uint        qSize = N_GetSendQueueSize(playerNumber);
+    uint        limit = 400; /*Sv_GetMaxFrameSize(playerNumber); */
 
     // If there are too many messages in the queue, the player's bandwidth
     // is overrated.
@@ -1142,29 +1140,21 @@ void Sv_PlaceThing(mobj_t* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor)
     }
 }
 
-/*
+/**
  * Reads a PKT_COORDS packet from the message buffer. We trust the
  * client's position and change ours to match it. The client better not
  * be cheating.
  */
 void Sv_ClientCoords(int playerNum)
 {
-    /*  client_t *cl = clients + playerNum; */
-    mobj_t *mo = players[playerNum].mo;
-    int     clx, cly, clz;
-    boolean onFloor = false;
-#ifdef _DEBUG
-    fixed_t oldz;
-#endif
+    mobj_t     *mo = players[playerNum].mo;
+    int         clx, cly, clz;
+    boolean     onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
     if(!mo || !players[playerNum].ingame ||
        players[playerNum].flags & DDPF_DEAD)
         return;
-
-#ifdef _DEBUG
-    oldz = mo->pos[VZ];
-#endif
 
     clx = Msg_ReadShort() << 16;
     cly = Msg_ReadShort() << 16;
@@ -1196,7 +1186,7 @@ void Sv_ClientCoords(int playerNum)
     }
 }
 
-/*
+/**
  * Console command for terminating a remote console connection.
  */
 D_CMD(Logout)

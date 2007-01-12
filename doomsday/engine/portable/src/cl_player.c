@@ -68,12 +68,12 @@ static int cp_momx[LOCALCAM_WRITE_TICS], cp_momy[LOCALCAM_WRITE_TICS];
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Clears the player state table.
  */
 void Cl_InitPlayers(void)
 {
-    int     i;
+    int         i;
 
     memset(playerstate, 0, sizeof(playerstate));
     xfix = yfix = fixtics = 0;
@@ -82,7 +82,7 @@ void Cl_InitPlayers(void)
     memset(cp_momy, 0, sizeof(cp_momy));
 
     // Clear psprites. The server will send them.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         //players[i].psprites[0].stateptr = NULL;
         //players[i].psprites[1].stateptr = NULL;
@@ -90,13 +90,13 @@ void Cl_InitPlayers(void)
     }
 }
 
-/*
+/**
  * Updates the state of the local player by looking at lastCmd.
  */
 void Cl_LocalCommand(void)
 {
     ddplayer_t *pl = players + consoleplayer;
-    client_t *cl = clients + consoleplayer;
+    client_t   *cl = clients + consoleplayer;
     playerstate_t *s = playerstate + consoleplayer;
 
     if(levelTime < 0.333)
@@ -116,7 +116,7 @@ void Cl_LocalCommand(void)
     s->turnDelta = 0;
 }
 
-/*
+/**
  * Reads a single player delta from the message buffer and applies
  * it to the player in question. Returns false only if the list of
  * deltas ends.
@@ -125,9 +125,9 @@ void Cl_LocalCommand(void)
  */
 int Cl_ReadPlayerDelta(void)
 {
-    int     df, psdf, i, idx;
-    int     num = Msg_ReadByte();
-    short   junk;
+    int         df, psdf, i, idx;
+    int         num = Msg_ReadByte();
+    short       junk;
     playerstate_t *s;
     ddplayer_t *pl;
     ddpsprite_t *psp;
@@ -158,15 +158,15 @@ int Cl_ReadPlayerDelta(void)
             // Find the new mobj.
             s->cmo = Cl_FindMobj(s->mobjId);
 #ifdef _DEBUG
-            Con_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjId, old);
-            Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.pos[VX],
-                        s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
+Con_Message("Pl%i: mobj=%i old=%x\n", num, s->mobjId, old);
+Con_Message("  x=%x y=%x z=%x\n", s->cmo->mo.pos[VX],
+            s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
 #endif
             s->cmo->mo.dplayer = pl;
 
 #ifdef _DEBUG
-            Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
-                        s->cmo->mo.dplayer - players, s->mobjId);
+Con_Message("Cl_RPlD: pl=%i => moid=%i\n",
+            s->cmo->mo.dplayer - players, s->mobjId);
 #endif
 
             // Unlink this cmo (not interactive or visible).
@@ -257,7 +257,7 @@ int Cl_ReadPlayerDelta(void)
     return true;
 }
 
-/*
+/**
  * Thrust (with a multiplier).
  */
 void Cl_ThrustMul(mobj_t *mo, angle_t angle, fixed_t move, fixed_t thmul)
@@ -274,14 +274,14 @@ void Cl_Thrust(mobj_t *mo, angle_t angle, fixed_t move)
     Cl_ThrustMul(mo, angle, move, FRACUNIT);
 }
 
-/*
+/**
  * Predict the movement of the given player.
  */
 void Cl_MovePlayer(ddplayer_t *pl)
 {
-    int     num = pl - players;
+    int         num = pl - players;
     playerstate_t *st = playerstate + num;
-    mobj_t *mo = pl->mo;
+    mobj_t     *mo = pl->mo;
 
     if(!mo)
         return;
@@ -325,14 +325,14 @@ void Cl_MovePlayer(ddplayer_t *pl)
     Cl_UpdatePlayerPos(pl);
 }
 
-/*
+/**
  * Move the (hidden, unlinked) client player mobj to the same coordinates
  * where the real mobj of the player is.
  */
 void Cl_UpdatePlayerPos(ddplayer_t *pl)
 {
-    int     num = pl - players;
-    mobj_t *clmo, *mo;
+    int         num = pl - players;
+    mobj_t     *clmo, *mo;
 
     if(!playerstate[num].cmo || !pl->mo)
         return;                 // Must have a mobj!
@@ -357,7 +357,7 @@ void Cl_CoordsReceived(void)
         return;
 
 #ifdef _DEBUG
-    Con_Printf("Cl_CoordsReceived\n");
+Con_Printf("Cl_CoordsReceived\n");
 #endif
 
     xfix = Msg_ReadShort() << 16;
@@ -369,13 +369,13 @@ void Cl_CoordsReceived(void)
 
 void Cl_HandlePlayerFix(void)
 {
-    ddplayer_t* plr = &players[consoleplayer];
-    int fixes = Msg_ReadLong();
-    angle_t angle;
-    float lookdir;
-    fixed_t pos[3];
-    mobj_t *mo = plr->mo;
-    clmobj_t *clmo = playerstate[consoleplayer].cmo;
+    ddplayer_t *plr = &players[consoleplayer];
+    int         fixes = Msg_ReadLong();
+    angle_t     angle;
+    float       lookdir;
+    fixed_t     pos[3];
+    mobj_t     *mo = plr->mo;
+    clmobj_t   *clmo = playerstate[consoleplayer].cmo;
 
     if(fixes & 1) // fix angles?
     {
@@ -384,13 +384,13 @@ void Cl_HandlePlayerFix(void)
         lookdir = FIX2FLT(Msg_ReadLong());
 
 #ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
-                    plr->fixacked.angles, FIX2FLT(angle), lookdir);
+Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
+            plr->fixacked.angles, FIX2FLT(angle), lookdir);
 #endif
         if(mo)
         {
 #ifdef _DEBUG
-            Con_Message("  Applying to mobj %p...\n", mo);
+Con_Message("  Applying to mobj %p...\n", mo);
 #endif
             mo->angle = angle;
             plr->lookdir = lookdir;
@@ -398,7 +398,7 @@ void Cl_HandlePlayerFix(void)
         if(clmo)
         {
 #ifdef _DEBUG
-            Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
+Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
 #endif
             clmo->mo.angle = angle;
         }
@@ -412,14 +412,14 @@ void Cl_HandlePlayerFix(void)
         pos[2] = Msg_ReadLong();
 
 #ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
-                    plr->fixacked.pos, FIX2FLT(pos[0]),
-                    FIX2FLT(pos[1]), FIX2FLT(pos[2]));
+Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
+            plr->fixacked.pos, FIX2FLT(pos[0]),
+            FIX2FLT(pos[1]), FIX2FLT(pos[2]));
 #endif
         if(mo)
         {
 #ifdef _DEBUG
-            Con_Message("  Applying to mobj %p...\n", mo);
+Con_Message("  Applying to mobj %p...\n", mo);
 #endif
             Sv_PlaceThing(mo, pos[0], pos[1], pos[2], false);
             mo->reactiontime = 18;
@@ -427,7 +427,7 @@ void Cl_HandlePlayerFix(void)
         if(clmo)
         {
 #ifdef _DEBUG
-            Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
+Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
 #endif
             Cl_UpdatePlayerPos(plr);
         }
@@ -441,14 +441,14 @@ void Cl_HandlePlayerFix(void)
         pos[2] = Msg_ReadLong();
 
 #ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: Fix momentum %i. Mom=%f, %f, %f\n",
-                    plr->fixacked.mom, FIX2FLT(pos[0]),
-                    FIX2FLT(pos[1]), FIX2FLT(pos[2]));
+Con_Message("Cl_HandlePlayerFix: Fix momentum %i. Mom=%f, %f, %f\n",
+            plr->fixacked.mom, FIX2FLT(pos[0]),
+            FIX2FLT(pos[1]), FIX2FLT(pos[2]));
 #endif
         if(mo)
         {
 #ifdef _DEBUG
-            Con_Message("  Applying to mobj %p...\n", mo);
+Con_Message("  Applying to mobj %p...\n", mo);
 #endif
             mo->momx = pos[0];
             mo->momy = pos[1];
@@ -457,7 +457,7 @@ void Cl_HandlePlayerFix(void)
         if(clmo)
         {
 #ifdef _DEBUG
-            Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
+Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
 #endif
             clmo->mo.momx = pos[0];
             clmo->mo.momy = pos[1];
@@ -473,19 +473,22 @@ void Cl_HandlePlayerFix(void)
     Net_SendBuffer(0, SPF_ORDERED | SPF_CONFIRM);
 }
 
-/*
+/**
  * Used in DEMOS. (Not in regular netgames.)
  * Applies the given dx and dy to the local player's coordinates.
- * The Z coordinate is given as the absolute viewpoint height.
- * If onground is true, the mobj's Z will be set to floorz, and the
- * player's viewheight is set so that the viewpoint height is 'z'.
- * If onground is false, the mobj's Z will be 'z' and viewheight is zero.
+ *
+ * @param z             Absolute viewpoint height.
+ * @param onground      If <code>true</code> the mobj's Z will be set to
+ *                      floorz, and the player's viewheight is set so that
+ *                      the viewpoint height is param 'z'.
+ *                      If <code>false</code> the mobj's Z will be param 'z'
+ *                      and viewheight is zero.
  */
 void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
 {
     ddplayer_t *pl = players + consoleplayer;
-    mobj_t *mo;
-    int     i;
+    mobj_t     *mo;
+    int         i;
 
     mo = pl->mo;
     if(!mo)
@@ -496,7 +499,7 @@ void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
     cp_momy[SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dy;
 
     // Calculate an average.
-    for(mo->momx = mo->momy = i = 0; i < LOCALCAM_WRITE_TICS; i++)
+    for(mo->momx = mo->momy = i = 0; i < LOCALCAM_WRITE_TICS; ++i)
     {
         mo->momx += cp_momx[i];
         mo->momy += cp_momy[i];
@@ -530,7 +533,7 @@ void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
     Cl_UpdatePlayerPos(players + consoleplayer);
 }
 
-/*
+/**
  * Animates the player sprites based on their states (up, down, etc.)
  */
 /*
@@ -538,13 +541,13 @@ void Cl_MovePsprites(void)
 {
     ddplayer_t *pl = players + consoleplayer;
     ddpsprite_t *psp = pl->psprites;
-    int     i;
+    int         i;
 
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
         if(psp[i].tics > 0)
             psp[i].tics--;
 
-    switch (psp->state)
+    switch(psp->state)
     {
     case DDPSP_UP:
         pspy -= FIX2FLT(psp_move_speed);
@@ -576,6 +579,7 @@ void Cl_MovePsprites(void)
         psp->y = FIX2FLT((fixed_t) gx.GetInteger(DD_PSPRITE_BOB_Y));
         break;
     }
+
     if(psp->state != DDPSP_BOBBING)
     {
         if(psp->offx)
@@ -589,20 +593,20 @@ void Cl_MovePsprites(void)
     psp[1].y = psp->y;
 }*/
 
-/*
+/**
  * Reads a single PSV_FRAME2 player delta from the message buffer and
  * applies it to the player in question.
  */
 void Cl_ReadPlayerDelta2(boolean skip)
 {
-    int     df = 0, psdf, i, idx;
+    int         df = 0, psdf, i, idx;
     playerstate_t *s;
     ddplayer_t *pl;
     ddpsprite_t *psp;
     static playerstate_t dummyState;
     static ddplayer_t dummyPlayer;
-    int     num, newId;
-    short   junk;
+    int         num, newId;
+    short       junk;
 
     // The first byte consists of a player number and some flags.
     num = Msg_ReadByte();
@@ -685,16 +689,17 @@ void Cl_ReadPlayerDelta2(boolean skip)
             }
 
 #if _DEBUG
-            Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, s->mobjId,
-                        old);
-            Con_Message("  x=%x y=%x z=%x fz=%x cz=%x\n", s->cmo->mo.pos[VX],
-                        s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
-                        s->cmo->mo.floorz, s->cmo->mo.ceilingz);
-            Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
-                        s->cmo->mo.dplayer - players, s->mobjId);
+Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, s->mobjId,
+            old);
+Con_Message("  x=%x y=%x z=%x fz=%x cz=%x\n", s->cmo->mo.pos[VX],
+            s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
+            s->cmo->mo.floorz, s->cmo->mo.ceilingz);
+Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
+            s->cmo->mo.dplayer - players, s->mobjId);
 #endif
         }
     }
+
     if(df & PDF_FORWARDMOVE)
         s->forwardMove = (char) Msg_ReadByte() * 2048;
     if(df & PDF_SIDEMOVE)
@@ -724,7 +729,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
         junk = Msg_ReadShort();
     if(df & PDF_PSPRITES)
     {
-        for(i = 0; i < 2; i++)
+        for(i = 0; i < 2; ++i)
         {
             // First the flags.
             psdf = Msg_ReadByte();
@@ -755,15 +760,18 @@ void Cl_ReadPlayerDelta2(boolean skip)
     }
 }
 
-/*
- * Returns true if the player is free to move according to floorz and
- * ceilingz. This test is used by the client plane mover.
+/**
+ * Used by the client plane mover.
+ *
+ * @return              <code>true</code> if the player is free to move
+ *                      according to floorz and ceilingz.
  */
 boolean Cl_IsFreeToMove(int player)
 {
-    mobj_t *mo = players[player].mo;
+    mobj_t     *mo = players[player].mo;
 
     if(!mo)
         return false;
-    return (mo->pos[VZ] >= mo->floorz && mo->pos[VZ] + mo->height <= mo->ceilingz);
+    return (mo->pos[VZ] >= mo->floorz && mo->pos[VZ] +
+            mo->height <= mo->ceilingz);
 }

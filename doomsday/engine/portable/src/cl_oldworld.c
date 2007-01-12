@@ -59,7 +59,7 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Reads a sector delta from the message buffer and applies it to
  * the world. Returns false only if the end marker is found.
  *
@@ -67,9 +67,9 @@
  */
 int Cl_ReadSectorDelta(void)
 {
-    short   num = Msg_ReadPackedShort();
-    sector_t *sec;
-    int     df;
+    short       num = Msg_ReadPackedShort();
+    sector_t   *sec;
+    int         df;
 
     // Sector number first (0 terminates).
     if(!num)
@@ -166,7 +166,7 @@ int Cl_ReadSectorDelta(void)
     return true;
 }
 
-/*
+/**
  * Reads a side delta from the message buffer and applies it to
  * the world. Returns false only if the end marker is found.
  *
@@ -174,9 +174,9 @@ int Cl_ReadSectorDelta(void)
  */
 int Cl_ReadSideDelta(void)
 {
-    short   num = Msg_ReadPackedShort(); // FIXME! we support > 32768 sidedefs!
-    side_t *sid;
-    int     df;
+    short       num = Msg_ReadPackedShort(); // FIXME! we support > 32768 sidedefs!
+    side_t     *sid;
+    int         df;
 
     // Side number first (0 terminates).
     if(!num)
@@ -205,8 +205,8 @@ int Cl_ReadSideDelta(void)
             line->flags &= ~0xff;
             line->flags |= updatedFlags;
 #if _DEBUG
-            Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
-                       updatedFlags);
+Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
+           updatedFlags);
 #endif
         }
     }
@@ -250,7 +250,7 @@ int Cl_ReadSideDelta(void)
     return true;
 }
 
-/*
+/**
  * Reads a poly delta from the message buffer and applies it to
  * the world. Returns false only if the end marker is found.
  *
@@ -258,9 +258,9 @@ int Cl_ReadSideDelta(void)
  */
 int Cl_ReadPolyDelta(void)
 {
-    int     df;
-    short   num = Msg_ReadPackedShort();
-    polyobj_t *po;
+    int         df;
+    short       num = Msg_ReadPackedShort();
+    polyobj_t  *po;
 
     // Check the number. A zero terminates.
     if(!num)
@@ -296,4 +296,3 @@ int Cl_ReadPolyDelta(void)
     // Continue reading.
     return true;
 }
-

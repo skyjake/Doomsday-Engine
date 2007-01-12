@@ -87,12 +87,12 @@ static int lastTransmitTic = 0;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Send all the relevant information to each client.
  */
 void Sv_TransmitFrame(void)
 {
-    int     i, cTime, numInGame, pCount;
+    int         i, cTime, numInGame, pCount;
 
     // Obviously clients don't transmit anything.
     if(!allowFrames || isClient)
@@ -104,7 +104,7 @@ void Sv_TransmitFrame(void)
     {
         // When not running a netgame, only generate deltas when somebody
         // is recording a demo.
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(i = 0; i < MAXPLAYERS; ++i)
             if(Sv_IsFrameTarget(i))
                 break;
 
@@ -128,7 +128,7 @@ void Sv_TransmitFrame(void)
     // How many players currently in the game?
     numInGame = Sv_GetNumPlayers();
 
-    for(i = 0, pCount = 0; i < MAXPLAYERS; i++)
+    for(i = 0, pCount = 0; i < MAXPLAYERS; ++i)
     {
         if(!Sv_IsFrameTarget(i))
         {
@@ -167,37 +167,37 @@ void Sv_TransmitFrame(void)
     }
 }
 
-/*
+/**
  * Shutdown routine for the server.
  */
 void Sv_Shutdown(void)
 {
 #ifdef _DEBUG
-    if(totalFrameCount > 0)
-    {
-        int     i;
+if(totalFrameCount > 0)
+{
+    uint        i;
 
-        // Byte probabilities.
-        for(i = 0; i < 256; i++)
-        {
-            Con_Printf("Byte %02x: %f\n", i,
-                       byteCounts[i] / (float) totalFrameCount);
-        }
+    // Byte probabilities.
+    for(i = 0; i < 256; ++i)
+    {
+        Con_Printf("Byte %02x: %f\n", i,
+                   byteCounts[i] / (float) totalFrameCount);
     }
+}
 #endif
 
     Sv_ShutdownPools();
 }
 
-/*
+/**
  * The delta is written to the message buffer.
  */
 void Sv_WriteMobjDelta(const void *deltaPtr)
 {
     const mobjdelta_t *delta = deltaPtr;
     const dt_mobj_t *d = &delta->mo;
-    int     df = delta->delta.flags;
-    byte    moreFlags = 0;
+    int         df = delta->delta.flags;
+    byte        moreFlags = 0;
 
     // Do we have fast momentum?
     if(abs(d->momx) >= MOM_FAST_LIMIT || abs(d->momy) >= MOM_FAST_LIMIT ||
@@ -241,15 +241,15 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
     }
 
 #ifdef _DEBUG
-    if(df & MDFC_NULL)
-    {
-        Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n", df);
-    }
-    if((df & 0xffff) == 0)
-    {
-        Con_Printf("Sv_WriteMobjDelta: This delta id%i [%x] is empty.\n",
-                   delta->delta.id, df);
-    }
+if(df & MDFC_NULL)
+{
+    Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n", df);
+}
+if((df & 0xffff) == 0)
+{
+    Con_Printf("Sv_WriteMobjDelta: This delta id%i [%x] is empty.\n",
+               delta->delta.id, df);
+}
 #endif
 
     // First the mobj ID number and flags.
@@ -333,7 +333,7 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
         Msg_WriteByte((byte)(d->vistarget +1));
 }
 
-/*
+/**
  * The delta is written to the message buffer.
  */
 void Sv_WritePlayerDelta(const void *deltaPtr)
@@ -341,8 +341,8 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
     const playerdelta_t *delta = deltaPtr;
     const dt_player_t *d = &delta->player;
     const ddpsprite_t *psp;
-    int     df = delta->delta.flags;
-    int     psdf, i, k;
+    int         df = delta->delta.flags;
+    int         psdf, i, k;
 
     // First the player number. Upper three bits contain flags.
     Msg_WriteByte(delta->delta.id | (df >> 8));
@@ -381,7 +381,7 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
         Msg_WriteShort(d->clPitch / 110 * DDMAXSHORT);*/ /* $unifiedangles */
     if(df & PDF_PSPRITES)       // Only set if there's something to write.
     {
-        for(i = 0; i < 2; i++)
+        for(i = 0; i < 2; ++i)
         {
             psdf = df >> (16 + i * 8);
             psp = d->psp + i;
@@ -425,15 +425,15 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
     }
 }
 
-/*
+/**
  * The delta is written to the message buffer.
  */
 void Sv_WriteSectorDelta(const void *deltaPtr)
 {
     const sectordelta_t *delta = deltaPtr;
     const dt_sector_t *d = &delta->sector;
-    int     df = delta->delta.flags, spd;
-    byte    floorspd = 0, ceilspd = 0;
+    int         df = delta->delta.flags, spd;
+    byte        floorspd = 0, ceilspd = 0;
 
     // Is there need to use 4.4 fixed-point speeds?
     // (7.1 is too inaccurate for very slow movement)
@@ -481,8 +481,8 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     if(df & SDF_CEILING_HEIGHT)
     {
 #ifdef _DEBUG
-        VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
-                            delta->delta.id, d->planes[PLN_CEILING].height) );
+VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
+                    delta->delta.id, d->planes[PLN_CEILING].height) );
 #endif
 
         Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].height) >> 16);
@@ -550,14 +550,14 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
                        (short)(d->planes[PLN_CEILING].glow * DDMAXSHORT));
 }
 
-/*
+/**
  * The delta is written to the message buffer.
  */
 void Sv_WriteSideDelta(const void *deltaPtr)
 {
     const sidedelta_t *delta = deltaPtr;
     const dt_side_t *d = &delta->side;
-    int     df = delta->delta.flags;
+    int         df = delta->delta.flags;
 
     // Side number first.
     Msg_WriteShort(delta->delta.id);
@@ -605,14 +605,14 @@ void Sv_WriteSideDelta(const void *deltaPtr)
         Msg_WriteByte(d->flags);
 }
 
-/*
+/**
  * The delta is written to the message buffer.
  */
 void Sv_WritePolyDelta(const void *deltaPtr)
 {
     const polydelta_t *delta = deltaPtr;
     const dt_poly_t *d = &delta->po;
-    int     df = delta->delta.flags;
+    int         df = delta->delta.flags;
 
     if(d->destAngle == (unsigned) -1)
     {
@@ -645,13 +645,13 @@ void Sv_WritePolyDelta(const void *deltaPtr)
         Msg_WriteShort(d->angleSpeed >> 16);
 }
 
-/*
+/**
  * The delta is written to the message buffer.
  */
 void Sv_WriteSoundDelta(const void *deltaPtr)
 {
     const sounddelta_t *delta = deltaPtr;
-    int     df = delta->delta.flags;
+    int         df = delta->delta.flags;
 
     // This is either the sound ID, emitter ID or sector index.
     Msg_WriteShort(delta->delta.id);
@@ -659,7 +659,7 @@ void Sv_WriteSoundDelta(const void *deltaPtr)
     // First the flags byte.
     Msg_WriteByte(df & 0xff);
 
-    switch (delta->delta.type)
+    switch(delta->delta.type)
     {
     case DT_MOBJ_SOUND:
     case DT_SECTOR_SOUND:
@@ -692,16 +692,16 @@ void Sv_WriteSoundDelta(const void *deltaPtr)
     }
 }
 
-/*
+/**
  * Write the type and possibly the set number (for Unacked deltas).
  */
-void Sv_WriteDeltaHeader(byte type, const delta_t * delta)
+void Sv_WriteDeltaHeader(byte type, const delta_t *delta)
 {
 #ifdef _DEBUG
-    if(type >= NUM_DELTA_TYPES)
-    {
-        Con_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
-    }
+if(type >= NUM_DELTA_TYPES)
+{
+    Con_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
+}
 #endif
 
     if(delta->state == DELTA_UNACKED)
@@ -728,15 +728,15 @@ void Sv_WriteDeltaHeader(byte type, const delta_t * delta)
     }
 }
 
-/*
+/**
  * The delta is written to the message buffer.
  */
-void Sv_WriteDelta(const delta_t * delta)
+void Sv_WriteDelta(const delta_t *delta)
 {
-    byte    type = delta->type;
+    byte        type = delta->type;
 #ifdef _NETDEBUG
-    int     lengthOffset;
-    int     endOffset;
+    int         lengthOffset;
+    int         endOffset;
 #endif
 
 #ifdef _NETDEBUG
@@ -764,7 +764,7 @@ void Sv_WriteDelta(const delta_t * delta)
     // First the type of the delta.
     Sv_WriteDeltaHeader(type, delta);
 
-    switch (delta->type)
+    switch(delta->type)
     {
     case DT_MOBJ:
         Sv_WriteMobjDelta(delta);
@@ -811,13 +811,13 @@ writeDeltaLength:
 #endif
 }
 
-/*
+/**
  * Returns an estimate for the maximum frame size appropriate for the
  * client. The bandwidth rating is updated whenever a frame is sent.
  */
 int Sv_GetMaxFrameSize(int playerNumber)
 {
-    int     size =
+    int         size =
         MINIMUM_FRAME_SIZE +
         FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
 
@@ -828,12 +828,12 @@ int Sv_GetMaxFrameSize(int playerNumber)
     return size;
 }
 
-/*
+/**
  * Returns a unique resend ID. Never returns zero.
  */
-byte Sv_GetNewResendID(pool_t * pool)
+byte Sv_GetNewResendID(pool_t *pool)
 {
-    byte    id = pool->resendDealer;
+    byte        id = pool->resendDealer;
 
     // Advance to next ID, skipping zero.
     while(!++pool->resendDealer);
@@ -841,21 +841,21 @@ byte Sv_GetNewResendID(pool_t * pool)
     return id;
 }
 
-/*
+/**
  * Send a sv_frame packet to the specified player. The amount of data sent
  * depends on the player's bandwidth rating.
  */
 void Sv_SendFrame(int playerNumber)
 {
-    pool_t *pool = Sv_GetPool(playerNumber);
-    int     maxFrameSize, lastStart;
-    byte    oldResend;
-    delta_t *delta;
-    int     deltaCount = 0;
+    pool_t     *pool = Sv_GetPool(playerNumber);
+    int         maxFrameSize, lastStart;
+    byte        oldResend;
+    delta_t    *delta;
+    int         deltaCount = 0;
 #if _NETDEBUG
-    int     endOffset = 0;
+    int         endOffset = 0;
 #endif
-    int     deltaCountOffset = 0;
+    int         deltaCountOffset = 0;
 
     // Does the send queue allow us to send this packet?
     // Bandwidth rating is updated during the check.
@@ -895,10 +895,11 @@ void Sv_SendFrame(int playerNumber)
     Msg_WriteLong(0);
 #endif
 
-    /*#ifdef _DEBUG
-       Con_Printf("set%i\n", pool->setDealer);
-       #endif */
-
+/*
+#ifdef _DEBUG
+Con_Printf("set%i\n", pool->setDealer);
+#endif
+*/
     // Keep writing until the maximum size is reached.
     while((delta = Sv_PoolQueueExtract(pool)) != NULL &&
           (lastStart = Msg_Offset()) < maxFrameSize)
@@ -935,16 +936,16 @@ void Sv_SendFrame(int playerNumber)
 
         // Successfully written, increment counter.
         deltaCount++;
-
-        /*#ifdef _DEBUG
-           if(delta->state == DELTA_UNACKED)
-           {
-           Con_Printf("Resend: %i, type%i[%x], set%i, rsid%i\n",
-           delta->id, delta->type, delta->flags,
-           delta->set, delta->resend);
-           }
-           #endif */
-
+/*
+#ifdef _DEBUG
+if(delta->state == DELTA_UNACKED)
+{
+    Con_Printf("Resend: %i, type%i[%x], set%i, rsid%i\n",
+               delta->id, delta->type, delta->flags,
+               delta->set, delta->resend);
+}
+#endif
+*/
         // Update the sent delta's state.
         if(delta->state == DELTA_NEW)
         {

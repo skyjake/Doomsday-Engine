@@ -73,8 +73,8 @@ boolean clientPaused = false;   // Set by the server.
 
 void Cl_InitID(void)
 {
-    FILE   *file;
-    int     i;
+    FILE       *file;
+    int         i;
 
     if((i = ArgCheckWith("-id", 1)) != 0)
     {
@@ -103,12 +103,12 @@ void Cl_InitID(void)
     }
 }
 
-int Cl_GameReady()
+int Cl_GameReady(void)
 {
     return (handshakeReceived && gameReady);
 }
 
-void Cl_CleanUp()
+void Cl_CleanUp(void)
 {
     Con_Printf("Cl_CleanUp.\n");
 
@@ -121,13 +121,13 @@ void Cl_CleanUp()
     GL_SetFilter(0);
 }
 
-/*
+/**
  * Sends a hello packet.
  * PCL_HELLO2 includes the Game ID (16 chars).
  */
 void Cl_SendHello(void)
 {
-    char    buf[256];
+    char        buf[256];
 
     Msg_Begin(PCL_HELLO2);
     Msg_WriteLong(clientID);
@@ -137,18 +137,17 @@ void Cl_SendHello(void)
     strncpy(buf, (char *) gx.GetVariable(DD_GAME_MODE), sizeof(buf) - 1);
 
 #ifdef _DEBUG
-    Con_Message("Cl_SendHello: game mode = %s\n", buf);
+Con_Message("Cl_SendHello: game mode = %s\n", buf);
 #endif
-    
-    Msg_Write(buf, 16);
 
+    Msg_Write(buf, 16);
     Net_SendBuffer(0, SPF_ORDERED);
 }
 
-void Cl_AnswerHandshake(handshake_packet_t * pShake)
+void Cl_AnswerHandshake(handshake_packet_t *pShake)
 {
     handshake_packet_t shake;
-    int     i;
+    int         i;
 
     // Copy the data to a buffer of our own.
     memcpy(&shake, pShake, sizeof(shake));
@@ -173,7 +172,7 @@ void Cl_AnswerHandshake(handshake_packet_t * pShake)
 
     // Update time and player ingame status.
     gameTime = shake.gameTime / 100.0;
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         players[i].ingame = (shake.playerMask & (1 << i)) != 0;
     }
@@ -212,9 +211,9 @@ void Cl_AnswerHandshake(handshake_packet_t * pShake)
     DD_ResetTimer();
 }
 
-void Cl_HandlePlayerInfo(playerinfo_packet_t * info)
+void Cl_HandlePlayerInfo(playerinfo_packet_t *info)
 {
-    boolean present;
+    boolean     present;
 
     Con_Printf("Cl_HandlePlayerInfo: console:%i name:%s\n", info->console,
                info->name);
@@ -241,13 +240,13 @@ void Cl_PlayerLeaves(int number)
     gx.NetPlayerEvent(number, DDPE_EXIT, 0);
 }
 
-/*
+/**
  * Client's packet handler.
  * Handles all the events the server sends.
  */
 void Cl_GetPackets(void)
 {
-    int     i;
+    int         i;
 
     // All messages come from the server.
     while(Net_GetPacket())
@@ -258,7 +257,7 @@ void Cl_GetPackets(void)
         {
             boolean handled = true;
 
-            switch (netBuffer.msg.type)
+            switch(netBuffer.msg.type)
             {
             case PSV_FRAME:
                 Cl_FrameReceived();
@@ -287,8 +286,9 @@ void Cl_GetPackets(void)
             if(handled)
                 continue;       // Get the next packet.
         }
+
         // How about the rest?
-        switch (netBuffer.msg.type)
+        switch(netBuffer.msg.type)
         {
         case PSV_PLAYER_FIX:
             Cl_HandlePlayerFix();
@@ -354,21 +354,21 @@ void Cl_GetPackets(void)
             else
             {
 #ifdef _DEBUG
-                Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
-                           netBuffer.msg.type);
+Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
+           netBuffer.msg.type);
 #endif
             }
         }
     }
 }
 
-/*
+/**
  * Client-side game ticker
  */
 void Cl_Ticker(void)
 {
     //static trigger_t fixed = { 1.0 / 35 };
-    static int ticSendTimer = 0;
+    static int  ticSendTimer = 0;
 
     if(!isClient || !Cl_GameReady() || clientPaused)
         return;
@@ -387,7 +387,7 @@ void Cl_Ticker(void)
     }
 }
 
-/*
+/**
  * Clients use this to establish a remote connection to the server.
  */
 D_CMD(Login)
@@ -395,6 +395,7 @@ D_CMD(Login)
     // Only clients can log in.
     if(!isClient)
         return false;
+
     Msg_Begin(PKT_LOGIN);
     // Write the password.
     if(argc == 1)

@@ -94,7 +94,7 @@ short  *xlat_lump;
  */
 void Cl_InitTranslations(void)
 {
-    int     i;
+    int         i;
 
     xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_REFRESHTEX, 0);
     memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
@@ -136,7 +136,7 @@ void Cl_InitMovers(void)
 
 void Cl_RemoveActiveMover(mover_t *mover)
 {
-    int     i;
+    int         i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] == mover)
@@ -152,7 +152,7 @@ void Cl_RemoveActiveMover(mover_t *mover)
  */
 void Cl_RemoveActivePoly(polymover_t *mover)
 {
-    int     i;
+    int         i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activepolys[i] == mover)
@@ -272,8 +272,8 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
 
 void Cl_PolyMoverThinker(polymover_t *mover)
 {
-    polyobj_t *poly = mover->poly;
-    int     dx, dy, dist;
+    polyobj_t  *poly = mover->poly;
+    int         dx, dy, dist;
 
     if(mover->move)
     {
@@ -321,7 +321,7 @@ void Cl_PolyMoverThinker(polymover_t *mover)
 
 polymover_t *Cl_FindActivePoly(int number)
 {
-    int     i;
+    int         i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activepolys[i] && activepolys[i]->number == number)
@@ -332,7 +332,7 @@ polymover_t *Cl_FindActivePoly(int number)
 polymover_t *Cl_NewPolyMover(int number)
 {
     polymover_t *mover;
-    polyobj_t *poly = PO_PTR(number);
+    polyobj_t  *poly = PO_PTR(number);
 
     mover = Z_Malloc(sizeof(polymover_t), PU_LEVEL, 0);
     memset(mover, 0, sizeof(*mover));
@@ -363,7 +363,7 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
  */
 void Cl_RemoveMovers(void)
 {
-    int     i;
+    int         i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
     {
@@ -382,7 +382,7 @@ void Cl_RemoveMovers(void)
 
 mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
 {
-    int     i;
+    int         i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] && activemovers[i]->sectornum == sectornum &&
@@ -394,12 +394,13 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
 }
 
 /**
- * Returns false if the end marker is found (lump index zero).
+ * @return              <code>false</code> if the end marker is found (lump
+ *                      index zero).
  */
 int Cl_ReadLumpDelta(void)
 {
-    int     num = Msg_ReadPackedShort();
-    char    name[9];
+    int         num = Msg_ReadPackedShort();
+    char        name[9];
 
     if(!num)
         return false;           // No more.
@@ -422,9 +423,9 @@ int Cl_ReadLumpDelta(void)
 void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 {
     unsigned short num;
-    sector_t *sec;
-    int     df;
-    boolean wasChanged = false;
+    sector_t   *sec;
+    int         df;
+    boolean     wasChanged = false;
     static sector_t dummy;      // Used when skipping.
     static plane_t* dummyPlaneArray[2];
     static plane_t dummyPlanes[2];
@@ -451,11 +452,11 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     if(!skip)
     {
 #ifdef _DEBUG
-        if(num >= numsectors)
-        {
-            // This is worrisome.
-            Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
-        }
+if(num >= numsectors)
+{
+    // This is worrisome.
+    Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
+}
 #endif
         sec = SECTOR_PTR(num);
     }
@@ -630,10 +631,12 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
     unsigned short num;
-    int     df, toptexture = 0, midtexture = 0, bottomtexture = 0, blendmode = 0;
-    byte    lineFlags = 0, sideFlags = 0;
-    byte    toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0}, bottomrgb[3] = {0,0,0};
-    side_t *sid;
+    int         df, toptexture = 0, midtexture = 0, bottomtexture = 0;
+    int         blendmode = 0;
+    byte        lineFlags = 0, sideFlags = 0;
+    byte        toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
+    byte        bottomrgb[3] = {0,0,0};
+    side_t  *sid;
 
     // First read all the data.
     num = Msg_ReadShort();
@@ -692,11 +695,11 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         return;
 
 #ifdef _DEBUG
-    if(num >= numsides)
-    {
-        // This is worrisome.
-        Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
-    }
+if(num >= numsides)
+{
+    // This is worrisome.
+    Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
+}
 #endif
 
     sid = SIDE_PTR(num);
@@ -710,8 +713,8 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         sid->SW_bottompic = bottomtexture;
 
 #ifdef _DEBUG
-        Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num,
-                   bottomtexture);
+Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num,
+           bottomtexture);
 #endif
     }
 
@@ -758,8 +761,8 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
             line->flags &= ~0xff;
             line->flags |= lineFlags;
 #if _DEBUG
-            Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n",
-                       GET_LINE_IDX(line), lineFlags);
+Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n",
+           GET_LINE_IDX(line), lineFlags);
 #endif
         }
     }
@@ -771,11 +774,11 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
  */
 void Cl_ReadPolyDelta2(boolean skip)
 {
-    int     df;
+    int         df;
     unsigned short num;
-    polyobj_t *po;
-    float   destX = 0, destY = 0;
-    int     speed = 0, destAngle = 0, angleSpeed = 0;
+    polyobj_t  *po;
+    float       destX = 0, destY = 0;
+    int         speed = 0, destAngle = 0, angleSpeed = 0;
 
     num = Msg_ReadPackedShort();
 
@@ -797,11 +800,11 @@ void Cl_ReadPolyDelta2(boolean skip)
         return;
 
 #ifdef _DEBUG
-    if(num >= po_NumPolyobjs)
-    {
-        // This is worrisome.
-        Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
-    }
+if(num >= po_NumPolyobjs)
+{
+    // This is worrisome.
+    Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
+}
 #endif
 
     po = PO_PTR(num);

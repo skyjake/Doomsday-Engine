@@ -52,20 +52,20 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Read a sound delta from the message buffer and play it.
  * Only used with PSV_FRAME2 packets.
  */
 void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 {
-    int     sound = 0, soundFlags = 0;
-    byte    flags = 0;
-    clmobj_t *cmo = NULL;
-    thid_t  mobjId = 0;
-    sector_t *sector = NULL;
-    polyobj_t *poly = NULL;
-    mobj_t *emitter = NULL;
-    float   volume = 1;
+    int         sound = 0, soundFlags = 0;
+    byte        flags = 0;
+    clmobj_t   *cmo = NULL;
+    thid_t      mobjId = 0;
+    sector_t   *sector = NULL;
+    polyobj_t  *poly = NULL;
+    mobj_t     *emitter = NULL;
+    float       volume = 1;
 
     if(type == DT_SOUND)
     {
@@ -174,8 +174,8 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         {
             // Not enough information.
 #ifdef _DEBUG
-            Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
-                       type, sound);
+Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
+           type, sound);
 #endif
             return;
         }
@@ -198,15 +198,16 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         }
 
         S_LocalSoundAtVolume(sound | soundFlags, emitter, volume);
-
-        /*#ifdef _DEBUG
-           Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f",
+/*#
+ifdef _DEBUG
+Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f",
            type, sound, flags, volume);
-           if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-           else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
-           else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
-           else Con_Printf("\n");
-           #endif */
+if(cmo) Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
+else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
+else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
+else Con_Printf("\n");
+#endif
+*/
     }
     else if(sound >= 0)
     {
@@ -216,20 +217,21 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         {
             S_StopSound(sound, emitter);
 
-            /*#ifdef _DEBUG
-               Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i",
-               type, sound);
-               if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-               else if(sector) Con_Printf(", sector=%i\n",
-               GET_SECTOR_IDX(sector));
-               else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
-               else Con_Printf("\n");
-               #endif */
+/*
+#ifdef _DEBUG
+Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i",
+           type, sound);
+if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
+else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
+else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
+else Con_Printf("\n");
+#endif
+*/
         }
     }
 }
 
-/*
+/**
  * Called when a PSV_FRAME sound packet is received.
  */
 void Cl_Sound(void)
@@ -259,7 +261,7 @@ void Cl_Sound(void)
         return;                 // Bad sound ID!
     }
 #ifdef _DEBUG
-    Con_Printf("Cl_Sound: %i\n", sound);
+Con_Printf("Cl_Sound: %i\n", sound);
 #endif
 
     if(flags & SNDF_VOLUME)
@@ -309,7 +311,7 @@ void Cl_Sound(void)
     {
         // Play it from "somewhere".
 #ifdef _DEBUG
-        Con_Printf("Cl_Sound: NULL orig sound %i\n", sound);
+Con_Printf("Cl_Sound: NULL orig sound %i\n", sound);
 #endif
         S_LocalSoundAtVolume(sound, NULL, volume / 127.0f);
     }
