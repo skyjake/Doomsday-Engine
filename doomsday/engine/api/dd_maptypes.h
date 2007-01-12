@@ -7,7 +7,7 @@
 
 #define DMT_SEG_V DDVT_PTR             // [Start, End] of the segment.
 #define DMT_SEG_LENGTH DDVT_FLOAT      // Accurate length of the segment (v1 -> v2).
-#define DMT_SEG_OFFSET DDVT_FIXED
+#define DMT_SEG_OFFSET DDVT_FLOAT
 #define DMT_SEG_SIDEDEF DDVT_PTR
 #define DMT_SEG_LINEDEF DDVT_PTR
 #define DMT_SEG_SEC DDVT_PTR
@@ -22,7 +22,7 @@
 
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_TEXTURE DDVT_SHORT
-#define DMT_SURFACE_TEXMOVE DDVT_FIXED // Texture movement X and Y
+#define DMT_SURFACE_TEXMOVE DDVT_FLOAT // Texture movement X and Y
 #define DMT_SURFACE_OFFX DDVT_FLOAT    // Texture x offset
 #define DMT_SURFACE_OFFY DDVT_FLOAT    // Texture y offset
 #define DMT_SURFACE_RGBA DDVT_BYTE     // Surface color tint
@@ -33,10 +33,7 @@
 #define DMT_PLANE_TARGET DDVT_FLOAT    // Target height
 #define DMT_PLANE_SPEED DDVT_FLOAT     // Move speed
 #define DMT_PLANE_SOUNDORG DDVT_PTR    // Sound origin for plane
-
-#define DMT_PLANE_SECTOR        DDVT_PTR
-#define DMT_PLANE_OFFX          DDVT_FLOAT
-#define DMT_PLANE_OFFY          DDVT_FLOAT
+#define DMT_PLANE_SECTOR DDVT_PTR      // Owner of the plane (temp)
 
 #define DMT_SECTOR_LIGHTLEVEL DDVT_SHORT
 #define DMT_SECTOR_RGB DDVT_BYTE
@@ -83,8 +80,7 @@
 #define DMT_NODE_Y DDVT_FLOAT          // Partition line.
 #define DMT_NODE_DX DDVT_FLOAT         // Partition line.
 #define DMT_NODE_DY DDVT_FLOAT         // Partition line.
-
-#define DMT_NODE_BBOX           DDVT_FIXED
-#define DMT_NODE_CHILDREN       DDVT_UINT
+#define DMT_NODE_BBOX DDVT_FLOAT       // Bounding box for each child.
+#define DMT_NODE_CHILDREN DDVT_UINT    // If NF_SUBSECTOR it's a subsector.
 
 #endif

@@ -1628,7 +1628,14 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
             memset(&map->vertexes[oldNum], 0, elements * sizeof(vertex_t));
             for(k = oldNum; k < newNum; ++k)
             {
-                map->vertexes[k].header.type = DMU_VERTEX;
+                vertex_t *vtx = &map->vertexes[k];
+
+                vtx->header.type = DMU_VERTEX;
+                vtx->numlineowners = 0;
+                vtx->lineowners = NULL;
+                vtx->anchored = false;
+                vtx->numsecowners = 0;
+                vtx->secowners = NULL;
             }
 
             if(mapLump->lumpClass == LCM_VERTEXES && oldNum == 0)
@@ -1653,7 +1660,12 @@ static boolean ReadMapData(gamemap_t* map, int doClass)
             memset(&map->lines[oldNum], 0, elements * sizeof(line_t));
             for(k = oldNum; k < newNum; ++k)
             {
-                map->lines[k].header.type = DMU_LINE;
+                line_t *lin = &map->lines[k];
+
+                lin->header.type = DMU_LINE;
+                lin->L_vo1 = NULL;
+                lin->L_vo2 = NULL;
+                lin->selfrefhackroot = false;
             }
 
             // for missing front detection
@@ -2852,13 +2864,11 @@ static void P_ProcessSegs(gamemap_t* map, int version)
             if(seg->offset == -1)
             {
                 if(side == 0)
-                    seg->offset =
-                        FRACUNIT * P_AccurateDistancef(seg->v[0]->pos[VX] - ldef->v[0]->pos[VX],
-                                                       seg->v[0]->pos[VY] - ldef->v[0]->pos[VY]);
+                    seg->offset = P_AccurateDistancef(seg->v[0]->pos[VX] - ldef->v[0]->pos[VX],
+                                                      seg->v[0]->pos[VY] - ldef->v[0]->pos[VY]);
                 else
-                    seg->offset =
-                        FRACUNIT * P_AccurateDistancef(seg->v[0]->pos[VX] - ldef->v[1]->pos[VX],
-                                                       seg->v[0]->pos[VY] - ldef->v[1]->pos[VY]);
+                    seg->offset = P_AccurateDistancef(seg->v[0]->pos[VX] - ldef->v[1]->pos[VX],
+                                                      seg->v[0]->pos[VY] - ldef->v[1]->pos[VY]);
             }
 
             if(seg->angle == -1)

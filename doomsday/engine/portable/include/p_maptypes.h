@@ -32,7 +32,7 @@ typedef struct seg_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];          // [Start, End] of the segment.
     float               length;        // Accurate length of the segment (v1 -> v2).
-    fixed_t             offset;
+    float               offset;
     struct side_s*      sidedef;
     struct line_s*      linedef;
     struct sector_s*    sec[2];
@@ -80,8 +80,8 @@ typedef struct surface_s {
     boolean             oldisflat;
     float               normal[3];     // Surface normal
     float               oldnormal[3];
-    fixed_t             texmove[2];    // Texture movement X and Y
-    fixed_t             oldtexmove[2];
+    float               texmove[2];    // Texture movement X and Y
+    float               oldtexmove[2];
     float               offx;          // Texture x offset
     float               oldoffx;
     float               offy;          // Texture y offset

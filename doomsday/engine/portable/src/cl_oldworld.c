@@ -95,8 +95,8 @@ int Cl_ReadSectorDelta(void)
     }
     if(df & SDF_FLOOR_TEXMOVE)
     {
-        sec->SP_floortexmove[0] = Msg_ReadShort() << 8;
-        sec->SP_floortexmove[1] = Msg_ReadShort() << 8;
+        sec->SP_floortexmove[0] = FIX2FLT(Msg_ReadShort() << 8);
+        sec->SP_floortexmove[1] = FIX2FLT(Msg_ReadShort() << 8);
     }
     if(df & SDF_CEILING_TARGET)
         sec->planes[PLN_CEILING]->target = FIX2FLT(Msg_ReadShort() << 16);
@@ -107,8 +107,8 @@ int Cl_ReadSectorDelta(void)
     }
     if(df & SDF_CEILING_TEXMOVE)
     {
-        sec->SP_ceiltexmove[0] = Msg_ReadShort() << 8;
-        sec->SP_ceiltexmove[1] = Msg_ReadShort() << 8;
+        sec->SP_ceiltexmove[0] = FIX2FLT(Msg_ReadShort() << 8);
+        sec->SP_ceiltexmove[1] = FIX2FLT(Msg_ReadShort() << 8);
     }
     if(df & SDF_COLOR_RED)
         sec->rgb[0] = Msg_ReadByte();

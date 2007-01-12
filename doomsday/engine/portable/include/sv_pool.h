@@ -256,7 +256,7 @@ typedef struct {
     short           texture;
     boolean         isflat;
     byte            rgba[4];       // Surface color tint
-    fixed_t         texmove[2];    // Texture movement X and Y.
+    float           texmove[2];    // Texture movement X and Y.
 } dt_surface_t;
 
 typedef struct {

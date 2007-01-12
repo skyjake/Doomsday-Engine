@@ -493,8 +493,8 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
         Msg_WriteByte(floorspd);
     if(df & SDF_FLOOR_TEXMOVE)
     {
-        Msg_WriteShort(d->planes[PLN_FLOOR].surface.texmove[0] >> 8);
-        Msg_WriteShort(d->planes[PLN_FLOOR].surface.texmove[1] >> 8);
+        Msg_WriteShort(FLT2FIX(d->planes[PLN_FLOOR].surface.texmove[0]) >> 8);
+        Msg_WriteShort(FLT2FIX(d->planes[PLN_FLOOR].surface.texmove[1]) >> 8);
     }
     if(df & SDF_CEILING_TARGET)
         Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].target) >> 16);
@@ -502,8 +502,8 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
         Msg_WriteByte(ceilspd);
     if(df & SDF_CEILING_TEXMOVE)
     {
-        Msg_WriteShort(d->planes[PLN_CEILING].surface.texmove[0] >> 8);
-        Msg_WriteShort(d->planes[PLN_CEILING].surface.texmove[1] >> 8);
+        Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].surface.texmove[0]) >> 8);
+        Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].surface.texmove[1]) >> 8);
     }
     if(df & SDF_COLOR_RED)
         Msg_WriteByte(d->rgb[0]);

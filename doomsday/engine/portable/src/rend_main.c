@@ -1175,7 +1175,7 @@ static void Rend_RenderSSWallSeg(seg_t *seg, sector_t *frontsec)
         vTL[VZ] = vTR[VZ] = fceil;
         vBL[VZ] = vBR[VZ] = ffloor;
 
-        quad->texoffx = side->SW_middleoffx + FIX2FLT(seg->offset);
+        quad->texoffx = side->SW_middleoffx + seg->offset;
         quad->texoffy = side->SW_middleoffy;
         if(ldef->flags & ML_DONTPEGBOTTOM)
             quad->texoffy += texh - fsh;
@@ -1316,7 +1316,7 @@ static void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec)
             vTL[VZ] = vTR[VZ] = gaptop    = MIN_OF(rbceil, rfceil);
             vBL[VZ] = vBR[VZ] = gapbottom = MAX_OF(rbfloor, rffloor);
 
-            quad->texoffx = side->SW_middleoffx + FIX2FLT(seg->offset);
+            quad->texoffx = side->SW_middleoffx + seg->offset;
 
             if(Rend_MidTexturePos
                (&vBL[VZ], &vBR[VZ], &vTL[VZ], &vTR[VZ],
@@ -1418,7 +1418,7 @@ static void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec)
             float tcyoff;
 
             // Calculate texture coordinates.
-            quad->texoffx = side->SW_topoffx + FIX2FLT(seg->offset);
+            quad->texoffx = side->SW_topoffx + seg->offset;
             tcyoff = side->SW_middleoffy;
 
             quad->flags = 0;
@@ -1507,7 +1507,7 @@ static void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec)
         {
             short tempflags = 0;
             // Calculate texture coordinates.
-            quad->texoffx = side->SW_bottomoffx + FIX2FLT(seg->offset);
+            quad->texoffx = side->SW_bottomoffx + seg->offset;
             quad->texoffy = side->SW_bottomoffy;
             if(ldef->flags & ML_DONTPEGBOTTOM)
                 quad->texoffy += fceil - bfloor; // Align with normal middle texture.

@@ -523,8 +523,8 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         fixed_t moveY = Msg_ReadShort() << 8;
         if(!skip)
         {
-            sec->SP_floortexmove[0] = moveX;
-            sec->SP_floortexmove[1] = moveY;
+            sec->SP_floortexmove[0] = FIX2FLT(moveX);
+            sec->SP_floortexmove[1] = FIX2FLT(moveY);
         }
     }
     if(df & SDF_CEILING_TARGET)
@@ -552,8 +552,13 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     }
     if(df & SDF_CEILING_TEXMOVE)
     {
-        sec->SP_ceiltexmove[0] = Msg_ReadShort() << 8;
-        sec->SP_ceiltexmove[1] = Msg_ReadShort() << 8;
+        fixed_t moveX = Msg_ReadShort() << 8;
+        fixed_t moveY = Msg_ReadShort() << 8;
+        if(!skip)
+        {
+            sec->SP_ceiltexmove[0] = FIX2FLT(moveX);
+            sec->SP_ceiltexmove[1] = FIX2FLT(moveY);
+        }
     }
     if(df & SDF_COLOR_RED)
         sec->rgb[0] = Msg_ReadByte();

@@ -28,7 +28,7 @@ end
 struct seg
     PTR     vertex_s*[2] v      // [Start, End] of the segment.
     FLOAT   float       length  // Accurate length of the segment (v1 -> v2).
-    FIXED   fixed_t     offset
+    FLOAT   float       offset
     PTR     side_s*     sidedef
     PTR     line_s*     linedef
     PTR     sector_s*[2] sec
@@ -76,8 +76,8 @@ struct surface
     -       boolean     oldisflat
     -       float[3]    normal  // Surface normal
     -       float[3]    oldnormal
-    FIXED   fixed_t[2]  texmove // Texture movement X and Y
-    -       fixed_t[2]  oldtexmove
+    FLOAT   float[2]    texmove // Texture movement X and Y
+    -       float[2]    oldtexmove
     FLOAT   float       offx	// Texture x offset
     -       float       oldoffx
     FLOAT   float       offy	// Texture y offset
@@ -96,16 +96,10 @@ struct plane
     FLOAT   float       target  // Target height
     FLOAT   float       speed   // Move speed
     PTR     degenmobj_t soundorg // Sound origin for plane
-    -       sector_s*   sector  // Owner of the plane (temp)
+    PTR     sector_s*   sector  // Owner of the plane (temp)
     -       float       visheight // Visible plane height (smoothed)
     -       float       visoffset
     -       sector_s*   linked  // Plane attached to another sector.
-end
-
-public
-#define DMT_PLANE_SECTOR        DDVT_PTR
-#define DMT_PLANE_OFFX          DDVT_FLOAT
-#define DMT_PLANE_OFFY          DDVT_FLOAT
 end
 
 internal
@@ -303,11 +297,6 @@ struct node
     FLOAT   float     y             // Partition line.
     FLOAT   float     dx            // Partition line.
     FLOAT   float     dy            // Partition line.
-    -       float[2][4] bbox        // Bounding box for each child.
-    -       uint[2]     children    // If NF_SUBSECTOR it's a subsector.
-end
-
-public
-#define DMT_NODE_BBOX           DDVT_FIXED
-#define DMT_NODE_CHILDREN       DDVT_UINT
+    FLOAT   float[2][4] bbox        // Bounding box for each child.
+    UINT    uint[2]   children      // If NF_SUBSECTOR it's a subsector.
 end

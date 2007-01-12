@@ -701,7 +701,7 @@ static float Rend_RadioLongWallBonus(float span)
 void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
 {
     sector_t   *backSector;
-    float       bFloor, bCeil, limit, size, segOffset;
+    float       bFloor, bCeil, limit, size;
     rendpoly_t *quad;
     int         i, texture = 0, sideNum;
     shadowcorner_t topCn[2], botCn[2], sideCn[2];
@@ -713,7 +713,6 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         return;
 
     backSector = seg->SG_backsector;
-    segOffset = FIX2FLT(seg->offset);
 
     // Choose the correct side.
     if(seg->linedef->L_frontsector == frontSector)
@@ -725,7 +724,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     for(i = 0; i < 2; ++i)
     {
         spans[i].length = seg->linedef->length;
-        spans[i].shift = segOffset;
+        spans[i].shift = seg->offset;
     }
 
     Rend_RadioScanEdges(topCn, botCn, sideCn, seg->linedef, sideNum, spans);
@@ -744,7 +743,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
 
     // Init the quad.
     quad->flags = RPF_SHADOW;
-    quad->texoffx = segOffset;
+    quad->texoffx = seg->offset;
     quad->texoffy = 0;
     quad->tex.id = GL_PrepareLSTexture(LST_RADIO_CC);
     quad->tex.detail = NULL;
@@ -1037,9 +1036,9 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         // Left Shadow
         if(i == 0)
         {
-            if(sideCn[0].corner > 0 && segOffset < size)
+            if(sideCn[0].corner > 0 && seg->offset < size)
             {
-                quad->texoffx = segOffset;
+                quad->texoffx = seg->offset;
                 // Make sure the shadow isn't too big
                 if(size > seg->linedef->length)
                 {
@@ -1056,9 +1055,9 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         }
         else // Right Shadow
         {
-            if(sideCn[1].corner > 0 && segOffset + seg->length > seg->linedef->length - size)
+            if(sideCn[1].corner > 0 && seg->offset + seg->length > seg->linedef->length - size)
             {
-                quad->texoffx = -seg->linedef->length + segOffset;
+                quad->texoffx = -seg->linedef->length + seg->offset;
                 // Make sure the shadow isn't too big
                 if(size > seg->linedef->length)
                 {

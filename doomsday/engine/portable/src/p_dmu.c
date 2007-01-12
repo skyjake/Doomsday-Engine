@@ -1094,14 +1094,14 @@ static int SetProperty(void* ptr, void* context)
             p->surface.isflat = true; // Kludge
             break;
         case DMU_PLANE_OFFSET_X:
-            SetValue(DMT_PLANE_OFFX, &p->surface.offx, args, 0);
+            SetValue(DMT_SURFACE_OFFX, &p->surface.offx, args, 0);
             break;
         case DMU_PLANE_OFFSET_Y:
-            SetValue(DMT_PLANE_OFFY, &p->surface.offy, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->surface.offy, args, 0);
             break;
         case DMU_PLANE_OFFSET_XY:
-            SetValue(DMT_PLANE_OFFX, &p->surface.offx, args, 0);
-            SetValue(DMT_PLANE_OFFY, &p->surface.offy, args, 1);
+            SetValue(DMT_SURFACE_OFFX, &p->surface.offx, args, 0);
+            SetValue(DMT_SURFACE_OFFY, &p->surface.offy, args, 1);
             break;
         case DMU_PLANE_TEXTURE_MOVE_X:
             SetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[0], args, 0);
@@ -1777,14 +1777,14 @@ static int GetProperty(void* ptr, void* context)
             break;
         }
         case DMU_PLANE_OFFSET_X:
-            GetValue(DMT_PLANE_OFFX, &p->surface.offx, args, 0);
+            GetValue(DMT_SURFACE_OFFX, &p->surface.offx, args, 0);
             break;
         case DMU_PLANE_OFFSET_Y:
-            GetValue(DMT_PLANE_OFFY, &p->surface.offy, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->surface.offy, args, 0);
             break;
         case DMU_PLANE_OFFSET_XY:
-            GetValue(DMT_PLANE_OFFX, &p->surface.offx, args, 0);
-            GetValue(DMT_PLANE_OFFY, &p->surface.offy, args, 1);
+            GetValue(DMT_SURFACE_OFFX, &p->surface.offx, args, 0);
+            GetValue(DMT_SURFACE_OFFY, &p->surface.offy, args, 1);
             break;
         case DMU_PLANE_TEXTURE_MOVE_X:
             GetValue(DMT_SURFACE_TEXMOVE, &p->surface.texmove[0], args, 0);

@@ -1365,7 +1365,7 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         {
             memcpy(d->planes[PLN_FLOOR].surface.texmove,
                    s->planes[PLN_FLOOR].surface.texmove,
-                   sizeof(int) * 2);
+                   sizeof(float) * 2);
         }
         if(sf & SDF_CEILING_TARGET)
             d->planes[PLN_CEILING].target = s->planes[PLN_CEILING].target;
@@ -1375,7 +1375,7 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         {
             memcpy(d->planes[PLN_CEILING].surface.texmove,
                    s->planes[PLN_CEILING].surface.texmove,
-                   sizeof(int) * 2);
+                   sizeof(float) * 2);
         }
         if(sf & SDF_FLOOR_HEIGHT)
             d->planes[PLN_FLOOR].height = s->planes[PLN_FLOOR].height;
