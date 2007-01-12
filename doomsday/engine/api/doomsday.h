@@ -25,9 +25,9 @@
 /*
  * doomsday.h: Doomsday Engine API
  *
- * Doomsday Engine API. Routines exported from Doomsday.exe (all of
- * this uses __stdcall). Games and plugins need to include this to
- * gain access to the engine's features.
+ * Doomsday Engine API. Routines exported from Doomsday.exe.
+ * Games and plugins need to include this to gain access to the 
+ * engine's features.
  */
 
 #ifndef __DOOMSDAY_EXPORTS_H__
@@ -35,7 +35,7 @@
 
 // The calling convention.
 #if defined(WIN32)
-#   define _DECALL  __stdcall
+#   define _DECALL  __cdecl
 #elif defined(UNIX)
 #   define _DECALL
 #endif

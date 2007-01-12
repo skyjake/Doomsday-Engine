@@ -2067,7 +2067,7 @@ void DP_Initialize(void)
 /**
  * Windows calls this when the DLL is loaded.
  */
-BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason)
     {

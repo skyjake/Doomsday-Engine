@@ -35,15 +35,6 @@
 extern          "C" {
 #endif
 
-    /*
-     * Caller cleans the stack in the __cdecl calling convention.
-     * This means the caller doesn't have to know the right number
-     * of arguments for the function. Most Doomsday functions use
-     * __stdcall, where the function clears up the stack itself.
-     * This means the caller must put the right number of arguments
-     * on the stack or Bad Things will happen.
-     */
-
 #include <stdlib.h>
 #include "../portable/include/dd_version.h"
 #include "dd_types.h"

@@ -65,7 +65,7 @@
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="1"
-				CallingConvention="2"
+				CallingConvention="0"
 				CompileAs="0"
 			/>
 			<Tool
@@ -149,7 +149,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\engine\win32\include;..\..\..\engine\portable\include;..\..\..\engine\api\;..\..\..\external\lzss\portable\include;..\..\..\external\zlib\include;..\..\..\external\libpng\portable\include"
+				AdditionalIncludeDirectories="..\..\..\engine\win32\include;..\..\..\engine\portable\include;..\..\..\engine\api\;..\..\..\external\lzss\portable\include;..\..\..\external\zlib\portable\include;..\..\..\external\libpng\portable\include;..\..\..\external\libcurl\portable\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE,ZLIB_DLL,__DOOMSDAY__,WIN32_GAMMA,WIN32,_DEBUG,_WINDOWS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -161,7 +161,7 @@
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
-				CallingConvention="2"
+				CallingConvention="0"
 				CompileAs="0"
 			/>
 			<Tool
@@ -178,12 +178,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dsound.lib dinput.lib dxguid.lib sdl_net.lib sdl.lib wsock32.lib libz.lib libpngd.lib lzss.lib winmm.lib gdi32.lib ole32.lib user32.lib"
+				AdditionalDependencies="curllibd.lib dsound.lib dinput.lib dxguid.lib sdl_net.lib sdl.lib wsock32.lib zlib1.lib libpng13d.lib lzss.lib winmm.lib gdi32.lib ole32.lib user32.lib"
 				OutputFile="./Bin/Debug/Doomsday.exe"
 				Version="1.0"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\..\external\lzss\win32;..\..\..\external\libpng\win32;..\..\..\external\zlib\win32;./Bin/Debug"
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32;..\..\..\external\libpng\win32;..\..\..\external\libcurl\win32;..\..\..\external\zlib\win32;./Bin/Debug"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="..\..\..\engine\api\Doomsday.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="./Bin/Debug/Doomsday.pdb"
@@ -330,7 +331,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						CallingConvention="2"
+						CallingConvention="0"
 					/>
 				</FileConfiguration>
 			</File>
@@ -681,6 +682,14 @@
 			<File
 				RelativePath="..\..\..\engine\portable\src\sys_master.c"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CallingConvention="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\win32\src\sys_mixer.c"
