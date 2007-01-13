@@ -1,11 +1,11 @@
 ## deng build scripts. 
-## Copyright © 2006:	Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
+## Copyright © 2006 - 2007 Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
 ## This file is licensed under the GNU GPLv2 or any later versions,
 ## or at your option the BSD 3 clause license. Both license texts follow.
 ##
 ## This file is part of the deng build scripts
 ##
-## Copyright © 2006 - Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
+## Copyright © 2006 - 2007 Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
 ##
 ## the deng build scripts is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 ##
 ################################################################################
 ##
-## Copyright (c) © 2006 - Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
+## Copyright © 2006 - 2007 Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -680,7 +680,7 @@ ENDIF (APPLE)
 
 ADD_EXECUTABLE (doomsday MACOSX_BUNDLE ${DENG_PORTABLE_SOURCES} ${DENG_ARCH_SPECIFIC_SOURCES})
 
-TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} )
+TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} ${CURL_LIBRARIES})
 
 IF (UNIX)
 	IF (NOT WIN32)
