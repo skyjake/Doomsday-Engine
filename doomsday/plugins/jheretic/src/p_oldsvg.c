@@ -550,5 +550,5 @@ void SV_v13_LoadGame(char *savename)
     Z_Free(savebuffer);
 
     // Spawn particle generators.
-    R_SetupLevel("", DDSLF_AFTER_LOADING);
+    R_SetupLevel(DDSLM_AFTER_LOADING, 0);
 }

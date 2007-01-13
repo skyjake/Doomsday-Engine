@@ -740,10 +740,13 @@ extern          "C" {
         float           pos[2];
     } ddvertexf_t;
 
-    // SetupLevel flags.
-#define DDSLF_AFTER_LOADING 0x1  // After loading a savegame...
-#define DDSLF_FINALIZE      0x2  // After everything else is done.
-#define DDSLF_INITIALIZE    0x4  // Before anything else if done.
+    // SetupLevel modes.
+    enum
+    {
+        DDSLM_AFTER_LOADING,    // After loading a savegame...
+        DDSLM_FINALIZE,         // After everything else is done.
+        DDSLM_INITIALIZE        // Before anything else if done.
+    };
 
     enum                           // Sector reverb data indices.
     {

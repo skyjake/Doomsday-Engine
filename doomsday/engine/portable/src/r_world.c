@@ -2278,139 +2278,17 @@ void R_InitLinks(void)
 }
 
 /**
- * This routine is called from the Game to polygonize the current
- * level.  Creates floors and ceilings and fixes the adjacent sky
- * sector heights.  Creates a big enough dlBlockLinks.  Reads mapinfo
- * and does the necessary setup.
+ * This routine is called from P_LoadMapData() to polygonize the current
+ * level. Creates floors and ceilings and fixes the adjacent sky sector
+ * heights.  Creates a big enough dlBlockLinks.
  */
-void R_SetupLevel(char *level_id, int flags)
+void R_InitLevel(char *level_id)
 {
     uint        startTime;
-
     uint        i;
 
-    if(flags & DDSLF_INITIALIZE)
-    {
-        // Switch to fast malloc mode in the zone. This is intended for large
-        // numbers of mallocs with no frees in between.
-        Z_EnableFastMalloc(false);
-
-        // A new level is about to be setup.
-        levelSetup = true;
-
-        // This is called before anything is actually done.
-        if(loadInStartupMode)
-            Con_StartupInit();
-        return;
-    }
-    if(flags & DDSLF_AFTER_LOADING)
-    {
-        side_t *side;
-
-        // Loading a game usually destroys all thinkers. Until a proper
-        // savegame system handled by the engine is introduced we'll have
-        // to resort to re-initializing the most important stuff.
-        P_SpawnTypeParticleGens();
-
-        // Update everything again. Its possible that after loading we
-        // now have more HOMs to fix, etc..
-
-        R_SkyFix(true, true); // fix floors and ceilings.
-
-        // Update all sectors. Set intial values of various tracked
-        // and interpolated properties (lighting, smoothed planes etc).
-        for(i = 0; i < numsectors; ++i)
-            R_UpdateSector(SECTOR_PTR(i), false);
-
-        // Do the same for side surfaces.
-        for(i = 0; i < numsides; ++i)
-        {
-            side = SIDE_PTR(i);
-            R_UpdateSurface(&side->SW_topsurface, false);
-            R_UpdateSurface(&side->SW_middlesurface, false);
-            R_UpdateSurface(&side->SW_bottomsurface, false);
-        }
-
-        // We don't render fakeradio on polyobjects...
-        PO_SetupPolyobjs();
-        return;
-    }
-    if(flags & DDSLF_FINALIZE)
-    {
-        side_t *side;
-
-        if(loadInStartupMode)
-            Con_StartupDone();
-
-        // Init server data.
-        Sv_InitPools();
-
-        // Recalculate the light range mod matrix.
-        Rend_CalcLightRangeModMatrix(NULL);
-
-        // Update all sectors. Set intial values of various tracked
-        // and interpolated properties (lighting, smoothed planes etc).
-        for(i = 0; i < numsectors; ++i)
-            R_UpdateSector(SECTOR_PTR(i), true);
-
-        // Do the same for side surfaces.
-        for(i = 0; i < numsides; ++i)
-        {
-            side = SIDE_PTR(i);
-            R_UpdateSurface(&side->SW_topsurface, true);
-            R_UpdateSurface(&side->SW_middlesurface, true);
-            R_UpdateSurface(&side->SW_bottomsurface, true);
-        }
-
-        // We don't render fakeradio on polyobjects...
-        PO_SetupPolyobjs();
-
-        // Run any commands specified in Map Info.
-        if(mapinfo && mapinfo->execute)
-            Con_Execute(CMDS_DED, mapinfo->execute, true, false);
-
-        // The level setup has been completed.  Run the special level
-        // setup command, which the user may alias to do something
-        // useful.
-        if(level_id && level_id[0])
-        {
-            char    cmd[80];
-
-            sprintf(cmd, "init-%s", level_id);
-            if(Con_IsValidCommand(cmd))
-            {
-                Con_Executef(CMDS_DED, false, cmd);
-            }
-        }
-
-        // Clear any input events that might have accumulated during the
-        // setup period.
-        DD_ClearEvents();
-
-        // Now that the setup is done, let's reset the tictimer so it'll
-        // appear that no time has passed during the setup.
-        DD_ResetTimer();
-
-        // Kill all local commands.
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            clients[i].numTics = 0;
-        }
-
-        // Reset the level tick timer.
-        levelTime = 0;
-
-        // We've finished setting up the level
-        levelSetup = false;
-
-        // Inform the timing system to suspend the starting of the clock.
-        firstFrameAfterLoad = true;
-
-        // Switch back to normal malloc mode in the zone. Z_Malloc will look
-        // for free blocks in the entire zone and purge purgable blocks.
-        Z_EnableFastMalloc(false);
-        return;
-    }
+    // Must be called before any mobjs are spawned.
+    R_InitLinks();
 
     if(isServer)
     {
@@ -2472,7 +2350,7 @@ void R_SetupLevel(char *level_id, int flags)
     R_SkyFix(true, true); // fix floors and ceilings.
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("R_SetupLevel: Initial SkyFix Done in %.2f seconds.\n",
+            ("R_InitLevel: Initial SkyFix Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
 
     S_CalcSectorReverbs();
@@ -2520,7 +2398,7 @@ void R_SetupLevel(char *level_id, int flags)
     P_SpawnMapParticleGens(level_id);
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("R_SetupLevel: Spawn Generators Done in %.2f seconds.\n",
+            ("R_InitLevel: Spawn Generators Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
 
     // Make sure that the next frame doesn't use a filtered viewer.
@@ -2538,6 +2416,141 @@ void R_SetupLevel(char *level_id, int flags)
     R_InitRendPolyPool();
 
     Con_Progress(10, 0);        // 50%.
+}
+
+/**
+ * Called by the game at various points in the level setup process.
+ */
+void R_SetupLevel(int mode, int fladgs)
+{
+    uint        i;
+
+    switch(mode)
+    {
+    case DDSLM_INITIALIZE:
+        // Switch to fast malloc mode in the zone. This is intended for large
+        // numbers of mallocs with no frees in between.
+        Z_EnableFastMalloc(false);
+
+        // A new level is about to be setup.
+        levelSetup = true;
+
+        // This is called before anything is actually done.
+        if(loadInStartupMode)
+            Con_StartupInit();
+        return;
+
+    case DDSLM_AFTER_LOADING:
+    {
+        side_t *side;
+
+        // Loading a game usually destroys all thinkers. Until a proper
+        // savegame system handled by the engine is introduced we'll have
+        // to resort to re-initializing the most important stuff.
+        P_SpawnTypeParticleGens();
+
+        // Update everything again. Its possible that after loading we
+        // now have more HOMs to fix, etc..
+
+        R_SkyFix(true, true); // fix floors and ceilings.
+
+        // Update all sectors. Set intial values of various tracked
+        // and interpolated properties (lighting, smoothed planes etc).
+        for(i = 0; i < numsectors; ++i)
+            R_UpdateSector(SECTOR_PTR(i), false);
+
+        // Do the same for side surfaces.
+        for(i = 0; i < numsides; ++i)
+        {
+            side = SIDE_PTR(i);
+            R_UpdateSurface(&side->SW_topsurface, false);
+            R_UpdateSurface(&side->SW_middlesurface, false);
+            R_UpdateSurface(&side->SW_bottomsurface, false);
+        }
+
+        // We don't render fakeradio on polyobjects...
+        PO_SetupPolyobjs();
+        return;
+    }
+    case DDSLM_FINALIZE:
+    {
+        side_t *side;
+
+        if(loadInStartupMode)
+            Con_StartupDone();
+
+        // Init server data.
+        Sv_InitPools();
+
+        // Recalculate the light range mod matrix.
+        Rend_CalcLightRangeModMatrix(NULL);
+
+        // Update all sectors. Set intial values of various tracked
+        // and interpolated properties (lighting, smoothed planes etc).
+        for(i = 0; i < numsectors; ++i)
+            R_UpdateSector(SECTOR_PTR(i), true);
+
+        // Do the same for side surfaces.
+        for(i = 0; i < numsides; ++i)
+        {
+            side = SIDE_PTR(i);
+            R_UpdateSurface(&side->SW_topsurface, true);
+            R_UpdateSurface(&side->SW_middlesurface, true);
+            R_UpdateSurface(&side->SW_bottomsurface, true);
+        }
+
+        // We don't render fakeradio on polyobjects...
+        PO_SetupPolyobjs();
+
+        // Run any commands specified in Map Info.
+        if(mapinfo && mapinfo->execute)
+            Con_Execute(CMDS_DED, mapinfo->execute, true, false);
+
+        // The level setup has been completed.  Run the special level
+        // setup command, which the user may alias to do something
+        // useful.
+        if(levelid && levelid[0])
+        {
+            char    cmd[80];
+
+            sprintf(cmd, "init-%s", levelid);
+            if(Con_IsValidCommand(cmd))
+            {
+                Con_Executef(CMDS_DED, false, cmd);
+            }
+        }
+
+        // Clear any input events that might have accumulated during the
+        // setup period.
+        DD_ClearEvents();
+
+        // Now that the setup is done, let's reset the tictimer so it'll
+        // appear that no time has passed during the setup.
+        DD_ResetTimer();
+
+        // Kill all local commands.
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            clients[i].numTics = 0;
+        }
+
+        // Reset the level tick timer.
+        levelTime = 0;
+
+        // We've finished setting up the level
+        levelSetup = false;
+
+        // Inform the timing system to suspend the starting of the clock.
+        firstFrameAfterLoad = true;
+
+        // Switch back to normal malloc mode in the zone. Z_Malloc will look
+        // for free blocks in the entire zone and purge purgable blocks.
+        Z_EnableFastMalloc(false);
+        return;
+    }
+    default:
+        Con_Error("R_SetupLevel: Unknown setup mode %i", mode);
+    }
 }
 
 void R_ClearSectorFlags(void)

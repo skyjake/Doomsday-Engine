@@ -217,18 +217,18 @@ void P_SetupForMapData(int type, uint num)
     }
 }
 
-/*
+/**
  * Loads map and glnode data for the requested episode and map
  */
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 {
 #if !__DOOM64TC__
 # if __JDOOM__ || __JHERETIC__
-    uint    i;
-    int     flags;
+    uint        i;
+    int         flags;
 # endif
 #endif
-    char    levelId[9];
+    char        levelId[9];
 
     // It begins
     levelSetup = true;
@@ -249,7 +249,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
     // Let the engine know that we are about to start setting up a
     // level.
-    R_SetupLevel(NULL, DDSLF_INITIALIZE);
+    R_SetupLevel(DDSLM_INITIALIZE, 0);
 
     // Initialize The Logical Sound Manager.
     S_LevelChange();
@@ -352,7 +352,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 
     // Someone may want to do something special now that
     // the level has been fully set up.
-    R_SetupLevel(levelId, DDSLF_FINALIZE);
+    R_SetupLevel(DDSLM_FINALIZE, 0);
 
     P_PrintMapBanner(episode, map);
 

@@ -317,6 +317,7 @@ typedef struct {
 */
 
 typedef struct gamemap_s {
+    char        levelid[9];
     uint        numvertexes;
     vertex_t   *vertexes;
 
@@ -350,7 +351,7 @@ typedef struct gamemap_s {
     fixed_t     bmaporgx, bmaporgy;     // origin of block map
     linkmobj_t *blockrings;             // for thing rings
 
-    byte    *rejectmatrix;
+    byte       *rejectmatrix;
 } gamemap_t;
 
 typedef struct {
@@ -1367,6 +1368,7 @@ static boolean P_ReadMapData(gamemap_t* map, int doClass)
 
 static void SetCurrentMap(gamemap_t* map)
 {
+    strncpy(levelid, map->levelid, sizeof(levelid));
     numvertexes = map->numvertexes;
     vertexes = map->vertexes;
 
@@ -1459,7 +1461,8 @@ boolean P_LoadMapData(char *levelId)
         // Excellent, its a map we can read. Load it in!
         Con_Message("P_LoadMapData: %s\n", levelId);
 
-        // Reset the global map data struct counters.
+        // Initialize the new map.
+        strncpy(newmap->levelid, levelId, sizeof(newmap->levelid));
         newmap->numvertexes = 0;
         newmap->numsubsectors = 0;
         newmap->numsectors = 0;
@@ -1516,15 +1519,12 @@ boolean P_LoadMapData(char *levelId)
         SetCurrentMap(newmap);
         M_Free(newmap);
 
-        // Must be called before any mobjs are spawned.
-        R_InitLinks();
-
         // It's imperative that this is called!
+        // - init map links.
         // - necessary GL data generated
         // - sky fix
         // - map info setup
-
-        R_SetupLevel(levelId, 0);
+        R_InitLevel(levelId);
 
         return true;
     }

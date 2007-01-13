@@ -116,6 +116,7 @@ typedef struct skyfix_s {
 /*
  * The map data arrays are accessible globally inside the engine.
  */
+extern char     levelid[9];
 extern uint     numvertexes;
 extern vertex_t *vertexes;
 

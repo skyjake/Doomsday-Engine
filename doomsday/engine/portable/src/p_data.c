@@ -87,7 +87,7 @@ extern boolean levelSetup;
 /*
  * These map data arrays are internal to the engine.
  */
-
+char        levelid[9]; // Name by which the game referred to the current map.
 uint        numvertexes;
 vertex_t   *vertexes;
 
