@@ -2082,14 +2082,6 @@ boolean M_EditResponder(event_t *ev)
         }
     }
 
-    // Take a screenshot in dev mode
-    // Still needed? Shouldn't be here at least...
-    if(devparm && ch == DDKEY_F1)
-    {
-        G_ScreenShot();
-        return true;
-    }
-
     return false;
 }
 
@@ -2764,7 +2756,7 @@ static void M_QuickSave(void)
 {
     player_t   *player = &players[consoleplayer];
 
-    if(player->playerstate == PST_DEAD || gamestate != GS_LEVEL ||
+    if(player->playerstate == PST_DEAD || G_GetGameState() != GS_LEVEL ||
        Get(DD_PLAYBACK))
     {
         M_StartMessage(SAVEDEAD, NULL, false);
@@ -3605,7 +3597,7 @@ void M_SaveGame(int option, void *data)
 {
     player_t *player = &players[consoleplayer];
 
-    if(player->playerstate == PST_DEAD || gamestate != GS_LEVEL ||
+    if(player->playerstate == PST_DEAD || G_GetGameState() != GS_LEVEL ||
        Get(DD_PLAYBACK))
     {
         M_StartMessage(SAVEDEAD, NULL, false);

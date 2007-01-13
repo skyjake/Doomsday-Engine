@@ -482,7 +482,7 @@ void cht_Init(void)
     }
 }
 
-/*
+/**
  * Responds to user input to see if a cheat sequence has been entered.
  *
  * @param       ev          ptr to the event to be checked
@@ -494,7 +494,7 @@ boolean cht_Responder(event_t *ev)
     byte    key = ev->data1;
     boolean eat;
 
-    if(gamestate != GS_LEVEL || ev->type != EV_KEY || ev->state != EVS_DOWN)
+    if(G_GetGameState() != GS_LEVEL || ev->type != EV_KEY || ev->state != EVS_DOWN)
         return false;
 
     if(gameskill == sk_nightmare)
@@ -1087,7 +1087,7 @@ DEFCC(CCmdCheatClip)
 
 DEFCC(CCmdCheatSuicide)
 {
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
     {
         S_LocalSound(SFX_CHAT, NULL);
         Con_Printf("Can only suicide when in a game!\n");

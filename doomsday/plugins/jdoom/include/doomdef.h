@@ -125,13 +125,14 @@ typedef enum {
 // The current state of the game: whether we are
 // playing, gazing at the intermission screen,
 // the game final animation, or a demo.
-typedef enum {
+typedef enum gamestate_e {
     GS_LEVEL,
     GS_INTERMISSION,
     GS_FINALE,
     GS_DEMOSCREEN,
     GS_WAITING,
-    GS_INFINE
+    GS_INFINE,
+    NUM_GAME_STATES
 } gamestate_t;
 
 //

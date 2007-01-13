@@ -337,16 +337,16 @@ boolean cht_Responder(event_t *ev)
     byte key = ev->data1;
     boolean eat;
 
-    if(gamestate != GS_LEVEL || ev->type != EV_KEY || ev->state != EVS_DOWN)
+    if(G_GetGameState() != GS_LEVEL || ev->type != EV_KEY || ev->state != EVS_DOWN)
         return false;
 
     if(IS_NETGAME || gameskill == sk_nightmare)
     {                           // Can't cheat in a net-game, or in nightmare mode
-        return (false);
+        return false;
     }
     if(players[consoleplayer].health <= 0)
     {                           // Dead players can't cheat
-        return (false);
+        return false;
     }
     eat = false;
     for(i = 0; Cheats[i].func != NULL; i++)
@@ -773,7 +773,7 @@ DEFCC(CCmdCheatClip)
 
 DEFCC(CCmdCheatSuicide)
 {
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
     {
         S_LocalSound(sfx_chat, NULL);
         Con_Printf("Can only suicide when in a game!\n");
@@ -884,7 +884,7 @@ DEFCC(CCmdCheatExitLevel)
 {
     if(!canCheat())
         return false;           // Can't cheat!
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
     {
         S_LocalSound(sfx_chat, NULL);
         Con_Printf("Can only exit a level when in a game!\n");

@@ -181,7 +181,6 @@ FILE   *rndDebugfile;
 game_config_t cfg; // The global cfg.
 
 gameaction_t gameaction;
-gamestate_t gamestate = GS_DEMOSCREEN;
 skill_t gameskill;
 int     gameepisode;
 int     gamemap;
@@ -267,6 +266,7 @@ int gsvArtifacts[NUMARTIFACTS];
 int gsvWPieces[4];
 #endif
 
+extern gamestate_t gamestate;
 cvar_t gamestatusCVars[] =
 {
    {"game-state", READONLYCVAR, CVT_INT, &gamestate, 0, 0},
@@ -415,6 +415,8 @@ cvar_t gamestatusCVars[] =
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static gamestate_t gamestate = GS_DEMOSCREEN;
+
 static skill_t d_skill;
 static int d_episode;
 static int d_map;
@@ -427,19 +429,19 @@ static int GameLoadSlot;
 
 void G_Register(void)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; gamestatusCVars[i].name; i++)
+    for(i = 0; gamestatusCVars[i].name; ++i)
         Con_AddVariable(gamestatusCVars + i);
 }
 
-/*
- *  Common Pre Engine Initialization routine.
- *    Game-specfic pre init actions should be placed in eg D_PreInit() (for jDoom)
+/**
+ * Common Pre Engine Initialization routine.
+ * Game-specfic pre init actions should be placed in eg D_PreInit() (for jDoom)
  */
 void G_PreInit(void)
 {
-    int i;
+    int         i;
 
 #ifdef TIC_DEBUG
     rndDebugfile = fopen("rndtrace.txt", "wt");
@@ -456,7 +458,7 @@ void G_PreInit(void)
     G_InitDGL();
 
     // Setup the players.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         players[i].plr = DD_GetPlayer(i);
         players[i].plr->extradata = (void *) &players[i];
@@ -526,14 +528,34 @@ void G_PostInit(void)
     linespecials = P_CreateIterList();
 }
 
-/*
+/**
+ * Retrieve the current game state.
+ *
+ * @return              The current game state.
+ */
+gamestate_t G_GetGameState(void)
+{
+    return gamestate;
+}
+
+/**
+ * Change the game's state.
+ *
+ * @param state         The state to change to.
+ */
+void G_ChangeGameState(gamestate_t state)
+{
+    gamestate = state;
+}
+
+/**
  * Begin the titlescreen animation sequence.
  */
 void G_StartTitle(void)
 {
 
-    char   *name = "title";
-    void   *script;
+    char       *name = "title";
+    void       *script;
 
     G_StopDemo();
     usergame = false;
@@ -549,16 +571,16 @@ void G_StartTitle(void)
 
 void G_DoLoadLevel(void)
 {
-    action_t *act;
-    int     i;
-    char   *lname, *ptr;
+    action_t   *act;
+    int         i;
+    char       *lname, *ptr;
 
 #if __JHEXEN__ || __JSTRIFE__
     static int firstFragReset = 1;
 #endif
 
     levelstarttic = gametic;    // for time calculation
-    gamestate = GS_LEVEL;
+    G_ChangeGameState(GS_LEVEL);
 
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
@@ -713,24 +735,82 @@ void G_SpecialButton(player_t *pl)
     }
 }
 
-/*
+/**
+ * Updates the game status cvars based on game and player data.
+ * Called each tick by G_Ticker().
+ */
+void G_UpdateGameStatusVarsForPlayer(player_t *pl)
+{
+    if(!pl)
+        return;
+
+    gsvHealth = pl->health;
+#if !__JHEXEN__
+    // Level stats
+    gsvKills = pl->killcount;
+    gsvItems = pl->itemcount;
+    gsvSecrets = pl->secretcount;
+#endif
+        // armor
+#if __JHEXEN__
+    gsvArmor = FixedDiv(PCLASS_INFO(pl->class)->autoarmorsave +
+                        pl->armorpoints[ARMOR_ARMOR] +
+                        pl->armorpoints[ARMOR_SHIELD] +
+                        pl->armorpoints[ARMOR_HELMET] +
+                        pl->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+#else
+    gsvArmor = pl->armorpoints;
+#endif
+    // Owned keys
+    for(i = 0; i < NUMKEYS; ++i)
+#if __JHEXEN__
+        gsvKeys[i] = (pl->keys & (1 << i))? 1 : 0;
+#else
+        gsvKeys[i] = pl->keys[i];
+#endif
+    // current weapon
+    gsvCurrentWeapon = pl->readyweapon;
+
+    // owned weapons
+    for(i = 0; i < NUMWEAPONS; ++i)
+        gsvWeapons[i] = pl->weaponowned[i];
+
+#if __JHEXEN__
+    // weapon pieces
+    gsvWPieces[0] = (pl->pieces & WPIECE1)? 1 : 0;
+    gsvWPieces[1] = (pl->pieces & WPIECE2)? 1 : 0;
+    gsvWPieces[2] = (pl->pieces & WPIECE3)? 1 : 0;
+    gsvWPieces[3] = (pl->pieces == 7)? 1 : 0;
+#endif
+    // current ammo amounts
+    for(i = 0; i < NUMAMMO; ++i)
+        gsvAmmo[i] = pl->ammo[i];
+
+#if __JHERETIC__ || __JHEXEN__
+    // artifacts
+    for(i = 0; i < NUMINVENTORYSLOTS; ++i)
+        gsvArtifacts[pl->inventory[i].type] = pl->inventory[i].count;
+#endif
+}
+
+/**
  * The core of the game timing loop.
  * Game state, game actions etc occur here.
  */
 void G_Ticker(void)
 {
-    int     i;
-    player_t *plyr = &players[consoleplayer];
+    int         i;
+    player_t   *plyr = &players[consoleplayer];
     static gamestate_t oldgamestate = -1;
 
     if(IS_CLIENT && !Get(DD_GAME_READY))
         return;
 
 #if _DEBUG
-    Z_CheckHeap();
+Z_CheckHeap();
 #endif
     // do player reborns if needed
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->ingame && players[i].playerstate == PST_REBORN)
             G_DoReborn(i);
@@ -743,11 +823,12 @@ void G_Ticker(void)
             {
                 if(!IS_CLIENT)
                 {
-                    P_SpawnTeleFog(players[i].plr->mo->pos[VX], players[i].plr->mo->pos[VY]);
+                    P_SpawnTeleFog(players[i].plr->mo->pos[VX],
+                                   players[i].plr->mo->pos[VY]);
                 }
                 // Let's get rid of the mobj.
 #ifdef _DEBUG
-                Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
+Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 #endif
                 P_RemoveMobj(players[i].plr->mo);
                 players[i].plr->mo = NULL;
@@ -758,7 +839,7 @@ void G_Ticker(void)
     // do things to change the game state
     while(gameaction != ga_nothing)
     {
-        switch (gameaction)
+        switch(gameaction)
         {
 #if __JHEXEN__ || __JSTRIFE__
         case ga_initnew:
@@ -775,32 +856,42 @@ void G_Ticker(void)
         case ga_loadlevel:
             G_DoLoadLevel();
             break;
+
         case ga_newgame:
             G_DoNewGame();
             break;
+
         case ga_loadgame:
             G_DoLoadGame();
             break;
+
         case ga_savegame:
             G_DoSaveGame();
             break;
+
         case ga_playdemo:
             G_DoPlayDemo();
             break;
+
         case ga_completed:
             G_DoCompleted();
             break;
+
         case ga_victory:
             gameaction = ga_nothing;
             break;
+
         case ga_worlddone:
             G_DoWorldDone();
             break;
+
         case ga_screenshot:
             G_DoScreenShot();
             gameaction = ga_nothing;
             break;
+
         case ga_nothing:
+        default:
             break;
         }
     }
@@ -809,7 +900,7 @@ void G_Ticker(void)
     G_LookAround();
 
     // Enable/disable sending of frames (delta sets) to clients.
-    Set(DD_ALLOW_FRAMES, gamestate == GS_LEVEL);
+    Set(DD_ALLOW_FRAMES, G_GetGameState() == GS_LEVEL);
     if(!IS_CLIENT)
     {
         // Tell Doomsday when the game is paused (clients can't pause
@@ -821,7 +912,7 @@ void G_Ticker(void)
     P_RunPlayers();
 
     // Do main actions.
-    switch (gamestate)
+    switch(G_GetGameState())
     {
     case GS_LEVEL:
         // update in-level game status cvar
@@ -852,7 +943,7 @@ void G_Ticker(void)
 #endif
 
     default:
-        if(oldgamestate != gamestate)
+        if(oldgamestate != G_GetGameState())
         {
             // update game status cvars
             gsvInLevel = 0;
@@ -864,58 +955,8 @@ void G_Ticker(void)
 
     oldgamestate = gamestate;
 
-    // DJS 07/05/05
     // Update the game status cvars for player data
-    if(plyr)
-    {
-        gsvHealth = plyr->health;
-#if !__JHEXEN__
-        // Level stats
-        gsvKills = plyr->killcount;
-        gsvItems = plyr->itemcount;
-        gsvSecrets = plyr->secretcount;
-#endif
-        // armor
-#if __JHEXEN__
-        gsvArmor = FixedDiv(PCLASS_INFO(plyr->class)->autoarmorsave +
-                            plyr->armorpoints[ARMOR_ARMOR] +
-                            plyr->armorpoints[ARMOR_SHIELD] +
-                            plyr->armorpoints[ARMOR_HELMET] +
-                            plyr->armorpoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
-#else
-        gsvArmor = plyr->armorpoints;
-#endif
-        // owned keys
-        for(i = 0; i < NUMKEYS; i++)
-#if __JHEXEN__
-            gsvKeys[i] = (plyr->keys & (1 << i))? 1 : 0;
-#else
-            gsvKeys[i] = plyr->keys[i];
-#endif
-        // current weapon
-        gsvCurrentWeapon = plyr->readyweapon;
-
-        // owned weapons
-        for(i = 0; i < NUMWEAPONS; i++)
-            gsvWeapons[i] = plyr->weaponowned[i];
-
-#if __JHEXEN__
-        // weapon pieces
-        gsvWPieces[0] = (plyr->pieces & WPIECE1)? 1 : 0;
-        gsvWPieces[1] = (plyr->pieces & WPIECE2)? 1 : 0;
-        gsvWPieces[2] = (plyr->pieces & WPIECE3)? 1 : 0;
-        gsvWPieces[3] = (plyr->pieces == 7)? 1 : 0;
-#endif
-        // current ammo amounts
-        for(i = 0; i < NUMAMMO; i++)
-            gsvAmmo[i] = plyr->ammo[i];
-
-#if __JHERETIC__ || __JHEXEN__
-        // artifacts
-        for(i = 0; i < NUMINVENTORYSLOTS; i++)
-            gsvArtifacts[plyr->inventory[i].type] = plyr->inventory[i].count;
-#endif
-    }
+    G_UpdateGameStatusVarsForPlayer(plyr);
 
     // Update view window size.
     R_ViewWindowTicker();
@@ -1263,7 +1304,7 @@ void G_DoReborn(int playernum)
 
         if(IS_CLIENT)
         {
-            if(gamestate == GS_LEVEL) 
+            if(G_GetGameState() == GS_LEVEL) 
             {
                 G_DummySpawnPlayer(playernum);
             }
@@ -1413,7 +1454,7 @@ void G_DoTeleportNewMap(void)
     }
 
     SV_HxMapTeleport(LeaveMap, LeavePosition);
-    gamestate = GS_LEVEL;
+    G_ChangeGameState(GS_LEVEL);
     gameaction = ga_nothing;
     RebornPosition = LeavePosition;
 
@@ -1688,7 +1729,7 @@ void G_DoCompleted(void)
 #elif __JHEXEN__ || __JSTRIFE__
     NetSv_Intermission(IMF_BEGIN, LeaveMap, LeavePosition);
 #endif
-    gamestate = GS_INTERMISSION;
+    G_ChangeGameState(GS_INTERMISSION);
 
 #if __JDOOM__
     WI_Start(&wminfo);
@@ -1741,7 +1782,7 @@ void G_WorldDone(void)
 
 void G_DoWorldDone(void)
 {
-    gamestate = GS_LEVEL;
+    G_ChangeGameState(GS_LEVEL);
 #if __JDOOM__
     gamemap = wminfo.next + 1;
 #endif
@@ -2266,7 +2307,7 @@ void G_DoPlayDemo(void)
 
     // Start playing the demo.
     if(DD_Execute(buf, false))
-        gamestate = GS_WAITING; // The demo will begin momentarily.
+        G_ChangeGameState(GS_WAITING); // The demo will begin momentarily.
 }
 
 /*
@@ -2280,7 +2321,7 @@ void G_StopDemo(void)
 
 void G_DemoEnds(void)
 {
-    gamestate = GS_WAITING;
+    G_ChangeGameState(GS_WAITING);
     if(singledemo)
         Sys_Quit();
     FI_DemoEnds();
@@ -2288,7 +2329,7 @@ void G_DemoEnds(void)
 
 void G_DemoAborted(void)
 {
-    gamestate = GS_WAITING;
+    G_ChangeGameState(GS_WAITING);
     FI_DemoEnds();
 }
 

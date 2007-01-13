@@ -235,7 +235,7 @@ void D_Display(void)
         R_ViewWindow((int) x, (int) y, (int) w, (int) h);
     }
 
-    switch (gamestate)
+    switch(G_GetGameState())
     {
     case GS_LEVEL:
         if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
@@ -333,7 +333,7 @@ void D_Display(void)
 
     menuactivestate = menuactive;
     viewactivestate = viewactive;
-    oldgamestate = wipegamestate = gamestate;
+    oldgamestate = wipegamestate = G_GetGameState();
 
     // draw pause pic (but not if InFine active)
     if(paused && !fi_active)

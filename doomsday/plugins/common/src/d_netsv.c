@@ -785,7 +785,7 @@ void NetSv_SendGameState(int flags, int to)
 
     if(IS_CLIENT)
         return;
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
         return;
 
     // Print a short message that describes the game state.

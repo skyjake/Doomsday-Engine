@@ -816,7 +816,7 @@ void SV_HxLoadMap(void)
     Z_Free(SaveBuffer);
 
     // Spawn particle generators.
-    R_SetupLevel(DDSLF_AFTER_LOADING, 0);
+    R_SetupLevel(DDSLM_AFTER_LOADING, 0);
 }
 
 void SV_HxInitBaseSlot(void)

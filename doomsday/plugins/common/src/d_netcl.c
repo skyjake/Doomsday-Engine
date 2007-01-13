@@ -632,7 +632,7 @@ void NetCl_Intermission(byte *data)
 
         G_PrepareWIData();
 
-        gamestate = GS_INTERMISSION;
+        G_ChangeGameState(GS_INTERMISSION);
         viewactive = false;
         if(automapactive)
             AM_Stop();
@@ -656,7 +656,7 @@ void NetCl_Intermission(byte *data)
         intertime = NetCl_ReadShort();
     if(flags & IMF_BEGIN)
     {
-        gamestate = GS_INTERMISSION;
+        G_ChangeGameState(GS_INTERMISSION);
         IN_Start();
     }
     if(flags & IMF_END)
@@ -670,7 +670,7 @@ void NetCl_Intermission(byte *data)
     {
         LeaveMap = NetCl_ReadByte();
         LeavePosition = NetCl_ReadByte();
-        gamestate = GS_INTERMISSION;
+        G_ChangeGameState(GS_INTERMISSION);
         IN_Start();
     }
     if(flags & IMF_END)

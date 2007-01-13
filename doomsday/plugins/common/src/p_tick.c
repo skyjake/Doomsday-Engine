@@ -123,7 +123,7 @@ void P_RunPlayers(void)
             G_SpecialButton(&players[i]);
 
             // The player thinks.
-            if(gamestate == GS_LEVEL && !pauseState)
+            if(G_GetGameState() == GS_LEVEL && !pauseState)
             {
                 P_PlayerThink(&players[i]);
             }

@@ -407,7 +407,7 @@ void FI_ClearState(void)
     gameaction = ga_nothing;
     if(fi->mode != FIMODE_OVERLAY)
     {
-        gamestate = GS_INFINE;
+        G_ChangeGameState(GS_INFINE);
         automapactive = false;
     }
 
@@ -618,7 +618,7 @@ void FI_Start(char *finalescript, infinemode_t mode)
     if(mode == FIMODE_OVERLAY)
     {
         // Overlay scripts stop when the gamemode changes.
-        fi->overlay_gamestate = gamestate;
+        fi->overlay_gamestate = G_GetGameState();
     }
 
     if(mode != FIMODE_LOCAL)
@@ -675,7 +675,7 @@ void FI_End(void)
         else if(oldMode == FIMODE_BEFORE)
         {
             // Enter the level, this was a briefing.
-            gamestate = GS_LEVEL;
+            G_ChangeGameState(GS_LEVEL);
             levelstarttic = gametic;
             leveltime = actual_leveltime = 0;
             // Restart the current map's song.
@@ -683,7 +683,7 @@ void FI_End(void)
         }
         else if(oldMode == FIMODE_LOCAL)
         {
-            gamestate = GS_WAITING;
+            G_ChangeGameState(GS_WAITING);
         }
     }
 }
@@ -715,7 +715,7 @@ DEFCC(CCmdStartInFine)
         return false;
     }
     // The overlay mode doesn't affect the current game mode.
-    FI_Start(script, gamestate == GS_LEVEL ? FIMODE_OVERLAY : FIMODE_LOCAL);
+    FI_Start(script, (G_GetGameState() == GS_LEVEL? FIMODE_OVERLAY : FIMODE_LOCAL));
     return true;
 }
 
@@ -738,7 +738,7 @@ int FI_Briefing(int episode, int map)
     ddfinale_t fin;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(brief_disabled || gamestate == GS_INFINE || IS_CLIENT ||
+    if(brief_disabled || G_GetGameState() == GS_INFINE || IS_CLIENT ||
        Get(DD_PLAYBACK))
         return false;
 
@@ -762,7 +762,7 @@ int FI_Debriefing(int episode, int map)
     ddfinale_t fin;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(brief_disabled || gamestate == GS_INFINE || IS_CLIENT ||
+    if(brief_disabled || G_GetGameState() == GS_INFINE || IS_CLIENT ||
        Get(DD_PLAYBACK))
         return false;
 
@@ -782,7 +782,7 @@ void FI_DemoEnds(void)
         // Restore the InFine state.
         fi->suspended = false;
         fi_active = true;
-        gamestate = GS_INFINE;
+        G_ChangeGameState(GS_INFINE);
         gameaction = ga_nothing;
         automapactive = false;
     }
@@ -1190,7 +1190,7 @@ void FI_Ticker(void)
     if(fi->mode == FIMODE_OVERLAY)
     {
         // Has the game mode changed?
-        if(fi->overlay_gamestate != gamestate)
+        if(fi->overlay_gamestate != G_GetGameState())
         {
             // Overlay scripts don't survive this...
             FI_End();

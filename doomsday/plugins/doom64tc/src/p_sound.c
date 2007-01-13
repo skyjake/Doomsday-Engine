@@ -64,7 +64,7 @@ void S_LevelMusic(void)
 {
     int songid;
 
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
         return;
 
     // Start new music for the level.

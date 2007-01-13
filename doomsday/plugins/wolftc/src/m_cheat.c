@@ -158,7 +158,7 @@ void cht_Init(void)
     // Nothing to do
 }
 
-/*
+/**
  * Responds to user input to see if a cheat sequence
  * has been entered. Events are never eaten.
  *
@@ -166,9 +166,9 @@ void cht_Init(void)
  */
 boolean cht_Responder(event_t *ev)
 {
-    int i;
+    int         i;
 
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
         return false;
 
     plyr = &players[consoleplayer];
@@ -590,7 +590,7 @@ DEFCC(CCmdCheatNoClip)
 
 DEFCC(CCmdCheatSuicide)
 {
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
     {
         S_LocalSound(sfx_oof, NULL);
         Con_Printf("Can only suicide when in a game!\n");
@@ -815,7 +815,7 @@ DEFCC(CCmdCheatExitLevel)
 {
     if(!can_cheat())
         return false;           // Can't cheat!
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
     {
         S_LocalSound(sfx_oof, NULL);
         Con_Printf("Can only exit a level when in a game!\n");

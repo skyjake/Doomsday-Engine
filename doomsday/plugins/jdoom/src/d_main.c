@@ -119,7 +119,7 @@ boolean D_SetGameMode(GameMode_t mode)
 {
     gamemode = mode;
 
-    if(gamestate == GS_LEVEL)
+    if(G_GetGameState() == GS_LEVEL)
         return false;
 
     switch(mode)

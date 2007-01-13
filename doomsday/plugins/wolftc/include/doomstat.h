@@ -146,9 +146,6 @@ extern boolean  usergame;
 // Quit after playing a demo from cmdline.
 extern boolean  singledemo;
 
-//?
-extern gamestate_t gamestate;
-
 //-----------------------------
 // Internal parameters, fixed.
 // These are set by the engine, and not changed

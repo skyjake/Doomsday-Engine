@@ -1716,7 +1716,7 @@ int P_Massacre(void)
     thinker_t *think;
 
     // Only massacre when in a level.
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
         return 0;
 
     count = 0;

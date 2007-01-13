@@ -193,7 +193,7 @@ void G_Drawer(void)
     }
 
     // Do buffered drawing
-    switch(gamestate)
+    switch(G_GetGameState())
     {
     case GS_LEVEL:
         // Clients should be a little careful about the first frames.
@@ -333,7 +333,7 @@ void G_Drawer(void)
 
     menuactivestate = menuactive;
     viewactivestate = viewactive;
-    oldgamestate = wipegamestate = gamestate;
+    oldgamestate = wipegamestate = G_GetGameState();
 
     if(paused && !fi_active)
     {

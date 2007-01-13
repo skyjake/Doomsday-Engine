@@ -907,7 +907,7 @@ void AM_Start(void)
 
     stopped = false;
 
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
         return;  // don't show automap if we aren't in a game!
 
     AM_initVariables();
@@ -2791,7 +2791,7 @@ DEFCC(CCmdMapAction)
 {
     static char buffer[20];
 
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
     {
         Con_Printf("The automap is only available in-game.\n");
         return false;

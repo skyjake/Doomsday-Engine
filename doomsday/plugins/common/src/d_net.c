@@ -264,7 +264,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         {
             // We have arrived, the game should be begun.
             Con_Message("PE: (client) arrived in netgame.\n");
-            gamestate = GS_WAITING;
+            G_ChangeGameState(GS_WAITING);
             showmsg = false;
         }
         else

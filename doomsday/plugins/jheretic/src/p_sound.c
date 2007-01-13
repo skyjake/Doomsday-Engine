@@ -66,7 +66,7 @@ void S_LevelMusic(void)
     char    id[10];
     int    songid = 0;
 
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
         return;
 
     sprintf(id, "E%iM%i", gameepisode, gamemap);

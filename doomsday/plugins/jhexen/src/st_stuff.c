@@ -1553,7 +1553,7 @@ void ST_doPaletteStuff(boolean forceChange)
     {
         sb_palette = -1;
     }
-    if(gamestate == GS_LEVEL)
+    if(G_GetGameState() == GS_LEVEL)
     {
         plyr = &players[consoleplayer];
         if(plyr->poisoncount)

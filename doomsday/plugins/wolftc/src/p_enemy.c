@@ -587,12 +587,12 @@ boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
 int P_Massacre(void)
 {
-    int     count = 0;
-    mobj_t *mo;
-    thinker_t *think;
+    int         count = 0;
+    mobj_t     *mo;
+    thinker_t  *think;
 
     // Only massacre when in a level.
-    if(gamestate != GS_LEVEL)
+    if(G_GetGameState() != GS_LEVEL)
         return 0;
 
     for(think = thinkercap.next; think != &thinkercap; think = think->next)

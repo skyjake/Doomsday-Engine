@@ -371,7 +371,7 @@ boolean HUMsg_Responder(event_t *ev)
     boolean     eatkey = false;
     unsigned char c;
 
-    if(gamestate != GS_LEVEL || !chatOn)
+    if(G_GetGameState() != GS_LEVEL || !chatOn)
         return false;
 
     if(ev->type == EV_KEY && ev->data1 == DDKEY_RSHIFT)

@@ -55,8 +55,9 @@ void            G_Register(void);
 void            G_PreInit(void);
 void            G_PostInit(void);
 void            G_StartTitle(void);
-void            G_PostInit(void);
-void            G_PreInit(void);
+
+gamestate_t     G_GetGameState(void);
+void            G_ChangeGameState(gamestate_t state);
 
 // Spawn player at a dummy place.
 void            G_DummySpawnPlayer(int playernum);
