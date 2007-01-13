@@ -76,6 +76,8 @@
 
 #define BODYQUESIZE         32
 
+#define UNNAMEDMAP          "Unnamed"
+#define NOTAMAPNAME         "N/A"
 #define READONLYCVAR        CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE
 
 // TYPES -------------------------------------------------------------------
@@ -256,7 +258,7 @@ int gsvWeapons[NUMWEAPONS];
 int gsvKeys[NUMKEYS];
 int gsvAmmo[NUMAMMO];
 
-char *gsvMapName = "N/A";
+char *gsvMapName = NOTAMAPNAME;
 
 #if __JHERETIC__ || __JHEXEN__
 int gsvArtifacts[NUMARTIFACTS];
@@ -472,6 +474,7 @@ void G_PreInit(void)
     Con_DefineActions(actions);
 
     DD_SetVariable(DD_SKYFLAT_NAME, SKYFLATNAME);
+    Con_SetString("map-name", NOTAMAPNAME, 1);
 
     G_BindClassRegistration();
 
@@ -640,12 +643,17 @@ void G_DoLoadLevel(void)
     if(!lname)
         lname = P_GetMapName(gamemap);
 #endif
-    // If still no name, call it unnamed.
-    if(!lname)
-        lname = "unnamed";
 
     // Set the map name
-    gsvMapName = lname;
+    // If still no name, call it unnamed.
+    if(!lname)
+    {
+        Con_SetString("map-name", UNNAMEDMAP, 1);
+    }
+    else
+    {
+        Con_SetString("map-name", lname, 1);
+    }
 
     // Start a briefing, if there is one.
     FI_Briefing(gameepisode, gamemap);
@@ -739,8 +747,10 @@ void G_SpecialButton(player_t *pl)
  * Updates the game status cvars based on game and player data.
  * Called each tick by G_Ticker().
  */
-void G_UpdateGameStatusVarsForPlayer(player_t *pl)
+void G_UpdateGSVarsForPlayer(player_t *pl)
 {
+    int         i;
+
     if(!pl)
         return;
 
@@ -947,7 +957,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         {
             // update game status cvars
             gsvInLevel = 0;
-            gsvMapName = "N/A";
+            Con_SetString("map-name", NOTAMAPNAME, 1);
             gsvMapMusic = -1;
         }
         break;
@@ -956,7 +966,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     oldgamestate = gamestate;
 
     // Update the game status cvars for player data
-    G_UpdateGameStatusVarsForPlayer(plyr);
+    G_UpdateGSVarsForPlayer(plyr);
 
     // Update view window size.
     R_ViewWindowTicker();
