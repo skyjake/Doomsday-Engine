@@ -266,6 +266,8 @@ FIND_PACKAGE(ZLIB REQUIRED)
 
 FIND_PACKAGE(PNG REQUIRED)
 
+FIND_PACKAGE(CURL REQUIRED)
+
 FIND_PACKAGE(PythonInterp REQUIRED)
 
 IF (UNIX)
@@ -501,6 +503,12 @@ IF (NOT PNG_FOUND)
 	MESSAGE (FATAL_ERROR "** libpng not found. On Ubuntu install libpng-dev. On Mac OSX install FIXME. On Windows install libpng-1.2.8-lib.zip.")
 ENDIF (NOT PNG_FOUND)
 INCLUDE_DIRECTORIES (${PNG_INCLUDE_DIR})
+
+## confirm we have libcurl.
+IF (NOT CURL_FOUND)
+	MESSAGE (FATAL_ERROR "** libcurl not found. On Ubuntu install FIXME. On Mac OSX install FIXME. On Windows install libpng-1.2.8-lib.zip.")
+ENDIF (NOT CURL_FOUND)
+INCLUDE_DIRECTORIES (${CURL_INCLUDE_DIR})
 
 ## Confirm we have ncurses
 IF (UNIX)
