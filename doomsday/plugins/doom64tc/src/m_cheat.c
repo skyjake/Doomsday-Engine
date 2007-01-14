@@ -172,13 +172,13 @@ boolean cht_Responder(event_t *ev)
 
     plyr = &players[consoleplayer];
 
-    if(gameskill != sk_nightmare &&
+    if(gameskill != SM_NIGHTMARE &&
        ev->type == EV_KEY && ev->state == EVS_DOWN)
     {
         if(!IS_NETGAME)
         {
             // b. - enabled for more debug fun.
-            // if (gameskill != sk_nightmare) {
+            // if (gameskill != SM_NIGHTMARE) {
 
             // 'dqd' cheat for toggleable god mode
             if(cht_CheckCheat(&cheat_god, ev->data1))
@@ -404,19 +404,19 @@ void cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo, boolean armor,
     if(weapons)
     {
         plyr->update |= PSF_OWNED_WEAPONS;
-        for(i = 0; i < NUMWEAPONS; i++)
+        for(i = 0; i < NUM_WEAPON_TYPES; i++)
             plyr->weaponowned[i] = true;
     }
     if(ammo)
     {
         plyr->update |= PSF_AMMO;
-        for(i = 0; i < NUMAMMO; i++)
+        for(i = 0; i < NUM_AMMO_TYPES; i++)
             plyr->ammo[i] = plyr->maxammo[i];
     }
     if(cards)
     {
         plyr->update |= PSF_KEYS;
-        for(i = 0; i < NUMKEYS; i++)
+        for(i = 0; i < NUM_KEY_TYPES; i++)
             plyr->keys[i] = true;
     }
 }
@@ -469,7 +469,7 @@ boolean cht_PowerUpFunc(player_t *plyr, int i)
     {
         return P_GivePower(plyr, i);
     }
-    else if(i == pw_strength || i == pw_flight)
+    else if(i == PT_STRENGTH || i == PT_FLIGHT)
     {
         return !(P_TakePower(plyr, i));
     }
@@ -482,8 +482,8 @@ boolean cht_PowerUpFunc(player_t *plyr, int i)
 
 void cht_ChoppersFunc(player_t *plyr)
 {
-    plyr->weaponowned[wp_chainsaw] = true;
-    plyr->powers[pw_invulnerability] = true;
+    plyr->weaponowned[WT_EIGHTH] = true;
+    plyr->powers[PT_INVULNERABILITY] = true;
 }
 
 void cht_PosFunc(player_t *plyr)
@@ -674,12 +674,12 @@ DEFCC(CCmdCheatReveal)
 
     // Reset them (for 'nothing'). :-)
     cheating = 0;
-    players[consoleplayer].powers[pw_allmap] = false;
+    players[consoleplayer].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
     if(option < 0 || option > 4)
         return false;
     if(option == 1)
-        players[consoleplayer].powers[pw_allmap] = true;
+        players[consoleplayer].powers[PT_ALLMAP] = true;
     else if(option != 0)
         cheating = option -1;
 
@@ -743,23 +743,23 @@ DEFCC(CCmdCheatGive)
             break;
 
         case 'b':
-            if(cht_PowerUpFunc(plyr, pw_strength))
+            if(cht_PowerUpFunc(plyr, PT_STRENGTH))
                 Con_Printf("Your vision blurs! Yaarrrgh!!\n");
             break;
 
         case 'f':
-            if(cht_PowerUpFunc(plyr, pw_flight))
+            if(cht_PowerUpFunc(plyr, PT_FLIGHT))
                 Con_Printf("You leap into the air, yet you do not fall...\n");
             break;
 
         case 'g':
             Con_Printf("Light amplification visor given.\n");
-            cht_PowerUpFunc(plyr, pw_infrared);
+            cht_PowerUpFunc(plyr, PT_INFRARED);
             break;
 
         case 'i':
             Con_Printf("You feel invincible!\n");
-            cht_PowerUpFunc(plyr, pw_invulnerability);
+            cht_PowerUpFunc(plyr, PT_INVULNERABILITY);
             break;
 
         case 'k':
@@ -769,7 +769,7 @@ DEFCC(CCmdCheatGive)
 
         case 'm':
             Con_Printf("Computer area map given.\n");
-            cht_PowerUpFunc(plyr, pw_allmap);
+            cht_PowerUpFunc(plyr, PT_ALLMAP);
             break;
 
         case 'p':
@@ -784,12 +784,12 @@ DEFCC(CCmdCheatGive)
 
         case 's':
             Con_Printf("Radiation shielding suit given.\n");
-            cht_PowerUpFunc(plyr, pw_ironfeet);
+            cht_PowerUpFunc(plyr, PT_IRONFEET);
             break;
 
         case 'v':
             Con_Printf("You are suddenly almost invisible!\n");
-            cht_PowerUpFunc(plyr, pw_invisibility);
+            cht_PowerUpFunc(plyr, PT_INVISIBILITY);
             break;
 
         case 'w':
@@ -800,7 +800,7 @@ DEFCC(CCmdCheatGive)
         default:
             // Individual Weapon
             weapNum = ((int) buf[i]) - 48;
-            if(weapNum >= 0 && weapNum < NUMWEAPONS)
+            if(weapNum >= 0 && weapNum < NUM_WEAPON_TYPES)
             {
                P_GiveWeapon(plyr, weapNum, false);
             }

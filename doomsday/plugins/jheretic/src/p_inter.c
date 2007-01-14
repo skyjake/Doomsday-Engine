@@ -74,7 +74,7 @@ extern ddvertex_t KeyPoints[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     maxammo[NUMAMMO] = {
+int     maxammo[NUM_AMMO_TYPES] = {
     100,                        // gold wand
     50,                         // crossbow
     200,                        // blaster
@@ -85,7 +85,7 @@ int     maxammo[NUMAMMO] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int GetWeaponAmmo[NUMWEAPONS] = {
+static int GetWeaponAmmo[NUM_WEAPON_TYPES] = {
     0,                          // staff
     25,                         // gold wand
     10,                         // crossbow
@@ -104,23 +104,23 @@ static int GetWeaponAmmo[NUMWEAPONS] = {
  */
 boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 {
-    if(ammo == AM_NOAMMO)
+    if(ammo == AT_NOAMMO)
         return false;
 
-    if(ammo < 0 || ammo > NUMAMMO)
+    if(ammo < 0 || ammo > NUM_AMMO_TYPES)
         Con_Error("P_GiveAmmo: bad type %i", ammo);
 
     if(player->ammo[ammo] == player->maxammo[ammo])
         return false;
 
-    if(gameskill == sk_baby || gameskill == sk_nightmare)
+    if(gameskill == SM_BABY || gameskill == SM_NIGHTMARE)
     {   // extra ammo in baby mode and nightmare mode
         num += num >> 1;
     }
 
     // We are about to receive some more ammo. Does the player want to
     // change weapon automatically?
-    P_MaybeChangeWeapon(player, WP_NOCHANGE, ammo, false);
+    P_MaybeChangeWeapon(player, WT_NOCHANGE, ammo, false);
 
     player->ammo[ammo] += num;
     player->update |= PSF_AMMO;
@@ -143,7 +143,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
     boolean gaveammo = false;
     boolean gaveweapon = false;
     int i;
-    int lvl = (player->powers[pw_weaponlevel2]? 1 : 0);
+    int lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
     if(IS_NETGAME && !deathmatch)
     {
@@ -156,7 +156,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         player->update |= PSF_OWNED_WEAPONS;
 
         // Give some of each of the ammo types used by this weapon.
-        for(i=0; i < NUMAMMO; ++i)
+        for(i=0; i < NUM_AMMO_TYPES; ++i)
         {
             if(!weaponinfo[weapon][player->class].mode[lvl].ammotype[i])
                 continue;   // Weapon does not take this type of ammo.
@@ -166,7 +166,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         }
 
         // Should we change weapon automatically?
-        P_MaybeChangeWeapon(player, weapon, AM_NOAMMO, false);
+        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, false);
 
         // Maybe unhide the HUD?
         if(player == &players[consoleplayer])
@@ -178,7 +178,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
     else
     {
         // Give some of each of the ammo types used by this weapon.
-        for(i=0; i < NUMAMMO; ++i)
+        for(i=0; i < NUM_AMMO_TYPES; ++i)
         {
             if(!weaponinfo[weapon][player->class].mode[lvl].ammotype[i])
                 continue;   // Weapon does not take this type of ammo.
@@ -196,7 +196,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
             player->update |= PSF_OWNED_WEAPONS;
 
             // Should we change weapon automatically?
-            P_MaybeChangeWeapon(player, weapon, AM_NOAMMO, false);
+            P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, false);
         }
 
         // Maybe unhide the HUD?
@@ -292,7 +292,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
     player->update |= PSF_POWERS;
     switch(power)
     {
-    case pw_invulnerability:
+    case PT_INVULNERABILITY:
         if(!(player->powers[power] > BLINKTHRESHOLD))
         {
             player->powers[power] = INVULNTICS;
@@ -300,7 +300,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
         }
         break;
 
-    case pw_weaponlevel2:
+    case PT_WEAPONLEVEL2:
         if(!(player->powers[power] > BLINKTHRESHOLD))
         {
             player->powers[power] = WPNLEV2TICS;
@@ -308,7 +308,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
         }
         break;
 
-    case pw_invisibility:
+    case PT_INVISIBILITY:
         if(!(player->powers[power] > BLINKTHRESHOLD))
         {
             player->powers[power] = INVISTICS;
@@ -317,7 +317,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
         }
         break;
 
-    case pw_flight:
+    case PT_FLIGHT:
         if(!(player->powers[power] > BLINKTHRESHOLD))
         {
             player->powers[power] = FLIGHTTICS;
@@ -332,7 +332,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
         }
         break;
 
-    case pw_infrared:
+    case PT_INFRARED:
         if(!(player->powers[power] > BLINKTHRESHOLD))
         {
             player->powers[power] = INFRATICS;
@@ -459,21 +459,21 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
     case SPR_BAGH:              // Item_BagOfHolding
         if(!player->backpack)
         {
-            for(i = 0; i < NUMAMMO; i++)
+            for(i = 0; i < NUM_AMMO_TYPES; i++)
             {
                 player->maxammo[i] *= 2;
             }
             player->backpack = true;
         }
-        P_GiveAmmo(player, am_goldwand, AMMO_GWND_WIMPY);
-        P_GiveAmmo(player, am_blaster, AMMO_BLSR_WIMPY);
-        P_GiveAmmo(player, am_crossbow, AMMO_CBOW_WIMPY);
-        P_GiveAmmo(player, am_skullrod, AMMO_SKRD_WIMPY);
-        P_GiveAmmo(player, am_phoenixrod, AMMO_PHRD_WIMPY);
+        P_GiveAmmo(player, AT_CRYSTAL, AMMO_GWND_WIMPY);
+        P_GiveAmmo(player, AT_ORB, AMMO_BLSR_WIMPY);
+        P_GiveAmmo(player, AT_ARROW, AMMO_CBOW_WIMPY);
+        P_GiveAmmo(player, AT_RUNE, AMMO_SKRD_WIMPY);
+        P_GiveAmmo(player, AT_FIREORB, AMMO_PHRD_WIMPY);
         P_SetMessage(player, TXT_ITEMBAGOFHOLDING, false);
         break;
     case SPR_SPMP:              // Item_SuperMap
-        if(!P_GivePower(player, pw_allmap))
+        if(!P_GivePower(player, PT_ALLMAP))
         {
             return;
         }
@@ -482,11 +482,11 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 
         // Keys
     case SPR_BKYY:              // Key_Blue
-        if(!player->keys[key_blue])
+        if(!player->keys[KT_BLUE])
         {
             P_SetMessage(player, TXT_GOTBLUEKEY, false);
         }
-        P_GiveKey(player, key_blue);
+        P_GiveKey(player, KT_BLUE);
         sound = sfx_keyup;
         if(!IS_NETGAME)
         {
@@ -494,24 +494,24 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         }
         return;
     case SPR_CKYY:              // Key_Yellow
-        if(!player->keys[key_yellow])
+        if(!player->keys[KT_YELLOW])
         {
             P_SetMessage(player, TXT_GOTYELLOWKEY, false);
         }
         sound = sfx_keyup;
-        P_GiveKey(player, key_yellow);
+        P_GiveKey(player, KT_YELLOW);
         if(!IS_NETGAME)
         {
             break;
         }
         return;
     case SPR_AKYY:              // Key_Green
-        if(!player->keys[key_green])
+        if(!player->keys[KT_GREEN])
         {
             P_SetMessage(player, TXT_GOTGREENKEY, false);
         }
         sound = sfx_keyup;
-        P_GiveKey(player, key_green);
+        P_GiveKey(player, KT_GREEN);
         if(!IS_NETGAME)
         {
             break;
@@ -592,84 +592,84 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 
         // Ammo
     case SPR_AMG1:              // Ammo_GoldWandWimpy
-        if(!P_GiveAmmo(player, am_goldwand, special->health))
+        if(!P_GiveAmmo(player, AT_CRYSTAL, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOGOLDWAND1, false);
         break;
     case SPR_AMG2:              // Ammo_GoldWandHefty
-        if(!P_GiveAmmo(player, am_goldwand, special->health))
+        if(!P_GiveAmmo(player, AT_CRYSTAL, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOGOLDWAND2, false);
         break;
     case SPR_AMM1:              // Ammo_MaceWimpy
-        if(!P_GiveAmmo(player, am_mace, special->health))
+        if(!P_GiveAmmo(player, AT_MSPHERE, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOMACE1, false);
         break;
     case SPR_AMM2:              // Ammo_MaceHefty
-        if(!P_GiveAmmo(player, am_mace, special->health))
+        if(!P_GiveAmmo(player, AT_MSPHERE, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOMACE2, false);
         break;
     case SPR_AMC1:              // Ammo_CrossbowWimpy
-        if(!P_GiveAmmo(player, am_crossbow, special->health))
+        if(!P_GiveAmmo(player, AT_ARROW, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOCROSSBOW1, false);
         break;
     case SPR_AMC2:              // Ammo_CrossbowHefty
-        if(!P_GiveAmmo(player, am_crossbow, special->health))
+        if(!P_GiveAmmo(player, AT_ARROW, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOCROSSBOW2, false);
         break;
     case SPR_AMB1:              // Ammo_BlasterWimpy
-        if(!P_GiveAmmo(player, am_blaster, special->health))
+        if(!P_GiveAmmo(player, AT_ORB, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOBLASTER1, false);
         break;
     case SPR_AMB2:              // Ammo_BlasterHefty
-        if(!P_GiveAmmo(player, am_blaster, special->health))
+        if(!P_GiveAmmo(player, AT_ORB, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOBLASTER2, false);
         break;
     case SPR_AMS1:              // Ammo_SkullRodWimpy
-        if(!P_GiveAmmo(player, am_skullrod, special->health))
+        if(!P_GiveAmmo(player, AT_RUNE, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOSKULLROD1, false);
         break;
     case SPR_AMS2:              // Ammo_SkullRodHefty
-        if(!P_GiveAmmo(player, am_skullrod, special->health))
+        if(!P_GiveAmmo(player, AT_RUNE, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOSKULLROD2, false);
         break;
     case SPR_AMP1:              // Ammo_PhoenixRodWimpy
-        if(!P_GiveAmmo(player, am_phoenixrod, special->health))
+        if(!P_GiveAmmo(player, AT_FIREORB, special->health))
         {
             return;
         }
         P_SetMessage(player, TXT_AMMOPHOENIXROD1, false);
         break;
     case SPR_AMP2:              // Ammo_PhoenixRodHefty
-        if(!P_GiveAmmo(player, am_phoenixrod, special->health))
+        if(!P_GiveAmmo(player, AT_FIREORB, special->health))
         {
             return;
         }
@@ -678,7 +678,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 
         // Weapons
     case SPR_WMCE:              // Weapon_Mace
-        if(!P_GiveWeapon(player, WP_SEVENTH))
+        if(!P_GiveWeapon(player, WT_SEVENTH))
         {
             return;
         }
@@ -686,7 +686,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         sound = sfx_wpnup;
         break;
     case SPR_WBOW:              // Weapon_Crossbow
-        if(!P_GiveWeapon(player, WP_THIRD))
+        if(!P_GiveWeapon(player, WT_THIRD))
         {
             return;
         }
@@ -694,7 +694,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         sound = sfx_wpnup;
         break;
     case SPR_WBLS:              // Weapon_Blaster
-        if(!P_GiveWeapon(player, WP_FOURTH))
+        if(!P_GiveWeapon(player, WT_FOURTH))
         {
             return;
         }
@@ -702,7 +702,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         sound = sfx_wpnup;
         break;
     case SPR_WSKL:              // Weapon_SkullRod
-        if(!P_GiveWeapon(player, WP_FIFTH))
+        if(!P_GiveWeapon(player, WT_FIFTH))
         {
             return;
         }
@@ -710,7 +710,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         sound = sfx_wpnup;
         break;
     case SPR_WPHX:              // Weapon_PhoenixRod
-        if(!P_GiveWeapon(player, WP_SIXTH))
+        if(!P_GiveWeapon(player, WT_SIXTH))
         {
             return;
         }
@@ -718,7 +718,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         sound = sfx_wpnup;
         break;
     case SPR_WGNT:              // Weapon_Gauntlets
-        if(!P_GiveWeapon(player, WP_EIGHTH))
+        if(!P_GiveWeapon(player, WT_EIGHTH))
         {
             return;
         }
@@ -781,7 +781,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 
                 if(source->player->morphTics)
                 {               // Make a super chicken
-                    P_GivePower(source->player, pw_weaponlevel2);
+                    P_GivePower(source->player, PT_WEAPONLEVEL2);
                 }
             }
         }
@@ -799,8 +799,8 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         }
         target->flags &= ~MF_SOLID;
         target->flags2 &= ~MF2_FLY;
-        target->player->powers[pw_flight] = 0;
-        target->player->powers[pw_weaponlevel2] = 0;
+        target->player->powers[PT_FLIGHT] = 0;
+        target->player->powers[PT_WEAPONLEVEL2] = 0;
         target->player->playerstate = PST_DEAD;
         target->player->plr->flags |= DDPF_DEAD;
         target->player->update |= PSF_STATE;
@@ -891,14 +891,14 @@ boolean P_MorphPlayer(player_t *player)
     if(player->morphTics)
     {
         if((player->morphTics < CHICKENTICS - TICSPERSEC) &&
-           !player->powers[pw_weaponlevel2])
+           !player->powers[PT_WEAPONLEVEL2])
         {                       // Make a super chicken
-            P_GivePower(player, pw_weaponlevel2);
+            P_GivePower(player, PT_WEAPONLEVEL2);
         }
         return false;
     }
 
-    if(player->powers[pw_invulnerability])
+    if(player->powers[PT_INVULNERABILITY])
     {                           // Immune when invulnerable
         return false;
     }
@@ -921,8 +921,8 @@ boolean P_MorphPlayer(player_t *player)
     player->health = chicken->health = MAXCHICKENHEALTH;
     player->plr->mo = chicken;
     player->armorpoints = player->armortype = 0;
-    player->powers[pw_invisibility] = 0;
-    player->powers[pw_weaponlevel2] = 0;
+    player->powers[PT_INVISIBILITY] = 0;
+    player->powers[PT_WEAPONLEVEL2] = 0;
 
     if(oldFlags2 & MF2_FLY)
         chicken->flags2 |= MF2_FLY;
@@ -1022,7 +1022,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
         }
     }
 
-    if((gameskill == sk_baby) && (normalCount * 25 >= saveHealth))
+    if((gameskill == SM_BABY) && (normalCount * 25 >= saveHealth))
     {
         // Use quartz flasks
         count = (saveHealth + 24) / 25;
@@ -1042,7 +1042,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
             P_InventoryRemoveArtifact(player, superSlot);
         }
     }
-    else if((gameskill == sk_baby) &&
+    else if((gameskill == SM_BABY) &&
             (superCount * 100 + normalCount * 25 >= saveHealth))
     {
         // Use mystic urns and quartz flasks
@@ -1109,7 +1109,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     player = target->player;
 
     // In trainer mode? then take half damage
-    if(player && gameskill == sk_baby)
+    if(player && gameskill == SM_BABY)
         damage >>= 1;
 
     // Special damage types
@@ -1153,7 +1153,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                 // Player specific checks
 
                 // Is player invulnerable?
-                if(target->player->powers[pw_invulnerability])
+                if(target->player->powers[PT_INVULNERABILITY])
                     break;
 
                 // Does the player have a Chaos Device he can use
@@ -1216,7 +1216,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     // Push the target unless source is using the gauntlets
     if(inflictor && !(target->flags & MF_NOCLIP) &&
        (!source || !source->player ||
-        source->player->readyweapon != WP_EIGHTH) &&
+        source->player->readyweapon != WT_EIGHTH) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
     {
         ang = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
@@ -1235,8 +1235,8 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         ang >>= ANGLETOFINESHIFT;
 
         if(source && source->player && (source == inflictor) &&
-           source->player->powers[pw_weaponlevel2] &&
-           source->player->readyweapon == WP_FIRST)
+           source->player->powers[PT_WEAPONLEVEL2] &&
+           source->player->readyweapon == WT_FIRST)
         {
             // Staff power level 2
             target->momx += FixedMul(10 * FRACUNIT, finecosine[ang]);
@@ -1269,7 +1269,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     {
         if(damage < 1000 &&
            ((P_GetPlayerCheats(player) & CF_GODMODE) ||
-            player->powers[pw_invulnerability]))
+            player->powers[PT_INVULNERABILITY]))
         {
             return;
         }
@@ -1295,7 +1295,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             player->update |= PSF_ARMOR_POINTS;
         }
 
-        if(damage >= player->health && ((gameskill == sk_baby) || deathmatch)
+        if(damage >= player->health && ((gameskill == SM_BABY) || deathmatch)
            && !player->morphTics)
         {                       // Try to use some inventory health
             P_AutoUseHealth(player, damage - player->health + 1);

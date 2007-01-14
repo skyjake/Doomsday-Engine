@@ -652,11 +652,11 @@ static menu_t SaveDef = {
 
 #if __JSTRIFE__
 static menuitem_t SkillItems[] = {
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_baby},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_easy},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_medium},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_hard},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_nightmare}
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_BABY},
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_EASY},
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_MEDIUM},
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_HARD},
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_NIGHTMARE}
 };
 
 static menu_t SkillDef = {
@@ -673,11 +673,11 @@ static menu_t SkillDef = {
 
 #elif __JHEXEN__
 static menuitem_t SkillItems[] = {
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_baby},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_easy},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_medium},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_hard},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, sk_nightmare}
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_BABY},
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_EASY},
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_MEDIUM},
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_HARD},
+    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_NIGHTMARE}
 };
 
 static menu_t SkillDef = {
@@ -693,11 +693,11 @@ static menu_t SkillDef = {
 };
 #elif __JHERETIC__
 static menuitem_t SkillItems[] = {
-    {ITT_EFUNC, 0, "thou needet a wet-nurse", M_ChooseSkill, sk_baby},
-    {ITT_EFUNC, 0, "yellowbellies-r-us", M_ChooseSkill, sk_easy},
-    {ITT_EFUNC, 0, "bringest them oneth", M_ChooseSkill, sk_medium},
-    {ITT_EFUNC, 0, "thou art a smite-meister", M_ChooseSkill, sk_hard},
-    {ITT_EFUNC, 0, "black plague possesses thee", M_ChooseSkill, sk_nightmare}
+    {ITT_EFUNC, 0, "thou needet a wet-nurse", M_ChooseSkill, SM_BABY},
+    {ITT_EFUNC, 0, "yellowbellies-r-us", M_ChooseSkill, SM_EASY},
+    {ITT_EFUNC, 0, "bringest them oneth", M_ChooseSkill, SM_MEDIUM},
+    {ITT_EFUNC, 0, "thou art a smite-meister", M_ChooseSkill, SM_HARD},
+    {ITT_EFUNC, 0, "black plague possesses thee", M_ChooseSkill, SM_NIGHTMARE}
 };
 
 static menu_t SkillDef = {
@@ -1001,21 +1001,21 @@ static menuitem_t WeaponItems[] = {
     {ITT_EMPTY,  0, "item up/down the list." , NULL, 0 },
     {ITT_EMPTY,  0, NULL, NULL, 0},
     {ITT_EMPTY,  0, "PRIORITY ORDER", NULL, 0},
-    {ITT_LRFUNC, 0, "1 :", M_WeaponOrder, 0 << NUMWEAPONS },
-    {ITT_LRFUNC, 0, "2 :", M_WeaponOrder, 1 << NUMWEAPONS },
-    {ITT_LRFUNC, 0, "3 :", M_WeaponOrder, 2 << NUMWEAPONS },
-    {ITT_LRFUNC, 0, "4 :", M_WeaponOrder, 3 << NUMWEAPONS },
+    {ITT_LRFUNC, 0, "1 :", M_WeaponOrder, 0 << NUM_WEAPON_TYPES },
+    {ITT_LRFUNC, 0, "2 :", M_WeaponOrder, 1 << NUM_WEAPON_TYPES },
+    {ITT_LRFUNC, 0, "3 :", M_WeaponOrder, 2 << NUM_WEAPON_TYPES },
+    {ITT_LRFUNC, 0, "4 :", M_WeaponOrder, 3 << NUM_WEAPON_TYPES },
 #if !__JHEXEN__
-    {ITT_LRFUNC, 0, "5 :", M_WeaponOrder, 4 << NUMWEAPONS },
-    {ITT_LRFUNC, 0, "6 :", M_WeaponOrder, 5 << NUMWEAPONS },
-    {ITT_LRFUNC, 0, "7 :", M_WeaponOrder, 6 << NUMWEAPONS },
-    {ITT_LRFUNC, 0, "8 :", M_WeaponOrder, 7 << NUMWEAPONS },
+    {ITT_LRFUNC, 0, "5 :", M_WeaponOrder, 4 << NUM_WEAPON_TYPES },
+    {ITT_LRFUNC, 0, "6 :", M_WeaponOrder, 5 << NUM_WEAPON_TYPES },
+    {ITT_LRFUNC, 0, "7 :", M_WeaponOrder, 6 << NUM_WEAPON_TYPES },
+    {ITT_LRFUNC, 0, "8 :", M_WeaponOrder, 7 << NUM_WEAPON_TYPES },
 #endif
 #if __JDOOM__
-    {ITT_LRFUNC, 0, "9 :", M_WeaponOrder, 8 << NUMWEAPONS },
+    {ITT_LRFUNC, 0, "9 :", M_WeaponOrder, 8 << NUM_WEAPON_TYPES },
 #endif
 #if __DOOM64TC__
-    {ITT_LRFUNC, 0, "10 :", M_WeaponOrder, 9 << NUMWEAPONS },
+    {ITT_LRFUNC, 0, "10 :", M_WeaponOrder, 9 << NUM_WEAPON_TYPES },
 #endif
     {ITT_EFUNC,  0, "Use with Next/Previous :", M_ToggleVar, 0, NULL, "player-weapon-nextmode"},
     {ITT_EMPTY,  0, NULL, NULL, 0},
@@ -2543,7 +2543,7 @@ void M_DrawMainMenu(void)
 void M_DrawClassMenu(void)
 {
     menu_t     *menu = &ClassDef;
-    pclass_t    class;
+    playerclass_t    class;
     static char *boxLumpName[3] = {
         "m_fbox",
         "m_cbox",
@@ -2558,7 +2558,7 @@ void M_DrawClassMenu(void)
     M_WriteText2(34, 24, "CHOOSE CLASS:", hu_font_b, menu->color[0],
                  menu->color[1], menu->color[2], menu_alpha);
 
-    class = (pclass_t) currentMenu->items[itemOn].option;
+    class = (playerclass_t) currentMenu->items[itemOn].option;
 
     gl.Color4f( 1, 1, 1, menu_alpha);
     GL_DrawPatch_CS(174, 8, W_GetNumForName(boxLumpName[class]));
@@ -3023,7 +3023,7 @@ void M_DrawWeaponMenu(void)
 
     M_DrawTitle("WEAPONS", menu->y - 20);
 
-    for(i = 0; i < NUMWEAPONS; ++i)
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
 #ifdef __JDOOM__
         M_WriteMenuText(menu, 4+i, GET_TXT(TXT_WEAPON0 + cfg.weaponOrder[i]));
@@ -3067,12 +3067,12 @@ void M_DrawWeaponMenu(void)
 
 void M_WeaponOrder(int option, void *data)
 {
-    int         choice = option >> NUMWEAPONS;
+    int         choice = option >> NUM_WEAPON_TYPES;
     int         temp;
 
     if(option & RIGHT_DIR)
     {
-        if(choice < NUMWEAPONS-1)
+        if(choice < NUM_WEAPON_TYPES-1)
         {
             temp = cfg.weaponOrder[choice+1];
             cfg.weaponOrder[choice+1] = cfg.weaponOrder[choice];
@@ -3699,11 +3699,11 @@ boolean M_VerifyNightmare(int option, void *data)
     if(messageResponse == 1) // Yes
     {
 #ifdef __JHERETIC__
-        G_DeferedInitNew(sk_nightmare, MenuEpisode, 1);
+        G_DeferedInitNew(SM_NIGHTMARE, MenuEpisode, 1);
 #elif __JDOOM__
-        G_DeferedInitNew(sk_nightmare, epi + 1, 1);
+        G_DeferedInitNew(SM_NIGHTMARE, epi + 1, 1);
 #elif __JSTRIFE__
-        G_DeferredNewGame(sk_nightmare);
+        G_DeferredNewGame(SM_NIGHTMARE);
 #endif
         M_StopMessage();
         M_ClearMenus();
@@ -3733,7 +3733,7 @@ void M_ChooseSkill(int option, void *data)
 
 #else
 # if __JDOOM__ || __JSTRIFE__
-    if(option == sk_nightmare)
+    if(option == SM_NIGHTMARE)
     {
 #  if __JSTRIFE__
         M_StartMessage("u nuts? FIXME!!!", M_VerifyNightmare, true);

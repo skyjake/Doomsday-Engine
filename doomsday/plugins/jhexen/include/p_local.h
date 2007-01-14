@@ -229,7 +229,7 @@ void            P_Validate();
 
 // ***** P_INTER *****
 
-extern int      clipmana[NUMAMMO];
+extern int      clipmana[NUM_AMMO_TYPES];
 
 void            HUMsg_ClearMessages(player_t *player);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);

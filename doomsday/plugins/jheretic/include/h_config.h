@@ -120,7 +120,7 @@ typedef struct jheretic_config_s {
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
-    int             weaponOrder[NUMWEAPONS];
+    int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            secretMsg;
     int             plrViewHeight;
@@ -205,7 +205,7 @@ typedef struct jheretic_config_s {
     byte            netSlot;
     byte            netColor;
 
-    pclass_t        PlayerClass[MAXPLAYERS];
+    playerclass_t        PlayerClass[MAXPLAYERS];
     int             PlayerColor[MAXPLAYERS];
 
     // jHeretic specific

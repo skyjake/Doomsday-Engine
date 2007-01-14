@@ -173,7 +173,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
     {
         player = thing->player;
         player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
-        if(player->powers[pw_flight] && aboveFloor)
+        if(player->powers[PT_FLIGHT] && aboveFloor)
         {
             thing->pos[VZ] = thing->floorz + aboveFloor;
             if(thing->pos[VZ] + thing->height > thing->ceilingz)
@@ -217,7 +217,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
                         thing->pos[VZ] + fogDelta, MT_TFOG);
         S_StartSound(SFX_TELEPORT, fog);
 
-        if(thing->player && !thing->player->powers[pw_speed])
+        if(thing->player && !thing->player->powers[PT_SPEED])
         {   // Freeze player for about .5 sec
             thing->reactiontime = 18;
         }

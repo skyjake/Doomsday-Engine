@@ -282,7 +282,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
         if(!player)
             return;
 
-        if(!player->keys[key_blue])
+        if(!player->keys[KT_BLUE])
         {
             P_SetMessage(player, TXT_NEEDBLUEKEY, false);
             S_ConsoleSound(sfx_plroof, NULL, player - players);
@@ -296,7 +296,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
         if(!player)
             return;
 
-        if(!player->keys[key_yellow])
+        if(!player->keys[KT_YELLOW])
         {
             P_SetMessage(player, TXT_NEEDYELLOWKEY, false);
             S_ConsoleSound(sfx_plroof, NULL, player - players);
@@ -310,7 +310,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
         if(!player)
             return;
 
-        if(!player->keys[key_green])
+        if(!player->keys[KT_GREEN])
         {
             P_SetMessage(player, TXT_NEEDGREENKEY, false);
             S_ConsoleSound(sfx_plroof, NULL, player - players);

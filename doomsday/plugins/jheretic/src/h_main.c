@@ -80,14 +80,14 @@ boolean cdrom;                  // true if cd-rom mode active
 boolean singletics;             // debug flag to cancel adaptiveness
 boolean artiskip;             // whether shift-enter skips an artifact
 
-skill_t startskill;
+skillmode_t startskill;
 int     startepisode;
 int     startmap;
 boolean autostart;
 FILE   *debugfile;
 boolean debugmode;              // checkparm of -debug
 
-GameMode_t gamemode;
+gamemode_t gamemode;
 int     gamemodebits;
 
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
@@ -139,7 +139,7 @@ static boolean devMap;
  * @param mode          The game mode to change to.
  * @return boolean      (TRUE) if we changed game modes successfully.
  */
-boolean D_SetGameMode(GameMode_t mode)
+boolean D_SetGameMode(gamemode_t mode)
 {
     gamemode = mode;
 
@@ -314,7 +314,7 @@ void H_PreInit(void)
     cfg.netJumping = true;
     cfg.netEpisode = 1;
     cfg.netMap = 1;
-    cfg.netSkill = sk_medium;
+    cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 4;           // Use the default color by default.
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
@@ -392,14 +392,14 @@ void H_PreInit(void)
     cfg.cameraNoClip = true;
     cfg.respawnMonstersNightmare = false;
 
-    cfg.weaponOrder[0] = WP_SEVENTH;    // mace \ beak
-    cfg.weaponOrder[1] = WP_SIXTH;      // phoenixrod \ beak
-    cfg.weaponOrder[2] = WP_FIFTH;      // skullrod \ beak
-    cfg.weaponOrder[3] = WP_FOURTH;     // blaster \ beak
-    cfg.weaponOrder[4] = WP_THIRD;      // crossbow \ beak
-    cfg.weaponOrder[5] = WP_SECOND;     // goldwand \ beak
-    cfg.weaponOrder[6] = WP_EIGHTH;     // gauntlets \ beak
-    cfg.weaponOrder[7] = WP_FIRST;      // staff \ beak
+    cfg.weaponOrder[0] = WT_SEVENTH;    // mace \ beak
+    cfg.weaponOrder[1] = WT_SIXTH;      // phoenixrod \ beak
+    cfg.weaponOrder[2] = WT_FIFTH;      // skullrod \ beak
+    cfg.weaponOrder[3] = WT_FOURTH;     // blaster \ beak
+    cfg.weaponOrder[4] = WT_THIRD;      // crossbow \ beak
+    cfg.weaponOrder[5] = WT_SECOND;     // goldwand \ beak
+    cfg.weaponOrder[6] = WT_EIGHTH;     // gauntlets \ beak
+    cfg.weaponOrder[7] = WT_FIRST;      // staff \ beak
 
     cfg.menuEffects = 1;
     cfg.menuFog = 4;
@@ -450,7 +450,7 @@ void H_PostInit(void)
     monsterinfight = GetDefInt("AI|Infight", 0);
 
     // get skill / episode / map from parms
-    startskill = sk_medium;
+    startskill = SM_MEDIUM;
     startepisode = 1;
     startmap = 1;
     autostart = false;
@@ -557,7 +557,7 @@ void H_PostInit(void)
         }
     }
 
-    if(gameaction != ga_loadgame)
+    if(gameaction != GA_LOADGAME)
     {
         GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
         if(autostart || IS_NETGAME)

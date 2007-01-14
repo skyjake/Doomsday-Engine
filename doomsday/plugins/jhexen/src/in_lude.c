@@ -145,7 +145,7 @@ void IN_Start(void)
     // InFine handles the text.
     if(!deathmatch)
     {
-        gameaction = ga_leavemap;
+        gameaction = GA_LEAVEMAP;
         return;
     }
 
@@ -165,7 +165,7 @@ void WaitStop(void)
         IN_Stop();
         //      gamestate = GS_LEVEL;
         //      G_DoLoadLevel();
-        gameaction = ga_leavemap;
+        gameaction = GA_LEAVEMAP;
         //      G_WorldDone();
     }
 }

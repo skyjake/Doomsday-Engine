@@ -518,7 +518,7 @@ void P_ZMovement(mobj_t *mo)
 
         int correct_lost_soul_bounce
                 = (gamemode == retail || gamemode == commercial)
-                  && gamemission != doom2;
+                  && gamemission != GM_DOOM2;
 
         if(correct_lost_soul_bounce && mo->flags & MF_SKULLFLY)
         {
@@ -855,7 +855,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
     //if(mobj->flags & MF_SOLID) mobj->ddflags |= DDMF_SOLID;
     P_SetDoomsdayFlags(mobj);
 
-    if(gameskill != sk_nightmare)
+    if(gameskill != SM_NIGHTMARE)
         mobj->reactiontime = info->reactiontime;
 
     mobj->lastlook = P_Random() % MAXPLAYERS;
@@ -1097,7 +1097,7 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
 
     // give all cards in death match mode
     if(deathmatch)
-        for(i = 0; i < NUMKEYS; i++)
+        for(i = 0; i < NUM_KEY_TYPES; i++)
             p->keys[i] = true;
 
     if(pnum == consoleplayer)
@@ -1156,9 +1156,9 @@ void P_SpawnMapThing(thing_t *th)
         return;
 
     // check for apropriate skill level
-    if(gameskill == sk_baby)
+    if(gameskill == SM_BABY)
         bit = 1;
-    else if(gameskill == sk_nightmare)
+    else if(gameskill == SM_NIGHTMARE)
         bit = 4;
     else
         bit = 1 << (gameskill - 1);

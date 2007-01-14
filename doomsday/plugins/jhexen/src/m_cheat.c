@@ -497,7 +497,7 @@ boolean cht_Responder(event_t *ev)
     if(G_GetGameState() != GS_LEVEL || ev->type != EV_KEY || ev->state != EVS_DOWN)
         return false;
 
-    if(gameskill == sk_nightmare)
+    if(gameskill == SM_NIGHTMARE)
     {   // Can't cheat in nightmare mode
         return false;
     }
@@ -574,7 +574,7 @@ static boolean canCheat()
 #ifdef _DEBUG
     return true;
 #else
-    return !(gameskill == sk_nightmare || (IS_NETGAME && !netcheat) ||
+    return !(gameskill == SM_NIGHTMARE || (IS_NETGAME && !netcheat) ||
              players[consoleplayer].health <= 0);
 #endif
 }
@@ -688,12 +688,12 @@ static void CheatWeaponsFunc(player_t *player, cheat_t * cheat)
         player->armorpoints[i] = PCLASS_INFO(player->class)->armorincrement[i];
     }
 
-    for(i = 0; i < NUMWEAPONS; i++)
+    for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
         player->weaponowned[i] = true;
     }
 
-    for(i = 0; i < NUMAMMO; i++)
+    for(i = 0; i < NUM_AMMO_TYPES; i++)
     {
         player->ammo[i] = MAX_MANA;
     }
@@ -876,7 +876,7 @@ static void CheatIDKFAFunc(player_t *player, cheat_t * cheat)
     {
         player->weaponowned[i] = false;
     }
-    player->pendingweapon = WP_FIRST;
+    player->pendingweapon = WT_FIRST;
     P_SetMessage(player, TXT_CHEATIDKFA, false);
 }
 
@@ -1184,7 +1184,7 @@ DEFCC(CCmdCheatGive)
         default:
             // Individual Weapon
             weapNum = ((int) buf[i]) - 48;
-            if(weapNum >= 0 && weapNum < NUMWEAPONS)
+            if(weapNum >= 0 && weapNum < NUM_WEAPON_TYPES)
             {
                plyr->weaponowned[weapNum] = true;
             }
@@ -1279,12 +1279,12 @@ DEFCC(CCmdCheatReveal)
 
     // Reset them (for 'nothing'). :-)
     cheating = 0;
-    players[consoleplayer].powers[pw_allmap] = false;
+    players[consoleplayer].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
     if(option < 0 || option > 4)
         return false;
     if(option == 1)
-        players[consoleplayer].powers[pw_allmap] = true;
+        players[consoleplayer].powers[PT_ALLMAP] = true;
     else if(option != 0)
         cheating = option -1;
 

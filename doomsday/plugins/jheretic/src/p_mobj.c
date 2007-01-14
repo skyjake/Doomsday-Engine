@@ -1080,7 +1080,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
     mobj->health = info->spawnhealth
                    * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
 
-    if(gameskill != sk_nightmare)
+    if(gameskill != SM_NIGHTMARE)
         mobj->reactiontime = info->reactiontime;
 
     mobj->lastlook = P_Random() % MAXPLAYERS;
@@ -1252,7 +1252,7 @@ void P_SpawnPlayer(thing_t * mthing, int plrnum)
 
     if(deathmatch)
     {                           // Give all keys in death match mode
-        for(i = 0; i < NUMKEYS; i++)
+        for(i = 0; i < NUM_KEY_TYPES; i++)
         {
             p->keys[i] = true;
             if(p == &players[consoleplayer])
@@ -1325,9 +1325,9 @@ void P_SpawnMapThing(thing_t * th)
     if(!IS_NETGAME && (th->options & 16))
         return;
 
-    if(gameskill == sk_baby)
+    if(gameskill == SM_BABY)
         bit = 1;
-    else if(gameskill == sk_nightmare)
+    else if(gameskill == SM_NIGHTMARE)
         bit = 4;
     else
         bit = 1 << (gameskill - 1);

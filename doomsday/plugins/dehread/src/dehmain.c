@@ -1217,7 +1217,7 @@ int PatchAmmo(int ammoNum)
        int *per;
        int dummy;
 
-       if (ammoNum >= 0 && ammoNum < NUMAMMO) {
+       if (ammoNum >= 0 && ammoNum < NUM_AMMO_TYPES) {
        DPrintf ("Ammo %d.\n", ammoNum);
        max = &maxammo[ammoNum];
        per = &clipammo[ammoNum];
@@ -1292,7 +1292,7 @@ int PatchWeapon(int weapNum)
 
        weaponinfo_t *info, dummy;
 
-       if (weapNum >= 0 && weapNum < NUMWEAPONS) {
+       if (weapNum >= 0 && weapNum < NUM_WEAPON_TYPES) {
        info = &weaponinfo[weapNum];
        DPrintf ("Weapon %d\n", weapNum);
        } else {

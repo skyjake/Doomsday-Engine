@@ -130,7 +130,7 @@ typedef struct {
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
-    int             weaponOrder[NUMWEAPONS];
+    int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     float           inventoryTimer; // Number of seconds until the invetory auto-hides.
 
@@ -174,7 +174,7 @@ typedef struct {
     float           menuColor2[3];
     byte            menuSlam;
 
-    pclass_t        PlayerClass[MAXPLAYERS];
+    playerclass_t        PlayerClass[MAXPLAYERS];
     byte            PlayerColor[MAXPLAYERS];
 } game_config_t;
 

@@ -94,7 +94,7 @@ extern fixed_t FloatBobOffsets[64];
 
 fixed_t bulletslope;
 
-weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
+weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
     {                           // First Weapons
      {                          // Fighter First Weapon - Punch
      {
@@ -447,16 +447,16 @@ void P_SetPspriteNF(player_t *player, int position, statenum_t stnum)
 
 void P_ActivateMorphWeapon(player_t *player)
 {
-    player->pendingweapon = WP_NOCHANGE;
+    player->pendingweapon = WT_NOCHANGE;
     player->psprites[ps_weapon].sy = WEAPONTOP;
-    player->readyweapon = WP_FIRST; // Snout is the first weapon
+    player->readyweapon = WT_FIRST; // Snout is the first weapon
     player->update |= PSF_WEAPONS;
     P_SetPsprite(player, ps_weapon, S_SNOUTREADY);
 }
 
 void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
 {
-    player->pendingweapon = WP_NOCHANGE;
+    player->pendingweapon = WT_NOCHANGE;
     player->readyweapon = weapon;
     player->psprites[ps_weapon].sy = WEAPONBOTTOM;
     player->update |= PSF_WEAPONS;
@@ -474,19 +474,19 @@ void P_BringUpWeapon(player_t *player)
     wminfo = WEAPON_INFO(player->pendingweapon, player->class, 0);
 
     newState = wminfo->upstate;
-    if(player->class == PCLASS_FIGHTER && player->pendingweapon == WP_SECOND &&
-       player->ammo[MANA_1])
+    if(player->class == PCLASS_FIGHTER && player->pendingweapon == WT_SECOND &&
+       player->ammo[AT_BLUEMANA])
     {
         newState = S_FAXEUP_G;
     }
 
-    if(player->pendingweapon == WP_NOCHANGE)
+    if(player->pendingweapon == WT_NOCHANGE)
         player->pendingweapon = player->readyweapon;
 
     if(wminfo->raisesound)
         S_StartSound(wminfo->raisesound, player->plr->mo);
 
-    player->pendingweapon = WP_NOCHANGE;
+    player->pendingweapon = WT_NOCHANGE;
     player->psprites[ps_weapon].sy = WEAPONBOTTOM;
     P_SetPsprite(player, ps_weapon, newState);
 }
@@ -507,14 +507,14 @@ boolean P_CheckAmmo(player_t *player)
     // KLUDGE: Work around the multiple firing modes problems.
     // We need to split the weapon firing routines and implement them as
     // new fire modes.
-    if(player->class == PCLASS_FIGHTER && player->readyweapon != WP_FOURTH)
+    if(player->class == PCLASS_FIGHTER && player->readyweapon != WT_FOURTH)
         return true;
     // < KLUDGE
 
     // Check we have enough of ALL ammo types used by this weapon.
     good = true;
 
-    for(i=0; i < NUMAMMO && good; ++i)
+    for(i=0; i < NUM_AMMO_TYPES && good; ++i)
     {
         if(!weaponinfo[player->readyweapon][player->class].mode[0].ammotype[i])
             continue; // Weapon does not take this type of ammo.
@@ -532,7 +532,7 @@ boolean P_CheckAmmo(player_t *player)
         return true;
 
     // Out of ammo, pick a weapon to change to.
-    P_MaybeChangeWeapon(player, WP_NOCHANGE, AM_NOAMMO, false);
+    P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
 
     // Now set appropriate weapon overlay.
     P_SetPsprite(player, ps_weapon,
@@ -549,8 +549,8 @@ void P_FireWeapon(player_t *player)
 
     // Psprite state.
     P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->attackstate);
-    if(player->class == PCLASS_FIGHTER && player->readyweapon == WP_SECOND &&
-       player->ammo[MANA_1] > 0)
+    if(player->class == PCLASS_FIGHTER && player->readyweapon == WT_SECOND &&
+       player->ammo[AT_BLUEMANA] > 0)
     {                           // Glowing axe
         attackState = S_FAXEATK_G1;
     }
@@ -597,7 +597,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
         P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
     }
 
-    if(player->readyweapon != WP_NOCHANGE)
+    if(player->readyweapon != WT_NOCHANGE)
     {
         wminfo = WEAPON_INFO(player->readyweapon, player->class, 0);
 
@@ -607,7 +607,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
 
         // check for change
         //  if player is dead, put the weapon away
-        if(player->pendingweapon != WP_NOCHANGE || !player->health)
+        if(player->pendingweapon != WT_NOCHANGE || !player->health)
         {   //  (pending weapon should allready be validated)
             P_SetPsprite(player, ps_weapon, wminfo->downstate);
             return;
@@ -650,7 +650,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
 void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
 {
     if(player->cmd.attack &&
-       player->pendingweapon == WP_NOCHANGE &&
+       player->pendingweapon == WT_NOCHANGE &&
        player->health)
     {
         player->refire++;
@@ -706,8 +706,8 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
         return;
     }
     psp->sy = WEAPONTOP;
-    if(player->class == PCLASS_FIGHTER && player->readyweapon == WP_SECOND &&
-       player->ammo[MANA_1])
+    if(player->class == PCLASS_FIGHTER && player->readyweapon == WT_SECOND &&
+       player->ammo[AT_BLUEMANA])
     {
         P_SetPsprite(player, ps_weapon, S_FAXEREADY_G);
     }
@@ -817,8 +817,8 @@ void C_DECL A_FHammerAttack(player_t *player, pspdef_t * psp)
         pmo->special1 = true;
     }
   hammerdone:
-    if(player->ammo[MANA_2] <
-       weaponinfo[player->readyweapon][player->class].mode[0].pershot[MANA_2])
+    if(player->ammo[AT_GREENMANA] <
+       weaponinfo[player->readyweapon][player->class].mode[0].pershot[AT_GREENMANA])
     {   // Don't spawn a hammer if the player doesn't have enough mana
         pmo->special1 = false;
     }
@@ -1273,7 +1273,7 @@ void C_DECL A_FAxeAttack(player_t *player, pspdef_t * psp)
 
     damage = 40 + (P_Random() & 15) + (P_Random() & 7);
     power = 0;
-    if(player->ammo[MANA_1] > 0)
+    if(player->ammo[AT_BLUEMANA] > 0)
     {
         damage <<= 1;
         power = 6 * FRACUNIT;
@@ -1325,7 +1325,7 @@ void C_DECL A_FAxeAttack(player_t *player, pspdef_t * psp)
     if(useMana == 2)
     {
         P_ShotAmmo(player);
-        if(player->ammo[MANA_1] <= 0)
+        if(player->ammo[AT_BLUEMANA] <= 0)
             P_SetPsprite(player, ps_weapon, S_FAXEATK_5);
     }
     return;

@@ -547,7 +547,7 @@ boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
 
         player = &players[actor->lastlook];
 
-        if(player->powers[pw_unsee]) // d64tc
+        if(player->powers[PT_UNSEE]) // d64tc
             continue;
 
         if(player->health <= 0)
@@ -1252,7 +1252,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameskill != sk_nightmare && !fastparm)
+        if(gameskill != SM_NIGHTMARE && !fastparm)
             P_NewChaseDir(actor);
         return;
     }
@@ -1270,7 +1270,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // check for missile attack
     if(actor->info->missilestate)
     {
-        if(gameskill < sk_nightmare && !fastparm && actor->movecount)
+        if(gameskill < SM_NIGHTMARE && !fastparm && actor->movecount)
         {
             goto nomissile;
         }
@@ -2949,7 +2949,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
 #if 0
     // DJS - is this even used?
     brain.easy ^= 1;
-    if(gameskill <= sk_easy && (!brain.easy))
+    if(gameskill <= SM_EASY && (!brain.easy))
         return;
 
     // shoot a cube at current target

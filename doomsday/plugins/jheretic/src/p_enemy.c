@@ -721,7 +721,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->threshold)
         actor->threshold--;
 
-    if(gameskill == sk_nightmare || cfg.fastMonsters )
+    if(gameskill == SM_NIGHTMARE || cfg.fastMonsters )
     {
         // Monsters move faster in nightmare mode
         actor->tics -= actor->tics / 2;
@@ -757,7 +757,7 @@ void C_DECL A_Chase(mobj_t *actor)
     {
         actor->flags &= ~MF_JUSTATTACKED;
 
-        if(gameskill != sk_nightmare)
+        if(gameskill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -775,7 +775,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // check for missile attack
     if(actor->info->missilestate)
     {
-        if(gameskill < sk_nightmare && actor->movecount)
+        if(gameskill < SM_NIGHTMARE && actor->movecount)
             goto nomissile;
 
         if(!P_CheckMissileRange(actor))

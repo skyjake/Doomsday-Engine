@@ -45,7 +45,7 @@
 //
 // These are used if other definitions are not found.
 //
-weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
+weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    {
     { // fist
      GM_ANY,
@@ -232,21 +232,21 @@ void P_InitWeaponInfo()
     ammotype_t k;
     char    buf[80];
     char   *data;
-    char   *ammotypes[NUMAMMO] = { "clip", "shell", "cell", "misl"};
+    char   *ammotypes[NUM_AMMO_TYPES] = { "clip", "shell", "cell", "misl"};
 
     // Max ammo.
-    GetDefInt(PLMAX "Clip", &maxammo[am_clip]);
-    GetDefInt(PLMAX "Shell", &maxammo[am_shell]);
-    GetDefInt(PLMAX "Cell", &maxammo[am_cell]);
-    GetDefInt(PLMAX "Misl", &maxammo[am_misl]);
+    GetDefInt(PLMAX "Clip", &maxammo[AT_CLIP]);
+    GetDefInt(PLMAX "Shell", &maxammo[AT_SHELL]);
+    GetDefInt(PLMAX "Cell", &maxammo[AT_CELL]);
+    GetDefInt(PLMAX "Misl", &maxammo[AT_MISSILE]);
 
     // Clip ammo.
-    GetDefInt(PLCLP "Clip", &clipammo[am_clip]);
-    GetDefInt(PLCLP "Shell", &clipammo[am_shell]);
-    GetDefInt(PLCLP "Cell", &clipammo[am_cell]);
-    GetDefInt(PLCLP "Misl", &clipammo[am_misl]);
+    GetDefInt(PLCLP "Clip", &clipammo[AT_CLIP]);
+    GetDefInt(PLCLP "Shell", &clipammo[AT_SHELL]);
+    GetDefInt(PLCLP "Cell", &clipammo[AT_CELL]);
+    GetDefInt(PLCLP "Misl", &clipammo[AT_MISSILE]);
 
-    for(i = 0; i < NUMWEAPONS; i++)
+    for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
         // TODO: Only allows for one type of ammo per weapon.
         sprintf(buf, WPINF "%i|Type", i);
@@ -255,7 +255,7 @@ void P_InitWeaponInfo()
             // Set the right types of ammo.
             if(!stricmp(data, "noammo"))
             {
-                for(k = 0; k < NUMAMMO; ++k)
+                for(k = 0; k < NUM_AMMO_TYPES; ++k)
                 {
                     weaponinfo[i][pclass].mode[0].ammotype[k] = false;
                     weaponinfo[i][pclass].mode[0].pershot[k] = 0;
@@ -263,7 +263,7 @@ void P_InitWeaponInfo()
             }
             else
             {
-                for(k = 0; k < NUMAMMO; ++k)
+                for(k = 0; k < NUM_AMMO_TYPES; ++k)
                 {
                     if(!stricmp(data, ammotypes[k]))
                     {
@@ -302,13 +302,13 @@ void P_InitPlayerValues(player_t *p)
     GetDefInt("Player|Health", &p->health);
     GetDefInt("Player|Weapon", (int *) &p->readyweapon);
     p->pendingweapon = p->readyweapon;
-    for(i = 0; i < NUMWEAPONS; i++)
+    for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
         sprintf(buf, "Weapon Info|%i|Owned", i);
         GetDefInt(buf, (int *) &p->weaponowned[i]);
     }
-    GetDefInt(PLINA "Clip", &p->ammo[am_clip]);
-    GetDefInt(PLINA "Shell", &p->ammo[am_shell]);
-    GetDefInt(PLINA "Cell", &p->ammo[am_cell]);
-    GetDefInt(PLINA "Misl", &p->ammo[am_misl]);
+    GetDefInt(PLINA "Clip", &p->ammo[AT_CLIP]);
+    GetDefInt(PLINA "Shell", &p->ammo[AT_SHELL]);
+    GetDefInt(PLINA "Cell", &p->ammo[AT_CELL]);
+    GetDefInt(PLINA "Misl", &p->ammo[AT_MISSILE]);
 }

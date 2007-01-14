@@ -92,17 +92,17 @@ static void SV_ReadPlayer(player_t *pl)
     pl->armorpoints = SV_ReadLong();
     pl->armortype = SV_ReadLong();
 
-    SV_Read(pl->powers, NUMPOWERS * 4);
-    SV_Read(pl->keys, NUMKEYS * 4);
+    SV_Read(pl->powers, NUM_POWER_TYPES * 4);
+    SV_Read(pl->keys, NUM_KEY_TYPES * 4);
     pl->backpack = SV_ReadLong();
 
     SV_Read(pl->frags, 4 * 4);
     pl->readyweapon = SV_ReadLong();
     pl->pendingweapon = SV_ReadLong();
 
-    SV_Read(pl->weaponowned, NUMWEAPONS * 4);
-    SV_Read(pl->ammo, NUMAMMO * 4);
-    SV_Read(pl->maxammo, NUMAMMO * 4);
+    SV_Read(pl->weaponowned, NUM_WEAPON_TYPES * 4);
+    SV_Read(pl->ammo, NUM_AMMO_TYPES * 4);
+    SV_Read(pl->maxammo, NUM_AMMO_TYPES * 4);
 
     pl->attackdown = SV_ReadLong();
     pl->usedown = SV_ReadLong();

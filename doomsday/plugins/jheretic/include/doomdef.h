@@ -93,8 +93,9 @@ typedef enum {
     shareware,                      // shareware, E1, M9
     registered,                     // DOOM 1 registered, E3, M27
     extended,                       // episodes 4 and 5 present
-    indetermined                   // Well, no IWAD found.
-} GameMode_t;
+    indetermined,                   // Well, no IWAD found.
+    NUM_GAME_MODES
+} gamemode_t;
 
 // Game mode bits for the above.
 #define GM_SHAREWARE        0x1     // shareware, E1, M9
@@ -125,8 +126,8 @@ typedef enum {
 typedef enum {
     PCLASS_PLAYER,
     PCLASS_CHICKEN,
-    NUMCLASSES
-} pclass_t;
+    NUM_PLAYER_CLASSES
+} playerclass_t;
 
 #define PCLASS_INFO(class)  (&classInfo[class])
 
@@ -144,7 +145,7 @@ typedef struct classinfo_s{
     int         failUseSound;       // sound played when a use fails.
 } classinfo_t;
 
-extern classinfo_t classInfo[NUMCLASSES];
+extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 // The current state of the game: whether we are
 // playing, gazing at the intermission screen,
@@ -171,53 +172,54 @@ typedef enum {
 #define MTF_AMBUSH      8
 
 typedef enum {
-    sk_baby,
-    sk_easy,
-    sk_medium,
-    sk_hard,
-    sk_nightmare
-} skill_t;
+    SM_BABY,
+    SM_EASY,
+    SM_MEDIUM,
+    SM_HARD,
+    SM_NIGHTMARE,
+    NUM_SKILL_MODES
+} skillmode_t;
 
 //
 // Key cards.
 //
 typedef enum {
-    key_yellow,
-    key_green,
-    key_blue,
-    NUMKEYS
+    KT_YELLOW,
+    KT_GREEN,
+    KT_BLUE,
+    NUM_KEY_TYPES
 } keytype_t;
 
 // The defined weapons,
 //  including a marker indicating
 //  user has not changed weapon.
 typedef enum {
-    WP_FIRST,       // staff / beak
-    WP_SECOND,      // goldwand / beak
-    WP_THIRD,       // crossbow / beak
-    WP_FOURTH,      // blaster / beak
-    WP_FIFTH,       // skullrod / beak
-    WP_SIXTH,       // phoenixrod / beak
-    WP_SEVENTH,     // mace / beak
-    WP_EIGHTH,      // gauntlets / beak
-    NUMWEAPONS,
+    WT_FIRST,       // staff / beak
+    WT_SECOND,      // goldwand / beak
+    WT_THIRD,       // crossbow / beak
+    WT_FOURTH,      // blaster / beak
+    WT_FIFTH,       // skullrod / beak
+    WT_SIXTH,       // phoenixrod / beak
+    WT_SEVENTH,     // mace / beak
+    WT_EIGHTH,      // gauntlets / beak
+    NUM_WEAPON_TYPES,
 
     // No pending weapon change.
-    WP_NOCHANGE
+    WT_NOCHANGE
 } weapontype_t;
 
 #define NUMWEAPLEVELS   2          // Number of weapon power levels.
 
 // Ammunition types defined.
 typedef enum {
-    am_goldwand,
-    am_crossbow,
-    am_blaster,
-    am_skullrod,
-    am_phoenixrod,
-    am_mace,
-    NUMAMMO,
-    AM_NOAMMO                      // Unlimited for staff, gauntlets
+    AT_CRYSTAL,
+    AT_ARROW,
+    AT_ORB,
+    AT_RUNE,
+    AT_FIREORB,
+    AT_MSPHERE,
+    NUM_AMMO_TYPES,
+    AT_NOAMMO                      // Unlimited for staff, gauntlets
 } ammotype_t;
 
 #define AMMO_GWND_WIMPY 10
@@ -234,16 +236,16 @@ typedef enum {
 #define AMMO_MACE_HEFTY 100
 
 typedef enum {
-    pw_None,
-    pw_invulnerability,
-    pw_invisibility,
-    pw_allmap,
-    pw_infrared,
-    pw_weaponlevel2,
-    pw_flight,
-    pw_shield,
-    pw_health2,
-    NUMPOWERS
+    PT_NONE,
+    PT_INVULNERABILITY,
+    PT_INVISIBILITY,
+    PT_ALLMAP,
+    PT_INFRARED,
+    PT_WEAPONLEVEL2,
+    PT_FLIGHT,
+    PT_SHIELD,
+    PT_HEALTH2,
+    NUM_POWER_TYPES
 } powertype_t;
 
 typedef enum {
@@ -315,7 +317,7 @@ extern fixed_t  finesine[5 * FINEANGLES / 4];
 extern fixed_t *finecosine;
 
 
-extern GameMode_t gamemode;        // current game mode (shareware, registered etc)
+extern gamemode_t gamemode;        // current game mode (shareware, registered etc)
 extern int  gamemodebits;          // current game modebits
 
 
@@ -413,7 +415,7 @@ void            I_EndRead(void);
 // carries out all thinking of monsters and players
 
 void            P_SetupLevel(int episode, int map, int playermask,
-                             skill_t skill);
+                             skillmode_t skill);
 // called by W_Ticker
 
 void            P_Init(void);

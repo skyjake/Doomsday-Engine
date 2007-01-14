@@ -691,7 +691,7 @@ void C_DECL A_Chase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameskill == sk_nightmare || (fastMonsters /*&& INCOMPAT_OK */ ))
+    if(gameskill == SM_NIGHTMARE || (fastMonsters /*&& INCOMPAT_OK */ ))
     {                           // Monsters move faster in nightmare mode
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
@@ -733,7 +733,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameskill != sk_nightmare)
+        if(gameskill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -756,7 +756,7 @@ void C_DECL A_Chase(mobj_t *actor)
     //
     if(actor->info->missilestate)
     {
-        if(gameskill < sk_nightmare && actor->movecount)
+        if(gameskill < SM_NIGHTMARE && actor->movecount)
             goto nomissile;
         if(!P_CheckMissileRange(actor))
             goto nomissile;
@@ -2003,7 +2003,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameskill == sk_nightmare || (fastMonsters /*&& INCOMPAT_OK */ ))
+    if(gameskill == SM_NIGHTMARE || (fastMonsters /*&& INCOMPAT_OK */ ))
     {                           // Monsters move faster in nightmare mode
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
@@ -2045,7 +2045,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameskill != sk_nightmare)
+        if(gameskill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -2211,7 +2211,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameskill == sk_nightmare || (fastMonsters /*&& INCOMPAT_OK */ ))
+    if(gameskill == SM_NIGHTMARE || (fastMonsters /*&& INCOMPAT_OK */ ))
     {                           // Monsters move faster in nightmare mode
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
@@ -2253,7 +2253,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameskill != sk_nightmare)
+        if(gameskill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -4584,7 +4584,7 @@ void C_DECL A_FastChase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameskill == sk_nightmare || (fastMonsters /*&& INCOMPAT_OK */ ))
+    if(gameskill == SM_NIGHTMARE || (fastMonsters /*&& INCOMPAT_OK */ ))
     {                           // Monsters move faster in nightmare mode
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
@@ -4626,7 +4626,7 @@ void C_DECL A_FastChase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameskill != sk_nightmare)
+        if(gameskill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -4667,7 +4667,7 @@ void C_DECL A_FastChase(mobj_t *actor)
     //
     if(actor->info->missilestate)
     {
-        if(gameskill < sk_nightmare && actor->movecount)
+        if(gameskill < SM_NIGHTMARE && actor->movecount)
             goto nomissile;
         if(!P_CheckMissileRange(actor))
             goto nomissile;

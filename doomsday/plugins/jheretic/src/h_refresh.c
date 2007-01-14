@@ -114,8 +114,8 @@ void R_DrawSpecialFilter(void)
 {
     player_t *player = &players[displayplayer];
 
-    if(!(player->powers[pw_invulnerability] > BLINKTHRESHOLD) ||
-       !(player->powers[pw_invulnerability] & 8))
+    if(!(player->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
+       !(player->powers[PT_INVULNERABILITY] & 8))
         return;
 
     gl.Disable(DGL_TEXTURING);
@@ -260,8 +260,8 @@ void D_Display(void)
             GL_SetFilter(vplayer->plr->filter);
 
             // How about fullbright?
-            Set(DD_FULLBRIGHT, (vplayer->powers[pw_invulnerability] > BLINKTHRESHOLD) ||
-                               (vplayer->powers[pw_invulnerability] & 8));
+            Set(DD_FULLBRIGHT, (vplayer->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
+                               (vplayer->powers[PT_INVULNERABILITY] & 8));
 
             // Render the view with possible custom filters.
             R_RenderPlayerView(vplayer->plr);

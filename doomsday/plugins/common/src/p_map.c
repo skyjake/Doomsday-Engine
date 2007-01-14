@@ -1609,7 +1609,7 @@ static boolean PTR_ShootTraverse(intercept_t * in)
 
 #if __JHERETIC__
     // check for physical attacks on a ghost
-    if((th->flags & MF_SHADOW) && shootthing->player->readyweapon == WP_FIRST)
+    if((th->flags & MF_SHADOW) && shootthing->player->readyweapon == WT_FIRST)
         return true;
 #endif
 

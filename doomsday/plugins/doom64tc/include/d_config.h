@@ -111,7 +111,7 @@ typedef struct jdoom_config_s {
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
     byte            berserkAutoSwitch;
-    int             weaponOrder[NUMWEAPONS];
+    int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            weaponRecoil; // d64tc
     byte            secretMsg;

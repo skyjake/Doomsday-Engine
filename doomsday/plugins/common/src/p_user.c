@@ -101,7 +101,7 @@ int     soulspherehealth;       // 100
 int     armorpoints[4];         // Green, blue, IDFA and IDKFA points.
 int     armorclass[4];          // Green, blue, IDFA and IDKFA armor classes.
 
-classinfo_t classInfo[NUMCLASSES] = {
+classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
         S_PLAY,
         S_PLAY_RUN1,
@@ -124,7 +124,7 @@ classinfo_t classInfo[NUMCLASSES] = {
 int     newtorch[MAXPLAYERS];   // used in the torch flicker effect.
 int     newtorchdelta[MAXPLAYERS];
 
-classinfo_t classInfo[NUMCLASSES] = {
+classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
         S_PLAY,
         S_PLAY_RUN1,
@@ -156,7 +156,7 @@ classinfo_t classInfo[NUMCLASSES] = {
 int     newtorch[MAXPLAYERS];   // used in the torch flicker effect.
 int     newtorchdelta[MAXPLAYERS];
 
-classinfo_t classInfo[NUMCLASSES] = {
+classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Fighter
         MT_PLAYER_FIGHTER,
         S_FPLAY,
@@ -243,7 +243,7 @@ void P_Thrust(player_t *player, angle_t angle, fixed_t move)
 #endif
 
     angle >>= ANGLETOFINESHIFT;
-    if(player->powers[pw_flight] && !(plrmo->pos[VZ] <= plrmo->floorz))
+    if(player->powers[PT_FLIGHT] && !(plrmo->pos[VZ] <= plrmo->floorz))
     {
         /*float xmul=1, ymul=1;
 
@@ -736,7 +736,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     player->morphTics = 0;
 # if __JHERETIC__
-    player->powers[pw_weaponlevel2] = 0;
+    player->powers[PT_WEAPONLEVEL2] = 0;
 # endif
     player->health = mo->health = MAXHEALTH;
     player->plr->mo = mo;
@@ -807,28 +807,28 @@ void P_ClientSideThink(void)
 #endif
 
     // Powers tic away.
-    for(i = 0; i < NUMPOWERS; i++)
+    for(i = 0; i < NUM_POWER_TYPES; i++)
     {
         switch (i)
         {
 #if __JDOOM__
-        case pw_invulnerability:
-        case pw_invisibility:
-        case pw_ironfeet:
-        case pw_infrared:
-        case pw_strength:
+        case PT_INVULNERABILITY:
+        case PT_INVISIBILITY:
+        case PT_IRONFEET:
+        case PT_INFRARED:
+        case PT_STRENGTH:
 #elif __JHERETIC__
-        case pw_invulnerability:
-        case pw_weaponlevel2:
-        case pw_invisibility:
-        case pw_flight:
-        case pw_infrared:
+        case PT_INVULNERABILITY:
+        case PT_WEAPONLEVEL2:
+        case PT_INVISIBILITY:
+        case PT_FLIGHT:
+        case PT_INFRARED:
 #elif __JHEXEN__
-        case pw_invulnerability:
-        case pw_infrared:
-        case pw_flight:
-        case pw_speed:
-        case pw_minotaur:
+        case PT_INVULNERABILITY:
+        case PT_INFRARED:
+        case PT_FLIGHT:
+        case PT_SPEED:
+        case PT_MINOTAUR:
 #endif
             if(pl->powers[i] > 0)
                 pl->powers[i]--;
@@ -846,7 +846,7 @@ void P_ClientSideThink(void)
 
     // Flying.
     fly = cmd->fly; //lookfly >> 4;
-    if(fly && pl->powers[pw_flight])
+    if(fly && pl->powers[PT_FLIGHT])
     {
         if(fly != TOCENTER)
         {
@@ -1027,7 +1027,7 @@ void P_PlayerThinkMove(player_t *player)
 
 #if __JHEXEN__
         plrmo = player->plr->mo;
-        if(player->powers[pw_speed] && !(leveltime & 1) &&
+        if(player->powers[PT_SPEED] && !(leveltime & 1) &&
            P_ApproxDistance(plrmo->momx, plrmo->momy) > 12 * FRACUNIT)
         {
             mobj_t *speedMo;
@@ -1089,7 +1089,7 @@ void P_PlayerThinkFly(player_t *player)
         return;
 
     fly = cmd->fly;
-    if(fly && player->powers[pw_flight])
+    if(fly && player->powers[PT_FLIGHT])
     {
         if(fly != TOCENTER)
         {
@@ -1230,7 +1230,7 @@ void P_PlayerThinkItems(player_t *player)
 
 #if __JHERETIC__ || __JHEXEN__
     fly = cmd->fly;
-    if(fly > 0 && !player->powers[pw_flight])
+    if(fly > 0 && !player->powers[PT_FLIGHT])
     {
         // Start flying automatically.
         P_InventoryUseArtifact(player, arti_fly);
@@ -1267,10 +1267,10 @@ void P_PlayerThinkWeapons(player_t *player)
         newweapon = cmd->changeWeapon - 1;
 #if __JDOOM__
 # if !__DOOM64TC__
-        if(gamemode != commercial && newweapon == wp_supershotgun)
+        if(gamemode != commercial && newweapon == WT_NINETH)
         {
             // In non-Doom II, supershotgun is the same as normal shotgun.
-            newweapon = wp_shotgun;
+            newweapon = WT_THIRD;
         }
 # endif
 #endif
@@ -1329,27 +1329,27 @@ void P_PlayerThinkPowers(player_t *player)
 
 #if __JDOOM__
     // Strength counts up to diminish fade.
-    if(player->powers[pw_strength])
-        player->powers[pw_strength]++;
+    if(player->powers[PT_STRENGTH])
+        player->powers[PT_STRENGTH]++;
 
-    if(player->powers[pw_ironfeet])
-        player->powers[pw_ironfeet]--;
+    if(player->powers[PT_IRONFEET])
+        player->powers[PT_IRONFEET]--;
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-    if(player->powers[pw_invulnerability])
-        player->powers[pw_invulnerability]--;
+    if(player->powers[PT_INVULNERABILITY])
+        player->powers[PT_INVULNERABILITY]--;
 
-    if(player->powers[pw_invisibility])
+    if(player->powers[PT_INVISIBILITY])
     {
-        if(!--player->powers[pw_invisibility])
+        if(!--player->powers[PT_INVISIBILITY])
             player->plr->mo->flags &= ~MF_SHADOW;
     }
 #endif
 
 #if __JDOOM__ || __JHEXEN__
-    if(player->powers[pw_infrared])
-        player->powers[pw_infrared]--;
+    if(player->powers[PT_INFRARED])
+        player->powers[PT_INFRARED]--;
 #endif
 
     if(player->damagecount)
@@ -1360,12 +1360,12 @@ void P_PlayerThinkPowers(player_t *player)
 
 #if __JHERETIC__ || __JHEXEN__
 # if __JHERETIC__
-    if(player->powers[pw_flight])
+    if(player->powers[PT_FLIGHT])
 # elif __JHEXEN__
-    if(player->powers[pw_flight] && IS_NETGAME)
+    if(player->powers[PT_FLIGHT] && IS_NETGAME)
 # endif
     {
-        if(!--player->powers[pw_flight])
+        if(!--player->powers[PT_FLIGHT])
         {
             if(player->plr->mo->pos[VZ] != player->plr->mo->floorz)
             {
@@ -1379,21 +1379,21 @@ void P_PlayerThinkPowers(player_t *player)
 #endif
 
 #if __JHERETIC__
-    if(player->powers[pw_weaponlevel2])
+    if(player->powers[PT_WEAPONLEVEL2])
     {
-        if(!--player->powers[pw_weaponlevel2])
+        if(!--player->powers[PT_WEAPONLEVEL2])
         {
-            if((player->readyweapon == WP_SIXTH) &&
+            if((player->readyweapon == WT_SIXTH) &&
                (player->psprites[ps_weapon].state != &states[S_PHOENIXREADY])
                && (player->psprites[ps_weapon].state != &states[S_PHOENIXUP]))
             {
                 P_SetPsprite(player, ps_weapon, S_PHOENIXREADY);
-                player->ammo[am_phoenixrod] -= USE_PHRD_AMMO_2;
+                player->ammo[AT_FIREORB] -= USE_PHRD_AMMO_2;
                 player->refire = 0;
                 player->update |= PSF_AMMO;
             }
-            else if((player->readyweapon == WP_EIGHTH) ||
-                    (player->readyweapon == WP_FIRST))
+            else if((player->readyweapon == WT_EIGHTH) ||
+                    (player->readyweapon == WT_FIRST))
             {
                 player->pendingweapon = player->readyweapon;
                 player->update |= PSF_PENDING_WEAPON;
@@ -1405,11 +1405,11 @@ void P_PlayerThinkPowers(player_t *player)
 
     // Colormaps
 #if __JHERETIC__ || __JHEXEN__
-    if(player->powers[pw_infrared])
+    if(player->powers[PT_INFRARED])
     {
-        if(player->powers[pw_infrared] <= BLINKTHRESHOLD)
+        if(player->powers[PT_INFRARED] <= BLINKTHRESHOLD)
         {
-            if(player->powers[pw_infrared] & 8)
+            if(player->powers[PT_INFRARED] & 8)
             {
                 player->plr->fixedcolormap = 0;
             }
@@ -1453,7 +1453,7 @@ void P_PlayerThinkPowers(player_t *player)
 #endif
 
 #ifdef __JHEXEN__
-    if(player->powers[pw_invulnerability])
+    if(player->powers[PT_INVULNERABILITY])
     {
         if(player->class == PCLASS_CLERIC)
         {
@@ -1487,7 +1487,7 @@ void P_PlayerThinkPowers(player_t *player)
                 }
             }
         }
-        if(!(--player->powers[pw_invulnerability]))
+        if(!(--player->powers[PT_INVULNERABILITY]))
         {
             player->plr->mo->flags2 &= ~(MF2_INVULNERABLE | MF2_REFLECTIVE);
             if(player->class == PCLASS_CLERIC)
@@ -1497,14 +1497,14 @@ void P_PlayerThinkPowers(player_t *player)
             }
         }
     }
-    if(player->powers[pw_minotaur])
+    if(player->powers[PT_MINOTAUR])
     {
-        player->powers[pw_minotaur]--;
+        player->powers[PT_MINOTAUR]--;
     }
 
-    if(player->powers[pw_speed])
+    if(player->powers[PT_SPEED])
     {
-        player->powers[pw_speed]--;
+        player->powers[PT_SPEED]--;
     }
 
     if(player->poisoncount && !(leveltime & 15))
@@ -1519,11 +1519,11 @@ void P_PlayerThinkPowers(player_t *player)
 #endif // __JHEXEN__
 
 #if __DOOM64TC__
-    if(player->powers[pw_unsee])
+    if(player->powers[PT_UNSEE])
     {
-        player->powers[pw_unsee]--;
+        player->powers[PT_UNSEE]--;
 
-        if(!player->powers[pw_unsee])
+        if(!player->powers[PT_UNSEE])
             P_SetMessage(player, UNSEEOFF, false);
     }
 

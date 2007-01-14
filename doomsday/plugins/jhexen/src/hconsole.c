@@ -158,10 +158,10 @@ cvar_t  gameCVars[] = {
         &cfg.noWeaponAutoSwitchIfFiring, 0, 1},
 
     // Weapon Order preferences
-    {"player-weapon-order0", 0, CVT_INT, &cfg.weaponOrder[0], 0, NUMWEAPONS},
-    {"player-weapon-order1", 0, CVT_INT, &cfg.weaponOrder[1], 0, NUMWEAPONS},
-    {"player-weapon-order2", 0, CVT_INT, &cfg.weaponOrder[2], 0, NUMWEAPONS},
-    {"player-weapon-order3", 0, CVT_INT, &cfg.weaponOrder[3], 0, NUMWEAPONS},
+    {"player-weapon-order0", 0, CVT_INT, &cfg.weaponOrder[0], 0, NUM_WEAPON_TYPES},
+    {"player-weapon-order1", 0, CVT_INT, &cfg.weaponOrder[1], 0, NUM_WEAPON_TYPES},
+    {"player-weapon-order2", 0, CVT_INT, &cfg.weaponOrder[2], 0, NUM_WEAPON_TYPES},
+    {"player-weapon-order3", 0, CVT_INT, &cfg.weaponOrder[3], 0, NUM_WEAPON_TYPES},
 
     {"player-weapon-nextmode", 0, CVT_BYTE, &cfg.weaponNextMode, 0, 1},
 

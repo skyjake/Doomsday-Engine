@@ -127,11 +127,11 @@ boolean singletics;             // debug flag to cancel adaptiveness
 boolean artiskip;               // whether shift-enter skips an artifact
 boolean netcheat;               // allow cheating in netgames (-netcheat)
 boolean dontrender;             // don't render the player view (debug)
-skill_t startskill;
+skillmode_t startskill;
 int     startepisode;
 int     startmap;
 
-GameMode_t gamemode;
+gamemode_t gamemode;
 int     gamemodebits;
 
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
@@ -185,7 +185,7 @@ static execopt_t ExecOptions[] = {
  * @param mode          The game mode to change to.
  * @return boolean      (TRUE) if we changed game modes successfully.
  */
-boolean D_SetGameMode(GameMode_t mode)
+boolean D_SetGameMode(gamemode_t mode)
 {
     gamemode = mode;
 
@@ -296,7 +296,7 @@ void H2_PreInit(void)
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
     cfg.netMap = 1;
-    cfg.netSkill = sk_medium;
+    cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 8;           // Use the default color by default.
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
@@ -376,10 +376,10 @@ void H2_PreInit(void)
 
     cfg.chatBeep = 1;
 
-    cfg.weaponOrder[0] = WP_FOURTH;
-    cfg.weaponOrder[1] = WP_THIRD;
-    cfg.weaponOrder[2] = WP_SECOND;
-    cfg.weaponOrder[3] = WP_FIRST;
+    cfg.weaponOrder[0] = WT_FOURTH;
+    cfg.weaponOrder[1] = WT_THIRD;
+    cfg.weaponOrder[2] = WT_SECOND;
+    cfg.weaponOrder[3] = WT_FIRST;
 
     // Hexen has a nifty "Ethereal Travel" screen, so don't show the
     // console during map setup.
@@ -413,7 +413,7 @@ void H2_PostInit(void)
 
     // get skill / episode / map from parms
     startepisode = 1;
-    startskill = sk_medium;
+    startskill = SM_MEDIUM;
     startmap = 1;
 
     // Game mode specific settings
@@ -471,7 +471,7 @@ void H2_PostInit(void)
         }
     }
 
-    if(gameaction != ga_loadgame)
+    if(gameaction != GA_LOADGAME)
     {
         GL_Update(DDUF_FULLSCREEN | DDUF_BORDER);
         if(autostart || IS_NETGAME)

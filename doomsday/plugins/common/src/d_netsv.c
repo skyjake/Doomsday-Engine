@@ -257,11 +257,11 @@ void NetSv_Ticker(void)
 
         red = plr->damagecount;
 #ifdef __JDOOM__
-        if(plr->powers[pw_strength])
+        if(plr->powers[PT_STRENGTH])
         {
             int     bz;
             // Slowly fade the berzerk out.
-            bz = 12 - (plr->powers[pw_strength] >> 6);
+            bz = 12 - (plr->powers[PT_STRENGTH] >> 6);
             if(bz > red)
                 red = bz;
         }
@@ -285,8 +285,8 @@ void NetSv_Ticker(void)
             palette += STARTBONUSPALS;
         }
 #ifdef __JDOOM__
-        else if(plr->powers[pw_ironfeet] > 4 * 32 ||
-                plr->powers[pw_ironfeet] & 8)
+        else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
+                plr->powers[PT_IRONFEET] & 8)
             palette = 13;       //RADIATIONPAL;
 #elif __JHEXEN__
         else if(plr->poisoncount)
@@ -889,7 +889,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
     if(flags & PSF2_OWNED_WEAPONS)
     {
         // This supports up to 16 weapons.
-        for(fl = 0, i = 0; i < NUMWEAPONS; i++)
+        for(fl = 0, i = 0; i < NUM_WEAPON_TYPES; i++)
             if(pl->weaponowned[i])
                 fl |= 1 << i;
         WRITE_SHORT(ptr, fl);
@@ -970,14 +970,14 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     {
         // First see which powers should be sent.
 #if __JHEXEN__ || __JSTRIFE__
-        for(i = 1, *ptr = 0; i < NUMPOWERS; i++)
+        for(i = 1, *ptr = 0; i < NUM_POWER_TYPES; i++)
             if(pl->powers[i])
                 *ptr |= 1 << (i - 1);
 #else
-        for(i = 0, *ptr = 0; i < NUMPOWERS; i++)
+        for(i = 0, *ptr = 0; i < NUM_POWER_TYPES; i++)
         {
 #  ifdef __JDOOM__
-            if(i == pw_ironfeet || i == pw_strength)
+            if(i == PT_IRONFEET || i == PT_STRENGTH)
                 continue;
 #  endif
             if(pl->powers[i])
@@ -988,14 +988,14 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 
         // Send the non-zero powers.
 #if __JHEXEN__ || __JSTRIFE__
-        for(i = 1; i < NUMPOWERS; i++)
+        for(i = 1; i < NUM_POWER_TYPES; i++)
             if(pl->powers[i])
                 *ptr++ = (pl->powers[i] + 34) / 35;
 #else
-        for(i = 0; i < NUMPOWERS; i++)
+        for(i = 0; i < NUM_POWER_TYPES; i++)
         {
 #  if __JDOOM__
-            if(i == pw_ironfeet || i == pw_strength)
+            if(i == PT_IRONFEET || i == PT_STRENGTH)
                 continue;
 #  endif
             if(pl->powers[i])
@@ -1008,7 +1008,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
         *ptr = 0;
 
 #if __JDOOM__ | __JHERETIC__
-        for(i = 0; i < NUMKEYS; i++)
+        for(i = 0; i < NUM_KEY_TYPES; i++)
             if(pl->keys[i])
                 *ptr |= 1 << i;
 #endif
@@ -1030,14 +1030,14 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     }
     if(flags & PSF_OWNED_WEAPONS)
     {
-        for(k = 0, i = 0; i < NUMWEAPONS; i++)
+        for(k = 0, i = 0; i < NUM_WEAPON_TYPES; i++)
             if(pl->weaponowned[i])
                 k |= 1 << i;
         *ptr++ = k;
     }
     if(flags & PSF_AMMO)
     {
-        for(i = 0; i < NUMAMMO; i++)
+        for(i = 0; i < NUM_AMMO_TYPES; i++)
 #if __JHEXEN__ || __JSTRIFE__
             *ptr++ = pl->ammo[i];
 #else
@@ -1047,7 +1047,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     if(flags & PSF_MAX_AMMO)
     {
 #if __JDOOM__ || __JHERETIC__               // Hexen has no use for max ammo.
-        for(i = 0; i < NUMAMMO; i++)
+        for(i = 0; i < NUM_AMMO_TYPES; i++)
             WRITE_SHORT(ptr, pl->maxammo[i]);
 #endif
     }

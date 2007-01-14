@@ -43,7 +43,7 @@ extern int numthings;
 #define numpolyobjs (DD_GetInteger(DD_POLYOBJ_COUNT))
 #endif
 
-void        P_SetupLevel(int episode, int map, int playermask, skill_t skill);
+void        P_SetupLevel(int episode, int map, int playermask, skillmode_t skill);
 
 
 #endif

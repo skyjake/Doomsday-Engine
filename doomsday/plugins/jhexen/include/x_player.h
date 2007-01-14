@@ -95,7 +95,7 @@ typedef struct player_s {
     playerstate_t   playerstate;
     ticcmd_t        cmd;
 
-    pclass_t        class;         // player class type
+    playerclass_t        class;         // player class type
 
     //  fixed_t     viewheight;             // base height above floor for viewz
     //  fixed_t     deltaviewheight;        // squat speed
@@ -114,13 +114,13 @@ typedef struct player_s {
     artitype_e      readyArtifact;
     int             artifactCount;
     int             inventorySlotNum;
-    int             powers[NUMPOWERS];
+    int             powers[NUM_POWER_TYPES];
     int             keys;
     int             pieces;        // Fourth Weapon pieces
     weapontype_t    readyweapon;
     weapontype_t    pendingweapon; // wp_nochange if not changing
-    boolean         weaponowned[NUMWEAPONS];
-    int             ammo[NUMAMMO];  // mana
+    boolean         weaponowned[NUM_WEAPON_TYPES];
+    int             ammo[NUM_AMMO_TYPES];  // mana
     int             attackdown, usedown;    // true if button down last tic
     int             cheats;        // bit flags
     signed int      frags[MAXPLAYERS];  // kills of other players

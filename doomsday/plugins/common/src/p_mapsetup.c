@@ -220,7 +220,7 @@ void P_SetupForMapData(int type, uint num)
 /**
  * Loads map and glnode data for the requested episode and map
  */
-void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
+void P_SetupLevel(int episode, int map, int playermask, skillmode_t skill)
 {
 #if !__DOOM64TC__
 # if __JDOOM__ || __JHERETIC__

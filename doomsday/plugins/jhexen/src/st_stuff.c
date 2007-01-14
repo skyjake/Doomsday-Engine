@@ -754,7 +754,7 @@ void ST_updateWidgets(void)
 
 
     // Update mana graphics based upon mana count weapon type
-    if(plr->readyweapon == WP_FIRST)
+    if(plr->readyweapon == WT_FIRST)
     {
         st_manaAicon = 0;
         st_manaBicon = 0;
@@ -762,7 +762,7 @@ void ST_updateWidgets(void)
         st_manaAvial = 0;
         st_manaBvial = 0;
     }
-    else if(plr->readyweapon == WP_SECOND)
+    else if(plr->readyweapon == WT_SECOND)
     {
         // If there is mana for this weapon, make it bright!
         if(st_manaAicon == -1)
@@ -775,7 +775,7 @@ void ST_updateWidgets(void)
         st_manaBicon = 0;
         st_manaBvial = 0;
     }
-    else if(plr->readyweapon == WP_THIRD)
+    else if(plr->readyweapon == WT_THIRD)
     {
         st_manaAicon = 0;
         st_manaAvial = 0;
@@ -1454,10 +1454,10 @@ static void DrawAnimatedIcons(void)
     Draw_BeginZoom(cfg.hudScale, 2, 2);
 
     // Wings of wrath
-    if(plyr->powers[pw_flight])
+    if(plyr->powers[PT_FLIGHT])
     {
-        if(plyr->powers[pw_flight] > BLINKTHRESHOLD ||
-           !(plyr->powers[pw_flight] & 16))
+        if(plyr->powers[PT_FLIGHT] > BLINKTHRESHOLD ||
+           !(plyr->powers[PT_FLIGHT] & 16))
         {
             frame = (leveltime / 3) & 15;
             if(plyr->plr->mo->flags2 & MF2_FLY)
@@ -1494,10 +1494,10 @@ static void DrawAnimatedIcons(void)
     }
 
     // Speed Boots
-    if(plyr->powers[pw_speed])
+    if(plyr->powers[PT_SPEED])
     {
-        if(plyr->powers[pw_speed] > BLINKTHRESHOLD ||
-           !(plyr->powers[pw_speed] & 16))
+        if(plyr->powers[PT_SPEED] > BLINKTHRESHOLD ||
+           !(plyr->powers[PT_SPEED] & 16))
         {
             frame = (leveltime / 3) & 15;
             GL_DrawPatchLitAlpha(60 + leftoff, 19, 1, iconalpha,
@@ -1511,10 +1511,10 @@ static void DrawAnimatedIcons(void)
     Draw_BeginZoom(cfg.hudScale, 318, 2);
 
     // Defensive power
-    if(plyr->powers[pw_invulnerability])
+    if(plyr->powers[PT_INVULNERABILITY])
     {
-        if(plyr->powers[pw_invulnerability] > BLINKTHRESHOLD ||
-           !(plyr->powers[pw_invulnerability] & 16))
+        if(plyr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD ||
+           !(plyr->powers[PT_INVULNERABILITY] & 16))
         {
             frame = (leveltime / 3) & 15;
             GL_DrawPatchLitAlpha(260, 19, 1, iconalpha,
@@ -1524,10 +1524,10 @@ static void DrawAnimatedIcons(void)
     }
 
     // Minotaur Active
-    if(plyr->powers[pw_minotaur])
+    if(plyr->powers[PT_MINOTAUR])
     {
-        if(plyr->powers[pw_minotaur] > BLINKTHRESHOLD ||
-           !(plyr->powers[pw_minotaur] & 16))
+        if(plyr->powers[PT_MINOTAUR] > BLINKTHRESHOLD ||
+           !(plyr->powers[PT_MINOTAUR] & 16))
         {
             frame = (leveltime / 3) & 15;
             GL_DrawPatchLitAlpha(300, 19, 1, iconalpha,
@@ -1817,7 +1817,7 @@ void DrawKeyBar(void)
     player_t   *plyr = &players[consoleplayer];
 
     xPosition = 46;
-    for(i = 0; i < NUMKEYS && xPosition <= 126; ++i)
+    for(i = 0; i < NUM_KEY_TYPES && xPosition <= 126; ++i)
     {
         if(plyr->keys & (1 << i))
         {
@@ -1930,24 +1930,24 @@ void ST_doFullscreenStuff(void)
         for(i = 0; i < 2; i++)
             if(plyr->ammo[i] == 0)
                 patches[i] = dim[i];
-        if(plyr->readyweapon == WP_FIRST)
+        if(plyr->readyweapon == WT_FIRST)
         {
             for(i = 0; i < 2; i++)
                 patches[i] = dim[i];
         }
-        if(plyr->readyweapon == WP_SECOND)
+        if(plyr->readyweapon == WT_SECOND)
         {
             if(!patches[0])
                 patches[0] = bright[0];
             patches[1] = dim[1];
         }
-        if(plyr->readyweapon == WP_THIRD)
+        if(plyr->readyweapon == WT_THIRD)
         {
             patches[0] = dim[0];
             if(!patches[1])
                 patches[1] = bright[1];
         }
-        if(plyr->readyweapon == WP_FOURTH)
+        if(plyr->readyweapon == WT_FOURTH)
         {
             for(i = 0; i < 2; i++)
                 if(!patches[i])
@@ -2133,7 +2133,7 @@ void SB_ChangePlayerClass(player_t *player, int newclass)
     for(i = 0; i < NUMARMOR; i++)
         player->armorpoints[i] = 0;
     cfg.PlayerClass[player - players] = newclass;
-    P_PostMorphWeapon(player, WP_FIRST);
+    P_PostMorphWeapon(player, WT_FIRST);
     if(player == players + consoleplayer)
         SB_SetClassData();
     player->update |= PSF_ARMOR_POINTS;

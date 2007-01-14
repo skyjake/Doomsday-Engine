@@ -110,7 +110,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
 
             // In Final Doom things teleported to their destination
             // but the height wasn't set to the floor.
-            if(gamemission != pack_tnt && gamemission != pack_plut)
+            if(gamemission != GM_TNT && gamemission != GM_PLUT)
                 thing->pos[VZ] = thing->floorz;
 
             if(spawnFog)
@@ -148,7 +148,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
             if(thing->player)
             {
                 thing->reactiontime = 18;
-                if(thing->player->powers[pw_flight] && aboveFloor)
+                if(thing->player->powers[PT_FLIGHT] && aboveFloor)
                 {
                     thing->pos[VZ] = thing->floorz + aboveFloor;
                     if(thing->pos[VZ] + thing->height > thing->ceilingz)

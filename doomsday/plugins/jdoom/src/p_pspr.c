@@ -147,13 +147,13 @@ void P_BringUpWeapon(player_t *player)
 
     wminfo = WEAPON_INFO(player->pendingweapon, player->class, 0);
 
-    if(player->pendingweapon == WP_NOCHANGE)
+    if(player->pendingweapon == WT_NOCHANGE)
         player->pendingweapon = player->readyweapon;
 
     if(wminfo->raisesound)
         S_StartSoundEx(wminfo->raisesound, player->plr->mo);
 
-    player->pendingweapon = WP_NOCHANGE;
+    player->pendingweapon = WT_NOCHANGE;
     player->psprites[ps_weapon].sy = WEAPONBOTTOM;
 
 #ifdef _DEBUG
@@ -175,7 +175,7 @@ boolean P_CheckAmmo(player_t *player)
 
     // Check we have enough of ALL ammo types used by this weapon.
     good = true;
-    for(i=0; i < NUMAMMO && good; ++i)
+    for(i=0; i < NUM_AMMO_TYPES && good; ++i)
     {
         if(!weaponinfo[player->readyweapon][player->class].mode[0].ammotype[i])
             continue; // Weapon does not take this type of ammo.
@@ -193,7 +193,7 @@ boolean P_CheckAmmo(player_t *player)
         return true;
 
     // Out of ammo, pick a weapon to change to.
-    P_MaybeChangeWeapon(player, WP_NOCHANGE, AM_NOAMMO, false);
+    P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
 
     // Now set appropriate weapon overlay.
     P_SetPsprite(player, ps_weapon, weaponinfo[player->readyweapon][player->class].mode[0].downstate);
@@ -246,7 +246,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
         P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
     }
 
-    if(player->readyweapon != WP_NOCHANGE)
+    if(player->readyweapon != WT_NOCHANGE)
     {
         wminfo = WEAPON_INFO(player->readyweapon, player->class, 0);
 
@@ -256,7 +256,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
 
         // check for change
         //  if player is dead, put the weapon away
-        if(player->pendingweapon != WP_NOCHANGE || !player->health)
+        if(player->pendingweapon != WT_NOCHANGE || !player->health)
         {   //  (pending weapon should allready be validated)
             P_SetPsprite(player, ps_weapon, wminfo->downstate);
             return;
@@ -294,7 +294,7 @@ void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
     // check for fire
     //  (if a weaponchange is pending, let it go through instead)
     if(player->cmd.attack &&
-       player->pendingweapon == WP_NOCHANGE &&
+       player->pendingweapon == WT_NOCHANGE &&
        player->health)
     {
         player->refire++;
@@ -311,7 +311,7 @@ void C_DECL A_CheckReload(player_t *player, pspdef_t * psp)
 {
     P_CheckAmmo(player);
 #if 0
-    if(player->ammo[am_shell] < 2)
+    if(player->ammo[AT_SHELL] < 2)
         P_SetPsprite(player, ps_weapon, S_DSNR1);
 #endif
 }
@@ -417,7 +417,7 @@ void C_DECL A_Punch(player_t *player, pspdef_t * psp)
 
     damage = (P_Random() % 10 + 1) << 1;
 
-    if(player->powers[pw_strength])
+    if(player->powers[PT_STRENGTH])
         damage *= 10;
 
     angle = player->plr->mo->angle;

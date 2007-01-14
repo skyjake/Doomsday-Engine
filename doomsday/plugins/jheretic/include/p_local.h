@@ -263,8 +263,8 @@ char           *P_GetShortLevelName(int episode, int map);
 
 // ***** P_INTER *****
 
-extern int      maxammo[NUMAMMO];
-extern int      clipammo[NUMAMMO];
+extern int      maxammo[NUM_AMMO_TYPES];
+extern int      clipammo[NUM_AMMO_TYPES];
 
 void            P_GiveKey(player_t *player, keytype_t key);
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);

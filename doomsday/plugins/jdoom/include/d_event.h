@@ -32,16 +32,16 @@
 #include "doomtype.h"
 
 typedef enum {
-    ga_nothing,
-    ga_loadlevel,
-    ga_newgame,
-    ga_loadgame,
-    ga_savegame,
-    ga_playdemo,
-    ga_completed,
-    ga_victory,
-    ga_worlddone,
-    ga_screenshot
+    GA_NONE,
+    GA_LOADLEVEL,
+    GA_NEWGAME,
+    GA_LOADGAME,
+    GA_SAVEGAME,
+    GA_PLAYDEMO,
+    GA_COMPLETED,
+    GA_VICTORY,
+    GA_WORLDDONE,
+    GA_SCREENSHOT
 } gameaction_t;
 
 extern gameaction_t gameaction;

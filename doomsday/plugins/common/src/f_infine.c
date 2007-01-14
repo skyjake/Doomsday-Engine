@@ -404,7 +404,7 @@ void FI_ClearState(void)
     HUMsg_ClearMessages(&players[consoleplayer]);
 
     // General game state.
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
     if(fi->mode != FIMODE_OVERLAY)
     {
         G_ChangeGameState(GS_INFINE);
@@ -670,7 +670,7 @@ void FI_End(void)
 #endif
                 return;
             }
-            gameaction = ga_completed;
+            gameaction = GA_COMPLETED;
         }
         else if(oldMode == FIMODE_BEFORE)
         {
@@ -783,7 +783,7 @@ void FI_DemoEnds(void)
         fi->suspended = false;
         fi_active = true;
         G_ChangeGameState(GS_INFINE);
-        gameaction = ga_nothing;
+        gameaction = GA_NONE;
         automapactive = false;
     }
 }

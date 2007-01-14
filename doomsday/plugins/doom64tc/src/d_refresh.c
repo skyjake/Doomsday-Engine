@@ -119,11 +119,11 @@ void R_DrawSpecialFilter(void)
 {
     player_t *player = &players[displayplayer];
 
-    if(player->powers[pw_invulnerability])
+    if(player->powers[PT_INVULNERABILITY])
     {
         float   max = 30;
         float   str, r, g, b;
-        int     t = player->powers[pw_invulnerability];
+        int     t = player->powers[PT_INVULNERABILITY];
 
         if(t < max)
             str = t / max;
@@ -296,9 +296,9 @@ void D_Display(void)
             GL_SetFilter(players[displayplayer].plr->filter);   // $democam
 
             // How about fullbright?
-            Set(DD_FULLBRIGHT, (player->powers[pw_infrared] > 4 * 32) ||
-                (player->powers[pw_infrared] & 8) ||
-                player->powers[pw_invulnerability] > 30);
+            Set(DD_FULLBRIGHT, (player->powers[PT_INFRARED] > 4 * 32) ||
+                (player->powers[PT_INFRARED] & 8) ||
+                player->powers[PT_INVULNERABILITY] > 30);
 
             // Render the view with possible custom filters.
             R_RenderPlayerView(players[displayplayer].plr);

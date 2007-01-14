@@ -1941,7 +1941,7 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
                 thing->dplayer->lookdir = 0;/* $unifiedangles */
             }
 #if __JHERETIC__
-            if(!thing->player->powers[pw_weaponlevel2])
+            if(!thing->player->powers[PT_WEAPONLEVEL2])
 #endif
             {
                 thing->reactiontime = 18;  // Freeze player for about .5 sec

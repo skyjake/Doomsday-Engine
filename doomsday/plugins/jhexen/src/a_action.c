@@ -478,7 +478,7 @@ void C_DECL A_Summon(mobj_t *actor)
         else
         {
             mo->tracer = actor->tracer; // Pointer to master (mobj_t *)
-            P_GivePower(master->player, pw_minotaur);
+            P_GivePower(master->player, PT_MINOTAUR);
         }
 
         // Make smoke puff

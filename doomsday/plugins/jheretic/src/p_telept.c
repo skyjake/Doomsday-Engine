@@ -94,7 +94,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
     if(thing->player)
     {
         player = thing->player;
-        if(player->powers[pw_flight] && aboveFloor)
+        if(player->powers[PT_FLIGHT] && aboveFloor)
         {
             thing->pos[VZ] = thing->floorz + aboveFloor;
             if(thing->pos[VZ] + thing->height > thing->ceilingz)
@@ -134,7 +134,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
         P_SpawnMobj(x + 20 * finecosine[an], y + 20 * finesine[an],
                     thing->pos[VZ] + fogDelta, MT_TFOG);
     S_StartSound(sfx_telept, fog);
-    if(thing->player && !thing->player->powers[pw_weaponlevel2])
+    if(thing->player && !thing->player->powers[PT_WEAPONLEVEL2])
     {                           // Freeze player for about .5 sec
         thing->reactiontime = 18;
     }

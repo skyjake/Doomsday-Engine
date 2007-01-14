@@ -81,21 +81,21 @@ static struct macespot_s{
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 /*
-    am_goldwand,
-    am_crossbow,
-    am_blaster,
-    am_skullrod,
-    am_phoenixrod,
-    am_mace,
+    AT_CRYSTAL,
+    AT_ARROW,
+    AT_ORB,
+    AT_RUNE,
+    AT_FIREORB,
+    AT_MSPHERE,
 */
-weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
+weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
   {
    {
     {
     { // Staff
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_STAFFUP,                 // upstate
      0,                         // raise sound id
@@ -109,8 +109,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // Staff lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_STAFFUP2,                // upstate
      0,                         // raise sound id
@@ -127,8 +127,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Beak
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -142,8 +142,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -162,8 +162,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Gold wand
      GM_ANY,                    // gamemodebits
-     {1, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {USE_GWND_AMMO_1, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {1, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {USE_GWND_AMMO_1, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_GOLDWANDUP,              // upstate
      0,                         // raise sound id
@@ -177,8 +177,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {1, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {USE_GWND_AMMO_2, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {1, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {USE_GWND_AMMO_2, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_GOLDWANDUP,              // upstate
      0,                         // raise sound id
@@ -195,8 +195,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Beak
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -210,8 +210,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -230,8 +230,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Crossbow
      GM_ANY,                    // gamemodebits
-     {0, 1, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, USE_CBOW_AMMO_1, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 1, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, USE_CBOW_AMMO_1, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_CRBOWUP,                 // upstate
      0,                         // raise sound id
@@ -245,8 +245,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 1, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, USE_CBOW_AMMO_2, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 1, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, USE_CBOW_AMMO_2, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_CRBOWUP,                 // upstate
      0,                         // raise sound id
@@ -263,8 +263,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Beak
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -278,8 +278,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -298,8 +298,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Blaster
      GM_ANY,                    // gamemodebits
-     {0, 0, 1, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, USE_BLSR_AMMO_1, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 1, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, USE_BLSR_AMMO_1, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BLASTERUP,               // upstate
      0,                         // raise sound id
@@ -313,8 +313,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 1, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, USE_BLSR_AMMO_2, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 1, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, USE_BLSR_AMMO_2, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BLASTERUP,               // upstate
      0,                         // raise sound id
@@ -331,8 +331,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Beak
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -346,8 +346,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -366,8 +366,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Skull rod
      GM_NOTSHAREWARE,           // gamemodebits
-     {0, 0, 0, 1, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, USE_SKRD_AMMO_1, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 1, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, USE_SKRD_AMMO_1, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_HORNRODUP,               // upstate
      0,                         // raise sound id
@@ -381,8 +381,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_NOTSHAREWARE,           // gamemodebits
-     {0, 0, 0, 1, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, USE_SKRD_AMMO_2, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 1, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, USE_SKRD_AMMO_2, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_HORNRODUP,               // upstate
      0,                         // raise sound id
@@ -399,8 +399,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Beak
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -414,8 +414,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -434,8 +434,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Phoenix rod
      GM_NOTSHAREWARE,           // gamemodebits
-     {0, 0, 0, 0, 1, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, USE_PHRD_AMMO_1, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 1, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, USE_PHRD_AMMO_1, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      false,              // autofire when raised if fire held
      S_PHOENIXUP,               // upstate
      0,                         // raise sound id
@@ -449,8 +449,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_NOTSHAREWARE,           // gamemodebits
-     {0, 0, 0, 0, 1, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, USE_PHRD_AMMO_2, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 1, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, USE_PHRD_AMMO_2, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      false,              // autofire when raised if fire held
      S_PHOENIXUP,               // upstate
      0,                         // raise sound id
@@ -467,8 +467,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Beak
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -482,8 +482,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -502,8 +502,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Mace
      GM_NOTSHAREWARE,           // gamemodebits
-     {0, 0, 0, 0, 0, 1}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, USE_MACE_AMMO_1}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 1}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, USE_MACE_AMMO_1}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_MACEUP,                  // upstate
      0,                         // raise sound id
@@ -517,8 +517,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_NOTSHAREWARE,           // gamemodebits
-     {0, 0, 0, 0, 0, 1}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, USE_MACE_AMMO_2}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 1}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, USE_MACE_AMMO_2}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_MACEUP,                  // upstate
      0,                         // raise sound id
@@ -535,8 +535,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Beak
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -550,8 +550,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -570,8 +570,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Gauntlets
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_GAUNTLETUP,              // upstate
      sfx_gntact,                // raise sound id
@@ -585,8 +585,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_GAUNTLETUP2,             // upstate
      sfx_gntact,                // raise sound id
@@ -603,8 +603,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     {
     { // Beak
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -618,8 +618,8 @@ weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES] = {
     // lvl2
     {
      GM_ANY,                    // gamemodebits
-     {0, 0, 0, 0, 0, 0}, // type:  am_goldwand | am_crossbow | etc...
-     {0, 0, 0, 0, 0, 0}, // pershot: am_goldwand | am_crossbow | etc...
+     {0, 0, 0, 0, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
+     {0, 0, 0, 0, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
      S_BEAKUP,                  // upstate
      0,                         // raise sound id
@@ -685,7 +685,7 @@ void P_InitWeaponInfo()
     int     i;
     char    buf[80];
 
-    for(i = 0; i < NUMWEAPONS; i++)
+    for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
         // Level 1 (don't use a sublevel for level 1)
         sprintf(buf, WPINF "%i|Static", i);
@@ -788,8 +788,8 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 
 void P_ActivateMorphWeapon(player_t *player)
 {
-    player->pendingweapon = WP_NOCHANGE;
-    player->readyweapon = WP_FIRST;
+    player->pendingweapon = WT_NOCHANGE;
+    player->readyweapon = WT_FIRST;
     player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
     player->psprites[ps_weapon].sy = WEAPONTOP;
     P_SetPsprite(player, ps_weapon, S_BEAKREADY);
@@ -798,7 +798,7 @@ void P_ActivateMorphWeapon(player_t *player)
 
 void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
 {
-    player->pendingweapon = WP_NOCHANGE;
+    player->pendingweapon = WT_NOCHANGE;
     player->readyweapon = weapon;
     player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
     player->psprites[ps_weapon].sy = WEAPONBOTTOM;
@@ -813,15 +813,15 @@ void P_BringUpWeapon(player_t *player)
     weaponmodeinfo_t *wminfo;
 
     wminfo = WEAPON_INFO(player->pendingweapon, player->class,
-                         (player->powers[pw_weaponlevel2]? 1:0));
+                         (player->powers[PT_WEAPONLEVEL2]? 1:0));
 
-    if(player->pendingweapon == WP_NOCHANGE)
+    if(player->pendingweapon == WT_NOCHANGE)
         player->pendingweapon = player->readyweapon;
 
     if(wminfo->raisesound)
         S_StartSoundEx(wminfo->raisesound, player->plr->mo);
 
-    player->pendingweapon = WP_NOCHANGE;
+    player->pendingweapon = WT_NOCHANGE;
     player->psprites[ps_weapon].sy = WEAPONBOTTOM;
 
     P_SetPsprite(player, ps_weapon, wminfo->upstate);
@@ -839,7 +839,7 @@ boolean P_CheckAmmo(player_t *player)
     boolean good;
 
 #if __JHERETIC__
-    if(player->powers[pw_weaponlevel2] && !deathmatch)
+    if(player->powers[PT_WEAPONLEVEL2] && !deathmatch)
         // If deathmatch always use level one ammo requirements.
         lvl = 1;
     else
@@ -848,7 +848,7 @@ boolean P_CheckAmmo(player_t *player)
 
     // Check we have enough of ALL ammo types used by this weapon.
     good = true;
-    for(i=0; i < NUMAMMO && good; ++i)
+    for(i=0; i < NUM_AMMO_TYPES && good; ++i)
     {
         if(!weaponinfo[player->readyweapon][player->class].mode[lvl].ammotype[i])
             continue; // Weapon does not take this type of ammo.
@@ -866,7 +866,7 @@ boolean P_CheckAmmo(player_t *player)
         return true;
 
     // Out of ammo, pick a weapon to change to.
-    P_MaybeChangeWeapon(player, WP_NOCHANGE, AM_NOAMMO, false);
+    P_MaybeChangeWeapon(player, WT_NOCHANGE, AT_NOAMMO, false);
 
     P_SetPsprite(player, ps_weapon,
                  weaponinfo[player->readyweapon][player->class].mode[lvl].downstate);
@@ -876,7 +876,7 @@ boolean P_CheckAmmo(player_t *player)
 void P_FireWeapon(player_t *player)
 {
     statenum_t attackState;
-    int lvl = (player->powers[pw_weaponlevel2]? 1 : 0);
+    int lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
     if(!P_CheckAmmo(player))
         return;
@@ -892,7 +892,7 @@ void P_FireWeapon(player_t *player)
     P_SetPsprite(player, ps_weapon, attackState);
 
     P_NoiseAlert(player->plr->mo, player->plr->mo);
-    if(player->readyweapon == WP_EIGHTH && !player->refire)
+    if(player->readyweapon == WT_EIGHTH && !player->refire)
     {                           
         // Play the sound for the initial gauntlet attack
         S_StartSoundEx(sfx_gntuse, player->plr->mo);
@@ -909,7 +909,7 @@ void P_FireWeapon(player_t *player)
  */
 void P_DropWeapon(player_t *player)
 {
-    if(player->powers[pw_weaponlevel2])
+    if(player->powers[PT_WEAPONLEVEL2])
     {
         P_SetPsprite(player, ps_weapon,
                      weaponinfo[player->readyweapon][player->class].mode[1].downstate);
@@ -936,9 +936,9 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
         P_SetMobjState(player->plr->mo, S_PLAY);
     }
 
-    if(player->readyweapon != WP_NOCHANGE)
+    if(player->readyweapon != WT_NOCHANGE)
     {
-        wminfo = WEAPON_INFO(player->readyweapon, player->class, (player->powers[pw_weaponlevel2]?1:0));
+        wminfo = WEAPON_INFO(player->readyweapon, player->class, (player->powers[PT_WEAPONLEVEL2]?1:0));
 
         // A weaponready sound?
         if(psp->state == &states[wminfo->readystate] && wminfo->readysound)
@@ -949,7 +949,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
 
         // check for change
         //  if player is dead, put the weapon away
-        if(player->pendingweapon != WP_NOCHANGE || !player->health)
+        if(player->pendingweapon != WT_NOCHANGE || !player->health)
         {   //  (pending weapon should allready be validated)
             P_SetPsprite(player, ps_weapon, wminfo->downstate);
             return;
@@ -997,7 +997,7 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t * psp)
     {                           // Chicken beak attack
         player->attackdown = true;
         P_SetMobjState(player->plr->mo, S_CHICPLAY_ATK1);
-        if(player->powers[pw_weaponlevel2])
+        if(player->powers[PT_WEAPONLEVEL2])
         {
             P_SetPsprite(player, ps_weapon, S_BEAKATK2_1);
             NetSv_PSpriteChange(player - players, S_BEAKATK2_1);
@@ -1025,7 +1025,7 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t * psp)
 void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
 {
     if(player->cmd.attack &&
-       player->pendingweapon == WP_NOCHANGE &&
+       player->pendingweapon == WT_NOCHANGE &&
        player->health)
     {
         player->refire++;
@@ -1053,7 +1053,7 @@ void C_DECL A_Lower(player_t *player, pspdef_t * psp)
 
     // Should we disable the lowering?
     if(!cfg.bobWeaponLower ||
-      ((player->powers[pw_weaponlevel2] &&
+      ((player->powers[PT_WEAPONLEVEL2] &&
         weaponinfo[player->readyweapon][player->class].mode[1].static_switch) ||
        weaponinfo[player->readyweapon][player->class].mode[0].static_switch))
     {
@@ -1086,7 +1086,7 @@ void C_DECL A_Lower(player_t *player, pspdef_t * psp)
 
     // Should we suddenly lower the weapon?
     if(cfg.bobWeaponLower &&
-      ((player->powers[pw_weaponlevel2] &&
+      ((player->powers[PT_WEAPONLEVEL2] &&
         !weaponinfo[player->readyweapon][player->class].mode[1].static_switch) ||
        !weaponinfo[player->readyweapon][player->class].mode[0].static_switch))
     {
@@ -1112,7 +1112,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
 
     // Should we disable the lowering?
     if(!cfg.bobWeaponLower ||
-      ((player->powers[pw_weaponlevel2] &&
+      ((player->powers[PT_WEAPONLEVEL2] &&
         weaponinfo[player->readyweapon][player->class].mode[1].static_switch) ||
        weaponinfo[player->readyweapon][player->class].mode[0].static_switch))
     {
@@ -1131,7 +1131,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
 
     // The weapon has been raised all the way,
     //  so change to the ready state.
-    if(player->powers[pw_weaponlevel2])
+    if(player->powers[PT_WEAPONLEVEL2])
         newstate = weaponinfo[player->readyweapon][player->class].mode[1].readystate;
     else
         newstate = weaponinfo[player->readyweapon][player->class].mode[0].readystate;
@@ -1935,7 +1935,7 @@ void C_DECL A_GauntletAttack(player_t *player, pspdef_t * psp)
     psp->sx = ((P_Random() & 3) - 2) * FRACUNIT;
     psp->sy = WEAPONTOP + (P_Random() & 3) * FRACUNIT;
     angle = player->plr->mo->angle;
-    if(player->powers[pw_weaponlevel2])
+    if(player->powers[PT_WEAPONLEVEL2])
     {
         damage = HITDICE(2);
         dist = 4 * MELEERANGE;
@@ -1973,7 +1973,7 @@ void C_DECL A_GauntletAttack(player_t *player, pspdef_t * psp)
     {
         player->plr->extralight = 2;
     }
-    if(player->powers[pw_weaponlevel2])
+    if(player->powers[PT_WEAPONLEVEL2])
     {
         P_GiveBody(player, damage >> 1);
         S_StartSoundEx(sfx_gntpow, player->plr->mo);

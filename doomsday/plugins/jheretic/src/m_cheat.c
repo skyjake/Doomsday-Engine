@@ -340,7 +340,7 @@ boolean cht_Responder(event_t *ev)
     if(G_GetGameState() != GS_LEVEL || ev->type != EV_KEY || ev->state != EVS_DOWN)
         return false;
 
-    if(IS_NETGAME || gameskill == sk_nightmare)
+    if(IS_NETGAME || gameskill == SM_NIGHTMARE)
     {                           // Can't cheat in a net-game, or in nightmare mode
         return false;
     }
@@ -387,7 +387,7 @@ static boolean canCheat()
 {
     if(IS_NETGAME && !IS_CLIENT && netSvAllowCheats)
         return true;
-    return !(gameskill == sk_nightmare || (IS_NETGAME /*&& !netcheat */ )
+    return !(gameskill == SM_NIGHTMARE || (IS_NETGAME /*&& !netcheat */ )
              || players[consoleplayer].health <= 0);
 }
 
@@ -496,19 +496,19 @@ static void CheatWeaponsFunc(player_t *player, Cheat_t * cheat)
     player->armortype = 2;
     if(!player->backpack)
     {
-        for(i = 0; i < NUMAMMO; i++)
+        for(i = 0; i < NUM_AMMO_TYPES; i++)
         {
             player->maxammo[i] *= 2;
         }
         player->backpack = true;
     }
-    for(i = 0; i < NUMWEAPONS; i++)
+    for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
         if(weaponinfo[i][0].mode[0].gamemodebits & gamemodebits)
             player->weaponowned[i] = true;
     }
 
-    for(i = 0; i < NUMAMMO; i++)
+    for(i = 0; i < NUM_AMMO_TYPES; i++)
     {
         player->ammo[i] = player->maxammo[i];
     }
@@ -518,9 +518,9 @@ static void CheatWeaponsFunc(player_t *player, Cheat_t * cheat)
 static void CheatPowerFunc(player_t *player, Cheat_t * cheat)
 {
     player->update |= PSF_POWERS;
-    if(player->powers[pw_weaponlevel2])
+    if(player->powers[PT_WEAPONLEVEL2])
     {
-        player->powers[pw_weaponlevel2] = 0;
+        player->powers[PT_WEAPONLEVEL2] = 0;
         P_SetMessage(player, TXT_CHEATPOWEROFF, false);
     }
     else
@@ -549,9 +549,9 @@ static void CheatKeysFunc(player_t *player, Cheat_t * cheat)
     extern int playerkeys;
 
     player->update |= PSF_KEYS;
-    player->keys[key_yellow] = true;
-    player->keys[key_green] = true;
-    player->keys[key_blue] = true;
+    player->keys[KT_YELLOW] = true;
+    player->keys[KT_GREEN] = true;
+    player->keys[KT_BLUE] = true;
     playerkeys = 7;             // Key refresh flags
     P_SetMessage(player, TXT_CHEATKEYS, false);
 }
@@ -687,7 +687,7 @@ static void CheatIDKFAFunc(player_t *player, Cheat_t * cheat)
     {
         player->weaponowned[i] = false;
     }
-    player->pendingweapon = WP_FIRST;
+    player->pendingweapon = WT_FIRST;
     P_SetMessage(player, TXT_CHEATIDKFA, false);
 }
 
@@ -932,12 +932,12 @@ DEFCC(CCmdCheatReveal)
 
     // Reset them (for 'nothing'). :-)
     cheating = 0;
-    players[consoleplayer].powers[pw_allmap] = false;
+    players[consoleplayer].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
     if(option < 0 || option > 4)
         return false;
     if(option == 1)
-        players[consoleplayer].powers[pw_allmap] = true;
+        players[consoleplayer].powers[PT_ALLMAP] = true;
     else if(option != 0)
         cheating = option -1;
 

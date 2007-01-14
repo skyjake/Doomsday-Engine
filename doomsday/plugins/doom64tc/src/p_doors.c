@@ -236,7 +236,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
     case 133:
         if(!p)
             return 0;
-        if(!p->keys[it_bluecard] && !p->keys[it_blueskull])
+        if(!p->keys[KT_BLUECARD] && !p->keys[KT_BLUESKULL])
         {
             P_SetMessage(p, PD_BLUEO, false);
             S_StartSound(sfx_oof, p->plr->mo);
@@ -248,7 +248,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
     case 135:
         if(!p)
             return 0;
-        if(!p->keys[it_redcard] && !p->keys[it_redskull])
+        if(!p->keys[KT_REDCARD] && !p->keys[KT_REDSKULL])
         {
             P_SetMessage(p, PD_REDO, false);
             S_StartSound(sfx_oof, p->plr->mo);
@@ -260,7 +260,7 @@ int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
     case 137:
         if(!p)
             return 0;
-        if(!p->keys[it_yellowcard] && !p->keys[it_yellowskull])
+        if(!p->keys[KT_YELLOWCARD] && !p->keys[KT_YELLOWSKULL])
         {
             P_SetMessage(p, PD_YELLOWO, false);
             S_StartSound(sfx_oof, p->plr->mo);
@@ -419,7 +419,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
         if(!player)
             return;
 
-        if(!player->keys[it_bluecard] && !player->keys[it_blueskull])
+        if(!player->keys[KT_BLUECARD] && !player->keys[KT_BLUESKULL])
         {
             P_SetMessage(player, PD_BLUEK, false);
             S_StartSound(sfx_oof, player->plr->mo);
@@ -434,7 +434,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
         if(!player)
             return;
 
-        if(!player->keys[it_yellowcard] && !player->keys[it_yellowskull])
+        if(!player->keys[KT_YELLOWCARD] && !player->keys[KT_YELLOWSKULL])
         {
             P_SetMessage(player, PD_YELLOWK, false);
             S_StartSound(sfx_oof, player->plr->mo);
@@ -449,7 +449,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
         if(!player)
             return;
 
-        if(!player->keys[it_redcard] && !player->keys[it_redskull])
+        if(!player->keys[KT_REDCARD] && !player->keys[KT_REDSKULL])
         {
             P_SetMessage(player, PD_REDK, false);
             S_StartSound(sfx_oof, player->plr->mo);

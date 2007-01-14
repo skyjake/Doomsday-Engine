@@ -37,7 +37,7 @@
 
 boolean         P_GivePower(player_t *, int);
 boolean         P_TakePower(player_t *player, int power);
-void            P_GiveKey(player_t *player, card_t card);
+void            P_GiveKey(player_t *player, keytype_t card);
 boolean         P_GiveBody(player_t *player, int num);
 void            P_GiveBackpack(player_t *player);
 boolean         P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped);

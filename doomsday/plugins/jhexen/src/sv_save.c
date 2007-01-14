@@ -585,7 +585,7 @@ void SV_HxMapTeleport(int map, int position)
     mobj_t     *targetPlayerMobj;
     boolean     rClass;
     boolean     playerWasReborn;
-    boolean     oldWeaponowned[NUMWEAPONS];
+    boolean     oldWeaponowned[NUM_WEAPON_TYPES];
     int         oldKeys = 0;
     int         oldPieces = 0;
     int         bestWeapon;
@@ -659,7 +659,7 @@ void SV_HxMapTeleport(int map, int position)
             {   // Cooperative net-play, retain keys and weapons
                 oldKeys = players[i].keys;
                 oldPieces = players[i].pieces;
-                for(j = 0; j < NUMWEAPONS; j++)
+                for(j = 0; j < NUM_WEAPON_TYPES; j++)
                 {
                     oldWeaponowned[j] = players[i].weaponowned[j];
                 }
@@ -681,7 +681,7 @@ void SV_HxMapTeleport(int map, int position)
         {   // Restore keys and weapons when reborn in co-op
             players[i].keys = oldKeys;
             players[i].pieces = oldPieces;
-            for(bestWeapon = 0, j = 0; j < NUMWEAPONS; ++j)
+            for(bestWeapon = 0, j = 0; j < NUM_WEAPON_TYPES; ++j)
             {
                 if(oldWeaponowned[j])
                 {
@@ -689,8 +689,8 @@ void SV_HxMapTeleport(int map, int position)
                     players[i].weaponowned[j] = true;
                 }
             }
-            players[i].ammo[MANA_1] = 25;
-            players[i].ammo[MANA_2] = 25;
+            players[i].ammo[AT_BLUEMANA] = 25;
+            players[i].ammo[AT_GREENMANA] = 25;
             if(bestWeapon)
             {                   // Bring up the best weapon
                 players[i].pendingweapon = bestWeapon;

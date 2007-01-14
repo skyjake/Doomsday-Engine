@@ -127,12 +127,12 @@ void P_ShotAmmo(player_t *player)
     weaponinfo_t *win = &weaponinfo[player->readyweapon][player->class];
 
 #if __JHERETIC__
-    lvl = (player->powers[pw_weaponlevel2]? 1 : 0);
+    lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 #else
     lvl = 0;
 #endif
 
-    for(i = 0; i < NUMAMMO; ++i)
+    for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
         if(!win->mode[lvl].ammotype[i])
             continue;   // Weapon does not take this ammo
@@ -172,7 +172,7 @@ void P_ShotAmmo(player_t *player)
  * @param ammo              The ammo given to the player (if any).
  * @param force             (TRUE) if we should force a weapon change.
  *
- * @return weapontype_t     The weapon we changed to OR WP_NOCHANGE.
+ * @return weapontype_t     The weapon we changed to OR WT_NOCHANGE.
  */
 weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                                  ammotype_t ammo, boolean force)
@@ -180,7 +180,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     int         i, lvl, pclass;
     ammotype_t  ammotype;
     weapontype_t candidate;
-    weapontype_t returnval = WP_NOCHANGE;
+    weapontype_t returnval = WT_NOCHANGE;
     weaponinfo_t *winf;
     boolean     found;
 
@@ -190,18 +190,18 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     pclass = player->class;
 
 #if __JHERETIC__
-    if(player->powers[pw_weaponlevel2])
+    if(player->powers[PT_WEAPONLEVEL2])
         lvl = 1;
 #endif
 
-    if(weapon == WP_NOCHANGE && ammo == AM_NOAMMO) // Out of ammo.
+    if(weapon == WT_NOCHANGE && ammo == AT_NOAMMO) // Out of ammo.
     {
         boolean good;
 
         // Note we have no auto-logical choice for a forced change.
         // Preferences are set by the user.
         found = false;
-        for(i=0; i < NUMWEAPONS && !found; ++i)
+        for(i=0; i < NUM_WEAPON_TYPES && !found; ++i)
         {
             candidate = cfg.weaponOrder[i];
             winf = &weaponinfo[candidate][pclass];
@@ -217,7 +217,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             // Is there sufficent ammo for the candidate weapon?
             // Check amount for each used ammo type.
             good = true;
-            for(ammotype = 0; ammotype < NUMAMMO && good; ++ammotype)
+            for(ammotype = 0; ammotype < NUM_AMMO_TYPES && good; ++ammotype)
             {
                 if(!winf->mode[lvl].ammotype[ammotype])
                     continue;   // Weapon does not take this type of ammo.
@@ -242,7 +242,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             }
         }
     }
-    else if(weapon != WP_NOCHANGE) // Player was given a NEW weapon.
+    else if(weapon != WT_NOCHANGE) // Player was given a NEW weapon.
     {
         // A forced weapon change?
         if(force)
@@ -262,7 +262,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
 
                 // Iterate the weapon order array and see if a weapon change
                 // should be made. Preferences are user selectable.
-                for(i=0; i < NUMWEAPONS; ++i)
+                for(i=0; i < NUM_WEAPON_TYPES; ++i)
                 {
                     candidate = cfg.weaponOrder[i];
                     winf = &weaponinfo[candidate][pclass];
@@ -283,7 +283,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             }
         }
     }
-    else if(ammo != AM_NOAMMO) // Player is about to be given some ammo.
+    else if(ammo != AT_NOAMMO) // Player is about to be given some ammo.
     {
         if((!player->ammo[ammo] && cfg.ammoAutoSwitch != 0) || force)
         {   // We were down to zero, so select a new weapon.
@@ -291,7 +291,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             // Iterate the weapon order array and see if the player owns a
             // weapon that can be used now they have this ammo.
             // Preferences are user selectable.
-            for(i=0; i < NUMWEAPONS; ++i)
+            for(i=0; i < NUM_WEAPON_TYPES; ++i)
             {
                 candidate = cfg.weaponOrder[i];
                 winf = &weaponinfo[candidate][pclass];
@@ -332,10 +332,10 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
 
     // Don't change to the exisitng weapon.
     if(returnval == player->readyweapon)
-        returnval = WP_NOCHANGE;
+        returnval = WT_NOCHANGE;
 
     // Choosen a weapon to change to?
-    if(returnval != WP_NOCHANGE)
+    if(returnval != WT_NOCHANGE)
     {
         player->pendingweapon = returnval;
         player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
@@ -357,30 +357,30 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
     int lvl, i;
 #if __DOOM64TC__
     static weapontype_t  wp_list[] = {
-        wp_fist, wp_pistol, wp_shotgun, wp_supershotgun, wp_chaingun,
-        wp_missile, wp_plasma, wp_bfg, wp_chainsaw, wp_unmaker
+        WT_FIRST, WT_SECOND, WT_THIRD, WT_NINETH, WT_FOURTH,
+        WT_FIFTH, WT_SIXTH, WT_SEVENTH, WT_EIGHTH, WT_TENTH
     };
 
 #elif __JDOOM__
     static weapontype_t  wp_list[] = {
-        wp_fist, wp_pistol, wp_shotgun, wp_supershotgun, wp_chaingun,
-        wp_missile, wp_plasma, wp_bfg, wp_chainsaw
+        WT_FIRST, WT_SECOND, WT_THIRD, WT_NINETH, WT_FOURTH,
+        WT_FIFTH, WT_SIXTH, WT_SEVENTH, WT_EIGHTH
     };
 
 #elif __JHERETIC__
     static weapontype_t  wp_list[] = {
-        WP_FIRST, WP_SECOND, WP_THIRD, WP_FOURTH, WP_FIFTH,
-        WP_SIXTH, WP_SEVENTH, WP_EIGHTH
+        WT_FIRST, WT_SECOND, WT_THIRD, WT_FOURTH, WT_FIFTH,
+        WT_SIXTH, WT_SEVENTH, WT_EIGHTH
     };
 
 #elif __JHEXEN__ || __JSTRIFE__
     static weapontype_t  wp_list[] = {
-        WP_FIRST, WP_SECOND, WP_THIRD, WP_FOURTH
+        WT_FIRST, WT_SECOND, WT_THIRD, WT_FOURTH
     };
 #endif
 
 #if __JHERETIC__
-    lvl = (player->powers[pw_weaponlevel2]? 1 : 0);
+    lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 #else
     lvl = 0;
 #endif
@@ -395,7 +395,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
         list = wp_list;
 
     // Find the current position in the weapon list.
-    for(i = 0; i < NUMWEAPONS; ++i)
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
         if(list[i] == player->readyweapon)
             break;
     // Locate the next or previous weapon owned by the player.
@@ -407,8 +407,8 @@ weapontype_t P_PlayerFindWeapon(player_t *player, boolean next)
         else
             i--;
         if(i < 0)
-            i = NUMWEAPONS - 1;
-        else if(i > NUMWEAPONS - 1)
+            i = NUM_WEAPON_TYPES - 1;
+        else if(i > NUM_WEAPON_TYPES - 1)
             i = 0;
 
         // Have we circled around?

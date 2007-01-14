@@ -752,7 +752,7 @@ static void AM_initVariables(void)
     memset(KeyPoints, 0, sizeof(ddvertex_t) * NUMBEROFKEYS);
 
     // load in the location of keys, if in baby mode
-    if(gameskill == sk_baby)
+    if(gameskill == SM_BABY)
     {
         for(think = thinkercap.next; think != &thinkercap; think = think->next)
         {
@@ -1690,7 +1690,7 @@ static void AM_drawWalls(boolean glowmode)
                     }
                 }
             }
-            else if(plr->powers[pw_allmap])
+            else if(plr->powers[PT_ALLMAP])
             {
                 if(!(P_GetIntp(line, DMU_FLAGS) & LINE_NEVERSEE))
                 {
@@ -1812,7 +1812,7 @@ static void AM_drawPlayers(void)
 
 #if !__JHEXEN__
 #if !__JSTRIFE__
-        if(p->powers[pw_invisibility])
+        if(p->powers[PT_INVISIBILITY])
         {
             // FIXME: The automap background color can be changed now!
 #if __JDOOM__
@@ -2275,7 +2275,7 @@ void AM_Drawer(void)
     if(cheating == 2) AM_drawThings(THINGCOLORS, THINGRANGE);
 
 #if !__JHEXEN__
-    if(gameskill == sk_baby && cfg.automapBabyKeys)
+    if(gameskill == SM_BABY && cfg.automapBabyKeys)
     {
         AM_drawKeys();
     }

@@ -44,12 +44,12 @@ void            G_DeathMatchSpawnPlayer(int playernum);
 boolean         G_ValidateMap(int *episode, int *map);
 int             G_GetLevelNumber(int episode, int map);
 
-void            G_InitNew(skill_t skill, int episode, int map);
+void            G_InitNew(skillmode_t skill, int episode, int map);
 
 // Can be called by the startup code or M_Responder.
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
-void            G_DeferedInitNew(skill_t skill, int episode, int map);
+void            G_DeferedInitNew(skillmode_t skill, int episode, int map);
 
 void            G_DeferedPlayDemo(char *demo);
 
@@ -63,7 +63,7 @@ void            G_DoLoadGame(void);
 void            G_SaveGame(int slot, char *description);
 
 // Only called by startup code.
-void            G_RecordDemo(skill_t skill, int numplayers, int episode,
+void            G_RecordDemo(skillmode_t skill, int numplayers, int episode,
                              int map, char *name);
 
 void            G_PlayDemo(char *name);

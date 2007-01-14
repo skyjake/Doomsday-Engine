@@ -295,7 +295,7 @@ static dpatch_t tallpercent;
 static dpatch_t shortnum[10];
 
 // 3 key-cards, 3 skulls
-static dpatch_t keys[NUMKEYS];
+static dpatch_t keys[NUM_KEY_TYPES];
 
 // face status patches
 static dpatch_t faces[ST_NUMFACES];
@@ -343,7 +343,7 @@ static int st_fragscount;
 static int st_oldhealth = -1;
 
 // used for evil grin
-static boolean oldweaponsowned[NUMWEAPONS];
+static boolean oldweaponsowned[NUM_WEAPON_TYPES];
 
  // count until face changes
 static int st_facecount = 0;
@@ -601,7 +601,7 @@ void ST_updateFaceWidget(void)
             // picking up bonus
             doevilgrin = false;
 
-            for(i = 0; i < NUMWEAPONS; i++)
+            for(i = 0; i < NUM_WEAPON_TYPES; i++)
             {
                 if(oldweaponsowned[i] != plyr->weaponowned[i])
                 {
@@ -725,7 +725,7 @@ void ST_updateFaceWidget(void)
     if(priority < 5)
     {
         // invulnerability
-        if((P_GetPlayerCheats(plyr) & CF_GODMODE) || plyr->powers[pw_invulnerability])
+        if((P_GetPlayerCheats(plyr) & CF_GODMODE) || plyr->powers[PT_INVULNERABILITY])
         {
             priority = 4;
 
@@ -761,7 +761,7 @@ void ST_updateWidgets(void)
 
     // must redirect the pointer if the ready weapon has changed.
     found = false;
-    for(ammotype=0; ammotype < NUMAMMO && !found; ++ammotype)
+    for(ammotype=0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
     {
         if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])
             continue; // Weapon does not use this type of ammo.
@@ -866,10 +866,10 @@ void ST_doPaletteStuff(void)
 
     cnt = plyr->damagecount;
 
-    if(plyr->powers[pw_strength])
+    if(plyr->powers[PT_STRENGTH])
     {
         // slowly fade the berzerk out
-        bzc = 12 - (plyr->powers[pw_strength] >> 6);
+        bzc = 12 - (plyr->powers[PT_STRENGTH] >> 6);
 
         if(bzc > cnt)
             cnt = bzc;
@@ -895,8 +895,8 @@ void ST_doPaletteStuff(void)
         palette += STARTBONUSPALS;
     }
 
-    else if(plyr->powers[pw_ironfeet] > 4 * 32 ||
-            plyr->powers[pw_ironfeet] & 8)
+    else if(plyr->powers[PT_IRONFEET] > 4 * 32 ||
+            plyr->powers[PT_IRONFEET] & 8)
         palette = RADIATIONPAL;
     else
         palette = 0;
@@ -1029,7 +1029,7 @@ void ST_doFullscreenStuff(void)
     int     h_width = 320 / cfg.hudScale, h_height = 200 / cfg.hudScale;
     float textalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudColor[3]);
     float iconalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudIconAlpha);
-    int     ammo_sprite[NUMAMMO] = {
+    int     ammo_sprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
         SPR_SBOX,
         SPR_CELL,
@@ -1074,7 +1074,7 @@ void ST_doFullscreenStuff(void)
 
         // TODO: Only supports one type of ammo per weapon.
         // for each type of ammo this weapon takes.
-        for(ammotype=0; ammotype < NUMAMMO; ++ammotype)
+        for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
         {
             if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])
                 continue;
@@ -1127,12 +1127,12 @@ Draw_BeginZoom(0.75f, pos , h_height - 2);
         {
             spr = 0;
             if(plr->
-               keys[i == 0 ? it_redcard : i ==
-                     1 ? it_yellowcard : it_bluecard])
+               keys[i == 0 ? KT_REDCARD : i ==
+                     1 ? KT_YELLOWCARD : KT_BLUECARD])
                 spr = i == 0 ? SPR_RKEY : i == 1 ? SPR_YKEY : SPR_BKEY;
             if(plr->
-               keys[i == 0 ? it_redskull : i ==
-                     1 ? it_yellowskull : it_blueskull])
+               keys[i == 0 ? KT_REDSKULL : i ==
+                     1 ? KT_YELLOWSKULL : KT_BLUESKULL])
                 spr = i == 0 ? SPR_RSKU : i == 1 ? SPR_YSKU : SPR_BSKU;
             if(spr)
             {
@@ -1226,7 +1226,7 @@ void ST_loadGraphics(void)
     R_CachePatch(&tallpercent, "STTPRCNT");
 
     // key cards
-    for(i = 0; i < NUMKEYS; i++)
+    for(i = 0; i < NUM_KEY_TYPES; i++)
     {
         sprintf(namebuf, "STKEYS%d", i);
         R_CachePatch(&keys[i], namebuf);
@@ -1313,7 +1313,7 @@ void ST_initData(void)
 
     st_oldhealth = -1;
 
-    for(i = 0; i < NUMWEAPONS; i++)
+    for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
         oldweaponsowned[i] = plyr->weaponowned[i];
     }
@@ -1340,7 +1340,7 @@ void ST_createWidgets(void)
     // ready weapon ammo
     // TODO: Only supports one type of ammo per weapon.
     found = false;
-    for(ammotype=0; ammotype < NUMAMMO && !found; ++ammotype)
+    for(ammotype=0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
     {
         if(!weaponinfo[plyr->readyweapon][plyr->class].mode[0].ammotype[ammotype])
             continue; // Weapon does not take this ammo.
@@ -1351,7 +1351,7 @@ void ST_createWidgets(void)
     }
     if(!found) // Weapon requires no ammo at all.
     {
-        // DOOM.EXE returns an address beyond plyr->ammo[NUMAMMO]
+        // DOOM.EXE returns an address beyond plyr->ammo[NUM_AMMO_TYPES]
         // if weaponinfo[plyr->readyweapon].ammo == am_noammo
         // ...obviously a bug.
 

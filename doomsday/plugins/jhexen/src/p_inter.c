@@ -65,10 +65,10 @@
 static void SetDormantArtifact(mobj_t *arti);
 static void TryPickupArtifact(player_t *player, artitype_e artifactType,
                               mobj_t *artifact);
-static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
+static void TryPickupWeapon(player_t *player, playerclass_t weaponClass,
                             weapontype_t weaponType, mobj_t *weapon,
                             char *message);
-static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
+static void TryPickupWeaponPiece(player_t *player, playerclass_t matchClass,
                                  int pieceValue, mobj_t *pieceMobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -122,16 +122,16 @@ boolean P_GiveMana(player_t *player, ammotype_t ammo, int num)
 {
     int     prevMana;
 
-    if(ammo == AM_NOAMMO || ammo == MANA_BOTH)
+    if(ammo == AT_NOAMMO)
         return false;
 
-    if(ammo < 0 || ammo > NUMAMMO)
+    if(ammo < 0 || ammo > NUM_AMMO_TYPES)
         Con_Error("P_GiveMana: bad type %i", ammo);
 
     if(player->ammo[ammo] == MAX_MANA)
         return false;
 
-    if(gameskill == sk_baby || gameskill == sk_nightmare)
+    if(gameskill == SM_BABY || gameskill == SM_NIGHTMARE)
     {   // extra mana in baby mode and nightmare mode
         num += num >> 1;
     }
@@ -139,7 +139,7 @@ boolean P_GiveMana(player_t *player, ammotype_t ammo, int num)
 
     // We are about to receive some more ammo. Does the player want to
     // change weapon automatically?
-    P_MaybeChangeWeapon(player, WP_NOCHANGE, ammo, false);
+    P_MaybeChangeWeapon(player, WT_NOCHANGE, ammo, false);
 
     player->ammo[ammo] += num;
     player->update |= PSF_AMMO;
@@ -148,8 +148,8 @@ boolean P_GiveMana(player_t *player, ammotype_t ammo, int num)
         player->ammo[ammo] = MAX_MANA;
 
     // FIXME - DJS: This shouldn't be actioned from here.
-    if(player->class == PCLASS_FIGHTER && player->readyweapon == WP_SECOND &&
-       ammo == MANA_1 && prevMana <= 0)
+    if(player->class == PCLASS_FIGHTER && player->readyweapon == WT_SECOND &&
+       ammo == AT_BLUEMANA && prevMana <= 0)
     {
         P_SetPsprite(player, ps_weapon, S_FAXEREADY_G);
     } // < FIXME
@@ -167,7 +167,7 @@ boolean P_GiveMana(player_t *player, ammotype_t ammo, int num)
 //
 //==========================================================================
 
-static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
+static void TryPickupWeapon(player_t *player, playerclass_t weaponClass,
                             weapontype_t weaponType, mobj_t *weapon,
                             char *message)
 {
@@ -184,16 +184,16 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
         {                       // Can't pick up weapons for other classes in coop netplay
             return;
         }
-        if(weaponType == WP_SECOND)
+        if(weaponType == WT_SECOND)
         {
-            if(!P_GiveMana(player, MANA_1, 25))
+            if(!P_GiveMana(player, AT_BLUEMANA, 25))
             {
                 return;
             }
         }
         else
         {
-            if(!P_GiveMana(player, MANA_2, 25))
+            if(!P_GiveMana(player, AT_GREENMANA, 25))
             {
                 return;
             }
@@ -207,13 +207,13 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
         }
         player->weaponowned[weaponType] = true;
         player->update |= PSF_OWNED_WEAPONS;
-        if(weaponType == WP_SECOND)
+        if(weaponType == WT_SECOND)
         {
-            P_GiveMana(player, MANA_1, 25);
+            P_GiveMana(player, AT_BLUEMANA, 25);
         }
         else
         {
-            P_GiveMana(player, MANA_2, 25);
+            P_GiveMana(player, AT_GREENMANA, 25);
         }
         player->pendingweapon = weaponType;
         remove = false;
@@ -224,13 +224,13 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
     }
     else
     {                           // Deathmatch or single player game
-        if(weaponType == WP_SECOND)
+        if(weaponType == WT_SECOND)
         {
-            gaveMana = P_GiveMana(player, MANA_1, 25);
+            gaveMana = P_GiveMana(player, AT_BLUEMANA, 25);
         }
         else
         {
-            gaveMana = P_GiveMana(player, MANA_2, 25);
+            gaveMana = P_GiveMana(player, AT_GREENMANA, 25);
         }
         if(player->weaponowned[weaponType])
         {
@@ -243,7 +243,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
             player->update |= PSF_OWNED_WEAPONS;
 
             // Should we change weapon automatically?
-            P_MaybeChangeWeapon(player, weaponType, AM_NOAMMO, false);
+            P_MaybeChangeWeapon(player, weaponType, AT_NOAMMO, false);
         }
 
         // Maybe unhide the HUD?
@@ -293,7 +293,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
 //--------------------------------------------------------------------------
 
 /*
-   boolean P_GiveWeapon(player_t *player, pclass_t class, weapontype_t weapon)
+   boolean P_GiveWeapon(player_t *player, playerclass_t class, weapontype_t weapon)
    {
    boolean gaveMana;
    boolean gaveWeapon;
@@ -304,13 +304,13 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
    { // Can't pick up weapons for other classes in coop netplay
    return false;
    }
-   if(weapon == WP_SECOND)
+   if(weapon == WT_SECOND)
    {
-   return P_GiveMana(player, MANA_1, 25);
+   return P_GiveMana(player, AT_BLUEMANA, 25);
    }
    else
    {
-   return P_GiveMana(player, MANA_2, 25);
+   return P_GiveMana(player, AT_GREENMANA, 25);
    }
    }
    if(IS_NETGAME && !deathmatch)
@@ -321,13 +321,13 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
    }
    player->bonuscount += BONUSADD;
    player->weaponowned[weapon] = true;
-   if(weapon == WP_SECOND)
+   if(weapon == WT_SECOND)
    {
-   P_GiveMana(player, MANA_1, 25);
+   P_GiveMana(player, AT_BLUEMANA, 25);
    }
    else
    {
-   P_GiveMana(player, MANA_2, 25);
+   P_GiveMana(player, AT_GREENMANA, 25);
    }
    player->pendingweapon = weapon;
    if(player == &players[consoleplayer])
@@ -336,13 +336,13 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
    }
    return(false);
    }
-   if(weapon == WP_SECOND)
+   if(weapon == WT_SECOND)
    {
-   gaveMana = P_GiveMana(player, MANA_1, 25);
+   gaveMana = P_GiveMana(player, AT_BLUEMANA, 25);
    }
    else
    {
-   gaveMana = P_GiveMana(player, MANA_2, 25);
+   gaveMana = P_GiveMana(player, AT_GREENMANA, 25);
    }
    if(player->weaponowned[weapon])
    {
@@ -368,10 +368,10 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
 //===========================================================================
 
 /*
-   boolean P_GiveWeaponPiece(player_t *player, pclass_t class, int piece)
+   boolean P_GiveWeaponPiece(player_t *player, playerclass_t class, int piece)
    {
-   P_GiveMana(player, MANA_1, 20);
-   P_GiveMana(player, MANA_2, 20);
+   P_GiveMana(player, AT_BLUEMANA, 20);
+   P_GiveMana(player, AT_GREENMANA, 20);
    if(player->class != class)
    {
    return true;
@@ -383,7 +383,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
    player->pieces |= piece;
    if(player->pieces == 7)
    { // player has built the fourth weapon!
-   P_GiveWeapon(player, class, WP_FOURTH);
+   P_GiveWeapon(player, class, WT_FOURTH);
    S_StartSound(player->plr->mo, SFX_WEAPON_BUILD);
    }
    return true;
@@ -396,7 +396,7 @@ static void TryPickupWeapon(player_t *player, pclass_t weaponClass,
 //
 //==========================================================================
 
-static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
+static void TryPickupWeaponPiece(player_t *player, playerclass_t matchClass,
                                  int pieceValue, mobj_t *pieceMobj)
 {
     boolean remove;
@@ -435,7 +435,7 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
         }
         checkAssembled = false;
         gaveMana =
-            P_GiveMana(player, MANA_1, 20) + P_GiveMana(player, MANA_2, 20);
+            P_GiveMana(player, AT_BLUEMANA, 20) + P_GiveMana(player, AT_GREENMANA, 20);
         if(!gaveMana)
         {                       // Didn't need the mana, so don't pick it up
             return;
@@ -448,14 +448,14 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
             return;
         }
         pieceValue = pieceValueTrans[pieceValue];
-        P_GiveMana(player, MANA_1, 20);
-        P_GiveMana(player, MANA_2, 20);
+        P_GiveMana(player, AT_BLUEMANA, 20);
+        P_GiveMana(player, AT_GREENMANA, 20);
         remove = false;
     }
     else
     {                           // Deathmatch or single player game
         gaveMana =
-            P_GiveMana(player, MANA_1, 20) + P_GiveMana(player, MANA_2, 20);
+            P_GiveMana(player, AT_BLUEMANA, 20) + P_GiveMana(player, AT_GREENMANA, 20);
         if(player->pieces & pieceValue)
         {                       // Already has the piece, check if mana needed
             if(!gaveMana)
@@ -497,8 +497,8 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
         if(player->pieces == (WPIECE1 | WPIECE2 | WPIECE3))
         {
             gaveWeapon = true;
-            player->weaponowned[WP_FOURTH] = true;
-            player->pendingweapon = WP_FOURTH;
+            player->weaponowned[WT_FOURTH] = true;
+            player->pendingweapon = WT_FOURTH;
             player->update |= PSF_WEAPONS | PSF_OWNED_WEAPONS;
         }
     }
@@ -510,7 +510,7 @@ static void TryPickupWeaponPiece(player_t *player, pclass_t matchClass,
         S_StartSound(SFX_WEAPON_BUILD, NULL);
 
         // Should we change weapon automatically?
-        P_MaybeChangeWeapon(player, WP_FOURTH, AM_NOAMMO, false);
+        P_MaybeChangeWeapon(player, WT_FOURTH, AT_NOAMMO, false);
     }
     else
     {
@@ -640,7 +640,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
 
     switch(power)
     {
-    case pw_invulnerability:
+    case PT_INVULNERABILITY:
         if(!(player->powers[power] > BLINKTHRESHOLD))
         {
             player->powers[power] = INVULNTICS;
@@ -653,7 +653,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
         }
         break;
 
-    case pw_flight:
+    case PT_FLIGHT:
         if(!(player->powers[power] > BLINKTHRESHOLD))
         {
             player->powers[power] = FLIGHTTICS;
@@ -668,7 +668,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
         }
         break;
 
-    case pw_infrared:
+    case PT_INFRARED:
         if(!(player->powers[power] > BLINKTHRESHOLD))
         {
             player->powers[power] = INFRATICS;
@@ -676,7 +676,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
         }
         break;
 
-    case pw_speed:
+    case PT_SPEED:
         if(!(player->powers[power] > BLINKTHRESHOLD))
         {
             player->powers[power] = SPEEDTICS;
@@ -684,7 +684,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
         }
         break;
 
-    case pw_minotaur:
+    case PT_MINOTAUR:
         // Doesn't matter if already have power, renew ticker
         player->powers[power] = MAULATORTICS;
         retval = true;
@@ -1066,60 +1066,60 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 
         // Mana
     case SPR_MAN1:
-        if(!P_GiveMana(player, MANA_1, 15))
+        if(!P_GiveMana(player, AT_BLUEMANA, 15))
         {
             return;
         }
         P_SetMessage(player, TXT_MANA_1, false);
         break;
     case SPR_MAN2:
-        if(!P_GiveMana(player, MANA_2, 15))
+        if(!P_GiveMana(player, AT_GREENMANA, 15))
         {
             return;
         }
         P_SetMessage(player, TXT_MANA_2, false);
         break;
     case SPR_MAN3:              // Double Mana Dodecahedron
-        if(!P_GiveMana(player, MANA_1, 20))
+        if(!P_GiveMana(player, AT_BLUEMANA, 20))
         {
-            if(!P_GiveMana(player, MANA_2, 20))
+            if(!P_GiveMana(player, AT_GREENMANA, 20))
             {
                 return;
             }
         }
         else
         {
-            P_GiveMana(player, MANA_2, 20);
+            P_GiveMana(player, AT_GREENMANA, 20);
         }
         P_SetMessage(player, TXT_MANA_BOTH, false);
         break;
 
         // 2nd and 3rd Mage Weapons
     case SPR_WMCS:              // Frost Shards
-        TryPickupWeapon(player, PCLASS_MAGE, WP_SECOND, special,
+        TryPickupWeapon(player, PCLASS_MAGE, WT_SECOND, special,
                         TXT_WEAPON_M2);
         return;
     case SPR_WMLG:              // Arc of Death
-        TryPickupWeapon(player, PCLASS_MAGE, WP_THIRD, special, TXT_WEAPON_M3);
+        TryPickupWeapon(player, PCLASS_MAGE, WT_THIRD, special, TXT_WEAPON_M3);
         return;
 
         // 2nd and 3rd Fighter Weapons
     case SPR_WFAX:              // Timon's Axe
-        TryPickupWeapon(player, PCLASS_FIGHTER, WP_SECOND, special,
+        TryPickupWeapon(player, PCLASS_FIGHTER, WT_SECOND, special,
                         TXT_WEAPON_F2);
         return;
     case SPR_WFHM:              // Hammer of Retribution
-        TryPickupWeapon(player, PCLASS_FIGHTER, WP_THIRD, special,
+        TryPickupWeapon(player, PCLASS_FIGHTER, WT_THIRD, special,
                         TXT_WEAPON_F3);
         return;
 
         // 2nd and 3rd Cleric Weapons
     case SPR_WCSS:              // Serpent Staff
-        TryPickupWeapon(player, PCLASS_CLERIC, WP_SECOND, special,
+        TryPickupWeapon(player, PCLASS_CLERIC, WT_SECOND, special,
                         TXT_WEAPON_C2);
         return;
     case SPR_WCFM:              // Firestorm
-        TryPickupWeapon(player, PCLASS_CLERIC, WP_THIRD, special,
+        TryPickupWeapon(player, PCLASS_CLERIC, WT_THIRD, special,
                         TXT_WEAPON_C3);
         return;
 
@@ -1284,7 +1284,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         }
         target->flags &= ~MF_SOLID;
         target->flags2 &= ~MF2_FLY;
-        target->player->powers[pw_flight] = 0;
+        target->player->powers[PT_FLIGHT] = 0;
         target->player->playerstate = PST_DEAD;
         target->player->update |= PSF_STATE | PSF_POWERS;
         // Let the engine know about this, too. The DEAD flag will be
@@ -1457,7 +1457,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         {
             if(!ActiveMinotaur(master->player))
             {
-                master->player->powers[pw_minotaur] = 0;
+                master->player->powers[PT_MINOTAUR] = 0;
             }
         }
     }
@@ -1530,7 +1530,7 @@ boolean P_MorphPlayer(player_t *player)
     angle_t angle;
     int     oldFlags2;
 
-    if(player->powers[pw_invulnerability])
+    if(player->powers[PT_INVULNERABILITY])
     {                           // Immune when invulnerable
         return (false);
     }
@@ -1623,7 +1623,7 @@ boolean P_MorphMonster(mobj_t *actor)
         {
             if(!ActiveMinotaur(master->player))
             {
-                master->player->powers[pw_minotaur] = 0;
+                master->player->powers[PT_MINOTAUR] = 0;
             }
         }
     }
@@ -1659,7 +1659,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
             superCount = player->inventory[i].count;
         }
     }
-    if((gameskill == sk_baby) && (normalCount * 25 >= saveHealth))
+    if((gameskill == SM_BABY) && (normalCount * 25 >= saveHealth))
     {                           // Use quartz flasks
         count = (saveHealth + 24) / 25;
         for(i = 0; i < count; i++)
@@ -1677,7 +1677,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
             P_InventoryRemoveArtifact(player, superSlot);
         }
     }
-    else if((gameskill == sk_baby) &&
+    else if((gameskill == SM_BABY) &&
             (superCount * 100 + normalCount * 25 >= saveHealth))
     {                           // Use mystic urns and quartz flasks
         count = (saveHealth + 24) / 25;
@@ -1799,7 +1799,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
         if(damage < 1000 &&
            ((P_GetPlayerCheats(target->player) & CF_GODMODE) ||
-            target->player->powers[pw_invulnerability]))
+            target->player->powers[PT_INVULNERABILITY]))
         {
             return;
         }
@@ -1814,7 +1814,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         return;
     }
     player = target->player;
-    if(player && gameskill == sk_baby)
+    if(player && gameskill == SM_BABY)
     {
         // Take half damage in trainer mode
         damage >>= 1;
@@ -1986,7 +1986,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
             damage -= saved >> FRACBITS;
         }
-        if(damage >= player->health && ((gameskill == sk_baby) || deathmatch)
+        if(damage >= player->health && ((gameskill == SM_BABY) || deathmatch)
            && !player->morphTics)
         {                       // Try to use some inventory health
             P_AutoUseHealth(player, damage - player->health + 1);
@@ -2056,7 +2056,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             }
         }
         if(source && (source->player) &&
-           (source->player->readyweapon == WP_FOURTH))
+           (source->player->readyweapon == WT_FOURTH))
         {
             // Always extreme death from fourth weapon
             target->health = -5000;
@@ -2171,7 +2171,7 @@ void P_FallingDamage(player_t *player)
 
 void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
 {
-    if((P_GetPlayerCheats(player) & CF_GODMODE) || player->powers[pw_invulnerability])
+    if((P_GetPlayerCheats(player) & CF_GODMODE) || player->powers[PT_INVULNERABILITY])
         return;
 
     player->poisoncount += poison;
@@ -2203,17 +2203,17 @@ void P_PoisonDamage(player_t *player, mobj_t *source, int damage,
     {                           // mobj is invulnerable
         return;
     }
-    if(player && gameskill == sk_baby)
+    if(player && gameskill == SM_BABY)
     {
         // Take half damage in trainer mode
         damage >>= 1;
     }
     if(damage < 1000 &&
-       ((P_GetPlayerCheats(player) & CF_GODMODE) || player->powers[pw_invulnerability]))
+       ((P_GetPlayerCheats(player) & CF_GODMODE) || player->powers[PT_INVULNERABILITY]))
     {
         return;
     }
-    if(damage >= player->health && ((gameskill == sk_baby) || deathmatch) &&
+    if(damage >= player->health && ((gameskill == SM_BABY) || deathmatch) &&
        !player->morphTics)
     {                           // Try to use some inventory health
         P_AutoUseHealth(player, damage - player->health + 1);

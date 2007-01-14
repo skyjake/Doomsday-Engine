@@ -60,7 +60,7 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 #if __JHERETIC__
-int     PSpriteSY[NUMCLASSES][NUMWEAPONS] = {
+int     PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
 // Player
     { 0, 5 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT,
      15 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT, 15 * FRACUNIT},
@@ -72,7 +72,7 @@ int     PSpriteSY[NUMCLASSES][NUMWEAPONS] = {
 
 #if __JHEXEN__
 // Y-adjustment values for full screen (4 weapons)
-int     PSpriteSY[NUMCLASSES][NUMWEAPONS] = {
+int     PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
     {0, -12 * FRACUNIT, -10 * FRACUNIT, 10 * FRACUNIT}, // Fighter
     {-8 * FRACUNIT, 10 * FRACUNIT, 10 * FRACUNIT, 0},   // Cleric
     {9 * FRACUNIT, 20 * FRACUNIT, 20 * FRACUNIT, 20 * FRACUNIT},    // Mage
@@ -82,7 +82,7 @@ int     PSpriteSY[NUMCLASSES][NUMWEAPONS] = {
 
 #if __JSTRIFE__
 // Y-adjustment values for full screen (10 weapons)
-int     PSpriteSY[NUMCLASSES][NUMWEAPONS] = {
+int     PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 #endif
@@ -143,17 +143,17 @@ void HU_UpdatePlayerSprite(int pnum)
         ddpsp->alpha = 1;
 
 #if __JDOOM__ || __JHERETIC__
-        if((pl->powers[pw_invisibility] > 4 * 32) ||
-           (pl->powers[pw_invisibility] & 8))
+        if((pl->powers[PT_INVISIBILITY] > 4 * 32) ||
+           (pl->powers[PT_INVISIBILITY] & 8))
         {
             // shadow draw
             ddpsp->alpha = .25f;
         }
         else
 #elif __JHEXEN__
-        if(pl->powers[pw_invulnerability] && pl->class == PCLASS_CLERIC)
+        if(pl->powers[PT_INVULNERABILITY] && pl->class == PCLASS_CLERIC)
         {
-            if(pl->powers[pw_invulnerability] > 4 * 32)
+            if(pl->powers[PT_INVULNERABILITY] > 4 * 32)
             {
                 if(pl->plr->mo->flags2 & MF2_DONTDRAW)
                 {               // don't draw the psprite
@@ -164,7 +164,7 @@ void HU_UpdatePlayerSprite(int pnum)
                     ddpsp->alpha = .666f;
                 }
             }
-            else if(pl->powers[pw_invulnerability] & 8)
+            else if(pl->powers[PT_INVULNERABILITY] & 8)
             {
                 ddpsp->alpha = .333f;
             }
@@ -184,9 +184,9 @@ void HU_UpdatePlayerSprite(int pnum)
         }
 #if !__JSTRIFE__
         // Needs fullbright?
-        if((pl->powers[pw_infrared] > 4 * 32) || (pl->powers[pw_infrared] & 8)
+        if((pl->powers[PT_INFRARED] > 4 * 32) || (pl->powers[PT_INFRARED] & 8)
 # if __JDOOM__
-           || (pl->powers[pw_invulnerability] > 30)
+           || (pl->powers[PT_INVULNERABILITY] > 30)
 # endif
            )
         {

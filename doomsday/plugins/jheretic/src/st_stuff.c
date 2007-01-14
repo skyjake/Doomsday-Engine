@@ -320,7 +320,7 @@ static dpatch_t     spinbooklump;
 static dpatch_t     spinflylump;
 
 // 3 keys
-static dpatch_t keys[NUMKEYS];
+static dpatch_t keys[NUM_KEY_TYPES];
 
 // CVARs for the HUD/Statusbar
 cvar_t hudCVars[] =
@@ -526,14 +526,14 @@ void ST_updateWidgets(void)
     ammotype_t ammotype;
     boolean found;
     player_t *plr = &players[consoleplayer];
-    int     lvl = (plr->powers[pw_weaponlevel2]? 1 : 0);
+    int     lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
     statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
     CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
 
     // must redirect the pointer if the ready weapon has changed.
     found = false;
-    for(ammotype=0; ammotype < NUMAMMO && !found; ++ammotype)
+    for(ammotype=0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
     {
         if(!weaponinfo[plr->readyweapon][plr->class].mode[lvl].ammotype[ammotype])
             continue; // Weapon does not use this type of ammo.
@@ -609,12 +609,12 @@ void ST_createWidgets(void)
     ammotype_t ammotype;
     boolean    found;
     int width, temp;
-    int lvl = (plyr->powers[pw_weaponlevel2]? 1 : 0);
+    int lvl = (plyr->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
     // ready weapon ammo
     // TODO: Only supports one type of ammo per weapon.
     found = false;
-    for(ammotype=0; ammotype < NUMAMMO && !found; ++ammotype)
+    for(ammotype=0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
     {
         if(!weaponinfo[plyr->readyweapon][plyr->class].mode[lvl].ammotype[ammotype])
             continue; // Weapon does not take this ammo.
@@ -626,7 +626,7 @@ void ST_createWidgets(void)
     }
     if(!found) // Weapon requires no ammo at all.
     {
-        // HERETIC.EXE returns an address beyond plyr->ammo[NUMAMMO]
+        // HERETIC.EXE returns an address beyond plyr->ammo[NUM_AMMO_TYPES]
         // if weaponinfo[plyr->readyweapon].ammo == am_noammo
         // ...obviously a bug.
 
@@ -804,10 +804,10 @@ void ST_Ticker(void)
         HealthMarker += delta;
     }
     // Tome of Power countdown sound.
-    if(plyr->powers[pw_weaponlevel2] &&
-       plyr->powers[pw_weaponlevel2] < cfg.tomeSound * 35)
+    if(plyr->powers[PT_WEAPONLEVEL2] &&
+       plyr->powers[PT_WEAPONLEVEL2] < cfg.tomeSound * 35)
     {
-        int     timeleft = plyr->powers[pw_weaponlevel2] / 35;
+        int     timeleft = plyr->powers[PT_WEAPONLEVEL2] / 35;
 
         if(tomePlay != timeleft)
         {
@@ -1065,13 +1065,13 @@ void ST_drawIcons(void)
     Draw_BeginZoom(cfg.hudScale, 2, 2);
 
     // Flight icons
-    if(plyr->powers[pw_flight])
+    if(plyr->powers[PT_FLIGHT])
     {
         int     offset = (cfg.hudShown[HUD_AMMO] && cfg.screenblocks > 10 &&
                           plyr->readyweapon > 0 &&
                           plyr->readyweapon < 7) ? 43 : 0;
-        if(plyr->powers[pw_flight] > BLINKTHRESHOLD ||
-           !(plyr->powers[pw_flight] & 16))
+        if(plyr->powers[PT_FLIGHT] > BLINKTHRESHOLD ||
+           !(plyr->powers[PT_FLIGHT] & 16))
         {
             frame = (leveltime / 3) & 15;
             if(plyr->plr->mo->flags2 & MF2_FLY)
@@ -1111,15 +1111,15 @@ void ST_drawIcons(void)
 
     Draw_BeginZoom(cfg.hudScale, 318, 2);
 
-    if(plyr->powers[pw_weaponlevel2] && !plyr->morphTics)
+    if(plyr->powers[PT_WEAPONLEVEL2] && !plyr->morphTics)
     {
-        if(cfg.tomeCounter || plyr->powers[pw_weaponlevel2] > BLINKTHRESHOLD
-           || !(plyr->powers[pw_weaponlevel2] & 16))
+        if(cfg.tomeCounter || plyr->powers[PT_WEAPONLEVEL2] > BLINKTHRESHOLD
+           || !(plyr->powers[PT_WEAPONLEVEL2] & 16))
         {
             frame = (leveltime / 3) & 15;
-            if(cfg.tomeCounter && plyr->powers[pw_weaponlevel2] < 35)
+            if(cfg.tomeCounter && plyr->powers[PT_WEAPONLEVEL2] < 35)
             {
-                gl.Color4f(1, 1, 1, plyr->powers[pw_weaponlevel2] / 35.0f);
+                gl.Color4f(1, 1, 1, plyr->powers[PT_WEAPONLEVEL2] / 35.0f);
             }
             GL_DrawPatchLitAlpha(300, 17, 1, iconalpha, spinbooklump.lump + frame);
             GL_Update(DDUF_TOP | DDUF_MESSAGES);
@@ -1128,9 +1128,9 @@ void ST_drawIcons(void)
         {
             GL_Update(DDUF_TOP | DDUF_MESSAGES);
         }
-        if(plyr->powers[pw_weaponlevel2] < cfg.tomeCounter * 35)
+        if(plyr->powers[PT_WEAPONLEVEL2] < cfg.tomeCounter * 35)
         {
-            _DrSmallNumber(1 + plyr->powers[pw_weaponlevel2] / 35, 303, 30,
+            _DrSmallNumber(1 + plyr->powers[PT_WEAPONLEVEL2] / 35, 303, 30,
                            false,1,1,1,textalpha);
         }
     }
@@ -1440,11 +1440,11 @@ void ST_doFullscreenStuff(void)
         if(plyr->readyweapon > 0 && plyr->readyweapon < 7)
         {
             ammotype_t ammotype;
-            int lvl = (plyr->powers[pw_weaponlevel2]? 1 : 0);
+            int lvl = (plyr->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
             // TODO: Only supports one type of ammo per weapon.
             // for each type of ammo this weapon takes.
-            for(ammotype=0; ammotype < NUMAMMO; ++ammotype)
+            for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
             {
                 if(!weaponinfo[plyr->readyweapon][plyr->class].mode[lvl].ammotype[ammotype])
                     continue;
@@ -1491,17 +1491,17 @@ void ST_doFullscreenStuff(void)
         x = 6;
 
         // Draw keys above health?
-        if(plyr->keys[key_yellow])
+        if(plyr->keys[KT_YELLOW])
         {
             GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1, iconalpha, W_GetNumForName("ykeyicon"));
             x += 11;
         }
-        if(plyr->keys[key_green])
+        if(plyr->keys[KT_GREEN])
         {
             GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1, iconalpha, W_GetNumForName("gkeyicon"));
             x += 11;
         }
-        if(plyr->keys[key_blue])
+        if(plyr->keys[KT_BLUE])
         {
             GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1, iconalpha, W_GetNumForName("bkeyicon"));
         }

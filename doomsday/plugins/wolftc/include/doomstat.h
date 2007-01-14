@@ -63,9 +63,9 @@ extern boolean  devparm;           // DEBUG: launched with -devparm
 // -----------------------------------------------------
 // Game Mode - identify IWAD as shareware, retail etc.
 //
-extern GameMode_t gamemode;
+extern gamemode_t gamemode;
 extern int      gamemodebits;
-extern GameMission_t gamemission;
+extern gamemission_t gamemission;
 
 
 // -------------------------------------------
@@ -73,14 +73,14 @@ extern GameMission_t gamemission;
 //
 
 // Defaults for menu, methinks.
-extern skill_t  startskill;
+extern skillmode_t  startskill;
 extern int      startepisode;
 extern int      startmap;
 
 extern boolean  autostart;
 
 // Selected by user.
-extern skill_t  gameskill;
+extern skillmode_t  gameskill;
 extern int      gameepisode;
 extern int      gamemap;
 
@@ -168,7 +168,7 @@ extern wbstartstruct_t wminfo;
 
 // LUT of ammunition limits for each kind.
 // This doubles with BackPack powerup item.
-extern int      maxammo[NUMAMMO];
+extern int      maxammo[NUM_AMMO_TYPES];
 
 //-----------------------------------------
 // Internal parameters, used for engine.

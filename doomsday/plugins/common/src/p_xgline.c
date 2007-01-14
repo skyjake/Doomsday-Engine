@@ -1279,7 +1279,7 @@ int C_DECL XL_DoKey(line_t *line, boolean dummy, void *context,
 
         return false;
     }
-    for(i = 0; i < NUMKEYS; i++)
+    for(i = 0; i < NUM_KEY_TYPES; i++)
     {
         if(info->iparm[0] & (1 << i))
             P_GiveKey(player, i);

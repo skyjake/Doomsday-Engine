@@ -137,7 +137,7 @@ void    DetectIWADs(void);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void    G_PlayerReborn(int player);
-void    G_InitNew(skill_t skill, int episode, int map);
+void    G_InitNew(skillmode_t skill, int episode, int map);
 void    G_DoInitNew(void);
 void    G_DoReborn(int playernum);
 void    G_DoLoadLevel(void);
@@ -165,7 +165,7 @@ void    G_StopDemo(void);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 #if __JDOOM__
-extern GameMission_t gamemission;
+extern gamemission_t gamemission;
 #endif
 
 #if __JHERETIC__
@@ -183,7 +183,7 @@ FILE   *rndDebugfile;
 game_config_t cfg; // The global cfg.
 
 gameaction_t gameaction;
-skill_t gameskill;
+skillmode_t gameskill;
 int     gameepisode;
 int     gamemap;
 int     nextmap;                // if non zero this will be the next map
@@ -254,9 +254,9 @@ int gsvSecrets = 0;
 #endif
 
 int gsvCurrentWeapon;
-int gsvWeapons[NUMWEAPONS];
-int gsvKeys[NUMKEYS];
-int gsvAmmo[NUMAMMO];
+int gsvWeapons[NUM_WEAPON_TYPES];
+int gsvKeys[NUM_KEY_TYPES];
+int gsvAmmo[NUM_AMMO_TYPES];
 
 char *gsvMapName = NOTAMAPNAME;
 
@@ -299,48 +299,48 @@ cvar_t gamestatusCVars[] =
 
 #if __JDOOM__
    // Ammo
-   {"player-ammo-bullets", READONLYCVAR, CVT_INT, &gsvAmmo[am_clip], 0, 0},
-   {"player-ammo-shells", READONLYCVAR, CVT_INT, &gsvAmmo[am_shell], 0, 0},
-   {"player-ammo-cells", READONLYCVAR, CVT_INT, &gsvAmmo[am_cell], 0, 0},
-   {"player-ammo-missiles", READONLYCVAR, CVT_INT, &gsvAmmo[am_misl], 0, 0},
+   {"player-ammo-bullets", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CLIP], 0, 0},
+   {"player-ammo-shells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_SHELL], 0, 0},
+   {"player-ammo-cells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CELL], 0, 0},
+   {"player-ammo-missiles", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MISSILE], 0, 0},
    // Weapons
-   {"player-weapon-fist", READONLYCVAR, CVT_INT, &gsvWeapons[wp_fist], 0, 0},
-   {"player-weapon-pistol", READONLYCVAR, CVT_INT, &gsvWeapons[wp_pistol], 0, 0},
-   {"player-weapon-shotgun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_shotgun], 0, 0},
-   {"player-weapon-chaingun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_chaingun], 0, 0},
-   {"player-weapon-mlauncher", READONLYCVAR, CVT_INT, &gsvWeapons[wp_missile], 0, 0},
-   {"player-weapon-plasmarifle", READONLYCVAR, CVT_INT, &gsvWeapons[wp_plasma], 0, 0},
-   {"player-weapon-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[wp_bfg], 0, 0},
-   {"player-weapon-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[wp_chainsaw], 0, 0},
-   {"player-weapon-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[wp_supershotgun], 0, 0},
+   {"player-weapon-fist", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0},
+   {"player-weapon-pistol", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0},
+   {"player-weapon-shotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0},
+   {"player-weapon-chaingun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0},
+   {"player-weapon-mlauncher", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0},
+   {"player-weapon-plasmarifle", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0},
+   {"player-weapon-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0},
+   {"player-weapon-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0},
+   {"player-weapon-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_NINETH], 0, 0},
    // Keys
-   {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[it_bluecard], 0, 0},
-   {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[it_yellowcard], 0, 0},
-   {"player-key-red", READONLYCVAR, CVT_INT, &gsvKeys[it_redcard], 0, 0},
-   {"player-key-blueskull", READONLYCVAR, CVT_INT, &gsvKeys[it_blueskull], 0, 0},
-   {"player-key-yellowskull", READONLYCVAR, CVT_INT, &gsvKeys[it_yellowskull], 0, 0},
-   {"player-key-redskull", READONLYCVAR, CVT_INT, &gsvKeys[it_redskull], 0, 0},
+   {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUECARD], 0, 0},
+   {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWCARD], 0, 0},
+   {"player-key-red", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDCARD], 0, 0},
+   {"player-key-blueskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUESKULL], 0, 0},
+   {"player-key-yellowskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWSKULL], 0, 0},
+   {"player-key-redskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDSKULL], 0, 0},
 #elif __JHERETIC__
    // Ammo
-   {"player-ammo-goldwand", READONLYCVAR, CVT_INT, &gsvAmmo[am_goldwand], 0, 0},
-   {"player-ammo-crossbow", READONLYCVAR, CVT_INT, &gsvAmmo[am_crossbow], 0, 0},
-   {"player-ammo-dragonclaw", READONLYCVAR, CVT_INT, &gsvAmmo[am_blaster], 0, 0},
-   {"player-ammo-hellstaff", READONLYCVAR, CVT_INT, &gsvAmmo[am_skullrod], 0, 0},
-   {"player-ammo-phoenixrod", READONLYCVAR, CVT_INT, &gsvAmmo[am_phoenixrod], 0, 0},
-   {"player-ammo-mace", READONLYCVAR, CVT_INT, &gsvAmmo[am_mace], 0, 0},
+   {"player-ammo-goldwand", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CRYSTAL], 0, 0},
+   {"player-ammo-crossbow", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ARROW], 0, 0},
+   {"player-ammo-dragonclaw", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ORB], 0, 0},
+   {"player-ammo-hellstaff", READONLYCVAR, CVT_INT, &gsvAmmo[AT_RUNE], 0, 0},
+   {"player-ammo-phoenixrod", READONLYCVAR, CVT_INT, &gsvAmmo[AT_FIREORB], 0, 0},
+   {"player-ammo-mace", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MSPHERE], 0, 0},
     // Weapons
-   {"player-weapon-staff", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIRST], 0, 0},
-   {"player-weapon-goldwand", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SECOND], 0, 0},
-   {"player-weapon-crossbow", READONLYCVAR, CVT_INT, &gsvWeapons[WP_THIRD], 0, 0},
-   {"player-weapon-dragonclaw", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FOURTH], 0, 0},
-   {"player-weapon-hellstaff", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIFTH], 0, 0},
-   {"player-weapon-phoenixrod", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SIXTH], 0, 0},
-   {"player-weapon-mace", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SEVENTH], 0, 0},
-   {"player-weapon-gauntlets", READONLYCVAR, CVT_INT, &gsvWeapons[WP_EIGHTH], 0, 0},
+   {"player-weapon-staff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0},
+   {"player-weapon-goldwand", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0},
+   {"player-weapon-crossbow", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0},
+   {"player-weapon-dragonclaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0},
+   {"player-weapon-hellstaff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0},
+   {"player-weapon-phoenixrod", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0},
+   {"player-weapon-mace", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0},
+   {"player-weapon-gauntlets", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0},
    // Keys
-   {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[key_yellow], 0, 0},
-   {"player-key-green", READONLYCVAR, CVT_INT, &gsvKeys[key_green], 0, 0},
-   {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[key_blue], 0, 0},
+   {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOW], 0, 0},
+   {"player-key-green", READONLYCVAR, CVT_INT, &gsvKeys[KT_GREEN], 0, 0},
+   {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUE], 0, 0},
    // Artifacts
    {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invulnerability], 0, 0},
    {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_invisibility], 0, 0},
@@ -354,25 +354,25 @@ cvar_t gamestatusCVars[] =
    {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvArtifacts[arti_teleport], 0, 0},
 #elif __JHEXEN__
    // Mana
-   {"player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[MANA_1], 0, 0},
-   {"player-mana-green", READONLYCVAR, CVT_INT, &gsvAmmo[MANA_2], 0, 0},
+   {"player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[AT_BLUEMANA], 0, 0},
+   {"player-mana-green", READONLYCVAR, CVT_INT, &gsvAmmo[AT_GREENMANA], 0, 0},
    // Keys
-   {"player-key-steel", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_1], 0, 0},
-   {"player-key-cave", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_2], 0, 0},
-   {"player-key-axe", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_3], 0, 0},
-   {"player-key-fire", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_4], 0, 0},
-   {"player-key-emerald", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_5], 0, 0},
-   {"player-key-dungeon", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_6], 0, 0},
-   {"player-key-silver", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_7], 0, 0},
-   {"player-key-rusted", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_8], 0, 0},
-   {"player-key-horn", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_9], 0, 0},
-   {"player-key-swamp", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_A], 0, 0},
-   {"player-key-castle", READONLYCVAR, CVT_INT, &gsvKeys[KKEY_B], 0, 0},
+   {"player-key-steel", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY1], 0, 0},
+   {"player-key-cave", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY2], 0, 0},
+   {"player-key-axe", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY3], 0, 0},
+   {"player-key-fire", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY4], 0, 0},
+   {"player-key-emerald", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY5], 0, 0},
+   {"player-key-dungeon", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY6], 0, 0},
+   {"player-key-silver", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY7], 0, 0},
+   {"player-key-rusted", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY8], 0, 0},
+   {"player-key-horn", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY9], 0, 0},
+   {"player-key-swamp", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYA], 0, 0},
+   {"player-key-castle", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYB], 0, 0},
    // Weapons
-   {"player-weapon-first", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FIRST], 0, 0},
-   {"player-weapon-second", READONLYCVAR, CVT_INT, &gsvWeapons[WP_SECOND], 0, 0},
-   {"player-weapon-third", READONLYCVAR, CVT_INT, &gsvWeapons[WP_THIRD], 0, 0},
-   {"player-weapon-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WP_FOURTH], 0, 0},
+   {"player-weapon-first", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0},
+   {"player-weapon-second", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0},
+   {"player-weapon-third", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0},
+   {"player-weapon-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0},
    // Weapon Pieces
    {"player-weapon-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0},
    {"player-weapon-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0},
@@ -419,7 +419,7 @@ cvar_t gamestatusCVars[] =
 
 static gamestate_t gamestate = GS_DEMOSCREEN;
 
-static skill_t d_skill;
+static skillmode_t d_skill;
 static int d_episode;
 static int d_map;
 
@@ -614,7 +614,7 @@ void G_DoLoadLevel(void)
 
     P_SetupLevel(gameepisode, gamemap, 0, gameskill);
     Set(DD_DISPLAYPLAYER, consoleplayer);   // view the guy you are playing
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
 
     Z_CheckHeap();
 
@@ -680,7 +680,7 @@ boolean G_Responder(event_t *ev)
 
 #endif
     // any key/button down pops up menu if in demos
-    if(gameaction == ga_nothing && !singledemo && !menuactive &&
+    if(gameaction == GA_NONE && !singledemo && !menuactive &&
        (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
     {
         if(ev->state == EVS_DOWN &&
@@ -772,7 +772,7 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
     gsvArmor = pl->armorpoints;
 #endif
     // Owned keys
-    for(i = 0; i < NUMKEYS; ++i)
+    for(i = 0; i < NUM_KEY_TYPES; ++i)
 #if __JHEXEN__
         gsvKeys[i] = (pl->keys & (1 << i))? 1 : 0;
 #else
@@ -782,7 +782,7 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
     gsvCurrentWeapon = pl->readyweapon;
 
     // owned weapons
-    for(i = 0; i < NUMWEAPONS; ++i)
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
         gsvWeapons[i] = pl->weaponowned[i];
 
 #if __JHEXEN__
@@ -793,7 +793,7 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
     gsvWPieces[3] = (pl->pieces == 7)? 1 : 0;
 #endif
     // current ammo amounts
-    for(i = 0; i < NUMAMMO; ++i)
+    for(i = 0; i < NUM_AMMO_TYPES; ++i)
         gsvAmmo[i] = pl->ammo[i];
 
 #if __JHERETIC__ || __JHEXEN__
@@ -847,60 +847,60 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     }
 
     // do things to change the game state
-    while(gameaction != ga_nothing)
+    while(gameaction != GA_NONE)
     {
         switch(gameaction)
         {
 #if __JHEXEN__ || __JSTRIFE__
-        case ga_initnew:
+        case GA_INITNEW:
             G_DoInitNew();
             break;
-        case ga_singlereborn:
+        case GA_SINGLEREBORN:
             G_DoSingleReborn();
             break;
-        case ga_leavemap:
+        case GA_LEAVEMAP:
             Draw_TeleportIcon();
             G_DoTeleportNewMap();
             break;
 #endif
-        case ga_loadlevel:
+        case GA_LOADLEVEL:
             G_DoLoadLevel();
             break;
 
-        case ga_newgame:
+        case GA_NEWGAME:
             G_DoNewGame();
             break;
 
-        case ga_loadgame:
+        case GA_LOADGAME:
             G_DoLoadGame();
             break;
 
-        case ga_savegame:
+        case GA_SAVEGAME:
             G_DoSaveGame();
             break;
 
-        case ga_playdemo:
+        case GA_PLAYDEMO:
             G_DoPlayDemo();
             break;
 
-        case ga_completed:
+        case GA_COMPLETED:
             G_DoCompleted();
             break;
 
-        case ga_victory:
-            gameaction = ga_nothing;
+        case GA_VICTORY:
+            gameaction = GA_NONE;
             break;
 
-        case ga_worlddone:
+        case GA_WORLDDONE:
             G_DoWorldDone();
             break;
 
-        case ga_screenshot:
+        case GA_SCREENSHOT:
             G_DoScreenShot();
-            gameaction = ga_nothing;
+            gameaction = GA_NONE;
             break;
 
-        case ga_nothing:
+        case GA_NONE:
         default:
             break;
         }
@@ -1031,14 +1031,14 @@ void G_PlayerExitMap(int player)
 
     // Remember if flying
 #if __JHEXEN__ || __JSTRIFE__
-    flightPower = p->powers[pw_flight];
+    flightPower = p->powers[PT_FLIGHT];
 #endif
 
 #if !__JDOOM__
     // Strip flight artifacts?
     if(!deathmatch && newCluster) // Entering new cluster
     {
-        p->powers[pw_flight] = 0;
+        p->powers[PT_FLIGHT] = 0;
 
         for(i = 0; i < MAXARTICOUNT; i++)
             P_InventoryUseArtifact(p, arti_fly);
@@ -1050,7 +1050,7 @@ void G_PlayerExitMap(int player)
 
 #if __JHEXEN__ || __JSTRIFE__
     if(!newCluster && !deathmatch)
-        p->powers[pw_flight] = flightPower; // restore flight.
+        p->powers[PT_FLIGHT] = flightPower; // restore flight.
 #endif
 
     // Remove their keys.
@@ -1204,19 +1204,19 @@ void G_PlayerReborn(int player)
     p->health = MAXHEALTH;
 
 #if __JDOOM__
-    p->readyweapon = p->pendingweapon = wp_pistol;
-    p->weaponowned[wp_fist] = true;
-    p->weaponowned[wp_pistol] = true;
-    p->ammo[am_clip] = 50;
+    p->readyweapon = p->pendingweapon = WT_SECOND;
+    p->weaponowned[WT_FIRST] = true;
+    p->weaponowned[WT_SECOND] = true;
+    p->ammo[AT_CLIP] = 50;
 
     // See if the Values specify anything.
     P_InitPlayerValues(p);
 
 #elif __JHERETIC__
-    p->readyweapon = p->pendingweapon = WP_SECOND;
-    p->weaponowned[WP_FIRST] = true;
-    p->weaponowned[WP_SECOND] = true;
-    p->ammo[am_goldwand] = 50;
+    p->readyweapon = p->pendingweapon = WT_SECOND;
+    p->weaponowned[WT_FIRST] = true;
+    p->weaponowned[WT_SECOND] = true;
+    p->ammo[AT_CRYSTAL] = 50;
 
     if(gamemap == 9 || secret)
     {
@@ -1224,14 +1224,14 @@ void G_PlayerReborn(int player)
     }
 
 #else
-    p->readyweapon = p->pendingweapon = WP_FIRST;
-    p->weaponowned[WP_FIRST] = true;
+    p->readyweapon = p->pendingweapon = WT_FIRST;
+    p->weaponowned[WT_FIRST] = true;
     localQuakeHappening[player] = false;
 #endif
 
 #if __JDOOM__ || __JHERETIC__
     // Reset maxammo.
-    for(i = 0; i < NUMAMMO; i++)
+    for(i = 0; i < NUM_AMMO_TYPES; i++)
         p->maxammo[i] = maxammo[i];
 #endif
 
@@ -1273,7 +1273,7 @@ void G_DoReborn(int playernum)
 {
 #if __JHEXEN__ || __JSTRIFE__
     int     i;
-    boolean oldWeaponowned[NUMWEAPONS];
+    boolean oldWeaponowned[NUM_WEAPON_TYPES];
     int     oldKeys;
     int     oldPieces;
     int     bestWeapon;
@@ -1292,15 +1292,15 @@ void G_DoReborn(int playernum)
 #if __JHEXEN__ || __JSTRIFE__
         if(SV_HxRebornSlotAvailable())
         {   // Use the reborn code if the slot is available
-            gameaction = ga_singlereborn;
+            gameaction = GA_SINGLEREBORN;
         }
         else
         {   // Start a new game if there's no reborn info
-            gameaction = ga_newgame;
+            gameaction = GA_NEWGAME;
         }
 #else
         // reload the level from scratch
-        gameaction = ga_loadlevel;
+        gameaction = GA_LOADLEVEL;
 #endif
     }
     else                        // Netgame
@@ -1334,7 +1334,7 @@ void G_DoReborn(int playernum)
         // Cooperative net-play, retain keys and weapons
         oldKeys = players[playernum].keys;
         oldPieces = players[playernum].pieces;
-        for(i = 0; i < NUMWEAPONS; i++)
+        for(i = 0; i < NUM_WEAPON_TYPES; i++)
             oldWeaponowned[i] = players[playernum].weaponowned[i];
 #endif
 
@@ -1393,7 +1393,7 @@ void G_DoReborn(int playernum)
         // Restore keys and weapons
         players[playernum].keys = oldKeys;
         players[playernum].pieces = oldPieces;
-        for(bestWeapon = 0, i = 0; i < NUMWEAPONS; i++)
+        for(bestWeapon = 0, i = 0; i < NUM_WEAPON_TYPES; i++)
         {
             if(oldWeaponowned[i])
             {
@@ -1402,8 +1402,8 @@ void G_DoReborn(int playernum)
             }
         }
 
-        players[playernum].ammo[MANA_1] = 25;
-        players[playernum].ammo[MANA_2] = 25;
+        players[playernum].ammo[AT_BLUEMANA] = 25;
+        players[playernum].ammo[AT_GREENMANA] = 25;
         if(bestWeapon)
         {                       // Bring up the best weapon
             players[playernum].pendingweapon = bestWeapon;
@@ -1426,7 +1426,7 @@ void G_StartNewInit(void)
     RebornPosition = 0;
 }
 
-void G_StartNewGame(skill_t skill)
+void G_StartNewGame(skillmode_t skill)
 {
     int     realMap = 1;
 
@@ -1449,7 +1449,7 @@ void G_StartNewGame(skill_t skill)
  */
 void G_TeleportNewMap(int map, int position)
 {
-    gameaction = ga_leavemap;
+    gameaction = GA_LEAVEMAP;
     LeaveMap = map;
     LeavePosition = position;
 }
@@ -1459,13 +1459,13 @@ void G_DoTeleportNewMap(void)
     // Clients trust the server in these things.
     if(IS_CLIENT)
     {
-        gameaction = ga_nothing;
+        gameaction = GA_NONE;
         return;
     }
 
     SV_HxMapTeleport(LeaveMap, LeavePosition);
     G_ChangeGameState(GS_LEVEL);
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
     RebornPosition = LeavePosition;
 
     // Is there a briefing before this map?
@@ -1510,7 +1510,7 @@ void G_LeaveLevel(int map, int position, boolean secret)
   #endif
 #endif
 
-    gameaction = ga_completed;
+    gameaction = GA_COMPLETED;
 }
 
 /*
@@ -1522,27 +1522,27 @@ boolean G_IfVictory(void)
     if((gameepisode == 1 && gamemap == 30) ||
        (gameepisode == 2 && gamemap == 7))
     {
-        gameaction = ga_victory;
+        gameaction = GA_VICTORY;
         return true;
     }
 #elif __JDOOM__
     if((gamemap == 8) && (gamemode != commercial))
     {
-        gameaction = ga_victory;
+        gameaction = GA_VICTORY;
         return true;
     }
 
 #elif __JHERETIC__
     if(gamemap == 8)
     {
-        gameaction = ga_victory;
+        gameaction = GA_VICTORY;
         return true;
     }
 
 #elif __JHEXEN__ || __JSTRIFE__
     if(LeaveMap == -1 && LeavePosition == -1)
     {
-        gameaction = ga_victory;
+        gameaction = GA_VICTORY;
         return true;
     }
 #endif
@@ -1565,7 +1565,7 @@ void G_DoCompleted(void)
     if(FI_Debriefing(gameepisode, gamemap))
         return;
 
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
 
     for(i = 0; i < MAXPLAYERS; i++)
     {
@@ -1782,7 +1782,7 @@ void G_PrepareWIData(void)
 
 void G_WorldDone(void)
 {
-    gameaction = ga_worlddone;
+    gameaction = GA_WORLDDONE;
 
 #if __JDOOM__
     if(secretexit)
@@ -1797,7 +1797,7 @@ void G_DoWorldDone(void)
     gamemap = wminfo.next + 1;
 #endif
     G_DoLoadLevel();
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
     viewactive = true;
 }
 
@@ -1808,7 +1808,7 @@ void G_DoWorldDone(void)
  */
 void G_DoSingleReborn(void)
 {
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
     SV_HxLoadGame(SV_HxGetRebornSlot());
     SB_SetClassData();
 }
@@ -1821,13 +1821,13 @@ void G_DoSingleReborn(void)
 void G_LoadGame(int slot)
 {
     GameLoadSlot = slot;
-    gameaction = ga_loadgame;
+    gameaction = GA_LOADGAME;
 }
 #else
 void G_LoadGame(char *name)
 {
     strcpy(savename, name);
-    gameaction = ga_loadgame;
+    gameaction = GA_LOADGAME;
 }
 #endif
 
@@ -1838,7 +1838,7 @@ void G_DoLoadGame(void)
 {
     G_StopDemo();
     FI_Reset();
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
 
 #if __JHEXEN__ || __JSTRIFE__
 
@@ -1863,7 +1863,7 @@ void G_SaveGame(int slot, char *description)
 {
     savegameslot = slot;
     strcpy(savedescription, description);
-    gameaction = ga_savegame;
+    gameaction = GA_SAVEGAME;
 }
 
 /*
@@ -1882,24 +1882,24 @@ void G_DoSaveGame(void)
     SV_SaveGame(name, savedescription);
 #endif
 
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
     savedescription[0] = 0;
 
     P_SetMessage(players + consoleplayer, TXT_GAMESAVED, false);
 }
 
 #if __JHEXEN__ || __JSTRIFE__
-void G_DeferredNewGame(skill_t skill)
+void G_DeferredNewGame(skillmode_t skill)
 {
     d_skill = skill;
-    gameaction = ga_newgame;
+    gameaction = GA_NEWGAME;
 }
 
 void G_DoInitNew(void)
 {
     SV_HxInitBaseSlot();
     G_InitNew(d_skill, d_episode, d_map);
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
 }
 #endif
 
@@ -1907,16 +1907,16 @@ void G_DoInitNew(void)
  * Can be called by the startup code or the menu task,
  * consoleplayer, displayplayer, playeringame[] should be set.
  */
-void G_DeferedInitNew(skill_t skill, int episode, int map)
+void G_DeferedInitNew(skillmode_t skill, int episode, int map)
 {
     d_skill = skill;
     d_episode = episode;
     d_map = map;
 
 #if __JHEXEN__ || __JSTRIFE__
-    gameaction = ga_initnew;
+    gameaction = GA_INITNEW;
 #else
-    gameaction = ga_newgame;
+    gameaction = GA_NEWGAME;
 #endif
 }
 
@@ -1934,13 +1934,13 @@ void G_DoNewGame(void)
 #else
     G_StartNewGame(d_skill);
 #endif
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
 }
 
 /*
  * Start a new game.
  */
-void G_InitNew(skill_t skill, int episode, int map)
+void G_InitNew(skillmode_t skill, int episode, int map)
 {
     int     i;
 
@@ -1956,10 +1956,10 @@ void G_InitNew(skill_t skill, int episode, int map)
         paused = false;
     }
 
-    if(skill < sk_baby)
-        skill = sk_baby;
-    if(skill > sk_nightmare)
-        skill = sk_nightmare;
+    if(skill < SM_BABY)
+        skill = SM_BABY;
+    if(skill > SM_NIGHTMARE)
+        skill = SM_NIGHTMARE;
 
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
@@ -1975,14 +1975,14 @@ void G_InitNew(skill_t skill, int episode, int map)
 
 #if __JDOOM__ || __JHERETIC__
     // Is respawning enabled at all in nightmare skill?
-    if(skill == sk_nightmare)
+    if(skill == SM_NIGHTMARE)
         respawnmonsters = cfg.respawnMonstersNightmare;
 #endif
 
 // KLUDGE:
 #if __JDOOM__
     // Fast monsters?
-    if(fastparm || (skill == sk_nightmare && gameskill != sk_nightmare))
+    if(fastparm || (skill == SM_NIGHTMARE && gameskill != SM_NIGHTMARE))
     {
         for(i = S_SARG_RUN1; i <= S_SARG_RUN8; i++)
             states[i].tics = 1;
@@ -2005,9 +2005,9 @@ void G_InitNew(skill_t skill, int episode, int map)
     // Fast missiles?
 #if __JDOOM__ || __JHERETIC__
 #   if __JDOOM__
-    speed = (fastparm || (skill == sk_nightmare && gameskill != sk_nightmare));
+    speed = (fastparm || (skill == SM_NIGHTMARE && gameskill != SM_NIGHTMARE));
 #   else
-    speed = skill == sk_nightmare;
+    speed = skill == SM_NIGHTMARE;
 #   endif
 
     for(i = 0; MonsterMissileInfo[i].type != -1; i++)
@@ -2292,7 +2292,7 @@ char   *P_GetLevelName(int episode, int map)
 void G_DeferedPlayDemo(char *name)
 {
     strcpy(defdemoname, name);
-    gameaction = ga_playdemo;
+    gameaction = GA_PLAYDEMO;
 }
 
 void G_DoPlayDemo(void)
@@ -2301,7 +2301,7 @@ void G_DoPlayDemo(void)
     char   *lump;
     char    buf[128];
 
-    gameaction = ga_nothing;
+    gameaction = GA_NONE;
 
     // The lump should contain the path of the demo file.
     if(lnum < 0 || W_LumpLength(lnum) != 64)
@@ -2345,7 +2345,7 @@ void G_DemoAborted(void)
 
 void G_ScreenShot(void)
 {
-    gameaction = ga_screenshot;
+    gameaction = GA_SCREENSHOT;
 }
 
 void G_DoScreenShot(void)

@@ -107,12 +107,13 @@ extern game_import_t gi;
  */
 
 typedef enum {
-    sk_baby,
-    sk_easy,
-    sk_medium,
-    sk_hard,
-    sk_nightmare
-} skill_t;
+    SM_BABY,
+    SM_EASY,
+    SM_MEDIUM,
+    SM_HARD,
+    SM_NIGHTMARE,
+    NUM_SKILL_MODES
+} skillmode_t;
 
 #if 0
 typedef struct {
@@ -152,8 +153,9 @@ typedef enum {
     shareware,                     // 4 level demo
     registered,                    // HEXEN registered
     extended,                      // DeathKings
-    indetermined                   // Well, no IWAD found.
-} GameMode_t;
+    indetermined,                  // Well, no IWAD found.
+    NUM_GAME_MODES
+} gamemode_t;
 
 // Game mode bits for the above.
 #define GM_SHAREWARE        0x1    // 4 level demo
@@ -174,19 +176,19 @@ typedef enum {
 } gamestate_t;
 
 typedef enum {
-    ga_nothing,
-    ga_loadlevel,
-    ga_initnew,
-    ga_newgame,
-    ga_loadgame,
-    ga_savegame,
-    ga_playdemo,
-    ga_completed,
-    ga_leavemap,
-    ga_singlereborn,
-    ga_victory,
-    ga_worlddone,
-    ga_screenshot
+    GA_NONE,
+    GA_LOADLEVEL,
+    GA_INITNEW,
+    GA_NEWGAME,
+    GA_LOADGAME,
+    GA_SAVEGAME,
+    GA_PLAYDEMO,
+    GA_COMPLETED,
+    GA_LEAVEMAP,
+    GA_SINGLEREBORN,
+    GA_VICTORY,
+    GA_WORLDDONE,
+    GA_SCREENSHOT
 } gameaction_t;
 
 typedef enum {
@@ -368,8 +370,8 @@ typedef enum {
     PCLASS_CLERIC,
     PCLASS_MAGE,
     PCLASS_PIG,
-    NUMCLASSES
-} pclass_t;
+    NUM_PLAYER_CLASSES
+} playerclass_t;
 
 #define PCLASS_INFO(class)  (&classInfo[class])
 
@@ -391,40 +393,41 @@ typedef struct classinfo_s{
     int         piecex[3];          // temp
 } classinfo_t;
 
-extern classinfo_t classInfo[NUMCLASSES];
+extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 typedef enum {
-    KKEY_1,
-    KKEY_2,
-    KKEY_3,
-    KKEY_4,
-    KKEY_5,
-    KKEY_6,
-    KKEY_7,
-    KKEY_8,
-    KKEY_9,
-    KKEY_A,
-    KKEY_B,
-    NUMKEYS
+    KT_KEY1,
+    KT_KEY2,
+    KT_KEY3,
+    KT_KEY4,
+    KT_KEY5,
+    KT_KEY6,
+    KT_KEY7,
+    KT_KEY8,
+    KT_KEY9,
+    KT_KEYA,
+    KT_KEYB,
+    NUM_KEY_TYPES
 } keytype_t;
 
 typedef enum {
-    WP_FIRST,
-    WP_SECOND,
-    WP_THIRD,
-    WP_FOURTH,
-    NUMWEAPONS,
-    WP_NOCHANGE
+    WT_FIRST,
+    WT_SECOND,
+    WT_THIRD,
+    WT_FOURTH,
+    NUM_WEAPON_TYPES,
+
+    WT_NOCHANGE
 } weapontype_t;
 
 #define NUMWEAPLEVELS 1
 
 typedef enum {
-    MANA_1,
-    MANA_2,
-    NUMAMMO,
-    MANA_BOTH,
-    AM_NOAMMO
+    AT_BLUEMANA,
+    AT_GREENMANA,
+    NUM_AMMO_TYPES,
+
+    AT_NOAMMO
 } ammotype_t;
 
 #define MAX_MANA    200
@@ -437,8 +440,8 @@ typedef enum {
 
 typedef struct {
     int             gamemodebits;  // Game modes, weapon is available in.
-    int             ammotype[NUMAMMO];  // required ammo types.
-    int             pershot[NUMAMMO];   // Ammo used per shot of each type.
+    int             ammotype[NUM_AMMO_TYPES];  // required ammo types.
+    int             pershot[NUM_AMMO_TYPES];   // Ammo used per shot of each type.
     boolean         autofire;           // (True)= fire when raised if fire held.
     int             upstate;
     int             raisesound;         // Sound played when weapon is raised.
@@ -454,7 +457,7 @@ typedef struct {
     weaponmodeinfo_t mode[NUMWEAPLEVELS];
 } weaponinfo_t;
 
-extern weaponinfo_t weaponinfo[NUMWEAPONS][NUMCLASSES];
+extern weaponinfo_t weaponinfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 
 typedef enum {
     arti_none,
@@ -498,16 +501,16 @@ typedef enum {
 #define MAXARTICOUNT 25
 
 typedef enum {
-    pw_None,
-    pw_invulnerability,
-    pw_allmap,
-    pw_infrared,
-    pw_flight,
-    pw_shield,
-    pw_health2,
-    pw_speed,
-    pw_minotaur,
-    NUMPOWERS
+    PT_NONE,
+    PT_INVULNERABILITY,
+    PT_ALLMAP,
+    PT_INFRARED,
+    PT_FLIGHT,
+    PT_SHIELD,
+    PT_HEALTH2,
+    PT_SPEED,
+    PT_MINOTAUR,
+    NUM_POWER_TYPES
 } powertype_t;
 
 #define INVULNTICS (30*35)
@@ -548,7 +551,7 @@ typedef struct saveplayer_s {
     playerstate_t   playerstate;
     ticcmd_t        cmd;
 
-    pclass_t        class;         // player class type
+    playerclass_t        class;         // player class type
 
     fixed_t         viewz;         // focal origin above r.z
     fixed_t         viewheight;    // base height above floor for viewz
@@ -567,13 +570,13 @@ typedef struct saveplayer_s {
     artitype_t      readyArtifact;
     int             artifactCount;
     int             inventorySlotNum;
-    int             powers[NUMPOWERS];
+    int             powers[NUM_POWER_TYPES];
     int             keys;
     int             pieces;        // Fourth Weapon pieces
     signed int      frags[MAXPLAYERS];  // kills of other players
     weapontype_t    readyweapon;
     weapontype_t    pendingweapon; // wp_nochange if not changing
-    boolean         weaponowned[NUMWEAPONS];
+    boolean         weaponowned[NUM_WEAPON_TYPES];
     int             mana[NUMMANA];
     int             attackdown, usedown;    // true if button down last tic
     int             cheats;        // bit flags
@@ -629,7 +632,7 @@ extern char    *DevMapsDir;        // development maps directory
 extern boolean  cmdfrag;           // true if a CMD_FRAG packet should be sent out every
 
 //extern boolean playeringame[MAXPLAYERS];
-//extern pclass_t PlayerClass[MAXPLAYERS];
+//extern playerclass_t PlayerClass[MAXPLAYERS];
 //extern byte PlayerColor[MAXPLAYERS];
 
 //extern int consoleplayer; // player taking events and displaying
@@ -688,14 +691,14 @@ void            G_DeathMatchSpawnPlayer(int playernum);
 
 int             G_GetLevelNumber(int episode, int map);
 
-void            G_InitNew(skill_t skill, int episode, int map);
+void            G_InitNew(skillmode_t skill, int episode, int map);
 
-void            G_DeferedInitNew(skill_t skill, int episode, int map);
+void            G_DeferedInitNew(skillmode_t skill, int episode, int map);
 
 // can be called by the startup code or M_Responder
 // a normal game starts at map 1, but a warp test can start elsewhere
 
-void            G_DeferredNewGame(skill_t skill);
+void            G_DeferredNewGame(skillmode_t skill);
 
 void            G_DeferedPlayDemo(char *demo);
 void            G_DoPlayDemo(void);
@@ -710,7 +713,7 @@ void            G_SaveGame(int slot, char *description);
 
 // called by M_Responder
 
-void            G_RecordDemo(skill_t skill, int numplayers, int episode,
+void            G_RecordDemo(skillmode_t skill, int numplayers, int episode,
                              int map, char *name);
 // only called by startup code
 
@@ -721,7 +724,7 @@ void            G_TeleportNewMap(int map, int position);
 
 void            G_LeaveLevel(int map, int position, boolean secret);
 
-void            G_StartNewGame(skill_t skill);
+void            G_StartNewGame(skillmode_t skill);
 void            G_StartNewInit(void);
 
 void            G_WorldDone(void);
@@ -768,7 +771,7 @@ struct xsector_s* P_XSectorOfSubsector(subsector_t* sub);
 // carries out all thinking of monsters and players
 
 void            P_SetupLevel(int episode, int map, int playermask,
-                             skill_t skill);
+                             skillmode_t skill);
 
 // called by W_Ticker
 

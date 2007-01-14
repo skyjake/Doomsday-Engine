@@ -74,7 +74,7 @@ typedef struct player_s {
     playerstate_t   playerstate;
     ticcmd_t        cmd;
 
-    pclass_t        class;         // player class type
+    playerclass_t        class;         // player class type
 
     // bounded/scaled total momentum.
     fixed_t         bob;
@@ -87,8 +87,8 @@ typedef struct player_s {
     int             armortype;
 
     // Power ups. invinc and invis are tic counters.
-    int             powers[NUMPOWERS];
-    boolean         keys[NUMKEYS];
+    int             powers[NUM_POWER_TYPES];
+    boolean         keys[NUM_KEY_TYPES];
     boolean         backpack;
 
     int             frags[MAXPLAYERS];
@@ -97,9 +97,9 @@ typedef struct player_s {
     // Is wp_nochange if not changing.
     weapontype_t    pendingweapon;
 
-    boolean         weaponowned[NUMWEAPONS];
-    int             ammo[NUMAMMO];
-    int             maxammo[NUMAMMO];
+    boolean         weaponowned[NUM_WEAPON_TYPES];
+    int             ammo[NUM_AMMO_TYPES];
+    int             maxammo[NUM_AMMO_TYPES];
 
     // True if button down last tic.
     int             attackdown;

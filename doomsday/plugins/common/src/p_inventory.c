@@ -359,14 +359,14 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
     switch (arti)
     {
     case arti_invulnerability:
-        if(!P_GivePower(player, pw_invulnerability))
+        if(!P_GivePower(player, PT_INVULNERABILITY))
         {
             return (false);
         }
         break;
 # if __JHERETIC__
     case arti_invisibility:
-        if(!P_GivePower(player, pw_invisibility))
+        if(!P_GivePower(player, PT_INVISIBILITY))
         {
             return (false);
         }
@@ -408,15 +408,15 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         }
         else
         {
-            if(!P_GivePower(player, pw_weaponlevel2))
+            if(!P_GivePower(player, PT_WEAPONLEVEL2))
             {
                 return (false);
             }
-            if(player->readyweapon == WP_FIRST)
+            if(player->readyweapon == WT_FIRST)
             {
                 P_SetPsprite(player, ps_weapon, S_STAFFREADY2_1);
             }
-            else if(player->readyweapon == WP_EIGHTH)
+            else if(player->readyweapon == WT_EIGHTH)
             {
                 P_SetPsprite(player, ps_weapon, S_GAUNTLETREADY2_1);
             }
@@ -424,7 +424,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         break;
 # endif
     case arti_torch:
-        if(!P_GivePower(player, pw_infrared))
+        if(!P_GivePower(player, PT_INFRARED))
         {
             return (false);
         }
@@ -459,7 +459,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         P_ArtiTele(player);
         break;
     case arti_fly:
-        if(!P_GivePower(player, pw_flight))
+        if(!P_GivePower(player, PT_FLIGHT))
         {
             return (false);
         }
@@ -531,15 +531,15 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         }
         break;
     case arti_speed:
-        if(!P_GivePower(player, pw_speed))
+        if(!P_GivePower(player, PT_SPEED))
         {
             return (false);
         }
         break;
     case arti_boostmana:
-        if(!P_GiveMana(player, MANA_1, MAX_MANA))
+        if(!P_GiveMana(player, AT_BLUEMANA, MAX_MANA))
         {
-            if(!P_GiveMana(player, MANA_2, MAX_MANA))
+            if(!P_GiveMana(player, AT_GREENMANA, MAX_MANA))
             {
                 return false;
             }
@@ -547,7 +547,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         }
         else
         {
-            P_GiveMana(player, MANA_2, MAX_MANA);
+            P_GiveMana(player, AT_GREENMANA, MAX_MANA);
         }
         break;
     case arti_boostarmor:

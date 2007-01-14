@@ -657,7 +657,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
 #if __JHERETIC__
     // Check Tome of Power and other artifact hotkeys.
     if(actions[A_TOMEOFPOWER].on && !cmd->arti &&
-       !players[consoleplayer].powers[pw_weaponlevel2])
+       !players[consoleplayer].powers[PT_WEAPONLEVEL2])
     {
         actions[A_TOMEOFPOWER].on = false;
         cmd->arti = arti_tomeofpower;
@@ -711,7 +711,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         cmd->arti = arti_egg;
     }
     else if(actions[A_INVULNERABILITY].on && !cmd->arti &&
-            !players[consoleplayer].powers[pw_invulnerability])
+            !players[consoleplayer].powers[PT_INVULNERABILITY])
     {
         actions[A_INVULNERABILITY].on = false;
         cmd->arti = arti_invulnerability;
@@ -762,28 +762,28 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     // Determine whether a weapon change should be done.
     if(actions[A_WEAPONCYCLE1].on)  // Fist/chainsaw.
     {
-        if(ISWPN(wp_fist) && GOTWPN(wp_chainsaw))
-            i = wp_chainsaw;
-        else if(ISWPN(wp_chainsaw))
-            i = wp_fist;
-        else if(GOTWPN(wp_chainsaw))
-            i = wp_chainsaw;
+        if(ISWPN(WT_FIRST) && GOTWPN(WT_EIGHTH))
+            i = WT_EIGHTH;
+        else if(ISWPN(WT_EIGHTH))
+            i = WT_FIRST;
+        else if(GOTWPN(WT_EIGHTH))
+            i = WT_EIGHTH;
         else
-            i = wp_fist;
+            i = WT_FIRST;
 
         cmd->changeWeapon = i + 1;
     }
     else if(actions[A_WEAPONCYCLE2].on) // Shotgun/super sg.
     {
-        if(ISWPN(wp_shotgun) && GOTWPN(wp_supershotgun) &&
+        if(ISWPN(WT_THIRD) && GOTWPN(WT_NINETH) &&
            gamemode == commercial)
-            i = wp_supershotgun;
-        else if(ISWPN(wp_supershotgun))
-            i = wp_shotgun;
-        else if(GOTWPN(wp_supershotgun) && gamemode == commercial)
-            i = wp_supershotgun;
+            i = WT_NINETH;
+        else if(ISWPN(WT_NINETH))
+            i = WT_THIRD;
+        else if(GOTWPN(WT_NINETH) && gamemode == commercial)
+            i = WT_NINETH;
         else
-            i = wp_shotgun;
+            i = WT_THIRD;
 
         cmd->changeWeapon = i + 1;
     }
@@ -792,14 +792,14 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     // Determine whether a weapon change should be done.
     if(actions[A_WEAPONCYCLE1].on)  // Staff/Gauntlets.
     {
-        if(ISWPN(WP_FIRST) && GOTWPN(WP_EIGHTH))
-            i = WP_EIGHTH;
-        else if(ISWPN(WP_EIGHTH))
-            i = WP_FIRST;
-        else if(GOTWPN(WP_EIGHTH))
-            i = WP_EIGHTH;
+        if(ISWPN(WT_FIRST) && GOTWPN(WT_EIGHTH))
+            i = WT_EIGHTH;
+        else if(ISWPN(WT_EIGHTH))
+            i = WT_FIRST;
+        else if(GOTWPN(WT_EIGHTH))
+            i = WT_EIGHTH;
         else
-            i = WP_FIRST;
+            i = WT_FIRST;
 
         cmd->changeWeapon = i + 1;
     }
@@ -807,7 +807,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
 #endif
     {
         // Take the first weapon action.
-        for(i = 0; i < NUMWEAPONS; i++)
+        for(i = 0; i < NUM_WEAPON_TYPES; i++)
             if(actions[A_WEAPON1 + i].on)
             {
                 cmd->changeWeapon = i + 1;
@@ -931,7 +931,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         side = -MAXPLMOVE;
 
 #if __JHEXEN__
-    if(cplr->powers[pw_speed] && !cplr->morphTics)
+    if(cplr->powers[PT_SPEED] && !cplr->morphTics)
     {
         // Adjust for a player with a speed artifact
         forward = (3 * forward) >> 1;

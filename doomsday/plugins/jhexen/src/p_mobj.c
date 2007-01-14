@@ -1386,7 +1386,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 
     mobj->health =
         info->spawnhealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
-    if(gameskill != sk_nightmare)
+    if(gameskill != SM_NIGHTMARE)
     {
         mobj->reactiontime = info->reactiontime;
     }
@@ -1687,11 +1687,11 @@ void P_SpawnMapThing(thing_t * mthing)
     }
 
     // Check current skill with spawn flags
-    if(gameskill == sk_baby || gameskill == sk_easy)
+    if(gameskill == SM_BABY || gameskill == SM_EASY)
     {
         spawnMask = MTF_EASY;
     }
-    else if(gameskill == sk_hard || gameskill == sk_nightmare)
+    else if(gameskill == SM_HARD || gameskill == SM_NIGHTMARE)
     {
         spawnMask = MTF_HARD;
     }
@@ -2424,8 +2424,8 @@ boolean P_HealRadius(player_t *player)
             break;
         case PCLASS_MAGE: // Radius mana boost
             amount = 50 + (P_Random() % 50);
-            if((P_GiveMana(mo->player, MANA_1, amount)) ||
-               (P_GiveMana(mo->player, MANA_2, amount)))
+            if((P_GiveMana(mo->player, AT_BLUEMANA, amount)) ||
+               (P_GiveMana(mo->player, AT_GREENMANA, amount)))
             {
                 effective = true;
                 S_StartSound(SFX_MYSTICINCANT, mo);

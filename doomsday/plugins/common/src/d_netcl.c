@@ -280,7 +280,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
         boolean val;
 
         k = NetCl_ReadShort();
-        for(i = 0; i < NUMWEAPONS; ++i)
+        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
         {
             val = (k & (1 << i)) != 0;
 
@@ -436,7 +436,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         b = NetCl_ReadByte();
         // Only the non-zero powers are included in the message.
 #if __JHEXEN__ || __JSTRIFE__
-        for(i = 0; i < NUMPOWERS - 1; ++i)
+        for(i = 0; i < NUM_POWER_TYPES - 1; ++i)
         {
             byte val = ((b & (1 << i))? (NetCl_ReadByte() * 35) : 0);
 
@@ -448,10 +448,10 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             pl->powers[i + 1] = val;
         }
 #else
-        for(i = 0; i < NUMPOWERS; ++i)
+        for(i = 0; i < NUM_POWER_TYPES; ++i)
         {
 #  if __JDOOM__
-            if(i == pw_ironfeet || i == pw_strength)
+            if(i == PT_IRONFEET || i == PT_STRENGTH)
                 continue;
 #  endif
             {
@@ -472,7 +472,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
         b = NetCl_ReadByte();
 #if __JDOOM__ | __JHERETIC__
-        for(i = 0; i < NUMKEYS; ++i)
+        for(i = 0; i < NUM_KEY_TYPES; ++i)
         {
             boolean val = (b & (1 << i)) != 0;
 
@@ -507,7 +507,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         boolean val;
 
         b = NetCl_ReadByte();
-        for(i = 0; i < NUMWEAPONS; ++i)
+        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
         {
             val = (b & (1 << i)) != 0;
 
@@ -522,7 +522,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     if(flags & PSF_AMMO)
     {
-        for(i = 0; i < NUMAMMO; ++i)
+        for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
 #if __JHEXEN__ || __JSTRIFE__
             int val = (int) NetCl_ReadByte();
@@ -541,7 +541,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     if(flags & PSF_MAX_AMMO)
     {
 #if __JDOOM__ || __JHERETIC__                   // Hexen has no use for max ammo.
-        for(i = 0; i < NUMAMMO; i++)
+        for(i = 0; i < NUM_AMMO_TYPES; i++)
             pl->maxammo[i] = NetCl_ReadShort();
 #endif
     }

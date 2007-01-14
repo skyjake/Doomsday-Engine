@@ -188,8 +188,8 @@ int             P_Massacre(void);
 //
 // P_INTER
 //
-extern int      maxammo[NUMAMMO];
-extern int      clipammo[NUMAMMO];
+extern int      maxammo[NUM_AMMO_TYPES];
+extern int      clipammo[NUM_AMMO_TYPES];
 
 void            P_TouchSpecialThing(mobj_t *special, mobj_t *toucher);
 

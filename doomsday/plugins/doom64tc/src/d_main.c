@@ -66,15 +66,15 @@ boolean fastparm;               // checkparm of -fast
 boolean turboparm;              // checkparm of -turbo
 float   turbomul;               // multiplier for turbo
 
-skill_t startskill;
+skillmode_t startskill;
 int     startepisode;
 int     startmap;
 boolean autostart;
 FILE   *debugfile;
 
-GameMode_t gamemode;
+gamemode_t gamemode;
 int     gamemodebits;
-GameMission_t gamemission = doom;
+gamemission_t gamemission = GM_DOOM;
 
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
 char gameModeString[17];
@@ -116,7 +116,7 @@ char *borderLumps[] = {
  * @param mode          The game mode to change to.
  * @return boolean      (TRUE) if we changed game modes successfully.
  */
-boolean D_SetGameMode(GameMode_t mode)
+boolean D_SetGameMode(gamemode_t mode)
 {
     gamemode = mode;
 
@@ -190,7 +190,7 @@ void D_IdentifyFromData(void)
 {
     typedef struct {
         char  **lumps;
-        GameMode_t mode;
+        gamemode_t mode;
     } identify_t;
 
     char   *registered_lumps[] = {
@@ -211,7 +211,7 @@ void D_IdentifyFromData(void)
         if(LumpsFound(list[i].lumps))
         {
             D_SetGameMode(list[i].mode);
-            gamemission = doom;
+            gamemission = GM_DOOM;
             return;
         }
     }
@@ -296,7 +296,7 @@ void D_PreInit(void)
     cfg.netJumping = true;
     cfg.netEpisode = 1;
     cfg.netMap = 1;
-    cfg.netSkill = sk_medium;
+    cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 4;
     cfg.netBFGFreeLook = 0;    // allow free-aim 0=none 1=not BFG 2=All
     cfg.netMobDamageModifier = 1;
@@ -368,16 +368,16 @@ void D_PreInit(void)
     cfg.cameraNoClip = true;
     cfg.respawnMonstersNightmare = true;
 
-    cfg.weaponOrder[0] = wp_unmaker;
-    cfg.weaponOrder[1] = wp_plasma;
-    cfg.weaponOrder[2] = wp_supershotgun;
-    cfg.weaponOrder[3] = wp_chaingun;
-    cfg.weaponOrder[4] = wp_shotgun;
-    cfg.weaponOrder[5] = wp_pistol;
-    cfg.weaponOrder[6] = wp_chainsaw;
-    cfg.weaponOrder[7] = wp_missile;
-    cfg.weaponOrder[8] = wp_bfg;
-    cfg.weaponOrder[9] = wp_fist;
+    cfg.weaponOrder[0] = WT_TENTH;
+    cfg.weaponOrder[1] = WT_SIXTH;
+    cfg.weaponOrder[2] = WT_NINETH;
+    cfg.weaponOrder[3] = WT_FOURTH;
+    cfg.weaponOrder[4] = WT_THIRD;
+    cfg.weaponOrder[5] = WT_SECOND;
+    cfg.weaponOrder[6] = WT_EIGHTH;
+    cfg.weaponOrder[7] = WT_FIFTH;
+    cfg.weaponOrder[8] = WT_SEVENTH;
+    cfg.weaponOrder[9] = WT_FIRST;
     cfg.weaponRecoil = true;
 
     cfg.berserkAutoSwitch = true;
@@ -411,7 +411,7 @@ void D_PostInit(void)
     monsterinfight = GetDefInt("AI|Infight", 0);
 
     // get skill / episode / map from parms
-    gameskill = startskill = sk_noitems;
+    gameskill = startskill = SM_NOITEMS;
     startepisode = 1;
     startmap = 1;
     autostart = false;
@@ -419,7 +419,7 @@ void D_PostInit(void)
     // Game mode specific settings
     // Plutonia and TNT automatically turn on the full sky.
     if(gamemode == commercial &&
-       (gamemission == pack_plut || gamemission == pack_tnt))
+       (gamemission == GM_PLUT || gamemission == GM_TNT))
     {
         Con_SetInteger("rend-sky-full", 1, true);
     }
@@ -533,7 +533,7 @@ void D_PostInit(void)
                  (cfg.netDeathmatch ==1)? " deathmatch" :
                     (cfg.netDeathmatch ==2)? " altdeath" : "");
 
-    if(gameaction != ga_loadgame)
+    if(gameaction != GA_LOADGAME)
     {
         GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
         if(autostart || IS_NETGAME)

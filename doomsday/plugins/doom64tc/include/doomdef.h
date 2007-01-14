@@ -85,8 +85,9 @@ typedef enum {
     commercial,                    // DOOM 2 retail, E1 M34
     // DOOM 2 german edition not handled
     retail,                        // DOOM 1 retail, E4, M36
-    indetermined                   // Well, no IWAD found.
-} GameMode_t;
+    indetermined,                  // Well, no IWAD found.
+    NUM_GAME_MODES
+} gamemode_t;
 
 // Game mode bits for the above.
 #define GM_SHAREWARE        0x1     // DOOM 1 shareware, E1, M9
@@ -102,12 +103,13 @@ typedef enum {
 
 // Mission packs - might be useful for TC stuff?
 typedef enum {
-    doom,                          // DOOM 1
-    doom2,                         // DOOM 2
-    pack_tnt,                      // TNT mission pack
-    pack_plut,                     // Plutonia pack
-    none
-} GameMission_t;
+    GM_DOOM,                          // DOOM 1
+    GM_DOOM2,                         // DOOM 2
+    GM_TNT,                      // TNT mission pack
+    GM_PLUT,                     // Plutonia pack
+    GM_NONE,
+    NUM_GAME_MISSIONS
+} gamemission_t;
 
 // Defines suck. C sucks.
 // C++ might sucks for OOP, but it sure is a better C.
@@ -140,8 +142,8 @@ typedef enum {
 //
 typedef enum {
     PCLASS_PLAYER,
-    NUMCLASSES
-} pclass_t;
+    NUM_PLAYER_CLASSES
+} playerclass_t;
 
 #define PCLASS_INFO(class)  (&classInfo[class])
 
@@ -159,30 +161,30 @@ typedef struct classinfo_s{
     int         failUseSound;       // sound played when a use fails.
 } classinfo_t;
 
-extern classinfo_t classInfo[NUMCLASSES];
+extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 typedef enum {
-    sk_noitems = -1, // skill mode 0
-    sk_baby = 0,
-    sk_easy,
-    sk_medium,
-    sk_hard,
-    sk_nightmare
-} skill_t;
+    SM_NOITEMS = -1, // skill mode 0
+    SM_BABY = 0,
+    SM_EASY,
+    SM_MEDIUM,
+    SM_HARD,
+    SM_NIGHTMARE,
+    NUM_SKILL_MODES
+} skillmode_t;
 
 //
 // Key cards.
 //
 typedef enum {
-    it_bluecard,
-    it_yellowcard,
-    it_redcard,
-    it_blueskull,
-    it_yellowskull,
-    it_redskull,
-
-    NUMKEYS
-} card_t;
+    KT_BLUECARD,
+    KT_YELLOWCARD,
+    KT_REDCARD,
+    KT_BLUESKULL,
+    KT_YELLOWSKULL,
+    KT_REDSKULL,
+    NUM_KEY_TYPES
+} keytype_t;
 
 // doom64tc >
 //
@@ -204,46 +206,46 @@ typedef enum
 //  including a marker indicating
 //  user has not changed weapon.
 typedef enum {
-    wp_fist,
-    wp_pistol,
-    wp_shotgun,
-    wp_chaingun,
-    wp_missile,
-    wp_plasma,
-    wp_bfg,
-    wp_chainsaw,
-    wp_supershotgun,
-    wp_unmaker, // d64tc
-    NUMWEAPONS,
+    WT_FIRST, // fist
+    WT_SECOND, // pistol
+    WT_THIRD, // shotgun
+    WT_FOURTH, // chaingun
+    WT_FIFTH, // missile launcher
+    WT_SIXTH, // plasma rifle
+    WT_SEVENTH, // bfg
+    WT_EIGHTH, // chainsaw
+    WT_NINETH, // supershotgun
+    WT_TENTH, // unmaker
+    NUM_WEAPON_TYPES,
 
     // No pending weapon change.
-    WP_NOCHANGE
+    WT_NOCHANGE
 } weapontype_t;
 
 #define NUMWEAPLEVELS       1       // DOOM weapons have 1 power level.
 
 // Ammunition types defined.
 typedef enum {
-    am_clip,                       // Pistol / chaingun ammo.
-    am_shell,                      // Shotgun / double barreled shotgun.
-    am_cell,                       // Plasma rifle, BFG.
-    am_misl,                       // Missile launcher.
-    NUMAMMO,
-    AM_NOAMMO                      // Unlimited for chainsaw / fist.
+    AT_CLIP,                       // Pistol / chaingun ammo.
+    AT_SHELL,                      // Shotgun / double barreled shotgun.
+    AT_CELL,                       // Plasma rifle, BFG.
+    AT_MISSILE,                       // Missile launcher.
+    NUM_AMMO_TYPES,
+    AT_NOAMMO                      // Unlimited for chainsaw / fist.
 } ammotype_t;
 
 // Power ups.
 typedef enum {
-    pw_invulnerability,
-    pw_strength,
-    pw_invisibility,
-    pw_ironfeet,
-    pw_allmap,
-    pw_infrared,
-    pw_flight,
-    pw_radar, // d64tc
-    pw_unsee, // d64tc
-    NUMPOWERS
+    PT_INVULNERABILITY,
+    PT_STRENGTH,
+    PT_INVISIBILITY,
+    PT_IRONFEET,
+    PT_ALLMAP,
+    PT_INFRARED,
+    PT_FLIGHT,
+    PT_RADAR, // d64tc
+    PT_UNSEE, // d64tc
+    NUM_POWER_TYPES
 } powertype_t;
 
 //

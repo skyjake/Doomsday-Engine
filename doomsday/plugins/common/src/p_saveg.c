@@ -1420,11 +1420,11 @@ static void P_ArchivePlayerHeader(void)
     playerheader_t *ph = &playerHeader;
     SV_WriteByte(1); // version byte
 
-    ph->numpowers = NUMPOWERS;
-    ph->numkeys = NUMKEYS;
+    ph->numpowers = NUM_POWER_TYPES;
+    ph->numkeys = NUM_KEY_TYPES;
     ph->numfrags = MAXPLAYERS;
-    ph->numweapons = NUMWEAPONS;
-    ph->numammotypes = NUMAMMO;
+    ph->numweapons = NUM_WEAPON_TYPES;
+    ph->numammotypes = NUM_AMMO_TYPES;
     ph->numpsprites = NUMPSPRITES;
 #if __DOOM64TC__
     ph->numartifacts = NUMARTIFACTS;

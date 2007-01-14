@@ -140,7 +140,7 @@ void G_UpdateState(int step)
     case DD_POST:
         G_RestoreState();
         P_Init();
-        // FIXME: Detect gamemode changes (doom -> doom2, for instance).
+        // FIXME: Detect gamemode changes (GM_DOOM -> GM_DOOM2, for instance).
 #if !__JHEXEN__
         XG_Update();
 #endif
