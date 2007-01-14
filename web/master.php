@@ -1,108 +1,19 @@
 <?php
 /*
-The Doomsday Master Server Script 1.1
-by Jaakko Keränen <skyjake@doomsdayhq.com>
-*/
+ * The Doomsday Master Server 2.0
+ * by Jaakko Keranen <jaakko.keranen@iki.fi>
+ *
+ * This file is the main interface to the master server.
+ */
 
-function get_ident($info)
-{
-	return $info['at'] . ":" . $info['port'];
-}
-
-class Database
-{
-	var $filename;
-	var $writable;
-	var $file;
-	var $servers;
-	
-	function Database($writable = false)
-	{
-		global $HTTP_SERVER_VARS;
-		$this->filename = "servers.dat";
-		$this->writable = $writable;
-		$this->file = fopen($this->filename, $writable? 'r+' : 'r');
-		if(!$this->file) die();
-		$this->lock();
-		$this->load();
-		if(!$writable) $this->unlock();
-	}
-	
-	function lock()
-	{
-		flock($this->file, $this->writable? 2 : 1);
-	}
-	
-	function unlock()
-	{
-		flock($this->file, 3);
-	}
-	
-	function load()
-	{
-		$now = time();
-		$max_age = 130; // 2+ mins.
-		$this->servers = array();
-		
-		while(!feof($this->file))
-		{
-			$line = trim(fgets($this->file, 4096));
-
-			if($line == "--")
-			{
-				// Expired announcements are ignored.
-				if($now - $info['time'] < $max_age && count($info) >= 3)
-				{
-					$this->servers[get_ident($info)] = $info;
-				}
-				$info = array();
-			}
-			else
-			{
-				$parts = split(" ", $line);
-				$info[$parts[0]] = urldecode($parts[1]);
-			}
-		}
-	}
-	
-	function save()
-	{
-		rewind($this->file);
-		while(list($ident, $info) = each($this->servers))
-		{
-			while(list($label, $value) = each($info))
-			{
-				fwrite($this->file, $label . " " . urlencode($value) . "\n");
-			}
-			fwrite($this->file, "--\n");
-		}
-		// Truncate the rest.
-		ftruncate($this->file, ftell($this->file));
-	}
-	
-	function insert($info)
-	{
-		$this->servers[get_ident($info)] = $info;
-	}
-	
-	function close()
-	{
-		if($this->writable) 
-		{
-			$this->save();
-			$this->unlock();
-			$this->writable = false;
-		}
-		fclose($this->file);
-	}
-}
+require('masterdb.php');
 
 function write_server($info)
 {
 	// We will not write empty infos.
 	if(count($info) <= 10) return;
 	
-	$db = new Database(true);	
+	$db = new Database;	
 	$db->insert($info);
 	$db->close();
 }
@@ -146,6 +57,8 @@ function update_server($announcement, $addr)
 function answer_request()
 {
 	$db = new Database;	
+    $db->load();
+    
 	while(list($ident, $info) = each($db->servers))
 	{
 		while(list($label, $value) = each($info))
@@ -161,6 +74,7 @@ function answer_request()
 function web_page()
 {
 	$db = new Database;
+    $db->load();
 	
 	print '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">';
 	print "\n<html><head><title>Public Doomsday Servers</title></head>\n";
@@ -197,6 +111,8 @@ function web_page()
 		
 	$db->close();
 }
+
+//global $HTTP_SERVER_VARS;
 
 $query  = $HTTP_SERVER_VARS['QUERY_STRING'];
 $remote = $HTTP_SERVER_VARS['REMOTE_ADDR'];
