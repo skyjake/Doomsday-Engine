@@ -163,6 +163,9 @@ class Database
             if($age < $max_age)
             {
                 //print "CURRENT(".$age.")\n";
+                // Remove some fields from the info.
+                unset($info['id']);
+                unset($info['firstseentime']);
                 $this->servers[make_ident($info)] = $info;
             }
             else
