@@ -268,7 +268,8 @@ int gsvArtifacts[NUMARTIFACTS];
 int gsvWPieces[4];
 #endif
 
-extern gamestate_t gamestate;
+static gamestate_t gamestate = GS_DEMOSCREEN;
+
 cvar_t gamestatusCVars[] =
 {
    {"game-state", READONLYCVAR, CVT_INT, &gamestate, 0, 0},
@@ -416,8 +417,6 @@ cvar_t gamestatusCVars[] =
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static gamestate_t gamestate = GS_DEMOSCREEN;
 
 static skillmode_t d_skill;
 static int d_episode;
