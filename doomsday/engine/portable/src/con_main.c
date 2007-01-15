@@ -175,7 +175,7 @@ static boolean ConsoleActive;   // Is the console active?
 static timespan_t ConsoleTime;  // How many seconds has the console been open?
 
 static char cmdLine[CMDLINE_SIZE]; // The command line.
-static uint cmdCursor;          // Position of the cursor on the command line.
+static int cmdCursor;          // Position of the cursor on the command line.
 static boolean cmdInsMode;      // Are we in insert input mode.
 static boolean conInputLock;    // While locked, most user input is disabled.
 
