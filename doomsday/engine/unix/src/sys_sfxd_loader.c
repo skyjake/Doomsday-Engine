@@ -24,9 +24,6 @@
 
 /*
  * sys_sfxd_loader.c: Loader for ds*.so
- *
- * Probably won't be needed because the OpenAL sound code can be
- * staticly linked. (Please don't consider static linking of openal - Yagisan)
  */
 
 // HEADER FILES ------------------------------------------------------------
