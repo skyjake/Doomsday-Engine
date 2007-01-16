@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="Doomsday"
 	ProjectGUID="{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}"
 	RootNamespace="Doomsday"
@@ -52,7 +52,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="./Include"
+				AdditionalIncludeDirectories="..\..\..\engine\win32\include;..\..\..\engine\portable\include;..\..\..\engine\api\;..\..\..\external\lzss\portable\include;..\..\..\external\zlib\portable\include;..\..\..\external\libpng\portable\include;..\..\..\external\libcurl\portable\include"
 				PreprocessorDefinitions="__DOOMSDAY__,WIN32_GAMMA,NORANGECHECKING,WIN32,NDEBUG,_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"

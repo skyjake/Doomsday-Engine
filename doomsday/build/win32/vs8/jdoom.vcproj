@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="JDoom"
 	ProjectGUID="{A36C0FB9-8186-4747-A5D9-D7B659B9F39F}"
 	RootNamespace="JDoom"
@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="./Include/JDoom,./Include/Common,./Include"
+				AdditionalIncludeDirectories="..\..\..\plugins\jdoom\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="__JDOOM__;WIN32;NDEBUG;_WINDOWS;_USRDLL;JDOOM_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"

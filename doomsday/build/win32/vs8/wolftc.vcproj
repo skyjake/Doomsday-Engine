@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="./Include/WolfTC,./Include/Common,./Include"
+				AdditionalIncludeDirectories="..\..\..\plugins\wolftc\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="__JDOOM__;__WOLFTC__;WIN32;NDEBUG;_WINDOWS;_USRDLL;WOLFTC_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"

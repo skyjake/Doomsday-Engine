@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="dsCompat"
 	ProjectGUID="{1D7A3D67-B874-4844-BA4E-8DA934AF993C}"
 	RootNamespace="dsCompat"
@@ -143,7 +143,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="Include"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DSCOMPAT_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"

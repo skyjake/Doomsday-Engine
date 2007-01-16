@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="dpMapLoad"
 	ProjectGUID="{DA1B6F57-7827-462C-A2BA-44E2F515D413}"
 	RootNamespace="dpMapLoad"
@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="Include"
+				AdditionalIncludeDirectories="..\..\..\external\zlib\portable\include;..\..\..\engine\api;..\..\..\external\glbsp\include"
 				PreprocessorDefinitions="GLBSP_PLUGIN;WIN32;NDEBUG;_WINDOWS;_USRDLL;DPDEHREAD_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"

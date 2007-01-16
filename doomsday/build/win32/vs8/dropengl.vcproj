@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="drOpenGL"
 	ProjectGUID="{4D082B36-9D60-4308-90D2-BF11C9C05ED7}"
 	RootNamespace="drOpenGL"
@@ -237,7 +237,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="./Include/drOpenGL,./Include"
+				AdditionalIncludeDirectories="..\..\..\engine\api;..\..\..\plugins\opengl\portable\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;drOpenGL_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"

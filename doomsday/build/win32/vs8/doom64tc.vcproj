@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="./Include/JDoom,./Include/Common,./Include"
+				AdditionalIncludeDirectories="..\..\..\plugins\doom64tc\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="__JDOOM__;__DOOM64TC__;WIN32;NDEBUG;_WINDOWS;_USRDLL;DOOM64TC_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"

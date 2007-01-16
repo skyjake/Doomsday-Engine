@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="drD3D"
 	ProjectGUID="{F7C05B19-E50B-48D3-8363-61E1B6428CE8}"
 	RootNamespace="drD3D"
@@ -143,7 +143,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="./Include/drD3D,./Include"
+				AdditionalIncludeDirectories="..\..\..\plugins\d3d\include;..\..\..\engine\api"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;drD3D_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"

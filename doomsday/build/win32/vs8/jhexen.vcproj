@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="JHexen"
 	ProjectGUID="{060CA7D4-CEF4-4F36-8950-55A3E5C46C4C}"
 	RootNamespace="JHexen"
@@ -145,7 +145,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="Include,Include/JHexen,Include/Common"
+				AdditionalIncludeDirectories="..\..\..\plugins\jhexen\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="__JHEXEN__;NORANGECHECKING;WIN32;NDEBUG;_WINDOWS;_USRDLL;JHEXEN_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"

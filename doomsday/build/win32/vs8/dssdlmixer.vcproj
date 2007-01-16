@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="dsSDLMixer"
 	ProjectGUID="{C9C45D56-D51C-45C7-8509-020DE447638B}"
 	RootNamespace="dsSDLMixer"
@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="Include"
+				AdditionalIncludeDirectories="..\..\..\engine\api;..\..\..\plugins\sdlmixer\portable\include"
 				PreprocessorDefinitions="GLBSP_PLUGIN;WIN32;NDEBUG;_WINDOWS;_USRDLL;DPDEHREAD_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
