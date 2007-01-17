@@ -47,6 +47,12 @@
 #define DT_NOINDEX    0x10
 #define DT_MSBCONVERT 0x20
 
+// number of map data lumps for a level
+#define NUM_MAPLUMPS 12
+
+// well, there is GL_PVIS too but we arn't interested in that
+#define NUM_GLLUMPS 5
+
 // Internal data types
 #define MAPDATA_FORMATS 2
 
@@ -158,163 +164,56 @@ enum {
     DAM_PROPERTY_COUNT
 };
 
+enum {
+    LCM_LABEL,
+    LCM_THINGS,
+    LCM_LINEDEFS,
+    LCM_SIDEDEFS,
+    LCM_VERTEXES,
+    LCM_SEGS,
+    LCM_SUBSECTORS,
+    LCM_NODES,
+    LCM_SECTORS,
+    LCM_REJECT,
+    LCM_BLOCKMAP,
+    LCM_BEHAVIOR,
+    LCG_LABEL,
+    LCG_VERTEXES,
+    LCG_SEGS,
+    LCG_SUBSECTORS,
+    LCG_NODES,
+    NUM_LUMPCLASSES
+};
+
+enum {
+    NO,        // Not required.
+    BSPBUILD,  // If we can build nodes we don't require it.
+    YES        // MUST be present
+};
+
 typedef struct {
-    char* level;
-    char* builder;
-    char* time;
-    char* checksum;
+    char       *level;
+    char       *builder;
+    char       *time;
+    char       *checksum;
 } glbuildinfo_t;
 
 // used to list lines in each block
 typedef struct linelist_t {
-    long num;
+    long        num;
     struct linelist_t *next;
 } linelist_t;
 
-// THING formats
-// These formats are FYI
-/*
-typedef struct {
-    short           x;
-    short           y;
-    short           angle;
-    short           type;
-    short           options;
-} mapthing_t;       // (DOOM format)
-
-typedef struct {
-    short           tid;
-    short           x;
-    short           y;
-    short           height;
-    short           angle;
-    short           type;
-    short           options;
-    byte            special;
-    byte            arg1;
-    byte            arg2;
-    byte            arg3;
-    byte            arg4;
-    byte            arg5;
-} mapthinghex_t;    // (HEXEN format)
-
-// LINEDEF formats
-
-typedef struct {
-    short           v1;
-    short           v2;
-    short           flags;
-    short           special;
-    short           tag;
-    short           sidenum[2];
-} maplinedef_t;     // (DOOM format)
-
-typedef struct {
-    short           v1;
-    short           v2;
-    short           flags;
-    byte            special;
-    byte            arg1;
-    byte            arg2;
-    byte            arg3;
-    byte            arg4;
-    byte            arg5;
-    short           sidenum[2];
-} maplinedefhex_t;  // (HEXEN format)
-
-// VERTEX formats
-typedef struct {
-    short           x;
-    short           y;
-} mapvertex_t;      // (DOOM format)
-
-typedef struct glvert2_s {
-    fixed_t  x, y;
-} glvert2_t;        // (gl vertex ver2)
-
-// SIDEDEF formats
-*/
 // TODO: we still use this struct for texture byte offsets
 typedef struct {
-    short           textureoffset;
-    short           rowoffset;
-    char            toptexture[8];
-    char            bottomtexture[8];
-    char            midtexture[8];
+    short       textureoffset;
+    short       rowoffset;
+    char        toptexture[8];
+    char        bottomtexture[8];
+    char        midtexture[8];
     // Front sector, towards viewer.
-    short           sector;
+    short       sector;
 } mapsidedef_t;
-
-/*
-// SECTOR formats
-typedef struct {
-    short           floorheight;
-    short           ceilingheight;
-    char            floorpic[8];
-    char            ceilingpic[8];
-    short           lightlevel;
-    short           special;
-    short           tag;
-} mapsector_t;
-
-// SUBSECTOR formats
-typedef struct {
-    short           numSegs;
-    short           firstseg;
-} mapsubsector_t;   // (DOOM format)
-
-typedef struct {
-    unsigned int numSegs;
-    unsigned int firstseg;
-} glsubsect3_t;     // (gl subsector ver 3)
-
-// SEG formats
-typedef struct {
-    short           v1;
-    short           v2;
-    short           angle;
-    short           linedef;
-    short           side;
-    short           offset;
-} mapseg_t;         // (DOOM format)
-
-typedef struct {
-    unsigned short v1, v2;
-    unsigned short linedef, side;
-    unsigned short partner;
-} glseg_t;          // (gl seg ver 1)
-
-typedef struct {
-    unsigned int v1, v2;
-    unsigned short linedef, side;
-    unsigned int partner;
-} glseg3_t;         // (gl seg ver 3)
-
-// NODE formats
-typedef struct {
-    // Partition line from (x,y) to x+dx,y+dy)
-    short           x;
-    short           y;
-    short           dx;
-    short           dy;
-
-    // Bounding box for each child,
-    // clip against view frustum.
-    short           bbox[2][4];
-
-    // If NF_SUBSECTOR its a subsector,
-    // else it's a node of another subtree.
-    unsigned short  children[2];
-
-} mapnode_t;        // (DOOM format)
-
-typedef struct {
-    short x, y;
-    short dx, dy;
-    short bbox[2][4];
-    unsigned int children[2];
-} glnode4_t;        // (gl node ver 4)
-*/
 
 typedef struct gamemap_s {
     char        levelid[9];
@@ -354,12 +253,68 @@ typedef struct gamemap_s {
     byte       *rejectmatrix;
 } gamemap_t;
 
+//
+// Types used in map data handling
+//
 typedef struct {
-    size_t elmsize;
-    unsigned int elements;
-    unsigned int numvalues;
-    datatype_t* types;
-    gamemap_t* map;
+    int         id; // DAM property ID to map the data to
+    boolean     gameprop; // if true is a game-specific property (passed to the game)
+    int         flags;
+    int         size;   // num of bytes
+    int         offset;
+} datatype_t;
+
+typedef struct mapdatalumpformat_s {
+    int         version;
+    char       *magicid;
+    boolean     isText; // True if the lump is a plain text lump.
+    size_t      elmSize;
+    uint        numProps;
+    datatype_t *props;
+} mapdatalumpformat_t;
+
+typedef struct mapdataformat_s {
+    char       *vername;
+    mapdatalumpformat_t verInfo[NUM_MAPLUMPS];
+    boolean     supported;
+} mapdataformat_t;
+
+typedef struct glnodeformat_s {
+    char       *vername;
+    mapdatalumpformat_t verInfo[NUM_GLLUMPS];
+    boolean     supported;
+} glnodeformat_t;
+
+typedef struct {
+    char       *lumpname;
+    int         mdLump;
+    int         glLump;
+    int         dataType;
+    int         lumpclass;
+    int         required;
+    boolean precache;
+} maplumpinfo_t;
+
+typedef struct mapdatalumpinfo_s {
+    int         lumpNum;
+    byte       *lumpp;      // ptr to the lump data
+    mapdatalumpformat_t *format;
+    int         lumpClass;
+    int         startOffset;
+    uint        elements;
+    size_t      length;
+} mapdatalumpinfo_t;
+
+typedef struct mapdatalumpnode_s {
+    mapdatalumpinfo_t *data;
+    struct mapdatalumpnode_s *next;
+} mapdatalumpnode_t;
+
+typedef struct {
+    size_t      elmsize;
+    uint        elements;
+    datatype_t **props;
+    gamemap_t  *map;
 } damargs_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -370,51 +325,71 @@ static void P_CreateBlockMap(gamemap_t* map);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static boolean  ReadMapData(gamemap_t* map, int doClass);
+static boolean  ReadMapData(gamemap_t* map, int doClass, int *props,
+                            uint numProps);
 static boolean  DetermineMapDataFormat(void);
 
-int P_CallbackEX(int dataType, unsigned int startIndex, const byte *buffer,
-                 void* context,
-                 int (*callback)(gamemap_t* map, int dataType, void* ptr,
-                                 const datatype_t* prop, const byte *buffer));
+static int P_CallbackEX(int dataType, unsigned int startIndex, const byte *buffer,
+                        void* context,
+                        int (*callback)(gamemap_t *map, int dataType, void* ptr,
+                                        const datatype_t* prop, const byte *buffer));
 
-static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
+static int ReadMapProperty(gamemap_t *map, int dataType, void* ptr,
                             const datatype_t* prop, const byte *buffer);
 
-static void     P_ReadSideDefTextures(gamemap_t* map, int lump);
-static void     P_FinishLineDefs(gamemap_t* map);
-static void     P_ProcessSegs(gamemap_t* map, int version);
+static void     finishLineDefs(gamemap_t *map);
+static void     processSegs(gamemap_t *map);
 
-static boolean  P_LoadReject(gamemap_t* map, mapdatalumpinfo_t* maplump);
-static boolean  P_LoadBlockMap(gamemap_t* map, mapdatalumpinfo_t* maplump);
-static void     P_GroupLines(gamemap_t* map);
+static boolean  P_LoadReject(gamemap_t *map, mapdatalumpinfo_t* maplump);
+static boolean  P_LoadBlockMap(gamemap_t *map, mapdatalumpinfo_t* maplump);
+static void     finalizeMapData(gamemap_t *map);
+
+static void     allocateMapData(gamemap_t *map);
+static void     countMapElements(gamemap_t *map);
 
 #if _DEBUG
-//static void     P_PrintDebugMapData(gamemap_t* map);
+//static void     printDebugMapData(gamemap_t* map);
 #endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-unsigned int     mapFormat;
+// BSP cvars.
+int bspBuild = true;
+static int bspCache = true;
+static int bspFactor = 7;
 
-// gl nodes
-unsigned int     glNodeFormat;
-int     firstGLvertex = 0;
+// Should we generate new blockmap data if its invalid?
+// 0: error out
+// 1: generate new
+// 2: Always generate new
+int         createBMap = 1;
+
+// Should we generate new reject data if its invalid?
+// 0: error out
+// 1: generate new
+// 2: Always generate new
+int         createReject = 1;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static mapdatalumpnode_t *mapDataLumps;
+static uint numMapDataLumps;
+
+static glbuildinfo_t *glBuilderInfo;
+
+static gamemap_t* currentMap = NULL;
+static uint    mapFormat;
+static uint    glNodeFormat;
+static uint    firstGLvertex = 0;
 
 // Set to true if glNodeData exists for the level.
-boolean glNodeData = false;
-
-enum {
-    NO,        // Not required.
-    BSPBUILD,  // If we can build nodes we don't require it.
-    YES        // MUST be present
-};
+static boolean glNodeData = false;
 
 // types of MAP data structure
 // These arrays are temporary. Some of the data will be provided via DED definitions.
-maplumpinfo_t mapLumpInfo[] = {
+static maplumpinfo_t mapLumpInfo[] = {
 //   lumpname    MD  GL  datatype      lumpclass     required?  precache?
     {NULL,       0, -1,  DAM_UNKNOWN,   LCM_LABEL,      NO,    false},
     {"THINGS",   1, -1,  DAM_THING,     LCM_THINGS,     YES,   false},
@@ -437,7 +412,7 @@ maplumpinfo_t mapLumpInfo[] = {
 };
 
 // Versions of map data structures
-mapdataformat_t mapDataFormats[] = {
+static mapdataformat_t mapDataFormats[] = {
     {"DOOM", {{1, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL},
               {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {-1, NULL, true}}, true},
     {"HEXEN",{{1, NULL}, {2, NULL}, {2, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL},
@@ -446,7 +421,7 @@ mapdataformat_t mapDataFormats[] = {
 };
 
 // Versions of GL node data structures
-glnodeformat_t glNodeFormats[] = {
+static glnodeformat_t glNodeFormats[] = {
 // Ver String   Label       Verts       Segs        SSects       Nodes     Supported?
     {"V1", {{1, NULL, true},   {1, NULL},   {2, NULL},   {1, NULL},   {1, NULL}}, true},
     {"V2", {{1, NULL, true},   {2, "gNd2"}, {2, NULL},   {1, NULL},   {1, NULL}}, true},
@@ -456,83 +431,15 @@ glnodeformat_t glNodeFormats[] = {
     {NULL}
 };
 
-// FIXME: This way of initializing the array is unsafe considering changes
-// to the DMU constants. Maybe use a similar type of array as in p_dmu.c for
-// DMU_Str, but used for initializing DAMpropertyTypes[] in P_Init.
-/*
-const valuetype_t DAMpropertyTypes[] = {
-    DDVT_NONE,          // DAM_NONE,
-
-    // Object/Data types
-    DDVT_PTR,           // DAM_THING,
-    DDVT_PTR,           // DAM_VERTEX,
-    DDVT_PTR,           // DAM_LINE,
-    DDVT_PTR,           // DAM_SIDE,
-    DDVT_PTR,           // DAM_SECTOR,
-    DDVT_PTR,           // DAM_SEG,
-    DDVT_PTR,           // DAM_SUBSECTOR,
-    DDVT_PTR,           // DAM_NODE,
-    DDVT_NONE,          // DAM_MAPBLOCK,
-    DDVT_NONE,          // DAM_SECREJECT,
-    DDVT_NONE,          // DAM_ACSSCRIPT,
-
-    // Object properties
-    DDVT_FIXED,         // DAM_X,
-    DDVT_FIXED,         // DAM_Y,
-    DDVT_FIXED,         // DAM_DX,
-    DDVT_FIXED,         // DAM_DY,
-
-    DDVT_VERT_PTR,      // DAM_VERTEX1,
-    DDVT_VERT_PTR,      // DAM_VERTEX2,
-    DDVT_INT,           // DAM_FLAGS,
-    DDVT_INT,           // DAM_SIDE0,
-    DDVT_INT,           // DAM_SIDE1,
-
-    DDVT_FIXED,         // DAM_TEXTURE_OFFSET_X,
-    DDVT_FIXED,         // DAM_TEXTURE_OFFSET_Y,
-    DDVT_FLAT_INDEX,    // DAM_TOP_TEXTURE,
-    DDVT_FLAT_INDEX,    // DAM_MIDDLE_TEXTURE,
-    DDVT_FLAT_INDEX,    // DAM_BOTTOM_TEXTURE,
-    DDVT_SECT_PTR,      // DAM_FRONT_SECTOR,
-
-    DDVT_FIXED,         // DAM_FLOOR_HEIGHT,
-    DDVT_FLAT_INDEX,    // DAM_FLOOR_TEXTURE,
-    DDVT_FIXED,         // DAM_CEILING_HEIGHT,
-    DDVT_FLAT_INDEX,    // DAM_CEILING_TEXTURE,
-    DDVT_SHORT,         // DAM_LIGHT_LEVEL,
-
-    DDVT_ANGLE,         // DAM_ANGLE,
-    DDVT_FIXED,         // DAM_OFFSET,
-
-    DDVT_INT,           // DAM_LINE_COUNT,
-    DDVT_INT,           // DAM_LINE_FIRST,
-
-    DDVT_FIXED,         // DAM_BBOX_RIGHT_TOP_Y,
-    DDVT_FIXED,         // DAM_BBOX_RIGHT_LOW_Y,
-    DDVT_FIXED,         // DAM_BBOX_RIGHT_LOW_X,
-    DDVT_FIXED,         // DAM_BBOX_RIGHT_TOP_X,
-    DDVT_FIXED,         // DAM_BBOX_LEFT_TOP_Y,
-    DDVT_FIXED,         // DAM_BBOX_LEFT_LOW_Y,
-    DDVT_FIXED,         // DAM_BBOX_LEFT_LOW_X,
-    DDVT_FIXED,         // DAM_BBOX_LEFT_TOP_X,
-    DDVT_INT,           // DAM_CHILD_RIGHT,
-    DDVT_INT            // DAM_CHILD_LEFT
-};*/
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static mapdatalumpinfo_t* mapDataLumps;
-static int numMapDataLumps;
-
-static glbuildinfo_t *glBuilderInfo;
-
-static gamemap_t* currentMap = NULL;
-
 // CODE --------------------------------------------------------------------
 
 void DAM_Register(void)
 {
     C_VAR_INT("blockmap-build", &createBMap, 0, 0, 2);
+    C_VAR_INT("bsp-build", &bspBuild, 0, 0, 1);
+    // FIXME: bsp-cache and bsp-factor are not yet implemented.
+    C_VAR_INT("bsp-cache", &bspCache, 0, 0, 1);
+    C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
     C_VAR_INT("reject-build", &createReject, 0, 0, 2);
 }
 
@@ -710,39 +617,45 @@ static void FreeGLBSPInf(void)
 
 static void AddMapDataLump(int lumpNum, int lumpClass)
 {
-    int num = numMapDataLumps;
-    mapdatalumpinfo_t* mapDataLump;
+    mapdatalumpinfo_t *mdlumpInf;
+    mapdatalumpnode_t *node;
 
     numMapDataLumps++;
 
-    mapDataLumps =
-        M_Realloc(mapDataLumps, sizeof(mapdatalumpinfo_t) * numMapDataLumps);
+    node = M_Malloc(sizeof(mapdatalumpnode_t));
+    node->data = mdlumpInf = M_Malloc(sizeof(mapdatalumpinfo_t));
 
-    mapDataLump = &mapDataLumps[num];
-    mapDataLump->lumpNum = lumpNum;
-    mapDataLump->lumpClass = lumpClass;
-    mapDataLump->lumpp = NULL;
-    mapDataLump->length = 0;
-    mapDataLump->format = NULL;
-    mapDataLump->startOffset = 0;
+    mdlumpInf->lumpNum = lumpNum;
+    mdlumpInf->lumpClass = lumpClass;
+    mdlumpInf->lumpp = NULL;
+    mdlumpInf->length = 0;
+    mdlumpInf->format = NULL;
+    mdlumpInf->startOffset = 0;
+
+    node->next = mapDataLumps;
+    mapDataLumps = node;
 }
 
 static void FreeMapDataLumps(void)
 {
-    int k;
-
     // Free the map data lump array
     if(mapDataLumps != NULL)
     {
-        // Free any lumps we might have pre-cached.
-        for(k = 0; k < numMapDataLumps; ++k)
-            if(mapDataLumps[k].lumpp)
-            {
-                Z_Free(mapDataLumps[k].lumpp);
-                mapDataLumps[k].lumpp = 0;
-            }
+        mapdatalumpnode_t *node, *np;
 
-        M_Free(mapDataLumps);
+        // Free any lumps we might have pre-cached.
+        node = mapDataLumps;
+        while(node)
+        {
+            np = node->next;
+            if(node->data->lumpp)
+                Z_Free(node->data->lumpp);
+
+            M_Free(node->data);
+            M_Free(node);
+            node = np;
+        }
+
         mapDataLumps = NULL;
         numMapDataLumps = 0;
     }
@@ -953,13 +866,12 @@ static void DetermineMapDataLumpFormat(mapdatalumpinfo_t* mapLump)
  * @return  boolean     (True) If the map data provides us with enough data
  *                             to proceed with loading the map.
  */
-static boolean VerifyMapData(char *levelID)
+static boolean verifyMapData(char *levelID)
 {
-    unsigned int i, k;
-    boolean found;
-    boolean required;
-    mapdatalumpinfo_t* mapDataLump;
-    maplumpinfo_t* mapLmpInf = mapLumpInfo;
+    uint        i;
+    boolean     found, required;
+    mapdatalumpnode_t *node;
+    maplumpinfo_t *mapLmpInf = mapLumpInfo;
 
     FreeGLBSPInf();
 
@@ -969,9 +881,11 @@ static boolean VerifyMapData(char *levelID)
         // Check all the registered map data lumps to make sure we have at least
         // one lump of each required lump class.
         found = false;
-        mapDataLump = mapDataLumps;
-        for(k = numMapDataLumps; k--; ++mapDataLump)
+        node = mapDataLumps;
+        while(node)
         {
+            mapdatalumpinfo_t *mapDataLump = node->data;
+
             // Is this a lump of the class we are looking for?
             if(mapDataLump->lumpClass == mapLmpInf->lumpclass)
             {
@@ -998,6 +912,8 @@ static boolean VerifyMapData(char *levelID)
                 // We've found (at least) one lump of this class.
                 found = true;
             }
+
+            node = node->next;
         }
 
         // We arn't interested in indetifier lumps
@@ -1022,7 +938,7 @@ static boolean VerifyMapData(char *levelID)
             {
                 // Darn, the map data is incomplete. We arn't able to to load this map :`(
                 // Inform the user.
-                Con_Message("VerifyMapData: %s for \"%s\" could not be found.\n" \
+                Con_Message("verifyMapData: %s for \"%s\" could not be found.\n" \
                             " This lump is required in order to play this map.\n",
                             mapLmpInf->lumpname, levelID);
                 return false;
@@ -1030,7 +946,7 @@ static boolean VerifyMapData(char *levelID)
             else
             {
                 // It's not required (we can generate it/we don't need it)
-                Con_Message("VerifyMapData: %s for \"%s\" could not be found.\n" \
+                Con_Message("verifyMapData: %s for \"%s\" could not be found.\n" \
                             "Useable data will be generated automatically if needed.\n",
                             mapLmpInf->lumpname, levelID);
                 // Add a dummy lump to the list
@@ -1054,19 +970,19 @@ static boolean VerifyMapData(char *levelID)
  */
 static boolean DetermineMapDataFormat(void)
 {
-    unsigned int i;
-    int lumpClass;
-    mapdatalumpinfo_t* mapLump;
+    int         lumpClass;
+    mapdatalumpnode_t *node;
 
     // Now that we know the data format of the lumps we need to update the
     // internal version number for any lumps that don't declare a version (-1).
     // Taken from the version stipulated in the map format.
-    mapLump = mapDataLumps;
-    for(i = numMapDataLumps; i--; ++mapLump)
+    node = mapDataLumps;
+    while(node)
     {
-        lumpClass = mapLumpInfo[mapLump->lumpClass].mdLump;
+        mapdatalumpinfo_t *mapLump = node->data;
 
         // Is it a map data lump class?
+        lumpClass = mapLumpInfo[mapLump->lumpClass].mdLump;
         if(mapLump->lumpClass >= LCM_THINGS &&
            mapLump->lumpClass <= LCM_BEHAVIOR)
         {
@@ -1074,13 +990,14 @@ static boolean DetermineMapDataFormat(void)
             if(mapLump->format == NULL)
                 mapLump->format = &mapDataFormats[mapFormat].verInfo[lumpClass];
         }
+        node = node->next;
     }
 
     // Do we have GL nodes?
     if(glNodeData)
     {
-        unsigned int k;
-        boolean failed;
+        uint        i;
+        boolean     failed;
         glnodeformat_t* nodeFormat = &glNodeFormats[GLNODE_FORMATS];
 
         // Find out which GL Node version the data is in.
@@ -1088,21 +1005,17 @@ static boolean DetermineMapDataFormat(void)
         for(i = GLNODE_FORMATS; i--; --nodeFormat)
         {
             // Check the version number of each map data lump
-            mapLump = mapDataLumps;
-            for(k = numMapDataLumps, failed = false; k-- && !failed; ++mapLump)
+            failed = false;
+            node = mapDataLumps;
+            while(node && !failed)
             {
+                mapdatalumpinfo_t *mapLump = node->data;
+
                 // Is it a GL Node data lump class?
                 if(mapLump->lumpClass >= LCG_VERTEXES &&
                    mapLump->lumpClass <= LCG_NODES)
                 {
                     lumpClass = mapLumpInfo[mapLump->lumpClass].glLump;
-
-                    /*Con_Message("Check lump %s | %s n%d ver %d lump ver %d\n",
-                                mapLumpInfo[mapLump->lumpClass].lumpname,
-                                W_CacheLumpNum(mapLump->lumpNum, PU_GETNAME),
-                                mapLumpInfo[mapLump->lumpClass].glLump,
-                                glNodeFormats[i].verInfo[lumpClass].version,
-                                mapLump->format->version);*/
 
                     // SHOULD this lump format declare a version (magic bytes)?
                     if(mapLump->format == NULL)
@@ -1117,6 +1030,8 @@ static boolean DetermineMapDataFormat(void)
                             failed = true;
                     }
                 }
+
+                node = node->next;
             }
 
             // Did all lumps match the required format for this version?
@@ -1152,12 +1067,13 @@ static boolean DetermineMapDataFormat(void)
                     // Now that we know the GL Node format we need to update the internal
                     // version number for any lumps that don't declare a version (-1).
                     // Taken from the version stipulated in the Node format.
-                    mapLump = mapDataLumps;
-                    for(k = numMapDataLumps; k--; ++mapLump)
+                    node = mapDataLumps;
+                    while(node)
                     {
-                        lumpClass = mapLumpInfo[mapLump->lumpClass].glLump;
+                        mapdatalumpinfo_t *mapLump = node->data;
 
                         // Is it a GL Node data lump class?
+                        lumpClass = mapLumpInfo[mapLump->lumpClass].glLump;
                         if(mapLump->lumpClass >= LCG_VERTEXES &&
                            mapLump->lumpClass <= LCG_NODES)
                         {
@@ -1165,6 +1081,7 @@ static boolean DetermineMapDataFormat(void)
                             if(mapLump->format == NULL)
                                 mapLump->format = &nodeFormat->verInfo[lumpClass];
                         }
+                        node = node->next;
                     }
                     return true;
                 }
@@ -1192,45 +1109,51 @@ static boolean DetermineMapDataFormat(void)
  * 1) Check the size of the REJECT data (we can generate if invalid).
  * 2) Check the size of the BLOCKMAP data (we can generate if invalid).
  */
-static boolean ValidateMapData(void)
+static boolean validateMapData(void)
 {
-    int k;
-    unsigned int count[NUM_LUMPCLASSES];
-    mapdatalumpinfo_t* mapDataLump;
+    uint        count[NUM_LUMPCLASSES];
+    mapdatalumpnode_t *node;
+    mapdatalumpinfo_t *mapLump;
 
-    memset(count, 0, sizeof(int)*NUM_LUMPCLASSES);
+    memset(count, 0, sizeof(uint)*NUM_LUMPCLASSES);
 
-    mapDataLump = mapDataLumps;
-    for(k = numMapDataLumps; k--; ++mapDataLump)
+    node = mapDataLumps;
+    while(node)
     {
+        mapLump = node->data;
+
         // How many elements are in the lump?
         // Add the number of elements to the potential count for this class.
-        if(mapDataLump->lumpNum != -1 && mapDataLump->format &&
-           !mapDataLump->format->isText)
+        if(mapLump->lumpNum != -1 && mapLump->format && !mapLump->format->isText)
         {
-            count[mapDataLump->lumpClass] +=
-              (mapDataLump->length - mapDataLump->startOffset) /
-              (int) mapDataLump->format->elmSize;
+            // How many elements are in the lump?
+            mapLump->elements = (mapLump->length - mapLump->startOffset) /
+                                     mapLump->format->elmSize;
+
+            count[mapLump->lumpClass] += mapLump->elements;
         }
+        node = node->next;
     }
 
     // Now confirm the data is valid.
-    mapDataLump = mapDataLumps;
-    for(k = numMapDataLumps; k--; ++mapDataLump)
+    node = mapDataLumps;
+    while(node)
     {
+        mapLump = node->data;
+
         // Is the REJECT complete?
-        if(mapDataLump->lumpClass == LCM_REJECT)
+        if(mapLump->lumpClass == LCM_REJECT)
         {   // Check the length of the lump
             size_t requiredLength = (((count[LCM_SECTORS]*count[LCM_SECTORS]) + 7) & ~7) /8;
 
-            if(mapDataLump->length < requiredLength)
+            if(mapLump->length < requiredLength)
             {
-                Con_Message("ValidateMapData: REJECT data is invalid.\n");
+                Con_Message("validateMapData: REJECT data is invalid.\n");
 
                 // Are we allowed to generate new reject data?
                 if(createReject == 0)
                 {
-                    Con_Message("ValidateMapData: Map has invalid REJECT resource.\n"
+                    Con_Message("validateMapData: Map has invalid REJECT resource.\n"
                                 "You can circumvent this error by allowing Doomsday to\n"
                                 "generate this resource when needed by setting the CVAR:\n"
                                 "reject-build 1\n");
@@ -1239,23 +1162,23 @@ static boolean ValidateMapData(void)
                 }
                 else
                     // Set the lump number to -1 so we generate it ourselves.
-                    mapDataLump->lumpNum = -1;
+                    mapLump->lumpNum = -1;
             }
         }
         // Is the BLOCKMAP complete?
-        else if(mapDataLump->lumpClass == LCM_BLOCKMAP)
+        else if(mapLump->lumpClass == LCM_BLOCKMAP)
         {
-            int count = mapDataLump->length / 2;
+            uint count = mapLump->length / 2;
 
             // Is there valid BLOCKMAP data?
             if(count >= 0x10000)
             {
-                Con_Message("ValidateMapData: Map exceeds limits of +/- 32767 map units.\n");
+                Con_Message("validateMapData: Map exceeds limits of +/- 32767 map units.\n");
 
                 // Are we allowed to generate new blockmap data?
                 if(createBMap == 0)
                 {
-                    Con_Message("ValidateMapData: Map has invalid BLOCKMAP resource.\n"
+                    Con_Message("validateMapData: Map has invalid BLOCKMAP resource.\n"
                                 "You can circumvent this error by allowing Doomsday to\n"
                                 "generate this resource when needed by setting the CVAR:\n"
                                 "blockmap-build 1");
@@ -1263,9 +1186,11 @@ static boolean ValidateMapData(void)
                 }
                 else
                     // Set the lump number to -1 so we generate it ourselves.
-                    mapDataLump->lumpNum = -1;
+                    mapLump->lumpNum = -1;
             }
         }
+
+        node = node->next;
     }
 
     return true;
@@ -1277,7 +1202,7 @@ boolean P_GetMapFormat(void)
     {
         // We support the map data format.
         // Validate the map data.
-        return ValidateMapData();
+        return validateMapData();
     }
     else
     {
@@ -1297,57 +1222,7 @@ boolean P_GLNodeDataPresent(void)
     return glNodeData;
 }
 
-/*
- * Do any final initialization of map data members.
- *
- * Configure the map data objects so they can be accessed by the
- * games, using the DMU functions of the Doomsday public API.
- */
-static void FinalizeMapData(gamemap_t* map)
-{
-    uint        i, k, count;
-    side_t     *side;
-    sector_t   *sec;
-
-    P_GroupLines(map);
-
-    // Finalize side properties
-    for(i = 0; i < map->numsides; ++i)
-    {
-        side = &map->sides[i];
-        // Make sure the texture references are good.
-        if(!side->SW_topisflat && side->SW_toppic >= numtextures)
-            side->SW_toppic = 0;
-        if(!side->SW_middleisflat && side->SW_middlepic >= numtextures)
-            side->SW_middlepic = 0;
-        if(!side->SW_bottomisflat && side->SW_bottompic >= numtextures)
-            side->SW_bottompic = 0;
-    }
-
-    // Set target heights of all planes.
-    for(i = 0; i < map->numsectors; ++i)
-    {
-        sec = &map->sectors[i];
-
-        for(k = 0; k < sec->planecount; ++k)
-            sec->planes[k]->target = sec->planes[k]->height;
-    }
-
-    // Initialize polyobject properties (here?)
-    for(i = 0; i < map->po_NumPolyobjs; ++i)
-        map->polyobjs[i].header.type = DMU_POLYOBJ;
-
-    // Clear out mobj rings.
-    count = sizeof(*map->blockrings) * map->bmapwidth * map->bmapheight;
-    map->blockrings = Z_Malloc(count, PU_LEVEL, 0);
-    memset(map->blockrings, 0, count);
-
-    for(i = 0; i < map->bmapwidth * map->bmapheight; ++i)
-        map->blockrings[i].next =
-            map->blockrings[i].prev = (mobj_t *) &map->blockrings[i];
-}
-
-static boolean P_ReadMapData(gamemap_t* map, int doClass)
+static boolean P_ReadMapData(gamemap_t* map, int doClass, int *props, uint numProps)
 {
     // Cant load GL NODE data if we don't have it.
     if(!glNodeData && (doClass >= LCG_VERTEXES && doClass <= LCG_NODES))
@@ -1356,7 +1231,7 @@ static boolean P_ReadMapData(gamemap_t* map, int doClass)
         // point in the map loading process (at the start).
         return true;
 
-    if(!ReadMapData(map, doClass))
+    if(!ReadMapData(map, doClass, props, numProps))
     {
         FreeMapDataLumps();
         FreeGLBSPInf();
@@ -1409,18 +1284,19 @@ static void SetCurrentMap(gamemap_t* map)
     currentMap = map;
 }
 
-/*
- * Loads the map data structures for a level.
+/**
+ * Attempts to load the data structures for a map.
  *
  * @param levelId   Identifier of the map to be loaded (eg "E1M1").
  *
- * @return gamemap_t*  Ptr to loaded map. NULL if unsuccessful.
+ * @return          <code>true</code> if the map was loaded successfully.
  */
-boolean P_LoadMapData(char *levelId)
+boolean P_AttemptMapLoad(char *levelId)
 {
-    int lumpNumbers[2];
-    gamemap_t* newmap;
+    int         lumpNumbers[2];
+    gamemap_t  *newmap;
 
+    mapDataLumps = NULL;
     numMapDataLumps = 0;
 
     // We'll assume we're loading a DOOM format map to begin with.
@@ -1442,7 +1318,7 @@ boolean P_LoadMapData(char *levelId)
         P_FindMapLumps(lumpNumbers[1]);
 
     // Make sure we have all the data we need to load this level.
-    if(!VerifyMapData(levelId))
+    if(!verifyMapData(levelId))
     {
         // Darn, the level data is incomplete.
         // Free any lumps we may have already precached in the process.
@@ -1459,62 +1335,173 @@ boolean P_LoadMapData(char *levelId)
     {
         newmap = M_Malloc(sizeof(gamemap_t));
         // Excellent, its a map we can read. Load it in!
-        Con_Message("P_LoadMapData: %s\n", levelId);
+        Con_Message("P_AttemptMapLoad: %s\n", levelId);
+
+        if(glNodeData && !bspBuild)
+            Con_Message(" : Ignoring GL Nodes\n");
 
         // Initialize the new map.
         strncpy(newmap->levelid, levelId, sizeof(newmap->levelid));
-        newmap->numvertexes = 0;
-        newmap->numsubsectors = 0;
-        newmap->numsectors = 0;
-        newmap->numnodes = 0;
-        newmap->numsides = 0;
-        newmap->numlines = 0;
-        newmap->numsegs = 0;
-        newmap->numthings = 0;
-        newmap->po_NumPolyobjs = 0;
+
+        countMapElements(newmap);
+        allocateMapData(newmap);
 
         // Load all lumps of each class in this order.
         //
         // NOTE:
         // DJS 01/10/05 - revised load order to allow for cross-referencing
         //                data during loading (detect + fix trivial errors).
-        if(!P_ReadMapData(newmap, LCM_VERTEXES))
+        {
+        // Vertexes and GL vertexes (read all properties).
+        int props[] = {
+            DAM_X,
+            DAM_Y};
+        if(!P_ReadMapData(newmap, LCM_VERTEXES, &(*props), 2))
             return false;
-        if(!P_ReadMapData(newmap, LCG_VERTEXES))
+        if(!P_ReadMapData(newmap, LCG_VERTEXES, &(*props), 2))
             return false;
-        if(!P_ReadMapData(newmap, LCM_SECTORS))
+        }
+        {
+        // Sectors (read all properties).
+        int props[] = {
+            DAM_FLOOR_HEIGHT,
+            DAM_CEILING_HEIGHT,
+            DAM_FLOOR_TEXTURE,
+            DAM_CEILING_TEXTURE,
+            DAM_LIGHT_LEVEL,
+            // Game-specific properties:
+            DAM_SECTOR_SPECIAL,
+            DAM_SECTOR_TAG};
+        if(!P_ReadMapData(newmap, LCM_SECTORS, &(*props), 7))
             return false;
-        if(!P_ReadMapData(newmap, LCM_SIDEDEFS))
+        }
+        {
+        // Sidedefs (read all properties except textures).
+        int props[] = {
+            DAM_TEXTURE_OFFSET_X,
+            DAM_TEXTURE_OFFSET_Y,
+            DAM_FRONT_SECTOR};
+        if(!P_ReadMapData(newmap, LCM_SIDEDEFS, &(*props), 3))
             return false;
-        if(!P_ReadMapData(newmap, LCM_LINEDEFS))
+        }
+        {
+        // Linedefs (read all properties).
+        int props[] = {
+            DAM_VERTEX1,
+            DAM_VERTEX2,
+            DAM_FLAGS,
+            DAM_SIDE0,
+            DAM_SIDE1,
+            // Game-specific properties:
+            DAM_LINE_TAG,
+            DAM_LINE_SPECIAL,
+            DAM_LINE_ARG1,
+            DAM_LINE_ARG2,
+            DAM_LINE_ARG3,
+            DAM_LINE_ARG4,
+            DAM_LINE_ARG5};
+        if(!P_ReadMapData(newmap, LCM_LINEDEFS, &(*props), 12))
             return false;
+        }
+        {
+        /* Sidedefs (read just textures).
+         * MUST be called after Linedefs are loaded.
+         *
+         * Sidedef texture fields might be overloaded with all kinds of
+         * different strings.
+         *
+         * In BOOM for example, these fields might contain strings that
+         * influence what special is assigned to the line. The game will
+         * then tell us what texture to use.
+         */
+        int props[] = {
+            DAM_TOP_TEXTURE,
+            DAM_MIDDLE_TEXTURE,
+            DAM_BOTTOM_TEXTURE};
+        if(!P_ReadMapData(newmap, LCM_SIDEDEFS, &(*props), 3))
+            return false;
+        }
 
-        P_ReadSideDefTextures(newmap, lumpNumbers[0] + ML_SIDEDEFS);
-        P_FinishLineDefs(newmap);
+        finishLineDefs(newmap);
 
-        if(!P_ReadMapData(newmap, LCM_BLOCKMAP))
+        {
+        // Things (read all properties).
+        int props[] = {
+            // Game-specific properties:
+            DAM_THING_TID,
+            DAM_THING_X,
+            DAM_THING_Y,
+            DAM_THING_HEIGHT,
+            DAM_THING_ANGLE,
+            DAM_THING_TYPE,
+            DAM_THING_OPTIONS,
+            DAM_THING_SPECIAL,
+            DAM_THING_ARG1,
+            DAM_THING_ARG2,
+            DAM_THING_ARG3,
+            DAM_THING_ARG4,
+            DAM_THING_ARG5};
+        if(!P_ReadMapData(newmap, LCM_THINGS, &(*props), 13))
             return false;
+        }
+        {
+        // Segs (read all properties).
+        int props[] = {
+            DAM_VERTEX1,
+            DAM_VERTEX2,
+            DAM_ANGLE,
+            DAM_LINE,
+            DAM_SIDE,
+            DAM_OFFSET};
+        if(!P_ReadMapData(newmap, LCM_SEGS, &(*props), 6))
+            return false;
+        }
 
-        if(!P_ReadMapData(newmap, LCM_THINGS))
-            return false;
-        if(!P_ReadMapData(newmap, LCM_SEGS))
-            return false;
-        if(!P_ReadMapData(newmap, LCM_SUBSECTORS))
-            return false;
-        if(!P_ReadMapData(newmap, LCM_NODES))
-            return false;
-        if(!P_ReadMapData(newmap, LCM_REJECT))
-            return false;
+        processSegs(newmap);
 
-        //P_PrintDebugMapData(newmap);
+        {
+        // Subsectors (read all properties).
+        int props[] = {
+            DAM_LINE_COUNT,
+            DAM_LINE_FIRST};
+        if(!P_ReadMapData(newmap, LCM_SUBSECTORS, &(*props), 2))
+            return false;
+        }
+        {
+        // Nodes (read all properties).
+        int props[] = {
+            DAM_X,
+            DAM_Y,
+            DAM_DX,
+            DAM_DY,
+            DAM_BBOX_RIGHT_TOP_Y,
+            DAM_BBOX_RIGHT_LOW_Y,
+            DAM_BBOX_RIGHT_LOW_X,
+            DAM_BBOX_RIGHT_TOP_X,
+            DAM_BBOX_LEFT_TOP_Y,
+            DAM_BBOX_LEFT_LOW_Y,
+            DAM_BBOX_LEFT_LOW_X,
+            DAM_BBOX_LEFT_TOP_X,
+            DAM_CHILD_RIGHT,
+            DAM_CHILD_LEFT};
+        if(!P_ReadMapData(newmap, LCM_NODES, &(*props), 14))
+            return false;
+        }
+
+        if(!P_ReadMapData(newmap, LCM_BLOCKMAP, NULL, 0))
+            return false;
+        if(!P_ReadMapData(newmap, LCM_REJECT, NULL, 0))
+            return false;
 
         // We have complete level data but we're not out of the woods yet...
         FreeMapDataLumps();
         FreeGLBSPInf();
 
+        //printDebugMapData(newmap);
+
         // Do any initialization/error checking work we need to do.
         // Must be called before we go any further
-        FinalizeMapData(newmap);
+        finalizeMapData(newmap);
 
         SetCurrentMap(newmap);
         M_Free(newmap);
@@ -1535,358 +1522,453 @@ boolean P_LoadMapData(char *levelId)
     }
 }
 
-/*
- * Works through the map data lump array, processing all the lumps
- * of the requested class.
+static void allocateMapData(gamemap_t *map)
+{
+    uint        k;
+
+    // Vertexes.
+    map->vertexes = Z_Calloc(map->numvertexes * sizeof(vertex_t), PU_LEVEL, 0);
+    for(k = 0; k < map->numvertexes; ++k)
+    {
+        vertex_t   *vtx = &map->vertexes[k];
+
+        vtx->header.type = DMU_VERTEX;
+        vtx->numlineowners = 0;
+        vtx->lineowners = NULL;
+        vtx->anchored = false;
+        vtx->numsecowners = 0;
+        vtx->secowners = NULL;
+    }
+
+    // Linedefs + missing fronts.
+    map->lines = Z_Calloc(map->numlines * sizeof(line_t), PU_LEVEL, 0);
+    missingFronts = M_Calloc(map->numlines * sizeof(uint));
+    for(k = 0; k < map->numlines; ++k)
+    {
+        line_t     *lin = &map->lines[k];
+
+        lin->header.type = DMU_LINE;
+        lin->L_vo1 = NULL;
+        lin->L_vo2 = NULL;
+        lin->selfrefhackroot = false;
+    }
+
+    // Sidedefs.
+    map->sides = Z_Calloc(map->numsides * sizeof(side_t), PU_LEVEL, 0);
+    for(k = 0; k < map->numsides; ++k)
+    {
+        side_t     *side = &map->sides[k];
+
+        side->header.type = DMU_SIDE;
+        side->SW_topsurface.header.type = DMU_SURFACE;
+        side->SW_middlesurface.header.type = DMU_SURFACE;
+        side->SW_bottomsurface.header.type = DMU_SURFACE;
+        side->SW_topflags = 0;
+        side->SW_bottomflags = 0;
+        side->SW_middleflags = 0;
+        memset(side->SW_toprgba, 0xff, 3);
+        memset(side->SW_middlergba, 0xff, 4);
+        memset(side->SW_bottomrgba, 0xff, 3);
+        side->blendmode = BM_NORMAL;
+        side->SW_topsurface.isflat = side->SW_topsurface.oldisflat = false;
+        side->SW_middlesurface.isflat = side->SW_middlesurface.oldisflat = false;
+        side->SW_bottomsurface.isflat = side->SW_bottomsurface.oldisflat = false;
+    }
+
+    // Segs.
+    map->segs = Z_Calloc(map->numsegs * sizeof(seg_t), PU_LEVEL, 0);
+    for(k = 0; k < map->numsegs; ++k)
+    {
+        seg_t      *seg = &map->segs[k];
+
+        seg->header.type = DMU_SEG;
+    }
+
+    // Subsectors.
+    map->subsectors = Z_Calloc(map->numsubsectors * sizeof(subsector_t), PU_LEVEL, 0);
+    for(k = 0; k < map->numsubsectors; ++k)
+    {
+        subsector_t *ssec = &map->subsectors[k];
+
+        ssec->header.type = DMU_SUBSECTOR;
+    }
+
+    // Nodes.
+    map->nodes = Z_Calloc(map->numnodes * sizeof(node_t), PU_LEVEL, 0);
+    for(k = 0; k < map->numnodes; ++k)
+    {
+        node_t     *node = &map->nodes[k];
+
+        node->header.type = DMU_NODE;
+    }
+
+    // Sectors.
+    map->sectors = Z_Calloc(map->numsectors * sizeof(sector_t), PU_LEVEL, 0);
+    for(k = 0; k < map->numsectors; ++k)
+    {
+        uint        j;
+        sector_t   *sec = &map->sectors[k];
+        plane_t    *planes;
+
+        sec->header.type = DMU_SECTOR;
+        sec->subscount = 0;
+        sec->thinglist = NULL;
+        memset(sec->rgb, 0xff, 3);
+
+        sec->planecount = 2;
+        sec->planes = Z_Malloc(sizeof(plane_t*) * sec->planecount, PU_LEVEL, 0);
+        planes = Z_Calloc(sizeof(plane_t) * sec->planecount, PU_LEVEL, 0);
+
+        // Do the planes too.
+        for(j = 0; j < sec->planecount; ++j, planes++)
+        {          
+            planes->header.type = DMU_PLANE;
+            memset(planes->glowrgb, 0xff, 3);
+            planes->glow = 0;
+            planes->height = 0;
+
+            // The back pointer (temporary)
+            planes->sector = sec;
+
+            planes->surface.header.type = DMU_SURFACE;
+            planes->surface.isflat = true;
+            planes->surface.oldisflat = true;
+            memset(planes->surface.rgba, 0xff, 3);
+            planes->surface.flags = 0;
+            planes->surface.offx = planes->surface.offy = 0;
+
+            sec->planes[j] = planes;
+        }
+
+        // Set plane normals
+        sec->planes[PLN_FLOOR]->surface.normal[VX] = 0;
+        sec->planes[PLN_FLOOR]->surface.normal[VY] = 0;
+        sec->planes[PLN_FLOOR]->surface.normal[VZ] = 1;
+
+        sec->planes[PLN_CEILING]->surface.normal[VX] = 0;
+        sec->planes[PLN_CEILING]->surface.normal[VY] = 0;
+        sec->planes[PLN_CEILING]->surface.normal[VZ] = -1;
+    }
+
+    // Call the game's setup routines
+    if(gx.SetupForMapData)
+    {
+        gx.SetupForMapData(DAM_VERTEX, map->numvertexes);
+        gx.SetupForMapData(DAM_THING, map->numthings);
+        gx.SetupForMapData(DAM_LINE, map->numlines);
+        gx.SetupForMapData(DAM_SIDE, map->numsides);
+        gx.SetupForMapData(DAM_SEG, map->numsegs);
+        gx.SetupForMapData(DAM_SUBSECTOR, map->numsubsectors);
+        gx.SetupForMapData(DAM_NODE, map->numnodes);
+        gx.SetupForMapData(DAM_SECTOR, map->numsectors);
+    }
+}
+
+static void countMapElements(gamemap_t *map)
+{
+    mapdatalumpnode_t *node;
+
+    map->numvertexes = 0;
+    map->numsubsectors = 0;
+    map->numsectors = 0;
+    map->numnodes = 0;
+    map->numsides = 0;
+    map->numlines = 0;
+    map->numsegs = 0;
+    map->numthings = 0;
+    map->po_NumPolyobjs = 0;
+
+    node = mapDataLumps;
+    while(node)
+    {
+        mapdatalumpinfo_t *mapLump = node->data;
+
+        // Is this a "real" lump? (or do we have to generate the data for it?)
+        if(mapLump->lumpNum != -1)
+        {
+            int         lumpClass = mapLump->lumpClass;
+            boolean     inuse = true;
+
+            // Are gl Nodes available?
+            if(glNodeData)
+            {
+                // Are we using them?
+                if(!bspBuild)
+                {
+                    if(mapLumpInfo[lumpClass].glLump >= 0)
+                        inuse = false;
+                }
+                else
+                {
+                    // Use the gl versions of the following lumps:
+                    if(lumpClass == LCM_SUBSECTORS ||
+                       lumpClass == LCM_SEGS ||
+                       lumpClass == LCM_NODES)
+                        inuse = false;
+                }
+            }
+
+            if(inuse)
+            {   // Determine the number of map data objects of each type we'll need.
+                switch(mapLumpInfo[lumpClass].dataType)
+                {
+                case DAM_VERTEX:    map->numvertexes   += mapLump->elements;    break;
+                case DAM_THING:     map->numthings     += mapLump->elements;    break;
+                case DAM_LINE:      map->numlines      += mapLump->elements;    break;
+                case DAM_SIDE:      map->numsides      += mapLump->elements;    break;
+                case DAM_SEG:       map->numsegs       += mapLump->elements;    break;
+                case DAM_SUBSECTOR: map->numsubsectors += mapLump->elements;    break;
+                case DAM_NODE:      map->numnodes      += mapLump->elements;    break;
+                case DAM_SECTOR:    map->numsectors    += mapLump->elements;    break;
+                default:
+                    break;
+                }
+            }
+        }
+        node = node->next;
+    }
+}
+
+static boolean ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
+                                   uint startIndex, datatype_t **props)
+{
+    int         type = mapLumpInfo[mapLump->lumpClass].dataType;
+    damargs_t   args;
+
+    // Is this a supported lump type?
+    switch(type)
+    {
+    case DAM_THING:
+    case DAM_VERTEX:
+    case DAM_LINE:
+    case DAM_SIDE:
+    case DAM_SECTOR:
+    case DAM_SEG:
+    case DAM_SUBSECTOR:
+    case DAM_NODE:
+        break;
+
+    default:
+        return false; // Read from this lump type is not supported.
+    }
+
+     // Select the lump size, number of elements etc...
+    args.map = map;
+    args.elmsize = mapLump->format->elmSize;
+    args.elements = mapLump->elements;
+    args.props = props;
+
+    // Have we cached the lump yet?
+    if(mapLump->lumpp == NULL)
+        mapLump->lumpp = (byte *) W_CacheLumpNum(mapLump->lumpNum, PU_STATIC);
+
+    // Read in that data!
+    // NOTE: We'll leave the lump cached, our caller probably knows better
+    // than us whether it should be free'd.
+    return P_CallbackEX(type, startIndex,
+                        (mapLump->lumpp + mapLump->startOffset), &args,
+                        ReadMapProperty);
+}
+
+/**
+ * Works through the map data lump array, processing all the lumps of the
+ * requested class.
  *
- * @param: doClass      The class of map data lump to process.
+ * @param map           Ptr to the map we are reading the data into.
+ * @param doClass       The class of map data to read.
+ * @param props         Ptr to array of properties to be read (internal DAM
+ *                      property identifiers e.g. DAM_FLOOR_HEIGHT).
+ * @param numProps      Number of properties in @param props.
  *
  * @return: boolean     (True) All the lumps of the requested class
  *                      were processed successfully.
  */
-static boolean ReadMapData(gamemap_t* map, int doClass)
+static boolean ReadMapData(gamemap_t *map, int doClass, int *props,
+                           uint numProps)
 {
-    int internalType;
-    int lumpCount;
-    unsigned int i;
-    unsigned int k;
-    unsigned int elements = 0;
-    unsigned int oldNum = 0, newNum;
-
-    datatype_t *dataTypes = NULL;
-    mapdatalumpinfo_t* mapLump = mapDataLumps;
-    mapdatalumpformat_t* lumpFormat = NULL;
-    maplumpinfo_t*  lumpInfo;
-
-    uint startTime;
+    uint        oldNum = 0;
+    mapdatalumpnode_t *node;
+    mapdatalumpformat_t *lastUsedFormat = NULL;
+    datatype_t **readProps = NULL;
 
     // Are gl Nodes available?
     if(glNodeData)
     {
-        // Use the gl versions of the following lumps:
-        if(doClass == LCM_SUBSECTORS)
-            doClass = LCG_SUBSECTORS;
-        else if(doClass == LCM_SEGS)
-            doClass = LCG_SEGS;
-        else if(doClass == LCM_NODES)
-            doClass = LCG_NODES;
+        // Are we using them?
+        if(!bspBuild)
+        {
+            if(doClass == LCG_VERTEXES)
+                return true;
+        }
+        else
+        {
+            // Use the gl versions of the following lumps:
+            if(doClass == LCM_SUBSECTORS)
+                doClass = LCG_SUBSECTORS;
+            else if(doClass == LCM_SEGS)
+                doClass = LCG_SEGS;
+            else if(doClass == LCM_NODES)
+                doClass = LCG_NODES;
+        }
     }
 
-    lumpCount = 0;
-    for(i = numMapDataLumps; i--; ++mapLump)
+    node = mapDataLumps;
+    while(node)
     {
+        mapdatalumpinfo_t *mapLump = node->data;
+        mapdatalumpformat_t *lumpFormat;
+        maplumpinfo_t *lumpInfo;
+        uint        startTime;
+
         // Only process lumps that match the class requested
-        if(doClass != mapLump->lumpClass)
-            continue;
-
-        lumpInfo = &mapLumpInfo[mapLump->lumpClass];
-        internalType = lumpInfo->dataType;
-
-        // Is this a "real" lump? (ie do we have to generate the data for it?)
-        if(mapLump->lumpNum != -1)
+        if(doClass == mapLump->lumpClass)
         {
+            lumpInfo = &mapLumpInfo[mapLump->lumpClass];
             lumpFormat = mapLump->format;
 
-            if(lumpFormat->values != NULL)
-                dataTypes = lumpFormat->values;
-            else
-                dataTypes = NULL;
-
-            // How many elements are in the lump?
-            elements = (mapLump->length - mapLump->startOffset) / (int) lumpFormat->elmSize;
-
-            VERBOSE(Con_Message("P_ReadMapData: Processing \"%s\" (#%d) ver %d...\n",
-                                W_CacheLumpNum(mapLump->lumpNum, PU_GETNAME), elements,
-                                mapLump->format->version));
-
-            // Have we cached the lump yet?
-            if(mapLump->lumpp == NULL)
+            // Is this a "real" lump? (ie do we have to generate the data for it?)
+            if(mapLump->lumpNum != -1)
             {
-                mapLump->lumpp = (byte *) W_CacheLumpNum(mapLump->lumpNum, PU_STATIC);
+                VERBOSE(Con_Message("P_ReadMapData: Processing \"%s\" (#%d) ver %d...\n",
+                                    W_CacheLumpNum(mapLump->lumpNum, PU_GETNAME),
+                                    mapLump->elements, lumpFormat->version));
             }
-        }
-        else
-        {
-            // Not a problem, we'll generate useable data automatically.
-            VERBOSE(Con_Message("P_ReadMapData: Generating \"%s\"\n",
-                                lumpInfo->lumpname));
-        }
-
-        // Allocate and init depending on the type of data and if this is the
-        // first lump of this class being processed.
-        switch(internalType)
-        {
-        case DAM_VERTEX:
-            oldNum = map->numvertexes;
-            newNum = map->numvertexes+= elements;
-
-            if(oldNum != 0)
-                map->vertexes = Z_Realloc(map->vertexes, map->numvertexes * sizeof(vertex_t), PU_LEVEL);
             else
-                map->vertexes = Z_Malloc(map->numvertexes * sizeof(vertex_t), PU_LEVEL, 0);
-
-            memset(&map->vertexes[oldNum], 0, elements * sizeof(vertex_t));
-            for(k = oldNum; k < newNum; ++k)
             {
-                vertex_t *vtx = &map->vertexes[k];
-
-                vtx->header.type = DMU_VERTEX;
-                vtx->numlineowners = 0;
-                vtx->lineowners = NULL;
-                vtx->anchored = false;
-                vtx->numsecowners = 0;
-                vtx->secowners = NULL;
+                // Not a problem, we'll generate useable data automatically.
+                VERBOSE(Con_Message("P_ReadMapData: Generating \"%s\"\n",
+                                    lumpInfo->lumpname));
             }
 
-            if(mapLump->lumpClass == LCM_VERTEXES && oldNum == 0)
-                firstGLvertex = map->numvertexes;
-            break;
-
-        case DAM_THING:
-            // mapthings are game-side
-            oldNum = map->numthings;
-            newNum = map->numthings+= elements;
-            break;
-
-        case DAM_LINE:
-            oldNum = map->numlines;
-            newNum = map->numlines+= elements;
-
-            if(oldNum != 0)
-                map->lines = Z_Realloc(lines, map->numlines * sizeof(line_t), PU_LEVEL);
-            else
-                map->lines = Z_Malloc(map->numlines * sizeof(line_t), PU_LEVEL, 0);
-
-            memset(&map->lines[oldNum], 0, elements * sizeof(line_t));
-            for(k = oldNum; k < newNum; ++k)
+            // Read in the lump data
+            startTime = Sys_GetRealTime();
+            if(lumpInfo->dataType == DAM_MAPBLOCK)
             {
-                line_t *lin = &map->lines[k];
-
-                lin->header.type = DMU_LINE;
-                lin->L_vo1 = NULL;
-                lin->L_vo2 = NULL;
-                lin->selfrefhackroot = false;
-            }
-
-            // for missing front detection
-            missingFronts = M_Malloc(map->numlines * sizeof(int));
-            memset(missingFronts, 0, sizeof(missingFronts));
-            break;
-
-        case DAM_SIDE:
-            {
-            side_t* side;
-
-            oldNum = map->numsides;
-            newNum = map->numsides+= elements;
-
-            if(oldNum != 0)
-                map->sides = Z_Realloc(map->sides, map->numsides * sizeof(side_t), PU_LEVEL);
-            else
-                map->sides = Z_Malloc(map->numsides * sizeof(side_t), PU_LEVEL, 0);
-
-            memset(&map->sides[oldNum], 0, elements * sizeof(side_t));
-
-            // Initialize side properties
-            for(k = oldNum; k < newNum; ++k)
-            {
-                side = &map->sides[k];
-
-                side->header.type = DMU_SIDE;
-
-                side->SW_topsurface.header.type = DMU_SURFACE;
-                side->SW_middlesurface.header.type = DMU_SURFACE;
-                side->SW_bottomsurface.header.type = DMU_SURFACE;
-                memset(side->SW_toprgba, 0xff, 3);
-                memset(side->SW_middlergba, 0xff, 4);
-                memset(side->SW_bottomrgba, 0xff, 3);
-                side->blendmode = BM_NORMAL;
-                side->SW_topsurface.isflat = side->SW_topsurface.oldisflat = false;
-                side->SW_middlesurface.isflat = side->SW_middlesurface.oldisflat = false;
-                side->SW_bottomsurface.isflat = side->SW_bottomsurface.oldisflat = false;
-            }
-            break;
-            }
-
-        case DAM_SEG:
-            oldNum = map->numsegs;
-            newNum = map->numsegs+= elements;
-
-            if(oldNum != 0)
-                map->segs = Z_Realloc(map->segs, map->numsegs * sizeof(seg_t), PU_LEVEL);
-            else
-                map->segs = Z_Malloc(map->numsegs * sizeof(seg_t), PU_LEVEL, 0);
-
-            // Initialize type identifier immediately.
-            memset(&map->segs[oldNum], 0, elements * sizeof(seg_t));
-            for(k = oldNum; k < newNum; ++k)
-            {
-                map->segs[k].header.type = DMU_SEG;
-            }
-            break;
-
-        case DAM_SUBSECTOR:
-            oldNum = map->numsubsectors;
-            newNum = map->numsubsectors+= elements;
-
-            if(oldNum != 0)
-                map->subsectors = Z_Realloc(map->subsectors, map->numsubsectors * sizeof(subsector_t),PU_LEVEL);
-            else
-                map->subsectors = Z_Malloc(map->numsubsectors * sizeof(subsector_t), PU_LEVEL, 0);
-
-            memset(&map->subsectors[oldNum], 0, elements * sizeof(subsector_t));
-            for(k = oldNum; k < newNum; ++k)
-            {
-                map->subsectors[k].header.type = DMU_SUBSECTOR;
-            }
-            break;
-
-        case DAM_NODE:
-            oldNum = map->numnodes;
-            newNum = map->numnodes+= elements;
-
-            if(oldNum != 0)
-                map->nodes = Z_Realloc(map->nodes, map->numnodes * sizeof(node_t), PU_LEVEL);
-            else
-                map->nodes = Z_Malloc(map->numnodes * sizeof(node_t), PU_LEVEL, 0);
-
-            memset(&map->nodes[oldNum], 0, elements * sizeof(node_t));
-            for(k = oldNum; k < newNum; ++k)
-            {
-                map->nodes[k].header.type = DMU_NODE;
-            }
-            break;
-
-        case DAM_SECTOR:
-            {
-            uint        j;
-            sector_t   *sec;
-
-            oldNum = map->numsectors;
-            newNum = map->numsectors+= elements;
-
-            if(oldNum != 0)
-                map->sectors = Z_Realloc(map->sectors, map->numsectors * sizeof(sector_t), PU_LEVEL);
-            else
-                map->sectors = Z_Malloc(map->numsectors * sizeof(sector_t), PU_LEVEL, 0);
-
-            memset(&map->sectors[oldNum], 0, elements * sizeof(sector_t));
-
-            // Initialize sector properties
-            for(k = oldNum; k < newNum; ++k)
-            {
-                sec = &map->sectors[k];
-
-                sec->header.type = DMU_SECTOR;
-                sec->subscount = 0;
-                sec->thinglist = NULL;
-                memset(sec->rgb, 0xff, 3);
-
-                sec->planecount = 2;
-                sec->planes = Z_Malloc(sizeof(plane_t*) * sec->planecount, PU_LEVEL, 0);
-
-                // Do the planes too.
-                for(j = 0; j < sec->planecount; ++j)
+                if(!P_LoadBlockMap(map, mapLump))
                 {
-                    sec->planes[j] = Z_Calloc(sizeof(plane_t), PU_LEVEL, 0);
-                    sec->planes[j]->header.type = DMU_PLANE;
-                    sec->planes[j]->surface.header.type = DMU_SURFACE;
-                    sec->planes[j]->surface.isflat = true;
-                    sec->planes[j]->surface.oldisflat = true;
-                    memset(sec->planes[j]->surface.rgba, 0xff, 3);
-                    memset(sec->planes[j]->glowrgb, 0xff, 3);
-                    sec->planes[j]->glow = 0;
-                    sec->planes[j]->surface.flags = 0;
-                    sec->planes[j]->surface.offx =
-                        sec->planes[j]->surface.offy = 0;
-
-                    // The back pointer (temporary)
-                    sec->planes[j]->sector = &map->sectors[k];
+                    if(readProps)
+                        M_Free(readProps);
+                    return false;
                 }
-
-                // Set plane normals
-                sec->planes[PLN_FLOOR]->surface.normal[VX] = 0;
-                sec->planes[PLN_FLOOR]->surface.normal[VY] = 0;
-                sec->planes[PLN_FLOOR]->surface.normal[VZ] = 1;
-
-                sec->planes[PLN_CEILING]->surface.normal[VX] = 0;
-                sec->planes[PLN_CEILING]->surface.normal[VY] = 0;
-                sec->planes[PLN_CEILING]->surface.normal[VZ] = -1;
             }
-            break;
-            }
-
-        default:
-            break;
-        }
-
-        // Call the game's setup routine
-        if(gx.SetupForMapData)
-            gx.SetupForMapData(internalType, elements);
-
-        // Read in the lump data
-        startTime = Sys_GetRealTime();
-        if(internalType == DAM_MAPBLOCK)
-        {
-            if(!P_LoadBlockMap(map, mapLump))
-                return false;
-        }
-        else if(internalType == DAM_SECREJECT)
-        {
-            if(!P_LoadReject(map, mapLump))
-                return false;
-        }
-        else
-        {
-            damargs_t args;
-
-            args.map = map;
-            args.elmsize = lumpFormat->elmSize;
-            args.elements = elements;
-            args.numvalues = lumpFormat->numValues;
-            args.types = dataTypes;
-
-            P_CallbackEX(internalType, oldNum,
-                         (mapLump->lumpp + mapLump->startOffset),
-                         &args, ReadMapProperty);
-
-            // Perform any additional processing required (temporary)
-            switch(internalType)
+            else if(lumpInfo->dataType == DAM_SECREJECT)
             {
-            case DAM_SEG:
-                P_ProcessSegs(map, mapLump->format->version);
-                break;
+                if(!P_LoadReject(map, mapLump))
+                {
+                    if(readProps)
+                        M_Free(readProps);
+                    return false;
+                }
+            }
+            else
+            {
+                uint        startIndex;
 
-            default:
-                break;
+                // KLUDGE: firstGLvertex. We should determine the start index for this
+                // block of data depending on the map format.
+                if(mapLump->lumpClass == LCM_VERTEXES)
+                    firstGLvertex = mapLump->elements;
+                
+                startIndex = (mapLump->lumpClass == LCG_VERTEXES? firstGLvertex : oldNum);
+                // < KLUDGE
+
+                //
+                // Create a NULL terminated array of the properties to be read.
+                //
+                // TODO:
+                // Improve property selection algorithm.
+
+                // Can we reuse a previously created array?
+                if(lumpFormat != lastUsedFormat)
+                {   // No we cannot.
+                    uint        readNumProps;
+                    uint        i, j, idx;
+                    boolean     found;
+
+                    // Count the number of requested properties that are present in
+                    // the lump.
+                    readNumProps = 0;
+                    for(i = 0; i < numProps; ++i)
+                    {
+                        j = 0;
+                        found = false;
+                        do
+                        {
+                            if(lumpFormat->props[j].id == props[i])
+                            {
+                                readNumProps++;
+                                found = true;
+                            }
+                            else
+                                j++;
+                        } while(!found && j < lumpFormat->numProps);
+                    }
+
+                    if(readProps)
+                        M_Free(readProps);
+
+                    readProps = M_Malloc(sizeof(datatype_t*) * (readNumProps + 1));
+                    // Retrieve ptrs to the properties to be read from the lumpformat.
+
+                    idx = 0;
+                    for(i = 0; i < numProps; ++i)
+                    {
+                        j = 0;
+                        found = false;
+                        do
+                        {
+                            if(lumpFormat->props[j].id == props[i])
+                            {
+                                readProps[idx++] = &lumpFormat->props[j];
+                                found = true;
+                            }
+                            else
+                                j++;
+                        } while(!found && j < lumpFormat->numProps);
+                    }
+                    readProps[idx] = NULL; // terminate
+                }
+                else // Yes we can.
+                    lumpFormat = lastUsedFormat;
+                // END TODO improve property selection algorithm.
+
+                lastUsedFormat = lumpFormat;
+
+                if(!ReadMapDataFromLump(map, mapLump, startIndex, readProps))
+                {
+                    M_Free(readProps);
+                    return false; // something went VERY horibly wrong...
+                }
+            }
+            // How much time did we spend?
+            VERBOSE2(Con_Message("P_ReadMapData: Done in %.4f seconds.\n",
+                                 (Sys_GetRealTime() - startTime) / 1000.0f));
+
+            oldNum += mapLump->elements;
+
+            // We're finished with this lump.
+            if(mapLump->lumpp)
+            {
+                Z_Free(mapLump->lumpp);
+                mapLump->lumpp = 0;
             }
         }
 
-        // How much time did we spend?
-        VERBOSE2(Con_Message("P_ReadMapData: Done in %.4f seconds.\n",
-                             (Sys_GetRealTime() - startTime) / 1000.0f));
-
-        // We're finished with this lump.
-        if(mapLump->lumpp)
-        {
-            Z_Free(mapLump->lumpp);
-            mapLump->lumpp = 0;
-        }
-
-        // Remember how many lumps of this class we've processed
-        ++lumpCount;
+        node = node->next;
     }
 
+    if(readProps)
+        M_Free(readProps);
     return true;
 }
 
-/*
+/**
  * Reads a value from the (little endian) source buffer. Does some basic
  * type checking so that incompatible types are not assigned.
  * Simple conversions are also done, e.g., float to fixed.
  */
 static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
-                      const byte *src, const datatype_t* prop, int element)
+                      const byte *src, const datatype_t* prop, uint element)
 {
     int flags = prop->flags;
 
@@ -1980,12 +2062,12 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
             if(flags & DT_TEXTURE)
             {
                 *d = P_CheckTexture((char*)((long long*)(src)), false, valueType,
-                                    element, prop->property);
+                                    element, prop->id);
             }
             else if(flags & DT_FLAT)
             {
                 *d = P_CheckTexture((char*)((long long*)(src)), true, valueType,
-                                    element, prop->property);
+                                    element, prop->id);
             }
             break;
             }
@@ -2185,23 +2267,9 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                       value_Str(prop->size));
         }
     }
-    // TODO: This is not correct.
-    // Currently we do NOT allocate all objects prior to reading map data,
-    // they are instead allocated just before the data is processed.
-    // This means that this routine is sensitive to the load order of
-    // map data. For example if SECTORS has not been read prior to calling
-    // this routine with a DDVT_SECT_PTR conversion we'll end up trying to
-    // dereference a NULL pointer.
-    //
-    // Now that we qualify all map data prior to loading we can be pretty
-    // sure that we won't encounter anything that will stop us once we start.
-    //
-    // Meaning that it would be logical to allocate memory for all the map
-    // data objects at the start of the read process (including, by extension,
-    // all game-specific map object data (in the games's code)).
-    //
-    // Furthermore, once we have a way to convert internal member to property
-    // we should no longer need these special case constants (eg DDVT_SECT_PTR).
+    // TODO:
+    // Once we have a way to convert internal member to property we should no
+    // longer need these special case constants (eg DDVT_SECT_PTR).
     else if(valueType == DDVT_SECT_PTR || valueType == DDVT_VERT_PTR ||
             valueType == DDVT_LINE_PTR || valueType == DDVT_SIDE_PTR)
     {
@@ -2281,8 +2349,11 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
             {
             vertex_t** d = dst;
 
+            // FIXME:
+            // The firstGLvertex offset should be handed down from the very
+            // start of the read process, it should not be a global.
             // If GL NODES are available this might be an "extra" vertex.
-            if(glNodeData)
+            if(glNodeData && bspBuild)
             {
                 switch(glNodeFormats[glNodeFormat].
                        verInfo[mapLumpInfo[LCG_SEGS].glLump].version)
@@ -2331,7 +2402,7 @@ static int ReadCustomMapProperty(gamemap_t* map, int dataType, void *ptr,
                                  const datatype_t* prop, const byte *buffer)
 {
     void*   dest = NULL;
-    int     idx = -1;
+    uint    idx = 0;
 
     byte    tmpbyte = 0;
     short   tmpshort = 0;
@@ -2342,7 +2413,7 @@ static int ReadCustomMapProperty(gamemap_t* map, int dataType, void *ptr,
     switch(dataType)
     {
     case DAM_THING:
-        idx = *(int*) ptr;
+        idx = *(uint*) ptr;
         break;
     case DAM_LINE:
         idx = ((line_t*) ptr) - map->lines;
@@ -2380,7 +2451,7 @@ static int ReadCustomMapProperty(gamemap_t* map, int dataType, void *ptr,
 
     ReadValue(map, prop->size, dest, buffer + prop->offset, prop, idx);
 
-    gx.HandleMapDataProperty(idx, dataType, prop->property, prop->size, dest);
+    gx.HandleMapDataProperty(idx, dataType, prop->id, prop->size, dest);
 
     return true;
 }
@@ -2401,7 +2472,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         vertex_t* p = ptr;
         uint    idx = p - map->vertexes;
 
-        switch(prop->property)
+        switch(prop->id)
         {
         case DAM_X:
             ReadValue(map, DMT_VERTEX_POS, &p->pos[VX], buffer + prop->offset, prop, idx);
@@ -2413,7 +2484,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
 
         default:
             Con_Error("ReadMapProperty: DAM_VERTEX has no property %s.\n",
-                      DAM_Str(prop->property));
+                      DAM_Str(prop->id));
         }
         break;
         }
@@ -2422,7 +2493,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         line_t* p = ptr;
         uint    idx = p - map->lines;
 
-        switch(prop->property)
+        switch(prop->id)
         {
         case DAM_VERTEX1:
             // TODO: should be DMT_LINE_V1 but we require special case logic
@@ -2448,7 +2519,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
 
         default:
             Con_Error("ReadMapProperty: DAM_LINE has no property %s.\n",
-                      DAM_Str(prop->property));
+                      DAM_Str(prop->id));
         }
         break;
         }
@@ -2457,7 +2528,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         side_t* p = ptr;
         uint    idx = p - map->sides;
 
-        switch(prop->property)
+        switch(prop->id)
         {
         case DAM_TEXTURE_OFFSET_X:
             ReadValue(map, DMT_SURFACE_OFFX, &p->SW_topoffx, buffer + prop->offset, prop, idx);
@@ -2492,7 +2563,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
 
         default:
             Con_Error("ReadMapProperty: DAM_SIDE has no property %s.\n",
-                      DAM_Str(prop->property));
+                      DAM_Str(prop->id));
         }
         break;
         }
@@ -2501,7 +2572,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         sector_t* p = ptr;
         uint    idx = p - map->sectors;
 
-        switch(prop->property)
+        switch(prop->id)
         {
         case DAM_FLOOR_HEIGHT:
             ReadValue(map, DMT_PLANE_HEIGHT, &p->SP_floorheight, buffer + prop->offset, prop, idx);
@@ -2525,7 +2596,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
 
         default:
             Con_Error("ReadMapProperty: DAM_SECTOR has no property %s.\n",
-                      DAM_Str(prop->property));
+                      DAM_Str(prop->id));
         }
         break;
         }
@@ -2534,7 +2605,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         seg_t* p = ptr;
         uint    idx = p - map->segs;
 
-        switch(prop->property)
+        switch(prop->id)
         {
         case DAM_VERTEX1:
             // TODO: should be DMT_SEG_V  but we require special case logic
@@ -2566,7 +2637,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
 
         default:
             Con_Error("ReadMapProperty: DAM_SEG has no property %s.\n",
-                      DAM_Str(prop->property));
+                      DAM_Str(prop->id));
         }
         break;
         }
@@ -2575,7 +2646,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         subsector_t* p = ptr;
         uint    idx = p - map->subsectors;
 
-        switch(prop->property)
+        switch(prop->id)
         {
         case DAM_LINE_COUNT:
             ReadValue(map, DMT_SUBSECTOR_LINECOUNT, &p->linecount, buffer + prop->offset, prop, idx);
@@ -2587,7 +2658,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
 
         default:
             Con_Error("ReadMapProperty: DAM_SUBSECTOR has no property %s.\n",
-                      DAM_Str(prop->property));
+                      DAM_Str(prop->id));
         }
         break;
         }
@@ -2596,7 +2667,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         node_t* p = ptr;
         uint    idx = p - map->nodes;
 
-        switch(prop->property)
+        switch(prop->id)
         {
         case DAM_X:
             ReadValue(map, DMT_NODE_X, &p->x, buffer + prop->offset, prop, idx);
@@ -2658,7 +2729,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
 
         default:
             Con_Error("ReadMapProperty: DAM_NODE has no property %s.\n",
-                      DAM_Str(prop->property));
+                      DAM_Str(prop->id));
         }
         break;
         }
@@ -2669,7 +2740,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     return true; // Continue iteration
 }
 
-static void *P_GetPtrToObject(gamemap_t* map, int objectType, int id)
+static void *P_GetPtrToObject(gamemap_t* map, int objectType, uint id)
 {
     switch (objectType)
     {
@@ -2704,7 +2775,7 @@ static void *P_GetPtrToObject(gamemap_t* map, int objectType, int id)
  *  1  Multiple callbacks can be made for each object.
  *  2  Any number of properties (of different types) per object
  *     can be manipulated. To accomplish the same result using
- *     P_Callback would require numorous rounds of itteration.
+ *     P_Callback would require numerous rounds of iteration.
  *  3  Optimised for bulk processing.
  *
  * Returns true if all the calls to the callback function return true. False
@@ -2726,61 +2797,28 @@ static void *P_GetPtrToObject(gamemap_t* map, int objectType, int id)
  *       use the same signature as the DMU callbacks.
  *       Think of a way to combine index and startIndex.
  */
-int P_CallbackEX(int dataType, unsigned int startIndex,
-                 const byte *buffer, void* context,
-                 int (*callback)(gamemap_t* map, int dataType, void* ptr,
+static int P_CallbackEX(int dataType, uint startIndex, const byte *buffer,
+                        void* context,
+                        int (*callback)(gamemap_t* map, int dataType, void* ptr,
                                  const datatype_t* prop, const byte *buffer))
 {
 #define NUMBLOCKS 8
 #define BLOCK ptr = dataType == DAM_THING? &idx : P_GetPtrToObject(map, dataType, idx);  \
-        for(k = args->numvalues, myTypes = args->types; k--; ++myTypes) \
+        for(prop = args->props[k = 0]; prop; prop = args->props[++k]) \
         { \
-          if(!callback(map, dataType, ptr, myTypes, buffer)) \
-            return false; \
+            if(!callback(map, dataType, ptr, prop, buffer)) \
+                return false; \
         } \
         buffer += args->elmsize; \
         ++idx;
 
-    uint        objectCount = 0;
     uint        idx;
     uint        i = 0, k;
     damargs_t  *args = (damargs_t*) context;
     gamemap_t  *map = args->map;
     uint        blockLimit = (args->elements / NUMBLOCKS) * NUMBLOCKS;
     void       *ptr;
-    const datatype_t* myTypes;
-
-    // Is it a known type?
-    switch(dataType)
-    {
-    case DAM_THING:
-        objectCount = map->numthings;
-        break;
-    case DAM_LINE:
-        objectCount = map->numlines;
-        break;
-    case DAM_SIDE:
-        objectCount = map->numsides;
-        break;
-    case DAM_VERTEX:
-        objectCount = map->numvertexes;
-        break;
-    case DAM_SEG:
-        objectCount = map->numsegs;
-        break;
-    case DAM_SUBSECTOR:
-        objectCount = map->numsubsectors;
-        break;
-    case DAM_NODE:
-        objectCount = map->numnodes;
-        break;
-    case DAM_SECTOR:
-        objectCount = map->numsectors;
-        break;
-
-    default:
-        Con_Error("P_CallbackEX: Type %s unknown.\n", DMU_Str(dataType));
-    }
+    const datatype_t *prop;
 
     // Have we got enough to do some in blocks?
     if(args->elements >= blockLimit)
@@ -2809,8 +2847,11 @@ int P_CallbackEX(int dataType, unsigned int startIndex,
         case 2: BLOCK
         case 1:
             ptr = dataType == DAM_THING? &idx : P_GetPtrToObject(map, dataType, idx);
-            for(k = args->numvalues, myTypes = args->types; k--; ++myTypes)
-                if(!callback(map, dataType, ptr, myTypes, buffer)) return false;
+            for(prop = args->props[k = 0]; prop; prop = args->props[++k])
+            {
+                if(!callback(map, dataType, ptr, prop, buffer))
+                    return false;
+            }
         }
     }
 
@@ -2823,7 +2864,7 @@ int P_CallbackEX(int dataType, unsigned int startIndex,
  * If angle and offset information is not provided they are
  * calculated here.
  */
-static void P_ProcessSegs(gamemap_t* map, int version)
+static void processSegs(gamemap_t *map)
 {
     uint        i, j ,k, n;
     seg_t      *seg;
@@ -2889,7 +2930,7 @@ static void P_ProcessSegs(gamemap_t* map, int version)
         seg->length = P_AccurateDistancef(seg->v[1]->pos[VX] - seg->v[0]->pos[VX],
                                           seg->v[1]->pos[VY] - seg->v[0]->pos[VY]);
 
-        if(version == 0 && seg->length == 0)
+        if(seg->length == 0)
             seg->length = 0.01f; // Hmm...
 
         // Calculate the surface normals
@@ -2934,7 +2975,7 @@ static void P_ProcessSegs(gamemap_t* map, int version)
  *
  * Sidedefs MUST be loaded before this is called
  */
-static void P_FinishLineDefs(gamemap_t* map)
+static void finishLineDefs(gamemap_t* map)
 {
     uint        i;
     line_t     *ld;
@@ -3021,72 +3062,17 @@ static void P_FinishLineDefs(gamemap_t* map)
 }
 
 /*
- * MUST be called after Linedefs are loaded.
- *
- * Sidedef texture fields might be overloaded with all kinds of
- * different strings.
- *
- * In BOOM for example, these fields might contain strings that
- * influence what special is assigned to the line.
- *
- * In order to allow the game to make the best decision on what
- * to do - we must provide the game with everything we know about
- * this property and the unaltered erogenous value.
- *
- * In the above example, jDoom will request various properties
- * of this side's linedef (hence why this has to wait until the
- * linedefs have been loaded).
- *
- * If the game doesn't know what the erogenous value means:
- * We'll ignore it and assign the "MISSING" texture instead.
- */
-static void P_ReadSideDefTextures(gamemap_t* map, int lump)
-{
-    byte       *data;
-    uint        i;
-    mapsidedef_t *msd;
-    side_t     *sd;
-
-    Con_Message("Loading Sidedef Texture IDs...\n");
-
-    data = W_CacheLumpNum(lump, PU_STATIC);
-
-    msd = (mapsidedef_t *) data;
-
-    for(i = 0; i < map->numsides; ++i, msd++)
-    {
-        sd = &map->sides[i];
-        sd->SW_toppic = P_CheckTexture(msd->toptexture, false, DAM_SIDE,
-                                       i, DAM_TOP_TEXTURE);
-        sd->SW_topisflat = false;
-        sd->SW_topflags = 0;
-
-        sd->SW_bottompic = P_CheckTexture(msd->bottomtexture, false, DAM_SIDE,
-                                          i, DAM_BOTTOM_TEXTURE);
-        sd->SW_bottomisflat = false;
-        sd->SW_bottomflags = 0;
-
-        sd->SW_middlepic = P_CheckTexture(msd->midtexture, false, DAM_SIDE,
-                                          i, DAM_MIDDLE_TEXTURE);
-        sd->SW_middleisflat = false;
-        sd->SW_middleflags = 0;
-    }
-
-    Z_Free(data);
-}
-
-/*
  * Builds sector line lists and subsector sector numbers.
  * Finds block bounding boxes for sectors.
  */
-static void P_GroupLines(gamemap_t *map)
+static void finalizeMapData(gamemap_t *map)
 {
     uint        startTime = Sys_GetRealTime();
 
     uint       *linesInSector;
     uint       *ssecsInSector;
     int         block;
-    uint        i, j, k;
+    uint        i, j, k, count;
     uint        secid;
 
     line_t    **linebuffer;
@@ -3174,10 +3160,10 @@ ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
     for(i = 0, sec = map->sectors; i < map->numsectors; ++i, sec++)
     {
         if(linesInSector[i] != sec->linecount)
-            Con_Error("P_GroupLines: miscounted lines"); // Hmm? Unusual...
+            Con_Error("finalizeMapData: miscounted lines"); // Hmm? Unusual...
 
         if(ssecsInSector[i] != sec->subscount)
-            Con_Error("P_GroupLines: miscounted subsectors"); // Hmm? Unusual...
+            Con_Error("finalizeMapData: miscounted subsectors"); // Hmm? Unusual...
 
         if(sec->linecount != 0)
         {
@@ -3199,22 +3185,6 @@ ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
                                                DMU_SECTOR, NULL);
         }
 
-        // set the degenmobj_t to the middle of the bounding box
-        sec->soundorg.pos[VX] = (bbox[BOXRIGHT] + bbox[BOXLEFT]) / 2;
-        sec->soundorg.pos[VY] = (bbox[BOXTOP] + bbox[BOXBOTTOM]) / 2;
-
-        // set the z height of the sector sound origin
-        sec->soundorg.pos[VZ] =
-            FLT2FIX((sec->SP_ceilheight - sec->SP_floorheight) / 2);
-
-        // set the position of the sound origin for all plane sound origins.
-        for(k = 0; k < sec->planecount; ++k)
-        {
-            sec->planes[k]->soundorg.pos[VX] = sec->soundorg.pos[VX];
-            sec->planes[k]->soundorg.pos[VY] = sec->soundorg.pos[VY];
-            sec->planes[k]->soundorg.pos[VZ] = FLT2FIX(sec->planes[k]->height);
-        }
-
         // adjust bounding box to map blocks
         block = (bbox[BOXTOP] - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
         block = block >= bmapheight ? bmapheight - 1 : block;
@@ -3231,14 +3201,61 @@ ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
         block = (bbox[BOXLEFT] - bmaporgx - MAXRADIUS) >> MAPBLOCKSHIFT;
         block = block < 0 ? 0 : block;
         sec->blockbox[BOXLEFT] = block;
+
+        // Set the degenmobj_t to the middle of the bounding box
+        sec->soundorg.pos[VX] = (bbox[BOXRIGHT] + bbox[BOXLEFT]) / 2;
+        sec->soundorg.pos[VY] = (bbox[BOXTOP] + bbox[BOXBOTTOM]) / 2;
+
+        // Set the z height of the sector sound origin
+        sec->soundorg.pos[VZ] =
+            FLT2FIX((sec->SP_ceilheight - sec->SP_floorheight) / 2);
+
+        // Set the position of the sound origin for all plane sound origins.
+        for(k = 0; k < sec->planecount; ++k)
+        {
+            sec->planes[k]->soundorg.pos[VX] = sec->soundorg.pos[VX];
+            sec->planes[k]->soundorg.pos[VY] = sec->soundorg.pos[VY];
+            sec->planes[k]->soundorg.pos[VZ] = FLT2FIX(sec->planes[k]->height);
+        }
+
+        // Set target heights of all planes.
+        for(k = 0; k < sec->planecount; ++k)
+            sec->planes[k]->target = sec->planes[k]->height;
     }
 
     M_Free(linesInSector);
     M_Free(ssecsInSector);
 
+    // Finalize side properties
+    for(i = 0; i < map->numsides; ++i)
+    {
+        side_t *side = &map->sides[i];
+
+        // Make sure the texture references are good.
+        if(!side->SW_topisflat && side->SW_toppic >= numtextures)
+            side->SW_toppic = 0;
+        if(!side->SW_middleisflat && side->SW_middlepic >= numtextures)
+            side->SW_middlepic = 0;
+        if(!side->SW_bottomisflat && side->SW_bottompic >= numtextures)
+            side->SW_bottompic = 0;
+    }
+
+    // Initialize polyobject properties (here?)
+    for(i = 0; i < map->po_NumPolyobjs; ++i)
+        map->polyobjs[i].header.type = DMU_POLYOBJ;
+
+    // Clear out mobj rings.
+    count = sizeof(*map->blockrings) * map->bmapwidth * map->bmapheight;
+    map->blockrings = Z_Malloc(count, PU_LEVEL, 0);
+    memset(map->blockrings, 0, count);
+
+    for(i = 0; i < map->bmapwidth * map->bmapheight; ++i)
+        map->blockrings[i].next =
+            map->blockrings[i].prev = (mobj_t *) &map->blockrings[i];
+
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("P_GroupLines: Done in %.2f seconds.\n",
+            ("finalizeMapData: Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
@@ -3666,7 +3683,7 @@ static void P_CreateReject(gamemap_t* map)
  * The format of the table is a simple matrix of boolean values,
  * a (true) value indicates that it is impossible for mobjs in
  * sector A to see mobjs in sector B (and vice-versa). A (false)
- * value indicates that a line-of-sight MIGHT be possible an a
+ * value indicates that a line-of-sight MIGHT be possible and a
  * more accurate (thus more expensive) calculation will have to
  * be made.
  *
@@ -3769,122 +3786,122 @@ void P_InitMapDataFormats(void)
                 if(mlver == 1)  // DOOM Format
                 {
                     *mlptr = 10;
-                    stiptr->verInfo[index].numValues = 5;
-                    stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 5, PU_STATIC, 0);
+                    stiptr->verInfo[index].numProps = 5;
+                    stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 5, PU_STATIC, 0);
                     // x
-                    stiptr->verInfo[index].values[0].property = DAM_THING_X;
-                    stiptr->verInfo[index].values[0].flags = 0;
-                    stiptr->verInfo[index].values[0].size =  2;
-                    stiptr->verInfo[index].values[0].offset = 0;
-                    stiptr->verInfo[index].values[0].gameprop = 1;
+                    stiptr->verInfo[index].props[0].id = DAM_THING_X;
+                    stiptr->verInfo[index].props[0].flags = 0;
+                    stiptr->verInfo[index].props[0].size =  2;
+                    stiptr->verInfo[index].props[0].offset = 0;
+                    stiptr->verInfo[index].props[0].gameprop = 1;
                     // y
-                    stiptr->verInfo[index].values[1].property = DAM_THING_Y;
-                    stiptr->verInfo[index].values[1].flags = 0;
-                    stiptr->verInfo[index].values[1].size =  2;
-                    stiptr->verInfo[index].values[1].offset = 2;
-                    stiptr->verInfo[index].values[1].gameprop = 1;
+                    stiptr->verInfo[index].props[1].id = DAM_THING_Y;
+                    stiptr->verInfo[index].props[1].flags = 0;
+                    stiptr->verInfo[index].props[1].size =  2;
+                    stiptr->verInfo[index].props[1].offset = 2;
+                    stiptr->verInfo[index].props[1].gameprop = 1;
                     // angle
-                    stiptr->verInfo[index].values[2].property = DAM_THING_ANGLE;
-                    stiptr->verInfo[index].values[2].flags = 0;
-                    stiptr->verInfo[index].values[2].size =  2;
-                    stiptr->verInfo[index].values[2].offset = 4;
-                    stiptr->verInfo[index].values[2].gameprop = 1;
+                    stiptr->verInfo[index].props[2].id = DAM_THING_ANGLE;
+                    stiptr->verInfo[index].props[2].flags = 0;
+                    stiptr->verInfo[index].props[2].size =  2;
+                    stiptr->verInfo[index].props[2].offset = 4;
+                    stiptr->verInfo[index].props[2].gameprop = 1;
                     // type
-                    stiptr->verInfo[index].values[3].property = DAM_THING_TYPE;
-                    stiptr->verInfo[index].values[3].flags = 0;
-                    stiptr->verInfo[index].values[3].size =  2;
-                    stiptr->verInfo[index].values[3].offset = 6;
-                    stiptr->verInfo[index].values[3].gameprop = 1;
+                    stiptr->verInfo[index].props[3].id = DAM_THING_TYPE;
+                    stiptr->verInfo[index].props[3].flags = 0;
+                    stiptr->verInfo[index].props[3].size =  2;
+                    stiptr->verInfo[index].props[3].offset = 6;
+                    stiptr->verInfo[index].props[3].gameprop = 1;
                     // options
-                    stiptr->verInfo[index].values[4].property = DAM_THING_OPTIONS;
-                    stiptr->verInfo[index].values[4].flags = 0;
-                    stiptr->verInfo[index].values[4].size =  2;
-                    stiptr->verInfo[index].values[4].offset = 8;
-                    stiptr->verInfo[index].values[4].gameprop = 1;
+                    stiptr->verInfo[index].props[4].id = DAM_THING_OPTIONS;
+                    stiptr->verInfo[index].props[4].flags = 0;
+                    stiptr->verInfo[index].props[4].size =  2;
+                    stiptr->verInfo[index].props[4].offset = 8;
+                    stiptr->verInfo[index].props[4].gameprop = 1;
                 }
                 else            // HEXEN format
                 {
                     *mlptr = 20;
-                    stiptr->verInfo[index].numValues = 13;
-                    stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 13, PU_STATIC, 0);
+                    stiptr->verInfo[index].numProps = 13;
+                    stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 13, PU_STATIC, 0);
                     // tid
-                    stiptr->verInfo[index].values[0].property = DAM_THING_TID;
-                    stiptr->verInfo[index].values[0].flags = 0;
-                    stiptr->verInfo[index].values[0].size =  2;
-                    stiptr->verInfo[index].values[0].offset = 0;
-                    stiptr->verInfo[index].values[0].gameprop = 1;
+                    stiptr->verInfo[index].props[0].id = DAM_THING_TID;
+                    stiptr->verInfo[index].props[0].flags = 0;
+                    stiptr->verInfo[index].props[0].size =  2;
+                    stiptr->verInfo[index].props[0].offset = 0;
+                    stiptr->verInfo[index].props[0].gameprop = 1;
                     // x
-                    stiptr->verInfo[index].values[1].property = DAM_THING_X;
-                    stiptr->verInfo[index].values[1].flags = 0;
-                    stiptr->verInfo[index].values[1].size =  2;
-                    stiptr->verInfo[index].values[1].offset = 2;
-                    stiptr->verInfo[index].values[1].gameprop = 1;
+                    stiptr->verInfo[index].props[1].id = DAM_THING_X;
+                    stiptr->verInfo[index].props[1].flags = 0;
+                    stiptr->verInfo[index].props[1].size =  2;
+                    stiptr->verInfo[index].props[1].offset = 2;
+                    stiptr->verInfo[index].props[1].gameprop = 1;
                     // y
-                    stiptr->verInfo[index].values[2].property = DAM_THING_Y;
-                    stiptr->verInfo[index].values[2].flags = 0;
-                    stiptr->verInfo[index].values[2].size =  2;
-                    stiptr->verInfo[index].values[2].offset = 4;
-                    stiptr->verInfo[index].values[2].gameprop = 1;
+                    stiptr->verInfo[index].props[2].id = DAM_THING_Y;
+                    stiptr->verInfo[index].props[2].flags = 0;
+                    stiptr->verInfo[index].props[2].size =  2;
+                    stiptr->verInfo[index].props[2].offset = 4;
+                    stiptr->verInfo[index].props[2].gameprop = 1;
                     // height
-                    stiptr->verInfo[index].values[3].property = DAM_THING_HEIGHT;
-                    stiptr->verInfo[index].values[3].flags = 0;
-                    stiptr->verInfo[index].values[3].size =  2;
-                    stiptr->verInfo[index].values[3].offset = 6;
-                    stiptr->verInfo[index].values[3].gameprop = 1;
+                    stiptr->verInfo[index].props[3].id = DAM_THING_HEIGHT;
+                    stiptr->verInfo[index].props[3].flags = 0;
+                    stiptr->verInfo[index].props[3].size =  2;
+                    stiptr->verInfo[index].props[3].offset = 6;
+                    stiptr->verInfo[index].props[3].gameprop = 1;
                     // angle
-                    stiptr->verInfo[index].values[4].property = DAM_THING_ANGLE;
-                    stiptr->verInfo[index].values[4].flags = 0;
-                    stiptr->verInfo[index].values[4].size =  2;
-                    stiptr->verInfo[index].values[4].offset = 8;
-                    stiptr->verInfo[index].values[4].gameprop = 1;
+                    stiptr->verInfo[index].props[4].id = DAM_THING_ANGLE;
+                    stiptr->verInfo[index].props[4].flags = 0;
+                    stiptr->verInfo[index].props[4].size =  2;
+                    stiptr->verInfo[index].props[4].offset = 8;
+                    stiptr->verInfo[index].props[4].gameprop = 1;
                     // type
-                    stiptr->verInfo[index].values[5].property = DAM_THING_TYPE;
-                    stiptr->verInfo[index].values[5].flags = 0;
-                    stiptr->verInfo[index].values[5].size =  2;
-                    stiptr->verInfo[index].values[5].offset = 10;
-                    stiptr->verInfo[index].values[5].gameprop = 1;
+                    stiptr->verInfo[index].props[5].id = DAM_THING_TYPE;
+                    stiptr->verInfo[index].props[5].flags = 0;
+                    stiptr->verInfo[index].props[5].size =  2;
+                    stiptr->verInfo[index].props[5].offset = 10;
+                    stiptr->verInfo[index].props[5].gameprop = 1;
                     // options
-                    stiptr->verInfo[index].values[6].property = DAM_THING_OPTIONS;
-                    stiptr->verInfo[index].values[6].flags = 0;
-                    stiptr->verInfo[index].values[6].size =  2;
-                    stiptr->verInfo[index].values[6].offset = 12;
-                    stiptr->verInfo[index].values[6].gameprop = 1;
+                    stiptr->verInfo[index].props[6].id = DAM_THING_OPTIONS;
+                    stiptr->verInfo[index].props[6].flags = 0;
+                    stiptr->verInfo[index].props[6].size =  2;
+                    stiptr->verInfo[index].props[6].offset = 12;
+                    stiptr->verInfo[index].props[6].gameprop = 1;
                     // special
-                    stiptr->verInfo[index].values[7].property = DAM_THING_SPECIAL;
-                    stiptr->verInfo[index].values[7].flags = 0;
-                    stiptr->verInfo[index].values[7].size =  1;
-                    stiptr->verInfo[index].values[7].offset = 14;
-                    stiptr->verInfo[index].values[7].gameprop = 1;
+                    stiptr->verInfo[index].props[7].id = DAM_THING_SPECIAL;
+                    stiptr->verInfo[index].props[7].flags = 0;
+                    stiptr->verInfo[index].props[7].size =  1;
+                    stiptr->verInfo[index].props[7].offset = 14;
+                    stiptr->verInfo[index].props[7].gameprop = 1;
                     // arg1
-                    stiptr->verInfo[index].values[8].property = DAM_THING_ARG1;
-                    stiptr->verInfo[index].values[8].flags = 0;
-                    stiptr->verInfo[index].values[8].size =  1;
-                    stiptr->verInfo[index].values[8].offset = 15;
-                    stiptr->verInfo[index].values[8].gameprop = 1;
+                    stiptr->verInfo[index].props[8].id = DAM_THING_ARG1;
+                    stiptr->verInfo[index].props[8].flags = 0;
+                    stiptr->verInfo[index].props[8].size =  1;
+                    stiptr->verInfo[index].props[8].offset = 15;
+                    stiptr->verInfo[index].props[8].gameprop = 1;
                     // arg2
-                    stiptr->verInfo[index].values[9].property = DAM_THING_ARG2;
-                    stiptr->verInfo[index].values[9].flags = 0;
-                    stiptr->verInfo[index].values[9].size =  1;
-                    stiptr->verInfo[index].values[9].offset = 16;
-                    stiptr->verInfo[index].values[9].gameprop = 1;
+                    stiptr->verInfo[index].props[9].id = DAM_THING_ARG2;
+                    stiptr->verInfo[index].props[9].flags = 0;
+                    stiptr->verInfo[index].props[9].size =  1;
+                    stiptr->verInfo[index].props[9].offset = 16;
+                    stiptr->verInfo[index].props[9].gameprop = 1;
                     // arg3
-                    stiptr->verInfo[index].values[10].property = DAM_THING_ARG3;
-                    stiptr->verInfo[index].values[10].flags = 0;
-                    stiptr->verInfo[index].values[10].size =  1;
-                    stiptr->verInfo[index].values[10].offset = 17;
-                    stiptr->verInfo[index].values[10].gameprop = 1;
+                    stiptr->verInfo[index].props[10].id = DAM_THING_ARG3;
+                    stiptr->verInfo[index].props[10].flags = 0;
+                    stiptr->verInfo[index].props[10].size =  1;
+                    stiptr->verInfo[index].props[10].offset = 17;
+                    stiptr->verInfo[index].props[10].gameprop = 1;
                     // arg4
-                    stiptr->verInfo[index].values[11].property = DAM_THING_ARG4;
-                    stiptr->verInfo[index].values[11].flags = 0;
-                    stiptr->verInfo[index].values[11].size =  1;
-                    stiptr->verInfo[index].values[11].offset = 18;
-                    stiptr->verInfo[index].values[11].gameprop = 1;
+                    stiptr->verInfo[index].props[11].id = DAM_THING_ARG4;
+                    stiptr->verInfo[index].props[11].flags = 0;
+                    stiptr->verInfo[index].props[11].size =  1;
+                    stiptr->verInfo[index].props[11].offset = 18;
+                    stiptr->verInfo[index].props[11].gameprop = 1;
                     // arg5
-                    stiptr->verInfo[index].values[12].property = DAM_THING_ARG5;
-                    stiptr->verInfo[index].values[12].flags = 0;
-                    stiptr->verInfo[index].values[12].size =  1;
-                    stiptr->verInfo[index].values[12].offset = 19;
-                    stiptr->verInfo[index].values[12].gameprop = 1;
+                    stiptr->verInfo[index].props[12].id = DAM_THING_ARG5;
+                    stiptr->verInfo[index].props[12].flags = 0;
+                    stiptr->verInfo[index].props[12].size =  1;
+                    stiptr->verInfo[index].props[12].offset = 19;
+                    stiptr->verInfo[index].props[12].gameprop = 1;
                 }
             }
             else if(lumpClass == LCM_LINEDEFS)
@@ -3892,363 +3909,381 @@ void P_InitMapDataFormats(void)
                 if(mlver == 1)  // DOOM format
                 {
                     *mlptr = 14;
-                    stiptr->verInfo[index].numValues = 7;
-                    stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 7, PU_STATIC, 0);
+                    stiptr->verInfo[index].numProps = 7;
+                    stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 7, PU_STATIC, 0);
                     // v1
-                    stiptr->verInfo[index].values[0].property = DAM_VERTEX1;
-                    stiptr->verInfo[index].values[0].flags = DT_UNSIGNED;
-                    stiptr->verInfo[index].values[0].size =  2;
-                    stiptr->verInfo[index].values[0].offset = 0;
-                    stiptr->verInfo[index].values[0].gameprop = 0;
+                    stiptr->verInfo[index].props[0].id = DAM_VERTEX1;
+                    stiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
+                    stiptr->verInfo[index].props[0].size =  2;
+                    stiptr->verInfo[index].props[0].offset = 0;
+                    stiptr->verInfo[index].props[0].gameprop = 0;
                     // v2
-                    stiptr->verInfo[index].values[1].property = DAM_VERTEX2;
-                    stiptr->verInfo[index].values[1].flags = DT_UNSIGNED;
-                    stiptr->verInfo[index].values[1].size =  2;
-                    stiptr->verInfo[index].values[1].offset = 2;
-                    stiptr->verInfo[index].values[1].gameprop = 0;
+                    stiptr->verInfo[index].props[1].id = DAM_VERTEX2;
+                    stiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
+                    stiptr->verInfo[index].props[1].size =  2;
+                    stiptr->verInfo[index].props[1].offset = 2;
+                    stiptr->verInfo[index].props[1].gameprop = 0;
                     // flags
-                    stiptr->verInfo[index].values[2].property = DAM_FLAGS;
-                    stiptr->verInfo[index].values[2].flags = 0;
-                    stiptr->verInfo[index].values[2].size =  2;
-                    stiptr->verInfo[index].values[2].offset = 4;
-                    stiptr->verInfo[index].values[2].gameprop = 0;
+                    stiptr->verInfo[index].props[2].id = DAM_FLAGS;
+                    stiptr->verInfo[index].props[2].flags = 0;
+                    stiptr->verInfo[index].props[2].size =  2;
+                    stiptr->verInfo[index].props[2].offset = 4;
+                    stiptr->verInfo[index].props[2].gameprop = 0;
                     // special
-                    stiptr->verInfo[index].values[3].property = DAM_LINE_SPECIAL;
-                    stiptr->verInfo[index].values[3].flags = 0;
-                    stiptr->verInfo[index].values[3].size =  2;
-                    stiptr->verInfo[index].values[3].offset = 6;
-                    stiptr->verInfo[index].values[3].gameprop = 1;
+                    stiptr->verInfo[index].props[3].id = DAM_LINE_SPECIAL;
+                    stiptr->verInfo[index].props[3].flags = 0;
+                    stiptr->verInfo[index].props[3].size =  2;
+                    stiptr->verInfo[index].props[3].offset = 6;
+                    stiptr->verInfo[index].props[3].gameprop = 1;
                     // tag
-                    stiptr->verInfo[index].values[4].property = DAM_LINE_TAG;
-                    stiptr->verInfo[index].values[4].flags = 0;
-                    stiptr->verInfo[index].values[4].size =  2;
-                    stiptr->verInfo[index].values[4].offset = 8;
-                    stiptr->verInfo[index].values[4].gameprop = 1;
+                    stiptr->verInfo[index].props[4].id = DAM_LINE_TAG;
+                    stiptr->verInfo[index].props[4].flags = 0;
+                    stiptr->verInfo[index].props[4].size =  2;
+                    stiptr->verInfo[index].props[4].offset = 8;
+                    stiptr->verInfo[index].props[4].gameprop = 1;
                     // front side
-                    stiptr->verInfo[index].values[5].property = DAM_SIDE0;
-                    stiptr->verInfo[index].values[5].flags = DT_NOINDEX;
-                    stiptr->verInfo[index].values[5].size =  2;
-                    stiptr->verInfo[index].values[5].offset = 10;
-                    stiptr->verInfo[index].values[5].gameprop = 0;
+                    stiptr->verInfo[index].props[5].id = DAM_SIDE0;
+                    stiptr->verInfo[index].props[5].flags = DT_NOINDEX;
+                    stiptr->verInfo[index].props[5].size =  2;
+                    stiptr->verInfo[index].props[5].offset = 10;
+                    stiptr->verInfo[index].props[5].gameprop = 0;
                     // back side
-                    stiptr->verInfo[index].values[6].property = DAM_SIDE1;
-                    stiptr->verInfo[index].values[6].flags = DT_NOINDEX;
-                    stiptr->verInfo[index].values[6].size =  2;
-                    stiptr->verInfo[index].values[6].offset = 12;
-                    stiptr->verInfo[index].values[6].gameprop = 0;
+                    stiptr->verInfo[index].props[6].id = DAM_SIDE1;
+                    stiptr->verInfo[index].props[6].flags = DT_NOINDEX;
+                    stiptr->verInfo[index].props[6].size =  2;
+                    stiptr->verInfo[index].props[6].offset = 12;
+                    stiptr->verInfo[index].props[6].gameprop = 0;
                 }
                 else            // HEXEN format
                 {
                     *mlptr = 16;
-                    stiptr->verInfo[index].numValues = 11;
-                    stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 11, PU_STATIC, 0);
+                    stiptr->verInfo[index].numProps = 11;
+                    stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 11, PU_STATIC, 0);
                     // v1
-                    stiptr->verInfo[index].values[0].property = DAM_VERTEX1;
-                    stiptr->verInfo[index].values[0].flags = DT_UNSIGNED;
-                    stiptr->verInfo[index].values[0].size =  2;
-                    stiptr->verInfo[index].values[0].offset = 0;
-                    stiptr->verInfo[index].values[0].gameprop = 0;
+                    stiptr->verInfo[index].props[0].id = DAM_VERTEX1;
+                    stiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
+                    stiptr->verInfo[index].props[0].size =  2;
+                    stiptr->verInfo[index].props[0].offset = 0;
+                    stiptr->verInfo[index].props[0].gameprop = 0;
                     // v2
-                    stiptr->verInfo[index].values[1].property = DAM_VERTEX2;
-                    stiptr->verInfo[index].values[1].flags = DT_UNSIGNED;
-                    stiptr->verInfo[index].values[1].size =  2;
-                    stiptr->verInfo[index].values[1].offset = 2;
-                    stiptr->verInfo[index].values[1].gameprop = 0;
+                    stiptr->verInfo[index].props[1].id = DAM_VERTEX2;
+                    stiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
+                    stiptr->verInfo[index].props[1].size =  2;
+                    stiptr->verInfo[index].props[1].offset = 2;
+                    stiptr->verInfo[index].props[1].gameprop = 0;
                     // flags
-                    stiptr->verInfo[index].values[2].property = DAM_FLAGS;
-                    stiptr->verInfo[index].values[2].flags = 0;
-                    stiptr->verInfo[index].values[2].size =  2;
-                    stiptr->verInfo[index].values[2].offset = 4;
-                    stiptr->verInfo[index].values[2].gameprop = 0;
+                    stiptr->verInfo[index].props[2].id = DAM_FLAGS;
+                    stiptr->verInfo[index].props[2].flags = 0;
+                    stiptr->verInfo[index].props[2].size =  2;
+                    stiptr->verInfo[index].props[2].offset = 4;
+                    stiptr->verInfo[index].props[2].gameprop = 0;
                     // special
-                    stiptr->verInfo[index].values[3].property = DAM_LINE_SPECIAL;
-                    stiptr->verInfo[index].values[3].flags = 0;
-                    stiptr->verInfo[index].values[3].size =  1;
-                    stiptr->verInfo[index].values[3].offset = 6;
-                    stiptr->verInfo[index].values[3].gameprop = 1;
+                    stiptr->verInfo[index].props[3].id = DAM_LINE_SPECIAL;
+                    stiptr->verInfo[index].props[3].flags = 0;
+                    stiptr->verInfo[index].props[3].size =  1;
+                    stiptr->verInfo[index].props[3].offset = 6;
+                    stiptr->verInfo[index].props[3].gameprop = 1;
                     // arg1
-                    stiptr->verInfo[index].values[4].property = DAM_LINE_ARG1;
-                    stiptr->verInfo[index].values[4].flags = 0;
-                    stiptr->verInfo[index].values[4].size =  1;
-                    stiptr->verInfo[index].values[4].offset = 7;
-                    stiptr->verInfo[index].values[4].gameprop = 1;
+                    stiptr->verInfo[index].props[4].id = DAM_LINE_ARG1;
+                    stiptr->verInfo[index].props[4].flags = 0;
+                    stiptr->verInfo[index].props[4].size =  1;
+                    stiptr->verInfo[index].props[4].offset = 7;
+                    stiptr->verInfo[index].props[4].gameprop = 1;
                     // arg2
-                    stiptr->verInfo[index].values[5].property = DAM_LINE_ARG2;
-                    stiptr->verInfo[index].values[5].flags = 0;
-                    stiptr->verInfo[index].values[5].size =  1;
-                    stiptr->verInfo[index].values[5].offset = 8;
-                    stiptr->verInfo[index].values[5].gameprop = 1;
+                    stiptr->verInfo[index].props[5].id = DAM_LINE_ARG2;
+                    stiptr->verInfo[index].props[5].flags = 0;
+                    stiptr->verInfo[index].props[5].size =  1;
+                    stiptr->verInfo[index].props[5].offset = 8;
+                    stiptr->verInfo[index].props[5].gameprop = 1;
                     // arg3
-                    stiptr->verInfo[index].values[6].property = DAM_LINE_ARG3;
-                    stiptr->verInfo[index].values[6].flags = 0;
-                    stiptr->verInfo[index].values[6].size =  1;
-                    stiptr->verInfo[index].values[6].offset = 9;
-                    stiptr->verInfo[index].values[6].gameprop = 1;
+                    stiptr->verInfo[index].props[6].id = DAM_LINE_ARG3;
+                    stiptr->verInfo[index].props[6].flags = 0;
+                    stiptr->verInfo[index].props[6].size =  1;
+                    stiptr->verInfo[index].props[6].offset = 9;
+                    stiptr->verInfo[index].props[6].gameprop = 1;
                     // arg4
-                    stiptr->verInfo[index].values[7].property = DAM_LINE_ARG4;
-                    stiptr->verInfo[index].values[7].flags = 0;
-                    stiptr->verInfo[index].values[7].size =  1;
-                    stiptr->verInfo[index].values[7].offset = 10;
-                    stiptr->verInfo[index].values[7].gameprop = 1;
+                    stiptr->verInfo[index].props[7].id = DAM_LINE_ARG4;
+                    stiptr->verInfo[index].props[7].flags = 0;
+                    stiptr->verInfo[index].props[7].size =  1;
+                    stiptr->verInfo[index].props[7].offset = 10;
+                    stiptr->verInfo[index].props[7].gameprop = 1;
                     // arg5
-                    stiptr->verInfo[index].values[8].property = DAM_LINE_ARG5;
-                    stiptr->verInfo[index].values[8].flags = 0;
-                    stiptr->verInfo[index].values[8].size =  1;
-                    stiptr->verInfo[index].values[8].offset = 11;
-                    stiptr->verInfo[index].values[8].gameprop = 1;
+                    stiptr->verInfo[index].props[8].id = DAM_LINE_ARG5;
+                    stiptr->verInfo[index].props[8].flags = 0;
+                    stiptr->verInfo[index].props[8].size =  1;
+                    stiptr->verInfo[index].props[8].offset = 11;
+                    stiptr->verInfo[index].props[8].gameprop = 1;
                     // front side
-                    stiptr->verInfo[index].values[9].property = DAM_SIDE0;
-                    stiptr->verInfo[index].values[9].flags = DT_NOINDEX;
-                    stiptr->verInfo[index].values[9].size =  2;
-                    stiptr->verInfo[index].values[9].offset = 12;
-                    stiptr->verInfo[index].values[9].gameprop = 0;
+                    stiptr->verInfo[index].props[9].id = DAM_SIDE0;
+                    stiptr->verInfo[index].props[9].flags = DT_NOINDEX;
+                    stiptr->verInfo[index].props[9].size =  2;
+                    stiptr->verInfo[index].props[9].offset = 12;
+                    stiptr->verInfo[index].props[9].gameprop = 0;
                     // back side
-                    stiptr->verInfo[index].values[10].property = DAM_SIDE1;
-                    stiptr->verInfo[index].values[10].flags = DT_NOINDEX;
-                    stiptr->verInfo[index].values[10].size =  2;
-                    stiptr->verInfo[index].values[10].offset = 14;
-                    stiptr->verInfo[index].values[10].gameprop = 0;
+                    stiptr->verInfo[index].props[10].id = DAM_SIDE1;
+                    stiptr->verInfo[index].props[10].flags = DT_NOINDEX;
+                    stiptr->verInfo[index].props[10].size =  2;
+                    stiptr->verInfo[index].props[10].offset = 14;
+                    stiptr->verInfo[index].props[10].gameprop = 0;
                 }
             }
             else if(lumpClass == LCM_SIDEDEFS)
             {
                 *mlptr = 30;
-                stiptr->verInfo[index].numValues = 3;
-                stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 3, PU_STATIC, 0);
+                stiptr->verInfo[index].numProps = 6;
+                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 6, PU_STATIC, 0);
                 // x offset
-                stiptr->verInfo[index].values[0].property = DAM_TEXTURE_OFFSET_X;
-                stiptr->verInfo[index].values[0].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[0].size =  2;
-                stiptr->verInfo[index].values[0].offset = 0;
-                stiptr->verInfo[index].values[0].gameprop = 0;
+                stiptr->verInfo[index].props[0].id = DAM_TEXTURE_OFFSET_X;
+                stiptr->verInfo[index].props[0].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[0].size =  2;
+                stiptr->verInfo[index].props[0].offset = 0;
+                stiptr->verInfo[index].props[0].gameprop = 0;
                 // y offset
-                stiptr->verInfo[index].values[1].property = DAM_TEXTURE_OFFSET_Y;
-                stiptr->verInfo[index].values[1].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[1].size =  2;
-                stiptr->verInfo[index].values[1].offset = 2;
-                stiptr->verInfo[index].values[1].gameprop = 0;
+                stiptr->verInfo[index].props[1].id = DAM_TEXTURE_OFFSET_Y;
+                stiptr->verInfo[index].props[1].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[1].size =  2;
+                stiptr->verInfo[index].props[1].offset = 2;
+                stiptr->verInfo[index].props[1].gameprop = 0;
+                // top pic
+                stiptr->verInfo[index].props[2].id = DAM_TOP_TEXTURE;
+                stiptr->verInfo[index].props[2].flags = DT_TEXTURE;
+                stiptr->verInfo[index].props[2].size =  8;
+                stiptr->verInfo[index].props[2].offset = 4;
+                stiptr->verInfo[index].props[2].gameprop = 0;
+                // bottom pic
+                stiptr->verInfo[index].props[3].id = DAM_BOTTOM_TEXTURE;
+                stiptr->verInfo[index].props[3].flags = DT_TEXTURE;
+                stiptr->verInfo[index].props[3].size =  8;
+                stiptr->verInfo[index].props[3].offset = 12;
+                stiptr->verInfo[index].props[3].gameprop = 0;
+                // middle pic
+                stiptr->verInfo[index].props[4].id = DAM_MIDDLE_TEXTURE;
+                stiptr->verInfo[index].props[4].flags = DT_TEXTURE;
+                stiptr->verInfo[index].props[4].size =  8;
+                stiptr->verInfo[index].props[4].offset = 20;
+                stiptr->verInfo[index].props[4].gameprop = 0;
                 // sector
-                stiptr->verInfo[index].values[2].property = DAM_FRONT_SECTOR;
-                stiptr->verInfo[index].values[2].flags = 0;
-                stiptr->verInfo[index].values[2].size =  2;
-                stiptr->verInfo[index].values[2].offset = 28;
-                stiptr->verInfo[index].values[2].gameprop = 0;
+                stiptr->verInfo[index].props[5].id = DAM_FRONT_SECTOR;
+                stiptr->verInfo[index].props[5].flags = 0;
+                stiptr->verInfo[index].props[5].size =  2;
+                stiptr->verInfo[index].props[5].offset = 28;
+                stiptr->verInfo[index].props[5].gameprop = 0;
             }
             else if(lumpClass == LCM_VERTEXES)
             {
                 *mlptr = 4;
-                stiptr->verInfo[index].numValues = 2;
-                stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
+                stiptr->verInfo[index].numProps = 2;
+                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
                 // x
-                stiptr->verInfo[index].values[0].property = DAM_X;
-                stiptr->verInfo[index].values[0].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[0].size =  2;
-                stiptr->verInfo[index].values[0].offset = 0;
-                stiptr->verInfo[index].values[0].gameprop = 0;
+                stiptr->verInfo[index].props[0].id = DAM_X;
+                stiptr->verInfo[index].props[0].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[0].size =  2;
+                stiptr->verInfo[index].props[0].offset = 0;
+                stiptr->verInfo[index].props[0].gameprop = 0;
                 // y
-                stiptr->verInfo[index].values[1].property = DAM_Y;
-                stiptr->verInfo[index].values[1].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[1].size =  2;
-                stiptr->verInfo[index].values[1].offset = 2;
-                stiptr->verInfo[index].values[1].gameprop = 0;
+                stiptr->verInfo[index].props[1].id = DAM_Y;
+                stiptr->verInfo[index].props[1].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[1].size =  2;
+                stiptr->verInfo[index].props[1].offset = 2;
+                stiptr->verInfo[index].props[1].gameprop = 0;
             }
             else if(lumpClass == LCM_SEGS)
             {
                 *mlptr = 12;
-                stiptr->verInfo[index].numValues = 6;
-                stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 6, PU_STATIC, 0);
+                stiptr->verInfo[index].numProps = 6;
+                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 6, PU_STATIC, 0);
                 // v1
-                stiptr->verInfo[index].values[0].property = DAM_VERTEX1;
-                stiptr->verInfo[index].values[0].flags = DT_UNSIGNED;
-                stiptr->verInfo[index].values[0].size =  2;
-                stiptr->verInfo[index].values[0].offset = 0;
-                stiptr->verInfo[index].values[0].gameprop = 0;
+                stiptr->verInfo[index].props[0].id = DAM_VERTEX1;
+                stiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
+                stiptr->verInfo[index].props[0].size =  2;
+                stiptr->verInfo[index].props[0].offset = 0;
+                stiptr->verInfo[index].props[0].gameprop = 0;
                 // v2
-                stiptr->verInfo[index].values[1].property = DAM_VERTEX2;
-                stiptr->verInfo[index].values[1].flags = DT_UNSIGNED;
-                stiptr->verInfo[index].values[1].size =  2;
-                stiptr->verInfo[index].values[1].offset = 2;
-                stiptr->verInfo[index].values[1].gameprop = 0;
+                stiptr->verInfo[index].props[1].id = DAM_VERTEX2;
+                stiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
+                stiptr->verInfo[index].props[1].size =  2;
+                stiptr->verInfo[index].props[1].offset = 2;
+                stiptr->verInfo[index].props[1].gameprop = 0;
                 // angle
-                stiptr->verInfo[index].values[2].property = DAM_ANGLE;
-                stiptr->verInfo[index].values[2].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[2].size =  2;
-                stiptr->verInfo[index].values[2].offset = 4;
-                stiptr->verInfo[index].values[2].gameprop = 0;
+                stiptr->verInfo[index].props[2].id = DAM_ANGLE;
+                stiptr->verInfo[index].props[2].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[2].size =  2;
+                stiptr->verInfo[index].props[2].offset = 4;
+                stiptr->verInfo[index].props[2].gameprop = 0;
                 // linedef
-                stiptr->verInfo[index].values[3].property = DAM_LINE;
-                stiptr->verInfo[index].values[3].flags = DT_NOINDEX;
-                stiptr->verInfo[index].values[3].size =  2;
-                stiptr->verInfo[index].values[3].offset = 6;
-                stiptr->verInfo[index].values[3].gameprop = 0;
+                stiptr->verInfo[index].props[3].id = DAM_LINE;
+                stiptr->verInfo[index].props[3].flags = DT_NOINDEX;
+                stiptr->verInfo[index].props[3].size =  2;
+                stiptr->verInfo[index].props[3].offset = 6;
+                stiptr->verInfo[index].props[3].gameprop = 0;
                 // side
-                stiptr->verInfo[index].values[4].property = DAM_SIDE;
-                stiptr->verInfo[index].values[4].flags = 0;
-                stiptr->verInfo[index].values[4].size =  2;
-                stiptr->verInfo[index].values[4].offset = 8;
-                stiptr->verInfo[index].values[4].gameprop = 0;
+                stiptr->verInfo[index].props[4].id = DAM_SIDE;
+                stiptr->verInfo[index].props[4].flags = 0;
+                stiptr->verInfo[index].props[4].size =  2;
+                stiptr->verInfo[index].props[4].offset = 8;
+                stiptr->verInfo[index].props[4].gameprop = 0;
                 // offset
-                stiptr->verInfo[index].values[5].property = DAM_OFFSET;
-                stiptr->verInfo[index].values[5].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[5].size =  2;
-                stiptr->verInfo[index].values[5].offset = 10;
-                stiptr->verInfo[index].values[5].gameprop = 0;
+                stiptr->verInfo[index].props[5].id = DAM_OFFSET;
+                stiptr->verInfo[index].props[5].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[5].size =  2;
+                stiptr->verInfo[index].props[5].offset = 10;
+                stiptr->verInfo[index].props[5].gameprop = 0;
             }
             else if(lumpClass == LCM_SUBSECTORS)
             {
                 *mlptr = 4;
-                stiptr->verInfo[index].numValues = 2;
-                stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
+                stiptr->verInfo[index].numProps = 2;
+                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
 
-                stiptr->verInfo[index].values[0].property = DAM_LINE_COUNT;
-                stiptr->verInfo[index].values[0].flags = DT_UNSIGNED;
-                stiptr->verInfo[index].values[0].size =  2;
-                stiptr->verInfo[index].values[0].offset = 0;
-                stiptr->verInfo[index].values[0].gameprop = 0;
+                stiptr->verInfo[index].props[0].id = DAM_LINE_COUNT;
+                stiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
+                stiptr->verInfo[index].props[0].size =  2;
+                stiptr->verInfo[index].props[0].offset = 0;
+                stiptr->verInfo[index].props[0].gameprop = 0;
 
-                stiptr->verInfo[index].values[1].property = DAM_LINE_FIRST;
-                stiptr->verInfo[index].values[1].flags = DT_UNSIGNED;
-                stiptr->verInfo[index].values[1].size =  2;
-                stiptr->verInfo[index].values[1].offset = 2;
-                stiptr->verInfo[index].values[1].gameprop = 0;
+                stiptr->verInfo[index].props[1].id = DAM_LINE_FIRST;
+                stiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
+                stiptr->verInfo[index].props[1].size =  2;
+                stiptr->verInfo[index].props[1].offset = 2;
+                stiptr->verInfo[index].props[1].gameprop = 0;
             }
             else if(lumpClass == LCM_NODES)
             {
                 *mlptr = 28;
-                stiptr->verInfo[index].numValues = 14;
-                stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 14, PU_STATIC, 0);
+                stiptr->verInfo[index].numProps = 14;
+                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 14, PU_STATIC, 0);
                 // x
-                stiptr->verInfo[index].values[0].property = DAM_X;
-                stiptr->verInfo[index].values[0].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[0].size =  2;
-                stiptr->verInfo[index].values[0].offset = 0;
-                stiptr->verInfo[index].values[0].gameprop = 0;
+                stiptr->verInfo[index].props[0].id = DAM_X;
+                stiptr->verInfo[index].props[0].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[0].size =  2;
+                stiptr->verInfo[index].props[0].offset = 0;
+                stiptr->verInfo[index].props[0].gameprop = 0;
                 // y
-                stiptr->verInfo[index].values[1].property = DAM_Y;
-                stiptr->verInfo[index].values[1].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[1].size =  2;
-                stiptr->verInfo[index].values[1].offset = 2;
-                stiptr->verInfo[index].values[1].gameprop = 0;
+                stiptr->verInfo[index].props[1].id = DAM_Y;
+                stiptr->verInfo[index].props[1].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[1].size =  2;
+                stiptr->verInfo[index].props[1].offset = 2;
+                stiptr->verInfo[index].props[1].gameprop = 0;
                 // dx
-                stiptr->verInfo[index].values[2].property = DAM_DX;
-                stiptr->verInfo[index].values[2].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[2].size =  2;
-                stiptr->verInfo[index].values[2].offset = 4;
-                stiptr->verInfo[index].values[2].gameprop = 0;
+                stiptr->verInfo[index].props[2].id = DAM_DX;
+                stiptr->verInfo[index].props[2].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[2].size =  2;
+                stiptr->verInfo[index].props[2].offset = 4;
+                stiptr->verInfo[index].props[2].gameprop = 0;
                 // dy
-                stiptr->verInfo[index].values[3].property = DAM_DY;
-                stiptr->verInfo[index].values[3].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[3].size =  2;
-                stiptr->verInfo[index].values[3].offset = 6;
-                stiptr->verInfo[index].values[3].gameprop = 0;
+                stiptr->verInfo[index].props[3].id = DAM_DY;
+                stiptr->verInfo[index].props[3].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[3].size =  2;
+                stiptr->verInfo[index].props[3].offset = 6;
+                stiptr->verInfo[index].props[3].gameprop = 0;
                 // bbox[0][0]
-                stiptr->verInfo[index].values[4].property = DAM_BBOX_RIGHT_TOP_Y;
-                stiptr->verInfo[index].values[4].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[4].size =  2;
-                stiptr->verInfo[index].values[4].offset = 8;
-                stiptr->verInfo[index].values[4].gameprop = 0;
+                stiptr->verInfo[index].props[4].id = DAM_BBOX_RIGHT_TOP_Y;
+                stiptr->verInfo[index].props[4].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[4].size =  2;
+                stiptr->verInfo[index].props[4].offset = 8;
+                stiptr->verInfo[index].props[4].gameprop = 0;
                 // bbox[0][1]
-                stiptr->verInfo[index].values[5].property = DAM_BBOX_RIGHT_LOW_Y;
-                stiptr->verInfo[index].values[5].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[5].size =  2;
-                stiptr->verInfo[index].values[5].offset = 10;
-                stiptr->verInfo[index].values[5].gameprop = 0;
+                stiptr->verInfo[index].props[5].id = DAM_BBOX_RIGHT_LOW_Y;
+                stiptr->verInfo[index].props[5].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[5].size =  2;
+                stiptr->verInfo[index].props[5].offset = 10;
+                stiptr->verInfo[index].props[5].gameprop = 0;
                 // bbox[0][2]
-                stiptr->verInfo[index].values[6].property = DAM_BBOX_RIGHT_LOW_X;
-                stiptr->verInfo[index].values[6].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[6].size =  2;
-                stiptr->verInfo[index].values[6].offset = 12;
-                stiptr->verInfo[index].values[6].gameprop = 0;
+                stiptr->verInfo[index].props[6].id = DAM_BBOX_RIGHT_LOW_X;
+                stiptr->verInfo[index].props[6].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[6].size =  2;
+                stiptr->verInfo[index].props[6].offset = 12;
+                stiptr->verInfo[index].props[6].gameprop = 0;
                 // bbox[0][3]
-                stiptr->verInfo[index].values[7].property = DAM_BBOX_RIGHT_TOP_X;
-                stiptr->verInfo[index].values[7].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[7].size =  2;
-                stiptr->verInfo[index].values[7].offset = 14;
-                stiptr->verInfo[index].values[7].gameprop = 0;
+                stiptr->verInfo[index].props[7].id = DAM_BBOX_RIGHT_TOP_X;
+                stiptr->verInfo[index].props[7].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[7].size =  2;
+                stiptr->verInfo[index].props[7].offset = 14;
+                stiptr->verInfo[index].props[7].gameprop = 0;
                 // bbox[1][0]
-                stiptr->verInfo[index].values[8].property = DAM_BBOX_LEFT_TOP_Y;
-                stiptr->verInfo[index].values[8].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[8].size =  2;
-                stiptr->verInfo[index].values[8].offset = 16;
-                stiptr->verInfo[index].values[8].gameprop = 0;
+                stiptr->verInfo[index].props[8].id = DAM_BBOX_LEFT_TOP_Y;
+                stiptr->verInfo[index].props[8].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[8].size =  2;
+                stiptr->verInfo[index].props[8].offset = 16;
+                stiptr->verInfo[index].props[8].gameprop = 0;
                 // bbox[1][1]
-                stiptr->verInfo[index].values[9].property = DAM_BBOX_LEFT_LOW_Y;
-                stiptr->verInfo[index].values[9].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[9].size =  2;
-                stiptr->verInfo[index].values[9].offset = 18;
-                stiptr->verInfo[index].values[9].gameprop = 0;
+                stiptr->verInfo[index].props[9].id = DAM_BBOX_LEFT_LOW_Y;
+                stiptr->verInfo[index].props[9].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[9].size =  2;
+                stiptr->verInfo[index].props[9].offset = 18;
+                stiptr->verInfo[index].props[9].gameprop = 0;
                 // bbox[1][2]
-                stiptr->verInfo[index].values[10].property = DAM_BBOX_LEFT_LOW_X;
-                stiptr->verInfo[index].values[10].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[10].size =  2;
-                stiptr->verInfo[index].values[10].offset = 20;
-                stiptr->verInfo[index].values[10].gameprop = 0;
+                stiptr->verInfo[index].props[10].id = DAM_BBOX_LEFT_LOW_X;
+                stiptr->verInfo[index].props[10].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[10].size =  2;
+                stiptr->verInfo[index].props[10].offset = 20;
+                stiptr->verInfo[index].props[10].gameprop = 0;
                 // bbox[1][3]
-                stiptr->verInfo[index].values[11].property = DAM_BBOX_LEFT_TOP_X;
-                stiptr->verInfo[index].values[11].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[11].size =  2;
-                stiptr->verInfo[index].values[11].offset = 22;
-                stiptr->verInfo[index].values[11].gameprop = 0;
+                stiptr->verInfo[index].props[11].id = DAM_BBOX_LEFT_TOP_X;
+                stiptr->verInfo[index].props[11].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[11].size =  2;
+                stiptr->verInfo[index].props[11].offset = 22;
+                stiptr->verInfo[index].props[11].gameprop = 0;
                 // children[0]
-                stiptr->verInfo[index].values[12].property = DAM_CHILD_RIGHT;
-                stiptr->verInfo[index].values[12].flags = DT_MSBCONVERT;
-                stiptr->verInfo[index].values[12].size =  2;
-                stiptr->verInfo[index].values[12].offset = 24;
-                stiptr->verInfo[index].values[12].gameprop = 0;
+                stiptr->verInfo[index].props[12].id = DAM_CHILD_RIGHT;
+                stiptr->verInfo[index].props[12].flags = DT_MSBCONVERT;
+                stiptr->verInfo[index].props[12].size =  2;
+                stiptr->verInfo[index].props[12].offset = 24;
+                stiptr->verInfo[index].props[12].gameprop = 0;
                 // children[1]
-                stiptr->verInfo[index].values[13].property = DAM_CHILD_LEFT;
-                stiptr->verInfo[index].values[13].flags = DT_MSBCONVERT;
-                stiptr->verInfo[index].values[13].size =  2;
-                stiptr->verInfo[index].values[13].offset = 26;
-                stiptr->verInfo[index].values[13].gameprop = 0;
+                stiptr->verInfo[index].props[13].id = DAM_CHILD_LEFT;
+                stiptr->verInfo[index].props[13].flags = DT_MSBCONVERT;
+                stiptr->verInfo[index].props[13].size =  2;
+                stiptr->verInfo[index].props[13].offset = 26;
+                stiptr->verInfo[index].props[13].gameprop = 0;
             }
             else if(lumpClass == LCM_SECTORS)
             {
                 *mlptr = 26;
-                stiptr->verInfo[index].numValues = 7;
-                stiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 7, PU_STATIC, 0);
+                stiptr->verInfo[index].numProps = 7;
+                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 7, PU_STATIC, 0);
                 // floor height
-                stiptr->verInfo[index].values[0].property = DAM_FLOOR_HEIGHT;
-                stiptr->verInfo[index].values[0].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[0].size =  2;
-                stiptr->verInfo[index].values[0].offset = 0;
-                stiptr->verInfo[index].values[0].gameprop = 0;
+                stiptr->verInfo[index].props[0].id = DAM_FLOOR_HEIGHT;
+                stiptr->verInfo[index].props[0].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[0].size =  2;
+                stiptr->verInfo[index].props[0].offset = 0;
+                stiptr->verInfo[index].props[0].gameprop = 0;
                 // ceiling height
-                stiptr->verInfo[index].values[1].property = DAM_CEILING_HEIGHT;
-                stiptr->verInfo[index].values[1].flags = DT_FRACBITS;
-                stiptr->verInfo[index].values[1].size =  2;
-                stiptr->verInfo[index].values[1].offset = 2;
-                stiptr->verInfo[index].values[1].gameprop = 0;
+                stiptr->verInfo[index].props[1].id = DAM_CEILING_HEIGHT;
+                stiptr->verInfo[index].props[1].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[1].size =  2;
+                stiptr->verInfo[index].props[1].offset = 2;
+                stiptr->verInfo[index].props[1].gameprop = 0;
                 // floor pic
-                stiptr->verInfo[index].values[2].property = DAM_FLOOR_TEXTURE;
-                stiptr->verInfo[index].values[2].flags = DT_FLAT;
-                stiptr->verInfo[index].values[2].size =  8;
-                stiptr->verInfo[index].values[2].offset = 4;
-                stiptr->verInfo[index].values[2].gameprop = 0;
+                stiptr->verInfo[index].props[2].id = DAM_FLOOR_TEXTURE;
+                stiptr->verInfo[index].props[2].flags = DT_FLAT;
+                stiptr->verInfo[index].props[2].size =  8;
+                stiptr->verInfo[index].props[2].offset = 4;
+                stiptr->verInfo[index].props[2].gameprop = 0;
                 // ceiling pic
-                stiptr->verInfo[index].values[3].property = DAM_CEILING_TEXTURE;
-                stiptr->verInfo[index].values[3].flags = DT_FLAT;
-                stiptr->verInfo[index].values[3].size =  8;
-                stiptr->verInfo[index].values[3].offset = 12;
-                stiptr->verInfo[index].values[3].gameprop = 0;
+                stiptr->verInfo[index].props[3].id = DAM_CEILING_TEXTURE;
+                stiptr->verInfo[index].props[3].flags = DT_FLAT;
+                stiptr->verInfo[index].props[3].size =  8;
+                stiptr->verInfo[index].props[3].offset = 12;
+                stiptr->verInfo[index].props[3].gameprop = 0;
                 // light level
-                stiptr->verInfo[index].values[4].property = DAM_LIGHT_LEVEL;
-                stiptr->verInfo[index].values[4].flags = 0;
-                stiptr->verInfo[index].values[4].size =  2;
-                stiptr->verInfo[index].values[4].offset = 20;
-                stiptr->verInfo[index].values[4].gameprop = 0;
+                stiptr->verInfo[index].props[4].id = DAM_LIGHT_LEVEL;
+                stiptr->verInfo[index].props[4].flags = 0;
+                stiptr->verInfo[index].props[4].size =  2;
+                stiptr->verInfo[index].props[4].offset = 20;
+                stiptr->verInfo[index].props[4].gameprop = 0;
                 // special
-                stiptr->verInfo[index].values[5].property = DAM_SECTOR_SPECIAL;
-                stiptr->verInfo[index].values[5].flags = 0;
-                stiptr->verInfo[index].values[5].size =  2;
-                stiptr->verInfo[index].values[5].offset = 22;
-                stiptr->verInfo[index].values[5].gameprop = 1;
+                stiptr->verInfo[index].props[5].id = DAM_SECTOR_SPECIAL;
+                stiptr->verInfo[index].props[5].flags = 0;
+                stiptr->verInfo[index].props[5].size =  2;
+                stiptr->verInfo[index].props[5].offset = 22;
+                stiptr->verInfo[index].props[5].gameprop = 1;
                 // tag
-                stiptr->verInfo[index].values[6].property = DAM_SECTOR_TAG;
-                stiptr->verInfo[index].values[6].flags = 0;
-                stiptr->verInfo[index].values[6].size =  2;
-                stiptr->verInfo[index].values[6].offset = 24;
-                stiptr->verInfo[index].values[6].gameprop = 1;
+                stiptr->verInfo[index].props[6].id = DAM_SECTOR_TAG;
+                stiptr->verInfo[index].props[6].flags = 0;
+                stiptr->verInfo[index].props[6].size =  2;
+                stiptr->verInfo[index].props[6].offset = 24;
+                stiptr->verInfo[index].props[6].gameprop = 1;
             }
             else if(lumpClass == LCM_REJECT)
             {
@@ -4278,38 +4313,38 @@ void P_InitMapDataFormats(void)
                 if(glver == 1)
                 {
                     *glptr = 4;
-                    glstiptr->verInfo[index].numValues = 2;
-                    glstiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
+                    glstiptr->verInfo[index].numProps = 2;
+                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
                     // x
-                    glstiptr->verInfo[index].values[0].property = DAM_X;
-                    glstiptr->verInfo[index].values[0].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[0].size =  2;
-                    glstiptr->verInfo[index].values[0].offset = 0;
-                    glstiptr->verInfo[index].values[0].gameprop = 0;
+                    glstiptr->verInfo[index].props[0].id = DAM_X;
+                    glstiptr->verInfo[index].props[0].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[0].size =  2;
+                    glstiptr->verInfo[index].props[0].offset = 0;
+                    glstiptr->verInfo[index].props[0].gameprop = 0;
                     // y
-                    glstiptr->verInfo[index].values[1].property = DAM_Y;
-                    glstiptr->verInfo[index].values[1].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[1].size =  2;
-                    glstiptr->verInfo[index].values[1].offset = 2;
-                    glstiptr->verInfo[index].values[1].gameprop = 0;
+                    glstiptr->verInfo[index].props[1].id = DAM_Y;
+                    glstiptr->verInfo[index].props[1].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[1].size =  2;
+                    glstiptr->verInfo[index].props[1].offset = 2;
+                    glstiptr->verInfo[index].props[1].gameprop = 0;
                 }
                 else
                 {
                     *glptr = 8;
-                    glstiptr->verInfo[index].numValues = 2;
-                    glstiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
+                    glstiptr->verInfo[index].numProps = 2;
+                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
                     // x
-                    glstiptr->verInfo[index].values[0].property = DAM_X;
-                    glstiptr->verInfo[index].values[0].flags = 0;
-                    glstiptr->verInfo[index].values[0].size =  4;
-                    glstiptr->verInfo[index].values[0].offset = 0;
-                    glstiptr->verInfo[index].values[0].gameprop = 0;
+                    glstiptr->verInfo[index].props[0].id = DAM_X;
+                    glstiptr->verInfo[index].props[0].flags = 0;
+                    glstiptr->verInfo[index].props[0].size =  4;
+                    glstiptr->verInfo[index].props[0].offset = 0;
+                    glstiptr->verInfo[index].props[0].gameprop = 0;
                     // y
-                    glstiptr->verInfo[index].values[1].property = DAM_Y;
-                    glstiptr->verInfo[index].values[1].flags = 0;
-                    glstiptr->verInfo[index].values[1].size =  4;
-                    glstiptr->verInfo[index].values[1].offset = 4;
-                    glstiptr->verInfo[index].values[1].gameprop = 0;
+                    glstiptr->verInfo[index].props[1].id = DAM_Y;
+                    glstiptr->verInfo[index].props[1].flags = 0;
+                    glstiptr->verInfo[index].props[1].size =  4;
+                    glstiptr->verInfo[index].props[1].offset = 4;
+                    glstiptr->verInfo[index].props[1].gameprop = 0;
                 }
             }
             else if(lumpClass == LCG_SEGS)
@@ -4317,32 +4352,32 @@ void P_InitMapDataFormats(void)
                 if(glver == 2)
                 {
                     *glptr = 10;
-                    glstiptr->verInfo[index].numValues = 4;
-                    glstiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 4, PU_STATIC, 0);
+                    glstiptr->verInfo[index].numProps = 4;
+                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 4, PU_STATIC, 0);
                     // v1
-                    glstiptr->verInfo[index].values[0].property = DAM_VERTEX1;
-                    glstiptr->verInfo[index].values[0].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[0].size =  2;
-                    glstiptr->verInfo[index].values[0].offset = 0;
-                    glstiptr->verInfo[index].values[0].gameprop = 0;
+                    glstiptr->verInfo[index].props[0].id = DAM_VERTEX1;
+                    glstiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[0].size =  2;
+                    glstiptr->verInfo[index].props[0].offset = 0;
+                    glstiptr->verInfo[index].props[0].gameprop = 0;
                     // v2
-                    glstiptr->verInfo[index].values[1].property = DAM_VERTEX2;
-                    glstiptr->verInfo[index].values[1].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[1].size =  2;
-                    glstiptr->verInfo[index].values[1].offset = 2;
-                    glstiptr->verInfo[index].values[1].gameprop = 0;
+                    glstiptr->verInfo[index].props[1].id = DAM_VERTEX2;
+                    glstiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[1].size =  2;
+                    glstiptr->verInfo[index].props[1].offset = 2;
+                    glstiptr->verInfo[index].props[1].gameprop = 0;
                     // linedef
-                    glstiptr->verInfo[index].values[2].property = DAM_LINE;
-                    glstiptr->verInfo[index].values[2].flags = DT_NOINDEX;
-                    glstiptr->verInfo[index].values[2].size =  2;
-                    glstiptr->verInfo[index].values[2].offset = 4;
-                    glstiptr->verInfo[index].values[2].gameprop = 0;
+                    glstiptr->verInfo[index].props[2].id = DAM_LINE;
+                    glstiptr->verInfo[index].props[2].flags = DT_NOINDEX;
+                    glstiptr->verInfo[index].props[2].size =  2;
+                    glstiptr->verInfo[index].props[2].offset = 4;
+                    glstiptr->verInfo[index].props[2].gameprop = 0;
                     // side
-                    glstiptr->verInfo[index].values[3].property = DAM_SIDE;
-                    glstiptr->verInfo[index].values[3].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[3].size =  2;
-                    glstiptr->verInfo[index].values[3].offset = 6;
-                    glstiptr->verInfo[index].values[3].gameprop = 0;
+                    glstiptr->verInfo[index].props[3].id = DAM_SIDE;
+                    glstiptr->verInfo[index].props[3].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[3].size =  2;
+                    glstiptr->verInfo[index].props[3].offset = 6;
+                    glstiptr->verInfo[index].props[3].gameprop = 0;
                 }
                 else if(glver == 4)
                 {
@@ -4351,32 +4386,32 @@ void P_InitMapDataFormats(void)
                 else // Ver 3/5
                 {
                     *glptr = 14;
-                    glstiptr->verInfo[index].numValues = 4;
-                    glstiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 4, PU_STATIC, 0);
+                    glstiptr->verInfo[index].numProps = 4;
+                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 4, PU_STATIC, 0);
                     // v1
-                    glstiptr->verInfo[index].values[0].property = DAM_VERTEX1;
-                    glstiptr->verInfo[index].values[0].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[0].size =  4;
-                    glstiptr->verInfo[index].values[0].offset = 0;
-                    glstiptr->verInfo[index].values[0].gameprop = 0;
+                    glstiptr->verInfo[index].props[0].id = DAM_VERTEX1;
+                    glstiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[0].size =  4;
+                    glstiptr->verInfo[index].props[0].offset = 0;
+                    glstiptr->verInfo[index].props[0].gameprop = 0;
                     // v2
-                    glstiptr->verInfo[index].values[1].property = DAM_VERTEX2;
-                    glstiptr->verInfo[index].values[1].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[1].size =  4;
-                    glstiptr->verInfo[index].values[1].offset = 4;
-                    glstiptr->verInfo[index].values[1].gameprop = 0;
+                    glstiptr->verInfo[index].props[1].id = DAM_VERTEX2;
+                    glstiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[1].size =  4;
+                    glstiptr->verInfo[index].props[1].offset = 4;
+                    glstiptr->verInfo[index].props[1].gameprop = 0;
                     // linedef
-                    glstiptr->verInfo[index].values[2].property = DAM_LINE;
-                    glstiptr->verInfo[index].values[2].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[2].size =  2;
-                    glstiptr->verInfo[index].values[2].offset = 8;
-                    glstiptr->verInfo[index].values[2].gameprop = 0;
+                    glstiptr->verInfo[index].props[2].id = DAM_LINE;
+                    glstiptr->verInfo[index].props[2].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[2].size =  2;
+                    glstiptr->verInfo[index].props[2].offset = 8;
+                    glstiptr->verInfo[index].props[2].gameprop = 0;
                     // side
-                    glstiptr->verInfo[index].values[3].property = DAM_SIDE;
-                    glstiptr->verInfo[index].values[3].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[3].size =  2;
-                    glstiptr->verInfo[index].values[3].offset = 10;
-                    glstiptr->verInfo[index].values[3].gameprop = 0;
+                    glstiptr->verInfo[index].props[3].id = DAM_SIDE;
+                    glstiptr->verInfo[index].props[3].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[3].size =  2;
+                    glstiptr->verInfo[index].props[3].offset = 10;
+                    glstiptr->verInfo[index].props[3].gameprop = 0;
                 }
             }
             else if(lumpClass == LCG_SUBSECTORS)
@@ -4384,38 +4419,38 @@ void P_InitMapDataFormats(void)
                 if(glver == 1)
                 {
                     *glptr = 4;
-                    glstiptr->verInfo[index].numValues = 2;
-                    glstiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
+                    glstiptr->verInfo[index].numProps = 2;
+                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
 
-                    glstiptr->verInfo[index].values[0].property = DAM_LINE_COUNT;
-                    glstiptr->verInfo[index].values[0].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[0].size =  2;
-                    glstiptr->verInfo[index].values[0].offset = 0;
-                    glstiptr->verInfo[index].values[0].gameprop = 0;
+                    glstiptr->verInfo[index].props[0].id = DAM_LINE_COUNT;
+                    glstiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[0].size =  2;
+                    glstiptr->verInfo[index].props[0].offset = 0;
+                    glstiptr->verInfo[index].props[0].gameprop = 0;
 
-                    glstiptr->verInfo[index].values[1].property = DAM_LINE_FIRST;
-                    glstiptr->verInfo[index].values[1].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[1].size =  2;
-                    glstiptr->verInfo[index].values[1].offset = 2;
-                    glstiptr->verInfo[index].values[1].gameprop = 0;
+                    glstiptr->verInfo[index].props[1].id = DAM_LINE_FIRST;
+                    glstiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[1].size =  2;
+                    glstiptr->verInfo[index].props[1].offset = 2;
+                    glstiptr->verInfo[index].props[1].gameprop = 0;
                 }
                 else
                 {
                     *glptr = 8;
-                    glstiptr->verInfo[index].numValues = 2;
-                    glstiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
+                    glstiptr->verInfo[index].numProps = 2;
+                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
 
-                    glstiptr->verInfo[index].values[0].property = DAM_LINE_COUNT;
-                    glstiptr->verInfo[index].values[0].flags = 0;
-                    glstiptr->verInfo[index].values[0].size =  4;
-                    glstiptr->verInfo[index].values[0].offset = 0;
-                    glstiptr->verInfo[index].values[0].gameprop = 0;
+                    glstiptr->verInfo[index].props[0].id = DAM_LINE_COUNT;
+                    glstiptr->verInfo[index].props[0].flags = 0;
+                    glstiptr->verInfo[index].props[0].size =  4;
+                    glstiptr->verInfo[index].props[0].offset = 0;
+                    glstiptr->verInfo[index].props[0].gameprop = 0;
 
-                    glstiptr->verInfo[index].values[1].property = DAM_LINE_FIRST;
-                    glstiptr->verInfo[index].values[1].flags = 0;
-                    glstiptr->verInfo[index].values[1].size =  4;
-                    glstiptr->verInfo[index].values[1].offset = 4;
-                    glstiptr->verInfo[index].values[1].gameprop = 0;
+                    glstiptr->verInfo[index].props[1].id = DAM_LINE_FIRST;
+                    glstiptr->verInfo[index].props[1].flags = 0;
+                    glstiptr->verInfo[index].props[1].size =  4;
+                    glstiptr->verInfo[index].props[1].offset = 4;
+                    glstiptr->verInfo[index].props[1].gameprop = 0;
                 }
             }
             else if(lumpClass == LCG_NODES)
@@ -4423,182 +4458,182 @@ void P_InitMapDataFormats(void)
                 if(glver == 1)
                 {
                     *glptr = 28;
-                    glstiptr->verInfo[index].numValues = 14;
-                    glstiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 14, PU_STATIC, 0);
+                    glstiptr->verInfo[index].numProps = 14;
+                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 14, PU_STATIC, 0);
                     // x
-                    glstiptr->verInfo[index].values[0].property = DAM_X;
-                    glstiptr->verInfo[index].values[0].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[0].size =  2;
-                    glstiptr->verInfo[index].values[0].offset = 0;
-                    glstiptr->verInfo[index].values[0].gameprop = 0;
+                    glstiptr->verInfo[index].props[0].id = DAM_X;
+                    glstiptr->verInfo[index].props[0].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[0].size =  2;
+                    glstiptr->verInfo[index].props[0].offset = 0;
+                    glstiptr->verInfo[index].props[0].gameprop = 0;
                     // y
-                    glstiptr->verInfo[index].values[1].property = DAM_Y;
-                    glstiptr->verInfo[index].values[1].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[1].size =  2;
-                    glstiptr->verInfo[index].values[1].offset = 2;
-                    glstiptr->verInfo[index].values[1].gameprop = 0;
+                    glstiptr->verInfo[index].props[1].id = DAM_Y;
+                    glstiptr->verInfo[index].props[1].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[1].size =  2;
+                    glstiptr->verInfo[index].props[1].offset = 2;
+                    glstiptr->verInfo[index].props[1].gameprop = 0;
                     // dx
-                    glstiptr->verInfo[index].values[2].property = DAM_DX;
-                    glstiptr->verInfo[index].values[2].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[2].size =  2;
-                    glstiptr->verInfo[index].values[2].offset = 4;
-                    glstiptr->verInfo[index].values[2].gameprop = 0;
+                    glstiptr->verInfo[index].props[2].id = DAM_DX;
+                    glstiptr->verInfo[index].props[2].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[2].size =  2;
+                    glstiptr->verInfo[index].props[2].offset = 4;
+                    glstiptr->verInfo[index].props[2].gameprop = 0;
                     // dy
-                    glstiptr->verInfo[index].values[3].property = DAM_DY;
-                    glstiptr->verInfo[index].values[3].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[3].size =  2;
-                    glstiptr->verInfo[index].values[3].offset = 6;
-                    glstiptr->verInfo[index].values[3].gameprop = 0;
+                    glstiptr->verInfo[index].props[3].id = DAM_DY;
+                    glstiptr->verInfo[index].props[3].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[3].size =  2;
+                    glstiptr->verInfo[index].props[3].offset = 6;
+                    glstiptr->verInfo[index].props[3].gameprop = 0;
                     // bbox[0][0]
-                    glstiptr->verInfo[index].values[4].property = DAM_BBOX_RIGHT_TOP_Y;
-                    glstiptr->verInfo[index].values[4].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[4].size =  2;
-                    glstiptr->verInfo[index].values[4].offset = 8;
-                    glstiptr->verInfo[index].values[4].gameprop = 0;
+                    glstiptr->verInfo[index].props[4].id = DAM_BBOX_RIGHT_TOP_Y;
+                    glstiptr->verInfo[index].props[4].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[4].size =  2;
+                    glstiptr->verInfo[index].props[4].offset = 8;
+                    glstiptr->verInfo[index].props[4].gameprop = 0;
                     // bbox[0][1]
-                    glstiptr->verInfo[index].values[5].property = DAM_BBOX_RIGHT_LOW_Y;
-                    glstiptr->verInfo[index].values[5].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[5].size =  2;
-                    glstiptr->verInfo[index].values[5].offset = 10;
-                    glstiptr->verInfo[index].values[5].gameprop = 0;
+                    glstiptr->verInfo[index].props[5].id = DAM_BBOX_RIGHT_LOW_Y;
+                    glstiptr->verInfo[index].props[5].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[5].size =  2;
+                    glstiptr->verInfo[index].props[5].offset = 10;
+                    glstiptr->verInfo[index].props[5].gameprop = 0;
                     // bbox[0][2]
-                    glstiptr->verInfo[index].values[6].property = DAM_BBOX_RIGHT_LOW_X;
-                    glstiptr->verInfo[index].values[6].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[6].size =  2;
-                    glstiptr->verInfo[index].values[6].offset = 12;
-                    glstiptr->verInfo[index].values[6].gameprop = 0;
+                    glstiptr->verInfo[index].props[6].id = DAM_BBOX_RIGHT_LOW_X;
+                    glstiptr->verInfo[index].props[6].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[6].size =  2;
+                    glstiptr->verInfo[index].props[6].offset = 12;
+                    glstiptr->verInfo[index].props[6].gameprop = 0;
                     // bbox[0][3]
-                    glstiptr->verInfo[index].values[7].property = DAM_BBOX_RIGHT_TOP_X;
-                    glstiptr->verInfo[index].values[7].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[7].size =  2;
-                    glstiptr->verInfo[index].values[7].offset = 14;
-                    glstiptr->verInfo[index].values[7].gameprop = 0;
+                    glstiptr->verInfo[index].props[7].id = DAM_BBOX_RIGHT_TOP_X;
+                    glstiptr->verInfo[index].props[7].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[7].size =  2;
+                    glstiptr->verInfo[index].props[7].offset = 14;
+                    glstiptr->verInfo[index].props[7].gameprop = 0;
                     // bbox[1][0]
-                    glstiptr->verInfo[index].values[8].property = DAM_BBOX_LEFT_TOP_Y;
-                    glstiptr->verInfo[index].values[8].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[8].size =  2;
-                    glstiptr->verInfo[index].values[8].offset = 16;
-                    glstiptr->verInfo[index].values[8].gameprop = 0;
+                    glstiptr->verInfo[index].props[8].id = DAM_BBOX_LEFT_TOP_Y;
+                    glstiptr->verInfo[index].props[8].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[8].size =  2;
+                    glstiptr->verInfo[index].props[8].offset = 16;
+                    glstiptr->verInfo[index].props[8].gameprop = 0;
                     // bbox[1][1]
-                    glstiptr->verInfo[index].values[9].property = DAM_BBOX_LEFT_LOW_Y;
-                    glstiptr->verInfo[index].values[9].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[9].size =  2;
-                    glstiptr->verInfo[index].values[9].offset = 18;
-                    glstiptr->verInfo[index].values[9].gameprop = 0;
+                    glstiptr->verInfo[index].props[9].id = DAM_BBOX_LEFT_LOW_Y;
+                    glstiptr->verInfo[index].props[9].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[9].size =  2;
+                    glstiptr->verInfo[index].props[9].offset = 18;
+                    glstiptr->verInfo[index].props[9].gameprop = 0;
                     // bbox[1][2]
-                    glstiptr->verInfo[index].values[10].property = DAM_BBOX_LEFT_LOW_X;
-                    glstiptr->verInfo[index].values[10].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[10].size =  2;
-                    glstiptr->verInfo[index].values[10].offset = 20;
-                    glstiptr->verInfo[index].values[10].gameprop = 0;
+                    glstiptr->verInfo[index].props[10].id = DAM_BBOX_LEFT_LOW_X;
+                    glstiptr->verInfo[index].props[10].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[10].size =  2;
+                    glstiptr->verInfo[index].props[10].offset = 20;
+                    glstiptr->verInfo[index].props[10].gameprop = 0;
                     // bbox[1][3]
-                    glstiptr->verInfo[index].values[11].property = DAM_BBOX_LEFT_TOP_X;
-                    glstiptr->verInfo[index].values[11].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[11].size =  2;
-                    glstiptr->verInfo[index].values[11].offset = 22;
-                    glstiptr->verInfo[index].values[11].gameprop = 0;
+                    glstiptr->verInfo[index].props[11].id = DAM_BBOX_LEFT_TOP_X;
+                    glstiptr->verInfo[index].props[11].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[11].size =  2;
+                    glstiptr->verInfo[index].props[11].offset = 22;
+                    glstiptr->verInfo[index].props[11].gameprop = 0;
                     // children[0]
-                    glstiptr->verInfo[index].values[12].property = DAM_CHILD_RIGHT;
-                    glstiptr->verInfo[index].values[12].flags = DT_UNSIGNED | DT_MSBCONVERT;
-                    glstiptr->verInfo[index].values[12].size =  2;
-                    glstiptr->verInfo[index].values[12].offset = 24;
-                    glstiptr->verInfo[index].values[12].gameprop = 0;
+                    glstiptr->verInfo[index].props[12].id = DAM_CHILD_RIGHT;
+                    glstiptr->verInfo[index].props[12].flags = DT_UNSIGNED | DT_MSBCONVERT;
+                    glstiptr->verInfo[index].props[12].size =  2;
+                    glstiptr->verInfo[index].props[12].offset = 24;
+                    glstiptr->verInfo[index].props[12].gameprop = 0;
                     // children[1]
-                    glstiptr->verInfo[index].values[13].property = DAM_CHILD_LEFT;
-                    glstiptr->verInfo[index].values[13].flags = DT_UNSIGNED | DT_MSBCONVERT;
-                    glstiptr->verInfo[index].values[13].size =  2;
-                    glstiptr->verInfo[index].values[13].offset = 26;
-                    glstiptr->verInfo[index].values[13].gameprop = 0;
+                    glstiptr->verInfo[index].props[13].id = DAM_CHILD_LEFT;
+                    glstiptr->verInfo[index].props[13].flags = DT_UNSIGNED | DT_MSBCONVERT;
+                    glstiptr->verInfo[index].props[13].size =  2;
+                    glstiptr->verInfo[index].props[13].offset = 26;
+                    glstiptr->verInfo[index].props[13].gameprop = 0;
                 }
                 else
                 {
                     *glptr = 32;
-                    glstiptr->verInfo[index].numValues = 14;
-                    glstiptr->verInfo[index].values = Z_Malloc(sizeof(datatype_t) * 14, PU_STATIC, 0);
+                    glstiptr->verInfo[index].numProps = 14;
+                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 14, PU_STATIC, 0);
                     // x
-                    glstiptr->verInfo[index].values[0].property = DAM_X;
-                    glstiptr->verInfo[index].values[0].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[0].size =  2;
-                    glstiptr->verInfo[index].values[0].offset = 0;
-                    glstiptr->verInfo[index].values[0].gameprop = 0;
+                    glstiptr->verInfo[index].props[0].id = DAM_X;
+                    glstiptr->verInfo[index].props[0].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[0].size =  2;
+                    glstiptr->verInfo[index].props[0].offset = 0;
+                    glstiptr->verInfo[index].props[0].gameprop = 0;
                     // y
-                    glstiptr->verInfo[index].values[1].property = DAM_Y;
-                    glstiptr->verInfo[index].values[1].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[1].size =  2;
-                    glstiptr->verInfo[index].values[1].offset = 2;
-                    glstiptr->verInfo[index].values[1].gameprop = 0;
+                    glstiptr->verInfo[index].props[1].id = DAM_Y;
+                    glstiptr->verInfo[index].props[1].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[1].size =  2;
+                    glstiptr->verInfo[index].props[1].offset = 2;
+                    glstiptr->verInfo[index].props[1].gameprop = 0;
                     // dx
-                    glstiptr->verInfo[index].values[2].property = DAM_DX;
-                    glstiptr->verInfo[index].values[2].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[2].size =  2;
-                    glstiptr->verInfo[index].values[2].offset = 4;
-                    glstiptr->verInfo[index].values[2].gameprop = 0;
+                    glstiptr->verInfo[index].props[2].id = DAM_DX;
+                    glstiptr->verInfo[index].props[2].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[2].size =  2;
+                    glstiptr->verInfo[index].props[2].offset = 4;
+                    glstiptr->verInfo[index].props[2].gameprop = 0;
                     // dy
-                    glstiptr->verInfo[index].values[3].property = DAM_DY;
-                    glstiptr->verInfo[index].values[3].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[3].size =  2;
-                    glstiptr->verInfo[index].values[3].offset = 6;
-                    glstiptr->verInfo[index].values[3].gameprop = 0;
+                    glstiptr->verInfo[index].props[3].id = DAM_DY;
+                    glstiptr->verInfo[index].props[3].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[3].size =  2;
+                    glstiptr->verInfo[index].props[3].offset = 6;
+                    glstiptr->verInfo[index].props[3].gameprop = 0;
                     // bbox[0][0]
-                    glstiptr->verInfo[index].values[4].property = DAM_BBOX_RIGHT_TOP_Y;
-                    glstiptr->verInfo[index].values[4].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[4].size =  2;
-                    glstiptr->verInfo[index].values[4].offset = 8;
-                    glstiptr->verInfo[index].values[4].gameprop = 0;
+                    glstiptr->verInfo[index].props[4].id = DAM_BBOX_RIGHT_TOP_Y;
+                    glstiptr->verInfo[index].props[4].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[4].size =  2;
+                    glstiptr->verInfo[index].props[4].offset = 8;
+                    glstiptr->verInfo[index].props[4].gameprop = 0;
                     // bbox[0][1]
-                    glstiptr->verInfo[index].values[5].property = DAM_BBOX_RIGHT_LOW_Y;
-                    glstiptr->verInfo[index].values[5].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[5].size =  2;
-                    glstiptr->verInfo[index].values[5].offset = 10;
-                    glstiptr->verInfo[index].values[5].gameprop = 0;
+                    glstiptr->verInfo[index].props[5].id = DAM_BBOX_RIGHT_LOW_Y;
+                    glstiptr->verInfo[index].props[5].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[5].size =  2;
+                    glstiptr->verInfo[index].props[5].offset = 10;
+                    glstiptr->verInfo[index].props[5].gameprop = 0;
                     // bbox[0][2]
-                    glstiptr->verInfo[index].values[6].property = DAM_BBOX_RIGHT_LOW_X;
-                    glstiptr->verInfo[index].values[6].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[6].size =  2;
-                    glstiptr->verInfo[index].values[6].offset = 12;
-                    glstiptr->verInfo[index].values[6].gameprop = 0;
+                    glstiptr->verInfo[index].props[6].id = DAM_BBOX_RIGHT_LOW_X;
+                    glstiptr->verInfo[index].props[6].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[6].size =  2;
+                    glstiptr->verInfo[index].props[6].offset = 12;
+                    glstiptr->verInfo[index].props[6].gameprop = 0;
                     // bbox[0][3]
-                    glstiptr->verInfo[index].values[7].property = DAM_BBOX_RIGHT_TOP_X;
-                    glstiptr->verInfo[index].values[7].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[7].size =  2;
-                    glstiptr->verInfo[index].values[7].offset = 14;
-                    glstiptr->verInfo[index].values[7].gameprop = 0;
+                    glstiptr->verInfo[index].props[7].id = DAM_BBOX_RIGHT_TOP_X;
+                    glstiptr->verInfo[index].props[7].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[7].size =  2;
+                    glstiptr->verInfo[index].props[7].offset = 14;
+                    glstiptr->verInfo[index].props[7].gameprop = 0;
                     // bbox[1][0]
-                    glstiptr->verInfo[index].values[8].property = DAM_BBOX_LEFT_TOP_Y;
-                    glstiptr->verInfo[index].values[8].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[8].size =  2;
-                    glstiptr->verInfo[index].values[8].offset = 16;
-                    glstiptr->verInfo[index].values[8].gameprop = 0;
+                    glstiptr->verInfo[index].props[8].id = DAM_BBOX_LEFT_TOP_Y;
+                    glstiptr->verInfo[index].props[8].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[8].size =  2;
+                    glstiptr->verInfo[index].props[8].offset = 16;
+                    glstiptr->verInfo[index].props[8].gameprop = 0;
                     // bbox[1][1]
-                    glstiptr->verInfo[index].values[9].property = DAM_BBOX_LEFT_LOW_Y;
-                    glstiptr->verInfo[index].values[9].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[9].size =  2;
-                    glstiptr->verInfo[index].values[9].offset = 18;
-                    glstiptr->verInfo[index].values[9].gameprop = 0;
+                    glstiptr->verInfo[index].props[9].id = DAM_BBOX_LEFT_LOW_Y;
+                    glstiptr->verInfo[index].props[9].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[9].size =  2;
+                    glstiptr->verInfo[index].props[9].offset = 18;
+                    glstiptr->verInfo[index].props[9].gameprop = 0;
                     // bbox[1][2]
-                    glstiptr->verInfo[index].values[10].property = DAM_BBOX_LEFT_LOW_X;
-                    glstiptr->verInfo[index].values[10].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[10].size =  2;
-                    glstiptr->verInfo[index].values[10].offset = 20;
-                    glstiptr->verInfo[index].values[10].gameprop = 0;
+                    glstiptr->verInfo[index].props[10].id = DAM_BBOX_LEFT_LOW_X;
+                    glstiptr->verInfo[index].props[10].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[10].size =  2;
+                    glstiptr->verInfo[index].props[10].offset = 20;
+                    glstiptr->verInfo[index].props[10].gameprop = 0;
                     // bbox[1][3]
-                    glstiptr->verInfo[index].values[11].property = DAM_BBOX_LEFT_TOP_X;
-                    glstiptr->verInfo[index].values[11].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].values[11].size =  2;
-                    glstiptr->verInfo[index].values[11].offset = 22;
-                    glstiptr->verInfo[index].values[11].gameprop = 0;
+                    glstiptr->verInfo[index].props[11].id = DAM_BBOX_LEFT_TOP_X;
+                    glstiptr->verInfo[index].props[11].flags = DT_FRACBITS;
+                    glstiptr->verInfo[index].props[11].size =  2;
+                    glstiptr->verInfo[index].props[11].offset = 22;
+                    glstiptr->verInfo[index].props[11].gameprop = 0;
                     // children[0]
-                    glstiptr->verInfo[index].values[12].property = 12;
-                    glstiptr->verInfo[index].values[12].flags = DAM_CHILD_RIGHT;
-                    glstiptr->verInfo[index].values[12].size =  4;
-                    glstiptr->verInfo[index].values[12].offset = 24;
-                    glstiptr->verInfo[index].values[12].gameprop = 0;
+                    glstiptr->verInfo[index].props[12].id = 12;
+                    glstiptr->verInfo[index].props[12].flags = DAM_CHILD_RIGHT;
+                    glstiptr->verInfo[index].props[12].size =  4;
+                    glstiptr->verInfo[index].props[12].offset = 24;
+                    glstiptr->verInfo[index].props[12].gameprop = 0;
                     // children[1]
-                    glstiptr->verInfo[index].values[13].property = DAM_CHILD_LEFT;
-                    glstiptr->verInfo[index].values[13].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].values[13].size =  4;
-                    glstiptr->verInfo[index].values[13].offset = 28;
-                    glstiptr->verInfo[index].values[13].gameprop = 0;
+                    glstiptr->verInfo[index].props[13].id = DAM_CHILD_LEFT;
+                    glstiptr->verInfo[index].props[13].flags = DT_UNSIGNED;
+                    glstiptr->verInfo[index].props[13].size =  4;
+                    glstiptr->verInfo[index].props[13].offset = 28;
+                    glstiptr->verInfo[index].props[13].gameprop = 0;
                 }
             }
         }
@@ -4606,7 +4641,7 @@ void P_InitMapDataFormats(void)
 }
 
 #if 0 // needs updating _DEBUG
-static void P_PrintDebugMapData(gamemap_t* map)
+static void printDebugMapData(gamemap_t* map)
 {
     int i;
     vertex_t *vtx;

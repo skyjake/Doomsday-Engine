@@ -356,7 +356,7 @@ void P_SpawnThings(void)
     int     deathSpotsCount;
 #endif
 
-    for(i = 0; i < numthings; i++)
+    for(i = 0; i < numthings; ++i)
     {
         th = &things[i];
 #if __JDOOM__

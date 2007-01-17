@@ -29,8 +29,6 @@
 #ifndef __COMMON_PLAYSETUP_H__
 #define __COMMON_PLAYSETUP_H__
 
-extern int numthings;
-
 #define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
 #define numsegs     (*(uint*) DD_GetVariable(DD_SEG_COUNT))
 #define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
@@ -38,6 +36,7 @@ extern int numthings;
 #define numnodes    (*(uint*) DD_GetVariable(DD_NODE_COUNT))
 #define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
 #define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
+#define numthings   (DD_GetInteger(DD_THING_COUNT))
 
 #if __JHEXEN__
 #define numpolyobjs (DD_GetInteger(DD_POLYOBJ_COUNT))

@@ -115,11 +115,6 @@ static byte showFrameTimePos = false;
 static byte showViewAngleDeltas = false;
 static byte showViewPosDeltas = false;
 
-// BSP cvars.
-int bspBuild = true;
-static int bspCache = true;
-static int bspFactor = 7;
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -127,11 +122,6 @@ static int bspFactor = 7;
  */
 void R_Register(void)
 {
-
-    C_VAR_INT("bsp-build", &bspBuild, 0, 0, 1);
-    C_VAR_INT("bsp-cache", &bspCache, 0, 0, 1);
-    C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
-
     C_VAR_INT("con-show-during-setup", &loadInStartupMode, 0, 0, 1);
 
     C_VAR_INT("rend-camera-smooth", &rend_camera_smooth, CVF_HIDE, 0, 1);

@@ -90,8 +90,6 @@ extern int actual_leveltime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int numthings;
-
 // Our private map data structures
 xsector_t *xsectors;
 xline_t   *xlines;
@@ -100,9 +98,6 @@ xline_t   *xlines;
 boolean levelSetup;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static uint oldNumLines;
-static uint oldNumSectors;
 
 // CODE --------------------------------------------------------------------
 
@@ -170,46 +165,15 @@ void P_SetupForMapData(int type, uint num)
     switch(type)
     {
     case DAM_SECTOR:
-        {
-        uint newnum = oldNumSectors + num;
-
-        if(oldNumSectors > 0)
-            xsectors = Z_Realloc(xsectors, newnum * sizeof(xsector_t), PU_LEVEL);
-        else
-            xsectors = Z_Malloc(newnum * sizeof(xsector_t), PU_LEVEL, 0);
-
-        memset(xsectors + oldNumSectors, 0, num * sizeof(xsector_t));
-        oldNumSectors = newnum;
-        }
+        xsectors = Z_Calloc(num * sizeof(xsector_t), PU_LEVEL, 0);
         break;
 
     case DAM_LINE:
-        {
-        uint newnum = oldNumLines + num;
-
-        if(oldNumLines > 0)
-            xlines = Z_Realloc(xlines, newnum * sizeof(xline_t), PU_LEVEL);
-        else
-            xlines = Z_Malloc(newnum * sizeof(xline_t), PU_LEVEL, 0);
-
-        memset(xlines + oldNumLines, 0, num * sizeof(xline_t));
-        oldNumLines = newnum;
-        }
+        xlines = Z_Calloc(num * sizeof(xline_t), PU_LEVEL, 0);
         break;
 
     case DAM_THING:
-        {
-        uint oldNum = numthings;
-
-        numthings += num;
-
-        if(oldNum > 0)
-            things = Z_Realloc(things, numthings * sizeof(thing_t), PU_LEVEL);
-        else
-            things = Z_Malloc(numthings * sizeof(thing_t), PU_LEVEL, 0);
-
-        memset(things + oldNum, 0, num * sizeof(thing_t));
-        }
+        things = Z_Calloc(num * sizeof(thing_t), PU_LEVEL, 0);
         break;
 
     default:
@@ -233,18 +197,8 @@ void P_SetupLevel(int episode, int map, int playermask, skillmode_t skill)
     // It begins
     levelSetup = true;
 
-    // Reset our local counters for xobjects
-    // Used to allow objects to be allocated in a non-continous order
-    oldNumLines = 0;
-    oldNumSectors = 0;
-
-    // Map thing data for the level IS stored game-side.
-    // However, Doomsday tells us how many things there are.
-    numthings = 0;
-
     // The engine manages polyobjects, so reset the count.
     DD_SetInteger(DD_POLYOBJ_COUNT, 0);
-
     P_ResetWorldState();
 
     // Let the engine know that we are about to start setting up a
@@ -259,19 +213,13 @@ void P_SetupLevel(int episode, int map, int playermask, skillmode_t skill)
 #endif
 
     Z_FreeTags(PU_LEVEL, PU_PURGELEVEL - 1);
-
     P_InitThinkers();
 
     P_GetMapLumpName(episode, map, levelId);
-
     if(!P_LoadMap(levelId))
     {
         Con_Error("P_SetupLevel: Failed loading map \"%s\".\n",levelId);
     }
-
-    // Now the map data has been loaded we can update the
-    // global data struct counters
-    numthings = DD_GetInteger(DD_THING_COUNT);
 
     // First job is to zero unused flags if MF_INVALID is set.
     //

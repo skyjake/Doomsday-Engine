@@ -109,18 +109,6 @@ line_t     *lines;
 uint        numsides;
 side_t     *sides;
 
-// Should we generate new blockmap data if its invalid?
-// 0: error out
-// 1: generate new
-// 2: Always generate new
-int         createBMap = 1;
-
-// Should we generate new reject data if its invalid?
-// 0: error out
-// 1: generate new
-// 2: Always generate new
-int         createReject = 1;
-
 // mapthings are actually stored & handled game-side
 int         numthings;
 
@@ -407,8 +395,7 @@ boolean P_LoadMap(char *levelId)
     // enough free memory of course) so that transitions are
     // (potentially) seamless :-)
 
-    // Attempt to load the map
-    if(P_LoadMapData(levelId))
+    if(P_AttemptMapLoad(levelId))
     {
         // ALL the map data was loaded/generated successfully.
         P_CheckLevel(levelId, false);
@@ -452,7 +439,7 @@ boolean P_CheckLevel(char *levelID, boolean silent)
         printCount = 0;
         for(i = 0; i < numlines; ++i)
         {
-            if(missingFronts[i] == 1)
+            if(missingFronts[i])
             {
                 Con_Printf("%s%d,", printCount? " ": "   ", i);
 

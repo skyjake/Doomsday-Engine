@@ -2278,7 +2278,7 @@ void R_InitLinks(void)
 }
 
 /**
- * This routine is called from P_LoadMapData() to polygonize the current
+ * This routine is called from P_AttemptMapLoad() to polygonize the current
  * level. Creates floors and ceilings and fixes the adjacent sky sector
  * heights.  Creates a big enough dlBlockLinks.
  */
@@ -2312,7 +2312,7 @@ void R_InitLevel(char *level_id)
     Con_Progress(10, 0);
 
     // Polygonize.
-    if(P_GLNodeDataPresent())
+    if(P_GLNodeDataPresent() && bspBuild)
         R_PolygonizeWithoutCarving();
     else
         R_CreateFloorsAndCeilings(numnodes - 1, 0, NULL);
