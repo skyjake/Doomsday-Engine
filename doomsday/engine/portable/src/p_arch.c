@@ -105,8 +105,12 @@ enum {
     DAM_SIDE0,
     DAM_SIDE1,
 
-    DAM_TEXTURE_OFFSET_X,
-    DAM_TEXTURE_OFFSET_Y,
+    DAM_TOP_TEXTURE_OFFSET_X,
+    DAM_TOP_TEXTURE_OFFSET_Y,
+    DAM_MIDDLE_TEXTURE_OFFSET_X,
+    DAM_MIDDLE_TEXTURE_OFFSET_Y,
+    DAM_BOTTOM_TEXTURE_OFFSET_X,
+    DAM_BOTTOM_TEXTURE_OFFSET_Y,
     DAM_TOP_TEXTURE,
     DAM_MIDDLE_TEXTURE,
     DAM_BOTTOM_TEXTURE,
@@ -332,9 +336,10 @@ static boolean  DetermineMapDataFormat(void);
 static int P_CallbackEX(int dataType, unsigned int startIndex, const byte *buffer,
                         void* context,
                         int (*callback)(gamemap_t *map, int dataType, void* ptr,
-                                        const datatype_t* prop, const byte *buffer));
+                                uint elmIdx, const datatype_t* prop,
+                                const byte *buffer));
 
-static int ReadMapProperty(gamemap_t *map, int dataType, void* ptr,
+static int ReadMapProperty(gamemap_t *map, int dataType, void* ptr, uint elmIdx, 
                             const datatype_t* prop, const byte *buffer);
 
 static void     finishLineDefs(gamemap_t *map);
@@ -477,8 +482,12 @@ const char* DAM_Str(int prop)
         { DAM_FLAGS, "DAM_FLAGS" },
         { DAM_SIDE0, "DAM_SIDE0" },
         { DAM_SIDE1, "DAM_SIDE1" },
-        { DAM_TEXTURE_OFFSET_X, "DAM_TEXTURE_OFFSET_X" },
-        { DAM_TEXTURE_OFFSET_Y, "DAM_TEXTURE_OFFSET_Y" },
+        { DAM_TOP_TEXTURE_OFFSET_X, "DAM_TOP_TEXTURE_OFFSET_X" },
+        { DAM_TOP_TEXTURE_OFFSET_Y, "DAM_TOP_TEXTURE_OFFSET_Y" },
+        { DAM_MIDDLE_TEXTURE_OFFSET_X, "DAM_MIDDLE_TEXTURE_OFFSET_X" },
+        { DAM_MIDDLE_TEXTURE_OFFSET_Y, "DAM_MIDDLE_TEXTURE_OFFSET_Y" },
+        { DAM_BOTTOM_TEXTURE_OFFSET_X, "DAM_BOTTOM_TEXTURE_OFFSET_X" },
+        { DAM_BOTTOM_TEXTURE_OFFSET_Y, "DAM_BOTTOM_TEXTURE_OFFSET_Y" },
         { DAM_TOP_TEXTURE, "DAM_TOP_TEXTURE" },
         { DAM_MIDDLE_TEXTURE, "DAM_MIDDLE_TEXTURE" },
         { DAM_BOTTOM_TEXTURE, "DAM_BOTTOM_TEXTURE" },
@@ -1378,10 +1387,14 @@ boolean P_AttemptMapLoad(char *levelId)
         {
         // Sidedefs (read all properties except textures).
         int props[] = {
-            DAM_TEXTURE_OFFSET_X,
-            DAM_TEXTURE_OFFSET_Y,
+            DAM_TOP_TEXTURE_OFFSET_X,
+            DAM_TOP_TEXTURE_OFFSET_Y,
+            DAM_MIDDLE_TEXTURE_OFFSET_X,
+            DAM_MIDDLE_TEXTURE_OFFSET_Y,
+            DAM_BOTTOM_TEXTURE_OFFSET_X,
+            DAM_BOTTOM_TEXTURE_OFFSET_Y,
             DAM_FRONT_SECTOR};
-        if(!P_ReadMapData(newmap, LCM_SIDEDEFS, &(*props), 3))
+        if(!P_ReadMapData(newmap, LCM_SIDEDEFS, &(*props), 7))
             return false;
         }
         {
@@ -1962,6 +1975,45 @@ static boolean ReadMapData(gamemap_t *map, int doClass, int *props,
     return true;
 }
 
+static void *P_GetPtrToObject(gamemap_t* map, int objectType, uint id)
+{
+    switch(objectType)
+    {
+    case DAM_LINE:
+        if(id < map->numlines)
+            return &map->lines[id];
+        break;
+    case DAM_SIDE:
+        if(id < map->numsides)
+            return &map->sides[id];
+        break;
+    case DAM_VERTEX:
+        if(id < map->numvertexes)
+            return &map->vertexes[id];
+        break;
+    case DAM_SEG:
+        if(id < map->numsegs)
+            return &map->segs[id];
+        break;
+    case DAM_SUBSECTOR:
+        if(id < map->numsubsectors)
+            return &map->subsectors[id];
+        break;
+    case DAM_NODE:
+        if(id < map->numnodes)
+            return &map->nodes[id];
+        break;
+    case DAM_SECTOR:
+        if(id < map->numsectors)
+            return &map->sectors[id];
+        break;
+    default:
+        Con_Error("P_GetPtrToObject: %i is not a valid type\n", objectType);
+    }
+
+    return NULL;
+}
+
 /**
  * Reads a value from the (little endian) source buffer. Does some basic
  * type checking so that incompatible types are not assigned.
@@ -2316,39 +2368,21 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
         switch(valueType)
         {
         case DDVT_LINE_PTR:
-            {
-            line_t** d = dst;
-            if(idx >= 0 && (unsigned) idx < map->numlines)
-                *d = &map->lines[idx];
-            else
-                *d = NULL;
+            *(line_t**) dst =
+                P_GetPtrToObject(map, DAM_LINE, (unsigned) idx);
             break;
-            }
 
         case DDVT_SIDE_PTR:
-            {
-            side_t** d = dst;
-            if(idx >= 0 && (unsigned) idx < map->numsides)
-                *d = &map->sides[idx];
-            else
-                *d = NULL;
+            *(side_t**) dst =
+                P_GetPtrToObject(map, DAM_SIDE, (unsigned) idx);
             break;
-            }
 
         case DDVT_SECT_PTR:
-            {
-            sector_t** d = dst;
-            if(idx >= 0 && (unsigned) idx < map->numsectors)
-                *d = &map->sectors[idx];
-            else
-                *d = NULL;
+            *(sector_t**) dst =
+                P_GetPtrToObject(map, DAM_SECTOR, (unsigned) idx);
             break;
-            }
 
         case DDVT_VERT_PTR:
-            {
-            vertex_t** d = dst;
-
             // FIXME:
             // The firstGLvertex offset should be handed down from the very
             // start of the read process, it should not be a global.
@@ -2380,12 +2414,9 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                 }
             }
 
-            if(idx >= 0 && (unsigned) idx < map->numvertexes)
-                *d = &map->vertexes[idx];
-            else
-                *d = NULL;
+            *(vertex_t**) dst =
+                P_GetPtrToObject(map, DAM_VERTEX, (unsigned) idx);
             break;
-            }
 
         default:
             // TODO: Need to react?
@@ -2398,31 +2429,25 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
     }
 }
 
-static int ReadCustomMapProperty(gamemap_t* map, int dataType, void *ptr,
-                                 const datatype_t* prop, const byte *buffer)
+static int ReadCustomMapProperty(gamemap_t* map, int dataType, void *ptr, uint elmIdx,
+                                 const datatype_t* prop, const byte *src)
 {
-    void*   dest = NULL;
-    uint    idx = 0;
-
-    byte    tmpbyte = 0;
-    short   tmpshort = 0;
-    fixed_t tmpfixed = 0;
-    int     tmpint = 0;
-    float   tmpfloat = 0;
+    byte        tmpbyte = 0;
+    short       tmpshort = 0;
+    fixed_t     tmpfixed = 0;
+    int         tmpint = 0;
+    float       tmpfloat = 0;
+    void       *dest = NULL;
 
     switch(dataType)
     {
     case DAM_THING:
-        idx = *(uint*) ptr;
         break;
     case DAM_LINE:
-        idx = ((line_t*) ptr) - map->lines;
         break;
     case DAM_SIDE:
-        idx = ((side_t*) ptr) - map->sides;
         break;
     case DAM_SECTOR:
-        idx = ((sector_t*) ptr) - map->sectors;
         break;
     default:
         Con_Error("ReadCustomMapProperty: Type does not support custom properties\n");
@@ -2449,19 +2474,18 @@ static int ReadCustomMapProperty(gamemap_t* map, int dataType, void *ptr,
         Con_Error("ReadCustomMapProperty: Unsupported data type id %i.\n", prop->size);
     };
 
-    ReadValue(map, prop->size, dest, buffer + prop->offset, prop, idx);
-
-    gx.HandleMapDataProperty(idx, dataType, prop->id, prop->size, dest);
+    ReadValue(map, prop->size, dest, src, prop, elmIdx);
+    gx.HandleMapDataProperty(elmIdx, dataType, prop->id, prop->size, dest);
 
     return true;
 }
 
-static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
-                            const datatype_t* prop, const byte *buffer)
+static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr, uint elmIdx,
+                            const datatype_t* prop, const byte *src)
 {
     // Handle unknown (game specific) properties.
     if(prop->gameprop)
-        return ReadCustomMapProperty(map, dataType, ptr, prop, buffer);
+        return ReadCustomMapProperty(map, dataType, ptr, elmIdx, prop, src);
 
     // These are the exported map data properties that can be
     // assigned to when reading map data.
@@ -2470,16 +2494,15 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_VERTEX:
         {
         vertex_t* p = ptr;
-        uint    idx = p - map->vertexes;
 
         switch(prop->id)
         {
         case DAM_X:
-            ReadValue(map, DMT_VERTEX_POS, &p->pos[VX], buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_VERTEX_POS, &p->pos[VX], src, prop, elmIdx);
             break;
 
         case DAM_Y:
-            ReadValue(map, DMT_VERTEX_POS, &p->pos[VY], buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_VERTEX_POS, &p->pos[VY], src, prop, elmIdx);
             break;
 
         default:
@@ -2488,33 +2511,32 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         }
         break;
         }
-    case DAM_LINE:  // Lines are read into an interim format
+    case DAM_LINE:
         {
         line_t* p = ptr;
-        uint    idx = p - map->lines;
 
         switch(prop->id)
         {
         case DAM_VERTEX1:
             // TODO: should be DMT_LINE_V1 but we require special case logic
-            ReadValue(map, DDVT_VERT_PTR, &p->L_v1, buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_VERT_PTR, &p->L_v1, src, prop, elmIdx);
             break;
 
         case DAM_VERTEX2:
             // TODO: should be DMT_LINE_V2 but we require special case logic
-            ReadValue(map, DDVT_VERT_PTR, &p->L_v2, buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_VERT_PTR, &p->L_v2, src, prop, elmIdx);
             break;
 
         case DAM_FLAGS:
-            ReadValue(map, DMT_LINE_FLAGS, &p->flags, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_LINE_FLAGS, &p->flags, src, prop, elmIdx);
             break;
 
         case DAM_SIDE0:
-            ReadValue(map, DDVT_SIDE_PTR, &p->L_frontside, buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_SIDE_PTR, &p->L_frontside, src, prop, elmIdx);
             break;
 
         case DAM_SIDE1:
-            ReadValue(map, DDVT_SIDE_PTR, &p->L_backside, buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_SIDE_PTR, &p->L_backside, src, prop, elmIdx);
             break;
 
         default:
@@ -2526,39 +2548,48 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_SIDE:
         {
         side_t* p = ptr;
-        uint    idx = p - map->sides;
 
         switch(prop->id)
         {
-        case DAM_TEXTURE_OFFSET_X:
-            ReadValue(map, DMT_SURFACE_OFFX, &p->SW_topoffx, buffer + prop->offset, prop, idx);
-            // DOOM format maps don't support per wall section offsets so, this
-            // property is a special case which copies the value to the others.
-            p->SW_middleoffx = p->SW_bottomoffx = p->SW_topoffx;
+        case DAM_TOP_TEXTURE_OFFSET_X:
+            ReadValue(map, DMT_SURFACE_OFFX, &p->SW_topoffx, src, prop, elmIdx);
             break;
 
-        case DAM_TEXTURE_OFFSET_Y:
-            ReadValue(map, DMT_SURFACE_OFFY, &p->SW_topoffy, buffer + prop->offset, prop, idx);
-            // DOOM format maps don't support per wall section offsets so, this
-            // property is a special case which copies the value to the others.
-            p->SW_middleoffy = p->SW_bottomoffy = p->SW_topoffy;
+        case DAM_TOP_TEXTURE_OFFSET_Y:
+            ReadValue(map, DMT_SURFACE_OFFY, &p->SW_topoffy, src, prop, elmIdx);
+            break;
+
+        case DAM_MIDDLE_TEXTURE_OFFSET_X:
+            ReadValue(map, DMT_SURFACE_OFFX, &p->SW_middleoffx, src, prop, elmIdx);
+            break;
+
+        case DAM_MIDDLE_TEXTURE_OFFSET_Y:
+            ReadValue(map, DMT_SURFACE_OFFY, &p->SW_middleoffy, src, prop, elmIdx);
+            break;
+
+        case DAM_BOTTOM_TEXTURE_OFFSET_X:
+            ReadValue(map, DMT_SURFACE_OFFX, &p->SW_bottomoffx, src, prop, elmIdx);
+            break;
+
+        case DAM_BOTTOM_TEXTURE_OFFSET_Y:
+            ReadValue(map, DMT_SURFACE_OFFY, &p->SW_bottomoffy, src, prop, elmIdx);
             break;
 
         case DAM_TOP_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SW_toppic, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SW_toppic, src, prop, elmIdx);
             break;
 
         case DAM_MIDDLE_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SW_middlepic, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SW_middlepic, src, prop, elmIdx);
             break;
 
         case DAM_BOTTOM_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SW_bottompic, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SW_bottompic, src, prop, elmIdx);
             break;
 
         case DAM_FRONT_SECTOR:
             // TODO: should be DMT_SIDE_SECTOR but we require special case logic
-            ReadValue(map, DDVT_SECT_PTR, &p->sector, buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_SECT_PTR, &p->sector, src, prop, elmIdx);
             break;
 
         default:
@@ -2570,28 +2601,27 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_SECTOR:
         {
         sector_t* p = ptr;
-        uint    idx = p - map->sectors;
 
         switch(prop->id)
         {
         case DAM_FLOOR_HEIGHT:
-            ReadValue(map, DMT_PLANE_HEIGHT, &p->SP_floorheight, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_PLANE_HEIGHT, &p->SP_floorheight, src, prop, elmIdx);
             break;
 
         case DAM_CEILING_HEIGHT:
-            ReadValue(map, DMT_PLANE_HEIGHT, &p->SP_ceilheight, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_PLANE_HEIGHT, &p->SP_ceilheight, src, prop, elmIdx);
             break;
 
         case DAM_FLOOR_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SP_floorpic, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SP_floorpic, src, prop, elmIdx);
             break;
 
         case DAM_CEILING_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SP_ceilpic, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SP_ceilpic, src, prop, elmIdx);
             break;
 
         case DAM_LIGHT_LEVEL:
-            ReadValue(map, DMT_SECTOR_LIGHTLEVEL, &p->lightlevel, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SECTOR_LIGHTLEVEL, &p->lightlevel, src, prop, elmIdx);
             break;
 
         default:
@@ -2603,36 +2633,35 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_SEG:
         {
         seg_t* p = ptr;
-        uint    idx = p - map->segs;
 
         switch(prop->id)
         {
         case DAM_VERTEX1:
             // TODO: should be DMT_SEG_V  but we require special case logic
-            ReadValue(map, DDVT_VERT_PTR, &p->SG_v1, buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_VERT_PTR, &p->SG_v1, src, prop, elmIdx);
             break;
 
         case DAM_VERTEX2:
             // TODO: should be DMT_SEG_V  but we require special case logic
-            ReadValue(map, DDVT_VERT_PTR, &p->SG_v2, buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_VERT_PTR, &p->SG_v2, src, prop, elmIdx);
             break;
 
         case DAM_ANGLE:
-            ReadValue(map, DMT_SEG_ANGLE, &p->angle, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SEG_ANGLE, &p->angle, src, prop, elmIdx);
             break;
 
         case DAM_LINE:
             // KLUDGE: Set the data type implicitly as DAM_LINE is DDVT_PTR
-            ReadValue(map, DDVT_LINE_PTR, &p->linedef, buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_LINE_PTR, &p->linedef, src, prop, elmIdx);
             break;
 
         case DAM_SIDE:
             // KLUDGE: Store the side id into the flags field
-            ReadValue(map, DDVT_BYTE, &p->flags, buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_BYTE, &p->flags, src, prop, elmIdx);
             break;
 
         case DAM_OFFSET:
-            ReadValue(map, DMT_SEG_OFFSET, &p->offset, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SEG_OFFSET, &p->offset, src, prop, elmIdx);
             break;
 
         default:
@@ -2644,16 +2673,15 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_SUBSECTOR:
         {
         subsector_t* p = ptr;
-        uint    idx = p - map->subsectors;
 
         switch(prop->id)
         {
         case DAM_LINE_COUNT:
-            ReadValue(map, DMT_SUBSECTOR_LINECOUNT, &p->linecount, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SUBSECTOR_LINECOUNT, &p->linecount, src, prop, elmIdx);
             break;
 
         case DAM_LINE_FIRST:
-            ReadValue(map, DMT_SUBSECTOR_FIRSTLINE, &p->firstline, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_SUBSECTOR_FIRSTLINE, &p->firstline, src, prop, elmIdx);
             break;
 
         default:
@@ -2665,66 +2693,65 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     case DAM_NODE:
         {
         node_t* p = ptr;
-        uint    idx = p - map->nodes;
 
         switch(prop->id)
         {
         case DAM_X:
-            ReadValue(map, DMT_NODE_X, &p->x, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_NODE_X, &p->x, src, prop, elmIdx);
             break;
 
         case DAM_Y:
-            ReadValue(map, DMT_NODE_Y, &p->y, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_NODE_Y, &p->y, src, prop, elmIdx);
             break;
 
         case DAM_DX:
-            ReadValue(map, DMT_NODE_DX, &p->dx, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_NODE_DX, &p->dx, src, prop, elmIdx);
             break;
 
         case DAM_DY:
-            ReadValue(map, DMT_NODE_DY, &p->dy, buffer + prop->offset, prop, idx);
+            ReadValue(map, DMT_NODE_DY, &p->dy, src, prop, elmIdx);
             break;
 
         // TODO: the following should use DMT_NODE_?
         // Constants not defined as yet by the maptypes script.
         case DAM_BBOX_RIGHT_TOP_Y:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[0][0], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[0][0], src, prop, elmIdx);
             break;
 
         case DAM_BBOX_RIGHT_LOW_Y:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[0][1], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[0][1], src, prop, elmIdx);
             break;
 
         case DAM_BBOX_RIGHT_LOW_X:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[0][2], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[0][2], src, prop, elmIdx);
             break;
 
         case DAM_BBOX_RIGHT_TOP_X:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[0][3], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[0][3], src, prop, elmIdx);
             break;
 
         case DAM_BBOX_LEFT_TOP_Y:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[1][0], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[1][0], src, prop, elmIdx);
             break;
 
         case DAM_BBOX_LEFT_LOW_Y:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[1][1], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[1][1], src, prop, elmIdx);
             break;
 
         case DAM_BBOX_LEFT_LOW_X:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[1][2], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[1][2], src, prop, elmIdx);
             break;
 
         case DAM_BBOX_LEFT_TOP_X:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[1][3], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_FLOAT, &p->bbox[1][3], src, prop, elmIdx);
             break;
 
         case DAM_CHILD_RIGHT:
-            ReadValue(map, DDVT_UINT, &p->children[0], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_UINT, &p->children[0], src, prop, elmIdx);
             break;
 
         case DAM_CHILD_LEFT:
-            ReadValue(map, DDVT_UINT, &p->children[1], buffer + prop->offset, prop, idx);
+            ReadValue(map, DDVT_UINT, &p->children[1], src, prop, elmIdx);
             break;
 
         default:
@@ -2738,31 +2765,6 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
     }
 
     return true; // Continue iteration
-}
-
-static void *P_GetPtrToObject(gamemap_t* map, int objectType, uint id)
-{
-    switch (objectType)
-    {
-    case DAM_LINE:
-        return &map->lines[id];
-    case DAM_SIDE:
-        return &map->sides[id];
-    case DAM_VERTEX:
-        return &map->vertexes[id];
-    case DAM_SEG:
-        return &map->segs[id];
-    case DAM_SUBSECTOR:
-        return &map->subsectors[id];
-    case DAM_NODE:
-        return &map->nodes[id];
-    case DAM_SECTOR:
-        return &map->sectors[id];
-    default:
-        Con_Error("P_GetPtrToObject: %i is not a valid type\n", objectType);
-    }
-
-    return NULL;
 }
 
 /*
@@ -2800,13 +2802,14 @@ static void *P_GetPtrToObject(gamemap_t* map, int objectType, uint id)
 static int P_CallbackEX(int dataType, uint startIndex, const byte *buffer,
                         void* context,
                         int (*callback)(gamemap_t* map, int dataType, void* ptr,
-                                 const datatype_t* prop, const byte *buffer))
+                                 uint elmIdx, const datatype_t* prop,
+                                 const byte *buffer))
 {
 #define NUMBLOCKS 8
 #define BLOCK ptr = dataType == DAM_THING? &idx : P_GetPtrToObject(map, dataType, idx);  \
         for(prop = args->props[k = 0]; prop; prop = args->props[++k]) \
         { \
-            if(!callback(map, dataType, ptr, prop, buffer)) \
+            if(!callback(map, dataType, ptr, idx, prop, buffer + prop->offset)) \
                 return false; \
         } \
         buffer += args->elmsize; \
@@ -2849,7 +2852,7 @@ static int P_CallbackEX(int dataType, uint startIndex, const byte *buffer,
             ptr = dataType == DAM_THING? &idx : P_GetPtrToObject(map, dataType, idx);
             for(prop = args->props[k = 0]; prop; prop = args->props[++k])
             {
-                if(!callback(map, dataType, ptr, prop, buffer))
+                if(!callback(map, dataType, ptr, idx, prop, buffer + prop->offset))
                     return false;
             }
         }
@@ -4030,44 +4033,71 @@ void P_InitMapDataFormats(void)
             else if(lumpClass == LCM_SIDEDEFS)
             {
                 *mlptr = 30;
-                stiptr->verInfo[index].numProps = 6;
-                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 6, PU_STATIC, 0);
-                // x offset
-                stiptr->verInfo[index].props[0].id = DAM_TEXTURE_OFFSET_X;
+                stiptr->verInfo[index].numProps = 10;
+                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 10, PU_STATIC, 0);
+                // DOOM format maps don't support per wall section offsets so, we'll
+                // read the one set of x, y offsets into the internal top, middle and
+                // bottom offsets.
+                // top x offset
+                stiptr->verInfo[index].props[0].id = DAM_TOP_TEXTURE_OFFSET_X;
                 stiptr->verInfo[index].props[0].flags = DT_FRACBITS;
                 stiptr->verInfo[index].props[0].size =  2;
                 stiptr->verInfo[index].props[0].offset = 0;
                 stiptr->verInfo[index].props[0].gameprop = 0;
-                // y offset
-                stiptr->verInfo[index].props[1].id = DAM_TEXTURE_OFFSET_Y;
+                // top y offset
+                stiptr->verInfo[index].props[1].id = DAM_TOP_TEXTURE_OFFSET_Y;
                 stiptr->verInfo[index].props[1].flags = DT_FRACBITS;
                 stiptr->verInfo[index].props[1].size =  2;
                 stiptr->verInfo[index].props[1].offset = 2;
                 stiptr->verInfo[index].props[1].gameprop = 0;
-                // top pic
-                stiptr->verInfo[index].props[2].id = DAM_TOP_TEXTURE;
-                stiptr->verInfo[index].props[2].flags = DT_TEXTURE;
-                stiptr->verInfo[index].props[2].size =  8;
-                stiptr->verInfo[index].props[2].offset = 4;
+                // middle x offset
+                stiptr->verInfo[index].props[2].id = DAM_MIDDLE_TEXTURE_OFFSET_X;
+                stiptr->verInfo[index].props[2].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[2].size =  2;
+                stiptr->verInfo[index].props[2].offset = 0;
                 stiptr->verInfo[index].props[2].gameprop = 0;
-                // bottom pic
-                stiptr->verInfo[index].props[3].id = DAM_BOTTOM_TEXTURE;
-                stiptr->verInfo[index].props[3].flags = DT_TEXTURE;
-                stiptr->verInfo[index].props[3].size =  8;
-                stiptr->verInfo[index].props[3].offset = 12;
+                // middle y offset
+                stiptr->verInfo[index].props[3].id = DAM_MIDDLE_TEXTURE_OFFSET_Y;
+                stiptr->verInfo[index].props[3].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[3].size =  2;
+                stiptr->verInfo[index].props[3].offset = 2;
                 stiptr->verInfo[index].props[3].gameprop = 0;
-                // middle pic
-                stiptr->verInfo[index].props[4].id = DAM_MIDDLE_TEXTURE;
-                stiptr->verInfo[index].props[4].flags = DT_TEXTURE;
-                stiptr->verInfo[index].props[4].size =  8;
-                stiptr->verInfo[index].props[4].offset = 20;
+                // bottom x offset
+                stiptr->verInfo[index].props[4].id = DAM_BOTTOM_TEXTURE_OFFSET_X;
+                stiptr->verInfo[index].props[4].flags = DT_FRACBITS;
+                stiptr->verInfo[index].props[4].size =  2;
+                stiptr->verInfo[index].props[4].offset = 0;
                 stiptr->verInfo[index].props[4].gameprop = 0;
-                // sector
-                stiptr->verInfo[index].props[5].id = DAM_FRONT_SECTOR;
-                stiptr->verInfo[index].props[5].flags = 0;
+                // bottom y offset
+                stiptr->verInfo[index].props[5].id = DAM_BOTTOM_TEXTURE_OFFSET_Y;
+                stiptr->verInfo[index].props[5].flags = DT_FRACBITS;
                 stiptr->verInfo[index].props[5].size =  2;
-                stiptr->verInfo[index].props[5].offset = 28;
+                stiptr->verInfo[index].props[5].offset = 2;
                 stiptr->verInfo[index].props[5].gameprop = 0;
+                // top pic
+                stiptr->verInfo[index].props[6].id = DAM_TOP_TEXTURE;
+                stiptr->verInfo[index].props[6].flags = DT_TEXTURE;
+                stiptr->verInfo[index].props[6].size =  8;
+                stiptr->verInfo[index].props[6].offset = 4;
+                stiptr->verInfo[index].props[6].gameprop = 0;
+                // bottom pic
+                stiptr->verInfo[index].props[7].id = DAM_BOTTOM_TEXTURE;
+                stiptr->verInfo[index].props[7].flags = DT_TEXTURE;
+                stiptr->verInfo[index].props[7].size =  8;
+                stiptr->verInfo[index].props[7].offset = 12;
+                stiptr->verInfo[index].props[7].gameprop = 0;
+                // middle pic
+                stiptr->verInfo[index].props[8].id = DAM_MIDDLE_TEXTURE;
+                stiptr->verInfo[index].props[8].flags = DT_TEXTURE;
+                stiptr->verInfo[index].props[8].size =  8;
+                stiptr->verInfo[index].props[8].offset = 20;
+                stiptr->verInfo[index].props[8].gameprop = 0;
+                // sector
+                stiptr->verInfo[index].props[9].id = DAM_FRONT_SECTOR;
+                stiptr->verInfo[index].props[9].flags = 0;
+                stiptr->verInfo[index].props[9].size =  2;
+                stiptr->verInfo[index].props[9].offset = 28;
+                stiptr->verInfo[index].props[9].gameprop = 0;
             }
             else if(lumpClass == LCM_VERTEXES)
             {
