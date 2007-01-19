@@ -37,7 +37,7 @@
 #endif
 
 #include "dd_share.h"
-#include "p_arch.h"
+#include "dam_main.h"
 #include "rend_bias.h"
 
 // Ticcmd
@@ -153,7 +153,6 @@ void            P_FloorChanged(sector_t *sector);
 void            P_CeilingChanged(sector_t *sector);
 void            P_PlaneChanged(sector_t *sector, uint plane);
 void            P_InitData(void);
-const char*     value_Str(int val);
 int             P_CheckTexture(char *name, boolean planeTex, int dataType,
                                unsigned int element, int property);
 

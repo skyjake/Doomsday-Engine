@@ -30,7 +30,6 @@
 
 #include "p_mapdata.h"
 #include "p_dmu.h"
-#include "p_arch.h"
 #include "p_think.h"
 #include "p_object.h"
 #include "p_intercept.h"

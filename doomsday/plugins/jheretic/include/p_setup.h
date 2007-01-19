@@ -117,38 +117,11 @@ enum {
     DAM_CHILD_LEFT
 };
 
-// Game specific map format properties
-// TODO: These should be registered by the game during preinit.
-enum {
-    DAM_LINE_TAG,
-    DAM_LINE_SPECIAL,
-    DAM_LINE_ARG1,
-    DAM_LINE_ARG2,
-    DAM_LINE_ARG3,
-    DAM_LINE_ARG4,
-    DAM_LINE_ARG5,
-    DAM_SECTOR_SPECIAL,
-    DAM_SECTOR_TAG,
-    DAM_THING_TID,
-    DAM_THING_X,
-    DAM_THING_Y,
-    DAM_THING_HEIGHT,
-    DAM_THING_ANGLE,
-    DAM_THING_TYPE,
-    DAM_THING_OPTIONS,
-    DAM_THING_SPECIAL,
-    DAM_THING_ARG1,
-    DAM_THING_ARG2,
-    DAM_THING_ARG3,
-    DAM_THING_ARG4,
-    DAM_THING_ARG5,
-    DAM_PROPERTY_COUNT
-};
-
-int             P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data);
-int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop, int type, void *data);
-
-void            P_Init(void);
-
-boolean         P_MapExists(int episode, int map);
+void        P_RegisterCustomMapProperties(void);
+int         P_HandleMapDataProperty(uint id, int dtype, int prop,
+                                    int type, void *data);
+int         P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
+                                         int type, void *data);
+void        P_Init(void);
+boolean     P_MapExists(int episode, int map);
 #endif

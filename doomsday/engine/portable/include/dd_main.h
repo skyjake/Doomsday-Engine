@@ -66,5 +66,5 @@ void            DD_SetVariable(int ddvalue, void *ptr);
 void           *DD_GetVariable(int ddvalue);
 ddplayer_t     *DD_GetPlayer(int number);
 void            DD_CheckTimeDemo(void);
-
+const char*     value_Str(int val);
 #endif

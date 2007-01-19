@@ -44,7 +44,6 @@ enum {
 typedef struct thing_s {
     short           x;
     short           y;
-    short           height;
     short           angle;
     short           type;
     short           options;

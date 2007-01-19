@@ -45,6 +45,31 @@
 
 // TYPES -------------------------------------------------------------------
 
+enum {
+    CMP_SECTOR_SPECIAL,
+    CMP_SECTOR_TAG,
+    CMP_LINE_SPECIAL,
+    CMP_LINE_ARG1,
+    CMP_LINE_ARG2,
+    CMP_LINE_ARG3,
+    CMP_LINE_ARG4,
+    CMP_LINE_ARG5,
+    CMP_THING_TID,
+    CMP_THING_POS_X,
+    CMP_THING_POS_Y,
+    CMP_THING_HEIGHT,
+    CMP_THING_ANGLE,
+    CMP_THING_TYPE,
+    CMP_THING_OPTIONS,
+    CMP_THING_SPECIAL,
+    CMP_THING_ARG1,
+    CMP_THING_ARG2,
+    CMP_THING_ARG3,
+    CMP_THING_ARG4,
+    CMP_THING_ARG5,
+    NUM_CUSTOM_MAP_PROPERTIES
+} mappropid_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -62,92 +87,172 @@ extern xline_t   *xlines;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int customPropIds[NUM_CUSTOM_MAP_PROPERTIES];
+
 // CODE --------------------------------------------------------------------
 
-/*
+static int DDPropIDToID(int ddid)
+{
+    int         i;
+
+    for(i = 0; i < NUM_CUSTOM_MAP_PROPERTIES; ++i)
+        if(customPropIds[i] == ddid) // a match!
+            return i;
+
+    return -1;
+}
+
+/**
+ * Called during pre-init.
+ * Registers the custom properties we need Doomsday to read from a map format.
+ */
+void P_RegisterCustomMapProperties(void)
+{
+    struct prop_s {
+        int         type;       // DAM object type e.g. DAM_LINE.
+        valuetype_t datatype;   // Internal type used to store the value.
+        char       *name;       // Name by which this property is referred.
+        int         ourid;      // The id we've assigned to it.
+    } properties[] =
+    {
+        // Line properties:
+        {DAM_LINE,      DDVT_BYTE,      "Special",      CMP_LINE_SPECIAL},
+        {DAM_LINE,      DDVT_BYTE,      "Arg1",         CMP_LINE_ARG1},
+        {DAM_LINE,      DDVT_BYTE,      "Arg2",         CMP_LINE_ARG2},
+        {DAM_LINE,      DDVT_BYTE,      "Arg3",         CMP_LINE_ARG3},
+        {DAM_LINE,      DDVT_BYTE,      "Arg4",         CMP_LINE_ARG4},
+        {DAM_LINE,      DDVT_BYTE,      "Arg5",         CMP_LINE_ARG5},
+        // Sector properties:
+        {DAM_SECTOR,    DDVT_SHORT,     "Tag",          CMP_SECTOR_TAG},
+        {DAM_SECTOR,    DDVT_SHORT,     "Special",      CMP_SECTOR_SPECIAL},
+        // Thing properties:
+        {DAM_THING,     DDVT_SHORT,     "TID",          CMP_THING_TID},
+        {DAM_THING,     DDVT_SHORT,     "X",            CMP_THING_POS_X},
+        {DAM_THING,     DDVT_SHORT,     "Y",            CMP_THING_POS_Y},
+        {DAM_THING,     DDVT_SHORT,     "Height",       CMP_THING_HEIGHT},
+        {DAM_THING,     DDVT_SHORT,     "Angle",        CMP_THING_ANGLE},
+        {DAM_THING,     DDVT_SHORT,     "Type",         CMP_THING_TYPE},
+        {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_OPTIONS},
+        {DAM_LINE,      DDVT_BYTE,      "Special",      CMP_THING_SPECIAL},
+        {DAM_LINE,      DDVT_BYTE,      "Arg1",         CMP_THING_ARG1},
+        {DAM_LINE,      DDVT_BYTE,      "Arg2",         CMP_THING_ARG2},
+        {DAM_LINE,      DDVT_BYTE,      "Arg3",         CMP_THING_ARG3},
+        {DAM_LINE,      DDVT_BYTE,      "Arg4",         CMP_THING_ARG4},
+        {DAM_LINE,      DDVT_BYTE,      "Arg5",         CMP_THING_ARG5},
+        {0,             0,              NULL,           0} // Terminate.
+    };
+    uint        i, idx;
+
+    i = 0;
+    while(properties[i].name)
+    {
+        // Will return the id by which Doomsday will refer to this property.
+        idx = P_RegisterCustomMapProperty(properties[i].type, properties[i].datatype,
+                                          properties[i].name);
+        // Store the id returned to us by Doosmday into the conversion LUT,
+        // using our id as the index.
+        customPropIds[properties[i].ourid] = idx;
+        i++;
+    }
+}
+
+/**
  * Doomsday will call this while loading in map data when a value is read
  * that is not part of the internal data structure for the particular element.
  * This is where game specific data is added to game-side map data structures
  * (eg sector->tag, line->args etc).
  *
- * Returns true unless there is a critical problem with the data supplied.
- *
- * @param id:       index of the current element being read.
- * @param dtype:    lump type class id this value is for.
- * @param prop:     propertyid of the game-specific variable (as declared via DED).
- * @param type:     data type id of the value pointed to by *data.
- * @param *data:    ptr to the data value (has already been expanded, size
+ * @param id        Index of the current element being read.
+ * @param dtype     Lump type class id this value is for.
+ * @param prop      Property id of the game-specific variable (as declared via DED).
+ * @param type      Data type id of the value pointed to by *data.
+ * @param *data     Ptr to the data value (has already been expanded, size
  *                  converted and endian converted where necessary).
+ *
+ * @return          <code>true</code> unless there is a critical problem with
+ *                  the data supplied.
  */
 int P_HandleMapDataProperty(uint id, int dtype, int prop, int type, void *data)
 {
-    switch(prop)
+    // Make sure the property id Doomsday passed makes sense.
+    int         pid = DDPropIDToID(prop);
+    void       *dest = NULL;
+
+    if(pid == -1)
+        Con_Error("P_HandleMapDataProperty: Invalid property ID %i", prop);
+
+    // Assign the value for this property to it's correct place.
+    switch(pid)
     {
-    case DAM_SECTOR_SPECIAL:
+    // Sector properties
+    case CMP_SECTOR_SPECIAL:
         xsectors[id].special = *(short *)data;
         break;
-    case DAM_SECTOR_TAG:
+    case CMP_SECTOR_TAG:
         xsectors[id].tag = *(short *)data;
         break;
-    case DAM_LINE_SPECIAL:
+    // Line properties
+    case CMP_LINE_SPECIAL:
         xlines[id].special = *(byte *)data;
         break;
-    case DAM_LINE_ARG1:
+    case CMP_LINE_ARG1:
         xlines[id].arg1 = *(byte *)data;
         break;
-    case DAM_LINE_ARG2:
+    case CMP_LINE_ARG2:
         xlines[id].arg2 = *(byte *)data;
         break;
-    case DAM_LINE_ARG3:
+    case CMP_LINE_ARG3:
         xlines[id].arg3 = *(byte *)data;
         break;
-    case DAM_LINE_ARG4:
+    case CMP_LINE_ARG4:
         xlines[id].arg4 = *(byte *)data;
         break;
-    case DAM_LINE_ARG5:
+    case CMP_LINE_ARG5:
         xlines[id].arg5 = *(byte *)data;
         break;
-    case DAM_THING_TID:
+    // Thing properties
+    case CMP_THING_TID:
         things[id].tid = *(short *)data;
         break;
-    case DAM_THING_X:
+    case CMP_THING_POS_X:
         things[id].x = *(short *)data;
         break;
-    case DAM_THING_Y:
+    case CMP_THING_POS_Y:
         things[id].y = *(short *)data;
         break;
-    case DAM_THING_HEIGHT:
+    case CMP_THING_HEIGHT:
         things[id].height = *(short *)data;
         break;
-    case DAM_THING_ANGLE:
+    case CMP_THING_ANGLE:
         things[id].angle = *(short *)data;
         break;
-    case DAM_THING_TYPE:
+    case CMP_THING_TYPE:
         things[id].type = *(short *)data;
         break;
-    case DAM_THING_OPTIONS:
+    case CMP_THING_OPTIONS:
         things[id].options = *(short *)data;
         break;
-    case DAM_THING_SPECIAL:
+    case CMP_THING_SPECIAL:
         things[id].special = *(byte *)data;
         break;
-    case DAM_THING_ARG1:
+    case CMP_THING_ARG1:
         things[id].arg1 = *(byte *)data;
         break;
-    case DAM_THING_ARG2:
+    case CMP_THING_ARG2:
         things[id].arg2 = *(byte *)data;
         break;
-    case DAM_THING_ARG3:
+    case CMP_THING_ARG3:
         things[id].arg3 = *(byte *)data;
         break;
-    case DAM_THING_ARG4:
+    case CMP_THING_ARG4:
         things[id].arg4 = *(byte *)data;
         break;
-    case DAM_THING_ARG5:
+    case CMP_THING_ARG5:
         things[id].arg5 = *(byte *)data;
         break;
+
     default:
-        Con_Error("P_HandleMapDataProperty: Unknown property id %i.\n", prop);
+        break;
     }
 
     return 1;

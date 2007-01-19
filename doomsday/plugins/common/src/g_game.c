@@ -444,14 +444,13 @@ void G_PreInit(void)
 {
     int         i;
 
-#ifdef TIC_DEBUG
-    rndDebugfile = fopen("rndtrace.txt", "wt");
-#endif
-
     // Make sure game.dll isn't newer than Doomsday...
     if(gi.version < DOOMSDAY_VERSION)
         Con_Error(GAMENAMETEXT " requires at least Doomsday " DOOMSDAY_VERSION_TEXT
                   "!\n");
+#ifdef TIC_DEBUG
+    rndDebugfile = fopen("rndtrace.txt", "wt");
+#endif
 
     verbose = ArgExists("-verbose");
 
@@ -476,6 +475,7 @@ void G_PreInit(void)
     Con_SetString("map-name", NOTAMAPNAME, 1);
 
     G_BindClassRegistration();
+    P_RegisterCustomMapProperties();
 
     // Add the cvars and ccmds to the console databases
     G_ConsoleRegistration();    // main command list

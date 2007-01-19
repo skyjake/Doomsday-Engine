@@ -68,7 +68,8 @@
  ./../../engine/portable/src/p_intercept.c
  ./../../engine/portable/src/p_data.c
  ./../../engine/portable/src/p_dmu.c
- ./../../engine/portable/src/p_arch.c
+ ./../../engine/portable/src/dam_main.c
+ ./../../engine/portable/src/dam_read.c
  ./../../engine/portable/src/p_bmap.c
  ./../../engine/portable/src/sv_sound.c
  ./../../engine/portable/src/sv_pool.c

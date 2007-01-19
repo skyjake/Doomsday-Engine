@@ -446,13 +446,6 @@ void            M_ForceUppercase(char *text);
 int             P_Random(void);
 void            M_ClearRandom(void);
 
-// fix randoms for demos
-
-void            M_ClearBox(fixed_t *box);
-void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
-
-// bounding box functions
-
 int             M_DrawText(int x, int y, boolean direct, char *string);
 
 //----------------------

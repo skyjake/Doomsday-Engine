@@ -308,6 +308,10 @@ extern          "C" {
     void            P_GetFloatpv(void* ptr, uint prop, float* params);
     void            P_GetPtrpv(void* ptr, uint prop, void* params);
 
+    // Play: Misc.
+    uint            P_RegisterCustomMapProperty(int type, valuetype_t dataType,
+                                                char *name);
+
     // Play: Polyobjs.
     void            PO_Allocate(void);
     boolean         PO_MovePolyobj(uint num, int x, int y);

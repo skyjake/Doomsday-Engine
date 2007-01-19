@@ -23,20 +23,33 @@
  */
 
 /*
- * p_arch.h: Doomsday Archived Map (DAM) reader
+ * dam_read.h: Doomsday Archived Map (DAM), reader
  *
  * Engine-internal header for DAM.
  */
 
-#ifndef __DOOMSDAY_ARCHIVED_MAP_H__
-#define __DOOMSDAY_ARCHIVED_MAP_H__
+#ifndef __DOOMSDAY_ARCHIVED_MAP_READ_H__
+#define __DOOMSDAY_ARCHIVED_MAP_READ_H__
 
-extern int      bspBuild;
-extern int      createBMap;
-extern int      createReject;
+// Data type flags
+#define DT_UNSIGNED   0x01
+#define DT_FRACBITS   0x02
+#define DT_FLAT       0x04
+#define DT_TEXTURE    0x08
+#define DT_NOINDEX    0x10
+#define DT_MSBCONVERT 0x20
 
-void        DAM_Register(void);
-void        P_InitMapDataFormats(void);
-boolean     P_AttemptMapLoad(char *levelId);
-boolean     P_GLNodeDataPresent(void);
+typedef struct {
+    // Dest
+    uint        id;
+    int         type;
+    // Src
+    int         flags;
+    int         size;   // num of bytes
+    int         offset;
+} readprop_t;
+
+boolean DAM_ReadMapDataFromLump(struct gamemap_s *map, mapdatalumpinfo_t *mapLump,
+                                uint startIndex, readprop_t *props,
+                                uint numProps);
 #endif
