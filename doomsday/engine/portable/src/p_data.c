@@ -146,45 +146,6 @@ static badtex_t *badTexNames = NULL;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Convert propertyType enum constant into a string for error/debug messages.
- */
-const char* value_Str(int val)
-{
-    static char valStr[40];
-    struct val_s {
-        int val;
-        const char* str;
-    } valuetypes[] =
-    {
-        { DDVT_BOOL, "DDVT_BOOL" },
-        { DDVT_BYTE, "DDVT_BYTE" },
-        { DDVT_SHORT, "DDVT_SHORT" },
-        { DDVT_INT, "DDVT_INT" },
-        { DDVT_FIXED, "DDVT_FIXED" },
-        { DDVT_ANGLE, "DDVT_ANGLE" },
-        { DDVT_FLOAT, "DDVT_FLOAT" },
-        { DDVT_ULONG, "DDVT_ULONG" },
-        { DDVT_PTR, "DDVT_PTR" },
-        { DDVT_FLAT_INDEX, "DDVT_FLAT_INDEX" },
-        { DDVT_BLENDMODE, "DDVT_BLENDMODE" },
-        { DDVT_VERT_PTR, "DDVT_VERT_PTR" },
-        { DDVT_LINE_PTR, "DDVT_LINE_PTR" },
-        { DDVT_SIDE_PTR, "DDVT_SIDE_PTR" },
-        { DDVT_SECT_PTR, "DDVT_SECT_PTR" },
-        { DDVT_SEG_PTR, "DDVT_SEG_PTR" },
-        { 0, NULL }
-    };
-    uint        i;
-
-    for(i = 0; valuetypes[i].str; ++i)
-        if(valuetypes[i].val == val)
-            return valuetypes[i].str;
-
-    sprintf(valStr, "(unnamed %i)", val);
-    return valStr;
-}
-
 void P_InitData(void)
 {
     P_InitMapDataFormats();

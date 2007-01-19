@@ -137,6 +137,45 @@ static char *wadfiles[MAXWADFILES];
 // CODE --------------------------------------------------------------------
 
 /**
+ * Convert propertyType enum constant into a string for error/debug messages.
+ */
+const char* value_Str(int val)
+{
+    static char valStr[40];
+    struct val_s {
+        int val;
+        const char* str;
+    } valuetypes[] =
+    {
+        { DDVT_BOOL, "DDVT_BOOL" },
+        { DDVT_BYTE, "DDVT_BYTE" },
+        { DDVT_SHORT, "DDVT_SHORT" },
+        { DDVT_INT, "DDVT_INT" },
+        { DDVT_FIXED, "DDVT_FIXED" },
+        { DDVT_ANGLE, "DDVT_ANGLE" },
+        { DDVT_FLOAT, "DDVT_FLOAT" },
+        { DDVT_ULONG, "DDVT_ULONG" },
+        { DDVT_PTR, "DDVT_PTR" },
+        { DDVT_FLAT_INDEX, "DDVT_FLAT_INDEX" },
+        { DDVT_BLENDMODE, "DDVT_BLENDMODE" },
+        { DDVT_VERT_PTR, "DDVT_VERT_PTR" },
+        { DDVT_LINE_PTR, "DDVT_LINE_PTR" },
+        { DDVT_SIDE_PTR, "DDVT_SIDE_PTR" },
+        { DDVT_SECT_PTR, "DDVT_SECT_PTR" },
+        { DDVT_SEG_PTR, "DDVT_SEG_PTR" },
+        { 0, NULL }
+    };
+    uint        i;
+
+    for(i = 0; valuetypes[i].str; ++i)
+        if(valuetypes[i].val == val)
+            return valuetypes[i].str;
+
+    sprintf(valStr, "(unnamed %i)", val);
+    return valStr;
+}
+
+/**
  * Adds the given IWAD to the list of default IWADs.
  */
 void DD_AddIWAD(const char *path)
@@ -420,9 +459,13 @@ void DD_Main(void)
 
     // Register the engine's binding classes
     B_RegisterBindClasses();
+    DAM_Init();
 
     if(gx.PreInit)
         gx.PreInit();
+ 
+    // We now accept no more custom properties.
+    DAM_LockCustomPropertys();
 
     // Automatically create an Auto mapping in the runtime directory.
     DD_DefineBuiltinVDM();
