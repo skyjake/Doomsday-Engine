@@ -1072,16 +1072,17 @@ boolean Sfx_Init(void)
         Con_Message("Compatible...\n");
         ok = Sfx_InitDriver(SFXD_COMPATIBLE);
     }
-    else                        // The default driver.
-    {
 #ifdef WIN32
+    else if(ArgExists("-ds9")) // DirectSound 9 with 3D sound support, EAX effects
+    {
         Con_Message("DirectSound...\n");
         ok = Sfx_InitDriver(SFXD_DSOUND);
+    }
 #endif
-#ifdef UNIX
+    else // The default driver.
+    {
         Con_Message("SDL_mixer...\n");
         ok = Sfx_InitDriver(SFXD_SDL_MIXER);
-#endif
     }
     // Did we succeed?
     if(!ok)

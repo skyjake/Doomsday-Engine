@@ -22,7 +22,7 @@
  */
 
 /*
- * sys_sfxd_loader.c: Sound Driver DLL Loader
+ * sys_sfxd_loader.c: Sound Driver DLL Loader (Win32)
  *
  * Loader for ds*.dll
  */
@@ -34,6 +34,7 @@
 
 #include "de_console.h"
 #include "sys_sfxd.h"
+#include "sys_musd.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -50,6 +51,10 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 sfxdriver_t sfxd_external;
+musdriver_t musd_external;
+musinterface_mus_t musd_external_imus;
+musinterface_ext_t musd_external_iext;
+musinterface_cd_t musd_external_icd;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -91,6 +96,40 @@ sfxdriver_t *DS_ImportExternal(void)
     d->Listener = Imp("DS_Listener");
     d->Listenerv = Imp("DS_Listenerv");
     d->Getv = Imp("DS_Getv");
+
+    // The driver may also provide music playback functionality.
+    // These additional init and shutdown functions are optional.
+    musd_external.Init = Imp("DM_Init");
+    musd_external.Shutdown = Imp("DM_Shutdown");
+
+    if(Imp("DM_Mus_Init"))
+    {
+        // The driver also offers a Mus music playback interface.
+        musinterface_mus_t* m = &musd_external_imus;
+        m->gen.Init = Imp("DM_Mus_Init");
+        m->gen.Update = Imp("DM_Mus_Update");
+        m->gen.Get = Imp("DM_Mus_Get");
+        m->gen.Set = Imp("DM_Mus_Set");
+        m->gen.Pause = Imp("DM_Mus_Pause");
+        m->gen.Stop = Imp("DM_Mus_Stop");
+        m->Play = Imp("DM_Mus_Play");
+        m->SongBuffer = Imp("DM_Mus_SongBuffer");
+    }
+
+    if(Imp("DM_Ext_Init"))
+    {
+        // The driver also offers an Ext music playback interface.
+        musinterface_ext_t* m = &musd_external_iext;
+        m->gen.Init = Imp("DM_Ext_Init");
+        m->gen.Update = Imp("DM_Ext_Update");
+        m->gen.Get = Imp("DM_Ext_Get");
+        m->gen.Set = Imp("DM_Ext_Set");
+        m->gen.Pause = Imp("DM_Ext_Pause");
+        m->gen.Stop = Imp("DM_Ext_Stop");
+        m->PlayFile = Imp("DM_Ext_PlayFile");
+        m->PlayBuffer = Imp("DM_Ext_PlayBuffer");
+        m->SongBuffer = Imp("DM_Ext_SongBuffer");
+    }
 
     // We should free the DLL at shutdown.
     d->Shutdown = DS_UnloadExternal;

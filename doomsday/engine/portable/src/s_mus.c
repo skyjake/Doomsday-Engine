@@ -60,6 +60,14 @@ D_CMD(StopMusic);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+#ifdef WIN32
+// Music playback functions exported from a sound driver plugin.
+extern musdriver_t musd_external;
+extern musinterface_mus_t musd_external_imus;
+extern musinterface_ext_t musd_external_iext;
+extern musinterface_cd_t musd_external_icd;
+#endif
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     mus_preference = MUSP_EXT;
@@ -118,18 +126,40 @@ boolean Mus_Init(void)
         return true;
 
 #ifdef WIN32
-    // The Win driver is always initialized.
-    if(musd_win.Init())
+    // Use the external music playback facilities, if available.
+    if(musd_external.Init)
+        musd_external.Init();
+    if(musd_external_imus.gen.Init)
     {
-        // Use Win's Mus interface.
-        imus = &musd_win_imus;
+        imus = &musd_external_imus;
     }
-    else
+    if(musd_external_iext.gen.Init)
     {
-        Con_Message("Mus_Init: Failed to initialize Win driver.\n");
+        iext = &musd_external_iext;
     }
-    // Must rely on Windows without an Ext interface.
-    icd = &musd_win_icd;
+    if(musd_external_icd.gen.Init)
+    {
+        icd = &musd_external_icd;
+    }
+
+    // The Win driver is our fallback option.
+    if(!imus)
+    {
+        if(musd_win.Init())
+        {
+            // Use Win's Mus interface.
+            imus = &musd_win_imus;
+        }
+        else
+        {
+            Con_Message("Mus_Init: Failed to initialize Win driver.\n");
+        }
+    }
+    if(!icd)
+    {
+        // Must rely on Windows without an Ext interface.
+        icd = &musd_win_icd;
+    }
 #endif
 #ifdef UNIX
     // The available interfaces have already been loaded.

@@ -1619,10 +1619,6 @@ void C_DECL A_Fall(mobj_t *actor)
     // actor is on ground, it can be walked over
     actor->flags &= ~MF_SOLID;
 
-#ifdef _DEBUG
-    Con_Message("A_Fall: actor not solid any more\n");
-#endif
-
     // So change this if corpse objects
     // are meant to be obstacles.
 }

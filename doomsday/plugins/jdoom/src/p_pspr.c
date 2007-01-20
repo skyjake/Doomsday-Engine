@@ -379,10 +379,6 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
 
-#ifdef _DEBUG
-    Con_Message("A_Raise: psp->sy = %x\n", psp->sy);
-#endif
-
     psp->sy -= RAISESPEED;
 
     if(psp->sy > WEAPONTOP)

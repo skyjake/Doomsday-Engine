@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="dsSDLMixer"
 	ProjectGUID="{C9C45D56-D51C-45C7-8509-020DE447638B}"
 	RootNamespace="dsSDLMixer"
@@ -174,6 +174,7 @@
 				OutputFile="./Bin/Debug/dsSDLMixer.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				ModuleDefinitionFile="..\..\..\plugins\sdlmixer\api\dssdlmixer.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="./Bin/Debug/dsSDLMixer.pdb"
 				ImportLibrary="./Bin/Debug/dsSDLMixer.lib"
