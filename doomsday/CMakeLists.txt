@@ -53,7 +53,7 @@
 ##
 ################################################################################
 PROJECT(deng C CXX)
-CMAKE_MINIMUM_REQUIRED (VERSION 2.4 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED (VERSION 2.4.5 FATAL_ERROR)
 SET (BUILDSCRIPTSDATE "$LastChangedDate$")
 SET(deng_VERSION_MAJOR 1)
 SET(deng_VERSION_MINOR 9)
