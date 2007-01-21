@@ -163,7 +163,7 @@ void DED_Destroy(ded_t *ded)
 
     for(i = 0; i < ded->count.lumpformats.num; ++i)
     {
-        M_Free(ded->lumpformats[i].members);
+        M_Free(ded->lumpformats[i].properties);
     }
     M_Free(ded->lumpformats);
 }
@@ -217,11 +217,11 @@ int DED_AddLumpFormat(ded_t *ded)
 
 int DED_AddLumpFormatMember(ded_lumpformat_t *lmpf)
 {
-    ded_lumpformat_member_t *lmpfm = DED_NewEntry((void **) &lmpf->members,
-                                         &lmpf->members_count,
-                                         sizeof(ded_lumpformat_member_t));
+    ded_lumpformat_property_t *lmpfm = DED_NewEntry((void **) &lmpf->properties,
+                                         &lmpf->property_count,
+                                         sizeof(ded_lumpformat_property_t));
 
-    return lmpfm - lmpf->members;
+    return lmpfm - lmpf->properties;
 }
 
 void DED_RemoveLumpFormat(ded_t *ded, int index)

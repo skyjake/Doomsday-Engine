@@ -105,20 +105,11 @@ enum {
     NUM_DAM_PROPERTIES
 };
 
-typedef struct {
-    int         id;     // DAM property ID to map the data to
-    int         flags;
-    int         size;   // num of bytes
-    int         offset;
-} datatype_t;
-
 typedef struct mapdatalumpformat_s {
-    int         version;
+    int         hversion;
     char       *magicid;
+    char       *formatName;
     boolean     isText; // True if the lump is a plain text lump.
-    size_t      elmSize;
-    uint        numProps;
-    datatype_t *props;
 } mapdatalumpformat_t;
 
 typedef struct mapdatalumpinfo_s {
@@ -160,7 +151,6 @@ void       *DAM_IndexToPtr(struct gamemap_s* map, int objectType, uint id);
 maplumpinfo_t* DAM_MapLumpInfoForLumpClass(int lumpClass);
 long        DAM_VertexIdx(long idx);
 
-void        P_InitMapDataFormats(void);
 uint        P_RegisterCustomMapProperty(int type, valuetype_t dataType,
                                         char *name);
 

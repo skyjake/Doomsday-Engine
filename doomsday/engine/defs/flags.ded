@@ -18,15 +18,15 @@ Flag { ID = "sf_dontstop"; Value = 0x20; }
 
 # Decorations
 Flag { # Decoration will not be used with IWAD resources.
-  ID = "dcf_noiwad"; Value = 0x1; 
+  ID = "dcf_noiwad"; Value = 0x1;
 }
 
 Flag { # Allow using decoration with PWAD resources.
-  ID = "dcf_pwad"; Value = 0x2; 
-}    
+  ID = "dcf_pwad"; Value = 0x2;
+}
 
 Flag { # Allow using decoration with external resources.
-  ID = "dcf_ext"; Value = 0x4; 
+  ID = "dcf_ext"; Value = 0x4;
 }
 
 # Lights
@@ -36,8 +36,8 @@ Flag { ID = "lgf_dontturnhalo"; Value = 0x200; }
 # Map Info
 Flag { ID = "mif_fog"; Value = 0x1; }
 Flag { # Draw the sky sphere even when models are in use.
-  ID = "mif_sphere"; Value = 0x2; 
-} 
+  ID = "mif_sphere"; Value = 0x2;
+}
 
 # Sky Layers
 Flag { ID = "slf_enable"; Value = 0x1; }
@@ -199,3 +199,21 @@ Flag { ID = "ptf_zeroyaw"; Value = 0x200; }
 Flag { ID = "ptf_zeropitch"; Value = 0x400; }
 Flag { ID = "ptf_rndyaw"; Value = 0x800; }
 Flag { ID = "ptf_rndpitch"; Value = 0x1000; }
+
+# DAM - Lump data classes:
+Flag { ID = "damlmpc_thing"; Value = 1; }
+Flag { ID = "damlmpc_vertex"; Value = 2; }
+Flag { ID = "damlmpc_linedef"; Value = 3; }
+Flag { ID = "damlmpc_sidedef"; Value = 4; }
+Flag { ID = "damlmpc_sector"; Value = 5; }
+Flag { ID = "damlmpc_seg"; Value = 6; }
+Flag { ID = "damlmpc_subsector"; Value = 7; }
+Flag { ID = "damlmpc_node"; Value = 8; }
+
+# DAM - Property Flags:
+Flag { ID = "dampf_unsigned"; Value = 0x1; }
+Flag { ID = "dampf_fracbits"; Value = 0x2; }
+Flag { ID = "dampf_flat"; Value = 0x4; }
+Flag { ID = "dampf_texture"; Value = 0x8; }
+Flag { ID = "dampf_noindex"; Value = 0x10; }
+Flag { ID = "dampf_msbconvert"; Value = 0x20; }

@@ -660,6 +660,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
     ded_sectortype_t *sec;
     int prev_sectortype_idx = -1; // For "Copy".
     ded_lumpformat_t *lmpf;
+    int prev_lumpformat_idx = -1; // For "Copy".
 //    ded_xgclass_t *xgc;
 
     int sub;
@@ -1614,32 +1615,44 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             idx = DED_AddLumpFormat(ded);
             lmpf = ded->lumpformats + idx;
             sub = 0;
+            if(prev_lumpformat_idx >= 0 && bCopyNext)
+            {
+                // Should we copy the previous definition?
+                memcpy(lmpf, ded->lumpformats + prev_lumpformat_idx, sizeof(*lmpf));
 
+                // Duplicate the properties array.
+                if(ded->lumpformats[prev_lumpformat_idx].properties)
+                {
+                    lmpf->properties =
+                        M_Malloc(sizeof(ded_lumpformat_property_t) * lmpf->property_count.max);
+                    memcpy(lmpf->properties, ded->lumpformats[prev_lumpformat_idx].properties,
+                           sizeof(ded_lumpformat_property_t) * lmpf->property_count.num);
+                }
+            }
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
                 RV_STR("ID", lmpf->id)
-                RV_FLAGS("Class", lmpf->type, "dmulmpc_")
-                RV_INT("Size", lmpf->size)
-                if(ISLABEL("Property") || ISLABEL("Game Property"))
+                RV_FLAGS("Class", lmpf->type, "damlmpc_")
+                RV_INT("ElementSize", lmpf->elmsize)
+                if(ISLABEL("Property"))
                 {
-                    ded_lumpformat_member_t *lfm = NULL;
+                    ded_lumpformat_property_t *lfm = NULL;
 
-                    if(sub >= lmpf->members_count.num)
+                    if(sub >= lmpf->property_count.num)
                     {
-                        // Allocate new member.
+                        // Allocate a new property.
                         sub = DED_AddLumpFormatMember(lmpf);
                     }
 
-                    lfm = &lmpf->members[sub];
-                    lfm->gameprop = ISLABEL("Game Property");
+                    lfm = &lmpf->properties[sub];
                     FINDBEGIN;
                     for(;;)
                     {
                         READLABEL;
-                        RV_FLAGS("Type ID", lfm->valueid, "dmup_")
-                        RV_FLAGS("Flags", lfm->flags, "dmupf_")
+                        RV_STR("ID", lfm->id)
+                        RV_FLAGS("Flags", lfm->flags, "dampf_")
                         RV_INT("Size", lfm->size)
                         RV_INT("Offset", lfm->offset)
                         RV_END
@@ -1650,6 +1663,7 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 else RV_END
                 CHECKSC;
             }
+            prev_lumpformat_idx = idx;
         }
         /*if(ISTOKEN("XGClass"))     // XG Class
         {

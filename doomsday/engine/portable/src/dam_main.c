@@ -32,6 +32,7 @@
 #include "de_base.h"
 #include "de_play.h"
 #include "de_dam.h"
+#include "de_defs.h"
 #include "de_refresh.h"
 #include "de_system.h"
 #include "de_misc.h"
@@ -79,35 +80,6 @@ enum {
     LCG_SUBSECTORS,
     LCG_NODES,
     NUM_LUMPCLASSES
-};
-
-// Game specific map format properties
-// TODO: These should be determined from the registered properties after
-// the lump formats have been read.
-enum {
-    DAM_LINE_TAG = NUM_DAM_PROPERTIES,
-    DAM_LINE_SPECIAL,
-    DAM_SECTOR_TAG,
-    DAM_SECTOR_SPECIAL,
-    DAM_THING_X,
-    DAM_THING_Y,
-    DAM_THING_ANGLE,
-    DAM_THING_TYPE,
-    DAM_THING_OPTIONS,
-    DAM_LINE_ARG1,
-    DAM_LINE_ARG2,
-    DAM_LINE_ARG3,
-    DAM_LINE_ARG4,
-    DAM_LINE_ARG5,
-    DAM_THING_TID,
-    DAM_THING_HEIGHT,
-    DAM_THING_SPECIAL,
-    DAM_THING_ARG1,
-    DAM_THING_ARG2,
-    DAM_THING_ARG3,
-    DAM_THING_ARG4,
-    DAM_THING_ARG5,
-    DAM_PROPERTY_COUNT
 };
 
 enum {
@@ -180,8 +152,8 @@ typedef struct {
     uint        id;
     int         type;       // DAM Object type e.g. DAM_SECTOR
     int         datatype;   // e.g. DDVT_INT
-    char       *name;
-} custommapproperty_t;
+    char        name[DED_STRINGID_LEN + 1];
+} mapproperty_t;
 
 typedef struct mapdataformat_s {
     char       *vername;
@@ -245,7 +217,7 @@ int         createReject = 1;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static uint numTotalCustomProps;
-static custommapproperty_t *customProps[DAM_NODE];
+static mapproperty_t *customProps[DAM_NODE];
 static uint numCustomProps[DAM_NODE];
 
 static boolean canRegisterProps = false;
@@ -289,22 +261,140 @@ static maplumpinfo_t mapLumpInfo[] = {
 
 // Versions of map data structures
 static mapdataformat_t mapDataFormats[] = {
-    {"DOOM", {{1, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL},
-              {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {-1, NULL, true}}, true},
-    {"HEXEN",{{1, NULL}, {2, NULL}, {2, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL},
-              {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL}, {1, NULL, true}}, true},
+    {"DOOM", {
+                {1, NULL, NULL, true},
+                {1, NULL, "DOOM Things", false},
+                {1, NULL, "DOOM Linedefs", false},
+                {1, NULL, "DOOM Sidedefs", false},
+                {1, NULL, "DOOM Vertexes", false},
+                {1, NULL, "DOOM Segs", false},
+                {1, NULL, "DOOM Subsectors", false},
+                {1, NULL, "DOOM Nodes", false},
+                {1, NULL, "DOOM Sectors", false},
+                {1, NULL, NULL, false},
+                {1, NULL, NULL, false},
+                {-1, NULL, NULL, true}},
+     true},
+    {"HEXEN",{
+                {1, NULL, NULL, true},
+                {2, NULL, "Hexen Things", false},
+                {2, NULL, "Hexen Linedefs", false},
+                {1, NULL, "DOOM Sidedefs", false},
+                {1, NULL, "DOOM Vertexes", false},
+                {1, NULL, "DOOM Segs", false},
+                {1, NULL, "DOOM Subsectors", false},
+                {1, NULL, "DOOM Nodes", false},
+                {1, NULL, "DOOM Sectors", false},
+                {1, NULL, NULL, false},
+                {1, NULL, NULL, false},
+                {1, NULL, NULL, true}},
+     true},
     {NULL}
 };
 
 // Versions of GL node data structures
 static glnodeformat_t glNodeFormats[] = {
-// Ver String   Label       Verts       Segs        SSects       Nodes     Supported?
-    {"V1", {{1, NULL, true},   {1, NULL},   {2, NULL},   {1, NULL},   {1, NULL}}, true},
-    {"V2", {{1, NULL, true},   {2, "gNd2"}, {2, NULL},   {1, NULL},   {1, NULL}}, true},
-    {"V3", {{1, NULL, true},   {2, "gNd2"}, {3, "gNd3"}, {3, "gNd3"}, {1, NULL}}, false},
-    {"V4", {{1, NULL, true},   {4, "gNd4"}, {4, NULL},   {4, NULL},   {4, NULL}}, false},
-    {"V5", {{1, NULL, true},   {5, "gNd5"}, {5, NULL},   {3, NULL},   {4, NULL}}, true},
+    {"V1", {
+                {1, NULL, NULL, true},
+                {1, NULL, "DOOM Vertexes", false},
+                {2, NULL, "GLv1 Segs", false},
+                {1, NULL, "DOOM Subsectors", false},
+                {1, NULL, "GLv1 Nodes", false}},
+     true},
+    {"V2", {
+                {1, NULL, NULL, true},
+                {2, "gNd2", "GLv2 Vertexes", false},
+                {2, NULL, "GLv1 Segs", false},
+                {1, NULL, "DOOM Subsectors", false},
+                {1, NULL, "GLv1 Nodes", false}},
+     true},
+    {"V3", {
+                {1, NULL, NULL, true},
+                {2, "gNd2", "GLv2 Vertexes", false},
+                {3, "gNd3", "GLv3 Segs", false},
+                {3, "gNd3", "GLv3 Subsectors", false},
+                {1, NULL, "GLv1 Nodes", false}},
+     false},
+    {"V4", {
+                {1, NULL, NULL, true},
+                {4, "gNd4", "GLv4 Vertexes", false},
+                {4, NULL, "GLv4 Segs", false},
+                {4, NULL, "GLv4 Subsectors", false},
+                {4, NULL, "GLv4 Nodes", false}},
+     false},
+    {"V5", {
+                {1, NULL, NULL, true},
+                {5, "gNd5", "GLv5 Vertexes", false},
+                {5, NULL, "GLv5 Segs", false},
+                {3, NULL, "GLv3 Subsectors", false},
+                {4, NULL, "GLv4 Nodes", false}},
+     true},
     {NULL}
+};
+
+static uint numProps = 44;
+static mapproperty_t properties[] =
+{   
+// Vertex
+    {DAM_X, DAM_VERTEX, DMT_VERTEX_POS, "x"},
+    {DAM_Y, DAM_VERTEX, DMT_VERTEX_POS, "y"},
+// Line
+    // TODO: should be DMT_LINE_V but we require special case logic
+    {DAM_VERTEX1, DAM_LINE, DDVT_VERT_PTR, "vertex1"},
+    // TODO: should be DMT_LINE_V but we require special case logic
+    {DAM_VERTEX2, DAM_LINE, DDVT_VERT_PTR, "vertex2"},
+    {DAM_FLAGS, DAM_LINE, DMT_LINE_FLAGS, "flags"},
+    // TODO: should be DMT_LINE_SIDES but we require special case logic
+    {DAM_SIDE0, DAM_LINE, DDVT_SIDE_PTR, "frontside"},
+    // TODO: should be DMT_LINE_SIDES but we require special case logic
+    {DAM_SIDE1, DAM_LINE, DDVT_SIDE_PTR, "backside"},
+// Side
+    {DAM_TOP_TEXTURE_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFX, "toptextureoffsetx"},
+    {DAM_TOP_TEXTURE_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFY, "toptextureoffsety"},
+    {DAM_MIDDLE_TEXTURE_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFX, "middletextureoffsetx"},
+    {DAM_MIDDLE_TEXTURE_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFY, "middletextureoffsety"},
+    {DAM_BOTTOM_TEXTURE_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFX, "bottomtextureoffsetx"},
+    {DAM_BOTTOM_TEXTURE_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFY, "bottomtextureoffsety"},
+    {DAM_TOP_TEXTURE, DAM_SIDE, DMT_SURFACE_TEXTURE, "toptexture"},
+    {DAM_MIDDLE_TEXTURE, DAM_SIDE, DMT_SURFACE_TEXTURE, "middletexture"},
+    {DAM_BOTTOM_TEXTURE, DAM_SIDE, DMT_SURFACE_TEXTURE, "bottomtexture"},
+    // TODO: should be DMT_SIDE_SECTOR but we require special case logic
+    {DAM_FRONT_SECTOR, DAM_SIDE, DDVT_SECT_PTR, "frontsector"},
+// Sector
+    {DAM_FLOOR_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "floorheight"},
+    {DAM_CEILING_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "ceilingheight"},
+    {DAM_FLOOR_TEXTURE, DAM_SECTOR, DMT_SURFACE_TEXTURE, "floortexture"},
+    {DAM_CEILING_TEXTURE, DAM_SECTOR, DMT_SURFACE_TEXTURE, "ceilingtexture"},
+    {DAM_LIGHT_LEVEL, DAM_SECTOR, DMT_SECTOR_LIGHTLEVEL, "lightlevel"},
+// Seg
+    // TODO: should be DMT_SEG_V but we require special case logic
+    {DAM_VERTEX1, DAM_SEG, DDVT_VERT_PTR, "vertex1"},
+    // TODO: should be DMT_SEG_V but we require special case logic
+    {DAM_VERTEX2, DAM_SEG, DDVT_VERT_PTR, "vertex2"},
+    {DAM_ANGLE, DAM_SEG, DMT_SEG_ANGLE, "angle"},
+    // TODO: should be DMT_SEG_LINE but we require special case logic
+    {DAM_LINE, DAM_SEG, DDVT_LINE_PTR, "linedef"},
+    // KLUDGE: Store the side id into the flags field
+    {DAM_SIDE, DAM_SEG, DDVT_BYTE, "side"},
+    {DAM_OFFSET, DAM_SEG, DMT_SEG_OFFSET, "offset"},
+// Subsector
+    {DAM_LINE_COUNT, DAM_SUBSECTOR, DMT_SUBSECTOR_LINECOUNT, "linecount"},
+    {DAM_LINE_FIRST, DAM_SUBSECTOR, DMT_SUBSECTOR_FIRSTLINE, "firstline"},
+// Node
+    {DAM_X, DAM_NODE, DMT_NODE_X, "x"},
+    {DAM_Y, DAM_NODE, DMT_NODE_Y, "y"},
+    {DAM_DX, DAM_NODE, DMT_NODE_DX, "dx"},
+    {DAM_DY, DAM_NODE, DMT_NODE_DY, "dy"},
+    {DAM_BBOX_RIGHT_TOP_Y, DAM_NODE, DMT_NODE_BBOX, "bboxrighttopy"},
+    {DAM_BBOX_RIGHT_LOW_Y, DAM_NODE, DMT_NODE_BBOX, "bboxrightlowy"},
+    {DAM_BBOX_RIGHT_LOW_X, DAM_NODE, DMT_NODE_BBOX, "bboxrightlowx"},
+    {DAM_BBOX_RIGHT_TOP_X, DAM_NODE, DMT_NODE_BBOX, "bboxrighttopx"},
+    {DAM_BBOX_LEFT_TOP_Y, DAM_NODE, DMT_NODE_BBOX, "bboxlefttopy"},
+    {DAM_BBOX_LEFT_LOW_Y, DAM_NODE, DMT_NODE_BBOX, "bboxleftlowy"},
+    {DAM_BBOX_LEFT_LOW_X, DAM_NODE, DMT_NODE_BBOX, "bboxleftlowx"},
+    {DAM_BBOX_LEFT_TOP_X, DAM_NODE, DMT_NODE_BBOX, "bboxlefttopx"},
+    {DAM_CHILD_RIGHT, DAM_NODE, DMT_NODE_CHILDREN, "childright"},
+    {DAM_CHILD_LEFT, DAM_NODE, DMT_NODE_CHILDREN, "childleft"}
 };
 
 // CODE --------------------------------------------------------------------
@@ -447,6 +537,63 @@ static boolean typeSupportsCustomProperty(int type)
     return false;
 }
 
+static uint DAM_IDForProperty(int type, char *name)
+{
+    uint        i, propID = 0;
+    boolean     found = false;
+
+    // Check built-in properties first.
+    if(numProps > 0)
+    {
+        mapproperty_t *ptr = properties;
+        i = 0;
+        do
+        {
+            if(ptr->type == type && !stricmp(ptr->name, name))
+            {
+                propID = ptr->id;
+                found = true;
+            }
+            else
+            {
+                i++;
+                ptr++;
+            }
+        } while(!found && i < numProps);
+    }
+
+    // Check custom properties.
+    if(!found && typeSupportsCustomProperty(type))
+    {
+        uint        id = type - 1;
+        if(numCustomProps[id] > 0)
+        {
+            mapproperty_t *ptr = customProps[id];
+            i = 0;
+            do
+            {
+                if(!stricmp(name, ptr->name))
+                {
+                    propID = ptr->id;
+                    found = true;
+                }
+                else
+                {
+                    i++;
+                    ptr++;
+                }
+            } while(!found && i < numCustomProps[id]);
+        }
+    }
+
+#if 0 // FIXME!!
+    if(!found)
+        Con_Error("DAM_IDForProperty: %s has no property named \"%s\".",
+                  DAM_Str(type), name);
+#endif
+    return propID;
+}
+
 /**
  * Called by the game via the Doomsday public API.
  * Registers a new custom map property which can then be read from a map
@@ -465,13 +612,26 @@ static boolean typeSupportsCustomProperty(int type)
  */
 uint P_RegisterCustomMapProperty(int type, valuetype_t dataType, char *name)
 {
-    custommapproperty_t *newProp;
+    mapproperty_t *newProp;
     uint        id = type - 1; // DAM_THING == 1
+    boolean     exists = false;
 
     // Are we able to register properties atm?
     if(!canRegisterProps)
         Con_Error("P_RegisterCustomMapProperty: Cannot register properties "
                   "at this time.");
+
+    // Do we have a name?
+    if(!name || name[0] == 0)
+        Con_Error("P_RegisterCustomMapProperty: Cannot register property "
+                  "of type %i to type %s - Custom properties must be named.",
+                  dataType, DAM_Str(type));
+
+    // Is the name too long?
+    if(strlen(name) > DED_STRINGID_LEN)
+        Con_Error("P_RegisterCustomMapProperty: Cannot register property "
+                  "\"%s\" to type %s. Property names must be %i characters or less.",
+                  name, DAM_Str(type), DED_STRINGID_LEN);
 
     // Does this type support custom properties?
     if(!typeSupportsCustomProperty(type))
@@ -479,19 +639,29 @@ uint P_RegisterCustomMapProperty(int type, valuetype_t dataType, char *name)
                   "\"%s\" - Type %s does not support custom properties.",
                   name, DAM_Str(type));
 
-    // Do we have a name?
-    if(!name || name[0] == 0)
-        Con_Error("P_RegisterCustomMapProperty: Cannot register property "
-                  "of type %i to object %s - Custom properties must be named.",
-                  dataType, DAM_Str(type));
-
     // Make sure the name is unique.
-    // TODO: Check against Doomsday map object property names too!
-    if(numCustomProps[id] > 0)
-    {
+    if(numProps > 0)
+    {   // Check built-in properties.
         uint        i = 0;
-        boolean     exists = false;
-        custommapproperty_t *ptr = customProps[id];
+        mapproperty_t *ptr = properties;
+
+        do
+        {
+            if(ptr->type == type && !stricmp(name, ptr->name))
+            {
+                exists = true;
+            }
+            else
+            {
+                i++;
+                ptr++;
+            }
+        } while(!exists && i < numProps);
+    }
+    if(!exists && numCustomProps[id] > 0)
+    {   // Check custom properties.
+        uint        i = 0;
+        mapproperty_t *ptr = customProps[id];
 
         do
         {
@@ -505,13 +675,13 @@ uint P_RegisterCustomMapProperty(int type, valuetype_t dataType, char *name)
                 ptr++;
             }
         } while(!exists && i < numCustomProps[id]);
-
-        if(exists)
-            Con_Error("P_RegisterCustomMapProperty: Cannot register "
-                      "property \"%s\" - A property by this name is "
-                      "already attributed to object %s.", name,
-                      DAM_Str(type));
     }
+
+    if(exists)
+        Con_Error("P_RegisterCustomMapProperty: Cannot register "
+                  "property \"%s\" - A property by this name is "
+                  "already attributed to object %s.", name,
+                  DAM_Str(type));
 
     // Is it a known data type?
     switch(dataType)
@@ -538,15 +708,14 @@ uint P_RegisterCustomMapProperty(int type, valuetype_t dataType, char *name)
     numCustomProps[id]++;
     numTotalCustomProps++;
 
-    // FIXME!!!!
     customProps[id] =
-        Z_Realloc(customProps[id], sizeof(custommapproperty_t) * numCustomProps[id],
+        Z_Realloc(customProps[id], sizeof(mapproperty_t) * numCustomProps[id],
                   PU_STATIC);
     newProp = &customProps[id][numCustomProps[id] - 1];
     newProp->id = NUM_DAM_PROPERTIES + numTotalCustomProps - 1;
     newProp->type = type;
     newProp->datatype = dataType;
-    newProp->name = Z_Malloc(strlen(name) + 1, PU_STATIC, 0);
+    memset(newProp->name, 0, sizeof(newProp->name));
     strcpy(newProp->name, name);
 
     VERBOSE2(Con_Message("P_RegisterCustomMapProperty: Added %s->%s (%s)\n",
@@ -1066,9 +1235,24 @@ static boolean determineMapDataFormat(void)
                     }
                     else
                     {
-                        // Compare the versions.
-                        if(mapLump->format->version != nodeFormat->verInfo[lumpClass].version)
-                            failed = true;
+                    /*    Con_Message("Compare formats: %s (%i)| %s (%i)\n",
+                                    mapLump->format->formatName,
+                                    mapLump->format->hversion,
+                                    nodeFormat->verInfo[lumpClass].formatName,
+                                    nodeFormat->verInfo[lumpClass].hversion);*/
+
+                        // Compare the lump formats.
+                        if((!mapLump->format->formatName && nodeFormat->verInfo[lumpClass].formatName) ||
+                           (mapLump->format->formatName && !nodeFormat->verInfo[lumpClass].formatName))
+                        {
+                           failed = true;
+                        }
+                        else
+                        {
+                            if(0 != stricmp(mapLump->format->formatName,
+                                            nodeFormat->verInfo[lumpClass].formatName))
+                                failed = true;
+                        }
                     }
                 }
 
@@ -1129,8 +1313,9 @@ static boolean determineMapDataFormat(void)
                 else
                 {
                     // Unsupported GL Node format.
-                    Con_Message("determineMapDataFormat: Sorry, %s GL Nodes arn't supported\n",
-                                nodeFormat->vername);
+                    if(nodeFormat->vername)
+                        Con_Message("determineMapDataFormat: Sorry, %s GL Nodes arn't supported.\n",
+                                    nodeFormat->vername);
                     return false;
                 }
             }
@@ -1167,9 +1352,13 @@ static boolean validateMapData(void)
         // Add the number of elements to the potential count for this class.
         if(mapLump->lumpNum != -1 && mapLump->format && !mapLump->format->isText)
         {
+            uint elmsize;
             // How many elements are in the lump?
-            mapLump->elements = (mapLump->length - mapLump->startOffset) /
-                                     mapLump->format->elmSize;
+            if(!mapLump->format->formatName)
+                elmsize = 1;
+            else
+                elmsize = Def_GetMapLumpFormat(mapLump->format->formatName)->elmsize;
+            mapLump->elements = (mapLump->length - mapLump->startOffset) / elmsize;
 
             count[mapLump->lumpClass] += mapLump->elements;
         }
@@ -1313,8 +1502,11 @@ long DAM_VertexIdx(long idx)
     // If GL NODES are available this might be an "extra" vertex.
     if(glNodeData && bspBuild)
     {
-        switch(glNodeFormats[glNodeFormat].
-               verInfo[DAM_MapLumpInfoForLumpClass(LCG_SEGS)->glLump].version)
+        mapdatalumpformat_t *format = &glNodeFormats[glNodeFormat].
+               verInfo[DAM_MapLumpInfoForLumpClass(LCG_SEGS)->glLump];
+
+        // FIXME: Hard linked format logic.
+        switch(format->hversion)
         {
         case 2:
             if(idx & 0x8000)
@@ -1400,9 +1592,10 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
             // Is this a "real" lump? (ie do we have to generate the data for it?)
             if(mapLump->lumpNum != -1)
             {
-                VERBOSE(Con_Message("P_ReadMapData: Processing \"%s\" (#%d) ver %d...\n",
+                VERBOSE(Con_Message("P_ReadMapData: Processing \"%s\" (#%d) ver %s...\n",
                                     W_CacheLumpNum(mapLump->lumpNum, PU_GETNAME),
-                                    mapLump->elements, lumpFormat->version));
+                                    mapLump->elements,
+                                    (lumpFormat->formatName? lumpFormat->formatName :"Unknown")));
             }
             else
             {
@@ -1453,11 +1646,13 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
                 // Can we reuse a previously created array?
                 if(lumpFormat != lastUsedFormat)
                 {   // No we cannot.
-                    uint        i, j, idx;
+                    int         j;
+                    uint        i, idx;
                     boolean     found;
+                    ded_lumpformat_t *def = Def_GetMapLumpFormat(lumpFormat->formatName);
 
-                    // Count the number of requested properties that are present in
-                    // the lump.
+                    // Count the number of requested properties that are present
+                    // in the lump.
                     readNumProps = 0;
                     for(i = 0; i < numProps; ++i)
                     {
@@ -1465,14 +1660,15 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
                         found = false;
                         do
                         {
-                            if(lumpFormat->props[j].id == props[i].id)
+                            if(DAM_IDForProperty(lumpInfo->dataType, def->properties[j].id) ==
+                               props[i].id)
                             {
                                 readNumProps++;
                                 found = true;
                             }
                             else
                                 j++;
-                        } while(!found && j < lumpFormat->numProps);
+                        } while(!found && j < def->property_count.num);
                     }
 
                     if(readNumProps > 0)
@@ -1490,23 +1686,24 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
                             found = false;
                             do
                             {
-                                if(lumpFormat->props[j].id == props[i].id)
+                                if(DAM_IDForProperty(lumpInfo->dataType, def->properties[j].id) ==
+                                   props[i].id)
                                 {
                                     // Property specific
                                     readProps[idx].id = props[i].id;
                                     readProps[idx].type = props[i].type;
 
                                     // Format specific
-                                    readProps[idx].flags = lumpFormat->props[j].flags;
-                                    readProps[idx].size = lumpFormat->props[j].size;
-                                    readProps[idx].offset = lumpFormat->props[j].offset;
+                                    readProps[idx].flags = def->properties[j].flags;
+                                    readProps[idx].size = def->properties[j].size;
+                                    readProps[idx].offset = def->properties[j].offset;
 
                                     idx++;
                                     found = true;
                                 }
                                 else
                                     j++;
-                            } while(!found && j < lumpFormat->numProps);
+                            } while(!found && j < def->property_count.num);
                         }
                     }
 
@@ -3136,803 +3333,4 @@ static boolean loadReject(gamemap_t* map, mapdatalumpinfo_t* maplump)
 
     // Success!
     return true;
-}
-
-/*
- * The DED for the game.dll should tell doomsday what
- * data maps to which internal data value, what size
- * the data item is etc.
- *
- * TODO: ALL of this can be moved to a DED
- *
- * TEMP the initialization of internal data struct info
- * is currently done here.
- */
-void P_InitMapDataFormats(void)
-{
-    int i, j, index, lumpClass;
-    int mlver, glver;
-    size_t *mlptr = NULL;
-    size_t *glptr = NULL;
-    mapdataformat_t *stiptr = NULL;
-    glnodeformat_t *glstiptr = NULL;
-
-    // Setup the map data formats for the different
-    // versions of the map data structs.
-
-    // Calculate the size of the map data structs
-    for(i = MAPDATA_FORMATS -1; i >= 0; --i)
-    {
-        for(j = 0; j < NUM_LUMPCLASSES; ++j)
-        {
-            lumpClass = mapLumpInfo[j].lumpclass;
-            index = mapLumpInfo[j].mdLump;
-
-            mlver = (mapDataFormats[i].verInfo[index].version);
-            mlptr = &(mapDataFormats[i].verInfo[index].elmSize);
-            stiptr = &(mapDataFormats[i]);
-
-            if(lumpClass == LCM_THINGS)
-            {
-                if(mlver == 1)  // DOOM Format
-                {
-                    *mlptr = 10;
-                    stiptr->verInfo[index].numProps = 5;
-                    stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 5, PU_STATIC, 0);
-                    // x
-                    stiptr->verInfo[index].props[0].id = DAM_THING_X;
-                    stiptr->verInfo[index].props[0].flags = 0;
-                    stiptr->verInfo[index].props[0].size =  2;
-                    stiptr->verInfo[index].props[0].offset = 0;
-                    // y
-                    stiptr->verInfo[index].props[1].id = DAM_THING_Y;
-                    stiptr->verInfo[index].props[1].flags = 0;
-                    stiptr->verInfo[index].props[1].size =  2;
-                    stiptr->verInfo[index].props[1].offset = 2;
-                    // angle
-                    stiptr->verInfo[index].props[2].id = DAM_THING_ANGLE;
-                    stiptr->verInfo[index].props[2].flags = 0;
-                    stiptr->verInfo[index].props[2].size =  2;
-                    stiptr->verInfo[index].props[2].offset = 4;
-                    // type
-                    stiptr->verInfo[index].props[3].id = DAM_THING_TYPE;
-                    stiptr->verInfo[index].props[3].flags = 0;
-                    stiptr->verInfo[index].props[3].size =  2;
-                    stiptr->verInfo[index].props[3].offset = 6;
-                    // options
-                    stiptr->verInfo[index].props[4].id = DAM_THING_OPTIONS;
-                    stiptr->verInfo[index].props[4].flags = 0;
-                    stiptr->verInfo[index].props[4].size =  2;
-                    stiptr->verInfo[index].props[4].offset = 8;
-                }
-                else            // HEXEN format
-                {
-                    *mlptr = 20;
-                    stiptr->verInfo[index].numProps = 13;
-                    stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 13, PU_STATIC, 0);
-                    // tid
-                    stiptr->verInfo[index].props[0].id = DAM_THING_TID;
-                    stiptr->verInfo[index].props[0].flags = 0;
-                    stiptr->verInfo[index].props[0].size =  2;
-                    stiptr->verInfo[index].props[0].offset = 0;
-                    // x
-                    stiptr->verInfo[index].props[1].id = DAM_THING_X;
-                    stiptr->verInfo[index].props[1].flags = 0;
-                    stiptr->verInfo[index].props[1].size =  2;
-                    stiptr->verInfo[index].props[1].offset = 2;
-                    // y
-                    stiptr->verInfo[index].props[2].id = DAM_THING_Y;
-                    stiptr->verInfo[index].props[2].flags = 0;
-                    stiptr->verInfo[index].props[2].size =  2;
-                    stiptr->verInfo[index].props[2].offset = 4;
-                    // height
-                    stiptr->verInfo[index].props[3].id = DAM_THING_HEIGHT;
-                    stiptr->verInfo[index].props[3].flags = 0;
-                    stiptr->verInfo[index].props[3].size =  2;
-                    stiptr->verInfo[index].props[3].offset = 6;
-                    // angle
-                    stiptr->verInfo[index].props[4].id = DAM_THING_ANGLE;
-                    stiptr->verInfo[index].props[4].flags = 0;
-                    stiptr->verInfo[index].props[4].size =  2;
-                    stiptr->verInfo[index].props[4].offset = 8;
-                    // type
-                    stiptr->verInfo[index].props[5].id = DAM_THING_TYPE;
-                    stiptr->verInfo[index].props[5].flags = 0;
-                    stiptr->verInfo[index].props[5].size =  2;
-                    stiptr->verInfo[index].props[5].offset = 10;
-                    // options
-                    stiptr->verInfo[index].props[6].id = DAM_THING_OPTIONS;
-                    stiptr->verInfo[index].props[6].flags = 0;
-                    stiptr->verInfo[index].props[6].size =  2;
-                    stiptr->verInfo[index].props[6].offset = 12;
-                    // special
-                    stiptr->verInfo[index].props[7].id = DAM_THING_SPECIAL;
-                    stiptr->verInfo[index].props[7].flags = 0;
-                    stiptr->verInfo[index].props[7].size =  1;
-                    stiptr->verInfo[index].props[7].offset = 14;
-                    // arg1
-                    stiptr->verInfo[index].props[8].id = DAM_THING_ARG1;
-                    stiptr->verInfo[index].props[8].flags = 0;
-                    stiptr->verInfo[index].props[8].size =  1;
-                    stiptr->verInfo[index].props[8].offset = 15;
-                    // arg2
-                    stiptr->verInfo[index].props[9].id = DAM_THING_ARG2;
-                    stiptr->verInfo[index].props[9].flags = 0;
-                    stiptr->verInfo[index].props[9].size =  1;
-                    stiptr->verInfo[index].props[9].offset = 16;
-                    // arg3
-                    stiptr->verInfo[index].props[10].id = DAM_THING_ARG3;
-                    stiptr->verInfo[index].props[10].flags = 0;
-                    stiptr->verInfo[index].props[10].size =  1;
-                    stiptr->verInfo[index].props[10].offset = 17;
-                    // arg4
-                    stiptr->verInfo[index].props[11].id = DAM_THING_ARG4;
-                    stiptr->verInfo[index].props[11].flags = 0;
-                    stiptr->verInfo[index].props[11].size =  1;
-                    stiptr->verInfo[index].props[11].offset = 18;
-                    // arg5
-                    stiptr->verInfo[index].props[12].id = DAM_THING_ARG5;
-                    stiptr->verInfo[index].props[12].flags = 0;
-                    stiptr->verInfo[index].props[12].size =  1;
-                    stiptr->verInfo[index].props[12].offset = 19;
-                }
-            }
-            else if(lumpClass == LCM_LINEDEFS)
-            {
-                if(mlver == 1)  // DOOM format
-                {
-                    *mlptr = 14;
-                    stiptr->verInfo[index].numProps = 7;
-                    stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 7, PU_STATIC, 0);
-                    // v1
-                    stiptr->verInfo[index].props[0].id = DAM_VERTEX1;
-                    stiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
-                    stiptr->verInfo[index].props[0].size =  2;
-                    stiptr->verInfo[index].props[0].offset = 0;
-                    // v2
-                    stiptr->verInfo[index].props[1].id = DAM_VERTEX2;
-                    stiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
-                    stiptr->verInfo[index].props[1].size =  2;
-                    stiptr->verInfo[index].props[1].offset = 2;
-                    // flags
-                    stiptr->verInfo[index].props[2].id = DAM_FLAGS;
-                    stiptr->verInfo[index].props[2].flags = 0;
-                    stiptr->verInfo[index].props[2].size =  2;
-                    stiptr->verInfo[index].props[2].offset = 4;
-                    // special
-                    stiptr->verInfo[index].props[3].id = DAM_LINE_SPECIAL;
-                    stiptr->verInfo[index].props[3].flags = 0;
-                    stiptr->verInfo[index].props[3].size =  2;
-                    stiptr->verInfo[index].props[3].offset = 6;
-                    // tag
-                    stiptr->verInfo[index].props[4].id = DAM_LINE_TAG;
-                    stiptr->verInfo[index].props[4].flags = 0;
-                    stiptr->verInfo[index].props[4].size =  2;
-                    stiptr->verInfo[index].props[4].offset = 8;
-                    // front side
-                    stiptr->verInfo[index].props[5].id = DAM_SIDE0;
-                    stiptr->verInfo[index].props[5].flags = DT_NOINDEX;
-                    stiptr->verInfo[index].props[5].size =  2;
-                    stiptr->verInfo[index].props[5].offset = 10;
-                    // back side
-                    stiptr->verInfo[index].props[6].id = DAM_SIDE1;
-                    stiptr->verInfo[index].props[6].flags = DT_NOINDEX;
-                    stiptr->verInfo[index].props[6].size =  2;
-                    stiptr->verInfo[index].props[6].offset = 12;
-                }
-                else            // HEXEN format
-                {
-                    *mlptr = 16;
-                    stiptr->verInfo[index].numProps = 11;
-                    stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 11, PU_STATIC, 0);
-                    // v1
-                    stiptr->verInfo[index].props[0].id = DAM_VERTEX1;
-                    stiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
-                    stiptr->verInfo[index].props[0].size =  2;
-                    stiptr->verInfo[index].props[0].offset = 0;
-                    // v2
-                    stiptr->verInfo[index].props[1].id = DAM_VERTEX2;
-                    stiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
-                    stiptr->verInfo[index].props[1].size =  2;
-                    stiptr->verInfo[index].props[1].offset = 2;
-                    // flags
-                    stiptr->verInfo[index].props[2].id = DAM_FLAGS;
-                    stiptr->verInfo[index].props[2].flags = 0;
-                    stiptr->verInfo[index].props[2].size =  2;
-                    stiptr->verInfo[index].props[2].offset = 4;
-                    // special
-                    stiptr->verInfo[index].props[3].id = DAM_LINE_SPECIAL;
-                    stiptr->verInfo[index].props[3].flags = 0;
-                    stiptr->verInfo[index].props[3].size =  1;
-                    stiptr->verInfo[index].props[3].offset = 6;
-                    // arg1
-                    stiptr->verInfo[index].props[4].id = DAM_LINE_ARG1;
-                    stiptr->verInfo[index].props[4].flags = 0;
-                    stiptr->verInfo[index].props[4].size =  1;
-                    stiptr->verInfo[index].props[4].offset = 7;
-                    // arg2
-                    stiptr->verInfo[index].props[5].id = DAM_LINE_ARG2;
-                    stiptr->verInfo[index].props[5].flags = 0;
-                    stiptr->verInfo[index].props[5].size =  1;
-                    stiptr->verInfo[index].props[5].offset = 8;
-                    // arg3
-                    stiptr->verInfo[index].props[6].id = DAM_LINE_ARG3;
-                    stiptr->verInfo[index].props[6].flags = 0;
-                    stiptr->verInfo[index].props[6].size =  1;
-                    stiptr->verInfo[index].props[6].offset = 9;
-                    // arg4
-                    stiptr->verInfo[index].props[7].id = DAM_LINE_ARG4;
-                    stiptr->verInfo[index].props[7].flags = 0;
-                    stiptr->verInfo[index].props[7].size =  1;
-                    stiptr->verInfo[index].props[7].offset = 10;
-                    // arg5
-                    stiptr->verInfo[index].props[8].id = DAM_LINE_ARG5;
-                    stiptr->verInfo[index].props[8].flags = 0;
-                    stiptr->verInfo[index].props[8].size =  1;
-                    stiptr->verInfo[index].props[8].offset = 11;
-                    // front side
-                    stiptr->verInfo[index].props[9].id = DAM_SIDE0;
-                    stiptr->verInfo[index].props[9].flags = DT_NOINDEX;
-                    stiptr->verInfo[index].props[9].size =  2;
-                    stiptr->verInfo[index].props[9].offset = 12;
-                    // back side
-                    stiptr->verInfo[index].props[10].id = DAM_SIDE1;
-                    stiptr->verInfo[index].props[10].flags = DT_NOINDEX;
-                    stiptr->verInfo[index].props[10].size =  2;
-                    stiptr->verInfo[index].props[10].offset = 14;
-                }
-            }
-            else if(lumpClass == LCM_SIDEDEFS)
-            {
-                *mlptr = 30;
-                stiptr->verInfo[index].numProps = 10;
-                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 10, PU_STATIC, 0);
-                // DOOM format maps don't support per wall section offsets so, we'll
-                // read the one set of x, y offsets into the internal top, middle and
-                // bottom offsets.
-                // top x offset
-                stiptr->verInfo[index].props[0].id = DAM_TOP_TEXTURE_OFFSET_X;
-                stiptr->verInfo[index].props[0].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[0].size =  2;
-                stiptr->verInfo[index].props[0].offset = 0;
-                // top y offset
-                stiptr->verInfo[index].props[1].id = DAM_TOP_TEXTURE_OFFSET_Y;
-                stiptr->verInfo[index].props[1].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[1].size =  2;
-                stiptr->verInfo[index].props[1].offset = 2;
-                // middle x offset
-                stiptr->verInfo[index].props[2].id = DAM_MIDDLE_TEXTURE_OFFSET_X;
-                stiptr->verInfo[index].props[2].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[2].size =  2;
-                stiptr->verInfo[index].props[2].offset = 0;
-                // middle y offset
-                stiptr->verInfo[index].props[3].id = DAM_MIDDLE_TEXTURE_OFFSET_Y;
-                stiptr->verInfo[index].props[3].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[3].size =  2;
-                stiptr->verInfo[index].props[3].offset = 2;
-                // bottom x offset
-                stiptr->verInfo[index].props[4].id = DAM_BOTTOM_TEXTURE_OFFSET_X;
-                stiptr->verInfo[index].props[4].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[4].size =  2;
-                stiptr->verInfo[index].props[4].offset = 0;
-                // bottom y offset
-                stiptr->verInfo[index].props[5].id = DAM_BOTTOM_TEXTURE_OFFSET_Y;
-                stiptr->verInfo[index].props[5].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[5].size =  2;
-                stiptr->verInfo[index].props[5].offset = 2;
-                // top pic
-                stiptr->verInfo[index].props[6].id = DAM_TOP_TEXTURE;
-                stiptr->verInfo[index].props[6].flags = DT_TEXTURE;
-                stiptr->verInfo[index].props[6].size =  8;
-                stiptr->verInfo[index].props[6].offset = 4;
-                // bottom pic
-                stiptr->verInfo[index].props[7].id = DAM_BOTTOM_TEXTURE;
-                stiptr->verInfo[index].props[7].flags = DT_TEXTURE;
-                stiptr->verInfo[index].props[7].size =  8;
-                stiptr->verInfo[index].props[7].offset = 12;
-                // middle pic
-                stiptr->verInfo[index].props[8].id = DAM_MIDDLE_TEXTURE;
-                stiptr->verInfo[index].props[8].flags = DT_TEXTURE;
-                stiptr->verInfo[index].props[8].size =  8;
-                stiptr->verInfo[index].props[8].offset = 20;
-                // sector
-                stiptr->verInfo[index].props[9].id = DAM_FRONT_SECTOR;
-                stiptr->verInfo[index].props[9].flags = 0;
-                stiptr->verInfo[index].props[9].size =  2;
-                stiptr->verInfo[index].props[9].offset = 28;
-            }
-            else if(lumpClass == LCM_VERTEXES)
-            {
-                *mlptr = 4;
-                stiptr->verInfo[index].numProps = 2;
-                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
-                // x
-                stiptr->verInfo[index].props[0].id = DAM_X;
-                stiptr->verInfo[index].props[0].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[0].size =  2;
-                stiptr->verInfo[index].props[0].offset = 0;
-                // y
-                stiptr->verInfo[index].props[1].id = DAM_Y;
-                stiptr->verInfo[index].props[1].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[1].size =  2;
-                stiptr->verInfo[index].props[1].offset = 2;
-            }
-            else if(lumpClass == LCM_SEGS)
-            {
-                *mlptr = 12;
-                stiptr->verInfo[index].numProps = 6;
-                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 6, PU_STATIC, 0);
-                // v1
-                stiptr->verInfo[index].props[0].id = DAM_VERTEX1;
-                stiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
-                stiptr->verInfo[index].props[0].size =  2;
-                stiptr->verInfo[index].props[0].offset = 0;
-                // v2
-                stiptr->verInfo[index].props[1].id = DAM_VERTEX2;
-                stiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
-                stiptr->verInfo[index].props[1].size =  2;
-                stiptr->verInfo[index].props[1].offset = 2;
-                // angle
-                stiptr->verInfo[index].props[2].id = DAM_ANGLE;
-                stiptr->verInfo[index].props[2].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[2].size =  2;
-                stiptr->verInfo[index].props[2].offset = 4;
-                // linedef
-                stiptr->verInfo[index].props[3].id = DAM_LINE;
-                stiptr->verInfo[index].props[3].flags = DT_NOINDEX;
-                stiptr->verInfo[index].props[3].size =  2;
-                stiptr->verInfo[index].props[3].offset = 6;
-                // side
-                stiptr->verInfo[index].props[4].id = DAM_SIDE;
-                stiptr->verInfo[index].props[4].flags = 0;
-                stiptr->verInfo[index].props[4].size =  2;
-                stiptr->verInfo[index].props[4].offset = 8;
-                // offset
-                stiptr->verInfo[index].props[5].id = DAM_OFFSET;
-                stiptr->verInfo[index].props[5].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[5].size =  2;
-                stiptr->verInfo[index].props[5].offset = 10;
-            }
-            else if(lumpClass == LCM_SUBSECTORS)
-            {
-                *mlptr = 4;
-                stiptr->verInfo[index].numProps = 2;
-                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
-
-                stiptr->verInfo[index].props[0].id = DAM_LINE_COUNT;
-                stiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
-                stiptr->verInfo[index].props[0].size =  2;
-                stiptr->verInfo[index].props[0].offset = 0;
-
-                stiptr->verInfo[index].props[1].id = DAM_LINE_FIRST;
-                stiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
-                stiptr->verInfo[index].props[1].size =  2;
-                stiptr->verInfo[index].props[1].offset = 2;
-            }
-            else if(lumpClass == LCM_NODES)
-            {
-                *mlptr = 28;
-                stiptr->verInfo[index].numProps = 14;
-                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 14, PU_STATIC, 0);
-                // x
-                stiptr->verInfo[index].props[0].id = DAM_X;
-                stiptr->verInfo[index].props[0].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[0].size =  2;
-                stiptr->verInfo[index].props[0].offset = 0;
-                // y
-                stiptr->verInfo[index].props[1].id = DAM_Y;
-                stiptr->verInfo[index].props[1].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[1].size =  2;
-                stiptr->verInfo[index].props[1].offset = 2;
-                // dx
-                stiptr->verInfo[index].props[2].id = DAM_DX;
-                stiptr->verInfo[index].props[2].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[2].size =  2;
-                stiptr->verInfo[index].props[2].offset = 4;
-                // dy
-                stiptr->verInfo[index].props[3].id = DAM_DY;
-                stiptr->verInfo[index].props[3].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[3].size =  2;
-                stiptr->verInfo[index].props[3].offset = 6;
-                // bbox[0][0]
-                stiptr->verInfo[index].props[4].id = DAM_BBOX_RIGHT_TOP_Y;
-                stiptr->verInfo[index].props[4].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[4].size =  2;
-                stiptr->verInfo[index].props[4].offset = 8;
-                // bbox[0][1]
-                stiptr->verInfo[index].props[5].id = DAM_BBOX_RIGHT_LOW_Y;
-                stiptr->verInfo[index].props[5].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[5].size =  2;
-                stiptr->verInfo[index].props[5].offset = 10;
-                // bbox[0][2]
-                stiptr->verInfo[index].props[6].id = DAM_BBOX_RIGHT_LOW_X;
-                stiptr->verInfo[index].props[6].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[6].size =  2;
-                stiptr->verInfo[index].props[6].offset = 12;
-                // bbox[0][3]
-                stiptr->verInfo[index].props[7].id = DAM_BBOX_RIGHT_TOP_X;
-                stiptr->verInfo[index].props[7].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[7].size =  2;
-                stiptr->verInfo[index].props[7].offset = 14;
-                // bbox[1][0]
-                stiptr->verInfo[index].props[8].id = DAM_BBOX_LEFT_TOP_Y;
-                stiptr->verInfo[index].props[8].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[8].size =  2;
-                stiptr->verInfo[index].props[8].offset = 16;
-                // bbox[1][1]
-                stiptr->verInfo[index].props[9].id = DAM_BBOX_LEFT_LOW_Y;
-                stiptr->verInfo[index].props[9].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[9].size =  2;
-                stiptr->verInfo[index].props[9].offset = 18;
-                // bbox[1][2]
-                stiptr->verInfo[index].props[10].id = DAM_BBOX_LEFT_LOW_X;
-                stiptr->verInfo[index].props[10].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[10].size =  2;
-                stiptr->verInfo[index].props[10].offset = 20;
-                // bbox[1][3]
-                stiptr->verInfo[index].props[11].id = DAM_BBOX_LEFT_TOP_X;
-                stiptr->verInfo[index].props[11].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[11].size =  2;
-                stiptr->verInfo[index].props[11].offset = 22;
-                // children[0]
-                stiptr->verInfo[index].props[12].id = DAM_CHILD_RIGHT;
-                stiptr->verInfo[index].props[12].flags = DT_MSBCONVERT;
-                stiptr->verInfo[index].props[12].size =  2;
-                stiptr->verInfo[index].props[12].offset = 24;
-                // children[1]
-                stiptr->verInfo[index].props[13].id = DAM_CHILD_LEFT;
-                stiptr->verInfo[index].props[13].flags = DT_MSBCONVERT;
-                stiptr->verInfo[index].props[13].size =  2;
-                stiptr->verInfo[index].props[13].offset = 26;
-            }
-            else if(lumpClass == LCM_SECTORS)
-            {
-                *mlptr = 26;
-                stiptr->verInfo[index].numProps = 7;
-                stiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 7, PU_STATIC, 0);
-                // floor height
-                stiptr->verInfo[index].props[0].id = DAM_FLOOR_HEIGHT;
-                stiptr->verInfo[index].props[0].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[0].size =  2;
-                stiptr->verInfo[index].props[0].offset = 0;
-                // ceiling height
-                stiptr->verInfo[index].props[1].id = DAM_CEILING_HEIGHT;
-                stiptr->verInfo[index].props[1].flags = DT_FRACBITS;
-                stiptr->verInfo[index].props[1].size =  2;
-                stiptr->verInfo[index].props[1].offset = 2;
-                // floor pic
-                stiptr->verInfo[index].props[2].id = DAM_FLOOR_TEXTURE;
-                stiptr->verInfo[index].props[2].flags = DT_FLAT;
-                stiptr->verInfo[index].props[2].size =  8;
-                stiptr->verInfo[index].props[2].offset = 4;
-                // ceiling pic
-                stiptr->verInfo[index].props[3].id = DAM_CEILING_TEXTURE;
-                stiptr->verInfo[index].props[3].flags = DT_FLAT;
-                stiptr->verInfo[index].props[3].size =  8;
-                stiptr->verInfo[index].props[3].offset = 12;
-                // light level
-                stiptr->verInfo[index].props[4].id = DAM_LIGHT_LEVEL;
-                stiptr->verInfo[index].props[4].flags = 0;
-                stiptr->verInfo[index].props[4].size =  2;
-                stiptr->verInfo[index].props[4].offset = 20;
-                // special
-                stiptr->verInfo[index].props[5].id = DAM_SECTOR_SPECIAL;
-                stiptr->verInfo[index].props[5].flags = 0;
-                stiptr->verInfo[index].props[5].size =  2;
-                stiptr->verInfo[index].props[5].offset = 22;
-                // tag
-                stiptr->verInfo[index].props[6].id = DAM_SECTOR_TAG;
-                stiptr->verInfo[index].props[6].flags = 0;
-                stiptr->verInfo[index].props[6].size =  2;
-                stiptr->verInfo[index].props[6].offset = 24;
-            }
-            else if(lumpClass == LCM_REJECT)
-            {
-                *mlptr = 1;
-            }
-            else if(lumpClass == LCM_BLOCKMAP)
-            {
-                *mlptr = 1;
-            }
-        }
-    }
-
-    // Calculate the size of the gl node structs
-    for(i = GLNODE_FORMATS -1; i >= 0; --i)
-    {
-        for(j = 0; j < NUM_LUMPCLASSES; ++j)
-        {
-            lumpClass = mapLumpInfo[j].lumpclass;
-            index = mapLumpInfo[j].glLump;
-
-            glver = (glNodeFormats[i].verInfo[index].version);
-            glptr = &(glNodeFormats[i].verInfo[index].elmSize);
-            glstiptr = &(glNodeFormats[i]);
-
-            if(lumpClass == LCG_VERTEXES)
-            {
-                if(glver == 1)
-                {
-                    *glptr = 4;
-                    glstiptr->verInfo[index].numProps = 2;
-                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
-                    // x
-                    glstiptr->verInfo[index].props[0].id = DAM_X;
-                    glstiptr->verInfo[index].props[0].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[0].size =  2;
-                    glstiptr->verInfo[index].props[0].offset = 0;
-                    // y
-                    glstiptr->verInfo[index].props[1].id = DAM_Y;
-                    glstiptr->verInfo[index].props[1].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[1].size =  2;
-                    glstiptr->verInfo[index].props[1].offset = 2;
-                }
-                else
-                {
-                    *glptr = 8;
-                    glstiptr->verInfo[index].numProps = 2;
-                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
-                    // x
-                    glstiptr->verInfo[index].props[0].id = DAM_X;
-                    glstiptr->verInfo[index].props[0].flags = 0;
-                    glstiptr->verInfo[index].props[0].size =  4;
-                    glstiptr->verInfo[index].props[0].offset = 0;
-                    // y
-                    glstiptr->verInfo[index].props[1].id = DAM_Y;
-                    glstiptr->verInfo[index].props[1].flags = 0;
-                    glstiptr->verInfo[index].props[1].size =  4;
-                    glstiptr->verInfo[index].props[1].offset = 4;
-                }
-            }
-            else if(lumpClass == LCG_SEGS)
-            {
-                if(glver == 2)
-                {
-                    *glptr = 10;
-                    glstiptr->verInfo[index].numProps = 4;
-                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 4, PU_STATIC, 0);
-                    // v1
-                    glstiptr->verInfo[index].props[0].id = DAM_VERTEX1;
-                    glstiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[0].size =  2;
-                    glstiptr->verInfo[index].props[0].offset = 0;
-                    // v2
-                    glstiptr->verInfo[index].props[1].id = DAM_VERTEX2;
-                    glstiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[1].size =  2;
-                    glstiptr->verInfo[index].props[1].offset = 2;
-                    // linedef
-                    glstiptr->verInfo[index].props[2].id = DAM_LINE;
-                    glstiptr->verInfo[index].props[2].flags = DT_NOINDEX;
-                    glstiptr->verInfo[index].props[2].size =  2;
-                    glstiptr->verInfo[index].props[2].offset = 4;
-                    // side
-                    glstiptr->verInfo[index].props[3].id = DAM_SIDE;
-                    glstiptr->verInfo[index].props[3].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[3].size =  2;
-                    glstiptr->verInfo[index].props[3].offset = 6;
-                }
-                else if(glver == 4)
-                {
-                    *glptr = 0;        // Unsupported atm
-                }
-                else // Ver 3/5
-                {
-                    *glptr = 14;
-                    glstiptr->verInfo[index].numProps = 4;
-                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 4, PU_STATIC, 0);
-                    // v1
-                    glstiptr->verInfo[index].props[0].id = DAM_VERTEX1;
-                    glstiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[0].size =  4;
-                    glstiptr->verInfo[index].props[0].offset = 0;
-                    // v2
-                    glstiptr->verInfo[index].props[1].id = DAM_VERTEX2;
-                    glstiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[1].size =  4;
-                    glstiptr->verInfo[index].props[1].offset = 4;
-                    // linedef
-                    glstiptr->verInfo[index].props[2].id = DAM_LINE;
-                    glstiptr->verInfo[index].props[2].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[2].size =  2;
-                    glstiptr->verInfo[index].props[2].offset = 8;
-                    // side
-                    glstiptr->verInfo[index].props[3].id = DAM_SIDE;
-                    glstiptr->verInfo[index].props[3].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[3].size =  2;
-                    glstiptr->verInfo[index].props[3].offset = 10;
-                }
-            }
-            else if(lumpClass == LCG_SUBSECTORS)
-            {
-                if(glver == 1)
-                {
-                    *glptr = 4;
-                    glstiptr->verInfo[index].numProps = 2;
-                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
-
-                    glstiptr->verInfo[index].props[0].id = DAM_LINE_COUNT;
-                    glstiptr->verInfo[index].props[0].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[0].size =  2;
-                    glstiptr->verInfo[index].props[0].offset = 0;
-
-                    glstiptr->verInfo[index].props[1].id = DAM_LINE_FIRST;
-                    glstiptr->verInfo[index].props[1].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[1].size =  2;
-                    glstiptr->verInfo[index].props[1].offset = 2;
-                }
-                else
-                {
-                    *glptr = 8;
-                    glstiptr->verInfo[index].numProps = 2;
-                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 2, PU_STATIC, 0);
-
-                    glstiptr->verInfo[index].props[0].id = DAM_LINE_COUNT;
-                    glstiptr->verInfo[index].props[0].flags = 0;
-                    glstiptr->verInfo[index].props[0].size =  4;
-                    glstiptr->verInfo[index].props[0].offset = 0;
-
-                    glstiptr->verInfo[index].props[1].id = DAM_LINE_FIRST;
-                    glstiptr->verInfo[index].props[1].flags = 0;
-                    glstiptr->verInfo[index].props[1].size =  4;
-                    glstiptr->verInfo[index].props[1].offset = 4;
-                }
-            }
-            else if(lumpClass == LCG_NODES)
-            {
-                if(glver == 1)
-                {
-                    *glptr = 28;
-                    glstiptr->verInfo[index].numProps = 14;
-                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 14, PU_STATIC, 0);
-                    // x
-                    glstiptr->verInfo[index].props[0].id = DAM_X;
-                    glstiptr->verInfo[index].props[0].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[0].size =  2;
-                    glstiptr->verInfo[index].props[0].offset = 0;
-                    // y
-                    glstiptr->verInfo[index].props[1].id = DAM_Y;
-                    glstiptr->verInfo[index].props[1].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[1].size =  2;
-                    glstiptr->verInfo[index].props[1].offset = 2;
-                    // dx
-                    glstiptr->verInfo[index].props[2].id = DAM_DX;
-                    glstiptr->verInfo[index].props[2].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[2].size =  2;
-                    glstiptr->verInfo[index].props[2].offset = 4;
-                    // dy
-                    glstiptr->verInfo[index].props[3].id = DAM_DY;
-                    glstiptr->verInfo[index].props[3].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[3].size =  2;
-                    glstiptr->verInfo[index].props[3].offset = 6;
-                    // bbox[0][0]
-                    glstiptr->verInfo[index].props[4].id = DAM_BBOX_RIGHT_TOP_Y;
-                    glstiptr->verInfo[index].props[4].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[4].size =  2;
-                    glstiptr->verInfo[index].props[4].offset = 8;
-                    // bbox[0][1]
-                    glstiptr->verInfo[index].props[5].id = DAM_BBOX_RIGHT_LOW_Y;
-                    glstiptr->verInfo[index].props[5].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[5].size =  2;
-                    glstiptr->verInfo[index].props[5].offset = 10;
-                    // bbox[0][2]
-                    glstiptr->verInfo[index].props[6].id = DAM_BBOX_RIGHT_LOW_X;
-                    glstiptr->verInfo[index].props[6].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[6].size =  2;
-                    glstiptr->verInfo[index].props[6].offset = 12;
-                    // bbox[0][3]
-                    glstiptr->verInfo[index].props[7].id = DAM_BBOX_RIGHT_TOP_X;
-                    glstiptr->verInfo[index].props[7].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[7].size =  2;
-                    glstiptr->verInfo[index].props[7].offset = 14;
-                    // bbox[1][0]
-                    glstiptr->verInfo[index].props[8].id = DAM_BBOX_LEFT_TOP_Y;
-                    glstiptr->verInfo[index].props[8].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[8].size =  2;
-                    glstiptr->verInfo[index].props[8].offset = 16;
-                    // bbox[1][1]
-                    glstiptr->verInfo[index].props[9].id = DAM_BBOX_LEFT_LOW_Y;
-                    glstiptr->verInfo[index].props[9].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[9].size =  2;
-                    glstiptr->verInfo[index].props[9].offset = 18;
-                    // bbox[1][2]
-                    glstiptr->verInfo[index].props[10].id = DAM_BBOX_LEFT_LOW_X;
-                    glstiptr->verInfo[index].props[10].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[10].size =  2;
-                    glstiptr->verInfo[index].props[10].offset = 20;
-                    // bbox[1][3]
-                    glstiptr->verInfo[index].props[11].id = DAM_BBOX_LEFT_TOP_X;
-                    glstiptr->verInfo[index].props[11].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[11].size =  2;
-                    glstiptr->verInfo[index].props[11].offset = 22;
-                    // children[0]
-                    glstiptr->verInfo[index].props[12].id = DAM_CHILD_RIGHT;
-                    glstiptr->verInfo[index].props[12].flags = DT_UNSIGNED | DT_MSBCONVERT;
-                    glstiptr->verInfo[index].props[12].size =  2;
-                    glstiptr->verInfo[index].props[12].offset = 24;
-                    // children[1]
-                    glstiptr->verInfo[index].props[13].id = DAM_CHILD_LEFT;
-                    glstiptr->verInfo[index].props[13].flags = DT_UNSIGNED | DT_MSBCONVERT;
-                    glstiptr->verInfo[index].props[13].size =  2;
-                    glstiptr->verInfo[index].props[13].offset = 26;
-                }
-                else
-                {
-                    *glptr = 32;
-                    glstiptr->verInfo[index].numProps = 14;
-                    glstiptr->verInfo[index].props = Z_Malloc(sizeof(datatype_t) * 14, PU_STATIC, 0);
-                    // x
-                    glstiptr->verInfo[index].props[0].id = DAM_X;
-                    glstiptr->verInfo[index].props[0].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[0].size =  2;
-                    glstiptr->verInfo[index].props[0].offset = 0;
-                    // y
-                    glstiptr->verInfo[index].props[1].id = DAM_Y;
-                    glstiptr->verInfo[index].props[1].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[1].size =  2;
-                    glstiptr->verInfo[index].props[1].offset = 2;
-                    // dx
-                    glstiptr->verInfo[index].props[2].id = DAM_DX;
-                    glstiptr->verInfo[index].props[2].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[2].size =  2;
-                    glstiptr->verInfo[index].props[2].offset = 4;
-                    // dy
-                    glstiptr->verInfo[index].props[3].id = DAM_DY;
-                    glstiptr->verInfo[index].props[3].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[3].size =  2;
-                    glstiptr->verInfo[index].props[3].offset = 6;
-                    // bbox[0][0]
-                    glstiptr->verInfo[index].props[4].id = DAM_BBOX_RIGHT_TOP_Y;
-                    glstiptr->verInfo[index].props[4].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[4].size =  2;
-                    glstiptr->verInfo[index].props[4].offset = 8;
-                    // bbox[0][1]
-                    glstiptr->verInfo[index].props[5].id = DAM_BBOX_RIGHT_LOW_Y;
-                    glstiptr->verInfo[index].props[5].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[5].size =  2;
-                    glstiptr->verInfo[index].props[5].offset = 10;
-                    // bbox[0][2]
-                    glstiptr->verInfo[index].props[6].id = DAM_BBOX_RIGHT_LOW_X;
-                    glstiptr->verInfo[index].props[6].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[6].size =  2;
-                    glstiptr->verInfo[index].props[6].offset = 12;
-                    // bbox[0][3]
-                    glstiptr->verInfo[index].props[7].id = DAM_BBOX_RIGHT_TOP_X;
-                    glstiptr->verInfo[index].props[7].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[7].size =  2;
-                    glstiptr->verInfo[index].props[7].offset = 14;
-                    // bbox[1][0]
-                    glstiptr->verInfo[index].props[8].id = DAM_BBOX_LEFT_TOP_Y;
-                    glstiptr->verInfo[index].props[8].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[8].size =  2;
-                    glstiptr->verInfo[index].props[8].offset = 16;
-                    // bbox[1][1]
-                    glstiptr->verInfo[index].props[9].id = DAM_BBOX_LEFT_LOW_Y;
-                    glstiptr->verInfo[index].props[9].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[9].size =  2;
-                    glstiptr->verInfo[index].props[9].offset = 18;
-                    // bbox[1][2]
-                    glstiptr->verInfo[index].props[10].id = DAM_BBOX_LEFT_LOW_X;
-                    glstiptr->verInfo[index].props[10].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[10].size =  2;
-                    glstiptr->verInfo[index].props[10].offset = 20;
-                    // bbox[1][3]
-                    glstiptr->verInfo[index].props[11].id = DAM_BBOX_LEFT_TOP_X;
-                    glstiptr->verInfo[index].props[11].flags = DT_FRACBITS;
-                    glstiptr->verInfo[index].props[11].size =  2;
-                    glstiptr->verInfo[index].props[11].offset = 22;
-                    // children[0]
-                    glstiptr->verInfo[index].props[12].id = 12;
-                    glstiptr->verInfo[index].props[12].flags = DAM_CHILD_RIGHT;
-                    glstiptr->verInfo[index].props[12].size =  4;
-                    glstiptr->verInfo[index].props[12].offset = 24;
-                    // children[1]
-                    glstiptr->verInfo[index].props[13].id = DAM_CHILD_LEFT;
-                    glstiptr->verInfo[index].props[13].flags = DT_UNSIGNED;
-                    glstiptr->verInfo[index].props[13].size =  4;
-                    glstiptr->verInfo[index].props[13].offset = 28;
-                }
-            }
-        }
-    }
 }

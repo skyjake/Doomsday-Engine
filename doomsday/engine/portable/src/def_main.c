@@ -450,6 +450,23 @@ ded_xgclass_t *Def_GetXGClass(char *name)
     return 0;
 }
 
+ded_lumpformat_t *Def_GetMapLumpFormat(char *name)
+{
+    ded_lumpformat_t *def;
+    int         i;
+
+    if(!name || !name[0])
+        return 0;
+
+    for(i = defs.count.lumpformats.num - 1, def = defs.lumpformats + i;
+        i >= 0; i--, def--)
+    {
+        if(!(stricmp(name, def->id)))
+            return def;
+    }
+    return 0;
+}
+
 int Def_GetFlagValue(char *flag)
 {
     int     i;
@@ -972,11 +989,11 @@ void Def_Read(void)
     // Other data:
     Def_CountMsg(defs.count.mapinfo.num, "map infos");
     Def_CountMsg(defs.count.finales.num, "finales");
+    Def_CountMsg(defs.count.lumpformats.num, "lump formats");
+
+    //Def_CountMsg(defs.count.xgclasses.num, "xg classes");
     Def_CountMsg(defs.count.lines.num, "line types");
     Def_CountMsg(defs.count.sectors.num, "sector types");
-
-    Def_CountMsg(defs.count.xgclasses.num, "xg classes");
-    Def_CountMsg(defs.count.lumpformats.num, "binary lump formats");
 
     // Init the base model search path (prepend).
     Dir_FixSlashes(defs.model_path);

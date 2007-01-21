@@ -30,6 +30,7 @@
 
 #include "de_base.h"
 #include "de_dam.h"
+#include "de_defs.h"
 #include "de_misc.h"
 
 #include "p_mapdata.h"
@@ -124,7 +125,7 @@ boolean DAM_ReadMapDataFromLump(struct gamemap_s *map, mapdatalumpinfo_t *mapLum
 
      // Select the lump size, number of elements etc...
     args.map = map;
-    args.elmsize = mapLump->format->elmSize;
+    args.elmsize = Def_GetMapLumpFormat(mapLump->format->formatName)->elmsize;
     args.elements = mapLump->elements;
     args.numProps = numProps;
     args.props = props;

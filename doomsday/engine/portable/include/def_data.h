@@ -100,19 +100,18 @@ extern          "C" {
     } ded_xgclass_t;
 
     typedef struct {
-        int             gameprop;
-        ded_flags_t     valueid;
+        ded_string_t    id;
         ded_flags_t     flags;
         int             size;
         int             offset;
-    } ded_lumpformat_member_t;
+    } ded_lumpformat_property_t;
 
     typedef struct {
-        ded_stringid_t  id;
+        ded_string_t    id;
         ded_flags_t     type;
-        int             size;
-        ded_count_t     members_count;
-        ded_lumpformat_member_t *members;
+        int             elmsize;
+        ded_count_t     property_count;
+        ded_lumpformat_property_t *properties;
     } ded_lumpformat_t;
 
     typedef struct {

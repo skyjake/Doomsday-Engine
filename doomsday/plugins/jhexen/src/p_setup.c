@@ -133,12 +133,12 @@ void P_RegisterCustomMapProperties(void)
         {DAM_THING,     DDVT_SHORT,     "Angle",        CMP_THING_ANGLE},
         {DAM_THING,     DDVT_SHORT,     "Type",         CMP_THING_TYPE},
         {DAM_THING,     DDVT_SHORT,     "Options",      CMP_THING_OPTIONS},
-        {DAM_LINE,      DDVT_BYTE,      "Special",      CMP_THING_SPECIAL},
-        {DAM_LINE,      DDVT_BYTE,      "Arg1",         CMP_THING_ARG1},
-        {DAM_LINE,      DDVT_BYTE,      "Arg2",         CMP_THING_ARG2},
-        {DAM_LINE,      DDVT_BYTE,      "Arg3",         CMP_THING_ARG3},
-        {DAM_LINE,      DDVT_BYTE,      "Arg4",         CMP_THING_ARG4},
-        {DAM_LINE,      DDVT_BYTE,      "Arg5",         CMP_THING_ARG5},
+        {DAM_THING,     DDVT_BYTE,      "Special",      CMP_THING_SPECIAL},
+        {DAM_THING,     DDVT_BYTE,      "Arg1",         CMP_THING_ARG1},
+        {DAM_THING,     DDVT_BYTE,      "Arg2",         CMP_THING_ARG2},
+        {DAM_THING,     DDVT_BYTE,      "Arg3",         CMP_THING_ARG3},
+        {DAM_THING,     DDVT_BYTE,      "Arg4",         CMP_THING_ARG4},
+        {DAM_THING,     DDVT_BYTE,      "Arg5",         CMP_THING_ARG5},
         {0,             0,              NULL,           0} // Terminate.
     };
     uint        i, idx;

@@ -1,5 +1,787 @@
-# Doomsday Engine 1.8
+# Doomsday Engine 1.9
 # Definitions shared by all games.
 
 Include "flags.ded";
 Include "xg.ded";
+
+LumpFormat {
+    ID = "DOOM Things";
+    Class = thing;
+    ElementSize = 10;
+    Property {
+        ID = "x";
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "y";
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "angle";
+        Size = 2;
+        Offset = 4;
+    }
+    Property {
+        ID = "type";
+        Size = 2;
+        Offset = 6;
+    }
+    Property {
+        ID = "options";
+        Size = 2;
+        Offset = 8;
+    }
+}
+
+LumpFormat {
+    ID = "Hexen Things";
+    Class = thing;
+    ElementSize = 20;
+    Property {
+        ID = "tid";
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "x";
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "y";
+        Size = 2;
+        Offset = 4;
+    }
+    Property {
+        ID = "height";
+        Size = 2;
+        Offset = 6;
+    }
+    Property {
+        ID = "angle";
+        Size = 2;
+        Offset = 8;
+    }
+    Property {
+        ID = "type";
+        Size = 2;
+        Offset = 10;
+    }
+    Property {
+        ID = "options";
+        Size = 2;
+        Offset = 12;
+    }
+    Property {
+        ID = "special";
+        Size = 1;
+        Offset = 14;
+    }
+    Property {
+        ID = "arg1";
+        Size = 1;
+        Offset = 15;
+    }
+    Property {
+        ID = "arg2";
+        Size = 1;
+        Offset = 16;
+    }
+    Property {
+        ID = "arg3";
+        Size = 1;
+        Offset = 17;
+    }
+    Property {
+        ID = "arg4";
+        Size = 1;
+        Offset = 18;
+    }
+    Property {
+        ID = "arg5";
+        Size = 1;
+        Offset = 19;
+    }
+}
+
+LumpFormat {
+    ID = "DOOM Vertexes";
+    Class = vertex;
+    ElementSize = 4;
+    Property {
+        ID = "x";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "y";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 2;
+    }
+}
+
+LumpFormat {
+    ID = "GLv2 Vertexes";
+    Class = vertex;
+    ElementSize = 8;
+    Property {
+        ID = "x";
+        Size = 4;
+        Offset = 0;
+    }
+    Property {
+        ID = "y";
+        Size = 4;
+        Offset = 4;
+    }
+}
+
+* LumpFormat {
+    ID = "GLv4 Vertexes";
+}
+
+* LumpFormat {
+    ID = "GLv5 Vertexes";
+}
+
+LumpFormat {
+    ID = "DOOM Linedefs";
+    Class = linedef;
+    ElementSize = 14;
+    Property {
+        ID = "vertex1";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "vertex2";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "flags";
+        Size = 2;
+        Offset = 4;
+    }
+    Property {
+        ID = "special";
+        Size = 2;
+        Offset = 6;
+    }
+    Property {
+        ID = "tag";
+        Size = 2;
+        Offset = 8;
+    }
+    Property {
+        ID = "frontside";
+        Flags = noindex;
+        Size = 2;
+        Offset = 10;
+    }
+    Property {
+        ID = "backside";
+        Flags = noindex;
+        Size = 2;
+        Offset = 12;
+    }
+}
+
+LumpFormat {
+    ID = "Hexen Linedefs";
+    Class = linedef;
+    ElementSize = 16;
+    Property {
+        ID = "vertex1";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "vertex2";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "flags";
+        Size = 2;
+        Offset = 4;
+    }
+    Property {
+        ID = "special";
+        Size = 1;
+        Offset = 6;
+    }
+    Property {
+        ID = "arg1";
+        Size = 1;
+        Offset = 7;
+    }
+    Property {
+        ID = "arg2";
+        Size = 1;
+        Offset = 8;
+    }
+    Property {
+        ID = "arg3";
+        Size = 1;
+        Offset = 9;
+    }
+    Property {
+        ID = "arg4";
+        Size = 1;
+        Offset = 10;
+    }
+    Property {
+        ID = "arg5";
+        Size = 1;
+        Offset = 11;
+    }
+    Property {
+        ID = "frontside";
+        Flags = noindex;
+        Size = 2;
+        Offset = 12;
+    }
+    Property {
+        ID = "backside";
+        Flags = noindex;
+        Size = 2;
+        Offset = 14;
+    }
+}
+
+LumpFormat {
+    ID = "DOOM Sidedefs";
+    Class = sidedef;
+    ElementSize = 30;
+    #
+    # DOOM format sidedefs do not support per wall section offsets
+    # so, read the one set of x, y offsets into the top, middle and
+    # bottom offsets.
+    #
+    Property {
+        ID = "toptextureoffsetx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "toptextureoffsety";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "middletextureoffsetx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "middletextureoffsety";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "bottomtextureoffsetx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "bottomtextureoffsety";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "toptexture";
+        Flags = texture;
+        Size = 8;
+        Offset = 4;
+    }
+    Property {
+        ID = "bottomtexture";
+        Flags = texture;
+        Size = 8;
+        Offset = 12;
+    }
+    Property {
+        ID = "middletexture";
+        Flags = texture;
+        Size = 8;
+        Offset = 20;
+    }
+    Property {
+        ID = "frontsector";
+        Size = 2;
+        Offset = 28;
+    }
+}
+
+LumpFormat {
+    ID = "DOOM Sectors";
+    Class = sector;
+    ElementSize = 26;
+    Property {
+        ID = "floorheight";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "ceilingheight";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "floortexture";
+        Flags = flat;
+        Size = 8;
+        Offset = 4;
+    }
+    Property {
+        ID = "ceilingtexture";
+        Flags = flat;
+        Size = 8;
+        Offset = 12;
+    }
+    Property {
+        ID = "lightlevel";
+        Size = 2;
+        Offset = 20;
+    }
+    Property {
+        ID = "special";
+        Size = 2;
+        Offset = 22;
+    }
+    Property {
+        ID = "tag";
+        Size = 2;
+        Offset = 24;
+    }
+}
+
+LumpFormat {
+    ID = "DOOM Segs";
+    Class = seg;
+    ElementSize = 12;
+    Property {
+        ID = "vertex1";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "vertex2";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "angle";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 4;
+    }
+    Property {
+        ID = "linedef";
+        Flags = noindex;
+        Size = 2;
+        Offset = 6;
+    }
+    Property {
+        ID = "side";
+        Size = 2;
+        Offset = 8;
+    }
+    Property {
+        ID = "offset";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 10;
+    }
+}
+
+LumpFormat {
+    ID = "GLv1 Segs";
+    Class = seg;
+    ElementSize = 10;
+    Property {
+        ID = "vertex1";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "vertex2";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "linedef";
+        Flags = noindex;
+        Size = 2;
+        Offset = 4;
+    }
+    Property {
+        ID = "side";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 6;
+    }
+}
+
+LumpFormat {
+    ID = "GLv3 Segs";
+    Class = seg;
+    ElementSize = 14;
+    Property {
+        ID = "vertex1";
+        Flags = unsigned;
+        Size = 4;
+        Offset = 0;
+    }
+    Property {
+        ID = "vertex2";
+        Flags = unsigned;
+        Size = 4;
+        Offset = 4;
+    }
+    Property {
+        ID = "linedef";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 8;
+    }
+    Property {
+        ID = "side";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 10;
+    }
+}
+
+* LumpFormat {
+    ID = "GLv5 Segs";
+}
+
+* LumpFormat {
+    ID = "GLv4 Segs";
+}
+
+LumpFormat {
+    ID = "DOOM Subsectors";
+    Class = subsector;
+    ElementSize = 4;
+    Property {
+        ID = "linecount";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "firstline";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 2;
+    }
+}
+
+LumpFormat {
+    ID = "GLv3 Subsectors";
+    Class = subsector;
+    ElementSize = 8;
+    Property {
+        ID = "linecount";
+        Size = 4;
+        Offset = 0;
+    }
+    Property {
+        ID = "firstline";
+        Size = 4;
+        Offset = 4;
+    }
+}
+
+LumpFormat {
+    ID = "DOOM Nodes";
+    Class = node;
+    ElementSize = 28;
+    Property {
+        ID = "x";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "y";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "dx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 4;
+    }
+    Property {
+        ID = "dy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 6;
+    }
+    Property {
+        ID = "bboxrighttopy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 8;
+    }
+    Property {
+        ID = "bboxrightlowy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 10;
+    }
+    Property {
+        ID = "bboxrightlowx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 12;
+    }
+    Property {
+        ID = "bboxrighttopx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 14;
+    }
+    Property {
+        ID = "bboxlefttopy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 16;
+    }
+    Property {
+        ID = "bboxleftlowy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 18;
+    }
+    Property {
+        ID = "bboxleftlowx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 20;
+    }
+    Property {
+        ID = "bboxlefttopx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 22;
+    }
+    Property {
+        ID = "childright";
+        Flags = msbconvert;
+        Size = 2;
+        Offset = 24;
+    }
+    Property {
+        ID = "childleft";
+        Flags = msbconvert;
+        Size = 2;
+        Offset = 26;
+    }
+}
+
+LumpFormat {
+    ID = "GLv1 Nodes";
+    Class = node;
+    ElementSize = 28;
+    Property {
+        ID = "x";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "y";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "dx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 4;
+    }
+    Property {
+        ID = "dy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 6;
+    }
+    Property {
+        ID = "bboxrighttopy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 8;
+    }
+    Property {
+        ID = "bboxrightlowy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 10;
+    }
+    Property {
+        ID = "bboxrightlowx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 12;
+    }
+    Property {
+        ID = "bboxrighttopx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 14;
+    }
+    Property {
+        ID = "bboxlefttopy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 16;
+    }
+    Property {
+        ID = "bboxleftlowy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 18;
+    }
+    Property {
+        ID = "bboxleftlowx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 20;
+    }
+    Property {
+        ID = "bboxlefttopx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 22;
+    }
+    Property {
+        ID = "childright";
+        Flags = unsigned | msbconvert;
+        Size = 2;
+        Offset = 24;
+    }
+    Property {
+        ID = "childleft";
+        Flags = unsigned | msbconvert;
+        Size = 2;
+        Offset = 26;
+    }
+}
+
+LumpFormat {
+    ID = "GLv4 Nodes";
+    Class = node;
+    ElementSize = 32;
+    Property {
+        ID = "x";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 0;
+    }
+    Property {
+        ID = "y";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 2;
+    }
+    Property {
+        ID = "dx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 4;
+    }
+    Property {
+        ID = "dy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 6;
+    }
+    Property {
+        ID = "bboxrighttopy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 8;
+    }
+    Property {
+        ID = "bboxrightlowy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 10;
+    }
+    Property {
+        ID = "bboxrightlowx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 12;
+    }
+    Property {
+        ID = "bboxrighttopx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 14;
+    }
+    Property {
+        ID = "bboxlefttopy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 16;
+    }
+    Property {
+        ID = "bboxleftlowy";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 18;
+    }
+    Property {
+        ID = "bboxleftlowx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 20;
+    }
+    Property {
+        ID = "bboxlefttopx";
+        Flags = fracbits;
+        Size = 2;
+        Offset = 22;
+    }
+    Property {
+        ID = "childright";
+        Flags = unsigned;
+        Size = 4;
+        Offset = 24;
+    }
+    Property {
+        ID = "childleft";
+        Flags = unsigned;
+        Size = 4;
+        Offset = 28;
+    }
+}
