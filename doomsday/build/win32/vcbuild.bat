@@ -99,7 +99,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread dpmapload dropengl drd3d dscompat jdoom jheretic jhexen wolftc doom64tc
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread dpmapload dropengl drd3d dssdlmixer dscompat jdoom jheretic jhexen wolftc doom64tc
 GOTO Done
 
 
@@ -199,7 +199,6 @@ cl /O2 /Gd /EHsc /MT /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "dr
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
-
 :: *** drOpenGL.dll
 :drOpenGL
 ECHO Compiling drOpenGL.dll (OpenGL driver)...
@@ -223,6 +222,15 @@ GOTO Failure
 ECHO Compiling dsCompat.dll (DirectSound(3D) SoundFX driver)...
 md %OBJ_DIR%\dsCompat
 cl /O2 /Ob1 %INCS% %DLLDEFINES% /D "DSCOMPAT_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsCompat" /Fd"./%OBJ_DIR%/dsCompat" /W3 /Gd  @dscompat_cl.rsp  /link /OUT:"./%BIN_DIR%/dsCompat.dll" %LFLAGS% /DLL /DEF:"./../../plugins/ds6/api/dsCompat.def" /IMPLIB:"./%BIN_DIR%/dsCompat.lib" %LIBS% eax.lib eaxguid.lib dsound.lib dxguid.lib ./%BIN_DIR%/doomsday.lib 
+IF %ERRORLEVEL% == 0 GOTO Done
+GOTO Failure
+
+
+:: *** dsSDLMixer.dll
+:dsSDLMixer
+ECHO Compiling dsSDLMixer.dll (SDL Sound Mixing driver)...
+md %OBJ_DIR%\dsSDLMixer
+cl /O2 /Ob1 %INCS% /I "./../../plugins/sdlmixer/portable/include" /I "%SDLMIXER_INC%" %DLLDEFINES% /D "DSSDLMIXER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsSDLMixer/" /Fd"./%OBJ_DIR%/dsSDLMixer/" /W3 /Gd  @dssdlmixer_cl.rsp  /link /OUT:"./%BIN_DIR%/dsSDLMixer.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dsSDLMixer.lib" /LIBPATH:"%SDLMIXER_LIB%" ./%BIN_DIR%/doomsday.lib SDL_mixer.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

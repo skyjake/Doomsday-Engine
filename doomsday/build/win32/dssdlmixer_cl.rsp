@@ -1,0 +1,4 @@
+ ./../../plugins/sdlmixer/portable/src/driver_sdlmixer.c
+ ./../../plugins/sdlmixer/portable/src/mus2midi.c
+ ./../../plugins/sdlmixer/portable/src/sdl.c
+ 

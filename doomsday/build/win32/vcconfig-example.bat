@@ -1,6 +1,8 @@
 REM Build configuration (example).
 REM Modify and save as "vcconfig.bat".
 
+SET ROOT_DIR=H:\deng\trunk\doomsday
+
 SET BIN_DIR=Bin\Release
 SET OBJ_DIR=Obj\Release
 
@@ -30,6 +32,9 @@ REM ---- SDL_net:
 SET SDLNET_INC=D:\sdk\SDL_net-1.2.5\include
 SET SDLNET_LIB=D:\sdk\SDL_net-1.2.5\lib
 
+REM ---- SDL_mixer:
+SET SDLMIXER_INC=D:\sdk\SDL_mixer-1.2.7\include
+SET SDLMIXER_LIB=D:\sdk\SDL_mixer-1.2.7\lib
 
 REM -=- Requirements for drOpenGL.dll -=-
 REM
@@ -42,4 +47,3 @@ REM
 REM ---- Aureal A3D:
 SET A3D_INC=D:\sdk\Aureal\A3D 3.0 SDK\sdk\inc
 SET A3D_LIB=D:\sdk\Aureal\A3D 3.0 SDK\sdk\lib
-
