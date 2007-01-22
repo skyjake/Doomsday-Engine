@@ -230,7 +230,7 @@ GOTO Failure
 :dsSDLMixer
 ECHO Compiling dsSDLMixer.dll (SDL Sound Mixing driver)...
 md %OBJ_DIR%\dsSDLMixer
-cl /O2 /Ob1 %INCS% /I "./../../plugins/sdlmixer/portable/include" /I "%SDLMIXER_INC%" %DLLDEFINES% /D "DSSDLMIXER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsSDLMixer/" /Fd"./%OBJ_DIR%/dsSDLMixer/" /W3 /Gd  @dssdlmixer_cl.rsp  /link /OUT:"./%BIN_DIR%/dsSDLMixer.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dsSDLMixer.lib" /LIBPATH:"%SDLMIXER_LIB%" ./%BIN_DIR%/doomsday.lib SDL_mixer.lib
+cl /O2 /Ob1 %INCS% /I "./../../plugins/sdlmixer/portable/include" /I "%SDLMIXER_INC%" %DLLDEFINES% /D "DSSDLMIXER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsSDLMixer/" /Fd"./%OBJ_DIR%/dsSDLMixer/" /W3 /Gd  @dssdlmixer_cl.rsp  /link /OUT:"./%BIN_DIR%/dsSDLMixer.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dsSDLMixer.lib" %LIBS% /LIBPATH:"%SDLMIXER_LIB%" SDL_mixer.lib sdl.lib ./%BIN_DIR%/doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
