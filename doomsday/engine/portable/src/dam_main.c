@@ -586,11 +586,10 @@ static uint DAM_IDForProperty(int type, char *name)
         }
     }
 
-#if 0 // FIXME!!
     if(!found)
         Con_Error("DAM_IDForProperty: %s has no property named \"%s\".",
                   DAM_Str(type), name);
-#endif
+
     return propID;
 }
 
