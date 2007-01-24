@@ -109,7 +109,7 @@ typedef struct mapdatalumpformat_s {
     int         hversion;
     char       *magicid;
     char       *formatName;
-    boolean     isText; // True if the lump is a plain text lump.
+    boolean     isText;     // True if the lump is a plain text lump.
 } mapdatalumpformat_t;
 
 typedef struct mapdatalumpinfo_s {

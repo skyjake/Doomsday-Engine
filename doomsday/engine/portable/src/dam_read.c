@@ -77,7 +77,7 @@ typedef struct {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void       *DAM_IndexToPtr(gamemap_t *map, int objectType, uint id);
+void *DAM_IndexToPtr(gamemap_t *map, int objectType, uint id);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
