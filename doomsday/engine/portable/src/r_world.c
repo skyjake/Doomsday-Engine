@@ -2378,7 +2378,7 @@ void R_InitLevel(char *level_id)
     }
     else
     {
-        // No map info found, set some basic stuff.
+        // No map info found, so set some basic stuff.
         mapgravity = FRACUNIT;
         mapambient = 0;
     }
