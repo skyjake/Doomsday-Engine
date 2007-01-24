@@ -696,8 +696,13 @@ void ST_updateWidgets(void)
     int         i, x;
     player_t   *plr = &players[consoleplayer];
 
-    statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
-    CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+    if(st_blended)
+    {
+        statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
+        CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+    }
+    else
+        statusbarCounterAlpha = 1.0f;
 
     // used by w_frags widget
     st_fragson = deathmatch && st_statusbaron;
@@ -1124,7 +1129,44 @@ void ST_refreshBackground(void)
     // Clamp
     CLAMP(alpha, 0.0f, 1.0f);
 
-    if(st_blended && ((alpha < 1.0f) && (alpha > 0.0f)))
+    if(!st_blended)
+    {
+        GL_DrawPatch(0, 134, PatchNumH2BAR.lump);
+        GL_DrawPatch(0, 134, PatchNumH2TOP.lump);
+
+        if(!inventory)
+        {
+            // Main interface
+            if(!automapactive)
+            {
+                GL_DrawPatch(38, 162, PatchNumSTATBAR.lump);
+
+                if(plyr->pieces == 7)
+                {
+                    GL_DrawPatch(190, 162, PatchNumWEAPONFULL.lump);
+                }
+                else
+                {
+                    GL_DrawPatch(190, 162, PatchNumWEAPONSLOT.lump);
+                }
+
+                DrawWeaponPieces();
+            }
+            else
+            {
+                GL_DrawPatch(38, 162, PatchNumKEYBAR.lump);
+                DrawKeyBar();
+            }
+
+        }
+        else
+        {
+            GL_DrawPatch(38, 162, PatchNumINVBAR.lump);
+        }
+
+        DrawChain();
+    }
+    else if(alpha < 1.0f && alpha > 0.0f)
     {
         gl.Color4f(1, 1, 1, alpha);
 
@@ -1281,43 +1323,6 @@ void ST_refreshBackground(void)
             gl.Vertex2f(x, y + h);
 
             gl.End();
-        }
-
-        DrawChain();
-    }
-    else if(alpha != 0)
-    {
-        GL_DrawPatch(0, 134, PatchNumH2BAR.lump);
-        GL_DrawPatch(0, 134, PatchNumH2TOP.lump);
-
-        if(!inventory)
-        {
-            // Main interface
-            if(!automapactive)
-            {
-                GL_DrawPatch(38, 162, PatchNumSTATBAR.lump);
-
-                if(plyr->pieces == 7)
-                {
-                    GL_DrawPatch(190, 162, PatchNumWEAPONFULL.lump);
-                }
-                else
-                {
-                    GL_DrawPatch(190, 162, PatchNumWEAPONSLOT.lump);
-                }
-
-                DrawWeaponPieces();
-            }
-            else
-            {
-                GL_DrawPatch(38, 162, PatchNumKEYBAR.lump);
-                DrawKeyBar();
-            }
-
-        }
-        else
-        {
-            GL_DrawPatch(38, 162, PatchNumINVBAR.lump);
         }
 
         DrawChain();

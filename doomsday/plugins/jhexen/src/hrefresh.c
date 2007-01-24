@@ -107,6 +107,10 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;
 void R_SetViewSize(int blocks, int detail)
 {
     setsizeneeded = true;
+    if(cfg.setblocks - 10 <= 0 && blocks - 10 > 0)
+    {   // When going fullscreen, force a hud show event (to reset the timer).
+        ST_HUDUnHide(HUE_FORCE);
+    }
     cfg.setblocks = blocks;
     GL_Update(DDUF_BORDER);
 }

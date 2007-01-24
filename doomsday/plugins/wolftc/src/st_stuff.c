@@ -412,104 +412,105 @@ void ST_refreshBackground(void)
 
     int x, y, w, h;
     float cw, cw2, ch;
+    float       alpha;
+
+    alpha = cfg.statusbarAlpha - hudHideAmount;
+    // Clamp
+    CLAMP(alpha, 0.0f, 1.0f);
 
     GL_SetPatch(sbar.lump);
+    if(!st_blended)
+    {
+        // we can just render the full thing as normal
+        GL_DrawPatch(ST_X, ST_Y, sbar.lump);
 
-    if(st_blended && ((cfg.statusbarAlpha < 1.0f) && (cfg.statusbarAlpha > 0.0f)))
+        if(st_armson)  // arms baground
+            GL_DrawPatch(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
+
+        if(IS_NETGAME) // faceback
+            GL_DrawPatch(ST_FX, ST_Y+1, faceback.lump);
+    }
+    else if(alpha < 1.0f && alpha > 0.0f)
     {
         // Alpha blended status bar, we'll need to cut it up into smaller bits...
 
-        gl.Color4f(1, 1, 1, cfg.statusbarAlpha);
+        gl.Color4f(1, 1, 1, alpha);
 
         gl.Begin(DGL_QUADS);
 
-            // (up to faceback if deathmatch, else ST_ARMS)
-            x = ST_X;
+        // (up to faceback if deathmatch, else ST_ARMS)
+        x = ST_X;
+        y = ST_Y;
+        w = st_armson ? 104 : 143;
+        h = 32;
+        cw = st_armson ? 0.325f : 0.446875f;
+
+        gl.TexCoord2f(0, 0);
+        gl.Vertex2f(x, y);
+        gl.TexCoord2f(cw, 0);
+        gl.Vertex2f(x + w, y);
+        gl.TexCoord2f(cw, 1);
+        gl.Vertex2f(x + w, y + h);
+        gl.TexCoord2f(0, 1);
+        gl.Vertex2f(x, y + h);
+
+        if(IS_NETGAME)
+        {
+            // (fiddly little bit above faceback)
+            x = ST_X + 144;
             y = ST_Y;
-            w = st_armson ? 104 : 143;
+            w = 35;
+            h = 1;
+            cw = 0.446875f;
+            cw2 = 0.55625f;
+            ch = 0.03125f;
+
+            gl.TexCoord2f(cw, 0);
+            gl.Vertex2f(x, y);
+            gl.TexCoord2f(cw2, 0);
+            gl.Vertex2f(x + w, y);
+            gl.TexCoord2f(cw2, ch);
+            gl.Vertex2f(x + w, y + h);
+            gl.TexCoord2f(cw, ch);
+            gl.Vertex2f(x, y + h);
+
+            // (after faceback)
+            x = ST_X + 178;
+            y = ST_Y;
+            w = 142;
             h = 32;
-            cw = st_armson ? 0.325f : 0.446875f;
+            cw = 0.55625f;
 
-            gl.TexCoord2f(0, 0);
-            gl.Vertex2f(x, y);
-            gl.TexCoord2f(cw, 0);
-            gl.Vertex2f(x + w, y);
-            gl.TexCoord2f(cw, 1);
-            gl.Vertex2f(x + w, y + h);
-            gl.TexCoord2f(0, 1);
-            gl.Vertex2f(x, y + h);
+        }
+        else
+        {
+            // (including area behind the face)
+            x = ST_X + 144;
+            y = ST_Y;
+            w = 176;
+            h = 32;
+            cw = 0.45f;
+        }
 
-            if(IS_NETGAME)
-            {
-                // (fiddly little bit above faceback)
-                x = ST_X + 144;
-                y = ST_Y;
-                w = 35;
-                h = 1;
-                cw = 0.446875f;
-                cw2 = 0.55625f;
-                ch = 0.03125f;
+        gl.TexCoord2f(cw, 0);
+        gl.Vertex2f(x, y);
+        gl.TexCoord2f(1, 0);
+        gl.Vertex2f(x + w, y);
+        gl.TexCoord2f(1, 1);
+        gl.Vertex2f(x + w, y + h);
+        gl.TexCoord2f(cw, 1);
+        gl.Vertex2f(x, y + h);
 
-                gl.TexCoord2f(cw, 0);
-                gl.Vertex2f(x, y);
-                gl.TexCoord2f(cw2, 0);
-                gl.Vertex2f(x + w, y);
-                gl.TexCoord2f(cw2, ch);
-                gl.Vertex2f(x + w, y + h);
-                gl.TexCoord2f(cw, ch);
-                gl.Vertex2f(x, y + h);
+        gl.End();
 
-                // (after faceback)
-                x = ST_X + 178;
-                y = ST_Y;
-                w = 142;
-                h = 32;
-                cw = 0.55625f;
+        if(st_armson)  // arms baground
+        {
+            GL_DrawPatch_CS(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
+        }
 
-            }
-            else
-            {
-                // (including area behind the face)
-                x = ST_X + 144;
-                y = ST_Y;
-                w = 176;
-                h = 32;
-                cw = 0.45f;
-            }
-
-            gl.TexCoord2f(cw, 0);
-            gl.Vertex2f(x, y);
-            gl.TexCoord2f(1, 0);
-            gl.Vertex2f(x + w, y);
-            gl.TexCoord2f(1, 1);
-            gl.Vertex2f(x + w, y + h);
-            gl.TexCoord2f(cw, 1);
-            gl.Vertex2f(x, y + h);
-
-            gl.End();
-
-            if(st_armson)  // arms baground
-            {
-                GL_DrawPatch_CS(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
-            }
-
-            if(IS_NETGAME) // faceback
-                GL_DrawPatch_CS(ST_FX, ST_Y+1, faceback.lump);
-
+        if(IS_NETGAME) // faceback
+            GL_DrawPatch_CS(ST_FX, ST_Y+1, faceback.lump);
     }
-    else if(cfg.statusbarAlpha != 0.0f)
-    {
-
-            // we can just render the full thing as normal
-            GL_DrawPatch(ST_X, ST_Y, sbar.lump);
-
-            if(st_armson)  // arms baground
-                GL_DrawPatch(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
-
-            if(IS_NETGAME) // faceback
-                GL_DrawPatch(ST_FX, ST_Y+1, faceback.lump);
-    }
-
 }
 
 int ST_calcPainOffset(void)
@@ -717,6 +718,14 @@ void ST_updateWidgets(void)
     ammotype_t ammotype;
     boolean found;
     player_t *plr = &players[consoleplayer];
+
+    if(st_blended)
+    {
+        statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
+        CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+    }
+    else
+        statusbarCounterAlpha = 1.0f;
 
     // must redirect the pointer if the ready weapon has changed.
     found = false;
@@ -1278,7 +1287,7 @@ void ST_createWidgets(void)
             continue; // Weapon does not take this ammo.
 
         STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum, &plyr->ammo[ammotype],
-                      &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
+                      &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
         found = true;
     }
     if(!found) // Weapon requires no ammo at all.
@@ -1289,11 +1298,11 @@ void ST_createWidgets(void)
 
         //STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum,
         //              &plyr->ammo[weaponinfo[plyr->readyweapon].ammo],
-        //              &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
+        //              &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
 
 
         STlib_initNum(&w_ready, ST_AMMOX, ST_AMMOY, tallnum, &largeammo,
-                      &st_statusbaron, ST_AMMOWIDTH, &cfg.statusbarCounterAlpha);
+                      &st_statusbaron, ST_AMMOWIDTH, &statusbarCounterAlpha);
     }
 
     // the last weapon type
@@ -1302,7 +1311,7 @@ void ST_createWidgets(void)
     // health percentage
     STlib_initPercent(&w_health, ST_HEALTHX, ST_HEALTHY, tallnum,
                       &plyr->health, &st_statusbaron, &tallpercent,
-                      &cfg.statusbarCounterAlpha);
+                      &statusbarCounterAlpha);
 
     // weapons owned
     for(i = 0; i < 6; i++)
@@ -1310,61 +1319,61 @@ void ST_createWidgets(void)
         STlib_initMultIcon(&w_arms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
                            ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i],
                            (int *) &plyr->weaponowned[i + 1], &st_armson,
-                           &cfg.statusbarCounterAlpha);
+                           &statusbarCounterAlpha);
     }
 
     // frags sum
     STlib_initNum(&w_frags, ST_FRAGSX, ST_FRAGSY, tallnum, &st_fragscount,
-                  &st_fragson, ST_FRAGSWIDTH, &cfg.statusbarCounterAlpha);
+                  &st_fragson, ST_FRAGSWIDTH, &statusbarCounterAlpha);
 
     // faces
     STlib_initMultIcon(&w_faces, ST_FACESX, ST_FACESY, faces, &st_faceindex,
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     // armor percentage - should be colored later
     STlib_initPercent(&w_armor, ST_ARMORX, ST_ARMORY, tallnum,
                       &plyr->armorpoints, &st_statusbaron, &tallpercent,
-                      &cfg.statusbarCounterAlpha);
+                      &statusbarCounterAlpha);
 
     // keyboxes 0-2
     STlib_initMultIcon(&w_keyboxes[0], ST_KEY0X, ST_KEY0Y, keys, &keyboxes[0],
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     STlib_initMultIcon(&w_keyboxes[1], ST_KEY1X, ST_KEY1Y, keys, &keyboxes[1],
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     STlib_initMultIcon(&w_keyboxes[2], ST_KEY2X, ST_KEY2Y, keys, &keyboxes[2],
-                       &st_statusbaron, &cfg.statusbarCounterAlpha);
+                       &st_statusbaron, &statusbarCounterAlpha);
 
     // ammo count (all four kinds)
     STlib_initNum(&w_ammo[0], ST_AMMO0X, ST_AMMO0Y, shortnum, &plyr->ammo[0],
-                  &st_statusbaron, ST_AMMO0WIDTH, &cfg.statusbarCounterAlpha);
+                  &st_statusbaron, ST_AMMO0WIDTH, &statusbarCounterAlpha);
 
     STlib_initNum(&w_ammo[1], ST_AMMO1X, ST_AMMO1Y, shortnum, &plyr->ammo[1],
-                  &st_statusbaron, ST_AMMO1WIDTH, &cfg.statusbarCounterAlpha);
+                  &st_statusbaron, ST_AMMO1WIDTH, &statusbarCounterAlpha);
 
     STlib_initNum(&w_ammo[2], ST_AMMO2X, ST_AMMO2Y, shortnum, &plyr->ammo[2],
-                  &st_statusbaron, ST_AMMO2WIDTH, &cfg.statusbarCounterAlpha);
+                  &st_statusbaron, ST_AMMO2WIDTH, &statusbarCounterAlpha);
 
     STlib_initNum(&w_ammo[3], ST_AMMO3X, ST_AMMO3Y, shortnum, &plyr->ammo[3],
-                  &st_statusbaron, ST_AMMO3WIDTH, &cfg.statusbarCounterAlpha);
+                  &st_statusbaron, ST_AMMO3WIDTH, &statusbarCounterAlpha);
 
     // max ammo count (all four kinds)
     STlib_initNum(&w_maxammo[0], ST_MAXAMMO0X, ST_MAXAMMO0Y, shortnum,
                   &plyr->maxammo[0], &st_statusbaron, ST_MAXAMMO0WIDTH,
-                  &cfg.statusbarCounterAlpha);
+                  &statusbarCounterAlpha);
 
     STlib_initNum(&w_maxammo[1], ST_MAXAMMO1X, ST_MAXAMMO1Y, shortnum,
                   &plyr->maxammo[1], &st_statusbaron, ST_MAXAMMO1WIDTH,
-                  &cfg.statusbarCounterAlpha);
+                  &statusbarCounterAlpha);
 
     STlib_initNum(&w_maxammo[2], ST_MAXAMMO2X, ST_MAXAMMO2Y, shortnum,
                   &plyr->maxammo[2], &st_statusbaron, ST_MAXAMMO2WIDTH,
-                  &cfg.statusbarCounterAlpha);
+                  &statusbarCounterAlpha);
 
     STlib_initNum(&w_maxammo[3], ST_MAXAMMO3X, ST_MAXAMMO3Y, shortnum,
                   &plyr->maxammo[3], &st_statusbaron, ST_MAXAMMO3WIDTH,
-                  &cfg.statusbarCounterAlpha);
+                  &statusbarCounterAlpha);
 
 }
 

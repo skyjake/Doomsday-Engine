@@ -528,8 +528,13 @@ void ST_updateWidgets(void)
     player_t *plr = &players[consoleplayer];
     int     lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
-    statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
-    CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+    if(st_blended)
+    {
+        statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
+        CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+    }
+    else
+        statusbarCounterAlpha = 1.0f;
 
     // must redirect the pointer if the ready weapon has changed.
     found = false;
@@ -957,10 +962,8 @@ static void ShadeChain(void)
     gl.Enable(DGL_TEXTURING);
 }
 
-/*
- *   ST_refreshBackground
- *
- *  Draws the whole statusbar backgound
+/**
+ * Draws the whole statusbar backgound.
  */
 void ST_refreshBackground(void)
 {
@@ -971,7 +974,31 @@ void ST_refreshBackground(void)
     // Clamp
     CLAMP(alpha, 0.0f, 1.0f);
 
-    if(st_blended && ((alpha < 1.0f) && (alpha > 0.0f)))
+    if(!st_blended)
+    {
+        // we can just render the full thing as normal
+
+        // topbits
+        GL_DrawPatch(0, 148, PatchLTFCTOP.lump);
+        GL_DrawPatch(290, 148, PatchRTFCTOP.lump);
+
+        // faces
+        GL_DrawPatch(0, 158, PatchBARBACK.lump);
+
+        if(P_GetPlayerCheats(pl) & CF_GODMODE)
+        {
+            GL_DrawPatch(16, 167, W_GetNumForName("GOD1"));
+            GL_DrawPatch(287, 167, W_GetNumForName("GOD2"));
+        }
+
+        if(!inventory)
+            GL_DrawPatch(34, 160, PatchSTATBAR.lump);
+        else
+            GL_DrawPatch(34, 160, PatchINVBAR.lump);
+
+        DrawChain();
+    }
+    else if(alpha < 1.0f && alpha > 0.0f)
     {
         gl.Color4f(1, 1, 1, alpha);
 
@@ -1010,30 +1037,6 @@ void ST_refreshBackground(void)
 
         DrawChain();
 
-    }
-    else if(alpha != 0.0f)
-    {
-        // we can just render the full thing as normal
-
-        // topbits
-        GL_DrawPatch(0, 148, PatchLTFCTOP.lump);
-        GL_DrawPatch(290, 148, PatchRTFCTOP.lump);
-
-        // faces
-        GL_DrawPatch(0, 158, PatchBARBACK.lump);
-
-        if(P_GetPlayerCheats(pl) & CF_GODMODE)
-        {
-            GL_DrawPatch(16, 167, W_GetNumForName("GOD1"));
-            GL_DrawPatch(287, 167, W_GetNumForName("GOD2"));
-        }
-
-        if(!inventory)
-            GL_DrawPatch(34, 160, PatchSTATBAR.lump);
-        else
-            GL_DrawPatch(34, 160, PatchINVBAR.lump);
-
-        DrawChain();
     }
 }
 

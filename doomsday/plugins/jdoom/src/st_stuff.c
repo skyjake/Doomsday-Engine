@@ -426,10 +426,9 @@ void ST_Register(void)
 
 void ST_refreshBackground(void)
 {
-
-    int x, y, w, h;
-    float cw, cw2, ch;
-    float alpha;
+    int         x, y, w, h;
+    float       cw, cw2, ch;
+    float       alpha;
 
     GL_SetPatch(sbar.lump);
 
@@ -437,99 +436,94 @@ void ST_refreshBackground(void)
     // Clamp
     CLAMP(alpha, 0.0f, 1.0f);
 
-    if(st_blended && ((alpha < 1.0f) && (alpha > 0.0f)))
+    if(!st_blended)
+    {
+        // we can just render the full thing as normal
+        GL_DrawPatch(ST_X, ST_Y, sbar.lump);
+
+        if(st_armson)  // arms baground
+            GL_DrawPatch(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
+
+        if(IS_NETGAME) // faceback
+            GL_DrawPatch(ST_FX, ST_Y+1, faceback.lump);
+    }
+    else if(alpha < 1.0f && alpha > 0.0f)
     {
         // Alpha blended status bar, we'll need to cut it up into smaller bits...
-
         gl.Color4f(1, 1, 1, alpha);
 
         gl.Begin(DGL_QUADS);
 
-            // (up to faceback if deathmatch, else ST_ARMS)
-            x = ST_X;
+        // (up to faceback if deathmatch, else ST_ARMS)
+        x = ST_X;
+        y = ST_Y;
+        w = st_armson ? 104 : 143;
+        h = 32;
+        cw = st_armson ? 0.325f : 0.446875f;
+
+        gl.TexCoord2f(0, 0);
+        gl.Vertex2f(x, y);
+        gl.TexCoord2f(cw, 0);
+        gl.Vertex2f(x + w, y);
+        gl.TexCoord2f(cw, 1);
+        gl.Vertex2f(x + w, y + h);
+        gl.TexCoord2f(0, 1);
+        gl.Vertex2f(x, y + h);
+
+        if(IS_NETGAME)
+        {
+            // (fiddly little bit above faceback)
+            x = ST_X + 144;
             y = ST_Y;
-            w = st_armson ? 104 : 143;
+            w = 35;
+            h = 1;
+            cw = 0.446875f;
+            cw2 = 0.55625f;
+            ch = 0.03125f;
+
+            gl.TexCoord2f(cw, 0);
+            gl.Vertex2f(x, y);
+            gl.TexCoord2f(cw2, 0);
+            gl.Vertex2f(x + w, y);
+            gl.TexCoord2f(cw2, ch);
+            gl.Vertex2f(x + w, y + h);
+            gl.TexCoord2f(cw, ch);
+            gl.Vertex2f(x, y + h);
+
+            // (after faceback)
+            x = ST_X + 178;
+            y = ST_Y;
+            w = 142;
             h = 32;
-            cw = st_armson ? 0.325f : 0.446875f;
+            cw = 0.55625f;
 
-            gl.TexCoord2f(0, 0);
-            gl.Vertex2f(x, y);
-            gl.TexCoord2f(cw, 0);
-            gl.Vertex2f(x + w, y);
-            gl.TexCoord2f(cw, 1);
-            gl.Vertex2f(x + w, y + h);
-            gl.TexCoord2f(0, 1);
-            gl.Vertex2f(x, y + h);
+        }
+        else
+        {
+            // (including area behind the face)
+            x = ST_X + 144;
+            y = ST_Y;
+            w = 176;
+            h = 32;
+            cw = 0.45f;
+        }
 
-            if(IS_NETGAME)
-            {
-                // (fiddly little bit above faceback)
-                x = ST_X + 144;
-                y = ST_Y;
-                w = 35;
-                h = 1;
-                cw = 0.446875f;
-                cw2 = 0.55625f;
-                ch = 0.03125f;
+        gl.TexCoord2f(cw, 0);
+        gl.Vertex2f(x, y);
+        gl.TexCoord2f(1, 0);
+        gl.Vertex2f(x + w, y);
+        gl.TexCoord2f(1, 1);
+        gl.Vertex2f(x + w, y + h);
+        gl.TexCoord2f(cw, 1);
+        gl.Vertex2f(x, y + h);
 
-                gl.TexCoord2f(cw, 0);
-                gl.Vertex2f(x, y);
-                gl.TexCoord2f(cw2, 0);
-                gl.Vertex2f(x + w, y);
-                gl.TexCoord2f(cw2, ch);
-                gl.Vertex2f(x + w, y + h);
-                gl.TexCoord2f(cw, ch);
-                gl.Vertex2f(x, y + h);
+        gl.End();
 
-                // (after faceback)
-                x = ST_X + 178;
-                y = ST_Y;
-                w = 142;
-                h = 32;
-                cw = 0.55625f;
+        if(st_armson)  // arms baground
+            GL_DrawPatch_CS(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
 
-            }
-            else
-            {
-                // (including area behind the face)
-                x = ST_X + 144;
-                y = ST_Y;
-                w = 176;
-                h = 32;
-                cw = 0.45f;
-            }
-
-            gl.TexCoord2f(cw, 0);
-            gl.Vertex2f(x, y);
-            gl.TexCoord2f(1, 0);
-            gl.Vertex2f(x + w, y);
-            gl.TexCoord2f(1, 1);
-            gl.Vertex2f(x + w, y + h);
-            gl.TexCoord2f(cw, 1);
-            gl.Vertex2f(x, y + h);
-
-            gl.End();
-
-            if(st_armson)  // arms baground
-            {
-                GL_DrawPatch_CS(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
-            }
-
-            if(IS_NETGAME) // faceback
-                GL_DrawPatch_CS(ST_FX, ST_Y+1, faceback.lump);
-
-    }
-    else if(alpha != 0.0f)
-    {
-
-            // we can just render the full thing as normal
-            GL_DrawPatch(ST_X, ST_Y, sbar.lump);
-
-            if(st_armson)  // arms baground
-                GL_DrawPatch(ST_ARMSBGX, ST_ARMSBGY, armsbg.lump);
-
-            if(IS_NETGAME) // faceback
-                GL_DrawPatch(ST_FX, ST_Y+1, faceback.lump);
+        if(IS_NETGAME) // faceback
+            GL_DrawPatch_CS(ST_FX, ST_Y+1, faceback.lump);
     }
 }
 
@@ -756,8 +750,13 @@ void ST_updateWidgets(void)
     boolean found;
     player_t *plr = &players[consoleplayer];
 
-    statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
-    CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+    if(st_blended)
+    {
+        statusbarCounterAlpha = cfg.statusbarCounterAlpha - hudHideAmount;
+        CLAMP(statusbarCounterAlpha, 0.0f, 1.0f);
+    }
+    else
+        statusbarCounterAlpha = 1.0f;
 
     // must redirect the pointer if the ready weapon has changed.
     found = false;
