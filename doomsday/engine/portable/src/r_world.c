@@ -2386,7 +2386,7 @@ void R_InitLevel(char *level_id)
     // Invalidate old cmds and init player values.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player[i].invoid = false;
+        players[i].invoid = false;
         if(isServer && players[i].ingame)
             clients[i].runTime = SECONDS_TO_TICKS(gameTime);
     }
