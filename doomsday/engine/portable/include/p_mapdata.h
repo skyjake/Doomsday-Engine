@@ -148,6 +148,44 @@ extern uint     numUniqueLines;
 extern uint    *missingFronts;
 extern uint     numMissingFronts;
 
+typedef struct gamemap_s {
+    char        levelid[9];
+    uint        numvertexes;
+    vertex_t   *vertexes;
+
+    uint        numsegs;
+    seg_t      *segs;
+
+    uint        numsectors;
+    sector_t   *sectors;
+
+    uint        numsubsectors;
+    subsector_t *subsectors;
+
+    uint        numnodes;
+    node_t     *nodes;
+
+    uint        numlines;
+    line_t     *lines;
+
+    uint        numsides;
+    side_t     *sides;
+
+    uint        po_NumPolyobjs;
+    polyobj_t  *polyobjs;
+
+    int         numthings;
+
+    long       *blockmaplump;           // offsets in blockmap are from here
+    long       *blockmap;
+
+    uint        bmapwidth, bmapheight;  // in mapblocks
+    fixed_t     bmaporgx, bmaporgy;     // origin of block map
+    struct linkmobj_s *blockrings;             // for thing rings
+
+    byte       *rejectmatrix;
+} gamemap_t;
+
 void            P_PolyobjChanged(polyobj_t *po);
 void            P_FloorChanged(sector_t *sector);
 void            P_CeilingChanged(sector_t *sector);

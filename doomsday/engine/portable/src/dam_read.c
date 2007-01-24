@@ -68,7 +68,7 @@ enum {
 };
 
 typedef struct {
-    struct gamemap_s *map;
+    gamemap_t *map;
     size_t      elmsize;
     uint        elements;
     uint        numProps;
@@ -83,11 +83,11 @@ typedef struct {
 
 static int P_CallbackEX(int dataType, unsigned int startIndex,
                         const byte *buffer, void* context,
-                        int (*callback)(struct gamemap_s  *map, int dataType,
+                        int (*callback)(gamemap_t  *map, int dataType,
                                 void* ptr, uint elmIdx, const readprop_t* prop,
                                 const byte *buffer));
 
-static int ReadMapProperty(struct gamemap_s  *map, int dataType, void* ptr,
+static int ReadMapProperty(gamemap_t  *map, int dataType, void* ptr,
                            uint elmIdx, const readprop_t* prop,
                            const byte *buffer);
 
@@ -99,7 +99,7 @@ static int ReadMapProperty(struct gamemap_s  *map, int dataType, void* ptr,
 
 // CODE --------------------------------------------------------------------
 
-boolean DAM_ReadMapDataFromLump(struct gamemap_s *map, mapdatalumpinfo_t *mapLump,
+boolean DAM_ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
                                 uint startIndex, readprop_t *props,
                                 uint numProps)
 {
@@ -147,7 +147,7 @@ boolean DAM_ReadMapDataFromLump(struct gamemap_s *map, mapdatalumpinfo_t *mapLum
  * type checking so that incompatible types are not assigned.
  * Simple conversions are also done, e.g., float to fixed.
  */
-static void ReadValue(struct gamemap_s* map, valuetype_t valueType, void* dst,
+static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                       const byte *src, const readprop_t* prop, uint element)
 {
     int flags = prop->flags;
@@ -526,7 +526,7 @@ static void ReadValue(struct gamemap_s* map, valuetype_t valueType, void* dst,
     }
 }
 
-static int ReadCustomMapProperty(struct gamemap_s* map, int dataType, void *ptr,
+static int ReadCustomMapProperty(gamemap_t* map, int dataType, void *ptr,
                                  uint elmIdx, const readprop_t* prop,
                                  const byte *src)
 {
@@ -565,7 +565,7 @@ static int ReadCustomMapProperty(struct gamemap_s* map, int dataType, void *ptr,
     return true;
 }
 
-static int ReadMapProperty(struct gamemap_s* map, int dataType, void* ptr,
+static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
                            uint elmIdx, const readprop_t* prop, const byte *src)
 {
     // Handle unknown (game specific) properties.
@@ -886,7 +886,7 @@ static int ReadMapProperty(struct gamemap_s* map, int dataType, void* ptr,
  */
 static int P_CallbackEX(int dataType, uint startIndex, const byte *buffer,
                         void* context,
-                        int (*callback)(struct gamemap_s* map, int dataType,
+                        int (*callback)(gamemap_t* map, int dataType,
                                  void* ptr, uint elmIdx, const readprop_t* prop,
                                  const byte *buffer))
 {
@@ -903,7 +903,7 @@ static int P_CallbackEX(int dataType, uint startIndex, const byte *buffer,
     uint        idx;
     uint        i = 0, k;
     damargs_t  *args = (damargs_t*) context;
-    struct gamemap_s *map = args->map;
+    gamemap_t *map = args->map;
     uint        blockLimit = (args->elements / NUMBLOCKS) * NUMBLOCKS;
     void       *ptr;
     const readprop_t *prop;

@@ -101,47 +101,6 @@ typedef struct linelist_t {
     struct linelist_t *next;
 } linelist_t;
 
-//
-// Types used in map data handling
-//
-typedef struct gamemap_s {
-    char        levelid[9];
-    uint        numvertexes;
-    vertex_t   *vertexes;
-
-    uint        numsegs;
-    seg_t      *segs;
-
-    uint        numsectors;
-    sector_t   *sectors;
-
-    uint        numsubsectors;
-    subsector_t *subsectors;
-
-    uint        numnodes;
-    node_t     *nodes;
-
-    uint        numlines;
-    line_t     *lines;
-
-    uint        numsides;
-    side_t     *sides;
-
-    uint        po_NumPolyobjs;
-    polyobj_t  *polyobjs;
-
-    int         numthings;
-
-    long       *blockmaplump;           // offsets in blockmap are from here
-    long       *blockmap;
-
-    uint        bmapwidth, bmapheight;  // in mapblocks
-    fixed_t     bmaporgx, bmaporgy;     // origin of block map
-    struct linkmobj_s *blockrings;             // for thing rings
-
-    byte       *rejectmatrix;
-} gamemap_t;
-
 /**
  * Registered by the game during init, these are used by DAM when reading
  * the map lump data as well as the DDay internal data types. The data is
@@ -178,8 +137,8 @@ typedef struct mapdatalumpnode_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static boolean  readMapData(struct gamemap_s *map, int doClass,
-                            selectprop_t *props, uint numProps);
+static boolean  readMapData(gamemap_t *map, int doClass, selectprop_t *props,
+                            uint numProps);
 static boolean  determineMapDataFormat(void);
 
 static void     finishLineDefs(gamemap_t *map);

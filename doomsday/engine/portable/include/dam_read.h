@@ -31,6 +31,8 @@
 #ifndef __DOOMSDAY_ARCHIVED_MAP_READ_H__
 #define __DOOMSDAY_ARCHIVED_MAP_READ_H__
 
+#include "de_play.h"
+
 // Data type flags
 #define DT_UNSIGNED   0x01
 #define DT_FRACBITS   0x02
@@ -49,7 +51,7 @@ typedef struct {
     int         offset;
 } readprop_t;
 
-boolean DAM_ReadMapDataFromLump(struct gamemap_s *map, mapdatalumpinfo_t *mapLump,
+boolean DAM_ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
                                 uint startIndex, readprop_t *props,
                                 uint numProps);
 #endif
