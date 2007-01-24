@@ -2383,12 +2383,12 @@ void R_InitLevel(char *level_id)
         mapambient = 0;
     }
 
-    // Invalidate old cmds.
-    if(isServer)
+    // Invalidate old cmds and init player values.
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].ingame)
-                clients[i].runTime = SECONDS_TO_TICKS(gameTime);
+        player[i].invoid = false;
+        if(isServer && players[i].ingame)
+            clients[i].runTime = SECONDS_TO_TICKS(gameTime);
     }
 
     // Spawn all type-triggered particle generators.
