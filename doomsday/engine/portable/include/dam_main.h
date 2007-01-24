@@ -147,7 +147,7 @@ void        DAM_Init(void);
 void        DAM_LockCustomPropertys(void);
 
 const char* DAM_Str(int prop);
-void       *DAM_IndexToPtr(struct gamemap_s* map, int objectType, uint id);
+void       *DAM_IndexToPtr(gamemap_t* map, int objectType, uint id);
 maplumpinfo_t* DAM_MapLumpInfoForLumpClass(int lumpClass);
 long        DAM_VertexIdx(long idx);
 
