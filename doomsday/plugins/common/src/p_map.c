@@ -139,7 +139,7 @@ static fixed_t topslope, bottomslope;
 static mobj_t *usething;
 
 static mobj_t *bombsource, *bombspot;
-static int     bombdamage;
+static int     bombdistance;
 
 static boolean crushchange;
 static boolean nofit;
@@ -149,7 +149,7 @@ static fixed_t endPos[3]; // end position for trajectory checks
 
 #if __JHEXEN__
 static mobj_t *tsthing;
-static int     bombdistance;
+static int     bombdamage;
 static boolean DamageSource;
 static mobj_t *onmobj; // generic global onmobj...used for landing on pods/players
 
@@ -1977,7 +1977,7 @@ static boolean PIT_RadiusAttack(mobj_t *thing, void *data)
     if(dist < 0)
         dist = 0;
 
-    if(dist >= bombdamage)
+    if(dist >= bombdistance)
         return true;            // out of range
 
     if(P_CheckSight(thing, bombspot))
@@ -1990,7 +1990,7 @@ static boolean PIT_RadiusAttack(mobj_t *thing, void *data)
             damage >>= 2;
         }
 #else
-        damage = bombdamage - dist;
+        damage = bombdistance - dist;
 #endif
         // must be in direct path
         P_DamageMobj(thing, bombspot, bombsource, damage);
@@ -2006,18 +2006,19 @@ static boolean PIT_RadiusAttack(mobj_t *thing, void *data)
 void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance,
                     boolean damageSource)
 #else
-void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage)
+void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
 #endif
 {
     int     x, y, xl, xh, yl, yh;
     fixed_t dist;
 
-    dist = (damage + MAXRADIUS) << FRACBITS;
+    dist = (distance + MAXRADIUS) << FRACBITS;
     P_PointToBlock(spot->pos[VX] - dist, spot->pos[VY] - dist, &xl, &yl);
     P_PointToBlock(spot->pos[VX] + dist, spot->pos[VY] + dist, &xh, &yh);
 
     bombspot = spot;
-    bombdamage = damage;
+    bombdistance = distance;
+
 #if __JHERETIC__
     if(spot->type == MT_POD && spot->target)
         bombsource = spot->target;
@@ -2026,7 +2027,7 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage)
         bombsource = source;
 
 #if __JHEXEN__
-    bombdistance = distance;
+    bombdamage = damage;
     DamageSource = damageSource;
 #endif
 

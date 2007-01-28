@@ -52,7 +52,7 @@ boolean         P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y,
 void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance,
                     boolean damageSource);
 #else
-void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage);
+void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance);
 #endif
 
 #if !__JHEXEN__
