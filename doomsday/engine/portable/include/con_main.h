@@ -35,6 +35,7 @@
 
 #include "con_buffer.h"
 
+#define CMDLINE_SIZE 256
 #define MAX_ARGS    256
 
 #define OBSOLETE        CVF_NO_ARCHIVE|CVF_HIDE

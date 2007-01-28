@@ -348,11 +348,11 @@ void Rend_Console(void)
     float       x, y;
     float       closeFade = 1;
     float       gtosMulY = glScreenHeight / 200.0f;
-    char        buff[256], temp[256], *cmdLine;
+    char        buff[CMDLINE_SIZE + 1], temp[CMDLINE_SIZE + 1], *cmdLine;
     float       fontScaledY;
     int         bgX = 64, bgY = 64;
     int         textOffsetY = 0;
-    int         cmdCursor;
+    uint        cmdCursor;
     cbuffer_t  *buffer;
 
     if(ConsoleY == 0)
@@ -485,7 +485,7 @@ void Rend_Console(void)
 
     // The command line.
     strcpy(buff, ">");
-    strcat(buff, cmdLine);
+    strncat(buff, cmdLine, 255);
 
     if(Cfont.Filter)
         Cfont.Filter(buff);

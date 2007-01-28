@@ -69,8 +69,6 @@
 // Needed because we can't sizeof a malloc'd block.
 #define PRBUFF_SIZE 655365
 
-#define CMDLINE_SIZE 256
-
 // Operators for the "if" command.
 enum {
     IF_EQUAL,
@@ -175,7 +173,7 @@ static boolean ConsoleActive;   // Is the console active?
 static timespan_t ConsoleTime;  // How many seconds has the console been open?
 
 static char cmdLine[CMDLINE_SIZE]; // The command line.
-static int cmdCursor;          // Position of the cursor on the command line.
+static uint cmdCursor;          // Position of the cursor on the command line.
 static boolean cmdInsMode;      // Are we in insert input mode.
 static boolean conInputLock;    // While locked, most user input is disabled.
 
@@ -562,7 +560,7 @@ void Con_Ticker(timespan_t time)
                         doit = false;
             }
 
-            if(doit)
+            if(doit && cmdCursor < CMDLINE_SIZE)
             {
                 strcat(cmdLine, " ");
                 cmdCursor++;
@@ -1240,14 +1238,20 @@ static int completeWord(int mode)
     // Was a single completion found?
     if(matchedWordCount == 1 || (mode == 1 && matchedWordCount > 1))
     {
-        strcpy(wordBegin, completion);
-        cmdCursor = strlen(cmdLine);
+        if(wordBegin - cmdLine + strlen(completion) < CMDLINE_SIZE)
+        {
+            strcpy(wordBegin, completion);
+            cmdCursor = strlen(cmdLine);
+        }
     }
     else if(matchedWordCount > 1)
     {
         // More than one completion; only complete the unambiguous part.
-        strcpy(wordBegin, unambiguous);
-        cmdCursor = strlen(cmdLine);
+        if(wordBegin - cmdLine + strlen(unambiguous) < CMDLINE_SIZE)
+        {
+            strcpy(wordBegin, unambiguous);
+            cmdCursor = strlen(cmdLine);
+        }
     }
 
     return matchedWordCount;
@@ -1670,14 +1674,27 @@ boolean Con_Responder(event_t *event)
             return true;
         }
 
-        if(cmdCursor < CMDLINE_SIZE && !cmdInsMode)
-        {
-            // Push the rest of the stuff forwards.
-            memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor,
-                    sizeof(cmdLine) - cmdCursor - 1);
 
-            // The last char is always zero, though.
-            cmdLine[sizeof(cmdLine) - 1] = 0;
+        // If not in insert mode, push the rest of the command-line forward.
+        if(!cmdInsMode)
+        {
+            uint    len = strlen(cmdLine);
+
+            if(cmdCursor < len)
+            {
+                if(len < CMDLINE_SIZE - 1)
+                {
+                    memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor,
+                            sizeof(cmdLine) - cmdCursor - 1);
+
+                    // The last char is always zero, though.
+                    cmdLine[sizeof(cmdLine) - 1] = 0;
+                }
+                else
+                {
+                    return true; // Can't place character.
+                }
+            }
         }
 
         cmdLine[cmdCursor] = ch;
