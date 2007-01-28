@@ -185,9 +185,6 @@ extern ui_page_t *ui_page;         // Active page.
 extern boolean  ui_active;
 extern ui_color_t ui_colors[];
 
-extern int      uiMouseWidth;
-extern int      uiMouseHeight;
-
 void            UI_Register(void);
 
 // Functions.

@@ -43,6 +43,8 @@
 // MACROS ------------------------------------------------------------------
 
 #define SCROLL_TIME     3
+#define UICURSORWIDTH   16
+#define UICURSORHEIGHT  32
 
 enum {
     UITEX_MOUSE,
@@ -101,8 +103,8 @@ float   ui_target_alpha = 1.0;          // Target alpha for the entire UI.
 boolean ui_draw_game = false;           // The game view should be drawn while
                                         // the UI active.
 
-int     uiMouseWidth = 16;
-int     uiMouseHeight = 32;
+float   uiCursorWidthMul = 1.0;
+float   uiCursorHeightMul = 1.0;
 
 // Modify these colors to change the look of the UI.
 ui_color_t ui_colors[NUM_UI_COLORS] = {
@@ -127,8 +129,8 @@ static boolean allowEscape; // Allow the user to exit a ui page using the escape
 void UI_Register(void)
 {
     // Cvars
-    C_VAR_INT("ui-cursor-width", &uiMouseWidth, CVF_NO_MAX, 1, 0);
-    C_VAR_INT("ui-cursor-height", &uiMouseHeight, CVF_NO_MAX, 1, 0);
+    C_VAR_FLOAT("ui-cursor-width", &uiCursorWidthMul, 0, 0.5f, 1.5f);
+    C_VAR_FLOAT("ui-cursor-height", &uiCursorHeightMul, 0, 0.5f, 1.5f);
 
     // Ccmds
     C_CMD("uicolor", "sfff", UIColor);
@@ -2288,12 +2290,22 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
     }
 }
 
+/**
+ * Draw the mouse cursor at the given x, y co-ordinates.
+ *
+ * @param x         X co-ordinate.
+ * @param y         Y co-ordinate.
+ */
 void UI_DrawMouse(int x, int y)
 {
-    float   scale = MAX_OF(1, glScreenWidth / 640.0f);
+    float   scale, xscale, yscale;
 
     if(!ui_showmouse)
         return;
+
+    scale = MAX_OF(1, glScreenWidth / 640.0f);
+    xscale = UICURSORWIDTH * uiCursorWidthMul * scale;
+    yscale = UICURSORHEIGHT * uiCursorHeightMul * scale;
 
     x--;
     y--;
@@ -2303,11 +2315,11 @@ void UI_DrawMouse(int x, int y)
     gl.TexCoord2f(0, 0);
     gl.Vertex2f(x, y);
     gl.TexCoord2f(1, 0);
-    gl.Vertex2f(x + uiMouseWidth * scale, y);
+    gl.Vertex2f(x + xscale, y);
     gl.TexCoord2f(1, 1);
-    gl.Vertex2f(x + uiMouseWidth * scale, y + uiMouseHeight * scale);
+    gl.Vertex2f(x + xscale, y + yscale);
     gl.TexCoord2f(0, 1);
-    gl.Vertex2f(x, y + uiMouseHeight * scale);
+    gl.Vertex2f(x, y + yscale);
     gl.End();
 }
 
