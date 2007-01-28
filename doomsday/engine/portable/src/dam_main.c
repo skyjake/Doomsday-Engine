@@ -1299,7 +1299,7 @@ static boolean validateMapData(void)
     mapdatalumpnode_t *node;
     mapdatalumpinfo_t *mapLump;
 
-    memset(count, 0, sizeof(uint)*NUM_LUMPCLASSES);
+    memset(count, 0, sizeof(count));
 
     node = mapDataLumps;
     while(node)

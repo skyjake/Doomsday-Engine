@@ -29,6 +29,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		B0066A870B6CA76C009BE854 /* dam_main.c in Sources */ = {isa = PBXBuildFile; fileRef = B0066A850B6CA76C009BE854 /* dam_main.c */; };
+		B0066A880B6CA76C009BE854 /* dam_read.c in Sources */ = {isa = PBXBuildFile; fileRef = B0066A860B6CA76C009BE854 /* dam_read.c */; };
 		B010785F08563447000BF0D8 /* am_map.c in Sources */ = {isa = PBXBuildFile; fileRef = B010785808563447000BF0D8 /* am_map.c */; };
 		B010786008563447000BF0D8 /* hu_lib.c in Sources */ = {isa = PBXBuildFile; fileRef = B010785908563447000BF0D8 /* hu_lib.c */; };
 		B010786108563447000BF0D8 /* hu_msg.c in Sources */ = {isa = PBXBuildFile; fileRef = B010785A08563447000BF0D8 /* hu_msg.c */; };
@@ -131,7 +133,6 @@
 		B0237B4706F3744E0059676A /* p_xgsec.c in Sources */ = {isa = PBXBuildFile; fileRef = B0D5B6F406EE44EB00B98CC8 /* p_xgsec.c */; };
 		B0237B4806F3744E0059676A /* r_common.c in Sources */ = {isa = PBXBuildFile; fileRef = B0D5B6F506EE44EB00B98CC8 /* r_common.c */; };
 		B0237B4906F3744E0059676A /* x_hair.c in Sources */ = {isa = PBXBuildFile; fileRef = B0D5B6F606EE44EB00B98CC8 /* x_hair.c */; };
-		B027965A099604D50003FB00 /* p_arch.h in Headers */ = {isa = PBXBuildFile; fileRef = B0279658099604D50003FB00 /* p_arch.h */; };
 		B027965B099604D50003FB00 /* r_lgrid.h in Headers */ = {isa = PBXBuildFile; fileRef = B0279659099604D50003FB00 /* r_lgrid.h */; };
 		B0346DC30A10F18D00C8BAB2 /* edit_bias.c in Sources */ = {isa = PBXBuildFile; fileRef = B0346DC20A10F18D00C8BAB2 /* edit_bias.c */; };
 		B0346DC80A10F1B200C8BAB2 /* dd_maptypes.h in Headers */ = {isa = PBXBuildFile; fileRef = B0346DC40A10F1B100C8BAB2 /* dd_maptypes.h */; };
@@ -334,7 +335,6 @@
 		B0D5B7E606EF6E1A00B98CC8 /* dehmain.c in Sources */ = {isa = PBXBuildFile; fileRef = B0D5B7E506EF6E1A00B98CC8 /* dehmain.c */; };
 		B0DAE5C009823D7C000A8265 /* p_dmu.c in Sources */ = {isa = PBXBuildFile; fileRef = B0DAE5B209823CEB000A8265 /* p_dmu.c */; };
 		B0DAE5CE09823E47000A8265 /* p_dmu.h in Headers */ = {isa = PBXBuildFile; fileRef = B0DAE5CD09823E47000A8265 /* p_dmu.h */; };
-		B0DAE5E9098261F8000A8265 /* p_arch.c in Sources */ = {isa = PBXBuildFile; fileRef = B0DAE5E8098261F8000A8265 /* p_arch.c */; };
 		B0DD15B609914A3E00B4D3AE /* analyze.c in Sources */ = {isa = PBXBuildFile; fileRef = B0DD15B509914A3E00B4D3AE /* analyze.c */; };
 		B0E0CF2709BAF826002BE2BF /* d_api.c in Sources */ = {isa = PBXBuildFile; fileRef = B0E0CF2609BAF826002BE2BF /* d_api.c */; };
 		B0F1780B087C5A230051F24A /* cl_def.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC38D06B3FA91005824AD /* cl_def.h */; };
@@ -739,6 +739,10 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		B0066A850B6CA76C009BE854 /* dam_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dam_main.c; path = ../../engine/portable/src/dam_main.c; sourceTree = SOURCE_ROOT; };
+		B0066A860B6CA76C009BE854 /* dam_read.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dam_read.c; path = ../../engine/portable/src/dam_read.c; sourceTree = SOURCE_ROOT; };
+		B0066A890B6CA789009BE854 /* dam_main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dam_main.h; path = ../../engine/portable/include/dam_main.h; sourceTree = SOURCE_ROOT; };
+		B0066A8A0B6CA789009BE854 /* dam_read.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dam_read.h; path = ../../engine/portable/include/dam_read.h; sourceTree = SOURCE_ROOT; };
 		B00B8A370A261D2C0019238B /* createfont_osx.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; path = createfont_osx.py; sourceTree = SOURCE_ROOT; };
 		B0107851085633C6000BF0D8 /* hu_lib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hu_lib.h; path = ../../plugins/common/include/hu_lib.h; sourceTree = SOURCE_ROOT; };
 		B0107852085633C6000BF0D8 /* hu_msg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hu_msg.h; path = ../../plugins/common/include/hu_msg.h; sourceTree = SOURCE_ROOT; };
@@ -867,7 +871,6 @@
 		B0237C4506F443120059676A /* sn_sonix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sn_sonix.c; path = ../../plugins/jhexen/src/sn_sonix.c; sourceTree = SOURCE_ROOT; };
 		B0237C4606F443120059676A /* sv_save.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sv_save.c; path = ../../plugins/jhexen/src/sv_save.c; sourceTree = SOURCE_ROOT; };
 		B0237C4706F443120059676A /* tables.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tables.c; path = ../../plugins/jhexen/src/tables.c; sourceTree = SOURCE_ROOT; };
-		B0279658099604D50003FB00 /* p_arch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = p_arch.h; path = ../../engine/portable/include/p_arch.h; sourceTree = SOURCE_ROOT; };
 		B0279659099604D50003FB00 /* r_lgrid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = r_lgrid.h; path = ../../engine/portable/include/r_lgrid.h; sourceTree = SOURCE_ROOT; };
 		B02AC38D06B3FA91005824AD /* cl_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cl_def.h; path = ../../engine/portable/include/cl_def.h; sourceTree = SOURCE_ROOT; };
 		B02AC38E06B3FA91005824AD /* cl_frame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cl_frame.h; path = ../../engine/portable/include/cl_frame.h; sourceTree = SOURCE_ROOT; };
@@ -1316,7 +1319,6 @@
 		B0DAE5B209823CEB000A8265 /* p_dmu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = p_dmu.c; path = ../../engine/portable/src/p_dmu.c; sourceTree = SOURCE_ROOT; };
 		B0DAE5BD09823D6C000A8265 /* template.c.template */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = template.c.template; path = ../../engine/portable/src/template.c.template; sourceTree = SOURCE_ROOT; };
 		B0DAE5CD09823E47000A8265 /* p_dmu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = p_dmu.h; path = ../../engine/portable/include/p_dmu.h; sourceTree = SOURCE_ROOT; };
-		B0DAE5E8098261F8000A8265 /* p_arch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = p_arch.c; path = ../../engine/portable/src/p_arch.c; sourceTree = SOURCE_ROOT; };
 		B0DD15B509914A3E00B4D3AE /* analyze.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = analyze.c; path = ../../external/glbsp/src/analyze.c; sourceTree = SOURCE_ROOT; };
 		B0DDF02F06EDF8C800C418E3 /* drOpenGL.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = drOpenGL.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		B0DDF03006EDF8C800C418E3 /* drOpenGL-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "drOpenGL-Info.plist"; sourceTree = "<group>"; };
@@ -1485,6 +1487,8 @@
 		29B97315FDCFA39411CA2CEA /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B0066A850B6CA76C009BE854 /* dam_main.c */,
+				B0066A860B6CA76C009BE854 /* dam_read.c */,
 				B01538F80B46E462006C9D45 /* con_buffer.c */,
 				B0BEDB7D0B3B40620096F91C /* con_data.c */,
 				B0BEDB7E0B3B40620096F91C /* gl_texmanager.c */,
@@ -1602,7 +1606,6 @@
 				B02AC8B406B41788005824AD /* ui_main.c */,
 				B02AC8B506B41788005824AD /* ui_mpi.c */,
 				B02AC8B606B41788005824AD /* ui_panel.c */,
-				B0DAE5E8098261F8000A8265 /* p_arch.c */,
 				B0134FE006ECEFAD007861F2 /* dd_uinit.c */,
 				B02AC8B906B41788005824AD /* lzss.c */,
 				B02AC8BA06B41788005824AD /* sys_console.c */,
@@ -1855,6 +1858,8 @@
 		B02AC73506B3FBD4005824AD /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B0066A890B6CA789009BE854 /* dam_main.h */,
+				B0066A8A0B6CA789009BE854 /* dam_read.h */,
 				B01538FA0B46E479006C9D45 /* con_buffer.h */,
 				B08174030A88FD5A0081B2E1 /* m_md5.h */,
 				B0C8FBE90A3F4DEF00CFA4A5 /* dd_uinit.h */,
@@ -1863,7 +1868,6 @@
 				B0346DC50A10F1B100C8BAB2 /* de_edit.h */,
 				B0346DC60A10F1B100C8BAB2 /* edit_bias.h */,
 				B0346DC70A10F1B100C8BAB2 /* p_maptypes.h */,
-				B0279658099604D50003FB00 /* p_arch.h */,
 				B0279659099604D50003FB00 /* r_lgrid.h */,
 				B0E3D3E107903967007811F6 /* rend_bias.h */,
 				B013500E06EDD51E007861F2 /* sys_dylib.h */,
@@ -2390,7 +2394,6 @@
 				B0F1789C087C5A230051F24A /* sys_dylib.h in Headers */,
 				B0F1789D087C5A230051F24A /* rend_bias.h in Headers */,
 				B0DAE5CE09823E47000A8265 /* p_dmu.h in Headers */,
-				B027965A099604D50003FB00 /* p_arch.h in Headers */,
 				B027965B099604D50003FB00 /* r_lgrid.h in Headers */,
 				B0346DC80A10F1B200C8BAB2 /* dd_maptypes.h in Headers */,
 				B0346DC90A10F1B200C8BAB2 /* de_edit.h in Headers */,
@@ -3108,7 +3111,6 @@
 				B0F1791C087C5A230051F24A /* rend_bias.c in Sources */,
 				B0F1791D087C5A230051F24A /* r_lgrid.c in Sources */,
 				B0DAE5C009823D7C000A8265 /* p_dmu.c in Sources */,
-				B0DAE5E9098261F8000A8265 /* p_arch.c in Sources */,
 				B0346DC30A10F18D00C8BAB2 /* edit_bias.c in Sources */,
 				B0C8F44C0A3F10FC00CFA4A5 /* DoomsdayRunner.m in Sources */,
 				B0C8F44D0A3F10FC00CFA4A5 /* SDLMain.m in Sources */,
@@ -3120,6 +3122,8 @@
 				B0BEDB810B3B40620096F91C /* gl_texmanager.c in Sources */,
 				B0BEDB820B3B40620096F91C /* rend_console.c in Sources */,
 				B01538F90B46E462006C9D45 /* con_buffer.c in Sources */,
+				B0066A870B6CA76C009BE854 /* dam_main.c in Sources */,
+				B0066A880B6CA76C009BE854 /* dam_read.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

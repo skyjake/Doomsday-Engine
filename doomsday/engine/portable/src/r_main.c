@@ -98,7 +98,7 @@ char    skyflatname[9] = "F_SKY";
 
 float   frameTimePos;           // 0...1: fractional part for sharp game tics
 
-int     loadInStartupMode = true;
+int     loadInStartupMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
