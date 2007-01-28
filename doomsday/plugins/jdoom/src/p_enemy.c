@@ -1344,7 +1344,7 @@ void C_DECL A_VileAttack(mobj_t *actor)
     // move the fire between the vile and the player
     fire->pos[VX] = actor->target->pos[VX] - FixedMul(24 * FRACUNIT, finecosine[an]);
     fire->pos[VY] = actor->target->pos[VY] - FixedMul(24 * FRACUNIT, finesine[an]);
-    P_RadiusAttack(fire, actor, 70, 70);
+    P_RadiusAttack(fire, actor, 70, 69);
 }
 
 /*
@@ -1625,7 +1625,7 @@ void C_DECL A_Fall(mobj_t *actor)
 
 void C_DECL A_Explode(mobj_t *thingy)
 {
-    P_RadiusAttack(thingy, thingy->target, 128, 128);
+    P_RadiusAttack(thingy, thingy->target, 128, 127);
 }
 
 /*

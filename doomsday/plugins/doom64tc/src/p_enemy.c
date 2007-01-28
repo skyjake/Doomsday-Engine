@@ -2548,8 +2548,8 @@ void C_DECL A_Explode(mobj_t *thingy)
         radius = 128;
     // < d64tc
 
-    //P_RadiusAttack(thingy, thingy->target, 128, 128); // d64tc
-    P_RadiusAttack(thingy, thingy->target, radius, radius);
+    //P_RadiusAttack(thingy, thingy->target, 128, 127); // d64tc
+    P_RadiusAttack(thingy, thingy->target, radius, radius - 1);
 }
 
 /**

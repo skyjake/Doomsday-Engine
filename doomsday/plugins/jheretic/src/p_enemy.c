@@ -1995,7 +1995,7 @@ void C_DECL A_Explode(mobj_t *actor)
         break;
     }
 
-    P_RadiusAttack(actor, actor->target, damage, damage);
+    P_RadiusAttack(actor, actor->target, damage, damage - 1);
     P_HitFloor(actor);
 }
 
@@ -2271,7 +2271,7 @@ void C_DECL A_VolcBallImpact(mobj_t *ball)
         ball->pos[VZ] += 28 * FRACUNIT;
     }
 
-    P_RadiusAttack(ball, ball->target, 25, 25);
+    P_RadiusAttack(ball, ball->target, 25, 24);
     for(i = 0; i < 4; i++)
     {
         tiny = P_SpawnMobj(ball->pos[VX], ball->pos[VY], ball->pos[VZ], MT_VOLCANOTBLAST);

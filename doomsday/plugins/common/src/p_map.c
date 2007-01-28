@@ -139,6 +139,7 @@ static fixed_t topslope, bottomslope;
 static mobj_t *usething;
 
 static mobj_t *bombsource, *bombspot;
+static int     bombdamage;
 static int     bombdistance;
 
 static boolean crushchange;
@@ -149,7 +150,6 @@ static fixed_t endPos[3]; // end position for trajectory checks
 
 #if __JHEXEN__
 static mobj_t *tsthing;
-static int     bombdamage;
 static boolean DamageSource;
 static mobj_t *onmobj; // generic global onmobj...used for landing on pods/players
 
@@ -1980,19 +1980,16 @@ static boolean PIT_RadiusAttack(mobj_t *thing, void *data)
     if(dist >= bombdistance)
         return true;            // out of range
 
+    // Must be in direct path.
     if(P_CheckSight(thing, bombspot))
     {
         int     damage;
-#if __JHEXEN__
+
         damage = (bombdamage * (bombdistance - dist) / bombdistance) + 1;
+#if __JHEXEN__
         if(thing->player)
-        {
             damage >>= 2;
-        }
-#else
-        damage = bombdistance - dist;
 #endif
-        // must be in direct path
         P_DamageMobj(thing, bombspot, bombsource, damage);
     }
 
@@ -2017,6 +2014,7 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
     P_PointToBlock(spot->pos[VX] + dist, spot->pos[VY] + dist, &xh, &yh);
 
     bombspot = spot;
+    bombdamage = damage;
     bombdistance = distance;
 
 #if __JHERETIC__
@@ -2027,7 +2025,6 @@ void P_RadiusAttack(mobj_t *spot, mobj_t *source, int damage, int distance)
         bombsource = source;
 
 #if __JHEXEN__
-    bombdamage = damage;
     DamageSource = damageSource;
 #endif
 
