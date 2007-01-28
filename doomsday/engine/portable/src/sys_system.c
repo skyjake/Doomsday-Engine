@@ -273,11 +273,9 @@ void Sys_OpenTextEditor(const char *filename)
  * Utilises SDL Threads on ALL systems.
  * Returns the SDL_thread structure as handle to the started thread.
  */
-SDL_Thread* Sys_StartThread(systhreadfunc_t startpos, void *parm)
+thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm)
 {
-    SDL_Thread* thread;
-
-    thread = SDL_CreateThread(startpos, parm);
+    SDL_Thread* thread = SDL_CreateThread(startpos, parm);
 
     if(thread == NULL)
     {
@@ -292,41 +290,41 @@ SDL_Thread* Sys_StartThread(systhreadfunc_t startpos, void *parm)
 /**
  * Suspends or resumes the execution of a thread.
  */
-void Sys_SuspendThread(int handle, boolean dopause)
+void Sys_SuspendThread(thread_t handle, boolean dopause)
 {
-
+    Con_Error("Sys_SuspendThread: Not implemented.\n");
 }
 
 /**
  * Returns the return value of the thread.
  */
-int Sys_WaitThread(SDL_Thread *handle)
+int Sys_WaitThread(thread_t thread)
 {
-    int     result;
-    SDL_WaitThread((SDL_Thread *) handle, &result);
+    int result = 0;
+    SDL_WaitThread(thread, &result);
     return result;
 }
 
-intptr_t Sys_CreateMutex(const char *name)
+mutex_t Sys_CreateMutex(const char *name)
 {
-    return (intptr_t) SDL_CreateMutex();
+    return (mutex_t) SDL_CreateMutex();
 }
 
-void Sys_DestroyMutex(intptr_t handle)
+void Sys_DestroyMutex(mutex_t handle)
 {
     if(!handle)
         return;
     SDL_DestroyMutex((SDL_mutex *) handle);
 }
 
-void Sys_Lock(intptr_t handle)
+void Sys_Lock(mutex_t handle)
 {
     if(!handle)
         return;
     SDL_mutexP((SDL_mutex *) handle);
 }
 
-void Sys_Unlock(intptr_t handle)
+void Sys_Unlock(mutex_t handle)
 {
     if(!handle)
         return;

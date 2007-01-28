@@ -31,13 +31,12 @@
 #define __DOOMSDAY_SYSTEM_H__
 
 #include "dd_types.h"
-#include <SDL_thread.h>
 
+typedef void*   thread_t;
+typedef intptr_t mutex_t;
 typedef int     (C_DECL *systhreadfunc_t) (void* parm);
 
 extern boolean  novideo;
-
-//extern int systics;
 
 void            Sys_Init(void);
 void            Sys_Shutdown(void);
@@ -50,15 +49,14 @@ void            Sys_MessageBox(const char* msg, boolean iserror);
 void            Sys_OpenTextEditor(const char* filename);
 void            Sys_ShowWindow(boolean hide);
 
-// Threads:
-SDL_Thread*    Sys_StartThread(systhreadfunc_t startpos, void* parm);
-void            Sys_SuspendThread(int handle, boolean dopause);
-int             Sys_WaitThread(SDL_Thread* handle);
+thread_t        Sys_StartThread(systhreadfunc_t startpos, void* parm);
+void            Sys_SuspendThread(thread_t handle, boolean dopause);
+int             Sys_WaitThread(thread_t handle);
 
-intptr_t        Sys_CreateMutex(const char* name);  // returns the mutex handle
-void            Sys_DestroyMutex(intptr_t mutexHandle);
-void            Sys_Lock(intptr_t mutexHandle);
-void            Sys_Unlock(intptr_t mutexHandle);
+mutex_t         Sys_CreateMutex(const char* name);  
+void            Sys_DestroyMutex(mutex_t mutexHandle);
+void            Sys_Lock(mutex_t mutexHandle);
+void            Sys_Unlock(mutex_t mutexHandle);
 
 long            Sem_Create(uint32_t initialValue);  // returns handle
 void            Sem_Destroy(long semaphore);

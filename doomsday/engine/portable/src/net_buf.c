@@ -72,7 +72,7 @@ static int msgCount;
 
 // A mutex is used to protect the addition and removal of messages from
 // the message queue.
-static intptr_t msgMutex;
+static mutex_t msgMutex;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

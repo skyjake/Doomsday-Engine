@@ -64,7 +64,6 @@ static char *titleText = "";
 static char secondaryTitleText[256];
 static char statusText[256];
 static int fontHgt = 8;         // Height of the font.
-static DGLuint bgflat;
 char   *bitmap = NULL;
 
 // CODE --------------------------------------------------------------------
@@ -94,7 +93,6 @@ void Con_StartupInit(void)
     {
         titleText = "Doomsday " DOOMSDAY_VERSION_TEXT " Startup";
         firstTime = false;
-        bgflat = 0;
     }
     else
     {
@@ -103,11 +101,6 @@ void Con_StartupInit(void)
 
     // Load graphics.
     startupLogo = GL_LoadGraphics("Background", LGM_GRAYSCALE);
-}
-
-void Con_SetBgFlat(int lump)
-{
-    bgflat = GL_BindTexFlat(R_GetFlat(lump));
 }
 
 void Con_StartupDone(void)

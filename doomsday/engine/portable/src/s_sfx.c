@@ -82,7 +82,7 @@ static sfxchannel_t *channels;
 static mobj_t *listener;
 static sector_t *listener_sector = 0;
 
-static SDL_Thread *refresh_handle;
+static thread_t refresh_handle;
 static volatile boolean allowrefresh, refreshing;
 
 static byte refmonitor = 0;
