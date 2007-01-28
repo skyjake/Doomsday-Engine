@@ -686,4 +686,8 @@ void R_RenderPlayerView(ddplayer_t *player)
         BorderTopRefresh = false;
         UpdateState |= I_MESSAGES;
     }
+
+    // The colored filter.
+    if(GL_DrawFilter())
+        BorderNeedRefresh = true;
 }

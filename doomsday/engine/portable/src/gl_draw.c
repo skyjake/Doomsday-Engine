@@ -386,8 +386,10 @@ void GL_SetFilter(int filterRGBA)
     curfilter = filterRGBA;
 }
 
-// Returns nonzero if the filter was drawn.
-int GL_DrawFilter()
+/**
+ * @return          Non-zero if the filter was drawn.
+ */
+int GL_DrawFilter(void)
 {
     if(!curfilter)
         return 0;               // No filter needed.

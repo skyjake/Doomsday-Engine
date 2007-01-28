@@ -183,9 +183,6 @@ void DD_DrawAndBlit(void)
 
         // Draw the game graphics.
         gx.G_Drawer();
-        // The colored filter.
-        if(GL_DrawFilter())
-            BorderNeedRefresh = true;
 
         // Menu is not drawn if the UI fading is in effect.
         if(!ui_active || UI_Alpha() >= 1.0)
