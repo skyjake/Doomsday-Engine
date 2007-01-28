@@ -110,7 +110,7 @@ void R_InitTranslation(void)
     }
 }
 
-/*
+/**
  * Draws a special filter over the screen
  * (eg the inversing filter used when in god mode).
  */
@@ -120,9 +120,10 @@ void R_DrawSpecialFilter(void)
 
     if(player->powers[PT_INVULNERABILITY])
     {
-        float   max = 30;
-        float   str, r, g, b;
-        int     t = player->powers[PT_INVULNERABILITY];
+        float       x, y, w, h;
+        float       max = 30;
+        float       str, r, g, b;
+        int         t = player->powers[PT_INVULNERABILITY];
 
         if(t < max)
             str = t / max;
@@ -132,26 +133,21 @@ void R_DrawSpecialFilter(void)
             str = (INVULNTICS - t) / max;
         else
             str = 1;            // Full inversion.
+
         // Draw an inversing filter.
         gl.Disable(DGL_TEXTURING);
         gl.Func(DGL_BLENDING, DGL_ONE_MINUS_DST_COLOR,
                 DGL_ONE_MINUS_SRC_COLOR);
+
         r = str * 2;
         g = str * 2 - .4;
         b = str * 2 - .8;
-        if(r < 0)
-            r = 0;
-        if(r > 1)
-            r = 1;
-        if(g < 0)
-            g = 0;
-        if(g > 1)
-            g = 1;
-        if(b < 0)
-            b = 0;
-        if(b > 1)
-            b = 1;
-        GL_DrawRect(0, 0, 320, 200, r, g, b, 1);
+        CLAMP(r, 0, 1);
+        CLAMP(g, 0, 1);
+        CLAMP(b, 0, 1);
+
+        R_GetViewWindow(&x, &y, &w, &h);
+        GL_DrawRect(x, y, w, h, r, g, b, 1);
 
         // Restore the normal rendering state.
         gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);

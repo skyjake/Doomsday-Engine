@@ -107,42 +107,43 @@ void R_InitTranslationTables(void)
     }
 }
 
-/*
+/**
  * Draws a special filter over the screen
  */
 void R_DrawSpecialFilter(void)
 {
-    player_t *player = &players[displayplayer];
+    float       x, y, w, h;
+    player_t   *player = &players[displayplayer];
 
-    if(!(player->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
+    if(player->powers[PT_INVULNERABILITY] <= BLINKTHRESHOLD &&
        !(player->powers[PT_INVULNERABILITY] & 8))
         return;
 
+    R_GetViewWindow(&x, &y, &w, &h);
     gl.Disable(DGL_TEXTURING);
     if(cfg.ringFilter == 1)
     {
         gl.Func(DGL_BLENDING, DGL_SRC_COLOR, DGL_SRC_COLOR);
-        GL_DrawRect(0, 0, 320, 200, .5f, .35f, .1f, 1);
+        GL_DrawRect(x, y, w, h, .5f, .35f, .1f, 1);
 
         /*gl.Func(DGL_BLENDING, DGL_ZERO, DGL_SRC_COLOR);
-           GL_DrawRect(0, 0, 320, 200, 1, .7f, 0, 1);
+           GL_DrawRect(x, y, w, h, 1, .7f, 0, 1);
            gl.Func(DGL_BLENDING, DGL_ONE, DGL_DST_COLOR);
-           GL_DrawRect(0, 0, 320, 200, .1f, 0, 0, 1); */
+           GL_DrawRect(x, y, w, h, .1f, 0, 0, 1); */
 
         /*gl.Func(DGL_BLENDING, DGL_ZERO, DGL_SRC_COLOR);
-           GL_DrawRect(0, 0, 320, 200, 0, .6f, 0, 1);
+           GL_DrawRect(x, y, w, h, 0, .6f, 0, 1);
            gl.Func(DGL_BLENDING, DGL_ONE_MINUS_DST_COLOR, DGL_ONE_MINUS_SRC_COLOR);
-           GL_DrawRect(0, 0, 320, 200, 1, 0, 0, 1); */
+           GL_DrawRect(x, y, w, h, 1, 0, 0, 1); */
     }
     else
     {
         gl.Func(DGL_BLENDING, DGL_DST_COLOR, DGL_SRC_COLOR);
-        GL_DrawRect(0, 0, 320, 200, 0, 0, .6f, 1);
+        GL_DrawRect(x, y, w, h, 0, 0, .6f, 1);
     }
     // Restore the normal rendering state.
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
     gl.Enable(DGL_TEXTURING);
-
 }
 
 /*

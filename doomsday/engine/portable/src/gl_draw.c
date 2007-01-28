@@ -399,10 +399,10 @@ int GL_DrawFilter()
                 (curfilter >> 16) & 0xff, (curfilter >> 24) & 0xff);
 
     gl.Begin(DGL_QUADS);
-    gl.Vertex2f(0, 0);
-    gl.Vertex2f(320, 0);
-    gl.Vertex2f(320, 200);
-    gl.Vertex2f(0, 200);
+    gl.Vertex2f(viewwindowx, viewwindowy);
+    gl.Vertex2f(viewwindowx + viewwidth, viewwindowy);
+    gl.Vertex2f(viewwindowx + viewwidth, viewwindowy + viewheight);
+    gl.Vertex2f(viewwindowx, viewwindowy + viewheight);
     gl.End();
 
     gl.Enable(DGL_TEXTURING);
