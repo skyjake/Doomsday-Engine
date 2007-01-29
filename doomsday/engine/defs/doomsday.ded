@@ -487,13 +487,13 @@ LumpFormat {
     Class = subsector;
     ElementSize = 4;
     Property {
-        ID = "linecount";
+        ID = "segcount";
         Flags = unsigned;
         Size = 2;
         Offset = 0;
     }
     Property {
-        ID = "firstline";
+        ID = "firstseg";
         Flags = unsigned;
         Size = 2;
         Offset = 2;
@@ -505,12 +505,12 @@ LumpFormat {
     Class = subsector;
     ElementSize = 8;
     Property {
-        ID = "linecount";
+        ID = "segcount";
         Size = 4;
         Offset = 0;
     }
     Property {
-        ID = "firstline";
+        ID = "firstseg";
         Size = 4;
         Offset = 4;
     }

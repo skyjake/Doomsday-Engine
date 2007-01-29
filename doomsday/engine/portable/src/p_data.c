@@ -296,10 +296,8 @@ void P_PlaneChanged(sector_t *sector, uint plane)
     {
         sub = sector->subsectors[i];
 
-        for(k = 0; k < sub->linecount; ++k)
+        for(k = 0, seg = sub->firstseg; k < sub->segcount; ++k, seg++)
         {
-            seg = SEG_PTR(k + sub->firstline);
-
             // Inform the shadow bias of changed geometry.
             SB_SegHasMoved(seg);
         }

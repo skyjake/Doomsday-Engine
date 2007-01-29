@@ -453,7 +453,8 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
     // Once we have a way to convert internal member to property we should no
     // longer need these special case constants (eg DDVT_SECT_PTR).
     else if(valueType == DDVT_SECT_PTR || valueType == DDVT_VERT_PTR ||
-            valueType == DDVT_LINE_PTR || valueType == DDVT_SIDE_PTR)
+            valueType == DDVT_LINE_PTR || valueType == DDVT_SIDE_PTR ||
+            valueType == DDVT_SEG_PTR)
     {
         long idx = NO_INDEX;
 
@@ -492,6 +493,7 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                       valueType == DDVT_SECT_PTR? "DDVT_SECT_PTR" :
                       valueType == DDVT_VERT_PTR? "DDVT_VERT_PTR" :
                       valueType == DDVT_SIDE_PTR? "DDVT_SIDE_PTR" :
+                      valueType == DDVT_SEG_PTR? "DDVT_SEG_PTR" :
                       "DDVT_LINE_PTR", value_Str(prop->size));
         }
 
@@ -507,6 +509,10 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
 
         case DDVT_SECT_PTR:
             *(sector_t **) dst = DAM_IndexToPtr(map, DAM_SECTOR, (unsigned) idx);
+            break;
+
+        case DDVT_SEG_PTR:
+            *(seg_t **) dst = DAM_IndexToPtr(map, DAM_SEG, (unsigned) idx);
             break;
 
         case DDVT_VERT_PTR:
@@ -763,12 +769,13 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
 
         switch(prop->id)
         {
-        case DAM_LINE_COUNT:
-            ReadValue(map, DMT_SUBSECTOR_LINECOUNT, &p->linecount, src, prop, elmIdx);
+        case DAM_SEG_COUNT:
+            ReadValue(map, DMT_SUBSECTOR_SEGCOUNT, &p->segcount, src, prop, elmIdx);
             break;
 
-        case DAM_LINE_FIRST:
-            ReadValue(map, DMT_SUBSECTOR_FIRSTLINE, &p->firstline, src, prop, elmIdx);
+        case DAM_SEG_FIRST:
+            // TODO: should be DMT_SUBSECTOR_FIRSTSEG  but we require special case logic.
+            ReadValue(map, DDVT_SEG_PTR, &p->firstseg, src, prop, elmIdx);
             break;
 
         default:

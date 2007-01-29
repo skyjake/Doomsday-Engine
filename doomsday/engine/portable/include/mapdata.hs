@@ -43,8 +43,8 @@ end
 
 struct subsector
     PTR     sector_s*   sector
-    UINT    uint        linecount
-    UINT    uint        firstline
+    UINT    uint        segcount
+    PTR     seg_s*      firstseg
     PTR     polyobj_s*  poly    // NULL, if there is no polyobj.
     BYTE    byte        flags
     -       ushort      numverts

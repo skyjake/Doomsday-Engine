@@ -337,8 +337,8 @@ static mapproperty_t properties[] =
     {DAM_SIDE, DAM_SEG, DDVT_BYTE, "side"},
     {DAM_OFFSET, DAM_SEG, DMT_SEG_OFFSET, "offset"},
 // Subsector
-    {DAM_LINE_COUNT, DAM_SUBSECTOR, DMT_SUBSECTOR_LINECOUNT, "linecount"},
-    {DAM_LINE_FIRST, DAM_SUBSECTOR, DMT_SUBSECTOR_FIRSTLINE, "firstline"},
+    {DAM_SEG_COUNT, DAM_SUBSECTOR, DMT_SUBSECTOR_SEGCOUNT, "segcount"},
+    {DAM_SEG_FIRST, DAM_SUBSECTOR, DMT_SUBSECTOR_FIRSTSEG, "firstseg"},
 // Node
     {DAM_X, DAM_NODE, DMT_NODE_X, "x"},
     {DAM_Y, DAM_NODE, DMT_NODE_Y, "y"},
@@ -424,8 +424,8 @@ const char* DAM_Str(int prop)
         { DAM_LIGHT_LEVEL, "DAM_LIGHT_LEVEL" },
         { DAM_ANGLE, "DAM_ANGLE" },
         { DAM_OFFSET, "DAM_OFFSET" },
-        { DAM_LINE_COUNT, "DAM_LINE_COUNT" },
-        { DAM_LINE_FIRST, "DAM_LINE_FIRST" },
+        { DAM_SEG_COUNT, "DAM_SEG_COUNT" },
+        { DAM_SEG_FIRST, "DAM_SEG_FIRST" },
         { DAM_BBOX_RIGHT_TOP_Y, "DAM_BBOX_RIGHT_TOP_Y" },
         { DAM_BBOX_RIGHT_LOW_Y, "DAM_BBOX_RIGHT_LOW_Y" },
         { DAM_BBOX_RIGHT_LOW_X, "DAM_BBOX_RIGHT_LOW_X" },
@@ -2245,8 +2245,8 @@ static boolean loadMapData(gamemap_t *map)
         boolean     result, freeList = false;
         selectprop_t *list, *cprops;
         selectprop_t props[] = {
-            {DAM_LINE_COUNT, 0},
-            {DAM_LINE_FIRST, 0}
+            {DAM_SEG_COUNT, 0},
+            {DAM_SEG_FIRST, 0}
         };
         uint        pcount = 2;
 
@@ -2638,8 +2638,7 @@ static void finalizeMapData(gamemap_t *map)
     // look up sector number for each subsector
     for(i = 0, ss = map->subsectors; i < map->numsubsectors; ++i, ss++)
     {
-        seg = &map->segs[ss->firstline];
-        for(j = 0; j < ss->linecount; ++j, seg++)
+        for(j = 0, seg = ss->firstseg; j < ss->segcount; ++j, seg++)
             if(seg->sidedef)
             {
 #if _DEBUG

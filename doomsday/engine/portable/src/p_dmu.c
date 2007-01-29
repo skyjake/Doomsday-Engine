@@ -1695,12 +1695,12 @@ static int GetProperty(void* ptr, void* context)
     {
         subsector_t* p = ptr;
         seg_t* segptr;
-        if(args->prop >= p->linecount)
+        if(args->prop >= p->segcount)
         {
             Con_Error("GetProperty: DMU_SEG_OF_SECTOR %i does not exist.\n",
                       args->prop);
         }
-        segptr = SEG_PTR(p->firstline + args->prop);
+        segptr = (p->firstseg + args->prop);
         GetValue(DDVT_PTR, &segptr, args, 0);
         return false; // stop iteration
     }
@@ -2222,11 +2222,11 @@ static int GetProperty(void* ptr, void* context)
         case DMU_POLYOBJ:
             GetValue(DMT_SUBSECTOR_POLY, &p->poly, args, 0);
             break;
-        case DMU_LINE_COUNT:
+        case DMU_SEG_COUNT:
         {
             // FIXME:
-            //GetValue(DMT_SUBSECTOR_LINECOUNT, &p->linecount, args, 0);
-            int val = (int) p->linecount;
+            //GetValue(DMT_SUBSECTOR_SEGCOUNT, &p->segcount, args, 0);
+            int val = (int) p->segcount;
             GetValue(DDVT_INT, &val, args, 0);
             break;
         }

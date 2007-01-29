@@ -1495,8 +1495,7 @@ static boolean DL_LightSegIteratorFunc(lumobj_t *lum, subsector_t *ssec)
     seg_t      *seg;
 
     // The wall segments.
-    for(j = 0, seg = &segs[ssec->firstline];
-        j < ssec->linecount; ++j, seg++)
+    for(j = 0, seg = ssec->firstseg; j < ssec->segcount; ++j, seg++)
     {
         if(seg->linedef)    // "minisegs" have no linedefs.
             DL_ProcessWallSeg(lum, seg, ssec->sector);
@@ -1622,8 +1621,8 @@ void DL_ProcessSubsector(subsector_t *ssec)
        (sect->SP_floorglow || sect->SP_ceilglow))
     {
         // The wall segments.
-        num = ssec->linecount;
-        for(j = 0, seg = &segs[ssec->firstline]; j < num; ++j, seg++)
+        num = ssec->segcount;
+        for(j = 0, seg = ssec->firstseg; j < num; ++j, seg++)
         {
             if(seg->linedef)    // "minisegs" have no linedefs.
                 DL_ProcessSegForGlow(seg, sect);

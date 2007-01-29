@@ -48,8 +48,8 @@ typedef struct seg_s {
 typedef struct subsector_s {
     runtime_mapdata_header_t header;
     struct sector_s*    sector;
-    unsigned int        linecount;
-    unsigned int        firstline;
+    unsigned int        segcount;
+    struct seg_s*       firstseg;
     struct polyobj_s*   poly;          // NULL, if there is no polyobj.
     byte                flags;
     unsigned short      numverts;

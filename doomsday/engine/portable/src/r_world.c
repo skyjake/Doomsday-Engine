@@ -571,12 +571,11 @@ static void R_PolygonizeWithoutCarving(void)
     for(i = 0; i < numsubsectors; ++i)
     {
         sub = SUBSECTOR_PTR(i);
-        num = sub->numverts = sub->linecount;
+        num = sub->numverts = sub->segcount;
         vtx = sub->verts =
-            Z_Malloc(sizeof(fvertex_t) * sub->linecount, PU_LEVELSTATIC, 0);
+            Z_Malloc(sizeof(fvertex_t) * sub->segcount, PU_LEVELSTATIC, 0);
 
-        seg = SEG_PTR(sub->firstline);
-        for(j = 0; j < num; ++j, seg++, vtx++)
+        for(j = 0, seg = sub->firstseg; j < num; ++j, seg++, vtx++)
         {
             vtx->pos[VX] = seg->SG_v1->pos[VX];
             vtx->pos[VY] = seg->SG_v1->pos[VY];
@@ -693,7 +692,7 @@ static fvertex_t *edgeClipper(uint *numpoints, fvertex_t *points,
 static void R_ConvexClipper(subsector_t *ssec, uint num, divline_t *list)
 {
     uint        i, numedgepoints;
-    uint        numclippers = num + ssec->linecount;
+    uint        numclippers = num + ssec->segcount;
     fvertex_t  *edgepoints;
     fdivline_t *clippers, *clip;
 
@@ -711,7 +710,7 @@ static void R_ConvexClipper(subsector_t *ssec, uint num, divline_t *list)
         }
         else
         {
-            seg_t  *seg = SEG_PTR(ssec->firstline + i - num);
+            seg_t  *seg = (ssec->firstseg + i - num);
 
             clip->pos[VX] = seg->SG_v1->pos[VX];
             clip->pos[VY] = seg->SG_v1->pos[VY];

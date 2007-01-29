@@ -1591,7 +1591,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
     uint        i;
     seg_t      *seg;
 
-    for(i = 0, seg = &segs[sub->firstline]; i < sub->linecount; ++i, seg++)
+    for(i = 0, seg = sub->firstseg; i < sub->segcount; ++i, seg++)
     {
         // Occlusions can only happen where two sectors contact.
         if(!seg->linedef)
@@ -1656,8 +1656,8 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     {
         if(pass == 0)
         {
-            num  = ssec->linecount;
-            list = &segs[ssec->firstline];
+            num  = ssec->segcount;
+            list = ssec->firstseg;
         }
         else
         {
@@ -1806,7 +1806,7 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
     fronth[0] = front->SP_floorheight;
     fronth[1] = front->SP_ceilheight;
 
-    for(i = 0, seg = &segs[sub->firstline]; i < sub->linecount; ++i, seg++)
+    for(i = 0, seg = sub->firstseg; i < sub->segcount; ++i, seg++)
     {
         // Occlusions can only happen where two sectors contact.
         if(!seg->linedef || !seg->SG_backsector)
@@ -2006,7 +2006,7 @@ static void Rend_RenderSubsector(uint ssecidx)
         Rend_SSectSkyFixes(ssec);
 
     // Draw the walls.
-    for(j = 0, seg = &segs[ssec->firstline]; j < ssec->linecount; ++j, seg++)
+    for(j = 0, seg = ssec->firstseg; j < ssec->segcount; ++j, seg++)
     {
         if(seg->linedef == NULL)    // "minisegs" have no linedefs.
             continue;

@@ -140,8 +140,7 @@ Con_Message("%d bytes; sub_reverb: %p\n", sizeof(subreverb_t) * numsubsectors, s
         // walls surrounding the subsector (floors and ceilings are currently
         // ignored).
         total = metal = rock = wood = cloth = 0;
-        seg = (seg_t *) segs;
-        for(j = 0; j < sub->linecount; ++j, seg++)
+        for(j = 0, seg = sub->firstseg; j < sub->segcount; ++j, seg++)
         {
             if(!seg->linedef || !seg->sidedef || !seg->sidedef->SW_middlepic)
                 continue;
