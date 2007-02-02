@@ -1594,7 +1594,7 @@ static void AM_drawWalls(boolean glowmode)
                 subColor = 0;
         }
 
-        for(i = 0; i < P_GetIntp(ssec, DMU_LINE_COUNT); ++i)
+        for(i = 0; i < P_GetIntp(ssec, DMU_SEG_COUNT); ++i)
         {
             seg = P_GetPtrp(ssec, DMU_SEG_OF_SUBSECTOR | i);
 
