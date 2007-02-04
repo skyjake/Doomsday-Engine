@@ -628,7 +628,7 @@ void R_InitTextures(void)
     names = W_CacheLumpName("PNAMES", PU_REFRESHTEX);
     nummappatches = LONG(*((int *) names));
     name_p = names + 4;
-    patchlookup = Z_Malloc(nummappatches * sizeof(*patchlookup), PU_STATIC, 0);
+    patchlookup = M_Malloc(nummappatches * sizeof(*patchlookup));
     for(i = 0; i < nummappatches; ++i)
     {
         strncpy(name, name_p + i * 8, 8);
@@ -759,7 +759,7 @@ void R_InitTextures(void)
         texturetranslation[i].inter = 0;
     }
 
-    Z_Free(patchlookup);
+    M_Free(patchlookup);
 
     // Assign switch texture pairs (SW1/SW2) to their own texture groups.
     // This'll allow them to be precached at the same time.
@@ -958,8 +958,8 @@ boolean R_IsCustomTexture(int texture)
  */
 boolean R_IsValidLightDecoration(ded_decorlight_t *lightDef)
 {
-    return lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
-        lightDef->color[2] != 0;
+    return (lightDef->color[0] != 0 || lightDef->color[1] != 0 ||
+        lightDef->color[2] != 0);
 }
 
 /**
