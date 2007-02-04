@@ -729,8 +729,6 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         spans[i].length = seg->linedef->length;
         spans[i].shift = seg->offset;
     }
-    //if(GET_LINE_IDX(seg->linedef) == 128)
-    //    Con_Message("found\n");
     Rend_RadioScanEdges(topCn, botCn, sideCn, seg->linedef, sideNum, spans);
 
     // Back sector visible plane heights.
