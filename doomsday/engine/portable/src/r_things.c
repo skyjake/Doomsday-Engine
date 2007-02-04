@@ -1016,21 +1016,25 @@ void R_AddSprites(sector_t *sec)
         // Hack: Sprites have a tendency to extend into the ceiling in
         // sky sectors. Here we will raise the skyfix dynamically, at
         // runtime, to make sure that no sprites get clipped by the sky.
-        R_GetSpriteInfo(thing->sprite, thing->frame, &spriteInfo);
-
         // Only check
-        if(!(thing->dplayer && thing->dplayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-           thing->pos[VZ] <= sec->SP_ceilheight && !sec->selfRefHack)
+        if(R_IsSkySurface(&sec->SP_ceilsurface))
         {
-            visibleTop = FIX2FLT(thing->pos[VZ] + (spriteInfo.height << FRACBITS));
-
-            if(R_IsSkySurface(&sec->SP_ceilsurface) &&
-               visibleTop > sec->SP_ceilheight + sec->skyfix[PLN_CEILING].offset)
+            if(!(thing->dplayer && thing->dplayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
+               thing->pos[VZ] <= sec->SP_ceilheight && 
+               thing->pos[VZ] >= sec->SP_floorheight && !sec->selfRefHack)
             {
-                // Raise sector skyfix.
-                sec->skyfix[PLN_CEILING].offset =
-                    visibleTop - sec->SP_ceilheight + 16; // Add some leeway.
-                raised = true;
+                R_GetSpriteInfo(thing->sprite, thing->frame, &spriteInfo);
+                visibleTop =
+                    FIX2FLT(thing->pos[VZ] + (spriteInfo.height << FRACBITS));
+
+                if(visibleTop >
+                    sec->SP_ceilheight + sec->skyfix[PLN_CEILING].offset)
+                {
+                    // Raise sector skyfix.
+                    sec->skyfix[PLN_CEILING].offset =
+                        visibleTop - sec->SP_ceilheight + 16; // Add some leeway.
+                    raised = true;
+                }
             }
         }
     }
