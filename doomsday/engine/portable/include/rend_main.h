@@ -43,6 +43,7 @@ extern int      missileBlend, litSprites;
 extern boolean  usingFog;
 extern byte     fogColor[4];
 extern int      r_ambient;
+extern byte     devNoLinkedSurfaces;
 
 extern signed short lightRangeModMatrix[MOD_RANGE][255];
 

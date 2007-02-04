@@ -186,6 +186,7 @@ typedef struct linkmobj_s {
 
 typedef struct shadowpoly_s {
     struct line_s  *line;
+    struct subsector_s *ssec;
     short           flags;
     ushort          visframe;      // Last visible frame (for rendering).
     struct vertex_s *outer[2];      // Left and right.

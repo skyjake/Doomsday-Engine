@@ -1836,6 +1836,7 @@ static void allocateMapData(gamemap_t *map)
         subsector_t *ssec = &map->subsectors[k];
 
         ssec->header.type = DMU_SUBSECTOR;
+        ssec->group = 0;
     }
 
     // Nodes.
@@ -2641,9 +2642,6 @@ static void finalizeMapData(gamemap_t *map)
         for(j = 0, seg = ss->firstseg; j < ss->segcount; ++j, seg++)
             if(seg->sidedef)
             {
-#if _DEBUG
-ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
-#endif
                 ss->sector = seg->sidedef->sector;
                 ss->sector->subscount++;
                 break;
@@ -2710,6 +2708,12 @@ ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
         if(ssecsInSector[i] != sec->subscount)
             Con_Error("finalizeMapData: miscounted subsectors"); // Hmm? Unusual...
 
+        sec->subsgroupcount = 1;
+        sec->subsgroups = Z_Malloc(sizeof(ssecgroup_t) * sec->subsgroupcount, PU_LEVEL, 0);
+        sec->subsgroups[0].linked = Z_Malloc(sizeof(sector_t*) * sec->planecount, PU_LEVEL, 0);
+        for(k = 0; k < sec->planecount; ++k)
+            sec->subsgroups[0].linked[k] = NULL;
+
         if(sec->linecount != 0)
         {
             M_ClearBox(bbox);
@@ -2755,17 +2759,16 @@ ASSERT_DMU_TYPE(seg->sidedef->sector, DMU_SECTOR);
         sec->soundorg.pos[VZ] =
             FLT2FIX((sec->SP_ceilheight - sec->SP_floorheight) / 2);
 
-        // Set the position of the sound origin for all plane sound origins.
+        // Set the position of the sound origin for all plane sound origins
+        // and target heights of all planes.
         for(k = 0; k < sec->planecount; ++k)
         {
             sec->planes[k]->soundorg.pos[VX] = sec->soundorg.pos[VX];
             sec->planes[k]->soundorg.pos[VY] = sec->soundorg.pos[VY];
             sec->planes[k]->soundorg.pos[VZ] = FLT2FIX(sec->planes[k]->height);
-        }
 
-        // Set target heights of all planes.
-        for(k = 0; k < sec->planecount; ++k)
             sec->planes[k]->target = sec->planes[k]->height;
+        }
     }
 
     M_Free(linesInSector);

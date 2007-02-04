@@ -610,6 +610,9 @@ desc = 1=Render player view in wireframe mode.
 [rend-dev-framecount]
 desc = Frame counter.
 
+[rend-dev-surface-linked]
+desc = 1=Disable linked surfaces for render.  
+
 [rend-info-lums]
 desc = 1=Print lumobj count after rendering a frame.
 

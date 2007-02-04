@@ -437,7 +437,7 @@ static boolean DL_SegTexCoords(float *t, float top, float bottom,
 /**
  * The front sector must be given because of polyobjs.
  */
-static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
+static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
 {
 #define SMIDDLE 0x1
 #define STOP    0x2
@@ -453,9 +453,12 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, sector_t *frontsec)
     uint        segindex = GET_SEG_IDX(seg);
     boolean     backSide = false;
     DGLubyte    lumRGB[3];
+    sector_t   *frontsec = ssec->sector, *linkSec;
 
-    fceil  = frontsec->SP_ceilvisheight;
-    ffloor = frontsec->SP_floorvisheight;
+    linkSec = R_GetLinkedSector(ssec, PLN_CEILING);
+    fceil  = linkSec->SP_ceilvisheight;
+    linkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
+    ffloor = linkSec->SP_floorvisheight;
 
     // A zero-volume sector?
     if(fceil <= ffloor)
@@ -1498,14 +1501,14 @@ static boolean DL_LightSegIteratorFunc(lumobj_t *lum, subsector_t *ssec)
     for(j = 0, seg = ssec->firstseg; j < ssec->segcount; ++j, seg++)
     {
         if(seg->linedef)    // "minisegs" have no linedefs.
-            DL_ProcessWallSeg(lum, seg, ssec->sector);
+            DL_ProcessWallSeg(lum, seg, ssec);
     }
 
     // Is there a polyobj on board? Light it, too.
     if(ssec->poly)
         for(j = 0; j < ssec->poly->numsegs; ++j)
         {
-            DL_ProcessWallSeg(lum, ssec->poly->segs[j], ssec->sector);
+            DL_ProcessWallSeg(lum, ssec->poly->segs[j], ssec);
         }
 
     return true;
@@ -1537,7 +1540,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
     uint        num, ssecidx = GET_SUBSECTOR_IDX(ssec);
     seg_t      *seg;
     lumcontact_t *con;
-    sector_t   *sect = ssec->sector;
+    sector_t   *sect = ssec->sector, *linkSec;
     planeitervars_t *pVars;
 
     // Do we need to enlarge the planeVars buffer?
@@ -1574,7 +1577,8 @@ void DL_ProcessSubsector(subsector_t *ssec)
     num = sect->planecount;
     for(pln = 0, pVars = planeVars; pln < num; pVars++, ++pln)
     {
-        pVars->height = SECT_PLANE_HEIGHT(sect, pln);
+        linkSec = R_GetLinkedSector(ssec, pln);
+        pVars->height = SECT_PLANE_HEIGHT(linkSec, pln);
         pVars->isLit = (!R_IsSkySurface(&sect->planes[pln]->surface));
         pVars->decorMap = 0;
 

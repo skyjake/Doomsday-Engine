@@ -174,9 +174,7 @@ void P_PlaneChanged(sector_t *sector, uint plane)
         back  = sector->Lines[i]->sides[1];
 
         if(!front || !front->sector ||
-           front->sector->planes[plane]->linked ||
-           !back || !back->sector ||
-           back->sector->planes[plane]->linked)
+           !back || !back->sector)
             continue;
 
         // Do as in the original Doom if the texture has not been defined -

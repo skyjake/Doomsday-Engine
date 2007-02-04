@@ -61,6 +61,7 @@ typedef struct subsector_s {
     struct fvertex_s*   vertices;
     int                 validcount;
     struct shadowlink_s* shadows;
+    unsigned int        group;
 } subsector_t;
 
 // Surface flags.
@@ -91,6 +92,16 @@ typedef struct surface_s {
     struct translation_s* xlat;
 } surface_t;
 
+enum {
+    PLN_FLOOR,
+    PLN_CEILING,
+    NUM_PLANE_TYPES
+};
+
+typedef struct skyfix_s {
+    float offset;
+} skyfix_t;
+
 typedef struct plane_s {
     runtime_mapdata_header_t header;
     float               height;        // Current height
@@ -104,7 +115,6 @@ typedef struct plane_s {
     struct sector_s*    sector;        // Owner of the plane (temp)
     float               visheight;     // Visible plane height (smoothed)
     float               visoffset;
-    struct sector_s*    linked;        // Plane attached to another sector.
 } plane_t;
 
 // Helper macros for accessing sector floor/ceiling plane data elements.
@@ -123,7 +133,6 @@ typedef struct plane_s {
 #define SP_ceiltexmove          planes[PLN_CEILING]->surface.texmove
 #define SP_ceilsoundorg         planes[PLN_CEILING]->soundorg
 #define SP_ceilvisheight        planes[PLN_CEILING]->visheight
-#define SP_ceillinked           planes[PLN_CEILING]->linked
 
 #define SP_floorsurface         planes[PLN_FLOOR]->surface
 #define SP_floorheight          planes[PLN_FLOOR]->height
@@ -140,7 +149,6 @@ typedef struct plane_s {
 #define SP_floortexmove         planes[PLN_FLOOR]->surface.texmove
 #define SP_floorsoundorg        planes[PLN_FLOOR]->soundorg
 #define SP_floorvisheight       planes[PLN_FLOOR]->visheight
-#define SP_floorlinked          planes[PLN_FLOOR]->linked
 
 #define SECT_PLANE_HEIGHT(x, n) (x->planes[n]->visheight)
 
@@ -152,6 +160,11 @@ typedef struct plane_s {
 // Sector flags.
 #define SECF_INVIS_FLOOR    0x1
 #define SECF_INVIS_CEILING  0x2
+
+typedef struct ssecgroup_s {
+	struct sector_s**   linked;     // [sector->planecount] size.
+	                                // Plane attached to another sector.
+} ssecgroup_t;
 
 typedef struct sector_s {
     runtime_mapdata_header_t header;
@@ -165,6 +178,8 @@ typedef struct sector_s {
     struct line_s**     Lines;         // [linecount] size.
     unsigned int        subscount;
     struct subsector_s** subsectors;   // [subscount] size.
+    unsigned int        subsgroupcount;
+    ssecgroup_t*        subsgroups;    // [subsgroupcount] size.
     skyfix_t            skyfix[2];     // floor, ceiling.
     degenmobj_t         soundorg;
     float               reverb[NUM_REVERB_DATA];
@@ -253,6 +268,8 @@ typedef struct side_s {
 #define L_backsector            sec[BACK]
 #define L_frontside             sides[FRONT]
 #define L_backside              sides[BACK]
+
+#define LINE_NEIGHBOR(line, side) (side? line->vo[side]->next->line : line->vo[side]->prev->line)
 
 typedef struct line_s {
     runtime_mapdata_header_t header;

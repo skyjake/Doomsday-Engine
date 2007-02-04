@@ -132,9 +132,10 @@ void Rend_RadioInitForFrame(void)
  * Before calling the other rendering routines, this must be called to
  * initialize the state of the FakeRadio renderer.
  */
-void Rend_RadioInitForSector(sector_t *sector)
+void Rend_RadioInitForSubsector(subsector_t *ssec)
 {
-    int sectorlight = sector->lightlevel;
+    sector_t *linkSec;
+    int sectorlight = ssec->sector->lightlevel;
 
     Rend_ApplyLightAdaptation(&sectorlight);
 
@@ -148,13 +149,15 @@ void Rend_RadioInitForSector(sector_t *sector)
         return;     // No point drawing shadows in a PITCH black sector.
 
     // Visible plane heights.
-    fFloor = sector->SP_floorvisheight;
-    fCeil = sector->SP_ceilvisheight;
+    linkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
+    fFloor = linkSec->SP_floorvisheight;
+    linkSec = R_GetLinkedSector(ssec, PLN_CEILING);
+    fCeil = linkSec->SP_ceilvisheight;
 
     if(fCeil <= fFloor)
         return;                 // A closed sector.
 
-    frontSector = sector;
+    frontSector = ssec->sector;
 
     // Determine the shadow properties.
     // FIXME: Make cvars out of constants.
@@ -320,7 +323,7 @@ static float Rend_RadioLineCorner(line_t *self, line_t *other,
         // The corner between the walls faces outwards.
         return -1;
     }
-    else if(diff == 180)
+    else if(diff == BANG_180)
     {
         return 0;
     }
@@ -726,7 +729,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         spans[i].length = seg->linedef->length;
         spans[i].shift = seg->offset;
     }
-
+    //if(GET_LINE_IDX(seg->linedef) == 128)
+    //    Con_Message("found\n");
     Rend_RadioScanEdges(topCn, botCn, sideCn, seg->linedef, sideNum, spans);
 
     // Back sector visible plane heights.
@@ -1153,64 +1157,10 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
  * openness value of one means that the other edge is at the same height as
  * this one. 2 means that the other edge is past our height ("clearly open").
  */
-static float Rend_RadioEdgeOpenness(line_t *line, int backside,
-                                    boolean isCeiling)
+static float radioEdgeOpenness(float fz, float bz, float bhz)
 {
-    sector_t   *front = line->sec[backside];
-    sector_t   *back  = line->sec[backside ^ 1];
-    side_t     *fside;
-    float       fz, bhz, bz;        // Front and back Z height
-
-    if(!back)
-        return 0;               // No backsector, this is a one-sided wall.
-
-    fside = line->sides[backside];
-
-    if(isCeiling)
-    {
-        fz  = -front->SP_ceilvisheight;
-        bz  = -back->SP_ceilvisheight;
-        bhz = -back->SP_floorvisheight;
-
-        if(fz < bz && fside->SW_toppic == 0)
-            return 2; // Consider it fully open.
-    }
-    else
-    {
-        fz  = front->SP_floorvisheight;
-        bz  = back->SP_floorvisheight;
-        bhz = back->SP_ceilvisheight;
-
-        // If theres a missing texture and the visible heights are
-        // different - never consider this edge for a plane shadow.
-        // TODO: does not consider any replacements we might make in
-        // Rend_RenderWallSeg to fix the missing texture...
-        if(fz < bz && fside->SW_bottompic == 0)
-            return 2; // Consider it fully open.
-    }
-
-    // Is the back sector closed?
-    if(back->SP_floorvisheight >= back->SP_ceilvisheight)
-    {
-        if((!isCeiling &&
-                R_IsSkySurface(&front->SP_ceilsurface) &&
-                R_IsSkySurface(&back->SP_ceilsurface)) ||
-           (isCeiling &&
-                R_IsSkySurface(&front->SP_floorsurface) &&
-                R_IsSkySurface(&back->SP_floorsurface)))
-            return 2; // Consider it fully open.
-        else
-            return 0;
-    }
-
     if(fz <= bz - EDGE_OPEN_THRESHOLD || fz >= bhz)
         return 0;               // Fully closed.
-
-    // Check for unmasked midtextures on twosided lines that completely
-    // fill the gap between floor and ceiling (we don't want to give away
-    // the location of any secret areas (false walls)).
-    if(Rend_DoesMidTextureFillGap(line, backside))
-        return 0;
 
     if(fz >= bhz - EDGE_OPEN_THRESHOLD)
         return (bhz - fz) / EDGE_OPEN_THRESHOLD;
@@ -1225,26 +1175,76 @@ static float Rend_RadioEdgeOpenness(line_t *line, int backside,
     return 2;
 }
 
+static void setRelativeHeights(sector_t *front, sector_t *back,
+                               boolean isCeiling,
+                               float *fz, float *bz, float *bhz)
+{
+    if(fz)
+    {
+        *fz  = front->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visheight;
+        if(isCeiling)
+            *fz = -(*fz);
+    }
+    if(bz)
+    {
+        *bz  =  back->planes[isCeiling? PLN_CEILING:PLN_FLOOR]->visheight;
+        if(isCeiling)
+            *bz = -(*bz);
+    }
+    if(bhz)
+    {
+        *bhz =  back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->visheight;
+        if(isCeiling)
+            *bhz = -(*bhz);
+    }
+}
+
+static uint radioEdgeHackType(line_t *line, sector_t *front, sector_t *back,
+                              int backside, boolean isCeiling, float fz,
+                              float bz)
+{
+    surface_t  *surface = &line->sides[backside? BACK:FRONT]->
+                             sections[isCeiling? SEG_TOP:SEG_BOTTOM];
+
+    if(fz < bz && surface->texture == 0 && !(surface->flags & SUF_TEXFIX))
+        return 3; // Consider it fully open.
+
+    // Is the back sector closed?
+    if(front->SP_floorvisheight >= back->SP_ceilvisheight)
+        if(R_IsSkySurface(&front->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface))
+        {
+            if(R_IsSkySurface(&back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface))
+                return 3; // Consider it fully open.
+        }
+        else
+            return 1; // Consider it fully  closed.
+
+    // Check for unmasked midtextures on twosided lines that completely
+    // fill the gap between floor and ceiling (we don't want to give away
+    // the location of any secret areas (false walls)).
+    if(Rend_DoesMidTextureFillGap(line, backside))
+        return 1; // Consider it fully  closed.
+
+    return 0;
+}
+
 /**
  * Calculate the corner coordinates and add a new shadow polygon to the
  * rendering lists.
  */
 static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
-                                    float darkness, float sideOpen[2])
+                                    float darkness, float sideOpen[2], float z)
 {
     rendpoly_t *q;
     rendpoly_vertex_t *vtx;
-    sector_t *sector;
-    float   z, pos;
-    uint    i, *idx;
-    uint    floorIndices[] = { 0, 1, 2, 3 };
-    uint    ceilIndices[] = { 0, 3, 2, 1 };
-    vec2_t  inner[2];
-
-    // This is the sector the shadow is actually in.
-    sector = shadow->line->sec[shadow->flags & SHPF_FRONTSIDE ? FRONT:BACK];
-
-    z = sector->planes[isCeiling]->visheight;
+    float       pos;
+    uint        i;
+    // Winding: 0 = left, 1 = right
+    uint        wind;
+    const uint *idx;
+    static const uint floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
+    static const uint ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
+    vec2_t      inner[2];
 
     // Sector lightlevel affects the darkness of the shadows.
     if(darkness > 1)
@@ -1260,22 +1260,27 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
         {
             /*V2_Lerp(inner[i], shadow->inoffset[i],
                shadow->bextoffset[i], pos);*/
-            V2_Copy(inner[i], shadow->inoffset[i]);
+            V2_Sum(inner[i], shadow->outer[i]->pos, shadow->inoffset[i]);
         }
         else if(pos == 1)       // Same height on both sides.
         {
-            V2_Copy(inner[i], shadow->bextoffset[i]);
+            V2_Sum(inner[i], shadow->outer[i]->pos, shadow->bextoffset[i]);
         }
         else                    // Fully, unquestionably open.
         {
             if(pos > 2) pos = 2;
             /*V2_Lerp(inner[i], shadow->bextoffset[i],
                shadow->extoffset[i], pos - 1); */
-            V2_Copy(inner[i], shadow->extoffset[i]);
+            V2_Sum(inner[i], shadow->outer[i]->pos, shadow->extoffset[i]);
         }
     }
 
-    // Initialize the rendpoly.
+    // What vertex winding order?
+    // (for best results, the cross edge should always be the shortest).
+    wind = (V2_Distance(inner[1], shadow->outer[1]->pos) >
+                V2_Distance(inner[0], shadow->outer[0]->pos)? 1 : 0);
+
+        // Initialize the rendpoly.
     q = R_AllocRendPoly(RP_FLAT, false, 4);
     q->flags = RPF_SHADOW;
     memset(&q->tex, 0, sizeof(q->tex));
@@ -1286,7 +1291,7 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     memset(q->vertices, 0, q->numvertices * sizeof(rendpoly_vertex_t));
 
     vtx = q->vertices;
-    idx = (isCeiling ? ceilIndices : floorIndices);
+    idx = (isCeiling ? ceilIndices[wind] : floorIndices[wind]);
 
     // Left outer corner.
     vtx[idx[0]].pos[VX] = shadow->outer[0]->pos[VX];
@@ -1307,13 +1312,13 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
         vtx[idx[1]].color.rgba[CA] *= 1 - sideOpen[1];
 
     // Right inner corner.
-    vtx[idx[2]].pos[VX] = vtx[idx[1]].pos[VX] + inner[1][VX];
-    vtx[idx[2]].pos[VY] = vtx[idx[1]].pos[VY] + inner[1][VY];
+    vtx[idx[2]].pos[VX] = inner[1][VX];
+    vtx[idx[2]].pos[VY] = inner[1][VY];
     vtx[idx[2]].pos[VZ] = z;
 
     // Left inner corner.
-    vtx[idx[3]].pos[VX] = vtx[idx[0]].pos[VX] + inner[0][VX];
-    vtx[idx[3]].pos[VY] = vtx[idx[0]].pos[VY] + inner[0][VY];
+    vtx[idx[3]].pos[VX] = inner[0][VX];
+    vtx[idx[3]].pos[VY] = inner[0][VY];
     vtx[idx[3]].pos[VZ] = z;
 
     RL_AddPoly(q);
@@ -1329,14 +1334,14 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
  */
 void Rend_RadioSubsectorEdges(subsector_t *subsector)
 {
+    uint        i, pln, hack, side;
+    float       open, sideOpen[2], vec[3];
+    float       fz, bz, bhz, plnHeight;
+    sector_t   *shadowSec, *front, *back;
+    line_t     *line;
+    surface_t  *suf;
     shadowlink_t *link;
     shadowpoly_t *shadow;
-    sector_t   *sector;
-    line_t     *neighbor;
-    float       open, sideOpen[2];
-    int         i;
-    uint        pln;
-    float       vec[3];
 
     if(!rendFakeRadio || levelFullBright)
         return;
@@ -1360,42 +1365,86 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
         // neighbours cause some changes in the polygon corner
         // vertices (placement, colour).
 
-        sector = R_GetShadowSector(shadow);
-
         vec[VX] = vx - subsector->midpoint.pos[VX];
         vec[VY] = vz - subsector->midpoint.pos[VY];
 
         for(pln = 0; pln < subsector->sector->planecount; ++pln)
         {
-            vec[VZ] = vy - SECT_PLANE_HEIGHT(subsector->sector, pln);
+            suf = &subsector->sector->planes[pln]->surface;
+
+            shadowSec = R_GetShadowSector(shadow, pln, true);
+            plnHeight = SECT_PLANE_HEIGHT(shadowSec, pln);
+            vec[VZ] = vy - plnHeight;
 
             // Glowing surfaces or missing textures shouldn't have shadows.
-            if((subsector->sector->planes[pln]->surface.flags & SUF_NO_RADIO) ||
+            if((suf->flags & SUF_NO_RADIO) ||
                !Rend_RadioNonGlowingFlat(subsector->sector, pln))
                 continue;
 
             // Don't bother with planes facing away from the camera.
-            if(M_DotProduct(vec, subsector->sector->planes[pln]->surface.normal) < 0)
+            if(M_DotProduct(vec, suf->normal) < 0)
                 continue;
 
-            open =
-                Rend_RadioEdgeOpenness(shadow->line,
-                                       (shadow->flags & SHPF_FRONTSIDE) == 0,
-                                       pln);
+            line = shadow->line;
+            if(line->L_backsector)
+            {
+                side = (shadow->flags & SHPF_FRONTSIDE) == 0;
+                if(subsector->sector->subsgroups[subsector->group].linked[pln])
+                {
+                    if(side == 0)
+                    {
+                        front = shadowSec;
+                        back  = line->sec[side ^ 1];
+                    }
+                    else
+                    {
+                        front = line->sec[side];
+                        back  = shadowSec;
+                    }
+                }
+                else
+                {
+                    front = line->sec[side];
+                    back  = line->sec[side ^ 1];
+                }
+                setRelativeHeights(front, back, pln, &fz, &bz, &bhz);
+
+                hack =
+                    radioEdgeHackType(line, front, back, side, pln, fz, bz);
+                if(hack)
+                    open = hack - 1;
+                else
+                    open = radioEdgeOpenness(fz, bz, bhz);
+            }
+            else
+                open = 0;
+
             if(open >= 1)
                 continue;
 
             // What about the neighbours?
             for(i = 0; i < 2; ++i)
             {
-                neighbor = R_GetShadowNeighbor(shadow, i == 0, false);
-                sideOpen[i] =
-                    Rend_RadioEdgeOpenness(neighbor,
-                                           neighbor->L_frontsector != sector,
-                                           pln);
+                line = R_GetShadowNeighbor(shadow, i == 0, false);
+                if(line->L_backsector)
+                {
+                    side = (line->L_frontsector != shadowSec);
+                    front = line->sec[side];
+                    back  = line->sec[side ^ 1];
+                    setRelativeHeights(front, back, pln, &fz, &bz, &bhz);
+
+                    hack = radioEdgeHackType(line, front, back, side, pln, fz, bz);
+                    if(hack)
+                        sideOpen[i] = hack - 1;
+                    else
+                        sideOpen[i] = radioEdgeOpenness(fz, bz, bhz);
+                }
+                else
+                    sideOpen[i] = 0;
             }
 
-            Rend_RadioAddShadowEdge(shadow, pln, 1 - open, sideOpen);
+            Rend_RadioAddShadowEdge(shadow, pln, 1 - open, sideOpen,
+                                    plnHeight);
         }
     }
 

@@ -350,12 +350,7 @@ void R_NewSharpWorld(void)
 
     if(resetNextViewer)
         resetNextViewer = 2;
-/*
-    if(useVSync)
-        gl.Enable(DGL_VSYNC);
-    else
-        gl.Disable(DGL_VSYNC);
-*/
+
     R_GetSharpView(&sharpView, viewplayer);
 
     // Update the camera angles that will be used when the camera is
@@ -386,12 +381,13 @@ void R_NewSharpWorld(void)
             plane->oldheight[0] = plane->oldheight[1];
             plane->oldheight[1] = plane->height;
 
-            if(fabs(plane->oldheight[0] - plane->oldheight[1]) >=
-               MAX_SMOOTH_PLANE_MOVE)
-            {
-                // Too fast: make an instantaneous jump.
-                plane->oldheight[0] = plane->oldheight[1];
-            }
+            if(plane->oldheight[0] != plane->oldheight[1])
+                if(fabs(plane->oldheight[0] - plane->oldheight[1]) >=
+                   MAX_SMOOTH_PLANE_MOVE)
+                {
+                    // Too fast: make an instantaneous jump.
+                    plane->oldheight[0] = plane->oldheight[1];
+                }
         }
     }
 }
@@ -448,15 +444,7 @@ void R_SetupWorldFrame(void)
                             plane->height;
 
                 // Visible plane height.
-                if(!plane->linked)
-                {
-                    plane->visheight = plane->height + plane->visoffset;
-                }
-                else
-                {
-                    plane->visheight =
-                        R_GetLinkedSector(plane->linked, j)->planes[j]->height;
-                }
+                plane->visheight = plane->height + plane->visoffset;
             }
         }
     }

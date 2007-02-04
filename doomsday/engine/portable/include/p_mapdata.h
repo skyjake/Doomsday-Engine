@@ -101,16 +101,6 @@ typedef struct fvertex_s {
     float           pos[2];
 } fvertex_t;
 
-enum {
-    PLN_FLOOR,
-    PLN_CEILING,
-    NUM_PLANE_TYPES
-};
-
-typedef struct skyfix_s {
-    float offset;
-} skyfix_t;
-
 #include "p_maptypes.h"
 
 /*

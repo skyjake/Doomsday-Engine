@@ -141,7 +141,8 @@ static byte bottomColor[3];
 // Current sector light color.
 const byte *sLightColor;
 
-static byte devNoTexFix = 0;
+byte devNoTexFix = 0;
+byte devNoLinkedSurfaces = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -172,6 +173,7 @@ void Rend_Register(void)
     C_VAR_INT("rend-dev-light-modmatrix", &debugLightModMatrix,
               CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, 0, 0, 1);
+    C_VAR_BYTE("rend-dev-surface-linked", &devNoLinkedSurfaces, 0, 0, 1);
 
     RL_Register();
     DL_Register();
@@ -1104,7 +1106,7 @@ static void Rend_SetSurfaceColorsForSide(side_t *side)
 /**
  * Renders the given single-sided seg into the world.
  */
-static void Rend_RenderSSWallSeg(seg_t *seg, sector_t *frontsec)
+static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 {
     int         surfaceFlags;
     surface_t  *surface;
@@ -1114,6 +1116,7 @@ static void Rend_RenderSSWallSeg(seg_t *seg, sector_t *frontsec)
     rendpoly_t *quad;
     float      *vBL, *vBR, *vTL, *vTR;
     boolean     backSide = true;
+    sector_t   *frontsec = ssec->sector, *fflinkSec, *fclinkSec;
 
     sid = seg->linedef->sides[0];
     backsid = seg->linedef->sides[1];
@@ -1129,8 +1132,10 @@ static void Rend_RenderSSWallSeg(seg_t *seg, sector_t *frontsec)
     else
         side = backsid;
 
-    ffloor = frontsec->SP_floorvisheight;
-    fceil = frontsec->SP_ceilvisheight;
+    fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
+    ffloor = fflinkSec->SP_floorvisheight;
+    fclinkSec = R_GetLinkedSector(ssec, PLN_CEILING);
+    fceil = fclinkSec->SP_ceilvisheight;
     fsh = fceil - ffloor;
 
     // Init the quad.
@@ -1219,7 +1224,7 @@ static void Rend_RenderSSWallSeg(seg_t *seg, sector_t *frontsec)
 /**
  * Renders wall sections for given two-sided seg.
  */
-static void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec)
+static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 {
     int         surfaceFlags;
     int         solidSeg = false; // -1 means NEVER.
@@ -1231,6 +1236,7 @@ static void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec)
     rendpoly_t *quad;
     float      *vBL, *vBR, *vTL, *vTR;
     boolean     backSide = true;
+    sector_t   *frontsec = ssec->sector, *fflinkSec, *fclinkSec;
 
     backsec = seg->SG_backsector;
     sid = seg->linedef->sides[0];
@@ -1252,8 +1258,10 @@ static void Rend_RenderWallSeg(seg_t *seg, sector_t *frontsec)
        side->SW_middlepic == 0)
        return; // Ugh... an obvious wall seg hack. Best take no chances...
 
-    ffloor = frontsec->SP_floorvisheight;
-    fceil = frontsec->SP_ceilvisheight;
+    fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
+    ffloor = fflinkSec->SP_floorvisheight;
+    fclinkSec = R_GetLinkedSector(ssec, PLN_CEILING);
+    fceil = fclinkSec->SP_ceilvisheight;
     fsh = fceil - ffloor;
 
     bceil = backsec->SP_ceilvisheight;
@@ -1858,7 +1866,7 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 
 static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
 {
-    sector_t   *sector = subsector->sector, *link = NULL;
+    sector_t   *sector = subsector->sector;
     int         surfaceFlags;
     float       height;
     surface_t  *surface;
@@ -1866,27 +1874,11 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     int         flags;
     sector_t   *polySector;
 
-    // Determine the height of the plane.
-    if(splane->linked)
-    {
-        polySector = link =
-            R_GetLinkedSector(splane->linked, plane->type);
-
-        height = SECT_PLANE_HEIGHT(link, plane->type);
-        // Add the skyfix
-        height += link->skyfix[plane->type].offset;
-
-        surface = &link->planes[plane->type]->surface;
-    }
-    else
-    {
-        polySector = sector;
-        height = splane->visheight;
-        // Add the skyfix
-        height += sector->skyfix[plane->type].offset;
-
-        surface = &sector->planes[plane->type]->surface;
-    }
+    polySector = R_GetLinkedSector(subsector, plane->type);
+    height = SECT_PLANE_HEIGHT(polySector, plane->type);
+    // Add the skyfix
+    height += polySector->skyfix[plane->type].offset;
+    surface = &polySector->planes[plane->type]->surface;
 
     // We don't render planes for unclosed sectors when the polys would
     // be added to the skymask (a DOOM.EXE renderer hack).
@@ -1971,15 +1963,15 @@ static void Rend_RenderSubsector(uint ssecidx)
     // Retrieve the sector light color.
     sLightColor = R_GetSectorLightColor(sect);
 
+    Rend_MarkSegsFacingFront(ssec);
+
     // Dynamic lights.
     if(useDynLights)
         DL_ProcessSubsector(ssec);
 
     // Prepare for FakeRadio.
-    Rend_RadioInitForSector(sect);
+    Rend_RadioInitForSubsector(ssec);
     Rend_RadioSubsectorEdges(ssec);
-
-    Rend_MarkSegsFacingFront(ssec);
 
     Rend_OccludeSubsector(ssec, false);
     DL_ClipInSubsector(ssecidx);
@@ -2015,9 +2007,9 @@ static void Rend_RenderSubsector(uint ssecidx)
         if(seg->frameflags & SEGINF_FACINGFRONT)
         {
             if(!seg->SG_backsector || !seg->SG_frontsector)
-                Rend_RenderSSWallSeg(seg, sect);
+                Rend_RenderSSWallSeg(seg, ssec);
             else
-                Rend_RenderWallSeg(seg, sect);
+                Rend_RenderWallSeg(seg, ssec);
         }
     }
 
@@ -2030,7 +2022,7 @@ static void Rend_RenderSubsector(uint ssecidx)
 
             // Let's first check which way this seg is facing.
             if(seg->frameflags & SEGINF_FACINGFRONT)
-                Rend_RenderSSWallSeg(seg, sect);
+                Rend_RenderSSWallSeg(seg, ssec);
         }
     }
 

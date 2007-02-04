@@ -56,6 +56,7 @@ struct subsector
     -       fvertex_s*  vertices
     -       int         validcount
     -       shadowlink_s* shadows
+    -       uint        group
 end
 
 internal
@@ -87,6 +88,18 @@ struct surface
     -       translation_s* xlat
 end
 
+internal
+enum {
+    PLN_FLOOR,
+    PLN_CEILING,
+    NUM_PLANE_TYPES
+};
+
+typedef struct skyfix_s {
+    float offset;
+} skyfix_t;
+end
+
 struct plane
     FLOAT   float       height  // Current height
     -       float[2]    oldheight
@@ -99,7 +112,6 @@ struct plane
     PTR     sector_s*   sector  // Owner of the plane (temp)
     -       float       visheight // Visible plane height (smoothed)
     -       float       visoffset
-    -       sector_s*   linked  // Plane attached to another sector.
 end
 
 internal
@@ -119,7 +131,6 @@ internal
 #define SP_ceiltexmove          planes[PLN_CEILING]->surface.texmove
 #define SP_ceilsoundorg         planes[PLN_CEILING]->soundorg
 #define SP_ceilvisheight        planes[PLN_CEILING]->visheight
-#define SP_ceillinked           planes[PLN_CEILING]->linked
 
 #define SP_floorsurface         planes[PLN_FLOOR]->surface
 #define SP_floorheight          planes[PLN_FLOOR]->height
@@ -136,7 +147,6 @@ internal
 #define SP_floortexmove         planes[PLN_FLOOR]->surface.texmove
 #define SP_floorsoundorg        planes[PLN_FLOOR]->soundorg
 #define SP_floorvisheight       planes[PLN_FLOOR]->visheight
-#define SP_floorlinked          planes[PLN_FLOOR]->linked
 
 #define SECT_PLANE_HEIGHT(x, n) (x->planes[n]->visheight)
 end
@@ -150,6 +160,11 @@ internal
 // Sector flags.
 #define SECF_INVIS_FLOOR    0x1
 #define SECF_INVIS_CEILING  0x2
+
+typedef struct ssecgroup_s {
+	struct sector_s**   linked;     // [sector->planecount] size.
+	                                // Plane attached to another sector.
+} ssecgroup_t;
 end
 
 struct sector
@@ -163,6 +178,8 @@ struct sector
     PTR     line_s**    Lines       // [linecount] size.
     UINT    uint        subscount
     PTR     subsector_s** subsectors // [subscount] size.
+    -       uint        subsgroupcount
+    -       ssecgroup_t* subsgroups // [subsgroupcount] size.
     -       skyfix_t[2] skyfix      // floor, ceiling.
     PTR     degenmobj_t soundorg
 

@@ -65,7 +65,7 @@ typedef struct {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 static void    R_PrepareSubsector(subsector_t *sub);
-static void    R_FindLineNeighbors(sector_t *sector, line_t *line,
+static void    R_FindLineNeighbors(sector_t *sector, line_t *line, int side,
                                    struct line_s **neighbors, int alignment);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -101,33 +101,6 @@ static float mapBounds[4];
 #endif
 
 /**
- * We mustn't create links which form loops. This will start looking
- * from destlink, and if it finds startsec we're in trouble.
- */
-static boolean R_IsValidLink(sector_t *startsec, sector_t *destlink,
-                             int plane)
-{
-    sector_t   *sec = destlink;
-    sector_t   *link;
-
-    for(;;)
-    {
-        // Advance to the linked sector.
-        if(!sec->planes[plane]->linked)
-            break;
-        link = sec->planes[plane]->linked;
-
-        // Is there an illegal linkage?
-        if(sec == link || startsec == link)
-            return false;
-        sec = link;
-    }
-
-    // No problems encountered.
-    return true;
-}
-
-/**
  * Called whenever the sector changes.
  *
  * This routine handles plane hacks where all of the sector's
@@ -139,12 +112,15 @@ static boolean R_IsValidLink(sector_t *startsec, sector_t *destlink,
  */
 static void R_SetSectorLinks(sector_t *sec)
 {
-    uint        k;
+    uint        i, j, k;
     sector_t   *back;
     line_t     *lin;
     boolean     hackfloor, hackceil;
     side_t     *sid, *frontsid, *backsid;
     sector_t   *floorlink_candidate = 0, *ceillink_candidate = 0;
+    seg_t      *seg;
+    subsector_t *sub;
+    ssecgroup_t *ssgrp;
 
     // Must have a valid sector!
     if(!sec || !sec->linecount || sec->permanentlink)
@@ -152,92 +128,116 @@ static void R_SetSectorLinks(sector_t *sec)
 
     hackfloor = (!R_IsSkySurface(&sec->SP_floorsurface));
     hackceil = (!R_IsSkySurface(&sec->SP_ceilsurface));
-    for(k = 0; k < sec->linecount; ++k)
+    if(hackfloor || hackceil)
+    for(i = 0; i < sec->subsgroupcount; ++i)
     {
-        lin = sec->Lines[k];
         if(!hackfloor && !hackceil)
             break;
-        // We are only interested in two-sided lines.
-        if(!(lin->L_frontsector && lin->L_backsector))
-            continue;
 
-        // Check the vertex line owners for both verts.
-        // We are only interested in lines that do NOT share either vertex
-        // with a one-sided line (ie, its not "anchored").
-        if(lin->L_v1->anchored || lin->L_v2->anchored)
-            return;
-
-        // Check which way the line is facing.
-        sid = lin->L_frontside;
-        if(sid->sector == sec)
+        ssgrp = &sec->subsgroups[i];
+        for(k = 0; k < sec->subscount; ++k)
         {
-            frontsid = sid;
-            backsid = lin->L_backside;
+            if(!hackfloor && !hackceil)
+                break;
+
+            sub = sec->subsectors[k];
+            // Must be in the same group.
+            if(sub->group != i)
+                continue;
+
+            for(j = 0, seg = sub->firstseg; j < sub->segcount; ++j, seg++)
+            {
+                if(!hackfloor && !hackceil)
+                    break;
+
+                lin = seg->linedef;
+
+                if(!lin)
+                    continue; // minisegs don't count.
+
+                // We are only interested in two-sided lines.
+                if(!(lin->L_frontsector && lin->L_backsector))
+                    continue;
+
+                // Check the vertex line owners for both verts.
+                // We are only interested in lines that do NOT share either vertex
+                // with a one-sided line (ie, its not "anchored").
+                if(lin->L_v1->anchored || lin->L_v2->anchored)
+                    return;
+
+                // Check which way the line is facing.
+                sid = lin->L_frontside;
+                if(sid->sector == sec)
+                {
+                    frontsid = sid;
+                    backsid = lin->L_backside;
+                }
+                else
+                {
+                    frontsid = lin->L_backside;
+                    backsid = sid;
+                }
+                back = backsid->sector;
+                if(back == sec)
+                    return;
+
+                // Check that there is something on the other side.
+                if(back->SP_ceilheight == back->SP_floorheight)
+                    return;
+                // Check the conditions that prevent the invis plane.
+                if(back->SP_floorheight == sec->SP_floorheight)
+                {
+                    hackfloor = false;
+                }
+                else
+                {
+                    if(back->SP_floorheight > sec->SP_floorheight)
+                        sid = frontsid;
+                    else
+                        sid = backsid;
+
+                    if((sid->SW_bottompic && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
+                       (sid->SW_middlepic && !(sid->SW_middleflags & SUF_TEXFIX)))
+                        hackfloor = false;
+                    else
+                        floorlink_candidate = back;
+                }
+
+                if(back->SP_ceilheight == sec->SP_ceilheight)
+                    hackceil = false;
+                else
+                {
+                    if(back->SP_ceilheight < sec->SP_ceilheight)
+                        sid = frontsid;
+                    else
+                        sid = backsid;
+
+                    if((sid->SW_toppic && !(sid->SW_topflags & SUF_TEXFIX)) ||
+                       (sid->SW_middlepic && !(sid->SW_middleflags & SUF_TEXFIX)))
+                        hackceil = false;
+                    else
+                        ceillink_candidate = back;
+                }
+            }
         }
-        else
+        if(hackfloor)
         {
-            frontsid = lin->L_backside;
-            backsid = sid;
-        }
-        back = backsid->sector;
-        if(back == sec)
-            return;
+            if(floorlink_candidate == sec->containsector)
+                ssgrp->linked[PLN_FLOOR] = floorlink_candidate;
 
-        // Check that there is something on the other side.
-        if(back->SP_ceilheight == back->SP_floorheight)
-            return;
-        // Check the conditions that prevent the invis plane.
-        if(back->SP_floorheight == sec->SP_floorheight)
+            /*      if(floorlink_candidate)
+               Con_Printf("LF:%i->%i\n",
+               i, GET_SECTOR_IDX(floorlink_candidate)); */
+        }
+        if(hackceil)
         {
-            hackfloor = false;
+            if(ceillink_candidate == sec->containsector)
+                ssgrp->linked[PLN_CEILING] = ceillink_candidate;
+
+            /*      if(ceillink_candidate)
+               Con_Printf("LC:%i->%i\n",
+               i, GET_SECTOR_IDX(ceillink_candidate)); */
         }
-        else
-        {
-            if(back->SP_floorheight > sec->SP_floorheight)
-                sid = frontsid;
-            else
-                sid = backsid;
-
-            if((sid->SW_bottompic && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
-               (sid->SW_middlepic && !(sid->SW_middleflags & SUF_TEXFIX)))
-                hackfloor = false;
-            else if(R_IsValidLink(sec, back, PLN_FLOOR))
-                floorlink_candidate = back;
-        }
-
-        if(back->SP_ceilheight == sec->SP_ceilheight)
-            hackceil = false;
-        else
-        {
-            if(back->SP_ceilheight < sec->SP_ceilheight)
-                sid = frontsid;
-            else
-                sid = backsid;
-
-            if((sid->SW_toppic && !(sid->SW_topflags & SUF_TEXFIX)) ||
-               (sid->SW_middlepic && !(sid->SW_middleflags & SUF_TEXFIX)))
-                hackceil = false;
-            else if(R_IsValidLink(sec, back, PLN_CEILING))
-                ceillink_candidate = back;
-        }
-    }
-    if(hackfloor)
-    {
-        if(floorlink_candidate == sec->containsector)
-            sec->planes[PLN_FLOOR]->linked = floorlink_candidate;
-
-        /*      if(floorlink_candidate)
-           Con_Printf("LF:%i->%i\n",
-           i, GET_SECTOR_IDX(floorlink_candidate)); */
-    }
-    if(hackceil)
-    {
-        if(ceillink_candidate == sec->containsector)
-            sec->planes[PLN_CEILING]->linked = ceillink_candidate;
-
-        /*      if(ceillink_candidate)
-           Con_Printf("LC:%i->%i\n",
-           i, GET_SECTOR_IDX(ceillink_candidate)); */
     }
 }
 
@@ -616,7 +616,7 @@ static fvertex_t *edgeClipper(uint *numpoints, fvertex_t *points,
 
         for(k = 0; k < num; ++k)
         {
-            int     startIdx = k, endIdx = k + 1;
+            uint    startIdx = k, endIdx = k + 1;
 
             // Check the end index.
             if(endIdx == num)
@@ -1111,9 +1111,9 @@ static void R_SetVertexSectorOwner(vertex_t *vtx, ownerlist_t *ownerList,
  * Generates an array of sector references for each vertex. The list
  * includes all the sectors the vertex belongs to.
  *
- * Generates an array of line references for each vertex. The list
- * includes all the lines the vertex belongs to sorted by angle.
- * (the list is arranged in clockwise order, east = 0).
+ * Generates an array of line references for each vertex. The list includes
+ * all the lines the vertex belongs to sorted by angle, (the list is
+ * arranged in clockwise order, east = 0).
  */
 static void R_BuildVertexOwners(void)
 {
@@ -1125,8 +1125,7 @@ static void R_BuildVertexOwners(void)
     ownerlist_t    *vtxSecOwnerLists;
 
     // Allocate memory for vertex sector owner processing.
-    vtxSecOwnerLists = M_Malloc(sizeof(ownerlist_t) * numvertexes);
-    memset(vtxSecOwnerLists, 0, sizeof(ownerlist_t) * numvertexes);
+    vtxSecOwnerLists = M_Calloc(sizeof(ownerlist_t) * numvertexes);
 
     for(i = 0, sec = sectors; i < numsectors; ++i, sec++)
     {
@@ -1149,8 +1148,8 @@ static void R_BuildVertexOwners(void)
         }
     }
 
-    // Now "harden" the sector owner linked lists into arrays and free as we go.
-    // We also need to sort line owners and then finish the rings.
+    // Now "harden" the sector owner linked lists into arrays and free as
+    // we go. Also need to sort line owners and then finish the rings.
     for(i = 0; i < numvertexes; ++i)
     {
         vertex_t   *v = VERTEX_PTR(i);
@@ -1185,8 +1184,8 @@ static void R_BuildVertexOwners(void)
                 sortLineOwners(v->lineowners, lineAngleSorter);
 
             // Finish the linking job
-            // They are only singly linked atm, we need them to be doubly and
-            // circularly linked.
+            // They are only singly linked atm, we need them to be doubly
+            // and circularly linked.
             last = v->lineowners;
             p = last->next;
             while(p)
@@ -1199,20 +1198,21 @@ static void R_BuildVertexOwners(void)
             v->lineowners->prev = last;
 
 #if _DEBUG
+if(verbose >= 2)
 {
 // For checking the line owner link rings are formed correctly.
 lineowner_t *base;
 uint        idx;
 
-VERBOSE2( Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners) );
+Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners);
 p = base = v->lineowners;
 idx = 0;
 do
 {
-    VERBOSE2( Con_Message("  %i: p = %i, this = %i, n = %i\n", idx,
-                          GET_LINE_IDX(p->prev->line),
-                          GET_LINE_IDX(p->line),
-                          GET_LINE_IDX(p->next->line)) );
+    Con_Message("  %i: p = %i, this = %i, n = %i\n", idx,
+                GET_LINE_IDX(p->prev->line),
+                GET_LINE_IDX(p->line),
+                GET_LINE_IDX(p->next->line));
     p = p->next;
     idx++;
 } while(p != base);
@@ -1384,8 +1384,14 @@ static void R_BuildSectorLinks(void)
             // Link all planes permanently.
             sec->permanentlink = true;
             // Only floor and ceiling can be linked, not all planes inbetween.
-            sec->SP_floorlinked = sec->containsector;
-            sec->SP_ceillinked = sec->containsector;
+            for(k = 0; k < sec->subsgroupcount; ++k)
+            {
+                ssecgroup_t *ssgrp = &sec->subsgroups[k];
+                uint        p;
+
+                for(p = 0; p < sec->planecount; ++p)
+                    ssgrp->linked[p] = sec->containsector;
+            }
 
             Con_Printf("Linking S%i planes permanently to S%i\n", i,
                        GET_SECTOR_IDX(sec->containsector));
@@ -1434,7 +1440,7 @@ static void R_InitPlaneIllumination(subsector_t *sub, uint planeid)
     }
 }
 
-static void R_InitPlanePolys(subsector_t *subsector)
+static void R_InitSubsectorPoly(subsector_t *subsector)
 {
     uint        numvrts, i;
     fvertex_t  *vrts, *vtx, *pv;
@@ -1480,15 +1486,6 @@ static void R_InitPlanePolys(subsector_t *subsector)
         // Re-add the first vertex so the triangle fan wraps around.
         memcpy(pv, &subsector->vertices[1], sizeof(*pv));
     }
-
-    // Initialize the illumination for the subsector.
-    for(i = 0; i < subsector->sector->planecount; ++i)
-        R_InitPlaneIllumination(subsector, i);
-
-    // FIXME: $nplanes
-    // Initialize the plane types.
-    subsector->planes[PLN_FLOOR]->type = PLN_FLOOR;
-    subsector->planes[PLN_CEILING]->type = PLN_CEILING;
 }
 
 static void R_BuildSubsectorPolys(void)
@@ -1504,12 +1501,23 @@ static void R_BuildSubsectorPolys(void)
     {
         sub = SUBSECTOR_PTR(i);
 
-        sub->planes = Z_Malloc(sub->sector->planecount * sizeof(subplaneinfo_t*),
-                               PU_LEVEL, NULL);
-        for(k = 0; k < sub->sector->planecount; ++k)
-            sub->planes[k] = Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
+        R_InitSubsectorPoly(sub);
 
-        R_InitPlanePolys(sub);
+        sub->planes =
+            Z_Malloc(sub->sector->planecount * sizeof(subplaneinfo_t*),
+                     PU_LEVEL, NULL);
+        for(k = 0; k < sub->sector->planecount; ++k)
+        {
+            sub->planes[k] =
+                Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
+
+            // Initialize the illumination for the subsector.
+            R_InitPlaneIllumination(sub, k);
+        }
+        // FIXME: $nplanes
+        // Initialize the plane types.
+        sub->planes[PLN_FLOOR]->type = PLN_FLOOR;
+        sub->planes[PLN_CEILING]->type = PLN_CEILING;
     }
 
 #ifdef _DEBUG
@@ -1677,6 +1685,10 @@ void R_RationalizeSectors(void)
             // Mark this sector as a self-referencing hack.
             sec->selfRefHack = true;
 
+            // We'll use validcount to ensure we only attempt to find
+            // each hack group once.
+            ++validcount;
+
             // Now look for lines connected to this root line (and any
             // subsequent lines that connect to those) that match the
             // requirements for a selfreferencing hack.
@@ -1690,7 +1702,7 @@ void R_RationalizeSectors(void)
                 if(!lin->selfrefhackroot)
                     continue;
 
-                if(lin->validcount)
+                if(lin->validcount == validcount)
                     continue; // We've already found this hack group.
 
                 for(l = 0; l < 2; ++l)
@@ -1780,7 +1792,7 @@ void R_RationalizeSectors(void)
 
                                                         if(!found)
                                                             p2 = p2->next;
-                                                    } while(!found && p2 != base);
+                                                    } while(!found && p2 != base2);
                                                 }
 
                                                 if(!found)
@@ -1811,7 +1823,7 @@ void R_RationalizeSectors(void)
                                                                      GET_SECTOR_IDX(sec)));
 
                                                 // Use validcount to mark them as done.
-                                                collectedLines[o]->validcount = true;
+                                                collectedLines[o]->validcount = validcount;
                                             }
 
                                             // We are done with this group, don't collect.
@@ -1990,9 +2002,9 @@ void R_SetupSky(void)
 }
 
 /**
- * Returns pointers to the line's vertices in such a fashion that
- * verts[0] is the leftmost vertex and verts[1] is the rightmost
- * vertex, when the line lies at the edge of `sector.'
+ * Returns pointers to the line's vertices in such a fashion that verts[0]
+ * is the leftmost vertex and verts[1] is the rightmost vertex, when the
+ * line lies at the edge of `sector.'
  */
 void R_OrderVertices(line_t *line, const sector_t *sector, vertex_t *verts[2])
 {
@@ -2009,94 +2021,67 @@ void R_OrderVertices(line_t *line, const sector_t *sector, vertex_t *verts[2])
 }
 
 /**
- * A neighbour is a line that shares a vertex with 'line', and faces
- * the specified sector.  Finds both the left and right neighbours.
+ * A neighbour is a line that shares a vertex with 'line', and faces the
+ * specified sector.
  */
-static void R_FindLineNeighbors(sector_t *sector, line_t *line,
-                                line_t **neighbors, int alignment)
+line_t *R_FindLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
+                           boolean antiClockwise)
 {
-    uint        j;
-    line_t     *other;
-    vertex_t   *vtx[2];
+    lineowner_t *cown = antiClockwise? own->prev : own->next;
+    line_t *other = cown->line;
 
-    // We want to know which vertex is the leftmost/rightmost one.
-    R_OrderVertices(line, sector, vtx);
+    if(other == line)
+        return NULL;
 
-    // Find the real neighbours, which are in the same sector
-    // as this line.
-    for(j = 0; j < sector->linecount; ++j)
+    if((other->L_frontsector == sector ||
+          (other->L_backsector && other->L_backsector == sector)) &&
+       other->L_frontsector != other->L_backsector)
     {
-        other = sector->Lines[j];
-        if(other == line)
-            continue;
-
-        // Is this a valid neighbour?
-        if(other->L_frontsector == other->L_backsector)
-            continue;
-
-        // Do we need to test the line alignment?
-        if(alignment)
-        {
-#define SEP 10
-            binangle_t diff = line->angle - other->angle;
-
-            /*if(!(diff < SEP && diff > BANG_MAX - SEP) &&
-               !(diff < BANG_180 + SEP && diff > BANG_180 - SEP))
-               continue; // Misaligned. */
-
-            if(alignment < 0)
-                diff -= BANG_180;
-            if(other->L_frontsector != sector)
-                diff -= BANG_180;
-            if(!(diff < SEP || diff > BANG_MAX - SEP))
-                continue;       // Misaligned.
-        }
-
-        // It's our 'left' neighbour if it shares v1.
-        if(other->v[0] == vtx[0] || other->v[1] == vtx[0])
-            neighbors[0] = other;
-
-        // It's our 'right' neighbour if it shares v2.
-        if(other->v[0] == vtx[1] || other->v[1] == vtx[1])
-            neighbors[1] = other;
-
-        // Do we have everything we want?
-        if(neighbors[0] && neighbors[1])
-            break;
+        return other;
     }
-}
 
-static boolean R_IsEquivalent(line_t *a, line_t *b)
-{
-    return ((a->v[0] == b->v[0] && a->v[1] == b->v[1]) ||
-            (a->v[0] == b->v[1] && a->v[1] == b->v[0]));
+    // Not suitable, try the next.
+    return R_FindLineNeighbor(sector, line, cown, antiClockwise);
 }
 
 /**
- * Browse through the lines in backSector.  The backNeighbor is the
- * line that 1) isn't realNeighbor and 2) connects to commonVertex.
+ * A side's alignneighbor is a line that shares a vertex with 'line' and
+ * whos orientation is aligned with it (thus, making it unnecessary to have
+ * a shadow between them. In practice, they would be considered a single,
+ * long sidedef by the shadow generator).
  */
-static void R_FindBackNeighbor(sector_t *backSector, line_t *self,
-                               line_t *realNeighbor, vertex_t *commonVertex,
-                               line_t **backNeighbor)
+line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
+                                lineowner_t *own, boolean antiClockwise,
+                                int alignment)
 {
-    uint        i;
-    line_t     *line;
+#define SEP 10
+    lineowner_t *cown = antiClockwise? own->prev : own->next;
+    line_t *other = cown->line;
+    binangle_t diff;
+    uint    candIDX = GET_LINE_IDX(other);
 
-    for(i = 0; i < backSector->linecount; ++i)
+    if(other == line)
+        return NULL;
+
+    if(!(other->L_backsector &&
+         other->L_backsector == other->L_frontsector))
     {
-        line = backSector->Lines[i];
-        if(R_IsEquivalent(line, realNeighbor) || R_IsEquivalent(line, self))
-            continue;
-        if(line->selfrefhackroot)
-            continue;
+        diff = line->angle - other->angle;
 
-        if(line->L_v1 == commonVertex || line->L_v2 == commonVertex)
-        {
-            *backNeighbor = line;
-            return;
-        }
+        if(alignment < 0)
+            diff -= BANG_180;
+        if(other->L_frontsector != sec)
+            diff -= BANG_180;
+        if(diff < SEP || diff > BANG_MAX - SEP)
+            return other;
     }
+
+    // Can't step over non-twosided lines.
+    if(!other->L_backsector || !other->L_frontsector)
+        return NULL;
+
+    // Not suitable, try the next.
+    return R_FindLineAlignNeighbor(sec, line, cown, antiClockwise, alignment);
 }
 
 /**
@@ -2106,11 +2091,11 @@ void R_InitLineNeighbors(void)
 {
     uint        startTime = Sys_GetRealTime();
 
-    uint        i, k, j, m;
+    uint        i, k, j, m, sid;
     line_t     *line, *other;
     sector_t   *sector;
     side_t     *side;
-    vertex_t   *vertices[2], *vtx;
+    vertex_t   *vtx;
 
     // Find neighbours. We'll do this sector by sector.
     for(k = 0; k < numsectors; ++k)
@@ -2121,107 +2106,98 @@ void R_InitLineNeighbors(void)
             line = sector->Lines[i];
 
             // Which side is this?
-            side = line->sides[line->L_frontsector == sector? FRONT:BACK];
+            sid = (line->L_frontsector == sector? FRONT:BACK);
+            side = line->sides[sid];
 
-            R_FindLineNeighbors(sector, line, side->neighbor, 0);
-
-            R_OrderVertices(line, sector, vertices);
-
-            // Figure out the sectors in the proximity.
             for(j = 0; j < 2; ++j)
             {
+                side->neighbor[j] =
+                    R_FindLineNeighbor(sector, line, line->vo[sid^j], j);
+
+                // Figure out the sectors in the proximity.
                 // Neighbour must be two-sided.
                 if(side->neighbor[j] && side->neighbor[j]->L_frontsector &&
                    side->neighbor[j]->L_backsector &&
                    !side->neighbor[j]->selfrefhackroot)
                 {
-                    side->proxsector[j] =
-                        side->neighbor[j]->sec[side->neighbor[j]->L_frontsector == sector ? BACK:FRONT];
+                    int         nSide =
+                        (side->neighbor[j]->L_frontsector == sector ? BACK:FRONT);
+
+                    side->proxsector[j] = side->neighbor[j]->sec[nSide];
 
                     // Find the backneighbour.  They are the
                     // neighbouring lines in the backsectors of the
                     // neighbour lines.
-                    R_FindBackNeighbor(side->proxsector[j], line,
-                                       side->neighbor[j], vertices[j],
-                                       &side->backneighbor[j]);
-/*
-#if _DEBUG
-assert(side->backneighbor[j] != line);
-#endif
-*/
+                    side->backneighbor[j] =
+                        R_FindLineNeighbor(side->proxsector[j],
+                                           side->neighbor[j],
+                                           side->neighbor[j]->vo[nSide^j],
+                                           j);
                 }
                 else
                 {
                     side->proxsector[j] = NULL;
                 }
+
+                // Look for aligned neighbours.  They are side-specific.
+                side->alignneighbor[j] =
+                    R_FindLineAlignNeighbor(sector, line, line->vo[sid^j], j,
+                                    (side == line->L_frontside? 1:-1));
+                // Alignneighbors can't be backneighbors.
+                if(side->alignneighbor[j] == side->backneighbor[j])
+                    side->alignneighbor[j] = NULL;
             }
 
-            // Look for aligned neighbours.  They are side-specific.
-            for(j = 0; j < 2; ++j)
-            {
-                vtx = vertices[j];
-                for(m = 0; m < vtx->numsecowners; ++m)
-                {
-                    R_FindLineNeighbors(SECTOR_PTR(vtx->secowners[m]), line,
-                                        side->alignneighbor,
-                                        (side == line->L_frontside? 1:-1));
-                }
-            }
-
-            // Attempt to find "pretend" neighbors for this line, if "real"
+            // Attempt to find "pretend" neighbours for this line, if "real"
             // ones have not been found.
-            // NOTE: selfrefhackroot lines don't have neighbors.
-            //       They can only be "pretend" neighbors.
+            // NOTE: selfrefhackroot lines don't have neighbours.
+            //       They can only be "pretend" neighbours.
 
-            // Pretend neighbors are selfrefhackroot lines but BOTH vertices
+            // Pretend neighbours are selfrefhackroot lines but BOTH vertices
             // are owned by this sector and ONE of the vertexes is owned by
             // this line.
             if((!side->neighbor[0] || !side->neighbor[1]) &&
                !line->selfrefhackroot)
             {
-                boolean ok, ok2;
 
-                // Check all lines.
-                for(j = 0; j < numlines; ++j)
+                uint        v;
+                boolean     done, ok;
+                lineowner_t *own;
+
+                for(j = 0; j < 2; ++j)
                 {
-                    other = LINE_PTR(j);
-                    if(other->selfrefhackroot &&
-                        (other->L_v1 == line->L_v1 || other->L_v1 == line->L_v2 ||
-                         other->L_v2 == line->L_v1 || other->L_v2 == line->L_v2))
+                    if(!side->neighbor[j])
                     {
-                        ok = ok2 = false;
-                        vtx = other->L_v1;
-                        for(m = 0; m < vtx->numsecowners && !ok; ++m)
-                            if(vtx->secowners[m] == k) // k == sector id
-                                ok = true;
-
-                        if(ok)
+                        own = line->vo[sid^j];
+                        done = false;
+                        do
                         {
-                            vtx = other->L_v2;
-                            for(m = 0; m < vtx->numsecowners && !ok2; ++m)
-                                if(vtx->secowners[m] == k) // k == sector id
-                                    ok2 = true;
-                        }
-
-                        if(ok && ok2)
-                        {
-#if _DEBUG
-VERBOSE2(Con_Message("L%i is a pretend neighbor to L%i\n",
-             GET_LINE_IDX(other), GET_LINE_IDX(line)));
-#endif
-
-                            if(other->v[0] == vertices[0] ||
-                               other->v[1] == vertices[0])
+                            other = own->line;
+                            if(other->selfrefhackroot &&
+                               (other->L_v1 == line->L_v1 || other->L_v1 == line->L_v2 ||
+                                other->L_v2 == line->L_v1 || other->L_v2 == line->L_v2))
                             {
-                                side->neighbor[0] = other;
-                                side->pretendneighbor[0] = true;
+                                for(v = 0; v < 2; ++v)
+                                {
+                                    ok = false;
+                                    vtx = other->v[v];
+                                    for(m = 0; m < vtx->numsecowners && !ok; ++m)
+                                        if(vtx->secowners[m] == k) // k == sector id
+                                            ok = true;
+                                    if(!ok)
+                                        break;
+                                }
+
+                                if(ok)
+                                {
+                                    side->neighbor[j] = other;
+                                    side->pretendneighbor[j] = true;
+                                    done = true;
+                                }
                             }
-                            else
-                            {
-                                side->neighbor[1] = other;
-                                side->pretendneighbor[1] = true;
-                            }
-                        }
+
+                            own = own->next;
+                        } while(own->line != line && !done);
                     }
                 }
             }
@@ -2245,12 +2221,17 @@ if(verbose >= 1)
                 continue;
 
             side = line->sides[k];
+
             if(side->alignneighbor[0] || side->alignneighbor[1])
                 Con_Printf("Line %i/%i: l=%i r=%i\n", i, k,
                            (side->alignneighbor[0] ?
                             GET_LINE_IDX(side->alignneighbor[0]) : -1),
                            (side->alignneighbor[1] ?
                             GET_LINE_IDX(side->alignneighbor[1]) : -1));
+
+            if(side->neighbor[k] && side->pretendneighbor[k])
+                Con_Printf("  has a pretend neighbor, line %i\n",
+                           GET_LINE_IDX(side->neighbor[k]));
         }
     }
 }
@@ -2565,28 +2546,14 @@ void R_ClearSectorFlags(void)
     }
 }
 
-sector_t *R_GetLinkedSector(sector_t *startsec, uint plane)
+sector_t *R_GetLinkedSector(subsector_t *startssec, uint plane)
 {
-    sector_t   *sec = startsec;
-    sector_t   *link;
+    ssecgroup_t *ssgrp = &startssec->sector->subsgroups[startssec->group];
 
-    for(;;)
-    {
-        if(!sec->planes[plane]->linked)
-            return sec;
-        link = sec->planes[plane]->linked;
-
-#ifdef _DEBUG
-        if(sec == link || startsec == link)
-        {
-            Con_Error("R_GetLinkedSector: linked to self! (%s)\n",
-                      (plane == PLN_FLOOR ? "flr" :
-                       plane == PLN_CEILING ? "ceil" : "mid"));
-            return startsec;
-        }
-#endif
-        sec = link;
-    }
+    if(!devNoLinkedSurfaces && ssgrp->linked[plane])
+        return ssgrp->linked[plane];
+    else
+        return startssec->sector;
 }
 
 void R_UpdateAllSurfaces(boolean forceUpdate)
@@ -2819,8 +2786,13 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     if(!sec->permanentlink) // Assign new links
     {
         // Only floor and ceiling can be linked, not all inbetween
-        sec->SP_floorlinked = NULL;
-        sec->SP_ceillinked = NULL;
+        for(i = 0; i < sec->subsgroupcount; ++i)
+        {
+            ssecgroup_t *ssgrp = &sec->subsgroups[i];
+
+            ssgrp->linked[PLN_FLOOR] = NULL;
+            ssgrp->linked[PLN_CEILING] = NULL;
+        }
         R_SetSectorLinks(sec);
     }
 }

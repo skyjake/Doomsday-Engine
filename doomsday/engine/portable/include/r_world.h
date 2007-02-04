@@ -46,7 +46,7 @@ void            R_SetupLevel(int mode, int flags);
 void            R_InitLinks(void);
 void            R_SetupFog(void);
 void            R_SetupSky(void);
-sector_t       *R_GetLinkedSector(sector_t *startsec, uint plane);
+sector_t       *R_GetLinkedSector(subsector_t *startssec, uint plane);
 void            R_UpdatePlanes(void);
 void            R_ClearSectorFlags(void);
 void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
