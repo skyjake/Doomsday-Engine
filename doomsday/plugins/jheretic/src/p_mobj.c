@@ -563,7 +563,7 @@ void P_ZMovement(mobj_t *mo)
        mo->onmobj && mo->pos[VZ] > mo->onmobj->pos[VZ] + mo->onmobj->height)
         mo->onmobj = NULL; // We were on a mobj, we are NOT now.
 
-    if(mo->flags & MF_FLOAT && mo->target)
+    if(mo->flags & MF_FLOAT && mo->target && !P_IsCamera(mo->target))
     {
         // float down towards target if too close
         if(!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))

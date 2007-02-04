@@ -799,7 +799,7 @@ void P_ZMovement(mobj_t *mo)
     // adjust height
     //
     mo->pos[VZ] += mo->momz;
-    if(mo->flags & MF_FLOAT && mo->target)
+    if(mo->flags & MF_FLOAT && mo->target && !P_IsCamera(mo->target))
     {                           // float down towards target if too close
         if(!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
         {
