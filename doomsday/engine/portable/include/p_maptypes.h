@@ -269,8 +269,6 @@ typedef struct side_s {
 #define L_frontside             sides[FRONT]
 #define L_backside              sides[BACK]
 
-#define LINE_NEIGHBOR(line, side) (side? line->vo[side]->next->line : line->vo[side]->prev->line)
-
 typedef struct line_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];
