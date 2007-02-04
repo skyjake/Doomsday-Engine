@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,7 +80,7 @@ byte   *translationtables;
 
 void R_SetBorderGfx(char *gfx[9])
 {
-    int     i;
+    uint        i;
 
     for(i = 0; i < 9; i++)
         if(gfx[i])
@@ -90,9 +91,9 @@ void R_SetBorderGfx(char *gfx[9])
     R_InitViewBorder();
 }
 
-void R_InitViewBorder()
+void R_InitViewBorder(void)
 {
-    patch_t *patch = NULL;
+    patch_t    *patch = NULL;
 
     // Detemine the view border width.
     if(W_CheckNumForName(borderGfx[BG_TOP]) == -1)
@@ -102,12 +103,12 @@ void R_InitViewBorder()
     bwidth = SHORT(patch->height);
 }
 
-/*
+/**
  * Draws the border around the view for different size windows.
  */
 void R_DrawViewBorder(void)
 {
-    int     lump;
+    int         lump;
 
     if(viewwidth == 320 && viewheight == 200)
         return;
@@ -159,7 +160,7 @@ void R_DrawViewBorder(void)
     gl.PopMatrix();
 }
 
-/*
+/**
  * Draws the top border around the view for different size windows.
  */
 void R_DrawTopBorder(void)
