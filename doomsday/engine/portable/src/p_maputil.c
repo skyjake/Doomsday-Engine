@@ -215,7 +215,6 @@ float P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
 
 /**
  * (0,1) = top left; (2,3) = bottom right
- * Assumes sectors are always closed.
  */
 void P_SectorBoundingBox(sector_t *sec, float *bbox)
 {
