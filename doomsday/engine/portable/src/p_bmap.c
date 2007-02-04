@@ -106,8 +106,8 @@ void P_InitSubsectorBlockMap(void)
 
     // The subsector blockmap is tagged as PU_LEVEL.
     subMap =
-        Z_Calloc(subMapWidth * subMapHeight * sizeof(subsector_t **), PU_LEVEL,
-                 0);
+        Z_Calloc(subMapWidth * subMapHeight * sizeof(subsector_t **),
+                 PU_LEVELSTATIC, 0);
 
     // We'll construct the links using nodes.
     map = M_Calloc(sizeof(subsecmap_t) * subMapWidth * subMapHeight);
@@ -191,7 +191,8 @@ void P_InitPolyBlockMap(void)
     }
 
     polyblockmap =
-        Z_Malloc(bmapwidth * bmapheight * sizeof(polyblock_t *), PU_LEVEL, 0);
+        Z_Malloc(bmapwidth * bmapheight * sizeof(polyblock_t *),
+                 PU_LEVELSTATIC, 0);
     memset(polyblockmap, 0, bmapwidth * bmapheight * sizeof(polyblock_t *));
 }
 
