@@ -264,6 +264,8 @@
 		B0CB90EE078B3DCD007EE194 /* qt.c in Sources */ = {isa = PBXBuildFile; fileRef = B0CB90ED078B3DCD007EE194 /* qt.c */; };
 		B0CB9107078B4FFB007EE194 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B0CB9105078B4FFB007EE194 /* Carbon.framework */; };
 		B0CB9108078B4FFB007EE194 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B0CB9106078B4FFB007EE194 /* QuickTime.framework */; };
+		B0CFA3430B7632C9008B7BB3 /* con_busy.c in Sources */ = {isa = PBXBuildFile; fileRef = B0CFA3420B7632C9008B7BB3 /* con_busy.c */; };
+		B0CFA4900B764C9C008B7BB3 /* gl_defer.c in Sources */ = {isa = PBXBuildFile; fileRef = B0CFA48F0B764C9C008B7BB3 /* gl_defer.c */; };
 		B0D5B4D406EE08B700B98CC8 /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = B013509406EDE24E007861F2 /* common.c */; };
 		B0D5B4D506EE08B700B98CC8 /* draw.c in Sources */ = {isa = PBXBuildFile; fileRef = B013509506EDE24E007861F2 /* draw.c */; };
 		B0D5B4D606EE08B700B98CC8 /* ext.c in Sources */ = {isa = PBXBuildFile; fileRef = B013509606EDE24E007861F2 /* ext.c */; };
@@ -1211,6 +1213,11 @@
 		B0CB90ED078B3DCD007EE194 /* qt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = qt.c; path = ../../plugins/sdlmixer/mac/src/qt.c; sourceTree = SOURCE_ROOT; };
 		B0CB9105078B4FFB007EE194 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		B0CB9106078B4FFB007EE194 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
+		B0CFA3420B7632C9008B7BB3 /* con_busy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = con_busy.c; path = ../../engine/portable/src/con_busy.c; sourceTree = SOURCE_ROOT; };
+		B0CFA3440B7632DA008B7BB3 /* con_busy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = con_busy.h; path = ../../engine/portable/include/con_busy.h; sourceTree = SOURCE_ROOT; };
+		B0CFA43B0B7646AA008B7BB3 /* gl_texmanager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gl_texmanager.h; path = ../../engine/portable/include/gl_texmanager.h; sourceTree = SOURCE_ROOT; };
+		B0CFA48F0B764C9C008B7BB3 /* gl_defer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gl_defer.c; path = ../../engine/portable/src/gl_defer.c; sourceTree = SOURCE_ROOT; };
+		B0CFA49D0B764D16008B7BB3 /* gl_defer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gl_defer.h; path = ../../engine/portable/include/gl_defer.h; sourceTree = SOURCE_ROOT; };
 		B0D5B5AC06EE30E200B98CC8 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
 		B0D5B5BA06EE323600B98CC8 /* dsSDLMixer.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = dsSDLMixer.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		B0D5B5BB06EE323600B98CC8 /* dsSDLMixer-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "dsSDLMixer-Info.plist"; sourceTree = "<group>"; };
@@ -1487,6 +1494,8 @@
 		29B97315FDCFA39411CA2CEA /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B0CFA48F0B764C9C008B7BB3 /* gl_defer.c */,
+				B0CFA3420B7632C9008B7BB3 /* con_busy.c */,
 				B0066A850B6CA76C009BE854 /* dam_main.c */,
 				B0066A860B6CA76C009BE854 /* dam_read.c */,
 				B01538F80B46E462006C9D45 /* con_buffer.c */,
@@ -1858,6 +1867,9 @@
 		B02AC73506B3FBD4005824AD /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B0CFA49D0B764D16008B7BB3 /* gl_defer.h */,
+				B0CFA43B0B7646AA008B7BB3 /* gl_texmanager.h */,
+				B0CFA3440B7632DA008B7BB3 /* con_busy.h */,
 				B0066A890B6CA789009BE854 /* dam_main.h */,
 				B0066A8A0B6CA789009BE854 /* dam_read.h */,
 				B01538FA0B46E479006C9D45 /* con_buffer.h */,
@@ -3124,6 +3136,8 @@
 				B01538F90B46E462006C9D45 /* con_buffer.c in Sources */,
 				B0066A870B6CA76C009BE854 /* dam_main.c in Sources */,
 				B0066A880B6CA76C009BE854 /* dam_read.c in Sources */,
+				B0CFA3430B7632C9008B7BB3 /* con_busy.c in Sources */,
+				B0CFA4900B764C9C008B7BB3 /* gl_defer.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

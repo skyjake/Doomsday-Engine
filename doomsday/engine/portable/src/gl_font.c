@@ -376,10 +376,11 @@ int FR_PrepareFont(const char *name)
         VERBOSE2(Con_Printf("FR_PrepareFont: Creating GL texture.\n"));
 
         // Load in the texture.
-        font->texture = gl.NewTexture();
-        gl.TexImage(DGL_RGBA, font->texWidth, font->texHeight, 0, image);
-        gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
-        gl.TexParameter(DGL_MAG_FILTER, DGL_NEAREST);
+        font->texture = GL_NewTextureWithParams2(DGL_RGBA,
+                                                 font->texWidth, font->texHeight, image,
+                                                 0, DGL_LINEAR, DGL_NEAREST,
+                                                 DGL_CLAMP, DGL_CLAMP);                                                 
+
         M_Free(image); image = 0;
 
         F_Close(file);
@@ -624,10 +625,9 @@ saveTGA24_rgba8888("ddfont.tga", bmpWidth, bmpHeight,
     }
 
     // Create the DGL texture.
-    font->texture = gl.NewTexture();
-    gl.TexImage(DGL_RGBA, imgWidth, imgHeight, 0, image);
-    gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-    gl.TexParameter(DGL_MAG_FILTER, DGL_NEAREST);
+    font->texture = GL_NewTextureWithParams2(DGL_RGBA, imgWidth, imgHeight, image,
+                                             0, DGL_NEAREST, DGL_NEAREST,
+                                             DGL_CLAMP, DGL_CLAMP);
 
     // We no longer need these.
     M_Free(image);

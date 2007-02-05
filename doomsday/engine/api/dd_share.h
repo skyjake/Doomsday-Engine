@@ -1072,6 +1072,12 @@ typedef enum blendmode_e {
     //
     //------------------------------------------------------------------------
 
+    // Busy mode flags.
+#define BUSYF_LAST_FRAME        0x1
+#define BUSYF_CONSOLE_OUTPUT    0x2
+#define BUSYF_PROGRESS_BAR      0x4
+#define BUSYF_ACTIVITY          0x8     // Indicate activity.
+
     // These correspond the good old text mode VGA colors.
 #define CBLF_BLACK      0x00000001
 #define CBLF_BLUE       0x00000002

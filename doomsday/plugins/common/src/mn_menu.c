@@ -1378,13 +1378,8 @@ void M_LoadData(void)
 
     if(!menuFogTexture && !Get(DD_NOVIDEO))
     {
-        menuFogTexture = gl.NewTexture();
-        gl.TexImage(DGL_LUMINANCE, 64, 64, 0,
-                    W_CacheLumpName("menufog", PU_CACHE));
-        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-        gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
-        gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-        gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
+        menuFogTexture = GL_NewTextureWithParams2(DGL_LUMINANCE, 64, 64, W_CacheLumpName("menufog", PU_CACHE),
+                                                  0, DGL_NEAREST, DGL_LINEAR, DGL_REPEAT, DGL_REPEAT);
     }
 }
 

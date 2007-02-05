@@ -39,5 +39,6 @@
 #include "gl_pcx.h"
 #include "gl_png.h"
 #include "gl_tga.h"
+#include "gl_defer.h"
 
 #endif

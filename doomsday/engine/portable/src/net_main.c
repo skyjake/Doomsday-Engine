@@ -59,6 +59,12 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct connectparam_s {
+    char address[256];
+    int port;    
+    serverinfo_t info;
+} connectparam_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 D_CMD(HuffmanStats); // in net_buf.c
@@ -1247,17 +1253,65 @@ D_CMD(SetConsole)
     return true;
 }
 
+int Net_ConnectWorker(void *ptr)
+{
+    connectparam_t *param = ptr;
+    double      startTime = 0;
+    boolean     isDone = false;
+    int         returnValue = false;
+    
+    // Make sure TCP/IP is active.
+    if(N_InitService(false))
+    {
+        Con_Message("Connecting to %s...\n", param->address);
+        
+        // Start searching at the specified location.
+        N_LookForHosts(param->address, param->port);
+        
+        startTime = Sys_GetSeconds();
+        isDone = false;
+        while(!isDone)
+        {
+            if(N_GetHostInfo(0, &param->info))
+            {
+                // Found something!
+                Net_PrintServerInfo(0, NULL);
+                Net_PrintServerInfo(0, &param->info);
+                Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
+                
+                returnValue = true;
+                isDone = true;
+            }
+            else
+            {
+                // Nothing yet, should we wait a while longer?
+                if(Sys_GetSeconds() - startTime >= net_connecttimeout)
+                    isDone = true;
+                else
+                    Sys_Sleep(250); // Wait a while.
+            }
+        }
+        
+        if(!returnValue)
+            Con_Printf("No response from %s.\n", param->address);
+    }
+    else
+    {
+        Con_Message("TCP/IP not available.\n");
+    }
+        
+    Con_BusyWorkerEnd();
+    return returnValue;
+}
+
 /*
  * Intelligently connect to a server. Just provide an IP address and the
  * rest is automatic.
  */
 D_CMD(Connect)
 {
-    int     port = 0, returnValue = false;
-    double  startTime;
-    char    buf[100], *ptr;
-    boolean needCloseStartup = false;
-    serverinfo_t info;
+    connectparam_t param;
+    char    *ptr;
 
     if(argc < 2 || argc > 3)
     {
@@ -1277,72 +1331,21 @@ D_CMD(Connect)
         return false;
     }
 
-    strcpy(buf, argv[1]);
+    strcpy(param.address, argv[1]);
+    
     // If there is a port specified in the address, use it.
-    if((ptr = strrchr(buf, ':')))
+    if((ptr = strrchr(param.address, ':')))
     {
-        port = strtol(ptr + 1, 0, 0);
+        param.port = strtol(ptr + 1, 0, 0);
         *ptr = 0;
     }
     if(argc == 3)
     {
-        port = strtol(argv[2], 0, 0);
+        param.port = strtol(argv[2], 0, 0);
     }
 
-    // If not already there, go to startup screen mode.
-    if(!startupScreen)
-    {
-        needCloseStartup = true;
-        Con_StartupInit();
-    }
-    // This won't print anything, but will draw the startup screen.
-    Con_Message("");
-
-    // Make sure TCP/IP is active.
-    if(N_InitService(false))
-    {
-        boolean     isDone;
-
-        Con_Message("Connecting to %s...\n", buf);
-
-        // Start searching at the specified location.
-        N_LookForHosts(buf, port);
-
-        startTime = Sys_GetSeconds();
-        isDone = false;
-        while(!isDone)
-        {
-            if(N_GetHostInfo(0, &info))
-            {
-                // Found something!
-                Net_PrintServerInfo(0, NULL);
-                Net_PrintServerInfo(0, &info);
-                Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
-
-                returnValue = true;
-                isDone = true;
-            }
-            else
-            {
-                // Nothing yet, should we wait a while longer?
-                if(Sys_GetSeconds() - startTime >= net_connecttimeout)
-                    isDone = true;
-                else
-                    Sys_Sleep(250); // Wait a while.
-            }
-        }
-
-        if(!returnValue)
-            Con_Printf("No response from %s.\n", buf);
-    }
-    else
-    {
-        Con_Message("TCP/IP not available.\n");
-    }
-
-    if(needCloseStartup)
-        Con_StartupDone();
-    return returnValue;
+    return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), 
+                    Net_ConnectWorker, &param);
 }
 
 /**

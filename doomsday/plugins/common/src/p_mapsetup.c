@@ -181,11 +181,17 @@ void P_SetupForMapData(int type, uint num)
     }
 }
 
-/**
- * Loads map and glnode data for the requested episode and map
- */
-void P_SetupLevel(int episode, int map, int playermask, skillmode_t skill)
+typedef struct setuplevelparam_s {
+    int episode;
+    int map;
+    int playerMask; // Unused?
+    skillmode_t skill;
+} setuplevelparam_t;
+
+int P_SetupLevelWorker(void *ptr)
 {
+    setuplevelparam_t *param = ptr;
+
 #if !__DOOM64TC__
 # if __JDOOM__ || __JHERETIC__
     uint        i;
@@ -193,34 +199,34 @@ void P_SetupLevel(int episode, int map, int playermask, skillmode_t skill)
 # endif
 #endif
     char        levelId[9];
-
+    
     // It begins
     levelSetup = true;
-
+    
     // The engine manages polyobjects, so reset the count.
     DD_SetInteger(DD_POLYOBJ_COUNT, 0);
     P_ResetWorldState();
-
+    
     // Let the engine know that we are about to start setting up a
     // level.
     R_SetupLevel(DDSLM_INITIALIZE, 0);
-
+    
     // Initialize The Logical Sound Manager.
     S_LevelChange();
-
+    
 #if __JHEXEN__
     S_StartMusic("chess", true);    // Waiting-for-level-load song
 #endif
-
+    
     Z_FreeTags(PU_LEVEL, PU_PURGELEVEL - 1);
     P_InitThinkers();
-
-    P_GetMapLumpName(episode, map, levelId);
+    
+    P_GetMapLumpName(param->episode, param->map, levelId);
     if(!P_LoadMap(levelId))
     {
         Con_Error("P_SetupLevel: Failed loading map \"%s\".\n",levelId);
     }
-
+    
     // First job is to zero unused flags if MF_INVALID is set.
     //
     // "This has been found to be necessary because of errors
@@ -248,24 +254,24 @@ void P_SetupLevel(int episode, int map, int playermask, skillmode_t skill)
     }
 # endif
 #endif
-
+    
 #if __JHERETIC__
     P_InitAmbientSound();
     P_InitMonsters();
     P_OpenWeapons();
 #endif
     P_SpawnThings();
-
+    
     // killough 3/26/98: Spawn icon landings:
 #if __JDOOM__
     if(gamemode == commercial)
         P_SpawnBrainTargets();
 #endif
-
+    
 #if __JHERETIC__
     P_CloseWeapons();
 #endif
-
+    
     // DJS - TODO:
     // This needs to be sorted out. R_SetupLevel should be called from the
     // engine but in order to move it there we need to decide how polyobject
@@ -275,37 +281,55 @@ void P_SetupLevel(int episode, int map, int playermask, skillmode_t skill)
     Con_Message("Polyobject init\n");
     // FIXME: Custom map data format support
     PO_Init(W_GetNumForName(levelId) + 1 /*ML_THINGS*/);   // Initialize the polyobjs
-
+    
     Con_Message("Load ACS scripts\n");
     // FIXME: Custom map data format support
     P_LoadACScripts(W_GetNumForName(levelId) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
-
+    
     P_DealPlayerStarts(0);
     P_SpawnPlayers();
-
+    
     // set up world state
     P_SpawnSpecials();
-
+    
     // preload graphics
     if(precache)
     {
         R_PrecacheLevel();
         R_PrecachePSprites();
     }
-
-    S_LevelMusic();
-
+    
+    S_LevelMusic();    
     P_FinalizeLevel();
-
+    
     // Someone may want to do something special now that
     // the level has been fully set up.
     R_SetupLevel(DDSLM_FINALIZE, 0);
-
-    P_PrintMapBanner(episode, map);
-
+    
+    P_PrintMapBanner(param->episode, param->map);
+    
     // It ends
-    levelSetup = false;
+    levelSetup = false;    
+    
+    Con_BusyWorkerEnd();
+    return 0;
+}
+
+/**
+ * Loads map and glnode data for the requested episode and map
+ */
+void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
+{
+    setuplevelparam_t param;
+    
+    param.episode = episode;
+    param.map = map;
+    param.playerMask = playerMask; // Unused?
+    param.skill = skill;
+    
+    Con_Busy(BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+             P_SetupLevelWorker, &param);
 }
 
 /*

@@ -305,6 +305,14 @@ int Sys_WaitThread(thread_t thread)
     return result;
 }
 
+/**
+ * Returns the identifier of the current thread.
+ */
+uint Sys_ThreadID(void)
+{
+    return SDL_ThreadID();
+}
+
 mutex_t Sys_CreateMutex(const char *name)
 {
     return (mutex_t) SDL_CreateMutex();

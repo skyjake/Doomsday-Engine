@@ -35,6 +35,7 @@
 #include "con_config.h"
 #include "con_action.h"
 #include "con_bind.h"
+#include "con_busy.h"
 #include "con_start.h"
 #include "con_bar.h"
 

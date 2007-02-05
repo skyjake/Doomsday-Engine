@@ -86,6 +86,7 @@ void    Net_Drawer(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static int DD_StartupWorker(void *parm);
 static void HandleArgs(int state);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -602,7 +603,32 @@ void DD_Main(void)
     }
 
     // Start printing messages in the startup.
-    Con_StartupInit();
+    // TODO: Init GL as early as possible and do data file loading in busy mode.
+    //       Make it unnecessary to use the native startup window?
+    Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), 
+             DD_StartupWorker, NULL);
+    
+    // Client connection command.
+    if(ArgCheckWith("-connect", 1))
+        Con_Executef(CMDS_CMDLINE, false, "connect %s", ArgNext());
+    
+    // Server start command.
+    // (shortcut for -command "net init tcpip; net server start").
+    if(ArgExists("-server"))
+    {
+        if(!N_InitService(true))
+            Con_Message("Can't start server: network init failed.\n");
+        else
+            Con_Executef(CMDS_CMDLINE, false, "net server start");
+    }
+    
+    DD_GameLoop();              // Never returns...
+}
+
+static int DD_StartupWorker(void *parm)
+{
+    int     p = 0;
+
     Con_Message("Con_StartupInit: Init startup screen.\n");
 
     if(gx.PostInit)
@@ -651,26 +677,13 @@ void DD_Main(void)
     // In dedicated mode the console must be opened, so all input events
     // will be handled by it.
     if(isDedicated)
-        Con_Open(true);
-
+        Con_Open(true);    
+    
     Plug_DoHook(HOOK_INIT, 0, 0);   // Any initialization hooks?
     Con_UpdateKnownWords();         // For word completion (with Tab).
 
-    // Client connection command.
-    if(ArgCheckWith("-connect", 1))
-        Con_Executef(CMDS_CMDLINE, false, "connect %s", ArgNext());
-
-    // Server start command.
-    // (shortcut for -command "net init tcpip; net server start").
-    if(ArgExists("-server"))
-    {
-        if(!N_InitService(true))
-            Con_Message("Can't start server: network init failed.\n");
-        else
-            Con_Executef(CMDS_CMDLINE, false, "net server start");
-    }
-
-    DD_GameLoop();              // Never returns...
+    Con_BusyWorkerEnd();
+    return 0;
 }
 
 static void HandleArgs(int state)

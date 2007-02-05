@@ -108,13 +108,21 @@ unsigned int Sys_GetRealTime(void)
     return now - start;
 }
 
-/*
- * Returns the timer value in seconds.
+/**
+ * Returns the timer value in seconds. Affected by the ticsPerSecond modifier.
  */
 double Sys_GetSeconds(void)
 {
     return (double) ((Sys_GetRealTime() / 1000.0) * (ticsPerSecond / 35)) +
         timeOffset;
+}
+
+/*
+ * Returns the real timer value in seconds.
+ */
+double Sys_GetRealSeconds(void)
+{
+    return (double) (Sys_GetRealTime() / 1000.0);
 }
 
 /*

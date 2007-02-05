@@ -54,6 +54,13 @@
  */
 #define MAX_FRAME_TIME (1.0/MIN_TIC_RATE)
 
+/*
+ * Maximum number of milliseconds spent uploading textures at the beginning
+ * of a frame. Note that non-uploaded textures will appear as pure white
+ * until their content gets uploaded (you should precache them).
+ */
+#define FRAME_DEFERRED_UPLOAD_TIMEOUT 20
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -109,8 +116,6 @@ void DD_GameLoop(void)
     MSG     msg;
 #endif
 
-    // Now we've surely finished startup.
-    Con_StartupDone();
     Sys_ShowWindow(true);
 
     // Limit the frame rate to 35 when running in dedicated mode.
@@ -162,7 +167,12 @@ void DD_DrawAndBlit(void)
 {
     if(novideo)
         return;
-
+    
+    if(Con_IsBusy())
+    {
+        Con_Error("DD_DrawAndBlit: Console is busy, can't draw!\n");
+    }
+    
     // This'll let DGL know that some serious rendering is about to begin.
     // OpenGL doesn't need it, but Direct3D will do the BeginScene call.
     // If rendering happens outside The Sequence, DGL is forced, in
@@ -219,6 +229,8 @@ void DD_DrawAndBlit(void)
 
 void DD_StartFrame(void)
 {
+    GL_UploadDeferredContent(FRAME_DEFERRED_UPLOAD_TIMEOUT);
+    
     frameStartTime = Sys_GetTimef();
 
     S_StartFrame();

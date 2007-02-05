@@ -70,11 +70,176 @@ typedef lt_dlhandle HINSTANCE;
 
 dgldriver_t __gl;               // Engine's internal function table.
 
+#ifdef _DEBUG
+dgldriver_t __gl2;
+#endif
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static HINSTANCE dglHandle;     // Instance handle to the rendering DLL.
 
+#ifdef _DEBUG
+uint glThreadId = 0; // ID of the thread who's allowed to use the GL.
+#endif
+
 // CODE --------------------------------------------------------------------
+
+#define ASSERT_THREAD() assert(glThreadId == Sys_ThreadID())
+
+#define DEF_VOID_VOID(F) void Routed_##F(void) { ASSERT_THREAD(); __gl2.F(); }
+#define DEF_VOID_1(F, T1) void Routed_##F(T1 a) { ASSERT_THREAD(); __gl2.F(a); }
+#define DEF_VOID_2(F, T1, T2) void Routed_##F(T1 a, T2 b) { ASSERT_THREAD(); __gl2.F(a, b); }
+#define DEF_VOID_3(F, T1, T2, T3) void Routed_##F(T1 a, T2 b, T3 c) { ASSERT_THREAD(); __gl2.F(a, b, c); }
+#define DEF_VOID_4(F, T1, T2, T3, T4) void Routed_##F(T1 a, T2 b, T3 c, T4 d) { ASSERT_THREAD(); __gl2.F(a, b, c, d); }
+#define DEF_VOID_5(F, T1, T2, T3, T4, T5) void Routed_##F(T1 a, T2 b, T3 c, T4 d, T5 e) { ASSERT_THREAD(); __gl2.F(a, b, c, d, e); }
+#define DEF_VOID_6(F, T1, T2, T3, T4, T5, T6) void Routed_##F(T1 a, T2 b, T3 c, T4 d, T5 e, T6 f) { ASSERT_THREAD(); __gl2.F(a, b, c, d, e, f); }
+#define DEF_VOID(RT, F) RT Routed_##F(void) { ASSERT_THREAD(); return __gl2.F(); }
+#define DEF_1(RT, F, T1) RT Routed_##F(T1 a) { ASSERT_THREAD(); return __gl2.F(a); }
+#define DEF_2(RT, F, T1, T2) RT Routed_##F(T1 a, T2 b) { ASSERT_THREAD(); return __gl2.F(a, b); }
+#define DEF_3(RT, F, T1, T2, T3) RT Routed_##F(T1 a, T2 b, T3 c) { ASSERT_THREAD(); return __gl2.F(a, b, c); }
+#define DEF_4(RT, F, T1, T2, T3, T4) RT Routed_##F(T1 a, T2 b, T3 c, T4 d) { ASSERT_THREAD(); return __gl2.F(a, b, c, d); }
+#define DEF_5(RT, F, T1, T2, T3, T4, T5) RT Routed_##F(T1 a, T2 b, T3 c, T4 d, T5 e) { ASSERT_THREAD(); return __gl2.F(a, b, c, d, e); }
+#define DEF_6(RT, F, T1, T2, T3, T4, T5, T6) RT Routed_##F(T1 a, T2 b, T3 c, T4 d, T5 e, T6 f) { ASSERT_THREAD(); return __gl2.F(a, b, c, d, e, f); }
+
+#ifdef _DEBUG
+
+DEF_VOID_VOID(Show)
+DEF_VOID_VOID(PushMatrix)
+DEF_VOID_VOID(PopMatrix)
+DEF_VOID_VOID(LoadIdentity)
+DEF_VOID_VOID(UnlockArrays)
+DEF_VOID_VOID(End)
+DEF_VOID(DGLuint, NewTexture)
+DEF_VOID_1(Clear, int)
+DEF_VOID_1(Disable, int)
+DEF_VOID_1(ZBias, int);
+DEF_VOID_1(MatrixMode, int)
+DEF_VOID_1(ArrayElement, int)
+DEF_VOID_1(Begin, int)
+DEF_VOID_1(Color4ubv, void*)
+DEF_VOID_1(Vertex2fv, float*)
+DEF_VOID_1(Vertex3fv, float*)
+DEF_VOID_1(Color3ubv, void*)
+DEF_VOID_1(Color3fv, float*)
+DEF_VOID_1(Color4fv, float*)
+DEF_VOID_1(TexCoord2fv, float*)
+DEF_VOID_2(DeleteTextures, int, DGLuint*)
+DEF_VOID_2(TexParameter, int, int)
+DEF_VOID_2(Vertex2f, float, float)
+DEF_VOID_2(MultiTexCoord2fv, int, float*)
+DEF_VOID_2(Vertices2ftv, int, gl_ft2vertex_t*)
+DEF_VOID_2(Vertices3ftv, int, gl_ft3vertex_t*)
+DEF_VOID_2(Vertices3fctv, int, gl_fct3vertex_t*)
+DEF_VOID_2(TexCoord2f, float, float)
+DEF_VOID_2(Palette, int, void*)
+DEF_VOID_2(Fog, int, float)
+DEF_VOID_2(Fogv, int, void*)
+DEF_VOID_3(EnableArrays, int, int, int)
+DEF_VOID_3(DisableArrays, int, int, int)
+DEF_VOID_3(Func, int, int, int)
+DEF_VOID_3(GetTexParameterv, int, int, int*)
+DEF_VOID_3(Translatef, float, float, float)
+DEF_VOID_3(Scalef, float, float, float)
+DEF_VOID_3(Color3ub, DGLubyte, DGLubyte, DGLubyte)
+DEF_VOID_3(Color3f, float, float, float)
+DEF_VOID_3(Vertex3f, float, float, float)
+DEF_VOID_3(MultiTexCoord2f, int, float, float)
+DEF_VOID_3(DrawElements, int, int, unsigned int*)
+DEF_VOID_4(Viewport, int, int, int, int)
+DEF_VOID_4(Scissor, int, int, int, int)
+DEF_VOID_4(Color4ub, DGLubyte, DGLubyte, DGLubyte, DGLubyte)
+DEF_VOID_4(Color4f, float, float, float, float)
+DEF_VOID_4(Rotatef, float, float, float, float)
+DEF_VOID_4(Perspective, float, float, float, float)
+DEF_VOID_5(Arrays, void*, void*, int, void**, int)
+DEF_VOID_6(Ortho, float, float, float, float, float, float)
+DEF_1(int, GetInteger, int)
+DEF_1(char*, GetString, int)
+DEF_1(int, Enable, int)
+DEF_1(int, Bind, DGLuint)
+DEF_2(int, GetIntegerv, int, int*)
+DEF_2(int, SetInteger, int, int)
+DEF_2(int, SetFloatv, int, float*)
+DEF_3(int, ReadPixels, int*, int, void*)
+DEF_3(int, Project, int, gl_fc3vertex_t*, gl_fc3vertex_t*)
+DEF_5(int, TexImage, int, int, int, int, void*)
+DEF_6(int, Grab, int, int, int, int, int, void*)
+
+#endif
+
+void DD_RouteAPI(void)
+{
+#ifdef _DEBUG
+    glThreadId = Sys_ThreadID();
+
+    memcpy(&__gl2, &__gl, sizeof(__gl));
+    
+#define ROUTE(n) __gl.n = Routed_##n;
+    ROUTE(Clear);
+    ROUTE(Show);
+    ROUTE(Viewport);
+    ROUTE(Scissor);
+    ROUTE(GetInteger);
+    ROUTE(GetIntegerv);
+    ROUTE(SetInteger);
+    ROUTE(SetFloatv);
+    ROUTE(GetString);
+    ROUTE(Enable);
+    ROUTE(Disable);
+    ROUTE(EnableArrays);
+    ROUTE(DisableArrays);
+    ROUTE(Arrays);
+    ROUTE(UnlockArrays);
+    ROUTE(Func);
+    ROUTE(NewTexture);
+    ROUTE(DeleteTextures);
+    ROUTE(TexImage);
+    ROUTE(TexParameter);
+    ROUTE(GetTexParameterv);
+    ROUTE(Palette);
+    ROUTE(Bind);
+    ROUTE(MatrixMode);
+    ROUTE(PushMatrix);
+    ROUTE(PopMatrix);
+    ROUTE(LoadIdentity);
+    ROUTE(Translatef);
+    ROUTE(Rotatef);
+    ROUTE(Scalef);
+    ROUTE(Ortho);
+    ROUTE(Perspective);
+    ROUTE(Color3ub);
+    ROUTE(Color3ubv);
+    ROUTE(Color4ub);
+    ROUTE(Color4ubv);
+    ROUTE(Color3f);
+    ROUTE(Color3fv);
+    ROUTE(Color4f);
+    ROUTE(Color4fv);
+    ROUTE(Begin);
+    ROUTE(End);
+    ROUTE(Vertex2f);
+    ROUTE(Vertex2fv);
+    ROUTE(Vertex3f);
+    ROUTE(Vertex3fv);
+    ROUTE(TexCoord2f);
+    ROUTE(TexCoord2fv);
+    ROUTE(MultiTexCoord2f);
+    ROUTE(MultiTexCoord2fv);
+    ROUTE(Vertices2ftv);
+    ROUTE(Vertices3ftv);
+    ROUTE(Vertices3fctv);
+    ROUTE(Arrays);
+    ROUTE(UnlockArrays);
+    ROUTE(ArrayElement);
+    ROUTE(DrawElements);
+    ROUTE(Grab);
+    ROUTE(Fog);
+    ROUTE(Fogv);
+    ROUTE(Project);
+    ROUTE(ReadPixels);
+#undef ROUTE
+#endif
+}
 
 /*
  * DD_InitDGLDriver
@@ -82,7 +247,7 @@ static HINSTANCE dglHandle;     // Instance handle to the rendering DLL.
  *  All exported DGL functions should have the DG_ prefix (Driver/Graphics).
  */
 int DD_InitDGLDriver(void)
-{
+{    
     Req(Init);
     Req(Shutdown);
 
@@ -162,6 +327,8 @@ int DD_InitDGLDriver(void)
     Req(Project);
     Req(ReadPixels);
 
+    DD_RouteAPI();
+    
     // All was OK.
     return true;
 }
@@ -243,7 +410,7 @@ void DD_ShutdownDGL(void)
  *  Used by other modules (the Game) to get the addresses of the
  *  DGL routines.
  */
-void   *DD_GetDGLProcAddress(const char *name)
+void *DD_GetDGLProcAddress(const char *name)
 {
 #ifdef WIN32
     return GetProcAddress(dglHandle, name);

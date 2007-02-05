@@ -117,6 +117,9 @@ extern          "C" {
     void            Z_CheckHeap(void);
 
     // Console.
+    int             Con_Busy(int flags, int (*workerFunc)(void*), void *workerData);
+    void            Con_BusyWorkerEnd(void);
+    boolean         Con_IsBusy(void);
     void            Con_Open(int yes);
     void            Con_SetFont(ddfont_t *cfont);
     void            Con_AddCommand(ccmd_t *cmd);
@@ -361,6 +364,9 @@ extern          "C" {
     void            GL_UseFog(int yes);
     int             GL_ChangeResolution(int w, int h, int bits);
     byte           *GL_GrabScreen(void);
+    unsigned int    GL_NewTextureWithParams2(int format, int width, int height, void* pixels, 
+                                             int flags, int minFilter, int magFilter, 
+                                             int wrapS, int wrapT);
     void            GL_TextureFilterMode(int target, int parm);
     void            GL_SetColor(int palidx);
     void            GL_SetColor2(int palidx, float alpha);

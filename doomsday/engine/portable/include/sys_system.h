@@ -52,6 +52,7 @@ void            Sys_ShowWindow(boolean hide);
 thread_t        Sys_StartThread(systhreadfunc_t startpos, void* parm);
 void            Sys_SuspendThread(thread_t handle, boolean dopause);
 int             Sys_WaitThread(thread_t handle);
+uint            Sys_ThreadID(void);
 
 mutex_t         Sys_CreateMutex(const char* name);  
 void            Sys_DestroyMutex(mutex_t mutexHandle);

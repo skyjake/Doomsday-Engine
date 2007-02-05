@@ -94,6 +94,7 @@ void Con_HideProgress(void)
  */
 void Con_Progress(int count, int flags)
 {
+#if 0
     int     x, y, w, h, bor = 2, bar = 10;
     int     maxWidth = 500;
     int     mainBor = 5;
@@ -130,7 +131,7 @@ void Con_Progress(int count, int flags)
     {
         // This'll redraw the startup screen to this page (necessary
         // if page flipping is used by the display adapter).
-        Con_DrawStartupScreen(false);
+        //Con_DrawStartupScreen(false);
 
         // If we're in the User Interface, this'll redraw it.
         UI_Drawer();
@@ -191,10 +192,11 @@ void Con_Progress(int count, int flags)
                 bar - 2, 4, UI_COL(UIC_TEXT), 1);
 
     // Show what was drawn.
-    if(!(flags & PBARF_NOBLIT))
-        gl.Show();
+    /*if(!(flags & PBARF_NOBLIT))
+        gl.Show();*/
 
     // Restore old projection matrix.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
+#endif
 }

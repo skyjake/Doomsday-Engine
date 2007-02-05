@@ -2414,10 +2414,6 @@ void R_SetupLevel(int mode, int fladgs)
 
         // A new level is about to be setup.
         levelSetup = true;
-
-        // This is called before anything is actually done.
-        if(loadInStartupMode)
-            Con_StartupInit();
         return;
 
     case DDSLM_AFTER_LOADING:
@@ -2455,9 +2451,6 @@ void R_SetupLevel(int mode, int fladgs)
     case DDSLM_FINALIZE:
     {
         side_t *side;
-
-        if(loadInStartupMode)
-            Con_StartupDone();
 
         // Init server data.
         Sv_InitPools();

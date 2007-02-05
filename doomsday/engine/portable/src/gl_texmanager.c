@@ -407,22 +407,12 @@ void GL_LoadLightMap(ded_lightmap_t *map)
                 GL_ConvertToAlpha(&image, true);
             }
 
-            map->tex = gl.NewTexture();
-
-            // Upload the texture.
-            // No mipmapping or resizing is needed, upload directly.
-            gl.Disable(DGL_TEXTURE_COMPRESSION);
-            gl.TexImage(image.pixelSize ==
-                        2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
-                        3 ? DGL_RGB : DGL_RGBA, image.width, image.height, 0,
-                        image.pixels);
-            gl.Enable(DGL_TEXTURE_COMPRESSION);
+            map->tex = GL_NewTextureWithParams(image.pixelSize ==
+                                               2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
+                                               3 ? DGL_RGB : DGL_RGBA,
+                                               image.width, image.height, image.pixels,
+                                               TXCF_NO_COMPRESSION);
             GL_DestroyImage(&image);
-
-            gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
-            gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-            gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-            gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
             // Copy this to all defs with the same lightmap.
             Def_LightMapLoaded(map->id, map->tex);
@@ -479,22 +469,16 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
                 GL_ConvertToAlpha(&image, true);
             }
 
-            map->tex = gl.NewTexture();
+            map->tex = GL_NewTextureWithParams2(image.pixelSize ==
+                                                2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
+                                                3 ? DGL_RGB : DGL_RGBA, 
+                                                image.width, image.height, image.pixels,
+                                                TXCF_NO_COMPRESSION, DGL_NEAREST, DGL_LINEAR,
+                                                DGL_CLAMP, DGL_CLAMP);
 
             // Upload the texture.
             // No mipmapping or resizing is needed, upload directly.
-            gl.Disable(DGL_TEXTURE_COMPRESSION);
-            gl.TexImage(image.pixelSize ==
-                        2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
-                        3 ? DGL_RGB : DGL_RGBA, image.width, image.height, 0,
-                        image.pixels);
-            gl.Enable(DGL_TEXTURE_COMPRESSION);
             GL_DestroyImage(&image);
-
-            gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-            gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-            gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-            gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
             // Copy this to all defs with the same flaremap.
             Def_FlareMapLoaded(map->id, map->tex, map->disabled, map->custom);
@@ -866,6 +850,9 @@ void GL_UpdateGamma(void)
  */
 void GL_BindTexture(DGLuint texname)
 {
+    if(Con_IsBusy())
+        return;
+    
     /*if(curtex != texname)
        { */
     gl.Bind(texname);
@@ -873,25 +860,61 @@ void GL_BindTexture(DGLuint texname)
     //}
 }
 
-/*
- * Can be rather time-consuming.
- * Returns the name of the texture.
- * The texture parameters will NOT be set here.
- * 'data' contains indices to the playpal. If 'alphachannel' is true,
- * 'data' also contains the alpha values (after the indices).
- */
-DGLuint GL_UploadTexture(byte *data, int width, int height,
+/*DGLuint GL_UploadTexture(byte *data, int width, int height,
                          boolean alphaChannel, boolean generateMipmaps,
-                         boolean RGBData, boolean noStretch)
+                         boolean RGBData, boolean noStretch)*/
+DGLuint GL_UploadTexture(byte *data, int width, int height,
+                         boolean flagAlphaChannel,
+                         boolean flagGenerateMipmaps,
+                         boolean flagRgbData,
+                         boolean flagNoStretch,
+                         int minFilter, int magFilter,
+                         int wrapS, int wrapT, int otherFlags)/*boolean alphaChannel, boolean generateMipmaps,
+                         boolean RGBData, boolean noStretch)*/
 {
+    texturecontent_t content;
+    
+    GL_InitTextureContent(&content);
+    content.buffer = data;
+    content.format = (flagRgbData? (flagAlphaChannel? DGL_RGBA : DGL_RGB) :
+                      (flagAlphaChannel? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8));
+    content.width = width;
+    content.height = height;
+    content.flags = TXCF_EASY_UPLOAD | otherFlags;
+    if(flagAlphaChannel) content.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
+    if(flagGenerateMipmaps) content.flags |= TXCF_MIPMAP;
+    if(flagRgbData) content.flags |= TXCF_UPLOAD_ARG_RGBDATA;
+    if(flagNoStretch) content.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
+    content.minFilter = minFilter;
+    content.magFilter = magFilter;
+    content.wrap[0] = wrapS;
+    content.wrap[1] = wrapT;
+    return GL_NewTexture(&content);
+}
+
+/**
+ * Can be rather time-consuming due to scaling operations and mipmap generation.
+ * The texture parameters will NOT be set here.
+ * @param data  contains indices to the playpal. 
+ * @param alphaChannel  If true, 'data' also contains the alpha values (after the indices).
+ * @return The name of the texture (same as 'texName').
+ */
+DGLuint GL_UploadTexture2(texturecontent_t *content)
+{
+    byte   *data = content->buffer;
+    int     width = content->width;
+    int     height = content->height;
+    boolean alphaChannel = ((content->flags & TXCF_UPLOAD_ARG_ALPHACHANNEL) != 0);
+    boolean generateMipmaps = ((content->flags & TXCF_MIPMAP) != 0);
+    boolean RGBData = ((content->flags & TXCF_UPLOAD_ARG_RGBDATA) != 0);
+    boolean noStretch = ((content->flags & TXCF_UPLOAD_ARG_NOSTRETCH) != 0);
     byte   *palette = GL_GetPalette();
     int     i, levelWidth, levelHeight; // width and height at the current level
     int     comps;
     byte   *buffer, *rgbaOriginal, *idxBuffer;
-    DGLuint texName;
     boolean freeOriginal;
     boolean freeBuffer;
-
+    
     // Number of color components in the destination image.
     comps = (alphaChannel ? 4 : 3);
 
@@ -990,9 +1013,9 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
         M_Free(rgbaOriginal);
     rgbaOriginal = NULL;
 
-    // Generate a new texture name and bind it.
-    texName = gl.NewTexture();
-
+    // Bind the texture so we can upload content.
+    gl.Bind(content->name);
+    
     if(load8bit)
     {
         int     canGenMips;
@@ -1018,12 +1041,11 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
                              palette, false);
 
             // Upload it.
-            if(gl.
-               TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
-                        DGL_COLOR_INDEX_8, levelWidth, levelHeight,
-                        generateMipmaps &&
-                        canGenMips ? DGL_TRUE : generateMipmaps ? -i :
-                        DGL_FALSE, idxBuffer) != DGL_OK)
+            if(gl.TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
+                           DGL_COLOR_INDEX_8, levelWidth, levelHeight,
+                           generateMipmaps &&
+                           canGenMips ? DGL_TRUE : generateMipmaps ? -i :
+                           DGL_FALSE, idxBuffer) != DGL_OK)
             {
                 Con_Error
                     ("GL_UploadTexture: TexImage failed (%i x %i) as 8-bit, alpha:%i\n",
@@ -1047,9 +1069,8 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
     else
     {
         // DGL knows how to generate mipmaps for RGB(A) textures.
-        if(gl.
-           TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, levelWidth, levelHeight,
-                    generateMipmaps ? DGL_TRUE : DGL_FALSE, buffer) != DGL_OK)
+        if(gl.TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, levelWidth, levelHeight,
+                       generateMipmaps ? DGL_TRUE : DGL_FALSE, buffer) != DGL_OK)
         {
             Con_Error
                 ("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n",
@@ -1060,7 +1081,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
     if(freeBuffer)
         M_Free(buffer);
 
-    return texName;
+    return content->name;
 }
 
 /*
@@ -1100,10 +1121,15 @@ dtexinst_t *GL_GetDetailInstance(int lump, float contrast,
  */
 DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
 {
-    byte   *lumpData, *image;
-    int     w = 256, h = 256;
+    byte   *lumpData, *image = 0;
+    //int     w = 256, h = 256;
+    texturecontent_t content;
     dtexinst_t *inst;
 
+    GL_InitTextureContent(&content);
+    content.width = 256;
+    content.height = 256;
+    
     if(num < 0 && external == NULL)
         return 0;               // No such lump?!
 
@@ -1120,7 +1146,8 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
     // Detail textures are faded to gray depending on the contrast factor.
     // The texture is also progressively faded towards gray when each
     // mipmap level is loaded.
-    gl.SetInteger(DGL_GRAY_MIPMAP, contrast * 255);
+    content.grayMipmap = contrast * 255;
+    gl.SetInteger(DGL_GRAY_MIPMAP, content.grayMipmap);
 
     // Try external first.
     if(external != NULL)
@@ -1139,19 +1166,13 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
         lumpData = W_CacheLumpNum(num, PU_STATIC);
 
         // First try loading it as a PCX image.
-        if(PCX_MemoryGetSize(lumpData, &w, &h))
+        if(PCX_MemoryGetSize(lumpData, &content.width, &content.height))
         {
             // Nice...
-            image = M_Malloc(w * h * 3);
-            PCX_MemoryLoad(lumpData, W_LumpLength(num), w, h, image);
-            inst->tex = gl.NewTexture();
-            // Make faded mipmaps.
-            if(!gl.TexImage(DGL_RGB, w, h, DGL_GRAY_MIPMAP, image))
-            {
-                Con_Error
-                    ("GL_LoadDetailTexture: %-8s (%ix%i): "
-                     "not powers of two.\n", lumpinfo[num].name, w, h);
-            }
+            image = M_Malloc(content.width * content.height * 3);
+            PCX_MemoryLoad(lumpData, W_LumpLength(num), content.width, content.height, image);
+            content.format = DGL_RGB;
+            content.buffer = image;
         }
         else // It must be a raw image.
         {
@@ -1168,30 +1189,31 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
                         W_ChangeCacheTag(num, PU_CACHE);
                         return 0;
                     }
-                    w = h = 64;
+                    content.width = content.height = 64;
                 }
                 else
                 {
-                    w = h = 128;
+                    content.width = content.height = 128;
                 }
             }
-            image = M_Malloc(w * h);
-            memcpy(image, W_CacheLumpNum(num, PU_CACHE), w * h);
-            inst->tex = gl.NewTexture();
-            // Make faded mipmaps.
-            gl.TexImage(DGL_LUMINANCE, w, h, DGL_GRAY_MIPMAP, image);
+            image = M_Malloc(content.width * content.height);
+            memcpy(image, W_CacheLumpNum(num, PU_CACHE), content.width * content.height);
+            content.format = DGL_LUMINANCE;
+            content.buffer = image;
         }
 
-        // Free allocated memory.
-        M_Free(image);
         W_ChangeCacheTag(num, PU_CACHE);
     }
 
     // Set texture parameters.
-    gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR_MIPMAP_LINEAR);
-    gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-    gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-    gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
+    content.minFilter = DGL_LINEAR_MIPMAP_LINEAR;
+    content.magFilter = DGL_LINEAR;
+    content.wrap[0] = content.wrap[1] = DGL_REPEAT;
+    
+    inst->tex = GL_NewTexture(&content);
+
+    // Free allocated memory.
+    M_Free(image);
 
     return inst->tex;
 }
@@ -1290,10 +1312,11 @@ DGLuint GL_BindTexFlat(flat_t * fl)
     }
 
     // Load the texture.
-    name =
-        GL_UploadTexture(flatptr, width, height, pixSize == 4, true, RGBData,
-                         false);
-
+    name = GL_UploadTexture(flatptr, width, height, 
+                            pixSize == 4, true, RGBData, false,
+                            glmode[mipmapping], glmode[texMagMode], 
+                            DGL_REPEAT, DGL_REPEAT, 0);                            
+    
     // Average color for glow planes.
     if(RGBData)
     {
@@ -1304,10 +1327,6 @@ DGLuint GL_BindTexFlat(flat_t * fl)
         averageColorIdx(&fl->color, flatptr, width, height,
                         GL_GetPalette(), false);
     }
-
-    // Set the parameters.
-    gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
-    gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
 
     if(freeptr)
         M_Free(flatptr);
@@ -1577,13 +1596,36 @@ byte *GL_LoadHighResFlat(image_t * img, char *name)
     return GL_LoadHighRes(img, name, "flat-", false, RC_TEXTURE);
 }
 
+DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
+{
+    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, DGL_FALSE, true);
+}
+
+DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
+                         gfxmode_t mode, int useMipmap, boolean clamped)
+{
+    return GL_LoadGraphics4(resClass, name, mode, useMipmap, 
+                            DGL_LINEAR, glmode[texMagMode], 
+                            clamped? DGL_CLAMP : DGL_REPEAT,
+                            clamped? DGL_CLAMP : DGL_REPEAT, 0);
+}
+
+DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
+                         int minFilter, int magFilter, int wrapS, int wrapT, int otherFlags)
+{
+    return GL_LoadGraphics4(RC_GRAPHICS, name, mode, DGL_FALSE, 
+                            minFilter, magFilter, wrapS, wrapT, otherFlags);
+}
+
 /*
  * Extended version that uses a custom resource class.
  * Set mode to 2 to include an alpha channel. Set to 3 to make the
  * actual pixel colors all white.
  */
-DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                         gfxmode_t mode, int useMipmap, boolean clamped)
+DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
+                         gfxmode_t mode, int useMipmap, 
+                         int minFilter, int magFilter, int wrapS, int wrapT, 
+                         int otherFlags)
 {
     image_t image;
     filename_t fileName;
@@ -1617,6 +1659,7 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
             GL_ConvertToLuminance(&image);
         }
 
+        /*
         texture = gl.NewTexture();
         if(image.width < 128 && image.height < 128)
         {
@@ -1636,16 +1679,22 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
         {
             gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
             gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-        }
-
+        }*/
+        
+        texture = GL_NewTextureWithParams2(( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : 
+                                             image.pixelSize == 3 ? DGL_RGB : 
+                                             image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
+                                           image.width, image.height, image.pixels,
+                                           ( otherFlags | (useMipmap? TXCF_MIPMAP : 0) |
+                                             (useMipmap == DGL_GRAY_MIPMAP? TXCF_GET_GRAY_MIPMAP : 0) |
+                                             (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0) ),
+                                           (useMipmap ? glmode[mipmapping] : DGL_LINEAR),
+                                           glmode[texMagMode],
+                                           wrapS, wrapT);
+                                           
         GL_DestroyImage(&image);
     }
     return texture;
-}
-
-DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
-{
-    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, DGL_FALSE, true);
 }
 
 /*
@@ -1775,7 +1824,9 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
 
         textures[idx]->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
-                             alphaChannel, true, RGBData, false);
+                             alphaChannel, true, RGBData, false,
+                             glmode[mipmapping], glmode[texMagMode], 
+                             DGL_REPEAT, DGL_REPEAT, 0);
 
         // Average color for glow planes.
         if(RGBData)
@@ -1789,17 +1840,7 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
                             image.height, GL_GetPalette(), false);
         }
 
-        // Set texture parameters.
-        gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
-        gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
-
         textures[idx]->masked = (image.isMasked != 0);
-
-        /*if(alphaChannel)
-           {
-           // Don't tile masked textures vertically.
-           gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-           } */
 
         GL_DestroyImage(&image);
 
@@ -1927,19 +1968,12 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
         }
 
         // Always disable compression on sky textures.
-        gl.Disable(DGL_TEXTURE_COMPRESSION);
-
         // Upload it.
         textures[idx]->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
-                             alphaChannel, true, RGBData, false);
-        gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
-        gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
-        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-        gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
-
-        // Enable compression again.
-        gl.Enable(DGL_TEXTURE_COMPRESSION);
+                             alphaChannel, true, RGBData, false,
+                             glmode[mipmapping], glmode[texMagMode], 
+                             DGL_REPEAT, DGL_REPEAT, TXCF_NO_COMPRESSION);
 
         // Do we have a masked texture?
         textures[idx]->masked = (image.isMasked != 0);
@@ -2018,12 +2052,9 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
     texture =
         GL_UploadTexture(image->pixels, image->width, image->height,
                          image->pixelSize != 3, true, image->pixelSize > 1,
-                         true);
-
-    gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
-    gl.TexParameter(DGL_MAG_FILTER, filterSprites ? DGL_LINEAR : DGL_NEAREST);
-    gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-    gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+                         true, glmode[mipmapping],
+                         (filterSprites ? DGL_LINEAR : DGL_NEAREST),
+                         DGL_CLAMP, DGL_CLAMP, 0);
 
     // Determine coordinates for the texture.
     GL_SetTexCoords(spritelumps[pnum]->tc[isPsprite], image->width,
@@ -2197,17 +2228,6 @@ DGLuint GL_GetOtherPart(int lump)
 }
 
 /*
- * Sets texture parameters for raw image textures (parts).
- */
-void GL_SetRawImageParams(void)
-{
-    gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-    gl.TexParameter(DGL_MAG_FILTER, linearRaw ? DGL_LINEAR : DGL_NEAREST);
-    gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-    gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-}
-
-/*
  * Prepares and uploads a raw image texture from the given lump.
  * Called only by GL_SetRawImage(), so params are valid.
  */
@@ -2276,15 +2296,17 @@ void GL_SetRawImageLump(int lump, int part)
         // Upload part one.
         info->tex[0] =
             GL_UploadTexture(dat1, 256, assumedWidth < 320 ? height : 256, false,
-                             false, rgbdata, false);
-        GL_SetRawImageParams();
+                             false, rgbdata, false,
+                             DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                             DGL_CLAMP, DGL_CLAMP, 0);
 
         if(part)
         {
             // And the other part.
             info->tex[1] =
-                GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false);
-            GL_SetRawImageParams();
+                GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false,
+                                 DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                                 DGL_CLAMP, DGL_CLAMP, 0);
 
             // Add it to the list.
             GL_NewRawLump(lump);
@@ -2335,8 +2357,9 @@ unsigned int GL_SetRawImage(int lump, int part)
             // big texture.
             info->tex[0] =
                 GL_UploadTexture(image.pixels, image.width, image.height,
-                                 image.pixelSize == 4, false, true, false);
-            GL_SetRawImageParams();
+                                 image.pixelSize == 4, false, true, false,
+                                 DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                                 DGL_CLAMP, DGL_CLAMP, 0);
 
             info->width[0] = 320;
             info->width[1] = 0;
@@ -2414,12 +2437,8 @@ void GL_PrepareLumpPatch(int lump)
                0, 0, 0, 0, glMaxTexSize, SHORT(patch->height));
         lumptexinfo[lump].tex[0] =
             GL_UploadTexture(tempbuff, glMaxTexSize, SHORT(patch->height),
-                             alphaChannel, false, false, false);
-
-        gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-        gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-        gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-        gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+                             alphaChannel, true, false, false,
+                             DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, 0);
 
         // Then part two.
         pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
@@ -2427,12 +2446,8 @@ void GL_PrepareLumpPatch(int lump)
                0, 0, 0, part2width, SHORT(patch->height));
         lumptexinfo[lump].tex[1] =
             GL_UploadTexture(tempbuff, part2width, SHORT(patch->height),
-                             alphaChannel, false, false, false);
-
-        gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-        gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
-        gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-        gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+                             alphaChannel, true, false, false,
+                             DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
 
         GL_BindTexture(lumptexinfo[lump].tex[0]);
 
@@ -2446,11 +2461,8 @@ void GL_PrepareLumpPatch(int lump)
         // Generate a texture.
         lumptexinfo[lump].tex[0] =
             GL_UploadTexture(buffer, SHORT(patch->width), SHORT(patch->height),
-                             alphaChannel, false, false, false);
-        gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-        gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
-        gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-        gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+                             alphaChannel, true, false, false,
+                             DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
 
         lumptexinfo[lump].width[0] = SHORT(patch->width);
         lumptexinfo[lump].width[1] = 0;
@@ -2482,16 +2494,11 @@ void GL_SetPatch(int lump)
             // This is our texture! No mipmaps are generated.
             lumptexinfo[lump].tex[0] =
                 GL_UploadTexture(image.pixels, image.width, image.height,
-                                 image.pixelSize == 4, false, true, false);
+                                 image.pixelSize == 4, true, true, false,
+                                 DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
 
             // The original image is no longer needed.
             GL_DestroyImage(&image);
-
-            // Set the texture parameters.
-            gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-            gl.TexParameter(DGL_MAG_FILTER, glmode[texMagMode]);
-            gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-            gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
 
             lumptexinfo[lump].width[0] = SHORT(patch->width);
             lumptexinfo[lump].width[1] = 0;
@@ -2536,20 +2543,10 @@ DGLuint GL_PrepareLSTexture(lightingtex_t which)
         // The dynamic light map is a 64x64 grayscale 8-bit image.
         if(!lightingTexNames[LST_DYNAMIC])
         {
-            // We don't want to compress the flares (banding would be
-            // noticeable).
-            gl.Disable(DGL_TEXTURE_COMPRESSION);
-
+            // We don't want to compress the flares (banding would be noticeable).
             lightingTexNames[LST_DYNAMIC] =
-                GL_LoadGraphics("dLight", LGM_WHITE_ALPHA);
-
-            gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
-            gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-            gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-            gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-
-            // Enable texture compression as usual.
-            gl.Enable(DGL_TEXTURE_COMPRESSION);
+                GL_LoadGraphics3("dLight", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR,
+                                 DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
         }
         // Global tex variables not set! (scalable texture)
         return lightingTexNames[LST_DYNAMIC];
@@ -2558,12 +2555,8 @@ DGLuint GL_PrepareLSTexture(lightingtex_t which)
         if(!lightingTexNames[LST_GRADIENT])
         {
             lightingTexNames[LST_GRADIENT] =
-                GL_LoadGraphics("wallglow", LGM_WHITE_ALPHA);
-
-            gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
-            gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-            gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-            gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+                GL_LoadGraphics3("wallglow", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR,
+                                 DGL_REPEAT, DGL_CLAMP, 0);
         }
         // Global tex variables not set! (scalable texture)
         return lightingTexNames[LST_GRADIENT];
@@ -2575,41 +2568,31 @@ DGLuint GL_PrepareLSTexture(lightingtex_t which)
         // FakeRadio corner shadows.
         if(!lightingTexNames[which])
         {
-            // Disable texture compression
-            gl.Disable(DGL_TEXTURE_COMPRESSION);
-
             switch(which)
             {
             case LST_RADIO_CO:
                 lightingTexNames[which] =
-                    GL_LoadGraphics("radioCO", LGM_WHITE_ALPHA);
+                    GL_LoadGraphics3("radioCO", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_CC:
                 lightingTexNames[which] =
-                    GL_LoadGraphics("radioCC", LGM_WHITE_ALPHA);
+                    GL_LoadGraphics3("radioCC", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OO:
                 lightingTexNames[which] =
-                    GL_LoadGraphics("radioOO", LGM_WHITE_ALPHA);
+                    GL_LoadGraphics3("radioOO", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OE:
                 lightingTexNames[which] =
-                    GL_LoadGraphics("radioOE", LGM_WHITE_ALPHA);
+                    GL_LoadGraphics3("radioOE", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             default:
                 break;
             }
-            // Enable texture compression as usual.
-            gl.Enable(DGL_TEXTURE_COMPRESSION);
-
-            gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
-            gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-            gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-            gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
         }
         // Global tex variables not set! (scalable texture)
         return lightingTexNames[which];
@@ -2629,25 +2612,17 @@ DGLuint GL_PrepareFlareTexture(flaretex_t flare)
     if(!flaretexnames[flare])
     {
         // We don't want to compress the flares (banding would be noticeable).
-        gl.Disable(DGL_TEXTURE_COMPRESSION);
-
         flaretexnames[flare] =
-            GL_LoadGraphics(flare == 0 ? "flare" : flare == 1 ? "brflare" :
-                           "bigflare", LGM_WHITE_ALPHA);
+            GL_LoadGraphics3(flare == 0 ? "flare" : flare == 1 ? "brflare" :
+                             "bigflare", LGM_WHITE_ALPHA,
+                             DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, 
+                             TXCF_NO_COMPRESSION);
 
         if(flaretexnames[flare] == 0)
         {
             Con_Error("GL_PrepareFlareTexture: flare texture %i not found!\n",
                       flare);
         }
-
-        gl.TexParameter(DGL_MIN_FILTER, DGL_NEAREST);
-        gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-        gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-        gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
-
-        // Allow texture compression as usual.
-        gl.Enable(DGL_TEXTURE_COMPRESSION);
     }
 
     return flaretexnames[flare];
@@ -2892,23 +2867,10 @@ unsigned int GL_PrepareSkin(model_t * mdl, int skin)
                       mdl->skins[skin].name);
         }
 
-        if(!mdl->allowTexComp)
-        {
-            // This will prevent texture compression.
-            gl.Disable(DGL_TEXTURE_COMPRESSION);
-        }
-
         st->tex =
-            GL_UploadTexture(image, width, height, size == 4, true, true,
-                             false);
-
-        gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
-        gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-        gl.TexParameter(DGL_WRAP_S, DGL_WRAP_S);
-        gl.TexParameter(DGL_WRAP_T, DGL_WRAP_T);
-
-        // Compression can be enabled again.
-        gl.Enable(DGL_TEXTURE_COMPRESSION);
+            GL_UploadTexture(image, width, height, size == 4, true, true, false,
+                             glmode[mipmapping], DGL_LINEAR, DGL_REPEAT, DGL_REPEAT,
+                             (!mdl->allowTexComp? TXCF_NO_COMPRESSION : 0));
 
         // We don't need the image data any more.
         M_Free(image);
@@ -2935,12 +2897,8 @@ unsigned int GL_PrepareShinySkin(modeldef_t * md, int sub)
 
         stp->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
-                             image.pixelSize == 4, true, true, false);
-
-        gl.TexParameter(DGL_MIN_FILTER, glmode[mipmapping]);
-        gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
-        gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+                             image.pixelSize == 4, true, true, false,
+                             glmode[mipmapping], DGL_LINEAR, DGL_REPEAT, DGL_CLAMP, 0);
 
         // We don't need the image data any more.
         GL_DestroyImage(&image);

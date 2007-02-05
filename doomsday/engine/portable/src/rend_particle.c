@@ -168,18 +168,10 @@ void PG_InitTextures(void)
         }
 
         // Create a new texture and upload the image.
-        ptctexname[i + 1] = gl.NewTexture();
-
-        gl.Disable(DGL_TEXTURE_COMPRESSION);
-        gl.TexImage(image.pixelSize == 4 ? DGL_RGBA : image.pixelSize ==
-                    2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB, image.width,
-                    image.height, 0, image.pixels);
-        gl.Enable(DGL_TEXTURE_COMPRESSION);
-
-        gl.TexParameter(DGL_MIN_FILTER, DGL_LINEAR);
-        gl.TexParameter(DGL_MAG_FILTER, DGL_LINEAR);
-        gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
-        gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
+        ptctexname[i + 1] = GL_NewTextureWithParams(image.pixelSize == 4 ? DGL_RGBA : image.pixelSize ==
+                                                    2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB, 
+                                                    image.width, image.height, image.pixels,
+                                                    TXCF_NO_COMPRESSION);
 
         // Free the buffer.
         GL_DestroyImage(&image);

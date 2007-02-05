@@ -519,6 +519,7 @@ void GL_Init(void)
         glScreenBits = atoi(ArgNext());
 
     gl.Init(glScreenWidth, glScreenHeight, glScreenBits, !ArgExists("-window"));
+    GL_InitDeferred();   
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
@@ -603,6 +604,7 @@ void GL_Shutdown(void)
     if(!initGLOk)
         return;                 // Not yet initialized fully.
 
+    GL_ShutdownDeferred();    
     GL_ShutdownFont();
     Rend_ShutdownSky();
     Rend_Reset();

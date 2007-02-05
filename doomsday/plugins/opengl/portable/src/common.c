@@ -346,6 +346,10 @@ int DG_GetIntegerv(int name, int *v)
         *v = extVSync? useVSync : -1;
         break;
 
+    case DGL_GRAY_MIPMAP:
+        *v = grayMipmapFactor * 255;
+        break;
+        
     default:
         return DGL_ERROR;
     }
