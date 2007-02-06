@@ -24,6 +24,12 @@
 
 /*
  * con_buffer.c: Console history buffer.
+ *
+ * TODO: A buffer must be protected for multithreaded usage with a mutex so 
+ *       that the busy drawer can read the console history contents. In
+ *       other words, add a mutex_t to cbuffer_t and make sure it's locked
+ *       whenever the buffer is accessed. Also mains that the buffer struct
+ *       mustn't be accessed directly, just using functions.
  */
 
 // HEADER FILES ------------------------------------------------------------
