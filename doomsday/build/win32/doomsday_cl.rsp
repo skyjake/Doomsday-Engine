@@ -23,6 +23,7 @@
  ./../../engine/portable/src/s_logic.c
  ./../../engine/portable/src/s_environ.c
  ./../../engine/portable/src/s_cache.c
+ ./../../engine/portable/src/gl_defer.c
  ./../../engine/portable/src/gl_texmanager.c
  ./../../engine/portable/src/gl_tga.c
  ./../../engine/portable/src/gl_tex.c
@@ -107,6 +108,7 @@
  ./../../engine/portable/src/sys_direc.c
  ./../../engine/win32/src/sys_console.c
  ./../../engine/portable/src/con_start.c
+ ./../../engine/portable/src/con_busy.c
  ./../../engine/portable/src/con_data.c
  ./../../engine/portable/src/con_buffer.c
  ./../../engine/portable/src/con_main.c

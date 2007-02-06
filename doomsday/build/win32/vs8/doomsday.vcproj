@@ -272,6 +272,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\con_busy.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\con_config.c"
 				>
 			</File>
@@ -365,6 +369,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\edit_bias.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\gl_defer.c"
 				>
 			</File>
 			<File
@@ -819,6 +827,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\con_busy.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\con_config.h"
 				>
 			</File>
@@ -996,6 +1008,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\edit_bias.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\gl_defer.h"
 				>
 			</File>
 			<File
