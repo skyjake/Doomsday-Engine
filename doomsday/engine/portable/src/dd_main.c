@@ -135,6 +135,7 @@ int     queryResult = 0;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static char *wadfiles[MAXWADFILES];
+static boolean userDirOk = true;
 
 // CODE --------------------------------------------------------------------
 
@@ -328,8 +329,6 @@ void DD_AutoLoad(void)
     }
 }
 
-boolean userdir_ok = true;
-
 /**
  * Engine and game initialization. When complete, starts the game loop.
  */
@@ -348,7 +347,7 @@ void DD_Main(void)
             sprintf(homeDir, "%s/.deng", getenv("HOME"));
             M_CheckPath(homeDir);
             Dir_MakeDir(homeDir, &ddRuntimeDir);
-            userdir_ok = Dir_ChDir(&ddRuntimeDir);
+            userDirOk = Dir_ChDir(&ddRuntimeDir);
         }
 #   endif
 #endif
@@ -357,7 +356,7 @@ void DD_Main(void)
     if(ArgCheckWith("-userdir", 1))
     {
         Dir_MakeDir(ArgNext(), &ddRuntimeDir);
-        userdir_ok = Dir_ChDir(&ddRuntimeDir);
+        userDirOk = Dir_ChDir(&ddRuntimeDir);
     }
 
     // We'll redirect stdout to a log file.
@@ -478,7 +477,7 @@ static int DD_StartupWorker(void *parm)
     sprintf(defsFileName, "%sdefs\\doomsday.ded", ddBasePath);
     
     // Was the change to userdir OK?
-    if(!userdir_ok)
+    if(!userDirOk)
         Con_Message("--(!)-- User directory not found " "(check -userdir).\n");
     
     bamsInit();                 // Binary angle calculations.
