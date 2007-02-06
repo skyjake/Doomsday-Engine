@@ -328,7 +328,8 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
     param.playerMask = playerMask; // Unused?
     param.skill = skill;
     
-    Con_Busy(BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    // TODO: Use progress bar mode and update progress during the setup.
+    Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              P_SetupLevelWorker, &param);
 }
 

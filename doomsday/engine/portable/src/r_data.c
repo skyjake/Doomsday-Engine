@@ -660,11 +660,10 @@ void R_InitTextures(void)
     textures = Z_Malloc(numtextures * 4, PU_REFRESHTEX, 0);
 
     sprintf(buf, "R_Init: Initializing %i textures...", numtextures);
-    Con_InitProgress(buf, numtextures);
 
     for(i = 0; i < numtextures; ++i, directory++)
     {
-        Con_Progress(1, PBARF_DONTSHOW);
+        //Con_Progress(1, PBARF_DONTSHOW);
 
         if(i == numtextures1)
         {                       // Start looking in second texture file.
@@ -748,7 +747,7 @@ void R_InitTextures(void)
     if(maptex2)
         Z_Free(maptex2);
 
-    Con_HideProgress();
+    //Con_HideProgress();
 
     // Translation table for global animation.
     texturetranslation =
@@ -1066,11 +1065,11 @@ void R_PrecacheLevel(void)
     // Don't precache when playing demo.
     if(isDedicated || playback)
     {
-        Con_HideProgress();
         return;
     }
 
-    Con_InitProgress("Setting up level: Precaching...", -1);
+    // Precaching from 100 to 200.
+    Con_SetProgress(100);
 
     starttime = Sys_GetSeconds();
 
@@ -1119,10 +1118,12 @@ void R_PrecacheLevel(void)
             else
                 texturepresent[sec->planes[j]->surface.texture] = 1;
         }
-
-        if(i % SAFEDIV(numsectors, 10) == 0)
-            Con_Progress(1, PBARF_DONTSHOW);
+        
+        /*if(i % SAFEDIV(numsectors, 10) == 0)
+            Con_Progress(1, PBARF_DONTSHOW);*/
     }
+    
+    // Update progress.
 
     // FIXME: Precache sky textures!
 
@@ -1130,9 +1131,11 @@ void R_PrecacheLevel(void)
         if(texturepresent[k])
         {
             R_PrecacheTexture(k);
-            if(k % SAFEDIV(numtextures, 10) == 0)
-                Con_Progress(1, PBARF_DONTSHOW);
+            /*if(k % SAFEDIV(numtextures, 10) == 0)
+                Con_Progress(1, PBARF_DONTSHOW);*/
         }
+            
+    // Update progress.
 
     // Precache sprites.
     if(precacheSprites)
@@ -1163,13 +1166,15 @@ void R_PrecacheLevel(void)
             if(th->function != gx.MobjThinker)
                 continue;
             // Advance progress bar.
-            if(++k % SAFEDIV(mocount, 10) == 0)
-                Con_Progress(2, PBARF_DONTSHOW);
+            /*if(++k % SAFEDIV(mocount, 10) == 0)
+                Con_Progress(2, PBARF_DONTSHOW);*/
             // Precache all the skins for the mobj.
             R_PrecacheSkinsForMobj((mobj_t *) th);
         }
     }
 
+    // Update progress.
+            
     // Sky models usually have big skins.
     R_PrecacheSky();
 
@@ -1180,8 +1185,9 @@ void R_PrecacheLevel(void)
 
         for(s = 0; s < numSprites; ++s)
         {
+            /*
             if(s % SAFEDIV(numSprites, 10) == 0)
-                Con_Progress(1, PBARF_DONTSHOW);
+                Con_Progress(1, PBARF_DONTSHOW);*/
 
             if(!spritepresent[s] || !useModels)
                 continue;
@@ -1210,8 +1216,7 @@ void R_PrecacheLevel(void)
     }
 
     // Done!
-    Con_Progress(100, PBARF_SET);
-    Con_HideProgress();
+    //Con_Progress(100, PBARF_SET);
 }
 
 translation_t *R_GetTranslation(boolean isTexture, int number)

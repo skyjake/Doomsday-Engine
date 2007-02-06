@@ -31,6 +31,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -50,6 +52,8 @@
 
 static void     Con_BusyLoop(void);
 static void     Con_BusyDrawer(void);
+static void     Con_BusyLoadTextures(void);
+static void     Con_BusyDeleteTextures(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -68,6 +72,9 @@ static thread_t busyThread;
 static timespan_t busyTime;
 static volatile boolean busyDone;
 static volatile const char* busyError = NULL;
+static float    busyProgress = 0;
+
+static DGLuint texLoading[2];
 
 static char *titleText = "";
 static char secondaryTitleText[256];
@@ -98,13 +105,19 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
     busyInited = true;
     busyDone = false;
 
+    // Load any textures needed in this mode.
+    Con_BusyLoadTextures();
+
     // Start the busy worker thread, which will proces things in the 
     // background while we keep the user occupied with nice animations.
     busyThread = Sys_StartThread(worker, workerData);
     
     // Wait for the busy thread to stop.
     Con_BusyLoop();
-    
+
+    // Free resources.
+    Con_BusyDeleteTextures();
+
     if(busyError)
     {
         Con_AbnormalShutdown((const char*) busyError);
@@ -152,6 +165,37 @@ boolean Con_IsBusy(void)
     return busyInited;
 }
 
+static void Con_BusyLoadTextures(void)
+{
+    image_t image;
+
+    // Need to load the progress indicator?
+    if(busyMode & (BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR))
+    {
+        // These must be real files in the base dir because virtual files haven't
+        // been loaded yet when engine startup is done.
+        if(GL_LoadImage(&image, "}data/graphics/loading1.png", false))
+        {
+            texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, 
+                                                    image.pixels, TXCF_NEVER_DEFER);
+            GL_DestroyImage(&image);
+        }
+
+        if(GL_LoadImage(&image, "}data/graphics/loading2.png", false))
+        {
+            texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, 
+                                                    image.pixels, TXCF_NEVER_DEFER);
+            GL_DestroyImage(&image);
+        }        
+    }    
+}
+
+static void Con_BusyDeleteTextures(void)
+{
+    gl.DeleteTextures(2, texLoading);
+    texLoading[0] = texLoading[1] = 0;
+}
+
 /**
  * The busy thread main function. Runs until busyDone set to true.
  */
@@ -160,6 +204,9 @@ static void Con_BusyLoop(void)
     timespan_t startTime = Sys_GetRealSeconds();
 
     // TODO: Grab a copy of the current frame buffer contents.
+    
+    // Need any textures?
+    Con_BusyLoadTextures();
     
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
@@ -193,6 +240,58 @@ static void Con_BusyLoop(void)
 }
 
 /**
+ * @param 0...1, to indicate how far things have progressed.
+ */
+static void Con_BusyDrawIndicator(float pos)
+{
+    int x = glScreenWidth/2;
+    int y = glScreenHeight/2;
+    int radius = glScreenHeight/16;
+    float col[4] = {
+         .333f, .333f, .333f, 1
+    };
+    int i = 0;
+    int edgeCount = 0;
+    
+    pos = MINMAX_OF(0, pos, 1);
+    edgeCount = MAX_OF(1, pos * 30);
+    
+    // Draw the frame.
+    gl.Enable(DGL_TEXTURING);
+    gl.Enable(DGL_BLENDING);
+    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+
+    gl.Bind(texLoading[0]);
+    GL_DrawRect(x - radius, y - radius, radius*2, radius*2, col[0], col[1], col[2], col[3]);
+    
+    // Rotate around center.
+    gl.MatrixMode(DGL_TEXTURE);
+    gl.PushMatrix();
+    gl.LoadIdentity();
+    gl.Translatef(.5f, .5f, 0.f);
+    gl.Rotatef(-busyTime * 20, 0.f, 0.f, 1.f);
+    gl.Translatef(-.5f, -.5f, 0.f);
+
+    // Draw a fan.
+    gl.Bind(texLoading[1]);
+    gl.Begin(DGL_TRIANGLE_FAN);
+    // Center.
+    gl.TexCoord2f(.5f, .5f);
+    gl.Vertex2f(x, y);
+    // Vertices along the edge.
+    for(i = 0; i <= edgeCount; ++i)
+    {
+        float angle = 2 * PI * pos * (i / (float)edgeCount) + PI/2;
+        gl.TexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
+        gl.Vertex2f(x + cos(angle)*radius, y + sin(angle)*radius);
+    }
+    gl.End();
+    
+    gl.MatrixMode(DGL_TEXTURE);
+    gl.PopMatrix();
+}
+
+/**
  * Busy drawer function. The entire frame is drawn here.
  */
 static void Con_BusyDrawer(void)
@@ -201,10 +300,21 @@ static void Con_BusyDrawer(void)
     char buf[100];
     
     gl.Clear(DGL_COLOR_BUFFER_BIT);
+
+    // Indefinite activity?
+    if(busyMode & BUSYF_ACTIVITY)
+    {
+        Con_BusyDrawIndicator(1);
+    }
+    else if(busyMode & BUSYF_PROGRESS_BAR)
+    {
+        // The progress is animated elsewhere.
+        Con_BusyDrawIndicator(Con_GetProgress());
+    }
     
     sprintf(buf, "Busy %04x : %.2lf", busyMode, busyTime);
     gl.Color4f(1, 1, 1, 1);
-    FR_TextOut(buf, 50, 50);
+    FR_TextOut(buf, 20, 20);
     
     // TODO: When accessing console output, lock the console buffer first!
     

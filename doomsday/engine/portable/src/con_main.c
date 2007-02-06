@@ -240,7 +240,7 @@ static void Con_Register(void)
     C_VAR_INT("con-key-activate", &consoleActiveKey, 0, 0, 255);
     C_VAR_BYTE("con-key-show", &consoleShowKeys, 0, 0, 1);
     C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1);
-    C_VAR_BYTE("con-progress", &progress_enabled, 0, 0, 1);
+    //C_VAR_BYTE("con-progress", &progress_enabled, 0, 0, 1);
 
     // File
     C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0);

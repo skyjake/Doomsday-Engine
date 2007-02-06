@@ -2286,10 +2286,10 @@ void R_InitLevel(char *level_id)
         }
     }
 
-    Con_InitProgress("Setting up level...", 100);
+    //Con_InitProgress("Setting up level...", 100);
     strcpy(currentLevelId, level_id);
 
-    Con_Progress(10, 0);
+    //Con_Progress(10, 0);
 
     // Polygonize.
     if(P_GLNodeDataPresent() && bspBuild)
@@ -2297,7 +2297,7 @@ void R_InitLevel(char *level_id)
     else
         R_CreateFloorsAndCeilings(numnodes - 1, 0, NULL);
 
-    Con_Progress(10, 0);
+    //Con_Progress(10, 0);
 
     // Init Particle Generator links.
     PG_InitForLevel();
@@ -2323,7 +2323,7 @@ void R_InitLevel(char *level_id)
     R_InitLineNeighbors();  // Must follow R_RationalizeSectors.
     R_InitSectorShadows();
 
-    Con_Progress(10, 0);
+    //Con_Progress(10, 0);
 
     startTime = Sys_GetRealTime();
     R_InitSkyFix();
@@ -2340,7 +2340,7 @@ void R_InitLevel(char *level_id)
     Cl_Reset();
     RL_DeleteLists();
     GL_DeleteRawImages();
-    Con_Progress(10, 0);
+    //Con_Progress(10, 0);
 
     // See what mapinfo says about this level.
     mapinfo = Def_GetMapInfo(level_id);
@@ -2395,7 +2395,7 @@ void R_InitLevel(char *level_id)
 
     R_InitRendPolyPool();
 
-    Con_Progress(10, 0);        // 50%.
+    //Con_Progress(10, 0);        // 50%.
 }
 
 /**

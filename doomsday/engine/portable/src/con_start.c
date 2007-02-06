@@ -262,7 +262,7 @@ void Con_DrawStartupScreen(int show)
     if(show)
     {
         // Update the progress bar, if one is active.
-        Con_Progress(0, PBARF_NOBACKGROUND | PBARF_NOBLIT);
+        //Con_Progress(0, PBARF_NOBACKGROUND | PBARF_NOBLIT);
         gl.Show();
     }
 }

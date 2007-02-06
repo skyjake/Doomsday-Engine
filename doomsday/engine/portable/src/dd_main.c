@@ -412,8 +412,8 @@ void DD_Main(void)
     }
       
     // Enter busy mode until startup complete.
-    Con_Busy(BUSYF_NO_UPLOADS | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0), 
-             DD_StartupWorker, NULL);    
+    Con_InitProgress(200);
+    Con_Busy(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR, DD_StartupWorker, NULL);    
    
     // Engine initialization is complete. Now finish up with the GL.
     if(!isDedicated)
@@ -423,7 +423,7 @@ void DD_Main(void)
     }
     
     // Do deferred uploads.
-    Con_Busy(BUSYF_PROGRESS_BAR, DD_StartupWorker2, NULL);
+    Con_Busy(BUSYF_PROGRESS_BAR | BUSYF_STARTUP | BUSYF_ACTIVITY, DD_StartupWorker2, NULL);
 
     // Client connection command.
     if(ArgCheckWith("-connect", 1))
@@ -466,12 +466,16 @@ static int DD_StartupWorker(void *parm)
     // Initialize the key mappings.
     DD_InitInput();
     
+    Con_SetProgress(10);
+    
     // Any startup hooks?
     Plug_DoHook(HOOK_STARTUP, 0, 0);
     
+    Con_SetProgress(20);
+    
     DD_AddStartupWAD("}data\\doomsday.pk3");
     R_InitExternalResources();
-    
+
     // The name of the .cfg will invariably be overwritten by the Game.
     strcpy(configFileName, "doomsday.cfg");
     sprintf(defsFileName, "%sdefs\\doomsday.ded", ddBasePath);
@@ -486,7 +490,7 @@ static int DD_StartupWorker(void *parm)
     Zip_Init();
     
     Def_Init();
-    
+
     if(ArgCheck("-dedicated"))
     {
         //SW_Shutdown();
@@ -507,6 +511,8 @@ static int DD_StartupWorker(void *parm)
     
     if(gx.PreInit)
         gx.PreInit();
+    
+    Con_SetProgress(30);
     
     // We now accept no more custom properties.
     DAM_LockCustomPropertys();
@@ -547,6 +553,8 @@ static int DD_StartupWorker(void *parm)
         }
     }
     
+    Con_SetProgress(40);
+    
     if(defaultWads)
         AddToWadList(defaultWads);  // These must take precedence.
     HandleArgs(1);              // Only the WADs.
@@ -558,6 +566,8 @@ static int DD_StartupWorker(void *parm)
     
     W_InitMultipleFiles(wadfiles);
     F_InitDirec();
+
+    Con_SetProgress(75);
     
     // Load help resources. Now virtual files are available as well.
     if(!isDedicated)
@@ -565,6 +575,8 @@ static int DD_StartupWorker(void *parm)
     
     // Final autoload round.
     DD_AutoLoad();
+    
+    Con_SetProgress(80);
     
     // No more WADs will be loaded in startup mode after this point.
     W_EndStartup();
@@ -579,7 +591,7 @@ static int DD_StartupWorker(void *parm)
     
     // Now that we've read the WADs we can initialize definitions.
     Def_Read();
-    
+        
 #ifdef WIN32
     if(ArgCheck("-nowsk"))      // No Windows system keys?
     {
@@ -624,11 +636,17 @@ static int DD_StartupWorker(void *parm)
         Con_Error("---End of lumps---\n");
     }
     
+    Con_SetProgress(100);
+    
     Con_Message("Sys_Init: Setting up machine state.\n");
     Sys_Init();
-    
+
+    Con_SetProgress(125);
+
     Con_Message("R_Init: Init the refresh daemon.\n");
     R_Init();
+    
+    Con_SetProgress(199);
     
     Con_Message("Net_InitGame: Initializing game data.\n");
     Net_InitGame();
@@ -636,7 +654,7 @@ static int DD_StartupWorker(void *parm)
     
     if(gx.PostInit)
         gx.PostInit();
-
+    
     // Now the defs have been read we can init the map format info
     P_InitData();
 
@@ -680,7 +698,9 @@ static int DD_StartupWorker(void *parm)
     // In dedicated mode the console must be opened, so all input events
     // will be handled by it.
     if(isDedicated)
-        Con_Open(true);    
+        Con_Open(true);  
+    
+    Con_SetProgress(200);
     
     Plug_DoHook(HOOK_INIT, 0, 0);   // Any initialization hooks?
     Con_UpdateKnownWords();         // For word completion (with Tab).
@@ -695,6 +715,7 @@ static int DD_StartupWorker(void *parm)
  */
 static int DD_StartupWorker2(void *parm)
 {
+    Con_SetProgress(200);
     Con_BusyWorkerEnd();
     return 0;
 }

@@ -281,7 +281,7 @@ int TGA_Save16_rgb888(char *filename, int w, int h, uChar * buffer)
  *  Warning: This is not a generic TGA loader. Only type 2, 24/32 pixel
  *     size, attrbits 0/8 and lower left origin supported.
  */
-int TGA_Load32_rgba8888(DFILE * file, int w, int h, uChar * buffer)
+int TGA_Load32_rgba8888(DFILE *file, int w, int h, uChar *buffer)
 {
     TARGA_HEADER header;
     int     x, y, pixbytes, format;

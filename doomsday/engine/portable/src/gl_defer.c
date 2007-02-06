@@ -59,6 +59,8 @@ typedef struct deferred_s {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 void        GL_ReserveNames(void);
+deferred_t* GL_GetNextDeferred(void);
+void        GL_DestroyDeferred(deferred_t* d);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -75,6 +77,31 @@ void GL_InitDeferred(void)
 {
     deferredMutex = Sys_CreateMutex("DGLDeferredMutex");
     GL_ReserveNames();
+}
+
+void GL_ShutdownDeferred(void)
+{
+    deferred_t *d;
+    
+    while((d = GL_GetNextDeferred()) != NULL)
+    {    
+        GL_DestroyDeferred(d);
+    }
+    
+    Sys_DestroyMutex(deferredMutex);
+    deferredMutex = NULL;
+    reservedCount = 0;
+}
+
+int GL_GetDeferredCount(void)
+{
+    int count = 0;
+    deferred_t* i = 0;
+    
+    Sys_Lock(deferredMutex);
+    for(i = (deferred_t*) deferredContentFirst; i; i = i->next, ++count);
+    Sys_Unlock(deferredMutex);
+    return count;
 }
 
 deferred_t* GL_GetNextDeferred(void)
@@ -95,20 +122,6 @@ void GL_DestroyDeferred(deferred_t* d)
 {
     free(d->content.buffer);
     free(d);
-}
-
-void GL_ShutdownDeferred(void)
-{
-    deferred_t *d;
-    
-    while((d = GL_GetNextDeferred()) != NULL)
-    {    
-        GL_DestroyDeferred(d);
-    }
-    
-    Sys_DestroyMutex(deferredMutex);
-    deferredMutex = 0;
-    reservedCount = 0;
 }
 
 void GL_ReserveNames(void)
@@ -253,7 +266,7 @@ DGLuint GL_NewTexture(texturecontent_t *content)
     
     content->name = GL_GetReservedName();
     
-    if(!Con_IsBusy())
+    if((content->flags & TXCF_NEVER_DEFER) || !Con_IsBusy())
     {
         // Let's do this right away. No need to take a copy.
         GL_UploadTextureContent(content);
@@ -314,17 +327,6 @@ DGLuint GL_NewTextureWithParams2(int format, int width, int height, void* pixels
     return GL_NewTexture(&c);
 }
 
-int GL_GetDeferredCount(void)
-{
-    int count = 0;
-    deferred_t* i = 0;
-        
-    Sys_Lock(deferredMutex);
-    for(i = (deferred_t*) deferredContentFirst; i; i = i->next, ++count);
-    Sys_Unlock(deferredMutex);
-    return count;
-}
-
 /**
  * @param timeOutMilliSeconds  Zero for no timeout.
  */
@@ -333,6 +335,8 @@ void GL_UploadDeferredContent(uint timeOutMilliSeconds)
     deferred_t *d;
     uint startTime = Sys_GetRealTime();
     
+    // We'll reserve names multiple times, because the worker thread may be needing
+    // new texture names while we are uploading.
     GL_ReserveNames();
     while((!timeOutMilliSeconds || Sys_GetRealTime() - startTime < timeOutMilliSeconds) &&
           (d = GL_GetNextDeferred()) != NULL)

@@ -114,14 +114,15 @@ void R_InitSpriteLumps(void)
     char    buf[64];
 
     sprintf(buf, "R_Init: Initializing %i sprites...", numSpriteLumps);
-    Con_InitProgress(buf, numSpriteLumps);
+    //Con_InitProgress(buf, numSpriteLumps);
 
     for(i = 0; i < numSpriteLumps; ++i)
     {
         sl = spritelumps[i];
 
+        /*
         if(!(i % 50))
-            Con_Progress(i, PBARF_SET | PBARF_DONTSHOW);
+            Con_Progress(i, PBARF_SET | PBARF_DONTSHOW);*/
 
         patch = W_CacheLumpNum(sl->lump, PU_CACHE);
         sl->width = SHORT(patch->width);
@@ -129,8 +130,6 @@ void R_InitSpriteLumps(void)
         sl->offset = SHORT(patch->leftoffset);
         sl->topoffset = SHORT(patch->topoffset);
     }
-
-    Con_HideProgress();
 }
 
 /*

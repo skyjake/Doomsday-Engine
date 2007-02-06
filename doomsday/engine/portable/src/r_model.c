@@ -1239,7 +1239,7 @@ void R_InitModels(void)
             ("  File hash built in %.2f seconds.\n",
              (Sys_GetRealTime() - usedTime) / 1000.0f));
 
-    Con_InitProgress("R_Init: Initializing models...", defs.count.models.num);
+    //Con_InitProgress("R_Init: Initializing models...", defs.count.models.num);
 
     usedTime = Sys_GetRealTime();
 
@@ -1258,10 +1258,9 @@ void R_InitModels(void)
     // Use the latest definition available for each sprite ID.
     for(i = defs.count.models.num - 1; i >= 0; --i)
     {
-        Con_Progress(1, PBARF_DONTSHOW);
+        //Con_Progress(1, PBARF_DONTSHOW);
         R_SetupModel(defs.models + i);
     }
-    Con_HideProgress();
 
     // Create interlinks. Note that the order in which the defs were loaded
     // is important. We want to allow "patch" definitions, right?
