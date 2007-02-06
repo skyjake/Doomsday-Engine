@@ -40,6 +40,7 @@ typedef struct cbline_s {
 
 // A console buffer.
 typedef struct {
+    mutex_t mutex;
     int     flags;              // CBF_* flags.
     uint    numLines;           // How many lines are there in the buffer?
     uint    maxLines;           // Maximum number of lines for the buffer.

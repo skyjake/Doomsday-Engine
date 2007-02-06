@@ -25,11 +25,10 @@
 /*
  * con_buffer.c: Console history buffer.
  *
- * TODO: A buffer must be protected for multithreaded usage with a mutex so 
- *       that the busy drawer can read the console history contents. In
- *       other words, add a mutex_t to cbuffer_t and make sure it's locked
- *       whenever the buffer is accessed. Also mains that the buffer struct
- *       mustn't be accessed directly, just using functions.
+ * NOTE: With respect to threading, this code assumes that a cbuffer,
+ *       mutex's lock/unlock state has been manipulated by the CALLER of
+ *       private functions declared here. Therefore, public functions must
+ *       lock before and unlock after calling a private function.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -37,6 +36,7 @@
 #include <ctype.h>
 
 #include "de_base.h"
+#include "de_system.h"
 #include "de_console.h"
 #include "de_misc.h"
 
@@ -215,12 +215,16 @@ static void removeNode(cbuffer_t *buf, cbnode_t *node)
  */
 cbuffer_t *Con_NewBuffer(uint maxNumLines, uint maxLineLength, int flags)
 {
+    char        name[32];
     cbuffer_t  *buf;
 
     if(maxLineLength < 1)
         Con_Error("Con_NewBuffer: Odd buffer params");
 
     buf = M_Malloc(sizeof(*buf));
+
+    sprintf(name, "CBufferMutex%p", buf);
+    buf->mutex = Sys_CreateMutex(name);
 
     buf->flags = flags;
     buf->headptr = buf->tailptr = NULL;
@@ -279,7 +283,9 @@ void Con_BufferClear(cbuffer_t *buf)
     if(!buf)
         return;
 
+    Sys_Lock(buf->mutex);
     clearBuffer(buf, false);
+    Sys_Unlock(buf->mutex);
 }
 
 /**
@@ -292,6 +298,8 @@ void Con_DestroyBuffer(cbuffer_t *buf)
     if(buf)
     {
         cbnode_t *n, *np;
+
+        Sys_Lock(buf->mutex);
 
         clearBuffer(buf, true);
         M_Free(buf->writebuf);
@@ -307,6 +315,9 @@ void Con_DestroyBuffer(cbuffer_t *buf)
             n = np;
         }
 
+        Sys_Unlock(buf->mutex);
+        Sys_DestroyMutex(buf->mutex);
+        buf->mutex = 0;
         M_Free(buf);
     }
 }
@@ -323,12 +334,14 @@ void Con_BufferSetMaxLineLength(cbuffer_t *buf, uint length)
     if(!buf)
         return;
 
+    Sys_Lock(buf->mutex);
     buf->maxLineLen = length;
 
     // The write buffer will be trimmed if resizing smaller.
     buf->writebuf = M_Realloc(buf->writebuf, buf->maxLineLen + 1);
     if(buf->wbc > buf->maxLineLen)
         buf->wbc = buf->maxLineLen;
+    Sys_Unlock(buf->mutex);
 }
 
 /**
@@ -338,10 +351,15 @@ void Con_BufferSetMaxLineLength(cbuffer_t *buf, uint length)
  */
 uint Con_BufferNumLines(cbuffer_t *buf)
 {
+    uint        num;
     if(!buf)
         return 0;
 
-    return buf->numLines; // index + 1
+    Sys_Lock(buf->mutex);
+    num = buf->numLines; // index + 1
+    Sys_Unlock(buf->mutex);
+
+    return num;
 }
 
 /**
@@ -355,51 +373,48 @@ uint Con_BufferNumLines(cbuffer_t *buf)
  */
 cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx)
 {
+    cbline_t   *ptr = NULL;
+
     if(!buf)
         return NULL;
 
-    if(buf->numLines == 0 || idx >= buf->numLines)
-        return NULL;
+    Sys_Lock(buf->mutex);
+    if(!(buf->numLines == 0 || idx >= buf->numLines))
+    {
+        if(!buf->indexGood)
+        {   // Rebuild the index.
+            uint        i;
+            cbnode_t   *node;
 
-    if(!buf->indexGood)
-    {   // Rebuild the index.
-        uint        i;
-        cbnode_t   *node;
+            // Do we need to enlarge the index?
+            if(buf->indexSize < buf->numLines)
+            {
+                buf->index =
+                    M_Realloc(buf->index, sizeof(cbline_t*) * buf->numLines);
+                buf->indexSize = buf->numLines;
+            }
 
-        // Do we need to enlarge the index?
-        if(buf->indexSize < buf->numLines)
-        {
-            buf->index =
-                M_Realloc(buf->index, sizeof(cbline_t*) * buf->numLines);
-            buf->indexSize = buf->numLines;
+            i = 0;
+            node = buf->headptr;
+            while(node != NULL)
+            {
+                buf->index[i++] = node->data;
+                node = node->next;
+            }
+
+            buf->indexGood = true;
         }
-
-        i = 0;
-        node = buf->headptr;
-        while(node != NULL)
-        {
-            buf->index[i++] = node->data;
-            node = node->next;
-        }
-
-        buf->indexGood = true;
+        ptr = buf->index[idx];
     }
+    Sys_Unlock(buf->mutex);
 
-    return buf->index[idx];
+    return ptr;
 }
 
-/**
- * Flushes the contents of the write buffer to the history buffer.
- *
- * @param buf               Ptr to the history buffer to flush.
- */
-void Con_BufferFlush(cbuffer_t *buf)
+static void bufferFlush(cbuffer_t *buf)
 {
     uint        len;
     cbline_t   *line;
-
-    if(!buf)
-        return;
 
     // Is there anything to flush?
     if(buf->wbc < 1)
@@ -438,6 +453,21 @@ void Con_BufferFlush(cbuffer_t *buf)
 }
 
 /**
+ * Flushes the contents of the write buffer to the history buffer.
+ *
+ * @param buf               Ptr to the history buffer to flush.
+ */
+void Con_BufferFlush(cbuffer_t *buf)
+{
+    if(!buf)
+        return;
+
+    Sys_Lock(buf->mutex);
+    bufferFlush(buf);
+    Sys_Unlock(buf->mutex);
+}
+
+/**
  * Write the given text string (plus optional flags) to the buffer.
  *
  * @param buf               Ptr to the buffer to write to.
@@ -451,37 +481,40 @@ void Con_BufferWrite(cbuffer_t *buf, int flags, char *txt)
     if(!buf)
         return;
 
+    Sys_Lock(buf->mutex);
+
     // Check for special write actions first.
     if(flags & CBLF_RULER)
     {
-        Con_BufferFlush(buf);
+        bufferFlush(buf);
 
         bufferNewLine(buf)->flags |= CBLF_RULER;
         flags &= ~CBLF_RULER;
     }
 
-    if(!txt || !strcmp(txt, ""))
-        return; // Nothing else we can do.
-
-    // Copy the text into the write buffer and flush to the history
-    // buffer when as necessary/required.
-    for(i = 0; i < strlen(txt); ++i)
+    if(!(!txt || !strcmp(txt, "")))
     {
-        buf->wbFlags = flags;
-        if(txt[i] == '\n' || buf->wbc >= buf->maxLineLen)  // A new line?
+        // Copy the text into the write buffer and flush to the history
+        // buffer when as necessary/required.
+        for(i = 0; i < strlen(txt); ++i)
         {
-            Con_BufferFlush(buf);
+            buf->wbFlags = flags;
+            if(txt[i] == '\n' || buf->wbc >= buf->maxLineLen)  // A new line?
+            {
+                bufferFlush(buf);
 
-            // Newlines won't get in the buffer at all.
-            if(txt[i] == '\n')
-                continue;
+                // Newlines won't get in the buffer at all.
+                if(txt[i] == '\n')
+                    continue;
+            }
+            // Copy the next character to the write buffer.
+            buf->writebuf[buf->wbc++] = txt[i];
         }
-        // Copy the next character to the write buffer.
-        buf->writebuf[buf->wbc++] = txt[i];
-    }
 
-    if(buf->flags & CBF_ALWAYSFLUSH)
-    {   // Don't leave data in the write buffer.
-        Con_BufferFlush(buf);
+        if(buf->flags & CBF_ALWAYSFLUSH)
+        {   // Don't leave data in the write buffer.
+            bufferFlush(buf);
+        }
     }
+    Sys_Unlock(buf->mutex);
 }
