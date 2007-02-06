@@ -33,6 +33,7 @@
 #endif
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
 
@@ -106,7 +107,7 @@ void GL_ShutdownDeferred(void)
     }
     
     Sys_DestroyMutex(deferredMutex);
-    deferredMutex = NULL;
+    deferredMutex = 0;
     reservedCount = 0;
 }
 
