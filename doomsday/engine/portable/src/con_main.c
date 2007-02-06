@@ -1910,6 +1910,25 @@ void Con_Error(const char *error, ...)
     strcat(buff, "\n");
     strcat(buff, err);
 
+    if(Con_IsBusy())
+    {
+        // In busy mode, the other thread will handle this.
+        Con_BusyWorkerError(buff);
+        while(true)
+        {
+            // We'll stop here. 
+            // TODO: Kill this thread?
+            Sys_Sleep(10000);
+        }
+    }
+    else
+    {
+        Con_AbnormalShutdown(buff);
+    }
+}
+
+void Con_AbnormalShutdown(const char* message)
+{
     Sys_Shutdown();
     B_Shutdown();
     Con_Shutdown();
@@ -1921,9 +1940,9 @@ void Con_Error(const char *error, ...)
     // Be a bit more graphic.
     Sys_ShowCursor(true);
     Sys_ShowCursor(true);
-    if(err[0])                  // Only show if a message given.
+    if(message)                  // Only show if a message given.
     {
-        Sys_MessageBox(buff, true);
+        Sys_MessageBox(message, true);
     }
 
     DD_Shutdown();

@@ -486,9 +486,12 @@ void GL_ShutdownVarFont(void)
 }
 
 /**
- * One-time initialization of DGL and the renderer.
+ * One-time initialization of DGL and the renderer. This is done very early on
+ * during engine startup, and is supposed to be fast. All subsystems cannot yet
+ * be initialized, such as fonts or texture management, so any rendering occuring
+ * before GL_Init() must be done with manually prepared textures.
  */
-void GL_Init(void)
+void GL_EarlyInit(void)
 {
     if(initGLOk)
         return;                 // Already initialized.
@@ -520,17 +523,7 @@ void GL_Init(void)
 
     gl.Init(glScreenWidth, glScreenHeight, glScreenBits, !ArgExists("-window"));
     GL_InitDeferred();   
-
-    // Initialize the renderer into a 2D state.
-    GL_Init2DState();
-
-    // Initialize font renderer.
-    GL_InitFont();
-
-    // Set the gamma in accordance with vid-gamma, vid-bright and
-    // vid-contrast.
-    GL_SetGamma();
-
+    
     // Check the maximum texture size.
     gl.GetIntegerv(DGL_MAX_TEXTURE_SIZE, &glMaxTexSize);
     if(glMaxTexSize == 256)
@@ -547,7 +540,7 @@ void GL_Init(void)
     if(ArgCheckWith("-maxtex", 1))
     {
         int     customSize = CeilPow2(strtol(ArgNext(), 0, 0));
-
+        
         if(glMaxTexSize < customSize)
             customSize = glMaxTexSize;
         glMaxTexSize = customSize;
@@ -559,14 +552,14 @@ void GL_Init(void)
         filloutlines = false;
         Con_Message("  Textures have outlines.\n");
     }
-
+    
     // Does the graphics library support multitexturing?
     numTexUnits = gl.GetInteger(DGL_MAX_TEXTURE_UNITS);
     envModAdd = gl.GetInteger(DGL_MODULATE_ADD_COMBINE);
     if(numTexUnits > 1)
     {
         Con_Printf("  Multitexturing enabled (%s).\n",
-                    envModAdd ? "full" : "partial");
+                   envModAdd ? "full" : "partial");
     }
     else
     {
@@ -574,7 +567,33 @@ void GL_Init(void)
         Con_Printf("  Multitexturing not available.\n");
     }
 
+    // Initialize the renderer into a 2D state.
+    GL_Init2DState();
+    
+    // Allow font rendering.
+    FR_Init();
+    
     initGLOk = true;
+}
+
+/**
+ * Finishes GL initialization. This can be called once the virtual file
+ * system has been fully loaded up, and the console variables have been
+ * read from the config file.
+ */
+void GL_Init(void)
+{
+    if(!initGLOk)
+    {
+        Con_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
+    }
+    
+    // Initialize font renderer.
+    GL_InitFont();
+
+    // Set the gamma in accordance with vid-gamma, vid-bright and
+    // vid-contrast.
+    GL_SetGamma();
 }
 
 /**

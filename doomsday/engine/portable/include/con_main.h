@@ -88,6 +88,7 @@ extern byte     consoleDump;
 
 void            Con_Init(void);
 void            Con_Shutdown(void);
+void            Con_AbnormalShutdown(const char* message);
 void            Con_DestroyDatabases(void);
 void            Con_WriteAliasesToFile(FILE * file);
 void            Con_SetMaxLineLength(void);

@@ -87,6 +87,7 @@ void    Net_Drawer(void);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int DD_StartupWorker(void *parm);
+static int DD_StartupWorker2(void *parm);
 static void HandleArgs(int state);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -327,16 +328,15 @@ void DD_AutoLoad(void)
     }
 }
 
+boolean userdir_ok = true;
+
 /**
  * Engine and game initialization. When complete, starts the game loop.
- * What a mess...
  */
 void DD_Main(void)
 {
     int     p;
-    char    buff[10];
     char   *outfilename = "doomsday.out";
-    boolean userdir_ok = true;
 
     DD_Verbosity();
 
@@ -405,209 +405,27 @@ void DD_Main(void)
     Con_Init();
     Con_Message("Con_Init: Initializing the console.\n");
 
-    // Create the startup messages window.
-    SW_Init();
-
-    Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
-
-    // Print the used command line.
-    if(verbose)
-    {
-        Con_Message("Command line (%i strings):\n", Argc());
-        for(p = 0; p < Argc(); p++)
-            Con_Message("  %i: %s\n", p, Argv(p));
-    }
-
-    F_InitMapping();
-
-    // Initialize the key mappings.
-    DD_InitInput();
-
-    // Any startup hooks?
-    Plug_DoHook(HOOK_STARTUP, 0, 0);
-
-    DD_AddStartupWAD("}data\\doomsday.pk3");
-    R_InitExternalResources();
-
-    // The name of the .cfg will invariably be overwritten by the Game.
-    strcpy(configFileName, "doomsday.cfg");
-    sprintf(defsFileName, "%sdefs\\doomsday.ded", ddBasePath);
-
-    // Was the change to userdir OK?
-    if(!userdir_ok)
-        Con_Message("--(!)-- User directory not found " "(check -userdir).\n");
-
-    bamsInit();                 // Binary angle calculations.
-
-    // Initialize the zip file database.
-    Zip_Init();
-
-    Def_Init();
-
-    if(ArgCheck("-dedicated"))
-    {
-        SW_Shutdown();
-        isDedicated = true;
-        Sys_ConInit();
-    }
-
-    autostart = false;
-    shareware = false;          // Always false for Hexen
-
-    HandleArgs(0);              // Everything but WADs.
-
-    novideo = ArgCheck("-novideo") || isDedicated;
-
-    // Register the engine's binding classes
-    B_RegisterBindClasses();
-    DAM_Init();
-
-    if(gx.PreInit)
-        gx.PreInit();
- 
-    // We now accept no more custom properties.
-    DAM_LockCustomPropertys();
-
-    // Automatically create an Auto mapping in the runtime directory.
-    DD_DefineBuiltinVDM();
-
-    // Initialize subsystems
-    Net_Init();                 // Network before anything else.
-
-    // Now we can hide the mouse cursor for good.
-    Sys_HideMouse();
-
-    // Load defaults before initing other systems
-    Con_Message("Parsing configuration files.\n");
-    // Check for a custom config file.
-    if(ArgCheckWith("-config", 1))
-    {
-        // This will override the default config file.
-        strcpy(configFileName, ArgNext());
-        Con_Message("Custom config file: %s\n", configFileName);
-    }
-
-    // This'll be the default config file.
-    Con_ParseCommands(configFileName, true);
-
-    // Parse additional files (that should be parsed BEFORE init).
-    if(ArgCheckWith("-cparse", 1))
-    {
-        for(;;)
-        {
-            char   *arg = ArgNext();
-
-            if(!arg || arg[0] == '-')
-                break;
-            Con_Message("Parsing: %s\n", arg);
-            Con_ParseCommands(arg, false);
-        }
-    }
-
-    if(defaultWads)
-        AddToWadList(defaultWads);  // These must take precedence.
-    HandleArgs(1);              // Only the WADs.
-
-    Con_Message("W_Init: Init WADfiles.\n");
-
-    // Add real files from the Auto directory to the wadfiles list.
-    DD_AddAutoData(false);
-
-    W_InitMultipleFiles(wadfiles);
-    F_InitDirec();
-
-    // Load help resources. Now virtual files are available as well.
-    if(!isDedicated)
-        DD_InitHelp();
-
-    // Final autoload round.
-    DD_AutoLoad();
-
-    // No more WADs will be loaded in startup mode after this point.
-    W_EndStartup();
-
-    VERBOSE(W_PrintMapList());
-
-    // Execute the startup script (Startup.cfg).
-    Con_ParseCommands("startup.cfg", false);
-
-    // Now the game can identify the game mode.
-    gx.UpdateState(DD_GAME_MODE);
-
-    // Now that we've read the WADs we can initialize definitions.
-    Def_Read();
-
-#ifdef WIN32
-    if(ArgCheck("-nowsk"))      // No Windows system keys?
-    {
-        // Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.
-        // A bit of a hack, I'm afraid...
-        SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
-        Con_Message("Windows system keys disabled.\n");
-    }
-#endif
-
-    if(ArgCheckWith("-dumplump", 1))
-    {
-        char   *arg = ArgNext();
-        char    fname[100];
-        FILE   *file;
-        int     lump = W_GetNumForName(arg);
-        byte   *lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
-
-        sprintf(fname, "%s.dum", arg);
-        file = fopen(fname, "wb");
-        if(!file)
-        {
-            Con_Error("Couldn't open %s for writing. %s\n", fname,
-                      strerror(errno));
-        }
-        fwrite(lumpPtr, 1, lumpinfo[lump].size, file);
-        fclose(file);
-        Con_Error("%s dumped to %s.\n", arg, fname);
-    }
-
-    if(ArgCheck("-dumpwaddir"))
-    {
-        printf("Lumps (%d total):\n", numlumps);
-        for(p = 0; p < numlumps; p++)
-        {
-            strncpy(buff, lumpinfo[p].name, 8);
-            buff[8] = 0;
-            printf("%04i - %-8s (hndl: %p, pos: %i, size: %i)\n", p, buff,
-                   lumpinfo[p].handle, lumpinfo[p].position, lumpinfo[p].size);
-        }
-        Con_Error("---End of lumps---\n");
-    }
-
-    Con_Message("Sys_Init: Setting up machine state.\n");
-    Sys_Init();
-
-    Con_Message("R_Init: Init the refresh daemon.\n");
-    R_Init();
-
-    Con_Message("Net_InitGame: Initializing game data.\n");
-    Net_InitGame();
-    Demo_Init();
-
-    // Engine initialization is complete. Now start the GL driver and go
-    // briefly to the Console Startup mode, so the results of the game
-    // init, the config file parsing and possible netgame connection will
-    // be visible.
-    SW_Shutdown();              // The message window can be closed.
+    //SW_Shutdown();              // The message window can be closed.
     if(!isDedicated)
     {
         Sys_ShowWindow(true);   // Show the main window (was created hidden).
+        GL_EarlyInit();
+    }
+      
+    // Enter busy mode until startup complete.
+    Con_Busy(BUSYF_NO_UPLOADS | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0), 
+             DD_StartupWorker, NULL);    
+   
+    // Engine initialization is complete. Now finish up with the GL.
+    if(!isDedicated)
+    {
         GL_Init();
         GL_InitRefresh(true, true);
     }
-
-    // Start printing messages in the startup.
-    // TODO: Init GL as early as possible and do data file loading in busy mode.
-    //       Make it unnecessary to use the native startup window?
-    Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), 
-             DD_StartupWorker, NULL);
     
+    // Do deferred uploads.
+    Con_Busy(BUSYF_PROGRESS_BAR, DD_StartupWorker2, NULL);
+
     // Client connection command.
     if(ArgCheckWith("-connect", 1))
         Con_Executef(CMDS_CMDLINE, false, "connect %s", ArgNext());
@@ -629,8 +447,194 @@ static int DD_StartupWorker(void *parm)
 {
     int     p = 0;
 
-    Con_Message("Con_StartupInit: Init startup screen.\n");
-
+    //Con_Message("Con_StartupInit: Init startup screen.\n");
+    
+    // Create the startup messages window.
+    //SW_Init();
+    
+    Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
+    
+    // Print the used command line.
+    if(verbose)
+    {
+        Con_Message("Command line (%i strings):\n", Argc());
+        for(p = 0; p < Argc(); p++)
+            Con_Message("  %i: %s\n", p, Argv(p));
+    }
+    
+    F_InitMapping();
+    
+    // Initialize the key mappings.
+    DD_InitInput();
+    
+    // Any startup hooks?
+    Plug_DoHook(HOOK_STARTUP, 0, 0);
+    
+    DD_AddStartupWAD("}data\\doomsday.pk3");
+    R_InitExternalResources();
+    
+    // The name of the .cfg will invariably be overwritten by the Game.
+    strcpy(configFileName, "doomsday.cfg");
+    sprintf(defsFileName, "%sdefs\\doomsday.ded", ddBasePath);
+    
+    // Was the change to userdir OK?
+    if(!userdir_ok)
+        Con_Message("--(!)-- User directory not found " "(check -userdir).\n");
+    
+    bamsInit();                 // Binary angle calculations.
+    
+    // Initialize the zip file database.
+    Zip_Init();
+    
+    Def_Init();
+    
+    if(ArgCheck("-dedicated"))
+    {
+        //SW_Shutdown();
+        isDedicated = true;
+        Sys_ConInit();
+    }
+    
+    autostart = false;
+    shareware = false;          // Always false for Hexen
+    
+    HandleArgs(0);              // Everything but WADs.
+    
+    novideo = ArgCheck("-novideo") || isDedicated;
+    
+    // Register the engine's binding classes
+    B_RegisterBindClasses();
+    DAM_Init();
+    
+    if(gx.PreInit)
+        gx.PreInit();
+    
+    // We now accept no more custom properties.
+    DAM_LockCustomPropertys();
+    
+    // Automatically create an Auto mapping in the runtime directory.
+    DD_DefineBuiltinVDM();
+    
+    // Initialize subsystems
+    Net_Init();                 // Network before anything else.
+    
+    // Now we can hide the mouse cursor for good.
+    Sys_HideMouse();
+    
+    // Load defaults before initing other systems
+    Con_Message("Parsing configuration files.\n");
+    // Check for a custom config file.
+    if(ArgCheckWith("-config", 1))
+    {
+        // This will override the default config file.
+        strcpy(configFileName, ArgNext());
+        Con_Message("Custom config file: %s\n", configFileName);
+    }
+    
+    // This'll be the default config file.
+    Con_ParseCommands(configFileName, true);
+    
+    // Parse additional files (that should be parsed BEFORE init).
+    if(ArgCheckWith("-cparse", 1))
+    {
+        for(;;)
+        {
+            char   *arg = ArgNext();
+            
+            if(!arg || arg[0] == '-')
+                break;
+            Con_Message("Parsing: %s\n", arg);
+            Con_ParseCommands(arg, false);
+        }
+    }
+    
+    if(defaultWads)
+        AddToWadList(defaultWads);  // These must take precedence.
+    HandleArgs(1);              // Only the WADs.
+    
+    Con_Message("W_Init: Init WADfiles.\n");
+    
+    // Add real files from the Auto directory to the wadfiles list.
+    DD_AddAutoData(false);
+    
+    W_InitMultipleFiles(wadfiles);
+    F_InitDirec();
+    
+    // Load help resources. Now virtual files are available as well.
+    if(!isDedicated)
+        DD_InitHelp();
+    
+    // Final autoload round.
+    DD_AutoLoad();
+    
+    // No more WADs will be loaded in startup mode after this point.
+    W_EndStartup();
+    
+    VERBOSE(W_PrintMapList());
+    
+    // Execute the startup script (Startup.cfg).
+    Con_ParseCommands("startup.cfg", false);
+    
+    // Now the game can identify the game mode.
+    gx.UpdateState(DD_GAME_MODE);
+    
+    // Now that we've read the WADs we can initialize definitions.
+    Def_Read();
+    
+#ifdef WIN32
+    if(ArgCheck("-nowsk"))      // No Windows system keys?
+    {
+        // Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.
+        // A bit of a hack, I'm afraid...
+        SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
+        Con_Message("Windows system keys disabled.\n");
+    }
+#endif    
+    
+    if(ArgCheckWith("-dumplump", 1))
+    {
+        char   *arg = ArgNext();
+        char    fname[100];
+        FILE   *file;
+        int     lump = W_GetNumForName(arg);
+        byte   *lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+        
+        sprintf(fname, "%s.dum", arg);
+        file = fopen(fname, "wb");
+        if(!file)
+        {
+            Con_Error("Couldn't open %s for writing. %s\n", fname,
+                      strerror(errno));
+        }
+        fwrite(lumpPtr, 1, lumpinfo[lump].size, file);
+        fclose(file);
+        Con_Error("%s dumped to %s.\n", arg, fname);
+    }
+    
+    if(ArgCheck("-dumpwaddir"))
+    {
+        char buff[10];
+        printf("Lumps (%d total):\n", numlumps);
+        for(p = 0; p < numlumps; p++)
+        {
+            strncpy(buff, lumpinfo[p].name, 8);
+            buff[8] = 0;
+            printf("%04i - %-8s (hndl: %p, pos: %i, size: %i)\n", p, buff,
+                   lumpinfo[p].handle, lumpinfo[p].position, lumpinfo[p].size);
+        }
+        Con_Error("---End of lumps---\n");
+    }
+    
+    Con_Message("Sys_Init: Setting up machine state.\n");
+    Sys_Init();
+    
+    Con_Message("R_Init: Init the refresh daemon.\n");
+    R_Init();
+    
+    Con_Message("Net_InitGame: Initializing game data.\n");
+    Net_InitGame();
+    Demo_Init();
+    
     if(gx.PostInit)
         gx.PostInit();
 
@@ -682,6 +686,16 @@ static int DD_StartupWorker(void *parm)
     Plug_DoHook(HOOK_INIT, 0, 0);   // Any initialization hooks?
     Con_UpdateKnownWords();         // For word completion (with Tab).
 
+    Con_BusyWorkerEnd();
+    return 0;
+}
+
+/**
+ * This only exists so we have something to call while the deferred uploads of the
+ * startup are processed.
+ */
+static int DD_StartupWorker2(void *parm)
+{
     Con_BusyWorkerEnd();
     return 0;
 }

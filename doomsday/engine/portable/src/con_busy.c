@@ -67,6 +67,7 @@ static int      busyMode;
 static thread_t busyThread;
 static timespan_t busyTime;
 static volatile boolean busyDone;
+static volatile const char* busyError = NULL;
 
 static char *titleText = "";
 static char secondaryTitleText[256];
@@ -104,15 +105,34 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
     // Wait for the busy thread to stop.
     Con_BusyLoop();
     
+    if(busyError)
+    {
+        Con_AbnormalShutdown((const char*) busyError);
+    }
+    
     // Make sure the worker finishes before we continue.
     result = Sys_WaitThread(busyThread);   
     busyThread = NULL;
     busyInited = false;
     
     // Make sure that any remaining deferred content gets uploaded.
-    GL_UploadDeferredContent(0);
+    if(!(busyMode & BUSYF_NO_UPLOADS))
+    {
+        GL_UploadDeferredContent(0);
+    }
     
     return result;
+}
+
+/**
+ * Called by the busy worker to shutdown the engine immediately.
+ * 
+ * @param message  Message, expected to exist until the engine closes.
+ */
+void Con_BusyWorkerError(const char* message)
+{
+    busyError = message;
+    Con_BusyWorkerEnd();
 }
 
 /**
@@ -146,12 +166,15 @@ static void Con_BusyLoop(void)
     gl.LoadIdentity();
     gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
     
-    while(!busyDone || GL_GetDeferredCount() > 0)
+    while(!busyDone || (!(busyMode & BUSYF_NO_UPLOADS) && GL_GetDeferredCount() > 0))
     {
         Sys_Sleep(20);
         
         // Make sure that any deferred content gets uploaded.
-        GL_UploadDeferredContent(15);
+        if(!(busyMode & BUSYF_NO_UPLOADS))
+        {
+            GL_UploadDeferredContent(15);
+        }
         
         // Update the time.
         busyTime = Sys_GetRealSeconds() - startTime;
