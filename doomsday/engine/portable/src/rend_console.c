@@ -354,8 +354,11 @@ void Rend_Console(void)
     int         textOffsetY = 0;
     uint        cmdCursor;
     cbuffer_t  *buffer;
+    const cbline_t **lines;
+    int         reqLines;
+    uint        count;
 
-    if(ConsoleY == 0)
+    if(ConsoleY <= 0)
         return;                 // We have nothing to do here.
 
     cmdLine = Con_GetCommandLine();
@@ -438,49 +441,59 @@ void Rend_Console(void)
     gl.Color4f(1, 1, 1, closeFade);
 
     // The text in the console buffer will be drawn from the bottom up (!).
-    for(i = Con_BufferNumLines(buffer) - bLineOff - 1,
-        y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
-        i >= 0 && y > -fontScaledY; i--)
+    y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
+    reqLines = ceil(y / fontScaledY);
+    if(reqLines > 0)
     {
-        cbline_t *line = Con_BufferGetLine(buffer, i);
-
-        if(!line)
-            continue;
-
-        if(line->flags & CBLF_RULER)
+        lines = Con_BufferGetLines(buffer, reqLines,
+                                   -(reqLines + (int) bLineOff),
+                                   &count);
+        if(lines)
         {
-            // Draw a ruler here, and nothing else.
-            drawRuler2(y / Cfont.sizeY, Cfont.height, closeFade,
-                       glScreenWidth / Cfont.sizeX);
-        }
-        else
-        {
-            if(!line->text)
-                continue;
-
-            memset(buff, 0, sizeof(buff));
-            strncpy(buff, line->text, 255);
-
-            x = line->flags & CBLF_CENTER ? (glScreenWidth / Cfont.sizeX -
-                                             Cfont.Width(buff)) / 2 : 2;
-
-            if(Cfont.Filter)
-                Cfont.Filter(buff);
-            /*else if(consoleShadowText)
+            for(i = count - 1; i >= 0 && y > -fontScaledY; i--)
             {
-                // Draw a shadow.
-                gl.Color3f(0, 0, 0);
-                Cfont.TextOut(buff, x + 2, y / Cfont.sizeY + 2);
-            }*/
+                const cbline_t *line = lines[i];
 
-            // Set the color.
-            if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
-                consoleSetColor(line->flags, closeFade);
-            Cfont.TextOut(buff, x, y / Cfont.sizeY);
+                if(!line)
+                    continue;
+
+                if(line->flags & CBLF_RULER)
+                {
+                    // Draw a ruler here, and nothing else.
+                    drawRuler2(y / Cfont.sizeY, Cfont.height, closeFade,
+                               glScreenWidth / Cfont.sizeX);
+                }
+                else
+                {
+                    if(!line->text)
+                        continue;
+
+                    memset(buff, 0, sizeof(buff));
+                    strncpy(buff, line->text, 255);
+
+                    x = line->flags & CBLF_CENTER ? (glScreenWidth / Cfont.sizeX -
+                                                     Cfont.Width(buff)) / 2 : 2;
+
+                    if(Cfont.Filter)
+                        Cfont.Filter(buff);
+                    /*else if(consoleShadowText)
+                    {
+                        // Draw a shadow.
+                        gl.Color3f(0, 0, 0);
+                        Cfont.TextOut(buff, x + 2, y / Cfont.sizeY + 2);
+                    }*/
+
+                    // Set the color.
+                    if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
+                        consoleSetColor(line->flags, closeFade);
+                    Cfont.TextOut(buff, x, y / Cfont.sizeY);
+                }
+
+                // Move up.
+                y -= fontScaledY;
+            }
+            Z_Free((cbline_t **) lines);
         }
-
-        // Move up.
-        y -= fontScaledY;
     }
 
     // The command line.

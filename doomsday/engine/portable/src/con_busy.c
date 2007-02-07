@@ -459,10 +459,11 @@ int Con_DrawTitle(float alpha)
  */
 void Con_DrawStartupScreen(int show)
 {
-    int         i, vislines, y, x, st;
-    int         topy, numBufLines;
+    int         vislines, y, x;
+    int         topy;
+    uint        i, count;
     cbuffer_t  *buffer;
-    cbline_t   *line;
+    const cbline_t   **lines, *line;
 
     // Print the messages in the console.
     if(!startupScreen || ui_active)
@@ -482,42 +483,42 @@ void Con_DrawStartupScreen(int show)
     y = topy;
 
     buffer = Con_GetConsoleBuffer();
-    numBufLines = Con_BufferNumLines(buffer);
-    st = numBufLines - vislines;
-    // Show the last line, too, if there's something.
-    line = Con_BufferGetLine(buffer, numBufLines - 1);
-    if(line && line->len)
-        st++;
-    if(st < 0)
-        st = 0;
-    for(i = 0; i < vislines && st + i < numBufLines; ++i)
+    if(vislines > 0)
     {
-        line = Con_BufferGetLine(buffer, st + i);
-
-        if(!line)
-            break;
-        if(line->flags & CBLF_RULER)
+        lines = Con_BufferGetLines(buffer, vislines, -vislines, &count);
+        if(lines)
         {
-            Con_DrawRuler(y, fontHgt, 1);
-        }
-        else
-        {
-            if(!line->text)
-                continue;
+            for(i = 0; i < count - 1; ++i)
+            {
+                line = lines[i];
 
-            x = line->flags & CBLF_CENTER ? (glScreenWidth -
-                                             FR_TextWidth(line->text)) / 2 : 3;
-            //gl.Color3f(0, 0, 0);
-            //FR_TextOut(line->text, x + 1, y + 1);
-            gl.Color3f(1, 1, 1);
-            FR_CustomShadowTextOut(line->text, x, y, 1, 1, 1);
+                if(!line)
+                    break;
+                if(line->flags & CBLF_RULER)
+                {
+                    Con_DrawRuler(y, fontHgt, 1);
+                }
+                else
+                {
+                    if(!line->text)
+                        continue;
+
+                    x = (line->flags & CBLF_CENTER ?
+                            (glScreenWidth - FR_TextWidth(line->text)) / 2 : 3);
+                    //gl.Color3f(0, 0, 0);
+                    //FR_TextOut(line->text, x + 1, y + 1);
+                    gl.Color3f(1, 1, 1);
+                    FR_CustomShadowTextOut(line->text, x, y, 1, 1, 1);
+                }
+                y += fontHgt;
+            }
+            Z_Free((cbline_t **) lines);
         }
-        y += fontHgt;
     }
     if(show)
     {
         // Update the progress bar, if one is active.
-        Con_Progress(0, PBARF_NOBACKGROUND | PBARF_NOBLIT);
+        //Con_Progress(0, PBARF_NOBACKGROUND | PBARF_NOBLIT);
         gl.Show();
     }
 }

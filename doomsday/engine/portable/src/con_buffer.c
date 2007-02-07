@@ -68,59 +68,6 @@ static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node);
 // CODE --------------------------------------------------------------------
 
 /**
- * Create a new buffer line and link it into the history buffer.
- *
- * @param buf               Ptr to the buffer to use.
- *
- * @return                  Ptr to the cbline_t with the requested index or
- *                          <code>NULL</code> if the index was invalid.
- */
-static cbline_t *bufferNewLine(cbuffer_t *buf)
-{
-    cbnode_t   *node;
-    cbline_t   *line;
-
-    if(!buf)
-        return NULL; // This is unacceptable!
-
-    // Do we have any unused nodes we can reuse?
-    if(buf->unused != NULL)
-    {
-        node = buf->unused;
-        buf->unused = node->next;
-        line = node->data;
-    }
-    else
-    {
-        // Allocate another line.
-        line = M_Malloc(sizeof(cbline_t));
-        node = M_Malloc(sizeof(cbnode_t));
-        node->data = line;
-
-        line->text = NULL;
-    }
-    buf->numLines++;
-
-    line->len = 0;
-    line->flags = 0;
-
-    // Link it in.
-    insertNodeAtEnd(buf, node);
-
-    // Check if there are too many lines.
-    if(buf->maxLines != 0 && buf->numLines > buf->maxLines)
-    {
-        // Drop the earliest.
-        removeNode(buf, buf->headptr);
-        buf->numLines--;
-    }
-
-    buf->indexGood = false; // it will be updated when needed.
-
-    return line;
-}
-
-/**
  * NOTE: Also destroys the data object.
  */
 static void destroyNode(cbnode_t *node)
@@ -180,12 +127,18 @@ static void insertNodeAtEnd(cbuffer_t *buf, cbnode_t *newnode)
 
 static void moveNodeForReuse(cbuffer_t *buf, cbnode_t *node)
 {
+    cbline_t *line;
+
     if(buf->unused != NULL)
         node->next = buf->unused;
     else
         node->next = NULL;
     node->prev = NULL;
     buf->unused = node;
+
+    line = node->data;
+    line->flags = 0;
+    memset(line->text, 0, line->len);
 }
 
 static void removeNode(cbuffer_t *buf, cbnode_t *node)
@@ -362,23 +315,10 @@ uint Con_BufferNumLines(cbuffer_t *buf)
     return num;
 }
 
-/**
- * Retrieve the line with the given index from the history buffer.
- *
- * @param buf               Ptr to the buffer to use.
- * @param idx               Index of the line to retrieve.
- *
- * @return                  Ptr to the cbline_t with the requested index or
- *                          <code>NULL</code> if the index was invalid.
- */
-cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx)
+static const cbline_t *bufferGetLine(cbuffer_t *buf, uint idx)
 {
-    cbline_t   *ptr = NULL;
+    const cbline_t *ptr = NULL;
 
-    if(!buf)
-        return NULL;
-
-    Sys_Lock(buf->mutex);
     if(!(buf->numLines == 0 || idx >= buf->numLines))
     {
         if(!buf->indexGood)
@@ -404,11 +344,172 @@ cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx)
 
             buf->indexGood = true;
         }
-        ptr = buf->index[idx];
+        ptr = (const cbline_t*) buf->index[idx];
     }
-    Sys_Unlock(buf->mutex);
 
     return ptr;
+}
+
+static const cbline_t **bufferGetLines(cbuffer_t *buf, uint reqCount,
+                                       int firstIdx, uint *num)
+{
+    if(firstIdx <= (int) buf->numLines)
+    {
+        uint        i, n, idx, count = reqCount;
+        const cbline_t  **array;
+
+        if(firstIdx >= 0)
+        {
+            idx = firstIdx;
+            if(reqCount == 0 ||
+               idx + count > buf->numLines)
+                count = buf->numLines - idx;
+        }
+        else
+        {
+            if(buf->numLines + firstIdx < 0)
+                idx = 0;
+            else
+                idx = buf->numLines + firstIdx;
+            if(reqCount == 0 ||
+               idx + count > buf->numLines)
+                count = buf->numLines - idx;
+        }
+
+        array = Z_Malloc(sizeof(cbline_t *) * (count + 1), PU_STATIC, NULL);
+
+        // Collect the ptrs.
+        for(i = 0, n = idx; i < count; ++i)
+            array[i] = bufferGetLine(buf, n++);
+
+        // Terminate.
+        array[i] = NULL;
+
+        if(num)
+            *num = count; // index + 1
+        return array;
+    }
+
+    if(num)
+        *num = 0;
+
+    return NULL;
+}
+
+/**
+ * Retrive an array of un-mutable ptrs to console buffer lines from the
+ * given cbuffer.
+ *
+ * NOTE: The array must be free'd with Z_Free().
+ *
+ * @param buf           Ptr to the buffer to retrieve the lines from.
+ * @param reqCount      Number of lines requested from the buffer, zero means
+ *                      use the current number of lines as the limit.
+ * @param firstIdx      Line index of the first line to be retrieved. If
+ *                      negative, the index is from the end of list.
+ * @param num           Ptr to a variable to write the number of elements
+ *                      returned to if not <code>NULL</code>
+ *
+ * @return              A null terminated array of console buffer lines from
+ *                      the given cbuffer if there are lines within the
+ *                      range specified, else <code>NULL</code>.
+ */
+const cbline_t **Con_BufferGetLines(cbuffer_t *buf, uint reqCount,
+                                    int firstIdx, uint *num)
+{
+    if(buf)
+    {
+        const cbline_t **result;
+
+        Sys_Lock(buf->mutex);
+        result = bufferGetLines(buf, reqCount, firstIdx, num);
+        Sys_Unlock(buf->mutex);
+
+        return result;
+    }
+
+    if(num)
+        *num = 0;
+
+    return NULL;
+}
+
+/**
+ * Retrieve an un-mutable ptr to the line with the given index from the
+ * history buffer.
+ *
+ * @param buf               Ptr to the buffer to use.
+ * @param idx               Index of the line to retrieve.
+ *
+ * @return                  Ptr to the cbline_t with the requested index or
+ *                          <code>NULL</code> if the index was invalid.
+ */
+const cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx)
+{
+    if(buf)
+    {
+        const cbline_t *ptr;
+
+        Sys_Lock(buf->mutex);
+        ptr = bufferGetLine(buf, idx);
+        Sys_Unlock(buf->mutex);
+        return ptr;
+    }
+
+    return NULL;
+}
+
+/**
+ * Create a new buffer line and link it into the history buffer.
+ *
+ * @param buf               Ptr to the buffer to use.
+ *
+ * @return                  Ptr to the cbline_t with the requested index or
+ *                          <code>NULL</code> if the index was invalid.
+ */
+static cbline_t *bufferNewLine(cbuffer_t *buf)
+{
+    cbnode_t   *node;
+    cbline_t   *line;
+
+    if(!buf)
+        return NULL; // This is unacceptable!
+
+    // Do we have any unused nodes we can reuse?
+    if(buf->unused != NULL)
+    {
+        node = buf->unused;
+        buf->unused = node->next;
+        line = node->data;
+    }
+    else
+    {
+        // Allocate another line.
+        line = M_Malloc(sizeof(cbline_t));
+        node = M_Malloc(sizeof(cbnode_t));
+        node->data = line;
+
+        line->text = NULL;
+    }
+    buf->numLines++;
+
+    line->len = 0;
+    line->flags = 0;
+
+    // Link it in.
+    insertNodeAtEnd(buf, node);
+
+    // Check if there are too many lines.
+    if(buf->maxLines != 0 && buf->numLines > buf->maxLines)
+    {
+        // Drop the earliest.
+        removeNode(buf, buf->headptr);
+        buf->numLines--;
+    }
+
+    buf->indexGood = false; // it will be updated when needed.
+
+    return line;
 }
 
 static void bufferFlush(cbuffer_t *buf)
@@ -429,12 +530,8 @@ static void bufferFlush(cbuffer_t *buf)
     if(line->text != NULL)
     {   // We are re-using an existing line so we may not need to
         // reallocate at all.
-        uint    exlen = strlen(line->text);
-
-        if(exlen < len)
+        if(line->len < len)
             line->text = M_Realloc(line->text, len + 1);
-        else
-            memset(line->text, 0, exlen);
     }
     else
     {

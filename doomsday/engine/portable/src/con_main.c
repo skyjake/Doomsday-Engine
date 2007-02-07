@@ -1614,7 +1614,7 @@ boolean Con_Responder(event_t *event)
             if(cmdLine[cmdCursor] == 0)
             {
                 uint        num;
-                cbline_t   *line;
+                const cbline_t   *line;
 
                 num = Con_BufferNumLines(oldCmds);
                 if(num > 0 && ocPos > 0)
@@ -1899,7 +1899,8 @@ void Con_Error(const char *error, ...)
         numBufLines = Con_BufferNumLines(histBuf);
         for(i = 5; i > 1; i--)
         {
-            cbline_t *cbl = Con_BufferGetLine(histBuf, numBufLines - i);
+            const cbline_t *cbl =
+                Con_BufferGetLine(histBuf, numBufLines - i);
 
             if(!cbl || !cbl->text)
                 continue;

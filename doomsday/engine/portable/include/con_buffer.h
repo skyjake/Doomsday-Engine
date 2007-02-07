@@ -68,6 +68,8 @@ void            Con_BufferFlush(cbuffer_t *buf);
 void            Con_BufferClear(cbuffer_t *buf);
 void            Con_BufferSetMaxLineLength(cbuffer_t *buf, uint length);
 
-cbline_t       *Con_BufferGetLine(cbuffer_t *buf, uint idx);
+const cbline_t *Con_BufferGetLine(cbuffer_t *buf, uint idx);
+const cbline_t **Con_BufferGetLines(cbuffer_t *buf, uint reqCount,
+                                    int firstIdx, uint *num);
 uint            Con_BufferNumLines(cbuffer_t *buf);
 #endif

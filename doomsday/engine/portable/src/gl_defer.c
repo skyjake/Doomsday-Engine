@@ -89,7 +89,7 @@ void GL_ShutdownDeferred(void)
     }
     
     Sys_DestroyMutex(deferredMutex);
-    deferredMutex = NULL;
+    deferredMutex = 0;
     reservedCount = 0;
 }
 
