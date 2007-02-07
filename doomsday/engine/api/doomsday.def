@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 328 <--
+; --> 331 <--
 ; Other free ordinals:
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
@@ -79,6 +79,8 @@ EXPORTS
 	DD_Executef		@40 NONAME
 	Con_Message			@41 NONAME
 	Con_Error			@42 NONAME
+	Con_Busy            @330 NONAME
+	Con_BusyWorkerEnd   @331 NONAME
 
 ; Console: Actions.
 	Con_DefineActions	@43 NONAME
@@ -284,6 +286,7 @@ EXPORTS
 	GL_SetTexture			@118 NONAME
 	GL_SetRawImage			@119 NONAME
 	GL_LoadGraphics			@244 NONAME
+	GL_NewTextureWithParams2 @329 NONAME
 
 ; Graphics: 2D drawing.
 	GL_DrawPatch			@120 NONAME
