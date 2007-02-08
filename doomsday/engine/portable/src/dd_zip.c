@@ -343,6 +343,7 @@ void Zip_CopyStr(char *dest, const char *src, int num, int destSize)
  * The folder in the root is mapped to another location
  *
  * Location is one of the following keynames.
+ * Folder 'Models' is mapped to Data/Game/Models
  * Floder 'Flares' is mapped to Data/Game/Flares
  * Folder 'LightMaps' is mapped to Data/Game/LightMaps
  * Folder 'Music' is mapped to Data/Game/Music
@@ -362,7 +363,8 @@ void Zip_MapPath(char *path)
         // the archive.
 
         // Check the beginning of the path.
-        if(!strnicmp("Flares" DIR_SEP_STR, path, 7) ||
+        if(!strnicmp("Models" DIR_SEP_STR, path, 7) ||
+           !strnicmp("Flares" DIR_SEP_STR, path, 7) ||
            !strnicmp("LightMaps" DIR_SEP_STR, path, 10) ||
            !strnicmp("Music" DIR_SEP_STR, path, 6) ||
            !strnicmp("Textures" DIR_SEP_STR, path, 9) ||
