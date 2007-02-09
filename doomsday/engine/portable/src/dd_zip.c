@@ -372,7 +372,7 @@ void Zip_MapPath(char *path)
            !strnicmp("Flats" DIR_SEP_STR, path, 6) ||
            !strnicmp("ShineMaps" DIR_SEP_STR, path, 10) ||
            !strnicmp("DetailTextures" DIR_SEP_STR, path, 15) ||
-           !strnicmp("Patches" DIR_SEP_STR, path, 8)
+           !strnicmp("Patches" DIR_SEP_STR, path, 8) ||
            !strnicmp("Sfx" DIR_SEP_STR, path, 4))
         {
             // Contents mapped to keyname folder.
