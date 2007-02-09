@@ -352,6 +352,7 @@ void Zip_CopyStr(char *dest, const char *src, int num, int destSize)
  * Folder 'ShineMaps' is mapped to Data/Game/ShineMaps
  * Folder 'DetailTextures' is mapped to Data/Game/DetailTextures
  * Folder 'Patches' is mapped to Data/Game/Patches
+ * Folder 'Sfx' is mapped to Data/Game/Sfx
  */
 void Zip_MapPath(char *path)
 {
@@ -371,7 +372,8 @@ void Zip_MapPath(char *path)
            !strnicmp("Flats" DIR_SEP_STR, path, 6) ||
            !strnicmp("ShineMaps" DIR_SEP_STR, path, 10) ||
            !strnicmp("DetailTextures" DIR_SEP_STR, path, 15) ||
-           !strnicmp("Patches" DIR_SEP_STR, path, 8))
+           !strnicmp("Patches" DIR_SEP_STR, path, 8)
+           !strnicmp("Sfx" DIR_SEP_STR, path, 4))
         {
             // Contents mapped to keyname folder.
             sprintf(mapped, "%s%s", R_GetDataPath(), path);
