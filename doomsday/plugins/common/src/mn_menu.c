@@ -3339,18 +3339,13 @@ void M_DrawMouseMenu(void)
 
 #ifndef __JDOOM__
     M_DrawTitle("MOUSE OPTIONS", 0);
-    M_WriteMenuText(menu, 0, yesno[cfg.usemlook != 0]);
-    M_WriteMenuText(menu, 1, yesno[cfg.mlookInverseY != 0]);
-    MN_DrawSlider(&MouseOptsMenu, 3, 18, cfg.mouseSensiX);
-    MN_DrawSlider(&MouseOptsMenu, 6, 18, cfg.mouseSensiY);
 #else
     M_DrawTitle("MOUSE OPTIONS", menu->y - 20);
-
+#endif
     M_WriteMenuText(menu, 0, yesno[cfg.usemlook]);
     M_WriteMenuText(menu, 1, yesno[cfg.mlookInverseY]);
     MN_DrawSlider(menu, 2, 21, cfg.mouseSensiX / 2);
     MN_DrawSlider(menu, 3, 21, cfg.mouseSensiY / 2);
-#endif
 }
 
 void M_DrawJoyMenu(void)
@@ -3757,7 +3752,6 @@ void M_ChooseSkill(int option, void *data)
 
 void M_MouseXSensi(int option, void *data)
 {
-#ifdef __JDOOM__
     if(option == RIGHT_DIR)
     {
         if(cfg.mouseSensiX < 39)
@@ -3769,24 +3763,10 @@ void M_MouseXSensi(int option, void *data)
     {
         cfg.mouseSensiX -= 2;
     }
-#else
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.mouseSensiX < 17)
-        {
-            cfg.mouseSensiX++;
-        }
-    }
-    else if(cfg.mouseSensiX)
-    {
-        cfg.mouseSensiX--;
-    }
-#endif
 }
 
 void M_MouseYSensi(int option, void *data)
 {
-#ifdef __JDOOM__
     if(option == RIGHT_DIR)
     {
         if(cfg.mouseSensiY < 39)
@@ -3798,19 +3778,6 @@ void M_MouseYSensi(int option, void *data)
     {
         cfg.mouseSensiY -= 2;
     }
-#else
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.mouseSensiY < 17)
-        {
-            cfg.mouseSensiY++;
-        }
-    }
-    else if(cfg.mouseSensiY)
-    {
-        cfg.mouseSensiY--;
-    }
-#endif
 }
 
 void M_SfxVol(int option, void *data)
