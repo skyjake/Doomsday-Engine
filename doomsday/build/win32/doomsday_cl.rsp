@@ -64,6 +64,7 @@
  ./../../engine/portable/src/p_sight.c
  ./../../engine/portable/src/p_polyob.c
  ./../../engine/portable/src/p_particle.c
+ ./../../engine/portable/src/p_control.c
  ./../../engine/portable/src/p_player.c
  ./../../engine/portable/src/p_mobj.c
  ./../../engine/portable/src/p_maputil.c
@@ -116,7 +117,6 @@
  ./../../engine/portable/src/con_config.c
  ./../../engine/portable/src/con_bind.c
  ./../../engine/portable/src/con_bar.c
- ./../../engine/portable/src/con_action.c
  ./../../engine/portable/src/dd_zone.c
  ./../../engine/portable/src/dd_zip.c
  ./../../engine/win32/src/dd_winit.c

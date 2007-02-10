@@ -46,7 +46,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void Con_ClearActions(int pnum);
+extern void P_ClearActions(int pnum);
 extern boolean B_SetBindClass(unsigned int classID, unsigned int type);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -533,7 +533,7 @@ D_CMD(BLEditor)
     {
         extern int consoleplayer;
 
-        Con_ClearActions(consoleplayer); // clear the actions array
+        P_ClearActions(consoleplayer); // clear the actions array
         Con_Open(false); // close the console if open
 
         // show the bias menu interface

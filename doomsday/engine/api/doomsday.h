@@ -141,9 +141,6 @@ extern          "C" {
     void            Con_Message(char *message, ...);
     void            Con_Error(char *error, ...);
 
-    // Console: Actions.
-    void            Con_DefineActions(action_t *acts);
-
     // Console: Bindings.
     void            B_FormEventString(char *buff, evtype_t type, evstate_t state,
                                       int data1);
@@ -314,6 +311,7 @@ extern          "C" {
     // Play: Misc.
     uint            P_RegisterCustomMapProperty(int type, valuetype_t dataType,
                                                 char *name);
+    void            P_DefineActions(action_t *acts);
 
     // Play: Polyobjs.
     void            PO_Allocate(void);

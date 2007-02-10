@@ -23,18 +23,18 @@
  */
 
 /*
- * con_action.h: Action Commands (Player Controls)
+ * p_control.h: Player Controls
  */
 
-#ifndef __DOOMSDAY_CONSOLE_ACTION_H__
-#define __DOOMSDAY_CONSOLE_ACTION_H__
+#ifndef __DOOMSDAY_PLAYER_CONTROL_H__
+#define __DOOMSDAY_PLAYER_CONTROL_H__
 
-void            Con_DefineActions(action_t *acts);
-void            Con_ClearActions(int pnum);
+void            P_DefineActions(action_t *acts);
+void            P_ClearActions(int pnum);
 
 // The command begins with a '+' or a '-'.
 // Returns true if the action was changed successfully.
-boolean         Con_ActionCommand(const char *cmd, boolean hasPrefix);
+boolean         P_ActionCommand(const char *cmd, boolean hasPrefix);
 
 D_CMD(ListActs);
 #endif

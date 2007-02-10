@@ -469,7 +469,7 @@ void G_PreInit(void)
     R_SetDataPath( DATAPATH );
 
     R_SetBorderGfx(borderLumps);
-    Con_DefineActions(actions);
+    P_DefineActions(actions);
 
     DD_SetVariable(DD_SKYFLAT_NAME, SKYFLATNAME);
     Con_SetString("map-name", NOTAMAPNAME, 1);

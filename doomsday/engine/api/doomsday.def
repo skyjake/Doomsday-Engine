@@ -82,9 +82,6 @@ EXPORTS
 	Con_Busy            @330 NONAME
 	Con_BusyWorkerEnd   @331 NONAME
 
-; Console: Actions.
-	Con_DefineActions	@43 NONAME
-
 ; Console: Bindings.
 	B_FormEventString		@44 NONAME
 	B_BindingsForCommand	@45 NONAME
@@ -229,6 +226,7 @@ EXPORTS
 
 ; Play: Misc.
 	P_RegisterCustomMapProperty @328 NONAME
+    P_DefineActions     @43 NONAME
 
 ; Play: Polyobjs.
 	PO_MovePolyobj		@79 NONAME

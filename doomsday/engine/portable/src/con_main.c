@@ -739,10 +739,10 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         prefix = args.argv[0][0];
         if(prefix == '+' || prefix == '-')
         {
-            return Con_ActionCommand(args.argv[0], true);
+            return P_ActionCommand(args.argv[0], true);
         }
         // What about a prefix-less action?
-        if(strlen(args.argv[0]) <= 8 && Con_ActionCommand(args.argv[0], false))
+        if(strlen(args.argv[0]) <= 8 && P_ActionCommand(args.argv[0], false))
             return true;        // There was one!
     }
 
@@ -1349,7 +1349,7 @@ void Con_Open(int yes)
 
     // Clear all action keys, keyup events won't go
     // to bindings processing when the console is open.
-    Con_ClearActions(consoleplayer);
+    P_ClearActions(consoleplayer);
     Rend_ConsoleOpen(yes);
     if(yes)
     {

@@ -23,10 +23,12 @@
  */
 
 /*
- * con_action.c: Action Commands (Player Controls)
+ * p_control.c: Player Controls
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <ctype.h>
 
 #include "de_base.h"
 #include "de_play.h" // for P_LocalToConsole()
@@ -53,7 +55,7 @@ action_t *ddactions = NULL;     // Pointer to the actions list.
 
 // CODE --------------------------------------------------------------------
 
-void Con_DefineActions(action_t *acts)
+void P_DefineActions(action_t *acts)
 {
     // Store a pointer to the list of actions.
     ddactions = acts;
@@ -65,7 +67,7 @@ void Con_DefineActions(action_t *acts)
  * @param pnum          Player number whose action controls to clear.
  *                      If negative, clear ALL player's actions controls.
  */
-void Con_ClearActions(int pnum)
+void P_ClearActions(int pnum)
 {
     action_t *act;
 
@@ -94,7 +96,7 @@ void Con_ClearActions(int pnum)
  * @return              <code>true</code> if the action was changed
  *                      successfully.
  */
-boolean Con_ActionCommand(const char *cmd, boolean hasPrefix)
+boolean P_ActionCommand(const char *cmd, boolean hasPrefix)
 {
     char    prefix = cmd[0];
     int     v1, v2;

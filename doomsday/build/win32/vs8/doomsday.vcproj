@@ -256,7 +256,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\con_action.c"
+				RelativePath="..\..\..\engine\portable\src\p_control.c"
 				>
 			</File>
 			<File
@@ -811,7 +811,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\con_action.h"
+				RelativePath="..\..\..\engine\portable\include\p_control.h"
 				>
 			</File>
 			<File

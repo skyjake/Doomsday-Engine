@@ -28,9 +28,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <ctype.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1242,7 +1245,7 @@ D_CMD(Bind)
             // Bind both the + and -.
             sprintf(validEventName, "-%s", evntptr);
             sprintf(buff, "-%s", cmdptr);
-            if(Con_ActionCommand(buff, true))
+            if(P_ActionCommand(buff, true))
             {
                 B_EventBuilder(validEventName, &event);
                 if(safe && (existing = B_GetBinding(&event, false)))
