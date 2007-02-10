@@ -607,9 +607,12 @@ void G_DoLoadLevel(void)
     SN_StopAllSequences();
 #endif
 
-    // Set all player mobjs to NULL.
-    for(i = 0; i < MAXPLAYERS; i++)
+    // Set all player mobjs to NULL, clear control state toggles etc.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
         players[i].plr->mo = NULL;
+        G_ResetLookOffset(i);
+    }
 
     P_SetupLevel(gameepisode, gamemap, 0, gameskill);
     Set(DD_DISPLAYPLAYER, consoleplayer);   // view the guy you are playing
@@ -621,9 +624,9 @@ void G_DoLoadLevel(void)
     G_ResetMousePos();
     sendpause = paused = false;
 
-    // Deactivate all action keys.
+    // Deactivate all action keys, for all players.
     for(act = actions; act->name[0]; act++)
-        act->on = false;
+        memset(act->on, 0, sizeof(act->on));
 
     // set the game status cvar for map name
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
@@ -906,7 +909,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     }
 
     // Update the viewer's look angle
-    G_LookAround();
+    G_LookAround(consoleplayer);
 
     // Enable/disable sending of frames (delta sets) to clients.
     Set(DD_ALLOW_FRAMES, G_GetGameState() == GS_LEVEL);

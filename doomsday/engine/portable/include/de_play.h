@@ -39,5 +39,6 @@
 #include "p_polyob.h"
 #include "p_sight.h"
 #include "p_ticker.h"
+#include "p_player.h"
 
 #endif

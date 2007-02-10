@@ -83,6 +83,8 @@ typedef enum {
     NUM_ACTIONS
 } haction_t;
 
+#define PLAYER_ACTION(pnum, actid) (actions[(actid)].on[(pnum)])
+
 // This is the actions array.
 extern action_t actions[NUM_ACTIONS + 1];
 

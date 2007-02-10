@@ -198,7 +198,7 @@ void HU_UpdatePlayerSprite(int pnum)
         ddpsp->light += .1f;
 
         // Offset from center.
-        ddpsp->x = FIX2FLT(psp->sx) - lookOffset * 1300;
+        ddpsp->x = FIX2FLT(psp->sx) - G_GetLookOffset(pnum) * 1300;
 
         if(fov > 90)
             fov = 90;

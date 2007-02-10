@@ -1395,7 +1395,7 @@ typedef enum blendmode_e {
     // Actions.
     typedef struct {
         char            name[9];   // The name of the action.
-        boolean         on;        // True if action is active.
+        boolean         on[DDMAXPLAYERS]; // True if action is active.
     } action_t;
 
 #ifdef __cplusplus

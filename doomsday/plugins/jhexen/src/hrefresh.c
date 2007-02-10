@@ -255,7 +255,7 @@ void G_Drawer(void)
                 Set(DD_VIEWY_OFFSET, 0);
             }
             // The view angle offset.
-            Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
+            Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -G_GetLookOffset(displayplayer));
             // Render the view.
             if(!dontrender)
             {

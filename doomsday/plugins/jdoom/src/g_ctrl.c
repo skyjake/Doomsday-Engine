@@ -49,7 +49,7 @@
 //
 // !!! Add new controls to the end, the existing indices must remain unchanged !!!
 //
-const Control_t controls[] = {
+const control_t controls[] = {
     // Actions (must be first so the A_* constants can be used).
     {"left", CLF_ACTION, DDBC_NORMAL, DDKEY_LEFTARROW, 0, 0},
     {"right", CLF_ACTION, DDBC_NORMAL, DDKEY_RIGHTARROW, 0, 0},

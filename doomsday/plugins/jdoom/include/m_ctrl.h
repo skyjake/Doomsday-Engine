@@ -37,7 +37,7 @@
 #include "jdoom.h"
 #include "g_controls.h"
 
-extern const Control_t *grabbing;
+extern const control_t *grabbing;
 
 #define NUM_CONTROLS_ITEMS 106
 

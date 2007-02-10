@@ -64,6 +64,7 @@
  ./../../engine/portable/src/p_sight.c
  ./../../engine/portable/src/p_polyob.c
  ./../../engine/portable/src/p_particle.c
+ ./../../engine/portable/src/p_player.c
  ./../../engine/portable/src/p_mobj.c
  ./../../engine/portable/src/p_maputil.c
  ./../../engine/portable/src/p_intercept.c

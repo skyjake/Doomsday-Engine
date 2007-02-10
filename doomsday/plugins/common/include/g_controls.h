@@ -47,9 +47,9 @@ typedef struct {
     int     defKey;             //
     int     defMouse;           // Zero means there is no default.
     int     defJoy;             //
-} Control_t;
+} control_t;
 
-extern const Control_t controls[];
+extern const control_t controls[];
 
 // Game registered bindClasses
 enum {
@@ -61,7 +61,7 @@ enum {
     GBC_MESSAGE
 };
 
-extern const Control_t *grabbing;
+extern const control_t *grabbing;
 
 void        G_ControlRegister(void);
 void        G_DefaultBindings(void);
@@ -70,8 +70,13 @@ void        G_BindClassRegistration(void);
 void        G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime);
 void        G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src);
 
-void        G_LookAround(void);
 boolean     G_AdjustControlState(event_t* ev);
+
+void        G_LookAround(int pnum);
+
 void        G_ResetMousePos(void);
+
+float       G_GetLookOffset(int pnum);
+void        G_ResetLookOffset(int pnum);
 
 #endif

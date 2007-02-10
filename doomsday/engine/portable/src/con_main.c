@@ -1349,7 +1349,7 @@ void Con_Open(int yes)
 
     // Clear all action keys, keyup events won't go
     // to bindings processing when the console is open.
-    Con_ClearActions();
+    Con_ClearActions(consoleplayer);
     Rend_ConsoleOpen(yes);
     if(yes)
     {

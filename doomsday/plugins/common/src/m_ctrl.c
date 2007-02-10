@@ -60,7 +60,7 @@ extern menu_t  ControlsDef;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-const Control_t *grabbing = NULL;
+const control_t *grabbing = NULL;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -95,7 +95,7 @@ void M_DrawControlsMenu(void)
     char    buff[80], prbuff[80], *token;
     const menu_t *menu = &ControlsDef;
     const menuitem_t *item = menu->items + menu->firstItem;
-    const Control_t *ctrl;
+    const control_t *ctrl;
 
 #if __JDOOM__
     M_DrawTitle("CONTROLS", menu->y - 28);

@@ -157,6 +157,7 @@ typedef struct classinfo_s{
     fixed_t     forwardmove[2];     // walk, run
     fixed_t     sidemove[2];        // walk, run
     int         movemul;            // multiplier for above
+    fixed_t     turnSpeed[3];       // [normal, speed, initial]
     int         jumptics;           // wait inbetween jumps
     int         failUseSound;       // sound played when a use fails.
 } classinfo_t;

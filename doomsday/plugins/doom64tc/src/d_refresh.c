@@ -290,7 +290,7 @@ void D_Display(void)
                 R_SetAllDoomsdayFlags();
             }
             // The view angle offset.
-            Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -lookOffset);
+            Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -G_GetLookOffset(displayplayer));
             GL_SetFilter(players[displayplayer].plr->filter);   // $democam
 
             // How about fullbright?

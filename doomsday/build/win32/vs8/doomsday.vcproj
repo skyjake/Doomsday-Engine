@@ -1155,6 +1155,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\p_player.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\p_polyob.h"
 				>
 			</File>

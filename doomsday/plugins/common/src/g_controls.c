@@ -52,8 +52,8 @@
 // MACROS ------------------------------------------------------------------
 
 #if __JDOOM__ || __JHERETIC__
-#  define GOTWPN(x) (cplr->weaponowned[x])
-#  define ISWPN(x)  (cplr->readyweapon == x)
+#  define GOTWPN(x) (plr->weaponowned[x])
+#  define ISWPN(x)  (plr->readyweapon == x)
 #endif
 
 #define SLOWTURNTICS        6
@@ -61,6 +61,24 @@
 #define JOY(x)              (x) / (100)
 
 // TYPES -------------------------------------------------------------------
+
+typedef struct pcontrolstate_s {
+    // Looking around.
+    float   targetLookOffset;
+    float   lookOffset;
+    boolean mlookPressed;
+
+    // for accelerative turning
+    float   turnheld;
+    float   lookheld;
+
+    int     dclicktime;
+    int     dclickstate;
+    int     dclicks;
+    int     dclicktime2;
+    int     dclickstate2;
+    int     dclicks2;
+} pcontrolstate_t;
 
 // Joystick axes.
 typedef enum joyaxis_e {
@@ -95,7 +113,7 @@ ArtifactHotkeys[] =
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime);
+static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum, float elapsedTime);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -115,32 +133,16 @@ bindclass_t BindClasses[] = {
     {NULL}
 };
 
-// Looking around.
-int     povangle = -1;          // -1 means centered (really 0 - 7).
-float   targetLookOffset = 0;
-float   lookOffset = 0;
-
-// Player movement.
-fixed_t angleturn[3] = { 640, 1280, 320 };  // + slow turn
-
-// for accelerative turning
-float   turnheld;
-float   lookheld;
-
-// mouse values are used once
-float   mousex;
-float   mousey;
-
-int     dclicktime;
-int     dclickstate;
-int     dclicks;
-int     dclicktime2;
-int     dclickstate2;
-int     dclicks2;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int     joymove[NUM_JOYSTICK_AXES];
+// Input devices; state controls.
+static int     joymove[NUM_JOYSTICK_AXES]; // joy axis state
+static int     povangle = -1;          // -1 means centered (really 0 - 7).
+static float   mousex;
+static float   mousey;
+
+// Player control state.
+static pcontrolstate_t controlStates[MAXPLAYERS];
 
 // CVars for control/input
 cvar_t  controlCVars[] = {
@@ -215,13 +217,21 @@ void G_BindClassRegistration(void)
         DD_AddBindClass(BindClasses + i);
 }
 
+/**
+ * Retrieve the look offset for the given player.
+ */
+float G_GetLookOffset(int pnum)
+{
+    return controlStates[pnum].lookOffset;
+}
+
 /*
  * Set default bindings for unbound Controls.
  */
 void G_DefaultBindings(void)
 {
     int         i;
-    const       Control_t *ctr;
+    const       control_t *ctr;
     char        evname[80], cmd[256], buff[256];
     evtype_t    evType;
     evstate_t   evState;
@@ -348,29 +358,31 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
     }
 }
 
-/*
+/**
  * Updates the viewers' look angle.
  * Called every tic by G_Ticker.
  */
-void G_LookAround(void)
+void G_LookAround(int pnum)
 {
+    pcontrolstate_t *cstate = &controlStates[pnum];
+
     if(povangle != -1)
     {
-        targetLookOffset = povangle / 8.0f;
-        if(targetLookOffset == .5f)
+        cstate->targetLookOffset = povangle / 8.0f;
+        if(cstate->targetLookOffset == .5f)
         {
-            if(lookOffset < 0)
-                targetLookOffset = -.5f;
+            if(cstate->lookOffset < 0)
+                cstate->targetLookOffset = -.5f;
         }
-        else if(targetLookOffset > .5)
-            targetLookOffset -= 1;
+        else if(cstate->targetLookOffset > .5)
+            cstate->targetLookOffset -= 1;
     }
     else
-        targetLookOffset = 0;
+        cstate->targetLookOffset = 0;
 
-    if(targetLookOffset != lookOffset && cfg.povLookAround)
+    if(cstate->targetLookOffset != cstate->lookOffset && cfg.povLookAround)
     {
-        float   diff = (targetLookOffset - lookOffset) / 2;
+        float   diff = (cstate->targetLookOffset - cstate->lookOffset) / 2;
 
         // Clamp it.
         if(diff > .075f)
@@ -378,7 +390,7 @@ void G_LookAround(void)
         if(diff < -.075f)
             diff = -.075f;
 
-        lookOffset += diff;
+        cstate->lookOffset += diff;
     }
 }
 
@@ -400,7 +412,7 @@ static void G_SetCmdViewAngles(ticcmd_t *cmd, player_t *pl)
     cmd->pitch = pl->plr->lookdir / 110 * DDMAXSHORT;
 }
 
-/*
+/**
  * Builds a ticcmd from all of the available inputs.
  */
 void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
@@ -413,7 +425,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
     if(Get(DD_PLAYBACK))
         return;
 
-    G_UpdateCmdControls(cmd, elapsedTime);
+    G_UpdateCmdControls(cmd, consoleplayer, elapsedTime);
 
     G_SetCmdViewAngles(cmd, cplr);
 
@@ -460,13 +472,13 @@ void G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src)
     dest->pause |= src->pause;
 }
 
-/*
+/**
  * Response to in-game control actions (movement, inventory etc).
  * Updates the ticcmd with the current control states.
  */
-static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
+static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
+                                float elapsedTime)
 {
-    static boolean mlook_pressed = false;
     float elapsedTics = elapsedTime * 35;
 
     boolean pausestate = P_IsPaused();
@@ -478,46 +490,42 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     int     forward = 0;
     int     side = 0;
     int     turn = 0;
-    player_t *cplr = &players[consoleplayer];
     int     joyturn = 0, joystrafe = 0, joyfwd = 0, joylook = 0;
     int    *axes[5] = { 0, &joyfwd, &joyturn, &joystrafe, &joylook };
     int     look = 0, lspeed = 0;
     int     flyheight = 0;
-    classinfo_t *pClassInfo = PCLASS_INFO(players[consoleplayer].class);
+    pcontrolstate_t *cstate = &controlStates[pnum];
+    player_t *plr = &players[pnum];
+    classinfo_t *pClassInfo = PCLASS_INFO(plr->class);
 
     // Check the joystick axes.
     for(i = 0; i < 8; i++)
         if(axes[cfg.joyaxis[i]])
             *axes[cfg.joyaxis[i]] += joymove[i];
 
-    strafe = actions[A_STRAFE].on;
-    speed = actions[A_SPEED].on;
+    strafe = PLAYER_ACTION(pnum, A_STRAFE);
+    speed = PLAYER_ACTION(pnum, A_SPEED);
 
     // Walk -> run, run -> walk.
     if(cfg.alwaysRun)
         speed = !speed;
 
     // Use two stage accelerative turning on the keyboard and joystick.
-    if(joyturn < -0
-       || joyturn > 0
-       || actions[A_TURNRIGHT].on || actions[A_TURNLEFT].on)
-        turnheld += elapsedTics;
+    if(joyturn < -0 || joyturn > 0 ||
+       PLAYER_ACTION(pnum, A_TURNRIGHT) ||
+       PLAYER_ACTION(pnum, A_TURNLEFT))
+        cstate->turnheld += elapsedTics;
     else
-        turnheld = 0;
-
-    if(turnheld < SLOWTURNTICS)
-        turnSpeed = 2;             // slow turn
-    else
-        turnSpeed = speed;
+        cstate->turnheld = 0;
 
     // Determine the appropriate look speed based on how long the key
     // has been held down.
-    if(actions[A_LOOKDOWN].on || actions[A_LOOKUP].on)
-        lookheld += elapsedTics;
+    if(PLAYER_ACTION(pnum, A_LOOKDOWN) || PLAYER_ACTION(pnum, A_LOOKUP))
+        cstate->lookheld += elapsedTics;
     else
-        lookheld = 0;
+        cstate->lookheld = 0;
 
-    if(lookheld < SLOWTURNTICS)
+    if(cstate->lookheld < SLOWTURNTICS)
         lspeed = 1;
     else
         lspeed = 2;
@@ -526,13 +534,14 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     // FIXME: the Turbo movement multiplier should happen server-side!
     sideMoveSpeed = pClassInfo->sidemove[speed] * turbomul;
     fwdMoveSpeed = pClassInfo->forwardmove[speed] * turbomul;
+    turnSpeed = pClassInfo->turnSpeed[(cstate->turnheld < SLOWTURNTICS ? 2 : speed)];
 
     // let movement keys cancel each other out
     if(strafe)
     {
-        if(actions[A_TURNRIGHT].on)
+        if(PLAYER_ACTION(pnum, A_TURNRIGHT))
             side += sideMoveSpeed;
-        if(actions[A_TURNLEFT].on)
+        if(PLAYER_ACTION(pnum, A_TURNLEFT))
             side -= sideMoveSpeed;
 
         // Swap strafing and turning.
@@ -542,17 +551,17 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     }
     else
     {
-        if(actions[A_TURNRIGHT].on)
-            turn -= angleturn[turnSpeed];
-        if(actions[A_TURNLEFT].on)
-            turn += angleturn[turnSpeed];
+        if(PLAYER_ACTION(pnum, A_TURNRIGHT))
+            turn -= turnSpeed;
+        if(PLAYER_ACTION(pnum, A_TURNLEFT))
+            turn += turnSpeed;
     }
 
     // Joystick turn.
     if(joyturn > 0)
-        turn -= angleturn[turnSpeed] * JOY(joyturn);
+        turn -= turnSpeed * JOY(joyturn);
     if(joyturn < -0)
-        turn += angleturn[turnSpeed] * JOY(-joyturn);
+        turn += turnSpeed * JOY(-joyturn);
 
     // Joystick strafe.
     if(joystrafe < -0)
@@ -566,43 +575,43 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         forward -= fwdMoveSpeed * JOY(joyfwd);
 
 
-    if(actions[A_FORWARD].on)
+    if(PLAYER_ACTION(pnum, A_FORWARD))
         forward += fwdMoveSpeed;
 
-    if(actions[A_BACKWARD].on)
+    if(PLAYER_ACTION(pnum, A_BACKWARD))
         forward -= fwdMoveSpeed;
 
-    if(actions[A_STRAFERIGHT].on)
+    if(PLAYER_ACTION(pnum, A_STRAFERIGHT))
         side += sideMoveSpeed;
-    if(actions[A_STRAFELEFT].on)
+    if(PLAYER_ACTION(pnum, A_STRAFELEFT))
         side -= sideMoveSpeed;
 
     // Look up/down/center keys
     if(!cfg.lookSpring || (cfg.lookSpring && !forward))
     {
-        if(actions[A_LOOKUP].on)
+        if(PLAYER_ACTION(pnum, A_LOOKUP))
         {
             look = lspeed;
         }
-        if(actions[A_LOOKDOWN].on)
+        if(PLAYER_ACTION(pnum, A_LOOKDOWN))
         {
             look = -lspeed;
         }
-        if(actions[A_LOOKCENTER].on)
+        if(PLAYER_ACTION(pnum, A_LOOKCENTER))
         {
             look = TOCENTER;
         }
     }
 
     // Fly up/down/drop keys
-    if(actions[A_FLYUP].on)
+    if(PLAYER_ACTION(pnum, A_FLYUP))
         // note that the actual flyheight will be twice this
         flyheight = 5;
 
-    if(actions[A_FLYDOWN].on)
+    if(PLAYER_ACTION(pnum, A_FLYDOWN))
         flyheight = -5;
 
-    if(actions[A_FLYCENTER].on)
+    if(PLAYER_ACTION(pnum, A_FLYCENTER))
     {
         flyheight = TOCENTER;
 
@@ -616,13 +625,13 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     // Use artifact key
-    if(actions[A_USEARTIFACT].on)
+    if(PLAYER_ACTION(pnum, A_USEARTIFACT))
     {
-        if(actions[A_SPEED].on && artiskip)
+        if(PLAYER_ACTION(pnum, A_SPEED) && artiskip)
         {
-            if(cplr->inventory[cplr->inv_ptr].type != arti_none)
+            if(plr->inventory[plr->inv_ptr].type != arti_none)
             {
-                actions[A_USEARTIFACT].on = false;
+                PLAYER_ACTION(pnum, A_USEARTIFACT) = false;
 
                 cmd->arti = 0xff;
             }
@@ -631,12 +640,12 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         {
             if(ST_IsInventoryVisible())
             {
-                cplr->readyArtifact = cplr->inventory[cplr->inv_ptr].type;
+                plr->readyArtifact = plr->inventory[plr->inv_ptr].type;
 
                 ST_Inventory(false); // close the inventory
 
                 if(cfg.chooseAndUse)
-                    cmd->arti = cplr->inventory[cplr->inv_ptr].type;
+                    cmd->arti = plr->inventory[plr->inv_ptr].type;
                 else
                     cmd->arti = 0;
 
@@ -644,7 +653,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
             }
             else if(usearti)
             {
-                cmd->arti = cplr->inventory[cplr->inv_ptr].type;
+                cmd->arti = plr->inventory[plr->inv_ptr].type;
                 usearti = false;
             }
         }
@@ -656,17 +665,17 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     //
 #if __JHERETIC__
     // Check Tome of Power and other artifact hotkeys.
-    if(actions[A_TOMEOFPOWER].on && !cmd->arti &&
-       !players[consoleplayer].powers[PT_WEAPONLEVEL2])
+    if(PLAYER_ACTION(pnum, A_TOMEOFPOWER) && !cmd->arti &&
+       !plr->powers[PT_WEAPONLEVEL2])
     {
-        actions[A_TOMEOFPOWER].on = false;
+        PLAYER_ACTION(pnum, A_TOMEOFPOWER) = false;
         cmd->arti = arti_tomeofpower;
     }
     for(i = 0; ArtifactHotkeys[i].artifact != arti_none && !cmd->arti; i++)
     {
-        if(actions[ArtifactHotkeys[i].action].on)
+        if(PLAYER_ACTION(pnum, ArtifactHotkeys[i].action))
         {
-            actions[ArtifactHotkeys[i].action].on = false;
+            PLAYER_ACTION(pnum, ArtifactHotkeys[i].action) = false;
             cmd->arti = ArtifactHotkeys[i].artifact;
             break;
         }
@@ -674,93 +683,93 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
 #endif
 
 #if __JHEXEN__ || __JSTRIFE__
-    if(actions[A_PANIC].on && !cmd->arti)
+    if(PLAYER_ACTION(pnum, A_PANIC) && !cmd->arti)
     {
-        actions[A_PANIC].on = false;    // Use one of each artifact
+        PLAYER_ACTION(pnum, A_PANIC) = false;    // Use one of each artifact
         cmd->arti = NUMARTIFACTS;
     }
-    else if(players[consoleplayer].plr->mo && actions[A_HEALTH].on &&
-            !cmd->arti && (players[consoleplayer].plr->mo->health < MAXHEALTH))
+    else if(plr->plr->mo && PLAYER_ACTION(pnum, A_HEALTH) &&
+            !cmd->arti && (plr->plr->mo->health < MAXHEALTH))
     {
-        actions[A_HEALTH].on = false;
+        PLAYER_ACTION(pnum, A_HEALTH) = false;
         cmd->arti = arti_health;
     }
-    else if(actions[A_POISONBAG].on && !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_POISONBAG) && !cmd->arti)
     {
-        actions[A_POISONBAG].on = false;
+        PLAYER_ACTION(pnum, A_POISONBAG) = false;
         cmd->arti = arti_poisonbag;
     }
-    else if(actions[A_BLASTRADIUS].on && !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_BLASTRADIUS) && !cmd->arti)
     {
-        actions[A_BLASTRADIUS].on = false;
+        PLAYER_ACTION(pnum, A_BLASTRADIUS) = false;
         cmd->arti = arti_blastradius;
     }
-    else if(actions[A_TELEPORT].on && !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_TELEPORT) && !cmd->arti)
     {
-        actions[A_TELEPORT].on = false;
+        PLAYER_ACTION(pnum, A_TELEPORT) = false;
         cmd->arti = arti_teleport;
     }
-    else if(actions[A_TELEPORTOTHER].on && !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_TELEPORTOTHER) && !cmd->arti)
     {
-        actions[A_TELEPORTOTHER].on = false;
+        PLAYER_ACTION(pnum, A_TELEPORTOTHER) = false;
         cmd->arti = arti_teleportother;
     }
-    else if(actions[A_EGG].on && !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_EGG) && !cmd->arti)
     {
-        actions[A_EGG].on = false;
+        PLAYER_ACTION(pnum, A_EGG) = false;
         cmd->arti = arti_egg;
     }
-    else if(actions[A_INVULNERABILITY].on && !cmd->arti &&
-            !players[consoleplayer].powers[PT_INVULNERABILITY])
+    else if(PLAYER_ACTION(pnum, A_INVULNERABILITY) && !cmd->arti &&
+            !plr->powers[PT_INVULNERABILITY])
     {
-        actions[A_INVULNERABILITY].on = false;
+        PLAYER_ACTION(pnum, A_INVULNERABILITY) = false;
         cmd->arti = arti_invulnerability;
     }
-    else if(actions[A_MYSTICURN].on && !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_MYSTICURN) && !cmd->arti)
     {
-        actions[A_MYSTICURN].on = false;
+        PLAYER_ACTION(pnum, A_MYSTICURN) = false;
         cmd->arti = arti_superhealth;
     }
-    else if(actions[A_TORCH].on && !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_TORCH) && !cmd->arti)
     {
-        actions[A_TORCH].on = false;
+        PLAYER_ACTION(pnum, A_TORCH) = false;
         cmd->arti = arti_torch;
     }
-    else if(actions[A_KRATER].on && !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_KRATER) && !cmd->arti)
     {
-        actions[A_KRATER].on = false;
+        PLAYER_ACTION(pnum, A_KRATER) = false;
         cmd->arti = arti_boostmana;
     }
-    else if(actions[A_SPEEDBOOTS].on & !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_SPEEDBOOTS) & !cmd->arti)
     {
-        actions[A_SPEEDBOOTS].on = false;
+        PLAYER_ACTION(pnum, A_SPEEDBOOTS) = false;
         cmd->arti = arti_speed;
     }
-    else if(actions[A_DARKSERVANT].on && !cmd->arti)
+    else if(PLAYER_ACTION(pnum, A_DARKSERVANT) && !cmd->arti)
     {
-        actions[A_DARKSERVANT].on = false;
+        PLAYER_ACTION(pnum, A_DARKSERVANT) = false;
         cmd->arti = arti_summon;
     }
 #endif
 
     // Buttons
 
-    if(actions[A_FIRE].on)
+    if(PLAYER_ACTION(pnum, A_FIRE))
         cmd->attack = true;
 
-    if(actions[A_USE].on)
+    if(PLAYER_ACTION(pnum, A_USE))
     {
         cmd->use = true;
         // clear double clicks if hit use button
-        dclicks = 0;
+        cstate->dclicks = 0;
     }
 
-    if(actions[A_JUMP].on)
+    if(PLAYER_ACTION(pnum, A_JUMP))
         cmd->jump = true;
 
 #if __JDOOM__
     // Determine whether a weapon change should be done.
-    if(actions[A_WEAPONCYCLE1].on)  // Fist/chainsaw.
+    if(PLAYER_ACTION(pnum, A_WEAPONCYCLE1))  // Fist/chainsaw.
     {
         if(ISWPN(WT_FIRST) && GOTWPN(WT_EIGHTH))
             i = WT_EIGHTH;
@@ -773,7 +782,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
 
         cmd->changeWeapon = i + 1;
     }
-    else if(actions[A_WEAPONCYCLE2].on) // Shotgun/super sg.
+    else if(PLAYER_ACTION(pnum, A_WEAPONCYCLE2)) // Shotgun/super sg.
     {
         if(ISWPN(WT_THIRD) && GOTWPN(WT_NINETH) &&
            gamemode == commercial)
@@ -790,7 +799,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     else
 #elif __JHERETIC__
     // Determine whether a weapon change should be done.
-    if(actions[A_WEAPONCYCLE1].on)  // Staff/Gauntlets.
+    if(PLAYER_ACTION(pnum, A_WEAPONCYCLE1))  // Staff/Gauntlets.
     {
         if(ISWPN(WT_FIRST) && GOTWPN(WT_EIGHTH))
             i = WT_EIGHTH;
@@ -808,67 +817,70 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     {
         // Take the first weapon action.
         for(i = 0; i < NUM_WEAPON_TYPES; i++)
-            if(actions[A_WEAPON1 + i].on)
+            if(PLAYER_ACTION(pnum, A_WEAPON1 + i))
             {
                 cmd->changeWeapon = i + 1;
                 break;
             }
     }
 
-    if(actions[A_NEXTWEAPON].on || actions[A_PREVIOUSWEAPON].on)
+    if(PLAYER_ACTION(pnum, A_NEXTWEAPON) ||
+       PLAYER_ACTION(pnum, A_PREVIOUSWEAPON))
     {
         cmd->changeWeapon =
-            (actions[A_NEXTWEAPON].on ? TICCMD_NEXT_WEAPON :
+            (PLAYER_ACTION(pnum, A_NEXTWEAPON) ? TICCMD_NEXT_WEAPON :
              TICCMD_PREV_WEAPON);
     }
 
     // forward double click
-    if(actions[A_FORWARD].on != dclickstate && dclicktime > 1 && cfg.dclickuse)
+    if(PLAYER_ACTION(pnum, A_FORWARD) != cstate->dclickstate &&
+        cstate->dclicktime > 1 && cfg.dclickuse)
     {
-        dclickstate = actions[A_FORWARD].on;
+        cstate->dclickstate = PLAYER_ACTION(pnum, A_FORWARD);
 
-        if(dclickstate)
-            dclicks++;
-        if(dclicks == 2)
+        if(cstate->dclickstate)
+            cstate->dclicks++;
+        if(cstate->dclicks == 2)
         {
             cmd->use = true;
-            dclicks = 0;
+            cstate->dclicks = 0;
         }
         else
-            dclicktime = 0;
+            cstate->dclicktime = 0;
     }
     else
     {
-        dclicktime++;
-        if(dclicktime > 20)
+        cstate->dclicktime++;
+        if(cstate->dclicktime > 20)
         {
-            dclicks = 0;
-            dclickstate = 0;
+            cstate->dclicks = 0;
+            cstate->dclickstate = 0;
         }
     }
 
     // strafe double click
     bstrafe = strafe;
-    if(bstrafe != dclickstate2 && dclicktime2 > 1 && cfg.dclickuse)
+    if(bstrafe != cstate->dclickstate2 && 
+       cstate->dclicktime2 > 1 && cfg.dclickuse)
     {
-        dclickstate2 = bstrafe;
-        if(dclickstate2)
-            dclicks2++;
-        if(dclicks2 == 2)
+        cstate->dclickstate2 = bstrafe;
+        if(cstate->dclickstate2)
+            cstate->dclicks2++;
+        if(cstate->dclicks2 == 2)
         {
             cmd->use = true;
-            dclicks2 = 0;
+            cstate->dclicks2 = 0;
         }
         else
-            dclicktime2 = 0;
+            cstate->dclicktime2 = 0;
     }
     else
     {
-        dclicktime2++;
-        if(dclicktime2 > 20)
+        cstate->dclicktime2++;
+        if(cstate->dclicktime2 > 20)
         {
-            dclicks2 = 0;
-            dclickstate2 = 0;
+            cstate->dclicks2 = 0;
+            cstate->dclickstate2 = 0;
         }
     }
 
@@ -878,20 +890,20 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     else if(mousex)
     {
         // Mouse angle changes are immediate.
-        if(!pausestate && players[consoleplayer].plr->mo &&
-           players[consoleplayer].playerstate != PST_DEAD)
+        if(!pausestate && plr->plr->mo &&
+           plr->playerstate != PST_DEAD)
         {
-            players[consoleplayer].plr->mo->angle += FLT2FIX(mousex * -8); //G_AdjustAngle(cplr, mousex * -8, 1);
+            plr->plr->mo->angle += FLT2FIX(mousex * -8); //G_AdjustAngle(plr, mousex * -8, 1);
         }
     }
 
     if(!pausestate)
     {
         // Speed based turning.
-        G_AdjustAngle(cplr, turn, elapsedTime);
+        G_AdjustAngle(plr, turn, elapsedTime);
 
-        if(strafe || (!cfg.usemlook && !actions[A_MLOOK].on) ||
-           players[consoleplayer].playerstate == PST_DEAD)
+        if(strafe || (!cfg.usemlook && !PLAYER_ACTION(pnum, A_MLOOK)) ||
+           plr->playerstate == PST_DEAD)
         {
             forward += 8 * mousey * elapsedTics;
         }
@@ -903,16 +915,16 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
 
             if(cfg.mlookInverseY)
                 adj = -adj;
-            cplr->plr->lookdir += adj; /* $unifiedangles */
+            plr->plr->lookdir += adj; /* $unifiedangles */
         }
         if(cfg.usejlook)
         {
             if(cfg.jlookDeltaMode) /* $unifiedangles */
-                cplr->plr->lookdir +=
+                plr->plr->lookdir +=
                     joylook / 20.0f * cfg.lookSpeed *
                     (cfg.jlookInverseY ? -1 : 1) * elapsedTics;
             else
-                cplr->plr->lookdir =
+                plr->plr->lookdir =
                     joylook * 1.1f * (cfg.jlookInverseY ? -1 : 1);
         }
     }
@@ -931,7 +943,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
         side = -MAXPLMOVE;
 
 #if __JHEXEN__
-    if(cplr->powers[PT_SPEED] && !cplr->morphTics)
+    if(plr->powers[PT_SPEED] && !plr->morphTics)
     {
         // Adjust for a player with a speed artifact
         forward = (3 * forward) >> 1;
@@ -945,22 +957,22 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, float elapsedTime)
     cmd->forwardMove += forward * cfg.playerMoveSpeed;
     cmd->sideMove += side * cfg.playerMoveSpeed;;
 
-    if(cfg.lookSpring && !actions[A_MLOOK].on &&
-       (cmd->forwardMove > MAXPLMOVE / 3 || cmd->forwardMove < -MAXPLMOVE / 3
-        || cmd->sideMove > MAXPLMOVE / 3 || cmd->sideMove < -MAXPLMOVE / 3 ||
-        mlook_pressed))
+    if(cfg.lookSpring && !PLAYER_ACTION(pnum, A_MLOOK) &&
+       (cmd->forwardMove > MAXPLMOVE / 3 || cmd->forwardMove < -MAXPLMOVE / 3 ||
+           cmd->sideMove > MAXPLMOVE / 3 || cmd->sideMove < -MAXPLMOVE / 3 ||
+           cstate->mlookPressed))
     {
         // Center view when mlook released w/lookspring, or when moving.
         look = TOCENTER;
     }
 
-    if(players[consoleplayer].playerstate == PST_LIVE && !pausestate)
-        G_AdjustLookDir(cplr, look, elapsedTime);
+    if(plr->playerstate == PST_LIVE && !pausestate)
+        G_AdjustLookDir(plr, look, elapsedTime);
 
     cmd->fly = flyheight;
 
     // Store the current mlook key state.
-    mlook_pressed = actions[A_MLOOK].on;
+    cstate->mlookPressed = PLAYER_ACTION(pnum, A_MLOOK);
 }
 
 /*
@@ -1026,11 +1038,24 @@ boolean G_AdjustControlState(event_t* ev)
     return false;
 }
 
-/*
+/**
  * Resets the mouse position to 0,0
- * Called eg when loading a new level.
+ * Called e.g. when starting a new level.
  */
 void G_ResetMousePos(void)
 {
     mousex = mousey = 0.f;
+}
+
+/**
+ * Resets the look offsets.
+ * Called e.g. when starting a new level.
+ */
+void G_ResetLookOffset(int pnum)
+{
+    pcontrolstate_t *cstate = &controlStates[pnum];
+
+    cstate->lookOffset = 0;
+    cstate->targetLookOffset = 0;
+    cstate->lookheld = 0;
 }

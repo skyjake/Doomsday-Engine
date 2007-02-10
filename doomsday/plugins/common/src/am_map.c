@@ -976,6 +976,8 @@ static void AM_doFollowPlayer(void)
  */
 void AM_Ticker(void)
 {
+    int         mapplr = consoleplayer;
+
     // If the automap is not active do nothing
     if(!automapactive)
         return;
@@ -1002,12 +1004,12 @@ void AM_Ticker(void)
         amap_fullyopen = false;
 
     // Zooming
-    if(actions[A_MAPZOOMOUT].on)  // zoom out
+    if(PLAYER_ACTION(mapplr, A_MAPZOOMOUT))  // zoom out
     {
         mtof_zoommul = M_ZOOMOUT;
         ftom_zoommul = M_ZOOMIN;
     }
-    else if(actions[A_MAPZOOMIN].on) // zoom in
+    else if(PLAYER_ACTION(mapplr, A_MAPZOOMIN)) // zoom in
     {
         mtof_zoommul = M_ZOOMIN;
         ftom_zoommul = M_ZOOMOUT;
@@ -1022,17 +1024,17 @@ void AM_Ticker(void)
     if(!followplayer)
     {
         // X axis pan
-        if(actions[A_MAPPANRIGHT].on) // pan right?
+        if(PLAYER_ACTION(mapplr, A_MAPPANRIGHT)) // pan right?
             m_paninc.pos[VX] = FTOM(F_PANINC);
-        else if(actions[A_MAPPANLEFT].on) // pan left?
+        else if(PLAYER_ACTION(mapplr, A_MAPPANLEFT)) // pan left?
             m_paninc.pos[VX] = -FTOM(F_PANINC);
         else
             m_paninc.pos[VX] = 0;
 
         // Y axis pan
-        if(actions[A_MAPPANUP].on)  // pan up?
+        if(PLAYER_ACTION(mapplr, A_MAPPANUP))  // pan up?
             m_paninc.pos[VY] = FTOM(F_PANINC);
-        else if(actions[A_MAPPANDOWN].on)  // pan down?
+        else if(PLAYER_ACTION(mapplr, A_MAPPANDOWN))  // pan down?
             m_paninc.pos[VY] = -FTOM(F_PANINC);
         else
             m_paninc.pos[VY] = 0;
