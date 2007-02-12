@@ -358,8 +358,8 @@ int Mus_GetExt(ded_music_t *def, char *path)
                 // Because the song can be in a virtual file, we must buffer
                 // it ourselves.
                 DFILE  *file = F_Open(buf, "rb");
-
                 ptr = iext->SongBuffer(len = F_Length(file));
+	        VERBOSE(Con_Message("Mus_GetExt: Opening Song %s: Using File %s : File Size is %d\n", def->id, def->path.path, F_Length(file) ));
                 F_Read(ptr, len, file);
                 F_Close(file);
 
