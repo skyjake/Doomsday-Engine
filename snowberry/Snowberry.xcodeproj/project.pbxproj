@@ -30,6 +30,7 @@
 		B0AC1D460A8D25780095D788 /* bar.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = bar.py; path = sb/widget/bar.py; sourceTree = "<group>"; };
 		B0AC1E230A8D2D570095D788 /* conf.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = conf.py; path = sb/conf.py; sourceTree = "<group>"; };
 		B0AC1E240A8D2D570095D788 /* confdb.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = confdb.py; path = sb/confdb.py; sourceTree = "<group>"; };
+		B0D7CAA40B8210DE00DB99BD /* portuguese-br.lang */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "portuguese-br.lang"; path = "lang/portuguese-br.lang"; sourceTree = "<group>"; };
 		B0E388AC0A8B972000C553A3 /* addon.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = addon.py; path = sb/addon.py; sourceTree = "<group>"; };
 		B0E388B60A8B987400C553A3 /* aodb.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = aodb.py; path = sb/aodb.py; sourceTree = "<group>"; };
 		B0E38AB30A8BB6E800C553A3 /* expressions.py */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.python; name = expressions.py; path = sb/expressions.py; sourceTree = "<group>"; };
@@ -179,6 +180,7 @@
 		B0F17731087C43560051F24A /* lang */ = {
 			isa = PBXGroup;
 			children = (
+				B0D7CAA40B8210DE00DB99BD /* portuguese-br.lang */,
 				B01532BA0B43C64B006C9D45 /* finnish.lang */,
 				B05FA5230A8A3CCD00A9FE0E /* german.lang */,
 				B0F17732087C436C0051F24A /* english.lang */,

@@ -499,7 +499,7 @@ class DropList (base.Widget):
 
         # Set the maximum length.
         if len(itemText) > 30:
-            return '...' + itemText[-30:]
+            return '...' + uniConv(itemText[-30:])
 
         return uniConv(itemText)
 
