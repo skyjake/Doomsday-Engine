@@ -35,9 +35,7 @@ OFFERS = 3
 EXTENSIONS = ['box', 'addon', 'pk3', 'zip', 'lmp', 'wad', 'ded', 'deh']
 
 # All the possible names of the addon metadata file.
-META_NAMES = ['Info', 'Info.conf']
-if paths.isCaseSensitive():
-    META_NAMES += ['info', 'info.conf']
+META_NAMES = ['Info', 'Info.conf', 'info', 'info.conf']
     
 
 class Addon:
