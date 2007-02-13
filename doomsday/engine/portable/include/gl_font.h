@@ -83,15 +83,15 @@ void            FR_SetFont(int id);
 int             FR_GetCurrent();
 void            FR_DestroyFont(int id);
 int             FR_CharWidth(int ch);
-int             FR_TextWidth(char *text);
-int             FR_TextHeight(char *text);
-int             FR_SingleLineHeight(char *text);
-int             FR_GlyphTopToAscent(char *text);
+int             FR_TextWidth(const char *text);
+int             FR_TextHeight(const char *text);
+int             FR_SingleLineHeight(const char *text);
+int             FR_GlyphTopToAscent(const char *text);
 
 // (x,y) is the upper left corner. Returns the length.
-int             FR_TextOut(char *text, int x, int y);
-int             FR_ShadowTextOut(char *text, int x, int y);
-int             FR_CustomShadowTextOut(char *text, int x, int y, 
+int             FR_TextOut(const char *text, int x, int y);
+int             FR_ShadowTextOut(const char *text, int x, int y);
+int             FR_CustomShadowTextOut(const char *text, int x, int y, 
                                        int shadowX, int shadowY,
                                        float shadowAlpha);
 

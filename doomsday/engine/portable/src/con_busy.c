@@ -73,13 +73,14 @@ static timespan_t busyTime;
 static volatile boolean busyDone;
 static volatile const char* busyError = NULL;
 static float    busyProgress = 0;
+static int      busyFont = 0;
+static int      busyFontHgt;         // Height of the font.
 
 static DGLuint texLoading[2];
 
 static char *titleText = "";
 static char secondaryTitleText[256];
 static char statusText[256];
-static int fontHgt = 8;         // Height of the font.
 
 // CODE --------------------------------------------------------------------
 
@@ -102,11 +103,12 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
     }
 
     busyMode = flags;
-    busyInited = true;
     busyDone = false;
 
     // Load any textures needed in this mode.
     Con_BusyLoadTextures();
+
+    busyInited = true;
 
     // Start the busy worker thread, which will proces things in the 
     // background while we keep the user occupied with nice animations.
@@ -188,12 +190,29 @@ static void Con_BusyLoadTextures(void)
             GL_DestroyImage(&image);
         }        
     }    
+    
+    if(busyMode & BUSYF_CONSOLE_OUTPUT)
+    {
+        if(FR_PrepareFont("normal12"))
+        {
+            busyFont = FR_GetCurrent();
+            busyFontHgt = FR_TextHeight("A");
+        }
+    }
 }
 
 static void Con_BusyDeleteTextures(void)
 {
+    // Destroy the font.
+    if(busyFont)
+    {
+        FR_DestroyFont(busyFont);
+    }
+    
     gl.DeleteTextures(2, texLoading);
     texLoading[0] = texLoading[1] = 0;
+    
+    busyFont = 0;
 }
 
 /**
@@ -204,9 +223,6 @@ static void Con_BusyLoop(void)
     timespan_t startTime = Sys_GetRealSeconds();
 
     // TODO: Grab a copy of the current frame buffer contents.
-    
-    // Need any textures?
-    Con_BusyLoadTextures();
     
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
@@ -292,6 +308,35 @@ static void Con_BusyDrawIndicator(float pos)
 }
 
 /**
+ * Draws a number of console output to the bottom of the screen.
+ */
+static void Con_BusyDrawConsoleOutput(void)
+{
+#define LINE_COUNT 3
+    
+    const char *lines[LINE_COUNT];
+    int i, y;
+    
+    lines[0] = "First line of console output.";
+    lines[1] = "Con_BusyDrawConsoleOutput: This is some output.";
+    lines[2] = "The bottom-most line.";
+
+    gl.Enable(DGL_TEXTURING);
+    gl.Enable(DGL_BLENDING);
+    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+    
+    y = glScreenHeight - busyFontHgt * (LINE_COUNT + 1);
+    for(i = 0; i < LINE_COUNT; ++i, y += busyFontHgt)
+    {
+        float color = (1.f - (LINE_COUNT - i - 1)/(float)LINE_COUNT) / 2;
+        gl.Color3f(color, color, color);
+        FR_TextOut(lines[i], (glScreenWidth - FR_TextWidth(lines[i]))/2, y);
+    }
+    
+#undef LINE_COUNT
+}
+
+/**
  * Busy drawer function. The entire frame is drawn here.
  */
 static void Con_BusyDrawer(void)
@@ -310,6 +355,12 @@ static void Con_BusyDrawer(void)
     {
         // The progress is animated elsewhere.
         Con_BusyDrawIndicator(Con_GetProgress());
+    }
+    
+    // Output from the console?
+    if(busyMode & BUSYF_CONSOLE_OUTPUT)
+    {
+        Con_BusyDrawConsoleOutput();
     }
     
     sprintf(buf, "Busy %04x : %.2lf", busyMode, busyTime);

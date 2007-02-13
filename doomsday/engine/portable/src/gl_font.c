@@ -104,7 +104,7 @@ int FR_Init(void)
     else
     {
         strcpy(fontpath, ddBasePath);
-        strcat(fontpath, "Data\\Fonts\\");
+        strcat(fontpath, "data\\fonts\\");
     }
     return 0;
 }
@@ -662,7 +662,7 @@ int FR_CharWidth(int ch)
         fonts[currentFontIndex].marginWidth * 2;
 }
 
-int FR_TextWidth(char *text)
+int FR_TextWidth(const char *text)
 {
     int     i, width = 0, len = strlen(text);
     jfrfont_t *cf;
@@ -677,7 +677,7 @@ int FR_TextWidth(char *text)
     return width;
 }
 
-int FR_TextHeight(char *text)
+int FR_TextHeight(const char *text)
 {
     int     i, height = 0, len;
     jfrfont_t *cf;
@@ -694,7 +694,7 @@ int FR_TextHeight(char *text)
     return height;
 }
 
-int FR_SingleLineHeight(char *text)
+int FR_SingleLineHeight(const char *text)
 {
     jfrfont_t *cf;
 
@@ -710,7 +710,7 @@ int FR_SingleLineHeight(char *text)
     return cf->chars[(byte)text[0]].h - 2*cf->marginHeight;
 }
 
-int FR_GlyphTopToAscent(char *text)
+int FR_GlyphTopToAscent(const char *text)
 {
     jfrfont_t *cf;
 
@@ -735,7 +735,7 @@ int FR_GetCurrent(void)
 /**
  * (x,y) is the upper left corner. Returns the length.
  */
-int FR_CustomShadowTextOut(char *text, int x, int y, int shadowX, int shadowY,
+int FR_CustomShadowTextOut(const char *text, int x, int y, int shadowX, int shadowY,
                            float shadowAlpha)
 {
     int     i, width = 0, len, step;
@@ -841,12 +841,12 @@ int FR_CustomShadowTextOut(char *text, int x, int y, int shadowX, int shadowY,
     return width;
 }
 
-int FR_TextOut(char *text, int x, int y)
+int FR_TextOut(const char *text, int x, int y)
 {
     return FR_CustomShadowTextOut(text, x, y, 0, 0, 0);
 }
 
-int FR_ShadowTextOut(char *text, int x, int y)
+int FR_ShadowTextOut(const char *text, int x, int y)
 {
     return FR_CustomShadowTextOut(text, x, y, 2, 2, .5f);
 }

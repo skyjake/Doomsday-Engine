@@ -39,7 +39,7 @@
 // MACROS ------------------------------------------------------------------
 
 // Time for the progress to reach the new target (seconds).
-#define PROGRESS_DELTA_TIME 0.5
+#define PROGRESS_DELTA_TIME 1.0
 
 // TYPES -------------------------------------------------------------------
 
