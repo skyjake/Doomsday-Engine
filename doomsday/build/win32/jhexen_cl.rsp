@@ -5,14 +5,12 @@
  ./../../plugins/common/src/m_multi.c
  ./../../plugins/common/src/mn_menu.c
  ./../../plugins/jhexen/src/g_ctrl.c
- ./../../plugins/common/src/m_ctrl.c
  ./../../plugins/common/src/g_dglinit.c
  ./../../plugins/jhexen/src/x_api.c
  ./../../plugins/jhexen/src/hrefresh.c
  ./../../plugins/common/src/g_update.c
  ./../../plugins/jhexen/src/hconsole.c
  ./../../plugins/jhexen/src/h2_main.c
- ./../../plugins/jhexen/src/h2_Actn.c
  ./../../plugins/common/src/p_view.c
  ./../../plugins/common/src/p_tick.c
  ./../../plugins/common/src/p_svtexarc.c

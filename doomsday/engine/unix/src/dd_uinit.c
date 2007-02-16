@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,7 +76,7 @@ lt_dlhandle hPlugins[MAX_PLUGS];
 
 void InitMainWindow(void)
 {
-	char    buf[256];
+	char        buf[256];
 
 	DD_MainWindowTitle(buf);
 	SDL_WM_SetCaption(buf, NULL);
@@ -83,8 +84,8 @@ void InitMainWindow(void)
 
 boolean InitGame(void)
 {
-	char   *gameName = NULL;
-	char    libName[PATH_MAX];
+	char       *gameName = NULL;
+	char        libName[PATH_MAX];
 
 	// First we need to locate the game library name among the command
 	// line arguments.
@@ -110,7 +111,8 @@ boolean InitGame(void)
 					lt_dlerror());
 		return false;
 	}
-	if(!(GetGameAPI = (GETGAMEAPI) lt_dlsym(hGame, "GetGameAPI")))
+
+    if(!(GetGameAPI = (GETGAMEAPI) lt_dlsym(hGame, "GetGameAPI")))
 	{
 		DD_ErrorBox(true,
 					"InitGame: Failed to get address of " "GetGameAPI (%s).\n",
@@ -127,11 +129,12 @@ boolean InitGame(void)
 
 static lt_dlhandle *NextPluginHandle(void)
 {
-	int i;
+	int         i;
 
 	for(i = 0; i < MAX_PLUGS; ++i)
 	{
-		if(!hPlugins[i]) return &hPlugins[i];
+		if(!hPlugins[i])
+            return &hPlugins[i];
 	}
 	return NULL;
 }
@@ -197,7 +200,7 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 int LoadPlugin(const char *pluginPath, lt_ptr data)
 {
 #ifndef MACOSX
-	filename_t name;
+	filename_t  name;
 #endif
 	lt_dlhandle plugin, *handle;
 	void (*initializer)(void);
@@ -230,7 +233,7 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 	return 0;
 }
 
-/*
+/**
  * Loads all the plugins from the library directory.
  */
 boolean InitPlugins(void)
@@ -242,8 +245,8 @@ boolean InitPlugins(void)
 
 int main(int argc, char **argv)
 {
-	char   *cmdLine;
-	int     i, length = 0;
+	char       *cmdLine;
+	int         i, length = 0;
 
 	// Initialize libtool's dynamic library routines.
 	lt_dlinit();
@@ -255,13 +258,13 @@ int main(int argc, char **argv)
 #endif
 
 	// Assemble a command line string.
-	for(i = 0, length = 0; i < argc; i++)
+	for(i = 0, length = 0; i < argc; ++i)
 		length += strlen(argv[i]) + 1;
 
 	// Allocate a large enough string.
 	cmdLine = malloc(length);
 
-	for(i = 0, length = 0; i < argc; i++)
+	for(i = 0, length = 0; i < argc; ++i)
 	{
 		strcpy(cmdLine + length, argv[i]);
 		if(i < argc - 1)
@@ -311,13 +314,12 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-//===========================================================================
-// DD_Shutdown
-//  Shuts down the engine.
-//===========================================================================
+/**
+ * Shuts down the engine.
+ */
 void DD_Shutdown(void)
 {
-	int     i;
+	int         i;
 
 	// Shutdown all subsystems.
 	DD_ShutdownAll();
@@ -327,7 +329,7 @@ void DD_Shutdown(void)
 	// Close the dynamic libraries.
 	lt_dlclose(hGame);
 	hGame = NULL;
-	for(i = 0; hPlugins[i]; i++)
+	for(i = 0; hPlugins[i]; ++i)
 		lt_dlclose(hPlugins[i]);
 	memset(hPlugins, 0, sizeof(hPlugins));
 

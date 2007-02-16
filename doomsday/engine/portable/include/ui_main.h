@@ -120,7 +120,7 @@ typedef struct ui_object_s {
     int             relx, rely, relw, relh; // Relative placement.
     char            text[256];     // Used in various ways.
     void            (*drawer) (struct ui_object_s *);
-    int             (*responder) (struct ui_object_s *, event_t *);
+    int             (*responder) (struct ui_object_s *, ddevent_t *);
     void            (*ticker) (struct ui_object_s *);
     void            (*action) (struct ui_object_s *);
     void           *data;          // Pointer to extra data.
@@ -137,7 +137,7 @@ typedef struct ui_page_s {
     int             focus;         // Index of the focus object.
     int             capture;       // Index of the capture object.
     void            (*drawer) (struct ui_page_s *);
-    int             (*responder) (struct ui_page_s *, event_t *);
+    int             (*responder) (struct ui_page_s *, ddevent_t *);
     void            (*ticker) (struct ui_page_s *);
     struct ui_page_s *previous;    // Pointer to the previous page, if any.
     int             timer;
@@ -197,7 +197,7 @@ void            UI_LoadTextures(void);
 void            UI_ClearTextures(void);
 void            UI_InitPage(ui_page_t * page, ui_object_t *objects);
 void            UI_SetPage(ui_page_t * page);
-int             UI_Responder(event_t *ev);
+int             UI_Responder(ddevent_t *ev);
 void            UI_Ticker(timespan_t time);
 void            UI_Drawer(void);
 int             UI_CountObjects(ui_object_t *list);
@@ -207,20 +207,20 @@ void            UI_Focus(ui_object_t *ob);
 void            UI_Capture(ui_object_t *ob);
 
 // Default callbacks.
-int             UIPage_Responder(ui_page_t * page, event_t *ev);
+int             UIPage_Responder(ui_page_t * page, ddevent_t *ev);
 void            UIPage_Ticker(ui_page_t * page);
 void            UIPage_Drawer(ui_page_t * page);
 void            UIFrame_Drawer(ui_object_t *ob);
 void            UIText_Drawer(ui_object_t *ob);
 void            UIText_BrightDrawer(ui_object_t *ob);
-int             UIButton_Responder(ui_object_t *ob, event_t *ev);
+int             UIButton_Responder(ui_object_t *ob, ddevent_t *ev);
 void            UIButton_Drawer(ui_object_t *ob);
-int             UIEdit_Responder(ui_object_t *ob, event_t *ev);
+int             UIEdit_Responder(ui_object_t *ob, ddevent_t *ev);
 void            UIEdit_Drawer(ui_object_t *ob);
-int             UIList_Responder(ui_object_t *ob, event_t *ev);
+int             UIList_Responder(ui_object_t *ob, ddevent_t *ev);
 void            UIList_Ticker(ui_object_t *ob);
 void            UIList_Drawer(ui_object_t *ob);
-int             UISlider_Responder(ui_object_t *ob, event_t *ev);
+int             UISlider_Responder(ui_object_t *ob, ddevent_t *ev);
 void            UISlider_Ticker(ui_object_t *ob);
 void            UISlider_Drawer(ui_object_t *ob);
 

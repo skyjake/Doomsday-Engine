@@ -48,6 +48,7 @@
 
 #include "g_controls.h"
 #include "p_tick.h" // for P_IsPaused()
+#include "d_netsv.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -190,30 +191,30 @@ cvar_t  controlCVars[] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Register the CVars and CCmds for input/controls.
  */
 void G_ControlRegister(void)
 {
-    int     i;
+    uint        i;
 
-    for(i = 0; controlCVars[i].name; i++)
+    for(i = 0; controlCVars[i].name; ++i)
         Con_AddVariable(controlCVars + i);
 }
 
-/*
+/**
  * Registers the additional bind classes the game requires
  *
  * (Doomsday manages the bind class stack which forms the
  * dynamic event responder chain).
  */
-void G_BindClassRegistration(void)
+void G_RegisterBindClasses(void)
 {
-    int i;
+    uint        i;
 
     Con_Message("G_PreInit: Registering Bind Classes...\n");
 
-    for(i = 0; BindClasses[i].name; i++)
+    for(i = 0; BindClasses[i].name; ++i)
         DD_AddBindClass(BindClasses + i);
 }
 
@@ -223,68 +224,6 @@ void G_BindClassRegistration(void)
 float G_GetLookOffset(int pnum)
 {
     return controlStates[pnum].lookOffset;
-}
-
-/*
- * Set default bindings for unbound Controls.
- */
-void G_DefaultBindings(void)
-{
-    int         i;
-    const       control_t *ctr;
-    char        evname[80], cmd[256], buff[256];
-    evtype_t    evType;
-    evstate_t   evState;
-    int         evData;
-
-    // Check all Controls.
-    for(i = 0; controls[i].command[0]; i++)
-    {
-        ctr = controls + i;
-        // If this command is bound to something, skip it.
-        sprintf(cmd, "%s%s", ctr->flags & CLF_ACTION ? "+" : "", ctr->command);
-        memset(buff, 0, sizeof(buff));
-        if(B_BindingsForCommand(cmd, buff, 0, true))
-            continue;
-
-        // This Control has no bindings, set it to the default.
-        sprintf(buff, "\"%s\"", ctr->command);
-        if(ctr->defKey)
-        {
-            evType = EV_KEY;
-            evState = EVS_DOWN;
-            evData = ctr->defKey;
-            B_FormEventString(evname, evType, evState, evData);
-            sprintf(cmd, "%s bdc%d %s %s",
-                    ctr->flags & CLF_REPEAT ? "safebindr" : "safebind",
-                    controls[i].bindClass, evname + 1, buff);
-            DD_Execute(cmd, true);
-        }
-
-        if(ctr->defMouse)
-        {
-            evType = EV_MOUSE_BUTTON;
-            evState = EVS_DOWN;
-            evData = 1 << (ctr->defMouse - 1);
-            B_FormEventString(evname, evType, evState, evData);
-            sprintf(cmd, "%s bdc%d %s %s",
-                    ctr->flags & CLF_REPEAT ? "safebindr" : "safebind",
-                    controls[i].bindClass, evname + 1, buff);
-            DD_Execute(cmd, true);
-        }
-
-        if(ctr->defJoy)
-        {
-            evType = EV_JOY_BUTTON;
-            evState = EVS_DOWN;
-            evData = 1 << (ctr->defJoy - 1);
-            B_FormEventString(evname, evType, evState, evData);
-            sprintf(cmd, "%s bdc%d %s %s",
-                    ctr->flags & CLF_REPEAT ? "safebindr" : "safebind",
-                    controls[i].bindClass, evname + 1, buff);
-            DD_Execute(cmd, true);
-        }
-    }
 }
 
 /*
@@ -394,24 +333,7 @@ void G_LookAround(int pnum)
     }
 }
 
-static void G_SetCmdViewAngles(ticcmd_t *cmd, player_t *pl)
-{
-    if(pl->plr->mo)
-    {
-        // These will be sent to the server (or P_MovePlayer).
-        cmd->angle = pl->plr->mo->angle >> 16; /* $unifiedangles */
-    }
-
-    // Clamp it. 110 corresponds 85 degrees.
-    /* $unifiedangles */
-    if(pl->plr->lookdir > 110)
-        pl->plr->lookdir = 110;
-    if(pl->plr->lookdir < -110)
-        pl->plr->lookdir = -110;
-
-    cmd->pitch = pl->plr->lookdir / 110 * DDMAXSHORT;
-}
-
+#if 0
 /**
  * Builds a ticcmd from all of the available inputs.
  */
@@ -440,7 +362,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime)
 
     if(IS_CLIENT)
     {
-        // Clients mirror their local commands.
+        // Clients mirror their local commands.#endif
         memcpy(&players[consoleplayer].cmd, cmd, sizeof(*cmd));
     }
 }
@@ -974,8 +896,54 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     // Store the current mlook key state.
     cstate->mlookPressed = PLAYER_ACTION(pnum, A_MLOOK);
 }
+#endif
 
-/*
+/**
+ * Clear all controls for the given player.
+ *
+ * @param player        Player number of whose controls to reset. If
+ *                      negative; clear ALL player's controls.
+ */
+void G_ControlReset(int player)
+{
+    P_ControlReset(player);
+}
+
+/**
+ * Handles special controls, such as pause.
+ */
+void G_SpecialButton(int pnum)
+{
+    player_t *pl = &players[pnum];
+    if(pl->plr->ingame)
+    {
+        if(pl->plr->cmd.actions & BT_SPECIAL)
+        {
+			switch(pl->plr->cmd.actions & BT_SPECIALMASK) 
+			{ 
+			case BTS_PAUSE:
+                paused ^= 1;
+                if(paused)
+                {
+                    // This will stop all sounds from all origins.
+                    S_StopSound(0, 0);
+                }
+
+                // Servers are responsible for informing clients about
+                // pauses in the game.
+                NetSv_Paused(paused);
+
+                pl->plr->cmd.actions = 0;
+                break;
+
+            default:
+                break;
+            }
+        }
+    }
+}
+
+/**
  * Called by G_Responder.
  * Depending on the type of the event we may wish to eat it before
  * it is sent to the engine to check for bindings.
@@ -987,6 +955,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
  */
 boolean G_AdjustControlState(event_t* ev)
 {
+/*
     switch (ev->type)
     {
     case EV_KEY:
@@ -1034,7 +1003,7 @@ boolean G_AdjustControlState(event_t* ev)
     default:
         break;
     }
-
+*/
     return false;
 }
 
@@ -1058,4 +1027,17 @@ void G_ResetLookOffset(int pnum)
     cstate->lookOffset = 0;
     cstate->targetLookOffset = 0;
     cstate->lookheld = 0;
+}
+
+int G_PrivilegedResponder(event_t *event)
+{
+    // Process the screen shot key right away.
+    if(devparm && event->type == EV_KEY && event->data1 == DDKEY_F1)
+    {
+        if(event->state == EVS_DOWN)
+            G_ScreenShot();
+        // All F1 events are eaten.
+        return true;
+    }
+    return false;
 }

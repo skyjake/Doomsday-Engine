@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,17 +72,18 @@ static int barPos, barMax;
 
 BOOL CALLBACK SW_DialogProc(HWND dlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    char    buf[300];
+    char        buf[300];
     static int cleared = false;
-    HWND    ed;
+    HWND        ed;
 
-    switch (uMsg)
+    switch(uMsg)
     {
     case WM_CTLCOLORSTATIC:
         // Set the background and text color of the messages edit box.
         ed = GetDlgItem(dlg, IDC_MESSAGES);
         if((HWND) lParam != ed)
             return FALSE;
+
         SetBkColor((HDC) wParam, CREF_BACKGROUND);
         SetTextColor((HDC) wParam, CREF_TEXT);
         // The first time text appears, clear the whole box.
@@ -105,7 +107,7 @@ BOOL CALLBACK SW_DialogProc(HWND dlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-/*
+/**
  * Replaces all \n with \r\n.
  */
 void SW_ReplaceNewlines(const char *in, char *out)
@@ -127,10 +129,10 @@ void SW_ReplaceNewlines(const char *in, char *out)
 
 void SW_Printf(const char *format, ...)
 {
-    static int printedChars = 0;
-    char    buf[16384], rep[16384];
-    va_list args;
-    boolean clearBox = false;
+    static int  printedChars = 0;
+    char        buf[16384], rep[16384];
+    va_list     args;
+    boolean     clearBox = false;
 
     if(!msgWnd)
         return;
@@ -184,9 +186,9 @@ void SW_Shutdown(void)
 
 void SW_DrawBar(void)
 {
-    HWND    prog;
-    HDC     dc;
-    RECT    rect;
+    HWND        prog;
+    HDC         dc;
+    RECT        rect;
 
     if(!msgWnd || !barMax)
         return;
@@ -207,7 +209,7 @@ void SW_SetBarPos(int pos)
 
 void SW_SetBarMax(int max)
 {
-    HWND    prog;
+    HWND        prog;
 
     if(!msgWnd)
         return;

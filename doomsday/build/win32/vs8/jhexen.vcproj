@@ -315,10 +315,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\p_ticcmd.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\include\p_tick.h"
 				>
 			</File>
@@ -412,10 +408,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\hu_stuff.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\src\m_ctrl.c"
 				>
 			</File>
 			<File
@@ -523,10 +515,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jhexen\include\h2_actn.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jhexen\include\h2def.h"
 				>
 			</File>
@@ -540,10 +528,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\include\m_cheat.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jhexen\include\m_ctrl.h"
 				>
 			</File>
 			<File
@@ -624,10 +608,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\src\g_ctrl.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jhexen\src\h2_actn.c"
 				>
 			</File>
 			<File

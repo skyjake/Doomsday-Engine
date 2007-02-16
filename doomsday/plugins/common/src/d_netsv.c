@@ -204,6 +204,9 @@ void *NetSv_ReadCommands(byte *msg, uint size)
             msg += 2;
         }
         if(flags & CMDF_BUTTONS)
+            cmd->actions = *msg++;
+/*
+        if(flags & CMDF_BUTTONS)
         {
             byte buttons = *msg++;
             cmd->attack = ((buttons & CMDF_BTN_ATTACK) != 0);
@@ -224,7 +227,7 @@ void *NetSv_ReadCommands(byte *msg, uint size)
             cmd->changeWeapon = SHORT( *(short *) msg );
             msg += 2;
         }
-
+*/
         // Copy to next command (only differences have been written).
         memcpy(cmd + 1, cmd, sizeof(ticcmd_t));
 

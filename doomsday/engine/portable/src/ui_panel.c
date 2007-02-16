@@ -76,7 +76,7 @@ void    CP_CvarButton(ui_object_t *ob);
 void    CP_CvarList(ui_object_t *ob);
 void    CP_CvarEdit(ui_object_t *ob);
 void    CP_CvarSlider(ui_object_t *ob);
-int     CP_KeyGrabResponder(ui_object_t *ob, event_t *ev);
+int     CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev);
 void    CP_KeyGrabDrawer(ui_object_t *ob);
 void    CP_QuickFOV(ui_object_t *ob);
 void    CP_ResolutionInfo(ui_object_t *ob);
@@ -241,8 +241,8 @@ uidata_list_t lst_resolution = {
 
 uidata_slider_t sld_con_alpha = { 0, 100, 0, 1, false, "con-alpha" };
 uidata_slider_t sld_con_light = { 0, 100, 0, 1, false, "con-light" };
-uidata_slider_t sld_joy_sensi = { 0, 9, 0, 1, false, "input-joy-sensi" };
-uidata_slider_t sld_joy_dead = { 0, 90, 0, 1, false, "input-joy-deadzone" };
+/*uidata_slider_t sld_joy_sensi = { 0, 9, 0, 1, false, "input-joy-sensi" }; */
+/*uidata_slider_t sld_joy_dead = { 0, 90, 0, 1, false, "input-joy-deadzone" }; */
 uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, "input-key-delay1" };
 uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, "input-key-delay2" };
 uidata_slider_t sld_client_pos_interval =
@@ -383,21 +383,21 @@ ui_object_t ob_panel[] =
 
     { UI_META,      4 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Input Options", UIText_BrightDrawer },
-    { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Invert mouse Y axis", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "input-mouse-y-inverse", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+/*  { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Invert mouse Y axis", UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "input-mouse-y-inverse", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },*/
     { UI_META,      4,  0,              0, 60 },
-    { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Filter mouse movement", UIText_Drawer },
+/*  { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Filter mouse movement", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "input-mouse-filter", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Disable mouse X axis", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "input-mouse-x-disable", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Disable mouse Y axis", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "input-mouse-y-disable", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "input-mouse-y-disable", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },*/
     { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Enable joystick", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 250, 70, 55,   "input-joy", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Joystick sensitivity", UIText_Drawer },
+/*    { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Joystick sensitivity", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_joy_sensi },
     { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Joystick dead zone (%)", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 370, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_joy_dead },
+    { UI_SLIDER,    0,  0,              680, 370, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_joy_dead },*/
     { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Key repeat delay (ms)", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 430, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_keywait1 },
     { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Key repeat rate (ms)", UIText_Drawer },
@@ -736,11 +736,11 @@ void CP_CvarSlider(ui_object_t *ob)
         Con_SetInteger(var->name, (byte) (slid->value + 0.5f), true);
 }
 
-int CP_KeyGrabResponder(ui_object_t *ob, event_t *ev)
+int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)
 {
-    if(ev->state == EVS_DOWN &&
-       ((ev->type == EV_MOUSE_BUTTON && UI_MouseInside(ob)) ||
-        (ev->type == EV_KEY && IS_ACTKEY(ev->data1))))
+    if(ev->data1 == EVS_DOWN &&
+       ((ev->deviceID == IDEV_MOUSE && !ev->isAxis && UI_MouseInside(ob)) ||
+        (ev->deviceID == IDEV_KEYBOARD && IS_ACTKEY(ev->controlID))))
     {
         // We want the focus.
         return true;
@@ -749,9 +749,9 @@ int CP_KeyGrabResponder(ui_object_t *ob, event_t *ev)
     if(!(ob->flags & UIF_FOCUS))
         return false;
 
-    if(ev->type == EV_KEY && ev->state == EVS_DOWN)
+    if(ev->deviceID == IDEV_KEYBOARD && ev->data1 == EVS_DOWN)
     {
-        Con_SetInteger(ob->text, ev->data1, true);
+        Con_SetInteger(ob->text, ev->controlID, true);
         // All keydown events are eaten.
         // Note that the UI responder eats all Tabs!
         return true;

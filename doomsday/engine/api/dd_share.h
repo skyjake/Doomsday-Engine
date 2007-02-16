@@ -498,8 +498,6 @@ extern          "C" {
         int             data4;
         int             data5;
         int             data6;
-        unsigned int    useclass;   // use a specific bindclass command
-        boolean         noclass;
     } event_t;
 
     // The mouse wheel is considered two extra mouse buttons.
@@ -507,6 +505,15 @@ extern          "C" {
 #define DDMB_MWHEELDOWN     0x2000
 
 #define DD_MICKEY_ACCURACY  1000
+
+    // Control classes.
+    typedef enum
+    {
+	    CC_AXIS,
+	    CC_TOGGLE,
+	    CC_IMPULSE,
+	    NUM_CONTROL_CLASSES
+    } ctlclass_t;
 
     //------------------------------------------------------------------------
     //
@@ -1209,6 +1216,21 @@ typedef enum blendmode_e {
     //
     //------------------------------------------------------------------------
 
+/* 
+ * Tick Commands. Usually only a part of this data is transferred over 
+ * the network. In addition to tick commands, clients will sent 'impulses'
+ * to the server when they want to change a weapon, use an artifact, or
+ * maybe commit suicide.
+ */
+typedef struct ticcmd_s {
+	char		forwardMove;		//*2048 for real move
+	char		sideMove;			//*2048 for real move
+	char		upMove;				//*2048 for real move
+	ushort		angle;				// <<16 for angle (view angle)
+	short		pitch;				// View pitch
+	short		actions;			// On/off action flags
+} ticcmd_t;
+
     // Network Player Events
     enum {
         DDPE_ARRIVAL,              // A player has arrived.
@@ -1370,6 +1392,7 @@ typedef enum blendmode_e {
     } fixcounters_t;
 
     typedef struct ddplayer_s {
+        ticcmd_t        cmd;
         struct mobj_s  *mo;        // pointer to a (game specific) mobj
         fixed_t         viewz;     // focal origin above r.z
         fixed_t         viewheight; // base height above floor for viewz
@@ -1391,12 +1414,6 @@ typedef enum blendmode_e {
         ddpsprite_t     psprites[DDMAXPSPRITES];    // Player sprites.
         void           *extradata; // Pointer to any game-specific data.
     } ddplayer_t;
-
-    // Actions.
-    typedef struct {
-        char            name[9];   // The name of the action.
-        boolean         on[DDMAXPLAYERS]; // True if action is active.
-    } action_t;
 
 #ifdef __cplusplus
 }

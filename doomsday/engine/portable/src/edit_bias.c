@@ -37,6 +37,8 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_ui.h"
+#include "de_console.h"
+#include "de_play.h"
 
 #include <math.h>
 
@@ -45,9 +47,6 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-extern void P_ClearActions(int pnum);
-extern boolean B_SetBindClass(unsigned int classID, unsigned int type);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -533,7 +532,7 @@ D_CMD(BLEditor)
     {
         extern int consoleplayer;
 
-        P_ClearActions(consoleplayer); // clear the actions array
+        P_ControlReset(-1); // clear the actions array
         Con_Open(false); // close the console if open
 
         // show the bias menu interface

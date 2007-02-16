@@ -103,8 +103,8 @@ float   ui_target_alpha = 1.0;          // Target alpha for the entire UI.
 boolean ui_draw_game = false;           // The game view should be drawn while
                                         // the UI active.
 
-float   uiCursorWidthMul = 1.0;
-float   uiCursorHeightMul = 1.0;
+float   uiCursorWidthMul = 0.75;
+float   uiCursorHeightMul = 0.75;
 
 // Modify these colors to change the look of the UI.
 ui_color_t ui_colors[NUM_UI_COLORS] = {
@@ -185,7 +185,7 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
  */
 void UI_End(void)
 {
-    event_t rel;
+    ddevent_t rel;
 
     if(!ui_active)
         return;
@@ -208,9 +208,10 @@ void UI_End(void)
     // the UI was eating all the input events.
     if(!shiftDown)
     {
-        rel.type = EV_KEY;
-        rel.state = EVS_UP;
-        rel.data1 = DDKEY_RSHIFT;
+        rel.deviceID = IDEV_KEYBOARD;
+        rel.data1 = EVS_UP;
+        rel.isAxis = false;
+        rel.controlID = DDKEY_RSHIFT;
         rel.noclass = true;
         rel.useclass = 0;
         DD_PostEvent(&rel);
@@ -447,33 +448,33 @@ void UI_SetPage(ui_page_t * page)
 /*
  * Directs events through the ui and current page if active
  */
-int UI_Responder(event_t *ev)
+int UI_Responder(ddevent_t *ev)
 {
     if(!ui_active)
         return false;
     if(!ui_page)
         return false;
 
-    // Check for Shift events.
-    switch (ev->type)
+    if(ev->deviceID == IDEV_MOUSE && ev->isAxis && ev->data1 != 0)
     {
-    case EV_MOUSE_AXIS:
-        if(ev->data1 || ev->data2)
-            ui_moved = true;
-        ui_cx += ev->data1 / DD_MICKEY_ACCURACY;
-        ui_cy += ev->data2 / DD_MICKEY_ACCURACY;
-        if(ui_cx < 0)
-            ui_cx = 0;
-        if(ui_cy < 0)
-            ui_cy = 0;
-        if(ui_cx >= glScreenWidth)
-            ui_cx = glScreenWidth - 1;
-        if(ui_cy >= glScreenHeight)
-            ui_cy = glScreenHeight - 1;
-        break;
+        ui_moved = true;
 
-    default:
-        break;
+        if(ev->controlID == 0) // xaxis.
+        {
+            ui_cx += ev->data1 / DD_MICKEY_ACCURACY;
+            if(ui_cx < 0)
+                ui_cx = 0;
+            if(ui_cx >= glScreenWidth)
+                ui_cx = glScreenWidth - 1;
+        }
+        else if(ev->controlID == 1) // yaxis.
+        {
+            ui_cy += ev->data1 / DD_MICKEY_ACCURACY;
+            if(ui_cy < 0)
+                ui_cy = 0;
+            if(ui_cy >= glScreenHeight)
+                ui_cy = glScreenHeight - 1;
+        }
     }
 
     // Call the page's responder.
@@ -652,22 +653,22 @@ void UI_Capture(ui_object_t *ob)
 // Default Callback Functions
 //---------------------------------------------------------------------------
 
-int UIPage_Responder(ui_page_t * page, event_t *ev)
+int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
 {
     int     i, k;
     ui_object_t *ob;
-    event_t translated;
+    ddevent_t translated;
 
     // Translate mouse wheel?
-    if(ev->type == EV_MOUSE_BUTTON)
+    if(ev->deviceID == IDEV_MOUSE && !ev->isAxis && ev->data1 == EVS_DOWN)
     {
-        if(ev->data1 & (DDMB_MWHEELUP | DDMB_MWHEELDOWN))
+        if(ev->controlID & (DDMB_MWHEELUP | DDMB_MWHEELDOWN))
         {
             UI_MouseFocus();
-            translated.type = EV_KEY;
-            translated.state = EVS_DOWN;
-            translated.data1 =
-                (ev->data1 & DDMB_MWHEELUP ? DDKEY_UPARROW : DDKEY_DOWNARROW);
+            translated.deviceID = IDEV_KEYBOARD;
+            translated.data1 = EVS_DOWN;
+            translated.controlID =
+                (ev->controlID & DDMB_MWHEELUP ? DDKEY_UPARROW : DDKEY_DOWNARROW);
             ev = &translated;
         }
     }
@@ -682,10 +683,12 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
     }
 
     // Check for Esc key.
-    if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
+    if(ev->deviceID == IDEV_KEYBOARD &&
+       (ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT))
     {
         // We won't accept repeats with Esc.
-        if(ev->data1 == DDKEY_ESCAPE && ev->state == EVS_DOWN && allowEscape)
+        if(ev->controlID == DDKEY_ESCAPE && ev->data1 == EVS_DOWN &&
+           allowEscape)
         {
             UI_SetPage(page->previous);
             // If we have no more a page, disactive UI.
@@ -698,7 +701,7 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
 //            return false;
 
         // Tab is used for navigation.
-        if(ev->data1 == DDKEY_TAB)
+        if(ev->controlID == DDKEY_TAB)
         {
             // Remove the focus flag from the current focus object.
             page->objects[page->focus].flags &= ~UIF_FOCUS;
@@ -738,7 +741,7 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
             continue;           // These flags prevent response.
         // When the UI is faded, a click on a nonfocusable object brings
         // back the UI.
-        /*if(ui_target_alpha < 1.0 && ev->type == EV_MOUSE_BUTTON && ev->state == EVS_DOWN &&
+        /*if(ui_target_alpha < 1.0 && ev->type == EV_MOUSE_BUTTON && ev->data1 == EVS_DOWN &&
            UI_MouseInside(ob) && (!ob->responder || ob->flags & UIF_NO_FOCUS))
         {
             // Restore default focus
@@ -754,7 +757,8 @@ int UIPage_Responder(ui_page_t * page, event_t *ev)
         }
     }
 
-    if(ui_target_alpha < 1.0 && ev->type == EV_MOUSE_BUTTON && ev->state == EVS_DOWN)
+    if(ui_target_alpha < 1.0 &&
+       ev->deviceID == IDEV_MOUSE && !ev->isAxis && ev->data1 == EVS_DOWN)
     {
         // When the UI the faded, an unhandled click brings back the UI.
         UI_DefaultFocus(page);
@@ -901,16 +905,16 @@ void UIText_BrightDrawer(ui_object_t *ob)
                  UI_COL(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1);
 }
 
-int UIButton_Responder(ui_object_t *ob, event_t *ev)
+int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
 {
     if(ob->flags & UIF_CLICKED)
     {
-        if(ev->state == EVS_UP &&
-           (ev->type == EV_MOUSE_BUTTON || ev->type == EV_KEY))
+        if((ev->deviceID == IDEV_KEYBOARD || ev->deviceID == IDEV_MOUSE) &&
+           !ev->isAxis && ev->data1 == EVS_UP)
         {
             UI_Capture(0);
             ob->flags &= ~UIF_CLICKED;
-            if(UI_MouseInside(ob) || ev->type == EV_KEY)
+            if(UI_MouseInside(ob) || ev->deviceID == IDEV_KEYBOARD)
             {
                 // Activate?
                 if(ob->action)
@@ -919,9 +923,9 @@ int UIButton_Responder(ui_object_t *ob, event_t *ev)
             return true;
         }
     }
-    else if(ev->state == EVS_DOWN &&
-            ((ev->type == EV_MOUSE_BUTTON && UI_MouseInside(ob)) ||
-             (ev->type == EV_KEY && IS_ACTKEY(ev->data1))))
+    else if(ev->data1 == EVS_DOWN &&
+            ((ev->deviceID == IDEV_MOUSE && !ev->isAxis && UI_MouseInside(ob)) ||
+             (ev->deviceID == IDEV_KEYBOARD && IS_ACTKEY(ev->controlID))))
     {
         if(ob->type == UI_BUTTON)
         {
@@ -976,19 +980,19 @@ void UIButton_Drawer(ui_object_t *ob)
                  true, UI_COL(UIC_TITLE), alpha);
 }
 
-int UIEdit_Responder(ui_object_t *ob, event_t *ev)
+int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
 {
     uidata_edit_t *dat = ob->data;
 
     if(ob->flags & UIF_ACTIVE)
     {
-        if(ev->type != EV_KEY)
+        if(ev->deviceID != IDEV_KEYBOARD)
             return false;
 
-        if(!(ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
+        if(!(ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT))
             return false;
 
-        switch (ev->data1)
+        switch(ev->controlID)
         {
         case DDKEY_LEFTARROW:
             if(dat->cp > 0)
@@ -1033,21 +1037,21 @@ int UIEdit_Responder(ui_object_t *ob, event_t *ev)
             break;
 
         default:
-            if((int) strlen(ob->text) < dat->maxlen && ev->data1 >= 32 &&
-               (DD_ModKey(ev->data1) <= 127 ||
-                DD_ModKey(ev->data1) >= DD_HIGHEST_KEYCODE))
+            if((int) strlen(ob->text) < dat->maxlen && ev->controlID >= 32 &&
+               (DD_ModKey(ev->controlID) <= 127 ||
+                DD_ModKey(ev->controlID) >= DD_HIGHEST_KEYCODE))
             {
                 memmove(ob->text + dat->cp + 1, ob->text + dat->cp,
                         strlen(ob->text) - dat->cp);
-                ob->text[dat->cp++] = DD_ModKey(ev->data1);
+                ob->text[dat->cp++] = DD_ModKey(ev->controlID);
             }
             break;
         }
         return true;
     }
-    else if(ev->state == EVS_DOWN &&
-            ((ev->type == EV_MOUSE_BUTTON && UI_MouseInside(ob)) ||
-             (ev->type == EV_KEY && IS_ACTKEY(ev->data1))))
+    else if(ev->data1 == EVS_DOWN &&
+            ((ev->deviceID == IDEV_MOUSE && !ev->isAxis && UI_MouseInside(ob)) ||
+             (ev->deviceID == IDEV_KEYBOARD && IS_ACTKEY(ev->controlID))))
     {
         // Activate and capture.
         ob->flags |= UIF_ACTIVE;
@@ -1121,7 +1125,7 @@ void UIEdit_Drawer(ui_object_t *ob)
     }
 }
 
-int UIList_Responder(ui_object_t *ob, event_t *ev)
+int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
 {
     uidata_list_t *dat = ob->data;
     int     i, oldsel = dat->selection, buth, barh;
@@ -1130,44 +1134,47 @@ int UIList_Responder(ui_object_t *ob, event_t *ev)
     if(ob->flags & UIF_CLICKED)
     {
         // We've captured all input.
-        if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_UP)
+        if(ev->deviceID == IDEV_MOUSE)
         {
-            dat->button[1] = false;
-            // Release capture.
-            UI_Capture(0);
-            ob->flags &= ~UIF_CLICKED;
-        }
-        if(ev->type == EV_MOUSE_AXIS)
-        {
-            // Calculate the new position.
-            buth = UI_ListButtonHeight(ob);
-            barh = ob->h - 2 * (UI_BORDER + buth);
-            if(barh - buth)
+            if(ev->isAxis)
             {
-                dat->first =
-                    ((ui_cy - ob->y - UI_BORDER -
-                      (buth * 3) / 2) * (dat->count - dat->numvis) + (barh -
-                                                                      buth) /
-                     2) / (barh - buth);
+                // Calculate the new position.
+                buth = UI_ListButtonHeight(ob);
+                barh = ob->h - 2 * (UI_BORDER + buth);
+                if(barh - buth)
+                {
+                    dat->first =
+                        ((ui_cy - ob->y - UI_BORDER -
+                          (buth * 3) / 2) * (dat->count - dat->numvis) + (barh -
+                                                                          buth) /
+                         2) / (barh - buth);
+                }
+                else
+                {
+                    dat->first = 0;
+                }
+                // Check that it's in range.
+                if(dat->first > dat->count - dat->numvis)
+                    dat->first = dat->count - dat->numvis;
+                if(dat->first < 0)
+                    dat->first = 0;
             }
-            else
+            else if(ev->data1 == EVS_UP)
             {
-                dat->first = 0;
+                dat->button[1] = false;
+                // Release capture.
+                UI_Capture(0);
+                ob->flags &= ~UIF_CLICKED;
             }
-            // Check that it's in range.
-            if(dat->first > dat->count - dat->numvis)
-                dat->first = dat->count - dat->numvis;
-            if(dat->first < 0)
-                dat->first = 0;
         }
         // We're eating everything.
         return true;
     }
-    else if(ev->type == EV_KEY &&
-            (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
+    else if(ev->deviceID == IDEV_KEYBOARD &&
+            (ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT))
     {
         used = true;
-        switch (ev->data1)
+        switch(ev->controlID)
         {
         case DDKEY_UPARROW:
             if(dat->selection > 0)
@@ -1191,7 +1198,8 @@ int UIList_Responder(ui_object_t *ob, event_t *ev)
             used = false;
         }
     }
-    else if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_DOWN)
+    else if(ev->deviceID == IDEV_MOUSE && !ev->isAxis &&
+            ev->data1 == EVS_DOWN)
     {
         if(!UI_MouseInside(ob))
             return false;
@@ -1251,10 +1259,11 @@ int UIList_Responder(ui_object_t *ob, event_t *ev)
         else
             return false;
     }
-    else if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_UP)
+    else if(ev->deviceID == IDEV_MOUSE && !ev->isAxis &&
+            ev->data1 == EVS_UP)
     {
         // Release all buttons.
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
             dat->button[i] = false;
         // We might have leaved the object's area, so let other objects
         // process this event, too.
@@ -1409,7 +1418,7 @@ int UI_SliderThumbPos(ui_object_t *ob)
                                                             butw * 3);
 }
 
-int UISlider_Responder(ui_object_t *ob, event_t *ev)
+int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
 {
     uidata_slider_t *dat = ob->data;
     float   oldvalue = dat->value;
@@ -1419,46 +1428,48 @@ int UISlider_Responder(ui_object_t *ob, event_t *ev)
     if(ob->flags & UIF_CLICKED)
     {
         // We've captured all input.
-        if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_UP)
+        if(ev->deviceID == IDEV_MOUSE)
         {
-            dat->button[1] = false; // Release thumb.
-            UI_Capture(0);
-            ob->flags &= ~UIF_CLICKED;
-        }
-
-        if(ev->type == EV_MOUSE_AXIS)
-        {
-            // Calculate new value from the mouse position.
-            butw = UI_SliderButtonWidth(ob);
-            inw = ob->w - 2 * UI_BAR_BORDER - 3 * butw;
-            if(inw > 0)
+            if(ev->isAxis)
             {
-                dat->value =
-                    dat->min + (dat->max - dat->min) * (ui_cx - ob->x -
-                                                        UI_BAR_BORDER -
-                                                        (3 * butw) / 2) /
-                    (float) inw;
+                // Calculate new value from the mouse position.
+                butw = UI_SliderButtonWidth(ob);
+                inw = ob->w - 2 * UI_BAR_BORDER - 3 * butw;
+                if(inw > 0)
+                {
+                    dat->value =
+                        dat->min + (dat->max - dat->min) * (ui_cx - ob->x -
+                                                            UI_BAR_BORDER -
+                                                            (3 * butw) / 2) /
+                        (float) inw;
+                }
+                else
+                {
+                    dat->value = dat->min;
+                }
+                if(dat->value < dat->min)
+                    dat->value = dat->min;
+                if(dat->value > dat->max)
+                    dat->value = dat->max;
+                if(!dat->floatmode)
+                    dat->value = (int) (dat->value + .5f);
+                if(ob->action)
+                    ob->action(ob);
             }
-            else
+            else if(ev->data1 == EVS_UP)
             {
-                dat->value = dat->min;
+                dat->button[1] = false; // Release thumb.
+                UI_Capture(0);
+                ob->flags &= ~UIF_CLICKED;
             }
-            if(dat->value < dat->min)
-                dat->value = dat->min;
-            if(dat->value > dat->max)
-                dat->value = dat->max;
-            if(!dat->floatmode)
-                dat->value = (int) (dat->value + .5f);
-            if(ob->action)
-                ob->action(ob);
         }
         return true;
     }
-    else if(ev->type == EV_KEY &&
-            (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
+    else if(ev->deviceID == IDEV_KEYBOARD &&
+            (ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT))
     {
         used = true;
-        switch (ev->data1)
+        switch(ev->controlID)
         {
         case DDKEY_HOME:
             dat->value = dat->min;
@@ -1489,7 +1500,8 @@ int UISlider_Responder(ui_object_t *ob, event_t *ev)
             used = false;
         }
     }
-    else if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_DOWN)
+    else if(ev->deviceID == IDEV_MOUSE && !ev->isAxis &&
+            ev->data1 == EVS_DOWN)
     {
         if(!UI_MouseInside(ob))
             return false;
@@ -1521,10 +1533,11 @@ int UISlider_Responder(ui_object_t *ob, event_t *ev)
             return true;
         }
     }
-    else if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_UP)
+    else if(ev->deviceID == IDEV_MOUSE && !ev->isAxis &&
+            ev->data1 == EVS_UP)
     {
         // Release all buttons.
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
             dat->button[i] = false;
         // We might be outside the object's area (or none of the buttons
         // might even be pressed), so let others have this event, too.

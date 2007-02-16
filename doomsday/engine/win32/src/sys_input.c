@@ -46,7 +46,6 @@
 // MACROS ------------------------------------------------------------------
 
 #define KEYBUFSIZE  32
-#define INV(x, axis)    (joyInverseAxis[axis]? -x : x)
 
 // TYPES -------------------------------------------------------------------
 
@@ -66,7 +65,6 @@ extern boolean novideo;
 
 int     joydevice = 0;          // Joystick index to use.
 byte    usejoystick = false;    // Joystick input enabled?
-int     joyInverseAxis[8];      // Axis inversion (default: all false).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -86,14 +84,6 @@ void I_Register(void)
 {
     C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0);
     C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1);
-    C_VAR_INT("input-joy-x-inverse", &joyInverseAxis[0], 0, 0, 1);
-    C_VAR_INT("input-joy-y-inverse", &joyInverseAxis[1], 0, 0, 1);
-    C_VAR_INT("input-joy-z-inverse", &joyInverseAxis[2], 0, 0, 1);
-    C_VAR_INT("input-joy-rx-inverse", &joyInverseAxis[3], 0, 0, 1);
-    C_VAR_INT("input-joy-ry-inverse", &joyInverseAxis[4], 0, 0, 1);
-    C_VAR_INT("input-joy-rz-inverse", &joyInverseAxis[5], 0, 0, 1);
-    C_VAR_INT("input-joy-slider1-inverse", &joyInverseAxis[6], 0, 0, 1);
-    C_VAR_INT("input-joy-slider2-inverse", &joyInverseAxis[7], 0, 0, 1);
 }
 
 const char *I_ErrorMsg(HRESULT hr)
@@ -316,7 +306,7 @@ void I_InitJoystick(void)
     didJoy = 0;
 }
 
-void I_KillDevice(LPDIRECTINPUTDEVICE8 * dev)
+void I_KillDevice(LPDIRECTINPUTDEVICE8 *dev)
 {
     if(!*dev)
         return;
@@ -326,7 +316,7 @@ void I_KillDevice(LPDIRECTINPUTDEVICE8 * dev)
 }
 
 #if 0
-void I_KillDevice2(LPDIRECTINPUTDEVICE2 * dev)
+void I_KillDevice2(LPDIRECTINPUTDEVICE2 *dev)
 {
     if(!*dev)
         return;
@@ -336,7 +326,7 @@ void I_KillDevice2(LPDIRECTINPUTDEVICE2 * dev)
 }
 #endif
 
-/*
+/**
  * Initialize input.
  *
  * @return: int         (true) if successful.
@@ -344,7 +334,7 @@ void I_KillDevice2(LPDIRECTINPUTDEVICE2 * dev)
 int I_Init(void)
 {
     if(initIOk)
-        return true;            // Already initialized.
+        return true; // Already initialized.
 
     // We'll create the DirectInput object. The only required input device
     // is the keyboard. The others are optional.
@@ -456,7 +446,7 @@ boolean I_JoystickPresent(void)
 int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 {
     DIDEVICEOBJECTDATA keyData[KEYBUFSIZE];
-    int     tries, i, num;
+    int         tries, i, num;
 
     if(!initIOk)
         return 0;
@@ -492,7 +482,7 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 void I_GetMouseState(mousestate_t *state)
 {
     DIMOUSESTATE2 mstate;
-    int     i, tries;
+    int         i, tries;
 
     memset(state, 0, sizeof(*state));
 
@@ -529,8 +519,8 @@ void I_GetMouseState(mousestate_t *state)
 
 void I_GetJoystickState(joystate_t * state)
 {
-    int     tries, i;
-    int     pov;
+    int         tries, i;
+    int         pov;
     DIJOYSTATE dijoy;
 
     memset(state, 0, sizeof(*state));
@@ -556,18 +546,18 @@ void I_GetJoystickState(joystate_t * state)
         IDirectInputDevice8_Acquire(didJoy);
     }
 
-    state->axis[0] = INV(dijoy.lX, 0);
-    state->axis[1] = INV(dijoy.lY, 1);
-    state->axis[2] = INV(dijoy.lZ, 2);
+    state->axis[0] = dijoy.lX;
+    state->axis[1] = dijoy.lY;
+    state->axis[2] = dijoy.lZ;
 
-    state->rotAxis[0] = INV(dijoy.lRx, 3);
-    state->rotAxis[1] = INV(dijoy.lRy, 4);
-    state->rotAxis[2] = INV(dijoy.lRz, 5);
+    state->rotAxis[0] = dijoy.lRx;
+    state->rotAxis[1] = dijoy.lRy;
+    state->rotAxis[2] = dijoy.lRz;
 
-    state->slider[0] = INV(dijoy.rglSlider[0], 6);
-    state->slider[1] = INV(dijoy.rglSlider[1], 7);
+    state->slider[0] = dijoy.rglSlider[0];
+    state->slider[1] = dijoy.rglSlider[1];
 
-    for(i = 0; i < IJOY_MAXBUTTONS; i++)
+    for(i = 0; i < IJOY_MAXBUTTONS; ++i)
         state->buttons[i] = (dijoy.rgbButtons[i] & 0x80) != 0;
     pov = dijoy.rgdwPOV[0];
     if((pov & 0xffff) == 0xffff)

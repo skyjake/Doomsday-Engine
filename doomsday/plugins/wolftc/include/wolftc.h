@@ -31,7 +31,6 @@
 #define __WOLFTC_CONVENIENCE_H__
 
 #include "../../wolftc/include/acfnlink.h"
-#include "../../wolftc/include/d_action.h"
 #include "../../wolftc/include/doomdef.h"
 #include "../../wolftc/include/dstrings.h"
 #include "../../wolftc/include/g_game.h"
@@ -43,7 +42,6 @@
 #include "../../wolftc/include/m_cheat.h"
 #include "../../wolftc/include/m_menu.h"
 #include "../../wolftc/include/mn_def.h"
-#include "../../wolftc/include/m_ctrl.h"
 #include "../../wolftc/include/p_inter.h"
 #include "../../wolftc/include/p_local.h"
 #include "../../wolftc/include/p_pspr.h"

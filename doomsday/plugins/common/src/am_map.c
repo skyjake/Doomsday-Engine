@@ -55,6 +55,7 @@
 #include "am_map.h"
 #include "g_common.h"
 #include "p_player.h"
+#include "g_controls.h"
 
 // TYPES -------------------------------------------------------------------
 
@@ -1004,6 +1005,7 @@ void AM_Ticker(void)
         amap_fullyopen = false;
 
     // Zooming
+/*
     if(PLAYER_ACTION(mapplr, A_MAPZOOMOUT))  // zoom out
     {
         mtof_zoommul = M_ZOOMOUT;
@@ -1015,11 +1017,13 @@ void AM_Ticker(void)
         ftom_zoommul = M_ZOOMOUT;
     }
     else
+*/
     {
         mtof_zoommul = FRACUNIT;
         ftom_zoommul = FRACUNIT;
     }
 
+/*
     // Camera location paning
     if(!followplayer)
     {
@@ -1040,6 +1044,7 @@ void AM_Ticker(void)
             m_paninc.pos[VY] = 0;
     }
     else  // Camera follows the player
+*/
         AM_doFollowPlayer();
 
     // Change the zoom

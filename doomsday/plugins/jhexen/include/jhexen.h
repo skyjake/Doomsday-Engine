@@ -43,10 +43,8 @@
 #define __JHEXEN_CONVENIENCE_H__
 
 #include "../../jhexen/include/acfnlink.h"
-#include "../../jhexen/include/h2_actn.h"
 #include "../../jhexen/include/h2def.h"
 #include "../../jhexen/include/m_cheat.h"
-#include "../../jhexen/include/m_ctrl.h"
 #include "../../jhexen/include/mn_def.h"
 #include "../../jhexen/include/p_local.h"
 #include "../../jhexen/include/p_mapinfo.h"

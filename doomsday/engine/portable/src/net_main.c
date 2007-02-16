@@ -330,39 +330,56 @@ void Net_ResetTimer(void)
 }
 
 /**
+ * @return      <code>true</code> if the specified player is a real,
+ *              local player.
+ */
+boolean Net_IsLocalPlayer(int pNum)
+{
+	return players[pNum].ingame && players[pNum].flags & DDPF_LOCAL;
+}
+
+/**
  * Send the local player(s) ticcmds to the server.
  */
 void Net_SendCommands(void)
 {
-    byte   *msg;
-    ticcmd_t *cmd;
+    uint        i;
+    byte       *msg;
+    ticcmd_t   *cmd;
     
     if(isDedicated)
         return;
 
-    // Clients send their ticcmds to the server at regular intervals,
-    // but significantly less often than new ticcmds are built.
-    // Therefore they need to send a combination of all the cmds built
-    // during the wait period.
+	// Send the commands of all local players.
+	for(i = 0; i < DDMAXPLAYERS; ++i)
+	{
+        if(!Net_IsLocalPlayer(i))
+            continue;
 
-    cmd = clients[consoleplayer].aggregateCmd;
+        // Clients send their ticcmds to the server at regular intervals,
+        // but significantly less often than new ticcmds are built.
+        // Therefore they need to send a combination of all the cmds built
+        // during the wait period.
 
-    // The game will pack the commands into a buffer. The returned
-    // pointer points to a buffer that contains its size and the
-    // packed commands.
-    msg = (byte *) gx.NetPlayerEvent(1, DDPE_WRITE_COMMANDS, cmd);
+        cmd = clients[i].aggregateCmd;
 
-    Msg_Begin(PCL_COMMANDS);
-    Msg_Write(msg + 2, *(ushort *) msg);
+        // The game will pack the commands into a buffer. The returned
+        // pointer points to a buffer that contains its size and the
+        // packed commands.
+        msg = (byte *) gx.NetPlayerEvent(1, DDPE_WRITE_COMMANDS, cmd);
 
-    // Send the packet to the server, i.e. player zero.
-    // Player commands are sent over TCP so their integrity and order
-    // are guaranteed.
-    Net_SendBuffer(0, (isClient ? 0 : SPF_REBOUND) | SPF_ORDERED);
+        Msg_Begin(PCL_COMMANDS);
+        Msg_Write(msg + 2, *(ushort *) msg);
 
-    // Clients will begin composing a new aggregate now that this
-    // one has been sent.
-    memset(cmd, 0, TICCMD_SIZE);
+        // Send the packet to the server, i.e. player zero.
+        // Player commands are sent over TCP so their integrity and order
+        // are guaranteed.
+        Net_SendBuffer(0, (isClient ? 0 : SPF_REBOUND) | SPF_ORDERED);
+
+        // Clients will begin composing a new aggregate now that this
+        // one has been sent.
+        memset(cmd, 0, TICCMD_SIZE);
+    }
 }
 
 static void Net_DoUpdate(void)
@@ -478,27 +495,33 @@ void Net_Update(void)
  */
 void Net_BuildLocalCommands(timespan_t time)
 {
-    ticcmd_t *cmd;
+    uint        i;
+    ticcmd_t   *cmd;
 
-    if(isDedicated) return;
+    if(isDedicated)
+        return;
 
-    // Ticcmd of the local player.
-    cmd = clients[consoleplayer].lastCmd;
-
-    if(playback || ui_active)
+		// Generate ticcmds for local players.
+	for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+		if(!Net_IsLocalPlayer(i))
+            continue;
+
+        cmd = clients[i].lastCmd;
+
+        // The command will stay 'empty' if no controls are active.
+        memset(cmd, 0, sizeof(*cmd));
         // No actions can be undertaken during demo playback or when
         // in UI mode.
-        memset(cmd, 0, sizeof(*cmd));
-    }
-    else
-    {
-        gx.BuildTicCmd(cmd, time);
-    }
+        if(!(playback || ui_active))
+        {
+            P_BuildCommand(cmd, i);
+        }
 
-    // Be sure to merge each built command into the aggregate that
-    // will be sent periodically to the server.
-    gx.MergeTicCmd(clients[consoleplayer].aggregateCmd, cmd);
+        // Be sure to merge each built command into the aggregate that
+        // will be sent periodically to the server.
+        P_MergeCommand(clients[i].aggregateCmd, cmd);
+    }
 }
 
 /**

@@ -275,7 +275,8 @@ void HU_Init(void)
 void HU_UnloadData(void)
 {
 #if __JDOOM__
-    Z_Free(lnames);
+    if(lnames)
+        Z_Free(lnames);
 #endif
 }
 

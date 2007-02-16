@@ -31,7 +31,6 @@
 #define __JDOOM_CONVENIENCE_H__
 
 #include "../../jdoom/include/acfnlink.h"
-#include "../../jdoom/include/d_action.h"
 #include "../../jdoom/include/doomdef.h"
 #include "../../jdoom/include/dstrings.h"
 #include "../../jdoom/include/g_game.h"
@@ -43,7 +42,6 @@
 #include "../../jdoom/include/m_cheat.h"
 #include "../../jdoom/include/m_menu.h"
 #include "../../jdoom/include/mn_def.h"
-#include "../../jdoom/include/m_ctrl.h"
 #include "../../jdoom/include/p_inter.h"
 #include "../../jdoom/include/p_local.h"
 #include "../../jdoom/include/p_oldsvg.h"

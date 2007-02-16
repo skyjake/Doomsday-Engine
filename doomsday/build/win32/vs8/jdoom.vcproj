@@ -315,10 +315,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\p_ticcmd.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\include\p_tick.h"
 				>
 			</File>
@@ -412,10 +408,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\hu_stuff.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\src\m_ctrl.c"
 				>
 			</File>
 			<File
@@ -519,10 +511,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jdoom\include\d_action.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jdoom\include\d_config.h"
 				>
 			</File>
@@ -584,10 +572,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jdoom\include\m_cheat.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jdoom\include\m_ctrl.h"
 				>
 			</File>
 			<File
@@ -672,10 +656,6 @@
 			>
 			<File
 				RelativePath="..\..\..\plugins\jdoom\src\acfnlink.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jdoom\src\d_action.c"
 				>
 			</File>
 			<File

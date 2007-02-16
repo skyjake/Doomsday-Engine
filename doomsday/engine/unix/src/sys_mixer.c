@@ -55,9 +55,6 @@ static int initMixerOk = 0;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// Sys_InitMixer
-//===========================================================================
 int Sys_InitMixer(void)
 {
     if(initMixerOk || ArgCheck("-nomixer") || ArgCheck("-nomusic") || isDedicated)
@@ -68,19 +65,14 @@ int Sys_InitMixer(void)
     return true;
 }
 
-//===========================================================================
-// Sys_ShutdownMixer
-//===========================================================================
 void Sys_ShutdownMixer(void)
 {
     if(!initMixerOk)
-        return;                 // Can't uninitialize if not inited.
+        return; // Can't un-initialize if not inited.
+
     initMixerOk = false;
 }
 
-//===========================================================================
-// Sys_Mixer4i
-//===========================================================================
 int Sys_Mixer4i(int device, int action, int control, int parm)
 {
     if(!initMixerOk)
@@ -90,9 +82,6 @@ int Sys_Mixer4i(int device, int action, int control, int parm)
     return MIX_ERROR;
 }
 
-//===========================================================================
-// Sys_Mixer3i
-//===========================================================================
 int Sys_Mixer3i(int device, int action, int control)
 {
     return Sys_Mixer4i(device, action, control, 0);

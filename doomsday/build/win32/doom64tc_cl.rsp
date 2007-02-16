@@ -5,7 +5,6 @@
  ./../../plugins/common/src/m_multi.c
  ./../../plugins/common/src/mn_menu.c
  ./../../plugins/doom64tc/src/g_ctrl.c
- ./../../plugins/common/src/m_ctrl.c
  ./../../plugins/common/src/g_dglinit.c
  ./../../plugins/doom64tc/src/d_api.c
  ./../../plugins/doom64tc/src/d_refresh.c
@@ -61,6 +60,5 @@
  ./../../plugins/common/src/g_game.c
  ./../../plugins/common/src/g_controls.c
  ./../../plugins/doom64tc/src/d_items.c
- ./../../plugins/doom64tc/src/d_action.c
  ./../../plugins/doom64tc/src/acfnlink.c
  

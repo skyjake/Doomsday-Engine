@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,7 +78,7 @@ GETGAMEAPI GetGameAPI;
 
 BOOL InitApplication(HINSTANCE hInst)
 {
-    WNDCLASS wc;
+    WNDCLASS    wc;
 
     // We need to register a window class for our window.
     wc.style = CS_OWNDC;
@@ -95,8 +96,8 @@ BOOL InitApplication(HINSTANCE hInst)
 
 BOOL InitInstance(HINSTANCE hInst, int cmdShow)
 {
-    HDC     hdc;
-    char    buf[256];
+    HDC         hdc;
+    char        buf[256];
 
     DD_MainWindowTitle(buf);
 
@@ -122,7 +123,7 @@ BOOL InitInstance(HINSTANCE hInst, int cmdShow)
 
 BOOL InitGameDLL(void)
 {
-    char   *dllName = NULL;     // Pointer to the filename of the game DLL.
+    char       *dllName = NULL; // Pointer to the filename of the game DLL.
 
     // First we need to locate the dll name among the command line arguments.
     DD_CheckArg("-game", &dllName);
@@ -160,17 +161,17 @@ BOOL InitGameDLL(void)
     return TRUE;
 }
 
-//===========================================================================
-// LoadPlugin
-//  Loads the given plugin. Returns TRUE iff the plugin was loaded
-//  succesfully.
-//===========================================================================
+/**
+ * Loads the given plugin.
+ *
+ * @return              <code>true</code> if the plugin was loaded succesfully.
+ */
 int LoadPlugin(const char *filename)
 {
-    int     i;
+    int         i;
 
     // Find the first empty plugin instance.
-    for(i = 0; hInstPlug[i]; i++);
+    for(i = 0; hInstPlug[i]; ++i);
 
     // Try to load it.
     if(!(hInstPlug[i] = LoadLibrary(filename)))
@@ -180,32 +181,30 @@ int LoadPlugin(const char *filename)
     return TRUE;
 }
 
-//===========================================================================
-// InitPlugins
-//  Loads all the plugins from the startup directory.
-//===========================================================================
+/**
+ * Loads all the plugins from the startup directory.
+ */
 int InitPlugins(void)
 {
-    long    hFile;
+    long        hFile;
     struct _finddata_t fd;
-    char    plugfn[256];
+    char        plugfn[256];
 
     sprintf(plugfn, "%sdp*.dll", ddBinDir.path);
     if((hFile = _findfirst(plugfn, &fd)) == -1L)
         return TRUE;
+
     do
         LoadPlugin(fd.name);
     while(!_findnext(hFile, &fd));
+
     return TRUE;
 }
 
-//===========================================================================
-// WinMain
-//===========================================================================
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
 {
-    char    path[256];
+    char        path[256];
 
     // Where are we?
     GetModuleFileName(hInstance, path, 255);
@@ -248,13 +247,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     return 0;
 }
 
-//===========================================================================
-// MainWndProc
-//  All messages go to the default window message processor.
-//===========================================================================
+/**
+ * All messages go to the default window message processor.
+ */
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    switch (msg)
+    switch(msg)
     {
     case WM_CLOSE:
         // FIXME: Allow closing via the close button.
@@ -266,20 +264,20 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-//===========================================================================
-// DD_Shutdown
-//  Shuts down the engine.
-//===========================================================================
+/**
+ * Shuts down the engine.
+ */
 void DD_Shutdown(void)
 {
-    int     i;
+    int         i;
 
     // Shutdown all subsystems.
     DD_ShutdownAll();
 
     FreeLibrary(hInstGame);
-    for(i = 0; hInstPlug[i]; i++)
+    for(i = 0; hInstPlug[i]; ++i)
         FreeLibrary(hInstPlug[i]);
+
     hInstGame = NULL;
     memset(hInstPlug, 0, sizeof(hInstPlug));
 }

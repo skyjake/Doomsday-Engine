@@ -74,10 +74,6 @@ typedef struct {
     int             (*GetInteger) (int id);
     void           *(*GetVariable) (int id);
 
-    // Ticcmds.
-    void            (*BuildTicCmd) (void *cmd, float elapsedTime);
-    void            (*MergeTicCmd) (void *dest, void *src);
-
     // Networking.
     int             (*NetServerStart) (int before);
     int             (*NetServerStop) (int before);

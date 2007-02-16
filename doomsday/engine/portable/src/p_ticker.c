@@ -123,6 +123,10 @@ void P_Ticker(timespan_t time)
 
     if(!thinkercap.next)
         return;                 // Not initialized yet.
+
+	// Update local view angle controls.
+	P_ControlTicker(time);
+
     if(!M_CheckTrigger(&fixed, time))
         return;
 

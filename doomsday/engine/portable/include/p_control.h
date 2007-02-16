@@ -29,12 +29,50 @@
 #ifndef __DOOMSDAY_PLAYER_CONTROL_H__
 #define __DOOMSDAY_PLAYER_CONTROL_H__
 
-void            P_DefineActions(action_t *acts);
-void            P_ClearActions(int pnum);
+typedef enum togglestate_e {
+    TG_OFF 		= 0,
+    TG_ON		= 1,
+    TG_NEGATIVE	= 2,
+	
+	// Some aliases:
+    TG_POSITIVE	= TG_ON,
+    TG_MIDDLE 	= TG_OFF,
 
-// The command begins with a '+' or a '-'.
-// Returns true if the action was changed successfully.
-boolean         P_ActionCommand(const char *cmd, boolean hasPrefix);
+	// Special state:
+    TG_TOGGLE	= 3
+} togglestate_t;
 
-D_CMD(ListActs);
+// Impulse numbers are 8-bit unsigned integers.
+typedef unsigned char impulse_t;
+
+typedef struct controltoggle_s {
+    togglestate_t state;
+    uint    time;               // Time of last change.
+} controltoggle_t;
+
+typedef struct controlaxis_s {
+    controltoggle_t *toggle;    // The toggle that affects this axis control.
+    float   pos;                // Possibly affected by toggles.
+    float   axisPos;            // Position of the input device axis.
+} controlaxis_t;
+
+void        P_RegisterControl(void);
+void        P_ControlTableInit(int player);
+void        P_ControlShutdown(void);
+
+void        P_RegisterPlayerControl(uint class, const char *name);
+
+int         P_ControlGetToggles(int player);
+void        P_ControlReset(int player);
+
+boolean     P_IsValidControl(const char *cmd);
+boolean     P_ControlExecute(const char *command);
+void        P_ControlTicker(timespan_t time);
+
+uint 	    P_ControlFindAxis(const char *name);
+float 	    P_ControlGetAxis(int player, const char *name);
+const char *P_ControlGetAxisName(uint index);
+void        P_ControlSetAxis(int player, uint axisControlIndex, float pos);
+void        P_ControlAxisDelta(int player, uint axisControlIndex,
+                               float delta);
 #endif

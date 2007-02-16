@@ -58,7 +58,6 @@
 #include "dd_api.h"
 #include "g_dgl.h"
 #include "version.h"
-#include "p_ticcmd.h"
 
 #define Set         DD_SetInteger
 #define Get         DD_GetInteger

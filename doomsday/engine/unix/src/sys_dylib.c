@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2005-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -111,9 +112,9 @@ int lt_dlforeachfile(const char *searchPath,
                      int (*func) (const char *fileName, lt_ptr data),
                      lt_ptr data)
 {
-    DIR *dir = NULL;
+    DIR        *dir = NULL;
     struct dirent *entry = NULL;
-    filename_t bundlePath;
+    filename_t  bundlePath;
 
     // This is the default location where bundles are.
     getBundlePath(bundlePath);
@@ -144,13 +145,13 @@ int lt_dlforeachfile(const char *searchPath,
     return 0;
 }
 
-/*
+/**
  * The base file name should have the ".bundle" file name extension.
  */
 lt_dlhandle lt_dlopenext(const char *baseFileName)
 {
     lt_dlhandle handle;
-    filename_t bundleName;
+    filename_t  bundleName;
 #ifdef MACOSX
     char* ptr;
 #endif

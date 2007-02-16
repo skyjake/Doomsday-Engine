@@ -23,7 +23,7 @@
  */
 
 /*
- * con_bind.h: Event/Command Binding
+ * con_bind.h: Control Binding
  */
 
 #ifndef __DOOMSDAY_CONSOLE_BIND_H__
@@ -32,32 +32,48 @@
 #include <stdio.h>
 #include "de_base.h"
 
-typedef struct {
-    char *command[3];       // { down, up, repeat }
-} command_t;
+typedef enum {
+    BND_UNUSED = -1,
+    BND_COMMAND = 0,
+    BND_AXIS,
+    NUM_BIND_TYPES
+} bindtype_t;
 
 typedef struct {
-    evtype_t    type;
-    int         data1;      // keys/mouse/joystick buttons
-    int         flags;
-    command_t  *commands;
+    char       *command[NUM_EVENT_STATES]; // { down, up, repeat }
+} bindcommand_t;
+
+typedef struct {
+	int         localPlayer;
+    int         playercontrol;
+    boolean     invert;
+} bindaxis_t;
+
+typedef struct {
+    bindtype_t type;
+    union {
+        bindcommand_t command;
+        bindaxis_t axiscontrol;
+    } data;
+} bindcontrol_t;
+
+typedef struct {
+    int         controlID;      // control index.
+    bindcontrol_t *binds;       // [maxBindClasses] size
 } binding_t;
 
-void            B_Init(void);
-void            B_Bind(event_t *event, char *command,
-                       unsigned int bindClass);
-void            DD_AddBindClass(struct bindclass_s *);
-boolean         B_SetBindClass(unsigned int classID, unsigned int type);
-void            B_RegisterBindClasses(void);
-int             B_BindingsForCommand(char *command, char *buffer,
-                                     unsigned int bindClass,
-                                     boolean allClasses);
-void            B_ClearBinding(char *command, unsigned int bindClass,
-                               boolean allClasses);
-boolean         B_Responder(event_t *ev);
-void            B_WriteToFile(FILE * file);
-void            B_Shutdown();
+void    B_Register(void);
+void    B_Init(void);
+void    DD_AddBindClass(struct bindclass_s *);
+boolean  B_SetBindClass(uint classID, uint type);
+void    B_RegisterBindClasses(void);
+int     B_BindingsForCommand(char *command, char *buffer, uint bindClass,
+                             boolean allClasses);
+void    B_ClearBinding(char *command, uint bindClass, boolean allClasses);
+boolean B_Responder(ddevent_t *ev);
+void    B_WriteToFile(FILE *file);
+void    B_Shutdown(void);
 
-int             DD_GetKeyCode(const char *key);
+int     DD_GetKeyCode(const char *key);
 
 #endif

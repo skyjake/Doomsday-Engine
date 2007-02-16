@@ -237,6 +237,9 @@ desc = Bind a console command to an event.
 [bindr]
 desc = Bind a console command to an event (keys with repeat).
 
+[bindaxis]
+desc = Bind a device axis to an axis control.
+
 [bledit]
 desc = Enter bias light edit mode.
 
@@ -329,6 +332,9 @@ inf = Params: dir (dirs) ...\nFor example, 'dir data\'.\nVirtual files are liste
 desc = Dump a data lump currently loaded in memory.
 inf = Params: dump (name)\nFor example, 'dump PLAYPAL'.
 
+[listinputdevices]
+desc = List all currently active input devices and their controls.
+
 [dumpkeymap]
 desc = Write the current keymap to a file.
 inf = Params: dumpkeymap (file)\nFor example, 'dumpkeymap finnish.dkm'.
@@ -373,8 +379,8 @@ inf = Params: keymap (dkm-file)\nFor example, 'keymap finnish'.
 desc = Kick client out of the game (server only).
 inf = Params: kick (playernum)\nFor example, 'kick 1'.
 
-[listactions]
-desc = List all action commands.
+[listcontrols]
+desc = List the names of all player controls.
 
 [listaliases]
 desc = List all aliases and their expanded forms.

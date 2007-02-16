@@ -38,6 +38,7 @@
 #include "hu_pspr.h"
 #include "am_map.h"
 #include "g_common.h"
+#include "g_controls.h"
 #include "r_common.h"
 #include "d_net.h"
 #include "f_infine.h"

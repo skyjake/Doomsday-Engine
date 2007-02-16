@@ -40,17 +40,6 @@
 #include "dam_main.h"
 #include "rend_bias.h"
 
-// Ticcmd
-#define TICCMD_SIZE     gx.ticcmd_size
-#define TICCMD_IDX(i)   ((i)*TICCMD_SIZE)
-
-// Tick Command template. Of course it contains much more info,
-// but these first bytes are always the same.
-typedef struct {
-    char            forwardMove;   //*2048 for real move
-    char            sideMove;      //*2048 for real move
-} ticcmd_t;
-
 #define GET_VERTEX_IDX(vtx)     ((vtx) - vertexes)
 #define GET_LINE_IDX(li)        ((li) - lines)
 #define GET_SIDE_IDX(si)        ((si) - sides)

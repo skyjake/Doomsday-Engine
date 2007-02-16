@@ -78,7 +78,7 @@ typedef struct autoload_s {
 
 void    G_CheckDemoStatus();
 void    F_Drawer(void);
-boolean F_Responder(event_t *ev);
+boolean F_Responder(ddevent_t *ev);
 void    S_InitScript(void);
 void    Net_Drawer(void);
 
@@ -334,7 +334,6 @@ void DD_AutoLoad(void)
  */
 void DD_Main(void)
 {
-    int     p;
     char   *outfilename = "doomsday.out";
 
     DD_Verbosity();
@@ -697,6 +696,10 @@ static int DD_StartupWorker(void *parm)
         }
     }
 
+	// Initialize the control table.
+	for(p = 0; p < DDMAXPLAYERS; ++p)
+        P_ControlTableInit(p);
+
     // In dedicated mode the console must be opened, so all input events
     // will be handled by it.
     if(isDedicated)
@@ -874,7 +877,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&skyDetail, 0},
     {&sfx_volume, &sfx_volume},
     {&mus_volume, &mus_volume},
-    {&mouseInverseY, &mouseInverseY},
+    {0, 0}, //{&mouseInverseY, &mouseInverseY},
     {&usegamma, 0},
     {&queryResult, 0},
     {&levelFullBright, &levelFullBright},

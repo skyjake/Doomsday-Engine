@@ -820,7 +820,6 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
     byte   *out = msg + 2, *flags, *start = out;
     ticcmd_t prev;
     int     i;
-    byte   buttons;
 
     // Always compare against the previous command.
     memset(&prev, 0, sizeof(prev));
@@ -853,7 +852,12 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
             *(short *) out = SHORT(cmd->pitch);
             out += 2;
         }
-
+		if(cmd->actions != prev.actions)
+		{
+			*flags |= CMDF_BUTTONS;
+			*out++ = cmd->actions;
+		}
+/*
         // Compile the button flags.
         buttons = 0;
         // Client sends player action requests sent instead.
@@ -892,7 +896,7 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
             *(short *) out = SHORT(cmd->changeWeapon);
             out += 2;
         }
-
+*/
         memcpy(&prev, cmd, sizeof(*cmd));
     }
 

@@ -282,7 +282,6 @@ void            Net_PingResponse(void);
 void            Net_ShowPingSummary(int player);
 void            Net_ShowChatMessage();
 int             Net_TimeDelta(byte now, byte then);
-void            Net_NewLocalCmd(ticcmd_t * cmd, int pNum);
 int             Net_GetTicCmd(void *cmd, int player);
 void            Net_Update(void);
 void            Net_Ticker(void/*timespan_t time*/);

@@ -44,7 +44,6 @@
 #define EVBUFSIZE       64
 
 #define KEYBUFSIZE      32
-#define INV(x, axis)    (joyInverseAxis[axis]? -x : x)
 
 #define CONVCONST       ((IJOY_AXISMAX - IJOY_AXISMIN) / 65535.0)
 
@@ -64,7 +63,6 @@ extern boolean novideo;
 
 int     joydevice = 0;          // Joystick index to use.
 byte    usejoystick = false;    // Joystick input enabled?
-int     joyInverseAxis[8];      // Axis inversion (default: all false).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -85,18 +83,10 @@ void I_Register(void)
 {
     C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0);
     C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1);
-    C_VAR_INT("input-joy-x-inverse", &joyInverseAxis[0], 0, 0, 1);
-    C_VAR_INT("input-joy-y-inverse", &joyInverseAxis[1], 0, 0, 1);
-    C_VAR_INT("input-joy-z-inverse", &joyInverseAxis[2], 0, 0, 1);
-    C_VAR_INT("input-joy-rx-inverse", &joyInverseAxis[3], 0, 0, 1);
-    C_VAR_INT("input-joy-ry-inverse", &joyInverseAxis[4], 0, 0, 1);
-    C_VAR_INT("input-joy-rz-inverse", &joyInverseAxis[5], 0, 0, 1);
-    C_VAR_INT("input-joy-slider1-inverse", &joyInverseAxis[6], 0, 0, 1);
-    C_VAR_INT("input-joy-slider2-inverse", &joyInverseAxis[7], 0, 0, 1);
 }
 
-/*
- * Returns a new key event struct from the buffer.
+/**
+ * @return          A new key event struct from the buffer.
  */
 keyevent_t *I_NewKeyEvent(void)
 {
@@ -107,8 +97,8 @@ keyevent_t *I_NewKeyEvent(void)
     return ev;
 }
 
-/*
- * Returns the oldest event from the buffer.
+/**
+ * @return          The oldest event from the buffer.
  */
 keyevent_t *I_GetKeyEvent(void)
 {
@@ -121,13 +111,13 @@ keyevent_t *I_GetKeyEvent(void)
     return ev;
 }
 
-/*
+/**
  * Translate the SDL symbolic key code to a DDKEY.
  * FIXME: A translation array for these?
  */
 int I_TranslateKeyCode(SDLKey sym)
 {
-    switch (sym)
+    switch(sym)
     {
     case 167:                   // Tilde
         return 96;              // ASCII: '`'
@@ -276,19 +266,19 @@ int I_TranslateKeyCode(SDLKey sym)
     return sym;
 }
 
-/*
+/**
  * SDL's events are all returned from the same routine.  This function
  * is called periodically, and the events we are interested in a saved
  * into our own buffer.
  */
 void I_PollEvents(void)
 {
-    SDL_Event event;
+    SDL_Event   event;
     keyevent_t *e;
 
     while(SDL_PollEvent(&event))
     {
-        switch (event.type)
+        switch(event.type)
         {
         case SDL_KEYDOWN:
         case SDL_KEYUP:
@@ -317,9 +307,6 @@ void I_PollEvents(void)
     }
 }
 
-//===========================================================================
-// I_InitMouse
-//===========================================================================
 void I_InitMouse(void)
 {
     if(ArgCheck("-nomouse") || novideo)
@@ -332,26 +319,27 @@ void I_InitMouse(void)
     SDL_WM_GrabInput(SDL_GRAB_ON);
 }
 
-//===========================================================================
-// I_InitJoystick
-//===========================================================================
 void I_InitJoystick(void)
 {
-        int joycount;
+    int         joycount;
 
     if(ArgCheck("-nojoy"))
         return;
 
-    if ((joycount = SDL_NumJoysticks()) > 0) {
-            if (joydevice > joycount) {
-                    Con_Message("I_InitJoystick: joydevice = %i, out of range.\n",
-                joydevice);
+    if((joycount = SDL_NumJoysticks()) > 0)
+    {
+        if(joydevice > joycount)
+        {
+            Con_Message("I_InitJoystick: joydevice = %i, out of range.\n",
+                        joydevice);
             joy = SDL_JoystickOpen(0);
         }
-        else joy = SDL_JoystickOpen(joydevice);
-        }
+        else
+            joy = SDL_JoystickOpen(joydevice);
+    }
 
-    if (joy) {
+    if(joy)
+    {
         // Show some info.
         Con_Message("I_InitJoystick: %s\n", SDL_JoystickName(SDL_JoystickIndex(joy)));
 
@@ -360,65 +348,56 @@ void I_InitJoystick(void)
 
         numaxes = SDL_JoystickNumAxes(joy);
         numbuttons = SDL_JoystickNumButtons(joy);
-        if (numbuttons > IJOY_MAXBUTTONS)
+        if(numbuttons > IJOY_MAXBUTTONS)
             numbuttons = IJOY_MAXBUTTONS;
 
         useJoystick = true;
     }
-    else {
+    else
+    {
         Con_Message("I_InitJoystick: No joysticks found\n");
         useJoystick = false;
     }
 }
 
-//===========================================================================
-// I_Init
-//  Initialize input. Returns true if successful.
-//===========================================================================
+/**
+ * Initialize input.
+ *
+ * @return              <code>true</code> if successful.
+ */
 int I_Init(void)
 {
     if(initIOk)
-        return true;            // Already initialized.
+        return true; // Already initialized.
+
     I_InitMouse();
     I_InitJoystick();
     initIOk = true;
     return true;
 }
 
-//===========================================================================
-// I_Shutdown
-//===========================================================================
 void I_Shutdown(void)
 {
     if(!initIOk)
-        return;                 // Not initialized.
+        return; // Not initialized.
     if (joy) SDL_JoystickClose(joy);
     initIOk = false;
 }
 
-//===========================================================================
-// I_MousePresent
-//===========================================================================
 boolean I_MousePresent(void)
 {
     return useMouse;
 }
 
-//===========================================================================
-// I_JoystickPresent
-//===========================================================================
 boolean I_JoystickPresent(void)
 {
     return useJoystick;
 }
 
-//===========================================================================
-// I_GetKeyEvents
-//===========================================================================
 int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 {
     keyevent_t *e;
-    int     i = 0;
+    int         i = 0;
 
     if(!initIOk)
         return 0;
@@ -427,23 +406,21 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
     I_PollEvents();
 
     // Get the events.
-    for(i = 0; i < bufsize; i++)
+    for(i = 0; i < bufsize; ++i)
     {
         e = I_GetKeyEvent();
         if(!e)
-            break;              // No more events.
+            break; // No more events.
         memcpy(&evbuf[i], e, sizeof(*e));
     }
+
     return i;
 }
 
-//===========================================================================
-// I_GetMouseState
-//===========================================================================
 void I_GetMouseState(mousestate_t *state)
 {
-    Uint8   buttons;
-    int     i;
+    Uint8       buttons;
+    int         i;
 
     memset(state, 0, sizeof(*state));
 
@@ -461,7 +438,7 @@ void I_GetMouseState(mousestate_t *state)
         state->buttons |= IMB_MIDDLE;
 
     // The buttons bitfield is ordered according to the numbering.
-    for(i = 4; i < 8; i++)
+    for(i = 4; i < 8; ++i)
     {
         if(buttons & SDL_BUTTON(i))
             state->buttons |= 1 << (i - 1);
@@ -471,12 +448,10 @@ void I_GetMouseState(mousestate_t *state)
     wheelCount = 0;
 }
 
-//===========================================================================
-// I_GetJoystickState
-//===========================================================================
-void I_GetJoystickState(joystate_t * state)
+void I_GetJoystickState(joystate_t *state)
 {
-    int i, pov;
+    int         i, pov;
+
     memset(state, 0, sizeof(*state));
 
     // Initialization has not been done.
@@ -487,26 +462,26 @@ void I_GetJoystickState(joystate_t * state)
     SDL_JoystickUpdate();
 
     // Grab the first three axes. SDL returns a value between -32768 and
-        // 32767, but Doomsday is expecting -10000 to 10000. We'll convert
-        // as we go.
+    // 32767, but Doomsday is expecting -10000 to 10000. We'll convert
+    // as we go.
 
     // FIXME: would changing IJOY_AXISMIN and IJOY_AXISMAX to -32768 and
     // 32767 break the Windows version? If not that would make this
     // cleaner.
-
-    for (i = 0; i < 3; i++) {
-        int value;
-        if (i > numaxes) break;
+    for(i = 0; i < 3; ++i)
+    {
+        int         value;
+        if(i > numaxes)
+            break;
 
         value = SDL_JoystickGetAxis(joy, i);
         value = ((value + 32768) * CONVCONST) + IJOY_AXISMIN;
 
-        state->axis[i] = INV(value, i);
+        state->axis[i] = value;
     }
 
     // Dunno what to do with these using SDL so we'll set them
     // all to 0 for now.
-
     state->rotAxis[0] = 0;
     state->rotAxis[1] = 0;
     state->rotAxis[2] = 0;
@@ -514,36 +489,45 @@ void I_GetJoystickState(joystate_t * state)
     state->slider[0] = 0;
     state->slider[1] = 0;
 
-    for(i = 0; i < numbuttons; i++)
+    for(i = 0; i < numbuttons; ++i)
         state->buttons[i] = SDL_JoystickGetButton(joy, i);
 
     pov = SDL_JoystickGetHat(joy, 0);
-    switch(pov) {
-        case SDL_HAT_UP:
-            state->povAngle = 0;
-            break;
-        case SDL_HAT_RIGHT:
-            state->povAngle = 90;
-            break;
-        case SDL_HAT_DOWN:
-            state->povAngle = 180;
-            break;
-        case SDL_HAT_LEFT:
-            state->povAngle = 270;
-            break;
-        case SDL_HAT_RIGHTUP:
-            state->povAngle = 45;
-            break;
-        case SDL_HAT_RIGHTDOWN:
-            state->povAngle = 135;
-            break;
-        case SDL_HAT_LEFTUP:
-            state->povAngle = 315;
-            break;
-        case SDL_HAT_LEFTDOWN:
-            state->povAngle = 225;
-            break;
-        default:
-            state->povAngle = IJOY_POV_CENTER;
+    switch(pov)
+    {
+    case SDL_HAT_UP:
+        state->povAngle = 0;
+        break;
+
+    case SDL_HAT_RIGHT:
+        state->povAngle = 90;
+        break;
+
+    case SDL_HAT_DOWN:
+        state->povAngle = 180;
+        break;
+
+    case SDL_HAT_LEFT:
+        state->povAngle = 270;
+        break;
+
+    case SDL_HAT_RIGHTUP:
+        state->povAngle = 45;
+        break;
+
+    case SDL_HAT_RIGHTDOWN:
+        state->povAngle = 135;
+        break;
+
+    case SDL_HAT_LEFTUP:
+        state->povAngle = 315;
+        break;
+
+    case SDL_HAT_LEFTDOWN:
+        state->povAngle = 225;
+        break;
+
+    default:
+        state->povAngle = IJOY_POV_CENTER;
     }
 }

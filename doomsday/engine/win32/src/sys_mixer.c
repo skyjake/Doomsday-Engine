@@ -125,15 +125,15 @@ void Sys_InitMixerLine(mixerdata_t * mix, DWORD type)
     mix->available = true;
 }
 
-/*
+/**
  * A ridiculous amount of code to do something this simple.
  * But mixers are pretty abstract a subject, I guess...
  * (No, the API just sucks.)
  */
 int Sys_InitMixer(void)
 {
-    MIXERCAPS mixerCaps;
-    int     num = mixerGetNumDevs();    // Number of mixer devices.
+    MIXERCAPS   mixerCaps;
+    int         num = mixerGetNumDevs(); // Number of mixer devices.
 
     if(initMixerOk || ArgCheck("-nomixer") || ArgCheck("-nomusic") || isDedicated)
         return true;
@@ -189,9 +189,9 @@ int Sys_Mixer4i(int device, int action, int control, int parm)
     MIXERCONTROLDETAILS ctrlDetails;
     MIXERCONTROLDETAILS_UNSIGNED mcdUnsigned[2];
     MIXERCONTROL *mctrl;
-    MIXERLINE *mline;
+    MIXERLINE  *mline;
     mixerdata_t *mix;
-    int     i;
+    int         i;
 
     if(!initMixerOk)
         return MIX_ERROR;
@@ -221,7 +221,7 @@ int Sys_Mixer4i(int device, int action, int control, int parm)
     ctrlDetails.cbDetails = sizeof(mcdUnsigned);
     ctrlDetails.paDetails = &mcdUnsigned;
 
-    switch (action)
+    switch(action)
     {
     case MIX_GET:
         res =

@@ -198,6 +198,7 @@ void DD_ShutdownAll(void)
     for(i = 0; i < MAXPLAYERS; ++i)
         Demo_StopRecording(i);
 
+    P_ControlShutdown();
     Sv_Shutdown();
     R_Shutdown();
     Sys_ConShutdown();

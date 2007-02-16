@@ -39,7 +39,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LINELEN 256             // Lazy: This is the max acceptable window width.
+#define LINELEN 256  // Lazy: This is the max acceptable window width.
 
 // TYPES -------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ static int needNewLine = false;
 
 void Sys_ConUpdateTitle(void)
 {
-    char    title[256];
+    char        title[256];
 
     DD_MainWindowTitle(title);
 
@@ -83,7 +83,7 @@ void Sys_ConUpdateTitle(void)
 
 void Sys_ConInit(void)
 {
-    int     maxPos[2];
+    int         maxPos[2];
 
     // Initialize curses.
     initscr();
@@ -133,7 +133,7 @@ int Sys_ConTranslateKey(int key)
 
     //fprintf(outFile, "key=%i\n", key);
 
-    switch (key)
+    switch(key)
     {
     case '\r':
     case '\n':
@@ -161,8 +161,8 @@ int Sys_ConTranslateKey(int key)
 
 void Sys_ConPostEvents(void)
 {
-    event_t ev;
-    int     key;
+    ddevent_t   ev;
+    int         key;
 
     // Get all keys that are waiting.
     for(key = wgetch(winCommand); key != ERR; key = wgetch(winCommand))
@@ -188,15 +188,16 @@ void Sys_ConPostEvents(void)
            continue;
            } */
 
-        ev.type = EV_KEY;
-        ev.state = EVS_DOWN;
+        ev.deviceID = IDEV_KEYBOARD;
+        ev.data1 = EVS_DOWN;
         ev.noclass = true;
         ev.useclass = 0; // initialize with something
-        ev.data1 = Sys_ConTranslateKey(key);
+        ev.isAxis = false;
+        ev.controlID = Sys_ConTranslateKey(key);
         DD_PostEvent(&ev);
 
         // Release immediately.
-        ev.state = EVS_UP;
+        ev.data1 = EVS_UP;
         DD_PostEvent(&ev);
     }
 }
@@ -214,7 +215,9 @@ void Sys_ConSetAttrib(int flags)
         wattrset(winText, A_NORMAL);
 }
 
-// Writes the text in winText at (cx,cy).
+/**
+ * Writes the text in winText at (cx,cy).
+ */
 void Sys_ConWriteText(const char *line, int len)
 {
     wmove(winText, cy, cx);
@@ -224,7 +227,7 @@ void Sys_ConWriteText(const char *line, int len)
 
 int Sys_ConGetScreenSize(int axis)
 {
-    int     x, y;
+    int         x, y;
 
     getmaxyx(winText, y, x);
     return axis == VX ? x : y;
@@ -232,10 +235,10 @@ int Sys_ConGetScreenSize(int axis)
 
 void Sys_ConPrint(int clflags, char *text)
 {
-    char    line[LINELEN];
-    int     count = strlen(text), lineStart, bPos;
-    char   *ptr = text, ch;
-    int     maxPos[2];
+    char        line[LINELEN];
+    int         count = strlen(text), lineStart, bPos;
+    char       *ptr = text, ch;
+    int         maxPos[2];
 
     // Determine the size of the text window.
     getmaxyx(winText, maxPos[VY], maxPos[VX]);
@@ -306,13 +309,13 @@ void Sys_ConPrint(int clflags, char *text)
 void Sys_ConUpdateCmdLine(char *text)
 {
     unsigned int i;
-    char    line[LINELEN], *ch;
-    int     maxX = Sys_ConGetScreenSize(VX);
-    int     length;
+    char        line[LINELEN], *ch;
+    int         maxX = Sys_ConGetScreenSize(VX);
+    int         length;
 
     if(text == NULL)
     {
-        int     y, x;
+        int         y, x;
 
         // Just move the cursor into the command line window.
         getyx(winCommand, y, x);
@@ -322,7 +325,7 @@ void Sys_ConUpdateCmdLine(char *text)
     {
         memset(line, 0, sizeof(line));
         line[0] = '>';
-        for(i = 0, ch = line + 1; i < LINELEN - 1; i++, ch++)
+        for(i = 0, ch = line + 1; i < LINELEN - 1; ++i, ch++)
         {
             if(i < strlen(text))
                 *ch = text[i];

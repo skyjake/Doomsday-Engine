@@ -68,6 +68,7 @@
 #include "am_map.h"
 #include "x_hair.h"
 #include "p_player.h"
+#include "g_controls.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -742,7 +743,7 @@ static menuitem_t OptionsItems[] = {
     {ITT_SETMENU, 0, "automap...", NULL, MENU_MAP},
     {ITT_SETMENU, 0, "weapons...", NULL, MENU_WEAPONSETUP},
     {ITT_SETMENU, 0, "sound...", NULL, MENU_OPTIONS2},
-    {ITT_SETMENU, 0, "controls...", NULL, MENU_CONTROLS},
+    {ITT_EFUNC,   0, "controls...", M_OpenDCP, 2},
     {ITT_SETMENU, 0, "mouse options...", NULL, MENU_MOUSE},
     {ITT_SETMENU, 0, "joystick options...", NULL, MENU_JOYSTICK}
 };
@@ -953,48 +954,6 @@ static menu_t HUDDef = {
     0, 13
 #endif
 };
-
-#ifdef __JDOOM__
-menu_t ControlsDef = {
-    MNF_NOHOTKEYS,
-    32, 40,
-    M_DrawControlsMenu,
-    NUM_CONTROLS_ITEMS, ControlsItems,
-    1, MENU_OPTIONS,
-    hu_font_a,                    //1, 0, 0,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
-    0, 16
-};
-#endif
-
-#ifdef __JHERETIC__
-menu_t ControlsDef = {
-    MNF_NOHOTKEYS,
-    32, 26,
-    M_DrawControlsMenu,
-    NUM_CONTROLS_ITEMS, ControlsItems,
-    1, MENU_OPTIONS,
-    hu_font_a,                    //1, 0, 0,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
-    0, 17
-};
-#endif
-
-#ifdef __JHEXEN__
-menu_t ControlsDef = {
-    MNF_NOHOTKEYS,
-    32, 21,
-    M_DrawControlsMenu,
-    NUM_CONTROLS_ITEMS, ControlsItems,
-    1, MENU_OPTIONS,
-    hu_font_a,                    //1, 0, 0,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
-    0, 17
-};
-#endif
 
 static menuitem_t WeaponItems[] = {
     {ITT_EMPTY,  0, "Use left/right to move", NULL, 0 },
@@ -1237,7 +1196,6 @@ menu_t* menulist[] = {
     &GameplayDef,
     &HUDDef,
     &MapDef,
-    &ControlsDef,
     &MouseOptsMenu,
     &JoyConfigMenu,
 #ifndef __JDOOM__
@@ -3839,7 +3797,8 @@ void M_SizeDisplay(int option, void *data)
 void M_OpenDCP(int option, void *data)
 {
     M_ClearMenus();
-    DD_Execute(option ? "panel audio" : "panel", true);
+    DD_Execute((option == 2? "panel input":(option == 1? "panel audio":"panel")),
+               true);
 }
 
 void MN_DrawColorBox(const menu_t * menu, int index, float r, float g,

@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,11 +38,6 @@
 #include <initguid.h>
 #include <eax.h>
 #include <math.h>
-
-/*#if _DEBUG
-   #define DEBUG
-   #include <dprintf.h>
-   #endif */
 
 #include "de_base.h"
 #include "de_console.h"
@@ -125,7 +121,7 @@ void DS_DSoundError(char *msg)
     Con_Message("DS_DSoundError: %s [%x]\n", msg, hr);
 }
 
-IDirectSoundBuffer8 *DS_DSoundCreateBuffer8(DSBUFFERDESC * desc)
+IDirectSoundBuffer8 *DS_DSoundCreateBuffer8(DSBUFFERDESC *desc)
 {
     IDirectSoundBuffer *buf;
     IDirectSoundBuffer8 *buf8;
@@ -146,7 +142,7 @@ IDirectSoundBuffer8 *DS_DSoundCreateBuffer8(DSBUFFERDESC * desc)
     return buf8;
 }
 
-IDirectSound3DBuffer8 *DS_DSoundGet3D(IDirectSoundBuffer8 * buf8)
+IDirectSound3DBuffer8 *DS_DSoundGet3D(IDirectSoundBuffer8 *buf8)
 {
     IDirectSound3DBuffer8 *buf3d;
 
@@ -165,37 +161,37 @@ IDirectSound3DBuffer8 *DS_DSoundGet3D(IDirectSoundBuffer8 * buf8)
     return buf3d;
 }
 
-/*
+/**
  * Does the EAX implementation support getting/setting of a propertry.
  *
- * @param:  property     Property id (constant) to be checked.
- * @return: boolean      (true) if supported.
+ * @param property      Property id (constant) to be checked.
+ * @return              <code>true</code> if supported.
  */
 boolean DS_EAXHasSupport(int property)
 {
-    ULONG   support = 0;
-    boolean has_support;
+    ULONG       support = 0;
+    boolean     hasSupport;
 
     if(!eax_listener)
         return false;
 
-    has_support = SUCCEEDED(hr =
-                            IKsPropertySet_QuerySupport(eax_listener,
-                                                        &DSPROPSETID_EAX_ListenerProperties,
-                                                        property, &support)) &&
+    hasSupport =
+        SUCCEEDED(hr = IKsPropertySet_QuerySupport(eax_listener,
+                                                   &DSPROPSETID_EAX_ListenerProperties,
+                                                   property, &support)) &&
                   (support & EAXSUP) == EAXSUP;
 
     if(verbose)
         Con_Message("DS_EAXHasSupport: Property %i => %s\n", property,
-                    has_support ? "Yes" : "No");
+                    hasSupport ? "Yes" : "No");
 
-    return has_support;
+    return hasSupport;
 }
 
-/*
+/**
  * Not a driver of its own, but part of the DSound driver.
  *
- * @return: int         (true) if EAX is available.
+ * @return              <code>true</code> if EAX is available.
  */
 int DS_EAXInit(void)
 {
@@ -260,10 +256,10 @@ int DS_EAXInit(void)
     return true;
 }
 
-/*
+/**
  * Init DirectSound, start playing the primary buffer.
  *
- * @return: int         (true) if successful.
+ * @return              <code>true</code> if successful.
  */
 int DS_DSoundInit(void)
 {
@@ -360,7 +356,7 @@ int DS_DSoundInit(void)
     return true;
 }
 
-/*
+/**
  * Shut everything down.
  */
 void DS_DSoundShutdown(void)
@@ -372,7 +368,7 @@ void DS_DSoundShutdown(void)
     eax_listener = NULL;
 }
 
-/*
+/**
  * The Event function is called to tell the driver about certain critical
  * events like the beginning and end of an update cycle.
  */
@@ -381,7 +377,7 @@ void DS_DSoundEvent(int type)
     // Do nothing...
 }
 
-/*
+/**
  * Called using Listener().
  */
 void DS_DSoundSetPrimaryFormat(int bits, int rate)
@@ -406,7 +402,7 @@ sfxbuffer_t *DS_DSoundCreateBuffer(int flags, int bits, int rate)
     WAVEFORMATEX format;
     DSBUFFERDESC desc;
     sfxbuffer_t *buf;
-    int     i;
+    int         i;
 
     // If we don't have the listener, the primary buffer doesn't have 3D
     // capabilities; don't create 3D buffers. DSound should provide software
@@ -478,19 +474,19 @@ sfxbuffer_t *DS_DSoundCreateBuffer(int flags, int bits, int rate)
     return buf;
 }
 
-void DS_DSoundDestroyBuffer(sfxbuffer_t * buf)
+void DS_DSoundDestroyBuffer(sfxbuffer_t *buf)
 {
     IDirectSoundBuffer_Release(DSBuf(buf));
     // Free the memory allocated for the buffer.
     Z_Free(buf);
 }
 
-/*
+/**
  * Prepare the buffer for playing a sample by filling the buffer with
  * as much sample data as fits. The pointer to sample is saved, so
  * the caller mustn't free it while the sample is loaded.
  */
-void DS_DSoundLoad(sfxbuffer_t * buf, struct sfxsample_s *sample)
+void DS_DSoundLoad(sfxbuffer_t *buf, struct sfxsample_s *sample)
 {
     void   *data;
     DWORD   locked_bytes, wrote_bytes;
@@ -532,25 +528,25 @@ void DS_DSoundLoad(sfxbuffer_t * buf, struct sfxsample_s *sample)
     IDirectSoundBuffer_SetCurrentPosition(DSBuf(buf), 0);
 }
 
-/*
+/**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_DSoundReset(sfxbuffer_t * buf)
+void DS_DSoundReset(sfxbuffer_t *buf)
 {
     DS_DSoundStop(buf);
     buf->sample = NULL;
     buf->flags &= ~SFXBF_RELOAD;
 }
 
-/*
- * @return: unsigned int    Length of the buffer in milliseconds.
+/**
+ * @return              Length of the buffer in milliseconds.
  */
-unsigned int DS_DSoundBufferLength(sfxbuffer_t * buf)
+unsigned int DS_DSoundBufferLength(sfxbuffer_t *buf)
 {
     return 1000 * buf->sample->numsamples / buf->freq;
 }
 
-void DS_DSoundPlay(sfxbuffer_t * buf)
+void DS_DSoundPlay(sfxbuffer_t *buf)
 {
     // Playing is quite impossible without a sample.
     if(!buf->sample)
@@ -574,7 +570,7 @@ void DS_DSoundPlay(sfxbuffer_t * buf)
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_DSoundStop(sfxbuffer_t * buf)
+void DS_DSoundStop(sfxbuffer_t *buf)
 {
     IDirectSoundBuffer_Stop(DSBuf(buf));
 
@@ -600,13 +596,13 @@ static boolean InRange(uint pos, uint start, uint end)
     return (pos >= start || pos <= end);
 }
 
-/*
+/**
  * Buffer streamer. Called by the Sfx refresh thread.
  * Copy sample data into the buffer, and if the sample has ended,
  * stop playing the buffer. If the buffer has been lost for some reason,
  * restore it. Don't do anything time-consuming...
  */
-void DS_DSoundRefresh(sfxbuffer_t * buf)
+void DS_DSoundRefresh(sfxbuffer_t *buf)
 {
     DWORD   play, bytes[2], dose, fill;
     void   *data[2];
@@ -651,7 +647,7 @@ void DS_DSoundRefresh(sfxbuffer_t * buf)
         write_bytes = buf->length - buf->cursor + play;
 
     // Try to lock the region, restoring if failed.
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
         if(FAILED
            (hr =
@@ -672,11 +668,11 @@ void DS_DSoundRefresh(sfxbuffer_t * buf)
         return;                 // Bugrit.
     }
 
-    //dprintf("C%i, B%i, W%i (p%i)", buf->cursor, write_bytes, buf->written, play);
-    //dprintf("  (d1=%p b=%i d2=%p b=%i)", data[0], bytes[0], data[1], bytes[1]);
+//dprintf("C%i, B%i, W%i (p%i)", buf->cursor, write_bytes, buf->written, play);
+//dprintf("  (d1=%p b=%i d2=%p b=%i)", data[0], bytes[0], data[1], bytes[1]);
 
     // Copy in two parts: as much sample data as we've got, and then zeros.
-    for(i = 0; i < 2 && data[i]; i++)
+    for(i = 0; i < 2 && data[i]; ++i)
     {
         // The dose is limited to the number of bytes we can write to this
         // pointer and the number of bytes we've got left.
@@ -721,12 +717,12 @@ void DS_DSoundRefresh(sfxbuffer_t * buf)
         buf->written = 0;
 }
 
-/*
+/**
  * Convert linear volume 0..1 to logarithmic -10000..0.
  */
 int DS_DSoundLinLog(float vol)
 {
-    int     ds_vol;
+    int         dsVol;
 
     if(vol <= 0)
         return DSBVOLUME_MIN;
@@ -734,13 +730,14 @@ int DS_DSoundLinLog(float vol)
         return DSBVOLUME_MAX;
 
     // Straighten the volume curve.
-    ds_vol = 100 * 20 * log10(vol);
-    if(ds_vol < DSBVOLUME_MIN)
-        ds_vol = DSBVOLUME_MIN;
-    return ds_vol;
+    dsVol = 100 * 20 * log10(vol);
+    if(dsVol < DSBVOLUME_MIN)
+        dsVol = DSBVOLUME_MIN;
+
+    return dsVol;
 }
 
-/*
+/**
  * Convert linear pan -1..1 to logarithmic -10000..10000.
  */
 int DS_DSoundLogPan(float pan)
@@ -753,10 +750,11 @@ int DS_DSoundLogPan(float pan)
         return 0;
     if(pan > 0)
         return -100 * 20 * log10(1 - pan);
+
     return 100 * 20 * log10(1 + pan);
 }
 
-/*
+/**
  * SFXBP_VOLUME (if negative, interpreted as attenuation)
  * SFXBP_FREQUENCY
  * SFXBP_PAN (-1..1)
@@ -764,11 +762,11 @@ int DS_DSoundLogPan(float pan)
  * SFXBP_MAX_DISTANCE
  * SFXBP_RELATIVE_MODE
  */
-void DS_DSoundSet(sfxbuffer_t * buf, int property, float value)
+void DS_DSoundSet(sfxbuffer_t *buf, int property, float value)
 {
     unsigned int f;
 
-    switch (property)
+    switch(property)
     {
     case SFXBP_VOLUME:
         if(value <= 0)  // Use logarithmic attenuation.
@@ -813,18 +811,18 @@ void DS_DSoundSet(sfxbuffer_t * buf, int property, float value)
     }
 }
 
-/*
+/**
  * SFXBP_POSITION
  * SFXBP_VELOCITY
  * Coordinates specified in world coordinate system, converted to DSound's:
  * +X to the right, +Y up and +Z away (Y and Z swapped, i.e.).
  */
-void DS_DSoundSetv(sfxbuffer_t * buf, int property, float *values)
+void DS_DSoundSetv(sfxbuffer_t *buf, int property, float *values)
 {
     if(!DSBuf3(buf))
         return;
 
-    switch (property)
+    switch(property)
     {
     case SFXBP_POSITION:
         IDirectSound3DBuffer_SetPosition(DSBuf3(buf), values[VX], values[VZ],
@@ -838,7 +836,7 @@ void DS_DSoundSetv(sfxbuffer_t * buf, int property, float *values)
     }
 }
 
-/*
+/**
  * SFXLP_UNITS_PER_METER
  * SFXLP_DOPPLER
  * SFXLP_UPDATE
@@ -848,7 +846,7 @@ void DS_DSoundListener(int property, float value)
     if(!ds_listener)
         return;
 
-    switch (property)
+    switch(property)
     {
     case SFXLP_UPDATE:
         // Commit any deferred settings.
@@ -868,14 +866,14 @@ void DS_DSoundListener(int property, float value)
     }
 }
 
-/*
+/**
  * Parameters are in radians.
  * Example front vectors:
  *   Yaw 0:(0,0,1), pi/2:(-1,0,0)
  */
 void DS_DSoundListenerOrientation(float yaw, float pitch)
 {
-    float   front[3], up[3];
+    float       front[3], up[3];
 
     front[VX] = cos(yaw) * cos(pitch);
     front[VZ] = sin(yaw) * cos(pitch);
@@ -890,14 +888,14 @@ void DS_DSoundListenerOrientation(float yaw, float pitch)
                                           DS3D_DEFERRED);
 }
 
-/*
+/**
  * Set the property as 'failed'. No more errors are reported for it.
  */
 void DS_EAXSetFailed(DWORD prop)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < MAX_FAILED_PROPS; i++)
+    for(i = 0; i < MAX_FAILED_PROPS; ++i)
         if(failed_props[i] == ~0)
         {
             failed_props[i] = prop;
@@ -905,22 +903,23 @@ void DS_EAXSetFailed(DWORD prop)
         }
 }
 
-/*
- * @return: boolean         (true) if the specified property has failed.
+/**
+ * @return              <code>true</code> if the specified property has failed.
  */
 boolean DS_EAXHasFailed(DWORD prop)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < MAX_FAILED_PROPS; i++)
+    for(i = 0; i < MAX_FAILED_PROPS; ++i)
         if(failed_props[i] == prop)
             return true;
     return false;
 }
 
-/*
- * @return: boolean         (true) if an EAX error should be reported.
- *                          NOTE: hr must be set.
+/**
+ * NOTE: hr must be set.
+ *
+ * @return              <code>true</code> if an EAX error should be reported.
  */
 boolean DS_EAXReportError(DWORD prop)
 {
@@ -962,13 +961,13 @@ void DS_EAXSetf(DWORD prop, float value)
     }
 }
 
-/*
+/**
  * Linear multiplication for a logarithmic property.
  */
 void DS_EAXMuldw(DWORD prop, float mul)
 {
-    DWORD   retBytes;
-    LONG    value;
+    DWORD       retBytes;
+    LONG        value;
 
     if(FAILED
        (hr =
@@ -982,13 +981,13 @@ void DS_EAXMuldw(DWORD prop, float mul)
     DS_EAXSetdw(prop, DS_DSoundLinLog(pow(10, value / 2000.0f) * mul));
 }
 
-/*
+/**
  * Linear multiplication for a linear property.
  */
 void DS_EAXMulf(DWORD prop, float mul, float min, float max)
 {
-    DWORD   retBytes;
-    float   value;
+    DWORD       retBytes;
+    float       value;
 
     if(FAILED
        (hr =
@@ -1016,12 +1015,12 @@ void DS_EAXCommitDeferred(void)
                        NULL, 0);
 }
 
-/*
+/**
  * Values use SRD_* for indices.
  */
 void DS_DSoundListenerEnvironment(float *rev)
 {
-    float   val;
+    float       val;
 
     // This can only be done if EAX is available.
     if(!eax_listener)
@@ -1061,12 +1060,12 @@ void DS_DSoundListenerEnvironment(float *rev)
     DS_EAXSetf(DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR, 1.3f);
 }
 
-/*
+/**
  * Call SFXLP_UPDATE at the end of every channel update.
  */
 void DS_DSoundListenerv(int property, float *values)
 {
-    switch (property)
+    switch(property)
     {
     case SFXLP_PRIMARY_FORMAT:
         if(!ArgExists("-nopsf"))    // Can we set the Primary Sound Format?

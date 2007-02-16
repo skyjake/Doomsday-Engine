@@ -31,7 +31,6 @@
 #define __DOOM64TC_CONVENIENCE_H__
 
 #include "../../doom64tc/include/acfnlink.h"
-#include "../../doom64tc/include/d_action.h"
 #include "../../doom64tc/include/doomdef.h"
 #include "../../doom64tc/include/dstrings.h"
 #include "../../doom64tc/include/g_game.h"
@@ -43,7 +42,6 @@
 #include "../../doom64tc/include/m_cheat.h"
 #include "../../doom64tc/include/m_menu.h"
 #include "../../doom64tc/include/mn_def.h"
-#include "../../doom64tc/include/m_ctrl.h"
 #include "../../doom64tc/include/p_inter.h"
 #include "../../doom64tc/include/p_local.h"
 #include "../../doom64tc/include/p_pspr.h"

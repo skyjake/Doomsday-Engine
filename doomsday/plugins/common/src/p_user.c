@@ -317,21 +317,22 @@ boolean P_IsPlayerOnGround(player_t *player)
     return onground;
 }
 
-/*
+/**
  * Will make the player jump if the latest command so instructs,
  * providing that jumping is possible.
  */
 void P_CheckPlayerJump(player_t *player)
 {
-    float   power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
-    ticcmd_t *cmd = &player->cmd;
+    float       power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
+    ticcmd_t   *cmd = &player->plr->cmd;
 
     if(player->plr->flags & DDPF_CAMERA)
         return; // Cameras don't jump.
 
     // Check if we are allowed to jump.
     if(cfg.jumpEnabled && power > 0 && P_IsPlayerOnGround(player) &&
-       cmd->jump && player->jumptics <= 0)
+       !(cmd->actions & BT_SPECIAL) && !(cmd->actions & BT_CHANGE) &&
+       (cmd->actions & BT_JUMP) && player->jumptics <= 0)
     {
         // Jump, then!
 #if __JHEXEN__
@@ -352,8 +353,12 @@ void P_CheckPlayerJump(player_t *player)
 void P_MovePlayer(player_t *player)
 {
     ddplayer_t *dp = player->plr;
-    mobj_t *plrmo = player->plr->mo;
-    ticcmd_t *cmd = &player->cmd;
+    mobj_t     *plrmo = player->plr->mo;
+    ticcmd_t   *cmd = &player->plr->cmd;
+    classinfo_t *pClassInfo = PCLASS_INFO(plr->class);
+    int         speed;
+    fixed_t     forwardMove;
+    fixed_t     sideMove;
 
     // Change the angle if possible.
     /* $unifiedangles */
@@ -383,23 +388,60 @@ void P_MovePlayer(player_t *player)
     {
         // 'Move while in air' hack (server doesn't know about this!!).
         // Movement while in air traditionally disabled.
-        int movemul = (onground || plrmo->flags2 & MF2_FLY) ? PCLASS_INFO(player->class)->movemul :
+        int movemul = (onground || plrmo->flags2 & MF2_FLY) ? pClassInfo->movemul :
                        (cfg.airborneMovement) ? cfg.airborneMovement * 64 : 0;
 
-        if(cmd->forwardMove && movemul)
+        // Walk -> run, run -> walk.
+        speed = (cmd->actions & BT_SPEED);
+        if(cfg.alwaysRun)
+            speed = !speed;
+
+        forwardMove = cmd->forwardMove * pClassInfo->forwardmove[speed] * turbomul;
+        sideMove = cmd->sideMove * pClassInfo->sidemove[speed] * turbomul;
+
+        if(forwardMove > pClassInfo->maxmove)
+            forwardMove = pClassInfo->maxmove;
+        else if(forwardMove < -pClassInfo->maxmove)
+            forwardMove = -pClassInfo->maxmove;
+        if(sideMove > pClassInfo->maxmove)
+            sideMove = pClassInfo->maxmove;
+        else if(sideMove < -pClassInfo->maxmove)
+            sideMove = -pClassInfo->maxmove;
+
+#if __JHEXEN__
+        if(player->powers[PT_SPEED] && !player->morphTics)
         {
-            P_Thrust(player, plrmo->angle, cmd->forwardMove * movemul);
+            // Adjust for a player with a speed artifact
+            forwardMove = (3 * forwardMove) >> 1;
+            sideMove = (3 * sideMove) >> 1;
+        }
+#endif
+
+        if(cfg.playerMoveSpeed > 1)
+            cfg.playerMoveSpeed = 1;
+        if(cfg.playerMoveSpeed < 0)
+            cfg.playerMoveSpeed = 0;
+
+        if(cfg.playerMoveSpeed < 1)
+        {
+            forwardMove *= cfg.playerMoveSpeed;
+            sideMove *= cfg.playerMoveSpeed;
         }
 
-        if(cmd->sideMove && movemul)
+        if(forwardMove && movemul)
         {
-            P_Thrust(player, plrmo->angle - ANG90, cmd->sideMove * movemul);
+            P_Thrust(player, plrmo->angle, forwardMove * movemul);
         }
 
-        if((cmd->forwardMove || cmd->sideMove) &&
-           player->plr->mo->state == &states[PCLASS_INFO(player->class)->normalstate])
+        if(sideMove && movemul)
         {
-            P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->runstate);
+            P_Thrust(player, plrmo->angle - ANG90, sideMove * movemul);
+        }
+
+        if((forwardMove || sideMove) &&
+           player->plr->mo->state == &states[pClassInfo->normalstate])
+        {
+            P_SetMobjState(player->plr->mo, pClassInfo->runstate);
         }
 
         //P_CheckPlayerJump(player); // done in a different place
@@ -562,7 +604,7 @@ void P_DeathThink(player_t *player)
 #endif
     }
 
-    if(player->cmd.use)
+    if(player->plr->cmd.actions & BT_USE)
     {
         if(IS_CLIENT)
         {
@@ -977,8 +1019,8 @@ void P_PlayerThinkCheat(player_t *player)
 
 void P_PlayerThinkAttackLunge(player_t *player)
 {
-    mobj_t *plrmo = player->plr->mo;
-    ticcmd_t *cmd = &player->cmd;
+    mobj_t     *plrmo = player->plr->mo;
+    ticcmd_t   *cmd = &player->plr->cmd;
 
     if(plrmo->flags & MF_JUSTATTACKED)
     {
@@ -1081,9 +1123,9 @@ void P_PlayerThinkMove(player_t *player)
 
 void P_PlayerThinkFly(player_t *player)
 {
-    mobj_t *plrmo = player->plr->mo;
-    ticcmd_t *cmd = &player->cmd;
-    int     fly;
+    mobj_t     *plrmo = player->plr->mo;
+    ticcmd_t   *cmd = &player->plr->cmd;
+    int         fly;
 
     // Reactiontime is used to prevent movement for a bit after a teleport.
     if(plrmo->reactiontime)
@@ -1093,7 +1135,7 @@ void P_PlayerThinkFly(player_t *player)
     if(player->plr->flags & DDPF_CAMERA)
         return;
 
-    fly = cmd->fly;
+    fly = cmd->upMove;
     if(fly && player->powers[PT_FLIGHT])
     {
         if(fly != TOCENTER)
@@ -1245,31 +1287,34 @@ void P_PlayerThinkItems(player_t *player)
 
 void P_PlayerThinkWeapons(player_t *player)
 {
-    ticcmd_t *cmd = &player->cmd;
+    ticcmd_t   *cmd = &player->plr->cmd;
     weapontype_t oldweapon = player->pendingweapon;
     weapontype_t newweapon;
 
-    // There might be a special weapon change.
-    if(cmd->changeWeapon == TICCMD_NEXT_WEAPON ||
-       cmd->changeWeapon == TICCMD_PREV_WEAPON)
+    if(cmd->actions & BT_SPECIAL)
     {
-        player->pendingweapon =
-            P_PlayerFindWeapon(player,
-                               cmd->changeWeapon == TICCMD_NEXT_WEAPON);
-        cmd->changeWeapon = 0;
+        // There might be a special weapon change.
+		if((cmd->actions & (BTS_NEXTWEAPON | BTS_PREVWEAPON)) &&
+		   !(cmd->actions & BTS_PAUSE))
+        {
+            player->pendingweapon =
+                P_PlayerFindWeapon(player,
+                                   (cmd->actions & BTS_NEXTWEAPON) != 0);
+            cmd->actions = 0;
+        }
     }
 
     // Check for weapon change.
 #if __JHERETIC__ || __JHEXEN__
-    if(cmd->changeWeapon && !player->morphTics)
+    if((cmd->actions & BT_CHANGE) && !player->morphTics)
 #else
-    if(cmd->changeWeapon)
+    if(cmd->actions & BT_CHANGE)
 #endif
     {
         // The actual changing of the weapon is done
         //  when the weapon psprite can do it
         //  (read: not in the middle of an attack).
-        newweapon = cmd->changeWeapon - 1;
+        newweapon = (cmd->actions & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
 #if __JDOOM__
 # if !__DOOM64TC__
         if(gamemode != commercial && newweapon == WT_NINETH)
@@ -1301,7 +1346,7 @@ void P_PlayerThinkWeapons(player_t *player)
 
 void P_PlayerThinkUse(player_t *player)
 {
-    ticcmd_t *cmd = &player->cmd;
+    ticcmd_t   *cmd = &player->plr->cmd;
 
     if(IS_NETGAME && IS_SERVER && player != &players[consoleplayer])
     {
@@ -1310,7 +1355,7 @@ void P_PlayerThinkUse(player_t *player)
     }
 
     // check for use
-    if(cmd->use)
+    if(cmd->actions & BT_USE)
     {
         if(!player->usedown)
         {

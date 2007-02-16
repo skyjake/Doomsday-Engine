@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -136,12 +137,12 @@ sfxdriver_t *DS_ImportExternal(void)
     return d;
 }
 
-/*
+/**
  * "A3D", "OpenAL" and "Compat" are supported.
  */
 sfxdriver_t *DS_Load(const char *name)
 {
-    char    fn[256];
+    char        fn[256];
 
     // Compose the name, use the prefix "ds".
     sprintf(fn, "ds%s.dll", name);

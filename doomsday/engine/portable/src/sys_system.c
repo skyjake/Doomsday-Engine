@@ -100,6 +100,8 @@ void Sys_Init(void)
     {
         if(!I_Init())
             Con_Error("Sys_Init: failed to initialize DirectInput.\n");
+
+        I_InitInputDevices();
     }
     Sys_InitTimer();
     Sys_InitMixer();
@@ -141,6 +143,7 @@ void Sys_Shutdown(void)
     S_Shutdown();
     Sys_ShutdownMixer();
     GL_Shutdown();
+    I_ShutdownInputDevices();
     I_Shutdown();
 
 #ifdef WIN32

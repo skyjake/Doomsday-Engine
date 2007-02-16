@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include "dd_share.h"
 #include "de_system.h"
+#include "dd_input.h"
 
 #include "con_buffer.h"
 
@@ -115,7 +116,7 @@ void            Con_UpdateKnownWords(void);
 knownword_t   **Con_CollectKnownWordsMatchingWord(const char *word,
                                                   unsigned int  *count);
 void            Con_Ticker(timespan_t time);
-boolean         Con_Responder(event_t *event);
+boolean         Con_Responder(ddevent_t *event);
 void            Con_Printf(const char *format, ...);
 void            Con_FPrintf(int flags, const char *format, ...);    // Flagged printf.
 int             Con_PrintFileName(const char *fn, filetype_t type, void *dir);

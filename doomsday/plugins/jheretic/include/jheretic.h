@@ -42,7 +42,6 @@
 #define __JHERETIC_CONVENIENCE_H__
 
 #include "../../jheretic/include/acfnlink.h"
-#include "../../jheretic/include/h_action.h"
 #include "../../jheretic/include/doomdef.h"
 #include "../../jheretic/include/dstrings.h"
 #include "../../jheretic/include/g_game.h"
@@ -53,7 +52,6 @@
 #include "../../jheretic/include/m_cheat.h"
 #include "../../jheretic/include/m_menu.h"
 #include "../../jheretic/include/mn_def.h"
-#include "../../jheretic/include/m_ctrl.h"
 #include "../../jheretic/include/p_local.h"
 #include "../../jheretic/include/p_oldsvg.h"
 #include "../../jheretic/include/p_pspr.h"

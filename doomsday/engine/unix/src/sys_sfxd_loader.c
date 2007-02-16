@@ -70,17 +70,11 @@ static void dummyVoid(void)
 {
 }
 
-//===========================================================================
-// Imp
-//===========================================================================
 static void *Imp(const char *fn)
 {
 	return lt_dlsym(handle, fn);
 }
 
-//===========================================================================
-// DS_UnloadExternal
-//===========================================================================
 void DS_UnloadExternal(void)
 {
 	driverShutdown();
@@ -88,9 +82,6 @@ void DS_UnloadExternal(void)
 	handle = NULL;
 }
 
-//===========================================================================
-// DS_ImportExternal
-//===========================================================================
 sfxdriver_t *DS_ImportExternal(void)
 {
 	sfxdriver_t *d = &sfxd_external;
@@ -160,10 +151,9 @@ sfxdriver_t *DS_ImportExternal(void)
 	return d;
 }
 
-//===========================================================================
-// DS_Load
-//  "A3D", "OpenAL" and "Compat" are supported.
-//===========================================================================
+/**
+ * "A3D", "OpenAL" and "Compat" are supported.
+ */
 sfxdriver_t *DS_Load(const char *name)
 {
 	filename_t fn;

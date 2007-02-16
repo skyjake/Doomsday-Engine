@@ -53,7 +53,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
+#if 0
 extern float   menu_alpha;
 extern int menusnds[];
 extern menu_t  ControlsDef;
@@ -252,3 +252,4 @@ int D_PrivilegedResponder(event_t *event)
     }
     return false;
 }
+#endif

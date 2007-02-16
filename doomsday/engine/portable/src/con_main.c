@@ -105,18 +105,12 @@ typedef struct execbuff_s {
 
 D_CMD(AddSub);
 D_CMD(Alias);
-D_CMD(Bind);
-D_CMD(ClearBindings);
 D_CMD(Console);
-D_CMD(DeleteBind);
 D_CMD(Echo);
-D_CMD(EnableBindClass);
 D_CMD(Font);
 D_CMD(If);
 D_CMD(ListActs);
 D_CMD(ListAliases);
-D_CMD(ListBindings);
-D_CMD(ListBindClasses);
 D_CMD(ListCmds);
 D_CMD(ListVars);
 D_CMD(OpenClose);
@@ -198,33 +192,23 @@ static void Con_Register(void)
     C_CMD("add",            NULL,   AddSub);
     C_CMD("after",          "is",   Wait);
     C_CMD("alias",          NULL,   Alias);
-    C_CMD("bind",           NULL,   Bind);
-    C_CMD("bindr",          NULL,   Bind);
     C_CMD("clear",          NULL,   Console);
-    C_CMD("clearbinds",     "",     ClearBindings);
     C_CMD("conclose",       "",     OpenClose);
     C_CMD("conopen",        "",     OpenClose);
     C_CMD("contoggle",      "",     OpenClose);
     C_CMD("dec",            NULL,   AddSub);
-    C_CMD("delbind",        NULL,   DeleteBind);
     C_CMD("echo",           "s*",   Echo);
-    C_CMD("enablebindclass", NULL,  EnableBindClass);
     C_CMD("exec",           "s*",   Parse);
     C_CMD("font",           NULL,   Font);
     C_CMD("help",           NULL,   Console);
     C_CMD("if",             NULL,   If);
     C_CMD("inc",            NULL,   AddSub);
-    C_CMD("listactions",    "",     ListActs);
     C_CMD("listaliases",    NULL,   ListAliases);
-    C_CMD("listbindings",   NULL,   ListBindings);
-    C_CMD("listbindclasses", "",    ListBindClasses);
     C_CMD("listcmds",       NULL,   ListCmds);
     C_CMD("listmobjtypes",  "",     ListMobjs);
     C_CMD("listvars",       NULL,   ListVars);
     C_CMD("quit!",          "",     Quit);
     C_CMD("repeat",         "ifs",  Repeat);
-    C_CMD("safebind",       NULL,   Bind);
-    C_CMD("safebindr",      NULL,   Bind);
     C_CMD("sub",            NULL,   AddSub);
     C_CMD("toggle",         "s",    Toggle);
     C_CMD("version",        "",     Version);
@@ -399,6 +383,7 @@ void Con_Init(void)
     DD_RegisterLoop();
     DD_RegisterInput();
     DD_RegisterVFS();
+    B_Register(); // for control bindings
     Con_Register();
     DH_Register();
     R_Register();
@@ -412,6 +397,7 @@ void Con_Init(void)
     DAM_Register();
     UI_Register();
     Demo_Register();
+    P_RegisterControl();
 }
 
 void Con_Shutdown(void)
@@ -724,7 +710,6 @@ static boolean isStringValidFloat(const char *str)
  */
 static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 {
-    char    prefix;
     cmdargs_t args;
     ddccmd_t *ccmd;
     cvar_t  *cvar;
@@ -734,16 +719,14 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     if(!args.argc)
         return true;
 
-    if(args.argc == 1)          // An action?
+    if(args.argc == 1)  // Possibly a control command?
     {
-        prefix = args.argv[0][0];
-        if(prefix == '+' || prefix == '-')
-        {
-            return P_ActionCommand(args.argv[0], true);
-        }
-        // What about a prefix-less action?
-        if(strlen(args.argv[0]) <= 8 && P_ActionCommand(args.argv[0], false))
-            return true;        // There was one!
+		if(P_ControlExecute(args.argv[0]))
+		{
+			// It was a control command.  No further processing is
+			// necessary.
+			return true;
+		}
     }
 
     // If logged in, send command to server at this point.
@@ -1347,9 +1330,9 @@ void Con_Open(int yes)
     if(isDedicated)
         yes = true;
 
-    // Clear all action keys, keyup events won't go
-    // to bindings processing when the console is open.
-    P_ClearActions(consoleplayer);
+    // Clear all action keys, keyup events won't go to bindings processing
+    // when the console is open.
+    P_ControlReset(-1);
     Rend_ConsoleOpen(yes);
     if(yes)
     {
@@ -1367,20 +1350,21 @@ void Con_Open(int yes)
 /**
  * @return      <code>true</code> if the event is eaten.
  */
-boolean Con_Responder(event_t *event)
+boolean Con_Responder(ddevent_t *event)
 {
-    // The console is only interested in key events.
-    if(!event->type == EV_KEY)
+    // The console is only interested in keyboard events.
+    if(!event->deviceID == IDEV_KEYBOARD)
         return false;
 
-    if(consoleShowKeys && event->state == EVS_DOWN)
+    if(consoleShowKeys && event->data1 == EVS_DOWN)
     {
-        Con_Printf("Keydown: ASCII %i (0x%x)\n", event->data1, event->data1);
+        Con_Printf("Keydown: ASCII %i (0x%x)\n",
+                   event->controlID, event->controlID);
     }
 
     // Special console key: Shift-Escape opens the Control Panel.
     if(!conInputLock &&
-       shiftDown && event->state == EVS_DOWN && event->data1 == DDKEY_ESCAPE)
+       shiftDown && event->data1 == EVS_DOWN && event->controlID == DDKEY_ESCAPE)
     {
         Con_Execute(CMDS_DDAY, "panel", true, false);
         return true;
@@ -1389,7 +1373,7 @@ boolean Con_Responder(event_t *event)
     if(!ConsoleActive)
     {
         // In this case we are only interested in the activation key.
-        if(event->state == EVS_DOWN && event->data1 == consoleActiveKey)
+        if(event->data1 == EVS_DOWN && event->controlID == consoleActiveKey)
         {
             Con_Open(true);
             return true;
@@ -1398,7 +1382,7 @@ boolean Con_Responder(event_t *event)
     }
 
     // All keyups are eaten by the console.
-    if(event->state == EVS_UP)
+    if(event->data1 == EVS_UP)
     {
         if(!shiftDown && conInputLock)
             conInputLock = false; // release the lock
@@ -1406,14 +1390,14 @@ boolean Con_Responder(event_t *event)
     }
 
     // We only want keydown events.
-    if(!(event->state == EVS_DOWN || event->state == EVS_REPEAT))
+    if(!(event->data1 == EVS_DOWN || event->data1 == EVS_REPEAT))
         return false;
 
     // In this case the console is active and operational.
     // Check the shutdown key.
     if(!conInputLock)
     {
-        if(event->data1 == consoleActiveKey)
+        if(event->controlID == consoleActiveKey)
         {
             if(shiftDown) // Shift-Tilde to fullscreen and halfscreen.
                 Rend_ConsoleToggleFullscreen();
@@ -1421,15 +1405,30 @@ boolean Con_Responder(event_t *event)
                 Con_Open(false);
             return true;
         }
+        else
+        {
+            switch(event->controlID)
+            {
+            case DDKEY_ESCAPE:
+                // Hitting Escape in the console closes it.
+                Con_Open(false);
+                return false; // Let the menu know about this.
 
-        if(event->data1 == DDKEY_ESCAPE)
-        {   // Hitting Escape in the console closes it.
-            Con_Open(false);
-            return false; // Let the menu know about this.
+            case DDKEY_HOME:
+                Rend_ConsoleMove(shiftDown ? -3 : -1);
+                return true;
+
+            case DDKEY_END:
+                Rend_ConsoleMove(shiftDown ? 3 : 1);
+                return true;
+
+            default:
+                break;
+            }
         }
     }
 
-    switch(event->data1)
+    switch(event->controlID)
     {
     case DDKEY_UPARROW:
         if(conInputLock)
@@ -1487,20 +1486,6 @@ boolean Con_Responder(event_t *event)
         }
         else
             bLineOff = 0;
-        return true;
-
-    case DDKEY_HOME:
-        if(conInputLock)
-            break;
-
-        Rend_ConsoleMove(shiftDown ? -3 : -1);
-        return true;
-
-    case DDKEY_END:
-        if(conInputLock)
-            break;
-
-        Rend_ConsoleMove(shiftDown ? 3 : 1);
         return true;
 
     case DDKEY_ENTER:
@@ -1657,7 +1642,7 @@ boolean Con_Responder(event_t *event)
         if(conInputLock)
             break;
 
-        ch = event->data1;
+        ch = event->controlID;
         ch = DD_ModKey(ch);
         if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
             return true;

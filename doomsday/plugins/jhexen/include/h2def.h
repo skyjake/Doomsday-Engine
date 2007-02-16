@@ -48,7 +48,6 @@
 #include "dd_api.h"
 #include "g_dgl.h"
 #include "version.h"
-#include "p_ticcmd.h"
 
 #define Set DD_SetInteger
 #define Get DD_GetInteger
@@ -114,38 +113,6 @@ typedef enum {
     SM_NIGHTMARE,
     NUM_SKILL_MODES
 } skillmode_t;
-
-#if 0
-typedef struct {
-    char            forwardMove;   // *2048 for move
-    char            sideMove;      // *2048 for move
-    unsigned short  angle;         // <<16 for angle
-    short           pitch;         // view pitch
-    byte            actions;
-    byte            lookfly;       // look/fly up/down/centering
-    byte            arti;          // artitype_t to use
-} ticcmd_t;
-
-#define BT_ATTACK       1
-#define BT_USE          2
-#define BT_CHANGE       4          // if true, the next 3 bits hold weapon num
-#define BT_WEAPONMASK   (8+16+32)
-#define BT_WEAPONSHIFT  3
-
-#define BT_SPECIAL      128        // game events, not really buttons
-#define BTS_SAVEMASK    (4+8+16)
-#define BTS_SAVESHIFT   2
-#define BT_SPECIALMASK  3
-#define BTS_PAUSE       1          // pause the game
-#define BTS_SAVEGAME    2          // save the game at each console
-// savegame slot numbers occupy the second byte of buttons
-
-// The top 3 bits of the artifact field in the ticcmd_t struct are used
-//      as additional flags
-#define AFLAG_MASK          0x3F
-#define AFLAG_SUICIDE       0x40
-#define AFLAG_JUMP          0x80
-#endif
 
 // Game mode handling - identify IWAD version
 //  to handle IWAD dependend animations etc.

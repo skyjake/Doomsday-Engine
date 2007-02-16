@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,24 +66,19 @@ static int barPos, barMax;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// SW_IsActive
-//===========================================================================
 int SW_IsActive(void)
 {
 	return swActive;
 }
 
-//===========================================================================
-// SW_Printf
-//===========================================================================
 void SW_Printf(const char *format, ...)
 {
 #ifdef MACOSX
-    char buf[16384];
-    va_list args;
+    char        buf[16384];
+    va_list     args;
 
-	if(!SW_IsActive()) return;
+	if(!SW_IsActive())
+        return;
 
     va_start(args, format);
 	vsprintf(buf, format, args);
@@ -92,50 +88,37 @@ void SW_Printf(const char *format, ...)
 #endif
 }
 
-//===========================================================================
-// SW_Init
-//===========================================================================
 void SW_Init(void)
 {
 	if(swActive)
-		return;					// Already initialized.
-	Con_Message("SW_Init: Startup message window opened.\n");
+		return;	// Already initialized.
+
+    Con_Message("SW_Init: Startup message window opened.\n");
 	swActive = true;
 }
 
-//===========================================================================
-// SW_Shutdown
-//===========================================================================
 void SW_Shutdown(void)
 {
 	if(!swActive)
-		return;					// Not initialized.
-	swActive = false;
+		return;	// Not initialized.
+
+    swActive = false;
     
 #ifdef MACOSX
     CloseStartupWindow();
 #endif
 }
 
-//===========================================================================
-// SW_DrawBar
-//===========================================================================
 void SW_DrawBar(void)
 {
 }
 
-//===========================================================================
-// SW_SetBarPos
-//===========================================================================
 void SW_SetBarPos(int pos)
 {
 	barPos = pos;
 	SW_DrawBar();
 }
 
-//===========================================================================
-// SW_SetBarMax
-//===========================================================================
 void SW_SetBarMax(int max)
 {
 	if(!SW_IsActive())

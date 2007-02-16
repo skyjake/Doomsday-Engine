@@ -256,10 +256,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\p_control.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\con_bar.c"
 				>
 			</File>
@@ -329,10 +325,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\dd_wad.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\win32\src\dd_winit.c"
 				>
 			</File>
 			<File
@@ -477,6 +469,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\p_bmap.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\p_cmd.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\p_control.c"
 				>
 			</File>
 			<File
@@ -672,23 +672,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\win32\src\sys_console.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\sys_direc.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\sys_filein.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\win32\src\sys_findfile.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\win32\src\sys_input.c"
 				>
 			</File>
 			<File
@@ -704,37 +692,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\win32\src\sys_mixer.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\win32\src\sys_musd_win.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\sys_network.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\win32\src\sys_sfxd_ds.c"
 				>
 			</File>
 			<File
@@ -742,15 +700,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\win32\src\sys_sfxd_loader.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\sys_sock.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\win32\src\sys_stwin.c"
 				>
 			</File>
 			<File
@@ -781,6 +731,336 @@
 				RelativePath="..\..\..\engine\portable\src\ui_panel.c"
 				>
 			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\engine\win32\src\dd_winit.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_console.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_findfile.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_input.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_mixer.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_musd_win.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_sfxd_ds.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_sfxd_loader.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_stwin.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Mac"
+				>
+				<File
+					RelativePath="..\..\..\engine\mac\src\DoomsdayRunner.m"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\mac\src\SDLMain.m"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\mac\src\StartupWindowController.m"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+			</Filter>
+			<Filter
+				Name="Unix"
+				>
+				<File
+					RelativePath="..\..\..\engine\unix\src\dd_uinit.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\sys_console.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\sys_dylib.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\sys_findfile.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\sys_input.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\sys_mixer.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\sys_path.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\sys_sfxd_loader.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\src\sys_stwin.c"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -808,10 +1088,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\cl_world.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\p_control.h"
 				>
 			</File>
 			<File
@@ -912,10 +1188,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\dd_wad.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\dd_winit.h"
 				>
 			</File>
 			<File
@@ -1120,6 +1392,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\p_bmap.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_cmd.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\p_control.h"
 				>
 			</File>
 			<File
@@ -1363,19 +1643,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\win32\include\sys_musd_win.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\sys_network.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\api\sys_sfxd.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\win32\include\sys_sfxd_ds.h"
 				>
 			</File>
 			<File
@@ -1422,6 +1694,174 @@
 				RelativePath="..\..\..\engine\portable\include\ui_panel.h"
 				>
 			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\engine\portable\include\dd_winit.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\include\resource.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\include\sys_musd_win.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\include\sys_sfxd_ds.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Mac"
+				>
+				<File
+					RelativePath="..\..\..\engine\mac\include\DoomsdayRunner.h"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\mac\include\SDLMain.h"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\mac\include\StartupWindowController.h"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+			</Filter>
+			<Filter
+				Name="Unix"
+				>
+				<File
+					RelativePath="..\..\..\engine\unix\include\dd_uinit.h"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\include\sys_dylib.h"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\include\sys_findfile.h"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\..\engine\unix\include\sys_path.h"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCustomBuildTool"
+						/>
+					</FileConfiguration>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"

@@ -69,7 +69,7 @@ static int needNewLine = false;
 
 void Sys_ConInit(void)
 {
-    char    title[256];
+    char        title[256];
 
     FreeConsole();
     if(!AllocConsole())
@@ -105,8 +105,8 @@ void Sys_ConShutdown(void)
 
 void Sys_ConPostEvents(void)
 {
-    event_t ev;
-    DWORD   num, read;
+    ddevent_t   ev;
+    DWORD       num, read;
     INPUT_RECORD rec[MAXRECS], *ptr;
     KEY_EVENT_RECORD *key;
 
@@ -114,21 +114,24 @@ void Sys_ConPostEvents(void)
         Con_Error("Sys_ConPostEvents: error %i\n", GetLastError());
     if(!num)
         return;
+
     ReadConsoleInput(hcInput, rec, MAXRECS, &read);
     for(ptr = rec; read > 0; read--, ptr++)
     {
 //Con_Message("Sys_ConPostEvents\n");
         if(ptr->EventType != KEY_EVENT)
             continue;
+
         key = &ptr->Event.KeyEvent;
-        ev.type = EV_KEY;
-        ev.state = (key->bKeyDown ? EVS_DOWN : EVS_UP);
+        ev.deviceID = IDEV_KEYBOARD;
+        ev.data1 = (key->bKeyDown ? EVS_DOWN : EVS_UP);
         if(key->wVirtualKeyCode == VK_UP)
-            ev.data1 = DDKEY_UPARROW;
+            ev.controlID = DDKEY_UPARROW;
         else if(key->wVirtualKeyCode == VK_DOWN)
-            ev.data1 = DDKEY_DOWNARROW;
+            ev.controlID = DDKEY_DOWNARROW;
         else
-            ev.data1 = DD_ScanToKey(key->wVirtualScanCode);
+            ev.controlID = DD_ScanToKey(key->wVirtualScanCode);
+        ev.isAxis = false;
         ev.noclass = true;
         ev.useclass = 0; // initialize with something
         DD_PostEvent(&ev);
@@ -138,7 +141,7 @@ void Sys_ConPostEvents(void)
 
 void Sys_ConSetCursor(int x, int y)
 {
-    COORD   pos;
+    COORD       pos;
 
     pos.X = x;
     pos.Y = y;
@@ -147,9 +150,9 @@ void Sys_ConSetCursor(int x, int y)
 
 void Sys_ConScrollLine(void)
 {
-    SMALL_RECT src;
-    COORD   dest;
-    CHAR_INFO fill;
+    SMALL_RECT  src;
+    COORD       dest;
+    CHAR_INFO   fill;
 
     src.Left = 0;
     src.Right = cbInfo.dwSize.X - 1;
@@ -186,14 +189,14 @@ void Sys_ConSetAttrib(int flags)
     SetConsoleTextAttribute(hcScreen, attrib);
 }
 
-/*
+/**
  * Writes the text at the (cx,cy).
  */
 void Sys_ConWriteText(CHAR_INFO * line, int len)
 {
-    COORD   linesize = { len, 1 };
-    COORD   from = { 0, 0 };
-    SMALL_RECT rect;
+    COORD       linesize = { len, 1 };
+    COORD       from = { 0, 0 };
+    SMALL_RECT  rect;
 
     rect.Left = cx;
     rect.Right = cx + len;
@@ -204,9 +207,9 @@ void Sys_ConWriteText(CHAR_INFO * line, int len)
 
 void Sys_ConPrint(int clflags, char *text)
 {
-    CHAR_INFO line[LINELEN];
-    int     count = strlen(text), linestart, bpos;
-    char   *ptr = text, ch;
+    CHAR_INFO   line[LINELEN];
+    int         count = strlen(text), linestart, bpos;
+    char       *ptr = text, ch;
 
     if(needNewLine)
     {
@@ -231,6 +234,7 @@ void Sys_ConPrint(int clflags, char *text)
             line[bpos].Char.AsciiChar = ch;
             bpos++;
         }
+
         // Time for newline?
         if(ch == '\n' || bpos == LINELEN)
         {
@@ -238,7 +242,7 @@ void Sys_ConPrint(int clflags, char *text)
             cx += bpos - linestart;
             bpos = 0;
             linestart = 0;
-            if(count > 1)       // Not the last character?
+            if(count > 1) // Not the last character?
             {
                 needNewLine = false;
                 cx = 0;
@@ -263,11 +267,11 @@ void Sys_ConPrint(int clflags, char *text)
 
 void Sys_ConUpdateCmdLine(char *text)
 {
-    CHAR_INFO line[LINELEN], *ch;
+    CHAR_INFO   line[LINELEN], *ch;
     unsigned int i;
-    COORD   linesize = { LINELEN, 1 };
-    COORD   from = { 0, 0 };
-    SMALL_RECT rect;
+    COORD       linesize = { LINELEN, 1 };
+    COORD       from = { 0, 0 };
+    SMALL_RECT  rect;
 
     line[0].Char.AsciiChar = '>';
     line[0].Attributes = CMDLINE_ATTRIB;
@@ -280,6 +284,7 @@ void Sys_ConUpdateCmdLine(char *text)
         // Gray color.
         ch->Attributes = CMDLINE_ATTRIB;
     }
+
     rect.Left = 0;
     rect.Right = LINELEN - 1;
     rect.Top = cbInfo.dwSize.Y - 1;

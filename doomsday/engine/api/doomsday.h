@@ -311,7 +311,9 @@ extern          "C" {
     // Play: Misc.
     uint            P_RegisterCustomMapProperty(int type, valuetype_t dataType,
                                                 char *name);
-    void            P_DefineActions(action_t *acts);
+    void            P_RegisterPlayerControl(uint ctlClass, const char *name);
+    void            P_ControlReset(int player);
+    void            P_MergeCommand(ticcmd_t *dest, ticcmd_t *src); // temporary.
 
     // Play: Polyobjs.
     void            PO_Allocate(void);

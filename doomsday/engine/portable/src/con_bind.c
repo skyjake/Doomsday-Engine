@@ -45,31 +45,41 @@ typedef struct {
 } keyname_t;
 
 typedef struct {
-    unsigned int num;
-    binding_t   *binds;
-} evtypebinds_t;
+    uint    numKeyBinds;
+    binding_t *keyBinds;
+    uint    numAxisBinds;
+    binding_t *axisBinds;
+} devcontrolbinds_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(Bind);
+D_CMD(BindAxis);
+D_CMD(ClearBindings);
+D_CMD(DeleteBind);
+D_CMD(EnableBindClass);
+D_CMD(ListBindings);
+D_CMD(ListBindClasses);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void    B_EventBuilder(char *buff, event_t *ev);
+static boolean B_EventBuilder(char *buff, ddevent_t *ev);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 bindclass_t *bindClasses = NULL;
-unsigned int numBindClasses = 0;
-static unsigned int maxBindClasses = 0;
+uint numBindClasses = 0;
+static uint maxBindClasses = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static evtypebinds_t evBindTypes[NUM_EVENT_TYPES];
+static devcontrolbinds_t devCtrlBinds[NUM_INPUT_DEVICES];
 
-static keyname_t keyNames[] = {
+static const keyname_t keyNames[] = {
     {DDKEY_PAUSE,       "pause"},
     {DDKEY_ESCAPE,      "escape"},
     {DDKEY_ESCAPE,      "esc"},
@@ -125,11 +135,11 @@ static keyname_t keyNames[] = {
     {0, NULL}                    // The terminator
 };
 
-static char *povDirNames[] = {
+static const char *povDirNames[] = {
     "F", "FR", "R", "BR", "B", "BL", "L", "FL", NULL
 };
 
-static char evStatePrefixes[NUM_EVENT_STATES] = {'+', '-', '*'};
+static const char evStatePrefixes[NUM_EVENT_STATES] = {'+', '-', '*'};
 
 // DJS 13/05/05
 // Binding Classes
@@ -180,17 +190,33 @@ bindclass_t ddBindClasses[] = {
 
 // CODE --------------------------------------------------------------------
 
+void B_Register(void)
+{
+    C_CMD("bind",           NULL,   Bind);
+    C_CMD("bindaxis",       NULL,   BindAxis);
+    C_CMD("bindr",          NULL,   Bind);
+    C_CMD("clearbinds",     "",     ClearBindings);
+    C_CMD("delbind",        NULL,   DeleteBind);
+    C_CMD("enablebindclass", NULL,  EnableBindClass);
+    C_CMD("listbindings",   NULL,   ListBindings);
+    C_CMD("listbindclasses", "",    ListBindClasses);
+    C_CMD("safebind",       NULL,   Bind);
+    C_CMD("safebindr",      NULL,   Bind);
+}
+
 /**
  * Called once on init.
  */
 void B_Init(void)
 {
-    unsigned int i;
+    uint        i;
 
-    for(i = 0; i < NUM_EVENT_TYPES; ++i)
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
-        evBindTypes[i].binds = NULL;
-        evBindTypes[i].num = 0;
+        devCtrlBinds[i].keyBinds = NULL;
+        devCtrlBinds[i].numKeyBinds = 0;
+        devCtrlBinds[i].axisBinds = NULL;
+        devCtrlBinds[i].numAxisBinds = 0;
     }
 }
 
@@ -199,7 +225,7 @@ void B_Init(void)
  */
 void B_RegisterBindClasses(void)
 {
-    unsigned int    i;
+    uint        i;
 
     for(i = 0; ddBindClasses[i].name; ++i)
         DD_AddBindClass(ddBindClasses + i);
@@ -223,7 +249,7 @@ const char* EventType_Str(evtype_t type)
         { EV_POV,           "pov"},
         { 0, NULL}
     };
-    unsigned int i;
+    uint        i;
     boolean     found;
 
     i = 0;
@@ -244,136 +270,136 @@ const char* EventType_Str(evtype_t type)
 }
 #endif
 
-/**
- * Compares two sets of event data to see if they match.
- */
-static boolean B_EventMatch(evtype_t eventType, int dataA, int dataB)
+static binding_t *B_BindingForEvent(ddevent_t *event)
 {
-    boolean match = false;
-
-    // Check the data.
-    switch(eventType)
-    {
-    case EV_KEY:
-    case EV_POV:
-        if(dataA == dataB)
-            match = true;
-        break;
-
-    case EV_MOUSE_BUTTON:
-    case EV_JOY_BUTTON:
-        if((dataA & dataB) != 0)
-            match = true;
-        break;
-
-    default:
-        // We don't know what to compare... :-]
-        break;
-    }
-
-//#if _DEBUG
-//if(match) Con_Message("B_EventDataMatch: (%s)\n",
-//                      EventType_Str(eventType));
-//#endif
-
-    return match;
-}
-
-static binding_t *B_BindingForEvent(event_t *event)
-{
-    unsigned int i;
-    binding_t  *bnd;
-    evtypebinds_t *bindGroup = &evBindTypes[event->type];
+    uint        i, *num;
+    binding_t  **list;
+    devcontrolbinds_t *devBinds = &devCtrlBinds[event->deviceID];
     boolean     found;
 
-    bnd = bindGroup->binds;
+    if(event->isAxis)
+    {
+        list = &devBinds->axisBinds;
+        num  = &devBinds->numAxisBinds;
+    }
+    else
+    {
+        list = &devBinds->keyBinds;
+        num  = &devBinds->numKeyBinds;
+    }
+
     i = 0;
     found = false;
-    while(i < bindGroup->num && !found)
+    while(i < (*num) && !found)
     {
-        if(B_EventMatch(event->type, event->data1, bnd[i].data1))
+        if(event->controlID == (*list)[i].controlID)
             found = true;
         else
             i++;
     }
     if(found)
-        return &bnd[i];
+        return &(*list)[i];
 
     return NULL;
 }
 
 /**
- * Searche event-type-specific binding array for a command which matches
- * the search critera.
+ * Search event-type-specific binding array for a command which matches the
+ * search critera.
  *
- * @param   event           The event to find the command for.
+ * @param event         The event to find the command for.
  *
- * @return  char*           Ptr to the found command ELSE NULL.
+ * @return              Ptr to the found bindcontrol_t ELSE <code>NULL</code>.
  */
-static char *B_GetCommandForEvent(event_t *ev)
+static bindcontrol_t *B_GetBindControlForEvent(ddevent_t *ev)
 {
-    binding_t *bnd;
-    command_t *cmd = NULL;
-    unsigned int k;
+    uint        i;
+	binding_t  *bnd;
+    bindcontrol_t *ctrl = NULL;
+    boolean     found;
 
-//#if _DEBUG
-//Con_Printf("B_GetCommandForEvent: ev type %i, ev state %i, "
-//           "ev useclass %i, ev noclass %s\n",
-//           ev->type, ev->state, ev->useclass,
-//           ev->noclass == false? "false": "true");
-//#endif
+    if(!I_GetDevice(ev->deviceID, true))
+        return NULL;
 
     bnd = B_BindingForEvent(ev);
     if(bnd == NULL)
         return NULL;
 
+    found = false;
     if(!ev->noclass) // use a specific class? (active or not)
     {
         // FYI: These kind of events aren't sent via direct user input
         // Only by "us" when we need to switch binding classes and a
         // current input is active eg; a key is held down during the
         // switch that has commands in multiple binding classes.
-        cmd = &bnd->commands[ev->useclass];
-        if(cmd->command[ev->state])
+        ctrl = &bnd->binds[ev->useclass];
+        switch(ctrl->type)
         {
-//#if _DEBUG
-//Con_Message("B_GetCommandForEvent: Returned (%s) \"%s\"\n",
-//            bindClasses[ev->useclass].name, cmd->command[ev->state]);
-//#endif
-            return cmd->command[ev->state];
+        case BND_AXIS:
+            if(ctrl->data.axiscontrol.playercontrol != -1)
+                found = true;
+            break;
+
+        case BND_COMMAND:
+            if(ctrl->data.command.command[ev->data1])
+                found = true;
+            break;
+
+        case BND_UNUSED:
+        default:
+            break;
         }
     }
     else
     {
-        unsigned int idx;
-        boolean     done, found;
+        uint        idx;
+        boolean     done;
 
         // loop backwards through the active binding classes, the
         // command in the highest binding class slot that is currently
         // active is executed
-        k = 0;
-        found = false;
+        i = 0;
         done = false;
-        while(k < numBindClasses && !done)
+        while(i < numBindClasses && !done)
         {
-            idx = numBindClasses - 1 - k;
-            cmd = &bnd->commands[idx];
+            idx = numBindClasses - 1 - i;
 
             if(bindClasses[idx].active == 1)
             {
-                if(cmd->command[ev->state])
+                ctrl = &bnd->binds[idx];
+                switch(ctrl->type)
                 {
-                    found = true;
-                    done = true;
-                }
-                else
-                {
-                    // RULE: If a repeat event does not have a
-                    // binding in BINDCLASS (k) we should ignore
-                    // commands in all lower classes IF there is NOT
-                    // a down binding for this event in this class.
-                    if(ev->state == EVS_REPEAT && cmd->command[EVS_DOWN])
-                        done = true; // do nothing
+                case BND_AXIS:
+                    if(ctrl->data.axiscontrol.playercontrol != -1)
+                    {
+                        found = true;
+                        done = true;
+                    }
+                    break;
+
+                case BND_COMMAND:
+                    {
+                    bindcommand_t *cmd = &ctrl->data.command;
+                    if(cmd->command[ev->data1])
+                    {
+                        found = true;
+                        done = true;
+                    }
+                    else
+                    {
+                        // RULE: If a repeat event does not have a
+                        // binding in BINDCLASS (k) we should ignore
+                        // commands in all lower classes IF there is NOT
+                        // a down binding for this event in this class.
+                        if(ev->data1 == EVS_REPEAT && cmd->command[EVS_DOWN])
+                            done = true; // do nothing
+                    }
+                    break;
+                    }
+
+                case BND_UNUSED:
+                default:
+                    break;
                 }
 
                 if(!done)
@@ -385,118 +411,170 @@ static char *B_GetCommandForEvent(event_t *ev)
             }
 
             if(!done)
-                k++;
-        }
-
-        if(found)
-        {
-//#if _DEBUG
-//Con_Message("B_GetCommandForEvent: Returned (%s) \"%s\"\n",
-//            bindClasses[idx].name, cmd->command[ev->state]);
-//#endif
-            return cmd->command[ev->state];
+                i++;
         }
     }
 
-//#if _DEBUG
-//Con_Printf("B_GetCommandForEvent: return NULL\n");
-//#endif
+    if(found)
+        return ctrl;
+
     return NULL;
 }
 
 /**
- * Checks to see if we need to respond to the given input event in
- * some way and then if so executes the action associated to the event.
+ * Checks to see if we need to respond to the given input event in some way
+ * and then if so executes the action associated to the event.
  *
- * @return boolean          <code>true</code> If an action was executed.
+ * @param ev            ddevent_t we may need to respond to.
+ *
+ * @return              <code>true</code> If an action was executed.
  */
-boolean B_Responder(event_t *ev)
+boolean B_Responder(ddevent_t *ev)
 {
-    char *cmd;
+    bindcontrol_t *ctrl;
 
-    // We won't even bother with axis data.
-    if(ev->type == EV_MOUSE_AXIS || ev->type == EV_JOY_AXIS)
-        return false;
+    if((ctrl = B_GetBindControlForEvent(ev)) == NULL)
+        return false; // nope nothing.
 
-    // Look for a command for this event.
-    cmd = B_GetCommandForEvent(ev);
-
-    if(cmd != NULL)
+    // Found one!
+    if(ctrl->type == BND_COMMAND)
     {
-        // Found one, execute!
-        Con_Execute(CMDS_BIND, cmd, true, false);
-        return true;
+        bindcommand_t *bnd = &ctrl->data.command;
+
+        Con_Execute(CMDS_BIND, bnd->command[ev->data1], true, false);
+    }
+    else // An axis control.
+    {
+        float       pos;
+        inputdev_t *device = I_GetDevice(ev->deviceID, true);
+        inputdevaxis_t *axis = &device->axes[ev->controlID];
+        bindaxis_t *bnd = &ctrl->data.axiscontrol;
+
+        // Invert the axis position, if requested.
+        if(bnd->invert)
+            pos = -axis->position;
+        else
+            pos = axis->position;
+
+        // Update the control state.
+        switch(device->axes[ev->controlID].type)
+        {
+        case IDAT_STICK: // joysticks, gamepads
+            P_ControlSetAxis(P_LocalToConsole(bnd->localPlayer),
+		                     bnd->playercontrol, pos);
+            break;
+
+        case IDAT_POINTER: // mouse
+            P_ControlAxisDelta(P_LocalToConsole(bnd->localPlayer),
+		                       bnd->playercontrol, pos);
+            break;
+
+        default:
+            break;
+        }
     }
 
-    return false; // nope nothing.
+    return true;
 }
 
 /**
- * Returns a binding for the given event.
+ * Retrieve a binding for the given device control.
+ *
+ * @param deviceID      Device ident for the binding.
+ * @param controlID     Device control index for the binding, either a
+ *                      key/button number or axis index number.
+ * @param isAxis        If <code>true</code> @param controlID is an axis
+ *                      index number.
+ * @param createNew     If <code>true</code> a new binding_t will be 
+ *                      allocated if an existing one cannot be found.
+ *
+ * @return              Binding for the given event OR <code>NULL</code>
  */
-static binding_t *B_GetBinding(event_t *event, boolean create_new)
+static binding_t *B_GetBinding(uint deviceID, uint controlID,
+                               boolean isAxis, boolean createNew)
 {
-    unsigned int i;
-    int         j;
-    binding_t  *newb, *bnd;
-    evtypebinds_t *bindGroup;
+    uint        i, *num;
+    binding_t  *newb, *bnd, **list;
+    devcontrolbinds_t *devBinds = &devCtrlBinds[deviceID];
+ 
+    if(isAxis)
+    {
+        list = &devBinds->axisBinds;
+        num  = &devBinds->numAxisBinds;
+    }
+    else
+    {
+        list = &devBinds->keyBinds;
+        num  = &devBinds->numKeyBinds;
+    }
 
     // We'll first have to search through the existing bindings
     // to see if there already is one for this event.
-    bnd = B_BindingForEvent(event);
-    if(bnd != NULL)
-        return bnd;
+    for(i = 0, bnd = (*list); i < (*num); ++i, bnd++)
+    {
+        if(bnd->controlID == controlID)
+	        return bnd;
+    }
 
-    if(!create_new)
+    if(!createNew)
         return NULL;
 
     // Hmm, no luck there. Let's create a new binding_t.
-    bindGroup = &evBindTypes[event->type];
-    bindGroup->binds =
-        M_Realloc(bindGroup->binds, sizeof(binding_t) * (bindGroup->num + 1));
+    *list = M_Realloc((*list), sizeof(binding_t) * ++(*num));
+    newb = (*list) + (*num) - 1;
 
-    newb = bindGroup->binds + bindGroup->num++;
-    memset(newb, 0, sizeof(*newb));
-    newb->commands = M_Malloc(sizeof(command_t) * maxBindClasses);
+    // Initalize the binding.
+    newb->controlID = controlID;
+    newb->binds = M_Calloc(sizeof(bindcontrol_t) * maxBindClasses);
 
     for(i = 0; i < numBindClasses; ++i)
-        for(j = 0; j < NUM_EVENT_STATES; ++j)
-            newb->commands[i].command[j] = NULL;
+        newb->binds[i].type = BND_UNUSED;
 
-    // Copy the event data.
-    newb->type  = event->type;
-    newb->data1 = event->data1;
     return newb;
 }
 
-static void B_DeleteBindingIdx(unsigned int index, unsigned int group)
+static void B_DeleteBindingIdx(uint deviceID, uint index, boolean isAxis)
 {
-    unsigned int i;
-    int         k;
-    evtypebinds_t *bindGroup = &evBindTypes[group];
-    binding_t  *bnd;
+    uint        i, k, *num;
+    devcontrolbinds_t *devBinds = &devCtrlBinds[deviceID];
+    binding_t  *bnd, **list;
 
-    if(index > bindGroup->num - 1)
+    if(isAxis)
+    {
+        list = &devBinds->axisBinds;
+        num  = &devBinds->numAxisBinds;
+    }
+    else
+    {
+        list = &devBinds->keyBinds;
+        num  = &devBinds->numKeyBinds;
+    }
+
+    if(index > (*num) - 1)
         return; // What?
 
-    bnd = &bindGroup->binds[index];
+    bnd = &(*list)[index];
     for(i = 0; i < numBindClasses; ++i)
-        for(k = 0; k < NUM_EVENT_STATES; ++k)
-            if(bnd->commands[i].command[k])
-            {
-                M_Free(bnd->commands[i].command[k]);
-                bnd->commands[i].command[k] = NULL;
-            }
-
-    M_Free(bnd->commands);
-
-    if(index < bindGroup->num - 1) // If not the last one, do some rollback.
     {
-        memmove(bindGroup->binds + index, bindGroup->binds + index + 1,
-                sizeof(binding_t) * (bindGroup->num - index - 1));
+        if(bnd->binds[i].type == BND_COMMAND)
+            for(k = 0; k < NUM_EVENT_STATES; ++k)
+            {
+                bindcommand_t *com = &bnd->binds[i].data.command;
+                if(com->command[k])
+                {
+                    M_Free(com->command[k]);
+                    com->command[k] = NULL;
+                }
+            }
     }
-    bindGroup->binds =
-        M_Realloc(bindGroup->binds, sizeof(binding_t) * --bindGroup->num);
+    M_Free(bnd->binds);
+
+    if(index < (*num) - 1) // If not the last one, do some rollback.
+    {
+        memmove((*list) + index, (*list) + index + 1,
+                sizeof(binding_t) * ((*num) - index - 1));
+    }
+    (*list) = M_Realloc((*list), sizeof(binding_t) * --(*num));
 }
 
 /**
@@ -507,101 +585,152 @@ static void B_DeleteBindingIdx(unsigned int index, unsigned int group)
  * 2) Bindind to NULL and specifying a class: clears the command and
  *    if no more commands exist for this binding - will delete it
  */
-void B_Bind(event_t *event, char *command, unsigned int bindClass)
+binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
 {
-    unsigned int i, k, count = 0;
-    binding_t *bnd = B_GetBinding(event, true);
+    uint        i;
+    binding_t  *bnd;
+    bindcommand_t *com;
+    bindaxis_t *ctrl;
+    inputdev_t *device;
+    boolean     removing = (ev->isAxis? (control < 0):(!command));
 
-    if(!command) // No string given?
+    bnd = B_GetBinding(ev->deviceID, ev->controlID, ev->isAxis, !removing);
+
+    if(removing)
     {
-        // clear the command in bindClass only
+        uint        k, count = 0;
+        boolean     unused;
+
+        if(!bnd)
+            return NULL; // Can't remove a binding that doesn't exist.
+
+        // Clear the command in bindClass only.
         for(i = 0; i < numBindClasses; ++i)
-            for(k = 0; k < NUM_EVENT_STATES; ++k)
-                if(bnd->commands[i].command[k])
-                {
-                    if(i == bindClass && k == event->state)
-                        bnd->commands[i].command[k] = NULL;
-
-                    count++;
-                }
-
-        if(count == 1)
-            // there are no more commands for this binding so delete.
-            B_DeleteBindingIdx(bnd - evBindTypes[event->type].binds, event->type);
-
-        return;
-    }
-
-    // Set the command.
-    bnd->commands[bindClass].command[event->state] =
-        M_Realloc(bnd->commands[bindClass].command[event->state],
-                strlen(command) + 1);
-    strcpy(bnd->commands[bindClass].command[event->state], command);
-
-//#if _DEBUG
-//Con_Printf("B_Bind: (%s) state: %i data: %d cmd: \"%s\"\n",
-//           EventType_Str(bnd->type), event->state,
-//           bnd->data1, bnd->commands[bindClass].command[event->state]);
-//#endif
-}
-
-void B_ClearBinding(char *command, unsigned int bindClass, boolean allClasses)
-{
-    int         k;
-    unsigned int i, j, g;
-    evtypebinds_t *bindGroup;
-    binding_t   *bnd;
-
-    if(allClasses) // clear all commands in all binding classes, all states.
-    {
-        for(g = 0; g < NUM_EVENT_TYPES; ++g)
         {
-            bindGroup = &evBindTypes[g];
-            bnd = bindGroup->binds;
+            if(bnd->binds[i].type == BND_UNUSED)
+                continue;
 
-            for(i = 0; i < bindGroup->num; ++i)
-                for(j = 0; j < numBindClasses; ++j)
-                    for(k = 0; k < NUM_EVENT_STATES; ++k)
-                        if(bnd[i].commands[j].command[k])
-                            if(!stricmp(bnd[i].commands[j].command[k], command))
-                                B_DeleteBindingIdx(i--, g);
-        }
-    }
-    else // clear the command in bindClass only, all states.
-    {
-        unsigned int count;
-        boolean     match;
-
-        for(g = 0; g < NUM_EVENT_TYPES; ++g)
-        {
-            bindGroup = &evBindTypes[g];
-            bnd = bindGroup->binds;
-
-            for(i = 0; i < bindGroup->num; ++i)
+            if(i == bindClass)
             {
-                match = false;
-                count = 0;
-
-                for(j = 0; j < numBindClasses; ++j)
+                unused = true;
+                // Implicit; axis bindings which match bindClass are unused.
+                
+                // Command bindings need to be checked as each has
+                // multiple states.
+                if(bnd->binds[i].type == BND_COMMAND)
                 {
                     for(k = 0; k < NUM_EVENT_STATES; ++k)
-                        if(bnd[i].commands[j].command[k])
-                        {
-                            count++;
-                            if((!stricmp(bnd[i].commands[j].command[k], command)) &&
-                                j == bindClass)
-                            {
-                                match = true;
-                                bnd[i].commands[j].command[k] = NULL;
-                            }
-                        }
-                }
+                    {
+                        com = &bnd->binds[i].data.command;
 
-                if(match && count == 1)
-                    // there are no more commands for this binding so delete.
-                    B_DeleteBindingIdx(i--, g);
+                        if(com->command[k])
+                        {
+                            if(k == ev->data1)
+                            {
+                                M_Free(com->command[k]);
+                                com->command[k] = NULL;
+                            }
+                            else
+                                unused = false;
+                        }
+                    }
+                    if(!unused)
+                        count++;
+                }
+                if(unused)
+                    bnd->binds[i].type = BND_UNUSED;
+            }
+            else
+                count++;
+        }
+
+        if(count == 0)
+        {   // There are no more controls/commands for this binding so delete.
+            devcontrolbinds_t *devBinds = &devCtrlBinds[ev->deviceID];
+            uint    idx = bnd - (ev->isAxis? devBinds->axisBinds :
+                                         devBinds->keyBinds);
+
+            B_DeleteBindingIdx(ev->deviceID, idx, ev->isAxis);
+        }
+
+        return NULL;
+    }
+
+    if(bnd->binds[bindClass].type == BND_COMMAND)
+    {
+        // If, changing from a command to an axis bind, free all commands
+        // in all states. Else, just free the command in the state being
+        // updated (if one already present).
+        com = &bnd->binds[bindClass].data.command;
+        for(i = 0; i < NUM_EVENT_STATES; ++i)
+        {
+            if(!ev->isAxis && i != ev->data1)
+                continue;
+
+            if(com->command[i])
+            {
+                M_Free(com->command[i]);
+                com->command[i] = NULL;
             }
         }
+    }
+
+    // Set the control
+    device = I_GetDevice(ev->deviceID, false);
+    bnd->binds[bindClass].type = (ev->isAxis? BND_AXIS : BND_COMMAND);
+    if(bnd->binds[bindClass].type == BND_AXIS)
+    {
+        ctrl = &bnd->binds[bindClass].data.axiscontrol;
+	    ctrl->playercontrol = control;
+//#if _DEBUG
+//Con_Printf("B_Bind: (%s) axis '%s' ctrl: '%s'\n",
+//           device->name, I_GetAxisByID(device, bnd->controlID)->name,
+//           P_ControlGetAxisName(control));
+//#endif
+    }
+    else
+    {
+        com = &bnd->binds[bindClass].data.command;
+        com->command[ev->data1] = M_Malloc(strlen(command) + 1);
+        strcpy(com->command[ev->data1], command);
+
+//#if _DEBUG
+//Con_Printf("B_Bind: (%s) state: %i ctrlID: %d cmd: \"%s\"\n",
+//           device->name, ev->data1,
+//           bnd->controlID, com->command[ev->data1]);
+//#endif
+    }
+
+    return bnd;
+}
+
+static void freeBindList(binding_t *list, uint num)
+{
+    uint        i, j, k;
+    binding_t  *bnd;
+    bindcontrol_t *ctrl;
+
+    if(!list)
+        return;
+
+    for(i = 0, bnd = list; i < num; ++i, bnd++)
+    {
+        for(j = 0; j < numBindClasses; ++j)
+        {
+            ctrl = &bnd->binds[j];
+
+            if(ctrl->type == BND_COMMAND)
+            {
+                bindcommand_t *com = &ctrl->data.command;
+
+                for(k = 0; k < NUM_EVENT_STATES; ++k)
+                    if(com->command[k])
+                        M_Free(com->command[k]);
+            }
+        }
+
+        M_Free(bnd->binds);
+        bnd->binds = NULL;
     }
 }
 
@@ -610,36 +739,41 @@ void B_ClearBinding(char *command, unsigned int bindClass, boolean allClasses)
  */
 void B_Shutdown(void)
 {
-    int         k;
-    unsigned int i, j, g;
-    evtypebinds_t *bindGroup;
-    binding_t  *bnd;
+    uint        i, d;
+    devcontrolbinds_t *devBinds;
+    uint        *num;
+    binding_t  **bnd;
 
-    for(g = 0; g < NUM_EVENT_TYPES; ++g)
+    for(d = 0; d < NUM_INPUT_DEVICES; ++d)
     {
-        bindGroup = &evBindTypes[g];
-        bnd = bindGroup->binds;
+        devBinds = &devCtrlBinds[d];
 
-        for(i = 0; i < bindGroup->num; ++i)
+        // Key bindings.
+        bnd = &devBinds->keyBinds;
+        num = &devBinds->numKeyBinds;
+        if(*bnd)
         {
-            for(j = 0; j < numBindClasses; ++j)
-            {
-                for(k = 0; k < NUM_EVENT_STATES; ++k)
-                    if(bnd[i].commands[j].command[k])
-                        M_Free(bnd[i].commands[j].command[k]);
-            }
-
-            M_Free(bnd[i].commands);
+            freeBindList(*bnd, *num);
+            M_Free(*bnd);
+            (*bnd) = NULL;
+            (*num) = 0;
         }
 
-        M_Free(bindGroup->binds);
-        bindGroup->binds = NULL;
-        bindGroup->num = 0;
+        // Axis bindings.
+        bnd = &devBinds->axisBinds;
+        num = &devBinds->numAxisBinds;
+        if(*bnd)
+        {
+            freeBindList(*bnd, *num);
+            M_Free(*bnd);
+            (*bnd) = NULL;
+            (*num) = 0;
+        }
     }
 
     // Now we can clear the bindClasses
-    for(j = 0; j < numBindClasses; ++j)
-        M_Free(bindClasses[j].name);
+    for(i = 0; i < numBindClasses; ++i)
+        M_Free(bindClasses[i].name);
 
     M_Free(bindClasses);
     bindClasses = NULL;
@@ -652,7 +786,7 @@ void B_Shutdown(void)
  */
 static char *shortNameForKey(int ddkey)
 {
-    unsigned int idx;
+    uint        idx;
     boolean     found;
 
     idx = 0;
@@ -673,7 +807,7 @@ static char *shortNameForKey(int ddkey)
 
 static int getByShortName(const char *key)
 {
-    unsigned int idx;
+    uint        idx;
     boolean     found;
 
     idx = 0;
@@ -694,7 +828,7 @@ static int getByShortName(const char *key)
 
 static int buttonNumber(int flags)
 {
-    unsigned int idx;
+    uint        idx;
     boolean     found;
 
     idx = 0;
@@ -720,7 +854,7 @@ static int buttonNumber(int flags)
  * @param buff      Src buffer containing the textual event string.
  * @param ev        The destination event to be updated.
  */
-static void B_EventBuilder(char *buff, event_t *ev)
+static boolean B_EventBuilder(char *buff, ddevent_t *ev)
 {
     char    prefix;
     char   *begin;
@@ -740,31 +874,38 @@ static void B_EventBuilder(char *buff, event_t *ev)
     // First check the obvious cases.
     if(!strnicmp(begin, "mb", 2))    // Mouse button?
     {
-        ev->type  = EV_MOUSE_BUTTON;
-        ev->state = (prefix == '+' ? EVS_DOWN : EVS_UP);
-        ev->data1 = 1 << (atoi(begin + 2) - 1);
+        ev->deviceID = IDEV_MOUSE;
+        ev->isAxis = false;
+        ev->data1 = (prefix == '+' ? EVS_DOWN : EVS_UP);
+        ev->controlID = 1 << (atoi(begin + 2) - 1);
+        return true;
     }
     else if(!strnicmp(begin, "mw", 2))    // Mouse wheel?
     {
-        ev->type  = EV_MOUSE_BUTTON;
-        ev->state = (prefix == '+' ? EVS_DOWN : EVS_UP);
-        ev->data1 =
+        ev->deviceID = IDEV_MOUSE;
+        ev->isAxis = false; // mouse wheel is translated to keys.
+        ev->data1 = (prefix == '+' ? EVS_DOWN : EVS_UP);
+        ev->controlID =
             !stricmp(begin + 2, "up") ? DDMB_MWHEELUP : DDMB_MWHEELDOWN;
+        return true;
     }
     else if(!strnicmp(begin, "jb", 2))    // Joystick button?
     {
-        ev->type  = EV_JOY_BUTTON;
-        ev->state = (prefix == '+' ? EVS_DOWN : EVS_UP);
-        ev->data1 = 1 << (atoi(begin + 2) - 1);
+        ev->deviceID = IDEV_JOY1;
+        ev->isAxis = false;
+        ev->data1 = (prefix == '+' ? EVS_DOWN : EVS_UP);
+        ev->controlID = 1 << (atoi(begin + 2) - 1);
+        return true;
     }
     else if(!strnicmp(begin, "pov", 3))    // A POV angle?
     {
-        unsigned int idx;
+        uint        idx;
         boolean     found;
 
-        ev->type  = EV_POV;
-        ev->state = (prefix == '+' ? EVS_DOWN : EVS_UP);
-        ev->data1 = -1;
+        ev->deviceID = IDEV_JOY1;
+        ev->isAxis = false;
+        ev->data1 = (prefix == '+' ? EVS_DOWN : EVS_UP);
+        ev->controlID = -1;
 
         idx = 0;
         found = false;
@@ -772,87 +913,208 @@ static void B_EventBuilder(char *buff, event_t *ev)
         {
             if(!stricmp(begin + 3, povDirNames[idx]))
             {
-                ev->data1 = idx;
+                ev->controlID = idx;
                 found = true;
             }
             else
                 idx++;
         }
+        return true;
     }
     else
     {
-        ev->type  = EV_KEY;
-        ev->state =
+        ev->deviceID = IDEV_KEYBOARD;
+        ev->isAxis = false;
+        ev->data1 =
             (prefix == '+' ? EVS_DOWN : (prefix == '*' ? EVS_REPEAT :
              EVS_UP));
 
         if((key = getByShortName(begin)))
-            ev->data1 = key;
+            ev->controlID = key;
         else
-            ev->data1 = begin[0];
+            ev->controlID = begin[0];
+        return true;
     }
+
+    return false;
 }
 
 /**
  * Forms a textual representation for an input event.
- * Part of the Doomsday public API.
  *
  * @param  buff        Destination buffer to hold the formed string.
- * @param  type        The event type (e.g. EV_KEY = keyboard).
+ * @param  deviceID    Device ID the event is for (e.g. IDEV_KEYBOARD = keyboard).
+ * @param  controlID   Usage depends on <code>type</code> eg keynumber.
+ * @param  isAxis      If <code>true</code> @param controlID is treated
+ *                     as a device axis id.
  * @param  state       The event state (EVS_DOWN/EVS_UP/EVS_REPEAT).
- * @param  data        Usage depends on <code>type</code> eg keynumber.
+ *                     Only used with keys (not with axis controls).
+ */
+void formEventString(char *buff, uint deviceID, int controlID,
+                     boolean isAxis, evstate_t state)
+{
+    inputdev_t *device = I_GetDevice(deviceID, false);
+    char   *begin;
+
+    if(!device)
+        Con_Error("formEventString: bad device id (%i)\n", deviceID);
+
+    if(isAxis)
+    {
+        sprintf(buff, "%s-%s", device->name,
+				device->axes[controlID].name);
+    }
+    else
+    {
+        if(state > EVS_REPEAT)
+            Con_Error("formEventString: bad event state (%d)\n", state);
+
+        switch(deviceID)
+        {
+        case IDEV_KEYBOARD:
+            if((begin = shortNameForKey(controlID)))
+            {
+                sprintf(buff, "%c%s", evStatePrefixes[state], begin);
+            }
+            else if(controlID > 32 && controlID < 128)
+            {
+                sprintf(buff, "%c%c", evStatePrefixes[state], controlID);
+            }
+            break;
+
+        case IDEV_MOUSE:
+            if(controlID & (DDMB_MWHEELUP | DDMB_MWHEELDOWN))
+                sprintf(buff, "%cMW%s", evStatePrefixes[state],
+                        controlID & DDMB_MWHEELUP ? "up" : "down");
+            else
+                sprintf(buff, "%cMB%d", evStatePrefixes[state],
+                        buttonNumber(controlID) + 1);
+            break;
+
+        case IDEV_JOY1:
+            sprintf(buff, "%cJB%d", evStatePrefixes[state],
+                    buttonNumber(controlID) + 1);
+            break;
+
+        default:
+            break; // impossible.
+        }
+    }
+}
+
+/**
+ * Forms a textual representation for an input event, translates from the
+ * game's event_t format to our internal ddevent_t format.
+ * Part of the Doomsday public API.
  */
 void B_FormEventString(char *buff, evtype_t type, evstate_t state,
                        int data1)
 {
-    char   *begin;
+    uint        deviceID;
+    boolean     isAxis;
 
-    if(state > EVS_REPEAT)
-        Con_Error("B_FormEventString: bad event state (%d)\n", state);
-
-    switch (type)
+    // These are the same translation rules as used in DD_ProcessEvents()
+    // except inverted as we are translating from event_t to ddevent_t.
+    switch(type)
     {
     case EV_KEY:
-        if((begin = shortNameForKey(data1)))
-        {
-            sprintf(buff, "%c%s", evStatePrefixes[state], begin);
-        }
-        else if(data1 > 32 && data1 < 128)
-        {
-            sprintf(buff, "%c%c", evStatePrefixes[state], data1);
-        }
+        deviceID = IDEV_KEYBOARD;
+        isAxis = false;
+        break;
+
+    case EV_MOUSE_AXIS:
+        deviceID = IDEV_MOUSE;
+        isAxis = true;
         break;
 
     case EV_MOUSE_BUTTON:
-        if(data1 & (DDMB_MWHEELUP | DDMB_MWHEELDOWN))
-            sprintf(buff, "%cMW%s", evStatePrefixes[state],
-                    data1 & DDMB_MWHEELUP ? "up" : "down");
-        else
-            sprintf(buff, "%cMB%d", evStatePrefixes[state],
-                    buttonNumber(data1) + 1);
+        deviceID = IDEV_MOUSE;
+        isAxis = false;
+        break;
+
+    case EV_JOY_AXIS:
+        deviceID = IDEV_JOY1;
+        isAxis = true;
+        break;
+
+    case EV_JOY_SLIDER:
+        deviceID = IDEV_JOY1;
+        isAxis = true;
         break;
 
     case EV_JOY_BUTTON:
-        sprintf(buff, "%cJB%d", evStatePrefixes[state],
-                buttonNumber(data1) + 1);
-        break;
-
-    case EV_POV:
-        sprintf(buff, "%cPOV%s", evStatePrefixes[state],
-                povDirNames[data1]);
+        deviceID = IDEV_JOY1;
+        isAxis = false;
         break;
 
     default:
-        Con_Error("B_FormEventString: bad event type (%d).\n", type);
+        Con_Error("B_FormEventString: Unknown event type %i.", type);
     }
+
+    formEventString(buff, deviceID, data1, isAxis, state);
+}
+
+/**
+ * Retrieve the id of the named bind class.
+ *
+ * @param           The symbolic bind class name to search for OR identifier
+ *                  in the form "bdc#" where '#' = bind class id.
+ *
+ * @return          <code>true</code> if one is found.
+ */
+static boolean B_GetBindClassIDbyName(const char *name, uint *id)
+{
+    uint        i;
+    boolean     found = false;
+
+    if(!name || !name[0])
+        return false;
+
+    // By bindClass id first.
+    if(!strnicmp(name, "bdc", 3))
+    {
+        uint        idx = (uint) atoi(name+3);
+        i = 0;
+        while(i < numBindClasses && !found)
+        {
+            if(idx == bindClasses[i].id)
+            {
+                *id = idx;
+                found = true;
+            }
+            else
+                ++i;
+        }
+    }
+    if(!found)
+    {   // Not found, now check the names.
+        i = 0;
+        while(i < numBindClasses && !found)
+        {
+            if(!stricmp(name, bindClasses[i].name))
+            {
+                if(id)
+                    *id = bindClasses[i].id;
+                found = true;
+            }
+            else
+                ++i;
+        }
+    }
+
+    return found;
 }
 
 void DD_AddBindClass(bindclass_t *newbc)
 {
-    unsigned int i, g;
+    uint        i, j, k;
     bindclass_t *added;
 
     VERBOSE2(Con_Printf("DD_AddBindClass: %s.\n", newbc->name));
+
+    if(B_GetBindClassIDbyName(newbc->name, NULL))
+        Con_Error("DD_AddBindClass: Cannot register. A bind class by the "
+                  "name '%s' already exists.", newbc->name);
 
     if(++numBindClasses > maxBindClasses)
     {
@@ -863,17 +1125,30 @@ void DD_AddBindClass(bindclass_t *newbc)
 
         bindClasses = M_Realloc(bindClasses, sizeof(bindclass_t) * maxBindClasses);
 
-        for(g = 0; g < NUM_EVENT_TYPES; ++g)
+        for(j = 0; j < NUM_INPUT_DEVICES; ++j)
         {
-            binding_t *bnd;
-            unsigned int num;
+            devcontrolbinds_t *devBinds = &devCtrlBinds[j];
+            binding_t  *bnd;
+            uint        num;
 
-            bnd = evBindTypes[g].binds;
-            num = evBindTypes[g].num;
+            bnd = devBinds->keyBinds;
+            num = devBinds->numKeyBinds;
             for(i = 0; i < num; ++i)
             {
-                bnd[i].commands =
-                    M_Realloc(bnd[i].commands, sizeof(command_t) * maxBindClasses);
+                bnd[i].binds =
+                    M_Realloc(bnd[i].binds, sizeof(bindcontrol_t) * maxBindClasses);
+                for(k = numBindClasses - 1; k < maxBindClasses; ++k)
+                    bnd[i].binds[k].type = BND_UNUSED;
+            }
+
+            bnd = devBinds->axisBinds;
+            num = devBinds->numAxisBinds;
+            for(i = 0; i < num; ++i)
+            {
+                bnd[i].binds =
+                    M_Realloc(bnd[i].binds, sizeof(bindcontrol_t) * maxBindClasses);
+                for(k = numBindClasses - 1; k < maxBindClasses; ++k)
+                    bnd[i].binds[k].type = BND_UNUSED;
             }
         }
     }
@@ -905,8 +1180,9 @@ boolean DD_SetBindClass(unsigned int classID, unsigned int type)
  */
 boolean B_SetBindClass(unsigned int classID, unsigned int type)
 {
-    unsigned int i, k, g, count;
+    uint        i, k, g, count;
     binding_t  *bind;
+    inputdev_t *dev;
     boolean     isDone;
 
     // Change the active state of the bindClass
@@ -933,149 +1209,236 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
     // bound too has commands in the bind class being enabled/disabled.
 
     // loop through the bindings
-    for(g=0; g < NUM_EVENT_TYPES; ++g)
-    for(i=0, bind = evBindTypes[g].binds; i < evBindTypes[g].num; ++i, bind++)
+    for(g = 0; g < NUM_INPUT_DEVICES; ++g)
     {
-        // we're only interested in bindings for down events currently being pressed
-        // that have a binding in the class being enabled/disabled (classID)
-        if(!(bind->commands[classID].command[EVS_DOWN] != NULL &&
-             ((bind->type == EV_KEY          && (DD_IsKeyDown(bind->data1))) ||
-              (bind->type == EV_MOUSE_BUTTON && (DD_IsMouseBDown(bind->data1))) ||
-              (bind->type == EV_JOY_BUTTON   && (DD_IsJoyBDown(bind->data1))) )))
+        if((dev = I_GetDevice(g, true)) == NULL)
             continue;
 
-        count = 0;
-        // loop through the commands for this binding,
-        // count the number of commands for this binding that are for currently active
-        // bind classes with a lower id than the class being enabled/disabled (classID)
-        k = 0;
-        isDone = false;
-        while(k < numBindClasses && !isDone)
+        // Key bindings.
+        for(i = 0, bind = devCtrlBinds[g].keyBinds;
+            i < devCtrlBinds[g].numKeyBinds; ++i, bind++)
         {
-            if(bindClasses[k].active && bind->commands[k].command[EVS_DOWN])
+            bindcommand_t *com;
+
+            if(bind->binds[classID].type == BND_UNUSED)
+                continue;
+
+            com = &bind->binds[classID].data.command;
+
+            // we're only interested in bindings for down events currently being pressed
+            // that have a binding in the class being enabled/disabled (classID)
+            if(!(com->command[EVS_DOWN] != NULL &&
+                 I_IsDeviceKeyDown(g, bind->controlID)))
+                continue;
+
+            count = 0;
+            // loop through the commands for this binding,
+            // count the number of commands for this binding that are for currently active
+            // bind classes with a lower id than the class being enabled/disabled (classID)
+            k = 0;
+            isDone = false;
+            while(k < numBindClasses && !isDone)
             {
-                // if there is a command for this event binding in a class that is
-                // currently active (current is k), that has a greater id than the
-                // class being enabled/disabled (classID) then we don't need to que
-                // any extra events at all as that will have been done when the binding
-                // class with the higher id was enabled. The commands in the lower
-                // classes can't have been active (for this event), as the highest
-                // class command is ALWAYS executed unless a specific class is requested.
-                if(k > classID)
+                com = &bind->binds[k].data.command;
+
+                if(bindClasses[k].active && com->command[EVS_DOWN])
                 {
-                    // don't need to que any extra events
-                    count = 0;
+                    // if there is a command for this event binding in a class that is
+                    // currently active (current is k), that has a greater id than the
+                    // class being enabled/disabled (classID) then we don't need to que
+                    // any extra events at all as that will have been done when the binding
+                    // class with the higher id was enabled. The commands in the lower
+                    // classes can't have been active (for this event), as the highest
+                    // class command is ALWAYS executed unless a specific class is requested.
+                    if(k > classID)
+                    {
+                        // don't need to que any extra events
+                        count = 0;
+                        isDone = true;
+                    }
+                    else
+                        count++;
+                }
+
+                if(!isDone)
+                    k++;
+            }
+
+            if(count > 0)
+            {
+                // We need to send up events with a forced binding
+                // command request for all the binding classes with a
+                // lower id than the class being enabled/disabled (classID)
+                // that are also active.
+                for(k = 0; k < classID; ++k)
+                {
+                    com = &bind->binds[k].data.command;
+
+                    if(bindClasses[k].active && com->command[EVS_UP])
+                    {
+                        ddevent_t ev;
+                        // que an up event for this down event.
+                        ev.deviceID = g;
+                        ev.isAxis = false;
+                        ev.controlID = bind->controlID;
+                        ev.data1 = EVS_UP;
+
+                        // request a command in this class
+                        ev.useclass = bindClasses[k].id;
+                        ev.noclass = false;
+                        // Finally, post the event
+                        DD_PostEvent(&ev);
+                    }
+                }
+            }
+
+            // Also send an up event for this binding if the currently
+            // currently active command is in the class being disabled
+            // and it has the highest id of the active bindClass commands
+            // for this binding
+            k = 0;
+            isDone = false;
+            while(k < numBindClasses && !isDone)
+            {
+                uint        idx = numBindClasses - 1 - k;
+
+                com = &bind->binds[idx].data.command;
+
+                if((idx > classID && bindClasses[idx].active &&
+                   com->command[EVS_DOWN]) || idx < classID)
+                {
                     isDone = true;
                 }
                 else
-                    count++;
-            }
-
-            if(!isDone)
-                k++;
-        }
-
-        if(count > 0)
-        {
-            // We need to send up events with a forced binding
-            // command request for all the binding classes with a
-            // lower id than the class being enabled/disabled (classID)
-            // that are also active.
-            for(k = 0; k < classID; ++k)
-            {
-                if(bindClasses[k].active && bind->commands[k].command[EVS_UP])
                 {
-                    event_t ev;
-                    // que an up event for this down event.
-                    ev.type  = bind->type;
-                    ev.data1 = bind->data1;
-                    ev.state = EVS_UP;
+                    if(!bindClasses[idx].active && com->command[EVS_DOWN])
+                    {
+                        ddevent_t ev;
+                        // Que an up event for this down event.
+                        ev.deviceID = g;
+                        ev.isAxis = false;
+                        ev.controlID = bind->controlID;
+                        ev.data1 = EVS_UP;
 
-                    // request a command in this class
-                    ev.useclass = bindClasses[k].id;
-                    ev.noclass = false;
-                    // Finally, post the event
-                    DD_PostEvent(&ev);
+                        // Request a command in this class
+                        ev.useclass = bindClasses[idx].id;
+                        ev.noclass = false;
+                        // Finally, post the event
+                        DD_PostEvent(&ev);
+                    }
+
+                    k++;
                 }
             }
         }
-
-        // Also send an up event for this binding if the currently
-        // currently active command is in the class being disabled
-        // and it has the highest id of the active bindClass commands
-        // for this binding
-        k = 0;
-        isDone = false;
-        while(k < numBindClasses && !isDone)
-        {
-            unsigned int idx = numBindClasses - 1 - k;
-
-            if((idx > classID && bindClasses[idx].active &&
-               bind->commands[idx].command[EVS_DOWN]) || idx < classID)
-            {
-                isDone = true;
-            }
-            else
-            {
-                if(!bindClasses[idx].active && bind->commands[idx].command[EVS_DOWN])
-                {
-                    event_t ev;
-                    // Que an up event for this down event.
-                    ev.type  = bind->type;
-                    ev.data1 = bind->data1;
-                    ev.state = EVS_UP;
-
-                    // Request a command in this class
-                    ev.useclass = bindClasses[idx].id;
-                    ev.noclass = false;
-                    // Finally, post the event
-                    DD_PostEvent(&ev);
-                }
-
-                k++;
-            }
-        }
+        // Axis bindings.
+        // FIXME!
     }
 
     return true;
 }
 
-void B_WriteToFile(FILE * file)
+static uint writeBindList(FILE *file, binding_t *list, uint num,
+                          uint deviceID, uint bindClass)
 {
-    int     j;
-    unsigned int i, k, g, num, count;
-    char    buffer[20];
-    binding_t *bnd;
+    uint        i, j, count = 0;
+    binding_t  *bnd;
+    bindcontrol_t *ctrl;
+    char        buffer[20];
 
-    for(k = 0; k < numBindClasses; ++k)
+    for(i = 0, bnd = list; i < num; ++i, bnd++)
     {
-        for(g = 0; g < NUM_EVENT_TYPES; ++g)
+        ctrl = &bnd->binds[bindClass];
+        switch(ctrl->type)
         {
-            count = 0;
-            bnd = evBindTypes[g].binds;
-            num = evBindTypes[g].num;
-            for(i = 0; i < num; ++i)
+        case BND_AXIS:
             {
-                for(j = 0; j < NUM_EVENT_STATES; ++j)
-                {
-                    B_FormEventString(buffer, bnd[i].type, j, bnd[i].data1);
-                    if(bnd[i].commands[k].command[j])
-                    {
-                        fprintf(file, "bind ");
-                        fprintf(file, "%s ", bindClasses[k].name);
-                        fprintf(file, "%s", buffer);
-                        fprintf(file, " \"");
+            bindaxis_t *axis = &ctrl->data.axiscontrol;
 
-                        M_WriteTextEsc(file, bnd[i].commands[k].command[j]);
-                        fprintf(file, "\"\n");
+            formEventString(buffer, deviceID, bnd->controlID, true, 0);
+            // FIXME: Using "after" is a hack...
+            fprintf(file, "after 1 { bindaxis %s %s ",
+                    bindClasses[bindClass].name, buffer);
+            if(axis->invert)
+                fprintf(file, "-");
+            fprintf(file, "%s", P_ControlGetAxisName(axis->playercontrol));
+            if(axis->localPlayer > 0)
+                fprintf(file, "/%i", axis->localPlayer);
+            fprintf(file, " }\n");
 
-                        count++;
-                    }
-                }
+            count++;
+            break;
             }
 
-            if(count > 0)
-                fprintf(file,"\n");
+        case BND_COMMAND:
+            {
+            bindcommand_t *com = &ctrl->data.command;
+
+            for(j = 0; j < NUM_EVENT_STATES; ++j)
+            {
+                formEventString(buffer, deviceID, bnd->controlID, false, j);
+                if(com->command[j])
+                {
+                    fprintf(file, "bind ");
+                    fprintf(file, "%s ", bindClasses[bindClass].name);
+                    fprintf(file, "%s", buffer);
+                    fprintf(file, " \"");
+
+                    M_WriteTextEsc(file, com->command[j]);
+                    fprintf(file, "\"\n");
+
+                    count++;
+                }
+            }
+            break;
+            }
+
+        case BND_UNUSED:
+        default:
+            break;
+        }
+    }
+
+    return count;
+}
+
+/**
+ * Dump all the bindings to a text (cfg) file.  Outputs console commands.
+ */
+void B_WriteToFile(FILE *file)
+{
+    uint        c, d, count;
+    uint       *num;
+    binding_t **bnd;
+    devcontrolbinds_t *devBinds;
+    inputdev_t *device;
+
+    for(c = 0; c < numBindClasses; ++c)
+    {
+        for(d = 0; d < NUM_INPUT_DEVICES; ++d)
+        {
+            device = I_GetDevice(d, false);
+            devBinds = &devCtrlBinds[d];
+
+            // Toggles, impulses and console commands.
+            bnd = &devBinds->keyBinds;
+            num = &devBinds->numKeyBinds;
+            if(*bnd)
+            {
+                count = writeBindList(file, *bnd, *num, d, c);
+                if(count > 0)
+                    fprintf(file,"\n");
+            }
+
+            // Axis bindings.
+            bnd = &devBinds->axisBinds;
+            num = &devBinds->numAxisBinds;
+            if(*bnd)
+            {
+                count = writeBindList(file, *bnd, *num, d, c);
+                if(count > 0)
+                    fprintf(file,"\n");
+            }
         }
     }
 }
@@ -1084,14 +1447,13 @@ void B_WriteToFile(FILE * file)
  * Returns the number of bindings. The buffer will be filled with the
  * names of the events. Part of the Doomsday public API.
  */
-int B_BindingsForCommand(char *command, char *buffer, unsigned int bindClass,
+int B_BindingsForCommand(char *command, char *buffer, uint bindClass,
                          boolean allClasses)
 {
-    int     j;
-    unsigned int i, k, g, count = 0;
-    char    bindname[20];
+    int         j;
+    uint        i, k, g, num, count = 0;
+    char        bindname[20];
     binding_t *bnd;
-    unsigned int num;
 
     strcpy(buffer, "");
 
@@ -1100,18 +1462,21 @@ int B_BindingsForCommand(char *command, char *buffer, unsigned int bindClass,
 
     if(allClasses) // check all bindclasses
     {
-        for(g = 0; g < NUM_EVENT_TYPES; ++g)
+        for(g = 0; g < NUM_INPUT_DEVICES; ++g)
         {
-            bnd = evBindTypes[g].binds;
-            num = evBindTypes[g].num;
-
+            bnd = devCtrlBinds[g].keyBinds;
+            num = devCtrlBinds[g].numKeyBinds;
             for(i = 0; i < num; ++i)
+            {
                 for(k = 0; k < numBindClasses; ++k)
+                {
+                    bindcommand_t *com = &bnd[i].binds[k].data.command;
+
                     for(j = 0; j < NUM_EVENT_STATES; ++j)
-                        if(bnd[i].commands[k].command[j])
+                        if(com->command[j])
                         {
-                            B_FormEventString(bindname, bnd[i].type, j, bnd[i].data1);
-                            if(!stricmp(command, bnd[i].commands[k].command[j]))
+                            formEventString(bindname, g, bnd[i].controlID, false, j);
+                            if(!stricmp(command, com->command[j]))
                             {
                                 if(buffer[0])        // If the buffer is not empty...
                                     strcat(buffer, " ");
@@ -1120,21 +1485,25 @@ int B_BindingsForCommand(char *command, char *buffer, unsigned int bindClass,
                                 count++;
                             }
                         }
+                }
+            }
         }
     }
     else // only check bindClass
     {
-        for(g = 0; g < NUM_EVENT_TYPES; ++g)
+        for(g = 0; g < NUM_INPUT_DEVICES; ++g)
         {
-            bnd = evBindTypes[g].binds;
-            num = evBindTypes[g].num;
-
+            bnd = devCtrlBinds[g].keyBinds;
+            num = devCtrlBinds[g].numKeyBinds;
             for(i = 0; i < num; ++i)
+            {
+                bindcommand_t *com = &bnd[i].binds[bindClass].data.command;
+
                 for(j = 0; j < NUM_EVENT_STATES; ++j)
-                    if(bnd[i].commands[bindClass].command[j])
+                    if(com->command[j])
                     {
-                        B_FormEventString(bindname, bnd[i].type, j, bnd[i].data1);
-                        if(!stricmp(command, bnd[i].commands[bindClass].command[j]))
+                        formEventString(bindname, g, bnd[i].controlID, false, j);
+                        if(!stricmp(command, com->command[j]))
                         {
                             if(buffer[0])        // If the buffer is not empty...
                                 strcat(buffer, " ");
@@ -1143,6 +1512,7 @@ int B_BindingsForCommand(char *command, char *buffer, unsigned int bindClass,
                             count++;
                         }
                     }
+            }
         }
     }
     return count;
@@ -1154,25 +1524,139 @@ int B_BindingsForCommand(char *command, char *buffer, unsigned int bindClass,
  */
 int DD_GetKeyCode(const char *key)
 {
-    int     code = getByShortName(key);
+    int         code = getByShortName(key);
 
-    return code ? code : key[0];
+    return (code ? code : key[0]);
 }
 
+/**
+ * The "bindaxis" console command creates and deletes axis bindings.
+ *
+ * Example:  bindaxis bindclass mouse-y (-)look/2
+ */
+D_CMD(BindAxis)
+{
+    uint        i;
+	uint        deviceID, axis;
+	boolean     invert = false;
+	const char *name;
+	char        *ptr, ctlName[20];
+	int         local = 0;
+	binding_t  *bind;
+    uint        ctlidx, bc = 0;
+    const char *axisptr = argv[2];
+    const char *ctrlptr = argv[3];
+    boolean     bindClassGiven = false;
+    bindaxis_t *ctrl;
+
+	if(argc < 3 || argc > 4)
+	{
+		Con_Printf("Usage: %s (class) (device-axis) (control)\n", argv[0]);
+        Con_Printf("Binding Classes:\n");
+        for(i = 0; i < numBindClasses; ++i)
+            Con_Printf("  %s\n", bindClasses[i].name);
+        return true;
+	}
+
+    // Check for a specified binding class.
+    bindClassGiven = B_GetBindClassIDbyName(argv[1], &bc);
+
+    if(argc == 4 && !bindClassGiven)
+    {
+        Con_Printf("'%s' is not a valid bindClass name/id.\n", argv[1]);
+        return false;
+    }
+
+    // Has a binding class been specified?
+    if(!bindClassGiven)
+    {
+        // No it hasn't! default to normal
+        bc = DDBC_NORMAL;
+        axisptr = argv[1];
+        ctrlptr = argv[2];
+    }
+    
+    // Get the device and the axis.
+	if(!I_ParseDeviceAxis(axisptr, &deviceID, &axis))
+	{
+		Con_Printf("'%s' is not a valid device or device axis.\n", axisptr);
+		return false;
+	}
+
+    // If no control is given, delete the binding.
+    if(argc == 3 && bindClassGiven)
+	{
+        ddevent_t ev;
+
+        ev.deviceID = deviceID;
+        ev.controlID = axis;
+        ev.isAxis = true;
+
+        B_Bind(&ev, NULL, -1, bc);
+		return true;
+	}
+
+    name = ctrlptr;
+	// A minus in front of the control name means inversion.
+	if(name[0] == '-')
+	{
+		invert = true;
+		name = &name[1];
+	}
+
+	memset(ctlName, 0, sizeof(ctlName));
+	strncpy(ctlName, name, sizeof(ctlName) - 1);
+	
+	ptr = strchr(ctlName, '/');
+	if(ptr)
+	{
+		local = strtol(ptr + 1, NULL, 10);
+		if(local < 0 || local >= DDMAXPLAYERS)
+            local = 0;
+		*ptr = 0;
+	}
+
+    ctlidx = P_ControlFindAxis(ctlName);
+    if(ctlidx == 0)
+    {
+        Con_Printf("'%s' is not a valid axis control.\n", ctlName);
+        return false;
+    }
+
+	// Create the binding.
+    {
+    ddevent_t ev;
+
+    ev.deviceID = deviceID;
+    ev.controlID = axis;
+    ev.isAxis = true;
+
+    bind = B_Bind(&ev, NULL, ctlidx - 1, bc);
+    ctrl = &bind->binds[bc].data.axiscontrol;
+    ctrl->localPlayer = local;
+	ctrl->invert = invert;
+    }
+	
+	return true;
+}
+
+/**
+ * (safe)bind(r) bindclass +space +jump
+ */
 D_CMD(Bind)
 {
-    boolean prefixGiven = true;
-    boolean bindClassGiven = false;
-    char    validEventName[16], buff[80];
-    char    prefix = '+', *begin;
-    char    *evntptr = argv[2];
-    char    *cmdptr = argv[3];
-    event_t event;
-    int     repeat = !stricmp(argv[0], "bindr") ||
-        !stricmp(argv[0], "safebindr");
-    int     safe = !strnicmp(argv[0], "safe", 4);
-    unsigned int bc = 0;
-    unsigned int i;
+    boolean     prefixGiven = true;
+    boolean     bindClassGiven = false;
+    char        validEventName[16], buff[80];
+    char        prefix = '+', *begin;
+    char       *evntptr = argv[2];
+    char       *cmdptr = argv[3];
+    ddevent_t   event;
+    int         repeat = !stricmp(argv[0], "bindr") ||
+                    !stricmp(argv[0], "safebindr");
+    int         safe = !strnicmp(argv[0], "safe", 4);
+    uint        bc = 0;
+    uint        i;
     binding_t *existing;
 
     if(argc < 2 || argc > 4)
@@ -1186,20 +1670,17 @@ D_CMD(Bind)
     }
 
     // Check for a specified binding class
-    for(i = 0; i < numBindClasses && !bindClassGiven; ++i)
-    {
-        if(!(stricmp(argv[1], bindClasses[i].name)) ||
-            ((!strnicmp(argv[1], "bdc", 3) &&
-            (atoi(argv[1]+3) == bindClasses[i].id) )))
-        {
-            bc = bindClasses[i].id;
-            bindClassGiven = true;
-        }
-    }
+    bindClassGiven = B_GetBindClassIDbyName(argv[1], &bc);
 
     // Has a binding class been specified?
     if(!bindClassGiven)
     {
+        if(argc == 4)
+        {
+            Con_Printf("'%s' is not a valid bindClass name/id.\n", argv[1]);
+            return false;
+        }
+
         // No it hasn't! default to normal
         bc = DDBC_NORMAL;
         evntptr = argv[1];
@@ -1221,18 +1702,24 @@ D_CMD(Bind)
     else
         prefixGiven = false;
 
-    if((argc == 3 && !prefixGiven && bindClassGiven) ||
-        ((argc == 2) && !prefixGiven && !bindClassGiven))
+    if((argc == 3 && bindClassGiven) || (argc == 2 && !bindClassGiven))
     {
-        unsigned int     i;
-
-        // We're clearing a binding. If no prefix has been given,
-        // all event states (+, - and *) are all cleared.
-        for(i = 0; i < NUM_EVENT_STATES; ++i)
+        // We're clearing a binding.
+        // If no prefix has been given event states (+,-,*) are cleared.
+        if(!prefixGiven)
         {
-            sprintf(buff, "%c%s", evStatePrefixes[i], evntptr);
-            B_EventBuilder(buff, &event);
-            B_Bind(&event, NULL, bc);
+            uint    i;
+            for(i = 0; i < NUM_EVENT_STATES; ++i)
+            {
+                sprintf(buff, "%c%s", evStatePrefixes[i], evntptr);
+                B_EventBuilder(buff, &event);
+                B_Bind(&event, NULL, -1, bc);
+            }
+        }
+        else
+        {
+            B_EventBuilder(evntptr, &event);
+            B_Bind(&event, NULL, -1, bc);
         }
         return true;
     }
@@ -1245,18 +1732,22 @@ D_CMD(Bind)
             // Bind both the + and -.
             sprintf(validEventName, "-%s", evntptr);
             sprintf(buff, "-%s", cmdptr);
-            if(P_ActionCommand(buff, true))
+            if(P_IsValidControl(buff))
             {
                 B_EventBuilder(validEventName, &event);
-                if(safe && (existing = B_GetBinding(&event, false)))
-                    if(existing->commands[bc].command[event.state])
-                        return false;
+                if(safe && (existing = B_GetBinding(event.deviceID, event.controlID, false, false)))
+                {
+                    bindcommand_t *com = &existing->binds[bc].data.command;
 
-                B_Bind(&event, buff, bc);
+                    if(com->command[event.data1])
+                        return false;
+                }
+
+                B_Bind(&event, buff, -1, bc);
                 sprintf(validEventName, "+%s", evntptr);
                 sprintf(buff, "+%s", cmdptr);
                 B_EventBuilder(validEventName, &event);
-                B_Bind(&event, buff, bc);
+                B_Bind(&event, buff, -1, bc);
                 return true;
             }
         }
@@ -1268,27 +1759,31 @@ D_CMD(Bind)
 
     // Convert the name to an event.
     B_EventBuilder(validEventName, &event);
-    if(safe && (existing = B_GetBinding(&event, false)))
-        if(existing->commands[bc].command[event.state])
+    if(safe && (existing = B_GetBinding(event.deviceID, event.controlID, false, false)))
+    {
+        bindcommand_t *com = &existing->binds[bc].data.command;
+
+        if(com->command[event.data1])
             return false;
+    }
 
     // Now we can create a binding for it.
     if((argc == 2 && !bindClassGiven && !prefixGiven) ||
-            (argc == 3 && bindClassGiven))
-        B_Bind(&event, NULL, bc);
+       (argc == 3 && bindClassGiven))
+        B_Bind(&event, NULL, -1, bc);
     else
-        B_Bind(&event, cmdptr, bc);
+        B_Bind(&event, cmdptr, -1, bc);
 
     // A repeater?
-    if(repeat && event.type == EV_KEY && event.state == EVS_DOWN)
+    if(repeat && event.deviceID == IDEV_KEYBOARD && event.data1 == EVS_DOWN)
     {
-        event.state = EVS_REPEAT;
+        event.data1 = EVS_REPEAT;
 
         if((argc == 2 && !bindClassGiven && !prefixGiven) ||
-                (argc == 3 && bindClassGiven))
-            B_Bind(&event, NULL, bc);
+           (argc == 3 && bindClassGiven))
+            B_Bind(&event, NULL, -1, bc);
         else
-            B_Bind(&event, cmdptr, bc);
+            B_Bind(&event, cmdptr, -1, bc);
     }
     return true;
 }
@@ -1302,11 +1797,13 @@ D_CMD(ClearBindings)
 
 D_CMD(DeleteBind)
 {
-    int     j;
-    unsigned int i, bc = 0;
-    int     start = 1;
-    char   *cmdptr = argv[1];
-    boolean bcSpecified;
+    Con_Printf("%s is not currently implemented\n", argv[0]);
+/*
+    int         j;
+    uint        i, bc = 0;
+    int         start = 1;
+    char       *cmdptr = argv[1];
+    boolean     bcSpecified;
 
     if(argc < 2)
     {
@@ -1350,13 +1847,13 @@ D_CMD(DeleteBind)
         Con_Printf("Not a valid binding class. Enter listbindclasses.\n");
         return false;
     }
-
+*/
     return true;
 }
 
 D_CMD(ListBindClasses)
 {
-    unsigned int k;
+    uint        k;
 
     // Show the available binding classes
     Con_Printf("Binding Classes:\n");
@@ -1367,97 +1864,178 @@ D_CMD(ListBindClasses)
     return true;
 }
 
-D_CMD(ListBindings)
+static uint printBindList(char *searchKey, uint deviceID, int bindClass,
+                          binding_t *list, uint num)
 {
-    int         k;
-    unsigned int i, j, g, num, comcount, onlythis;
-    char        buffer[20];
+    uint        i, j, k, count;
     binding_t  *bnd;
-    unsigned int totalBinds;
-    boolean     specificClass, noMatch;
+    bindcontrol_t *ctrl;
+    boolean     noMatch;
+    char       buffer[40];
 
-    // Are we showing bindings in a particular class only?
-    specificClass = false;
-    onlythis = 0;
-    if(argc >= 2)
+    count = 0;
+    for(i = 0, bnd = list; i < num; ++i, bnd++)
     {
         for(j = 0; j < numBindClasses; ++j)
-            if(!stricmp(argv[1], bindClasses[j].name))
-            {
-                // only show bindings in this class
-                onlythis = bindClasses[j].id;
-                specificClass = true;
-            }
-    }
-
-    totalBinds = 0;
-    comcount = 0;
-    for(g = 0; g < NUM_EVENT_TYPES; ++g)
-    {
-        bnd = evBindTypes[g].binds;
-        num = evBindTypes[g].num;
-        totalBinds += num;
-
-        // loop through the bindings.
-        for(i = 0; i < num; ++i)
         {
-            // loop through the bindclasses.
-            for(j = 0; j < numBindClasses; ++j)
+            ctrl = &bnd->binds[j];
+            switch(ctrl->type)
             {
+            case BND_COMMAND:
+                {
+                bindcommand_t *com = &ctrl->data.command;
+
                 // for each event state.
                 for(k = 0; k < NUM_EVENT_STATES; ++k)
                 {
-                    if(bnd[i].commands[j].command[k])
+                    if(com->command[k])
                     {
-                        B_FormEventString(buffer, bnd[i].type, k, bnd[i].data1);
+                        formEventString(buffer, deviceID, bnd->controlID,
+                                        (ctrl->type == BND_AXIS), k);
 
                         // Does this event match the search pattern?
                         noMatch = false;
-                        if(argc >= 2)
+                        if(bindClass >= 0)
                         {
-                            if(!specificClass &&
-                                strnicmp(buffer + 1, argv[1], strlen(argv[1])))
+                            if(j != bindClass)
                                 noMatch = true;
-                            else
-                            {
-                                if(argc >= 3)
-                                {
-                                    if(strnicmp(buffer+1, argv[2], strlen(argv[2])) ||
-                                       (specificClass && j != onlythis))
-                                        noMatch = true;
-                                }
-                                else if(specificClass && j != onlythis)
-                                    noMatch = true;
-                            }
                         }
+                        if(!noMatch)
+                            if(searchKey &&
+                               strnicmp(buffer + 1, searchKey, strlen(searchKey)))
+                                noMatch = true;
 
                         if(!noMatch)
                         {
-                            comcount++;
-
-                            if(specificClass)
+                            if(bindClass >= 0)
                                 Con_Printf("%-8s : %s\n", buffer,
-                                           bnd[i].commands[j].command[k]);
+                                           com->command[k]);
                             else
-                                Con_Printf("%-8s : %s : %s\n", buffer,
+                                Con_Printf("%-8s : %-8s : %s\n", buffer,
                                            bindClasses[j].name,
-                                           bnd[i].commands[j].command[k]);
+                                           com->command[k]);
+                            count++;
                         }
                     }
                 }
+                break;
+                }
+
+            case BND_AXIS:
+                {
+                bindaxis_t *ctl = &ctrl->data.axiscontrol;
+
+                formEventString(buffer, deviceID, bnd->controlID,
+                                (ctrl->type == BND_AXIS), 0);
+
+                // Does this device control match the search pattern?
+                noMatch = false;
+                if(bindClass >= 0)
+                {
+                    if(j != bindClass)
+                        noMatch = true;
+                }
+                if(!noMatch)
+                    if(searchKey &&
+                       strnicmp(buffer, searchKey, strlen(searchKey)))
+                        noMatch = true;
+
+                if(!noMatch)
+                {
+                    const char *axisName =
+                        P_ControlGetAxisName(ctl->playercontrol);
+                                            
+                    if(bindClass >= 0)
+                        Con_Printf("%-8s : %s%s\n", buffer,
+			                       (ctl->invert? "-" : ""),
+			                       axisName);
+                    else
+                        Con_Printf("%-8s : %-8s : %s%s\n", buffer,
+                                   bindClasses[j].name,
+			                       (ctl->invert? "-" : ""),
+			                       axisName);
+                    count++;
+                }
+                break;
+                }
+
+            case BND_UNUSED:
+            default:
+                break;
             }
         }
     }
 
-    if(specificClass)
+    return count;
+}
+
+/**
+ * List all control bindings for all devices (including inactive devices).
+ */
+D_CMD(ListBindings)
+{
+    uint        i, g, comcount, bindClass = -1;
+    char        *searchKey;
+    uint        *num;
+    binding_t  **list;
+    uint        totalBinds;
+    devcontrolbinds_t *devBinds;
+    inputdev_t *device;
+
+    // Are we showing bindings in a particular class only?
+    searchKey = NULL;
+    if(argc >= 2)
     {
-        Con_Printf("Showing %d (%s class) commands from %d bindings.\n",
-            comcount, bindClasses[onlythis].name, totalBinds);
+        for(i = 0; i < numBindClasses; ++i)
+            if(!stricmp(argv[1], bindClasses[i].name))
+            {
+                // only show bindings in this class
+                bindClass = bindClasses[i].id;
+            }
+
+        if(bindClass == -1)
+            searchKey = argv[1];
+        else
+        {
+            if(argc >= 3)
+                searchKey = argv[2];
+        }
+    }
+
+    totalBinds = 0;
+    comcount = 0;
+    for(g = 0; g < NUM_INPUT_DEVICES; ++g)
+    {
+        device = I_GetDevice(g, false);
+
+        if(!device)
+            continue;
+        devBinds = &devCtrlBinds[g];
+
+        // Key bindings.
+        list = &devBinds->keyBinds;
+        num  = &devBinds->numKeyBinds;
+        totalBinds += *num;
+        if(*list)
+            comcount += printBindList(searchKey, g, bindClass, *list, *num);
+
+        // Axis bindings.
+        list = &devBinds->axisBinds;
+        num  = &devBinds->numAxisBinds;
+        totalBinds += *num;
+        if(*list)
+            comcount += printBindList(searchKey, g, bindClass, *list, *num);
+    }
+
+    if(bindClass != -1)
+    {
+        Con_Printf("Showing %i (%s class) commands from %i bindings.\n",
+                   comcount, bindClasses[bindClass].name, totalBinds);
     }
     else
     {
-        Con_Printf("Showing %d commands from %d bindings.\n",
-            comcount, totalBinds);
+        Con_Printf("Showing %i commands from %i bindings.\n",
+                   comcount, totalBinds);
     }
     return true;
 }
@@ -1468,7 +2046,7 @@ D_CMD(ListBindings)
  */
 D_CMD(EnableBindClass)
 {
-    unsigned int i, idx = 0;
+    uint        i, idx = 0;
     boolean     found;
 
     if(argc < 2 || argc > 3)
@@ -1477,7 +2055,7 @@ D_CMD(EnableBindClass)
             Con_Printf("%d: %s is %s\n", i, bindClasses[i].name,
                        (bindClasses[i].active)? "On" : "Off");
 
-        Con_Printf("Usage: %s (binding class) (1=On, 0=Off (leave blank to toggle))\n",
+        Con_Printf("Usage: %s (binding class) (1=On, 0=Off (omit to toggle))\n",
                    argv[0]);
         return true;
     }

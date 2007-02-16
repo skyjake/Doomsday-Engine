@@ -30,27 +30,6 @@
 #ifndef __COMMON_CONTROLS_H__
 #define __COMMON_CONTROLS_H__
 
-#include "p_ticcmd.h"
-
-#define CTLCFG_TYPE void
-
-CTLCFG_TYPE SCControlConfig(int option, void *data);
-
-// Control flags.
-#define CLF_ACTION      0x1     // The control is an action (+/- in front).
-#define CLF_REPEAT      0x2     // Bind down + repeat.
-
-typedef struct {
-    char   *command;            // The command to execute.
-    int     flags;
-    unsigned int bindClass;     // Class it should be bound into
-    int     defKey;             //
-    int     defMouse;           // Zero means there is no default.
-    int     defJoy;             //
-} control_t;
-
-extern const control_t controls[];
-
 // Game registered bindClasses
 enum {
     GBC_CLASS1 = NUM_DDBINDCLASSES,
@@ -61,20 +40,20 @@ enum {
     GBC_MESSAGE
 };
 
-extern const control_t *grabbing;
-
 void        G_ControlRegister(void);
 void        G_DefaultBindings(void);
-void        G_BindClassRegistration(void);
+void        G_RegisterBindClasses(void);
+void        G_RegisterPlayerControls(void);
 
-void        G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime);
-void        G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src);
+int         G_PrivilegedResponder(event_t *event);
 
 boolean     G_AdjustControlState(event_t* ev);
 
 void        G_LookAround(int pnum);
+void        G_SpecialButton(int pnum);
 
 void        G_ResetMousePos(void);
+void        G_ControlReset(int pnum);
 
 float       G_GetLookOffset(int pnum);
 void        G_ResetLookOffset(int pnum);

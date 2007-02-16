@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,14 +62,14 @@ typedef struct fdata_s {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Get the info for the next file.
  */
-static int nextfinddata(finddata_t * fd)
+static int nextfinddata(finddata_t *fd)
 {
-	fdata_t *data = fd->finddata;
-	char   *fn, *last;
-	char    ext[256];
+	fdata_t    *data = fd->finddata;
+	char       *fn, *last;
+	char        ext[256];
 	struct stat st;
 
 	if(data->buf.gl_pathc <= data->pos)
@@ -117,12 +118,12 @@ static int nextfinddata(finddata_t * fd)
 	return 0;
 }
 
-/*
- * Returns zero if successful.
+/**
+ * @return              <code>0</code> if successful(!).
  */
-int myfindfirst(const char *filename, finddata_t * fd)
+int myfindfirst(const char *filename, finddata_t *fd)
 {
-	fdata_t *data;
+	fdata_t    *data;
 
 	// Allocate a new glob struct.
 	fd->finddata = data = calloc(1, sizeof(fdata_t));
@@ -148,17 +149,18 @@ int myfindfirst(const char *filename, finddata_t * fd)
 	   return dta->hFile<0; */
 }
 
-/*
- * Returns zero if successful.
+/**
+ * @return              <code>0</code> if successful(!).
  */
-int myfindnext(finddata_t * fd)
+int myfindnext(finddata_t *fd)
 {
 	if(!fd->finddata)
 		return FIND_ERROR;
-	return nextfinddata(fd);
+
+    return nextfinddata(fd);
 }
 
-void myfindend(finddata_t * fd)
+void myfindend(finddata_t *fd)
 {
 	globfree(&((fdata_t *) fd->finddata)->buf);
 	free(((fdata_t *) fd->finddata)->pattern);

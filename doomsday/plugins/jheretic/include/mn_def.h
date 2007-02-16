@@ -89,7 +89,6 @@ typedef enum {
     MENU_GAMEPLAY,
     MENU_HUD,
     MENU_MAP,
-    MENU_CONTROLS,
     MENU_MOUSE,
     MENU_JOYSTICK,
     MENU_FILES,

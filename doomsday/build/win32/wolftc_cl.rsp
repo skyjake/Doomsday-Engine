@@ -5,7 +5,6 @@
  ./../../plugins/common/src/m_multi.c
  ./../../plugins/common/src/mn_menu.c
  ./../../plugins/wolftc/src/g_ctrl.c
- ./../../plugins/common/src/m_ctrl.c
  ./../../plugins/common/src/g_dglinit.c
  ./../../plugins/wolftc/src/d_api.c
  ./../../plugins/wolftc/src/d_refresh.c
@@ -61,6 +60,5 @@
  ./../../plugins/common/src/g_game.c
  ./../../plugins/common/src/g_controls.c
  ./../../plugins/wolftc/src/d_items.c
- ./../../plugins/wolftc/src/d_action.c
  ./../../plugins/wolftc/src/acfnlink.c
  

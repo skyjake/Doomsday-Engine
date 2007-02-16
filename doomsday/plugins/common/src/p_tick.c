@@ -53,7 +53,6 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void    P_ClientSideThink(void);
-void    G_SpecialButton(player_t *pl);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -84,10 +83,10 @@ boolean P_IsPaused(void)
  */
 void P_RunPlayers(void)
 {
-    boolean pauseState = P_IsPaused();
-    int     i;
-    ticcmd_t command;
-    boolean gotCommands;
+    boolean     pauseState = P_IsPaused();
+    uint        i;
+    ticcmd_t    command;
+    boolean     gotCommands;
 
     // This is not for clients.
     if(IS_CLIENT)
@@ -97,7 +96,7 @@ void P_RunPlayers(void)
     // For the local player, this is always the cmd of the current tick.
     // For remote players, this might be a predicted cmd or a real cmd
     // from the past.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->ingame)
         {
             // We will combine all the waiting commands into this
@@ -106,21 +105,25 @@ void P_RunPlayers(void)
 
             // Get all the commands for the player.
             gotCommands = false;
-            while(Net_GetTicCmd(&players[i].cmd, i))
+            while(Net_GetTicCmd(&players[i].plr->cmd, i))
             {
-                G_MergeTiccmd(&command, &players[i].cmd);
+                P_MergeCommand(&command, &players[i].plr->cmd);
                 gotCommands = true;
+
+                // Local players run one tic at a time.
+				if(players[i].plr->flags & DDPF_LOCAL)
+                    break;
             }
 
             if(gotCommands)
             {
                 // The new merged command will be the one that the
                 // player uses for thinking on this tick.
-                memcpy(&players[i].cmd, &command, sizeof(command));
+                memcpy(&players[i].plr->cmd, &command, sizeof(command));
             }
 
             // Check for special buttons (pause and netsave).
-            G_SpecialButton(&players[i]);
+            G_SpecialButton(i);
 
             // The player thinks.
             if(G_GetGameState() == GS_LEVEL && !pauseState)

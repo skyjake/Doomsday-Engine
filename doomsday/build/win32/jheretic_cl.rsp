@@ -5,7 +5,6 @@
  ./../../plugins/common/src/m_multi.c
  ./../../plugins/common/src/mn_menu.c
  ./../../plugins/jheretic/src/g_ctrl.c
- ./../../plugins/common/src/m_ctrl.c
  ./../../plugins/common/src/g_dglinit.c
  ./../../plugins/jheretic/src/h_api.c
  ./../../plugins/jheretic/src/h_refresh.c
@@ -52,7 +51,6 @@
  ./../../plugins/common/src/g_update.c
  ./../../plugins/common/src/g_game.c
  ./../../plugins/common/src/g_controls.c
- ./../../plugins/jheretic/src/h_action.c
  ./../../plugins/common/src/f_infine.c
  ./../../plugins/jheretic/src/tables.c
  ./../../plugins/jheretic/src/st_stuff.c

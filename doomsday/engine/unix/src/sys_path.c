@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,15 +53,15 @@
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Removes references to the current (.) and parent (..) directories.
  * The given path should be an absolute path.
  */
 void DD_ResolvePath(char *path)
 {
-	char   *ch = path;
-	char   *end = path + strlen(path);
-	char   *prev = path;		// Assume an absolute path.
+	char       *ch = path;
+	char       *end = path + strlen(path);
+	char       *prev = path;		// Assume an absolute path.
 
 	for(; *ch; ch++)
 	{
@@ -85,21 +86,21 @@ void DD_ResolvePath(char *path)
 	}
 }
 
-/*
+/**
  * Convert the given path to an absolute path.
  */
 char *_fullpath(char *full, const char *original, int maxLen)
 {
-	ddstring_t dir;
-	char    workDir[512];		// Fixed-size array...
+	ddstring_t  dir;
+	char        workDir[512];		// Fixed-size array...
 
 	Str_Init(&dir);
 
 	// FIXME: Check for '~'.
 
-	if(original[0] != '/')		// A relative path?
+	if(original[0] != '/') // A relative path?
 	{
-		getcwd(workDir, sizeof(workDir));	// FIXME: Check for ERANGE.
+		getcwd(workDir, sizeof(workDir)); // FIXME: Check for ERANGE.
 		Str_Set(&dir, workDir);
 		Str_Append(&dir, "/");
 		Str_Append(&dir, original);
@@ -121,7 +122,7 @@ char *_fullpath(char *full, const char *original, int maxLen)
 
 void strzncpy(char *dest, const char *src, int count)
 {
-	char   *out = dest;
+	char       *out = dest;
 	const char *in = src;
 
 	while(count-- > 0)
@@ -136,10 +137,10 @@ void strzncpy(char *dest, const char *src, int count)
 void _splitpath(const char *path, char *drive, char *dir, char *name,
 				char *ext)
 {
-	char   *lastPeriod, *lastSlash;
+	char       *lastPeriod, *lastSlash;
 
 	if(drive)
-		strcpy(drive, "");		// There is never a drive letter.
+		strcpy(drive, ""); // There is never a drive letter.
 
 	lastPeriod = strrchr(path, '.');
 	lastSlash = strrchr(path, '/');

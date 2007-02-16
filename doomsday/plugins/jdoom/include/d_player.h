@@ -71,7 +71,6 @@ typedef enum {
 typedef struct player_s {
     ddplayer_t     *plr;           // Pointer to the engine's player data.
     playerstate_t   playerstate;
-    ticcmd_t        cmd;
 
     playerclass_t        class;         // player class type
 

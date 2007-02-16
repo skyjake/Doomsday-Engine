@@ -469,12 +469,12 @@ void G_PreInit(void)
     R_SetDataPath( DATAPATH );
 
     R_SetBorderGfx(borderLumps);
-    P_DefineActions(actions);
 
     DD_SetVariable(DD_SKYFLAT_NAME, SKYFLATNAME);
     Con_SetString("map-name", NOTAMAPNAME, 1);
 
-    G_BindClassRegistration();
+    G_RegisterBindClasses();
+    G_RegisterPlayerControls();
     P_RegisterCustomMapProperties();
 
     // Add the cvars and ccmds to the console databases
@@ -573,7 +573,6 @@ void G_StartTitle(void)
 
 void G_DoLoadLevel(void)
 {
-    action_t   *act;
     int         i;
     char       *lname, *ptr;
 
@@ -624,9 +623,7 @@ void G_DoLoadLevel(void)
     G_ResetMousePos();
     sendpause = paused = false;
 
-    // Deactivate all action keys, for all players.
-    for(act = actions; act->name[0]; act++)
-        memset(act->on, 0, sizeof(act->on));
+    G_ControlReset(-1); // Clear all controls for all local players.
 
     // set the game status cvar for map name
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
@@ -721,28 +718,6 @@ boolean G_Responder(event_t *ev)
 
     // The event wasn't used.
     return false;
-}
-
-void G_SpecialButton(player_t *pl)
-{
-    if(pl->plr->ingame)
-    {
-        if(pl->cmd.pause)
-        {
-            paused ^= 1;
-            if(paused)
-            {
-                // This will stop all sounds from all origins.
-                S_StopSound(0, 0);
-            }
-
-            // Servers are responsible for informing clients about
-            // pauses in the game.
-            NetSv_Paused(paused);
-
-            pl->cmd.pause = 0;
-        }
-    }
 }
 
 /**

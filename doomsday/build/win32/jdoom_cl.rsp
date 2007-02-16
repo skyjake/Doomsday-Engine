@@ -5,7 +5,6 @@
  ./../../plugins/common/src/m_multi.c
  ./../../plugins/common/src/mn_menu.c
  ./../../plugins/jdoom/src/g_ctrl.c
- ./../../plugins/common/src/m_ctrl.c
  ./../../plugins/common/src/g_dglinit.c
  ./../../plugins/jdoom/src/d_api.c
  ./../../plugins/jdoom/src/d_refresh.c
@@ -62,6 +61,5 @@
  ./../../plugins/common/src/g_game.c
  ./../../plugins/common/src/g_controls.c
  ./../../plugins/jdoom/src/d_items.c
- ./../../plugins/jdoom/src/d_action.c
  ./../../plugins/jdoom/src/acfnlink.c
  
