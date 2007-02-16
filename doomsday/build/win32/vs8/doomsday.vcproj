@@ -504,7 +504,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\p_player.c"
+				RelativePath="..\..\..\engine\portable\src\p_players.c"
 				>
 			</File>
 			<File
@@ -1435,7 +1435,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\p_player.h"
+				RelativePath="..\..\..\engine\portable\include\p_players.h"
 				>
 			</File>
 			<File

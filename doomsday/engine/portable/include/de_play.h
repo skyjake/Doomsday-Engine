@@ -40,7 +40,7 @@
 #include "p_polyob.h"
 #include "p_sight.h"
 #include "p_ticker.h"
-#include "p_player.h"
+#include "p_players.h"
 #include "p_control.h"
 #include "p_cmd.h"
 

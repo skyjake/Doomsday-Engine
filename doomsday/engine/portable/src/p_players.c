@@ -23,7 +23,7 @@
  */
 
 /*
- * p_player.c: Players and Player Classes
+ * p_players.c: Players
  */
 
 // HEADER FILES ------------------------------------------------------------

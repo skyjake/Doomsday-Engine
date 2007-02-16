@@ -23,7 +23,7 @@
  */
 
 /*
- * p_player.h: Players and Player Classes
+ * p_players.h: Players
  */
 
 #ifndef __DOOMSDAY_PLAYERS_H__
