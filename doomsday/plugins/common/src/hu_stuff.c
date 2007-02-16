@@ -658,13 +658,13 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
     }
 }
 
-/*
+/**
  * Find string width from hu_font chars
  * Skips parameter blocks eg "{param}Text" = 4 chars
  */
-int M_StringWidth(char *string, dpatch_t * font)
+int M_StringWidth(const char *string, dpatch_t * font)
 {
-    uint    i;
+    uint        i;
     int         w = 0;
     int         c;
     boolean     skip;
@@ -690,14 +690,14 @@ int M_StringWidth(char *string, dpatch_t * font)
     return w;
 }
 
-/*
+/**
  * Find string height from hu_font chars
  */
-int M_StringHeight(char *string, dpatch_t * font)
+int M_StringHeight(const char *string, dpatch_t *font)
 {
-    uint    i;
-    int     h;
-    int     height = SHORT(font[17].height);
+    uint        i;
+    int         h;
+    int         height = SHORT(font[17].height);
 
     h = height;
     for(i = 0; i < strlen(string); ++i)
@@ -749,12 +749,12 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float red,
 /*
  * Write a string using the hu_font
  */
-void M_WriteText(int x, int y, char *string)
+void M_WriteText(int x, int y, const char *string)
 {
     M_WriteText2(x, y, string, hu_font_a, 1, 1, 1, 1);
 }
 
-void M_WriteText2(int x, int y, char *string, dpatch_t *font, float red,
+void M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
                   float green, float blue, float alpha)
 {
     M_WriteText3(x, y, string, font, red, green, blue, alpha, true, 0);

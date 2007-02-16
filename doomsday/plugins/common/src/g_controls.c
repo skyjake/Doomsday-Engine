@@ -87,7 +87,7 @@ typedef enum joyaxis_e {
     NUM_JOYSTICK_AXES
 } joyaxis_t;
 
-#if __JHERETIC__
+#if 0 // FIXME! __JHERETIC__
 struct artifacthotkey_s {
     int     action;
     int     artifact;
@@ -119,7 +119,6 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum, float elapsedTime);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean sendpause;
-extern float   turbomul;               // multiplier for turbo
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

@@ -81,13 +81,8 @@ void            M_StartMenu(void);
 void            M_ClearMenus(void);
 
 void            M_StartMessage(char *string, void *routine, boolean input);
-void M_StopMessage(void);
+void            M_StopMessage(void);
 
-void            M_WriteText2(int x, int y, char *string, dpatch_t *font,
-                             float red, float green, float blue, float alpha);
-void            M_WriteText3(int x, int y, const char *string, dpatch_t *font,
-                             float red, float green, float blue, float alpha,
-                             boolean doTypeIn, int initialCount);
 DEFCC(CCmdMenuAction);
 DEFCC(CCmdMsgResponse);
 

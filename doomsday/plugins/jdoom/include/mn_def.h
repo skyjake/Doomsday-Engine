@@ -147,10 +147,7 @@ extern menu_t   GameSetupMenu;
 extern menu_t   PlayerSetupMenu;
 
 void    M_DrawTitle(char *text, int y);
-void    M_WriteText(int x, int y, char *string);
-void    M_WriteText2(int x, int y, char *string, dpatch_t *font,
-                             float red, float green, float blue, float alpha);
-void    M_WriteMenuText(const menu_t * menu, int index, char *text);
+void    M_WriteMenuText(const menu_t * menu, int index, const char *text);
 
 // Color widget.
 void    DrawColorWidget();
@@ -163,8 +160,6 @@ void    M_DrawThermo(int x, int y, int thermWidth, int thermDot);
 void    MN_DrawSlider(const menu_t * menu, int item, int width, int slot);
 void    MN_DrawColorBox(const menu_t * menu, int index, float r, float g,
                         float b, float a);
-int     M_StringWidth(char *string, dpatch_t * font);
-int     M_StringHeight(char *string, dpatch_t * font);
 void    M_StartControlPanel(void);
 void    M_StartMessage(char *string, void *routine, boolean input);
 void    M_StopMessage(void);

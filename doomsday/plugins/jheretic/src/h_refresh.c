@@ -41,6 +41,7 @@
 #include "d_net.h"
 #include "f_infine.h"
 #include "x_hair.h"
+#include "g_controls.h"
 
 // MACROS ------------------------------------------------------------------
 

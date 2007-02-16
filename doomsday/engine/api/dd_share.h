@@ -1116,7 +1116,7 @@ typedef enum blendmode_e {
         int             height;
         int             (*TextOut) (const char *text, int x, int y);
         int             (*Width) (const char *text);
-        void            (*Filter) (const char *text);
+        void            (*Filter) (char *text); // maybe alters text
     } ddfont_t;
 
 #ifdef _RedefineTextOut_

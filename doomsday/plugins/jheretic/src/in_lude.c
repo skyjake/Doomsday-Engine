@@ -468,22 +468,22 @@ void IN_Ticker(void)
     }
 }
 
-/*
+/**
  * Check to see if any player hit a key
  */
 void IN_CheckForSkip(void)
 {
-    int     i;
-    player_t *player;
+    int         i;
+    player_t   *player;
 
     if(IS_CLIENT)
         return;
 
-    for(i = 0, player = players; i < MAXPLAYERS; i++, player++)
+    for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
     {
-        if(players[i].plr->ingame)
+        if(players->plr->ingame)
         {
-            if(player->cmd.attack)
+            if(player->plr->cmd.actions & BT_ATTACK)
             {
                 if(!player->attackdown)
                 {
@@ -495,7 +495,7 @@ void IN_CheckForSkip(void)
             {
                 player->attackdown = false;
             }
-            if(player->cmd.use)
+            if(player->plr->cmd.actions & BT_USE)
             {
                 if(!player->usedown)
                 {

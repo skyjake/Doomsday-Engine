@@ -47,7 +47,7 @@ void        G_RegisterPlayerControls(void);
 
 int         G_PrivilegedResponder(event_t *event);
 
-boolean     G_AdjustControlState(event_t* ev);
+boolean     G_AdjustControlState(event_t *ev);
 
 void        G_LookAround(int pnum);
 void        G_SpecialButton(int pnum);

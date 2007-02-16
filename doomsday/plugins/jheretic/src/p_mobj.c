@@ -494,7 +494,7 @@ void P_XYMovement(mobj_t *mo)
     // Stop player walking animation.
     if(player && mo->momx > -STANDSPEED && mo->momx < STANDSPEED &&
        mo->momy > -STANDSPEED && mo->momy < STANDSPEED &&
-       !player->cmd.forwardMove && !player->cmd.sideMove)
+       !player->plr->cmd.forwardMove && !player->plr->cmd.sideMove)
     {
         // if in a walking frame, stop moving
         if((unsigned) ((player->plr->mo->state - states) - PCLASS_INFO(player->class)->runstate) < 4)
@@ -503,8 +503,8 @@ void P_XYMovement(mobj_t *mo)
 
     if(mo->momx > -STOPSPEED && mo->momx < STOPSPEED && mo->momy > -STOPSPEED
        && mo->momy < STOPSPEED && (!player ||
-                                   (player->cmd.forwardMove == 0 &&
-                                    player->cmd.sideMove == 0)))
+                                   (player->plr->cmd.forwardMove == 0 &&
+                                    player->plr->cmd.sideMove == 0)))
     {
         mo->momx = 0;
         mo->momy = 0;

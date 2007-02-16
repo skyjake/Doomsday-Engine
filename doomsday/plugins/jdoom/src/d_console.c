@@ -277,7 +277,7 @@ void D_ConsoleBg(int *width, int *height)
  * Draw (char *) text in the game's font.
  * Called by the console drawer.
  */
-int ConTextOut(char *text, int x, int y)
+int ConTextOut(const char *text, int x, int y)
 {
     extern int typein_time;
     int     old = typein_time;
@@ -292,7 +292,7 @@ int ConTextOut(char *text, int x, int y)
 /**
  * Get the visual width of (char*) text in the game's font.
  */
-int ConTextWidth(char *text)
+int ConTextWidth(const char *text)
 {
     return M_StringWidth(text, hu_font_a);
 }

@@ -2236,7 +2236,7 @@ void M_DrawTitle(char *text, int y)
                      cfg.menuColor[2], menu_alpha, true, true, ALIGN_LEFT);
 }
 
-void M_WriteMenuText(const menu_t * menu, int index, char *text)
+void M_WriteMenuText(const menu_t *menu, int index, const char *text)
 {
     int         off = 0;
 

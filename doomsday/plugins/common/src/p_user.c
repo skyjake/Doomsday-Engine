@@ -88,6 +88,8 @@ boolean     P_TestMobjLocation(mobj_t *mobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern float   turbomul;               // multiplier for turbo
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 boolean onground;
 
@@ -355,7 +357,7 @@ void P_MovePlayer(player_t *player)
     ddplayer_t *dp = player->plr;
     mobj_t     *plrmo = player->plr->mo;
     ticcmd_t   *cmd = &player->plr->cmd;
-    classinfo_t *pClassInfo = PCLASS_INFO(plr->class);
+    classinfo_t *pClassInfo = PCLASS_INFO(player->class);
     int         speed;
     fixed_t     forwardMove;
     fixed_t     sideMove;
@@ -1243,12 +1245,13 @@ void P_PlayerThinkSounds(player_t *player)
 
 void P_PlayerThinkItems(player_t *player)
 {
+#if 0 // FIXME!
 #if __JHERETIC__ || __JHEXEN__
     int fly;
 #endif
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    ticcmd_t *cmd = &player->cmd;
+    ticcmd_t *cmd = &player->plr->cmd;
 
     if(cmd->arti)
     {                           // Use an artifact
@@ -1282,6 +1285,7 @@ void P_PlayerThinkItems(player_t *player)
         // Start flying automatically.
         P_InventoryUseArtifact(player, arti_fly);
     }
+#endif
 #endif
 }
 

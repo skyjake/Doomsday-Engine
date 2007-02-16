@@ -74,7 +74,7 @@
 #define MAXCHICKENHEALTH 30
 #define VIEWHEIGHT      (cfg.eyeHeight*FRACUNIT) // 41*FRACUNIT
 
-#define TOCENTER TICCMD_FALL_DOWN
+#define TOCENTER        -8
 
 // player radius for movement checking
 #define PLAYERRADIUS    16*FRACUNIT

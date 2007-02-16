@@ -957,7 +957,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     }
 
     // check for autofire
-    if(player->cmd.attack)
+    if(player->plr->cmd.actions & BT_ATTACK)
     {
         wminfo = WEAPON_INFO(player->readyweapon, player->class, 0);
 
@@ -986,14 +986,14 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     ddpsp->state = DDPSP_BOBBING;
 }
 
-void P_UpdateBeak(player_t *player, pspdef_t * psp)
+void P_UpdateBeak(player_t *player, pspdef_t *psp)
 {
     psp->sy = WEAPONTOP + (player->chickenPeck << (FRACBITS - 1));
 }
 
-void C_DECL A_BeakReady(player_t *player, pspdef_t * psp)
+void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
 {
-    if(player->cmd.attack)
+    if(player->plr->cmd.actions & BT_ATTACK)
     {                           // Chicken beak attack
         player->attackdown = true;
         P_SetMobjState(player->plr->mo, S_CHICPLAY_ATK1);
@@ -1019,12 +1019,12 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t * psp)
     }
 }
 
-/*
+/**
  * The player can re fire the weapon without lowering it entirely.
  */
-void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
+void C_DECL A_ReFire(player_t *player, pspdef_t *psp)
 {
-    if(player->cmd.attack &&
+    if((player->plr->cmd.actions & BT_ATTACK) &&
        player->pendingweapon == WT_NOCHANGE &&
        player->health)
     {
@@ -1038,10 +1038,10 @@ void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
     }
 }
 
-/*
+/**
  * Lowers current weapon, and changes weapon at bottom.
  */
-void C_DECL A_Lower(player_t *player, pspdef_t * psp)
+void C_DECL A_Lower(player_t *player, pspdef_t *psp)
 {
     if(player->morphTics)
         psp->sy = WEAPONBOTTOM;

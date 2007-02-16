@@ -65,13 +65,9 @@ void    H_EndFrame(void);
 void    M_Drawer(void);
 
 // Input responders
-int     D_PrivilegedResponder(event_t *event);
+int     G_PrivilegedResponder(event_t *event);
 boolean G_Responder(event_t *ev);
 int     D_PrivilegedResponder(event_t *event);
-
-// Ticcmd
-void    G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime);
-void    G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src);
 
 // Map Data
 void    P_SetupForMapData(int type, uint num);
@@ -211,12 +207,10 @@ game_export_t *GetGameAPI(game_import_t * imports)
     gx.PreInit = H_PreInit;
     gx.PostInit = H_PostInit;
     gx.Shutdown = H_Shutdown;
-    gx.BuildTicCmd = (void (*)(void*, float)) G_BuildTiccmd;
-    gx.MergeTicCmd = (void (*)(void*, void*)) G_MergeTiccmd;
     gx.G_Drawer = D_Display;
     gx.Ticker = H_Ticker;
     gx.MN_Drawer = M_Drawer;
-    gx.PrivilegedResponder = (boolean (*)(event_t *)) D_PrivilegedResponder;
+    gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
     gx.FallbackResponder = M_Responder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
