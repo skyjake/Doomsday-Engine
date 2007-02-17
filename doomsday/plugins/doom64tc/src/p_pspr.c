@@ -251,6 +251,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
 
         // d64tc >
         // DJS - FIXME!
+/*
         if(player->readyweapon == WT_TENTH)
         {
             if(actions[A_WEAPON10].on &&
@@ -260,6 +261,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
                 player->pendingweapon = WT_TENTH;
             }
         }
+*/
         // < d64tc
 
         // check for change
@@ -272,7 +274,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     }
 
     // check for autofire
-    if(player->cmd.attack)
+    if(player->plr->cmd.actions & BT_ATTACK)
     {
         wminfo = WEAPON_INFO(player->readyweapon, player->class, 0);
 
@@ -294,16 +296,15 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     player->plr->psprites[0].state = DDPSP_BOBBING;
 }
 
-/*
+/**
  * The player can re-fire the weapon without lowering it entirely.
  */
-void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
+void C_DECL A_ReFire(player_t *player, pspdef_t *psp)
 {
     // check for fire
     //  (if a weaponchange is pending, let it go through instead)
-    if(player->cmd.attack &&
-       player->pendingweapon == WT_NOCHANGE &&
-       player->health)
+    if((player->plr->cmd.actions & BT_ATTACK) &&
+       player->pendingweapon == WT_NOCHANGE && player->health)
     {
         player->refire++;
         P_FireWeapon(player);
@@ -315,7 +316,7 @@ void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
     }
 }
 
-void C_DECL A_CheckReload(player_t *player, pspdef_t * psp)
+void C_DECL A_CheckReload(player_t *player, pspdef_t *psp)
 {
     P_CheckAmmo(player);
 #if 0

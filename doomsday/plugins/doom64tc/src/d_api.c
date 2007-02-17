@@ -59,11 +59,7 @@ void    M_Drawer(void);
 // Input responders
 boolean M_Responder(event_t *ev);
 boolean G_Responder(event_t *ev);
-int     D_PrivilegedResponder(event_t *event);
-
-// Ticcmd
-void    G_BuildTiccmd(ticcmd_t *cmd, float elapsedTime);
-void    G_MergeTiccmd(ticcmd_t *dest, ticcmd_t *src);
+int     G_PrivilegedResponder(event_t *event);
 
 // Map Data
 void    P_SetupForMapData(int type, uint num);
@@ -118,12 +114,12 @@ game_export_t gx;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Get a 32-bit integer value.
  */
 int G_GetInteger(int id)
 {
-    switch (id)
+    switch(id)
     {
     case DD_PSPRITE_BOB_X:
         return (int) (FRACUNIT +
@@ -145,12 +141,12 @@ int G_GetInteger(int id)
     return 0;
 }
 
-/*
+/**
  * Get a pointer to the value of a variable. Added for 64-bit support.
  */
 void *G_GetVariable(int id)
 {
-    switch (id)
+    switch(id)
     {
     case DD_GAME_NAME:
         return GAMENAMETEXT;
@@ -183,11 +179,11 @@ void *G_GetVariable(int id)
     return 0;
 }
 
-/*
+/**
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-game_export_t *GetGameAPI(game_import_t * imports)
+game_export_t *GetGameAPI(game_import_t *imports)
 {
     // Take a copy of the imports, but only copy as much data as is
     // allowed and legal.
@@ -202,12 +198,10 @@ game_export_t *GetGameAPI(game_import_t * imports)
     gx.PreInit = D_PreInit;
     gx.PostInit = D_PostInit;
     gx.Shutdown = D_Shutdown;
-    gx.BuildTicCmd = (void (*)(void*, float)) G_BuildTiccmd;
-    gx.MergeTicCmd = (void (*)(void*, void*)) G_MergeTiccmd;
     gx.Ticker = D_Ticker;
     gx.G_Drawer = D_Display;
     gx.MN_Drawer = M_Drawer;
-    gx.PrivilegedResponder = (boolean (*)(event_t *)) D_PrivilegedResponder;
+    gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
     gx.FallbackResponder = M_Responder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
