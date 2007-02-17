@@ -171,7 +171,7 @@ void G_DefaultBindings(void)
     {"strafer",     CLF_ACTION,     DDBC_NORMAL,    '.', 0, 0},
 */
     {"jump",        CLF_ACTION,     DDBC_NORMAL,    '/', 2, 5},
-    {"fire",        CLF_ACTION,     DDBC_NORMAL,    DDKEY_RCTRL, 1, 1},
+    {"attack",      CLF_ACTION,     DDBC_NORMAL,    DDKEY_RCTRL, 1, 1},
     {"use",         CLF_ACTION,     DDBC_NORMAL,    ' ', 0, 4},
     {"strafe",      CLF_ACTION,     DDBC_NORMAL,    DDKEY_RALT, 3, 2},
 

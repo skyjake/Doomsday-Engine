@@ -42,6 +42,7 @@
 #include "am_map.h"
 #include "hu_stuff.h"
 #include "p_player.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -225,11 +226,16 @@ extern boolean hu_showallfrags; // in hu_stuff.c currently
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int hudHideTics;
+static float hudHideAmount;
+
 // slide statusbar amount 1.0 is fully open
 static float showbar = 0.0f;
 
 // fullscreen hud alpha value
 static float hudalpha = 0.0f;
+
+static float statusbarCounterAlpha = 0.0f;
 
 // ST_Start() has just been called
 static boolean st_firsttime;
@@ -513,6 +519,23 @@ void ST_refreshBackground(void)
     }
 }
 
+/**
+ * Unhides the current HUD display if hidden.
+ *
+ * @param event         The HUD Update Event type to check for triggering.
+ */
+void ST_HUDUnHide(hueevent_t event)
+{
+    if(event < HUE_FORCE || event > NUMHUDUNHIDEEVENTS)
+        return;
+
+    if(event == HUE_FORCE || cfg.hudUnHide[event])
+    {
+        hudHideTics = (cfg.hudTimer * TICSPERSEC);
+        hudHideAmount = 0;
+    }
+}
+
 int ST_calcPainOffset(void)
 {
     int     health;
@@ -785,6 +808,21 @@ void ST_Ticker(void)
 {
     player_t *plyr = &players[consoleplayer];
 
+    if(!P_IsPaused())
+    {
+        if(cfg.hudTimer == 0)
+        {
+            hudHideTics = hudHideAmount = 0;
+        }
+        else
+        {
+            if(hudHideTics > 0)
+                hudHideTics--;
+            if(hudHideTics == 0 && cfg.hudTimer > 0 && hudHideAmount < 1)
+                hudHideAmount += 0.1f;
+        }
+    }
+
     st_clock++;
     st_randomnumber = M_Random();
     ST_updateWidgets();
@@ -976,8 +1014,8 @@ void ST_doFullscreenStuff(void)
     char    buf[20];
     int     w, h, pos = 0, spr, i;
     int     h_width = 320 / cfg.hudScale, h_height = 200 / cfg.hudScale;
-    float textalpha = hudalpha - ( 1 - cfg.hudColor[3]);
-    float iconalpha = hudalpha - ( 1 - cfg.hudIconAlpha);
+    float textalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudColor[3]);
+    float iconalpha = hudalpha - hudHideAmount - ( 1 - cfg.hudIconAlpha);
     int     ammo_sprite[NUM_AMMO_TYPES] = {
         SPR_HCLP,
         SPR_HFLM,

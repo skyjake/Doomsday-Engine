@@ -527,7 +527,7 @@ void ST_refreshBackground(void)
     }
 }
 
-/*
+/**
  * Unhides the current HUD display if hidden.
  *
  * @param event         The HUD Update Event type to check for triggering.
@@ -561,7 +561,7 @@ int ST_calcPainOffset(void)
     return lastcalc;
 }
 
-/*
+/**
  * This is a not-very-pretty routine which handles the face states
  * and their timing. the precedence of expressions is:
  *
@@ -1432,7 +1432,6 @@ void ST_createWidgets(void)
     STlib_initNum(&w_maxammo[3], ST_MAXAMMO3X, ST_MAXAMMO3Y, shortnum,
                   &plyr->maxammo[3], &st_statusbaron, ST_MAXAMMO3WIDTH,
                   &statusbarCounterAlpha);
-
 }
 
 void ST_Start(void)

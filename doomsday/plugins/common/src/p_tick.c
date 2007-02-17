@@ -70,7 +70,7 @@ int     TimerGame;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Returns true if the game is currently paused.
  */
 boolean P_IsPaused(void)
@@ -78,7 +78,7 @@ boolean P_IsPaused(void)
     return paused || (!IS_NETGAME && menuactive);
 }
 
-/*
+/**
  * This is called at all times, no matter gamestate.
  */
 void P_RunPlayers(void)
@@ -133,7 +133,7 @@ void P_RunPlayers(void)
         }
 }
 
-/*
+/**
  * Called 35 times per second.
  * The heart of play sim.
  */

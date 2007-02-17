@@ -41,6 +41,8 @@
 #include "d_net.h"
 #include "f_infine.h"
 #include "x_hair.h"
+#include "g_controls.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -54,7 +56,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void    R_SetAllDoomsdayFlags();
+void    R_SetAllDoomsdayFlags(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -78,20 +80,20 @@ static int setdetail;
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Creates the translation tables to map
- * the green color ramp to gray, brown, red.
- * Assumes a given structure of the PLAYPAL.
- * Could be read from a lump instead.
+/**
+ * Creates the translation tables to map the green color ramp to gray,
+ * brown, red.
+ * NOTE: Assumes a given structure of the PLAYPAL.
+ *       Could be read from a lump instead.
  */
 void R_InitTranslation(void)
 {
-    byte   *translationtables = (byte *)
-        DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
-    int     i;
+    byte       *translationtables = (byte *)
+                    DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    int         i;
 
     // translate just the 16 green colors
-    for(i = 0; i < 256; i++)
+    for(i = 0; i < 256; ++i)
     {
         if(i >= 0x70 && i <= 0x7f)
         {
@@ -110,8 +112,8 @@ void R_InitTranslation(void)
 }
 
 /**
- * Draws a special filter over the screen
- * (eg the inversing filter used when in god mode).
+ * Draws a special filter over the screen (eg the inversing filter used when
+ * in god mode).
  */
 void R_DrawSpecialFilter(void)
 {
@@ -152,15 +154,15 @@ void R_DrawSpecialFilter(void)
     }
 }
 
-/*
+/**
  * Show map name and author.
  */
 void R_DrawLevelTitle(void)
 {
-    float   alpha = 1;
-    int     y = 12;
-    int     mapnum;
-    char   *lname, *lauthor, *ptr;
+    float       alpha = 1;
+    int         y = 12;
+    int         mapnum;
+    char       *lname, *lauthor, *ptr;
 
     if(!cfg.levelTitle || actual_leveltime > 6 * 35)
         return;
@@ -214,9 +216,8 @@ void R_DrawLevelTitle(void)
 }
 
 /**
- * Do not really change anything here,
- * because Doomsday might be in the middle of a refresh.
- * The change will take effect next refresh.
+ * Do not really change anything here, because Doomsday might be in the
+ * middle of a refresh. The change will take effect next refresh.
  */
 void R_SetViewSize(int blocks, int detail)
 {
@@ -229,20 +230,16 @@ void R_SetViewSize(int blocks, int detail)
     setdetail = detail;
 }
 
-/*
- * Draw current display, possibly wiping it from the previous
- * wipegamestate can be set to -1 to force a wipe on the next draw
- */
 void D_Display(void)
 {
     static boolean viewactivestate = false;
     static boolean menuactivestate = false;
-    static int fullscreenmode = 0;
+    static int  fullscreenmode = 0;
     static gamestate_t oldgamestate = -1;
-    int     ay;
-    boolean redrawsbar;
-    player_t *player = &players[displayplayer];
-    boolean iscam = (player->plr->flags & DDPF_CAMERA) != 0;    // $democam
+    int         ay;
+    boolean     redrawsbar;
+    player_t   *player = &players[displayplayer];
+    boolean     iscam = (player->plr->flags & DDPF_CAMERA) != 0; // $democam
 
     redrawsbar = false;
 
@@ -388,9 +385,9 @@ void D_Display(void)
     FI_Drawer();
 }
 
-/*
- * Updates the mobj flags used by Doomsday with the state
- * of our local flags for the given mobj.
+/**
+ * Updates the mobj flags used by Doomsday with the state of our local flags
+ * for the given mobj.
  */
 void P_SetDoomsdayFlags(mobj_t *mo)
 {
@@ -458,17 +455,16 @@ void P_SetDoomsdayFlags(mobj_t *mo)
     mo->ddflags |= mo->flags & MF_TRANSLATION;
 }
 
-/*
+/**
  * Updates the status flags for all visible things.
  */
-void R_SetAllDoomsdayFlags()
+void R_SetAllDoomsdayFlags(void)
 {
-    int     i;
-    int     count = DD_GetInteger(DD_SECTOR_COUNT);
-    mobj_t *iter;
+    uint        i;
+    mobj_t     *iter;
 
     // Only visible things are in the sector thinglists, so this is good.
-    for(i = 0; i < count; i++)
+    for(i = 0; i < numsectors; ++i)
     {
         for(iter = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); iter; iter = iter->snext)
             P_SetDoomsdayFlags(iter);

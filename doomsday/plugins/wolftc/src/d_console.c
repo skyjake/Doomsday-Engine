@@ -24,7 +24,7 @@
  */
 
 /*
- * d_console.c: jDoom specific console stuff
+ * d_console.c: WolfTC specific console stuff
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -245,7 +245,7 @@ ccmd_t  gameCCmds[] = {
  */
 void G_ConsoleRegistration(void)
 {
-    unsigned int i;
+    uint        i;
 
     for(i = 0; gameCVars[i].name; ++i)
         Con_AddVariable(&gameCVars[i]);
@@ -259,7 +259,7 @@ void G_ConsoleRegistration(void)
  */
 void D_ConsoleBg(int *width, int *height)
 {
-    extern int consoleFlat;
+    extern int  consoleFlat;
     extern float consoleZoom;
 
     if(consoleFlat)
@@ -279,10 +279,10 @@ void D_ConsoleBg(int *width, int *height)
  * Draw (char *) text in the game's font.
  * Called by the console drawer.
  */
-int ConTextOut(char *text, int x, int y)
+int ConTextOut(const char *text, int x, int y)
 {
-    extern int typein_time;
-    int     old = typein_time;
+    extern int  typein_time;
+    int         old = typein_time;
 
     typein_time = 0xffffff;
 
@@ -294,7 +294,7 @@ int ConTextOut(char *text, int x, int y)
 /**
  * Get the visual width of (char*) text in the game's font.
  */
-int ConTextWidth(char *text)
+int ConTextWidth(const char *text)
 {
     return M_StringWidth(text, hu_font_a);
 }
@@ -321,7 +321,7 @@ DEFCC(CCmdScreenShot)
  */
 DEFCC(CCmdViewSize)
 {
-    int     min = 3, max = 13, *val = &cfg.screenblocks;
+    int         min = 3, max = 13, *val = &cfg.screenblocks;
 
     if(argc != 2)
     {
@@ -373,7 +373,7 @@ DEFCC(CCmdPause)
  */
 DEFCC(CCmdWolftcFont)
 {
-    ddfont_t cfont;
+    ddfont_t    cfont;
 
     cfont.flags = DDFONT_WHITE;
     cfont.height = 8;

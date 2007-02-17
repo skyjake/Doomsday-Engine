@@ -61,6 +61,9 @@ void    ST_Init(void);
 
 void    ST_updateGraphics(void);
 
+// Called when it might be neccessary for the hud to unhide.
+void    ST_HUDUnHide(hueevent_t event);
+
 // States for status bar code.
 typedef enum {
     AutomapState,

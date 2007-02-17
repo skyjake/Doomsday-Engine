@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
+ *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -167,7 +167,7 @@ void G_DefaultBindings(void)
     {"strafel",     CLF_ACTION,     DDBC_NORMAL,    ',', 0, 0},
     {"strafer",     CLF_ACTION,     DDBC_NORMAL,    '.', 0, 0},
 */
-    {"fire",        CLF_ACTION,     DDBC_NORMAL,    DDKEY_RCTRL, 1, 1},
+    {"attack",      CLF_ACTION,     DDBC_NORMAL,    DDKEY_RCTRL, 1, 1},
     {"use",         CLF_ACTION,     DDBC_NORMAL,    ' ', 0, 4},
     {"strafe",      CLF_ACTION,     DDBC_NORMAL,    DDKEY_RALT, 3, 2},
     {"speed",       CLF_ACTION,     DDBC_NORMAL,    DDKEY_RSHIFT, 0, 3},
