@@ -583,6 +583,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\x_event.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\x_player.h"
 				>
 			</File>
