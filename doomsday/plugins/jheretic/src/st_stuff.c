@@ -517,6 +517,7 @@ void ST_initData(void)
     }
 
     STlib_init();
+    ST_HUDUnHide(HUE_FORCE);
 }
 
 void ST_updateWidgets(void)
@@ -1573,7 +1574,7 @@ void ST_doFullscreenStuff(void)
     }
 }
 
-/*
+/**
  * Console command to show the hud if hidden.
  */
 DEFCC(CCmdHUDShow)
@@ -1582,7 +1583,7 @@ DEFCC(CCmdHUDShow)
     return true;
 }
 
-/*
+/**
  * Console command to change the size of the status bar.
  */
 DEFCC(CCmdStatusBarSize)
@@ -1603,5 +1604,6 @@ DEFCC(CCmdStatusBarSize)
 
     // Update the view size if necessary.
     R_SetViewSize(cfg.screenblocks, 0);
+    ST_HUDUnHide(HUE_FORCE); // so the user can see the change.
     return true;
 }

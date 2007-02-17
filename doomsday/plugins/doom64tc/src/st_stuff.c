@@ -210,20 +210,20 @@ ccmd_t  hudCCmds[] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Register CVARs and CCmds for the HUD/Status bar
  */
 void ST_Register(void)
 {
-    int     i;
+    uint        i;
 
-    for(i = 0; hudCVars[i].name; i++)
+    for(i = 0; hudCVars[i].name; ++i)
         Con_AddVariable(hudCVars + i);
-    for(i = 0; hudCCmds[i].name; i++)
+    for(i = 0; hudCCmds[i].name; ++i)
         Con_AddCommand(hudCCmds + i);
 }
 
-/*
+/**
  * Unhides the current HUD display if hidden.
  *
  * @param event         The HUD Update Event type to check for triggering.
@@ -769,7 +769,7 @@ void ST_Init(void)
     ST_loadData();
 }
 
-/*
+/**
  * Console command to show the hud if hidden.
  */
 DEFCC(CCmdHUDShow)

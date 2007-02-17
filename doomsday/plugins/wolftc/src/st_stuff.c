@@ -200,12 +200,12 @@
 
 // TYPES -------------------------------------------------------------------
 
-enum {
+typedef enum hotloc_e {
     HOT_TLEFT,
     HOT_TRIGHT,
     HOT_BRIGHT,
     HOT_BLEFT
-};
+} hotloc_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -213,7 +213,7 @@ enum {
 
 void    ST_Stop(void);
 
-// Console commands for the HUD/Statusbar
+DEFCC(CCmdHUDShow);
 DEFCC(CCmdStatusBarSize);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -389,12 +389,23 @@ cvar_t hudCVars[] =
     {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
 
     {"hud-frags-all", 0, CVT_BYTE, &hu_showallfrags, 0, 1},
+
+    {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
+
+    {"hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1},
+    {"hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1},
+    {"hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1},
+    {"hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1},
+    {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1},
+    {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1},
+    {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1},
     {NULL}
 };
 
 // Console commands for the HUD/Status bar
 ccmd_t  hudCCmds[] = {
     {"sbsize",      "s",    CCmdStatusBarSize},
+    {"showhud",     "",     CCmdHUDShow},
     {NULL}
 };
 
@@ -1306,6 +1317,7 @@ void ST_initData(void)
     }
 
     STlib_init();
+    ST_HUDUnHide(HUE_FORCE);
 }
 
 void ST_createWidgets(void)
@@ -1440,7 +1452,16 @@ void ST_Init(void)
     ST_loadData();
 }
 
-/*
+/**
+ * Console command to show the hud if hidden.
+ */
+DEFCC(CCmdHUDShow)
+{
+    ST_HUDUnHide(HUE_FORCE);
+    return true;
+}
+
+/**
  * Console command to change the size of the status bar.
  */
 DEFCC(CCmdStatusBarSize)
@@ -1461,5 +1482,6 @@ DEFCC(CCmdStatusBarSize)
 
     // Update the view size if necessary.
     R_SetViewSize(cfg.screenblocks, 0);
+    ST_HUDUnHide(HUE_FORCE); // so the user can see the change.
     return true;
 }

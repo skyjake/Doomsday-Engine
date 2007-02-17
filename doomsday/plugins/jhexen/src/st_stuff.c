@@ -508,6 +508,7 @@ void ST_initData(void)
     }
 
     STlib_init();
+    ST_HUDUnHide(HUE_FORCE);
 }
 
 void ST_createWidgets(void)
@@ -2111,6 +2112,7 @@ DEFCC(CCmdStatusBarSize)
 
     // Update the view size if necessary.
     R_SetViewSize(cfg.screenblocks, 0);
+    ST_HUDUnHide(HUE_FORCE); // so the user can see the change.
     return true;
 }
 
