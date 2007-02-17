@@ -234,7 +234,7 @@ ccmd_t  gameCCmds[] = {
  */
 void G_ConsoleRegistration(void)
 {
-    unsigned int i;
+    uint        i;
 
     for(i = 0; gameCVars[i].name; ++i)
         Con_AddVariable(&gameCVars[i]);
@@ -268,10 +268,10 @@ void H2_ConsoleBg(int *width, int *height)
  * Draw (char *) text in the game's font.
  * Called by the console drawer.
  */
-int ConTextOut(char *text, int x, int y)
+int ConTextOut(const char *text, int x, int y)
 {
     extern int typein_time;
-    int     old = typein_time;
+    int         old = typein_time;
 
     typein_time = 0xffffff;
     M_WriteText2(x, y, text, hu_font_a, -1, -1, -1, -1);
@@ -282,7 +282,7 @@ int ConTextOut(char *text, int x, int y)
 /**
  * Get the visual width of (char*) text in the game's font.
  */
-int ConTextWidth(char *text)
+int ConTextWidth(const char *text)
 {
     return M_StringWidth(text, hu_font_a);
 }

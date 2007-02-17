@@ -956,7 +956,7 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
     avg.pos[VY] = 0;
 
     validCount++;
-    for(i = 0; i < poNumSegs; ++i, tempSeg++, tempPt++)
+    for(i = 0; i < (uint) poNumSegs; ++i, tempSeg++, tempPt++)
     {
         line_t* linedef = P_GetPtrp(*tempSeg, DMU_LINE);
         if(P_GetIntp(linedef, DMU_VALID_COUNT) != validCount)

@@ -45,7 +45,7 @@
 #define NUMBONUSPALS    4
 #define NUMPOISONPALS   8
 
-#define TOCENTER TICCMD_FALL_DOWN
+#define TOCENTER        -8
 #define FLOATSPEED (FRACUNIT*4)
 
 #define MAXHEALTH 100

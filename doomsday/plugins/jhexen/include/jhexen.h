@@ -59,6 +59,7 @@
 #include "../../jhexen/include/textdefs.h"
 #include "../../jhexen/include/version.h"
 #include "../../jhexen/include/x_config.h"
+#include "../../jhexen/include/x_event.h"
 #include "../../jhexen/include/x_player.h"
 #include "../../jhexen/include/x_state.h"
 #include "../../jhexen/include/xddefs.h"

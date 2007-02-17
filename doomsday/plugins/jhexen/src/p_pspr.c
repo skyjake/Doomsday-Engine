@@ -615,7 +615,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     }
 
     // check for autofire
-    if(player->cmd.attack)
+    if(player->plr->cmd.actions & BT_ATTACK)
     {
         wminfo = WEAPON_INFO(player->readyweapon, player->class, 0);
 
@@ -644,14 +644,13 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     ddpsp->state = DDPSP_BOBBING;
 }
 
-/*
+/**
  * The player can re fire the weapon without lowering it entirely.
  */
-void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
+void C_DECL A_ReFire(player_t *player, pspdef_t *psp)
 {
-    if(player->cmd.attack &&
-       player->pendingweapon == WT_NOCHANGE &&
-       player->health)
+    if((player->plr->cmd.actions & BT_ATTACK) &&
+       player->pendingweapon == WT_NOCHANGE && player->health)
     {
         player->refire++;
         P_FireWeapon(player);
@@ -663,7 +662,7 @@ void C_DECL A_ReFire(player_t *player, pspdef_t * psp)
     }
 }
 
-void C_DECL A_Lower(player_t *player, pspdef_t * psp)
+void C_DECL A_Lower(player_t *player, pspdef_t *psp)
 {
     // Psprite state.
     player->plr->psprites[0].state = DDPSP_DOWN;

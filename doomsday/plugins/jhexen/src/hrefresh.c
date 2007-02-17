@@ -49,6 +49,7 @@
 #include "f_infine.h"
 #include "r_common.h"
 #include "p_mapsetup.h"
+#include "g_controls.h"
 
 // MACROS ------------------------------------------------------------------
 

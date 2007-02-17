@@ -143,22 +143,6 @@ typedef enum {
 } gamestate_t;
 
 typedef enum {
-    GA_NONE,
-    GA_LOADLEVEL,
-    GA_INITNEW,
-    GA_NEWGAME,
-    GA_LOADGAME,
-    GA_SAVEGAME,
-    GA_PLAYDEMO,
-    GA_COMPLETED,
-    GA_LEAVEMAP,
-    GA_SINGLEREBORN,
-    GA_VICTORY,
-    GA_WORLDDONE,
-    GA_SCREENSHOT
-} gameaction_t;
-
-typedef enum {
     wipe_0,
     wipe_1,
     wipe_2,
@@ -585,8 +569,6 @@ typedef struct saveplayer_s {
 
 extern fixed_t  finesine[5 * FINEANGLES / 4];
 extern fixed_t *finecosine;
-
-extern gameaction_t gameaction;
 
 extern boolean  DevMaps;           // true = map development mode
 extern char    *DevMapsDir;        // development maps directory

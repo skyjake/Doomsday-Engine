@@ -157,18 +157,10 @@ extern menu_t   PlayerSetupMenu;
 
 void            M_StartControlPanel(void);
 void            M_DrawSaveLoadBorder(int x, int y);
-void            M_WriteMenuText(const menu_t * menu, int index, char *text);
-int             M_StringWidth(char *string,  dpatch_t  *font);
-int             M_StringHeight(char *string, dpatch_t *font);
+void            M_WriteMenuText(const menu_t * menu, int index, const char *text);
 
 void            M_StartMessage(char *string, void *routine, boolean input);
-void M_StopMessage(void);
-void            M_WriteText(int x, int y, char *string);
-void            M_WriteText2(int x, int y, char * string, dpatch_t *font,
-                             float red, float green, float blue, float alpha);
-void            M_WriteText3(int x, int y, const char *string, dpatch_t *font,
-                             float red, float green, float blue, float alpha,
-                             boolean doTypeIn, int initialCount);
+void            M_StopMessage(void);
 
 // Color widget.
 void            DrawColorWidget();

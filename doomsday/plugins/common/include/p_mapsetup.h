@@ -39,7 +39,7 @@
 #define numthings   (DD_GetInteger(DD_THING_COUNT))
 
 #if __JHEXEN__
-#define numpolyobjs (DD_GetInteger(DD_POLYOBJ_COUNT))
+#define numpolyobjs (*(uint*) DD_GetVariable(DD_POLYOBJ_COUNT))
 #endif
 
 void        P_SetupLevel(int episode, int map, int playermask, skillmode_t skill);
