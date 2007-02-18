@@ -571,7 +571,7 @@ static void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 /**
  * @return          The key state from the downKeys array.
  */
-int I_IsDeviceKeyDown(uint ident, int code)
+boolean I_IsDeviceKeyDown(uint ident, int code)
 {
     inputdev_t *dev;
 
