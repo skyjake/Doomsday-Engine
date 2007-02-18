@@ -61,9 +61,28 @@ void    averageColorRGB(rgbcol_t * col, byte *data, int w, int h);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static byte *scratchBuffer = NULL;
+static size_t scratchBufferSize = 0;
+
 // CODE --------------------------------------------------------------------
 
-/*
+/**
+ * Provides a persistent scratch buffer for use by texture manipulation
+ * routines e.g. scaleLine().
+ */
+static byte *GetScratchBuffer(size_t size)
+{
+    // Need to enlarge?
+    if(size > scratchBufferSize)
+    {
+        scratchBuffer = Z_Realloc(scratchBuffer, size, PU_STATIC);
+        scratchBufferSize = size;
+    }
+
+    return scratchBuffer;
+}
+
+/**
  * Finds the power of 2 that is equal to or greater than
  * the specified number.
  */
@@ -359,26 +378,24 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
 void GL_ScaleBuffer32(byte *in, int inWidth, int inHeight, byte *out,
                       int outWidth, int outHeight, int comps)
 {
-    int     i;
-    byte   *temp;
+    int         i;
+    byte       *buffer;
 
-    temp = M_Malloc(outWidth * inHeight * comps);
+    buffer = GetScratchBuffer(outWidth * inHeight * comps);
 
     // First scale horizontally, to outWidth, into the temporary buffer.
     for(i = 0; i < inHeight; ++i)
     {
-        scaleLine(in + inWidth * comps * i, comps, temp + outWidth * comps * i,
+        scaleLine(in + inWidth * comps * i, comps, buffer + outWidth * comps * i,
                   comps, outWidth, inWidth, comps);
     }
 
     // Then scale vertically, to outHeight, into the out buffer.
     for(i = 0; i < outWidth; ++i)
     {
-        scaleLine(temp + comps * i, outWidth * comps, out + comps * i,
+        scaleLine(buffer + comps * i, outWidth * comps, out + comps * i,
                   outWidth * comps, outHeight, inHeight, comps);
     }
-
-    M_Free(temp);
 }
 
 /*
