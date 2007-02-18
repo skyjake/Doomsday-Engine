@@ -294,6 +294,83 @@ boolean M_IsComment(char *buffer)
     return false;
 }
 
+/**
+ * Can the given string be interpreted as a valid integer?
+ */
+boolean M_IsStringValidInt(const char *str)
+{
+    uint        i, len;
+    const char *c;
+    boolean     isBad;
+
+    if(!str)
+        return false;
+
+    len = strlen(str);
+    if(len == 0)
+        return false;
+
+    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
+    {
+        if(i != 0 && *c == '-')
+            isBad = true;       // sign is in the wrong place.
+        else if(*c < '0' || *c > '9')
+            isBad = true;       // non-numeric character.
+    }
+
+    return !isBad;
+}
+
+/**
+ * Can the given string be interpreted as a valid byte?
+ */
+boolean M_IsStringValidByte(const char *str)
+{
+    if(M_IsStringValidInt(str))
+    {
+        int val = atoi(str);
+
+        if(!(val < 0 || val > 255))
+            return true;
+    }
+
+    return false;
+}
+
+/**
+ * Can the given string be interpreted as a valid float?
+ */
+boolean M_IsStringValidFloat(const char *str)
+{
+    uint        i, len;
+    const char *c;
+    boolean     isBad, foundDP = false;
+
+    if(!str)
+        return false;
+
+    len = strlen(str);
+    if(len == 0)
+        return false;
+
+    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
+    {
+        if(i != 0 && *c == '-')
+            isBad = true;       // sign is in the wrong place.
+        else if(*c == '.')
+        {
+            if(foundDP)
+                isBad = true;   // multiple decimal places??
+            else
+                foundDP = true;
+        }
+        else if(*c < '0' || *c > '9')
+            isBad = true;       // other non-numeric character.
+    }
+
+    return !isBad;
+}
+
 // This is the new flat distribution table
 unsigned char rndtable[256] = {
     201, 1, 243, 19, 18, 42, 183, 203, 101, 123, 154, 137, 34, 118, 10, 216,

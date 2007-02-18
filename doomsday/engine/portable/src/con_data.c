@@ -47,6 +47,11 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(HelpWhat);
+D_CMD(ListAliases);
+D_CMD(ListCmds);
+D_CMD(ListVars);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int C_DECL wordListSorter(const void *e1, const void *e2);
@@ -74,6 +79,14 @@ static knownword_t *knownWords = NULL;
 static unsigned int numKnownWords = 0;
 
 // CODE --------------------------------------------------------------------
+
+void Con_DataRegister(void)
+{
+    C_CMD("help",           "s",    HelpWhat);
+    C_CMD("listaliases",    NULL,   ListAliases);
+    C_CMD("listcmds",       NULL,   ListCmds);
+    C_CMD("listvars",       NULL,   ListVars);
+}
 
 void Con_SetString(const char *name, char *text, byte override)
 {
@@ -373,7 +386,10 @@ void Con_AddCommandList(ccmd_t *cmdlist)
 
 void Con_AddCommand(ccmd_t *cmd)
 {
-    ddccmd_t *newCmd;
+    uint        i;
+    cvartype_t  params[MAX_ARGS];
+    int         minArgs, maxArgs;
+    ddccmd_t   *newCmd;
 
     if(!cmd->name)
         Con_Error("Con_AddCommand: CCmd missing a name.");
@@ -383,31 +399,11 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
             cmd->params, cmd->flags);
 #endif
 */
-    if(Con_GetCommand(cmd->name))
-        Con_Error("Con_AddCommand: A CCmd by the name \"%s\" "
-                  "is already registered.", cmd->name);
-
-    // Have we ran out of available ddcmd_t's?
-    if(++numCCmds > maxCCmds)
-    {   // Allocate some more.
-        maxCCmds *= 2;
-        if(maxCCmds < numCCmds)
-            maxCCmds = numCCmds;
-        ccmds = M_Realloc(ccmds, sizeof(ddccmd_t) * maxCCmds);
-    }
-    newCmd = &ccmds[numCCmds - 1];
-
-    // Copy the properties.
-    newCmd->name   = cmd->name;
-    newCmd->func   = cmd->func;
-    newCmd->flags  = cmd->flags;
-
     // Decode the usage string if present.
     if(cmd->params != NULL)
     {
-        int         minArgs;
         char        c;
-        unsigned int l, len;
+        uint        l, len;
         cvartype_t  type = CVT_NULL;
         boolean     unlimitedArgs;
 
@@ -431,7 +427,7 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
                 if(l != len-1)
                     Con_Error("Con_AddCommand: CCmd \"%s\": '*' character "
                               "not last in usage string: \"%s\".",
-                              newCmd->name, cmd->params);
+                              cmd->name, cmd->params);
 
                 unlimitedArgs = true;
                 type = CVT_NULL; // not a real parameter.
@@ -440,43 +436,40 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
             // Erroneous symbol:
             default:
                 Con_Error("Con_AddCommand: CCmd \"%s\": Invalid character "
-                          "'%c' in usage string: \"%s\".", newCmd->name, c,
+                          "'%c' in usage string: \"%s\".", cmd->name, c,
                           cmd->params);
             }
 
             if(type != CVT_NULL)
             {
-                if(minArgs >= MAX_REQUIRED_CCMD_PARAMS)
+                if(minArgs >= MAX_ARGS)
                     Con_Error("Con_AddCommand: CCmd \"%s\": Too many parameters. "
-                              "Limit is %i.", newCmd->name,
-                              MAX_REQUIRED_CCMD_PARAMS);
+                              "Limit is %i.", cmd->name, MAX_ARGS);
 
                 // Copy the parameter type into the buffer.
-                newCmd->params[minArgs++] = type;
+                params[minArgs++] = type;
             }
         }
 
         // Set the min/max parameter counts for this ccmd.
         if(unlimitedArgs)
         {
-            newCmd->maxArgs = -1;
+            maxArgs = -1;
             if(minArgs == 0)
-                newCmd->minArgs = -1;
-            else
-                newCmd->minArgs = minArgs;
+                minArgs = -1;
         }
         else
-            newCmd->minArgs = newCmd->maxArgs = minArgs;
+            maxArgs = minArgs;
 
 /*
 #if _DEBUG
 {
 int i;
 Con_Message("Con_AddCommand: CCmd \"%s\": minArgs %i, maxArgs %i: \"",
-            newCmd->name, newCmd->minArgs, newCmd->maxArgs);
-for(i = 0; i < newCmd->minArgs; ++i)
+            cmd->name, minArgs, maxArgs);
+for(i = 0; i < minArgs; ++i)
 {
-    switch(newCmd->params[i])
+    switch(params[i])
     {
     case CVT_BYTE:    c = 'b'; break;
     case CVT_INT:     c = 'i'; break;
@@ -492,75 +485,163 @@ Con_Printf("\".\n");
     }
     else // it's usage is NOT validated by Doomsday.
     {
-        newCmd->minArgs = newCmd->maxArgs = -1;
+        minArgs = maxArgs = -1;
 /*
 #if _DEBUG
 if(cmd->params == NULL)
   Con_Message("Con_AddCommand: CCmd \"%s\" will not have it's usage "
-              "validated.\n", newCmd->name);
+              "validated.\n", cmd->name);
 #endif
 */
     }
+
+    // Now check that the ccmd to be registered is unique.
+    // We allow multiple ccmds with the same name if we can determine by
+    // their paramater lists that they are unique (overloading).
+    for(i = 0; i < numCCmds; ++i)
+    {
+        ddccmd_t *other = &ccmds[i];
+
+        if(!stricmp(other->name, cmd->name))
+        {
+            boolean unique = true;
+
+            // The ccmd being registered is NOT a deng validated ccmd
+            // and there is already an existing ccmd by this name?
+            if(minArgs == -1 && maxArgs == -1)
+                unique = false;
+            // An existing ccmd with no validation? 
+            else if(other->minArgs == -1 && other->maxArgs == -1)
+                unique = false;
+            // An existing ccmd with a lower minimum and no maximum?
+            else if(other->minArgs < minArgs && other->maxArgs == -1)
+                unique = false;
+            // An existing ccmd with a larger min and this ccmd has no max?
+            else if(other->minArgs > minArgs && maxArgs == -1)
+                unique = false;
+            // An existing ccmd with the same minimum number of args?
+            else if(other->minArgs == minArgs)
+            {
+                // TODO: Implement support for paramater type checking.
+                unique = false;
+            }
+
+            if(!unique)
+                Con_Error("Con_AddCommand: A CCmd by the name '%s' "
+                          "is already registered. Their paramater lists "
+                          "would be ambiguant.", cmd->name);
+
+            // Sanity check.
+            if(other->func == cmd->func)
+                Con_Error("Con_AddCommand: A CCmd by the name '%s' is "
+                          "already registered and the callback funcs are "
+                          "the same, is this really what you wanted?",
+                          cmd->name);
+        }
+    }
+
+    // Have we ran out of available ddcmd_t's?
+    if(++numCCmds > maxCCmds)
+    {   // Allocate some more.
+        maxCCmds *= 2;
+        if(maxCCmds < numCCmds)
+            maxCCmds = numCCmds;
+        ccmds = M_Realloc(ccmds, sizeof(ddccmd_t) * maxCCmds);
+    }
+    newCmd = &ccmds[numCCmds - 1];
+
+    // Copy the properties.
+    newCmd->name   = cmd->name;
+    newCmd->func   = cmd->func;
+    newCmd->flags  = cmd->flags;
+    newCmd->minArgs = minArgs;
+    newCmd->maxArgs = maxArgs;
+    memcpy(newCmd->params, &params, sizeof(newCmd->params));
 
     // Sort them.
     qsort(ccmds, numCCmds, sizeof(ddccmd_t), wordListSorter);
 }
 
-/**
- * @return              Ptr to the ddccmd_t with the specified name, or NULL.
- */
-ddccmd_t *Con_GetCommand(const char *name)
+ddccmd_t *Con_GetCommand(cmdargs_t *args)
 {
-    int     result;
-    unsigned int bottomIdx, topIdx, pivot;
-    ddccmd_t *cmd;
-    boolean isDone;
+    uint        i;
+    boolean     found;
+    ddccmd_t    *ccmd;
 
-    if(numCCmds == 0)
-        return NULL;
-
-    bottomIdx = 0;
-    topIdx = numCCmds-1;
-    cmd = NULL;
-    isDone = false;
-    while(bottomIdx <= topIdx && !isDone)
+    found = false;
+    i = 0;
+    while(!found && i < numCCmds)
     {
-        pivot = bottomIdx + (topIdx - bottomIdx)/2;
+        ccmd = &ccmds[i];
 
-        result = stricmp(ccmds[pivot].name, name);
-        if(result == 0)
+        if(!stricmp(args->argv[0], ccmd->name))
         {
-            // Found.
-            cmd = &ccmds[pivot];
-            isDone = true;
-        }
-        else
-        {
-            if(result > 0)
+            boolean     invalidArgs = false;
+
+            // Are we validating the arguments?
+            if(!(ccmd->minArgs == -1 && ccmd->maxArgs == -1))
             {
-                if(pivot == 0)
-                {
-                    // Not present.
-                    isDone = true;
-                }
+                int         j;
+
+                // Do we have the right number of arguments?
+                if(args->argc-1 < ccmd->minArgs)
+                    invalidArgs = true;
+                else if(ccmd->maxArgs != -1 && args->argc-1 > ccmd->maxArgs)
+                    invalidArgs = true;
                 else
-                    topIdx = pivot - 1;
+                {
+                    // We can only validate the minimum number of arguments,
+                    // currently. We cannot yet validate non-required args.
+                    for(j = 0; j < ccmd->minArgs && !invalidArgs; ++j)
+                    {
+                        if(ccmd->params[j] == CVT_BYTE)
+                            invalidArgs = !M_IsStringValidByte(args->argv[j+1]);
+                        else if(ccmd->params[j] == CVT_INT)
+                            invalidArgs = !M_IsStringValidInt(args->argv[j+1]);
+                        else if(ccmd->params[j] == CVT_FLOAT)
+                            invalidArgs = !M_IsStringValidFloat(args->argv[j+1]);
+                        // Strings are considered always valid.
+                    }
+                }
             }
-            else
-                bottomIdx = pivot + 1;
+            if(!invalidArgs)
+                found = true; // This is the one!
         }
+        if(!found) // continue the search.
+            i++;
     }
 
-    return cmd;
+    if(found)
+        return ccmd;
+    return NULL;
 }
 
 /**
  * @return              <code>true</code> if the given string is a
- *                      valid command or alias.
+ *                      valid command or alias name.
  */
 boolean Con_IsValidCommand(const char *name)
 {
-    return Con_GetCommand(name) || Con_GetAlias(name);
+    uint        i = 0;
+    boolean     found = false;;
+
+    // Try the console commands first.
+    while(!found && i < numCCmds)
+    {
+        if(!stricmp(ccmds[i].name, name))
+            found = true;
+        else
+            i++;
+    }
+
+    if(found)
+    {
+        return true;
+    }
+    else // Try the aliases (aliai?) then.
+    {
+        return (Con_GetAlias(name) != NULL);
+    }
 }
 
 /**
@@ -568,8 +649,10 @@ boolean Con_IsValidCommand(const char *name)
  * ccmd's usage is validated by Doomsday.
  *
  * @param ccmd          Ptr to the ccmd to print the usage info for.
+ * @param showExtra     If <code>true</code> print any additional info we
+ *                      have about the ccmd.
  */
-void Con_PrintCCmdUsage(ddccmd_t *ccmd)
+void Con_PrintCCmdUsage(ddccmd_t *ccmd, boolean showExtra)
 {
     int         i;
     char       *str;
@@ -598,10 +681,11 @@ void Con_PrintCCmdUsage(ddccmd_t *ccmd)
         Con_Printf(" ...");
     Con_Printf("\n");
 
-    // Check for extra info about this ccmd's usage.
-    if((str = DH_GetString(ccmd_help, HST_INFO)))
+    if(showExtra)
     {
-        Con_Printf("%s\n", str);
+        // Check for extra info about this ccmd's usage.
+        if((str = DH_GetString(ccmd_help, HST_INFO)))
+            Con_Printf("%s\n", str);
     }
 }
 
@@ -858,6 +942,57 @@ void Con_DestroyDatabases(void)
     M_Free(caliases);
     caliases = NULL;
     numCAliases = 0;
+}
+
+D_CMD(HelpWhat)
+{
+    char       *str;
+    void       *help;
+    ddccmd_t   *ccmd;
+    cvar_t     *cvar;
+    uint        i, found = 0;
+
+    if(!stricmp(argv[1], "(what)"))
+    {
+        Con_Printf("You've got to be kidding!\n");
+        return true;
+    }
+
+    // Try the console commands first.
+    for(i = 0; i < numCCmds; ++i)
+    {
+        ccmd = &ccmds[i];
+        if(!stricmp(argv[1], ccmd->name))
+        {
+            if(found == 0) // only print a description once.
+            {
+                help = DH_Find(ccmd->name);
+                if((str = DH_GetString(help, HST_DESCRIPTION)))
+                    Con_Printf("%s\n", str);
+            }
+            Con_PrintCCmdUsage(ccmd, (found == 0));
+            found++; // found one, but there may be more...
+        }
+    }
+
+    if(found == 0) // Perhaps its a cvar then?
+    {
+        cvar = Con_GetVariable(argv[1]);
+        if(cvar != NULL)
+        {
+            help = DH_Find(cvar->name);
+            if((str = DH_GetString(help, HST_DESCRIPTION)))
+            {
+                Con_Printf("%s\n", str);
+                found = true;
+            }
+        }
+    }
+
+    if(found == 0) // Still not found?
+        Con_Printf("There's no help about '%s'.\n", argv[1]);
+
+    return true;
 }
 
 D_CMD(ListCmds)

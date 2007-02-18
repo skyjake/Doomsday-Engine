@@ -105,14 +105,11 @@ typedef struct execbuff_s {
 
 D_CMD(AddSub);
 D_CMD(Alias);
-D_CMD(Console);
+D_CMD(Clear);
 D_CMD(Echo);
 D_CMD(Font);
+D_CMD(Help);
 D_CMD(If);
-D_CMD(ListActs);
-D_CMD(ListAliases);
-D_CMD(ListCmds);
-D_CMD(ListVars);
 D_CMD(OpenClose);
 D_CMD(Parse);
 D_CMD(Quit);
@@ -192,7 +189,7 @@ static void Con_Register(void)
     C_CMD("add",            NULL,   AddSub);
     C_CMD("after",          "is",   Wait);
     C_CMD("alias",          NULL,   Alias);
-    C_CMD("clear",          NULL,   Console);
+    C_CMD("clear",          "",     Clear);
     C_CMD_FLAGS("conclose",       "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
@@ -200,13 +197,10 @@ static void Con_Register(void)
     C_CMD("echo",           "s*",   Echo);
     C_CMD("exec",           "s*",   Parse);
     C_CMD("font",           NULL,   Font);
-    C_CMD("help",           NULL,   Console);
+    C_CMD("help",           "",     Help);
     C_CMD("if",             NULL,   If);
     C_CMD("inc",            NULL,   AddSub);
-    C_CMD("listaliases",    NULL,   ListAliases);
-    C_CMD("listcmds",       NULL,   ListCmds);
     C_CMD("listmobjtypes",  "",     ListMobjs);
-    C_CMD("listvars",       NULL,   ListVars);
     C_CMD("quit!",          "",     Quit);
     C_CMD("repeat",         "ifs",  Repeat);
     C_CMD("sub",            NULL,   AddSub);
@@ -228,6 +222,8 @@ static void Con_Register(void)
 
     // File
     C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0);
+
+    Con_DataRegister();
 }
 
 boolean Con_IsActive(void)
@@ -534,24 +530,14 @@ void Con_Ticker(timespan_t time)
         knownword_t *word = matchedWords[lastCompletion];
 
         // Add a trailing space if the word is NOT a cmd or alias.
-        if(matchedWordListGood && word->type != WT_ALIAS)
+        if(matchedWordListGood &&
+           !(word->type == WT_ALIAS || word->type == WT_CCMD) &&
+           cmdCursor < CMDLINE_SIZE)
         {
-            boolean doit = true;
-
-            if(word->type == WT_CCMD)
-            {
-                ddccmd_t *ccmd = Con_GetCommand(word->word);
-                if(ccmd)
-                    if(ccmd->maxArgs != -1 && ccmd->minArgs == 0)
-                        doit = false;
-            }
-
-            if(doit && cmdCursor < CMDLINE_SIZE)
-            {
-                strcat(cmdLine, " ");
-                cmdCursor++;
-            }
+            strcat(cmdLine, " ");
+            cmdCursor++;
         }
+
         matchedWordListGood = false;
         finishCompletion = false;
     }
@@ -637,83 +623,15 @@ static void expandWithArguments(char **expCommand, cmdargs_t *args)
     }
 }
 
-static boolean isStringValidInt(const char *str)
-{
-    unsigned int i, len;
-    const char *c;
-    boolean  isBad;
-
-    if(!str)
-        return false;
-
-    len = strlen(str);
-    if(len == 0)
-        return false;
-
-    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
-    {
-        if(i != 0 && *c == '-')
-            isBad = true;       // sign is in the wrong place.
-        else if(*c < '0' || *c > '9')
-            isBad = true;       // non-numeric character.
-    }
-
-    return !isBad;
-}
-
-static boolean isStringValidByte(const char *str)
-{
-    if(isStringValidInt(str))
-    {
-        int val = atoi(str);
-
-        if(!(val < 0 || val > 255))
-            return true;
-    }
-
-    return false;
-}
-
-static boolean isStringValidFloat(const char *str)
-{
-    unsigned int i, len;
-    const char *c;
-    boolean  isBad, foundDP = false;
-
-    if(!str)
-        return false;
-
-    len = strlen(str);
-    if(len == 0)
-        return false;
-
-    for(i = 0, c = str, isBad = false; i < len && !isBad; ++i, c++)
-    {
-        if(i != 0 && *c == '-')
-            isBad = true;       // sign is in the wrong place.
-        else if(*c == '.')
-        {
-            if(foundDP)
-                isBad = true;   // multiple decimal places??
-            else
-                foundDP = true;
-        }
-        else if(*c < '0' || *c > '9')
-            isBad = true;       // other non-numeric character.
-    }
-
-    return !isBad;
-}
-
 /**
  * The command is executed forthwith!!
  */
 static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 {
-    cmdargs_t args;
-    ddccmd_t *ccmd;
-    cvar_t  *cvar;
-    calias_t *cal;
+    cmdargs_t   args;
+    ddccmd_t   *ccmd;
+    cvar_t     *cvar;
+    calias_t   *cal;
 
     PrepareCmdArgs(&args, subCmd);
     if(!args.argc)
@@ -737,8 +655,8 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         return true;
     }
 
-    // Try to find a matching command.
-    ccmd = Con_GetCommand(args.argv[0]);
+    // Try to find a matching console command.
+    ccmd = Con_GetCommand(&args);
     if(ccmd != NULL)
     {
         // Found a match. Are we allowed to execute?
@@ -853,40 +771,6 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             Con_Printf("Error: '%s' cannot be executed via %s.\n",
                        ccmd->name, CMDTYPESTR(src));
             return true;
-        }
-
-        // Are we validating the arguments?
-        if(!(ccmd->minArgs == -1 && ccmd->maxArgs == -1))
-        {
-            int         i;
-            boolean     invalidArgs = false;
-
-            // Do we have the right number of arguments?
-            if(args.argc-1 < ccmd->minArgs)
-                invalidArgs = true;
-            else if(ccmd->maxArgs != -1 && args.argc-1 > ccmd->maxArgs)
-                invalidArgs = true;
-            else
-            {
-                // We can only validate the minimum number of arguments,
-                // currently. We cannot yet validate non-required args.
-                for(i = 0; i < ccmd->minArgs && !invalidArgs; ++i)
-                {
-                    if(ccmd->params[i] == CVT_BYTE)
-                        invalidArgs = !isStringValidByte(args.argv[i+1]);
-                    else if(ccmd->params[i] == CVT_INT)
-                        invalidArgs = !isStringValidInt(args.argv[i+1]);
-                    else if(ccmd->params[i] == CVT_FLOAT)
-                        invalidArgs = !isStringValidFloat(args.argv[i+1]);
-                    // Strings are always valid by this point.
-                }
-            }
-
-            if(invalidArgs)
-            {
-                Con_PrintCCmdUsage(ccmd);
-                canExecute = false;
-            }
         }
 
         if(canExecute)
@@ -2004,87 +1888,39 @@ static void Con_Alias(char *aName, char *command)
     Con_UpdateKnownWords();
 }
 
-/**
- * As you can see, several commands can be handled inside one command function.
- */
-D_CMD(Console)
+D_CMD(Help)
 {
-    if(!stricmp(argv[0], "help"))
-    {
-        if(argc == 2)
-        {
-            char   *str;
-            void   *ccmd_help;
-            ddccmd_t *ccmd;
-            cvar_t *cvar;
+    Con_FPrintf(CBLF_RULER | CBLF_YELLOW | CBLF_CENTER,
+                "-=- Doomsday " DOOMSDAY_VERSION_TEXT
+                " Console -=-\n");
+    Con_Printf("Keys:\n");
+    Con_Printf("Tilde         Open/close the console.\n");
+    Con_Printf
+        ("Shift-Tilde   Switch between half and full screen mode.\n");
+    Con_Printf("F5            Clear the buffer.\n");
+    Con_Printf("Alt-C         Clear the command line.\n");
+    Con_Printf("Shift-Left    Move cursor to the start of the command line.\n");
+    Con_Printf("Shift-Right   Move cursor to the end of the command line.\n");
+    Con_Printf
+        ("Ins/Del       Move console window up/down one line.\n");
+    Con_Printf
+        ("Shift-Ins/Del Move console window three lines at a time.\n");
+    Con_Printf("Home          Jump to the beginning of the buffer.\n");
+    Con_Printf("End           Jump to the end of the buffer.\n");
+    Con_Printf("PageUp/Down   Scroll up/down two lines.\n");
+    Con_Printf("\n");
+    Con_Printf
+        ("Type \"listcmds\" to see a list of available commands.\n");
+    Con_Printf
+        ("Type \"help (what)\" to see information about (what).\n");
+    Con_FPrintf(CBLF_RULER, "\n");
+    return true;
+}
 
-            if(!stricmp(argv[1], "(what)"))
-            {
-                Con_Printf("You've got to be kidding!\n");
-                return true;
-            }
-
-            // We need to look through the cvars and ccmds to see if there's a match.
-            ccmd = Con_GetCommand(argv[1]);
-            if(ccmd != NULL)
-            {
-                boolean found = false;
-                ccmd_help = DH_Find(ccmd->name);
-
-                if((str = DH_GetString(ccmd_help, HST_DESCRIPTION)))
-                {
-                    Con_Printf("%s\n", str);
-                    found = true;
-                }
-                Con_PrintCCmdUsage(ccmd);
-                return found;
-            }
-
-            cvar = Con_GetVariable(argv[1]);
-            if(cvar != NULL)
-            {
-                ccmd_help = DH_Find(cvar->name);
-                if((str = DH_GetString(ccmd_help, HST_DESCRIPTION)))
-                {
-                    Con_Printf("%s\n", str);
-                    return true;
-                }
-            }
-            Con_Printf("There's no help about '%s'.\n", argv[1]);
-        }
-        else
-        {
-            Con_FPrintf(CBLF_RULER | CBLF_YELLOW | CBLF_CENTER,
-                        "-=- Doomsday " DOOMSDAY_VERSION_TEXT
-                        " Console -=-\n");
-            Con_Printf("Keys:\n");
-            Con_Printf("Tilde         Open/close the console.\n");
-            Con_Printf
-                ("Shift-Tilde   Switch between half and full screen mode.\n");
-            Con_Printf("F5            Clear the buffer.\n");
-            Con_Printf("Alt-C         Clear the command line.\n");
-            Con_Printf("Shift-Left    Move cursor to the start of the command line.\n");
-            Con_Printf("Shift-Right   Move cursor to the end of the command line.\n");
-            Con_Printf
-                ("Ins/Del       Move console window up/down one line.\n");
-            Con_Printf
-                ("Shift-Ins/Del Move console window three lines at a time.\n");
-            Con_Printf("Home          Jump to the beginning of the buffer.\n");
-            Con_Printf("End           Jump to the end of the buffer.\n");
-            Con_Printf("PageUp/Down   Scroll up/down two lines.\n");
-            Con_Printf("\n");
-            Con_Printf
-                ("Type \"listcmds\" to see a list of available commands.\n");
-            Con_Printf
-                ("Type \"help (what)\" to see information about (what).\n");
-            Con_FPrintf(CBLF_RULER, "\n");
-        }
-    }
-    else if(!stricmp(argv[0], "clear"))
-    {
-        Con_BufferClear(histBuf);
-        bLineOff = 0;
-    }
+D_CMD(Clear)
+{
+    Con_BufferClear(histBuf);
+    bLineOff = 0;
     return true;
 }
 

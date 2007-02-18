@@ -54,10 +54,9 @@ typedef struct {
 } cmdargs_t;
 
 // Doomsday's internal representation of registered ccmds.
-#define MAX_REQUIRED_CCMD_PARAMS 32  // surely enough?
 typedef struct {
     const char     *name;
-    cvartype_t      params[MAX_REQUIRED_CCMD_PARAMS];
+    cvartype_t      params[MAX_ARGS];
     int           (*func) (byte src, int argc, char **argv);
     int             flags;
     int             minArgs, maxArgs;
@@ -87,10 +86,35 @@ extern int      CmdReturnValue;
 extern ddfont_t Cfont;
 extern byte     consoleDump;
 
+void            Con_DataRegister(void);
+void            Con_DestroyDatabases(void);
+
+ddccmd_t       *Con_GetCommand(cmdargs_t *args);
+void            Con_AddCommand(ccmd_t *cmd);
+void            Con_AddVariable(cvar_t *var);
+void            Con_AddCommandList(ccmd_t *cmdlist);
+void            Con_AddVariableList(cvar_t *varlist);
+calias_t       *Con_AddAlias(const char *aName, const char *command);
+void            Con_DeleteAlias(calias_t *cal);
+void            Con_PrintCVar(cvar_t *var, char *prefix);
+boolean         Con_IsValidCommand(const char *name);
+void            Con_PrintCCmdUsage(ddccmd_t *ccmd, boolean showExtra);
+calias_t       *Con_GetAlias(const char *name);
+cvar_t         *Con_GetVariable(const char *name);
+cvar_t         *Con_GetVariableIDX(unsigned int idx);
+unsigned int    Con_CVarCount(void);
+int             Con_GetInteger(const char *name);
+float           Con_GetFloat(const char *name);
+byte            Con_GetByte(const char *name);
+char           *Con_GetString(const char *name);
+
+void            Con_SetInteger(const char *name, int value, byte override);
+void            Con_SetFloat(const char *name, float value, byte override);
+void            Con_SetString(const char *name, char *text, byte override);
+
 void            Con_Init(void);
 void            Con_Shutdown(void);
 void            Con_AbnormalShutdown(const char* message);
-void            Con_DestroyDatabases(void);
 void            Con_WriteAliasesToFile(FILE * file);
 void            Con_SetMaxLineLength(void);
 void            Con_Open(int yes);
@@ -100,17 +124,7 @@ boolean         Con_InputMode(void);
 uint            Con_CursorPosition(void);
 char           *Con_GetCommandLine(void);
 cbuffer_t      *Con_GetConsoleBuffer(void);
-void            Con_AddCommand(ccmd_t *cmd);
-void            Con_AddVariable(cvar_t *var);
-void            Con_AddCommandList(ccmd_t *cmdlist);
-void            Con_AddVariableList(cvar_t *varlist);
-calias_t       *Con_AddAlias(const char *aName, const char *command);
-void            Con_DeleteAlias(calias_t *cal);
-void            Con_PrintCVar(cvar_t *var, char *prefix);
-ddccmd_t       *Con_GetCommand(const char *name);
-boolean         Con_IsValidCommand(const char *name);
-void            Con_PrintCCmdUsage(ddccmd_t *ccmd);
-calias_t       *Con_GetAlias(const char *name);
+
 boolean         Con_IsSpecialChar(int ch);
 void            Con_UpdateKnownWords(void);
 knownword_t   **Con_CollectKnownWordsMatchingWord(const char *word,
@@ -129,17 +143,6 @@ int             Con_Executef(byte src, int silent, const char *command, ...);
 
 void            Con_Message(const char *message, ...);
 void            Con_Error(const char *error, ...);
-cvar_t         *Con_GetVariable(const char *name);
-cvar_t         *Con_GetVariableIDX(unsigned int idx);
-unsigned int    Con_CVarCount(void);
-int             Con_GetInteger(const char *name);
-float           Con_GetFloat(const char *name);
-byte            Con_GetByte(const char *name);
-char           *Con_GetString(const char *name);
-
-void            Con_SetInteger(const char *name, int value, byte override);
-void            Con_SetFloat(const char *name, float value, byte override);
-void            Con_SetString(const char *name, char *text, byte override);
 
 char           *TrimmedFloat(float val);
 

@@ -81,6 +81,9 @@ char           *M_SkipLine(char *str);
 void            M_WriteCommented(FILE * file, const char *text);
 void            M_WriteTextEsc(FILE * file, char *text);
 boolean         M_IsComment(char *text);
+boolean         M_IsStringValidInt(const char *str);
+boolean         M_IsStringValidByte(const char *str);
+boolean         M_IsStringValidFloat(const char *str);
 char           *M_LimitedStrCat(const char *str, unsigned int maxWidth,
                                 char separator, char *buf,
                                 unsigned int bufLength);
