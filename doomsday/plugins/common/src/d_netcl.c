@@ -739,10 +739,10 @@ void NetCl_UpdatePlayerInfo(byte *data)
 
     NetCl_SetReadBuffer(data);
     num = NetCl_ReadByte();
-    cfg.PlayerColor[num] = NetCl_ReadByte();
+    cfg.playerColor[num] = NetCl_ReadByte();
 #if __JHEXEN__ || __JHERETIC__
-    cfg.PlayerClass[num] = NetCl_ReadByte();
-    players[num].class = cfg.PlayerClass[num];
+    cfg.playerClass[num] = NetCl_ReadByte();
+    players[num].class = cfg.playerClass[num];
     if(num == consoleplayer)
         SB_SetClassData();
 #endif
@@ -752,10 +752,10 @@ void NetCl_UpdatePlayerInfo(byte *data)
 
 #if __JDOOM__ || __JSTRIFE__
     Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
-               cfg.PlayerColor[num]);
+               cfg.playerColor[num]);
 #else
     Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
-               cfg.PlayerColor[num], cfg.PlayerClass[num]);
+               cfg.playerColor[num], cfg.playerClass[num]);
 #endif
 }
 

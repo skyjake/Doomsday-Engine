@@ -1197,7 +1197,7 @@ void P_SpawnPlayer(thing_t * mthing, int plrnum)
     p = &players[plrnum];
 
     Con_Printf("P_SpawnPlayer: spawning player %i, col=%i.\n", plrnum,
-               cfg.PlayerColor[plrnum]);
+               cfg.playerColor[plrnum]);
 
     if(p->playerstate == PST_REBORN)
         G_PlayerReborn(plrnum);
@@ -1217,7 +1217,7 @@ void P_SpawnPlayer(thing_t * mthing, int plrnum)
     }
 
     // set color translations for player sprites
-    i = cfg.PlayerColor[plrnum];
+    i = cfg.playerColor[plrnum];
     if(i > 0)
         mobj->flags |= i << MF_TRANSSHIFT;
     mobj->angle = ANG45 * (mthing->angle / 45); /* $unifiedangles */

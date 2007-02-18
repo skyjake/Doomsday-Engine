@@ -1114,9 +1114,9 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
         return;
 
     *ptr++ = whose;
-    *ptr++ = cfg.PlayerColor[whose];
+    *ptr++ = cfg.playerColor[whose];
 #if __JHERETIC__ || __JHEXEN__
-    *ptr++ = cfg.PlayerClass[whose];
+    *ptr++ = cfg.playerClass[whose];
 #endif
     Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO, buffer,
                    ptr - buffer);
@@ -1129,21 +1129,21 @@ void NetSv_ChangePlayerInfo(int from, byte *data)
 
     // Color is first.
     col = *data++;
-    cfg.PlayerColor[from] = PLR_COLOR(from, col);
+    cfg.playerColor[from] = PLR_COLOR(from, col);
 #if __JHERETIC__ || __JHEXEN__
-    cfg.PlayerClass[from] = *data++;
+    cfg.playerClass[from] = *data++;
     Con_Printf("NetSv_ChangePlayerInfo: pl%i, col=%i, class=%i\n", from,
-               cfg.PlayerColor[from], cfg.PlayerClass[from]);
+               cfg.playerColor[from], cfg.playerClass[from]);
 #else
     Con_Printf("NetSv_ChangePlayerInfo: pl%i, col=%i\n", from,
-               cfg.PlayerColor[from]);
+               cfg.playerColor[from]);
 #endif
 
 #if __JHEXEN__
     // The 'colormap' variable controls the setting of the color
     // translation flags when the player is (re)spawned (which will
     // be done in SB_ChangePlayerClass).
-    pl->colormap = cfg.PlayerColor[from];
+    pl->colormap = cfg.playerColor[from];
 #else
     if(pl->plr->mo)
     {
@@ -1154,7 +1154,7 @@ void NetSv_ChangePlayerInfo(int from, byte *data)
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    SB_ChangePlayerClass(pl, cfg.PlayerClass[from]);
+    SB_ChangePlayerClass(pl, cfg.playerClass[from]);
 #endif
 
     // Re-deal start spots.

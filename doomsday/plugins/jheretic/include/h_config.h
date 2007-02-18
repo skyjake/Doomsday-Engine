@@ -74,15 +74,11 @@ typedef enum {
 
 typedef struct jheretic_config_s {
     float           playerMoveSpeed;
-    int             mouseSensiX, mouseSensiY;
     int             dclickuse;
     int             usemlook;      // Mouse look (mouse Y => viewpitch)
     int             usejlook;      // Joy look (joy Y => viewpitch)
     int             alwaysRun;     // Always run.
     int             noAutoAim;     // No auto-aiming?
-    int             mlookInverseY; // Inverse mlook Y axis.
-    int             jlookInverseY; // Inverse jlook Y axis.
-    int             joyaxis[8];
     int             jlookDeltaMode;
     int             lookSpring;
     float           lookSpeed;
@@ -205,8 +201,8 @@ typedef struct jheretic_config_s {
     byte            netSlot;
     byte            netColor;
 
-    playerclass_t        PlayerClass[MAXPLAYERS];
-    int             PlayerColor[MAXPLAYERS];
+    playerclass_t   playerClass[MAXPLAYERS];
+    int             playerColor[MAXPLAYERS];
 
     // jHeretic specific
     int             ringFilter;

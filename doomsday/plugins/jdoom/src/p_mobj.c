@@ -1068,7 +1068,7 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
     }
 
     // set color translations for player sprites
-    i = cfg.PlayerColor[pnum];
+    i = cfg.playerColor[pnum];
     if(i > 0)
         mobj->flags |= i << MF_TRANSSHIFT;
 

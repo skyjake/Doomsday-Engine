@@ -1282,7 +1282,7 @@ void ST_updateGraphics(void)
     char    namebuf[9];
 
     // face backgrounds for different color players
-    sprintf(namebuf, "STFB%d", cfg.PlayerColor[consoleplayer]);
+    sprintf(namebuf, "STFB%d", cfg.playerColor[consoleplayer]);
     R_CachePatch(&faceback, namebuf);
 }
 

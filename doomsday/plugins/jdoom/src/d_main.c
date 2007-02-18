@@ -374,10 +374,7 @@ void D_PreInit(void)
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
     cfg.dclickuse = false;
-    cfg.mouseSensiX = cfg.mouseSensiY = 8;
     cfg.povLookAround = true;
-    cfg.joyaxis[0] = JOYAXIS_TURN;
-    cfg.joyaxis[1] = JOYAXIS_MOVE;
     cfg.sbarscale = 20;         // Full size.
     cfg.screenblocks = cfg.setblocks = 10;
     cfg.echoMsg = true;

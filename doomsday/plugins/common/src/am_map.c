@@ -1831,7 +1831,7 @@ static void AM_drawPlayers(void)
         else
 #endif
 #endif
-            color = their_colors[cfg.PlayerColor[i]];
+            color = their_colors[cfg.playerColor[i]];
 
         /* $unifiedangles */
         AM_drawLineCharacter(lc, lcNumLines, size, p->plr->mo->angle, color,
@@ -2348,7 +2348,7 @@ static void AM_drawFragsTable(void)
 
         // Draw the choice.
         name = Net_GetPlayerName(choose);
-        switch(cfg.PlayerColor[choose])
+        switch(cfg.playerColor[choose])
         {
         case 0:                // green
             gl.Color3f(0, .8f, 0);
@@ -2442,7 +2442,7 @@ static void AM_drawDeathmatchStats(void)
         }
         else
         {
-            GL_SetColor(their_colors[cfg.PlayerColor[order[i]]]);
+            GL_SetColor(their_colors[cfg.playerColor[order[i]]]);
             memset(textBuffer, 0, 80);
             strncpy(textBuffer, Net_GetPlayerName(order[i]), 78);
             strcat(textBuffer, ":");

@@ -274,10 +274,6 @@ void H2_PreInit(void)
     cfg.sbarscale = 20;
     cfg.dclickuse = false;
     cfg.inventoryNextOnUnuse = true;
-    cfg.mouseSensiX = 8;
-    cfg.mouseSensiY = 8;
-    cfg.joyaxis[0] = JOYAXIS_TURN;
-    cfg.joyaxis[1] = JOYAXIS_MOVE;
     cfg.screenblocks = cfg.setblocks = 10;
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
@@ -433,7 +429,7 @@ void H2_PostInit(void)
         }
         Con_Message("\nPlayer Class: %d\n", pClass);
     }
-    cfg.PlayerClass[consoleplayer] = pClass;
+    cfg.playerClass[consoleplayer] = pClass;
 
     P_InitMapMusicInfo();         // Init music fields in mapinfo
 

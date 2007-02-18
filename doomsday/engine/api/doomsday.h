@@ -136,8 +136,8 @@ extern          "C" {
     void            Con_SetString(char *name, char *text, byte override);
     void            Con_Printf(char *format, ...);
     void            Con_FPrintf(int flags, char *format, ...);
-    int             DD_Execute(char *command, int silent);
-    int             DD_Executef(int silent, char *command, ...);
+    int             DD_Execute(const char *command, int silent);
+    int             DD_Executef(int silent, const char *command, ...);
     void            Con_Message(char *message, ...);
     void            Con_Error(char *error, ...);
 

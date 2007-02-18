@@ -146,22 +146,6 @@ static pcontrolstate_t controlStates[MAXPLAYERS];
 
 // CVars for control/input
 cvar_t  controlCVars[] = {
-// Input (settings)
-    // Mouse
-    {"input-mouse-x-sensi", CVF_NO_MAX, CVT_INT, &cfg.mouseSensiX, 0, 25},
-    {"input-mouse-y-sensi", CVF_NO_MAX, CVT_INT, &cfg.mouseSensiY, 0, 25},
-
-    // Joystick/Gamepad
-    {"input-joy-x", 0, CVT_INT, &cfg.joyaxis[0], 0, 4},
-    {"input-joy-y", 0, CVT_INT, &cfg.joyaxis[1], 0, 4},
-    {"input-joy-z", 0, CVT_INT, &cfg.joyaxis[2], 0, 4},
-    {"input-joy-rx", 0, CVT_INT, &cfg.joyaxis[3], 0, 4},
-    {"input-joy-ry", 0, CVT_INT, &cfg.joyaxis[4], 0, 4},
-    {"input-joy-rz", 0, CVT_INT, &cfg.joyaxis[5], 0, 4},
-
-    {"input-joy-slider1", 0, CVT_INT, &cfg.joyaxis[6], 0, 4},
-    {"input-joy-slider2", 0, CVT_INT, &cfg.joyaxis[7], 0, 4},
-
 // Control (options/preferences)
     {"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1},
 
@@ -178,13 +162,10 @@ cvar_t  controlCVars[] = {
     {"ctl-look-spring", 0, CVT_INT, &cfg.lookSpring, 0, 1},
 
     {"ctl-look-mouse", 0, CVT_INT, &cfg.usemlook, 0, 1},
-    {"ctl-look-mouse-inverse", 0, CVT_INT, &cfg.mlookInverseY, 0, 1},
 
     {"ctl-look-pov", 0, CVT_BYTE, &cfg.povLookAround, 0, 1},
     {"ctl-look-joy", 0, CVT_INT, &cfg.usejlook, 0, 1},
-    {"ctl-look-joy-inverse", 0, CVT_INT, &cfg.jlookInverseY, 0, 1},
     {"ctl-look-joy-delta", 0, CVT_INT, &cfg.jlookDeltaMode, 0, 1},
-
     {NULL}
 };
 

@@ -24,7 +24,7 @@
  */
 
 /*
- * d_config.h: jDoom configuration.
+ * d_config.h: Doom64TC configuration.
  * Global settings. Most of these are console variables.
  */
 
@@ -63,17 +63,13 @@ typedef enum {
 // WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
 
-typedef struct jdoom_config_s {
+typedef struct d64tc_config_s {
     float           playerMoveSpeed;
-    int             mouseSensiX, mouseSensiY;
     int             dclickuse;
     int             usemlook;      // Mouse look (mouse Y => viewpitch)
     int             usejlook;      // Joy look (joy Y => viewpitch)
     int             alwaysRun;     // Always run.
     int             noAutoAim;     // No auto-aiming?
-    int             mlookInverseY; // Inverse mlook Y axis.
-    int             jlookInverseY; // Inverse jlook Y axis.
-    int             joyaxis[8];
     int             jlookDeltaMode;
     int             lookSpring;
     float           lookSpeed;
@@ -196,7 +192,7 @@ typedef struct jdoom_config_s {
     byte            netSlot;
     byte            netColor;
 
-    int             PlayerColor[MAXPLAYERS];
+    int             playerColor[MAXPLAYERS];
 } game_config_t;
 
 extern game_config_t cfg;

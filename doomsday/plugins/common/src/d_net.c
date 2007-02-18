@@ -139,12 +139,12 @@ int D_NetServerStarted(int before)
     G_StopDemo();
 
     // We're the server, so...
-    cfg.PlayerColor[0] = PLR_COLOR(0, cfg.netColor);
+    cfg.playerColor[0] = PLR_COLOR(0, cfg.netColor);
 
 #if __JHEXEN__
-    cfg.PlayerClass[0] = cfg.netClass;
+    cfg.playerClass[0] = cfg.netClass;
 #elif __JHERETIC__
-    cfg.PlayerClass[0] = PCLASS_PLAYER;
+    cfg.playerClass[0] = PCLASS_PLAYER;
 #endif
 
     // Set the game parameters.
@@ -666,7 +666,7 @@ DEFCC(CCmdSetColor)
         // because this is a local mobj we're dealing with. We'll change
         // the color translation bits directly.
 
-        cfg.PlayerColor[0] = PLR_COLOR(0, cfg.netColor);
+        cfg.playerColor[0] = PLR_COLOR(0, cfg.netColor);
 #ifdef __JDOOM__
         ST_updateGraphics();
 #endif
@@ -677,14 +677,14 @@ DEFCC(CCmdSetColor)
         // Additional difficulty is caused by the fact that the Fighter's
         // colors 0 (blue) and 2 (yellow) must be swapped.
         players[0].plr->mo->flags |=
-            (cfg.PlayerClass[0] ==
-             PCLASS_FIGHTER ? (cfg.PlayerColor[0] ==
-                               0 ? 2 : cfg.PlayerColor[0] ==
-                               2 ? 0 : cfg.PlayerColor[0]) : cfg.
-             PlayerColor[0]) << MF_TRANSSHIFT;
-        players[0].colormap = cfg.PlayerColor[0];
+            (cfg.playerClass[0] ==
+             PCLASS_FIGHTER ? (cfg.playerColor[0] ==
+                               0 ? 2 : cfg.playerColor[0] ==
+                               2 ? 0 : cfg.playerColor[0]) : cfg.
+             playerColor[0]) << MF_TRANSSHIFT;
+        players[0].colormap = cfg.playerColor[0];
 #else
-        players[0].plr->mo->flags |= cfg.PlayerColor[0] << MF_TRANSSHIFT;
+        players[0].plr->mo->flags |= cfg.playerColor[0] << MF_TRANSSHIFT;
 #endif
 
         // Tell the clients about the change.

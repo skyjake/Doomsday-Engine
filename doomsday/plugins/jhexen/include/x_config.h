@@ -75,8 +75,6 @@ typedef struct {
     int             quakeFly;
     byte            fastMonsters;
     int             usemlook, usejlook;
-    int             mouseSensiX, mouseSensiY;
-
     int             screenblocks;
     int             setblocks;
     byte            hudShown[4];   // HUD data visibility.
@@ -91,15 +89,6 @@ typedef struct {
     int             echoMsg;
     int             translucentIceCorpse;
 
-    byte            netMap, netClass, netColor, netSkill;
-    byte            netEpisode;    // unused in Hexen
-    byte            netDeathmatch, netNomonsters, netRandomclass;
-    byte            netJumping;
-    byte            netMobDamageModifier;   // multiplier for non-player mobj damage
-    byte            netMobHealthModifier;   // health modifier for non-player mobjs
-    int             netGravity;              // multiplayer custom gravity
-    byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
-    byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
     byte            overrideHubMsg; // skip the transition hub message when 1
     int             cameraNoClip;
     float           bobView, bobWeapon;
@@ -109,8 +98,6 @@ typedef struct {
     int             airborneMovement;
     int             usemouse, noAutoAim, alwaysRun;
     byte            povLookAround;
-    int             joySensitivity, jlookInverseY;
-    int             joyaxis[8];
     int             jlookDeltaMode;
 
     int             xhair, xhairSize;
@@ -174,8 +161,18 @@ typedef struct {
     float           menuColor2[3];
     byte            menuSlam;
 
-    playerclass_t        PlayerClass[MAXPLAYERS];
-    byte            PlayerColor[MAXPLAYERS];
+    byte            netMap, netClass, netColor, netSkill;
+    byte            netEpisode;    // unused in Hexen
+    byte            netDeathmatch, netNomonsters, netRandomclass;
+    byte            netJumping;
+    byte            netMobDamageModifier;   // multiplier for non-player mobj damage
+    byte            netMobHealthModifier;   // health modifier for non-player mobjs
+    int             netGravity;              // multiplayer custom gravity
+    byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
+    byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
+
+    playerclass_t   playerClass[MAXPLAYERS];
+    byte            playerColor[MAXPLAYERS];
 } game_config_t;
 
 extern game_config_t cfg;

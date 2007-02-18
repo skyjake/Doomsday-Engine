@@ -1969,11 +1969,11 @@ void FIC_If(void)
 #if __JHEXEN__
     // Player classes.
     else if(!stricmp(fi_token, "fighter"))
-        val = (cfg.PlayerClass[consoleplayer] == PCLASS_FIGHTER);
+        val = (cfg.playerClass[consoleplayer] == PCLASS_FIGHTER);
     else if(!stricmp(fi_token, "cleric"))
-        val = (cfg.PlayerClass[consoleplayer] == PCLASS_CLERIC);
+        val = (cfg.playerClass[consoleplayer] == PCLASS_CLERIC);
     else if(!stricmp(fi_token, "mage"))
-        val = (cfg.PlayerClass[consoleplayer] == PCLASS_MAGE);
+        val = (cfg.playerClass[consoleplayer] == PCLASS_MAGE);
 #endif
     else
     {

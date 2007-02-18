@@ -1171,10 +1171,10 @@ void G_PlayerReborn(int player)
     players[player].secretcount = secretcount;
 #if __JHEXEN__ || __JSTRIFE__
     players[player].worldTimer = worldTimer;
-    players[player].colormap = cfg.PlayerColor[player];
+    players[player].colormap = cfg.playerColor[player];
 #endif
 #if __JHEXEN__
-    players[player].class = cfg.PlayerClass[player];
+    players[player].class = cfg.playerClass[player];
 #endif
     p->usedown = p->attackdown = true;  // don't do anything immediately
     p->playerstate = PST_LIVE;

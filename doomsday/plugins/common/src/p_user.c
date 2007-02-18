@@ -733,7 +733,7 @@ boolean P_UndoPlayerMorph(player_t *player)
     playerNum = P_GetPlayerNum(player);
 # if __JHEXEN__
     mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ],
-                     PCLASS_INFO(cfg.PlayerClass[playerNum])->mobjtype);
+                     PCLASS_INFO(cfg.playerClass[playerNum])->mobjtype);
 # else
     mo = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_PLAYER);
 # endif
@@ -792,7 +792,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 # if __JHERETIC__
     player->class = PCLASS_PLAYER;
 # else
-    player->class = cfg.PlayerClass[playerNum];
+    player->class = cfg.playerClass[playerNum];
 # endif
     angle >>= ANGLETOFINESHIFT;
 

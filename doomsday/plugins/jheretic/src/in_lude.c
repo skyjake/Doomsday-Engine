@@ -249,7 +249,7 @@ void IN_InitStats(void)
         {
             if(!players[i].plr->ingame)
                 continue;
-            playerTeam[i] = cfg.PlayerColor[i];
+            playerTeam[i] = cfg.playerColor[i];
             teamInfo[playerTeam[i]].members++;
         }
     }

@@ -1506,17 +1506,17 @@ void P_SpawnPlayer(thing_t * mthing, int playernum)
     if(randomclass && deathmatch)
     {
         p->class = P_Random() % 3;
-        if(p->class == cfg.PlayerClass[playernum])
+        if(p->class == cfg.playerClass[playernum])
         {
             p->class = (p->class + 1) % 3;
         }
-        cfg.PlayerClass[playernum] = p->class;
+        cfg.playerClass[playernum] = p->class;
         SB_SetClassData();
         NetSv_SendPlayerInfo(playernum, DDSP_ALL_PLAYERS);
     }
     else
     {
-        p->class = cfg.PlayerClass[playernum];
+        p->class = cfg.playerClass[playernum];
     }
 
     mobj = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], PCLASS_INFO(p->class)->mobjtype);
@@ -1707,7 +1707,7 @@ void P_SpawnMapThing(thing_t * mthing)
     // Check current character classes with spawn flags
     if(IS_NETGAME == false)
     {                           // Single player
-        if((mthing->options & classFlags[cfg.PlayerClass[0]]) == 0)
+        if((mthing->options & classFlags[cfg.playerClass[0]]) == 0)
         {                       // Not for current class
             return;
         }
@@ -1719,7 +1719,7 @@ void P_SpawnMapThing(thing_t * mthing)
         {
             if(players[i].plr->ingame)
             {
-                spawnMask |= classFlags[cfg.PlayerClass[i]];
+                spawnMask |= classFlags[cfg.playerClass[i]];
             }
         }
 

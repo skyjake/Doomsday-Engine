@@ -643,7 +643,7 @@ void SB_SetClassData(void)
     int         class;
     char        namebuf[9];
 
-    class = cfg.PlayerClass[consoleplayer]; // original player class (not pig)
+    class = cfg.playerClass[consoleplayer]; // original player class (not pig)
 
     sprintf(namebuf, "wpslot%d", 0 + class);
     R_CachePatch(&PatchNumWEAPONSLOT, namebuf);
@@ -1880,17 +1880,17 @@ static void DrawWeaponPieces(void)
     {
         if(plyr->pieces & WPIECE1)
         {
-            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.PlayerClass[consoleplayer])->piecex[0], 162,
+            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->piecex[0], 162,
                             1, statusbarCounterAlpha, PatchNumPIECE1.lump);
         }
         if(plyr->pieces & WPIECE2)
         {
-            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.PlayerClass[consoleplayer])->piecex[1], 162,
+            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->piecex[1], 162,
                             1, statusbarCounterAlpha, PatchNumPIECE2.lump);
         }
         if(plyr->pieces & WPIECE3)
         {
-            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.PlayerClass[consoleplayer])->piecex[2], 162,
+            GL_DrawPatchLitAlpha(PCLASS_INFO(cfg.playerClass[consoleplayer])->piecex[2], 162,
                             1, statusbarCounterAlpha, PatchNumPIECE3.lump);
         }
     }
@@ -2139,7 +2139,7 @@ void SB_ChangePlayerClass(player_t *player, int newclass)
     // Take away armor.
     for(i = 0; i < NUMARMOR; i++)
         player->armorpoints[i] = 0;
-    cfg.PlayerClass[player - players] = newclass;
+    cfg.playerClass[player - players] = newclass;
     P_PostMorphWeapon(player, WT_FIRST);
     if(player == players + consoleplayer)
         SB_SetClassData();

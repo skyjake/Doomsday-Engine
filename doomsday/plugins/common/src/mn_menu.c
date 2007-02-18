@@ -136,9 +136,6 @@ void M_StatusBarAlpha(int option, void *data);
 void M_HUDRed(int option, void *data);
 void M_HUDGreen(int option, void *data);
 void M_HUDBlue(int option, void *data);
-void M_MouseXSensi(int option, void *data);
-void M_MouseYSensi(int option, void *data);
-void M_JoyAxis(int option, void *data);
 void M_FinishReadThis(int option, void *data);
 void M_LoadSelect(int option, void *data);
 void M_SaveSelect(int option, void *data);
@@ -180,8 +177,6 @@ void M_DrawGameplay(void);
 void M_DrawHUDMenu(void);
 void M_DrawMapMenu(void);
 void M_DrawWeaponMenu(void);
-void M_DrawMouseMenu(void);
-void M_DrawJoyMenu(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
 void M_DrawFilesMenu(void);
@@ -743,9 +738,9 @@ static menuitem_t OptionsItems[] = {
     {ITT_SETMENU, 0, "automap...", NULL, MENU_MAP},
     {ITT_SETMENU, 0, "weapons...", NULL, MENU_WEAPONSETUP},
     {ITT_SETMENU, 0, "sound...", NULL, MENU_OPTIONS2},
-    {ITT_EFUNC,   0, "controls...", M_OpenDCP, 2},
-    {ITT_SETMENU, 0, "mouse options...", NULL, MENU_MOUSE},
-    {ITT_SETMENU, 0, "joystick options...", NULL, MENU_JOYSTICK}
+    {ITT_EFUNC,   0, "controls", M_OpenDCP, 3},
+    {ITT_SETMENU, 0, "mouse options", M_OpenDCP, 2},
+    {ITT_SETMENU, 0, "joystick options", M_OpenDCP, 2}
 };
 
 static menu_t OptionsDef = {
@@ -1109,79 +1104,6 @@ static menu_t GameplayDef = {
 };
 #endif
 
-static menuitem_t MouseOptsItems[] = {
-    {ITT_EFUNC, 0, "MOUSE LOOK :", M_ToggleVar, 0, NULL, "ctl-look-mouse"},
-    {ITT_EFUNC, 0, "INVERSE MLOOK :", M_ToggleVar, 0, NULL, "ctl-look-mouse-inverse"},
-    {ITT_LRFUNC, 0, "X SENSITIVITY", M_MouseXSensi, 0},
-#ifndef __JDOOM__
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-#endif
-    {ITT_LRFUNC, 0, "Y SENSITIVITY", M_MouseYSensi, 0},
-#ifndef __JDOOM__
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0}
-#endif
-};
-
-static menu_t MouseOptsMenu = {
-    0,
-#if __JHEXEN__ || __JSTRIFE__
-    72, 25,
-#elif __JHERETIC__
-    72, 30,
-#elif __JDOOM__
-    70, 40,
-#endif
-    M_DrawMouseMenu,
-#ifndef __JDOOM__
-    8, MouseOptsItems,
-#else
-    4, MouseOptsItems,
-#endif
-    0, MENU_OPTIONS,
-    hu_font_a,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
-#ifndef __JDOOM__
-    0, 8
-#else
-    0, 4
-#endif
-};
-
-static menuitem_t JoyConfigItems[] = {
-    {ITT_LRFUNC, 0, "X AXIS :", M_JoyAxis, 0 << 8},
-    {ITT_LRFUNC, 0, "Y AXIS :", M_JoyAxis, 1 << 8},
-    {ITT_LRFUNC, 0, "Z AXIS :", M_JoyAxis, 2 << 8},
-    {ITT_LRFUNC, 0, "RX AXIS :", M_JoyAxis, 3 << 8},
-    {ITT_LRFUNC, 0, "RY AXIS :", M_JoyAxis, 4 << 8},
-    {ITT_LRFUNC, 0, "RZ AXIS :", M_JoyAxis, 5 << 8},
-    {ITT_LRFUNC, 0, "SLIDER 1 :", M_JoyAxis, 6 << 8},
-    {ITT_LRFUNC, 0, "SLIDER 2 :", M_JoyAxis, 7 << 8},
-    {ITT_EFUNC, 0, "JOY LOOK :", M_ToggleVar, 0, NULL, "ctl-look-joy"},
-    {ITT_EFUNC, 0, "INVERSE LOOK :", M_ToggleVar, 0, NULL, "ctl-look-joy-inverse"},
-    {ITT_EFUNC, 0, "POV LOOK :", M_ToggleVar, 0, NULL, "ctl-look-pov"}
-};
-
-static menu_t JoyConfigMenu = {
-    0,
-#if __JHEXEN__ || __JSTRIFE__
-    72, 25,
-#elif __JHERETIC__
-    80, 30,
-#elif __JDOOM__
-    70, 40,
-#endif
-    M_DrawJoyMenu,
-    11, JoyConfigItems,
-    0, MENU_OPTIONS,
-    hu_font_a,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
-    0, 11
-};
-
 menu_t* menulist[] = {
     &MainDef,
 #if __JHEXEN__
@@ -1196,8 +1118,6 @@ menu_t* menulist[] = {
     &GameplayDef,
     &HUDDef,
     &MapDef,
-    &MouseOptsMenu,
-    &JoyConfigMenu,
 #ifndef __JDOOM__
     &FilesMenu,
 #endif
@@ -3291,44 +3211,6 @@ void M_WGCurrentColor(int option, void *data)
     M_FloatMod10(data, option);
 }
 
-void M_DrawMouseMenu(void)
-{
-    menu_t     *menu = &MouseOptsMenu;
-
-#ifndef __JDOOM__
-    M_DrawTitle("MOUSE OPTIONS", 0);
-#else
-    M_DrawTitle("MOUSE OPTIONS", menu->y - 20);
-#endif
-    M_WriteMenuText(menu, 0, yesno[cfg.usemlook]);
-    M_WriteMenuText(menu, 1, yesno[cfg.mlookInverseY]);
-    MN_DrawSlider(menu, 2, 21, cfg.mouseSensiX / 2);
-    MN_DrawSlider(menu, 3, 21, cfg.mouseSensiY / 2);
-}
-
-void M_DrawJoyMenu(void)
-{
-    menu_t     *menu = &JoyConfigMenu;
-    static char *axisname[] = { "-", "MOVE", "TURN", "STRAFE", "LOOK" };
-
-#ifndef __JDOOM__
-    M_DrawTitle("JOYSTICK OPTIONS", 0);
-#else
-    M_DrawTitle("JOYSTICK OPTIONS", menu->y - 20);
-#endif
-    M_WriteMenuText(menu, 0, axisname[cfg.joyaxis[0]]);
-    M_WriteMenuText(menu, 1, axisname[cfg.joyaxis[1]]);
-    M_WriteMenuText(menu, 2, axisname[cfg.joyaxis[2]]);
-    M_WriteMenuText(menu, 3, axisname[cfg.joyaxis[3]]);
-    M_WriteMenuText(menu, 4, axisname[cfg.joyaxis[4]]);
-    M_WriteMenuText(menu, 5, axisname[cfg.joyaxis[5]]);
-    M_WriteMenuText(menu, 6, axisname[cfg.joyaxis[6]]);
-    M_WriteMenuText(menu, 7, axisname[cfg.joyaxis[7]]);
-    M_WriteMenuText(menu, 8, yesno[cfg.usejlook]);
-    M_WriteMenuText(menu, 9, yesno[cfg.jlookInverseY]);
-    M_WriteMenuText(menu, 10, yesno[cfg.povLookAround]);
-}
-
 void M_NewGame(int option, void *data)
 {
     if(IS_NETGAME)
@@ -3511,20 +3393,6 @@ void M_HUDBlue(int option, void *data)
 }
 #endif
 
-void M_JoyAxis(int option, void *data)
-{
-    if(option & RIGHT_DIR)
-    {
-        if(cfg.joyaxis[option >> 8] < 4)
-            cfg.joyaxis[option >> 8]++;
-    }
-    else
-    {
-        if(cfg.joyaxis[option >> 8] > 0)
-            cfg.joyaxis[option >> 8]--;
-    }
-}
-
 void M_LoadGame(int option, void *data)
 {
     if(IS_CLIENT && !Get(DD_PLAYBACK))
@@ -3674,7 +3542,7 @@ void M_ChooseSkill(int option, void *data)
 #if __JHEXEN__
     extern int SB_state;
 
-    cfg.PlayerClass[consoleplayer] = MenuPClass;
+    cfg.playerClass[consoleplayer] = MenuPClass;
     G_DeferredNewGame(option);
     SB_SetClassData();
     SB_state = -1;
@@ -3706,36 +3574,6 @@ void M_ChooseSkill(int option, void *data)
     menuactive = false;
     fadingOut = false;
     M_ClearMenus();
-}
-
-void M_MouseXSensi(int option, void *data)
-{
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.mouseSensiX < 39)
-        {
-            cfg.mouseSensiX += 2;
-        }
-    }
-    else if(cfg.mouseSensiX > 1)
-    {
-        cfg.mouseSensiX -= 2;
-    }
-}
-
-void M_MouseYSensi(int option, void *data)
-{
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.mouseSensiY < 39)
-        {
-            cfg.mouseSensiY += 2;
-        }
-    }
-    else if(cfg.mouseSensiY > 1)
-    {
-        cfg.mouseSensiY -= 2;
-    }
 }
 
 void M_SfxVol(int option, void *data)
@@ -3796,9 +3634,22 @@ void M_SizeDisplay(int option, void *data)
 
 void M_OpenDCP(int option, void *data)
 {
+#define NUM_PANEL_NAMES 3
+    static const char *panelNames[] = {
+        "panel",
+        "panel audio",
+        "panel input",
+        "panel controls"
+    };
+    int         idx = option;
+
+    if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
+        idx = 0;
+
     M_ClearMenus();
-    DD_Execute((option == 2? "panel controls":(option == 1? "panel audio":"panel")),
-               true);
+    DD_Execute(panelNames[idx], true);
+
+#undef NUM_PANEL_NAMES
 }
 
 void MN_DrawColorBox(const menu_t * menu, int index, float r, float g,

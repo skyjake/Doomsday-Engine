@@ -699,7 +699,7 @@ static void sendMessage(char *msg)
     else
     {   // Send to all of the destination color.
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->ingame && cfg.PlayerColor[i] == chatTo)
+            if(players[i].plr->ingame && cfg.playerColor[i] == chatTo)
             {
                 sprintf(buff, "chatNum %d ", i);
                 M_StrCatQuoted(buff, msg);

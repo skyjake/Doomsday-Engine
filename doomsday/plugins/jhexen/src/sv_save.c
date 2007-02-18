@@ -851,7 +851,7 @@ void ArchivePlayer(player_t *player)
     StreamOutByte(2);
 
     // Class.
-    StreamOutByte(cfg.PlayerClass[player - players]);
+    StreamOutByte(cfg.playerClass[player - players]);
 
     StreamOutLong(p->playerstate);
     StreamOutLong(p->class);    // 2nd class...?
@@ -904,7 +904,7 @@ void UnarchivePlayer(player_t *p)
 
     version = GET_BYTE;
 
-    cfg.PlayerClass[p - players] = GET_BYTE;
+    cfg.playerClass[p - players] = GET_BYTE;
 
     memset(p, 0, sizeof(*p));   // Force everything NULL,
     p->plr = dp;                // but restore the ddplayer pointer.

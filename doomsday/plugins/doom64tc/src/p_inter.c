@@ -1115,8 +1115,8 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                 return;
             // Same color, no damage?
             if(cfg.noTeamDamage &&
-               cfg.PlayerColor[player - players] ==
-               cfg.PlayerColor[source->player - players])
+               cfg.playerColor[player - players] ==
+               cfg.playerColor[source->player - players])
                 return;
         }
 
