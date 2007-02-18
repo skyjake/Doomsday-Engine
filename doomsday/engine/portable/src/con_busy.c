@@ -74,9 +74,10 @@ static volatile boolean busyDone;
 static volatile const char* busyError = NULL;
 static float    busyProgress = 0;
 static int      busyFont = 0;
-static int      busyFontHgt;         // Height of the font.
+static int      busyFontHgt;        // Height of the font.
 
-static DGLuint texLoading[2];
+static DGLuint  texLoading[2];
+static DGLuint  texScreenshot;      // Captured screenshot of the latest frame.
 
 static char *titleText = "";
 static char secondaryTitleText[256];
@@ -171,6 +172,12 @@ static void Con_BusyLoadTextures(void)
 {
     image_t image;
 
+    if(!(busyMode & BUSYF_STARTUP))
+    {
+        // Not in startup, so take a copy of the current frame contents.
+        Con_AcquireScreenshotTexture();
+    }
+    
     // Need to load the progress indicator?
     if(busyMode & (BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR))
     {
@@ -213,6 +220,50 @@ static void Con_BusyDeleteTextures(void)
     texLoading[0] = texLoading[1] = 0;
     
     busyFont = 0;
+    
+    // Don't release this yet if doing a wipe.
+    Con_ReleaseScreenshotTexture();
+}
+
+/**
+ * Take a screenshot and store it as a texture.
+ */
+void Con_AcquireScreenshotTexture(void)
+{
+    int oldMaxTexSize = glMaxTexSize;
+#ifdef _DEBUG
+    timespan_t startTime;
+#endif
+    
+    if(texScreenshot)
+    {
+        Con_ReleaseScreenshotTexture();
+    }
+    
+#ifdef _DEBUG
+    startTime = Sys_GetRealSeconds();
+#endif
+
+    byte* frame = malloc(glScreenWidth * glScreenHeight * 3);
+    gl.Grab(0, 0, glScreenWidth, glScreenHeight, DGL_RGB, frame);
+    glMaxTexSize = 512; // A bit of a hack, but don't use too large a texture.
+    texScreenshot = GL_UploadTexture(frame, glScreenWidth, glScreenHeight,
+                                     false, false, true, false, 
+                                     DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP,
+                                     TXCF_NEVER_DEFER);
+    glMaxTexSize = oldMaxTexSize;
+    free(frame);
+    
+#ifdef _DEBUG
+    printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n", 
+           Sys_GetRealSeconds() - startTime);
+#endif
+}
+
+void Con_ReleaseScreenshotTexture(void)
+{
+    gl.DeleteTextures(1, &texScreenshot);
+    texScreenshot = 0;
 }
 
 /**
@@ -222,8 +273,6 @@ static void Con_BusyLoop(void)
 {
     timespan_t startTime = Sys_GetRealSeconds();
 
-    // TODO: Grab a copy of the current frame buffer contents.
-    
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
@@ -256,6 +305,34 @@ static void Con_BusyLoop(void)
 }
 
 /**
+ * Draws the captured screenshot as a background, or just clears the screen if no
+ * screenshot is available.
+ */
+static void Con_DrawScreenshotBackground(void)
+{
+    if(texScreenshot)
+    {
+        gl.Enable(DGL_TEXTURING);
+        gl.Bind(texScreenshot);
+        gl.Color3ub(255, 255, 255);
+        gl.Begin(DGL_QUADS);
+        gl.TexCoord2f(0, 1);
+        gl.Vertex2f(0, 0);
+        gl.TexCoord2f(1, 1);
+        gl.Vertex2f(glScreenWidth, 0);
+        gl.TexCoord2f(1, 0);
+        gl.Vertex2f(glScreenWidth, glScreenHeight);
+        gl.TexCoord2f(0, 0);
+        gl.Vertex2f(0, glScreenHeight);
+        gl.End();
+    }
+    else
+    {
+        gl.Clear(DGL_COLOR_BUFFER_BIT);
+    }
+}
+
+/**
  * @param 0...1, to indicate how far things have progressed.
  */
 static void Con_BusyDrawIndicator(float pos)
@@ -264,18 +341,38 @@ static void Con_BusyDrawIndicator(float pos)
     int y = glScreenHeight/2;
     int radius = glScreenHeight/16;
     float col[4] = {
-         .333f, .333f, .333f, 1
+         1.f, 1.f, 1.f, .2f
     };
     int i = 0;
     int edgeCount = 0;
+    int backW = glScreenWidth/12;
+    int backH = glScreenHeight/12;
     
     pos = MINMAX_OF(0, pos, 1);
     edgeCount = MAX_OF(1, pos * 30);
     
-    // Draw the frame.
-    gl.Enable(DGL_TEXTURING);
+    // Draw a background.
+    gl.Disable(DGL_TEXTURING);
     gl.Enable(DGL_BLENDING);
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+
+    gl.Begin(DGL_TRIANGLE_FAN);
+    gl.Color4ub(0, 0, 0, 128);
+    gl.Vertex2f(x, y);
+    gl.Color4ub(0, 0, 0, 0);
+    gl.Vertex2f(x, y - backH);
+    gl.Vertex2f(x + backW*.8f, y - backH*.8f);
+    gl.Vertex2f(x + backW, y);
+    gl.Vertex2f(x + backW*.8f, y + backH*.8f);
+    gl.Vertex2f(x, y + backH);
+    gl.Vertex2f(x - backW*.8f, y + backH*.8f);
+    gl.Vertex2f(x - backW, y);
+    gl.Vertex2f(x - backW*.8f, y - backH*.8f);
+    gl.Vertex2f(x, y - backH);
+    gl.End();
+    
+    // Draw the frame.
+    gl.Enable(DGL_TEXTURING);
 
     gl.Bind(texLoading[0]);
     GL_DrawRect(x - radius, y - radius, radius*2, radius*2, col[0], col[1], col[2], col[3]);
@@ -321,15 +418,27 @@ static void Con_BusyDrawConsoleOutput(void)
     lines[1] = "Con_BusyDrawConsoleOutput: This is some output.";
     lines[2] = "The bottom-most line.";
 
-    gl.Enable(DGL_TEXTURING);
+    gl.Disable(DGL_TEXTURING);
     gl.Enable(DGL_BLENDING);
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+
+    gl.Begin(DGL_QUADS);
+    gl.Color4ub(0, 0, 0, 0);
+    y = glScreenHeight - (LINE_COUNT + 3) * busyFontHgt;
+    gl.Vertex2f(0, y);
+    gl.Vertex2f(glScreenWidth, y);
+    gl.Color4ub(0, 0, 0, 128);
+    gl.Vertex2f(glScreenWidth, glScreenHeight);
+    gl.Vertex2f(0, glScreenHeight);
+    gl.End();
     
-    y = glScreenHeight - busyFontHgt * (LINE_COUNT + 1);
+    gl.Enable(DGL_TEXTURING);
+    
+    y = glScreenHeight - busyFontHgt * (LINE_COUNT + .5f);
     for(i = 0; i < LINE_COUNT; ++i, y += busyFontHgt)
     {
-        float color = (1.f - (LINE_COUNT - i - 1)/(float)LINE_COUNT) / 2;
-        gl.Color3f(color, color, color);
+        float color = 1.f / (LINE_COUNT - i);
+        gl.Color4f(1.f, 1.f, 1.f, color);
         FR_TextOut(lines[i], (glScreenWidth - FR_TextWidth(lines[i]))/2, y);
     }
     
@@ -344,8 +453,8 @@ static void Con_BusyDrawer(void)
     DGLuint oldBinding = 0;
     char buf[100];
     
-    gl.Clear(DGL_COLOR_BUFFER_BIT);
-
+    Con_DrawScreenshotBackground();
+    
     // Indefinite activity?
     if(busyMode & BUSYF_ACTIVITY)
     {
@@ -363,11 +472,9 @@ static void Con_BusyDrawer(void)
         Con_BusyDrawConsoleOutput();
     }
     
-    sprintf(buf, "Busy %04x : %.2lf", busyMode, busyTime);
+    /*sprintf(buf, "Busy %04x : %.2lf", busyMode, busyTime);
     gl.Color4f(1, 1, 1, 1);
-    FR_TextOut(buf, 20, 20);
-    
-    // TODO: When accessing console output, lock the console buffer first!
+    FR_TextOut(buf, 20, 20);*/
     
     // Swap buffers.
     gl.Show();
