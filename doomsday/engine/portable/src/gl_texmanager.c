@@ -909,6 +909,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     boolean generateMipmaps = ((content->flags & TXCF_MIPMAP) != 0);
     boolean RGBData = ((content->flags & TXCF_UPLOAD_ARG_RGBDATA) != 0);
     boolean noStretch = ((content->flags & TXCF_UPLOAD_ARG_NOSTRETCH) != 0);
+    boolean noSmartFilter = ((content->flags & TXCF_UPLOAD_ARG_NOSMARTFILTER) != 0);
     byte   *palette = GL_GetPalette();
     int     i, levelWidth, levelHeight; // width and height at the current level
     int     comps;
@@ -941,7 +942,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     }
 
     // If smart filtering is enabled, all textures are magnified 2x.
-    if(useSmartFilter /* && comps == 3 */ )
+    if(useSmartFilter && !noSmartFilter /* && comps == 3 */ )
     {
         byte   *filtered = M_Malloc(4 * width * height * 4);
 

@@ -252,7 +252,7 @@ void Con_AcquireScreenshotTexture(void)
     texScreenshot = GL_UploadTexture(frame, glScreenWidth, glScreenHeight,
                                      false, false, true, false, 
                                      DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP,
-                                     TXCF_NEVER_DEFER);
+                                     (TXCF_NEVER_DEFER | TXCF_UPLOAD_ARG_NOSMARTFILTER));
     glMaxTexSize = oldMaxTexSize;
     M_Free(frame);
     

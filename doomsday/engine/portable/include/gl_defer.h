@@ -55,7 +55,8 @@ typedef struct texturecontent_s {
 #define TXCF_UPLOAD_ARG_ALPHACHANNEL    0x10
 #define TXCF_UPLOAD_ARG_RGBDATA         0x20
 #define TXCF_UPLOAD_ARG_NOSTRETCH       0x40
-#define TXCF_NEVER_DEFER                0x80
+#define TXCF_UPLOAD_ARG_NOSMARTFILTER   0x80
+#define TXCF_NEVER_DEFER                0x100
 
 void            GL_InitDeferred(void);
 void            GL_ShutdownDeferred(void);
