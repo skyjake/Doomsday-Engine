@@ -147,10 +147,10 @@ void GL_Register(void)
     C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
 
     // Ccmds
-    C_CMD("fog", NULL, Fog);
-    C_CMD("setgamma", "i", SetGamma);
-    C_CMD("setres", "ii", SetRes);
-    C_CMD("setvidramp", "", UpdateGammaRamp);
+    C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setgamma", "i", SetGamma, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
 
     GL_TexRegister();
 }
@@ -944,23 +944,11 @@ void GL_BlendMode(blendmode_t mode)
  */
 D_CMD(SetRes)
 {
-    if(isDedicated)
-    {
-        Con_Printf("Impossible in dedicated mode.\n");
-        return false;
-    }
-
     return GL_ChangeResolution(atoi(argv[1]), atoi(argv[2]), 0);
 }
 
 D_CMD(UpdateGammaRamp)
 {
-    if(isDedicated)
-    {
-        Con_Printf("Impossible in dedicated mode.\n");
-        return false;
-    }
-
     GL_SetGamma();
     Con_Printf("Gamma ramp set.\n");
     return true;
@@ -969,12 +957,6 @@ D_CMD(UpdateGammaRamp)
 D_CMD(SetGamma)
 {
     int     newlevel;
-
-    if(isDedicated)
-    {
-        Con_Printf("Impossible in dedicated mode.\n");
-        return false;
-    }
 
     newlevel = strtol(argv[1], NULL, 0);
     // Clamp it to the min and max.
@@ -998,11 +980,6 @@ D_CMD(Fog)
 {
     int     i;
 
-    if(isDedicated)
-    {
-        Con_Printf("Fog not supported in dedicated mode.\n");
-        return false;
-    }
     if(argc == 1)
     {
         Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);

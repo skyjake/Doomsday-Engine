@@ -1169,19 +1169,22 @@ typedef enum blendmode_e {
 // Helper macro for defining console command functions.
 #define DEFCC(name)     int name(byte src, int argc, char **argv)
 
+// Console command flags.
+#define CMDF_NO_DEDICATED       0x00000001 // Not available in dedicated server mode.
+
 // Console command usage flags.
 // (what method(s) CAN NOT be used to invoke a ccmd (used with the CMDS codes above)).
-#define CMDF_DDAY               0x1
-#define CMDF_GAME               0x2
-#define CMDF_CONSOLE            0x4
-#define CMDF_BIND               0x8
-#define CMDF_CONFIG             0x10
-#define CMDF_PROFILE            0x20
-#define CMDF_CMDLINE            0x40
-#define CMDF_DED                0x80
-#define CMDF_CLIENT             0x100 // sent over the net from a client
+#define CMDF_DDAY               0x00800000
+#define CMDF_GAME               0x01000000
+#define CMDF_CONSOLE            0x02000000
+#define CMDF_BIND               0x04000000
+#define CMDF_CONFIG             0x08000000
+#define CMDF_PROFILE            0x10000000
+#define CMDF_CMDLINE            0x20000000
+#define CMDF_DED                0x40000000
+#define CMDF_CLIENT             0x80000000 // sent over the net from a client.
 
-// Console variable flags.
+    // Console variable flags.
 #define CVF_NO_ARCHIVE      0x1    // Not written in/read from the defaults file.
 #define CVF_PROTECTED       0x2    // Can't be changed unless forced.
 #define CVF_NO_MIN          0x4    // Don't use the minimum.

@@ -217,10 +217,10 @@ void GL_TexRegister(void)
     C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
 
     // Ccmds
-    C_CMD("lowres", "", LowRes);
-    C_CMD("mipmap", "i", MipMap);
-    C_CMD("smoothscr", "i", SmoothRaw);
-    C_CMD("texreset", "", ResetTextures);
+    C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("smoothscr", "i", SmoothRaw, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
 }
 
 /*

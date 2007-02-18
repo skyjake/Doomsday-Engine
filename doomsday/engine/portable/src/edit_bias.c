@@ -129,20 +129,20 @@ void SBE_Register(void)
     C_VAR_INT("edit-bias-show-indices", &editShowIndices, 0, 0, 1);
 
     // Commands for light editing.
-    C_CMD("bledit", "", BLEditor);
-    C_CMD("blquit", "", BLEditor);
-    C_CMD("blclear", "", BLEditor);
-    C_CMD("blsave", NULL, BLEditor);
-    C_CMD("blnew", "", BLEditor);
-    C_CMD("bldel", "", BLEditor);
-    C_CMD("bllock", "", BLEditor);
-    C_CMD("blunlock", "", BLEditor);
-    C_CMD("blgrab", "", BLEditor);
-    C_CMD("bldup", "", BLEditor);
-    C_CMD("blc", "fff", BLEditor);
-    C_CMD("bli", NULL, BLEditor);
-    C_CMD("blhue", NULL, BLEditor);
-    C_CMD("blmenu", "", BLEditor);
+    C_CMD_FLAGS("bledit", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blquit", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blclear", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blsave", NULL, BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blnew", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bldel", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bllock", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blunlock", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blgrab", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bldup", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blc", "fff", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bli", NULL, BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blhue", NULL, BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blmenu", "", BLEditor, CMDF_NO_DEDICATED);
 }
 
 /*

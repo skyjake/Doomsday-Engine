@@ -108,9 +108,9 @@ void Mus_Register(void)
     C_VAR_INT("music-source", &mus_preference, 0, 0, 2);
 
     // Ccmds
-    C_CMD("playext", "s", PlayExt);
-    C_CMD("playmusic", NULL, PlayMusic);
-    C_CMD("stopmusic", "", StopMusic);
+    C_CMD_FLAGS("playext", "s", PlayExt, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("playmusic", NULL, PlayMusic, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("stopmusic", "", StopMusic, CMDF_NO_DEDICATED);
 }
 
 /**

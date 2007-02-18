@@ -133,7 +133,7 @@ void UI_Register(void)
     C_VAR_FLOAT("ui-cursor-height", &uiCursorHeightMul, 0, 0.5f, 1.5f);
 
     // Ccmds
-    C_CMD("uicolor", "sfff", UIColor);
+    C_CMD_FLAGS("uicolor", "sfff", UIColor, CMDF_NO_DEDICATED);
 
     CP_Register();
 }

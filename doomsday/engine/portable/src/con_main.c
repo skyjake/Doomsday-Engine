@@ -193,9 +193,9 @@ static void Con_Register(void)
     C_CMD("after",          "is",   Wait);
     C_CMD("alias",          NULL,   Alias);
     C_CMD("clear",          NULL,   Console);
-    C_CMD("conclose",       "",     OpenClose);
-    C_CMD("conopen",        "",     OpenClose);
-    C_CMD("contoggle",      "",     OpenClose);
+    C_CMD_FLAGS("conclose",       "",     OpenClose,    CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD("dec",            NULL,   AddSub);
     C_CMD("echo",           "s*",   Echo);
     C_CMD("exec",           "s*",   Parse);
@@ -743,6 +743,14 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     {
         // Found a match. Are we allowed to execute?
         boolean canExecute = true;
+
+        // A dedicated server, trying to execute a ccmd not available to us?
+        if(isDedicated && (ccmd->flags & CMDF_NO_DEDICATED))
+        {
+            Con_Printf("executeSubCmd: '%s' impossible in dedicated mode.\n",
+                        ccmd->name);
+            return true;
+        }
 
         // Net commands sent to servers have extra protection.
         if(isServer && isNetCmd)

@@ -163,7 +163,7 @@ void Net_Register(void)
     C_CMD("chatnum", NULL, Chat);
     C_CMD("chatto", NULL, Chat);
     C_CMD("conlocp", "i", MakeCamera);
-    C_CMD("connect", NULL, Connect);
+    C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_DEDICATED);
     C_CMD("huffman", "", HuffmanStats);
     C_CMD("kick", "i", Kick);
     C_CMD("login", NULL, Login);
@@ -1327,7 +1327,7 @@ int Net_ConnectWorker(void *ptr)
     return returnValue;
 }
 
-/*
+/**
  * Intelligently connect to a server. Just provide an IP address and the
  * rest is automatic.
  */
@@ -1343,11 +1343,7 @@ D_CMD(Connect)
         Con_Printf("If a port is not specified port zero will be used.\n");
         return true;
     }
-    if(isDedicated)
-    {
-        Con_Printf("Not allowed.\n");
-        return false;
-    }
+
     if(netgame)
     {
         Con_Printf("Already connected.\n");

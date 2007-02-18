@@ -100,8 +100,8 @@ void Rend_SkyRegister(void)
     C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2);
 
     // Ccmds
-    C_CMD("skydetail", "i", SkyDetail);
-    C_CMD("skyrows", "i", SkyDetail);
+    C_CMD_FLAGS("skydetail", "i", SkyDetail, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("skyrows", "i", SkyDetail, CMDF_NO_DEDICATED);
 }
 
 void Rend_RenderSkyModels(void)

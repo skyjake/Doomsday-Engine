@@ -81,7 +81,7 @@ static float funnyAng;
 
 void Rend_ConsoleRegister(void)
 {
-    C_CMD("bgturn", "i", BackgroundTurn);
+    C_CMD_FLAGS("bgturn", "i", BackgroundTurn, CMDF_NO_DEDICATED);
 
     C_VAR_INT("con-alpha", &consoleAlpha, 0, 0, 100);
     C_VAR_INT("con-light", &consoleLight, 0, 0, 100);

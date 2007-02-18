@@ -629,7 +629,7 @@ void CP_Register(void)
     C_VAR_BYTE("ui-panel-tips", &panel_show_tips, 0, 0, 1);
 
     // Ccmds
-    C_CMD("panel", NULL, OpenPanel);
+    C_CMD_FLAGS("panel", NULL, OpenPanel, CMDF_NO_DEDICATED);
 }
 
 void CP_ClosePanel(ui_object_t *ob)
@@ -1047,9 +1047,6 @@ D_CMD(OpenPanel)
     ui_object_t *ob, *foc;
     uidata_list_t *list;
     cvarbutton_t *cvb;
-
-    if(isDedicated)
-        return false;
 
     Con_Execute(CMDS_DDAY, "conclose", true, false);
 

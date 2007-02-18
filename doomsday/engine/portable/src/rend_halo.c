@@ -120,7 +120,7 @@ void H_Register(void)
     };
     Con_AddVariableList(cvars);
 
-    C_CMD("flareconfig", NULL, FlareConfig);
+    C_CMD_FLAGS("flareconfig", NULL, FlareConfig, CMDF_NO_DEDICATED);
 }
 
 void H_SetupState(boolean dosetup)
