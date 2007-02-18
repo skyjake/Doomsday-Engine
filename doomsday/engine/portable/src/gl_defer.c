@@ -212,12 +212,12 @@ void GL_UploadTextureContent(texturecontent_t* content)
         {
             gl.Enable(DGL_TEXTURE_COMPRESSION);
         }
-        
-        gl.TexParameter(DGL_MIN_FILTER, content->minFilter);
-        gl.TexParameter(DGL_MAG_FILTER, content->magFilter);
-        gl.TexParameter(DGL_WRAP_S, content->wrap[0]);
-        gl.TexParameter(DGL_WRAP_T, content->wrap[1]);
     }
+    
+    gl.TexParameter(DGL_MIN_FILTER, content->minFilter);
+    gl.TexParameter(DGL_MAG_FILTER, content->magFilter);
+    gl.TexParameter(DGL_WRAP_S, content->wrap[0]);
+    gl.TexParameter(DGL_WRAP_T, content->wrap[1]);
 }
 
 DGLuint GL_NewTexture(texturecontent_t *content)
