@@ -623,8 +623,8 @@ void Con_DrawStartupScreen(int show)
     int         topy;
     uint        i, count;
     cbuffer_t  *buffer;
-    static cbline_t **lines;
-    static int  bufferSize;
+    static cbline_t **lines = NULL;
+    static int  bufferSize = 0;
     cbline_t   *line;
 
     // Print the messages in the console.
@@ -682,7 +682,6 @@ void Con_DrawStartupScreen(int show)
                 }
                 y += fontHgt;
             }
-            Z_Free((cbline_t **) lines);
         }
     }
     if(show)
