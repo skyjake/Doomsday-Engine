@@ -1513,6 +1513,10 @@ static void AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps, boolean glowm
     if(!glowmode)
     {
         // No glow? then draw a regular line
+        //
+        // FIXME: Begin(DGL_LINES)/End() must be called for as large a set of lines as
+        //        possible! This is very inefficient (FPS drops).
+        //
         gl.Begin(DGL_LINES);
         gl.Vertex2f(FIX2FLT(CXMTOFX(FLT2FIX(ml->a.pos[VX]))),
                     FIX2FLT(CYMTOFX(FLT2FIX(ml->a.pos[VY]))));
