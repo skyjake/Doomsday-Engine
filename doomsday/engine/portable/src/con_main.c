@@ -1197,8 +1197,11 @@ static void processCmd(byte src)
     DD_ClearKeyRepeaters();
 
     // Add the command line to the oldCmds buffer.
-    Con_BufferWrite(oldCmds, 0, cmdLine);
-    ocPos = Con_BufferNumLines(oldCmds);
+    if(strlen(cmdLine) > 0)
+    {
+        Con_BufferWrite(oldCmds, 0, cmdLine);
+        ocPos = Con_BufferNumLines(oldCmds);
+    }
 
     Con_Execute(src, cmdLine, false, false);
 }

@@ -61,6 +61,9 @@ typedef struct repeater_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(AxisPrintConfig);
+D_CMD(AxisChangeOption);
+D_CMD(AxisChangeValue);
 D_CMD(DumpKeyMap);
 D_CMD(KeyMap);
 D_CMD(ListInputDevices);
@@ -205,6 +208,9 @@ void DD_RegisterInput(void)
     C_CMD("dumpkeymap", "s", DumpKeyMap);
     C_CMD("keymap", "s", KeyMap);
     C_CMD("listinputdevices", "", ListInputDevices);
+    C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setaxis", "sss",    AxisChangeValue, CMDF_NO_DEDICATED);
 }
 
 /**
@@ -1205,9 +1211,108 @@ void DD_ReadJoystick(void)
     DD_PostEvent(&ev);
 }
 
+static void I_PrintAxisConfig(inputdev_t *device, inputdevaxis_t *axis)
+{
+    Con_Printf("%s-%s Config:\n"
+               "  Type: %s\n"
+               "  Filter: %i\n"
+               "  Dead Zone: %g\n"
+               "  Scale: %g\n"
+               "  Flags: (%s%s)\n", 
+               device->name, axis->name,
+               (axis->type == IDAT_STICK? "STICK" : "POINTER"),
+               axis->filter, axis->deadZone, axis->scale,
+               ((axis->flags & IDA_DISABLED)? "|disabled":""),
+               ((axis->flags & IDA_INVERT)? "|inverted":""));
+}
+
+D_CMD(AxisPrintConfig)
+{
+    uint        deviceID, axisID;
+    inputdev_t *device;
+    inputdevaxis_t *axis;
+
+    if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
+    {
+        Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
+		return false;
+    }
+
+    device = I_GetDevice(deviceID, false);
+    axis   = I_GetAxisByID(device, axisID);
+    I_PrintAxisConfig(device, axis);
+
+    return true;
+}
+
+D_CMD(AxisChangeOption)
+{
+    uint        deviceID, axisID;
+    inputdev_t *device;
+    inputdevaxis_t *axis;
+
+    if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
+    {
+        Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
+		return false;
+    }
+
+    device = I_GetDevice(deviceID, false);
+    axis   = I_GetAxisByID(device, axisID);
+
+    // Options:
+    if(!stricmp(argv[2], "disable") || !stricmp(argv[2], "off"))
+    {
+        axis->flags |= IDA_DISABLED;
+    }
+    else if(!stricmp(argv[2], "enable") || !stricmp(argv[2], "on"))
+    {
+        axis->flags &= ~IDA_DISABLED;
+    }
+    else if(!stricmp(argv[2], "invert")) // toggle
+    {
+        axis->flags ^= IDA_INVERT;
+    }
+
+    // Unknown option name.
+    return true;
+}
+
+D_CMD(AxisChangeValue)
+{
+    uint        deviceID, axisID;
+    inputdev_t *device;
+    inputdevaxis_t *axis;
+
+    if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
+    {
+        Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
+		return false;
+    }
+
+    device = I_GetDevice(deviceID, false);
+    axis   = I_GetAxisByID(device, axisID);
+
+    // Values:
+    if(!stricmp(argv[2], "filter"))
+    {
+        axis->filter = strtod(argv[3], 0);
+    }
+    else if(!stricmp(argv[2], "deadzone") || !stricmp(argv[2], "dead zone"))
+    {
+        axis->deadZone = strtod(argv[3], 0);
+    }
+    else if(!stricmp(argv[2], "scale"))
+    {
+        axis->scale = strtod(argv[3], 0);
+    }
+
+    // Unknown value name.
+    return true;
+}
+
 /**
- * Console command to list all of the available input devices and their
- * currently registered controls + settings.
+ * Console command to list all of the available input devices+axes.
  */
 D_CMD(ListInputDevices)
 {
@@ -1224,14 +1329,7 @@ D_CMD(ListInputDevices)
         Con_Printf("%s (%i keys, %i axes)\n", dev->name, dev->numKeys,
                    dev->numAxes);
         for(j = 0; j < dev->numAxes; ++j)
-        {
-            inputdevaxis_t *axis = &dev->axes[j];
-
-            Con_Printf("  '%s' (%s%s%s)\n", axis->name,
-                       (axis->type == IDAT_STICK? "STICK" : "POINTER"),
-                       ((axis->flags & IDA_DISABLED)? "|disabled":""),
-                       ((axis->flags & IDA_INVERT)? "|inverted":""));
-        }
+            Con_Printf("  Axis #%i: %s\n", j, dev->axes[j].name);
     }
     return true;
 }

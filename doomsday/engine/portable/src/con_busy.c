@@ -39,6 +39,7 @@
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_ui.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -230,7 +231,8 @@ static void Con_BusyDeleteTextures(void)
  */
 void Con_AcquireScreenshotTexture(void)
 {
-    int oldMaxTexSize = glMaxTexSize;
+    int         oldMaxTexSize = glMaxTexSize;
+    byte       *frame;
 #ifdef _DEBUG
     timespan_t startTime;
 #endif
@@ -244,7 +246,7 @@ void Con_AcquireScreenshotTexture(void)
     startTime = Sys_GetRealSeconds();
 #endif
 
-    byte* frame = malloc(glScreenWidth * glScreenHeight * 3);
+    frame = M_Malloc(glScreenWidth * glScreenHeight * 3);
     gl.Grab(0, 0, glScreenWidth, glScreenHeight, DGL_RGB, frame);
     glMaxTexSize = 512; // A bit of a hack, but don't use too large a texture.
     texScreenshot = GL_UploadTexture(frame, glScreenWidth, glScreenHeight,
@@ -252,7 +254,7 @@ void Con_AcquireScreenshotTexture(void)
                                      DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP,
                                      TXCF_NEVER_DEFER);
     glMaxTexSize = oldMaxTexSize;
-    free(frame);
+    M_Free(frame);
     
 #ifdef _DEBUG
     printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n", 
@@ -451,7 +453,7 @@ static void Con_BusyDrawConsoleOutput(void)
 static void Con_BusyDrawer(void)
 {
     DGLuint oldBinding = 0;
-    char buf[100];
+//    char buf[100];
     
     Con_DrawScreenshotBackground();
     

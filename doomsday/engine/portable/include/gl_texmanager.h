@@ -147,6 +147,13 @@ DGLuint         GL_LoadGraphics4(resourceclass_t resClass, const char *name,
                                  gfxmode_t mode, int useMipmap, 
                                  int minFilter, int magFilter, int wrapS, int wrapT, 
                                  int otherFlags);
+DGLuint         GL_UploadTexture(byte *data, int width, int height,
+                                 boolean flagAlphaChannel,
+                                 boolean flagGenerateMipmaps,
+                                 boolean flagRgbData,
+                                 boolean flagNoStretch,
+                                 int minFilter, int magFilter,
+                                 int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
 DGLuint         GL_GetTextureInfo(int index);
 DGLuint         GL_GetTextureInfo2(int index, boolean translate);

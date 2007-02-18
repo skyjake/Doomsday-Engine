@@ -510,7 +510,7 @@ if(cmd->params == NULL)
             // and there is already an existing ccmd by this name?
             if(minArgs == -1 && maxArgs == -1)
                 unique = false;
-            // An existing ccmd with no validation? 
+            // An existing ccmd with no validation?
             else if(other->minArgs == -1 && other->maxArgs == -1)
                 unique = false;
             // An existing ccmd with a lower minimum and no maximum?
