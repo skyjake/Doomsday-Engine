@@ -40,7 +40,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define NUM_CP_BUTTONS  11
+#define NUM_CP_BUTTONS  12
 #define NUMITEMS(x)     (sizeof(x)/sizeof(uidata_listitem_t))
 #define RES(x, y)       (x | (y<<16))
 #define CPID_FRAME      (UIF_ID0 | UIF_ID1)
@@ -328,18 +328,19 @@ ui_page_t page_panel;
 /* *INDENT-OFF* */
 ui_object_t ob_panel[] =
 {
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 210, 240, 60,   "Video",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[0] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 275, 240, 60,   "Audio",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[1] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 340, 240, 60,   "Input",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[2] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 405, 240, 60,   "Graphics", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[3] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 467, 210, 60,   "Lights",   UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[4] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 529, 210, 60,   "Halos",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[5] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 591, 210, 60,   "Textures", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[6] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 653, 210, 60,   "Objects",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[7] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 715, 210, 60,   "Particles", UIButton_Drawer, UIButton_Responder, 0,            CP_ChooseGroup, &panel_buttons[8] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 780, 240, 60,   "Network",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[9] },
-    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 845, 240, 60,   "Console",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[10] },
-    { UI_BUTTON,    0,  UIF_NEVER_FADE, 10, 940, 240, 60,   "Close Panel (Esc)", UIButton_Drawer, UIButton_Responder, 0,    CP_ClosePanel },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 225, 240, 55,   "Video",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[0] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 285, 240, 55,   "Audio",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[1] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 345, 240, 55,   "Input",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[2] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 405, 240, 55,   "Controls", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[3] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 465, 240, 55,   "Graphics", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[4] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 525, 210, 55,   "Lights",   UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[5] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 585, 210, 55,   "Halos",    UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[6] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 645, 210, 55,   "Textures", UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[7] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 705, 210, 55,   "Objects",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[8] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 40, 765, 210, 55,   "Particles", UIButton_Drawer, UIButton_Responder, 0,            CP_ChooseGroup, &panel_buttons[9] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 825, 240, 55,   "Network",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[10] },
+    { UI_BUTTON2,   1,  UIF_LEFT_ALIGN, 10, 885, 240, 55,   "Console",  UIButton_Drawer, UIButton_Responder, 0,             CP_ChooseGroup, &panel_buttons[11] },
+    { UI_BUTTON,    0,  UIF_NEVER_FADE, 10, 945, 240, 55,   "Close Panel (Esc)", UIButton_Drawer, UIButton_Responder, 0,    CP_ClosePanel },
     { UI_BOX,       0,  0,              8, -20, 250, 250,   "",         CP_DrawLogo },
     { UI_BOX,       0,  CPID_FRAME,     280, 55, 720, 945,  "",         CP_DrawBorder },
 
@@ -406,8 +407,11 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              680, 550, 70, 55,   "input-key-show-scancodes", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
     { UI_META,      5 },
+    { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Control Options", UIText_BrightDrawer },
+
+    { UI_META,      6 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options", UIText_BrightDrawer },
-    { UI_META,      5,  0,              0, -60 },
+    { UI_META,      6,  0,              0, -60 },
 //  { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Smooth camera movement", UIText_Drawer },
 //  { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-camera-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Field Of View angle", UIText_Drawer },
@@ -418,7 +422,7 @@ ui_object_t ob_panel[] =
     { UI_BUTTON,    0,  0,              905, 190, 70, 60,   "110",      UIButton_Drawer, UIButton_Responder, 0, CP_QuickFOV },
     { UI_TEXT,      0,  0,              300, 255, 0, 55,    "Mirror player weapon models", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 255, 70, 55,   "rend-model-mirror-hud", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      5,  0,              0, 60 },
+    { UI_META,      6,  0,              0, 60 },
     { UI_TEXT,      0,  0,              300, 255, 0, 55,    "Sky sphere radius", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 255, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_sky_distance },
     { UI_TEXT,      0,  0,              300, 315, 0, 55,    "Always render full sky", UIText_Drawer },
@@ -436,7 +440,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 675, 0, 55,    "Radiosity shadow darkness", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 675, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_fakeradio_dark },
 
-    { UI_META,      6 },
+    { UI_META,      7 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Lights", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable dynamic lights", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-light", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -452,7 +456,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  0,              680, 430, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_max },
 //  { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Clip dynamic lights", UIText_Drawer },
 //  { UI_BUTTON2,   0,  0,              680, 490, 70, 55,   "rend-light-clip", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      6,  0,              0, -120 },
+    { UI_META,      7,  0,              0, -120 },
 //  { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Lightpoly edge shrink units", UIText_Drawer },
 //  { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_shrink },
     { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Ambient light level", UIText_Drawer },
@@ -472,13 +476,13 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 1030, 0, 55,    "Enable decorations", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 1030, 70, 55,   "rend-light-decor", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
 
-    { UI_META,      7 },
+    { UI_META,      8 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Halos", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Number of flares per halo", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Use realistic halos", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "rend-halo-realistic", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      7,  0,              0,   60 },
+    { UI_META,      8,  0,              0,   60 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Halo brightness", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo_bright },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Halo size factor", UIText_Drawer },
@@ -496,7 +500,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Z magnification divisor", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_halo_zmagdiv },
 
-    { UI_META,      8 },
+    { UI_META,      9 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Textures", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable textures", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-tex", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -506,14 +510,14 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              880, 130, 95, 55,   "rend-model-shiny-multitex", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Smooth texture animation", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "rend-tex-anim-smooth", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      8,  0,              0, 120 },
+    { UI_META,      9,  0,              0, 120 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Mipmapping filter", UIText_Drawer },
     { UI_LIST,      0,  0,              680, 130, 300, 175, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_mipmap },
     { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Texture quality", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_tex_quality },
     { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Smart texture filtering", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 370, 70, 55,   "rend-tex-filter-smart", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      8,  0,              0,   180 },
+    { UI_META,      9,  0,              0,   180 },
     { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Bilinear filtering", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 370, 95, 55,   "rend-tex-filter-sprite", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_BUTTON2,   0,  0,              780, 370, 95, 55,   "rend-tex-filter-mag", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -525,7 +529,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Detail texture contrast", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
 
-    { UI_META,      9 },
+    { UI_META,      10 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Objects", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable 3D models", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-model", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -554,7 +558,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 850, 0, 55,    "Smooth actor movement", UIText_Drawer },
     { UI_LIST,      0,  0,              680, 850, 300, 115, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_CvarList, &lst_smooth_move },
 
-    { UI_META,      10 },
+    { UI_META,      11 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Particles", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Enable particle effects", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "rend-particle", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -567,7 +571,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Near clip distance", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_particle_visnear },
 
-    { UI_META,      11 },
+    { UI_META,      12 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Network Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Continuous screen refresh", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "net-nosleep", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -580,18 +584,18 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Frame interval tics", UIText_Drawer },
     { UI_SLIDER,    0,  0,              680, 310, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_server_frame_interval },
 
-    { UI_META,      12 },
+    { UI_META,      13 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Console Options", UIText_BrightDrawer },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display FPS counter", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "con-fps",  UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      12, 0,              0, 60 },
+    { UI_META,      13, 0,              0, 60 },
     { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Display progress bar", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 70, 70, 55,    "con-progress", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Display Control Panel help window", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "ui-panel-help", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Display help indicators", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 190, 70, 55,   "ui-panel-tips", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_META,      12, 0,              0, 180 },
+    { UI_META,      13, 0,              0, 180 },
     { UI_TEXT,      0,  0,              300, 130, 0, 55,    "Silent console variables", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 130, 70, 55,   "con-var-silent", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 190, 0, 55,    "Dump messages to Doomsday.out", UIText_Drawer },
@@ -635,14 +639,14 @@ void CP_ClosePanel(ui_object_t *ob)
 
 void CP_ChooseGroup(ui_object_t *ob)
 {
-    int     i;
+    int         i;
 
     memset(panel_buttons, 0, sizeof(panel_buttons));
     UI_FlagGroup(ob_panel, 1, UIF_ACTIVE, UIFG_CLEAR);
     *(char *) ob->data = true;
     ob->flags |= UIF_ACTIVE;
     // Hide/show the option controls.
-    for(i = 0; i < NUM_CP_BUTTONS; i++)
+    for(i = 0; i < NUM_CP_BUTTONS; ++i)
         UI_FlagGroup(ob_panel, 2 + i, UIF_HIDDEN, !panel_buttons[i]);
 }
 
@@ -653,10 +657,10 @@ void CP_DrawLogo(ui_object_t *ob)
 
 void CP_DrawBorder(ui_object_t *ob)
 {
-    int     b = UI_BORDER;
+    int         b = UI_BORDER;
     ui_object_t *it;
-    void   *help_ptr;
-    boolean shown;
+    void       *help_ptr;
+    boolean     shown;
 
     UIFrame_Drawer(ob);
 
@@ -684,7 +688,7 @@ void CP_DrawBorder(ui_object_t *ob)
 void CP_CvarButton(ui_object_t *ob)
 {
     cvarbutton_t *cb = ob->data;
-    cvar_t *var = Con_GetVariable(cb->cvarname);
+    cvar_t     *var = Con_GetVariable(cb->cvarname);
 
     strcpy(ob->text, cb->active ? cb->yes : cb->no);
     if(!strcmp(cb->cvarname, "rend-tex-filter-raw"))
@@ -702,8 +706,8 @@ void CP_CvarButton(ui_object_t *ob)
 void CP_CvarList(ui_object_t *ob)
 {
     uidata_list_t *list = ob->data;
-    cvar_t *var = Con_GetVariable(list->data);
-    int     value = ((uidata_listitem_t *) list->items)[list->selection].data;
+    cvar_t     *var = Con_GetVariable(list->data);
+    int         value = ((uidata_listitem_t *) list->items)[list->selection].data;
 
     if(list->selection < 0)
         return;                 // Hmm?
@@ -723,7 +727,7 @@ void CP_CvarEdit(ui_object_t *ob)
 void CP_CvarSlider(ui_object_t *ob)
 {
     uidata_slider_t *slid = ob->data;
-    cvar_t *var = Con_GetVariable(slid->data);
+    cvar_t     *var = Con_GetVariable(slid->data);
 
     if(!var)
         return;
@@ -761,10 +765,10 @@ int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)
 
 void CP_KeyGrabDrawer(ui_object_t *ob)
 {
-    boolean sel = (ob->flags & UIF_FOCUS) != 0;
-    float   alpha = (ob->flags & UIF_DISABLED ? .2f : 1);
-    char    buf[80];
-    byte    key = Con_GetByte(ob->text);
+    boolean     sel = (ob->flags & UIF_FOCUS) != 0;
+    float       alpha = (ob->flags & UIF_DISABLED ? .2f : 1);
+    char        buf[80];
+    byte        key = Con_GetByte(ob->text);
 
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_COL(UIC_SHADOW), 0,
                   1, 0);
@@ -785,7 +789,7 @@ void CP_QuickFOV(ui_object_t *ob)
 
 void CP_ResolutionInfo(ui_object_t *ob)
 {
-    char    buf[80];
+    char        buf[80];
 
     if(!strcmp(ob->text, "default"))
         sprintf(buf, "%i x %i", defResX, defResY);
@@ -810,8 +814,8 @@ void CP_UpdateSetResButton(int w, int h)
 void CP_ResolutionList(ui_object_t *ob)
 {
     uidata_list_t *list = ob->data;
-    int     seldata =
-        ((uidata_listitem_t *) list->items)[list->selection].data;
+    int         seldata =
+                ((uidata_listitem_t *) list->items)[list->selection].data;
 
     sprintf(panel_res_x, "%i", seldata & 0xffff);
     sprintf(panel_res_y, "%i", seldata >> 16);
@@ -824,7 +828,7 @@ void CP_ResolutionList(ui_object_t *ob)
 
 void CP_SetDefaultRes(ui_object_t *ob)
 {
-    int     x = atoi(panel_res_x), y = atoi(panel_res_y);
+    int         x = atoi(panel_res_x), y = atoi(panel_res_y);
 
     if(!x || !y)
         return;
@@ -834,7 +838,7 @@ void CP_SetDefaultRes(ui_object_t *ob)
 
 void CP_SetRes(ui_object_t *ob)
 {
-    int     x = atoi(panel_res_x), y = atoi(panel_res_y);
+    int         x = atoi(panel_res_x), y = atoi(panel_res_y);
 
     if(!x || !y)
         return;
@@ -856,8 +860,8 @@ void CP_ResChanged(ui_object_t *ob)
     CP_UpdateSetResButton(atoi(panel_res_x), atoi(panel_res_y));
 }
 
-/*
- * Returns the option, if any, the mouse is currently hovering on. The
+/**
+ * Returns the object, if any, the mouse is currently hovering on. The
  * check is based on the coordinates of the Text object.
  */
 ui_object_t *CP_FindHover(void)
@@ -877,14 +881,14 @@ ui_object_t *CP_FindHover(void)
     return NULL;
 }
 
-/*
+/**
  * Track the mouse and move the documentation window as needed.
  */
-void CP_Ticker(ui_page_t * page)
+void CP_Ticker(ui_page_t *page)
 {
-    int     off;
+    int         off;
     ui_object_t *ob;
-    void   *help;
+    void       *help;
 
     // Normal ticker actions first.
     UIPage_Ticker(page);
@@ -946,7 +950,7 @@ void CP_Ticker(ui_page_t * page)
 int CP_LabelText(char *label, char *text, int x, int y, int w, int h,
                  float alpha)
 {
-    int     ind;
+    int         ind;
 
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_ColorA(UI_COL(UIC_TEXT), .5f * alpha * UI_Alpha());
@@ -956,12 +960,12 @@ int CP_LabelText(char *label, char *text, int x, int y, int w, int h,
                             alpha);
 }
 
-void CP_Drawer(ui_page_t * page)
+void CP_Drawer(ui_page_t *page)
 {
-    float   alpha = panel_help_offset / (float) HELP_OFFSET;
-    int     x, y, w, h, bor;
-    char   *str;
-    char   *homeURL = "http://sourceforge.net/projects/deng/";
+    float       alpha = panel_help_offset / (float) HELP_OFFSET;
+    int         x, y, w, h, bor;
+    char       *str;
+    char       *homeURL = "http://sourceforge.net/projects/deng/";
 
     // First call the regular drawer.
     UIPage_Drawer(page);
@@ -1015,7 +1019,7 @@ void CP_Drawer(ui_page_t * page)
     }
 }
 
-/*
+/**
  * Initializes all slider objects.
  */
 void CP_InitCvarSliders(ui_object_t *ob)
@@ -1034,12 +1038,12 @@ void CP_InitCvarSliders(ui_object_t *ob)
     }
 }
 
-/*
+/**
  * Initialize and open the Control Panel.
  */
 D_CMD(OpenPanel)
 {
-    int     i;
+    int         i;
     ui_object_t *ob, *foc;
     uidata_list_t *list;
     cvarbutton_t *cvb;
@@ -1063,7 +1067,7 @@ D_CMD(OpenPanel)
     {
         // Choose the group that was last visible.
         foc = NULL;
-        for(i = 0; i < NUM_CP_BUTTONS; i++)
+        for(i = 0; i < NUM_CP_BUTTONS; ++i)
             if(panel_buttons[i])
                 CP_ChooseGroup(foc = ob_panel + i);
     }
@@ -1071,7 +1075,7 @@ D_CMD(OpenPanel)
     {
         // With an argument, choose the appropriate group.
         foc = NULL;
-        for(i = 0; i < NUM_CP_BUTTONS; i++)
+        for(i = 0; i < NUM_CP_BUTTONS; ++i)
         {
             if(!stricmp(ob_panel[i].text, argv[1]))
             {
@@ -1095,7 +1099,7 @@ D_CMD(OpenPanel)
 
     // Set cvarbutton data pointers.
     // This is only done the first time "panel" is issued.
-    for(i = 0, ob = ob_panel; ob_panel[i].type; i++, ob++)
+    for(i = 0, ob = ob_panel; ob_panel[i].type; ++i, ob++)
     {
         if(ob->action == CP_CvarButton)
         {

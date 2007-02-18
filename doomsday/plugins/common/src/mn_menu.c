@@ -3797,7 +3797,7 @@ void M_SizeDisplay(int option, void *data)
 void M_OpenDCP(int option, void *data)
 {
     M_ClearMenus();
-    DD_Execute((option == 2? "panel input":(option == 1? "panel audio":"panel")),
+    DD_Execute((option == 2? "panel controls":(option == 1? "panel audio":"panel")),
                true);
 }
 
