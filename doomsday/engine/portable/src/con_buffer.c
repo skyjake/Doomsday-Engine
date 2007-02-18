@@ -350,13 +350,12 @@ static const cbline_t *bufferGetLine(cbuffer_t *buf, uint idx)
     return ptr;
 }
 
-static const cbline_t **bufferGetLines(cbuffer_t *buf, uint reqCount,
-                                       int firstIdx, uint *num)
+static uint bufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
+                           const cbline_t **list)
 {
     if(firstIdx <= (int) buf->numLines)
     {
         uint        i, n, idx, count = reqCount;
-        const cbline_t  **array;
 
         if(firstIdx >= 0)
         {
@@ -376,24 +375,19 @@ static const cbline_t **bufferGetLines(cbuffer_t *buf, uint reqCount,
                 count = buf->numLines - idx;
         }
 
-        array = Z_Malloc(sizeof(cbline_t *) * (count + 1), PU_STATIC, NULL);
-
         // Collect the ptrs.
         for(i = 0, n = idx; i < count; ++i)
-            array[i] = bufferGetLine(buf, n++);
+            list[i] = bufferGetLine(buf, n++);
 
         // Terminate.
-        array[i] = NULL;
+        list[i] = NULL;
 
-        if(num)
-            *num = count; // index + 1
-        return array;
+        return count; // index + 1
     }
 
-    if(num)
-        *num = 0;
-
-    return NULL;
+    if(*list)
+        list[0] = NULL;
+    return 0;
 }
 
 /**
@@ -407,31 +401,28 @@ static const cbline_t **bufferGetLines(cbuffer_t *buf, uint reqCount,
  *                      use the current number of lines as the limit.
  * @param firstIdx      Line index of the first line to be retrieved. If
  *                      negative, the index is from the end of list.
- * @param num           Ptr to a variable to write the number of elements
- *                      returned to if not <code>NULL</code>
+ * @param buffer        Ptr to an array of console buffer ptrs which we'll
+ *                      write to and terminate with <code>NULL</code>
  *
- * @return              A null terminated array of console buffer lines from
- *                      the given cbuffer if there are lines within the
- *                      range specified, else <code>NULL</code>.
+ * @return              The number of elements written back to the buffer.
  */
-const cbline_t **Con_BufferGetLines(cbuffer_t *buf, uint reqCount,
-                                    int firstIdx, uint *num)
+uint Con_BufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
+                        const cbline_t **list)
 {
     if(buf)
     {
-        const cbline_t **result;
+        uint result;
 
         Sys_Lock(buf->mutex);
-        result = bufferGetLines(buf, reqCount, firstIdx, num);
+        result = bufferGetLines(buf, reqCount, firstIdx, list);
         Sys_Unlock(buf->mutex);
 
         return result;
     }
+    if(*list)
+        list[0] = NULL;
 
-    if(num)
-        *num = 0;
-
-    return NULL;
+    return 0;
 }
 
 /**

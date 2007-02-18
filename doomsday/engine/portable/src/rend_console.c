@@ -354,7 +354,8 @@ void Rend_Console(void)
     int         textOffsetY = 0;
     uint        cmdCursor;
     cbuffer_t  *buffer;
-    const cbline_t **lines;
+    static cbline_t **lines;
+    static int bufferSize;
     int         reqLines;
     uint        count;
 
@@ -445,10 +446,18 @@ void Rend_Console(void)
     reqLines = ceil(y / fontScaledY);
     if(reqLines > 0)
     {
-        lines = Con_BufferGetLines(buffer, reqLines,
+        // Need to enlarge the buffer?
+        if(reqLines > bufferSize)
+        {
+            lines = Z_Realloc(lines, sizeof(cbline_t *) * (reqLines + 1),
+                              PU_STATIC);
+            bufferSize = reqLines;
+        }
+
+        count = Con_BufferGetLines(buffer, reqLines,
                                    -(reqLines + (int) bLineOff),
-                                   &count);
-        if(lines)
+                                   lines);
+        if(count > 0)
         {
             for(i = count - 1; i >= 0 && y > -fontScaledY; i--)
             {

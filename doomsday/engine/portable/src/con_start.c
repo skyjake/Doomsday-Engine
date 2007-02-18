@@ -208,7 +208,9 @@ void Con_DrawStartupScreen(int show)
     int         topy;
     uint        i, count;
     cbuffer_t  *buffer;
-    const cbline_t   **lines, *line;
+    static cbline_t **lines;
+    static int bufferSize;
+    cbline_t   *line;
 
     // Print the messages in the console.
     if(!startupScreen || ui_active)
@@ -230,8 +232,16 @@ void Con_DrawStartupScreen(int show)
     buffer = Con_GetConsoleBuffer();
     if(vislines > 0)
     {
-        lines = Con_BufferGetLines(buffer, vislines, -vislines, &count);
-        if(lines)
+        // Need to enlarge the buffer?
+        if(vislines > bufferSize)
+        {
+            lines = Z_Realloc(lines, sizeof(cbline_t *) * (vislines + 1),
+                              PU_STATIC);
+            bufferSize = vislines;
+        }
+
+        count = Con_BufferGetLines(buffer, vislines, -vislines, lines);
+        if(count > 0)
         {
             for(i = 0; i < count - 1; ++i)
             {
