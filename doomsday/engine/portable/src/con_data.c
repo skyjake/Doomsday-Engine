@@ -425,8 +425,8 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
             case '*':
                 // Variable arg list.
                 if(l != len-1)
-                    Con_Error("Con_AddCommand: CCmd \"%s\": '*' character "
-                              "not last in usage string: \"%s\".",
+                    Con_Error("Con_AddCommand: CCmd '%s': '*' character "
+                              "not last in parameter string: \"%s\".",
                               cmd->name, cmd->params);
 
                 unlimitedArgs = true;
@@ -435,15 +435,15 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", cmd->name,
 
             // Erroneous symbol:
             default:
-                Con_Error("Con_AddCommand: CCmd \"%s\": Invalid character "
-                          "'%c' in usage string: \"%s\".", cmd->name, c,
+                Con_Error("Con_AddCommand: CCmd '%s': Invalid character "
+                          "'%c' in parameter string: \"%s\".", cmd->name, c,
                           cmd->params);
             }
 
             if(type != CVT_NULL)
             {
                 if(minArgs >= MAX_ARGS)
-                    Con_Error("Con_AddCommand: CCmd \"%s\": Too many parameters. "
+                    Con_Error("Con_AddCommand: CCmd '%s': Too many parameters. "
                               "Limit is %i.", cmd->name, MAX_ARGS);
 
                 // Copy the parameter type into the buffer.
@@ -528,7 +528,7 @@ if(cmd->params == NULL)
 
             if(!unique)
                 Con_Error("Con_AddCommand: A CCmd by the name '%s' "
-                          "is already registered. Their paramater lists "
+                          "is already registered. Their parameter lists "
                           "would be ambiguant.", cmd->name);
 
             // Sanity check.
@@ -694,10 +694,10 @@ void Con_PrintCCmdUsage(ddccmd_t *ccmd, boolean showExtra)
  */
 calias_t *Con_GetAlias(const char *name)
 {
-    int     result;
-    unsigned int bottomIdx, topIdx, pivot;
-    calias_t *cal;
-    boolean isDone;
+    int         result;
+    uint        bottomIdx, topIdx, pivot;
+    calias_t   *cal;
+    boolean     isDone;
 
     if(numCAliases == 0)
         return NULL;
@@ -739,7 +739,7 @@ calias_t *Con_GetAlias(const char *name)
 
 calias_t *Con_AddAlias(const char *aName, const char *command)
 {
-    calias_t *cal;
+    calias_t   *cal;
 
     caliases = M_Realloc(caliases, sizeof(calias_t) * (++numCAliases));
     cal = caliases + numCAliases - 1;
@@ -757,7 +757,7 @@ calias_t *Con_AddAlias(const char *aName, const char *command)
 
 void Con_DeleteAlias(calias_t *cal)
 {
-    unsigned int idx = cal - caliases;
+    uint        idx = cal - caliases;
 
     M_Free(cal->name);
     M_Free(cal->command);
@@ -772,10 +772,10 @@ void Con_DeleteAlias(calias_t *cal)
 /**
  * Called by the config file writer.
  */
-void Con_WriteAliasesToFile(FILE * file)
+void Con_WriteAliasesToFile(FILE *file)
 {
-    unsigned int    i;
-    calias_t       *cal;
+    uint        i;
+    calias_t   *cal;
 
     for(i = 0, cal = caliases; i < numCAliases; ++i, cal++)
     {
@@ -802,8 +802,8 @@ static int C_DECL knownWordListSorter(const void *e1, const void *e2)
  */
 void Con_UpdateKnownWords(void)
 {
-    unsigned int i, c, knownVars;
-    unsigned int len;
+    uint        i, c, knownVars;
+    uint        len;
 
     // Count the number of visible console variables.
     for(i = knownVars = 0; i < numCVars; ++i)
@@ -859,7 +859,7 @@ void Con_UpdateKnownWords(void)
 knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
                                                 unsigned int *count)
 {
-    unsigned int i, num = 0, num2 = 0;
+    uint        i, num = 0, num2 = 0;
     size_t      wordLength;
     knownword_t **array;
 
@@ -902,7 +902,7 @@ knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
 
 void Con_DestroyDatabases(void)
 {
-    unsigned int i, k;
+    uint        i, k;
     char       *ptr;
 
     // Free the data of the data cvars.
@@ -997,7 +997,7 @@ D_CMD(HelpWhat)
 
 D_CMD(ListCmds)
 {
-    unsigned int i;
+    uint        i;
     char       *str;
     void       *ccmd_help;
     size_t      length = 0;
@@ -1023,7 +1023,7 @@ D_CMD(ListCmds)
 
 D_CMD(ListVars)
 {
-    unsigned int i;
+    uint        i;
     size_t      length = 0;
 
     if(argc > 1)
@@ -1044,7 +1044,7 @@ D_CMD(ListVars)
 
 D_CMD(ListAliases)
 {
-    unsigned int i;
+    uint        i;
     size_t      length = 0;
 
     if(argc > 1)
