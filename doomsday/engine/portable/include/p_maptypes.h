@@ -37,6 +37,7 @@ typedef struct seg_s {
     struct line_s*      linedef;
     struct sector_s*    sec[2];
     angle_t             angle;
+    byte                side;          // 0=front, 1=back
     byte                flags;
     short               frameflags;
     struct biastracker_s tracker[3];   // 0=top, 1=middle, 2=bottom

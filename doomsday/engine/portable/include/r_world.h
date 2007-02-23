@@ -31,6 +31,17 @@
 
 #include "r_data.h"
 
+// Used for vertex sector owners and side line owners.
+typedef struct ownernode_s {
+    void *data;
+    struct ownernode_s* next;
+} ownernode_t;
+
+typedef struct {
+    ownernode_t *head;
+    uint        count;
+} ownerlist_t;
+
 extern int      rendSkyLight;      // cvar
 
 // Map Info flags.

@@ -749,8 +749,7 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
             break;
 
         case DAM_SIDE:
-            // KLUDGE: Store the side id into the flags field
-            ReadValue(map, DDVT_BYTE, &p->flags, src, prop, elmIdx);
+            ReadValue(map, DMT_SEG_SIDE, &p->side, src, prop, elmIdx);
             break;
 
         case DAM_OFFSET:

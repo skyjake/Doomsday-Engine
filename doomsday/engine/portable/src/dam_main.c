@@ -1772,7 +1772,8 @@ static void allocateMapData(gamemap_t *map)
     uint        k;
 
     // Vertexes.
-    map->vertexes = Z_Calloc(map->numvertexes * sizeof(vertex_t), PU_LEVEL, 0);
+    map->vertexes = Z_Calloc(map->numvertexes * sizeof(vertex_t),
+                             PU_LEVELSTATIC, 0);
     for(k = 0; k < map->numvertexes; ++k)
     {
         vertex_t   *vtx = &map->vertexes[k];
@@ -1786,7 +1787,7 @@ static void allocateMapData(gamemap_t *map)
     }
 
     // Linedefs + missing fronts.
-    map->lines = Z_Calloc(map->numlines * sizeof(line_t), PU_LEVEL, 0);
+    map->lines = Z_Calloc(map->numlines * sizeof(line_t), PU_LEVELSTATIC, 0);
     missingFronts = M_Calloc(map->numlines * sizeof(uint));
     for(k = 0; k < map->numlines; ++k)
     {
@@ -1821,7 +1822,7 @@ static void allocateMapData(gamemap_t *map)
     }
 
     // Segs.
-    map->segs = Z_Calloc(map->numsegs * sizeof(seg_t), PU_LEVEL, 0);
+    map->segs = Z_Calloc(map->numsegs * sizeof(seg_t), PU_LEVELSTATIC, 0);
     for(k = 0; k < map->numsegs; ++k)
     {
         seg_t      *seg = &map->segs[k];
@@ -1830,7 +1831,8 @@ static void allocateMapData(gamemap_t *map)
     }
 
     // Subsectors.
-    map->subsectors = Z_Calloc(map->numsubsectors * sizeof(subsector_t), PU_LEVEL, 0);
+    map->subsectors = Z_Calloc(map->numsubsectors * sizeof(subsector_t),
+                               PU_LEVELSTATIC, 0);
     for(k = 0; k < map->numsubsectors; ++k)
     {
         subsector_t *ssec = &map->subsectors[k];
@@ -1840,7 +1842,8 @@ static void allocateMapData(gamemap_t *map)
     }
 
     // Nodes.
-    map->nodes = Z_Calloc(map->numnodes * sizeof(node_t), PU_LEVEL, 0);
+    map->nodes = Z_Calloc(map->numnodes * sizeof(node_t),
+                          PU_LEVELSTATIC, 0);
     for(k = 0; k < map->numnodes; ++k)
     {
         node_t     *node = &map->nodes[k];
@@ -1849,7 +1852,8 @@ static void allocateMapData(gamemap_t *map)
     }
 
     // Sectors.
-    map->sectors = Z_Calloc(map->numsectors * sizeof(sector_t), PU_LEVEL, 0);
+    map->sectors = Z_Calloc(map->numsectors * sizeof(sector_t),
+                            PU_LEVELSTATIC, 0);
     for(k = 0; k < map->numsectors; ++k)
     {
         uint        j;
@@ -2040,8 +2044,162 @@ static selectprop_t* mergePropLists(selectprop_t *listA, uint numA,
     return newlist;
 }
 
+static void copySideDef(side_t *dest, side_t *src)
+{
+    uint        i;
+
+    if(!dest || !src)
+        return; // wha?
+
+    dest->blendmode = src->blendmode;
+    dest->flags = src->flags;
+    dest->sector = src->sector;
+    for(i = 0; i < 3; ++i)
+        memcpy(&dest->sections[i], &src->sections[i], sizeof(surface_t));
+}
+
+static void setSideOwner(ownerlist_t *ownerList, void *data)
+{
+    ownernode_t *node;
+
+    if(!data)
+        return;
+
+    // Add a new owner.
+    ownerList->count++;
+
+    node = M_Malloc(sizeof(ownernode_t));
+    node->data = data;
+    node->next = ownerList->head;
+    ownerList->head = node;
+}
+
+static uint unpackSideDefs(gamemap_t *map)
+{
+    uint        startTime = Sys_GetRealTime();
+    uint        i, newCount, count = 0;
+    line_t     *line;
+
+    // Count how many unique sides we SHOULD have.
+    for(i = 0, count = 0; i < map->numlines; ++i)
+    {
+        line = &map->lines[i];
+
+        if(line->L_frontside)
+            count++;
+        if(line->L_backside)
+            count++;
+    }
+
+    // Check for packing.
+    newCount = count - map->numsides;
+    if(newCount > 0)
+    {
+        uint        j, newIdx;
+        side_t     *newSides, *side;
+        ownerlist_t *sideOwnerLists;
+
+        // Allocate memory for the side owner processing.
+        sideOwnerLists = M_Calloc(sizeof(ownerlist_t) * map->numsides);
+        for(i = 0; i < map->numlines; ++i)
+        {
+            line = &map->lines[i];
+            if(line->L_frontside)
+                setSideOwner(&sideOwnerLists[line->L_frontside - map->sides],
+                             line);
+            if(line->L_backside)
+                setSideOwner(&sideOwnerLists[line->L_backside - map->sides],
+                             line);
+        }
+
+        newSides = Z_Calloc(count * sizeof(side_t), PU_LEVELSTATIC, 0);
+        for(i = 0; i < count; ++i)
+        {
+            side_t     *side = &newSides[i];
+
+            side->header.type = DMU_SIDE;
+            side->SW_topsurface.header.type = DMU_SURFACE;
+            side->SW_middlesurface.header.type = DMU_SURFACE;
+            side->SW_bottomsurface.header.type = DMU_SURFACE;
+            side->SW_topflags = 0;
+            side->SW_bottomflags = 0;
+            side->SW_middleflags = 0;
+            memset(side->SW_toprgba, 0xff, 3);
+            memset(side->SW_middlergba, 0xff, 4);
+            memset(side->SW_bottomrgba, 0xff, 3);
+            side->blendmode = BM_NORMAL;
+            side->SW_topsurface.isflat = side->SW_topsurface.oldisflat = false;
+            side->SW_middlesurface.isflat = side->SW_middlesurface.oldisflat = false;
+            side->SW_bottomsurface.isflat = side->SW_bottomsurface.oldisflat = false;
+        }
+
+        newIdx = map->numsides;
+        for(i = 0; i < map->numsides; ++i)
+        {
+            ownernode_t *node, *p;
+            boolean updateSegs;
+
+            side = &map->sides[i];
+            node = sideOwnerLists[i].head;
+            j = 0;
+            updateSegs = false;
+            while(node)
+            {
+                p = node->next;
+                line = (line_t*) node->data;
+
+                if(j == 0)
+                {
+                    copySideDef(&newSides[i], side);
+                }
+                else
+                {
+                    if(line->L_frontside == side)
+                        line->L_frontside = &newSides[newIdx];
+                    else
+                        line->L_backside = &newSides[newIdx];
+
+                    copySideDef(&newSides[newIdx], side);
+                    newIdx++;
+                    updateSegs = true;
+                }
+
+                M_Free(node);
+                node = p;
+                j++;
+            }
+
+            if(updateSegs)
+            {
+                for(j = 0; j < map->numsegs; ++j)
+                {
+                    seg_t *seg = &map->segs[j];
+                    if(seg->sidedef == side)
+                        seg->sidedef = seg->linedef->sides[seg->side];
+                }
+            }
+        }
+        M_Free(sideOwnerLists);
+
+        Z_Free(map->sides);
+        map->sides = newSides;
+        map->numsides = count;
+    }
+
+    if(newCount > 0)
+        Con_Message("unpackSideDefs: Unpacked %i new sides\n", newCount);
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("unpackSideDefs: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
+
+    return newCount;
+}
+
 static boolean loadMapData(gamemap_t *map)
 {
+    uint        i;
     // Load all lumps of each class in this order.
     //
     // NOTE:
@@ -2188,8 +2346,6 @@ static boolean loadMapData(gamemap_t *map)
             return false;
     }
 
-    finishLineDefs(map);
-
     // Things (read all custom properties).
     {
         uint        pcount;
@@ -2238,6 +2394,14 @@ static boolean loadMapData(gamemap_t *map)
             return false;
     }
 
+    for(i = 0; i < map->numsegs; ++i)
+    {
+        seg_t *seg = &map->segs[i];
+        if(seg->linedef)
+            seg->sidedef = seg->linedef->sides[seg->side];
+    }
+    unpackSideDefs(map);
+    finishLineDefs(map);
     processSegs(map);
 
     {
@@ -2416,7 +2580,6 @@ static void processSegs(gamemap_t *map)
     uint        i, j ,k, n;
     seg_t      *seg;
     line_t     *ldef;
-    int         side;
 
     for(i = 0; i < map->numsegs; ++i)
     {
@@ -2424,24 +2587,18 @@ static void processSegs(gamemap_t *map)
 
         if(seg->angle == 0)
             seg->angle = -1;
-
         if(seg->offset == 0)
             seg->offset = -1;
-
-        // Kludge: The flags member is used as a temporary holder
-        // for the side value.
-        side = (int) seg->flags;
         seg->flags = 0;
 
         if(seg->linedef)
         {
             ldef = seg->linedef;
-            seg->sidedef = ldef->sides[side];
-            seg->SG_frontsector = ldef->sides[side]->sector;
+            seg->SG_frontsector = ldef->sides[seg->side]->sector;
 
-            if((ldef->flags & ML_TWOSIDED) && ldef->sides[side ^ 1])
+            if((ldef->flags & ML_TWOSIDED) && ldef->sides[seg->side ^ 1])
             {
-                seg->SG_backsector = ldef->sides[side ^ 1]->sector;
+                seg->SG_backsector = ldef->sides[seg->side ^ 1]->sector;
             }
             else
             {
@@ -2451,7 +2608,7 @@ static void processSegs(gamemap_t *map)
 
             if(seg->offset == -1)
             {
-                if(side == 0)
+                if(seg->side == 0)
                     seg->offset = P_AccurateDistancef(seg->v[0]->pos[VX] - ldef->v[0]->pos[VX],
                                                       seg->v[0]->pos[VY] - ldef->v[0]->pos[VY]);
                 else
@@ -2467,7 +2624,6 @@ static void processSegs(gamemap_t *map)
         else
         {
             seg->linedef = NULL;
-            seg->sidedef = NULL;
             seg->SG_frontsector = NULL;
             seg->SG_backsector = NULL;
         }

@@ -33,6 +33,7 @@ struct seg
     PTR     line_s*     linedef
     PTR     sector_s*[2] sec
     ANGLE   angle_t     angle
+    BYTE    byte		side    // 0=front, 1=back
     BYTE    byte        flags
     -       short       frameflags
     -       biastracker_s[3] tracker // 0=top, 1=middle, 2=bottom

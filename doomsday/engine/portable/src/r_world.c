@@ -49,17 +49,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-// These are currently only used for vertex, sector owners.
-typedef struct ownernode_s {
-    void *data;
-    struct ownernode_s* next;
-} ownernode_t;
-
-typedef struct {
-    ownernode_t *head;
-    uint        count;
-} ownerlist_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -1080,8 +1069,7 @@ static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr)
         lineptr->L_vo2 = newOwner;
 }
 
-static void R_SetVertexSectorOwner(vertex_t *vtx, ownerlist_t *ownerList,
-                                   sector_t *secptr)
+static void R_SetVertexSectorOwner(ownerlist_t *ownerList, sector_t *secptr)
 {
     uint        i;
     ownernode_t *node;
@@ -1138,9 +1126,9 @@ static void R_BuildVertexOwners(void)
             {
                 uint idx = GET_VERTEX_IDX(line->v[p]);
 
-                R_SetVertexSectorOwner(line->v[p], &vtxSecOwnerLists[idx],
+                R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
                                        line->L_frontsector);
-                R_SetVertexSectorOwner(line->v[p], &vtxSecOwnerLists[idx],
+                R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
                                        line->L_backsector);
 
                 R_SetVertexLineOwner(line->v[p], line);
