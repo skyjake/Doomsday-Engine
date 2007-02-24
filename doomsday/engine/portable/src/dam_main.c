@@ -293,7 +293,7 @@ static glnodeformat_t glNodeFormats[] = {
 
 static uint numProps = 44;
 static mapproperty_t properties[] =
-{   
+{
 // Vertex
     {DAM_X, DAM_VERTEX, DMT_VERTEX_POS, "x"},
     {DAM_Y, DAM_VERTEX, DMT_VERTEX_POS, "y"},
@@ -1591,7 +1591,7 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
                 // block of data depending on the map format.
                 if(mapLump->lumpClass == LCM_VERTEXES)
                     firstGLvertex = mapLump->elements;
-                
+
                 startIndex = (mapLump->lumpClass == LCG_VERTEXES? firstGLvertex : oldNum);
                 // < KLUDGE
 
@@ -1871,7 +1871,7 @@ static void allocateMapData(gamemap_t *map)
 
         // Do the planes too.
         for(j = 0; j < sec->planecount; ++j, planes++)
-        {          
+        {
             planes->header.type = DMU_PLANE;
             memset(planes->glowrgb, 0xff, 3);
             planes->glow = 0;
@@ -2137,12 +2137,10 @@ static uint unpackSideDefs(gamemap_t *map)
         for(i = 0; i < map->numsides; ++i)
         {
             ownernode_t *node, *p;
-            boolean updateSegs;
 
             side = &map->sides[i];
             node = sideOwnerLists[i].head;
             j = 0;
-            updateSegs = false;
             while(node)
             {
                 p = node->next;
@@ -2161,7 +2159,6 @@ static uint unpackSideDefs(gamemap_t *map)
 
                     copySideDef(&newSides[newIdx], side);
                     newIdx++;
-                    updateSegs = true;
                 }
 
                 M_Free(node);
@@ -2169,14 +2166,11 @@ static uint unpackSideDefs(gamemap_t *map)
                 j++;
             }
 
-            if(updateSegs)
+            for(j = 0; j < map->numsegs; ++j)
             {
-                for(j = 0; j < map->numsegs; ++j)
-                {
-                    seg_t *seg = &map->segs[j];
-                    if(seg->sidedef == side)
-                        seg->sidedef = seg->linedef->sides[seg->side];
-                }
+                seg_t *seg = &map->segs[j];
+                if(seg->sidedef == side)
+                    seg->sidedef = seg->linedef->sides[seg->side];
             }
         }
         M_Free(sideOwnerLists);

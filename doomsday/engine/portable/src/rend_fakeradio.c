@@ -1387,16 +1387,17 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             if(line->L_backsector)
             {
                 side = (shadow->flags & SHPF_FRONTSIDE) == 0;
-                if(subsector->sector->subsgroups[subsector->group].linked[pln])
+                if(subsector->sector->subsgroups[subsector->group].linked[pln] &&
+                   !devNoLinkedSurfaces)
                 {
                     if(side == 0)
                     {
                         front = shadowSec;
-                        back  = line->sec[side ^ 1];
+                        back  = line->L_backsector;
                     }
                     else
                     {
-                        front = line->sec[side];
+                        front = line->L_frontsector;
                         back  = shadowSec;
                     }
                 }

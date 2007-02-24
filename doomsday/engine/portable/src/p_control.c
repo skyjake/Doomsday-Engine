@@ -501,13 +501,16 @@ boolean P_IsValidControl(const char *cmd)
  */
 boolean P_ControlExecute(const char *cmd)
 {
-	char        name[20], *ptr;
+	char        name[MAX_DESCRIPTOR_LENGTH], *ptr;
     uint        idx;
     int         console, localPlayer = 0;
     togglestate_t newState = TG_TOGGLE;
 	controlstate_t *state = NULL;
 
-	// Check the prefix to see what will be the new state of the
+    if(!cmd || !cmd[0] || strlen(cmd) > MAX_DESCRIPTOR_LENGTH)
+        return false;
+
+    // Check the prefix to see what will be the new state of the
 	// toggle.
 	if(cmd[0] == '+' || cmd[0] == '-')
 	{

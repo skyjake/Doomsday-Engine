@@ -869,6 +869,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
                          boolean flagGenerateMipmaps,
                          boolean flagRgbData,
                          boolean flagNoStretch,
+                         boolean flagNoSmartFilter,
                          int minFilter, int magFilter,
                          int wrapS, int wrapT, int otherFlags)/*boolean alphaChannel, boolean generateMipmaps,
                          boolean RGBData, boolean noStretch)*/
@@ -886,6 +887,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
     if(flagGenerateMipmaps) content.flags |= TXCF_MIPMAP;
     if(flagRgbData) content.flags |= TXCF_UPLOAD_ARG_RGBDATA;
     if(flagNoStretch) content.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
+    if(flagNoSmartFilter) content.flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
     content.minFilter = minFilter;
     content.magFilter = magFilter;
     content.wrap[0] = wrapS;
@@ -1315,7 +1317,7 @@ DGLuint GL_BindTexFlat(flat_t * fl)
 
     // Load the texture.
     name = GL_UploadTexture(flatptr, width, height, 
-                            pixSize == 4, true, RGBData, false,
+                            pixSize == 4, true, RGBData, false, false,
                             glmode[mipmapping], glmode[texMagMode], 
                             DGL_REPEAT, DGL_REPEAT, 0);                            
     
@@ -1826,7 +1828,7 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
 
         textures[idx]->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
-                             alphaChannel, true, RGBData, false,
+                             alphaChannel, true, RGBData, false, false,
                              glmode[mipmapping], glmode[texMagMode], 
                              DGL_REPEAT, DGL_REPEAT, 0);
 
@@ -1973,7 +1975,7 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
         // Upload it.
         textures[idx]->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
-                             alphaChannel, true, RGBData, false,
+                             alphaChannel, true, RGBData, false, false,
                              glmode[mipmapping], glmode[texMagMode], 
                              DGL_REPEAT, DGL_REPEAT, TXCF_NO_COMPRESSION);
 
@@ -2054,7 +2056,7 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
     texture =
         GL_UploadTexture(image->pixels, image->width, image->height,
                          image->pixelSize != 3, true, image->pixelSize > 1,
-                         true, glmode[mipmapping],
+                         true, false, glmode[mipmapping],
                          (filterSprites ? DGL_LINEAR : DGL_NEAREST),
                          DGL_CLAMP, DGL_CLAMP, 0);
 
@@ -2298,7 +2300,7 @@ void GL_SetRawImageLump(int lump, int part)
         // Upload part one.
         info->tex[0] =
             GL_UploadTexture(dat1, 256, assumedWidth < 320 ? height : 256, false,
-                             false, rgbdata, false,
+                             false, rgbdata, false, false,
                              DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
                              DGL_CLAMP, DGL_CLAMP, 0);
 
@@ -2306,7 +2308,7 @@ void GL_SetRawImageLump(int lump, int part)
         {
             // And the other part.
             info->tex[1] =
-                GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false,
+                GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false, false,
                                  DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
                                  DGL_CLAMP, DGL_CLAMP, 0);
 
@@ -2359,7 +2361,7 @@ unsigned int GL_SetRawImage(int lump, int part)
             // big texture.
             info->tex[0] =
                 GL_UploadTexture(image.pixels, image.width, image.height,
-                                 image.pixelSize == 4, false, true, false,
+                                 image.pixelSize == 4, false, true, false, false,
                                  DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
                                  DGL_CLAMP, DGL_CLAMP, 0);
 
@@ -2439,7 +2441,7 @@ void GL_PrepareLumpPatch(int lump)
                0, 0, 0, 0, glMaxTexSize, SHORT(patch->height));
         lumptexinfo[lump].tex[0] =
             GL_UploadTexture(tempbuff, glMaxTexSize, SHORT(patch->height),
-                             alphaChannel, true, false, false,
+                             alphaChannel, true, false, false, false,
                              DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, 0);
 
         // Then part two.
@@ -2448,7 +2450,7 @@ void GL_PrepareLumpPatch(int lump)
                0, 0, 0, part2width, SHORT(patch->height));
         lumptexinfo[lump].tex[1] =
             GL_UploadTexture(tempbuff, part2width, SHORT(patch->height),
-                             alphaChannel, true, false, false,
+                             alphaChannel, true, false, false, false,
                              DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
 
         GL_BindTexture(lumptexinfo[lump].tex[0]);
@@ -2463,7 +2465,7 @@ void GL_PrepareLumpPatch(int lump)
         // Generate a texture.
         lumptexinfo[lump].tex[0] =
             GL_UploadTexture(buffer, SHORT(patch->width), SHORT(patch->height),
-                             alphaChannel, true, false, false,
+                             alphaChannel, true, false, false, false,
                              DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
 
         lumptexinfo[lump].width[0] = SHORT(patch->width);
@@ -2496,7 +2498,7 @@ void GL_SetPatch(int lump)
             // This is our texture! No mipmaps are generated.
             lumptexinfo[lump].tex[0] =
                 GL_UploadTexture(image.pixels, image.width, image.height,
-                                 image.pixelSize == 4, true, true, false,
+                                 image.pixelSize == 4, true, true, false, false,
                                  DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
 
             // The original image is no longer needed.
@@ -2870,7 +2872,7 @@ unsigned int GL_PrepareSkin(model_t * mdl, int skin)
         }
 
         st->tex =
-            GL_UploadTexture(image, width, height, size == 4, true, true, false,
+            GL_UploadTexture(image, width, height, size == 4, true, true, false, false,
                              glmode[mipmapping], DGL_LINEAR, DGL_REPEAT, DGL_REPEAT,
                              (!mdl->allowTexComp? TXCF_NO_COMPRESSION : 0));
 
@@ -2899,7 +2901,7 @@ unsigned int GL_PrepareShinySkin(modeldef_t * md, int sub)
 
         stp->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
-                             image.pixelSize == 4, true, true, false,
+                             image.pixelSize == 4, true, true, false, false,
                              glmode[mipmapping], DGL_LINEAR, DGL_REPEAT, DGL_CLAMP, 0);
 
         // We don't need the image data any more.

@@ -152,6 +152,7 @@ DGLuint         GL_UploadTexture(byte *data, int width, int height,
                                  boolean flagGenerateMipmaps,
                                  boolean flagRgbData,
                                  boolean flagNoStretch,
+                                 boolean flagNoSmartFilter,
                                  int minFilter, int magFilter,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);

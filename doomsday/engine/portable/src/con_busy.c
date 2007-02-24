@@ -250,9 +250,9 @@ void Con_AcquireScreenshotTexture(void)
     gl.Grab(0, 0, glScreenWidth, glScreenHeight, DGL_RGB, frame);
     glMaxTexSize = 512; // A bit of a hack, but don't use too large a texture.
     texScreenshot = GL_UploadTexture(frame, glScreenWidth, glScreenHeight,
-                                     false, false, true, false, 
+                                     false, false, true, false, true,
                                      DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP,
-                                     (TXCF_NEVER_DEFER | TXCF_UPLOAD_ARG_NOSMARTFILTER));
+                                     TXCF_NEVER_DEFER);
     glMaxTexSize = oldMaxTexSize;
     M_Free(frame);
     
