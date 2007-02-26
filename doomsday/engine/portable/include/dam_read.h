@@ -44,7 +44,7 @@
 typedef struct {
     // Dest
     uint        id;
-    int         type;
+    int         valueType;
     // Src
     int         flags;
     int         size;   // num of bytes

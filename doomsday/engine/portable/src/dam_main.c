@@ -290,23 +290,22 @@ static glnodeformat_t glNodeFormats[] = {
      true},
     {NULL}
 };
-
-static uint numProps = 44;
-static mapproperty_t properties[] =
+#define DAM_NUM_PROPERTIES 44
+static mapproperty_t properties[DAM_NUM_PROPERTIES] =
 {
 // Vertex
     {DAM_X, DAM_VERTEX, DMT_VERTEX_POS, "x"},
     {DAM_Y, DAM_VERTEX, DMT_VERTEX_POS, "y"},
 // Line
     // TODO: should be DMT_LINE_V but we require special case logic
-    {DAM_VERTEX1, DAM_LINE, DDVT_VERT_PTR, "vertex1"},
+    {DAM_VERTEX1, DAM_LINE, DDVT_VERT_IDX, "vertex1"},
     // TODO: should be DMT_LINE_V but we require special case logic
-    {DAM_VERTEX2, DAM_LINE, DDVT_VERT_PTR, "vertex2"},
+    {DAM_VERTEX2, DAM_LINE, DDVT_VERT_IDX, "vertex2"},
     {DAM_FLAGS, DAM_LINE, DMT_LINE_FLAGS, "flags"},
     // TODO: should be DMT_LINE_SIDES but we require special case logic
-    {DAM_SIDE0, DAM_LINE, DDVT_SIDE_PTR, "frontside"},
+    {DAM_SIDE0, DAM_LINE, DDVT_SIDE_IDX, "frontside"},
     // TODO: should be DMT_LINE_SIDES but we require special case logic
-    {DAM_SIDE1, DAM_LINE, DDVT_SIDE_PTR, "backside"},
+    {DAM_SIDE1, DAM_LINE, DDVT_SIDE_IDX, "backside"},
 // Side
     {DAM_TOP_TEXTURE_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFX, "toptextureoffsetx"},
     {DAM_TOP_TEXTURE_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFY, "toptextureoffsety"},
@@ -318,7 +317,7 @@ static mapproperty_t properties[] =
     {DAM_MIDDLE_TEXTURE, DAM_SIDE, DMT_SURFACE_TEXTURE, "middletexture"},
     {DAM_BOTTOM_TEXTURE, DAM_SIDE, DMT_SURFACE_TEXTURE, "bottomtexture"},
     // TODO: should be DMT_SIDE_SECTOR but we require special case logic
-    {DAM_FRONT_SECTOR, DAM_SIDE, DDVT_SECT_PTR, "frontsector"},
+    {DAM_FRONT_SECTOR, DAM_SIDE, DDVT_SECT_IDX, "frontsector"},
 // Sector
     {DAM_FLOOR_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "floorheight"},
     {DAM_CEILING_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "ceilingheight"},
@@ -327,18 +326,18 @@ static mapproperty_t properties[] =
     {DAM_LIGHT_LEVEL, DAM_SECTOR, DMT_SECTOR_LIGHTLEVEL, "lightlevel"},
 // Seg
     // TODO: should be DMT_SEG_V but we require special case logic
-    {DAM_VERTEX1, DAM_SEG, DDVT_VERT_PTR, "vertex1"},
+    {DAM_VERTEX1, DAM_SEG, DDVT_VERT_IDX, "vertex1"},
     // TODO: should be DMT_SEG_V but we require special case logic
-    {DAM_VERTEX2, DAM_SEG, DDVT_VERT_PTR, "vertex2"},
+    {DAM_VERTEX2, DAM_SEG, DDVT_VERT_IDX, "vertex2"},
     {DAM_ANGLE, DAM_SEG, DMT_SEG_ANGLE, "angle"},
     // TODO: should be DMT_SEG_LINE but we require special case logic
-    {DAM_LINE, DAM_SEG, DDVT_LINE_PTR, "linedef"},
-    // KLUDGE: Store the side id into the flags field
+    {DAM_LINE, DAM_SEG, DDVT_LINE_IDX, "linedef"},
     {DAM_SIDE, DAM_SEG, DDVT_BYTE, "side"},
     {DAM_OFFSET, DAM_SEG, DMT_SEG_OFFSET, "offset"},
 // Subsector
     {DAM_SEG_COUNT, DAM_SUBSECTOR, DMT_SUBSECTOR_SEGCOUNT, "segcount"},
-    {DAM_SEG_FIRST, DAM_SUBSECTOR, DMT_SUBSECTOR_FIRSTSEG, "firstseg"},
+    // TODO: should be DMT_SUBSECTOR_FIRSTSEG but we require special case logic
+    {DAM_SEG_FIRST, DAM_SUBSECTOR, DDVT_SEG_IDX, "firstseg"},
 // Node
     {DAM_X, DAM_NODE, DMT_NODE_X, "x"},
     {DAM_Y, DAM_NODE, DMT_NODE_Y, "y"},
@@ -502,7 +501,7 @@ static uint DAM_IDForProperty(int type, char *name)
     boolean     found = false;
 
     // Check built-in properties first.
-    if(numProps > 0)
+    if(DAM_NUM_PROPERTIES > 0)
     {
         mapproperty_t *ptr = properties;
         i = 0;
@@ -518,7 +517,7 @@ static uint DAM_IDForProperty(int type, char *name)
                 i++;
                 ptr++;
             }
-        } while(!found && i < numProps);
+        } while(!found && i < DAM_NUM_PROPERTIES);
     }
 
     // Check custom properties.
@@ -598,7 +597,7 @@ uint P_RegisterCustomMapProperty(int type, valuetype_t dataType, char *name)
                   name, DAM_Str(type));
 
     // Make sure the name is unique.
-    if(numProps > 0)
+    if(DAM_NUM_PROPERTIES > 0)
     {   // Check built-in properties.
         uint        i = 0;
         mapproperty_t *ptr = properties;
@@ -614,7 +613,7 @@ uint P_RegisterCustomMapProperty(int type, valuetype_t dataType, char *name)
                 i++;
                 ptr++;
             }
-        } while(!exists && i < numProps);
+        } while(!exists && i < DAM_NUM_PROPERTIES);
     }
     if(!exists && numCustomProps[id] > 0)
     {   // Check custom properties.
@@ -1649,7 +1648,7 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
                                 {
                                     // Property specific
                                     readProps[idx].id = props[i].id;
-                                    readProps[idx].type = props[i].type;
+                                    readProps[idx].valueType = props[i].valueType;
 
                                     // Format specific
                                     readProps[idx].flags = def->properties[j].flags;
@@ -1665,7 +1664,7 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
                         }
                     }
 
-                    // Now lets sort the properties based on their byte offset,
+                    // TODO: sort the properties based on their byte offset,
                     // this should improve performance while reading.
                 }
                 else // Yes we can.
@@ -1980,39 +1979,68 @@ static void countMapElements(gamemap_t *map)
 }
 
 /**
- * Creates an array of all the registered custom properties for the given DAM
- * object identifier.
+ * Creates an array of all the custom properties for the given DAM object
+ * identifier, built-in and custom.
  *
  * NOTE: The returned array must free'd with M_Free().
  *
  * @param type          DAM type to collect the custom props for e.g DAM_SIDE.
+ * @param builtIn       If <code>true</code>, include built-in properties.
+ * @param custom        If <code>true</code>, include custom properties.
  * @param count         Num props will be written back to this address.
  *
  * @return              Ptr to the array of collected properties.
  */
-static selectprop_t* collectCustomProps(int type, uint *count)
+static selectprop_t* collectProps(int type, boolean builtIn, boolean custom,
+                                  uint *count)
 {
-    uint        i, idx = type - 1;
+    uint        i, idx, tid = type - 1;
+    uint        totalNum = 0, num;
     selectprop_t *props = NULL;
 
 #if _DEBUG
-if(!typeSupportsCustomProperty(type))
+if(custom && !typeSupportsCustomProperty(type))
     Con_Error("collectCustomProps: type does not support custom properties.",
               DAM_Str(type));
 #endif
 
-    if(numCustomProps[idx] > 0)
+    if(builtIn)
     {
-        props = M_Malloc(sizeof(selectprop_t) * numCustomProps[idx]);
-        for(i = 0; i < numCustomProps[idx]; ++i)
-        {
-            props[i].id = customProps[idx][i].id;
-            props[i].type = customProps[idx][i].datatype;
-        }
+        // Count how many there are.
+        num = 0;
+        for(i = 0; i < DAM_NUM_PROPERTIES; ++i)
+            if(properties[i].type == type)
+                num++;
+
+        totalNum += num;
+    }
+    if(custom)
+        totalNum += numCustomProps[tid];
+
+    if(totalNum > 0)
+    {
+        props = M_Malloc(sizeof(selectprop_t) * totalNum);
+        idx = 0;
+        if(builtIn && num > 0)
+            for(i = 0; i < DAM_NUM_PROPERTIES; ++i)
+                if(properties[i].type == type)
+                {
+                    props[idx].id = properties[i].id;
+                    props[idx].valueType = properties[i].datatype;
+                    idx++;
+                }
+
+        if(custom && numCustomProps[tid] > 0)
+            for(i = 0; i < numCustomProps[tid]; ++i)
+            {
+                props[idx].id = customProps[tid][i].id;
+                props[idx].valueType = customProps[tid][i].datatype;
+                idx++;
+            }
     }
 
-    if(count != NULL)
-        *count = numCustomProps[idx];
+    if(*count)
+        *count = totalNum;
     return props;
 }
 
@@ -2028,13 +2056,13 @@ static selectprop_t* mergePropLists(selectprop_t *listA, uint numA,
     for(i = 0; i < numA; ++i)
     {
         newlist[idx].id = listA[i].id;
-        newlist[idx].type = listA[i].type;
+        newlist[idx].valueType = listA[i].valueType;
         idx++;
     }
     for(i = 0; i < numB; ++i)
     {
         newlist[idx].id = listB[i].id;
-        newlist[idx].type = listB[i].type;
+        newlist[idx].valueType = listB[i].valueType;
         idx++;
     }
 
@@ -2191,6 +2219,33 @@ static uint unpackSideDefs(gamemap_t *map)
     return newCount;
 }
 
+static boolean readAllTypeProperties(gamemap_t *map, int type)
+{
+    uint        i, pcount;
+    boolean     result = true;
+    selectprop_t *list;
+    maplumpinfo_t *mapLmpInf = mapLumpInfo;
+
+    list = collectProps(type, true, true, &pcount);
+    if(list)
+    {
+        // Iterate our known lump classes array.
+        i = 0;
+        while(i < NUM_LUMPCLASSES && result)
+        {
+            mapLmpInf = &mapLumpInfo[i];
+            if(mapLmpInf->dataType == type)
+                result =
+                    P_ReadMapData(map, mapLmpInf->lumpclass, list, pcount);
+
+            i++;
+        }
+        M_Free(list);
+    }
+
+    return result;
+}
+
 static boolean loadMapData(gamemap_t *map)
 {
     uint        i;
@@ -2199,84 +2254,28 @@ static boolean loadMapData(gamemap_t *map)
     // NOTE:
     // DJS 01/10/05 - revised load order to allow for cross-referencing
     //                data during loading (detect + fix trivial errors).
-    {
-        // Vertexes and GL vertexes (read all properties).
-        uint        ccount;
-        boolean     result, freeList = false;
-        selectprop_t *list, *cprops;
-        selectprop_t props[] = {
-            {DAM_X, 0},
-            {DAM_Y, 0}
-        };
-        uint        pcount = 2;
-
-        list = props;
-        // Any custom properties?
-        cprops = collectCustomProps(DAM_VERTEX, &ccount);
-        if(cprops)
-        {   // Merge the property lists.
-            list = mergePropLists(&(*props), pcount, cprops, ccount, &pcount);
-            freeList = true;
-            M_Free(cprops);
-        }
-
-        result = P_ReadMapData(map, LCM_VERTEXES, list, pcount);
-        if(result)
-            result = P_ReadMapData(map, LCG_VERTEXES, list, pcount);
-        if(freeList)
-            M_Free(list);
-        if(!result)
-            return false;
-    }
-    {
-        // Sectors (read all properties).
-        uint        ccount;
-        boolean     result, freeList = false;
-        selectprop_t *list, *cprops;
-        selectprop_t props[] = {
-            {DAM_FLOOR_HEIGHT, 0},
-            {DAM_CEILING_HEIGHT, 0},
-            {DAM_FLOOR_TEXTURE, 0},
-            {DAM_CEILING_TEXTURE, 0},
-            {DAM_LIGHT_LEVEL, 0}
-        };
-        uint        pcount = 5;
-
-        list = props;
-        // Any custom properties?
-        cprops = collectCustomProps(DAM_SECTOR, &ccount);
-        if(cprops)
-        {   // Merge the property lists.
-            list = mergePropLists(&(*props), pcount, cprops, ccount, &pcount);
-            freeList = true;
-            M_Free(cprops);
-        }
-
-        result = P_ReadMapData(map, LCM_SECTORS, list, pcount);
-        if(freeList)
-            M_Free(list);
-        if(!result)
-            return false;
-    }
+    readAllTypeProperties(map, DAM_VERTEX);
+    readAllTypeProperties(map, DAM_SECTOR);
     {
         // Sidedefs (read all properties except textures).
         uint        ccount;
         boolean     result, freeList = false;
         selectprop_t *list, *cprops;
         selectprop_t props[] = {
-            {DAM_TOP_TEXTURE_OFFSET_X, 0},
-            {DAM_TOP_TEXTURE_OFFSET_Y, 0},
-            {DAM_MIDDLE_TEXTURE_OFFSET_X, 0},
-            {DAM_MIDDLE_TEXTURE_OFFSET_Y, 0},
-            {DAM_BOTTOM_TEXTURE_OFFSET_X, 0},
-            {DAM_BOTTOM_TEXTURE_OFFSET_Y, 0},
-            {DAM_FRONT_SECTOR, 0}
+            {DAM_TOP_TEXTURE_OFFSET_X, DMT_SURFACE_OFFX},
+            {DAM_TOP_TEXTURE_OFFSET_Y, DMT_SURFACE_OFFY},
+            {DAM_MIDDLE_TEXTURE_OFFSET_X, DMT_SURFACE_OFFX},
+            {DAM_MIDDLE_TEXTURE_OFFSET_Y, DMT_SURFACE_OFFY},
+            {DAM_BOTTOM_TEXTURE_OFFSET_X, DMT_SURFACE_OFFX},
+            {DAM_BOTTOM_TEXTURE_OFFSET_Y, DMT_SURFACE_OFFY},
+            // TODO: should be DMT_SIDE_SECTOR but we require special case logic
+            {DAM_FRONT_SECTOR, DDVT_SECT_IDX}
         };
         uint        pcount = 7;
 
         list = props;
         // Any custom properties?
-        cprops = collectCustomProps(DAM_SIDE, &ccount);
+        cprops = collectProps(DAM_SIDE, false, true, &ccount);
         if(cprops)
         {   // Merge the property lists.
             list = mergePropLists(&(*props), pcount, cprops, ccount, &pcount);
@@ -2290,36 +2289,7 @@ static boolean loadMapData(gamemap_t *map)
         if(!result)
             return false;
     }
-    {
-        // Linedefs (read all properties).
-        uint        ccount;
-        boolean     result, freeList = false;
-        selectprop_t *list, *cprops;
-        selectprop_t props[] = {
-            {DAM_VERTEX1, 0},
-            {DAM_VERTEX2, 0},
-            {DAM_FLAGS, 0},
-            {DAM_SIDE0, 0},
-            {DAM_SIDE1, 0}
-        };
-        uint        pcount = 5;
-
-        list = props;
-        // Any custom properties?
-        cprops = collectCustomProps(DAM_LINE, &ccount);
-        if(cprops)
-        {   // Merge the property lists.
-            list = mergePropLists(&(*props), pcount, cprops, ccount, &pcount);
-            freeList = true;
-            M_Free(cprops);
-        }
-
-        result = P_ReadMapData(map, LCM_LINEDEFS, list, pcount);
-        if(freeList)
-            M_Free(list);
-        if(!result)
-            return false;
-    }
+    readAllTypeProperties(map, DAM_LINE);
     {
         /* Sidedefs (read just textures).
          * MUST be called after Linedefs are loaded.
@@ -2332,61 +2302,15 @@ static boolean loadMapData(gamemap_t *map)
          * then tell us what texture to use.
          */
         selectprop_t props[] = {
-            {DAM_TOP_TEXTURE, 0},
-            {DAM_MIDDLE_TEXTURE, 0},
-            {DAM_BOTTOM_TEXTURE, 0}
+            {DAM_TOP_TEXTURE, DMT_SURFACE_TEXTURE},
+            {DAM_MIDDLE_TEXTURE, DMT_SURFACE_TEXTURE},
+            {DAM_BOTTOM_TEXTURE, DMT_SURFACE_TEXTURE}
         };
         if(!P_ReadMapData(map, LCM_SIDEDEFS, &(*props), 3))
             return false;
     }
-
-    // Things (read all custom properties).
-    {
-        uint        pcount;
-        boolean     result;
-        selectprop_t *cprops;
-
-        // Any custom properties?
-        cprops = collectCustomProps(DAM_THING, &pcount);
-        if(cprops)
-        {
-            result = P_ReadMapData(map, LCM_THINGS, &(*cprops), pcount);
-            M_Free(cprops);
-            if(!result)
-                return false;
-        }
-    }
-    {
-        // Segs (read all properties).
-        uint        ccount;
-        boolean     result, freeList = false;
-        selectprop_t *list, *cprops;
-        selectprop_t props[] = {
-            {DAM_VERTEX1, 0},
-            {DAM_VERTEX2, 0},
-            {DAM_ANGLE, 0},
-            {DAM_LINE, 0},
-            {DAM_SIDE, 0},
-            {DAM_OFFSET, 0}
-        };
-        uint        pcount = 6;
-
-        list = props;
-        // Any custom properties?
-        cprops = collectCustomProps(DAM_SEG, &ccount);
-        if(cprops)
-        {   // Merge the property lists.
-            list = mergePropLists(&(*props), pcount, cprops, ccount, &pcount);
-            freeList = true;
-            M_Free(cprops);
-        }
-
-        result = P_ReadMapData(map, LCM_SEGS, list, pcount);
-        if(freeList)
-            M_Free(list);
-        if(!result)
-            return false;
-    }
+    readAllTypeProperties(map, DAM_THING);
+    readAllTypeProperties(map, DAM_SEG);
 
     for(i = 0; i < map->numsegs; ++i)
     {
@@ -2398,72 +2322,8 @@ static boolean loadMapData(gamemap_t *map)
     finishLineDefs(map);
     processSegs(map);
 
-    {
-        // Subsectors (read all properties).
-        uint        ccount;
-        boolean     result, freeList = false;
-        selectprop_t *list, *cprops;
-        selectprop_t props[] = {
-            {DAM_SEG_COUNT, 0},
-            {DAM_SEG_FIRST, 0}
-        };
-        uint        pcount = 2;
-
-        list = props;
-        // Any custom properties?
-        cprops = collectCustomProps(DAM_SUBSECTOR, &ccount);
-        if(cprops)
-        {   // Merge the property lists.
-            list = mergePropLists(&(*props), pcount, cprops, ccount, &pcount);
-            freeList = true;
-            M_Free(cprops);
-        }
-
-        result = P_ReadMapData(map, LCM_SUBSECTORS, list, pcount);
-        if(freeList)
-            M_Free(list);
-        if(!result)
-            return false;
-    }
-    {
-        // Nodes (read all properties).
-        uint        ccount;
-        boolean     result, freeList = false;
-        selectprop_t *list, *cprops;
-        selectprop_t props[] = {
-            {DAM_X, 0},
-            {DAM_Y, 0},
-            {DAM_DX, 0},
-            {DAM_DY, 0},
-            {DAM_BBOX_RIGHT_TOP_Y, 0},
-            {DAM_BBOX_RIGHT_LOW_Y, 0},
-            {DAM_BBOX_RIGHT_LOW_X, 0},
-            {DAM_BBOX_RIGHT_TOP_X, 0},
-            {DAM_BBOX_LEFT_TOP_Y, 0},
-            {DAM_BBOX_LEFT_LOW_Y, 0},
-            {DAM_BBOX_LEFT_LOW_X, 0},
-            {DAM_BBOX_LEFT_TOP_X, 0},
-            {DAM_CHILD_RIGHT, 0},
-            {DAM_CHILD_LEFT, 0}
-        };
-        uint        pcount = 14;
-
-        list = props;
-        // Any custom properties?
-        cprops = collectCustomProps(DAM_NODE, &ccount);
-        if(cprops)
-        {   // Merge the property lists.
-            list = mergePropLists(&(*props), pcount, cprops, ccount, &pcount);
-            freeList = true;
-            M_Free(cprops);
-        }
-
-        result = P_ReadMapData(map, LCM_NODES, list, pcount);
-        if(freeList)
-            M_Free(list);
-        if(!result)
-            return false;
-    }
+    readAllTypeProperties(map, DAM_SUBSECTOR);
+    readAllTypeProperties(map, DAM_NODE);
 
     if(!P_ReadMapData(map, LCM_BLOCKMAP, NULL, 0))
         return false;

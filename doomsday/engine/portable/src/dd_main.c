@@ -154,6 +154,7 @@ const char* value_Str(int val)
         { DDVT_BYTE, "DDVT_BYTE" },
         { DDVT_SHORT, "DDVT_SHORT" },
         { DDVT_INT, "DDVT_INT" },
+        { DDVT_UINT, "DDVT_UINT" },
         { DDVT_FIXED, "DDVT_FIXED" },
         { DDVT_ANGLE, "DDVT_ANGLE" },
         { DDVT_FLOAT, "DDVT_FLOAT" },
@@ -161,11 +162,11 @@ const char* value_Str(int val)
         { DDVT_PTR, "DDVT_PTR" },
         { DDVT_FLAT_INDEX, "DDVT_FLAT_INDEX" },
         { DDVT_BLENDMODE, "DDVT_BLENDMODE" },
-        { DDVT_VERT_PTR, "DDVT_VERT_PTR" },
-        { DDVT_LINE_PTR, "DDVT_LINE_PTR" },
-        { DDVT_SIDE_PTR, "DDVT_SIDE_PTR" },
-        { DDVT_SECT_PTR, "DDVT_SECT_PTR" },
-        { DDVT_SEG_PTR, "DDVT_SEG_PTR" },
+        { DDVT_VERT_IDX, "DDVT_VERT_IDX" },
+        { DDVT_LINE_IDX, "DDVT_LINE_IDX" },
+        { DDVT_SIDE_IDX, "DDVT_SIDE_IDX" },
+        { DDVT_SECT_IDX, "DDVT_SECT_IDX" },
+        { DDVT_SEG_IDX, "DDVT_SEG_IDX" },
         { 0, NULL }
     };
     uint        i;

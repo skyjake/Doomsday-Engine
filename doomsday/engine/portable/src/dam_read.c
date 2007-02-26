@@ -39,41 +39,30 @@
 
 // TYPES -------------------------------------------------------------------
 
-// Game specific map format properties
-// TODO: These need to be identified from DED.
-enum {
-    DAM_LINE_TAG = NUM_DAM_PROPERTIES,
-    DAM_LINE_SPECIAL,
-    DAM_SECTOR_TAG,
-    DAM_SECTOR_SPECIAL,
-    DAM_THING_X,
-    DAM_THING_Y,
-    DAM_THING_ANGLE,
-    DAM_THING_TYPE,
-    DAM_THING_OPTIONS,
-    DAM_THING_HEIGHT,
-    DAM_THING_TID,
-    DAM_LINE_ARG1,
-    DAM_LINE_ARG2,
-    DAM_LINE_ARG3,
-    DAM_LINE_ARG4,
-    DAM_LINE_ARG5,
-    DAM_THING_SPECIAL,
-    DAM_THING_ARG1,
-    DAM_THING_ARG2,
-    DAM_THING_ARG3,
-    DAM_THING_ARG4,
-    DAM_THING_ARG5,
-    DAM_PROPERTY_COUNT
-};
-
 typedef struct {
     gamemap_t *map;
     size_t      elmsize;
     uint        elements;
     uint        numProps;
     readprop_t *props;
-} damargs_t;
+} damlumpreadargs_t;
+
+typedef struct setargs_s {
+    int         type;
+    uint        prop;
+
+    valuetype_t valueType;
+    boolean    *booleanValues;
+    byte       *byteValues;
+    short      *shortValues;
+    int        *intValues;
+    uint       *uintValues;
+    fixed_t    *fixedValues;
+    unsigned long *ulongValues;
+    float      *floatValues;
+    angle_t    *angleValues;
+    void      **ptrValues;
+} damsetargs_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -85,13 +74,13 @@ void *DAM_IndexToPtr(gamemap_t *map, int objectType, uint id);
 
 static int P_CallbackEX(int dataType, unsigned int startIndex,
                         const byte *buffer, void* context,
-                        int (*callback)(gamemap_t  *map, int dataType,
-                                void* ptr, uint elmIdx, const readprop_t* prop,
-                                const byte *buffer));
+                        int (*callback)(void *ptr, int dataType,
+                                gamemap_t *map, uint elmIdx, const readprop_t* prop,
+                                const byte *src));
 
-static int ReadMapProperty(gamemap_t  *map, int dataType, void* ptr,
+static int ReadMapProperty(void *ptr, int dataType, gamemap_t *map,
                            uint elmIdx, const readprop_t* prop,
-                           const byte *buffer);
+                           const byte *src);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -101,12 +90,25 @@ static int ReadMapProperty(gamemap_t  *map, int dataType, void* ptr,
 
 // CODE --------------------------------------------------------------------
 
+/**
+ * Initializes a damsetargs struct.
+ *
+ * @param type  Type of the map data object (e.g., DAM_LINE).
+ * @param prop  Property of the map data object.
+ */
+static void initArgs(damsetargs_t* args, int type, uint prop)
+{
+    memset(args, 0, sizeof(*args));
+    args->type = type;
+    args->prop = prop;
+}
+
 boolean DAM_ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
                                 uint startIndex, readprop_t *props,
                                 uint numProps)
 {
     int         type = DAM_MapLumpInfoForLumpClass(mapLump->lumpClass)->dataType;
-    damargs_t   args;
+    damlumpreadargs_t   args;
 
     // Is this a supported lump type?
     switch(type)
@@ -145,53 +147,307 @@ boolean DAM_ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
 }
 
 /**
- * Reads a value from the (little endian) source buffer. Does some basic
- * type checking so that incompatible types are not assigned.
- * Simple conversions are also done, e.g., float to fixed.
+ * Sets a value. Does some basic type checking so that incompatible types are
+ * not assigned. Simple conversions are also done, e.g., float to fixed.
  */
-static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
-                      const byte *src, const readprop_t* prop, uint element)
+static void SetValue(valuetype_t valueType, void* dst, damsetargs_t* args,
+                     uint index, gamemap_t *map)
 {
-    int flags = prop->flags;
-
-    if(valueType == DDVT_BYTE)
+    if(valueType == DDVT_FIXED)
     {
-        byte* d = dst;
-        switch(prop->size)
+        fixed_t* d = dst;
+
+        switch(args->valueType)
         {
-        case 1:
-            *d = *src;
+        case DDVT_BYTE:
+            *d = (args->byteValues[index] << FRACBITS);
             break;
-        case 2:
-            *d = *src;
+        case DDVT_INT:
+            *d = (args->intValues[index] << FRACBITS);
             break;
-        case 4:
-            *d = *src;
+        case DDVT_FIXED:
+            *d = args->fixedValues[index];
+            break;
+        case DDVT_FLOAT:
+            *d = FLT2FIX(args->floatValues[index]);
             break;
         default:
-            Con_Error("ReadValue: DDVT_BYTE incompatible with value type %s\n",
-                      value_Str(prop->size));
+            Con_Error("SetValue: DDVT_FIXED incompatible with value type %s.\n",
+                      value_Str(args->valueType));
         }
     }
     else if(valueType == DDVT_FLOAT)
     {
         float* d = dst;
-        switch(prop->size)
+
+        switch(args->valueType)
+        {
+        case DDVT_BYTE:
+            *d = args->byteValues[index];
+            break;
+        case DDVT_SHORT:
+            *d = args->shortValues[index];
+            break;
+        case DDVT_UINT:
+            *d = args->uintValues[index];
+            break;
+        case DDVT_INT:
+            *d = args->intValues[index];
+            break;
+        case DDVT_FIXED:
+            *d = FIX2FLT(args->fixedValues[index]);
+            break;
+        case DDVT_FLOAT:
+            *d = args->floatValues[index];
+            break;
+        default:
+            Con_Error("SetValue: DDVT_FLOAT incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_BOOL)
+    {
+        boolean* d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_BOOL:
+            *d = args->booleanValues[index];
+            break;
+        default:
+            Con_Error("SetValue: DDVT_BOOL incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_BYTE)
+    {
+        byte* d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_BOOL:
+            *d = args->booleanValues[index];
+            break;
+        case DDVT_BYTE:
+            *d = args->byteValues[index];
+            break;
+        case DDVT_SHORT:
+            *d = args->shortValues[index];
+            break;
+        case DDVT_INT:
+            *d = args->intValues[index];
+            break;
+        case DDVT_FLOAT:
+            *d = (byte) args->floatValues[index];
+            break;
+        default:
+            Con_Error("SetValue: DDVT_BYTE incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_INT)
+    {
+        int* d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_BOOL:
+            *d = args->booleanValues[index];
+            break;
+        case DDVT_BYTE:
+            *d = args->byteValues[index];
+            break;
+        case DDVT_INT:
+            *d = args->intValues[index];
+            break;
+        case DDVT_FLOAT:
+            *d = args->floatValues[index];
+            break;
+        case DDVT_FIXED:
+            *d = (args->fixedValues[index] >> FRACBITS);
+            break;
+        default:
+            Con_Error("SetValue: DDVT_INT incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_UINT)
+    {
+        uint* d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_BOOL:
+            *d = args->booleanValues[index];
+            break;
+        case DDVT_BYTE:
+            *d = args->byteValues[index];
+            break;
+        case DDVT_INT:
+            *d = (unsigned) args->intValues[index];
+            break;
+        case DDVT_UINT:
+            *d = args->uintValues[index];
+            break;
+        case DDVT_FLOAT:
+            *d = (unsigned) args->floatValues[index];
+            break;
+        case DDVT_FIXED:
+            *d = (unsigned) (args->fixedValues[index] >> FRACBITS);
+            break;
+        default:
+            Con_Error("SetValue: DDVT_UINT incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_SHORT || valueType == DDVT_FLAT_INDEX)
+    {
+        short* d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_BOOL:
+            *d = args->booleanValues[index];
+            break;
+        case DDVT_BYTE:
+            *d = args->byteValues[index];
+            break;
+        case DDVT_SHORT:
+            *d = args->shortValues[index];
+            break;
+        case DDVT_INT:
+            *d = args->intValues[index];
+            break;
+        case DDVT_ULONG:
+            *d = args->ulongValues[index];
+            break;
+        case DDVT_FLOAT:
+            *d = args->floatValues[index];
+            break;
+        case DDVT_FIXED:
+            *d = (args->fixedValues[index] >> FRACBITS);
+            break;
+        default:
+            Con_Error("SetValue: DDVT_SHORT incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_ANGLE)
+    {
+        angle_t* d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_ANGLE:
+            *d = args->angleValues[index];
+            break;
+        default:
+            Con_Error("SetValue: DDVT_ANGLE incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_BLENDMODE)
+    {
+        blendmode_t* d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_INT:
+            if(args->intValues[index] > DDNUM_BLENDMODES || args->intValues[index] < 0)
+                Con_Error("SetValue: %d is not a valid value for DDVT_BLENDMODE.\n",
+                          args->intValues[index]);
+
+            *d = args->intValues[index];
+            break;
+        default:
+            Con_Error("SetValue: DDVT_BLENDMODE incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_PTR)
+    {
+        void** d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_SECT_IDX:
+            *(sector_t **) dst = DAM_IndexToPtr(map, DAM_SECTOR, args->uintValues[index]);
+            break;
+        case DDVT_VERT_IDX:
+            {
+            uint         value;
+            // FIXME:
+            // There has to be a better way to do this...
+            value = DAM_VertexIdx(args->uintValues[index]);
+            // end FIXME
+            *(vertex_t **) dst = DAM_IndexToPtr(map, DAM_VERTEX, value);
+            }
+            break;
+        case DDVT_LINE_IDX:
+            *(line_t **) dst = DAM_IndexToPtr(map, DAM_LINE, args->uintValues[index]);
+            break;
+        case DDVT_SIDE_IDX:
+            *(side_t **) dst = DAM_IndexToPtr(map, DAM_SIDE, args->uintValues[index]);
+            break;
+        case DDVT_SEG_IDX:
+            *(seg_t **) dst = DAM_IndexToPtr(map, DAM_SEG, args->uintValues[index]);
+            break;
+        case DDVT_PTR:
+            *d = args->ptrValues[index];
+            break;
+        default:
+            Con_Error("SetValue: DDVT_PTR incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else
+    {
+        Con_Error("SetValue: unknown value type %d.\n", valueType);
+    }
+}
+
+/**
+ * Reads a value from the (little endian) source buffer. Does some basic
+ * type checking so that incompatible types are not assigned.
+ * Simple conversions are also done, e.g., float to fixed.
+ */
+static void ReadValue(valuetype_t valueType, size_t size, const byte *src,
+                      damsetargs_t *args, uint index, int flags,
+                      uint element)
+{
+    if(valueType == DDVT_BYTE)
+    {
+        switch(size)
+        {
+        case 1:
+        case 2:
+        case 4:
+            break;
+        default:
+            Con_Error("ReadValue: DDVT_BYTE no conversion from %i bytes.",
+                      size);
+        }
+        args->byteValues[index] = *src;
+    }
+    else if(valueType == DDVT_FLOAT)
+    {
+        float       d;
+        switch(size)
         {
         case 2:
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    *d = FIX2FLT(USHORT(*((short*)(src))) << FRACBITS);
+                    d = FIX2FLT(USHORT(*((short*)(src))) << FRACBITS);
                 else
-                    *d = FIX2FLT(USHORT(*((short*)(src))));
+                    d = FIX2FLT(USHORT(*((short*)(src))));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    *d = FIX2FLT(SHORT(*((short*)(src))) << FRACBITS);
+                    d = FIX2FLT(SHORT(*((short*)(src))) << FRACBITS);
                 else
-                    *d = FIX2FLT(SHORT(*((short*)(src))));
+                    d = FIX2FLT(SHORT(*((short*)(src))));
             }
             break;
 
@@ -199,43 +455,44 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    *d = FIX2FLT(ULONG(*((long*)(src))) << FRACBITS);
+                    d = FIX2FLT(ULONG(*((long*)(src))) << FRACBITS);
                 else
-                    *d = FIX2FLT(ULONG(*((long*)(src))));
+                    d = FIX2FLT(ULONG(*((long*)(src))));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    *d = FIX2FLT(LONG(*((long*)(src))) << FRACBITS);
+                    d = FIX2FLT(LONG(*((long*)(src))) << FRACBITS);
                 else
-                    *d = FIX2FLT(LONG(*((long*)(src))));
+                    d = FIX2FLT(LONG(*((long*)(src))));
             }
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_FLOAT incompatible with value type %s\n",
-                      value_Str(prop->size));
+            Con_Error("ReadValue: DDVT_FLOAT no conversion from %i bytes.",
+                      size);
         }
+        args->floatValues[index] = d;
     }
     else if(valueType == DDVT_SHORT || valueType == DDVT_FLAT_INDEX)
     {
-        short* d = dst;
-        switch(prop->size)
+        short       d;
+        switch(size)
         {
         case 2:
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    *d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((short*)(src))) << FRACBITS;
                 else
-                    *d = USHORT(*((short*)(src)));
+                    d = USHORT(*((short*)(src)));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    *d = SHORT(*((short*)(src))) << FRACBITS;
+                    d = SHORT(*((short*)(src))) << FRACBITS;
                 else
-                    *d = SHORT(*((short*)(src)));
+                    d = SHORT(*((short*)(src)));
             }
             break;
 
@@ -243,104 +500,106 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
             {
             if(flags & DT_TEXTURE)
             {
-                *d = P_CheckTexture((char*)((long long*)(src)), false, valueType,
-                                    element, prop->id);
+                d = P_CheckTexture((char*)((long long*)(src)), false, valueType,
+                                   element, args->prop);
             }
             else if(flags & DT_FLAT)
             {
-                *d = P_CheckTexture((char*)((long long*)(src)), true, valueType,
-                                    element, prop->id);
+                d = P_CheckTexture((char*)((long long*)(src)), true, valueType,
+                                    element, args->prop);
             }
             break;
             }
          default:
-            Con_Error("ReadValue: DDVT_SHORT incompatible with value type %s.\n",
-                      value_Str(prop->size));
+            Con_Error("ReadValue: DDVT_SHORT no conversion from %i bytes.",
+                      size);
          }
+        args->shortValues[index] = d;
     }
     else if(valueType == DDVT_FIXED)
     {
-        fixed_t* d = dst;
-
-        switch(prop->size) // Number of src bytes
+        fixed_t     d;
+        switch(size) // Number of src bytes
         {
         case 2:
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    *d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((short*)(src))) << FRACBITS;
                 else
-                    *d = USHORT(*((short*)(src)));
+                    d = USHORT(*((short*)(src)));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    *d = SHORT(*((short*)(src))) << FRACBITS;
+                    d = SHORT(*((short*)(src))) << FRACBITS;
                 else
-                    *d = SHORT(*((short*)(src)));
+                    d = SHORT(*((short*)(src)));
             }
             break;
 
         case 4:
             if(flags & DT_UNSIGNED)
-                *d = ULONG(*((long*)(src)));
+                d = ULONG(*((long*)(src)));
             else
-                *d = LONG(*((long*)(src)));
+                d = LONG(*((long*)(src)));
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_FIXED incompatible with value type %s.\n",
-                      value_Str(prop->size));
+            Con_Error("ReadValue: DDVT_FIXED no conversion from %i bytes.",
+                      size);
         }
+        args->fixedValues[index] = d;
     }
     else if(valueType == DDVT_ULONG)
     {
-        unsigned long* d = dst;
+        unsigned long   d;
 
-        switch(prop->size) // Number of src bytes
+        switch(size) // Number of src bytes
         {
         case 2:
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    *d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((short*)(src))) << FRACBITS;
                 else
-                    *d = USHORT(*((short*)(src)));
+                    d = USHORT(*((short*)(src)));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    *d = SHORT(*((short*)(src))) << FRACBITS;
+                    d = SHORT(*((short*)(src))) << FRACBITS;
                 else
-                    *d = SHORT(*((short*)(src)));
+                    d = SHORT(*((short*)(src)));
             }
             break;
 
         case 4:
             if(flags & DT_UNSIGNED)
-                *d = ULONG(*((long*)(src)));
+                d = ULONG(*((long*)(src)));
             else
-                *d = LONG(*((long*)(src)));
+                d = LONG(*((long*)(src)));
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_ULONG incompatible with value type %s.\n",
-                      value_Str(prop->size));
+            Con_Error("ReadValue: DDVT_ULONG no conversion from %i bytes.",
+                      size);
         }
+        args->ulongValues[index] = d;
     }
     else if(valueType == DDVT_UINT)
     {
-        unsigned int* d = dst;
+        unsigned int    d;
 
-        switch(prop->size) // Number of src bytes
+        switch(size) // Number of src bytes
         {
         case 2:
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    *d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((short*)(src))) << FRACBITS;
                 else
-                    *d = USHORT(*((short*)(src)));
+                    d = USHORT(*((short*)(src)));
             }
             else
             {
@@ -348,51 +607,51 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                 {
                     unsigned short num = SHORT(*((short*)(src)));
 
-                    *d = NO_INDEX;
+                    d = NO_INDEX;
 
                     if(num != ((unsigned short)-1))
-                        *d = num;
+                        d = num;
                 }
                 else
                 {
                     if(flags & DT_FRACBITS)
-                        *d = SHORT(*((short*)(src))) << FRACBITS;
+                        d = SHORT(*((short*)(src))) << FRACBITS;
                     else
-                        *d = USHORT(*((short*)(src)));
+                        d = SHORT(*((short*)(src)));
                 }
             }
-            if((flags & DT_MSBCONVERT) && (*d & 0x8000))
+            if((flags & DT_MSBCONVERT) && (d & 0x8000))
             {
-                *d &= ~0x8000;
-                *d |= 0x80000000;
+                d &= ~0x8000;
+                d |= 0x80000000;
             }
             break;
 
         case 4:
             if(flags & DT_UNSIGNED)
-                *d = ULONG(*((long*)(src)));
+                d = ULONG(*((long*)(src)));
             else
-                *d = LONG(*((long*)(src)));
+                d = LONG(*((long*)(src)));
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_INT incompatible with value type %s.\n",
-                      value_Str(prop->size));
+            Con_Error("ReadValue: DDVT_INT no conversion from %i bytes.",
+                      size);
         }
+        args->uintValues[index] = d;
     }
     else if(valueType == DDVT_INT)
     {
-        int* d = dst;
-
-        switch(prop->size) // Number of src bytes
+        int         d;
+        switch(size) // Number of src bytes
         {
         case 2:
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    *d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((short*)(src))) << FRACBITS;
                 else
-                    *d = USHORT(*((short*)(src)));
+                    d = USHORT(*((short*)(src)));
             }
             else
             {
@@ -400,133 +659,56 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
                 {
                     unsigned short num = SHORT(*((short*)(src)));
 
-                    *d = NO_INDEX;
+                    d = NO_INDEX;
 
                     if(num != ((unsigned short)-1))
-                        *d = num;
+                        d = num;
                 }
                 else
                 {
                     if(flags & DT_FRACBITS)
-                        *d = SHORT(*((short*)(src))) << FRACBITS;
+                        d = SHORT(*((short*)(src))) << FRACBITS;
                     else
-                        *d = SHORT(*((short*)(src)));
+                        d = SHORT(*((short*)(src)));
                 }
             }
-            if((flags & DT_MSBCONVERT) && (*d & 0x8000))
+            if((flags & DT_MSBCONVERT) && (d & 0x8000))
             {
-                *d &= ~0x8000;
-                *d |= 0x80000000;
+                d &= ~0x8000;
+                d |= 0x80000000;
             }
             break;
 
         case 4:
             if(flags & DT_UNSIGNED)
-                *d = ULONG(*((long*)(src)));
+                d = ULONG(*((long*)(src)));
             else
-                *d = LONG(*((long*)(src)));
+                d = LONG(*((long*)(src)));
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_INT incompatible with value type %s.\n",
-                      value_Str(prop->size));
+            Con_Error("ReadValue: DDVT_INT no conversion from %i bytes.",
+                      size);
         }
+        args->intValues[index] = d;
     }
     else if(valueType == DDVT_ANGLE)
     {
-        angle_t* d = dst;
-        switch(prop->size) // Number of src bytes
+        angle_t     d;
+        switch(size) // Number of src bytes
         {
         case 2:
             if(flags & DT_FRACBITS)
-                *d = (angle_t) (SHORT(*((short*)(src))) << FRACBITS);
+                d = (angle_t) (SHORT(*((short*)(src))) << FRACBITS);
             else
-                *d = (angle_t) SHORT(*((short*)(src)));
+                d = (angle_t) SHORT(*((short*)(src)));
             break;
 
         default:
-            Con_Error("ReadValue: DDVT_ANGLE incompatible with value type %s.\n",
-                      value_Str(prop->size));
+            Con_Error("ReadValue: DDVT_ANGLE no conversion from %i bytes.",
+                      size);
         }
-    }
-    // TODO:
-    // Once we have a way to convert internal member to property we should no
-    // longer need these special case constants (eg DDVT_SECT_PTR).
-    else if(valueType == DDVT_SECT_PTR || valueType == DDVT_VERT_PTR ||
-            valueType == DDVT_LINE_PTR || valueType == DDVT_SIDE_PTR ||
-            valueType == DDVT_SEG_PTR)
-    {
-        long idx = NO_INDEX;
-
-        switch(prop->size) // Number of src bytes
-        {
-        case 2:
-            if(flags & DT_UNSIGNED)
-            {
-                idx = USHORT(*((short*)(src)));
-            }
-            else
-            {
-                if(flags & DT_NOINDEX)
-                {
-                    unsigned short num = SHORT(*((short*)(src)));
-
-                    if(num != ((unsigned short)-1))
-                        idx = num;
-                }
-                else
-                {
-                    idx = SHORT(*((short*)(src)));
-                }
-            }
-            break;
-
-        case 4:
-            if(flags & DT_UNSIGNED)
-                idx = ULONG(*((long*)(src)));
-            else
-                idx = LONG(*((long*)(src)));
-            break;
-
-        default:
-            Con_Error("ReadValue: %s incompatible with value type %s.\n",
-                      valueType == DDVT_SECT_PTR? "DDVT_SECT_PTR" :
-                      valueType == DDVT_VERT_PTR? "DDVT_VERT_PTR" :
-                      valueType == DDVT_SIDE_PTR? "DDVT_SIDE_PTR" :
-                      valueType == DDVT_SEG_PTR? "DDVT_SEG_PTR" :
-                      "DDVT_LINE_PTR", value_Str(prop->size));
-        }
-
-        switch(valueType)
-        {
-        case DDVT_LINE_PTR:
-            *(line_t **) dst = DAM_IndexToPtr(map, DAM_LINE, (unsigned) idx);
-            break;
-
-        case DDVT_SIDE_PTR:
-            *(side_t **) dst = DAM_IndexToPtr(map, DAM_SIDE, (unsigned) idx);
-            break;
-
-        case DDVT_SECT_PTR:
-            *(sector_t **) dst = DAM_IndexToPtr(map, DAM_SECTOR, (unsigned) idx);
-            break;
-
-        case DDVT_SEG_PTR:
-            *(seg_t **) dst = DAM_IndexToPtr(map, DAM_SEG, (unsigned) idx);
-            break;
-
-        case DDVT_VERT_PTR:
-            // FIXME:
-            // There has to be a better way to do this...
-            idx = DAM_VertexIdx(idx);
-            // end FIXME
-            *(vertex_t **) dst = DAM_IndexToPtr(map, DAM_VERTEX, (unsigned) idx);
-            break;
-
-        default:
-            // TODO: Need to react?
-            break;
-        }
+        args->angleValues[index] = d;
     }
     else
     {
@@ -534,73 +716,345 @@ static void ReadValue(gamemap_t* map, valuetype_t valueType, void* dst,
     }
 }
 
-static int ReadCustomMapProperty(gamemap_t* map, int dataType, void *ptr,
-                                 uint elmIdx, const readprop_t* prop,
-                                 const byte *src)
+static int ReadProperty(void *context, uint elmIdx,
+                        const readprop_t* prop, const byte *src)
 {
-    byte        tmpbyte = 0;
-    short       tmpshort = 0;
-    fixed_t     tmpfixed = 0;
-    int         tmpint = 0;
-    float       tmpfloat = 0;
-    void       *dest = NULL;
+    damsetargs_t *args = (damsetargs_t*) context;
 
-    switch(prop->type)
+    // Handle unknown (game specific) properties.
+    if(args->prop >= NUM_DAM_PROPERTIES)
+    {
+        ReadValue(args->valueType, prop->size, src, args, 0, prop->flags, elmIdx);
+        return true;
+    }
+
+    // These are the exported map data properties that can be
+    // assigned to when reading map data.
+    switch(args->type)
+    {
+    case DAM_VERTEX:
+        switch(args->prop)
+        {
+        case DAM_X:
+            ReadValue(DMT_VERTEX_POS, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_Y:
+            ReadValue(DMT_VERTEX_POS, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        default:
+            Con_Error("GetProperty: DAM_VERTEX has no property %s.\n",
+                      DAM_Str(args->prop));
+        }
+        break;
+
+    case DAM_LINE:
+        switch(args->prop)
+        {
+        case DAM_VERTEX1:
+            // TODO: should be DMT_LINE_V1 but we require special case logic
+            ReadValue(DDVT_UINT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_VERTEX2:
+            // TODO: should be DMT_LINE_V2 but we require special case logic
+            ReadValue(DDVT_UINT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_FLAGS:
+            ReadValue(DMT_LINE_FLAGS, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_SIDE0:
+            // TODO: should be DMT_LINE_SIDES but we require special case logic
+            ReadValue(DDVT_UINT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_SIDE1:
+            // TODO: should be DMT_LINE_SIDES but we require special case logic
+            ReadValue(DDVT_UINT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        default:
+            Con_Error("GetProperty: DAM_LINE has no property %s.\n",
+                      DAM_Str(args->prop));
+        }
+        break;
+
+    case DAM_SIDE:
+        switch(args->prop)
+        {
+        case DAM_TOP_TEXTURE_OFFSET_X:
+            ReadValue(DMT_SURFACE_OFFX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_TOP_TEXTURE_OFFSET_Y:
+            ReadValue(DMT_SURFACE_OFFY, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_MIDDLE_TEXTURE_OFFSET_X:
+            ReadValue(DMT_SURFACE_OFFX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_MIDDLE_TEXTURE_OFFSET_Y:
+            ReadValue(DMT_SURFACE_OFFY, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BOTTOM_TEXTURE_OFFSET_X:
+            ReadValue(DMT_SURFACE_OFFX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BOTTOM_TEXTURE_OFFSET_Y:
+            ReadValue(DMT_SURFACE_OFFY, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_TOP_TEXTURE:
+            ReadValue(DMT_SURFACE_TEXTURE, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_MIDDLE_TEXTURE:
+            ReadValue(DMT_SURFACE_TEXTURE, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BOTTOM_TEXTURE:
+            ReadValue(DMT_SURFACE_TEXTURE, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_FRONT_SECTOR:
+            // TODO: should be DMT_SIDE_SECTOR but we require special case logic
+            ReadValue(DDVT_UINT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        default:
+            Con_Error("GetProperty: DAM_SIDE has no property %s.\n",
+                      DAM_Str(args->prop));
+        }
+        break;
+
+    case DAM_SECTOR:
+        switch(args->prop)
+        {
+        case DAM_FLOOR_HEIGHT:
+            ReadValue(DMT_PLANE_HEIGHT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_CEILING_HEIGHT:
+            ReadValue(DMT_PLANE_HEIGHT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_FLOOR_TEXTURE:
+            ReadValue(DMT_SURFACE_TEXTURE, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_CEILING_TEXTURE:
+            ReadValue(DMT_SURFACE_TEXTURE, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_LIGHT_LEVEL:
+            ReadValue(DMT_SECTOR_LIGHTLEVEL, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        default:
+            Con_Error("GetProperty: DAM_SECTOR has no property %s.\n",
+                      DAM_Str(args->prop));
+        }
+        break;
+
+    case DAM_SEG:
+        switch(args->prop)
+        {
+        case DAM_VERTEX1:
+            // TODO: should be DMT_SEG_V but we require special case logic
+            ReadValue(DDVT_UINT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_VERTEX2:
+            // TODO: should be DMT_SEG_V but we require special case logic
+            ReadValue(DDVT_UINT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_ANGLE:
+            ReadValue(DMT_SEG_ANGLE, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_LINE:
+            // TODO: should be DMT_SEG_LINEDEF but we require special case logic
+            ReadValue(DDVT_UINT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_SIDE:
+            ReadValue(DMT_SEG_SIDE, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_OFFSET:
+            ReadValue(DMT_SEG_OFFSET, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        default:
+            Con_Error("GetProperty: DAM_SEG has no property %s.\n",
+                      DAM_Str(args->prop));
+        }
+        break;
+
+    case DAM_SUBSECTOR:
+        switch(args->prop)
+        {
+        case DAM_SEG_COUNT:
+            ReadValue(DMT_SUBSECTOR_SEGCOUNT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_SEG_FIRST:
+            // TODO: should be DMT_SUBSECTOR_FIRSTSEG but we require special case logic.
+            ReadValue(DDVT_UINT, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        default:
+            Con_Error("GetProperty: DAM_SUBSECTOR has no property %s.\n",
+                      DAM_Str(args->prop));
+        }
+        break;
+
+    case DAM_NODE:
+        switch(args->prop)
+        {
+        case DAM_X:
+            ReadValue(DMT_NODE_X, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_Y:
+            ReadValue(DMT_NODE_Y, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_DX:
+            ReadValue(DMT_NODE_DX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_DY:
+            ReadValue(DMT_NODE_DY, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BBOX_RIGHT_TOP_Y:
+            ReadValue(DMT_NODE_BBOX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BBOX_RIGHT_LOW_Y:
+            ReadValue(DMT_NODE_BBOX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BBOX_RIGHT_LOW_X:
+            ReadValue(DMT_NODE_BBOX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BBOX_RIGHT_TOP_X:
+            ReadValue(DMT_NODE_BBOX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BBOX_LEFT_TOP_Y:
+            ReadValue(DMT_NODE_BBOX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BBOX_LEFT_LOW_Y:
+            ReadValue(DMT_NODE_BBOX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BBOX_LEFT_LOW_X:
+            ReadValue(DMT_NODE_BBOX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_BBOX_LEFT_TOP_X:
+            ReadValue(DMT_NODE_BBOX, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_CHILD_RIGHT:
+            ReadValue(DMT_NODE_CHILDREN, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        case DAM_CHILD_LEFT:
+            ReadValue(DMT_NODE_CHILDREN, prop->size, src, args, 0, prop->flags, elmIdx);
+            break;
+
+        default:
+            Con_Error("GetProperty: DAM_NODE has no property %s.\n",
+                      DAM_Str(args->prop));
+        }
+        break;
+
+    default:
+        Con_Error("GetProperty: Type cannot be assigned to from a map format.\n");
+    }
+
+    return true; // Continue iteration
+}
+
+static int setCustomProperty(void *ptr, void *context,
+                             gamemap_t *map, uint elmIdx)
+{
+    damsetargs_t *args = (damsetargs_t*) context;
+    void        *dest = NULL;
+
+    if(!gx.HandleMapDataProperty)
+        return false;
+
+    switch(args->valueType)
     {
     case DDVT_BYTE:
-        dest = &tmpbyte;
+        dest = &args->byteValues[0];
         break;
     case DDVT_SHORT:
-        dest = &tmpshort;
+        dest = &args->shortValues[0];
         break;
     case DDVT_FIXED:
-        dest = &tmpfixed;
+        dest = &args->fixedValues[0];
         break;
     case DDVT_INT:
-        dest = &tmpint;
+        dest = &args->intValues[0];
         break;
     case DDVT_FLOAT:
-        dest = &tmpfloat;
+        dest = &args->floatValues[0];
         break;
     default:
-        Con_Error("ReadCustomMapProperty: Unsupported data type id %s.\n",
-                  value_Str(prop->type));
+        Con_Error("SetProperty: Unsupported data type id %s.\n",
+                  value_Str(args->valueType));
     };
-
-    ReadValue(map, prop->type, dest, src, prop, elmIdx);
-    gx.HandleMapDataProperty(elmIdx, dataType, prop->id, prop->type, dest);
+    gx.HandleMapDataProperty(elmIdx, args->type, args->prop, args->valueType, dest);
 
     return true;
 }
 
-static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
-                           uint elmIdx, const readprop_t* prop, const byte *src)
+static int SetProperty(void *ptr, void *context,
+                       gamemap_t *map, uint elmIdx)
 {
+    damsetargs_t *args = (damsetargs_t*) context;
+
     // Handle unknown (game specific) properties.
-    if(prop->id >= NUM_DAM_PROPERTIES)
-        return ReadCustomMapProperty(map, dataType, ptr, elmIdx, prop, src);
+    if(args->prop >= NUM_DAM_PROPERTIES)
+    {
+        setCustomProperty(ptr, context, map, elmIdx);
+        return true;
+    }
 
     // These are the exported map data properties that can be
     // assigned to when reading map data.
-    switch(dataType)
+    switch(args->type)
     {
     case DAM_VERTEX:
         {
         vertex_t* p = ptr;
 
-        switch(prop->id)
+        switch(args->prop)
         {
         case DAM_X:
-            ReadValue(map, DMT_VERTEX_POS, &p->pos[VX], src, prop, elmIdx);
+            SetValue(DMT_VERTEX_POS, &p->pos[VX], args, 0, map);
             break;
 
         case DAM_Y:
-            ReadValue(map, DMT_VERTEX_POS, &p->pos[VY], src, prop, elmIdx);
+            SetValue(DMT_VERTEX_POS, &p->pos[VY], args, 0, map);
             break;
 
         default:
-            Con_Error("ReadMapProperty: DAM_VERTEX has no property %s.\n",
-                      DAM_Str(prop->id));
+            Con_Error("SetProperty: DAM_VERTEX has no property %s.\n",
+                      DAM_Str(args->prop));
         }
         break;
         }
@@ -608,33 +1062,31 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         {
         line_t* p = ptr;
 
-        switch(prop->id)
+        switch(args->prop)
         {
         case DAM_VERTEX1:
-            // TODO: should be DMT_LINE_V1 but we require special case logic
-            ReadValue(map, DDVT_VERT_PTR, &p->L_v1, src, prop, elmIdx);
+            SetValue(DMT_LINE_V, &p->L_v1, args, 0, map);
             break;
 
         case DAM_VERTEX2:
-            // TODO: should be DMT_LINE_V2 but we require special case logic
-            ReadValue(map, DDVT_VERT_PTR, &p->L_v2, src, prop, elmIdx);
+            SetValue(DMT_LINE_V, &p->L_v2, args, 0, map);
             break;
 
         case DAM_FLAGS:
-            ReadValue(map, DMT_LINE_FLAGS, &p->flags, src, prop, elmIdx);
+            SetValue(DMT_LINE_FLAGS, &p->flags, args, 0, map);
             break;
 
         case DAM_SIDE0:
-            ReadValue(map, DDVT_SIDE_PTR, &p->L_frontside, src, prop, elmIdx);
+            SetValue(DMT_LINE_SIDES, &p->L_frontside, args, 0, map);
             break;
 
         case DAM_SIDE1:
-            ReadValue(map, DDVT_SIDE_PTR, &p->L_backside, src, prop, elmIdx);
+            SetValue(DMT_LINE_SIDES, &p->L_backside, args, 0, map);
             break;
 
         default:
-            Con_Error("ReadMapProperty: DAM_LINE has no property %s.\n",
-                      DAM_Str(prop->id));
+            Con_Error("SetProperty: DAM_LINE has no property %s.\n",
+                      DAM_Str(args->prop));
         }
         break;
         }
@@ -642,52 +1094,51 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         {
         side_t* p = ptr;
 
-        switch(prop->id)
+        switch(args->prop)
         {
         case DAM_TOP_TEXTURE_OFFSET_X:
-            ReadValue(map, DMT_SURFACE_OFFX, &p->SW_topoffx, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_OFFX, &p->SW_topoffx, args, 0, map);
             break;
 
         case DAM_TOP_TEXTURE_OFFSET_Y:
-            ReadValue(map, DMT_SURFACE_OFFY, &p->SW_topoffy, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_OFFY, &p->SW_topoffy, args, 0, map);
             break;
 
         case DAM_MIDDLE_TEXTURE_OFFSET_X:
-            ReadValue(map, DMT_SURFACE_OFFX, &p->SW_middleoffx, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_OFFX, &p->SW_middleoffx, args, 0, map);
             break;
 
         case DAM_MIDDLE_TEXTURE_OFFSET_Y:
-            ReadValue(map, DMT_SURFACE_OFFY, &p->SW_middleoffy, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_OFFY, &p->SW_middleoffy, args, 0, map);
             break;
 
         case DAM_BOTTOM_TEXTURE_OFFSET_X:
-            ReadValue(map, DMT_SURFACE_OFFX, &p->SW_bottomoffx, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_OFFX, &p->SW_bottomoffx, args, 0, map);
             break;
 
         case DAM_BOTTOM_TEXTURE_OFFSET_Y:
-            ReadValue(map, DMT_SURFACE_OFFY, &p->SW_bottomoffy, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_OFFY, &p->SW_bottomoffy, args, 0, map);
             break;
 
         case DAM_TOP_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SW_toppic, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_TEXTURE, &p->SW_toppic, args, 0, map);
             break;
 
         case DAM_MIDDLE_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SW_middlepic, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_TEXTURE, &p->SW_middlepic, args, 0, map);
             break;
 
         case DAM_BOTTOM_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SW_bottompic, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_TEXTURE, &p->SW_bottompic, args, 0, map);
             break;
 
         case DAM_FRONT_SECTOR:
-            // TODO: should be DMT_SIDE_SECTOR but we require special case logic
-            ReadValue(map, DDVT_SECT_PTR, &p->sector, src, prop, elmIdx);
+            SetValue(DMT_SIDE_SECTOR, &p->sector, args, 0, map);
             break;
 
         default:
-            Con_Error("ReadMapProperty: DAM_SIDE has no property %s.\n",
-                      DAM_Str(prop->id));
+            Con_Error("SetProperty: DAM_SIDE has no property %s.\n",
+                      DAM_Str(args->prop));
         }
         break;
         }
@@ -695,31 +1146,31 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         {
         sector_t* p = ptr;
 
-        switch(prop->id)
+        switch(args->prop)
         {
         case DAM_FLOOR_HEIGHT:
-            ReadValue(map, DMT_PLANE_HEIGHT, &p->SP_floorheight, src, prop, elmIdx);
+            SetValue(DMT_PLANE_HEIGHT, &p->SP_floorheight, args, 0, map);
             break;
 
         case DAM_CEILING_HEIGHT:
-            ReadValue(map, DMT_PLANE_HEIGHT, &p->SP_ceilheight, src, prop, elmIdx);
+            SetValue(DMT_PLANE_HEIGHT, &p->SP_ceilheight, args, 0, map);
             break;
 
         case DAM_FLOOR_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SP_floorpic, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_TEXTURE, &p->SP_floorpic, args, 0, map);
             break;
 
         case DAM_CEILING_TEXTURE:
-            ReadValue(map, DMT_SURFACE_TEXTURE, &p->SP_ceilpic, src, prop, elmIdx);
+            SetValue(DMT_SURFACE_TEXTURE, &p->SP_ceilpic, args, 0, map);
             break;
 
         case DAM_LIGHT_LEVEL:
-            ReadValue(map, DMT_SECTOR_LIGHTLEVEL, &p->lightlevel, src, prop, elmIdx);
+            SetValue(DMT_SECTOR_LIGHTLEVEL, &p->lightlevel, args, 0, map);
             break;
 
         default:
-            Con_Error("ReadMapProperty: DAM_SECTOR has no property %s.\n",
-                      DAM_Str(prop->id));
+            Con_Error("SetProperty: DAM_SECTOR has no property %s.\n",
+                      DAM_Str(args->prop));
         }
         break;
         }
@@ -727,38 +1178,35 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         {
         seg_t* p = ptr;
 
-        switch(prop->id)
+        switch(args->prop)
         {
         case DAM_VERTEX1:
-            // TODO: should be DMT_SEG_V  but we require special case logic
-            ReadValue(map, DDVT_VERT_PTR, &p->SG_v1, src, prop, elmIdx);
+            SetValue(DMT_SEG_V, &p->SG_v1, args, 0, map);
             break;
 
         case DAM_VERTEX2:
-            // TODO: should be DMT_SEG_V  but we require special case logic
-            ReadValue(map, DDVT_VERT_PTR, &p->SG_v2, src, prop, elmIdx);
+            SetValue(DMT_SEG_V, &p->SG_v2, args, 0, map);
             break;
 
         case DAM_ANGLE:
-            ReadValue(map, DMT_SEG_ANGLE, &p->angle, src, prop, elmIdx);
+            SetValue(DMT_SEG_ANGLE, &p->angle, args, 0, map);
             break;
 
         case DAM_LINE:
-            // KLUDGE: Set the data type implicitly as DAM_LINE is DDVT_PTR
-            ReadValue(map, DDVT_LINE_PTR, &p->linedef, src, prop, elmIdx);
+            SetValue(DMT_SEG_LINEDEF, &p->linedef, args, 0, map);
             break;
 
         case DAM_SIDE:
-            ReadValue(map, DMT_SEG_SIDE, &p->side, src, prop, elmIdx);
+            SetValue(DMT_SEG_SIDE, &p->side, args, 0, map);
             break;
 
         case DAM_OFFSET:
-            ReadValue(map, DMT_SEG_OFFSET, &p->offset, src, prop, elmIdx);
+            SetValue(DMT_SEG_OFFSET, &p->offset, args, 0, map);
             break;
 
         default:
-            Con_Error("ReadMapProperty: DAM_SEG has no property %s.\n",
-                      DAM_Str(prop->id));
+            Con_Error("SetProperty: DAM_SEG has no property %s.\n",
+                      DAM_Str(args->prop));
         }
         break;
         }
@@ -766,20 +1214,19 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         {
         subsector_t* p = ptr;
 
-        switch(prop->id)
+        switch(args->prop)
         {
         case DAM_SEG_COUNT:
-            ReadValue(map, DMT_SUBSECTOR_SEGCOUNT, &p->segcount, src, prop, elmIdx);
+            SetValue(DMT_SUBSECTOR_SEGCOUNT, &p->segcount, args, 0, map);
             break;
 
         case DAM_SEG_FIRST:
-            // TODO: should be DMT_SUBSECTOR_FIRSTSEG  but we require special case logic.
-            ReadValue(map, DDVT_SEG_PTR, &p->firstseg, src, prop, elmIdx);
+            SetValue(DMT_SUBSECTOR_FIRSTSEG, &p->firstseg, args, 0, map);
             break;
 
         default:
-            Con_Error("ReadMapProperty: DAM_SUBSECTOR has no property %s.\n",
-                      DAM_Str(prop->id));
+            Con_Error("SetProperty: DAM_SUBSECTOR has no property %s.\n",
+                      DAM_Str(args->prop));
         }
         break;
         }
@@ -787,78 +1234,111 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
         {
         node_t* p = ptr;
 
-        switch(prop->id)
+        switch(args->prop)
         {
         case DAM_X:
-            ReadValue(map, DMT_NODE_X, &p->x, src, prop, elmIdx);
+            SetValue(DMT_NODE_X, &p->x, args, 0, map);
             break;
 
         case DAM_Y:
-            ReadValue(map, DMT_NODE_Y, &p->y, src, prop, elmIdx);
+            SetValue(DMT_NODE_Y, &p->y, args, 0, map);
             break;
 
         case DAM_DX:
-            ReadValue(map, DMT_NODE_DX, &p->dx, src, prop, elmIdx);
+            SetValue(DMT_NODE_DX, &p->dx, args, 0, map);
             break;
 
         case DAM_DY:
-            ReadValue(map, DMT_NODE_DY, &p->dy, src, prop, elmIdx);
+            SetValue(DMT_NODE_DY, &p->dy, args, 0, map);
             break;
 
-        // TODO: the following should use DMT_NODE_?
-        // Constants not defined as yet by the maptypes script.
         case DAM_BBOX_RIGHT_TOP_Y:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[0][0], src, prop, elmIdx);
+            SetValue(DMT_NODE_BBOX, &p->bbox[0][0], args, 0, map);
             break;
 
         case DAM_BBOX_RIGHT_LOW_Y:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[0][1], src, prop, elmIdx);
+            SetValue(DMT_NODE_BBOX, &p->bbox[0][1], args, 0, map);
             break;
 
         case DAM_BBOX_RIGHT_LOW_X:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[0][2], src, prop, elmIdx);
+            SetValue(DMT_NODE_BBOX, &p->bbox[0][2], args, 0, map);
             break;
 
         case DAM_BBOX_RIGHT_TOP_X:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[0][3], src, prop, elmIdx);
+            SetValue(DMT_NODE_BBOX, &p->bbox[0][3], args, 0, map);
             break;
 
         case DAM_BBOX_LEFT_TOP_Y:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[1][0], src, prop, elmIdx);
+            SetValue(DMT_NODE_BBOX, &p->bbox[1][0], args, 0, map);
             break;
 
         case DAM_BBOX_LEFT_LOW_Y:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[1][1], src, prop, elmIdx);
+            SetValue(DMT_NODE_BBOX, &p->bbox[1][1], args, 0, map);
             break;
 
         case DAM_BBOX_LEFT_LOW_X:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[1][2], src, prop, elmIdx);
+            SetValue(DMT_NODE_BBOX, &p->bbox[1][2], args, 0, map);
             break;
 
         case DAM_BBOX_LEFT_TOP_X:
-            ReadValue(map, DDVT_FLOAT, &p->bbox[1][3], src, prop, elmIdx);
+            SetValue(DMT_NODE_BBOX, &p->bbox[1][3], args, 0, map);
             break;
 
         case DAM_CHILD_RIGHT:
-            ReadValue(map, DDVT_UINT, &p->children[0], src, prop, elmIdx);
+            SetValue(DMT_NODE_CHILDREN, &p->children[0], args, 0, map);
             break;
 
         case DAM_CHILD_LEFT:
-            ReadValue(map, DDVT_UINT, &p->children[1], src, prop, elmIdx);
+            SetValue(DMT_NODE_CHILDREN, &p->children[1], args, 0, map);
             break;
 
         default:
-            Con_Error("ReadMapProperty: DAM_NODE has no property %s.\n",
-                      DAM_Str(prop->id));
+            Con_Error("SetProperty: DAM_NODE has no property %s.\n",
+                      DAM_Str(args->prop));
         }
         break;
         }
     default:
-        Con_Error("ReadMapProperty: Type cannot be assigned to from a map format.\n");
+        Con_Error("SetProperty: Type cannot be assigned to from a map format.\n");
     }
 
     return true; // Continue iteration
 }
+
+static int ReadMapProperty(void *ptr, int dataType, gamemap_t *map,
+                           uint elmIdx, const readprop_t* prop, const byte *src)
+{
+    damsetargs_t args;
+    angle_t     tmpangle;
+    boolean     tmpboolean;
+    byte        tmpbyte;
+    fixed_t     tmpfixed;
+    float       tmpfloat;
+    short       tmpshort;
+    int         tmpint;
+    uint        tmpuint;
+    unsigned long tmpulong;
+    void       *tmpptr;
+
+    initArgs(&args, dataType, prop->id);
+    args.valueType = prop->valueType;
+    args.angleValues = &tmpangle;
+    args.booleanValues = &tmpboolean;
+    args.byteValues = &tmpbyte;
+    args.fixedValues = &tmpfixed;
+    args.floatValues = &tmpfloat;
+    args.shortValues = &tmpshort;
+    args.intValues = &tmpint;
+    args.uintValues = &tmpuint;
+    args.ulongValues = &tmpulong;
+    args.ptrValues = &tmpptr;
+
+    ReadProperty(&args, elmIdx, prop, src);
+    SetProperty(ptr, &args, map, elmIdx);
+
+    return true; // Continue iteration.
+}
+
 
 /*
  * Make multiple calls to a callback function on a selection of archived
@@ -894,15 +1374,15 @@ static int ReadMapProperty(gamemap_t* map, int dataType, void* ptr,
  */
 static int P_CallbackEX(int dataType, uint startIndex, const byte *buffer,
                         void* context,
-                        int (*callback)(gamemap_t* map, int dataType,
-                                 void* ptr, uint elmIdx, const readprop_t* prop,
+                        int (*callback)(void *ptr, int dataType,
+                                 gamemap_t* map, uint elmIdx, const readprop_t* prop,
                                  const byte *buffer))
 {
 #define NUMBLOCKS 8
 #define BLOCK ptr = dataType == DAM_THING? &idx : DAM_IndexToPtr(map, dataType, idx);  \
         for(prop = &args->props[k = 0]; k < args->numProps; prop = &args->props[++k]) \
         { \
-            if(!callback(map, dataType, ptr, idx, prop, buffer + prop->offset)) \
+            if(!callback(ptr, dataType, map, idx, prop, buffer + prop->offset)) \
                 return false; \
         } \
         buffer += args->elmsize; \
@@ -910,7 +1390,7 @@ static int P_CallbackEX(int dataType, uint startIndex, const byte *buffer,
 
     uint        idx;
     uint        i = 0, k;
-    damargs_t  *args = (damargs_t*) context;
+    damlumpreadargs_t  *args = (damlumpreadargs_t*) context;
     gamemap_t *map = args->map;
     uint        blockLimit = (args->elements / NUMBLOCKS) * NUMBLOCKS;
     void       *ptr;
@@ -945,7 +1425,7 @@ static int P_CallbackEX(int dataType, uint startIndex, const byte *buffer,
             ptr = dataType == DAM_THING? &idx : DAM_IndexToPtr(map, dataType, idx);
             for(prop = &args->props[k = 0]; k < args->numProps; prop = &args->props[++k])
             {
-                if(!callback(map, dataType, ptr, idx, prop, buffer + prop->offset))
+                if(!callback(ptr, dataType, map, idx, prop, buffer + prop->offset))
                     return false;
             }
         }

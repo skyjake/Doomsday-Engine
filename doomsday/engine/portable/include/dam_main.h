@@ -134,7 +134,7 @@ typedef struct {
 
 typedef struct {
     uint        id;
-    int         type;
+    int         valueType;
 } selectprop_t;
 
 extern int      bspBuild;

@@ -1425,7 +1425,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             for(i = 0; i < 2; ++i)
             {
                 line = R_GetShadowNeighbor(shadow, i == 0, false);
-                if(line->L_backsector)
+                if(line && line->L_backsector)
                 {
                     side = (line->L_frontsector != shadowSec);
                     front = line->sec[side];

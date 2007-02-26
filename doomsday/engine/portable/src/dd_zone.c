@@ -362,6 +362,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
 
         // If there is a free block behind the rover, back up over them.
         base = volume->zone->rover;
+        assert(base->prev);
         if(!base->prev->user)
             base = base->prev;
 
