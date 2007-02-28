@@ -1075,8 +1075,9 @@ static int SetProperty2(void *ptr, void *context)
     return true; // Continue iteration
 }
 
-int DAM_SetProperty(int type, uint index, void *context)
+int DAM_SetProperty(int type, uint idx, void *context)
 {
+    uint        index = idx;
     damsetargs_t *args = (damsetargs_t*) context;
     void       *ptr = (type == DAM_THING? &index :
                        DAM_IndexToPtr(args->map, type, index));
