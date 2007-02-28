@@ -75,11 +75,9 @@ void *DAM_IndexToPtr(gamemap_t *map, int objectType, uint id);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int ReadAndSetProperties(int dataType, unsigned int startIndex,
-                                const byte *buffer, void* context,
-                                int (*callback)(void* p, void* ctx));
-
-int SetProperty(void *ptr, void *context);
+static int ReadAndCallback(int dataType, unsigned int startIndex,
+                           const byte *buffer, void* context,
+                           int (*callback)(int type, uint index, void* ctx));
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -104,7 +102,8 @@ static void initArgs(damsetargs_t* args, int type, uint prop)
 
 boolean DAM_ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
                                 uint startIndex, readprop_t *props,
-                                uint numProps)
+                                uint numProps,
+                                int (*callback)(int type, uint index, void* context))
 {
     int         type = DAM_MapLumpInfoForLumpClass(mapLump->lumpClass)->dataType;
     damlumpreadargs_t   args;
@@ -140,9 +139,9 @@ boolean DAM_ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
     // Read in that data!
     // NOTE: We'll leave the lump cached, our caller probably knows better
     // than us whether it should be free'd.
-    return ReadAndSetProperties(type, startIndex,
-                                (mapLump->lumpp + mapLump->startOffset),
-                                &args, SetProperty);
+    return ReadAndCallback(type, startIndex,
+                           (mapLump->lumpp + mapLump->startOffset),
+                           &args, callback);
 }
 
 /**
@@ -754,12 +753,12 @@ static void ReadValue(valuetype_t valueType, size_t size, const byte *src,
     }
     else
     {
-        Con_Error("ReadValue: unknown value type %s.\n", value_Str(valueType));
+        Con_Error("ReadValue: unknown value type %s.\n",
+                  value_Str(valueType));
     }
 }
 
-static int setCustomProperty(void *ptr, void *context,
-                             uint elmIdx)
+static int setCustomProperty(void *ptr, void *context)
 {
     damsetargs_t *args = (damsetargs_t*) context;
     void        *dest = NULL;
@@ -788,19 +787,20 @@ static int setCustomProperty(void *ptr, void *context,
         Con_Error("SetProperty: Unsupported data type id %s.\n",
                   value_Str(args->valueType));
     };
-    gx.HandleMapDataProperty(elmIdx, args->type, args->prop, args->valueType, dest);
+    gx.HandleMapDataProperty(args->elmIdx, args->type, args->prop,
+                             args->valueType, dest);
 
     return true;
 }
 
-int SetProperty(void *ptr, void *context)
+static int SetProperty2(void *ptr, void *context)
 {
     damsetargs_t *args = (damsetargs_t*) context;
 
     // Handle unknown (game specific) properties.
     if(args->prop >= NUM_DAM_PROPERTIES)
     {
-        setCustomProperty(ptr, context, args->elmIdx);
+        setCustomProperty(ptr, context);
         return true; // Continue iteration.
     }
 
@@ -1075,14 +1075,23 @@ int SetProperty(void *ptr, void *context)
     return true; // Continue iteration
 }
 
-static int ReadAndSetProperties(int dataType, uint startIndex,
-                                const byte *buffer, void *context,
-                                int (*callback)(void* p, void* ctx))
+int DAM_SetProperty(int type, uint index, void *context)
+{
+    damsetargs_t *args = (damsetargs_t*) context;
+    void       *ptr = (type == DAM_THING? &index :
+                       DAM_IndexToPtr(args->map, type, index));
+
+    // TODO: Use DMU's SetProperty for this, save code duplication.
+    return SetProperty2(ptr, context);
+}
+
+static int ReadAndCallback(int dataType, uint startIndex,
+                           const byte *buffer, void *context,
+                           int (*callback)(int type, uint index, void* ctx))
 {
     uint        idx;
     uint        i, k;
     damlumpreadargs_t  *largs = (damlumpreadargs_t*) context;
-    void       *ptr;
     const readprop_t *prop;
 
     damsetargs_t args;
@@ -1100,8 +1109,6 @@ static int ReadAndSetProperties(int dataType, uint startIndex,
 
     for(i = 0, idx = startIndex + i; i < largs->elements; ++i)
     {
-        ptr = (dataType == DAM_THING? &idx :
-                  DAM_IndexToPtr(largs->map, dataType, idx));
         for(prop = &largs->props[k = 0]; k < largs->numProps;
             prop = &largs->props[++k])
         {
@@ -1126,7 +1133,7 @@ static int ReadAndSetProperties(int dataType, uint startIndex,
             // in a damsetargs_t
             ReadValue(args.valueType, prop->size, buffer + prop->offset,
                       &args, 0, prop->flags);
-            if(!callback(ptr, &args))
+            if(!callback(dataType, idx, &args))
                 return false;
         }
         buffer += largs->elmsize;

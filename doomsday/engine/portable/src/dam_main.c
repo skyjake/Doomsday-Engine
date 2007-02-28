@@ -138,7 +138,8 @@ typedef struct mapdatalumpnode_s {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static boolean  readMapData(gamemap_t *map, int doClass, selectprop_t *props,
-                            uint numProps);
+                            uint numProps,
+                            int (*callback)(int type, uint index, void* ctx));
 static boolean  determineMapDataFormat(void);
 
 static void     finishLineDefs(gamemap_t *map);
@@ -1501,12 +1502,15 @@ long DAM_VertexIdx(long idx)
  * @param props         Ptr to array of properties to be read (internal DAM
  *                      property identifiers e.g. DAM_FLOOR_HEIGHT).
  * @param numProps      Number of properties in @param props.
+ * @param callback      Function to be called with the read data for each
+ *                      element specified.
  *
- * @return: boolean     (True) All the lumps of the requested class
- *                      were processed successfully.
+ * @return:             If <code>true</code> all lumps of the requested
+ *                      class were processed successfully.
  */
-boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
-                    uint numProps)
+static boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
+                           uint numProps,
+                           int (*callback)(int type, uint index, void* ctx))
 {
     uint        oldNum = 0;
     mapdatalumpnode_t *node;
@@ -1551,7 +1555,7 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
             // Is this a "real" lump? (ie do we have to generate the data for it?)
             if(mapLump->lumpNum != -1)
             {
-                VERBOSE(Con_Message("P_ReadMapData: Processing \"%s\" (#%d) ver %s...\n",
+                VERBOSE(Con_Message("readMapData: Processing \"%s\" (#%d) ver %s...\n",
                                     W_CacheLumpNum(mapLump->lumpNum, PU_GETNAME),
                                     mapLump->elements,
                                     (lumpFormat->formatName? lumpFormat->formatName :"Unknown")));
@@ -1559,7 +1563,7 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
             else
             {
                 // Not a problem, we'll generate useable data automatically.
-                VERBOSE(Con_Message("P_ReadMapData: Generating \"%s\"\n",
+                VERBOSE(Con_Message("readMapData: Generating \"%s\"\n",
                                     lumpInfo->lumpname));
             }
 
@@ -1677,14 +1681,15 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
 
                 if(readNumProps > 0)
                     if(!DAM_ReadMapDataFromLump(map, mapLump, startIndex, readProps,
-                                                readNumProps))
+                                                readNumProps,
+                                                callback))
                     {
                         M_Free(readProps);
                         return false; // something went VERY horibly wrong...
                     }
             }
             // How much time did we spend?
-            VERBOSE2(Con_Message("P_ReadMapData: Done in %.4f seconds.\n",
+            VERBOSE2(Con_Message("readMapData: Done in %.4f seconds.\n",
                                  (Sys_GetRealTime() - startTime) / 1000.0f));
 
             oldNum += mapLump->elements;
@@ -1706,7 +1711,8 @@ boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
 }
 
 static boolean P_ReadMapData(gamemap_t* map, int doClass, selectprop_t *props,
-                             uint numProps)
+                             uint numProps,
+                             int (*callback)(int type, uint index, void* ctx))
 {
     // Cant load GL NODE data if we don't have it.
     if((!glNodeData || (glNodeData && !bspBuild)) &&
@@ -1716,7 +1722,7 @@ static boolean P_ReadMapData(gamemap_t* map, int doClass, selectprop_t *props,
         // point in the map loading process (at the start).
         return true;
 
-    if(!readMapData(map, doClass, props, numProps))
+    if(!readMapData(map, doClass, props, numProps, callback))
     {
         FreeMapDataLumps();
         FreeGLBSPInf();
@@ -2222,7 +2228,8 @@ static uint unpackSideDefs(gamemap_t *map)
     return newCount;
 }
 
-static boolean readAllTypeProperties(gamemap_t *map, int type)
+static boolean readAllTypeProperties(gamemap_t *map, int type,
+                                     int (*callback)(int type, uint index, void* ctx))
 {
     uint        i, pcount;
     boolean     result = true;
@@ -2239,7 +2246,8 @@ static boolean readAllTypeProperties(gamemap_t *map, int type)
             mapLmpInf = &mapLumpInfo[i];
             if(mapLmpInf->dataType == type)
                 result =
-                    P_ReadMapData(map, mapLmpInf->lumpclass, list, pcount);
+                    P_ReadMapData(map, mapLmpInf->lumpclass, list, pcount,
+                                  callback);
 
             i++;
         }
@@ -2257,8 +2265,8 @@ static boolean loadMapData(gamemap_t *map)
     // NOTE:
     // DJS 01/10/05 - revised load order to allow for cross-referencing
     //                data during loading (detect + fix trivial errors).
-    readAllTypeProperties(map, DAM_VERTEX);
-    readAllTypeProperties(map, DAM_SECTOR);
+    readAllTypeProperties(map, DAM_VERTEX, DAM_SetProperty);
+    readAllTypeProperties(map, DAM_SECTOR, DAM_SetProperty);
     {
         // Sidedefs (read all properties except textures).
         uint        ccount;
@@ -2286,13 +2294,14 @@ static boolean loadMapData(gamemap_t *map)
             M_Free(cprops);
         }
 
-        result = P_ReadMapData(map, LCM_SIDEDEFS, list, pcount);
+        result = P_ReadMapData(map, LCM_SIDEDEFS, list, pcount,
+                               DAM_SetProperty);
         if(freeList)
             M_Free(list);
         if(!result)
             return false;
     }
-    readAllTypeProperties(map, DAM_LINE);
+    readAllTypeProperties(map, DAM_LINE, DAM_SetProperty);
     {
         /* Sidedefs (read just textures).
          * MUST be called after Linedefs are loaded.
@@ -2309,11 +2318,11 @@ static boolean loadMapData(gamemap_t *map)
             {DAM_MIDDLE_TEXTURE, DMT_SURFACE_TEXTURE},
             {DAM_BOTTOM_TEXTURE, DMT_SURFACE_TEXTURE}
         };
-        if(!P_ReadMapData(map, LCM_SIDEDEFS, &(*props), 3))
+        if(!P_ReadMapData(map, LCM_SIDEDEFS, &(*props), 3, DAM_SetProperty))
             return false;
     }
-    readAllTypeProperties(map, DAM_THING);
-    readAllTypeProperties(map, DAM_SEG);
+    readAllTypeProperties(map, DAM_THING, DAM_SetProperty);
+    readAllTypeProperties(map, DAM_SEG, DAM_SetProperty);
 
     for(i = 0; i < map->numsegs; ++i)
     {
@@ -2325,12 +2334,12 @@ static boolean loadMapData(gamemap_t *map)
     finishLineDefs(map);
     processSegs(map);
 
-    readAllTypeProperties(map, DAM_SUBSECTOR);
-    readAllTypeProperties(map, DAM_NODE);
+    readAllTypeProperties(map, DAM_SUBSECTOR, DAM_SetProperty);
+    readAllTypeProperties(map, DAM_NODE, DAM_SetProperty);
 
-    if(!P_ReadMapData(map, LCM_BLOCKMAP, NULL, 0))
+    if(!P_ReadMapData(map, LCM_BLOCKMAP, NULL, 0, NULL))
         return false;
-    if(!P_ReadMapData(map, LCM_REJECT, NULL, 0))
+    if(!P_ReadMapData(map, LCM_REJECT, NULL, 0, NULL))
         return false;
 
     return true;

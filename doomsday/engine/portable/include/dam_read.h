@@ -53,5 +53,7 @@ typedef struct {
 
 boolean DAM_ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
                                 uint startIndex, readprop_t *props,
-                                uint numProps);
+                                uint numProps,
+                                int (*callback)(int type, uint index, void* ctx));
+int DAM_SetProperty(int type, uint index, void *context);
 #endif
