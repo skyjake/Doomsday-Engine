@@ -51,7 +51,6 @@ typedef struct setargs_s {
     gamemap_t  *map;
     int         type;
     uint        prop;
-    uint        elmIdx;
 
     valuetype_t valueType;
     boolean    *booleanValues;
@@ -411,8 +410,9 @@ static void SetValue(valuetype_t valueType, void* dst, damsetargs_t* args,
  * Does some basic type checking so that incompatible types are not
  * assigned. Simple conversions are also done, e.g., float to fixed.
  */
-static void ReadValue(valuetype_t valueType, size_t size, const byte *src,
-                      damsetargs_t *args, uint index, int flags)
+static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
+                      const byte *src, damsetargs_t *args, uint index,
+                      int flags)
 {
     if(valueType == DDVT_BYTE)
     {
@@ -500,12 +500,12 @@ static void ReadValue(valuetype_t valueType, size_t size, const byte *src,
             if(flags & DT_TEXTURE)
             {
                 d = P_CheckTexture((char*)((long long*)(src)), false, valueType,
-                                   args->elmIdx, args->prop);
+                                   elmIdx, args->prop);
             }
             else if(flags & DT_FLAT)
             {
                 d = P_CheckTexture((char*)((long long*)(src)), true, valueType,
-                                   args->elmIdx, args->prop);
+                                   elmIdx, args->prop);
             }
             break;
             }
@@ -758,51 +758,9 @@ static void ReadValue(valuetype_t valueType, size_t size, const byte *src,
     }
 }
 
-static int setCustomProperty(void *ptr, void *context)
-{
-    damsetargs_t *args = (damsetargs_t*) context;
-    void        *dest = NULL;
-
-    if(!gx.HandleMapDataProperty)
-        return false;
-
-    switch(args->valueType)
-    {
-    case DDVT_BYTE:
-        dest = &args->byteValues[0];
-        break;
-    case DDVT_SHORT:
-        dest = &args->shortValues[0];
-        break;
-    case DDVT_FIXED:
-        dest = &args->fixedValues[0];
-        break;
-    case DDVT_INT:
-        dest = &args->intValues[0];
-        break;
-    case DDVT_FLOAT:
-        dest = &args->floatValues[0];
-        break;
-    default:
-        Con_Error("SetProperty: Unsupported data type id %s.\n",
-                  value_Str(args->valueType));
-    };
-    gx.HandleMapDataProperty(args->elmIdx, args->type, args->prop,
-                             args->valueType, dest);
-
-    return true;
-}
-
 static int SetProperty2(void *ptr, void *context)
 {
     damsetargs_t *args = (damsetargs_t*) context;
-
-    // Handle unknown (game specific) properties.
-    if(args->prop >= NUM_DAM_PROPERTIES)
-    {
-        setCustomProperty(ptr, context);
-        return true; // Continue iteration.
-    }
 
     // These are the exported map data properties that can be
     // assigned to when reading map data.
@@ -1079,11 +1037,47 @@ int DAM_SetProperty(int type, uint idx, void *context)
 {
     uint        index = idx;
     damsetargs_t *args = (damsetargs_t*) context;
-    void       *ptr = (type == DAM_THING? &index :
-                       DAM_IndexToPtr(args->map, type, index));
 
-    // TODO: Use DMU's SetProperty for this, save code duplication.
-    return SetProperty2(ptr, context);
+    // Handle unknown (game specific) properties.
+    if(args->prop >= NUM_DAM_PROPERTIES)
+    {
+        void        *data = NULL;
+
+        if(!gx.HandleMapDataProperty)
+            return true; // Continue iteration.
+
+        switch(args->valueType)
+        {
+        case DDVT_BYTE:
+            data = &args->byteValues[0];
+            break;
+        case DDVT_SHORT:
+            data = &args->shortValues[0];
+            break;
+        case DDVT_FIXED:
+            data = &args->fixedValues[0];
+            break;
+        case DDVT_INT:
+            data = &args->intValues[0];
+            break;
+        case DDVT_FLOAT:
+            data = &args->floatValues[0];
+            break;
+        default:
+            Con_Error("SetProperty: Unsupported data type id %s.\n",
+                      value_Str(args->valueType));
+        };
+        gx.HandleMapDataProperty(index, args->type, args->prop,
+                                 args->valueType, data);
+        return true; // Continue iteration.
+    }
+    else
+    {
+        void       *ptr = (type == DAM_THING? &index :
+                           DAM_IndexToPtr(args->map, type, index));
+        // TODO: Use DMU's SetProperty for this, save code duplication.
+        return SetProperty2(ptr, context);
+    }
 }
 
 static int ReadAndCallback(int dataType, uint startIndex,
@@ -1116,7 +1110,6 @@ static int ReadAndCallback(int dataType, uint startIndex,
             initArgs(&args, dataType, prop->id);
             args.map = largs->map;
             args.valueType = prop->valueType;
-            args.elmIdx = idx;
 
             args.angleValues = &tmpangle;
             args.booleanValues = &tmpboolean;
@@ -1132,8 +1125,8 @@ static int ReadAndCallback(int dataType, uint startIndex,
 
             // Read the value(s) from the src buffer and insert into them
             // in a damsetargs_t
-            ReadValue(args.valueType, prop->size, buffer + prop->offset,
-                      &args, 0, prop->flags);
+            ReadValue(prop->valueType, idx, prop->size,
+                      buffer + prop->offset, &args, 0, prop->flags);
             if(!callback(dataType, idx, &args))
                 return false;
         }
