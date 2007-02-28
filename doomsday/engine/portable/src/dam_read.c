@@ -60,6 +60,7 @@ typedef struct setargs_s {
     int        *intValues;
     uint       *uintValues;
     fixed_t    *fixedValues;
+    long       *longValues;
     unsigned long *ulongValues;
     float      *floatValues;
     angle_t    *angleValues;
@@ -75,7 +76,10 @@ void *DAM_IndexToPtr(gamemap_t *map, int objectType, uint id);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int ReadAndSetProperties(int dataType, unsigned int startIndex,
-                                const byte *buffer, void* context);
+                                const byte *buffer, void* context,
+                                int (*callback)(void* p, void* ctx));
+
+int SetProperty(void *ptr, void *context);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -137,7 +141,8 @@ boolean DAM_ReadMapDataFromLump(gamemap_t *map, mapdatalumpinfo_t *mapLump,
     // NOTE: We'll leave the lump cached, our caller probably knows better
     // than us whether it should be free'd.
     return ReadAndSetProperties(type, startIndex,
-                        (mapLump->lumpp + mapLump->startOffset), &args);
+                                (mapLump->lumpp + mapLump->startOffset),
+                                &args, SetProperty);
 }
 
 /**
@@ -365,26 +370,26 @@ static void SetValue(valuetype_t valueType, void* dst, damsetargs_t* args,
         switch(args->valueType)
         {
         case DDVT_SECT_IDX:
-            *(sector_t **) dst = DAM_IndexToPtr(args->map, DAM_SECTOR, args->uintValues[index]);
+            *(sector_t **) dst = DAM_IndexToPtr(args->map, DAM_SECTOR, (unsigned) args->longValues[index]);
             break;
         case DDVT_VERT_IDX:
             {
-            uint         value;
+            long        value;
             // FIXME:
             // There has to be a better way to do this...
-            value = DAM_VertexIdx(args->uintValues[index]);
+            value = DAM_VertexIdx(args->longValues[index]);
             // end FIXME
-            *(vertex_t **) dst = DAM_IndexToPtr(args->map, DAM_VERTEX, value);
+            *(vertex_t **) dst = DAM_IndexToPtr(args->map, DAM_VERTEX, (unsigned) value);
             }
             break;
         case DDVT_LINE_IDX:
-            *(line_t **) dst = DAM_IndexToPtr(args->map, DAM_LINE, args->uintValues[index]);
+            *(line_t **) dst = DAM_IndexToPtr(args->map, DAM_LINE, (unsigned) args->longValues[index]);
             break;
         case DDVT_SIDE_IDX:
-            *(side_t **) dst = DAM_IndexToPtr(args->map, DAM_SIDE, args->uintValues[index]);
+            *(side_t **) dst = DAM_IndexToPtr(args->map, DAM_SIDE, (unsigned) args->longValues[index]);
             break;
         case DDVT_SEG_IDX:
-            *(seg_t **) dst = DAM_IndexToPtr(args->map, DAM_SEG, args->uintValues[index]);
+            *(seg_t **) dst = DAM_IndexToPtr(args->map, DAM_SEG, (unsigned) args->longValues[index]);
             break;
         case DDVT_PTR:
             *d = args->ptrValues[index];
@@ -582,10 +587,7 @@ static void ReadValue(valuetype_t valueType, size_t size, const byte *src,
         }
         args->ulongValues[index] = d;
     }
-    else if(valueType == DDVT_UINT ||
-            valueType == DDVT_VERT_IDX || valueType == DDVT_LINE_IDX ||
-            valueType == DDVT_SIDE_IDX || valueType == DDVT_SECT_IDX ||
-            valueType == DDVT_SEG_IDX)
+    else if(valueType == DDVT_UINT)
     {
         unsigned int    d;
 
@@ -637,6 +639,48 @@ static void ReadValue(valuetype_t valueType, size_t size, const byte *src,
                       size);
         }
         args->uintValues[index] = d;
+    }
+    else if(valueType == DDVT_VERT_IDX || valueType == DDVT_LINE_IDX ||
+            valueType == DDVT_SIDE_IDX || valueType == DDVT_SECT_IDX ||
+            valueType == DDVT_SEG_IDX)
+    {
+        long d = NO_INDEX;
+
+        switch(size) // Number of src bytes
+        {
+        case 2:
+            if(flags & DT_UNSIGNED)
+            {
+                d = USHORT(*((short*)(src)));
+            }
+            else
+            {
+                if(flags & DT_NOINDEX)
+                {
+                    unsigned short num = SHORT(*((short*)(src)));
+
+                    if(num != ((unsigned short)-1))
+                        d = num;
+                }
+                else
+                {
+                    d = SHORT(*((short*)(src)));
+                }
+            }
+            break;
+
+        case 4:
+            if(flags & DT_UNSIGNED)
+                d = ULONG(*((long*)(src)));
+            else
+                d = LONG(*((long*)(src)));
+            break;
+
+        default:
+            Con_Error("ReadValue: %s no conversion from %i bytes.\n",
+                      value_Str(valueType), size);
+        }
+        args->longValues[index] = d;
     }
     else if(valueType == DDVT_INT)
     {
@@ -749,7 +793,7 @@ static int setCustomProperty(void *ptr, void *context,
     return true;
 }
 
-static int SetProperty(void *ptr, void *context)
+int SetProperty(void *ptr, void *context)
 {
     damsetargs_t *args = (damsetargs_t*) context;
 
@@ -1032,7 +1076,8 @@ static int SetProperty(void *ptr, void *context)
 }
 
 static int ReadAndSetProperties(int dataType, uint startIndex,
-                                const byte *buffer, void *context)
+                                const byte *buffer, void *context,
+                                int (*callback)(void* p, void* ctx))
 {
     uint        idx;
     uint        i, k;
@@ -1049,6 +1094,7 @@ static int ReadAndSetProperties(int dataType, uint startIndex,
     short       tmpshort;
     int         tmpint;
     uint        tmpuint;
+    long        tmplong;
     unsigned long tmpulong;
     void       *tmpptr;
 
@@ -1072,6 +1118,7 @@ static int ReadAndSetProperties(int dataType, uint startIndex,
             args.shortValues = &tmpshort;
             args.intValues = &tmpint;
             args.uintValues = &tmpuint;
+            args.longValues = &tmplong;
             args.ulongValues = &tmpulong;
             args.ptrValues = &tmpptr;
 
@@ -1079,7 +1126,7 @@ static int ReadAndSetProperties(int dataType, uint startIndex,
             // in a damsetargs_t
             ReadValue(args.valueType, prop->size, buffer + prop->offset,
                       &args, 0, prop->flags);
-            if(!SetProperty(ptr, &args))
+            if(!callback(ptr, &args))
                 return false;
         }
         buffer += largs->elmsize;

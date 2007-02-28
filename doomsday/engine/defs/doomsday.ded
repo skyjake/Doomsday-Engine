@@ -594,13 +594,13 @@ LumpFormat {
     }
     Property {
         ID = "childright";
-        Flags = msbconvert;
+        Flags = unsigned | msbconvert;
         Size = 2;
         Offset = 24;
     }
     Property {
         ID = "childleft";
-        Flags = msbconvert;
+        Flags = unsigned | msbconvert;
         Size = 2;
         Offset = 26;
     }

@@ -119,6 +119,7 @@ extern          "C" {
         DDVT_FIXED,
         DDVT_ANGLE,
         DDVT_FLOAT,
+        DDVT_LONG,
         DDVT_ULONG,
         DDVT_PTR,
         DDVT_FLAT_INDEX,

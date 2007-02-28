@@ -158,6 +158,7 @@ const char* value_Str(int val)
         { DDVT_FIXED, "DDVT_FIXED" },
         { DDVT_ANGLE, "DDVT_ANGLE" },
         { DDVT_FLOAT, "DDVT_FLOAT" },
+        { DDVT_LONG, "DDVT_LONG" },
         { DDVT_ULONG, "DDVT_ULONG" },
         { DDVT_PTR, "DDVT_PTR" },
         { DDVT_FLAT_INDEX, "DDVT_FLAT_INDEX" },
