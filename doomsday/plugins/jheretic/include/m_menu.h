@@ -83,6 +83,9 @@ void            M_ClearMenus(void);
 void            M_StartMessage(char *string, void *routine, boolean input);
 void            M_StopMessage(void);
 
+float           MN_MenuAlpha(void);
+boolean         MN_CurrentMenuHasBackground(void);
+
 DEFCC(CCmdMenuAction);
 DEFCC(CCmdMsgResponse);
 

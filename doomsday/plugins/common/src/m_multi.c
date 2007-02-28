@@ -131,6 +131,7 @@ menu_t  MultiplayerMenu = {
     3, MultiplayerItems,
     0, MENU_MAIN,
     hu_font_a,cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
     0, 3
 };
@@ -240,6 +241,7 @@ menu_t  GameSetupMenu = {
     0, MENU_MULTIPLAYER,
     hu_font_a,                  //1, 0, 0,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
     0, NUM_GAMESETUP_ITEMS
 };
@@ -271,7 +273,7 @@ menu_t  PlayerSetupMenu = {
     DrawPlayerSetupMenu,
     NUM_PLAYERSETUP_ITEMS, PlayerSetupItems,
     0, MENU_MULTIPLAYER,
-    hu_font_b, cfg.menuColor, LINEHEIGHT_B,
+    hu_font_b, cfg.menuColor, NULL, LINEHEIGHT_B,
     0, NUM_PLAYERSETUP_ITEMS
 };
 

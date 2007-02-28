@@ -180,7 +180,7 @@ void M_DrawWeaponMenu(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
 void M_DrawFilesMenu(void);
-void M_DrawBackground(void);
+void M_DrawBackground(menu_t *menu);
 
 void M_DrawBackgroundBox(int x, int y, int w, int h,
                          float r, float g, float b, float a,
@@ -443,6 +443,7 @@ menu_t MainDef = {
     0, MENU_NONE,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT_B,
     0, 6
 #elif __JHERETIC__
@@ -453,6 +454,7 @@ menu_t MainDef = {
     0, MENU_NONE,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT_B,
     0, 6
 #elif __JSTRIFE__
@@ -463,6 +465,7 @@ menu_t MainDef = {
     0, MENU_NONE,
     hu_font_a,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT_B + 1,
     0, 7
 #elif __DOOM64TC__
@@ -483,6 +486,7 @@ menu_t MainDef = {
     0, MENU_NONE,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT_B + 1,
     0, 7
 #endif
@@ -503,6 +507,7 @@ menu_t ClassDef = {
     0, MENU_MAIN,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT_B + 1,
     0, 3
 };
@@ -525,6 +530,7 @@ menu_t EpiDef = {
     0, MENU_MAIN,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT + 1,
     0, 3
 };
@@ -543,6 +549,7 @@ menu_t  EpiDef = {
     0, MENU_MAIN,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT + 1,
     0, 2
 };
@@ -563,6 +570,7 @@ menu_t  EpiDef = {
     0, MENU_MAIN,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT + 1,
     0, 4
 };
@@ -583,6 +591,7 @@ static menu_t FilesMenu = {
     0, MENU_MAIN,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT + 1,
     0, 2
 };
@@ -613,6 +622,7 @@ static menu_t LoadDef = {
     0, MENU_MAIN,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A + 8,
     0, NUMSAVESLOTS
 };
@@ -642,6 +652,7 @@ static menu_t SaveDef = {
     0, MENU_MAIN,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A + 8,
     0, NUMSAVESLOTS
 };
@@ -663,6 +674,7 @@ static menu_t SkillDef = {
     2, MENU_MAIN,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT,
     0, 5
 };
@@ -684,6 +696,7 @@ static menu_t SkillDef = {
     2, MENU_CLASS,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT,
     0, 5
 };
@@ -704,6 +717,7 @@ static menu_t SkillDef = {
     2, MENU_EPISODE,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT,
     0, 5
 };
@@ -725,6 +739,7 @@ static menu_t SkillDef = {
     2, MENU_EPISODE,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT,
     0, 5
 };
@@ -751,6 +766,7 @@ static menu_t OptionsDef = {
     0, MENU_MAIN,
     hu_font_a,                    //1, 0, 0,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
     0, 10
 };
@@ -787,6 +803,7 @@ static menu_t Options2Def = {
     0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
 #ifndef __JDOOM__
     0, 7
@@ -807,6 +824,7 @@ menu_t  ReadDef1 = {
     0, MENU_MAIN,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT,
     0, 1
 };
@@ -827,6 +845,7 @@ menu_t  ReadDef2 = {
     0, MENU_MAIN,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT,
     0, 1
 };
@@ -844,6 +863,7 @@ menu_t  ReadDef3 = {
     0, MENU_MAIN,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT,
     0, 1
 };
@@ -938,6 +958,7 @@ static menu_t HUDDef = {
     0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
 #if __JHEXEN__ || __JSTRIFE__
     0, 15        // 21
@@ -1002,6 +1023,7 @@ static menu_t WeaponDef = {
     0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
 #ifdef __DOOM64TC__
     0, 21
@@ -1071,6 +1093,7 @@ static menu_t GameplayDef = {
     0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
     0, 3
 };
@@ -1093,6 +1116,7 @@ static menu_t GameplayDef = {
     0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
 #if __DOOM64TC__
     0, 17
@@ -1161,6 +1185,7 @@ static menu_t ColorWidgetMnu = {
     0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
 #ifndef __JDOOM__
     0, 10
@@ -1622,6 +1647,27 @@ void M_ClearMenus(void)
 }
 
 /**
+ * @return          Current alpha level of the menu.
+ */
+float MN_MenuAlpha(void)
+{
+    return mfAlpha;
+}
+
+/**
+ * @return          <code>true</code> if the menu is active and there is
+ *                  a background for this page.
+ */
+boolean MN_CurrentMenuHasBackground(void)
+{
+    if(!menuactive)
+        return false;
+
+    return (currentMenu->background &&
+            W_CheckNumForName(currentMenu->background) != -1);
+}
+
+/**
  * Sets the view matrix up for rendering the menu
  */
 void M_SetMenuMatrix(float time)
@@ -1635,7 +1681,7 @@ void M_SetMenuMatrix(float time)
 
     // Draw menu background.
     if(mfAlpha)
-        M_DrawBackground();
+        M_DrawBackground(currentMenu);
 
     if(allowScaling)
     {
@@ -2237,11 +2283,23 @@ void M_StopMessage(void)
  * Draws a 'fancy' menu effect.
  * FIXME: A bit of a mess really...
  */
-void M_DrawBackground(void)
+static void M_DrawBackground(menu_t *menu)
 {
     int         i;
     const float xscale = 2.0f;
     const float yscale = 1.0f;
+
+    // If there is a menu background raw lump, draw it instead of the fog.
+    if(menu->background)
+    {
+        int lump = W_CheckNumForName(menu->background);
+        if(lump != -1)
+        {
+            gl.Color4f(1, 1, 1, mfAlpha);
+            GL_DrawPatch_CS(0, 0, lump);
+            return;
+        }
+    }
 
     if(cfg.menuEffects > 1)
         return;
@@ -2253,6 +2311,7 @@ void M_DrawBackground(void)
         gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
         GL_DrawRectTiled(0, 0, 320, 200, 1, 1);
         gl.Enable(DGL_TEXTURING);
+        return;
     }
 
     if(cfg.menuFog == 4)
@@ -2261,7 +2320,6 @@ void M_DrawBackground(void)
         GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, mfAlpha/2.5f);
         return;
     }
-
 
     gl.Bind(menuFogTexture);
     gl.Color3f(mfAlpha, mfAlpha, mfAlpha);

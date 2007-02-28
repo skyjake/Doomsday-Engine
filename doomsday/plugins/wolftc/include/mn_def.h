@@ -127,6 +127,7 @@ typedef struct {
     menutype_t      prevMenu;
     dpatch_t       *font;           // Font for menu items.
     float          *color;
+    char           *background;     // Background lump name for this menu (if any).
     int             itemHeight;
     // For multipage menus.
     int             firstItem, numVisItems;

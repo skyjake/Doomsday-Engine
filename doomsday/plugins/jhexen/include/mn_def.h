@@ -134,6 +134,7 @@ typedef struct {
     menutype_t      prevMenu;
     dpatch_t       *font;           // Font for menu items.
     float          *color;
+    char           *background;     // Background lump name for this menu (if any).
     int             itemHeight;
     // For multipage menus.
     int             firstItem, numVisItems;
@@ -186,6 +187,9 @@ boolean         Ed_Responder(event_t *event);
 // Called by Init
 // registers all the CCmds and CVars for the menu
 void            MN_Register(void);
+
+float           MN_MenuAlpha(void);
+boolean         MN_CurrentMenuHasBackground(void);
 
 DEFCC(CCmdMenuAction);
 DEFCC(CCmdMsgResponse);

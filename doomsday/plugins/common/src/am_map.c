@@ -2545,6 +2545,7 @@ menu_t MapDef = {
     0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
     0, 14
 };
@@ -2592,6 +2593,7 @@ menu_t MapDef = {
     0, MENU_OPTIONS,
     hu_font_a,
     cfg.menuColor2,
+    NULL,
     LINEHEIGHT_A,
 #if __JHERETIC__
     0, 17

@@ -49,7 +49,7 @@ boolean         M_Responder(event_t *ev);
 
 // Called by Init
 // registers all the CCmds and CVars for the menu
-void        MN_Register(void);
+void            MN_Register(void);
 
 // Called by main loop,
 // only used for menu (skull cursor) animation.
@@ -73,6 +73,9 @@ void            M_ClearMenus(void);
 
 void            M_StartMessage(char *string, void *routine, boolean input);
 void            M_StopMessage(void);
+
+float           MN_MenuAlpha(void);
+boolean         MN_CurrentMenuHasBackground(void);
 
 DEFCC(CCmdMenuAction);
 DEFCC(CCmdMsgResponse);

@@ -279,8 +279,9 @@ void D_Display(void)
             // a bug, but since there's an easy fix...
             break;
         }
-        if(!automapactive || !amap_fullyopen || cfg.automapBack[3] < 1
-           /*|| cfg.automapWidth < 1 || cfg.automapHeight < 1*/)
+        if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
+           (!automapactive || !amap_fullyopen || cfg.automapBack[3] < 1
+           /*|| cfg.automapWidth < 1 || cfg.automapHeight < 1*/))
         {
             // Draw the player view.
             if(IS_CLIENT)

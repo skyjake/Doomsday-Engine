@@ -217,8 +217,9 @@ void G_Drawer(void)
             break;
         }
 
-        if(!automapactive || !amap_fullyopen || cfg.automapBack[3] < 1
-           /*|| cfg.automapWidth < 1 || cfg.automapHeight < 1*/)
+        if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
+           (!automapactive || !amap_fullyopen || cfg.automapBack[3] < 1
+           /*|| cfg.automapWidth < 1 || cfg.automapHeight < 1*/))
         {
             boolean special200 = false;
 
