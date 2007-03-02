@@ -36,6 +36,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -120,8 +121,8 @@ deferred_t* GL_GetNextDeferred(void)
 
 void GL_DestroyDeferred(deferred_t* d)
 {
-    free(d->content.buffer);
-    free(d);
+    M_Free(d->content.buffer);
+    M_Free(d);
 }
 
 void GL_ReserveNames(void)
@@ -277,9 +278,9 @@ DGLuint GL_NewTexture(texturecontent_t *content)
     else
     {
         // Defer this operation. Need to make a copy.
-        deferred_t* d = calloc(sizeof(deferred_t), 1);
+        deferred_t* d = M_Calloc(sizeof(deferred_t));
         memcpy(&d->content, content, sizeof(*content));
-        d->content.buffer = malloc(content->bufferSize);
+        d->content.buffer = M_Malloc(content->bufferSize);
         memcpy(d->content.buffer, content->buffer, content->bufferSize);
 
         Sys_Lock(deferredMutex);
