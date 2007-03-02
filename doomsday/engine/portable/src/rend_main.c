@@ -655,9 +655,8 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
         flags = SUF_GLOW; // Make it stand out
     }
     else if(surface->texture == -1)
-    {   // An unknown texture, draw the "unknown" graphic.
-        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN);
-        flags = SUF_GLOW; // Make it stand out
+    {   // An unknown texture. The "unknown" graphic will be used.
+        return SUF_GLOW; // Make it stand out
     }
     else
     {
