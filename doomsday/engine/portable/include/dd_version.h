@@ -50,5 +50,6 @@
 #define DOOMSDAY_VERSION		10900 // Don't touch; see above.
 #define DOOMSDAY_RELEASE_NAME	"svn-trunk-devel"
 #define DOOMSDAY_VERSION_TEXT	"1.9."DOOMSDAY_RELEASE_NAME
+#define DOOMSDAY_PROJECTURL     "http://sourceforge.net/projects/deng/"
 
 #endif

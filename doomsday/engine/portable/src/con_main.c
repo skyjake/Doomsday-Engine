@@ -1933,7 +1933,7 @@ D_CMD(Version)
     if(gl.GetString)
         Con_Printf("%s\n", gl.GetString(DGL_VERSION));
     Con_Printf("Game DLL: %s\n", (char *) gx.GetVariable(DD_VERSION_LONG));
-    Con_Printf("http://sourceforge.net/projects/deng/\n");
+    Con_Printf("%s\n", DOOMSDAY_PROJECTURL);
     return true;
 }
 
