@@ -2304,6 +2304,13 @@ static void M_DrawBackground(menu_t *menu)
     if(cfg.menuEffects > 1)
         return;
 
+    if(cfg.menuFog == 4)
+    {
+        GL_SetNoTexture();
+        GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, mfAlpha/2.5f);
+        return;
+    }
+
     if(cfg.menuFog == 2)
     {
         gl.Disable(DGL_TEXTURING);
@@ -2311,14 +2318,6 @@ static void M_DrawBackground(menu_t *menu)
         gl.Func(DGL_BLENDING, DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
         GL_DrawRectTiled(0, 0, 320, 200, 1, 1);
         gl.Enable(DGL_TEXTURING);
-        return;
-    }
-
-    if(cfg.menuFog == 4)
-    {
-        GL_SetNoTexture();
-        GL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, mfAlpha/2.5f);
-        return;
     }
 
     gl.Bind(menuFogTexture);
