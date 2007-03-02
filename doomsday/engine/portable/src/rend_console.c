@@ -412,23 +412,23 @@ void Rend_Console(void)
     gl.LoadIdentity();
     gl.Translatef(2 * sin(funnyAng / 4), 2 * cos(funnyAng / 4), 0);
     gl.Rotatef(funnyAng * 3, 0, 0, 1);
-    GL_DrawRectTiled(0, (int) ConsoleY * gtosMulY + 4, glScreenWidth,
+    GL_DrawRectTiled(0, (int) (ConsoleY * gtosMulY + 4), glScreenWidth,
                      -glScreenHeight - 4, bgX, bgY);
     gl.MatrixMode(DGL_TEXTURE);
     gl.PopMatrix();
 
     // The border.
-    GL_DrawRect(0, (int) ConsoleY * gtosMulY + 3, glScreenWidth, 2, 0, 0, 0,
+    GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 3), glScreenWidth, 2, 0, 0, 0,
                 closeFade);
 
     // Subtle shadow.
     gl.Begin(DGL_QUADS);
     gl.Color4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
-    gl.Vertex2f(0, (int) ConsoleY * gtosMulY + 5);
-    gl.Vertex2f(glScreenWidth, (int) ConsoleY * gtosMulY + 5);
+    gl.Vertex2f(0, (int) (ConsoleY * gtosMulY + 5));
+    gl.Vertex2f(glScreenWidth, (int) (ConsoleY * gtosMulY + 5));
     gl.Color4f(0, 0, 0, 0);
-    gl.Vertex2f(glScreenWidth, (int) ConsoleY * gtosMulY + 13);
-    gl.Vertex2f(0, (int) ConsoleY * gtosMulY + 13);
+    gl.Vertex2f(glScreenWidth, (int) (ConsoleY * gtosMulY + 13));
+    gl.Vertex2f(0, (int) (ConsoleY * gtosMulY + 13));
     gl.End();
 
     gl.MatrixMode(DGL_MODELVIEW);
@@ -540,9 +540,8 @@ void Rend_Console(void)
     if(!Con_IsLocked())
     {
         gl.Disable(DGL_TEXTURING);
-        GL_DrawRect(2 + i, -textOffsetY + ((ConsoleY * gtosMulY - fontScaledY) /
-                                           Cfont.sizeY) + Cfont.height,
-                    k, -(Con_InputMode()? Cfont.height : Cfont.height/4),
+        GL_DrawRect(2 + i, (ConsoleY * gtosMulY) / Cfont.sizeY,
+                    k, -(Con_InputMode()? fontScaledY : textOffsetY),
                     CcolYellow[0], CcolYellow[1], CcolYellow[2],
                     closeFade * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
         gl.Enable(DGL_TEXTURING);
