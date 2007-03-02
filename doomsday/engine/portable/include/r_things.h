@@ -55,15 +55,15 @@ typedef struct vissprite_s {
         struct vissprite_mobj_s {
             int             patch;
             subsector_t    *subsector;
-            fixed_t         gx, gy; // for line side calculation
-            fixed_t         gz, gzt;    // global bottom / top for silhouette clipping
+            float           gx, gy; // for line side calculation
+            float           gz, gzt;    // global bottom / top for silhouette clipping
             boolean         flip;  // Flip texture?
             float           v1[2], v2[2];   // The vertices (v1 is the left one).
             int             flags; // for color translation and shadow draw
             uint            id;
             int             selector;
-            int             class; // player class (used in translation)
-            fixed_t         floorclip;
+            int             pclass; // player class (used in translation)
+            float           floorclip;
             boolean         viewaligned;    // Align to view plane.
             float           secfloor, secceil;
             boolean         hasglow;
@@ -149,7 +149,7 @@ extern vissprite_t vsprsortedhead;
 void            R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
 void            R_GetPatchInfo(int lump, spriteinfo_t *info);
 int             R_VisualRadius(struct mobj_s *mo);
-fixed_t         R_GetBobOffset(struct mobj_s *mo);
+float           R_GetBobOffset(struct mobj_s *mo);
 float           R_MovementYaw(fixed_t momx, fixed_t momy);
 float           R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz);
 void            R_ProjectSprite(struct mobj_s *thing);

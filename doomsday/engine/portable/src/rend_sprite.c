@@ -128,8 +128,8 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
     data.rgb1 = quad->vertices[0].color.rgba;
     data.rgb2 = quad->vertices[1].color.rgba;
 
-    data.viewvec.pos[VX] = FIX2FLT(spr->data.mo.gx - viewx);
-    data.viewvec.pos[VY] = FIX2FLT(spr->data.mo.gy - viewy);
+    data.viewvec.pos[VX] = spr->data.mo.gx - FIX2FLT(viewx);
+    data.viewvec.pos[VY] = spr->data.mo.gy - FIX2FLT(viewy);
 
     len = sqrt(data.viewvec.pos[VX] * data.viewvec.pos[VX] +
                data.viewvec.pos[VY] * data.viewvec.pos[VY]);
@@ -137,8 +137,8 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
     {
         data.viewvec.pos[VX] /= len;
         data.viewvec.pos[VY] /= len;
-        DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx,
-                          spr->data.mo.gy, dlMaxRad << FRACBITS,
+        DL_RadiusIterator(spr->data.mo.subsector, FLT2FIX(spr->data.mo.gx),
+                          FLT2FIX(spr->data.mo.gy), dlMaxRad << FRACBITS,
                           &data, Rend_SpriteLighter);
     }
 
@@ -157,8 +157,8 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
             if(glowHeight > glowHeightMax)
                 glowHeight = glowHeightMax;
 
-            len = 1 - (FIX2FLT(spr->data.mo.gz) -
-                       spr->data.mo.secfloor) / glowHeight;
+            len = 1 - (spr->data.mo.gz - spr->data.mo.secfloor) /
+                          glowHeight;
 
             for(v = 0; v < 2; ++v)
                 Rend_ScaledAmbientLight(quad->vertices[v].color.rgba,
@@ -174,8 +174,8 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
             if(glowHeight > glowHeightMax)
                 glowHeight = glowHeightMax;
 
-            len = 1 - (spr->data.mo.secceil -
-                       FIX2FLT(spr->data.mo.gzt)) / glowHeight;
+            len = 1 - (spr->data.mo.secceil - spr->data.mo.gzt) /
+                          glowHeight;
 
             for(v = 0; v < 2; ++v)
                 Rend_ScaledAmbientLight(quad->vertices[v].color.rgba,
@@ -348,11 +348,12 @@ void Rend_DrawPlayerSprites(void)
         // Draw as separate sprites.
         for(i = 0; i < DDMAXPSPRITES; ++i)
         {
-            int light = (int)(psp[i].light * 255.0f);
+            int light;
 
             if(!info[i].realLump)
                 continue;       // This doesn't exist.
 
+            light = (int)(psp[i].light * 255.0f);
             Rend_ApplyLightAdaptation(&light);
 
             if(isFullBright)
@@ -406,11 +407,11 @@ void Rend_DrawPlayerSprites(void)
  * with sprites, so no artifacts appear when sprites are seen behind
  * masked walls.
  */
-void Rend_RenderMaskedWall(vissprite_t * vis)
+void Rend_RenderMaskedWall(vissprite_t *vis)
 {
-    float   color[4];
-    boolean withDyn = false;
-    int     normal, dyn = DGL_TEXTURE1;
+    float       color[4];
+    boolean     withDyn = false;
+    int         normal, dyn = DGL_TEXTURE1;
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
@@ -581,14 +582,13 @@ void Rend_RenderMaskedWall(vissprite_t * vis)
  */
 void Rend_DrawMasked(void)
 {
-    boolean haloDrawn = false;
+    boolean     haloDrawn = false;
     vissprite_t *spr;
 
     if(!willRenderSprites)
         return;
 
     R_SortVisSprites();
-
     if(vissprite_p > vissprites)
     {
         // Draw all vissprites back to front.
@@ -655,13 +655,13 @@ void Rend_DrawMasked(void)
                   spritelumps[pnum]->tc[0][VY] * y) \
 )
 
-static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
+static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
 {
-    int     i, temp;
-    float   fdist = FIX2FLT(dist) * 1.2f; // Pretend the light is a bit further away.
+    int         i, temp;
+    float       fdist = FIX2FLT(dist) * 1.2f; // Pretend the light is a bit further away.
     spritelighterdata_t *slData = (spritelighterdata_t*) data;
-    fvertex_t lightVec;
-    float   directness, side, inleft, inright, zfactor;
+    fvertex_t   lightVec;
+    float       directness, side, inleft, inright, zfactor;
 
     if(!fdist)
         return true;
@@ -670,7 +670,7 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
         return false;           // No point in continuing, light is already white.
 
     zfactor =
-        (FIX2FLT(slData->spr->data.mo.gz + slData->spr->data.mo.gzt) / 2 -
+        (slData->spr->data.mo.gz + slData->spr->data.mo.gzt / 2 -
          (FIX2FLT(lum->thing->pos[VZ]) + lum->center)) / dlMaxRad;
 
     // Round out the "shape" of light to be more spherical.
@@ -687,8 +687,8 @@ static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data)
     if(zfactor > 1)
         zfactor = 1;
 
-    lightVec.pos[VX]  = FIX2FLT(slData->spr->data.mo.gx - lum->thing->pos[VX]);
-    lightVec.pos[VY]  = FIX2FLT(slData->spr->data.mo.gy - lum->thing->pos[VY]);
+    lightVec.pos[VX]  = slData->spr->data.mo.gx - FIX2FLT(lum->thing->pos[VX]);
+    lightVec.pos[VY]  = slData->spr->data.mo.gy - FIX2FLT(lum->thing->pos[VY]);
     lightVec.pos[VX] /= fdist;
     lightVec.pos[VY] /= fdist;
 
@@ -797,7 +797,7 @@ void Rend_RenderSprite(vissprite_t *spr)
             GL_SetTranslatedSprite(patch,
                                    (spr->data.mo.
                                     flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT,
-                                   spr->data.mo.class);
+                                   spr->data.mo.pclass);
         }
         else
         {
@@ -846,8 +846,8 @@ void Rend_RenderSprite(vissprite_t *spr)
         int lightLevel = spr->data.mo.lightlevel;
         // Note: light adaptation has already been applied.
 
-        v1[VX] = Q_FIX2FLT(spr->data.mo.gx);
-        v1[VY] = Q_FIX2FLT(spr->data.mo.gy);
+        v1[VX] = spr->data.mo.gx;
+        v1[VY] = spr->data.mo.gy;
 
         tempquad = R_AllocRendPoly(RP_NONE, false, 2);
         tempquad->vertices[0].dist =
@@ -866,7 +866,7 @@ void Rend_RenderSprite(vissprite_t *spr)
 
     // We must find the correct positioning using the sector floor and ceiling
     // heights as an aid.
-    top = FIX2FLT(spr->data.mo.gzt);
+    top = spr->data.mo.gzt;
     // Sprite fits in, adjustment possible?
     if(sprh < spr->data.mo.secceil - spr->data.mo.secfloor)
     {
@@ -880,7 +880,7 @@ void Rend_RenderSprite(vissprite_t *spr)
             top = spr->data.mo.secfloor + sprh;
     }
     // Adjust by the floor clip.
-    top -= FIX2FLT(spr->data.mo.floorclip);
+    top -= spr->data.mo.floorclip;
     bot = top - sprh;
 
     // Should the texture be flipped?
@@ -900,8 +900,8 @@ void Rend_RenderSprite(vissprite_t *spr)
     // Do we need to do some aligning?
     if(spr->data.mo.viewaligned || alwaysAlign >= 2)
     {
-        float   centerx = FIX2FLT(spr->data.mo.gx);
-        float   centery = FIX2FLT(spr->data.mo.gy);
+        float   centerx = spr->data.mo.gx;
+        float   centery = spr->data.mo.gy;
         float   centerz = (top + bot) * .5f;
 
         // We must set up a modelview transformation matrix.

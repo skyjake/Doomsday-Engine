@@ -188,7 +188,7 @@ boolean Mod_LightIterator(lumobj_t *lum, fixed_t xyDist, void *data)
 {
     vissprite_t *spr = (vissprite_t*) data;
     fixed_t     zDist =
-        ((spr->data.mo.gz + spr->data.mo.gzt) >> 1) -
+        (FLT2FIX(spr->data.mo.gz + spr->data.mo.gzt) >> 1) -
         (lum->thing->pos[VZ] + FRACUNIT * lum->center);
     fixed_t dist = P_ApproxDistance(xyDist, zDist);
     int         i, maxIndex = 0;
@@ -664,9 +664,9 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
     // Model space => World space
     gl.Translatef(spr->data.mo.v1[VX] + spr->data.mo.visoff[VX] +
                   Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
-                  FIX2FLT(spr->data.mo.gz) + spr->data.mo.visoff[VZ] +
+                  spr->data.mo.gz + spr->data.mo.visoff[VZ] +
                   Mod_Lerp(mf->offset[VY], mfNext->offset[VY],
-                           inter) - FIX2FLT(spr->data.mo.floorclip),
+                           inter) - spr->data.mo.floorclip,
                   spr->data.mo.v1[VY] + spr->data.mo.visoff[VY] +
                   zSign * Mod_Lerp(mf->offset[VZ], mfNext->offset[VZ], inter));
 
@@ -734,11 +734,11 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
 
     // Coordinates to the center of the model (game coords).
     modelCenter[VX] =
-        FIX2FLT(spr->data.mo.gx) + mf->offset[VX] + spr->data.mo.visoff[VX];
+        spr->data.mo.gx + mf->offset[VX] + spr->data.mo.visoff[VX];
     modelCenter[VY] =
-        FIX2FLT(spr->data.mo.gy) + mf->offset[VZ] + spr->data.mo.visoff[VY];
+        spr->data.mo.gy + mf->offset[VZ] + spr->data.mo.visoff[VY];
     modelCenter[VZ] =
-        FIX2FLT((spr->data.mo.gz + spr->data.mo.gzt) >> 1) + mf->offset[VY] +
+        ((spr->data.mo.gz + spr->data.mo.gzt) * 2) + mf->offset[VY] +
         spr->data.mo.visoff[VZ];
 
     // Calculate lighting.
@@ -1100,9 +1100,8 @@ void Rend_RenderModel(vissprite_t *spr)
                     Mod_GlowLightSetup(light);
                     memcpy(light->worldVector, &ceilingLight,
                            sizeof(ceilingLight));
-                    dist =
-                        1 - (spr->data.mo.secceil -
-                             FIX2FLT(spr->data.mo.gzt)) / glowHeight;
+                    dist = 1 - (spr->data.mo.secceil - spr->data.mo.gzt) /
+                                   glowHeight;
                     scaleFloatRgb(light->color, spr->data.mo.ceilglow, dist);
                     scaleAmbientRgb(ambientColor, spr->data.mo.ceilglow, dist / 3);
                 }
@@ -1124,9 +1123,8 @@ void Rend_RenderModel(vissprite_t *spr)
                     light->used = true;
                     Mod_GlowLightSetup(light);
                     memcpy(light->worldVector, &floorLight, sizeof(floorLight));
-                    dist =
-                        1 - (FIX2FLT(spr->data.mo.gz) -
-                             spr->data.mo.secfloor) / glowHeight;
+                    dist = 1 - (spr->data.mo.gz - spr->data.mo.secfloor) /
+                                   glowHeight;
                     scaleFloatRgb(light->color, spr->data.mo.floorglow, dist);
                     scaleAmbientRgb(ambientColor, spr->data.mo.floorglow,
                                     dist / 3);
@@ -1143,8 +1141,8 @@ void Rend_RenderModel(vissprite_t *spr)
         for(i = numLights; i < MAX_MODEL_LIGHTS; ++i)
             lights[i].dist = DDMAXINT;
 
-        DL_RadiusIterator(spr->data.mo.subsector, spr->data.mo.gx,
-                          spr->data.mo.gy, dlMaxRad << FRACBITS,
+        DL_RadiusIterator(spr->data.mo.subsector, FLT2FIX(spr->data.mo.gx),
+                          FLT2FIX(spr->data.mo.gy), dlMaxRad << FRACBITS,
                           spr, Mod_LightIterator);
     }
 

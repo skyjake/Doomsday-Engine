@@ -482,6 +482,8 @@ static cbline_t *bufferNewLine(cbuffer_t *buf)
 
         line->text = NULL;
     }
+    assert(node->data);
+
     buf->numLines++;
 
     line->len = 0;

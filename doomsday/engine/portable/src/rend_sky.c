@@ -143,9 +143,9 @@ void Rend_RenderSkyModels(void)
 
         vis.type = VSPR_SKY_MODEL;
         vis.distance = 1;
-        vis.data.mo.gx = FRACUNIT * pos[0];
-        vis.data.mo.gy = FRACUNIT * pos[2];
-        vis.data.mo.gz = vis.data.mo.gzt = FRACUNIT * pos[1];
+        vis.data.mo.gx = pos[0];
+        vis.data.mo.gy = pos[2];
+        vis.data.mo.gz = vis.data.mo.gzt = pos[1];
         vis.data.mo.v1[0] = pos[0];
         vis.data.mo.v1[1] = pos[2];
         vis.data.mo.v2[0] = sky->def->rotate[0];

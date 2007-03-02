@@ -494,9 +494,9 @@ void R_ProjectDecoration(mobj_t *source)
     else
         vis->data.mo.light = DL_GetLuminous(source->light);
     //  vis->data.mo.flags = thing->ddflags;
-    vis->data.mo.gx = source->pos[VX];
-    vis->data.mo.gy = source->pos[VY];
-    vis->data.mo.gz = vis->data.mo.gzt = source->pos[VZ];
+    vis->data.mo.gx = FIX2FLT(source->pos[VX]);
+    vis->data.mo.gy = FIX2FLT(source->pos[VY]);
+    vis->data.mo.gz = vis->data.mo.gzt = FIX2FLT(source->pos[VZ]);
 }
 
 /*
@@ -529,15 +529,15 @@ void R_ProjectPlayerSprites(void)
         vis->data.mo.flags = 0;
         // Adjust the vector slightly so an angle can be calculated.
         ang = viewangle >>ANGLETOFINESHIFT;
-        vis->data.mo.gx = viewx + (2 * finecosine[ang]);
-        vis->data.mo.gy = viewy + (2 * finesine[ang]);
-        vis->data.mo.v1[VX] = FIX2FLT(vis->data.mo.gx);
-        vis->data.mo.v1[VY] = FIX2FLT(vis->data.mo.gy);
+        vis->data.mo.gx = FIX2FLT(viewx + (2 * finecosine[ang]));
+        vis->data.mo.gy = FIX2FLT(viewy + (2 * finesine[ang]));
+        vis->data.mo.v1[VX] = vis->data.mo.gx;
+        vis->data.mo.v1[VY] = vis->data.mo.gy;
         // 32 is the raised weapon height.
-        vis->data.mo.gzt = vis->data.mo.gz = viewz;
+        vis->data.mo.gzt = vis->data.mo.gz = FIX2FLT(viewz);
         vis->data.mo.secfloor = viewplayer->mo->subsector->sector->SP_floorvisheight;
         vis->data.mo.secceil = viewplayer->mo->subsector->sector->SP_ceilvisheight;
-        vis->data.mo.class = 0;
+        vis->data.mo.pclass = 0;
         vis->data.mo.floorclip = 0;
 
         // Glowing floor and ceiling.
@@ -562,10 +562,10 @@ void R_ProjectPlayerSprites(void)
         vis->data.mo.nextmf = nextmf;
         vis->data.mo.viewaligned = true;
         // Use the exact center with HUD models.
-        vis->data.mo.gx = viewx;
-        vis->data.mo.gy = viewy;
-        vis->data.mo.v1[VX] = FIX2FLT(viewx);
-        vis->data.mo.v1[VY] = FIX2FLT(viewy);
+        vis->data.mo.gx = FIX2FLT(viewx);
+        vis->data.mo.gy = FIX2FLT(viewy);
+        vis->data.mo.v1[VX] = vis->data.mo.gx;
+        vis->data.mo.v1[VY] = vis->data.mo.gy;
 
         // Mark this sprite rendered.
         psp->flags |= DDPSPF_RENDERED;
@@ -644,14 +644,13 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
     if(vis->data.mo.flooradjust &&
        projectedThing->pos[VZ] == FLT2FIX(sector->SP_floorheight))
     {
-        vis->data.mo.gz = FRACUNIT * sector->SP_floorvisheight;
+        vis->data.mo.gz = sector->SP_floorvisheight;
     }
 
     if(projectedThing->pos[VZ] + projectedThing->height ==
         FLT2FIX(sector->SP_ceilheight))
     {
-        vis->data.mo.gz =
-            FRACUNIT * sector->SP_ceilvisheight - projectedThing->height;
+        vis->data.mo.gz = sector->SP_ceilvisheight - projectedThing->height;
     }
     return true;
 }
@@ -827,9 +826,9 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.flags = thing->ddflags;
     vis->data.mo.id = thing->thinker.id;
     vis->data.mo.selector = thing->selector;
-    vis->data.mo.gx = thing->pos[VX];
-    vis->data.mo.gy = thing->pos[VY];
-    vis->data.mo.gz = thing->pos[VZ];
+    vis->data.mo.gx = FIX2FLT(thing->pos[VX]);
+    vis->data.mo.gy = FIX2FLT(thing->pos[VY]);
+    vis->data.mo.gz = FIX2FLT(thing->pos[VZ]);
 
     vis->data.mo.flooradjust =
         (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
@@ -842,7 +841,7 @@ void R_ProjectSprite(mobj_t *thing)
     P_ThingSectorsIterator(thing, RIT_VisMobjZ, vis);
 
     vis->data.mo.gzt =
-        vis->data.mo.gz + ((fixed_t) spritelumps[lump]->topoffset << FRACBITS);
+        vis->data.mo.gz + ((float) spritelumps[lump]->topoffset);
 
     if(useBias)
     {
@@ -862,12 +861,12 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.secceil = thing->subsector->sector->SP_ceilvisheight;
 
     if(thing->ddflags & DDMF_TRANSLATION)
-        vis->data.mo.class = (thing->ddflags >> DDMF_CLASSTRSHIFT) & 0x3;
+        vis->data.mo.pclass = (thing->ddflags >> DDMF_CLASSTRSHIFT) & 0x3;
     else
-        vis->data.mo.class = 0;
+        vis->data.mo.pclass = 0;
 
     // Foot clipping.
-    vis->data.mo.floorclip = thing->floorclip;
+    vis->data.mo.floorclip = FIX2FLT(thing->floorclip);
     if(thing->ddflags & DDMF_BOB)
     {
         // Bobbing is applied to the floorclip.
@@ -915,9 +914,8 @@ void R_ProjectSprite(mobj_t *thing)
         {
             vis->data.mo.pitch =
                 -BANG2DEG(bamsAtan2
-                          (FIX2FLT
-                           ((vis->data.mo.gz + vis->data.mo.gzt) / 2 -
-                            viewz) * 10, distance * 10));
+                          (((vis->data.mo.gz + vis->data.mo.gzt) / 2 -
+                            FIX2FLT(viewz)) * 10, distance * 10));
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
         {
@@ -1096,11 +1094,11 @@ void R_SortVisSprites(void)
  * Returns the current floatbob offset for the mobj, if the mobj is flagged
  * for bobbing.
  */
-fixed_t R_GetBobOffset(mobj_t *mo)
+float R_GetBobOffset(mobj_t *mo)
 {
     if(mo->ddflags & DDMF_BOB)
     {
-        return FRACUNIT * (sin(THING_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) * 8);
+        return (sin(THING_TO_ID(mo) + levelTime / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }

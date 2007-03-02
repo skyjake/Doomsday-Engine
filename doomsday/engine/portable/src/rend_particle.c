@@ -582,9 +582,9 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             vis.distance = dist;
             vis.data.mo.subsector =
                 R_PointInSubsector(pt->pos[VX], pt->pos[VY]);
-            vis.data.mo.gx = FRACUNIT * center[VX];
-            vis.data.mo.gy = FRACUNIT * center[VZ];
-            vis.data.mo.gz = vis.data.mo.gzt = FRACUNIT * center[VY];
+            vis.data.mo.gx = center[VX];
+            vis.data.mo.gy = center[VZ];
+            vis.data.mo.gz = vis.data.mo.gzt = center[VY];
             vis.data.mo.v1[0] = center[VX];
             vis.data.mo.v1[1] = center[VZ];
             vis.data.mo.v2[0] = size;   // Extra scaling factor.

@@ -217,11 +217,11 @@ boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
         H_SetupState(true);
 
     center[VX] =
-        FIX2FLT(sourcevis->data.mo.gx) + sourcevis->data.mo.visoff[VX];
+        sourcevis->data.mo.gx + sourcevis->data.mo.visoff[VX];
     center[VZ] =
-        FIX2FLT(sourcevis->data.mo.gy) + sourcevis->data.mo.visoff[VY];
+        sourcevis->data.mo.gy + sourcevis->data.mo.visoff[VY];
     center[VY] =
-        FIX2FLT(sourcevis->data.mo.gz) + lum->center +
+        sourcevis->data.mo.gz + lum->center +
         sourcevis->data.mo.visoff[VZ];
 
     // Apply the flare's X offset. (Positive is to the right.)
