@@ -246,6 +246,11 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->decorlightmap = 0;
     poly->sector = 0;
     poly->blendmode = BM_NORMAL;
+    poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN);
+    poly->tex.detail = texdetail;
+    poly->tex.height = texh;
+    poly->tex.width = texw;
+    poly->tex.masked = texmask;
 
     return poly;
 }

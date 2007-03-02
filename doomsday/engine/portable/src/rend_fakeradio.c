@@ -751,6 +751,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     quad->tex.detail = NULL;
     quad->tex.width = seg->linedef->length;
     quad->tex.height = shadowSize;
+    quad->tex.masked = false;
     quad->lights = NULL;
     quad->intertex.id = 0;
     quad->intertex.detail = NULL;

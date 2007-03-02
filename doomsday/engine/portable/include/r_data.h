@@ -103,6 +103,7 @@ typedef struct detailinfo_s {
 typedef struct gltexture_s {
     DGLuint         id;
     float           width, height;
+    boolean         masked;
     detailinfo_t   *detail;
 } gltexture_t;
 

@@ -447,7 +447,9 @@ static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
     poly->blendmode = ref->blend_mode;
     poly->tex.id = ref->use_shiny->shiny_tex;
     poly->tex.detail = NULL;
+    poly->tex.masked = false;
     poly->intertex.detail = NULL;
+    poly->intertex.masked = false;
     poly->interpos = 0;
 
     // Strength of the shine.
@@ -500,6 +502,7 @@ static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
     poly->intertex.width = texw;
     poly->intertex.height = texh;
     poly->intertex.detail = texdetail;
+    poly->intertex.masked = texmask;
     poly->interpos = xlat->inter;
 }
 
@@ -669,6 +672,7 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
     poly->tex.width = texw;
     poly->tex.height = texh;
     poly->tex.detail = texdetail;
+    poly->tex.masked = texmask;
 
     // Return the parameters for this surface.
     return flags;

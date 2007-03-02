@@ -281,7 +281,7 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
     vis->type = VSPR_MASKED_WALL;
     vis->distance = (poly->vertices[0].dist + poly->vertices[1].dist) / 2;
     vis->data.wall.texture = poly->tex.id;
-    vis->data.wall.masked = texmask;    // Store texmask status in flip.
+    vis->data.wall.masked = poly->tex.masked; // Store texmask status in flip.
     for(i = 0; i < 4; ++i)
     {
         vis->data.wall.vertices[i].pos[VX] = poly->vertices[i].pos[VX];
