@@ -1423,10 +1423,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\p_mobj.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\p_object.h"
 				>
 			</File>
@@ -1448,10 +1444,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\p_think.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\p_tick.h"
 				>
 			</File>
 			<File
