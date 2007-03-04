@@ -168,8 +168,8 @@ static boolean PIT_ApplyTorque(line_t *ld, void *data)
             dist >>= 1;
         }
 
-        mo->momx -= x;
-        mo->momy += y;
+        mo->mom[MX] -= x;
+        mo->mom[MY] += y;
     }
 
     return true;
@@ -196,7 +196,7 @@ void P_ApplyTorque(mobj_t *mo)
     P_ThingLinesIterator(mo, PIT_ApplyTorque, 0);
 
     // If any momentum, mark object as 'falling' using engine-internal flags
-    if(mo->momx | mo->momy)
+    if(mo->mom[MX] | mo->mom[MY])
         mo->intflags |= MIF_FALLING;
     else
         // Clear the engine-internal flag indicating falling object.

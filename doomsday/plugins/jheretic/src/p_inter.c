@@ -323,7 +323,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
             player->powers[power] = FLIGHTTICS;
             plrmo->flags2 |= MF2_FLY;
             plrmo->flags |= MF_NOGRAVITY;
-            if(plrmo->pos[VZ] <= plrmo->floorz)
+            if(plrmo->pos[VZ] <= FLT2FIX(plrmo->floorz))
             {
                 player->flyheight = 10; // thrust the player in the air a bit
                 player->plr->flags |= DDPF_FIXMOM;
@@ -419,7 +419,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
     boolean respawn;
 
     delta = special->pos[VZ] - toucher->pos[VZ];
-    if(delta > toucher->height || delta < -32 * FRACUNIT)
+    if(delta > FLT2FIX(toucher->height) || delta < -32 * FRACUNIT)
     {                           // Out of reach
         return;
     }
@@ -758,7 +758,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     target->flags |= MF_CORPSE | MF_DROPOFF;
     target->flags2 &= ~MF2_PASSMOBJ;
     target->corpsetics = 0;
-    target->height >>= 2;
+    target->height /= 2*2;
     if(source && source->player)
     {
         if(target->flags & MF_COUNTKILL)
@@ -841,8 +841,8 @@ void P_MinotaurSlam(mobj_t *source, mobj_t *target)
                             target->pos[VX], target->pos[VY]);
     angle >>= ANGLETOFINESHIFT;
     thrust = 16 * FRACUNIT + (P_Random() << 10);
-    target->momx += FixedMul(thrust, finecosine[angle]);
-    target->momy += FixedMul(thrust, finesine[angle]);
+    target->mom[MX] += FixedMul(thrust, finecosine[angle]);
+    target->mom[MY] += FixedMul(thrust, finesine[angle]);
     P_DamageMobj(target, NULL, NULL, HITDICE(6));
     if(target->player)
     {
@@ -855,8 +855,8 @@ void P_TouchWhirlwind(mobj_t *target)
     int     randVal;
 
     target->angle += (P_Random() - P_Random()) << 20;
-    target->momx += (P_Random() - P_Random()) << 10;
-    target->momy += (P_Random() - P_Random()) << 10;
+    target->mom[MX] += (P_Random() - P_Random()) << 10;
+    target->mom[MY] += (P_Random() - P_Random()) << 10;
     if(leveltime & 16 && !(target->flags2 & MF2_BOSS))
     {
         randVal = P_Random();
@@ -864,10 +864,10 @@ void P_TouchWhirlwind(mobj_t *target)
         {
             randVal = 160;
         }
-        target->momz += randVal << 10;
-        if(target->momz > 12 * FRACUNIT)
+        target->mom[MZ] += randVal << 10;
+        if(target->mom[MZ] > 12 * FRACUNIT)
         {
-            target->momz = 12 * FRACUNIT;
+            target->mom[MZ] = 12 * FRACUNIT;
         }
     }
     if(!(leveltime & 7))
@@ -1103,7 +1103,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         {                       // Minotaur is invulnerable during charge attack
             return;
         }
-        target->momx = target->momy = target->momz = 0;
+        target->mom[MX] = target->mom[MY] = target->mom[MZ] = 0;
     }
 
     player = target->player;
@@ -1239,17 +1239,17 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
            source->player->readyweapon == WT_FIRST)
         {
             // Staff power level 2
-            target->momx += FixedMul(10 * FRACUNIT, finecosine[ang]);
-            target->momy += FixedMul(10 * FRACUNIT, finesine[ang]);
+            target->mom[MX] += FixedMul(10 * FRACUNIT, finecosine[ang]);
+            target->mom[MY] += FixedMul(10 * FRACUNIT, finesine[ang]);
             if(!(target->flags & MF_NOGRAVITY))
             {
-                target->momz += 5 * FRACUNIT;
+                target->mom[MZ] += 5 * FRACUNIT;
             }
         }
         else
         {
-            target->momx += FixedMul(thrust, finecosine[ang]);
-            target->momy += FixedMul(thrust, finesine[ang]);
+            target->mom[MX] += FixedMul(thrust, finecosine[ang]);
+            target->mom[MY] += FixedMul(thrust, finesine[ang]);
         }
 
         if(target->dplayer)

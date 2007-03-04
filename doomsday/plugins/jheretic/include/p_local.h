@@ -236,10 +236,10 @@ void            P_DSparilTeleport(mobj_t *actor);
 
 // ***** P_MAPUTL *****
 
-#define openrange           Get(DD_OPENRANGE)
-#define opentop             Get(DD_OPENTOP)
-#define openbottom          Get(DD_OPENBOTTOM)
-#define lowfloor            Get(DD_LOWFLOOR)
+#define openrange           (*(float*) DD_GetVariable(DD_OPENRANGE))
+#define opentop             (*(float*) DD_GetVariable(DD_OPENTOP))
+#define openbottom          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
+#define lowfloor            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 void            P_UnsetThingPosition(mobj_t *thing);
 void            P_SetThingPosition(mobj_t *thing);

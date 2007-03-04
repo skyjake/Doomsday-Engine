@@ -251,7 +251,7 @@ typedef struct mobj_s {
     int             threshold;     // if >0, the target will be chased
 
     int             intflags;      // killough $dropoff_fix: internal flags
-    fixed_t         dropoffz;      // killough $dropoff_fix
+    float           dropoffz;      // killough $dropoff_fix
     short           gear;          // killough 11/98: used in torque simulation
     boolean         wallrun;       // true = last move was the result of a wallrun
 

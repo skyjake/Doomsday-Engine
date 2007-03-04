@@ -105,9 +105,9 @@ static void SV_v13_ReadPlayer(player_t *pl)
     SV_v13_ReadLong();          // mo
     pl->playerstate = SV_v13_ReadLong();
     SV_v13_Read(temp, 10);      // ticcmd_t
-    ddpl->viewz = SV_v13_ReadLong();
-    ddpl->viewheight = SV_v13_ReadLong();
-    ddpl->deltaviewheight = SV_v13_ReadLong();
+    ddpl->viewz = FIX2FLT(SV_v13_ReadLong());
+    ddpl->viewheight = FIX2FLT(SV_v13_ReadLong());
+    ddpl->deltaviewheight = FIX2FLT(SV_v13_ReadLong());
     pl->bob = SV_v13_ReadLong();
     pl->flyheight = SV_v13_ReadLong();
     ddpl->lookdir = SV_v13_ReadLong();
@@ -181,13 +181,13 @@ static void SV_v13_ReadMobj(mobj_t *mo)
     // Subsector.
     SV_v13_ReadLong();
 
-    mo->floorz = SV_v13_ReadLong();
-    mo->ceilingz = SV_v13_ReadLong();
+    mo->floorz = FIX2FLT(SV_v13_ReadLong());
+    mo->ceilingz = FIX2FLT(SV_v13_ReadLong());
     mo->radius = SV_v13_ReadLong();
-    mo->height = SV_v13_ReadLong();
-    mo->momx = SV_v13_ReadLong();
-    mo->momy = SV_v13_ReadLong();
-    mo->momz = SV_v13_ReadLong();
+    mo->height = FIX2FLT(SV_v13_ReadLong());
+    mo->mom[MX] = SV_v13_ReadLong();
+    mo->mom[MY] = SV_v13_ReadLong();
+    mo->mom[MZ] = SV_v13_ReadLong();
 
     mo->valid = SV_v13_ReadLong();
 
@@ -350,8 +350,8 @@ void P_v13_UnArchiveThinkers(void)
             }
             P_SetThingPosition(mobj);
             mobj->info = &mobjinfo[mobj->type];
-            mobj->floorz = P_GetFixedp(mobj->subsector, DMU_FLOOR_HEIGHT);
-            mobj->ceilingz = P_GetFixedp(mobj->subsector, DMU_CEILING_HEIGHT);
+            mobj->floorz = P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT);
+            mobj->ceilingz = P_GetFloatp(mobj->subsector, DMU_CEILING_HEIGHT);
             mobj->thinker.function = P_MobjThinker;
             P_AddThinker(&mobj->thinker);
             break;

@@ -659,7 +659,7 @@ boolean P_GivePower(player_t *player, powertype_t power)
             player->powers[power] = FLIGHTTICS;
             player->plr->mo->flags2 |= MF2_FLY;
             player->plr->mo->flags |= MF_NOGRAVITY;
-            if(player->plr->mo->pos[VZ] <= player->plr->mo->floorz)
+            if(player->plr->mo->pos[VZ] <= FLT2FIX(player->plr->mo->floorz))
             {
                 player->flyheight = 10; // thrust the player in the air a bit
                 player->plr->flags |= DDPF_FIXMOM;
@@ -870,7 +870,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
         return;
 
     delta = special->pos[VZ] - toucher->pos[VZ];
-    if(delta > toucher->height || delta < -32 * FRACUNIT)
+    if(delta > FLT2FIX(toucher->height) || delta < -32 * FRACUNIT)
     {                           // Out of reach
         return;
     }
@@ -1226,7 +1226,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY | MF_NOGRAVITY);
     target->flags |= MF_CORPSE | MF_DROPOFF;
     target->flags2 &= ~MF2_PASSMOBJ;
-    target->height >>= 2;
+    target->height /= 2*2;
     if((target->flags & MF_COUNTKILL || target->type == MT_ZBELL) &&
        target->special)
     {                           // Initiate monster death actions
@@ -1397,7 +1397,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         else if(target->type == MT_TREEDESTRUCTIBLE)
         {
             P_SetMobjState(target, S_ZTREEDES_X1);
-            target->height = 24 * FRACUNIT;
+            target->height = 24;
             S_StartSound(SFX_TREE_EXPLODE, target);
             return;
         }
@@ -1463,7 +1463,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     }
     else if(target->type == MT_TREEDESTRUCTIBLE)
     {
-        target->height = 24 * FRACUNIT;
+        target->height = 24;
     }
     if(target->health < -(target->info->spawnhealth >> 1) &&
        target->info->xdeathstate)
@@ -1473,7 +1473,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     else
     {                           // Normal death
         if((target->type == MT_FIREDEMON) &&
-           (target->pos[VZ] <= target->floorz + 2 * FRACUNIT) &&
+           (target->pos[VZ] <= FLT2FIX(target->floorz + 2)) &&
            (target->info->xdeathstate))
         {
             // This is to fix the imps' staying in fall state
@@ -1503,8 +1503,8 @@ void P_MinotaurSlam(mobj_t *source, mobj_t *target)
                             target->pos[VX], target->pos[VY]);
     angle >>= ANGLETOFINESHIFT;
     thrust = 16 * FRACUNIT + (P_Random() << 10);
-    target->momx += FixedMul(thrust, finecosine[angle]);
-    target->momy += FixedMul(thrust, finesine[angle]);
+    target->mom[MX] += FixedMul(thrust, finecosine[angle]);
+    target->mom[MY] += FixedMul(thrust, finesine[angle]);
     P_DamageMobj(target, NULL, source, HITDICE(4));
     if(target->player)
     {
@@ -1767,7 +1767,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         else if(target->flags & MF_ICECORPSE)   // frozen
         {
             target->tics = 1;
-            target->momx = target->momy = 0;
+            target->mom[MX] = target->mom[MY] = 0;
         }
         return;
     }
@@ -1806,7 +1806,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     }
     if(target->flags & MF_SKULLFLY)
     {
-        target->momx = target->momy = target->momz = 0;
+        target->mom[MX] = target->mom[MY] = target->mom[MZ] = 0;
     }
     if(target->flags2 & MF2_DORMANT)
     {
@@ -1936,8 +1936,8 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             thrust *= 4;
         }
         ang >>= ANGLETOFINESHIFT;
-        target->momx += FixedMul(thrust, finecosine[ang]);
-        target->momy += FixedMul(thrust, finesine[ang]);
+        target->mom[MX] += FixedMul(thrust, finecosine[ang]);
+        target->mom[MY] += FixedMul(thrust, finesine[ang]);
         if(target->dplayer)
         {
             // Only fix momentum. Otherwise clients will find it difficult
@@ -2145,7 +2145,7 @@ void P_FallingDamage(player_t *player)
     int     mom;
     int     dist;
 
-    mom = abs(player->plr->mo->momz);
+    mom = abs(player->plr->mo->mom[MZ]);
     dist = FixedMul(mom, 16 * FRACUNIT / 23);
 
     if(mom >= 63 * FRACUNIT)
@@ -2154,7 +2154,7 @@ void P_FallingDamage(player_t *player)
         return;
     }
     damage = ((FixedMul(dist, dist) / 10) >> FRACBITS) - 24;
-    if(player->plr->mo->momz > -39 * FRACUNIT &&
+    if(player->plr->mo->mom[MZ] > -39 * FRACUNIT &&
        damage > player->plr->mo->health && player->plr->mo->health != 1)
     {                           // No-death threshold
         damage = player->plr->mo->health - 1;
