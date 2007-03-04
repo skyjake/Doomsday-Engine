@@ -593,7 +593,7 @@ void R_ProjectPlayerSprites(void)
             // Evaluate the position of this player in the light grid.
             // TODO: Should be affected by BIAS sources.
             float point[3] = { FIX2FLT(viewplayer->mo->pos[VX]), FIX2FLT(viewplayer->mo->pos[VY]),
-                               FIX2FLT(viewplayer->mo->pos[VZ] + viewplayer->mo->height/2)};
+                               FIX2FLT(viewplayer->mo->pos[VZ]) + viewplayer->mo->height/2};
             LG_Evaluate(point, vis->data.mo.rgb);
 
             vis->data.mo.lightlevel = 255;
@@ -642,13 +642,13 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
     assert(data != NULL);
 
     if(vis->data.mo.flooradjust &&
-       projectedThing->pos[VZ] == FLT2FIX(sector->SP_floorheight))
+       FIX2FLT(projectedThing->pos[VZ]) == sector->SP_floorheight)
     {
         vis->data.mo.gz = sector->SP_floorvisheight;
     }
 
-    if(projectedThing->pos[VZ] + projectedThing->height ==
-        FLT2FIX(sector->SP_ceilheight))
+    if(FIX2FLT(projectedThing->pos[VZ]) + projectedThing->height ==
+       sector->SP_ceilheight)
     {
         vis->data.mo.gz = sector->SP_ceilvisheight - projectedThing->height;
     }
@@ -799,7 +799,7 @@ void R_ProjectSprite(mobj_t *thing)
             // to disappear too early.
             if(P_ApproxDistance
                (distance * FRACUNIT,
-                thing->pos[VZ] + thing->height / 2 - viewz) >
+                thing->pos[VZ] + FLT2FIX(thing->height / 2) - viewz) >
                MAX_OBJECT_RADIUS * FRACUNIT)
             {
                 return;         // Can't be visible.
@@ -846,7 +846,7 @@ void R_ProjectSprite(mobj_t *thing)
     if(useBias)
     {
         float point[3] = { FIX2FLT(thing->pos[VX]), FIX2FLT(thing->pos[VY]),
-                           FIX2FLT(thing->pos[VZ] + thing->height/2)};
+                           FIX2FLT(thing->pos[VZ]) + thing->height/2};
         LG_Evaluate(point, vis->data.mo.rgb);
     }
     else
@@ -866,7 +866,7 @@ void R_ProjectSprite(mobj_t *thing)
         vis->data.mo.pclass = 0;
 
     // Foot clipping.
-    vis->data.mo.floorclip = FIX2FLT(thing->floorclip);
+    vis->data.mo.floorclip = thing->floorclip;
     if(thing->ddflags & DDMF_BOB)
     {
         // Bobbing is applied to the floorclip.
@@ -894,7 +894,7 @@ void R_ProjectSprite(mobj_t *thing)
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
         {
-            vis->data.mo.yaw = R_MovementYaw(thing->momx, thing->momy);
+            vis->data.mo.yaw = R_MovementYaw(thing->mom[MX], thing->mom[MY]);
         }
         else
         {
@@ -920,7 +920,7 @@ void R_ProjectSprite(mobj_t *thing)
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
         {
             vis->data.mo.pitch =
-                R_MovementPitch(thing->momx, thing->momy, thing->momz);
+                R_MovementPitch(thing->mom[MX], thing->mom[MY], thing->mom[MZ]);
         }
         else
             vis->data.mo.pitch = 0;
@@ -978,13 +978,13 @@ void R_ProjectSprite(mobj_t *thing)
             for(i = 0; i < 3; i++)
                 vis->data.mo.visoff[i] = FIX2FLT(thing->srvo[i] << 8) * mul;
         }
-        if(thing->momx || thing->momy || thing->momz)
+        if(thing->mom[MX] || thing->mom[MY] || thing->mom[MZ])
         {
             // Use the object's speed to calculate a short-range
             // offset.
-            vis->data.mo.visoff[VX] += FIX2FLT(thing->momx) * frameTimePos;
-            vis->data.mo.visoff[VY] += FIX2FLT(thing->momy) * frameTimePos;
-            vis->data.mo.visoff[VZ] += FIX2FLT(thing->momz) * frameTimePos;
+            vis->data.mo.visoff[VX] += FIX2FLT(thing->mom[MX]) * frameTimePos;
+            vis->data.mo.visoff[VY] += FIX2FLT(thing->mom[MY]) * frameTimePos;
+            vis->data.mo.visoff[VZ] += FIX2FLT(thing->mom[MZ]) * frameTimePos;
         }
     }
 

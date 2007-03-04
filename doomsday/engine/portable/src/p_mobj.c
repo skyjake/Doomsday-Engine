@@ -61,8 +61,8 @@ typedef struct {
     mobj_t *thing;
     fixed_t box[4];
     int     flags;
-    fixed_t pos[3], height;
-    fixed_t floorz, ceilingz, dropoffz;
+    fixed_t pos[3];
+    float   height, floorz, ceilingz, dropoffz;
 } checkpos_data_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -80,8 +80,8 @@ extern fixed_t mapgravity;
 // If set to true, P_CheckPosition will skip the mobj hit test.
 boolean dontHitMobjs = false;
 
-fixed_t tmpFloorZ;
-fixed_t tmpCeilingZ;
+float tmpFloorZ;
+float tmpCeilingZ;
 
 // When a mobj is contacted in PIT_CheckThing, this pointer is set.
 // It's reset to NULL in the beginning of P_CheckPosition.
@@ -99,9 +99,8 @@ static mobj_t *slideMo;
 
 static boolean noFit;
 
-static fixed_t tmpDropOffZ;
-static fixed_t tmpXMove;
-static fixed_t tmpYMove;
+static float tmpDropOffZ;
+static fixed_t tmpMove[3];
 
 // CODE --------------------------------------------------------------------
 
@@ -208,12 +207,12 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
     if(tm->pos[VZ] != DDMAXINT && (tm->thing->dplayer /* || thing->dplayer */
                              || thing->ddflags & DDMF_NOGRAVITY))
     {
-        if(thing->pos[VZ] > tm->pos[VZ] + tm->height)
+        if(thing->pos[VZ] > tm->pos[VZ] + FLT2FIX(tm->height))
         {
             // We're under it.
             return true;
         }
-        else if(thing->pos[VZ] + thing->height < tm->pos[VZ])
+        else if(FIX2FLT(thing->pos[VZ]) + thing->height < tm->pos[VZ])
         {
             // We're over it.
             return true;
@@ -231,11 +230,11 @@ static boolean PIT_CheckThing(mobj_t *thing, void *parm)
     if(overlap)
     {
         // How are we positioned?
-        if(tm->pos[VZ] >= thing->pos[VZ] + thing->height - 24 * FRACUNIT)
+        if(tm->pos[VZ] >= thing->pos[VZ] + FLT2FIX(thing->height - 24))
         {
             // Above, allowing stepup.
             tm->thing->onmobj = thing;
-            tm->floorz = thing->pos[VZ] + thing->height;
+            tm->floorz = FIX2FLT(thing->pos[VZ]) + thing->height;
             return true;
         }
 
@@ -298,8 +297,8 @@ boolean P_CheckPosXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     // that contains the point.
     // Any contacted lines the step closer together
     // will adjust them.
-    data.floorz = data.dropoffz = FLT2FIX(newsubsec->sector->SP_floorheight);
-    data.ceilingz = FLT2FIX(newsubsec->sector->SP_ceilheight);
+    data.floorz = data.dropoffz = newsubsec->sector->SP_floorheight;
+    data.ceilingz = newsubsec->sector->SP_ceilheight;
 
     validcount++;
 
@@ -388,19 +387,19 @@ boolean P_TryMoveXYZ(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
         if(tmpCeilingZ - tmpFloorZ < thing->height)
             return false;
 
-        if(tmpCeilingZ - z < thing->height)
+        if(tmpCeilingZ - FIX2FLT(z) < thing->height)
             return false;       // mobj must lower itself to fit
 
         if(thing->dplayer)
         {
             // Players are allowed a stepup.
-            if(tmpFloorZ - z > 24 * FRACUNIT)
+            if(tmpFloorZ - FIX2FLT(z) > 24)
                 return false;   // too big a step up
         }
         else
         {
             // Normals mobjs are not...
-            if(tmpFloorZ > z)
+            if(tmpFloorZ > FIX2FLT(z))
                 return false;   // below the floor
         }
     }
@@ -500,7 +499,7 @@ static boolean P_HeightClip(mobj_t *thing)
     if(thing->dplayer == &players[consoleplayer] && playback)
         return true;
 
-    onfloor = (thing->pos[VZ] <= thing->floorz);
+    onfloor = (thing->pos[VZ] <= FLT2FIX(thing->floorz));
 
     P_CheckPosXYZ(thing, thing->pos[VX], thing->pos[VY], thing->pos[VZ]);
     thing->floorz = tmpFloorZ;
@@ -508,13 +507,13 @@ static boolean P_HeightClip(mobj_t *thing)
 
     if(onfloor)
     {
-        thing->pos[VZ] = thing->floorz;
+        thing->pos[VZ] = FLT2FIX(thing->floorz);
     }
     else
     {
         // don't adjust a floating monster unless forced to
-        if(thing->pos[VZ] + thing->height > thing->ceilingz)
-            thing->pos[VZ] = thing->ceilingz - thing->height;
+        if(FIX2FLT(thing->pos[VZ]) + thing->height > thing->ceilingz)
+            thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
     }
 
     // On clientside, players are represented by two mobjs: the real mobj,
@@ -550,8 +549,8 @@ boolean P_IsInVoid(ddplayer_t *player)
     // (so check z height above/below ceiling/floor).
     if((player->flags & DDPF_CAMERA) &&
        (player->invoid ||
-         (player->mo->pos[VZ] > player->mo->ceilingz ||
-          player->mo->pos[VZ] < player->mo->floorz)))
+         (FIX2FLT(player->mo->pos[VZ]) > player->mo->ceilingz ||
+          FIX2FLT(player->mo->pos[VZ]) < player->mo->floorz)))
         return true;
 
     return false;
@@ -574,12 +573,12 @@ static void P_WallMomSlide(line_t *ld)
     // First check the simple cases.
     if(ld->slopetype == ST_HORIZONTAL)
     {
-        tmpYMove = 0;
+        tmpMove[VY] = 0;
         return;
     }
     if(ld->slopetype == ST_VERTICAL)
     {
-        tmpXMove = 0;
+        tmpMove[VX] = 0;
         return;
     }
 
@@ -589,7 +588,7 @@ static void P_WallMomSlide(line_t *ld)
     if(side == 1)
         lineangle += ANG180;
 
-    moveangle = R_PointToAngle2(0, 0, tmpXMove, tmpYMove);
+    moveangle = R_PointToAngle2(0, 0, tmpMove[VX], tmpMove[VY]);
     deltaangle = moveangle - lineangle;
 
     if(deltaangle > ANG180)
@@ -598,11 +597,11 @@ static void P_WallMomSlide(line_t *ld)
     lineangle >>= ANGLETOFINESHIFT;
     deltaangle >>= ANGLETOFINESHIFT;
 
-    movelen = P_ApproxDistance(tmpXMove, tmpYMove);
+    movelen = P_ApproxDistance(tmpMove[MX], tmpMove[MY]);
     newlen = FixedMul(movelen, finecosine[deltaangle]);
 
-    tmpXMove = FixedMul(newlen, finecosine[lineangle]);
-    tmpYMove = FixedMul(newlen, finesine[lineangle]);
+    tmpMove[VX] = FixedMul(newlen, finecosine[lineangle]);
+    tmpMove[VY] = FixedMul(newlen, finesine[lineangle]);
 }
 
 static boolean PTR_SlideTraverse(intercept_t *in)
@@ -630,10 +629,10 @@ static boolean PTR_SlideTraverse(intercept_t *in)
     if(openrange < slideMo->height)
         goto isblocking;        // doesn't fit
 
-    if(opentop - slideMo->pos[VZ] < slideMo->height)
+    if(opentop - FIX2FLT(slideMo->pos[VZ]) < slideMo->height)
         goto isblocking;        // mobj is too high
 
-    if(openbottom - slideMo->pos[VZ] > 24 * FRACUNIT)
+    if(openbottom - FIX2FLT(slideMo->pos[VZ]) > 24)
         goto isblocking;        // too big a step up
 
     // this line doesn't block movement
@@ -676,35 +675,35 @@ static void P_ThingSlidingMove(mobj_t *mo)
         goto stairstep;         // don't loop forever
 
     // trace along the three leading corners
-    if(mo->momx > 0)
+    if(mo->mom[MX] > 0)
     {
-        leadx = mo->pos[VX] + mo->radius;
+        leadx  = mo->pos[VX] + mo->radius;
         trailx = mo->pos[VX] - mo->radius;
     }
     else
     {
-        leadx = mo->pos[VX] - mo->radius;
+        leadx  = mo->pos[VX] - mo->radius;
         trailx = mo->pos[VX] + mo->radius;
     }
 
-    if(mo->momy > 0)
+    if(mo->mom[MY] > 0)
     {
-        leady = mo->pos[VY] + mo->radius;
+        leady  = mo->pos[VY] + mo->radius;
         traily = mo->pos[VY] - mo->radius;
     }
     else
     {
-        leady = mo->pos[VY] - mo->radius;
+        leady  = mo->pos[VY] - mo->radius;
         traily = mo->pos[VY] + mo->radius;
     }
 
     bestSlideFrac = FRACUNIT + 1;
 
-    P_PathTraverse(leadx, leady, leadx + mo->momx, leady + mo->momy,
+    P_PathTraverse(leadx, leady, leadx + mo->mom[MX], leady + mo->mom[MY],
                    PT_ADDLINES, PTR_SlideTraverse);
-    P_PathTraverse(trailx, leady, trailx + mo->momx, leady + mo->momy,
+    P_PathTraverse(trailx, leady, trailx + mo->mom[MX], leady + mo->mom[MY],
                    PT_ADDLINES, PTR_SlideTraverse);
-    P_PathTraverse(leadx, traily, leadx + mo->momx, traily + mo->momy,
+    P_PathTraverse(leadx, traily, leadx + mo->mom[MX], traily + mo->mom[MY],
                    PT_ADDLINES, PTR_SlideTraverse);
 
     // Move up to the wall.
@@ -712,8 +711,8 @@ static void P_ThingSlidingMove(mobj_t *mo)
     {
         // The move most have hit the middle, so stairstep.
       stairstep:
-        if(!P_TryMoveXYZ(mo, mo->pos[VX], mo->pos[VY] + mo->momy, mo->pos[VZ]))
-            P_TryMoveXYZ(mo, mo->pos[VX] + mo->momx, mo->pos[VY], mo->pos[VZ]);
+        if(!P_TryMoveXYZ(mo, mo->pos[VX], mo->pos[VY] + mo->mom[MY], mo->pos[VZ]))
+            P_TryMoveXYZ(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY], mo->pos[VZ]);
         return;
     }
 
@@ -721,8 +720,8 @@ static void P_ThingSlidingMove(mobj_t *mo)
     bestSlideFrac -= 0x800;
     if(bestSlideFrac > 0)
     {
-        newx = FixedMul(mo->momx, bestSlideFrac);
-        newy = FixedMul(mo->momy, bestSlideFrac);
+        newx = FixedMul(mo->mom[MX], bestSlideFrac);
+        newy = FixedMul(mo->mom[MY], bestSlideFrac);
         if(!P_TryMoveXYZ(mo, mo->pos[VX] + newx, mo->pos[VY] + newy, mo->pos[VZ]))
             goto stairstep;
     }
@@ -737,15 +736,16 @@ static void P_ThingSlidingMove(mobj_t *mo)
     if(bestSlideFrac <= 0)
         return;
 
-    tmpXMove = FixedMul(mo->momx, bestSlideFrac);
-    tmpYMove = FixedMul(mo->momy, bestSlideFrac);
+    tmpMove[MX] = FixedMul(mo->mom[MX], bestSlideFrac);
+    tmpMove[MY] = FixedMul(mo->mom[MY], bestSlideFrac);
 
     P_WallMomSlide(bestSlideLine);  // clip the moves
 
-    mo->momx = tmpXMove;
-    mo->momy = tmpYMove;
+    mo->mom[MX] = tmpMove[MX];
+    mo->mom[MY] = tmpMove[MY];
 
-    if(!P_TryMoveXYZ(mo, mo->pos[VX] + tmpXMove, mo->pos[VY] + tmpYMove, mo->pos[VZ]))
+    if(!P_TryMoveXYZ(mo, mo->pos[VX] + tmpMove[MX],
+                         mo->pos[VY] + tmpMove[MY], mo->pos[VZ]))
     {
         goto retry;
     }
@@ -792,47 +792,47 @@ void P_ThingMovement(mobj_t *mo)
 void P_ThingMovement2(mobj_t *mo, void *pstate)
 {
     playerstate_t *playstate = pstate;
-    fixed_t ptryx, ptryy;
-    fixed_t xmove, ymove;
+    fixed_t     ptry[3];
+    fixed_t     move[3];
     ddplayer_t *player;
 
-    if(!mo->momx && !mo->momy)
+    if(!mo->mom[MX] && !mo->mom[MY])
         return;                 // This isn't moving anywhere.
 
     player = mo->dplayer;
 
     // Make sure we're not trying to move too much.
-    if(mo->momx > MAXMOVE)
-        mo->momx = MAXMOVE;
-    else if(mo->momx < -MAXMOVE)
-        mo->momx = -MAXMOVE;
+    if(mo->mom[MX] > MAXMOVE)
+        mo->mom[MX] = MAXMOVE;
+    else if(mo->mom[MX] < -MAXMOVE)
+        mo->mom[MX] = -MAXMOVE;
 
-    if(mo->momy > MAXMOVE)
-        mo->momy = MAXMOVE;
-    else if(mo->momy < -MAXMOVE)
-        mo->momy = -MAXMOVE;
+    if(mo->mom[MY] > MAXMOVE)
+        mo->mom[MY] = MAXMOVE;
+    else if(mo->mom[MY] < -MAXMOVE)
+        mo->mom[MY] = -MAXMOVE;
 
     // Do the move in progressive steps.
-    xmove = mo->momx;
-    ymove = mo->momy;
+    move[MX] = mo->mom[MX];
+    move[MY] = mo->mom[MY];
     do
     {
-        if(xmove > MAXMOVE / 2 || ymove > MAXMOVE / 2 ||
-           xmove < -MAXMOVE / 2 || ymove < -MAXMOVE / 2)
+        if(move[MX] > MAXMOVE / 2  || move[MY] > MAXMOVE / 2 ||
+           move[MX] < -MAXMOVE / 2 || move[MY] < -MAXMOVE / 2)
         {
-            ptryx = mo->pos[VX] + xmove / 2;
-            ptryy = mo->pos[VY] + ymove / 2;
-            xmove >>= 1;
-            ymove >>= 1;
+            ptry[MX] = mo->pos[VX] + move[MX] / 2;
+            ptry[MY] = mo->pos[VY] + move[MY] / 2;
+            move[MX] >>= 1;
+            move[MY] >>= 1;
         }
         else
         {
-            ptryx = mo->pos[VX] + xmove;
-            ptryy = mo->pos[VY] + ymove;
-            xmove = ymove = 0;
+            ptry[MX] = mo->pos[VX] + move[MX];
+            ptry[MY] = mo->pos[VY] + move[MY];
+            move[MX] = move[MY] = 0;
         }
 
-        if(!P_TryMoveXYZ(mo, ptryx, ptryy, mo->pos[VZ]))
+        if(!P_TryMoveXYZ(mo, ptry[MX], ptry[MY], mo->pos[VZ]))
         {
             // Blocked move.
             if(player)
@@ -840,18 +840,18 @@ void P_ThingMovement2(mobj_t *mo, void *pstate)
                 if(blockingMobj)
                 {
                     // Slide along the side of the mobj.
-                    if(P_TryMoveXYZ(mo, mo->pos[VX], ptryy, mo->pos[VZ]))
+                    if(P_TryMoveXYZ(mo, mo->pos[VX], ptry[MY], mo->pos[VZ]))
                     {
-                        mo->momx = 0;
+                        mo->mom[MX] = 0;
                     }
-                    else if(P_TryMoveXYZ(mo, ptryx, mo->pos[VY], mo->pos[VZ]))
+                    else if(P_TryMoveXYZ(mo, ptry[MX], mo->pos[VY], mo->pos[VZ]))
                     {
-                        mo->momy = 0;
+                        mo->mom[MY] = 0;
                     }
                     else
                     {
                         // All movement stops here.
-                        mo->momx = mo->momy = 0;
+                        mo->mom[MX] = mo->mom[MY] = 0;
                     }
                 }
                 else
@@ -863,25 +863,23 @@ void P_ThingMovement2(mobj_t *mo, void *pstate)
             else
             {
                 // Stop moving.
-                mo->momx = mo->momy = 0;
+                mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(xmove || ymove);
+    } while(move[MX] || move[MY]);
 
     // Apply friction.
     if(mo->ddflags & DDMF_MISSILE)
         return;                 // No friction for missiles, ever.
 
-    if(mo->pos[VZ] > mo->floorz && !mo->onmobj && !(mo->ddflags & DDMF_FLY))
+    if(mo->pos[VZ] > FLT2FIX(mo->floorz) && !mo->onmobj && !(mo->ddflags & DDMF_FLY))
         return;                 // No friction when airborne.
 
-    if(mo->momx > -STOPSPEED && mo->momx < STOPSPEED && mo->momy > -STOPSPEED
-       && mo->momy < STOPSPEED && (!playstate ||
-                                   (!playstate->forwardMove &&
-                                    !playstate->sideMove)))
+    if(mo->mom[MX] > -STOPSPEED && mo->mom[MX] < STOPSPEED &&
+       mo->mom[MY] > -STOPSPEED && mo->mom[MY] < STOPSPEED &&
+       (!playstate || (!playstate->forwardMove && !playstate->sideMove)))
     {
-        mo->momx = 0;
-        mo->momy = 0;
+        mo->mom[MX] = mo->mom[MY] = 0;
     }
     else
     {
@@ -889,80 +887,81 @@ void P_ThingMovement2(mobj_t *mo, void *pstate)
 
         if(playstate)
             friction = playstate->friction;
-        mo->momx = FixedMul(mo->momx, friction);
-        mo->momy = FixedMul(mo->momy, friction);
+
+        mo->mom[MX] = FixedMul(mo->mom[MX], friction);
+        mo->mom[MY] = FixedMul(mo->mom[MY], friction);
     }
 }
 
 void P_ThingZMovement(mobj_t *mo)
 {
     // check for smooth step up
-    if(mo->dplayer && mo->pos[VZ] < mo->floorz)
+    if(mo->dplayer && FIX2FLT(mo->pos[VZ]) < mo->floorz)
     {
-        mo->dplayer->viewheight -= mo->floorz - mo->pos[VZ];
+        mo->dplayer->viewheight -= mo->floorz - FIX2FLT(mo->pos[VZ]);
         mo->dplayer->deltaviewheight =
-            ((41 << FRACBITS) - mo->dplayer->viewheight) >> 3;
+            FIX2FLT(((41 << FRACBITS) - FLT2FIX(mo->dplayer->viewheight)) >> 3);
     }
 
     // Adjust height.
-    mo->pos[VZ] += mo->momz;
+    mo->pos[VZ] += mo->mom[MZ];
 
     // Clip movement. Another thing?
-    if(mo->onmobj && mo->pos[VZ] <= mo->onmobj->pos[VZ] + mo->onmobj->height)
+    if(mo->onmobj && mo->pos[VZ] <= mo->onmobj->pos[VZ] + FLT2FIX(mo->onmobj->height))
     {
-        if(mo->momz < 0)
+        if(mo->mom[MZ] < 0)
         {
-            if(mo->dplayer && mo->momz < -mapgravity * 8)
+            if(mo->dplayer && mo->mom[MZ] < -mapgravity * 8)
             {
                 // Squat down.
                 // Decrease viewheight for a moment
                 // after hitting the ground (hard),
                 // and utter appropriate sound.
-                mo->dplayer->deltaviewheight = mo->momz >> 3;
+                mo->dplayer->deltaviewheight = FIX2FLT(mo->mom[MZ] >> 3);
             }
-            mo->momz = 0;
+            mo->mom[MZ] = 0;
         }
-        if(!mo->momz)
-            mo->pos[VZ] = mo->onmobj->pos[VZ] + mo->onmobj->height;
+        if(!mo->mom[MZ])
+            mo->pos[VZ] = mo->onmobj->pos[VZ] + FLT2FIX(mo->onmobj->height);
     }
 
     // The floor.
-    if(mo->pos[VZ] <= mo->floorz)
+    if(mo->pos[VZ] <= FLT2FIX(mo->floorz))
     {
         // Hit the floor.
-        if(mo->momz < 0)
+        if(mo->mom[MZ] < 0)
         {
-            if(mo->dplayer && mo->momz < -mapgravity * 8)
+            if(mo->dplayer && mo->mom[MZ] < -mapgravity * 8)
             {
                 // Squat down.
                 // Decrease viewheight for a moment
                 // after hitting the ground (hard),
                 // and utter appropriate sound.
-                mo->dplayer->deltaviewheight = mo->momz >> 3;
+                mo->dplayer->deltaviewheight = FIX2FLT(mo->mom[MZ] >> 3);
             }
-            mo->momz = 0;
+            mo->mom[MZ] = 0;
         }
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = FLT2FIX(mo->floorz);
     }
     else if(mo->ddflags & DDMF_LOWGRAVITY)
     {
-        if(mo->momz == 0)
-            mo->momz = -(mapgravity >> 3) * 2;
+        if(mo->mom[MZ] == 0)
+            mo->mom[MZ] = -(mapgravity >> 3) * 2;
         else
-            mo->momz -= mapgravity >> 3;
+            mo->mom[MZ] -= mapgravity >> 3;
     }
     else if(!(mo->ddflags & DDMF_NOGRAVITY))
     {
-        if(mo->momz == 0)
-            mo->momz = -mapgravity * 2;
+        if(mo->mom[MZ] == 0)
+            mo->mom[MZ] = -mapgravity * 2;
         else
-            mo->momz -= mapgravity;
+            mo->mom[MZ] -= mapgravity;
     }
-    if(mo->pos[VZ] + mo->height > mo->ceilingz)
+    if(FIX2FLT(mo->pos[VZ]) + mo->height > mo->ceilingz)
     {
         // hit the ceiling
-        if(mo->momz > 0)
-            mo->momz = 0;
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        if(mo->mom[MZ] > 0)
+            mo->mom[MZ] = 0;
+        mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
     }
 }

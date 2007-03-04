@@ -60,11 +60,11 @@ int     cplr_thrust_mul = FRACUNIT;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int fixspeed = 15;
-static int xfix, yfix, fixtics;
+static int fixpos[3], fixtics;
 static float pspy;
 
 // Console player demo momentum (used to smooth out abrupt momentum changes).
-static int cp_momx[LOCALCAM_WRITE_TICS], cp_momy[LOCALCAM_WRITE_TICS];
+static int cp_mom[3][LOCALCAM_WRITE_TICS];
 
 // CODE --------------------------------------------------------------------
 
@@ -76,10 +76,10 @@ void Cl_InitPlayers(void)
     int         i;
 
     memset(playerstate, 0, sizeof(playerstate));
-    xfix = yfix = fixtics = 0;
+    memset(fixpos, 0, sizeof(fixpos));
+    fixtics = 0;
     pspy = 0;
-    memset(cp_momx, 0, sizeof(cp_momx));
-    memset(cp_momy, 0, sizeof(cp_momy));
+    memset(cp_mom, 0, sizeof(cp_mom));
 
     // Clear psprites. The server will send them.
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -105,8 +105,8 @@ void Cl_LocalCommand(void)
         memset(cl->lastCmd, 0, TICCMD_SIZE);
         if(s->cmo)
         {
-            s->cmo->mo.momx = 0;
-            s->cmo->mo.momy = 0;
+            s->cmo->mo.mom[MX] = 0;
+            s->cmo->mo.mom[MY] = 0;
         }
     }
 
@@ -265,8 +265,8 @@ void Cl_ThrustMul(mobj_t *mo, angle_t angle, fixed_t move, fixed_t thmul)
     // Make a fine angle.
     angle >>= ANGLETOFINESHIFT;
     move = FixedMul(move, thmul);
-    mo->momx += FixedMul(move, finecosine[angle]);
-    mo->momy += FixedMul(move, finesine[angle]);
+    mo->mom[MX] += FixedMul(move, finecosine[angle]);
+    mo->mom[MY] += FixedMul(move, finesine[angle]);
 }
 
 void Cl_Thrust(mobj_t *mo, angle_t angle, fixed_t move)
@@ -305,7 +305,7 @@ void Cl_MovePlayer(ddplayer_t *pl)
     if(num == consoleplayer)
     {
         fixed_t air_thrust = FRACUNIT / 32;
-        boolean airborne = (mo->pos[VZ] > mo->floorz && !(mo->ddflags & DDMF_FLY));
+        boolean airborne = (mo->pos[VZ] > FLT2FIX(mo->floorz) && !(mo->ddflags & DDMF_FLY));
 
         if(!(pl->flags & DDPF_DEAD) && !mo->reactiontime)    // Dead players do not move willfully.
         {
@@ -346,9 +346,9 @@ void Cl_UpdatePlayerPos(ddplayer_t *pl)
     P_LinkThing(clmo, 0);       // Update subsector pointer.
     clmo->floorz = mo->floorz;
     clmo->ceilingz = mo->ceilingz;
-    clmo->momx = mo->momx;
-    clmo->momy = mo->momy;
-    clmo->momz = mo->momz;
+    clmo->mom[MX] = mo->mom[MX];
+    clmo->mom[MY] = mo->mom[MY];
+    clmo->mom[MZ] = mo->mom[MZ];
 }
 
 void Cl_CoordsReceived(void)
@@ -360,11 +360,11 @@ void Cl_CoordsReceived(void)
 Con_Printf("Cl_CoordsReceived\n");
 #endif
 
-    xfix = Msg_ReadShort() << 16;
-    yfix = Msg_ReadShort() << 16;
+    fixpos[VX] = Msg_ReadShort() << 16;
+    fixpos[VY] = Msg_ReadShort() << 16;
     fixtics = fixspeed;
-    xfix /= fixspeed;
-    yfix /= fixspeed;
+    fixpos[VX] /= fixspeed;
+    fixpos[VY] /= fixspeed;
 }
 
 void Cl_HandlePlayerFix(void)
@@ -450,18 +450,18 @@ Con_Message("Cl_HandlePlayerFix: Fix momentum %i. Mom=%f, %f, %f\n",
 #ifdef _DEBUG
 Con_Message("  Applying to mobj %p...\n", mo);
 #endif
-            mo->momx = pos[0];
-            mo->momy = pos[1];
-            mo->momz = pos[2];
+            mo->mom[MX] = pos[0];
+            mo->mom[MY] = pos[1];
+            mo->mom[MZ] = pos[2];
         }
         if(clmo)
         {
 #ifdef _DEBUG
 Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
 #endif
-            clmo->mo.momx = pos[0];
-            clmo->mo.momy = pos[1];
-            clmo->mo.momz = pos[2];
+            clmo->mo.mom[MX] = pos[0];
+            clmo->mo.mom[MY] = pos[1];
+            clmo->mo.mom[MZ] = pos[2];
         }
     }
 
@@ -495,17 +495,17 @@ void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
         return;
 
     // Place the new momentum in the appropriate place.
-    cp_momx[SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dx;
-    cp_momy[SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dy;
+    cp_mom[MX][SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dx;
+    cp_mom[MY][SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dy;
 
     // Calculate an average.
-    for(mo->momx = mo->momy = i = 0; i < LOCALCAM_WRITE_TICS; ++i)
+    for(mo->mom[MX] = mo->mom[MY] = i = 0; i < LOCALCAM_WRITE_TICS; ++i)
     {
-        mo->momx += cp_momx[i];
-        mo->momy += cp_momy[i];
+        mo->mom[MX] += cp_mom[MX][i];
+        mo->mom[MY] += cp_mom[MY][i];
     }
-    mo->momx /= LOCALCAM_WRITE_TICS;
-    mo->momy /= LOCALCAM_WRITE_TICS;
+    mo->mom[MX] /= LOCALCAM_WRITE_TICS;
+    mo->mom[MY] /= LOCALCAM_WRITE_TICS;
 
     if(dx || dy)
     {
@@ -516,8 +516,8 @@ void Cl_MoveLocalPlayer(int dx, int dy, int z, boolean onground)
     }
 
     mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
-    mo->floorz = FLT2FIX(mo->subsector->sector->SP_floorheight);
-    mo->ceilingz = FLT2FIX(mo->subsector->sector->SP_ceilheight);
+    mo->floorz = mo->subsector->sector->SP_floorheight;
+    mo->ceilingz = mo->subsector->sector->SP_ceilheight;
 
     if(onground)
     {
@@ -691,7 +691,7 @@ void Cl_ReadPlayerDelta2(boolean skip)
 #if _DEBUG
 Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%x\n", num, s->mobjId,
             old);
-Con_Message("  x=%x y=%x z=%x fz=%x cz=%x\n", s->cmo->mo.pos[VX],
+Con_Message("  x=%x y=%x z=%x fz=%g cz=%g\n", s->cmo->mo.pos[VX],
             s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
             s->cmo->mo.floorz, s->cmo->mo.ceilingz);
 Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
@@ -772,6 +772,6 @@ boolean Cl_IsFreeToMove(int player)
 
     if(!mo)
         return false;
-    return (mo->pos[VZ] >= mo->floorz && mo->pos[VZ] +
-            mo->height <= mo->ceilingz);
+    return (mo->pos[VZ] >= FLT2FIX(mo->floorz) &&
+            FIX2FLT(mo->pos[VZ]) + mo->height <= mo->ceilingz);
 }

@@ -45,7 +45,7 @@ DD_BASE_MOBJ_ELEMENTS()} mobj_t;
 
 #define DEFAULT_FRICTION    0xe800
 
-extern int      tmpFloorZ, tmpCeilingZ;
+extern float    tmpFloorZ, tmpCeilingZ;
 extern mobj_t  *blockingMobj;
 extern boolean  dontHitMobjs;
 

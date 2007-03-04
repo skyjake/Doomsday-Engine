@@ -461,7 +461,7 @@ static void Net_DoUpdate(void)
         Msg_Begin(PKT_COORDS);
         Msg_WriteShort(mo->pos[VX] >> 16);
         Msg_WriteShort(mo->pos[VY] >> 16);
-        if(mo->pos[VZ] == mo->floorz)
+        if(mo->pos[VZ] == FLT2FIX(mo->floorz))
         {
             // This'll keep us on the floor even in fast moving sectors.
             Msg_WriteShort(DDMININT >> 16);

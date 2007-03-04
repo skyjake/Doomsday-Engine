@@ -79,14 +79,14 @@ boolean PTR_SightTraverse(intercept_t * in)
 
     if(li->L_frontsector->SP_floorheight != li->L_backsector->SP_floorheight)
     {
-        slope = FixedDiv(openbottom - sightzstart, in->frac);
+        slope = FixedDiv(FLT2FIX(openbottom) - sightzstart, in->frac);
         if(slope > bottomslope)
             bottomslope = slope;
     }
 
     if(li->L_frontsector->SP_ceilheight != li->L_backsector->SP_ceilheight)
     {
-        slope = FixedDiv(opentop - sightzstart, in->frac);
+        slope = FixedDiv(FLT2FIX(opentop) - sightzstart, in->frac);
         if(slope < topslope)
             topslope = slope;
     }
@@ -501,8 +501,8 @@ boolean P_CheckSight(mobj_t *t1, mobj_t *t2)
     // Check precisely.
     sightzstart = t1->pos[VZ];
     if(!(t1->dplayer && t1->dplayer->flags & DDPF_CAMERA))
-        sightzstart += t1->height + -(t1->height >> 2);
-    topslope = (t2->pos[VZ] + t2->height) - sightzstart;
+        sightzstart += FLT2FIX(t1->height) + -(FLT2FIX(t1->height) >> 2);
+    topslope = (t2->pos[VZ] + FLT2FIX(t2->height)) - sightzstart;
     bottomslope = (t2->pos[VZ]) - sightzstart;
 
     return P_SightPathTraverse(t1->pos[VX], t1->pos[VY], t2->pos[VX], t2->pos[VY]);

@@ -882,6 +882,8 @@ extern          "C" {
 #define VISIBLE 1
 #define INVISIBLE -1
 
+enum { MX, MY, MZ };               // Momentum axis indices.
+
     // Base mobj_t elements. Games MUST use this as the basis for mobj_t.
 #define DD_BASE_MOBJ_ELEMENTS() \
     thinker_t       thinker;            /* thinker node */ \
@@ -892,21 +894,21 @@ extern          "C" {
     struct mobj_s   *snext, **sprev;    /* links in sector (if needed) */ \
 \
     struct subsector_s *subsector;      /* subsector in which this resides */ \
-    fixed_t         momx, momy, momz;   \
+    fixed_t         mom[3];   \
     angle_t         angle;              \
     spritenum_t     sprite;             /* used to find patch_t and \
                                          * flip value */ \
     int             frame;              /* might be ord with FF_FULLBRIGHT */ \
     fixed_t         radius; \
-    fixed_t         height; \
+    float           height; \
     int             ddflags;            /* Doomsday mobj flags (DDMF_*) */ \
-    fixed_t         floorclip;          /* value to use for floor clipping */ \
+    float           floorclip;          /* value to use for floor clipping */ \
     int             valid;              /* if == valid, already checked */ \
     int             type;               /* mobj type */ \
     struct state_s  *state; \
     int             tics;               /* state tic counter */ \
-    fixed_t         floorz;             /* highest contacted floor */ \
-    fixed_t         ceilingz;           /* lowest contacted ceiling */ \
+    float           floorz;             /* highest contacted floor */ \
+    float           ceilingz;           /* lowest contacted ceiling */ \
     struct mobj_s*  onmobj;             /* the mobj this one is on top of. */ \
     boolean         wallhit;            /* the mobj is hitting a wall. */ \
     struct ddplayer_s *dplayer;         /* NULL if not a player mobj. */ \
@@ -1398,9 +1400,9 @@ typedef struct ticcmd_s {
     typedef struct ddplayer_s {
         ticcmd_t        cmd;
         struct mobj_s  *mo;        // pointer to a (game specific) mobj
-        fixed_t         viewz;     // focal origin above r.z
-        fixed_t         viewheight; // base height above floor for viewz
-        fixed_t         deltaviewheight;
+        float           viewz;     // focal origin above r.z
+        float           viewheight; // base height above floor for viewz
+        float           deltaviewheight;
         float           lookdir;   // It's now a float, for mlook.
         int             fixedcolormap;  // can be set to REDCOLORMAP, etc
         int             extralight; // so gun flashes light up areas

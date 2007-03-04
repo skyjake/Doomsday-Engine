@@ -299,7 +299,7 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
     view->pitch = player->lookdir;
     view->pos[VX] = player->mo->pos[VX] + viewxOffset;
     view->pos[VY] = player->mo->pos[VY] + viewyOffset;
-    view->pos[VZ] = player->viewz + viewzOffset;
+    view->pos[VZ] = FLT2FIX(player->viewz) + viewzOffset;
     if((player->flags & DDPF_CHASECAM) && !(player->flags & DDPF_CAMERA))
     {
         /* STUB
@@ -323,13 +323,13 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
     // Cameras are not restricted.
     if(!(player->flags & DDPF_CAMERA))
     {
-        if(view->pos[VZ] > player->mo->ceilingz - 4 * FRACUNIT)
+        if(view->pos[VZ] > FLT2FIX(player->mo->ceilingz - 4))
         {
-            view->pos[VZ] = player->mo->ceilingz - 4 * FRACUNIT;
+            view->pos[VZ] = FLT2FIX(player->mo->ceilingz - 4);
         }
-        if(view->pos[VZ] < player->mo->floorz + 4 * FRACUNIT)
+        if(view->pos[VZ] < FLT2FIX(player->mo->floorz + 4))
         {
-            view->pos[VZ] = player->mo->floorz + 4 * FRACUNIT;
+            view->pos[VZ] = FLT2FIX(player->mo->floorz + 4);
         }
     }
 }

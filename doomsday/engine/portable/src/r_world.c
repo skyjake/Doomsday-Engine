@@ -260,7 +260,7 @@ static void R_InitSkyFix(void)
         // Check that all the things in the sector fit in.
         for(it = sec->thinglist; it; it = it->snext)
         {
-            b = FIX2FLT(it->height);
+            b = it->height;
             f = sec->SP_ceilheight + *fix -
                 sec->SP_floorheight;
 

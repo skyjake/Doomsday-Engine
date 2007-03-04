@@ -418,15 +418,15 @@ static void P_NewParticle(ptcgen_t *gen)
         }
         if(gen->flags & PGF_RELATIVE_VELOCITY)
         {
-            pt->mov[VX] += gen->source->momx;
-            pt->mov[VY] += gen->source->momy;
-            pt->mov[VZ] += gen->source->momz;
+            pt->mov[VX] += gen->source->mom[MX];
+            pt->mov[VY] += gen->source->mom[MY];
+            pt->mov[VZ] += gen->source->mom[MZ];
         }
 
         // Position.
         pt->pos[VX] = gen->source->pos[VX];
         pt->pos[VY] = gen->source->pos[VY];
-        pt->pos[VZ] = gen->source->pos[VZ] - gen->source->floorclip;
+        pt->pos[VZ] = gen->source->pos[VZ] - FLT2FIX(gen->source->floorclip);
         P_Uncertain(pt->pos, FRACUNIT * def->min_spawn_radius,
                     FRACUNIT * def->spawn_radius);
 
@@ -1346,11 +1346,11 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
         // Calculate appropriate center coordinates and the vector.
         gen->center[VX] += mo->pos[VX];
         gen->center[VY] += mo->pos[VY];
-        gen->center[VZ] += mo->pos[VZ] + mo->height / 2;
+        gen->center[VZ] += mo->pos[VZ] + FLT2FIX(mo->height / 2);
         gen->vector[VX] += mo->pos[VX] - inflictor->pos[VX];
         gen->vector[VY] += mo->pos[VY] - inflictor->pos[VY];
         gen->vector[VZ] +=
-            mo->pos[VZ] + mo->height / 2 - inflictor->pos[VZ] - inflictor->height / 2;
+            mo->pos[VZ] + FLT2FIX(mo->height / 2) - inflictor->pos[VZ] - FLT2FIX(inflictor->height / 2);
 
         // Normalize the vector.
         len =

@@ -261,7 +261,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 
         // Give it a real Z coordinate.
         onFloor = true;
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = FLT2FIX(mo->floorz);
     }
     if(mo->pos[VZ] == DDMAXINT)
     {
@@ -270,7 +270,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 
         // Give it a real Z coordinate.
         inCeiling = true;
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
     }
 
     // Find out floor and ceiling z.
@@ -280,11 +280,11 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 
     if(onFloor)
     {
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = FLT2FIX(mo->floorz);
     }
     if(inCeiling)
     {
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
     }
 
 #if 0
@@ -338,11 +338,11 @@ if(!mo || !clmo)
     }
     mo->pos[VZ] = clmo->pos[VZ];
     if(flags & MDF_MOM_X)
-        mo->momx = clmo->momx;
+        mo->mom[MX] = clmo->mom[MX];
     if(flags & MDF_MOM_Y)
-        mo->momy = clmo->momy;
+        mo->mom[MY] = clmo->mom[MY];
     if(flags & MDF_MOM_Z)
-        mo->momz = clmo->momz;
+        mo->mom[MZ] = clmo->mom[MZ];
     if(flags & MDF_ANGLE)
     {
         mo->angle = clmo->angle;
@@ -461,11 +461,11 @@ if(!d->pos[VX] && !d->pos[VY])
 
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
-        d->momx = (Msg_ReadShort() << 16) / 256;    //>> 8;
+        d->mom[MX] = (Msg_ReadShort() << 16) / 256;    //>> 8;
     if(df & MDF_MOM_Y)
-        d->momy = (Msg_ReadShort() << 16) / 256;    //>> 8;
+        d->mom[MY] = (Msg_ReadShort() << 16) / 256;    //>> 8;
     if(df & MDF_MOM_Z)
-        d->momz = (Msg_ReadShort() << 16) / 256;    //>> 8;
+        d->mom[MZ] = (Msg_ReadShort() << 16) / 256;    //>> 8;
 
     // Angles with 16-bit accuracy.
     if(df & MDF_ANGLE)
@@ -493,13 +493,13 @@ if(!d->pos[VX] && !d->pos[VY])
     if(df & MDF_RADIUS)
         d->radius = Msg_ReadByte() << FRACBITS;
     if(df & MDF_HEIGHT)
-        d->height = Msg_ReadByte() << FRACBITS;
+        d->height = (float) Msg_ReadByte();
     if(df & MDF_FLOORCLIP)
     {
         if(df & MDF_LONG_FLOORCLIP)
-            d->floorclip = Msg_ReadPackedShort() << 14;
+            d->floorclip = FIX2FLT(Msg_ReadPackedShort() << 14);
         else
-            d->floorclip = Msg_ReadByte() << 14;
+            d->floorclip = FIX2FLT(Msg_ReadByte() << 14);
     }
 
     // Link again.
@@ -581,7 +581,7 @@ void Cl_MoveThing(clmobj_t *cmo)
     boolean     collided = false;
 
     // First do XY movement.
-    if(mo->momx || mo->momy)
+    if(mo->mom[MX] || mo->mom[MY])
     {
         // Missiles don't hit mobjs only after a short delay. This'll
         // allow the missile to move free of the shooter. (Quite a hack!)
@@ -594,7 +594,7 @@ void Cl_MoveThing(clmobj_t *cmo)
         }
 
         // Move while doing collision checking.
-        if(!P_StepMove(mo, mo->momx, mo->momy, 0))
+        if(!P_StepMove(mo, mo->mom[MX], mo->mom[MY], 0))
         {
             // There was a collision!
             collided = true;
@@ -604,40 +604,40 @@ void Cl_MoveThing(clmobj_t *cmo)
         dontHitMobjs = false;
     }
 
-    if(mo->momz)
+    if(mo->mom[MZ])
     {
-        mo->pos[VZ] += mo->momz;
+        mo->pos[VZ] += mo->mom[MZ];
 
-        if(mo->pos[VZ] < mo->floorz)
+        if(mo->pos[VZ] < FLT2FIX(mo->floorz))
         {
-            mo->pos[VZ] = mo->floorz;
-            mo->momz = 0;
+            mo->pos[VZ] = FLT2FIX(mo->floorz);
+            mo->mom[MZ] = 0;
             collided = true;
         }
-        if(mo->pos[VZ] + mo->height > mo->ceilingz)
+        if(FIX2FLT(mo->pos[VZ]) + mo->height > mo->ceilingz)
         {
-            mo->pos[VZ] = mo->ceilingz - mo->height;
-            mo->momz = 0;
+            mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
+            mo->mom[MZ] = 0;
             collided = true;
         }
     }
 
-    if(mo->pos[VZ] > mo->floorz)
+    if(mo->pos[VZ] > FLT2FIX(mo->floorz))
     {
         // Gravity will affect the prediction.
         if(mo->ddflags & DDMF_LOWGRAVITY)
         {
-            if(mo->momz == 0)
-                mo->momz = -(mapgravity >> 3) * 2;
+            if(mo->mom[MZ] == 0)
+                mo->mom[MZ] = -(mapgravity >> 3) * 2;
             else
-                mo->momz -= mapgravity >> 3;
+                mo->mom[MZ] -= mapgravity >> 3;
         }
         else if(!(mo->ddflags & DDMF_NOGRAVITY))
         {
-            if(mo->momz == 0)
-                mo->momz = -mapgravity * 2;
+            if(mo->mom[MZ] == 0)
+                mo->mom[MZ] = -mapgravity * 2;
             else
-                mo->momz -= mapgravity;
+                mo->mom[MZ] -= mapgravity;
         }
     }
 
@@ -659,11 +659,11 @@ void Cl_MoveThing(clmobj_t *cmo)
     // Stick to a plane?
     if(cmo->flags & CLMF_STICK_FLOOR)
     {
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = FLT2FIX(mo->floorz);
     }
     if(cmo->flags & CLMF_STICK_CEILING)
     {
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
     }
 }
 
@@ -969,17 +969,17 @@ void Cl_ReadMobjDelta2(boolean skip)
     if(df & MDF_MOM_X)
     {
         mom = Msg_ReadShort();
-        d->momx = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
+        d->mom[MX] = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
     if(df & MDF_MOM_Y)
     {
         mom = Msg_ReadShort();
-        d->momy = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
+        d->mom[MY] = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
     if(df & MDF_MOM_Z)
     {
         mom = Msg_ReadShort();
-        d->momz = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
+        d->mom[MZ] = (fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
 
     // Angles with 16-bit accuracy.
@@ -1015,13 +1015,13 @@ void Cl_ReadMobjDelta2(boolean skip)
     if(df & MDF_RADIUS)
         d->radius = Msg_ReadByte() << FRACBITS;
     if(df & MDF_HEIGHT)
-        d->height = Msg_ReadByte() << FRACBITS;
+        d->height = (float) Msg_ReadByte();
     if(df & MDF_FLOORCLIP)
     {
         if(df & MDF_LONG_FLOORCLIP)
-            d->floorclip = Msg_ReadPackedShort() << 14;
+            d->floorclip = FIX2FLT(Msg_ReadPackedShort() << 14);
         else
-            d->floorclip = Msg_ReadByte() << 14;
+            d->floorclip = FIX2FLT(Msg_ReadByte() << 14);
     }
 
     if(moreFlags & MDFE_TRANSLUCENCY)
