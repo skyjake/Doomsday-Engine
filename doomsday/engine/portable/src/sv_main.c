@@ -1000,16 +1000,16 @@ Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
     if(player->flags & DDPF_FIXMOM)
     {
         Msg_WriteLong(++player->fixcounter.mom);
-        Msg_WriteLong(player->mo->momx);
-        Msg_WriteLong(player->mo->momy);
-        Msg_WriteLong(player->mo->momz);
+        Msg_WriteLong(player->mo->mom[MX]);
+        Msg_WriteLong(player->mo->mom[MY]);
+        Msg_WriteLong(player->mo->mom[MZ]);
 
 #ifdef _DEBUG
 Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
             player->fixcounter.mom,
-            FIX2FLT(player->mo->momx),
-            FIX2FLT(player->mo->momy),
-            FIX2FLT(player->mo->momz));
+            FIX2FLT(player->mo->mom[MX]),
+            FIX2FLT(player->mo->mom[MY]),
+            FIX2FLT(player->mo->mom[MZ]));
 #endif
     }
 
@@ -1136,7 +1136,7 @@ void Sv_PlaceThing(mobj_t* mo, fixed_t x, fixed_t y, fixed_t z, boolean onFloor)
 
     if(onFloor)
     {
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = FLT2FIX(mo->floorz);
     }
 }
 
@@ -1162,7 +1162,7 @@ void Sv_ClientCoords(int playerNum)
 
     if((unsigned) clz == (DDMININT & 0xffff0000))
     {
-        clz = mo->floorz;
+        clz = FLT2FIX(mo->floorz);
         onFloor = true;
     }
 
@@ -1175,7 +1175,7 @@ void Sv_ClientCoords(int playerNum)
         // has been misestimated on serverside.
 
         // Prevent illegal stepups.
-        if(tmpFloorZ - mo->pos[VZ] <= 24*FRACUNIT ||
+        if(tmpFloorZ - FIX2FLT(mo->pos[VZ]) <= 24 ||
            // But also allow warping the position.
            (abs(clx - mo->pos[VX]) > WARP_LIMIT * FRACUNIT ||
             abs(cly - mo->pos[VY]) > WARP_LIMIT * FRACUNIT ||

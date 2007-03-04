@@ -476,6 +476,7 @@ menu_t MainDef = {
     0, MENU_NONE,
     hu_font_b,                    //1, 0, 0,
     cfg.menuColor,
+    NULL,
     LINEHEIGHT_B + 1,
     0, 6
 #else

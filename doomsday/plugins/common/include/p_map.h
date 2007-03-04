@@ -32,8 +32,8 @@
 // If "floatok" true, move would be ok
 // if within "tmfloorz - tmceilingz".
 extern boolean  floatok;
-extern fixed_t  tmfloorz;
-extern fixed_t  tmceilingz;
+extern float  tmfloorz;
+extern float  tmceilingz;
 extern int      tmfloorpic;
 
 extern line_t  *ceilingline;

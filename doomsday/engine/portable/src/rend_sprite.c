@@ -338,7 +338,7 @@ void Rend_DrawPlayerSprites(void)
             // Evaluate the position of this player in the light grid.
             // TODO: Could be affected by BIAS (dynamic lights?).
             float point[3] = { FIX2FLT(viewplayer->mo->pos[VX]), FIX2FLT(viewplayer->mo->pos[VY]),
-                               FIX2FLT(viewplayer->mo->pos[VZ] + viewplayer->mo->height/2)};
+                               FIX2FLT(viewplayer->mo->pos[VZ]) + viewplayer->mo->height/2};
             LG_Evaluate(point, secbRGB);
         }
 

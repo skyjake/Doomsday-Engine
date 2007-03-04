@@ -119,7 +119,7 @@ void P_SRVOAngleTicker(mobj_t *mo)
     {
         // Calculate a good step size.
         // Thing height and diff taken into account.
-        hgt = mo->height >> 16;
+        hgt = (int) mo->height;
         if(hgt < 30)
             hgt = 30;
         if(hgt > 60)

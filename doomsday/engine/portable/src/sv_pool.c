@@ -367,11 +367,11 @@ void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
  */
 fixed_t Sv_GetMaxedMobjZ(const mobj_t *mo)
 {
-    if(mo->pos[VZ] == mo->floorz)
+    if(FIX2FLT(mo->pos[VZ]) == mo->floorz)
     {
         return DDMININT;
     }
-    if(mo->pos[VZ] + mo->height == mo->ceilingz)
+    if(FIX2FLT(mo->pos[VZ]) + mo->height == mo->ceilingz)
     {
         return DDMAXINT;
     }
@@ -394,9 +394,9 @@ void Sv_RegisterMobj(dt_mobj_t *reg, const mobj_t *mo)
     reg->pos[VZ] = Sv_GetMaxedMobjZ(mo);
     reg->floorz = mo->floorz;
     reg->ceilingz = mo->ceilingz;
-    reg->momx = mo->momx;
-    reg->momy = mo->momy;
-    reg->momz = mo->momz;
+    reg->mom[MX] = mo->mom[MX];
+    reg->mom[MY] = mo->mom[MY];
+    reg->mom[MZ] = mo->mom[MZ];
     reg->angle = mo->angle;
     reg->selector = mo->selector;
     reg->state = mo->state;
@@ -552,11 +552,11 @@ boolean Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s,
     if(r->pos[VZ] != Sv_GetMaxedMobjZ(s))
         df |= MDF_POS_Z;
 
-    if(r->momx != s->momx)
+    if(r->mom[MX] != s->mom[MX])
         df |= MDF_MOM_X;
-    if(r->momy != s->momy)
+    if(r->mom[MY] != s->mom[MY])
         df |= MDF_MOM_Y;
-    if(r->momz != s->momz)
+    if(r->mom[MZ] != s->mom[MZ])
         df |= MDF_MOM_Z;
 
     if(r->angle != s->angle)
@@ -1075,7 +1075,8 @@ void Sv_UpdateOwnerInfo(pool_t *pool)
         info->pos[VY] = player->mo->pos[VY];
         info->pos[VZ] = player->mo->pos[VZ];
         info->angle = player->mo->angle;
-        info->speed = P_ApproxDistance(player->mo->momx, player->mo->momy);
+        info->speed =
+            P_ApproxDistance(player->mo->mom[MX], player->mo->mom[MY]);
     }
 
     // The acknowledgement threshold is a multiple of the average
@@ -1272,11 +1273,11 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
         if(sf & MDF_POS_Z)
             d->pos[VZ] = s->pos[VZ];
         if(sf & MDF_MOM_X)
-            d->momx = s->momx;
+            d->mom[MX] = s->mom[MX];
         if(sf & MDF_MOM_Y)
-            d->momy = s->momy;
+            d->mom[MY] = s->mom[MY];
         if(sf & MDF_MOM_Z)
-            d->momz = s->momz;
+            d->mom[MZ] = s->mom[MZ];
         if(sf & MDF_ANGLE)
             d->angle = s->angle;
         if(sf & MDF_SELECTOR)
@@ -1602,7 +1603,7 @@ uint Sv_DeltaAge(const delta_t *delta)
 fixed_t Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
                         boolean isReal)
 {
-    fixed_t z;
+    float z;
 
     if(isReal && !P_IsUsedMobjID(mo->thinker.id))
     {
@@ -1610,19 +1611,19 @@ fixed_t Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info,
         return DDMAXINT;
     }
 
-    z = mo->pos[VZ];
+    z = FIX2FLT(mo->pos[VZ]);
 
     // Registered mobjs may have a maxed out Z coordinate.
     if(!isReal)
     {
-        if(z == DDMININT)
+        if(z == FIX2FLT(DDMININT))
             z = mo->floorz;
-        if(z == DDMAXINT)
+        if(z == FIX2FLT(DDMAXINT))
             z = mo->ceilingz - mo->height;
     }
 
     return P_ApproxDistance3(info->pos[VX] - mo->pos[VX], info->pos[VY] - mo->pos[VY],
-                             info->pos[VZ] - (z + mo->height / 2));
+                             info->pos[VZ] - FLT2FIX(z + mo->height / 2));
 }
 
 /**
@@ -2780,7 +2781,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
             score *= 1.2f;
 
         // Small objects are not that important.
-        size = FIX2FLT(MAX_OF(mo->radius, mo->height));
+        size = MAX_OF(FIX2FLT(mo->radius), mo->height);
         if(size < 16)
         {
             // Not too small, though.

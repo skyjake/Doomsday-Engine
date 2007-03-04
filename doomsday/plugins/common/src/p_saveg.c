@@ -507,9 +507,9 @@ static void SV_WritePlayer(int playernum)
 
     SV_WriteByte(3);            // Write a version byte.
     SV_WriteLong(pl->playerstate);
-    SV_WriteLong(dpl->viewz);
-    SV_WriteLong(dpl->viewheight);
-    SV_WriteLong(dpl->deltaviewheight);
+    SV_WriteLong(FLT2FIX(dpl->viewz));
+    SV_WriteLong(FLT2FIX(dpl->viewheight));
+    SV_WriteLong(FLT2FIX(dpl->deltaviewheight));
     SV_WriteFloat(dpl->lookdir);
     SV_WriteLong(pl->bob);
 
@@ -591,9 +591,9 @@ static void SV_ReadPlayer(player_t *pl)
     ver = SV_ReadByte();
 
     pl->playerstate = SV_ReadLong();
-    dpl->viewz = SV_ReadLong();
-    dpl->viewheight = SV_ReadLong();
-    dpl->deltaviewheight = SV_ReadLong();
+    dpl->viewz = FIX2FLT(SV_ReadLong());
+    dpl->viewheight = FIX2FLT(SV_ReadLong());
+    dpl->deltaviewheight = FIX2FLT(SV_ReadLong());
     dpl->lookdir = SV_ReadFloat();
     pl->bob = SV_ReadLong();
 
@@ -733,17 +733,17 @@ static void SV_WriteMobj(mobj_t *mobj)
     SV_WriteLong(mo.frame);
 
     // The closest interval over all contacted Sectors.
-    SV_WriteLong(mo.floorz);
-    SV_WriteLong(mo.ceilingz);
+    SV_WriteLong(FLT2FIX(mo.floorz));
+    SV_WriteLong(FLT2FIX(mo.ceilingz));
 
     // For movement checking.
     SV_WriteLong(mo.radius);
-    SV_WriteLong(mo.height);
+    SV_WriteLong(FLT2FIX(mo.height));
 
     // Momentums, used to update position.
-    SV_WriteLong(mo.momx);
-    SV_WriteLong(mo.momy);
-    SV_WriteLong(mo.momz);
+    SV_WriteLong(mo.mom[MX]);
+    SV_WriteLong(mo.mom[MY]);
+    SV_WriteLong(mo.mom[MZ]);
 
     // If == validcount, already checked.
     SV_WriteLong(mo.valid);
@@ -788,7 +788,7 @@ static void SV_WriteMobj(mobj_t *mobj)
     SV_WriteLong(mo.spawninfo.options);
 
     SV_WriteLong(mo.intflags);  // killough $dropoff_fix: internal flags
-    SV_WriteLong(mo.dropoffz);  // killough $dropoff_fix
+    SV_WriteLong(FLT2FIX(mo.dropoffz));  // killough $dropoff_fix
     SV_WriteLong(mo.gear);      // killough used in torque simulation
 
     SV_WriteLong(mo.damage);
@@ -802,7 +802,7 @@ static void SV_WriteMobj(mobj_t *mobj)
     SV_WriteByte(mo.translucency);
     SV_WriteByte((byte)(mo.vistarget +1));
 
-    SV_WriteLong(mo.floorclip);
+    SV_WriteLong(FLT2FIX(mo.floorclip));
 
 #ifdef __JHERETIC__
     // Ver 7 features: generator
@@ -908,17 +908,17 @@ static int SV_ReadMobj(thinker_t *th)
         mo->frame &= FF_FRAMEMASK; // not used anymore.
 
     // The closest interval over all contacted Sectors.
-    mo->floorz = SV_ReadLong();
-    mo->ceilingz = SV_ReadLong();
+    mo->floorz = FIX2FLT(SV_ReadLong());
+    mo->ceilingz = FIX2FLT(SV_ReadLong());
 
     // For movement checking.
     mo->radius = SV_ReadLong();
-    mo->height = SV_ReadLong();
+    mo->height = FIX2FLT(SV_ReadLong());
 
     // Momentums, used to update position.
-    mo->momx = SV_ReadLong();
-    mo->momy = SV_ReadLong();
-    mo->momz = SV_ReadLong();
+    mo->mom[MX] = SV_ReadLong();
+    mo->mom[MY] = SV_ReadLong();
+    mo->mom[MZ] = SV_ReadLong();
 
     // If == validcount, already checked.
     mo->valid = SV_ReadLong();
@@ -979,7 +979,7 @@ static int SV_ReadMobj(thinker_t *th)
     if(ver >= 3)
     {
         mo->intflags = SV_ReadLong();   // killough $dropoff_fix: internal flags
-        mo->dropoffz = SV_ReadLong();   // killough $dropoff_fix
+        mo->dropoffz = FIX2FLT(SV_ReadLong());   // killough $dropoff_fix
         mo->gear = SV_ReadLong();   // killough used in torque simulation
     }
 #endif
@@ -988,7 +988,7 @@ static int SV_ReadMobj(thinker_t *th)
     if(ver >= 5)
     {
         mo->intflags = SV_ReadLong();   // killough $dropoff_fix: internal flags
-        mo->dropoffz = SV_ReadLong();   // killough $dropoff_fix
+        mo->dropoffz = FIX2FLT(SV_ReadLong());   // killough $dropoff_fix
         mo->gear = SV_ReadLong();   // killough used in torque simulation
     }
 #endif
@@ -1026,7 +1026,7 @@ static int SV_ReadMobj(thinker_t *th)
     if(ver >= 5)
     {
         mo->vistarget = ((short)SV_ReadByte())-1;
-        mo->floorclip = SV_ReadLong();
+        mo->floorclip = FIX2FLT(SV_ReadLong());
     }
 
 #if __JHERETIC__
@@ -1069,11 +1069,11 @@ static int SV_ReadMobj(thinker_t *th)
 
     P_SetThingPosition(mo);
     mo->info = &mobjinfo[mo->type];
-    mo->floorz = P_GetFixedp(mo->subsector,
-                               DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
+    mo->floorz = P_GetFloatp(mo->subsector,
+                             DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
 
-    mo->ceilingz = P_GetFixedp(mo->subsector,
-                                 DMU_SECTOR_OF_SUBSECTOR | DMU_CEILING_HEIGHT);
+    mo->ceilingz = P_GetFloatp(mo->subsector,
+                               DMU_SECTOR_OF_SUBSECTOR | DMU_CEILING_HEIGHT);
 
     return true; // Add this thinker.
 }
@@ -2807,8 +2807,8 @@ void SV_SaveClient(unsigned int gameid)
     SV_WriteLong(mo->pos[VX]);
     SV_WriteLong(mo->pos[VY]);
     SV_WriteLong(mo->pos[VZ]);
-    SV_WriteLong(mo->floorz);
-    SV_WriteLong(mo->ceilingz);
+    SV_WriteLong(FLT2FIX(mo->floorz));
+    SV_WriteLong(FLT2FIX(mo->ceilingz));
     SV_WriteLong(mo->angle); /* $unifiedangles */
     SV_WriteFloat(pl->plr->lookdir); /* $unifiedangles */
     P_ArchivePlayerHeader();
@@ -2866,8 +2866,8 @@ void SV_LoadClient(unsigned int gameid)
     mo->pos[VY] = SV_ReadLong();
     mo->pos[VZ] = SV_ReadLong();
     P_SetThingPosition(mo);
-    mo->floorz = SV_ReadLong();
-    mo->ceilingz = SV_ReadLong();
+    mo->floorz = FIX2FLT(SV_ReadLong());
+    mo->ceilingz = FIX2FLT(SV_ReadLong());
     mo->angle = SV_ReadLong(); /* $unifiedangles */
     cpl->plr->lookdir = SV_ReadFloat(); /* $unifiedangles */
     P_UnArchivePlayerHeader();

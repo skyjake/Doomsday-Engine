@@ -200,8 +200,9 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
     byte        moreFlags = 0;
 
     // Do we have fast momentum?
-    if(abs(d->momx) >= MOM_FAST_LIMIT || abs(d->momy) >= MOM_FAST_LIMIT ||
-       abs(d->momz) >= MOM_FAST_LIMIT)
+    if(abs(d->mom[MX]) >= MOM_FAST_LIMIT ||
+       abs(d->mom[MY]) >= MOM_FAST_LIMIT ||
+       abs(d->mom[MZ]) >= MOM_FAST_LIMIT)
     {
         df |= MDF_MORE_FLAGS;
         moreFlags |= MDFE_FAST_MOM;
@@ -222,7 +223,7 @@ void Sv_WriteMobjDelta(const void *deltaPtr)
     }
 
     // Do we need the longer floorclip entry?
-    if(d->floorclip > 64 * FRACUNIT)
+    if(d->floorclip > 64)
         df |= MDF_LONG_FLOORCLIP;
 
     // Flags. What elements are included in the delta?
@@ -282,18 +283,18 @@ if((df & 0xffff) == 0)
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(d->momx) :
-                       FIXED8_8(d->momx));
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(d->mom[MX]) :
+                       FIXED8_8(d->mom[MX]));
     }
     if(df & MDF_MOM_Y)
     {
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(d->momy) :
-                       FIXED8_8(d->momy));
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(d->mom[MY]) :
+                       FIXED8_8(d->mom[MY]));
     }
     if(df & MDF_MOM_Z)
     {
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(d->momz) :
-                       FIXED8_8(d->momz));
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(d->mom[MZ]) :
+                       FIXED8_8(d->mom[MZ]));
     }
 
     // Angles with 16-bit accuracy.
@@ -317,13 +318,13 @@ if((df & 0xffff) == 0)
     if(df & MDF_RADIUS)
         Msg_WriteByte(d->radius >> FRACBITS);
     if(df & MDF_HEIGHT)
-        Msg_WriteByte(d->height >> FRACBITS);
+        Msg_WriteByte((byte) d->height);
     if(df & MDF_FLOORCLIP)
     {
         if(df & MDF_LONG_FLOORCLIP)
-            Msg_WritePackedShort(d->floorclip >> 14);
+            Msg_WritePackedShort(FLT2FIX(d->floorclip) >> 14);
         else
-            Msg_WriteByte(d->floorclip >> 14);
+            Msg_WriteByte(FLT2FIX(d->floorclip) >> 14);
     }
 
     if(df & MDFC_TRANSLUCENCY)

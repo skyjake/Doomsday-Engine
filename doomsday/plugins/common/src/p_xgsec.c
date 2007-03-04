@@ -1928,16 +1928,16 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
             if(thing->player->plr->mo->flags2 & MF2_FLY && aboveFloor)
             {
                 thing->pos[VZ] = thfloorz + aboveFloor;
-                if(thing->pos[VZ] + thing->height > thceilz)
+                if(thing->pos[VZ] + FLT2FIX(thing->height) > thceilz)
                 {
-                    thing->pos[VZ] = thceilz - thing->height;
+                    thing->pos[VZ] = thceilz - FLT2FIX(thing->height);
                 }
-                thing->dplayer->viewz = thing->pos[VZ] + thing->dplayer->viewheight;
+                thing->dplayer->viewz = FIX2FLT(thing->pos[VZ]) + thing->dplayer->viewheight;
             }
             else
             {
                 thing->pos[VZ] = thfloorz;
-                thing->dplayer->viewz = thing->pos[VZ] + thing->dplayer->viewheight;
+                thing->dplayer->viewz = FIX2FLT(thing->pos[VZ]) + thing->dplayer->viewheight;
                 thing->dplayer->lookdir = 0;/* $unifiedangles */
             }
 #if __JHERETIC__
@@ -1954,9 +1954,9 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         else if(thing->flags & MF_MISSILE)
         {
             thing->pos[VZ] = thfloorz + aboveFloor;
-            if(thing->pos[VZ] + thing->height > thceilz)
+            if(thing->pos[VZ] + FLT2FIX(thing->height) > thceilz)
             {
-                thing->pos[VZ] = thceilz - thing->height;
+                thing->pos[VZ] = thceilz - FLT2FIX(thing->height);
             }
         }
 #endif
@@ -2001,7 +2001,7 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
                                        DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
                P_GetThingFloorType(thing) >= FLOOR_LIQUID)
             {
-                thing->floorclip = 10 * FRACUNIT;
+                thing->floorclip = 10;
             }
             else
             {
@@ -2012,12 +2012,12 @@ int C_DECL XSTrav_Teleport(sector_t *sector, boolean ceiling, void *context,
         if(thing->flags & MF_MISSILE)
         {
             an >>= ANGLETOFINESHIFT;
-            thing->momx = FixedMul(thing->info->speed, finecosine[an]);
-            thing->momy = FixedMul(thing->info->speed, finesine[an]);
+            thing->mom[MX] = FixedMul(thing->info->speed, finecosine[an]);
+            thing->mom[MY] = FixedMul(thing->info->speed, finesine[an]);
         }
         else
         {
-            thing->momx = thing->momy = thing->momz = 0;
+            thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
         }
     }
     else
@@ -2444,13 +2444,13 @@ int XSTrav_SectorChain(sector_t *sec, mobj_t *mo, int ch)
     {
     case XSCE_FLOOR:
         // Is it touching the floor?
-        if(mo->pos[VZ] > P_GetFixedp(sec, DMU_FLOOR_HEIGHT))
+        if(FIX2FLT(mo->pos[VZ]) > P_GetFloatp(sec, DMU_FLOOR_HEIGHT))
             return true;
         break;
 
     case XSCE_CEILING:
         // Is it touching the ceiling?
-        if(mo->pos[VZ] + mo->height < P_GetFixedp(sec, DMU_CEILING_HEIGHT))
+        if(FIX2FLT(mo->pos[VZ]) + mo->height < P_GetFloatp(sec, DMU_CEILING_HEIGHT))
             return true;
         break;
 
@@ -2494,14 +2494,14 @@ int XSTrav_Wind(sector_t *sec, mobj_t *mo, int data)
         if(!(info->flags & (STF_FLOOR_WIND | STF_CEILING_WIND)) ||
            (info->flags & STF_FLOOR_WIND && mo->pos[VZ] <= thfloorz) ||
            (info->flags & STF_CEILING_WIND &&
-            mo->pos[VZ] + mo->height >= thceilz))
+            mo->pos[VZ] + FLT2FIX(mo->height) >= thceilz))
         {
             // Apply vertical wind.
-            mo->momz += FRACUNIT * info->vertical_wind;
+            mo->mom[MZ] += FRACUNIT * info->vertical_wind;
 
             // Horizontal wind.
-            mo->momx += FRACUNIT * cos(ang) * info->wind_speed;
-            mo->momy += FRACUNIT * sin(ang) * info->wind_speed;
+            mo->mom[MX] += FRACUNIT * cos(ang) * info->wind_speed;
+            mo->mom[MY] += FRACUNIT * sin(ang) * info->wind_speed;
         }
     }
 

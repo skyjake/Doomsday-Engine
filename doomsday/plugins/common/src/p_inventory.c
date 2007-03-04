@@ -434,8 +434,8 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         angle = player->plr->mo->angle >> ANGLETOFINESHIFT;
         mo = P_SpawnMobj(player->plr->mo->pos[VX] + 24 * finecosine[angle],
                          player->plr->mo->pos[VY] + 24 * finesine[angle],
-                         player->plr->mo->pos[VZ] - player->plr->mo->floorclip +
-                         15 * FRACUNIT, MT_FIREBOMB);
+                         player->plr->mo->pos[VZ] - FLT2FIX(player->plr->mo->floorclip + 15),
+                         MT_FIREBOMB);
         mo->target = player->plr->mo;
         break;
 # endif
@@ -464,7 +464,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
             return (false);
         }
 # if __JHEXEN__
-        if(player->plr->mo->momz <= -35 * FRACUNIT)
+        if(player->plr->mo->mom[MZ] <= -35 * FRACUNIT)
         {   // stop falling scream
             S_StopSound(0, player->plr->mo);
         }
@@ -477,7 +477,7 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         {
             mo->target = player->plr->mo;
             mo->tracer = player->plr->mo;
-            mo->momz = 5 * FRACUNIT;
+            mo->mom[MZ] = 5 * FRACUNIT;
         }
         break;
     case arti_teleportother:
@@ -489,8 +489,8 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         {
             mo = P_SpawnMobj(player->plr->mo->pos[VX] + 16 * finecosine[angle],
                              player->plr->mo->pos[VY] + 24 * finesine[angle],
-                             player->plr->mo->pos[VZ] - player->plr->mo->floorclip +
-                             8 * FRACUNIT, MT_POISONBAG);
+                             player->plr->mo->pos[VZ] - FLT2FIX(player->plr->mo->floorclip + 8),
+                             MT_POISONBAG);
             if(mo)
             {
                 mo->target = player->plr->mo;
@@ -500,8 +500,8 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         {
             mo = P_SpawnMobj(player->plr->mo->pos[VX] + 16 * finecosine[angle],
                              player->plr->mo->pos[VY] + 24 * finesine[angle],
-                             player->plr->mo->pos[VZ] - player->plr->mo->floorclip +
-                             8 * FRACUNIT, MT_FIREBOMB);
+                             player->plr->mo->pos[VZ] - FLT2FIX(player->plr->mo->floorclip + 8),
+                             MT_FIREBOMB);
             if(mo)
             {
                 mo->target = player->plr->mo;
@@ -511,19 +511,19 @@ boolean P_UseArtifactOnPlayer(player_t *player, artitype_e arti)
         {
             mo = P_SpawnMobj(player->plr->mo->pos[VX],
                              player->plr->mo->pos[VY],
-                             player->plr->mo->pos[VZ] - player->plr->mo->floorclip +
-                             35 * FRACUNIT, MT_THROWINGBOMB);
+                             player->plr->mo->pos[VZ] - FLT2FIX(player->plr->mo->floorclip +  35),
+                             MT_THROWINGBOMB);
             if(mo)
             {
                 mo->angle =
                     player->plr->mo->angle + (((P_Random() & 7) - 4) << 24);
-                mo->momz =
+                mo->mom[MZ] =
                     4 * FRACUNIT +
                     (((int) player->plr->lookdir) << (FRACBITS - 4));
                 mo->pos[VZ] += ((int) player->plr->lookdir) << (FRACBITS - 4);
                 P_ThrustMobj(mo, mo->angle, mo->info->speed);
-                mo->momx += player->plr->mo->momx >> 1;
-                mo->momy += player->plr->mo->momy >> 1;
+                mo->mom[MX] += player->plr->mo->mom[MX] >> 1;
+                mo->mom[MY] += player->plr->mo->mom[MY] >> 1;
                 mo->target = player->plr->mo;
                 mo->tics -= P_Random() & 3;
                 P_CheckMissileSpawn(mo);

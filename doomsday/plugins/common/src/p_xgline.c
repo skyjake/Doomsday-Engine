@@ -1550,14 +1550,14 @@ int C_DECL XLTrav_LineTeleport(line_t *newline, boolean dummy, void *context, vo
     c = finecosine[angle>>ANGLETOFINESHIFT];
 
     // Whether walking towards first side of exit linedef steps down
-    if(P_GetFixedp(newfrontsector, DMU_FLOOR_HEIGHT) <
-       P_GetFixedp(newbacksector, DMU_FLOOR_HEIGHT))
+    if(P_GetFloatp(newfrontsector, DMU_FLOOR_HEIGHT) <
+       P_GetFloatp(newbacksector, DMU_FLOOR_HEIGHT))
         stepdown = true;
     else
         stepdown = false;
 
     // Height of thing above ground
-    newz = mobj->pos[VZ] - mobj->floorz;
+    newz = mobj->pos[VZ] - FLT2FIX(mobj->floorz);
 
     // Side to exit the linedef on positionally.
     //
@@ -1612,12 +1612,12 @@ int C_DECL XLTrav_LineTeleport(line_t *newline, boolean dummy, void *context, vo
     mobj->angle += angle;
 
     // Update momentum of mobj crossing teleporter linedef?
-    newx = mobj->momx;
-    newy = mobj->momy;
+    newx = mobj->mom[MX];
+    newy = mobj->mom[MY];
 
     // Rotate mobj's momentum to come out of exit just like it entered
-    mobj->momx = FixedMul(newx, c) - FixedMul(newy, s);
-    mobj->momy = FixedMul(newy, c) + FixedMul(newx, s);
+    mobj->mom[MX] = FixedMul(newx, c) - FixedMul(newy, s);
+    mobj->mom[MY] = FixedMul(newy, c) + FixedMul(newx, s);
 
     // Feet clipped?
     if(mobj->flags2 & MF2_FLOORCLIP)
@@ -1626,7 +1626,7 @@ int C_DECL XLTrav_LineTeleport(line_t *newline, boolean dummy, void *context, vo
                                    DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
            P_GetThingFloorType(mobj) >= FLOOR_LIQUID)
         {
-            mobj->floorclip = 10 * FRACUNIT;
+            mobj->floorclip = 10;
         }
         else
         {
@@ -1650,7 +1650,7 @@ int C_DECL XLTrav_LineTeleport(line_t *newline, boolean dummy, void *context, vo
     // Adjust the player's view, incase there has been a height change
     if(mobj->player)
     {
-        mobj->dplayer->viewz = mobj->pos[VZ] + mobj->dplayer->viewheight;
+        mobj->dplayer->viewz = FIX2FLT(mobj->pos[VZ]) + mobj->dplayer->viewheight;
         mobj->dplayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     }
 

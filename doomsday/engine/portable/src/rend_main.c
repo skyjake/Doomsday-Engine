@@ -2732,7 +2732,7 @@ static void Rend_RenderBoundingBoxes(void)
 
             // Draw a bounding box in an appropriate color.
             size = FIX2FLT(mo->radius);
-            Rend_DrawBBox(pos, size, size, FIX2FLT(mo->height)/2,
+            Rend_DrawBBox(pos, size, size, mo->height/2,
                           (mo->ddflags & DDMF_MISSILE)? yellow :
                           (mo->ddflags & DDMF_SOLID)? green : red,
                           alpha, 0.08f, true);

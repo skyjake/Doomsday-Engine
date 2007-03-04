@@ -250,7 +250,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             returnval = weapon;
         }
         // Is the player currently firing?
-        else if(!((player->plr->cmd.actions & BT_ATTACK) && 
+        else if(!((player->plr->cmd.actions & BT_ATTACK) &&
                   cfg.noWeaponAutoSwitchIfFiring))
         {
             // Should we change weapon automatically?
@@ -477,18 +477,18 @@ void P_Thrust3D(player_t *player, angle_t angle, float lookdir,
     angle >>= ANGLETOFINESHIFT;
     sideangle >>= ANGLETOFINESHIFT;
     pitch >>= ANGLETOFINESHIFT;
-
-    mom[VX] = FixedMul(forwardmove, finecosine[angle]);
-    mom[VY] = FixedMul(forwardmove, finesine[angle]);
-    mom[VZ] = FixedMul(forwardmove, finesine[pitch]);
-
     zmul = finecosine[pitch];
-    mom[VX] = FixedMul(mom[VX], zmul) + FixedMul(sidemove, finecosine[sideangle]);
-    mom[VY] = FixedMul(mom[VY], zmul) + FixedMul(sidemove, finesine[sideangle]);
 
-    mo->momx += mom[VX];
-    mo->momy += mom[VY];
-    mo->momz += mom[VZ];
+    mom[MX] = FixedMul(forwardmove, finecosine[angle]);
+    mom[MY] = FixedMul(forwardmove, finesine[angle]);
+    mom[MZ] = FixedMul(forwardmove, finesine[pitch]);
+
+    mom[MX] = FixedMul(mom[MX], zmul) + FixedMul(sidemove, finecosine[sideangle]);
+    mom[MY] = FixedMul(mom[MY], zmul) + FixedMul(sidemove, finesine[sideangle]);
+
+    mo->mom[MX] += mom[MX];
+    mo->mom[MY] += mom[MY];
+    mo->mom[MZ] += mom[MZ];
 }
 
 boolean P_IsCamera(mobj_t *mo)
@@ -506,13 +506,13 @@ int P_CameraXYMovement(mobj_t *mo)
     if(mo->flags & MF_NOCLIP
        // This is a very rough check!
        // Sometimes you get stuck in things.
-       || P_CheckPosition2(mo, mo->pos[VX] + mo->momx, mo->pos[VY] + mo->momy, mo->pos[VZ]))
+       || P_CheckPosition2(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY] + mo->mom[MY], mo->pos[VZ]))
     {
 #endif
 
         P_UnsetThingPosition(mo);
-        mo->pos[VX] += mo->momx;
-        mo->pos[VY] += mo->momy;
+        mo->pos[VX] += mo->mom[MX];
+        mo->pos[VY] += mo->mom[MY];
         P_SetThingPosition(mo);
         P_CheckPosition(mo, mo->pos[VX], mo->pos[VY]);
         mo->floorz = tmfloorz;
@@ -522,8 +522,8 @@ int P_CameraXYMovement(mobj_t *mo)
     }
 #endif
     // Friction.
-    mo->momx = FixedMul(mo->momx, 0xe800);
-    mo->momy = FixedMul(mo->momy, 0xe800);
+    mo->mom[MX] = FixedMul(mo->mom[MX], 0xe800);
+    mo->mom[MY] = FixedMul(mo->mom[MY], 0xe800);
     return true;
 }
 
@@ -531,8 +531,8 @@ int P_CameraZMovement(mobj_t *mo)
 {
     if(!P_IsCamera(mo))
         return false;
-    mo->pos[VZ] += mo->momz;
-    mo->momz = FixedMul(mo->momz, 0xe800);
+    mo->pos[VZ] += mo->mom[MZ];
+    mo->mom[MZ] = FixedMul(mo->mom[MZ], 0xe800);
 
     /*if(mo->pos[VZ] < mo->floorz + 6 * FRACUNIT)
         mo->pos[VZ] = mo->floorz + 6 * FRACUNIT;
@@ -589,7 +589,7 @@ void P_PlayerThinkCamera(player_t *player)
                                     mo->pos[VY] - target->pos[VY]);
             angle =
                 R_PointToAngle2(0, 0,
-                                target->pos[VZ] + target->height / 2 - mo->pos[VZ],
+                                target->pos[VZ] + FLT2FIX(target->height /2) - mo->pos[VZ],
                                 dist);
             //player->plr->clLookDir =
             player->plr->lookdir =
@@ -628,12 +628,12 @@ DEFCC(CCmdSetCamera)
         if(player->plr->flags & DDPF_CAMERA)
         {   // Is now a camera.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] += player->plr->viewheight;
+                player->plr->mo->pos[VZ] += FLT2FIX(player->plr->viewheight);
         }
         else
         {   // Is now a "real" player.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] -= player->plr->viewheight;
+                player->plr->mo->pos[VZ] -= FLT2FIX(player->plr->viewheight);
         }
     }
     return true;

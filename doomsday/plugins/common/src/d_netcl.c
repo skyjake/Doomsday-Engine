@@ -233,7 +233,7 @@ void NetCl_UpdateGameState(byte *data)
             mo->pos[VZ] = NetCl_ReadShort() << 16;
             P_SetThingPosition(mo);
             mo->angle = NetCl_ReadShort() << 16; /* $unifiedangles */
-            pl->plr->viewz = mo->pos[VZ];
+            pl->plr->viewz = FIX2FLT(mo->pos[VZ]);
             // Update floorz and ceilingz.
 #ifdef __JDOOM__
             P_CheckPosition2(mo, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
@@ -572,7 +572,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     }
     if(flags & PSF_VIEW_HEIGHT)
     {
-        pl->plr->viewheight = NetCl_ReadByte() << 16;
+        pl->plr->viewheight = (float) NetCl_ReadByte();
     }
 
 #if __JHERETIC || __JHEXEN__ || __JSTRIFE__
@@ -852,11 +852,11 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
             *(short *) out = SHORT(cmd->pitch);
             out += 2;
         }
-		if(cmd->actions != prev.actions)
-		{
-			*flags |= CMDF_BUTTONS;
-			*out++ = cmd->actions;
-		}
+        if(cmd->actions != prev.actions)
+        {
+            *flags |= CMDF_BUTTONS;
+            *out++ = cmd->actions;
+        }
 /*
         // Compile the button flags.
         buttons = 0;

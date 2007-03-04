@@ -46,7 +46,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define VIEW_HEIGHT  (cfg.plrViewHeight << FRACBITS)
+#define VIEW_HEIGHT  (cfg.plrViewHeight)
 
 #define MAXBOB  0x100000        // 16 pixels of bob.
 
@@ -82,13 +82,13 @@ void P_CalcHeight(player_t *player)
     // Regular movement bobbing.
     // (needs to be calculated for gun swing even if not on ground)
     player->bob =
-        FixedMul(pmo->momx, pmo->momx) + FixedMul(pmo->momy, pmo->momy);
+        FixedMul(pmo->mom[MX], pmo->mom[MX]) + FixedMul(pmo->mom[MY], pmo->mom[MY]);
     player->bob >>= 2;
     if(player->bob > MAXBOB)
         player->bob = MAXBOB;
 
     // When flying, don't bob the view.
-    if(pmo->flags2 & MF2_FLY && pmo->pos[VZ] > pmo->floorz)
+    if(pmo->flags2 & MF2_FLY && pmo->pos[VZ] > FLT2FIX(pmo->floorz))
     {
         player->bob = FRACUNIT / 2;
     }
@@ -103,7 +103,7 @@ void P_CalcHeight(player_t *player)
     if(Get(DD_PLAYBACK))
         airborne = !dplay->viewheight;
     else
-        airborne = pmo->pos[VZ] > pmo->floorz;    // Truly in the air?
+        airborne = pmo->pos[VZ] > FLT2FIX(pmo->floorz);    // Truly in the air?
 
     // Should view bobbing be done?
     if(setz)
@@ -162,15 +162,15 @@ void P_CalcHeight(player_t *player)
                 dplay->viewheight = VIEW_HEIGHT;
                 dplay->deltaviewheight = 0;
             }
-            if(dplay->viewheight < VIEW_HEIGHT / 2)
+            if(dplay->viewheight < VIEW_HEIGHT / 2.0f)
             {
-                dplay->viewheight = VIEW_HEIGHT / 2;
+                dplay->viewheight = VIEW_HEIGHT / 2.0f;
                 if(dplay->deltaviewheight <= 0)
                     dplay->deltaviewheight = 1;
             }
             if(dplay->deltaviewheight)
             {
-                dplay->deltaviewheight += FRACUNIT / 4;
+                dplay->deltaviewheight += 0.25f;
                 if(!dplay->deltaviewheight)
                     dplay->deltaviewheight = 1;
             }
@@ -178,7 +178,8 @@ void P_CalcHeight(player_t *player)
     }
 
     // Set the player's eye-level Z coordinate.
-    dplay->viewz = pmo->pos[VZ] + (P_IsCamera(pmo)? 0 : dplay->viewheight);
+    dplay->viewz = FIX2FLT(pmo->pos[VZ]) +
+                     (P_IsCamera(pmo)? 0 : dplay->viewheight);
 
     // During demo playback (or camera mode) the viewz will not be
     // modified any further.
@@ -187,13 +188,13 @@ void P_CalcHeight(player_t *player)
         if(morphed)
         {
             // Chicken or pig.
-            dplay->viewz -= 20 * FRACUNIT;
+            dplay->viewz -= 20;
         }
         // Foot clipping is done for living players.
         if(player->playerstate != PST_DEAD)
         {
             // Foot clipping is done for living players.
-            if(pmo->floorclip && pmo->pos[VZ] <= pmo->floorz)
+            if(pmo->floorclip && FIX2FLT(pmo->pos[VZ]) <= pmo->floorz)
             {
                 dplay->viewz -= pmo->floorclip;
             }

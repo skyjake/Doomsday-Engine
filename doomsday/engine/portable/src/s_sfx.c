@@ -342,7 +342,7 @@ void Sfx_GetListenerXYZ(float *pos)
     // FIXME: Make it exactly eye-level! (viewheight)
     pos[VX] = FIX2FLT(listener->pos[VX]);
     pos[VY] = FIX2FLT(listener->pos[VY]);
-    pos[VZ] = FIX2FLT(listener->pos[VZ] + listener->height - (5 << FRACBITS));
+    pos[VZ] = FIX2FLT(listener->pos[VZ] + FLT2FIX(listener->height) - (5 << FRACBITS));
 }
 
 /*
@@ -368,7 +368,7 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
         if(P_IsMobjThinker(ch->emitter->thinker.function))
         {
             // Sounds originate from the center.
-            ch->pos[VZ] += FIX2FLT(ch->emitter->height) / 2;
+            ch->pos[VZ] += ch->emitter->height / 2;
         }
     }
 
@@ -397,9 +397,9 @@ void Sfx_ChannelUpdate(sfxchannel_t * ch)
         if(ch->emitter && ch->emitter != listener &&
            P_IsMobjThinker(ch->emitter->thinker.function))
         {
-            vec[VX] = FIX2FLT(ch->emitter->momx) * TICSPERSEC;
-            vec[VY] = FIX2FLT(ch->emitter->momy) * TICSPERSEC;
-            vec[VZ] = FIX2FLT(ch->emitter->momz) * TICSPERSEC;
+            vec[VX] = FIX2FLT(ch->emitter->mom[MX]) * TICSPERSEC;
+            vec[VY] = FIX2FLT(ch->emitter->mom[MY]) * TICSPERSEC;
+            vec[VZ] = FIX2FLT(ch->emitter->mom[MZ]) * TICSPERSEC;
             driver->Setv(buf, SFXBP_VELOCITY, vec);
         }
         else
@@ -500,9 +500,9 @@ void Sfx_ListenerUpdate(void)
         driver->Listenerv(SFXLP_ORIENTATION, vec);
 
         // Velocity. The unit is world distance units per second.
-        vec[VX] = FIX2FLT(listener->momx) * TICSPERSEC;
-        vec[VY] = FIX2FLT(listener->momy) * TICSPERSEC;
-        vec[VZ] = FIX2FLT(listener->momz) * TICSPERSEC;
+        vec[VX] = FIX2FLT(listener->mom[MX]) * TICSPERSEC;
+        vec[VY] = FIX2FLT(listener->mom[MY]) * TICSPERSEC;
+        vec[VZ] = FIX2FLT(listener->mom[MZ]) * TICSPERSEC;
         driver->Listenerv(SFXLP_VELOCITY, vec);
 
         // Reverb effects. Has the current sector changed?

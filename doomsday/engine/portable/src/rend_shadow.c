@@ -113,17 +113,17 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
     }
 
     // Check the height.
-    moz = mo->pos[VZ] - mo->floorclip;
+    moz = mo->pos[VZ] - FLT2FIX(mo->floorclip);
     if(mo->ddflags & DDMF_BOB)
-        moz -= R_GetBobOffset(mo);
+        moz -= FLT2FIX(R_GetBobOffset(mo));
 
-    height = FIX2FLT(moz - mo->floorz);
-    moh = FIX2FLT(mo->height);
+    height = FIX2FLT(moz) - mo->floorz;
+    moh = mo->height;
     if(!moh)
         moh = 1;
     if(height > moh)
         return;                 // Too far.
-    if(moz + mo->height < mo->floorz)
+    if(FIX2FLT(moz) + mo->height < mo->floorz)
         return;
 
     // Calculate the strength of the shadow.
@@ -158,7 +158,7 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
     floor = mo->subsector->sector->SP_floorvisheight;
     P_ThingSectorsIterator(mo, Rend_ShadowIterator, &floor);
 
-    if(floor >= FIX2FLT(moz + mo->height))
+    if(floor >= FIX2FLT(moz) + mo->height)
         return; // Can't have a shadow above the object!
 
     // View height might prevent us from seeing the shadow.

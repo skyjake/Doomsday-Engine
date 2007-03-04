@@ -252,7 +252,7 @@ void P_Thrust(player_t *player, angle_t angle, fixed_t move)
 #endif
 
     angle >>= ANGLETOFINESHIFT;
-    if(player->powers[PT_FLIGHT] && !(plrmo->pos[VZ] <= plrmo->floorz))
+    if(player->powers[PT_FLIGHT] && !(plrmo->pos[VZ] <= FLT2FIX(plrmo->floorz)))
     {
         /*float xmul=1, ymul=1;
 
@@ -261,23 +261,23 @@ void P_Thrust(player_t *player, angle_t angle, fixed_t move)
            {
            float ang = LOOKDIR2RAD(player->plr->lookdir);
            xmul = ymul = cos(ang);
-           mo->momz += sin(ang) * move;
+           mo->mom[MZ] += sin(ang) * move;
            } */
 
-        plrmo->momx += FixedMul(move, finecosine[angle]);
-        plrmo->momy += FixedMul(move, finesine[angle]);
+        plrmo->mom[MX] += FixedMul(move, finecosine[angle]);
+        plrmo->mom[MY] += FixedMul(move, finesine[angle]);
     }
 #if __JHERETIC__
     else if(P_XSector(sector)->special == 15)    // Friction_Low
     {
-        plrmo->momx += FixedMul(move >> 2, finecosine[angle]);
-        plrmo->momy += FixedMul(move >> 2, finesine[angle]);
+        plrmo->mom[MX] += FixedMul(move >> 2, finecosine[angle]);
+        plrmo->mom[MY] += FixedMul(move >> 2, finesine[angle]);
     }
 #elif __JHEXEN__
     else if(P_GetThingFloorType(plrmo) == FLOOR_ICE)   // Friction_Low
     {
-        plrmo->momx += FixedMul(move >> 1, finecosine[angle]);
-        plrmo->momy += FixedMul(move >> 1, finesine[angle]);
+        plrmo->mom[MX] += FixedMul(move >> 1, finecosine[angle]);
+        plrmo->mom[MY] += FixedMul(move >> 1, finesine[angle]);
     }
 #endif
     else
@@ -288,8 +288,8 @@ void P_Thrust(player_t *player, angle_t angle, fixed_t move)
         if(mul != FRACUNIT)
             move = FixedMul(move, mul);
 #endif
-        plrmo->momx += FixedMul(move, finecosine[angle]);
-        plrmo->momy += FixedMul(move, finesine[angle]);
+        plrmo->mom[MX] += FixedMul(move, finecosine[angle]);
+        plrmo->mom[MY] += FixedMul(move, finesine[angle]);
     }
 }
 
@@ -299,21 +299,21 @@ void P_Thrust(player_t *player, angle_t angle, fixed_t move)
  */
 boolean P_IsPlayerOnGround(player_t *player)
 {
-    boolean onground = (player->plr->mo->pos[VZ] <= player->plr->mo->floorz);
+    boolean onground = (player->plr->mo->pos[VZ] <= FLT2FIX(player->plr->mo->floorz));
 
 #if __JHEXEN__
     if((player->plr->mo->flags2 & MF2_ONMOBJ) && !onground)
     {
         //mobj_t *on = onmobj;
 
-        onground = true; //(player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
+        onground = true; //(player->plr->mo->pos[VZ] <= on->pos[VZ] + FLT2FIX(on->height));
     }
 #else
     if(player->plr->mo->onmobj && !onground && !(player->plr->mo->flags2 & MF2_FLY))
     {
         mobj_t *on = player->plr->mo->onmobj;
 
-        onground = (player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
+        onground = (player->plr->mo->pos[VZ] <= on->pos[VZ] + FLT2FIX(on->height));
     }
 #endif
     return onground;
@@ -339,10 +339,10 @@ void P_CheckPlayerJump(player_t *player)
         // Jump, then!
 #if __JHEXEN__
         if(player->morphTics) // Pigs don't jump that high.
-            player->plr->mo->momz = FRACUNIT * (2 * power / 3);
+            player->plr->mo->mom[MZ] = FRACUNIT * (2 * power / 3);
         else
 #endif
-            player->plr->mo->momz = FRACUNIT * power;
+            player->plr->mo->mom[MZ] = FRACUNIT * power;
 
         player->jumptics = PCLASS_INFO(player->class)->jumptics;
 
@@ -480,7 +480,7 @@ void P_DeathThink(player_t *player)
 
     P_MovePsprites(player);
 
-    onground = (player->plr->mo->pos[VZ] <= player->plr->mo->floorz);
+    onground = (player->plr->mo->pos[VZ] <= FLT2FIX(player->plr->mo->floorz));
 #if __JDOOM__
     if(cfg.deathLookUp)
 #elif __JHERETIC__
@@ -490,7 +490,7 @@ void P_DeathThink(player_t *player)
        player->plr->mo->type == MT_ICECHUNK)
 #endif
     {   // Flying bloody skull
-        player->plr->viewheight = 6 * FRACUNIT;
+        player->plr->viewheight = 6;
         player->plr->deltaviewheight = 0;
 
         if(onground)
@@ -517,11 +517,11 @@ void P_DeathThink(player_t *player)
     else // fall to the ground
 #endif
     {
-        if(player->plr->viewheight > 6 * FRACUNIT)
-            player->plr->viewheight -= FRACUNIT;
+        if(player->plr->viewheight > 6)
+            player->plr->viewheight -= 1;
 
-        if(player->plr->viewheight < 6 * FRACUNIT)
-            player->plr->viewheight = 6 * FRACUNIT;
+        if(player->plr->viewheight < 6)
+            player->plr->viewheight = 6;
 
         player->plr->deltaviewheight = 0;
 
@@ -660,7 +660,7 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
-    if(!(pmo->momx + pmo->momy) && P_Random() < 64)
+    if(!(pmo->mom[MX] + pmo->mom[MY]) && P_Random() < 64)
     {   // Snout sniff
         P_SetPspriteNF(player, ps_weapon, S_SNOUTATK2);
         S_StartSound(SFX_PIG_ACTIVE1, pmo); // snort
@@ -682,13 +682,13 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
-    if(!(pmo->momx + pmo->momy) && P_Random() < 160)
+    if(!(pmo->mom[MX] + pmo->mom[MY]) && P_Random() < 160)
     {                           // Twitch view angle
         pmo->angle += (P_Random() - P_Random()) << 19;
     }
-    if((pmo->pos[VZ] <= pmo->floorz) && (P_Random() < 32))
+    if((pmo->pos[VZ] <= FLT2FIX(pmo->floorz)) && (P_Random() < 32))
     {                           // Jump and noise
-        pmo->momz += FRACUNIT;
+        pmo->mom[MZ] += FRACUNIT;
         P_SetMobjState(pmo, S_CHICPLAY_PAIN);
         return;
     }
@@ -921,7 +921,7 @@ void P_ClientSideThink(void)
         // Keep the fly flag in sync.
         mo->flags2 |= MF2_FLY;
 
-        mo->momz = pl->flyheight * FRACUNIT;
+        mo->mom[MZ] = pl->flyheight * FRACUNIT;
         if(pl->flyheight)
             pl->flyheight /= 2;
         // Do some fly-bobbing.
@@ -943,7 +943,7 @@ void P_ClientSideThink(void)
         P_PlayerInSpecialSector(pl);
 */
     // Set consoleplayer thrust multiplier.
-    if(mo->pos[VZ] > mo->floorz)      // Airborne?
+    if(mo->pos[VZ] > FLT2FIX(mo->floorz))      // Airborne?
     {
         Set(DD_CPLAYER_THRUST_MUL, (mo->ddflags & DDMF_FLY) ? FRACUNIT : 0);
     }
@@ -1077,7 +1077,7 @@ void P_PlayerThinkMove(player_t *player)
 #if __JHEXEN__
         plrmo = player->plr->mo;
         if(player->powers[PT_SPEED] && !(leveltime & 1) &&
-           P_ApproxDistance(plrmo->momx, plrmo->momy) > 12 * FRACUNIT)
+           P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) > 12 * FRACUNIT)
         {
             mobj_t *speedMo;
             int     playerNum;
@@ -1148,7 +1148,7 @@ void P_PlayerThinkFly(player_t *player)
                 plrmo->flags2 |= MF2_FLY;
                 plrmo->flags |= MF_NOGRAVITY;
 #if __JHEXEN__
-                if(plrmo->momz <= -39 * FRACUNIT)
+                if(plrmo->mom[MZ] <= -39 * FRACUNIT)
                 {           // stop falling scream
                     S_StopSound(0, plrmo);
                 }
@@ -1164,7 +1164,7 @@ void P_PlayerThinkFly(player_t *player)
 
     if(plrmo->flags2 & MF2_FLY)
     {
-        plrmo->momz = player->flyheight * FRACUNIT;
+        plrmo->mom[MZ] = player->flyheight * FRACUNIT;
         if(player->flyheight)
         {
             player->flyheight /= 2;
@@ -1214,24 +1214,24 @@ void P_PlayerThinkSounds(player_t *player)
     switch(player->class)
     {
         case PCLASS_FIGHTER:
-            if(plrmo->momz <= -35 * FRACUNIT &&
-               plrmo->momz >= -40 * FRACUNIT && !player->morphTics &&
+            if(plrmo->mom[MZ] <= -35 * FRACUNIT &&
+               plrmo->mom[MZ] >= -40 * FRACUNIT && !player->morphTics &&
                !S_IsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo))
             {
                 S_StartSound(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo);
             }
             break;
         case PCLASS_CLERIC:
-            if(plrmo->momz <= -35 * FRACUNIT &&
-               plrmo->momz >= -40 * FRACUNIT && !player->morphTics &&
+            if(plrmo->mom[MZ] <= -35 * FRACUNIT &&
+               plrmo->mom[MZ] >= -40 * FRACUNIT && !player->morphTics &&
                !S_IsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo))
             {
                 S_StartSound(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo);
             }
             break;
         case PCLASS_MAGE:
-            if(plrmo->momz <= -35 * FRACUNIT &&
-               plrmo->momz >= -40 * FRACUNIT && !player->morphTics &&
+            if(plrmo->mom[MZ] <= -35 * FRACUNIT &&
+               plrmo->mom[MZ] >= -40 * FRACUNIT && !player->morphTics &&
                !S_IsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo))
             {
                 S_StartSound(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo);
@@ -1421,7 +1421,7 @@ void P_PlayerThinkPowers(player_t *player)
     {
         if(!--player->powers[PT_FLIGHT])
         {
-            if(player->plr->mo->pos[VZ] != player->plr->mo->floorz)
+            if(player->plr->mo->pos[VZ] != FLT2FIX(player->plr->mo->floorz))
             {
                 player->centering = true;
             }
