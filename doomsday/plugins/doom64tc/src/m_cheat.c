@@ -563,7 +563,7 @@ static void CheatDebugFunc(player_t *player, cheat_t * cheat)
                 P_GetIntp(sub, DMU_FLOOR_TEXTURE));
     Con_Message("  Ceilingz:%d pic:%d\n", P_GetIntp(sub, DMU_CEILING_HEIGHT),
                 P_GetIntp(sub, DMU_CEILING_TEXTURE));
-    Con_Message("Player height:%x   Player radius:%x\n",
+    Con_Message("Player height:%g   Player radius:%x\n",
                 player->plr->mo->height, player->plr->mo->radius);
 }
 

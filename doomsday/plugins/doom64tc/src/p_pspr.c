@@ -554,8 +554,8 @@ void C_DECL A_FireMissile(player_t *player, pspdef_t * psp)
         angle_t angle = player->plr->mo->angle + ANG180;
 
         angle >>= ANGLETOFINESHIFT;
-        player->plr->mo->momx += FixedMul(4 * FRACUNIT, finecosine[angle]);
-        player->plr->mo->momy += FixedMul(4 * FRACUNIT, finesine[angle]);
+        player->plr->mo->mom[MX] += FixedMul(4 * FRACUNIT, finecosine[angle]);
+        player->plr->mo->mom[MY] += FixedMul(4 * FRACUNIT, finesine[angle]);
     }
     // < d64tc
 }
@@ -575,7 +575,7 @@ void C_DECL A_Rocketpuff(mobj_t *smoke)
         smoke->reactiontime -= 8;
         if(smoke->reactiontime <= 0)
         {
-            smoke->momx = smoke->momy = smoke->momz = 0;
+            smoke->mom[MX] = smoke->mom[MY] = smoke->mom[MZ] = 0;
 
             P_SetMobjState(smoke, smoke->info->deathstate);
             S_StartSound(smoke->info->deathsound, smoke);
@@ -681,7 +681,7 @@ void A_SpawnFloater(player_t *player)
     if(floater)
     {
         floater->angle = mo->angle;
-        floater->momz += 1 * FRACUNIT;
+        floater->mom[MZ] += 1 * FRACUNIT;
     }
 }
 
@@ -960,8 +960,8 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t * psp)
         angle = player->plr->mo->angle + ANG180;
         angle >>= ANGLETOFINESHIFT;
 
-        player->plr->mo->momx += FixedMul(4 * FRACUNIT, finecosine[angle]);
-        player->plr->mo->momy += FixedMul(4 * FRACUNIT, finesine[angle]);
+        player->plr->mo->mom[MX] += FixedMul(4 * FRACUNIT, finecosine[angle]);
+        player->plr->mo->mom[MY] += FixedMul(4 * FRACUNIT, finesine[angle]);
     }
     // < d64tc
 
@@ -1043,7 +1043,7 @@ void C_DECL A_BFGSpray(mobj_t *mo)
             continue;
 
         P_SpawnMobj(linetarget->pos[VX], linetarget->pos[VY],
-                    linetarget->pos[VZ] + (linetarget->height >> 2), MT_EXTRABFG);
+                    linetarget->pos[VZ] + (FLT2FIX(linetarget->height) >> 2), MT_EXTRABFG);
 
         damage = 0;
         for(j = 0; j < 15; j++)

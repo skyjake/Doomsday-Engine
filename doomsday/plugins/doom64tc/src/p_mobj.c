@@ -137,7 +137,7 @@ void P_ExplodeMissile(mobj_t *mo)
         return;
     }
 
-    mo->momx = mo->momy = mo->momz = 0;
+    mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
     P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
 
@@ -160,7 +160,7 @@ void P_ExplodeMissile(mobj_t *mo)
     if(mo->type == MT_ACIDMISSILE) // d64tc
     {
         mo->flags = MF_NOGRAVITY;
-        mo->momz = FRACUNIT * ((P_Random() % 50) / 16); // DJS - odd...
+        mo->mom[MZ] = FRACUNIT * ((P_Random() % 50) / 16); // DJS - odd...
     }
 
     if(mo->info->deathsound)
@@ -173,20 +173,20 @@ void P_ExplodeMissile(mobj_t *mo)
  */
 void P_BounceMissile(mobj_t *mo)   //kaiser
 {
-    mo->momz = FixedMul(mo->momz, -(mo->reactiontime * FRACUNIT / 192));
+    mo->mom[MZ] = FixedMul(mo->mom[MZ], -(mo->reactiontime * FRACUNIT / 192));
     S_StartSound(sfx_ssdth,mo);
 }
 
 void P_FloorBounceMissile(mobj_t *mo)
 {
-    mo->momz = -mo->momz;
+    mo->mom[MZ] = -mo->mom[MZ];
     P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
 }
 
 // Returns the ground friction factor for the mobj.
 fixed_t P_GetMobjFriction(mobj_t *mo)
 {
-    if(mo->flags2 & MF2_FLY && !(mo->pos[VZ] <= mo->floorz) &&
+    if(mo->flags2 & MF2_FLY && !(mo->pos[VZ] <= FLT2FIX(mo->floorz)) &&
        !mo->onmobj)
     {
         return FRICTION_FLY;
@@ -196,28 +196,26 @@ fixed_t P_GetMobjFriction(mobj_t *mo)
 
 void P_XYMovement(mobj_t *mo)
 {
-    sector_t *backsector;
-    fixed_t ptryx;
-    fixed_t ptryy;
-    player_t *player;
-    fixed_t xmove;
-    fixed_t ymove;
-    boolean largeNegative;
+    sector_t   *backsector;
+    fixed_t     ptry[3];
+    player_t   *player;
+    fixed_t     move[3];
+    boolean     largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
         return;
 
-    xmove = mo->momx = CLAMP(mo->momx, -MAXMOVE, MAXMOVE);
-    ymove = mo->momy = CLAMP(mo->momy, -MAXMOVE, MAXMOVE);
+    move[MX] = mo->mom[MX] = CLAMP(mo->mom[MX], -MAXMOVE, MAXMOVE);
+    move[MY] = mo->mom[MY] = CLAMP(mo->mom[MY], -MAXMOVE, MAXMOVE);
 
-    if((xmove | ymove) == 0)
+    if((move[MX] | move[MY]) == 0)
     {
         if(mo->flags & MF_SKULLFLY)
         {
             // the skull slammed into something
             mo->flags &= ~MF_SKULLFLY;
-            mo->momx = mo->momy = mo->momz = 0;
+            mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
             P_SetMobjState(mo, mo->info->spawnstate);
         }
@@ -233,23 +231,24 @@ void P_XYMovement(mobj_t *mo)
         // This explains the tendency for Mancubus fireballs
         // to pass through walls.
         largeNegative = false;
-        if(!cfg.moveBlock && (xmove < -MAXMOVE / 2 || ymove < -MAXMOVE / 2))
+        if(!cfg.moveBlock &&
+           (move[MX] < -MAXMOVE / 2 || move[MY] < -MAXMOVE / 2))
         {
             // Make an exception for "north-only wallrunning".
             if(!(cfg.wallRunNorthOnly && mo->wallrun))
                 largeNegative = true;
         }
 
-        if(xmove > MAXMOVE / 2 || ymove > MAXMOVE / 2 || largeNegative)
+        if(move[MX] > MAXMOVE / 2 || move[MY] > MAXMOVE / 2 || largeNegative)
         {
-            ptryx = mo->pos[VX] + (xmove >>= 1);
-            ptryy = mo->pos[VY] + (ymove >>= 1);
+            ptry[VX] = mo->pos[VX] + (move[MX] >>= 1);
+            ptry[VY] = mo->pos[VY] + (move[MY] >>= 1);
         }
         else
         {
-            ptryx = mo->pos[VX] + xmove;
-            ptryy = mo->pos[VY] + ymove;
-            xmove = ymove = 0;
+            ptry[VX] = mo->pos[VX] + move[MX];
+            ptry[VY] = mo->pos[VY] + move[MY];
+            move[MX] = move[MY] = 0;
         }
 
         // If mobj was wallrunning - stop.
@@ -257,7 +256,7 @@ void P_XYMovement(mobj_t *mo)
             mo->wallrun = false;
 
         // killough $dropoff_fix
-        if(!P_TryMove(mo, ptryx, ptryy, true, false))
+        if(!P_TryMove(mo, ptry[VX], ptry[VY], true, false))
         {
             // blocked move
             if(mo->flags2 & MF2_SLIDE)
@@ -287,22 +286,22 @@ void P_XYMovement(mobj_t *mo)
                 P_ExplodeMissile(mo);
             }
             else
-                mo->momx = mo->momy = 0;
+                mo->mom[MX] = mo->mom[MY] = 0;
         }
-    } while(xmove | ymove);
+    } while(move[MX] | move[MY]);
 
     // slow down
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
     {
         // debug option for no sliding at all
-        mo->momx = mo->momy = 0;
+        mo->mom[MX] = mo->mom[MY] = 0;
         return;
     }
 
     if(mo->flags & (MF_MISSILE | MF_SKULLFLY))
         return;                 // no friction for missiles ever
 
-    if(mo->pos[VZ] > mo->floorz && !mo->onmobj && !(mo->flags2 & MF2_FLY))
+    if(mo->pos[VZ] > FLT2FIX(mo->floorz) && !mo->onmobj && !(mo->flags2 & MF2_FLY))
         return;                 // no friction when falling
 
     if(cfg.slidingCorpses)
@@ -314,57 +313,57 @@ void P_XYMovement(mobj_t *mo)
         {
             // do not stop sliding
             //  if halfway off a step with some momentum
-            if(mo->momx > FRACUNIT / 4 || mo->momx < -FRACUNIT / 4 ||
-               mo->momy > FRACUNIT / 4 || mo->momy < -FRACUNIT / 4)
+            if(mo->mom[MX] > FRACUNIT / 4 || mo->mom[MX] < -FRACUNIT / 4 ||
+               mo->mom[MY] > FRACUNIT / 4 || mo->mom[MY] < -FRACUNIT / 4)
             {
                 if(mo->floorz !=
-                   P_GetFixedp(mo->subsector, DMU_FLOOR_HEIGHT))
+                   P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
                     return;
             }
         }
     }
 
     // Stop player walking animation.
-    if(player && mo->momx > -STANDSPEED && mo->momx < STANDSPEED &&
-       mo->momy > -STANDSPEED && mo->momy < STANDSPEED &&
-       !player->plr->cmd.forwardMove && !player->plr->cmd.sideMove)
+    if(player &&
+       !player->plr->cmd.forwardMove && !player->plr->cmd.sideMove &&
+       mo->mom[MX] > -STANDSPEED && mo->mom[MX] < STANDSPEED &&
+       mo->mom[MY] > -STANDSPEED && mo->mom[MY] < STANDSPEED)
     {
         // if in a walking frame, stop moving
         if((unsigned) ((player->plr->mo->state - states) - PCLASS_INFO(player->class)->runstate) < 4)
             P_SetMobjState(player->plr->mo, PCLASS_INFO(player->class)->normalstate);
     }
 
-    if(mo->momx > -STOPSPEED && mo->momx < STOPSPEED && mo->momy > -STOPSPEED
-       && mo->momy < STOPSPEED && (!player ||
-                                   (player->plr->cmd.forwardMove == 0 &&
-                                    player->plr->cmd.sideMove == 0)))
+    if(mo->mom[MX] > -STOPSPEED && mo->mom[MX] < STOPSPEED &&
+       mo->mom[MY] > -STOPSPEED && mo->mom[MY] < STOPSPEED &&
+       (!player || (player->plr->cmd.forwardMove == 0 &&
+                    player->plr->cmd.sideMove == 0)))
     {
-        mo->momx = 0;
-        mo->momy = 0;
+        mo->mom[MX] = mo->mom[MY] = 0;
     }
     else
     {
-        if(mo->flags2 & MF2_FLY && !(mo->pos[VZ] <= mo->floorz) &&
+        if(mo->flags2 & MF2_FLY && !(mo->pos[VZ] <= FLT2FIX(mo->floorz)) &&
            !mo->onmobj)
         {
-            mo->momx = FixedMul(mo->momx, FRICTION_FLY);
-            mo->momy = FixedMul(mo->momy, FRICTION_FLY);
+            mo->mom[MX] = FixedMul(mo->mom[MX], FRICTION_FLY);
+            mo->mom[MY] = FixedMul(mo->mom[MY], FRICTION_FLY);
         }
 #if __JHERETIC__
         else if(P_XSector(P_GetPtrp(mo->subsector,
                                     DMU_SECTOR))->special == 15)
         {
             // Friction_Low
-            mo->momx = FixedMul(mo->momx, FRICTION_LOW);
-            mo->momy = FixedMul(mo->momy, FRICTION_LOW);
+            mo->mom[MX] = FixedMul(mo->mom[MX], FRICTION_LOW);
+            mo->mom[MY] = FixedMul(mo->mom[MY], FRICTION_LOW);
         }
 #endif
         else
         {
             fixed_t fric = P_GetMobjFriction(mo);
 
-            mo->momx = FixedMul(mo->momx, fric);
-            mo->momy = FixedMul(mo->momy, fric);
+            mo->mom[MX] = FixedMul(mo->mom[MX], fric);
+            mo->mom[MY] = FixedMul(mo->mom[MY], fric);
         }
     }
 }
@@ -400,8 +399,8 @@ void P_RipperBlood(mobj_t *mo)
     pos[VZ] += ((P_Random() - P_Random()) << 12);
     th = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], MT_BLOOD);
     th->flags |= MF_NOGRAVITY;
-    th->momx = mo->momx >> 1;
-    th->momy = mo->momy >> 1;
+    th->mom[MX] = mo->mom[MX] >> 1;
+    th->mom[MY] = mo->mom[MY] >> 1;
     th->tics += P_Random() & 3;
 }
 
@@ -417,9 +416,9 @@ void P_HitFloor(mobj_t *mo)
 
 void P_ZMovement(mobj_t *mo)
 {
-    fixed_t gravity;
-    fixed_t dist;
-    fixed_t delta;
+    fixed_t     gravity;
+    fixed_t     dist;
+    fixed_t     delta;
 
     gravity = XS_Gravity(P_GetPtrp(mo->subsector, DMU_SECTOR));
 
@@ -428,18 +427,18 @@ void P_ZMovement(mobj_t *mo)
         return;
 
     // check for smooth step up
-    if(mo->player && mo->pos[VZ] < mo->floorz)
+    if(mo->player && FIX2FLT(mo->pos[VZ]) < mo->floorz)
     {
-        mo->dplayer->viewheight -= mo->floorz - mo->pos[VZ];
+        mo->dplayer->viewheight -= mo->floorz - FIX2FLT(mo->pos[VZ]);
 
         mo->dplayer->deltaviewheight =
-            ((cfg.plrViewHeight << FRACBITS) - mo->dplayer->viewheight) >> 3;
+            FIX2FLT(((cfg.plrViewHeight << FRACBITS) - FLT2FIX(mo->dplayer->viewheight)) >> 3);
     }
 
     // adjust height
-    mo->pos[VZ] += mo->momz;
+    mo->pos[VZ] += mo->mom[MZ];
     if((mo->flags2 & MF2_FLY) &&
-       mo->onmobj && mo->pos[VZ] > mo->onmobj->pos[VZ] + mo->onmobj->height)
+       mo->onmobj && mo->pos[VZ] > mo->onmobj->pos[VZ] + FLT2FIX(mo->onmobj->height))
         mo->onmobj = NULL; // We were on a mobj, we are NOT now.
 
     if(mo->flags & MF_FLOAT && mo->target && !P_IsCamera(mo->target))
@@ -451,12 +450,12 @@ void P_ZMovement(mobj_t *mo)
                                     mo->pos[VY] - mo->target->pos[VY]);
 
             //delta = (mo->target->pos[VZ] + (mo->height>>1)) - mo->z;
-            delta = (mo->target->pos[VZ] + mo->target->height / 2) -
-                    (mo->pos[VZ] + mo->height / 2);
+            delta = (mo->target->pos[VZ] + FLT2FIX(mo->target->height) / 2) -
+                    (mo->pos[VZ] + FLT2FIX(mo->height) / 2);
 
 #define ABS(x)  ((x)<0?-(x):(x))
             if(dist < mo->radius + mo->target->radius &&
-               ABS(delta) < mo->height + mo->target->height)
+               ABS(delta) < FLT2FIX(mo->height + mo->target->height))
             {
                 // Don't go INTO the target.
                 delta = 0;
@@ -475,7 +474,7 @@ void P_ZMovement(mobj_t *mo)
         }
     }
     // Do some fly-bobbing.
-    if(mo->player && (mo->flags2 & MF2_FLY) && mo->pos[VZ] > mo->floorz &&
+    if(mo->player && (mo->flags2 & MF2_FLY) && mo->pos[VZ] > FLT2FIX(mo->floorz) &&
        !mo->onmobj && (leveltime & 2))
     {
         mo->pos[VZ] += finesine[(FINEANGLES / 20 * leveltime >> 2) & FINEMASK];
@@ -484,10 +483,10 @@ void P_ZMovement(mobj_t *mo)
     // Clip movement. Another thing?
     // d64tc >
     // DJS - FIXME!
-    if(mo->pos[VZ] <= mo->floorz && (mo->flags & MF_MISSILE))
+    if(mo->pos[VZ] <= FLT2FIX(mo->floorz) && (mo->flags & MF_MISSILE))
     {
         // Hit the floor
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = FLT2FIX(mo->floorz);
         if(mo->type == MT_GRENADE)
         {
             P_BounceMissile(mo);
@@ -501,25 +500,25 @@ void P_ZMovement(mobj_t *mo)
     }
     // < d64tc
 
-    if(mo->onmobj && mo->pos[VZ] <= mo->onmobj->pos[VZ] + mo->onmobj->height)
+    if(mo->onmobj && mo->pos[VZ] <= mo->onmobj->pos[VZ] + FLT2FIX(mo->onmobj->height))
     {
-        if(mo->momz < 0)
+        if(mo->mom[MZ] < 0)
         {
-            if(mo->player && mo->momz < -gravity * 8 && !(mo->flags2 & MF2_FLY))
+            if(mo->player && mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
             {
                 // Squat down.
                 // Decrease viewheight for a moment
                 // after hitting the ground (hard),
                 // and utter appropriate sound.
-                mo->dplayer->deltaviewheight = mo->momz >> 3;
+                mo->dplayer->deltaviewheight = FIX2FLT(mo->mom[MZ] >> 3);
 
                 if(mo->player->health > 0)
                     S_StartSound(sfx_oof, mo);
             }
-            mo->momz = 0;
+            mo->mom[MZ] = 0;
         }
-        if(!mo->momz)
-            mo->pos[VZ] = mo->onmobj->pos[VZ] + mo->onmobj->height;
+        if(!mo->mom[MZ])
+            mo->pos[VZ] = mo->onmobj->pos[VZ] + FLT2FIX(mo->onmobj->height);
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
@@ -560,7 +559,7 @@ void P_ZMovement(mobj_t *mo)
     // < d64tc
 
     // The floor.
-    if(mo->pos[VZ] <= mo->floorz)
+    if(mo->pos[VZ] <= FLT2FIX(mo->floorz))
     {
         // hit the floor
 
@@ -594,18 +593,18 @@ void P_ZMovement(mobj_t *mo)
         if(correct_lost_soul_bounce && mo->flags & MF_SKULLFLY)
         {
             // the skull slammed into something
-            mo->momz = -mo->momz;
+            mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if(mo->momz < 0)
+        if(mo->mom[MZ] < 0)
         {
-            if(mo->player && mo->momz < -gravity * 8 && !(mo->flags2 & MF2_FLY))
+            if(mo->player && mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
             {
                 // Squat down.
                 // Decrease viewheight for a moment
                 // after hitting the ground (hard),
                 // and utter appropriate sound.
-                mo->dplayer->deltaviewheight = mo->momz >> 3;
+                mo->dplayer->deltaviewheight = FIX2FLT(mo->mom[MZ] >> 3);
 
                 // Fix DOOM bug - dead players grunting when hitting the ground
                 // (e.g., after an archvile attack)
@@ -613,9 +612,9 @@ void P_ZMovement(mobj_t *mo)
                     S_StartSound(sfx_oof, mo);
             }
             P_HitFloor(mo);
-            mo->momz = 0;
+            mo->mom[MZ] = 0;
         }
-        mo->pos[VZ] = mo->floorz;
+        mo->pos[VZ] = FLT2FIX(mo->floorz);
 
         // cph 2001/05/26 -
         // See lost soul bouncing comment above. We need this here for bug
@@ -624,7 +623,7 @@ void P_ZMovement(mobj_t *mo)
         //
 
         if(!correct_lost_soul_bounce && mo->flags & MF_SKULLFLY)
-            mo->momz = -mo->momz;
+            mo->mom[MZ] = -mo->mom[MZ];
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
@@ -642,30 +641,30 @@ void P_ZMovement(mobj_t *mo)
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
-        if(mo->momz == 0)
-            mo->momz = -(gravity >> 3) * 2;
+        if(mo->mom[MZ] == 0)
+            mo->mom[MZ] = -(gravity >> 3) * 2;
         else
-            mo->momz -= gravity >> 3;
+            mo->mom[MZ] -= gravity >> 3;
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
-        if(mo->momz == 0)
-            mo->momz = -gravity * 2;
+        if(mo->mom[MZ] == 0)
+            mo->mom[MZ] = -gravity * 2;
         else
-            mo->momz -= gravity;
+            mo->mom[MZ] -= gravity;
     }
 
-    if(mo->pos[VZ] + mo->height > mo->ceilingz)
+    if(FIX2FLT(mo->pos[VZ]) + mo->height > mo->ceilingz)
     {
         // hit the ceiling
-        if(mo->momz > 0)
-            mo->momz = 0;
+        if(mo->mom[MZ] > 0)
+            mo->mom[MZ] = 0;
 
-        mo->pos[VZ] = mo->ceilingz - mo->height;
+        mo->pos[VZ] = FLT2FIX(mo->ceilingz - mo->height);
 
         if(mo->flags & MF_SKULLFLY)
         {                       // the skull slammed into something
-            mo->momz = -mo->momz;
+            mo->mom[MZ] = -mo->mom[MZ];
         }
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
@@ -686,9 +685,9 @@ void P_ZMovement(mobj_t *mo)
 
 void P_NightmareRespawn(mobj_t *mobj)
 {
-    fixed_t pos[3];
+    fixed_t     pos[3];
     subsector_t *ss;
-    mobj_t *mo;
+    mobj_t     *mo;
 
     memcpy(pos, mobj->spawninfo.pos, sizeof(pos));
 
@@ -745,19 +744,19 @@ void P_FloatThingy(mobj_t *actor)
     if(actor->threshold || (actor->flags & MF_INFLOAT))
         return;
 
-    maxz = actor->ceilingz - actor->height - 16 * FRACUNIT;
-    minz = actor->floorz + 96 * FRACUNIT;
+    maxz = FLT2FIX(actor->ceilingz - 16 - actor->height);
+    minz = FLT2FIX(actor->floorz + 96);
 
     if(minz > maxz)
         minz = maxz;
 
     if(minz < actor->pos[VZ])
     {
-        actor->momz -= FRACUNIT;
+        actor->mom[MZ] -= FRACUNIT;
     }
     else
     {
-        actor->momz += FRACUNIT;
+        actor->mom[MZ] += FRACUNIT;
     }
 
     actor->reactiontime = (minz == actor->pos[VZ]? 4 : 0);
@@ -804,7 +803,7 @@ void P_MobjThinker(mobj_t *mobj)
     // < d64tc
 
     // Handle X and Y momentums
-    if(mobj->momx || mobj->momy || (mobj->flags & MF_SKULLFLY))
+    if(mobj->mom[MX] || mobj->mom[MY] || (mobj->flags & MF_SKULLFLY))
     {
         P_XYMovement(mobj);
 
@@ -818,37 +817,38 @@ void P_MobjThinker(mobj_t *mobj)
         //mobj->pos[VZ] = mobj->floorz+FloatBobOffsets[(mobj->health++)&63];
 
         // Keep it on the floor.
-        mobj->pos[VZ] = mobj->floorz;
+        mobj->pos[VZ] = FLT2FIX(mobj->floorz);
 #if __JHERETIC__
         // Negative floorclip raises the mobj off the floor.
-        mobj->floorclip = -mobj->special1;
+        mobj->floorclip = FIX2FLT(-mobj->special1);
 #elif __JDOOM__
         mobj->floorclip = 0;
 #endif
-        if(mobj->floorclip < -MAX_BOB_OFFSET)
+        if(mobj->floorclip < FIX2FLT(-MAX_BOB_OFFSET))
         {
             // We don't want it going through the floor.
-            mobj->floorclip = -MAX_BOB_OFFSET;
+            mobj->floorclip = FIX2FLT(-MAX_BOB_OFFSET);
         }
 
         // Old floatbob used health as index, let's still increase it
         // as before (in case somebody wants to use it).
         mobj->health++;
     }
-    else if((mobj->pos[VZ] != mobj->floorz) || mobj->momz) // GMJ 02/02/02
+    else if((mobj->pos[VZ] != FLT2FIX(mobj->floorz)) || mobj->mom[MZ]) // GMJ 02/02/02
     {
         P_ZMovement(mobj);
         if(mobj->thinker.function != P_MobjThinker) // cph - Must've been removed
             return;             // killough - mobj was removed
     }
     // non-sentient objects at rest
-    else if(!(mobj->momx | mobj->momy) && !sentient(mobj) && !(mobj->player) &&
-            !((mobj->flags & MF_CORPSE) && cfg.slidingCorpses))
+    else if(!(mobj->mom[MX] | mobj->mom[MY]) && !sentient(mobj) &&
+            !(mobj->player) && !((mobj->flags & MF_CORPSE) &&
+            cfg.slidingCorpses))
     {
         // killough 9/12/98: objects fall off ledges if they are hanging off
         // slightly push off of ledge if hanging more than halfway off
 
-        if(mobj->pos[VZ] > mobj->dropoffz && // Only objects contacting dropoff
+        if(FIX2FLT(mobj->pos[VZ]) > mobj->dropoffz && // Only objects contacting dropoff
            !(mobj->flags & MF_NOGRAVITY) && cfg.fallOff)
         {
             P_ApplyTorque(mobj);
@@ -862,8 +862,8 @@ void P_MobjThinker(mobj_t *mobj)
 
     if(cfg.slidingCorpses)
     {
-        if((mobj->flags & MF_CORPSE ? mobj->pos[VZ] > mobj->dropoffz :
-                                      mobj->pos[VZ] - mobj->dropoffz > FRACUNIT * 24) && // Only objects contacting drop off
+        if((mobj->flags & MF_CORPSE ? FIX2FLT(mobj->pos[VZ]) > mobj->dropoffz :
+                                      FIX2FLT(mobj->pos[VZ]) - mobj->dropoffz > 24) && // Only objects contacting drop off
            !(mobj->flags & MF_NOGRAVITY))    // Only objects which fall
         {
             P_ApplyTorque(mobj);    // Apply torque
@@ -974,7 +974,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
     mobj->pos[VX] = x;
     mobj->pos[VY] = y;
     mobj->radius = info->radius;
-    mobj->height = info->height;
+    mobj->height = FIX2FLT(info->height);
     mobj->flags = info->flags;
     mobj->flags2 = info->flags2;
     mobj->flags3 = info->flags3;
@@ -1009,29 +1009,27 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
     // set subsector and/or block links
     P_SetThingPosition(mobj);
 
-    mobj->dropoffz =            //killough $dropoff_fix
-        mobj->floorz =
-            P_GetFixedp(mobj->subsector, DMU_FLOOR_HEIGHT);
-
-    mobj->ceilingz =
-        P_GetFixedp(mobj->subsector, DMU_CEILING_HEIGHT);
+    //killough $dropoff_fix
+    mobj->floorz   = P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT);
+    mobj->dropoffz = mobj->floorz;
+    mobj->ceilingz = P_GetFloatp(mobj->subsector, DMU_CEILING_HEIGHT);
 
     if(z == ONFLOORZ)
-        mobj->pos[VZ] = mobj->floorz;
+        mobj->pos[VZ] = FLT2FIX(mobj->floorz);
     else if(z == ONCEILINGZ)
-        mobj->pos[VZ] = mobj->ceilingz - mobj->info->height;
+        mobj->pos[VZ] = FLT2FIX(mobj->ceilingz) - mobj->info->height;
     else if(z == FLOATRANDZ)
     {
-        space = ((mobj->ceilingz) - (mobj->info->height)) - mobj->floorz;
+        space = FLT2FIX(mobj->ceilingz) - mobj->info->height - FLT2FIX(mobj->floorz);
         if(space > 48 * FRACUNIT)
         {
             space -= 40 * FRACUNIT;
             mobj->pos[VZ] =
-                ((space * P_Random()) >> 8) + mobj->floorz + 40 * FRACUNIT;
+                ((space * P_Random()) >> 8) + FLT2FIX(mobj->floorz + 40);
         }
         else
         {
-            mobj->pos[VZ] = mobj->floorz;
+            mobj->pos[VZ] = FLT2FIX(mobj->floorz);
         }
     }
     else
@@ -1041,7 +1039,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
        P_GetThingFloorType(mobj) >= FLOOR_LIQUID &&
        mobj->pos[VZ] == P_GetFixedp(mobj->subsector, DMU_FLOOR_HEIGHT))
     {
-        mobj->floorclip = 10 * FRACUNIT;
+        mobj->floorclip = 10;
     }
     else
     {
@@ -1147,7 +1145,7 @@ void P_RespawnSpecials(void) // d64tc
            P_GetThingFloorType(mo) >= FLOOR_LIQUID &&
            mo->pos[VZ] == P_GetFixedp(mo->subsector, DMU_FLOOR_HEIGHT))
         {
-            mo->floorclip = 10 * FRACUNIT;
+            mo->floorclip = 10;
         }
         else
         {
@@ -1181,7 +1179,6 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
     fixed_t pos[3];
     mobj_t *mobj;
     int     i;
-    int     viewHeight;
 
     if(pnum < 0)
         pnum = 0;
@@ -1244,14 +1241,13 @@ void P_SpawnPlayer(thing_t * mthing, int pnum)
     p->plr->extralight = 0;
     p->plr->fixedcolormap = 0;
     p->plr->lookdir = 0;
-    viewHeight = (cfg.plrViewHeight << FRACBITS);
     if(p->plr->flags & DDPF_CAMERA)
     {
-        p->plr->mo->pos[VZ] += viewHeight;
+        p->plr->mo->pos[VZ] += cfg.plrViewHeight << FRACBITS;
         p->plr->viewheight = 0;
     }
     else
-        p->plr->viewheight = viewHeight;
+        p->plr->viewheight = (float) cfg.plrViewHeight;
 
     p->class = PCLASS_PLAYER;
 
@@ -1445,7 +1441,7 @@ mobj_t *P_SpawnCustomPuff(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
     z += ((P_Random() - P_Random()) << 10);
 
     th = P_SpawnMobj(x, y, z, type);
-    th->momz = FRACUNIT;
+    th->mom[MZ] = FRACUNIT;
     th->tics -= P_Random() & 3;
 
     // Make it last at least one tic.
@@ -1470,7 +1466,7 @@ void P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage)
 
     z += ((P_Random() - P_Random()) << 10);
     th = P_SpawnMobj(x, y, z, MT_BLOOD);
-    th->momz = FRACUNIT * 2;
+    th->mom[MZ] = FRACUNIT * 2;
     th->tics -= P_Random() & 3;
 
     if(th->tics < 1)
@@ -1493,9 +1489,9 @@ void P_CheckMissileSpawn(mobj_t *th)
 
     // move a little forward so an angle can
     // be computed if it immediately explodes
-    th->pos[VX] += (th->momx >> 1);
-    th->pos[VY] += (th->momy >> 1);
-    th->pos[VZ] += (th->momz >> 1);
+    th->pos[VX] += (th->mom[MX] >> 1);
+    th->pos[VY] += (th->mom[MY] >> 1);
+    th->pos[VZ] += (th->mom[MZ] >> 1);
 
     if(!P_TryMove(th, th->pos[VX], th->pos[VY], false, false))
         P_ExplodeMissile(th);
@@ -1510,7 +1506,7 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 
     z = source->pos[VZ] + 4 * 8 * FRACUNIT;
 
-    z -= source->floorclip;
+    z -= FLT2FIX(source->floorclip);
     th = P_SpawnMobj(source->pos[VX], source->pos[VY], z, type);
 
     if(th->info->seesound)
@@ -1534,8 +1530,8 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
 
     th->angle = an;
     an >>= ANGLETOFINESHIFT;
-    th->momx = FixedMul(th->info->speed, finecosine[an]);
-    th->momy = FixedMul(th->info->speed, finesine[an]);
+    th->mom[MX] = FixedMul(th->info->speed, finecosine[an]);
+    th->mom[MY] = FixedMul(th->info->speed, finesine[an]);
 
     dist = P_ApproxDistance(dest->pos[VX] - source->pos[VX],
                             dest->pos[VY] - source->pos[VY]);
@@ -1545,18 +1541,18 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
     if(dist < 1)
         dist = 1;
 
-    th->momz = (dest->pos[VZ] - source->pos[VZ]) / dist;
+    th->mom[MZ] = (dest->pos[VZ] - source->pos[VZ]) / dist;
 
     // Make sure the speed is right (in 3D).
-    dist3 = P_ApproxDistance(th->momx, th->momy);
-    dist3 = P_ApproxDistance(dist3, th->momz);
+    dist3 = P_ApproxDistance(th->mom[MX], th->mom[MY]);
+    dist3 = P_ApproxDistance(dist3, th->mom[MZ]);
     if(!dist3)
         dist3 = 1;
     dist = FixedDiv(th->info->speed, dist3);
 
-    th->momx = FixedMul(th->momx, dist);
-    th->momy = FixedMul(th->momy, dist);
-    th->momz = FixedMul(th->momz, dist);
+    th->mom[MX] = FixedMul(th->mom[MX], dist);
+    th->mom[MY] = FixedMul(th->mom[MY], dist);
+    th->mom[MZ] = FixedMul(th->mom[MZ], dist);
 
     P_CheckMissileSpawn(th);
 
@@ -1602,7 +1598,7 @@ void P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type)
     memcpy(pos, source->pos, sizeof(pos));
     pos[VZ] += 4 * 8 * FRACUNIT;
 
-    pos[VZ] -= source->floorclip;
+    pos[VZ] -= FLT2FIX(source->floorclip);
 
     th = P_SpawnMobj(pos[VX], pos[VY], pos[VZ], type);
 
@@ -1612,23 +1608,23 @@ void P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type)
 
     th->target = source;
     th->angle = an;
-    th->momx = FixedMul(th->info->speed, finecosine[an >> ANGLETOFINESHIFT]);
-    th->momy = FixedMul(th->info->speed, finesine[an >> ANGLETOFINESHIFT]);
+    th->mom[MX] = FixedMul(th->info->speed, finecosine[an >> ANGLETOFINESHIFT]);
+    th->mom[MY] = FixedMul(th->info->speed, finesine[an >> ANGLETOFINESHIFT]);
 
     // Allow free-aim with the BFG in deathmatch?
     if(deathmatch && cfg.netBFGFreeLook == 0 && type == MT_BFG)
-        th->momz = 0;
+        th->mom[MZ] = 0;
     else
-        th->momz = FixedMul(th->info->speed, slope);
+        th->mom[MZ] = FixedMul(th->info->speed, slope);
 
     // Make sure the speed is right (in 3D).
-    dist = P_ApproxDistance(P_ApproxDistance(th->momx, th->momy), th->momz);
+    dist = P_ApproxDistance(P_ApproxDistance(th->mom[MX], th->mom[MY]), th->mom[MZ]);
     if(!dist)
         dist = 1;
     dist = FixedDiv(th->info->speed, dist);
-    th->momx = FixedMul(th->momx, dist);
-    th->momy = FixedMul(th->momy, dist);
-    th->momz = FixedMul(th->momz, dist);
+    th->mom[MX] = FixedMul(th->mom[MX], dist);
+    th->mom[MY] = FixedMul(th->mom[MY], dist);
+    th->mom[MZ] = FixedMul(th->mom[MZ], dist);
 
     P_CheckMissileSpawn(th);
 }
@@ -1681,11 +1677,11 @@ mobj_t *P_SPMAngle(mobj_t *source, mobjtype_t type, angle_t angle)
 
     th->target = source;
     th->angle = an;
-    th->momx = movfactor *
+    th->mom[MX] = movfactor *
         FixedMul(th->info->speed, finecosine[an >> ANGLETOFINESHIFT]);
-    th->momy = movfactor *
+    th->mom[MY] = movfactor *
         FixedMul(th->info->speed, finesine[an >> ANGLETOFINESHIFT]);
-    th->momz = FixedMul(th->info->speed, slope);
+    th->mom[MZ] = FixedMul(th->info->speed, slope);
 
     if(th->info->seesound)
         S_StartSound(th->info->seesound, th);
@@ -1704,7 +1700,7 @@ mobj_t *P_SpawnMotherMissile(fixed_t x, fixed_t y, fixed_t z, mobj_t *source,
     angle_t an;
     int dist;
 
-    z -= source->floorclip;
+    z -= FLT2FIX(source->floorclip);
     th = P_SpawnMobj(x, y, z, type);
 
     if(th->info->seesound)
@@ -1721,8 +1717,8 @@ mobj_t *P_SpawnMotherMissile(fixed_t x, fixed_t y, fixed_t z, mobj_t *source,
     th->angle = an;
 
     an >>= ANGLETOFINESHIFT;
-    th->momx = FixedMul(th->info->speed, finecosine[an]);
-    th->momy = FixedMul(th->info->speed, finesine[an]);
+    th->mom[MX] = FixedMul(th->info->speed, finecosine[an]);
+    th->mom[MY] = FixedMul(th->info->speed, finesine[an]);
 
     dist = P_ApproxDistance(dest->pos[VX] - x, dest->pos[VY] - y);
     dist = dist / th->info->speed;
@@ -1730,7 +1726,7 @@ mobj_t *P_SpawnMotherMissile(fixed_t x, fixed_t y, fixed_t z, mobj_t *source,
     if(dist < 1)
         dist = 1;
 
-    th->momz = (dest->pos[VZ] - z + (30 * FRACUNIT)) / dist;
+    th->mom[MZ] = (dest->pos[VZ] - z + (30 * FRACUNIT)) / dist;
 
     P_CheckMissileSpawn(th);
     return th;

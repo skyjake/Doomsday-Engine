@@ -687,7 +687,8 @@ void C_DECL A_BFGSpray(mobj_t *mo)
             continue;
 
         P_SpawnMobj(linetarget->pos[VX], linetarget->pos[VY],
-                    linetarget->pos[VZ] + (linetarget->height >> 2), MT_EXTRABFG);
+                    linetarget->pos[VZ] + FLT2FIX(linetarget->height /2),
+                    MT_EXTRABFG);
 
         damage = 0;
         for(j = 0; j < 15; j++)

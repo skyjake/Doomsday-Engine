@@ -83,9 +83,9 @@ static void SV_ReadPlayer(player_t *pl)
     SV_ReadLong();
     pl->playerstate = SV_ReadLong();
     SV_Read(temp, 8);
-    pl->plr->viewz = SV_ReadLong();
-    pl->plr->viewheight = SV_ReadLong();
-    pl->plr->deltaviewheight = SV_ReadLong();
+    pl->plr->viewz = FIX2FLT(SV_ReadLong());
+    pl->plr->viewheight = FIX2FLT(SV_ReadLong());
+    pl->plr->deltaviewheight = FIX2FLT(SV_ReadLong());
     pl->bob = SV_ReadLong();
     pl->flyheight = 0;
     pl->health = SV_ReadLong();
@@ -159,17 +159,17 @@ static void SV_ReadMobj(mobj_t *mo)
     SV_ReadLong();
 
     // The closest interval over all contacted Sectors.
-    mo->floorz = SV_ReadLong();
-    mo->ceilingz = SV_ReadLong();
+    mo->floorz = FIX2FLT(SV_ReadLong());
+    mo->ceilingz = FIX2FLT(SV_ReadLong());
 
     // For movement checking.
     mo->radius = SV_ReadLong();
-    mo->height = SV_ReadLong();
+    mo->height = FIX2FLT(SV_ReadLong());
 
     // Momentums, used to update position.
-    mo->momx = SV_ReadLong();
-    mo->momy = SV_ReadLong();
-    mo->momz = SV_ReadLong();
+    mo->mom[MX] = SV_ReadLong();
+    mo->mom[MY] = SV_ReadLong();
+    mo->mom[MZ] = SV_ReadLong();
 
     // If == validcount, already checked.
     mo->valid = SV_ReadLong();
@@ -374,9 +374,9 @@ void P_v19_UnArchiveThinkers(void)
             P_SetThingPosition(mobj);
             mobj->info = &mobjinfo[mobj->type];
             mobj->floorz =
-                P_GetFixedp(mobj->subsector, DMU_FLOOR_HEIGHT);
+                P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT);
             mobj->ceilingz =
-                P_GetFixedp(mobj->subsector, DMU_CEILING_HEIGHT);
+                P_GetFloatp(mobj->subsector, DMU_CEILING_HEIGHT);
             mobj->thinker.function = P_MobjThinker;
             P_AddThinker(&mobj->thinker);
             break;
