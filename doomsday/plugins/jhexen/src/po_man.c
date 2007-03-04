@@ -663,8 +663,8 @@ static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po)
 
     thrustX = FixedMul(force, finecosine[thrustAngle]);
     thrustY = FixedMul(force, finesine[thrustAngle]);
-    mobj->momx += thrustX;
-    mobj->momy += thrustY;
+    mobj->mom[MX] += thrustX;
+    mobj->mom[MY] += thrustY;
 
     if(P_GetBoolp(po, DMU_CRUSH))
     {

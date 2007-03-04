@@ -212,9 +212,9 @@ boolean EV_ThingProjectile(byte *args, boolean gravity)
 
         newMobj->target = mobj; // Originator
         newMobj->angle = angle;
-        newMobj->momx = FixedMul(speed, finecosine[fineAngle]);
-        newMobj->momy = FixedMul(speed, finesine[fineAngle]);
-        newMobj->momz = vspeed;
+        newMobj->mom[MX] = FixedMul(speed, finecosine[fineAngle]);
+        newMobj->mom[MY] = FixedMul(speed, finesine[fineAngle]);
+        newMobj->mom[MZ] = vspeed;
         newMobj->flags2 |= MF2_DROPPED; // Don't respawn
         if(gravity == true)
         {
@@ -254,7 +254,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
         z = mobj->pos[VZ];
 
         if(mobjinfo[moType].flags2 & MF2_FLOATBOB)
-            z -= mobj->floorz;
+            z -= FLT2FIX(mobj->floorz);
 
         newMobj = P_SpawnMobj(mobj->pos[VX], mobj->pos[VY], z, moType);
         if(P_TestMobjLocation(newMobj) == false)
@@ -275,7 +275,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
             newMobj->flags2 |= MF2_DROPPED; // Don't respawn
             if(newMobj->flags2 & MF2_FLOATBOB)
             {
-                newMobj->special1 = newMobj->pos[VZ] - newMobj->floorz;
+                newMobj->special1 = newMobj->pos[VZ] - FLT2FIX(newMobj->floorz);
             }
             success = true;
         }

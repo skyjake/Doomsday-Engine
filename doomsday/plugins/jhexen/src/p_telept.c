@@ -165,7 +165,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
 
     memcpy(oldpos, thing->pos, sizeof(oldpos));
 
-    aboveFloor = thing->pos[VZ] - thing->floorz;
+    aboveFloor = thing->pos[VZ] - FLT2FIX(thing->floorz);
     if(!P_TeleportMove(thing, x, y, false))
         return false;
 
@@ -175,17 +175,17 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
         player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
         if(player->powers[PT_FLIGHT] && aboveFloor)
         {
-            thing->pos[VZ] = thing->floorz + aboveFloor;
-            if(thing->pos[VZ] + thing->height > thing->ceilingz)
+            thing->pos[VZ] = FLT2FIX(thing->floorz) + aboveFloor;
+            if(FIX2FLT(thing->pos[VZ]) + thing->height > thing->ceilingz)
             {
-                thing->pos[VZ] = thing->ceilingz - thing->height;
+                thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
             }
-            player->plr->viewz = thing->pos[VZ] + player->plr->viewheight;
+            player->plr->viewz = FIX2FLT(thing->pos[VZ]) + player->plr->viewheight;
         }
         else
         {
-            thing->pos[VZ] = thing->floorz;
-            player->plr->viewz = thing->pos[VZ] + player->plr->viewheight;
+            thing->pos[VZ] = FLT2FIX(thing->floorz);
+            player->plr->viewz = FIX2FLT(thing->pos[VZ]) + player->plr->viewheight;
             if(useFog)
             {
                 player->plr->lookdir = 0;
@@ -194,15 +194,15 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
     }
     else if(thing->flags & MF_MISSILE)
     {
-        thing->pos[VZ] = thing->floorz + aboveFloor;
-        if(thing->pos[VZ] + thing->height > thing->ceilingz)
+        thing->pos[VZ] = FLT2FIX(thing->floorz) + aboveFloor;
+        if(FIX2FLT(thing->pos[VZ]) + thing->height > thing->ceilingz)
         {
-            thing->pos[VZ] = thing->ceilingz - thing->height;
+            thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
         }
     }
     else
     {
-        thing->pos[VZ] = thing->floorz;
+        thing->pos[VZ] = FLT2FIX(thing->floorz);
     }
 
     // Spawn teleport fog at source and destination
@@ -230,7 +230,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
                                    DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
            P_GetThingFloorType(thing) >= FLOOR_LIQUID)
         {
-            thing->floorclip = 10 * FRACUNIT;
+            thing->floorclip = 10;
         }
         else
         {
@@ -241,12 +241,12 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
     if(thing->flags & MF_MISSILE)
     {
         angle >>= ANGLETOFINESHIFT;
-        thing->momx = FixedMul(thing->info->speed, finecosine[angle]);
-        thing->momy = FixedMul(thing->info->speed, finesine[angle]);
+        thing->mom[MX] = FixedMul(thing->info->speed, finecosine[angle]);
+        thing->mom[MY] = FixedMul(thing->info->speed, finesine[angle]);
     }
     else if(useFog) // no fog doesn't alter the player's momentums
     {
-        thing->momx = thing->momy = thing->momz = 0;
+        thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
     }
     P_ClearThingSRVO(thing);
 

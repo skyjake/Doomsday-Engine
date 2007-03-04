@@ -103,7 +103,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
                 continue;
 
             memcpy(oldpos, thing->pos, sizeof(thing->pos));
-            aboveFloor = thing->pos[VZ] - thing->floorz;
+            aboveFloor = thing->pos[VZ] - FLT2FIX(thing->floorz);
 
             if(!P_TeleportMove(thing, m->pos[VX], m->pos[VY], false))
                 return 0;
@@ -111,7 +111,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
             // In Final Doom things teleported to their destination
             // but the height wasn't set to the floor.
             if(gamemission != GM_TNT && gamemission != GM_PLUT)
-                thing->pos[VZ] = thing->floorz;
+                thing->pos[VZ] = FLT2FIX(thing->floorz);
 #if 0
             // spawn teleport fog at source and destination
             fog = P_SpawnMobj(oldpos[VX], oldpos[VY], oldpos[VZ], MT_TFOG);
@@ -131,14 +131,14 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
                                            DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT) &&
                    P_GetThingFloorType(thing) >= FLOOR_LIQUID)
                 {
-                    thing->floorclip = 10 * FRACUNIT;
+                    thing->floorclip = 10;
                 }
                 else
                 {
                     thing->floorclip = 0;
                 }
             }
-            thing->momx = thing->momy = thing->momz = 0;
+            thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
 
             // don't move for a bit
             if(thing->player)
@@ -146,13 +146,13 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
                 thing->reactiontime = 18;
                 if(thing->player->powers[PT_FLIGHT] && aboveFloor)
                 {
-                    thing->pos[VZ] = thing->floorz + aboveFloor;
-                    if(thing->pos[VZ] + thing->height > thing->ceilingz)
+                    thing->pos[VZ] = FLT2FIX(thing->floorz) + aboveFloor;
+                    if(FIX2FLT(thing->pos[VZ]) + thing->height > thing->ceilingz)
                     {
-                        thing->pos[VZ] = thing->ceilingz - thing->height;
+                        thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
                     }
                     thing->dplayer->viewz =
-                        thing->pos[VZ] + thing->dplayer->viewheight;
+                        FIX2FLT(thing->pos[VZ]) + thing->dplayer->viewheight;
                 }
                 else
                 {

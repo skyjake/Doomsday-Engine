@@ -855,9 +855,9 @@ void ArchivePlayer(player_t *player)
 
     StreamOutLong(p->playerstate);
     StreamOutLong(p->class);    // 2nd class...?
-    StreamOutLong(dp->viewz);
-    StreamOutLong(dp->viewheight);
-    StreamOutLong(dp->deltaviewheight);
+    StreamOutLong(FLT2FIX(dp->viewz));
+    StreamOutLong(FLT2FIX(dp->viewheight));
+    StreamOutLong(FLT2FIX(dp->deltaviewheight));
     StreamOutLong(p->bob);
     StreamOutLong(p->flyheight);
     StreamOutFloat(dp->lookdir);
@@ -911,9 +911,9 @@ void UnarchivePlayer(player_t *p)
 
     p->playerstate = GET_LONG;
     p->class = GET_LONG;        // 2nd class...?
-    dp->viewz = GET_LONG;
-    dp->viewheight = GET_LONG;
-    dp->deltaviewheight = GET_LONG;
+    dp->viewz = FIX2FLT(GET_LONG);
+    dp->viewheight = FIX2FLT(GET_LONG);
+    dp->deltaviewheight = FIX2FLT(GET_LONG);
     p->bob = GET_LONG;
     p->flyheight = GET_LONG;
     dp->lookdir = GET_FLOAT;
@@ -1305,10 +1305,10 @@ void ArchiveMobj(mobj_t *original)
     StreamOutLong(mo->frame);
     StreamOutLong(mo->floorpic);
     StreamOutLong(mo->radius);
-    StreamOutLong(mo->height);
-    StreamOutLong(mo->momx);
-    StreamOutLong(mo->momy);
-    StreamOutLong(mo->momz);
+    StreamOutLong(FLT2FIX(mo->height));
+    StreamOutLong(mo->mom[MX]);
+    StreamOutLong(mo->mom[MY]);
+    StreamOutLong(mo->mom[MZ]);
     StreamOutLong(mo->valid);
     StreamOutLong(mo->type);
     StreamOutLong((int) mo->info);
@@ -1328,7 +1328,7 @@ void ArchiveMobj(mobj_t *original)
     StreamOutLong(mo->threshold);
     StreamOutLong((int) mo->player);
     StreamOutLong(mo->lastlook);
-    StreamOutLong(mo->floorclip);
+    StreamOutLong(FLT2FIX(mo->floorclip));
     StreamOutLong(mo->archiveNum);
     StreamOutLong(mo->tid);
     StreamOutLong(mo->special);
@@ -1354,10 +1354,10 @@ void UnarchiveMobj(mobj_t *mo)
         mo->frame &= FF_FRAMEMASK; // not used anymore.
     mo->floorpic = GET_LONG;
     mo->radius = GET_LONG;
-    mo->height = GET_LONG;
-    mo->momx = GET_LONG;
-    mo->momy = GET_LONG;
-    mo->momz = GET_LONG;
+    mo->height = FIX2FLT(GET_LONG);
+    mo->mom[MX] = GET_LONG;
+    mo->mom[MY] = GET_LONG;
+    mo->mom[MZ] = GET_LONG;
     mo->valid = GET_LONG;
     mo->type = GET_LONG;
     mo->info = (mobjinfo_t *) GET_LONG;
@@ -1378,7 +1378,7 @@ void UnarchiveMobj(mobj_t *mo)
     mo->threshold = GET_LONG;
     mo->player = (player_t *) GET_LONG;
     mo->lastlook = GET_LONG;
-    mo->floorclip = GET_LONG;
+    mo->floorclip = FIX2FLT(GET_LONG);
     mo->archiveNum = GET_LONG;
     mo->tid = GET_LONG;
     mo->special = GET_LONG;
@@ -1611,9 +1611,9 @@ static void RestoreMobj(mobj_t *mobj, int ver)
     }
     P_SetThingPosition(mobj);
     mobj->info = &mobjinfo[mobj->type];
-    mobj->floorz = P_GetFixedp(mobj->subsector,
+    mobj->floorz = P_GetFloatp(mobj->subsector,
                                DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
-    mobj->ceilingz = P_GetFixedp(mobj->subsector,
+    mobj->ceilingz = P_GetFloatp(mobj->subsector,
                                  DMU_SECTOR_OF_SUBSECTOR | DMU_CEILING_HEIGHT);
     SetMobjPtr((int *) &mobj->target);
 

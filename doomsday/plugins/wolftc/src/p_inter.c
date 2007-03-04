@@ -295,7 +295,7 @@ boolean P_GivePower(player_t *player, int power)
         player->powers[power] = 1;
         player->plr->mo->flags2 |= MF2_FLY;
         player->plr->mo->flags |= MF_NOGRAVITY;
-        if(player->plr->mo->pos[VZ] <= player->plr->mo->floorz)
+        if(player->plr->mo->pos[VZ] <= FLT2FIX(player->plr->mo->floorz))
         {
             player->flyheight = 10; // thrust the player in the air a bit
             player->plr->mo->flags |= DDPF_FIXMOM;
@@ -336,7 +336,7 @@ boolean P_TakePower(player_t *player, int power)
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
     {
-        if(plrmo->pos[VZ] != plrmo->floorz)
+        if(plrmo->pos[VZ] != FLT2FIX(plrmo->floorz))
         {
             player->centering = true;
         }
@@ -364,7 +364,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 
     delta = special->pos[VZ] - toucher->pos[VZ];
 
-    if(delta > toucher->height || delta < -8 * FRACUNIT)
+    if(delta > FLT2FIX(toucher->height) || delta < -8 * FRACUNIT)
     {
         // out of reach
         return;
@@ -1069,7 +1069,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     target->flags |= MF_CORPSE | MF_DROPOFF;
     target->flags2 &= ~MF2_PASSMOBJ;
     target->corpsetics = 0;
-    target->height >>= 2;
+    target->height /= 2*2;
 
     if(source && source->player)
     {
@@ -1204,7 +1204,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
     if(target->flags & MF_SKULLFLY)
     {
-        target->momx = target->momy = target->momz = 0;
+        target->mom[MX] = target->mom[MY] = target->mom[MZ] = 0;
     }
 
     player = target->player;
@@ -1243,8 +1243,8 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
 
         ang >>= ANGLETOFINESHIFT;
-        target->momx += FixedMul(thrust, finecosine[ang]);
-        target->momy += FixedMul(thrust, finesine[ang]);
+        target->mom[MX] += FixedMul(thrust, finecosine[ang]);
+        target->mom[MY] += FixedMul(thrust, finesine[ang]);
         if(target->dplayer)
         {
             // Only fix momentum. Otherwise clients will find it difficult

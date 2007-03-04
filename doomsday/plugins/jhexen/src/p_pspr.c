@@ -911,12 +911,12 @@ void C_DECL A_LightningClip(mobj_t *actor)
 
     if(actor->type == MT_LIGHTNING_FLOOR)
     {
-        actor->pos[VZ] = actor->floorz;
+        actor->pos[VZ] = FLT2FIX(actor->floorz);
         target = actor->lastenemy->tracer;
     }
     else if(actor->type == MT_LIGHTNING_CEILING)
     {
-        actor->pos[VZ] = actor->ceilingz - actor->height;
+        actor->pos[VZ] = FLT2FIX(actor->ceilingz - actor->height);
         target = actor->tracer;
     }
     if(actor->type == MT_LIGHTNING_FLOOR)
@@ -952,8 +952,8 @@ void C_DECL A_LightningClip(mobj_t *actor)
         {
             actor->angle = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
                                            target->pos[VX], target->pos[VY]);
-            actor->momx = 0;
-            actor->momy = 0;
+            actor->mom[MX] = 0;
+            actor->mom[MY] = 0;
             P_ThrustMobj(actor, actor->angle, actor->info->speed >> 1);
         }
     }
@@ -986,16 +986,16 @@ void C_DECL A_LightningZap(mobj_t *actor)
     if(mo)
     {
         mo->lastenemy = actor;
-        mo->momx = actor->momx;
-        mo->momy = actor->momy;
+        mo->mom[MX] = actor->mom[MX];
+        mo->mom[MY] = actor->mom[MY];
         mo->target = actor->target;
         if(actor->type == MT_LIGHTNING_FLOOR)
         {
-            mo->momz = 20 * FRACUNIT;
+            mo->mom[MZ] = 20 * FRACUNIT;
         }
         else
         {
-            mo->momz = -20 * FRACUNIT;
+            mo->mom[MZ] = -20 * FRACUNIT;
         }
     }
 
@@ -1046,8 +1046,8 @@ void C_DECL A_ZapMimic(mobj_t *actor)
         }
         else
         {
-            actor->momx = mo->momx;
-            actor->momy = mo->momy;
+            actor->mom[MX] = mo->mom[MX];
+            actor->mom[MY] = mo->mom[MY];
         }
     }
 }
@@ -1060,7 +1060,7 @@ void C_DECL A_LastZap(mobj_t *actor)
     if(mo)
     {
         P_SetMobjState(mo, S_LIGHTNING_ZAP_X1);
-        mo->momz = 40 * FRACUNIT;
+        mo->mom[MZ] = 40 * FRACUNIT;
     }
 }
 
@@ -1145,9 +1145,9 @@ void C_DECL A_MStaffWeave(mobj_t *actor)
     actor->pos[VZ] -= FloatBobOffsets[weaveZ] << 1;
     weaveZ = (weaveZ + 3) & 63;
     actor->pos[VZ] += FloatBobOffsets[weaveZ] << 1;
-    if(actor->pos[VZ] <= actor->floorz)
+    if(actor->pos[VZ] <= FLT2FIX(actor->floorz))
     {
-        actor->pos[VZ] = actor->floorz + FRACUNIT;
+        actor->pos[VZ] = FLT2FIX(actor->floorz) + FRACUNIT;
     }
     actor->special2 = weaveZ + (weaveXY << 16);
 }
@@ -1491,9 +1491,9 @@ void C_DECL A_CFlameAttack(player_t *player, pspdef_t * psp)
 void C_DECL A_CFlamePuff(mobj_t *actor)
 {
     A_UnHideThing(actor);
-    actor->momx = 0;
-    actor->momy = 0;
-    actor->momz = 0;
+    actor->mom[MX] = 0;
+    actor->mom[MY] = 0;
+    actor->mom[MZ] = 0;
     S_StartSound(SFX_CLERIC_FLAME_EXPLODE, actor);
 }
 
@@ -1520,8 +1520,8 @@ void C_DECL A_CFlameMissile(mobj_t *actor)
             {
                 mo->angle = an << ANGLETOFINESHIFT;
                 mo->target = actor->target;
-                mo->momx = mo->special1 = FixedMul(FLAMESPEED, finecosine[an]);
-                mo->momy = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
+                mo->mom[MX] = mo->special1 = FixedMul(FLAMESPEED, finecosine[an]);
+                mo->mom[MY] = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
                 mo->tics -= P_Random() & 3;
             }
             mo = P_SpawnMobj(BlockingMobj->pos[VX] - FixedMul(dist, finecosine[an]),
@@ -1531,9 +1531,9 @@ void C_DECL A_CFlameMissile(mobj_t *actor)
             {
                 mo->angle = ANG180 + (an << ANGLETOFINESHIFT);
                 mo->target = actor->target;
-                mo->momx = mo->special1 =
+                mo->mom[MX] = mo->special1 =
                     FixedMul(-FLAMESPEED, finecosine[an]);
-                mo->momy = mo->special2 = FixedMul(-FLAMESPEED, finesine[an]);
+                mo->mom[MY] = mo->special2 = FixedMul(-FLAMESPEED, finesine[an]);
                 mo->tics -= P_Random() & 3;
             }
         }
@@ -1546,8 +1546,8 @@ void C_DECL A_CFlameRotate(mobj_t *actor)
     int     an;
 
     an = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
-    actor->momx = actor->special1 + FixedMul(FLAMEROTSPEED, finecosine[an]);
-    actor->momy = actor->special2 + FixedMul(FLAMEROTSPEED, finesine[an]);
+    actor->mom[MX] = actor->special1 + FixedMul(FLAMEROTSPEED, finecosine[an]);
+    actor->mom[MY] = actor->special2 + FixedMul(FLAMEROTSPEED, finesine[an]);
     actor->angle += ANG90 / 15;
 }
 
@@ -1713,12 +1713,12 @@ static void CHolySeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
         actor->angle -= delta;
     }
     angle = actor->angle >> ANGLETOFINESHIFT;
-    actor->momx = FixedMul(actor->info->speed, finecosine[angle]);
-    actor->momy = FixedMul(actor->info->speed, finesine[angle]);
-    if(!(leveltime & 15) || actor->pos[VZ] > target->pos[VZ] + (target->height) ||
-       actor->pos[VZ] + actor->height < target->pos[VZ])
+    actor->mom[MX] = FixedMul(actor->info->speed, finecosine[angle]);
+    actor->mom[MY] = FixedMul(actor->info->speed, finesine[angle]);
+    if(!(leveltime & 15) || actor->pos[VZ] > target->pos[VZ] + FLT2FIX(target->height) ||
+       actor->pos[VZ] + FLT2FIX(actor->height) < target->pos[VZ])
     {
-        newZ = target->pos[VZ] + ((P_Random() * target->height) >> 8);
+        newZ = target->pos[VZ] + ((P_Random() * FLT2FIX(target->height)) >> 8);
         deltaZ = newZ - actor->pos[VZ];
         if(abs(deltaZ) > 15 * FRACUNIT)
         {
@@ -1738,7 +1738,7 @@ static void CHolySeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
         {
             dist = 1;
         }
-        actor->momz = deltaZ / dist;
+        actor->mom[MZ] = deltaZ / dist;
     }
     return;
 }
@@ -1770,9 +1770,9 @@ void C_DECL A_CHolySeek(mobj_t *actor)
     actor->health--;
     if(actor->health <= 0)
     {
-        actor->momx >>= 2;
-        actor->momy >>= 2;
-        actor->momz = 0;
+        actor->mom[MX] >>= 2;
+        actor->mom[MY] >>= 2;
+        actor->mom[MZ] = 0;
         P_SetMobjState(actor, actor->info->deathstate);
         actor->tics -= P_Random() & 3;
         return;
@@ -1955,7 +1955,7 @@ void C_DECL A_ShedShard(mobj_t *actor)
         {
             mo->special1 = SHARDSPAWN_LEFT;
             mo->special2 = spermcount;
-            mo->momz = actor->momz;
+            mo->mom[MZ] = actor->mom[MZ];
             mo->target = actor->target;
             mo->args[0] = (spermcount == 3) ? 2 : 0;
         }
@@ -1969,7 +1969,7 @@ void C_DECL A_ShedShard(mobj_t *actor)
         {
             mo->special1 = SHARDSPAWN_RIGHT;
             mo->special2 = spermcount;
-            mo->momz = actor->momz;
+            mo->mom[MZ] = actor->mom[MZ];
             mo->target = actor->target;
             mo->args[0] = (spermcount == 3) ? 2 : 0;
         }
@@ -1980,7 +1980,7 @@ void C_DECL A_ShedShard(mobj_t *actor)
                                       (15 + 2 * spermcount) << FRACBITS);
         if(mo)
         {
-            mo->momz = actor->momz;
+            mo->mom[MZ] = actor->mom[MZ];
             mo->pos[VZ] += 8 * FRACUNIT;
             if(spermcount & 1)  // Every other reproduction
                 mo->special1 =
@@ -1998,7 +1998,7 @@ void C_DECL A_ShedShard(mobj_t *actor)
                                       (15 + 2 * spermcount) << FRACBITS);
         if(mo)
         {
-            mo->momz = actor->momz;
+            mo->mom[MZ] = actor->mom[MZ];
             mo->pos[VZ] -= 4 * FRACUNIT;
             if(spermcount & 1)  // Every other reproduction
                 mo->special1 =
