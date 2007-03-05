@@ -46,7 +46,6 @@ enum                               // Colors.
     NUM_UI_COLORS
 };
 
-#define UI_COL(x)       (ui_colors + (x))
 #define IS_ACTKEY(x)    (x == ' ' || x == DDKEY_ENTER)
 
 typedef enum {
@@ -65,7 +64,7 @@ typedef enum {
 // Standard dimensions.
 #define UI_BORDER       (glScreenWidth/120) // All borders are this wide.
 #define UI_SHADOW_OFFSET (MIN_OF(3, glScreenWidth/320))
-#define UI_TITLE_HGT    (ui_fonthgt + UI_BORDER)
+#define UI_TITLE_HGT    (UI_FontHeight() + UI_BORDER)
 #define UI_BUTTON_BORDER (UI_BORDER)
 #define UI_BAR_WDH      (UI_BORDER * 3)
 #define UI_BAR_BORDER   (UI_BORDER / 2)
@@ -179,24 +178,22 @@ typedef struct {
     byte            button[3];     // Button states (0=normal, 1=down).
 } uidata_slider_t;
 
-// Data.
-extern int      ui_fonthgt;
-extern ui_page_t *ui_page;         // Active page.
-extern boolean  ui_active;
-extern ui_color_t ui_colors[];
-
 void            UI_Register(void);
 
 // Functions.
 void            UI_Init(boolean halttime, boolean tckui, boolean tckframe,
                         boolean drwgame, boolean mousemod, boolean noescape);
 void            UI_End(void);
+boolean         UI_IsActive(void);
+ui_page_t      *UI_CurrentPage(void);
 void            UI_SetAlpha(float alpha);
 float           UI_Alpha(void);
+ui_color_t     *UI_Color(uint id);
+int             UI_FontHeight(void);
 void            UI_LoadTextures(void);
 void            UI_ClearTextures(void);
-void            UI_InitPage(ui_page_t * page, ui_object_t *objects);
-void            UI_SetPage(ui_page_t * page);
+void            UI_InitPage(ui_page_t *page, ui_object_t *objects);
+void            UI_SetPage(ui_page_t *page);
 int             UI_Responder(ddevent_t *ev);
 void            UI_Ticker(timespan_t time);
 void            UI_Drawer(void);
@@ -207,9 +204,9 @@ void            UI_Focus(ui_object_t *ob);
 void            UI_Capture(ui_object_t *ob);
 
 // Default callbacks.
-int             UIPage_Responder(ui_page_t * page, ddevent_t *ev);
-void            UIPage_Ticker(ui_page_t * page);
-void            UIPage_Drawer(ui_page_t * page);
+int             UIPage_Responder(ui_page_t *page, ddevent_t *ev);
+void            UIPage_Ticker(ui_page_t *page);
+void            UIPage_Drawer(ui_page_t *page);
 void            UIFrame_Drawer(ui_object_t *ob);
 void            UIText_Drawer(ui_object_t *ob);
 void            UIText_BrightDrawer(ui_object_t *ob);
@@ -232,48 +229,48 @@ int             UI_ScreenH(int relh);
 void            UI_InitColumns(ui_object_t *ob);
 int             UI_MouseInsideBox(int x, int y, int w, int h);
 int             UI_MouseInside(ui_object_t *ob);
-int             UI_MouseResting(ui_page_t * page);
+int             UI_MouseResting(ui_page_t *page);
 int             UI_ListFindItem(ui_object_t *ob, int data_value);
 void            UI_DrawLogo(int x, int y, int w, int h);
 void            UI_DrawMouse(int x, int y);
-void            UI_DrawTitle(ui_page_t * page);
+void            UI_DrawTitle(ui_page_t *page);
 void            UI_DrawTitleEx(char *text, int height, float alpha);
-void            UI_MixColors(ui_color_t * a, ui_color_t * b, ui_color_t * dest,
+void            UI_MixColors(ui_color_t *a, ui_color_t *b, ui_color_t *dest,
                              float amount);
-void            UI_ColorA(ui_color_t * color, float alpha);
-void            UI_Color(ui_color_t * color);
-void            UI_Line(int x1, int y1, int x2, int y2, ui_color_t * start,
-                        ui_color_t * end, float start_alpha, float end_alpha);
+void            UI_SetColorA(ui_color_t *color, float alpha);
+void            UI_SetColor(ui_color_t *color);
+void            UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start,
+                        ui_color_t *end, float startAlpha, float endAlpha);
 void            UI_Shade(int x, int y, int w, int h, int border,
-                         ui_color_t * main, ui_color_t * secondary,
+                         ui_color_t *main, ui_color_t *secondary,
                          float alpha, float bottom_alpha);
-void            UI_Gradient(int x, int y, int w, int h, ui_color_t * top,
-                            ui_color_t * bottom, float top_alpha,
-                            float bottom_alpha);
+void            UI_Gradient(int x, int y, int w, int h, ui_color_t *top,
+                            ui_color_t *bottom, float topAlpha,
+                            float bottomAlpha);
 void            UI_GradientEx(int x, int y, int w, int h, int border,
-                              ui_color_t * top, ui_color_t * bottom,
-                              float top_alpha, float bottom_alpha);
-void            UI_HorizGradient(int x, int y, int w, int h, ui_color_t * left,
-                                 ui_color_t * right, float left_alpha,
-                                 float right_alpha);
+                              ui_color_t *top, ui_color_t *bottom,
+                              float topAlpha, float bottomAlpha);
+void            UI_HorizGradient(int x, int y, int w, int h, ui_color_t *left,
+                                 ui_color_t *right, float leftAlpha,
+                                 float rightAlpha);
 void            UI_DrawRect(int x, int y, int w, int h, int brd,
-                            ui_color_t * color, float alpha);
+                            ui_color_t *color, float alpha);
 void            UI_DrawRectEx(int x, int y, int w, int h, int brd,
-                              boolean filled, ui_color_t * top,
-                              ui_color_t * bottom, float alpha,
-                              float bottom_alpha);
-void            UI_DrawTriangle(int x, int y, int radius, ui_color_t * hi,
-                                ui_color_t * med, ui_color_t * low,
+                              boolean filled, ui_color_t *top,
+                              ui_color_t *bottom, float alpha,
+                              float bottomAlpha);
+void            UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi,
+                                ui_color_t *med, ui_color_t *low,
                                 float alpha);
 void            UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
-                              ui_color_t * background, boolean down,
+                              ui_color_t *background, boolean down,
                               boolean disabled, int arrow);
 void            UI_TextOut(char *text, int x, int y);
 void            UI_TextOutEx(char *text, int x, int y, int horiz_center,
-                             int vert_center, ui_color_t * color, float alpha);
+                             int vert_center, ui_color_t *color, float alpha);
 int             UI_TextOutWrap(char *text, int x, int y, int w, int h);
 int             UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
-                                 ui_color_t * color, float alpha);
+                                 ui_color_t *color, float alpha);
 void            UI_DrawHelpBox(int x, int y, int w, int h, float alpha,
                                char *text);
 

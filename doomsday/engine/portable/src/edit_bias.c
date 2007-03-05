@@ -636,10 +636,10 @@ D_CMD(BLEditor)
 static void SBE_DrawBox(int x, int y, int w, int h, ui_color_t *c)
 {
     UI_GradientEx(x, y, w, h, 6,
-                  c ? c : UI_COL(UIC_BG_MEDIUM),
-                  c ? c : UI_COL(UIC_BG_LIGHT),
+                  c ? c : UI_Color(UIC_BG_MEDIUM),
+                  c ? c : UI_Color(UIC_BG_LIGHT),
                   .2f, .4f);
-    UI_DrawRectEx(x, y, w, h, 6, false, c ? c : UI_COL(UIC_BRD_HI),
+    UI_DrawRectEx(x, y, w, h, 6, false, c ? c : UI_Color(UIC_BRD_HI),
                   NULL, .4f, -1);
 }
 
@@ -667,31 +667,31 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     // - intensity
     // - color
 
-    UI_TextOutEx(title, x, y, false, true, UI_COL(UIC_TITLE), alpha);
+    UI_TextOutEx(title, x, y, false, true, UI_Color(UIC_TITLE), alpha);
     y += th;
 
     sprintf(buf, "# %03i %s", SB_ToIndex(s),
             s->flags & BLF_LOCKED ? "(lock)" : "");
-    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
     y += th;
 
     sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->pos[0], s->pos[1], s->pos[2]);
-    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
     y += th;
 
     sprintf(buf, "Distance:%-.0f", M_Distance(eye, s->pos));
-    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
     y += th;
 
     sprintf(buf, "Intens:%-5.0f L:%3i/%3i", s->primaryIntensity,
             s->sectorLevel[0], s->sectorLevel[1]);
 
-    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
     y += th;
 
     sprintf(buf, "R:%.3f G:%.3f B:%.3f",
             s->color[0], s->color[1], s->color[2]);
-    UI_TextOutEx(buf, x, y, false, true, UI_COL(UIC_TEXT), alpha);
+    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
     y += th;
 
 }
@@ -772,13 +772,13 @@ static void SBE_DrawLevelGauge(void)
 
     // The number values.
     sprintf(buf, "%03i", sector->lightlevel);
-    UI_TextOutEx(buf, x, secY, true, true, UI_COL(UIC_TITLE), .7f);
+    UI_TextOutEx(buf, x, secY, true, true, UI_Color(UIC_TITLE), .7f);
     if(maxLevel != minLevel)
     {
         sprintf(buf, "%03i", maxLevel);
-        UI_TextOutEx(buf, x + 2*off, maxY, true, true, UI_COL(UIC_TEXT), .7f);
+        UI_TextOutEx(buf, x + 2*off, maxY, true, true, UI_Color(UIC_TEXT), .7f);
         sprintf(buf, "%03i", minLevel);
-        UI_TextOutEx(buf, x + 2*off, minY, true, true, UI_COL(UIC_TEXT), .7f);
+        UI_TextOutEx(buf, x + 2*off, minY, true, true, UI_Color(UIC_TEXT), .7f);
     }
 }
 
@@ -806,11 +806,11 @@ void SBE_DrawHUD(void)
     y = glScreenHeight - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
     UI_TextOutEx(buf, 18, y + h / 2, false, true,
-                 UI_COL(UIC_TITLE), alpha);
+                 UI_Color(UIC_TITLE), alpha);
 
     // The map ID.
     UI_TextOutEx((char*)R_GetUniqueLevelID(), 18, y - h/2, false, true,
-                 UI_COL(UIC_TITLE), alpha);
+                 UI_Color(UIC_TITLE), alpha);
 
     // Stats for nearest & grabbed:
     if(numSources)
@@ -885,7 +885,7 @@ static void SBE_DrawIndex(source_t *src)
 
     // Show the index number of the source.
     sprintf(buf, "%i", SB_ToIndex(src));
-    UI_TextOutEx(buf, 2, 2, false, false, UI_COL(UIC_TITLE),
+    UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE),
                  1 - M_Distance(src->pos, eye)/2000);
 
     gl.MatrixMode(DGL_MODELVIEW);

@@ -375,10 +375,10 @@ void MPIGotoPage(ui_object_t *ob)
 
 void MPIGoBack(ui_object_t *ob)
 {
-    if(!ui_page->previous)
+    if(!UI_CurrentPage()->previous)
         UI_End();
     else
-        UI_SetPage(ui_page->previous);
+        UI_SetPage(UI_CurrentPage()->previous);
 }
 
 void MPIStartServer(ui_object_t *ob)

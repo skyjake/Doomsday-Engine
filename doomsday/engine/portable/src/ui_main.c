@@ -53,7 +53,7 @@ enum {
     UITEX_SHADE,
     UITEX_HINT,
     UITEX_LOGO,
-    NUM_UI_TEXTURES
+    NUM_UITEXTURES
 };
 
 // TYPES -------------------------------------------------------------------
@@ -66,10 +66,10 @@ D_CMD(UIColor);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-int     UI_ListItemHeight(uidata_list_t * listdata);
+int     UI_ListItemHeight(uidata_list_t *listdata);
 int     UI_ListButtonHeight(ui_object_t *ob);
 int     UI_ListThumbPos(ui_object_t *ob);
-void    UI_StrCpyLen(char *dest, char *src, int max_width);
+void    UI_StrCpyLen(char *dest, char *src, int maxWidth);
 int     UI_MouseInsideBox(int x, int y, int w, int h);
 void    UI_MouseFocus(void);
 
@@ -87,27 +87,29 @@ extern boolean allowMouseMod;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean ui_active = false;              // The user interface is active.
-boolean ui_showmouse = true;
-ui_page_t *ui_page = 0;                 // Currently active page.
-int     ui_fonthgt;                     // Height of the UI font.
-DGLuint ui_textures[NUM_UI_TEXTURES];   // Cursor texture.
-int     ui_cx, ui_cy;                   // Cursor position.
-int     ui_rest_cx, ui_rest_cy;
-int     ui_rest_start;                  // Start time of current resting.
-int     ui_rest_time = TICSPERSEC / 2;  // 500 ms.
-int     ui_rest_offset_limit = 2;
-int     ui_moved;                       // True if the mouse has been moved.
-float   ui_alpha = 1.0;                 // Main alpha for the entire UI.
-float   ui_target_alpha = 1.0;          // Target alpha for the entire UI.
-boolean ui_draw_game = false;           // The game view should be drawn while
-                                        // the UI active.
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-float   uiCursorWidthMul = 0.75;
-float   uiCursorHeightMul = 0.75;
+static boolean uiActive = false;            // The user interface is active.
+static boolean uiShowMouse = true;
+static ui_page_t *uiCurrentPage = 0;        // Currently active page.
+static int     uiFontHgt;                   // Height of the UI font.
+static DGLuint uiTextures[NUM_UITEXTURES];  // Cursor texture.
+static int     uiCX, uiCY;                  // Cursor position.
+static int     uiRestCX, uiRestCY;
+static int     uiRestStart;                 // Start time of current resting.
+static int     uiRestTime = TICSPERSEC / 2; // 500 ms.
+static int     uiRestOffsetLimit = 2;
+static int     uiMoved;                     // True if the mouse has been moved.
+static float   uiAlpha = 1.0;               // Main alpha for the entire UI.
+static float   uiTargetAlpha = 1.0;         // Target alpha for the entire UI.
+static boolean uiDrawGame = false;          // The game view should be drawn while
+                                            // the UI active.
+
+static float   uiCursorWidthMul = 0.75;
+static float   uiCursorHeightMul = 0.75;
 
 // Modify these colors to change the look of the UI.
-ui_color_t ui_colors[NUM_UI_COLORS] = {
+static ui_color_t ui_colors[NUM_UI_COLORS] = {
     /* UIC_TEXT */ {.85f, .87f, 1},
     /* UIC_TITLE */ {1, 1, 1},
     /* UIC_SHADOW */ {0, 0, 0},
@@ -119,8 +121,6 @@ ui_color_t ui_colors[NUM_UI_COLORS] = {
     /* UIC_BRD_LOW */ {.25f, .25f, .55f},
     /* UIC_HELP */ {.4f, .4f, .52f}
 };
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean allowEscape; // Allow the user to exit a ui page using the escape key
 
@@ -138,24 +138,24 @@ void UI_Register(void)
     CP_Register();
 }
 
-/*
+/**
  * Called when entering a ui page
  */
 void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
              boolean mousemod, boolean noescape)
 {
-    if(ui_active)
+    if(uiActive)
         return;
-    ui_active = true;
+    uiActive = true;
 
     // Restore full alpha.
-    ui_alpha = ui_target_alpha = 1.0;
+    uiAlpha = uiTargetAlpha = 1.0;
 
     // Adjust the engine state
     stopTime = halttime;
     tickUI = tckui;
     tickFrame = tckframe;
-    ui_draw_game = drawGame = drwgame;
+    uiDrawGame = drawGame = drwgame;
     allowMouseMod = mousemod;
 
     // Setup state.
@@ -163,36 +163,36 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
 
     // Change font.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    ui_fonthgt = FR_TextHeight("W");
+    uiFontHgt = FR_TextHeight("W");
 
     // Should the mouse cursor be visible?
     if(!mousemod)
-        ui_showmouse = !ArgExists("-nomouse");
+        uiShowMouse = !ArgExists("-nomouse");
     else
-        ui_showmouse = false;
+        uiShowMouse = false;
 
     // Allow use of the escape key to exit the ui?
     allowEscape = !noescape;
 
     // Load graphics.
-    ui_cx = glScreenWidth / 2;
-    ui_cy = glScreenHeight / 2;
-    ui_moved = false;
+    uiCX = glScreenWidth / 2;
+    uiCY = glScreenHeight / 2;
+    uiMoved = false;
 }
 
-/*
+/**
  * Called upon exiting a ui page
  */
 void UI_End(void)
 {
     ddevent_t rel;
 
-    if(!ui_active)
+    if(!uiActive)
         return;
-    ui_active = false;
+    uiActive = false;
 
     // Restore full alpha.
-    ui_alpha = ui_target_alpha = 1.0;
+    uiAlpha = uiTargetAlpha = 1.0;
 
     // Restore old state.
     Con_StartupDone();
@@ -218,28 +218,71 @@ void UI_End(void)
     }
 }
 
-/*
+/**
+ * @return              <code>true</code> if the UI is currently active.
+ */
+boolean UI_IsActive(void)
+{
+    return uiActive;
+}
+
+/**
+ * @return              Height of the current UI font.
+ */
+int UI_FontHeight(void)
+{
+    return uiFontHgt;
+}
+
+/**
+ * @param id            Id number of the color to return e.g. "UIC_TEXT".
+ */
+ui_color_t *UI_Color(uint id)
+{
+    if(id >= NUM_UI_COLORS)
+        return NULL;
+
+    return &ui_colors[id];
+}
+
+/**
  * Set the alpha level of the entire UI. Alpha levels below one automatically
  * show the game view in addition to the UI.
+ *
+ * @param alpha         Alpha level to set the UI too (0...1)
  */
 void UI_SetAlpha(float alpha)
 {
     // The UI's alpha will start moving towards this target value.
-    ui_target_alpha = alpha;
+    uiTargetAlpha = alpha;
 }
 
+/**
+ * @return              Current alpha level of the UI.
+ */
 float UI_Alpha(void)
 {
-    return ui_alpha;
+    return uiAlpha;
 }
 
-/*
+/**
+ * @return              Ptr to the current UI page if active.
+ */
+ui_page_t *UI_CurrentPage(void)
+{
+    if(uiActive)
+        return uiCurrentPage;
+
+    return NULL;
+}
+
+/**
  * Called from GL_LoadSystemTextures.
  */
 void UI_LoadTextures(void)
 {
-    int     i;
-    const char *picNames[NUM_UI_TEXTURES] = {
+    int         i;
+    const char *picNames[NUM_UITEXTURES] = {
         "Mouse",
         "BoxCorner",
         "BoxFill",
@@ -248,28 +291,28 @@ void UI_LoadTextures(void)
         "Logo"
     };
 
-    for(i = 0; i < NUM_UI_TEXTURES; i++)
-        if(!ui_textures[i])
+    for(i = 0; i < NUM_UITEXTURES; ++i)
+        if(!uiTextures[i])
         {
-            ui_textures[i] = GL_LoadGraphics(picNames[i], LGM_NORMAL);
+            uiTextures[i] = GL_LoadGraphics(picNames[i], LGM_NORMAL);
         }
 }
 
 void UI_ClearTextures(void)
 {
-    gl.DeleteTextures(NUM_UI_TEXTURES, ui_textures);
-    memset(ui_textures, 0, sizeof(ui_textures));
+    gl.DeleteTextures(NUM_UITEXTURES, uiTextures);
+    memset(uiTextures, 0, sizeof(uiTextures));
 }
 
-/*
+/**
  * Sets focus to the object that should get focus by default.
  */
-void UI_DefaultFocus(ui_page_t* page)
+void UI_DefaultFocus(ui_page_t *page)
 {
     ui_object_t *deffocus = NULL;
-    int i;
+    int         i;
 
-    for(i = 0; i < page->count; i++)
+    for(i = 0; i < page->count; ++i)
     {
         page->objects[i].flags &= ~UIF_FOCUS;
         if(page->objects[i].flags & UIF_DEFAULT)
@@ -283,7 +326,7 @@ void UI_DefaultFocus(ui_page_t* page)
     else
     {
         // Find an object for focus.
-        for(i = 0; i < page->count; i++)
+        for(i = 0; i < page->count; ++i)
         {
             if(!(page->objects[i].flags & UIF_NO_FOCUS))
             {
@@ -296,12 +339,12 @@ void UI_DefaultFocus(ui_page_t* page)
     }
 }
 
-/*
+/**
  * Initialises ui page data prior to use
  */
-void UI_InitPage(ui_page_t * page, ui_object_t *objects)
+void UI_InitPage(ui_page_t *page, ui_object_t *objects)
 {
-    int     i;
+    int         i;
     ui_object_t meta;
 
     memset(page, 0, sizeof(*page));
@@ -314,7 +357,7 @@ void UI_InitPage(ui_page_t * page, ui_object_t *objects)
     page->header = true;    // render header by default
     page->ticker = UIPage_Ticker;
     page->count = UI_CountObjects(objects);
-    for(i = 0; i < page->count; i++)
+    for(i = 0; i < page->count; ++i)
     {
         if(objects[i].type == UI_TEXT || objects[i].type == UI_BOX ||
            objects[i].type == UI_META)
@@ -326,7 +369,7 @@ void UI_InitPage(ui_page_t * page, ui_object_t *objects)
     }
     UI_DefaultFocus(page);
     // Meta effects.
-    for(i = 0, meta.type = 0; i < page->count; i++)
+    for(i = 0, meta.type = 0; i < page->count; ++i)
     {
         if(!meta.type && objects[i].type != UI_META)
             continue;
@@ -351,7 +394,7 @@ void UI_InitPage(ui_page_t * page, ui_object_t *objects)
     }
 }
 
-/*
+/**
  * The width of the available page area, in pixels.
  */
 int UI_AvailableWidth(void)
@@ -364,7 +407,7 @@ int UI_AvailableHeight(void)
     return glScreenHeight - UI_TITLE_HGT - UI_BORDER * 4;
 }
 
-/*
+/**
  * Convert a relative coordinate to a screen coordinate.
  */
 int UI_ScreenX(int relx)
@@ -372,7 +415,7 @@ int UI_ScreenX(int relx)
     return UI_BORDER * 2 + (relx * UI_AvailableWidth()) / 1000;
 }
 
-/*
+/**
  * Convert a relative coordinate to a screen coordinate.
  */
 int UI_ScreenY(int rely)
@@ -390,19 +433,19 @@ int UI_ScreenH(int relh)
     return (relh * UI_AvailableHeight()) / 1000;
 }
 
-/*
+/**
  * Change and prepare the active page.
  */
-void UI_SetPage(ui_page_t * page)
+void UI_SetPage(ui_page_t *page)
 {
-    int     i;
+    int         i;
     ui_object_t *ob;
 
-    ui_page = page;
+    uiCurrentPage = page;
     if(!page)
         return;
     // Init objects.
-    for(i = 0, ob = page->objects; i < page->count; i++, ob++)
+    for(i = 0, ob = page->objects; i < page->count; ++i, ob++)
     {
         // Calculate real coordinates.
         ob->x = UI_ScreenX(ob->relx);
@@ -442,43 +485,43 @@ void UI_SetPage(ui_page_t * page)
         }
     }
     // The mouse has not yet been moved on this page.
-    ui_moved = false;
+    uiMoved = false;
 }
 
-/*
+/**
  * Directs events through the ui and current page if active
  */
 int UI_Responder(ddevent_t *ev)
 {
-    if(!ui_active)
+    if(!uiActive)
         return false;
-    if(!ui_page)
+    if(!uiCurrentPage)
         return false;
 
     if(ev->deviceID == IDEV_MOUSE && ev->isAxis && ev->data1 != 0)
     {
-        ui_moved = true;
+        uiMoved = true;
 
         if(ev->controlID == 0) // xaxis.
         {
-            ui_cx += ev->data1 / DD_MICKEY_ACCURACY;
-            if(ui_cx < 0)
-                ui_cx = 0;
-            if(ui_cx >= glScreenWidth)
-                ui_cx = glScreenWidth - 1;
+            uiCX += ev->data1 / DD_MICKEY_ACCURACY;
+            if(uiCX < 0)
+                uiCX = 0;
+            if(uiCX >= glScreenWidth)
+                uiCX = glScreenWidth - 1;
         }
         else if(ev->controlID == 1) // yaxis.
         {
-            ui_cy += ev->data1 / DD_MICKEY_ACCURACY;
-            if(ui_cy < 0)
-                ui_cy = 0;
-            if(ui_cy >= glScreenHeight)
-                ui_cy = glScreenHeight - 1;
+            uiCY += ev->data1 / DD_MICKEY_ACCURACY;
+            if(uiCY < 0)
+                uiCY = 0;
+            if(uiCY >= glScreenHeight)
+                uiCY = glScreenHeight - 1;
         }
     }
 
     // Call the page's responder.
-    ui_page->responder(ui_page, ev);
+    uiCurrentPage->responder(uiCurrentPage, ev);
     // If the UI is active, all events are eaten by it.
 
     return true;
@@ -486,48 +529,51 @@ int UI_Responder(ddevent_t *ev)
 
 void UI_Ticker(timespan_t time)
 {
-    static trigger_t fixed = { 1 / 35.0 };
-    float diff = 0;
+#define UIALPHA_FADE_STEP .07
 
-    if(!ui_active)
+    static trigger_t fixed = { 1 / 35.0 };
+    float       diff = 0;
+
+    if(!uiActive)
         return;
-    if(!ui_page)
+    if(!uiCurrentPage)
         return;
 
     if(!M_CheckTrigger(&fixed, time))
         return;
 
     // Move towards the target alpha level for the entire UI.
-    diff = ui_target_alpha - ui_alpha;
-#define UI_ALPHA_FADE_STEP .07
-    if(fabs(diff) > UI_ALPHA_FADE_STEP)
+    diff = uiTargetAlpha - uiAlpha;
+    if(fabs(diff) > UIALPHA_FADE_STEP)
     {
-        ui_alpha += UI_ALPHA_FADE_STEP * (diff > 0? 1 : -1);
+        uiAlpha += UIALPHA_FADE_STEP * (diff > 0? 1 : -1);
     }
     else
     {
-        ui_alpha = ui_target_alpha;
+        uiAlpha = uiTargetAlpha;
     }
 
-    if(!ui_draw_game)
+    if(!uiDrawGame)
     {
         // By default, the game is not visible, but since the alpha is not
         // fully opaque, it must be shown anyway.
-        drawGame = (ui_alpha < 1.0);
+        drawGame = (uiAlpha < 1.0);
     }
 
     // Call the active page's ticker.
-    ui_page->ticker(ui_page);
+    uiCurrentPage->ticker(uiCurrentPage);
+
+#undef UIALPHA_FADE_STEP
 }
 
-/*
+/**
  * Draws the current ui page if active
  */
 void UI_Drawer(void)
 {
-    if(!ui_active)
+    if(!uiActive)
         return;
-    if(!ui_page)
+    if(!uiCurrentPage)
         return;
 
     // Go into screen projection mode.
@@ -537,9 +583,9 @@ void UI_Drawer(void)
     gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
     // Call the active page's drawer.
-    ui_page->drawer(ui_page);
+    uiCurrentPage->drawer(uiCurrentPage);
     // Draw mouse cursor.
-    UI_DrawMouse(ui_cx, ui_cy);
+    UI_DrawMouse(uiCX, uiCY);
 
     // Restore the original matrices.
     gl.MatrixMode(DGL_PROJECTION);
@@ -548,7 +594,7 @@ void UI_Drawer(void)
 
 int UI_CountObjects(ui_object_t *list)
 {
-    int     count;
+    int         count;
 
     for(count = 0; list->type != UI_NONE; list++, count++);
     return count;
@@ -559,7 +605,7 @@ void UI_FlagGroup(ui_object_t *list, int group, int flags, int set)
     for(; list->type; list++)
         if(list->group == group)
         {
-            switch (set)
+            switch(set)
             {
             case UIFG_CLEAR:
                 list->flags &= ~flags;
@@ -572,11 +618,14 @@ void UI_FlagGroup(ui_object_t *list, int group, int flags, int set)
             case UIFG_XOR:
                 list->flags ^= flags;
                 break;
+            default:
+                Con_Error("UI_FlagGroup: Unknown flag bit op %i\n", set);
+                break;
             }
         }
 }
 
-/*
+/**
  * All the specified flags must be set.
  */
 ui_object_t *UI_FindObject(ui_object_t *list, int group, int flags)
@@ -588,15 +637,16 @@ ui_object_t *UI_FindObject(ui_object_t *list, int group, int flags)
     return NULL;
 }
 
-/*
+/**
  * Set focus to the object under the mouse cursor.
  */
 void UI_MouseFocus(void)
 {
-    int     i;
+    int         i;
     ui_object_t *ob;
 
-    for(i = 0, ob = ui_page->objects; i < ui_page->count; i++, ob++)
+    for(i = 0, ob = uiCurrentPage->objects; i < uiCurrentPage->count;
+        i++, ob++)
         if(!(ob->flags & UIF_NO_FOCUS) && UI_MouseInside(ob))
         {
             UI_Focus(ob);
@@ -604,12 +654,12 @@ void UI_MouseFocus(void)
         }
 }
 
-/*
- * Ob must be on the current page! It can't be NULL.
+/**
+ * @param ob            Must be on the current page! It can't be NULL.
  */
 void UI_Focus(ui_object_t *ob)
 {
-    int     i;
+    int         i;
 
     if(!ob)
         Con_Error("UI_Focus: Tried to set focus on NULL.\n");
@@ -618,33 +668,33 @@ void UI_Focus(ui_object_t *ob)
     if(ob->flags & UIF_NO_FOCUS)
         return;
 
-    ui_page->focus = ob - ui_page->objects;
-    for(i = 0; i < ui_page->count; i++)
+    uiCurrentPage->focus = ob - uiCurrentPage->objects;
+    for(i = 0; i < uiCurrentPage->count; ++i)
     {
-        if(i == ui_page->focus)
-            ui_page->objects[i].flags |= UIF_FOCUS;
+        if(i == uiCurrentPage->focus)
+            uiCurrentPage->objects[i].flags |= UIF_FOCUS;
         else
-            ui_page->objects[i].flags &= ~UIF_FOCUS;
+            uiCurrentPage->objects[i].flags &= ~UIF_FOCUS;
     }
 }
 
-/*
- * Ob must be on the current page!
- * If ob is NULL, capture is ended.
+/**
+ * @param ob            If <code>NULL</code>, capture is ended.
+ *                      Must be on the current page!
  */
 void UI_Capture(ui_object_t *ob)
 {
     if(!ob)
     {
         // End capture.
-        ui_page->capture = -1;
+        uiCurrentPage->capture = -1;
         return;
     }
     if(!ob->responder)
         return;                 // Sorry, pal...
 
     // Set the capture object.
-    ui_page->capture = ob - ui_page->objects;
+    uiCurrentPage->capture = ob - uiCurrentPage->objects;
     // Set focus.
     UI_Focus(ob);
 }
@@ -655,9 +705,9 @@ void UI_Capture(ui_object_t *ob)
 
 int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
 {
-    int     i, k;
+    int         i, k;
     ui_object_t *ob;
-    ddevent_t translated;
+    ddevent_t   translated;
 
     // Translate mouse wheel?
     if(ev->deviceID == IDEV_MOUSE && !ev->isAxis && ev->data1 == EVS_DOWN)
@@ -692,7 +742,7 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
         {
             UI_SetPage(page->previous);
             // If we have no more a page, disactive UI.
-            if(!ui_page)
+            if(!uiCurrentPage)
                 UI_End();
             return true;        // The event was used.
         }
@@ -726,7 +776,7 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
     }
     // Call responders until someone uses the event.
     // We start with the focus object.
-    for(i = 0; i < page->count; i++)
+    for(i = 0; i < page->count; ++i)
     {
         // Determine the index of the object to process.
         k = page->focus + i;
@@ -737,12 +787,12 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
             k -= page->count;
         ob = page->objects + k;
         // Check the flags of this object.
-        if(ob->flags & UIF_HIDDEN || ob->flags & UIF_DISABLED)
+        if((ob->flags & UIF_HIDDEN) || (ob->flags & UIF_DISABLED))
             continue;           // These flags prevent response.
         // When the UI is faded, a click on a nonfocusable object brings
         // back the UI.
-        /*if(ui_target_alpha < 1.0 && ev->type == EV_MOUSE_BUTTON && ev->data1 == EVS_DOWN &&
-           UI_MouseInside(ob) && (!ob->responder || ob->flags & UIF_NO_FOCUS))
+        /*if(uiTargetAlpha < 1.0 && ev->type == EV_MOUSE_BUTTON && ev->data1 == EVS_DOWN &&
+           UI_MouseInside(ob) && (!ob->responder || (ob->flags & UIF_NO_FOCUS)))
         {
             // Restore default focus
             UI_DefaultFocus(page);
@@ -757,7 +807,7 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
         }
     }
 
-    if(ui_target_alpha < 1.0 &&
+    if(uiTargetAlpha < 1.0 &&
        ev->deviceID == IDEV_MOUSE && !ev->isAxis && ev->data1 == EVS_DOWN)
     {
         // When the UI the faded, an unhandled click brings back the UI.
@@ -768,27 +818,27 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
     return false;
 }
 
-/*
+/**
  * Call the ticker routine for each object.
  */
-void UIPage_Ticker(ui_page_t * page)
+void UIPage_Ticker(ui_page_t *page)
 {
-    int     i;
+    int         i;
     ui_object_t *ob;
-    boolean faded_away = false;
+    boolean     fadedAway = false;
 
     // Call the ticker of each object, unless they're hidden or paused.
-    for(i = 0, ob = page->objects; i < page->count; i++, ob++)
+    for(i = 0, ob = page->objects; i < page->count; ++i, ob++)
     {
-        if(ob->flags & UIF_PAUSED || ob->flags & UIF_HIDDEN)
+        if((ob->flags & UIF_PAUSED) || (ob->flags & UIF_HIDDEN))
             continue;
 
         // Fadeaway objects cause the UI to fade away when the mouse is over
         // the control.
-        if(ob->flags & UIF_FOCUS && ob->flags & UIF_FADE_AWAY)
+        if((ob->flags & UIF_FOCUS) && (ob->flags & UIF_FADE_AWAY))
         {
             UI_SetAlpha(0);
-            faded_away = true;
+            fadedAway = true;
         }
 
         if(ob->ticker)
@@ -797,7 +847,7 @@ void UIPage_Ticker(ui_page_t * page)
         ob->timer++;
     }
 
-    if(!faded_away)
+    if(!fadedAway)
     {
         UI_SetAlpha(1.0);
     }
@@ -805,40 +855,40 @@ void UIPage_Ticker(ui_page_t * page)
     page->timer++;
 
     // Check mouse resting.
-    if(abs(ui_cx - ui_rest_cx) > ui_rest_offset_limit ||
-       abs(ui_cy - ui_rest_cy) > ui_rest_offset_limit)
+    if(abs(uiCX - uiRestCX) > uiRestOffsetLimit ||
+       abs(uiCY - uiRestCY) > uiRestOffsetLimit)
     {
         // Restart resting period.
-        ui_rest_cx = ui_cx;
-        ui_rest_cy = ui_cy;
-        ui_rest_start = page->timer;
+        uiRestCX = uiCX;
+        uiRestCY = uiCY;
+        uiRestStart = page->timer;
     }
 }
 
-/*
+/**
  * Draws the ui including all objects on the current page
  */
-void UIPage_Drawer(ui_page_t * page)
+void UIPage_Drawer(ui_page_t *page)
 {
-    int     i;
-    float   t;
+    int         i;
+    float       t;
     ui_object_t *ob;
-    ui_color_t focuscol;
+    ui_color_t  focuscol;
 
     // Draw background?
     if(page->background)
-        Con_DrawStartupBackground(ui_alpha);
+        Con_DrawStartupBackground(uiAlpha);
 
     // Draw title?
     if(page->header)
         UI_DrawTitle(page);
 
     // Draw each object, unless they're hidden.
-    for(i = 0, ob = page->objects; i < page->count; i++, ob++)
+    for(i = 0, ob = page->objects; i < page->count; ++i, ob++)
     {
-        float current_ui_alpha = ui_alpha;
+        float currentUIAlpha = uiAlpha;
 
-        if(ob->flags & UIF_HIDDEN || !ob->drawer)
+        if((ob->flags & UIF_HIDDEN) || !ob->drawer)
             continue;
 
         if(ob->flags & UIF_FADE_AWAY)
@@ -846,29 +896,29 @@ void UIPage_Drawer(ui_page_t * page)
             if(ob->flags & UIF_FOCUS)
             {
                 // The focused object must not fade away completely.
-                ui_alpha = MAX_OF(current_ui_alpha, 0.75);
+                uiAlpha = MAX_OF(currentUIAlpha, 0.75);
             }
             else
             {
                 // Other fadeaway objects remain slightly visible.
-                ui_alpha = MAX_OF(current_ui_alpha, 0.333);
+                uiAlpha = MAX_OF(currentUIAlpha, 0.333);
             }
         }
         if(ob->flags & UIF_NEVER_FADE)
         {
-            ui_alpha = 1.0;
+            uiAlpha = 1.0;
         }
 
         // Draw the object itself.
         ob->drawer(ob);
 
-        if(ob->flags & UIF_FOCUS &&
+        if((ob->flags & UIF_FOCUS) &&
             (ob->type != UI_EDIT || !(ob->flags & UIF_ACTIVE)))
         {
             t = (1 + sin(page->timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
-            UI_MixColors(UI_COL(UIC_BRD_LOW), UI_COL(UIC_BRD_HI), &focuscol, t);
+            UI_MixColors(UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_HI), &focuscol, t);
             UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER,
-                     UI_COL(UIC_BRD_LOW), UI_COL(UIC_BRD_LOW), .2f + t * .3f, -1);
+                     UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_LOW), .2f + t * .3f, -1);
             gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
             // Draw a focus rectangle.
             UI_DrawRect(ob->x - 1, ob->y - 1, ob->w + 2, ob->h + 2, UI_BORDER,
@@ -877,32 +927,32 @@ void UIPage_Drawer(ui_page_t * page)
         }
 
         // Restore the correct UI alpha.
-        ui_alpha = current_ui_alpha;
+        uiAlpha = currentUIAlpha;
     }
 }
 
 void UIFrame_Drawer(ui_object_t *ob)
 {
-    int     b = UI_BORDER;
+    int         b = UI_BORDER;
 
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, b, UI_COL(UIC_BG_MEDIUM), 0, .6f,
+    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BG_MEDIUM), 0, .6f,
                   0);
-    UI_DrawRect(ob->x, ob->y, ob->w, ob->h, b, UI_COL(UIC_BRD_HI)
-                /*, UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW) */ , 1);
+    UI_DrawRect(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BRD_HI)
+                /*, UI_Color(UIC_BRD_MED), UI_Color(UIC_BRD_LOW) */ , 1);
 }
 
 void UIText_Drawer(ui_object_t *ob)
 {
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true,
-                 UI_COL(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1);
+                 UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1);
 }
 
 void UIText_BrightDrawer(ui_object_t *ob)
 {
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true,
-                 UI_COL(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1);
+                 UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1);
 }
 
 int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
@@ -951,33 +1001,33 @@ int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
 
 void UIButton_Drawer(ui_object_t *ob)
 {
-    int     dis = (ob->flags & UIF_DISABLED) != 0;
-    int     act = (ob->flags & UIF_ACTIVE) != 0;
-    int     click = (ob->flags & UIF_CLICKED) != 0;
-    boolean down = act || click;
-    ui_color_t back;
-    float   t = ob->timer / 15.0f;
-    float   alpha = (dis ? .2f : 1);
+    int         dis = (ob->flags & UIF_DISABLED) != 0;
+    int         act = (ob->flags & UIF_ACTIVE) != 0;
+    int         click = (ob->flags & UIF_CLICKED) != 0;
+    boolean     down = act || click;
+    ui_color_t  back;
+    float       t = ob->timer / 15.0f;
+    float       alpha = (dis ? .2f : 1);
 
     // Mix the background color.
     if(!click || t > .5f)
         t = .5f;
     if(act && t > .1f)
         t = .1f;
-    UI_MixColors(UI_COL(UIC_TEXT), UI_COL(UIC_SHADOW), &back, t);
+    UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), &back, t);
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER, &back, 0,
                   alpha, 0);
     UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1),
-             UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_LOW), alpha / 3, -1);
+             UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h,
                   UI_BUTTON_BORDER * (down ? -1 : 1), false,
-                  UI_COL(UIC_BRD_HI), NULL, alpha, -1);
+                  UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(ob->text,
                  down + ob->x +
                  (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w /
                   2), down + ob->y + ob->h / 2, !(ob->flags & UIF_LEFT_ALIGN),
-                 true, UI_COL(UIC_TITLE), alpha);
+                 true, UI_Color(UIC_TITLE), alpha);
 }
 
 int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
@@ -1068,23 +1118,23 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
 void UIEdit_Drawer(ui_object_t *ob)
 {
     uidata_edit_t *dat = ob->data;
-    int     act = (ob->flags & UIF_ACTIVE) != 0;
-    int     dis = (ob->flags & UIF_DISABLED) != 0;
-    ui_color_t back;
-    float   t = ob->timer / 8.0f;
-    char    buf[256];
-    int     curx, i, maxw = ob->w - UI_BORDER * 4, first_in_buf = 0;
-    float   alpha = (dis ? .2f : .5f);
+    int         act = (ob->flags & UIF_ACTIVE) != 0;
+    int         dis = (ob->flags & UIF_DISABLED) != 0;
+    ui_color_t  back;
+    float       t = ob->timer / 8.0f;
+    char        buf[256];
+    int         curx, i, maxw = ob->w - UI_BORDER * 4, firstInBuf = 0;
+    float       alpha = (dis ? .2f : .5f);
 
     // Mix the background color.
     if(!act || t > 1)
         t = 1;
-    UI_MixColors(UI_COL(UIC_TEXT), UI_COL(UIC_SHADOW), &back, t);
+    UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), &back, t);
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, &back, 0, alpha, 0);
-    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_COL(UIC_BRD_HI),
-             UI_COL(UIC_BRD_LOW), alpha / 3, -1);
+    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_HI),
+             UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (act ? -1 : 1),
-                  false, UI_COL(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
+                  false, UI_Color(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
     // Draw text.
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     memset(buf, 0, sizeof(buf));
@@ -1097,13 +1147,13 @@ void UIEdit_Drawer(ui_object_t *ob)
         else
         {
             // Can we show to the cursor?
-            for(curx = 0, i = 0; i < dat->cp; i++)
+            for(curx = 0, i = 0; i < dat->cp; ++i)
                 curx += FR_CharWidth(ob->text[i]);
 
             // How much do we need to skip forward?
-            for(; curx > maxw; first_in_buf++)
-                curx -= FR_CharWidth(ob->text[first_in_buf]);
-            UI_StrCpyLen(buf, ob->text + first_in_buf, maxw);
+            for(; curx > maxw; ++firstInBuf)
+                curx -= FR_CharWidth(ob->text[firstInBuf]);
+            UI_StrCpyLen(buf, ob->text + firstInBuf, maxw);
         }
     }
     else
@@ -1112,24 +1162,24 @@ void UIEdit_Drawer(ui_object_t *ob)
         strcpy(buf, ob->text);
     }
     UI_TextOutEx(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, false, true,
-                 UI_COL(UIC_TEXT), dis ? .2f : 1);
+                 UI_Color(UIC_TEXT), dis ? .2f : 1);
     if(act && ob->timer & 4)
     {
         // Draw cursor.
         // Determine position.
-        for(curx = 0, i = first_in_buf; i < dat->cp; i++)
+        for(curx = 0, i = firstInBuf; i < dat->cp; ++i)
             curx += FR_CharWidth(ob->text[i]);
         UI_Gradient(ob->x + UI_BORDER * 2 + curx - 1,
-                    ob->y + ob->h / 2 - ui_fonthgt / 2, 2, ui_fonthgt,
-                    UI_COL(UIC_TEXT), 0, 1, 1);
+                    ob->y + ob->h / 2 - uiFontHgt / 2, 2, uiFontHgt,
+                    UI_Color(UIC_TEXT), 0, 1, 1);
     }
 }
 
 int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
 {
     uidata_list_t *dat = ob->data;
-    int     i, oldsel = dat->selection, buth, barh;
-    int     used = false;
+    int         i, oldsel = dat->selection, buth, barh;
+    int         used = false;
 
     if(ob->flags & UIF_CLICKED)
     {
@@ -1144,7 +1194,7 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
                 if(barh - buth)
                 {
                     dat->first =
-                        ((ui_cy - ob->y - UI_BORDER -
+                        ((uiCY - ob->y - UI_BORDER -
                           (buth * 3) / 2) * (dat->count - dat->numvis) + (barh -
                                                                           buth) /
                          2) / (barh - buth);
@@ -1215,7 +1265,7 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
                              ob->h - 2 * UI_BORDER))
         {
             dat->selection =
-                dat->first + (ui_cy - ob->y -
+                dat->first + (uiCY - ob->y -
                               UI_BORDER) / UI_ListItemHeight(dat);
             if(dat->selection >= dat->count)
                 dat->selection = dat->count - 1;
@@ -1308,23 +1358,23 @@ void UIList_Drawer(ui_object_t *ob)
 {
     uidata_list_t *dat = ob->data;
     uidata_listitem_t *items = dat->items;
-    int     dis = (ob->flags & UIF_DISABLED) != 0;
-    int     i, c, x, y, ihgt, maxw = ob->w - 2 * UI_BORDER;
-    int     maxh = ob->h - 2 * UI_BORDER, buth;
-    char    buf[256], *ptr, *endptr, tmp[256];
-    float   alpha = dis ? .2f : 1;
-    int     barw;
+    int         dis = (ob->flags & UIF_DISABLED) != 0;
+    int         i, c, x, y, ihgt, maxw = ob->w - 2 * UI_BORDER;
+    int         maxh = ob->h - 2 * UI_BORDER, buth;
+    char        buf[256], *ptr, *endptr, tmp[256];
+    float       alpha = dis ? .2f : 1;
+    int         barw;
 
     // The background.
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_COL(UIC_SHADOW), 0,
+    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0,
                   alpha / 2, 0);
     // The borders.
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BORDER, false,
-                  UI_COL(UIC_BRD_HI), NULL, alpha, -1);
+                  UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     // The title.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - ui_fonthgt, false, false,
-                 UI_COL(UIC_TEXT), alpha);
+    UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - uiFontHgt, false, false,
+                 UI_Color(UIC_TEXT), alpha);
     // Is a scroll bar necessary?
     ihgt = UI_ListItemHeight(dat);
     if(dat->numvis < dat->count)
@@ -1334,7 +1384,7 @@ void UIList_Drawer(ui_object_t *ob)
         buth = UI_ListButtonHeight(ob);
         x = ob->x + ob->w - UI_BORDER - barw;
         y = ob->y + UI_BORDER;
-        UI_GradientEx(x, y, barw, maxh, UI_BAR_BUTTON_BORDER, UI_COL(UIC_TEXT),
+        UI_GradientEx(x, y, barw, maxh, UI_BAR_BUTTON_BORDER, UI_Color(UIC_TEXT),
                       0, alpha * .2f, alpha * .2f);
         // Up Button.
         UI_DrawButton(x, y, barw, buth, UI_BAR_BUTTON_BORDER,
@@ -1352,26 +1402,26 @@ void UIList_Drawer(ui_object_t *ob)
     x = ob->x + UI_BORDER;
     y = ob->y + UI_BORDER;
     // Draw columns?
-    for(c = 0; c < UI_MAX_COLUMNS; c++)
+    for(c = 0; c < UI_MAX_COLUMNS; ++c)
     {
         if(!dat->column[c] || dat->column[c] > maxw - 2 * UI_BORDER)
             continue;
         UI_Gradient(x + UI_BORDER + dat->column[c] - 2, ob->y + UI_BORDER, 1,
-                    maxh, UI_COL(UIC_TEXT), 0, alpha * .5f, alpha * .5f);
+                    maxh, UI_Color(UIC_TEXT), 0, alpha * .5f, alpha * .5f);
     }
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     for(i = dat->first; i < dat->count && i < dat->first + dat->numvis;
-        i++, y += ihgt)
+        ++i, y += ihgt)
     {
         // The selection has a white background.
         if(i == dat->selection)
         {
-            UI_GradientEx(x, y, maxw, ihgt, UI_BAR_BORDER, UI_COL(UIC_TEXT), 0,
+            UI_GradientEx(x, y, maxw, ihgt, UI_BAR_BORDER, UI_Color(UIC_TEXT), 0,
                           alpha * .6f, alpha * .2f);
         }
         // The text, clipped w/columns.
         ptr = items[i].text;
-        for(c = 0; c < UI_MAX_COLUMNS; c++)
+        for(c = 0; c < UI_MAX_COLUMNS; ++c)
         {
             endptr = strchr(ptr, '\t');
             memset(tmp, 0, sizeof(tmp));
@@ -1382,7 +1432,7 @@ void UIList_Drawer(ui_object_t *ob)
             memset(buf, 0, sizeof(buf));
             UI_StrCpyLen(buf, tmp, maxw - 2 * UI_BORDER - dat->column[c]);
             UI_TextOutEx(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2,
-                         false, true, UI_COL(UIC_TEXT), alpha);
+                         false, true, UI_Color(UIC_TEXT), alpha);
             if(!endptr)
                 break;
             ptr = endptr + 1;
@@ -1393,7 +1443,7 @@ void UIList_Drawer(ui_object_t *ob)
 int UI_SliderButtonWidth(ui_object_t *ob)
 {
     //  uidata_slider_t *dat = ob->data;
-    int     width = ob->h - UI_BAR_BORDER * 2;
+    int         width = ob->h - UI_BAR_BORDER * 2;
 
     if(width < UI_BAR_BORDER * 3)
         width = UI_BAR_BORDER * 3;
@@ -1403,8 +1453,8 @@ int UI_SliderButtonWidth(ui_object_t *ob)
 int UI_SliderThumbPos(ui_object_t *ob)
 {
     uidata_slider_t *dat = ob->data;
-    float   range = dat->max - dat->min, useval;
-    int     butw = UI_SliderButtonWidth(ob);
+    float       range = dat->max - dat->min, useval;
+    int         butw = UI_SliderButtonWidth(ob);
 
     if(!range)
         range = 1;              // Should never happen.
@@ -1421,9 +1471,9 @@ int UI_SliderThumbPos(ui_object_t *ob)
 int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
 {
     uidata_slider_t *dat = ob->data;
-    float   oldvalue = dat->value;
-    boolean used = false;
-    int     i, butw, inw;
+    float       oldvalue = dat->value;
+    boolean     used = false;
+    int         i, butw, inw;
 
     if(ob->flags & UIF_CLICKED)
     {
@@ -1438,7 +1488,7 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
                 if(inw > 0)
                 {
                     dat->value =
-                        dat->min + (dat->max - dat->min) * (ui_cx - ob->x -
+                        dat->min + (dat->max - dat->min) * (uiCX - ob->x -
                                                             UI_BAR_BORDER -
                                                             (3 * butw) / 2) /
                         (float) inw;
@@ -1557,7 +1607,7 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
 void UISlider_Ticker(ui_object_t *ob)
 {
     uidata_slider_t *dat = ob->data;
-    float   oldval;
+    float       oldval;
 
     if(ob->timer >= SCROLL_TIME && (dat->button[0] || dat->button[2]))
     {
@@ -1579,22 +1629,22 @@ void UISlider_Ticker(ui_object_t *ob)
 void UISlider_Drawer(ui_object_t *ob)
 {
     uidata_slider_t *dat = ob->data;
-    boolean dis = (ob->flags & UIF_DISABLED) != 0;
-    int     inwidth = ob->w - UI_BAR_BORDER * 2, inheight =
-        ob->h - UI_BAR_BORDER * 2;
-    int     butw = UI_SliderButtonWidth(ob);
-    int     butbor = UI_BAR_BUTTON_BORDER;
-    int     x, y, thumbx;
-    float   alpha = dis ? .2f : 1;
-    char    buf[80];
+    boolean     dis = (ob->flags & UIF_DISABLED) != 0;
+    int         inwidth = ob->w - UI_BAR_BORDER * 2;
+    int         inheight = ob->h - UI_BAR_BORDER * 2;
+    int         butw = UI_SliderButtonWidth(ob);
+    int         butbor = UI_BAR_BUTTON_BORDER;
+    int         x, y, thumbx;
+    float       alpha = dis ? .2f : 1;
+    char        buf[80];
 
     // The background.
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BAR_BORDER,
-                  UI_COL(UIC_SHADOW), 0, alpha / 2, 0);
+                  UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
 
     // The borders.
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BAR_BORDER, false,
-                  UI_COL(UIC_BRD_HI), NULL, alpha, -1);
+                  UI_Color(UIC_BRD_HI), NULL, alpha, -1);
 
     x = ob->x + UI_BAR_BORDER;
     y = ob->y + UI_BAR_BORDER;
@@ -1627,7 +1677,7 @@ void UISlider_Drawer(ui_object_t *ob)
                       (dat->min + dat->max) / 2 ? inwidth - butw -
                       UI_BAR_BORDER - FR_TextWidth(buf) : butw +
                       UI_BAR_BORDER), y + inheight / 2, false, true,
-                 UI_COL(UIC_TEXT), alpha);
+                 UI_Color(UIC_TEXT), alpha);
 }
 
 //---------------------------------------------------------------------------
@@ -1638,17 +1688,17 @@ void UI_InitColumns(ui_object_t *ob)
 {
     uidata_list_t *dat = ob->data;
     uidata_listitem_t *list = dat->items;
-    int     i, c, w, sep, last, maxw;
-    char   *endptr, *ptr, temp[256];
-    int     width[UI_MAX_COLUMNS];
-    int     numcols = 1;
+    int         i, c, w, sep, last, maxw;
+    char       *endptr, *ptr, temp[256];
+    int         width[UI_MAX_COLUMNS];
+    int         numcols = 1;
 
     memset(dat->column, 0, sizeof(dat->column));
     memset(width, 0, sizeof(width));
-    for(i = 0; i < dat->count; i++)
+    for(i = 0; i < dat->count; ++i)
     {
         ptr = list[i].text;
-        for(c = 0; c < UI_MAX_COLUMNS; c++)
+        for(c = 0; c < UI_MAX_COLUMNS; ++c)
         {
             if(c + 1 > numcols)
                 numcols = c + 1;
@@ -1667,39 +1717,40 @@ void UI_InitColumns(ui_object_t *ob)
         }
     }
     // Calculate the total maximum width.
-    for(w = i = 0; i < UI_MAX_COLUMNS; i++)
+    for(w = i = 0; i < UI_MAX_COLUMNS; ++i)
     {
         w += width[i];
         if(width[i])
             last = width[i];
     }
     // Calculate the offset for each column.
-    maxw = ob->w - 4 * UI_BORDER - (dat->count > dat->numvis ? UI_BAR_WDH : 0);
+    maxw = ob->w - 4 * UI_BORDER -
+                (dat->count > dat->numvis ? UI_BAR_WDH : 0);
     sep = maxw - w;
     if(numcols > 1)
         sep /= numcols - 1;
     if(sep < 0)
         sep = 0;
-    for(c = i = 0; i < numcols; i++)
+    for(c = i = 0; i < numcols; ++i)
     {
         dat->column[i] = c;
         c += sep + width[i];
     }
 }
 
-int UI_ListItemHeight(uidata_list_t * listdata)
+int UI_ListItemHeight(uidata_list_t *listdata)
 {
-    int     h = listdata->itemhgt;
+    int         h = listdata->itemhgt;
 
-    if(h < ui_fonthgt * 8 / 10)
-        h = ui_fonthgt * 8 / 10;
+    if(h < uiFontHgt * 8 / 10)
+        h = uiFontHgt * 8 / 10;
     return h;
 }
 
 int UI_ListButtonHeight(ui_object_t *ob)
 {
-    int     barh = ob->h - 2 * UI_BORDER;
-    int     buth = UI_BAR_WDH;
+    int         barh = ob->h - 2 * UI_BORDER;
+    int         buth = UI_BAR_WDH;
 
     if(buth > barh / 3)
         buth = barh / 3;
@@ -1709,8 +1760,8 @@ int UI_ListButtonHeight(ui_object_t *ob)
 int UI_ListThumbPos(ui_object_t *ob)
 {
     uidata_list_t *dat = ob->data;
-    int     buth = UI_ListButtonHeight(ob);
-    int     barh = ob->h - 2 * (UI_BORDER + buth);
+    int         buth = UI_ListButtonHeight(ob);
+    int         barh = ob->h - 2 * (UI_BORDER + buth);
 
     if(dat->count <= dat->numvis)
         return 0;
@@ -1721,23 +1772,23 @@ int UI_ListThumbPos(ui_object_t *ob)
 int UI_ListFindItem(ui_object_t *ob, int data_value)
 {
     uidata_list_t *dat = ob->data;
-    int     i;
+    int         i;
 
-    for(i = 0; i < dat->count; i++)
+    for(i = 0; i < dat->count; ++i)
         if(((uidata_listitem_t *) dat->items)[i].data == data_value)
             return i;
     return -1;
 }
 
-void UI_StrCpyLen(char *dest, char *src, int max_width)
+void UI_StrCpyLen(char *dest, char *src, int maxWidth)
 {
-    int     i, width;
+    int         i, width;
 
-    for(i = 0, width = 0; src[i]; i++)
+    for(i = 0, width = 0; src[i]; ++i)
     {
         dest[i] = src[i];
         width += FR_CharWidth(src[i]);
-        if(width > max_width)
+        if(width > maxWidth)
         {
             dest[i] = 0;
             break;
@@ -1747,28 +1798,29 @@ void UI_StrCpyLen(char *dest, char *src, int max_width)
 
 int UI_MouseInsideBox(int x, int y, int w, int h)
 {
-    return (ui_cx >= x && ui_cx <= x + w && ui_cy >= y && ui_cy <= y + h);
+    return (uiCX >= x && uiCX <= x + w && uiCY >= y && uiCY <= y + h);
 }
 
-/*
- * Returns true if the mouse is inside the object.
+/**
+ * @return              <code>true</code> if the mouse is inside the object.
  */
 int UI_MouseInside(ui_object_t *ob)
 {
     return UI_MouseInsideBox(ob->x, ob->y, ob->w, ob->h);
 }
 
-/*
- * Returns true if the mouse hasn't been moved for a while.
+/**
+ * @return              <code>true</code> if the mouse hasn't been moved
+ *                      for a while.
  */
-int UI_MouseResting(ui_page_t * page)
+int UI_MouseResting(ui_page_t *page)
 {
-    if(!ui_moved)
+    if(!uiMoved)
         return false;
-    return page->timer - ui_rest_start >= ui_rest_time;
+    return page->timer - uiRestStart >= uiRestTime;
 }
 
-void UI_MixColors(ui_color_t * a, ui_color_t * b, ui_color_t * dest,
+void UI_MixColors(ui_color_t *a, ui_color_t *b, ui_color_t *dest,
                   float amount)
 {
     dest->red = (1 - amount) * a->red + amount * b->red;
@@ -1776,12 +1828,12 @@ void UI_MixColors(ui_color_t * a, ui_color_t * b, ui_color_t * dest,
     dest->blue = (1 - amount) * a->blue + amount * b->blue;
 }
 
-void UI_ColorA(ui_color_t * color, float alpha)
+void UI_SetColorA(ui_color_t *color, float alpha)
 {
     gl.Color4f(color->red, color->green, color->blue, alpha);
 }
 
-void UI_Color(ui_color_t * color)
+void UI_SetColor(ui_color_t *color)
 {
     gl.Color3f(color->red, color->green, color->blue);
 }
@@ -1789,45 +1841,45 @@ void UI_Color(ui_color_t * color)
 void UI_DrawTitleEx(char *text, int height, float alpha)
 {
     FR_SetFont(glFontVariable[GLFS_BOLD]);
-    UI_Gradient(0, 0, glScreenWidth, height, UI_COL(UIC_BG_MEDIUM),
-                UI_COL(UIC_BG_LIGHT), .8f * alpha, alpha);
-    UI_Gradient(0, height, glScreenWidth, UI_BORDER, UI_COL(UIC_SHADOW),
-                UI_COL(UIC_BG_DARK), alpha, 0);
-    UI_TextOutEx(text, UI_BORDER, height / 2, false, true, UI_COL(UIC_TITLE),
+    UI_Gradient(0, 0, glScreenWidth, height, UI_Color(UIC_BG_MEDIUM),
+                UI_Color(UIC_BG_LIGHT), .8f * alpha, alpha);
+    UI_Gradient(0, height, glScreenWidth, UI_BORDER, UI_Color(UIC_SHADOW),
+                UI_Color(UIC_BG_DARK), alpha, 0);
+    UI_TextOutEx(text, UI_BORDER, height / 2, false, true, UI_Color(UIC_TITLE),
                  alpha);
 }
 
-void UI_DrawTitle(ui_page_t* page)
+void UI_DrawTitle(ui_page_t *page)
 {
     UI_DrawTitleEx(page->title, UI_TITLE_HGT, 1.f);
-    if(1 || !ui_showmouse)
+    if(1 || !uiShowMouse)
     {
         char *msg = "(Move with Tab/S-Tab)";
-        float current_ui_alpha = ui_alpha; // Never fade this text.
-        ui_alpha = 1.0;
+        float currentUIAlpha = uiAlpha; // Never fade this text.
+        uiAlpha = 1.0;
 
         // If the mouse cursor is not visible, print a short help message.
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutEx(msg, glScreenWidth - UI_BORDER - FR_TextWidth(msg),
-                     UI_TITLE_HGT / 2, false, true, UI_COL(UIC_TEXT), 0.33f);
+                     UI_TITLE_HGT / 2, false, true, UI_Color(UIC_TEXT), 0.33f);
 
-        ui_alpha = current_ui_alpha;
+        uiAlpha = currentUIAlpha;
     }
 }
 
 void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
               ui_color_t *secondary, float alpha, float bottomAlpha)
 {
-    float   s[2][2] = { {0, 1}, {1, 0} };
-    float   t[2][2] = { {0, 1}, {1, 0} };
+    float       s[2][2] = { {0, 1}, {1, 0} };
+    float       t[2][2] = { {0, 1}, {1, 0} };
     ui_color_t *color;
     unsigned int i;
-    float  *u, *v;
-    boolean flip = false;
-    float   beta = 1;
+    float      *u, *v;
+    boolean     flip = false;
+    float       beta = 1;
 
-    alpha *= ui_alpha;
-    bottomAlpha *= ui_alpha;
+    alpha *= uiAlpha;
+    bottomAlpha *= uiAlpha;
 
     if(border < 0)
     {
@@ -1839,7 +1891,7 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
         bottomAlpha = alpha;
 
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
-    gl.Bind(ui_textures[UITEX_SHADE]);
+    gl.Bind(uiTextures[UITEX_SHADE]);
     gl.Begin(DGL_QUADS);
     for(i = 0; i < 2; ++i)
     {
@@ -1852,12 +1904,12 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
         if(i == 1)
             beta = 0.5f;
 
-        UI_ColorA(color, alpha * beta);
+        UI_SetColorA(color, alpha * beta);
         gl.TexCoord2f(u[0], v[0]);
         gl.Vertex2f(x + border, y + border);
         gl.TexCoord2f(u[1], v[0]);
         gl.Vertex2f(x + w - border, y + border);
-        UI_ColorA(color, bottomAlpha * beta);
+        UI_SetColorA(color, bottomAlpha * beta);
         gl.TexCoord2f(u[1], v[1]);
         gl.Vertex2f(x + w - border, y + h - border);
         gl.TexCoord2f(u[0], v[1]);
@@ -1884,17 +1936,17 @@ void UI_GradientEx(int x, int y, int w, int h, int border, ui_color_t *top,
 void UI_HorizGradient(int x, int y, int w, int h, ui_color_t *left,
                       ui_color_t *right, float leftAlpha, float rightAlpha)
 {
-    leftAlpha *= ui_alpha;
-    rightAlpha *= ui_alpha;
+    leftAlpha *= uiAlpha;
+    rightAlpha *= uiAlpha;
 
-    gl.Bind(ui_textures[UITEX_HINT]);
+    gl.Bind(uiTextures[UITEX_HINT]);
     gl.Begin(DGL_QUADS);
-    UI_ColorA(left, leftAlpha);
+    UI_SetColorA(left, leftAlpha);
     gl.TexCoord2f(0, 1);
     gl.Vertex2f(x, y + h);
     gl.TexCoord2f(0, 0);
     gl.Vertex2f(x, y);
-    UI_ColorA(right ? right : left, rightAlpha);
+    UI_SetColorA(right ? right : left, rightAlpha);
     gl.TexCoord2f(1, 0);
     gl.Vertex2f(x + w, y);
     gl.TexCoord2f(1, 1);
@@ -1905,34 +1957,34 @@ void UI_HorizGradient(int x, int y, int w, int h, ui_color_t *left,
 void UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start,
              ui_color_t *end, float startAlpha, float endAlpha)
 {
-    startAlpha *= ui_alpha;
-    endAlpha *= ui_alpha;
+    startAlpha *= uiAlpha;
+    endAlpha *= uiAlpha;
 
     gl.Disable(DGL_TEXTURING);
     gl.Begin(DGL_LINES);
-    UI_ColorA(start, startAlpha);
+    UI_SetColorA(start, startAlpha);
     gl.Vertex2f(x1, y1);
-    UI_ColorA(end ? end : start, endAlpha);
+    UI_SetColorA(end ? end : start, endAlpha);
     gl.Vertex2f(x2, y2);
     gl.End();
     gl.Enable(DGL_TEXTURING);
 }
 
-/*
+/**
  * Draw white, shadowed text.
  */
 void UI_TextOut(char *text, int x, int y)
 {
-    UI_TextOutEx(text, x, y, false, false, UI_COL(UIC_TEXT), 1);
+    UI_TextOutEx(text, x, y, false, false, UI_Color(UIC_TEXT), 1);
 }
 
-/*
+/**
  * Draw shadowed text.
  */
 void UI_TextOutEx(char *text, int x, int y, int horizCenter, int vertCenter,
                   ui_color_t *color, float alpha)
 {
-    alpha *= ui_alpha;
+    alpha *= uiAlpha;
     if(alpha <= 0) return;
 
     // Center, if requested.
@@ -1944,33 +1996,33 @@ void UI_TextOutEx(char *text, int x, int y, int horizCenter, int vertCenter,
         y -= FR_SingleLineHeight(text)/2 + FR_GlyphTopToAscent(text);
     }
     // Shadow.
-    //UI_ColorA(UI_COL(UIC_SHADOW), .6f * alpha);
+    //UI_SetColorA(UI_Color(UIC_SHADOW), .6f * alpha);
     //FR_TextOut((char*)text, x + UI_SHADOW_OFFSET, y + UI_SHADOW_OFFSET);
     // Actual text.
-    UI_ColorA(color, alpha);
+    UI_SetColorA(color, alpha);
     FR_CustomShadowTextOut(text, x, y, UI_SHADOW_OFFSET, UI_SHADOW_OFFSET, .6f);
 }
 
 int UI_TextOutWrap(char *text, int x, int y, int w, int h)
 {
-    return UI_TextOutWrapEx(text, x, y, w, h, UI_COL(UIC_TEXT), 1);
+    return UI_TextOutWrapEx(text, x, y, w, h, UI_Color(UIC_TEXT), 1);
 }
 
-/*
+/**
  * Draw line-wrapped text inside a box. Returns the Y coordinate of the
  * last word.
  */
 int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
                      ui_color_t *color, float alpha)
 {
-    char    word[2048], *wp = word;
-    int     len, tx = x, ty = y;
-    byte    c;
-    int     linehgt = FR_SingleLineHeight("A");
+    char        word[2048], *wp = word;
+    int         len, tx = x, ty = y;
+    byte        c;
+    int         linehgt = FR_SingleLineHeight("A");
 
-    alpha *= ui_alpha;
+    alpha *= uiAlpha;
 
-    UI_ColorA(color, alpha);
+    UI_SetColorA(color, alpha);
     for(;; text++)
     {
         c = *text;
@@ -2012,6 +2064,9 @@ int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
                 tx = x;
                 ty += 3 * linehgt / 2;
                 break;
+
+            default:
+                break;
             }
         }
         else
@@ -2026,10 +2081,10 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
                    ui_color_t *top, ui_color_t *bottom, float alpha,
                    float bottomAlpha)
 {
-    float   s[2] = { 0, 1 }, t[2] = { 0, 1 };
+    float       s[2] = { 0, 1 }, t[2] = { 0, 1 };
 
-    alpha *= ui_alpha;
-    bottomAlpha *= ui_alpha;
+    alpha *= uiAlpha;
+    bottomAlpha *= uiAlpha;
     if(alpha <= 0 && bottomAlpha <= 0)
         return;
 
@@ -2047,25 +2102,25 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
     // The fill comes first, if there's one.
     if(filled)
     {
-        gl.Bind(ui_textures[UITEX_FILL]);
+        gl.Bind(uiTextures[UITEX_FILL]);
         gl.Begin(DGL_QUADS);
         gl.TexCoord2f(0.5f, 0.5f);
-        UI_ColorA(top, alpha);
+        UI_SetColorA(top, alpha);
         gl.Vertex2f(x + brd, y + brd);
         gl.Vertex2f(x + w - brd, y + brd);
-        UI_ColorA(bottom, bottomAlpha);
+        UI_SetColorA(bottom, bottomAlpha);
         gl.Vertex2f(x + w - brd, y + h - brd);
         gl.Vertex2f(x + brd, y + h - brd);
     }
     else
     {
-        gl.Bind(ui_textures[UITEX_CORNER]);
+        gl.Bind(uiTextures[UITEX_CORNER]);
         gl.Begin(DGL_QUADS);
     }
     if(!filled || brd > 0)
     {
         // Top Left.
-        UI_ColorA(top, alpha);
+        UI_SetColorA(top, alpha);
         gl.TexCoord2f(s[0], t[0]);
         gl.Vertex2f(x, y);
         gl.TexCoord2f(0.5f, t[0]);
@@ -2097,7 +2152,7 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
         gl.Vertex2f(x + w - brd, y + brd);
         gl.TexCoord2f(s[1], 0.5f);
         gl.Vertex2f(x + w, y + brd);
-        UI_ColorA(bottom, bottomAlpha);
+        UI_SetColorA(bottom, bottomAlpha);
         gl.TexCoord2f(s[1], 0.5f);
         gl.Vertex2f(x + w, y + h - brd);
         gl.TexCoord2f(0.5f, 0.5f);
@@ -2130,12 +2185,12 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
         gl.TexCoord2f(s[0], t[1]);
         gl.Vertex2f(x, y + h);
         // Left.
-        UI_ColorA(top, alpha);
+        UI_SetColorA(top, alpha);
         gl.TexCoord2f(s[0], 0.5f);
         gl.Vertex2f(x, y + brd);
         gl.TexCoord2f(0.5f, 0.5f);
         gl.Vertex2f(x + brd, y + brd);
-        UI_ColorA(bottom, bottomAlpha);
+        UI_SetColorA(bottom, bottomAlpha);
         gl.TexCoord2f(0.5f, 0.5f);
         gl.Vertex2f(x + brd, y + h - brd);
         gl.TexCoord2f(s[0], 0.5f);
@@ -2153,10 +2208,10 @@ void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t *color,
 void UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi,
                      ui_color_t *med, ui_color_t *low, float alpha)
 {
-    float   xrad = radius * .866f;  // cos(60)
-    float   yrad = radius / 2;  // sin(60)
+    float       xrad = radius * .866f;  // cos(60)
+    float       yrad = radius / 2;  // sin(60)
 
-    alpha *= ui_alpha;
+    alpha *= uiAlpha;
     if(alpha <= 0) return;
 
     gl.Disable(DGL_TEXTURING);
@@ -2165,42 +2220,42 @@ void UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi,
     y += radius / 4;
 
     // Upper left triangle.
-    UI_ColorA(radius > 0 ? hi : med, alpha);
+    UI_SetColorA(radius > 0 ? hi : med, alpha);
     gl.Vertex2f(x, y);
     gl.Vertex2f(x - xrad, y + yrad);
-    UI_ColorA(radius > 0 ? hi : low, alpha);
+    UI_SetColorA(radius > 0 ? hi : low, alpha);
     gl.Vertex2f(x, y - radius);
 
     // Upper right triangle.
-    UI_ColorA(low, alpha);
+    UI_SetColorA(low, alpha);
     gl.Vertex2f(x, y);
     gl.Vertex2f(x, y - radius);
-    UI_ColorA(med, alpha);
+    UI_SetColorA(med, alpha);
     gl.Vertex2f(x + xrad, y + yrad);
 
     // Bottom triangle.
     if(radius < 0)
-        UI_ColorA(hi, alpha);
+        UI_SetColorA(hi, alpha);
     gl.Vertex2f(x, y);
     gl.Vertex2f(x + xrad, y + yrad);
-    UI_ColorA(radius > 0 ? low : med, alpha);
+    UI_SetColorA(radius > 0 ? low : med, alpha);
     gl.Vertex2f(x - xrad, y + yrad);
 
     gl.End();
     gl.Enable(DGL_TEXTURING);
 }
 
-/*
+/**
  * A horizontal triangle, pointing left or right. Positive radius
  * means left.
  */
 void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t *hi,
                           ui_color_t *med, ui_color_t *low, float alpha)
 {
-    float   yrad = radius * .866f;  // cos(60)
-    float   xrad = radius / 2;  // sin(60)
+    float       yrad = radius * .866f;  // cos(60)
+    float       xrad = radius / 2;  // sin(60)
 
-    alpha *= ui_alpha;
+    alpha *= uiAlpha;
     if(alpha <= 0)
         return;
 
@@ -2210,28 +2265,28 @@ void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t *hi,
     x += radius / 4;
 
     // Upper left triangle.
-    UI_ColorA(radius > 0 ? hi : med, alpha);
+    UI_SetColorA(radius > 0 ? hi : med, alpha);
     gl.Vertex2f(x, y);
     if(radius < 0)
-        UI_ColorA(low, alpha);
+        UI_SetColorA(low, alpha);
     gl.Vertex2f(x - radius, y);
     gl.Vertex2f(x + xrad, y - yrad);
 
     // Lower left triangle.
-    UI_ColorA(radius > 0 ? med : hi, alpha);
+    UI_SetColorA(radius > 0 ? med : hi, alpha);
     gl.Vertex2f(x, y);
     if(radius < 0)
-        UI_ColorA(hi, alpha);
+        UI_SetColorA(hi, alpha);
     gl.Vertex2f(x + xrad, y + yrad);
-    UI_ColorA(radius > 0 ? low : med, alpha);
+    UI_SetColorA(radius > 0 ? low : med, alpha);
     gl.Vertex2f(x - radius, y);
 
     // Right triangle.
-    UI_ColorA(radius > 0 ? med : hi, alpha);
+    UI_SetColorA(radius > 0 ? med : hi, alpha);
     gl.Vertex2f(x, y);
-    UI_ColorA(radius > 0 ? hi : med, alpha);
+    UI_SetColorA(radius > 0 ? hi : med, alpha);
     gl.Vertex2f(x + xrad, y - yrad);
-    UI_ColorA(radius > 0 ? low : hi, alpha);
+    UI_SetColorA(radius > 0 ? low : hi, alpha);
     gl.Vertex2f(x + xrad, y + yrad);
 
     gl.End();
@@ -2240,16 +2295,16 @@ void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t *hi,
 
 void UI_DefaultButtonBackground(ui_color_t *col, boolean down)
 {
-    UI_MixColors(UI_COL(UIC_TEXT), UI_COL(UIC_SHADOW), col, down ? .1f : .5f);
+    UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), col, down ? .1f : .5f);
 }
 
 void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
                    ui_color_t *background, boolean down, boolean disabled,
                    int arrow)
 {
-    int     inside = MIN_OF(w - brd * 2, h - brd * 2);
-    int     boff = down ? 2 : 0;
-    ui_color_t back;
+    int         inside = MIN_OF(w - brd * 2, h - brd * 2);
+    int         boff = down ? 2 : 0;
+    ui_color_t  back;
 
     if(!background)
     {
@@ -2260,18 +2315,18 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
 
     UI_GradientEx(x, y, w, h, brd, background, 0, disabled ? .2f : 1, 0);
     UI_Shade(x, y, w, h, UI_BUTTON_BORDER * (down ? -1 : 1),
-             UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_LOW), alpha / 3, -1);
-    UI_DrawRectEx(x, y, w, h, brd * (down ? -1 : 1), false, UI_COL(UIC_BRD_HI),
+             UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
+    UI_DrawRectEx(x, y, w, h, brd * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI),
                   NULL, alpha, -1);
 
-    switch (arrow)
+    switch(arrow)
     {
     case UIBA_UP:
     case UIBA_DOWN:
         UI_DrawTriangle(x + w / 2 + boff, y + h / 2 + boff,
                         inside / 2.75f * (arrow == UIBA_DOWN ? -1 : 1),
-                        /*UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW), */
-                        UI_COL(UIC_TEXT), UI_COL(UIC_TEXT), UI_COL(UIC_TEXT),
+                        /*UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_MED), UI_Color(UIC_BRD_LOW), */
+                        UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT),
                         alpha * (disabled ? .2f : 1));
         break;
 
@@ -2279,27 +2334,30 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
     case UIBA_RIGHT:
         UI_DrawHorizTriangle(x + w / 2 + boff, y + h / 2 + boff,
                              inside / 2.75f * (arrow == UIBA_RIGHT ? -1 : 1),
-                             /*UI_COL(UIC_BRD_HI), UI_COL(UIC_BRD_MED), UI_COL(UIC_BRD_LOW), */
-                             UI_COL(UIC_TEXT), UI_COL(UIC_TEXT),
-                             UI_COL(UIC_TEXT), alpha * (disabled ? .2f : 1));
+                             /*UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_MED), UI_Color(UIC_BRD_LOW), */
+                             UI_Color(UIC_TEXT), UI_Color(UIC_TEXT),
+                             UI_Color(UIC_TEXT), alpha * (disabled ? .2f : 1));
+        break;
+
+    default:
         break;
     }
 }
 
 void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
 {
-    int     bor = UI_BUTTON_BORDER;
+    int         bor = UI_BUTTON_BORDER;
 
-    UI_GradientEx(x, y, w, h, bor, UI_COL(UIC_HELP), UI_COL(UIC_HELP),
+    UI_GradientEx(x, y, w, h, bor, UI_Color(UIC_HELP), UI_Color(UIC_HELP),
                   alpha / 4, alpha / 2);
-    UI_DrawRectEx(x, y, w, h, bor, false, UI_COL(UIC_BRD_HI), NULL, alpha, -1);
+    UI_DrawRectEx(x, y, w, h, bor, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
 
     if(text)
     {
         bor = 2 * UI_BORDER / 3;
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutWrapEx(text, x + 2 * bor, y + 2 * bor, w - 4 * bor,
-                         h - 4 * bor, UI_COL(UIC_TEXT), alpha);
+                         h - 4 * bor, UI_Color(UIC_TEXT), alpha);
     }
 }
 
@@ -2311,9 +2369,9 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
  */
 void UI_DrawMouse(int x, int y)
 {
-    float   scale, xscale, yscale;
+    float       scale, xscale, yscale;
 
-    if(!ui_showmouse)
+    if(!uiShowMouse)
         return;
 
     scale = MAX_OF(1, glScreenWidth / 640.0f);
@@ -2323,7 +2381,7 @@ void UI_DrawMouse(int x, int y)
     x--;
     y--;
     gl.Color3f(1, 1, 1);
-    gl.Bind(ui_textures[UITEX_MOUSE]);
+    gl.Bind(uiTextures[UITEX_MOUSE]);
     gl.Begin(DGL_QUADS);
     gl.TexCoord2f(0, 0);
     gl.Vertex2f(x, y);
@@ -2338,11 +2396,11 @@ void UI_DrawMouse(int x, int y)
 
 void UI_DrawLogo(int x, int y, int w, int h)
 {
-    gl.Bind(ui_textures[UITEX_LOGO]);
-    GL_DrawRect(x, y, w, h, 1, 1, 1, ui_alpha);
+    gl.Bind(uiTextures[UITEX_LOGO]);
+    GL_DrawRect(x, y, w, h, 1, 1, 1, uiAlpha);
 }
 
-/*
+/**
  * CCmd: Change the UI colors.
  */
 D_CMD(UIColor)
@@ -2361,7 +2419,7 @@ D_CMD(UIColor)
         "help",
         NULL
     };
-    int     i;
+    int         i;
 
     for(i = 0; objects[i]; ++i)
         if(!stricmp(argv[1], objects[i]))

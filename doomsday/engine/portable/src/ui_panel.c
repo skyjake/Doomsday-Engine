@@ -676,9 +676,9 @@ void CP_DrawBorder(ui_object_t *ob)
             if((help_ptr = DH_Find(it->text)))
             {
                 shown = (panel_help == help_ptr && panel_help_active);
-                UI_HorizGradient(ob->x + b, it->y + it->h / 2 - ui_fonthgt / 2,
-                                 2 * ui_fonthgt, ui_fonthgt,
-                                 UI_COL(UIC_BRD_HI), 0, shown ? .8f : .2f, 0);
+                UI_HorizGradient(ob->x + b, it->y + it->h / 2 - UI_FontHeight() / 2,
+                                 2 * UI_FontHeight(), UI_FontHeight(),
+                                 UI_Color(UIC_BRD_HI), 0, shown ? .8f : .2f, 0);
             }
         }
         GL_BlendMode(BM_NORMAL);
@@ -770,16 +770,16 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     char        buf[80];
     byte        key = Con_GetByte(ob->text);
 
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_COL(UIC_SHADOW), 0,
+    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0,
                   1, 0);
-    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_COL(UIC_BRD_HI),
-             UI_COL(UIC_BRD_LOW), alpha / 3, -1);
+    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_HI),
+             UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (sel ? -1 : 1),
-                  false, UI_COL(UIC_BRD_HI), NULL, alpha, -1);
+                  false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     sprintf(buf, "%i", key);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, true, true,
-                 UI_COL(UIC_TEXT), alpha);
+                 UI_Color(UIC_TEXT), alpha);
 }
 
 void CP_QuickFOV(ui_object_t *ob)
@@ -796,7 +796,7 @@ void CP_ResolutionInfo(ui_object_t *ob)
     else
         sprintf(buf, "Current resolution: %i x %i", glScreenWidth, glScreenHeight);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true, UI_COL(UIC_TEXT),
+    UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TEXT),
                  1);
 }
 
@@ -953,10 +953,10 @@ int CP_LabelText(char *label, char *text, int x, int y, int w, int h,
     int         ind;
 
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_ColorA(UI_COL(UIC_TEXT), .5f * alpha * UI_Alpha());
+    UI_SetColorA(UI_Color(UIC_TEXT), .5f * alpha * UI_Alpha());
     FR_TextOut(label, x, y);
     ind = FR_TextWidth(label);
-    return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, UI_COL(UIC_TEXT),
+    return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, UI_Color(UIC_TEXT),
                             alpha);
 }
 
@@ -973,7 +973,7 @@ void CP_Drawer(ui_page_t *page)
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(DOOMSDAY_PROJECTURL,
                  glScreenWidth - UI_BORDER - FR_TextWidth(DOOMSDAY_PROJECTURL),
-                 UI_ScreenY(25), false, true, UI_COL(UIC_TEXT), 0.4f);
+                 UI_ScreenY(25), false, true, UI_Color(UIC_TEXT), 0.4f);
 
     // Is the help box visible?
     if(panel_help_offset <= 0 || !panel_help_source)
@@ -985,9 +985,9 @@ void CP_Drawer(ui_page_t *page)
     y = UI_ScreenY(0);
     w = HELP_OFFSET;
     h = UI_ScreenH(920);
-    UI_GradientEx(x, y, w, h, bor, UI_COL(UIC_HELP), UI_COL(UIC_HELP), alpha,
+    UI_GradientEx(x, y, w, h, bor, UI_Color(UIC_HELP), UI_Color(UIC_HELP), alpha,
                   alpha);
-    UI_DrawRectEx(x, y, w, h, bor, false, UI_COL(UIC_BRD_HI), NULL, alpha, -1);
+    UI_DrawRectEx(x, y, w, h, bor, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     x += 2 * bor;
     y += 2 * bor;
     w -= 4 * bor;
@@ -996,26 +996,26 @@ void CP_Drawer(ui_page_t *page)
     // The title (with shadow).
     FR_SetFont(glFontVariable[GLFS_BOLD]);
     /*UI_TextOutWrapEx(panel_help_source->text, x + UI_SHADOW_OFFSET,
-                     y + UI_SHADOW_OFFSET, w, h, UI_COL(UIC_SHADOW), alpha);*/
+                     y + UI_SHADOW_OFFSET, w, h, UI_Color(UIC_SHADOW), alpha);*/
     y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h,
-                         UI_COL(UIC_TITLE), alpha) + ui_fonthgt + 3;
-    UI_Line(x, y, x + w, y, UI_COL(UIC_TEXT), 0, alpha * .5f, 0);
+                         UI_Color(UIC_TITLE), alpha) + UI_FontHeight() + 3;
+    UI_Line(x, y, x + w, y, UI_Color(UIC_TEXT), 0, alpha * .5f, 0);
     y += 2;
 
     // Cvar?
     if((str = DH_GetString(panel_help, HST_CONSOLE_VARIABLE)))
-        y = CP_LabelText("CVar: ", str, x, y, w, h, alpha) + ui_fonthgt;
+        y = CP_LabelText("CVar: ", str, x, y, w, h, alpha) + UI_FontHeight();
 
     // Default?
     if((str = DH_GetString(panel_help, HST_DEFAULT_VALUE)))
-        y = CP_LabelText("Default: ", str, x, y, w, h, alpha) + ui_fonthgt;
+        y = CP_LabelText("Default: ", str, x, y, w, h, alpha) + UI_FontHeight();
 
     // Information.
     if((str = DH_GetString(panel_help, HST_DESCRIPTION)))
     {
-        y += ui_fonthgt / 2;
+        y += UI_FontHeight() / 2;
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutWrapEx(str, x, y, w, h, UI_COL(UIC_TEXT), alpha);
+        UI_TextOutWrapEx(str, x, y, w, h, UI_Color(UIC_TEXT), alpha);
     }
 }
 

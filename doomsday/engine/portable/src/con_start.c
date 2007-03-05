@@ -130,7 +130,7 @@ void Con_StartupDone(void)
 void Con_DrawStartupBackground(float alpha)
 {
     float   mul = (startupLogo ? 1.5f : 1.0f);
-    ui_color_t *dark = UI_COL(UIC_BG_DARK), *light = UI_COL(UIC_BG_LIGHT);
+    ui_color_t *dark = UI_Color(UIC_BG_DARK), *light = UI_Color(UIC_BG_LIGHT);
 
     // Background gradient picture.
     gl.Bind(startupLogo);
@@ -182,14 +182,14 @@ int Con_DrawTitle(float alpha)
         width = FR_TextWidth(titleText) + FR_TextWidth("  ");
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutEx(secondaryTitleText, UI_BORDER + width, height / 2,
-                     false, true, UI_COL(UIC_TEXT), .75f * alpha);
+                     false, true, UI_Color(UIC_TEXT), .75f * alpha);
     }
     if(statusText[0])
     {
         width = FR_TextWidth(statusText);
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutEx(statusText, glScreenWidth - UI_BORDER - width, height / 2,
-                     false, true, UI_COL(UIC_TEXT), .75f * alpha);
+                     false, true, UI_Color(UIC_TEXT), .75f * alpha);
     }
 
     gl.MatrixMode(DGL_MODELVIEW);
@@ -213,7 +213,7 @@ void Con_DrawStartupScreen(int show)
     cbline_t   *line;
 
     // Print the messages in the console.
-    if(!startupScreen || ui_active)
+    if(!startupScreen || UI_IsActive())
         return;
 
     //gl.MatrixMode(DGL_PROJECTION);

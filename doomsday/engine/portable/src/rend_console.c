@@ -181,10 +181,10 @@ static void drawRuler2(int y, int lineHeight, float alpha, int scrWidth)
     int     rh = 6;
 
     UI_GradientEx(xoff, y + (lineHeight - rh) / 2 + 1, scrWidth - 2 * xoff, rh,
-                  rh / 2, UI_COL(UIC_SHADOW), UI_COL(UIC_BG_DARK), alpha / 3,
+                  rh / 2, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), alpha / 3,
                   alpha);
     UI_DrawRectEx(xoff, y + (lineHeight - rh) / 2 + 1, scrWidth - 2 * xoff, rh,
-                  rh / 2, false, UI_COL(UIC_TEXT), NULL, /*UI_COL(UIC_BG_DARK), UI_COL(UIC_BG_LIGHT), */
+                  rh / 2, false, UI_Color(UIC_TEXT), NULL, /*UI_Color(UIC_BG_DARK), UI_Color(UIC_BG_LIGHT), */
                   alpha, -1);
 }
 
@@ -323,18 +323,18 @@ void Rend_ConsoleFPS(void)
         return;
 
     // If the ui is active draw the counter a bit further down
-    if(ui_active)
+    if(UI_IsActive())
         y += 20;
 
     sprintf(buf, "%.1f FPS", DD_GetFrameRate());
     w = FR_TextWidth(buf) + 16;
     h = FR_TextHeight(buf) + 16;
     x = glScreenWidth - w - 10;
-    UI_GradientEx(x, y, w, h, 6, UI_COL(UIC_BG_MEDIUM),
-                  UI_COL(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(x, y, w, h, 6, false, UI_COL(UIC_BRD_HI), NULL, .5f, -1);
-    UI_Color(UI_COL(UIC_TEXT));
-    UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_COL(UIC_TITLE), 1);
+    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM),
+                  UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+    UI_SetColor(UI_Color(UIC_TEXT));
+    UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_Color(UIC_TITLE), 1);
 }
 
 /**

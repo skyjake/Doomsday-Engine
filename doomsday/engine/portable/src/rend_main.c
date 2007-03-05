@@ -2475,10 +2475,10 @@ int Rend_GetLightAdaptVal(int lightvalue)
 static void DrawRangeBox(int x, int y, int w, int h, ui_color_t *c)
 {
     UI_GradientEx(x, y, w, h, 6,
-                  c ? c : UI_COL(UIC_BG_MEDIUM),
-                  c ? c : UI_COL(UIC_BG_LIGHT),
+                  c ? c : UI_Color(UIC_BG_MEDIUM),
+                  c ? c : UI_Color(UIC_BG_LIGHT),
                   1, 1);
-    UI_DrawRectEx(x, y, w, h, 6, false, c ? c : UI_COL(UIC_BRD_HI),
+    UI_DrawRectEx(x, y, w, h, 6, false, c ? c : UI_Color(UIC_BRD_HI),
                   NULL, 1, -1);
 }
 
@@ -2554,7 +2554,7 @@ void R_DrawLightRange(void)
     gl.Enable(DGL_TEXTURING);
 
     UI_TextOutEx(title, ((bWidth * 255) / 2),
-                 -12, true, true, UI_COL(UIC_TITLE), .7f);
+                 -12, true, true, UI_Color(UIC_TITLE), .7f);
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();

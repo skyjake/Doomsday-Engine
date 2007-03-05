@@ -195,7 +195,7 @@ void DD_DrawAndBlit(void)
         gx.G_Drawer();
 
         // Menu is not drawn if the UI fading is in effect.
-        if(!ui_active || UI_Alpha() >= 1.0)
+        if(!UI_IsActive() || UI_Alpha() >= 1.0)
         {
             // Draw Menu
             gx.MN_Drawer();
@@ -210,7 +210,7 @@ void DD_DrawAndBlit(void)
         S_Drawer();
     }
 
-    if(ui_active)
+    if(UI_IsActive())
     {
         // Draw user interface.
         UI_Drawer();

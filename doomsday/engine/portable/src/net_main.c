@@ -513,7 +513,7 @@ void Net_BuildLocalCommands(timespan_t time)
         memset(cmd, 0, sizeof(*cmd));
         // No actions can be undertaken during demo playback or when
         // in UI mode.
-        if(!(playback || ui_active))
+        if(!(playback || UI_IsActive()))
         {
             P_BuildCommand(cmd, i);
         }
