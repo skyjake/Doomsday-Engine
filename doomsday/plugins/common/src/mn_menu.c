@@ -180,13 +180,13 @@ void M_DrawWeaponMenu(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
 void M_DrawFilesMenu(void);
-void M_DrawBackground(menu_t *menu);
-
 void M_DrawBackgroundBox(int x, int y, int w, int h,
                          float r, float g, float b, float a,
                          boolean background, int border);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void M_DrawBackground(menu_t *menu);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
