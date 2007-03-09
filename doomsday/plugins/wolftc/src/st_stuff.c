@@ -434,9 +434,11 @@ void ST_refreshBackground(void)
     alpha = cfg.statusbarAlpha - hudHideAmount;
     // Clamp
     CLAMP(alpha, 0.0f, 1.0f);
+    if(!(alpha > 0))
+        return;
 
     GL_SetPatch(sbar.lump);
-    if(!st_blended)
+    if(!st_blended || !(alpha < 1)
     {
         // we can just render the full thing as normal
         GL_DrawPatch(ST_X, ST_Y, sbar.lump);
@@ -447,7 +449,7 @@ void ST_refreshBackground(void)
         if(IS_NETGAME) // faceback
             GL_DrawPatch(ST_FX, ST_Y+1, faceback.lump);
     }
-    else if(alpha < 1.0f && alpha > 0.0f)
+    else
     {
         // Alpha blended status bar, we'll need to cut it up into smaller bits...
 

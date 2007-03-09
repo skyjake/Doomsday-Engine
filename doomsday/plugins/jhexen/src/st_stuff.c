@@ -1129,8 +1129,10 @@ void ST_refreshBackground(void)
     alpha = cfg.statusbarAlpha - hudHideAmount;
     // Clamp
     CLAMP(alpha, 0.0f, 1.0f);
+    if(!(alpha > 0))
+        return;
 
-    if(!st_blended)
+    if(!st_blended || !(alpha < 1))
     {
         GL_DrawPatch(0, 134, PatchNumH2BAR.lump);
         GL_DrawPatch(0, 134, PatchNumH2TOP.lump);
@@ -1167,7 +1169,7 @@ void ST_refreshBackground(void)
 
         DrawChain();
     }
-    else if(alpha < 1.0f && alpha > 0.0f)
+    else
     {
         gl.Color4f(1, 1, 1, alpha);
 
