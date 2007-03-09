@@ -1207,6 +1207,9 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
     // Now we need to do a check in case there are keys currently
     // being pressed that should be released if the event binding they are
     // bound too has commands in the bind class being enabled/disabled.
+    // Also, if there are any axes which are outside their dead zone and
+    // if there axis bindings in the bind class being enabled/disabled, we
+    // need to send centering events for them.
 
     // loop through the bindings
     for(g = 0; g < NUM_INPUT_DEVICES; ++g)
@@ -1332,7 +1335,122 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
             }
         }
         // Axis bindings.
-        // FIXME!
+        for(i = 0, bind = devCtrlBinds[g].axisBinds;
+            i < devCtrlBinds[g].numAxisBinds; ++i, bind++)
+        {
+            bindaxis_t *axis;
+
+            if(bind->binds[classID].type == BND_UNUSED)
+                continue;
+
+            axis = &bind->binds[classID].data.axiscontrol;
+
+            // we're only interested in bindings for axes which are
+            // currently outside their dead zone, that have a binding in
+            // the class being enabled/disabled (classID)
+            if(!dev->axes[axis->playercontrol].position)
+                continue;
+
+            count = 0;
+            // loop through the commands for this binding,
+            // count the number of commands for this binding that are for
+            // currently active bind classes with a lower id than the class
+            // being enabled/disabled (classID)
+            k = 0;
+            isDone = false;
+            while(k < numBindClasses && !isDone)
+            {
+                axis = &bind->binds[k].data.axiscontrol;
+
+                if(bindClasses[k].active && bind->binds[k].type != BND_UNUSED)
+                {
+                    // if there is a command for this event binding in a
+                    // class that is currently active (current is k), that
+                    // has a greater id than the class being
+                    // enabled/disabled (classID) then we don't need to que
+                    // any extra events at all as that will have been done
+                    // when the binding class with the higher id was enabled.
+                    // The commands in the lower classes can't have been
+                    // active (for this event), as the highest class command
+                    // is ALWAYS executed unless a specific class is
+                    // requested.
+                    if(k > classID)
+                    {
+                        // don't need to que any extra events
+                        count = 0;
+                        isDone = true;
+                    }
+                    else
+                        count++;
+                }
+
+                if(!isDone)
+                    k++;
+            }
+
+            if(count > 0)
+            {
+                // We need to send center events with a forced binding
+                // axis request for all the binding classes with a
+                // lower id than the class being enabled/disabled (classID)
+                // that are also active.
+                for(k = 0; k < classID; ++k)
+                {
+                    if(bindClasses[k].active && bind->binds[k].type != BND_UNUSED)
+                    {
+                        ddevent_t ev;
+                        // Que a center event for this axis.
+                        ev.deviceID = g;
+                        ev.isAxis = true;
+                        ev.controlID = bind->controlID;
+                        ev.data1 = 0;
+
+                        // Request an axisBind in this class
+                        ev.useclass = bindClasses[k].id;
+                        ev.noclass = false;
+                        // Finally, post the event
+                        DD_PostEvent(&ev);
+                    }
+                }
+            }
+
+            // Also send a center event for this binding if the currently
+            // currently active axisbind is in the class being disabled
+            // and it has the highest id of the active bindClass axisbinds
+            // for this binding
+            k = 0;
+            isDone = false;
+            while(k < numBindClasses && !isDone)
+            {
+                uint        idx = numBindClasses - 1 - k;
+
+                if((idx > classID && bindClasses[idx].active &&
+                    bind->binds[idx].type != BND_UNUSED) || idx < classID)
+                {
+                    isDone = true;
+                }
+                else
+                {
+                    if(!bindClasses[idx].active && bind->binds[idx].type != BND_UNUSED)
+                    {
+                        ddevent_t ev;
+                        // Que a center event for this axis.
+                        ev.deviceID = g;
+                        ev.isAxis = true;
+                        ev.controlID = bind->controlID;
+                        ev.data1 = 0;
+
+                        // Request an axisbind in this class
+                        ev.useclass = bindClasses[idx].id;
+                        ev.noclass = false;
+                        // Finally, post the event
+                        DD_PostEvent(&ev);
+                    }
+
+                    k++;
+                }
+            }
+        }
     }
 
     return true;
