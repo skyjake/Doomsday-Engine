@@ -684,7 +684,7 @@ void ST_createWidgets(void)
                       &oldartiCount, &st_statusbaron, ST_ARTIFACTCWIDTH, &statusbarCounterAlpha);
 
     // inventory slots
-    width = PatchARTIFACTS[5].width + 1;
+    width = SHORT(PatchARTIFACTS[5].width) + 1;
     temp = 0;
 
     for (i = 0; i < NUMVISINVSLOTS; i++){
