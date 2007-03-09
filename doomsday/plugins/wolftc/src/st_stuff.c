@@ -438,7 +438,7 @@ void ST_refreshBackground(void)
         return;
 
     GL_SetPatch(sbar.lump);
-    if(!st_blended || !(alpha < 1)
+    if(!st_blended || !(alpha < 1))
     {
         // we can just render the full thing as normal
         GL_DrawPatch(ST_X, ST_Y, sbar.lump);
