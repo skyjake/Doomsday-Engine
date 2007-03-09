@@ -964,17 +964,17 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     }
     if(digits == 4)
     {
-        GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val / 1000].width / 2 - 12, y + 2, 0, .4f, numbers[val / 1000]);
+        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(hu_font_b[val / 1000].width) / 2 - 12, y + 2, 0, .4f, numbers[val / 1000]);
         gl.Color4f(r, g, b, a);
-        GL_DrawPatch_CS(xpos + 6 - hu_font_b[val / 1000].width / 2 - 12, y, numbers[val / 1000]);
+        GL_DrawPatch_CS(xpos + 6 - SHORT(hu_font_b[val / 1000].width) / 2 - 12, y, numbers[val / 1000]);
     }
     if(digits > 2)
     {
         if(realdigits > 2)
         {
-            GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val / 100].width / 2, y+2, 0, .4f, numbers[val / 100]);
+            GL_DrawPatchLitAlpha(xpos + 8 - SHORT(hu_font_b[val / 100].width) / 2, y+2, 0, .4f, numbers[val / 100]);
             gl.Color4f(r, g, b, a);
-            GL_DrawPatch_CS(xpos + 6 - hu_font_b[val / 100].width / 2, y, numbers[val / 100]);
+            GL_DrawPatch_CS(xpos + 6 - SHORT(hu_font_b[val / 100].width) / 2, y, numbers[val / 100]);
         }
         xpos += 12;
     }
@@ -983,9 +983,9 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     {
         if(val > 9)
         {
-            GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val / 10].width / 2, y+2, 0, .4f, numbers[val / 10]);
+            GL_DrawPatchLitAlpha(xpos + 8 - SHORT(hu_font_b[val / 10].width) / 2, y+2, 0, .4f, numbers[val / 10]);
             gl.Color4f(r, g, b, a);
-            GL_DrawPatch_CS(xpos + 6 - hu_font_b[val / 10].width / 2, y, numbers[val / 10]);
+            GL_DrawPatch_CS(xpos + 6 - SHORT(hu_font_b[val / 10].width) / 2, y, numbers[val / 10]);
         }
         else if(digits == 2 || oldval > 99)
         {
@@ -996,13 +996,13 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
         xpos += 12;
     }
     val = val % 10;
-    GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[val].width / 2, y+2, 0, .4f, numbers[val]);
+    GL_DrawPatchLitAlpha(xpos + 8 - SHORT(hu_font_b[val].width) / 2, y+2, 0, .4f, numbers[val]);
     gl.Color4f(r, g, b, a);
-    GL_DrawPatch_CS(xpos + 6 - hu_font_b[val].width / 2, y, numbers[val]);
+    GL_DrawPatch_CS(xpos + 6 - SHORT(hu_font_b[val].width) / 2, y, numbers[val]);
     if(neg)
     {
-        GL_DrawPatchLitAlpha(xpos + 8 - hu_font_b[negative].width / 2 - 12 * (realdigits), y+2, 0, .4f, negative);
+        GL_DrawPatchLitAlpha(xpos + 8 - SHORT(hu_font_b[negative].width) / 2 - 12 * (realdigits), y+2, 0, .4f, negative);
         gl.Color4f(r, g, b, a);
-        GL_DrawPatch_CS(xpos + 6 - hu_font_b[negative].width / 2 - 12 * (realdigits), y, negative);
+        GL_DrawPatch_CS(xpos + 6 - SHORT(hu_font_b[negative].width) / 2 - 12 * (realdigits), y, negative);
     }
 }
