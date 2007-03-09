@@ -358,12 +358,12 @@ int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
         case FLEV_LOWERFLOOR:
             floor->direction = -1;
             floor->sector = sec;
-            floor->floordestheight = P_FindHighestFloorSurrounding(sec);
+            floor->floordestheight = FLT2FIX(P_FindHighestFloorSurrounding(sec));
             break;
         case FLEV_LOWERFLOORTOLOWEST:
             floor->direction = -1;
             floor->sector = sec;
-            floor->floordestheight = P_FindLowestFloorSurrounding(sec);
+            floor->floordestheight = FLT2FIX(P_FindLowestFloorSurrounding(sec));
             break;
         case FLEV_LOWERFLOORBYVALUE:
             floor->direction = -1;
@@ -388,7 +388,7 @@ int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
         case FLEV_RAISEFLOOR:
             floor->direction = 1;
             floor->sector = sec;
-            floor->floordestheight = P_FindLowestCeilingSurrounding(sec);
+            floor->floordestheight = FLT2FIX(P_FindLowestCeilingSurrounding(sec));
             if(floor->floordestheight > P_GetFixedp(sec, DMU_CEILING_HEIGHT))
                 floor->floordestheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
             break;
@@ -396,7 +396,7 @@ int EV_DoFloor(line_t *line, byte *args, floor_e floortype)
             floor->direction = 1;
             floor->sector = sec;
             floor->floordestheight =
-                P_FindNextHighestFloor(sec, P_GetFixedp(sec, DMU_FLOOR_HEIGHT));
+                FLT2FIX(P_FindNextHighestFloor(sec, P_GetFloatp(sec, DMU_FLOOR_HEIGHT)));
             break;
         case FLEV_RAISEFLOORBYVALUE:
             floor->direction = 1;
@@ -819,7 +819,7 @@ int EV_OpenPillar(line_t *line, byte *args)
         pillar->sector = sec;
         if(!args[2])
         {
-            pillar->floordest = P_FindLowestFloorSurrounding(sec);
+            pillar->floordest = FLT2FIX(P_FindLowestFloorSurrounding(sec));
         }
         else
         {
@@ -828,7 +828,7 @@ int EV_OpenPillar(line_t *line, byte *args)
         }
         if(!args[3])
         {
-            pillar->ceilingdest = P_FindHighestCeilingSurrounding(sec);
+            pillar->ceilingdest = FLT2FIX(P_FindHighestCeilingSurrounding(sec));
         }
         else
         {

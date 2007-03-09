@@ -58,11 +58,11 @@ ceilinglist_t *activeceilings;
 
 // CODE --------------------------------------------------------------------
 
-void T_MoveCeiling(ceiling_t * ceiling)
+void T_MoveCeiling(ceiling_t *ceiling)
 {
     result_e res;
 
-    switch (ceiling->direction)
+    switch(ceiling->direction)
     {
     case 0:
         // IN STASIS
@@ -75,7 +75,7 @@ void T_MoveCeiling(ceiling_t * ceiling)
 
         if(!(leveltime & 7))
         {
-            switch (ceiling->type)
+            switch(ceiling->type)
             {
             case silentCrushAndRaise:
                 break;
@@ -88,7 +88,7 @@ void T_MoveCeiling(ceiling_t * ceiling)
 
         if(res == pastdest)
         {
-            switch (ceiling->type)
+            switch(ceiling->type)
             {
             case raiseToHighest:
             case customCeiling: //d64tc
@@ -117,7 +117,7 @@ void T_MoveCeiling(ceiling_t * ceiling)
 
         if(!(leveltime & 7))
         {
-            switch (ceiling->type)
+            switch(ceiling->type)
             {
             case silentCrushAndRaise:
                 break;
@@ -128,7 +128,7 @@ void T_MoveCeiling(ceiling_t * ceiling)
 
         if(res == pastdest)
         {
-            switch (ceiling->type)
+            switch(ceiling->type)
             {
             case silentCrushAndRaise:
                 S_SectorSound(ceiling->sector, SORG_CEILING, sfx_pstop);
@@ -152,7 +152,7 @@ void T_MoveCeiling(ceiling_t * ceiling)
         {
             if(res == crushed)
             {
-                switch (ceiling->type)
+                switch(ceiling->type)
                 {
                 case silentCrushAndRaise:
                 case crushAndRaise:
@@ -218,9 +218,9 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
         {
         case fastCrushAndRaise:
             ceiling->crush = true;
-            ceiling->topheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
+            ceiling->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             ceiling->bottomheight =
-                P_GetFixedp(sec, DMU_FLOOR_HEIGHT) + (8 * FRACUNIT);
+                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
 
             ceiling->direction = -1;
             ceiling->speed = CEILSPEED * 2;
@@ -229,12 +229,12 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
         case silentCrushAndRaise:
         case crushAndRaise:
             ceiling->crush = true;
-            ceiling->topheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
+            ceiling->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
         case lowerAndCrush:
         case lowerToFloor:
-            ceiling->bottomheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
+            ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
             if(type != lowerToFloor)
-                ceiling->bottomheight += 8 * FRACUNIT;
+                ceiling->bottomheight += 8;
             ceiling->direction = -1;
             //ceiling->speed = CEILSPEED;
             ceiling->speed = CEILSPEED * 8; // d64tc
@@ -242,7 +242,7 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
 
         case raiseToHighest:
             ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
-            ceiling->topheight -= 8*FRACUNIT;   // d64tc
+            ceiling->topheight -= 8;   // d64tc
             ceiling->direction = 1;
             ceiling->speed = CEILSPEED;
             break;
@@ -252,24 +252,23 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
             //bitmip? wha?
             side_t *front = P_GetPtrp(line, DMU_SIDE0);
             side_t *back = P_GetPtrp(line, DMU_SIDE1);
-            int bitmipL = 0;
-            int bitmipR = 0;
+            float bitmipL = 0, bitmipR = 0;
 
-            bitmipL = P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS;
+            bitmipL = P_GetFloatp(front, DMU_MIDDLE_TEXTURE_OFFSET_X);
             if(back)
-                bitmipR = P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS;
+                bitmipR = P_GetFloatp(back, DMU_MIDDLE_TEXTURE_OFFSET_X);
 
             if(bitmipR > 0)
             {
                 ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
                 ceiling->direction = 1;
                 ceiling->speed = CEILSPEED * bitmipL;
-                ceiling->topheight -= bitmipR * FRACUNIT;
+                ceiling->topheight -= bitmipR;
             }
             else
             {
-                ceiling->bottomheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
-                ceiling->bottomheight -= bitmipR * FRACUNIT;
+                ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+                ceiling->bottomheight -= bitmipR;
                 ceiling->direction = -1;
                 ceiling->speed = CEILSPEED * bitmipL;
             }
@@ -283,10 +282,10 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
     return rtn;
 }
 
-/*
- * Adds a ceiling to the head of the list of active ceilings
+/**
+ * Adds a ceiling to the head of the list of active ceilings.
  *
- * @param ceiling: ptr to the ceiling structure to be added
+ * @param ceiling           Ptr to the ceiling structure to be added.
  */
 void P_AddActiveCeiling(ceiling_t *ceiling)
 {
@@ -302,10 +301,10 @@ void P_AddActiveCeiling(ceiling_t *ceiling)
     activeceilings = list;
 }
 
-/*
- * Removes a ceiling from the list of active ceilings
+/**
+ * Removes a ceiling from the list of active ceilings.
  *
- * @param ceiling: ptr to the ceiling structure to be removed
+ * @param ceiling           Ptr to the ceiling structure to be removed.
  */
 void P_RemoveActiveCeiling(ceiling_t *ceiling)
 {
@@ -320,7 +319,7 @@ void P_RemoveActiveCeiling(ceiling_t *ceiling)
     free(list);
 }
 
-/*
+/**
  * Removes all ceilings from the active ceiling list
  */
 void P_RemoveAllActiveCeilings(void)
@@ -334,15 +333,16 @@ void P_RemoveAllActiveCeilings(void)
     }
 }
 
-/*
- * Reactivates all stopped crushers with the right tag
- * Returns true if a ceiling reactivated
+/**
+ * Reactivates all stopped crushers with the right tag.
  *
- * @param line: ptr to the line reactivating the crusher
+ * @param line          Ptr to the line reactivating the crusher.
+ *
+ * @return              <code>true</code> if a ceiling reactivated.
  */
 int P_ActivateInStasisCeiling(line_t *line)
 {
-    int rtn = 0;
+    int         rtn = 0;
     ceilinglist_t *cl;
 
     for(cl = activeceilings; cl; cl = cl->next)
@@ -361,15 +361,16 @@ int P_ActivateInStasisCeiling(line_t *line)
     return rtn;
 }
 
-/*
- * Stops all active ceilings with the right tag
- * Returns true if a ceiling put in stasis
+/**
+ * Stops all active ceilings with the right tag.
  *
- * @param line: ptr to the line stopping the ceilings
+ * @param line          Ptr to the line stopping the ceilings.
+ *
+ * @return              <code>true</code> if a ceiling put in stasis.
  */
 int EV_CeilingCrushStop(line_t *line)
 {
-    int rtn = 0;
+    int         rtn = 0;
     ceilinglist_t *cl;
 
     for(cl = activeceilings; cl; cl = cl->next)

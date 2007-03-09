@@ -57,20 +57,20 @@
 
 // CODE --------------------------------------------------------------------
 
-void T_VerticalDoor(vldoor_t * door)
+void T_VerticalDoor(vldoor_t *door)
 {
     xsector_t *xsec;
     result_e res;
 
     xsec = P_XSector(door->sector);
 
-    switch (door->direction)
+    switch(door->direction)
     {
     case 0:
         // WAITING
         if(!--door->topcountdown)
         {
-            switch (door->type)
+            switch(door->type)
             {
             case instantRaise:  //d64tc
                 door->direction = -1;
@@ -100,7 +100,7 @@ void T_VerticalDoor(vldoor_t * door)
         //  INITIAL WAIT
         if(!--door->topcountdown)
         {
-            switch (door->type)
+            switch(door->type)
             {
             case raiseIn5Mins:
                 door->direction = 1;
@@ -118,11 +118,11 @@ void T_VerticalDoor(vldoor_t * door)
         // DOWN
         res =
             T_MovePlane(door->sector, door->speed,
-                        P_GetFixedp(door->sector, DMU_FLOOR_HEIGHT),
+                        P_GetFloatp(door->sector, DMU_FLOOR_HEIGHT),
                         false, 1, door->direction);
         if(res == pastdest)
         {
-            switch (door->type)
+            switch(door->type)
             {
             case instantRaise:  //d64tc
             case instantClose:  //d64tc
@@ -162,7 +162,7 @@ void T_VerticalDoor(vldoor_t * door)
             // DOOMII BUG:
             // The switch bellow SHOULD(?) play the blazing open sound if
             // the door type is blazing and not sfx_doropn.
-            switch (door->type)
+            switch(door->type)
             {
             case blazeClose:
             case close:     // DO NOT GO BACK UP!
@@ -184,7 +184,7 @@ void T_VerticalDoor(vldoor_t * door)
 
         if(res == pastdest)
         {
-            switch (door->type)
+            switch(door->type)
             {
             case instantRaise:  //d64tc
                 door->direction = 0;
@@ -217,7 +217,7 @@ void T_VerticalDoor(vldoor_t * door)
     }
 }
 
-/*
+/**
  * Move a locked door up/down
  */
 int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
@@ -337,11 +337,11 @@ int EV_DoDoor(line_t *line, vldoor_e type)
         door->topwait = VDOORWAIT;
         door->speed = VDOORSPEED;
 
-        switch (type)
+        switch(type)
         {
         case blazeClose:
             door->topheight = P_FindLowestCeilingSurrounding(sec);
-            door->topheight -= 4 * FRACUNIT;
+            door->topheight -= 4;
             door->direction = -1;
             door->speed = VDOORSPEED * 4;
             S_SectorSound(door->sector, SORG_CEILING, sfx_bdcls);
@@ -349,14 +349,13 @@ int EV_DoDoor(line_t *line, vldoor_e type)
 
         case close:
             door->topheight = P_FindLowestCeilingSurrounding(sec);
-            door->topheight -= 4 * FRACUNIT;
+            door->topheight -= 4;
             door->direction = -1;
             S_SectorSound(door->sector, SORG_CEILING, sfx_dorcls);
             break;
 
         case close30ThenOpen:
-            door->topheight =
-                P_GetFixedp(sec, DMU_CEILING_HEIGHT);
+            door->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             door->direction = -1;
             S_SectorSound(door->sector, SORG_CEILING, sfx_dorcls);
             break;
@@ -365,10 +364,9 @@ int EV_DoDoor(line_t *line, vldoor_e type)
         case blazeOpen:
             door->direction = 1;
             door->topheight = P_FindLowestCeilingSurrounding(sec);
-            door->topheight -= 4 * FRACUNIT;
+            door->topheight -= 4;
             door->speed = VDOORSPEED * 4;
-            if(door->topheight !=
-                P_GetFixedp(sec, DMU_CEILING_HEIGHT))
+            if(door->topheight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
                 S_SectorSound(door->sector, SORG_CEILING, sfx_bdopn);
             break;
 
@@ -376,9 +374,8 @@ int EV_DoDoor(line_t *line, vldoor_e type)
         case open:
             door->direction = 1;
             door->topheight = P_FindLowestCeilingSurrounding(sec);
-            door->topheight -= 4 * FRACUNIT;
-            if(door->topheight !=
-                P_GetFixedp(sec, DMU_CEILING_HEIGHT))
+            door->topheight -= 4;
+            if(door->topheight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
                 S_SectorSound(door->sector, SORG_CEILING, sfx_doropn);
             break;
 
@@ -390,7 +387,7 @@ int EV_DoDoor(line_t *line, vldoor_e type)
     return rtn;
 }
 
-/*
+/**
  * open a door manually, no tag value
  */
 void EV_VerticalDoor(line_t *line, mobj_t *thing)
@@ -410,7 +407,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
     //  Check for locks
     player = thing->player;
 
-    switch (xline->special)
+    switch(xline->special)
     {
     case 26:
     case 32:
@@ -553,7 +550,7 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 
     // find the top and bottom of the movement range
     door->topheight = P_FindLowestCeilingSurrounding(sec);
-    door->topheight -= 4 * FRACUNIT;
+    door->topheight -= 4;
 }
 
 void P_SpawnDoorCloseIn30(sector_t *sec)
@@ -575,7 +572,7 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
     door->topcountdown = 30 * 35;
 }
 
-void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
+void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 {
     vldoor_t *door;
 
@@ -592,7 +589,7 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
     door->type = raiseIn5Mins;
     door->speed = VDOORSPEED;
     door->topheight = P_FindLowestCeilingSurrounding(sec);
-    door->topheight -= 4 * FRACUNIT;
+    door->topheight -= 4;
     door->topwait = VDOORWAIT;
     door->topcountdown = 5 * 60 * 35;
 }
@@ -600,7 +597,7 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
 /**
  * kaiser - Implemented for doom64tc.
  */
-int EV_DoSplitDoor(line_t * line, int ftype, int ctype)
+int EV_DoSplitDoor(line_t *line, int ftype, int ctype)
 {
     boolean     floor, ceiling;
     sector_t   *sec = NULL;

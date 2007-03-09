@@ -176,7 +176,7 @@ int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
             break;
 
         case CLEV_RAISETOHIGHEST:
-            ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
+            ceiling->topheight = FLT2FIX(P_FindHighestCeilingSurrounding(sec));
             ceiling->direction = 1;
             break;
 

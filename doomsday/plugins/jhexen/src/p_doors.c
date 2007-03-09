@@ -192,7 +192,7 @@ int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
         switch (type)
         {
         case DREV_CLOSE:
-            door->topheight = P_FindLowestCeilingSurrounding(sec);
+            door->topheight = FLT2FIX(P_FindLowestCeilingSurrounding(sec));
             door->topheight -= 4 * FRACUNIT;
             door->direction = -1;
             break;
@@ -205,7 +205,7 @@ int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
         case DREV_NORMAL:
         case DREV_OPEN:
             door->direction = 1;
-            door->topheight = P_FindLowestCeilingSurrounding(sec);
+            door->topheight = FLT2FIX(P_FindLowestCeilingSurrounding(sec));
             door->topheight -= 4 * FRACUNIT;
             break;
 
@@ -273,7 +273,7 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     //
     // find the top and bottom of the movement range
     //
-    door->topheight = P_FindLowestCeilingSurrounding(sec);
+    door->topheight = FLT2FIX(P_FindLowestCeilingSurrounding(sec));
     door->topheight -= 4 * FRACUNIT;
     SN_StartSequence(P_SectorSoundOrigin(door->sector),
                      SEQ_DOOR_STONE + P_XSector(door->sector)->seqType);

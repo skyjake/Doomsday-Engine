@@ -1592,9 +1592,9 @@ static void SV_WriteCeiling(ceiling_t* ceiling)
     SV_WriteByte((byte) ceiling->type);
     SV_WriteLong(P_ToIndex(ceiling->sector));
 
-    SV_WriteShort(ceiling->bottomheight >> FRACBITS);
-    SV_WriteShort(ceiling->topheight >> FRACBITS);
-    SV_WriteLong(ceiling->speed);
+    SV_WriteShort((int)ceiling->bottomheight);
+    SV_WriteShort((int)ceiling->topheight);
+    SV_WriteLong(FLT2FIX(ceiling->speed));
 
     SV_WriteByte(ceiling->crush);
 
@@ -1624,9 +1624,9 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
 
         ceiling->sector = sector;
 
-        ceiling->bottomheight = SV_ReadShort() << FRACBITS;
-        ceiling->topheight = SV_ReadShort() << FRACBITS;
-        ceiling->speed = SV_ReadLong();
+        ceiling->bottomheight = (float) SV_ReadShort();
+        ceiling->topheight = (float) SV_ReadShort();
+        ceiling->speed = FIX2FLT(SV_ReadLong());
 
         ceiling->crush = SV_ReadByte();
 
@@ -1639,6 +1639,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
         // Its in the old pre V5 format which serialized ceiling_t
         // Padding at the start (an old thinker_t struct)
         thinker_t junk;
+        fixed_t temp;
         SV_Read(&junk, sizeof(thinker_t));
 
         // Start of used data members.
@@ -1653,9 +1654,12 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
 
         ceiling->sector = sector;
 
-        SV_Read(&ceiling->bottomheight, sizeof(fixed_t));
-        SV_Read(&ceiling->topheight, sizeof(fixed_t));
-        SV_Read(&ceiling->speed, sizeof(fixed_t));
+        SV_Read(&temp, sizeof(fixed_t));
+        ceiling->bottomheight = (float) temp;
+        SV_Read(&temp, sizeof(fixed_t));
+        ceiling->topheight = (float) temp;
+        SV_Read(&temp, sizeof(fixed_t));
+        ceiling->speed = FIX2FLT(temp);
         SV_Read(&ceiling->crush, sizeof(boolean));
         SV_Read(&ceiling->direction, sizeof(int));
         SV_Read(&ceiling->tag, sizeof(int));
@@ -1682,8 +1686,8 @@ static void SV_WriteDoor(vldoor_t* door)
 
     SV_WriteLong(P_ToIndex(door->sector));
 
-    SV_WriteShort(door->topheight >> FRACBITS);
-    SV_WriteLong(door->speed);
+    SV_WriteShort((int)door->topheight);
+    SV_WriteLong(FLT2FIX(door->speed));
 
     SV_WriteLong(door->direction);
     SV_WriteLong(door->topwait);
@@ -1707,8 +1711,8 @@ static int SV_ReadDoor(vldoor_t* door)
 
         door->sector = sector;
 
-        door->topheight = SV_ReadShort() << FRACBITS;
-        door->speed = SV_ReadLong();
+        door->topheight = (float) SV_ReadShort();
+        door->speed = FIX2FLT(SV_ReadLong());
 
         door->direction = SV_ReadLong();
         door->topwait = SV_ReadLong();
@@ -1716,6 +1720,7 @@ static int SV_ReadDoor(vldoor_t* door)
     }
     else
     {
+        fixed_t temp;
         // Its in the old pre V5 format which serialized vldoor_t
         // Padding at the start (an old thinker_t struct)
         SV_Read(junkbuffer, (size_t) 16);
@@ -1732,8 +1737,10 @@ static int SV_ReadDoor(vldoor_t* door)
 
         door->sector = sector;
 
-        SV_Read(&door->topheight, sizeof(fixed_t));
-        SV_Read(&door->speed, sizeof(fixed_t));
+        SV_Read(&temp, sizeof(fixed_t));
+        door->topheight = (float) temp;
+        SV_Read(&temp, sizeof(fixed_t));
+        door->speed = FIX2FLT(temp);
         SV_Read(&door->direction, sizeof(int));
         SV_Read(&door->topwait, sizeof(int));
         SV_Read(&door->topcountdown, sizeof(int));
@@ -1745,7 +1752,7 @@ static int SV_ReadDoor(vldoor_t* door)
     return true; // Add this thinker.
 }
 
-static void SV_WriteFloor(floormove_t* floor)
+static void SV_WriteFloor(floormove_t *floor)
 {
     SV_WriteByte(tc_floor);
 
@@ -1765,11 +1772,11 @@ static void SV_WriteFloor(floormove_t* floor)
 
     SV_WriteShort(floor->texture);
 
-    SV_WriteShort(floor->floordestheight >> FRACBITS);
-    SV_WriteLong(floor->speed);
+    SV_WriteShort((int)floor->floordestheight);
+    SV_WriteLong(FLT2FIX(floor->speed));
 }
 
-static int SV_ReadFloor(floormove_t* floor)
+static int SV_ReadFloor(floormove_t *floor)
 {
     sector_t* sector;
 
@@ -1793,11 +1800,12 @@ static int SV_ReadFloor(floormove_t* floor)
 
         floor->texture = SV_ReadShort();
 
-        floor->floordestheight = SV_ReadShort() << FRACBITS;
-        floor->speed = SV_ReadLong();
+        floor->floordestheight = (float) SV_ReadShort();
+        floor->speed = FIX2FLT(SV_ReadLong());
     }
     else
     {
+        fixed_t temp;
         // Its in the old pre V5 format which serialized floormove_t
         // Padding at the start (an old thinker_t struct)
         SV_Read(junkbuffer, (size_t) 16);
@@ -1819,8 +1827,10 @@ static int SV_ReadFloor(floormove_t* floor)
         SV_Read(&floor->direction, sizeof(int));
         SV_Read(&floor->newspecial, sizeof(int));
         SV_Read(&floor->texture, sizeof(short));
-        SV_Read(&floor->floordestheight, sizeof(fixed_t));
-        SV_Read(&floor->speed, sizeof(fixed_t));
+        SV_Read(&temp, sizeof(fixed_t));
+        floor->floordestheight = (float) temp;
+        SV_Read(&temp, sizeof(fixed_t));
+        floor->speed = FIX2FLT(temp);
     }
 
     P_XSector(floor->sector)->specialdata = floor;
@@ -1843,9 +1853,9 @@ static void SV_WritePlat(plat_t* plat)
 
     SV_WriteLong(P_ToIndex(plat->sector));
 
-    SV_WriteLong(plat->speed);
-    SV_WriteShort(plat->low >> FRACBITS);
-    SV_WriteShort(plat->high >> FRACBITS);
+    SV_WriteLong(FLT2FIX(plat->speed));
+    SV_WriteShort((int)plat->low);
+    SV_WriteShort((int)plat->high);
 
     SV_WriteLong(plat->wait);
     SV_WriteLong(plat->count);
@@ -1878,9 +1888,9 @@ static int SV_ReadPlat(plat_t* plat)
 
         plat->sector = sector;
 
-        plat->speed = SV_ReadLong();
-        plat->low = SV_ReadShort() << FRACBITS;
-        plat->high = SV_ReadShort() << FRACBITS;
+        plat->speed = FIX2FLT(SV_ReadLong());
+        plat->low = (float) SV_ReadShort();
+        plat->high = (float) SV_ReadShort();
 
         plat->wait = SV_ReadLong();
         plat->count = SV_ReadLong();
@@ -1896,6 +1906,7 @@ static int SV_ReadPlat(plat_t* plat)
         // Its in the old pre V5 format which serialized plat_t
         // Padding at the start (an old thinker_t struct)
         thinker_t junk;
+        fixed_t temp;
         SV_Read(&junk, sizeof(thinker_t));
 
         // Start of used data members.
@@ -1908,9 +1919,12 @@ static int SV_ReadPlat(plat_t* plat)
 
         plat->sector = sector;
 
-        SV_Read(&plat->speed, sizeof(fixed_t));
-        SV_Read(&plat->low, sizeof(fixed_t));
-        SV_Read(&plat->high, sizeof(fixed_t));
+        SV_Read(&temp, sizeof(fixed_t));
+        plat->speed = FIX2FLT(temp);
+        SV_Read(&temp, sizeof(fixed_t));
+        plat->low = (float) temp;
+        SV_Read(&temp, sizeof(fixed_t));
+        plat->high = (float) temp;
         SV_Read(&plat->wait, sizeof(int));
         SV_Read(&plat->count, sizeof(int));
         SV_Read(&plat->status, sizeof(plat_e));

@@ -58,12 +58,12 @@ platlist_t *activeplats;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Move a plat up and down
  *
- * @parm plat: ptr to the plat to move
+ * @parm plat           Ptr to the plat to move
  */
-void T_PlatRaise(plat_t * plat)
+void T_PlatRaise(plat_t *plat)
 {
     result_e res;
 
@@ -142,7 +142,7 @@ void T_PlatRaise(plat_t * plat)
     case waiting:
         if(!--plat->count)
         {
-            if(P_GetFixedp(plat->sector, DMU_FLOOR_HEIGHT) == plat->low)
+            if(P_GetFloatp(plat->sector, DMU_FLOOR_HEIGHT) == plat->low)
                 plat->status = up;
             else
                 plat->status = down;
@@ -155,23 +155,23 @@ void T_PlatRaise(plat_t * plat)
     }
 }
 
-/*
+/**
  * Do Platforms.
  *
- * @param amount: is only used for SOME platforms.
+ * @param amount            Is only used for SOME platforms.
  */
 int EV_DoPlat(line_t *line, plattype_e type, int amount)
 {
     int         rtn = 0;
     plat_t     *plat;
-    fixed_t     floorheight;
+    float      floorheight;
     sector_t   *sec = NULL;
     sector_t   *frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     xsector_t  *xsec;
     iterlist_t *list;
 
     //  Activate all <type> plats that are in_stasis
-    switch (type)
+    switch(type)
     {
     case perpetualRaise:
         P_ActivateInStasis(P_XLine(line)->tag);
@@ -207,7 +207,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
 
         plat->tag = P_XLine(line)->tag;
 
-        floorheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
+        floorheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         switch(type)
         {
         case raiseToNearestAndChange:
@@ -274,7 +274,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
             if(plat->low > floorheight)
                 plat->low = floorheight;
             if(plat->low != floorheight)
-                plat->low += 6 * FRACUNIT;
+                plat->low += 6;
 
             plat->high = floorheight;
             plat->wait = 50 * PLATWAIT;
@@ -318,11 +318,11 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
     return rtn;
 }
 
-/*
+/**
  * Activate a plat that has been put in stasis
  * (stopped perpetual floor, instant floor/ceil toggle)
  *
- * @parm tag: the tag of the plat that should be reactivated
+ * @parm tag            The tag of the plat that should be reactivated
  */
 void P_ActivateInStasis(int tag)
 {
@@ -342,11 +342,12 @@ void P_ActivateInStasis(int tag)
     }
 }
 
-/*
- * Handler for "stop perpetual floor" linedef type
- * Returns true if a plat was put in stasis
+/**
+ * Handler for "stop perpetual floor" linedef type.
  *
- * @parm line: ptr to the line that stopped the plat
+ * @parm line           Ptr to the line that stopped the plat.
+ *
+ * @return              <code>true</code> if a plat was put in stasis.
  */
 int EV_StopPlat(line_t *line)
 {
@@ -369,10 +370,10 @@ int EV_StopPlat(line_t *line)
     return 1;
 }
 
-/*
- * Add a plat to the head of the active plat list
+/**
+ * Add a plat to the head of the active plat list.
  *
- * @parm plat: ptr to the plat to add
+ * @parm plat           Ptr to the plat to add.
  */
 void P_AddActivePlat(plat_t *plat)
 {
@@ -388,10 +389,10 @@ void P_AddActivePlat(plat_t *plat)
     activeplats = list;
 }
 
-/*
- * Remove a plat from the active plat list
+/**
+ * Remove a plat from the active plat list.
  *
- * @parm plat: ptr to the plat to remove
+ * @parm plat           Ptr to the plat to remove.
  */
 void P_RemoveActivePlat(plat_t *plat)
 {
@@ -407,8 +408,8 @@ void P_RemoveActivePlat(plat_t *plat)
     free(list);
 }
 
-/*
- *Remove all plats from the active plat list
+/**
+ * Remove all plats from the active plat list
  */
 void P_RemoveAllActivePlats(void)
 {

@@ -192,15 +192,15 @@ sector_t *P_GetNextSector(line_t *line, sector_t *sec)
 /**
  * Find lowest floor height in surrounding sectors.
  */
-fixed_t P_FindLowestFloorSurrounding(sector_t *sec)
+float P_FindLowestFloorSurrounding(sector_t *sec)
 {
     int         i;
     int         lineCount;
-    fixed_t     floor;
+    float       floor;
     line_t     *check;
     sector_t   *other;
 
-    floor = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
+    floor = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
     lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
@@ -210,8 +210,8 @@ fixed_t P_FindLowestFloorSurrounding(sector_t *sec)
         if(!other)
             continue;
 
-        if(P_GetFixedp(other, DMU_FLOOR_HEIGHT) < floor)
-            floor = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
+        if(P_GetFloatp(other, DMU_FLOOR_HEIGHT) < floor)
+            floor = P_GetFloatp(other, DMU_FLOOR_HEIGHT);
     }
 
     return floor;
@@ -220,11 +220,11 @@ fixed_t P_FindLowestFloorSurrounding(sector_t *sec)
 /**
  * Find highest floor height in surrounding sectors.
  */
-fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
+float P_FindHighestFloorSurrounding(sector_t *sec)
 {
     int         i;
     int         lineCount;
-    fixed_t     floor = -500 * FRACUNIT;
+    float       floor = -500;
     line_t     *check;
     sector_t   *other;
 
@@ -237,8 +237,8 @@ fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
         if(!other)
             continue;
 
-        if(P_GetFixedp(other, DMU_FLOOR_HEIGHT) > floor)
-            floor = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
+        if(P_GetFloatp(other, DMU_FLOOR_HEIGHT) > floor)
+            floor = P_GetFloatp(other, DMU_FLOOR_HEIGHT);
     }
 
     return floor;
@@ -253,12 +253,12 @@ fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
  * DJS - Rewritten using Lee Killough's algorithm for avoiding the
  *       the fixed array.
  */
-fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
+float P_FindNextHighestFloor(sector_t *sec, float currentheight)
 {
     int         i;
     int         lineCount;
-    fixed_t     otherHeight;
-    fixed_t     anotherHeight;
+    float       otherHeight;
+    float       anotherHeight;
     line_t     *check;
     sector_t   *other;
 
@@ -271,7 +271,7 @@ fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
         if(!other)
             continue;
 
-        otherHeight = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
+        otherHeight = P_GetFloatp(other, DMU_FLOOR_HEIGHT);
 
         if(otherHeight > currentheight)
         {
@@ -282,7 +282,7 @@ fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
 
                 if(other)
                 {
-                    anotherHeight = P_GetFixedp(other, DMU_FLOOR_HEIGHT);
+                    anotherHeight = P_GetFloatp(other, DMU_FLOOR_HEIGHT);
 
                     if(anotherHeight < otherHeight &&
                        anotherHeight > currentheight)
@@ -300,11 +300,11 @@ fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
 /**
  * Find lowest ceiling in the surrounding sector.
  */
-fixed_t P_FindLowestCeilingSurrounding(sector_t *sec)
+float P_FindLowestCeilingSurrounding(sector_t *sec)
 {
     int         i;
     int         lineCount;
-    fixed_t     height = DDMAXINT;
+    float       height = FIX2FLT(DDMAXINT);
     line_t     *check;
     sector_t   *other;
 
@@ -317,8 +317,8 @@ fixed_t P_FindLowestCeilingSurrounding(sector_t *sec)
         if(!other)
             continue;
 
-        if(P_GetFixedp(other, DMU_CEILING_HEIGHT) < height)
-            height = P_GetFixedp(other, DMU_CEILING_HEIGHT);
+        if(P_GetFloatp(other, DMU_CEILING_HEIGHT) < height)
+            height = P_GetFloatp(other, DMU_CEILING_HEIGHT);
     }
     return height;
 }
@@ -326,11 +326,11 @@ fixed_t P_FindLowestCeilingSurrounding(sector_t *sec)
 /**
  * Find highest ceiling in the surrounding sectors.
  */
-fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
+float P_FindHighestCeilingSurrounding(sector_t *sec)
 {
     int         i;
     int         lineCount;
-    fixed_t     height = 0;
+    float       height = 0;
     line_t     *check;
     sector_t   *other;
 
@@ -343,8 +343,8 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t *sec)
         if(!other)
             continue;
 
-        if(P_GetFixedp(other, DMU_CEILING_HEIGHT) > height)
-            height = P_GetFixedp(other, DMU_CEILING_HEIGHT);
+        if(P_GetFloatp(other, DMU_CEILING_HEIGHT) > height)
+            height = P_GetFloatp(other, DMU_CEILING_HEIGHT);
     }
     return height;
 }
