@@ -413,12 +413,17 @@ static void Con_BusyDrawConsoleOutput(void)
 {
 #define LINE_COUNT 3
     
-    const char *lines[LINE_COUNT];
-    int i, y;
-    
-    lines[0] = "First line of console output.";
-    lines[1] = "Con_BusyDrawConsoleOutput: This is some output.";
-    lines[2] = "The bottom-most line.";
+    cbuffer_t  *buffer;
+    static cbline_t *lines[LINE_COUNT + 1];
+    int         y;
+    uint        i, linecount;
+
+    buffer = Con_GetConsoleBuffer();
+    linecount = Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT,
+                                   &lines[0]);
+
+    if(!linecount)
+        return;
 
     gl.Disable(DGL_TEXTURING);
     gl.Enable(DGL_BLENDING);
@@ -436,12 +441,23 @@ static void Con_BusyDrawConsoleOutput(void)
     
     gl.Enable(DGL_TEXTURING);
     
-    y = glScreenHeight - busyFontHgt * (LINE_COUNT + .5f);
-    for(i = 0; i < LINE_COUNT; ++i, y += busyFontHgt)
+    y = glScreenHeight - busyFontHgt * (linecount + .5f);
+    for(i = 0; i < linecount; ++i, y += busyFontHgt)
     {
-        float color = 1.f / (LINE_COUNT - i);
-        gl.Color4f(1.f, 1.f, 1.f, color);
-        FR_TextOut(lines[i], (glScreenWidth - FR_TextWidth(lines[i]))/2, y);
+        float color = 1.f / (linecount - i);
+        const cbline_t *line = lines[i];
+
+        if(!line)
+            continue;
+
+        if(!(line->flags & CBLF_RULER)) // ignore rulers.
+        {
+            if(!line->text)
+                continue;
+
+            gl.Color4f(1.f, 1.f, 1.f, color);
+            FR_TextOut(line->text, (glScreenWidth - FR_TextWidth(line->text))/2, y);
+        }
     }
     
 #undef LINE_COUNT
