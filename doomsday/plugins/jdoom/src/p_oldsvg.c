@@ -36,14 +36,13 @@
 #define SAVESTRINGSIZE  24
 #define VERSIONSIZE     16
 
+#define FF_FULLBRIGHT       0x8000 // used to be flag in thing->frame
 #define FF_FRAMEMASK        0x7fff
 
-// TYPES -------------------------------------------------------------------
+#define SIZEOF_V19_THINKER_T 12
+#define V19_THINKER_T_FUNC_OFFSET 8
 
-typedef enum thinkerclass_e {
-    tc_end,
-    tc_mobj
-} thinkerclass_t;
+// TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -66,11 +65,18 @@ byte   *savebuffer;
 
 static void SV_Read(void *data, int len)
 {
-    memcpy(data, save_p, len);
+    if(data)
+        memcpy(data, save_p, len);
     save_p += len;
 }
 
-static int SV_ReadLong()
+static short SV_ReadShort(void)
+{
+    save_p += 2;
+    return *(short *) (save_p - 2);
+}
+
+static int SV_ReadLong(void)
 {
     save_p += 4;
     return *(int *) (save_p - 4);
@@ -92,17 +98,17 @@ static void SV_ReadPlayer(player_t *pl)
     pl->armorpoints = SV_ReadLong();
     pl->armortype = SV_ReadLong();
 
-    SV_Read(pl->powers, NUM_POWER_TYPES * 4);
-    SV_Read(pl->keys, NUM_KEY_TYPES * 4);
+    SV_Read(pl->powers, 6 * 4);
+    SV_Read(pl->keys, 6 * 4);
     pl->backpack = SV_ReadLong();
 
     SV_Read(pl->frags, 4 * 4);
     pl->readyweapon = SV_ReadLong();
     pl->pendingweapon = SV_ReadLong();
 
-    SV_Read(pl->weaponowned, NUM_WEAPON_TYPES * 4);
-    SV_Read(pl->ammo, NUM_AMMO_TYPES * 4);
-    SV_Read(pl->maxammo, NUM_AMMO_TYPES * 4);
+    SV_Read(pl->weaponowned, 9 * 4);
+    SV_Read(pl->ammo, 4 * 4);
+    SV_Read(pl->maxammo, 4 * 4);
 
     pl->attackdown = SV_ReadLong();
     pl->usedown = SV_ReadLong();
@@ -125,7 +131,7 @@ static void SV_ReadPlayer(player_t *pl)
     pl->plr->extralight = SV_ReadLong();
     pl->plr->fixedcolormap = SV_ReadLong();
     pl->colormap = SV_ReadLong();
-    SV_Read(pl->psprites, NUMPSPRITES * sizeof(pspdef_t));
+    SV_Read(pl->psprites, 2 * sizeof(pspdef_t));
 
     pl->didsecret = SV_ReadLong();
 }
@@ -150,7 +156,8 @@ static void SV_ReadMobj(mobj_t *mo)
     mo->angle = SV_ReadLong();  // orientation
     mo->sprite = SV_ReadLong(); // used to find patch_t and flip value
     mo->frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
-    mo->frame &= ~FF_FRAMEMASK;
+    if(mo->frame & FF_FULLBRIGHT)
+        mo->frame &= FF_FRAMEMASK; // not used anymore.
 
     // Interaction info, by BLOCKMAP.
     // Links in blocks (if needed).
@@ -175,6 +182,7 @@ static void SV_ReadMobj(mobj_t *mo)
     mo->valid = SV_ReadLong();
 
     mo->type = SV_ReadLong();
+    mo->info = &mobjinfo[mo->type];
     SV_ReadLong();              // &mobjinfo[mobj->type]
 
     mo->tics = SV_ReadLong();   // state tic counter
@@ -207,12 +215,12 @@ static void SV_ReadMobj(mobj_t *mo)
     mo->lastlook = SV_ReadLong();
 
     // For nightmare respawn.
-    mo->spawninfo.pos[VX] = (fixed_t) (SV_ReadLong() << FRACBITS);
-    mo->spawninfo.pos[VY] = (fixed_t) (SV_ReadLong() << FRACBITS);
+    mo->spawninfo.pos[VX] = (fixed_t) (SV_ReadShort() << FRACBITS);
+    mo->spawninfo.pos[VY] = (fixed_t) (SV_ReadShort() << FRACBITS);
     mo->spawninfo.pos[VZ] = ONFLOORZ;
-    mo->spawninfo.angle = (angle_t) (ANG45 * (SV_ReadLong() / 45));
-    mo->spawninfo.type = (int) SV_ReadLong();
-    mo->spawninfo.options = (int) SV_ReadLong();
+    mo->spawninfo.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
+    mo->spawninfo.type = (int) SV_ReadShort();
+    mo->spawninfo.options = (int) SV_ReadShort();
 
     // Thing being chased/attacked for tracers.
     SV_ReadLong();
@@ -295,12 +303,7 @@ void P_v19_UnArchiveWorld(void)
 
         for(j = 0; j < 2; ++j)
         {
-            side_t* sdef;
-
-            if(j == 0)
-                sdef = P_GetPtr(DMU_LINE, i, DMU_SIDE0);
-            else
-                sdef = P_GetPtr(DMU_LINE, i, DMU_SIDE1);
+            side_t* sdef = P_GetPtrp(line, (j? DMU_SIDE1:DMU_SIDE0));
 
             if(!sdef)
                 continue;
@@ -323,6 +326,11 @@ void P_v19_UnArchiveWorld(void)
 
 void P_v19_UnArchiveThinkers(void)
 {
+enum thinkerclass_e {
+    tc_end,
+    tc_mobj
+};
+
     byte    tclass;
     thinker_t *currentthinker;
     thinker_t *next;
@@ -354,8 +362,7 @@ void P_v19_UnArchiveThinkers(void)
 
         case tc_mobj:
             PADSAVEP();
-            mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
-            memset(mobj, 0, sizeof(*mobj));
+            mobj = Z_Calloc(sizeof(*mobj), PU_LEVEL, NULL);
 
             SV_ReadMobj(mobj);
 
@@ -385,6 +392,265 @@ void P_v19_UnArchiveThinkers(void)
             Con_Error("Unknown tclass %i in savegame", tclass);
         }
     }
+}
+
+static int SV_ReadCeiling(ceiling_t *ceiling)
+{
+/* Original DOOM format:
+typedef struct {
+    thinker_t thinker; // was 12 bytes
+    ceiling_e type; // was 32bit int
+    sector_t *sector;
+    fixed_t bottomheight;
+    fixed_t topheight;
+    fixed_t speed;
+    boolean crush;
+    int     direction;
+    int     tag;                   
+    int     olddirection;
+} v19_ceiling_t;
+*/
+    int temp[3];
+
+    // Padding at the start (an old thinker_t struct)
+    SV_Read(&temp, SIZEOF_V19_THINKER_T);
+
+    // Start of used data members.
+    ceiling->type = SV_ReadLong();
+
+    // A 32bit pointer to sector, serialized.
+    ceiling->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    if(!ceiling->sector)
+        Con_Error("tc_ceiling: bad sector number\n");
+
+    ceiling->bottomheight = FIX2FLT(SV_ReadLong());
+    ceiling->topheight = FIX2FLT(SV_ReadLong());
+    ceiling->speed = FIX2FLT(SV_ReadLong());
+    ceiling->crush = SV_ReadLong();
+    ceiling->direction = SV_ReadLong();
+    ceiling->tag = SV_ReadLong();
+    ceiling->olddirection = SV_ReadLong();
+
+    if((byte) temp + V19_THINKER_T_FUNC_OFFSET)
+        ceiling->thinker.function = T_MoveCeiling;
+
+    P_XSector(ceiling->sector)->specialdata = ceiling;
+    return true; // Add this thinker.
+}
+
+static int SV_ReadDoor(vldoor_t *door)
+{
+/* Original DOOM format:
+typedef struct {
+    thinker_t thinker; // was 12 bytes
+    vldoor_e type; // was 32bit int
+    sector_t *sector;
+    fixed_t topheight;
+    fixed_t speed;
+    int     direction;
+    int     topwait;
+    int     topcountdown;
+} v19_vldoor_t;
+*/
+    // Padding at the start (an old thinker_t struct)
+    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+
+    // Start of used data members.
+    door->type = SV_ReadLong();
+
+    // A 32bit pointer to sector, serialized.
+    door->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    if(!door->sector)
+        Con_Error("tc_door: bad sector number\n");
+
+    door->topheight = FIX2FLT(SV_ReadLong());
+    door->speed = FIX2FLT(SV_ReadLong());
+    door->direction = SV_ReadLong();
+    door->topwait = SV_ReadLong();
+    door->topcountdown = SV_ReadLong();
+
+    door->thinker.function = T_VerticalDoor;
+
+    P_XSector(door->sector)->specialdata = door;
+    return true; // Add this thinker.
+}
+
+static int SV_ReadFloor(floormove_t *floor)
+{
+/* Original DOOM format:
+typedef struct {
+    thinker_t thinker; // was 12 bytes
+    floor_e	type; // was 32bit int
+    boolean	crush;
+    sector_t *sector;
+    int		direction;
+    int		newspecial;
+    short	texture;
+    fixed_t	floordestheight;
+    fixed_t	speed;
+} v19_floormove_t;
+*/
+    // Padding at the start (an old thinker_t struct)
+    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+
+    // Start of used data members.
+    floor->type = SV_ReadLong();
+    floor->crush = SV_ReadLong();
+
+    // A 32bit pointer to sector, serialized.
+    floor->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    if(!floor->sector)
+        Con_Error("tc_floor: bad sector number\n");
+
+    floor->direction = SV_ReadLong();
+    floor->newspecial = SV_ReadLong();
+    floor->texture = SV_ReadShort();
+    floor->floordestheight = FIX2FLT(SV_ReadLong());
+    floor->speed = FIX2FLT(SV_ReadLong());
+
+    floor->thinker.function = T_MoveFloor;
+
+    P_XSector(floor->sector)->specialdata = floor;
+    return true; // Add this thinker.
+}
+
+static int SV_ReadPlat(plat_t *plat)
+{
+/* Original DOOM format:
+typedef struct {
+    thinker_t thinker; // was 12 bytes
+    sector_t *sector;
+    fixed_t speed;
+    fixed_t low;
+    fixed_t high;
+    int     wait;
+    int     count;
+    plat_e  status; // was 32bit int
+    plat_e  oldstatus; // was 32bit int
+    boolean crush;
+    int     tag;
+    plattype_e type; // was 32bit int
+} v19_plat_t;
+*/
+    int temp[3];
+
+    // Padding at the start (an old thinker_t struct)
+    SV_Read(temp, SIZEOF_V19_THINKER_T);
+
+    // Start of used data members.
+    // A 32bit pointer to sector, serialized.
+    plat->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    if(!plat->sector)
+        Con_Error("tc_plat: bad sector number\n");
+
+    plat->speed = FIX2FLT(SV_ReadLong());
+    plat->low = FIX2FLT(SV_ReadLong());
+    plat->high = FIX2FLT(SV_ReadLong());
+    plat->wait = SV_ReadLong();
+    plat->count = SV_ReadLong();
+    plat->status = SV_ReadLong();
+    plat->oldstatus = SV_ReadLong();
+    plat->crush = SV_ReadLong();
+    plat->tag = SV_ReadLong();
+    plat->type = SV_ReadLong();
+
+    if((byte) temp + V19_THINKER_T_FUNC_OFFSET)
+        plat->thinker.function = T_PlatRaise;
+
+    P_XSector(plat->sector)->specialdata = plat;
+    return true; // Add this thinker.
+}
+
+static int SV_ReadFlash(lightflash_t *flash)
+{
+/* Original DOOM format:
+typedef struct {
+    thinker_t thinker; // was 12 bytes
+    sector_t *sector;
+    int     count;
+    int     maxlight;
+    int     minlight;
+    int     maxtime;
+    int     mintime;
+} v19_lightflash_t;
+*/
+    // Padding at the start (an old thinker_t struct)
+    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+
+    // Start of used data members.
+    // A 32bit pointer to sector, serialized.
+    flash->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    if(!flash->sector)
+        Con_Error("tc_flash: bad sector number\n");
+
+    flash->count = SV_ReadLong();
+    flash->maxlight = SV_ReadLong();
+    flash->minlight = SV_ReadLong();
+    flash->maxtime = SV_ReadLong();
+    flash->mintime = SV_ReadLong();
+
+    flash->thinker.function = T_LightFlash;
+    return true; // Add this thinker.
+}
+
+static int SV_ReadStrobe(strobe_t *strobe)
+{
+/* Original DOOM format:
+typedef struct {
+    thinker_t thinker; // was 12 bytes
+    sector_t *sector;
+    int     count;
+    int     minlight;
+    int     maxlight;
+    int     darktime;
+    int     brighttime;
+} v19_strobe_t;
+*/
+    // Padding at the start (an old thinker_t struct)
+    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+
+    // Start of used data members.
+    // A 32bit pointer to sector, serialized.
+    strobe->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    if(!strobe->sector)
+        Con_Error("tc_strobe: bad sector number\n");
+
+    strobe->count = SV_ReadLong();
+    strobe->minlight = SV_ReadLong();
+    strobe->maxlight = SV_ReadLong();
+    strobe->darktime = SV_ReadLong();
+    strobe->brighttime = SV_ReadLong();
+
+    strobe->thinker.function = T_StrobeFlash;
+    return true; // Add this thinker.
+}
+
+static int SV_ReadGlow(glow_t *glow)
+{
+/* Original DOOM format:
+typedef struct {
+    thinker_t thinker; // was 12 bytes
+    sector_t *sector;
+    int     minlight;
+    int     maxlight;
+    int     direction;
+} v19_glow_t;
+*/
+    // Padding at the start (an old thinker_t struct)
+    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+
+    // Start of used data members.
+    // A 32bit pointer to sector, serialized.
+    glow->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    if(!glow->sector)
+        Con_Error("tc_glow: bad sector number\n");
+
+    glow->minlight = SV_ReadLong();
+    glow->maxlight = SV_ReadLong();
+    glow->direction = SV_ReadLong();
+
+    glow->thinker.function = T_Glow;
+    return true; // Add this thinker.
 }
 
 /*
@@ -424,23 +690,16 @@ void P_v19_UnArchiveSpecials(void)
     for(;;)
     {
         tclass = *save_p++;
-        switch (tclass)
+        switch(tclass)
         {
         case tc_endspecials:
             return;             // end of list
 
         case tc_ceiling:
             PADSAVEP();
-            ceiling = Z_Malloc(sizeof(*ceiling), PU_LEVEL, NULL);
-            memcpy(ceiling, save_p, sizeof(*ceiling));
-            save_p += sizeof(*ceiling);
-
-            ceiling->sector = P_ToPtr(DMU_SECTOR, (int) ceiling->sector);
-
-            P_XSector(ceiling->sector)->specialdata = ceiling;
-
-            if(ceiling->thinker.function)
-                ceiling->thinker.function = T_MoveCeiling;
+            ceiling = Z_Calloc(sizeof(*ceiling), PU_LEVSPEC, NULL);
+            
+            SV_ReadCeiling(ceiling);
 
             P_AddThinker(&ceiling->thinker);
             P_AddActiveCeiling(ceiling);
@@ -448,85 +707,61 @@ void P_v19_UnArchiveSpecials(void)
 
         case tc_door:
             PADSAVEP();
-            door = Z_Malloc(sizeof(*door), PU_LEVEL, NULL);
-            memcpy(door, save_p, sizeof(*door));
-            save_p += sizeof(*door);
+            door = Z_Calloc(sizeof(*door), PU_LEVSPEC, NULL);
 
-            door->sector = P_ToPtr(DMU_SECTOR, (int) door->sector);
-
-            P_XSector(door->sector)->specialdata = door;
-            door->thinker.function = T_VerticalDoor;
+            SV_ReadDoor(door);
+ 
             P_AddThinker(&door->thinker);
             break;
 
         case tc_floor:
             PADSAVEP();
-            floor = Z_Malloc(sizeof(*floor), PU_LEVEL, NULL);
-            memcpy(floor, save_p, sizeof(*floor));
-            save_p += sizeof(*floor);
+            floor = Z_Calloc(sizeof(*floor), PU_LEVSPEC, NULL);
 
-            floor->sector = P_ToPtr(DMU_SECTOR, (int) floor->sector);
-            P_XSector(floor->sector)->specialdata = floor;
-            floor->thinker.function = T_MoveFloor;
+            SV_ReadFloor(floor);
 
             P_AddThinker(&floor->thinker);
             break;
 
         case tc_plat:
             PADSAVEP();
-            plat = Z_Malloc(sizeof(*plat), PU_LEVEL, NULL);
-            memcpy(plat, save_p, sizeof(*plat));
-            save_p += sizeof(*plat);
+            plat = Z_Calloc(sizeof(*plat), PU_LEVSPEC, NULL);
 
-            plat->sector = P_ToPtr(DMU_SECTOR, (int) plat->sector);
-            P_XSector(plat->sector)->specialdata = plat;
-
-            if(plat->thinker.function)
-                plat->thinker.function = T_PlatRaise;
+            SV_ReadPlat(plat);
 
             P_AddThinker(&plat->thinker);
             P_AddActivePlat(plat);
-
             break;
 
         case tc_flash:
             PADSAVEP();
-            flash = Z_Malloc(sizeof(*flash), PU_LEVEL, NULL);
-            memcpy(flash, save_p, sizeof(*flash));
-            save_p += sizeof(*flash);
+            flash = Z_Calloc(sizeof(*flash), PU_LEVSPEC, NULL);
 
-            flash->sector = P_ToPtr(DMU_SECTOR, (int) flash->sector);
-            flash->thinker.function = T_LightFlash;
+            SV_ReadFlash(flash);
 
             P_AddThinker(&flash->thinker);
             break;
 
         case tc_strobe:
             PADSAVEP();
-            strobe = Z_Malloc(sizeof(*strobe), PU_LEVEL, NULL);
-            memcpy(strobe, save_p, sizeof(*strobe));
-            save_p += sizeof(*strobe);
+            strobe = Z_Calloc(sizeof(*strobe), PU_LEVSPEC, NULL);
 
-            strobe->sector = P_ToPtr(DMU_SECTOR, (int) strobe->sector);
-            strobe->thinker.function = T_StrobeFlash;
+            SV_ReadStrobe(strobe);
 
             P_AddThinker(&strobe->thinker);
             break;
 
         case tc_glow:
             PADSAVEP();
-            glow = Z_Malloc(sizeof(*glow), PU_LEVEL, NULL);
-            memcpy(glow, save_p, sizeof(*glow));
-            save_p += sizeof(*glow);
+            glow = Z_Calloc(sizeof(*glow), PU_LEVSPEC, NULL);
 
-            glow->sector = P_ToPtr(DMU_SECTOR, (int) glow->sector);
-            glow->thinker.function = T_Glow;
+            SV_ReadGlow(glow);
 
             P_AddThinker(&glow->thinker);
             break;
 
         default:
-            Con_Error("P_UnarchiveSpecials:Unknown tclass %i " "in savegame",
+            Con_Error("P_UnarchiveSpecials:Unknown tclass %i in savegame",
                       tclass);
         }
     }
