@@ -128,7 +128,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
                 {
                 case crushAndRaise:
                 case lowerAndCrush:
-                    ceiling->speed = CEILSPEED / 8;
+                    ceiling->speed = CEILSPEED * .125;
                     break;
 
                 default:

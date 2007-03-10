@@ -211,7 +211,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
         switch(type)
         {
         case raiseToNearestAndChange:
-            plat->speed = PLATSPEED / 2;
+            plat->speed = PLATSPEED * .5;
 
             P_SetIntp(sec, DMU_FLOOR_TEXTURE,
                       P_GetIntp(frontsector, DMU_FLOOR_TEXTURE));
@@ -227,7 +227,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
             break;
 
         case raiseAndChange:
-            plat->speed = PLATSPEED / 2;
+            plat->speed = PLATSPEED * .5;
 
             P_SetIntp(sec, DMU_FLOOR_TEXTURE,
                       P_GetIntp(frontsector, DMU_FLOOR_TEXTURE));

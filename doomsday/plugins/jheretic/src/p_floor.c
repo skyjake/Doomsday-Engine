@@ -619,7 +619,7 @@ int EV_DoDonut(line_t *line)
             floor->crush = false;
             floor->direction = 1;
             floor->sector = s2;
-            floor->speed = FLOORSPEED / 2;
+            floor->speed = FLOORSPEED * .5;
             floor->texture = P_GetIntp(s3, DMU_FLOOR_TEXTURE);
             floor->newspecial = 0;
             floor->floordestheight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
@@ -635,7 +635,7 @@ int EV_DoDonut(line_t *line)
             floor->crush = false;
             floor->direction = -1;
             floor->sector = s1;
-            floor->speed = FLOORSPEED / 2;
+            floor->speed = FLOORSPEED * .5;
             floor->floordestheight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
             break;
         }

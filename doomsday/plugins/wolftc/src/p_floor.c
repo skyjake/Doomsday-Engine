@@ -534,7 +534,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
         switch(type)
         {
         case build8:
-            speed = FLOORSPEED / 4;
+            speed = FLOORSPEED * .25;
             stairsize = 8;
             break;
         case turbo16:
@@ -639,7 +639,7 @@ int EV_DoDonut(line_t *line)
             floor->crush = false;
             floor->direction = 1;
             floor->sector = s2;
-            floor->speed = FLOORSPEED / 2;
+            floor->speed = FLOORSPEED * .5;
             floor->texture = P_GetIntp(s3, DMU_FLOOR_TEXTURE);
             floor->newspecial = 0;
             floor->floordestheight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
@@ -655,7 +655,7 @@ int EV_DoDonut(line_t *line)
             floor->crush = false;
             floor->direction = -1;
             floor->sector = s1;
-            floor->speed = FLOORSPEED / 2;
+            floor->speed = FLOORSPEED * .5;
             floor->floordestheight = P_GetFloatp(s3, DMU_FLOOR_HEIGHT);
             break;
         }
