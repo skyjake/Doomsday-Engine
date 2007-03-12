@@ -501,7 +501,7 @@ boolean P_IsValidControl(const char *cmd)
  */
 boolean P_ControlExecute(const char *cmd)
 {
-	char        name[MAX_DESCRIPTOR_LENGTH], *ptr;
+	char        name[MAX_DESCRIPTOR_LENGTH + 1], *ptr;
     uint        idx;
     int         console, localPlayer = 0;
     togglestate_t newState = TG_TOGGLE;

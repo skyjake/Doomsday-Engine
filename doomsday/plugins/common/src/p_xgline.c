@@ -552,13 +552,13 @@ int XL_AutoGenType(int id, linetype_t *outptr)
 #endif
  }
 
-/*
- * Returns true if the type is defined.
+/**
+ * @return              <code>true</code> if the type is defined.
  */
 linetype_t *XL_GetType(int id)
 {
     linetype_t *ptr;
-    char buff[5];
+    char        buff[6];
 
     // Try finding it from the DDXGDATA lump.
     ptr = XG_GetLumpLine(id);
@@ -598,7 +598,7 @@ float XG_RandomPercentFloat(float value, int percent)
     return value * (1 + i);
 }
 
-/*
+/**
  * Looks for line type definition and sets the
  * line type if one is found.
  */
