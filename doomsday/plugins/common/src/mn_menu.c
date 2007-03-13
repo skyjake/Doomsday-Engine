@@ -1461,42 +1461,6 @@ void MN_Ticker(void)
         }
     }
 
-    for(i = 0; i < 2; ++i)
-    {
-        if(cfg.menuFog == 1)
-        {
-            mfAngle[i] += mfSpeeds[i] / 4;
-            mfPosAngle[i] -= mfSpeeds[!i];
-            mfPos[i][VX] = 160 + 120 * cos(mfPosAngle[i] / 180 * PI);
-            mfPos[i][VY] = 100 + 100 * sin(mfPosAngle[i] / 180 * PI);
-        }
-        else
-        {
-            mfAngle[i] += mfSpeeds[i] / 4;
-            mfPosAngle[i] -= 1.5f * mfSpeeds[!i];
-            mfPos[i][VX] = 320 + 320 * cos(mfPosAngle[i] / 180 * PI);
-            mfPos[i][VY] = 240 + 240 * sin(mfPosAngle[i] / 180 * PI);
-        }
-    }
-
-    typein_time++;
-
-    // Fade in/out the widget background filter
-    if(widgetEdit)
-    {
-        if(menu_calpha < 0.5f)
-            menu_calpha += .1f;
-        if(menu_calpha > 0.5f)
-            menu_calpha = 0.5f;
-    }
-    else
-    {
-        if(menu_calpha > 0)
-            menu_calpha -= .1f;
-        if(menu_calpha < 0)
-            menu_calpha = 0;
-    }
-
     // Smooth the menu & fog alpha on a curved ramp
     if(menuactive && (!messageToPrint || quitAsk))
     {
@@ -1524,15 +1488,6 @@ void MN_Ticker(void)
             menu_alpha = 0;
     }
 
-    // Calculate the height of the menuFog 3 Y join
-    if((menuactive || mfAlpha > 0) && updown && mfYjoin > 0.46f)
-        mfYjoin = mfYjoin / 1.002f;
-    else if((menuactive || mfAlpha > 0) && !updown && mfYjoin < 0.54f )
-        mfYjoin = mfYjoin * 1.002f;
-
-    if((menuactive || mfAlpha > 0) && (mfYjoin < 0.46f || mfYjoin > 0.54f))
-        updown = !updown;
-
     // menu zoom in/out
     if(!menuactive && mfAlpha > 0)
     {
@@ -1541,18 +1496,66 @@ void MN_Ticker(void)
             fadingOut = false;
     }
 
-    // animate the cursor patches
-    if(--skullAnimCounter <= 0)
-    {
-        whichSkull++;
-        skullAnimCounter = MENUCURSOR_TICSPERFRAME;
-        if(whichSkull > cursors-1)
-            whichSkull = 0;
-    }
-
     if(menuactive || mfAlpha > 0)
     {
         float   rewind = 20;
+
+        for(i = 0; i < 2; ++i)
+        {
+            if(cfg.menuFog == 1)
+            {
+                mfAngle[i] += mfSpeeds[i] / 4;
+                mfPosAngle[i] -= mfSpeeds[!i];
+                mfPos[i][VX] = 160 + 120 * cos(mfPosAngle[i] / 180 * PI);
+                mfPos[i][VY] = 100 + 100 * sin(mfPosAngle[i] / 180 * PI);
+            }
+            else
+            {
+                mfAngle[i] += mfSpeeds[i] / 4;
+                mfPosAngle[i] -= 1.5f * mfSpeeds[!i];
+                mfPos[i][VX] = 320 + 320 * cos(mfPosAngle[i] / 180 * PI);
+                mfPos[i][VY] = 240 + 240 * sin(mfPosAngle[i] / 180 * PI);
+            }
+        }
+
+        typein_time++;
+
+        // Fade in/out the widget background filter
+        if(widgetEdit)
+        {
+            if(menu_calpha < 0.5f)
+                menu_calpha += .1f;
+            if(menu_calpha > 0.5f)
+                menu_calpha = 0.5f;
+        }
+        else
+        {
+            if(menu_calpha > 0)
+                menu_calpha -= .1f;
+            if(menu_calpha < 0)
+                menu_calpha = 0;
+        }
+
+        // Calculate the height of the menuFog 3 Y join
+        if(cfg.menuFog == 3)
+        {
+            if(updown && mfYjoin > 0.46f)
+                mfYjoin = mfYjoin / 1.002f;
+            else if(!updown && mfYjoin < 0.54f )
+                mfYjoin = mfYjoin * 1.002f;
+
+            if((mfYjoin < 0.46f || mfYjoin > 0.54f))
+                updown = !updown;
+        }
+
+        // Animate the cursor patches
+        if(--skullAnimCounter <= 0)
+        {
+            whichSkull++;
+            skullAnimCounter = MENUCURSOR_TICSPERFRAME;
+            if(whichSkull > cursors-1)
+                whichSkull = 0;
+        }
 
         menuTime++;
 
@@ -1577,7 +1580,8 @@ void MN_Ticker(void)
         // Used for jHeretic's rotating skulls
         frame = (menuTime / 3) % 18;
     }
-    MN_TickerEx();
+    if(menuactive)
+        MN_TickerEx();
 }
 
 void M_StartMenu(void)
