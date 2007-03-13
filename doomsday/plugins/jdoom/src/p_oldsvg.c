@@ -327,8 +327,8 @@ void P_v19_UnArchiveWorld(void)
 void P_v19_UnArchiveThinkers(void)
 {
 enum thinkerclass_e {
-    tc_end,
-    tc_mobj
+    TC_END,
+    TC_MOBJ
 };
 
     byte    tclass;
@@ -355,12 +355,12 @@ enum thinkerclass_e {
     for(;;)
     {
         tclass = *save_p++;
-        switch (tclass)
+        switch(tclass)
         {
-        case tc_end:
+        case TC_END:
             return;             // end of list
 
-        case tc_mobj:
+        case TC_MOBJ:
             PADSAVEP();
             mobj = Z_Calloc(sizeof(*mobj), PU_LEVEL, NULL);
 

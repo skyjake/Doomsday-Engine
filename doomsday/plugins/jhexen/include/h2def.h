@@ -689,24 +689,6 @@ void            G_StopDemo(void);
 void            G_DemoEnds(void);
 void            G_DemoAborted(void);
 
-//-------
-//SV_SAVE
-//-------
-
-void            SV_Init(void);
-void            SV_SaveGameFile(int slot, char *str);
-int             SV_GetSaveDescription(char *filename, char *str);
-void            SV_HxSaveGame(int slot, char *description);
-void            SV_HxSaveMap(boolean savePlayers);
-void            SV_HxLoadGame(int slot);
-void            SV_HxMapTeleport(int map, int position);
-void            SV_HxLoadMap(void);
-void            SV_HxInitBaseSlot(void);
-void            SV_HxUpdateRebornSlot(void);
-void            SV_HxClearRebornSlot(void);
-boolean         SV_HxRebornSlotAvailable(void);
-int             SV_HxGetRebornSlot(void);
-
 //-----
 //PLAY
 //-----

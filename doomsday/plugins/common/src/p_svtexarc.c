@@ -51,19 +51,10 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // Savegame I/O:
-#ifdef __JDOOM__
-void    SV_Write(void *data, int len);
-void    SV_WriteShort(short val);
-#elif __JHERETIC__
-void    SV_Write(void *data, int len);
-void    SV_WriteShort(short val);
-#else
-void    StreamOutBuffer(void *buffer, int size);
-void    StreamOutWord(unsigned short val);
-#endif
-
-void    SV_Read(void *data, int len);
-short   SV_ReadShort();
+extern void    SV_Write(void *data, int len);
+extern void    SV_WriteShort(short val);
+extern void    SV_Read(void *data, int len);
+extern short   SV_ReadShort();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -208,35 +199,23 @@ int SV_GetArchiveTexture(int archivenum)
         return R_TextureNumForName(tex_archive.table[archivenum].name);
 }
 
-void SV_WriteTexArchive(texarchive_t * arc)
+void SV_WriteTexArchive(texarchive_t *arc)
 {
-    int     i;
+    int         i;
 
-#ifdef __JDOOM__
     SV_WriteShort(arc->count);
-#elif __JHERETIC__
-    SV_WriteShort(arc->count);
-#else
-    StreamOutWord(arc->count);
-#endif
-    for(i = 0; i < arc->count; i++)
+    for(i = 0; i < arc->count; ++i)
     {
-#ifdef __JDOOM__
         SV_Write(arc->table[i].name, 8);
-#elif __JHERETIC__
-        SV_Write(arc->table[i].name, 8);
-#else
-        StreamOutBuffer(arc->table[i].name, 8);
-#endif
     }
 }
 
-void SV_ReadTexArchive(texarchive_t * arc)
+void SV_ReadTexArchive(texarchive_t *arc)
 {
-    int     i;
+    int         i;
 
     arc->count = SV_ReadShort();
-    for(i = 0; i < arc->count; i++)
+    for(i = 0; i < arc->count; ++i)
     {
         SV_Read(arc->table[i].name, 8);
         arc->table[i].name[8] = 0;

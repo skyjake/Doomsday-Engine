@@ -25,6 +25,7 @@
 #ifndef __P_SAVEG__
 #define __P_SAVEG__
 
+#if !__JHEXEN__
 enum {
     sc_normal,
     sc_ploff,                   // plane offset
@@ -36,47 +37,88 @@ typedef enum lineclass_e {
     lc_xg1
 } lineclass_t;
 
-typedef enum {
-    tc_null = -1,
-    tc_end,
-    tc_mobj,
-    tc_xgmover,
-    tc_ceiling,
-    tc_door,
-    tc_floor,
-    tc_plat,
-    tc_flash,
-    tc_strobe,
-#if __JDOOM__
-    tc_glow,
-    tc_flicker,
-# if __DOOM64TC__
-    tc_blink,
+typedef enum thinkclass_e {
+    TC_NULL = -1,
+    TC_END,
+    TC_MOBJ,
+    TC_XGMOVER,
+    TC_CEILING,
+    TC_DOOR,
+    TC_FLOOR,
+    TC_PLAT,
+    TC_FLASH,
+    TC_STROBE,
+# if __JDOOM__
+    TC_GLOW,
+    TC_FLICKER,
+#  if __DOOM64TC__
+    TC_BLINK,
+#  endif
+# else
+    TC_GLOW,
 # endif
-#else
-    tc_glow,
-#endif
     NUMTHINKERCLASSES
 } thinkerclass_t;
 
+#else
+typedef enum thinkclass_e {
+    TC_NULL,
+    TC_CEILING,
+    TC_DOOR,
+    TC_FLOOR,
+    TC_PLAT,
+    TC_INTERPRET_ACS,
+    TC_FLOOR_WAGGLE,
+    TC_LIGHT,
+    TC_PHASE,
+    TC_BUILD_PILLAR,
+    TC_ROTATE_POLY,
+    TC_MOVE_POLY,
+    TC_POLY_DOOR,
+    NUMTHINKERCLASSES
+} thinkerclass_t;
+#endif
+
 void            SV_Init(void);
 void            SV_SaveGameFile(int slot, char *str);
-int             SV_SaveGame(char *filename, char *description);
 int             SV_GetSaveDescription(char *filename, char *str);
-int             SV_LoadGame(char *filename);
+#if __JHEXEN__
+boolean         SV_SaveGame(int slot, char *description);
+boolean         SV_LoadGame(int slot);
+void            SV_MapTeleport(int map, int position);
+
+void            SV_HxInitBaseSlot(void);
+void            SV_HxUpdateRebornSlot(void);
+void            SV_HxClearRebornSlot(void);
+boolean         SV_HxRebornSlotAvailable(void);
+int             SV_HxGetRebornSlot(void);
+#else
+boolean         SV_SaveGame(char *filename, char *description);
+boolean         SV_LoadGame(char *filename);
+#endif
 
 // Write a client savegame file.
 void            SV_SaveClient(unsigned int gameid);
 void            SV_ClientSaveGameFile(unsigned int game_id, char *str);
 void            SV_LoadClient(unsigned int gameid);
 
+#if !__JHEXEN__
 unsigned short  SV_ThingArchiveNum(mobj_t *mo);
 mobj_t         *SV_GetArchiveThing(int num);
+#endif
 
 void            SV_Write(void *data, int len);
 void            SV_WriteByte(byte val);
+#if __JHEXEN__
+void            SV_WriteShort(unsigned short val);
+#else
 void            SV_WriteShort(short val);
+#endif
+#if __JHEXEN__
+void            SV_WriteLong(unsigned int val);
+#else
 void            SV_WriteLong(long val);
+#endif
 void            SV_WriteFloat(float val);
 void            SV_Read(void *data, int len);
 byte            SV_ReadByte();

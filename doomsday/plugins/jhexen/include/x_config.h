@@ -177,6 +177,4 @@ typedef struct {
 
 extern game_config_t cfg;
 
-extern char     SavePath[];
-
 #endif                          //__JHEXEN_SETTINGS_H__

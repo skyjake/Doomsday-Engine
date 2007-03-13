@@ -210,7 +210,7 @@ void SV_WriteXGPlaneMover(thinker_t *th)
     uint    i;
     xgplanemover_t *mov = (xgplanemover_t *) th;
 
-    SV_WriteByte(tc_xgmover);
+    SV_WriteByte(TC_XGMOVER);
     SV_WriteByte(1);            // Version.
 
     SV_WriteLong(P_ToIndex(mov->sector));
@@ -239,12 +239,12 @@ void SV_WriteXGPlaneMover(thinker_t *th)
     SV_WriteLong(mov->timer);
 }
 
-/*
+/**
  * Reads the plane mover thinker.
  */
-int SV_ReadXGPlaneMover(xgplanemover_t* mov)
+int SV_ReadXGPlaneMover(xgplanemover_t *mov)
 {
-    int     i;
+    int         i;
 
     SV_ReadByte();                // Version.
 

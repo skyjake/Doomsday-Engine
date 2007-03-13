@@ -36,19 +36,15 @@
 #if  __DOOM64TC__
 #  include <stdlib.h>
 #  include "doom64tc.h"
-#  include "p_saveg.h"
 #elif __WOLFTC__
 #  include <stdlib.h>
 #  include "wolftc.h"
-#  include "p_saveg.h"
 #elif __JDOOM__
 #  include <stdlib.h>
 #  include "jdoom.h"
-#  include "p_saveg.h"
 #elif __JHERETIC__
 #  include <stdio.h>
 #  include "jheretic.h"
-#  include "p_saveg.h"
 #  include "p_inventory.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
@@ -57,6 +53,7 @@
 #  include "jstrife.h"
 #endif
 
+#include "p_saveg.h"
 #include "g_controls.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
@@ -1440,7 +1437,7 @@ void G_DoTeleportNewMap(void)
         return;
     }
 
-    SV_HxMapTeleport(LeaveMap, LeavePosition);
+    SV_MapTeleport(LeaveMap, LeavePosition);
     G_ChangeGameState(GS_LEVEL);
     gameaction = GA_NONE;
     RebornPosition = LeavePosition;
@@ -1786,7 +1783,7 @@ void G_DoWorldDone(void)
 void G_DoSingleReborn(void)
 {
     gameaction = GA_NONE;
-    SV_HxLoadGame(SV_HxGetRebornSlot());
+    SV_LoadGame(SV_HxGetRebornSlot());
     SB_SetClassData();
 }
 #endif
@@ -1821,7 +1818,7 @@ void G_DoLoadGame(void)
 
     Draw_LoadIcon();
 
-    SV_HxLoadGame(GameLoadSlot);
+    SV_LoadGame(GameLoadSlot);
     if(!IS_NETGAME)
     {                           // Copy the base slot to the reborn slot
         SV_HxUpdateRebornSlot();
@@ -1851,7 +1848,7 @@ void G_DoSaveGame(void)
 #if __JHEXEN__ || __JSTRIFE__
     Draw_SaveIcon();
 
-    SV_HxSaveGame(savegameslot, savedescription);
+    SV_SaveGame(savegameslot, savedescription);
 #else
     char    name[100];
 

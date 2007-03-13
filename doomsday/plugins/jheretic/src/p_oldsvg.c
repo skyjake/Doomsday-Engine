@@ -308,6 +308,12 @@ void P_v13_UnArchiveWorld(void)
 
 void P_v13_UnArchiveThinkers(void)
 {
+typedef enum
+{
+	TC_END,
+	TC_MOBJ
+} thinkerclass_t;
+
     byte    tclass;
     thinker_t *currentthinker, *next;
     mobj_t *mobj;
@@ -331,10 +337,10 @@ void P_v13_UnArchiveThinkers(void)
         tclass = *save_p++;
         switch (tclass)
         {
-        case tc_end:
+        case TC_END:
             return;             // end of list
 
-        case tc_mobj:
+        case TC_MOBJ:
             mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
 
             SV_v13_ReadMobj(mobj);
@@ -377,16 +383,16 @@ void P_v13_UnArchiveThinkers(void)
  */
 void P_v13_UnArchiveSpecials(void)
 {
-    enum {
-        tc_ceiling,
-        tc_door,
-        tc_floor,
-        tc_plat,
-        tc_flash,
-        tc_strobe,
-        tc_glow,
-        tc_endspecials
-    };
+enum {
+    tc_ceiling,
+    tc_door,
+    tc_floor,
+    tc_plat,
+    tc_flash,
+    tc_strobe,
+    tc_glow,
+    tc_endspecials
+};
 
     byte    tclass;
     ceiling_t *ceiling;
@@ -401,7 +407,7 @@ void P_v13_UnArchiveSpecials(void)
     for(;;)
     {
         tclass = *save_p++;
-        switch (tclass)
+        switch(tclass)
         {
         case tc_endspecials:
             return;             // end of list

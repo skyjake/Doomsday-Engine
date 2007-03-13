@@ -25,10 +25,8 @@
 /*
  * p_saveg.c: Save Game I/O
  *
- * Compiles for jDoom and jHeretic
+ * Compiles for all supported games.
  */
-
-#if __JDOOM__ || __WOLFTC__ || __JHERETIC__
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -42,6 +40,8 @@
 #  include "jdoom.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
 #endif
 
 #include "p_saveg.h"
@@ -49,8 +49,10 @@
 #include "d_net.h"
 #include "p_svtexarc.h"
 #include "dmu_lib.h"
+#include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_player.h"
+#include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -90,15 +92,37 @@
 # define SAVEGAMENAME          "HticSav"
 # define CLIENTSAVEGAMENAME    "HticCl"
 # define SAVEGAMEEXTENSION     "hsg"
+#elif __JHEXEN__
+# define HXS_VERSION_TEXT        "HXS Ver " // Do not change me!
+# define HXS_VERSION_TEXT_LENGTH 16
+
+# define MY_SAVE_VERSION         3
+# define SAVESTRINGSIZE          24
+# define SAVEGAMENAME            "Hex"
+# define CLIENTSAVEGAMENAME      "HexenCl"
+# define SAVEGAMEEXTENSION       "hxs"
+
+# define MAX_TARGET_PLAYERS      512
+# define MOBJ_NULL               -1
+# define MOBJ_XX_PLAYER          -2
+# define MAX_MAPS                99
+# define BASE_SLOT               6
+# define REBORN_SLOT             7
+# define REBORN_DESCRIPTION      "TEMP GAME"
+# define MAX_THINKER_SIZE        256
+# define INVALID_PLAYER          ((player_t*) -1 )
 #endif
 
-#define PRE_VER5_END_SPECIALS   7
+#if !__JHEXEN__
+# define PRE_VER5_END_SPECIALS   7
+#endif
 
 #define FF_FULLBRIGHT       0x8000 // used to be flag in thing->frame
 #define FF_FRAMEMASK        0x7fff
 
 // TYPES -------------------------------------------------------------------
 
+#if !__JHEXEN__
 typedef struct saveheader_s {
     int     magic;
     int     version;
@@ -126,6 +150,32 @@ typedef struct playerheader_s {
     int     numartifacts;
 #endif
 } playerheader_t;
+#endif
+
+#if __JHEXEN__
+typedef enum gamearchivesegment_e {
+    ASEG_GAME_HEADER = 101,
+    ASEG_MAP_HEADER,
+    ASEG_WORLD,
+    ASEG_POLYOBJS,
+    ASEG_MOBJS,
+    ASEG_THINKERS,
+    ASEG_SCRIPTS,
+    ASEG_PLAYERS,
+    ASEG_SOUNDS,
+    ASEG_MISC,
+    ASEG_END,
+    ASEG_TEX_ARCHIVE,
+    ASEG_MAP_HEADER2
+} gamearchivesegment_t;
+
+static union saveptr_u {
+    byte   *b;
+    short  *w;
+    int    *l;
+    float  *f;
+} saveptr;
+#endif
 
 // Thinker Save flags
 #define TSF_SERVERONLY      0x01    // Only saved by servers.
@@ -147,7 +197,11 @@ typedef struct thinkerinfo_s {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void SV_WriteMobj(mobj_t *mobj);
+#if __JHEXEN__
+static int  SV_ReadMobj(mobj_t *mo);
+#else
 static int  SV_ReadMobj(thinker_t *th);
+#endif
 static void SV_WriteCeiling(ceiling_t* ceiling);
 static int  SV_ReadCeiling(ceiling_t* ceiling);
 static void SV_WriteDoor(vldoor_t* door);
@@ -156,42 +210,100 @@ static void SV_WriteFloor(floormove_t* floor);
 static int  SV_ReadFloor(floormove_t* floor);
 static void SV_WritePlat(plat_t* plat);
 static int  SV_ReadPlat(plat_t* plat);
+
+#if __JHEXEN__
+static void SV_WriteLight(light_t *light);
+static int  SV_ReadLight(light_t *light);
+static void SV_WritePhase(phase_t *phase);
+static int  SV_ReadPhase(phase_t *phase);
+static void SV_WriteScript(acs_t *script);
+static int  SV_ReadScript(acs_t *script);
+static void SV_WriteDoorPoly(polydoor_t *polydoor);
+static int  SV_ReadDoorPoly(polydoor_t *polydoor);
+static void SV_WriteMovePoly(polyevent_t *movepoly);
+static int  SV_ReadMovePoly(polyevent_t *movepoly);
+static void SV_WriteRotatePoly(polyevent_t *rotatepoly);
+static int  SV_ReadRotatePoly(polyevent_t *rotatepoly);
+static void SV_WritePillar(pillar_t *pillar);
+static int  SV_ReadPillar(pillar_t *pillar);
+static void SV_WriteFloorWaggle(floorWaggle_t *floorwaggle);
+static int  SV_ReadFloorWaggle(floorWaggle_t *floorwaggle);
+#else
 static void SV_WriteFlash(lightflash_t* flash);
 static int  SV_ReadFlash(lightflash_t* flash);
 static void SV_WriteStrobe(strobe_t* strobe);
 static int  SV_ReadStrobe(strobe_t* strobe);
 static void SV_WriteGlow(glow_t* glow);
 static int  SV_ReadGlow(glow_t* glow);
-#if __JDOOM__
+# if __JDOOM__
 static void SV_WriteFlicker(fireflicker_t* flicker);
 static int  SV_ReadFlicker(fireflicker_t* flicker);
-#endif
+# endif
 
-#if __DOOM64TC__
+# if __DOOM64TC__
 static void SV_WriteBlink(lightblink_t* flicker);
 static int  SV_ReadBlink(lightblink_t* flicker);
+# endif
+#endif
+
+#if __JHEXEN__
+static void OpenStreamOut(char *fileName);
+static void CloseStreamOut(void);
+
+static void ClearSaveSlot(int slot);
+static void CopySaveSlot(int sourceSlot, int destSlot);
+static void CopyFile(char *sourceName, char *destName);
+static boolean ExistingFile(char *name);
+
+static void SetMobjArchiveNums(void);
+static int GetMobjNum(mobj_t *mobj);
+static void SetMobjPtr(int *archiveNum);
+
+static void SV_HxLoadMap(void);
+#else
+static void SV_DMLoadMap(void);
 #endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+#if __JHEXEN__
+extern int ACScriptCount;
+extern byte *ActionCodeBase;
+extern acsinfo_t *ACSInfo;
+#endif
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 LZFILE *savefile;
-char    save_path[128];         /* = "savegame\\"; */
-char    client_save_path[128];  /* = "savegame\\client\\"; */
+#if __JHEXEN__
+char    savePath[256];        /* = "hexndata\\"; */
+char    clientSavePath[256];  /* = "hexndata\\client\\"; */
+#else
+char    savePath[128];         /* = "savegame\\"; */
+char    clientSavePath[128];  /* = "savegame\\client\\"; */
+#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+#if __JHEXEN__
+static int saveVersion;
+#else
 static saveheader_t hdr;
+static playerheader_t playerHeader;
+#endif
 static mobj_t **thing_archive;
 static int thing_archiveSize;
-static int SaveToRealPlayer[MAXPLAYERS];
-
+static int saveToRealPlayerNum[MAXPLAYERS];
+#if __JHEXEN__
+static int **targetPlayerAddrs;
+static int targetPlayerCount;
+static byte *saveBuffer;
+static boolean savingPlayers;
+#else
 static int numSoundTargets = 0;
+#endif
 
 static byte *junkbuffer;        // Old save data is read into here.
-
-static playerheader_t playerHeader;
 
 /*
  * IMPORTANT:
@@ -199,15 +311,20 @@ static playerheader_t playerHeader;
  */
 static thinkerinfo_t thinkerInfo[] = {
     {
-      tc_end,
+#if __JHEXEN__
+      TC_NULL,
+#else
+      TC_END,
+#endif
       NULL,
       0,
       NULL,
       NULL,
       0
     },
+#if !__JHEXEN__
     {
-      tc_mobj,
+      TC_MOBJ,
       P_MobjThinker,
       TSF_SERVERONLY,
       SV_WriteMobj,
@@ -215,15 +332,16 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(mobj_t)
     },
     {
-      tc_xgmover,
+      TC_XGMOVER,
       XS_PlaneMover,
       0,
       SV_WriteXGPlaneMover,
       SV_ReadXGPlaneMover,
       sizeof(xgplanemover_t)
     },
+#endif
     {
-      tc_ceiling,
+      TC_CEILING,
       T_MoveCeiling,
       TSF_SPECIAL,
       SV_WriteCeiling,
@@ -231,7 +349,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(ceiling_t)
     },
     {
-      tc_door,
+      TC_DOOR,
       T_VerticalDoor,
       TSF_SPECIAL,
       SV_WriteDoor,
@@ -239,7 +357,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(vldoor_t)
     },
     {
-      tc_floor,
+      TC_FLOOR,
       T_MoveFloor,
       TSF_SPECIAL,
       SV_WriteFloor,
@@ -247,15 +365,81 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(floormove_t)
     },
     {
-      tc_plat,
+      TC_PLAT,
       T_PlatRaise,
       TSF_SPECIAL,
       SV_WritePlat,
       SV_ReadPlat,
       sizeof(plat_t)
     },
+#if __JHEXEN__
     {
-      tc_flash,
+     TC_INTERPRET_ACS,
+     T_InterpretACS,
+     0,
+     SV_WriteScript,
+     SV_ReadScript,
+     sizeof(acs_t)
+    },
+    {
+     TC_FLOOR_WAGGLE,
+     T_FloorWaggle,
+     0,
+     SV_WriteFloorWaggle,
+     SV_ReadFloorWaggle,
+     sizeof(floorWaggle_t)
+    },
+    {
+     TC_LIGHT,
+     T_Light,
+     0,
+     SV_WriteLight,
+     SV_ReadLight,
+     sizeof(light_t)
+    },
+    {
+     TC_PHASE,
+     T_Phase,
+     0,
+     SV_WritePhase,
+     SV_ReadPhase,
+     sizeof(phase_t)
+    },
+    {
+     TC_BUILD_PILLAR,
+     T_BuildPillar,
+     0,
+     SV_WritePillar,
+     SV_ReadPillar,
+     sizeof(pillar_t)
+    },
+    {
+     TC_ROTATE_POLY,
+     T_RotatePoly,
+     0,
+     SV_WriteRotatePoly,
+     SV_ReadRotatePoly,
+     sizeof(polyevent_t)
+    },
+    {
+     TC_MOVE_POLY,
+     T_MovePoly,
+     0,
+     SV_WriteMovePoly,
+     SV_ReadMovePoly,
+     sizeof(polyevent_t)
+    },
+    {
+     TC_POLY_DOOR,
+     T_PolyDoor,
+     0,
+     SV_WriteDoorPoly,
+     SV_ReadDoorPoly,
+     sizeof(polydoor_t)
+    },
+#else
+    {
+      TC_FLASH,
       T_LightFlash,
       TSF_SPECIAL,
       SV_WriteFlash,
@@ -263,7 +447,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(lightflash_t)
     },
     {
-      tc_strobe,
+      TC_STROBE,
       T_StrobeFlash,
       TSF_SPECIAL,
       SV_WriteStrobe,
@@ -271,41 +455,57 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(strobe_t)
     },
     {
-      tc_glow,
+      TC_GLOW,
       T_Glow,
       TSF_SPECIAL,
       SV_WriteGlow,
       SV_ReadGlow,
       sizeof(glow_t)
     },
-#if __JDOOM__
+# if __JDOOM__
     {
-      tc_flicker,
+      TC_FLICKER,
       T_FireFlicker,
       TSF_SPECIAL,
       SV_WriteFlicker,
       SV_ReadFlicker,
       sizeof(fireflicker_t)
     },
-#endif
-#if __DOOM64TC__
+# endif
+# if __DOOM64TC__
     {
-      tc_blink,
+      TC_BLINK,
       T_LightBlink,
       TSF_SPECIAL,
       SV_WriteBlink,
       SV_ReadBlink,
       sizeof(lightblink_t)
     },
+# endif
 #endif
     // Terminator
-    { tc_null, NULL, 0, NULL, NULL, 0 }
+    { TC_NULL, NULL, 0, NULL, NULL, 0 }
 };
 
 // CODE --------------------------------------------------------------------
 
-/*
- * Return a ptr to the thinkerinfo for the given thinker.
+/**
+ * Exit with a fatal error if thr value at the current location in the save
+ * file does not match that associated with the specified segment type. 
+ *
+ * @param segType       Value by which to check for alignment.
+ */
+static void AssertSegment(int segType)
+{
+    if(SV_ReadLong() != segType)
+    {
+        Con_Error("Corrupt save game: Segment [%d] failed alignment check",
+                  segType);
+    }
+}
+
+/**
+ * @return              Ptr to the thinkerinfo for the given thinker.
  */
 static thinkerinfo_t* ThinkerInfo(thinker_t *th)
 {
@@ -314,7 +514,7 @@ static thinkerinfo_t* ThinkerInfo(thinker_t *th)
     if(!th)
         return NULL;
 
-    while(thInfo->thinkclass != tc_null)
+    while(thInfo->thinkclass != TC_NULL)
     {
         if(thInfo->function == th->function)
             return thInfo;
@@ -324,6 +524,106 @@ static thinkerinfo_t* ThinkerInfo(thinker_t *th)
 
     return NULL;
 }
+
+static void removeAllThinkers(void)
+{
+    thinker_t *th, *next;
+
+    th = thinkercap.next;
+    while(th != &thinkercap && th)
+    {
+        next = th->next;
+
+        if(th->function == P_MobjThinker)
+            P_RemoveMobj((mobj_t *) th);
+        else
+            Z_Free(th);
+
+        th= next;
+    }
+    P_InitThinkers();
+}
+
+#if __JHEXEN__
+/**
+ * Sets the archive numbers in all mobj structs.  Also sets the thing_archiveSize
+ * global.  Ignores player mobjs if savingPlayers is false.
+ */
+static void SetMobjArchiveNums(void)
+{
+    uint        i;
+    mobj_t     *mobj;
+    thinker_t  *th;
+
+    thing_archiveSize = 0;
+
+    // jk: I don't know if it ever happens, but what if a mobj has a target
+    // that isn't archived? (doesn't have a thinker).
+    // Let's initialize the archiveNums of all known mobjs to -1.
+    for(i = 0; i < numsectors; ++i)
+    {
+        for(mobj = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); mobj; mobj = mobj->snext)
+            mobj->archiveNum = MOBJ_NULL;
+    }
+
+    th = thinkercap.next;
+    while(th != &thinkercap && th)
+    {
+        if(th->function == P_MobjThinker)
+        {
+            mobj = (mobj_t *) th;
+            if(!(mobj->player && !savingPlayers))
+                mobj->archiveNum = thing_archiveSize++;
+        }
+
+        th = th->next;
+    }
+}
+
+static int GetMobjNum(mobj_t *mobj)
+{
+    if(mobj == NULL)
+    {
+        return MOBJ_NULL;
+    }
+
+    if(mobj->player && !savingPlayers)
+    {
+        return MOBJ_XX_PLAYER;
+    }
+
+    return mobj->archiveNum;
+}
+
+static void SetMobjPtr(int *archiveNum)
+{
+    if(*archiveNum == MOBJ_NULL)
+    {
+        *archiveNum = 0;
+        return;
+    }
+
+    if(*archiveNum == MOBJ_XX_PLAYER)
+    {
+        if(targetPlayerCount == MAX_TARGET_PLAYERS)
+        {
+            Con_Error("RestoreMobj: exceeded MAX_TARGET_PLAYERS");
+        }
+        targetPlayerAddrs[targetPlayerCount++] = archiveNum;
+        *archiveNum = 0;
+        return;
+    }
+
+    // Check that the archiveNum is valid. -jk
+    if(*archiveNum < 0 || *archiveNum > thing_archiveSize - 1)
+    {
+        *archiveNum = 0;        // Set it to null. What else can we do?
+        return;
+    }
+    *archiveNum = (int) thing_archive[*archiveNum];
+}
+
+#else
 
 /*
  * Must be called before saving or loading any data.
@@ -406,7 +706,7 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
     return first_empty + 1;
 }
 
-/*
+/**
  * Used by the read code when mobjs are read.
  */
 static void SV_SetArchiveThing(mobj_t *mo, int num)
@@ -427,6 +727,8 @@ mobj_t *SV_GetArchiveThing(int num)
     return *(thing_archive + num - 1);
 }
 
+#endif // __JHEXEN__
+
 unsigned int SV_GameID(void)
 {
     return Sys_GetRealTime() + (leveltime << 24);
@@ -442,61 +744,241 @@ void SV_WriteByte(byte val)
     lzPutC(val, savefile);
 }
 
+#if __JHEXEN__
+void SV_WriteShort(unsigned short val)
+#else
 void SV_WriteShort(short val)
+#endif
 {
     lzPutW(val, savefile);
 }
 
+#if __JHEXEN__
+void SV_WriteLong(unsigned int val)
+#else
 void SV_WriteLong(long val)
+#endif
 {
     lzPutL(val, savefile);
 }
 
 void SV_WriteFloat(float val)
 {
+#if __JHEXEN__
+    lzPutL(*(int *) &val, savefile);
+#else
     long temp = 0;
     memcpy(&temp, &val, 4);
     lzPutL(temp, savefile);
+#endif
 }
 
 void SV_Read(void *data, int len)
 {
+#if __JHEXEN__
+    memcpy(data, saveptr.b, len);
+    saveptr.b += len;
+#else
     lzRead(data, len, savefile);
+#endif
 }
 
 byte SV_ReadByte(void)
 {
+#if __JHEXEN__
+    return (*saveptr.b++);
+#else
     return lzGetC(savefile);
+#endif
 }
 
 short SV_ReadShort(void)
 {
+#if __JHEXEN__
+    return (SHORT(*saveptr.w++));
+#else
     return lzGetW(savefile);
+#endif
 }
 
 long SV_ReadLong(void)
 {
+#if __JHEXEN__
+    return (LONG(*saveptr.l++));
+#else
     return lzGetL(savefile);
+#endif
 }
 
 float SV_ReadFloat(void)
 {
+#if __JHEXEN__
+    return (FLOAT(*saveptr.f++));
+#else
     long    val = lzGetL(savefile);
     float   returnValue = 0;
 
     memcpy(&returnValue, &val, 4);
     return returnValue;
+#endif
 }
 
+#if __JHEXEN__
+static void OpenStreamOut(char *fileName)
+{
+    savefile = lzOpen(fileName, "wp");
+}
+
+static void CloseStreamOut(void)
+{
+    if(savefile)
+    {
+        lzClose(savefile);
+    }
+}
+
+static boolean ExistingFile(char *name)
+{
+    FILE       *fp;
+
+    if((fp = fopen(name, "rb")) != NULL)
+    {
+        fclose(fp);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+/**
+ * Deletes all save game files associated with a slot number.
+ */
+static void ClearSaveSlot(int slot)
+{
+    int         i;
+    char        fileName[100];
+
+    for(i = 0; i < MAX_MAPS; ++i)
+    {
+        sprintf(fileName, "%shex%d%02d.hxs", savePath, slot, i);
+        M_TranslatePath(fileName, fileName);
+        remove(fileName);
+    }
+    sprintf(fileName, "%shex%d.hxs", savePath, slot);
+    M_TranslatePath(fileName, fileName);
+    remove(fileName);
+}
+
+static void CopyFile(char *sourceName, char *destName)
+{
+    size_t      length;
+    byte       *buffer;
+    LZFILE     *outf;
+
+    length = M_ReadFile(sourceName, &buffer);
+    outf = lzOpen(destName, "wp");
+    if(outf)
+    {
+        lzWrite(buffer, length, outf);
+        lzClose(outf);
+    }
+    Z_Free(buffer);
+}
+
+/**
+ * Copies all the save game files from one slot to another.
+ */
+static void CopySaveSlot(int sourceSlot, int destSlot)
+{
+    int         i;
+    char        sourceName[100];
+    char        destName[100];
+
+    for(i = 0; i < MAX_MAPS; ++i)
+    {
+        sprintf(sourceName, "%shex%d%02d.hxs", savePath, sourceSlot, i);
+        M_TranslatePath(sourceName, sourceName);
+
+        if(ExistingFile(sourceName))
+        {
+            sprintf(destName, "%shex%d%02d.hxs", savePath, destSlot, i);
+            M_TranslatePath(destName, destName);
+            CopyFile(sourceName, destName);
+        }
+    }
+
+    sprintf(sourceName, "%shex%d.hxs", savePath, sourceSlot);
+    M_TranslatePath(sourceName, sourceName);
+
+    if(ExistingFile(sourceName))
+    {
+        sprintf(destName, "%shex%d.hxs", savePath, destSlot);
+        M_TranslatePath(destName, destName);
+        CopyFile(sourceName, destName);
+    }
+}
+
+/**
+ * Copies the base slot to the reborn slot.
+ */
+void SV_HxUpdateRebornSlot(void)
+{
+    ClearSaveSlot(REBORN_SLOT);
+    CopySaveSlot(BASE_SLOT, REBORN_SLOT);
+}
+
+void SV_HxClearRebornSlot(void)
+{
+    ClearSaveSlot(REBORN_SLOT);
+}
+
+int SV_HxGetRebornSlot(void)
+{
+    return (REBORN_SLOT);
+}
+
+/**
+ * @return              <code>true</code> if the reborn slot is available.
+ */
+boolean SV_HxRebornSlotAvailable(void)
+{
+    char        fileName[100];
+
+    sprintf(fileName, "%shex%d.hxs", savePath, REBORN_SLOT);
+    M_TranslatePath(fileName, fileName);
+    return ExistingFile(fileName);
+}
+
+void SV_HxInitBaseSlot(void)
+{
+    ClearSaveSlot(BASE_SLOT);
+}
+#endif
+
+/**
+ * Writes the given player's data (not including the ID number).
+ */
 static void SV_WritePlayer(int playernum)
 {
-    player_t temp, *pl = &temp;
-    ddplayer_t *dpl;
-    int     i;
+    int         i, numPSprites;
+    player_t    temp, *p = &temp;
+    ddplayer_t  ddtemp, *dp = &ddtemp;
 
-    memcpy(pl, players + playernum, sizeof(temp));
-    dpl = pl->plr;
-    for(i = 0; i < playerHeader.numpsprites; i++)
+#if __JHEXEN__
+    numPSprites = NUMPSPRITES;
+#else
+    numPSprites = playerHeader.numpsprites;
+#endif
+
+    // Make a copy of the player.
+    memcpy(p, &players[playernum], sizeof(temp));
+    memcpy(dp, players[playernum].plr, sizeof(ddtemp));
+    temp.plr = &ddtemp;
+
+    // Convert the psprite states.
+    for(i = 0; i < numPSprites; ++i)
     {
         if(temp.psprites[i].state)
         {
@@ -505,200 +987,447 @@ static void SV_WritePlayer(int playernum)
         }
     }
 
-    SV_WriteByte(3);            // Write a version byte.
-    SV_WriteLong(pl->playerstate);
-    SV_WriteLong(FLT2FIX(dpl->viewz));
-    SV_WriteLong(FLT2FIX(dpl->viewheight));
-    SV_WriteLong(FLT2FIX(dpl->deltaviewheight));
-    SV_WriteFloat(dpl->lookdir);
-    SV_WriteLong(pl->bob);
-
-    SV_WriteLong(pl->health);
-    SV_WriteLong(pl->armorpoints);
-    SV_WriteLong(pl->armortype);
-
-#if __DOOM64TC__
-    SV_WriteLong(pl->laserpw); // d64tc
-    SV_WriteLong(pl->lasericon1); // added in outcast
-    SV_WriteLong(pl->lasericon2); // added in outcast
-    SV_WriteLong(pl->lasericon3); // added in outcast
-    SV_WriteLong(pl->outcastcycle); // added in outcast
-    SV_WriteLong(pl->helltime); // added in outcast
-    SV_WriteLong(pl->devicetime); // added in outcast
+    // Version number. Increase when you make changes to the player data
+    // segment format.
+#if __JHEXEN__
+    SV_WriteByte(2);
+#else
+    SV_WriteByte(3);
 #endif
 
-    SV_Write(pl->powers, playerHeader.numpowers * 4);
+#if __JHEXEN__
+    // Class.
+    SV_WriteByte(cfg.playerClass[playernum]);
+#endif
+
+    SV_WriteLong(p->playerstate);
+#if __JHEXEN__
+    SV_WriteLong(p->class);    // 2nd class...?
+#endif
+    SV_WriteLong(FLT2FIX(dp->viewz));
+    SV_WriteLong(FLT2FIX(dp->viewheight));
+    SV_WriteLong(FLT2FIX(dp->deltaviewheight));
+#if !__JHEXEN__
+    SV_WriteFloat(dp->lookdir);
+#endif
+    SV_WriteLong(p->bob);
+#if __JHEXEN__
+    SV_WriteLong(p->flyheight);
+    SV_WriteFloat(dp->lookdir);
+    SV_WriteLong(p->centering);
+#endif
+    SV_WriteLong(p->health);
+#if __JHEXEN__
+    SV_Write(p->armorpoints, sizeof(p->armorpoints));
+    SV_Write(p->inventory, sizeof(p->inventory));
+    SV_WriteLong(p->readyArtifact);
+    SV_WriteLong(p->artifactCount);
+    SV_WriteLong(p->inventorySlotNum);
+
+    SV_Write(p->powers, sizeof(p->powers));
+# else
+    SV_WriteLong(p->armorpoints);
+    SV_WriteLong(p->armortype);
+
+# if __DOOM64TC__
+    SV_WriteLong(p->laserpw); // d64tc
+    SV_WriteLong(p->lasericon1); // added in outcast
+    SV_WriteLong(p->lasericon2); // added in outcast
+    SV_WriteLong(p->lasericon3); // added in outcast
+    SV_WriteLong(p->outcastcycle); // added in outcast
+    SV_WriteLong(p->helltime); // added in outcast
+    SV_WriteLong(p->devicetime); // added in outcast
+# endif
+    SV_Write(p->powers, playerHeader.numpowers * 4);
+#endif
+
 #if __DOOM64TC__
     //SV_WriteLong(cheatenable); // added in outcast
 #endif
-    SV_Write(pl->keys, playerHeader.numkeys * 4);
-#if __DOOM64TC__
-    SV_Write(pl->artifacts, playerHeader.numartifacts * 4);
+
+#if __JHEXEN__
+    SV_WriteLong(p->keys);
+    SV_WriteLong(p->pieces);
+
+    SV_Write(p->frags, sizeof(p->frags));
+#else
+    SV_Write(p->keys, playerHeader.numkeys * 4);
+
+# if __DOOM64TC__
+    SV_Write(p->artifacts, playerHeader.numartifacts * 4);
+# endif
+
+    SV_WriteLong(p->backpack);
+
+    SV_Write(p->frags, playerHeader.numfrags * 4);
 #endif
-    SV_WriteLong(pl->backpack);
 
-    SV_Write(pl->frags, playerHeader.numfrags * 4);
-    SV_WriteLong(pl->readyweapon);
-    SV_WriteLong(pl->pendingweapon);
+    SV_WriteLong(p->readyweapon);
 
-    SV_Write(pl->weaponowned, playerHeader.numweapons * 4);
-    SV_Write(pl->ammo, playerHeader.numammotypes * 4);
-    SV_Write(pl->maxammo, playerHeader.numammotypes * 4);
+#if __JHEXEN__
+    SV_Write(p->weaponowned, sizeof(p->weaponowned));
+    SV_Write(p->ammo, sizeof(p->ammo));
+#else
+    SV_WriteLong(p->pendingweapon);
 
-    SV_WriteLong(pl->attackdown);
-    SV_WriteLong(pl->usedown);
+    SV_Write(p->weaponowned, playerHeader.numweapons * 4);
+    SV_Write(p->ammo, playerHeader.numammotypes * 4);
+    SV_Write(p->maxammo, playerHeader.numammotypes * 4);
+#endif
 
-    SV_WriteLong(pl->cheats);
+    SV_WriteLong(p->attackdown);
+    SV_WriteLong(p->usedown);
 
-    SV_WriteLong(pl->refire);
+    SV_WriteLong(p->cheats);
 
-    SV_WriteLong(pl->killcount);
-    SV_WriteLong(pl->itemcount);
-    SV_WriteLong(pl->secretcount);
+    SV_WriteLong(p->refire);
 
-    SV_WriteLong(pl->damagecount);
-    SV_WriteLong(pl->bonuscount);
+    SV_WriteLong(p->killcount);
+    SV_WriteLong(p->itemcount);
+    SV_WriteLong(p->secretcount);
 
-    SV_WriteLong(dpl->extralight);
-    SV_WriteLong(dpl->fixedcolormap);
-    SV_WriteLong(pl->colormap);
-    SV_Write(pl->psprites, playerHeader.numpsprites * sizeof(pspdef_t));
+    SV_WriteLong(p->damagecount);
+    SV_WriteLong(p->bonuscount);
+#if __JHEXEN__
+    SV_WriteLong(p->poisoncount);
+#endif
 
-    SV_WriteLong(pl->didsecret);
+    SV_WriteLong(dp->extralight);
+    SV_WriteLong(dp->fixedcolormap);
+    SV_WriteLong(p->colormap);
+
+    SV_Write(p->psprites, numPSprites * sizeof(pspdef_t));
+
+#if !__JHEXEN__
+    SV_WriteLong(p->didsecret);
 
     // Added in ver 2 with __JDOOM__
-    SV_WriteLong(pl->flyheight);
+    SV_WriteLong(p->flyheight);
+#endif
+
 #ifdef __JHERETIC__
-    SV_Write(pl->inventory, 4 * 2 * 14);
-    SV_WriteLong(pl->readyArtifact);
-    SV_WriteLong(pl->artifactCount);
-    SV_WriteLong(pl->inventorySlotNum);
-    SV_WriteLong(pl->chickenPeck);
-    SV_WriteLong(pl->morphTics);
-    SV_WriteLong(pl->flamecount);
+    SV_Write(p->inventory, 4 * 2 * 14);
+    SV_WriteLong(p->readyArtifact);
+    SV_WriteLong(p->artifactCount);
+    SV_WriteLong(p->inventorySlotNum);
+    SV_WriteLong(p->chickenPeck);
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+    SV_WriteLong(p->morphTics);
+#endif
+
+#if __JHEXEN__
+    SV_WriteLong(p->jumptics);
+    SV_WriteLong(p->worldTimer);
+#elif __JHERETIC__
+    SV_WriteLong(p->flamecount);
 
     // Added in ver 2
-    SV_WriteByte(pl->class);
+    SV_WriteByte(p->class);
 #endif
 }
 
-static void SV_ReadPlayer(player_t *pl)
+/**
+ * Reads a player's data (not including the ID number).
+ */
+static void SV_ReadPlayer(player_t *p)
 {
-    ddplayer_t *dpl = pl->plr;
-    int     j;
-    byte ver;
+    int         i, numPSprites;
+    byte        ver;
+    ddplayer_t *dp = p->plr;
+
+#if __JHEXEN__
+    numPSprites = NUMPSPRITES;
+#else
+    numPSprites = playerHeader.numpsprites;
+#endif
 
     ver = SV_ReadByte();
 
-    pl->playerstate = SV_ReadLong();
-    dpl->viewz = FIX2FLT(SV_ReadLong());
-    dpl->viewheight = FIX2FLT(SV_ReadLong());
-    dpl->deltaviewheight = FIX2FLT(SV_ReadLong());
-    dpl->lookdir = SV_ReadFloat();
-    pl->bob = SV_ReadLong();
+#if __JHEXEN__
+    cfg.playerClass[p - players] = SV_ReadByte();
 
-    pl->health = SV_ReadLong();
-    pl->armorpoints = SV_ReadLong();
-    pl->armortype = SV_ReadLong();
-
-#if __DOOM64TC__
-    pl->laserpw = SV_ReadLong(); // d64tc
-    pl->lasericon1 = SV_ReadLong(); // added in outcast
-    pl->lasericon2 = SV_ReadLong(); // added in outcast
-    pl->lasericon3 = SV_ReadLong(); // added in outcast
-    pl->outcastcycle = SV_ReadLong(); // added in outcast
-    pl->helltime = SV_ReadLong(); // added in outcast
-    pl->devicetime = SV_ReadLong(); // added in outcast
+    memset(p, 0, sizeof(*p));   // Force everything NULL,
+    p->plr = dp;                // but restore the ddplayer pointer.
 #endif
-    SV_Read(pl->powers, playerHeader.numpowers * 4);
+
+    p->playerstate = SV_ReadLong();
+#if __JHEXEN__
+    p->class = SV_ReadLong();        // 2nd class...?
+#endif
+    dp->viewz = FIX2FLT(SV_ReadLong());
+    dp->viewheight = FIX2FLT(SV_ReadLong());
+    dp->deltaviewheight = FIX2FLT(SV_ReadLong());
+#if !__JHEXEN__
+    dp->lookdir = SV_ReadFloat();
+#endif
+    p->bob = SV_ReadLong();
+#if __JHEXEN__
+    p->flyheight = SV_ReadLong();
+    dp->lookdir = SV_ReadFloat();
+    p->centering = SV_ReadLong();
+#endif
+
+    p->health = SV_ReadLong();
+
+#if __JHEXEN__
+    SV_Read(p->armorpoints, 4 * 4);
+
+    SV_Read(p->inventory, 33 * 4);
+    p->readyArtifact = SV_ReadLong();
+    p->artifactCount = SV_ReadLong();
+    p->inventorySlotNum = SV_ReadLong();
+
+    SV_Read(p->powers, 9 * 4);
+#else
+    p->armorpoints = SV_ReadLong();
+    p->armortype = SV_ReadLong();
+
+# if __DOOM64TC__
+    p->laserpw = SV_ReadLong(); // d64tc
+    p->lasericon1 = SV_ReadLong(); // added in outcast
+    p->lasericon2 = SV_ReadLong(); // added in outcast
+    p->lasericon3 = SV_ReadLong(); // added in outcast
+    p->outcastcycle = SV_ReadLong(); // added in outcast
+    p->helltime = SV_ReadLong(); // added in outcast
+    p->devicetime = SV_ReadLong(); // added in outcast
+# endif
+
+    SV_Read(p->powers, playerHeader.numpowers * 4);
+#endif
+
 #if __DOOM64TC__
     //cheatenable = SV_ReadLong(); // added in outcast
 #endif
-    SV_Read(pl->keys, playerHeader.numkeys * 4);
-#if __DOOM64TC__
-    SV_Read(pl->artifacts, playerHeader.numartifacts * 4);
+
+#if __JHEXEN__
+    p->keys = SV_ReadLong();
+    p->pieces = SV_ReadLong();
+#else
+    SV_Read(p->keys, playerHeader.numkeys * 4);
+
+# if __DOOM64TC__
+    SV_Read(p->artifacts, playerHeader.numartifacts * 4);
+# endif
+
+    p->backpack = SV_ReadLong();
 #endif
-    pl->backpack = SV_ReadLong();
 
-    SV_Read(pl->frags, playerHeader.numfrags * 4);
-    pl->readyweapon = SV_ReadLong();
-    pl->pendingweapon = SV_ReadLong();
+#if __JHEXEN__
+    SV_Read(p->frags, 8 * 4);
+    p->pendingweapon = p->readyweapon = SV_ReadLong();
+#else
+    SV_Read(p->frags, playerHeader.numfrags * 4);
+    p->readyweapon = SV_ReadLong();
+    p->pendingweapon = SV_ReadLong();
+#endif
 
-    SV_Read(pl->weaponowned, playerHeader.numweapons * 4);
-    SV_Read(pl->ammo, playerHeader.numammotypes * 4);
-    SV_Read(pl->maxammo, playerHeader.numammotypes * 4);
+#if __JHEXEN__
+    SV_Read(p->weaponowned, 4 * 4);
+    SV_Read(p->ammo, 2 * 4);
+#else
+    SV_Read(p->weaponowned, playerHeader.numweapons * 4);
+    SV_Read(p->ammo, playerHeader.numammotypes * 4);
+    SV_Read(p->maxammo, playerHeader.numammotypes * 4);
+#endif
 
-    pl->attackdown = SV_ReadLong();
-    pl->usedown = SV_ReadLong();
+    p->attackdown = SV_ReadLong();
+    p->usedown = SV_ReadLong();
 
-    pl->cheats = SV_ReadLong();
+    p->cheats = SV_ReadLong();
 
-    pl->refire = SV_ReadLong();
+    p->refire = SV_ReadLong();
 
-    pl->killcount = SV_ReadLong();
-    pl->itemcount = SV_ReadLong();
-    pl->secretcount = SV_ReadLong();
+    p->killcount = SV_ReadLong();
+    p->itemcount = SV_ReadLong();
+    p->secretcount = SV_ReadLong();
 
-    pl->damagecount = SV_ReadLong();
-    pl->bonuscount = SV_ReadLong();
+#if __JHEXEN__
+    if(ver <= 1)
+    {
+        /*p->messageTics =*/ SV_ReadLong();
+        /*p->ultimateMessage =*/ SV_ReadLong();
+        /*p->yellowMessage =*/ SV_ReadLong();
+    }
+#endif
 
-    dpl->extralight = SV_ReadLong();
-    dpl->fixedcolormap = SV_ReadLong();
-    pl->colormap = SV_ReadLong();
-    SV_Read(pl->psprites, playerHeader.numpsprites * sizeof(pspdef_t));
+    p->damagecount = SV_ReadLong();
+    p->bonuscount = SV_ReadLong();
+#if __JHEXEN__
+    p->poisoncount = SV_ReadLong();
+#endif
 
-    pl->didsecret = SV_ReadLong();
+    dp->extralight = SV_ReadLong();
+    dp->fixedcolormap = SV_ReadLong();
+    p->colormap = SV_ReadLong();
 
-#ifdef __JDOOM__
+    SV_Read(p->psprites, numPSprites * sizeof(pspdef_t));
+
+#if !__JHEXEN__
+    p->didsecret = SV_ReadLong();
+
+# if __JDOOM__
     if(ver == 2) // nolonger used in >= ver 3
-        /*pl->messageTics =*/ SV_ReadLong();
+        /*p->messageTics =*/ SV_ReadLong();
 
     if(ver >= 2)
-        pl->flyheight = SV_ReadLong();
-#endif
+        p->flyheight = SV_ReadLong();
 
-#ifdef __JHERETIC__
+# elif __JHERETIC__
     if(ver < 3) // nolonger used in >= ver 3
-        /*pl->messageTics =*/ SV_ReadLong();
+        /*p->messageTics =*/ SV_ReadLong();
 
-    pl->flyheight = SV_ReadLong();
-    SV_Read(pl->inventory, 4 * 2 * 14);
-    pl->readyArtifact = SV_ReadLong();
-    pl->artifactCount = SV_ReadLong();
-    pl->inventorySlotNum = SV_ReadLong();
-    pl->chickenPeck = SV_ReadLong();
-    pl->morphTics = SV_ReadLong();
-    pl->flamecount = SV_ReadLong();
-
-    if(ver >= 2)
-        pl->class = SV_ReadByte();
+    p->flyheight = SV_ReadLong();
+    SV_Read(p->inventory, 4 * 2 * 14);
+    p->readyArtifact = SV_ReadLong();
+    p->artifactCount = SV_ReadLong();
+    p->inventorySlotNum = SV_ReadLong();
+    p->chickenPeck = SV_ReadLong();
+# endif
 #endif
 
-    for(j = 0; j < playerHeader.numpsprites; j++)
-        if(pl->psprites[j].state)
+#if __JHERETIC__ || __JHEXEN__
+    p->morphTics = SV_ReadLong();
+#endif
+
+#if __JHEXEN__
+    p->jumptics = SV_ReadLong();
+    p->worldTimer = SV_ReadLong();
+#elif __JHERETIC__
+    p->flamecount = SV_ReadLong();
+
+    if(ver >= 2)
+        p->class = SV_ReadByte();
+#endif
+
+    // Demangle it.
+    for(i = 0; i < numPSprites; ++i)
+        if(p->psprites[i].state)
         {
-            pl->psprites[j].state = &states[(int) pl->psprites[j].state];
+            p->psprites[i].state = &states[(int) p->psprites[i].state];
         }
 
     // Mark the player for fixpos and fixangles.
-    dpl->flags |= DDPF_FIXPOS | DDPF_FIXANGLES | DDPF_FIXMOM;
-    pl->update = PSF_REBORN;
+    dp->flags |= DDPF_FIXPOS | DDPF_FIXANGLES | DDPF_FIXMOM;
+    p->update |= PSF_REBORN;
 }
 
-#define MOBJ_SAVEVERSION 7
-static void SV_WriteMobj(mobj_t *mobj)
+#if __JHEXEN__
+static void MangleMobj(mobj_t *mobj)
 {
-    mobj_t  mo;
+    boolean     corpse;
 
-    SV_WriteByte(tc_mobj);
+    corpse = mobj->flags & MF_CORPSE;
+    mobj->state = (state_t *) (mobj->state - states);
+    if(mobj->player)
+    {
+        mobj->player = (player_t *) ((mobj->player - players) + 1);
+    }
+
+    if(corpse)
+    {
+        mobj->target = (mobj_t *) MOBJ_NULL;
+    }
+    else
+    {
+        mobj->target = (mobj_t *) GetMobjNum(mobj->target);
+    }
+
+    switch (mobj->type)
+    {
+        // Just tracer
+    case MT_BISH_FX:
+    case MT_HOLY_FX:
+    case MT_DRAGON:
+    case MT_THRUSTFLOOR_UP:
+    case MT_THRUSTFLOOR_DOWN:
+    case MT_MINOTAUR:
+    case MT_SORCFX1:
+    case MT_MSTAFF_FX2:
+        if(corpse)
+        {
+            mobj->tracer = (mobj_t *) MOBJ_NULL;
+        }
+        else
+        {
+            mobj->tracer = (mobj_t *) GetMobjNum(mobj->tracer);
+        }
+        break;
+
+        // Just special2
+    case MT_LIGHTNING_FLOOR:
+    case MT_LIGHTNING_ZAP:
+        if(corpse)
+        {
+            mobj->special2 = MOBJ_NULL;
+        }
+        else
+        {
+            mobj->special2 = GetMobjNum((mobj_t *) mobj->special2);
+        }
+        break;
+
+        // Both tracer and special2
+    case MT_HOLY_TAIL:
+    case MT_LIGHTNING_CEILING:
+        if(corpse)
+        {
+            mobj->tracer = (mobj_t *) MOBJ_NULL;
+            mobj->special2 = MOBJ_NULL;
+        }
+        else
+        {
+            mobj->tracer = (mobj_t *) GetMobjNum(mobj->tracer);
+            mobj->special2 = GetMobjNum((mobj_t *) mobj->special2);
+        }
+        break;
+
+        // Miscellaneous
+    case MT_KORAX:
+        mobj->special1 = 0;     // Searching index
+        break;
+
+    default:
+        break;
+    }
+}
+#endif
+
+#if __JHEXEN__
+# define MOBJ_SAVEVERSION 5
+#else
+# define MOBJ_SAVEVERSION 7
+#endif
+
+static void SV_WriteMobj(mobj_t *original)
+{
+    mobj_t  temp, *mo = &temp;
+
+#if !__JHEXEN__
+    SV_WriteByte(TC_MOBJ); // Write thinker type byte.
+#endif
+
+    memcpy(mo, original, sizeof(*mo));
 
     // Mangle it!
-    memcpy(&mo, mobj, sizeof(mo));
-    mo.state = (state_t *) (mo.state - states);
-    if(mo.player)
-        mo.player = (player_t *) ((mo.player - players) + 1);
+#if __JHEXEN__
+    MangleMobj(mo);
+#else
+    mo->state = (state_t *) (mo->state - states);
+    if(mo->player)
+        mo->player = (player_t *) ((mo->player - players) + 1);
+#endif
 
     // Version.
+    // JHEXEN
+    // 2: Added the 'translucency' byte.
+    // 3: Added byte 'vistarget'
+    // 4: Added long 'tracer'
+    // 4: Added long 'lastenemy'
+    // 5: Added flags3
+    //
+    // JDOOM || JHERETIC || WOLFTC || DOOM64TC
     // 4: Added byte 'translucency'
     // 5: Added byte 'vistarget'
     // 5: Added tracer in jDoom
@@ -711,106 +1440,140 @@ static void SV_WriteMobj(mobj_t *mobj)
     // 7: Added flags3
     SV_WriteByte(MOBJ_SAVEVERSION);
 
+#if !__JHEXEN__
     // A version 2 features: archive number and target.
-    SV_WriteShort(SV_ThingArchiveNum(mobj));
-    SV_WriteShort(SV_ThingArchiveNum(mo.target));
+    SV_WriteShort(SV_ThingArchiveNum(original));
+    SV_WriteShort(SV_ThingArchiveNum(mo->target));
 
-#if __JDOOM__
+# if __JDOOM__
     // Ver 5 features: Save tracer (fixes Archvile, Revenant bug)
-    SV_WriteShort(SV_ThingArchiveNum(mo.tracer));
+    SV_WriteShort(SV_ThingArchiveNum(mo->tracer));
+# endif
+
+    SV_WriteShort(SV_ThingArchiveNum(mo->onmobj));
 #endif
 
-    SV_WriteShort(SV_ThingArchiveNum(mo.onmobj));
-
     // Info for drawing: position.
-    SV_WriteLong(mo.pos[VX]);
-    SV_WriteLong(mo.pos[VY]);
-    SV_WriteLong(mo.pos[VZ]);
+    SV_WriteLong(mo->pos[VX]);
+    SV_WriteLong(mo->pos[VY]);
+    SV_WriteLong(mo->pos[VZ]);
 
     //More drawing info: to determine current sprite.
-    SV_WriteLong(mo.angle);     // orientation
-    SV_WriteLong(mo.sprite);    // used to find patch_t and flip value
-    SV_WriteLong(mo.frame);
+    SV_WriteLong(mo->angle);     // orientation
+    SV_WriteLong(mo->sprite);    // used to find patch_t and flip value
+    SV_WriteLong(mo->frame);
 
+# if __JHEXEN__
+    SV_WriteLong(mo->floorpic);
+#else
     // The closest interval over all contacted Sectors.
-    SV_WriteLong(FLT2FIX(mo.floorz));
-    SV_WriteLong(FLT2FIX(mo.ceilingz));
+    SV_WriteLong(FLT2FIX(mo->floorz));
+    SV_WriteLong(FLT2FIX(mo->ceilingz));
+#endif
 
     // For movement checking.
-    SV_WriteLong(mo.radius);
-    SV_WriteLong(FLT2FIX(mo.height));
+    SV_WriteLong(mo->radius);
+    SV_WriteLong(FLT2FIX(mo->height));
 
     // Momentums, used to update position.
-    SV_WriteLong(mo.mom[MX]);
-    SV_WriteLong(mo.mom[MY]);
-    SV_WriteLong(mo.mom[MZ]);
+    SV_WriteLong(mo->mom[MX]);
+    SV_WriteLong(mo->mom[MY]);
+    SV_WriteLong(mo->mom[MZ]);
 
     // If == validcount, already checked.
-    SV_WriteLong(mo.valid);
+    SV_WriteLong(mo->valid);
 
-    SV_WriteLong(mo.type);
+    SV_WriteLong(mo->type);
+#if __JHEXEN__
+    SV_WriteLong((int) mo->info);
+#endif
 
-    SV_WriteLong(mo.tics);      // state tic counter
-    SV_WriteLong((int) mo.state);
-    SV_WriteLong(mo.flags);
-    SV_WriteLong(mo.health);
+    SV_WriteLong(mo->tics);      // state tic counter
+    SV_WriteLong((int) mo->state);
+
+#if __JHEXEN__
+    SV_WriteLong(mo->damage);
+#endif
+
+    SV_WriteLong(mo->flags);
+#if __JHEXEN__
+    SV_WriteLong(mo->flags2);
+    SV_WriteLong(mo->flags3);
+    SV_WriteLong(mo->special1);
+    SV_WriteLong(mo->special2);
+#endif
+    SV_WriteLong(mo->health);
 
     // Movement direction, movement generation (zig-zagging).
-    SV_WriteLong(mo.movedir);   // 0-7
-    SV_WriteLong(mo.movecount); // when 0, select a new dir
+    SV_WriteLong(mo->movedir);   // 0-7
+    SV_WriteLong(mo->movecount); // when 0, select a new dir
+
+#if __JHEXEN__
+    SV_WriteLong((int) mo->target);
+#endif
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
-    SV_WriteLong(mo.reactiontime);
+    SV_WriteLong(mo->reactiontime);
 
 #if __DOOM64TC__
-    SV_WriteLong(mo.floatswitch); // added in outcast
-    SV_WriteLong(mo.floattics); // added in outcast
+    SV_WriteLong(mo->floatswitch); // added in outcast
+    SV_WriteLong(mo->floattics); // added in outcast
 #endif
 
     // If >0, the target will be chased
     // no matter what (even if shot)
-    SV_WriteLong(mo.threshold);
+    SV_WriteLong(mo->threshold);
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
-    SV_WriteLong((int) mo.player);
+    SV_WriteLong((int) mo->player);
 
     // Player number last looked for.
-    SV_WriteLong(mo.lastlook);
+    SV_WriteLong(mo->lastlook);
 
+#if !__JHEXEN__
     // For nightmare/multiplayer respawn.
-    SV_WriteLong(mo.spawninfo.pos[VX]);
-    SV_WriteLong(mo.spawninfo.pos[VY]);
-    SV_WriteLong(mo.spawninfo.pos[VZ]);
-    SV_WriteLong(mo.spawninfo.angle);
-    SV_WriteLong(mo.spawninfo.type);
-    SV_WriteLong(mo.spawninfo.options);
+    SV_WriteLong(mo->spawninfo.pos[VX]);
+    SV_WriteLong(mo->spawninfo.pos[VY]);
+    SV_WriteLong(mo->spawninfo.pos[VZ]);
+    SV_WriteLong(mo->spawninfo.angle);
+    SV_WriteLong(mo->spawninfo.type);
+    SV_WriteLong(mo->spawninfo.options);
 
-    SV_WriteLong(mo.intflags);  // killough $dropoff_fix: internal flags
-    SV_WriteLong(FLT2FIX(mo.dropoffz));  // killough $dropoff_fix
-    SV_WriteLong(mo.gear);      // killough used in torque simulation
+    SV_WriteLong(mo->intflags);  // killough $dropoff_fix: internal flags
+    SV_WriteLong(FLT2FIX(mo->dropoffz));  // killough $dropoff_fix
+    SV_WriteLong(mo->gear);      // killough used in torque simulation
 
-    SV_WriteLong(mo.damage);
-    SV_WriteLong(mo.flags2);
-    SV_WriteLong(mo.flags3);
-#ifdef __JHERETIC__
-    SV_WriteLong(mo.special1);
-    SV_WriteLong(mo.special2);
+    SV_WriteLong(mo->damage);
+    SV_WriteLong(mo->flags2);
+    SV_WriteLong(mo->flags3);
+# ifdef __JHERETIC__
+    SV_WriteLong(mo->special1);
+    SV_WriteLong(mo->special2);
+# endif
+
+    SV_WriteByte(mo->translucency);
+    SV_WriteByte((byte)(mo->vistarget +1));
 #endif
 
-    SV_WriteByte(mo.translucency);
-    SV_WriteByte((byte)(mo.vistarget +1));
-
-    SV_WriteLong(FLT2FIX(mo.floorclip));
-
-#ifdef __JHERETIC__
+    SV_WriteLong(FLT2FIX(mo->floorclip));
+#if __JHEXEN__
+    SV_WriteLong(mo->archiveNum);
+    SV_WriteLong(mo->tid);
+    SV_WriteLong(mo->special);
+    SV_Write(mo->args, sizeof(mo->args));
+    SV_WriteByte(mo->translucency);
+    SV_WriteByte((byte)(mo->vistarget +1));
+    SV_WriteLong((int) mo->tracer);
+    SV_WriteLong((int) mo->lastenemy);
+#elif __JHERETIC__
     // Ver 7 features: generator
-    SV_WriteShort(SV_ThingArchiveNum(mo.generator));
+    SV_WriteShort(SV_ThingArchiveNum(mo->generator));
 #endif
 }
 
-/*
+/**
  * Fixes the mobj flags in older save games to the current values.
  *
  * Called after loading a save game where the mobj format is older than
@@ -819,6 +1582,7 @@ static void SV_WriteMobj(mobj_t *mobj)
  * @param   mo          Ptr to the mobj whoose flags are to be updated.
  * @param   ver         The MOBJ save version to update from.
  */
+#if !__JHEXEN__
 void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
 {
     if(ver < 6)
@@ -861,11 +1625,134 @@ void SV_UpdateReadMobjFlags(mobj_t *mo, int ver)
         mo->flags3 = mo->info->flags3;
     }
 }
+#endif
 
-static int SV_ReadMobj(thinker_t *th)
+static boolean RestoreMobj(mobj_t *mo, int ver)
 {
-    mobj_t *mo = (mobj_t*) th;
-    int     ver = SV_ReadByte();
+#if __JHEXEN__
+    // Restore DDMF flags set only in P_SpawnMobj. R_SetAllDoomsdayFlags
+    // might not set these because it only iterates seclinked mobjs.
+    if(mo->flags & MF_SOLID)
+    {
+        mo->ddflags |= DDMF_SOLID;
+    }
+    if(mo->flags2 & MF2_DONTDRAW)
+    {
+        mo->ddflags |= DDMF_DONTDRAW;
+    }
+#endif
+
+    mo->state = &states[(int) mo->state];
+    if(mo->player)
+    {
+        // The player number translation table is used to find out the
+        // *current* (actual) player number of the referenced player.
+        int     pNum = saveToRealPlayerNum[(int) mo->player - 1];
+
+#if __JHEXEN__
+        if(pNum < 0)
+        {
+            // This saved player does not exist in the current game!
+            // This'll make the mobj unarchiver destroy this mobj.
+            mo->player = INVALID_PLAYER;
+            return false;  // Don't add this thinker.
+        }
+#endif
+
+        mo->player = &players[pNum];
+        mo->dplayer = mo->player->plr;
+        mo->dplayer->mo = mo;
+        //mo->dplayer->clAngle = mo->angle; /* $unifiedangles */
+        mo->dplayer->lookdir = 0; /* $unifiedangles */
+    }
+
+    mo->visangle = mo->angle >> 16;
+
+#if !__JHEXEN__
+    if(mo->dplayer && !mo->dplayer->ingame)
+    {
+        if(mo->dplayer)
+            mo->dplayer->mo = NULL;
+        Z_Free(mo);
+
+        return false; // Don't add this thinker.
+    }
+
+    mo->thinker.function = P_MobjThinker;
+
+    // Do we need to update this mobj's flag values?
+    if(ver < MOBJ_SAVEVERSION)
+        SV_UpdateReadMobjFlags(mo, ver);
+#else
+    // flags3 was introduced in ver 5 so all we can do is to
+    // apply the values as set in the mobjinfo.
+    // Non-persistent flags might screw things up a lot worse otherwise.
+    if(ver < 5)
+        mo->flags3 = mo->info->flags3;
+#endif
+
+    P_SetThingPosition(mo);
+    mo->info = &mobjinfo[mo->type];
+    mo->floorz = P_GetFloatp(mo->subsector,
+                               DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
+    mo->ceilingz = P_GetFloatp(mo->subsector,
+                                 DMU_SECTOR_OF_SUBSECTOR | DMU_CEILING_HEIGHT);
+
+#if __JHEXEN__
+    SetMobjPtr((int *) &mo->target);
+
+    switch(mo->type)
+    {
+        // Just tracer
+    case MT_BISH_FX:
+    case MT_HOLY_FX:
+    case MT_DRAGON:
+    case MT_THRUSTFLOOR_UP:
+    case MT_THRUSTFLOOR_DOWN:
+    case MT_MINOTAUR:
+    case MT_SORCFX1:
+        if(ver >= 4)
+            SetMobjPtr((int *) &mo->tracer);
+        else
+            SetMobjPtr((int *) &mo->special1);
+        break;
+
+        // Just special2
+    case MT_LIGHTNING_FLOOR:
+    case MT_LIGHTNING_ZAP:
+        SetMobjPtr(&mo->special2);
+        break;
+
+        // Both tracer and special2
+    case MT_HOLY_TAIL:
+    case MT_LIGHTNING_CEILING:
+        if(ver >= 4)
+            SetMobjPtr((int *) &mo->tracer);
+        else
+            SetMobjPtr((int *) &mo->special1);
+        SetMobjPtr(&mo->special2);
+        break;
+
+    default:
+        break;
+    }
+#endif
+
+    return true; // Add this thinker.
+}
+
+#if __JHEXEN__
+static int SV_ReadMobj(mobj_t *mo)
+#else
+static int SV_ReadMobj(thinker_t *th)
+#endif
+{
+    int         ver = SV_ReadByte();
+
+#if __JHEXEN__
+    memset(mo, 0, sizeof(*mo));
+#else
+    mobj_t     *mo = (mobj_t*) th;
 
     if(ver >= 2)
     {
@@ -880,36 +1767,41 @@ static int SV_ReadMobj(thinker_t *th)
     // Ver 5 features:
     if(ver >= 5)
     {
-#if __JDOOM__
+# if __JDOOM__
         // Tracer for enemy attacks (updated after all mobjs are loaded).
         mo->tracer = (mobj_t *) (int) SV_ReadShort();
-#endif
+# endif
         // mobj this one is on top of (updated after all mobjs are loaded).
         mo->onmobj = (mobj_t *) (int) SV_ReadShort();
     }
     else
     {
-#if __JDOOM__
+# if __JDOOM__
         mo->tracer = NULL;
-#endif
+# endif
         mo->onmobj = NULL;
     }
+#endif
 
     // Info for drawing: position.
     mo->pos[VX] = SV_ReadLong();
     mo->pos[VY] = SV_ReadLong();
     mo->pos[VZ] = SV_ReadLong();
 
-    //More drawing info: to determine current sprite.
+    //More drawing info: to determine current sprite. 
     mo->angle = SV_ReadLong();  // orientation
     mo->sprite = SV_ReadLong(); // used to find patch_t and flip value
     mo->frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
     if(mo->frame & FF_FULLBRIGHT)
         mo->frame &= FF_FRAMEMASK; // not used anymore.
 
+#if __JHEXEN__
+    mo->floorpic = SV_ReadLong();
+#else
     // The closest interval over all contacted Sectors.
     mo->floorz = FIX2FLT(SV_ReadLong());
     mo->ceilingz = FIX2FLT(SV_ReadLong());
+#endif
 
     // For movement checking.
     mo->radius = SV_ReadLong();
@@ -923,17 +1815,38 @@ static int SV_ReadMobj(thinker_t *th)
     // If == validcount, already checked.
     mo->valid = SV_ReadLong();
     mo->type = SV_ReadLong();
+#if __JHEXEN__
+    mo->info = (mobjinfo_t *) SV_ReadLong();
+#else
     mo->info = &mobjinfo[mo->type];
+#endif
 
     mo->tics = SV_ReadLong();   // state tic counter
     mo->state = (state_t *) SV_ReadLong();
+
+#if __JHEXEN__
+    mo->damage = SV_ReadLong();
+#endif
+
     mo->flags = SV_ReadLong();
+
+#if __JHEXEN__
+    mo->flags2 = SV_ReadLong();
+    if(ver >= 5)
+        mo->flags3 = SV_ReadLong();
+    mo->special1 = SV_ReadLong();
+    mo->special2 = SV_ReadLong();
+#endif
 
     mo->health = SV_ReadLong();
 
     // Movement direction, movement generation (zig-zagging).
     mo->movedir = SV_ReadLong();    // 0-7
     mo->movecount = SV_ReadLong();  // when 0, select a new dir
+
+#if __JHEXEN__
+    mo->target = (mobj_t *) SV_ReadLong();
+#endif
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
@@ -955,6 +1868,31 @@ static int SV_ReadMobj(thinker_t *th)
     // Player number last looked for.
     mo->lastlook = SV_ReadLong();
 
+#if __JHEXEN__
+    mo->floorclip = FIX2FLT(SV_ReadLong());
+    mo->archiveNum = SV_ReadLong();
+    mo->tid = SV_ReadLong();
+    mo->special = SV_ReadLong();
+    SV_Read(mo->args, 1 * 5);
+
+    if(ver >= 2)
+    {
+        // Version 2 added the 'translucency' byte.
+        mo->translucency = SV_ReadByte();
+    }
+
+    if(ver >= 3)
+    {
+        // Ver3 has the vistarget byte.
+        mo->vistarget = (SV_ReadByte()) -1;
+    }
+
+    if(ver >= 4)
+        mo->tracer = (mobj_t *) SV_ReadLong();
+
+    if(ver >= 4)
+        mo->lastenemy = (mobj_t *) SV_ReadLong();
+#else
     // For nightmare respawn.
     if(ver >= 6)
     {
@@ -975,25 +1913,25 @@ static int SV_ReadMobj(thinker_t *th)
         mo->spawninfo.options = (int) SV_ReadShort();
     }
 
-#ifdef __JDOOM__
+# ifdef __JDOOM__
     if(ver >= 3)
     {
         mo->intflags = SV_ReadLong();   // killough $dropoff_fix: internal flags
         mo->dropoffz = FIX2FLT(SV_ReadLong());   // killough $dropoff_fix
         mo->gear = SV_ReadLong();   // killough used in torque simulation
     }
-#endif
+# endif
 
-#ifdef __JHERETIC__
+# ifdef __JHERETIC__
     if(ver >= 5)
     {
         mo->intflags = SV_ReadLong();   // killough $dropoff_fix: internal flags
         mo->dropoffz = FIX2FLT(SV_ReadLong());   // killough $dropoff_fix
         mo->gear = SV_ReadLong();   // killough used in torque simulation
     }
-#endif
+# endif
 
-#if __JDOOM__
+# if __JDOOM__
     if(ver >= 6)
     {
         mo->damage = SV_ReadLong();
@@ -1002,19 +1940,19 @@ static int SV_ReadMobj(thinker_t *th)
     else
         mo->damage = DDMAXINT; // Use the value set in mo->info->damage
 
-#elif __JHERETIC__
+# elif __JHERETIC__
     mo->damage = SV_ReadLong();
     mo->flags2 = SV_ReadLong();
-#endif
+# endif
 
     if(ver >= 7)
         mo->flags3 = SV_ReadLong();
     // Else flags3 will be applied from the defs.
 
-#if __JHERETIC__
+# if __JHERETIC__
     mo->special1 = SV_ReadLong();
     mo->special2 = SV_ReadLong();
-#endif
+# endif
 
     // Version 4 has the translucency byte.
     if(ver >= 4)
@@ -1029,60 +1967,193 @@ static int SV_ReadMobj(thinker_t *th)
         mo->floorclip = FIX2FLT(SV_ReadLong());
     }
 
-#if __JHERETIC__
+# if __JHERETIC__
     if(ver >= 7)
         mo->generator = (mobj_t *) (int) SV_ReadShort();
     else
         mo->generator = NULL;
+# endif
 #endif
 
     // Restore! (unmangle)
-    mo->state = &states[(int) mo->state];
-    if(mo->player)
+    return RestoreMobj(mo, ver); // Add this thinker?
+}
+
+/*
+ * Prepare and write the player header info.
+ */
+#if !__JHEXEN__
+static void P_ArchivePlayerHeader(void)
+{
+    playerheader_t *ph = &playerHeader;
+    SV_WriteByte(1); // version byte
+
+    ph->numpowers = NUM_POWER_TYPES;
+    ph->numkeys = NUM_KEY_TYPES;
+    ph->numfrags = MAXPLAYERS;
+    ph->numweapons = NUM_WEAPON_TYPES;
+    ph->numammotypes = NUM_AMMO_TYPES;
+    ph->numpsprites = NUMPSPRITES;
+# if __DOOM64TC__
+    ph->numartifacts = NUMARTIFACTS;
+# endif
+
+    SV_WriteLong(ph->numpowers);
+    SV_WriteLong(ph->numkeys);
+    SV_WriteLong(ph->numfrags);
+    SV_WriteLong(ph->numweapons);
+    SV_WriteLong(ph->numammotypes);
+    SV_WriteLong(ph->numpsprites);
+# if __DOOM64TC__
+    SV_WriteLong(ph->numartifacts);
+# endif
+}
+
+/*
+ * Read archived playerheader info.
+ */
+static void P_UnArchivePlayerHeader(void)
+{
+    if(hdr.version >= 5)
     {
-        // Saved players might be in a different order than at the moment.
-        int     pnum = SaveToRealPlayer[(int) mo->player - 1];
+        int ver;
 
-        mo->player = &players[pnum];
-        mo->dplayer = mo->player->plr;
-        mo->dplayer->mo = mo;
-        //mo->dplayer->clAngle = mo->angle; /* $unifiedangles */
-        mo->dplayer->lookdir = 0; /* $unifiedangles */
+        ver = SV_ReadByte(); // Unused atm
+        playerHeader.numpowers = SV_ReadLong();
+        playerHeader.numkeys = SV_ReadLong();
+        playerHeader.numfrags = SV_ReadLong();
+        playerHeader.numweapons = SV_ReadLong();
+        playerHeader.numammotypes = SV_ReadLong();
+        playerHeader.numpsprites = SV_ReadLong();
+# if __DOOM64TC__
+        playerHeader.numartifacts = SV_ReadLong();
+# endif
     }
-
-    if(mo->dplayer && !mo->dplayer->ingame)
+    else // The old format didn't save the counts.
     {
-        if(mo->dplayer)
-            mo->dplayer->mo = NULL;
-        Z_Free(mo);
-
-        return false; // Don't add this thinker.
+# if __JDOOM__
+        playerHeader.numpowers = 6;
+        playerHeader.numkeys = 6;
+        playerHeader.numfrags = 4; // why was this only 4?
+        playerHeader.numweapons = 9;
+        playerHeader.numammotypes = 4;
+        playerHeader.numpsprites = 2;
+# elif __JHERETIC__
+        playerHeader.numpowers = 9;
+        playerHeader.numkeys = 3;
+        playerHeader.numfrags = 4; // ?
+        playerHeader.numweapons = 8;
+        playerHeader.numammotypes = 6;
+        playerHeader.numpsprites = 2;
+# endif
     }
+}
+#endif // !__JHEXEN__
 
-    mo->visangle = mo->angle >> 16;
+static void P_ArchivePlayers(void)
+{
+    int         i;
 
-    mo->thinker.function = P_MobjThinker;
+#if __JHEXEN__
+    SV_WriteLong(ASEG_PLAYERS);
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        SV_WriteByte(players[i].plr->ingame);
+    }
+#endif
 
-    // Do we need to update this mobj's flag values?
-    if(ver < MOBJ_SAVEVERSION)
-        SV_UpdateReadMobjFlags(mo, ver);
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->ingame)
+            continue;
+        SV_WriteLong(Net_GetPlayerID(i));
+        SV_WritePlayer(i);
+    }
+}
 
-    P_SetThingPosition(mo);
-    mo->info = &mobjinfo[mo->type];
-    mo->floorz = P_GetFloatp(mo->subsector,
-                             DMU_SECTOR_OF_SUBSECTOR | DMU_FLOOR_HEIGHT);
+static void P_UnArchivePlayers(boolean *infile, boolean *loaded)
+{
+    int         i, j;
+    unsigned int pid;
+    player_t    dummy_player;
+    ddplayer_t  dummy_ddplayer;
+    player_t   *player;
 
-    mo->ceilingz = P_GetFloatp(mo->subsector,
-                               DMU_SECTOR_OF_SUBSECTOR | DMU_CEILING_HEIGHT);
+    // Setup the dummy.
+    dummy_player.plr = &dummy_ddplayer;
 
-    return true; // Add this thinker.
+    // Load the players.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        // By default a saved player translates to nothing.
+        saveToRealPlayerNum[i] = -1;
+
+        if(!infile[i])
+            continue;
+
+        // The ID number will determine which player this actually is.
+        pid = SV_ReadLong();
+        for(player = 0, j = 0; j < MAXPLAYERS; ++j)
+            if((IS_NETGAME && Net_GetPlayerID(j) == pid) ||
+               (!IS_NETGAME && j == 0))
+            {
+                // This is our guy.
+                player = players + j;
+                loaded[j] = true;
+                // Later references to the player number 'i' must be
+                // translated!
+                saveToRealPlayerNum[i] = j;
+#ifdef _DEBUG
+                Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
+#endif
+                break;
+            }
+        if(!player)
+        {
+            // We have a missing player. Use a dummy to load the data.
+            player = &dummy_player;
+        }
+
+        // Read the data.
+        SV_ReadPlayer(player);
+
+#if !__JHEXEN__
+        // Will be set when unarc thinker.
+        player->plr->mo = NULL;
+        player->attacker = NULL;
+#endif
+    }
 }
 
 static void SV_WriteSector(sector_t *sec)
 {
-    int     type;
-    xsector_t *xsec = P_XSector(sec);
+#if !__JHEXEN__
+    int         type;
+#endif
+    xsector_t  *xsec = P_XSector(sec);
+    byte        rgb[3];
 
+#if __JHEXEN__
+    // Version.
+    // 2: Surface colors.
+    SV_WriteByte(2); // write a version byte.
+
+    SV_WriteShort(P_GetIntp(sec, DMU_FLOOR_HEIGHT));
+    SV_WriteShort(P_GetIntp(sec, DMU_CEILING_HEIGHT));
+    SV_WriteShort(SV_FlatArchiveNum(P_GetIntp(sec, DMU_FLOOR_TEXTURE)));
+    SV_WriteShort(SV_FlatArchiveNum(P_GetIntp(sec, DMU_CEILING_TEXTURE)));
+    SV_WriteShort(P_GetIntp(sec, DMU_LIGHT_LEVEL));
+    P_GetBytepv(sec, DMU_COLOR, rgb); SV_Write(rgb, 3);
+    P_GetBytepv(sec, DMU_FLOOR_COLOR, rgb); SV_Write(rgb, 3);
+    P_GetBytepv(sec, DMU_CEILING_COLOR, rgb); SV_Write(rgb, 3);
+    SV_WriteShort(xsec->special);
+    SV_WriteShort(xsec->tag);
+    SV_WriteShort(xsec->seqType);
+    SV_WriteFloat(P_GetFloatp(sec, DMU_FLOOR_OFFSET_X));
+    SV_WriteFloat(P_GetFloatp(sec, DMU_FLOOR_OFFSET_Y));
+    SV_WriteFloat(P_GetFloatp(sec, DMU_CEILING_OFFSET_X));
+    SV_WriteFloat(P_GetFloatp(sec, DMU_CEILING_OFFSET_Y));
+#else
     int     floorheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
     int     ceilingheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
     int     floorpic = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
@@ -1092,7 +2163,6 @@ static void SV_WriteSector(sector_t *sec)
     float   flooroffy = P_GetFloatp(sec, DMU_FLOOR_OFFSET_Y);
     float   ceiloffx = P_GetFloatp(sec, DMU_CEILING_OFFSET_X);
     float   ceiloffy = P_GetFloatp(sec, DMU_CEILING_OFFSET_Y);
-    byte    rgb[3];
 
     // Determine type.
     if(xsec->xg)
@@ -1105,7 +2175,9 @@ static void SV_WriteSector(sector_t *sec)
     // Type byte.
     SV_WriteByte(type);
 
-    SV_WriteByte(1); // Write a version byte.
+    // Version.
+    // 2: Surface colors.
+    SV_WriteByte(2); // Write a version byte.
 
     SV_WriteShort(floorheight >> FRACBITS);
     SV_WriteShort(ceilingheight >> FRACBITS);
@@ -1141,21 +2213,31 @@ static void SV_WriteSector(sector_t *sec)
     // Count the number of sound targets
     if(xsec->soundtarget)
         numSoundTargets++;
+#endif
 }
 
-/*
+/**
  * Reads all versions of archived sectors.
  * Including the old Ver1.
  */
 static void SV_ReadSector(sector_t *sec)
 {
-    int     ver;
-    int     type = 0;
-    int     floorTexID;
-    int     ceilingTexID;
-    byte    rgb[3];
-    xsector_t *xsec = P_XSector(sec);
+    int         ver;
+#if !__JHEXEN__
+    int         type = 0;
+#endif
+    int         floorTexID;
+    int         ceilingTexID;
+    byte        rgb[3];
+    xsector_t  *xsec = P_XSector(sec);
+    int         fh, ch;
 
+#if __JHEXEN__
+    // Save version > 2 include a version byte
+    ver = 1;
+    if(saveVersion > 2)
+        ver = SV_ReadByte();
+#else
     // Save versions > 1 include a type byte
     if(hdr.version > 1)
         type = SV_ReadByte();
@@ -1163,13 +2245,33 @@ static void SV_ReadSector(sector_t *sec)
     // Save version > 4 include a version byte
     if(hdr.version > 4)
         ver = SV_ReadByte();
+#endif
 
-    P_SetFixedp(sec, DMU_FLOOR_HEIGHT, SV_ReadShort() << FRACBITS);
-    P_SetFixedp(sec, DMU_CEILING_HEIGHT, SV_ReadShort() << FRACBITS);
+    fh = SV_ReadShort();
+    ch = SV_ReadShort();
+
+#if __JHEXEN__
+    P_SetIntp(sec, DMU_FLOOR_HEIGHT, fh);
+    P_SetIntp(sec, DMU_CEILING_HEIGHT, ch);
+
+    // Update the "target heights" of the planes.
+    P_SetIntp(sec, DMU_FLOOR_TARGET, fh);
+    P_SetIntp(sec, DMU_CEILING_TARGET, ch);
+#else
+    P_SetFixedp(sec, DMU_FLOOR_HEIGHT, fh << FRACBITS);
+    P_SetFixedp(sec, DMU_CEILING_HEIGHT, ch << FRACBITS);
+#endif
+
+#if __JHEXEN__
+    // The move speed is not saved; can cause minor problems.
+    P_SetIntp(sec, DMU_FLOOR_SPEED, 0);
+    P_SetIntp(sec, DMU_CEILING_SPEED, 0);
+#endif
 
     floorTexID = SV_ReadShort();
     ceilingTexID = SV_ReadShort();
 
+#if !__JHEXEN__
     if(hdr.version == 1)
     {
         // In Ver1 the flat numbers are the actual lump numbers.
@@ -1179,6 +2281,7 @@ static void SV_ReadSector(sector_t *sec)
         ceilingTexID += firstflat;
     }
     else if(hdr.version >= 4)
+#endif
     {
         // In Versions >= 4: The flat numbers are actually archive numbers.
         floorTexID = SV_GetArchiveFlat(floorTexID);
@@ -1188,6 +2291,12 @@ static void SV_ReadSector(sector_t *sec)
     P_SetIntp(sec, DMU_FLOOR_TEXTURE, floorTexID);
     P_SetIntp(sec, DMU_CEILING_TEXTURE, ceilingTexID);
 
+#if __JHEXEN__
+    P_SetIntp(sec, DMU_LIGHT_LEVEL, SV_ReadShort());
+
+    SV_Read(rgb, 3);
+    P_SetBytepv(sec, DMU_COLOR, rgb);
+#else
     // In Ver1 the light level is a short
     if(hdr.version == 1)
         P_SetIntp(sec, DMU_LIGHT_LEVEL, SV_ReadShort());
@@ -1199,9 +2308,10 @@ static void SV_ReadSector(sector_t *sec)
         SV_Read(rgb, 3);
         P_SetBytepv(sec, DMU_COLOR, rgb);
     }
+#endif
 
-    // Ver 5 includes surface colours
-    if(hdr.version >= 5)
+    // Ver 2 includes surface colours
+    if(ver >= 2)
     {
         SV_Read(rgb, 3);
         P_SetBytepv(sec, DMU_FLOOR_COLOR, rgb);
@@ -1213,6 +2323,16 @@ static void SV_ReadSector(sector_t *sec)
     xsec->special = SV_ReadShort();
     /*xsec->tag =*/ SV_ReadShort();
 
+#if __JHEXEN__
+    xsec->seqType = SV_ReadShort();
+#endif
+
+#if __JHEXEN__
+    P_SetFloatp(sec, DMU_FLOOR_OFFSET_X, SV_ReadFloat());
+    P_SetFloatp(sec, DMU_FLOOR_OFFSET_Y, SV_ReadFloat());
+    P_SetFloatp(sec, DMU_CEILING_OFFSET_X, SV_ReadFloat());
+    P_SetFloatp(sec, DMU_CEILING_OFFSET_Y, SV_ReadFloat());
+#else
     // Save versions > 1 include a type byte
     if(hdr.version > 1)
     {
@@ -1228,6 +2348,7 @@ static void SV_ReadSector(sector_t *sec)
             SV_ReadXGSector(sec);
     }
     else
+#endif
     {
         xsec->specialdata = 0;
     }
@@ -1238,125 +2359,149 @@ static void SV_ReadSector(sector_t *sec)
 
 static void SV_WriteLine(line_t *li)
 {
-    int     i;
-    int     texid;
-    byte    rgb[3];
-    byte    rgba[4];
-
+    uint        i;
+    int         texid;
+    byte        rgba[4];
+#if !__JHEXEN__
     lineclass_t type;
-    xline_t *xli = P_XLine(li);
-    side_t *side;
+#endif
+    xline_t    *xli = P_XLine(li);
 
+#if !__JHEXEN__
     if(xli->xg)
         type =  lc_xg1;
     else
         type = lc_normal;
 
     SV_WriteByte(type);
+#endif
+
+    // Version.
+    // 2: Per surface texture offsets.
+    // 2: Surface colors.
     SV_WriteByte(2); // Write a version byte
 
     SV_WriteShort(P_GetIntp(li, DMU_FLAGS));
+#if __JHEXEN__
+    SV_WriteByte(xli->special);
+    SV_WriteByte(xli->arg1);
+    SV_WriteByte(xli->arg2);
+    SV_WriteByte(xli->arg3);
+    SV_WriteByte(xli->arg4);
+    SV_WriteByte(xli->arg5);
+#else
     SV_WriteShort(xli->special);
     SV_WriteShort(xli->tag);
+#endif
 
     // For each side
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
-        if(i == 0)
-            side = P_GetPtrp(li, DMU_SIDE0);
-        else
-            side = P_GetPtrp(li, DMU_SIDE1);
-
-        if(!side)
+        side_t *si = P_GetPtrp(li, (i? DMU_SIDE1:DMU_SIDE0));
+        if(!si)
             continue;
 
-        SV_WriteShort(P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X) >> FRACBITS);
-        SV_WriteShort(P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y) >> FRACBITS);
-        SV_WriteShort(P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS);
-        SV_WriteShort(P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y) >> FRACBITS);
-        SV_WriteShort(P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X) >> FRACBITS);
-        SV_WriteShort(P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(si, DMU_TOP_TEXTURE_OFFSET_X) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(si, DMU_TOP_TEXTURE_OFFSET_Y) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_X) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_Y) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_X) >> FRACBITS);
+        SV_WriteShort(P_GetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_Y) >> FRACBITS);
 
-        texid = P_GetIntp(side, DMU_TOP_TEXTURE);
+        texid = P_GetIntp(si, DMU_TOP_TEXTURE);
         SV_WriteShort(SV_TextureArchiveNum(texid));
 
-        texid = P_GetIntp(side, DMU_BOTTOM_TEXTURE);
+        texid = P_GetIntp(si, DMU_BOTTOM_TEXTURE);
         SV_WriteShort(SV_TextureArchiveNum(texid));
 
-        texid = P_GetIntp(side, DMU_MIDDLE_TEXTURE);
+        texid = P_GetIntp(si, DMU_MIDDLE_TEXTURE);
         SV_WriteShort(SV_TextureArchiveNum(texid));
 
-        P_GetBytepv(side, DMU_TOP_COLOR, rgb);
-        SV_Write(rgb, 3);
+        P_GetBytepv(si, DMU_TOP_COLOR, rgba);
+        SV_Write(rgba, 3);
 
-        P_GetBytepv(side, DMU_BOTTOM_COLOR, rgb);
-        SV_Write(rgb, 3);
+        P_GetBytepv(si, DMU_BOTTOM_COLOR, rgba);
+        SV_Write(rgba, 3);
 
-        P_GetBytepv(side, DMU_MIDDLE_COLOR, rgba);
+        P_GetBytepv(si, DMU_MIDDLE_COLOR, rgba);
         SV_Write(rgba, 4);
 
-        SV_WriteLong(P_GetIntp(side, DMU_MIDDLE_BLENDMODE));
+        SV_WriteLong(P_GetIntp(si, DMU_MIDDLE_BLENDMODE));
 
-        SV_WriteShort(P_GetIntp(side, DMU_FLAGS));
+        SV_WriteShort(P_GetIntp(si, DMU_FLAGS));
     }
 
+#if !__JHEXEN__
     // Extended General?
     if(xli->xg)
     {
         SV_WriteXGLine(li);
     }
+#endif
 }
 
-/*
+/**
  * Reads all versions of archived lines.
  * Including the old Ver1.
  */
 static void SV_ReadLine(line_t *li)
 {
+#if !__JHEXEN__
     enum lineclass_e type = 0;
+#endif
+    int         i;
+    int         ver;
+    int         topTexID;
+    int         bottomTexID;
+    int         middleTexID;
+    byte        rgba[4];
+    xline_t    *xli = P_XLine(li);
 
-    int     i;
-    int     ver = 0; // FIXME: Is this an appropriate default value?
-    int     topTexID;
-    int     bottomTexID;
-    int     middleTexID;
-    byte    rgb[3];
-    byte    rgba[4];
-    side_t *side;
-    xline_t *xli = P_XLine(li);
-
+#if __JHEXEN__
+    // Save versions > 2 include a version byte
+    ver = 1;
+    if(saveVersion > 2)
+        ver = SV_ReadByte();
+#else
     // Save versions > 1 include a type byte
     if(hdr.version > 1)
         type = SV_ReadByte();
 
     // Save versions > 4 include a version byte
+    ver = 1;
     if(hdr.version > 4)
         ver = SV_ReadByte();
+#endif
 
     P_SetIntp(li, DMU_FLAGS, SV_ReadShort());
+#if __JHEXEN__
+    xli->special = SV_ReadByte();
+    xli->arg1 = SV_ReadByte();
+    xli->arg2 = SV_ReadByte();
+    xli->arg3 = SV_ReadByte();
+    xli->arg4 = SV_ReadByte();
+    xli->arg5 = SV_ReadByte();
+#else
     xli->special = SV_ReadShort();
     /*xli->tag =*/ SV_ReadShort();
+#endif
 
     // For each side
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 2; ++i)
     {
-        if(i == 0)
-            side = P_GetPtrp(li, DMU_SIDE0);
-        else
-            side = P_GetPtrp(li, DMU_SIDE1);
-
-        if(!side)
+        side_t *si = P_GetPtrp(li, (i? DMU_SIDE1:DMU_SIDE0));
+        if(!si)
             continue;
 
         // Versions latter than 2 store per surface texture offsets.
         if(ver >= 2)
         {
-            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
-            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
-            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
-            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
-            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
-            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(si, DMU_TOP_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(si, DMU_TOP_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_X, SV_ReadShort() << FRACBITS);
+            P_SetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_Y, SV_ReadShort() << FRACBITS);
         }
         else
         {
@@ -1365,19 +2510,21 @@ static void SV_ReadLine(line_t *li)
             offx = SV_ReadShort() << FRACBITS;
             offy = SV_ReadShort() << FRACBITS;
 
-            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, offx);
-            P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_Y, offy);
-            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, offx);
-            P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_Y, offy);
-            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, offx);
-            P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_Y, offy);
+            P_SetFixedp(si, DMU_TOP_TEXTURE_OFFSET_X, offx);
+            P_SetFixedp(si, DMU_TOP_TEXTURE_OFFSET_Y, offy);
+            P_SetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_X, offx);
+            P_SetFixedp(si, DMU_MIDDLE_TEXTURE_OFFSET_Y, offy);
+            P_SetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_X, offx);
+            P_SetFixedp(si, DMU_BOTTOM_TEXTURE_OFFSET_Y, offy);
         }
 
         topTexID = SV_ReadShort();
         bottomTexID = SV_ReadShort();
         middleTexID = SV_ReadShort();
 
+#if !__JHEXEN__
         if(hdr.version >= 4)
+#endif
         {
             // The texture numbers are only archive numbers.
             topTexID = SV_GetArchiveTexture(topTexID);
@@ -1385,189 +2532,122 @@ static void SV_ReadLine(line_t *li)
             middleTexID = SV_GetArchiveTexture(middleTexID);
         }
 
-        P_SetIntp(side, DMU_TOP_TEXTURE, topTexID);
-        P_SetIntp(side, DMU_BOTTOM_TEXTURE, bottomTexID);
-        P_SetIntp(side, DMU_MIDDLE_TEXTURE, middleTexID);
+        P_SetIntp(si, DMU_TOP_TEXTURE, topTexID);
+        P_SetIntp(si, DMU_BOTTOM_TEXTURE, bottomTexID);
+        P_SetIntp(si, DMU_MIDDLE_TEXTURE, middleTexID);
 
-        // Ver5 includes surface colours
-        if(hdr.version >= 5)
+        // Ver2 includes surface colours
+        if(ver >= 2)
         {
-            SV_Read(rgb, 3);
-            P_SetBytepv(side, DMU_TOP_COLOR, rgb);
+            SV_Read(rgba, 3);
+            P_SetBytepv(si, DMU_TOP_COLOR, rgba);
 
-            SV_Read(rgb, 3);
-            P_SetBytepv(side, DMU_BOTTOM_COLOR, rgb);
+            SV_Read(rgba, 3);
+            P_SetBytepv(si, DMU_BOTTOM_COLOR, rgba);
 
             SV_Read(rgba, 4);
-            P_SetBytepv(side, DMU_MIDDLE_COLOR, rgba);
+            P_SetBytepv(si, DMU_MIDDLE_COLOR, rgba);
 
-            P_SetIntp(side, DMU_MIDDLE_BLENDMODE, SV_ReadLong());
+            P_SetIntp(si, DMU_MIDDLE_BLENDMODE, SV_ReadLong());
 
-            P_SetIntp(side, DMU_FLAGS, SV_ReadShort());
+            P_SetIntp(si, DMU_FLAGS, SV_ReadShort());
         }
     }
+
+#if !__JHEXEN__
     // Versions > 1 might include XG data
     if(hdr.version > 1)
         if(type == lc_xg1)
             SV_ReadXGLine(li);
+#endif
 }
 
-/*
- * Prepare and write the player header info.
- */
-static void P_ArchivePlayerHeader(void)
+#if __JHEXEN__
+static void SV_WritePolyObj(polyobj_t *po)
 {
-    playerheader_t *ph = &playerHeader;
-    SV_WriteByte(1); // version byte
+    SV_WriteByte(1); // write a version byte.
 
-    ph->numpowers = NUM_POWER_TYPES;
-    ph->numkeys = NUM_KEY_TYPES;
-    ph->numfrags = MAXPLAYERS;
-    ph->numweapons = NUM_WEAPON_TYPES;
-    ph->numammotypes = NUM_AMMO_TYPES;
-    ph->numpsprites = NUMPSPRITES;
-#if __DOOM64TC__
-    ph->numartifacts = NUMARTIFACTS;
-#endif
-
-    SV_WriteLong(ph->numpowers);
-    SV_WriteLong(ph->numkeys);
-    SV_WriteLong(ph->numfrags);
-    SV_WriteLong(ph->numweapons);
-    SV_WriteLong(ph->numammotypes);
-    SV_WriteLong(ph->numpsprites);
-#if __DOOM64TC__
-    SV_WriteLong(ph->numartifacts);
-#endif
+    SV_WriteLong(P_GetIntp(po, DMU_TAG));
+    SV_WriteLong(P_GetAnglep(po, DMU_ANGLE));
+    SV_WriteLong(P_GetFixedp(po, DMU_START_SPOT_X));
+    SV_WriteLong(P_GetFixedp(po, DMU_START_SPOT_Y));
 }
 
-/*
- * Read archived playerheader info.
- */
-static void P_UnArchivePlayerHeader(void)
+static int SV_ReadPolyObj(polyobj_t *po)
 {
-    if(hdr.version >= 5)
-    {
-        int ver;
+    int         ver;
+    fixed_t     deltaX;
+    fixed_t     deltaY;
+    angle_t     angle;
 
-        ver = SV_ReadByte(); // Unused atm
-        playerHeader.numpowers = SV_ReadLong();
-        playerHeader.numkeys = SV_ReadLong();
-        playerHeader.numfrags = SV_ReadLong();
-        playerHeader.numweapons = SV_ReadLong();
-        playerHeader.numammotypes = SV_ReadLong();
-        playerHeader.numpsprites = SV_ReadLong();
-#if __DOOM64TC__
-        playerHeader.numartifacts = SV_ReadLong();
-#endif
-    }
-    else // The old format didn't save the counts.
-    {
-#if __JDOOM__
-        playerHeader.numpowers = 6;
-        playerHeader.numkeys = 6;
-        playerHeader.numfrags = 4; // why was this only 4?
-        playerHeader.numweapons = 9;
-        playerHeader.numammotypes = 4;
-        playerHeader.numpsprites = 2;
-#elif __JHERETIC__
-        playerHeader.numpowers = 9;
-        playerHeader.numkeys = 3;
-        playerHeader.numfrags = 4; // ?
-        playerHeader.numweapons = 8;
-        playerHeader.numammotypes = 6;
-        playerHeader.numpsprites = 2;
-#endif
-    }
+    if(saveVersion >= 3)
+        ver = SV_ReadByte();
+
+    if(SV_ReadLong() != P_GetIntp(po, DMU_TAG))
+        Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
+
+    angle = (angle_t) SV_ReadLong();
+    PO_RotatePolyobj(P_GetIntp(po, DMU_TAG), angle);
+    P_SetAnglep(po, DMU_DESTINATION_ANGLE, angle);
+    deltaX = SV_ReadLong() - P_GetFixedp(po, DMU_START_SPOT_X);
+    deltaY = SV_ReadLong() - P_GetFixedp(po, DMU_START_SPOT_Y);
+    PO_MovePolyobj(P_GetIntp(po, DMU_TAG), deltaX, deltaY);
+    // FIXME: What about speed? It isn't saved at all?
+    return true;
 }
-
-static void P_ArchivePlayers(void)
-{
-    int     i;
-
-    for(i = 0; i < MAXPLAYERS; i++)
-    {
-        if(!players[i].plr->ingame)
-            continue;
-        SV_WriteLong(Net_GetPlayerID(i));
-        SV_WritePlayer(i);
-    }
-}
-
-static void P_UnArchivePlayers(boolean *infile, boolean *loaded)
-{
-    int     i;
-    int     j;
-    unsigned int pid;
-    player_t dummy_player;
-    ddplayer_t dummy_ddplayer;
-    player_t *player;
-
-    // Setup the dummy.
-    dummy_player.plr = &dummy_ddplayer;
-
-    for(i = 0; i < MAXPLAYERS; i++)
-    {
-        // By default a saved player translates to nothing.
-        SaveToRealPlayer[i] = -1;
-
-        if(!infile[i])
-            continue;
-
-        // The ID number will determine which player this actually is.
-        pid = SV_ReadLong();
-        for(player = 0, j = 0; j < MAXPLAYERS; j++)
-            if((IS_NETGAME && Net_GetPlayerID(j) == pid) ||
-               (!IS_NETGAME && j == 0))
-            {
-                // This is our guy.
-                player = players + j;
-                loaded[j] = true;
-                // Later references to the player number 'i' must be
-                // translated!
-                SaveToRealPlayer[i] = j;
-#ifdef _DEBUG
-                Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
 #endif
-                break;
-            }
-        if(!player)
-        {
-            // We have a missing player. Use a dummy to load the data.
-            player = &dummy_player;
-        }
-        SV_ReadPlayer(player);
 
-        // Will be set when unarc thinker.
-        player->plr->mo = NULL;
-        player->attacker = NULL;
-    }
-}
-
-/*
- * Only write world in the latest format
+/**
+ * Only write world in the latest format.
  */
 static void P_ArchiveWorld(void)
 {
-    uint    i;
+    uint        i;
+
+#if __JHEXEN__
+    SV_WriteLong(ASEG_TEX_ARCHIVE);
+#endif
 
     // Write the texture archives.
     SV_WriteTextureArchive();
+
+#if __JHEXEN__
+    SV_WriteLong(ASEG_WORLD);
+#endif
 
     for(i = 0; i < numsectors; ++i)
         SV_WriteSector(P_ToPtr(DMU_SECTOR, i));
 
     for(i = 0; i < numlines; ++i)
         SV_WriteLine(P_ToPtr(DMU_LINE, i));
+
+#if __JHEXEN__
+    SV_WriteLong(ASEG_POLYOBJS);
+    SV_WriteLong(numpolyobjs);
+    for(i = 0; i < numpolyobjs; ++i)
+        SV_WritePolyObj(P_ToPtr(DMU_POLYOBJ, i));
+#endif
 }
 
 static void P_UnArchiveWorld(void)
 {
-    uint    i;
+    uint        i;
 
+#if __JHEXEN__
+    AssertSegment(ASEG_TEX_ARCHIVE);
+#endif
+
+#if !__JHEXEN__
     // Save versions >= 4 include texture archives.
     if(hdr.version >= 4)
         SV_ReadTextureArchive();
+#else
+    SV_ReadTextureArchive();
+#endif
+
+#if __JHEXEN__
+    AssertSegment(ASEG_WORLD);
+#endif
 
     // Load sectors.
     for(i = 0; i < numsectors; ++i)
@@ -1576,11 +2656,31 @@ static void P_UnArchiveWorld(void)
     // Load lines.
     for(i = 0; i < numlines; ++i)
         SV_ReadLine(P_ToPtr(DMU_LINE, i));
+
+#if __JHEXEN__
+    AssertSegment(ASEG_POLYOBJS);
+
+    if(SV_ReadLong() != numpolyobjs)
+        Con_Error("UnarchivePolyobjs: Bad polyobj count");
+
+    for(i = 0; i < numpolyobjs; ++i)
+        SV_ReadPolyObj(P_ToPtr(DMU_POLYOBJ, i));
+#endif
 }
 
-static void SV_WriteCeiling(ceiling_t* ceiling)
+static void SV_WriteCeiling(ceiling_t *ceiling)
 {
-    SV_WriteByte(tc_ceiling);
+#if __JHEXEN__
+    byte        buffer[MAX_THINKER_SIZE];
+    ceiling_t  *temp = (ceiling_t*) &buffer;
+
+    SV_WriteByte(TC_CEILING);
+
+    memcpy(temp, ceiling, sizeof(*temp));
+    temp->sector = (sector_t*) P_ToIndex(ceiling->sector);
+    SV_Write(temp, sizeof(*temp));
+#else
+    SV_WriteByte(TC_CEILING);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -1601,11 +2701,25 @@ static void SV_WriteCeiling(ceiling_t* ceiling)
     SV_WriteLong(ceiling->direction);
     SV_WriteLong(ceiling->tag);
     SV_WriteLong(ceiling->olddirection);
+#endif
 }
 
-static int SV_ReadCeiling(ceiling_t* ceiling)
+static int SV_ReadCeiling(ceiling_t *ceiling)
 {
-    sector_t* sector;
+#if __JHEXEN__
+    // Note: the thinker class byte has already been read.
+    memcpy(ceiling, saveptr.b, sizeof(*ceiling));
+    saveptr.b += sizeof(*ceiling);
+
+    ceiling->sector = P_ToPtr(DMU_SECTOR, (int) ceiling->sector);
+    if(!ceiling->sector)
+        Con_Error("TC_CEILING: bad sector number\n");
+
+    ceiling->thinker.function = T_MoveCeiling;
+
+    P_XSector(ceiling->sector)->specialdata = ceiling->thinker.function;
+#else
+    sector_t *sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -1620,7 +2734,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
         if(!sector)
-            Con_Error("tc_ceiling: bad sector number\n");
+            Con_Error("TC_CEILING: bad sector number\n");
 
         ceiling->sector = sector;
 
@@ -1650,7 +2764,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
         sector = P_ToPtr(DMU_SECTOR, (int) ceiling->sector);
 
         if(!sector)
-            Con_Error("tc_ceiling: bad sector number\n");
+            Con_Error("TC_CEILING: bad sector number\n");
 
         ceiling->sector = sector;
 
@@ -1670,12 +2784,23 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
     }
 
     P_XSector(ceiling->sector)->specialdata = ceiling;
+#endif
     return true; // Add this thinker.
 }
 
-static void SV_WriteDoor(vldoor_t* door)
+static void SV_WriteDoor(vldoor_t *door)
 {
-    SV_WriteByte(tc_door);
+#if __JHEXEN__
+    byte        buffer[MAX_THINKER_SIZE];
+    vldoor_t   *temp = (vldoor_t*) &buffer;
+
+    SV_WriteByte(TC_DOOR);
+
+    memcpy(temp, door, sizeof(*temp));
+    temp->sector = (sector_t*) P_ToIndex(door->sector);
+    SV_Write(temp, sizeof(*temp));
+#else
+    SV_WriteByte(TC_DOOR);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -1692,11 +2817,25 @@ static void SV_WriteDoor(vldoor_t* door)
     SV_WriteLong(door->direction);
     SV_WriteLong(door->topwait);
     SV_WriteLong(door->topcountdown);
+#endif
 }
 
-static int SV_ReadDoor(vldoor_t* door)
+static int SV_ReadDoor(vldoor_t *door)
 {
-    sector_t* sector;
+#if __JHEXEN__
+    // Note: the thinker class byte has already been read.
+    memcpy(door, saveptr.b, sizeof(*door));
+    saveptr.b += sizeof(*door);
+
+    door->sector = P_ToPtr(DMU_SECTOR, (int) door->sector);
+    if(!door->sector)
+        Con_Error("TC_DOOR: bad sector number\n");
+
+    door->thinker.function = T_VerticalDoor;
+
+    P_XSector(door->sector)->specialdata = door->thinker.function;
+#else
+    sector_t *sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -1707,7 +2846,7 @@ static int SV_ReadDoor(vldoor_t* door)
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
         if(!sector)
-            Con_Error("tc_door: bad sector number\n");
+            Con_Error("TC_DOOR: bad sector number\n");
 
         door->sector = sector;
 
@@ -1733,7 +2872,7 @@ static int SV_ReadDoor(vldoor_t* door)
         sector = P_ToPtr(DMU_SECTOR, (int) door->sector);
 
         if(!sector)
-            Con_Error("tc_door: bad sector number\n");
+            Con_Error("TC_DOOR: bad sector number\n");
 
         door->sector = sector;
 
@@ -1749,12 +2888,23 @@ static int SV_ReadDoor(vldoor_t* door)
     P_XSector(door->sector)->specialdata = door;
 
     door->thinker.function = T_VerticalDoor;
+#endif
     return true; // Add this thinker.
 }
 
 static void SV_WriteFloor(floormove_t *floor)
 {
-    SV_WriteByte(tc_floor);
+#if __JHEXEN__
+    byte        buffer[MAX_THINKER_SIZE];
+    floormove_t *temp = (floormove_t*) &buffer;
+
+    SV_WriteByte(TC_FLOOR);
+
+    memcpy(temp, floor, sizeof(*temp));
+    temp->sector = (sector_t*) P_ToIndex(floor->sector);
+    SV_Write(temp, sizeof(*temp));
+#else
+    SV_WriteByte(TC_FLOOR);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -1774,11 +2924,25 @@ static void SV_WriteFloor(floormove_t *floor)
 
     SV_WriteShort((int)floor->floordestheight);
     SV_WriteLong(FLT2FIX(floor->speed));
+#endif
 }
 
 static int SV_ReadFloor(floormove_t *floor)
 {
-    sector_t* sector;
+#if __JHEXEN__
+    // Note: the thinker class byte has already been read.
+    memcpy(floor, saveptr.b, sizeof(*floor));
+    saveptr.b += sizeof(*floor);
+
+    floor->sector = P_ToPtr(DMU_SECTOR, (int) floor->sector);
+    if(!floor->sector)
+        Con_Error("TC_FLOOR: bad sector number\n");
+
+    floor->thinker.function = T_MoveFloor;
+
+    P_XSector(floor->sector)->specialdata = floor->thinker.function;
+#else
+    sector_t *sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -1789,7 +2953,7 @@ static int SV_ReadFloor(floormove_t *floor)
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
         if(!sector)
-            Con_Error("tc_floor: bad sector number\n");
+            Con_Error("TC_FLOOR: bad sector number\n");
 
         floor->sector = sector;
 
@@ -1820,7 +2984,7 @@ static int SV_ReadFloor(floormove_t *floor)
         sector = P_ToPtr(DMU_SECTOR, (int) floor->sector);
 
         if(!sector)
-            Con_Error("tc_floor: bad sector number\n");
+            Con_Error("TC_FLOOR: bad sector number\n");
 
         floor->sector = sector;
 
@@ -1835,12 +2999,23 @@ static int SV_ReadFloor(floormove_t *floor)
 
     P_XSector(floor->sector)->specialdata = floor;
     floor->thinker.function = T_MoveFloor;
+#endif
     return true; // Add this thinker.
 }
 
-static void SV_WritePlat(plat_t* plat)
+static void SV_WritePlat(plat_t *plat)
 {
-    SV_WriteByte(tc_plat);
+#if __JHEXEN__
+    byte        buffer[MAX_THINKER_SIZE];
+    plat_t     *temp = (plat_t*) &buffer;
+
+    SV_WriteByte(TC_PLAT);
+
+    memcpy(temp, plat, sizeof(*temp));
+    temp->sector = (sector_t*) P_ToIndex(plat->sector);
+    SV_Write(temp, sizeof(*temp));
+#else
+    SV_WriteByte(TC_PLAT);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -1865,11 +3040,25 @@ static void SV_WritePlat(plat_t* plat)
     SV_WriteByte((byte) plat->crush);
 
     SV_WriteLong(plat->tag);
+#endif
 }
 
-static int SV_ReadPlat(plat_t* plat)
+static int SV_ReadPlat(plat_t *plat)
 {
-    sector_t* sector;
+#if __JHEXEN__
+    // Note: the thinker class byte has already been read.
+    memcpy(plat, saveptr.b, sizeof(*plat));
+    saveptr.b += sizeof(*plat);
+
+    plat->sector = P_ToPtr(DMU_SECTOR, (int) plat->sector);
+    if(!plat->sector)
+        Con_Error("TC_PLAT: bad sector number\n");
+
+    plat->thinker.function = T_PlatRaise;
+
+    P_XSector(plat->sector)->specialdata = plat->thinker.function;
+#else
+    sector_t *sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -1884,7 +3073,7 @@ static int SV_ReadPlat(plat_t* plat)
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
         if(!sector)
-            Con_Error("tc_plat: bad sector number\n");
+            Con_Error("TC_PLAT: bad sector number\n");
 
         plat->sector = sector;
 
@@ -1915,7 +3104,7 @@ static int SV_ReadPlat(plat_t* plat)
         sector = P_ToPtr(DMU_SECTOR, (int) plat->sector);
 
         if(!sector)
-            Con_Error("tc_plat: bad sector number\n");
+            Con_Error("TC_PLAT: bad sector number\n");
 
         plat->sector = sector;
 
@@ -1938,12 +3127,220 @@ static int SV_ReadPlat(plat_t* plat)
     }
 
     P_XSector(plat->sector)->specialdata = plat;
+#endif
     return true; // Add this thinker.
 }
 
+#if __JHEXEN__
+static void SV_WriteLight(light_t *th)
+{
+    byte        buffer[MAX_THINKER_SIZE];
+    light_t    *temp = (light_t*) &buffer;
+
+    SV_WriteByte(TC_LIGHT);
+
+    memcpy(temp, th, sizeof(*temp));
+    temp->sector = (sector_t*) P_ToIndex(th->sector);
+    SV_Write(temp, sizeof(*temp));
+}
+
+static int SV_ReadLight(light_t *th)
+{
+    // Note: the thinker class byte has already been read.
+    memcpy(th, saveptr.b, sizeof(*th));
+    saveptr.b += sizeof(*th);
+
+    th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
+    if(!th->sector)
+        Con_Error("TC_LIGHT: bad sector number\n");
+
+    th->thinker.function = T_Light;
+    return true; // Add this thinker.
+}
+
+static void SV_WritePhase(phase_t *th)
+{
+    byte        buffer[MAX_THINKER_SIZE];
+    phase_t    *temp = (phase_t*) &buffer;
+
+    SV_WriteByte(TC_PHASE);
+
+    memcpy(temp, th, sizeof(*temp));
+    temp->sector = (sector_t*) P_ToIndex(th->sector);
+    SV_Write(temp, sizeof(*temp));
+}
+
+static int SV_ReadPhase(phase_t *th)
+{
+    // Note: the thinker class byte has already been read.
+    memcpy(th, saveptr.b, sizeof(*th));
+    saveptr.b += sizeof(*th);
+
+    th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
+    if(!th->sector)
+        Con_Error("TC_PHASE: bad sector number\n");
+
+    th->thinker.function = T_Phase;
+    return true; // Add this thinker.
+}
+
+static void SV_WriteScript(acs_t *th)
+{
+    byte        buffer[MAX_THINKER_SIZE];
+    acs_t      *temp = (acs_t*) &buffer;
+
+    SV_WriteByte(TC_INTERPRET_ACS);
+
+    memcpy(temp, th, sizeof(*temp));
+    temp->ip = (int *) ((int) (th->ip) - (int) ActionCodeBase);
+    temp->line =
+        (th->line ? (line_t *) P_ToIndex(th->line) : (line_t *) -1);
+    temp->activator = (mobj_t *) GetMobjNum(th->activator);
+    SV_Write(temp, sizeof(*temp));
+}
+
+static int SV_ReadScript(acs_t *th)
+{
+    memcpy(th, saveptr.b, sizeof(*th));
+    saveptr.b += sizeof(*th);
+
+    th->ip = (int *) (ActionCodeBase + (int) th->ip);
+    if((int) th->line == -1)
+    {
+        th->line = NULL;
+    }
+    else
+    {
+        th->line = P_ToPtr(DMU_LINE, (int) th->line);
+    }
+    SetMobjPtr((int *) &th->activator);
+    return true; // Add this thinker.
+}
+
+static void SV_WriteDoorPoly(polydoor_t *th)
+{
+    byte        buffer[MAX_THINKER_SIZE];
+    polydoor_t *temp = (polydoor_t*) &buffer;
+
+    SV_WriteByte(TC_POLY_DOOR);
+
+    memcpy(temp, th, sizeof(*temp));
+    SV_Write(temp, sizeof(*temp));
+}
+
+static int SV_ReadDoorPoly(polydoor_t *th)
+{
+    // Note: the thinker class byte has already been read.
+    memcpy(th, saveptr.b, sizeof(*th));
+    saveptr.b += sizeof(*th);
+
+    th->thinker.function = T_PolyDoor;
+    return true; // Add this thinker.
+}
+
+static void SV_WriteMovePoly(polyevent_t *th)
+{
+    byte        buffer[MAX_THINKER_SIZE];
+    polyevent_t *temp = (polyevent_t*) &buffer;
+
+    SV_WriteByte(TC_MOVE_POLY);
+
+    memcpy(temp, th, sizeof(*temp));
+    SV_Write(temp, sizeof(*temp));
+}
+
+static int SV_ReadMovePoly(polyevent_t *th)
+{
+    // Note: the thinker class byte has already been read.
+    memcpy(th, saveptr.b, sizeof(*th));
+    saveptr.b += sizeof(*th);
+
+    th->thinker.function = T_MovePoly;
+    return true; // Add this thinker.
+}
+
+static void SV_WriteRotatePoly(polyevent_t *th)
+{
+    byte        buffer[MAX_THINKER_SIZE];
+    polyevent_t *temp = (polyevent_t*) &buffer;
+
+    SV_WriteByte(TC_ROTATE_POLY);
+
+    memcpy(temp, th, sizeof(*temp));
+    SV_Write(temp, sizeof(*temp));
+}
+
+static int SV_ReadRotatePoly(polyevent_t *th)
+{
+    // Note: the thinker class byte has already been read.
+    memcpy(th, saveptr.b, sizeof(*th));
+    saveptr.b += sizeof(*th);
+
+    th->thinker.function = T_RotatePoly;
+    return true; // Add this thinker.
+}
+
+static void SV_WritePillar(pillar_t *th)
+{
+    byte        buffer[MAX_THINKER_SIZE];
+    pillar_t   *temp = (pillar_t*) &buffer;
+
+    SV_WriteByte(TC_BUILD_PILLAR);
+
+    memcpy(temp, th, sizeof(*temp));
+    temp->sector = (sector_t*) P_ToIndex(th->sector);
+    SV_Write(temp, sizeof(*temp));
+}
+
+static int SV_ReadPillar(pillar_t *th)
+{
+    // Note: the thinker class byte has already been read.
+    memcpy(th, saveptr.b, sizeof(*th));
+    saveptr.b += sizeof(*th);
+
+    th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
+    if(!th->sector)
+        Con_Error("TC_BUILD_PILLAR: bad sector number\n");
+
+    th->thinker.function = T_BuildPillar;
+
+    P_XSector(th->sector)->specialdata = th->thinker.function;
+    return true; // Add this thinker.
+}
+
+static void SV_WriteFloorWaggle(floorWaggle_t *th)
+{
+    byte        buffer[MAX_THINKER_SIZE];
+    floorWaggle_t *temp = (floorWaggle_t*) &buffer;
+
+    SV_WriteByte(TC_FLOOR_WAGGLE);
+
+    memcpy(temp, th, sizeof(*temp));
+    temp->sector = (sector_t*) P_ToIndex(th->sector);
+    SV_Write(temp, sizeof(*temp));
+}
+
+static int SV_ReadFloorWaggle(floorWaggle_t *th)
+{
+    // Note: the thinker class byte has already been read.
+    memcpy(th, saveptr.b, sizeof(*th));
+    saveptr.b += sizeof(*th);
+
+    th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
+    if(!th->sector)
+        Con_Error("TC_FLOOR_WAGGLE: bad sector number\n");
+
+    th->thinker.function = T_FloorWaggle;
+
+    P_XSector(th->sector)->specialdata = th->thinker.function;
+    return true; // Add this thinker.
+}
+#endif // __JHEXEN__
+
+#if !__JHEXEN__
 static void SV_WriteFlash(lightflash_t* flash)
 {
-    SV_WriteByte(tc_flash);
+    SV_WriteByte(TC_FLASH);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -1970,7 +3367,7 @@ static int SV_ReadFlash(lightflash_t* flash)
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
         if(!sector)
-            Con_Error("tc_flash: bad sector number\n");
+            Con_Error("TC_FLASH: bad sector number\n");
 
         flash->sector = sector;
 
@@ -1992,7 +3389,7 @@ static int SV_ReadFlash(lightflash_t* flash)
         sector = P_ToPtr(DMU_SECTOR, (int) flash->sector);
 
         if(!sector)
-            Con_Error("tc_flash: bad sector number\n");
+            Con_Error("TC_FLASH: bad sector number\n");
 
         flash->sector = sector;
 
@@ -2009,7 +3406,7 @@ static int SV_ReadFlash(lightflash_t* flash)
 
 static void SV_WriteStrobe(strobe_t* strobe)
 {
-    SV_WriteByte(tc_strobe);
+    SV_WriteByte(TC_STROBE);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -2036,7 +3433,7 @@ static int SV_ReadStrobe(strobe_t* strobe)
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
         if(!sector)
-            Con_Error("tc_strobe: bad sector number\n");
+            Con_Error("TC_STROBE: bad sector number\n");
 
         strobe->sector = sector;
 
@@ -2058,7 +3455,7 @@ static int SV_ReadStrobe(strobe_t* strobe)
         sector = P_ToPtr(DMU_SECTOR, (int) strobe->sector);
 
         if(!sector)
-            Con_Error("tc_strobe: bad sector number\n");
+            Con_Error("TC_STROBE: bad sector number\n");
 
         strobe->sector = sector;
 
@@ -2073,9 +3470,9 @@ static int SV_ReadStrobe(strobe_t* strobe)
     return true; // Add this thinker.
 }
 
-static void SV_WriteGlow(glow_t* glow)
+static void SV_WriteGlow(glow_t *glow)
 {
-    SV_WriteByte(tc_glow);
+    SV_WriteByte(TC_GLOW);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -2100,7 +3497,7 @@ static int SV_ReadGlow(glow_t* glow)
         sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
         if(!sector)
-            Con_Error("tc_glow: bad sector number\n");
+            Con_Error("TC_GLOW: bad sector number\n");
 
         glow->sector = sector;
 
@@ -2120,7 +3517,7 @@ static int SV_ReadGlow(glow_t* glow)
         sector = P_ToPtr(DMU_SECTOR, (int) glow->sector);
 
         if(!sector)
-            Con_Error("tc_glow: bad sector number\n");
+            Con_Error("TC_GLOW: bad sector number\n");
 
         glow->sector = sector;
 
@@ -2133,10 +3530,10 @@ static int SV_ReadGlow(glow_t* glow)
     return true; // Add this thinker.
 }
 
-#if __JDOOM__
+# if __JDOOM__
 static void SV_WriteFlicker(fireflicker_t* flicker)
 {
-    SV_WriteByte(tc_flicker);
+    SV_WriteByte(TC_FLICKER);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -2162,7 +3559,7 @@ static int SV_ReadFlicker(fireflicker_t* flicker)
     sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
     if(!sector)
-        Con_Error("tc_flicker: bad sector number\n");
+        Con_Error("TC_FLICKER: bad sector number\n");
 
     flicker->sector = sector;
 
@@ -2172,12 +3569,12 @@ static int SV_ReadFlicker(fireflicker_t* flicker)
     flicker->thinker.function = T_FireFlicker;
     return true; // Add this thinker.
 }
-#endif
+# endif
 
-#if __DOOM64TC__
+# if __DOOM64TC__
 static void SV_WriteBlink(lightblink_t *blink)
 {
-    SV_WriteByte(tc_blink);
+    SV_WriteByte(TC_BLINK);
 
     SV_WriteByte(1); // Write a version byte.
 
@@ -2219,6 +3616,89 @@ static int SV_ReadBlink(lightblink_t *blink)
     blink->thinker.function = T_LightBlink;
     return true; // Add this thinker.
 }
+# endif
+#endif // !__JHEXEN__
+
+#if __JHEXEN__
+static void P_ArchiveMobjs(void)
+{
+    int         count;
+    thinker_t  *th;
+
+    SV_WriteLong(ASEG_MOBJS);
+    SV_WriteLong(thing_archiveSize);
+    count = 0;
+    for(th = thinkercap.next; th != &thinkercap && th;
+        th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+        {                       // Not a mobj thinker
+            continue;
+        }
+        if(((mobj_t *) th)->player && !savingPlayers)
+        {                       // Skipping player mobjs
+            continue;
+        }
+        count++;
+        SV_WriteMobj((mobj_t *) th);
+    }
+    if(count != thing_archiveSize)
+    {
+        Con_Error("SV_WriteMobjs: bad mobj count");
+    }
+}
+
+static void P_UnArchiveMobjs(void)
+{
+    int         i;
+    mobj_t     *mobj;
+
+/*
+printf("SV_ReadMobjs\n");
+*/
+    AssertSegment(ASEG_MOBJS);
+
+    targetPlayerAddrs = Z_Malloc(MAX_TARGET_PLAYERS * sizeof(int *),
+                                 PU_STATIC, NULL);
+    targetPlayerCount = 0;
+    thing_archiveSize = SV_ReadLong();
+/*
+printf("- thing_archiveSize: %d\n", thing_archiveSize);
+*/
+    thing_archive = Z_Malloc(thing_archiveSize * sizeof(mobj_t *),
+                             PU_STATIC, NULL);
+    for(i = 0; i < thing_archiveSize; ++i)
+    {
+        thing_archive[i] = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL);
+    }
+/*
+printf("- memory allocated for each mobj (sizeof = %d bytes)\n",
+         sizeof(mobj_t));
+*/
+    for(i = 0; i < thing_archiveSize; ++i)
+    {
+/*
+printf("- loading mobj %d\n", i);
+*/
+        mobj = thing_archive[i];
+
+        SV_ReadMobj(mobj);
+
+        if(mobj->player == INVALID_PLAYER)
+        {
+            // This mobj doesn't belong to anyone any more.
+            Z_Free(mobj);
+            thing_archive[i] = NULL; // The mobj no longer exists.
+            continue;
+        }
+
+        mobj->thinker.function = P_MobjThinker;
+        P_AddThinker(&mobj->thinker);
+    }
+
+    P_CreateTIDList();
+    P_InitCreatureCorpseQueue(true);    // true = scan for corpses
+}
 #endif
 
 static void SV_AddThinker(thinkerclass_t tclass, thinker_t* th)
@@ -2227,10 +3707,10 @@ static void SV_AddThinker(thinkerclass_t tclass, thinker_t* th)
 
     switch(tclass)
     {
-    case tc_ceiling:
+    case TC_CEILING:
         P_AddActiveCeiling((ceiling_t *) th);
         break;
-    case tc_plat:
+    case TC_PLAT:
         P_AddActivePlat((plat_t *) th);
         break;
 
@@ -2239,7 +3719,7 @@ static void SV_AddThinker(thinkerclass_t tclass, thinker_t* th)
     }
 }
 
-/*
+/**
  * Archives the specified thinker. Needed due to plats/ceilings in stasis.
  *
  * @param th        The thinker to be archived.
@@ -2249,8 +3729,12 @@ static void DoArchiveThinker(thinker_t *th, thinkerclass_t tclass)
 {
     thinkerinfo_t *thInfo;
 
-    if(!th || tclass < tc_end + 1 || tclass > NUMTHINKERCLASSES - 1)
+    if(!th || tclass > NUMTHINKERCLASSES - 1)
         return;
+#if !__JHEXEN__
+    if(tclass < TC_END + 1)
+        return;
+#endif
 
     thInfo = &thinkerInfo[tclass];
     // Only the server saves this class of thinker?
@@ -2258,7 +3742,9 @@ static void DoArchiveThinker(thinker_t *th, thinkerclass_t tclass)
         return;
 
     if(thInfo->Write)
+    {
         thInfo->Write(th);
+    }
 }
 
 /*
@@ -2272,11 +3758,18 @@ static void P_ArchiveThinkers(void)
 {
     thinker_t  *th = 0;
     thinkerinfo_t *thInfo;
+#if !__JHEXEN__
     boolean     found;
+#endif
+
+#if __JHEXEN__
+    SV_WriteLong(ASEG_THINKERS);
+#endif
 
     // Save off the current thinkers
     for(th = thinkercap.next; th != &thinkercap && th; th = th->next)
     {
+#if !__JHEXEN__
         if(th->function == NOPFUNC) // Special case for thinkers in stasis.
         {
             platlist_t *pl;
@@ -2290,18 +3783,19 @@ static void P_ArchiveThinkers(void)
             for(pl = activeplats; pl && !found; pl = pl->next)
                 if(pl->plat == (plat_t *) th)      // killough 2/14/98
                 {
-                    DoArchiveThinker(th, tc_plat);
+                    DoArchiveThinker(th, TC_PLAT);
                     found = true;
                 }
 
             for(cl = activeceilings; cl && !found; cl = cl->next)
                 if(cl->ceiling == (ceiling_t *) th)      //jff 2/22/98
                 {
-                    DoArchiveThinker(th, tc_ceiling);
+                    DoArchiveThinker(th, TC_CEILING);
                     found = true;
                 }
         }
         else
+#endif
         {
             thInfo = ThinkerInfo(th);
             if(thInfo != NULL)
@@ -2309,46 +3803,49 @@ static void P_ArchiveThinkers(void)
         }
     }
 
-    // add a terminating marker
-    SV_WriteByte(tc_end);
+    // Add a terminating marker.
+#if __JHEXEN__
+    SV_WriteByte(TC_NULL);
+#else
+    SV_WriteByte(TC_END);
+#endif
 }
 
-/*
+/**
  * Un-Archives thinkers for both client and server.
  */
 static void P_UnArchiveThinkers(void)
 {
-    byte    tclass;
-    thinker_t *th = 0;
-    thinker_t *next = 0;
+    byte        tClass;
+    thinker_t  *th = 0;
     thinkerinfo_t *thInfo = 0;
-    boolean doSpecials = (hdr.version >= 5);
-    boolean found, knownThinker;
+    boolean     found, knownThinker;
+#if !__JHEXEN__
+    boolean     doSpecials = (hdr.version >= 5);
+#endif
 
-    // remove all the current thinkers (server only)
+#if __JHEXEN__
+    AssertSegment(ASEG_THINKERS);
+
+    // Remove all the current thinkers.
+    removeAllThinkers();
+#else
+    // Remove all the current thinkers (server only).
     if(IS_SERVER)
     {
-        th = thinkercap.next;
-        while(th != &thinkercap)
-        {
-            next = th->next;
-
-            if(th->function == P_MobjThinker)
-                P_RemoveMobj((mobj_t *) th);
-            else
-                Z_Free(th);
-
-            th = next;
-        }
-
-        P_InitThinkers();
+        removeAllThinkers();
     }
+#endif
 
-    // Read in saved thinkers
+    // Read in saved thinkers.
     for(;;)
     {
-        tclass = SV_ReadByte();
+        tClass = SV_ReadByte();
 
+#if __JHEXEN__
+        if(tClass == TC_NULL)
+            break; // End of the list.
+#else
         if(hdr.version < 5)
         {
             if(doSpecials) // Have we started on the specials yet?
@@ -2356,14 +3853,14 @@ static void P_UnArchiveThinkers(void)
                 // Versions prior to 5 used a different value to mark
                 // the end of the specials data so we need to manipulate
                 // the thinker class identifier value.
-                if(tclass == PRE_VER5_END_SPECIALS)
-                    tclass = tc_end;
+                if(tClass == PRE_VER5_END_SPECIALS)
+                    tClass = TC_END;
                 else
-                    tclass += 3;
+                    tClass += 3;
             }
             else
             {
-                if(tclass == tc_end)
+                if(tClass == TC_END)
                 {
                     // We have reached the begining of the "specials" block.
                     doSpecials = true;
@@ -2372,25 +3869,28 @@ static void P_UnArchiveThinkers(void)
             }
         }
 
-        if(tclass == tc_end)
-            break;   // end of the list
+        if(tClass == TC_END)
+            break; // End of the list.
+#endif
 
         found = knownThinker = false;
         thInfo = thinkerInfo;
-        while(thInfo->thinkclass != tc_null && !found)
+        while(thInfo->thinkclass != TC_NULL && !found)
         {
-            if(thInfo->thinkclass == tclass)
+            if(thInfo->thinkclass == tClass)
             {
                 found = true;
 
                 // Not for us? (it shouldn't be here anyway!).
                 if(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT))
                 {
-                    th = Z_Malloc(thInfo->size,
+#if __JHEXEN__
+                    th = Z_Calloc(thInfo->size, PU_LEVEL, 0);
+#else
+                    th = Z_Calloc(thInfo->size,
                                   ((thInfo->flags & TSF_SPECIAL)? PU_LEVSPEC : PU_LEVEL),
                                   0);
-                    memset(th, 0, thInfo->size);
-
+#endif
                     knownThinker = thInfo->Read(th);
                 }
             }
@@ -2398,14 +3898,15 @@ static void P_UnArchiveThinkers(void)
             thInfo++;
         }
 
-        if(knownThinker)
-            SV_AddThinker(tclass, th);
-
         if(!found)
-            Con_Error("P_UnArchiveThinkers: Unknown tclass %i " "in savegame.",
-                      tclass);
+            Con_Error("P_UnarchiveThinkers: Unknown tClass %i in savegame",
+                      tClass);
+
+        if(knownThinker)
+            SV_AddThinker(tClass, th);
     }
 
+#if !__JHEXEN__
     // Update references to things (server only)
     if(IS_SERVER)
     {
@@ -2419,22 +3920,23 @@ static void P_UnArchiveThinkers(void)
             mobj = (mobj_t *) th;
             mobj->target = SV_GetArchiveThing((int) mobj->target);
 
-#if __JDOOM__
+# if __JDOOM__
             // Update tracer.
             mobj->tracer = SV_GetArchiveThing((int) mobj->tracer);
-#endif
+# endif
             // Update onmobj.
             mobj->onmobj = SV_GetArchiveThing((int) mobj->onmobj);
 
-#if __JHERETIC__
+# if __JHERETIC__
             // Update generator.
             mobj->generator = SV_GetArchiveThing((int) mobj->generator);
-#endif
+# endif
         }
 
         // The activator mobjs must be set.
         XL_UnArchiveLines();
     }
+#endif
 }
 
 #ifdef __JDOOM__
@@ -2466,6 +3968,7 @@ static void P_UnArchiveBrain(void)
 }
 #endif
 
+#if !__JHEXEN__
 static void P_ArchiveSoundTargets(void)
 {
     uint        i;
@@ -2512,6 +4015,307 @@ static void P_UnArchiveSoundTargets(void)
             SV_GetArchiveThing(SV_ReadShort());
     }
 }
+#endif
+
+#if __JHEXEN__
+static void P_ArchiveSounds(void)
+{
+    seqnode_t  *node;
+    sector_t   *sec;
+    int         difference;
+    uint        i;
+
+    SV_WriteLong(ASEG_SOUNDS);
+
+    // Save the sound sequences
+    SV_WriteLong(ActiveSequences);
+    for(node = SequenceListHead; node; node = node->next)
+    {
+        SV_WriteByte(1); // write a version byte.
+
+        SV_WriteLong(node->sequence);
+        SV_WriteLong(node->delayTics);
+        SV_WriteLong(node->volume);
+        SV_WriteLong(SN_GetSequenceOffset(node->sequence, node->sequencePtr));
+        SV_WriteLong(node->currentSoundID);
+        for(i = 0; i < numpolyobjs; ++i)
+        {
+            if(node->mobj == P_GetPtr(DMU_POLYOBJ, i, DMU_START_SPOT))
+            {
+                break;
+            }
+        }
+
+        if(i == numpolyobjs)
+        {   // Sound is attached to a sector, not a polyobj
+            sec = P_GetPtrp(R_PointInSubsector(node->mobj->pos[VX], node->mobj->pos[VY]),
+                            DMU_SECTOR);
+            difference = P_ToIndex(sec);
+            SV_WriteLong(0);   // 0 -- sector sound origin
+        }
+        else
+        {
+            SV_WriteLong(1);   // 1 -- polyobj sound origin
+            difference = i;
+        }
+        SV_WriteLong(difference);
+    }
+}
+
+static void P_UnArchiveSounds(void)
+{
+    int         i, ver;
+    int         numSequences;
+    int         sequence;
+    int         delayTics;
+    int         volume;
+    int         seqOffset;
+    int         soundID;
+    int         polySnd;
+    int         secNum;
+    mobj_t     *sndMobj;
+
+    AssertSegment(ASEG_SOUNDS);
+
+    // Reload and restart all sound sequences
+    numSequences = SV_ReadLong();
+    i = 0;
+    while(i < numSequences)
+    {
+        if(saveVersion >= 3)
+            ver = SV_ReadByte();
+
+        sequence = SV_ReadLong();
+        delayTics = SV_ReadLong();
+        volume = SV_ReadLong();
+        seqOffset = SV_ReadLong();
+
+        soundID = SV_ReadLong();
+        polySnd = SV_ReadLong();
+        secNum = SV_ReadLong();
+        if(!polySnd)
+        {
+            sndMobj = P_GetPtr(DMU_SECTOR, secNum, DMU_SOUND_ORIGIN);
+        }
+        else
+        {
+            sndMobj = P_GetPtr(DMU_POLYOBJ, secNum, DMU_START_SPOT);
+        }
+        SN_StartSequence(sndMobj, sequence);
+        SN_ChangeNodeData(i, seqOffset, delayTics, volume, soundID);
+        i++;
+    }
+}
+
+static void P_ArchiveScripts(void)
+{
+    int         i;
+
+    SV_WriteLong(ASEG_SCRIPTS);
+    for(i = 0; i < ACScriptCount; ++i)
+    {
+        SV_WriteShort(ACSInfo[i].state);
+        SV_WriteShort(ACSInfo[i].waitValue);
+    }
+    SV_Write(MapVars, sizeof(MapVars));
+}
+
+static void P_UnArchiveScripts(void)
+{
+    int         i;
+
+    AssertSegment(ASEG_SCRIPTS);
+    for(i = 0; i < ACScriptCount; ++i)
+    {
+        ACSInfo[i].state = SV_ReadShort();
+        ACSInfo[i].waitValue = SV_ReadShort();
+    }
+    memcpy(MapVars, saveptr.b, sizeof(MapVars));
+    saveptr.b += sizeof(MapVars);
+}
+
+static void P_ArchiveMisc(void)
+{
+    int         ix;
+
+    SV_WriteLong(ASEG_MISC);
+    for(ix = 0; ix < MAXPLAYERS; ++ix)
+    {
+        SV_WriteLong(localQuakeHappening[ix]);
+    }
+}
+
+static void P_UnArchiveMisc(void)
+{
+    int         ix;
+
+    AssertSegment(ASEG_MISC);
+    for(ix = 0; ix < MAXPLAYERS; ++ix)
+    {
+        localQuakeHappening[ix] = SV_ReadLong();
+    }
+}
+#endif
+
+#if __JHEXEN__
+static void P_ArchiveMap(boolean savePlayers)
+#else
+static void P_ArchiveMap(void)
+#endif
+{
+#if __JHEXEN__
+    savingPlayers = savePlayers;
+
+    // Place a header marker
+    SV_WriteLong(ASEG_MAP_HEADER2);
+
+    // Write a version byte
+    SV_WriteByte(MY_SAVE_VERSION);
+
+    // Write the level timer
+    SV_WriteLong(leveltime);
+#else
+    // Clear the sound target count (determined while saving sectors).
+    numSoundTargets = 0;
+#endif
+
+    SV_InitTextureArchives();
+
+    P_ArchiveWorld();
+#if __JHEXEN__
+    P_ArchiveMobjs();
+#endif
+    P_ArchiveThinkers();
+
+#if __JHEXEN__
+    P_ArchiveScripts();
+    P_ArchiveSounds();
+    P_ArchiveMisc();
+#else
+    if(IS_SERVER)
+    {
+# ifdef __JDOOM__
+        // Doom saves the brain data, too. (It's a part of the world.)
+        P_ArchiveBrain();
+# endif
+        // Save the sound target data (prevents bug where monsters who have
+        // been alerted go back to sleep when loading a save game).
+        P_ArchiveSoundTargets();
+    }
+#endif
+
+#if __JHEXEN__
+    // Place a termination marker
+    SV_WriteLong(ASEG_END);
+#endif
+}
+
+static void P_UnArchiveMap(void)
+{
+#if __JHEXEN__
+    int         segType = SV_ReadLong();
+
+    // Determine the map version.
+    if(segType == ASEG_MAP_HEADER2)
+    {
+        saveVersion = SV_ReadByte();
+    }
+    else if(segType == ASEG_MAP_HEADER)
+    {
+        saveVersion = 2;
+    }
+    else
+    {
+        Con_Error("Corrupt save game: Segment [%d] failed alignment check",
+                  ASEG_MAP_HEADER);
+    }
+
+    // Read the level timer
+    leveltime = SV_ReadLong();
+#endif
+
+    P_UnArchiveWorld();
+#if __JHEXEN__
+    P_UnArchiveMobjs();
+#endif
+    P_UnArchiveThinkers();
+
+#if __JHEXEN__
+    P_UnArchiveScripts();
+    P_UnArchiveSounds();
+    P_UnArchiveMisc();
+#else
+    if(IS_SERVER)
+    {
+#ifdef __JDOOM__
+        // Doom saves the brain data, too. (It's a part of the world.)
+        P_UnArchiveBrain();
+#endif
+
+        // Read the sound target data (prevents bug where monsters who have
+        // been alerted go back to sleep when loading a save game).
+        P_UnArchiveSoundTargets();
+    }
+#endif
+
+#if __JHEXEN__
+    AssertSegment(ASEG_END);
+#endif
+}
+
+int SV_GetSaveDescription(char *filename, char *str)
+{
+#if __JHEXEN__
+    LZFILE     *fp;
+    char        name[256];
+    char        versionText[HXS_VERSION_TEXT_LENGTH];
+    boolean     found = false;
+
+    strncpy(name, filename, sizeof(name));
+    M_TranslatePath(name, name);
+    fp = lzOpen(name, "rp");
+    if(fp)
+    {
+        lzRead(str, SAVESTRINGSIZE, fp);
+        lzRead(versionText, HXS_VERSION_TEXT_LENGTH, fp);
+        lzClose(fp);
+        if(!strncmp(versionText, HXS_VERSION_TEXT, 8))
+        {
+            saveVersion = atoi(&versionText[8]);
+            if(saveVersion <= MY_SAVE_VERSION)
+                found = true;
+        }
+    }
+    return found;
+#else
+    savefile = lzOpen(filename, "rp");
+    if(!savefile)
+    {
+# if __DOOM64TC__ || __WOLFTC__
+        // we don't support the original game's save format (for obvious reasons).
+        return false;
+# else
+        // It might still be a v19 savegame.
+        savefile = lzOpen(filename, "r");
+        if(!savefile)
+            return false;       // It just doesn't exist.
+        lzRead(str, SAVESTRINGSIZE, savefile);
+        str[SAVESTRINGSIZE - 1] = 0;
+        lzClose(savefile);
+        return true;
+# endif
+    }
+    // Read the header.
+    lzRead(&hdr, sizeof(hdr), savefile);
+    lzClose(savefile);
+    // Check the magic.
+    if(hdr.magic != MY_SAVE_MAGIC)
+        // This isn't a proper savegame file.
+        return false;
+    strcpy(str, hdr.description);
+    return true;
+#endif
+}
 
 /*
  * Initialize the savegame directories. If the directories do not
@@ -2521,41 +4325,82 @@ void SV_Init(void)
 {
     if(ArgCheckWith("-savedir", 1))
     {
-        strcpy(save_path, ArgNext());
+        strcpy(savePath, ArgNext());
         // Add a trailing backslash is necessary.
-        if(save_path[strlen(save_path) - 1] != '\\')
-            strcat(save_path, "\\");
+        if(savePath[strlen(savePath) - 1] != '\\')
+            strcat(savePath, "\\");
     }
     else
     {
         // Use the default path.
-        sprintf(save_path, "savegame\\%s\\", (char *) G_GetVariable(DD_GAME_MODE));
+#if __JHEXEN__
+        sprintf(savePath, "hexndata\\%s\\", (char *) G_GetVariable(DD_GAME_MODE));
+#else
+        sprintf(savePath, "savegame\\%s\\", (char *) G_GetVariable(DD_GAME_MODE));
+#endif
     }
 
     // Build the client save path.
-    strcpy(client_save_path, save_path);
-    strcat(client_save_path, "client\\");
+    strcpy(clientSavePath, savePath);
+    strcat(clientSavePath, "client\\");
 
     // Check that the save paths exist.
-    M_CheckPath(save_path);
-    M_CheckPath(client_save_path);
-    M_TranslatePath(save_path, save_path);
-    M_TranslatePath(client_save_path, client_save_path);
+    M_CheckPath(savePath);
+    M_CheckPath(clientSavePath);
+#if !__JHEXEN__
+    M_TranslatePath(savePath, savePath);
+    M_TranslatePath(clientSavePath, clientSavePath);
+#endif
 }
 
 void SV_SaveGameFile(int slot, char *str)
 {
-    sprintf(str, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, save_path, slot);
+    sprintf(str, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, savePath, slot);
 }
 
 void SV_ClientSaveGameFile(unsigned int game_id, char *str)
 {
-    sprintf(str, "%s" CLIENTSAVEGAMENAME "%08X.dsg", client_save_path,
-            game_id);
+    sprintf(str, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION,
+            clientSavePath, game_id);
 }
 
-int SV_SaveGame(char *filename, char *description)
+#if __JHEXEN__
+boolean SV_SaveGame(int slot, char *description)
+#else
+boolean SV_SaveGame(char *filename, char *description)
+#endif
 {
+#if __JHEXEN__
+    char        fileName[256];
+    char        versionText[HXS_VERSION_TEXT_LENGTH];
+
+    // Open the output file
+    sprintf(fileName, "%shex6.hxs", savePath);
+    M_TranslatePath(fileName, fileName);
+    OpenStreamOut(fileName);
+
+    // Write game save description
+    SV_Write(description, SAVESTRINGSIZE);
+
+    // Write version info
+    memset(versionText, 0, HXS_VERSION_TEXT_LENGTH);
+    sprintf(versionText, HXS_VERSION_TEXT"%i", MY_SAVE_VERSION);
+    SV_Write(versionText, HXS_VERSION_TEXT_LENGTH);
+
+    // Place a header marker
+    SV_WriteLong(ASEG_GAME_HEADER);
+
+    // Write current map and difficulty
+    SV_WriteByte(gamemap);
+    SV_WriteByte(gameskill);
+    SV_WriteByte(deathmatch);
+    SV_WriteByte(nomonsters);
+    SV_WriteByte(randomclass);
+
+    // Write global script info
+    SV_Write(WorldVars, sizeof(WorldVars));
+    SV_Write(ACSStore, sizeof(ACSStore));
+#else
     int     i;
 
     // Open the file.
@@ -2567,24 +4412,22 @@ int SV_SaveGame(char *filename, char *description)
         return false;           // No success.
     }
 
-    SV_InitTextureArchives();
-
     // Write the header.
     hdr.magic = MY_SAVE_MAGIC;
     hdr.version = MY_SAVE_VERSION;
-#ifdef __JDOOM__
+# ifdef __JDOOM__
     hdr.gamemode = gamemode;
-#elif defined(__JHERETIC__)
+# elif defined(__JHERETIC__)
     hdr.gamemode = 0;
-#endif
+# endif
 
     strncpy(hdr.description, description, SAVESTRINGSIZE);
     hdr.description[SAVESTRINGSIZE - 1] = 0;
     hdr.skill = gameskill;
-#ifdef __JDOOM__
+# ifdef __JDOOM__
     if(fastparm)
         hdr.skill |= 0x80;      // Set high byte.
-#endif
+# endif
     hdr.episode = gameepisode;
     hdr.map = gamemap;
     hdr.deathmatch = deathmatch;
@@ -2600,147 +4443,220 @@ int SV_SaveGame(char *filename, char *description)
     NetSv_SaveGame(hdr.gameid);
     SV_InitThingArchive(false);
     P_ArchivePlayerHeader();
-    P_ArchivePlayers();
-
-    // Clear the sound target count (determined while saving sectors).
-    numSoundTargets = 0;
-
-    P_ArchiveWorld();
-    P_ArchiveThinkers();
-
-#ifdef __JDOOM__
-    // Doom saves the brain data, too. (It's a part of the world.)
-    P_ArchiveBrain();
 #endif
 
-    // Save the sound target data (prevents bug where monsters who have
-    // been alerted go back to sleep when loading a save game).
-    P_ArchiveSoundTargets();
+    P_ArchivePlayers();
 
+#if __JHEXEN__
+    // Place a termination marker
+    SV_WriteLong(ASEG_END);
+
+    // Close the output file
+    CloseStreamOut();
+
+    // Set the mobj archive numbers
+    SetMobjArchiveNums();
+#endif
+
+    // Save out the current map
+#if __JHEXEN__
+    {
+        char        fileName[100];
+
+        // Open the output file
+        sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
+        M_TranslatePath(fileName, fileName);
+        OpenStreamOut(fileName);
+
+        P_ArchiveMap(true);         // true = save player info
+
+        // Close the output file
+        CloseStreamOut();
+    }
+#else
+    P_ArchiveMap();
+#endif
+
+#if __JHEXEN__
+    // Clear all save files at destination slot
+    ClearSaveSlot(slot);
+
+    // Copy base slot to destination slot
+    CopySaveSlot(BASE_SLOT, slot);
+#else
     // To be absolutely sure...
     SV_WriteByte(CONSISTENCY);
 
     SV_FreeThingArchive();
     lzClose(savefile);
-    return true;
+#endif
+
+    return true; // Success!
 }
 
-int SV_GetSaveDescription(char *filename, char *str)
-{
-    savefile = lzOpen(filename, "rp");
-    if(!savefile)
-    {
-#if __DOOM64TC__ || __WOLFTC__
-        // we don't support the original game's save format (for obvious reasons).
-        return false;
+#if __JHEXEN__
+static boolean readSaveHeader(void)
 #else
-        // It might still be a v19 savegame.
-        savefile = lzOpen(filename, "r");
-        if(!savefile)
-            return false;       // It just doesn't exist.
-        lzRead(str, SAVESTRINGSIZE, savefile);
-        str[SAVESTRINGSIZE - 1] = 0;
-        lzClose(savefile);
-        return true;
+static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
 #endif
-    }
-    // Read the header.
-    lzRead(&hdr, sizeof(hdr), savefile);
-    lzClose(savefile);
-    // Check the magic.
-    if(hdr.magic != MY_SAVE_MAGIC)
-        // This isn't a proper savegame file.
-        return false;
-    strcpy(str, hdr.description);
-    return true;
-}
-
-int SV_LoadGame(char *filename)
 {
-    int     i;
-    boolean infile[MAXPLAYERS], loaded[MAXPLAYERS];
-    char    buf[80];
+#if __JHEXEN__
+    // Set the save pointer and skip the description field
+    saveptr.b = saveBuffer + SAVESTRINGSIZE;
 
-    // Make sure an opening briefing is not shown.
-    // (G_InitNew --> G_DoLoadLevel)
-    brief_disabled = true;
-
-    savefile = lzOpen(filename, "rp");
-    if(!savefile)
-    {
-#if __DOOM64TC__ || __WOLFTC__
-        // we don't support the original game's save format (for obvious reasons).
-        return false;
-#else
-# if __JDOOM__
-        // It might still be a v19 savegame.
-        SV_v19_LoadGame(filename);
-# elif __JHERETIC__
-        SV_v13_LoadGame(filename);
-# endif
-#endif
-        return true;
-    }
-
-    // Read the header.
-    lzRead(&hdr, sizeof(hdr), savefile);
-    if(hdr.magic != MY_SAVE_MAGIC)
+    if(strncmp(saveptr.b, HXS_VERSION_TEXT, 8))
     {
         Con_Message("SV_LoadGame: Bad magic.\n");
         return false;
     }
-#ifdef __JDOOM__
-    if(hdr.gamemode != gamemode && !ArgExists("-nosavecheck"))
+
+    saveVersion = atoi(saveptr.b + 8);
+    if(saveVersion > MY_SAVE_VERSION)
     {
-        Con_Message("SV_LoadGame: savegame not from gamemode %i.\n", gamemode);
+        return false; // Bad version
+    }
+
+    saveptr.b += HXS_VERSION_TEXT_LENGTH;
+
+    AssertSegment(ASEG_GAME_HEADER);
+
+    gameepisode = 1;
+    gamemap = SV_ReadByte();
+    gameskill = SV_ReadByte();
+    deathmatch = SV_ReadByte();
+    nomonsters = SV_ReadByte();
+    randomclass = SV_ReadByte();
+
+#else
+    lzRead(hdr, sizeof(*hdr), savefile);
+
+    if(hdr->magic != MY_SAVE_MAGIC)
+    {
+        Con_Message("SV_LoadGame: Bad magic.\n");
         return false;
     }
+
+# ifdef __JDOOM__
+    if(hdr->gamemode != gamemode && !ArgExists("-nosavecheck"))
+    {
+        Con_Message("SV_LoadGame: savegame not from gamemode %i.\n",
+                    gamemode);
+        return false;
+    }
+# endif
+
+    gameskill = hdr->skill & 0x7f;
+# ifdef __JDOOM__
+    fastparm = (hdr->skill & 0x80) != 0;
+# endif
+    gameepisode = hdr->episode;
+    gamemap = hdr->map;
+    deathmatch = hdr->deathmatch;
+    nomonsters = hdr->nomonsters;
+    respawnmonsters = hdr->respawn;
 #endif
 
-    gameskill = hdr.skill & 0x7f;
-#ifdef __JDOOM__
-    fastparm = (hdr.skill & 0x80) != 0;
-#endif
-    gameepisode = hdr.episode;
-    gamemap = hdr.map;
-    deathmatch = hdr.deathmatch;
-    nomonsters = hdr.nomonsters;
-    respawnmonsters = hdr.respawn;
-    // We don't have the right to say which players are in the game. The
-    // players that already are will continue to be. If the data for a given
-    // player is not in the savegame file, he will be notified. The data for
-    // players who were saved but are not currently in the game will be
-    // discarded.
-    for(i = 0; i < MAXPLAYERS; i++)
-        infile[i] = hdr.players[i];
+    return true; // Read was OK.
+}
 
+static boolean SV_LoadGame2(void)
+{
+    int         i;
+    char        buf[80];
+    boolean     loaded[MAXPLAYERS], infile[MAXPLAYERS];
+#if __JHEXEN__
+    int         k;
+    player_t    playerBackup[MAXPLAYERS];
+#endif
+
+    // Read the header.
+#if __JHEXEN__
+    if(!readSaveHeader())
+#else
+    if(!readSaveHeader(&hdr, savefile))
+#endif
+        return false; // Something went wrong.
+
+    // Read global save data not part of the game metadata.
+#if __JHEXEN__
+    // Read global script info
+    memcpy(WorldVars, saveptr.b, sizeof(WorldVars));
+    saveptr.b += sizeof(WorldVars);
+    memcpy(ACSStore, saveptr.b, sizeof(ACSStore));
+    saveptr.b += sizeof(ACSStore);
+#endif
+
+    // Allocate a small junk buffer.
+    // (Data from old save versions is read into here)
+    junkbuffer = malloc(sizeof(byte) * 64);
+
+#if !__JHEXEN__
     // Load the level.
     G_InitNew(gameskill, gameepisode, gamemap);
 
     // Set the time.
     leveltime = hdr.leveltime;
 
-    // Allocate a small junk buffer.
-    // (Data from old save versions is read into here)
-    junkbuffer = malloc(sizeof(byte) * 64);
-
-    // Dearchive all the data.
-    memset(loaded, 0, sizeof(loaded));
     SV_InitThingArchive(true);
     P_UnArchivePlayerHeader();
-    P_UnArchivePlayers(infile, loaded);
-    P_UnArchiveWorld();
-    P_UnArchiveThinkers();
-
-#ifdef __JDOOM__
-    // Doom saves the brain data, too. (It's a part of the world.)
-    P_UnArchiveBrain();
 #endif
 
-    // Read the sound target data (prevents bug where monsters who have
-    // been alerted go back to sleep when loading a save game).
-    P_UnArchiveSoundTargets();
+    // Read the player structures
+#if __JHEXEN__
+    AssertSegment(ASEG_PLAYERS);
+#endif
 
+    // We don't have the right to say which players are in the game. The
+    // players that already are will continue to be. If the data for a given
+    // player is not in the savegame file, he will be notified. The data for
+    // players who were saved but are not currently in the game will be
+    // discarded.
+#if !__JHEXEN__
+    for(i = 0; i < MAXPLAYERS; ++i)
+        infile[i] = hdr.players[i];
+#else
+    for(i = 0; i < MAXPLAYERS; ++i)
+        infile[i] = SV_ReadByte();
+#endif
+
+    memset(loaded, 0, sizeof(loaded));
+    P_UnArchivePlayers(infile, loaded);
+
+#if __JHEXEN__
+    AssertSegment(ASEG_END);
+#endif
+
+#if __JHEXEN__
+    Z_Free(saveBuffer);
+
+    // Save player structs
+    memcpy(playerBackup, players, sizeof(playerBackup));
+#endif
+
+    // Load the current map
+#if __JHEXEN__
+    SV_HxLoadMap();
+#else
+    // Load the current map
+    SV_DMLoadMap();
+#endif
+
+#if __JHEXEN__
+    // Don't need the player mobj relocation info for load game
+    Z_Free(targetPlayerAddrs);
+
+    // Restore player structs
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        mobj_t *mo = players[i].plr->mo;
+
+        memcpy(&players[i], &playerBackup[i], sizeof(player_t));
+        players[i].plr->mo = mo;
+        players[i].readyArtifact = players[i].inventory[players[i].inv_ptr].type;
+
+        P_InventoryResetCursor(&players[i]);
+    }
+#else
     // Check consistency.
     if(SV_ReadByte() != CONSISTENCY)
         Con_Error("SV_LoadGame: Bad savegame (consistency test failed!)\n");
@@ -2748,50 +4664,129 @@ int SV_LoadGame(char *filename)
     // We're done.
     SV_FreeThingArchive();
     lzClose(savefile);
+#endif
 
     // Notify the players that weren't in the savegame.
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        boolean notLoaded = false;
+
+#if __JHEXEN__
+        if(players[i].plr->ingame)
+        {
+            // Try to find a saved player that corresponds this one.
+            for(k = 0; k < MAXPLAYERS; ++k)
+                if(saveToRealPlayerNum[k] == i)
+                    break;
+            if(k < MAXPLAYERS)
+                continue;           // Found; don't bother this player.
+
+            players[i].playerstate = PST_REBORN;
+
+            if(!i)
+            {
+                // If the consoleplayer isn't in the save, it must be some
+                // other player's file?
+                P_SetMessage(players, GET_TXT(TXT_LOADMISSING), false);
+            }
+            else
+            {
+                NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
+                notLoaded = true;
+            }
+        }
+#else
         if(!loaded[i] && players[i].plr->ingame)
         {
             if(!i)
             {
-#ifndef __JHEXEN__
-#ifndef __JSTRIFE__
                 P_SetMessage(players, GET_TXT(TXT_LOADMISSING), false);
-#endif
-#endif
             }
             else
             {
                 NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
             }
+            notLoaded = true;
+        }
+#endif
+
+        if(notLoaded)
+        {
             // Kick this player out, he doesn't belong here.
             sprintf(buf, "kick %i", i);
             DD_Execute(buf, false);
         }
+    }
 
+#if !__JHEXEN__
     // In netgames, the server tells the clients about this.
     NetSv_LoadGame(hdr.gameid);
+#endif
 
-    // Spawn particle generators, fix HOMS etc, etc...
-    R_SetupLevel(DDSLM_AFTER_LOADING, 0);
-    return true;
+    return true; // Success!
 }
 
-/*
+#if __JHEXEN__
+boolean SV_LoadGame(int slot)
+#else
+boolean SV_LoadGame(char *filename)
+#endif
+{
+#if __JHEXEN__
+    char        fileName[200];
+
+    // Copy all needed save files to the base slot
+    if(slot != BASE_SLOT)
+    {
+        ClearSaveSlot(BASE_SLOT);
+        CopySaveSlot(slot, BASE_SLOT);
+    }
+
+    // Create the name
+    sprintf(fileName, "%shex6.hxs", savePath);
+    M_TranslatePath(fileName, fileName);
+
+    // Load the file
+    M_ReadFile(fileName, &saveBuffer);
+#else
+    // Make sure an opening briefing is not shown.
+    // (G_InitNew --> G_DoLoadLevel)
+    brief_disabled = true;
+
+    savefile = lzOpen(filename, "rp");
+    if(!savefile)
+    {
+# if __DOOM64TC__ || __WOLFTC__
+        // we don't support the original game's save format (for obvious reasons).
+        return false;
+# else
+#  if __JDOOM__
+        // It might still be a v19 savegame.
+        SV_v19_LoadGame(filename);
+#  elif __JHERETIC__
+        SV_v13_LoadGame(filename);
+#  endif
+# endif
+        return true;
+    }
+#endif
+
+    return SV_LoadGame2();
+}
+
+/**
  * Saves a snapshot of the world, a still image.
  * No data of movement is included (server sends it).
  */
 void SV_SaveClient(unsigned int gameid)
 {
+#if !__JHEXEN__ // unsupported in jHexen
     char    name[200];
     player_t *pl = players + consoleplayer;
     mobj_t *mo = players[consoleplayer].plr->mo;
 
     if(!IS_CLIENT || !mo)
         return;
-
-    SV_InitTextureArchives();
 
     SV_ClientSaveGameFile(gameid, name);
     // Open the file.
@@ -2828,15 +4823,16 @@ void SV_SaveClient(unsigned int gameid)
     P_ArchivePlayerHeader();
     SV_WritePlayer(consoleplayer);
 
-    P_ArchiveWorld();
-    P_ArchiveThinkers();
+    P_ArchiveMap();
 
     lzClose(savefile);
     free(junkbuffer);
+#endif
 }
 
 void SV_LoadClient(unsigned int gameid)
 {
+#if !__JHEXEN__ // unsupported in jHexen
     char    name[200];
     player_t *cpl = players + consoleplayer;
     mobj_t *mo = cpl->plr->mo;
@@ -2887,13 +4883,232 @@ void SV_LoadClient(unsigned int gameid)
     P_UnArchivePlayerHeader();
     SV_ReadPlayer(cpl);
 
-    P_UnArchiveWorld();
-    P_UnArchiveThinkers();
+    P_UnArchiveMap();
 
     lzClose(savefile);
     free(junkbuffer);
 
-    return;
+#endif
 }
 
+#if !__JHEXEN__
+static void SV_DMLoadMap(void)
+{
+    P_UnArchiveMap();
+
+    // Spawn particle generators, fix HOMS etc, etc...
+    R_SetupLevel(DDSLM_AFTER_LOADING, 0);
+}
+#endif
+
+#if __JHEXEN__
+static void SV_HxLoadMap(void)
+{
+    char        fileName[100];
+
+#ifdef _DEBUG
+    Con_Printf("SV_HxLoadMap: Begin, G_InitNew...\n");
+#endif
+
+    // We don't want to see a briefing if we're loading a map.
+    brief_disabled = true;
+
+    // Load a base level
+    G_InitNew(gameskill, gameepisode, gamemap);
+
+    // Create the name
+    sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
+    M_TranslatePath(fileName, fileName);
+
+#ifdef _DEBUG
+    Con_Printf("SV_HxLoadMap: Reading %s\n", fileName);
+#endif
+
+    // Load the file
+    M_ReadFile(fileName, &saveBuffer);
+    saveptr.b = saveBuffer;
+
+    P_UnArchiveMap();
+
+    // Free mobj list and save buffer
+    Z_Free(thing_archive);
+    Z_Free(saveBuffer);
+
+    // Spawn particle generators, fix HOMS etc, etc...
+    R_SetupLevel(DDSLM_AFTER_LOADING, 0);
+}
+
+void SV_MapTeleport(int map, int position)
+{
+    int         i;
+    int         j;
+    char        fileName[100];
+    player_t    playerBackup[MAXPLAYERS];
+    mobj_t     *targetPlayerMobj;
+    boolean     rClass;
+    boolean     playerWasReborn;
+    boolean     oldWeaponowned[NUM_WEAPON_TYPES];
+    int         oldKeys = 0;
+    int         oldPieces = 0;
+    int         bestWeapon;
+
+    if(!deathmatch)
+    {
+        if(P_GetMapCluster(gamemap) == P_GetMapCluster(map))
+        {   // Same cluster - save map without saving player mobjs
+            char        fileName[100];
+
+            // Set the mobj archive numbers
+            SetMobjArchiveNums();
+
+            // Open the output file
+            sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
+            M_TranslatePath(fileName, fileName);
+            OpenStreamOut(fileName);
+
+            P_ArchiveMap(false);
+
+            // Close the output file
+            CloseStreamOut();
+        }
+        else
+        {   // Entering new cluster - clear base slot
+            ClearSaveSlot(BASE_SLOT);
+        }
+    }
+
+    // Store player structs for later
+    rClass = randomclass;
+    randomclass = false;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        memcpy(&playerBackup[i], &players[i], sizeof(player_t));
+    }
+
+    // Only SV_HxLoadMap() uses targetPlayerAddrs, so it's NULLed here
+    // for the following check (player mobj redirection)
+    targetPlayerAddrs = NULL;
+
+    gamemap = map;
+    sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
+    M_TranslatePath(fileName, fileName);
+    if(!deathmatch && ExistingFile(fileName))
+    {                           // Unarchive map
+        SV_HxLoadMap();
+        brief_disabled = true;
+    }
+    else
+    {                           // New map
+        G_InitNew(gameskill, gameepisode, gamemap);
+
+        // Destroy all freshly spawned players
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            if(players[i].plr->ingame)
+            {
+                P_RemoveMobj(players[i].plr->mo);
+            }
+        }
+    }
+
+    // Restore player structs
+    targetPlayerMobj = NULL;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->ingame)
+        {
+            continue;
+        }
+        memcpy(&players[i], &playerBackup[i], sizeof(player_t));
+        HUMsg_ClearMessages(&players[i]);
+        players[i].attacker = NULL;
+        players[i].poisoner = NULL;
+
+        if(IS_NETGAME || deathmatch)
+        {
+            if(players[i].playerstate == PST_DEAD)
+            {   // In a network game, force all players to be alive
+                players[i].playerstate = PST_REBORN;
+            }
+            if(!deathmatch)
+            {   // Cooperative net-play, retain keys and weapons
+                oldKeys = players[i].keys;
+                oldPieces = players[i].pieces;
+                for(j = 0; j < NUM_WEAPON_TYPES; j++)
+                {
+                    oldWeaponowned[j] = players[i].weaponowned[j];
+                }
+            }
+        }
+        playerWasReborn = (players[i].playerstate == PST_REBORN);
+        if(deathmatch)
+        {
+            memset(players[i].frags, 0, sizeof(players[i].frags));
+            players[i].plr->mo = NULL;
+            G_DeathMatchSpawnPlayer(i);
+        }
+        else
+        {
+            P_SpawnPlayer(P_GetPlayerStart(position, i), i);
+        }
+
+        if(playerWasReborn && IS_NETGAME && !deathmatch)
+        {   // Restore keys and weapons when reborn in co-op
+            players[i].keys = oldKeys;
+            players[i].pieces = oldPieces;
+            for(bestWeapon = 0, j = 0; j < NUM_WEAPON_TYPES; ++j)
+            {
+                if(oldWeaponowned[j])
+                {
+                    bestWeapon = j;
+                    players[i].weaponowned[j] = true;
+                }
+            }
+            players[i].ammo[AT_BLUEMANA] = 25;
+            players[i].ammo[AT_GREENMANA] = 25;
+            if(bestWeapon)
+            {                   // Bring up the best weapon
+                players[i].pendingweapon = bestWeapon;
+            }
+        }
+
+        if(targetPlayerMobj == NULL)
+        {                       // The poor sap
+            targetPlayerMobj = players[i].plr->mo;
+        }
+    }
+    randomclass = rClass;
+
+    // Redirect anything targeting a player mobj
+    if(targetPlayerAddrs)
+    {
+        for(i = 0; i < targetPlayerCount; ++i)
+        {
+            *targetPlayerAddrs[i] = (int) targetPlayerMobj;
+        }
+        Z_Free(targetPlayerAddrs);
+    }
+
+    // Destroy all things touching players
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(players[i].plr->ingame)
+        {
+            P_TeleportMove(players[i].plr->mo, players[i].plr->mo->pos[VX],
+                           players[i].plr->mo->pos[VY], true);
+        }
+    }
+
+    // Launch waiting scripts
+    if(!deathmatch)
+    {
+        P_CheckACSStore();
+    }
+
+    // For single play, save immediately into the reborn slot
+    if(!IS_NETGAME && !deathmatch)
+    {
+        SV_SaveGame(REBORN_SLOT, REBORN_DESCRIPTION);
+    }
+}
 #endif
