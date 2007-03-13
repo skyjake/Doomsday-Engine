@@ -59,7 +59,7 @@
 				ProgramDataBaseFileName=".\./Obj/Release/Doom64TC/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				CallingConvention="2"
+				CallingConvention="0"
 				CompileAs="0"
 			/>
 			<Tool
@@ -76,11 +76,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib odbc32.lib odbccp32.lib"
-				OutputFile=".\./Bin/Release/Doom64TC.dll"
+				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib"
+				OutputFile="./Bin/Release/Doom64TC.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ModuleDefinitionFile=".\Src\Doom64TC\Doom64TC.def"
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				ModuleDefinitionFile="..\..\..\plugins\doom64tc\api\doom64tc.def"
 				ProgramDatabaseFile=".\./Bin/Release/Doom64TC.pdb"
 				ImportLibrary=".\./Bin/Release/Doom64TC.lib"
 			/>

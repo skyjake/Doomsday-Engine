@@ -157,7 +157,7 @@
 				ProgramDataBaseFileName=".\./Obj/Release/JHexen/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				CallingConvention="2"
+				CallingConvention="0"
 				CompileAs="0"
 			/>
 			<Tool
@@ -174,11 +174,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib"
 				OutputFile=".\./Bin/Release/JHexen.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ModuleDefinitionFile=".\Src\jHexen\jhexen.def"
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
 				ProgramDatabaseFile=".\./Bin/Release/JHexen.pdb"
 				ImportLibrary=".\./Bin/Release/JHexen.lib"
 			/>
@@ -728,10 +729,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\src\st_stuff.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jhexen\src\sv_save.c"
 				>
 			</File>
 			<File

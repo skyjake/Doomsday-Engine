@@ -51,7 +51,7 @@
  ./../../plugins/common/src/g_controls.c
  ./../../plugins/common/src/f_infine.c
  ./../../plugins/jhexen/src/tables.c
- ./../../plugins/jhexen/src/sv_save.c
+ ./../../plugins/common/src/p_saveg.c
  ./../../plugins/jhexen/src/sn_sonix.c
  ./../../plugins/jhexen/src/sc_man.c
  ./../../plugins/common/src/hu_stuff.c

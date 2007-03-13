@@ -176,7 +176,7 @@
 				OutputFile=".\./Bin/Release/dsCompat.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ModuleDefinitionFile=".\Src\dsCompat\dsCompat.def"
+				ModuleDefinitionFile="..\..\..\plugins\ds6\api\dsCompat.def"
 				ProgramDatabaseFile=".\./Bin/Release/dsCompat.pdb"
 				ImportLibrary=".\./Bin/Release/dsCompat.lib"
 			/>

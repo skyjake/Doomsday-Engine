@@ -155,7 +155,7 @@
 				ProgramDataBaseFileName=".\./Obj/Release/drD3D/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				CallingConvention="2"
+				CallingConvention="0"
 				CompileAs="0"
 			/>
 			<Tool
@@ -172,11 +172,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib d3d8.lib d3dx8.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="./bin/release/doomsday.lib d3d8.lib d3dx8.lib"
 				OutputFile=".\./Bin/Release/drD3D.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ModuleDefinitionFile=".\Src\drD3D\drD3D.def"
+				ModuleDefinitionFile="..\..\..\plugins\d3d\api\drd3d.def"
 				ProgramDatabaseFile=".\./Bin/Release/drD3D.pdb"
 				ImportLibrary=".\./Bin/Release/drD3D.lib"
 			/>
