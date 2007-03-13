@@ -150,14 +150,14 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing)
                     {
                         thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
                     }
-                    thing->dplayer->viewz =
-                        FIX2FLT(thing->pos[VZ]) + thing->dplayer->viewheight;
                 }
                 else
                 {
                     //thing->dplayer->clLookDir = 0; /* $unifiedangles */
                     thing->dplayer->lookdir = 0;
                 }
+                thing->dplayer->viewz =
+                    FIX2FLT(thing->pos[VZ]) + thing->dplayer->viewheight;
 
                 //thing->dplayer->clAngle = thing->angle; /* $unifiedangles */
                 thing->dplayer->flags |=
