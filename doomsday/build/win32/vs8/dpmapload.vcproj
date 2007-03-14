@@ -76,7 +76,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="./bin/release/doomsday.lib"
 				OutputFile="./Bin/Release/dpMapLoad.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
