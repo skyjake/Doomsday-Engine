@@ -96,7 +96,7 @@
 # define HXS_VERSION_TEXT        "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH 16
 
-# define MY_SAVE_VERSION         3
+# define MY_SAVE_VERSION         4
 # define SAVESTRINGSIZE          24
 # define SAVEGAMENAME            "Hex"
 # define CLIENTSAVEGAMENAME      "HexenCl"
@@ -2670,16 +2670,6 @@ static void P_UnArchiveWorld(void)
 
 static void SV_WriteCeiling(ceiling_t *ceiling)
 {
-#if __JHEXEN__
-    byte        buffer[MAX_THINKER_SIZE];
-    ceiling_t  *temp = (ceiling_t*) &buffer;
-
-    SV_WriteByte(TC_CEILING);
-
-    memcpy(temp, ceiling, sizeof(*temp));
-    temp->sector = (sector_t*) P_ToIndex(ceiling->sector);
-    SV_Write(temp, sizeof(*temp));
-#else
     SV_WriteByte(TC_CEILING);
 
     SV_WriteByte(1); // Write a version byte.
@@ -2701,27 +2691,17 @@ static void SV_WriteCeiling(ceiling_t *ceiling)
     SV_WriteLong(ceiling->direction);
     SV_WriteLong(ceiling->tag);
     SV_WriteLong(ceiling->olddirection);
-#endif
 }
 
 static int SV_ReadCeiling(ceiling_t *ceiling)
 {
-#if __JHEXEN__
-    // Note: the thinker class byte has already been read.
-    memcpy(ceiling, saveptr.b, sizeof(*ceiling));
-    saveptr.b += sizeof(*ceiling);
-
-    ceiling->sector = P_ToPtr(DMU_SECTOR, (int) ceiling->sector);
-    if(!ceiling->sector)
-        Con_Error("TC_CEILING: bad sector number\n");
-
-    ceiling->thinker.function = T_MoveCeiling;
-
-    P_XSector(ceiling->sector)->specialdata = ceiling->thinker.function;
-#else
     sector_t *sector;
 
+#if __JHEXEN__
+    if(saveVersion >= 4)
+#else
     if(hdr.version >= 5)
+#endif
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -2750,6 +2730,17 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
     }
     else
     {
+#if __JHEXEN__
+        // Its in the old pre V4 format which serialized ceiling_t
+        memcpy(ceiling, saveptr.b, sizeof(*ceiling));
+        saveptr.b += sizeof(*ceiling);
+
+        ceiling->sector = P_ToPtr(DMU_SECTOR, (int) ceiling->sector);
+        if(!ceiling->sector)
+            Con_Error("TC_CEILING: bad sector number\n");
+
+        ceiling->thinker.function = T_MoveCeiling;
+#else
         // Its in the old pre V5 format which serialized ceiling_t
         // Padding at the start (an old thinker_t struct)
         thinker_t junk;
@@ -2781,8 +2772,12 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 
         if(junk.function)
             ceiling->thinker.function = T_MoveCeiling;
+#endif
     }
 
+#if __JHEXEN__
+    P_XSector(ceiling->sector)->specialdata = ceiling->thinker.function;
+#else
     P_XSector(ceiling->sector)->specialdata = ceiling;
 #endif
     return true; // Add this thinker.
@@ -2790,16 +2785,6 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 
 static void SV_WriteDoor(vldoor_t *door)
 {
-#if __JHEXEN__
-    byte        buffer[MAX_THINKER_SIZE];
-    vldoor_t   *temp = (vldoor_t*) &buffer;
-
-    SV_WriteByte(TC_DOOR);
-
-    memcpy(temp, door, sizeof(*temp));
-    temp->sector = (sector_t*) P_ToIndex(door->sector);
-    SV_Write(temp, sizeof(*temp));
-#else
     SV_WriteByte(TC_DOOR);
 
     SV_WriteByte(1); // Write a version byte.
@@ -2817,27 +2802,17 @@ static void SV_WriteDoor(vldoor_t *door)
     SV_WriteLong(door->direction);
     SV_WriteLong(door->topwait);
     SV_WriteLong(door->topcountdown);
-#endif
 }
 
 static int SV_ReadDoor(vldoor_t *door)
 {
-#if __JHEXEN__
-    // Note: the thinker class byte has already been read.
-    memcpy(door, saveptr.b, sizeof(*door));
-    saveptr.b += sizeof(*door);
-
-    door->sector = P_ToPtr(DMU_SECTOR, (int) door->sector);
-    if(!door->sector)
-        Con_Error("TC_DOOR: bad sector number\n");
-
-    door->thinker.function = T_VerticalDoor;
-
-    P_XSector(door->sector)->specialdata = door->thinker.function;
-#else
     sector_t *sector;
 
+#if __JHEXEN__
+    if(saveVersion >= 4)
+#else
     if(hdr.version >= 5)
+#endif
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -2859,6 +2834,15 @@ static int SV_ReadDoor(vldoor_t *door)
     }
     else
     {
+#if __JHEXEN__
+        // Its in the old pre V4 format which serialized vldoor_t
+        memcpy(door, saveptr.b, sizeof(*door));
+        saveptr.b += sizeof(*door);
+
+        door->sector = P_ToPtr(DMU_SECTOR, (int) door->sector);
+        if(!door->sector)
+            Con_Error("TC_DOOR: bad sector number\n");
+#else
         fixed_t temp;
         // Its in the old pre V5 format which serialized vldoor_t
         // Padding at the start (an old thinker_t struct)
@@ -2883,27 +2867,22 @@ static int SV_ReadDoor(vldoor_t *door)
         SV_Read(&door->direction, sizeof(int));
         SV_Read(&door->topwait, sizeof(int));
         SV_Read(&door->topcountdown, sizeof(int));
+#endif
     }
 
+#if __JHEXEN__
+    P_XSector(door->sector)->specialdata = door->thinker.function;
+#else
     P_XSector(door->sector)->specialdata = door;
+#endif
 
     door->thinker.function = T_VerticalDoor;
-#endif
+
     return true; // Add this thinker.
 }
 
 static void SV_WriteFloor(floormove_t *floor)
 {
-#if __JHEXEN__
-    byte        buffer[MAX_THINKER_SIZE];
-    floormove_t *temp = (floormove_t*) &buffer;
-
-    SV_WriteByte(TC_FLOOR);
-
-    memcpy(temp, floor, sizeof(*temp));
-    temp->sector = (sector_t*) P_ToIndex(floor->sector);
-    SV_Write(temp, sizeof(*temp));
-#else
     SV_WriteByte(TC_FLOOR);
 
     SV_WriteByte(1); // Write a version byte.
@@ -2924,27 +2903,28 @@ static void SV_WriteFloor(floormove_t *floor)
 
     SV_WriteShort((int)floor->floordestheight);
     SV_WriteLong(FLT2FIX(floor->speed));
+
+#if __JHEXEN__
+    SV_WriteLong(floor->delayCount);
+    SV_WriteLong(floor->delayTotal);
+    SV_WriteLong(FLT2FIX(floor->stairsDelayHeight));
+    SV_WriteLong(FLT2FIX(floor->stairsDelayHeightDelta));
+    SV_WriteLong(FLT2FIX(floor->resetHeight));
+    SV_WriteShort(floor->resetDelay);
+    SV_WriteShort(floor->resetDelayCount);
+    SV_WriteByte(floor->textureChange);
 #endif
 }
 
 static int SV_ReadFloor(floormove_t *floor)
 {
-#if __JHEXEN__
-    // Note: the thinker class byte has already been read.
-    memcpy(floor, saveptr.b, sizeof(*floor));
-    saveptr.b += sizeof(*floor);
-
-    floor->sector = P_ToPtr(DMU_SECTOR, (int) floor->sector);
-    if(!floor->sector)
-        Con_Error("TC_FLOOR: bad sector number\n");
-
-    floor->thinker.function = T_MoveFloor;
-
-    P_XSector(floor->sector)->specialdata = floor->thinker.function;
-#else
     sector_t *sector;
 
+#if __JHEXEN__
+    if(saveVersion >= 4)
+#else
     if(hdr.version >= 5)
+#endif
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -2966,9 +2946,29 @@ static int SV_ReadFloor(floormove_t *floor)
 
         floor->floordestheight = (float) SV_ReadShort();
         floor->speed = FIX2FLT(SV_ReadLong());
+
+#if __JHEXEN__
+        floor->delayCount = SV_ReadLong();
+        floor->delayTotal = SV_ReadLong();
+        floor->stairsDelayHeight = FIX2FLT(SV_ReadLong());
+        floor->stairsDelayHeightDelta = FIX2FLT(SV_ReadLong());
+        floor->resetHeight = FIX2FLT(SV_ReadLong());
+        floor->resetDelay = SV_ReadShort();
+        floor->resetDelayCount = SV_ReadShort();
+        floor->textureChange = SV_ReadByte();
+#endif
     }
     else
     {
+#if __JHEXEN__
+        // Its in the old pre V4 format which serialized floormove_t
+        memcpy(floor, saveptr.b, sizeof(*floor));
+        saveptr.b += sizeof(*floor);
+
+        floor->sector = P_ToPtr(DMU_SECTOR, (int) floor->sector);
+        if(!floor->sector)
+            Con_Error("TC_FLOOR: bad sector number\n");
+#else
         fixed_t temp;
         // Its in the old pre V5 format which serialized floormove_t
         // Padding at the start (an old thinker_t struct)
@@ -2995,26 +2995,22 @@ static int SV_ReadFloor(floormove_t *floor)
         floor->floordestheight = (float) temp;
         SV_Read(&temp, sizeof(fixed_t));
         floor->speed = FIX2FLT(temp);
+#endif
     }
 
+#if __JHEXEN__
+    P_XSector(floor->sector)->specialdata = floor->thinker.function;
+#else
     P_XSector(floor->sector)->specialdata = floor;
-    floor->thinker.function = T_MoveFloor;
 #endif
+
+    floor->thinker.function = T_MoveFloor;
+
     return true; // Add this thinker.
 }
 
 static void SV_WritePlat(plat_t *plat)
 {
-#if __JHEXEN__
-    byte        buffer[MAX_THINKER_SIZE];
-    plat_t     *temp = (plat_t*) &buffer;
-
-    SV_WriteByte(TC_PLAT);
-
-    memcpy(temp, plat, sizeof(*temp));
-    temp->sector = (sector_t*) P_ToIndex(plat->sector);
-    SV_Write(temp, sizeof(*temp));
-#else
     SV_WriteByte(TC_PLAT);
 
     SV_WriteByte(1); // Write a version byte.
@@ -3040,27 +3036,17 @@ static void SV_WritePlat(plat_t *plat)
     SV_WriteByte((byte) plat->crush);
 
     SV_WriteLong(plat->tag);
-#endif
 }
 
 static int SV_ReadPlat(plat_t *plat)
 {
-#if __JHEXEN__
-    // Note: the thinker class byte has already been read.
-    memcpy(plat, saveptr.b, sizeof(*plat));
-    saveptr.b += sizeof(*plat);
-
-    plat->sector = P_ToPtr(DMU_SECTOR, (int) plat->sector);
-    if(!plat->sector)
-        Con_Error("TC_PLAT: bad sector number\n");
-
-    plat->thinker.function = T_PlatRaise;
-
-    P_XSector(plat->sector)->specialdata = plat->thinker.function;
-#else
     sector_t *sector;
 
+#if __JHEXEN__
+    if(saveVersion >= 4)
+#else
     if(hdr.version >= 5)
+#endif
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -3092,6 +3078,17 @@ static int SV_ReadPlat(plat_t *plat)
     }
     else
     {
+#if __JHEXEN__
+        // Its in the old pre V4 format which serialized plat_t
+        memcpy(plat, saveptr.b, sizeof(*plat));
+        saveptr.b += sizeof(*plat);
+
+        plat->sector = P_ToPtr(DMU_SECTOR, (int) plat->sector);
+        if(!plat->sector)
+            Con_Error("TC_PLAT: bad sector number\n");
+
+        plat->thinker.function = T_PlatRaise;
+#else
         // Its in the old pre V5 format which serialized plat_t
         // Padding at the start (an old thinker_t struct)
         thinker_t junk;
@@ -3124,157 +3121,327 @@ static int SV_ReadPlat(plat_t *plat)
 
         if(junk.function)
             plat->thinker.function = T_PlatRaise;
+#endif
     }
 
+#if __JHEXEN__
+    P_XSector(plat->sector)->specialdata = plat->thinker.function;
+#else
     P_XSector(plat->sector)->specialdata = plat;
 #endif
+
     return true; // Add this thinker.
 }
 
 #if __JHEXEN__
 static void SV_WriteLight(light_t *th)
 {
-    byte        buffer[MAX_THINKER_SIZE];
-    light_t    *temp = (light_t*) &buffer;
-
     SV_WriteByte(TC_LIGHT);
 
-    memcpy(temp, th, sizeof(*temp));
-    temp->sector = (sector_t*) P_ToIndex(th->sector);
-    SV_Write(temp, sizeof(*temp));
+    SV_WriteByte(1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    SV_WriteByte((byte) th->type);
+
+    SV_WriteLong(P_ToIndex(th->sector));
+
+    SV_WriteLong(th->value1);
+    SV_WriteLong(th->value2);
+    SV_WriteLong(th->tics1);
+    SV_WriteLong(th->tics2);
+    SV_WriteLong(th->count);
 }
 
 static int SV_ReadLight(light_t *th)
 {
-    // Note: the thinker class byte has already been read.
-    memcpy(th, saveptr.b, sizeof(*th));
-    saveptr.b += sizeof(*th);
+    sector_t *sector;
+    
+    if(saveVersion >= 4)
+    {
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
-    th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
-    if(!th->sector)
-        Con_Error("TC_LIGHT: bad sector number\n");
+        th->type = (lighttype_t) SV_ReadByte();
+
+        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+        if(!sector)
+            Con_Error("TC_LIGHT: bad sector number\n");
+        th->sector = sector;
+
+        th->value1 = SV_ReadLong();
+        th->value2 = SV_ReadLong();
+        th->tics1 = SV_ReadLong();
+        th->tics2 = SV_ReadLong();
+        th->count = SV_ReadLong(); 
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized light_t
+        memcpy(th, saveptr.b, sizeof(*th));
+        saveptr.b += sizeof(*th);
+
+        th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
+        if(!th->sector)
+            Con_Error("TC_LIGHT: bad sector number\n");
+    }
 
     th->thinker.function = T_Light;
+
     return true; // Add this thinker.
 }
 
 static void SV_WritePhase(phase_t *th)
 {
-    byte        buffer[MAX_THINKER_SIZE];
-    phase_t    *temp = (phase_t*) &buffer;
-
     SV_WriteByte(TC_PHASE);
 
-    memcpy(temp, th, sizeof(*temp));
-    temp->sector = (sector_t*) P_ToIndex(th->sector);
-    SV_Write(temp, sizeof(*temp));
+    SV_WriteByte(1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    SV_WriteLong(P_ToIndex(th->sector));
+
+    SV_WriteLong(th->index);
+    SV_WriteLong(th->base);
 }
 
 static int SV_ReadPhase(phase_t *th)
 {
-    // Note: the thinker class byte has already been read.
-    memcpy(th, saveptr.b, sizeof(*th));
-    saveptr.b += sizeof(*th);
+    sector_t *sector;
+    
+    if(saveVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
-    th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
-    if(!th->sector)
-        Con_Error("TC_PHASE: bad sector number\n");
+        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+        if(!sector)
+            Con_Error("TC_PHASE: bad sector number\n");
+        th->sector = sector;
+
+        th->index = SV_ReadLong();
+        th->base = SV_ReadLong();
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized phase_t
+        memcpy(th, saveptr.b, sizeof(*th));
+        saveptr.b += sizeof(*th);
+
+        th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
+        if(!th->sector)
+            Con_Error("TC_PHASE: bad sector number\n");
+    }
 
     th->thinker.function = T_Phase;
+
     return true; // Add this thinker.
 }
 
 static void SV_WriteScript(acs_t *th)
 {
-    byte        buffer[MAX_THINKER_SIZE];
-    acs_t      *temp = (acs_t*) &buffer;
+    uint        i;
 
     SV_WriteByte(TC_INTERPRET_ACS);
 
-    memcpy(temp, th, sizeof(*temp));
-    temp->ip = (int *) ((int) (th->ip) - (int) ActionCodeBase);
-    temp->line =
-        (th->line ? (line_t *) P_ToIndex(th->line) : (line_t *) -1);
-    temp->activator = (mobj_t *) GetMobjNum(th->activator);
-    SV_Write(temp, sizeof(*temp));
+    SV_WriteByte(1); // Write a version byte.
+
+    SV_WriteLong(GetMobjNum(th->activator));
+    SV_WriteLong(th->line ? P_ToIndex(th->line) : -1);
+    SV_WriteLong(th->side);
+    SV_WriteLong(th->number);
+    SV_WriteLong(th->infoIndex);
+    SV_WriteLong(th->delayCount);
+    for(i = 0; i < ACS_STACK_DEPTH; ++i)
+        SV_WriteLong(th->stack[i]);
+    SV_WriteLong(th->stackPtr);
+    for(i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
+        SV_WriteLong(th->vars[i]);
+    SV_WriteLong((int) (th->ip) - (int) ActionCodeBase);
 }
 
 static int SV_ReadScript(acs_t *th)
 {
-    memcpy(th, saveptr.b, sizeof(*th));
-    saveptr.b += sizeof(*th);
-
-    th->ip = (int *) (ActionCodeBase + (int) th->ip);
-    if((int) th->line == -1)
+    if(saveVersion >= 4)
     {
-        th->line = NULL;
+        int         temp;
+        uint        i;
+
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ SV_ReadByte(); // version byte.
+
+        th->activator = (mobj_t*) SV_ReadLong();
+        SetMobjPtr((int *) &th->activator);
+        temp = SV_ReadLong();
+        if(temp == -1)
+            th->line = NULL;
+        else
+            th->line = P_ToPtr(DMU_LINE, temp);
+        th->side = SV_ReadLong();
+        th->number = SV_ReadLong();
+        th->infoIndex = SV_ReadLong();
+        th->delayCount = SV_ReadLong();
+        for(i = 0; i < ACS_STACK_DEPTH; ++i)
+            th->stack[i] = SV_ReadLong();
+        th->stackPtr = SV_ReadLong();
+        for(i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
+            th->vars[i] = SV_ReadLong();
+        th->ip = (int *) (ActionCodeBase + SV_ReadLong());
     }
     else
     {
-        th->line = P_ToPtr(DMU_LINE, (int) th->line);
+        // Its in the old pre V4 format which serialized acs_t
+        memcpy(th, saveptr.b, sizeof(*th));
+        saveptr.b += sizeof(*th);
+
+        th->ip = (int *) (ActionCodeBase + (int) th->ip);
+        if((int) th->line == -1)
+            th->line = NULL;
+        else
+            th->line = P_ToPtr(DMU_LINE, (int) th->line);
+
+        SetMobjPtr((int *) &th->activator);
     }
-    SetMobjPtr((int *) &th->activator);
+
     return true; // Add this thinker.
 }
 
 static void SV_WriteDoorPoly(polydoor_t *th)
 {
-    byte        buffer[MAX_THINKER_SIZE];
-    polydoor_t *temp = (polydoor_t*) &buffer;
-
     SV_WriteByte(TC_POLY_DOOR);
 
-    memcpy(temp, th, sizeof(*temp));
-    SV_Write(temp, sizeof(*temp));
+    SV_WriteByte(1); // Write a version byte.
+
+    SV_WriteByte(th->type);
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    SV_WriteLong(th->polyobj);
+    SV_WriteLong(th->speed);
+    SV_WriteLong(th->dist);
+    SV_WriteLong(th->totalDist);
+    SV_WriteLong(th->direction);
+    SV_WriteLong(th->xSpeed);
+    SV_WriteLong(th->ySpeed);
+    SV_WriteLong(th->tics);
+    SV_WriteLong(th->waitTics);
+    SV_WriteByte(th->close);
 }
 
 static int SV_ReadDoorPoly(polydoor_t *th)
-{
-    // Note: the thinker class byte has already been read.
-    memcpy(th, saveptr.b, sizeof(*th));
-    saveptr.b += sizeof(*th);
+{   
+    if(saveVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ SV_ReadByte(); // version byte.
+
+        th->type = SV_ReadByte();
+
+        th->polyobj = SV_ReadLong();
+        th->speed = SV_ReadLong();
+        th->dist = SV_ReadLong();
+        th->totalDist = SV_ReadLong();
+        th->direction = SV_ReadLong();
+        th->xSpeed = SV_ReadLong();
+        th->ySpeed = SV_ReadLong();
+        th->tics = SV_ReadLong();
+        th->waitTics = SV_ReadLong();
+        th->close = SV_ReadByte();
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized polydoor_t
+        memcpy(th, saveptr.b, sizeof(*th));
+        saveptr.b += sizeof(*th);
+    }
 
     th->thinker.function = T_PolyDoor;
+
     return true; // Add this thinker.
 }
 
 static void SV_WriteMovePoly(polyevent_t *th)
 {
-    byte        buffer[MAX_THINKER_SIZE];
-    polyevent_t *temp = (polyevent_t*) &buffer;
-
     SV_WriteByte(TC_MOVE_POLY);
 
-    memcpy(temp, th, sizeof(*temp));
-    SV_Write(temp, sizeof(*temp));
+    SV_WriteByte(1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    SV_WriteLong(th->polyobj);
+    SV_WriteLong(th->speed);
+    SV_WriteLong(th->dist);
+    SV_WriteLong(th->angle);
+    SV_WriteLong(th->xSpeed);
+    SV_WriteLong(th->ySpeed);
 }
 
 static int SV_ReadMovePoly(polyevent_t *th)
 {
-    // Note: the thinker class byte has already been read.
-    memcpy(th, saveptr.b, sizeof(*th));
-    saveptr.b += sizeof(*th);
+    if(saveVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ SV_ReadByte(); // version byte.
+
+        th->polyobj = SV_ReadLong();
+        th->speed = SV_ReadLong();
+        th->dist = SV_ReadLong();
+        th->angle = SV_ReadLong();
+        th->xSpeed = SV_ReadLong();
+        th->ySpeed = SV_ReadLong();
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized polyevent_t
+        memcpy(th, saveptr.b, sizeof(*th));
+        saveptr.b += sizeof(*th);
+    }
 
     th->thinker.function = T_MovePoly;
+
     return true; // Add this thinker.
 }
 
 static void SV_WriteRotatePoly(polyevent_t *th)
 {
-    byte        buffer[MAX_THINKER_SIZE];
-    polyevent_t *temp = (polyevent_t*) &buffer;
-
     SV_WriteByte(TC_ROTATE_POLY);
 
-    memcpy(temp, th, sizeof(*temp));
-    SV_Write(temp, sizeof(*temp));
+    SV_WriteByte(1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    SV_WriteLong(th->polyobj);
+    SV_WriteLong(th->speed);
+    SV_WriteLong(th->dist);
+    SV_WriteLong(th->angle);
+    SV_WriteLong(th->xSpeed);
+    SV_WriteLong(th->ySpeed);
 }
 
 static int SV_ReadRotatePoly(polyevent_t *th)
 {
-    // Note: the thinker class byte has already been read.
-    memcpy(th, saveptr.b, sizeof(*th));
-    saveptr.b += sizeof(*th);
+    if(saveVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ SV_ReadByte(); // version byte.
+
+        th->polyobj = SV_ReadLong();
+        th->speed = SV_ReadLong();
+        th->dist = SV_ReadLong();
+        th->angle = SV_ReadLong();
+        th->xSpeed = SV_ReadLong();
+        th->ySpeed = SV_ReadLong();
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized polyevent_t
+        memcpy(th, saveptr.b, sizeof(*th));
+        saveptr.b += sizeof(*th);
+    }
 
     th->thinker.function = T_RotatePoly;
     return true; // Add this thinker.
@@ -3282,25 +3449,54 @@ static int SV_ReadRotatePoly(polyevent_t *th)
 
 static void SV_WritePillar(pillar_t *th)
 {
-    byte        buffer[MAX_THINKER_SIZE];
-    pillar_t   *temp = (pillar_t*) &buffer;
-
     SV_WriteByte(TC_BUILD_PILLAR);
 
-    memcpy(temp, th, sizeof(*temp));
-    temp->sector = (sector_t*) P_ToIndex(th->sector);
-    SV_Write(temp, sizeof(*temp));
+    SV_WriteByte(1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    SV_WriteLong(P_ToIndex(th->sector));
+
+    SV_WriteLong(th->ceilingSpeed);
+    SV_WriteLong(th->floorSpeed);
+    SV_WriteLong(th->floordest);
+    SV_WriteLong(th->ceilingdest);
+    SV_WriteLong(th->direction);
+    SV_WriteLong(th->crush);
 }
 
 static int SV_ReadPillar(pillar_t *th)
 {
-    // Note: the thinker class byte has already been read.
-    memcpy(th, saveptr.b, sizeof(*th));
-    saveptr.b += sizeof(*th);
+    sector_t *sector;
+    
+    if(saveVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ SV_ReadByte(); // version byte.
 
-    th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
-    if(!th->sector)
-        Con_Error("TC_BUILD_PILLAR: bad sector number\n");
+        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+        if(!sector)
+            Con_Error("TC_BUILD_PILLAR: bad sector number\n");
+        th->sector = sector;
+
+        th->ceilingSpeed = SV_ReadLong();
+        th->floorSpeed = SV_ReadLong();
+        th->floordest = SV_ReadLong();
+        th->ceilingdest = SV_ReadLong();
+        th->direction = SV_ReadLong();
+        th->crush = SV_ReadLong();
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized pillar_t
+        memcpy(th, saveptr.b, sizeof(*th));
+        saveptr.b += sizeof(*th);
+
+        th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
+        if(!th->sector)
+            Con_Error("TC_BUILD_PILLAR: bad sector number\n");
+    }
 
     th->thinker.function = T_BuildPillar;
 
@@ -3310,25 +3506,57 @@ static int SV_ReadPillar(pillar_t *th)
 
 static void SV_WriteFloorWaggle(floorWaggle_t *th)
 {
-    byte        buffer[MAX_THINKER_SIZE];
-    floorWaggle_t *temp = (floorWaggle_t*) &buffer;
-
     SV_WriteByte(TC_FLOOR_WAGGLE);
 
-    memcpy(temp, th, sizeof(*temp));
-    temp->sector = (sector_t*) P_ToIndex(th->sector);
-    SV_Write(temp, sizeof(*temp));
+    SV_WriteByte(1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    SV_WriteLong(P_ToIndex(th->sector));
+
+    SV_WriteLong(th->originalHeight);
+    SV_WriteLong(th->accumulator);
+    SV_WriteLong(th->accDelta);
+    SV_WriteLong(th->targetScale);
+    SV_WriteLong(th->scale);
+    SV_WriteLong(th->scaleDelta);
+    SV_WriteLong(th->ticker);
+    SV_WriteLong(th->state);
 }
 
 static int SV_ReadFloorWaggle(floorWaggle_t *th)
 {
-    // Note: the thinker class byte has already been read.
-    memcpy(th, saveptr.b, sizeof(*th));
-    saveptr.b += sizeof(*th);
+    sector_t *sector;
 
-    th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
-    if(!th->sector)
-        Con_Error("TC_FLOOR_WAGGLE: bad sector number\n");
+    if(saveVersion >= 4)
+    {
+        /*int ver =*/ SV_ReadByte(); // version byte.
+
+        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+        if(!sector)
+            Con_Error("TC_FLOOR_WAGGLE: bad sector number\n");
+        th->sector = sector;
+
+        th->originalHeight = SV_ReadLong();
+        th->accumulator = SV_ReadLong();
+        th->accDelta = SV_ReadLong();
+        th->targetScale = SV_ReadLong();
+        th->scale = SV_ReadLong();
+        th->scaleDelta = SV_ReadLong();
+        th->ticker = SV_ReadLong();
+        th->state = SV_ReadLong();
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized floorWaggle_t
+        memcpy(th, saveptr.b, sizeof(*th));
+        saveptr.b += sizeof(*th);
+
+        th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
+        if(!th->sector)
+            Con_Error("TC_FLOOR_WAGGLE: bad sector number\n");
+    }
 
     th->thinker.function = T_FloorWaggle;
 

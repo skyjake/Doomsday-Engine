@@ -95,14 +95,9 @@ void            P_InitLightning(void);
 void            P_ForceLightning(void);
 void            R_HandleSectorSpecials(void);
 
-/*
-   ===============================================================================
-
-   P_LIGHTS
-
-   ===============================================================================
- */
-
+//
+// Light
+//
 typedef enum {
     LITE_RAISEBYVALUE,
     LITE_LOWERBYVALUE,
@@ -141,73 +136,9 @@ void            P_SpawnPhasedLight(sector_t *sector, int base, int index);
 void            P_SpawnLightSequence(sector_t *sector, int indexStep);
 boolean         EV_SpawnLight(line_t *line, byte *arg, lighttype_t type);
 
-#if 0
-typedef struct {
-    thinker_t       thinker;
-    sector_t       *sector;
-    int             count;
-    int             maxlight;
-    int             minlight;
-    int             maxtime;
-    int             mintime;
-} lightflash_t;
-
-typedef struct {
-    thinker_t       thinker;
-    sector_t       *sector;
-    int             count;
-    int             minlight;
-    int             maxlight;
-    int             darktime;
-    int             brighttime;
-} strobe_t;
-
-typedef struct {
-    thinker_t       thinker;
-    sector_t       *sector;
-    int             minlight;
-    int             maxlight;
-    int             direction;
-} glow_t;
-
-typedef struct {
-    thinker_t       thinker;
-    sector_t       *sector;
-    int             index;
-    int             base;
-} phase_t;
-
-#define GLOWSPEED 8
-#define STROBEBRIGHT 5
-#define FASTDARK 15
-#define SLOWDARK 35
-
-#define LIGHT_SEQUENCE_START    2
-#define LIGHT_SEQUENCE                  3
-#define LIGHT_SEQUENCE_ALT      4
-
-void            T_LightFlash(lightflash_t * flash);
-void            P_SpawnLightFlash(sector_t *sector);
-void            T_StrobeFlash(strobe_t * flash);
-void            P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow,
-                                   int inSync);
-void            EV_StartLightStrobing(line_t *line);
-void            EV_TurnTagLightsOff(line_t *line);
-void            EV_LightTurnOn(line_t *line, int bright);
-void            T_Glow(glow_t * g);
-void            P_SpawnGlowingLight(sector_t *sector);
-void            T_Phase(phase_t * phase);
-void            P_SpawnPhasedLight(sector_t *sector, int base, int index);
-void            P_SpawnLightSequence(sector_t *sector, int indexStep);
-#endif
-
-/*
-   ===============================================================================
-
-   P_SWITCH
-
-   ===============================================================================
- */
+//
+// Switch
+//
 typedef struct {
     char            name1[9];
     char            name2[9];
@@ -238,14 +169,9 @@ void            P_FreeButtons(void);
 void            P_ChangeSwitchTexture(line_t *line, int useAgain);
 void            P_InitSwitchList(void);
 
-/*
-   ===============================================================================
-
-   P_PLATS
-
-   ===============================================================================
- */
-
+//
+// Plats
+//
 typedef enum {
     PLAT_UP,
     PLAT_DOWN,
@@ -291,13 +217,9 @@ void            P_AddActivePlat(plat_t * plat);
 void            P_RemoveActivePlat(plat_t * plat);
 void            EV_StopPlat(line_t *line, byte *args);
 
-/*
-   ===============================================================================
-
-   P_DOORS
-
-   ===============================================================================
- */
+//
+// Doors
+//
 typedef enum {
     DREV_NORMAL,
     DREV_CLOSE30THENOPEN,
@@ -327,13 +249,9 @@ void            T_VerticalDoor(vldoor_t * door);
 //void P_SpawnDoorCloseIn30(sector_t *sec);
 //void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum);
 
-/*
-   ===============================================================================
-
-   P_CEILNG
-
-   ===============================================================================
- */
+//
+// Ceiling
+//
 typedef enum {
     CLEV_LOWERTOFLOOR,
     CLEV_RAISETOHIGHEST,
@@ -349,7 +267,8 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     ceiling_e       type;
-    fixed_t         bottomheight, topheight;
+    fixed_t         bottomheight;
+    fixed_t         topheight;
     fixed_t         speed;
     int             crush;
     int             direction;     // 1 = up, 0 = waiting, -1 = down
@@ -369,13 +288,9 @@ void            P_AddActiveCeiling(ceiling_t * c);
 void            P_RemoveActiveCeiling(ceiling_t * c);
 int             EV_CeilingCrushStop(line_t *line, byte *args);
 
-/*
-   ===============================================================================
-
-   P_FLOOR
-
-   ===============================================================================
- */
+//
+// Floor
+//
 typedef enum {
     FLEV_LOWERFLOOR,               // lower floor to highest surrounding floor
     FLEV_LOWERFLOORTOLOWEST,       // lower floor to lowest surrounding floor
@@ -466,24 +381,18 @@ int             EV_FloorCrushStop(line_t *line, byte *args);
 boolean         EV_StartFloorWaggle(int tag, int height, int speed, int offset,
                                     int timer);
 
-//--------------------------------------------------------------------------
 //
-// p_telept
+// Teleport
 //
-//--------------------------------------------------------------------------
-
 #define         TELEFOGHEIGHT (32*FRACUNIT)
 boolean         P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle,
                            boolean useFog);
 boolean         EV_Teleport(int tid, mobj_t *thing, boolean fog);
 void            P_ArtiTele(player_t *player);
 
-//--------------------------------------------------------------------------
 //
-// p_acs
+// ACS
 //
-//--------------------------------------------------------------------------
-
 #define MAX_ACS_SCRIPT_VARS 10
 #define MAX_ACS_MAP_VARS 32
 #define MAX_ACS_WORLD_VARS 64
@@ -548,12 +457,9 @@ extern int      MapVars[MAX_ACS_MAP_VARS];
 extern int      WorldVars[MAX_ACS_WORLD_VARS];
 extern acsstore_t ACSStore[MAX_ACS_STORE + 1];  // +1 for termination marker
 
-//--------------------------------------------------------------------------
 //
-// p_things
+// Things
 //
-//--------------------------------------------------------------------------
-
 extern mobjtype_t TranslateThingType[];
 
 boolean         EV_ThingProjectile(byte *args, boolean gravity);
