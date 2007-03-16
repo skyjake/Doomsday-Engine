@@ -45,18 +45,14 @@
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
-#  include "p_saveg.h"
 #elif __WOLFTC__
 #  include "wolftc.h"
-#  include "p_saveg.h"
 #elif __JDOOM__
 #  include "jdoom.h"
-#  include "p_saveg.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #  include "g_common.h"
 #  include "m_argv.h"
-#  include "p_saveg.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #elif __JSTRIFE__
@@ -69,6 +65,7 @@
 #include "x_hair.h"
 #include "p_player.h"
 #include "g_controls.h"
+#include "p_saveg.h"
 
 // MACROS ------------------------------------------------------------------
 

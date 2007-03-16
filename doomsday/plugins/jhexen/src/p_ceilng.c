@@ -40,31 +40,42 @@
  * http://www.ravensoft.com/
  */
 
+/*
+ *  p_ceilng.c : Moving ceilings.
+ */
+
+// HEADER FILES ------------------------------------------------------------
+
 #include "jhexen.h"
 #include "p_start.h"
 #include "dmu_lib.h"
 #include "p_mapspec.h"
 
-//==================================================================
-//==================================================================
-//
-//                                                      CEILINGS
-//
-//==================================================================
-//==================================================================
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 ceiling_t *activeceilings[MAXCEILINGS];
 
-//==================================================================
-//
-//      T_MoveCeiling
-//
-//==================================================================
-void T_MoveCeiling(ceiling_t * ceiling)
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// CODE --------------------------------------------------------------------
+
+void T_MoveCeiling(ceiling_t *ceiling)
 {
     result_e res;
 
-    switch (ceiling->direction)
+    switch(ceiling->direction)
     {
         //      case 0:         // IN STASIS
         //          break;
@@ -74,18 +85,20 @@ void T_MoveCeiling(ceiling_t * ceiling)
         if(res == RES_PASTDEST)
         {
             SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
-            switch (ceiling->type)
+            switch(ceiling->type)
             {
             case CLEV_CRUSHANDRAISE:
                 ceiling->direction = -1;
                 ceiling->speed = ceiling->speed * 2;
                 break;
+
             default:
                 P_RemoveActiveCeiling(ceiling);
                 break;
             }
         }
         break;
+
     case -1:                    // DOWN
         res =
             T_MovePlane(ceiling->sector, ceiling->speed, ceiling->bottomheight,
@@ -93,13 +106,14 @@ void T_MoveCeiling(ceiling_t * ceiling)
         if(res == RES_PASTDEST)
         {
             SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
-            switch (ceiling->type)
+            switch(ceiling->type)
             {
             case CLEV_CRUSHANDRAISE:
             case CLEV_CRUSHRAISEANDSTAY:
                 ceiling->direction = 1;
                 ceiling->speed = ceiling->speed / 2;
                 break;
+
             default:
                 P_RemoveActiveCeiling(ceiling);
                 break;
@@ -107,13 +121,14 @@ void T_MoveCeiling(ceiling_t * ceiling)
         }
         else if(res == RES_CRUSHED)
         {
-            switch (ceiling->type)
+            switch(ceiling->type)
             {
             case CLEV_CRUSHANDRAISE:
             case CLEV_LOWERANDCRUSH:
             case CLEV_CRUSHRAISEANDSTAY:
                 //ceiling->speed = ceiling->speed/4;
                 break;
+
             default:
                 break;
             }
@@ -150,71 +165,68 @@ int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
         ceiling->thinker.function = T_MoveCeiling;
         ceiling->sector = sec;
         ceiling->crush = 0;
-        ceiling->speed = arg[1] * (FRACUNIT / 8);
+        ceiling->speed = FIX2FLT(arg[1] * (FRACUNIT / 8));
 
-        switch (type)
+        switch(type)
         {
         case CLEV_CRUSHRAISEANDSTAY:
             ceiling->crush = arg[2];    // arg[2] = crushing value
-            ceiling->topheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
-            ceiling->bottomheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT) +
-                (8 * FRACUNIT);
+            ceiling->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
             ceiling->direction = -1;
             break;
 
         case CLEV_CRUSHANDRAISE:
-            ceiling->topheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
+            ceiling->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
         case CLEV_LOWERANDCRUSH:
             ceiling->crush = arg[2];    // arg[2] = crushing value
         case CLEV_LOWERTOFLOOR:
-            ceiling->bottomheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
+            ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
             if(type != CLEV_LOWERTOFLOOR)
             {
-                ceiling->bottomheight += 8 * FRACUNIT;
+                ceiling->bottomheight += 8;
             }
             ceiling->direction = -1;
             break;
 
         case CLEV_RAISETOHIGHEST:
-            ceiling->topheight = FLT2FIX(P_FindHighestCeilingSurrounding(sec));
+            ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
             ceiling->direction = 1;
             break;
 
         case CLEV_LOWERBYVALUE:
-            ceiling->bottomheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT) -
-                arg[2] * FRACUNIT;
+            ceiling->bottomheight =
+                P_GetFloatp(sec, DMU_CEILING_HEIGHT) - arg[2];
             ceiling->direction = -1;
             break;
 
         case CLEV_RAISEBYVALUE:
-            ceiling->topheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT) +
-                arg[2] * FRACUNIT;
+            ceiling->topheight =
+                P_GetFloatp(sec, DMU_CEILING_HEIGHT) + arg[2];
             ceiling->direction = 1;
             break;
 
         case CLEV_MOVETOVALUETIMES8:
             {
-                int     destHeight = arg[2] * FRACUNIT * 8;
+            float   destHeight = arg[2] * 8;
 
-                if(arg[3])
-                {
-                    destHeight = -destHeight;
-                }
-                if(P_GetFixedp(sec, DMU_CEILING_HEIGHT) <= destHeight)
-                {
-                    ceiling->direction = 1;
-                    ceiling->topheight = destHeight;
-                    if(P_GetFixedp(sec, DMU_CEILING_HEIGHT) == destHeight)
-                    {
-                        rtn = 0;
-                    }
-                }
-                else if(P_GetFixedp(sec, DMU_CEILING_HEIGHT) > destHeight)
-                {
-                    ceiling->direction = -1;
-                    ceiling->bottomheight = destHeight;
-                }
-                break;
+            if(arg[3])
+            {
+                destHeight = -destHeight;
+            }
+            if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) <= destHeight)
+            {
+                ceiling->direction = 1;
+                ceiling->topheight = destHeight;
+                if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) == destHeight)
+                    rtn = 0;
+            }
+            else if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) > destHeight)
+            {
+                ceiling->direction = -1;
+                ceiling->bottomheight = destHeight;
+            }
+            break;
             }
 
         default:
@@ -236,16 +248,11 @@ int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
     return rtn;
 }
 
-//==================================================================
-//
-//              Add an active ceiling
-//
-//==================================================================
-void P_AddActiveCeiling(ceiling_t * c)
+void P_AddActiveCeiling(ceiling_t *c)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < MAXCEILINGS; i++)
+    for(i = 0; i < MAXCEILINGS; ++i)
         if(activeceilings[i] == NULL)
         {
             activeceilings[i] = c;
@@ -253,16 +260,11 @@ void P_AddActiveCeiling(ceiling_t * c)
         }
 }
 
-//==================================================================
-//
-//              Remove a ceiling's thinker
-//
-//==================================================================
-void P_RemoveActiveCeiling(ceiling_t * c)
+void P_RemoveActiveCeiling(ceiling_t *c)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < MAXCEILINGS; i++)
+    for(i = 0; i < MAXCEILINGS; ++i)
         if(activeceilings[i] == c)
         {
             P_XSector(activeceilings[i]->sector)->specialdata = NULL;
@@ -273,20 +275,16 @@ void P_RemoveActiveCeiling(ceiling_t * c)
         }
 }
 
-//==================================================================
-//
-//              EV_CeilingCrushStop
-//              Stop a ceiling from crushing!
-//
-//==================================================================
-
+/**
+ * Stop a ceiling from crushing!
+ */
 int EV_CeilingCrushStop(line_t *line, byte *args)
 {
-    int     i;
-    int     rtn;
+    int         i;
+    int         rtn;
 
     rtn = 0;
-    for(i = 0; i < MAXCEILINGS; i++)
+    for(i = 0; i < MAXCEILINGS; ++i)
     {
         if(activeceilings[i] && activeceilings[i]->tag == args[0])
         {

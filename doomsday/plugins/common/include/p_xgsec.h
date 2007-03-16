@@ -126,9 +126,9 @@ typedef struct {
     int             flags;
     struct line_s  *origin;
 
-    fixed_t         destination;
-    fixed_t         speed;         // Signed.
-    fixed_t         crushspeed;    // Signed (speed to use when crushing).
+    float           destination;
+    float           speed;        // Signed.
+    float           crushspeed;   // Signed (speed to use when crushing).
 
     int             setflat;       // Set flat when move done.
     int             setsector;     // Sector type to set when move done

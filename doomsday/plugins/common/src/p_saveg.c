@@ -2720,7 +2720,7 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 
         ceiling->bottomheight = (float) SV_ReadShort();
         ceiling->topheight = (float) SV_ReadShort();
-        ceiling->speed = FIX2FLT(SV_ReadLong());
+        ceiling->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
         ceiling->crush = SV_ReadByte();
 
@@ -2754,15 +2754,9 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
         ceiling->sector = sector;
 #endif
 
-#if __JHEXEN__
-        ceiling->bottomheight = SV_ReadLong();
-        ceiling->topheight = SV_ReadLong();
-        ceiling->speed = SV_ReadLong();
-#else
-        ceiling->bottomheight = (float) SV_ReadLong();
-        ceiling->topheight = (float) SV_ReadLong();
+        ceiling->bottomheight = FIX2FLT((fixed_t) SV_ReadLong());
+        ceiling->topheight = FIX2FLT((fixed_t) SV_ReadLong());
         ceiling->speed = FIX2FLT((fixed_t) SV_ReadLong());
-#endif
 
         ceiling->crush = SV_ReadLong();
         ceiling->direction = SV_ReadLong();
@@ -2856,14 +2850,9 @@ static int SV_ReadDoor(vldoor_t *door)
             Con_Error("TC_DOOR: bad sector number\n");
         door->sector = sector;
 #endif
-
-#if __JHEXEN__
-        door->topheight = SV_ReadLong();
-        door->speed = SV_ReadLong();
-#else
-        door->topheight = (float) SV_ReadLong();
+        door->topheight = FIX2FLT((fixed_t) SV_ReadLong());
         door->speed = FIX2FLT((fixed_t) SV_ReadLong());
-#endif
+
         door->direction = SV_ReadLong();
         door->topwait = SV_ReadLong();
         door->topcountdown = SV_ReadLong();
@@ -2987,20 +2976,16 @@ static int SV_ReadFloor(floormove_t *floor)
         floor->direction = SV_ReadLong();
         floor->newspecial = SV_ReadLong();
         floor->texture = SV_ReadShort();
-#if __JHEXEN__
-        floor->floordestheight = SV_ReadLong();
-        floor->speed = SV_ReadLong();
-#else
-        floor->floordestheight = (float) SV_ReadLong();
+
+        floor->floordestheight = FIX2FLT((fixed_t) SV_ReadLong());
         floor->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
-#endif
 #if __JHEXEN__
         floor->delayCount = SV_ReadLong();
         floor->delayTotal = SV_ReadLong();
-        floor->stairsDelayHeight = SV_ReadLong();
-        floor->stairsDelayHeightDelta = SV_ReadLong();
-        floor->resetHeight = SV_ReadLong();
+        floor->stairsDelayHeight = FIX2FLT((fixed_t) SV_ReadLong());
+        floor->stairsDelayHeightDelta = FIX2FLT((fixed_t) SV_ReadLong());
+        floor->resetHeight = FIX2FLT((fixed_t) SV_ReadLong());
         floor->resetDelay = SV_ReadShort();
         floor->resetDelayCount = SV_ReadShort();
         floor->textureChange = SV_ReadByte();
@@ -3099,15 +3084,10 @@ static int SV_ReadPlat(plat_t *plat)
             Con_Error("TC_PLAT: bad sector number\n");
         plat->sector = sector;
 
-#if __JHEXEN__
-        plat->speed = SV_ReadLong();
-        plat->low = SV_ReadLong();
-        plat->high = SV_ReadLong();
-#else
         plat->speed = FIX2FLT((fixed_t) SV_ReadLong());
-        plat->low = (float) SV_ReadLong();
-        plat->high = (float) SV_ReadLong();
-#endif
+        plat->low = FIX2FLT((fixed_t) SV_ReadLong());
+        plat->high = FIX2FLT((fixed_t) SV_ReadLong());
+
         plat->wait = SV_ReadLong();
         plat->count = SV_ReadLong();
         plat->status = SV_ReadLong();
@@ -3521,10 +3501,10 @@ static void SV_WritePillar(pillar_t *th)
 
     SV_WriteLong(P_ToIndex(th->sector));
 
-    SV_WriteLong(th->ceilingSpeed);
-    SV_WriteLong(th->floorSpeed);
-    SV_WriteLong(th->floordest);
-    SV_WriteLong(th->ceilingdest);
+    SV_WriteLong(FLT2FIX(th->ceilingSpeed));
+    SV_WriteLong(FLT2FIX(th->floorSpeed));
+    SV_WriteLong(FLT2FIX(th->floordest));
+    SV_WriteLong(FLT2FIX(th->ceilingdest));
     SV_WriteLong(th->direction);
     SV_WriteLong(th->crush);
 }
@@ -3544,10 +3524,10 @@ static int SV_ReadPillar(pillar_t *th)
             Con_Error("TC_BUILD_PILLAR: bad sector number\n");
         th->sector = sector;
 
-        th->ceilingSpeed = SV_ReadLong();
-        th->floorSpeed = SV_ReadLong();
-        th->floordest = SV_ReadLong();
-        th->ceilingdest = SV_ReadLong();
+        th->ceilingSpeed = FIX2FLT((fixed_t) SV_ReadLong());
+        th->floorSpeed = FIX2FLT((fixed_t) SV_ReadLong());
+        th->floordest = FIX2FLT((fixed_t) SV_ReadLong());
+        th->ceilingdest = FIX2FLT((fixed_t) SV_ReadLong());
         th->direction = SV_ReadLong();
         th->crush = SV_ReadLong();
     }
@@ -3565,10 +3545,10 @@ static int SV_ReadPillar(pillar_t *th)
             Con_Error("TC_BUILD_PILLAR: bad sector number\n");
         th->sector = sector;
 
-        th->ceilingSpeed = SV_ReadLong();
-        th->floorSpeed = SV_ReadLong();
-        th->floordest = SV_ReadLong();
-        th->ceilingdest = SV_ReadLong();
+        th->ceilingSpeed = FIX2FLT((fixed_t) SV_ReadLong());
+        th->floorSpeed = FIX2FLT((fixed_t) SV_ReadLong());
+        th->floordest = FIX2FLT((fixed_t) SV_ReadLong());
+        th->ceilingdest = FIX2FLT((fixed_t) SV_ReadLong());
         th->direction = SV_ReadLong();
         th->crush = SV_ReadLong();
     }
@@ -3590,12 +3570,12 @@ static void SV_WriteFloorWaggle(floorWaggle_t *th)
 
     SV_WriteLong(P_ToIndex(th->sector));
 
-    SV_WriteLong(th->originalHeight);
-    SV_WriteLong(th->accumulator);
-    SV_WriteLong(th->accDelta);
-    SV_WriteLong(th->targetScale);
-    SV_WriteLong(th->scale);
-    SV_WriteLong(th->scaleDelta);
+    SV_WriteLong(FLT2FIX(th->originalHeight));
+    SV_WriteLong(FLT2FIX(th->accumulator));
+    SV_WriteLong(FLT2FIX(th->accDelta));
+    SV_WriteLong(FLT2FIX(th->targetScale));
+    SV_WriteLong(FLT2FIX(th->scale));
+    SV_WriteLong(FLT2FIX(th->scaleDelta));
     SV_WriteLong(th->ticker);
     SV_WriteLong(th->state);
 }
@@ -3614,12 +3594,12 @@ static int SV_ReadFloorWaggle(floorWaggle_t *th)
             Con_Error("TC_FLOOR_WAGGLE: bad sector number\n");
         th->sector = sector;
 
-        th->originalHeight = SV_ReadLong();
-        th->accumulator = SV_ReadLong();
-        th->accDelta = SV_ReadLong();
-        th->targetScale = SV_ReadLong();
-        th->scale = SV_ReadLong();
-        th->scaleDelta = SV_ReadLong();
+        th->originalHeight = FIX2FLT((fixed_t) SV_ReadLong());
+        th->accumulator = FIX2FLT((fixed_t) SV_ReadLong());
+        th->accDelta = FIX2FLT((fixed_t) SV_ReadLong());
+        th->targetScale = FIX2FLT((fixed_t) SV_ReadLong());
+        th->scale = FIX2FLT((fixed_t) SV_ReadLong());
+        th->scaleDelta = FIX2FLT((fixed_t) SV_ReadLong());
         th->ticker = SV_ReadLong();
         th->state = SV_ReadLong();
     }
@@ -3637,12 +3617,12 @@ static int SV_ReadFloorWaggle(floorWaggle_t *th)
             Con_Error("TC_FLOOR_WAGGLE: bad sector number\n");
         th->sector = sector;
 
-        th->originalHeight = SV_ReadLong();
-        th->accumulator = SV_ReadLong();
-        th->accDelta = SV_ReadLong();
-        th->targetScale = SV_ReadLong();
-        th->scale = SV_ReadLong();
-        th->scaleDelta = SV_ReadLong();
+        th->originalHeight = FIX2FLT((fixed_t) SV_ReadLong());
+        th->accumulator = FIX2FLT((fixed_t) SV_ReadLong());
+        th->accDelta = FIX2FLT((fixed_t) SV_ReadLong());
+        th->targetScale = FIX2FLT((fixed_t) SV_ReadLong());
+        th->scale = FIX2FLT((fixed_t) SV_ReadLong());
+        th->scaleDelta = FIX2FLT((fixed_t) SV_ReadLong());
         th->ticker = SV_ReadLong();
         th->state = SV_ReadLong();
     }

@@ -233,11 +233,11 @@ void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
             break;
 
         case 'f':
-            offset += FIX2FLT(xsec->origfloor);
+            offset += xsec->origfloor;
             break;
 
         case 'c':
-            offset += FIX2FLT(xsec->origceiling);
+            offset += xsec->origceiling;
             break;
 
         default:
@@ -384,8 +384,8 @@ void XS_Init(void)
 
         P_GetBytepv(sec, DMU_COLOR, tmprgb);
 
-        xsec->origfloor = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
-        xsec->origceiling = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
+        xsec->origfloor = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+        xsec->origceiling = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
         xsec->origlight = P_GetIntp(sec, DMU_LIGHT_LEVEL);
 
         memcpy(xsec->origrgb, tmprgb, 3);
@@ -452,13 +452,13 @@ void XS_MoverStopped(xgplanemover_t * mover, boolean done)
 /*
  * A thinker function for plane movers.
  */
-void XS_PlaneMover(xgplanemover_t * mover)
+void XS_PlaneMover(xgplanemover_t *mover)
 {
     byte rgb[3];
     int     res, res2;
     int     dir;
-    int     ceil = P_GetFixedp(mover->sector, DMU_CEILING_HEIGHT);
-    int     floor = P_GetFixedp(mover->sector, DMU_FLOOR_HEIGHT);
+    float   ceil = P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT);
+    float   floor = P_GetFloatp(mover->sector, DMU_FLOOR_HEIGHT);
     xsector_t *xsec = P_XSector(mover->sector);
     boolean docrush = (mover->flags & PMF_CRUSH) != 0;
     boolean follows = (mover->flags & PMF_OTHER_FOLLOWS) != 0;
@@ -497,14 +497,14 @@ void XS_PlaneMover(xgplanemover_t * mover)
     if(setorig)
     {
         if(mover->ceiling)
-            xsec->origceiling = P_GetFixedp(mover->sector, DMU_CEILING_HEIGHT);
+            xsec->origceiling = P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT);
         else
-            xsec->origfloor = P_GetFixedp(mover->sector, DMU_FLOOR_HEIGHT);;
+            xsec->origfloor = P_GetFloatp(mover->sector, DMU_FLOOR_HEIGHT);
     }
 
     if(follows)
     {
-        int     off = mover->ceiling ? floor - ceil : ceil - floor;
+        float       off = mover->ceiling ? floor - ceil : ceil - floor;
 
         res2 =
             T_MovePlane(mover->sector, mover->speed, mover->destination + off,
@@ -513,9 +513,9 @@ void XS_PlaneMover(xgplanemover_t * mover)
         if(setorig)
         {
             if(!mover->ceiling)
-                xsec->origceiling = P_GetFixedp(mover->sector, DMU_CEILING_HEIGHT);
+                xsec->origceiling = P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT);
             else
-                xsec->origfloor = P_GetFixedp(mover->sector, DMU_FLOOR_HEIGHT);
+                xsec->origfloor = P_GetFloatp(mover->sector, DMU_FLOOR_HEIGHT);
         }
         if(res2 == crushed)
             res = crushed;
@@ -550,13 +550,13 @@ void XS_PlaneMover(xgplanemover_t * mover)
         {
             // Make sure both the planes are where we started from.
             if((!mover->ceiling || follows) &&
-               P_GetFixedp(mover->sector, DMU_FLOOR_HEIGHT) != floor)
+               P_GetFloatp(mover->sector, DMU_FLOOR_HEIGHT) != floor)
             {
                 T_MovePlane(mover->sector, mover->speed, floor, docrush, false,
                             -dir);
             }
             if((mover->ceiling || follows) &&
-               P_GetFixedp(mover->sector, DMU_CEILING_HEIGHT) != ceil)
+               P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT) != ceil)
             {
                 T_MovePlane(mover->sector, mover->speed, ceil, docrush, true,
                             -dir);
@@ -570,7 +570,7 @@ void XS_PlaneMover(xgplanemover_t * mover)
 // Removes any existing thinkers associated with the plane.
 xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
 {
-    thinker_t *th;
+    thinker_t  *th;
     xgplanemover_t *mover;
 
     for(th = thinkercap.next; th != &thinkercap; th = th->next)
@@ -595,7 +595,7 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
 
 void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex, byte rgb[3])
 {
-    int i;
+    int         i;
 
     // Clamping is not necessary since the rgb array has already a byte type.
 
@@ -1158,7 +1158,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
     if(ref == SPREF_ORIGINAL_FLOOR)
     {
         if(height)
-            *height = P_XSector(sector)->origfloor;
+            *height = FLT2FIX(P_XSector(sector)->origfloor);
         if(pic)
             *pic = P_GetIntp(sector, DMU_FLOOR_TEXTURE);
         return true;
@@ -1166,7 +1166,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
     if(ref == SPREF_ORIGINAL_CEILING)
     {
         if(height)
-            *height = P_XSector(sector)->origceiling;
+            *height = FLT2FIX(P_XSector(sector)->origceiling);
         if(pic)
             *pic = P_GetIntp(sector, DMU_CEILING_TEXTURE);
         return true;
@@ -1341,10 +1341,13 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
     mover->origin = line;
 
     // Setup the thinker and add it to the list.
-    XS_GetPlane(line, sector, info->iparm[2], NULL, &mover->destination, 0, 0);
-    mover->destination += FRACUNIT * info->fparm[2];
-    mover->speed = FRACUNIT * info->fparm[0];
-    mover->crushspeed = FRACUNIT * info->fparm[1];
+    {
+    int temp = FLT2FIX(mover->destination);
+    XS_GetPlane(line, sector, info->iparm[2], NULL, &temp, 0, 0);
+    mover->destination = FIX2FLT(temp) + info->fparm[2];
+    }
+    mover->speed = info->fparm[0];
+    mover->crushspeed = info->fparm[1];
     mover->mininterval = FLT2TIC(info->fparm[3]);
     mover->maxinterval = FLT2TIC(info->fparm[4]);
     mover->flags = info->iparm[3];
@@ -1440,9 +1443,9 @@ void XS_InitStairBuilder(line_t *line)
 }
 
 boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
-                   linetype_t * info, uint stepcount)
+                   linetype_t *info, uint stepcount)
 {
-    static int firstheight;
+    static float firstheight;
     uint    secnum = P_ToIndex(sector);
     xgplanemover_t *mover;
     float   waittime;
@@ -1458,14 +1461,14 @@ boolean XS_DoBuild(sector_t *sector, boolean ceiling, line_t *origin,
 
     // Setup the mover.
     if(stepcount != 0)
-        firstheight = ceiling ? P_GetFixedp(sector, DMU_CEILING_HEIGHT) :
-                                P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
+        firstheight =
+        P_GetFloatp(sector, (ceiling? DMU_CEILING_HEIGHT:DMU_FLOOR_HEIGHT));
 
     mover->destination =
-        firstheight + (stepcount + 1) * info->fparm[1] * FRACUNIT;
-    mover->speed = FRACUNIT * (info->fparm[0] + stepcount * info->fparm[6]);
+        firstheight + (stepcount + 1) * info->fparm[1];
+    mover->speed = (info->fparm[0] + stepcount * info->fparm[6]);
     if(mover->speed <= 0)
-        mover->speed = FRACUNIT / 1000;
+        mover->speed = 1 / 1000;
     mover->mininterval = FLT2TIC(info->fparm[4]);
     mover->maxinterval = FLT2TIC(info->fparm[5]);
     if(info->iparm[8])
@@ -2776,13 +2779,13 @@ DEFCC(CCmdDumpXG)
  */
 DEFCC(CCmdMovePlane)
 {
-    boolean isCeiling = !stricmp(argv[0], "moveceil");
-    boolean isBoth = !stricmp(argv[0], "movesec");
-    boolean isOffset = false, isCrusher = false;
-    sector_t *sector = NULL;
-    fixed_t units = 0, speed = FRACUNIT;
-    int     p = 0;
-    fixed_t floorheight, ceilingheight;
+    boolean     isCeiling = !stricmp(argv[0], "moveceil");
+    boolean     isBoth = !stricmp(argv[0], "movesec");
+    boolean     isOffset = false, isCrusher = false;
+    sector_t   *sector = NULL;
+    float       units = 0, speed = FRACUNIT;
+    int         p = 0;
+    float       floorheight, ceilingheight;
     xgplanemover_t *mover;
 
     if(argc < 2)
@@ -2838,14 +2841,14 @@ DEFCC(CCmdMovePlane)
         }
     }
 
-    floorheight = P_GetFixedp(sector, DMU_FLOOR_HEIGHT);
-    ceilingheight = P_GetFixedp(sector, DMU_CEILING_HEIGHT);
+    floorheight = P_GetFloatp(sector, DMU_FLOOR_HEIGHT);
+    ceilingheight = P_GetFloatp(sector, DMU_CEILING_HEIGHT);
 
     // No more arguments?
     if(argc == p)
     {
-        Con_Printf("Ceiling = %i\nFloor = %i\n", ceilingheight >> FRACBITS,
-                   floorheight >> FRACBITS);
+        Con_Printf("Ceiling = %g\nFloor = %g\n", ceilingheight,
+                   floorheight);
         return true;
     }
 
@@ -2866,7 +2869,7 @@ DEFCC(CCmdMovePlane)
     // The amount to move.
     if(argc >= p + 1)
     {
-        units = FRACUNIT * strtod(argv[p++], 0);
+        units = strtod(argv[p++], 0);
     }
     else
     {
@@ -2877,7 +2880,7 @@ DEFCC(CCmdMovePlane)
     // The optional speed parameter.
     if(argc >= p + 1)
     {
-        speed = FRACUNIT * strtod(argv[p++], 0);
+        speed = strtod(argv[p++], 0);
         // The speed is always positive.
         if(speed < 0)
             speed = -speed;
@@ -2898,17 +2901,17 @@ DEFCC(CCmdMovePlane)
     if(!isBoth)
     {
         if(isCeiling &&
-           mover->destination < floorheight + 4 * FRACUNIT)
-            mover->destination = floorheight + 4 * FRACUNIT;
+           mover->destination < floorheight + 4)
+            mover->destination = floorheight + 4;
         if(!isCeiling &&
-           mover->destination > ceilingheight - 4 * FRACUNIT)
-            mover->destination = ceilingheight - 4 * FRACUNIT;
+           mover->destination > ceilingheight - 4)
+            mover->destination = ceilingheight - 4;
     }
 
     mover->speed = speed;
     if(isCrusher)
     {
-        mover->crushspeed = speed / 2;  // Crush at half speed.
+        mover->crushspeed = speed * .5;  // Crush at half speed.
         mover->flags |= PMF_CRUSH;
     }
     if(isBoth)

@@ -192,9 +192,9 @@ typedef enum {
 typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
-    fixed_t         speed;
-    fixed_t         low;
-    fixed_t         high;
+    float           speed;
+    float           low;
+    float           high;
     int             wait;
     int             count;
     plat_e          status;
@@ -205,16 +205,16 @@ typedef struct {
 } plat_t;
 
 #define PLATWAIT 3
-#define PLATSPEED FRACUNIT
+#define PLATSPEED 1
 #define MAXPLATS 128
 
 extern plat_t  *activeplats[MAXPLATS];
 
-void            T_PlatRaise(plat_t * plat);
+void            T_PlatRaise(plat_t *plat);
 int             EV_DoPlat(line_t *line, byte *args, plattype_e type,
                           int amount);
-void            P_AddActivePlat(plat_t * plat);
-void            P_RemoveActivePlat(plat_t * plat);
+void            P_AddActivePlat(plat_t *plat);
+void            P_RemoveActivePlat(plat_t *plat);
 void            EV_StopPlat(line_t *line, byte *args);
 
 //
@@ -232,19 +232,19 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     vldoor_e        type;
-    fixed_t         topheight;
-    fixed_t         speed;
+    float           topheight;
+    float           speed;
     int             direction;     // 1 = up, 0 = waiting at top, -1 = down
     int             topwait;       // tics to wait at the top (keep in case a door going down is reset)
     int             topcountdown;  // when it reaches 0, start going down
 } vldoor_t;
 
-#define VDOORSPEED FRACUNIT*2
-#define VDOORWAIT 150
+#define VDOORSPEED      1*2
+#define VDOORWAIT       150
 
 boolean         EV_VerticalDoor(line_t *line, mobj_t *thing);
 int             EV_DoDoor(line_t *line, byte *args, vldoor_e type);
-void            T_VerticalDoor(vldoor_t * door);
+void            T_VerticalDoor(vldoor_t *door);
 
 //void P_SpawnDoorCloseIn30(sector_t *sec);
 //void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum);
@@ -267,25 +267,25 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     ceiling_e       type;
-    fixed_t         bottomheight;
-    fixed_t         topheight;
-    fixed_t         speed;
+    float           bottomheight;
+    float           topheight;
+    float           speed;
     int             crush;
     int             direction;     // 1 = up, 0 = waiting, -1 = down
     int             tag;           // ID
     int             olddirection;
 } ceiling_t;
 
-#define CEILSPEED FRACUNIT
-#define CEILWAIT 150
-#define MAXCEILINGS 30
+#define CEILSPEED       1
+#define CEILWAIT        150
+#define MAXCEILINGS     30
 
 extern ceiling_t *activeceilings[MAXCEILINGS];
 
 int             EV_DoCeiling(line_t *line, byte *args, ceiling_e type);
-void            T_MoveCeiling(ceiling_t * ceiling);
-void            P_AddActiveCeiling(ceiling_t * c);
-void            P_RemoveActiveCeiling(ceiling_t * c);
+void            T_MoveCeiling(ceiling_t *ceiling);
+void            P_AddActiveCeiling(ceiling_t *c);
+void            P_RemoveActiveCeiling(ceiling_t *c);
 int             EV_CeilingCrushStop(line_t *line, byte *args);
 
 //
@@ -315,13 +315,13 @@ typedef struct {
     int             direction;
     int             newspecial;
     short           texture;
-    fixed_t         floordestheight;
-    fixed_t         speed;
+    float           floordestheight;
+    float           speed;
     int             delayCount;
     int             delayTotal;
-    fixed_t         stairsDelayHeight;
-    fixed_t         stairsDelayHeightDelta;
-    fixed_t         resetHeight;
+    float           stairsDelayHeight;
+    float           stairsDelayHeightDelta;
+    float           resetHeight;
     short           resetDelay;
     short           resetDelayCount;
     byte            textureChange;
@@ -330,10 +330,10 @@ typedef struct {
 typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
-    int             ceilingSpeed;
-    int             floorSpeed;
-    int             floordest;
-    int             ceilingdest;
+    float           ceilingSpeed;
+    float           floorSpeed;
+    float           floordest;
+    float           ceilingdest;
     int             direction;
     int             crush;
 } pillar_t;
@@ -341,17 +341,17 @@ typedef struct {
 typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
-    fixed_t         originalHeight;
-    fixed_t         accumulator;
-    fixed_t         accDelta;
-    fixed_t         targetScale;
-    fixed_t         scale;
-    fixed_t         scaleDelta;
+    float           originalHeight;
+    float           accumulator;
+    float           accDelta;
+    float           targetScale;
+    float           scale;
+    float           scaleDelta;
     int             ticker;
     int             state;
 } floorWaggle_t;
 
-#define FLOORSPEED FRACUNIT
+#define FLOORSPEED      1
 
 typedef enum {
     RES_OK,
@@ -365,21 +365,21 @@ typedef enum {
     STAIRS_PHASED
 } stairs_e;
 
-result_e        T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
+result_e        T_MovePlane(sector_t *sector, float speed, float dest,
                             int crush, int floorOrCeiling, int direction);
 
 int             EV_BuildStairs(line_t *line, byte *args, int direction,
                                stairs_e type);
 int             EV_DoFloor(line_t *line, byte *args, floor_e floortype);
-void            T_MoveFloor(floormove_t * floor);
-void            T_BuildPillar(pillar_t * pillar);
-void            T_FloorWaggle(floorWaggle_t * waggle);
+void            T_MoveFloor(floormove_t *floor);
+void            T_BuildPillar(pillar_t *pillar);
+void            T_FloorWaggle(floorWaggle_t *waggle);
 int             EV_BuildPillar(line_t *line, byte *args, boolean crush);
 int             EV_OpenPillar(line_t *line, byte *args);
 int             EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise);
 int             EV_FloorCrushStop(line_t *line, byte *args);
-boolean         EV_StartFloorWaggle(int tag, int height, int speed, int offset,
-                                    int timer);
+boolean         EV_StartFloorWaggle(int tag, int height, int speed,
+                                    int offset, int timer);
 
 //
 // Teleport
@@ -393,11 +393,11 @@ void            P_ArtiTele(player_t *player);
 //
 // ACS
 //
-#define MAX_ACS_SCRIPT_VARS 10
-#define MAX_ACS_MAP_VARS 32
-#define MAX_ACS_WORLD_VARS 64
-#define ACS_STACK_DEPTH 32
-#define MAX_ACS_STORE 20
+#define MAX_ACS_SCRIPT_VARS     10
+#define MAX_ACS_MAP_VARS        32
+#define MAX_ACS_WORLD_VARS      64
+#define ACS_STACK_DEPTH         32
+#define MAX_ACS_STORE           20
 
 typedef enum aste_e {
     ASTE_INACTIVE,
@@ -444,7 +444,7 @@ boolean         P_StartLockedACS(line_t *line, byte *args, mobj_t *mo,
                                  int side);
 boolean         P_TerminateACS(int number, int map);
 boolean         P_SuspendACS(int number, int map);
-void            T_InterpretACS(acs_t * script);
+void            T_InterpretACS(acs_t *script);
 void            P_TagFinished(int tag);
 void            P_PolyobjFinished(int po);
 void            P_ACSInitNewGame(void);

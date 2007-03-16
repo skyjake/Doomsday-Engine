@@ -43,69 +43,85 @@
  * a complete drop in replacement. - Yagisan
  */
 
+/*
+ *  p_doors.c : Vertical doors.
+ */
+
+// HEADER FILES ------------------------------------------------------------
+
 #include "jhexen.h"
 
 #include "dmu_lib.h"
 #include "p_mapspec.h"
 
-//==================================================================
-//==================================================================
-//
-//                                                      VERTICAL DOORS
-//
-//==================================================================
-//==================================================================
+// MACROS ------------------------------------------------------------------
 
-//==================================================================
-//
-//      T_VerticalDoor
-//
-//==================================================================
-void T_VerticalDoor(vldoor_t * door)
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// CODE --------------------------------------------------------------------
+
+void T_VerticalDoor(vldoor_t *door)
 {
     result_e res;
 
-    switch (door->direction)
+    switch(door->direction)
     {
     case 0:                 // WAITING
         if(!--door->topcountdown)
-            switch (door->type)
+            switch(door->type)
             {
             case DREV_NORMAL:
                 door->direction = -1;   // time to go back down
                 SN_StartSequence(P_SectorSoundOrigin(door->sector),
                                  SEQ_DOOR_STONE + P_XSector(door->sector)->seqType);
                 break;
+
             case DREV_CLOSE30THENOPEN:
                 door->direction = 1;
                 break;
+
             default:
                 break;
             }
         break;
+
     case 2:                 // INITIAL WAIT
         if(!--door->topcountdown)
         {
-            switch (door->type)
+            switch(door->type)
             {
             case DREV_RAISEIN5MINS:
                 door->direction = 1;
                 door->type = DREV_NORMAL;
                 break;
+
             default:
                 break;
             }
         }
         break;
+
     case -1:                    // DOWN
         res =
             T_MovePlane(door->sector, door->speed,
-                        P_GetFixedp(door->sector, DMU_FLOOR_HEIGHT),
+                        P_GetFloatp(door->sector, DMU_FLOOR_HEIGHT),
                         false, 1, door->direction);
         if(res == RES_PASTDEST)
         {
             SN_StopSequence(P_SectorSoundOrigin(door->sector));
-            switch (door->type)
+            switch(door->type)
             {
             case DREV_NORMAL:
             case DREV_CLOSE:
@@ -113,26 +129,30 @@ void T_VerticalDoor(vldoor_t * door)
                 P_TagFinished(P_XSector(door->sector)->tag);
                 P_RemoveThinker(&door->thinker);    // unlink and free
                 break;
+
             case DREV_CLOSE30THENOPEN:
                 door->direction = 0;
                 door->topcountdown = 35 * 30;
                 break;
+
             default:
                 break;
             }
         }
         else if(res == RES_CRUSHED)
         {
-            switch (door->type)
+            switch(door->type)
             {
             case DREV_CLOSE:    // DON'T GO BACK UP!
                 break;
+
             default:
                 door->direction = 1;
                 break;
             }
         }
         break;
+
     case 1:                 // UP
         res =
             T_MovePlane(door->sector, door->speed, door->topheight, false, 1,
@@ -140,18 +160,20 @@ void T_VerticalDoor(vldoor_t * door)
         if(res == RES_PASTDEST)
         {
             SN_StopSequence(P_SectorSoundOrigin(door->sector));
-            switch (door->type)
+            switch(door->type)
             {
             case DREV_NORMAL:
                 door->direction = 0;    // wait at top
                 door->topcountdown = door->topwait;
                 break;
+
             case DREV_CLOSE30THENOPEN:
             case DREV_OPEN:
                 P_XSector(door->sector)->specialdata = NULL;
                 P_TagFinished(P_XSector(door->sector)->tag);
                 P_RemoveThinker(&door->thinker);    // unlink and free
                 break;
+
             default:
                 break;
             }
@@ -166,12 +188,12 @@ void T_VerticalDoor(vldoor_t * door)
 int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
 {
     int         rtn = 0;
-    fixed_t     speed;
+    float       speed;
     sector_t   *sec = NULL;
     vldoor_t   *door;
     iterlist_t *list;
 
-    speed = args[1] * FRACUNIT / 8;
+    speed = FIX2FLT(args[1]) / 8;
 
     list = P_GetSectorIterListForTag((int) args[0], false);
     if(!list)
@@ -189,24 +211,24 @@ int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
         P_XSector(sec)->specialdata = door;
         door->thinker.function = T_VerticalDoor;
         door->sector = sec;
-        switch (type)
+        switch(type)
         {
         case DREV_CLOSE:
-            door->topheight = FLT2FIX(P_FindLowestCeilingSurrounding(sec));
-            door->topheight -= 4 * FRACUNIT;
+            door->topheight = P_FindLowestCeilingSurrounding(sec);
+            door->topheight -= 4;
             door->direction = -1;
             break;
 
         case DREV_CLOSE30THENOPEN:
-            door->topheight = P_GetFixedp(sec, DMU_CEILING_HEIGHT);
+            door->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             door->direction = -1;
             break;
 
         case DREV_NORMAL:
         case DREV_OPEN:
             door->direction = 1;
-            door->topheight = FLT2FIX(P_FindLowestCeilingSurrounding(sec));
-            door->topheight -= 4 * FRACUNIT;
+            door->topheight = P_FindLowestCeilingSurrounding(sec);
+            door->topheight -= 4;
             break;
 
         default:
@@ -223,11 +245,9 @@ int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
     return rtn;
 }
 
-//==================================================================
-//
-//      EV_VerticalDoor : open a door manually, no tag value
-//
-//==================================================================
+/**
+ * Open a door manually, no tag value.
+ */
 boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
 {
     sector_t *sec;
@@ -253,80 +273,31 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     door->thinker.function = T_VerticalDoor;
     door->sector = sec;
     door->direction = 1;
-    switch (P_XLine(line)->special)
+    switch(P_XLine(line)->special)
     {
     case 11:
         door->type = DREV_OPEN;
         P_XLine(line)->special = 0;
         break;
+
     case 12:
     case 13:
         door->type = DREV_NORMAL;
         break;
+
     default:
         door->type = DREV_NORMAL;
         break;
     }
-    door->speed = P_XLine(line)->arg2 * (FRACUNIT / 8);
+    door->speed = FIX2FLT(P_XLine(line)->arg2 * (FRACUNIT / 8));
     door->topwait = P_XLine(line)->arg3;
 
     //
     // find the top and bottom of the movement range
     //
-    door->topheight = FLT2FIX(P_FindLowestCeilingSurrounding(sec));
-    door->topheight -= 4 * FRACUNIT;
+    door->topheight = P_FindLowestCeilingSurrounding(sec);
+    door->topheight -= 4;
     SN_StartSequence(P_SectorSoundOrigin(door->sector),
                      SEQ_DOOR_STONE + P_XSector(door->sector)->seqType);
     return true;
 }
-
-//==================================================================
-//
-//      Spawn a door that closes after 30 seconds
-//
-//==================================================================
-
-/*
-   void P_SpawnDoorCloseIn30(sector_t *sec)
-   {
-   vldoor_t *door;
-
-   door = Z_Malloc(sizeof(*door), PU_LEVSPEC, 0);
-   P_AddThinker(&door->thinker);
-   sec->specialdata = door;
-   sec->special = 0;
-   door->thinker.function = T_VerticalDoor;
-   door->sector = sec;
-   door->direction = 0;
-   door->type = DREV_NORMAL;
-   door->speed = VDOORSPEED;
-   door->topcountdown = 30*35;
-   }
- */
-
-//==================================================================
-//
-//      Spawn a door that opens after 5 minutes
-//
-//==================================================================
-
-/*
-   void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum)
-   {
-   vldoor_t *door;
-
-   door = Z_Malloc(sizeof(*door), PU_LEVSPEC, 0);
-   P_AddThinker(&door->thinker);
-   sec->specialdata = door;
-   sec->special = 0;
-   door->thinker.function = T_VerticalDoor;
-   door->sector = sec;
-   door->direction = 2;
-   door->type = DREV_RAISEIN5MINS;
-   door->speed = VDOORSPEED;
-   door->topheight = P_FindLowestCeilingSurrounding(sec);
-   door->topheight -= 4*FRACUNIT;
-   door->topwait = VDOORWAIT;
-   door->topcountdown = 5*60*35;
-   }
- */

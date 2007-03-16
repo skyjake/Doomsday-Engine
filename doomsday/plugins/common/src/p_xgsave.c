@@ -226,9 +226,9 @@ void SV_WriteXGPlaneMover(thinker_t *th)
 
     SV_WriteLong(i);            // Zero means there is no origin.
 
-    SV_WriteLong(mov->destination);
-    SV_WriteLong(mov->speed);
-    SV_WriteLong(mov->crushspeed);
+    SV_WriteLong(FLT2FIX(mov->destination));
+    SV_WriteLong(FLT2FIX(mov->speed));
+    SV_WriteLong(FLT2FIX(mov->crushspeed));
     SV_WriteLong(mov->setflat);
     SV_WriteLong(mov->setsector);
     SV_WriteLong(mov->startsound);
@@ -257,9 +257,9 @@ int SV_ReadXGPlaneMover(xgplanemover_t *mov)
     if(i)
         mov->origin = P_ToPtr(DMU_LINE, i - 1);
 
-    mov->destination = SV_ReadLong();
-    mov->speed = SV_ReadLong();
-    mov->crushspeed = SV_ReadLong();
+    mov->destination = FIX2FLT(SV_ReadLong());
+    mov->speed = FIX2FLT(SV_ReadLong());
+    mov->crushspeed = FIX2FLT(SV_ReadLong());
     mov->setflat = SV_ReadLong();
     mov->setsector = SV_ReadLong();
     mov->startsound = SV_ReadLong();

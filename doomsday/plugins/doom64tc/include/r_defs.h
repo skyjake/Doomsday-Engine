@@ -69,9 +69,10 @@ typedef struct xsector_s {
     void           *specialdata;
 
     // stone, metal, heavy, etc...
-    byte       seqType;       // NOT USED ATM
+    byte            seqType;       // NOT USED ATM
 
-    int             origfloor, origceiling, origlight;
+    float           origfloor, origceiling;
+    int             origlight;
     byte            origrgb[3];
     xgsector_t     *xg;
 

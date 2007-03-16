@@ -531,7 +531,7 @@ int EV_BuildStairs(line_t *line, stair_e type)
         floor->thinker.function = T_MoveFloor;
         floor->direction = 1;
         floor->sector = sec;
-        switch (type)
+        switch(type)
         {
         case build8:
             speed = FLOORSPEED * .25;

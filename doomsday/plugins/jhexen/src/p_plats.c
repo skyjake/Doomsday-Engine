@@ -142,7 +142,7 @@ void T_PlatRaise(plat_t *plat)
     case PLAT_WAITING:
         if(!--plat->count)
         {
-            if(P_GetFixedp(plat->sector, DMU_FLOOR_HEIGHT) == plat->low)
+            if(P_GetFloatp(plat->sector, DMU_FLOOR_HEIGHT) == plat->low)
                 plat->status = PLAT_UP;
             else
                 plat->status = PLAT_DOWN;
@@ -157,7 +157,7 @@ void T_PlatRaise(plat_t *plat)
 int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
 {
     int         rtn = 0;
-    fixed_t     floorheight;
+    float       floorheight;
     sector_t   *sec = NULL;
     plat_t     *plat;
     iterlist_t *list;
@@ -183,13 +183,13 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
         plat->thinker.function = T_PlatRaise;
         plat->crush = false;
         plat->tag = args[0];
-        plat->speed = args[1] * (FRACUNIT / 8);
-        floorheight = P_GetFixedp(sec, DMU_FLOOR_HEIGHT);
+        plat->speed = FIX2FLT(args[1] * (FRACUNIT / 8));
+        floorheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
 
         switch(type)
         {
         case PLAT_DOWNWAITUPSTAY:
-            plat->low = FLT2FIX(P_FindLowestFloorSurrounding(sec)) + 8 * FRACUNIT;
+            plat->low = P_FindLowestFloorSurrounding(sec) + 8;
             if(plat->low > floorheight)
                 plat->low = floorheight;
             plat->high = floorheight;
@@ -198,7 +198,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
             break;
 
         case PLAT_DOWNBYVALUEWAITUPSTAY:
-            plat->low = floorheight - args[3] * 8 * FRACUNIT;
+            plat->low = floorheight - args[3] * 8;
             if(plat->low > floorheight)
                 plat->low = floorheight;
             plat->high = floorheight;
@@ -207,7 +207,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
             break;
 
         case PLAT_UPWAITDOWNSTAY:
-            plat->high = FLT2FIX(P_FindHighestFloorSurrounding(sec));
+            plat->high = P_FindHighestFloorSurrounding(sec);
             if(plat->high < floorheight)
                 plat->high = floorheight;
             plat->low = floorheight;
@@ -216,7 +216,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
             break;
 
         case PLAT_UPBYVALUEWAITDOWNSTAY:
-            plat->high = floorheight + args[3] * 8 * FRACUNIT;
+            plat->high = floorheight + args[3] * 8;
             if(plat->high < floorheight)
                 plat->high = floorheight;
             plat->low = floorheight;
@@ -225,10 +225,10 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
             break;
 
         case PLAT_PERPETUALRAISE:
-            plat->low = FLT2FIX(P_FindLowestFloorSurrounding(sec)) + 8 * FRACUNIT;
+            plat->low = P_FindLowestFloorSurrounding(sec) + 8;
             if(plat->low > floorheight)
                 plat->low = floorheight;
-            plat->high = FLT2FIX(P_FindHighestFloorSurrounding(sec));
+            plat->high = P_FindHighestFloorSurrounding(sec);
             if(plat->high < floorheight)
                 plat->high = floorheight;
             plat->wait = args[2];
