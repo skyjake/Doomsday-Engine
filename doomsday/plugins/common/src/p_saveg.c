@@ -2730,49 +2730,49 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
     }
     else
     {
-#if __JHEXEN__
-        // Its in the old pre V4 format which serialized ceiling_t
-        memcpy(ceiling, saveptr.b, sizeof(*ceiling));
-        saveptr.b += sizeof(*ceiling);
-
-        ceiling->sector = P_ToPtr(DMU_SECTOR, (int) ceiling->sector);
-        if(!ceiling->sector)
-            Con_Error("TC_CEILING: bad sector number\n");
-
-        ceiling->thinker.function = T_MoveCeiling;
-#else
-        // Its in the old pre V5 format which serialized ceiling_t
+        // Its in the old format which serialized ceiling_t
         // Padding at the start (an old thinker_t struct)
         thinker_t junk;
-        fixed_t temp;
-        SV_Read(&junk, sizeof(thinker_t));
+        SV_Read(&junk, (size_t) 16);
 
         // Start of used data members.
-        SV_Read(&ceiling->type, sizeof(ceiling_e));
-
+#if __JHEXEN__
         // A 32bit pointer to sector, serialized.
-        SV_Read(&ceiling->sector, sizeof(sector_t*));
-        sector = P_ToPtr(DMU_SECTOR, (int) ceiling->sector);
-
+        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
         if(!sector)
             Con_Error("TC_CEILING: bad sector number\n");
-
         ceiling->sector = sector;
 
-        SV_Read(&temp, sizeof(fixed_t));
-        ceiling->bottomheight = (float) temp;
-        SV_Read(&temp, sizeof(fixed_t));
-        ceiling->topheight = (float) temp;
-        SV_Read(&temp, sizeof(fixed_t));
-        ceiling->speed = FIX2FLT(temp);
-        SV_Read(&ceiling->crush, sizeof(boolean));
-        SV_Read(&ceiling->direction, sizeof(int));
-        SV_Read(&ceiling->tag, sizeof(int));
-        SV_Read(&ceiling->olddirection, sizeof(int));
+        ceiling->type = SV_ReadLong();
+#else
+        ceiling->type = SV_ReadLong();
 
-        if(junk.function)
-            ceiling->thinker.function = T_MoveCeiling;
+        // A 32bit pointer to sector, serialized.
+        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+        if(!sector)
+            Con_Error("TC_CEILING: bad sector number\n");
+        ceiling->sector = sector;
 #endif
+
+#if __JHEXEN__
+        ceiling->bottomheight = SV_ReadLong();
+        ceiling->topheight = SV_ReadLong();
+        ceiling->speed = SV_ReadLong();
+#else
+        ceiling->bottomheight = (float) SV_ReadLong();
+        ceiling->topheight = (float) SV_ReadLong();
+        ceiling->speed = FIX2FLT((fixed_t) SV_ReadLong());
+#endif
+
+        ceiling->crush = SV_ReadLong();
+        ceiling->direction = SV_ReadLong();
+        ceiling->tag = SV_ReadLong();
+        ceiling->olddirection = SV_ReadLong();
+
+#if !__JHEXEN__
+        if(junk.function)
+#endif
+            ceiling->thinker.function = T_MoveCeiling;
     }
 
 #if __JHEXEN__
@@ -2826,7 +2826,7 @@ static int SV_ReadDoor(vldoor_t *door)
         door->sector = sector;
 
         door->topheight = (float) SV_ReadShort();
-        door->speed = FIX2FLT(SV_ReadLong());
+        door->speed = FIX2FLT((fixed_t) SV_ReadLong());
 
         door->direction = SV_ReadLong();
         door->topwait = SV_ReadLong();
@@ -2834,40 +2834,39 @@ static int SV_ReadDoor(vldoor_t *door)
     }
     else
     {
-#if __JHEXEN__
-        // Its in the old pre V4 format which serialized vldoor_t
-        memcpy(door, saveptr.b, sizeof(*door));
-        saveptr.b += sizeof(*door);
-
-        door->sector = P_ToPtr(DMU_SECTOR, (int) door->sector);
-        if(!door->sector)
-            Con_Error("TC_DOOR: bad sector number\n");
-#else
-        fixed_t temp;
-        // Its in the old pre V5 format which serialized vldoor_t
+        // Its in the old format which serialized vldoor_t
         // Padding at the start (an old thinker_t struct)
         SV_Read(junkbuffer, (size_t) 16);
 
         // Start of used data members.
-        SV_Read(&door->type, sizeof(vldoor_e));
-
+#if __JHEXEN__
         // A 32bit pointer to sector, serialized.
-        SV_Read(&door->sector, sizeof(sector_t*));
-        sector = P_ToPtr(DMU_SECTOR, (int) door->sector);
-
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_DOOR: bad sector number\n");
-
         door->sector = sector;
 
-        SV_Read(&temp, sizeof(fixed_t));
-        door->topheight = (float) temp;
-        SV_Read(&temp, sizeof(fixed_t));
-        door->speed = FIX2FLT(temp);
-        SV_Read(&door->direction, sizeof(int));
-        SV_Read(&door->topwait, sizeof(int));
-        SV_Read(&door->topcountdown, sizeof(int));
+        door->type = SV_ReadLong();
+#else
+        door->type = SV_ReadLong();
+
+        // A 32bit pointer to sector, serialized.
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
+        if(!sector)
+            Con_Error("TC_DOOR: bad sector number\n");
+        door->sector = sector;
 #endif
+
+#if __JHEXEN__
+        door->topheight = SV_ReadLong();
+        door->speed = SV_ReadLong();
+#else
+        door->topheight = (float) SV_ReadLong();
+        door->speed = FIX2FLT((fixed_t) SV_ReadLong());
+#endif
+        door->direction = SV_ReadLong();
+        door->topwait = SV_ReadLong();
+        door->topcountdown = SV_ReadLong();
     }
 
 #if __JHEXEN__
@@ -2960,41 +2959,51 @@ static int SV_ReadFloor(floormove_t *floor)
     }
     else
     {
-#if __JHEXEN__
-        // Its in the old pre V4 format which serialized floormove_t
-        memcpy(floor, saveptr.b, sizeof(*floor));
-        saveptr.b += sizeof(*floor);
-
-        floor->sector = P_ToPtr(DMU_SECTOR, (int) floor->sector);
-        if(!floor->sector)
-            Con_Error("TC_FLOOR: bad sector number\n");
-#else
-        fixed_t temp;
-        // Its in the old pre V5 format which serialized floormove_t
+        // Its in the old format which serialized floormove_t
         // Padding at the start (an old thinker_t struct)
         SV_Read(junkbuffer, (size_t) 16);
 
         // Start of used data members.
-        SV_Read(&floor->type, sizeof(floor_e));
-
-        SV_Read(&floor->crush, sizeof(boolean));
-
+#if __JHEXEN__
         // A 32bit pointer to sector, serialized.
-        SV_Read(&floor->sector, sizeof(sector_t*));
-        sector = P_ToPtr(DMU_SECTOR, (int) floor->sector);
-
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_FLOOR: bad sector number\n");
-
         floor->sector = sector;
 
-        SV_Read(&floor->direction, sizeof(int));
-        SV_Read(&floor->newspecial, sizeof(int));
-        SV_Read(&floor->texture, sizeof(short));
-        SV_Read(&temp, sizeof(fixed_t));
-        floor->floordestheight = (float) temp;
-        SV_Read(&temp, sizeof(fixed_t));
-        floor->speed = FIX2FLT(temp);
+        floor->type = SV_ReadLong();
+        floor->crush = SV_ReadLong();
+#else
+        floor->type = SV_ReadLong();
+
+        floor->crush = SV_ReadLong();
+
+        // A 32bit pointer to sector, serialized.
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
+        if(!sector)
+            Con_Error("TC_FLOOR: bad sector number\n");
+        floor->sector = sector;
+#endif
+        floor->direction = SV_ReadLong();
+        floor->newspecial = SV_ReadLong();
+        floor->texture = SV_ReadShort();
+#if __JHEXEN__
+        floor->floordestheight = SV_ReadLong();
+        floor->speed = SV_ReadLong();
+#else
+        floor->floordestheight = (float) SV_ReadLong();
+        floor->speed = FIX2FLT((fixed_t) SV_ReadLong());
+
+#endif
+#if __JHEXEN__
+        floor->delayCount = SV_ReadLong();
+        floor->delayTotal = SV_ReadLong();
+        floor->stairsDelayHeight = SV_ReadLong();
+        floor->stairsDelayHeightDelta = SV_ReadLong();
+        floor->resetHeight = SV_ReadLong();
+        floor->resetDelay = SV_ReadShort();
+        floor->resetDelayCount = SV_ReadShort();
+        floor->textureChange = SV_ReadByte();
 #endif
     }
 
@@ -3078,50 +3087,39 @@ static int SV_ReadPlat(plat_t *plat)
     }
     else
     {
-#if __JHEXEN__
-        // Its in the old pre V4 format which serialized plat_t
-        memcpy(plat, saveptr.b, sizeof(*plat));
-        saveptr.b += sizeof(*plat);
-
-        plat->sector = P_ToPtr(DMU_SECTOR, (int) plat->sector);
-        if(!plat->sector)
-            Con_Error("TC_PLAT: bad sector number\n");
-
-        plat->thinker.function = T_PlatRaise;
-#else
-        // Its in the old pre V5 format which serialized plat_t
+        // Its in the old format which serialized plat_t
         // Padding at the start (an old thinker_t struct)
         thinker_t junk;
-        fixed_t temp;
-        SV_Read(&junk, sizeof(thinker_t));
+        SV_Read(&junk, (size_t) 16);
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
-        SV_Read(&plat->sector, sizeof(sector_t*));
-        sector = P_ToPtr(DMU_SECTOR, (int) plat->sector);
-
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_PLAT: bad sector number\n");
-
         plat->sector = sector;
 
-        SV_Read(&temp, sizeof(fixed_t));
-        plat->speed = FIX2FLT(temp);
-        SV_Read(&temp, sizeof(fixed_t));
-        plat->low = (float) temp;
-        SV_Read(&temp, sizeof(fixed_t));
-        plat->high = (float) temp;
-        SV_Read(&plat->wait, sizeof(int));
-        SV_Read(&plat->count, sizeof(int));
-        SV_Read(&plat->status, sizeof(plat_e));
-        SV_Read(&plat->oldstatus, sizeof(plat_e));
-        SV_Read(&plat->crush, sizeof(boolean));
-        SV_Read(&plat->tag, sizeof(int));
-        SV_Read(&plat->type, sizeof(plattype_e));
-
-        if(junk.function)
-            plat->thinker.function = T_PlatRaise;
+#if __JHEXEN__
+        plat->speed = SV_ReadLong();
+        plat->low = SV_ReadLong();
+        plat->high = SV_ReadLong();
+#else
+        plat->speed = FIX2FLT((fixed_t) SV_ReadLong());
+        plat->low = (float) SV_ReadLong();
+        plat->high = (float) SV_ReadLong();
 #endif
+        plat->wait = SV_ReadLong();
+        plat->count = SV_ReadLong();
+        plat->status = SV_ReadLong();
+        plat->oldstatus = SV_ReadLong();
+        plat->crush = SV_ReadLong();
+        plat->tag = SV_ReadLong();
+        plat->type = SV_ReadLong();
+
+#if !__JHEXEN__
+        if(junk.function)
+#endif
+            plat->thinker.function = T_PlatRaise;
     }
 
 #if __JHEXEN__
@@ -3178,12 +3176,23 @@ static int SV_ReadLight(light_t *th)
     else
     {
         // Its in the old pre V4 format which serialized light_t
-        memcpy(th, saveptr.b, sizeof(*th));
-        saveptr.b += sizeof(*th);
+        // Padding at the start (an old thinker_t struct)
+        thinker_t junk;
+        SV_Read(&junk, (size_t) 16);
 
-        th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
-        if(!th->sector)
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
+        if(!sector)
             Con_Error("TC_LIGHT: bad sector number\n");
+        th->sector = sector;
+
+        th->type = (lighttype_t) SV_ReadLong();
+        th->value1 = SV_ReadLong();
+        th->value2 = SV_ReadLong();
+        th->tics1 = SV_ReadLong();
+        th->tics2 = SV_ReadLong();
+        th->count = SV_ReadLong();
     }
 
     th->thinker.function = T_Light;
@@ -3215,7 +3224,7 @@ static int SV_ReadPhase(phase_t *th)
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
-        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_PHASE: bad sector number\n");
         th->sector = sector;
@@ -3226,12 +3235,19 @@ static int SV_ReadPhase(phase_t *th)
     else
     {
         // Its in the old pre V4 format which serialized phase_t
-        memcpy(th, saveptr.b, sizeof(*th));
-        saveptr.b += sizeof(*th);
+        // Padding at the start (an old thinker_t struct)
+        thinker_t junk;
+        SV_Read(&junk, (size_t) 16);
 
-        th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
-        if(!th->sector)
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
+        if(!sector)
             Con_Error("TC_PHASE: bad sector number\n");
+        th->sector = sector;
+
+        th->index = SV_ReadLong();
+        th->base = SV_ReadLong();
     }
 
     th->thinker.function = T_Phase;
@@ -3263,11 +3279,11 @@ static void SV_WriteScript(acs_t *th)
 
 static int SV_ReadScript(acs_t *th)
 {
+    int         temp;
+    uint        i;
+
     if(saveVersion >= 4)
     {
-        int         temp;
-        uint        i;
-
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -3292,16 +3308,28 @@ static int SV_ReadScript(acs_t *th)
     else
     {
         // Its in the old pre V4 format which serialized acs_t
-        memcpy(th, saveptr.b, sizeof(*th));
-        saveptr.b += sizeof(*th);
+        // Padding at the start (an old thinker_t struct)
+        thinker_t   junk;
+        SV_Read(&junk, (size_t) 16);
 
-        th->ip = (int *) (ActionCodeBase + (int) th->ip);
-        if((int) th->line == -1)
+        // Start of used data members.
+        th->activator = (mobj_t*) SV_ReadLong();
+        SetMobjPtr((int *) &th->activator);
+        temp = SV_ReadLong();
+        if(temp == -1)
             th->line = NULL;
         else
-            th->line = P_ToPtr(DMU_LINE, (int) th->line);
-
-        SetMobjPtr((int *) &th->activator);
+            th->line = P_ToPtr(DMU_LINE, temp);
+        th->side = SV_ReadLong();
+        th->number = SV_ReadLong();
+        th->infoIndex = SV_ReadLong();
+        th->delayCount = SV_ReadLong();
+        for(i = 0; i < ACS_STACK_DEPTH; ++i)
+            th->stack[i] = SV_ReadLong();
+        th->stackPtr = SV_ReadLong();
+        for(i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
+            th->vars[i] = SV_ReadLong();
+        th->ip = (int *) (ActionCodeBase + SV_ReadLong());
     }
 
     return true; // Add this thinker.
@@ -3337,6 +3365,7 @@ static int SV_ReadDoorPoly(polydoor_t *th)
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
+        // Start of used data members.
         th->type = SV_ReadByte();
 
         th->polyobj = SV_ReadLong();
@@ -3353,8 +3382,22 @@ static int SV_ReadDoorPoly(polydoor_t *th)
     else
     {
         // Its in the old pre V4 format which serialized polydoor_t
-        memcpy(th, saveptr.b, sizeof(*th));
-        saveptr.b += sizeof(*th);
+        // Padding at the start (an old thinker_t struct)
+        thinker_t junk;
+        SV_Read(&junk, (size_t) 16);
+
+        // Start of used data members.
+        th->polyobj = SV_ReadLong();
+        th->speed = SV_ReadLong();
+        th->dist = SV_ReadLong();
+        th->totalDist = SV_ReadLong();
+        th->direction = SV_ReadLong();
+        th->xSpeed = SV_ReadLong();
+        th->ySpeed = SV_ReadLong();
+        th->tics = SV_ReadLong();
+        th->waitTics = SV_ReadLong();
+        th->type = SV_ReadByte();
+        th->close = SV_ReadByte();
     }
 
     th->thinker.function = T_PolyDoor;
@@ -3386,6 +3429,7 @@ static int SV_ReadMovePoly(polyevent_t *th)
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
+        // Start of used data members.
         th->polyobj = SV_ReadLong();
         th->speed = SV_ReadLong();
         th->dist = SV_ReadLong();
@@ -3396,8 +3440,17 @@ static int SV_ReadMovePoly(polyevent_t *th)
     else
     {
         // Its in the old pre V4 format which serialized polyevent_t
-        memcpy(th, saveptr.b, sizeof(*th));
-        saveptr.b += sizeof(*th);
+        // Padding at the start (an old thinker_t struct)
+        thinker_t junk;
+        SV_Read(&junk, (size_t) 16);
+
+        // Start of used data members.
+        th->polyobj = SV_ReadLong();
+        th->speed = SV_ReadLong();
+        th->dist = SV_ReadLong();
+        th->angle = SV_ReadLong();
+        th->xSpeed = SV_ReadLong();
+        th->ySpeed = SV_ReadLong();
     }
 
     th->thinker.function = T_MovePoly;
@@ -3429,6 +3482,7 @@ static int SV_ReadRotatePoly(polyevent_t *th)
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
+        // Start of used data members.
         th->polyobj = SV_ReadLong();
         th->speed = SV_ReadLong();
         th->dist = SV_ReadLong();
@@ -3439,8 +3493,17 @@ static int SV_ReadRotatePoly(polyevent_t *th)
     else
     {
         // Its in the old pre V4 format which serialized polyevent_t
-        memcpy(th, saveptr.b, sizeof(*th));
-        saveptr.b += sizeof(*th);
+        // Padding at the start (an old thinker_t struct)
+        thinker_t junk;
+        SV_Read(&junk, (size_t) 16);
+
+        // Start of used data members.
+        th->polyobj = SV_ReadLong();
+        th->speed = SV_ReadLong();
+        th->dist = SV_ReadLong();
+        th->angle = SV_ReadLong();
+        th->xSpeed = SV_ReadLong();
+        th->ySpeed = SV_ReadLong();
     }
 
     th->thinker.function = T_RotatePoly;
@@ -3475,7 +3538,8 @@ static int SV_ReadPillar(pillar_t *th)
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
-        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+        // Start of used data members.
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_BUILD_PILLAR: bad sector number\n");
         th->sector = sector;
@@ -3490,12 +3554,23 @@ static int SV_ReadPillar(pillar_t *th)
     else
     {
         // Its in the old pre V4 format which serialized pillar_t
-        memcpy(th, saveptr.b, sizeof(*th));
-        saveptr.b += sizeof(*th);
+        // Padding at the start (an old thinker_t struct)
+        thinker_t junk;
+        SV_Read(&junk, (size_t) 16);
 
-        th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
-        if(!th->sector)
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
+        if(!sector)
             Con_Error("TC_BUILD_PILLAR: bad sector number\n");
+        th->sector = sector;
+
+        th->ceilingSpeed = SV_ReadLong();
+        th->floorSpeed = SV_ReadLong();
+        th->floordest = SV_ReadLong();
+        th->ceilingdest = SV_ReadLong();
+        th->direction = SV_ReadLong();
+        th->crush = SV_ReadLong();
     }
 
     th->thinker.function = T_BuildPillar;
@@ -3533,7 +3608,8 @@ static int SV_ReadFloorWaggle(floorWaggle_t *th)
     {
         /*int ver =*/ SV_ReadByte(); // version byte.
 
-        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+        // Start of used data members.
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_FLOOR_WAGGLE: bad sector number\n");
         th->sector = sector;
@@ -3550,12 +3626,25 @@ static int SV_ReadFloorWaggle(floorWaggle_t *th)
     else
     {
         // Its in the old pre V4 format which serialized floorWaggle_t
-        memcpy(th, saveptr.b, sizeof(*th));
-        saveptr.b += sizeof(*th);
+        // Padding at the start (an old thinker_t struct)
+        thinker_t junk;
+        SV_Read(&junk, (size_t) 16);
 
-        th->sector = P_ToPtr(DMU_SECTOR, (int) th->sector);
-        if(!th->sector)
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
+        if(!sector)
             Con_Error("TC_FLOOR_WAGGLE: bad sector number\n");
+        th->sector = sector;
+
+        th->originalHeight = SV_ReadLong();
+        th->accumulator = SV_ReadLong();
+        th->accDelta = SV_ReadLong();
+        th->targetScale = SV_ReadLong();
+        th->scale = SV_ReadLong();
+        th->scaleDelta = SV_ReadLong();
+        th->ticker = SV_ReadLong();
+        th->state = SV_ReadLong();
     }
 
     th->thinker.function = T_FloorWaggle;
@@ -3592,11 +3681,10 @@ static int SV_ReadFlash(lightflash_t* flash)
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
-        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
-
+        // Start of used data members.
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_FLASH: bad sector number\n");
-
         flash->sector = sector;
 
         flash->count = SV_ReadLong();
@@ -3613,19 +3701,16 @@ static int SV_ReadFlash(lightflash_t* flash)
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
-        SV_Read(&flash->sector, sizeof(sector_t*));
-        sector = P_ToPtr(DMU_SECTOR, (int) flash->sector);
-
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_FLASH: bad sector number\n");
-
         flash->sector = sector;
 
-        SV_Read(&flash->count, sizeof(int));
-        SV_Read(&flash->maxlight, sizeof(int));
-        SV_Read(&flash->minlight, sizeof(int));
-        SV_Read(&flash->maxtime, sizeof(int));
-        SV_Read(&flash->mintime, sizeof(int));
+        flash->count = SV_ReadLong();
+        flash->maxlight = SV_ReadLong();
+        flash->minlight = SV_ReadLong();
+        flash->maxtime = SV_ReadLong();
+        flash->mintime = SV_ReadLong();
     }
 
     flash->thinker.function = T_LightFlash;
@@ -3650,7 +3735,7 @@ static void SV_WriteStrobe(strobe_t* strobe)
     SV_WriteLong(strobe->brighttime);
 }
 
-static int SV_ReadStrobe(strobe_t* strobe)
+static int SV_ReadStrobe(strobe_t *strobe)
 {
     sector_t* sector;
 
@@ -3658,11 +3743,9 @@ static int SV_ReadStrobe(strobe_t* strobe)
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
-        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
-
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_STROBE: bad sector number\n");
-
         strobe->sector = sector;
 
         strobe->count = SV_ReadLong();
@@ -3679,19 +3762,16 @@ static int SV_ReadStrobe(strobe_t* strobe)
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
-        SV_Read(&strobe->sector, sizeof(sector_t*));
-        sector = P_ToPtr(DMU_SECTOR, (int) strobe->sector);
-
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_STROBE: bad sector number\n");
-
         strobe->sector = sector;
 
-        SV_Read(&strobe->count, sizeof(int));
-        SV_Read(&strobe->minlight, sizeof(int));
-        SV_Read(&strobe->maxlight, sizeof(int));
-        SV_Read(&strobe->darktime, sizeof(int));
-        SV_Read(&strobe->brighttime, sizeof(int));
+        strobe->count = SV_ReadLong();
+        strobe->minlight = SV_ReadLong();
+        strobe->maxlight = SV_ReadLong();
+        strobe->darktime = SV_ReadLong();
+        strobe->brighttime = SV_ReadLong();
     }
 
     strobe->thinker.function = T_StrobeFlash;
@@ -3714,7 +3794,7 @@ static void SV_WriteGlow(glow_t *glow)
     SV_WriteLong(glow->direction);
 }
 
-static int SV_ReadGlow(glow_t* glow)
+static int SV_ReadGlow(glow_t *glow)
 {
     sector_t* sector;
 
@@ -3722,11 +3802,9 @@ static int SV_ReadGlow(glow_t* glow)
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
-        sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
-
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_GLOW: bad sector number\n");
-
         glow->sector = sector;
 
         glow->maxlight = SV_ReadLong();
@@ -3741,17 +3819,14 @@ static int SV_ReadGlow(glow_t* glow)
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
-        SV_Read(&glow->sector, sizeof(sector_t*));
-        sector = P_ToPtr(DMU_SECTOR, (int) glow->sector);
-
+        sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
         if(!sector)
             Con_Error("TC_GLOW: bad sector number\n");
-
         glow->sector = sector;
 
-        SV_Read(&glow->minlight, sizeof(int));
-        SV_Read(&glow->maxlight, sizeof(int));
-        SV_Read(&glow->direction, sizeof(int));
+        glow->minlight = SV_ReadLong();
+        glow->maxlight = SV_ReadLong();
+        glow->direction = SV_ReadLong();
     }
 
     glow->thinker.function = T_Glow;
@@ -3759,7 +3834,7 @@ static int SV_ReadGlow(glow_t* glow)
 }
 
 # if __JDOOM__
-static void SV_WriteFlicker(fireflicker_t* flicker)
+static void SV_WriteFlicker(fireflicker_t *flicker)
 {
     SV_WriteByte(TC_FLICKER);
 
@@ -3774,21 +3849,19 @@ static void SV_WriteFlicker(fireflicker_t* flicker)
     SV_WriteLong(flicker->minlight);
 }
 
-/*
- * T_FireFlicker was added to save games in ver5,
- * therefore we don't have an old format to support
+/**
+ * T_FireFlicker was added to save games in ver5, therefore we don't have
+ * an old format to support.
  */
-static int SV_ReadFlicker(fireflicker_t* flicker)
+static int SV_ReadFlicker(fireflicker_t *flicker)
 {
     sector_t* sector;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     // Note: the thinker class byte has already been read.
-    sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
-
+    sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
     if(!sector)
         Con_Error("TC_FLICKER: bad sector number\n");
-
     flicker->sector = sector;
 
     flicker->maxlight = SV_ReadLong();
@@ -3818,9 +3891,9 @@ static void SV_WriteBlink(lightblink_t *blink)
     SV_WriteLong(blink->mintime);
 }
 
-/*
- * T_LightBlink was added to save games in ver5,
- * therefore we don't have an old format to support
+/**
+ * T_LightBlink was added to save games in ver5, therefore we don't have an
+ * old format to support
  */
 static int SV_ReadBlink(lightblink_t *blink)
 {
@@ -3828,11 +3901,9 @@ static int SV_ReadBlink(lightblink_t *blink)
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     // Note: the thinker class byte has already been read.
-    sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
-
+    sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
     if(!sector)
         Con_Error("tc_lightblink: bad sector number\n");
-
     blink->sector = sector;
 
     blink->count = SV_ReadLong();
