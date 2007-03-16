@@ -877,7 +877,7 @@ void P_UpdateSpecials(void)
     //  ANIMATE LINE SPECIALS
     if(P_IterListSize(linespecials))
     {
-        int         x;
+        float       x, offset;
 
         P_IterListResetIterator(linespecials, false);
         while((line = P_IterListIterator(linespecials)) != NULL)
@@ -885,15 +885,20 @@ void P_UpdateSpecials(void)
             switch(P_XLine(line)->special)
             {
             case 48:
+            case 85:
                 side = P_GetPtrp(line, DMU_SIDE0);
+                if(P_XLine(line)->special == 85)
+                    offset = -1;
+                else
+                    offset = 1;
 
                 // EFFECT FIRSTCOL SCROLL +
-                x = P_GetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X);
-                P_SetFixedp(side, DMU_TOP_TEXTURE_OFFSET_X, x += FRACUNIT);
-                x = P_GetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
-                P_SetFixedp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x += FRACUNIT);
-                x = P_GetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
-                P_SetFixedp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x += FRACUNIT);
+                x = P_GetFloatp(side, DMU_TOP_TEXTURE_OFFSET_X);
+                P_SetFloatp(side, DMU_TOP_TEXTURE_OFFSET_X, x += offset);
+                x = P_GetFloatp(side, DMU_MIDDLE_TEXTURE_OFFSET_X);
+                P_SetFloatp(side, DMU_MIDDLE_TEXTURE_OFFSET_X, x += offset);
+                x = P_GetFloatp(side, DMU_BOTTOM_TEXTURE_OFFSET_X);
+                P_SetFloatp(side, DMU_BOTTOM_TEXTURE_OFFSET_X, x += offset);
                 break;
 
             default:
