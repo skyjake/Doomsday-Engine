@@ -39,7 +39,7 @@
  ./../../plugins/jheretic/src/p_inter.c
  ./../../plugins/jheretic/src/p_floor.c
  ./../../plugins/jheretic/src/p_enemy.c
- ./../../plugins/jheretic/src/p_doors.c
+ ./../../plugins/common/src/p_doors.c
  ./../../plugins/jheretic/src/p_ceilng.c
  ./../../plugins/common/src/p_actor.c
  ./../../plugins/common/src/p_player.c

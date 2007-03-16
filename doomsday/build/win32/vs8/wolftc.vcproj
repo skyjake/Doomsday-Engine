@@ -428,6 +428,28 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\p_doors.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\p_inventory.c"
 				>
 			</File>
@@ -689,10 +711,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\wolftc\src\p_ceilng.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\wolftc\src\p_doors.c"
 				>
 			</File>
 			<File
