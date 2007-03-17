@@ -19,6 +19,7 @@
  ./../../plugins/common/src/p_inventory.c
  ./../../plugins/common/src/p_tick.c
  ./../../plugins/jheretic/src/p_telept.c
+ ./../../plugins/common/src/p_switches.c
  ./../../plugins/jheretic/src/p_switch.c
  ./../../plugins/common/src/p_svtexarc.c
  ./../../plugins/common/src/p_start.c

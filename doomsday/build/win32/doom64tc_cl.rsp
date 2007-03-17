@@ -18,6 +18,7 @@
  ./../../plugins/common/src/p_user.c
  ./../../plugins/common/src/p_tick.c
  ./../../plugins/doom64tc/src/p_telept.c
+ ./../../plugins/common/src/p_switches.c
  ./../../plugins/doom64tc/src/p_switch.c
  ./../../plugins/common/src/p_svtexarc.c
  ./../../plugins/common/src/p_start.c

@@ -486,6 +486,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\p_switches.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\p_tick.c"
 				>
 			</File>

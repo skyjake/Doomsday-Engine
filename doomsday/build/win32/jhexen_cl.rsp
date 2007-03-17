@@ -22,7 +22,7 @@
  ./../../plugins/common/src/p_inventory.c
  ./../../plugins/jhexen/src/p_things.c
  ./../../plugins/jhexen/src/p_telept.c
- ./../../plugins/jhexen/src/p_switch.c
+ ./../../plugins/common/src/p_switches.c
  ./../../plugins/common/src/p_mapspec.c
  ./../../plugins/jhexen/src/p_spec.c
  ./../../plugins/jhexen/src/p_setup.c
