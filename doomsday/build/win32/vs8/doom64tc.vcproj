@@ -470,6 +470,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\p_plats.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\p_player.c"
 				>
 			</File>
@@ -735,10 +739,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\doom64tc\src\p_mobj.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\doom64tc\src\p_plats.c"
 				>
 			</File>
 			<File

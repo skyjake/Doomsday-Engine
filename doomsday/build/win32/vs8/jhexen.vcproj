@@ -470,6 +470,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\p_plats.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\p_player.c"
 				>
 			</File>
@@ -703,10 +707,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\src\p_mobj.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jhexen\src\p_plats.c"
 				>
 			</File>
 			<File

@@ -29,7 +29,7 @@
  ./../../plugins/doom64tc/src/p_setup.c
  ./../../plugins/common/src/p_saveg.c
  ./../../plugins/doom64tc/src/p_pspr.c
- ./../../plugins/doom64tc/src/p_plats.c
+ ./../../plugins/common/src/p_plats.c
  ./../../plugins/doom64tc/src/p_mobj.c
  ./../../plugins/doom64tc/src/p_maputl.c
  ./../../plugins/common/src/p_iterlist.c

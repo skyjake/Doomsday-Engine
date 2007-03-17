@@ -27,7 +27,7 @@
  ./../../plugins/jhexen/src/p_spec.c
  ./../../plugins/jhexen/src/p_setup.c
  ./../../plugins/jhexen/src/p_pspr.c
- ./../../plugins/jhexen/src/p_plats.c
+ ./../../plugins/common/src/p_plats.c
  ./../../plugins/jhexen/src/p_mobj.c
  ./../../plugins/jhexen/src/p_mapinfo.c
  ./../../plugins/jhexen/src/p_maputl.c

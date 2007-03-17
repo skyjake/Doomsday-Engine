@@ -215,7 +215,7 @@ int             EV_DoPlat(line_t *line, byte *args, plattype_e type,
                           int amount);
 void            P_AddActivePlat(plat_t *plat);
 void            P_RemoveActivePlat(plat_t *plat);
-void            EV_StopPlat(line_t *line, byte *args);
+boolean         EV_StopPlat(line_t *line, byte *args);
 
 //
 // Doors

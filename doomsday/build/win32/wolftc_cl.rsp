@@ -29,7 +29,7 @@
  ./../../plugins/wolftc/src/p_setup.c
  ./../../plugins/common/src/p_saveg.c
  ./../../plugins/wolftc/src/p_pspr.c
- ./../../plugins/wolftc/src/p_plats.c
+ ./../../plugins/common/src/p_plats.c
  ./../../plugins/wolftc/src/p_mobj.c
  ./../../plugins/wolftc/src/p_maputl.c
  ./../../plugins/common/src/p_iterlist.c
