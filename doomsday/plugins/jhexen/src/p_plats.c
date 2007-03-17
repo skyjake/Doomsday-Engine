@@ -69,17 +69,6 @@ plat_t *activeplats[MAXPLATS];
 
 // CODE --------------------------------------------------------------------
 
-static void StartSequence(sector_t *sector, int seqBase)
-{
-    SN_StartSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN),
-                     seqBase + P_XSector(sector)->seqType);
-}
-
-static void StopSequence(sector_t *sector)
-{
-    SN_StopSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN));
-}
-
 /**
  * Move a plat up and down
  */
@@ -97,13 +86,13 @@ void T_PlatRaise(plat_t *plat)
         {
             plat->count = plat->wait;
             plat->status = PLAT_DOWN;
-            StartSequence(plat->sector, SEQ_PLATFORM);
+            SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
         }
         else if(res == pastdest)
         {
             plat->count = plat->wait;
             plat->status = PLAT_WAITING;
-            StopSequence(plat->sector);
+            SN_StopSequenceInSec(plat->sector);
 
             switch(plat->type)
             {
@@ -135,7 +124,7 @@ void T_PlatRaise(plat_t *plat)
             default:
                 break;
             }
-            StopSequence(plat->sector);
+            SN_StopSequenceInSec(plat->sector);
         }
         break;
 
@@ -146,7 +135,7 @@ void T_PlatRaise(plat_t *plat)
                 plat->status = PLAT_UP;
             else
                 plat->status = PLAT_DOWN;
-            StartSequence(plat->sector, SEQ_PLATFORM);
+            SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
         }
     }
 }
@@ -237,7 +226,7 @@ int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
         }
 
         P_AddActivePlat(plat);
-        StartSequence(plat->sector, SEQ_PLATFORM);
+        SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
     }
     return rtn;
 }
