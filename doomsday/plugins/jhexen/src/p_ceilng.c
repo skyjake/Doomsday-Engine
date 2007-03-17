@@ -82,7 +82,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
     case 1:                 // UP
         res = T_MovePlane(ceiling->sector, ceiling->speed, ceiling->topheight,
                           false, 1, ceiling->direction);
-        if(res == RES_PASTDEST)
+        if(res == pastdest)
         {
             SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
             switch(ceiling->type)
@@ -103,7 +103,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
         res =
             T_MovePlane(ceiling->sector, ceiling->speed, ceiling->bottomheight,
                         ceiling->crush, 1, ceiling->direction);
-        if(res == RES_PASTDEST)
+        if(res == pastdest)
         {
             SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
             switch(ceiling->type)
@@ -119,7 +119,7 @@ void T_MoveCeiling(ceiling_t *ceiling)
                 break;
             }
         }
-        else if(res == RES_CRUSHED)
+        else if(res == crushed)
         {
             switch(ceiling->type)
             {

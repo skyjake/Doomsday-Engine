@@ -221,11 +221,11 @@ void            EV_StopPlat(line_t *line, byte *args);
 // Doors
 //
 typedef enum {
-    DREV_NORMAL,
-    DREV_CLOSE30THENOPEN,
-    DREV_CLOSE,
-    DREV_OPEN,
-    DREV_RAISEIN5MINS,
+    normal,
+    close30ThenOpen,
+    close,
+    open,
+    raiseIn5Mins,
 } vldoor_e;
 
 typedef struct {
@@ -354,9 +354,9 @@ typedef struct {
 #define FLOORSPEED      1
 
 typedef enum {
-    RES_OK,
-    RES_CRUSHED,
-    RES_PASTDEST
+    ok,
+    crushed,
+    pastdest
 } result_e;
 
 typedef enum {

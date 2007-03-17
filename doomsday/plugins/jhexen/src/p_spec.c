@@ -248,7 +248,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         break;
 
     case 10: // Door Close
-        buttonSuccess = EV_DoDoor(line, args, DREV_CLOSE);
+        buttonSuccess = EV_DoDoor(line, args, close);
         break;
 
     case 11: // Door Open
@@ -258,7 +258,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         }
         else
         {
-            buttonSuccess = EV_DoDoor(line, args, DREV_OPEN);
+            buttonSuccess = EV_DoDoor(line, args, open);
         }
         break;
 
@@ -269,7 +269,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         }
         else
         {
-            buttonSuccess = EV_DoDoor(line, args, DREV_NORMAL);
+            buttonSuccess = EV_DoDoor(line, args, normal);
         }
         break;
 
@@ -282,7 +282,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
             }
             else
             {
-                buttonSuccess = EV_DoDoor(line, args, DREV_NORMAL);
+                buttonSuccess = EV_DoDoor(line, args, normal);
             }
         }
         break;

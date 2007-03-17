@@ -137,10 +137,10 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest, int crush,
                     SETX(DMU_FLOOR_HEIGHT, lastpos);
                     SETX(ptarget, lastpos);
                     P_ChangeSector(sector, crush);
-                    //return RES_CRUSHED;
+                    //return crushed;
                 }
                 SETX(pspeed, 0);
-                return RES_PASTDEST;
+                return pastdest;
             }
             else
             {
@@ -153,7 +153,7 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest, int crush,
                     SETX(ptarget, lastpos);
                     SETX(pspeed, 0);
                     P_ChangeSector(sector, crush);
-                    return RES_CRUSHED;
+                    return crushed;
                 }
             }
             break;
@@ -169,10 +169,10 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest, int crush,
                     SETX(DMU_FLOOR_HEIGHT, lastpos);
                     SETX(ptarget, lastpos);
                     P_ChangeSector(sector, crush);
-                    //return RES_CRUSHED;
+                    //return crushed;
                 }
                 SETX(pspeed, 0);
-                return RES_PASTDEST;
+                return pastdest;
             }
             else                // COULD GET CRUSHED
             {
@@ -185,7 +185,7 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest, int crush,
                     SETX(ptarget, lastpos);
                     SETX(pspeed, 0);
                     P_ChangeSector(sector, crush);
-                    return RES_CRUSHED;
+                    return crushed;
                 }
             }
             break;
@@ -206,10 +206,10 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest, int crush,
                     SETX(DMU_CEILING_HEIGHT, lastpos);
                     SETX(ptarget, lastpos);
                     P_ChangeSector(sector, crush);
-                    //return RES_CRUSHED;
+                    //return crushed;
                 }
                 SETX(pspeed, 0);
-                return RES_PASTDEST;
+                return pastdest;
             }
             else                // COULD GET CRUSHED
             {
@@ -220,13 +220,13 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest, int crush,
                 {
                     //if (crush == true)
                     //{
-                    //  return RES_CRUSHED;
+                    //  return crushed;
                     //}
                     SETX(DMU_CEILING_HEIGHT, lastpos);
                     SETX(ptarget, lastpos);
                     SETX(pspeed, 0);
                     P_ChangeSector(sector, crush);
-                    return RES_CRUSHED;
+                    return crushed;
                 }
             }
             break;
@@ -242,10 +242,10 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest, int crush,
                     SETX(DMU_CEILING_HEIGHT, lastpos);
                     SETX(ptarget, lastpos);
                     P_ChangeSector(sector, crush);
-                    //return RES_CRUSHED;
+                    //return crushed;
                 }
                 SETX(pspeed, 0);
-                return RES_PASTDEST;
+                return pastdest;
             }
             else
             {
@@ -257,7 +257,7 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest, int crush,
                 {
                     sector->ceilingheight = lastpos;
                     P_ChangeSector(sector, crush);
-                    return RES_CRUSHED;
+                    return crushed;
                 }
 #endif
             }
@@ -266,7 +266,7 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest, int crush,
         break;
 
     }
-    return RES_OK;
+    return ok;
 #undef SETX
 #undef GETX
 }
@@ -319,7 +319,7 @@ void T_MoveFloor(floormove_t *floor)
             floor->stairsDelayHeight += floor->stairsDelayHeightDelta;
         }
     }
-    if(res == RES_PASTDEST)
+    if(res == pastdest)
     {
         P_SetFloatp(floor->sector, DMU_FLOOR_SPEED, 0);
         SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
@@ -690,7 +690,7 @@ void T_BuildPillar(pillar_t *pillar)
     res2 =
         T_MovePlane(pillar->sector, pillar->ceilingSpeed, pillar->ceilingdest,
                     pillar->crush, 1, -pillar->direction);
-    if(res1 == RES_PASTDEST && res2 == RES_PASTDEST)
+    if(res1 == pastdest && res2 == pastdest)
     {
         P_XSector(pillar->sector)->specialdata = NULL;
         SN_StopSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN));

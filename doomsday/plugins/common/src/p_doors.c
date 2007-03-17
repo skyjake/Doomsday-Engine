@@ -51,6 +51,40 @@
 
 // MACROS ------------------------------------------------------------------
 
+// Sounds played by the doors when changing state.
+// jHexen uses sound sequences, so it's are defined as 'sfx_None'.
+#if __DOOM64TC__
+# define SFX_DOORCLOSE         (sfx_dorcls)
+# define SFX_DOORBLAZECLOSE    (sfx_bdcls)
+# define SFX_DOOROPEN          (sfx_doropn)
+# define SFX_DOORBLAZEOPEN     (sfx_bdopn)
+# define SFX_DOORLOCKED        (sfx_oof)
+#elif __WOLFTC__
+# define SFX_DOORCLOSE         (sfx_wlfdrc)
+# define SFX_DOORBLAZECLOSE    (sfx_wlfpwl)
+# define SFX_DOOROPEN          (sfx_wlfdro)
+# define SFX_DOORBLAZEOPEN     (sfx_wlfpwl)
+# define SFX_DOORLOCKED        (sfx_dorlck)
+#elif __JDOOM__
+# define SFX_DOORCLOSE         (sfx_dorcls)
+# define SFX_DOORBLAZECLOSE    (sfx_bdcls)
+# define SFX_DOOROPEN          (sfx_doropn)
+# define SFX_DOORBLAZEOPEN     (sfx_bdopn)
+# define SFX_DOORLOCKED        (sfx_oof)
+#elif __JHERETIC__
+# define SFX_DOORCLOSE         (sfx_doropn)
+# define SFX_DOORBLAZECLOSE    (sfx_None)
+# define SFX_DOOROPEN          (sfx_doropn)
+# define SFX_DOORBLAZEOPEN     (sfx_doropn)
+# define SFX_DOORLOCKED        (sfx_plroof)
+#elif __JHEXEN__
+# define SFX_DOORCLOSE         (SFX_NONE)
+# define SFX_DOORBLAZECLOSE    (SFX_NONE)
+# define SFX_DOOROPEN          (SFX_NONE)
+# define SFX_DOORBLAZEOPEN     (SFX_NONE)
+# define SFX_DOORLOCKED        (SFX_NONE)
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -90,42 +124,23 @@ void T_VerticalDoor(vldoor_t *door)
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
             case blazeRaise:
                 door->direction = -1;   // time to go back down
-# if __WOLFTC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_wlfpwl);
-# else
-                S_SectorSound(door->sector, SORG_CEILING, sfx_bdcls);
-# endif
+                S_SectorSound(door->sector, SORG_CEILING, SFX_DOORBLAZECLOSE);
                 break;
 #endif
-
-#if __JHEXEN__
-            case DREV_NORMAL:
-#else
             case normal:
-#endif
                 door->direction = -1;   // time to go back down
 #if __JHEXEN__
                 SN_StartSequence(P_SectorSoundOrigin(door->sector),
                                  SEQ_DOOR_STONE + xsec->seqType);
-#elif __WOLFTC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_wlfdrc);
-#elif __JHERETIC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_doropn);
 #else
-                S_SectorSound(door->sector, SORG_CEILING, sfx_dorcls);
+                S_SectorSound(door->sector, SORG_CEILING, SFX_DOORCLOSE);
 #endif
                 break;
 
-#if __JHEXEN__
-            case DREV_CLOSE30THENOPEN:
-#else
             case close30ThenOpen:
-#endif
                 door->direction = 1;
-#if __WOLFTC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_wlfdro);
-#elif __JDOOM__ || __JHERETIC__ || __DOOM64TC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_doropn);
+#if !__JHEXEN__
+                S_SectorSound(door->sector, SORG_CEILING, SFX_DOOROPEN);
 #endif
                 break;
 
@@ -141,22 +156,11 @@ void T_VerticalDoor(vldoor_t *door)
         {
             switch(door->type)
             {
-#if __JHEXEN__
-            case DREV_RAISEIN5MINS:
-#else
             case raiseIn5Mins:
-#endif
                 door->direction = 1;
-#if __JHEXEN__
-                door->type = DREV_NORMAL;
-#else
                 door->type = normal;
-#endif
-
-#if __WOLFTC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_wlfdro);
-#elif __JDOOM__ || __JHERETIC__ || __DOOM64TC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_doropn);
+#if !__JHEXEN__
+                S_SectorSound(door->sector, SORG_CEILING, SFX_DOOROPEN);
 #endif
                 break;
 
@@ -172,11 +176,8 @@ void T_VerticalDoor(vldoor_t *door)
             T_MovePlane(door->sector, door->speed,
                         P_GetFloatp(door->sector, DMU_FLOOR_HEIGHT),
                         false, 1, door->direction);
-#if __JHEXEN__
-        if(res == RES_PASTDEST)
-#else
+
         if(res == pastdest)
-#endif
         {
 #if __JHEXEN__
             SN_StopSequence(P_SectorSoundOrigin(door->sector));
@@ -200,35 +201,22 @@ void T_VerticalDoor(vldoor_t *door)
                 // This is what causes blazing doors to produce two closing
                 // sounds as one has already been played when the door starts
                 // to close (above)
-# if __WOLFTC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_wlfpwl);
-# else
-                S_SectorSound(door->sector, SORG_CEILING, sfx_bdcls);
-# endif
+                S_SectorSound(door->sector, SORG_CEILING, SFX_DOORBLAZECLOSE);
                 break;
 #endif
-#if __JHEXEN__
-            case DREV_NORMAL:
-            case DREV_CLOSE:
-#else
             case normal:
             case close:
-#endif
                 xsec->specialdata = NULL;
 #if __JHEXEN__
                 P_TagFinished(P_XSector(door->sector)->tag);
 #endif
                 P_RemoveThinker(&door->thinker);    // unlink and free
 #if __JHERETIC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_dorcls);
+                S_SectorSound(door->sector, SORG_CEILING, SFX_DOORCLOSE);
 #endif
                 break;
 
-#if __JHEXEN__
-            case DREV_CLOSE30THENOPEN:
-#else
             case close30ThenOpen:
-#endif
                 door->direction = 0;
                 door->topcountdown = 35 * 30;
                 break;
@@ -237,11 +225,7 @@ void T_VerticalDoor(vldoor_t *door)
                 break;
             }
         }
-#if __JHEXEN__
-        else if(res == RES_CRUSHED)
-#else
         else if(res == crushed)
-#endif
         {
             // DOOMII BUG:
             // The switch bellow SHOULD(?) play the blazing open sound if
@@ -251,19 +235,13 @@ void T_VerticalDoor(vldoor_t *door)
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
             case blazeClose:
 #endif
-#if __JHEXEN__
-            case DREV_CLOSE:    // DON'T GO BACK UP!
-#else
-            case close:     // DO NOT GO BACK UP!
-#endif
+            case close:     // Do not go back up!
                 break;
 
             default:
                 door->direction = 1;
-#if __WOLFTC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_wlfdro);
-#elif __JDOOM__ || __JHERETIC__ || __DOOM64TC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_doropn);
+#if !__JHEXEN__
+                S_SectorSound(door->sector, SORG_CEILING, SFX_DOOROPEN);
 #endif
                 break;
             }
@@ -276,11 +254,7 @@ void T_VerticalDoor(vldoor_t *door)
             T_MovePlane(door->sector, door->speed, door->topheight, false, 1,
                         door->direction);
 
-#if __JHEXEN__
-        if(res == RES_PASTDEST)
-#else
         if(res == pastdest)
-#endif
         {
 #if __JHEXEN__
             SN_StopSequence(P_SectorSoundOrigin(door->sector));
@@ -301,11 +275,8 @@ void T_VerticalDoor(vldoor_t *door)
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
             case blazeRaise:
 #endif
-#if __JHEXEN__
-            case DREV_NORMAL:
-#else
+
             case normal:
-#endif
                 door->direction = 0;    // wait at top
                 door->topcountdown = door->topwait;
                 break;
@@ -313,13 +284,8 @@ void T_VerticalDoor(vldoor_t *door)
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
             case blazeOpen:
 #endif
-#if __JHEXEN__
-            case DREV_CLOSE30THENOPEN:
-            case DREV_OPEN:
-#else
             case close30ThenOpen:
             case open:
-#endif
                 xsec->specialdata = NULL;
 #if __JHEXEN__
                 P_TagFinished(P_XSector(door->sector)->tag);
@@ -342,132 +308,15 @@ void T_VerticalDoor(vldoor_t *door)
     }
 }
 
-/**
- * Move a locked door up/down
- */
-#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
-int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
+static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
 {
-    xline_t *xline = P_XLine(line);
-    player_t *p;
-
-    p = thing->player;
-
-    if(!p)
-        return 0;
-
-    switch(xline->special)
-    {
-    case 99:                    // Blue Lock
-    case 133:
-        if(!p)
-            return 0;
-        if(!p->keys[KT_BLUECARD] && !p->keys[KT_BLUESKULL])
-        {
-            P_SetMessage(p, PD_BLUEO, false);
-# if __WOLFTC__
-            S_StartSound(sfx_dorlck, p->plr->mo);
-# else
-            S_StartSound(sfx_oof, p->plr->mo);
-#endif
-            return 0;
-        }
-        break;
-
-    case 134:                   // Red Lock
-    case 135:
-        if(!p)
-            return 0;
-        if(!p->keys[KT_REDCARD] && !p->keys[KT_REDSKULL])
-        {
-            P_SetMessage(p, PD_REDO, false);
-# if __WOLFTC__
-            S_StartSound(sfx_dorlck, p->plr->mo);
-# else
-            S_StartSound(sfx_oof, p->plr->mo);
-# endif
-            return 0;
-        }
-        break;
-
-    case 136:                   // Yellow Lock
-    case 137:
-        if(!p)
-            return 0;
-        if(!p->keys[KT_YELLOWCARD] && !p->keys[KT_YELLOWSKULL])
-        {
-            P_SetMessage(p, PD_YELLOWO, false);
-# if __WOLFTC__
-            S_StartSound(sfx_dorlck, p->plr->mo);
-# else
-            S_StartSound(sfx_oof, p->plr->mo);
-#endif
-            return 0;
-        }
-        break;
-
-# if __DOOM64TC__
-    case 343: // d64tc
-        if(!p)
-            return 0;
-        if(!p->artifacts[it_laserpw1])
-        {
-            P_SetMessage(p, PD_OPNPOWERUP, false);
-            S_StartSound(sfx_oof, p->plr->mo);
-            return 0;
-        }
-        break;
-
-    case 344: // d64tc
-        if(!p)
-            return 0;
-        if(!p->artifacts[it_laserpw2])
-        {
-            P_SetMessage(p, PD_OPNPOWERUP, false);
-            S_StartSound(sfx_oof, p->plr->mo);
-            return 0;
-        }
-        break;
-
-    case 345: // d64tc
-        if(!p)
-            return 0;
-        if(!p->artifacts[it_laserpw3])
-        {
-            P_SetMessage(p, PD_OPNPOWERUP, false);
-            S_StartSound(sfx_oof, p->plr->mo);
-            return 0;
-        }
-        break;
-# endif
-    default:
-        break;
-    }
-
-    return EV_DoDoor(line, type);
-}
-#endif
-
-#if __JHEXEN__
-int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
-#else
-int EV_DoDoor(line_t *line, vldoor_e type)
-#endif
-{
-    int         rtn = 0;
-#if __JHEXEN__
-    float       speed = FIX2FLT(args[1]) / 8;
-#endif
+    int         rtn = 0, sound;
     xsector_t  *xsec;
     sector_t   *sec = NULL;
     vldoor_t   *door;
     iterlist_t *list;
 
-#if __JHEXEN__
-    list = P_GetSectorIterListForTag((int) args[0], false);
-#else
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
-#endif
+    list = P_GetSectorIterListForTag(tag, false);
     if(!list)
         return rtn;
 
@@ -487,11 +336,17 @@ int EV_DoDoor(line_t *line, vldoor_e type)
 
         door->thinker.function = T_VerticalDoor;
         door->sector = sec;
-#if __JDOOM__ || __JHERETIC__ || __WOLFTC__ || __DOOM64TC__
+
         door->type = type;
-        door->topwait = VDOORWAIT;
-        door->speed = VDOORSPEED;
+        door->topwait = topwait;
+        door->speed = speed;
+
+#if __JHEXEN__
+        sound = SEQ_DOOR_STONE + P_XSector(door->sector)->seqType;
+#else
+        sound = 0;
 #endif
+
         switch(type)
         {
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
@@ -499,44 +354,24 @@ int EV_DoDoor(line_t *line, vldoor_e type)
             door->topheight = P_FindLowestCeilingSurrounding(sec);
             door->topheight -= 4;
             door->direction = -1;
-            door->speed = VDOORSPEED * 4;
-# if __WOLFTC__
-            S_SectorSound(door->sector, SORG_CEILING, sfx_wlfpwl);
-# else
-            S_SectorSound(door->sector, SORG_CEILING, sfx_bdcls);
-# endif
+            door->speed *= 4;
+            sound = SFX_DOORBLAZECLOSE;
             break;
 #endif
-#if __JHEXEN__
-        case DREV_CLOSE:
-#else
         case close:
-#endif
             door->topheight = P_FindLowestCeilingSurrounding(sec);
             door->topheight -= 4;
             door->direction = -1;
-#if __WOLFTC__
-            S_SectorSound(door->sector, SORG_CEILING, sfx_wlfdrc);
-#elif __JHERETIC__
-            S_SectorSound(door->sector, SORG_CEILING, sfx_doropn);
-#elif __JDOOM__ || __DOOM64TC__
-            S_SectorSound(door->sector, SORG_CEILING, sfx_dorcls);
+#if !__JHEXEN__
+            sound = SFX_DOORCLOSE;
 #endif
             break;
 
-#if __JHEXEN__
-        case DREV_CLOSE30THENOPEN:
-#else
         case close30ThenOpen:
-#endif
             door->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             door->direction = -1;
-#if __WOLFTC__
-            S_SectorSound(door->sector, SORG_CEILING, sfx_wlfdrc);
-#elif __JHERETIC__
-            S_SectorSound(door->sector, SORG_CEILING, sfx_doropn);
-#elif __JDOOM__ || __DOOM64TC__
-            S_SectorSound(door->sector, SORG_CEILING, sfx_dorcls);
+#if !__JHEXEN__
+            sound = SFX_DOORCLOSE;
 #endif
             break;
 
@@ -549,42 +384,24 @@ int EV_DoDoor(line_t *line, vldoor_e type)
             door->topheight = P_FindLowestCeilingSurrounding(sec);
             door->topheight -= 4;
 # if __JHERETIC__
-            door->speed = VDOORSPEED * 3;
+            door->speed *= 3;
 # else
-            door->speed = VDOORSPEED * 4;
+            door->speed *= 4;
 # endif
             if(door->topheight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
-            {
-# if __WOLFTC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_wlfpwl);
-# elif __JHERETIC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_doropn);
-# else
-                S_SectorSound(door->sector, SORG_CEILING, sfx_bdopn);
-# endif
-            }
+                sound = SFX_DOORBLAZEOPEN;
             break;
 #endif
 
-#if __JHEXEN__
-        case DREV_NORMAL:
-        case DREV_OPEN:
-#else
         case normal:
         case open:
-#endif
             door->direction = 1;
             door->topheight = P_FindLowestCeilingSurrounding(sec);
             door->topheight -= 4;
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+
+#if !__JHEXEN__
             if(door->topheight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
-            {
-# if __WOLFTC__
-                S_SectorSound(door->sector, SORG_CEILING, sfx_wlfdro);
-# else
-                S_SectorSound(door->sector, SORG_CEILING, sfx_doropn);
-# endif
-            }
+                sound = SFX_DOOROPEN;
 #endif
             break;
 
@@ -592,49 +409,128 @@ int EV_DoDoor(line_t *line, vldoor_e type)
             break;
         }
 
+        // Play a sound?
 #if __JHEXEN__
-        door->type = type;
-        door->speed = speed;
-        door->topwait = args[2];    // line->arg3
-        SN_StartSequence(P_SectorSoundOrigin(door->sector),
-                         SEQ_DOOR_STONE + P_XSector(door->sector)->seqType);
+        SN_StartSequence(P_SectorSoundOrigin(door->sector), sound);
+#else
+        if(sound)
+            S_SectorSound(door->sector, SORG_CEILING, sound);
 #endif
     }
     return rtn;
 }
 
-/**
- * open a door manually, no tag value
- */
 #if __JHEXEN__
-boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
-#else
-void EV_VerticalDoor(line_t *line, mobj_t *thing)
-#endif
+int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
 {
-#if !__JHEXEN__
-    player_t *player;
-#endif
-    xline_t *xline = P_XLine(line);
-    xsector_t *xsec;
-    sector_t *sec;
-    vldoor_t *door;
-
-    sec = P_GetPtrp(line, DMU_BACK_SECTOR);
-    if(!sec)
-    {
-#if __JHEXEN__
-        return false;
+    return EV_DoDoor2((int) args[0], FIX2FLT(args[1]) / 8, (int) args[2],
+                      type);
+}
 #else
-        return;
+int EV_DoDoor(line_t *line, vldoor_e type)
+{
+    return EV_DoDoor2(P_XLine(line)->tag, VDOORSPEED, VDOORWAIT, type);
+}
 #endif
+
+/**
+ * Checks whether the given linedef is a locked door.
+ * If locked and the player IS ABLE to open it, return <code>true</code>.
+ * If locked and the player IS NOT ABLE to open it, send an appropriate
+ * message and play a sound before returning <code>false</code>.
+ * Else, NOT a locked door and can be opened, return <code>true</code> 
+ */
+static boolean tryLockedDoor(line_t *line, player_t *p)
+{
+    xline_t *xline = P_XLine(line);
+
+    if(!p || !xline)
+        return false;
+
+#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+    switch(xline->special)
+    {
+    case 99:                    // Blue Lock
+    case 133:
+        if(!p->keys[KT_BLUECARD] && !p->keys[KT_BLUESKULL])
+        {
+            P_SetMessage(p, PD_BLUEO, false);
+            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
+            return false;
+        }
+        break;
+
+    case 134:                   // Red Lock
+    case 135:
+        if(!p->keys[KT_REDCARD] && !p->keys[KT_REDSKULL])
+        {
+            P_SetMessage(p, PD_REDO, false);
+            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
+            return false;
+        }
+        break;
+
+    case 136:                   // Yellow Lock
+    case 137:
+        if(!p->keys[KT_YELLOWCARD] && !p->keys[KT_YELLOWSKULL])
+        {
+            P_SetMessage(p, PD_YELLOWO, false);
+            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
+            return false;
+        }
+        break;
+
+# if __DOOM64TC__
+    case 343: // d64tc
+        if(!p->artifacts[it_laserpw1])
+        {
+            P_SetMessage(p, PD_OPNPOWERUP, false);
+            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
+            return false;
+        }
+        break;
+
+    case 344: // d64tc
+        if(!p->artifacts[it_laserpw2])
+        {
+            P_SetMessage(p, PD_OPNPOWERUP, false);
+            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
+            return false;
+        }
+        break;
+
+    case 345: // d64tc
+        if(!p->artifacts[it_laserpw3])
+        {
+            P_SetMessage(p, PD_OPNPOWERUP, false);
+            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
+            return false;
+        }
+        break;
+# endif
+    default:
+        break;
     }
-    xsec = P_XSector(sec);
+#endif
+
+    return true;
+}
+
+/**
+ * Checks whether the given linedef is a locked manual door.
+ * If locked and the player IS ABLE to open it, return <code>true</code>.
+ * If locked and the player IS NOT ABLE to open it, send an appropriate
+ * message and play a sound before returning <code>false</code>.
+ * Else, NOT a locked door and can be opened, return <code>true</code> 
+ */
+static boolean tryLockedManualDoor(line_t *line, player_t *p)
+{
+    xline_t *xline = P_XLine(line);
+
+    if(!p || !xline)
+        return false;
 
 #if !__JHEXEN__
-    //  Check for locks
-    player = thing->player;
-
     switch(xline->special)
     {
     case 26:
@@ -643,26 +539,19 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
     case 525: // d64tc
 # endif
         // Blue Lock
-        if(!player)
-            return;
-
 # if __JHERETIC__
-        if(!player->keys[KT_BLUE])
+        if(!p->keys[KT_BLUE])
         {
-            P_SetMessage(player, TXT_NEEDBLUEKEY, false);
-            S_ConsoleSound(sfx_plroof, NULL, player - players);
-            return;
+            P_SetMessage(p, TXT_NEEDBLUEKEY, false);
+            S_ConsoleSound(SFX_DOORLOCKED, NULL, p - players);
+            return false;
         }
 # else
-        if(!player->keys[KT_BLUECARD] && !player->keys[KT_BLUESKULL])
+        if(!p->keys[KT_BLUECARD] && !p->keys[KT_BLUESKULL])
         {
-            P_SetMessage(player, PD_BLUEK, false);
-#  if __WOLFTC__
-            S_StartSound(sfx_dorlck, player->plr->mo);
-#  else
-            S_StartSound(sfx_oof, player->plr->mo);
-#  endif
-            return;
+            P_SetMessage(p, PD_BLUEK, false);
+            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
+            return false;
         }
 # endif
         break;
@@ -673,26 +562,19 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
     case 526: // d64tc
 # endif
         // Yellow Lock
-        if(!player)
-            return;
-
 # if __JHERETIC__
-        if(!player->keys[KT_YELLOW])
+        if(!p->keys[KT_YELLOW])
         {
-            P_SetMessage(player, TXT_NEEDYELLOWKEY, false);
-            S_ConsoleSound(sfx_plroof, NULL, player - players);
-            return;
+            P_SetMessage(p, TXT_NEEDYELLOWKEY, false);
+            S_ConsoleSound(SFX_DOORLOCKED, NULL, p - players);
+            return false;
         }
 # else
-        if(!player->keys[KT_YELLOWCARD] && !player->keys[KT_YELLOWSKULL])
+        if(!p->keys[KT_YELLOWCARD] && !p->keys[KT_YELLOWSKULL])
         {
-            P_SetMessage(player, PD_YELLOWK, false);
-#  if __WOLFTC__
-            S_StartSound(sfx_dorlck, player->plr->mo);
-#  else
-            S_StartSound(sfx_oof, player->plr->mo);
-#  endif
-            return;
+            P_SetMessage(p, PD_YELLOWK, false);
+            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
+            return false;
         }
 # endif
         break;
@@ -702,28 +584,21 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 # if __DOOM64TC__
     case 527: // d64tc
 # endif
-        if(!player)
-            return;
-
 # if __JHERETIC__
         // Green lock
-        if(!player->keys[KT_GREEN])
+        if(!p->keys[KT_GREEN])
         {
-            P_SetMessage(player, TXT_NEEDGREENKEY, false);
-            S_ConsoleSound(sfx_plroof, NULL, player - players);
-            return;
+            P_SetMessage(p, TXT_NEEDGREENKEY, false);
+            S_ConsoleSound(SFX_DOORLOCKED, NULL, p - players);
+            return false;
         }
 # else
         // Red lock
-        if(!player->keys[KT_REDCARD] && !player->keys[KT_REDSKULL])
+        if(!p->keys[KT_REDCARD] && !p->keys[KT_REDSKULL])
         {
-            P_SetMessage(player, PD_REDK, false);
-#  if __WOLFTC__
-            S_StartSound(sfx_dorlck, player->plr->mo);
-#  else
-            S_StartSound(sfx_oof, player->plr->mo);
-#  endif
-            return;
+            P_SetMessage(p, PD_REDK, false);
+            S_StartSound(SFX_DOORLOCKED, p->plr->mo);
+            return false;
         }
 # endif
         break;
@@ -733,7 +608,42 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
     }
 #endif
 
-    // if the sector has an active thinker, use it
+    return true;
+}
+
+/**
+ * Move a locked door up/down
+ */
+#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+int EV_DoLockedDoor(line_t *line, vldoor_e type, mobj_t *thing)
+{
+    if(!tryLockedDoor(line, thing->player))
+        return 0;
+
+    return EV_DoDoor(line, type);
+}
+#endif
+
+/**
+ * Open a door manually, no tag value.
+ */
+boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
+{
+    xline_t *xline = P_XLine(line);
+    xsector_t *xsec;
+    sector_t *sec;
+    vldoor_t *door;
+
+    sec = P_GetPtrp(line, DMU_BACK_SECTOR);
+    if(!sec)
+        return false;
+
+    xsec = P_XSector(sec);
+
+    if(!tryLockedManualDoor(line, thing->player))
+        return false;
+
+    // If the sector has an active thinker, use it.
     if(xsec->specialdata)
     {
 #if __JHEXEN__
@@ -754,17 +664,17 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
         case 526: // d64tc
         case 527: // d64tc
 # endif
-            // ONLY FOR "RAISE" DOORS, NOT "OPEN"s
+            // Only for "raise" doors, not "open"s
             if(door->direction == -1)
-                door->direction = 1;    // go back up
+                door->direction = 1; // go back up
             else
             {
                 if(!thing->player)
-                    return;     // JDC: bad guys never close doors
+                    return false; // JDC: bad guys never close doors
 
-                door->direction = -1;   // start going down immediately
+                door->direction = -1; // start going down immediately
             }
-            return;
+            return false;
 
         default:
             break;
@@ -772,8 +682,19 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
 #endif
     }
 
-#if !__JHEXEN__
-    // for proper sound
+    // New door thinker.
+    door = Z_Malloc(sizeof(*door), PU_LEVSPEC, 0);
+    P_AddThinker(&door->thinker);
+    xsec->specialdata = door;
+    door->thinker.function = T_VerticalDoor;
+    door->sector = sec;
+    door->direction = 1;
+
+    // Play a sound?
+#if __JHEXEN__
+    SN_StartSequence(P_SectorSoundOrigin(door->sector),
+                     SEQ_DOOR_STONE + P_XSector(door->sector)->seqType);
+#else
     switch(xline->special)
     {
 # if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
@@ -785,63 +706,50 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
     case 527: // d64tc
 #  endif
         // BLAZING DOOR RAISE/OPEN
-#  if __WOLFTC__
-        S_SectorSound(sec, SORG_CEILING, sfx_wlfpwl);
-#  else
-        S_SectorSound(sec, SORG_CEILING, sfx_bdopn);
-#  endif
+        S_SectorSound(door->sector, SORG_CEILING, SFX_DOORBLAZEOPEN);
         break;
 # endif
+
     case 1:
     case 31:
         // NORMAL DOOR SOUND
-# if __WOLFTC__
-        S_SectorSound(sec, SORG_CEILING, sfx_wlfdro);
-# else
-        S_SectorSound(sec, SORG_CEILING, sfx_doropn);
-# endif
+        S_SectorSound(door->sector, SORG_CEILING, SFX_DOOROPEN);
         break;
 
     default:
         // LOCKED DOOR SOUND
-# if __WOLFTC__
-        S_SectorSound(sec, SORG_CEILING, sfx_wlfdro);
-# else
-        S_SectorSound(sec, SORG_CEILING, sfx_doropn);
-# endif
+        S_SectorSound(door->sector, SORG_CEILING, SFX_DOOROPEN);
         break;
     }
-# endif
-
-    // new door thinker
-    door = Z_Malloc(sizeof(*door), PU_LEVSPEC, 0);
-    P_AddThinker(&door->thinker);
-    xsec->specialdata = door;
-    door->thinker.function = T_VerticalDoor;
-    door->sector = sec;
-    door->direction = 1;
-#if __JHEXEN__
-    door->speed = FIX2FLT(P_XLine(line)->arg2 * (FRACUNIT / 8));
-    door->topwait = P_XLine(line)->arg3;
-#else
-    door->speed = VDOORSPEED;
-    door->topwait = VDOORWAIT;
 #endif
+
     switch(xline->special)
     {
 #if __JHEXEN__
     case 11:
-        door->type = DREV_OPEN;
+        door->type = open;
+        door->speed = FIX2FLT(xline->arg2 * (FRACUNIT / 8));
+        door->topwait = xline->arg3;
         xline->special = 0;
         break;
+#else
+    case 31:
+    case 32:
+    case 33:
+    case 34:
+        door->type = open;
+        door->speed = VDOORSPEED;
+        door->topwait = VDOORWAIT;
+        xline->special = 0;
+        break;
+#endif
 
+#if __JHEXEN__
     case 12:
     case 13:
-        door->type = DREV_NORMAL;
-        break;
-
-    default:
-        door->type = DREV_NORMAL;
+        door->type = normal;
+        door->speed = FIX2FLT(xline->arg2 * (FRACUNIT / 8));
+        door->topwait = xline->arg3;
         break;
 #else
     case 1:
@@ -849,44 +757,47 @@ void EV_VerticalDoor(line_t *line, mobj_t *thing)
     case 27:
     case 28:
         door->type = normal;
+        door->speed = VDOORSPEED;
+        door->topwait = VDOORWAIT;
         break;
+#endif
 
-    case 31:
-    case 32:
-    case 33:
-    case 34:
-        door->type = open;
-        xline->special = 0;
-        break;
-# if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
     case 117:                   // blazing door raise
-#  if __DOOM64TC__
+# if __DOOM64TC__
     case 525: // d64tc
     case 526: // d64tc
     case 527: // d64tc
-#  endif
+# endif
         door->type = blazeRaise;
         door->speed = VDOORSPEED * 4;
+        door->topwait = VDOORWAIT;
         break;
+
     case 118:                   // blazing door open
         door->type = blazeOpen;
-        xline->special = 0;
         door->speed = VDOORSPEED * 4;
-        break;
-# endif
-    default:
+        door->topwait = VDOORWAIT;
+        xline->special = 0;
         break;
 #endif
+
+    default:
+#if __JHEXEN__
+        door->type = normal;
+        door->speed = FIX2FLT(xline->arg2 * (FRACUNIT / 8));
+        door->topwait = xline->arg3;
+#else
+        door->speed = VDOORSPEED;
+        door->topwait = VDOORWAIT;
+#endif
+        break;
     }
 
     // find the top and bottom of the movement range
     door->topheight = P_FindLowestCeilingSurrounding(sec);
     door->topheight -= 4;
-#if __JHEXEN__
-    SN_StartSequence(P_SectorSoundOrigin(door->sector),
-                     SEQ_DOOR_STONE + P_XSector(door->sector)->seqType);
     return true;
-#endif
 }
 
 #if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
