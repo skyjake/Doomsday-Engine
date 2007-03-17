@@ -1064,7 +1064,7 @@ static menuitem_t GameplayItems[] = {
 # if __JDOOM__ || __JHERETIC__
     {ITT_EFUNC, 0, "MONSTERS CAN GET STUCK IN DOORS :", M_ToggleVar, 0, NULL,
         "game-monsters-stuckindoors"},
-    {ITT_EFUNC, 0, "SOME OBJECTS HANG OVER LEDGES :", M_ToggleVar, 0, NULL,
+    {ITT_EFUNC, 0, "SOME OBJECTS NEVER HANG OVER LEDGES :", M_ToggleVar, 0, NULL,
         "game-objects-hangoverledges"},
     {ITT_EFUNC, 0, "OBJECTS FALL UNDER OWN WEIGHT :", M_ToggleVar, 0, NULL,
         "game-objects-falloff"},

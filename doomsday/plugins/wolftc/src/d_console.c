@@ -180,7 +180,7 @@ cvar_t  gameCVars[] = {
     {"game-skullsinwalls", 0, CVT_BYTE, &cfg.allowskullsinwalls, 0, 1},
     {"game-anybossdeath666", 0, CVT_BYTE, &cfg.anybossdeath, 0, 1},
     {"game-monsters-stuckindoors", 0, CVT_BYTE, &cfg.monstersStuckInDoors, 0, 1},
-    {"game-objects-hangoverledges", 0, CVT_BYTE, &cfg.avoidDropoffs, 0, 1},
+    {"game-objects-neverhangoverledges", 0, CVT_BYTE, &cfg.avoidDropoffs, 0, 1},
     {"game-objects-clipping", 0, CVT_BYTE, &cfg.moveBlock, 0, 1},
     {"game-zombiescanexit", 0, CVT_BYTE, &cfg.zombiesCanExit, 0, 1},
     {"game-player-wallrun-northonly", 0, CVT_BYTE, &cfg.wallRunNorthOnly, 0, 1},

@@ -329,7 +329,7 @@ void H_PreInit(void)
     cfg.askQuickSaveLoad = true;
 
     cfg.monstersStuckInDoors = false;
-    cfg.avoidDropoffs = false;
+    cfg.avoidDropoffs = true;
     cfg.moveBlock = false;
     cfg.fallOff = true;
 
