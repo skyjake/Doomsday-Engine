@@ -38,7 +38,7 @@
  ./../../plugins/jhexen/src/p_floor.c
  ./../../plugins/jhexen/src/p_enemy.c
  ./../../plugins/common/src/p_doors.c
- ./../../plugins/jhexen/src/p_ceilng.c
+ ./../../plugins/common/src/p_ceilings.c
  ./../../plugins/jhexen/src/p_anim.c
  ./../../plugins/jhexen/src/p_acs.c
  ./../../plugins/common/src/x_hair.c

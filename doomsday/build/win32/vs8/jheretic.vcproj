@@ -429,6 +429,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\p_ceilings.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\p_doors.c"
 				>
 				<FileConfiguration
@@ -704,10 +708,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jheretic\src\m_random.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jheretic\src\p_ceilng.c"
 				>
 			</File>
 			<File

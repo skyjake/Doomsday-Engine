@@ -428,6 +428,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\p_ceilings.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\p_doors.c"
 				>
 				<FileConfiguration
@@ -675,10 +679,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\jhexen\src\p_anim.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jhexen\src\p_ceilng.c"
 				>
 			</File>
 			<File

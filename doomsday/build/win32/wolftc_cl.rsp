@@ -39,7 +39,7 @@
  ./../../plugins/wolftc/src/p_floor.c
  ./../../plugins/wolftc/src/p_enemy.c
  ./../../plugins/common/src/p_doors.c
- ./../../plugins/wolftc/src/p_ceilng.c
+ ./../../plugins/common/src/p_ceilings.c
  ./../../plugins/common/src/p_actor.c
  ./../../plugins/common/src/p_player.c
  ./../../plugins/common/src/x_hair.c
