@@ -294,7 +294,12 @@ void UI_LoadTextures(void)
     for(i = 0; i < NUM_UITEXTURES; ++i)
         if(!uiTextures[i])
         {
-            uiTextures[i] = GL_LoadGraphics(picNames[i], LGM_NORMAL);
+            uiTextures[i] = //GL_LoadGraphics(picNames[i], LGM_NORMAL);
+                GL_LoadGraphics4(RC_GRAPHICS, picNames[i],
+                                 LGM_NORMAL, DGL_FALSE,
+                                 DGL_LINEAR, DGL_LINEAR,
+                                 DGL_CLAMP, DGL_CLAMP,
+                                 TXCF_NO_COMPRESSION);
         }
 }
 
