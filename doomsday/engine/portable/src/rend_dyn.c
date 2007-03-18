@@ -274,9 +274,12 @@ dynlight_t *DL_GetSubSecPlaneLightLinks(uint ssec, uint plane)
 {
     subseclight_t *ssll;
 
-    assert(ssec >= numsubsectors);
+    if(!useDynLights)
+        return NULL;
+
+    assert(ssec < numsubsectors);
     ssll = &subSecLightLinks[ssec];
-    assert(!ssll->planeCount || plane > ssll->planeCount - 1);
+    assert(ssll->planeCount || plane < ssll->planeCount);
     
     return ssll->planes[plane];
 }
@@ -291,6 +294,9 @@ static void DL_LinkToSegSection(dynlight_t *dyn, uint index, segsection_t segPar
  */
 dynlight_t *DL_GetSegSectionLightLinks(uint seg, segsection_t section)
 {
+    if(!useDynLights)
+        return NULL;
+
     return segLightLinks[seg].wallSection[section];
 }
 
