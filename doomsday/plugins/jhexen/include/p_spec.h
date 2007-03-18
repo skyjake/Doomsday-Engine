@@ -173,20 +173,18 @@ void            P_InitSwitchList(void);
 // Plats
 //
 typedef enum {
-    PLAT_UP,
-    PLAT_DOWN,
-    PLAT_WAITING,
+    up,
+    down,
+    waiting,
     //  PLAT_IN_STASIS
 } plat_e;
 
 typedef enum {
-    PLAT_PERPETUALRAISE,
-    PLAT_DOWNWAITUPSTAY,
-    PLAT_DOWNBYVALUEWAITUPSTAY,
-    PLAT_UPWAITDOWNSTAY,
-    PLAT_UPBYVALUEWAITDOWNSTAY,
-    //PLAT_RAISEANDCHANGE,
-    //PLAT_RAISETONEARESTANDCHANGE
+    perpetualRaise,
+    downWaitUpStay,
+    downByValueWaitUpStay,
+    upWaitDownStay,
+    upByValueWaitDownStay
 } plattype_e;
 
 typedef struct {
@@ -208,13 +206,12 @@ typedef struct {
 #define PLATSPEED 1
 #define MAXPLATS 128
 
-extern plat_t  *activeplats[MAXPLATS];
-
 void            T_PlatRaise(plat_t *plat);
 int             EV_DoPlat(line_t *line, byte *args, plattype_e type,
                           int amount);
 void            P_AddActivePlat(plat_t *plat);
 void            P_RemoveActivePlat(plat_t *plat);
+void            P_RemoveAllActivePlats(void);
 boolean         EV_StopPlat(line_t *line, byte *args);
 
 //

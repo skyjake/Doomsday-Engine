@@ -376,7 +376,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         break;
 
     case 60: // Plat Perpetual Raise
-        buttonSuccess = EV_DoPlat(line, args, PLAT_PERPETUALRAISE, 0);
+        buttonSuccess = EV_DoPlat(line, args, perpetualRaise, 0);
         break;
 
     case 61: // Plat Stop
@@ -384,19 +384,19 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         break;
 
     case 62: // Plat Down-Wait-Up-Stay
-        buttonSuccess = EV_DoPlat(line, args, PLAT_DOWNWAITUPSTAY, 0);
+        buttonSuccess = EV_DoPlat(line, args, downWaitUpStay, 0);
         break;
 
     case 63: // Plat Down-by-Value*8-Wait-Up-Stay
-        buttonSuccess = EV_DoPlat(line, args, PLAT_DOWNBYVALUEWAITUPSTAY, 0);
+        buttonSuccess = EV_DoPlat(line, args, downByValueWaitUpStay, 0);
         break;
 
     case 64: // Plat Up-Wait-Down-Stay
-        buttonSuccess = EV_DoPlat(line, args, PLAT_UPWAITDOWNSTAY, 0);
+        buttonSuccess = EV_DoPlat(line, args, upWaitDownStay, 0);
         break;
 
     case 65: // Plat Up-by-Value*8-Wait-Down-Stay
-        buttonSuccess = EV_DoPlat(line, args, PLAT_UPBYVALUEWAITDOWNSTAY, 0);
+        buttonSuccess = EV_DoPlat(line, args, upByValueWaitDownStay, 0);
         break;
 
     case 66: // Floor Lower Instant * 8
@@ -922,8 +922,7 @@ void P_SpawnSpecials(void)
 
     // FIXME: Remove fixed limits.
     P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
-    for(i = 0; i < MAXPLATS; ++i)
-        activeplats[i] = NULL;
+    P_RemoveAllActivePlats();
 
     P_FreeButtons();
 }

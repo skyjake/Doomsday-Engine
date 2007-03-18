@@ -222,8 +222,6 @@ typedef struct platlist {
 #define PLATWAIT        3
 #define PLATSPEED       1
 
-extern platlist_t *activeplats;
-
 void            T_PlatRaise(plat_t *plat);
 
 int             EV_DoPlat(line_t *line, plattype_e type, int amount);

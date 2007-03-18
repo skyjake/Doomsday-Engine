@@ -61,6 +61,30 @@
 
 // MACROS ------------------------------------------------------------------
 
+// Sounds played by the platforms when changing state or moving.
+// jHexen uses sound sequences, so it's are defined as 'sfx_None'.
+#if __WOLFTC__
+# define SFX_PLATFORMSTART      (sfx_pltstr)
+# define SFX_PLATFORMMOVE       (sfx_pltmov)
+# define SFX_PLATFORMSTOP       (sfx_pltstp)
+#elif __DOOM64TC__
+# define SFX_PLATFORMSTART      (sfx_pstart)
+# define SFX_PLATFORMMOVE       (sfx_stnmov)
+# define SFX_PLATFORMSTOP       (sfx_pstop)
+#elif __JDOOM__
+# define SFX_PLATFORMSTART      (sfx_pstart)
+# define SFX_PLATFORMMOVE       (sfx_stnmov)
+# define SFX_PLATFORMSTOP       (sfx_pstop)
+#elif __JHERETIC__
+# define SFX_PLATFORMSTART      (sfx_pstart)
+# define SFX_PLATFORMMOVE       (sfx_stnmov)
+# define SFX_PLATFORMSTOP       (sfx_pstop)
+#elif __JHEXEN__
+# define SFX_PLATFORMSTART      (SFX_NONE)
+# define SFX_PLATFORMMOVE       (SFX_NONE)
+# define SFX_PLATFORMSTOP       (SFX_NONE)
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -84,9 +108,9 @@ platlist_t *activeplats;
 // CODE --------------------------------------------------------------------
 
 /**
- * Move a plat up and down
+ * Move a plat up and down.
  *
- * @parm plat: ptr to the plat to move
+ * @param plat          Ptr to the plat to be moved.
  */
 void T_PlatRaise(plat_t *plat)
 {
@@ -94,51 +118,34 @@ void T_PlatRaise(plat_t *plat)
 
     switch(plat->status)
     {
-#if __JHEXEN__
-    case PLAT_UP:
-#else
     case up:
-#endif
         res = T_MovePlane(plat->sector, plat->speed, plat->high,
                           plat->crush, 0, 1);
 
         // Play a "while-moving" sound?
 #if __JHERETIC__
         if(!(leveltime & 31))
-            S_SectorSound(plat->sector, SORG_FLOOR, sfx_stnmov);
+            S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
 #endif
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
         if(plat->type == raiseAndChange ||
            plat->type == raiseToNearestAndChange)
         {
             if(!(leveltime & 7))
-            {
-# if __WOLFTC__
-                S_SectorSound(plat->sector, SORG_FLOOR, sfx_pltmov);
-# else
-                S_SectorSound(plat->sector, SORG_FLOOR, sfx_stnmov);
-# endif
-            }
+                S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
         }
 #endif
         if(res == crushed && (!plat->crush))
         {
             plat->count = plat->wait;
+            plat->status = down;
 #if __JHEXEN__
-            plat->status = PLAT_DOWN;
             SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
 #else
-            plat->status = down;
 # if __DOOM64TC__
             if(plat->type != downWaitUpDoor) // d64tc added test
 # endif
-            {
-# if __WOLFTC__
-                S_SectorSound(plat->sector, SORG_FLOOR, sfx_pltstr);
-# else
-                S_SectorSound(plat->sector, SORG_FLOOR, sfx_pstart);
-# endif
-            }
+                S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTART);
 #endif
         }
         else
@@ -146,24 +153,17 @@ void T_PlatRaise(plat_t *plat)
             if(res == pastdest)
             {
                 plat->count = plat->wait;
-#if __JHEXEN__
-                plat->status = PLAT_WAITING;
-#else
                 plat->status = waiting;
-#endif
-
 #if __JHEXEN__
                 SN_StopSequenceInSec(plat->sector);
-#elif __WOLFTC__
-                S_SectorSound(plat->sector, SORG_FLOOR, sfx_pltstp);
 #else
-                S_SectorSound(plat->sector, SORG_FLOOR, sfx_pstop);
+                S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTOP);
 #endif
                 switch(plat->type)
                 {
+                case downWaitUpStay:
 #if __JHEXEN__
-                case PLAT_DOWNWAITUPSTAY:
-                case PLAT_DOWNBYVALUEWAITUPSTAY:
+                case downByValueWaitUpStay:
 #else
 # if !__JHERETIC__
                 case blazeDWUS:
@@ -173,7 +173,6 @@ void T_PlatRaise(plat_t *plat)
                 case blazeDWUSplus16: // d64tc
                 case downWaitUpDoor: // d64tc
 # endif
-                case downWaitUpStay:
                 case raiseAndChange:
 #endif
                     P_RemoveActivePlat(plat);
@@ -186,36 +185,21 @@ void T_PlatRaise(plat_t *plat)
         }
         break;
 
-#if __JHEXEN__
-    case PLAT_DOWN:
-#else
     case down:
-#endif
         res =
             T_MovePlane(plat->sector, plat->speed, plat->low, false,0, -1);
 
         if(res == pastdest)
         {
             plat->count = plat->wait;
-#if __JHEXEN__
-            plat->status = PLAT_WAITING;
-#else
             plat->status = waiting;
-#endif
-#if __JHEXEN__
-            switch(plat->type)
-            {
-            case PLAT_UPWAITDOWNSTAY:
-            case PLAT_UPBYVALUEWAITDOWNSTAY:
-                P_RemoveActivePlat(plat);
-                break;
 
-            default:
-                break;
-            }
-#elif __DOOM64TC__
+#if __JHEXEN__ || __DOOM64TC__
             switch(plat->type)
             {
+# if __JHEXEN__
+            case upByValueWaitDownStay:
+# endif
             case upWaitDownStay:
                 P_RemoveActivePlat(plat);
                 break;
@@ -224,12 +208,11 @@ void T_PlatRaise(plat_t *plat)
                 break;
             }
 #endif
+
 #if __JHEXEN__
             SN_StopSequenceInSec(plat->sector);
-#elif __WOLFTC__
-            S_SectorSound(plat->sector, SORG_FLOOR, sfx_pltstp);
 #else
-            S_SectorSound(plat->sector, SORG_FLOOR, sfx_pstop);
+            S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTOP);
 #endif
         }
         else
@@ -237,40 +220,22 @@ void T_PlatRaise(plat_t *plat)
             // Play a "while-moving" sound?
 #if __JHERETIC__
             if(!(leveltime & 31))
-                S_SectorSound(plat->sector, SORG_FLOOR, sfx_stnmov);
+                S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
 #endif
         }
         break;
 
-#if __JHEXEN__
-    case PLAT_WAITING:
-#else
     case waiting:
-#endif
         if(!--plat->count)
         {
             if(P_GetFloatp(plat->sector, DMU_FLOOR_HEIGHT) == plat->low)
-            {
-#if __JHEXEN__
-                plat->status = PLAT_UP;
-#else
                 plat->status = up;
-#endif
-            }
             else
-            {
-#if __JHEXEN__
-                plat->status = PLAT_DOWN;
-#else
                 plat->status = down;
-#endif
-            }
 #if __JHEXEN__
             SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
-#elif __WOLFTC__
-            S_SectorSound(plat->sector, SORG_FLOOR, sfx_pltstr);
 #else
-            S_SectorSound(plat->sector, SORG_FLOOR, sfx_pstart);
+            S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTART);
 #endif
         }
         break;
@@ -282,15 +247,11 @@ void T_PlatRaise(plat_t *plat)
     }
 }
 
-/**
- * Do Platforms.
- *
- * @param amount: is only used for SOME platforms.
- */
 #if __JHEXEN__
-int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
+static int EV_DoPlat2(line_t *line, int tag, byte *args, plattype_e type,
+                      int amount)
 #else
-int EV_DoPlat(line_t *line, plattype_e type, int amount)
+static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
 #endif
 {
     int         rtn = 0;
@@ -303,24 +264,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
     xsector_t  *xsec;
     iterlist_t *list;
 
-#if !__JHEXEN__
-    // Activate all <type> plats that are in_stasis
-    switch(type)
-    {
-    case perpetualRaise:
-        P_ActivateInStasis(P_XLine(line)->tag);
-        break;
-
-    default:
-        break;
-    }
-#endif
-
-#if __JHEXEN__
-    list = P_GetSectorIterListForTag((int) args[0], false);
-#else
-    list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
-#endif
+    list = P_GetSectorIterListForTag(tag, false);
     if(!list)
         return rtn;
 
@@ -347,12 +291,9 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
         plat->thinker.function = (actionf_p1) T_PlatRaise;
 #endif
         plat->crush = false;
-
+        plat->tag = tag;
 #if __JHEXEN__
-        plat->tag = args[0];
         plat->speed = FIX2FLT(args[1] * (FRACUNIT / 8));
-#else
-        plat->tag = P_XLine(line)->tag;
 #endif
         floorheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         switch(type)
@@ -370,12 +311,7 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
             plat->status = up;
             // NO MORE DAMAGE, IF APPLICABLE
             xsec->special = 0;
-
-# if __WOLFTC__
-            S_SectorSound(sec, SORG_FLOOR, sfx_pltmov);
-# else
-            S_SectorSound(sec, SORG_FLOOR, sfx_stnmov);
-# endif
+            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
             break;
 
         case raiseAndChange:
@@ -387,19 +323,10 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
             plat->high = floorheight + amount * FRACUNIT;
             plat->wait = 0;
             plat->status = up;
-
-# if __WOLFTC__
-            S_SectorSound(sec, SORG_FLOOR, sfx_pltmov);
-# else
-            S_SectorSound(sec, SORG_FLOOR, sfx_stnmov);
-# endif
+            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
             break;
 #endif
-#if __JHEXEN__
-        case PLAT_DOWNWAITUPSTAY:
-#else
         case downWaitUpStay:
-#endif
             plat->low = P_FindLowestFloorSurrounding(sec);
 #if __JHEXEN__
             plat->low += 8;
@@ -410,35 +337,38 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
                 plat->low = floorheight;
 
             plat->high = floorheight;
+            plat->status = down;
 #if __JHEXEN__
             plat->wait = args[2];
-            plat->status = PLAT_DOWN;
 #else
             plat->wait = 35 * PLATWAIT;
-            plat->status = down;
-
-# if __WOLFTC__
-            S_SectorSound(sec, SORG_FLOOR, sfx_pltstr);
-# else
-            S_SectorSound(sec, SORG_FLOOR, sfx_pstart);
-# endif
+#endif
+#if !__JHEXEN__
+            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
 #endif
             break;
-#if __DOOM64TC__
-        case upWaitDownStay: // d64tc
-            plat->speed = PLATSPEED * 8;
+
+#if __DOOM64TC__ || __JHEXEN__
+        case upWaitDownStay:
             plat->high = P_FindHighestFloorSurrounding(sec);
 
             if(plat->high < floorheight)
                 plat->high = floorheight;
 
             plat->low = floorheight;
-            plat->wait = 35 * PLATWAIT;
             plat->status = up;
-
-            S_SectorSound(sec, SORG_FLOOR, sfx_pstart);
+# if __JHEXEN__
+            plat->wait = args[2];
+# else
+            plat->wait = 35 * PLATWAIT;
+# endif
+# if __DOOM64TC__
+            plat->speed = PLATSPEED * 8;
+            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
+# endif
             break;
-
+#endif
+#if __DOOM64TC__
         case downWaitUpDoor: // d64tc
             plat->speed = PLATSPEED * 8;
             plat->low = P_FindLowestFloorSurrounding(sec);
@@ -454,31 +384,22 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
             break;
 #endif
 #if __JHEXEN__
-       case PLAT_DOWNBYVALUEWAITUPSTAY:
+       case downByValueWaitUpStay:
             plat->low = floorheight - args[3] * 8;
             if(plat->low > floorheight)
                 plat->low = floorheight;
             plat->high = floorheight;
             plat->wait = args[2];
-            plat->status = PLAT_DOWN;
+            plat->status = down;
             break;
 
-        case PLAT_UPWAITDOWNSTAY:
-            plat->high = P_FindHighestFloorSurrounding(sec);
-            if(plat->high < floorheight)
-                plat->high = floorheight;
-            plat->low = floorheight;
-            plat->wait = args[2];
-            plat->status = PLAT_UP;
-            break;
-
-        case PLAT_UPBYVALUEWAITDOWNSTAY:
+        case upByValueWaitDownStay:
             plat->high = floorheight + args[3] * 8;
             if(plat->high < floorheight)
                 plat->high = floorheight;
             plat->low = floorheight;
             plat->wait = args[2];
-            plat->status = PLAT_UP;
+            plat->status = up;
             break;
 #endif
 #if __JDOOM__
@@ -492,19 +413,10 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
             plat->high = floorheight;
             plat->wait = 35 * PLATWAIT;
             plat->status = down;
-
-# if __WOLFTC__
-            S_SectorSound(sec, SORG_FLOOR, sfx_pltstr);
-# else
-            S_SectorSound(sec, SORG_FLOOR, sfx_pstart);
-# endif
+            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
             break;
 #endif
-#if __JHEXEN__
-        case PLAT_PERPETUALRAISE:
-#else
         case perpetualRaise:
-#endif
             plat->low = P_FindLowestFloorSurrounding(sec);
 #if __JHEXEN__
             plat->low += 8;
@@ -524,12 +436,9 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
             plat->wait = args[2];
 #else
             plat->wait = 35 * PLATWAIT;
-
-# if __WOLFTC__
-            S_SectorSound(sec, SORG_FLOOR, sfx_pltstr);
-# else
-            S_SectorSound(sec, SORG_FLOOR, sfx_pstart);
-# endif
+#endif
+#if !__JHEXEN__
+            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
 #endif
             break;
         }
@@ -540,6 +449,37 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
 #endif
     }
     return rtn;
+}
+
+/**
+ * Do Platforms.
+ *
+ * @param amount: is only used for SOME platforms.
+ */
+#if __JHEXEN__
+int EV_DoPlat(line_t *line, byte *args, plattype_e type, int amount)
+#else
+int EV_DoPlat(line_t *line, plattype_e type, int amount)
+#endif
+{
+#if __JHEXEN__
+    return EV_DoPlat2(line, (int) args[0], args, type, amount);
+#else
+    xline_t *xline = P_XLine(line);
+
+    // Activate all <type> plats that are in_stasis
+    switch(type)
+    {
+    case perpetualRaise:
+        P_ActivateInStasis(xline->tag);
+        break;
+
+    default:
+        break;
+    }
+
+    return EV_DoPlat2(line, xline->tag, type, amount);
+#endif
 }
 
 /**
@@ -572,18 +512,8 @@ void P_ActivateInStasis(int tag)
 }
 #endif
 
-/**
- * Handler for "stop perpetual floor" linedef type.
- *
- * @parm line           Ptr to the line that stopped the plat.
- *
- * @return              <code>true</code> if the plat was put in stasis.
- */
-#if __JHEXEN__
-boolean EV_StopPlat(line_t *line, byte *args)
-#else
-boolean EV_StopPlat(line_t *line)
-#endif
+
+static boolean EV_StopPlat2(int tag)
 {
 #if __JHEXEN__
     int         i;
@@ -592,7 +522,7 @@ boolean EV_StopPlat(line_t *line)
     for(i = 0; i < MAXPLATS; ++i)
     {
         // ...for the one with the tag.
-        if((activeplats[i])->tag == args[0])
+        if((activeplats[i])->tag == tag)
         {
             // Destroy it.
             P_XSector((activeplats[i])->sector)->specialdata = NULL;
@@ -612,7 +542,7 @@ boolean EV_StopPlat(line_t *line)
         plat_t *plat = pl->plat;
 
         // ..for one with the tag and not in stasis.
-        if(plat->status != in_stasis && plat->tag == P_XLine(line)->tag)
+        if(plat->status != in_stasis && plat->tag == tag)
         {
             // Put it in stasis
             plat->oldstatus = plat->status;
@@ -621,6 +551,26 @@ boolean EV_StopPlat(line_t *line)
         }
     }
     return true;
+#endif
+}
+
+/**
+ * Handler for "stop perpetual floor" linedef type.
+ *
+ * @parm line           Ptr to the line that stopped the plat.
+ *
+ * @return              <code>true</code> if the plat was put in stasis.
+ */
+#if __JHEXEN__
+boolean EV_StopPlat(line_t *line, byte *args)
+#else
+boolean EV_StopPlat(line_t *line)
+#endif
+{
+#if __JHEXEN__
+    return EV_StopPlat2((int) args[0]);
+#else
+    return EV_StopPlat2(P_XLine(line)->tag);
 #endif
 }
 
@@ -692,9 +642,13 @@ void P_RemoveActivePlat(plat_t *plat)
 /**
  * Remove all plats from the active plat list.
  */
-#if !__JHEXEN__
 void P_RemoveAllActivePlats(void)
 {
+#if __JHEXEN__
+    uint        i;
+    for(i = 0; i < MAXPLATS; ++i)
+        activeplats[i] = NULL;
+#else
     while(activeplats)
     {
         platlist_t *next = activeplats->next;
@@ -702,5 +656,5 @@ void P_RemoveAllActivePlats(void)
         free(activeplats);
         activeplats = next;
     }
-}
 #endif
+}

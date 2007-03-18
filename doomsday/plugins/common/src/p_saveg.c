@@ -4037,6 +4037,7 @@ static void P_ArchiveThinkers(void)
 {
 #if !__JHEXEN__
     extern ceilinglist_t *activeceilings;
+    extern platlist_t *activeplats;
 #endif
 
     thinker_t  *th = 0;

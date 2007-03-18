@@ -78,7 +78,7 @@
 # define SFX_CEILINGSTOP        (sfx_none)
 #elif __JHEXEN__
 # define SFX_CEILINGMOVE        (SFX_NONE)
-# define SFX_CEILINGSTOP        (sfx_none)
+# define SFX_CEILINGSTOP        (SFX_NONE)
 #endif
 
 // TYPES -------------------------------------------------------------------
