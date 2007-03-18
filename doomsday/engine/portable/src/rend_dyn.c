@@ -272,7 +272,13 @@ static void DL_LinkToSubSecPlane(dynlight_t *dyn, uint index, uint plane)
  */
 dynlight_t *DL_GetSubSecPlaneLightLinks(uint ssec, uint plane)
 {
-    return subSecLightLinks[ssec].planes[plane];
+    subseclight_t *ssll;
+
+    assert(ssec >= numsubsectors);
+    ssll = &subSecLightLinks[ssec];
+    assert(!ssll->planeCount || plane > ssll->planeCount - 1);
+    
+    return ssll->planes[plane];
 }
 
 static void DL_LinkToSegSection(dynlight_t *dyn, uint index, segsection_t segPart)
