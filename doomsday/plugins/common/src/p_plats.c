@@ -547,7 +547,7 @@ static boolean EV_StopPlat2(int tag)
             // Put it in stasis
             plat->oldstatus = plat->status;
             plat->status = in_stasis;
-            plat->thinker.function = NOPFUNC;
+            plat->thinker.function = INSTASIS;
         }
     }
     return true;

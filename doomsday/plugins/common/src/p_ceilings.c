@@ -307,6 +307,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
         ceiling->thinker.function = T_MoveCeiling;
         ceiling->sector = sec;
         ceiling->crush = false;
+        ceiling->speed = basespeed;
 
         switch(type)
         {
@@ -321,9 +322,6 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             ceiling->speed *= 2;
             break;
 #endif
-#if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
-        case silentCrushAndRaise:
-#endif
 #if __JHEXEN__
         case crushRaiseAndStay:
             ceiling->crush = arg[2];    // arg[2] = crushing value
@@ -331,6 +329,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
             ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
             ceiling->direction = -1;
             break;
+#endif
+#if __JDOOM__ || __WOLFTC__ || __DOOM64TC__
+        case silentCrushAndRaise:
 #endif
         case crushAndRaise:
 #if !__JHEXEN__
@@ -459,6 +460,7 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
                          FIX2FLT((fixed_t) arg[1] * (FRACUNIT / 8)),
                          type);
 #else
+    int         rtn = 0;
     // Reactivate in-stasis ceilings...for certain types.
     switch(type)
     {
@@ -467,16 +469,16 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
     case silentCrushAndRaise:
 # endif
     case crushAndRaise:
-        P_ActivateInStasisCeiling(line);
+        rtn = P_ActivateInStasisCeiling(line);
         break;
 
     default:
         break;
     }
 # if __DOOM64TC__
-    return EV_DoCeiling2(line, P_XLine(line)->tag, CEILSPEED, type);
+    return EV_DoCeiling2(line, P_XLine(line)->tag, CEILSPEED, type) || rtn;
 # else
-    return EV_DoCeiling2(P_XLine(line)->tag, CEILSPEED, type);
+    return EV_DoCeiling2(P_XLine(line)->tag, CEILSPEED, type) || rtn;
 # endif
 #endif
 }
@@ -575,13 +577,14 @@ void P_RemoveAllActiveCeilings(void)
 int P_ActivateInStasisCeiling(line_t *line)
 {
     int         rtn = 0;
+    xline_t    *xline = P_XLine(line);
     ceilinglist_t *cl;
 
     for(cl = activeceilings; cl; cl = cl->next)
     {
         ceiling_t *ceiling = cl->ceiling;
 
-        if(ceiling->direction == 0 && ceiling->tag == P_XLine(line)->tag)
+        if(ceiling->direction == 0 && ceiling->tag == xline->tag)
         {
             ceiling->direction = ceiling->olddirection;
 # if __JHERETIC__
@@ -630,9 +633,7 @@ static int EV_CeilingCrushStop2(int tag)
         {
             ceiling->olddirection = ceiling->direction;
             ceiling->direction = 0;
-            ceiling->thinker.function = NOPFUNC;
-
-            // return true
+            ceiling->thinker.function = INSTASIS;
             rtn = 1;
         }
     }

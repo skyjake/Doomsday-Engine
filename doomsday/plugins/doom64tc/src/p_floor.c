@@ -89,8 +89,6 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
                 // The move is complete.
                 lastpos = floorheight;
                 P_SetFloatp(sector, DMU_FLOOR_HEIGHT, dest);
-                //P_SetFloatp(sector, pspeed, 0);
-
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
@@ -104,13 +102,12 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
             else
             {
                 lastpos = floorheight;
-                P_SetFloatp(sector, DMU_FLOOR_HEIGHT, lastpos - speed);
+                P_SetFloatp(sector, DMU_FLOOR_HEIGHT, floorheight - speed);
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
                     P_SetFloatp(sector, DMU_FLOOR_HEIGHT, lastpos);
                     P_SetFloatp(sector, ptarget, lastpos);
-                    //P_SetFloatp(sector, pspeed, 0);
                     P_ChangeSector(sector, crush);
                     return crushed;
                 }
@@ -124,7 +121,6 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
                 // The move is complete.
                 lastpos = floorheight;
                 P_SetFloatp(sector, DMU_FLOOR_HEIGHT, dest);
-                //P_SetFloatp(sector, pspeed, 0);
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
@@ -139,7 +135,7 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
             {
                 // COULD GET CRUSHED
                 lastpos = floorheight;
-                P_SetFloatp(sector, DMU_FLOOR_HEIGHT, lastpos + speed);
+                P_SetFloatp(sector, DMU_FLOOR_HEIGHT, floorheight + speed);
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
@@ -148,7 +144,6 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
 
                     P_SetFloatp(sector, DMU_FLOOR_HEIGHT, lastpos);
                     P_SetFloatp(sector, ptarget, lastpos);
-                    //P_SetFloatp(sector, pspeed, 0);
                     P_ChangeSector(sector, crush);
                     return crushed;
                 }
@@ -168,7 +163,6 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
                 // The move is complete.
                 lastpos = ceilingheight;
                 P_SetFloatp(sector, DMU_CEILING_HEIGHT, dest);
-                //P_SetFloatp(sector, pspeed, 0);
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
@@ -182,7 +176,7 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
             {
                 // COULD GET CRUSHED
                 lastpos = ceilingheight;
-                P_SetFloatp(sector, DMU_CEILING_HEIGHT, lastpos - speed);
+                P_SetFloatp(sector, DMU_CEILING_HEIGHT, ceilingheight - speed);
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
@@ -191,7 +185,6 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
 
                     P_SetFloatp(sector, DMU_CEILING_HEIGHT, lastpos);
                     P_SetFloatp(sector, ptarget, lastpos);
-                    //P_SetFloatp(sector, pspeed, 0);
                     P_ChangeSector(sector, crush);
 
                     return crushed;
@@ -206,7 +199,6 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
                 // The move is complete.
                 lastpos = ceilingheight;
                 P_SetFloatp(sector, DMU_CEILING_HEIGHT, dest);
-                //P_SetFloatp(sector, pspeed, 0);
                 flag = P_ChangeSector(sector, crush);
                 if(flag == true)
                 {
@@ -219,7 +211,7 @@ result_e T_MovePlane(sector_t *sector, float speed, float dest,
             else
             {
                 lastpos = ceilingheight;
-                P_SetFloatp(sector, DMU_CEILING_HEIGHT, lastpos + speed);
+                P_SetFloatp(sector, DMU_CEILING_HEIGHT, ceilingheight + speed);
                 flag = P_ChangeSector(sector, crush);
             }
             break;

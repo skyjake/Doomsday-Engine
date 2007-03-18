@@ -625,7 +625,7 @@ static void SetMobjPtr(int *archiveNum)
 
 #else
 
-/*
+/**
  * Must be called before saving or loading any data.
  */
 static void SV_InitThingArchive(boolean load)
@@ -643,7 +643,7 @@ static void SV_InitThingArchive(boolean load)
     {
         thinker_t *th;
 
-        // Count the number of mobjs we'll be writting.
+        // Count the number of mobjs we'll be writing.
         th = thinkercap.next;
         while(th != &thinkercap)
         {
@@ -660,7 +660,7 @@ static void SV_InitThingArchive(boolean load)
     thing_archiveSize = count;
 }
 
-/*
+/**
  * Free the thing archive. Called when load is complete.
  */
 static void SV_FreeThingArchive(void)
@@ -670,7 +670,7 @@ static void SV_FreeThingArchive(void)
     thing_archiveSize = 0;
 }
 
-/*
+/**
  * Called by the write code to get archive numbers.
  * If the mobj is already archived, the existing number is returned.
  * Number zero is not used.
@@ -681,7 +681,7 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
     int     first_empty = -1;
 
     // We only archive valid mobj thinkers.
-    if(mo == NULL || ((thinker_t *) mo)->function == NOPFUNC)
+    if(mo == NULL || ((thinker_t *) mo)->function != P_MobjThinker)
         return 0;
 
     for(i = 0; i < thing_archiveSize; i++)
@@ -4054,7 +4054,7 @@ static void P_ArchiveThinkers(void)
     for(th = thinkercap.next; th != &thinkercap && th; th = th->next)
     {
 #if !__JHEXEN__
-        if(th->function == NOPFUNC) // Special case for thinkers in stasis.
+        if(th->function == INSTASIS) // Special case for thinkers in stasis.
         {
             platlist_t *pl;
             ceilinglist_t *cl;     //jff 2/22/98 need this for ceilings too now
