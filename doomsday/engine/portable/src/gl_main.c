@@ -64,6 +64,11 @@
 #  include <SDL.h>
 #endif
 
+#ifdef TextOut
+// Windows has its own TextOut.
+#  undef TextOut
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -530,8 +535,8 @@ void GL_EarlyInit(void)
         glScreenBits = atoi(ArgNext());
 
     gl.Init(glScreenWidth, glScreenHeight, glScreenBits, !ArgExists("-window"));
-    GL_InitDeferred();   
-    
+    GL_InitDeferred();
+
     // Check the maximum texture size.
     gl.GetIntegerv(DGL_MAX_TEXTURE_SIZE, &glMaxTexSize);
     if(glMaxTexSize == 256)
@@ -548,7 +553,7 @@ void GL_EarlyInit(void)
     if(ArgCheckWith("-maxtex", 1))
     {
         int     customSize = CeilPow2(strtol(ArgNext(), 0, 0));
-        
+
         if(glMaxTexSize < customSize)
             customSize = glMaxTexSize;
         glMaxTexSize = customSize;
@@ -560,7 +565,7 @@ void GL_EarlyInit(void)
         filloutlines = false;
         Con_Message("  Textures have outlines.\n");
     }
-    
+
     // Does the graphics library support multitexturing?
     numTexUnits = gl.GetInteger(DGL_MAX_TEXTURE_UNITS);
     envModAdd = gl.GetInteger(DGL_MODULATE_ADD_COMBINE);
@@ -577,10 +582,10 @@ void GL_EarlyInit(void)
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
-    
+
     // Allow font rendering.
     FR_Init();
-    
+
     initGLOk = true;
 }
 
@@ -595,7 +600,7 @@ void GL_Init(void)
     {
         Con_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
     }
-    
+
     // Initialize font renderer.
     GL_InitFont();
 
@@ -631,7 +636,7 @@ void GL_Shutdown(void)
     if(!initGLOk)
         return;                 // Not yet initialized fully.
 
-    GL_ShutdownDeferred();    
+    GL_ShutdownDeferred();
     GL_ShutdownFont();
     Rend_ShutdownSky();
     Rend_Reset();
