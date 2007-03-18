@@ -328,9 +328,13 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
     param.playerMask = playerMask; // Unused?
     param.skill = skill;
     
+    DD_Executef(true, "texreset raw"); // delete raw images to save memory
+    
     // TODO: Use progress bar mode and update progress during the setup.
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              P_SetupLevelWorker, &param);
+
+    R_SetupLevel(DDSLM_AFTER_BUSY, 0);
 }
 
 /*

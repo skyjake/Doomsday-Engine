@@ -1874,19 +1874,19 @@ void R_RationalizeSectors(void)
 }
 
 /**
- * Mapinfo must be set.
+ * Mapinfo must be available.
  */
 void R_SetupFog(void)
 {
-    int     flags;
-
+    int flags = 0;
+    
     if(!mapinfo)
     {
         // Go with the defaults.
         Con_Execute(CMDS_DDAY,"fog off", true, false);
         return;
     }
-
+    
     // Check the flags.
     flags = mapinfo->flags;
     if(flags & MIF_FOG)
@@ -2327,8 +2327,6 @@ void R_InitLevel(char *level_id)
 
     Cl_Reset();
     RL_DeleteLists();
-    GL_DeleteRawImages();
-    //Con_Progress(10, 0);
 
     // See what mapinfo says about this level.
     mapinfo = Def_GetMapInfo(level_id);
@@ -2336,7 +2334,6 @@ void R_InitLevel(char *level_id)
         mapinfo = Def_GetMapInfo("*");
 
     // Setup accordingly.
-    R_SetupFog();
     R_SetupSky();
 
     if(mapinfo)
@@ -2389,7 +2386,7 @@ void R_InitLevel(char *level_id)
 /**
  * Called by the game at various points in the level setup process.
  */
-void R_SetupLevel(int mode, int fladgs)
+void R_SetupLevel(int mode, int flags)
 {
     uint        i;
 
@@ -2509,6 +2506,10 @@ void R_SetupLevel(int mode, int fladgs)
         Z_EnableFastMalloc(false);
         return;
     }
+    case DDSLM_AFTER_BUSY:
+        // Shouldn't do anything time-consuming, as we are no longer in busy mode.
+        R_SetupFog();
+        break;
     default:
         Con_Error("R_SetupLevel: Unknown setup mode %i", mode);
     }

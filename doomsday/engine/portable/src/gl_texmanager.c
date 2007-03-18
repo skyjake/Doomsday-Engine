@@ -3123,7 +3123,16 @@ D_CMD(TranslateFont)
 
 D_CMD(ResetTextures)
 {
-    GL_TexReset();
+    if(argc == 2 && !stricmp(argv[1], "raw"))
+    {
+        // Reset just raw images.
+        GL_DeleteRawImages();
+    }
+    else
+    {
+        // Reset everything.
+        GL_TexReset();
+    }
     return true;
 }
 

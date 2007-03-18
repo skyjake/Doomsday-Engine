@@ -753,7 +753,8 @@ extern          "C" {
     {
         DDSLM_AFTER_LOADING,    // After loading a savegame...
         DDSLM_FINALIZE,         // After everything else is done.
-        DDSLM_INITIALIZE        // Before anything else if done.
+        DDSLM_INITIALIZE,       // Before anything else if done.
+        DDSLM_AFTER_BUSY        // After leaving busy mode, which was used during setup.
     };
 
     enum                           // Sector reverb data indices.
