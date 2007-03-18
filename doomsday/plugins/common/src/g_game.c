@@ -790,9 +790,6 @@ void G_Ticker(void)
     if(IS_CLIENT && !Get(DD_GAME_READY))
         return;
 
-#if _DEBUG
-Z_CheckHeap();
-#endif
     // do player reborns if needed
     for(i = 0; i < MAXPLAYERS; ++i)
     {
