@@ -253,14 +253,14 @@ void            T_VerticalDoor(vldoor_t *door);
 // Ceiling
 //
 typedef enum {
-    CLEV_LOWERTOFLOOR,
-    CLEV_RAISETOHIGHEST,
-    CLEV_LOWERANDCRUSH,
-    CLEV_CRUSHANDRAISE,
-    CLEV_LOWERBYVALUE,
-    CLEV_RAISEBYVALUE,
-    CLEV_CRUSHRAISEANDSTAY,
-    CLEV_MOVETOVALUETIMES8
+    lowerToFloor,
+    raiseToHighest,
+    lowerAndCrush,
+    crushAndRaise,
+    lowerByValue,
+    raiseByValue,
+    crushRaiseAndStay,
+    moveToValueTimes8
 } ceiling_e;
 
 typedef struct {
@@ -280,12 +280,11 @@ typedef struct {
 #define CEILWAIT        150
 #define MAXCEILINGS     30
 
-extern ceiling_t *activeceilings[MAXCEILINGS];
-
 int             EV_DoCeiling(line_t *line, byte *args, ceiling_e type);
 void            T_MoveCeiling(ceiling_t *ceiling);
 void            P_AddActiveCeiling(ceiling_t *c);
 void            P_RemoveActiveCeiling(ceiling_t *c);
+void            P_RemoveAllActiveCeilings(void);
 int             EV_CeilingCrushStop(line_t *line, byte *args);
 
 //

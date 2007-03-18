@@ -301,8 +301,6 @@ typedef struct ceilinglist {
 #define CEILSPEED       1
 #define CEILWAIT        150
 
-extern ceilinglist_t *activeceilings;
-
 int             EV_DoCeiling(line_t *line, ceiling_e type);
 
 void            T_MoveCeiling(ceiling_t *ceiling);

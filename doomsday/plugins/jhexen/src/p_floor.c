@@ -491,7 +491,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
         {
             P_XSector(sec)->specialdata = NULL;
         }
-        ceiling = EV_DoCeiling(line, args, CLEV_RAISEBYVALUE);
+        ceiling = EV_DoCeiling(line, args, raiseByValue);
     }
     else
     {
@@ -500,7 +500,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
         {
             P_XSector(sec)->specialdata = NULL;
         }
-        ceiling = EV_DoCeiling(line, args, CLEV_LOWERBYVALUE);
+        ceiling = EV_DoCeiling(line, args, lowerByValue);
     }
     return (floor | ceiling);
 }

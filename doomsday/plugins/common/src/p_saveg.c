@@ -491,7 +491,7 @@ static thinkerinfo_t thinkerInfo[] = {
 
 /**
  * Exit with a fatal error if thr value at the current location in the save
- * file does not match that associated with the specified segment type. 
+ * file does not match that associated with the specified segment type.
  *
  * @param segType       Value by which to check for alignment.
  */
@@ -1788,7 +1788,7 @@ static int SV_ReadMobj(thinker_t *th)
     mo->pos[VY] = SV_ReadLong();
     mo->pos[VZ] = SV_ReadLong();
 
-    //More drawing info: to determine current sprite. 
+    //More drawing info: to determine current sprite.
     mo->angle = SV_ReadLong();  // orientation
     mo->sprite = SV_ReadLong(); // used to find patch_t and flip value
     mo->frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
@@ -3135,7 +3135,7 @@ static void SV_WriteLight(light_t *th)
 static int SV_ReadLight(light_t *th)
 {
     sector_t *sector;
-    
+
     if(saveVersion >= 4)
     {
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3151,7 +3151,7 @@ static int SV_ReadLight(light_t *th)
         th->value2 = SV_ReadLong();
         th->tics1 = SV_ReadLong();
         th->tics2 = SV_ReadLong();
-        th->count = SV_ReadLong(); 
+        th->count = SV_ReadLong();
     }
     else
     {
@@ -3198,7 +3198,7 @@ static void SV_WritePhase(phase_t *th)
 static int SV_ReadPhase(phase_t *th)
 {
     sector_t *sector;
-    
+
     if(saveVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
@@ -3339,7 +3339,7 @@ static void SV_WriteDoorPoly(polydoor_t *th)
 }
 
 static int SV_ReadDoorPoly(polydoor_t *th)
-{   
+{
     if(saveVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
@@ -3512,7 +3512,7 @@ static void SV_WritePillar(pillar_t *th)
 static int SV_ReadPillar(pillar_t *th)
 {
     sector_t *sector;
-    
+
     if(saveVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
@@ -4035,6 +4035,10 @@ static void DoArchiveThinker(thinker_t *th, thinkerclass_t tclass)
  */
 static void P_ArchiveThinkers(void)
 {
+#if !__JHEXEN__
+    extern ceilinglist_t *activeceilings;
+#endif
+
     thinker_t  *th = 0;
     thinkerinfo_t *thInfo;
 #if !__JHEXEN__

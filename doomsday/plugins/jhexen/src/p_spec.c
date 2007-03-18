@@ -348,19 +348,19 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         break;
 
     case 40: // Ceiling Lower by Value
-        buttonSuccess = EV_DoCeiling(line, args, CLEV_LOWERBYVALUE);
+        buttonSuccess = EV_DoCeiling(line, args, lowerByValue);
         break;
 
     case 41: // Ceiling Raise by Value
-        buttonSuccess = EV_DoCeiling(line, args, CLEV_RAISEBYVALUE);
+        buttonSuccess = EV_DoCeiling(line, args, raiseByValue);
         break;
 
     case 42: // Ceiling Crush and Raise
-        buttonSuccess = EV_DoCeiling(line, args, CLEV_CRUSHANDRAISE);
+        buttonSuccess = EV_DoCeiling(line, args, crushAndRaise);
         break;
 
     case 43: // Ceiling Lower and Crush
-        buttonSuccess = EV_DoCeiling(line, args, CLEV_LOWERANDCRUSH);
+        buttonSuccess = EV_DoCeiling(line, args, lowerAndCrush);
         break;
 
     case 44: // Ceiling Crush Stop
@@ -368,7 +368,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         break;
 
     case 45: // Ceiling Crush Raise and Stay
-        buttonSuccess = EV_DoCeiling(line, args, CLEV_CRUSHRAISEANDSTAY);
+        buttonSuccess = EV_DoCeiling(line, args, crushRaiseAndStay);
         break;
 
     case 46: // Floor Crush Stop
@@ -412,7 +412,7 @@ boolean P_ExecuteLineSpecial(int special, byte *args, line_t *line, int side,
         break;
 
     case 69: // Ceiling Move to Value * 8
-        buttonSuccess = EV_DoCeiling(line, args, CLEV_MOVETOVALUETIMES8);
+        buttonSuccess = EV_DoCeiling(line, args, moveToValueTimes8);
         break;
 
     case 70: // Teleport
@@ -920,9 +920,8 @@ void P_SpawnSpecials(void)
         }
     }
 
-    // FIXME: Remove fixed limits
-    for(i = 0; i < MAXCEILINGS; ++i)
-        activeceilings[i] = NULL;
+    // FIXME: Remove fixed limits.
+    P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
     for(i = 0; i < MAXPLATS; ++i)
         activeplats[i] = NULL;
 
