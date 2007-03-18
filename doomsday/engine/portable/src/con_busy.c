@@ -201,7 +201,8 @@ static void Con_BusyLoadTextures(void)
     
     if(busyMode & BUSYF_CONSOLE_OUTPUT)
     {
-        if(FR_PrepareFont("normal12"))
+        const char* fontName = (glScreenWidth > 640? "normal18" : "normal12");
+        if(FR_PrepareFont(fontName))
         {
             busyFont = FR_GetCurrent();
             busyFontHgt = FR_TextHeight("A");
@@ -359,7 +360,7 @@ static void Con_BusyDrawIndicator(float pos)
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 
     gl.Begin(DGL_TRIANGLE_FAN);
-    gl.Color4ub(0, 0, 0, 128);
+    gl.Color4ub(0, 0, 0, 140);
     gl.Vertex2f(x, y);
     gl.Color4ub(0, 0, 0, 0);
     gl.Vertex2f(x, y - backH);
@@ -388,6 +389,7 @@ static void Con_BusyDrawIndicator(float pos)
     gl.Translatef(-.5f, -.5f, 0.f);
 
     // Draw a fan.
+    gl.Color4f(col[0], col[1], col[2], .66f);
     gl.Bind(texLoading[1]);
     gl.Begin(DGL_TRIANGLE_FAN);
     // Center.
@@ -411,7 +413,11 @@ static void Con_BusyDrawIndicator(float pos)
  */
 static void Con_BusyDrawConsoleOutput(void)
 {
-#define LINE_COUNT 3
+#define LINE_COUNT 4
+    
+    const float lineAlpha[LINE_COUNT] = {
+        .05f, .1f, .2f, 1.f
+    };
     
     cbuffer_t  *buffer;
     static cbline_t *lines[LINE_COUNT + 1];
@@ -444,7 +450,7 @@ static void Con_BusyDrawConsoleOutput(void)
     y = glScreenHeight - busyFontHgt * (linecount + .5f);
     for(i = 0; i < linecount; ++i, y += busyFontHgt)
     {
-        float color = 1.f / (linecount - i);
+        float color = lineAlpha[i];
         const cbline_t *line = lines[i];
 
         if(!line)
