@@ -427,6 +427,14 @@ void GL_InitFont(void)
     glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
 
     FR_SetFont(glFontFixed);
+
+    Cfont.flags = DDFONT_WHITE;
+    Cfont.height = FR_SingleLineHeight("Con");
+    Cfont.sizeX = 1;
+    Cfont.sizeY = 1;
+    Cfont.TextOut = FR_ShadowTextOut;
+    Cfont.Width = FR_TextWidth;
+    Cfont.Filter = NULL;
 }
 
 void GL_ShutdownFont(void)
