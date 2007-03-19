@@ -237,10 +237,8 @@ void P_CopySector(sector_t* from, sector_t* to)
     // Copy the extended properties too
 #if __JDOOM__ || __JHERETIC__
     xto->special = xfrom->special;
-    //xto->tag = xfrom->tag;
     xto->soundtraversed = xfrom->soundtraversed;
     xto->soundtarget = xfrom->soundtarget;
-    xto->specialdata = xfrom->specialdata;
 #if __JHERETIC__
     xto->seqType = xfrom->seqType;
 #endif
@@ -251,11 +249,9 @@ void P_CopySector(sector_t* from, sector_t* to)
     xto->xg = xfrom->xg;
 #else
     xto->special = xfrom->special;
-    //xto->tag = xfrom->tag;
     xto->soundtraversed = xfrom->soundtraversed;
     xto->soundtarget = xfrom->soundtarget;
     xto->seqType = xfrom->seqType;
-    xto->specialdata = xfrom->specialdata;
 #endif
 }
 
