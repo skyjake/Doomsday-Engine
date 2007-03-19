@@ -97,11 +97,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-#if __JHEXEN__
-plat_t *activeplats[MAXPLATS];
-#else
 platlist_t *activeplats;
-#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -516,25 +512,6 @@ int P_ActivateInStasisPlat(int tag)
 
 static boolean EV_StopPlat2(int tag)
 {
-#if __JHEXEN__
-    int         i;
-
-    // Search the active plats...
-    for(i = 0; i < MAXPLATS; ++i)
-    {
-        // ...for the one with the tag.
-        if((activeplats[i])->tag == tag)
-        {
-            // Destroy it.
-            P_XSector((activeplats[i])->sector)->specialdata = NULL;
-            P_TagFinished(P_XSector((activeplats[i])->sector)->tag);
-            P_RemoveThinker(&(activeplats[i])->thinker);
-            activeplats[i] = NULL;
-            return false;
-        }
-    }
-    return false;
-#else
     platlist_t *pl;
 
     // Search the active plats...
@@ -542,6 +519,15 @@ static boolean EV_StopPlat2(int tag)
     {
         plat_t *plat = pl->plat;
 
+#if __JHEXEN__
+        // ...for THE one with the tag.
+        if(plat->tag == tag)
+        {
+            // Destroy it.
+            P_RemoveActivePlat(plat);
+            return false;
+        }
+#else
         // ..for one with the tag and not in stasis.
         if(plat->status != in_stasis && plat->tag == tag)
         {
@@ -550,7 +536,12 @@ static boolean EV_StopPlat2(int tag)
             plat->status = in_stasis;
             plat->thinker.function = INSTASIS;
         }
+#endif
     }
+
+#if __JHEXEN__
+    return false;
+#else
     return true;
 #endif
 }
@@ -582,17 +573,6 @@ boolean EV_StopPlat(line_t *line)
  */
 void P_AddActivePlat(plat_t *plat)
 {
-#if __JHEXEN__
-    int         i;
-
-    for(i = 0; i < MAXPLATS; ++i)
-        if(activeplats[i] == NULL)
-        {
-            activeplats[i] = plat;
-            return;
-        }
-    Con_Error("P_AddActivePlat: no more plats!");
-#else
     platlist_t *list = malloc(sizeof *list);
 
     list->plat = plat;
@@ -603,7 +583,6 @@ void P_AddActivePlat(plat_t *plat)
 
     list->prev = &activeplats;
     activeplats = list;
-#endif
 }
 
 /**
@@ -613,31 +592,18 @@ void P_AddActivePlat(plat_t *plat)
  */
 void P_RemoveActivePlat(plat_t *plat)
 {
-#if __JHEXEN__
-    int         i;
-
-    for(i = 0; i < MAXPLATS; ++i)
-        if(plat == activeplats[i])
-        {
-            P_XSector((activeplats[i])->sector)->specialdata = NULL;
-            P_TagFinished(P_XSector(plat->sector)->tag);
-            P_RemoveThinker(&(activeplats[i])->thinker);
-            activeplats[i] = NULL;
-            return;
-        }
-    Con_Error("P_RemoveActivePlat: can't find plat!");
-#else
     platlist_t *list = plat->list;
 
     P_XSector(plat->sector)->specialdata = NULL;
-
+#if __JHEXEN__
+    P_TagFinished(P_XSector(plat->sector)->tag);
+#endif
     P_RemoveThinker(&plat->thinker);
 
     if((*list->prev = list->next) != NULL)
         list->next->prev = list->prev;
 
     free(list);
-#endif
 }
 
 /**
@@ -645,11 +611,6 @@ void P_RemoveActivePlat(plat_t *plat)
  */
 void P_RemoveAllActivePlats(void)
 {
-#if __JHEXEN__
-    uint        i;
-    for(i = 0; i < MAXPLATS; ++i)
-        activeplats[i] = NULL;
-#else
     while(activeplats)
     {
         platlist_t *next = activeplats->next;
@@ -657,5 +618,4 @@ void P_RemoveAllActivePlats(void)
         free(activeplats);
         activeplats = next;
     }
-#endif
 }

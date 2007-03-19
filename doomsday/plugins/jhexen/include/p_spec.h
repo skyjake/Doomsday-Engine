@@ -200,11 +200,18 @@ typedef struct {
     int             crush;
     int             tag;
     plattype_e      type;
+
+    struct platlist *list;   // killough
 } plat_t;
+
+// New limit-free plat structure -- killough
+typedef struct platlist {
+  plat_t *plat;
+  struct platlist *next,**prev;
+} platlist_t;
 
 #define PLATWAIT 3
 #define PLATSPEED 1
-#define MAXPLATS 128
 
 void            T_PlatRaise(plat_t *plat);
 int             EV_DoPlat(line_t *line, byte *args, plattype_e type,
