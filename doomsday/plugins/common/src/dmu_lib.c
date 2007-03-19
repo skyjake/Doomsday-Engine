@@ -74,16 +74,16 @@ void P_FreeDummyLine(line_t* line)
     P_FreeDummy(line);
 }
 
-/*
- * Copies all (changeable) properties from one line
- * to another including the extended properties.
+/**
+ * Copies all (changeable) properties from one line to another including the
+ * extended properties.
  */
-void P_CopyLine(line_t* from, line_t* to)
+void P_CopyLine(line_t *from, line_t *to)
 {
-    int i, sidx;
-    side_t *sidefrom, *sideto;
-    xline_t* xfrom = P_XLine(from);
-    xline_t* xto = P_XLine(to);
+    int         i, sidx;
+    side_t     *sidefrom, *sideto;
+    xline_t    *xfrom = P_XLine(from);
+    xline_t    *xto = P_XLine(to);
 
     if(from == to)
         return; // no point copying self
@@ -147,8 +147,6 @@ void P_CopyLine(line_t* from, line_t* to)
     // Copy the extended properties too
 #if __JDOOM__ || __JHERETIC__
     xto->special = xfrom->special;
-    //xto->tag = xfrom->tag;
-    xto->specialdata = xfrom->specialdata;
     if(xfrom->xg && xto->xg)
         memcpy(xto->xg, xfrom->xg, sizeof(*xto->xg));
     else
@@ -160,23 +158,22 @@ void P_CopyLine(line_t* from, line_t* to)
     xto->arg3 = xfrom->arg3;
     xto->arg4 = xfrom->arg4;
     xto->arg5 = xfrom->arg5;
-    xto->specialdata = xfrom->specialdata;
 #endif
 }
 
-/*
- * Copies all (changeable) properties from one sector
- * to another including the extended properties.
+/**
+ * Copies all (changeable) properties from one sector to another including
+ * the extended properties.
  */
-void P_CopySector(sector_t* from, sector_t* to)
+void P_CopySector(sector_t *from, sector_t *to)
 {
-    xsector_t* xfrom = P_XSector(from);
-    xsector_t* xto = P_XSector(to);
+    xsector_t  *xfrom = P_XSector(from);
+    xsector_t  *xto = P_XSector(to);
 
     if(from == to)
-        return; // no point copying self
+        return; // no point copying self.
 
-    // Copy the built-in properties
+    // Copy the built-in properties.
 #if 0
     // P_Copyp is not implemented in Doomsday yet.
     P_Copyp(DMU_LIGHT_LEVEL, from, to);
@@ -255,34 +252,32 @@ void P_CopySector(sector_t* from, sector_t* to)
 #endif
 }
 
-int P_SectorLight(sector_t* sector)
+int P_SectorLight(sector_t *sector)
 {
     return P_GetIntp(sector, DMU_LIGHT_LEVEL);
 }
 
-void P_SectorSetLight(sector_t* sector, int level)
+void P_SectorSetLight(sector_t *sector, int level)
 {
     P_SetIntp(sector, DMU_LIGHT_LEVEL, level);
 }
 
-void P_SectorModifyLight(sector_t* sector, int value)
+void P_SectorModifyLight(sector_t *sector, int value)
 {
-    int level = P_SectorLight(sector);
+    int         level = P_SectorLight(sector);
 
     level += value;
-
-    if(level < 0) level = 0;
-    if(level > 255) level = 255;
+    CLAMP(level, 0, 255);
 
     P_SectorSetLight(sector, level);
 }
 
-fixed_t P_SectorLightx(sector_t* sector)
+fixed_t P_SectorLightx(sector_t *sector)
 {
     return P_GetFixedp(sector, DMU_LIGHT_LEVEL);
 }
 
-void P_SectorModifyLightx(sector_t* sector, fixed_t value)
+void P_SectorModifyLightx(sector_t *sector, fixed_t value)
 {
     P_SetFixedp(sector, DMU_LIGHT_LEVEL,
                 P_SectorLightx(sector) + value);

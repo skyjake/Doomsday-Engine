@@ -92,8 +92,6 @@ typedef struct xline_s {
     // Animation related.
     short           special;
     short           tag;
-    // thinker_t for reversable actions
-    void           *specialdata;
 
     // Extended generalized lines.
     xgline_t       *xg;

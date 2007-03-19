@@ -115,7 +115,6 @@ typedef struct xline_s {
     byte            arg3;
     byte            arg4;
     byte            arg5;
-    void           *specialdata;
 } xline_t;
 
 /*
