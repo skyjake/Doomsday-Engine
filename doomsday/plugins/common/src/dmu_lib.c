@@ -243,7 +243,10 @@ void P_CopySector(sector_t *from, sector_t *to)
     xto->origceiling = xfrom->origceiling;
     xto->origlight = xfrom->origlight;
     memcpy(xto->origrgb, xfrom->origrgb, 3);
-    xto->xg = xfrom->xg;
+    if(xfrom->xg && xto->xg)
+        memcpy(xto->xg, xfrom->xg, sizeof(*xto->xg));
+    else
+        xto->xg = NULL;
 #else
     xto->special = xfrom->special;
     xto->soundtraversed = xfrom->soundtraversed;
