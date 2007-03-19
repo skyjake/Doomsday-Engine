@@ -233,11 +233,11 @@ void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
             break;
 
         case 'f':
-            offset += xsec->origfloor;
+            offset += xsec->SP_floororigheight;
             break;
 
         case 'c':
-            offset += xsec->origceiling;
+            offset += xsec->SP_ceilorigheight;
             break;
 
         default:
@@ -384,8 +384,8 @@ void XS_Init(void)
 
         P_GetBytepv(sec, DMU_COLOR, tmprgb);
 
-        xsec->origfloor = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
-        xsec->origceiling = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+        xsec->SP_floororigheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+        xsec->SP_ceilorigheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
         xsec->origlight = P_GetIntp(sec, DMU_LIGHT_LEVEL);
 
         memcpy(xsec->origrgb, tmprgb, 3);
@@ -496,15 +496,14 @@ void XS_PlaneMover(xgplanemover_t *mover)
     // Should we update origheight?
     if(setorig)
     {
-        if(mover->ceiling)
-            xsec->origceiling = P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT);
-        else
-            xsec->origfloor = P_GetFloatp(mover->sector, DMU_FLOOR_HEIGHT);
+        xsec->planes[mover->ceiling? PLN_CEILING:PLN_FLOOR].origheight =
+            P_GetFloatp(mover->sector,
+                        mover->ceiling? DMU_CEILING_HEIGHT:DMU_FLOOR_HEIGHT);
     }
 
     if(follows)
     {
-        float       off = mover->ceiling ? floor - ceil : ceil - floor;
+        float       off = (mover->ceiling? floor - ceil : ceil - floor);
 
         res2 =
             T_MovePlane(mover->sector, mover->speed, mover->destination + off,
@@ -512,10 +511,9 @@ void XS_PlaneMover(xgplanemover_t *mover)
         // Should we update origheight?
         if(setorig)
         {
-            if(!mover->ceiling)
-                xsec->origceiling = P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT);
-            else
-                xsec->origfloor = P_GetFloatp(mover->sector, DMU_FLOOR_HEIGHT);
+            xsec->planes[(!mover->ceiling)? PLN_CEILING:PLN_FLOOR].origheight =
+                P_GetFloatp(mover->sector,
+                            (!mover->ceiling)? DMU_CEILING_HEIGHT:DMU_FLOOR_HEIGHT);
         }
         if(res2 == crushed)
             res = crushed;
@@ -1158,7 +1156,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
     if(ref == SPREF_ORIGINAL_FLOOR)
     {
         if(height)
-            *height = FLT2FIX(P_XSector(sector)->origfloor);
+            *height = FLT2FIX(P_XSector(sector)->SP_floororigheight);
         if(pic)
             *pic = P_GetIntp(sector, DMU_FLOOR_TEXTURE);
         return true;
@@ -1166,7 +1164,7 @@ boolean XS_GetPlane(line_t *actline, sector_t *sector, int ref, uint *refdata,
     if(ref == SPREF_ORIGINAL_CEILING)
     {
         if(height)
-            *height = FLT2FIX(P_XSector(sector)->origceiling);
+            *height = FLT2FIX(P_XSector(sector)->SP_ceilorigheight);
         if(pic)
             *pic = P_GetIntp(sector, DMU_CEILING_TEXTURE);
         return true;

@@ -51,6 +51,9 @@
 //  used by play and refresh
 //
 
+#define SP_floororigheight      planes[PLN_FLOOR].origheight
+#define SP_ceilorigheight       planes[PLN_CEILING].origheight
+
 //
 // The SECTORS record, at runtime.
 // Stores things/mobjs.
@@ -71,7 +74,10 @@ typedef struct xsector_s {
     // stone, metal, heavy, etc...
     byte            seqType;       // NOT USED ATM
 
-    float           origfloor, origceiling;
+    struct {
+        float       origheight;
+    } planes[2];    // {floor, ceiling}
+
     int             origlight;
     byte            origrgb[3];
     xgsector_t     *xg;

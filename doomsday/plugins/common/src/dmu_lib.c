@@ -239,8 +239,8 @@ void P_CopySector(sector_t *from, sector_t *to)
 #if __JHERETIC__
     xto->seqType = xfrom->seqType;
 #endif
-    xto->origfloor = xfrom->origfloor;
-    xto->origceiling = xfrom->origceiling;
+    xto->SP_floororigheight = xfrom->SP_floororigheight;
+    xto->SP_ceilorigheight = xfrom->SP_ceilorigheight;
     xto->origlight = xfrom->origlight;
     memcpy(xto->origrgb, xfrom->origrgb, 3);
     if(xfrom->xg && xto->xg)
