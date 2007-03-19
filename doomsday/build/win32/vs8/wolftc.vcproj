@@ -454,6 +454,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\p_floors.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\p_inventory.c"
 				>
 			</File>

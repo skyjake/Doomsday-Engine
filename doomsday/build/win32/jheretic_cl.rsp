@@ -38,6 +38,7 @@
  ./../../plugins/common/src/p_map.c
  ./../../plugins/jheretic/src/p_lights.c
  ./../../plugins/jheretic/src/p_inter.c
+ ./../../plugins/common/src/p_floors.c
  ./../../plugins/jheretic/src/p_floor.c
  ./../../plugins/jheretic/src/p_enemy.c
  ./../../plugins/common/src/p_doors.c

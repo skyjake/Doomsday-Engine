@@ -35,6 +35,7 @@
  ./../../plugins/common/src/p_map.c
  ./../../plugins/jhexen/src/p_lights.c
  ./../../plugins/jhexen/src/p_inter.c
+ ./../../plugins/common/src/p_floors.c
  ./../../plugins/jhexen/src/p_floor.c
  ./../../plugins/jhexen/src/p_enemy.c
  ./../../plugins/common/src/p_doors.c
