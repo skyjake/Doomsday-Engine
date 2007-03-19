@@ -341,7 +341,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
 #if __JHEXEN__
             plat->wait = args[2];
 #else
-            plat->wait = 35 * PLATWAIT;
+            plat->wait = PLATWAIT * TICSPERSEC;
 #endif
 #if !__JHEXEN__
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
@@ -360,7 +360,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
 # if __JHEXEN__
             plat->wait = args[2];
 # else
-            plat->wait = 35 * PLATWAIT;
+            plat->wait = PLATWAIT * TICSPERSEC;
 # endif
 # if __DOOM64TC__
             plat->speed = PLATSPEED * 8;
@@ -411,7 +411,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
                 plat->low = floorheight;
 
             plat->high = floorheight;
-            plat->wait = 35 * PLATWAIT;
+            plat->wait = PLATWAIT * TICSPERSEC;
             plat->status = down;
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
             break;
@@ -435,7 +435,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
 #if __JHEXEN__
             plat->wait = args[2];
 #else
-            plat->wait = 35 * PLATWAIT;
+            plat->wait = PLATWAIT * TICSPERSEC;
 #endif
 #if !__JHEXEN__
             S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
