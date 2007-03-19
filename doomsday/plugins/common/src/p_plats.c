@@ -285,11 +285,8 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
         plat->sector = sec;
 
         xsec->specialdata = plat;
-#if __JHERETIC__ || __JHEXEN__
         plat->thinker.function = T_PlatRaise;
-#else
-        plat->thinker.function = (actionf_p1) T_PlatRaise;
-#endif
+
         plat->crush = false;
         plat->tag = tag;
 #if __JHEXEN__

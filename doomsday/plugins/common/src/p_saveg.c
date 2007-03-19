@@ -2769,11 +2769,7 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
             ceiling->thinker.function = T_MoveCeiling;
     }
 
-#if __JHEXEN__
-    P_XSector(ceiling->sector)->specialdata = ceiling->thinker.function;
-#else
     P_XSector(ceiling->sector)->specialdata = ceiling;
-#endif
     return true; // Add this thinker.
 }
 
@@ -2858,12 +2854,7 @@ static int SV_ReadDoor(vldoor_t *door)
         door->topcountdown = SV_ReadLong();
     }
 
-#if __JHEXEN__
-    P_XSector(door->sector)->specialdata = door->thinker.function;
-#else
     P_XSector(door->sector)->specialdata = door;
-#endif
-
     door->thinker.function = T_VerticalDoor;
 
     return true; // Add this thinker.
@@ -2992,12 +2983,7 @@ static int SV_ReadFloor(floormove_t *floor)
 #endif
     }
 
-#if __JHEXEN__
-    P_XSector(floor->sector)->specialdata = floor->thinker.function;
-#else
     P_XSector(floor->sector)->specialdata = floor;
-#endif
-
     floor->thinker.function = T_MoveFloor;
 
     return true; // Add this thinker.
@@ -3102,12 +3088,7 @@ static int SV_ReadPlat(plat_t *plat)
             plat->thinker.function = T_PlatRaise;
     }
 
-#if __JHEXEN__
-    P_XSector(plat->sector)->specialdata = plat->thinker.function;
-#else
     P_XSector(plat->sector)->specialdata = plat;
-#endif
-
     return true; // Add this thinker.
 }
 
@@ -3555,7 +3536,7 @@ static int SV_ReadPillar(pillar_t *th)
 
     th->thinker.function = T_BuildPillar;
 
-    P_XSector(th->sector)->specialdata = th->thinker.function;
+    P_XSector(th->sector)->specialdata = th;
     return true; // Add this thinker.
 }
 
@@ -3629,7 +3610,7 @@ static int SV_ReadFloorWaggle(floorWaggle_t *th)
 
     th->thinker.function = T_FloorWaggle;
 
-    P_XSector(th->sector)->specialdata = th->thinker.function;
+    P_XSector(th->sector)->specialdata = th;
     return true; // Add this thinker.
 }
 #endif // __JHEXEN__
