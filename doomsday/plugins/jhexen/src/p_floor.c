@@ -39,9 +39,6 @@
  * You should have received a copy of the HERETIC / HEXEN source code
  * license along with this program (Ravenlic.txt); if not:
  * http://www.ravensoft.com/
- *
- *\attention  2006-09-10 - We should be able to use jDoom version of this as
- * a base for replacement. - Yagisan
  */
 
 /*
@@ -435,33 +432,6 @@ int EV_OpenPillar(line_t *line, byte *args)
         pillar->direction = -1; // open the pillar
         SN_StartSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN),
                          SEQ_PLATFORM + P_XSector(pillar->sector)->seqType);
-    }
-    return rtn;
-}
-
-int EV_FloorCrushStop(line_t *line, byte *args)
-{
-    thinker_t  *think;
-    floormove_t *floor;
-    boolean     rtn;
-
-    rtn = 0;
-    for(think = thinkercap.next; think != &thinkercap && think;
-        think = think->next)
-    {
-        if(think->function != T_MoveFloor)
-            continue;
-
-        floor = (floormove_t *) think;
-        if(floor->type != FLEV_RAISEFLOORCRUSH)
-            continue;
-
-        // Completely remove the crushing floor
-        SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
-        P_XSector(floor->sector)->specialdata = NULL;
-        P_TagFinished(P_XSector(floor->sector)->tag);
-        P_RemoveThinker(&floor->thinker);
-        rtn = 1;
     }
     return rtn;
 }

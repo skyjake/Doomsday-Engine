@@ -39,7 +39,7 @@
  */
 
 /*
- *  p_floors.c: Moving floors, raising stairs.
+ *  p_floors.c: Moving floors.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -843,6 +843,35 @@ int EV_DoFloor(line_t *line, floor_e floortype)
 #endif
     return rtn;
 }
+
+#if __JHEXEN__
+int EV_FloorCrushStop(line_t *line, byte *args)
+{
+    thinker_t  *think;
+    floormove_t *floor;
+    boolean     rtn;
+
+    rtn = 0;
+    for(think = thinkercap.next; think != &thinkercap && think;
+        think = think->next)
+    {
+        if(think->function != T_MoveFloor)
+            continue;
+
+        floor = (floormove_t *) think;
+        if(floor->type != FLEV_RAISEFLOORCRUSH)
+            continue;
+
+        // Completely remove the crushing floor
+        SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
+        P_XSector(floor->sector)->specialdata = NULL;
+        P_TagFinished(P_XSector(floor->sector)->tag);
+        P_RemoveThinker(&floor->thinker);
+        rtn = 1;
+    }
+    return rtn;
+}
+#endif
 
 #if __JHEXEN__
 int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
