@@ -93,11 +93,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-#if __JHEXEN__
-ceiling_t *activeceilings[MAXCEILINGS];
-#else
 ceilinglist_t *activeceilings;
-#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -490,16 +486,6 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
  */
 void P_AddActiveCeiling(ceiling_t *ceiling)
 {
-#if __JHEXEN__
-    int         i;
-
-    for(i = 0; i < MAXCEILINGS; ++i)
-        if(activeceilings[i] == NULL)
-        {
-            activeceilings[i] = ceiling;
-            return;
-        }
-#else
     ceilinglist_t *list = malloc(sizeof *list);
 
     list->ceiling = ceiling;
@@ -510,7 +496,6 @@ void P_AddActiveCeiling(ceiling_t *ceiling)
 
     list->prev = &activeceilings;
     activeceilings = list;
-#endif
 }
 
 /**
@@ -520,29 +505,18 @@ void P_AddActiveCeiling(ceiling_t *ceiling)
  */
 void P_RemoveActiveCeiling(ceiling_t *ceiling)
 {
-#if __JHEXEN__
-    int         i;
-
-    for(i = 0; i < MAXCEILINGS; ++i)
-        if(activeceilings[i] == ceiling)
-        {
-            P_XSector(activeceilings[i]->sector)->specialdata = NULL;
-            P_RemoveThinker(&activeceilings[i]->thinker);
-            P_TagFinished(P_XSector(activeceilings[i]->sector)->tag);
-            activeceilings[i] = NULL;
-            break;
-        }
-#else
     ceilinglist_t *list = ceiling->list;
 
     P_XSector(ceiling->sector)->specialdata = NULL;
+#if __JHEXEN__
+    P_TagFinished(P_XSector(ceiling->sector)->tag);
+#endif
     P_RemoveThinker(&ceiling->thinker);
 
     if((*list->prev = list->next) != NULL)
         list->next->prev = list->prev;
 
     free(list);
-#endif
 }
 
 /**
@@ -550,12 +524,6 @@ void P_RemoveActiveCeiling(ceiling_t *ceiling)
  */
 void P_RemoveAllActiveCeilings(void)
 {
-#if __JHEXEN__
-    uint        i;
-
-    for(i = 0; i < MAXCEILINGS; ++i)
-        activeceilings[i] = NULL;
-#else
     while(activeceilings)
     {
         ceilinglist_t *next = activeceilings->next;
@@ -563,7 +531,6 @@ void P_RemoveAllActiveCeilings(void)
         free(activeceilings);
         activeceilings = next;
     }
-#endif
 }
 
 /**
@@ -587,11 +554,7 @@ int P_ActivateInStasisCeiling(line_t *line)
         if(ceiling->direction == 0 && ceiling->tag == xline->tag)
         {
             ceiling->direction = ceiling->olddirection;
-# if __JHERETIC__
             ceiling->thinker.function = T_MoveCeiling;
-# else
-            ceiling->thinker.function = (actionf_p1) T_MoveCeiling;
-# endif
             rtn = 1;
         }
     }
@@ -601,26 +564,6 @@ int P_ActivateInStasisCeiling(line_t *line)
 
 static int EV_CeilingCrushStop2(int tag)
 {
-#if __JHEXEN__
-    int         i;
-    int         rtn;
-
-    rtn = 0;
-    for(i = 0; i < MAXCEILINGS; ++i)
-    {
-        if(activeceilings[i] && activeceilings[i]->tag == tag)
-        {
-            rtn = 1;
-            SN_StopSequence(P_SectorSoundOrigin(activeceilings[i]->sector));
-            P_XSector(activeceilings[i]->sector)->specialdata = NULL;
-            P_RemoveThinker(&activeceilings[i]->thinker);
-            P_TagFinished(P_XSector(activeceilings[i]->sector)->tag);
-            activeceilings[i] = NULL;
-            break;
-        }
-    }
-    return rtn;
-#else
     int         rtn = 0;
     ceilinglist_t *cl;
 
@@ -628,16 +571,26 @@ static int EV_CeilingCrushStop2(int tag)
     {
         ceiling_t *ceiling = cl->ceiling;
 
+#if __JHEXEN__
+        if(ceiling->tag == tag)
+        {   // Destroy it.
+            SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
+            P_RemoveActiveCeiling(ceiling);
+            rtn = 1;
+            break;
+        }
+#else
         if(ceiling->direction != 0 && ceiling->tag == tag)
-        {
+        {   // Put it into stasis.
             ceiling->olddirection = ceiling->direction;
             ceiling->direction = 0;
             ceiling->thinker.function = INSTASIS;
             rtn = 1;
         }
-    }
-    return rtn;
 #endif
+    }
+
+    return rtn;
 }
 
 /**

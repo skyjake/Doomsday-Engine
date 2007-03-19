@@ -278,11 +278,17 @@ typedef struct {
     int             direction;     // 1 = up, 0 = waiting, -1 = down
     int             tag;           // ID
     int             olddirection;
+
+    struct ceilinglist *list;   // jff 2/22/98 copied from killough's plats
 } ceiling_t;
+
+typedef struct ceilinglist {
+    ceiling_t *ceiling;
+    struct ceilinglist *next,**prev;
+} ceilinglist_t;
 
 #define CEILSPEED       1
 #define CEILWAIT        150
-#define MAXCEILINGS     30
 
 int             EV_DoCeiling(line_t *line, byte *args, ceiling_e type);
 void            T_MoveCeiling(ceiling_t *ceiling);

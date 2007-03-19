@@ -497,11 +497,7 @@ int P_ActivateInStasisPlat(int tag)
         if(plat->tag == tag && plat->status == in_stasis)
         {
             plat->status = plat->oldstatus;
-# if __JHERETIC__
             plat->thinker.function = T_PlatRaise;
-# else
-            plat->thinker.function = (actionf_p1) T_PlatRaise;
-# endif
             rtn = 1;
         }
     }
