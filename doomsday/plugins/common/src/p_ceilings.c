@@ -592,7 +592,6 @@ int P_ActivateInStasisCeiling(line_t *line)
 # else
             ceiling->thinker.function = (actionf_p1) T_MoveCeiling;
 # endif
-            // return true
             rtn = 1;
         }
     }

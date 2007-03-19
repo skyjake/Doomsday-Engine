@@ -221,7 +221,7 @@ boolean         EV_StopPlat(line_t *line);
 void            P_AddActivePlat(plat_t *plat);
 void            P_RemoveActivePlat(plat_t *plat);
 void            P_RemoveAllActivePlats(void);    // killough
-void            P_ActivateInStasis(int tag);
+int             P_ActivateInStasisPlat(int tag);
 
 //
 // P_DOORS

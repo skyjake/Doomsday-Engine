@@ -465,20 +465,21 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
 #if __JHEXEN__
     return EV_DoPlat2(line, (int) args[0], args, type, amount);
 #else
-    xline_t *xline = P_XLine(line);
+    int         rtn = 0;
+    xline_t    *xline = P_XLine(line);
 
     // Activate all <type> plats that are in_stasis
     switch(type)
     {
     case perpetualRaise:
-        P_ActivateInStasis(xline->tag);
+        rtn = P_ActivateInStasisPlat(xline->tag);
         break;
 
     default:
         break;
     }
 
-    return EV_DoPlat2(line, xline->tag, type, amount);
+    return EV_DoPlat2(line, xline->tag, type, amount) || rtn;
 #endif
 }
 
@@ -489,8 +490,9 @@ int EV_DoPlat(line_t *line, plattype_e type, int amount)
  * @parm tag: the tag of the plat that should be reactivated
  */
 #if !__JHEXEN__
-void P_ActivateInStasis(int tag)
+int P_ActivateInStasisPlat(int tag)
 {
+    int         rtn = 0;
     platlist_t *pl;
 
     // search the active plats
@@ -507,8 +509,10 @@ void P_ActivateInStasis(int tag)
 # else
             plat->thinker.function = (actionf_p1) T_PlatRaise;
 # endif
+            rtn = 1;
         }
     }
+    return rtn;
 }
 #endif
 
