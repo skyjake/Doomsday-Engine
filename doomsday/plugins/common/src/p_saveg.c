@@ -255,7 +255,7 @@ static void CopySaveSlot(int sourceSlot, int destSlot);
 static void CopyFile(char *sourceName, char *destName);
 static boolean ExistingFile(char *name);
 
-static void SetMobjArchiveNums(void);
+static void SetMobjArchiveNums(boolean savePlayers);
 static int GetMobjNum(mobj_t *mobj);
 static void SetMobjPtr(int *archiveNum);
 
@@ -547,9 +547,9 @@ static void removeAllThinkers(void)
 #if __JHEXEN__
 /**
  * Sets the archive numbers in all mobj structs.  Also sets the thing_archiveSize
- * global.  Ignores player mobjs if savingPlayers is false.
+ * global.  Ignores player mobjs if savePlayers is false.
  */
-static void SetMobjArchiveNums(void)
+static void SetMobjArchiveNums(boolean savePlayers)
 {
     uint        i;
     mobj_t     *mobj;
@@ -567,12 +567,12 @@ static void SetMobjArchiveNums(void)
     }
 
     th = thinkercap.next;
-    while(th != &thinkercap && th)
+    while(th != &thinkercap)
     {
         if(th->function == P_MobjThinker)
         {
             mobj = (mobj_t *) th;
-            if(!(mobj->player && !savingPlayers))
+            if(!(mobj->player && !savePlayers))
                 mobj->archiveNum = thing_archiveSize++;
         }
 
@@ -1018,13 +1018,14 @@ static void SV_WritePlayer(int playernum)
 #endif
     SV_WriteLong(p->health);
 #if __JHEXEN__
-    SV_Write(p->armorpoints, sizeof(p->armorpoints));
-    SV_Write(p->inventory, sizeof(p->inventory));
+    SV_Write(p->armorpoints, 4 * 4);
+
+    SV_Write(p->inventory, 33 * 4);
     SV_WriteLong(p->readyArtifact);
     SV_WriteLong(p->artifactCount);
     SV_WriteLong(p->inventorySlotNum);
 
-    SV_Write(p->powers, sizeof(p->powers));
+    SV_Write(p->powers, 9 * 4);
 # else
     SV_WriteLong(p->armorpoints);
     SV_WriteLong(p->armortype);
@@ -1049,7 +1050,7 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->keys);
     SV_WriteLong(p->pieces);
 
-    SV_Write(p->frags, sizeof(p->frags));
+    SV_Write(p->frags, 8 * 4);
 #else
     SV_Write(p->keys, playerHeader.numkeys * 4);
 
@@ -1065,8 +1066,8 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->readyweapon);
 
 #if __JHEXEN__
-    SV_Write(p->weaponowned, sizeof(p->weaponowned));
-    SV_Write(p->ammo, sizeof(p->ammo));
+    SV_Write(p->weaponowned, 4 * 4);
+    SV_Write(p->ammo, 2 * 4);
 #else
     SV_WriteLong(p->pendingweapon);
 
@@ -3880,7 +3881,7 @@ static int SV_ReadBlink(lightblink_t *blink)
 #endif // !__JHEXEN__
 
 #if __JHEXEN__
-static void P_ArchiveMobjs(void)
+static void P_ArchiveMobjs(boolean savePlayers)
 {
     int         count;
     thinker_t  *th;
@@ -3895,7 +3896,7 @@ static void P_ArchiveMobjs(void)
         {                       // Not a mobj thinker
             continue;
         }
-        if(((mobj_t *) th)->player && !savingPlayers)
+        if(((mobj_t *) th)->player && !savePlayers)
         {                       // Skipping player mobjs
             continue;
         }
@@ -3904,7 +3905,8 @@ static void P_ArchiveMobjs(void)
     }
     if(count != thing_archiveSize)
     {
-        Con_Error("SV_WriteMobjs: bad mobj count");
+        Con_Error("SV_WriteMobjs: bad mobj count %i of %i",
+                  count, thing_archiveSize);
     }
 }
 
@@ -4448,7 +4450,7 @@ static void P_ArchiveMap(void)
 
     P_ArchiveWorld();
 #if __JHEXEN__
-    P_ArchiveMobjs();
+    P_ArchiveMobjs(savePlayers);
 #endif
     P_ArchiveThinkers();
 
@@ -4720,7 +4722,7 @@ boolean SV_SaveGame(char *filename, char *description)
     CloseStreamOut();
 
     // Set the mobj archive numbers
-    SetMobjArchiveNums();
+    SetMobjArchiveNums(true);
 #endif
 
     // Save out the current map
@@ -5224,7 +5226,7 @@ void SV_MapTeleport(int map, int position)
             char        fileName[100];
 
             // Set the mobj archive numbers
-            SetMobjArchiveNums();
+            SetMobjArchiveNums(false);
 
             // Open the output file
             sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
