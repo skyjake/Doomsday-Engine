@@ -446,13 +446,13 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
  * Move a ceiling up/down.
  */
 #if __JHEXEN__
-int EV_DoCeiling(line_t *line, byte *arg, ceiling_e type)
+int EV_DoCeiling(line_t *line, byte *args, ceiling_e type)
 #else
 int EV_DoCeiling(line_t *line, ceiling_e type)
 #endif
 {
 #if __JHEXEN__
-    return EV_DoCeiling2(arg, (int) arg[0], (float) args[1] * (1.0 / 8),
+    return EV_DoCeiling2(args, (int) args[0], (float) args[1] * (1.0 / 8),
                          type);
 #else
     int         rtn = 0;
