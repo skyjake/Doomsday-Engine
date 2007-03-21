@@ -3880,89 +3880,6 @@ static int SV_ReadBlink(lightblink_t *blink)
 # endif
 #endif // !__JHEXEN__
 
-#if __JHEXEN__
-static void P_ArchiveMobjs(boolean savePlayers)
-{
-    int         count;
-    thinker_t  *th;
-
-    SV_WriteLong(ASEG_MOBJS);
-    SV_WriteLong(thing_archiveSize);
-    count = 0;
-    for(th = thinkercap.next; th != &thinkercap && th;
-        th = th->next)
-    {
-        if(th->function != P_MobjThinker)
-        {                       // Not a mobj thinker
-            continue;
-        }
-        if(((mobj_t *) th)->player && !savePlayers)
-        {                       // Skipping player mobjs
-            continue;
-        }
-        count++;
-        SV_WriteMobj((mobj_t *) th);
-    }
-    if(count != thing_archiveSize)
-    {
-        Con_Error("SV_WriteMobjs: bad mobj count %i of %i",
-                  count, thing_archiveSize);
-    }
-}
-
-static void P_UnArchiveMobjs(void)
-{
-    int         i;
-    mobj_t     *mobj;
-
-/*
-printf("SV_ReadMobjs\n");
-*/
-    AssertSegment(ASEG_MOBJS);
-
-    targetPlayerAddrs = Z_Malloc(MAX_TARGET_PLAYERS * sizeof(int *),
-                                 PU_STATIC, NULL);
-    targetPlayerCount = 0;
-    thing_archiveSize = SV_ReadLong();
-/*
-printf("- thing_archiveSize: %d\n", thing_archiveSize);
-*/
-    thing_archive = Z_Malloc(thing_archiveSize * sizeof(mobj_t *),
-                             PU_STATIC, NULL);
-    for(i = 0; i < thing_archiveSize; ++i)
-    {
-        thing_archive[i] = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL);
-    }
-/*
-printf("- memory allocated for each mobj (sizeof = %d bytes)\n",
-         sizeof(mobj_t));
-*/
-    for(i = 0; i < thing_archiveSize; ++i)
-    {
-/*
-printf("- loading mobj %d\n", i);
-*/
-        mobj = thing_archive[i];
-
-        SV_ReadMobj(mobj);
-
-        if(mobj->player == INVALID_PLAYER)
-        {
-            // This mobj doesn't belong to anyone any more.
-            Z_Free(mobj);
-            thing_archive[i] = NULL; // The mobj no longer exists.
-            continue;
-        }
-
-        mobj->thinker.function = P_MobjThinker;
-        P_AddThinker(&mobj->thinker);
-    }
-
-    P_CreateTIDList();
-    P_InitCreatureCorpseQueue(true);    // true = scan for corpses
-}
-#endif
-
 static void SV_AddThinker(thinkerclass_t tclass, thinker_t* th)
 {
     P_AddThinker(&((plat_t *)th)->thinker);
@@ -4016,7 +3933,11 @@ static void DoArchiveThinker(thinker_t *th, thinkerclass_t tclass)
  *
  * NOTE: Some thinker classes are NEVER saved by clients.
  */
+#if __JHEXEN__
+static void P_ArchiveThinkers(boolean savePlayers)
+#else
 static void P_ArchiveThinkers(void)
+#endif
 {
 #if !__JHEXEN__
     extern ceilinglist_t *activeceilings;
@@ -4027,6 +3948,33 @@ static void P_ArchiveThinkers(void)
     thinkerinfo_t *thInfo;
 #if !__JHEXEN__
     boolean     found;
+#endif
+
+#if __JHEXEN__
+    int         count;
+
+    SV_WriteLong(ASEG_MOBJS);
+    SV_WriteLong(thing_archiveSize);
+
+    count = 0;
+    for(th = thinkercap.next; th != &thinkercap && th;
+        th = th->next)
+    {
+        if(th->function != P_MobjThinker)
+        {                       // Not a mobj thinker
+            continue;
+        }
+        if(((mobj_t *) th)->player && !savePlayers)
+        {                       // Skipping player mobjs
+            continue;
+        }
+        count++;
+        SV_WriteMobj((mobj_t *) th);
+    }
+
+    if(count != thing_archiveSize)
+        Con_Error("SV_WriteMobjs: bad mobj count %i of %i",
+                  count, thing_archiveSize);
 #endif
 
 #if __JHEXEN__
@@ -4092,10 +4040,47 @@ static void P_UnArchiveThinkers(void)
 #endif
 
 #if __JHEXEN__
-    AssertSegment(ASEG_THINKERS);
+    int         i;
+    mobj_t     *mobj;
+
+    AssertSegment(ASEG_MOBJS);
 
     // Remove all the current thinkers.
     removeAllThinkers();
+
+    targetPlayerAddrs = Z_Malloc(MAX_TARGET_PLAYERS * sizeof(int *),
+                                 PU_STATIC, NULL);
+    targetPlayerCount = 0;
+    thing_archiveSize = SV_ReadLong();
+
+    thing_archive = Z_Malloc(thing_archiveSize * sizeof(mobj_t *),
+                             PU_STATIC, NULL);
+    for(i = 0; i < thing_archiveSize; ++i)
+    {
+        thing_archive[i] = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL);
+    }
+
+    for(i = 0; i < thing_archiveSize; ++i)
+    {
+        mobj = thing_archive[i];
+
+        SV_ReadMobj(mobj);
+
+        if(mobj->player == INVALID_PLAYER)
+        {
+            // This mobj doesn't belong to anyone any more.
+            Z_Free(mobj);
+            thing_archive[i] = NULL; // The mobj no longer exists.
+            continue;
+        }
+
+        mobj->thinker.function = P_MobjThinker;
+        P_AddThinker(&mobj->thinker);
+    }
+#endif
+
+#if __JHEXEN__
+    AssertSegment(ASEG_THINKERS);
 #else
     // Remove all the current thinkers (server only).
     if(IS_SERVER)
@@ -4172,6 +4157,11 @@ static void P_UnArchiveThinkers(void)
         if(knownThinker)
             SV_AddThinker(tClass, th);
     }
+
+#if __JHEXEN__
+    P_CreateTIDList();
+    P_InitCreatureCorpseQueue(true);    // true = scan for corpses
+#endif
 
 #if !__JHEXEN__
     // Update references to things (server only)
@@ -4450,9 +4440,10 @@ static void P_ArchiveMap(void)
 
     P_ArchiveWorld();
 #if __JHEXEN__
-    P_ArchiveMobjs(savePlayers);
-#endif
+    P_ArchiveThinkers(savePlayers);
+#else
     P_ArchiveThinkers();
+#endif
 
 #if __JHEXEN__
     P_ArchiveScripts();
@@ -4502,9 +4493,6 @@ static void P_UnArchiveMap(void)
 #endif
 
     P_UnArchiveWorld();
-#if __JHEXEN__
-    P_UnArchiveMobjs();
-#endif
     P_UnArchiveThinkers();
 
 #if __JHEXEN__
