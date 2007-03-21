@@ -423,8 +423,8 @@ static int EV_DoDoor2(int tag, float speed, int topwait, vldoor_e type)
 #if __JHEXEN__
 int EV_DoDoor(line_t *line, byte *args, vldoor_e type)
 {
-    return EV_DoDoor2((int) args[0], FIX2FLT(args[1]) / 8, (int) args[2],
-                      type);
+    return EV_DoDoor2((int) args[0], (float) args[1] * (1.0 / 8),
+                      (int) args[2], type);
 }
 #else
 int EV_DoDoor(line_t *line, vldoor_e type)
@@ -728,8 +728,8 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
 #if __JHEXEN__
     case 11:
         door->type = open;
-        door->speed = FIX2FLT(xline->arg2 * (FRACUNIT / 8));
-        door->topwait = xline->arg3;
+        door->speed = (float) xline->arg2 * (1.0 / 8);
+        door->topwait = (int) xline->arg3;
         xline->special = 0;
         break;
 #else
@@ -748,8 +748,8 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     case 12:
     case 13:
         door->type = normal;
-        door->speed = FIX2FLT(xline->arg2 * (FRACUNIT / 8));
-        door->topwait = xline->arg3;
+        door->speed = (float) xline->arg2 * (1.0 / 8);
+        door->topwait = (int) xline->arg3;
         break;
 #else
     case 1:
@@ -785,8 +785,8 @@ boolean EV_VerticalDoor(line_t *line, mobj_t *thing)
     default:
 #if __JHEXEN__
         door->type = normal;
-        door->speed = FIX2FLT(xline->arg2 * (FRACUNIT / 8));
-        door->topwait = xline->arg3;
+        door->speed = (float) xline->arg2 * (1.0 / 8);
+        door->topwait = (int) xline->arg3;
 #else
         door->speed = VDOORSPEED;
         door->topwait = VDOORWAIT;

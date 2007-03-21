@@ -467,7 +467,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         floor->type = floortype;
         floor->crush = false;
 #if __JHEXEN__
-        floor->speed = FIX2FLT(args[1] * (FRACUNIT / 8));
+        floor->speed = (float) args[1] * (1.0 / 8);
         if(floortype == FLEV_LOWERTIMES8INSTANT ||
            floortype == FLEV_RAISETIMES8INSTANT)
         {
@@ -511,7 +511,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = -1;
             floor->sector = sec;
             floor->floordestheight =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - args[2];
+                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - (float) args[2];
             break;
 
         case FLEV_LOWERTIMES8INSTANT:
@@ -519,7 +519,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = -1;
             floor->sector = sec;
             floor->floordestheight =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - args[2] * 8;
+                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - (float) args[2] * 8;
             break;
 #endif
 #if !__JHEXEN__
@@ -587,7 +587,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
         case raiseFloorCrush:
 #endif
 #if __JHEXEN__
-            floor->crush = args[2]; // arg[2] = crushing value
+            floor->crush = (int) args[2]; // arg[2] = crushing value
 #else
             floor->crush = true;
 #endif
@@ -668,7 +668,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = 1;
             floor->sector = sec;
             floor->floordestheight =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + args[2];
+                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + (float) args[2];
             break;
 
         case FLEV_RAISETIMES8INSTANT:
@@ -676,12 +676,12 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->direction = 1;
             floor->sector = sec;
             floor->floordestheight =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + args[2] * 8;
+                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + (float) args[2] * 8;
             break;
 
         case FLEV_MOVETOVALUETIMES8:
             floor->sector = sec;
-            floor->floordestheight = args[2] * 8;
+            floor->floordestheight = (float) args[2] * 8;
             if(args[3])
                 floor->floordestheight = -floor->floordestheight;
 

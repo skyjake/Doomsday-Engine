@@ -286,7 +286,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
         plat->crush = false;
         plat->tag = tag;
 #if __JHEXEN__
-        plat->speed = FIX2FLT(args[1] * (FRACUNIT / 8));
+        plat->speed = (float) args[1] * (1.0 / 8);
 #endif
         floorheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         switch(type)
@@ -332,7 +332,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
             plat->high = floorheight;
             plat->status = down;
 #if __JHEXEN__
-            plat->wait = args[2];
+            plat->wait = (int) args[2];
 #else
             plat->wait = PLATWAIT * TICSPERSEC;
 #endif
@@ -351,7 +351,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
             plat->low = floorheight;
             plat->status = up;
 # if __JHEXEN__
-            plat->wait = args[2];
+            plat->wait = (int) args[2];
 # else
             plat->wait = PLATWAIT * TICSPERSEC;
 # endif
@@ -378,20 +378,20 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
 #endif
 #if __JHEXEN__
        case downByValueWaitUpStay:
-            plat->low = floorheight - args[3] * 8;
+            plat->low = floorheight - (float) args[3] * 8;
             if(plat->low > floorheight)
                 plat->low = floorheight;
             plat->high = floorheight;
-            plat->wait = args[2];
+            plat->wait = (int) args[2];
             plat->status = down;
             break;
 
         case upByValueWaitDownStay:
-            plat->high = floorheight + args[3] * 8;
+            plat->high = floorheight + (float) args[3] * 8;
             if(plat->high < floorheight)
                 plat->high = floorheight;
             plat->low = floorheight;
-            plat->wait = args[2];
+            plat->wait = (int) args[2];
             plat->status = up;
             break;
 #endif
@@ -426,7 +426,7 @@ static int EV_DoPlat2(line_t *line, int tag, plattype_e type, int amount)
 
             plat->status = P_Random() & 1;
 #if __JHEXEN__
-            plat->wait = args[2];
+            plat->wait = (int) args[2];
 #else
             plat->wait = PLATWAIT * TICSPERSEC;
 #endif

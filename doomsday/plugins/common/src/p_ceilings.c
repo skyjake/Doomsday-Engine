@@ -320,7 +320,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 #endif
 #if __JHEXEN__
         case crushRaiseAndStay:
-            ceiling->crush = arg[2];    // arg[2] = crushing value
+            ceiling->crush = (int) arg[2];    // arg[2] = crushing value
             ceiling->topheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
             ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
             ceiling->direction = -1;
@@ -337,7 +337,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 
         case lowerAndCrush:
 #if __JHEXEN__
-            ceiling->crush = arg[2];    // arg[2] = crushing value
+            ceiling->crush = (int) arg[2];    // arg[2] = crushing value
 #endif
         case lowerToFloor:
             ceiling->bottomheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
@@ -388,13 +388,13 @@ static int EV_DoCeiling2(int tag, float basespeed, ceiling_e type)
 #if __JHEXEN__
         case lowerByValue:
             ceiling->bottomheight =
-                P_GetFloatp(sec, DMU_CEILING_HEIGHT) - arg[2];
+                P_GetFloatp(sec, DMU_CEILING_HEIGHT) - (float) arg[2];
             ceiling->direction = -1;
             break;
 
         case raiseByValue:
             ceiling->topheight =
-                P_GetFloatp(sec, DMU_CEILING_HEIGHT) + arg[2];
+                P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) arg[2];
             ceiling->direction = 1;
             break;
 
@@ -452,8 +452,7 @@ int EV_DoCeiling(line_t *line, ceiling_e type)
 #endif
 {
 #if __JHEXEN__
-    return EV_DoCeiling2(arg, (int) arg[0],
-                         FIX2FLT((fixed_t) arg[1] * (FRACUNIT / 8)),
+    return EV_DoCeiling2(arg, (int) arg[0], (float) args[1] * (1.0 / 8),
                          type);
 #else
     int         rtn = 0;

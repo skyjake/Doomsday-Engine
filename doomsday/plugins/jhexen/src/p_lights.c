@@ -164,10 +164,10 @@ boolean EV_SpawnLight(line_t *line, byte *arg, lighttype_t type)
     sector_t   *sec = NULL;
     iterlist_t *list;
 
-    arg1 = arg[1];
-    arg2 = arg[2];
-    arg3 = arg[3];
-    arg4 = arg[4];
+    arg1 = (int) arg[1];
+    arg2 = (int) arg[2];
+    arg3 = (int) arg[3];
+    arg4 = (int) arg[4];
 
     list = P_GetSectorIterListForTag((int) arg[0], false);
     if(!list)

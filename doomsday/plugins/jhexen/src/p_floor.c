@@ -237,17 +237,17 @@ int EV_BuildStairs(line_t *line, byte *args, int direction,
     // Set global stairs variables
     stairData.textureChange = 0;
     stairData.direction = direction;
-    stairData.stepDelta = stairData.direction * args[2];
-    stairData.speed = FIX2FLT(args[1] * (FRACUNIT / 8));
-    resetDelay = args[4];
-    delay = args[3];
+    stairData.stepDelta = stairData.direction * (float) args[2];
+    stairData.speed = (float) args[1] * (1.0 / 8);
+    resetDelay = (int) args[4];
+    delay = (int) args[3];
     if(stairsType == STAIRS_PHASED)
     {
         stairData.startDelay =
-            stairData.startDelayDelta = args[3];
+            stairData.startDelayDelta = (int) args[3];
         resetDelay = stairData.startDelayDelta;
         delay = 0;
-        stairData.textureChange = args[4];
+        stairData.textureChange = (int) args[4];
     }
 
     validCount++;
@@ -328,7 +328,8 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
         }
         else
         {
-            newHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + args[2];
+            newHeight =
+                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + (float) args[2];
         }
 
         pillar = Z_Malloc(sizeof(*pillar), PU_LEVSPEC, 0);
@@ -339,19 +340,19 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
         if(!args[2])
         {
             pillar->ceilingSpeed = pillar->floorSpeed =
-                FIX2FLT(args[1] * (FRACUNIT / 8));
+                (float) args[1] * (1.0 / 8);
         }
         else if(newHeight - P_GetFloatp(sec, DMU_FLOOR_HEIGHT) >
                 P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newHeight)
         {
-            pillar->floorSpeed = FIX2FLT(args[1] * (FRACUNIT / 8));
+            pillar->floorSpeed = (float) args[1] * (1.0 / 8);
             pillar->ceilingSpeed =
                 (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newHeight) *
                       (pillar->floorSpeed / (newHeight - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)));
         }
         else
         {
-            pillar->ceilingSpeed = FIX2FLT(args[1] * (FRACUNIT / 8));
+            pillar->ceilingSpeed = (float) args[1] * (1.0 / 8);
             pillar->floorSpeed =
                 (newHeight - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) *
                     (pillar->ceilingSpeed / 
@@ -360,7 +361,7 @@ int EV_BuildPillar(line_t *line, byte *args, boolean crush)
         pillar->floordest = newHeight;
         pillar->ceilingdest = newHeight;
         pillar->direction = 1;
-        pillar->crush = crush * args[3];
+        pillar->crush = crush * (int) args[3];
         SN_StartSequence(P_GetPtrp(pillar->sector, DMU_SOUND_ORIGIN),
                          SEQ_PLATFORM + P_XSector(pillar->sector)->seqType);
     }
@@ -401,7 +402,7 @@ int EV_OpenPillar(line_t *line, byte *args)
         else
         {
             pillar->floordest =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - args[2];
+                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - (float) args[2];
         }
         if(!args[3])
         {
@@ -410,12 +411,12 @@ int EV_OpenPillar(line_t *line, byte *args)
         else
         {
             pillar->ceilingdest =
-                P_GetFloatp(sec, DMU_CEILING_HEIGHT) + args[3];
+                P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) args[3];
         }
         if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - pillar->floordest >=
            pillar->ceilingdest - P_GetFloatp(sec, DMU_CEILING_HEIGHT))
         {
-            pillar->floorSpeed = FIX2FLT(args[1] * (FRACUNIT / 8));
+            pillar->floorSpeed = (float) args[1] * (1.0 / 8);
             pillar->ceilingSpeed =
                 (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - pillar->ceilingdest) *
                     (pillar->floorSpeed /
@@ -423,7 +424,7 @@ int EV_OpenPillar(line_t *line, byte *args)
         }
         else
         {
-            pillar->ceilingSpeed = FIX2FLT(args[1] * (FRACUNIT / 8));
+            pillar->ceilingSpeed = (float) args[1] * (1.0 / 8);
             pillar->floorSpeed =
                 (pillar->floordest - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) *
                     (pillar->ceilingSpeed /
