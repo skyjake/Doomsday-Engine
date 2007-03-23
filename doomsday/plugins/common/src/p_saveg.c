@@ -159,7 +159,7 @@ typedef enum gamearchivesegment_e {
     ASEG_MAP_HEADER,        //jhexen only
     ASEG_WORLD,
     ASEG_POLYOBJS,          //jhexen only
-    ASEG_MOBJS,             //jhexen only
+    ASEG_MOBJS,             //jhexen < ver 4 only
     ASEG_THINKERS,
     ASEG_SCRIPTS,           //jhexen only
     ASEG_PLAYERS,
@@ -192,6 +192,21 @@ typedef struct thinkerinfo_s {
     int           (*Read) ();
     size_t          size;
 } thinkerinfo_t;
+
+typedef enum {
+    sc_normal,
+    sc_ploff,                   // plane offset
+#if !__JHEXEN__
+    sc_xg1
+#endif
+} sectorclass_e;
+
+typedef enum {
+    lc_normal,
+#if !__JHEXEN__
+    lc_xg1
+#endif
+} lineclass_e;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -2099,9 +2114,7 @@ Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
 
 static void SV_WriteSector(sector_t *sec)
 {
-#if !__JHEXEN__
     int         type;
-#endif
     float       flooroffx = P_GetFloatp(sec, DMU_FLOOR_OFFSET_X);
     float       flooroffy = P_GetFloatp(sec, DMU_FLOOR_OFFSET_Y);
     float       ceiloffx = P_GetFloatp(sec, DMU_CEILING_OFFSET_X);
@@ -2118,14 +2131,15 @@ static void SV_WriteSector(sector_t *sec)
     // Determine type.
     if(xsec->xg)
         type = sc_xg1;
-    else if(flooroffx || flooroffy || ceiloffx || ceiloffy)
+    else
+#endif
+        if(flooroffx || flooroffy || ceiloffx || ceiloffy)
         type = sc_ploff;
     else
         type = sc_normal;
 
     // Type byte.
     SV_WriteByte(type);
-#endif
 
     // Version.
     // 2: Surface colors.
@@ -2157,9 +2171,11 @@ static void SV_WriteSector(sector_t *sec)
     SV_WriteShort(xsec->seqType);
 #endif
 
+    if(type == sc_ploff
 #if !__JHEXEN__
-    if(type == sc_xg1 || type == sc_ploff)
+       || type == sc_xg1
 #endif
+       )
     {
         SV_WriteFloat(flooroffx);
         SV_WriteFloat(flooroffy);
@@ -2186,21 +2202,26 @@ static void SV_WriteSector(sector_t *sec)
 static void SV_ReadSector(sector_t *sec)
 {
     int         ver = 1;
-#if !__JHEXEN__
     int         type = 0;
-#endif
     int         floorTexID;
     int         ceilingTexID;
     byte        rgb[3];
     xsector_t  *xsec = P_XSector(sec);
     int         fh, ch;
 
-#if !__JHEXEN__
-    // Save versions > 1 include a type byte
-    if(hdr.version > 1)
-        type = SV_ReadByte();
+    // A type byte?
+#if __JHEXEN__
+    if(saveVersion < 4)
+        type = sc_ploff;
+    else
+#else
+    if(hdr.version <= 1)
+        type = sc_normal;
+    else
 #endif
+        type = SV_ReadByte();
 
+    // A version byte?
 #if __JHEXEN__
     if(saveVersion > 2)
 #else
@@ -2281,27 +2302,25 @@ static void SV_ReadSector(sector_t *sec)
     xsec->seqType = SV_ReadShort();
 #endif
 
-#if __JHEXEN__
-    P_SetFloatp(sec, DMU_FLOOR_OFFSET_X, SV_ReadFloat());
-    P_SetFloatp(sec, DMU_FLOOR_OFFSET_Y, SV_ReadFloat());
-    P_SetFloatp(sec, DMU_CEILING_OFFSET_X, SV_ReadFloat());
-    P_SetFloatp(sec, DMU_CEILING_OFFSET_Y, SV_ReadFloat());
-#else
-    // Save versions > 1 include a type byte
-    if(hdr.version > 1)
+    if(type == sc_ploff
+#if !__JHEXEN__
+       || type == sc_xg1
+#endif
+       )
     {
-        if(type == sc_xg1 || type == sc_ploff)
-        {
-            P_SetFloatp(sec, DMU_FLOOR_OFFSET_X, SV_ReadFloat());
-            P_SetFloatp(sec, DMU_FLOOR_OFFSET_Y, SV_ReadFloat());
-            P_SetFloatp(sec, DMU_CEILING_OFFSET_X, SV_ReadFloat());
-            P_SetFloatp(sec, DMU_CEILING_OFFSET_Y, SV_ReadFloat());
-        }
-
-        if(type == sc_xg1)
-            SV_ReadXGSector(sec);
+        P_SetFloatp(sec, DMU_FLOOR_OFFSET_X, SV_ReadFloat());
+        P_SetFloatp(sec, DMU_FLOOR_OFFSET_Y, SV_ReadFloat());
+        P_SetFloatp(sec, DMU_CEILING_OFFSET_X, SV_ReadFloat());
+        P_SetFloatp(sec, DMU_CEILING_OFFSET_Y, SV_ReadFloat());
     }
-    else
+
+#if !__JHEXEN__
+    if(type == sc_xg1)
+        SV_ReadXGSector(sec);
+#endif
+
+#if !__JHEXEN__
+    if(hdr.version <= 1)
 #endif
     {
         xsec->specialdata = 0;
@@ -2316,19 +2335,16 @@ static void SV_WriteLine(line_t *li)
     uint        i;
     int         texid;
     byte        rgba[4];
-#if !__JHEXEN__
-    lineclass_t type;
-#endif
+    lineclass_e type;
     xline_t    *xli = P_XLine(li);
 
 #if !__JHEXEN__
     if(xli->xg)
         type =  lc_xg1;
     else
-        type = lc_normal;
-
-    SV_WriteByte(type);
 #endif
+        type = lc_normal;
+    SV_WriteByte(type);
 
     // Version.
     // 2: Per surface texture offsets.
@@ -2399,28 +2415,33 @@ static void SV_WriteLine(line_t *li)
  */
 static void SV_ReadLine(line_t *li)
 {
-#if !__JHEXEN__
-    enum lineclass_e type = 0;
-#endif
     int         i;
-    int         ver = 1;
+    lineclass_e type;
+    int         ver;
     int         topTexID;
     int         bottomTexID;
     int         middleTexID;
     byte        rgba[4];
     xline_t    *xli = P_XLine(li);
 
-#if !__JHEXEN__
-    // Save versions > 1 include a type byte
-    if(hdr.version > 1)
-        type = (int) SV_ReadByte();
-#endif
-
+    // A type byte?
 #if __JHEXEN__
-    if(saveVersion > 2)
+    if(saveVersion < 4)
 #else
-    if(hdr.version > 4)
+    if(hdr.version < 2)
 #endif
+        type = lc_normal;
+    else
+        type = (int) SV_ReadByte();
+
+    // A version byte?
+#if __JHEXEN__
+    if(saveVersion < 3)
+#else
+    if(hdr.version < 5)
+#endif
+        ver = 1;
+    else
         ver = (int) SV_ReadByte();
 
     P_SetIntp(li, DMU_FLAGS, SV_ReadShort());
@@ -2504,10 +2525,8 @@ static void SV_ReadLine(line_t *li)
     }
 
 #if !__JHEXEN__
-    // Versions > 1 might include XG data
-    if(hdr.version > 1)
-        if(type == lc_xg1)
-            SV_ReadXGLine(li);
+    if(type == lc_xg1)
+        SV_ReadXGLine(li);
 #endif
 }
 

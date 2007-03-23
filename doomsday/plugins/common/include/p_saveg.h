@@ -25,19 +25,6 @@
 #ifndef __P_SAVEG__
 #define __P_SAVEG__
 
-#if !__JHEXEN__
-enum {
-    sc_normal,
-    sc_ploff,                   // plane offset
-    sc_xg1
-} sectorclass_e;
-
-typedef enum lineclass_e {
-    lc_normal,
-    lc_xg1
-} lineclass_t;
-#endif
-
 typedef enum thinkclass_e {
     TC_NULL = -1,
     TC_END,
