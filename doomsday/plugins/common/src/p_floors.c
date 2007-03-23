@@ -82,7 +82,7 @@
  * Move a plane (floor or ceiling) and check for crushing.
  */
 result_e T_MovePlane(sector_t *sector, float speed, float dest,
-                     boolean crush, int isCeiling, int direction)
+                     int crush, int isCeiling, int direction)
 {
     boolean     flag;
     float       lastpos;
@@ -272,7 +272,7 @@ void T_MoveFloor(floormove_t *floor)
 {
     xsector_t *xsec = P_XSector(floor->sector);
     result_e res;
-    
+
 #if __JHEXEN__
     if(floor->resetDelayCount)
     {
@@ -689,7 +689,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
                 floor->direction = 1;
             else if(floor->floordestheight < P_GetFloatp(sec, DMU_FLOOR_HEIGHT))
                 floor->direction = -1;
-            else 
+            else
                 rtn = 0; // Already at lowest position.
 
             break;
@@ -886,7 +886,7 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
 
     P_IterListResetIterator(list, true);
 
-    // Original Hexen KLUDGE: 
+    // Original Hexen KLUDGE:
     // Due to the fact that sectors can only have one special thinker
     // linked at a time, this routine manually removes the link before
     // then creating a second thinker for the sector.
