@@ -102,8 +102,6 @@
 # define CLIENTSAVEGAMENAME    "HexenCl"
 # define SAVEGAMEEXTENSION     "hxs"
 
-# define MAX_TARGET_PLAYERS    512
-# define MOBJ_NULL             -1
 # define MOBJ_XX_PLAYER        -2
 # define MAX_MAPS              99
 # define BASE_SLOT             6
@@ -582,11 +580,11 @@ static void SetMobjArchiveNums(boolean savePlayers)
 
     // jk: I don't know if it ever happens, but what if a mobj has a target
     // that isn't archived? (doesn't have a thinker).
-    // Let's initialize the archiveNums of all known mobjs to -1.
+    // Let's initialize the archiveNums of all known mobjs to NULL.
     for(i = 0; i < numsectors; ++i)
     {
         for(mobj = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); mobj; mobj = mobj->snext)
-            mobj->archiveNum = MOBJ_NULL;
+            mobj->archiveNum = 0;
     }
 
     th = thinkercap.next;
@@ -676,14 +674,14 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
 {
 #if __JHEXEN__
     if(mo == NULL)
-        return MOBJ_NULL;
+        return 0;
 
     if(mo->player && !savingPlayers)
     {
         return MOBJ_XX_PLAYER;
     }
 
-    return mo->archiveNum;
+    return mo->archiveNum + 1;
 #else
     uint        i, first_empty = 0;
     boolean     found;
@@ -695,7 +693,7 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
     found = false;
     for(i = 0; i < thing_archiveSize; ++i)
     {
-        if(!thing_archive[i] && first_empty < 0)
+        if(!thing_archive[i] && !found)
         {
             first_empty = i;
             found = true;
@@ -732,12 +730,13 @@ static void SV_FreeTargetPlayerList(void)
 }
 #endif
 
+/**
+ * Called by the read code to resolve mobj ptrs from archived thing ids
+ * after all thinkers have been read and spawned into the map.
+ */
 mobj_t *SV_GetArchiveThing(int thingid, void *address)
 {
 #if __JHEXEN__
-    if(thingid == MOBJ_NULL)
-        return NULL;
-
     if(thingid == MOBJ_XX_PLAYER)
     {
         targetplraddress_t *tpa = malloc(sizeof(targetplraddress_t));
@@ -749,21 +748,34 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
 
         return NULL;
     }
+#endif
 
-    // Check that the thing archive id is valid. -jk
-    if(thingid < 0 || (uint) thingid > thing_archiveSize - 1)
-        return NULL;
+    // Check that the thing archive id is valid.
+#if __JHEXEN__
+    if(saveVersion < 4)
+    {   // Old format is base 0.
+        if(thingid == -1)
+            return NULL; // A NULL reference.
+
+        if(thingid < 0 || (uint) thingid > thing_archiveSize - 1)
+            return NULL;
+    }
+    else
+#endif
+    {   // New format is base 1.
+        if(thingid == 0)
+            return NULL; // A NULL reference.
+
+        if(thingid < 1 || (uint) thingid > thing_archiveSize)
+        {
+            Con_Message("SV_GetArchiveThing: Invalid NUM %i??\n", thingid);
+            return NULL;
+        }
+
+        thingid -= 1;
+    }
 
     return thing_archive[thingid];
-#else
-    if(thingid == 0)
-        return NULL;
-
-    if(thingid < 0)
-        Con_Message("SV_GetArchiveThing: Invalid NUM %i??\n", thingid);
-
-    return *(thing_archive + thingid - 1);
-#endif
 }
 
 static playerheader_t *GetPlayerHeader(void)
@@ -1473,7 +1485,7 @@ static void SV_WriteMobj(mobj_t *original)
     case MT_HOLY_TAIL:
     case MT_LIGHTNING_CEILING:
         if(mo->flags & MF_CORPSE)
-            SV_WriteLong(MOBJ_NULL);
+            SV_WriteLong(0);
         else
             SV_WriteLong(SV_ThingArchiveNum((mobj_t *) mo->special2));
         break;
@@ -1491,7 +1503,7 @@ static void SV_WriteMobj(mobj_t *original)
 
 #if __JHEXEN__
     if(mo->flags & MF_CORPSE)
-        SV_WriteLong((int) MOBJ_NULL);
+        SV_WriteLong(0);
     else
         SV_WriteLong((int) SV_ThingArchiveNum(mo->target));
 #endif
@@ -1563,7 +1575,7 @@ static void SV_WriteMobj(mobj_t *original)
     case MT_HOLY_TAIL:
     case MT_LIGHTNING_CEILING:
         if(mo->flags & MF_CORPSE)
-            SV_WriteLong(MOBJ_NULL);
+            SV_WriteLong(0);
         else
             SV_WriteLong(SV_ThingArchiveNum(mo->tracer));
         break;
