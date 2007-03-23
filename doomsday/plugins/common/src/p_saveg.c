@@ -567,8 +567,8 @@ static void removeAllThinkers(void)
 
 #if __JHEXEN__
 /**
- * Sets the archive numbers in all mobj structs.  Also sets the thing_archiveSize
- * global.  Ignores player mobjs if savePlayers is false.
+ * Sets the archive numbers in all mobj structs. Also sets the thing_archiveSize
+ * global. Ignores player mobjs if savePlayers is false.
  */
 static void SetMobjArchiveNums(boolean savePlayers)
 {
@@ -600,24 +600,29 @@ static void SetMobjArchiveNums(boolean savePlayers)
         th = th->next;
     }
 }
-#else
+#endif
 
 /**
  * Must be called before saving or loading any data.
  */
 static void SV_InitThingArchive(boolean load)
 {
-    int count = 0;
+    uint    count = 0;
 
     if(load)
     {
-        if(hdr.version >= 5)
-            count = SV_ReadLong();
-        else
+#if !__JHEXEN__
+        if(hdr.version < 5)
             count = 1024; // Limit in previous versions.
+        else
+#endif
+            count = SV_ReadLong();
     }
     else
     {
+#if __JHEXEN__
+        Con_Error("SV_InitThingArchive: Write Unsupported!");
+#else
         thinker_t *th;
 
         // Count the number of mobjs we'll be writing.
@@ -631,6 +636,7 @@ static void SV_InitThingArchive(boolean load)
         }
 
         SV_WriteLong(count);
+#endif
     }
 
     thing_archive = calloc(count, sizeof(mobj_t*));
@@ -642,11 +648,15 @@ static void SV_InitThingArchive(boolean load)
  */
 static void SV_SetArchiveThing(mobj_t *mo, int num)
 {
-    if(!num)
+#if !__JHEXEN__
+        num -= 1;
+#endif
+
+    if(num < 0)
         return;
-    thing_archive[num - 1] = mo;
+
+    thing_archive[num] = mo;
 }
-#endif // __JHEXEN__
 
 /**
  * Free the thing archive. Called when load is complete.
@@ -1841,7 +1851,7 @@ static int SV_ReadMobj(thinker_t *th)
 
 #if __JHEXEN__
     mo->floorclip = FIX2FLT(SV_ReadLong());
-    mo->archiveNum = SV_ReadLong();
+    SV_SetArchiveThing(mo, SV_ReadLong());
     mo->tid = SV_ReadLong();
 #else
     // For nightmare respawn.
@@ -3960,13 +3970,8 @@ static void P_UnArchiveThinkers(void)
         AssertSegment(ASEG_THINKERS);
 
 #if __JHEXEN__
-    thing_archiveSize = SV_ReadLong();
     targetPlayerAddrs = NULL;
-    thing_archive = malloc(thing_archiveSize * sizeof(mobj_t *));
-    for(i = 0; i < thing_archiveSize; ++i)
-    {
-        thing_archive[i] = Z_Calloc(sizeof(mobj_t), PU_LEVEL, NULL);
-    }
+    SV_InitThingArchive(true);
 #endif
 
     // Read in saved thinkers.
