@@ -288,7 +288,7 @@ void XL_UnArchiveLines(void)
         xline = P_XLine(P_ToPtr(DMU_LINE, i));
         if(xline->xg)
         {
-            activator = SV_GetArchiveThing((int) xline->xg->activator);
+            activator = SV_GetArchiveThing((int) xline->xg->activator, &xline->xg->activator);
             xline->xg->activator = (activator ? activator : &dummything);
         }
     }

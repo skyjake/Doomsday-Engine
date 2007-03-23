@@ -306,7 +306,7 @@ static mobj_t **thing_archive;
 static int thing_archiveSize;
 static int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
-static int **targetPlayerAddrs;
+static mobj_t **targetPlayerAddrs;
 static int targetPlayerCount;
 static byte *saveBuffer;
 static boolean savingPlayers;
@@ -598,50 +598,6 @@ static void SetMobjArchiveNums(boolean savePlayers)
         th = th->next;
     }
 }
-
-static int GetMobjNum(mobj_t *mobj)
-{
-    if(mobj == NULL)
-    {
-        return MOBJ_NULL;
-    }
-
-    if(mobj->player && !savingPlayers)
-    {
-        return MOBJ_XX_PLAYER;
-    }
-
-    return mobj->archiveNum;
-}
-
-static void SetMobjPtr(int *archiveNum)
-{
-    if(*archiveNum == MOBJ_NULL)
-    {
-        *archiveNum = 0;
-        return;
-    }
-
-    if(*archiveNum == MOBJ_XX_PLAYER)
-    {
-        if(targetPlayerCount == MAX_TARGET_PLAYERS)
-        {
-            Con_Error("RestoreMobj: exceeded MAX_TARGET_PLAYERS");
-        }
-        targetPlayerAddrs[targetPlayerCount++] = archiveNum;
-        *archiveNum = 0;
-        return;
-    }
-
-    // Check that the archiveNum is valid. -jk
-    if(*archiveNum < 0 || *archiveNum > thing_archiveSize - 1)
-    {
-        *archiveNum = 0;        // Set it to null. What else can we do?
-        return;
-    }
-    *archiveNum = (int) thing_archive[*archiveNum];
-}
-
 #else
 
 /**
@@ -690,12 +646,38 @@ static void SV_FreeThingArchive(void)
 }
 
 /**
+ * Used by the read code when mobjs are read.
+ */
+static void SV_SetArchiveThing(mobj_t *mo, int num)
+{
+    if(!num)
+        return;
+    *(thing_archive + num - 1) = mo;
+}
+#endif // __JHEXEN__
+
+/**
  * Called by the write code to get archive numbers.
  * If the mobj is already archived, the existing number is returned.
  * Number zero is not used.
  */
+#if __JHEXEN__
+int SV_ThingArchiveNum(mobj_t *mo)
+#else
 unsigned short SV_ThingArchiveNum(mobj_t *mo)
+#endif
 {
+#if __JHEXEN__
+    if(mo == NULL)
+        return MOBJ_NULL;
+
+    if(mo->player && !savingPlayers)
+    {
+        return MOBJ_XX_PLAYER;
+    }
+
+    return mo->archiveNum;
+#else
     int     i;
     int     first_empty = -1;
 
@@ -723,30 +705,39 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
     // OK, place it in an empty pos.
     *(thing_archive + first_empty) = mo;
     return first_empty + 1;
+#endif
 }
 
-/**
- * Used by the read code when mobjs are read.
- */
-static void SV_SetArchiveThing(mobj_t *mo, int num)
+mobj_t *SV_GetArchiveThing(int thingid, void *address)
 {
-    if(!num)
-        return;
-    *(thing_archive + num - 1) = mo;
-}
-
-mobj_t *SV_GetArchiveThing(int num)
-{
-    if(num == 0)
+#if __JHEXEN__
+    if(thingid == MOBJ_NULL)
         return NULL;
 
-    if(num < 0)
-        Con_Message("SV_GetArchiveThing: Invalid NUM %i??\n", num);
+    if(thingid == MOBJ_XX_PLAYER)
+    {
+        if(targetPlayerCount == MAX_TARGET_PLAYERS)
+            Con_Error("RestoreMobj: exceeded MAX_TARGET_PLAYERS");
 
-    return *(thing_archive + num - 1);
+        targetPlayerAddrs[targetPlayerCount++] = address;
+        return NULL;
+    }
+
+    // Check that the thing archive id is valid. -jk
+    if(thingid < 0 || thingid > thing_archiveSize - 1)
+        return NULL;
+
+    return thing_archive[thingid];
+#else
+    if(thingid == 0)
+        return NULL;
+
+    if(thingid < 0)
+        Con_Message("SV_GetArchiveThing: Invalid NUM %i??\n", thingid);
+
+    return *(thing_archive + thingid - 1);
+#endif
 }
-
-#endif // __JHEXEN__
 
 static playerheader_t *GetPlayerHeader(void)
 {
@@ -1344,88 +1335,6 @@ static void SV_ReadPlayer(player_t *p)
     p->update |= PSF_REBORN;
 }
 
-
-static void MangleMobj(mobj_t *mo)
-{
-#if __JHEXEN__
-    boolean     corpse;
-#endif
-
-    mo->state = (state_t *) (mo->state - states);
-    if(mo->player)
-        mo->player = (player_t *) ((mo->player - players) + 1);
-
-#if __JHEXEN__
-    corpse = mo->flags & MF_CORPSE;
-    if(corpse)
-    {
-        mo->target = (mobj_t *) MOBJ_NULL;
-    }
-    else
-    {
-        mo->target = (mobj_t *) GetMobjNum(mo->target);
-    }
-
-    switch(mo->type)
-    {
-    // Just tracer
-    case MT_BISH_FX:
-    case MT_HOLY_FX:
-    case MT_DRAGON:
-    case MT_THRUSTFLOOR_UP:
-    case MT_THRUSTFLOOR_DOWN:
-    case MT_MINOTAUR:
-    case MT_SORCFX1:
-    case MT_MSTAFF_FX2:
-        if(corpse)
-        {
-            mo->tracer = (mobj_t *) MOBJ_NULL;
-        }
-        else
-        {
-            mo->tracer = (mobj_t *) GetMobjNum(mo->tracer);
-        }
-        break;
-
-    // Just special2
-    case MT_LIGHTNING_FLOOR:
-    case MT_LIGHTNING_ZAP:
-        if(corpse)
-        {
-            mo->special2 = MOBJ_NULL;
-        }
-        else
-        {
-            mo->special2 = GetMobjNum((mobj_t *) mo->special2);
-        }
-        break;
-
-    // Both tracer and special2
-    case MT_HOLY_TAIL:
-    case MT_LIGHTNING_CEILING:
-        if(corpse)
-        {
-            mo->tracer = (mobj_t *) MOBJ_NULL;
-            mo->special2 = MOBJ_NULL;
-        }
-        else
-        {
-            mo->tracer = (mobj_t *) GetMobjNum(mo->tracer);
-            mo->special2 = GetMobjNum((mobj_t *) mo->special2);
-        }
-        break;
-
-    // Miscellaneous
-    case MT_KORAX:
-        mo->special1 = 0;     // Searching index
-        break;
-
-    default:
-        break;
-    }
-#endif
-}
-
 #if __JHEXEN__
 # define MOBJ_SAVEVERSION 5
 #else
@@ -1439,7 +1348,10 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteByte(TC_MOBJ); // Write thinker type byte.
 
     memcpy(mo, original, sizeof(*mo));
-    MangleMobj(mo);
+    // Mangle it!
+    mo->state = (state_t *) (mo->state - states);
+    if(mo->player)
+        mo->player = (player_t *) ((mo->player - players) + 1);
 
     // Version.
     // JHEXEN
@@ -1521,8 +1433,28 @@ static void SV_WriteMobj(mobj_t *original)
 #if __JHEXEN__
     SV_WriteLong(mo->flags2);
     SV_WriteLong(mo->flags3);
-    SV_WriteLong(mo->special1);
-    SV_WriteLong(mo->special2);
+
+    if(mo->type == MT_KORAX)
+        SV_WriteLong(0);     // Searching index
+    else
+        SV_WriteLong(mo->special1);
+
+    switch(mo->type)
+    {
+    case MT_LIGHTNING_FLOOR:
+    case MT_LIGHTNING_ZAP:
+    case MT_HOLY_TAIL:
+    case MT_LIGHTNING_CEILING:
+        if(mo->flags & MF_CORPSE)
+            SV_WriteLong(MOBJ_NULL);
+        else
+            SV_WriteLong(SV_ThingArchiveNum((mobj_t *) mo->special2));
+        break;
+
+    default:
+        SV_WriteLong(mo->special2);
+        break;
+    }
 #endif
     SV_WriteLong(mo->health);
 
@@ -1531,7 +1463,10 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->movecount); // when 0, select a new dir
 
 #if __JHEXEN__
-    SV_WriteLong((int) mo->target);
+    if(mo->flags & MF_CORPSE)
+        SV_WriteLong((int) MOBJ_NULL);
+    else
+        SV_WriteLong((int) SV_ThingArchiveNum(mo->target));
 #endif
 
     // Reaction time: if non 0, don't attack yet.
@@ -1587,7 +1522,33 @@ static void SV_WriteMobj(mobj_t *original)
     SV_Write(mo->args, sizeof(mo->args));
     SV_WriteByte(mo->translucency);
     SV_WriteByte((byte)(mo->vistarget +1));
-    SV_WriteLong((int) mo->tracer);
+
+    switch(mo->type)
+    {
+    case MT_BISH_FX:
+    case MT_HOLY_FX:
+    case MT_DRAGON:
+    case MT_THRUSTFLOOR_UP:
+    case MT_THRUSTFLOOR_DOWN:
+    case MT_MINOTAUR:
+    case MT_SORCFX1:
+    case MT_MSTAFF_FX2:
+    case MT_HOLY_TAIL:
+    case MT_LIGHTNING_CEILING:
+        if(mo->flags & MF_CORPSE)
+            SV_WriteLong(MOBJ_NULL);
+        else
+            SV_WriteLong(SV_ThingArchiveNum(mo->tracer));
+        break;
+
+    default:
+# if _DEBUG
+Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
+# endif
+        SV_WriteLong((int) mo->tracer);
+        break;
+    }
+
     SV_WriteLong((int) mo->lastenemy);
 #elif __JHERETIC__
     // Ver 7 features: generator
@@ -3171,7 +3132,7 @@ static void SV_WriteScript(acs_t *th)
 
     SV_WriteByte(1); // Write a version byte.
 
-    SV_WriteLong(GetMobjNum(th->activator));
+    SV_WriteLong(SV_ThingArchiveNum(th->activator));
     SV_WriteLong(th->line ? P_ToIndex(th->line) : -1);
     SV_WriteLong(th->side);
     SV_WriteLong(th->number);
@@ -3196,7 +3157,7 @@ static int SV_ReadScript(acs_t *th)
         /*int ver =*/ SV_ReadByte(); // version byte.
 
         th->activator = (mobj_t*) SV_ReadLong();
-        SetMobjPtr((int *) &th->activator);
+        th->activator = SV_GetArchiveThing((int) th->activator, &th->activator);
         temp = SV_ReadLong();
         if(temp == -1)
             th->line = NULL;
@@ -3222,7 +3183,7 @@ static int SV_ReadScript(acs_t *th)
 
         // Start of used data members.
         th->activator = (mobj_t*) SV_ReadLong();
-        SetMobjPtr((int *) &th->activator);
+        th->activator = SV_GetArchiveThing((int) th->activator, &th->activator);
         temp = SV_ReadLong();
         if(temp == -1)
             th->line = NULL;
@@ -3961,7 +3922,7 @@ static void P_UnArchiveThinkers(void)
         AssertSegment(ASEG_THINKERS);
 
 #if __JHEXEN__
-    targetPlayerAddrs = Z_Malloc(MAX_TARGET_PLAYERS * sizeof(int *),
+    targetPlayerAddrs = Z_Malloc(MAX_TARGET_PLAYERS * sizeof(mobj_t *),
                                  PU_STATIC, NULL);
     targetPlayerCount = 0;
     thing_archiveSize = SV_ReadLong();
@@ -4079,7 +4040,7 @@ static void P_UnArchiveThinkers(void)
                 continue;
 
             mo = (mobj_t *) th;
-            SetMobjPtr((int *) &mo->target);
+            mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
 
             switch(mo->type)
             {
@@ -4092,25 +4053,35 @@ static void P_UnArchiveThinkers(void)
             case MT_MINOTAUR:
             case MT_SORCFX1:
                 if(saveVersion >= 3)
-                    SetMobjPtr((int *) &mo->tracer);
+                {
+                    mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
+                }
                 else
-                    SetMobjPtr((int *) &mo->special1);
+                {
+                    mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                    mo->special1 = 0;
+                }
                 break;
 
             // Just special2
             case MT_LIGHTNING_FLOOR:
             case MT_LIGHTNING_ZAP:
-                SetMobjPtr(&mo->special2);
+                mo->special2 = (int) SV_GetArchiveThing(mo->special2, &mo->special2);
                 break;
 
             // Both tracer and special2
             case MT_HOLY_TAIL:
             case MT_LIGHTNING_CEILING:
                 if(saveVersion >= 3)
-                    SetMobjPtr((int *) &mo->tracer);
+                {
+                    mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
+                }
                 else
-                    SetMobjPtr((int *) &mo->special1);
-                SetMobjPtr(&mo->special2);
+                {
+                    mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                    mo->special1 = 0;
+                }
+                mo->special2 = (int) SV_GetArchiveThing(mo->special2, &mo->special2);
                 break;
 
             default:
@@ -4130,18 +4101,18 @@ static void P_UnArchiveThinkers(void)
 
             mo = (mobj_t *) th;
             // Update target.
-            mo->target = SV_GetArchiveThing((int) mo->target);
+            mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
 
 # if __JDOOM__
             // Update tracer.
-            mo->tracer = SV_GetArchiveThing((int) mo->tracer);
+            mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
 # endif
             // Update onmobj.
-            mo->onmobj = SV_GetArchiveThing((int) mo->onmobj);
+            mo->onmobj = SV_GetArchiveThing((int) mo->onmobj, &mo->onmobj);
 
 # if __JHERETIC__
             // Update generator.
-            mo->generator = SV_GetArchiveThing((int) mo->generator);
+            mo->generator = SV_GetArchiveThing((int) mo->generator, &mo->generator);
 # endif
         }
 
@@ -4178,7 +4149,10 @@ static void P_UnArchiveBrain(void)
     numbraintargets = SV_ReadByte();
     brain.targeton = SV_ReadByte();
     for(i = 0; i < numbraintargets; ++i)
-        braintargets[i] = SV_GetArchiveThing(SV_ReadShort());
+    {
+        braintargets[i] = (mobj_t*) SV_ReadShort();
+        braintargets[i] = SV_GetArchiveThing((int) braintargets[i], NULL);
+    }
 
     if(gamemode == commercial)
         P_SpawnBrainTargets();
@@ -4209,9 +4183,10 @@ static void P_ArchiveSoundTargets(void)
 
 static void P_UnArchiveSoundTargets(void)
 {
-    uint    i;
-    uint    secid;
-    uint    numsoundtargets;
+    uint        i;
+    uint        secid;
+    uint        numsoundtargets;
+    xsector_t  *xsec;
 
     // Sound Target data was introduced in ver 5
     if(hdr.version < 5)
@@ -4228,8 +4203,9 @@ static void P_UnArchiveSoundTargets(void)
         if(secid > numsectors)
             Con_Error("P_UnArchiveSoundTargets: bad sector number\n");
 
-        P_XSector(P_ToPtr(DMU_SECTOR, secid))->soundtarget =
-            SV_GetArchiveThing(SV_ReadShort());
+        xsec = P_XSector(P_ToPtr(DMU_SECTOR, secid));
+        xsec->soundtarget = (mobj_t*) SV_ReadShort();
+            SV_GetArchiveThing((int) xsec->soundtarget, &xsec->soundtarget);
     }
 }
 #endif
@@ -5309,11 +5285,12 @@ void SV_MapTeleport(int map, int position)
     randomclass = rClass;
 
     // Redirect anything targeting a player mobj
+    // FIXME! This only supports single player games!!
     if(targetPlayerAddrs)
     {
         for(i = 0; i < targetPlayerCount; ++i)
         {
-            *targetPlayerAddrs[i] = (int) targetPlayerMobj;
+            *targetPlayerAddrs[i] = targetPlayerMobj;
         }
         Z_Free(targetPlayerAddrs);
     }

@@ -82,10 +82,12 @@ void            SV_SaveClient(unsigned int gameid);
 void            SV_ClientSaveGameFile(unsigned int game_id, char *str);
 void            SV_LoadClient(unsigned int gameid);
 
-#if !__JHEXEN__
+#if __JHEXEN__
+int             SV_ThingArchiveNum(mobj_t *mo);
+#else
 unsigned short  SV_ThingArchiveNum(mobj_t *mo);
-mobj_t         *SV_GetArchiveThing(int num);
 #endif
+mobj_t         *SV_GetArchiveThing(int thingid, void *address);
 
 void            SV_Write(void *data, int len);
 void            SV_WriteByte(byte val);
