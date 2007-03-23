@@ -36,6 +36,7 @@ typedef enum lineclass_e {
     lc_normal,
     lc_xg1
 } lineclass_t;
+#endif
 
 typedef enum thinkclass_e {
     TC_NULL = -1,
@@ -46,6 +47,16 @@ typedef enum thinkclass_e {
     TC_DOOR,
     TC_FLOOR,
     TC_PLAT,
+#if __JHEXEN__
+    TC_INTERPRET_ACS,
+    TC_FLOOR_WAGGLE,
+    TC_LIGHT,
+    TC_PHASE,
+    TC_BUILD_PILLAR,
+    TC_ROTATE_POLY,
+    TC_MOVE_POLY,
+    TC_POLY_DOOR,
+#else
     TC_FLASH,
     TC_STROBE,
 # if __JDOOM__
@@ -57,27 +68,9 @@ typedef enum thinkclass_e {
 # else
     TC_GLOW,
 # endif
-    NUMTHINKERCLASSES
-} thinkerclass_t;
-
-#else
-typedef enum thinkclass_e {
-    TC_NULL,
-    TC_CEILING,
-    TC_DOOR,
-    TC_FLOOR,
-    TC_PLAT,
-    TC_INTERPRET_ACS,
-    TC_FLOOR_WAGGLE,
-    TC_LIGHT,
-    TC_PHASE,
-    TC_BUILD_PILLAR,
-    TC_ROTATE_POLY,
-    TC_MOVE_POLY,
-    TC_POLY_DOOR,
-    NUMTHINKERCLASSES
-} thinkerclass_t;
 #endif
+    NUMTHINKERCLASSES
+} thinkerclass_t;
 
 void            SV_Init(void);
 void            SV_SaveGameFile(int slot, char *str);
