@@ -173,11 +173,16 @@ typedef enum gamearchivesegment_e {
 
 #if __JHEXEN__
 static union saveptr_u {
-    byte   *b;
-    short  *w;
-    int    *l;
-    float  *f;
+    byte        *b;
+    short       *w;
+    int         *l;
+    float       *f;
 } saveptr;
+
+typedef struct targetplraddress_s {
+    void     **address;
+    struct targetplraddress_s *next;
+} targetplraddress_t;
 #endif
 
 // Thinker Save flags
@@ -303,11 +308,10 @@ static saveheader_t hdr;
 static playerheader_t playerHeader;
 static boolean playerHeaderOK = false;
 static mobj_t **thing_archive;
-static int thing_archiveSize;
+static uint thing_archiveSize;
 static int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
-static mobj_t **targetPlayerAddrs;
-static int targetPlayerCount;
+static targetplraddress_t *targetPlayerAddrs = NULL;
 static byte *saveBuffer;
 static boolean savingPlayers;
 #else
@@ -632,17 +636,7 @@ static void SV_InitThingArchive(boolean load)
     }
 
     thing_archive = calloc(count, sizeof(mobj_t*));
-    thing_archiveSize = count;
-}
-
-/**
- * Free the thing archive. Called when load is complete.
- */
-static void SV_FreeThingArchive(void)
-{
-    free(thing_archive);
-    thing_archive = NULL;
-    thing_archiveSize = 0;
+    thing_archiveSize = (uint) count;
 }
 
 /**
@@ -652,9 +646,22 @@ static void SV_SetArchiveThing(mobj_t *mo, int num)
 {
     if(!num)
         return;
-    *(thing_archive + num - 1) = mo;
+    thing_archive[num - 1] = mo;
 }
 #endif // __JHEXEN__
+
+/**
+ * Free the thing archive. Called when load is complete.
+ */
+static void SV_FreeThingArchive(void)
+{
+    if(thing_archive)
+    {
+        free(thing_archive);
+        thing_archive = NULL;
+        thing_archiveSize = 0;
+    }
+}
 
 /**
  * Called by the write code to get archive numbers.
@@ -678,35 +685,52 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
 
     return mo->archiveNum;
 #else
-    int     i;
-    int     first_empty = -1;
+    uint        i, first_empty = 0;
+    boolean     found;
 
     // We only archive valid mobj thinkers.
     if(mo == NULL || ((thinker_t *) mo)->function != P_MobjThinker)
         return 0;
 
-    for(i = 0; i < thing_archiveSize; i++)
+    found = false;
+    for(i = 0; i < thing_archiveSize; ++i)
     {
         if(!thing_archive[i] && first_empty < 0)
         {
             first_empty = i;
+            found = true;
             continue;
         }
         if(thing_archive[i] == mo)
             return i + 1;
     }
 
-    if(first_empty == -1)
+    if(!found)
     {
         Con_Error("SV_ThingArchiveNum: Thing archive exhausted!\n");
         return 0;               // No number available!
     }
 
     // OK, place it in an empty pos.
-    *(thing_archive + first_empty) = mo;
+    thing_archive[first_empty] = mo;
     return first_empty + 1;
 #endif
 }
+
+#if __JHEXEN__
+static void SV_FreeTargetPlayerList(void)
+{
+    targetplraddress_t *p = targetPlayerAddrs, *np;
+
+    while(p != NULL)
+    {
+        np = p->next;
+        free(p);
+        p = np;
+    }
+    targetPlayerAddrs = NULL;
+}
+#endif
 
 mobj_t *SV_GetArchiveThing(int thingid, void *address)
 {
@@ -716,15 +740,18 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
 
     if(thingid == MOBJ_XX_PLAYER)
     {
-        if(targetPlayerCount == MAX_TARGET_PLAYERS)
-            Con_Error("RestoreMobj: exceeded MAX_TARGET_PLAYERS");
+        targetplraddress_t *tpa = malloc(sizeof(targetplraddress_t));
 
-        targetPlayerAddrs[targetPlayerCount++] = address;
+        tpa->address = address;
+
+        tpa->next = targetPlayerAddrs;
+        targetPlayerAddrs = tpa;
+
         return NULL;
     }
 
     // Check that the thing archive id is valid. -jk
-    if(thingid < 0 || thingid > thing_archiveSize - 1)
+    if(thingid < 0 || (uint) thingid > thing_archiveSize - 1)
         return NULL;
 
     return thing_archive[thingid];
@@ -1543,6 +1570,7 @@ static void SV_WriteMobj(mobj_t *original)
 
     default:
 # if _DEBUG
+if(mo->tracer != NULL)
 Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
 # endif
         SV_WriteLong((int) mo->tracer);
@@ -3896,9 +3924,7 @@ static void P_ArchiveThinkers(boolean savePlayers)
  */
 static void P_UnArchiveThinkers(void)
 {
-#if __JHEXEN__
-    int         i;
-#endif
+    uint        i;
     byte        tClass;
     thinker_t  *th = 0;
     thinkerinfo_t *thInfo = 0;
@@ -3922,13 +3948,9 @@ static void P_UnArchiveThinkers(void)
         AssertSegment(ASEG_THINKERS);
 
 #if __JHEXEN__
-    targetPlayerAddrs = Z_Malloc(MAX_TARGET_PLAYERS * sizeof(mobj_t *),
-                                 PU_STATIC, NULL);
-    targetPlayerCount = 0;
     thing_archiveSize = SV_ReadLong();
-
-    thing_archive = Z_Malloc(thing_archiveSize * sizeof(mobj_t *),
-                             PU_STATIC, NULL);
+    targetPlayerAddrs = NULL;
+    thing_archive = malloc(thing_archiveSize * sizeof(mobj_t *));
     for(i = 0; i < thing_archiveSize; ++i)
     {
         thing_archive[i] = Z_Calloc(sizeof(mobj_t), PU_LEVEL, NULL);
@@ -4116,8 +4138,14 @@ static void P_UnArchiveThinkers(void)
 # endif
         }
 
-        // The activator mobjs must be set.
-        XL_UnArchiveLines();
+        for(i = 0; i < numlines; ++i)
+        {
+            xline_t *xline = P_XLine(P_ToPtr(DMU_LINE, i));
+            if(xline->xg)
+                xline->xg->activator =
+                    SV_GetArchiveThing((int) xline->xg->activator,
+                                       &xline->xg->activator);
+        }
     }
 #endif
 
@@ -4838,9 +4866,19 @@ static boolean SV_LoadGame2(void)
     SV_DMLoadMap();
 #endif
 
+#if !__JHEXEN__
+    // Check consistency.
+    if(SV_ReadByte() != CONSISTENCY)
+        Con_Error("SV_LoadGame: Bad savegame (consistency test failed!)\n");
+
+    // We're done.
+    SV_FreeThingArchive();
+    lzClose(savefile);
+#endif
+
 #if __JHEXEN__
     // Don't need the player mobj relocation info for load game
-    Z_Free(targetPlayerAddrs);
+    SV_FreeTargetPlayerList();
 
     // Restore player structs
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -4853,14 +4891,11 @@ static boolean SV_LoadGame2(void)
 
         P_InventoryResetCursor(&players[i]);
     }
-#else
-    // Check consistency.
-    if(SV_ReadByte() != CONSISTENCY)
-        Con_Error("SV_LoadGame: Bad savegame (consistency test failed!)\n");
+#endif
 
-    // We're done.
-    SV_FreeThingArchive();
-    lzClose(savefile);
+#if !__JHEXEN__
+    // The activator mobjs must be set.
+    XL_UpdateActivators();
 #endif
 
     // Notify the players that weren't in the savegame.
@@ -5091,6 +5126,8 @@ void SV_LoadClient(unsigned int gameid)
     lzClose(savefile);
     free(junkbuffer);
 
+    // The activator mobjs must be set.
+    XL_UpdateActivators();
 #endif
 }
 
@@ -5134,7 +5171,7 @@ static void SV_HxLoadMap(void)
     P_UnArchiveMap();
 
     // Free mobj list and save buffer
-    Z_Free(thing_archive);
+    SV_FreeThingArchive();
     Z_Free(saveBuffer);
 
     // Spawn particle generators, fix HOMS etc, etc...
@@ -5288,11 +5325,21 @@ void SV_MapTeleport(int map, int position)
     // FIXME! This only supports single player games!!
     if(targetPlayerAddrs)
     {
-        for(i = 0; i < targetPlayerCount; ++i)
+        targetplraddress_t *p;
+
+        p = targetPlayerAddrs;
+        while(p != NULL)
         {
-            *targetPlayerAddrs[i] = targetPlayerMobj;
+            *(p->address) = targetPlayerMobj;
+            p = p->next;
         }
-        Z_Free(targetPlayerAddrs);
+        SV_FreeTargetPlayerList();
+
+        /* DJS - When XG is available in jHexen, call this after updating
+        target player references (after a load).
+        // The activator mobjs must be set.
+        XL_UpdateActivators();
+        */
     }
 
     // Destroy all things touching players

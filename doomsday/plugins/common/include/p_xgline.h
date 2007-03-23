@@ -370,6 +370,6 @@ int             XG_RandomInt(int min, int max);
 
 void            SV_WriteXGLine(struct line_s *li);
 void            SV_ReadXGLine(struct line_s *li);
-void            XL_UnArchiveLines(void);
+void            XL_UpdateActivators(void);
 
 #endif
