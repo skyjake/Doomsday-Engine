@@ -316,19 +316,7 @@ static int numSoundTargets = 0;
 
 static byte *junkbuffer;        // Old save data is read into here.
 
-/*
- * IMPORTANT:
- * Add new thinkers to the end. Existing indices must remain the same.
- */
 static thinkerinfo_t thinkerInfo[] = {
-    {
-      TC_END,
-      NULL,
-      0,
-      NULL,
-      NULL,
-      0
-    },
     {
       TC_MOBJ,
       P_MobjThinker,
@@ -345,15 +333,6 @@ static thinkerinfo_t thinkerInfo[] = {
       SV_WriteXGPlaneMover,
       SV_ReadXGPlaneMover,
       sizeof(xgplanemover_t)
-    },
-#else
-    {
-      TC_XGMOVER,
-      NULL,
-      0,
-      NULL,
-      NULL,
-      0
     },
 #endif
     {
@@ -532,7 +511,7 @@ static void SV_BeginSegment(int segType)
 /**
  * @return              Ptr to the thinkerinfo for the given thinker.
  */
-static thinkerinfo_t* ThinkerInfo(thinker_t *th)
+static thinkerinfo_t* infoForThinker(thinker_t *th)
 {
     thinkerinfo_t *thInfo = thinkerInfo;
 
@@ -542,6 +521,21 @@ static thinkerinfo_t* ThinkerInfo(thinker_t *th)
     while(thInfo->thinkclass != TC_NULL)
     {
         if(thInfo->function == th->function)
+            return thInfo;
+
+        thInfo++;
+    }
+
+    return NULL;
+}
+
+static thinkerinfo_t* thinkerinfo(thinkerclass_t tClass)
+{
+    thinkerinfo_t *thInfo = thinkerInfo;
+
+    while(thInfo->thinkclass != TC_NULL)
+    {
+        if(thInfo->thinkclass == tClass)
             return thInfo;
 
         thInfo++;
@@ -3851,27 +3845,22 @@ static void SV_AddThinker(thinkerclass_t tclass, thinker_t* th)
 }
 
 /**
- * Archives the specified thinker. Needed due to plats/ceilings in stasis.
+ * Archives the specified thinker.
  *
+ * @param thInfo    The thinker info to be used when archiving.
  * @param th        The thinker to be archived.
- * @param tclass    The class of the thinker to be archived.
  */
-static void DoArchiveThinker(thinker_t *th, thinkerclass_t tclass)
+static void DoArchiveThinker(thinkerinfo_t *thInfo, thinker_t *th)
 {
-    thinkerinfo_t *thInfo;
-
-    if(!th || tclass < TC_END + 1 || tclass > NUMTHINKERCLASSES - 1)
+    if(!thInfo || !th)
         return;
 
-    thInfo = &thinkerInfo[tclass];
     // Only the server saves this class of thinker?
     if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
         return;
 
     if(thInfo->Write)
-    {
         thInfo->Write(th);
-    }
 }
 
 /**
@@ -3889,7 +3878,6 @@ static void P_ArchiveThinkers(boolean savePlayers)
 #endif
 
     thinker_t  *th = 0;
-    thinkerinfo_t *thInfo;
 #if !__JHEXEN__
     boolean     found;
 #endif
@@ -3916,14 +3904,14 @@ static void P_ArchiveThinkers(boolean savePlayers)
             for(pl = activeplats; pl && !found; pl = pl->next)
                 if(pl->plat == (plat_t *) th)      // killough 2/14/98
                 {
-                    DoArchiveThinker(th, TC_PLAT);
+                    DoArchiveThinker(thinkerinfo(TC_PLAT), th);
                     found = true;
                 }
 
             for(cl = activeceilings; cl && !found; cl = cl->next)
                 if(cl->ceiling == (ceiling_t *) th)      //jff 2/22/98
                 {
-                    DoArchiveThinker(th, TC_CEILING);
+                    DoArchiveThinker(thinkerinfo(TC_CEILING), th);
                     found = true;
                 }
         }
@@ -3934,9 +3922,7 @@ static void P_ArchiveThinkers(boolean savePlayers)
                ((mobj_t *) th)->player && !savePlayers)
                 continue; // Skipping player mobjs
 
-            thInfo = ThinkerInfo(th);
-            if(thInfo != NULL)
-                DoArchiveThinker(th, thInfo->thinkclass);
+            DoArchiveThinker(infoForThinker(th), th);
         }
     }
 
