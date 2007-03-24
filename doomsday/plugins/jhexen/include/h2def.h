@@ -186,7 +186,6 @@ typedef struct mobj_s {
     int             threshold;     // if > 0, the target will be chased
     // no matter what (even if shot)
     int             lastlook;      // player number last looked for
-    int             archiveNum;    // Identity during archive
     short           tid;           // thing identifier
     byte            special;       // special
     byte            args[5];       // special arguments

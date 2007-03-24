@@ -305,8 +305,8 @@ static saveheader_t hdr;
 #endif
 static playerheader_t playerHeader;
 static boolean playerHeaderOK = false;
-static mobj_t **thing_archive;
-static uint thing_archiveSize;
+static mobj_t **thing_archive = NULL;
+static uint thing_archiveSize = 0;
 static int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
 static targetplraddress_t *targetPlayerAddrs = NULL;
@@ -565,47 +565,10 @@ static void removeAllThinkers(void)
     P_InitThinkers();
 }
 
-#if __JHEXEN__
-/**
- * Sets the archive numbers in all mobj structs. Also sets the thing_archiveSize
- * global. Ignores player mobjs if savePlayers is false.
- */
-static void SetMobjArchiveNums(boolean savePlayers)
-{
-    uint        i;
-    mobj_t     *mobj;
-    thinker_t  *th;
-
-    thing_archiveSize = 0;
-
-    // jk: I don't know if it ever happens, but what if a mobj has a target
-    // that isn't archived? (doesn't have a thinker).
-    // Let's initialize the archiveNums of all known mobjs to NULL.
-    for(i = 0; i < numsectors; ++i)
-    {
-        for(mobj = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); mobj; mobj = mobj->snext)
-            mobj->archiveNum = 0;
-    }
-
-    th = thinkercap.next;
-    while(th != &thinkercap)
-    {
-        if(th->function == P_MobjThinker)
-        {
-            mobj = (mobj_t *) th;
-            if(!(mobj->player && !savePlayers))
-                mobj->archiveNum = thing_archiveSize++;
-        }
-
-        th = th->next;
-    }
-}
-#endif
-
 /**
  * Must be called before saving or loading any data.
  */
-static void SV_InitThingArchive(boolean load)
+static uint SV_InitThingArchive(boolean load, boolean savePlayers)
 {
     uint    count = 0;
 
@@ -620,27 +583,22 @@ static void SV_InitThingArchive(boolean load)
     }
     else
     {
-#if __JHEXEN__
-        Con_Error("SV_InitThingArchive: Write Unsupported!");
-#else
         thinker_t *th;
 
         // Count the number of mobjs we'll be writing.
         th = thinkercap.next;
         while(th != &thinkercap)
         {
-            if(th->function == P_MobjThinker)
+            if(th->function == P_MobjThinker &&
+               !(((mobj_t *) th)->player && !savePlayers))
                 count++;
 
             th = th->next;
         }
-
-        SV_WriteLong(count);
-#endif
     }
 
     thing_archive = calloc(count, sizeof(mobj_t*));
-    thing_archiveSize = (uint) count;
+    return thing_archiveSize = (uint) count;
 }
 
 /**
@@ -648,12 +606,16 @@ static void SV_InitThingArchive(boolean load)
  */
 static void SV_SetArchiveThing(mobj_t *mo, int num)
 {
-#if !__JHEXEN__
-        num -= 1;
+#if __JHEXEN__
+    if(saveVersion >= 4)
 #endif
+        num -= 1;
 
     if(num < 0)
         return;
+
+    if(!thing_archive)
+        Con_Error("SV_SetArchiveThing: Thing archive uninitialized.");
 
     thing_archive[num] = mo;
 }
@@ -682,23 +644,20 @@ int SV_ThingArchiveNum(mobj_t *mo)
 unsigned short SV_ThingArchiveNum(mobj_t *mo)
 #endif
 {
-#if __JHEXEN__
-    if(mo == NULL)
-        return 0;
-
-    if(mo->player && !savingPlayers)
-    {
-        return MOBJ_XX_PLAYER;
-    }
-
-    return mo->archiveNum + 1;
-#else
     uint        i, first_empty = 0;
     boolean     found;
 
     // We only archive valid mobj thinkers.
     if(mo == NULL || ((thinker_t *) mo)->function != P_MobjThinker)
         return 0;
+
+#if __JHEXEN__
+    if(mo->player && !savingPlayers)
+        return MOBJ_XX_PLAYER;
+#endif
+
+    if(!thing_archive)
+        Con_Error("SV_ThingArchiveNum: Thing archive uninitialized.");
 
     found = false;
     for(i = 0; i < thing_archiveSize; ++i)
@@ -722,7 +681,6 @@ unsigned short SV_ThingArchiveNum(mobj_t *mo)
     // OK, place it in an empty pos.
     thing_archive[first_empty] = mo;
     return first_empty + 1;
-#endif
 }
 
 #if __JHEXEN__
@@ -759,6 +717,9 @@ mobj_t *SV_GetArchiveThing(int thingid, void *address)
         return NULL;
     }
 #endif
+
+    if(!thing_archive)
+        Con_Error("SV_GetArchiveThing: Thing archive uninitialized.");
 
     // Check that the thing archive id is valid.
 #if __JHEXEN__
@@ -1565,7 +1526,7 @@ static void SV_WriteMobj(mobj_t *original)
 
     SV_WriteLong(FLT2FIX(mo->floorclip));
 #if __JHEXEN__
-    SV_WriteLong(mo->archiveNum);
+    SV_WriteLong(SV_ThingArchiveNum(original));
     SV_WriteLong(mo->tid);
     SV_WriteLong(mo->special);
     SV_Write(mo->args, sizeof(mo->args));
@@ -3971,7 +3932,7 @@ static void P_UnArchiveThinkers(void)
 
 #if __JHEXEN__
     targetPlayerAddrs = NULL;
-    SV_InitThingArchive(true);
+    SV_InitThingArchive(true, savingPlayers);
 #endif
 
     // Read in saved thinkers.
@@ -4043,13 +4004,9 @@ static void P_UnArchiveThinkers(void)
                 // Not for us? (it shouldn't be here anyway!).
                 if(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT))
                 {
-#if __JHEXEN__
-                    th = Z_Calloc(thInfo->size, PU_LEVEL, 0);
-#else
                     th = Z_Calloc(thInfo->size,
                                   ((thInfo->flags & TSF_SPECIAL)? PU_LEVSPEC : PU_LEVEL),
                                   0);
-#endif
                     knownThinker = thInfo->Read(th);
                 }
             }
@@ -4139,18 +4096,13 @@ static void P_UnArchiveThinkers(void)
                 continue;
 
             mo = (mobj_t *) th;
-            // Update target.
-            mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
 
+            mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
+            mo->onmobj = SV_GetArchiveThing((int) mo->onmobj, &mo->onmobj);
 # if __JDOOM__
-            // Update tracer.
             mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
 # endif
-            // Update onmobj.
-            mo->onmobj = SV_GetArchiveThing((int) mo->onmobj, &mo->onmobj);
-
 # if __JHERETIC__
-            // Update generator.
             mo->generator = SV_GetArchiveThing((int) mo->generator, &mo->generator);
 # endif
         }
@@ -4673,10 +4625,9 @@ boolean SV_SaveGame(char *filename, char *description)
 #endif
 
     // Set the mobj archive numbers
-#if __JHEXEN__
-    SetMobjArchiveNums(true);
-#else
-    SV_InitThingArchive(false);
+    SV_InitThingArchive(false, true);
+#if !__JHEXEN__
+    SV_WriteLong(thing_archiveSize);
 #endif
 
     P_ArchivePlayerHeader();
@@ -4844,7 +4795,7 @@ static boolean SV_LoadGame2(void)
     // Set the time.
     leveltime = hdr.leveltime;
 
-    SV_InitThingArchive(true);
+    SV_InitThingArchive(true, true);
 #endif
 
     P_UnArchivePlayerHeader();
@@ -5218,7 +5169,7 @@ void SV_MapTeleport(int map, int position)
             char        fileName[100];
 
             // Set the mobj archive numbers
-            SetMobjArchiveNums(false);
+            SV_InitThingArchive(false, false);
 
             // Open the output file
             sprintf(fileName, "%shex6%02d.hxs", savePath, gamemap);
