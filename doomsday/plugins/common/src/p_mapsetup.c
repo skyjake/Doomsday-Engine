@@ -335,6 +335,28 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
              P_SetupLevelWorker, &param);
 
     R_SetupLevel(DDSLM_AFTER_BUSY, 0);
+
+#if __JHEXEN__
+    {
+    int i;
+    // Load colormap and set the fullbright flag
+    i = P_GetMapFadeTable(gamemap);
+    if(i == W_GetNumForName("COLORMAP"))
+    {
+        // We don't want fog in this case.
+        GL_UseFog(false);
+    }
+    else
+    {
+        // Probably fog ... don't use fullbright sprites
+        if(i == W_GetNumForName("FOGMAP"))
+        {
+            // Tell the renderer to turn on the fog.
+            GL_UseFog(true);
+        }
+    }
+    }
+#endif
 }
 
 /*
@@ -463,32 +485,12 @@ static void P_FinalizeLevel(void)
     P_TurnGizmosAwayFromDoors();
 
 #elif __JHEXEN__
-    {
-    int i;
-    // Load colormap and set the fullbright flag
-    i = P_GetMapFadeTable(gamemap);
-    if(i == W_GetNumForName("COLORMAP"))
-    {
-        // We don't want fog in this case.
-        GL_UseFog(false);
-    }
-    else
-    {
-        // Probably fog ... don't use fullbright sprites
-        if(i == W_GetNumForName("FOGMAP"))
-        {
-            // Tell the renderer to turn on the fog.
-            GL_UseFog(true);
-        }
-    }
-
     P_TurnTorchesToFaceWalls();
 
     // Check if the level is a lightning level.
     P_InitLightning();
 
     SN_StopAllSequences();
-    }
 #endif
 }
 
