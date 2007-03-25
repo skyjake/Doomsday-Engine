@@ -164,7 +164,7 @@ void UpdateSegBBox(seg_t *seg)
 void PO_SetupPolyobjs(void)
 {
     uint        i, j, k, num;
-    seg_t     **segList;
+    seg_t     **segList, *seg;
     line_t     *line;
     side_t     *side;
 
@@ -174,9 +174,14 @@ void PO_SetupPolyobjs(void)
         num = polyobjs[i].numsegs;
         for(j = 0; j < num; ++j, segList++)
         {
-            if((*segList)->linedef)
+            seg = (*segList);
+
+            // Mark this as a poly object seg.
+            seg->flags |= SEGF_POLYOBJ;
+
+            if(seg->linedef)
             {
-                line = (*segList)->linedef;
+                line = seg->linedef;
 
                 for(k = 0; k < 2; ++k)
                 {

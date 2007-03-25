@@ -20,6 +20,9 @@ internal
 #define SG_frontsector          sec[FRONT]
 #define SG_backsector           sec[BACK]
 
+// Seg flags
+#define SEGF_POLYOBJ			0x1 // Seg is part of a poly object.
+
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
 #define SEGINF_BACKSECSKYFIX    0x0002

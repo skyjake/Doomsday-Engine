@@ -1513,7 +1513,12 @@ static boolean DL_LightSegIteratorFunc(lumobj_t *lum, subsector_t *ssec)
     for(j = 0, seg = ssec->firstseg; j < ssec->segcount; ++j, seg++)
     {
         if(seg->linedef)    // "minisegs" have no linedefs.
+        {
+            if(seg->flags & SEGF_POLYOBJ)
+                continue;
+
             DL_ProcessWallSeg(lum, seg, ssec);
+        }
     }
 
     // Is there a polyobj on board? Light it, too.
@@ -1641,7 +1646,12 @@ void DL_ProcessSubsector(subsector_t *ssec)
         for(j = 0, seg = ssec->firstseg; j < num; ++j, seg++)
         {
             if(seg->linedef)    // "minisegs" have no linedefs.
+            {
+                if(seg->flags & SEGF_POLYOBJ)
+                    continue;
+
                 DL_ProcessSegForGlow(seg, sect);
+            }
         }
 
         // Is there a polyobj on board? Light it, too.

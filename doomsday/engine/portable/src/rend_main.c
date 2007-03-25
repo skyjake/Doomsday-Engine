@@ -1605,7 +1605,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
     for(i = 0, seg = sub->firstseg; i < sub->segcount; ++i, seg++)
     {
         // Occlusions can only happen where two sectors contact.
-        if(!seg->linedef)
+        if(!seg->linedef || (seg->flags & SEGF_POLYOBJ))
             continue;
 
         seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
@@ -1692,6 +1692,9 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
 
             side = seg->sidedef;
             if(!side)
+                continue;
+
+            if(seg->flags & SEGF_POLYOBJ) // No sky fixes for polyobj segs.
                 continue;
 
             backsec = seg->SG_backsector;
@@ -1822,6 +1825,9 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
         // Occlusions can only happen where two sectors contact.
         if(!seg->linedef || !seg->SG_backsector)
             continue;
+
+        if(seg->flags & SEGF_POLYOBJ)
+            continue; // Polyobjects don't occlude.
 
         if(forward_facing != (seg->frameflags & SEGINF_FACINGFRONT))
             continue;
@@ -2003,6 +2009,9 @@ static void Rend_RenderSubsector(uint ssecidx)
     // Draw the walls.
     for(j = 0, seg = ssec->firstseg; j < ssec->segcount; ++j, seg++)
     {
+        if(seg->flags & SEGF_POLYOBJ) // Not handled here.
+            continue;
+
         if(seg->linedef == NULL)    // "minisegs" have no linedefs.
             continue;
 
