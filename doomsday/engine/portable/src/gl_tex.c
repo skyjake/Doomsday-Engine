@@ -1005,7 +1005,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
     if(region[2] > 0)
     {
         src += pixelsize * width * region[2];
-        alphasrc += pixelsize * width * region[2];
+        alphasrc += width * region[2];
     }
     slump->flarex = slump->flarey = 0;
 
@@ -1014,7 +1014,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         if(region[0] > 0)
         {
             src += pixelsize * region[0];
-            alphasrc += pixelsize * region[0];
+            alphasrc += region[0];
         }
 
         for(i = region[0], x = 0; i < region[1] + 1; ++i, ++x, src += pixelsize, alphasrc++)
@@ -1071,7 +1071,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         if(region[1] < width - 1)
         {
             src += pixelsize * (width - 1 - region[1]);
-            alphasrc += pixelsize * (width - 1 - region[1]);
+            alphasrc += (width - 1 - region[1]);
         }
     }
     if(!poscnt)
