@@ -1357,6 +1357,11 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
 
         // Now it will be rendered.
         shadow = link->poly;
+
+        // Unless seg is part of a polyobject.
+        if(shadow->seg->flags & SEGF_POLYOBJ)
+            continue;
+
         shadow->visframe = (ushort) framecount;
 
         // Determine the openness of the line and its neighbors.  If
@@ -1384,7 +1389,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             if(M_DotProduct(vec, suf->normal) < 0)
                 continue;
 
-            line = shadow->line;
+            line = shadow->seg->linedef;
             if(line->L_backsector)
             {
                 side = (shadow->flags & SHPF_FRONTSIDE) == 0;

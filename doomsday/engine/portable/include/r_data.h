@@ -186,7 +186,7 @@ typedef struct linkmobj_s {
 #define SHPF_FRONTSIDE  0x1
 
 typedef struct shadowpoly_s {
-    struct line_s  *line;
+    struct seg_s   *seg;
     struct subsector_s *ssec;
     short           flags;
     ushort          visframe;      // Last visible frame (for rendering).

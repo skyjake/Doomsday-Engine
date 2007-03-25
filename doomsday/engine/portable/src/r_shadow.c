@@ -140,7 +140,7 @@ void R_ShadowDelta(pvec2_t delta, line_t *line, sector_t *frontSector)
 
 side_t *R_GetShadowLineSide(shadowpoly_t *poly)
 {
-    return (poly->line->sides[poly->flags & SHPF_FRONTSIDE ? FRONT : BACK]);
+    return (poly->seg->linedef->sides[poly->flags & SHPF_FRONTSIDE ? FRONT : BACK]);
 }
 
 line_t *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left, boolean back)
@@ -158,7 +158,7 @@ sector_t *R_GetShadowSector(shadowpoly_t *poly, uint pln, boolean getLinked)
 {
     if(getLinked)
         return R_GetLinkedSector(poly->ssec, pln);
-    return (poly->line->sec[poly->flags & SHPF_FRONTSIDE ? FRONT : BACK]);
+    return (poly->seg->linedef->sec[poly->flags & SHPF_FRONTSIDE ? FRONT : BACK]);
 }
 
 /**
@@ -181,7 +181,7 @@ boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
     line_t *neighbor;
 
     // The line itself.
-    R_ShadowDelta(leftCorner ? right : left, poly->line, sector);
+    R_ShadowDelta(leftCorner ? right : left, poly->seg->linedef, sector);
 
     // The (back)neighbour.
     if(NULL == (neighbor = R_GetShadowNeighbor(poly, leftCorner, back)))
@@ -465,7 +465,7 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
             {
                 //if(i == k) continue;
                 line = sector->Lines[k];
-                if(polys[i].line == line)
+                if(polys[i].seg->linedef == line)
                     continue;
 
                 if(line->selfrefhackroot)
@@ -568,7 +568,7 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
                 // Get a new shadow poly.
                 poly = allocator++;
 
-                poly->line = line;
+                poly->seg = seg;
                 poly->ssec = ssec;
                 poly->flags = (frontside ? SHPF_FRONTSIDE : 0);
                 poly->visframe = framecount - 1;
