@@ -2754,8 +2754,8 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 
                 if((player->flags & DDPF_CAMERA) &&
                    player->mo->subsector->sector == sec &&
-                   (player->mo->pos[VZ] > sec->SP_ceilheight ||
-                    player->mo->pos[VZ] < sec->SP_floorheight))
+                   (FIX2FLT(player->mo->pos[VZ]) > sec->SP_ceilheight ||
+                    FIX2FLT(player->mo->pos[VZ]) < sec->SP_floorheight))
                 {
                     player->invoid = true;
                 }
