@@ -984,7 +984,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
 {
     byte   *palette = pixelsize == 1 ? GL_GetPalette() : NULL;
     spritelump_t *slump = spritelumps[pnum];
-    int     i, k, c, cnt = 0, poscnt = 0;
+    int     i, k, x, y, c, cnt = 0, poscnt = 0;
     byte    rgb[3], *src, *alphasrc = NULL;
     int     limit = 0xc0, poslimit = 0xe0, collimit = 0xc0;
     int     average[3], avcnt = 0, lowavg[3], lowcnt = 0;
@@ -1002,13 +1002,22 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
     }
 
     GL_GetNonAlphaRegion(buffer, width, height, pixelsize, &region[0]);
-    src += pixelsize * region[0];
-    alphasrc += pixelsize * region[0];
-    slump->flarex = region[0];
-    slump->flarey = region[2];
+    if(region[2] > 0)
+    {
+        src += pixelsize * width * region[2];
+        alphasrc += pixelsize * width * region[2];
+    }
+    slump->flarex = slump->flarey = 0;
 
-    for(k = region[2]; k < region[3]; ++k)
-        for(i = region[0]; i < region[1]; ++i, src += pixelsize, alphasrc++)
+    for(k = region[2], y = 0; k < region[3] + 1; ++k, ++y)
+    {
+        if(region[0] > 0)
+        {
+            src += pixelsize * region[0];
+            alphasrc += pixelsize * region[0];
+        }
+
+        for(i = region[0], x = 0; i < region[1] + 1; ++i, ++x, src += pixelsize, alphasrc++)
         {
             // Alpha pixels don't count.
             if(pixelsize == 1)
@@ -1036,8 +1045,8 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
             {
                 // This pixel will participate in calculating the average
                 // center point.
-                slump->flarex += i;
-                slump->flarey += k;
+                slump->flarex += x;
+                slump->flarey += y;
                 poscnt++;
             }
 
@@ -1059,6 +1068,12 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
                     lowavg[c] += rgb[c];
             }
         }
+        if(region[1] < width - 1)
+        {
+            src += pixelsize * (width - 1 - region[1]);
+            alphasrc += pixelsize * (width - 1 - region[1]);
+        }
+    }
     if(!poscnt)
     {
         slump->flarex = region[0] + ((region[1] - region[0]) / 2.0f);
@@ -1069,6 +1084,9 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         // Get the average.
         slump->flarex /= poscnt;
         slump->flarey /= poscnt;
+        // Add the origin offset.
+        slump->flarex += region[0];
+        slump->flarey += region[2];
     }
 
     // The color.
