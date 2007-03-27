@@ -80,10 +80,6 @@ static int      busyFontHgt;        // Height of the font.
 static DGLuint  texLoading[2];
 static DGLuint  texScreenshot;      // Captured screenshot of the latest frame.
 
-static char *titleText = "";
-static char secondaryTitleText[256];
-static char statusText[256];
-
 // CODE --------------------------------------------------------------------
 
 /**

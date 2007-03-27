@@ -479,7 +479,6 @@
 		B0F17898087C5A230051F24A /* ui_panel.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49906B3FA91005824AD /* ui_panel.h */; };
 		B0F17899087C5A230051F24A /* sys_findfile.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49B06B3FA91005824AD /* sys_findfile.h */; };
 		B0F1789A087C5A230051F24A /* sys_path.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49C06B3FA91005824AD /* sys_path.h */; };
-		B0F1789B087C5A230051F24A /* zconf.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49D06B3FA91005824AD /* zconf.h */; };
 		B0F1789C087C5A230051F24A /* sys_dylib.h in Headers */ = {isa = PBXBuildFile; fileRef = B013500E06EDD51E007861F2 /* sys_dylib.h */; };
 		B0F1789D087C5A230051F24A /* rend_bias.h in Headers */ = {isa = PBXBuildFile; fileRef = B0E3D3E107903967007811F6 /* rend_bias.h */; };
 		B0F178A1087C5A230051F24A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
@@ -1000,7 +999,6 @@
 		B02AC49906B3FA91005824AD /* ui_panel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ui_panel.h; path = ../../engine/portable/include/ui_panel.h; sourceTree = SOURCE_ROOT; };
 		B02AC49B06B3FA91005824AD /* sys_findfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys_findfile.h; path = ../../engine/unix/include/sys_findfile.h; sourceTree = SOURCE_ROOT; };
 		B02AC49C06B3FA91005824AD /* sys_path.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys_path.h; path = ../../engine/unix/include/sys_path.h; sourceTree = SOURCE_ROOT; };
-		B02AC49D06B3FA91005824AD /* zconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zconf.h; path = ../../external/zlib/include/zconf.h; sourceTree = SOURCE_ROOT; };
 		B02AC85006B41788005824AD /* cl_frame.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cl_frame.c; path = ../../engine/portable/src/cl_frame.c; sourceTree = SOURCE_ROOT; };
 		B02AC85106B41788005824AD /* cl_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cl_main.c; path = ../../engine/portable/src/cl_main.c; sourceTree = SOURCE_ROOT; };
 		B02AC85206B41788005824AD /* cl_mobj.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cl_mobj.c; path = ../../engine/portable/src/cl_mobj.c; sourceTree = SOURCE_ROOT; wrapsLines = 1; };
@@ -1997,7 +1995,6 @@
 				B02AC49706B3FA91005824AD /* ui_main.h */,
 				B02AC49806B3FA91005824AD /* ui_mpi.h */,
 				B02AC49906B3FA91005824AD /* ui_panel.h */,
-				B02AC49D06B3FA91005824AD /* zconf.h */,
 				B02AC38D06B3FA91005824AD /* cl_def.h */,
 				B02AC38E06B3FA91005824AD /* cl_frame.h */,
 				B02AC38F06B3FA91005824AD /* cl_mobj.h */,
@@ -2384,7 +2381,6 @@
 				B0F17898087C5A230051F24A /* ui_panel.h in Headers */,
 				B0F17899087C5A230051F24A /* sys_findfile.h in Headers */,
 				B0F1789A087C5A230051F24A /* sys_path.h in Headers */,
-				B0F1789B087C5A230051F24A /* zconf.h in Headers */,
 				B0F1789C087C5A230051F24A /* sys_dylib.h in Headers */,
 				B0F1789D087C5A230051F24A /* rend_bias.h in Headers */,
 				B0DAE5CE09823E47000A8265 /* p_dmu.h in Headers */,

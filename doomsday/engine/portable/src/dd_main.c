@@ -441,6 +441,9 @@ void DD_Main(void)
         else
             Con_Executef(CMDS_CMDLINE, false, "net server start");
     }
+    
+    // Final preparations for using the console UI.
+    Con_InitUI();
 
     DD_GameLoop();              // Never returns...
 }

@@ -31,6 +31,7 @@
 extern int      startupLogo;
 extern boolean  startupScreen;
 
+void            Con_InitUI(void);
 void            Con_StartupInit(void);
 void            Con_StartupDone(void);
 int             Con_DrawTitle(float alpha);

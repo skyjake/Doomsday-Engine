@@ -60,13 +60,26 @@ int     startupLogo;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char *titleText = "";
+static char *titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
 static char secondaryTitleText[256];
 static char statusText[256];
 static int fontHgt = 8;         // Height of the font.
 char   *bitmap = NULL;
 
 // CODE --------------------------------------------------------------------
+
+/**
+ * Initializes the Doomsday console user interface. This is called when
+ * engine startup is complete.
+ */
+void Con_InitUI(void)
+{
+    // Update the secondary title and the game status.
+    strncpy(secondaryTitleText, (char *) gx.GetVariable(DD_GAME_ID),
+            sizeof(secondaryTitleText) - 1);
+    strncpy(statusText, (char *) gx.GetVariable(DD_GAME_MODE),
+            sizeof(statusText) - 1);
+}
 
 /*
  * The startup screen mode is used during engine startup.  In startup
@@ -169,11 +182,12 @@ int Con_DrawTitle(float alpha)
 {
     int width = 0;
     int height = UI_TITLE_HGT;
+    int oldFont = FR_GetCurrent();
 
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PushMatrix();
     gl.LoadIdentity();
-
+    
     FR_SetFont(glFontVariable[GLFS_BOLD]);
     height = FR_TextHeight("W") + UI_BORDER;
     UI_DrawTitleEx(titleText, height, alpha);
@@ -195,7 +209,7 @@ int Con_DrawTitle(float alpha)
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();
 
-    FR_SetFont(glFontFixed);
+    FR_SetFont(oldFont);
     return height;
 }
 
