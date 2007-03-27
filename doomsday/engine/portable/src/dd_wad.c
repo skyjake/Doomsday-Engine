@@ -609,7 +609,7 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
         rec->numlumps = 1;
 
         if(!stricmp(extension, "deh"))
-            strcpy(fileinfo->name, "DEHACKED");
+            strncpy(fileinfo->name, "DEHACKED", 8);
     }
     else
     {
