@@ -1113,7 +1113,7 @@ static mapline_t AM_getLine(int type, int special)
         break;
 
     case 2:
-        // regular twosided linedef no sector height changes
+        // a linedef with some sort of special
         // could be a door or teleport or something...
         switch(special)
         {
@@ -1139,7 +1139,7 @@ static mapline_t AM_getLine(int type, int special)
                 l.b = 0.776f;
                 l.a = cfg.automapLineAlpha/2;
                 l.a2 = cfg.automapLineAlpha/1.5;
-                if ( cfg.automapDoorGlow > 0)
+                if(cfg.automapDoorGlow > 0)
                     l.glow = TWOSIDED_GLOW;
                 else
                     l.glow = NO_GLOW;
@@ -1157,7 +1157,7 @@ static mapline_t AM_getLine(int type, int special)
                 l.b = 0;
                 l.a = cfg.automapLineAlpha/2;
                 l.a2 = cfg.automapLineAlpha/1.5;
-                if ( cfg.automapDoorGlow > 0)
+                if(cfg.automapDoorGlow > 0)
                     l.glow = TWOSIDED_GLOW;
                 else
                     l.glow = NO_GLOW;
@@ -1174,7 +1174,7 @@ static mapline_t AM_getLine(int type, int special)
                 l.b = 0;
                 l.a = cfg.automapLineAlpha/2;
                 l.a2 = cfg.automapLineAlpha/1.5;
-                if ( cfg.automapDoorGlow > 0)
+                if(cfg.automapDoorGlow > 0)
                     l.glow = TWOSIDED_GLOW;
                 else
                     l.glow = NO_GLOW;
@@ -1182,6 +1182,37 @@ static mapline_t AM_getLine(int type, int special)
                 l.scale = true;
                 break;
 
+            case 11:                    // Exit switch
+            case 52:                    // Exit walkover
+                l.r = 0;
+                l.g = 1;
+                l.b = 0;
+                l.a = cfg.automapLineAlpha/2;
+                l.a2 = cfg.automapLineAlpha/1.5;
+                if(cfg.automapDoorGlow > 0)
+                    l.glow = TWOSIDED_GLOW;
+                else
+                    l.glow = NO_GLOW;
+
+                l.w = 5.0f;
+                l.scale = true;
+                break;
+
+            case 51:                    // Exit switch (secret)
+            case 124:                   // Exit walkover (secret)
+                l.r = 0;
+                l.g = 1;
+                l.b = 1;
+                l.a = cfg.automapLineAlpha/2;
+                l.a2 = cfg.automapLineAlpha/1.5;
+                if(cfg.automapDoorGlow > 0)
+                    l.glow = TWOSIDED_GLOW;
+                else
+                    l.glow = NO_GLOW;
+
+                l.w = 5.0f;
+                l.scale = true;
+                break;
 #elif __JHERETIC__
             case 26:                    // Blue
             case 32:
@@ -1317,19 +1348,23 @@ static int AM_checkSpecial(int special)
 #ifdef __JDOOM__
     case 32:                    // Blue locked door open
     case 26:                    // Blue Door/Locked
-    case 99:
-    case 133:
+    case 99:                    // Blue door switch
+    case 133:                   // Blue door switch
     case 33:                    // Red locked door open
     case 28:                    // Red Door /Locked
-    case 134:
-    case 135:
+    case 134:                   // Red door switch
+    case 135:                   // Red door switch
     case 34:                    // Yellow locked door open
     case 27:                    // Yellow Door /Locked
-    case 136:
-    case 137:
-        // its a door
-        return 1;
+    case 136:                   // Yellow door switch
+    case 137:                   // Yellow door switch
+        return 1; // its a door
 
+    case 11:                    // Exit switch
+    case 51:                    // Exit switch (secret)
+    case 52:                    // Exit walkover
+    case 124:                   // Exit walkover (secret)
+        return 3; // some form of exit
 #elif __JHERETIC__
     case 26:
     case 32:
@@ -1639,7 +1674,7 @@ static void AM_drawWalls(boolean glowmode)
                 // Show active XG lines.
                 if(xline->xg && xline->xg->active && (leveltime & 4))
                 {
-                    templine = AM_getLine( 1, 0);
+                    templine = AM_getLine(1, 0);
                     AM_drawMline2(&l, &templine, false, glowmode, true);
                 }
             }
@@ -1647,10 +1682,26 @@ static void AM_drawWalls(boolean glowmode)
 #endif
             if(cheating || (P_GetIntp(line, DMU_FLAGS) & ML_MAPPED))
             {
+                int     specialType;
+
                 if((P_GetIntp(line, DMU_FLAGS) & LINE_NEVERSEE) && !cheating)
                     continue;
 
-                if(!backsector)
+                specialType = AM_checkSpecial(xline->special);
+
+                if(cfg.automapShowDoors &&
+                   (specialType == 1 || (specialType > 1 && cheating)))
+                {
+                    // some sort of special
+
+                    if(cfg.automapDoorGlow > 0 && glowmode)
+                        withglow = true;
+
+                    templine = AM_getLine(2, xline->special);
+
+                    AM_drawMline2(&l, &templine, withglow, glowmode, withglow);
+                }
+                else if(!backsector)
                 {
                     // solid wall (well probably anyway...)
                     templine = AM_getLine( 1, 0);
@@ -1665,17 +1716,6 @@ static void AM_drawWalls(boolean glowmode)
                         templine = AM_getLine( 1, 0);
 
                         AM_drawMline2(&l, &templine, false, glowmode, false);
-                    }
-                    else if(cfg.automapShowDoors && AM_checkSpecial(xline->special) > 0 )
-                    {
-                        // some sort of special
-
-                        if(cfg.automapDoorGlow > 0 && glowmode)
-                            withglow = true;
-
-                        templine = AM_getLine( 2, xline->special);
-
-                        AM_drawMline2(&l, &templine, withglow, glowmode, withglow);
                     }
                     else if(P_GetFixedp(backsector, DMU_FLOOR_HEIGHT) !=
                             P_GetFixedp(frontsector, DMU_FLOOR_HEIGHT))
