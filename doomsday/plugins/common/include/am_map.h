@@ -37,22 +37,15 @@ extern boolean  automapactive;  // Common\f_infine.c is looking for this if not 
 #define LINEHEIGHT_A 10
 #endif
 
-// Caleld by Menu
-void    M_DrawMAP(void);
+void    AM_Register(void);  // Called during init to register automap cvars and ccmds.
+void    AM_Init(void);      // Called during init to initialize the automap.
+void    AM_Shutdown(void);  // Called on exit to free any allocated memory.
 
-// Called by Init
-void AM_Register(void);
+void    AM_Ticker(void);    // Called by main loop.
+void    AM_Drawer(void);    // Called every frame to render the map (if visible).
+void    AM_Stop(void);      // Called to force the automap to quit if the level is completed while it is up.
 
-// Called by main loop.
-void            AM_Ticker(void);
-
-// called instead of view drawer if automap active.
-void            AM_Drawer(void);
-
-// Called to force the automap to quit
-// if the level is completed while it is up.
-void            AM_Stop(void);
-
+void    M_DrawMAP(void);    // Called to render the map menu.
 
 // Used by ST StatusBar stuff.
 #define AM_MSGHEADER (('a'<<24)+('m'<<16))

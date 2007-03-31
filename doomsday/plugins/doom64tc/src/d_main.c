@@ -39,6 +39,7 @@
 #include "hu_msg.h"
 #include "p_saveg.h"
 #include "p_mapspec.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -558,6 +559,7 @@ void D_Shutdown(void)
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
     P_FreeButtons();
+    AM_Shutdown();
 }
 
 void D_Ticker(void)

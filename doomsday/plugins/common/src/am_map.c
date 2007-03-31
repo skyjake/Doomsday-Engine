@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -74,6 +74,19 @@ typedef struct mline_s {
     mpoint_t a, b;
 } mline_t;
 
+typedef enum vectorgraphname_e {
+    VG_KEYSQUARE,
+    VG_TRIANGLE,
+    VG_ARROW,
+    VG_CHEATARROW,
+    NUM_VECTOR_GRAPHS
+} vectorgrapname_t;
+
+typedef struct vectorgrap_s {
+    uint        count;
+    mline_t    *lines;
+} vectorgrap_t;
+
 typedef struct islope_s {
     fixed_t slp, islp;
 } islope_t;
@@ -85,9 +98,55 @@ typedef enum glowtype_e {
     FRONT_GLOW
 } glowtype_t;
 
-// MACROS ------------------------------------------------------------------
+// Types used for automap rendering lists.
+#define AMLT_PALCOL     1
+#define AMLT_RGBA       2
 
-#define thinkercap    (*gi.thinkercap)
+typedef struct amrline_s {
+    byte    type;
+    struct {
+        float   pos[2];
+    } a, b;
+    union {
+        struct {
+            int     color;
+            float   alpha;
+        } palcolor;
+        struct {
+            float rgba[4];
+        } f4color;
+    } coldata;
+} amrline_t;
+
+typedef struct amrquad_s {
+    float   rgba[4];
+    struct {
+        float   pos[2];
+        float   tex[2];
+    } verts[4];
+} amrquad_t;
+
+typedef struct amprim_s {
+    union {
+        amrquad_t quad;
+        amrline_t line;
+    } data;
+    struct amprim_s *next;
+} amprim_t;
+
+typedef struct amprimlist_s {
+    int         type; // DGL_QUAD or DGL_LINES
+    amprim_t *head, *tail, *unused;
+} amprimlist_t;
+
+typedef struct amquadlist_s {
+    int         tex;
+    boolean     blend;
+    amprimlist_t primlist;
+    struct amquadlist_s *next;
+} amquadlist_t;
+
+// MACROS ------------------------------------------------------------------
 
 //
 // The vector graphics for the automap.
@@ -96,6 +155,7 @@ typedef enum glowtype_e {
 //
 
 #define R (1.0f)
+
 mline_t         keysquare[] = {
     {{0, 0}, {R / 4, -R / 2}},
     {{R / 4, -R / 2}, {R / 2, -R / 2}},
@@ -106,25 +166,15 @@ mline_t         keysquare[] = {
     {{-R, 0}, {-R, -R / 2}},       // end lockpick part
     {{-3 * R / 4, 0}, {-3 * R / 4, -R / 4}}
 };
-#undef R
-#define NUMKEYSQUARELINES (sizeof(keysquare) / sizeof(mline_t))
 
-#define R (1.0f)
 mline_t         thintriangle_guy[] = {
     {{-R / 2, R - R / 2}, {R, 0}}, // >
     {{R, 0}, {-R / 2, -R + R / 2}},
     {{-R / 2, -R + R / 2}, {-R / 2, R - R / 2}} // |>
 };
-#undef R
 
-#define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy) / sizeof(mline_t))
-
-
-// JDOOM Stuff
-#ifdef __JDOOM__
-
-#define R (1.0f)
-mline_t player_arrow[] = {
+#if __JDOOM__
+mline_t         player_arrow[] = {
     {{-R + R / 8, 0}, {R, 0}},    // -----
     {{R, 0}, {R - R / 2, R / 4}},    // ----->
     {{R, 0}, {R - R / 2, -R / 4}},
@@ -133,11 +183,8 @@ mline_t player_arrow[] = {
     {{-R + 3 * R / 8, 0}, {-R + R / 8, R / 4}},    // >>--->
     {{-R + 3 * R / 8, 0}, {-R + R / 8, -R / 4}}
 };
-#undef R
-#define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
 
-#define R (1.0f)
-mline_t cheat_player_arrow[] = {
+mline_t         cheat_player_arrow[] = {
     {{-R + R / 8, 0}, {R, 0}},    // -----
     {{R, 0}, {R - R / 2, R / 6}},    // ----->
     {{R, 0}, {R - R / 2, -R / 6}},
@@ -156,16 +203,7 @@ mline_t cheat_player_arrow[] = {
     {{R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}}
 };
 
-#undef R
-#define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
-#endif
-
-
-//------------------------------------------------------------------------
-// JHERETIC Stuff
-#ifdef __JHERETIC__
-
-#define R (1.0f)
+#elif __JHERETIC__
 mline_t         player_arrow[] = {
     {{-R + R / 4, 0}, {0, 0}},       // center line.
     {{-R + R / 4, R / 8}, {R, 0}}, // blade
@@ -178,10 +216,7 @@ mline_t         player_arrow[] = {
     {{-R - R / 4, R / 8}, {-R + R / 8, R / 8}},
     {{-R - R / 4, -R / 8}, {-R + R / 8, -R / 8}}
 };
-#undef R
-#define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
 
-#define R (1.0f)
 mline_t         cheat_player_arrow[] = {
     {{-R + R / 8, 0}, {R, 0}},       // -----
     {{R, 0}, {R - R / 2, R / 6}},  // ----->
@@ -201,15 +236,7 @@ mline_t         cheat_player_arrow[] = {
     {{R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}}
 };
 
-#undef R
-#define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
-#endif
-
-
-// JHEXEN Stuff ------------------------------------------------------------
-#ifdef __JHEXEN__
-
-#define R (1.0f)
+#elif __JHEXEN__
 mline_t         player_arrow[] = {
     {{-R + R / 4, 0}, {0, 0}},       // center line.
     {{-R + R / 4, R / 8}, {R, 0}}, // blade
@@ -222,36 +249,9 @@ mline_t         player_arrow[] = {
     {{-R - R / 4, R / 8}, {-R + R / 8, R / 8}},
     {{-R - R / 4, -R / 8}, {-R + R / 8, -R / 8}}
 };
-
-#undef R
-#define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
-
 #endif
 
-// JSTRIFE Stuff ------------------------------------------------------------
-#if __JSTRIFE__
-
-#define R (1.0f)
-mline_t         player_arrow[] = {
-    {{-R + R / 4, 0}, {0, 0}},       // center line.
-    {{-R + R / 4, R / 8}, {R, 0}}, // blade
-    {{-R + R / 4, -R / 8}, {R, 0}},
-    {{-R + R / 4, -R / 4}, {-R + R / 4, R / 4}},    // crosspiece
-    {{-R + R / 8, -R / 4}, {-R + R / 8, R / 4}},
-    {{-R + R / 8, -R / 4}, {-R + R / 4, -R / 4}},    //crosspiece connectors
-    {{-R + R / 8, R / 4}, {-R + R / 4, R / 4}},
-    {{-R - R / 4, R / 8}, {-R - R / 4, -R / 8}},    //pommel
-    {{-R - R / 4, R / 8}, {-R + R / 8, R / 8}},
-    {{-R - R / 4, -R / 8}, {-R + R / 8, -R / 8}}
-};
-
 #undef R
-#define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
-
-#endif
-
-// Used for Baby mode
-ddvertex_t KeyPoints[NUMBEROFKEYS];
 
 // scale on entry
 #define INITSCALEMTOF (.2*FRACUNIT)
@@ -309,7 +309,7 @@ static void AM_minOutWindowScale(void);
 static void AM_restoreScaleAndLoc(void);
 static void AM_setWinPos(void);
 static void AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps,
-                          boolean glowmode, boolean blend);
+                          boolean blend);
 
 #ifdef __JDOOM__
 static void AM_drawFragsTable(void);
@@ -317,15 +317,24 @@ static void AM_drawFragsTable(void);
 static void AM_drawDeathmatchStats(void);
 #endif
 
+static void AM_ClearAllLists(boolean destroy);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern float menu_alpha;
+extern boolean viewactive;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+static vectorgrap_t *vectorGraphs[NUM_VECTOR_GRAPHS];
+
+ddvertex_t KeyPoints[NUMBEROFKEYS]; // Used in Baby mode
 
 int     cheating = 0;
 boolean automapactive = false;
 boolean amap_fullyopen = false;
+
+boolean freezeMapRLs = false;
 
 cvar_t  mapCVars[] = {
 /*    {"map-position", 0, CVT_INT, &cfg.automapPos, 0, 8},
@@ -359,6 +368,7 @@ cvar_t  mapCVars[] = {
     {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1},
 #endif
 #endif
+    {"rend-dev-freeze-map", CVF_NO_ARCHIVE, CVT_BYTE, &freezeMapRLs, 0, 1},
     {NULL}
 };
 
@@ -375,17 +385,18 @@ ccmd_t  mapCCmds[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-#ifdef __JDOOM__
+#if __JDOOM__
 static int keycolors[] = { KEY1, KEY2, KEY3, KEY4, KEY5, KEY6 };
 static int maplumpnum = 0; // if 0 no background image will be drawn
-
 #elif __JHERETIC__
 static int keycolors[] = { KEY1, KEY2, KEY3 };
 static int maplumpnum = 1; // if 0 no background image will be drawn
 #else
 static int keycolors[] = { KEY1, KEY2, KEY3 };
 static int maplumpnum = 1; // if 0 no background image will be drawn
+#endif
 
+#if __JHEXEN__
 boolean ShowKills = 0;
 unsigned ShowKillsCount = 0;
 
@@ -399,7 +410,6 @@ static int their_colors[] = {
     AM_PLR7_COLOR,
     AM_PLR8_COLOR
 };
-
 #endif
 
 static int scissorState[5];
@@ -408,7 +418,6 @@ static int scrwidth = 0;    // real screen dimensions
 static int scrheight = 0;
 
 static int finit_height = SCREENHEIGHT;
-//static int finit_width = SCREENWIDTH;
 
 static float am_alpha = 0;
 
@@ -416,20 +425,11 @@ static int bigstate = 0;
 static int grid = 0;
 static int followplayer = 1;        // specifies whether to follow the player around
 
-static int leveljuststarted = 1;    // kluge until AM_LevelInit() is called
-
 // location of window on screen
-static int f_x;
-static int f_y;
+static int f_x, f_y;
 
 // size of window on screen
-static int f_w;
-static int f_h;
-
-static int lightlev;            // used for funky strobing effect
-
-//static byte*  fb;                 // pseudo-frame buffer
-static int amclock;
+static int f_w, f_h;
 
 static mpoint_t m_paninc;        // how far the window pans each tic (map coords)
 static fixed_t mtof_zoommul;        // how far the window zooms in each tic (map coords)
@@ -439,21 +439,13 @@ static fixed_t m_x, m_y;        // LL x,y where the window is on the map (map co
 static fixed_t m_x2, m_y2;        // UR x,y where the window is on the map (map coords)
 
 // width/height of window on map (map coords)
-static fixed_t m_w;
-static fixed_t m_h;
+static fixed_t m_w, m_h;
 
 // based on level size
 static fixed_t min_x;
 static fixed_t min_y;
 static fixed_t max_x;
 static fixed_t max_y;
-
-static fixed_t max_w;            // max_x-min_x,
-static fixed_t max_h;            // max_y-min_y
-
-// based on player size
-static fixed_t min_w;
-static fixed_t min_h;
 
 static fixed_t min_scale_mtof;        // used to tell when to stop zooming out
 static fixed_t max_scale_mtof;        // used to tell when to stop zooming in
@@ -479,8 +471,6 @@ static int markpointnum = 0;            // next point to be assigned
 
 static boolean stopped = true;
 
-extern boolean viewactive;
-
 // Where the window should be on screen, and the dimensions
 static int sx0, sy0, sx1, sy1;
 
@@ -497,6 +487,14 @@ static int oldwin_h = 0;
 // Used in subsector debug display.
 static mapline_t subColors[10];
 
+//
+// Rendering lists.
+//
+static amquadlist_t *amQuadListHead;
+
+// Lines.
+static amprimlist_t amLineList;
+
 // CODE --------------------------------------------------------------------
 
 /**
@@ -508,9 +506,130 @@ void AM_Register(void)
     int         i;
 
     for(i = 0; mapCVars[i].name; ++i)
-        Con_AddVariable(mapCVars + i);
+        Con_AddVariable(&mapCVars[i]);
     for(i = 0; mapCCmds[i].name; ++i)
-        Con_AddCommand(mapCCmds + i);
+        Con_AddCommand(&mapCCmds[i]);
+}
+
+/**
+ * Called during init.
+ */
+void AM_Init(void)
+{
+    memset(vectorGraphs, 0, sizeof(vectorGraphs));
+
+    amLineList.type = DGL_LINES;
+    amLineList.head = amLineList.tail = amLineList.unused = NULL;
+}
+
+/**
+ * Called during shutdown.
+ */
+void AM_Shutdown(void)
+{
+    uint        i;
+    amquadlist_t *list, *listp;
+    amprim_t   *n, *np;
+    amprim_t   *nq, *npq;
+
+    AM_ClearAllLists(true);
+
+    // Empty the free node lists too.
+    // Lines.
+    n = amLineList.unused;
+    while(n)
+    {
+        np = n->next;
+        free(n);
+        n = np;
+    }
+    amLineList.unused = NULL;
+
+    // Quads.
+    list = amQuadListHead;
+    while(list)
+    {
+        listp = list->next;
+
+        nq = list->primlist.unused;
+        while(nq)
+        {
+            npq = nq->next;
+            free(nq);
+            nq = npq;
+        }
+        list->primlist.unused = NULL;
+        free(list);
+
+        list = listp;
+    }
+
+    // Vector graphics.
+    for(i = 0; i < NUM_VECTOR_GRAPHS; ++i)
+    {
+        vectorgrap_t *vg = vectorGraphs[i];
+
+        if(vg)
+        {
+            free(vg->lines);
+            free(vg);
+        }
+    }
+}
+
+static vectorgrap_t *AM_GetVectorGraphic(uint idx)
+{
+    vectorgrap_t *vg;
+    mline_t    *lines;
+
+    if(idx > NUM_VECTOR_GRAPHS - 1)
+        return NULL;
+
+    if(vectorGraphs[idx])
+        return vectorGraphs[idx];
+
+    // Not loaded yet.
+    {
+    uint        i, linecount;
+
+    vg = vectorGraphs[idx] = malloc(sizeof(*vg));
+
+    switch(idx)
+    {
+    case VG_KEYSQUARE:
+        lines = keysquare;
+        linecount = sizeof(keysquare) / sizeof(mline_t);
+        break;
+
+    case VG_TRIANGLE:
+        lines = thintriangle_guy;
+        linecount = sizeof(thintriangle_guy) / sizeof(mline_t);
+        break;
+
+    case VG_ARROW:
+        lines = player_arrow;
+        linecount = sizeof(player_arrow) / sizeof(mline_t);
+        break;
+
+#if !__JHEXEN__
+    case VG_CHEATARROW:
+        lines = cheat_player_arrow;
+        linecount = sizeof(cheat_player_arrow) / sizeof(mline_t);
+        break;
+#endif
+
+    default:
+        Con_Error("AM_GetVectorGraphic: Unknown idx %i.", idx);
+        break;
+    }
+
+    vg->lines = malloc(linecount * sizeof(mline_t));
+    vg->count = linecount;
+    for(i = 0; i < linecount; ++i)
+        memcpy(&vg->lines[i], &lines[i], sizeof(mline_t));
+    }
+
+    return vg;
 }
 
 /**
@@ -616,6 +735,10 @@ static void AM_findMinMaxBoundaries(void)
     fixed_t     x, y;
     fixed_t     a;
     fixed_t     b;
+    fixed_t     max_w;
+    fixed_t     max_h;
+    fixed_t     min_w;
+    fixed_t     min_h;
 
     min_x = min_y = DDMAXINT;
     max_x = max_y = -DDMAXINT;
@@ -691,10 +814,6 @@ static void AM_initVariables(void)
     automapactive = true;
 
     f_oldloc.pos[VX] = (float) DDMAXINT;
-
-    amclock = 0;
-    lightlev = 0;
-
     m_paninc.pos[VX] = m_paninc.pos[VY] = 0;
 
     // Set the colors for the subsector debug display
@@ -842,14 +961,6 @@ static void AM_loadPics(void)
 }
 
 /**
- * Is this stub still needed?
- */
-static void AM_unloadPics(void)
-{
-    // nothing to unload
-}
-
-/**
  * Clears markpoint array
  * fixme THIS IS BOLLOCKS!
  */
@@ -867,8 +978,6 @@ static void AM_clearMarks(void)
  */
 void AM_LevelInit(void)
 {
-    leveljuststarted = 0;
-
     f_x = f_y = 0;
 
     f_w = Get(DD_SCREEN_WIDTH);
@@ -888,7 +997,6 @@ void AM_LevelInit(void)
  */
 void AM_Stop(void)
 {
-    AM_unloadPics();
     automapactive = false;
     amap_fullyopen = false;
     am_alpha = 0;
@@ -982,8 +1090,6 @@ void AM_Ticker(void)
     // If the automap is not active do nothing
     if(!automapactive)
         return;
-
-    amclock++;
 
     // Increase alpha level of the map
     if(am_alpha < 1)
@@ -1082,34 +1188,35 @@ static void AM_clearFB(int color)
  * Returns the settings for the given type of line.
  * Not a very pretty routine. Will do this with an array when I rewrite the map...
  */
-static mapline_t AM_getLine(int type, int special)
+static void AM_getLine(mapline_t *l, int type, int special)
 {
-    mapline_t   l;
+    if(!l)
+        return;
 
     switch(type)
     {
     default:
         // An unseen line (got the computer map)
-        l.r = cfg.automapL0[0];
-        l.g = cfg.automapL0[1];
-        l.b = cfg.automapL0[2];
-        l.a = cfg.automapLineAlpha;
-        l.a2 =  cfg.automapLineAlpha;
-        l.glow = NO_GLOW;
-        l.w = 0;
-        l.scale = false;
+        l->r = cfg.automapL0[0];
+        l->g = cfg.automapL0[1];
+        l->b = cfg.automapL0[2];
+        l->a = cfg.automapLineAlpha;
+        l->a2 =  cfg.automapLineAlpha;
+        l->glow = NO_GLOW;
+        l->w = 0;
+        l->scale = false;
         break;
 
     case 1:
         // onesided linedef (regular wall)
-        l.r = cfg.automapL1[0];
-        l.g = cfg.automapL1[1];
-        l.b = cfg.automapL1[2];
-        l.a = cfg.automapLineAlpha;
-        l.a2 = cfg.automapLineAlpha/3;
-        l.glow = NO_GLOW;
-        l.w = 0;
-        l.scale = false;
+        l->r = cfg.automapL1[0];
+        l->g = cfg.automapL1[1];
+        l->b = cfg.automapL1[2];
+        l->a = cfg.automapLineAlpha;
+        l->a2 = cfg.automapLineAlpha/3;
+        l->glow = NO_GLOW;
+        l->w = 0;
+        l->scale = false;
         break;
 
     case 2:
@@ -1119,14 +1226,14 @@ static mapline_t AM_getLine(int type, int special)
         {
         default:
             // nope nothing special about it
-            l.r = cfg.automapL0[0];
-            l.g = cfg.automapL0[1];
-            l.b = cfg.automapL0[2];
-            l.a = 1;
-            l.a2 = 1;
-            l.glow = NO_GLOW;
-            l.w = 0;
-            l.scale = false;
+            l->r = cfg.automapL0[0];
+            l->g = cfg.automapL0[1];
+            l->b = cfg.automapL0[2];
+            l->a = 1;
+            l->a2 = 1;
+            l->glow = NO_GLOW;
+            l->w = 0;
+            l->scale = false;
             break;
 
 #ifdef __JDOOM__
@@ -1134,203 +1241,201 @@ static mapline_t AM_getLine(int type, int special)
             case 26:                    // Blue Door/Locked
             case 99:
             case 133:
-                l.r = 0;
-                l.g = 0;
-                l.b = 0.776f;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
+                l->r = 0;
+                l->g = 0;
+                l->b = 0.776f;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
                 if(cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
+                    l->glow = NO_GLOW;
 
-                l.w = 5.0f;
-                l.scale = true;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 
             case 33:                    // Red locked door open
             case 28:                    // Red Door /Locked
             case 134:
             case 135:
-                l.r = 0.682f;
-                l.g = 0;
-                l.b = 0;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
+                l->r = 0.682f;
+                l->g = 0;
+                l->b = 0;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
                 if(cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
-                l.w = 5.0f;
-                l.scale = true;
+                    l->glow = NO_GLOW;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 
             case 34:                    // Yellow locked door open
             case 27:                    // Yellow Door /Locked
             case 136:
             case 137:
-                l.r = 0.905f;
-                l.g = 0.9f;
-                l.b = 0;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
+                l->r = 0.905f;
+                l->g = 0.9f;
+                l->b = 0;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
                 if(cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
-                l.w = 5.0f;
-                l.scale = true;
+                    l->glow = NO_GLOW;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 
             case 11:                    // Exit switch
             case 52:                    // Exit walkover
-                l.r = 0;
-                l.g = 1;
-                l.b = 0;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
+                l->r = 0;
+                l->g = 1;
+                l->b = 0;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
                 if(cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
+                    l->glow = NO_GLOW;
 
-                l.w = 5.0f;
-                l.scale = true;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 
             case 51:                    // Exit switch (secret)
             case 124:                   // Exit walkover (secret)
-                l.r = 0;
-                l.g = 1;
-                l.b = 1;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
+                l->r = 0;
+                l->g = 1;
+                l->b = 1;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
                 if(cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
+                    l->glow = NO_GLOW;
 
-                l.w = 5.0f;
-                l.scale = true;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 #elif __JHERETIC__
             case 26:                    // Blue
             case 32:
-                l.r = 0;
-                l.g = 0;
-                l.b = 0.776f;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
-                if ( cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                l->r = 0;
+                l->g = 0;
+                l->b = 0.776f;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
+                if(cfg.automapDoorGlow > 0)
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
-                l.w = 5.0f;
-                l.scale = true;
+                    l->glow = NO_GLOW;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 
             case 27:                    // Yellow
             case 34:
-                l.r = 0.905f;
-                l.g = 0.9f;
-                l.b = 0;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
-                if ( cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                l->r = 0.905f;
+                l->g = 0.9f;
+                l->b = 0;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
+                if(cfg.automapDoorGlow > 0)
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
-                l.w = 5.0f;
-                l.scale = true;
+                    l->glow = NO_GLOW;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 
             case 28:                    // Green
             case 33:
-                l.r = 0;
-                l.g = 0.9f;
-                l.b = 0;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
-                if ( cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                l->r = 0;
+                l->g = 0.9f;
+                l->b = 0;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
+                if(cfg.automapDoorGlow > 0)
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
-                l.w = 5.0f;
-                l.scale = true;
+                    l->glow = NO_GLOW;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 #else
             case 13:                    // Locked door line -- all locked doors are green
             case 83:
-                l.r = 0;
-                l.g = 0.9f;
-                l.b = 0;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
-                if ( cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                l->r = 0;
+                l->g = 0.9f;
+                l->b = 0;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
+                if(cfg.automapDoorGlow > 0)
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
-                l.w = 5.0f;
-                l.scale = true;
+                    l->glow = NO_GLOW;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 
             case 70:                    // intra-level teleports are blue
             case 71:
-                l.r = 0;
-                l.g = 0;
-                l.b = 0.776f;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
-                if ( cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                l->r = 0;
+                l->g = 0;
+                l->b = 0.776f;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
+                if(cfg.automapDoorGlow > 0)
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
-                l.w = 5.0f;
-                l.scale = true;
+                    l->glow = NO_GLOW;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 
             case 74:                    // inter-level teleport/game-winning exit -- both are red
             case 75:
-                l.r = 0.682f;
-                l.g = 0;
-                l.b = 0;
-                l.a = cfg.automapLineAlpha/2;
-                l.a2 = cfg.automapLineAlpha/1.5;
-                if ( cfg.automapDoorGlow > 0)
-                    l.glow = TWOSIDED_GLOW;
+                l->r = 0.682f;
+                l->g = 0;
+                l->b = 0;
+                l->a = cfg.automapLineAlpha/2;
+                l->a2 = cfg.automapLineAlpha/1.5;
+                if(cfg.automapDoorGlow > 0)
+                    l->glow = TWOSIDED_GLOW;
                 else
-                    l.glow = NO_GLOW;
-                l.w = 5.0f;
-                l.scale = true;
+                    l->glow = NO_GLOW;
+                l->w = 5.0f;
+                l->scale = true;
                 break;
 #endif
         }
         break;
 
     case 3: // twosided linedef, floor change
-        l.r = cfg.automapL2[0];
-        l.g = cfg.automapL2[1];
-        l.b = cfg.automapL2[2];
-        l.a = cfg.automapLineAlpha;
-        l.a2 = cfg.automapLineAlpha/2;
-        l.glow = NO_GLOW;
-        l.w = 0;
-        l.scale = false;
+        l->r = cfg.automapL2[0];
+        l->g = cfg.automapL2[1];
+        l->b = cfg.automapL2[2];
+        l->a = cfg.automapLineAlpha;
+        l->a2 = cfg.automapLineAlpha/2;
+        l->glow = NO_GLOW;
+        l->w = 0;
+        l->scale = false;
         break;
 
     case 4: // twosided linedef, ceiling change
-        l.r = cfg.automapL3[0];
-        l.g = cfg.automapL3[1];
-        l.b = cfg.automapL3[2];
-        l.a = cfg.automapLineAlpha;
-        l.a2 = cfg.automapLineAlpha/2;
-        l.glow = NO_GLOW;
-        l.w = 0;
-        l.scale = false;
+        l->r = cfg.automapL3[0];
+        l->g = cfg.automapL3[1];
+        l->b = cfg.automapL3[2];
+        l->a = cfg.automapLineAlpha;
+        l->a2 = cfg.automapLineAlpha/2;
+        l->glow = NO_GLOW;
+        l->w = 0;
+        l->scale = false;
         break;
     }
-
-    return l;
 }
 
 /**
@@ -1395,176 +1500,364 @@ static int AM_checkSpecial(int special)
     return 0;
 }
 
+static amprim_t *AM_NewPrimitive(amprimlist_t *list)
+{
+    amprim_t   *p;
+
+    // Any primitives available in a passed primlist's, unused list?
+    if(list && list->unused)
+    {   // Yes, unlink from the unused list and use it.
+        p = list->unused;
+        list->unused = p->next;
+    }
+    else
+    {   // No, allocate another.
+        p = malloc(sizeof(*p));
+    }
+
+    return p;
+}
+
+static void AM_LinkPrimitiveToList(amprimlist_t *list, amprim_t *p)
+{
+    p->next = list->head;
+    if(!list->tail)
+        list->tail = p;
+    list->head = p;
+}
+
+static amrline_t *AM_AllocateLine(void)
+{
+    amprimlist_t *list = &amLineList;
+    amprim_t   *p = AM_NewPrimitive(list);
+
+    AM_LinkPrimitiveToList(list, p);
+    return &(p->data.line);
+}
+
+static amrquad_t *AM_AllocateQuad(int tex, boolean blend)
+{
+    amquadlist_t *list;
+    amprim_t   *p;
+    boolean     found;
+
+    // Find a suitable primitive list (matching texture & blend).
+    list = amQuadListHead;
+    found = false;
+    while(list && !found)
+    {
+        if(list->tex == tex && list->blend == blend)
+            found = true;
+        else
+            list = list->next;
+    }
+
+    if(!found)
+    {   // Allocate a new list.
+        list = malloc(sizeof(*list));
+
+        list->tex = tex;
+        list->blend = blend;
+        list->primlist.type = DGL_QUADS;
+        list->primlist.head = list->primlist.tail =
+            list->primlist.unused = NULL;
+
+        // Link it in.
+        list->next = amQuadListHead;
+        amQuadListHead = list;
+    }
+
+    p = AM_NewPrimitive(&list->primlist);
+    AM_LinkPrimitiveToList(&list->primlist, p);
+
+    return &(p->data.quad);
+}
+
+static void AM_DeleteList(amprimlist_t *list, boolean destroy)
+{
+    amprim_t *n, *np;
+
+    // Are we destroying the lists?
+    if(destroy)
+    {   // Yes, free the nodes.
+        n = list->head;
+        while(n)
+        {
+            np = n->next;
+            free(n);
+            n = np;
+        }
+    }
+    else
+    {   // No, move all nodes to the free list.
+        n = list->tail;
+        if(list->tail && list->unused)
+            n->next = list->unused;
+    }
+
+    list->head = list->tail = NULL;
+}
+
+static void AM_ClearAllLists(boolean destroy)
+{
+    amquadlist_t *list;
+
+    // Lines.
+    AM_DeleteList(&amLineList, destroy);
+
+    // Quads.
+    list = amQuadListHead;
+    while(list)
+    {
+        AM_DeleteList(&list->primlist, destroy);
+        list = list->next;
+    }
+}
+
+static void AM_AddLine(float x, float y, float x2, float y2, int color,
+                       float alpha)
+{
+    amrline_t *l;
+
+    l = AM_AllocateLine();
+
+    l->a.pos[0] = x;
+    l->a.pos[1] = y;
+    l->b.pos[0] = x2;
+    l->b.pos[1] = y2;
+
+    l->type = AMLT_PALCOL;
+    l->coldata.palcolor.color = color;
+    l->coldata.palcolor.alpha = CLAMP(alpha, 0.0, 1.0f);
+}
+
+static void AM_AddLine4f(float x, float y, float x2, float y2,
+                         float r, float g, float b, float a)
+{
+    amrline_t *l;
+
+    l = AM_AllocateLine();
+
+    l->a.pos[0] = x;
+    l->a.pos[1] = y;
+    l->b.pos[0] = x2;
+    l->b.pos[1] = y2;
+
+    l->type = AMLT_RGBA;
+    l->coldata.f4color.rgba[0] = r;
+    l->coldata.f4color.rgba[1] = g;
+    l->coldata.f4color.rgba[2] = b;
+    l->coldata.f4color.rgba[3] = CLAMP(a, 0.0, 1.0f);
+}
+
+static void AM_AddQuad(float x1, float y1, float x2, float y2,
+                       float x3, float y3, float x4, float y4,
+                       float tc1st1, float tc1st2,
+                       float tc2st1, float tc2st2,
+                       float tc3st1, float tc3st2,
+                       float tc4st1, float tc4st2,
+                       float r, float g, float b, float a,
+                       int tex, boolean blend)
+{
+    // Vertex layout.
+    // 1--2
+    // | /|
+    // |/ |
+    // 3--4
+    //
+    amrquad_t *q;
+
+    q = AM_AllocateQuad(tex, blend);
+
+    q->rgba[0] = r;
+    q->rgba[1] = g;
+    q->rgba[2] = b;
+    q->rgba[3] = a;
+
+    // V1
+    q->verts[0].pos[0] = x1;
+    q->verts[0].tex[0] = tc1st1;
+    q->verts[0].pos[1] = y1;
+    q->verts[0].tex[1] = tc1st2;
+
+    // V2
+    q->verts[1].pos[0] = x2;
+    q->verts[1].tex[0] = tc2st1;
+    q->verts[1].pos[1] = y2;
+    q->verts[1].tex[1] = tc2st2;
+
+    // V3
+    q->verts[2].pos[0] = x3;
+    q->verts[2].tex[0] = tc3st1;
+    q->verts[2].pos[1] = y3;
+    q->verts[2].tex[1] = tc3st2;
+
+    // V4
+    q->verts[3].pos[0] = x4;
+    q->verts[3].tex[0] = tc4st1;
+    q->verts[3].pos[1] = y4;
+    q->verts[3].tex[1] = tc4st2;
+}
+
 /**
  * Draws the given line. No cliping is done!
  */
-static void AM_drawMline(mline_t *ml, int color)
+static void AM_drawMline(mline_t *ml, int color, float alpha)
 {
-    GL_SetColor2(color, (am_alpha - (1-cfg.automapLineAlpha)));
-
-    gl.Vertex2f(FIX2FLT(CXMTOFX(FLT2FIX(ml->a.pos[VX]))),
-                FIX2FLT(CYMTOFX(FLT2FIX(ml->a.pos[VY]))));
-    gl.Vertex2f(FIX2FLT(CXMTOFX(FLT2FIX(ml->b.pos[VX]))),
-                FIX2FLT(CYMTOFX(FLT2FIX(ml->b.pos[VY]))));
+    AM_AddLine(FIX2FLT(CXMTOFX(FLT2FIX(ml->a.pos[VX]))),
+               FIX2FLT(CYMTOFX(FLT2FIX(ml->a.pos[VY]))),
+               FIX2FLT(CXMTOFX(FLT2FIX(ml->b.pos[VX]))),
+               FIX2FLT(CYMTOFX(FLT2FIX(ml->b.pos[VY]))),
+               color,
+               (am_alpha - (1 - alpha)));
 }
 
 /**
  * Draws the given line including any optional extras
  */
-static void AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps, boolean glowmode,
+static void AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps,
                           boolean blend)
 {
-
-    float       a[2], b[2], normal[2], unit[2], thickness;
+    float       a[2], b[2];
     float       length, dx, dy;
 
-    // Scale line thickness relative to zoom level?
-    if(c->scale)
-        thickness = cfg.automapDoorGlow * FIX2FLT(scale_mtof) * 2.5f + 3;
-    else
-        thickness = c->w;
+    a[VX] = ml->a.pos[VX];
+    a[VY] = ml->a.pos[VY];
+    b[VX] = ml->b.pos[VX];
+    b[VY] = ml->b.pos[VY];
 
-    // Get colour from the passed line.
-    // If the line glows and this is glow mode - use alpha 2 else alpha 1
-    if(glowmode && c->glow)
-        GL_SetColorAndAlpha(c->r, c->g, c->b, am_alpha - (1 - c->a2));
-    else
-        GL_SetColorAndAlpha(c->r, c->g, c->b, am_alpha - (1 - c->a));
+    // Scale into map, screen space units.
+    a[VX] = FIX2FLT(CXMTOFX(FLT2FIX(a[VX])));
+    a[VY] = FIX2FLT(CYMTOFX(FLT2FIX(a[VY])));
+    b[VX] = FIX2FLT(CXMTOFX(FLT2FIX(b[VX])));
+    b[VY] = FIX2FLT(CYMTOFX(FLT2FIX(b[VY])));
 
-    // If we are in glow mode and the line has glow - draw it
-    if(glowmode && c->glow > NO_GLOW)
+    dx = b[VX] - a[VX];
+    dy = b[VY] - a[VY];
+    length = sqrt(dx * dx + dy * dy);
+    if(length <= 0)
+        return;
+
+    // Is this a glowing line?
+    if(c->glow > NO_GLOW)
     {
-        gl.Enable(DGL_TEXTURING);
-        if(blend)
-            gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+        int         tex;
+        float       normal[2], unit[2], thickness;
 
-        gl.Bind(Get(DD_DYNLIGHT_TEXTURE));
-        gl.Begin(DGL_QUADS);
+        // Scale line thickness relative to zoom level?
+        if(c->scale)
+            thickness = cfg.automapDoorGlow * FIX2FLT(scale_mtof) * 2.5f + 3;
+        else
+            thickness = c->w;
 
-        a[VX] = FIX2FLT(CXMTOFX(FLT2FIX(ml->a.pos[VX])));
-        a[VY] = FIX2FLT(CYMTOFX(FLT2FIX(ml->a.pos[VY])));
-        b[VX] = FIX2FLT(CXMTOFX(FLT2FIX(ml->b.pos[VX])));
-        b[VY] = FIX2FLT(CYMTOFX(FLT2FIX(ml->b.pos[VY])));
-
-        dx = b[VX] - a[VX];
-        dy = b[VY] - a[VY];
-        length = sqrt(dx * dx + dy * dy);
-        if(length <= 0)
-            return;
+        tex = Get(DD_DYNLIGHT_TEXTURE);
 
         unit[VX] = dx / length;
         unit[VY] = dy / length;
         normal[VX] = unit[VY];
         normal[VY] = -unit[VX];
 
-        if(caps){
-            // Draws a "cap" at the start of the line
-            gl.TexCoord2f(0, 0);
-            gl.Vertex2f(a[VX] - unit[VX] * thickness + normal[VX] * thickness,
-                        a[VY] - unit[VY] * thickness + normal[VY] * thickness);
-
-            gl.TexCoord2f(0.5f, 0);
-            gl.Vertex2f(a[VX] + normal[VX] * thickness,
-                        a[VY] + normal[VY] * thickness);
-
-            gl.TexCoord2f(0.5f, 1);
-            gl.Vertex2f(a[VX] - normal[VX] * thickness,
-                        a[VY] - normal[VY] * thickness);
-
-            gl.TexCoord2f(0, 1);
-            gl.Vertex2f(a[VX] - unit[VX] * thickness - normal[VX] * thickness,
-                        a[VY] - unit[VY] * thickness - normal[VY] * thickness);
+        if(caps)
+        {
+            // Draw a "cap" at the start of the line
+            AM_AddQuad(a[VX] - unit[VX] * thickness + normal[VX] * thickness,
+                       a[VY] - unit[VY] * thickness + normal[VY] * thickness,
+                       a[VX] + normal[VX] * thickness,
+                       a[VY] + normal[VY] * thickness,
+                       a[VX] - normal[VX] * thickness,
+                       a[VY] - normal[VY] * thickness,
+                       a[VX] - unit[VX] * thickness - normal[VX] * thickness,
+                       a[VY] - unit[VY] * thickness - normal[VY] * thickness,
+                       0, 0,
+                       0.5f, 0,
+                       0.5f, 1,
+                       0, 1,
+                       c->r, c->g, c->b, am_alpha - (1 - c->a2),
+                       tex, blend);
         }
 
         // The middle part of the line.
-        if(c->glow == TWOSIDED_GLOW )
+        switch(c->glow)
         {
-            // two sided
-            gl.TexCoord2f(0.5f, 0);
-            gl.Vertex2f(a[VX] + normal[VX] * thickness,
-                        a[VY] + normal[VY] * thickness);
-            gl.Vertex2f(b[VX] + normal[VX] * thickness,
-                        b[VY] + normal[VY] * thickness);
+        case TWOSIDED_GLOW:
+            AM_AddQuad(a[VX] + normal[VX] * thickness,
+                       a[VY] + normal[VY] * thickness,
+                       b[VX] + normal[VX] * thickness,
+                       b[VY] + normal[VY] * thickness,
+                       b[VX] - normal[VX] * thickness,
+                       b[VY] - normal[VY] * thickness,
+                       a[VX] - normal[VX] * thickness,
+                       a[VY] - normal[VY] * thickness,
+                       0.5f, 0,
+                       0.5f, 0,
+                       0.5f, 1,
+                       0.5f, 1,
+                       c->r, c->g, c->b, am_alpha - (1 - c->a2),
+                       tex, blend);
+            break;
 
-            gl.TexCoord2f(0.5f, 1);
-            gl.Vertex2f(b[VX] - normal[VX] * thickness,
-                        b[VY] - normal[VY] * thickness);
-            gl.Vertex2f(a[VX] - normal[VX] * thickness,
-                        a[VY] - normal[VY] * thickness);
-        }
-        else if (c->glow == BACK_GLOW)
-        {
-            // back side only
-            gl.TexCoord2f(0, 0.25f);
-            gl.Vertex2f(a[VX] + normal[VX] * thickness,
-                        a[VY] + normal[VY] * thickness);
-            gl.Vertex2f(b[VX] + normal[VX] * thickness,
-                        b[VY] + normal[VY] * thickness);
+        case BACK_GLOW:
+            AM_AddQuad(a[VX] + normal[VX] * thickness,
+                       a[VY] + normal[VY] * thickness,
+                       b[VX] + normal[VX] * thickness,
+                       b[VY] + normal[VY] * thickness,
+                       b[VX], b[VY],
+                       a[VX], a[VY],
+                       0, 0.25f,
+                       0, 0.25f,
+                       0.5f, 0.25f,
+                       0.5f, 0.25f,
+                       c->r, c->g, c->b, am_alpha - (1 - c->a2),
+                       tex, blend);
+            break;
 
-            gl.TexCoord2f(0.5f, 0.25f);
-            gl.Vertex2f(b[VX], b[VY]);
-            gl.Vertex2f(a[VX], a[VY]);
-        }
-        else
-        {
-            // front side only
-            gl.TexCoord2f(0.75f, 0.5f);
-            gl.Vertex2f(a[VX], a[VY]);
-            gl.Vertex2f(b[VX], b[VY]);
+        case FRONT_GLOW:
+            AM_AddQuad(a[VX], a[VY],
+                       b[VX], b[VY],
+                       b[VX] - normal[VX] * thickness,
+                       b[VY] - normal[VY] * thickness,
+                       a[VX] - normal[VX] * thickness,
+                       a[VY] - normal[VY] * thickness,
+                       0.75f, 0.5f,
+                       0.75f, 0.5f,
+                       0.75f, 1,
+                       0.75f, 1,
+                       c->r, c->g, c->b, am_alpha - (1 - c->a2),
+                       tex, blend);
+            break;
 
-            gl.TexCoord2f(0.75f, 1);
-            gl.Vertex2f(b[VX] - normal[VX] * thickness,
-                        b[VY] - normal[VY] * thickness);
-            gl.Vertex2f(a[VX] - normal[VX] * thickness,
-                        a[VY] - normal[VY] * thickness);
+        default:
+            break; // Impossible.
         }
 
         if(caps)
         {
-            // Draws a "cap" at the end of the line
-            gl.TexCoord2f(0.5f, 0);
-            gl.Vertex2f(b[VX] + normal[VX] * thickness,
-                        b[VY] + normal[VY] * thickness);
-
-            gl.TexCoord2f(1, 0);
-            gl.Vertex2f(b[VX] + unit[VX] * thickness + normal[VX] * thickness,
-                        b[VY] + unit[VY] * thickness + normal[VY] * thickness);
-
-            gl.TexCoord2f(1, 1);
-            gl.Vertex2f(b[VX] + unit[VX] * thickness - normal[VX] * thickness,
-                        b[VY] + unit[VY] * thickness - normal[VY] * thickness);
-
-            gl.TexCoord2f(0.5f, 1);
-            gl.Vertex2f(b[VX] - normal[VX] * thickness,
-                        b[VY] - normal[VY] * thickness);
+            // Draw a "cap" at the end of the line.
+            AM_AddQuad(b[VX] + normal[VX] * thickness,
+                       b[VY] + normal[VY] * thickness,
+                       b[VX] + unit[VX] * thickness + normal[VX] * thickness,
+                       b[VY] + unit[VY] * thickness + normal[VY] * thickness,
+                       b[VX] + unit[VX] * thickness - normal[VX] * thickness,
+                       b[VY] + unit[VY] * thickness - normal[VY] * thickness,
+                       b[VX] - normal[VX] * thickness,
+                       b[VY] - normal[VY] * thickness,
+                       0.5f, 0,
+                       1, 0,
+                       1, 1,
+                       0.5f, 1,
+                       c->r, c->g, c->b, am_alpha - (1 - c->a2),
+                       tex, blend);
         }
-
-        gl.End();
-        if(blend)
-            gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-        gl.Disable(DGL_TEXTURING);
     }
 
-    if(!glowmode)
-    {
-        // No glow? then draw a regular line
-        //
-        // FIXME: Begin(DGL_LINES)/End() must be called for as large a set of lines as
-        //        possible! This is very inefficient (FPS drops).
-        //
-        gl.Begin(DGL_LINES);
-        gl.Vertex2f(FIX2FLT(CXMTOFX(FLT2FIX(ml->a.pos[VX]))),
-                    FIX2FLT(CYMTOFX(FLT2FIX(ml->a.pos[VY]))));
-        gl.Vertex2f(FIX2FLT(CXMTOFX(FLT2FIX(ml->b.pos[VX]))),
-                    FIX2FLT(CYMTOFX(FLT2FIX(ml->b.pos[VY]))));
-        gl.End();
-    }
+    AM_AddLine4f(a[VX], a[VY], b[VX], b[VY],
+                 c->r, c->g, c->b, am_alpha - (1 - c->a));
 }
 
 /**
  * Draws blockmap aligned grid lines.
  */
-static void AM_drawGrid(int color)
+static void renderGrid(int color)
 {
     fixed_t     x, y;
     fixed_t     start, end;
@@ -1584,12 +1877,11 @@ static void AM_drawGrid(int color)
     ml.a.pos[VY] = FIX2FLT(m_y);
     ml.b.pos[VY] = FIX2FLT(m_y + m_h);
 
-    gl.Begin(DGL_LINES);
     for(x = start; x < end; x += (MAPBLOCKUNITS << FRACBITS))
     {
         ml.a.pos[VX] = FIX2FLT(x);
         ml.b.pos[VX] = FIX2FLT(x);
-        AM_drawMline(&ml, color);
+        AM_drawMline(&ml, color, cfg.automapLineAlpha);
     }
 
     // Figure out start of horizontal gridlines
@@ -1607,31 +1899,28 @@ static void AM_drawGrid(int color)
     {
         ml.a.pos[VY] = FIX2FLT(y);
         ml.b.pos[VY] = FIX2FLT(y);
-        AM_drawMline(&ml, color);
+        AM_drawMline(&ml, color, cfg.automapLineAlpha);
     }
-    gl.End();
 }
 
 /**
  * Determines visible lines, draws them.
  */
-static void AM_drawWalls(boolean glowmode)
+static void renderWalls(void)
 {
-    int         i;
+    int         i, flags;
     uint        s, subColor = 0;
     line_t     *line;
     xline_t    *xline;
     mline_t     l;
-    subsector_t *ssec;
     sector_t   *sec, *frontsector, *backsector;
     seg_t      *seg;
     mapline_t   templine;
     boolean     withglow = false;
 
-    for(s = 0; s < numsubsectors; s++)
+    for(s = 0; s < numsubsectors; ++s)
     {
-        ssec = P_ToPtr(DMU_SUBSECTOR, s);
-        sec = P_GetPtrp(ssec, DMU_SECTOR);
+        sec = P_GetPtr(DMU_SUBSECTOR, s, DMU_SECTOR);
 
         if(cheating == 3)        // Debug cheat, show subsectors
         {
@@ -1640,17 +1929,14 @@ static void AM_drawWalls(boolean glowmode)
                 subColor = 0;
         }
 
-        for(i = 0; i < P_GetIntp(ssec, DMU_SEG_COUNT); ++i)
+        for(i = 0; i < P_GetInt(DMU_SUBSECTOR, s, DMU_SEG_COUNT); ++i)
         {
-            seg = P_GetPtrp(ssec, DMU_SEG_OF_SUBSECTOR | i);
-
-            frontsector = P_GetPtrp(seg, DMU_FRONT_SECTOR);
-            backsector = P_GetPtrp(seg, DMU_BACK_SECTOR);
-
+            seg = P_GetPtr(DMU_SUBSECTOR, s, DMU_SEG_OF_SUBSECTOR | i);
             line = P_GetPtrp(seg, DMU_LINE);
             if(!line)
                 continue;
 
+            flags = P_GetIntp(line, DMU_FLAGS);
             l.a.pos[VX] = P_GetFloatp(seg, DMU_VERTEX1_X);
             l.a.pos[VY] = P_GetFloatp(seg, DMU_VERTEX1_Y);
             l.b.pos[VX] = P_GetFloatp(seg, DMU_VERTEX2_X);
@@ -1658,10 +1944,11 @@ static void AM_drawWalls(boolean glowmode)
 
             if(cheating == 3)        // Debug cheat, show subsectors
             {
-                AM_drawMline2(&l, &subColors[subColor], false, glowmode, true);
+                AM_drawMline2(&l, &subColors[subColor], false, true);
                 continue;
             }
 
+            frontsector = P_GetPtrp(seg, DMU_FRONT_SECTOR);
             if(frontsector != P_GetPtrp(line, DMU_SIDE0_OF_LINE | DMU_SECTOR))
                 continue; // we only want to draw twosided lines once.
 
@@ -1674,17 +1961,18 @@ static void AM_drawWalls(boolean glowmode)
                 // Show active XG lines.
                 if(xline->xg && xline->xg->active && (leveltime & 4))
                 {
-                    templine = AM_getLine(1, 0);
-                    AM_drawMline2(&l, &templine, false, glowmode, true);
+                    AM_getLine(&templine, 1, 0);
+                    AM_drawMline2(&l, &templine, false, true);
                 }
             }
 #endif
 #endif
-            if(cheating || (P_GetIntp(line, DMU_FLAGS) & ML_MAPPED))
+            backsector = P_GetPtrp(seg, DMU_BACK_SECTOR);
+            if(cheating || (flags & ML_MAPPED))
             {
                 int     specialType;
 
-                if((P_GetIntp(line, DMU_FLAGS) & LINE_NEVERSEE) && !cheating)
+                if((flags & LINE_NEVERSEE) && !cheating)
                     continue;
 
                 specialType = AM_checkSpecial(xline->special);
@@ -1694,60 +1982,54 @@ static void AM_drawWalls(boolean glowmode)
                 {
                     // some sort of special
 
-                    if(cfg.automapDoorGlow > 0 && glowmode)
+                    if(cfg.automapDoorGlow > 0)
                         withglow = true;
 
-                    templine = AM_getLine(2, xline->special);
-
-                    AM_drawMline2(&l, &templine, withglow, glowmode, withglow);
+                    AM_getLine(&templine, 2, xline->special);
+                    AM_drawMline2(&l, &templine, withglow, withglow);
                 }
                 else if(!backsector)
                 {
                     // solid wall (well probably anyway...)
-                    templine = AM_getLine( 1, 0);
-
-                    AM_drawMline2(&l, &templine, false, glowmode, false);
+                    AM_getLine(&templine, 1, 0);
+                    AM_drawMline2(&l, &templine, false, false);
                 }
                 else
                 {
-                    if(P_GetIntp(line, DMU_FLAGS) & ML_SECRET)
+                    if(flags & ML_SECRET)
                     {
                         // secret door
-                        templine = AM_getLine( 1, 0);
-
-                        AM_drawMline2(&l, &templine, false, glowmode, false);
+                        AM_getLine(&templine, 1, 0);
+                        AM_drawMline2(&l, &templine, false, false);
                     }
-                    else if(P_GetFixedp(backsector, DMU_FLOOR_HEIGHT) !=
-                            P_GetFixedp(frontsector, DMU_FLOOR_HEIGHT))
+                    else if(P_GetFloatp(backsector, DMU_FLOOR_HEIGHT) !=
+                            P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT))
                     {
                         // floor level change
-                        templine = AM_getLine( 3, 0);
-
-                        AM_drawMline2(&l, &templine, false, glowmode, false);
+                        AM_getLine(&templine, 3, 0);
+                        AM_drawMline2(&l, &templine, false, false);
                     }
-                    else if(P_GetFixedp(backsector, DMU_CEILING_HEIGHT) !=
-                            P_GetFixedp(frontsector, DMU_CEILING_HEIGHT))
+                    else if(P_GetFloatp(backsector, DMU_CEILING_HEIGHT) !=
+                            P_GetFloatp(frontsector, DMU_CEILING_HEIGHT))
                     {
                         // ceiling level change
-                        templine = AM_getLine( 4, 0);
-
-                        AM_drawMline2(&l, &templine, false, glowmode, false);
+                        AM_getLine(&templine, 4, 0);
+                        AM_drawMline2(&l, &templine, false, false);
                     }
                     else if(cheating)
                     {
-                        templine = AM_getLine( 0, 0);
-
-                        AM_drawMline2(&l, &templine, false, glowmode, false);
+                        AM_getLine(&templine, 0, 0);
+                        AM_drawMline2(&l, &templine, false, false);
                     }
                 }
             }
             else if(plr->powers[PT_ALLMAP])
             {
-                if(!(P_GetIntp(line, DMU_FLAGS) & LINE_NEVERSEE))
+                if(!(flags & LINE_NEVERSEE))
                 {
                     // as yet unseen line
-                    templine = AM_getLine( 0, 0);
-                    AM_drawMline2(&l, &templine, false, glowmode, false);
+                    AM_getLine(&templine, 0, 0);
+                    AM_drawMline2(&l, &templine, false, false);
                 }
             }
         }
@@ -1773,17 +2055,17 @@ static void AM_rotate(float *x, float *y, angle_t a)
 /**
  * Draws a line character (eg the player arrow)
  */
-static void AM_drawLineCharacter(mline_t *lineguy, int lineguylines, float scale,
-                                 angle_t angle, int color, float x, float y)
+static void addLineCharacter(vectorgrap_t *vg, float scale,
+                             angle_t angle, int color, float alpha,
+                             float x, float y)
 {
-    int         i;
+    uint        i;
     mline_t     l;
 
-    gl.Begin(DGL_LINES);
-    for(i = 0; i < lineguylines; ++i)
+    for(i = 0; i < vg->count; ++i)
     {
-        l.a.pos[VX] = lineguy[i].a.pos[VX];
-        l.a.pos[VY] = lineguy[i].a.pos[VY];
+        l.a.pos[VX] = vg->lines[i].a.pos[VX];
+        l.a.pos[VY] = vg->lines[i].a.pos[VY];
 
         l.a.pos[VX] = scale * l.a.pos[VX];
         l.a.pos[VY] = scale * l.a.pos[VY];
@@ -1793,8 +2075,8 @@ static void AM_drawLineCharacter(mline_t *lineguy, int lineguylines, float scale
         l.a.pos[VX] += x;
         l.a.pos[VY] += y;
 
-        l.b.pos[VX] = lineguy[i].b.pos[VX];
-        l.b.pos[VY] = lineguy[i].b.pos[VY];
+        l.b.pos[VX] = vg->lines[i].b.pos[VX];
+        l.b.pos[VY] = vg->lines[i].b.pos[VY];
 
         l.b.pos[VX] = scale * l.b.pos[VX];
         l.b.pos[VY] = scale * l.b.pos[VY];
@@ -1804,15 +2086,14 @@ static void AM_drawLineCharacter(mline_t *lineguy, int lineguylines, float scale
         l.b.pos[VX] += x;
         l.b.pos[VY] += y;
 
-        AM_drawMline(&l, color);
+        AM_drawMline(&l, color, alpha);
     }
-    gl.End();
 }
 
 /**
  * Draws all players on the map using a line character
  */
-static void AM_drawPlayers(void)
+static void renderPlayers(void)
 {
     int         i;
 #if __JDOOM__
@@ -1821,31 +2102,26 @@ static void AM_drawPlayers(void)
     static int  their_colors[] = { KEY3, KEY2, BLOODRED, KEY1 };
 #endif
     float       size = FIX2FLT(PLAYERRADIUS);
-    mline_t    *lc;
-    int         lcNumLines;
+    vectorgrap_t *vg;
 
 #if __JDOOM__
     if(!IS_NETGAME && cheating)
     {
-        lc = cheat_player_arrow;
-        lcNumLines = NUMCHEATPLYRLINES;
+        vg = AM_GetVectorGraphic(VG_CHEATARROW);
     }
     else
-    {
-        lc = player_arrow;
-        lcNumLines = NUMPLYRLINES;
-    }
-#else
-    lc = player_arrow;
-    lcNumLines = NUMPLYRLINES;
 #endif
+    {
+        vg = AM_GetVectorGraphic(VG_ARROW);
+    }
 
     if(!IS_NETGAME)
     {
         /* $unifiedangles */
-        AM_drawLineCharacter(lc, lcNumLines, size, plr->plr->mo->angle, WHITE,
-                             FIX2FLT(plr->plr->mo->pos[VX]),
-                             FIX2FLT(plr->plr->mo->pos[VY]));
+        addLineCharacter(vg, size, plr->plr->mo->angle, WHITE,
+                         cfg.automapLineAlpha,
+                         FIX2FLT(plr->plr->mo->pos[VX]),
+                         FIX2FLT(plr->plr->mo->pos[VY]));
         return;
     }
 
@@ -1853,6 +2129,7 @@ static void AM_drawPlayers(void)
     {
         player_t   *p = &players[i];
         int         color;
+        float       alpha;
 
 #if __JDOOM__ || __JHERETIC__
         if(deathmatch && p != &players[consoleplayer])
@@ -1861,45 +2138,38 @@ static void AM_drawPlayers(void)
         if(!p->plr->ingame)
             continue;
 
+        color = their_colors[cfg.playerColor[i]];
+        alpha = cfg.automapLineAlpha;
+
 #if !__JHEXEN__
-#if !__JSTRIFE__
         if(p->powers[PT_INVISIBILITY])
-        {
-            // FIXME: The automap background color can be changed now!
-#if __JDOOM__
-            color = 246;        // *close* to black
-#elif __JHERETIC__
-            color = 102;        // *close* to the automap color
+            alpha *= 0.125;
 #endif
-        }
-        else
-#endif
-#endif
-            color = their_colors[cfg.playerColor[i]];
 
         /* $unifiedangles */
-        AM_drawLineCharacter(lc, lcNumLines, size, p->plr->mo->angle, color,
-                             FIX2FLT(p->plr->mo->pos[VX]),
-                             FIX2FLT(p->plr->mo->pos[VY]));
+        addLineCharacter(vg, size, p->plr->mo->angle, color, alpha,
+                         FIX2FLT(p->plr->mo->pos[VX]),
+                         FIX2FLT(p->plr->mo->pos[VY]));
     }
 }
 
 /**
  * Draws all things on the map
  */
-static void AM_drawThings(int colors, int colorrange)
+static void renderThings(int color, int colorrange)
 {
     uint        i;
     mobj_t     *iter;
     float       size = FIX2FLT(PLAYERRADIUS);
+    vectorgrap_t *vg = AM_GetVectorGraphic(VG_TRIANGLE);
 
     for(i = 0; i < numsectors; ++i)
     {
-        for(iter = P_GetPtr(DMU_SECTOR,i,DMU_THINGS); iter; iter = iter->snext)
+        for(iter = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); iter; iter = iter->snext)
         {
-            AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,
-                                 size, iter->angle, colors + lightlev,
-                                 FIX2FLT(iter->pos[VX]), FIX2FLT(iter->pos[VY]));
+            addLineCharacter(vg, size, iter->angle,
+                             color, cfg.automapLineAlpha,
+                             FIX2FLT(iter->pos[VX]), FIX2FLT(iter->pos[VY]));
         }
     }
 }
@@ -1910,9 +2180,11 @@ static void AM_drawThings(int colors, int colorrange)
  */
 static void AM_drawMarks(void)
 {
+#if !__DOOM64TC__
     int         i, fx, fy, w, h;
 
-#if !__DOOM64TC__
+    gl.Color4f(1, 1, 1, 1);
+
     // FIXME >
     for(i = 0; i < AM_NUMMARKPOINTS; ++i)
     {
@@ -1934,24 +2206,22 @@ static void AM_drawMarks(void)
 /**
  * Draws all the keys on the map using the keysquare line character
  */
-static void AM_drawKeys(void)
+static void renderKeys(void)
 {
     int         i;
     float       size = FIX2FLT(PLAYERRADIUS);
-
-    gl.Begin(DGL_LINES);
 
     for(i = 0; i< NUMBEROFKEYS; ++i)
     {
         // FIXME: What about keys that ARE at [0, 0]?
         if(KeyPoints[i].pos[VX] != 0 || KeyPoints[i].pos[VY] != 0)
         {
-            AM_drawLineCharacter(keysquare, NUMKEYSQUARELINES, size, 0, keycolors[i],
-                                 FIX2FLT(KeyPoints[i].pos[VX]),
-                                 FIX2FLT(KeyPoints[i].pos[VY]));
+            addLineCharacter(AM_GetVectorGraphic(VG_KEYSQUARE), size,
+                             0, keycolors[i], cfg.automapLineAlpha,
+                             FIX2FLT(KeyPoints[i].pos[VX]),
+                             FIX2FLT(KeyPoints[i].pos[VY]));
         }
     }
-    gl.End();
 }
 
 /**
@@ -2303,40 +2573,141 @@ static void AM_drawLevelName(void)
 #undef FIXYTOSCREENY
 }
 
+static void AM_RenderList(int tex, boolean blend, amprimlist_t *list)
+{
+    amprim_t *p;
+
+    // Change render state for this list?
+    if(tex)
+    {
+        gl.Enable(DGL_TEXTURING);
+        gl.Bind(tex);
+    }
+    else
+    {
+        gl.Disable(DGL_TEXTURING);
+    }
+
+    if(blend)
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+
+    // Write commands.
+    p = list->head;
+    gl.Begin(list->type);
+    switch(list->type)
+    {
+    case DGL_QUADS:
+        while(p)
+        {
+            gl.Color4fv(p->data.quad.rgba);
+
+            // V1
+            gl.TexCoord2f(p->data.quad.verts[0].tex[0],
+                          p->data.quad.verts[0].tex[1]);
+            gl.Vertex2f(p->data.quad.verts[0].pos[0],
+                        p->data.quad.verts[0].pos[1]);
+            // V2
+            gl.TexCoord2f(p->data.quad.verts[1].tex[0],
+                          p->data.quad.verts[1].tex[1]);
+            gl.Vertex2f(p->data.quad.verts[1].pos[0],
+                        p->data.quad.verts[1].pos[1]);
+            // V3
+            gl.TexCoord2f(p->data.quad.verts[2].tex[0],
+                          p->data.quad.verts[2].tex[1]);
+            gl.Vertex2f(p->data.quad.verts[2].pos[0],
+                        p->data.quad.verts[2].pos[1]);
+            // V4
+            gl.TexCoord2f(p->data.quad.verts[3].tex[0],
+                          p->data.quad.verts[3].tex[1]);
+            gl.Vertex2f(p->data.quad.verts[3].pos[0],
+                        p->data.quad.verts[3].pos[1]);
+
+            p = p->next;
+        }
+        break;
+
+    case DGL_LINES:
+        while(p)
+        {
+            if(p->data.line.type == AMLT_PALCOL)
+            {
+                GL_SetColor2(p->data.line.coldata.palcolor.color,
+                             p->data.line.coldata.palcolor.alpha);
+            }
+            else
+            {
+                gl.Color4fv(p->data.line.coldata.f4color.rgba);
+            }
+
+            gl.Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
+            gl.Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
+
+            p = p->next;
+        }
+        break;
+
+    default:
+        break;
+    }
+    gl.End();
+
+    // Restore previous state.
+    if(!tex)
+        gl.Enable(DGL_TEXTURING);
+    if(blend)
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+}
+
+static void AM_RenderAllLists(void)
+{
+    amquadlist_t *list;
+
+    // Quads.
+    list = amQuadListHead;
+    while(list)
+    {
+        AM_RenderList(list->tex, list->blend, &list->primlist);
+        list = list->next;
+    }
+
+    // Lines.
+    AM_RenderList(0, 0, &amLineList);
+}
+
 void AM_Drawer(void)
 {
     // If the automap isn't active, draw nothing
     if(!automapactive)
         return;
 
-    // Setup
+    // Setup for frame.
     AM_clearFB(BACKGROUND);
     AM_GL_SetupState();
 
-    gl.Disable(DGL_TEXTURING);
+    if(!freezeMapRLs)
+    {
+        AM_ClearAllLists(false);
 
-    // Draw.
-    if(grid)
-        AM_drawGrid(GRIDCOLORS);
+        // Draw.
+        if(grid)
+            renderGrid(GRIDCOLORS);
 
-    AM_drawWalls(true);    // draw the glowing lines first
-    AM_drawWalls(false);   // then the regular lines
-    AM_drawPlayers();
+        renderWalls();
+        renderPlayers();
 
-    if(cheating == 2) AM_drawThings(THINGCOLORS, THINGRANGE);
+        if(cheating == 2)
+            renderThings(THINGCOLORS, THINGRANGE);
 
 #if !__JHEXEN__
-    if(gameskill == SM_BABY && cfg.automapBabyKeys)
-    {
-        AM_drawKeys();
-    }
+        if(gameskill == SM_BABY && cfg.automapBabyKeys)
+            renderKeys();
 #endif
-
-    gl.Enable(DGL_TEXTURING);
-    gl.Color4f(1, 1, 1, 1);
+    }
+    AM_RenderAllLists();
 
     // Draw any marked points
-    AM_drawMarks();
+    if(!freezeMapRLs)
+        AM_drawMarks();
 
     gl.PopMatrix();
 
@@ -2555,75 +2926,55 @@ static void AM_drawWorldTimer(void)
 // Automap Menu
 //-------------------------------------------------------------------------------
 
-#ifdef __JDOOM__
-
 menuitem_t MAPItems[] = {
-/*    {ITT_LRFUNC, 0, "window position : ",    M_MapPosition, 0 },
+/*
+    {ITT_LRFUNC, 0, "window position : ",       M_MapPosition, 0 },
     {ITT_LRFUNC, 0, "window width :       ",    M_MapWidth, 0 },
-    {ITT_LRFUNC, 0, "window height :     ",    M_MapHeight, 0 },*/
-    {ITT_LRFUNC, 0, "hud display :        ",    M_MapStatusbar, 0 },
-    {ITT_LRFUNC, 0, "kills count :         ", M_MapKills, 0 },
-    {ITT_LRFUNC, 0, "items count :         ", M_MapItems, 0 },
-    {ITT_LRFUNC, 0, "secrets count :    ",    M_MapSecrets, 0 },
-    {ITT_EMPTY, 0, "automap colours",        NULL, 0 },
-    {ITT_EFUNC, 0, "   walls",        SCColorWidget, 1 },
-    {ITT_EFUNC, 0, "   floor height changes", SCColorWidget, 2 },
-    {ITT_EFUNC, 0, "   ceiling height changes",SCColorWidget, 3 },
-    {ITT_EFUNC, 0, "   unseen areas",        SCColorWidget, 0 },
-    {ITT_EFUNC, 0, "   background",        SCColorWidget, 4 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_EFUNC, 0, "door colors :        ",    M_MapDoorColors, 0 },
-    {ITT_LRFUNC, 0, "door glow : ",        M_MapDoorGlow, 0 },
-    {ITT_LRFUNC, 0, "line alpha :          ",    M_MapLineAlpha, 0 },
-};
-
-menu_t MapDef = {
-    0,
-    70, 40,
-    M_DrawMapMenu,
-    14, MAPItems,
-    0, MENU_OPTIONS,
-    hu_font_a,
-    cfg.menuColor2,
-    NULL,
-    LINEHEIGHT_A,
-    0, 14
-};
-
-#else
-
-menuitem_t MAPItems[] = {
-/*    {ITT_LRFUNC, 0, "window position : ", M_MapPosition, 0 },
-    {ITT_LRFUNC, 0, "window width :       ", M_MapWidth, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_LRFUNC, 0, "window height :     ", M_MapHeight, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },*/
-    {ITT_LRFUNC, 0, "hud display :      ", M_MapStatusbar, 0 },
-#ifdef __JHERETIC__
-    {ITT_LRFUNC, 0, "kills count :           ", M_MapKills, 0 },
-    {ITT_LRFUNC, 0, "items count :          ", M_MapItems, 0 },
-    {ITT_LRFUNC, 0, "secrets count :     ", M_MapSecrets, 0 },
+#if !__JDOOM__
+    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
+    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
 #endif
-    {ITT_NAVLEFT, 0, "automap colours", NULL, 0 },
-    {ITT_EFUNC, 0, "   walls", SCColorWidget, 1 },
-    {ITT_EFUNC, 0, "   floor height changes", SCColorWidget, 2 },
+    {ITT_LRFUNC, 0, "window height :     ",     M_MapHeight, 0 },
+#if !__JDOOM__
+    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
+    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
+#endif
+*/
+    {ITT_LRFUNC, 0, "hud display :        ",    M_MapStatusbar, 0 },
+#if !__JHEXEN__
+    {ITT_LRFUNC, 0, "kills count :         ",   M_MapKills, 0 },
+    {ITT_LRFUNC, 0, "items count :         ",   M_MapItems, 0 },
+    {ITT_LRFUNC, 0, "secrets count :    ",      M_MapSecrets, 0 },
+#endif
+    {ITT_NAVLEFT, 0, "automap colours",         NULL, 0 },
+    {ITT_EFUNC, 0, "   walls",                  SCColorWidget, 1 },
+    {ITT_EFUNC, 0, "   floor height changes",   SCColorWidget, 2 },
     {ITT_EFUNC, 0, "   ceiling height changes", SCColorWidget, 3 },
-    {ITT_EFUNC, 0, "   unseen areas", SCColorWidget, 0 },
-    {ITT_EFUNC, 0, "   background", SCColorWidget, 4 },
-    {ITT_EFUNC, 0, "door colors :        ", M_MapDoorColors, 0 },
-    {ITT_LRFUNC, 0, "door glow :", M_MapDoorGlow, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_LRFUNC, 0, "line alpha :         ", M_MapLineAlpha, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 }
+    {ITT_EFUNC, 0, "   unseen areas",           SCColorWidget, 0 },
+    {ITT_EFUNC, 0, "   background",             SCColorWidget, 4 },
+#if __JDOOM__
+    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
+#endif
+    {ITT_EFUNC, 0, "door colors :        ",     M_MapDoorColors, 0 },
+    {ITT_LRFUNC, 0, "door glow : ",             M_MapDoorGlow, 0 },
+#if !__JDOOM__
+    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
+    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
+#endif
+    {ITT_LRFUNC, 0, "line alpha :          ",   M_MapLineAlpha, 0 },
+#if !__JDOOM__
+    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
+    {ITT_EMPTY, 0, NULL,                        NULL, 0 },
+#endif
 };
 
 menu_t MapDef = {
     0,
+#if __JDOOM__
+    70, 40,
+#else
     64, 28,
+#endif
     M_DrawMapMenu,
 #if __JHERETIC__
     17, MAPItems,
@@ -2641,7 +2992,6 @@ menu_t MapDef = {
     0, 14
 #endif
 };
-#endif
 
 /**
  * Draws the automap options menu
@@ -2651,13 +3001,13 @@ void M_DrawMapMenu(void)
     const menu_t *menu = &MapDef;
     static char *hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
     static char *yesno[2] = { "NO", "YES" };
-#if !defined(__JHEXEN__) && !defined(__JSTRIFE__)
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
     static char *countnames[4] = { "NO", "YES", "PERCENT", "COUNT+PCNT" };
 #endif
 
     M_DrawTitle("Automap OPTIONS", menu->y - 26);
 
-#ifdef __JDOOM__
+#if __JDOOM__
     M_WriteMenuText(menu, 0, hudviewnames[cfg.automapHudDisplay]);
     M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
     M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
@@ -2672,7 +3022,7 @@ void M_DrawMapMenu(void)
     MN_DrawSlider(menu, 13, 11, cfg.automapLineAlpha * 10 + .5f);
 #else
     M_WriteMenuText(menu, 0, hudviewnames[cfg.automapHudDisplay]);
-# ifdef __JHERETIC__
+# if __JHERETIC__
     M_WriteMenuText(menu, 1, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
     M_WriteMenuText(menu, 2, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
     M_WriteMenuText(menu, 3, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
@@ -2694,9 +3044,7 @@ void M_DrawMapMenu(void)
     MN_DrawSlider(menu, 9, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
     MN_DrawSlider(menu, 12, 11, cfg.automapLineAlpha * 10 + .5f);
 # endif
-
 #endif
-
 }
 
 /**

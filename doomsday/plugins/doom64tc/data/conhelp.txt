@@ -885,3 +885,6 @@ desc = 1=Fast monsters in non-demo single player.
 
 [game-corpse-time]
 desc = Corpse vanish time in seconds, 0=disabled.
+
+[rend-dev-freeze-map]
+desc = 1=Stop updating the automap rendering lists.

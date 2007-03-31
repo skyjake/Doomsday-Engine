@@ -522,6 +522,9 @@ void G_PostInit(void)
     Con_Message("MN_Init: Init miscellaneous info.\n");
     MN_Init();
 
+    Con_Message("AM_Init: Init automap.\n");
+    AM_Init();
+
     // Create the various line lists (spechits, anims, buttons etc).
     spechit = P_CreateIterList();
     linespecials = P_CreateIterList();

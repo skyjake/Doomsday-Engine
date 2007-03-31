@@ -53,6 +53,7 @@
 #include "g_update.h"
 #include "g_common.h"
 #include "p_mapspec.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -628,6 +629,7 @@ void H2_Shutdown(void)
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
     P_FreeButtons();
+    AM_Shutdown();
 }
 
 void H2_Ticker(void)
