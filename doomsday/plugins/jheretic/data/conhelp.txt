@@ -889,4 +889,3 @@ desc = 1=Unhide the HUD when player collects an inventory item.
 
 [rend-dev-freeze-map]
 desc = 1=Stop updating the automap rendering lists.
-        
