@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -1158,7 +1158,7 @@ void P_ThunderSector(void)
     {
         if(!(leveltime & 32))
         {
-            P_SetBytep(sec, DMU_LIGHT_LEVEL, 255);
+            P_SetFloatp(sec, DMU_LIGHT_LEVEL, 1);
             S_StartSound(sfx_sssit, P_GetPtrp(sec, DMU_SOUND_ORIGIN));
         }
     }

@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -202,10 +202,10 @@ static void P_LightningFlash(void)
                    P_XSector(tempSec)->special == LIGHTNING_SPECIAL ||
                    P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
                 {
-                    if(*tempLight < P_GetIntp(tempSec, DMU_LIGHT_LEVEL) - 4)
+                    if(*tempLight < 255.0f * P_GetFloatp(tempSec, DMU_LIGHT_LEVEL) - 4)
                     {
-                        P_SetIntp(tempSec, DMU_LIGHT_LEVEL,
-                                  P_GetIntp(tempSec, DMU_LIGHT_LEVEL) - 4);
+                        P_SetFloatp(tempSec, DMU_LIGHT_LEVEL,
+                                    P_GetFloatp(tempSec, DMU_LIGHT_LEVEL) - ((1.0f / 255.0f) * 4));
                     }
                     tempLight++;
                 }
@@ -221,7 +221,7 @@ static void P_LightningFlash(void)
                    P_XSector(tempSec)->special == LIGHTNING_SPECIAL ||
                    P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
                 {
-                    P_SetIntp(tempSec, DMU_LIGHT_LEVEL, *tempLight);
+                    P_SetFloatp(tempSec, DMU_LIGHT_LEVEL, (float) (*tempLight) / 255.0f);
                     tempLight++;
                 }
             }
@@ -243,7 +243,7 @@ static void P_LightningFlash(void)
            P_XSector(tempSec)->special == LIGHTNING_SPECIAL ||
            P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
         {
-            int newLevel = *tempLight = P_GetIntp(tempSec, DMU_LIGHT_LEVEL);
+            int newLevel = *tempLight = 255.0f * P_GetFloatp(tempSec, DMU_LIGHT_LEVEL);
 
             if(P_XSector(tempSec)->special == LIGHTNING_SPECIAL)
             {
@@ -270,7 +270,7 @@ static void P_LightningFlash(void)
             {
                 newLevel = *tempLight;
             }
-            P_SetIntp(tempSec, DMU_LIGHT_LEVEL, newLevel);
+            P_SetFloatp(tempSec, DMU_LIGHT_LEVEL, (float) newLevel / 255.0f);
             tempLight++;
             foundSec = true;
         }

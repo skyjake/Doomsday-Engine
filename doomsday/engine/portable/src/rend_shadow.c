@@ -129,7 +129,7 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
     // Calculate the strength of the shadow.
     // Simplified version, no light diminishing or range compression.
     color =
-        shadowFactor * sec->lightlevel * reciprocal255 *
+        shadowFactor * sec->lightlevel *
         (1 - mo->translucency * reciprocal255);
 
     halfmoh = moh / 2;

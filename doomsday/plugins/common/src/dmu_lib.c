@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -201,7 +201,7 @@ void P_CopySector(sector_t *from, sector_t *to)
     int  itemp[2];
     float ftemp[NUM_REVERB_DATA];
 
-    P_SetIntp(to, DMU_LIGHT_LEVEL, P_GetIntp(from, DMU_LIGHT_LEVEL));
+    P_SetFloatp(to, DMU_LIGHT_LEVEL, P_GetFloatp(from, DMU_LIGHT_LEVEL));
     P_GetBytepv(from, DMU_COLOR, temp);
     P_SetBytepv(to, DMU_COLOR, temp);
     P_GetFloatpv(from, DMU_SOUND_REVERB, ftemp);
@@ -257,12 +257,12 @@ void P_CopySector(sector_t *from, sector_t *to)
 
 int P_SectorLight(sector_t *sector)
 {
-    return P_GetIntp(sector, DMU_LIGHT_LEVEL);
+    return 255 * P_GetFloatp(sector, DMU_LIGHT_LEVEL);
 }
 
 void P_SectorSetLight(sector_t *sector, int level)
 {
-    P_SetIntp(sector, DMU_LIGHT_LEVEL, level);
+    P_SetFloatp(sector, DMU_LIGHT_LEVEL, level / 255.0f);
 }
 
 void P_SectorModifyLight(sector_t *sector, int value)
@@ -277,13 +277,13 @@ void P_SectorModifyLight(sector_t *sector, int value)
 
 fixed_t P_SectorLightx(sector_t *sector)
 {
-    return P_GetFixedp(sector, DMU_LIGHT_LEVEL);
+    return FLT2FIX(255.0f * P_GetFloatp(sector, DMU_LIGHT_LEVEL));
 }
 
 void P_SectorModifyLightx(sector_t *sector, fixed_t value)
 {
-    P_SetFixedp(sector, DMU_LIGHT_LEVEL,
-                P_SectorLightx(sector) + value);
+    P_SetFloatp(sector, DMU_LIGHT_LEVEL,
+                FIX2FLT(P_SectorLightx(sector) + value));
 }
 
 void *P_SectorSoundOrigin(sector_t *sec)

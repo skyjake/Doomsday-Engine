@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -355,12 +355,12 @@ float P_FindHighestCeilingSurrounding(sector_t *sec)
 int P_FindMinSurroundingLight(sector_t *sec, int max)
 {
     int         i;
-    int         min;
+    float       min;
     int         lineCount;
     line_t     *line;
     sector_t   *check;
 
-    min = max;
+    min = (float) max / 255.0f;
     lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
@@ -370,9 +370,9 @@ int P_FindMinSurroundingLight(sector_t *sec, int max)
         if(!check)
             continue;
 
-        if(P_GetIntp(check, DMU_LIGHT_LEVEL) < min)
-            min = P_GetIntp(check, DMU_LIGHT_LEVEL);
+        if(P_GetFloatp(check, DMU_LIGHT_LEVEL) < min)
+            min = P_GetFloatp(check, DMU_LIGHT_LEVEL);
     }
 
-    return min;
+    return 255.0f * min;
 }

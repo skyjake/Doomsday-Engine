@@ -348,12 +348,12 @@ void Rend_DrawPlayerSprites(void)
         // Draw as separate sprites.
         for(i = 0; i < DDMAXPSPRITES; ++i)
         {
-            int light;
+            float light;
 
             if(!info[i].realLump)
                 continue;       // This doesn't exist.
 
-            light = (int)(psp[i].light * 255.0f);
+            light = psp[i].light;
             Rend_ApplyLightAdaptation(&light);
 
             if(isFullBright)
@@ -374,10 +374,10 @@ void Rend_DrawPlayerSprites(void)
 
                     if(lval < 0)
                         lval = 0;
-                    if(lval > 255)
-                        lval = 255;
+                    if(lval > 1)
+                        lval = 1;
 
-                    rgba[c] = (byte) lval;
+                    rgba[c] = (byte) (255.0f * lval);
                 }
             }
             rgba[CA] = psp[i].alpha * 255.0f;
@@ -843,7 +843,7 @@ void Rend_RenderSprite(vissprite_t *spr)
     }
     else
     {
-        int lightLevel = spr->data.mo.lightlevel;
+        float lightLevel = spr->data.mo.lightlevel;
         // Note: light adaptation has already been applied.
 
         v1[VX] = spr->data.mo.gx;

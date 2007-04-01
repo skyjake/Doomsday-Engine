@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -261,7 +261,7 @@ void P_v13_UnArchiveWorld(void)
         P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
         P_SetIntp(sec, DMU_FLOOR_TEXTURE, *get++ + firstflat);
         P_SetIntp(sec, DMU_CEILING_TEXTURE, *get++ + firstflat);
-        P_SetIntp(sec, DMU_LIGHT_LEVEL, *get++);
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++;  // needed?
         /*xsec->tag =*/ *get++;      // needed?
         xsec->specialdata = 0;

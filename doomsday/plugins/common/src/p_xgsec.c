@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -386,7 +386,7 @@ void XS_Init(void)
 
         xsec->SP_floororigheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         xsec->SP_ceilorigheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-        xsec->origlight = P_GetIntp(sec, DMU_LIGHT_LEVEL);
+        xsec->origlight = 255.0f * P_GetFloatp(sec, DMU_LIGHT_LEVEL);
 
         memcpy(xsec->origrgb, tmprgb, 3);
 
@@ -664,7 +664,7 @@ int XS_AdjoiningPlanes(sector_t *sector, boolean ceiling, int *heightlist,
         }
 
         if(lightlist)
-            lightlist[count] = P_GetIntp(other, DMU_LIGHT_LEVEL);
+            lightlist[count] = 255.0f * P_GetFloatp(other, DMU_LIGHT_LEVEL);
 
         if(sectorlist)
             sectorlist[count] = other;
@@ -1674,7 +1674,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
     line_t *line = (line_t *) context;
     linetype_t *info = context2;
     int     num, levels[MAX_VALS], i = 0;
-    int     uselevel = P_GetIntp(sector, DMU_LIGHT_LEVEL);
+    int     uselevel = 255.0f * P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     sector_t *frontsector, *backsector;
     byte    usergb[3];
 
@@ -1699,12 +1699,12 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
             break;
 
         case LIGHTREF_MY:
-            uselevel = P_GetIntp(frontsector, DMU_LIGHT_LEVEL);
+            uselevel = 255.0f * P_GetFloatp(frontsector, DMU_LIGHT_LEVEL);
             break;
 
         case LIGHTREF_BACK:
             if(backsector)
-                uselevel = P_GetIntp(backsector, DMU_LIGHT_LEVEL);
+                uselevel = 255.0f * P_GetFloatp(backsector, DMU_LIGHT_LEVEL);
             break;
 
         case LIGHTREF_ORIGINAL:
@@ -1758,7 +1758,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
             uselevel = 255;
 
         // Set the value.
-        P_SetIntp(sector, DMU_LIGHT_LEVEL, uselevel);
+        P_SetFloatp(sector, DMU_LIGHT_LEVEL, (float) uselevel / 255.0f);
     }
 
     if(info->iparm[3])
@@ -2288,7 +2288,7 @@ void XS_UpdateLight(sector_t *sec)
         if(lightlevel > 255)
             lightlevel = 255;
 
-        P_SetIntp(sec, DMU_LIGHT_LEVEL, lightlevel);
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) lightlevel / 255.0f);
     }
 
     // Red, green and blue.

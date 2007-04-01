@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2085,7 +2085,7 @@ static void SV_WriteSector(sector_t *sec)
     float       flooroffy = P_GetFloatp(sec, DMU_FLOOR_OFFSET_Y);
     float       ceiloffx = P_GetFloatp(sec, DMU_CEILING_OFFSET_X);
     float       ceiloffy = P_GetFloatp(sec, DMU_CEILING_OFFSET_Y);
-    byte        lightlevel = (byte) P_GetIntp(sec, DMU_LIGHT_LEVEL);
+    byte        lightlevel = (byte) (P_GetFloatp(sec, DMU_LIGHT_LEVEL) / 255.0f);
     short       floorheight = (short) P_GetIntp(sec, DMU_FLOOR_HEIGHT);
     short       ceilingheight = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
     int         floorpic = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
@@ -2171,7 +2171,7 @@ static void SV_ReadSector(sector_t *sec)
     int         type = 0;
     int         floorTexID;
     int         ceilingTexID;
-    byte        rgb[3];
+    byte        rgb[3], lightlevel;
     xsector_t  *xsec = P_XSector(sec);
     int         fh, ch;
 
@@ -2234,14 +2234,15 @@ static void SV_ReadSector(sector_t *sec)
     P_SetIntp(sec, DMU_CEILING_TEXTURE, ceilingTexID);
 
 #if __JHEXEN__
-    P_SetIntp(sec, DMU_LIGHT_LEVEL, SV_ReadShort());
+    lightlevel = (byte) SV_ReadShort();
 #else
     // In Ver1 the light level is a short
     if(hdr.version == 1)
-        P_SetIntp(sec, DMU_LIGHT_LEVEL, SV_ReadShort());
+        lightlevel = (byte) SV_ReadShort();
     else
-        P_SetIntp(sec, DMU_LIGHT_LEVEL, SV_ReadByte());
+        lightlevel = SV_ReadByte();
 #endif
+    P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) lightlevel / 255.0f);
 
 #if !__JHEXEN__
     if(hdr.version > 1)
