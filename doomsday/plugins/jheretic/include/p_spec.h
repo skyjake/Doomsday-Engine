@@ -87,8 +87,8 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     int             count;
-    int             maxlight;
-    int             minlight;
+    float           maxlight;
+    float           minlight;
     int             maxtime;
     int             mintime;
 } lightflash_t;
@@ -97,8 +97,8 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     int             count;
-    int             minlight;
-    int             maxlight;
+    float           minlight;
+    float           maxlight;
     int             darktime;
     int             brighttime;
 } strobe_t;
@@ -106,8 +106,8 @@ typedef struct {
 typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
-    int             minlight;
-    int             maxlight;
+    float           minlight;
+    float           maxlight;
     int             direction;
 } glow_t;
 
@@ -125,7 +125,7 @@ void            P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
 void            EV_StartLightStrobing(line_t *line);
 void            EV_TurnTagLightsOff(line_t *line);
 
-void            EV_LightTurnOn(line_t *line, int bright);
+void            EV_LightTurnOn(line_t *line, float bright);
 
 void            T_Glow(glow_t *g);
 void            P_SpawnGlowingLight(sector_t *sector);

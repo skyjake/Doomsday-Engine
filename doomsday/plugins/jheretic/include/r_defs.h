@@ -88,7 +88,7 @@ typedef struct xsector_s {
         float       origheight;
     } planes[2];    // {floor, ceiling}
 
-    int             origlight;
+    float           origlight;
     byte            origrgb[3];
     xgsector_t     *xg;
 

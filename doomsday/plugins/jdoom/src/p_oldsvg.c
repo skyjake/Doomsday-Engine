@@ -584,8 +584,8 @@ typedef struct {
         Con_Error("tc_flash: bad sector number\n");
 
     flash->count = SV_ReadLong();
-    flash->maxlight = SV_ReadLong();
-    flash->minlight = SV_ReadLong();
+    flash->maxlight = (float) SV_ReadLong() / 255.0f;
+    flash->minlight = (float) SV_ReadLong() / 255.0f;
     flash->maxtime = SV_ReadLong();
     flash->mintime = SV_ReadLong();
 
@@ -616,8 +616,8 @@ typedef struct {
         Con_Error("tc_strobe: bad sector number\n");
 
     strobe->count = SV_ReadLong();
-    strobe->minlight = SV_ReadLong();
-    strobe->maxlight = SV_ReadLong();
+    strobe->minlight = (float) SV_ReadLong() / 255.0f;
+    strobe->maxlight = (float) SV_ReadLong() / 255.0f;
     strobe->darktime = SV_ReadLong();
     strobe->brighttime = SV_ReadLong();
 
@@ -645,8 +645,8 @@ typedef struct {
     if(!glow->sector)
         Con_Error("tc_glow: bad sector number\n");
 
-    glow->minlight = SV_ReadLong();
-    glow->maxlight = SV_ReadLong();
+    glow->minlight = (float) SV_ReadLong() / 255.0f;
+    glow->maxlight = (float) SV_ReadLong() / 255.0f;
     glow->direction = SV_ReadLong();
 
     glow->thinker.function = T_Glow;

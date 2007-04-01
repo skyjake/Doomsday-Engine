@@ -443,13 +443,13 @@ boolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side)
 
     case 138:
         // Light Turn On
-        EV_LightTurnOn(line, 255);
+        EV_LightTurnOn(line, 1);
         P_ChangeSwitchTexture(line, 1);
         break;
 
     case 139:
         // Light Turn Off
-        EV_LightTurnOn(line, 35);
+        EV_LightTurnOn(line, 35.0f/255.0f);
         P_ChangeSwitchTexture(line, 1);
         break;
 
