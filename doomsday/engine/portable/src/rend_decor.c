@@ -317,13 +317,13 @@ static boolean Rend_CheckDecorationBounds(fixed_t bounds[6], float fMaxDist)
  */
 static float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t *lightDef)
 {
-    int    lightlevel;
-    float   factor;
+    float       lightlevel;
+    float       factor;
 
     lightlevel = sector->lightlevel;
 
     // Has a limit been set?
-    if(lightDef->light_levels[0] == lightDef->light_levels[1])
+    if(lightDef->lightlevels[0] == lightDef->lightlevels[1])
         return 1;
 
     // Apply adaptation
@@ -331,8 +331,8 @@ static float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t *lightDef)
 
     factor =
         (lightlevel -
-         lightDef->light_levels[0]) / (float) (lightDef->light_levels[1] -
-                                               lightDef->light_levels[0]);
+         lightDef->lightlevels[0]) / (float) (lightDef->lightlevels[1] -
+                                               lightDef->lightlevels[0]);
     if(factor < 0)
         return 0;
     if(factor > 1)
@@ -343,7 +343,7 @@ static float Rend_CheckSectorLight(sector_t *sector, ded_decorlight_t *lightDef)
 /**
  * Determine proper skip values.
  */
-static void Rend_DecorationPatternSkip(ded_decorlight_t * lightDef, int *skip)
+static void Rend_DecorationPatternSkip(ded_decorlight_t *lightDef, int *skip)
 {
     unsigned int k;
 

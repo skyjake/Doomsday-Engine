@@ -429,7 +429,7 @@ static boolean SBE_Save(const char *name)
         fprintf(file, "  Color { %g %g %g }\n",
                 s->color[0], s->color[1], s->color[2]);
         fprintf(file, "  Intensity = %g\n", s->primaryIntensity);
-        fprintf(file, "  Sector levels { %i %i }\n", s->sectorLevel[0],
+        fprintf(file, "  Sector levels { %g %g }\n", s->sectorLevel[0],
                 s->sectorLevel[1]);
         fprintf(file, "}\n");
     }
@@ -576,8 +576,17 @@ D_CMD(BLEditor)
 
         if(argc >= 3)
         {
-            src->sectorLevel[0] = atoi(argv[1]);
-            src->sectorLevel[1] = atoi(argv[2]);
+            src->sectorLevel[0] = strtod(argv[1], NULL) / 255.0f;
+            if(src->sectorLevel[0] < 0)
+                src->sectorLevel[0] = 0;
+            else if(src->sectorLevel[0] > 1)
+                src->sectorLevel[0] = 1;
+
+            src->sectorLevel[1] = strtod(argv[2], NULL) / 255.0f;
+            if(src->sectorLevel[1] < 0)
+                src->sectorLevel[1] = 0;
+            else if(src->sectorLevel[1] > 1)
+                src->sectorLevel[1] = 1;
         }
         else if(argc >= 2)
         {
@@ -684,7 +693,8 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     y += th;
 
     sprintf(buf, "Intens:%-5.0f L:%3i/%3i", s->primaryIntensity,
-            s->sectorLevel[0], s->sectorLevel[1]);
+            (int) (255.0f * s->sectorLevel[0]),
+            (int) (255.0f * s->sectorLevel[1]));
 
     UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
     y += th;
@@ -704,7 +714,7 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
 static void SBE_DrawLevelGauge(void)
 {
     static sector_t *lastSector = NULL;
-    static int minLevel = 0, maxLevel = 0;
+    static float minLevel = 0, maxLevel = 0;
     sector_t *sector;
     int height = 255;
     int x = 20, y = glScreenHeight/2 - height/2;
@@ -739,17 +749,17 @@ static void SBE_DrawLevelGauge(void)
     gl.Vertex2f(x + off, y);
     gl.Vertex2f(x + off, y + height);
     // Normal lightlevel.
-    secY = y + height * (1 - sector->lightlevel / 255.0f);
+    secY = y + height * (1.0f - sector->lightlevel);
     gl.Vertex2f(x + off - 4, secY);
     gl.Vertex2f(x + off, secY);
     if(maxLevel != minLevel)
     {
         // Max lightlevel.
-        maxY = y + height * (1 - maxLevel / 255.0f);
+        maxY = y + height * (1.0f - maxLevel);
         gl.Vertex2f(x + off + 4, maxY);
         gl.Vertex2f(x + off, maxY);
         // Min lightlevel.
-        minY = y + height * (1 - minLevel / 255.0f);
+        minY = y + height * (1.0f - minLevel);
         gl.Vertex2f(x + off + 4, minY);
         gl.Vertex2f(x + off, minY);
     }
@@ -757,12 +767,12 @@ static void SBE_DrawLevelGauge(void)
     if(src->sectorLevel[0] > 0 || src->sectorLevel[1] > 0)
     {
         gl.Color3f(1, 0, 0);
-        p = y + height * (1 - src->sectorLevel[0] / 255.0f);
+        p = y + height * (1.0f - src->sectorLevel[0]);
         gl.Vertex2f(x + off + 2, p);
         gl.Vertex2f(x + off - 2, p);
 
         gl.Color3f(0, 1, 0);
-        p = y + height * (1 - src->sectorLevel[1] / 255.0f);
+        p = y + height * (1.0f - src->sectorLevel[1]);
         gl.Vertex2f(x + off + 2, p);
         gl.Vertex2f(x + off - 2, p);
     }
@@ -771,13 +781,13 @@ static void SBE_DrawLevelGauge(void)
     gl.Enable(DGL_TEXTURING);
 
     // The number values.
-    sprintf(buf, "%03i", sector->lightlevel);
+    sprintf(buf, "%03i", (short) (255.0f * sector->lightlevel));
     UI_TextOutEx(buf, x, secY, true, true, UI_Color(UIC_TITLE), .7f);
     if(maxLevel != minLevel)
     {
-        sprintf(buf, "%03i", maxLevel);
+        sprintf(buf, "%03i", (short) (255.0f * maxLevel));
         UI_TextOutEx(buf, x + 2*off, maxY, true, true, UI_Color(UIC_TEXT), .7f);
-        sprintf(buf, "%03i", minLevel);
+        sprintf(buf, "%03i", (short) (255.0f * minLevel));
         UI_TextOutEx(buf, x + 2*off, minY, true, true, UI_Color(UIC_TEXT), .7f);
     }
 }

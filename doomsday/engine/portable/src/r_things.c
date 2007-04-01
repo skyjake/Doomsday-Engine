@@ -596,7 +596,7 @@ void R_ProjectPlayerSprites(void)
                                FIX2FLT(viewplayer->mo->pos[VZ]) + viewplayer->mo->height/2};
             LG_Evaluate(point, vis->data.mo.rgb);
 
-            vis->data.mo.lightlevel = 255;
+            vis->data.mo.lightlevel = 1;
         }
         else
         {
@@ -605,11 +605,11 @@ void R_ProjectPlayerSprites(void)
 
             if(psp->light < 1)
             {
-                vis->data.mo.lightlevel = (int)((psp->light - .1f) * 255);
+                vis->data.mo.lightlevel = (psp->light - .1f);
                 Rend_ApplyLightAdaptation(&vis->data.mo.lightlevel);
             }
             else
-                vis->data.mo.lightlevel = 255;
+                vis->data.mo.lightlevel = 1;
         }
 
         memset(vis->data.mo.visoff, 0, sizeof(vis->data.mo.visoff));
@@ -932,12 +932,12 @@ void R_ProjectSprite(mobj_t *thing)
     if((levelFullBright || thing->state->flags & STF_FULLBRIGHT) &&
        (!mf || !(mf->sub[0].flags & MFF_DIM)))
     {
-        vis->data.mo.lightlevel = -1;
+        vis->data.mo.lightlevel = -1; // fullbright
     }
     else if(useBias)
     {
         // The light color has been evaluated with the light grid.
-        vis->data.mo.lightlevel = 255;
+        vis->data.mo.lightlevel = 1;
     }
     else
     {

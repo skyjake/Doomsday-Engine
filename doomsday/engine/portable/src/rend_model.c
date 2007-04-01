@@ -1024,7 +1024,7 @@ void Rend_RenderModel(vissprite_t *spr)
     modeldef_t *mf = spr->data.mo.mf;
     rendpoly_t *quad;
     int         i;
-    int         lightLevel = spr->data.mo.lightlevel;
+    float       lightLevel = spr->data.mo.lightlevel;
     float       dist;
     mlight_t   *light;
 

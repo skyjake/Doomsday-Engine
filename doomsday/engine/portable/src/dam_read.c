@@ -894,6 +894,7 @@ static int SetProperty2(void *ptr, void *context)
 
         case DAM_LIGHT_LEVEL:
             SetValue(DMT_SECTOR_LIGHTLEVEL, &p->lightlevel, args, 0);
+            p->lightlevel /= 255.0f;
             break;
 
         default:

@@ -77,8 +77,8 @@ static source_t sources[MAX_BIAS_LIGHTS];
 static int numSourceDelta = 0;
 
 static int useSightCheck = true;
-static int biasMin = 220;
-static int biasMax = 255;
+static float biasMin = 0.85f;
+static float biasMax = 1.0f;
 static int updateAffected = true;
 static float biasIgnoreLimit = .005f;
 static int lightSpeed = 130;
@@ -102,9 +102,9 @@ void SB_Register(void)
 {
     C_VAR_INT("rend-bias", &useBias, 0, 0, 1);
 
-    C_VAR_INT("rend-bias-min", &biasMin, 0, 0, 255);
+    C_VAR_FLOAT("rend-bias-min", &biasMin, 0, 0, 1);
 
-    C_VAR_INT("rend-bias-max", &biasMax, 0, 0, 255);
+    C_VAR_FLOAT("rend-bias-max", &biasMax, 0, 0, 1);
 
     C_VAR_INT("rend-bias-lightspeed", &lightSpeed, 0, 0, 5000);
 
@@ -131,8 +131,8 @@ void SB_Register(void)
  *
  * @return int          The id of the newly created bias light source else -1.
  */
-int SB_NewSourceAt(float x, float y, float z, float size, int minLight,
-                   int maxLight, float *rgb)
+int SB_NewSourceAt(float x, float y, float z, float size, float minLight,
+                   float maxLight, float *rgb)
 {
     source_t *src;
 
@@ -166,7 +166,7 @@ int SB_NewSourceAt(float x, float y, float z, float size, int minLight,
  * Same as above really but for updating an existing source.
  */
 void SB_UpdateSource(int which, float x, float y, float z, float size,
-                     int minLight, int maxLight, float *rgb)
+                     float minLight, float maxLight, float *rgb)
 {
     source_t *src;
 
@@ -286,14 +286,14 @@ void SB_Clear(void)
     }
 }
 
-/*
+/**
  * Initializes the bias lights according to the loaded Light
  * definitions.
  */
 void SB_InitForLevel(const char *uniqueId)
 {
     ded_light_t *def;
-    int i;
+    int         i;
 
     // Start with no sources whatsoever.
     numSources = 0;
@@ -315,8 +315,8 @@ void SB_InitForLevel(const char *uniqueId)
 
 void SB_SetColor(float *dest, float *src)
 {
-    float largest = 0;
-    int i;
+    float       largest = 0;
+    int         i;
 
     // Amplify the color.
     for(i = 0; i < 3; ++i)
@@ -337,13 +337,13 @@ void SB_SetColor(float *dest, float *src)
     }
 }
 
-/*
+/**
  * Conversion from HSV to RGB.  Everything is [0,1].
  */
 void HSVtoRGB(float *rgb, float h, float s, float v)
 {
-    int i;
-    float f, p, q, t;
+    int         i;
+    float       f, p, q, t;
 
     if(s == 0)
     {
@@ -404,7 +404,7 @@ void HSVtoRGB(float *rgb, float h, float s, float v)
 
 static void SB_AddAffected(affection_t *aff, uint k, float intensity)
 {
-    uint i, worst;
+    uint        i, worst;
 
     if(aff->numFound < MAX_BIAS_AFFECTED)
     {
@@ -427,13 +427,13 @@ static void SB_AddAffected(affection_t *aff, uint k, float intensity)
     }
 }
 
-/*
+/**
  * This must be called when a plane that the seg touches is moved, or
  * when a seg in a polyobj changes position.
  */
 void SB_SegHasMoved(struct seg_s *seg)
 {
-    int     i;
+    int         i;
 
     // Mark the affected lights changed.
     for(i = 0; i < MAX_BIAS_AFFECTED && seg->affected[i].source >= 0; ++i)
@@ -442,13 +442,13 @@ void SB_SegHasMoved(struct seg_s *seg)
     }
 }
 
-/*
+/**
  * This must be called when a plane has moved.  Set 'theCeiling' to
  * true if the plane is a ceiling plane.
  */
 void SB_PlaneHasMoved(subsector_t *subsector, uint plane)
 {
-    int     i;
+    int         i;
     subplaneinfo_t *info = subsector->planes[plane];
 
     // Mark the affected lights changed.
@@ -458,18 +458,18 @@ void SB_PlaneHasMoved(subsector_t *subsector, uint plane)
     }
 }
 
-/*
+/**
  * This could be enhanced so that only the lights on the right side of
  * the seg are taken into consideration.
  */
 void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
 {
-    seg_t * seg = SEG_PTR(segId);
-    int i, k;
-    vec2_t delta;
-    source_t *src;
-    float distance = 0, len;
-    float intensity;
+    seg_t      *seg = SEG_PTR(segId);
+    int         i, k;
+    vec2_t      delta;
+    source_t   *src;
+    float       distance = 0, len;
+    float       intensity;
     affection_t aff;
 
     // If the data is already up to date, nothing needs to be done.
@@ -504,7 +504,7 @@ void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
         if(distance < 1)
             distance = 1;
 
-        intensity = src->intensity/distance;
+        intensity = src->intensity / distance;
 
         // Is the source is too weak, ignore it entirely.
         if(intensity < biasIgnoreLimit)
@@ -516,8 +516,8 @@ void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
 
 static float SB_Dot(source_t *src, float point[3], float normal[3])
 {
-    float delta[3];
-    int i;
+    float       delta[3];
+    int         i;
 
     // Delta vector between source and given point.
     for(i = 0; i < 3; ++i)
@@ -529,7 +529,7 @@ static float SB_Dot(source_t *src, float point[3], float normal[3])
     return M_DotProduct(delta, normal);
 }
 
-/*
+/**
  * This could be enhanced so that only the lights on the right side of
  * the plane are taken into consideration.
  */
@@ -606,7 +606,7 @@ void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
     M_Free(aff);
 }
 
-/*
+/**
  * Sets/clears a bit in the tracker for the given index.
  */
 void SB_TrackerMark(biastracker_t *tracker, int index)
@@ -621,7 +621,7 @@ void SB_TrackerMark(biastracker_t *tracker, int index)
     }*/
 }
 
-/*
+/**
  * Checks if the given index bit is set in the tracker.
  */
 int SB_TrackerCheck(biastracker_t *tracker, int index)
@@ -720,8 +720,8 @@ void SB_BeginFrame(void)
     {
         if(s->sectorLevel[1] > 0 || s->sectorLevel[0] > 0)
         {
-            int minLevel = s->sectorLevel[0];
-            int maxLevel = s->sectorLevel[1];
+            float   minLevel = s->sectorLevel[0];
+            float   maxLevel = s->sectorLevel[1];
             sector_t *sector = R_PointInSubsector
                 (FRACUNIT * s->pos[VX], FRACUNIT * s->pos[VY])->sector;
             float oldIntensity = s->intensity;
@@ -801,8 +801,8 @@ void SB_EndFrame(void)
 
 void SB_AddLight(gl_rgba_t *dest, const byte *color, float howMuch)
 {
-    int i, new;
-    byte amplified[3], largest = 0;
+    int         i, newval;
+    byte        amplified[3], largest = 0;
 
     if(color == NULL)
     {
@@ -828,18 +828,18 @@ void SB_AddLight(gl_rgba_t *dest, const byte *color, float howMuch)
 
     for(i = 0; i < 3; ++i)
     {
-        new = dest->rgba[i] + (byte)
+        newval = dest->rgba[i] + (byte)
             ((color ? color : amplified)[i] * howMuch);
 
-        if(new > 255)
-            new = 255;
+        if(newval > 255)
+            newval = 255;
 
-        dest->rgba[i] = new;
+        dest->rgba[i] = newval;
     }
 }
 
 #if 0
-/*
+/**
  * Color override forces the bias light color to override biased
  * sectorlight.
  */
@@ -861,7 +861,7 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
 }
 #endif
 
-/*
+/**
  * Poly can be a either a wall or a plane (ceiling or a floor).
  *
  * Parameters:
@@ -890,8 +890,7 @@ void SB_RendPoly(struct rendpoly_s *poly, struct surface_s *surface,
     {
         const byte *sectorColor;
 
-        biasAmount = (sector->lightlevel - biasMin) /
-            (float) (biasMax - biasMin);
+        biasAmount = (sector->lightlevel - biasMin) / (biasMax - biasMin);
 
         if(biasAmount > 1)
             biasAmount = 1;
@@ -996,14 +995,14 @@ void SB_LerpIllumination(vertexillum_t *illum, gl_rgba_t *result)
     }
 }
 
-/*
- * Returns the light contributed by the specified source.
+/**
+ * @return          Light contributed by the specified source.
  */
 byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
                    biasaffection_t *affectedSources)
 {
-    int i, k;
-    boolean inUse;
+    int         i, k;
+    boolean     inUse;
 
     for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
         if(illum->casted[i].source == sourceIndex)
@@ -1037,19 +1036,19 @@ byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
     return NULL;
 }
 
-/*
+/**
  * Add ambient light.
  */
 void SB_AmbientLight(float *point, gl_rgba_t *light)
 {
     // Add grid light (represents ambient lighting).
-    byte color[3];
+    byte        color[3];
 
     LG_Evaluate(point, color);
     SB_AddLight(light, color, 1.0f);
 }
 
-/*
+/**
  * Applies shadow bias to the given point.  If 'forced' is true, new
  * lighting is calculated regardless of whether the lights affecting
  * the point have changed.  This is needed when there has been world
@@ -1063,15 +1062,15 @@ void SB_EvalPoint(gl_rgba_t *light,
                   float *point, float *normal)
 {
     gl_rgba_t new;
-    float dot;
-    float delta[3], surfacePoint[3];
-    float distance;
-    float level;
-    int i, idx;
-    boolean illuminationChanged = false;
+    float       dot;
+    float       delta[3], surfacePoint[3];
+    float       distance;
+    float       level;
+    int         i, idx;
+    boolean     illuminationChanged = false;
     unsigned int latestSourceUpdate = 0;
-    source_t *s;
-    byte *casted;
+    source_t   *s;
+    byte       *casted;
 
   //  gl_rgba_t Srgba;
 
@@ -1212,9 +1211,9 @@ void SB_EvalPoint(gl_rgba_t *light,
             //int v;
 
             // The light casted from this source.
-            casted[i] = (byte) (255 * s->color[i] * level);
+            casted[i] = (byte) (255.0f * s->color[i] * level);
 
-            //v = new.rgba[i] + 255 * s->color[i] * level;
+            //v = new.rgba[i] + 255.0f * s->color[i] * level;
 
 
             //if(v > 255) v = 255;

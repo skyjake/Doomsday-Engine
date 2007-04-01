@@ -544,13 +544,13 @@ void LG_Init(void)
 /*
  * Apply the sector's lighting to the block.
  */
-static void LG_ApplySector(gridblock_t *block, const byte *color, int level,
+static void LG_ApplySector(gridblock_t *block, const byte *color, float level,
                            float factor, int bias)
 {
-    int i;
+    int         i;
 
     // Apply a bias to the light level.
-    level -= (240 - level);
+    level -= (0.95f - level);
     if(level < 0)
         level = 0;
 
@@ -561,7 +561,7 @@ static void LG_ApplySector(gridblock_t *block, const byte *color, int level,
 
     for(i = 0; i < 3; ++i)
     {
-        int c = color[i] * level * reciprocal255;
+        int     c = color[i] * level;
         c = MINMAX_OF(0, c, 255);
 
         if(block->rgb[i] + c > 255)
@@ -702,11 +702,11 @@ static boolean LG_BlockNeedsUpdate(int x, int y)
 void LG_Update(void)
 {
     gridblock_t *block, *lastBlock, *other;
-    int x, y, a, b;
-    sector_t *sector;
+    int         x, y, a, b;
+    sector_t   *sector;
     const byte *color;
-    int bias;
-    int height;
+    int         bias;
+    int         height;
 
     static float factors[5 * 5] =
     {
@@ -823,9 +823,9 @@ void LG_Update(void)
  */
 void LG_Evaluate(const float *point, byte *color)
 {
-    int x, y, i;
-    int dz = 0;
-    float dimming;
+    int         x, y, i;
+    int         dz = 0;
+    float       dimming;
     gridblock_t *block;
 
     if(!lgInited)
@@ -885,7 +885,7 @@ void LG_Evaluate(const float *point, byte *color)
         for(i = 0; i < 3; ++i)
         {
             // Add the light range compression factor
-            color[i] += Rend_GetLightAdaptVal((int)color[i]);
+            color[i] += 255.0f * Rend_GetLightAdaptVal((float)color[i] / 255.0f);
 
             // Apply the dimming
             color[i] *= dimming;
@@ -895,7 +895,7 @@ void LG_Evaluate(const float *point, byte *color)
     {
         // Just add the light range compression factor
         for(i = 0; i < 3; ++i)
-            color[i] += Rend_GetLightAdaptVal((int)color[i]);
+            color[i] += 255.0f *Rend_GetLightAdaptVal((float)color[i] / 255.0f);
     }
 }
 

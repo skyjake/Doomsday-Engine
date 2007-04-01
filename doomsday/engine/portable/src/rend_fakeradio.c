@@ -108,9 +108,9 @@ void Rend_RadioRegister(void)
     C_VAR_FLOAT("rend-fakeradio-darkness", &rendFakeRadioDarkness, 0, 0, 2);
 }
 
-static __inline float Rend_RadioShadowDarkness(int lightlevel)
+static __inline float Rend_RadioShadowDarkness(float lightlevel)
 {
-    return (.65f - lightlevel / 850.0f) * rendFakeRadioDarkness;
+    return (.65f - lightlevel * 0.3f) * rendFakeRadioDarkness;
 }
 
 void Rend_RadioInitForFrame(void)
@@ -135,7 +135,7 @@ void Rend_RadioInitForFrame(void)
 void Rend_RadioInitForSubsector(subsector_t *ssec)
 {
     sector_t *linkSec;
-    int sectorlight = ssec->sector->lightlevel;
+    float sectorlight = ssec->sector->lightlevel;
 
     Rend_ApplyLightAdaptation(&sectorlight);
 
@@ -161,7 +161,7 @@ void Rend_RadioInitForSubsector(subsector_t *ssec)
 
     // Determine the shadow properties.
     // FIXME: Make cvars out of constants.
-    shadowSize = 2 * (8 + 16 - sectorlight / 16);
+    shadowSize = 2 * (8 + 16 - sectorlight * 16);
     shadowDark = Rend_RadioShadowDarkness(sectorlight) *.8f;
 }
 

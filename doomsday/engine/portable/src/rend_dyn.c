@@ -1044,7 +1044,7 @@ void DL_AddLuminous(mobj_t *thing)
                                 FIX2FLT(thing->pos[VX]),
                                 FIX2FLT(thing->pos[VY]),
                                 FIX2FLT(thing->pos[VZ]) + center,
-                                radius * 0.3f, 0, 255, rgb);
+                                radius * 0.3f, 0, 1, rgb);
                 return;
             }
         }
@@ -1057,7 +1057,7 @@ void DL_AddLuminous(mobj_t *thing)
                     SB_NewSourceAt(FIX2FLT(thing->pos[VX]),
                                    FIX2FLT(thing->pos[VY]),
                                    FIX2FLT(thing->pos[VZ]) + center,
-                                   radius * 0.3f, 0, 255, rgb)) != -1)
+                                   radius * 0.3f, 0, 1, rgb)) != -1)
             {
                 // We've acquired a BIAS source for this light.
                 thing->usingBias = true;

@@ -906,7 +906,22 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 RV_FLT("Green", lig->color[1])
                 RV_FLT("Blue", lig->color[2])
                 RV_VEC("Color", lig->color, 3)
-                RV_IVEC("Sector levels", lig->lightlevel, 2)
+                if(ISLABEL("Sector levels"))
+                {
+                    int     b;
+                    FINDBEGIN;
+                    for(b = 0; b < 2; ++b)
+                    {
+                        READFLT(lig->lightlevel[b])
+                        lig->lightlevel[b] /= 255.0f;
+                        if(lig->lightlevel[b] < 0)
+                            lig->lightlevel[b] = 0;
+                        else if(lig->lightlevel[b] > 1)
+                            lig->lightlevel[b] = 1;
+                    }
+                    ReadToken();
+                }
+                else
                 RV_FLAGS("Flags", lig->flags, "lgf_")
                 RV_STR("Top map", lig->up.id)
                 RV_STR("Bottom map", lig->down.id)
@@ -1552,7 +1567,22 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                         RV_FLT("Halo radius", dl->halo_radius)
                         RV_IVEC("Pattern offset", dl->pattern_offset, 2)
                         RV_IVEC("Pattern skip", dl->pattern_skip, 2)
-                        RV_IVEC("Levels", dl->light_levels, 2)
+                        if(ISLABEL("Levels"))
+                        {
+                            int     b;
+                            FINDBEGIN;
+                            for(b = 0; b < 2; ++b)
+                            {
+                                READFLT(dl->lightlevels[b])
+                                dl->lightlevels[b] /= 255.0f;
+                                if(dl->lightlevels[b] < 0)
+                                    dl->lightlevels[b] = 0;
+                                else if(dl->lightlevels[b] > 1)
+                                    dl->lightlevels[b] = 1;
+                            }
+                            ReadToken();
+                        }
+                        else
                         RV_INT("Flare texture", dl->flare_texture)
                         RV_STR("Flare map", dl->flare.id)
                         RV_STR("Top map", dl->up.id)

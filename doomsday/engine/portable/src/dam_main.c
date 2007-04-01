@@ -326,7 +326,7 @@ static mapproperty_t properties[DAM_NUM_PROPERTIES] =
     {DAM_CEILING_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "ceilingheight"},
     {DAM_FLOOR_TEXTURE, DAM_SECTOR, DMT_SURFACE_TEXTURE, "floortexture"},
     {DAM_CEILING_TEXTURE, DAM_SECTOR, DMT_SURFACE_TEXTURE, "ceilingtexture"},
-    {DAM_LIGHT_LEVEL, DAM_SECTOR, DMT_SECTOR_LIGHTLEVEL, "lightlevel"},
+    {DAM_LIGHT_LEVEL, DAM_SECTOR, DDVT_SHORT, "lightlevel"},
 // Seg
     // TODO: should be DMT_SEG_V but we require special case logic
     {DAM_VERTEX1, DAM_SEG, DDVT_VERT_IDX, "vertex1"},

@@ -335,27 +335,27 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
  * Color distance attenuation, extralight, fixedcolormap.
  * "Torchlight" is white, regardless of the original RGB.
  */
-void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
+void RL_VertexColors(rendpoly_t *poly, float lightlevel, const byte *rgb)
 {
-    int     i, num;
-    float   light, real, minimum;
+    int         i, num;
+    float       light, real, minimum;
     rendpoly_vertex_t *vtx;
-    boolean usewhite;
+    boolean     usewhite;
 
     if(poly->isWall && rend_light_wall_angle && !useBias)  // A quad?
     {
         // Do a lighting adjustment based on orientation.
-        lightlevel +=
-            (poly->vertices[1].pos[VY] -
+        lightlevel += (1.0f / 255.0f) *
+            ((poly->vertices[1].pos[VY] -
              poly->vertices[0].pos[VY]) / poly->wall->length * 18 *
-            rend_light_wall_angle;
+            rend_light_wall_angle);
         if(lightlevel < 0)
             lightlevel = 0;
-        if(lightlevel > 255)
-            lightlevel = 255;
+        if(lightlevel > 1)
+            lightlevel = 1;
     }
 
-    light = lightlevel * reciprocal255;
+    light = lightlevel;
     num = poly->numvertices;
     for(i = 0, vtx = poly->vertices; i < num; ++i, vtx++)
     {
@@ -408,7 +408,8 @@ void RL_VertexColors(rendpoly_t *poly, int lightlevel, const byte *rgb)
 void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
                      subsector_t *subsector)
 {
-    int         i, num, vid, sectorlight;
+    int         i, num, vid;
+    float       sectorlight;
     const byte *pLightColor;
     byte        vColor[] = { 0, 0, 0, 0};
     surface_t  *surface = &poly->sector->planes[plane->type]->surface;
@@ -1654,7 +1655,7 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
         // Rendering lights on them would be pointless.
         if(!IS_MUL ||
            !((poly->flags & RPF_GLOW) ||
-             (poly->sector && poly->sector->lightlevel >= 250)))
+             (poly->sector && poly->sector->lightlevel >= 0.98f)))
         {
             // Surfaces lit by dynamic lights may need to be rendered
             // differently than non-lit surfaces.

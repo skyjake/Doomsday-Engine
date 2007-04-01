@@ -471,7 +471,7 @@ if(num >= numsectors)
     if(df & SDF_CEILINGPIC)
         sec->SP_ceilpic = Cl_TranslateLump(Msg_ReadPackedShort());
     if(df & SDF_LIGHT)
-        sec->lightlevel = Msg_ReadByte();
+        sec->lightlevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_HEIGHT)
     {
         sec->planes[PLN_FLOOR]->height = FIX2FLT(Msg_ReadShort() << 16);

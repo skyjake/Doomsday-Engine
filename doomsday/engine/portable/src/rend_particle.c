@@ -526,7 +526,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 // This is a simplified version of sectorlight (no distance
                 // attenuation or range compression).
                 if(pt->sector)
-                    color[c] *= pt->sector->lightlevel * reciprocal255;
+                    color[c] *= pt->sector->lightlevel;
             }
         }
 

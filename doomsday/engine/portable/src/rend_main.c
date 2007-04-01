@@ -48,13 +48,15 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define ROUND(x) ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    int value;
-    int currentlight;
-    sector_t *sector;
-    unsigned int updateTime;
+    float       value;
+    float       currentlight;
+    sector_t   *sector;
+    uint        updateTime;
 } lightsample_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -110,17 +112,13 @@ uint    playerLightRange[MAXPLAYERS];
 lightsample_t playerLastLightSample[MAXPLAYERS];
 
 float   r_lightAdapt = 0.8f; // Amount of light adaption
-
 int     r_lightAdaptDarkTime = 80;
-int     r_lightAdaptBrightTime = 3;
+int     r_lightAdaptBrightTime = 8;
 
-float   r_lightAdaptRamp = 0.001f;
-float   r_lightAdaptMul = 0.02f;
+float   lightRangeCompression = 0;
 
-int     r_lightrangeshift = 0;
-float   r_lightcompression = 0;
-
-signed short     lightRangeModMatrix[MOD_RANGE][255];
+float   lightRangeModMatrix[MOD_RANGE][255];
+float   lightRangeAdaptRamp = 0.2f;
 
 int     debugLightModMatrix = 0;
 int     devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
@@ -154,13 +152,11 @@ void Rend_Register(void)
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
     C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
     C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
-    C_VAR_FLOAT2("rend-light-compression", &r_lightcompression,0, -100, 100,
+    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression,0, -1, 1,
                  Rend_CalcLightRangeModMatrix);
     C_VAR_FLOAT("rend-light-adaptation", &r_lightAdapt, 0, 0, 1);
-    C_VAR_FLOAT2("rend-light-adaptation-mul", &r_lightAdaptMul,
-                 CVF_PROTECTED, 0, 1, Rend_CalcLightRangeModMatrix);
-    C_VAR_FLOAT2("rend-light-adaptation-ramp", &r_lightAdaptRamp,
-                 CVF_PROTECTED, 0, 1, Rend_CalcLightRangeModMatrix);
+    C_VAR_FLOAT2("rend-light-adaptation-ramp", &lightRangeAdaptRamp,
+                 CVF_PROTECTED, -1, 1, Rend_CalcLightRangeModMatrix);
     C_VAR_INT("rend-light-adaptation-darktime", &r_lightAdaptDarkTime,
               0, 0, 200);
     C_VAR_INT("rend-light-adaptation-brighttime", &r_lightAdaptBrightTime,
@@ -251,9 +247,9 @@ void Rend_ModelViewMatrix(boolean useAngles)
  * is also noted. This is meant to be used for white light only
  * (a light level).
  */
-int R_AttenuateLevel(int lightlevel, float distance)
+int R_AttenuateLevel(float lightlevel, float distance)
 {
-    float   light = lightlevel / 255.0f, real, minimum;
+    float   light = lightlevel, real, minimum;
     float   d, newmin;
     int     i;
 
@@ -1585,16 +1581,13 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     R_FreeRendPoly(quad);
 }
 
-int Rend_SectorLight(sector_t *sec)
+float Rend_SectorLight(sector_t *sec)
 {
-    int         i;
-
-    i = levelFullBright ? 255 : sec->lightlevel;
-
+    if(levelFullBright)
+        return 1.0f;
+    
     // Apply light adaptation
-    Rend_ApplyLightAdaptation(&i);
-
-    return i;
+    return sec->lightlevel + Rend_GetLightAdaptVal(sec->lightlevel);
 }
 
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
@@ -2160,84 +2153,55 @@ void Rend_RenderMap(void)
  * The offsets in the lightRangeModTables are added to the sector->lightlevel
  * during rendering (both positive and negative).
  */
-void Rend_CalcLightRangeModMatrix(cvar_t* unused)
+void Rend_CalcLightRangeModMatrix(cvar_t *unused)
 {
-    int         r, j, n;
+    int         j, n;
     int         mid = MOD_RANGE / 2;
-    float       f, mod, factor;
-    double      multiplier, mx;
+    float       f;
+    double      ramp = 0, rm = 0;
+
+    memset(lightRangeModMatrix, 0, (sizeof(float) * 255) * MOD_RANGE);
 
     if(mapambient > ambientLight)
         r_ambient = mapambient;
     else
         r_ambient = ambientLight;
 
-    memset(lightRangeModMatrix, 0, (sizeof(byte) * 255) * MOD_RANGE);
-
-    if(r_lightcompression > 0)
-        factor = r_lightcompression;
-    else
-        factor = 1;
-
-    multiplier = r_lightAdaptMul / MOD_RANGE;
-
-    for(n = 0, r = -mid; r < mid; ++n, ++r)
+    if(lightRangeAdaptRamp != 0)
     {
-        // Calculate the light mod value for this range
-        mod = (MOD_RANGE + n) / 255.0f;
+        ramp = -MOD_RANGE * (lightRangeAdaptRamp / 10.0f);
+        rm = -(ramp * (MOD_RANGE / 2));
+    }
 
-        // Calculate the multiplier.
-        mx = (r * multiplier) * MOD_RANGE;
-
+    for(n = 0; n < MOD_RANGE; ++n, rm += ramp)
+    {
         for(j = 0; j < 255; ++j)
         {
-            if(r < 0)  // Dark to light range
+            // Adjust the white point/dark point?
+            f = 0;
+            if(lightRangeCompression != 0)
             {
-                // Apply the mod factor
-                f = -((mod * j) / (n + 1));
-
-                // Apply the multiplier
-                f += -r * ((f * (mx * j)) * r_lightAdaptRamp);
-            }
-            else  // Light to dark range
-            {
-                f = ((255 - j) * mod) / (MOD_RANGE - n);
-                f -= r * ((f * (mx * (255 - j))) * r_lightAdaptRamp);
+                if(lightRangeCompression >= 0) // Brighten dark areas.
+                    f = (float) (255 - j) * lightRangeCompression;
+                else // Darken bright areas.
+                    f = (float) -j * -lightRangeCompression;
             }
 
-            // Adjust the white point/dark point
-            if(r_lightcompression >= 0)
-                f += (int)((255.f - j) * (r_lightcompression / 255.f));
-            else
-                f += (int)((j) * (r_lightcompression / 255.f));
-
-            // Apply the linear range shift
-            f += r_lightrangeshift;
-
-            // Round to nearest (signed) whole.
-            if(f >= 0)
-                f += 0.5f;
-            else
-                f -= 0.5f;
-
-            // Clamp the result as a modifier to the light value (j).
-            if(r < 0)
-            {
-                if((j+f) >= 255)
-                    f = 254 - j;
-            }
-            else
-            {
-                if((j+f) <= 0)
-                    f = -j;
-            }
+            // Apply the light range adaption ramp.
+            f += rm;
 
             // Lower than the ambient limit?
-            if(j+f <= r_ambient)
+            if(r_ambient != 0 && j+f <= r_ambient)
                 f = r_ambient - j;
 
+            // Clamp the result as a modifier to the light value (j).
+            if((j+f) >= 255)
+                f = 255 - j;
+            else if((j+f) <= 0)
+                f = -j;
+
             // Insert it into the matrix
-            lightRangeModMatrix[n][j] = (signed short) f;
+            lightRangeModMatrix[n][j] = f / 255.0f;
         }
     }
 }
@@ -2279,9 +2243,8 @@ void Rend_InitPlayerLightRanges(void)
 void Rend_RetrieveLightSample(void)
 {
     uint        i;
-    int         diff, midpoint;
-    short       light;
-    float       range, mod, inter;
+    int         midpoint;
+    float       light, diff, range, mod, inter;
     ddplayer_t *player;
     subsector_t *sub;
 
@@ -2328,7 +2291,7 @@ void Rend_RetrieveLightSample(void)
 
             // TODO: Should be affected by BIAS sources...
             LG_Evaluate(pos, color);
-            light = (int) ((color[0] + color[1] + color[2]) / 3);
+            light = ((float)(color[0] + color[1] + color[2]) / 3) / 255.0f;
         }
         else*/
         {
@@ -2352,7 +2315,7 @@ void Rend_RetrieveLightSample(void)
             else
             {
                 diff = playerLastLightSample[i].value - light;
-                mod = -(((diff - (diff * inter)) / MOD_RANGE) * 25); //midpoint
+                mod = -(MOD_RANGE * diff) * (1.0f - inter);
             }
         }
         else if(light > playerLastLightSample[i].value)
@@ -2366,14 +2329,14 @@ void Rend_RetrieveLightSample(void)
             else
             {
                 diff = light - playerLastLightSample[i].value;
-                mod = ((diff - (diff * inter)) / MOD_RANGE) * 25;
+                mod = (MOD_RANGE * diff) * (1.0f - inter);
             }
         }
         else
             mod = 0;
 
-        range = midpoint -
-                ((/*( ((float) light / 255.f) * 10) +*/ mod) * r_lightAdapt);
+        range = midpoint - (mod * r_lightAdapt);
+
         // Round to nearest whole.
         range += 0.5f;
 
@@ -2393,14 +2356,13 @@ void Rend_RetrieveLightSample(void)
             // If this sample is different to the previous sample
             // update the last sample value;
             if(playerLastLightSample[i].sector)
-                playerLastLightSample[i].value = playerLastLightSample[i].sector->lightlevel;
+                playerLastLightSample[i].value =
+                    playerLastLightSample[i].sector->lightlevel;
             else
                 playerLastLightSample[i].value = light;
 
             playerLastLightSample[i].updateTime = currentTime;
-
             playerLastLightSample[i].sector = sub->sector;
-
             playerLastLightSample[i].currentlight = light;
         }
         else // Light changes in the same sector?
@@ -2435,27 +2397,26 @@ void Rend_RetrieveLightSample(void)
  *
  * @param lightvar    Ptr to the value to apply the adaptation to.
  */
-void Rend_ApplyLightAdaptation(int* lightvar)
+void Rend_ApplyLightAdaptation(float *lightvar)
 {
     // The default range.
     uint        range = (MOD_RANGE/2) - 1;
-    int         lightval;
+    float       lightval;
 
     if(lightvar == NULL)
         return; // Can't apply adaptation to a NULL val ptr...
-
-    lightval = *lightvar;
-
-    if(lightval > 255)
-        lightval = 255;
-    else if(lightval < 0)
-        lightval = 0;
 
     // Apply light adaptation?
     if(r_lightAdapt)
         range = playerLightRange[viewplayer - players];
 
-    *lightvar += lightRangeModMatrix[range][lightval];
+    lightval = ROUND(255.0f * *lightvar);
+    if(lightval > 254)
+        lightval = 254;
+    else if(lightval < 0)
+        lightval = 0;
+
+    *lightvar += lightRangeModMatrix[range][(int) lightval];
 }
 
 /**
@@ -2465,20 +2426,22 @@ void Rend_ApplyLightAdaptation(int* lightvar)
  * @param lightvalue    Light value to look up the adaptation value of.
  * @return int          Adaptation value for the passed light value.
  */
-int Rend_GetLightAdaptVal(int lightvalue)
+float Rend_GetLightAdaptVal(float lightvalue)
 {
     uint        range = (MOD_RANGE/2) - 1;
-    int         lightval = lightvalue;
+    float       lightval;
 
-    if(lightval > 255)
-        lightval = 255;
-    else if(lightval < 0)
-        lightval = 0;
-
+    // Apply light adaptation?
     if(r_lightAdapt)
         range = playerLightRange[viewplayer - players];
 
-    return lightRangeModMatrix[range][lightval];
+    lightval = ROUND(255.0f * lightvalue);
+    if(lightval > 254)
+        lightval = 254;
+    else if(lightval < 0)
+        lightval = 0;
+
+    return lightRangeModMatrix[range][(int) lightval];
 }
 
 static void DrawRangeBox(int x, int y, int w, int h, ui_color_t *c)
@@ -2503,8 +2466,7 @@ void R_DrawLightRange(void)
     int         i, r;
     int         y;
     static char *title = "Light Range Matrix";
-    signed short v;
-    byte        a, c;
+    float       c, off;
     ui_color_t  color;
 
     if(!debugLightModMatrix)
@@ -2530,26 +2492,16 @@ void R_DrawLightRange(void)
     for(r = MOD_RANGE, y = 0; r > 0; r--, y++)
     {
         gl.Begin(DGL_QUADS);
-        for(i = 0; i < 255; i++)
+        for(i = 0, c = 0; i < 255; ++i, c += (1.0f/255.0f))
         {
-            // Get the result of the source light level + offset
-            v = i + lightRangeModMatrix[r-1][i];
+            // Get the result of the source light level + offset.
+            off = lightRangeModMatrix[r-1][i];
 
-            c = (byte) v;
-
-            // Show the ambient light modifier using alpha as well
-            if(r_ambient < 0 && i > r_ambient)
-                a = 128;
-            else if(r_ambient > 0 && i < r_ambient)
-                a = 128;
-            else
-                a = 255;
-
-            // Draw in red if the range matches that of the current viewplayer
+            // Draw the range bar to match that of the current viewplayer.
             if(r == playerLightRange[viewplayer - players])
-                gl.Color4ub(255, 0, 0, 255);
+                gl.Color4f(c + off, c + off, c + off, 1);
             else
-                gl.Color4ub(c, c, c, a);
+                gl.Color4f(c + off, c + off, c + off, .75);
 
             gl.Vertex2f(i * bWidth, y * bHeight);
             gl.Vertex2f(i * bWidth + bWidth, y * bHeight);

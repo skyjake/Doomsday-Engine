@@ -1230,8 +1230,8 @@ boolean B_SetBindClass(unsigned int classID, unsigned int type)
 
             // we're only interested in bindings for down events currently being pressed
             // that have a binding in the class being enabled/disabled (classID)
-            if(!(com->command[EVS_DOWN] != NULL &&
-                 I_IsDeviceKeyDown(g, bind->controlID)))
+            if(!(com->command[EVS_DOWN] != NULL && bind->controlID >= 0 &&
+                 I_IsDeviceKeyDown(g, (uint) bind->controlID)))
                 continue;
 
             count = 0;
