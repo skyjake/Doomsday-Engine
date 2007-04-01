@@ -330,7 +330,7 @@ static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
 
     case 13:
         // Light Turn On 255
-        EV_LightTurnOn(line, 255);
+        EV_LightTurnOn(line, 1);
         P_XLine(line)->special = 0;
         break;
 
@@ -373,7 +373,7 @@ static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
 
     case 35:
         // Lights Very Dark
-        EV_LightTurnOn(line, 35);
+        EV_LightTurnOn(line, 35.0f/255.0f);
         P_XLine(line)->special = 0;
         break;
 
@@ -569,7 +569,7 @@ static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
 
     case 79:
         // Lights Very Dark
-        EV_LightTurnOn(line, 35);
+        EV_LightTurnOn(line, 35.0f/255.0f);
         break;
 
     case 80:
@@ -579,7 +579,7 @@ static void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
 
     case 81:
         // Light Turn On 255
-        EV_LightTurnOn(line, 255);
+        EV_LightTurnOn(line, 1);
         break;
 
     case 82:

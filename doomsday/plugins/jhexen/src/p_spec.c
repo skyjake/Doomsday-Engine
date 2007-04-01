@@ -882,7 +882,7 @@ void P_SpawnSpecials(void)
         {
         case 1: // Phased light
             // Hardcoded base, use sector->lightlevel as the index
-            P_SpawnPhasedLight(sec, 80, -1);
+            P_SpawnPhasedLight(sec, (80.f / 255.0f), -1);
             break;
 
         case 2:// Phased light sequence start

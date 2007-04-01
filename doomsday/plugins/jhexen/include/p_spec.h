@@ -112,9 +112,10 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     lighttype_t     type;
-    int             value1;
-    int             value2;
-    int             tics1;
+    float           value1;
+    float           value2;
+    int             tics1;  // TODO: Type LITEGLOW uses this as a third light value.
+                            // As such, it has been left as 0 - 255 for now.
     int             tics2;
     int             count;
 } light_t;
@@ -123,16 +124,16 @@ typedef struct {
     thinker_t       thinker;
     sector_t       *sector;
     int             index;
-    int             base;
+    float           baseValue;
 } phase_t;
 
 #define LIGHT_SEQUENCE_START    2
 #define LIGHT_SEQUENCE          3
 #define LIGHT_SEQUENCE_ALT      4
 
-void            T_Phase(phase_t * phase);
-void            T_Light(light_t * light);
-void            P_SpawnPhasedLight(sector_t *sector, int base, int index);
+void            T_Phase(phase_t *phase);
+void            T_Light(light_t *light);
+void            P_SpawnPhasedLight(sector_t *sector, float base, int index);
 void            P_SpawnLightSequence(sector_t *sector, int indexStep);
 boolean         EV_SpawnLight(line_t *line, byte *arg, lighttype_t type);
 

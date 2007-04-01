@@ -111,7 +111,7 @@ boolean DoubleSky;
 static boolean LevelHasLightning;
 static int NextLightningFlash;
 static int LightningFlash;
-static int *LightningLightLevels;
+static float *LightningLightLevels;
 
 // CODE --------------------------------------------------------------------
 
@@ -185,9 +185,9 @@ static void P_LightningFlash(void)
 {
     uint        i;
     sector_t   *tempSec;
-    int        *tempLight;
+    float      *tempLight;
     boolean     foundSec;
-    int         flashLight;
+    float       flashLight;
 
     if(LightningFlash)
     {
@@ -202,7 +202,7 @@ static void P_LightningFlash(void)
                    P_XSector(tempSec)->special == LIGHTNING_SPECIAL ||
                    P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
                 {
-                    if(*tempLight < 255.0f * P_GetFloatp(tempSec, DMU_LIGHT_LEVEL) - 4)
+                    if(*tempLight < P_GetFloatp(tempSec, DMU_LIGHT_LEVEL) - (4.0f/255.0f))
                     {
                         P_SetFloatp(tempSec, DMU_LIGHT_LEVEL,
                                     P_GetFloatp(tempSec, DMU_LIGHT_LEVEL) - ((1.0f / 255.0f) * 4));
@@ -221,7 +221,7 @@ static void P_LightningFlash(void)
                    P_XSector(tempSec)->special == LIGHTNING_SPECIAL ||
                    P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
                 {
-                    P_SetFloatp(tempSec, DMU_LIGHT_LEVEL, (float) (*tempLight) / 255.0f);
+                    P_SetFloatp(tempSec, DMU_LIGHT_LEVEL, *tempLight);
                     tempLight++;
                 }
             }
@@ -233,7 +233,7 @@ static void P_LightningFlash(void)
     }
 
     LightningFlash = (P_Random() & 7) + 8;
-    flashLight = 200 + (P_Random() & 31);
+    flashLight = (float) (200 + (P_Random() & 31)) / 255.0f;
     tempLight = LightningLightLevels;
     foundSec = false;
     for(i = 0; i < numsectors; ++i)
@@ -243,11 +243,11 @@ static void P_LightningFlash(void)
            P_XSector(tempSec)->special == LIGHTNING_SPECIAL ||
            P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
         {
-            int newLevel = *tempLight = 255.0f * P_GetFloatp(tempSec, DMU_LIGHT_LEVEL);
+            float newLevel = *tempLight = P_GetFloatp(tempSec, DMU_LIGHT_LEVEL);
 
             if(P_XSector(tempSec)->special == LIGHTNING_SPECIAL)
             {
-                newLevel += 64;
+                newLevel += .25f;
                 if(newLevel > flashLight)
                 {
                     newLevel = flashLight;
@@ -255,7 +255,7 @@ static void P_LightningFlash(void)
             }
             else if(P_XSector(tempSec)->special == LIGHTNING_SPECIAL2)
             {
-                newLevel += 32;
+                newLevel += .125f;
                 if(newLevel > flashLight)
                 {
                     newLevel = flashLight;
@@ -270,7 +270,7 @@ static void P_LightningFlash(void)
             {
                 newLevel = *tempLight;
             }
-            P_SetFloatp(tempSec, DMU_LIGHT_LEVEL, (float) newLevel / 255.0f);
+            P_SetFloatp(tempSec, DMU_LIGHT_LEVEL, newLevel);
             tempLight++;
             foundSec = true;
         }
@@ -297,7 +297,7 @@ static void P_LightningFlash(void)
                             plrmo->pos[VY] + (16 * (M_Random() - 127) << FRACBITS),
                             plrmo->pos[VZ] + (4000 << FRACBITS), MT_CAMERA);
             //P_RestoreRandom();
-            crashorigin->tics = 5 * 35; // Five seconds will do.
+            crashorigin->tics = 5 * TICSPERSEC; // Five seconds will do.
         }
         // Make it loud!
         S_StartSound(SFX_THUNDER_CRASH | DDSF_NO_ATTENUATION, crashorigin);
@@ -314,11 +314,11 @@ static void P_LightningFlash(void)
         {
             if(P_Random() < 128 && !(leveltime & 32))
             {
-                NextLightningFlash = ((P_Random() & 7) + 2) * 35;
+                NextLightningFlash = ((P_Random() & 7) + 2) * TICSPERSEC;
             }
             else
             {
-                NextLightningFlash = ((P_Random() & 15) + 5) * 35;
+                NextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
             }
         }
     }
@@ -366,8 +366,8 @@ void P_InitLightning(void)
         return;
     }
 
-    LightningLightLevels = Z_Malloc(secCount * sizeof(int), PU_LEVEL, NULL);
-    NextLightningFlash = ((P_Random() & 15) + 5) * 35;  // don't flash at level start
+    LightningLightLevels = Z_Malloc(secCount * sizeof(float), PU_LEVEL, NULL);
+    NextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;  // don't flash at level start
 }
 
 /**
