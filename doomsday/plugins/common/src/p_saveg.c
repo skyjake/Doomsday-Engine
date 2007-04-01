@@ -3026,8 +3026,8 @@ static void SV_WriteLight(light_t *th)
 
     SV_WriteLong(P_ToIndex(th->sector));
 
-    SV_WriteLong(th->value1);
-    SV_WriteLong(th->value2);
+    SV_WriteLong((int) (255.0f * th->value1));
+    SV_WriteLong((int) (255.0f * th->value2));
     SV_WriteLong(th->tics1);
     SV_WriteLong(th->tics2);
     SV_WriteLong(th->count);
@@ -3048,8 +3048,8 @@ static int SV_ReadLight(light_t *th)
             Con_Error("TC_LIGHT: bad sector number\n");
         th->sector = sector;
 
-        th->value1 = SV_ReadLong();
-        th->value2 = SV_ReadLong();
+        th->value1 = (float) SV_ReadLong() / 255.0f;
+        th->value2 = (float) SV_ReadLong() / 255.0f;
         th->tics1 = SV_ReadLong();
         th->tics2 = SV_ReadLong();
         th->count = SV_ReadLong();
@@ -3069,8 +3069,8 @@ static int SV_ReadLight(light_t *th)
         th->sector = sector;
 
         th->type = (lighttype_t) SV_ReadLong();
-        th->value1 = SV_ReadLong();
-        th->value2 = SV_ReadLong();
+        th->value1 = (float) SV_ReadLong() / 255.0f;
+        th->value2 = (float) SV_ReadLong() / 255.0f;
         th->tics1 = SV_ReadLong();
         th->tics2 = SV_ReadLong();
         th->count = SV_ReadLong();
@@ -3093,7 +3093,7 @@ static void SV_WritePhase(phase_t *th)
     SV_WriteLong(P_ToIndex(th->sector));
 
     SV_WriteLong(th->index);
-    SV_WriteLong(th->base);
+    SV_WriteLong((int) (255.0f * th->baseValue));
 }
 
 static int SV_ReadPhase(phase_t *th)
@@ -3111,7 +3111,7 @@ static int SV_ReadPhase(phase_t *th)
         th->sector = sector;
 
         th->index = SV_ReadLong();
-        th->base = SV_ReadLong();
+        th->baseValue = (float) SV_ReadLong() / 255.0f;
     }
     else
     {
@@ -3128,7 +3128,7 @@ static int SV_ReadPhase(phase_t *th)
         th->sector = sector;
 
         th->index = SV_ReadLong();
-        th->base = SV_ReadLong();
+        th->baseValue = (float) SV_ReadLong() / 255.0f;
     }
 
     th->thinker.function = T_Phase;
@@ -3548,8 +3548,8 @@ static void SV_WriteFlash(lightflash_t* flash)
     SV_WriteLong(P_ToIndex(flash->sector));
 
     SV_WriteLong(flash->count);
-    SV_WriteLong(flash->maxlight);
-    SV_WriteLong(flash->minlight);
+    SV_WriteLong((int) (255.0f * flash->maxlight));
+    SV_WriteLong((int) (255.0f * flash->minlight));
     SV_WriteLong(flash->maxtime);
     SV_WriteLong(flash->mintime);
 }
@@ -3569,8 +3569,8 @@ static int SV_ReadFlash(lightflash_t* flash)
         flash->sector = sector;
 
         flash->count = SV_ReadLong();
-        flash->maxlight = SV_ReadLong();
-        flash->minlight = SV_ReadLong();
+        flash->maxlight = (float) SV_ReadLong() / 255.0f;
+        flash->minlight = (float) SV_ReadLong() / 255.0f;
         flash->maxtime = SV_ReadLong();
         flash->mintime = SV_ReadLong();
     }
@@ -3588,8 +3588,8 @@ static int SV_ReadFlash(lightflash_t* flash)
         flash->sector = sector;
 
         flash->count = SV_ReadLong();
-        flash->maxlight = SV_ReadLong();
-        flash->minlight = SV_ReadLong();
+        flash->maxlight = (float) SV_ReadLong() / 255.0f;
+        flash->minlight = (float) SV_ReadLong() / 255.0f;
         flash->maxtime = SV_ReadLong();
         flash->mintime = SV_ReadLong();
     }
@@ -3610,8 +3610,8 @@ static void SV_WriteStrobe(strobe_t* strobe)
     SV_WriteLong(P_ToIndex(strobe->sector));
 
     SV_WriteLong(strobe->count);
-    SV_WriteLong(strobe->maxlight);
-    SV_WriteLong(strobe->minlight);
+    SV_WriteLong((int) (255.0f * strobe->maxlight));
+    SV_WriteLong((int) (255.0f * strobe->minlight));
     SV_WriteLong(strobe->darktime);
     SV_WriteLong(strobe->brighttime);
 }
@@ -3630,8 +3630,8 @@ static int SV_ReadStrobe(strobe_t *strobe)
         strobe->sector = sector;
 
         strobe->count = SV_ReadLong();
-        strobe->maxlight = SV_ReadLong();
-        strobe->minlight = SV_ReadLong();
+        strobe->maxlight = (float) SV_ReadLong() / 255.0f;
+        strobe->minlight = (float) SV_ReadLong() / 255.0f;
         strobe->darktime = SV_ReadLong();
         strobe->brighttime = SV_ReadLong();
     }
@@ -3649,8 +3649,8 @@ static int SV_ReadStrobe(strobe_t *strobe)
         strobe->sector = sector;
 
         strobe->count = SV_ReadLong();
-        strobe->minlight = SV_ReadLong();
-        strobe->maxlight = SV_ReadLong();
+        strobe->minlight = (float) SV_ReadLong() / 255.0f;
+        strobe->maxlight = (float) SV_ReadLong() / 255.0f;
         strobe->darktime = SV_ReadLong();
         strobe->brighttime = SV_ReadLong();
     }
@@ -3670,8 +3670,8 @@ static void SV_WriteGlow(glow_t *glow)
 
     SV_WriteLong(P_ToIndex(glow->sector));
 
-    SV_WriteLong(glow->maxlight);
-    SV_WriteLong(glow->minlight);
+    SV_WriteLong((int) (255.0f * glow->maxlight));
+    SV_WriteLong((int) (255.0f * glow->minlight));
     SV_WriteLong(glow->direction);
 }
 
@@ -3688,8 +3688,8 @@ static int SV_ReadGlow(glow_t *glow)
             Con_Error("TC_GLOW: bad sector number\n");
         glow->sector = sector;
 
-        glow->maxlight = SV_ReadLong();
-        glow->minlight = SV_ReadLong();
+        glow->maxlight = (float) SV_ReadLong() / 255.0f;
+        glow->minlight = (float) SV_ReadLong() / 255.0f;
         glow->direction = SV_ReadLong();
     }
     else
@@ -3705,8 +3705,8 @@ static int SV_ReadGlow(glow_t *glow)
             Con_Error("TC_GLOW: bad sector number\n");
         glow->sector = sector;
 
-        glow->minlight = SV_ReadLong();
-        glow->maxlight = SV_ReadLong();
+        glow->minlight = (float) SV_ReadLong() / 255.0f;
+        glow->maxlight = (float) SV_ReadLong() / 255.0f;
         glow->direction = SV_ReadLong();
     }
 
@@ -3726,8 +3726,8 @@ static void SV_WriteFlicker(fireflicker_t *flicker)
 
     SV_WriteLong(P_ToIndex(flicker->sector));
 
-    SV_WriteLong(flicker->maxlight);
-    SV_WriteLong(flicker->minlight);
+    SV_WriteLong((int) (255.0f * flicker->maxlight));
+    SV_WriteLong((int) (255.0f * flicker->minlight));
 }
 
 /**
@@ -3745,8 +3745,8 @@ static int SV_ReadFlicker(fireflicker_t *flicker)
         Con_Error("TC_FLICKER: bad sector number\n");
     flicker->sector = sector;
 
-    flicker->maxlight = SV_ReadLong();
-    flicker->minlight = SV_ReadLong();
+    flicker->maxlight = (float) SV_ReadLong() / 255.0f;
+    flicker->minlight = (float) SV_ReadLong() / 255.0f;
 
     flicker->thinker.function = T_FireFlicker;
     return true; // Add this thinker.
@@ -3766,8 +3766,8 @@ static void SV_WriteBlink(lightblink_t *blink)
     SV_WriteLong(P_ToIndex(blink->sector));
 
     SV_WriteLong(blink->count);
-    SV_WriteLong(blink->maxlight);
-    SV_WriteLong(blink->minlight);
+    SV_WriteLong((int) (255.0f * blink->maxlight));
+    SV_WriteLong((int) (255.0f * blink->minlight));
     SV_WriteLong(blink->maxtime);
     SV_WriteLong(blink->mintime);
 }
@@ -3788,8 +3788,8 @@ static int SV_ReadBlink(lightblink_t *blink)
     blink->sector = sector;
 
     blink->count = SV_ReadLong();
-    blink->maxlight = SV_ReadLong();
-    blink->minlight = SV_ReadLong();
+    blink->maxlight = (float) SV_ReadLong() / 255.0f;
+    blink->minlight = (float) SV_ReadLong() / 255.0f;
     blink->maxtime = SV_ReadLong();
     blink->mintime = SV_ReadLong();
 

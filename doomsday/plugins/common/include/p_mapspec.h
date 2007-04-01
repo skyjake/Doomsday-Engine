@@ -52,6 +52,6 @@ float           P_FindHighestFloorSurrounding(sector_t *sec);
 float           P_FindNextHighestFloor(sector_t *sec, float currentheight);
 float           P_FindLowestCeilingSurrounding(sector_t *sec);
 float           P_FindHighestCeilingSurrounding(sector_t *sec);
-int             P_FindMinSurroundingLight(sector_t *sector, int max);
+float           P_FindMinSurroundingLight(sector_t *sector, float min);
 
 #endif

@@ -101,10 +101,10 @@ boolean levelSetup;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Converts a line to an xline.
  */
-xline_t* P_XLine(line_t* line)
+xline_t* P_XLine(line_t *line)
 {
     // Is it a dummy?
     if(P_IsDummy(line))
@@ -117,10 +117,10 @@ xline_t* P_XLine(line_t* line)
     }
 }
 
-/*
+/**
  * Converts a sector to an xsector.
  */
-xsector_t* P_XSector(sector_t* sector)
+xsector_t* P_XSector(sector_t *sector)
 {
     // Is it a dummy?
     if(P_IsDummy(sector))
@@ -133,10 +133,10 @@ xsector_t* P_XSector(sector_t* sector)
     }
 }
 
-/*
+/**
  * Given a subsector - find its parent xsector.
  */
-xsector_t* P_XSectorOfSubsector(subsector_t* sub)
+xsector_t* P_XSectorOfSubsector(subsector_t *sub)
 {
     sector_t* sec = P_GetPtrp(sub, DMU_SECTOR);
 
@@ -151,7 +151,7 @@ xsector_t* P_XSectorOfSubsector(subsector_t* sub)
     }
 }
 
-/*
+/**
  * Doomsday calls this (before any data is read) for each type of map object
  * at the start of the level load process. This is to allow us (the game) to do
  * any initialization we need. For example if we maintain our own data for lines
@@ -359,13 +359,13 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
 #endif
 }
 
-/*
+/**
  * Called during level setup when beginning to load a new map.
  */
 static void P_ResetWorldState(void)
 {
-    int i;
-    int     parm;
+    int         i;
+    int         parm;
 
 #if __JDOOM__
     wminfo.maxfrags = 0;
@@ -415,7 +415,7 @@ static void P_ResetWorldState(void)
     leveltime = actual_leveltime = 0;
 }
 
-/*
+/**
  * Do any level finalization including any game-specific stuff.
  */
 static void P_FinalizeLevel(void)
@@ -494,7 +494,7 @@ static void P_FinalizeLevel(void)
 #endif
 }
 
-/*
+/**
  * Prints a banner to the console containing information
  * pertinent to the current map (eg map name, author...).
  */

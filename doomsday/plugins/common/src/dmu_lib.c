@@ -255,35 +255,30 @@ void P_CopySector(sector_t *from, sector_t *to)
 #endif
 }
 
-int P_SectorLight(sector_t *sector)
+float P_SectorLight(sector_t *sector)
 {
-    return 255 * P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    return P_GetFloatp(sector, DMU_LIGHT_LEVEL);
 }
 
-void P_SectorSetLight(sector_t *sector, int level)
+void P_SectorSetLight(sector_t *sector, float level)
 {
-    P_SetFloatp(sector, DMU_LIGHT_LEVEL, level / 255.0f);
+    P_SetFloatp(sector, DMU_LIGHT_LEVEL, level);
 }
 
-void P_SectorModifyLight(sector_t *sector, int value)
+void P_SectorModifyLight(sector_t *sector, float value)
 {
-    int         level = P_SectorLight(sector);
+    float       level = P_SectorLight(sector);
 
     level += value;
-    CLAMP(level, 0, 255);
+    CLAMP(level, 0, 1);
 
     P_SectorSetLight(sector, level);
-}
-
-fixed_t P_SectorLightx(sector_t *sector)
-{
-    return FLT2FIX(255.0f * P_GetFloatp(sector, DMU_LIGHT_LEVEL));
 }
 
 void P_SectorModifyLightx(sector_t *sector, fixed_t value)
 {
     P_SetFloatp(sector, DMU_LIGHT_LEVEL,
-                FIX2FLT(P_SectorLightx(sector) + value));
+                P_SectorLight(sector) + FIX2FLT(value) / 255.0f);
 }
 
 void *P_SectorSoundOrigin(sector_t *sec)

@@ -214,7 +214,7 @@ void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
     // Check for offsets to current values.
     if(func[0] == '+')
     {
-        switch (func[1])
+        switch(func[1])
         {
         case 'r':
             offset += xsec->origrgb[0];
@@ -229,7 +229,7 @@ void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
             break;
 
         case 'l':
-            offset += xsec->origlight;
+            offset += 255.0f * xsec->origlight;
             break;
 
         case 'f':
@@ -386,7 +386,7 @@ void XS_Init(void)
 
         xsec->SP_floororigheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         xsec->SP_ceilorigheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-        xsec->origlight = 255.0f * P_GetFloatp(sec, DMU_LIGHT_LEVEL);
+        xsec->origlight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
 
         memcpy(xsec->origrgb, tmprgb, 3);
 
@@ -1674,7 +1674,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
     line_t *line = (line_t *) context;
     linetype_t *info = context2;
     int     num, levels[MAX_VALS], i = 0;
-    int     uselevel = 255.0f * P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    float   uselevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     sector_t *frontsector, *backsector;
     byte    usergb[3];
 
@@ -1699,12 +1699,12 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
             break;
 
         case LIGHTREF_MY:
-            uselevel = 255.0f * P_GetFloatp(frontsector, DMU_LIGHT_LEVEL);
+            uselevel = P_GetFloatp(frontsector, DMU_LIGHT_LEVEL);
             break;
 
         case LIGHTREF_BACK:
             if(backsector)
-                uselevel = 255.0f * P_GetFloatp(backsector, DMU_LIGHT_LEVEL);
+                uselevel = P_GetFloatp(backsector, DMU_LIGHT_LEVEL);
             break;
 
         case LIGHTREF_ORIGINAL:
@@ -1733,15 +1733,15 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
                 break;
 
             case LIGHTREF_NEXT_HIGHEST:
-                i = FindNextOf(levels, num, uselevel);
+                i = FindNextOf(levels, num, 255.0f * uselevel);
                 break;
 
             case LIGHTREF_NEXT_LOWEST:
-                i = FindPrevOf(levels, num, uselevel);
+                i = FindPrevOf(levels, num, 255.0f * uselevel);
                 break;
             }
             if(i >= 0)
-                uselevel = levels[i];
+                uselevel = (float) levels[i] / 255.0f;
             break;
 
         default:
@@ -1749,16 +1749,16 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
         }
 
         // Add the offset.
-        uselevel += info->iparm[5];
+        uselevel += (float) info->iparm[5] / 255.0f;
 
         // Clamp the result.
         if(uselevel < 0)
             uselevel = 0;
-        if(uselevel > 255)
-            uselevel = 255;
+        if(uselevel > 1)
+            uselevel = 1;
 
         // Set the value.
-        P_SetFloatp(sector, DMU_LIGHT_LEVEL, (float) uselevel / 255.0f);
+        P_SetFloatp(sector, DMU_LIGHT_LEVEL, uselevel);
     }
 
     if(info->iparm[3])
@@ -2273,7 +2273,7 @@ void XS_UpdateLight(sector_t *sec)
     xgsector_t *xg;
     function_t *fn;
     int     i, c;
-    int     lightlevel;
+    float   lightlevel;
 
     xg = P_XSector(sec)->xg;
 
@@ -2281,14 +2281,14 @@ void XS_UpdateLight(sector_t *sec)
     fn = &xg->light;
     if(UPDFUNC(fn))
     {
-        lightlevel = fn->value;
+        lightlevel = fn->value / 255.0f;
 
         if(lightlevel < 0)
             lightlevel = 0;
-        if(lightlevel > 255)
-            lightlevel = 255;
+        if(lightlevel > 1)
+            lightlevel = 1;
 
-        P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) lightlevel / 255.0f);
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL, lightlevel);
     }
 
     // Red, green and blue.

@@ -352,15 +352,13 @@ float P_FindHighestCeilingSurrounding(sector_t *sec)
 /**
  * Find minimum light from an adjacent sector
  */
-int P_FindMinSurroundingLight(sector_t *sec, int max)
+float P_FindMinSurroundingLight(sector_t *sec, float min)
 {
     int         i;
-    float       min;
     int         lineCount;
     line_t     *line;
     sector_t   *check;
 
-    min = (float) max / 255.0f;
     lineCount = P_GetIntp(sec, DMU_LINE_COUNT);
     for(i = 0; i < lineCount; ++i)
     {
@@ -374,5 +372,5 @@ int P_FindMinSurroundingLight(sector_t *sec, int max)
             min = P_GetFloatp(check, DMU_LIGHT_LEVEL);
     }
 
-    return 255.0f * min;
+    return min;
 }
