@@ -172,8 +172,8 @@ typedef struct ssecgroup_s {
 
 typedef struct sector_s {
     runtime_mapdata_header_t header;
-    short               lightlevel;
-    int                 oldlightlevel;
+    float               lightlevel;
+    float               oldlightlevel;
     byte                rgb[3];
     byte                oldrgb[3];
     int                 validcount;    // if == validcount, already checked.

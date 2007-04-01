@@ -269,7 +269,7 @@ typedef struct {
 } dt_plane_t;
 
 typedef struct {
-    short           lightlevel;
+    float           lightlevel;
     byte            rgb[3];
     uint            planecount;
     dt_plane_t      planes[2];

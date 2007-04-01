@@ -45,7 +45,7 @@ extern byte     fogColor[4];
 extern int      r_ambient;
 extern byte     devNoLinkedSurfaces;
 
-extern signed short lightRangeModMatrix[MOD_RANGE][255];
+extern float    lightRangeModMatrix[MOD_RANGE][255];
 
 void            Rend_Register(void);
 void            Rend_Init(void);
@@ -58,16 +58,16 @@ void            Rend_ModelViewMatrix(boolean use_angles);
 
 float           Rend_PointDist3D(float c[3]);
 //float           Rend_SignedPointDist2D(float c[2]);
-int             Rend_SectorLight(sector_t *sec);
+float           Rend_SectorLight(sector_t *sec);
 int             Rend_MidTexturePos(float *bottomleft, float *bottomright,
                                    float *topleft, float *topright,
                                    float *texoffy, float tcyoff,
                                    boolean lower_unpeg);
-boolean         Rend_IsWallSectionPVisible(line_t* line, segsection_t section,
+boolean         Rend_IsWallSectionPVisible(line_t *line, segsection_t section,
                                            boolean backside);
 
-void            Rend_ApplyLightAdaptation(int* lightvalue);
-int             Rend_GetLightAdaptVal(int lightvalue);
+void            Rend_ApplyLightAdaptation(float *lightvalue);
+float           Rend_GetLightAdaptVal(float lightvalue);
 
 void            Rend_CalcLightRangeModMatrix(struct cvar_s* unused);
 void            Rend_InitPlayerLightRanges(void);

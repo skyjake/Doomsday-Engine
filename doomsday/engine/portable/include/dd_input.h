@@ -126,6 +126,6 @@ inputdev_t *I_GetDevice(uint ident, boolean ifactive);
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive);
 boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis);
 inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id);
-boolean I_IsDeviceKeyDown(uint ident, int code);
+boolean I_IsDeviceKeyDown(uint ident, uint code);
 
 #endif

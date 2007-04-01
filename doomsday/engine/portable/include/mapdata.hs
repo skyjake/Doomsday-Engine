@@ -172,8 +172,8 @@ typedef struct ssecgroup_s {
 end
 
 struct sector
-    SHORT   short       lightlevel
-    -       int         oldlightlevel
+    FLOAT   float       lightlevel
+    -       float       oldlightlevel
     BYTE    byte[3]     rgb
     -       byte[3]     oldrgb
     INT     int         validcount  // if == validcount, already checked.

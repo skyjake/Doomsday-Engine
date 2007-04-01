@@ -72,7 +72,7 @@ typedef struct vissprite_s {
             float           floorglowamount;
             float           ceilglowamount;
             byte            rgb[3]; // Sector light color.
-            int             lightlevel;
+            float           lightlevel;
             float           alpha;
             float           visoff[3];  // Last-minute offset to coords.
             struct modeldef_s *mf, *nextmf;

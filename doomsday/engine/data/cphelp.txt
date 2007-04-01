@@ -1111,9 +1111,6 @@ desc = Sector light range compression (brighten dark areas / darken light areas)
 [rend-light-adaptation]
 desc = Controls the overall strength of light adaptation
 
-[rend-light-adaptation-mul]
-desc = Light adaptation range multiplier.
-
 [rend-light-adaptation-ramp]
 desc = Light adaptation range ramp multiplier.
 

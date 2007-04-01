@@ -66,7 +66,7 @@ typedef struct source_s {
     float           color[3];
     float           intensity;
     float           primaryIntensity;
-    int             sectorLevel[2];
+    float           sectorLevel[2];
     unsigned int    lastUpdateTime;
 } source_t;
 
@@ -92,10 +92,10 @@ void            SB_RendPoly(struct rendpoly_s *poly,
                             uint mapElementIndex);
 void            SB_EndFrame(void);
 
-int             SB_NewSourceAt(float x, float y, float z, float size, int minLight,
-                               int maxLight, float *rgb);
+int             SB_NewSourceAt(float x, float y, float z, float size, float minLight,
+                               float maxLight, float *rgb);
 void            SB_UpdateSource(int which, float x, float y, float z, float size,
-                                int minLight, int maxLight, float *rgb);
+                                float minLight, float maxLight, float *rgb);
 void            SB_Delete(int which);
 void            SB_Clear(void);
 

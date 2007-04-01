@@ -186,7 +186,7 @@ extern          "C" {
                                       Zero means automatic */
         float           size;      // Zero: automatic
         float           color[3];  // Red Green Blue (0,1)
-        int             lightlevel[2]; // Min/max lightlevel for bias
+        float           lightlevel[2]; // Min/max lightlevel for bias
         ded_flags_t     flags;
         ded_lightmap_t  up, down, sides;
         ded_flaremap_t  flare;
@@ -474,7 +474,7 @@ extern          "C" {
         float           halo_radius;    // Halo radius (zero = no halo).
         int             pattern_offset[2];
         int             pattern_skip[2];
-        int             light_levels[2];    // Fade by sector lightlevel.
+        float           lightlevels[2];    // Fade by sector lightlevel.
         int             flare_texture;
         ded_lightmap_t  up, down, sides;
         ded_flaremap_t  flare;          // Overrides flare_texture

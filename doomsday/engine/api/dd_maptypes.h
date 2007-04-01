@@ -36,7 +36,7 @@
 #define DMT_PLANE_SOUNDORG DDVT_PTR    // Sound origin for plane
 #define DMT_PLANE_SECTOR DDVT_PTR      // Owner of the plane (temp)
 
-#define DMT_SECTOR_LIGHTLEVEL DDVT_SHORT
+#define DMT_SECTOR_LIGHTLEVEL DDVT_FLOAT
 #define DMT_SECTOR_RGB DDVT_BYTE
 #define DMT_SECTOR_VALIDCOUNT DDVT_INT // if == validcount, already checked.
 #define DMT_SECTOR_THINGLIST DDVT_PTR  // List of mobjs in the sector.
