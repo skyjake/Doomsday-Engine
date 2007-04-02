@@ -1372,6 +1372,11 @@ unsigned int GL_PrepareFlat2(int idx, boolean translate)
     return GL_GetFlatInfo(idx, translate);
 }
 
+void GL_SetFlat(int idx)
+{
+    gl.Bind(curtex = GL_PrepareFlat2(idx, false));
+}
+
 /*
  * Prepares one of the "Doomsday Textures" 'which' must be one
  * of the DDT_* constants.

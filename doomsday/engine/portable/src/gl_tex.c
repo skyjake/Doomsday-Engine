@@ -522,11 +522,6 @@ void GL_GetFlatColor(int fnum, unsigned char *rgb)
     memcpy(rgb, flat->color.rgb, 3);
 }
 
-void GL_SetFlat(int idx)
-{
-    gl.Bind(curtex = GL_PrepareFlat2(idx, false));
-}
-
 /**
  * The buffer must have room for the alpha values.
  * Returns true if the buffer really has alpha information.
