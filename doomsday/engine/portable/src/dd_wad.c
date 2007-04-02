@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -106,8 +106,6 @@ int     numlumps = 0;
 void  **lumpcache = 0;
 int     numcache = 0;
 
-//int cachesize, initialnumlumps;
-
 // The file records.
 int     numrecords = 0;
 filerecord_t *records = 0;
@@ -148,9 +146,10 @@ void DD_RegisterVFS(void)
 
 static void convertSlashes(char *modifiableBuffer)
 {
-    unsigned int i;
+    uint        i, len;
 
-    for(i = 0; i < strlen(modifiableBuffer); i++)
+    len = strlen(modifiableBuffer);
+    for(i = 0; i < len; ++i)
         if(modifiableBuffer[i] == '\\')
             modifiableBuffer[i] = '/';
 }
@@ -164,9 +163,9 @@ static int W_Index(int lump)
     return lump;
 }
 
-/*
- * Selects which lump cache to use, given a logical lump index. This is called
- * in all the functions that access the lump cache.
+/**
+ * Selects which lump cache to use, given a logical lump index. This is
+ * called in all the functions that access the lump cache.
  */
 static int W_Select(int lump)
 {
@@ -187,14 +186,14 @@ static int W_Select(int lump)
  * (all functions named W_Record*)
  */
 
-/*
+/**
  * Allocate a new file record.
  */
-filerecord_t *W_RecordNew()
+filerecord_t *W_RecordNew(void)
 {
     filerecord_t *ptr;
 
-    records = realloc(records, sizeof(filerecord_t) * (++numrecords));
+    records = M_Realloc(records, sizeof(filerecord_t) * (++numrecords));
     ptr = records + numrecords - 1;
     memset(ptr, 0, sizeof(*ptr));
     return ptr;
@@ -202,20 +201,21 @@ filerecord_t *W_RecordNew()
 
 int W_RecordGetIdx(char *filename)
 {
-    int     i;
-    char    buffer[RECORD_FILENAMELEN];
+    int         i;
+    char        buffer[RECORD_FILENAMELEN];
 
     // We have to make sure the slashes are correct.
     strcpy(buffer, filename);
     convertSlashes(buffer);
 
-    for(i = 0; i < numrecords; i++)
+    for(i = 0; i < numrecords; ++i)
         if(!stricmp(records[i].filename, buffer))
             return i;
+
     return -1;
 }
 
-/*
+/**
  * Destroy the specified record. Returns true if successful.
  */
 boolean W_RecordDestroy(int idx)
@@ -224,7 +224,7 @@ boolean W_RecordDestroy(int idx)
         return false;           // Huh?
 
     // First unallocate the memory of the record.
-    //  free(records[idx].indices);
+    //  M_Free(records[idx].indices);
 
     // Collapse the record array.
     if(idx != numrecords - 1)
@@ -233,19 +233,19 @@ boolean W_RecordDestroy(int idx)
 
     // Reallocate the records memory.
     numrecords--;               // One less record.
-    records = realloc(records, sizeof(filerecord_t) * numrecords);
+    records = M_Realloc(records, sizeof(filerecord_t) * numrecords);
 
     return true;
 }
 
-/*
+/**
  * Look for the named lump, starting from the specified index.
  */
 int W_ScanForName(char *lumpname, int startfrom)
 {
-    char    name8[9];
-    int     v1, v2;
-    int     i;
+    char        name8[9];
+    int         v1, v2;
+    int         i;
     lumpinfo_t *lump_p;
 
     if(startfrom < 0 || startfrom > numlumps - 1)
@@ -255,6 +255,7 @@ int W_ScanForName(char *lumpname, int startfrom)
     strncpy(name8, lumpname, 8);
     v1 = *(int *) name8;
     v2 = *(int *) (name8 + 4);
+
     // Start from the beginning.
     for(i = startfrom, lump_p = lumpinfo + startfrom; i < numlumps;
         i++, lump_p++)
@@ -262,6 +263,7 @@ int W_ScanForName(char *lumpname, int startfrom)
         if(v1 == *(int *) lump_p->name && v2 == *(int *) (lump_p->name + 4))
             return i;
     }
+
     return -1;
 }
 
@@ -269,10 +271,10 @@ int W_ScanForName(char *lumpname, int startfrom)
  * Lumpinfo inserting, filling, removal and other operations.
  */
 
-/*
+/**
  * Writes the correct data into a lumpinfo_t entry.
  */
-void W_FillLumpInfo(int liIndex, filelump_t * flump, filerecord_t * rec,
+void W_FillLumpInfo(int liIndex, filelump_t *flump, filerecord_t *rec,
                     int groupTag)
 {
     lumpinfo_t *lump = lumpinfo + liIndex;
@@ -285,15 +287,16 @@ void W_FillLumpInfo(int liIndex, filelump_t * flump, filerecord_t * rec,
     lump->group = groupTag;
 }
 
-/*
+/**
  * Moves 'count' lumpinfos, starting from 'from'. Updates the lumpcache.
  * Offset can only be positive.
  *
- * Lumpinfo and lumpcache are assumed to have enough memory for the operation!
+ * Lumpinfo and lumpcache are assumed to have enough memory for the
+ * operation!
  */
 void W_MoveLumps(int from, int count, int offset)
 {
-    int     i;
+    int         i;
 
     // Check that our information is valid.
     if(!offset || count <= 0 || from < 0 || from > numlumps - 1)
@@ -302,9 +305,10 @@ void W_MoveLumps(int from, int count, int offset)
     // First update the lumpcache.
     memmove(lumpcache + from + offset, lumpcache + from,
             sizeof(*lumpcache) * count);
-    for(i = from + offset; i < from + count + offset; i++)
+    for(i = from + offset; i < from + count + offset; ++i)
         if(lumpcache[i])
             Z_ChangeUser(lumpcache[i], lumpcache + i);  // Update the user.
+
     // Clear the 'revealed' memory.
     if(offset > 0)              // Revealed from the beginning.
         memset(lumpcache + from, 0, offset * sizeof(*lumpcache));
@@ -317,31 +321,31 @@ void W_MoveLumps(int from, int count, int offset)
             sizeof(lumpinfo_t) * count);
 }
 
-/*
+/**
  * Moves the rest of the lumps forward.
  */
-void W_InsertAndFillLumpRange(int toIndex, filelump_t * lumps, int num,
-                              filerecord_t * rec, int groupTag)
+void W_InsertAndFillLumpRange(int toIndex, filelump_t *lumps, int num,
+                              filerecord_t *rec, int groupTag)
 {
-    int     i;
+    int         i;
 
     // Move lumps if needed.
     if(toIndex < numlumps)
         W_MoveLumps(toIndex, numlumps - toIndex, num);
 
     // Now we can just fill in the lumps.
-    for(i = 0; i < num; i++)
+    for(i = 0; i < num; ++i)
         W_FillLumpInfo(toIndex + i, lumps + i, rec, groupTag);
 
     // Update the number of lumps.
     numlumps += num;
 }
 
-void W_RemoveLumpsWithHandle(DFILE * handle)
+void W_RemoveLumpsWithHandle(DFILE *handle)
 {
-    int     i, k, first, len;
+    int         i, k, first, len;
 
-    for(i = 0, first = -1; i < numlumps; i++)
+    for(i = 0, first = -1; i < numlumps; ++i)
     {
         if(first < 0 && lumpinfo[i].handle == handle)
         {
@@ -349,6 +353,7 @@ void W_RemoveLumpsWithHandle(DFILE * handle)
             first = i;
             continue;
         }
+
         // Does a region end?
         if(first >= 0)
             if(lumpinfo[i].handle != handle || i == numlumps - 1 ||
@@ -357,28 +362,32 @@ void W_RemoveLumpsWithHandle(DFILE * handle)
             {
                 if(lumpinfo[i].handle == handle && i == numlumps - 1)
                     i++;        // Also free the last one.
+
                 // The length of the region.
                 len = i - first;
                 // Free the memory allocated for the region.
-                for(k = first; k < i; k++)
+                for(k = first; k < i; ++k)
                 {
                     //  Con_Message("removing lump: %s (%d)\n", lumpinfo[k].name, lumpinfo[k].handle);
                     if(lumpcache[k])
                     {
 
                         // If the block has a user, it must be explicitly freed.
-                        /*if((unsigned int)Z_GetUser(lumpcache[k]) > 0x100)
+                        /*
+                        if((unsigned int)Z_GetUser(lumpcache[k]) > 0x100)
                            Z_Free(lumpcache[k]);
-                           else if(Z_GetTag(lumpcache[k]) < PU_LEVEL)
-                           Z_ChangeTag(lumpcache[k], PU_LEVEL); */
-                        //Z_ChangeTag(lumpcache[k], PU_CACHE);
-                        //Z_ChangeUser(lumpcache[k], NULL);
+                        else if(Z_GetTag(lumpcache[k]) < PU_LEVEL)
+                           Z_ChangeTag(lumpcache[k], PU_LEVEL);
+                        Z_ChangeTag(lumpcache[k], PU_CACHE);
+                        Z_ChangeUser(lumpcache[k], NULL);
+                        */
                         if(Z_GetTag(lumpcache[k]) < PU_LEVEL)
                             Z_ChangeTag(lumpcache[k], PU_LEVEL);
                         // Mark the memory pointer in use, but unowned.
                         Z_ChangeUser(lumpcache[k], (void *) 0x2);
                     }
                 }
+
                 // Move the data in the lump storage.
                 W_MoveLumps(i, numlumps - i, -len);
                 numlumps -= len;
@@ -389,12 +398,12 @@ void W_RemoveLumpsWithHandle(DFILE * handle)
     }
 }
 
-/*
+/**
  * Reallocates lumpinfo and lumpcache.
  */
 void W_ResizeLumpStorage(int numitems)
 {
-    lumpinfo = realloc(lumpinfo, sizeof(lumpinfo_t) * numitems);
+    lumpinfo = M_Realloc(lumpinfo, sizeof(lumpinfo_t) * numitems);
 
     // Updating the cache is a bit more difficult. We need to make sure
     // the user pointers in the memory zone remain valid.
@@ -404,7 +413,7 @@ void W_ResizeLumpStorage(int numitems)
         int     i, newCacheBytes = numitems * sizeof(*newcache);    // The new size of the cache (bytes).
         int     numToMod;
 
-        newcache = malloc(newCacheBytes);
+        newcache = M_Malloc(newCacheBytes);
         memset(newcache, 0, newCacheBytes); // Clear the new cache.
         // Copy the old cache.
         if(numcache < numitems)
@@ -412,6 +421,7 @@ void W_ResizeLumpStorage(int numitems)
         else
             numToMod = numitems;
         memcpy(newcache, lumpcache, numToMod * sizeof(*lumpcache));
+
         // Update the user information in the memory zone.
         for(i = 0; i < numToMod; i++)
             if(newcache[i])
@@ -424,18 +434,20 @@ void W_ResizeLumpStorage(int numitems)
            Con_Error("W_ResizeLumpStorage: Cached lump getting lost.\n");
          */
         // Get rid of the old cache.
-        free(lumpcache);
+        M_Free(lumpcache);
         lumpcache = newcache;
         numcache = numitems;
     }
 }
 
-// Returns one of the grouping tags.
+/**
+ * @return              One of the grouping tags.
+ */
 int MarkerForGroup(char *name, boolean begin)
 {
-    int     i;
+    int         i;
 
-    for(i = 1; i < NUM_LGTAGS; i++)
+    for(i = 1; i < NUM_LGTAGS; ++i)
         if(!strnicmp(name, begin ? lumpgroups[i].start : lumpgroups[i].end, 8) ||
            !strnicmp(name + 1, begin ? lumpgroups[i].start : lumpgroups[i].end, 7))
             return i;
@@ -444,26 +456,26 @@ int MarkerForGroup(char *name, boolean begin)
     return LGT_NONE;
 }
 
-/*
- * Inserts the lumps in the fileinfo/record to their correct places in
- * the lumpinfo. Also maintains lumpinfo/records that all data is valid.
+/**
+ * Inserts the lumps in the fileinfo/record to their correct places in the
+ * lumpinfo. Also maintains lumpinfo/records that all data is valid.
  *
- * The current placing of the lumps is that flats and sprites are added
- * to previously existing flat and sprite groups. All other lumps are
- * just appended to the end of the list.
+ * The current placing of the lumps is that flats and sprites are added to
+ * previously existing flat and sprite groups. All other lumps are just
+ * appended to the end of the list.
  */
-void W_InsertLumps(filelump_t * fileinfo, filerecord_t * rec)
+void W_InsertLumps(filelump_t *fileinfo, filerecord_t *rec)
 {
-    int     i, to, num;
+    int         i, to, num;
     filelump_t *flump = fileinfo;
-    int     inside = LGT_NONE;  // Not inside any group.
-    int     groupFirst = 0;     // First lump in the current group.
-    int     maxNumLumps = numlumps + rec->numlumps; // This must be enough.
+    int         inside = LGT_NONE;  // Not inside any group.
+    int         groupFirst = 0;     // First lump in the current group.
+    int         maxNumLumps = numlumps + rec->numlumps; // This must be enough.
 
     // Allocate more memory for the lumpinfo.
     W_ResizeLumpStorage(maxNumLumps);
 
-    for(i = 0; i < rec->numlumps; i++, flump++)
+    for(i = 0; i < rec->numlumps; ++i, flump++)
     {
         if(inside == LGT_NONE)
         {
@@ -474,6 +486,7 @@ void W_InsertLumps(filelump_t * fileinfo, filerecord_t * rec)
                 groupFirst = i + 1;
                 continue;
             }
+
             // This lump is very ordinary. Just append it to the
             // lumpinfo.
             //rec->indices[i] = numlumps;
@@ -481,7 +494,7 @@ void W_InsertLumps(filelump_t * fileinfo, filerecord_t * rec)
         }
         else
         {
-            if(MarkerForGroup(flump->name, false) == inside)    // Our group ends?
+            if(MarkerForGroup(flump->name, false) == inside) // Our group ends?
             {
                 // This is how many lumps we'll add.
                 num = i - groupFirst;
@@ -514,19 +527,19 @@ void W_InsertLumps(filelump_t * fileinfo, filerecord_t * rec)
     rec->numlumps -= maxNumLumps - numlumps;
 }
 
-/*
+/**
  * Files with a .wad extension are wadlink files with multiple lumps,
  * other files are single lumps with the base filename for the lump name.
  *
- * Returns true if the operation is successful.
+ * @return              <code>true</code> if the operation is successful.
  */
 boolean W_AddFile(const char *filename, boolean allowDuplicate)
 {
-    char    alterFileName[256];
-    wadinfo_t header;
-    DFILE  *handle;
+    char        alterFileName[256];
+    wadinfo_t   header;
+    DFILE      *handle;
     unsigned int length;
-    filelump_t singleinfo;
+    filelump_t  singleinfo;
     filelump_t *fileinfo;
     filelump_t *freeFileInfo;
     filerecord_t *rec;
@@ -583,8 +596,8 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
 
     if(stricmp(extension, "wad") && stricmp(extension, "gwa")) // lmp?
     {
-        int offset = 0;
-        char *slash = NULL;
+        int     offset = 0;
+        char   *slash = NULL;
 
         // Single lump file.
         fileinfo = &singleinfo;
@@ -636,13 +649,15 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
             if(!stricmp(extension, "wad"))
                 rec->iwad = true;
         }
+
         header.numlumps = LONG(header.numlumps);
         header.infotableofs = LONG(header.infotableofs);
         length = header.numlumps * sizeof(filelump_t);
-        if(!(fileinfo = malloc(length)))
+        if(!(fileinfo = M_Malloc(length)))
         {
             Con_Error("W_AddFile: fileinfo malloc failed\n");
         }
+
         freeFileInfo = fileinfo;
         F_Seek(handle, header.infotableofs, SEEK_SET);
         F_Read(fileinfo, length, handle);
@@ -653,7 +668,7 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
     W_InsertLumps(fileinfo, rec);
 
     if(freeFileInfo)
-        free(freeFileInfo);
+        M_Free(freeFileInfo);
 
     PrimaryLumpInfo = lumpinfo;
     PrimaryLumpCache = lumpcache;
@@ -684,7 +699,7 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
 
 boolean W_RemoveFile(char *filename)
 {
-    int     idx = W_RecordGetIdx(filename);
+    int         idx = W_RecordGetIdx(filename);
     filerecord_t *rec;
 
     if(idx == -1)
@@ -712,69 +727,76 @@ boolean W_RemoveFile(char *filename)
     return true;
 }
 
-/*
+/**
  * Remove all records flagged Runtime.
  */
-void W_Reset()
+void W_Reset(void)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < numrecords; i++)
+    for(i = 0; i < numrecords; ++i)
         if(records[i].flags & FRF_RUNTIME)
             W_RemoveFile(records[i].filename);
 }
 
-/*
- * Returns true iff the given filename exists and is an IWAD.
+/**
+ * @return              <code>true</code> iff the given filename exists and
+ *                      is an IWAD.
  */
 int W_IsIWAD(char *fn)
 {
-    FILE   *file;
-    char    id[5];
+    FILE       *file;
+    char        id[5];
 
     if(!M_FileExists(fn))
         return false;
     if((file = fopen(fn, "rb")) == NULL)
         return false;
+
     fread(id, 4, 1, file);
     id[4] = 0;
     fclose(file);
+
     return !stricmp(id, "IWAD");
 }
 
 /**
  * Determines if a file name refers to a PK3 package.
- * @param fn  Path of the file.
- * @return  <code>true</code>, if the file is a PK3 package.
+ *
+ * @param fn            Path of the file.
+ *
+ * @return              <code>true</code>, if the file is a PK3 package.
  */
 boolean W_IsPK3(const char *fn)
 {
-    int len = strlen(fn);
+    int         len = strlen(fn);
+
     return (len > 3 && (!strnicmp(fn + len - 4, ".pk3", 4) ||
                         !strnicmp(fn + len - 4, ".zip", 4)));
 }
 
-/*
- * Pass a null terminated list of files to use.  All files are optional,
- * but at least one file must be found.  Lump names can appear multiple
- * times.  The name searcher looks backwards, so a later file can
- * override an earlier one.
+/**
+ * Pass a null terminated list of files to use. All files are optional, but
+ * at least one file must be found. Lump names can appear multiple times.
+ * The name searcher looks backwards, so a later file can override an
+ * earlier one.
  */
 void W_InitMultipleFiles(char **filenames)
 {
-    char  **ptr;
-    int     numLoaded = 0;
-    byte   *loaded = 0;
+    char      **ptr;
+    int         numLoaded = 0;
+    byte       *loaded = 0;
 
     // Count number of files.
     for(ptr = filenames; *ptr; ptr++, numLoaded++);
-    loaded = calloc(numLoaded, 1);
+
+    loaded = M_Calloc(numLoaded);
 
     iwadLoaded = false;
 
     // Open all the files, load headers, and count lumps
     numlumps = 0;
-    lumpinfo = malloc(1);       // Will be realloced as lumps are added
+    lumpinfo = M_Malloc(1); // Will be realloced as lumps are added
 
     // This'll force the loader NOT the flag new records Runtime. (?)
     loadingForStartup = true;
@@ -811,7 +833,7 @@ void W_InitMultipleFiles(char **filenames)
             W_AddFile(*ptr, false);
 
     // Bookkeeping no longer needed.
-    free(loaded);
+    M_Free(loaded);
     loaded = NULL;
 
     if(!numlumps)
@@ -826,17 +848,17 @@ void W_EndStartup(void)
     loadingForStartup = false;
 }
 
-/*
+/**
  * Reallocate the lump cache so that it has the right amount of memory.
  */
-void W_UpdateCache()
+void W_UpdateCache(void)
 {
     /*  unsigned int i, numcopy;
        int size;
        void **newcache;
 
        size = numlumps * sizeof(*lumpcache);
-       newcache = malloc(size);
+       newcache = M_Malloc(size);
        memset(newcache, 0, size);
        // The cache is a list of pointers to the memory zone. We must
        // update the zone user pointers.
@@ -861,7 +883,7 @@ void W_UpdateCache()
        memcpy(newcache, lumpcache, numcopy*sizeof(*lumpcache));
 
        // Get rid of the old cache.
-       free(lumpcache);
+       M_Free(lumpcache);
        lumpcache = newcache;
        cachesize = size;
 
@@ -870,12 +892,12 @@ void W_UpdateCache()
        PrimaryNumLumps = numlumps; */
 }
 
-/*
+/**
  * Initialize the primary from a single file.
  */
 void W_InitFile(char *filename)
 {
-    char   *names[2];
+    char       *names[2];
 
     names[0] = filename;
     names[1] = NULL;
@@ -884,11 +906,11 @@ void W_InitFile(char *filename)
 
 int W_OpenAuxiliary(const char *filename)
 {
-    int     i;
-    int     size;
-    wadinfo_t header;
-    DFILE  *handle;
-    int     length;
+    int         i;
+    int         size;
+    wadinfo_t   header;
+    DFILE      *handle;
+    int         length;
     filelump_t *fileinfo;
     filelump_t *sourceLump;
     lumpinfo_t *destLump;
@@ -897,11 +919,13 @@ int W_OpenAuxiliary(const char *filename)
     {
         W_CloseAuxiliary();
     }
+
     if((handle = F_Open(filename, "rb")) == NULL)
     {
         Con_Error("W_OpenAuxiliary: %s not found.", filename);
         return -1;
     }
+
     AuxiliaryHandle = handle;
     F_Read(&header, sizeof(header), handle);
     if(strncmp(header.identification, "IWAD", 4))
@@ -911,6 +935,7 @@ int W_OpenAuxiliary(const char *filename)
             Con_Error("Wad file %s doesn't have IWAD or PWAD id\n", filename);
         }
     }
+
     header.numlumps = LONG(header.numlumps);
     header.infotableofs = LONG(header.infotableofs);
     length = header.numlumps * sizeof(filelump_t);
@@ -947,12 +972,12 @@ int W_OpenAuxiliary(const char *filename)
 
 static void W_CloseAuxiliary(void)
 {
-    int     i;
+    int         i;
 
     if(AuxiliaryOpened)
     {
         W_UseAuxiliary();
-        for(i = 0; i < numlumps; i++)
+        for(i = 0; i < numlumps; ++i)
         {
             if(lumpcache[i])
             {
@@ -967,9 +992,9 @@ static void W_CloseAuxiliary(void)
     W_UsePrimary();
 }
 
-/*
- * WARNING: W_CloseAuxiliary() must be called before any further
- * auxiliary lump processing.
+/**
+ * WARNING: W_CloseAuxiliary() must be called before any further auxiliary
+ * lump processing.
  */
 static void W_CloseAuxiliaryFile(void)
 {
@@ -1011,7 +1036,8 @@ static int W_ScanLumpInfo(int v[2])
     lumpinfo_t *lump_p = lumpinfo + numlumps;
     while(lump_p-- != lumpinfo)
     {
-        if(*(int *) lump_p->name == v[0] && *(int *) &lump_p->name[4] == v[1])
+        if(*(int *) lump_p->name == v[0] &&
+           *(int *) &lump_p->name[4] == v[1])
         {
             // W_Index handles the conversion to a logical index that is
             // independent of the
@@ -1021,14 +1047,14 @@ static int W_ScanLumpInfo(int v[2])
     return -1;
 }
 
-/*
- * @return int      (-1) if name not found.
+/**
+ * @return              <code>-1</code> if name not found, else lump num.
  */
 int W_CheckNumForName(char *name)
 {
-    char    name8[9];
-    int     v[2];
-    int     idx = -1;
+    char        name8[9];
+    int         v[2];
+    int         idx = -1;
 
     // If the name string is empty, don't bother to search.
     if(!name[0])
@@ -1064,12 +1090,12 @@ int W_CheckNumForName(char *name)
     return -1;
 }
 
-/*
+/**
  * Calls W_CheckNumForName, but bombs out if not found.
  */
 int W_GetNumForName(char *name)
 {
-    int     i;
+    int         i;
 
     i = W_CheckNumForName(name);
     if(i != -1)
@@ -1080,8 +1106,8 @@ int W_GetNumForName(char *name)
     return -1;
 }
 
-/*
- * Returns the buffer size needed to load the given lump.
+/**
+ * @return              The buffer size needed to load the given lump.
  */
 size_t W_LumpLength(int lump)
 {
@@ -1093,7 +1119,7 @@ size_t W_LumpLength(int lump)
     return lumpinfo[lump].size;
 }
 
-/*
+/**
  * Get the name of the given lump.
  */
 const char *W_LumpName(int lump)
@@ -1107,7 +1133,7 @@ const char *W_LumpName(int lump)
     return lumpinfo[lump].name;
 }
 
-/*
+/**
  * Loads the lump into the given buffer, which must be >= W_LumpLength().
  */
 void W_ReadLump(int lump, void *dest)
@@ -1119,6 +1145,7 @@ void W_ReadLump(int lump, void *dest)
     {
         Con_Error("W_ReadLump: %i >= numlumps", lump);
     }
+
     l = lumpinfo + lump;
     F_Seek(l->handle, l->position, SEEK_SET);
     c = F_Read(dest, l->size, l->handle);
@@ -1131,7 +1158,7 @@ void W_ReadLump(int lump, void *dest)
 
 void W_ReadLumpSection(int lump, void *dest, int startoffset, size_t length)
 {
-    size_t     c;
+    size_t      c;
     lumpinfo_t *l;
 
     lump = W_Select(lump);
@@ -1139,6 +1166,7 @@ void W_ReadLumpSection(int lump, void *dest, int startoffset, size_t length)
     {
         Con_Error("W_ReadLumpSection: %i >= numlumps", lump);
     }
+
     l = lumpinfo + lump;
     F_Seek(l->handle, l->position + startoffset, SEEK_SET);
     c = F_Read(dest, length, l->handle);
@@ -1149,19 +1177,20 @@ void W_ReadLumpSection(int lump, void *dest, int startoffset, size_t length)
     }
 }
 
-/*
+/**
  * If called with the special purgelevel PU_GETNAME, returns a pointer
  * to the name of the lump.
  */
 void* W_CacheLumpNum(int absoluteLump, int tag)
 {
-    byte   *ptr;
-    int    lump = W_Select(absoluteLump);
+    byte       *ptr;
+    int         lump = W_Select(absoluteLump);
 
     if((unsigned) lump >= (unsigned) numlumps)
     {
         Con_Error("W_CacheLumpNum: %i >= numlumps", lump);
     }
+
     // Return the name instead of data?
     if(tag == PU_GETNAME)
     {
@@ -1169,8 +1198,9 @@ void* W_CacheLumpNum(int absoluteLump, int tag)
         retname[8] = 0;
         return retname;
     }
+
     if(!lumpcache[lump])
-    {                           // Need to read the lump in
+    {    // Need to read the lump in
         ptr = Z_Malloc(W_LumpLength(absoluteLump), tag, &lumpcache[lump]);
         W_ReadLump(lump, lumpcache[lump]);
     }
@@ -1195,20 +1225,21 @@ void W_ChangeCacheTag(int lump, int tag)
         }
 }
 
-/*
+/**
  * Checks if an IWAD has been loaded. If not, tries to load one of the
  * default ones.
  */
 void W_CheckIWAD(void)
 {
     extern char *iwadlist[];
-    int     i;
+
+    int         i;
 
     if(iwadLoaded)
         return;
 
     // Try one of the default IWADs.
-    for(i = 0; iwadlist[i]; i++)
+    for(i = 0; iwadlist[i]; ++i)
     {
         if(M_FileExists(iwadlist[i]))
             W_AddFile(iwadlist[i], false);
@@ -1224,13 +1255,13 @@ void W_CheckIWAD(void)
         Con_Error("W_CheckIWAD: Init aborted.\n");
 }
 
-/*
- * Returns the name of the WAD file where the given lump resides.
- * Always returns a valid filename (or an empty string).
+/**
+ * @return              The name of the WAD file where the given lump resides.
+ *                      Always returns a valid filename (or an empty string).
  */
 const char *W_LumpSourceFile(int lump)
 {
-    int     i;
+    int         i;
     lumpinfo_t *l;
 
     lump = W_Select(lump);
@@ -1238,24 +1269,26 @@ const char *W_LumpSourceFile(int lump)
         Con_Error("W_LumpSourceFile: Bad lump number: %i.", lump);
 
     l = lumpinfo + lump;
-    for(i = 0; i < numrecords; i++)
+    for(i = 0; i < numrecords; ++i)
         if(records[i].handle == l->handle)
             return records[i].filename;
+
     return "";
 }
 
-/*
+/**
  * An extremely simple formula. Does not conform to any CRC standard.
  * (So why's it called CRC, then?)
  */
 unsigned int W_CRCNumberForRecord(int idx)
 {
-    int     i, k;
+    int         i, k;
     unsigned int crc = 0;
 
     if(idx < 0 || idx >= numrecords)
         return 0;
-    for(i = 0; i < numlumps; i++)
+
+    for(i = 0; i < numlumps; ++i)
     {
         if(lumpinfo[i].handle != records[idx].handle)
             continue;
@@ -1263,32 +1296,34 @@ unsigned int W_CRCNumberForRecord(int idx)
         for(k = 0; k < 8; k++)
             crc += lumpinfo[i].name[k];
     }
+
     return crc;
 }
 
-/*
+/**
  * Calculated using the lumps of the main IWAD.
  */
 unsigned int W_CRCNumber(void)
 {
-    int     i;
+    int         i;
 
     // Find the IWAD's record.
-    for(i = 0; i < numrecords; i++)
+    for(i = 0; i < numrecords; ++i)
         if(records[i].iwad)
             return W_CRCNumberForRecord(i);
+
     return 0;
 }
 
-/*
+/**
  * Copies the file name of the IWAD to the given buffer.
  */
 void W_GetIWADFileName(char *buf, int bufSize)
 {
-    int     i;
+    int         i;
 
     // Find the IWAD's record.
-    for(i = 0; i < numrecords; i++)
+    for(i = 0; i < numrecords; ++i)
         if(records[i].iwad)
         {
             char    temp[256];
@@ -1300,15 +1335,15 @@ void W_GetIWADFileName(char *buf, int bufSize)
         }
 }
 
-/*
+/**
  * Compiles a list of PWAD file names, separated by the specified character.
  * All .GWA files are excluded from the list.
  */
 void W_GetPWADFileNames(char *buf, int bufSize, char separator)
 {
-    int     i;
+    int         i;
 
-    for(i = 0; i < numrecords; i++)
+    for(i = 0; i < numrecords; ++i)
         if(!records[i].iwad)
         {
             char    temp[256];
@@ -1317,17 +1352,18 @@ void W_GetPWADFileNames(char *buf, int bufSize, char separator)
             if(!stricmp(temp + strlen(temp) - 3, "gwa") ||
                !stricmp(temp + strlen(temp) - 3, "lmp"))
                 continue;
+
             M_LimitedStrCat(temp, 64, separator, buf, bufSize);
         }
 }
 
-/*
- * Returns true if the specified lump is in an IWAD. Otherwise it's
- * from a PWAD.
+/**
+ * @return              <code>true</code> if the specified lump is in an
+ *                      IWAD. Otherwise it's from a PWAD.
  */
 boolean W_IsFromIWAD(int lump)
 {
-    int     i;
+    int         i;
 
     lump = W_Select(lump);
     if(lump < 0 || lump >= numlumps)
@@ -1336,9 +1372,10 @@ boolean W_IsFromIWAD(int lump)
         return false;
     }
 
-    for(i = 0; i < numrecords; i++)
+    for(i = 0; i < numrecords; ++i)
         if(records[i].handle == lumpinfo[lump].handle)
             return records[i].iwad != 0;
+
     return false;
 }
 
@@ -1360,9 +1397,9 @@ static void W_MapLumpName(int episode, int map, char *mapLump)
  */
 boolean W_RemapPWADMaps(const char *pwadName, int episode, int map)
 {
-    int     i;
+    int         i;
     filerecord_t *rec;
-    char    baseName[256], buf[256];
+    char        baseName[256], buf[256];
 
     // Try matching the full name first.
     if((i = W_RecordGetIdx(pwadName)) < 0)
@@ -1370,18 +1407,20 @@ boolean W_RemapPWADMaps(const char *pwadName, int episode, int map)
         // Then the base name only.
         M_ExtractFileBase(pwadName, baseName);
 
-        for(i = 0; i < numrecords; i++)
+        for(i = 0; i < numrecords; ++i)
         {
             M_ExtractFileBase(records[i].filename, buf);
             if(!stricmp(baseName, buf))
                 break;
         }
+
         if(i == numrecords)
         {
             Con_Printf("%s has not been loaded.\n", pwadName);
             return false;
         }
     }
+
     rec = records + i;
     if(rec->iwad)
     {
@@ -1390,7 +1429,7 @@ boolean W_RemapPWADMaps(const char *pwadName, int episode, int map)
     }
     Con_Printf("Renumbering maps in %s.\n", rec->filename);
 
-    for(i = 0; i < numlumps; i++)
+    for(i = 0; i < numlumps; ++i)
     {
         // We'll only modify the maps
         if(lumpinfo[i].handle != rec->handle)
@@ -1400,17 +1439,17 @@ boolean W_RemapPWADMaps(const char *pwadName, int episode, int map)
 }
 #endif
 
-/*
+/**
  * Print a list of maps and the WAD files where they are from.
  */
 void W_PrintFormattedMapList(int episode, const char **files, int count)
 {
     const char *current = NULL;
-    char    lump[20];
-    int     i, k;
-    int     rangeStart = 0, len;
+    char        lump[20];
+    int         i, k;
+    int         rangeStart = 0, len;
 
-    for(i = 0; i < count; i++)
+    for(i = 0; i < count; ++i)
     {
         if(!current && files[i])
         {
@@ -1424,7 +1463,7 @@ void W_PrintFormattedMapList(int episode, const char **files, int count)
             Con_Printf("  ");   // Indentation.
             if(len <= 2)
             {
-                for(k = rangeStart + 1; k <= i; k++)
+                for(k = rangeStart + 1; k <= i; ++k)
                 {
                     W_MapLumpName(episode, k, lump);
                     Con_Printf("%s%s", lump, k != i ? "," : "");
@@ -1446,23 +1485,23 @@ void W_PrintFormattedMapList(int episode, const char **files, int count)
     }
 }
 
-/*
+/**
  * Print a list of loaded maps and which WAD files are they located in.
  * The maps are identified using the "ExMy" and "MAPnn" markers.
  */
 void W_PrintMapList(void)
 {
     const char *sourceList[100];
-    int     lump;
-    int     episode, map;
-    char    mapLump[20];
+    int         lump;
+    int         episode, map;
+    char        mapLump[20];
 
-    for(episode = 0; episode <= 9; episode++)
+    for(episode = 0; episode <= 9; ++episode)
     {
         memset((void *) sourceList, 0, sizeof(sourceList));
 
         // Find the name of each map (not all may exist).
-        for(map = 1; map <= (episode ? 9 : 99); map++)
+        for(map = 1; map <= (episode ? 9 : 99); ++map)
         {
             W_MapLumpName(episode, map, mapLump);
 
@@ -1487,10 +1526,9 @@ D_CMD(ListMaps)
 
 D_CMD(LoadFile)
 {
-    //extern int RegisteredSong;
-    int     i, succeeded = false;
+    int         i, succeeded = false;
 
-    for(i = 1; i < argc; i++)
+    for(i = 1; i < argc; ++i)
     {
         Con_Message("Loading %s...\n", argv[i]);
         if(W_AddFile(argv[i], true))
@@ -1501,6 +1539,7 @@ D_CMD(LoadFile)
         else
             Con_Message("Failed!\n");
     }
+
     // We only need to update if something was actually loaded.
     if(succeeded)
     {
@@ -1515,10 +1554,9 @@ D_CMD(LoadFile)
 
 D_CMD(UnloadFile)
 {
-    //extern int RegisteredSong;
-    int     i, succeeded = false;
+    int         i, succeeded = false;
 
-    for(i = 1; i < argc; i++)
+    for(i = 1; i < argc; ++i)
     {
         Con_Message("Unloading %s...\n", argv[i]);
         if(W_RemoveFile(argv[i]))
@@ -1529,6 +1567,7 @@ D_CMD(UnloadFile)
         else
             Con_Message("Failed!\n");
     }
+
     if(succeeded)
         DD_UpdateEngineState();
     return true;
@@ -1536,16 +1575,17 @@ D_CMD(UnloadFile)
 
 D_CMD(Dump)
 {
-    char    fname[100];
-    FILE   *file;
-    int     lump;
-    byte   *lumpPtr;
+    char        fname[100];
+    FILE       *file;
+    int         lump;
+    byte       *lumpPtr;
 
     if(W_CheckNumForName(argv[1]) == -1)
     {
         Con_Printf("No such lump.\n");
         return false;
     }
+
     lump = W_GetNumForName(argv[1]);
     lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
 
@@ -1558,6 +1598,7 @@ D_CMD(Dump)
         Z_ChangeTag(lumpPtr, PU_CACHE);
         return false;
     }
+
     fwrite(lumpPtr, 1, lumpinfo[lump].size, file);
     fclose(file);
     Z_ChangeTag(lumpPtr, PU_CACHE);
@@ -1566,15 +1607,15 @@ D_CMD(Dump)
     return true;
 }
 
-/*
+/**
  * Print contents of directories as Doomsday sees them.
  */
 D_CMD(Dir)
 {
-    char    dir[256], pattern[256];
-    int     i;
+    char        dir[256], pattern[256];
+    int         i;
 
-    for(i = 1; i < argc; i++)
+    for(i = 1; i < argc; ++i)
     {
         M_PrependBasePath(argv[i], dir);
         Dir_ValidDir(dir);
@@ -1593,9 +1634,10 @@ D_CMD(ListFiles)
 {
     extern int numrecords;
     extern filerecord_t *records;
-    int     i;
 
-    for(i = 0; i < numrecords; i++)
+    int         i;
+
+    for(i = 0; i < numrecords; ++i)
     {
         Con_Printf("%s (%d lump%s%s)", records[i].filename,
                    records[i].numlumps, records[i].numlumps != 1 ? "s" : "",
