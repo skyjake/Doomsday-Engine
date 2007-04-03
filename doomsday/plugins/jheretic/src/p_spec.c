@@ -118,12 +118,14 @@ mobj_t  LavaInflictor; // From the HERETIC source (To be moved!)
  */
 void P_InitPicAnims(void)
 {
-    int i, j;
-    int groupNum;
-    int isTexture, startFrame, endFrame, ticsPerFrame;
-    int numFrames;
-    int lump = W_CheckNumForName("ANIMATED");
-    animdef_t *animdefs;
+    int         i, j;
+    int         groupNum;
+    int         startFrame, endFrame, ticsPerFrame;
+    int         numFrames;
+    int         lump = W_CheckNumForName("ANIMATED");
+    int         type;
+    char       *name;
+    animdef_t  *animdefs;
 
     // Has a custom ANIMATED lump been loaded?
     if(lump > 0)
@@ -154,7 +156,7 @@ void P_InitPicAnims(void)
                 startFrame = R_FlatNumForName(animdefs[i].startname);
             }
 
-            isTexture = animdefs[i].istexture;
+            type = (animdefs[i].istexture? DD_TEXTURE : DD_FLAT);
             numFrames = endFrame - startFrame + 1;
 
             ticsPerFrame = LONG(animdefs[i].speed);
@@ -167,8 +169,7 @@ void P_InitPicAnims(void)
             {
                 // We have a valid animation.
                 // Create a new animation group for it.
-                groupNum =
-                    R_CreateAnimGroup(isTexture ? DD_TEXTURE : DD_FLAT, AGF_SMOOTH);
+                groupNum = R_CreateAnimGroup(type, AGF_SMOOTH);
 
                 // Doomsday's group animation needs to know the texture/flat
                 // numbers of ALL frames in the animation group so we'll have
@@ -184,12 +185,20 @@ void P_InitPicAnims(void)
                 if(endFrame > startFrame)
                 {
                     for(j = startFrame; j <= endFrame; j++)
-                        R_AddToAnimGroup(groupNum, j, ticsPerFrame, 0);
+                    {
+                        name = (type == DD_TEXTURE? R_TextureNameForNum(j) :
+                                 (char *) W_LumpName(j));
+                        R_AddToAnimGroup(groupNum, name, ticsPerFrame, 0);
+                    }
                 }
                 else
                 {
                     for(j = endFrame; j >= startFrame; j--)
-                        R_AddToAnimGroup(groupNum, j, ticsPerFrame, 0);
+                    {
+                        name = (type == DD_TEXTURE? R_TextureNameForNum(j) :
+                                 W_LumpName(j));
+                        R_AddToAnimGroup(groupNum, name, ticsPerFrame, 0);
+                    }
                 }
             }
         }

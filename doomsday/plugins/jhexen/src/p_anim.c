@@ -380,7 +380,8 @@ void P_InitPicAnims(void)
     boolean     done;
     int         AnimDefCount = 0;
     int         groupNumber = 0, picBase = 0;
-    int         type = 0, index = 0;
+    int         type = 0;
+    char       *name;
 
     SC_Open(ANIM_SCRIPT_NAME);
     while(SC_GetString())
@@ -441,7 +442,10 @@ void P_InitPicAnims(void)
                     SC_MustGetNumber();
                     if(ignore == false)
                     {
-                        index = picBase + sc_Number - 1;
+                        if(type == ANIM_FLAT)
+                            name = (char *) W_LumpName(picBase + sc_Number - 1);
+                        else
+                            name = R_TextureNameForNum(picBase + sc_Number - 1);
                     }
                     SC_MustGetString();
                     if(SC_Compare(SCI_TICS))
@@ -449,7 +453,7 @@ void P_InitPicAnims(void)
                         SC_MustGetNumber();
                         if(ignore == false)
                         {
-                            R_AddToAnimGroup(groupNumber, index, sc_Number, 0);
+                            R_AddToAnimGroup(groupNumber, name, sc_Number, 0);
                         }
                     }
                     else if(SC_Compare(SCI_RAND))
@@ -459,7 +463,7 @@ void P_InitPicAnims(void)
                         SC_MustGetNumber();
                         if(ignore == false)
                         {
-                            R_AddToAnimGroup(groupNumber, index, base,
+                            R_AddToAnimGroup(groupNumber, name, base,
                                              sc_Number - base);
                         }
                     }

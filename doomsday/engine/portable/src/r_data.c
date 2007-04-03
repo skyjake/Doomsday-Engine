@@ -455,13 +455,28 @@ animgroup_t *R_GetAnimGroup(int number)
 /**
  * This function is exported and accessible from DLLs.
  */
-void R_AddToAnimGroup(int groupNum, int number, int tics, int randomTics)
+void R_AddToAnimGroup(int groupNum, char *name, int tics, int randomTics)
 {
-    animgroup_t *group = R_GetAnimGroup(groupNum);
+    animgroup_t *group;
     animframe_t *frame;
+    int         number;
 
-    if(!group || number < 0)
+    if(!name || !name[0])
+        return;
+
+    group = R_GetAnimGroup(groupNum);
+    if(!group)
+        Con_Error("R_AddToAnimGroup: Unknown anim group %i.", groupNum);
+
+    if(group->flags & AGF_TEXTURE)
+        number = R_CheckTextureNumForName(name);
+    else
+        number = W_CheckNumForName(name);
+
+    if(number < 0)
     {
+        Con_Message("R_AddToAnimGroup: Unknown %s '%s'.",
+                    ((group->flags & AGF_TEXTURE)? "Texture" : "Flat"), name);
         return;
     }
 
@@ -542,8 +557,8 @@ void R_InitAnimGroup(ded_group_t *def)
             groupNumber = R_CreateAnimGroup(type, def->flags);
         }
 
-        R_AddToAnimGroup(groupNumber, number, def->members[i].tics,
-                         def->members[i].random_tics);
+        R_AddToAnimGroup(groupNumber, def->members[i].name,
+                         def->members[i].tics, def->members[i].random_tics);
     }
 }
 
@@ -599,8 +614,8 @@ void R_InitSwitchAnimGroups(void)
             {
                 // Create a non-animating group for these.
                 group = R_CreateAnimGroup(DD_TEXTURE, AGF_PRECACHE);
-                R_AddToAnimGroup(group, i, 0, 0);
-                R_AddToAnimGroup(group, k, 0, 0);
+                R_AddToAnimGroup(group, textures[i]->name, 0, 0);
+                R_AddToAnimGroup(group, textures[k]->name, 0, 0);
                 break;
             }
         }
