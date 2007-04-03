@@ -410,7 +410,7 @@ typedef struct {
     int     olddirection;
 } v19_ceiling_t;
 */
-    int temp[3];
+    byte temp[SIZEOF_V19_THINKER_T];
 
     // Padding at the start (an old thinker_t struct)
     SV_Read(&temp, SIZEOF_V19_THINKER_T);
@@ -431,7 +431,7 @@ typedef struct {
     ceiling->tag = SV_ReadLong();
     ceiling->olddirection = SV_ReadLong();
 
-    if((byte) temp + V19_THINKER_T_FUNC_OFFSET)
+    if(temp + V19_THINKER_T_FUNC_OFFSET)
         ceiling->thinker.function = T_MoveCeiling;
 
     P_XSector(ceiling->sector)->specialdata = ceiling;
@@ -532,7 +532,7 @@ typedef struct {
     plattype_e type; // was 32bit int
 } v19_plat_t;
 */
-    int temp[3];
+    byte temp[SIZEOF_V19_THINKER_T];
 
     // Padding at the start (an old thinker_t struct)
     SV_Read(temp, SIZEOF_V19_THINKER_T);
@@ -554,7 +554,7 @@ typedef struct {
     plat->tag = SV_ReadLong();
     plat->type = SV_ReadLong();
 
-    if((byte) temp + V19_THINKER_T_FUNC_OFFSET)
+    if(temp + V19_THINKER_T_FUNC_OFFSET)
         plat->thinker.function = T_PlatRaise;
 
     P_XSector(plat->sector)->specialdata = plat;

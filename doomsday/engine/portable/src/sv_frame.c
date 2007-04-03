@@ -472,12 +472,12 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
-        byte    lightlevel = (byte) (255.0f * d->lightlevel);
+        int     lightlevel = (int) (255.0f * d->lightlevel);
             
         lightlevel = (lightlevel < 0 ? 0 : lightlevel >
                       255 ? 255 : lightlevel);
 
-        Msg_WriteByte(lightlevel);
+        Msg_WriteByte((byte) lightlevel);
     }
     if(df & SDF_FLOOR_HEIGHT)
     {

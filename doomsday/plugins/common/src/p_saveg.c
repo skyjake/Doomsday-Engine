@@ -4148,7 +4148,7 @@ static void P_UnArchiveBrain(void)
     brain.targeton = SV_ReadByte();
     for(i = 0; i < numbraintargets; ++i)
     {
-        braintargets[i] = (mobj_t*) SV_ReadShort();
+        braintargets[i] = (mobj_t*) (int) SV_ReadShort();
         braintargets[i] = SV_GetArchiveThing((int) braintargets[i], NULL);
     }
 
@@ -4202,7 +4202,7 @@ static void P_UnArchiveSoundTargets(void)
             Con_Error("P_UnArchiveSoundTargets: bad sector number\n");
 
         xsec = P_XSector(P_ToPtr(DMU_SECTOR, secid));
-        xsec->soundtarget = (mobj_t*) SV_ReadShort();
+        xsec->soundtarget = (mobj_t*) (int) SV_ReadShort();
             SV_GetArchiveThing((int) xsec->soundtarget, &xsec->soundtarget);
     }
 }

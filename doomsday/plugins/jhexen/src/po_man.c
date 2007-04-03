@@ -74,7 +74,6 @@ static void TranslateToStartSpot(int tag, int originX, int originY);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int  numthings;
 extern thing_t *things;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------

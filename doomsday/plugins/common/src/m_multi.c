@@ -845,7 +845,7 @@ void MN_TickerEx(void)          // The extended ticker.
     }
 }
 
-int Ed_VisibleSlotChars(char *text, int (*widthFunc) (char *text, dpatch_t *font))
+int Ed_VisibleSlotChars(char *text, int (*widthFunc) (const char *text, dpatch_t *font))
 {
     char    cbuf[2] = { 0, 0 };
     int     i, w;
@@ -860,7 +860,7 @@ int Ed_VisibleSlotChars(char *text, int (*widthFunc) (char *text, dpatch_t *font
     return i;
 }
 
-void Ed_MakeCursorVisible()
+void Ed_MakeCursorVisible(void)
 {
     char    buf[MAX_EDIT_LEN + 1];
     int     i, len, vis;
@@ -881,7 +881,7 @@ void Ed_MakeCursorVisible()
     }
 }
 
-void DrawEditField(menu_t * menu, int index, editfield_t * ef)
+void DrawEditField(menu_t *menu, int index, editfield_t *ef)
 {
     int     x = menu->x, y = menu->y + menu->itemHeight * index, vis;
     char    buf[MAX_EDIT_LEN + 1], *text;

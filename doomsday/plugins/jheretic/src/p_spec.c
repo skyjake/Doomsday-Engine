@@ -196,7 +196,7 @@ void P_InitPicAnims(void)
                     for(j = endFrame; j >= startFrame; j--)
                     {
                         name = (type == DD_TEXTURE? R_TextureNameForNum(j) :
-                                 W_LumpName(j));
+                                 (char *) W_LumpName(j));
                         R_AddToAnimGroup(groupNum, name, ticsPerFrame, 0);
                     }
                 }
