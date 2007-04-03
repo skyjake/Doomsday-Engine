@@ -1028,18 +1028,6 @@ void DD_SetInteger(int ddvalue, int parm)
             memset(skyflatname, 0, 9);
             strncpy(skyflatname, (char *) parm, 9);
         }
-        else if(ddvalue == DD_TRANSLATED_SPRITE_TEXTURE)
-        {
-            // See DD_TSPR_PARM in dd_share.h.
-            int     lump = parm & 0xffffff;
-            int     cls = (parm >> 24) & 0xf;
-            int     table = (parm >> 28) & 0xf;
-
-            if(table)
-                GL_SetTranslatedSprite(lump, table, cls);
-            else
-                GL_SetSprite(lump, 0);
-        }
         return;
     }
     if(ddValues[ddvalue].writePtr)

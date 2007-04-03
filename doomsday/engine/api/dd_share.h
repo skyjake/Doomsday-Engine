@@ -284,7 +284,6 @@ extern          "C" {
         // Non-integer/special values for Set/Get
         DD_SKYFLAT_NAME = 0x4000,
         DD_TRANSLATIONTABLES_ADDRESS,
-        DD_TRANSLATED_SPRITE_TEXTURE,   // Make parameter with DD_TSPR_PARM.
         DD_TRACE_ADDRESS,          // divline 'trace' used by PathTraverse.
         DD_SPRITE_REPLACEMENT,     // Sprite <-> model replacement.
         DD_ACTION_LINK,            // State action routine addresses.
@@ -310,9 +309,6 @@ extern          "C" {
         DD_BLOCKMAP_ORIGIN_Y,
         DD_XGFUNC_LINK             // XG line classes
     };
-
-    // Macro for preparing the parameter for DD_TRANSLATED_SPRITE_TEXTURE.
-#define DD_TSPR_PARM(Lump,Class,TableNum)   (((Lump)&0xffffff) + ((Class)<<24) + ((TableNum)<<28))
 
     // Bounding box coordinates.
     enum {

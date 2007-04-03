@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 333 <--
+; --> 334 <--
 ; Other free ordinals:
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
@@ -282,6 +282,7 @@ EXPORTS
 	GL_SetNoTexture			@115 NONAME
 	GL_SetPatch				@196 NONAME
 	GL_SetSprite			@116 NONAME
+	GL_SetTranslatedSprite  @334 NONAME
 	GL_SetFlat				@117 NONAME
 	GL_SetTexture			@118 NONAME
 	GL_SetRawImage			@119 NONAME

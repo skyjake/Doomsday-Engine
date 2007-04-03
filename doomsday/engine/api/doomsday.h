@@ -374,6 +374,7 @@ extern          "C" {
     void            GL_SetNoTexture(void);
     void            GL_SetPatch(int lump);
     void            GL_SetSprite(int pnum, int spriteType);
+    void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
     void            GL_SetFlat(int idx);
     void            GL_SetTexture(int idx);
     unsigned int    GL_SetRawImage(int lump, int part);

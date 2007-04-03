@@ -437,10 +437,6 @@ void DrawPlayerSetupMenu(void)
         useColor = menuTime / 5 % numColors;
 
     // Draw the color selection as a random player frame.
-    //#ifndef __JHEXEN__
-    //  gi.GetSpriteInfo(SPR_PLAY, CurrentPlrFrame, &sprInfo);
-    //#else
-
     R_GetSpriteInfo(sprites[plrClass], CurrentPlrFrame, &sprInfo);
 
 #if __JHEXEN__
@@ -453,8 +449,10 @@ void DrawPlayerSetupMenu(void)
             useColor = 0;
     }
 #endif
-    Set(DD_TRANSLATED_SPRITE_TEXTURE,
-        DD_TSPR_PARM(sprInfo.lump, plrClass, useColor));
+    if(useColor)
+        GL_SetTranslatedSprite(sprInfo.lump, useColor, plrClass);
+    else
+        GL_SetSprite(sprInfo.lump, 0);
 
     GL_DrawRect(162 - sprInfo.offset,
 #ifdef __JDOOM__
