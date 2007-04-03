@@ -486,6 +486,7 @@ extern          "C" {
     typedef struct ded_decor_s {
         ded_string_t    surface;        // Texture or flat name.
         int             is_texture;     // True, if decoration for a wall.
+        int             glow;
         ded_flags_t     flags;
         int             surface_index;  // Flat or texture index.
         unsigned int    pregen_lightmap;

@@ -2502,7 +2502,8 @@ S_TRANS_RUN4,                  // 1485
 S_TRANS_RUN5,                  // 1486
 S_TRANS_RUN6,                  // 1487
 S_TRANS_RUN7,                  // 1488
-S_TRANS_RUN8,                  // 1489
+
+S_TRANS_RUN8,                  // 1489
 S_TRANS_ATK1,                  // 1490
 S_TRANS_ATK2,                  // 1491
 S_TRANS_ATK3,                  // 1492
@@ -6656,8 +6657,6 @@ typedef enum {
     TXT_SAVENET,                   // 304
     TXT_CLNETLOAD,                 // 305
     TXT_LOADMISSING,               // 306
-    TXT_RENDER_GLOWFLATS,          // 307
-    TXT_RENDER_GLOWTEXTURES,       // 308
     TXT_FINALEFLAT_E1,             // 309
     TXT_FINALEFLAT_E2,             // 310
     TXT_FINALEFLAT_E3,             // 311

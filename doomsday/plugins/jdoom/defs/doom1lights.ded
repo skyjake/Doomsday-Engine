@@ -6,17 +6,37 @@ Header { Version = 5; }
 SkipIf doom2-plut;
 SkipIf doom2-tnt;
 
-#####====--- LIGHT DECORATIONS FOR DOOM I ---====#####
+#####====--- TEXTURE DECORATIONS FOR DOOM I ---====#####
 #
 # The default flags allow using these only with the original textures.
-# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external 
+# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external
 # resources.
 #
 # There can only be one decoration per texture/flat. Newer decorations
-# override older ones. 
+# override older ones.
 #
 # One decoration can specify up to 16 lights.
 #
+
+#
+# Glowing flats:
+#
+Decoration {
+  Flat = "LAVA1";
+  Glow {
+  };
+}
+
+* Decoration { Flat = "LAVA2"; }
+* Decoration { Flat = "LAVA3"; }
+* Decoration { Flat = "LAVA4"; }
+* Decoration { Flat = "NUKAGE1"; }
+* Decoration { Flat = "NUKAGE2"; }
+* Decoration { Flat = "NUKAGE3"; }
+* Decoration { Flat = "FWATER1"; }
+* Decoration { Flat = "FWATER2"; }
+* Decoration { Flat = "FWATER3"; }
+* Decoration { Flat = "FWATER4"; }
 
 #
 # Flats:
@@ -228,19 +248,19 @@ Decoration {
 Decoration {
   Texture = "PLANET1";
   # Six monitors.
-  Light { 
+  Light {
     Color { .1 .4 .7 };
     Offset { 30 30 };
     Radius = .5;
     Levels { 230 220 };
   };
-  Light { 
+  Light {
     Color { .75 .35 .1 };
     Offset { 92 30 };
     Radius = .45;
     Levels { 230 220 };
   };
-  Light { 
+  Light {
     Color { .3 .5 .5 };
     Offset { 158 34 };
     Radius = .4;
@@ -313,13 +333,13 @@ Decoration {
 
 Decoration {
   Texture = "LITEBLU2";
-  Light { 
+  Light {
     Color { .15 .15 1 };
     Offset { 8 20 };
     Halo radius = .1;
     Radius = .1;
   };
-  Light { 
+  Light {
     Color { .15 .15 1 };
     Offset { 8 52 };
     Halo radius = .1;
@@ -424,7 +444,7 @@ Copy Decoration {
 
 Copy Decoration {
   Texture = "SW2COMP";
-  Light { Offset { 32 79 }; };  
+  Light { Offset { 32 79 }; };
 }
 
 Copy Decoration {
@@ -434,7 +454,7 @@ Copy Decoration {
 
 Copy Decoration {
   Texture = "SW2GRAY";
-  Light { Offset { 32 77 }; };  
+  Light { Offset { 32 77 }; };
 }
 
 Copy Decoration {
@@ -477,16 +497,16 @@ Copy Decoration {
   Light { Offset { 27 101 }; };
 }
 
-Copy Decoration { 
+Copy Decoration {
   Texture = "SW2DIRT";
-  Light { Offset { 27 43 }; };  
+  Light { Offset { 27 43 }; };
 }
 
 Decoration {
   Texture = "SW2BRN2";
-  Light { 
+  Light {
     Color { .1 .9 .1 };
-    Offset { 32.5 91 }; 
+    Offset { 32.5 91 };
     Radius = .06;
     Halo radius = .04;
   };

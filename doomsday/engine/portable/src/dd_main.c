@@ -1040,33 +1040,6 @@ void DD_SetInteger(int ddvalue, int parm)
             else
                 GL_SetSprite(lump, 0);
         }
-        else if(ddvalue == DD_TEXTURE_GLOW)
-        {
-            // See DD_TGLOW_PARM in dd_share.h.
-            int     tnum = parm & 0xffff;
-            int     istex = (parm & 0x80000000) != 0;
-            int     glowstate = (parm & 0x10000) != 0;
-
-            if(istex)
-            {
-                if(glowstate)
-                    textures[tnum]->flags |= TXF_GLOW;
-                else
-                    textures[tnum]->flags &= ~TXF_GLOW;
-            }
-            else
-            {
-                flat_t *fl = R_GetFlat(tnum);
-
-                if(glowstate)
-                    fl->flags |= TXF_GLOW;
-                else
-                    fl->flags &= ~TXF_GLOW;
-            }
-
-            // Update all surfaces which may be using this texture.
-            R_UpdateAllSurfaces(false);
-        }
         return;
     }
     if(ddValues[ddvalue].writePtr)

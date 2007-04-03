@@ -2,13 +2,14 @@
 
 Header { Version = 5; }
 
-SkipIf -nodefaultfx; 
+SkipIf -nodefaultfx;
 
 #####====--- LIGHT DECORATIONS ---====#####
 
 Include "doom1lights.ded";
 Include "doom2lights.ded";
-
+Include "doom2-tntlights.ded";
+Include "doom2-plutlights.ded";
 
 #####====--- LIGHT SOURCE PROPERTIES ---====#####
 

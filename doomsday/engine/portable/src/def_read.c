@@ -1547,6 +1547,18 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                     READSTR(decor->surface)
                     decor->is_texture = false;
                 }
+                else if(ISLABEL("Glow"))
+                {
+                    decor->glow = true;
+                    FINDBEGIN;
+                    for(;;)
+                    {
+                        READLABEL;
+                        // No paramaters yet. 
+                        CHECKSC;
+                    }
+                    sub++;
+                }
                 else if(ISLABEL("Light"))
                 {
                     ded_decorlight_t *dl = decor->lights + sub;

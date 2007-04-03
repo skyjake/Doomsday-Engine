@@ -286,7 +286,6 @@ extern          "C" {
         DD_TRANSLATIONTABLES_ADDRESS,
         DD_TRANSLATED_SPRITE_TEXTURE,   // Make parameter with DD_TSPR_PARM.
         DD_TRACE_ADDRESS,          // divline 'trace' used by PathTraverse.
-        DD_TEXTURE_GLOW,
         DD_SPRITE_REPLACEMENT,     // Sprite <-> model replacement.
         DD_ACTION_LINK,            // State action routine addresses.
         DD_MAP_NAME,
@@ -314,9 +313,6 @@ extern          "C" {
 
     // Macro for preparing the parameter for DD_TRANSLATED_SPRITE_TEXTURE.
 #define DD_TSPR_PARM(Lump,Class,TableNum)   (((Lump)&0xffffff) + ((Class)<<24) + ((TableNum)<<28))
-
-    // Macro for preparing the parameter for DD_TEXTURE_GLOW.
-#define DD_TGLOW_PARM(TNum,IsTexture,Glow)  ((TNum & 0xffff) | (IsTexture? 0x80000000 : 0) | (Glow? 0x10000 : 0))
 
     // Bounding box coordinates.
     enum {

@@ -8,11 +8,11 @@ SkipIf Not doom2;
 #####====--- LIGHT DECORATIONS FOR DOOM II ---====#####
 #
 # The default flags allow using these only with the original textures.
-# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external 
+# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external
 # resources.
 #
 # There can only be one decoration per texture/flat. Newer decorations
-# override older ones. 
+# override older ones.
 #
 # One decoration can specify up to 16 lights.
 #
@@ -30,3 +30,23 @@ Decoration {
 Copy Decoration {
   Texture = "BRICKLIT";
 }
+
+#
+# Glowing textures:
+#
+Decoration {
+  Texture = "FIREBLU1";
+  Glow {
+  };
+}
+
+* Decoration { Texture = "FIREBLU2"; }
+* Decoration { Texture = "FIRELAVA"; }
+* Decoration { Texture = "FIRELAV2"; }
+* Decoration { Texture = "FIRELAV3"; }
+* Decoration { Texture = "FIREMAG1"; }
+* Decoration { Texture = "FIREMAG2"; }
+* Decoration { Texture = "FIREMAG3"; }
+* Decoration { Texture = "FIREWALL"; }
+* Decoration { Texture = "FIREWALA"; }
+* Decoration { Texture = "FIREWALB"; }

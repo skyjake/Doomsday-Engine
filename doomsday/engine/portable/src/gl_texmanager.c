@@ -472,7 +472,7 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
 
             map->tex = GL_NewTextureWithParams2(image.pixelSize ==
                                                 2 ? DGL_LUMINANCE_PLUS_A8 : image.pixelSize ==
-                                                3 ? DGL_RGB : DGL_RGBA, 
+                                                3 ? DGL_RGB : DGL_RGBA,
                                                 image.width, image.height, image.pixels,
                                                 TXCF_NO_COMPRESSION, DGL_NEAREST, DGL_LINEAR,
                                                 DGL_CLAMP, DGL_CLAMP);
@@ -853,7 +853,7 @@ void GL_BindTexture(DGLuint texname)
 {
     if(Con_IsBusy())
         return;
-    
+
     /*if(curtex != texname)
        { */
     gl.Bind(texname);
@@ -875,7 +875,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
                          boolean RGBData, boolean noStretch)*/
 {
     texturecontent_t content;
-    
+
     GL_InitTextureContent(&content);
     content.buffer = data;
     content.format = (flagRgbData? (flagAlphaChannel? DGL_RGBA : DGL_RGB) :
@@ -898,7 +898,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
 /**
  * Can be rather time-consuming due to scaling operations and mipmap generation.
  * The texture parameters will NOT be set here.
- * @param data  contains indices to the playpal. 
+ * @param data  contains indices to the playpal.
  * @param alphaChannel  If true, 'data' also contains the alpha values (after the indices).
  * @return The name of the texture (same as 'texName').
  */
@@ -918,7 +918,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
     byte   *buffer, *rgbaOriginal, *idxBuffer;
     boolean freeOriginal;
     boolean freeBuffer;
-    
+
     // Number of color components in the destination image.
     comps = (alphaChannel ? 4 : 3);
 
@@ -1019,7 +1019,7 @@ DGLuint GL_UploadTexture2(texturecontent_t *content)
 
     // Bind the texture so we can upload content.
     gl.Bind(content->name);
-    
+
     if(load8bit)
     {
         int     canGenMips;
@@ -1133,7 +1133,7 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
     GL_InitTextureContent(&content);
     content.width = 256;
     content.height = 256;
-    
+
     if(num < 0 && external == NULL)
         return 0;               // No such lump?!
 
@@ -1213,7 +1213,7 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
     content.minFilter = DGL_LINEAR_MIPMAP_LINEAR;
     content.magFilter = DGL_LINEAR;
     content.wrap[0] = content.wrap[1] = DGL_REPEAT;
-    
+
     inst->tex = GL_NewTexture(&content);
 
     // Free allocated memory.
@@ -1275,6 +1275,7 @@ DGLuint GL_BindTexFlat(flat_t * fl)
     int     lump = fl->lump, width, height, pixSize = 3;
     boolean RGBData = false, freeptr = false;
     ded_detailtexture_t *def;
+    ded_decor_t *dec;
     image_t image;
     boolean hasExternal = false;
 
@@ -1316,11 +1317,11 @@ DGLuint GL_BindTexFlat(flat_t * fl)
     }
 
     // Load the texture.
-    name = GL_UploadTexture(flatptr, width, height, 
+    name = GL_UploadTexture(flatptr, width, height,
                             pixSize == 4, true, RGBData, false, false,
-                            glmode[mipmapping], glmode[texMagMode], 
-                            DGL_REPEAT, DGL_REPEAT, 0);                            
-    
+                            glmode[mipmapping], glmode[texMagMode],
+                            DGL_REPEAT, DGL_REPEAT, 0);
+
     // Average color for glow planes.
     if(RGBData)
     {
@@ -1336,7 +1337,17 @@ DGLuint GL_BindTexFlat(flat_t * fl)
         M_Free(flatptr);
 
     // Is there a surface decoration for this flat?
-    fl->decoration = Def_GetDecoration(lump, false, hasExternal);
+    dec = Def_GetDecoration(lump, false, hasExternal);
+    if(dec)
+    {
+        // A glowing flat?
+        if(dec->glow)
+            fl->flags |= TXF_GLOW;
+        else
+            fl->flags &= ~TXF_GLOW;
+
+        fl->decoration = dec;
+    }
 
     // Get the surface reflection for this flat.
     fl->reflection = Def_GetReflection(lump, false);
@@ -1613,8 +1624,8 @@ DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
 DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
                          gfxmode_t mode, int useMipmap, boolean clamped)
 {
-    return GL_LoadGraphics4(resClass, name, mode, useMipmap, 
-                            DGL_LINEAR, glmode[texMagMode], 
+    return GL_LoadGraphics4(resClass, name, mode, useMipmap,
+                            DGL_LINEAR, glmode[texMagMode],
                             clamped? DGL_CLAMP : DGL_REPEAT,
                             clamped? DGL_CLAMP : DGL_REPEAT, 0);
 }
@@ -1622,7 +1633,7 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
 DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
                          int minFilter, int magFilter, int wrapS, int wrapT, int otherFlags)
 {
-    return GL_LoadGraphics4(RC_GRAPHICS, name, mode, DGL_FALSE, 
+    return GL_LoadGraphics4(RC_GRAPHICS, name, mode, DGL_FALSE,
                             minFilter, magFilter, wrapS, wrapT, otherFlags);
 }
 
@@ -1632,8 +1643,8 @@ DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
  * actual pixel colors all white.
  */
 DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
-                         gfxmode_t mode, int useMipmap, 
-                         int minFilter, int magFilter, int wrapS, int wrapT, 
+                         gfxmode_t mode, int useMipmap,
+                         int minFilter, int magFilter, int wrapS, int wrapT,
                          int otherFlags)
 {
     image_t image;
@@ -1689,9 +1700,9 @@ DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
             gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
             gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);
         }*/
-        
-        texture = GL_NewTextureWithParams2(( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : 
-                                             image.pixelSize == 3 ? DGL_RGB : 
+
+        texture = GL_NewTextureWithParams2(( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+                                             image.pixelSize == 3 ? DGL_RGB :
                                              image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
                                            image.width, image.height, image.pixels,
                                            ( otherFlags | (useMipmap? TXCF_MIPMAP : 0) |
@@ -1700,7 +1711,7 @@ DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
                                            (useMipmap ? glmode[mipmapping] : DGL_LINEAR),
                                            glmode[texMagMode],
                                            wrapS, wrapT);
-                                           
+
         GL_DestroyImage(&image);
     }
     return texture;
@@ -1760,6 +1771,7 @@ unsigned int GL_PrepareTexture(int idx)
 unsigned int GL_PrepareTexture2(int idx, boolean translate)
 {
     ded_detailtexture_t *def;
+    ded_decor_t *dec;
     int     originalIndex = idx;
     texture_t *tex;
     boolean alphaChannel = false, RGBData = false;
@@ -1834,7 +1846,7 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
         textures[idx]->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
                              alphaChannel, true, RGBData, false, false,
-                             glmode[mipmapping], glmode[texMagMode], 
+                             glmode[mipmapping], glmode[texMagMode],
                              DGL_REPEAT, DGL_REPEAT, 0);
 
         // Average color for glow planes.
@@ -1854,7 +1866,17 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
         GL_DestroyImage(&image);
 
         // Is there a decoration for this surface?
-        textures[idx]->decoration = Def_GetDecoration(idx, true, hasExternal);
+        dec = Def_GetDecoration(idx, true, hasExternal);
+        if(dec)
+        {
+            // A glowing texture?
+            if(dec->glow)
+                textures[idx]->flags |= TXF_GLOW;
+            else
+                textures[idx]->flags &= ~TXF_GLOW;
+
+            textures[idx]->decoration = dec;
+        }
 
         // Get the reflection for this surface.
         textures[idx]->reflection = Def_GetReflection(idx, true);
@@ -1981,7 +2003,7 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
         textures[idx]->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
                              alphaChannel, true, RGBData, false, false,
-                             glmode[mipmapping], glmode[texMagMode], 
+                             glmode[mipmapping], glmode[texMagMode],
                              DGL_REPEAT, DGL_REPEAT, TXCF_NO_COMPRESSION);
 
         // Do we have a masked texture?
@@ -2624,7 +2646,7 @@ DGLuint GL_PrepareFlareTexture(flaretex_t flare)
         flaretexnames[flare] =
             GL_LoadGraphics3(flare == 0 ? "flare" : flare == 1 ? "brflare" :
                              "bigflare", LGM_WHITE_ALPHA,
-                             DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, 
+                             DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP,
                              TXCF_NO_COMPRESSION);
 
         if(flaretexnames[flare] == 0)

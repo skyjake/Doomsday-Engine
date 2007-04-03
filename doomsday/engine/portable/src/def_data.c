@@ -505,6 +505,7 @@ int DED_AddDecoration(ded_t *ded)
     int     i;
 
     // Init some default values.
+    decor->glow = 0;
     for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
     {
         // The color (0,0,0) means the light is not active.

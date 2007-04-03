@@ -64,8 +64,6 @@ void    M_UnloadData(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void G_SetGlowing(void);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -159,7 +157,6 @@ void G_UpdateState(int step)
 #if __JDOOM__ || __JHERETIC__ || __JSTRIFE__
         S_LevelMusic();
 #endif
-        G_SetGlowing();
         break;
 
     case DD_RENDER_RESTART_PRE:
@@ -187,49 +184,4 @@ static char *ScanWord(char *ptr, char *buf)
     }
     *buf = 0;
     return ptr;
-}
-
-/*
- * As long as the -noglow commandline flag has not been set this will
- * retrieve the TXT_RENDER_GLOWFLATS & TXT_RENDER_GLOWTEXTURES strings
- * from the engine and register the flats/textures contained in them
- * as "glowing" textures in Doomsday.
- *
- * Each string contains the lump names of individual FLATS/TEXTURES
- * respectively. Each name is delimited by whitespace.
- */
-void G_SetGlowing(void)
-{
-    char   *ptr;
-    char    buf[50];
-
-    if(!ArgCheck("-noglow"))
-    {
-        // Set some glowing textures.
-        ptr = GET_TXT(TXT_RENDER_GLOWFLATS);
-        if(ptr)
-        {
-            for(ptr = ScanWord(ptr, buf); *buf; ptr = ScanWord(ptr, buf))
-            {
-                // Is there such a flat?
-                if(W_CheckNumForName(buf) == -1)
-                    continue;
-                Set(DD_TEXTURE_GLOW,
-                    DD_TGLOW_PARM(R_FlatNumForName(buf), false, true));
-            }
-        }
-
-        ptr = GET_TXT(TXT_RENDER_GLOWTEXTURES);
-        if(ptr)
-        {
-            for(ptr = ScanWord(ptr, buf); *buf; ptr = ScanWord(ptr, buf))
-            {
-                // Is there such a texture?
-                if(R_CheckTextureNumForName(buf) == -1)
-                    continue;
-                Set(DD_TEXTURE_GLOW,
-                    DD_TGLOW_PARM(R_TextureNumForName(buf), true, true));
-            }
-        }
-    }
 }

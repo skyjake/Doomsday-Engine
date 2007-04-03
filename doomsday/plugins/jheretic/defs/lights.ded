@@ -6,15 +6,40 @@ Header { Version = 6; }
 #####====--- LIGHT DECORATIONS ---====#####
 #
 # The default flags allow using these only with the original textures.
-# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external 
+# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external
 # resources.
 #
 # There can only be one decoration per texture/flat. Newer decorations
-# override older ones. 
+# override older ones.
 #
 # One decoration can specify up to 16 lights.
 #
 # (based on Isegrim's definitions)
+
+#
+# Glowing flats:
+#
+Decoration {
+  Flat = "FLATHUH1";
+  Glow {
+  };
+}
+
+* Decoration { Flat = "FLATHUH2"; }
+* Decoration { Flat = "FLATHUH3"; }
+* Decoration { Flat = "FLATHUH4"; }
+
+#
+# Glowing textures:
+#
+Decoration {
+  Texture = "LAVAFL1";
+  Glow {
+  };
+}
+
+* Decoration { Texture = "LAVAFL2"; }
+* Decoration { Texture = "LAVAFL3"; }
 
 Decoration {
   Texture = "GRSKULL3";
@@ -28,7 +53,7 @@ Decoration {
     Color { .7 0 0 }
     Offset { 72 32 }
     Halo radius = .1;
-    Radius = .05;    
+    Radius = .05;
   }
 }
 

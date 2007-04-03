@@ -1,11 +1,21 @@
-# WolfTC: Lights
-# 10 Aug 2006 - Contents Identical to jDoom
+# jDoom: Light Decorations for Doom II-tnt
 
-Header { Version = 5; }
+Header { Version = 6; }
 
-SkipIf -nodefaultfx;
+# This file is skipped if not Doom II TNT.
+SkipIf Not doom2-tnt;
 
-#####====--- LIGHT DECORATIONS ---====#####
+#####====--- LIGHT DECORATIONS FOR DOOM II TNT ---====#####
+#
+# The default flags allow using these only with the original textures.
+# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external
+# resources.
+#
+# There can only be one decoration per texture/flat. Newer decorations
+# override older ones.
+#
+# One decoration can specify up to 16 lights.
+#
 
 #
 # Glowing flats:
@@ -46,29 +56,3 @@ Decoration {
 * Decoration { Texture = "FIREWALL"; }
 * Decoration { Texture = "FIREWALA"; }
 * Decoration { Texture = "FIREWALB"; }
-
-
-#####====--- LIGHT SOURCE PROPERTIES ---====#####
-
-# The default properties of all light-emitting objects are determined
-# automatically by the engine.
-
-# The blue health bottles should be lit a bit more brightly.
-Light { State = "BON1"; Size = 0.5; Color { .05 .05 .85 }; }
-* Light { State = "BON1A"; }
-* Light { State = "BON1B"; }
-* Light { State = "BON1C"; }
-* Light { State = "BON1D"; }
-* Light { State = "BON1E"; }
-
-# Nuke-barrel's (weak) green glow.
-Light {
-  State = "BAR1";
-  Flags = "lgf_nohalo";
-  Size = 0.31;
-  Y Offset = -6;
-}
-Copy Light {
-  State = "BAR2";
-  Size = 0.32;
-}

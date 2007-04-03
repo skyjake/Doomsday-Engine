@@ -780,16 +780,6 @@ Text {
 }
 
 Text {
-  ID = "RENDER_GLOWFLATS";
-  Text = "FLATHUH1 FLATHUH2 FLATHUH3 FLATHUH4";
-}
-
-Text {
-  ID = "RENDER_GLOWTEXTURES";
-  Text = "LAVAFL1 LAVAFL2 LAVAFL3";
-}
-
-Text {
   ID = "EPISODE1";
   Text = "City Of The Damned";
 }
