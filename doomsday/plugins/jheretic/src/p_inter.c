@@ -70,7 +70,6 @@
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int playerkeys;
-extern ddvertex_t KeyPoints[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -268,8 +267,6 @@ void P_GiveKey(player_t *player, keytype_t key)
     if(player == &players[consoleplayer])
     {
         playerkeys |= 1 << key;
-        KeyPoints[key].pos[VX] = 0;
-        KeyPoints[key].pos[VY] = 0;
     }
 
     player->bonuscount = BONUSADD;

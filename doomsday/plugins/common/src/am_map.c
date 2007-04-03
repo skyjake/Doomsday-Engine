@@ -87,10 +87,6 @@ typedef struct vectorgrap_s {
     mline_t    *lines;
 } vectorgrap_t;
 
-typedef struct islope_s {
-    fixed_t slp, islp;
-} islope_t;
-
 typedef enum glowtype_e {
     NO_GLOW = -1,
     TWOSIDED_GLOW,
@@ -254,27 +250,27 @@ mline_t         player_arrow[] = {
 #undef R
 
 // scale on entry
-#define INITSCALEMTOF (.2*FRACUNIT)
+#define INITSCALEMTOF (.2f)
 
 // how much the automap moves window per tic in frame-buffer coordinates
 #define F_PANINC    4                   // moves 140 pixels in 1 second
 
 // how much zoom-in per tic
-#define M_ZOOMIN        ((int) (1.02*FRACUNIT))        // goes to 2x in 1 second
+#define M_ZOOMIN        (1.02f)        // goes to 2x in 1 second
 
 // how much zoom-out per tic
-#define M_ZOOMOUT       ((int) (FRACUNIT/1.02))        // pulls out to 0.5x in 1 second
+#define M_ZOOMOUT       (1.02f)        // pulls out to 0.5x in 1 second
 
 // translates between frame-buffer and map distances
-#define FTOM(x) FixedMul(((x)<<16),scale_ftom)
-#define MTOF(x) (FixedMul((x),scale_mtof)>>16)
-#define MTOFX(x) FixedMul((x),scale_mtof)
+#define FTOM(x) ((x) * scale_ftom)
+#define MTOF(x) ((x) * scale_mtof)
+#define MTOFX(x) ((x) * scale_mtof)
 
 // translates between frame-buffer and map coordinates
-#define CXMTOF(x)  (f_x + MTOF((x)-m_x))
-#define CYMTOF(y)  (f_y + (f_h - MTOF((y)-m_y)))
-#define CXMTOFX(x)  ((f_x<<16) + MTOFX((x)-m_x))
-#define CYMTOFX(y)  ((f_y<<16) + ((f_h<<16) - MTOFX((y)-m_y)))
+#define CXMTOF(x)  (f_x + MTOF((x) - m_x))
+#define CYMTOF(y)  (f_y + (f_h - MTOF((y) - m_y)))
+#define CXMTOFX(x)  (f_x + MTOFX((x) - m_x))
+#define CYMTOFX(y)  (f_y + (f_h - MTOFX((y) - m_y)))
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -327,8 +323,6 @@ extern boolean viewactive;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 static vectorgrap_t *vectorGraphs[NUM_VECTOR_GRAPHS];
-
-ddvertex_t KeyPoints[NUMBEROFKEYS]; // Used in Baby mode
 
 int     cheating = 0;
 boolean automapactive = false;
@@ -386,13 +380,10 @@ ccmd_t  mapCCmds[] = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 #if __JDOOM__
-static int keycolors[] = { KEY1, KEY2, KEY3, KEY4, KEY5, KEY6 };
 static int maplumpnum = 0; // if 0 no background image will be drawn
 #elif __JHERETIC__
-static int keycolors[] = { KEY1, KEY2, KEY3 };
 static int maplumpnum = 1; // if 0 no background image will be drawn
 #else
-static int keycolors[] = { KEY1, KEY2, KEY3 };
 static int maplumpnum = 1; // if 0 no background image will be drawn
 #endif
 
@@ -432,36 +423,36 @@ static int f_x, f_y;
 static int f_w, f_h;
 
 static mpoint_t m_paninc;        // how far the window pans each tic (map coords)
-static fixed_t mtof_zoommul;        // how far the window zooms in each tic (map coords)
-static fixed_t ftom_zoommul;        // how far the window zooms in each tic (fb coords)
+static float mtof_zoommul;        // how far the window zooms in each tic (map coords)
+static float ftom_zoommul;        // how far the window zooms in each tic (fb coords)
 
-static fixed_t m_x, m_y;        // LL x,y where the window is on the map (map coords)
-static fixed_t m_x2, m_y2;        // UR x,y where the window is on the map (map coords)
+static float m_x, m_y;        // LL x,y where the window is on the map (map coords)
+static float m_x2, m_y2;        // UR x,y where the window is on the map (map coords)
 
 // width/height of window on map (map coords)
-static fixed_t m_w, m_h;
+static float m_w, m_h;
 
 // based on level size
-static fixed_t min_x;
-static fixed_t min_y;
-static fixed_t max_x;
-static fixed_t max_y;
+static float min_x;
+static float min_y;
+static float max_x;
+static float max_y;
 
-static fixed_t min_scale_mtof;        // used to tell when to stop zooming out
-static fixed_t max_scale_mtof;        // used to tell when to stop zooming in
+static float min_scale_mtof;        // used to tell when to stop zooming out
+static float max_scale_mtof;        // used to tell when to stop zooming in
 
 // old stuff for recovery later
-static fixed_t old_m_w, old_m_h;
-static fixed_t old_m_x, old_m_y;
+static float old_m_w, old_m_h;
+static float old_m_x, old_m_y;
 
 // old location used by the Follower routine
 static mpoint_t f_oldloc;
 
 // used by MTOF to scale from map-to-frame-buffer coords
-static fixed_t scale_mtof = INITSCALEMTOF;
+static float scale_mtof = INITSCALEMTOF;
 
 // used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
-static fixed_t scale_ftom;
+static float scale_ftom;
 
 static player_t *plr;                // the player represented by an arrow
 
@@ -633,31 +624,6 @@ static vectorgrap_t *AM_GetVectorGraphic(uint idx)
 }
 
 /**
- * Calculates the slope and slope according to the x-axis of a line
- * segment in map coordinates (with the upright y-axis n' all) so
- * that it can be used with the brain-dead drawing stuff.
- */
-#if 0 // currently unused.
-static void AM_getIslope(mline_t *ml, islope_t *is)
-{
-    int         dx, dy;
-
-    dy = ml->a.pos[VY] - ml->b.pos[VY];
-    dx = ml->b.pos[VX] - ml->a.pos[VX];
-
-    if(!dy)
-        is->islp = (dx < 0 ? -DDMAXINT : DDMAXINT);
-    else
-        is->islp = FixedDiv(dx, dy);
-    if(!dx)
-        is->slp = (dy < 0 ? -DDMAXINT : DDMAXINT);
-    else
-        is->slp = FixedDiv(dy, dx);
-
-}
-#endif
-
-/**
  * Activate the new scale
  */
 static void AM_activateNewScale(void)
@@ -697,15 +663,15 @@ static void AM_restoreScaleAndLoc(void)
     }
     else
     {
-        m_x = plr->plr->mo->pos[VX] - m_w / 2;
-        m_y = plr->plr->mo->pos[VY] - m_h / 2;
+        m_x = FIX2FLT(plr->plr->mo->pos[VX]) - m_w / 2.0f;
+        m_y = FIX2FLT(plr->plr->mo->pos[VY]) - m_h / 2.0f;
     }
     m_x2 = m_x + m_w;
     m_y2 = m_y + m_h;
 
     // Change the scaling multipliers
-    scale_mtof = FixedDiv(f_w << FRACBITS, m_w);
-    scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+    scale_mtof = (float) f_w / m_w;
+    scale_ftom = 1.0f / scale_mtof;
 }
 
 /**
@@ -714,15 +680,14 @@ static void AM_restoreScaleAndLoc(void)
 static void AM_addMark(void)
 {
 #if _DEBUG
-Con_Message("Adding mark point %d at X=%d Y=%d\n",
-            (markpointnum + 1) % AM_NUMMARKPOINTS,  m_x + m_w / 2, m_y + m_h / 2);
+Con_Message("Adding mark point %i at X=%g Y=%g\n",
+            (markpointnum + 1) % AM_NUMMARKPOINTS, m_x + m_w / 2.0f, m_y + m_h / 2.0f);
 #endif
 
-    markpoints[markpointnum].pos[VX] = m_x + m_w / 2;
-    markpoints[markpointnum].pos[VY] = m_y + m_h / 2;
+    markpoints[markpointnum].pos[VX] = m_x + m_w / 2.0f;
+    markpoints[markpointnum].pos[VY] = m_y + m_h / 2.0f;
     markpoints[markpointnum].pos[VZ] = 0;
     markpointnum = (markpointnum + 1) % AM_NUMMARKPOINTS;
-
 }
 
 /**
@@ -732,45 +697,42 @@ Con_Message("Adding mark point %d at X=%d Y=%d\n",
 static void AM_findMinMaxBoundaries(void)
 {
     uint        i;
-    fixed_t     x, y;
-    fixed_t     a;
-    fixed_t     b;
-    fixed_t     max_w;
-    fixed_t     max_h;
-    fixed_t     min_w;
-    fixed_t     min_h;
+    float       pos[2];
+    float       a, b;
+    float       max_w;
+    float       max_h;
+    float       min_w;
+    float       min_h;
 
-    min_x = min_y = DDMAXINT;
-    max_x = max_y = -DDMAXINT;
+    min_x = min_y = (float) DDMAXINT;
+    max_x = max_y = (float) -DDMAXINT;
 
     for(i = 0; i < numvertexes; ++i)
     {
-        x = P_GetFixed(DMU_VERTEX, i, DMU_X);
-        y = P_GetFixed(DMU_VERTEX, i, DMU_Y);
+        P_GetFloatv(DMU_VERTEX, i, DMU_XY, pos);
 
-        if(x < min_x)
-            min_x = x;
-        else if(x > max_x)
-            max_x = x;
+        if(pos[VX] < min_x)
+            min_x = pos[VX];
+        else if(pos[VX] > max_x)
+            max_x = pos[VX];
 
-        if(y < min_y)
-            min_y = y;
-        else if(y > max_y)
-            max_y = y;
+        if(pos[VY] < min_y)
+            min_y = pos[VY];
+        else if(pos[VY] > max_y)
+            max_y = pos[VY];
     }
 
     max_w = max_x - min_x;
     max_h = max_y - min_y;
 
-    min_w = 2 * PLAYERRADIUS;    // const? never changed?
-    min_h = 2 * PLAYERRADIUS;
+    min_w = FIX2FLT(2 * PLAYERRADIUS);    // const? never changed?
+    min_h = FIX2FLT(2 * PLAYERRADIUS);
 
-    a = FixedDiv(f_w << FRACBITS, max_w);
-    b = FixedDiv(f_h << FRACBITS, max_h);
+    a = (float) f_w / max_w;
+    b = (float) f_h / max_h;
 
-    min_scale_mtof = a < b ? a : b;
-    max_scale_mtof = FixedDiv(f_h << FRACBITS, 2 * PLAYERRADIUS);
-
+    min_scale_mtof = (a < b ? a : b);
+    max_scale_mtof = (float) f_h / FIX2FLT(2 * PLAYERRADIUS);
 }
 
 /**
@@ -808,8 +770,6 @@ static void AM_changeWindowLoc(void)
 static void AM_initVariables(void)
 {
     int         i, pnum;
-    thinker_t  *think;
-    mobj_t     *mo;
 
     automapactive = true;
 
@@ -857,8 +817,8 @@ static void AM_initVariables(void)
     }
 
     plr = &players[pnum];
-    m_x = plr->plr->mo->pos[VX] - m_w / 2;
-    m_y = plr->plr->mo->pos[VY] - m_h / 2;
+    m_x = FIX2FLT(plr->plr->mo->pos[VX]) - m_w / 2.0f;
+    m_y = FIX2FLT(plr->plr->mo->pos[VY]) - m_h / 2.0f;
     AM_changeWindowLoc();
 
     // for saving & restoring
@@ -868,71 +828,6 @@ static void AM_initVariables(void)
     old_m_h = m_h;
 
     AM_setWinPos();
-
-    memset(KeyPoints, 0, sizeof(ddvertex_t) * NUMBEROFKEYS);
-
-    // load in the location of keys, if in baby mode
-    if(gameskill == SM_BABY)
-    {
-        for(think = thinkercap.next; think != &thinkercap; think = think->next)
-        {
-            if(think->function != P_MobjThinker)
-            {                    //not a mobj
-                continue;
-            }
-            mo = (mobj_t *) think;
-#ifdef __JDOOM__
-            if(mo->type == MT_MISC4)
-            {
-                KeyPoints[0].pos[VX] = mo->pos[VX];
-                KeyPoints[0].pos[VY] = mo->pos[VY];
-            }
-            if(mo->type == MT_MISC5)
-            {
-                KeyPoints[1].pos[VX] = mo->pos[VX];
-                KeyPoints[1].pos[VY] = mo->pos[VY];
-            }
-            if(mo->type == MT_MISC6)
-            {
-                KeyPoints[2].pos[VX] = mo->pos[VX];
-                KeyPoints[2].pos[VY] = mo->pos[VY];
-            }
-            if(mo->type == MT_MISC7)
-            {
-                KeyPoints[3].pos[VX] = mo->pos[VX];
-                KeyPoints[3].pos[VY] = mo->pos[VY];
-            }
-            if(mo->type == MT_MISC8)
-            {
-                KeyPoints[4].pos[VX] = mo->pos[VX];
-                KeyPoints[4].pos[VY] = mo->pos[VY];
-            }
-            if(mo->type == MT_MISC9)
-            {
-                KeyPoints[5].pos[VX] = mo->pos[VX];
-                KeyPoints[5].pos[VY] = mo->pos[VY];
-            }
-#elif __JHERETIC__              // NB - Should really put the keys into a struct for neatness.
-                                // name of the vector object, object keyname, colour etc.
-                                // could easily display other objects on the map then...
-            if(mo->type == MT_CKEY)
-            {
-                KeyPoints[0].pos[VX] = mo->pos[VX];
-                KeyPoints[0].pos[VY] = mo->pos[VY];
-            }
-            else if(mo->type == MT_BKYY)
-            {
-                KeyPoints[1].pos[VX] = mo->pos[VX];
-                KeyPoints[1].pos[VY] = mo->pos[VY];
-            }
-            else if(mo->type == MT_AKYY)
-            {
-                KeyPoints[2].pos[VX] = mo->pos[VX];
-                KeyPoints[2].pos[VY] = mo->pos[VY];
-            }
-#endif                                // FIXME: Keys in jHexen!
-        }
-    }
 }
 
 /**
@@ -961,8 +856,7 @@ static void AM_loadPics(void)
 }
 
 /**
- * Clears markpoint array
- * fixme THIS IS BOLLOCKS!
+ * Clears markpoint array.
  */
 static void AM_clearMarks(void)
 {
@@ -986,10 +880,10 @@ void AM_LevelInit(void)
     AM_clearMarks();
 
     AM_findMinMaxBoundaries();
-    scale_mtof = FixedDiv(min_scale_mtof, (int) (0.7 * FRACUNIT));
+    scale_mtof = min_scale_mtof / 0.7f;
     if(scale_mtof > max_scale_mtof)
         scale_mtof = min_scale_mtof;
-    scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+    scale_ftom = 1.0f / scale_mtof;
 }
 
 /**
@@ -1029,7 +923,7 @@ void AM_Start(void)
 static void AM_minOutWindowScale(void)
 {
     scale_mtof = min_scale_mtof;
-    scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+    scale_ftom = 1.0f / scale_mtof;
     AM_activateNewScale();
 }
 
@@ -1039,7 +933,7 @@ static void AM_minOutWindowScale(void)
 static void AM_maxOutWindowScale(void)
 {
     scale_mtof = max_scale_mtof;
-    scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+    scale_ftom = 1.0f / scale_mtof;
     AM_activateNewScale();
 }
 
@@ -1049,8 +943,8 @@ static void AM_maxOutWindowScale(void)
 static void AM_changeWindowScale(void)
 {
     // Change the scaling multipliers
-    scale_mtof = FixedMul(scale_mtof, mtof_zoommul);
-    scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+    scale_mtof = scale_mtof * mtof_zoommul;
+    scale_ftom = 1.0f / scale_mtof;
 
     if(scale_mtof < min_scale_mtof)
         AM_minOutWindowScale();
@@ -1067,16 +961,16 @@ static void AM_doFollowPlayer(void)
 {
     mobj_t *mo = plr->plr->mo;
 
-    if(f_oldloc.pos[VX] != mo->pos[VX] || f_oldloc.pos[VY] != mo->pos[VY])
+    if(f_oldloc.pos[VX] != FIX2FLT(mo->pos[VX]) || f_oldloc.pos[VY] != FIX2FLT(mo->pos[VY]))
     {
         // Now that a high resolution is used (compared to 320x200!)
         // there is no need to quantify map scrolling. -jk
-        m_x =  mo->pos[VX] - m_w / 2;
-        m_y =  mo->pos[VY]  - m_h / 2;
+        m_x = FIX2FLT(mo->pos[VX]) - m_w / 2.0f;
+        m_y = FIX2FLT(mo->pos[VY]) - m_h / 2.0f;
         m_x2 = m_x + m_w;
         m_y2 = m_y + m_h;
-        f_oldloc.pos[VX] = mo->pos[VX];
-        f_oldloc.pos[VY] = mo->pos[VY];
+        f_oldloc.pos[VX] = FIX2FLT(mo->pos[VX]);
+        f_oldloc.pos[VY] = FIX2FLT(mo->pos[VY]);
     }
 }
 
@@ -1125,8 +1019,8 @@ void AM_Ticker(void)
     else
 */
     {
-        mtof_zoommul = FRACUNIT;
-        ftom_zoommul = FRACUNIT;
+        mtof_zoommul = 1;
+        ftom_zoommul = 1;
     }
 
 /*
@@ -1704,10 +1598,10 @@ static void AM_AddQuad(float x1, float y1, float x2, float y2,
  */
 static void AM_drawMline(mline_t *ml, int color, float alpha)
 {
-    AM_AddLine(FIX2FLT(CXMTOFX(FLT2FIX(ml->a.pos[VX]))),
-               FIX2FLT(CYMTOFX(FLT2FIX(ml->a.pos[VY]))),
-               FIX2FLT(CXMTOFX(FLT2FIX(ml->b.pos[VX]))),
-               FIX2FLT(CYMTOFX(FLT2FIX(ml->b.pos[VY]))),
+    AM_AddLine(CXMTOFX(ml->a.pos[VX]),
+               CYMTOFX(ml->a.pos[VY]),
+               CXMTOFX(ml->b.pos[VX]),
+               CYMTOFX(ml->b.pos[VY]),
                color,
                (am_alpha - (1 - alpha)));
 }
@@ -1721,16 +1615,11 @@ static void AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps,
     float       a[2], b[2];
     float       length, dx, dy;
 
-    a[VX] = ml->a.pos[VX];
-    a[VY] = ml->a.pos[VY];
-    b[VX] = ml->b.pos[VX];
-    b[VY] = ml->b.pos[VY];
-
     // Scale into map, screen space units.
-    a[VX] = FIX2FLT(CXMTOFX(FLT2FIX(a[VX])));
-    a[VY] = FIX2FLT(CYMTOFX(FLT2FIX(a[VY])));
-    b[VX] = FIX2FLT(CXMTOFX(FLT2FIX(b[VX])));
-    b[VY] = FIX2FLT(CYMTOFX(FLT2FIX(b[VY])));
+    a[VX] = CXMTOFX(ml->a.pos[VX]);
+    a[VY] = CYMTOFX(ml->a.pos[VY]);
+    b[VX] = CXMTOFX(ml->b.pos[VX]);
+    b[VY] = CYMTOFX(ml->b.pos[VY]);
 
     dx = b[VX] - a[VX];
     dy = b[VY] - a[VY];
@@ -1746,7 +1635,7 @@ static void AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps,
 
         // Scale line thickness relative to zoom level?
         if(c->scale)
-            thickness = cfg.automapDoorGlow * FIX2FLT(scale_mtof) * 2.5f + 3;
+            thickness = cfg.automapDoorGlow * scale_mtof * 2.5f + 3;
         else
             thickness = c->w;
 
@@ -1859,46 +1748,42 @@ static void AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps,
  */
 static void renderGrid(int color)
 {
-    fixed_t     x, y;
-    fixed_t     start, end;
-    fixed_t     originx = *((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_X));
-    fixed_t     originy = *((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_Y));
+    float       x, y;
+    float       start, end;
+    float       originx = FIX2FLT(*((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_X)));
+    float       originy = FIX2FLT(*((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_Y)));
     mline_t     ml;
 
     // Figure out start of vertical gridlines
     start = m_x;
-    if((start - originx) % (MAPBLOCKUNITS << FRACBITS))
-        start +=
-            (MAPBLOCKUNITS << FRACBITS) -
-            ((start - originx) % (MAPBLOCKUNITS << FRACBITS));
+    if((int) (start - originx) % MAPBLOCKUNITS)
+        start += MAPBLOCKUNITS - ((int) (start - originx) % MAPBLOCKUNITS);
     end = m_x + m_w;
 
     // Draw vertical gridlines
-    ml.a.pos[VY] = FIX2FLT(m_y);
-    ml.b.pos[VY] = FIX2FLT(m_y + m_h);
+    ml.a.pos[VY] = m_y;
+    ml.b.pos[VY] = m_y + m_h;
 
-    for(x = start; x < end; x += (MAPBLOCKUNITS << FRACBITS))
+    for(x = start; x < end; x += MAPBLOCKUNITS)
     {
-        ml.a.pos[VX] = FIX2FLT(x);
-        ml.b.pos[VX] = FIX2FLT(x);
+        ml.a.pos[VX] = x;
+        ml.b.pos[VX] = x;
         AM_drawMline(&ml, color, cfg.automapLineAlpha);
     }
 
     // Figure out start of horizontal gridlines
     start = m_y;
-    if((start - originy) % (MAPBLOCKUNITS << FRACBITS))
-        start +=
-            (MAPBLOCKUNITS << FRACBITS) -
-            ((start - originy) % (MAPBLOCKUNITS << FRACBITS));
+    if((int) (start - originy) % MAPBLOCKUNITS)
+        start += MAPBLOCKUNITS - ((int) (start - originy) % MAPBLOCKUNITS);
     end = m_y + m_h;
 
     // draw horizontal gridlines
-    ml.a.pos[VX] = FIX2FLT(m_x);
-    ml.b.pos[VX] = FIX2FLT(m_x + m_w);
-    for(y = start; y < end; y += (MAPBLOCKUNITS << FRACBITS))
+    ml.a.pos[VX] = m_x;
+    ml.b.pos[VX] = m_x + m_w;
+    for(y = start; y < end; y += MAPBLOCKUNITS)
     {
-        ml.a.pos[VY] = FIX2FLT(y);
-        ml.b.pos[VY] = FIX2FLT(y);
+        ml.a.pos[VY] = y;
+        ml.b.pos[VY] = y;
         AM_drawMline(&ml, color, cfg.automapLineAlpha);
     }
 }
@@ -1908,20 +1793,18 @@ static void renderGrid(int color)
  */
 static void renderWalls(void)
 {
-    int         i, flags;
+    int         i, segcount, flags;
     uint        s, subColor = 0;
     line_t     *line;
     xline_t    *xline;
     mline_t     l;
-    sector_t   *sec, *frontsector, *backsector;
+    sector_t   *frontsector, *backsector;
     seg_t      *seg;
     mapline_t   templine;
     boolean     withglow = false;
 
     for(s = 0; s < numsubsectors; ++s)
     {
-        sec = P_GetPtr(DMU_SUBSECTOR, s, DMU_SECTOR);
-
         if(cheating == 3)        // Debug cheat, show subsectors
         {
             subColor++;
@@ -1929,18 +1812,16 @@ static void renderWalls(void)
                 subColor = 0;
         }
 
-        for(i = 0; i < P_GetInt(DMU_SUBSECTOR, s, DMU_SEG_COUNT); ++i)
+        segcount = P_GetInt(DMU_SUBSECTOR, s, DMU_SEG_COUNT);
+        for(i = 0; i < segcount; ++i)
         {
             seg = P_GetPtr(DMU_SUBSECTOR, s, DMU_SEG_OF_SUBSECTOR | i);
             line = P_GetPtrp(seg, DMU_LINE);
             if(!line)
                 continue;
 
-            flags = P_GetIntp(line, DMU_FLAGS);
-            l.a.pos[VX] = P_GetFloatp(seg, DMU_VERTEX1_X);
-            l.a.pos[VY] = P_GetFloatp(seg, DMU_VERTEX1_Y);
-            l.b.pos[VX] = P_GetFloatp(seg, DMU_VERTEX2_X);
-            l.b.pos[VY] = P_GetFloatp(seg, DMU_VERTEX2_Y);
+            P_GetFloatpv(seg, DMU_VERTEX1_XY, l.a.pos);
+            P_GetFloatpv(seg, DMU_VERTEX2_XY, l.b.pos);
 
             if(cheating == 3)        // Debug cheat, show subsectors
             {
@@ -1963,11 +1844,13 @@ static void renderWalls(void)
                 {
                     AM_getLine(&templine, 1, 0);
                     AM_drawMline2(&l, &templine, false, true);
+                    continue;
                 }
             }
 #endif
 #endif
             backsector = P_GetPtrp(seg, DMU_BACK_SECTOR);
+            flags = P_GetIntp(line, DMU_FLAGS);
             if(cheating || (flags & ML_MAPPED))
             {
                 int     specialType;
@@ -2041,13 +1924,15 @@ static void renderWalls(void)
  */
 static void AM_rotate(float *x, float *y, angle_t a)
 {
-    float   tmpx;
+    int         angle;
+    float       tmpx;
 
-    tmpx = (*x * FIX2FLT(finecosine[a >> ANGLETOFINESHIFT])) -
-           (*y * FIX2FLT(finesine[a >> ANGLETOFINESHIFT]));
+    angle = a >> ANGLETOFINESHIFT;
+    tmpx = (*x * FIX2FLT(finecosine[angle])) -
+                (*y * FIX2FLT(finesine[angle]));
 
-    *y = (*x * FIX2FLT(finesine[a >> ANGLETOFINESHIFT])) +
-         (*y * FIX2FLT(finecosine[a >> ANGLETOFINESHIFT]));
+    *y = (*x * FIX2FLT(finesine[angle])) +
+                (*y * FIX2FLT(finecosine[angle]));
 
     *x = tmpx;
 }
@@ -2067,8 +1952,8 @@ static void addLineCharacter(vectorgrap_t *vg, float scale,
         l.a.pos[VX] = vg->lines[i].a.pos[VX];
         l.a.pos[VY] = vg->lines[i].a.pos[VY];
 
-        l.a.pos[VX] = scale * l.a.pos[VX];
-        l.a.pos[VY] = scale * l.a.pos[VY];
+        l.a.pos[VX] *= scale;
+        l.a.pos[VY] *= scale;
 
         AM_rotate(&l.a.pos[VX], &l.a.pos[VY], angle);
 
@@ -2078,8 +1963,8 @@ static void addLineCharacter(vectorgrap_t *vg, float scale,
         l.b.pos[VX] = vg->lines[i].b.pos[VX];
         l.b.pos[VY] = vg->lines[i].b.pos[VY];
 
-        l.b.pos[VX] = scale * l.b.pos[VX];
-        l.b.pos[VY] = scale * l.b.pos[VY];
+        l.b.pos[VX] *= scale;
+        l.b.pos[VY] *= scale;
 
         AM_rotate(&l.b.pos[VX], &l.b.pos[VY], angle);
 
@@ -2165,7 +2050,8 @@ static void renderThings(int color, int colorrange)
 
     for(i = 0; i < numsectors; ++i)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); iter; iter = iter->snext)
+        for(iter = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); iter;
+            iter = iter->snext)
         {
             addLineCharacter(vg, size, iter->angle,
                              color, cfg.automapLineAlpha,
@@ -2181,7 +2067,7 @@ static void renderThings(int color, int colorrange)
 static void AM_drawMarks(void)
 {
 #if !__DOOM64TC__
-    int         i, fx, fy, w, h;
+    int         i;
 
     gl.Color4f(1, 1, 1, 1);
 
@@ -2190,13 +2076,8 @@ static void AM_drawMarks(void)
     {
         if(markpoints[i].pos[VX] != -1)
         {
-            w = 5;                // because something's wrong with the wad, i guess
-            h = 6;                // because something's wrong with the wad, i guess
-
-            fx = FIX2FLT( CXMTOF(markpoints[i].pos[VX]) << FRACBITS );
-            fy = FIX2FLT( CYMTOF(markpoints[i].pos[VY]) << FRACBITS );
-
-            GL_DrawPatch_CS(fx, fy, markpnums[i]);
+            GL_DrawPatch_CS(CXMTOF(markpoints[i].pos[VX]),
+                            CYMTOF(markpoints[i].pos[VY]), markpnums[i]);
         }
     }
     // < FIXME
@@ -2204,23 +2085,49 @@ static void AM_drawMarks(void)
 }
 
 /**
- * Draws all the keys on the map using the keysquare line character
+ * Draws all the keys on the map using the keysquare line character.
  */
 static void renderKeys(void)
 {
-    int         i;
+    int         keyColor;
+    thinker_t  *th;
+    mobj_t     *mo;
     float       size = FIX2FLT(PLAYERRADIUS);
 
-    for(i = 0; i< NUMBEROFKEYS; ++i)
+    for(th = thinkercap.next; th != &thinkercap; th = th->next)
     {
-        // FIXME: What about keys that ARE at [0, 0]?
-        if(KeyPoints[i].pos[VX] != 0 || KeyPoints[i].pos[VY] != 0)
-        {
-            addLineCharacter(AM_GetVectorGraphic(VG_KEYSQUARE), size,
-                             0, keycolors[i], cfg.automapLineAlpha,
-                             FIX2FLT(KeyPoints[i].pos[VX]),
-                             FIX2FLT(KeyPoints[i].pos[VY]));
-        }
+        if(th->function != P_MobjThinker)           
+            continue;
+
+        mo = (mobj_t *) th;
+#if __JDOOM__
+        if(mo->type == MT_MISC4)
+            keyColor = KEY1;
+        else if(mo->type == MT_MISC5)
+            keyColor = KEY2;
+        else if(mo->type == MT_MISC6)
+            keyColor = KEY3;
+        else if(mo->type == MT_MISC7)
+            keyColor = KEY4;
+        else if(mo->type == MT_MISC8)
+            keyColor = KEY5;
+        else if(mo->type == MT_MISC9)
+            keyColor = KEY6;
+        else
+#elif __JHERETIC__
+        if(mo->type == MT_CKEY)
+            keyColor = KEY1;
+        else if(mo->type == MT_BKYY)
+            keyColor = KEY2;
+        else if(mo->type == MT_AKYY)
+            keyColor = KEY3;
+        else
+#endif
+            continue; // not a key.
+
+        addLineCharacter(AM_GetVectorGraphic(VG_KEYSQUARE), size, 0,
+                         keyColor, cfg.automapLineAlpha,
+                         FIX2FLT(mo->pos[VX]), FIX2FLT(mo->pos[VY]));
     }
 }
 

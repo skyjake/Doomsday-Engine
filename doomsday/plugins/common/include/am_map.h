@@ -130,8 +130,6 @@ void    M_DrawMAP(void);    // Called to render the map menu.
 #define KEY5   (256-5*16)   //  Red Skull
 #define KEY6   197      //  Blue Skull
 
-#define NUMBEROFKEYS 6
-
 #define BORDERGRAPHIC "brdr_b"
 
 #define MARKERPATCHES (sprintf(namebuf, "AMMNUM%d", i))     // DJS - Patches used for marking the automap, a bit of a hack I suppose
@@ -204,8 +202,6 @@ void    M_DrawMAP(void);    // Called to render the map menu.
 #define KEY2   197  // HERETIC - Yellow Key
 #define KEY3   220  // HERETIC - Blue Key
 
-#define NUMBEROFKEYS 3
-
 #define BORDERGRAPHIC "bordb"
 
 #define MARKERPATCHES (sprintf(namebuf, "FONTA%d", (16 +i) ))       // DJS - Patches used for marking the automap, a bit of a hack I suppose
@@ -268,8 +264,6 @@ void    M_DrawMAP(void);    // Called to render the map menu.
 #define KEY2   144  // HEXEN -
 #define KEY3   220  // HEXEN -
 
-#define NUMBEROFKEYS 3
-
 #define BORDERGRAPHIC "bordb"
 
 #define MARKERPATCHES (sprintf(namebuf, "FONTA%d", (16 +i) ))       // DJS - Patches used for marking the automap, a bit of a hack I suppose
@@ -330,8 +324,6 @@ void    M_DrawMAP(void);    // Called to render the map menu.
 #define KEY1   197  // HEXEN -
 #define KEY2   144  // HEXEN -
 #define KEY3   220  // HEXEN -
-
-#define NUMBEROFKEYS 3
 
 #define BORDERGRAPHIC "bordb"
 
