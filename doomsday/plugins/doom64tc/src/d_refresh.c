@@ -224,10 +224,7 @@ void R_DrawLevelTitle(void)
 void R_SetViewSize(int blocks, int detail)
 {
     cfg.setsizeneeded = true;
-    if(cfg.setblocks - 10 <= 0 && blocks - 10 > 0)
-    {   // When going fullscreen, force a hud show event (to reset the timer).
-        ST_HUDUnHide(HUE_FORCE);
-    }
+    ST_HUDUnHide(HUE_FORCE);
     cfg.setblocks = blocks;
     setdetail = detail;
 }

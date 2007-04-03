@@ -199,7 +199,7 @@ void R_DrawLevelTitle(void)
 void R_SetViewSize(int blocks, int detail)
 {
     cfg.setsizeneeded = true;
-    if(cfg.setblocks - 10 <= 0 && blocks - 10 > 0)
+    if(cfg.setblocks != blocks && blocks > 10 && blocks < 13)
     {   // When going fullscreen, force a hud show event (to reset the timer).
         ST_HUDUnHide(HUE_FORCE);
     }
@@ -210,11 +210,14 @@ void D_Display(void)
 {
     static boolean viewactivestate = false;
     static boolean menuactivestate = false;
-    //static int fullscreenmode = 0;
+    static int fullscreenmode = 0;
     static gamestate_t oldgamestate = -1;
     int         ay;
+    boolean     redrawsbar;
     player_t   *vplayer = &players[displayplayer];
     boolean     iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
+
+    redrawsbar = false;
 
     // $democam: can be set on every frame
     if(cfg.setblocks > 10 || iscam)
@@ -288,22 +291,25 @@ void D_Display(void)
             // beginning of a level.
             R_DrawLevelTitle();
 
+            if((viewheight != 200))
+                redrawsbar = true;
+
             // Do we need to render a full status bar at this point?
             if(!(automapactive && cfg.automapHudDisplay == 0))
             {
                 if(!iscam)
                 {
-                    if(viewheight == 200)
+                    if(true == (viewheight == 200))
                     {
                         // Fullscreen. Which mode?
-                        ST_Drawer(cfg.setblocks - 10, true);    // $democam
+                        ST_Drawer(cfg.setblocks - 10, redrawsbar);    // $democam
                     }
                     else
                     {
-                        ST_Drawer(0, true);    // $democam
+                        ST_Drawer(0, redrawsbar);    // $democam
                     }
                 }
-                //fullscreenmode = (viewheight == 200);
+                fullscreenmode = (viewheight == 200);
             }
 
             HU_Drawer();

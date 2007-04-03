@@ -1126,13 +1126,18 @@ void ST_refreshBackground(void)
     player_t   *plyr = &players[consoleplayer];
     float       alpha;
 
-    alpha = cfg.statusbarAlpha - hudHideAmount;
-    // Clamp
-    CLAMP(alpha, 0.0f, 1.0f);
-    if(!(alpha > 0))
-        return;
+    if(st_blended)
+    {
+        alpha = cfg.statusbarAlpha - hudHideAmount;
+        // Clamp
+        CLAMP(alpha, 0.0f, 1.0f);
+        if(!(alpha > 0))
+            return;
+    }
+    else
+        alpha = 1.0f;
 
-    if(!st_blended || !(alpha < 1))
+    if(!(alpha < 1))
     {
         GL_DrawPatch(0, 134, PatchNumH2BAR.lump);
         GL_DrawPatch(0, 134, PatchNumH2TOP.lump);

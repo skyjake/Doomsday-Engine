@@ -432,13 +432,18 @@ void ST_refreshBackground(void)
 
     GL_SetPatch(sbar.lump);
 
-    alpha = cfg.statusbarAlpha - hudHideAmount;
-    // Clamp
-    CLAMP(alpha, 0.0f, 1.0f);
-    if(!(alpha > 0))
-        return;
+    if(st_blended)
+    {
+        alpha = cfg.statusbarAlpha - hudHideAmount;
+        // Clamp
+        CLAMP(alpha, 0.0f, 1.0f);
+        if(!(alpha > 0))
+            return;
+    }
+    else
+        alpha = 1.0f;
 
-    if(!st_blended || !(alpha < 1))
+    if(!(alpha < 1))
     {
         // we can just render the full thing as normal
         GL_DrawPatch(ST_X, ST_Y, sbar.lump);
