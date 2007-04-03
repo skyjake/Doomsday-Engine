@@ -506,7 +506,6 @@ void G_PostInit(void)
 
     G_DefaultBindings();
     R_SetViewSize(cfg.screenblocks, 0);
-    G_SetGlowing();
 
     Con_Message("P_Init: Init Playloop state.\n");
     P_Init();
