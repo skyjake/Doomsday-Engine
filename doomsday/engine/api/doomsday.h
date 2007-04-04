@@ -91,8 +91,8 @@ extern          "C" {
     int             DD_GetKeyCode(const char *name);
 
     // Base: WAD.
-    int             W_CheckNumForName(char *name);
-    int             W_GetNumForName(char *name);
+    int             W_CheckNumForName(const char *name);
+    int             W_GetNumForName(const char *name);
     size_t          W_LumpLength(int lump);
     const char     *W_LumpName(int lump);
     void            W_ReadLump(int lump, void *dest);
@@ -341,14 +341,14 @@ extern          "C" {
     void            R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t *sprinfo);
     void            R_GetPatchInfo(int lump, spriteinfo_t *info);
-    int             R_FlatNumForName(char *name);
-    int             R_CheckTextureNumForName(char *name);
-    int             R_TextureNumForName(char *name);
-    char           *R_TextureNameForNum(int num);
+    int             R_FlatNumForName(const char *name);
+    int             R_CheckTextureNumForName(const char *name);
+    int             R_TextureNumForName(const char *name);
+    const char     *R_TextureNameForNum(int num);
     int             R_SetFlatTranslation(int flat, int translate_to);
     int             R_SetTextureTranslation(int tex, int translate_to);
     int             R_CreateAnimGroup(int type, int flags);
-    void            R_AddToAnimGroup(int groupNum, char *name,
+    void            R_AddToAnimGroup(int groupNum, const char *name,
                                      int tics, int randomTics);
     angle_t         R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2,
                                     fixed_t y2);

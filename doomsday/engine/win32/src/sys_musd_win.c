@@ -235,7 +235,7 @@ int DM_WinMusGetNextEvent(MIDIEVENT *mev)
 {
     MUSEventDesc_t *evDesc;
     byte        midiStatus, midiChan, midiParm1, midiParm2;
-    int         scoreEnd = 0, i;
+    int         i;
 
     mev->dwDeltaTime = readTime;
     readTime = 0;

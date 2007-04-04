@@ -169,7 +169,7 @@ static size_t C_DECL N_MasterWriteCallback(void *ptr, size_t size, size_t nmemb,
 {
 	ddstring_t* response = stream;
 	size_t bytes = size * nmemb;
-	size_t pos = Str_Length(response);
+	//size_t pos = Str_Length(response);
 	
 	// Append the new data to the response.
 	Str_Reserve(response, Str_Length(response) + bytes);

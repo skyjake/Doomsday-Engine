@@ -215,9 +215,12 @@ static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
     // Brightness drops as the angle gets too big.
     if(def->elevation < 2 && decorFadeAngle > 0)    // Close the surface?
     {
-        float   vector[3] = { pos[VX] - vx, pos[VZ] - vy, pos[VY] - vz };
+        float   vector[3];
         float   dot;
 
+        vector[0] = pos[VX] - vx;
+        vector[1] = pos[VZ] - vy;
+        vector[2] = pos[VY] - vz;
         M_Normalize(vector);
         dot =
             -(surfaceNormal[VX] * vector[VX] + surfaceNormal[VY] * vector[VY] +

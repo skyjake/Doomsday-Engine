@@ -258,8 +258,6 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
                 return ANG270 - 1 - tantoangle[R_SlopeDiv(x, y)];   // octant 5
         }
     }
-
-    return 0;
 }
 
 angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)

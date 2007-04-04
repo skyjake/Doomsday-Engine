@@ -1050,7 +1050,7 @@ static int W_ScanLumpInfo(int v[2])
 /**
  * @return              <code>-1</code> if name not found, else lump num.
  */
-int W_CheckNumForName(char *name)
+int W_CheckNumForName(const char *name)
 {
     char        name8[9];
     int         v[2];
@@ -1093,7 +1093,7 @@ int W_CheckNumForName(char *name)
 /**
  * Calls W_CheckNumForName, but bombs out if not found.
  */
-int W_GetNumForName(char *name)
+int W_GetNumForName(const char *name)
 {
     int         i;
 

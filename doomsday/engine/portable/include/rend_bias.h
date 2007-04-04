@@ -92,15 +92,15 @@ void            SB_RendPoly(struct rendpoly_s *poly,
                             uint mapElementIndex);
 void            SB_EndFrame(void);
 
-int             SB_NewSourceAt(float x, float y, float z, float size, float minLight,
+uint            SB_NewSourceAt(float x, float y, float z, float size, float minLight,
                                float maxLight, float *rgb);
-void            SB_UpdateSource(int which, float x, float y, float z, float size,
+void            SB_UpdateSource(uint which, float x, float y, float z, float size,
                                 float minLight, float maxLight, float *rgb);
-void            SB_Delete(int which);
+void            SB_Delete(uint which);
 void            SB_Clear(void);
 
 source_t*       SB_GetSource(int which);
-int             SB_ToIndex(source_t* source);
+uint            SB_ToIndex(source_t* source);
 
 void            SB_SetColor(float *dest, float *src);
 void            HSVtoRGB(float *rgb, float h, float s, float v);

@@ -408,8 +408,12 @@ static void P_NewParticle(ptcgen_t *gen)
         if(gen->flags & PGF_RELATIVE_VECTOR)
         {
             // Rotate the vector using the source angle.
-            float   temp[3] =
-                { FIX2FLT(pt->mov[VX]), FIX2FLT(pt->mov[VY]), 0 };
+            float   temp[3];
+
+            temp[0] = FIX2FLT(pt->mov[VX]);
+            temp[1] = FIX2FLT(pt->mov[VY]);
+            temp[2] = 0;
+
             // Player visangles have some problems, let's not use them.
             M_RotateVector(temp,
                            gen->source->angle / (float) ANG180 * -180 + 90, 0);

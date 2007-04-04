@@ -455,7 +455,7 @@ animgroup_t *R_GetAnimGroup(int number)
 /**
  * This function is exported and accessible from DLLs.
  */
-void R_AddToAnimGroup(int groupNum, char *name, int tics, int randomTics)
+void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
 {
     animgroup_t *group;
     animframe_t *frame;
@@ -897,7 +897,7 @@ void R_UpdateTranslationTables(void)
     R_InitTranslationTables();
 }
 
-int R_FlatNumForName(char *name)
+int R_FlatNumForName(const char *name)
 {
     int     i;
     char    namet[9];
@@ -913,7 +913,7 @@ int R_FlatNumForName(char *name)
     return i;                   //R_GetFlatIndex(i);//i - firstflat;
 }
 
-int R_CheckTextureNumForName(char *name)
+int R_CheckTextureNumForName(const char *name)
 {
     int     i;
 
@@ -927,7 +927,7 @@ int R_CheckTextureNumForName(char *name)
     return -1;
 }
 
-int R_TextureNumForName(char *name)
+int R_TextureNumForName(const char *name)
 {
     int     i;
 
@@ -938,7 +938,7 @@ int R_TextureNumForName(char *name)
     return i;
 }
 
-char *R_TextureNameForNum(int num)
+const char *R_TextureNameForNum(int num)
 {
     if(num < 0 || num > numtextures - 1)
         return NULL;

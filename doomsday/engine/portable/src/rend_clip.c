@@ -490,7 +490,8 @@ void C_RemoveOcclusionRange(occnode_t *orange)
 void C_AddOcclusionRange(binangle_t start, binangle_t end, float *normal,
                          boolean topHalf)
 {
-    occnode_t  *orange, *newor, *last;
+    occnode_t      *orange = NULL, *newor = NULL, *last = NULL;
+    boolean         done;
 
     // Is the range valid?
     if(start > end)
@@ -512,7 +513,10 @@ void C_AddOcclusionRange(binangle_t start, binangle_t end, float *normal,
     // contained by the new orange. But how to do the check efficiently?
 
     // Add the new occlusion range to the appropriate position.
-    for(orange = occHead; orange; last = orange, orange = orange->next)
+    orange = occHead;
+    done = false;
+    while(orange && !done)
+    {
         // The list of oranges is sorted by the start angle.
         // Find the first range whose start is greater than the new one.
         if(orange->start > start)
@@ -525,8 +529,17 @@ void C_AddOcclusionRange(binangle_t start, binangle_t end, float *normal,
                 newor->prev->next = newor;
             else
                 occHead = newor;    // We have a new head.
-            return;
+
+            done = true;
         }
+        else
+        {
+            last = orange;
+            orange = orange->next;
+        }
+    }
+    if(done)
+        return;
 
     // All right, add the new range to the end of the list.
     last->next = newor;
@@ -931,10 +944,13 @@ void C_AddViewRelOcclusion(float *v1, float *v2, float height, boolean tophalf)
 
 #if _DEBUG
 {
-    float   testPos[3] = { 0, 0, tophalf ? 1000 : -1000 };
-    float   dot = M_DotProduct(testPos, normal);
+    float   testPos[3];
 
-    if(dot < 0)
+    testPos[0] = 0;
+    testPos[1] = 0;
+    testPos[2] = (tophalf ? 1000 : -1000);
+
+    if(M_DotProduct(testPos, normal) < 0)
     {
         Con_Error("C_AddViewRelOcclusion: wrong side!\n");
     }
@@ -979,8 +995,13 @@ boolean C_IsPointOccluded(float *viewrelpoint)
  */
 boolean C_IsPointVisible(float x, float y, float height)
 {
-    float       point[3] = { x - vx, y - vz, height - vy };
-    binangle_t  angle = C_PointToAngle(point);
+    float       point[3];
+    binangle_t  angle;
+
+    point[0] = x - vx;
+    point[1] = y - vz;
+    point[2] = height - vy;
+    angle = C_PointToAngle(point);
 
     if(!C_IsAngleVisible(angle))
         return false;
@@ -1146,10 +1167,17 @@ boolean C_IsSegOccluded(float relv1[3], float relv2[3], float reltop,
  */
 boolean C_CheckSeg(float *v1, float *v2, float top, float bottom)
 {
-    float       relv1[3] = { v1[VX] - vx, v1[VY] - vz, 0 };
-    float       relv2[3] = { v2[VX] - vx, v2[VY] - vz, 0 };
+    float       relv1[3], relv2[3];
     float       reltop = top - vy, relbottom = bottom - vy;
     binangle_t  start, end;
+
+    relv1[0] = v1[VX] - vx;
+    relv1[1] = v1[VY] - vz;
+    relv1[2] = 0;
+
+    relv2[0] = v2[VX] - vx;
+    relv2[1] = v2[VY] - vz;
+    relv2[2] = 0;
 
     // Determine the range.
     start = C_PointToAngle(relv2);

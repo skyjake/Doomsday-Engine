@@ -109,7 +109,7 @@ void Str_Clear(ddstring_t *ds)
 /**
  * Allocates so much memory that for_length characters will fit.
  */
-void Str_Alloc(ddstring_t *ds, int for_length, int preserve)
+void Str_Alloc(ddstring_t *ds, size_t for_length, int preserve)
 {
     boolean old_data = false;
     char   *buf;
@@ -140,7 +140,7 @@ void Str_Alloc(ddstring_t *ds, int for_length, int preserve)
     ds->str = buf;
 }
 
-void Str_Reserve(ddstring_t *ds, int length)
+void Str_Reserve(ddstring_t *ds, size_t length)
 {
     Str_Alloc(ds, length, true);
 }
@@ -185,7 +185,7 @@ void Str_Appendf(ddstring_t *ds, const char *format, ...)
 /**
  * Appends a portion of a string.
  */
-void Str_PartAppend(ddstring_t *dest, const char *src, int start, int count)
+void Str_PartAppend(ddstring_t *dest, const char *src, int start, size_t count)
 {
     Str_Alloc(dest, dest->length + count, true);
     memcpy(dest->str + dest->length, src + start, count);
@@ -223,7 +223,7 @@ char *Str_Text(ddstring_t *ds)
 /**
  * This is safe for all strings.
  */
-int Str_Length(ddstring_t *ds)
+size_t Str_Length(ddstring_t *ds)
 {
     if(ds->length)
         return ds->length;
@@ -247,8 +247,8 @@ void Str_Copy(ddstring_t *dest, ddstring_t *src)
  */
 void Str_StripLeft(ddstring_t *ds)
 {
-    int     i, num;
-    boolean isDone;
+    size_t      i, num;
+    boolean     isDone;
 
     if(!ds->length)
         return;

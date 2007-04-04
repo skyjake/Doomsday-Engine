@@ -548,7 +548,7 @@ D_CMD(BLEditor)
     if(editGrabbed >= 0)
         which = editGrabbed;
     else
-        which = SB_ToIndex(SBE_GetNearest());
+        which = SB_ToIndex(SBE_GetNearest() - 1);
 
     if(!stricmp(cmd, "c") && numSources > 0)
     {
@@ -654,12 +654,17 @@ static void SBE_DrawBox(int x, int y, int w, int h, ui_color_t *c)
 
 static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
 {
-    float eye[3] = { vx, vz, vy };
-    int w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
-    int th = FR_TextHeight("a"), h = th * 6 + 16;
-    int x = glScreenWidth - 10 - w - rightX, y = glScreenHeight - 10 - h;
-    char buf[80];
+    float       eye[3];
+    int         w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
+    int         th = FR_TextHeight("a"), h = th * 6 + 16;
+    int         x = glScreenWidth - 10 - w - rightX;
+    int         y = glScreenHeight - 10 - h;
+    char        buf[80];
     ui_color_t color;
+
+    eye[0] = vx;
+    eye[1] = vz;
+    eye[2] = vy;
 
     color.red = s->color[0];
     color.green = s->color[1];
@@ -679,7 +684,7 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     UI_TextOutEx(title, x, y, false, true, UI_Color(UIC_TITLE), alpha);
     y += th;
 
-    sprintf(buf, "# %03i %s", SB_ToIndex(s),
+    sprintf(buf, "# %03i %s", SB_ToIndex(s) - 1,
             s->flags & BLF_LOCKED ? "(lock)" : "");
     UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
     y += th;
@@ -876,12 +881,16 @@ void SBE_DrawStar(float pos[3], float size, float color[4])
 
 static void SBE_DrawIndex(source_t *src)
 {
-    char buf[80];
-    float eye[3] = { vx, vz, vy };
-    float scale = M_Distance(src->pos, eye)/(glScreenWidth/2);
-
+    char        buf[80];
+    float       eye[3], scale;
+   
     if(!editShowIndices)
         return;
+
+    eye[0] = vx;
+    eye[1] = vz;
+    eye[2] = vy;
+    scale = M_Distance(src->pos, eye) / (glScreenWidth / 2);
 
     gl.Disable(DGL_DEPTH_TEST);
     gl.Enable(DGL_TEXTURING);
@@ -894,7 +903,7 @@ static void SBE_DrawIndex(source_t *src)
     gl.Scalef(-scale, -scale, 1);
 
     // Show the index number of the source.
-    sprintf(buf, "%i", SB_ToIndex(src));
+    sprintf(buf, "%i", SB_ToIndex(src) - 1);
     UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE),
                  1 - M_Distance(src->pos, eye)/2000);
 
@@ -907,12 +916,17 @@ static void SBE_DrawIndex(source_t *src)
 
 static void SBE_DrawSource(source_t *src)
 {
-    float col[4], d;
-    float eye[3] = { vx, vz, vy };
+    float       col[4], d;
+    float       eye[3];
+
+    eye[0] = vx;
+    eye[1] = vz;
+    eye[2] = vy;
 
     col[0] = src->color[0];
     col[1] = src->color[1];
     col[2] = src->color[2];
+
     d = (M_Distance(eye, src->pos) - 100) / 1000;
     if(d < 1) d = 1;
     col[3] = 1.0f / d;
@@ -930,12 +944,16 @@ static void SBE_HueOffset(double angle, float *offset)
 
 static void SBE_DrawHue(void)
 {
-    vec3_t eye = { vx, vy, vz };
-    vec3_t center, off, off2;
-    float steps = 32, inner = 10, outer = 30, s;
-    double angle;
-    float color[4], sel[4], hue, saturation;
-    int i;
+    vec3_t      eye;
+    vec3_t      center, off, off2;
+    float       steps = 32, inner = 10, outer = 30, s;
+    double      angle;
+    float       color[4], sel[4], hue, saturation;
+    int         i;
+
+    eye[0] = vx;
+    eye[1] = vy;
+    eye[2] = vz;
 
     gl.Disable(DGL_DEPTH_TEST);
     gl.Disable(DGL_TEXTURING);
@@ -1041,15 +1059,18 @@ void SBE_DrawCursor(void)
 {
 #define SET_COL(x, r, g, b, a) {x[0]=(r); x[1]=(g); x[2]=(b); x[3]=(a);}
 
-    double t = Sys_GetRealTime()/100.0f;
-    source_t *s;
-    float hand[3];
-    float size = 10000, distance;
-    float col[4];
-    float eye[3] = { vx, vz, vy };
+    double      t = Sys_GetRealTime()/100.0f;
+    source_t   *s;
+    float       hand[3];
+    float       size = 10000, distance;
+    float       col[4], eye[3];
 
     if(!editActive || !numSources || editHidden || freezeRLs)
         return;
+
+    eye[0] = vx;
+    eye[1] = vz;
+    eye[2] = vy;
 
     if(editHueCircle && SBE_GetGrabbed())
         SBE_DrawHue();
@@ -1140,4 +1161,6 @@ void SBE_DrawCursor(void)
 
     gl.Enable(DGL_TEXTURING);
     gl.Enable(DGL_DEPTH_TEST);
+
+#undef SET_COL
 }

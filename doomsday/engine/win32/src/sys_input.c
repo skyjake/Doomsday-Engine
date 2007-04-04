@@ -446,31 +446,38 @@ boolean I_JoystickPresent(void)
 int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 {
     DIDEVICEOBJECTDATA keyData[KEYBUFSIZE];
-    int         tries, i, num;
+    int         tries, i, num = 0;
+    boolean     aquired;
 
     if(!initIOk)
         return 0;
 
     // Try two times to get the data.
-    for(tries = 1; tries >= 0; tries--)
+    tries = 1;
+    aquired = false;
+    while(!aquired && tries >= 0)
     {
         num = KEYBUFSIZE;
         hr = IDirectInputDevice_GetDeviceData(didKeyb,
                                               sizeof(DIDEVICEOBJECTDATA),
                                               keyData, &num, 0);
         if(SUCCEEDED(hr))
-            break;
-
-        // No tries left? The operation is a failure.
-        if(!tries)
-            return 0;
-
-        // Try to reacquire.
-        IDirectInputDevice_Acquire(didKeyb);
+        {
+            aquired = true;
+        }
+        else if(tries > 0)
+        {
+            // Try to reacquire.
+            IDirectInputDevice_Acquire(didKeyb);
+            tries--;
+        }
     }
 
+    if(!aquired)
+        return 0; // The operation is a failure.
+
     // Get the events.
-    for(i = 0; i < num && i < bufsize; i++)
+    for(i = 0; i < num && i < bufsize; ++i)
     {
         evbuf[i].event =
             (keyData[i].dwData & 0x80) ? IKE_KEY_DOWN : IKE_KEY_UP;
@@ -483,6 +490,7 @@ void I_GetMouseState(mousestate_t *state)
 {
     DIMOUSESTATE2 mstate;
     int         i, tries;
+    boolean     aquired;
 
     memset(state, 0, sizeof(*state));
 
@@ -491,20 +499,26 @@ void I_GetMouseState(mousestate_t *state)
         return;
 
     // Try to get the mouse state.
-    for(tries = 1; tries >= 0; tries--)
+    tries = 1;
+    aquired = false;
+    while(!aquired && tries >= 0)
     {
         hr = IDirectInputDevice_GetDeviceState(didMouse, sizeof(mstate),
                                                &mstate);
         if(SUCCEEDED(hr))
-            break;
-
-        // Out of tries?
-        if(!tries)
-            return;
-
-        // Try to reacquire.
-        IDirectInputDevice_Acquire(didMouse);
+        {
+            aquired = true;
+        }
+        else if(tries > 0)
+        {
+            // Try to reacquire.
+            IDirectInputDevice_Acquire(didMouse);
+            tries--;
+        }
     }
+
+    if(!aquired)
+        return; // The operation is a failure.
 
     // Fill in the state structure.
     state->x = mstate.lX;
@@ -517,11 +531,12 @@ void I_GetMouseState(mousestate_t *state)
             state->buttons |= 1 << i;
 }
 
-void I_GetJoystickState(joystate_t * state)
+void I_GetJoystickState(joystate_t *state)
 {
     int         tries, i;
     int         pov;
-    DIJOYSTATE dijoy;
+    DIJOYSTATE  dijoy;
+    boolean     aquired;
 
     memset(state, 0, sizeof(*state));
 
@@ -532,19 +547,26 @@ void I_GetJoystickState(joystate_t * state)
     // Some joysticks need to be polled.
     IDirectInputDevice8_Poll(didJoy);
 
-    for(tries = 1; tries >= 0; tries--)
+    tries = 1;
+    aquired = false;
+    while(!aquired && tries >= 0)
     {
         hr = IDirectInputDevice8_GetDeviceState(didJoy, sizeof(dijoy), &dijoy);
+
         if(SUCCEEDED(hr))
-            break;
-
-        // Out of tries?
-        if(!tries)
-            return;
-
-        // Try to reacquire.
-        IDirectInputDevice8_Acquire(didJoy);
+        {
+            aquired = true;
+        }
+        else if(tries > 0)
+        {
+            // Try to reacquire.
+            IDirectInputDevice8_Acquire(didJoy);
+            tries--;
+        }
     }
+
+    if(!aquired)
+        return; // The operation is a failure.
 
     state->axis[0] = dijoy.lX;
     state->axis[1] = dijoy.lY;

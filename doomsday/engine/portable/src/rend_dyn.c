@@ -465,7 +465,7 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
     uint        segindex = GET_SEG_IDX(seg);
     boolean     backSide = false;
     DGLubyte    lumRGB[3];
-    sector_t   *frontsec = ssec->sector, *linkSec;
+    sector_t   *linkSec;
 
     linkSec = R_GetLinkedSector(ssec, PLN_CEILING);
     fceil  = linkSec->SP_ceilvisheight;
@@ -729,11 +729,6 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
     // Visible plane heights.
     fceil  = sect->SP_ceilvisheight;
     ffloor = sect->SP_floorvisheight;
-    if(back)
-    {
-        bceil  = back->SP_ceilvisheight;
-        bfloor = back->SP_floorvisheight;
-    }
 
     // Determine which portions of the segment get lit.
     if(!back)
@@ -745,6 +740,8 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
     else
     {
         // Two-sided.
+        bceil  = back->SP_ceilvisheight;
+        bfloor = back->SP_floorvisheight;
         opentop = MIN_OF(fceil, bceil);
         openbottom = MAX_OF(ffloor, bfloor);
 
@@ -1057,7 +1054,7 @@ void DL_AddLuminous(mobj_t *thing)
                     SB_NewSourceAt(FIX2FLT(thing->pos[VX]),
                                    FIX2FLT(thing->pos[VY]),
                                    FIX2FLT(thing->pos[VZ]) + center,
-                                   radius * 0.3f, 0, 1, rgb)) != -1)
+                                   radius * 0.3f, 0, 1, rgb)) != 0)
             {
                 // We've acquired a BIAS source for this light.
                 thing->usingBias = true;

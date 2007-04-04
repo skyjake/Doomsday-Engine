@@ -592,8 +592,12 @@ void R_ProjectPlayerSprites(void)
         {
             // Evaluate the position of this player in the light grid.
             // TODO: Should be affected by BIAS sources.
-            float point[3] = { FIX2FLT(viewplayer->mo->pos[VX]), FIX2FLT(viewplayer->mo->pos[VY]),
-                               FIX2FLT(viewplayer->mo->pos[VZ]) + viewplayer->mo->height/2};
+            float point[3];
+
+            point[0] = FIX2FLT(viewplayer->mo->pos[VX]);
+            point[1] = FIX2FLT(viewplayer->mo->pos[VY]);
+            point[2] = FIX2FLT(viewplayer->mo->pos[VZ]) +
+                            viewplayer->mo->height / 2;
             LG_Evaluate(point, vis->data.mo.rgb);
 
             vis->data.mo.lightlevel = 1;
@@ -845,8 +849,11 @@ void R_ProjectSprite(mobj_t *thing)
 
     if(useBias)
     {
-        float point[3] = { FIX2FLT(thing->pos[VX]), FIX2FLT(thing->pos[VY]),
-                           FIX2FLT(thing->pos[VZ]) + thing->height/2};
+        float point[3];
+
+        point[0] = FIX2FLT(thing->pos[VX]);
+        point[1] = FIX2FLT(thing->pos[VY]);
+        point[2] = FIX2FLT(thing->pos[VZ]) + thing->height / 2;
         LG_Evaluate(point, vis->data.mo.rgb);
     }
     else

@@ -491,7 +491,7 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
     {   // External resource not found.
         // Perhaps a "built-in" flare texture id?
         char   *end;
-        int     id, pass;
+        int     id = 0, pass;
         boolean ok;
 
         // First pass:

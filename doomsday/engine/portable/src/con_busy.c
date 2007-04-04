@@ -416,13 +416,13 @@ static void Con_BusyDrawConsoleOutput(void)
     };
     
     cbuffer_t  *buffer;
-    static cbline_t *lines[LINE_COUNT + 1];
+    static cbline_t *lines[LINE_COUNT + 1], **linesp = lines;
     int         y;
     uint        i, linecount;
 
     buffer = Con_GetConsoleBuffer();
     linecount = Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT,
-                                   &lines[0]);
+                                   linesp);
 
     if(!linecount)
         return;
@@ -470,7 +470,6 @@ static void Con_BusyDrawConsoleOutput(void)
  */
 static void Con_BusyDrawer(void)
 {
-    DGLuint oldBinding = 0;
 //    char buf[100];
     
     Con_DrawScreenshotBackground();

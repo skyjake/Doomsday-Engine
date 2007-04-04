@@ -1777,10 +1777,10 @@ boolean XL_CheckMobjGone(int thingtype)
 
 boolean XL_SwitchSwap(side_t* side, int section)
 {
-    char   *name;
-    char    buf[10];
-    int     texid = 0;
-    boolean makeChange = false;
+    const char   *name;
+    char        buf[10];
+    int         texid = 0;
+    boolean     makeChange = false;
 
     if(!side)
         return false;

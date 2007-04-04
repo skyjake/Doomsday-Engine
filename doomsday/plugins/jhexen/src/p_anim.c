@@ -381,7 +381,7 @@ void P_InitPicAnims(void)
     int         AnimDefCount = 0;
     int         groupNumber = 0, picBase = 0;
     int         type = 0;
-    char       *name;
+    const char *name;
 
     SC_Open(ANIM_SCRIPT_NAME);
     while(SC_GetString())
@@ -443,7 +443,7 @@ void P_InitPicAnims(void)
                     if(ignore == false)
                     {
                         if(type == ANIM_FLAT)
-                            name = (char *) W_LumpName(picBase + sc_Number - 1);
+                            name = W_LumpName(picBase + sc_Number - 1);
                         else
                             name = R_TextureNameForNum(picBase + sc_Number - 1);
                     }

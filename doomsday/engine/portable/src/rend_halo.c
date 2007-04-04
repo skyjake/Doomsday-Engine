@@ -158,7 +158,7 @@ void H_SetupState(boolean dosetup)
  */
 boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
 {
-    float   viewpos[3] = { vx, vy, vz };
+    float   viewpos[3];
     float   viewtocenter[3], mirror[3], normalviewtocenter[3];
     float   leftoff[3], rightoff[3], center[3], radius;
     float   halopos[3], occlusionfactor;
@@ -230,6 +230,9 @@ boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewsidevec.
+    viewpos[0] = vx;
+    viewpos[1] = vy;
+    viewpos[2] = vz;
     for(i = 0; i < 3; i++)
         normalviewtocenter[i] = viewtocenter[i] = center[i] - viewpos[i];
 

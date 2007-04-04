@@ -927,9 +927,14 @@ void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
                        int *region)
 {
     int     k, i;
-    int     myregion[4] = {width, 0, height, 0};
+    int     myregion[4];
     byte   *src = buffer;
     byte   *alphasrc = NULL;
+
+    myregion[0] = width;
+    myregion[1] = 0;
+    myregion[2] = height;
+    myregion[3] = 0;
 
     if(pixelsize == 1)
         // In paletted mode, the alpha channel follows the actual image.

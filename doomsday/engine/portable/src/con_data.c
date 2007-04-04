@@ -566,7 +566,7 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
 {
     uint        i;
     boolean     found;
-    ddccmd_t    *ccmd;
+    ddccmd_t    *ccmd = NULL;
 
     found = false;
     i = 0;

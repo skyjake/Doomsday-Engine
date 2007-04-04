@@ -352,6 +352,7 @@ void UI_InitPage(ui_page_t *page, ui_object_t *objects)
     int         i;
     ui_object_t meta;
 
+    memset(&meta, 0, sizeof(meta));
     memset(page, 0, sizeof(*page));
     page->objects = objects;
     page->capture = -1;    // No capture.
@@ -1857,7 +1858,7 @@ void UI_DrawTitleEx(char *text, int height, float alpha)
 void UI_DrawTitle(ui_page_t *page)
 {
     UI_DrawTitleEx(page->title, UI_TITLE_HGT, 1.f);
-    if(1 || !uiShowMouse)
+    if(!uiShowMouse)
     {
         char *msg = "(Move with Tab/S-Tab)";
         float currentUIAlpha = uiAlpha; // Never fade this text.
@@ -1878,9 +1879,8 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
     float       s[2][2] = { {0, 1}, {1, 0} };
     float       t[2][2] = { {0, 1}, {1, 0} };
     ui_color_t *color;
-    unsigned int i;
+    uint        i, flip = 0;
     float      *u, *v;
-    boolean     flip = false;
     float       beta = 1;
 
     alpha *= uiAlpha;
@@ -1888,7 +1888,7 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
 
     if(border < 0)
     {
-        //flip = true;
+        //flip = 1;
         border = -border;
     }
     border = 0;

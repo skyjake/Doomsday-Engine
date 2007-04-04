@@ -430,7 +430,7 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
     }
     else if(valueType == DDVT_FLOAT)
     {
-        float       d;
+        float       d = 0;
         switch(size)
         {
         case 2:
@@ -475,7 +475,7 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
     }
     else if(valueType == DDVT_SHORT || valueType == DDVT_FLAT_INDEX)
     {
-        short       d;
+        short       d = 0;
         switch(size)
         {
         case 2:
@@ -517,7 +517,7 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
     }
     else if(valueType == DDVT_FIXED)
     {
-        fixed_t     d;
+        fixed_t     d = 0;
         switch(size) // Number of src bytes
         {
         case 2:
@@ -552,7 +552,7 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
     }
     else if(valueType == DDVT_ULONG)
     {
-        unsigned long   d;
+        unsigned long   d = 0;
 
         switch(size) // Number of src bytes
         {
@@ -588,7 +588,7 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
     }
     else if(valueType == DDVT_UINT)
     {
-        unsigned int    d;
+        unsigned int    d = 0;
 
         switch(size) // Number of src bytes
         {
@@ -683,7 +683,7 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
     }
     else if(valueType == DDVT_INT)
     {
-        int         d;
+        int         d = 0;
         switch(size) // Number of src bytes
         {
         case 2:
@@ -735,7 +735,7 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
     }
     else if(valueType == DDVT_ANGLE)
     {
-        angle_t     d;
+        angle_t     d = 0;
         switch(size) // Number of src bytes
         {
         case 2:

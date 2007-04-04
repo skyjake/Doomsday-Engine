@@ -1852,7 +1852,12 @@ if(numTexUnits < 2)
 static void RL_DetailFogState(void)
 {
     // The fog color alpha is probably meaningless?
-    byte    midGray[4] = { 0x80, 0x80, 0x80, fogColor[3] };
+    byte    midGray[4];
+
+    midGray[0] = 0x80;
+    midGray[1] = 0x80;
+    midGray[2] = 0x80;
+    midGray[3] = fogColor[3];
 
     gl.Enable(DGL_FOG);
     gl.Fogv(DGL_FOG_COLOR, midGray);

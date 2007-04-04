@@ -337,10 +337,10 @@ int             R_GraphicResourceFlags(resourceclass_t rclass, int id);
 flat_t         *R_FindFlat(int lumpnum);    // May return NULL.
 flat_t         *R_GetFlat(int lumpnum); // Creates new entries.
 flat_t        **R_CollectFlats(int *count);
-int             R_FlatNumForName(char *name);
-int             R_CheckTextureNumForName(char *name);
-int             R_TextureNumForName(char *name);
-char           *R_TextureNameForNum(int num);
+int             R_FlatNumForName(const char *name);
+int             R_CheckTextureNumForName(const char *name);
+int             R_TextureNumForName(const char *name);
+const char     *R_TextureNameForNum(int num);
 int             R_SetFlatTranslation(int flat, int translateTo);
 int             R_SetTextureTranslation(int tex, int translateTo);
 boolean         R_IsCustomTexture(int texture);

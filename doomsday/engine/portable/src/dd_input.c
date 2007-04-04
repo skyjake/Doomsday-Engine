@@ -951,7 +951,7 @@ void DD_ReadKeyboard(void)
         {
             // Clear any repeaters with this key.
             for(k = 0; k < MAX_DOWNKEYS; ++k)
-                if(keyReps[k].key == ev.controlID)
+                if(keyReps[k].key == (int) ev.controlID)
                     keyReps[k].key = 0;
         }
 

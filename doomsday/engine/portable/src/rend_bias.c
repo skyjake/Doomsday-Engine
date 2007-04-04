@@ -68,7 +68,7 @@ void         SB_EvalPoint(gl_rgba_t *light,
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int useBias = false;
-int numSources = 0;
+uint numSources = 0;
 unsigned int currentTimeSB;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -129,15 +129,15 @@ void SB_Register(void)
  * @param   maxLight    Upper sector light level limit.
  * @param   rgb         Ptr to float[3], the color for the new light.
  *
- * @return int          The id of the newly created bias light source else -1.
+ * @return int          The id of the newly created bias light source else 0.
  */
-int SB_NewSourceAt(float x, float y, float z, float size, float minLight,
-                   float maxLight, float *rgb)
+uint SB_NewSourceAt(float x, float y, float z, float size, float minLight,
+                    float maxLight, float *rgb)
 {
     source_t *src;
 
     if(numSources == MAX_BIAS_LIGHTS)
-        return -1;
+        return 0;
 
     src = &sources[numSources++];
 
@@ -165,12 +165,12 @@ int SB_NewSourceAt(float x, float y, float z, float size, float minLight,
 /*
  * Same as above really but for updating an existing source.
  */
-void SB_UpdateSource(int which, float x, float y, float z, float size,
+void SB_UpdateSource(uint which, float x, float y, float z, float size,
                      float minLight, float maxLight, float *rgb)
 {
     source_t *src;
 
-    if(which < 0 || which >= numSources)
+    if(which >= numSources)
         return;
 
     src = &sources[which];
@@ -199,12 +199,12 @@ source_t *SB_GetSource(int which)
 /*
  * Convert bias light source ptr to index.
  */
-int SB_ToIndex(source_t* source)
+uint SB_ToIndex(source_t* source)
 {
     if(!source)
-        return -1;
+        return 0;
     else
-        return (source - sources);
+        return (source - sources) + 1;
 }
 
 /*
@@ -212,14 +212,14 @@ int SB_ToIndex(source_t* source)
  *
  * @param which         The id of the bias light source to be deleted.
  */
-void SB_Delete(int which)
+void SB_Delete(uint which)
 {
-    int         i;
+    uint        i;
     uint        j;
     sector_t   *seciter;
     boolean     done;
 
-    if(which < 0 || which > numSources)
+    if(which > numSources)
         return; // Very odd...
 
     // Do a memory move.
@@ -264,9 +264,11 @@ void SB_Clear(void)
     uint        i;
     sector_t   *seciter;
 
+    if(!numSources)
+        return;
+
     while(numSources-- > 0)
         sources[numSources].flags |= BLF_CHANGED;
-
     numSources = 0;
 
     // Zero Bias source indices acquired by mobjs.
@@ -308,7 +310,7 @@ void SB_InitForLevel(const char *uniqueId)
 
         if(SB_NewSourceAt(def->offset[VX], def->offset[VY], def->offset[VZ],
                           def->size, def->lightlevel[0],
-                          def->lightlevel[1], def->color) == -1)
+                          def->lightlevel[1], def->color) == 0)
             break;
     }
 }
@@ -465,7 +467,8 @@ void SB_PlaneHasMoved(subsector_t *subsector, uint plane)
 void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
 {
     seg_t      *seg = SEG_PTR(segId);
-    int         i, k;
+    int         i;
+    uint        k;
     vec2_t      delta;
     source_t   *src;
     float       distance = 0, len;
@@ -536,8 +539,7 @@ static float SB_Dot(source_t *src, float point[3], float normal[3])
 void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
 {
     subsector_t *subsector = SUBSECTOR_PTR(sub);
-    int         i;
-    uint        k;
+    uint        i, k;
     vec2_t      delta;
     float       point[3];
     source_t   *src;
@@ -703,8 +705,7 @@ void SB_MarkPlaneChanges(subsector_t *ssec, uint plane,
 void SB_BeginFrame(void)
 {
     biastracker_t allChanges;
-    int         l;
-    uint        i, j, k;
+    uint        i, j, k, l;
     subsector_t *sub;
     source_t   *s;
 
@@ -1066,7 +1067,7 @@ void SB_EvalPoint(gl_rgba_t *light,
     float       delta[3], surfacePoint[3];
     float       distance;
     float       level;
-    int         i, idx;
+    uint        i, idx;
     boolean     illuminationChanged = false;
     unsigned int latestSourceUpdate = 0;
     source_t   *s;
@@ -1075,8 +1076,8 @@ void SB_EvalPoint(gl_rgba_t *light,
   //  gl_rgba_t Srgba;
 
     struct {
-        int              index;
-        //int              affNum; // Index in affectedSources.
+        uint             index;
+        //uint           affNum; // Index in affectedSources.
         source_t        *source;
         biasaffection_t *affection;
         boolean          changed;
@@ -1101,7 +1102,7 @@ void SB_EvalPoint(gl_rgba_t *light,
         idx = affectedSources[i].source;
 
         // Is this a valid index?
-        if(idx < 0 || idx >= numSources)
+        if(idx >= numSources)
             continue;
 
         aff->index = idx;

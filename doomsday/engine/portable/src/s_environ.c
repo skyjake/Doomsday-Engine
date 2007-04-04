@@ -76,9 +76,9 @@ typedef struct {
 
 // CODE --------------------------------------------------------------------
 
-int S_TextureTypeForName(char *name)
+int S_TextureTypeForName(const char *name)
 {
-    int     i, k;
+    int         i, k;
     ded_tenviron_t *env;
 
     for(i = 0, env = defs.tenviron; i < defs.count.tenviron.num; ++i, env++)

@@ -188,7 +188,7 @@ void P_InitPicAnims(void)
     int         numFrames;
     int         lump = W_CheckNumForName("ANIMATED");
     int         type;
-    char       *name;
+    const char *name;
     animdef_t  *animdefs;
 
     // Has a custom ANIMATED lump been loaded?
@@ -251,7 +251,7 @@ void P_InitPicAnims(void)
                     for(j = startFrame; j <= endFrame; j++)
                     {
                         name = (type == DD_TEXTURE? R_TextureNameForNum(j) :
-                                 (char *) W_LumpName(j));
+                                 W_LumpName(j));
                         R_AddToAnimGroup(groupNum, name, ticsPerFrame, 0);
                     }
                 }

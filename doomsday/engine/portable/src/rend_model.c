@@ -456,9 +456,12 @@ void Mod_FullBrightVertexColors(int count, gl_color_t *colors, byte alpha)
  */
 void Mod_FixedVertexColors(int count, gl_color_t *colors, float *color)
 {
-    byte        rgba[4] =
-            {color[0] * 255, color[1] * 255, color[2] * 255, color[3] * 255};
+    byte        rgba[4];
 
+    rgba[0] = color[0] * 255;
+    rgba[1] = color[1] * 255;
+    rgba[2] = color[2] * 255;
+    rgba[3] = color[3] * 255;
     for(; count-- > 0; colors++)
         memcpy(colors->rgba, rgba, 4);
 }

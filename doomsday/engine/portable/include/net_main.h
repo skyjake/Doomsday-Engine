@@ -173,7 +173,7 @@ typedef struct {
 
     // Client-reported time of the last processed ticcmd.
     // Older or as old tics than this are discarded.
-    byte            runTime;
+    int             runTime;
 
     // Bandwidth rating for connection. Determines how much information
     // can be sent to the client. Determined dynamically.

@@ -651,8 +651,12 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             // Flat against a wall, then?
             else if(flatOnWall)
             {
-                float line[2] = {pt->contact->dx, pt->contact->dy};
+                float line[2];
                 float pos[3];
+
+                line[0] = pt->contact->dx;
+                line[1] = pt->contact->dy;
+
                 // There will be a slight approximation on the XY plane since
                 // the particles aren't that accurate when it comes to wall
                 // collisions.

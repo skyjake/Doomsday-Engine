@@ -686,9 +686,9 @@ uint P_RegisterCustomMapProperty(int type, valuetype_t dataType, char *name)
 
 static void ParseGLBSPInf(mapdatalumpinfo_t* mapLump)
 {
-    int i, n, keylength = -1;
-    char* ch;
-    char line[250];
+    int         i, keylength = -1;
+    uint        n;
+    char        *ch, line[250];
 
     glbuildinfo_t *newInfo = M_Malloc(sizeof(glbuildinfo_t));
 
@@ -871,7 +871,7 @@ static boolean P_LocateMapData(char *levelID, int *lumpIndices)
     else
     {
         glNodeData = false;
-        glNodeFormat = -1;
+        glNodeFormat = 0;
     }
 
     return true;
@@ -1589,7 +1589,7 @@ static boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
             }
             else
             {
-                uint        readNumProps;
+                uint        readNumProps = 0;
                 uint        startIndex;
 
                 // KLUDGE: firstGLvertex. We should determine the start index for this
@@ -2004,7 +2004,7 @@ static selectprop_t* collectProps(int type, boolean builtIn, boolean custom,
                                   uint *count)
 {
     uint        i, idx, tid = type - 1;
-    uint        totalNum = 0, num;
+    uint        totalNum = 0, num = 0;
     selectprop_t *props = NULL;
 
 #if _DEBUG

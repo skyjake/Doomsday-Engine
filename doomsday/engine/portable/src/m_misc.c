@@ -210,7 +210,10 @@ char *M_LimitedStrCat(const char *str, unsigned int maxWidth, char separator,
     {
         if(separator && !isEmpty)
         {
-            char    sepBuf[2] = { separator, 0 };
+            char    sepBuf[2];
+            sepBuf[0] = separator;
+            sepBuf[1] = 0;
+
             strcat(buf, sepBuf);
         }
         strncat(buf, str, length);
@@ -559,15 +562,16 @@ void M_ProjectPointOnLine(float *point, float *linepoint, float *delta,
                           float gap, float *result)
 {
 #define DOTPROD(a,b)    (a[VX]*b[VX] + a[VY]*b[VY])
-    float   pointvec[2] = {
-        point[VX] - linepoint[VX],
-        point[VY] - linepoint[VY]
-    };
+    float   pointvec[2];
     float   div = DOTPROD(delta, delta);
     float   diff[2], dist;
 
     if(!div)
         return;
+
+    pointvec[0] = point[VX] - linepoint[VX];
+    pointvec[1] = point[VY] - linepoint[VY];
+
     div = DOTPROD(pointvec, delta) / div;
     result[VX] = linepoint[VX] + delta[VX] * div;
     result[VY] = linepoint[VY] + delta[VY] * div;

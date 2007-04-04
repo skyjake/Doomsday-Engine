@@ -1268,7 +1268,8 @@ boolean Con_Responder(ddevent_t *event)
     if(!ConsoleActive)
     {
         // In this case we are only interested in the activation key.
-        if(event->data1 == EVS_DOWN && event->controlID == consoleActiveKey)
+        if(event->data1 == EVS_DOWN &&
+           (int) event->controlID == consoleActiveKey)
         {
             Con_Open(true);
             return true;
@@ -1292,7 +1293,7 @@ boolean Con_Responder(ddevent_t *event)
     // Check the shutdown key.
     if(!conInputLock)
     {
-        if(event->controlID == consoleActiveKey)
+        if((int) event->controlID == consoleActiveKey)
         {
             if(shiftDown) // Shift-Tilde to fullscreen and halfscreen.
                 Rend_ConsoleToggleFullscreen();
@@ -1795,7 +1796,7 @@ void Con_Error(const char *error, ...)
     {
         // In busy mode, the other thread will handle this.
         Con_BusyWorkerError(buff);
-        while(true)
+        for(;;)
         {
             // We'll stop here. 
             // TODO: Kill this thread?

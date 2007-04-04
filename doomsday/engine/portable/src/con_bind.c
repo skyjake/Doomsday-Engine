@@ -292,7 +292,7 @@ static binding_t *B_BindingForEvent(ddevent_t *event)
     found = false;
     while(i < (*num) && !found)
     {
-        if(event->controlID == (*list)[i].controlID)
+        if((int) event->controlID == (*list)[i].controlID)
             found = true;
         else
             i++;
@@ -512,7 +512,7 @@ static binding_t *B_GetBinding(uint deviceID, uint controlID,
     // to see if there already is one for this event.
     for(i = 0, bnd = (*list); i < (*num); ++i, bnd++)
     {
-        if(bnd->controlID == controlID)
+        if(bnd->controlID == (int) controlID)
 	        return bnd;
     }
 
@@ -625,7 +625,7 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
 
                         if(com->command[k])
                         {
-                            if(k == ev->data1)
+                            if((int) k == ev->data1)
                             {
                                 M_Free(com->command[k]);
                                 com->command[k] = NULL;
@@ -664,7 +664,7 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindClass)
         com = &bnd->binds[bindClass].data.command;
         for(i = 0; i < NUM_EVENT_STATES; ++i)
         {
-            if(!ev->isAxis && i != ev->data1)
+            if(!ev->isAxis && (int) i != ev->data1)
                 continue;
 
             if(com->command[i])
@@ -905,7 +905,7 @@ static boolean B_EventBuilder(char *buff, ddevent_t *ev)
         ev->deviceID = IDEV_JOY1;
         ev->isAxis = false;
         ev->data1 = (prefix == '+' ? EVS_DOWN : EVS_UP);
-        ev->controlID = -1;
+        ev->controlID = 0;
 
         idx = 0;
         found = false;
@@ -935,8 +935,6 @@ static boolean B_EventBuilder(char *buff, ddevent_t *ev)
             ev->controlID = begin[0];
         return true;
     }
-
-    return false;
 }
 
 /**
@@ -1010,8 +1008,8 @@ void formEventString(char *buff, uint deviceID, int controlID,
 void B_FormEventString(char *buff, evtype_t type, evstate_t state,
                        int data1)
 {
-    uint        deviceID;
-    boolean     isAxis;
+    uint        deviceID = 0;
+    boolean     isAxis = false;
 
     // These are the same translation rules as used in DD_ProcessEvents()
     // except inverted as we are translating from event_t to ddevent_t.
@@ -2015,7 +2013,7 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
                         noMatch = false;
                         if(bindClass >= 0)
                         {
-                            if(j != bindClass)
+                            if(j != (uint) bindClass)
                                 noMatch = true;
                         }
                         if(!noMatch)
@@ -2050,7 +2048,7 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
                 noMatch = false;
                 if(bindClass >= 0)
                 {
-                    if(j != bindClass)
+                    if(j != (uint) bindClass)
                         noMatch = true;
                 }
                 if(!noMatch)
@@ -2092,13 +2090,14 @@ static uint printBindList(char *searchKey, uint deviceID, int bindClass,
  */
 D_CMD(ListBindings)
 {
-    uint        i, g, comcount, bindClass = -1;
+    uint        i, g, comcount, bindClass = 0;
     char        *searchKey;
     uint        *num;
     binding_t  **list;
     uint        totalBinds;
     devcontrolbinds_t *devBinds;
     inputdev_t *device;
+    boolean     inClassOnly = false;
 
     // Are we showing bindings in a particular class only?
     searchKey = NULL;
@@ -2107,11 +2106,12 @@ D_CMD(ListBindings)
         for(i = 0; i < numBindClasses; ++i)
             if(!stricmp(argv[1], bindClasses[i].name))
             {
-                // only show bindings in this class
+                // only show bindings in this class.
                 bindClass = bindClasses[i].id;
+                inClassOnly= true;
             }
 
-        if(bindClass == -1)
+        if(!inClassOnly)
             searchKey = argv[1];
         else
         {
@@ -2135,17 +2135,17 @@ D_CMD(ListBindings)
         num  = &devBinds->numKeyBinds;
         totalBinds += *num;
         if(*list)
-            comcount += printBindList(searchKey, g, bindClass, *list, *num);
+            comcount += printBindList(searchKey, g, (inClassOnly? bindClass:-1), *list, *num);
 
         // Axis bindings.
         list = &devBinds->axisBinds;
         num  = &devBinds->numAxisBinds;
         totalBinds += *num;
         if(*list)
-            comcount += printBindList(searchKey, g, bindClass, *list, *num);
+            comcount += printBindList(searchKey, g, (inClassOnly? bindClass:-1), *list, *num);
     }
 
-    if(bindClass != -1)
+    if(inClassOnly)
     {
         Con_Printf("Showing %i (%s class) commands from %i bindings.\n",
                    comcount, bindClasses[bindClass].name, totalBinds);

@@ -260,8 +260,12 @@ float V2_Intersection(const pvec2_t p1, const pvec2_t delta1, const pvec2_t p2,
 float V2_Intercept(const pvec2_t a, const pvec2_t b, const pvec2_t c,
                    const pvec2_t d, pvec2_t point)
 {
-    vec2_t  ab = { b[VX] - a[VX], b[VY] - a[VY] };
-    vec2_t  cd = { d[VX] - c[VX], d[VY] - c[VY] };
+    vec2_t  ab, cd;
+
+    ab[0] = b[VX] - a[VX];
+    ab[1] = b[VY] - a[VY];
+    cd[0] = d[VX] - c[VX];
+    cd[1] = d[VY] - c[VY];
 
     return V2_Intersection(a, ab, c, cd, point);
 }

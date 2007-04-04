@@ -63,7 +63,7 @@ typedef struct {
 #pragma pack()
 
 typedef struct netbuffer_s {
-    uint            player;         // Recipient or sender.
+    int             player;         // Recipient or sender.
     int             length;         // Number of bytes in the data buffer.
     int             headerLength;   // 1 byte at the moment.
 

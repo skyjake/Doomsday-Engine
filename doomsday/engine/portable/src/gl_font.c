@@ -545,7 +545,11 @@ int FR_PrepareGDIFont(HFONT hfont)
     {
         jfrchar_t *fc = font->chars + i;
         SIZE    size;
-        byte    ch[2] = { i, 0 };
+        byte    ch[2];
+
+        ch[0] = i;
+        ch[1] = 0;
+
         GetTextExtentPoint32(hdc, ch, 1, &size);
         fc->w = size.cx;
         fc->h = size.cy;
@@ -573,7 +577,11 @@ int FR_PrepareGDIFont(HFONT hfont)
     for(i = 0, x = 0, y = 0, maxh = 0; i < 256; ++i)
     {
         jfrchar_t *fc = font->chars + i;
-        byte    ch[2] = { i, 0 };
+        byte    ch[2];
+
+        ch[0] = i;
+        ch[1] = 0;
+
         if(x + fc->w + 1 >= bmpWidth)
         {
             x = 0;

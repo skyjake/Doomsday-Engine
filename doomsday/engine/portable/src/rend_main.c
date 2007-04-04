@@ -1872,7 +1872,6 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     int         surfaceFlags;
     float       height;
     surface_t  *surface;
-    plane_t    *splane = subsector->sector->planes[plane->type];
     int         flags;
     sector_t   *polySector;
 
@@ -2156,7 +2155,6 @@ void Rend_RenderMap(void)
 void Rend_CalcLightRangeModMatrix(cvar_t *unused)
 {
     int         j, n;
-    int         mid = MOD_RANGE / 2;
     float       f;
     double      ramp = 0, rm = 0;
 
@@ -2650,13 +2648,15 @@ static void Rend_RenderBoundingBoxes(void)
     static float green[3] = { 0.2f, 1, 0.2f}; // solid objects
     static float yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
     float       alpha;
-    float       eye[3] = {FIX2FLT(viewplayer->mo->pos[VX]),
-                          FIX2FLT(viewplayer->mo->pos[VY]),
-                          FIX2FLT(viewplayer->mo->pos[VZ])};
+    float       eye[3];
     float       pos[3];
 
     if(!devMobjBBox || netgame)
         return;
+
+    eye[VX] = FIX2FLT(viewplayer->mo->pos[VX]);
+    eye[VY] = FIX2FLT(viewplayer->mo->pos[VY]);
+    eye[VZ] = FIX2FLT(viewplayer->mo->pos[VZ]);
 
     if(usingFog)
         gl.Disable(DGL_FOG);

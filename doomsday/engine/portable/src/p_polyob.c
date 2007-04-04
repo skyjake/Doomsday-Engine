@@ -98,7 +98,7 @@ polyobj_t *GetPolyobj(uint polyNum)
 
     for(i = 0; i < po_NumPolyobjs; ++i)
     {
-        if(PO_PTR(i)->tag == polyNum)
+        if((uint) PO_PTR(i)->tag == polyNum)
         {
             return PO_PTR(i);   //&polyobjs[i];
         }

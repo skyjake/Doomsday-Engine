@@ -72,8 +72,8 @@ void            DD_RegisterVFS(void);
 
 void            W_InitMultipleFiles(char **filenames);
 void            W_EndStartup(void);
-int             W_CheckNumForName(char *name);
-int             W_GetNumForName(char *name);
+int             W_CheckNumForName(const char *name);
+int             W_GetNumForName(const char *name);
 size_t          W_LumpLength(int lump);
 const char     *W_LumpName(int lump);
 void            W_ReadLump(int lump, void *dest);

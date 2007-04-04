@@ -918,9 +918,10 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
     uint        i;
     fixed_t     dx, dy;
     binangle_t  angles[2];
-    line_t     *lines[2] = {((lineowner_t *)a)->line,
-                            ((lineowner_t *)b)->line};
+    line_t     *lines[2];
 
+    lines[0] = ((lineowner_t *)a)->line;
+    lines[1] = ((lineowner_t *)b)->line;
     for(i = 0; i < 2; ++i)
     {
         if(lines[i]->L_v1 == rootVtx)
@@ -1974,9 +1975,8 @@ void R_SetupSky(void)
 
     // Calculate a balancing factor, so the light in the non-skylit
     // sectors won't appear too bright.
-    if(false &&
-       (mapinfo->sky_color[0] > 0 || mapinfo->sky_color[1] > 0 ||
-        mapinfo->sky_color[2] > 0))
+    if(mapinfo->sky_color[0] > 0 || mapinfo->sky_color[1] > 0 ||
+        mapinfo->sky_color[2] > 0)
     {
         skyColorBalance =
             (0 +
@@ -2043,10 +2043,10 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
                                 int alignment)
 {
 #define SEP 10
+
     lineowner_t *cown = antiClockwise? own->prev : own->next;
     line_t *other = cown->line;
     binangle_t diff;
-    uint    candIDX = GET_LINE_IDX(other);
 
     if(other == line)
         return NULL;
@@ -2070,6 +2070,8 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
 
     // Not suitable, try the next.
     return R_FindLineAlignNeighbor(sec, line, cown, antiClockwise, alignment);
+
+#undef SEP
 }
 
 /**
@@ -2149,7 +2151,7 @@ void R_InitLineNeighbors(void)
             {
 
                 uint        v;
-                boolean     done, ok;
+                boolean     done, ok = false;
                 lineowner_t *own;
 
                 for(j = 0; j < 2; ++j)

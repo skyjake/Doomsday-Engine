@@ -147,11 +147,12 @@ float P_MobjPointDistancef(mobj_t *start, mobj_t *end, float *fixpoint)
     }
     if(fixpoint)
     {
-        float   sp[3] = {
-            FIX2FLT(start->pos[VX]),
-            FIX2FLT(start->pos[VY]),
-            FIX2FLT(start->pos[VZ])
-        };
+        float   sp[3];
+
+        sp[0] = FIX2FLT(start->pos[VX]);
+        sp[1] = FIX2FLT(start->pos[VY]),
+        sp[2] = FIX2FLT(start->pos[VZ]);
+
         return M_ApproxDistancef(fixpoint[VZ] - sp[VZ],
                                  M_ApproxDistancef(fixpoint[VX] - sp[VX],
                                                    fixpoint[VY] - sp[VY]));
