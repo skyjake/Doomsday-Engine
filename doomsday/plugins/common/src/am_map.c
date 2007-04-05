@@ -56,6 +56,7 @@
 #include "g_common.h"
 #include "p_player.h"
 #include "g_controls.h"
+#include "am_rendlist.h"
 
 // TYPES -------------------------------------------------------------------
 
@@ -93,54 +94,6 @@ typedef enum glowtype_e {
     BACK_GLOW,
     FRONT_GLOW
 } glowtype_t;
-
-// Types used for automap rendering lists.
-#define AMLT_PALCOL     1
-#define AMLT_RGBA       2
-
-typedef struct amrline_s {
-    byte    type;
-    struct {
-        float   pos[2];
-    } a, b;
-    union {
-        struct {
-            int     color;
-            float   alpha;
-        } palcolor;
-        struct {
-            float rgba[4];
-        } f4color;
-    } coldata;
-} amrline_t;
-
-typedef struct amrquad_s {
-    float   rgba[4];
-    struct {
-        float   pos[2];
-        float   tex[2];
-    } verts[4];
-} amrquad_t;
-
-typedef struct amprim_s {
-    union {
-        amrquad_t quad;
-        amrline_t line;
-    } data;
-    struct amprim_s *next;
-} amprim_t;
-
-typedef struct amprimlist_s {
-    int         type; // DGL_QUAD or DGL_LINES
-    amprim_t *head, *tail, *unused;
-} amprimlist_t;
-
-typedef struct amquadlist_s {
-    int         tex;
-    boolean     blend;
-    amprimlist_t primlist;
-    struct amquadlist_s *next;
-} amquadlist_t;
 
 // MACROS ------------------------------------------------------------------
 
@@ -302,7 +255,7 @@ static void AM_addMark(void);
 static void AM_clearMarks(void);
 static void AM_saveScaleAndLoc(void);
 static void AM_minOutWindowScale(void);
-static void AM_restoreScaleAndLoc(void);
+static void AM_restoreScaleAndLoc(int pnum);
 static void AM_setWinPos(void);
 static void AM_drawMline2(mline_t *ml, mapline_t *c, boolean caps,
                           boolean blend);
@@ -312,8 +265,6 @@ static void AM_drawFragsTable(void);
 #elif __JHEXEN__ || __JSTRIFE__
 static void AM_drawDeathmatchStats(void);
 #endif
-
-static void AM_ClearAllLists(boolean destroy);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -327,8 +278,6 @@ static vectorgrap_t *vectorGraphs[NUM_VECTOR_GRAPHS];
 int     cheating = 0;
 boolean automapactive = false;
 boolean amap_fullyopen = false;
-
-boolean freezeMapRLs = false;
 
 cvar_t  mapCVars[] = {
 /*    {"map-position", 0, CVT_INT, &cfg.automapPos, 0, 8},
@@ -362,7 +311,6 @@ cvar_t  mapCVars[] = {
     {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1},
 #endif
 #endif
-    {"rend-dev-freeze-map", CVF_NO_ARCHIVE, CVT_BYTE, &freezeMapRLs, 0, 1},
     {NULL}
 };
 
@@ -454,8 +402,6 @@ static float scale_mtof = INITSCALEMTOF;
 // used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
 static float scale_ftom;
 
-static player_t *plr;                // the player represented by an arrow
-
 static int markpnums[10];            // numbers used for marking by the automap (lump indices)
 static mpoint_t markpoints[AM_NUMMARKPOINTS];    // where the points are
 static int markpointnum = 0;            // next point to be assigned
@@ -478,14 +424,6 @@ static int oldwin_h = 0;
 // Used in subsector debug display.
 static mapline_t subColors[10];
 
-//
-// Rendering lists.
-//
-static amquadlist_t *amQuadListHead;
-
-// Lines.
-static amprimlist_t amLineList;
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -500,6 +438,8 @@ void AM_Register(void)
         Con_AddVariable(&mapCVars[i]);
     for(i = 0; mapCCmds[i].name; ++i)
         Con_AddCommand(&mapCCmds[i]);
+
+    AM_ListRegister();
 }
 
 /**
@@ -509,8 +449,7 @@ void AM_Init(void)
 {
     memset(vectorGraphs, 0, sizeof(vectorGraphs));
 
-    amLineList.type = DGL_LINES;
-    amLineList.head = amLineList.tail = amLineList.unused = NULL;
+    AM_ListInit();
 }
 
 /**
@@ -519,41 +458,8 @@ void AM_Init(void)
 void AM_Shutdown(void)
 {
     uint        i;
-    amquadlist_t *list, *listp;
-    amprim_t   *n, *np;
-    amprim_t   *nq, *npq;
 
-    AM_ClearAllLists(true);
-
-    // Empty the free node lists too.
-    // Lines.
-    n = amLineList.unused;
-    while(n)
-    {
-        np = n->next;
-        free(n);
-        n = np;
-    }
-    amLineList.unused = NULL;
-
-    // Quads.
-    list = amQuadListHead;
-    while(list)
-    {
-        listp = list->next;
-
-        nq = list->primlist.unused;
-        while(nq)
-        {
-            npq = nq->next;
-            free(nq);
-            nq = npq;
-        }
-        list->primlist.unused = NULL;
-        free(list);
-
-        list = listp;
-    }
+    AM_ListShutdown();
 
     // Vector graphics.
     for(i = 0; i < NUM_VECTOR_GRAPHS; ++i)
@@ -652,19 +558,20 @@ static void AM_saveScaleAndLoc(void)
 /**
  * Restore the scale/location from last automap viewing
  */
-static void AM_restoreScaleAndLoc(void)
+static void AM_restoreScaleAndLoc(int pnum)
 {
     m_w = old_m_w;
     m_h = old_m_h;
-    if(!followplayer)
+    if(!followplayer || pnum < 0 || pnum >= MAXPLAYERS ||
+       !players[pnum].plr->ingame)
     {
         m_x = old_m_x;
         m_y = old_m_y;
     }
     else
     {
-        m_x = FIX2FLT(plr->plr->mo->pos[VX]) - m_w / 2.0f;
-        m_y = FIX2FLT(plr->plr->mo->pos[VY]) - m_h / 2.0f;
+        m_x = FIX2FLT(players[pnum].plr->mo->pos[VX]) - m_w / 2.0f;
+        m_y = FIX2FLT(players[pnum].plr->mo->pos[VY]) - m_h / 2.0f;
     }
     m_x2 = m_x + m_w;
     m_y2 = m_y + m_h;
@@ -770,6 +677,7 @@ static void AM_changeWindowLoc(void)
 static void AM_initVariables(void)
 {
     int         i, pnum;
+    player_t   *plr;
 
     automapactive = true;
 
@@ -835,10 +743,10 @@ static void AM_initVariables(void)
  */
 static void AM_loadPics(void)
 {
+#if !__DOOM64TC__
     int         i;
     char        namebuf[9];
 
-#if !__DOOM64TC__
     // FIXME >
     for(i = 0; i < 10; ++i)
     {
@@ -957,11 +865,16 @@ static void AM_changeWindowScale(void)
 /**
  * Align the map camera to the players position
  */
-static void AM_doFollowPlayer(void)
+static void AM_doFollowPlayer(int pnum)
 {
-    mobj_t *mo = plr->plr->mo;
+    mobj_t     *mo;
 
-    if(f_oldloc.pos[VX] != FIX2FLT(mo->pos[VX]) || f_oldloc.pos[VY] != FIX2FLT(mo->pos[VY]))
+    if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->ingame)
+        return;
+
+    mo = players[pnum].plr->mo;
+    if(f_oldloc.pos[VX] != FIX2FLT(mo->pos[VX]) ||
+       f_oldloc.pos[VY] != FIX2FLT(mo->pos[VY]))
     {
         // Now that a high resolution is used (compared to 320x200!)
         // there is no need to quantify map scrolling. -jk
@@ -1045,7 +958,7 @@ void AM_Ticker(void)
     }
     else  // Camera follows the player
 */
-        AM_doFollowPlayer();
+        AM_doFollowPlayer(consoleplayer);
 
     // Change the zoom
     AM_changeWindowScale();
@@ -1394,205 +1307,6 @@ static int AM_checkSpecial(int special)
     return 0;
 }
 
-static amprim_t *AM_NewPrimitive(amprimlist_t *list)
-{
-    amprim_t   *p;
-
-    // Any primitives available in a passed primlist's, unused list?
-    if(list && list->unused)
-    {   // Yes, unlink from the unused list and use it.
-        p = list->unused;
-        list->unused = p->next;
-    }
-    else
-    {   // No, allocate another.
-        p = malloc(sizeof(*p));
-    }
-
-    return p;
-}
-
-static void AM_LinkPrimitiveToList(amprimlist_t *list, amprim_t *p)
-{
-    p->next = list->head;
-    if(!list->tail)
-        list->tail = p;
-    list->head = p;
-}
-
-static amrline_t *AM_AllocateLine(void)
-{
-    amprimlist_t *list = &amLineList;
-    amprim_t   *p = AM_NewPrimitive(list);
-
-    AM_LinkPrimitiveToList(list, p);
-    return &(p->data.line);
-}
-
-static amrquad_t *AM_AllocateQuad(int tex, boolean blend)
-{
-    amquadlist_t *list;
-    amprim_t   *p;
-    boolean     found;
-
-    // Find a suitable primitive list (matching texture & blend).
-    list = amQuadListHead;
-    found = false;
-    while(list && !found)
-    {
-        if(list->tex == tex && list->blend == blend)
-            found = true;
-        else
-            list = list->next;
-    }
-
-    if(!found)
-    {   // Allocate a new list.
-        list = malloc(sizeof(*list));
-
-        list->tex = tex;
-        list->blend = blend;
-        list->primlist.type = DGL_QUADS;
-        list->primlist.head = list->primlist.tail =
-            list->primlist.unused = NULL;
-
-        // Link it in.
-        list->next = amQuadListHead;
-        amQuadListHead = list;
-    }
-
-    p = AM_NewPrimitive(&list->primlist);
-    AM_LinkPrimitiveToList(&list->primlist, p);
-
-    return &(p->data.quad);
-}
-
-static void AM_DeleteList(amprimlist_t *list, boolean destroy)
-{
-    amprim_t *n, *np;
-
-    // Are we destroying the lists?
-    if(destroy)
-    {   // Yes, free the nodes.
-        n = list->head;
-        while(n)
-        {
-            np = n->next;
-            free(n);
-            n = np;
-        }
-    }
-    else
-    {   // No, move all nodes to the free list.
-        n = list->tail;
-        if(list->tail && list->unused)
-            n->next = list->unused;
-    }
-
-    list->head = list->tail = NULL;
-}
-
-static void AM_ClearAllLists(boolean destroy)
-{
-    amquadlist_t *list;
-
-    // Lines.
-    AM_DeleteList(&amLineList, destroy);
-
-    // Quads.
-    list = amQuadListHead;
-    while(list)
-    {
-        AM_DeleteList(&list->primlist, destroy);
-        list = list->next;
-    }
-}
-
-static void AM_AddLine(float x, float y, float x2, float y2, int color,
-                       float alpha)
-{
-    amrline_t *l;
-
-    l = AM_AllocateLine();
-
-    l->a.pos[0] = x;
-    l->a.pos[1] = y;
-    l->b.pos[0] = x2;
-    l->b.pos[1] = y2;
-
-    l->type = AMLT_PALCOL;
-    l->coldata.palcolor.color = color;
-    l->coldata.palcolor.alpha = CLAMP(alpha, 0.0, 1.0f);
-}
-
-static void AM_AddLine4f(float x, float y, float x2, float y2,
-                         float r, float g, float b, float a)
-{
-    amrline_t *l;
-
-    l = AM_AllocateLine();
-
-    l->a.pos[0] = x;
-    l->a.pos[1] = y;
-    l->b.pos[0] = x2;
-    l->b.pos[1] = y2;
-
-    l->type = AMLT_RGBA;
-    l->coldata.f4color.rgba[0] = r;
-    l->coldata.f4color.rgba[1] = g;
-    l->coldata.f4color.rgba[2] = b;
-    l->coldata.f4color.rgba[3] = CLAMP(a, 0.0, 1.0f);
-}
-
-static void AM_AddQuad(float x1, float y1, float x2, float y2,
-                       float x3, float y3, float x4, float y4,
-                       float tc1st1, float tc1st2,
-                       float tc2st1, float tc2st2,
-                       float tc3st1, float tc3st2,
-                       float tc4st1, float tc4st2,
-                       float r, float g, float b, float a,
-                       int tex, boolean blend)
-{
-    // Vertex layout.
-    // 1--2
-    // | /|
-    // |/ |
-    // 3--4
-    //
-    amrquad_t *q;
-
-    q = AM_AllocateQuad(tex, blend);
-
-    q->rgba[0] = r;
-    q->rgba[1] = g;
-    q->rgba[2] = b;
-    q->rgba[3] = a;
-
-    // V1
-    q->verts[0].pos[0] = x1;
-    q->verts[0].tex[0] = tc1st1;
-    q->verts[0].pos[1] = y1;
-    q->verts[0].tex[1] = tc1st2;
-
-    // V2
-    q->verts[1].pos[0] = x2;
-    q->verts[1].tex[0] = tc2st1;
-    q->verts[1].pos[1] = y2;
-    q->verts[1].tex[1] = tc2st2;
-
-    // V3
-    q->verts[2].pos[0] = x3;
-    q->verts[2].tex[0] = tc3st1;
-    q->verts[2].pos[1] = y3;
-    q->verts[2].tex[1] = tc3st2;
-
-    // V4
-    q->verts[3].pos[0] = x4;
-    q->verts[3].tex[0] = tc4st1;
-    q->verts[3].pos[1] = y4;
-    q->verts[3].tex[1] = tc4st2;
-}
-
 /**
  * Draws the given line. No cliping is done!
  */
@@ -1791,7 +1505,7 @@ static void renderGrid(int color)
 /**
  * Determines visible lines, draws them.
  */
-static void renderWalls(void)
+static void renderWalls(int pnum)
 {
     int         i, segcount, flags;
     uint        s, subColor = 0;
@@ -1802,6 +1516,12 @@ static void renderWalls(void)
     seg_t      *seg;
     mapline_t   templine;
     boolean     withglow = false;
+    player_t   *plr;
+
+    if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->ingame)
+        return; // huh?
+
+    plr = &players[consoleplayer];
 
     for(s = 0; s < numsubsectors; ++s)
     {
@@ -2000,28 +1720,19 @@ static void renderPlayers(void)
         vg = AM_GetVectorGraphic(VG_ARROW);
     }
 
-    if(!IS_NETGAME)
-    {
-        /* $unifiedangles */
-        addLineCharacter(vg, size, plr->plr->mo->angle, WHITE,
-                         cfg.automapLineAlpha,
-                         FIX2FLT(plr->plr->mo->pos[VX]),
-                         FIX2FLT(plr->plr->mo->pos[VY]));
-        return;
-    }
-
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t   *p = &players[i];
         int         color;
         float       alpha;
 
+        if(!p->plr->ingame)
+            continue;
+
 #if __JDOOM__ || __JHERETIC__
         if(deathmatch && p != &players[consoleplayer])
             continue;
 #endif
-        if(!p->plr->ingame)
-            continue;
 
         color = their_colors[cfg.playerColor[i]];
         alpha = cfg.automapLineAlpha;
@@ -2211,9 +1922,15 @@ static void AM_setWinPos(void)
 /**
  * Sets up the state for automap drawing
  */
-static void AM_GL_SetupState(void)
+static void AM_GL_SetupState(int pnum)
 {
     //float extrascale = 0;
+    player_t       *plr;
+
+    if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->ingame)
+        return; // huh?
+
+    plr = &players[pnum];
 
     // Update the window scale vars
     if(oldwin_w != 1 /*cfg.automapWidth*/ || oldwin_h != 1 /*cfg.automapHeight*/)
@@ -2311,12 +2028,20 @@ static void AM_GL_RestoreState(void)
 /**
  * Handles what counters to draw eg title, timer, dm stats etc
  */
-static void AM_drawCounters(void)
+static void AM_drawCounters(int pnum)
 {
+    player_t   *plr;
 #if __JDOOM__ || __JHERETIC__
     char        buf[40], tmp[20];
     int         x = 5, y = LINEHEIGHT_A * 3;
+#endif
 
+    if(pnum < 0 || pnum >= MAXPLAYERS || !players[pnum].plr->ingame)
+        return; // huh?
+
+    plr = &players[pnum];
+
+#if __JDOOM__ || __JHERETIC__
     gl.Color3f(1, 1, 1);
 
     gl.MatrixMode(DGL_MODELVIEW);
@@ -2480,107 +2205,6 @@ static void AM_drawLevelName(void)
 #undef FIXYTOSCREENY
 }
 
-static void AM_RenderList(int tex, boolean blend, amprimlist_t *list)
-{
-    amprim_t *p;
-
-    // Change render state for this list?
-    if(tex)
-    {
-        gl.Enable(DGL_TEXTURING);
-        gl.Bind(tex);
-    }
-    else
-    {
-        gl.Disable(DGL_TEXTURING);
-    }
-
-    if(blend)
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
-
-    // Write commands.
-    p = list->head;
-    gl.Begin(list->type);
-    switch(list->type)
-    {
-    case DGL_QUADS:
-        while(p)
-        {
-            gl.Color4fv(p->data.quad.rgba);
-
-            // V1
-            gl.TexCoord2f(p->data.quad.verts[0].tex[0],
-                          p->data.quad.verts[0].tex[1]);
-            gl.Vertex2f(p->data.quad.verts[0].pos[0],
-                        p->data.quad.verts[0].pos[1]);
-            // V2
-            gl.TexCoord2f(p->data.quad.verts[1].tex[0],
-                          p->data.quad.verts[1].tex[1]);
-            gl.Vertex2f(p->data.quad.verts[1].pos[0],
-                        p->data.quad.verts[1].pos[1]);
-            // V3
-            gl.TexCoord2f(p->data.quad.verts[2].tex[0],
-                          p->data.quad.verts[2].tex[1]);
-            gl.Vertex2f(p->data.quad.verts[2].pos[0],
-                        p->data.quad.verts[2].pos[1]);
-            // V4
-            gl.TexCoord2f(p->data.quad.verts[3].tex[0],
-                          p->data.quad.verts[3].tex[1]);
-            gl.Vertex2f(p->data.quad.verts[3].pos[0],
-                        p->data.quad.verts[3].pos[1]);
-
-            p = p->next;
-        }
-        break;
-
-    case DGL_LINES:
-        while(p)
-        {
-            if(p->data.line.type == AMLT_PALCOL)
-            {
-                GL_SetColor2(p->data.line.coldata.palcolor.color,
-                             p->data.line.coldata.palcolor.alpha);
-            }
-            else
-            {
-                gl.Color4fv(p->data.line.coldata.f4color.rgba);
-            }
-
-            gl.Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
-            gl.Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
-
-            p = p->next;
-        }
-        break;
-
-    default:
-        break;
-    }
-    gl.End();
-
-    // Restore previous state.
-    if(!tex)
-        gl.Enable(DGL_TEXTURING);
-    if(blend)
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-}
-
-static void AM_RenderAllLists(void)
-{
-    amquadlist_t *list;
-
-    // Quads.
-    list = amQuadListHead;
-    while(list)
-    {
-        AM_RenderList(list->tex, list->blend, &list->primlist);
-        list = list->next;
-    }
-
-    // Lines.
-    AM_RenderList(0, 0, &amLineList);
-}
-
 void AM_Drawer(void)
 {
     // If the automap isn't active, draw nothing
@@ -2589,7 +2213,7 @@ void AM_Drawer(void)
 
     // Setup for frame.
     AM_clearFB(BACKGROUND);
-    AM_GL_SetupState();
+    AM_GL_SetupState(consoleplayer);
 
     if(!freezeMapRLs)
     {
@@ -2599,7 +2223,7 @@ void AM_Drawer(void)
         if(grid)
             renderGrid(GRIDCOLORS);
 
-        renderWalls();
+        renderWalls(consoleplayer);
         renderPlayers();
 
         if(cheating == 2)
@@ -2620,7 +2244,7 @@ void AM_Drawer(void)
 
     AM_drawLevelName();
     AM_GL_RestoreState();
-    AM_drawCounters();
+    AM_drawCounters(consoleplayer);
 }
 
 #if __JDOOM__
@@ -3125,6 +2749,8 @@ DEFCC(CCmdMapAction)
 
         if(!stricmp(argv[0], "follow"))  // follow mode toggle
         {
+            player_t    *plr = &players[consoleplayer];
+
             followplayer = !followplayer;
             f_oldloc.pos[VX] = (float) DDMAXINT;
 
@@ -3141,6 +2767,8 @@ DEFCC(CCmdMapAction)
 
         if(!stricmp(argv[0], "rotate"))  // rotate mode toggle
         {
+            player_t    *plr = &players[consoleplayer];
+
             cfg.automapRotate = !cfg.automapRotate;
             P_SetMessage(plr, (cfg.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF), false);
             Con_Printf("Rotate mode toggle.\n");
@@ -3149,6 +2777,8 @@ DEFCC(CCmdMapAction)
 
         if(!stricmp(argv[0], "addmark"))  // add a mark
         {
+            player_t    *plr = &players[consoleplayer];
+
             sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, markpointnum);
             P_SetMessage(plr, buffer, false);
             AM_addMark();
@@ -3158,6 +2788,8 @@ DEFCC(CCmdMapAction)
 
         if(!stricmp(argv[0], "clearmarks"))  // clear all marked points
         {
+            player_t    *plr = &players[consoleplayer];
+
             AM_clearMarks();
             P_SetMessage(plr, AMSTR_MARKSCLEARED, false);
             Con_Printf("All markers cleared on automap.\n");
@@ -3166,6 +2798,8 @@ DEFCC(CCmdMapAction)
 
         if(!stricmp(argv[0], "grid")) // toggle drawing of grid
         {
+            player_t    *plr = &players[consoleplayer];
+
             grid = !grid;
             P_SetMessage(plr, (grid ? AMSTR_GRIDON : AMSTR_GRIDOFF), false);
             Con_Printf("Grid toggled in automap.\n");
@@ -3181,7 +2815,7 @@ DEFCC(CCmdMapAction)
                 AM_minOutWindowScale();
             }
             else
-                AM_restoreScaleAndLoc();
+                AM_restoreScaleAndLoc(consoleplayer);
 
             Con_Printf("Maximum zoom toggle in automap.\n");
             return true;

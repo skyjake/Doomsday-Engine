@@ -63,5 +63,6 @@
  ./../../plugins/common/src/hu_lib.c
  ./../../plugins/common/src/hu_msg.c
  ./../../plugins/common/src/am_map.c
+ ./../../plugins/common/src/am_rendlist.c
  ./../../plugins/jheretic/src/acfnlink.c
  

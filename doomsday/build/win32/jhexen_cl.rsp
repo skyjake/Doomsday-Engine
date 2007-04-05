@@ -64,6 +64,7 @@
  ./../../plugins/jhexen/src/in_lude.c
  ./../../plugins/jhexen/src/st_stuff.c
  ./../../plugins/common/src/am_map.c
+ ./../../plugins/common/src/am_rendlist.c
  ./../../plugins/jhexen/src/acfnlink.c
  ./../../plugins/jhexen/src/a_action.c
  

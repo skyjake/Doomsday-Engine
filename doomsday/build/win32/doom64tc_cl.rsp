@@ -53,6 +53,7 @@
  ./../../plugins/common/src/hu_lib.c
  ./../../plugins/common/src/f_infine.c
  ./../../plugins/common/src/am_map.c
+ ./../../plugins/common/src/am_rendlist.c
  ./../../plugins/doom64tc/src/tables.c
  ./../../plugins/common/src/r_common.c
  ./../../plugins/doom64tc/src/m_random.c

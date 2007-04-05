@@ -221,6 +221,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\am_rendlist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\d_net.h"
 				>
 			</File>
@@ -358,6 +362,10 @@
 			>
 			<File
 				RelativePath="..\..\..\plugins\common\src\am_map.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\am_rendlist.c"
 				>
 			</File>
 			<File

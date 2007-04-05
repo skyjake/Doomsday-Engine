@@ -54,6 +54,7 @@
  ./../../plugins/common/src/hu_lib.c
  ./../../plugins/common/src/f_infine.c
  ./../../plugins/common/src/am_map.c
+ ./../../plugins/common/src/am_rendlist.c
  ./../../plugins/jdoom/src/tables.c
  ./../../plugins/common/src/r_common.c
  ./../../plugins/jdoom/src/m_random.c
