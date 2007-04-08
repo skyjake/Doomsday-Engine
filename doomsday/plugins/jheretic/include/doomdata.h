@@ -81,7 +81,7 @@ extern thing_t* things;
 #define ML_DONTDRAW     128
 
 // Set if already seen, thus drawn in automap.
-#define ML_MAPPED       256
+//#define ML_MAPPED       256
 
 // Allows a USE action to pass through a line with a special
 #define ML_PASSUSE    512

@@ -54,6 +54,7 @@
 #include "g_common.h"
 #include "p_player.h"
 #include "p_inventory.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -105,8 +106,6 @@ static void CheatIDDQDFunc(player_t *player, Cheat_t * cheat);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean automapactive;
-extern int cheating;
 extern int messageResponse;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -358,19 +357,18 @@ boolean cht_Responder(event_t *ev)
         }
     }
 
-    if(automapactive)
+    if(AM_IsMapActive(consoleplayer))
     {
         if(ev->state == EVS_DOWN)
         {
-            if(cheat_amap[cheatcount] == ev->data1 && !IS_NETGAME)
+            if(!deathmatch && cheat_amap[cheatcount] == ev->data1)
                 cheatcount++;
             else
                 cheatcount = 0;
 
             if(cheatcount == 6)
             {
-                cheatcount = 0;
-                cheating = (cheating + 1) % 4;
+                AM_IncMapCheatLevel(consoleplayer);
             }
             return false;
         }
@@ -925,21 +923,21 @@ DEFCC(CCmdCheatWhere)
 DEFCC(CCmdCheatReveal)
 {
     int     option;
-    extern int cheating;
 
     if(!canCheat())
         return false;           // Can't cheat!
 
     // Reset them (for 'nothing'). :-)
-    cheating = 0;
+    AM_SetMapCheatLevel(consoleplayer, 0);
     players[consoleplayer].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
     if(option < 0 || option > 4)
         return false;
+
     if(option == 1)
         players[consoleplayer].powers[PT_ALLMAP] = true;
     else if(option != 0)
-        cheating = option -1;
+        AM_SetMapCheatLevel(consoleplayer, option -1);
 
     return true;
 }

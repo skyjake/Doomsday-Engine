@@ -288,6 +288,7 @@ typedef struct line_s {
     float               length;        // Accurate length
     binangle_t          angle;         // Calculated from front side's normal
     boolean             selfrefhackroot; // This line is the root of a self-referencing hack sector
+    boolean             mapped[DDMAXPLAYERS]; // Whether the line has been mapped by each player yet.
 } line_t;
 
 typedef struct polyobj_s {

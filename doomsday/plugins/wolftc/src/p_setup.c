@@ -252,11 +252,18 @@ int P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data)
 {
     switch(code)
     {
-    case DMUSC_BENIGNSECTOR:
+    case DMUSC_SECTOR_ISBENIGN:
         // A benign sector is one which has zero lines.
         // Zero it's tag to prevent it from being selected while searching for
         // sectors to act on (eg XG and the "built-in" line specials).
         xsectors[id].tag = 0;
+        break;
+
+    case DMUSC_LINE_FIRSTRENDERED:
+        // Called the first time the given line is rendered.
+        // *data is a pointer to int, giving the player id which has seen it.
+        // We'll utilize this to mark it as being visible in the automap.
+        xlines[id].mapped[*(int *) data] = true;
         break;
 
     default:

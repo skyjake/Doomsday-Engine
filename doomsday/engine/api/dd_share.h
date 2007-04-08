@@ -725,7 +725,8 @@ extern          "C" {
     // Sent to the game when various map update events occur.
     enum /* do not change the numerical values of the constants */
     {
-        DMUSC_BENIGNSECTOR
+        DMUSC_SECTOR_ISBENIGN,
+        DMUSC_LINE_FIRSTRENDERED
     };
 
     // Fixed-point vertex position. Utility struct for the game, not

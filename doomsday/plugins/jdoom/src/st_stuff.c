@@ -43,6 +43,7 @@
 
 #include "p_tick.h" // for P_IsPaused
 #include "p_player.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1157,7 +1158,7 @@ Draw_EndZoom();
 void ST_Drawer(int fullscreenmode, boolean refresh)
 {
     st_firsttime = st_firsttime || refresh;
-    st_statusbaron = (fullscreenmode < 2) || (automapactive &&
+    st_statusbaron = (fullscreenmode < 2) || (AM_IsMapActive(consoleplayer) &&
                      (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts

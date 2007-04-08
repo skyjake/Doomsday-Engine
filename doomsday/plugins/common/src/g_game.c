@@ -1540,7 +1540,7 @@ void G_DoCompleted(void)
 
     gameaction = GA_NONE;
 
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->ingame)
         {
@@ -1549,11 +1549,10 @@ void G_DoCompleted(void)
             // Update this client's stats.
             NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS,
                                   PSF_FRAGS | PSF_COUNTERS, true);
+
+            AM_Stop(i);
         }
     }
-
-    if(automapactive)
-        AM_Stop();
 
     // Has the player completed the game?
     if(G_IfVictory())
@@ -1705,7 +1704,7 @@ void G_DoCompleted(void)
     // Tell the clients what's going on.
     NetSv_Intermission(IMF_BEGIN, 0, 0);
     viewactive = false;
-    automapactive = false;
+
 #elif __JHERETIC__
     // Let the clients know the next level.
     NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
@@ -2007,7 +2006,6 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 
     usergame = true;            // will be set false if a demo
     paused = false;
-    automapactive = false;
     viewactive = true;
     gameepisode = episode;
     gamemap = map;

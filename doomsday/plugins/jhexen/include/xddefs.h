@@ -72,7 +72,7 @@ extern thing_t* things;
 #define ML_SECRET           0x0020 // don't map as two sided: IT'S A SECRET!
 #define ML_SOUNDBLOCK       0x0040 // don't let sound cross two of these
 #define ML_DONTDRAW         0x0080 // don't draw on the automap
-#define ML_MAPPED           0x0100 // set if already drawn in automap
+//#define ML_MAPPED           0x0100 // set if already drawn in automap
 #define ML_REPEAT_SPECIAL   0x0200 // special is repeatable
 #define ML_SPAC_SHIFT       10
 #define ML_SPAC_MASK        0x1c00

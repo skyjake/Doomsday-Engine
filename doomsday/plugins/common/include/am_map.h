@@ -31,35 +31,16 @@
 #define __AMMAP_H__
 
 #ifndef __JDOOM__
-extern boolean  automapactive;  // Common\f_infine.c is looking for this if not jDoom... ??
-
 // DJS - defined in Include\jDoom\Mn_def.h in all games but jDoom
 #define LINEHEIGHT_A 10
 #endif
-
-void    AM_Register(void);  // Called during init to register automap cvars and ccmds.
-void    AM_Init(void);      // Called during init to initialize the automap.
-void    AM_Shutdown(void);  // Called on exit to free any allocated memory.
-
-void    AM_Ticker(void);    // Called by main loop.
-void    AM_Drawer(void);    // Called every frame to render the map (if visible).
-void    AM_Stop(void);      // Called to force the automap to quit if the level is completed while it is up.
-
-void    M_DrawMAP(void);    // Called to render the map menu.
 
 // Used by ST StatusBar stuff.
 #define AM_MSGHEADER (('a'<<24)+('m'<<16))
 #define AM_MSGENTERED (AM_MSGHEADER | ('e'<<8))
 #define AM_MSGEXITED (AM_MSGHEADER | ('x'<<8))
 
-// Keys
-#define AM_STARTKEY DDKEY_TAB
-#define AM_ENDKEY   DDKEY_TAB
-
 #define AM_NUMMARKPOINTS 10
-
-// the following is crap
-#define LINE_NEVERSEE ML_DONTDRAW
 
 // Counter Cheat flags.
 #define CCH_KILLS           0x1
@@ -331,5 +312,27 @@ void    M_DrawMAP(void);    // Called to render the map menu.
 
 #endif
 
+void    AM_Register(void);  // Called during init to register automap cvars and ccmds.
+void    AM_Init(void);      // Called during init to initialize the automap.
+void    AM_Shutdown(void);  // Called on exit to free any allocated memory.
+void    AM_LoadData(void);
+void    AM_UnloadData(void);
+
+void    AM_Ticker(void);    // Called by main loop.
+void    AM_Drawer(int viewplayer); // Called every frame to render the map (if visible).
+
+void    M_DrawMAP(void);    // Called to render the map menu.
+
+void    AM_Stop(int pnum);  // Called to force the automap to quit if the level is completed while it is up.
+
+boolean AM_IsMapActive(int pnum);
+boolean AM_IsMapFullyOpen(int pnum);
+
+// TODO: Split this functionality down into logical seperate settings.
+void    AM_SetMapCheatLevel(int pnum, int level);
+void    AM_IncMapCheatLevel(int pnum); // Called to increase map cheat level.
+#if __JHEXEN__
+void    AM_SetMapShowKills(int pnum, int value);
+#endif
 
 #endif

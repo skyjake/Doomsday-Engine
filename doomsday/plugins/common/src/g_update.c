@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <ctype.h>
+
 #if  __DOOM64TC__
 #  include "doom64tc.h"
 #elif __WOLFTC__
@@ -44,8 +46,8 @@
 #  include "jstrife.h"
 #endif
 
-#include <ctype.h>
 #include "hu_pspr.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -162,11 +164,15 @@ void G_UpdateState(int step)
     case DD_RENDER_RESTART_PRE:
         // Free the menufog texture.
         M_UnloadData();
+        // Free the automap marker patches.
+        AM_UnloadData();
         break;
 
     case DD_RENDER_RESTART_POST:
         // Reload the menufog texture.
         M_LoadData();
+        // Reload the automap marker patches.
+        AM_LoadData();
         break;
     }
 }

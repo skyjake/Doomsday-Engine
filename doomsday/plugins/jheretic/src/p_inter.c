@@ -809,13 +809,10 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
             return;
         }
 
-        if(target->player == &players[consoleplayer] && automapactive)
-        {
-            // don't die in auto map,
-            // switch view prior to dying
-            AM_Stop();
-        }
+        // Don't die in auto map.
+        AM_Stop(target->player - players);
     }
+
     if(target->health < -(target->info->spawnhealth >> 1) &&
        target->info->xdeathstate)
     {                           // Extreme death

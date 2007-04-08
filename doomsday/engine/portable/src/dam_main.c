@@ -2725,10 +2725,10 @@ static void finalizeMapData(gamemap_t *map)
     for(i = 0, sec = map->sectors; i < map->numsectors; ++i, sec++)
     {
         if(linesInSector[i] != sec->linecount)
-            Con_Error("finalizeMapData: miscounted lines"); // Hmm? Unusual...
+            Con_Error("finalizeMapData: Miscounted lines?"); // Hmm? Unusual...
 
         if(ssecsInSector[i] != sec->subscount)
-            Con_Error("finalizeMapData: miscounted subsectors"); // Hmm? Unusual...
+            Con_Error("finalizeMapData: Miscounted subsectors?"); // Hmm? Unusual...
 
         sec->subsgroupcount = 1;
         sec->subsgroups = Z_Malloc(sizeof(ssecgroup_t) * sec->subsgroupcount, PU_LEVEL, 0);
@@ -2751,7 +2751,7 @@ static void finalizeMapData(gamemap_t *map)
         {
             // Send the game a status report (we don't need to do anything).
             if(gx.HandleMapObjectStatusReport)
-                gx.HandleMapObjectStatusReport(DMUSC_BENIGNSECTOR,
+                gx.HandleMapObjectStatusReport(DMUSC_SECTOR_ISBENIGN,
                                                sec - map->sectors,
                                                DMU_SECTOR, NULL);
         }

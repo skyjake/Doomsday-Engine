@@ -38,7 +38,7 @@ void    AM_ListRegister(void);
 void    AM_ListInit(void);
 void    AM_ListShutdown(void);
 
-void    AM_RenderAllLists(void);
+void    AM_RenderAllLists(float alpha);
 void    AM_ClearAllLists(boolean destroy);
 
 
@@ -53,6 +53,6 @@ void    AM_AddQuad(float x1, float y1, float x2, float y2,
                    float tc3st1, float tc3st2,
                    float tc4st1, float tc4st2,
                    float r, float g, float b, float a,
-                   int tex, boolean blend);
+                   uint tex, boolean texIsPatchLumpNum, boolean blend);
 
 #endif

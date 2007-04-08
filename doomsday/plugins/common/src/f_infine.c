@@ -50,6 +50,7 @@
 #include "g_common.h"
 #include "d_net.h"
 #include "p_player.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -408,7 +409,7 @@ void FI_ClearState(void)
     if(fi->mode != FIMODE_OVERLAY)
     {
         G_ChangeGameState(GS_INFINE);
-        automapactive = false;
+        AM_Stop(consoleplayer);
     }
 
     fi_active = true;
@@ -784,7 +785,7 @@ void FI_DemoEnds(void)
         fi_active = true;
         G_ChangeGameState(GS_INFINE);
         gameaction = GA_NONE;
-        automapactive = false;
+        AM_Stop(consoleplayer);
     }
 }
 

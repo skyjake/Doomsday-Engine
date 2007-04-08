@@ -248,11 +248,6 @@ boolean         P_GiveBody(player_t *player, int num);
 boolean         P_GivePower(player_t *player, powertype_t power);
 boolean         P_MorphPlayer(player_t *player);
 
-// ***** AM_MAP *****
-
-void            AM_Ticker(void);
-void            AM_Drawer(void);
-
 // ***** A_ACTION *****
 boolean         A_LocalQuake(byte *args, mobj_t *victim);
 void            P_SpawnDirt(mobj_t *actor, fixed_t radius);

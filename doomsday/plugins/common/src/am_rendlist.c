@@ -89,7 +89,8 @@ typedef struct amprimlist_s {
 } amprimlist_t;
 
 typedef struct amquadlist_s {
-    int         tex;
+    uint        tex;
+    boolean     texIsPatchLumpNum;
     boolean     blend;
     amprimlist_t primlist;
     struct amquadlist_s *next;
@@ -251,7 +252,8 @@ static amrline_t *AM_AllocateLine(void)
  *
  * @return          Ptr to the new quad, automap render primitive. 
  */
-static amrquad_t *AM_AllocateQuad(int tex, boolean blend)
+static amrquad_t *AM_AllocateQuad(uint tex, boolean texIsPatchLumpNum,
+                                  boolean blend)
 {
     amquadlist_t *list;
     amprim_t   *p;
@@ -262,7 +264,9 @@ static amrquad_t *AM_AllocateQuad(int tex, boolean blend)
     found = false;
     while(list && !found)
     {
-        if(list->tex == tex && list->blend == blend)
+        if(list->tex == tex &&
+           list->texIsPatchLumpNum == texIsPatchLumpNum &&
+           list->blend == blend)
             found = true;
         else
             list = list->next;
@@ -273,6 +277,7 @@ static amrquad_t *AM_AllocateQuad(int tex, boolean blend)
         list = malloc(sizeof(*list));
 
         list->tex = tex;
+        list->texIsPatchLumpNum = texIsPatchLumpNum;
         list->blend = blend;
         list->primlist.type = DGL_QUADS;
         list->primlist.head = list->primlist.tail =
@@ -315,8 +320,12 @@ static void AM_DeleteList(amprimlist_t *list, boolean destroy)
     else
     {   // No, move all nodes to the free list.
         n = list->tail;
-        if(list->tail && list->unused)
-            n->next = list->unused;
+        if(list->tail)
+        {
+            if(list->unused)
+                n->next = list->unused;
+            list->unused = list->head;
+        }
     }
 
     list->head = list->tail = NULL;
@@ -426,7 +435,8 @@ void AM_AddLine4f(float x, float y, float x2, float y2,
  * @param g         Green color component of the line.
  * @param b         Blue color component of the line.
  * @param a         Alpha value of the line (opacity).
- * @param tex       DGLuint texture identifier for quad.
+ * @param tex       DGLuint texture identifier for quad OR patch lump num.
+ * @param texIsPatchLumpNum  If <code>true</code> 'tex' is a patch lump num.
  * @param blend     If <code>true</code> this quad will be added to a list
  *                  suitable for additive blended primitives.       
  */
@@ -437,17 +447,17 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
                 float tc3st1, float tc3st2,
                 float tc4st1, float tc4st2,
                 float r, float g, float b, float a,
-                int tex, boolean blend)
+                uint tex, boolean texIsPatchLumpNum, boolean blend)
 {
     // Vertex layout.
-    // 1--2
+    // 4--3
     // | /|
     // |/ |
-    // 3--4
+    // 1--2
     //
     amrquad_t *q;
 
-    q = AM_AllocateQuad(tex, blend);
+    q = AM_AllocateQuad(tex, texIsPatchLumpNum, blend);
 
     q->rgba[0] = r;
     q->rgba[1] = g;
@@ -484,19 +494,27 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
  * blending mode.
  *
  * @param tex       DGLuint texture identifier for quads on the list.
+ * @param texIsPatchLumpNum   If <code>true</code> 'tex' is a patch lump num.
  * @param blend     If <code>true</code> all primitives on the list will be
  *                  rendered with additive blending.
+ * @param alpha     The alpha of primitives on the list will be rendered
+ *                  using: (their alpha * alpha).
  * @param list      Ptr to the automap render list to be rendered.
  */
-void AM_RenderList(int tex, boolean blend, amprimlist_t *list)
+void AM_RenderList(uint tex, boolean texIsPatchLumpNum, boolean blend,
+                   float alpha, amprimlist_t *list)
 {
     amprim_t *p;
 
     // Change render state for this list?
     if(tex)
     {
+        if(texIsPatchLumpNum)
+            GL_SetPatch(tex);
+        else
+            gl.Bind(tex);
+
         gl.Enable(DGL_TEXTURING);
-        gl.Bind(tex);
     }
     else
     {
@@ -514,7 +532,10 @@ void AM_RenderList(int tex, boolean blend, amprimlist_t *list)
     case DGL_QUADS:
         while(p)
         {
-            gl.Color4fv(p->data.quad.rgba);
+            gl.Color4f(p->data.quad.rgba[0],
+                       p->data.quad.rgba[1],
+                       p->data.quad.rgba[2],
+                       p->data.quad.rgba[3] * alpha);
 
             // V1
             gl.TexCoord2f(p->data.quad.verts[0].tex[0],
@@ -547,11 +568,14 @@ void AM_RenderList(int tex, boolean blend, amprimlist_t *list)
             if(p->data.line.type == AMLT_PALCOL)
             {
                 GL_SetColor2(p->data.line.coldata.palcolor.color,
-                             p->data.line.coldata.palcolor.alpha);
+                             p->data.line.coldata.palcolor.alpha * alpha);
             }
             else
             {
-                gl.Color4fv(p->data.line.coldata.f4color.rgba);
+                gl.Color4f(p->data.line.coldata.f4color.rgba[0],
+                           p->data.line.coldata.f4color.rgba[1],
+                           p->data.line.coldata.f4color.rgba[2],
+                           p->data.line.coldata.f4color.rgba[3] * alpha);
             }
 
             gl.Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
@@ -576,7 +600,7 @@ void AM_RenderList(int tex, boolean blend, amprimlist_t *list)
 /**
  * Render all primitives in all automap render lists.
  */
-void AM_RenderAllLists(void)
+void AM_RenderAllLists(float alpha)
 {
     amquadlist_t *list;
 
@@ -584,10 +608,12 @@ void AM_RenderAllLists(void)
     list = amQuadListHead;
     while(list)
     {
-        AM_RenderList(list->tex, list->blend, &list->primlist);
+        AM_RenderList(list->tex, list->texIsPatchLumpNum, list->blend,
+                      alpha,
+                      &list->primlist);
         list = list->next;
     }
 
     // Lines.
-    AM_RenderList(0, 0, &amLineList);
+    AM_RenderList(0, 0, false, alpha, &amLineList);
 }

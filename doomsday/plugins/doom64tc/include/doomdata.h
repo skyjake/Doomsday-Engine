@@ -82,7 +82,7 @@ extern thing_t* things;
 #define ML_DONTDRAW     128
 
 // Set if already seen, thus drawn in automap.
-#define ML_MAPPED       256
+//#define ML_MAPPED       256
 
 // FIXME! DJS - This is important!
 // Doom64tc unfortunetly used non standard values for the line flags

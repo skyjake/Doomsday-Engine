@@ -66,7 +66,7 @@
 #define ML_TWOSIDED         0x0004
 #define ML_DONTPEGTOP       0x0008
 #define ML_DONTPEGBOTTOM    0x0010
-#define ML_MAPPED           0x0100 // set if already drawn in automap
+//#define ML_MAPPED           0x0100 // set if already drawn in automap
 
 // Node flags.
 #define NF_SUBSECTOR    0x80000000

@@ -918,13 +918,8 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         target->player->plr->flags |= DDPF_DEAD;
         P_DropWeapon(target->player);
 
-        if(target->player == &players[consoleplayer] && automapactive)
-        {
-            // don't die in auto map,
-            // switch view prior to dying
-            AM_Stop();
-        }
-
+        // Don't die in auto map.
+        AM_Stop(target->player - players);
     }
 
     if(target->health < -target->info->spawnhealth &&

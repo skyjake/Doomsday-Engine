@@ -48,6 +48,7 @@
 #include "d_net.h"
 
 #include "p_tick.h" // for P_IsPaused
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1145,7 +1146,7 @@ void ST_refreshBackground(void)
         if(!inventory)
         {
             // Main interface
-            if(!automapactive)
+            if(!AM_IsMapActive(consoleplayer))
             {
                 GL_DrawPatch(38, 162, PatchNumSTATBAR.lump);
 
@@ -1255,7 +1256,7 @@ void ST_refreshBackground(void)
         if(!inventory)
         {
             // Main interface
-            if(!automapactive)
+            if(!AM_IsMapActive(consoleplayer))
             {
                 if(deathmatch)
                 {
@@ -1390,7 +1391,7 @@ void ST_Drawer(int fullscreenmode, boolean refresh )
 {
     st_firsttime = st_firsttime || refresh;
     st_statusbaron = (fullscreenmode < 2) ||
-                      (automapactive &&
+                      (AM_IsMapActive(consoleplayer) &&
                        (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts
@@ -1738,7 +1739,7 @@ void ST_drawWidgets(boolean refresh)
     oldhealth = -1;
     if(!inventory)
     {
-        if(!automapactive)
+        if(!AM_IsMapActive(consoleplayer))
         {
             // Frags
             if(deathmatch)

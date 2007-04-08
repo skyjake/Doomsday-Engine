@@ -2316,9 +2316,14 @@ static void SV_WriteLine(line_t *li)
     // Version.
     // 2: Per surface texture offsets.
     // 2: Surface colors.
-    SV_WriteByte(2); // Write a version byte
+    // 3: "Mapped by player" values.
+    SV_WriteByte(3); // Write a version byte
 
     SV_WriteShort(P_GetIntp(li, DMU_FLAGS));
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+        SV_WriteByte(xli->mapped[i]);
+
 #if __JHEXEN__
     SV_WriteByte(xli->special);
     SV_WriteByte(xli->arg1);
@@ -2389,6 +2394,7 @@ static void SV_ReadLine(line_t *li)
     int         bottomTexID;
     int         middleTexID;
     byte        rgba[4];
+    short       flags;
     xline_t    *xli = P_XLine(li);
 
     // A type byte?
@@ -2411,7 +2417,21 @@ static void SV_ReadLine(line_t *li)
     else
         ver = (int) SV_ReadByte();
 
-    P_SetIntp(li, DMU_FLAGS, SV_ReadShort());
+    flags = SV_ReadShort();
+    if(ver < 3 && (flags & 0x0100)) // the old ML_MAPPED flag
+    {
+        // Set line as having been seen by all players..
+        memset(&xli->mapped, 1, sizeof(&xli->mapped));
+        flags &= ~0x0100; // remove the old flag.
+    }
+    P_SetIntp(li, DMU_FLAGS, flags);
+
+    if(ver >= 3)
+    {
+        for(i = 0; i < MAXPLAYERS; ++i)
+            xli->mapped[i] = SV_ReadByte();
+    }
+
 #if __JHEXEN__
     xli->special = SV_ReadByte();
     xli->arg1 = SV_ReadByte();

@@ -1116,11 +1116,22 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     float      *vBL, *vBR, *vTL, *vTR;
     boolean     backSide = true;
     sector_t   *frontsec = ssec->sector, *fflinkSec, *fclinkSec;
+    int         pid = viewplayer - players;
 
     sid = seg->linedef->sides[0];
     backsid = seg->linedef->sides[1];
     ldef = seg->linedef;
-    ldef->flags |= ML_MAPPED; // This line is now seen in the map.
+
+    if(!ldef->mapped[pid])
+    {
+        ldef->mapped[pid] = true; // This line is now seen in the map.
+
+        // Send a status report.
+        if(gx.HandleMapObjectStatusReport)
+            gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
+                                           GET_LINE_IDX(ldef),
+                                           DMU_LINE, &pid);
+    }
 
     // Which side are we using?
     if(sid == seg->sidedef)
@@ -1236,12 +1247,23 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     float      *vBL, *vBR, *vTL, *vTR;
     boolean     backSide = true;
     sector_t   *frontsec = ssec->sector, *fflinkSec, *fclinkSec;
+    int         pid = viewplayer - players;
 
     backsec = seg->SG_backsector;
     sid = seg->linedef->sides[0];
     backsid = seg->linedef->sides[1];
     ldef = seg->linedef;
-    ldef->flags |= ML_MAPPED; // This line is now seen in the map.
+
+    if(!ldef->mapped[pid])
+    {
+        ldef->mapped[pid] = true; // This line is now seen in the map.
+
+        // Send a status report.
+        if(gx.HandleMapObjectStatusReport)
+            gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
+                                           GET_LINE_IDX(ldef),
+                                           DMU_LINE, &pid);
+    }
 
     // Which side are we using?
     if(sid == seg->sidedef)

@@ -2437,7 +2437,8 @@ void R_SetupLevel(int mode, int flags)
     }
     case DDSLM_FINALIZE:
     {
-        side_t *side;
+        int     j, k;
+        line_t *line;
 
         // Init server data.
         Sv_InitPools();
@@ -2450,13 +2451,40 @@ void R_SetupLevel(int mode, int flags)
         for(i = 0; i < numsectors; ++i)
             R_UpdateSector(SECTOR_PTR(i), true);
 
-        // Do the same for side surfaces.
-        for(i = 0; i < numsides; ++i)
+        for(i = 0; i < numlines; ++i)
         {
-            side = SIDE_PTR(i);
-            R_UpdateSurface(&side->SW_topsurface, true);
-            R_UpdateSurface(&side->SW_middlesurface, true);
-            R_UpdateSurface(&side->SW_bottomsurface, true);
+            line = LINE_PTR(i);
+
+            if(line->flags & 0x0100) // The old ML_MAPPED flag
+            {
+                // This line wants to be seen in the map from the begining.
+                memset(&line->mapped, 1, sizeof(&line->mapped));
+
+                // Send a status report.
+                if(gx.HandleMapObjectStatusReport)
+                {
+                    int  pid;
+
+                    for(k = 0; k < DDMAXPLAYERS; ++k)
+                    {
+                        pid = k;
+                        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
+                                                      i, DMU_LINE, &pid);
+                    }
+                }
+                line->flags &= ~0x0100; // remove the flag.
+            }
+
+            // Update side surfaces.
+            for(j = 0; j < 2; ++j)
+            {
+                if(!line->sides[j])
+                    continue;
+
+                R_UpdateSurface(&line->sides[j]->SW_topsurface, true);
+                R_UpdateSurface(&line->sides[j]->SW_middlesurface, true);
+                R_UpdateSurface(&line->sides[j]->SW_bottomsurface, true);
+            }
         }
 
         // We don't render fakeradio on polyobjects...

@@ -277,11 +277,6 @@ boolean         P_GiveBody(player_t *player, int num);
 boolean         P_GivePower(player_t *player, powertype_t power);
 boolean         P_MorphPlayer(player_t *player);
 
-// ***** AM_MAP *****
-
-void            AM_Ticker(void);
-void            AM_Drawer(void);
-
 // mn_menu, sb_bar
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);

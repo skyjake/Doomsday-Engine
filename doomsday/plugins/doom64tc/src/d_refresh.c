@@ -68,7 +68,6 @@ extern int actual_leveltime;
  // Name graphics of each level (centered)
 extern dpatch_t *lnames;
 
-extern boolean amap_fullyopen;
 extern float lookOffset;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -279,7 +278,7 @@ void D_Display(void)
             break;
         }
         if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
-           (!automapactive || !amap_fullyopen || cfg.automapBack[3] < 1
+           (!AM_IsMapActive(displayplayer)  || !AM_IsMapFullyOpen(displayplayer) || cfg.automapBack[3] < 1
            /*|| cfg.automapWidth < 1 || cfg.automapHeight < 1*/))
         {
             // Draw the player view.
@@ -307,8 +306,7 @@ void D_Display(void)
         }
 
         // Draw the automap?
-        if(automapactive)
-            AM_Drawer();
+        AM_Drawer(displayplayer);
 
         // These various HUD's will be drawn unless Doomsday advises not to
         if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
@@ -321,7 +319,7 @@ void D_Display(void)
                 redrawsbar = true;
 
             // Do we need to render a full status bar at this point?
-            if (!(automapactive && cfg.automapHudDisplay == 0 ))
+            if (!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 ))
             {
                 if(!iscam)
                 {
@@ -345,7 +343,7 @@ void D_Display(void)
         if(oldgamestate != GS_LEVEL ||
             ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
                 !R_IsFullScreenViewWindow() ||
-                (automapactive && cfg.automapHudDisplay == 0 ))))
+                (AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 ))))
         {
             // Update the borders.
             GL_Update(DDUF_BORDER);
@@ -371,10 +369,10 @@ void D_Display(void)
     viewactivestate = viewactive;
     oldgamestate = wipegamestate = G_GetGameState();
 
-    // draw pause pic (but not if InFine active)
+    // Draw pause pic (but not if InFine active).
     if(paused && !fi_active)
     {
-        if(automapactive)
+        if(AM_IsMapActive(displayplayer))
             ay = 4;
         else
             ay = viewwindowy + 4;

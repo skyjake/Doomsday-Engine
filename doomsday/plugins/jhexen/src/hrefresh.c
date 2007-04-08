@@ -50,6 +50,7 @@
 #include "r_common.h"
 #include "p_mapsetup.h"
 #include "g_controls.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -81,8 +82,6 @@ void    MN_DrCenterTextA_CS(char *text, int center_x, int y);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean automapactive;
-extern boolean amap_fullyopen;
 extern float lookOffset;
 extern int actual_leveltime;
 
@@ -218,7 +217,7 @@ void G_Drawer(void)
         }
 
         if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
-           (!automapactive || !amap_fullyopen || cfg.automapBack[3] < 1
+           (!AM_IsMapActive(displayplayer)  || !AM_IsMapFullyOpen(displayplayer) || cfg.automapBack[3] < 1
            /*|| cfg.automapWidth < 1 || cfg.automapHeight < 1*/))
         {
             boolean special200 = false;
@@ -273,9 +272,8 @@ void G_Drawer(void)
 
         }
 
-        // Draw the automap?
-        if(automapactive)
-            AM_Drawer();
+        // Draw the automap.
+        AM_Drawer(displayplayer);
 
         // These various HUD's will be drawn unless Doomsday advises not to
         if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
@@ -288,7 +286,7 @@ void G_Drawer(void)
             GL_Update(DDUF_FULLSCREEN);
 
             // DJS - Do we need to render a full status bar at this point?
-            if (!(automapactive && cfg.automapHudDisplay == 0 )){
+            if (!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 )){
 
                 if(!iscam)
                 {
@@ -311,7 +309,7 @@ void G_Drawer(void)
         // Need to update the borders?
         if(oldgamestate != GS_LEVEL ||
             (Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
-                cfg.sbarscale < 20 || (automapactive && cfg.automapHudDisplay == 0 )))
+                cfg.sbarscale < 20 || (AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 )))
         {
             // Update the borders.
             GL_Update(DDUF_BORDER);
@@ -343,7 +341,7 @@ void G_Drawer(void)
 
     if(paused && !fi_active)
     {
-        if(automapactive)
+        if(AM_IsMapActive(displayplayer))
             py = 4;
         else
             py = 4; // in jDOOM this is viewwindowy + 4

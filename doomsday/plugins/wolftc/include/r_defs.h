@@ -86,6 +86,9 @@ typedef struct xline_s {
     // Animation related.
     short           special;
     short           tag;
+    // Has been rendered at least once and needs to appear in the map,
+    // for each player.
+    boolean         mapped[MAXPLAYERS];
 
     // Extended generalized lines.
     xgline_t       *xg;

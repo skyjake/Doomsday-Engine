@@ -1186,7 +1186,7 @@ void ST_doRefresh(void)
 void ST_Drawer(int fullscreenmode, boolean refresh )
 {
     st_firsttime = st_firsttime || refresh;
-    st_statusbaron = (fullscreenmode < 2) || ( automapactive && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
+    st_statusbaron = (fullscreenmode < 2) || ( AM_IsMapActive(consoleplayer) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
 
     // Do palette shifts
     ST_doPaletteStuff();

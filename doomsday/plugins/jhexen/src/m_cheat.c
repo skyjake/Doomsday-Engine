@@ -44,6 +44,7 @@
 #include "p_inventory.h"
 #include "p_player.h"
 #include "p_map.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -118,16 +119,12 @@ static void CheatTrackFunc2(player_t *player, cheat_t * cheat);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int  messageResponse;
-extern boolean automapactive;
-extern int  cheating;
-
-extern boolean ShowKills;
-extern unsigned ShowKillsCount;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int ShowKillsCount;
 static byte CheatLookup[256];
 
 // Toggle god mode
@@ -535,7 +532,7 @@ boolean cht_Responder(event_t *ev)
         }
     }
 
-    if(automapactive)
+    if(AM_IsMapActive(consoleplayer))
     {
         if(ev->state == EVS_DOWN)
         {
@@ -546,7 +543,7 @@ boolean cht_Responder(event_t *ev)
                 if(ShowKillsCount == 5)
                 {
                     ShowKillsCount = 0;
-                    ShowKills ^= 1;
+                    AM_SetMapShowKills(consoleplayer, -1); // toggle
                 }
             }
             else
@@ -985,12 +982,12 @@ static void CheatScriptFunc3(player_t *player, cheat_t * cheat)
     }
 }
 
-static void CheatRevealFunc(player_t *player, cheat_t * cheat)
+static void CheatRevealFunc(player_t *player, cheat_t *cheat)
 {
-    cheating = (cheating + 1) % 4;
+    AM_IncMapCheatLevel(player - players);
 }
 
-static void CheatTrackFunc1(player_t *player, cheat_t * cheat)
+static void CheatTrackFunc1(player_t *player, cheat_t *cheat)
 {
     /*  char buffer[80];
 
@@ -1278,15 +1275,16 @@ DEFCC(CCmdCheatReveal)
         return false;           // Can't cheat!
 
     // Reset them (for 'nothing'). :-)
-    cheating = 0;
+    AM_SetMapCheatLevel(consoleplayer, 0);
     players[consoleplayer].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
     if(option < 0 || option > 4)
         return false;
+
     if(option == 1)
         players[consoleplayer].powers[PT_ALLMAP] = true;
     else if(option != 0)
-        cheating = option -1;
+        AM_SetMapCheatLevel(consoleplayer, option -1);
 
     return true;
 }

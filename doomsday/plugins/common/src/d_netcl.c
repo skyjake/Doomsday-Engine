@@ -604,7 +604,8 @@ void NetCl_UpdatePSpriteState(byte *data)
 
 void NetCl_Intermission(byte *data)
 {
-    int     flags;
+    uint        i;
+    int         flags;
 
 #ifdef __JHERETIC__
     extern int interstate;
@@ -620,6 +621,10 @@ void NetCl_Intermission(byte *data)
 
     //Con_Printf( "NetCl_Intermission: flags=%x\n", flags);
 
+    // Close any automaps left open at the end of the previous map.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        AM_Stop(i);
+
 #ifdef __JDOOM__
     if(flags & IMF_BEGIN)
     {
@@ -634,8 +639,6 @@ void NetCl_Intermission(byte *data)
 
         G_ChangeGameState(GS_INTERMISSION);
         viewactive = false;
-        if(automapactive)
-            AM_Stop();
 
         WI_Start(&wminfo);
     }

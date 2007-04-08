@@ -112,7 +112,6 @@ extern int      gamemap;
 // Status flags for refresh.
 //
 
-extern boolean  automapactive;     // In AutoMap mode?
 extern boolean  menuactive;        // Menu overlayed?
 extern boolean  paused;            // Game Pause?
 
