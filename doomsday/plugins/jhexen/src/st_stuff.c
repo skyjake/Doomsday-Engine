@@ -359,7 +359,7 @@ char    artifactlist[][10] = {
 };
 
 // CVARs for the HUD/Statusbar
-cvar_t hudCVars[] =
+cvar_t sthudCVars[] =
 {
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
@@ -400,7 +400,7 @@ cvar_t hudCVars[] =
 };
 
 // Console commands for the HUD/Status bar
-ccmd_t  hudCCmds[] = {
+ccmd_t  sthudCCmds[] = {
     {"sbsize",      "s",    CCmdStatusBarSize},
     {"showhud",     "",     CCmdHUDShow},
     {NULL}
@@ -415,10 +415,10 @@ void ST_Register(void)
 {
     int         i;
 
-    for(i = 0; hudCVars[i].name; ++i)
-        Con_AddVariable(hudCVars + i);
-    for(i = 0; hudCCmds[i].name; ++i)
-        Con_AddCommand(hudCCmds + i);
+    for(i = 0; sthudCVars[i].name; ++i)
+        Con_AddVariable(sthudCVars + i);
+    for(i = 0; sthudCCmds[i].name; ++i)
+        Con_AddCommand(sthudCCmds + i);
 }
 
 void ST_loadGraphics(void)

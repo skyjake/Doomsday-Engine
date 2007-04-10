@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -115,10 +115,14 @@ extern char    *mapnamesp[32], *mapnamest[32];
 
 #endif
 
+void        HU_Register(void);
+
 void        HU_Start(void);
 void        HU_UnloadData(void);
 void        HU_Drawer(void);
 char        HU_dequeueChatChar(void);
 void        HU_Erase(void);
+
+void        HU_DrawMapCounters(void);
 
 #endif

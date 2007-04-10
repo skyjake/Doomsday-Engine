@@ -55,6 +55,7 @@
 #include "dmu_lib.h"
 #include "r_common.h"
 #include "p_mapsetup.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -63,7 +64,6 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void    P_SpawnThings(void);
-void    AM_LevelInit(void);
 
 #if __JHERETIC__
 void P_TurnGizmosAwayFromDoors();
@@ -420,7 +420,7 @@ static void P_ResetWorldState(void)
  */
 static void P_FinalizeLevel(void)
 {
-    AM_LevelInit();
+    AM_InitForLevel();
 
 #if __JDOOM__
     // Adjust slime lower wall textures (a hack!).

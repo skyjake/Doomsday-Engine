@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, 
  * Boston, MA  02110-1301  USA
+ */
+
+/*
+ * r_common.c : Common routines for refresh.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -39,6 +43,8 @@
 #elif __JSTRIFE__
 #  include "jstrife.h"
 #endif
+
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -146,4 +152,61 @@ boolean R_IsFullScreenViewWindow(void)
 {
     return (windowWidth >= 320 && windowHeight >= 200 && windowX <= 0 &&
             windowY <= 0);
+}
+
+/**
+ * Does the given display player's automap obscure the window completely?
+ * NOTE: Window dimensions are in fixed scale {x} 0 - 320, {y} 0 - 200.
+ *
+ * @param playerid  Index of the player whose map to check.
+ * @param x         Top left X coordinate.
+ * @param y         Top left Y coordinate.
+ * @param w         Width.
+ * @param h         Height.
+ *
+ * @return          <code>true</code> if there is no point in the given
+ *                  window which is even partially visible.
+ */
+boolean R_MapObscures(int playerid, int x, int y, int w, int h)
+{
+#define FIXXTOSCREENX(x) (scrwidth * (x / (float) SCREENWIDTH))
+#define FIXYTOSCREENY(y) (scrheight * (y / (float) SCREENHEIGHT))
+
+    boolean     retVal = false;
+
+    // Perhaps the automap completely obscures the view?
+    if(AM_IsMapActive(displayplayer))
+    {
+        float   alpha;
+
+        AM_GetColorAndAlpha(displayplayer, AMO_BACKGROUND,
+                                    NULL, NULL, NULL, &alpha);
+        if(!(alpha < 1) && !(AM_GetGlobalAlpha(displayplayer) < 1))
+        {
+            if(AM_IsMapWindowInFullScreenMode(displayplayer))
+            {
+                retVal = true;
+            }
+            else
+            {
+                // We'll have to compare the dimensions.
+                float       scrwidth = Get(DD_SCREEN_WIDTH);
+                float       scrheight = Get(DD_SCREEN_HEIGHT);
+                float       fx = FIXXTOSCREENX(x);
+                float       fy = FIXYTOSCREENY(x);
+                float       fw = FIXXTOSCREENX(w);
+                float       fh = FIXYTOSCREENY(h);
+                float       mx, my, mw, mh;
+
+                AM_GetWindow(displayplayer, &mx, &my, &mw, &mh);
+                if(mx >= fx && my >= fy && mw >= fw && mh >= fh)
+                    retVal = true;
+            }
+        }
+    }
+
+    return retVal;
+
+#undef FIXXTOSCREENX
+#undef FIXYTOSCREENY
 }

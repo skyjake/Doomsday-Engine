@@ -242,6 +242,8 @@ void D_Display(void)
     boolean redrawsbar;
     player_t *player = &players[displayplayer];
     boolean iscam = (player->plr->flags & DDPF_CAMERA) != 0;    // $democam
+    float x, y, w, h;
+    boolean     mapHidesView;
 
     redrawsbar = false;
 
@@ -258,11 +260,8 @@ void D_Display(void)
         R_SetViewWindowTarget(160 - (w >> 1), (100 - (h >> 1)), w, h);
     }
 
-    {
-        float x, y, w, h;
-        R_GetViewWindow(&x, &y, &w, &h);
-        R_ViewWindow((int) x, (int) y, (int) w, (int) h);
-    }
+    R_GetViewWindow(&x, &y, &w, &h);
+    R_ViewWindow((int) x, (int) y, (int) w, (int) h);
 
     // Do buffered drawing.
     switch(G_GetGameState())
@@ -277,9 +276,12 @@ void D_Display(void)
             // a bug, but since there's an easy fix...
             break;
         }
+
+        mapHidesView =
+            R_MapObscures(displayplayer, (int) x, (int) y, (int) w, (int) h);
+
         if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
-           (!AM_IsMapActive(displayplayer)  || !AM_IsMapFullyOpen(displayplayer) || cfg.automapBack[3] < 1
-           /*|| cfg.automapWidth < 1 || cfg.automapHeight < 1*/))
+           !mapHidesView)
         {
             // Draw the player view.
             if(IS_CLIENT)
@@ -319,7 +321,7 @@ void D_Display(void)
                 redrawsbar = true;
 
             // Do we need to render a full status bar at this point?
-            if (!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 ))
+            if(!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 ))
             {
                 if(!iscam)
                 {
@@ -343,7 +345,7 @@ void D_Display(void)
         if(oldgamestate != GS_LEVEL ||
             ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
                 !R_IsFullScreenViewWindow() ||
-                (AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 ))))
+                !mapHidesView)))
         {
             // Update the borders.
             GL_Update(DDUF_BORDER);
@@ -372,10 +374,10 @@ void D_Display(void)
     // Draw pause pic (but not if InFine active).
     if(paused && !fi_active)
     {
-        if(AM_IsMapActive(displayplayer))
+        //if(AM_IsMapActive(displayplayer))
             ay = 4;
-        else
-            ay = viewwindowy + 4;
+        //else
+        //    ay = viewwindowy + 4;
 
         WI_DrawPatch(SCREENWIDTH /2, ay, 1, 1, 1, 1, W_GetNumForName("M_PAUSE"),
                      NULL, false, ALIGN_CENTER);

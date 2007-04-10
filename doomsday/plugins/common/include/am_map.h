@@ -4,8 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +22,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-//
-// 08/01/2005 DJS - First pass. Combined all game/am_map src files. Lots of hacky compiler directives...
-
+/*
+ * am_map.h : Automap, automap menu and related code.
+ */
 
 #ifndef __AMMAP_H__
 #define __AMMAP_H__
@@ -40,16 +39,7 @@
 #define AM_MSGENTERED (AM_MSGHEADER | ('e'<<8))
 #define AM_MSGEXITED (AM_MSGHEADER | ('x'<<8))
 
-#define AM_NUMMARKPOINTS 10
-
-// Counter Cheat flags.
-#define CCH_KILLS           0x1
-#define CCH_ITEMS           0x2
-#define CCH_SECRET          0x4
-#define CCH_KILLS_PRCNT         0x8
-#define CCH_ITEMS_PRCNT         0x10
-#define CCH_SECRET_PRCNT        0x20
-
+#define NUMMARKPOINTS 10
 
 #ifdef __JDOOM__
 // For use if I do walls with outsides/insides
@@ -293,15 +283,6 @@
 #define BORDEROFFSET 4
 
 // Automap colors
-#define AM_PLR1_COLOR 157       // Blue
-#define AM_PLR2_COLOR 177       // Red
-#define AM_PLR3_COLOR 137       // Yellow
-#define AM_PLR4_COLOR 198       // Green
-#define AM_PLR5_COLOR 215       // Jade
-#define AM_PLR6_COLOR 32        // White
-#define AM_PLR7_COLOR 106       // Hazel
-#define AM_PLR8_COLOR 234       // Purple
-
 #define KEY1   197  // HEXEN -
 #define KEY2   144  // HEXEN -
 #define KEY3   220  // HEXEN -
@@ -312,27 +293,76 @@
 
 #endif
 
+typedef enum automapobjectname_e {
+    AMO_THINGPLAYER,
+    AMO_BACKGROUND,
+    AMO_UNSEENLINE,
+    AMO_SINGLESIDEDLINE,
+    AMO_TWOSIDEDLINE,
+    AMO_FLOORCHANGELINE,
+    AMO_CEILINGCHANGELINE,
+    AMO_BLOCKMAPGRIDLINE,
+    AMO_NUMOBJECTS
+} automapobjectname_t;
+
+typedef enum glowtype_e {
+    NO_GLOW,
+    TWOSIDED_GLOW,
+    BACK_GLOW,
+    FRONT_GLOW
+} glowtype_t;
+
+typedef enum vectorgraphname_e {
+    VG_KEYSQUARE,
+    VG_TRIANGLE,
+    VG_ARROW,
+    VG_CHEATARROW,
+    NUM_VECTOR_GRAPHS
+} vectorgrapname_t;
+
 void    AM_Register(void);  // Called during init to register automap cvars and ccmds.
 void    AM_Init(void);      // Called during init to initialize the automap.
 void    AM_Shutdown(void);  // Called on exit to free any allocated memory.
 void    AM_LoadData(void);
 void    AM_UnloadData(void);
 
+void    AM_InitForLevel(void); // Called at the end of a level load.
 void    AM_Ticker(void);    // Called by main loop.
 void    AM_Drawer(int viewplayer); // Called every frame to render the map (if visible).
 
-void    M_DrawMAP(void);    // Called to render the map menu.
-
+void    AM_Start(int pnum);
 void    AM_Stop(int pnum);  // Called to force the automap to quit if the level is completed while it is up.
 
-boolean AM_IsMapActive(int pnum);
-boolean AM_IsMapFullyOpen(int pnum);
+void    AM_SetWindowTarget(int pid, int x, int y, int w, int h);
+void    AM_SetWindowFullScreenMode(int pid, int value);
+void    AM_SetViewTarget(int pid, float x, float y);
+void    AM_SetViewScaleTarget(int pid, float scale);
+void    AM_SetViewAngleTarget(int pid, float angle);
+void    AM_SetViewRotate(int pid, boolean on);
+void    AM_SetGlobalAlpha(int pid, float alpha);
+void    AM_SetColor(int pid, int objectname, float r, float g, float b);
+void    AM_SetColorAndAlpha(int pid, int objectname, float r, float g,
+                            float b, float a);
+void    AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
+                   float alpha, boolean canScale);
+void    AM_SetVectorGraphic(int pid, int objectname, int vgname);
+int     AM_AddMark(int pid, float x, float y);
+void    AM_ClearMarks(int pid);
+void    AM_SetCheatLevel(int pid, int level);
+void    AM_IncMapCheatLevel(int pid);
 
 // TODO: Split this functionality down into logical seperate settings.
-void    AM_SetMapCheatLevel(int pnum, int level);
+void    AM_SetCheatLevel(int pnum, int level);
 void    AM_IncMapCheatLevel(int pnum); // Called to increase map cheat level.
-#if __JHEXEN__
-void    AM_SetMapShowKills(int pnum, int value);
-#endif
+
+boolean AM_IsMapActive(int pnum);
+void    AM_GetWindow(int pid, float *x, float *y, float *w, float *h);
+boolean AM_IsMapWindowInFullScreenMode(int pid);
+float   AM_GetGlobalAlpha(int pid);
+void    AM_GetColor(int pid, int objectname, float *r, float *g, float *b);
+void    AM_GetColorAndAlpha(int pid, int objectname, float *r, float *g,
+                            float *b, float *a);
+
+void    M_DrawMAP(void);    // Called to render the map menu.
 
 #endif

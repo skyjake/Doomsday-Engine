@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -56,6 +56,16 @@
 
 // MACROS ------------------------------------------------------------------
 
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+// Counter Cheat flags.
+#define CCH_KILLS           0x1
+#define CCH_ITEMS           0x2
+#define CCH_SECRET          0x4
+#define CCH_KILLS_PRCNT         0x8
+#define CCH_ITEMS_PRCNT         0x10
+#define CCH_SECRET_PRCNT        0x20
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -83,12 +93,31 @@ dpatch_t *lnames;
 
 boolean hu_showallfrags = false;
 
+cvar_t  hudCVars[] = {
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+    {"map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63},
+    {"map-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1},
+#endif
+    {NULL}
+};
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static dpatch_t borderpatches[8];
 static boolean headsupactive = false;
 
 // Code -------------------------------------------------------------------
+
+/**
+ * Called during pre-init to register cvars and ccmds for the hud displays.
+ */
+void HU_Register(void)
+{
+    uint        i;
+
+    for(i = 0; hudCVars[i].name; ++i)
+        Con_AddVariable(&hudCVars[i]);
+}
 
 void R_CachePatch(dpatch_t * dp, char *name)
 {
@@ -328,6 +357,338 @@ void HU_Drawer(void)
             y += 10;
         }
     }
+}
+
+#if __JDOOM__
+/**
+ * Draws a sorted frags list in the lower right corner of the screen.
+ */
+static void drawFragsTable(void)
+{
+#define FRAGS_DRAWN    -99999
+    int         i, k, y, inCount = 0;    // How many players in the game?
+    int         totalFrags[MAXPLAYERS];
+    int         max, choose = 0;
+    int         w = 30;
+    char       *name, tmp[40];
+
+    memset(totalFrags, 0, sizeof(totalFrags));
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->ingame)
+            continue;
+
+        inCount++;
+        for(k = 0; k < MAXPLAYERS; ++k)
+            totalFrags[i] += players[i].frags[k] * (k != i ? 1 : -1);
+    }
+
+    // Start drawing from the top.
+# if __DOOM64TC__
+    y = HU_TITLEY + 32 * (inCount - 1) * LINEHEIGHT_A;
+# else
+    y = HU_TITLEY + 32 * (20 - cfg.sbarscale) / 20 - (inCount - 1) * LINEHEIGHT_A;
+#endif
+    for(i = 0; i < inCount; ++i, y += LINEHEIGHT_A)
+    {
+        // Find the largest.
+        for(max = FRAGS_DRAWN + 1, k = 0; k < MAXPLAYERS; ++k)
+        {
+            if(!players[k].plr->ingame || totalFrags[k] == FRAGS_DRAWN)
+                continue;
+
+            if(totalFrags[k] > max)
+            {
+                choose = k;
+                max = totalFrags[k];
+            }
+        }
+
+        // Draw the choice.
+        name = Net_GetPlayerName(choose);
+        switch(cfg.playerColor[choose])
+        {
+        case 0:                // green
+            gl.Color3f(0, .8f, 0);
+            break;
+
+        case 1:                // gray
+            gl.Color3f(.45f, .45f, .45f);
+            break;
+
+        case 2:                // brown
+            gl.Color3f(.7f, .5f, .4f);
+            break;
+
+        case 3:                // red
+            gl.Color3f(1, 0, 0);
+            break;
+        }
+
+        M_WriteText2(320 - w - M_StringWidth(name, hu_font_a) - 6, y, name,
+                     hu_font_a, -1, -1, -1, -1);
+        // A colon.
+        M_WriteText2(320 - w - 5, y, ":", hu_font_a, -1, -1, -1, -1);
+        // The frags count.
+        sprintf(tmp, "%i", totalFrags[choose]);
+        M_WriteText2(320 - w, y, tmp, hu_font_a, -1, -1, -1, -1);
+        // Mark to ignore in the future.
+        totalFrags[choose] = FRAGS_DRAWN;
+    }
+}
+#endif
+
+/**
+ * Draws the deathmatch stats
+ * TODO: Merge with drawFragsTable()
+ */
+#if __JHEXEN__
+static void drawDeathmatchStats(void)
+{
+static const int their_colors[] = {
+    AM_PLR1_COLOR,
+    AM_PLR2_COLOR,
+    AM_PLR3_COLOR,
+    AM_PLR4_COLOR,
+    AM_PLR5_COLOR,
+    AM_PLR6_COLOR,
+    AM_PLR7_COLOR,
+    AM_PLR8_COLOR
+};
+
+    int         i, j, k, m;
+    int         fragCount[MAXPLAYERS];
+    int         order[MAXPLAYERS];
+    char        textBuffer[80];
+    int         yPosition;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        fragCount[i] = 0;
+        order[i] = -1;
+    }
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->ingame)
+            continue;
+
+        for(j = 0; j < MAXPLAYERS; ++j)
+        {
+            if(players[i].plr->ingame)
+            {
+                fragCount[i] += players[i].frags[j];
+            }
+        }
+
+        for(k = 0; k < MAXPLAYERS; ++k)
+        {
+            if(order[k] == -1)
+            {
+                order[k] = i;
+                break;
+            }
+            else if(fragCount[i] > fragCount[order[k]])
+            {
+                for(m = MAXPLAYERS - 1; m > k; m--)
+                {
+                    order[m] = order[m - 1];
+                }
+                order[k] = i;
+                break;
+            }
+        }
+    }
+
+    yPosition = 15;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(order[i] < 0 || !players[order[i]].plr ||
+           !players[order[i]].plr->ingame)
+        {
+            continue;
+        }
+        else
+        {
+            GL_SetColor(their_colors[cfg.playerColor[order[i]]]);
+            memset(textBuffer, 0, 80);
+            strncpy(textBuffer, Net_GetPlayerName(order[i]), 78);
+            strcat(textBuffer, ":");
+            MN_TextFilter(textBuffer);
+
+            M_WriteText2(4, yPosition, textBuffer, hu_font_a, -1, -1, -1, -1);
+            j = M_StringWidth(textBuffer, hu_font_a);
+
+            sprintf(textBuffer, "%d", fragCount[order[i]]);
+            M_WriteText2(j + 8, yPosition, textBuffer, hu_font_a, -1, -1, -1, -1);
+            yPosition += 10;
+        }
+    }
+}
+#endif
+
+/**
+ * Draws the world time in the top right corner of the screen
+ */
+static void drawWorldTimer(void)
+{
+#ifndef __JDOOM__
+#ifndef __JHERETIC__
+    int     days, hours, minutes, seconds;
+    int     worldTimer;
+    char    timeBuffer[15];
+    char    dayBuffer[20];
+
+    worldTimer = players[displayplayer].worldTimer;
+
+    worldTimer /= 35;
+    days = worldTimer / 86400;
+    worldTimer -= days * 86400;
+    hours = worldTimer / 3600;
+    worldTimer -= hours * 3600;
+    minutes = worldTimer / 60;
+    worldTimer -= minutes * 60;
+    seconds = worldTimer;
+
+    sprintf(timeBuffer, "%.2d : %.2d : %.2d", hours, minutes, seconds);
+    M_WriteText2(240, 8, timeBuffer, hu_font_a, 1, 1, 1, 1);
+
+    if(days)
+    {
+        if(days == 1)
+        {
+            sprintf(dayBuffer, "%.2d DAY", days);
+        }
+        else
+        {
+            sprintf(dayBuffer, "%.2d DAYS", days);
+        }
+
+        M_WriteText2(240, 20, dayBuffer, hu_font_a, 1, 1, 1, 1);
+        if(days >= 5)
+        {
+            M_WriteText2(230, 35, "YOU FREAK!!!", hu_font_a, 1, 1, 1, 1);
+        }
+    }
+#endif
+#endif
+}
+
+/**
+ * Handles what counters to draw eg title, timer, dm stats etc
+ */
+void HU_DrawMapCounters(void)
+{
+    player_t   *plr;
+#if __JDOOM__ || __JHERETIC__
+    char        buf[40], tmp[20];
+    int         x = 5, y = LINEHEIGHT_A * 3;
+#endif
+
+    plr = &players[displayplayer];
+
+#if __JDOOM__ || __JHERETIC__
+    gl.Color3f(1, 1, 1);
+
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PushMatrix();
+#endif
+
+    gl.Enable(DGL_TEXTURING);
+
+    drawWorldTimer();
+
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+    Draw_BeginZoom(cfg.counterCheatScale, x, y);
+
+    if(cfg.counterCheat)
+    {
+        // Kills.
+        if(cfg.counterCheat & (CCH_KILLS | CCH_KILLS_PRCNT))
+        {
+            strcpy(buf, "Kills: ");
+            if(cfg.counterCheat & CCH_KILLS)
+            {
+                sprintf(tmp, "%i/%i ", plr->killcount, totalkills);
+                strcat(buf, tmp);
+            }
+            if(cfg.counterCheat & CCH_KILLS_PRCNT)
+            {
+                sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_KILLS ? "(" : ""),
+                        totalkills ? plr->killcount * 100 / totalkills : 100,
+                        (cfg.counterCheat & CCH_KILLS ? ")" : ""));
+                strcat(buf, tmp);
+            }
+
+            M_WriteText2(x, y, buf, hu_font_a, 1, 1, 1, 1);
+
+            y += LINEHEIGHT_A;
+        }
+
+        // Items.
+        if(cfg.counterCheat & (CCH_ITEMS | CCH_ITEMS_PRCNT))
+        {
+            strcpy(buf, "Items: ");
+            if(cfg.counterCheat & CCH_ITEMS)
+            {
+                sprintf(tmp, "%i/%i ", plr->itemcount, totalitems);
+                strcat(buf, tmp);
+            }
+            if(cfg.counterCheat & CCH_ITEMS_PRCNT)
+            {
+                sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_ITEMS ? "(" : ""),
+                        totalitems ? plr->itemcount * 100 / totalitems : 100,
+                        (cfg.counterCheat & CCH_ITEMS ? ")" : ""));
+                strcat(buf, tmp);
+            }
+
+            M_WriteText2(x, y, buf, hu_font_a, 1, 1, 1, 1);
+
+            y += LINEHEIGHT_A;
+        }
+
+        // Secrets.
+        if(cfg.counterCheat & (CCH_SECRET | CCH_SECRET_PRCNT))
+        {
+            strcpy(buf, "Secret: ");
+            if(cfg.counterCheat & CCH_SECRET)
+            {
+                sprintf(tmp, "%i/%i ", plr->secretcount, totalsecret);
+                strcat(buf, tmp);
+            }
+            if(cfg.counterCheat & CCH_SECRET_PRCNT)
+            {
+                sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_SECRET ? "(" : ""),
+                        totalsecret ? plr->secretcount * 100 / totalsecret : 100,
+                        (cfg.counterCheat & CCH_SECRET ? ")" : ""));
+                strcat(buf, tmp);
+            }
+
+            M_WriteText2(x, y, buf, hu_font_a, 1, 1, 1, 1);
+
+            y += LINEHEIGHT_A;
+        }
+    }
+
+    Draw_EndZoom();
+
+#if __JDOOM__
+    if(deathmatch)
+        drawFragsTable();
+#endif
+
+    gl.MatrixMode(DGL_MODELVIEW);
+    gl.PopMatrix();
+
+#endif
+
+#if __JHEXEN__ || __JSTRIFE__
+    if(IS_NETGAME)
+    {
+        // Always draw deathmatch stats in a netgame, even in coop
+        drawDeathmatchStats();
+    }
+#endif
 }
 
 void HU_Ticker(void)

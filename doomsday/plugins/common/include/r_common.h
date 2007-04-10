@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +22,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-//===========================================================================
-// R_COMMON.H
-//===========================================================================
+/*
+ * r_common.h : Common routines for refresh.
+ */
+
 #ifndef __GAME_COMMON_REFRESH_H__
 #define __GAME_COMMON_REFRESH_H__
 
@@ -32,5 +34,6 @@ void            R_SetViewWindowTarget(int x, int y, int w, int h);
 void            R_ViewWindowTicker(void);
 void            R_GetViewWindow(float* x, float* y, float* w, float* h);
 boolean         R_IsFullScreenViewWindow(void);
+boolean         R_MapObscures(int playerid, int x, int y, int w, int h);
 
 #endif

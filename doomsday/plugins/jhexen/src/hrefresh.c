@@ -174,6 +174,8 @@ void G_Drawer(void)
     int         py;
     player_t   *vplayer = &players[displayplayer];
     boolean     iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0;   // $democam
+    float       x, y, w, h;
+    boolean     mapHidesView;
 
     // $democam: can be set on every frame
     if(cfg.setblocks > 10 || iscam)
@@ -190,11 +192,8 @@ void G_Drawer(void)
                               w, h);
     }
 
-    {
-        float x, y, w, h;
-        R_GetViewWindow(&x, &y, &w, &h);
-        R_ViewWindow((int) x, (int) y, (int) w, (int) h);
-    }
+    R_GetViewWindow(&x, &y, &w, &h);
+    R_ViewWindow((int) x, (int) y, (int) w, (int) h);
 
     // Do buffered drawing
     switch(G_GetGameState())
@@ -216,9 +215,11 @@ void G_Drawer(void)
             break;
         }
 
+        mapHidesView =
+            R_MapObscures(displayplayer, (int) x, (int) y, (int) w, (int) h);
+
         if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
-           (!AM_IsMapActive(displayplayer)  || !AM_IsMapFullyOpen(displayplayer) || cfg.automapBack[3] < 1
-           /*|| cfg.automapWidth < 1 || cfg.automapHeight < 1*/))
+           !mapHidesView)
         {
             boolean special200 = false;
 
@@ -309,7 +310,8 @@ void G_Drawer(void)
         // Need to update the borders?
         if(oldgamestate != GS_LEVEL ||
             (Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
-                cfg.sbarscale < 20 || (AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 )))
+                cfg.sbarscale < 20 || !R_IsFullScreenViewWindow() ||
+                !mapHidesView))
         {
             // Update the borders.
             GL_Update(DDUF_BORDER);
@@ -341,10 +343,10 @@ void G_Drawer(void)
 
     if(paused && !fi_active)
     {
-        if(AM_IsMapActive(displayplayer))
+        //if(AM_IsMapActive(displayplayer))
             py = 4;
-        else
-            py = 4; // in jDOOM this is viewwindowy + 4
+        //else
+        //    py = 4; // in jDOOM this is viewwindowy + 4
 
         GL_DrawPatch(160, py, W_GetNumForName("PAUSED"));
     }

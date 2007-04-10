@@ -481,6 +481,7 @@ void G_PreInit(void)
     G_ControlRegister();        // for controls/input
     AM_Register();              // for the automap
     MN_Register();              // for the menu
+    HU_Register();              // for the HUD displays.
     HUMsg_Register();           // for the message buffer/chat widget
     ST_Register();              // for the hud/statusbar
     X_Register();               // for the crosshair

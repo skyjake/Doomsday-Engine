@@ -671,7 +671,7 @@ DEFCC(CCmdCheatReveal)
         return false;           // Can't cheat!
 
     // Reset them (for 'nothing'). :-)
-    AM_SetMapCheatLevel(consoleplayer, 0);
+    AM_SetCheatLevel(consoleplayer, 0);
     players[consoleplayer].powers[PT_ALLMAP] = false;
     option = atoi(argv[1]);
     if(option < 0 || option > 4)
@@ -680,7 +680,7 @@ DEFCC(CCmdCheatReveal)
     if(option == 1)
         players[consoleplayer].powers[PT_ALLMAP] = true;
     else if(option != 0)
-        AM_SetMapCheatLevel(consoleplayer, option -1);
+        AM_SetCheatLevel(consoleplayer, option -1);
 
     return true;
 }
