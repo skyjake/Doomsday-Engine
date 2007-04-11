@@ -339,13 +339,18 @@ void    AM_SetViewTarget(int pid, float x, float y);
 void    AM_SetViewScaleTarget(int pid, float scale);
 void    AM_SetViewAngleTarget(int pid, float angle);
 void    AM_SetViewRotate(int pid, boolean on);
-void    AM_SetGlobalAlpha(int pid, float alpha);
+void    AM_SetGlobalAlphaTarget(int pid, float alpha);
 void    AM_SetColor(int pid, int objectname, float r, float g, float b);
 void    AM_SetColorAndAlpha(int pid, int objectname, float r, float g,
                             float b, float a);
 void    AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
                    float alpha, boolean canScale);
 void    AM_SetVectorGraphic(int pid, int objectname, int vgname);
+void    AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
+                               int sided,
+                               float r, float g, float b, float a,
+                               glowtype_t glowType, float glowAlpha,
+                               float glowWidth, boolean scaleGlowWithView);
 int     AM_AddMark(int pid, float x, float y);
 void    AM_ClearMarks(int pid);
 void    AM_SetCheatLevel(int pid, int level);

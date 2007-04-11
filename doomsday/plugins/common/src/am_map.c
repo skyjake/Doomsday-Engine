@@ -55,129 +55,6 @@
 #include "g_controls.h"
 #include "am_rendlist.h"
 
-// TYPES -------------------------------------------------------------------
-
-typedef struct mapobjectinfo_s {
-    float       rgba[4];
-
-    float       glowAlpha;
-    float       glowWidth;
-    boolean     glow;
-    boolean     scaleWithView;
-} mapobjectinfo_t;
-
-typedef struct mpoint_s {
-    float       pos[3];
-} mpoint_t;
-
-typedef struct mline_s {
-    mpoint_t a, b;
-} vgline_t;
-
-typedef struct automapwindow_s {
-    // Where the window currently is on screen, and the dimensions.
-    float       x, y, width, height;
-
-    // Where the window should be on screen, and the dimensions.
-    int         targetX, targetY, targetWidth, targetHeight;
-
-    int         oldX, oldY, oldWidth, oldHeight;
-
-    float       posTimer;
-} automapwindow_t;
-
-typedef struct automapcfg_s {
-    float       lineGlowScale;
-    boolean     glowingLineSpecials;
-    float       backgroundRGBA[4];
-
-    mapobjectinfo_t unseenLine;
-    mapobjectinfo_t singleSidedLine;
-    mapobjectinfo_t twoSidedLine;
-    mapobjectinfo_t floorChangeLine;
-    mapobjectinfo_t ceilingChangeLine;
-    mapobjectinfo_t blockmapGridLine;
-} automapcfg_t;
-
-#define AMF_REND_THINGS     0x01
-#define AMF_REND_KEYS       0x02
-#define AMF_REND_ALLLINES   0x04
-#define AMF_REND_EXITLINES  0x08
-#define AMF_REND_XGLINES    0x10
-#define AMF_REND_SUBSECTORS 0x20
-#define AMF_REND_BLOCKMAP   0x40
-
-typedef struct automap_s {
-// State
-    int         flags;
-    boolean     active;
-
-    boolean     fullScreenMode; // If the map is currently in fullscreen mode.
-    boolean     panMode; // If the map viewer location is currently in free pan mode.
-    boolean     rotate;
-    uint        followPlayer; // Player id of that to follow.
-
-    boolean     maxScale; // If the map is currently in forced max zoom mode.
-    float       priorToMaxScale; // Viewer scale before entering maxScale mode.
-
-    // Used by MTOF to scale from map-to-frame-buffer coords.
-    float       scaleMTOF;
-    // Used by FTOM to scale from frame-buffer-to-map coords (=1/scaleMTOF).
-    float       scaleFTOM;
-
-// Paramaters for render.
-    float       alpha;
-    float       targetAlpha;
-
-    automapcfg_t cfg;
-    vectorgrapname_t vectorGraphicForPlayer;
-
-// Automap window (screen space).
-    automapwindow_t window;
-
-// Viewer location on the map.
-    float       viewX, viewY; // Current.
-    float       targetViewX, targetViewY; // Should be at.
-    float       oldViewX, oldViewY; // Previous.
-    float       viewTimer;
-
-// Viewer frame scale.
-    float       viewScale; // Current.
-    float       targetViewScale; // Should be at.
-    float       oldViewScale; // Previous.
-    float       viewScaleTimer;
-
-    float       minScaleMTOF; // Viewer frame scale limits.
-    float       maxScaleMTOF; // 
-
-// Viewer frame rotation.
-    float       angle; // Current.
-    float       targetAngle; // Should be at.
-    float       oldAngle; // Previous.
-    float       angleTimer;
-
-// Viewer frame dimensions on map (TODO: does not consider rotation!)
-    float       vframe[2][2]; // {TL{x,y}, BR{x,y}}
-
-    // Misc
-    int         cheating;
-
-    // Marked map points.
-    mpoint_t    markpoints[NUMMARKPOINTS];
-    boolean     markpointsUsed[NUMMARKPOINTS];
-    int         markpointnum; // next point to be assigned.
-} automap_t;
-
-typedef struct vectorgrap_s {
-    uint        count;
-    vgline_t    *lines;
-} vectorgrap_t;
-
-typedef struct automaptex_s {
-    int         width, height;
-    DGLuint     tex;
-} automaptex_t;
-
 // MACROS ------------------------------------------------------------------
 
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
@@ -187,6 +64,14 @@ typedef struct automaptex_s {
 //  A line drawing of the player pointing right,
 //   starting from the middle.
 //
+
+typedef struct mpoint_s {
+    float       pos[3];
+} mpoint_t;
+
+typedef struct mline_s {
+    mpoint_t a, b;
+} vgline_t;
 
 #define R (1.0f)
 
@@ -298,6 +183,133 @@ vgline_t         player_arrow[] = {
 // translates between frame-buffer and map coordinates
 #define CXMTOF(map, xpos)  ((map)->window.x + MTOF((map), (xpos) - (map)->vframe[0][VX]))
 #define CYMTOF(map, ypos)  ((map)->window.y + ((map)->window.height - MTOF((map), (ypos) - (map)->vframe[0][VY])))
+
+#define AM_MAXSPECIALLINES      32
+
+// TYPES -------------------------------------------------------------------
+
+typedef struct mapobjectinfo_s {
+    float       rgba[4];
+
+    float       glowAlpha;
+    float       glowWidth;
+    boolean     glow;
+    boolean     scaleWithView;
+} mapobjectinfo_t;
+
+typedef struct automapwindow_s {
+    // Where the window currently is on screen, and the dimensions.
+    float       x, y, width, height;
+
+    // Where the window should be on screen, and the dimensions.
+    int         targetX, targetY, targetWidth, targetHeight;
+
+    int         oldX, oldY, oldWidth, oldHeight;
+
+    float       posTimer;
+} automapwindow_t;
+
+typedef struct automapcfg_s {
+    float       lineGlowScale;
+    boolean     glowingLineSpecials;
+    float       backgroundRGBA[4];
+
+    mapobjectinfo_t unseenLine;
+    mapobjectinfo_t singleSidedLine;
+    mapobjectinfo_t twoSidedLine;
+    mapobjectinfo_t floorChangeLine;
+    mapobjectinfo_t ceilingChangeLine;
+    mapobjectinfo_t blockmapGridLine;
+} automapcfg_t;
+
+#define AMF_REND_THINGS     0x01
+#define AMF_REND_KEYS       0x02
+#define AMF_REND_ALLLINES   0x04
+#define AMF_REND_XGLINES    0x08
+#define AMF_REND_SUBSECTORS 0x10
+#define AMF_REND_BLOCKMAP   0x20
+
+typedef struct automapspecialline_s {
+    int         special;
+    int         sided;
+    int         cheatLevel; // minimum cheat level for this special.
+    mapobjectinfo_t info;
+} automapspecialline_t;
+
+typedef struct automap_s {
+// State
+    int         flags;
+    boolean     active;
+
+    boolean     fullScreenMode; // If the map is currently in fullscreen mode.
+    boolean     panMode; // If the map viewer location is currently in free pan mode.
+    boolean     rotate;
+    uint        followPlayer; // Player id of that to follow.
+
+    boolean     maxScale; // If the map is currently in forced max zoom mode.
+    float       priorToMaxScale; // Viewer scale before entering maxScale mode.
+
+    // Used by MTOF to scale from map-to-frame-buffer coords.
+    float       scaleMTOF;
+    // Used by FTOM to scale from frame-buffer-to-map coords (=1/scaleMTOF).
+    float       scaleFTOM;
+
+// Paramaters for render.
+    float       alpha;
+    float       targetAlpha;
+
+    automapcfg_t cfg;
+
+    automapspecialline_t specialLines[AM_MAXSPECIALLINES];
+    uint        numSpecialLines;
+
+    vectorgrapname_t vectorGraphicForPlayer;
+
+// Automap window (screen space).
+    automapwindow_t window;
+
+// Viewer location on the map.
+    float       viewX, viewY; // Current.
+    float       targetViewX, targetViewY; // Should be at.
+    float       oldViewX, oldViewY; // Previous.
+    float       viewTimer;
+
+// Viewer frame scale.
+    float       viewScale; // Current.
+    float       targetViewScale; // Should be at.
+    float       oldViewScale; // Previous.
+    float       viewScaleTimer;
+
+    float       minScaleMTOF; // Viewer frame scale limits.
+    float       maxScaleMTOF; // 
+
+// Viewer frame rotation.
+    float       angle; // Current.
+    float       targetAngle; // Should be at.
+    float       oldAngle; // Previous.
+    float       angleTimer;
+
+// Viewer frame dimensions on map (TODO: does not consider rotation!)
+    float       vframe[2][2]; // {TL{x,y}, BR{x,y}}
+
+    // Misc
+    int         cheating;
+
+    // Marked map points.
+    mpoint_t    markpoints[NUMMARKPOINTS];
+    boolean     markpointsUsed[NUMMARKPOINTS];
+    int         markpointnum; // next point to be assigned.
+} automap_t;
+
+typedef struct vectorgrap_s {
+    uint        count;
+    vgline_t    *lines;
+} vectorgrap_t;
+
+typedef struct automaptex_s {
+    int         width, height;
+    DGLuint     tex;
+} automaptex_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -457,6 +469,93 @@ Con_Error("mapForPlayerId: Invalid player id %i.", id);
     return &automaps[id];
 }
 
+static vectorgrap_t *getVectorGraphic(uint idx)
+{
+    vectorgrap_t *vg;
+    vgline_t    *lines;
+
+    if(idx > NUM_VECTOR_GRAPHS - 1)
+        return NULL;
+
+    if(vectorGraphs[idx])
+        return vectorGraphs[idx];
+
+    // Not loaded yet.
+    {
+    uint        i, linecount;
+
+    vg = vectorGraphs[idx] = malloc(sizeof(*vg));
+
+    switch(idx)
+    {
+    case VG_KEYSQUARE:
+        lines = keysquare;
+        linecount = sizeof(keysquare) / sizeof(vgline_t);
+        break;
+
+    case VG_TRIANGLE:
+        lines = thintriangle_guy;
+        linecount = sizeof(thintriangle_guy) / sizeof(vgline_t);
+        break;
+
+    case VG_ARROW:
+        lines = player_arrow;
+        linecount = sizeof(player_arrow) / sizeof(vgline_t);
+        break;
+
+#if !__JHEXEN__
+    case VG_CHEATARROW:
+        lines = cheat_player_arrow;
+        linecount = sizeof(cheat_player_arrow) / sizeof(vgline_t);
+        break;
+#endif
+
+    default:
+        Con_Error("getVectorGraphic: Unknown idx %i.", idx);
+        break;
+    }
+
+    vg->lines = malloc(linecount * sizeof(vgline_t));
+    vg->count = linecount;
+    for(i = 0; i < linecount; ++i)
+        memcpy(&vg->lines[i], &lines[i], sizeof(vgline_t));
+    }
+
+    return vg;
+}
+
+static mapobjectinfo_t *getMapObjectInfo(automap_t *map, int objectname)
+{
+    if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
+        Con_Error("getMapObjectInfo: Unknown object %i.", objectname);
+
+    switch(objectname)
+    {
+    case AMO_UNSEENLINE:
+        return &map->cfg.unseenLine;
+
+    case AMO_SINGLESIDEDLINE:
+        return &map->cfg.singleSidedLine;
+
+    case AMO_TWOSIDEDLINE:
+        return &map->cfg.twoSidedLine;
+
+    case AMO_FLOORCHANGELINE:
+        return &map->cfg.floorChangeLine;
+
+    case AMO_CEILINGCHANGELINE:
+        return &map->cfg.ceilingChangeLine;
+
+    case AMO_BLOCKMAPGRIDLINE:
+        return &map->cfg.blockmapGridLine;
+
+    default:
+        Con_Error("getMapObjectInfo: No info for object %i.", objectname);
+    }
+
+    return NULL;
+}
+
 /**
  * Register cvars and ccmds for the automap
  * Called during the PreInit of each game
@@ -479,6 +578,7 @@ void AM_Register(void)
 void AM_Init(void)
 {
     uint        i;
+
     memset(vectorGraphs, 0, sizeof(vectorGraphs));
 
     scrwidth = Get(DD_SCREEN_WIDTH);
@@ -493,6 +593,7 @@ void AM_Init(void)
         automap_t *map = &automaps[i];
 
         // Initialize.
+        map->followPlayer = i;
         map->oldViewScale = 1;
         map->window.oldX = map->window.x = 0;
         map->window.oldY = map->window.y = 0;
@@ -546,6 +647,60 @@ void AM_Init(void)
         map->cfg.blockmapGridLine.rgba[1] = 1;
         map->cfg.blockmapGridLine.rgba[2] = 1;
         map->cfg.blockmapGridLine.rgba[3] = 1;
+
+        // Register lines we want to display in a special way.
+#if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
+        // Blue locked door, open.
+        AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Blue locked door, locked.
+        AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 99, 0, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 133, 0, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Red locked door, open.
+        AM_RegisterSpecialLine(i, 0, 33, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Red locked door, locked.
+        AM_RegisterSpecialLine(i, 0, 28, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 134, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 135, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Yellow locked door, open.
+        AM_RegisterSpecialLine(i, 0, 34, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Yellow locked door, locked.
+        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 136, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 137, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Exit switch.
+        AM_RegisterSpecialLine(i, 1, 11, 1, 0, 1, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Exit cross line.
+        AM_RegisterSpecialLine(i, 1, 52, 2, 0, 1, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Secret Exit switch.
+        AM_RegisterSpecialLine(i, 1, 51, 1, 0, 1, 1, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Secret Exit cross line.
+        AM_RegisterSpecialLine(i, 2, 124, 2, 0, 1, 1, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+#elif __JHERETIC__
+        // Blue locked door.
+        AM_RegisterSpecialLine(i, 0, 26, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Blue switch?
+        AM_RegisterSpecialLine(i, 0, 32, 0, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Yellow locked door.
+        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Yellow switch?
+        AM_RegisterSpecialLine(i, 0, 34, 0, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Green locked door.
+        AM_RegisterSpecialLine(i, 0, 28, 2, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Green switch?
+        AM_RegisterSpecialLine(i, 0, 33, 0, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+#elif __JHEXEN__
+        // A locked door (all are green).
+        AM_RegisterSpecialLine(i, 0, 13, 0, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 83, 0, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Intra-level teleporters (all are blue).
+        AM_RegisterSpecialLine(i, 0, 70, 2, 0, 0, .776, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 71, 2, 0, 0, .776, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Inter-level teleport.
+        AM_RegisterSpecialLine(i, 0, 74, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        // Game-winning exit.
+        AM_RegisterSpecialLine(i, 0, 75, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+#endif
 
         // Setup map based on player's config.
         // TODO: All players' maps work from the same config!
@@ -609,21 +764,16 @@ void AM_Shutdown(void)
     }
 }
 
-/**
- * Called during the finalization stage of map loading (after all geometry).
- */
-void AM_InitForLevel(void)
+static void calcViewScaleFactors(automap_t *map)
 {
-    uint        i;
     float       a, b;
     float       max_w;
     float       max_h;
     float       min_w;
     float       min_h;
-    automap_t  *map;
 
-    // Find the world boundary points shared by all maps.
-    findMinMaxBoundaries();
+    if(!map)
+        return; // hmm...
 
     // Calculate the min/max scaling factors.
     max_w = bounds[1][0] - bounds[0][0];
@@ -631,6 +781,27 @@ void AM_InitForLevel(void)
 
     min_w = FIX2FLT(2 * PLAYERRADIUS);    // const? never changed?
     min_h = FIX2FLT(2 * PLAYERRADIUS);
+
+    // Calculate world to screen space scale based on window width/height
+    // divided by the min/max scale factors derived from map boundaries.
+    a = (float) map->window.width / max_w;
+    b = (float) map->window.height / max_h;
+
+    map->minScaleMTOF = (a < b ? a : b);
+    map->maxScaleMTOF =
+        (float) map->window.height / FIX2FLT(2 * PLAYERRADIUS);
+}
+
+/**
+ * Called during the finalization stage of map loading (after all geometry).
+ */
+void AM_InitForLevel(void)
+{
+    uint        i;
+    automap_t  *map;
+
+    // Find the world boundary points shared by all maps.
+    findMinMaxBoundaries();
 
     // Setup all players' maps.
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -642,13 +813,8 @@ void AM_InitForLevel(void)
 
         setWindowFullScreenMode(map, true);
 
-        // Calculate world to screen space scale based on window width/height
-        // divided by the min/max scale factors derived from map boundaries.
-        a = (float) map->window.width / max_w;
-        b = (float) map->window.height / max_h;
-
-        map->minScaleMTOF = (a < b ? a : b);
-        map->maxScaleMTOF = (float) map->window.height / FIX2FLT(2 * PLAYERRADIUS);
+        // Determine the map view scale factors.
+        calcViewScaleFactors(map);
 
         // Change the zoom.
         setViewScaleTarget(map, (map->maxScale? 0 : 0.0125f));
@@ -686,7 +852,7 @@ void AM_Start(int pnum)
         return; // Already active.
 
     map->active = true;
-    map->targetAlpha = 1.0;
+    AM_SetGlobalAlphaTarget(pnum, 1);
 
     if(map->panMode || !players[map->followPlayer].plr->ingame)
     {   // Set viewer target to the center of the map.
@@ -714,7 +880,7 @@ void AM_Stop(int pnum)
     map = &automaps[pnum];
 
     map->active = false;
-    map->targetAlpha = 0;
+    AM_SetGlobalAlphaTarget(pnum, 0);
 
     GL_Update(DDUF_BORDER);
 }
@@ -957,7 +1123,7 @@ int AM_AddMark(int pid, float x, float y)
  *
  * @param alpha         Alpha level to set the automap too (0...1)
  */
-void AM_SetGlobalAlpha(int pid, float alpha)
+void AM_SetGlobalAlphaTarget(int pid, float alpha)
 {
     automap_t *map = mapForPlayerId(pid);
     if(!map)
@@ -1299,6 +1465,61 @@ void AM_SetVectorGraphic(int pid, int objectname, int vgname)
     }
 }
 
+void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
+                            int sided,
+                            float r, float g, float b, float a,
+                            glowtype_t glowType, float glowAlpha,
+                            float glowWidth, boolean scaleGlowWithView)
+{
+    uint        i;
+    automap_t  *map = mapForPlayerId(pid);
+    automapspecialline_t *line, *p;
+
+    if(!map)
+        return;
+
+    // Any room for a new special line?
+    if(map->numSpecialLines >= AM_MAXSPECIALLINES)
+        Con_Error("AM_RegisterSpecialLine: No available slot.");
+
+    if(cheatLevel < 0 || cheatLevel > 4)
+        Con_Error("AM_RegisterSpecialLine: cheatLevel '%i' out of range {0-4}.",
+                  cheatLevel);
+    if(lineSpecial < 0)
+        Con_Error("AM_RegisterSpecialLine: lineSpecial '%i' is negative.",
+                  lineSpecial);
+    if(sided < 0 || sided > 2)
+        Con_Error("AM_RegisterSpecialLine: sided '%i' is invalid.", sided);
+
+    // Later re-registrations override earlier ones.
+    i = 0;
+    line = NULL;
+    while(i < map->numSpecialLines && !line)
+    {
+        p = &map->specialLines[i];
+        if(p->special == lineSpecial && p->cheatLevel == cheatLevel)
+            line = p;
+        else
+            i++;
+    }
+
+    if(!line) // It must be a new one.
+        line = &map->specialLines[map->numSpecialLines++];
+
+    line->cheatLevel = cheatLevel;
+    line->special = lineSpecial;
+    line->sided = sided;
+
+    line->info.rgba[0] = CLAMP(r, 0, 1);
+    line->info.rgba[1] = CLAMP(g, 0, 1);
+    line->info.rgba[2] = CLAMP(b, 0, 1);
+    line->info.rgba[3] = CLAMP(a, 0, 1);
+    line->info.glow = glowType;
+    line->info.glowAlpha = CLAMP(glowAlpha, 0, 1);
+    line->info.glowWidth = glowWidth;
+    line->info.scaleWithView = scaleGlowWithView;
+}
+
 void AM_SetCheatLevel(int pid, int level)
 {
     automap_t *map = mapForPlayerId(pid);
@@ -1309,9 +1530,9 @@ void AM_SetCheatLevel(int pid, int level)
     map->cheating = level;
 
     if(map->cheating)
-        map->flags |= (AMF_REND_ALLLINES | AMF_REND_EXITLINES);
+        map->flags |= AMF_REND_ALLLINES;
     else
-        map->flags &= ~(AMF_REND_ALLLINES | AMF_REND_EXITLINES);
+        map->flags &= ~AMF_REND_ALLLINES;
 
     if(map->cheating == 2)
         map->flags |= (AMF_REND_THINGS | AMF_REND_XGLINES);
@@ -1333,9 +1554,9 @@ void AM_IncMapCheatLevel(int pid)
     map->cheating = (map->cheating + 1) % 4;
 
     if(map->cheating)
-        map->flags |= (AMF_REND_ALLLINES | AMF_REND_EXITLINES);
+        map->flags |= AMF_REND_ALLLINES;
     else
-        map->flags &= ~(AMF_REND_ALLLINES | AMF_REND_EXITLINES);
+        map->flags &= ~AMF_REND_ALLLINES;
 
     if(map->cheating == 2)
         map->flags |= (AMF_REND_THINGS | AMF_REND_XGLINES);
@@ -1348,64 +1569,8 @@ void AM_IncMapCheatLevel(int pid)
         map->flags &= ~AMF_REND_SUBSECTORS;
 }
 
-static vectorgrap_t *getVectorGraphic(uint idx)
-{
-    vectorgrap_t *vg;
-    vgline_t    *lines;
-
-    if(idx > NUM_VECTOR_GRAPHS - 1)
-        return NULL;
-
-    if(vectorGraphs[idx])
-        return vectorGraphs[idx];
-
-    // Not loaded yet.
-    {
-    uint        i, linecount;
-
-    vg = vectorGraphs[idx] = malloc(sizeof(*vg));
-
-    switch(idx)
-    {
-    case VG_KEYSQUARE:
-        lines = keysquare;
-        linecount = sizeof(keysquare) / sizeof(vgline_t);
-        break;
-
-    case VG_TRIANGLE:
-        lines = thintriangle_guy;
-        linecount = sizeof(thintriangle_guy) / sizeof(vgline_t);
-        break;
-
-    case VG_ARROW:
-        lines = player_arrow;
-        linecount = sizeof(player_arrow) / sizeof(vgline_t);
-        break;
-
-#if !__JHEXEN__
-    case VG_CHEATARROW:
-        lines = cheat_player_arrow;
-        linecount = sizeof(cheat_player_arrow) / sizeof(vgline_t);
-        break;
-#endif
-
-    default:
-        Con_Error("getVectorGraphic: Unknown idx %i.", idx);
-        break;
-    }
-
-    vg->lines = malloc(linecount * sizeof(vgline_t));
-    vg->count = linecount;
-    for(i = 0; i < linecount; ++i)
-        memcpy(&vg->lines[i], &lines[i], sizeof(vgline_t));
-    }
-
-    return vg;
-}
-
 /**
- * Determines bounding box of all vertices,
- * sets global variables controlling zoom range.
+ * Determines bounding box of all the map's vertexes.
  */
 static void findMinMaxBoundaries(void)
 {
@@ -1488,18 +1653,23 @@ static void mapWindowTicker(automap_t *map)
         {
             // In fullscreen mode we always snap straight to the
             // new dimensions.
-            win->x = win->y = 0;
-            win->width = newWidth;
-            win->height = newHeight;
+            win->x = win->oldX = win->targetX = 0;
+            win->y = win->oldY = win->targetY = 0;
+            win->width = win->oldWidth = win->targetWidth = newWidth;
+            win->height = win->oldHeight = win->targetHeight = newHeight;
         }
         else
         {
             // Snap dimensions if new scale is smaller.
             if(newWidth < win->width)
-                win->oldWidth = win->targetWidth = newWidth;
+                win->width = win->oldWidth = win->targetWidth = newWidth;
             if(newHeight < win->height)
-                win->oldHeight = win->targetHeight = newHeight;
+                win->height = win->oldHeight = win->targetHeight = newHeight;
         }
+
+        // Now the screen dimensions have changed we have to update scaling
+        // factors accordingly.
+        calcViewScaleFactors(map);
     }
 
     if(map->fullScreenMode)
@@ -1733,368 +1903,6 @@ static void clearFB(int color)
 #endif
 }
 
-static mapobjectinfo_t *getMapObjectInfo(automap_t *map, int objectname)
-{
-    if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
-        Con_Error("getMapObjectInfo: Unknown object %i.", objectname);
-
-    switch(objectname)
-    {
-    case AMO_UNSEENLINE:
-        return &map->cfg.unseenLine;
-
-    case AMO_SINGLESIDEDLINE:
-        return &map->cfg.singleSidedLine;
-
-    case AMO_TWOSIDEDLINE:
-        return &map->cfg.twoSidedLine;
-
-    case AMO_FLOORCHANGELINE:
-        return &map->cfg.floorChangeLine;
-
-    case AMO_CEILINGCHANGELINE:
-        return &map->cfg.ceilingChangeLine;
-
-    case AMO_BLOCKMAPGRIDLINE:
-        return &map->cfg.blockmapGridLine;
-
-    default:
-        Con_Error("getMapObjectInfo: No info for object %i.", objectname);
-    }
-
-    return NULL;
-}
-
-/**
- * Returns the settings for the given type of line.
- * Not a very pretty routine. Will do this with an array when I rewrite the map...
- */
-/*
-static void getLineParams(automap_t *map, mapobjectinfo_t *l, int type,
-                          int special)
-{
-    if(!l)
-        return;
-
-    switch(type)
-    {
-    default:
-        // An unseen line (got the computer map)
-        l->r = map->cfg.unseenLineRGBA[0];
-        l->g = map->cfg.unseenLineRGBA[1];
-        l->b = map->cfg.unseenLineRGBA[2];
-        l->a = map->cfg.unseenLineRGBA[3];
-        l->a2 =  cfg.automapLineAlpha;
-        l->glow = NO_GLOW;
-        l->w = 0;
-        l->scale = false;
-        break;
-
-    case 1:
-        // single sided linedef (regular wall)
-        l->r = map->cfg.singleSidedLineRGBA[0];
-        l->g = map->cfg.singleSidedLineRGBA[1];
-        l->b = map->cfg.singleSidedLineRGBA[2];
-        l->a = map->cfg.singleSidedLineRGBA[3];
-        l->a2 = cfg.automapLineAlpha/3;
-        l->glow = NO_GLOW;
-        l->w = 0;
-        l->scale = false;
-        break;
-
-    case 2:
-        // a linedef with some sort of special
-        // could be a door or teleport or something...
-        switch(special)
-        {
-        default:
-            // nope nothing special about it
-            l->r = map->cfg.twoSidedLineRGBA[0];
-            l->g = map->cfg.twoSidedLineRGBA[1];
-            l->b = map->cfg.twoSidedLineRGBA[2];
-            l->a = map->cfg.twoSidedLineRGBA[3];
-            l->a2 = 1;
-            l->glow = NO_GLOW;
-            l->w = 0;
-            l->scale = false;
-            break;
-
-#ifdef __JDOOM__
-            case 32:                    // Blue locked door open
-            case 26:                    // Blue Door/Locked
-            case 99:
-            case 133:
-                l->r = 0;
-                l->g = 0;
-                l->b = 0.776f;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-
-            case 33:                    // Red locked door open
-            case 28:                    // Red Door /Locked
-            case 134:
-            case 135:
-                l->r = 0.682f;
-                l->g = 0;
-                l->b = 0;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-
-            case 34:                    // Yellow locked door open
-            case 27:                    // Yellow Door /Locked
-            case 136:
-            case 137:
-                l->r = 0.905f;
-                l->g = 0.9f;
-                l->b = 0;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-
-            case 11:                    // Exit switch
-            case 52:                    // Exit walkover
-                l->r = 0;
-                l->g = 1;
-                l->b = 0;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-
-            case 51:                    // Exit switch (secret)
-            case 124:                   // Exit walkover (secret)
-                l->r = 0;
-                l->g = 1;
-                l->b = 1;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-#elif __JHERETIC__
-            case 26:                    // Blue
-            case 32:
-                l->r = 0;
-                l->g = 0;
-                l->b = 0.776f;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-
-            case 27:                    // Yellow
-            case 34:
-                l->r = 0.905f;
-                l->g = 0.9f;
-                l->b = 0;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-
-            case 28:                    // Green
-            case 33:
-                l->r = 0;
-                l->g = 0.9f;
-                l->b = 0;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-#else
-            case 13:                    // Locked door line -- all locked doors are green
-            case 83:
-                l->r = 0;
-                l->g = 0.9f;
-                l->b = 0;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-
-            case 70:                    // intra-level teleports are blue
-            case 71:
-                l->r = 0;
-                l->g = 0;
-                l->b = 0.776f;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-
-            case 74:                    // inter-level teleport/game-winning exit -- both are red
-            case 75:
-                l->r = 0.682f;
-                l->g = 0;
-                l->b = 0;
-                l->a = cfg.automapLineAlpha/2;
-                l->a2 = cfg.automapLineAlpha/1.5;
-                if(cfg.automapDoorGlow > 0)
-                    l->glow = TWOSIDED_GLOW;
-                else
-                    l->glow = NO_GLOW;
-                l->w = 5.0f;
-                l->scale = true;
-                break;
-#endif
-        }
-        break;
-
-    case 3: // twosided linedef, floor change
-        l->r = map->cfg.floorChangeLineRGBA[0];
-        l->g = map->cfg.floorChangeLineRGBA[1];
-        l->b = map->cfg.floorChangeLineRGBA[2];
-        l->a = map->cfg.floorChangeLineRGBA[3];
-        l->a2 = cfg.automapLineAlpha/2;
-        l->glow = NO_GLOW;
-        l->w = 0;
-        l->scale = false;
-        break;
-
-    case 4: // twosided linedef, ceiling change
-        l->r = map->cfg.ceilingChangeLineRGBA[0];
-        l->g = map->cfg.ceilingChangeLineRGBA[1];
-        l->b = map->cfg.ceilingChangeLineRGBA[2];
-        l->a = map->cfg.ceilingChangeLineRGBA[3];
-        l->a2 = cfg.automapLineAlpha/2;
-        l->glow = NO_GLOW;
-        l->w = 0;
-        l->scale = false;
-        break;
-
-    case 5: // blockmap grid line.
-        l->r = map->cfg.blockmapGridLineRGBA[0];
-        l->g = map->cfg.blockmapGridLineRGBA[1];
-        l->b = map->cfg.blockmapGridLineRGBA[2];
-        l->a = map->cfg.blockmapGridLineRGBA[3];
-        l->a2 = cfg.automapLineAlpha/2;
-        l->glow = NO_GLOW;
-        l->w = 0;
-        l->scale = false;
-        break;
-    }
-}
-*/
-
-/**
- * Returns a value > 0 if the line is some sort of special that we
- * might want to add a glow to, or change the colour of etc.
- */
-static int checkLineSpecial(int special)
-{
-    switch(special)
-    {
-    default:
-        // If it's not a special, zero is returned.
-        break;
-
-#ifdef __JDOOM__
-    case 32:                    // Blue locked door open
-    case 26:                    // Blue Door/Locked
-    case 99:                    // Blue door switch
-    case 133:                   // Blue door switch
-    case 33:                    // Red locked door open
-    case 28:                    // Red Door /Locked
-    case 134:                   // Red door switch
-    case 135:                   // Red door switch
-    case 34:                    // Yellow locked door open
-    case 27:                    // Yellow Door /Locked
-    case 136:                   // Yellow door switch
-    case 137:                   // Yellow door switch
-        return 1; // its a door
-
-    case 11:                    // Exit switch
-    case 51:                    // Exit switch (secret)
-    case 52:                    // Exit walkover
-    case 124:                   // Exit walkover (secret)
-        return 3; // some form of exit
-#elif __JHERETIC__
-    case 26:
-    case 32:
-    case 27:
-    case 34:
-    case 28:
-    case 33:
-        // its a door
-        return 1;
-#else
-    case 13:
-    case 83:
-        // its a door
-        return 1;
-
-    case 70:
-    case 71:
-        // intra-level teleports
-        return 2;
-
-    case 74:
-    case 75:
-        // inter-level teleport/game-winning exit
-        return 3;
-
-#endif
-    }
-    return 0;
-}
-
 /**
  * Draws the given line. No cliping is done!
  */
@@ -2308,7 +2116,7 @@ static void renderGrid(void)
 static void renderWalls(void)
 {
     int         i, segcount, flags;
-    uint        s, subColor = 0;
+    uint        j, s, subColor = 0;
     float       v1[2], v2[2];
     line_t     *line;
     xline_t    *xline;
@@ -2353,42 +2161,64 @@ static void renderWalls(void)
 
             xline = P_XLine(line);
 
-            info = NULL;
-/*
 #if !__JHEXEN__
 #if !__JSTRIFE__
             if(map->flags & AMF_REND_XGLINES) // Debug cheat.
             {
                 // Show active XG lines.
                 if(xline->xg && xline->xg->active && (leveltime & 4))
-                    info = getLineParams(map, &templine, 1, 0);
-            }
-            else
-#endif
-#endif
-*/
-            {
-                backsector = P_GetPtrp(seg, DMU_BACK_SECTOR);
-                flags = P_GetIntp(line, DMU_FLAGS);
-                if((map->flags & AMF_REND_ALLLINES) ||
-                   xline->mapped[mapviewplayer])
                 {
-//                    int     specialType;
+                    rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
+                              .8f, 0, .8f, 1,
+                              TWOSIDED_GLOW, 1, 5, true, false, true);
+                    continue;
+                }
+            }
+#endif
+#endif
+            info = NULL;
+            backsector = P_GetPtrp(seg, DMU_BACK_SECTOR);
+            flags = P_GetIntp(line, DMU_FLAGS);
+            if((map->flags & AMF_REND_ALLLINES) ||
+               xline->mapped[mapviewplayer])
+            {
+                if((flags & ML_DONTDRAW) &&
+                   !(map->flags & AMF_REND_ALLLINES))
+                    continue;
 
-                    if((flags & ML_DONTDRAW) &&
-                       !(map->flags & AMF_REND_ALLLINES))
-                        continue;
-/*
-                    specialType = checkLineSpecial(xline->special);
+                // Perhaps this is a specially colored line?
+                for(j = 0; j < map->numSpecialLines && !info; ++j)
+                {
+                    automapspecialline_t *sl = &map->specialLines[j];
 
-                    if(map->cfg.glowingLineSpecials &&
-                       (specialType == 1 ||
-                        (specialType > 1 && (map->flags & AMF_REND_EXITLINES))))
+                    // Is there a line special restriction?
+                    if(sl->special)
                     {
-                        // some sort of special
-                        getLineParams(map, &templine, 2, xline->special);
+                        if(sl->special != xline->special)
+                            continue;
                     }
-                    else */ if(!backsector || (flags & ML_SECRET))
+
+                    // Is there a sided restriction?
+                    if(sl->sided)
+                    {
+                        if(sl->sided == 1 && backsector && frontsector)
+                            continue;
+                        else if(sl->sided == 2 && (!backsector || !frontsector))
+                            continue;
+                    }
+
+                    // Is there a cheat level restriction?
+                    if(sl->cheatLevel > map->cheating)
+                        continue;
+
+                    // This is the one!
+                    info = &sl->info;
+                }
+
+                if(!info)
+                {
+                    // Perhaps a default colored line?
+                    if(!backsector || (flags & ML_SECRET))
                     {
                         // solid wall (well probably anyway...)
                         info = getMapObjectInfo(map, AMO_SINGLESIDEDLINE);
@@ -2396,15 +2226,15 @@ static void renderWalls(void)
                     else
                     {
                         if(P_GetFloatp(backsector, DMU_FLOOR_HEIGHT) !=
-                                P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT))
+                           P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT))
                         {
-                            // floor level change
+                            // Floor level change.
                             info = getMapObjectInfo(map, AMO_FLOORCHANGELINE);
                         }
                         else if(P_GetFloatp(backsector, DMU_CEILING_HEIGHT) !=
                                 P_GetFloatp(frontsector, DMU_CEILING_HEIGHT))
                         {
-                            // ceiling level change
+                            // Ceiling level change.
                             info = getMapObjectInfo(map, AMO_CEILINGCHANGELINE);
                         }
                         else if(map->flags & AMF_REND_ALLLINES)
@@ -2413,23 +2243,26 @@ static void renderWalls(void)
                         }
                     }
                 }
-                else if(plr->powers[PT_ALLMAP])
+            }
+            else if(plr->powers[PT_ALLMAP])
+            {
+                if(!(flags & ML_DONTDRAW))
                 {
-                    if(!(flags & ML_DONTDRAW))
-                    {
-                        // An as yet, unseen line.
-                        info = getMapObjectInfo(map, AMO_UNSEENLINE);
-                    }
+                    // An as yet, unseen line.
+                    info = getMapObjectInfo(map, AMO_UNSEENLINE);
                 }
             }
 
             if(info)
             rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
-                      info->rgba[0], info->rgba[1], info->rgba[2],
-                      info->rgba[3], info->glow, info->glowAlpha,
+                      info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
+                      (xline->special && !map->cfg.glowingLineSpecials ?
+                            NO_GLOW : info->glow),
+                      info->glowAlpha,
                       info->glowWidth, info->scaleWithView,
-                      false,
-                      (map->cfg.lineGlowScale > 0));
+                      (info->glow && !(xline->special && !map->cfg.glowingLineSpecials)),
+                      (xline->special && !map->cfg.glowingLineSpecials ?
+                            NO_GLOW : info->glow));
         }
     }
 }
