@@ -52,9 +52,11 @@ void            RL_ClearLists();
 void            RL_DeleteLists();
 void            RL_AddPoly(rendpoly_t *poly);
 void            RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly,
-                                float height, subsector_t *subsector);
+                                float height, subsector_t *subsector,
+                                byte alpha);
 void            RL_VertexColors(rendpoly_t *poly, float lightlevel,
-                                const byte *rgb);
+                                float distanceOverride, const byte *rgb,
+                                byte alpha);
 void            RL_RenderAllLists();
 
 void            RL_SelectTexUnits(int count);

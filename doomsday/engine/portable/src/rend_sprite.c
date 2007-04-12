@@ -347,7 +347,6 @@ void Rend_DrawPlayerSprites(void)
         }
 
         tempquad = R_AllocRendPoly(RP_NONE, false, 2);
-        tempquad->vertices[0].dist = tempquad->vertices[1].dist = 1;
 
         // Draw as separate sprites.
         for(i = 0; i < DDMAXPSPRITES; ++i)
@@ -386,14 +385,11 @@ void Rend_DrawPlayerSprites(void)
             }
             rgba[CA] = psp[i].alpha * 255.0f;
 
-            RL_VertexColors(tempquad, light, rgba);
+            RL_VertexColors(tempquad, light, 1, rgba, rgba[CA]);
 
             // Add extra light using dynamic lights.
             if(litSprites)
                 Rend_DoLightSprite(vispsprites +i, tempquad);
-
-            tempquad->vertices[0].color.rgba[CA] =
-                tempquad->vertices[1].color.rgba[CA] = rgba[CA];
 
             Rend_DrawPSprite(psp[i].x - info[i].offset + offx,
                            offScaleY * psp[i].y + (1 - offScaleY) * 32 -
@@ -854,17 +850,14 @@ void Rend_RenderSprite(vissprite_t *spr)
         v1[VY] = spr->data.mo.gy;
 
         tempquad = R_AllocRendPoly(RP_NONE, false, 2);
-        tempquad->vertices[0].dist =
-            tempquad->vertices[1].dist = Rend_PointDist2D(v1);
 
-        RL_VertexColors(tempquad, lightLevel, spr->data.mo.rgb);
+        RL_VertexColors(tempquad, lightLevel, Rend_PointDist2D(v1),
+                        spr->data.mo.rgb, alpha);
 
         // Add extra light using dynamic lights.
         if(litSprites)
             Rend_DoLightSprite(spr, tempquad);
 
-        tempquad->vertices[0].color.rgba[CA] =
-            tempquad->vertices[1].color.rgba[CA] = alpha;
         gl.Color4ubv(tempquad->vertices[0].color.rgba);
     }
 

@@ -866,8 +866,6 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
 
 /**
  * Called by Rend_RenderWallSeg to render ALL wall sections.
- *
- * TODO: Combine all the boolean (hint) parameters into a single flags var.
  */
 static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
                                    sector_t *frontsec, surface_t *surface,
@@ -875,7 +873,6 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
 {
     uint        i;
     uint        segIndex = GET_SEG_IDX(seg);
-    rendpoly_vertex_t *vtx;
     const byte *colorPtr = NULL;
     const byte *color2Ptr = NULL;
 
@@ -942,11 +939,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
         Rend_WallHeightDivision(quad, seg, frontsec, section);
 
     // Surface color/light.
-    RL_VertexColors(quad, Rend_SectorLight(frontsec), colorPtr);
-
-    // Alpha?
-    for(i = 0, vtx = quad->vertices; i < quad->numvertices; ++i, vtx++)
-        vtx->color.rgba[3] = alpha;
+    RL_VertexColors(quad, Rend_SectorLight(frontsec), -1, colorPtr, alpha);
 
     // Bottom color (if different from top)?
     if(color2Ptr != NULL)
@@ -1004,19 +997,13 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
                                subplaneinfo_t* plane, surface_t *surface,
                                float height, byte alpha, short flags)
 {
-    uint        i;
     uint        subIndex = GET_SUBSECTOR_IDX(subsector);
-    rendpoly_vertex_t *vtx;
 
     if((flags & RPF2_GLOW) && glowingTextures)        // Make it fullbright?
         poly->flags |= RPF_GLOW;
 
     // Surface color/light.
-    RL_PreparePlane(plane, poly, height, subsector);
-
-    // Alpha?
-    for(i = 0, vtx = poly->vertices; i < poly->numvertices; i++, vtx++)
-        vtx->color.rgba[3] = alpha;
+    RL_PreparePlane(plane, poly, height, subsector, alpha);
 
     // Dynamic lights. Check for sky.
     if(R_IsSkySurface(surface))
@@ -1166,12 +1153,6 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     vBR[VX] = vTR[VX] = seg->SG_v2->pos[VX];
     vBR[VY] = vTR[VY] = seg->SG_v2->pos[VY];
 
-    // Calculate the distances.
-    quad->vertices[0].dist =
-        quad->vertices[2].dist = Rend_PointDist2D(vBL);
-    quad->vertices[1].dist =
-        quad->vertices[3].dist = Rend_PointDist2D(vBR);
-
     quad->wall->length = seg->length;
 
     Rend_SetSurfaceColorsForSide(side);
@@ -1306,12 +1287,6 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     vBL[VY] = vTL[VY] = seg->SG_v1->pos[VY];
     vBR[VX] = vTR[VX] = seg->SG_v2->pos[VX];
     vBR[VY] = vTR[VY] = seg->SG_v2->pos[VY];
-
-    // Calculate the distances.
-    quad->vertices[0].dist =
-        quad->vertices[2].dist = Rend_PointDist2D(vBL);
-    quad->vertices[1].dist =
-        quad->vertices[3].dist = Rend_PointDist2D(vBR);
 
     quad->wall->length = seg->length;
 

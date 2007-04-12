@@ -274,12 +274,18 @@ void RL_Register(void)
 static void RL_AddMaskedPoly(rendpoly_t *poly)
 {
     vissprite_t *vis = R_NewVisSprite();
-    byte    brightest[3];
+    byte        brightest[3];
     dynlight_t *dyn;
-    int     i, c;
+    int         i, c;
+    float       midpoint[2];
+
+    midpoint[VX] =
+        (poly->vertices[0].pos[VX] + poly->vertices[1].pos[VX]) / 2;
+    midpoint[VY] =
+        (poly->vertices[0].pos[VY] + poly->vertices[1].pos[VY]) / 2;
 
     vis->type = VSPR_MASKED_WALL;
-    vis->distance = (poly->vertices[0].dist + poly->vertices[1].dist) / 2;
+    vis->distance = Rend_PointDist2D(midpoint);
     vis->data.wall.texture = poly->tex.id;
     vis->data.wall.masked = poly->tex.masked; // Store texmask status in flip.
     for(i = 0; i < 4; ++i)
@@ -334,13 +340,26 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
 /**
  * Color distance attenuation, extralight, fixedcolormap.
  * "Torchlight" is white, regardless of the original RGB.
+ *
+ * @param distanceOverride If positive, this distance will be used for ALL
+ *                      of the rendpoly's vertices. Else, the dist will be
+ *                      calculated if needed, depending on the properties of
+ *                      the rendpoly to be lit, for each vertex seperately.                     
  */
-void RL_VertexColors(rendpoly_t *poly, float lightlevel, const byte *rgb)
+void RL_VertexColors(rendpoly_t *poly, float lightlevel,
+                     float distanceOverride, const byte *rgb, byte alpha)
 {
     int         i, num;
     float       light, real, minimum;
+    float       dist;
     rendpoly_vertex_t *vtx;
     boolean     usewhite;
+
+    // Check for special case exceptions.
+    if(poly->flags & (RPF_SKY_MASK|RPF_LIGHT|RPF_SHADOW))
+    {
+        return; // Don't need per-vertex lighting.
+    }
 
     if(poly->isWall && rend_light_wall_angle && !useBias)  // A quad?
     {
@@ -361,7 +380,12 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel, const byte *rgb)
     {
         usewhite = false;
 
-        real = light - (vtx->dist - 32) / maxLightDist * (1 - light);
+        if(distanceOverride > 0)
+            dist = distanceOverride;
+        else
+            dist = Rend_PointDist2D(vtx->pos);
+
+        real = light - (dist - 32) / maxLightDist * (1 - light);
         minimum = light * light + (light - .63f) / 2;
         if(real < minimum)
             real = minimum;     // Clamp it.
@@ -375,7 +399,7 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel, const byte *rgb)
             // Colormap 1 is the brightest. I'm guessing 16 would be
             // the darkest.
             int     ll = 16 - viewplayer->fixedcolormap;
-            float   d = (1024 - vtx->dist) / 512.0f;
+            float   d = (1024 - dist) / 512.0f;
             float   newmin = d * ll / 15.0f;
 
             if(real < newmin)
@@ -402,17 +426,15 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel, const byte *rgb)
             vtx->color.rgba[1] = (DGLubyte) (rgb[1] * real);
             vtx->color.rgba[2] = (DGLubyte) (rgb[2] * real);
         }
+
+        vtx->color.rgba[3] = (DGLubyte) alpha;
     }
 }
 
 void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
-                     subsector_t *subsector)
+                     subsector_t *subsector, byte alpha)
 {
     int         i, num, vid;
-    float       sectorlight;
-    const byte *pLightColor;
-    byte        vColor[] = { 0, 0, 0, 0};
-    surface_t  *surface = &poly->sector->planes[plane->type]->surface;
 
     poly->numvertices = subsector->numvertices;
 
@@ -422,7 +444,6 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
     else
         vid = 0;
 
-    // Calculate the distance to each vertex.
     num = subsector->numvertices;
     for(i = 0; i < num; ++i)
     {
@@ -430,31 +451,37 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
         poly->vertices[i].pos[VY] = subsector->vertices[vid].pos[VY];
         poly->vertices[i].pos[VZ] = height;
 
-        poly->vertices[i].dist = Rend_PointDist2D(poly->vertices[i].pos);
-
         (plane->type == PLN_CEILING? vid-- : vid++);
     }
 
-    sectorlight = Rend_SectorLight(poly->sector);
-    pLightColor = R_GetSectorLightColor(poly->sector);
-
-    // Calculate the color for each vertex, blended with plane color?
-    if(surface->rgba[0] < 255 ||
-       surface->rgba[1] < 255 ||
-       surface->rgba[2] < 255 )
+    if(!(poly->flags & RPF_SKY_MASK))
     {
-        // Blend sector light+color+planecolor
-        for(i = 0; i < 3; ++i)
+        float       sectorlight;
+        const byte *pLightColor;
+        byte        vColor[] = { 0, 0, 0, 0};
+        surface_t  *surface = &poly->sector->planes[plane->type]->surface;
+
+        sectorlight = Rend_SectorLight(poly->sector);
+        pLightColor = R_GetSectorLightColor(poly->sector);
+
+        // Calculate the color for each vertex, blended with plane color?
+        if(surface->rgba[0] < 255 ||
+           surface->rgba[1] < 255 ||
+           surface->rgba[2] < 255 )
         {
-            vColor[i] = (byte) (((surface->rgba[i] * reciprocal255)) * pLightColor[i]);
-        }
+            // Blend sector light+color+planecolor
+            for(i = 0; i < 3; ++i)
+            {
+                vColor[i] = (byte) (((surface->rgba[i] * reciprocal255)) * pLightColor[i]);
+            }
 
-        RL_VertexColors(poly, sectorlight, vColor);
-    }
-    else
-    {
-        // Use sector light+color only
-        RL_VertexColors(poly, sectorlight, pLightColor);
+            RL_VertexColors(poly, sectorlight, -1, vColor, alpha);
+        }
+        else
+        {
+            // Use sector light+color only
+            RL_VertexColors(poly, sectorlight, -1, pLightColor, alpha);
+        }
     }
 }
 
