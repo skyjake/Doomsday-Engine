@@ -83,49 +83,49 @@ static byte *GetScratchBuffer(size_t size)
 }
 
 /**
- * Finds the power of 2 that is equal to or greater than
- * the specified number.
+ * Finds the power of 2 that is equal to or greater than the specified
+ * number.
  */
 int CeilPow2(int num)
 {
-    int     cumul;
+    int         cumul;
 
     for(cumul = 1; num > cumul; cumul <<= 1);
+
     return cumul;
 }
 
-/*
- * Finds the power of 2 that is less than or equal to
- * the specified number.
+/**
+ * Finds the power of 2 that is less than or equal to the specified number.
  */
 int FloorPow2(int num)
 {
-    int     fl = CeilPow2(num);
+    int         fl = CeilPow2(num);
 
     if(fl > num)
         fl >>= 1;
     return fl;
 }
 
-/*
- * Finds the power of 2 that is nearest the specified number.
- * In ambiguous cases, the smaller number is returned.
+/**
+ * Finds the power of 2 that is nearest the specified number. In ambiguous
+ * cases, the smaller number is returned.
  */
 int RoundPow2(int num)
 {
-    int     cp2 = CeilPow2(num), fp2 = FloorPow2(num);
+    int         cp2 = CeilPow2(num), fp2 = FloorPow2(num);
 
-    return (cp2 - num >= num - fp2) ? fp2 : cp2;
+    return ((cp2 - num >= num - fp2) ? fp2 : cp2);
 }
 
-/*
- * Weighted rounding. Weight determines the point where the number
- * is still rounded down (0..1).
+/**
+ * Weighted rounding. Weight determines the point where the number is still
+ * rounded down (0..1).
  */
 int WeightPow2(int num, float weight)
 {
-    int     fp2 = FloorPow2(num);
-    float   frac = (num - fp2) / (float) fp2;
+    int         fp2 = FloorPow2(num);
+    float       frac = (num - fp2) / (float) fp2;
 
     if(frac <= weight)
         return fp2;
@@ -133,7 +133,7 @@ int WeightPow2(int num, float weight)
         return (fp2 << 1);
 }
 
-/*
+/**
  * Copies a rectangular region of the source buffer to the destination
  * buffer. Doesn't perform clipping, so be careful.
  * Yeah, 13 parameters...
@@ -142,9 +142,9 @@ void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, int destWidth,
             int destHeight, int alpha, int srcRegX, int srcRegY, int destRegX,
             int destRegY, int regWidth, int regHeight)
 {
-    int     y;                  // Y in the copy region.
-    int     srcNumPels = srcWidth * srcHeight;
-    int     destNumPels = destWidth * destHeight;
+    int         y;                  // Y in the copy region.
+    int         srcNumPels = srcWidth * srcHeight;
+    int         destNumPels = destWidth * destHeight;
 
     for(y = 0; y < regHeight; ++y)  // Copy line by line.
     {
@@ -162,14 +162,14 @@ void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, int destWidth,
     }
 }
 
-/*
+/**
  * Prepare the pal18to8 table.
  * A time-consuming operation (64 * 64 * 64 * 256!).
  */
 void CalculatePal18to8(byte *dest, byte *palette)
 {
-    int     r, g, b, i;
-    byte    palRGB[3];
+    int         r, g, b, i;
+    byte        palRGB[3];
     unsigned int diff, smallestDiff, closestIndex = 0;
 
     for(r = 0; r < 64; ++r)
@@ -198,15 +198,15 @@ void CalculatePal18to8(byte *dest, byte *palette)
 
 void PalIdxToRGB(byte *pal, int idx, byte *rgb)
 {
-    int     c;
-    int     gammalevel = /*gammaSupport? 0 : */ usegamma;
+    int         c;
+    int         gammalevel = /*gammaSupport? 0 : */ usegamma;
 
     for(c = 0; c < 3; ++c)      // Red, green and blue.
         rgb[c] = gammatable[gammalevel][pal[idx * 3 + c]];
 }
 
-/*
- * in/outformat:
+/**
+ * in/out format:
  * 1 = palette indices
  * 2 = palette indices followed by alpha values
  * 3 = RGB
@@ -215,9 +215,9 @@ void PalIdxToRGB(byte *pal, int idx, byte *rgb)
 void GL_ConvertBuffer(int width, int height, int informat, int outformat,
                       byte *in, byte *out, byte *palette, boolean gamma)
 {
-    int     inSize = (informat == 2 ? 1 : informat);
-    int     outSize = (outformat == 2 ? 1 : outformat);
-    int     i, numPixels = width * height, a;
+    int         inSize = (informat == 2 ? 1 : informat);
+    int         outSize = (outformat == 2 ? 1 : outformat);
+    int         i, numPixels = width * height, a;
 
     if(informat == outformat)
     {
@@ -225,6 +225,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
         memcpy(out, in, numPixels * informat);
         return;
     }
+
     // Conversion from pal8(a) to RGB(A).
     if(informat <= 2 && outformat >= 3)
     {
@@ -271,33 +272,30 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
         {
             memcpy(out, in, 3);
             out[3] = 0xff;      // Opaque.
-
-            /*          out[0] = 0xff;
-               out[1] = 0;
-               out[2] = 0; */
         }
     }
 }
 
-/*
+/**
  * Len is measured in out units. Comps is the number of components per
- * pixel, or rather the number of bytes per pixel (3 or 4). The strides
- * must be byte-aligned anyway, though; not in pixels.
+ * pixel, or rather the number of bytes per pixel (3 or 4). The strides must
+ * be byte-aligned anyway, though; not in pixels.
+ *
  * FIXME: Probably could be optimized.
  */
 static void scaleLine(byte *in, int inStride, byte *out, int outStride,
                       int outLen, int inLen, int comps)
 {
-    int     i, c;
-    float   inToOutScale = outLen / (float) inLen;
+    int         i, c;
+    float       inToOutScale = outLen / (float) inLen;
 
     if(inToOutScale > 1)
     {
         // Magnification is done using linear interpolation.
-        fixed_t inPosDelta = (FRACUNIT * (inLen - 1)) / (outLen - 1), inPos =
-            inPosDelta;
-        byte   *col1, *col2;
-        int     weight, invWeight;
+        fixed_t     inPosDelta = (FRACUNIT * (inLen - 1)) / (outLen - 1);
+        fixed_t     inPos = inPosDelta;
+        byte       *col1, *col2;
+        int         weight, invWeight;
 
         // The first pixel.
         memcpy(out, in, comps);
@@ -310,6 +308,7 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
             col2 = col1 + inStride;
             weight = inPos & 0xffff;
             invWeight = 0x10000 - weight;
+
             out[0] = (byte)((col1[0] * invWeight + col2[0] * weight) >> 16);
             out[1] = (byte)((col1[1] * invWeight + col2[1] * weight) >> 16);
             out[2] = (byte)((col1[2] * invWeight + col2[2] * weight) >> 16);
@@ -324,8 +323,8 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
     {
         // Minification needs to calculate the average of each of
         // the pixels contained by the out pixel.
-        unsigned int cumul[4] = { 0, 0, 0, 0 }, count = 0;
-        int     outpos = 0;
+        uint        cumul[4] = { 0, 0, 0, 0 }, count = 0;
+        int         outpos = 0;
 
         for(i = 0; i < inLen; ++i, in += inStride)
         {
@@ -379,33 +378,46 @@ void GL_ScaleBuffer32(byte *in, int inWidth, int inHeight, byte *out,
                       int outWidth, int outHeight, int comps)
 {
     int         i;
+    int         stride;
+    uint        inOffsetSize, outOffsetSize;
+    byte       *inOff, *outOff;
     byte       *buffer;
 
     buffer = GetScratchBuffer(outWidth * inHeight * comps);
 
     // First scale horizontally, to outWidth, into the temporary buffer.
-    for(i = 0; i < inHeight; ++i)
+    inOff = in;
+    outOff = buffer;
+    inOffsetSize = inWidth * comps;
+    outOffsetSize = outWidth * comps;
+    for(i = 0; i < inHeight;
+        ++i, inOff += inOffsetSize, outOff += outOffsetSize)
     {
-        scaleLine(in + inWidth * comps * i, comps, buffer + outWidth * comps * i,
-                  comps, outWidth, inWidth, comps);
+        scaleLine(inOff, comps, outOff, comps, outWidth, inWidth, comps);
     }
 
     // Then scale vertically, to outHeight, into the out buffer.
-    for(i = 0; i < outWidth; ++i)
+    inOff = buffer;
+    outOff = out;
+    stride = outWidth * comps;
+    inOffsetSize = comps;
+    outOffsetSize = comps;
+    for(i = 0; i < outWidth;
+        ++i, inOff += inOffsetSize, outOff += outOffsetSize)
     {
-        scaleLine(buffer + comps * i, outWidth * comps, out + comps * i,
-                  outWidth * comps, outHeight, inHeight, comps);
+        scaleLine(inOff, stride, outOff, stride, outHeight, inHeight,
+                  comps);
     }
 }
 
-/*
+/**
  * Works within the given data, reducing the size of the picture to half
  * its original. Width and height must be powers of two.
  */
 void GL_DownMipmap32(byte *in, int width, int height, int comps)
 {
-    byte   *out;
-    int     x, y, c, outW = width >> 1, outH = height >> 1;
+    byte       *out;
+    int         x, y, c, outW = width >> 1, outH = height >> 1;
 
     if(width == 1 && height == 1)
     {
@@ -417,7 +429,7 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
 
     if(!outW || !outH)          // Limited, 1x2|2x1 -> 1x1 reduction?
     {
-        int     outDim = width > 1 ? outW : outH;
+        int     outDim = (width > 1 ? outW : outH);
 
         out = in;
         for(x = 0; x < outDim; ++x, in += comps * 2)
@@ -436,10 +448,12 @@ void GL_DownMipmap32(byte *in, int width, int height, int comps)
     }
 }
 
-/*
+/**
  * Determine the optimal size for a texture. Usually the dimensions are
- * scaled upwards to the next power of two. Returns true if noStretch is
- * true and the stretching can be skipped.
+ * scaled upwards to the next power of two.
+ *
+ * @param true          If <code>noStretch == true</code> and the stretching
+ *                      can be skipped.
  */
 boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
                        boolean noStretch)
@@ -512,46 +526,57 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
     return noStretch;
 }
 
-/*
+/**
  * 'fnum' is really a lump number.
  */
 void GL_GetFlatColor(int fnum, unsigned char *rgb)
 {
-    flat_t *flat = R_GetFlat(fnum);
+    flat_t     *flat = R_GetFlat(fnum);
 
     memcpy(rgb, flat->color.rgb, 3);
 }
 
 /**
- * The buffer must have room for the alpha values.
- * Returns true if the buffer really has alpha information.
- * If !checkForAlpha, returns false.
- * Origx and origy set the origin of the patch.
- *
  * Modified to allow taller masked textures - GMJ Aug 2002
+ *
+ * Warning: The buffer must have room for the new alpha data!
+ *
+ * @param buffer        The destination buffer to draw the patch in to.
+ * @param texwidth      Width of the dst buffer in pixels.
+ * @param texheight     Height of the dst buffer in pixels.
+ * @param patch         Ptr to the patch structure to draw to the dst buffer.
+ * @param origx         X coordinate in the dst buffer to draw the patch too.
+ * @param origy         Y coordinate in the dst buffer to draw the patch too.
+ * @param maskZero      Used with sky textures.
+ * @param transtable    If not <code>NULL</code>, read pixels from the patch
+ *                      will have their color translated using this LUT.
+ * @param checkForAlpha If <code>true</code> the composited image will be
+ *                      checked for alpha pixels and will return accordingly
+ *                      if present.
+ *
+ * @return              If <code>checkForAlpha == false</code>, will return
+ *                      <code>false</code>. Else, <code>true</code> if the
+ *                      buffer really has alpha information.
  */
 int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
                   int origx, int origy, boolean maskZero,
                   unsigned char *transtable, boolean checkForAlpha)
 {
-    int     count;
-    int     col;
-    column_t *column;
-    byte   *destTop, *destAlphaTop = NULL;
-    byte   *dest1, *dest2;
-    byte   *source;
-    int     w, i, bufsize = texwidth * texheight;
-    int     x, y, top;          // Keep track of pos for clipping.
+    int         count, col = 0;
+    int         x = origx, y, top; // Keep track of pos for clipping.
+    int         w = SHORT(patch->width);
+    int         bufsize = texwidth * texheight;
+    column_t   *column;
+    byte       *destTop = buffer + origx;
+    byte       *destAlphaTop = buffer + origx + bufsize;
+    byte       *dest1, *dest2;
+    byte       *source;
 
-    col = 0;
-    destTop = buffer + origx;
-    destAlphaTop = buffer + origx + bufsize;
-    w = SHORT(patch->width);
-    x = origx;
     for(; col < w; ++col, destTop++, destAlphaTop++, ++x)
     {
         column = (column_t *) ((byte *) patch + LONG(patch->columnofs[col]));
         top = -1;
+
         // Step through the posts in a column
         while(column->topdelta != 0xff)
         {
@@ -565,16 +590,15 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
             else
                 top = column->topdelta;
 
-            if(column->length > 0)
+            if((count = column->length) > 0)
             {
                 y = origy + top;
                 dest1 = destTop + y * texwidth;
                 dest2 = destAlphaTop + y * texwidth;
 
-                count = column->length;
                 while(count--)
                 {
-                    unsigned char palidx = *source++;
+                    byte palidx = *source++;
 
                     // Do we need to make a translation?
                     if(transtable)
@@ -587,7 +611,7 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
                             *dest1 = palidx;
 
                         if(maskZero)
-                            *dest2 = palidx ? 0xff : 0;
+                            *dest2 = (palidx ? 0xff : 0);
                         else
                             *dest2 = 0xff;
                     }
@@ -598,11 +622,16 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
                     y++;
                 }
             }
+
             column = (column_t *) ((byte *) column + column->length + 4);
         }
     }
+
     if(checkForAlpha)
     {
+        int         i;
+        boolean     allowSingleAlpha = (texwidth < 128 || texheight < 128);
+
         // Scan through the RGBA buffer and check for sub-0xff alpha.
         source = buffer + texwidth * texheight;
         for(i = 0, count = 0; i < texwidth * texheight; ++i)
@@ -611,8 +640,9 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
             {
                 //----- <HACK> -----
                 // 'Small' textures tolerate no alpha.
-                if(texwidth <= 128 || texheight < 128)
+                if(allowSingleAlpha)
                     return true;
+
                 // Big ones can have a single alpha pixel (ZZZFACE3!).
                 if(count++ > 1)
                     return true;    // Has alpha data.
@@ -620,7 +650,8 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
             }
         }
     }
-    return false;               // Doesn't have alpha data.
+
+    return false; // Doesn't have alpha data.
 }
 
 /**
@@ -628,15 +659,16 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
  */
 void TranslatePatch(patch_t *patch, byte *transTable)
 {
-    int     count;
-    int     col = 0;
-    column_t *column;
-    byte   *source;
-    int     w = SHORT(patch->width);
+    int         count;
+    int         col = 0;
+    column_t   *column;
+    byte       *source;
+    int         w = SHORT(patch->width);
 
     for(; col < w; ++col)
     {
         column = (column_t *) ((byte *) patch + LONG(patch->columnofs[col]));
+
         // Step through the posts in a column
         while(column->topdelta != 0xff)
         {
@@ -655,10 +687,10 @@ void TranslatePatch(patch_t *patch, byte *transTable)
 /**
  * Converts the image data to grayscale luminance in-place.
  */
-void GL_ConvertToLuminance(image_t * image)
+void GL_ConvertToLuminance(image_t *image)
 {
-    int     p, total = image->width * image->height;
-    byte   *ptr = image->pixels;
+    int         p, total = image->width * image->height;
+    byte       *ptr = image->pixels;
 
     if(image->pixelSize == 1)
     {
@@ -671,12 +703,13 @@ void GL_ConvertToLuminance(image_t * image)
     {
         image->pixels[p] = (ptr[0] + ptr[1] + ptr[2]) / 3;
     }
+
     image->pixelSize = 1;
 }
 
-void GL_ConvertToAlpha(image_t * image, boolean makeWhite)
+void GL_ConvertToAlpha(image_t *image, boolean makeWhite)
 {
-    int     p, total = image->width * image->height;
+    int         p, total = image->width * image->height;
 
     GL_ConvertToLuminance(image);
     for(p = 0; p < total; ++p)
@@ -687,14 +720,15 @@ void GL_ConvertToAlpha(image_t * image, boolean makeWhite)
         if(makeWhite)
             image->pixels[p] = 255;
     }
+
     image->pixelSize = 2;
 }
 
 boolean ImageHasAlpha(image_t *img)
 {
-    unsigned int i, size;
-    boolean hasAlpha = false;
-    byte    *in;
+    uint        i, size;
+    boolean     hasAlpha = false;
+    byte       *in;
 
     if(img->pixelSize == 4)
     {
@@ -711,18 +745,18 @@ boolean ImageHasAlpha(image_t *img)
 }
 
 int LineAverageRGB(byte *imgdata, int width, int height, int line,
-                   byte *rgb, byte *palette, boolean has_alpha)
+                   byte *rgb, byte *palette, boolean hasAlpha)
 {
-    byte   *start = imgdata + width * line;
-    byte   *alphaStart = start + width * height;
-    int     i, c, count = 0;
-    int     integerRGB[3] = { 0, 0, 0 };
-    byte    col[3];
+    byte       *start = imgdata + width * line;
+    byte       *alphaStart = start + width * height;
+    int         i, c, count = 0;
+    int         integerRGB[3] = { 0, 0, 0 };
+    byte        col[3];
 
     for(i = 0; i < width; ++i)
     {
         // Not transparent?
-        if(alphaStart[i] > 0 || !has_alpha)
+        if(alphaStart[i] > 0 || !hasAlpha)
         {
             count++;
             // Ignore the gamma level.
@@ -747,7 +781,7 @@ int LineAverageRGB(byte *imgdata, int width, int height, int line,
 void ImageAverageRGB(byte *imgdata, int width, int height, byte *rgb,
                      byte *palette)
 {
-    int     i, c, integerRGB[3] = { 0, 0, 0 }, count = 0;
+    int         i, c, integerRGB[3] = { 0, 0, 0 }, count = 0;
 
     for(i = 0; i < height; ++i)
     {
@@ -758,21 +792,23 @@ void ImageAverageRGB(byte *imgdata, int width, int height, byte *rgb,
                 integerRGB[c] += rgb[c];
         }
     }
+
     if(count)                   // If there were pixels...
         for(c = 0; c < 3; ++c)
             rgb[c] = integerRGB[c] / count;
 }
 
 /**
- * Fills the empty pixels with reasonable color indices.
- * This gets rid of the black outlines.
- * Not a very efficient algorithm...
+ * Fills the empty pixels with reasonable color indices in order to get rid
+ * of black outlines caused by texture filtering.
+ *
+ * FIXME: Not a very efficient algorithm...
  */
 void ColorOutlines(byte *buffer, int width, int height)
 {
-    int     numpels = width * height;
-    byte   *ptr;
-    int     i, k, a, b;
+    int         i, k, a, b;
+    byte       *ptr;
+    const int   numpels = width * height;
 
     for(k = 0; k < height; ++k)
         for(i = 0; i < width; ++i)
@@ -801,16 +837,16 @@ void ColorOutlines(byte *buffer, int width, int height)
  */
 void DeSaturate(byte *buffer, byte *palette, int width, int height)
 {
-    byte   *rgb, *pal18to8 = GL_GetPal18to8();
-    int     i, max, temp = 0, paletteIndex = 0;
-    const int numpels = width * height;
+    int         i, max, temp = 0, paletteIndex = 0;
+    byte       *rgb, *pal18to8 = GL_GetPal18to8();
+    const int   numpels = width * height;
 
     // What is the maximum color value?
     max = 0;
     for(i = 0; i < numpels; ++i)
     {
         rgb = &palette[buffer[i] * 3];
-        temp = (2*rgb[0] + 4*rgb[1] + 3*rgb[2]) / 9;
+        temp = (2 * (int)rgb[0] + 4 * (int)rgb[1] + 3 * (int)rgb[2]) / 9;
         if(temp > max)
         {
             max = temp;
@@ -822,7 +858,7 @@ void DeSaturate(byte *buffer, byte *palette, int width, int height)
         rgb = &palette[buffer[i] * 3];
 
         // Calculate a weighted average.
-        temp = (2*rgb[0] + 4*rgb[1] + 3*rgb[2]) / 9;
+        temp = (2 * (int)rgb[0] + 4 * (int)rgb[1] + 3 * (int)rgb[2]) / 9;
         if(max)
         {
             temp *= 255.f / max;
@@ -839,7 +875,7 @@ void DeSaturate(byte *buffer, byte *palette, int width, int height)
  */
 static void amplify(byte *rgb)
 {
-    int     i, max = 0;
+    int         i, max = 0;
 
     for(i = 0; i < 3; ++i)
         if(rgb[i] > max)
@@ -859,19 +895,20 @@ static void amplify(byte *rgb)
  * Used by flares and dynamic lights. The resulting average color is
  * amplified to be as bright as possible.
  */
-void averageColorIdx(rgbcol_t * col, byte *data, int w, int h, byte *palette,
-                     boolean has_alpha)
+void averageColorIdx(rgbcol_t *col, byte *data, int w, int h, byte *palette,
+                     boolean hasAlpha)
 {
-    int     i;
-    unsigned int r, g, b, count;
-    byte   *alphaStart = data + w * h, rgb[3];
+    int         i;
+    uint        r, g, b, count;
+    const int   numpels = w * h;
+    byte       *alphaStart = data + numpels, rgb[3];
 
     // First clear them.
     memset(col->rgb, 0, sizeof(col->rgb));
     r = g = b = count = 0;
-    for(i = 0; i < w * h; ++i)
+    for(i = 0; i < numpels; ++i)
     {
-        if(!has_alpha || alphaStart[i])
+        if(!hasAlpha || alphaStart[i])
         {
             count++;
             memcpy(rgb, palette + 3 * data[i], 3);
@@ -881,7 +918,8 @@ void averageColorIdx(rgbcol_t * col, byte *data, int w, int h, byte *palette,
         }
     }
     if(!count)
-        return;                 // Line added by GMJ 22/07/01
+        return; // Line added by GMJ 22/07/01
+
     col->rgb[0] = (byte)(r / count);
     col->rgb[1] = (byte)(g / count);
     col->rgb[2] = (byte)(b / count);
@@ -890,16 +928,17 @@ void averageColorIdx(rgbcol_t * col, byte *data, int w, int h, byte *palette,
     amplify(col->rgb);
 }
 
-void averageColorRGB(rgbcol_t * col, byte *data, int w, int h)
+void averageColorRGB(rgbcol_t *col, byte *data, int w, int h)
 {
-    int     i, count = w * h;
-    unsigned int cumul[3];
+    int         i;
+    const int   numpels = w * h;
+    uint        cumul[3];
 
-    if(!count)
+    if(!numpels)
         return;
 
     memset(cumul, 0, sizeof(cumul));
-    for(i = 0; i < count; ++i)
+    for(i = 0; i < numpels; ++i)
     {
         cumul[0] += *data++;
         cumul[1] += *data++;
@@ -907,7 +946,7 @@ void averageColorRGB(rgbcol_t * col, byte *data, int w, int h)
     }
 
     for(i = 0; i < 3; ++i)
-        col->rgb[i] = (byte)(cumul[i] / count);
+        col->rgb[i] = (byte)(cumul[i] / numpels);
 
     amplify(col->rgb);
 }
@@ -926,10 +965,10 @@ void averageColorRGB(rgbcol_t * col, byte *data, int w, int h)
 void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
                        int *region)
 {
-    int     k, i;
-    int     myregion[4];
-    byte   *src = buffer;
-    byte   *alphasrc = NULL;
+    int         k, i;
+    int         myregion[4];
+    byte       *src = buffer;
+    byte       *alphasrc = NULL;
 
     myregion[0] = width;
     myregion[1] = 0;
@@ -972,8 +1011,8 @@ void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
 }
 
 /**
- * Calculates the properties of a dynamic light that the given sprite
- * frame casts.
+ * Calculates the properties of a dynamic light that the given sprite frame
+ * casts.
  * 2005-02-22 (danij): Modified to handle sprites with large areas of alpha
  *                     by only working on the region of the buffer that contains
  *                     non-alpha pixels (crop).
@@ -1136,7 +1175,8 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
 }
 
 /**
- * Returns true if the given color is either (0,255,255) or (255,0,255).
+ * @return          <code>true</code> if the given color is either
+ *                  (0,255,255) or (255,0,255).
  */
 static boolean ColorKey(byte *color)
 {
@@ -1149,7 +1189,7 @@ static boolean ColorKey(byte *color)
  */
 static void DoColorKeying(byte *rgbaBuf, unsigned int width)
 {
-    unsigned int i;
+    uint        i;
 
     for(i = 0; i < width; ++i, rgbaBuf += 4)
         if(ColorKey(rgbaBuf))
@@ -1164,21 +1204,19 @@ static void DoColorKeying(byte *rgbaBuf, unsigned int width)
  *                  to the newly allocated buffer which must be freed with
  *                  M_Free().
  */
-byte *GL_ApplyColorKeying(byte *buf, unsigned int pixelSize,
-                          unsigned int width, unsigned int height)
+byte *GL_ApplyColorKeying(byte *buf, uint pixelSize, uint width,
+                          uint height)
 {
-    unsigned int i;
+    uint        i;
     byte       *ckdest, *in, *out;
-    unsigned int numpx;
-
-    numpx = width * height;
+    const uint  numpels = width * height;
 
     // We must allocate a new buffer if the loaded image has three
     // color components.
     if(pixelSize < 4)
     {
         ckdest = M_Malloc(4 * width * height);
-        for(in = buf, out = ckdest, i = 0; i < numpx;
+        for(in = buf, out = ckdest, i = 0; i < numpels;
             ++i, in += pixelSize, out += 4)
         {
             if(ColorKey(in))
