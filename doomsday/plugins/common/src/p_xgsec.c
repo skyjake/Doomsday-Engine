@@ -2838,6 +2838,11 @@ DEFCC(CCmdMovePlane)
             }
         }
     }
+    else
+    {   // Unknown mode.
+        Con_Printf("Unknown mode.\n");
+        return false;
+    }
 
     floorheight = P_GetFloatp(sector, DMU_FLOOR_HEIGHT);
     ceilingheight = P_GetFloatp(sector, DMU_CEILING_HEIGHT);
