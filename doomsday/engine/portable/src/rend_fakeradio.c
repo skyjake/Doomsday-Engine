@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,6 +76,14 @@ typedef struct edgespan_s {
     float   shift;
 } edgespan_t;
 
+typedef struct edge_s {
+    boolean done;
+    line_t *line;
+    sector_t *sector;
+    float   length;
+    binangle_t diff;
+} edge_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -134,8 +142,8 @@ void Rend_RadioInitForFrame(void)
  */
 void Rend_RadioInitForSubsector(subsector_t *ssec)
 {
-    sector_t *linkSec;
-    float sectorlight = ssec->sector->lightlevel;
+    sector_t   *linkSec;
+    float       sectorlight = ssec->sector->lightlevel;
 
     Rend_ApplyLightAdaptation(&sectorlight);
 
@@ -181,7 +189,7 @@ static __inline boolean Rend_RadioNonGlowingFlat(sector_t* sector, int plane)
  */
 static void Rend_RadioSetColor(rendpoly_t *q, float darkness)
 {
-    int     i;
+    int         i;
 
     // Clamp it.
     if(darkness < 0)
@@ -198,7 +206,7 @@ static void Rend_RadioSetColor(rendpoly_t *q, float darkness)
 }
 
 /**
- * Returns true if there is open space in the sector.
+ * @return          <code>true</code> if there is open space in the sector.
  */
 static __inline boolean Rend_IsSectorOpen(sector_t *sector)
 {
@@ -207,177 +215,10 @@ static __inline boolean Rend_IsSectorOpen(sector_t *sector)
 }
 
 /**
- * FIXME: No need to do this each frame. Set a flag in side_t->flags to
- *        denote this. Is sensitive to plane heights, surface properties
- *        (e.g. alpha) and surface texture properties.
- */
-static boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
-{
-    // Check for unmasked midtextures on twosided lines that completely
-    // fill the gap between floor and ceiling (we don't want to give away
-    // the location of any secret areas (false walls)).
-    if(line->L_backsector)
-    {
-        sector_t *front = line->sec[backside];
-        sector_t *back  = line->sec[backside ^ 1];
-        side_t   *side  = line->sides[backside];
-
-        if(side->SW_middlepic != 0)
-        {
-            boolean masked;
-            int     texheight;
-
-            if(side->SW_middlepic > 0)
-            {
-                if(side->SW_middleisflat)
-                    GL_PrepareFlat2(side->SW_middlepic, true);
-                else
-                    GL_GetTextureInfo(side->SW_middlepic);
-                masked = texmask;
-                texheight = texh;
-            }
-            else // It's a DDay texture.
-            {
-                masked = false;
-                texheight = 64;
-            }
-
-            if(!side->blendmode && side->SW_middlergba[3] == 255 && !masked)
-            {
-                float openTop[2], gapTop[2];
-                float openBottom[2], gapBottom[2];
-
-                openTop[0] = openTop[1] = gapTop[0] = gapTop[1] =
-                    MIN_OF(back->SP_ceilvisheight, front->SP_ceilvisheight);
-                openBottom[0] = openBottom[1] = gapBottom[0] = gapBottom[1] =
-                    MAX_OF(back->SP_floorvisheight, front->SP_floorvisheight);
-
-                // Could the mid texture fill enough of this gap for us
-                // to consider it completely closed?
-                if(texheight >= (openTop[0] - openBottom[0]) &&
-                   texheight >= (openTop[1] - openBottom[1]))
-                {
-                    // Possibly. Check the placement of the mid texture.
-                    if(Rend_MidTexturePos
-                       (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
-                        NULL, side->SW_middleoffy,
-                        0 != (line->flags & ML_DONTPEGBOTTOM)))
-                    {
-                        if(openTop[0] >= gapTop[0] &&
-                           openTop[1] >= gapTop[1] &&
-                           openBottom[0] <= gapBottom[0] &&
-                           openBottom[1] <= gapBottom[1])
-                            return true;
-                    }
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
-/**
- * Returns the corner shadow factor.
- */
-static float Rend_RadioLineCorner(line_t *self, line_t *other,
-                                  const sector_t *mySector)
-{
-    vertex_t   *myVtx[2], *otherVtx[2];
-    boolean     flipped = false;
-
-    float   oFFloor, oFCeil;
-    float   oBFloor, oBCeil;
-
-    binangle_t diff = self->angle - other->angle;
-
-    // Sort the vertices so they can be compared consistently.
-    R_OrderVertices(self, mySector, myVtx);
-    R_OrderVertices(other, mySector, otherVtx);
-
-    if(myVtx[0] == other->v[0] || myVtx[1] == other->v[1])
-    {
-        // The line normals are not facing the same direction.
-        diff -= BANG_180;
-    }
-    if(myVtx[0] == otherVtx[1])
-    {
-        // The other is on our left side.
-        // We want the difference: (leftmost wall) - (rightmost wall)
-        if(self->L_frontsector == mySector)
-            diff = -diff;
-        else
-            flipped = true;
-    }
-    else if(myVtx[1] == otherVtx[0])
-    {
-        if(self->L_backsector == mySector)
-        {
-            diff = -diff;
-            flipped = true;
-        }
-    }
-
-    if(diff > BANG_180)
-    {
-        // The corner between the walls faces outwards.
-        return -1;
-    }
-    else if(diff == BANG_180)
-    {
-        return 0;
-    }
-    if(other->L_frontsector && other->L_backsector)
-    {
-        oFCeil  = other->L_frontsector->SP_ceilvisheight;
-        oFFloor = other->L_frontsector->SP_floorvisheight;
-        oBCeil  = other->L_backsector->SP_ceilvisheight;
-        oBFloor = other->L_backsector->SP_floorvisheight;
-
-        if((other->L_frontsector == mySector &&
-            ((oBCeil > fFloor && oBFloor <= fFloor) ||
-             (oBFloor < fCeil && oBCeil >= fCeil) ||
-             (oBFloor < fCeil && oBCeil > fFloor))) ||
-           (other->L_backsector == mySector &&
-            ((oFCeil > fFloor && oFFloor <= fFloor) ||
-             (oFFloor < fCeil && oFCeil >= fCeil) ||
-             (oFFloor < fCeil && oFCeil > fFloor)))  )
-        {
-            if(Rend_IsSectorOpen(other->L_frontsector) &&
-               Rend_IsSectorOpen(other->L_backsector))
-            {
-                if(!Rend_DoesMidTextureFillGap(other, other->L_frontsector != mySector))
-                    return 0;
-            }
-        }
-    }
-
-    if(diff < BANG_45 / 5)
-    {
-        // The difference is too small, there won't be a shadow.
-        return 0;
-    }
-
-    // 90 degrees is the largest effective difference.
-    if(diff > BANG_90)
-    {
-        if(flipped)
-        {
-            // The difference is too small, there won't be a shadow.
-            if(diff > BANG_180 - (BANG_45 /5))
-                return 0;
-
-            return (float) BANG_90 / diff;
-        }
-        else
-            diff = BANG_90;
-    }
-    return (float) diff / BANG_90;
-}
-
-/**
- * Set the rendpoly's X offset and texture size.  A negative length
- * implies that the texture is flipped horizontally.
+ * Set the rendpoly's X offset and texture size.
+ *
+ * @param length    If negative; implies that the texture is flipped
+ *                  horizontally.
  */
 static void Rend_RadioTexCoordX(rendpoly_t *q, float lineLength,
                                 float segOffset)
@@ -390,8 +231,10 @@ static void Rend_RadioTexCoordX(rendpoly_t *q, float lineLength,
 }
 
 /**
- * Set the rendpoly's Y offset and texture size.  A negative size
- * implies that the texture is flipped vertically.
+ * Set the rendpoly's Y offset and texture size.
+ *
+ * @param size      If negative; implies that the texture is flipped
+ *                  vertically.
  */
 static void Rend_RadioTexCoordY(rendpoly_t *q, float size)
 {
@@ -401,168 +244,91 @@ static void Rend_RadioTexCoordY(rendpoly_t *q, float size)
         q->texoffy = fFloor - q->vertices[2].pos[VZ];
 }
 
-/**
- * Returns the side number (0, 1) of the neighbour line.
- */
-static int R_GetAlignedNeighbor(line_t **neighbor, const line_t *line,
-                                int side, boolean leftNeighbor)
+static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
+                                   edge_t *edge, boolean toLeft)
 {
-    uint        i;
-    side_t     *sid;
-
-    if(!line->sides[side])
-        return 0;
-
-    sid = line->sides[side];
-
-    *neighbor = sid->alignneighbor[leftNeighbor ? 0 : 1];
-    if(!*neighbor)
-        return 0;
-
-    // We need to decide which side of the neighbor is chosen.
-    for(i = 0; i < 2; ++i)
-    {
-        sid = (*neighbor)->sides[i];
-        if(sid)
-        {
-            // Do the selection based on the backlink.
-            if(sid->alignneighbor[leftNeighbor ? 1 : 0] == line)
-                return i;
-        }
-    }
-
-    // This is odd... There is no link back to the first line.
-    // Better take no chances.
-    *neighbor = NULL;
-    return 0;
-}
-
-/**
- * Scan a set of aligned neighbours.  Scans simultaneously both the top and
- * bottom edges.  Looks a bit complicated, but that's because the algorithm
- * must handle both the left and right directions, and scans the top and
- * bottom edges at the same time.
- *
- * TODO: DJS
- *       We should stop the scan when a hack sector is encountered, at which
- *       point we should implicitly set the corner to -1.
- *       Clean this up... I've made a bit of mess.
- */
-static void Rend_RadioScanNeighbors(shadowcorner_t top[2],
-                                    shadowcorner_t bottom[2], line_t *line,
-                                    unsigned int side, edgespan_t spans[2],
-                                    boolean toLeft)
-{
-    struct edge_s {
-        boolean done;
-        line_t *line;
-        side_t *side;
-        sector_t *sector;
-        float   length;
-    } edges[2];                 // bottom, top
+#define SEP 10
 
     line_t     *iter;
-    sector_t   *scanSector;
-    unsigned int i, scanSide;
-    int         nIdx = (toLeft ? 0 : 1); // neighbour index
-    float       gap[2];
+    lineowner_t *own;
+    binangle_t  diff = 0;
+    float       lengthDelta = 0, gap = 0;
     float       iFFloor, iFCeil;
     float       iBFloor, iBCeil;
+    int         scanSecSide = side;
+    sector_t   *startSector = line->sec[side];
+    sector_t   *scanSector;
+    boolean     clockwise = toLeft;
+    boolean     stopScan = false;
     boolean     closed;
 
-    edges[0].done = edges[1].done = false;
-    edges[0].length = edges[1].length = 0;
-    gap[0] = gap[1] = 0;
-
-    // Use validcount to detect looped neighbours, which may occur
-    // with strange map geometry (probably due to bugs in r_shadow.c).
-    ++validcount;
-
-    for(iter = line, scanSide = side; !(edges[0].done && edges[1].done);)
+    // Retrieve the start owner node.
+    own = R_GetVtxLineOwner(line->v[(side^!toLeft)], line);
+    do
     {
-        scanSector = iter->sec[scanSide==0? FRONT:BACK];
+        // Select the next line.
+        diff = (clockwise? own->angle : own->LO_prev->angle);
+        iter = own->link[clockwise]->line;
 
-        // Should we stop?
-        if(iter != line)
+        scanSecSide = (iter->L_frontsector == startSector);
+
+        // Step over selfreferencing lines?
+        while(iter->L_frontsector == iter->L_backsector)
         {
-            if(!Rend_IsSectorOpen(scanSector))
-            {
-                edges[0].done = edges[1].done = true;
-            }
-            else
-            {
-                if(scanSector->SP_floorvisheight != fFloor)
-                    edges[0].done = true;
-                if(scanSector->SP_ceilvisheight != fCeil)
-                    edges[1].done = true;
-            }
+            own = own->link[clockwise];
+            diff += (clockwise? own->angle : own->LO_prev->angle);
+            iter = own->link[clockwise]->line;
 
-            if(edges[0].done && edges[1].done)
-                break;
-
-            // Look out for loops.
-            if(iter->validcount == validcount)
-                break;
-            iter->validcount = validcount;
+            scanSecSide = (iter->L_frontsector == startSector);
         }
 
-        iFFloor = iter->L_frontsector->SP_floorvisheight;
-        iFCeil  = iter->L_frontsector->SP_ceilvisheight;
-
-        if(iter->L_backsector)
-        {
-            iBFloor = iter->L_backsector->SP_floorvisheight;
-            iBCeil  = iter->L_backsector->SP_ceilvisheight;
-        }
+        // Determine the relative backsector.
+        if(iter->sec[scanSecSide])
+            scanSector = iter->sec[scanSecSide];
         else
-            iBFloor = iBCeil = 0;
+            scanSector = NULL;
 
-        // We'll do the bottom and top simultaneously.
-        for(i = 0; i < 2; ++i)
+        // Pick plane heights for relative offset comparison.
+        if(!stopScan)
         {
-            if(edges[i].done)
-                continue;
+            iFFloor = iter->L_frontsector->SP_floorvisheight;
+            iFCeil  = iter->L_frontsector->SP_ceilvisheight;
 
-            edges[i].line = iter;
-            if(iter->sides[scanSide])
-                edges[i].side = iter->sides[scanSide];
-            else
-                edges[i].side = NULL;
-            edges[i].sector = scanSector;
-
-            if(iter == line)
-                continue;
-
-            if(i==0)  // Bottom
+            if(iter->L_backsector)
             {
-                closed = false;
-                if(side == 0 && iter->L_backsector != NULL)
-                    if(iBCeil <= fFloor)
-                        closed = true;  // compared to "this" sector anyway
+                iBFloor = iter->L_backsector->SP_floorvisheight;
+                iBCeil  = iter->L_backsector->SP_ceilvisheight;
+            }
+            else
+                iBFloor = iBCeil = 0;
+        }
 
-                if((side == 0 && iter->L_backsector == line->L_frontsector &&
-                    iFFloor <= fFloor) ||
-                   (side == 1 && iter->L_backsector == line->L_backsector &&
-                    iFFloor <= fFloor) ||
-                   (side == 0 && closed == false && iter->L_backsector != NULL &&
-                    iter->L_backsector != line->L_frontsector && iBFloor <= fFloor &&
-                    Rend_IsSectorOpen(iter->L_backsector)))
+        lengthDelta = 0;
+        if(!stopScan)
+        {
+            // This line will attribute to this seg's shadow edge.
+            // Store indentity for later use.
+            edge->diff = diff;
+            edge->line = iter;
+            edge->sector = scanSector;
+
+            closed = false;
+            if(side == 0 && iter->L_backsector != NULL)
+                if(scanTop)
                 {
-                    gap[i] += iter->length;  // Should we just mark it done instead?
+                    if(iBFloor >= fCeil)
+                        closed = true;  // compared to "this" sector anyway
                 }
                 else
                 {
-                    edges[i].length += iter->length + gap[i];
-                    gap[i] = 0;
-                }
-            }
-            else  // Top
-            {
-                closed = false;
-                if(side == 0 && iter->L_backsector != NULL)
-                    if(iBFloor >= fCeil)
+                    if(iBCeil <= fFloor)
                         closed = true;  // compared to "this" sector anyway
+                }
 
+            // Does this line's length contribute to the alignment of the
+            // texture on the seg shadow edge being rendered?
+            if(scanTop)
+            {
                 if((side == 0 && iter->L_backsector == line->L_frontsector &&
                     iFCeil >= fCeil) ||
                    (side == 1 && iter->L_backsector == line->L_backsector &&
@@ -571,61 +337,183 @@ static void Rend_RadioScanNeighbors(shadowcorner_t top[2],
                     iter->L_backsector != line->L_frontsector && iBCeil >= fCeil &&
                     Rend_IsSectorOpen(iter->L_backsector)))
                 {
-                    gap[i] += iter->length;  // Should we just mark it done instead?
+                    gap += iter->length;  // Should we just mark it done instead?
                 }
                 else
                 {
-                    edges[i].length += iter->length + gap[i];
-                    gap[i] = 0;
+                    edge->length += iter->length + gap;
+                    gap = 0;
+                }
+            }
+            else
+            {
+                if((side == 0 && iter->L_backsector == line->L_frontsector &&
+                    iFFloor <= fFloor) ||
+                   (side == 1 && iter->L_backsector == line->L_backsector &&
+                    iFFloor <= fFloor) ||
+                   (side == 0 && closed == false && iter->L_backsector != NULL &&
+                    iter->L_backsector != line->L_frontsector && iBFloor <= fFloor &&
+                    Rend_IsSectorOpen(iter->L_backsector)))
+                {
+                    gap += iter->length;  // Should we just mark it done instead?
+                }
+                else
+                {
+                    lengthDelta = iter->length + gap;
+                    gap = 0;
                 }
             }
         }
 
-        scanSide = R_GetAlignedNeighbor(&iter, iter, scanSide, toLeft);
-
-        // Stop the scan?
-        if(!iter)
-            break;
-    }
-
-    for(i = 0; i < 2; ++i)      // 0=bottom, 1=top
-    {
-        shadowcorner_t *corner = (i == 0 ? &bottom[nIdx] : &top[nIdx]);
-
-        // Increment the apparent line length/offset.
-        spans[i].length += edges[i].length;
-        if(toLeft)
-            spans[i].shift += edges[i].length;
-
-        if(edges[i].side && edges[i].side->neighbor[nIdx])
+        // Time to stop scanning?
+        if(iter == line)
         {
-            if(edges[i].side->pretendneighbor[nIdx]) // It's a pretend neighbor.
-                corner->corner = 0;
-            else
-            {
-                corner->corner =
-                    Rend_RadioLineCorner(edges[i].line,
-                                         edges[i].side->neighbor[nIdx],
-                                         edges[i].sector);
-            }
+            stopScan = true;
         }
         else
         {
+            // Is this line coalignable?
+            if(!(diff >= BANG_180 - SEP && diff <= BANG_180 + SEP))
+                stopScan = true; // no.
+            else if(scanSector)
+            {
+                // Perhaps its a closed edge?
+                if(!Rend_IsSectorOpen(scanSector))
+                {
+                    stopScan = true;
+                }
+                else
+                {
+                    // A height difference from the start sector?
+                    if(scanTop)
+                    {
+                        if(scanSector->SP_ceilvisheight != fCeil)
+                            stopScan = true;
+                    }
+                    else
+                    {
+                        if(scanSector->SP_floorvisheight != fFloor)
+                            stopScan = true;
+                    }
+                }
+            }
+        }
+
+        // Swap to the iter line's owner node (i.e: around the corner)?
+        if(!stopScan)
+        {
+            // Around the corner.
+            if(own->link[clockwise] == iter->L_vo2)
+                own = iter->L_vo1;
+            else if(own->link[clockwise] == iter->L_vo1)
+                own = iter->L_vo2;
+
+            // Skip into the back neighbor sector of the iter line if
+            // heights are within accepted range.
+            if(scanSector &&
+                ((scanTop && scanSector->SP_ceilvisheight ==
+                                startSector->SP_ceilvisheight) ||
+                 (!scanTop && scanSector->SP_floorvisheight ==
+                                startSector->SP_floorvisheight)))
+            {
+                // Into the back neighbor sector.
+                own = own->link[clockwise];
+                startSector = scanSector;
+            }
+
+            // The last line was co-alignable so apply any length delta.
+            edge->length += lengthDelta;
+        }
+    } while(!stopScan);
+
+    // Now we've found the furthest coalignable neighbor, select the back
+    // neighbor if present for "edge open-ness" comparison.
+    if(edge->sector) // the back sector of the coalignable neighbor.
+    {
+        // Since we have the details of the backsector already, simply
+        // get the next neighbor (it IS the backneighbor).
+        edge->line =
+            R_FindLineNeighbor(edge->sector, edge->line,
+                               edge->line->vo[(edge->line->L_backsector == edge->sector)^!toLeft],
+                               !toLeft, &edge->diff);
+    }
+
+#undef SEP
+}
+
+static void Rend_RadioScanNeighbors(shadowcorner_t top[2],
+                                    shadowcorner_t bottom[2], line_t *line,
+                                    uint side, edgespan_t spans[2],
+                                    boolean toLeft)
+{
+    uint        i;
+    edge_t      edges[2], *edge; // {bottom, top}
+    edgespan_t *span;
+    shadowcorner_t *corner;
+
+    if(line->L_frontsector == line->L_backsector)
+        return;
+
+    memset(edges, 0, sizeof(edges));
+
+    Rend_RadioScanNeighbor(false, line, side, &edges[0], toLeft);
+    Rend_RadioScanNeighbor(true, line, side, &edges[1], toLeft);
+
+    for(i = 0; i < 2; ++i)      // 0=bottom, 1=top
+    {
+        corner = (i == 0 ? &bottom[!toLeft] : &top[!toLeft]);
+        edge = &edges[i];
+        span = &spans[i];
+
+        // Increment the apparent line length/offset.
+        span->length += edge->length;
+        if(toLeft)
+            span->shift += edge->length;
+
+        // Compare the relative angle difference of this edge to determine
+        // an "open-ness" factor.
+        if(edge->line && edge->line != line)
+        {
+            if(edge->diff > BANG_180)
+            {   // The corner between the walls faces outwards.
+                corner->corner = -1;
+            }
+            else if(edge->diff == BANG_180)
+            {   // Perfectly coaligned? Great.
+                corner->corner = 0;
+            }
+            else if(edge->diff < BANG_45 / 5)
+            {   // The difference is too small, there won't be a shadow.
+                corner->corner = 0;
+            }
+            // 90 degrees is the largest effective difference.
+            else if(edge->diff > BANG_90)
+            {
+                corner->corner = (float) BANG_90 / edge->diff;
+            }
+            else
+            {
+                corner->corner = (float) edge->diff / BANG_90;
+            }
+        }
+        else
+        {   // Consider it coaligned.
             corner->corner = 0;
         }
 
-        if(edges[i].side && edges[i].side->proxsector[nIdx])
+        // Determine relative height offsets (affects shadow map selection).
+        if(edge->sector)
         {
-            corner->proximity = edges[i].side->proxsector[nIdx];
+            corner->proximity = edge->sector;
             if(i == 0)          // floor
             {
                 corner->pOffset = corner->proximity->SP_floorvisheight - fFloor;
-                corner->pHeight = edges[i].side->proxsector[nIdx]->SP_floorvisheight;
+                corner->pHeight = corner->proximity->SP_floorvisheight;
             }
             else                // ceiling
             {
                 corner->pOffset = corner->proximity->SP_ceilvisheight - fCeil;
-                corner->pHeight = edges[i].side->proxsector[nIdx]->SP_ceilvisheight;
+                corner->pHeight = corner->proximity->SP_ceilvisheight;
             }
         }
         else
@@ -652,28 +540,50 @@ static void Rend_RadioScanNeighbors(shadowcorner_t top[2],
 static void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
                                 shadowcorner_t bottomCorners[2],
                                 shadowcorner_t sideCorners[2], line_t *line,
-                                unsigned int side, edgespan_t spans[2])
+                                unsigned int sid, edgespan_t spans[2])
 {
-    side_t     *sid;
-    unsigned int i;
+    uint        i;
+    side_t     *side;
+    line_t     *other;
 
-    sid = line->sides[side];
+    side = line->sides[sid];
 
     memset(sideCorners, 0, sizeof(sideCorners));
 
     // Find the sidecorners first: left and right neighbour.
     for(i = 0; i < 2; ++i)
     {
-        if(sid && sid->neighbor[i] && !sid->pretendneighbor[i])
+        binangle_t diff = 0;
+
+        other = R_FindSolidLineNeighbor(line->sec[sid], line,
+                                        line->vo[i^sid], i, &diff);
+        if(other && other != line)
         {
-            sideCorners[i].corner =
-                Rend_RadioLineCorner(line, sid->neighbor[i], frontSector);
+            if(diff > BANG_180)
+            {   // The corner between the walls faces outwards.
+                sideCorners[i].corner = -1;
+            }
+            else if(diff == BANG_180)
+            {
+                sideCorners[i].corner = 0;
+            }
+            else if(diff < BANG_45 / 5)
+            {   // The difference is too small, there won't be a shadow.
+                sideCorners[i].corner = 0;
+            }
+            else if(diff > BANG_90)
+            {   // 90 degrees is the largest effective difference.
+                sideCorners[i].corner = (float) BANG_90 / diff;
+            }
+            else
+            {
+                sideCorners[i].corner = (float) diff / BANG_90;
+            }
         }
         else
             sideCorners[i].corner = 0;
 
-        // Scan left/right (both top and bottom).
-        Rend_RadioScanNeighbors(topCorners, bottomCorners, line, side, spans,
+        Rend_RadioScanNeighbors(topCorners, bottomCorners, line, sid, spans,
                                 !i);
     }
 }
@@ -684,7 +594,7 @@ static void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
  */
 static float Rend_RadioLongWallBonus(float span)
 {
-    float   limit;
+    float       limit;
 
     if(rendRadioLongWallDiv > 0 && span > rendRadioLongWallMin)
     {
@@ -708,7 +618,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     rendpoly_t *quad;
     int         i, texture = 0, sideNum;
     shadowcorner_t topCn[2], botCn[2], sideCn[2];
-    edgespan_t  spans[2];        // bottom, top
+    edgespan_t  spans[2];        // {bottom, top}
     edgespan_t *floorSpan = &spans[0], *ceilSpan = &spans[1];
 
     if(!rendFakeRadio || levelFullBright || shadowSize <= 0 ||  // Disabled?
@@ -1234,13 +1144,12 @@ static uint radioEdgeHackType(line_t *line, sector_t *front, sector_t *back,
 static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
                                     float darkness, float sideOpen[2], float z)
 {
+    uint        i;
+    uint        wind; // Winding: 0 = left, 1 = right
+    const uint *idx;
     rendpoly_t *q;
     rendpoly_vertex_t *vtx;
     float       pos;
-    uint        i;
-    // Winding: 0 = left, 1 = right
-    uint        wind;
-    const uint *idx;
     static const uint floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static const uint ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
     vec2_t      inner[2];
@@ -1263,7 +1172,61 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
         }
         else if(pos == 1)       // Same height on both sides.
         {
-            V2_Sum(inner[i], shadow->outer[i]->pos, shadow->bextoffset[i]);
+            // We need to use a back extended offset but which one?
+            // Walk around the vertex and choose the bextoffset for the
+            // back neighbor at which plane heights differ.
+            lineowner_t *base, *p;
+            uint        id;
+            boolean     found;
+
+            base = R_GetVtxLineOwner(shadow->seg->linedef->v[i^!(shadow->flags & SHPF_FRONTSIDE)],
+                                     shadow->seg->linedef);
+            p = base->link[!i];
+            id = 0;
+            found = false;
+            while(p != base && !found)
+            {
+                if(!(p->line->L_frontsector == p->line->L_backsector))
+                {
+                    if(!p->line->L_backsector)
+                    {
+                        if((isCeiling && p->line->L_frontsector->SP_ceilvisheight == z) ||
+                           (!isCeiling && p->line->L_frontsector->SP_floorvisheight == z))
+                            found = true;
+                    }
+                    else
+                    {
+                        if((isCeiling &&
+                            (p->line->L_frontsector->SP_ceilvisheight < z ||
+                             p->line->L_backsector->SP_ceilvisheight < z)) ||
+                           (!isCeiling &&
+                            (p->line->L_frontsector->SP_floorvisheight > z ||
+                             p->line->L_backsector->SP_floorvisheight > z)))
+                        {
+                            found = true;
+                        }
+                    }
+
+                    if(!found)
+                        id++;
+                }
+
+                if(!p->line->L_backsector)
+                    break;
+
+                if(!found)
+                    p = p->link[!i];
+            }
+
+            if(found)
+            {
+                // id is now the index + 1 into the side's bextoffset array.
+                V2_Sum(inner[i], shadow->outer[i]->pos, shadow->bextoffset[i][id-1].offset);
+            }
+            else // Its an open edge.
+            {
+                V2_Sum(inner[i], shadow->outer[i]->pos, shadow->extoffset[i]);
+            }
         }
         else                    // Fully, unquestionably open.
         {
@@ -1430,7 +1393,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             // What about the neighbours?
             for(i = 0; i < 2; ++i)
             {
-                line = R_GetShadowNeighbor(shadow, i == 0, false);
+                line = R_GetShadowNeighbor(shadow, i == 0);
                 if(line && line->L_backsector)
                 {
                     side = (line->L_frontsector != shadowSec);

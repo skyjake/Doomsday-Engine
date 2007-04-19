@@ -184,15 +184,22 @@ typedef struct linkmobj_s {
 // Shadowpoly flags.
 #define SHPF_FRONTSIDE  0x1
 
+typedef struct shadowpolyoffset_s {
+    float           offset[2];
+} shadowpolyoffset_t;
+
+#define MAX_EXOFFSETS   8
+#define MAX_BEXOFFSETS  8
+
 typedef struct shadowpoly_s {
     struct seg_s   *seg;
     struct subsector_s *ssec;
     short           flags;
     ushort          visframe;      // Last visible frame (for rendering).
     struct vertex_s *outer[2];      // Left and right.
-    float           inoffset[2][2]; // Offset from 'outer.'
+    float           inoffset[2][2]; // Inner offset from 'outer.'
     float           extoffset[2][2];    // Extended: offset from 'outer.'
-    float           bextoffset[2][2];   // Back-extended: offset frmo 'outer.'
+    shadowpolyoffset_t bextoffset[2][MAX_BEXOFFSETS];   // Back-extended: offset frmo 'outer.'
 } shadowpoly_t;
 
 typedef struct shadowlink_s {
@@ -208,10 +215,13 @@ typedef struct subplaneinfo_s {
     biasaffection_t affected[MAX_BIAS_AFFECTED];
 } subplaneinfo_t;
 
+#define LO_prev     link[0]
+#define LO_next     link[1]
+
 typedef struct lineowner_s {
     struct line_s *line;
-    struct lineowner_s *prev;
-    struct lineowner_s *next;
+    struct lineowner_s *link[2];    // {prev, next} (i.e. {anticlk, clk}).
+    binangle_t      angle;          // between this and next clockwise.
 } lineowner_t;
 
 typedef struct polyblock_s {

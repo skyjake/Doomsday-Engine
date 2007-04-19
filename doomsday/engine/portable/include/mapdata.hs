@@ -258,11 +258,6 @@ struct side
     PTR     sector_s*   sector
     SHORT   short       flags
     -       short       frameflags
-    -       line_s*[2]  neighbor    // Left and right neighbour.
-    -       boolean[2]  pretendneighbor // If true, neighbor is not a "real" neighbor (it does not share a line with this side's sector).
-    -       sector_s*[2] proxsector // Sectors behind the neighbors.
-    -       line_s*[2]  backneighbor // Neighbour in the backsector (if any).
-    -       line_s*[2]  alignneighbor // Aligned left and right neighbours.
 end
 
 internal

@@ -502,6 +502,77 @@ static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
     poly->interpos = xlat->inter;
 }
 
+/**
+ * FIXME: No need to do this each frame. Set a flag in side_t->flags to
+ *        denote this. Is sensitive to plane heights, surface properties
+ *        (e.g. alpha) and surface texture properties.
+ */
+boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
+{
+    // Check for unmasked midtextures on twosided lines that completely
+    // fill the gap between floor and ceiling (we don't want to give away
+    // the location of any secret areas (false walls)).
+    if(line->L_backsector)
+    {
+        sector_t *front = line->sec[backside];
+        sector_t *back  = line->sec[backside ^ 1];
+        side_t   *side  = line->sides[backside];
+
+        if(side->SW_middlepic != 0)
+        {
+            boolean masked;
+            int     texheight;
+
+            if(side->SW_middlepic > 0)
+            {
+                if(side->SW_middleisflat)
+                    GL_PrepareFlat2(side->SW_middlepic, true);
+                else
+                    GL_GetTextureInfo(side->SW_middlepic);
+                masked = texmask;
+                texheight = texh;
+            }
+            else // It's a DDay texture.
+            {
+                masked = false;
+                texheight = 64;
+            }
+
+            if(!side->blendmode && side->SW_middlergba[3] == 255 && !masked)
+            {
+                float openTop[2], gapTop[2];
+                float openBottom[2], gapBottom[2];
+
+                openTop[0] = openTop[1] = gapTop[0] = gapTop[1] =
+                    MIN_OF(back->SP_ceilvisheight, front->SP_ceilvisheight);
+                openBottom[0] = openBottom[1] = gapBottom[0] = gapBottom[1] =
+                    MAX_OF(back->SP_floorvisheight, front->SP_floorvisheight);
+
+                // Could the mid texture fill enough of this gap for us
+                // to consider it completely closed?
+                if(texheight >= (openTop[0] - openBottom[0]) &&
+                   texheight >= (openTop[1] - openBottom[1]))
+                {
+                    // Possibly. Check the placement of the mid texture.
+                    if(Rend_MidTexturePos
+                       (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
+                        NULL, side->SW_middleoffy,
+                        0 != (line->flags & ML_DONTPEGBOTTOM)))
+                    {
+                        if(openTop[0] >= gapTop[0] &&
+                           openTop[1] >= gapTop[1] &&
+                           openBottom[0] <= gapBottom[0] &&
+                           openBottom[1] <= gapBottom[1])
+                            return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 boolean Rend_IsWallSectionPVisible(line_t* line, segsection_t section,
                                    boolean backside)
 {

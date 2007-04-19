@@ -256,11 +256,6 @@ typedef struct side_s {
     struct sector_s*    sector;
     short               flags;
     short               frameflags;
-    struct line_s*      neighbor[2];   // Left and right neighbour.
-    boolean             pretendneighbor[2]; // If true, neighbor is not a "real" neighbor (it does not share a line with this side's sector).
-    struct sector_s*    proxsector[2]; // Sectors behind the neighbors.
-    struct line_s*      backneighbor[2]; // Neighbour in the backsector (if any).
-    struct line_s*      alignneighbor[2]; // Aligned left and right neighbours.
 } side_t;
 
 // Helper macros for accessing linedef data elements.

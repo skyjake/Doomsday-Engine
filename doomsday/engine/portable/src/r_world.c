@@ -59,8 +59,6 @@ static void    R_FindLineNeighbors(sector_t *sector, line_t *line, int side,
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static lineowner_t* R_GetVtxLineOwner(vertex_t *vtx, line_t *line);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -371,11 +369,11 @@ static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
     base = R_GetVtxLineOwner(vtx, refLine);
 
     // Spread will begin from the next line anti-clockwise.
-    lOwner = base->prev;
+    lOwner = base->LO_prev;
 
     // Spread clockwise around this vertex from the reference plus one
     // until we reach the reference again OR a single sided line.
-    rOwner = base->next;
+    rOwner = base->LO_next;
     do
     {
         if(rOwner != lOwner)
@@ -409,15 +407,15 @@ static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
         if(!rOwner->line->L_backsector)
             break;
 
-        rOwner = rOwner->next;
+        rOwner = rOwner->LO_next;
     } while(rOwner != base);
 
     // Spread will begin from the next line clockwise.
-    rOwner = base->next;
+    rOwner = base->LO_next;
 
     // Spread anti-clockwise around this vertex from the reference minus one
     // until we reach the reference again OR a single sided line.
-    lOwner = base->prev;
+    lOwner = base->LO_prev;
     do
     {
         if(rOwner != lOwner)
@@ -451,7 +449,7 @@ static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
         if(!lOwner->line->L_backsector)
             break;
 
-        lOwner = lOwner->prev;
+        lOwner = lOwner->LO_prev;
     } while(lOwner != base);
 }
 
@@ -918,23 +916,37 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
     uint        i;
     fixed_t     dx, dy;
     binangle_t  angles[2];
-    line_t     *lines[2];
+    lineowner_t *own[2];
+    line_t     *line;
 
-    lines[0] = ((lineowner_t *)a)->line;
-    lines[1] = ((lineowner_t *)b)->line;
+    own[0] = (lineowner_t *)a;
+    own[1] = (lineowner_t *)b;
     for(i = 0; i < 2; ++i)
     {
-        if(lines[i]->L_v1 == rootVtx)
+        if(own[i]->LO_prev) // We have a cached result.
         {
-            dx = FLT2FIX(lines[i]->L_v2->pos[VX] - rootVtx->pos[VX]);
-            dy = FLT2FIX(lines[i]->L_v2->pos[VY] - rootVtx->pos[VY]);
+            angles[i] = own[i]->angle;
         }
         else
         {
-            dx = FLT2FIX(lines[i]->L_v1->pos[VX] - rootVtx->pos[VX]);
-            dy = FLT2FIX(lines[i]->L_v1->pos[VY] - rootVtx->pos[VY]);
+            line = own[i]->line;
+
+            if(line->L_v1 == rootVtx)
+            {
+                dx = line->L_v2->pos[VX] - rootVtx->pos[VX];
+                dy = line->L_v2->pos[VY] - rootVtx->pos[VY];
+            }
+            else
+            {
+                dx = line->L_v1->pos[VX] - rootVtx->pos[VX];
+                dy = line->L_v1->pos[VY] - rootVtx->pos[VY];
+            }
+
+            own[i]->angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
+
+            // Mark as having a cached angle.
+            own[i]->LO_prev = (lineowner_t*) 1;
         }
-        angles[i] = bamsAtan2(-(dx >> 13), dy >> 13);
     }
 
     return (angles[1] - angles[0]);
@@ -952,36 +964,36 @@ static lineowner_t *mergeLineOwners(lineowner_t *left, lineowner_t *right,
     lineowner_t tmp, *np;
 
     np = &tmp;
-    tmp.next = np;
+    tmp.LO_next = np;
     while(left != NULL && right != NULL)
     {
         if(compare(left, right) <= 0)
         {
-            np->next = left;
+            np->LO_next = left;
             np = left;
 
-            left = left->next;
+            left = left->LO_next;
         }
         else
         {
-            np->next = right;
+            np->LO_next = right;
             np = right;
 
-            right = right->next;
+            right = right->LO_next;
         }
     }
 
     // At least one of these lists is now empty.
     if(left)
-        np->next = left;
+        np->LO_next = left;
     if(right)
-        np->next = right;
+        np->LO_next = right;
 
     // Is the list empty?
-    if(tmp.next == &tmp)
+    if(tmp.LO_next == &tmp)
         return NULL;
 
-    return tmp.next;
+    return tmp.LO_next;
 }
 
 static lineowner_t *splitLineOwners(lineowner_t *list)
@@ -995,13 +1007,13 @@ static lineowner_t *splitLineOwners(lineowner_t *list)
     do
     {
         listc = listb;
-        listb = listb->next;
-        lista = lista->next;
+        listb = listb->LO_next;
+        lista = lista->LO_next;
         if(lista != NULL)
-            lista = lista->next;
+            lista = lista->LO_next;
     } while(lista);
 
-    listc->next = NULL;
+    listc->LO_next = NULL;
     return listb;
 }
 
@@ -1014,7 +1026,7 @@ static lineowner_t *sortLineOwners(lineowner_t *list,
 {
     lineowner_t *p;
 
-    if(list && list->next)
+    if(list && list->LO_next)
     {
         p = splitLineOwners(list);
 
@@ -1025,7 +1037,8 @@ static lineowner_t *sortLineOwners(lineowner_t *list,
     return list;
 }
 
-static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr)
+static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr,
+                                 lineowner_t **storage)
 {
     lineowner_t *p, *newOwner;
 
@@ -1045,22 +1058,23 @@ static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr)
             if(p->line == lineptr)
                 return;             // Yes, we can exit.
 
-            p = p->next;
+            p = p->LO_next;
         }
     }
 
     //Add a new owner.
     vtx->numlineowners++;
 
-    newOwner = Z_Malloc(sizeof(lineowner_t), PU_LEVELSTATIC, 0);
+    newOwner = (*storage)++;
     newOwner->line = lineptr;
+    newOwner->LO_prev = NULL;
 
     // Link it in.
     // NOTE: We don't bother linking everything at this stage since we'll
     // be sorting the lists anyway. After which we'll finish the job by
     // setting the prev and circular links.
     // So, for now this is only linked singlely, forward.
-    newOwner->next = vtx->lineowners;
+    newOwner->LO_next = vtx->lineowners;
     vtx->lineowners = newOwner;
 
     // Link the line to its respective owner node.
@@ -1111,10 +1125,16 @@ static void R_BuildVertexOwners(void)
     uint            i, k, p;
     sector_t       *sec;
     line_t         *line;
+    lineowner_t    *lineOwners, *allocator;
     ownerlist_t    *vtxSecOwnerLists;
 
     // Allocate memory for vertex sector owner processing.
     vtxSecOwnerLists = M_Calloc(sizeof(ownerlist_t) * numvertexes);
+
+    // We know how many vertex line owners we need (numlines * 2).
+    lineOwners =
+        Z_Malloc(sizeof(lineowner_t) * numlines * 2, PU_LEVELSTATIC, 0);
+    allocator = lineOwners;
 
     for(i = 0, sec = sectors; i < numsectors; ++i, sec++)
     {
@@ -1132,7 +1152,7 @@ static void R_BuildVertexOwners(void)
                 R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
                                        line->L_backsector);
 
-                R_SetVertexLineOwner(line->v[p], line);
+                R_SetVertexLineOwner(line->v[p], line, &allocator);
             }
         }
     }
@@ -1166,43 +1186,58 @@ static void R_BuildVertexOwners(void)
         if(v->numlineowners != 0)
         {
             lineowner_t *p, *last;
+            binangle_t  lastAngle = 0;
 
             // Sort them so that they are ordered clockwise based on angle.
             rootVtx = v;
             v->lineowners =
                 sortLineOwners(v->lineowners, lineAngleSorter);
 
-            // Finish the linking job
+            // Finish the linking job and convert to relative angles.
             // They are only singly linked atm, we need them to be doubly
             // and circularly linked.
             last = v->lineowners;
-            p = last->next;
+            p = last->LO_next;
             while(p)
             {
-                p->prev = last;
+                p->LO_prev = last;
+
+                // Convert to a relative angle between last and this.
+                last->angle = last->angle - p->angle;
+                lastAngle += last->angle;
+
                 last = p;
-                p = p->next;
+                p = p->LO_next;
             }
-            last->next = v->lineowners;
-            v->lineowners->prev = last;
+            last->LO_next = v->lineowners;
+            v->lineowners->LO_prev = last;
+
+            // Set the angle of the last owner.
+            last->angle = BANG_360 - lastAngle;
 
 #if _DEBUG
-if(verbose >= 2)
 {
 // For checking the line owner link rings are formed correctly.
 lineowner_t *base;
 uint        idx;
 
-Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners);
+if(verbose >= 2)
+    Con_Message("Vertex #%i: line owners #%i\n", i, v->numlineowners);
+
 p = base = v->lineowners;
 idx = 0;
 do
 {
-    Con_Message("  %i: p = %i, this = %i, n = %i\n", idx,
-                GET_LINE_IDX(p->prev->line),
-                GET_LINE_IDX(p->line),
-                GET_LINE_IDX(p->next->line));
-    p = p->next;
+    if(verbose >= 2)
+        Con_Message("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f\n", idx,
+                    GET_LINE_IDX(p->LO_prev->line),
+                    GET_LINE_IDX(p->line),
+                    GET_LINE_IDX(p->LO_next->line), BANG2DEG(p->angle));
+
+    if(p->LO_prev->LO_next != p || p->LO_next->LO_prev != p)
+       Con_Error("Invalid line owner link ring!");
+
+    p = p->LO_next;
     idx++;
 } while(p != base);
 }
@@ -1221,7 +1256,7 @@ do
  * @return          Ptr to the lineowner for this line for this vertex else
  *                  <code>NULL</code>.
  */
-static lineowner_t* R_GetVtxLineOwner(vertex_t *vtx, line_t *line)
+lineowner_t* R_GetVtxLineOwner(vertex_t *vtx, line_t *line)
 {
     if(vtx == line->L_v1)
         return line->L_vo1;
@@ -1563,8 +1598,8 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
                     if(vtx[0]->numlineowners > 1)
                     {
                         base = R_GetVtxLineOwner(vtx[0], lin);
-                        lOwner = base->prev->line;
-                        rOwner = base->next->line;
+                        lOwner = base->LO_prev->line;
+                        rOwner = base->LO_next->line;
 
                         if(rOwner == lOwner)
                             ok = true;
@@ -1584,8 +1619,8 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
                     if(ok && vtx[1]->numlineowners > 1)
                     {
                         base = R_GetVtxLineOwner(vtx[1], lin);
-                        lOwner = base->prev->line;
-                        rOwner = base->next->line;
+                        lOwner = base->LO_prev->line;
+                        rOwner = base->LO_next->line;
 
                         if(rOwner == lOwner)
                             ok2 = true;
@@ -1780,7 +1815,7 @@ void R_RationalizeSectors(void)
                                                         }
 
                                                         if(!found)
-                                                            p2 = p2->next;
+                                                            p2 = p2->LO_next;
                                                     } while(!found && p2 != base2);
                                                 }
 
@@ -1858,7 +1893,7 @@ void R_RationalizeSectors(void)
                         }
 
                         if(!rescanVtx)
-                            p = p->next;
+                            p = p->LO_next;
                     } while(p != base && scanOwners);
                 }
             }
@@ -2013,23 +2048,119 @@ void R_OrderVertices(line_t *line, const sector_t *sector, vertex_t *verts[2])
  * specified sector.
  */
 line_t *R_FindLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
-                           boolean antiClockwise)
+                           boolean antiClockwise, binangle_t *diff)
 {
-    lineowner_t *cown = antiClockwise? own->prev : own->next;
+    lineowner_t *cown = own->link[!antiClockwise];
+    line_t     *other = cown->line;
+
+    if(other == line)
+        return NULL;
+
+    if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
+
+    if(other->L_frontsector != other->L_backsector)
+    {
+        if(sector) // Must one of the sectors match?
+        {
+            if(other->L_frontsector == sector ||
+               (other->L_backsector && other->L_backsector == sector))
+                return other;
+        }
+        else
+            return other;
+    }
+
+    // Not suitable, try the next.
+    return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
+}
+
+line_t *R_FindSolidLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
+                                boolean antiClockwise, binangle_t *diff)
+{
+    lineowner_t *cown = own->link[!antiClockwise];
+    line_t     *other = cown->line;
+    int         side;
+
+    if(other == line)
+        return NULL;
+
+    if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
+
+    if(!other->L_frontsector || !other->L_backsector)
+    {
+        return other;
+    }
+
+    if(other->L_frontsector != other->L_backsector &&
+       (other->L_frontsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
+        other->L_frontsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
+        other->L_backsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
+        other->L_backsector->SP_ceilvisheight <= sector->SP_floorvisheight))
+        return other;
+
+    // Both front and back MUST be open by this point.
+
+    // Check for mid texture which fills the gap between floor and ceiling.
+    // We should not give away the location of false walls (secrets).
+    side = (other->L_frontsector == sector? 0 : 1);
+    if(other->sides[side]->SW_middlepic != 0)
+    {
+        float oFCeil  = other->L_frontsector->SP_ceilvisheight;
+        float oFFloor = other->L_frontsector->SP_floorvisheight;
+        float oBCeil  = other->L_backsector->SP_ceilvisheight;
+        float oBFloor = other->L_backsector->SP_floorvisheight;
+
+        if((side == 0 &&
+            ((oBCeil > sector->SP_floorvisheight &&
+                  oBFloor <= sector->SP_floorvisheight) ||
+             (oBFloor < sector->SP_ceilvisheight &&
+                  oBCeil >= sector->SP_ceilvisheight) ||
+             (oBFloor < sector->SP_ceilvisheight &&
+                  oBCeil > sector->SP_floorvisheight))) ||
+           ( /* side must be 1 */
+            ((oFCeil > sector->SP_floorvisheight &&
+                  oFFloor <= sector->SP_floorvisheight) ||
+             (oFFloor < sector->SP_ceilvisheight &&
+                  oFCeil >= sector->SP_ceilvisheight) ||
+             (oFFloor < sector->SP_ceilvisheight &&
+                  oFCeil > sector->SP_floorvisheight)))  )
+        {
+
+            if(!Rend_DoesMidTextureFillGap(other, side))
+                return 0;
+        }
+    }
+
+    // Not suitable, try the next.
+    return R_FindSolidLineNeighbor(sector, line, cown, antiClockwise, diff);
+}
+
+/**
+ * Find a backneighbour for the given line.
+ * They are the neighbouring line in the backsector of the imediate line
+ * neighbor.
+ */
+line_t *R_FindLineBackNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
+                               boolean antiClockwise, binangle_t *diff)
+{
+    lineowner_t *cown = own->link[!antiClockwise];
     line_t *other = cown->line;
 
     if(other == line)
         return NULL;
 
-    if((other->L_frontsector == sector ||
-          (other->L_backsector && other->L_backsector == sector)) &&
-       other->L_frontsector != other->L_backsector)
+    if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
+
+    if(other->L_frontsector != other->L_backsector)
     {
-        return other;
+        if(!(other->L_frontsector == sector ||
+             (other->L_backsector && other->L_backsector == sector)))
+            return other;
     }
 
     // Not suitable, try the next.
-    return R_FindLineNeighbor(sector, line, cown, antiClockwise);
+    return R_FindLineBackNeighbor(sector, line, cown, antiClockwise,
+                                   diff);
 }
 
 /**
@@ -2044,7 +2175,7 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
 {
 #define SEP 10
 
-    lineowner_t *cown = antiClockwise? own->prev : own->next;
+    lineowner_t *cown = own->link[!antiClockwise];
     line_t *other = cown->line;
     binangle_t diff;
 
@@ -2060,7 +2191,7 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
             diff -= BANG_180;
         if(other->L_frontsector != sec)
             diff -= BANG_180;
-        if(diff < SEP || diff > BANG_MAX - SEP)
+        if(diff < SEP || diff > BANG_360 - SEP)
             return other;
     }
 
@@ -2077,6 +2208,7 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
 /**
  * Find line neighbours, which will be used in the FakeRadio calculations.
  */
+#if 0
 void R_InitLineNeighbors(void)
 {
     uint        startTime = Sys_GetRealTime();
@@ -2102,27 +2234,17 @@ void R_InitLineNeighbors(void)
             for(j = 0; j < 2; ++j)
             {
                 side->neighbor[j] =
-                    R_FindLineNeighbor(sector, line, line->vo[sid^j], j);
+                    R_FindLineNeighbor(sector, line, line->vo[sid^j], j, NULL);
 
                 // Figure out the sectors in the proximity.
                 // Neighbour must be two-sided.
                 if(side->neighbor[j] && side->neighbor[j]->L_frontsector &&
-                   side->neighbor[j]->L_backsector &&
-                   !side->neighbor[j]->selfrefhackroot)
+                   side->neighbor[j]->L_backsector)
                 {
                     int         nSide =
                         (side->neighbor[j]->L_frontsector == sector ? BACK:FRONT);
 
                     side->proxsector[j] = side->neighbor[j]->sec[nSide];
-
-                    // Find the backneighbour.  They are the
-                    // neighbouring lines in the backsectors of the
-                    // neighbour lines.
-                    side->backneighbor[j] =
-                        R_FindLineNeighbor(side->proxsector[j],
-                                           side->neighbor[j],
-                                           side->neighbor[j]->vo[nSide^j],
-                                           j);
                 }
                 else
                 {
@@ -2133,9 +2255,6 @@ void R_InitLineNeighbors(void)
                 side->alignneighbor[j] =
                     R_FindLineAlignNeighbor(sector, line, line->vo[sid^j], j,
                                     (side == line->L_frontside? 1:-1));
-                // Alignneighbors can't be backneighbors.
-                if(side->alignneighbor[j] == side->backneighbor[j])
-                    side->alignneighbor[j] = NULL;
             }
 
             // Attempt to find "pretend" neighbours for this line, if "real"
@@ -2186,7 +2305,7 @@ void R_InitLineNeighbors(void)
                                 }
                             }
 
-                            own = own->next;
+                            own = own->LO_next;
                         } while(own->line != line && !done);
                     }
                 }
@@ -2227,6 +2346,7 @@ if(verbose >= 1)
 }
 #endif
 }
+#endif
 
 void R_InitLinks(void)
 {
@@ -2310,7 +2430,7 @@ void R_InitLevel(char *level_id)
     P_InitSubsectorBlockMap();
 
     R_RationalizeSectors();
-    R_InitLineNeighbors();  // Must follow R_RationalizeSectors.
+//    R_InitLineNeighbors();  // Must follow R_RationalizeSectors.
     R_InitSectorShadows();
 
     //Con_Progress(10, 0);

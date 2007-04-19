@@ -64,4 +64,17 @@ void            R_SkyFix(boolean fixFloors, boolean fixCeilings);
 void            R_OrderVertices(line_t *line, const sector_t *sector,
                                 vertex_t *verts[2]);
 void            R_GetMapSize(fixed_t *min, fixed_t *max);
+
+lineowner_t    *R_GetVtxLineOwner(vertex_t *vtx, line_t *line);
+line_t         *R_FindLineNeighbor(sector_t *sector, line_t *line,
+                                   lineowner_t *own,
+                                   boolean antiClockwise, binangle_t *diff);
+line_t         *R_FindSolidLineNeighbor(sector_t *sector, line_t *line,
+                                        lineowner_t *own,
+                                        boolean antiClockwise,
+                                        binangle_t *diff);
+line_t         *R_FindLineBackNeighbor(sector_t *sector, line_t *line,
+                                       lineowner_t *own,
+                                       boolean antiClockwise,
+                                       binangle_t *diff);
 #endif
