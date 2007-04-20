@@ -1923,10 +1923,11 @@ static void rendLine2(float x1, float y1, float x2, float y2,
                       float r, float g, float b, float a,
                       glowtype_t glowType, float glowAlpha, float glowWidth,
                       boolean scaleGlowWithView,
-                      boolean caps, boolean blend)
+                      boolean caps, boolean blend, boolean drawNormal)
 {
     float       v1[2], v2[2];
     float       length, dx, dy;
+    float       normal[2], unit[2];
     automap_t  *map = &automaps[mapviewplayer];
 
     // Scale into map, screen space units.
@@ -1941,11 +1942,16 @@ static void rendLine2(float x1, float y1, float x2, float y2,
     if(length <= 0)
         return;
 
+    unit[VX] = dx / length;
+    unit[VY] = dy / length;
+    normal[VX] = unit[VY];
+    normal[VY] = -unit[VX];
+
     // Is this a glowing line?
     if(glowType != NO_GLOW)
     {
         int         tex;
-        float       normal[2], unit[2], thickness;
+        float       thickness;
 
         // Scale line thickness relative to zoom level?
         if(scaleGlowWithView)
@@ -1954,11 +1960,6 @@ static void rendLine2(float x1, float y1, float x2, float y2,
             thickness = glowWidth;
 
         tex = Get(DD_DYNLIGHT_TEXTURE);
-
-        unit[VX] = dx / length;
-        unit[VY] = dy / length;
-        normal[VX] = unit[VY];
-        normal[VY] = -unit[VX];
 
         if(caps)
         {
@@ -2055,6 +2056,18 @@ static void rendLine2(float x1, float y1, float x2, float y2,
 
     AM_AddLine4f(v1[VX], v1[VY], v2[VX], v2[VY],
                  r, g, b, a);
+
+    if(drawNormal)
+    {
+        float       center[2];
+
+        center[VX] = v1[VX] + (length / 2) * unit[VX];
+        center[VY] = v1[VY] + (length / 2) * unit[VY];
+        AM_AddLine4f(center[VX], center[VY],
+                     center[VX] - normal[VX] * 8,
+                     center[VY] - normal[VY] * 8,
+                     r, g, b, a);
+    }
 }
 
 /**
@@ -2087,7 +2100,8 @@ static void renderGrid(void)
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
                   info->glow, info->glowAlpha, info->glowWidth,
-                  info->scaleWithView, false, (info->glow != NO_GLOW));
+                  info->scaleWithView, false, (info->glow != NO_GLOW),
+                  false);
     }
 
     // Figure out start of horizontal gridlines.
@@ -2106,7 +2120,8 @@ static void renderGrid(void)
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
                   info->glow, info->glowAlpha, info->glowWidth,
-                  info->scaleWithView, false, (info->glow != NO_GLOW));
+                  info->scaleWithView, false, (info->glow != NO_GLOW),
+                  false);
     }
 }
 
@@ -2126,6 +2141,7 @@ static void renderWalls(void)
     player_t   *plr = &players[mapviewplayer];
     automap_t  *map = &automaps[mapviewplayer];
 
+    validCount++;
     for(s = 0; s < numsubsectors; ++s)
     {
         if(map->flags & AMF_REND_SUBSECTORS) // Debug cheat, show subsectors
@@ -2143,15 +2159,16 @@ static void renderWalls(void)
             if(!line)
                 continue;
 
-            P_GetFloatpv(seg, DMU_VERTEX1_XY, v1);
-            P_GetFloatpv(seg, DMU_VERTEX2_XY, v2);
-
             if(map->flags & AMF_REND_SUBSECTORS) // Debug cheat, show subsectors
             {
+                P_GetFloatpv(seg, DMU_VERTEX1_XY, v1);
+                P_GetFloatpv(seg, DMU_VERTEX2_XY, v2);
+
                 rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                           subColors[subColor][0], subColors[subColor][1],
                           subColors[subColor][2], subColors[subColor][3],
-                          FRONT_GLOW, 1.0f, 7.5f, false, false, true);
+                          FRONT_GLOW, 1.0f, 7.5f, false, false, true,
+                          map->cheating);
                 continue;
             }
 
@@ -2160,6 +2177,12 @@ static void renderWalls(void)
                 continue; // we only want to draw twosided lines once.
 
             xline = P_XLine(line);
+            if(xline->validcount == validCount)
+                continue; // Already drawn once.
+            xline->validcount = validCount;
+
+            P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
+            P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
 
 #if !__JHEXEN__
 #if !__JSTRIFE__
@@ -2170,7 +2193,8 @@ static void renderWalls(void)
                 {
                     rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                               .8f, 0, .8f, 1,
-                              TWOSIDED_GLOW, 1, 5, true, false, true);
+                              TWOSIDED_GLOW, 1, 5, true, false, true,
+                              map->cheating);
                     continue;
                 }
             }
@@ -2262,7 +2286,7 @@ static void renderWalls(void)
                       info->glowWidth, info->scaleWithView,
                       (info->glow && !(xline->special && !map->cfg.glowingLineSpecials)),
                       (xline->special && !map->cfg.glowingLineSpecials ?
-                            NO_GLOW : info->glow));
+                            NO_GLOW : info->glow), map->cheating);
         }
     }
 }

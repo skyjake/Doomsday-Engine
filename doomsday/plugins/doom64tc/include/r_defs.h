@@ -91,6 +91,7 @@ typedef struct xline_s {
     // Has been rendered at least once and needs to appear in the map,
     // for each player.
     boolean         mapped[MAXPLAYERS];
+    int             validcount;
 
     // Extended generalized lines.
     xgline_t       *xg;
