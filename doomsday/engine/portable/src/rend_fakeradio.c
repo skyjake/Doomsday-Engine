@@ -411,6 +411,7 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
             // Skip into the back neighbor sector of the iter line if
             // heights are within accepted range.
             if(scanSector &&
+               scanSector != line->sec[side^1] &&
                 ((scanTop && scanSector->SP_ceilvisheight ==
                                 startSector->SP_ceilvisheight) ||
                  (!scanTop && scanSector->SP_floorvisheight ==
