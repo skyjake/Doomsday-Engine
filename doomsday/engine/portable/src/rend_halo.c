@@ -146,7 +146,10 @@ void H_SetupState(boolean dosetup)
 /**
  * The caller must check that <code>sourcevis</code> really has a ->light!
  *
- * @param sourcevis     The vissprite to receive the halo/flare(s).
+ * @param x             X coordinate of the center of the halo.
+ * @param y             Y coordinate of the center of the halo.
+ * @param z             Z coordinate of the center of the halo.
+ * @param lumobj        The lumobj casting the halo.
  * @param primary       If <code>true</code>, we'll draw the primary halo,
  *                      otherwise the secondary ones (which won't be clipped
  *                      or occluded by anything; they're drawn after
@@ -156,14 +159,13 @@ void H_SetupState(boolean dosetup)
  *
  * @return              <code>true</code> if a halo was rendered.
  */
-boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
+boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
 {
     float   viewpos[3];
     float   viewtocenter[3], mirror[3], normalviewtocenter[3];
     float   leftoff[3], rightoff[3], center[3], radius;
     float   halopos[3], occlusionfactor;
     int     i, k, tex;
-    lumobj_t *lum = sourcevis->data.mo.light;
     float   color[4], radx, rady, scale, turnangle = 0;
     float   fadefactor = 1, secbold, secdimfactor;
     float   coloraverage, f, distancedim, lum_distance;
@@ -198,7 +200,7 @@ boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
             (lum_distance - haloFadeMin) / (haloFadeMax - haloFadeMin);
     }
 
-    occlusionfactor = (lum->thing->halofactor & 0x7f) / 127.0f;
+    occlusionfactor = (lum->halofactor & 0x7f) / 127.0f;
     if(occlusionfactor == 0)
         return false;
     occlusionfactor = (1 + occlusionfactor) / 2;
@@ -216,13 +218,9 @@ boolean H_RenderHalo(vissprite_t * sourcevis, boolean primary)
     if(primary)
         H_SetupState(true);
 
-    center[VX] =
-        sourcevis->data.mo.gx + sourcevis->data.mo.visoff[VX];
-    center[VZ] =
-        sourcevis->data.mo.gy + sourcevis->data.mo.visoff[VY];
-    center[VY] =
-        sourcevis->data.mo.gz + lum->center +
-        sourcevis->data.mo.visoff[VZ];
+    center[VX] = x;
+    center[VZ] = y;
+    center[VY] = z + lum->zOff;
 
     // Apply the flare's X offset. (Positive is to the right.)
     for(i = 0; i < 3; i++)

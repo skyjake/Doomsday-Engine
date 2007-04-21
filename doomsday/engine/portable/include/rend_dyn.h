@@ -49,12 +49,14 @@ typedef struct lumobj_s            // For dynamic lighting.
     struct lumobj_s *ssNext;       // Next in the same subsector, or NULL.
 
     int             flags;
-    mobj_t         *thing;
-    float           center;        // Offset to center from mobj Z.
+    float           pos[3];
+    subsector_t    *subsector;
     int             radius, patch, distance;    // Radius: lights are spheres.
     int             flareSize;     // Radius for this light source.
+    byte            halofactor;
     byte            rgb[3];        // The color.
     float           xOff;
+    float           zOff;          // Offset to center from pos[VZ].
     float           xyScale;       // 1.0 if there's no modeldef.
     DGLuint         tex;           // Lightmap texture.
     DGLuint         floorTex, ceilTex;  // Lightmaps for floor/ceil.

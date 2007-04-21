@@ -36,7 +36,8 @@ extern float    haloFadeMax, haloFadeMin, minHaloSize;
 
 void            H_Register(void);
 void            H_SetupState(boolean dosetup);
-boolean         H_RenderHalo(vissprite_t * sourcevis, boolean primary);
+boolean         H_RenderHalo(float x, float y, float z,
+                             struct lumobj_s *lum, boolean primary);
 
 // Console commands.
 D_CMD(FlareConfig);

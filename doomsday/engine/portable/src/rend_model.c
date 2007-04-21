@@ -75,6 +75,11 @@ typedef struct {
     float   lightSide, darkSide;    // Factors for world light.
 } mlight_t;
 
+typedef struct {
+    float       z;
+    float       gzt;
+} modellightitervars_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -186,10 +191,10 @@ float __inline Mod_Lerp(float start, float end, float pos)
  */
 boolean Mod_LightIterator(lumobj_t *lum, fixed_t xyDist, void *data)
 {
-    vissprite_t *spr = (vissprite_t*) data;
+    modellightitervars_t *vars = (modellightitervars_t*) data;
     fixed_t     zDist =
-        (FLT2FIX(spr->data.mo.gz + spr->data.mo.gzt) >> 1) -
-        (lum->thing->pos[VZ] + FRACUNIT * lum->center);
+        (FLT2FIX(vars->z + vars->gzt) >> 1) -
+        FLT2FIX(lum->pos[VZ] + lum->zOff);
     fixed_t dist = P_ApproxDistance(xyDist, zDist);
     int         i, maxIndex = 0;
     fixed_t     maxDist = -1;
@@ -503,12 +508,12 @@ void Mod_ShinyCoords(int count, gl_texcoord_t *coords, gl_vertex_t *normals,
 /**
  * Render a submodel from the vissprite.
  */
-void Mod_RenderSubModel(vissprite_t *spr, int number)
+static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 {
-    modeldef_t *mf = spr->data.mo.mf, *mfNext = spr->data.mo.nextmf;
+    modeldef_t *mf = params->mf, *mfNext = params->nextmf;
     submodeldef_t *smf = &mf->sub[number];
     model_t    *mdl = modellist[smf->model];
-    model_frame_t *frame = Mod_GetVisibleFrame(mf, number, spr->data.mo.id);
+    model_frame_t *frame = Mod_GetVisibleFrame(mf, number, params->id);
     model_frame_t *nextFrame = NULL;
 
     //int mainFlags = mf->flags;
@@ -516,19 +521,18 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
     int         numVerts;
     int         useSkin;
     int         i, c;
-    float       inter, endPos, offset;
-    float       yawAngle, pitchAngle;
+    float       endPos, offset;
     float       alpha, customAlpha;
     float       dist, intensity, lightCenter[3], delta[3], color[4];
     float       ambient[3];
     float       shininess, *shinyColor;
     float       normYaw, normPitch, shinyAng, shinyPnt;
+    float       inter = params->inter;
     mlight_t   *light;
     byte        byteAlpha;
     blendmode_t blending = mf->def->sub[number].blendmode;
     DGLuint     skinTexture = 0, shinyTexture = 0;
-    int         zSign = (spr->type == VSPR_HUD_MODEL &&
-                            mirrorHudModels != 0 ? -1 : 1);
+    int         zSign = (params->mirror? -1 : 1);
 
     if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0)
     {
@@ -540,7 +544,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
     customAlpha = 1 - smf->alpha / 255.0f;
 
     if(missileBlend &&
-       (spr->data.mo.flags & DDMF_BRIGHTSHADOW || subFlags & MFF_BRIGHTSHADOW))
+       ((params->flags & DDMF_BRIGHTSHADOW) || (subFlags & MFF_BRIGHTSHADOW)))
     {
         alpha = .80f;
         blending = BM_ADD;
@@ -555,16 +559,16 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
         alpha = customAlpha;
         blending = BM_DARK;
     }
-    else if(spr->data.mo.flags & DDMF_SHADOW || subFlags & MFF_SHADOW2)
+    else if((params->flags & DDMF_SHADOW) || (subFlags & MFF_SHADOW2))
         alpha = .2f;
-    else if(spr->data.mo.flags & DDMF_ALTSHADOW || subFlags & MFF_SHADOW1)
+    else if((params->flags & DDMF_ALTSHADOW) || (subFlags & MFF_SHADOW1))
         alpha = .62f;
     else
         alpha = customAlpha;
 
     // More custom alpha?
-    if(spr->data.mo.alpha >= 0)
-        alpha *= spr->data.mo.alpha;
+    if(params->alpha >= 0)
+        alpha *= params->alpha;
     if(alpha <= 0)
         return;                 // Fully transparent.
     if(alpha > 1)
@@ -582,7 +586,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
     // Selskin overrides the skin range.
     if(subFlags & MFF_SELSKIN)
     {
-        i = (spr->data.mo.selector >> DDMOBJ_SELECTOR_SHIFT) &
+        i = (params->selector >> DDMOBJ_SELECTOR_SHIFT) &
             mf->def->sub[number].selskinbits[0];    // Selskin mask
         c = mf->def->sub[number].selskinbits[1];    // Selskin shift
         if(c > 0)
@@ -602,11 +606,8 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
     {
         // What rule to use for determining the skin?
         useSkin +=
-            (subFlags & MFF_IDSKIN ? spr->data.mo.
-             id : SECONDS_TO_TICKS(gameTime) / mf->skintics) % smf->skinrange;
+            (subFlags & MFF_IDSKIN ? params->id : SECONDS_TO_TICKS(gameTime) / mf->skintics) % smf->skinrange;
     }
-
-    inter = spr->data.mo.inter;
 
     // Scale interpos. Intermark becomes zero and endmark becomes one.
     // (Full sub-interpolation!) But only do it for the standard
@@ -615,14 +616,14 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
        subFlags & MFF_WORLD_TIME_ANIM)
     {
         endPos = (mf->internext ? mf->internext->intermark : 1);
-        inter = (inter - mf->intermark) / (endPos - mf->intermark);
+        inter = (params->inter - mf->intermark) / (endPos - mf->intermark);
     }
 
     // Do we have a sky/particle model here?
-    if(spr->type == VSPR_SKY_MODEL || spr->type == VSPR_PARTICLE_MODEL)
+    if(params->alwaysInterpolate)
     {
-        // Sky models are animated differently.
         // Always interpolate, if there's animation.
+        // Used with sky and particle models.
         nextFrame = mdl->frames + (smf->frame + 1) % mdl->info.numFrames;
         mfNext = mf;
     }
@@ -633,18 +634,14 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
         {
             if(mfNext->sub[number].model == smf->model)
             {
-                nextFrame =
-                    Mod_GetVisibleFrame(mfNext, number, spr->data.mo.id);
+                nextFrame = Mod_GetVisibleFrame(mfNext, number, params->id);
             }
         }
     }
 
     // Need translation?
     if(subFlags & MFF_SKINTRANS)
-        useSkin = (spr->data.mo.flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
-
-    yawAngle = spr->data.mo.yaw;
-    pitchAngle = spr->data.mo.pitch;
+        useSkin = (params->flags & DDMF_TRANSLATION) >> DDMF_TRANSSHIFT;
 
     // Clamp interpolation.
     if(inter < 0)
@@ -665,37 +662,36 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
     gl.PushMatrix();
 
     // Model space => World space
-    gl.Translatef(spr->data.mo.v1[VX] + spr->data.mo.visoff[VX] +
-                  Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
-                  spr->data.mo.gz + spr->data.mo.visoff[VZ] +
-                  Mod_Lerp(mf->offset[VY], mfNext->offset[VY],
-                           inter) - spr->data.mo.floorclip,
-                  spr->data.mo.v1[VY] + spr->data.mo.visoff[VY] +
-                  zSign * Mod_Lerp(mf->offset[VZ], mfNext->offset[VZ], inter));
+    gl.Translatef(params->center[VX] + params->srvo[VX] + 
+                    Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
+                  params->center[VZ] + params->srvo[VZ] +
+                    Mod_Lerp(mf->offset[VY], mfNext->offset[VY], inter),
+                  params->center[VY] + params->srvo[VY] + zSign *
+                    Mod_Lerp(mf->offset[VZ], mfNext->offset[VZ], inter));
 
-    if(spr->type == VSPR_SKY_MODEL)
+    if(params->extraYawAngle || params->extraPitchAngle)
     {
         // Sky models have an extra rotation.
         gl.Scalef(1, 200 / 240.0f, 1);
-        gl.Rotatef(spr->data.mo.v2[VX], 1, 0, 0);
-        gl.Rotatef(spr->data.mo.v2[VY], 0, 0, 1);
+        gl.Rotatef(params->extraYawAngle, 1, 0, 0);
+        gl.Rotatef(params->extraPitchAngle, 0, 0, 1);
         gl.Scalef(1, 240 / 200.0f, 1);
     }
 
     // Model rotation.
-    gl.Rotatef(spr->data.mo.viewaligned ? spr->data.mo.v2[VX] : yawAngle,
+    gl.Rotatef(params->viewAligned ? params->yawAngleOffset : params->yaw,
                0, 1, 0);
-    gl.Rotatef(spr->data.mo.viewaligned ? spr->data.mo.v2[VY] : pitchAngle,
+    gl.Rotatef(params->viewAligned ? params->pitchAngleOffset : params->pitch,
                0, 0, 1);
 
     // Scaling and model space offset.
     gl.Scalef(Mod_Lerp(mf->scale[VX], mfNext->scale[VX], inter),
               Mod_Lerp(mf->scale[VY], mfNext->scale[VY], inter),
               Mod_Lerp(mf->scale[VZ], mfNext->scale[VZ], inter));
-    if(spr->type == VSPR_PARTICLE_MODEL)
+    if(params->extraScale)
     {
         // Particle models have an extra scale.
-        gl.Scalef(spr->data.mo.v2[0], spr->data.mo.v2[0], spr->data.mo.v2[0]);
+        gl.Scalef(params->extraScale, params->extraScale, params->extraScale);
     }
     gl.Translatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
 
@@ -711,7 +707,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
             lodFactor = 1 / lodFactor;
 
         // Determine the LOD we will be using.
-        activeLod = (int) (lodFactor * spr->distance);
+        activeLod = (int) (lodFactor * params->distance);
         if(activeLod < 0)
             activeLod = 0;
         if(activeLod >= mdl->info.numLODs)
@@ -736,25 +732,22 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter[VX] =
-        spr->data.mo.gx + mf->offset[VX] + spr->data.mo.visoff[VX];
-    modelCenter[VY] =
-        spr->data.mo.gy + mf->offset[VZ] + spr->data.mo.visoff[VY];
-    modelCenter[VZ] =
-        ((spr->data.mo.gz + spr->data.mo.gzt) * 2) + mf->offset[VY] +
-        spr->data.mo.visoff[VZ];
+    modelCenter[VX] = params->center[VX] + params->srvo[VX] + mf->offset[VX];
+    modelCenter[VY] = params->center[VY] + params->srvo[VY] + mf->offset[VZ];
+    modelCenter[VZ] = ((params->center[VZ] + params->gzt) * 2) + params->srvo[VZ] +
+                        mf->offset[VY];
 
     // Calculate lighting.
-    if(spr->type == VSPR_SKY_MODEL)
+    if(params->uniformColor)
     {
-        // Skymodels don't have light, only color.
-        color[0] = spr->data.mo.rgb[0] / 255.0f;
-        color[1] = spr->data.mo.rgb[1] / 255.0f;
-        color[2] = spr->data.mo.rgb[2] / 255.0f;
+        // Specified uniform color.
+        color[0] = params->rgb[0];
+        color[1] = params->rgb[1];
+        color[2] = params->rgb[2];
         color[3] = byteAlpha / 255.0f;
         Mod_FixedVertexColors(numVerts, modelColors, color);
     }
-    else if((spr->data.mo.lightlevel < 0 || subFlags & MFF_FULLBRIGHT) &&
+    else if((params->lightLevel < 0 || (subFlags & MFF_FULLBRIGHT)) &&
             !(subFlags & MFF_DIM))
     {
         // Fullbright white.
@@ -791,10 +784,9 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
                 }
 
                 // The center of the light source.
-                lightCenter[VX] = FIX2FLT(light->lum->thing->pos[VX]);
-                lightCenter[VY] = FIX2FLT(light->lum->thing->pos[VY]);
-                lightCenter[VZ] = FIX2FLT(light->lum->thing->pos[VZ]) +
-                    light->lum->center;
+                lightCenter[VX] = light->lum->pos[VX];
+                lightCenter[VY] = light->lum->pos[VY];
+                lightCenter[VZ] = light->lum->pos[VZ] + light->lum->zOff;
 
                 intensity *= reciprocal255;
 
@@ -814,7 +806,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
                        sizeof(lights[i].vector));
             }
             // We must transform the light vector to model space.
-            M_RotateVector(light->vector, -yawAngle, -pitchAngle);
+            M_RotateVector(light->vector, -params->yaw, -params->pitch);
             // Quick hack: Flip light normal if model inverted.
             if(mf->scale[VY] < 0)
             {
@@ -838,20 +830,20 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
         shinyColor = mf->def->sub[number].shinycolor;
 
         // With psprites, add the view angle/pitch.
-        offset = (spr->type == VSPR_HUD_MODEL ? -vang : 0);
+        offset = params->shineYawOffset;
 
         // Calculate normalized (0,1) model yaw and pitch.
         normYaw =
-            M_CycleIntoRange(((spr->data.mo.viewaligned ? spr->data.mo.
-                               v2[VX] : yawAngle) + offset) / 360, 1);
+            M_CycleIntoRange(((params->viewAligned ? params->yawAngleOffset :
+                                params->yaw) + offset) / 360, 1);
 
-        offset = (spr->type == VSPR_HUD_MODEL ? vpitch + 90 : 0);
+        offset = params->shinePitchOffset;
 
         normPitch =
-            M_CycleIntoRange(((spr->data.mo.viewaligned ? spr->data.mo.
-                               v2[VY] : pitchAngle) + offset) / 360, 1);
+            M_CycleIntoRange(((params->viewAligned ? params->pitchAngleOffset :
+                                params->pitch) + offset) / 360, 1);
 
-        if(spr->type == VSPR_HUD_MODEL)
+        if(params->shinepspriteCoordSpace)
         {
             // This is a hack to accommodate the psprite coordinate space.
             shinyAng = 0;
@@ -863,7 +855,7 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
             delta[VY] = modelCenter[VY] - vz;
             delta[VZ] = modelCenter[VZ] - vy;
 
-            if(spr->type == VSPR_SKY_MODEL)
+            if(params->shineTranslateWithViewerPos)
             {
                 delta[VX] += vx;
                 delta[VY] += vz;
@@ -897,8 +889,8 @@ void Mod_RenderSubModel(vissprite_t *spr, int number)
         shinyTexture = GL_PrepareShinySkin(mf, number);
     }
 
-    if(renderTextures == 2 && spr->type != VSPR_SKY_MODEL)
-        // For lighting debug, render all solid surfaces using the gray texture.
+    if(renderTextures == 2)
+        // For lighting debug, render all surfaces using the gray texture.
         skinTexture = GL_PrepareDDTexture(DDT_GRAY);
     else
         skinTexture = GL_PrepareSkin(mdl, useSkin);
@@ -1022,16 +1014,15 @@ void Mod_GlowLightSetup(mlight_t *light)
 /**
  * Render all the submodels of a model.
  */
-void Rend_RenderModel(vissprite_t *spr)
+void Rend_RenderModel(const modelparams_t *params)
 {
-    modeldef_t *mf = spr->data.mo.mf;
     rendpoly_t *quad;
     int         i;
-    float       lightLevel = spr->data.mo.lightlevel;
     float       dist;
     mlight_t   *light;
+    byte        rgb[3];
 
-    if(!mf)
+    if(!params || !params->mf)
         return;
 
     numLights = 0;
@@ -1040,8 +1031,10 @@ void Rend_RenderModel(vissprite_t *spr)
     quad = R_AllocRendPoly(RP_NONE, false, 1);
 
     // Note: Light adaptation has already been applied
-    RL_VertexColors(quad, lightLevel, Rend_PointDist2D(spr->data.mo.v1),
-                    spr->data.mo.rgb, 255);
+    rgb[0] = params->rgb[0] * 255.f;
+    rgb[1] = params->rgb[1] * 255.f;
+    rgb[2] = params->rgb[2] * 255.f;
+    RL_VertexColors(quad, params->lightLevel, params->distance, rgb, 255);
 
     // Determine the ambient light affecting the model.
     for(i = 0; i < 3; ++i)
@@ -1064,9 +1057,8 @@ void Rend_RenderModel(vissprite_t *spr)
             lights->color[i] = ambientColor[i];
         }
 
-        if(spr->type == VSPR_HUD_MODEL)
+        if(params->starkLight)
         {
-            // Psprites can a bit starker world light.
             lights->lightSide = .35f;
             lights->darkSide = .5f;
             lights->offset = 0;
@@ -1082,71 +1074,74 @@ void Rend_RenderModel(vissprite_t *spr)
         }
 
         // Plane glow?
-        if(spr->data.mo.hasglow)
+        if(params->hasGlow)
         {
             float glowHeight;
 
             // Ceiling glow
-            glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.ceilglowamount)
-                          * glowHeightFactor;
+            glowHeight =
+                (MAX_GLOWHEIGHT * params->ceilGlowAmount) * glowHeightFactor;
             // Don't make too small or too large glows.
             if(glowHeight > 2)
             {
                 if(glowHeight > glowHeightMax)
                     glowHeight = glowHeightMax;
 
-                if(spr->data.mo.ceilglow[0] || spr->data.mo.ceilglow[1] ||
-                   spr->data.mo.ceilglow[2])
+                if(params->ceilGlowRGB[0] || params->ceilGlowRGB[1] ||
+                   params->ceilGlowRGB[2])
                 {
                     light = lights + numLights++;
                     light->used = true;
                     Mod_GlowLightSetup(light);
                     memcpy(light->worldVector, &ceilingLight,
                            sizeof(ceilingLight));
-                    dist = 1 - (spr->data.mo.secceil - spr->data.mo.gzt) /
-                                   glowHeight;
-                    scaleFloatRgb(light->color, spr->data.mo.ceilglow, dist);
-                    scaleAmbientRgb(ambientColor, spr->data.mo.ceilglow, dist / 3);
+                    dist = 1 - (params->ceilHeight - params->gzt) / glowHeight;
+                    scaleFloatRgb(light->color, params->ceilGlowRGB, dist);
+                    scaleAmbientRgb(ambientColor, params->ceilGlowRGB, dist / 3);
                 }
             }
 
             // Floor glow
-            glowHeight = (MAX_GLOWHEIGHT * spr->data.mo.floorglowamount)
-                          * glowHeightFactor;
+            glowHeight =
+                (MAX_GLOWHEIGHT * params->floorGlowAmount) * glowHeightFactor;
             // Don't make too small or too large glows.
             if(glowHeight > 2)
             {
                 if(glowHeight > glowHeightMax)
                     glowHeight = glowHeightMax;
 
-                if(spr->data.mo.floorglow[0] || spr->data.mo.floorglow[1] ||
-                   spr->data.mo.floorglow[2])
+                if(params->floorGlowRGB[0] || params->floorGlowRGB[1] ||
+                   params->floorGlowRGB[2])
                 {
                     light = lights + numLights++;
                     light->used = true;
                     Mod_GlowLightSetup(light);
                     memcpy(light->worldVector, &floorLight, sizeof(floorLight));
-                    dist = 1 - (spr->data.mo.gz - spr->data.mo.secfloor) /
+                    dist = 1 - (params->center[VZ] - params->floorHeight) /
                                    glowHeight;
-                    scaleFloatRgb(light->color, spr->data.mo.floorglow, dist);
-                    scaleAmbientRgb(ambientColor, spr->data.mo.floorglow,
-                                    dist / 3);
+                    scaleFloatRgb(light->color, params->floorGlowRGB, dist);
+                    scaleAmbientRgb(ambientColor, params->floorGlowRGB, dist / 3);
                 }
             }
         }
     }
 
     // Add extra light using dynamic lights.
-    if(modelLight > numLights && dlInited)
+    if(modelLight > numLights && dlInited && params->subsector)
     {
+        modellightitervars_t vars;
+
+        vars.z = params->center[VZ];
+        vars.gzt = params->gzt;
+
         // Find the nearest sources of light. They will be used to
         // light the vertices. First initialize the array.
         for(i = numLights; i < MAX_MODEL_LIGHTS; ++i)
             lights[i].dist = DDMAXINT;
 
-        DL_RadiusIterator(spr->data.mo.subsector, FLT2FIX(spr->data.mo.gx),
-                          FLT2FIX(spr->data.mo.gy), dlMaxRad << FRACBITS,
-                          spr, Mod_LightIterator);
+        DL_RadiusIterator(params->subsector, FLT2FIX(params->center[VX]),
+                          FLT2FIX(params->center[VY]), dlMaxRad << FRACBITS,
+                          &vars, Mod_LightIterator);
     }
 
     // Don't use too many lights.
@@ -1155,16 +1150,16 @@ void Rend_RenderModel(vissprite_t *spr)
 
     // Render all the models associated with the vissprite.
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
-        if(mf->sub[i].model)
+        if(params->mf->sub[i].model)
         {
-            boolean disableZ = (mf->flags & MFF_DISABLE_Z_WRITE ||
-                                mf->sub[i].flags & MFF_DISABLE_Z_WRITE);
+            boolean disableZ = (params->mf->flags & MFF_DISABLE_Z_WRITE ||
+                                params->mf->sub[i].flags & MFF_DISABLE_Z_WRITE);
 
             if(disableZ)
                 gl.Disable(DGL_DEPTH_WRITE);
 
             // Render the submodel.
-            Mod_RenderSubModel(spr, i);
+            Mod_RenderSubModel(i, params);
 
             if(disableZ)
                 gl.Enable(DGL_DEPTH_WRITE);

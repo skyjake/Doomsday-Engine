@@ -109,7 +109,7 @@ void Rend_RenderSkyModels(void)
     int     i, k;
     float   inter;
     skymodel_t *sky;
-    vissprite_t vis;
+    modelparams_t params;
     float   pos[3];
 
     gl.MatrixMode(DGL_MODELVIEW);
@@ -138,30 +138,29 @@ void Rend_RenderSkyModels(void)
 
         inter = (sky->maxTimer > 0 ? sky->timer / (float) sky->maxTimer : 0);
 
-        // Setup a dummy vissprite with all the information.
-        memset(&vis, 0, sizeof(vis));
+        memset(&params, 0, sizeof(params));
 
-        vis.type = VSPR_SKY_MODEL;
-        vis.distance = 1;
-        vis.data.mo.gx = pos[0];
-        vis.data.mo.gy = pos[2];
-        vis.data.mo.gz = vis.data.mo.gzt = pos[1];
-        vis.data.mo.v1[0] = pos[0];
-        vis.data.mo.v1[1] = pos[2];
-        vis.data.mo.v2[0] = sky->def->rotate[0];
-        vis.data.mo.v2[1] = sky->def->rotate[1];
-        vis.data.mo.inter = inter;
-        vis.data.mo.mf = sky->model;
+        params.distance = 1;
+        params.center[VX] = pos[0];
+        params.center[VY] = pos[2];
+        params.center[VZ] = params.gzt = pos[1];
+        params.extraYawAngle = params.yawAngleOffset = sky->def->rotate[0];
+        params.extraPitchAngle = params.pitchAngleOffset = sky->def->rotate[1];
+        params.inter = inter;
+        params.mf = sky->model;
+        params.alwaysInterpolate = true;
         R_SetModelFrame(sky->model, sky->frame);
-        vis.data.mo.yaw = sky->yaw;
-        vis.data.mo.lightlevel = -1;    // Fullbright.
+        params.yaw = sky->yaw;
+        params.lightLevel = -1;    // Fullbright.
         for(k = 0; k < 3; ++k)
         {
-            vis.data.mo.rgb[k] = sky->def->color[k] * 255;
+            params.rgb[k] = sky->def->color[k];
         }
-        vis.data.mo.alpha = sky->def->color[3];
+        params.uniformColor = true;
+        params.alpha = sky->def->color[3];
+        params.shineTranslateWithViewerPos = true;
 
-        Rend_RenderModel(&vis);
+        Rend_RenderModel(&params);
     }
 
     // We don't want that anything interferes with what was drawn.

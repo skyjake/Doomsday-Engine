@@ -277,14 +277,20 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
     byte        brightest[3];
     dynlight_t *dyn;
     int         i, c;
-    float       midpoint[2];
+    float       midpoint[3];
 
     midpoint[VX] =
         (poly->vertices[0].pos[VX] + poly->vertices[1].pos[VX]) / 2;
     midpoint[VY] =
         (poly->vertices[0].pos[VY] + poly->vertices[1].pos[VY]) / 2;
+    midpoint[VZ] =
+        (poly->vertices[0].pos[VZ] + poly->vertices[1].pos[VZ]) / 2;
 
     vis->type = VSPR_MASKED_WALL;
+    vis->light = NULL;
+    vis->center[VX] = midpoint[VX];
+    vis->center[VY] = midpoint[VY];
+    vis->center[VZ] = midpoint[VZ];
     vis->distance = Rend_PointDist2D(midpoint);
     vis->data.wall.texture = poly->tex.id;
     vis->data.wall.masked = poly->tex.masked; // Store texmask status in flip.

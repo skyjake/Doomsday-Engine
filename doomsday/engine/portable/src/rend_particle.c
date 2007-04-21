@@ -414,14 +414,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
     int     usingTexture = -1;
     int     primType = DGL_QUADS;
     blendmode_t mode = BM_NORMAL, newMode;
-    vissprite_t vis;
     boolean flatOnPlane, flatOnWall, nearPlane, nearWall;
-
-    if(rtype == PTC_MODEL)
-    {
-        // Prepare a dummy vissprite.
-        memset(&vis, 0, sizeof(vis));
-    }
 
     // viewsidevec points to the left.
     for(c = 0; c < 3; ++c)
@@ -575,58 +568,98 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         // routine.
         if(rtype == PTC_MODEL && dst->model >= 0)
         {
-            int     frame;
+            int         frame;
+            const byte *slc;
+            modelparams_t params;
+
+            memset(&params, 0, sizeof(params));
 
             // Render the particle as a model.
-            vis.type = VSPR_PARTICLE_MODEL;
-            vis.distance = dist;
-            vis.data.mo.subsector =
+            params.distance = dist;
+            params.subsector =
                 R_PointInSubsector(pt->pos[VX], pt->pos[VY]);
-            vis.data.mo.gx = center[VX];
-            vis.data.mo.gy = center[VZ];
-            vis.data.mo.gz = vis.data.mo.gzt = center[VY];
-            vis.data.mo.v1[0] = center[VX];
-            vis.data.mo.v1[1] = center[VZ];
-            vis.data.mo.v2[0] = size;   // Extra scaling factor.
-            vis.data.mo.mf = &modefs[dst->model];
+            params.center[VX] = center[VX];
+            params.center[VY] = center[VZ];
+            params.center[VZ] = params.gzt = center[VY];
+            params.extraScale = size;   // Extra scaling factor.
+            params.mf = &modefs[dst->model];
+            params.alwaysInterpolate = true;
+
             if(dst->end_frame < 0)
             {
                 frame = dst->frame;
-                vis.data.mo.inter = 0;
+                params.inter = 0;
             }
             else
             {
                 frame = dst->frame + (dst->end_frame - dst->frame) * mark;
-                vis.data.mo.inter =
+                params.inter =
                     M_CycleIntoRange(mark * (dst->end_frame - dst->frame), 1);
             }
-            R_SetModelFrame(vis.data.mo.mf, frame);
+            R_SetModelFrame(params.mf, frame);
             // Set the correct orientation for the particle.
-            if(vis.data.mo.mf->sub[0].flags & MFF_MOVEMENT_YAW)
+            if(params.mf->sub[0].flags & MFF_MOVEMENT_YAW)
             {
-                vis.data.mo.yaw = R_MovementYaw(pt->mov[0], pt->mov[1]);
+                params.yaw = R_MovementYaw(pt->mov[0], pt->mov[1]);
             }
             else
             {
-                vis.data.mo.yaw = pt->yaw / 32768.0f * 180;
+                params.yaw = pt->yaw / 32768.0f * 180;
             }
-            if(vis.data.mo.mf->sub[0].flags & MFF_MOVEMENT_PITCH)
+            if(params.mf->sub[0].flags & MFF_MOVEMENT_PITCH)
             {
-                vis.data.mo.pitch =
+                params.pitch =
                     R_MovementPitch(pt->mov[0], pt->mov[1], pt->mov[2]);
             }
             else
             {
-                vis.data.mo.pitch = pt->pitch / 32768.0f * 180;
+                params.pitch = pt->pitch / 32768.0f * 180;
             }
             if(st->flags & PTCF_BRIGHT || levelFullBright)
-                vis.data.mo.lightlevel = -1;    // Fullbright.
+                params.lightLevel = -1;    // Fullbright.
             else
-                vis.data.mo.lightlevel = pt->sector->lightlevel;
-            memcpy(vis.data.mo.rgb, R_GetSectorLightColor(pt->sector), 3);
-            vis.data.mo.alpha = color[3];
+            {
+                params.lightLevel = pt->sector->lightlevel;
+                Rend_ApplyLightAdaptation(&params.lightLevel);
+            }
+            slc = R_GetSectorLightColor(pt->sector);
+            params.rgb[0] = slc[0] / 255.f;
+            params.rgb[1] = slc[1] / 255.f;
+            params.rgb[2] = slc[2] / 255.f;
+            params.alpha = color[3];
 
-            Rend_RenderModel(&vis);
+            if(useWallGlow)
+            {
+                uint        c;
+                sector_t   *sec = params.subsector->sector;
+
+                // Do ceiling.
+                if(sec && sec->planes[PLN_CEILING]->glow)
+                {
+                    memcpy(params.ceilGlowRGB,
+                           sec->planes[PLN_CEILING]->glowrgb, 3);
+
+                    for(c = 0; c < 3; ++c)
+                        params.ceilGlowRGB[c] *= dlFactor;
+
+                    params.hasGlow = true;
+                    params.ceilGlowAmount = sec->planes[PLN_CEILING]->glow;
+                }
+
+                // Do floor.
+                if(sec && sec->planes[PLN_FLOOR]->glow)
+                {
+                    memcpy(params.floorGlowRGB,
+                           sec->planes[PLN_FLOOR]->glowrgb, 3);
+
+                    for(c = 0; c < 3; ++c)
+                        params.floorGlowRGB[c] *= dlFactor;
+
+                    params.hasGlow = true;
+                    params.floorGlowAmount = sec->planes[PLN_FLOOR]->glow;
+                }
+            }
+            Rend_RenderModel(&params);
             continue;
         }
 

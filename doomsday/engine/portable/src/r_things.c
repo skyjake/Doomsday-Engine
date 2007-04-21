@@ -475,30 +475,6 @@ static void R_ApplyPlaneGlowsToVisSprite(vissprite_t *vis, sector_t *sect)
     }
 }
 
-void R_ProjectDecoration(mobj_t *source)
-{
-    float   v1[2];
-    vissprite_t *vis;
-
-    // Calculate edges of the shape.
-    v1[VX] = FIX2FLT(source->pos[VX]);
-    v1[VY] = FIX2FLT(source->pos[VY]);
-
-    vis = R_NewVisSprite();
-    memset(vis, 0, sizeof(*vis));
-    vis->type = VSPR_MAP_OBJECT;
-    vis->distance = Rend_PointDist2D(v1);
-    vis->data.mo.patch = -1;    // Doesn't have one!
-    if(source->usingBias && useBias)
-        vis->data.mo.light = NULL;
-    else
-        vis->data.mo.light = DL_GetLuminous(source->light);
-    //  vis->data.mo.flags = thing->ddflags;
-    vis->data.mo.gx = FIX2FLT(source->pos[VX]);
-    vis->data.mo.gy = FIX2FLT(source->pos[VY]);
-    vis->data.mo.gz = vis->data.mo.gzt = FIX2FLT(source->pos[VZ]);
-}
-
 /*
  * If 3D models are found for psprites, here we will create vissprites
  * for them.
@@ -529,12 +505,12 @@ void R_ProjectPlayerSprites(void)
         vis->data.mo.flags = 0;
         // Adjust the vector slightly so an angle can be calculated.
         ang = viewangle >>ANGLETOFINESHIFT;
-        vis->data.mo.gx = FIX2FLT(viewx + (2 * finecosine[ang]));
-        vis->data.mo.gy = FIX2FLT(viewy + (2 * finesine[ang]));
-        vis->data.mo.v1[VX] = vis->data.mo.gx;
-        vis->data.mo.v1[VY] = vis->data.mo.gy;
+        vis->center[VX] = FIX2FLT(viewx + (2 * finecosine[ang]));
+        vis->center[VY] = FIX2FLT(viewy + (2 * finesine[ang]));
+        vis->data.mo.v1[VX] = vis->center[VX];
+        vis->data.mo.v1[VY] = vis->center[VY];
         // 32 is the raised weapon height.
-        vis->data.mo.gzt = vis->data.mo.gz = FIX2FLT(viewz);
+        vis->data.mo.gzt = vis->center[VZ] = FIX2FLT(viewz);
         vis->data.mo.secfloor = viewplayer->mo->subsector->sector->SP_floorvisheight;
         vis->data.mo.secceil = viewplayer->mo->subsector->sector->SP_ceilvisheight;
         vis->data.mo.pclass = 0;
@@ -558,14 +534,15 @@ void R_ProjectPlayerSprites(void)
             continue;
         }
         vis->type = VSPR_HUD_MODEL; // it's a psprite
+        vis->light = NULL;
         vis->data.mo.mf = mf;
         vis->data.mo.nextmf = nextmf;
         vis->data.mo.viewaligned = true;
         // Use the exact center with HUD models.
-        vis->data.mo.gx = FIX2FLT(viewx);
-        vis->data.mo.gy = FIX2FLT(viewy);
-        vis->data.mo.v1[VX] = vis->data.mo.gx;
-        vis->data.mo.v1[VY] = vis->data.mo.gy;
+        vis->center[VX] = FIX2FLT(viewx);
+        vis->center[VY] = FIX2FLT(viewy);
+        vis->data.mo.v1[VX] = vis->center[VX];
+        vis->data.mo.v1[VY] = vis->center[VY];
 
         // Mark this sprite rendered.
         psp->flags |= DDPSPF_RENDERED;
@@ -648,18 +625,18 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
     if(vis->data.mo.flooradjust &&
        FIX2FLT(projectedThing->pos[VZ]) == sector->SP_floorheight)
     {
-        vis->data.mo.gz = sector->SP_floorvisheight;
+        vis->center[VZ] = sector->SP_floorvisheight;
     }
 
     if(FIX2FLT(projectedThing->pos[VZ]) + projectedThing->height ==
        sector->SP_ceilheight)
     {
-        vis->data.mo.gz = sector->SP_ceilvisheight - projectedThing->height;
+        vis->center[VZ] = sector->SP_ceilvisheight - projectedThing->height;
     }
     return true;
 }
 
-/*
+/**
  * Generates a vissprite for a thing if it might be visible.
  */
 void R_ProjectSprite(mobj_t *thing)
@@ -820,9 +797,9 @@ void R_ProjectSprite(mobj_t *thing)
     vis->distance = distance;
     vis->data.mo.subsector = thing->subsector;
     if(thing->usingBias && useBias)
-        vis->data.mo.light = NULL;
+        vis->light = NULL;
     else
-        vis->data.mo.light = DL_GetLuminous(thing->light);
+        vis->light = DL_GetLuminous(thing->light);
 
     vis->data.mo.mf = mf;
     vis->data.mo.nextmf = nextmf;
@@ -830,9 +807,9 @@ void R_ProjectSprite(mobj_t *thing)
     vis->data.mo.flags = thing->ddflags;
     vis->data.mo.id = thing->thinker.id;
     vis->data.mo.selector = thing->selector;
-    vis->data.mo.gx = FIX2FLT(thing->pos[VX]);
-    vis->data.mo.gy = FIX2FLT(thing->pos[VY]);
-    vis->data.mo.gz = FIX2FLT(thing->pos[VZ]);
+    vis->center[VX] = FIX2FLT(thing->pos[VX]);
+    vis->center[VY] = FIX2FLT(thing->pos[VY]);
+    vis->center[VZ] = FIX2FLT(thing->pos[VZ]);
 
     vis->data.mo.flooradjust =
         (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
@@ -845,7 +822,7 @@ void R_ProjectSprite(mobj_t *thing)
     P_ThingSectorsIterator(thing, RIT_VisMobjZ, vis);
 
     vis->data.mo.gzt =
-        vis->data.mo.gz + ((float) spritelumps[lump]->topoffset);
+        vis->center[VZ] + ((float) spritelumps[lump]->topoffset);
 
     if(useBias)
     {
@@ -921,7 +898,7 @@ void R_ProjectSprite(mobj_t *thing)
         {
             vis->data.mo.pitch =
                 -BANG2DEG(bamsAtan2
-                          (((vis->data.mo.gz + vis->data.mo.gzt) / 2 -
+                          (((vis->center[VZ] + vis->data.mo.gzt) / 2 -
                             FIX2FLT(viewz)) * 10, distance * 10));
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)

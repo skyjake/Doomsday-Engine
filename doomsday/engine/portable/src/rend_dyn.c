@@ -436,7 +436,7 @@ void DL_InitForMap(void)
 static boolean DL_SegTexCoords(float *t, float top, float bottom,
                                lumobj_t *lum)
 {
-    float   lightZ = FIX2FLT(lum->thing->pos[VZ]) + lum->center;
+    float   lightZ = lum->pos[VZ] + lum->zOff;
     float   radius = lum->radius / DYN_ASPECT;
     float   radiusX2 = 2 * radius;
 
@@ -531,8 +531,8 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
     if(!(seg->frameflags & SEGINF_FACINGFRONT))
         return;
 
-    pntLight[VX] = FIX2FLT(lum->thing->pos[VX]);
-    pntLight[VY] = FIX2FLT(lum->thing->pos[VY]);
+    pntLight[VX] = lum->pos[VX];
+    pntLight[VY] = lum->pos[VY];
 
     // Calculate distance between seg and light source.
     dist = ((seg->SG_v1->pos[VY] - pntLight[VY]) * (seg->SG_v2->pos[VX] - seg->SG_v1->pos[VX]) -
@@ -1068,9 +1068,13 @@ void DL_AddLuminous(mobj_t *thing)
             thing->light = DL_NewLuminous();
 
             lum = DL_GetLuminous(thing->light);
-            lum->thing = thing;
+            lum->pos[VX] = FIX2FLT(thing->pos[VX]);
+            lum->pos[VY] = FIX2FLT(thing->pos[VY]);
+            lum->pos[VZ] = FIX2FLT(thing->pos[VZ]);
+            lum->subsector = thing->subsector;
+            lum->halofactor = thing->halofactor;
             lum->patch = lump;
-            lum->center = center;
+            lum->zOff = center;
             lum->xOff = xOff;
             lum->flags = flags;
             lum->flags |= LUMF_CLIPPED;
@@ -1201,8 +1205,8 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
 
     // Calculate distance to line.
     distance =
-        ((line->L_v1->pos[VY] - FIX2FLT(light->lum->thing->pos[VY])) * line->dx -
-         (line->L_v1->pos[VX] - FIX2FLT(light->lum->thing->pos[VX])) * line->dy)
+        ((line->L_v1->pos[VY] - light->lum->pos[VY]) * line->dx -
+         (line->L_v1->pos[VX] - light->lum->pos[VX]) * line->dy)
          / line->length;
 
     if((source == line->L_frontsector && distance < 0) ||
@@ -1249,16 +1253,16 @@ static void DL_FindContacts(lumobj_t *lum)
     static uint numSpreads = 0, numFinds = 0;
 
     // Do the sector spread. Begin from the light's own sector.
-    lum->thing->subsector->sector->validcount = validcount;
+    lum->subsector->sector->validcount = validcount;
 
     light.lum = lum;
     light.firstValid = firstValid;
-    light.box[BOXTOP]    = lum->thing->pos[VY] + radius;
-    light.box[BOXBOTTOM] = lum->thing->pos[VY] - radius;
-    light.box[BOXRIGHT]  = lum->thing->pos[VX] + radius;
-    light.box[BOXLEFT]   = lum->thing->pos[VX] - radius;
+    light.box[BOXTOP]    = FLT2FIX(lum->pos[VY]) + radius;
+    light.box[BOXBOTTOM] = FLT2FIX(lum->pos[VY]) - radius;
+    light.box[BOXRIGHT]  = FLT2FIX(lum->pos[VX]) + radius;
+    light.box[BOXLEFT]   = FLT2FIX(lum->pos[VX]) - radius;
 
-    DL_ContactSector(lum, light.box, lum->thing->subsector->sector);
+    DL_ContactSector(lum, light.box, lum->subsector->sector);
 
     xl = (light.box[BOXLEFT]   - bmaporgx) >> MAPBLOCKSHIFT;
     xh = (light.box[BOXRIGHT]  - bmaporgx) >> MAPBLOCKSHIFT;
@@ -1381,8 +1385,8 @@ static void DL_LinkLuminous(void)
 
         // Link this lumobj to the dlBlockLinks, if it can be linked.
         lum->next = NULL;
-        bx = X_TO_DLBX(lum->thing->pos[VX]);
-        by = Y_TO_DLBY(lum->thing->pos[VY]);
+        bx = X_TO_DLBX(FLT2FIX(lum->pos[VX]));
+        by = Y_TO_DLBY(FLT2FIX(lum->pos[VY]));
 
         if(bx >= 0 && by >= 0 && bx < dlBlockWidth && by < dlBlockHeight)
         {
@@ -1392,7 +1396,7 @@ static void DL_LinkLuminous(void)
         }
 
         // Link this lumobj into its subsector (always possible).
-        root = dlSubLinks + GET_SUBSECTOR_IDX(lum->thing->subsector);
+        root = dlSubLinks + GET_SUBSECTOR_IDX(lum->subsector);
         lum->ssNext = *root;
         *root = lum;
     }
@@ -1432,12 +1436,12 @@ static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
     float       s[2], t[2];
     float       pos[3];
 
-    pos[VX] = FIX2FLT(lum->thing->pos[VX]);
-    pos[VY] = FIX2FLT(lum->thing->pos[VY]);
-    pos[VZ] = FIX2FLT(lum->thing->pos[VZ]);
+    pos[VX] = lum->pos[VX];
+    pos[VY] = lum->pos[VY];
+    pos[VZ] = lum->pos[VZ];
 
     // Center the Z.
-    pos[VZ] += lum->center;
+    pos[VZ] += lum->zOff;
     srcRadius = lum->radius / 4;
     if(srcRadius == 0)
         srcRadius = 1;
@@ -1616,7 +1620,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
 
         if(haloMode)
         {
-            if(lum->thing->subsector == ssec)
+            if(lum->subsector == ssec)
                 lum->flags |= LUMF_RENDERED;
         }
 
@@ -1725,8 +1729,8 @@ boolean DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,
     isDone = false;
     while(con && !isDone)
     {
-        dist = P_ApproxDistance(con->lum->thing->pos[VX] - x,
-                                con->lum->thing->pos[VY] - y);
+        dist = P_ApproxDistance(FLT2FIX(con->lum->pos[VX]) - x,
+                                FLT2FIX(con->lum->pos[VY]) - y);
 
         if(dist <= radius && !func(con->lum, dist, data))
         {
@@ -1756,9 +1760,8 @@ void DL_ClipInSubsector(uint ssecidx)
 
         // FIXME: Determine the exact centerpoint of the light in
         // DL_AddLuminous!
-        if(!C_IsPointVisible
-           (FIX2FLT(lumi->thing->pos[VX]), FIX2FLT(lumi->thing->pos[VY]),
-            FIX2FLT(lumi->thing->pos[VZ]) + lumi->center))
+        if(!C_IsPointVisible(lumi->pos[VX], lumi->pos[VY],
+                             lumi->pos[VZ] + lumi->zOff))
             lumi->flags |= LUMF_CLIPPED;    // Won't have a halo.
     }
 }
@@ -1796,8 +1799,7 @@ void DL_ClipBySight(uint ssecidx)
                 // Ignore segs facing the wrong way.
                 if(seg->frameflags & SEGINF_FACINGFRONT)
                 {
-                    V2_Set(source, FIX2FLT(lumi->thing->pos[VX]),
-                           FIX2FLT(lumi->thing->pos[VY]));
+                    V2_Set(source, lumi->pos[VX], lumi->pos[VY]);
 
                     if(V2_Intercept2(source, eye, seg->SG_v1->pos,
                                      seg->SG_v2->pos, NULL, NULL, NULL))

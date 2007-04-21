@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,8 +39,7 @@ enum {
     VSPR_MASKED_WALL,
     VSPR_MAP_OBJECT,
     VSPR_HUD_MODEL,
-    VSPR_SKY_MODEL,
-    VSPR_PARTICLE_MODEL
+    VSPR_DECORATION
 };
 
 // A vissprite_t is a thing or masked wall that will be drawn during
@@ -49,14 +48,15 @@ typedef struct vissprite_s {
     struct vissprite_s *prev, *next;
     byte            type;          // True if this is a sprite (otherwise a wall segment).
     float           distance;      // Vissprites are sorted by distance.
+    float           center[3];
+    struct lumobj_s *light; // For the halo (NULL if no halo).
 
     // An anonymous union for the data.
     union vissprite_data_u {
         struct vissprite_mobj_s {
             int             patch;
             subsector_t    *subsector;
-            float           gx, gy; // for line side calculation
-            float           gz, gzt;    // global bottom / top for silhouette clipping
+            float           gzt;    // global top for silhouette clipping
             boolean         flip;  // Flip texture?
             float           v1[2], v2[2];   // The vertices (v1 is the left one).
             int             flags; // for color translation and shadow draw
@@ -78,7 +78,6 @@ typedef struct vissprite_s {
             struct modeldef_s *mf, *nextmf;
             float           yaw, pitch; // For models.
             float           inter; // Frame interpolation, 0..1
-            struct lumobj_s *light; // For the halo (NULL if no halo).
             boolean         flooradjust; // Allow moving sprite to match visible floor.
         } mo;
         struct vissprite_wall_s {
@@ -154,8 +153,8 @@ float           R_MovementYaw(fixed_t momx, fixed_t momy);
 float           R_MovementPitch(fixed_t momx, fixed_t momy, fixed_t momz);
 void            R_ProjectSprite(struct mobj_s *thing);
 void            R_ProjectPlayerSprites(void);
-void            R_ProjectDecoration(struct mobj_s *source);
 void            R_SortVisSprites(void);
+vissprite_t    *R_NewVisSprite(void);
 void            R_AddSprites(sector_t *sec);
 void            R_AddPSprites(void);
 void            R_DrawSprites(void);

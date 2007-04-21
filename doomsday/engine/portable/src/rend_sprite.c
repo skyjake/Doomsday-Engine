@@ -53,6 +53,8 @@ typedef struct spritelighterdata_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void Rend_SetupModelParamsForVissprite(modelparams_t *params,
+                                              vissprite_t *spr);
 static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul);
 static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data);
 
@@ -92,7 +94,8 @@ void Rend_SpriteRegister(void)
  */
 void Rend_Draw3DPlayerSprites(void)
 {
-    int     i;
+    int         i;
+    modelparams_t params;
 
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false);
@@ -109,7 +112,9 @@ void Rend_Draw3DPlayerSprites(void)
     {
         if(!vispsprites[i].type)
             continue;           // Not used.
-        Rend_RenderModel(vispsprites + i);
+
+        Rend_SetupModelParamsForVissprite(&params, vispsprites + i);
+        Rend_RenderModel(&params);
     }
 
     // Should we turn the fog back on?
@@ -128,8 +133,8 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
     data.rgb1 = quad->vertices[0].color.rgba;
     data.rgb2 = quad->vertices[1].color.rgba;
 
-    data.viewvec.pos[VX] = spr->data.mo.gx - FIX2FLT(viewx);
-    data.viewvec.pos[VY] = spr->data.mo.gy - FIX2FLT(viewy);
+    data.viewvec.pos[VX] = spr->center[VX] - FIX2FLT(viewx);
+    data.viewvec.pos[VY] = spr->center[VY] - FIX2FLT(viewy);
 
     len = sqrt(data.viewvec.pos[VX] * data.viewvec.pos[VX] +
                data.viewvec.pos[VY] * data.viewvec.pos[VY]);
@@ -137,8 +142,8 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
     {
         data.viewvec.pos[VX] /= len;
         data.viewvec.pos[VY] /= len;
-        DL_RadiusIterator(spr->data.mo.subsector, FLT2FIX(spr->data.mo.gx),
-                          FLT2FIX(spr->data.mo.gy), dlMaxRad << FRACBITS,
+        DL_RadiusIterator(spr->data.mo.subsector, FLT2FIX(spr->center[VX]),
+                          FLT2FIX(spr->center[VY]), dlMaxRad << FRACBITS,
                           &data, Rend_SpriteLighter);
     }
 
@@ -157,7 +162,7 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
             if(glowHeight > glowHeightMax)
                 glowHeight = glowHeightMax;
 
-            len = 1 - (spr->data.mo.gz - spr->data.mo.secfloor) /
+            len = 1 - (spr->center[VZ] - spr->data.mo.secfloor) /
                           glowHeight;
 
             for(v = 0; v < 2; ++v)
@@ -570,6 +575,67 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
     GL_BlendMode(BM_NORMAL);
 }
 
+static void Rend_SetupModelParamsForVissprite(modelparams_t *params,
+                                              vissprite_t *spr)
+{
+    if(!params || !spr)
+        return; // Hmm...
+
+    if(spr->type == VSPR_MAP_OBJECT ||
+       spr->type == VSPR_HUD_MODEL)
+    {
+        params->mf = spr->data.mo.mf;
+        params->nextmf = spr->data.mo.nextmf;
+        params->inter = spr->data.mo.inter;
+        params->alwaysInterpolate = false;
+        params->id = spr->data.mo.id;
+        params->selector = spr->data.mo.selector;
+        params->flags = spr->data.mo.flags;
+        params->center[VX] = spr->center[VX];
+        params->center[VY] = spr->center[VY];
+        params->center[VZ] = spr->center[VZ];
+        params->srvo[VX] = spr->data.mo.visoff[VX];
+        params->srvo[VY] = spr->data.mo.visoff[VY];
+        params->srvo[VZ] = spr->data.mo.visoff[VZ] - spr->data.mo.floorclip;
+        params->gzt = spr->data.mo.gzt;
+        params->distance = spr->distance;
+        params->yaw = spr->data.mo.yaw;
+        params->extraYawAngle = 0;
+        params->yawAngleOffset = spr->data.mo.v2[VX];
+        params->pitch = spr->data.mo.pitch;
+        params->extraPitchAngle = 0;
+        params->pitchAngleOffset = spr->data.mo.v2[VY];
+        params->extraScale = 0;
+        params->subsector = spr->data.mo.subsector;
+
+        params->lightLevel = spr->data.mo.lightlevel;
+        params->starkLight = (spr->type == VSPR_HUD_MODEL);
+
+        params->hasGlow = spr->data.mo.hasglow;
+        params->ceilHeight = spr->data.mo.secceil;
+        params->floorHeight = spr->data.mo.secfloor;
+        params->ceilGlowAmount = spr->data.mo.ceilglowamount;
+        params->floorGlowAmount = spr->data.mo.floorglowamount;
+        params->ceilGlowRGB = spr->data.mo.ceilglow;
+        params->floorGlowRGB = spr->data.mo.floorglow;
+
+        params->rgb[0] = spr->data.mo.rgb[0] / 255.f;
+        params->rgb[1] = spr->data.mo.rgb[1] / 255.f;
+        params->rgb[2] = spr->data.mo.rgb[2] / 255.f;
+        params->uniformColor = false;
+        params->alpha = spr->data.mo.alpha;
+
+        params->viewAligned = spr->data.mo.viewaligned;
+        params->mirror =
+            (spr->type == VSPR_HUD_MODEL && mirrorHudModels != 0);
+
+        params->shineYawOffset = (spr->type == VSPR_HUD_MODEL? -vang : 0);
+        params->shinePitchOffset = (spr->type == VSPR_HUD_MODEL? vpitch + 90 : 0);
+        params->shineTranslateWithViewerPos = false;
+        params->shinepspriteCoordSpace = (spr->type == VSPR_HUD_MODEL);
+    }
+}
+
 /**
  * Render sprites, 3D models, masked wall segments and halos, ordered
  * back to front. Halos are rendered with Z-buffer tests and writes
@@ -582,6 +648,7 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
  */
 void Rend_DrawMasked(void)
 {
+    float       center[3];
     boolean     haloDrawn = false;
     vissprite_t *spr;
 
@@ -600,7 +667,8 @@ void Rend_DrawMasked(void)
                 // Depth writing is once again needed.
                 Rend_RenderMaskedWall(spr);
             }
-            else // This is a mobj.
+            else if(spr->type == VSPR_MAP_OBJECT ||
+                    spr->type == VSPR_HUD_MODEL)
             {
                 // There might be a model for this sprite, let's see.
                 if(!spr->data.mo.mf)
@@ -618,14 +686,32 @@ void Rend_DrawMasked(void)
                 }
                 else // It's a sprite and it has a modelframe (it's a 3D model).
                 {
-                    Rend_RenderModel(spr);
+                    modelparams_t params;
+
+                    Rend_SetupModelParamsForVissprite(&params, spr);
+                    Rend_RenderModel(&params);
+                }
+            }
+
+            // How about a halo?
+            if(spr->light)
+            {
+                center[VX] = spr->center[VX];
+                center[VY] = spr->center[VY];
+                center[VZ] = spr->center[VZ];
+
+                if(spr->type == VSPR_MAP_OBJECT ||
+                   spr->type == VSPR_HUD_MODEL)
+                {
+                    center[VX] += spr->data.mo.visoff[VX];
+                    center[VY] += spr->data.mo.visoff[VY];
+                    center[VZ] += spr->data.mo.visoff[VZ];
                 }
 
-                // How about a halo?
-                if(spr->data.mo.light)
-                {
-                    haloDrawn = H_RenderHalo(spr, true);
-                }
+                if(H_RenderHalo(center[VX], center[VY], center[VZ],
+                                spr->light, true) &&
+                   !haloDrawn)
+                    haloDrawn = true;
             }
         }
 
@@ -638,8 +724,23 @@ void Rend_DrawMasked(void)
             for(spr = vsprsortedhead.next; spr != &vsprsortedhead;
                 spr = spr->next)
             {
-                if(spr->type && spr->data.mo.light)
-                    H_RenderHalo(spr, false);
+                if(spr->light)
+                {
+                    center[VX] = spr->center[VX];
+                    center[VY] = spr->center[VY];
+                    center[VZ] = spr->center[VZ];
+
+                    if(spr->type == VSPR_MAP_OBJECT ||
+                       spr->type == VSPR_HUD_MODEL)
+                    {
+                        center[VX] += spr->data.mo.visoff[VX];
+                        center[VY] += spr->data.mo.visoff[VY];
+                        center[VZ] += spr->data.mo.visoff[VZ];
+                    }
+
+                    H_RenderHalo(center[VX], center[VY], center[VZ],
+                                 spr->light, false);
+                }
             }
 
             // And we're done...
@@ -670,8 +771,8 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
         return false;           // No point in continuing, light is already white.
 
     zfactor =
-        (slData->spr->data.mo.gz + slData->spr->data.mo.gzt / 2 -
-         (FIX2FLT(lum->thing->pos[VZ]) + lum->center)) / dlMaxRad;
+        (slData->spr->center[VZ] + slData->spr->data.mo.gzt / 2 -
+         (lum->pos[VZ] + lum->zOff)) / dlMaxRad;
 
     // Round out the "shape" of light to be more spherical.
     zfactor *= 8;
@@ -687,8 +788,8 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
     if(zfactor > 1)
         zfactor = 1;
 
-    lightVec.pos[VX]  = slData->spr->data.mo.gx - FIX2FLT(lum->thing->pos[VX]);
-    lightVec.pos[VY]  = slData->spr->data.mo.gy - FIX2FLT(lum->thing->pos[VY]);
+    lightVec.pos[VX]  = slData->spr->center[VX] - lum->pos[VX];
+    lightVec.pos[VY]  = slData->spr->center[VY] - lum->pos[VY];
     lightVec.pos[VX] /= fdist;
     lightVec.pos[VY] /= fdist;
 
@@ -846,8 +947,8 @@ void Rend_RenderSprite(vissprite_t *spr)
         float lightLevel = spr->data.mo.lightlevel;
         // Note: light adaptation has already been applied.
 
-        v1[VX] = spr->data.mo.gx;
-        v1[VY] = spr->data.mo.gy;
+        v1[VX] = spr->center[VX];
+        v1[VY] = spr->center[VY];
 
         tempquad = R_AllocRendPoly(RP_NONE, false, 2);
 
@@ -897,8 +998,8 @@ void Rend_RenderSprite(vissprite_t *spr)
     // Do we need to do some aligning?
     if(spr->data.mo.viewaligned || alwaysAlign >= 2)
     {
-        float   centerx = spr->data.mo.gx;
-        float   centery = spr->data.mo.gy;
+        float   centerx = spr->center[VX];
+        float   centery = spr->center[VY];
         float   centerz = (top + bot) * .5f;
 
         // We must set up a modelview transformation matrix.

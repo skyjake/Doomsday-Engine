@@ -46,7 +46,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct decorsource_s {
-    mobj_t  thing;
+    uint        light;
+    float       pos[3];
     struct decorsource_s *next;
 } decorsource_t;
 
@@ -122,6 +123,25 @@ static void Rend_ClearDecorations(void)
     sourceCursor = sourceFirst;
 }
 
+static void R_ProjectDecoration(decorsource_t *source)
+{
+    float   v1[2];
+    vissprite_t *vis;
+
+    // Calculate edges of the shape.
+    v1[VX] = source->pos[VX];
+    v1[VY] = source->pos[VY];
+
+    vis = R_NewVisSprite();
+    memset(vis, 0, sizeof(*vis));
+    vis->type = VSPR_DECORATION;
+    vis->distance = Rend_PointDist2D(v1);
+    vis->light = DL_GetLuminous(source->light);
+    vis->center[VX] = source->pos[VX];
+    vis->center[VY] = source->pos[VY];
+    vis->center[VZ] = source->pos[VZ];
+}
+
 /**
  * Project all the non-clipped decorations. They become regular vissprites.
  * This is needed for rendering halos.
@@ -136,13 +156,13 @@ void Rend_ProjectDecorations(void)
 
     for(src = sourceFirst; src != sourceCursor; src = src->next)
     {
-        lumobj_t *lum = DL_GetLuminous(src->thing.light);
+        lumobj_t *lum = DL_GetLuminous(src->light);
 
         // Clipped sources don't get halos.
         if(lum->flags & LUMF_CLIPPED || lum->flareSize <= 0)
             continue;
 
-        R_ProjectDecoration(&src->thing);
+        R_ProjectDecoration(src);
     }
 }
 
@@ -175,7 +195,6 @@ static decorsource_t *Rend_NewLightDecorationSource(void)
     {
         // There are old sources to use.
         src = sourceCursor;
-        memset(&src->thing, 0, sizeof(src->thing));
 
         // Advance the cursor.
         sourceCursor = sourceCursor->next;
@@ -241,20 +260,18 @@ static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
     if(!(source = Rend_NewLightDecorationSource()))
         return;                 // Out of sources!
 
-    // Initialize the essentials in the dummy mobj.
-    source->thing.pos[VX] = pos[VX] * FRACUNIT;
-    source->thing.pos[VY] = pos[VY] * FRACUNIT;
-    source->thing.pos[VZ] = pos[VZ] * FRACUNIT;
-    source->thing.ddflags = DDMF_ALWAYSLIT;
-    source->thing.halofactor = 0xff;    // Assumed visible.
-    source->thing.subsector =
-        R_PointInSubsector(source->thing.pos[VX], source->thing.pos[VY]);
-
     // Fill in the data for a new luminous object.
-    source->thing.light = DL_NewLuminous();
-    lum = DL_GetLuminous(source->thing.light);
-    lum->thing = &source->thing;
-    lum->center = 0;
+    source->light = DL_NewLuminous();
+    source->pos[VX] = pos[VX];
+    source->pos[VY] = pos[VY];
+    source->pos[VZ] = pos[VZ];
+    lum = DL_GetLuminous(source->light);
+    lum->pos[VX] = source->pos[VX];
+    lum->pos[VY] = source->pos[VY];
+    lum->pos[VZ] = source->pos[VZ];
+    lum->subsector = R_PointInSubsector(FLT2FIX(lum->pos[VX]), FLT2FIX(lum->pos[VY]));
+    lum->halofactor = 0xff; // Assumed visible.
+    lum->zOff = 0;
     lum->flags = LUMF_CLIPPED;
     lum->tex = def->sides.tex;
     lum->ceilTex = def->up.tex;
@@ -297,9 +314,9 @@ static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
 
     // Approximate the distance.
     lum->distance =
-        P_ApproxDistance3(source->thing.pos[VX] - viewx,
-                          source->thing.pos[VY] - viewy,
-                          source->thing.pos[VZ] - viewz);
+        P_ApproxDistance3(FLT2FIX(lum->pos[VX]) - viewx,
+                          FLT2FIX(lum->pos[VY]) - viewy,
+                          FLT2FIX(lum->pos[VZ]) - viewz);
 }
 
 /**
