@@ -87,8 +87,8 @@ struct surface
     -       float       oldoffx
     FLOAT   float       offy	// Texture y offset
     -       float       oldoffy
-    BYTE    byte[4]     rgba    // Surface color tint
-    -       byte[4]     oldrgba
+    FLOAT   float[4]    rgba    // Surface color tint
+    -       float[4]    oldrgba
     -       translation_s* xlat
 end
 
@@ -109,7 +109,7 @@ struct plane
     -       float[2]    oldheight
     -       surface_t   surface
     FLOAT   float       glow    // Glow amount
-    BYTE    byte[3]     glowrgb // Glow color
+    FLOAT   float[3]    glowrgb // Glow color
     FLOAT   float       target  // Target height
     FLOAT   float       speed   // Move speed
     PTR     degenmobj_t soundorg // Sound origin for plane
@@ -174,8 +174,8 @@ end
 struct sector
     FLOAT   float       lightlevel
     -       float       oldlightlevel
-    BYTE    byte[3]     rgb
-    -       byte[3]     oldrgb
+    FLOAT   float[3]    rgb
+    -       float[3]    oldrgb
     INT     int         validcount  // if == validcount, already checked.
     PTR     mobj_s*     thinglist   // List of mobjs in the sector.
     UINT    uint        linecount   

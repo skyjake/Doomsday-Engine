@@ -35,7 +35,7 @@ void            LG_Register(void);
 void            LG_Init(void);
 void            LG_SectorChanged(sector_t *sector);
 void            LG_Update(void);
-void            LG_Evaluate(const float *point, byte *color);
+void            LG_Evaluate(const float *point, float *color);
 void            LG_Debug(void);
 
 #endif

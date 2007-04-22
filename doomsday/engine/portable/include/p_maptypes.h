@@ -91,8 +91,8 @@ typedef struct surface_s {
     float               oldoffx;
     float               offy;          // Texture y offset
     float               oldoffy;
-    byte                rgba[4];       // Surface color tint
-    byte                oldrgba[4];
+    float               rgba[4];       // Surface color tint
+    float               oldrgba[4];
     struct translation_s* xlat;
 } surface_t;
 
@@ -112,7 +112,7 @@ typedef struct plane_s {
     float               oldheight[2];
     surface_t           surface;
     float               glow;          // Glow amount
-    byte                glowrgb[3];    // Glow color
+    float               glowrgb[3];    // Glow color
     float               target;        // Target height
     float               speed;         // Move speed
     degenmobj_t         soundorg;      // Sound origin for plane
@@ -174,8 +174,8 @@ typedef struct sector_s {
     runtime_mapdata_header_t header;
     float               lightlevel;
     float               oldlightlevel;
-    byte                rgb[3];
-    byte                oldrgb[3];
+    float               rgb[3];
+    float               oldrgb[3];
     int                 validcount;    // if == validcount, already checked.
     struct mobj_s*      thinglist;     // List of mobjs in the sector.
     unsigned int        linecount;

@@ -341,8 +341,8 @@ extern          "C" {
         int             ev_chain;
         int             act_chain;
         int             deact_chain;
-        int        act_linetype;
-        int        deact_linetype;
+        int             act_linetype;
+        int             deact_linetype;
         ded_flags_t     wallsection;
         ded_stringid_t  act_tex;
         ded_stringid_t  deact_tex;

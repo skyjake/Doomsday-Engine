@@ -63,16 +63,16 @@ typedef struct modelparams_s {
     // Lighting/color:
     float       lightLevel; // Light level of the sector the model is in. All modifiers applied (i.e. light adaptation).
     boolean     starkLight;
-    float      *rgb;
+    float       rgb[3];
     boolean     uniformColor;
     float       alpha;
 
     // Glowing planes affecting this model:
     boolean     hasGlow;
     float       ceilGlowAmount, ceilHeight;
-    byte       *ceilGlowRGB;
+    float       ceilGlowRGB[3];
     float       floorGlowAmount, floorHeight;
-    byte       *floorGlowRGB;
+    float       floorGlowRGB[3];
 
     // Shinemaping:
     float       shineYawOffset;

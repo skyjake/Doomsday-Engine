@@ -67,11 +67,11 @@ typedef struct vissprite_s {
             boolean         viewaligned;    // Align to view plane.
             float           secfloor, secceil;
             boolean         hasglow;
-            byte            floorglow[3];   // Floor glow color.
-            byte            ceilglow[3];    // Ceiling glow color.
+            float           floorglow[3];   // Floor glow color.
+            float           ceilglow[3];    // Ceiling glow color.
             float           floorglowamount;
             float           ceilglowamount;
-            byte            rgb[3]; // Sector light color.
+            float           rgb[3]; // Sector light color.
             float           lightlevel;
             float           alpha;
             float           visoff[3];  // Last-minute offset to coords.

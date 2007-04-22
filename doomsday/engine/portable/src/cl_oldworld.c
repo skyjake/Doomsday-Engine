@@ -111,39 +111,39 @@ int Cl_ReadSectorDelta(void)
         sec->SP_ceiltexmove[1] = FIX2FLT(Msg_ReadShort() << 8);
     }
     if(df & SDF_COLOR_RED)
-        sec->rgb[0] = Msg_ReadByte();
+        sec->rgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_COLOR_GREEN)
-        sec->rgb[1] = Msg_ReadByte();
+        sec->rgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_COLOR_BLUE)
-        sec->rgb[2] = Msg_ReadByte();
+        sec->rgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        sec->SP_floorrgb[0] = Msg_ReadByte();
+        sec->SP_floorrgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->SP_floorrgb[1] = Msg_ReadByte();
+        sec->SP_floorrgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->SP_floorrgb[2] = Msg_ReadByte();
+        sec->SP_floorrgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_CEIL_COLOR_RED)
-        sec->SP_ceilrgb[0] = Msg_ReadByte();
+        sec->SP_ceilrgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_CEIL_COLOR_GREEN)
-        sec->SP_ceilrgb[1] = Msg_ReadByte();
+        sec->SP_ceilrgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_CEIL_COLOR_BLUE)
-        sec->SP_ceilrgb[2] = Msg_ReadByte();
+        sec->SP_ceilrgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_FLOOR_GLOW_RED)
-        sec->SP_floorglowrgb[0] = Msg_ReadByte();
+        sec->SP_floorglowrgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_FLOOR_GLOW_GREEN)
-        sec->SP_floorglowrgb[1] = Msg_ReadByte();
+        sec->SP_floorglowrgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_FLOOR_GLOW_BLUE)
-        sec->SP_floorglowrgb[2] = Msg_ReadByte();
+        sec->SP_floorglowrgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_CEIL_GLOW_RED)
-        sec->SP_ceilglowrgb[0] = Msg_ReadByte();
+        sec->SP_ceilglowrgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_CEIL_GLOW_GREEN)
-        sec->SP_ceilglowrgb[1] = Msg_ReadByte();
+        sec->SP_ceilglowrgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_CEIL_GLOW_BLUE)
-        sec->SP_ceilglowrgb[2] = Msg_ReadByte();
+        sec->SP_ceilglowrgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_FLOOR_GLOW)
         sec->SP_floorglow = (float) (Msg_ReadShort() / DDMAXSHORT);
@@ -212,27 +212,27 @@ Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        sid->SW_toprgba[0] = Msg_ReadByte();
+        sid->SW_toprgba[0] = Msg_ReadByte() / 255.f;
     if(df & SIDF_TOP_COLOR_GREEN)
-        sid->SW_toprgba[1] = Msg_ReadByte();
+        sid->SW_toprgba[1] = Msg_ReadByte() / 255.f;
     if(df & SIDF_TOP_COLOR_BLUE)
-        sid->SW_toprgba[2] = Msg_ReadByte();
+        sid->SW_toprgba[2] = Msg_ReadByte() / 255.f;
 
     if(df & SIDF_MID_COLOR_RED)
-        sid->SW_middlergba[0] = Msg_ReadByte();
+        sid->SW_middlergba[0] = Msg_ReadByte() / 255.f;
     if(df & SIDF_MID_COLOR_GREEN)
-        sid->SW_middlergba[1] = Msg_ReadByte();
+        sid->SW_middlergba[1] = Msg_ReadByte() / 255.f;
     if(df & SIDF_MID_COLOR_BLUE)
-        sid->SW_middlergba[2] = Msg_ReadByte();
+        sid->SW_middlergba[2] = Msg_ReadByte() / 255.f;
     if(df & SIDF_MID_COLOR_ALPHA)
-        sid->SW_middlergba[3] = Msg_ReadByte();
+        sid->SW_middlergba[3] = Msg_ReadByte() / 255.f;
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        sid->SW_bottomrgba[0] = Msg_ReadByte();
+        sid->SW_bottomrgba[0] = Msg_ReadByte() / 255.f;
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        sid->SW_bottomrgba[1] = Msg_ReadByte();
+        sid->SW_bottomrgba[1] = Msg_ReadByte() / 255.f;
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        sid->SW_bottomrgba[2] = Msg_ReadByte();
+        sid->SW_bottomrgba[2] = Msg_ReadByte() / 255.f;
 
     if(df & SIDF_MID_BLENDMODE)
         sid->blendmode = Msg_ReadShort() << 16;

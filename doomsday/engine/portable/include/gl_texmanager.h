@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -131,12 +131,12 @@ void            GL_UpdateGamma(void);
 
 void            GL_LowRes(void);
 void            TranslatePatch(struct patch_s *patch, byte *transTable);
-byte           *GL_LoadImage(image_t * img, const char *imagefn,
+byte           *GL_LoadImage(image_t *img, const char *imagefn,
                              boolean useModelPath);
-byte           *GL_LoadImageCK(image_t * img, const char *imagefn,
+byte           *GL_LoadImageCK(image_t *img, const char *imagefn,
                                boolean useModelPath);
-void            GL_DestroyImage(image_t * img);
-byte           *GL_LoadTexture(image_t * img, char *name);
+void            GL_DestroyImage(image_t *img);
+byte           *GL_LoadTexture(image_t *img, char *name);
 DGLuint         GL_LoadGraphics(const char *name, gfxmode_t mode);
 DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char *name,
                                  gfxmode_t mode, int useMipmap, boolean clamped);
@@ -189,10 +189,10 @@ void            GL_DeleteSprite(int spritelump);
 int             GL_GetSkinTexIndex(const char *skin);
 
 boolean         GL_IsColorKeyed(const char *path);
-void            GL_GetSkyTopColor(int texidx, byte *rgb);
+void            GL_GetSkyTopColor(int texidx, float *rgb);
 void            GL_GetSpriteColorf(int pnum, float *rgb);
-void            GL_GetFlatColor(int fnum, unsigned char *rgb);
-void            GL_GetTextureColor(int texid, unsigned char *rgb);
+void            GL_GetFlatColor(int fnum, float *rgb);
+void            GL_GetTextureColor(int texid, float *rgb);
 
 // Part is either 1 or 2. Part 0 means only the left side is loaded.
 // No splittex is created in that case. Once a raw image is loaded
@@ -207,8 +207,8 @@ unsigned int    GL_GetTextureName(int texidx);
 void            GL_DeleteTexture(int texidx);
 
 // Load the skin texture and prepare it for rendering.
-unsigned int    GL_PrepareSkin(model_t * mdl, int skin);
-unsigned int    GL_PrepareShinySkin(modeldef_t * md, int sub);
+unsigned int    GL_PrepareSkin(model_t *mdl, int skin);
+unsigned int    GL_PrepareShinySkin(modeldef_t *md, int sub);
 
 // Loads the shiny texture and the mask texture, if they aren't yet loaded.
 boolean         GL_LoadReflectionMap(ded_reflection_t *ref);

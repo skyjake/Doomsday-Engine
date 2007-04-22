@@ -26,18 +26,18 @@
 #define DMT_SURFACE_TEXMOVE DDVT_FLOAT // Texture movement X and Y
 #define DMT_SURFACE_OFFX DDVT_FLOAT    // Texture x offset
 #define DMT_SURFACE_OFFY DDVT_FLOAT    // Texture y offset
-#define DMT_SURFACE_RGBA DDVT_BYTE     // Surface color tint
+#define DMT_SURFACE_RGBA DDVT_FLOAT    // Surface color tint
 
 #define DMT_PLANE_HEIGHT DDVT_FLOAT    // Current height
 #define DMT_PLANE_GLOW DDVT_FLOAT      // Glow amount
-#define DMT_PLANE_GLOWRGB DDVT_BYTE    // Glow color
+#define DMT_PLANE_GLOWRGB DDVT_FLOAT   // Glow color
 #define DMT_PLANE_TARGET DDVT_FLOAT    // Target height
 #define DMT_PLANE_SPEED DDVT_FLOAT     // Move speed
 #define DMT_PLANE_SOUNDORG DDVT_PTR    // Sound origin for plane
 #define DMT_PLANE_SECTOR DDVT_PTR      // Owner of the plane (temp)
 
 #define DMT_SECTOR_LIGHTLEVEL DDVT_FLOAT
-#define DMT_SECTOR_RGB DDVT_BYTE
+#define DMT_SECTOR_RGB DDVT_FLOAT
 #define DMT_SECTOR_VALIDCOUNT DDVT_INT // if == validcount, already checked.
 #define DMT_SECTOR_THINGLIST DDVT_PTR  // List of mobjs in the sector.
 #define DMT_SECTOR_LINECOUNT DDVT_UINT

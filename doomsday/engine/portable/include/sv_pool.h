@@ -255,7 +255,7 @@ typedef struct {
 typedef struct {
     short           texture;
     boolean         isflat;
-    byte            rgba[4];       // Surface color tint
+    float           rgba[4];       // Surface color tint
     float           texmove[2];    // Texture movement X and Y.
 } dt_surface_t;
 
@@ -265,12 +265,12 @@ typedef struct {
     float           target;        // Target height.
     float           speed;         // Move speed.
     float           glow;          // Glow amount.
-    byte            glowrgb[3];    // Glow color.
+    float           glowrgb[3];    // Glow color.
 } dt_plane_t;
 
 typedef struct {
     float           lightlevel;
-    byte            rgb[3];
+    float           rgb[3];
     uint            planecount;
     dt_plane_t      planes[2];
 } dt_sector_t;

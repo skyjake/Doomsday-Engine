@@ -562,39 +562,39 @@ if(num >= numsectors)
         }
     }
     if(df & SDF_COLOR_RED)
-        sec->rgb[0] = Msg_ReadByte();
+        sec->rgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_COLOR_GREEN)
-        sec->rgb[1] = Msg_ReadByte();
+        sec->rgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_COLOR_BLUE)
-        sec->rgb[2] = Msg_ReadByte();
+        sec->rgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        sec->SP_floorrgb[0] = Msg_ReadByte();
+        sec->SP_floorrgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->SP_floorrgb[1] = Msg_ReadByte();
+        sec->SP_floorrgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->SP_floorrgb[2] = Msg_ReadByte();
+        sec->SP_floorrgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_CEIL_COLOR_RED)
-        sec->SP_ceilrgb[0] = Msg_ReadByte();
+        sec->SP_ceilrgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_CEIL_COLOR_GREEN)
-        sec->SP_ceilrgb[1] = Msg_ReadByte();
+        sec->SP_ceilrgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_CEIL_COLOR_BLUE)
-        sec->SP_ceilrgb[2] = Msg_ReadByte();
+        sec->SP_ceilrgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_FLOOR_GLOW_RED)
-        sec->planes[PLN_FLOOR]->glowrgb[0] = Msg_ReadByte();
+        sec->planes[PLN_FLOOR]->glowrgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_FLOOR_GLOW_GREEN)
-        sec->planes[PLN_FLOOR]->glowrgb[1] = Msg_ReadByte();
+        sec->planes[PLN_FLOOR]->glowrgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_FLOOR_GLOW_BLUE)
-        sec->planes[PLN_FLOOR]->glowrgb[2] = Msg_ReadByte();
+        sec->planes[PLN_FLOOR]->glowrgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_CEIL_GLOW_RED)
-        sec->planes[PLN_CEILING]->glowrgb[0] = Msg_ReadByte();
+        sec->planes[PLN_CEILING]->glowrgb[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_CEIL_GLOW_GREEN)
-        sec->planes[PLN_CEILING]->glowrgb[1] = Msg_ReadByte();
+        sec->planes[PLN_CEILING]->glowrgb[1] = Msg_ReadByte() / 255.f;
     if(df & SDF_CEIL_GLOW_BLUE)
-        sec->planes[PLN_CEILING]->glowrgb[2] = Msg_ReadByte();
+        sec->planes[PLN_CEILING]->glowrgb[2] = Msg_ReadByte() / 255.f;
 
     if(df & SDF_FLOOR_GLOW)
         sec->planes[PLN_FLOOR]->glow = (float) Msg_ReadShort() / DDMAXSHORT;
@@ -634,9 +634,9 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     int         df, toptexture = 0, midtexture = 0, bottomtexture = 0;
     int         blendmode = 0;
     byte        lineFlags = 0, sideFlags = 0;
-    byte        toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
-    byte        bottomrgb[3] = {0,0,0};
-    side_t  *sid;
+    float       toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
+    float       bottomrgb[3] = {0,0,0};
+    side_t     *sid;
 
     // First read all the data.
     num = Msg_ReadShort();

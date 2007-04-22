@@ -1812,6 +1812,7 @@ static void allocateMapData(gamemap_t *map)
     for(k = 0; k < map->numsides; ++k)
     {
         side_t     *side = &map->sides[k];
+        uint        c;
 
         side->header.type = DMU_SIDE;
         side->SW_topsurface.header.type = DMU_SURFACE;
@@ -1820,9 +1821,12 @@ static void allocateMapData(gamemap_t *map)
         side->SW_topflags = 0;
         side->SW_bottomflags = 0;
         side->SW_middleflags = 0;
-        memset(side->SW_toprgba, 0xff, 3);
-        memset(side->SW_middlergba, 0xff, 4);
-        memset(side->SW_bottomrgba, 0xff, 3);
+        for(c = 0; c < 4; ++c)
+        {
+            side->SW_toprgba[c] = 1;
+            side->SW_middlergba[c] = 1;
+            side->SW_bottomrgba[c] = 1;
+        }
         side->blendmode = BM_NORMAL;
         side->SW_topsurface.isflat = side->SW_topsurface.oldisflat = false;
         side->SW_middlesurface.isflat = side->SW_middlesurface.oldisflat = false;
@@ -1864,14 +1868,15 @@ static void allocateMapData(gamemap_t *map)
                             PU_LEVELSTATIC, 0);
     for(k = 0; k < map->numsectors; ++k)
     {
-        uint        j;
+        uint        j, c;
         sector_t   *sec = &map->sectors[k];
         plane_t    *planes;
 
         sec->header.type = DMU_SECTOR;
         sec->subscount = 0;
         sec->thinglist = NULL;
-        memset(sec->rgb, 0xff, 3);
+        for(j = 0;  j < 3; ++j)
+            sec->rgb[j] = 1;
 
         sec->planecount = 2;
         sec->planes = Z_Malloc(sizeof(plane_t*) * sec->planecount, PU_LEVEL, 0);
@@ -1881,7 +1886,8 @@ static void allocateMapData(gamemap_t *map)
         for(j = 0; j < sec->planecount; ++j, planes++)
         {
             planes->header.type = DMU_PLANE;
-            memset(planes->glowrgb, 0xff, 3);
+            for(c = 0; c < 3; ++c)
+                planes->glowrgb[c] = 1;
             planes->glow = 0;
             planes->height = 0;
 
@@ -1891,7 +1897,8 @@ static void allocateMapData(gamemap_t *map)
             planes->surface.header.type = DMU_SURFACE;
             planes->surface.isflat = true;
             planes->surface.oldisflat = true;
-            memset(planes->surface.rgba, 0xff, 3);
+            for(c = 0; c < 4; ++c)
+                planes->surface.rgba[c] = 1;
             planes->surface.flags = 0;
             planes->surface.offx = planes->surface.offy = 0;
 
@@ -2153,6 +2160,7 @@ static uint unpackSideDefs(gamemap_t *map)
         for(i = 0; i < count; ++i)
         {
             side_t     *side = &newSides[i];
+            uint        c;
 
             side->header.type = DMU_SIDE;
             side->SW_topsurface.header.type = DMU_SURFACE;
@@ -2161,9 +2169,12 @@ static uint unpackSideDefs(gamemap_t *map)
             side->SW_topflags = 0;
             side->SW_bottomflags = 0;
             side->SW_middleflags = 0;
-            memset(side->SW_toprgba, 0xff, 3);
-            memset(side->SW_middlergba, 0xff, 4);
-            memset(side->SW_bottomrgba, 0xff, 3);
+            for(c = 0; c < 4; ++c)
+            {
+                side->SW_toprgba[c] = 1;
+                side->SW_middlergba[c] = 1;
+                side->SW_bottomrgba[c] = 1;
+            }
             side->blendmode = BM_NORMAL;
             side->SW_topsurface.isflat = side->SW_topsurface.oldisflat = false;
             side->SW_middlesurface.isflat = side->SW_middlesurface.oldisflat = false;

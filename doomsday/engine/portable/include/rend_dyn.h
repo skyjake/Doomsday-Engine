@@ -54,7 +54,7 @@ typedef struct lumobj_s            // For dynamic lighting.
     int             radius, patch, distance;    // Radius: lights are spheres.
     int             flareSize;     // Radius for this light source.
     byte            halofactor;
-    byte            rgb[3];        // The color.
+    float           rgb[3];        // The color.
     float           xOff;
     float           zOff;          // Offset to center from pos[VZ].
     float           xyScale;       // 1.0 if there's no modeldef.
@@ -76,7 +76,7 @@ typedef struct dynlight_s {
 
     int             flags;
     float           s[2], t[2];
-    byte            color[3];
+    float           color[3];
     DGLuint         texture;
 } dynlight_t;
 

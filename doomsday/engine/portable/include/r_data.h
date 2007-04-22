@@ -231,7 +231,7 @@ typedef struct polyblock_s {
 } polyblock_t;
 
 typedef struct {
-    byte            rgb[3];
+    float           rgb[3];
 } rgbcol_t;
 
 typedef struct {

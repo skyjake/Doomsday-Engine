@@ -529,11 +529,11 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
 /**
  * 'fnum' is really a lump number.
  */
-void GL_GetFlatColor(int fnum, unsigned char *rgb)
+void GL_GetFlatColor(int fnum, float *rgb)
 {
     flat_t     *flat = R_GetFlat(fnum);
 
-    memcpy(rgb, flat->color.rgb, 3);
+    memcpy(rgb, flat->color.rgb, sizeof(float) * 3);
 }
 
 /**
@@ -873,21 +873,22 @@ void DeSaturate(byte *buffer, byte *palette, int width, int height)
  * The given RGB color is scaled uniformly so that the highest component
  * becomes one.
  */
-static void amplify(byte *rgb)
+static void amplify(float *rgb)
 {
-    int         i, max = 0;
+    int         i;
+    float       max = 0;
 
     for(i = 0; i < 3; ++i)
         if(rgb[i] > max)
             max = rgb[i];
 
-    if(!max || max == 255)
+    if(!max || max == 1)
         return;
 
     if(max)
     {
         for(i = 0; i < 3; ++i)
-            rgb[i] = (byte)(rgb[i] * 255.0f / max);
+            rgb[i] = rgb[i] / max;
     }
 }
 
@@ -899,12 +900,15 @@ void averageColorIdx(rgbcol_t *col, byte *data, int w, int h, byte *palette,
                      boolean hasAlpha)
 {
     int         i;
-    uint        r, g, b, count;
+    uint        count;
     const int   numpels = w * h;
     byte       *alphaStart = data + numpels, rgb[3];
+    float       r, g, b;
 
     // First clear them.
-    memset(col->rgb, 0, sizeof(col->rgb));
+    for(i = 0; i < 3; ++i)
+        col->rgb[i] = 0;
+
     r = g = b = count = 0;
     for(i = 0; i < numpels; ++i)
     {
@@ -912,17 +916,17 @@ void averageColorIdx(rgbcol_t *col, byte *data, int w, int h, byte *palette,
         {
             count++;
             memcpy(rgb, palette + 3 * data[i], 3);
-            r += rgb[0];
-            g += rgb[1];
-            b += rgb[2];
+            r += rgb[0] / 255.f;
+            g += rgb[1] / 255.f;
+            b += rgb[2] / 255.f;
         }
     }
     if(!count)
         return; // Line added by GMJ 22/07/01
 
-    col->rgb[0] = (byte)(r / count);
-    col->rgb[1] = (byte)(g / count);
-    col->rgb[2] = (byte)(b / count);
+    col->rgb[0] = r / count;
+    col->rgb[1] = g / count;
+    col->rgb[2] = b / count;
 
     // Make it glow (average colors are used with flares and dynlights).
     amplify(col->rgb);
@@ -930,23 +934,24 @@ void averageColorIdx(rgbcol_t *col, byte *data, int w, int h, byte *palette,
 
 void averageColorRGB(rgbcol_t *col, byte *data, int w, int h)
 {
-    int         i;
-    const int   numpels = w * h;
-    uint        cumul[3];
+    uint        i;
+    const uint  numpels = w * h;
+    float       cumul[3];
 
     if(!numpels)
         return;
 
-    memset(cumul, 0, sizeof(cumul));
+    for(i = 0; i < 3; ++i)
+        cumul[i] = 0;
     for(i = 0; i < numpels; ++i)
     {
-        cumul[0] += *data++;
-        cumul[1] += *data++;
-        cumul[2] += *data++;
+        cumul[0] += (*data++) / 255.f;
+        cumul[1] += (*data++) / 255.f;
+        cumul[2] += (*data++) / 255.f;
     }
 
     for(i = 0; i < 3; ++i)
-        col->rgb[i] = (byte)(cumul[i] / numpels);
+        col->rgb[i] = cumul[i] / numpels;
 
     amplify(col->rgb);
 }
@@ -1026,12 +1031,16 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
     int     i, k, x, y, c, cnt = 0, poscnt = 0;
     byte    rgb[3], *src, *alphasrc = NULL;
     int     limit = 0xc0, poslimit = 0xe0, collimit = 0xc0;
-    int     average[3], avcnt = 0, lowavg[3], lowcnt = 0;
+    int     avcnt = 0, lowcnt = 0;
     rgbcol_t *sprcol = &slump->color;
+    float   average[3], lowavg[3];
     int     region[4];
 
-    memset(average, 0, sizeof(average));
-    memset(lowavg, 0, sizeof(lowavg));
+    for(i = 0; i < 3; ++i)
+    {
+        average[i] = 0;
+        lowavg[i] = 0;
+    }
     src = buffer;
 
     if(pixelsize == 1)
@@ -1098,13 +1107,13 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
             {
                 avcnt++;
                 for(c = 0; c < 3; ++c)
-                    average[c] += rgb[c];
+                    average[c] += rgb[c] / 255.f;
             }
             else
             {
                 lowcnt++;
                 for(c = 0; c < 3; ++c)
-                    lowavg[c] += rgb[c];
+                    lowavg[c] += rgb[c] / 255.f;
             }
         }
         if(region[1] < width - 1)
@@ -1134,20 +1143,21 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
         if(!lowcnt)
         {
             // Doesn't the thing have any pixels??? Use white light.
-            memset(sprcol->rgb, 0xff, 3);
+            for(c = 0; c < 3; ++c)
+                sprcol->rgb[c] = 1;
         }
         else
         {
             // Low-intensity color average.
             for(c = 0; c < 3; ++c)
-                sprcol->rgb[c] = (byte)(lowavg[c] / lowcnt);
+                sprcol->rgb[c] = lowavg[c] / lowcnt;
         }
     }
     else
     {
         // High-intensity color average.
         for(c = 0; c < 3; ++c)
-            sprcol->rgb[c] = (byte)(average[c] / avcnt);
+            sprcol->rgb[c] = average[c] / avcnt;
     }
 
 #ifdef _DEBUG
@@ -1155,7 +1165,7 @@ void GL_CalcLuminance(int pnum, byte *buffer, int width, int height,
                           "  width %dpx, height %dpx, bits %d\n"
                           "  cell region X[%d, %d] Y[%d, %d]\n"
                           "  flare X= %g Y=%g %s\n"
-                          "  flare RGB[%d, %d, %d] %s\n",
+                          "  flare RGB[%g, %g, %g] %s\n",
                           W_CacheLumpNum(slump->lump, PU_GETNAME),
                           width, height, pixelsize,
                           region[0], region[1], region[2], region[3],

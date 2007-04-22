@@ -53,10 +53,10 @@ void            RL_DeleteLists();
 void            RL_AddPoly(rendpoly_t *poly);
 void            RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly,
                                 float height, subsector_t *subsector,
-                                byte alpha);
+                                float alpha);
 void            RL_VertexColors(rendpoly_t *poly, float lightlevel,
-                                float distanceOverride, const byte *rgb,
-                                byte alpha);
+                                float distanceOverride, const float *rgb,
+                                float alpha);
 void            RL_RenderAllLists();
 
 void            RL_SelectTexUnits(int count);
