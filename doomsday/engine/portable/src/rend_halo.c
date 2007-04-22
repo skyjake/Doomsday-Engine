@@ -211,7 +211,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
         leftoff[i] = viewupvec[i] + viewsidevec[i];
         rightoff[i] = viewupvec[i] - viewsidevec[i];
         // Convert the color to floating point.
-        color[i] = lum->rgb[i] * reciprocal255;
+        color[i] = lum->rgb[i];
     }
 
     // Setup the proper DGL state.

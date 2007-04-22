@@ -274,7 +274,7 @@ void RL_Register(void)
 static void RL_AddMaskedPoly(rendpoly_t *poly)
 {
     vissprite_t *vis = R_NewVisSprite();
-    byte        brightest[3];
+    float       brightest[3];
     dynlight_t *dyn;
     int         i, c;
     float       midpoint[3];
@@ -325,14 +325,14 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
        envModAdd && poly->vertices[0].color.rgba[3] == 255)
     {
         // Choose the brightest light.
-        memcpy(brightest, poly->lights->color, 3);
+        memcpy(brightest, poly->lights->color, sizeof(float) * 3);
         vis->data.wall.light = poly->lights;
         for(dyn = poly->lights->next; dyn; dyn = dyn->next)
         {
             if((brightest[0] + brightest[1] + brightest[2]) / 3 <
                (dyn->color[0] + dyn->color[1] + dyn->color[2]) / 3)
             {
-                memcpy(brightest, dyn->color, 3);
+                memcpy(brightest, dyn->color, sizeof(float) * 3);
                 vis->data.wall.light = dyn;
             }
         }
@@ -353,7 +353,7 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
  *                      the rendpoly to be lit, for each vertex seperately.                     
  */
 void RL_VertexColors(rendpoly_t *poly, float lightlevel,
-                     float distanceOverride, const byte *rgb, byte alpha)
+                     float distanceOverride, const float *rgb, float alpha)
 {
     int         i, num;
     float       light, real, minimum;
@@ -428,17 +428,17 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
         }
         else
         {
-            vtx->color.rgba[0] = (DGLubyte) (rgb[0] * real);
-            vtx->color.rgba[1] = (DGLubyte) (rgb[1] * real);
-            vtx->color.rgba[2] = (DGLubyte) (rgb[2] * real);
+            vtx->color.rgba[0] = (DGLubyte) (255 * rgb[0] * real);
+            vtx->color.rgba[1] = (DGLubyte) (255 * rgb[1] * real);
+            vtx->color.rgba[2] = (DGLubyte) (255 * rgb[2] * real);
         }
 
-        vtx->color.rgba[3] = (DGLubyte) alpha;
+        vtx->color.rgba[3] = (DGLubyte) (255 * alpha);
     }
 }
 
 void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
-                     subsector_t *subsector, byte alpha)
+                     subsector_t *subsector, float alpha)
 {
     int         i, num, vid;
 
@@ -463,23 +463,19 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
     if(!(poly->flags & RPF_SKY_MASK))
     {
         float       sectorlight;
-        const byte *pLightColor;
-        byte        vColor[] = { 0, 0, 0, 0};
+        const float *pLightColor;
+        float       vColor[] = { 0, 0, 0, 0};
         surface_t  *surface = &poly->sector->planes[plane->type]->surface;
 
         sectorlight = Rend_SectorLight(poly->sector);
         pLightColor = R_GetSectorLightColor(poly->sector);
 
         // Calculate the color for each vertex, blended with plane color?
-        if(surface->rgba[0] < 255 ||
-           surface->rgba[1] < 255 ||
-           surface->rgba[2] < 255 )
+        if(surface->rgba[0] < 1 || surface->rgba[1] < 1 || surface->rgba[2] < 1)
         {
             // Blend sector light+color+planecolor
             for(i = 0; i < 3; ++i)
-            {
-                vColor[i] = (byte) (((surface->rgba[i] * reciprocal255)) * pLightColor[i]);
-            }
+                vColor[i] = surface->rgba[i] * pLightColor[i];
 
             RL_VertexColors(poly, sectorlight, -1, vColor, alpha);
         }
@@ -1554,10 +1550,10 @@ static void RL_EndWrite(rendlist_t *list)
 static void RL_WriteDynLight(rendlist_t *list, dynlight_t *dyn, primhdr_t *prim,
                              rendpoly_t *poly)
 {
-    uint    i, num, base;
+    uint        i, c, num, base;
     gl_texcoord_t *tc;
     gl_color_t *col;
-    void   *ptr;
+    void       *ptr;
 
     ptr = RL_AllocateData(list, sizeof(primhdr_t));
     list->last = ptr;
@@ -1588,7 +1584,8 @@ static void RL_WriteDynLight(rendlist_t *list, dynlight_t *dyn, primhdr_t *prim,
     {
         // Each vertex uses the light's color.
         col = &colors[base + i];
-        memcpy(col->rgba, dyn->color, 3);
+        for(c = 0; c < 3; ++c)
+            col->rgba[c] = (byte) (255 * dyn->color[c]);
         col->rgba[3] = 255;
     }
 
@@ -1780,7 +1777,6 @@ void RL_FloatRGB(byte *rgb, float *dest)
 static void RL_DrawPrimitives(int conditions, rendlist_t *list)
 {
     primhdr_t  *hdr;
-    float       color[4];
     boolean     skip, bypass = false;
 
     // Should we just skip all this?
@@ -1834,8 +1830,7 @@ static void RL_DrawPrimitives(int conditions, rendlist_t *list)
                 gl.SetInteger(DGL_ACTIVE_TEXTURE,
                               conditions & DCF_SET_LIGHT_ENV0 ? 0 : 1);
                 RL_Bind(hdr->light->texture);
-                RL_FloatRGB(hdr->light->color, color);
-                gl.SetFloatv(DGL_ENV_COLOR, color);
+                gl.SetFloatv(DGL_ENV_COLOR, hdr->light->color);
                 // Make sure the light is not repeated.
                 gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
                 gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);

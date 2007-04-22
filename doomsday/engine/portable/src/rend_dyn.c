@@ -360,9 +360,9 @@ void DL_ThingRadius(lumobj_t *lum, lightconfig_t *cf)
 }
 #endif
 
-static void DL_ComputeLightColor(lumobj_t *lum, DGLubyte *outRGB, float light)
+static void DL_ComputeLightColor(lumobj_t *lum, float *outRGB, float light)
 {
-    unsigned int i;
+    uint        i;
 
     if(light < 0)
         light = 0;
@@ -378,14 +378,14 @@ static void DL_ComputeLightColor(lumobj_t *lum, DGLubyte *outRGB, float light)
     // Multiply with the light color.
     if(lum->decorMap)
     {   // Decoration maps are pre-colored.
-        light *= 255;
-        memset(outRGB, (DGLubyte) (light), sizeof(DGLubyte) * 3);
+       for(i = 0; i < 3; ++i)
+           outRGB[i] = light;
     }
     else
     {
         for(i = 0; i < 3; ++i)
         {
-            outRGB[i] = (DGLubyte) (light * lum->rgb[i]);
+            outRGB[i] = light * lum->rgb[i];
         }
     }
 }
@@ -464,7 +464,7 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
     dynlight_t *dyn;
     uint        segindex = GET_SEG_IDX(seg);
     boolean     backSide = false;
-    DGLubyte    lumRGB[3];
+    float       lumRGB[3];
     sector_t   *linkSec;
 
     linkSec = R_GetLinkedSector(ssec, PLN_CEILING);
@@ -581,7 +581,7 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
            DL_SegTexCoords(t, top[1], bottom[1], lum))
         {
             dyn = DL_New(s, t);
-            memcpy(dyn->color, lumRGB, sizeof(DGLubyte) * 3);
+            memcpy(dyn->color, lumRGB, sizeof(float) * 3);
             dyn->texture = lum->tex;
 
             DL_LinkToSegSection(dyn, segindex, SEG_MIDDLE);
@@ -592,7 +592,7 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
         if(DL_SegTexCoords(t, fceil, MAX_OF(ffloor, bceil), lum))
         {
             dyn = DL_New(s, t);
-            memcpy(dyn->color, lumRGB, sizeof(DGLubyte) * 3);
+            memcpy(dyn->color, lumRGB, sizeof(float) * 3);
             dyn->texture = lum->tex;
 
             DL_LinkToSegSection(dyn, segindex, SEG_TOP);
@@ -603,7 +603,7 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
         if(DL_SegTexCoords(t, MIN_OF(bfloor, fceil), ffloor, lum))
         {
             dyn = DL_New(s, t);
-            memcpy(dyn->color, lumRGB, sizeof(DGLubyte) * 3);
+            memcpy(dyn->color, lumRGB, sizeof(float) * 3);
             dyn->texture = lum->tex;
 
             DL_LinkToSegSection(dyn, segindex, SEG_BOTTOM);
@@ -688,13 +688,11 @@ static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, segsection_t par
         s[1] = 1;
 
         dyn = DL_New(s, t);
-        memcpy(dyn->color, sect->planes[g]->glowrgb, 3);
-
         dyn->texture = GL_PrepareLSTexture(LST_GRADIENT);
 
         for(i = 0; i < 3; ++i)
         {
-            dyn->color[i] *= dlFactor;
+            dyn->color[i] = sect->planes[g]->glowrgb[i] * dlFactor;
 
             // In fog, additive blending is used. The normal fog color
             // is way too bright.
@@ -1087,7 +1085,7 @@ void DL_AddLuminous(mobj_t *thing)
             lum->flareMul = 1;
             lum->flareSize = flareSize;
             for(i = 0; i < 3; ++i)
-                lum->rgb[i] = (byte) (255 * rgb[i]);
+                lum->rgb[i] = rgb[i];
 
             // Approximate the distance in 3D.
             lum->distance =

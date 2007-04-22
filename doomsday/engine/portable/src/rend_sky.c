@@ -301,14 +301,11 @@ void Rend_SkyRenderer(int hemi)
     }
 }
 
-static void SetupFadeout(skylayer_t * slayer)
+static void SetupFadeout(skylayer_t *slayer)
 {
     int     i;
-    byte    rgb[3];
 
-    GL_GetSkyTopColor(slayer->texture, rgb);
-    for(i = 0; i < 3; ++i)
-        slayer->fadeout.rgb[i] = rgb[i] / 255.0f;
+    GL_GetSkyTopColor(slayer->texture, slayer->fadeout.rgb);
 
     // Determine if it should be used.
     for(slayer->fadeout.use = false, i = 0; i < 3; ++i)

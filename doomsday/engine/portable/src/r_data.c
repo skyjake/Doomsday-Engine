@@ -364,7 +364,8 @@ flat_t *R_FindFlat(int lumpnum)
  */
 flat_t *R_GetFlat(int lumpnum)
 {
-    flat_t *f = 0;
+    uint        c;
+    flat_t     *f = 0;
     flathash_t *hash = 0;
 
     if(lumpnum >= numlumps)
@@ -393,7 +394,8 @@ flat_t *R_GetFlat(int lumpnum)
     // Init the new one.
     f->lump = lumpnum;
     f->translation.current = f->translation.next = lumpnum;
-    memset(f->color.rgb, 0xff, 3);
+    for(c = 0; c < 3; ++c)
+        f->color.rgb[c] = 1;
     return f;
 }
 

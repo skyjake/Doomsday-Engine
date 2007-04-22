@@ -310,7 +310,7 @@ static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
     lum->decorMap = decorMap;
 
     for(i = 0; i < 3; ++i)
-        lum->rgb[i] = (byte) (255 * def->color[i] * fadeMul);
+        lum->rgb[i] = def->color[i] * fadeMul;
 
     // Approximate the distance.
     lum->distance =

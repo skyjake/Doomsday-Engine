@@ -445,33 +445,33 @@ static void R_ApplyPlaneGlowsToVisSprite(vissprite_t *vis, sector_t *sect)
     // Do ceiling.
     if(sect->planes[PLN_CEILING]->glow)
     {
-        memcpy(vis->data.mo.ceilglow, sect->planes[PLN_CEILING]->glowrgb, 3);
-
         for(c = 0; c < 3; ++c)
-            vis->data.mo.ceilglow[c] *= dlFactor;
+            vis->data.mo.ceilglow[c] =
+                sect->planes[PLN_CEILING]->glowrgb[c] * dlFactor;
 
         vis->data.mo.hasglow = true;
         vis->data.mo.ceilglowamount = sect->planes[PLN_CEILING]->glow;
     }
     else
     {
-        memset(vis->data.mo.ceilglow, 0, sizeof(vis->data.mo.ceilglow));
+        for(c = 0; c < 3; ++c)
+            vis->data.mo.ceilglow[c] = 0;
     }
 
     // Do floor.
     if(sect->planes[PLN_FLOOR]->glow)
     {
-        memcpy(vis->data.mo.floorglow, sect->planes[PLN_FLOOR]->glowrgb, 3);
-
         for(c = 0; c < 3; ++c)
-            vis->data.mo.floorglow[c] *= dlFactor;
+            vis->data.mo.floorglow[c] =
+                sect->planes[PLN_FLOOR]->glowrgb[c] * dlFactor;
 
         vis->data.mo.hasglow = true;
         vis->data.mo.floorglowamount = sect->planes[PLN_FLOOR]->glow;
     }
     else
     {
-        memset(vis->data.mo.floorglow, 0, sizeof(vis->data.mo.floorglow));
+        for(c = 0; c < 3; ++c)
+            vis->data.mo.floorglow[c] = 0;
     }
 }
 
@@ -481,12 +481,12 @@ static void R_ApplyPlaneGlowsToVisSprite(vissprite_t *vis, sector_t *sect)
  */
 void R_ProjectPlayerSprites(void)
 {
-    int     i;
-    angle_t ang;
+    int         i;
+    angle_t     ang;
     modeldef_t *mf, *nextmf;
     ddpsprite_t *psp;
     vissprite_t *vis;
-    mobj_t  dummy;
+    mobj_t      dummy;
 
     psp3d = false;
 
@@ -569,7 +569,7 @@ void R_ProjectPlayerSprites(void)
         {
             // Evaluate the position of this player in the light grid.
             // TODO: Should be affected by BIAS sources.
-            float point[3];
+            float       point[3];
 
             point[0] = FIX2FLT(viewplayer->mo->pos[VX]);
             point[1] = FIX2FLT(viewplayer->mo->pos[VY]);
@@ -582,7 +582,8 @@ void R_ProjectPlayerSprites(void)
         else
         {
             memcpy(vis->data.mo.rgb,
-                   R_GetSectorLightColor(viewplayer->mo->subsector->sector), 3);
+                   R_GetSectorLightColor(viewplayer->mo->subsector->sector),
+                   sizeof(float) * 3);
 
             if(psp->light < 1)
             {
@@ -641,20 +642,20 @@ boolean RIT_VisMobjZ(sector_t *sector, void *data)
  */
 void R_ProjectSprite(mobj_t *thing)
 {
-    sector_t *sect = thing->subsector->sector;
-    fixed_t trx, try;
+    sector_t   *sect = thing->subsector->sector;
+    fixed_t     trx, try;
     spritedef_t *sprdef;
     spriteframe_t *sprframe = NULL;
-    int     i, lump;
-    unsigned rot;
-    boolean flip;
+    int         i, lump;
+    unsigned    rot;
+    boolean     flip;
     vissprite_t *vis;
-    angle_t ang;
-    float   v1[2], v2[2];
-    float   sinrv, cosrv, thangle = 0;  // rv = real value
-    boolean align;
+    angle_t     ang;
+    float       v1[2], v2[2];
+    float       sinrv, cosrv, thangle = 0;  // rv = real value
+    boolean     align;
     modeldef_t *mf = NULL, *nextmf = NULL;
-    float   interp = 0, distance;
+    float       interp = 0, distance;
 
     v2[VX] = v2[VY] = 0; // initialize
 
@@ -835,14 +836,13 @@ void R_ProjectSprite(mobj_t *thing)
     }
     else
     {
-        memcpy(vis->data.mo.rgb, R_GetSectorLightColor(sect), 3);
+        memcpy(vis->data.mo.rgb, R_GetSectorLightColor(sect), sizeof(float) * 3);
     }
 
     vis->data.mo.viewaligned = align;
 
     vis->data.mo.secfloor = thing->subsector->sector->SP_floorvisheight;
-
-    vis->data.mo.secceil = thing->subsector->sector->SP_ceilvisheight;
+    vis->data.mo.secceil  = thing->subsector->sector->SP_ceilvisheight;
 
     if(thing->ddflags & DDMF_TRANSLATION)
         vis->data.mo.pclass = (thing->ddflags >> DDMF_CLASSTRSHIFT) & 0x3;

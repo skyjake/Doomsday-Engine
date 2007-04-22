@@ -80,7 +80,7 @@ typedef struct dtexinst_s {
 // Sky texture topline colors.
 typedef struct {
     int     texidx;
-    unsigned char rgb[3];
+    float   rgb[3];
 } skycol_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -92,7 +92,7 @@ D_CMD(ResetTextures);
 D_CMD(MipMap);
 D_CMD(SmoothRaw);
 
-byte   *GL_LoadHighResFlat(image_t * img, char *name);
+byte   *GL_LoadHighResFlat(image_t *img, char *name);
 void    GL_DeleteDetailTexture(detailtex_t * dtex);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -2224,13 +2224,10 @@ void GL_DeleteSprite(int spritelump)
 
 void GL_GetSpriteColorf(int pnum, float *rgb)
 {
-    int i;
-
     if(pnum > numSpriteLumps - 1)
         return;
 
-    for(i=0; i < 3; ++i)
-        rgb[i] = spritelumps[pnum]->color.rgb[i] * reciprocal255;
+    memcpy(rgb, spritelumps[pnum]->color.rgb, sizeof(float) * 3);
 }
 
 /*
@@ -2999,11 +2996,11 @@ DGLuint GL_GetFlatInfo(int idx, boolean translate)
  * @param   texid       The id of the texture.
  * @param   rgb         The dest buffer.
  */
-void GL_GetTextureColor(int texid, unsigned char *rgb)
+void GL_GetTextureColor(int texid, float *rgb)
 {
     texture_t *tex = textures[texid];
 
-    memcpy(rgb, tex->color.rgb, 3);
+    memcpy(rgb, tex->color.rgb, sizeof(float) * 3);
 }
 
 void GL_SetTexture(int idx)
@@ -3050,7 +3047,7 @@ skycol_t *GL_GetSkyColor(int texidx)
 {
     int     i, width, height;
     skycol_t *skycol;
-    byte   *imgdata, *pald;
+    byte   *imgdata, *pald, rgb[3];
 
     if(texidx < 0 || texidx >= numtextures)
         return NULL;
@@ -3069,26 +3066,28 @@ skycol_t *GL_GetSkyColor(int texidx)
     // Calculate the color.
     pald = W_CacheLumpNum(pallump, PU_STATIC);
     GL_BufferSkyTexture(texidx, &imgdata, &width, &height, false);
-    LineAverageRGB(imgdata, width, height, 0, skycol->rgb, pald, false);
+    LineAverageRGB(imgdata, width, height, 0, rgb, pald, false);
+    for(i = 0; i < 3; ++i)
+        skycol->rgb[i] = rgb[i] / 255.f;
     M_Free(imgdata);            // Free the temp buffer created by GL_BufferSkyTexture.
     W_ChangeCacheTag(pallump, PU_CACHE);
     return skycol;
 }
 
-/*
+/**
  * Returns the sky fadeout color of the given texture.
  */
-void GL_GetSkyTopColor(int texidx, byte *rgb)
+void GL_GetSkyTopColor(int texidx, float *rgb)
 {
     skycol_t *skycol = GL_GetSkyColor(texidx);
 
     if(!skycol)
     {
-        // Must be an invalid texture.
-        memset(rgb, 0, 3);      // Default to black.
+        // Must be an invalid texture, default to black.
+        rgb[0] = rgb[1] = rgb[2] = 0;
     }
     else
-        memcpy(rgb, skycol->rgb, 3);
+        memcpy(rgb, skycol->rgb, sizeof(float) * 3);
 }
 
 D_CMD(LowRes)

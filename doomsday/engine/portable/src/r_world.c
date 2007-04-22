@@ -77,7 +77,7 @@ nodeindex_t     *linelinks;         // indices to roots
 static vertex_t *rootVtx; // used when sorting vertex line owners.
 
 static boolean noSkyColorGiven;
-static byte skyColorRGB[4], balancedRGB[4];
+static float skyColorRGB[4], balancedRGB[4];
 static float skyColorBalance;
 static float mapBounds[4];
 
@@ -2003,7 +2003,7 @@ void R_SetupSky(void)
     noSkyColorGiven = true;
     for(i = 0; i < 3; ++i)
     {
-        skyColorRGB[i] = (byte) (255 * mapinfo->sky_color[i]);
+        skyColorRGB[i] = mapinfo->sky_color[i];
         if(mapinfo->sky_color[i] > 0)
             noSkyColorGiven = false;
     }
@@ -2834,7 +2834,7 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
         // TODO: when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
-        memcpy(suf->oldrgba, suf->rgba, 4);
+        memcpy(suf->oldrgba, suf->rgba, sizeof(suf->oldrgba));
     }
 }
 
@@ -2852,7 +2852,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
     {
         sec->frameflags |= SIF_LIGHT_CHANGED;
         sec->oldlightlevel = sec->lightlevel;
-        memcpy(sec->oldrgb, sec->rgb, 3);
+        memcpy(sec->oldrgb, sec->rgb, sizeof(sec->oldrgb));
 
         LG_SectorChanged(sec);
     }
@@ -2883,7 +2883,8 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         else
         {
             plane->glow = 0;
-            memset(plane->glowrgb, 0, 3);
+            for(j = 0; j < 3; ++j)
+                plane->glowrgb[j] = 0;
         }
         // < FIXME
 
@@ -2974,7 +2975,7 @@ const char *R_GetUniqueLevelID(void)
 /**
  * Sector light color may be affected by the sky light color.
  */
-const byte *R_GetSectorLightColor(sector_t *sector)
+const float *R_GetSectorLightColor(sector_t *sector)
 {
     sector_t   *src;
     uint        i;
@@ -3001,7 +3002,7 @@ const byte *R_GetSectorLightColor(sector_t *sector)
         else
         {
             for(i = 0; i < 3; ++i)
-                balancedRGB[i] = (byte) (sector->rgb[i] * skyColorBalance);
+                balancedRGB[i] = sector->rgb[i] * skyColorBalance;
             return balancedRGB;
         }
     }

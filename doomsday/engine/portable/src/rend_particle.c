@@ -569,7 +569,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
         if(rtype == PTC_MODEL && dst->model >= 0)
         {
             int         frame;
-            const byte *slc;
+            const float *slc;
             modelparams_t params;
 
             memset(&params, 0, sizeof(params));
@@ -623,9 +623,9 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 Rend_ApplyLightAdaptation(&params.lightLevel);
             }
             slc = R_GetSectorLightColor(pt->sector);
-            params.rgb[0] = slc[0] / 255.f;
-            params.rgb[1] = slc[1] / 255.f;
-            params.rgb[2] = slc[2] / 255.f;
+            params.rgb[0] = slc[0];
+            params.rgb[1] = slc[1];
+            params.rgb[2] = slc[2];
             params.alpha = color[3];
 
             if(useWallGlow)
@@ -636,11 +636,9 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 // Do ceiling.
                 if(sec && sec->planes[PLN_CEILING]->glow)
                 {
-                    memcpy(params.ceilGlowRGB,
-                           sec->planes[PLN_CEILING]->glowrgb, 3);
-
                     for(c = 0; c < 3; ++c)
-                        params.ceilGlowRGB[c] *= dlFactor;
+                        params.ceilGlowRGB[c] =
+                            sec->planes[PLN_CEILING]->glowrgb[c] * dlFactor;
 
                     params.hasGlow = true;
                     params.ceilGlowAmount = sec->planes[PLN_CEILING]->glow;
@@ -649,11 +647,9 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 // Do floor.
                 if(sec && sec->planes[PLN_FLOOR]->glow)
                 {
-                    memcpy(params.floorGlowRGB,
-                           sec->planes[PLN_FLOOR]->glowrgb, 3);
-
                     for(c = 0; c < 3; ++c)
-                        params.floorGlowRGB[c] *= dlFactor;
+                        params.floorGlowRGB[c] =
+                            sec->planes[PLN_FLOOR]->glowrgb[c] * dlFactor;
 
                     params.hasGlow = true;
                     params.floorGlowAmount = sec->planes[PLN_FLOOR]->glow;

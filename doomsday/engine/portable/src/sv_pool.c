@@ -465,7 +465,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
     sector_t   *sec = SECTOR_PTR(number);
 
     reg->lightlevel = sec->lightlevel;
-    memcpy(reg->rgb, sec->rgb, 3);
+    memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
     // FIXME: $nplanes
     for(i = 0; i < 2; ++i) // number of planes in sector.
     {
@@ -501,9 +501,9 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     reg->bottom.texture = side->SW_bottompic;
     reg->lineFlags = (line ? line->flags & 0xff : 0);
 
-    memcpy(reg->top.rgba, side->SW_toprgba, 3);
-    memcpy(reg->middle.rgba, side->SW_middlergba, 4);
-    memcpy(reg->bottom.rgba, side->SW_bottomrgba, 3);
+    memcpy(reg->top.rgba, side->SW_toprgba, sizeof(reg->top.rgba));
+    memcpy(reg->middle.rgba, side->SW_middlergba, sizeof(reg->middle.rgba));
+    memcpy(reg->bottom.rgba, side->SW_bottomrgba, sizeof(reg->bottom.rgba));
     reg->blendmode = side->blendmode;
     reg->flags = side->flags & 0xff;
 }

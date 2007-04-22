@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -67,7 +67,8 @@ typedef struct gridblock_s {
     char bias;
 
     // Color of the light.
-    byte rgb[3];
+    float rgb[3];
+    float oldrgb[3]; // Used instead of rgb if between change and update.
 
 } gridblock_t;
 
@@ -101,7 +102,7 @@ static int      lgMXSample = 1; // Default is mode 1 (5 samples per block)
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Registers console variables.
  */
 void LG_Register(void)
@@ -117,7 +118,7 @@ void LG_Register(void)
     C_VAR_INT("rend-bias-grid-multisample", &lgMXSample, 0, 0, 7);
 }
 
-/*
+/**
  * Determines if the index (x, y) is in the bitfield.
  */
 static boolean HasIndexBit(int x, int y, uint *bitfield)
@@ -128,7 +129,7 @@ static boolean HasIndexBit(int x, int y, uint *bitfield)
     return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
 }
 
-/*
+/**
  * Sets the index (x, y) in the bitfield.
  * Count is incremented when a zero bit is changed to one.
  */
@@ -144,7 +145,7 @@ static void AddIndexBit(int x, int y, uint *bitfield, int *count)
     bitfield[index >> 5] |= (1 << (index & 0x1f));
 }
 
-/*
+/**
  * Initialize the light grid for the current level.
  */
 void LG_Init(void)
@@ -172,7 +173,7 @@ void LG_Init(void)
     gridblock_t *block;
     int        *sampleResults = 0;
     int         n, size, numSamples, center, best;
-    uint        s;
+    uint        l, s;
     fixed_t     off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 
@@ -541,10 +542,10 @@ void LG_Init(void)
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
-/*
+/**
  * Apply the sector's lighting to the block.
  */
-static void LG_ApplySector(gridblock_t *block, const byte *color, float level,
+static void LG_ApplySector(gridblock_t *block, const float *color, float level,
                            float factor, int bias)
 {
     int         i;
@@ -561,12 +562,12 @@ static void LG_ApplySector(gridblock_t *block, const byte *color, float level,
 
     for(i = 0; i < 3; ++i)
     {
-        int     c = color[i] * level;
-        c = MINMAX_OF(0, c, 255);
+        float    c = color[i] * level;
+        c = MINMAX_OF(0, c, 1);
 
-        if(block->rgb[i] + c > 255)
+        if(block->rgb[i] + c > 1)
         {
-            block->rgb[i] = 255;
+            block->rgb[i] = 1;
         }
         else
         {
@@ -580,12 +581,12 @@ static void LG_ApplySector(gridblock_t *block, const byte *color, float level,
     block->bias = i;
 }
 
-/*
+/**
  * Called when a sector has changed its light level.
  */
 void LG_SectorChanged(sector_t *sector)
 {
-    uint        i;
+    uint        i, j;
     unsigned short n;
 
     if(!lgInited)
@@ -595,9 +596,14 @@ void LG_SectorChanged(sector_t *sector)
     for(i = 0; i < sector->changedblockcount; ++i)
     {
         n = sector->blocks[i];
-        grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
         // The color will be recalculated.
-        memset(grid[n].rgb, 0, 3);
+        if(!(grid[n].flags & GBF_CHANGED))
+            memcpy(grid[n].oldrgb, grid[n].rgb, sizeof(float) * 3);
+
+        for(j = 0; j < 3; ++j)
+            grid[n].rgb[j] = 0;
+
+        grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
     }
     for(; i < sector->blockcount; ++i)
     {
@@ -695,7 +701,7 @@ static boolean LG_BlockNeedsUpdate(int x, int y)
 }
 #endif
 
-/*
+/**
  * Update the grid by finding the strongest light source in each grid
  * block.
  */
@@ -704,7 +710,7 @@ void LG_Update(void)
     gridblock_t *block, *lastBlock, *other;
     int         x, y, a, b;
     sector_t   *sector;
-    const byte *color;
+    const float *color;
     int         bias;
     int         height;
 
@@ -730,7 +736,7 @@ void LG_Update(void)
                 block->flags |= GBF_CHANGED;
 
                 // Clear to zero (will be recalculated).
-                memset(block->rgb, 0, 3);
+                memset(block->rgb, 0, sizeof(float) * 3);
 
                 // Mark contributors.
                 for(b = -2; b <= 2; ++b)
@@ -815,22 +821,21 @@ void LG_Update(void)
     needsUpdate = false;
 }
 
-/*
+/**
  * Calculate the light level for a 3D point in the world.
  *
  * @param point  3D point.
  * @param color  Evaluated color of the point (return value).
  */
-void LG_Evaluate(const float *point, byte *color)
+void LG_Evaluate(const float *point, float *color)
 {
     int         x, y, i;
-    int         dz = 0;
-    float       dimming;
+    float       dz = 0, dimming;
     gridblock_t *block;
 
     if(!lgInited)
     {
-        memset(color, 0, 3);
+        memset(color, 0, sizeof(float) * 3);
         return;
     }
 
@@ -846,28 +851,39 @@ void LG_Evaluate(const float *point, byte *color)
         if(block->bias < 0)
         {
             // Calculate Z difference to the ceiling.
-            dz = (int) (block->sector->SP_ceilheight - point[VZ]);
+            dz = block->sector->SP_ceilheight - point[VZ];
         }
         else if(block->bias > 0)
         {
             // Calculate Z difference to the floor.
-            dz = (int) (point[VZ] - block->sector->SP_floorheight);
+            dz = point[VZ] - block->sector->SP_floorheight;
         }
 
         dz -= 50;
         if(dz < 0)
             dz = 0;
 
-        memcpy(color, block->rgb, 3);
+        if(block->flags & GBF_CHANGED)
+        {   // We are waiting for an updated value, for now use the old.
+            color[0] = block->oldrgb[0];
+            color[1] = block->oldrgb[1];
+            color[2] = block->oldrgb[2];
+        }
+        else
+        {
+            color[0] = block->rgb[0];
+            color[1] = block->rgb[1];
+            color[2] = block->rgb[2];
+        }
     }
 #if 0
     else
     {
         // DEBUG:
         // Bright purple if the block doesn't have a sector.
-        color[0] = 254;
+        color[0] = 1;
         color[1] = 0;
-        color[2] = 254;
+        color[2] = 1;
     }
 #endif
 
@@ -875,9 +891,9 @@ void LG_Evaluate(const float *point, byte *color)
     if(dz && block->bias)
     {
         if(block->bias < 0)
-            dimming = 1 - (dz * -block->bias) / 35000.0f;
+            dimming = 1 - (dz * (float) -block->bias) / 35000.0f;
         else
-            dimming = 1 - (dz * block->bias) / 35000.0f;
+            dimming = 1 - (dz * (float) block->bias) / 35000.0f;
 
         if(dimming < .5f)
             dimming = .5f;
@@ -885,7 +901,7 @@ void LG_Evaluate(const float *point, byte *color)
         for(i = 0; i < 3; ++i)
         {
             // Add the light range compression factor
-            color[i] += 255.0f * Rend_GetLightAdaptVal((float)color[i] / 255.0f);
+            color[i] += Rend_GetLightAdaptVal(color[i]);
 
             // Apply the dimming
             color[i] *= dimming;
@@ -895,20 +911,28 @@ void LG_Evaluate(const float *point, byte *color)
     {
         // Just add the light range compression factor
         for(i = 0; i < 3; ++i)
-            color[i] += 255.0f *Rend_GetLightAdaptVal((float)color[i] / 255.0f);
+            color[i] += Rend_GetLightAdaptVal(color[i]);
     }
 }
 
-/*
+/**
  * Draw the grid in 2D HUD mode.
  */
 void LG_Debug(void)
 {
     gridblock_t *block;
-    int x, y;
+    int         x, y;
+    int         vx, vy;
+    static int  blink = 0;
 
     if(!lgInited || !lgShowDebug)
         return;
+
+    blink++;
+    vx = ((viewplayer->mo->pos[VX] - lgOrigin[VX]) / lgBlockSize) >> FRACBITS;
+    vy = ((viewplayer->mo->pos[VY] - lgOrigin[VY]) / lgBlockSize) >> FRACBITS;
+    vx = MINMAX_OF(1, vx, lgBlockWidth - 2);
+    vy = MINMAX_OF(1, vy, lgBlockHeight - 2);
 
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
@@ -926,7 +950,10 @@ void LG_Debug(void)
             if(!block->sector)
                 continue;
 
-            gl.Color3ubv(block->rgb);
+            if(x == vx && y == vy && (blink & 16))
+                gl.Color3f(1, 0, 0);
+            else
+                gl.Color3fv(block->rgb);
 
             gl.Vertex2f(x * lgDebugSize, y * lgDebugSize);
             gl.Vertex2f(x * lgDebugSize + lgDebugSize, y * lgDebugSize);

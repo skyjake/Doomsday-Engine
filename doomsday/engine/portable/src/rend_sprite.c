@@ -55,8 +55,8 @@ typedef struct spritelighterdata_s {
 
 static void Rend_SetupModelParamsForVissprite(modelparams_t *params,
                                               vissprite_t *spr);
-static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul);
-static boolean Rend_SpriteLighter(lumobj_t * lum, fixed_t dist, void *data);
+static void Rend_ScaledAmbientLight(byte *out, float *ambient, float mul);
+static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -334,9 +334,9 @@ void Rend_DrawPlayerSprites(void)
        }
        else */
     {
-        const byte *secRGB = R_GetSectorLightColor(sec);
-        byte  secbRGB[3];
-        byte  rgba[4];
+        const float *secRGB = R_GetSectorLightColor(sec);
+        float       secbRGB[3];
+        float       rgba[4];
 
         if(useBias)
         {
@@ -356,7 +356,7 @@ void Rend_DrawPlayerSprites(void)
         // Draw as separate sprites.
         for(i = 0; i < DDMAXPSPRITES; ++i)
         {
-            float light;
+            float       light;
 
             if(!info[i].realLump)
                 continue;       // This doesn't exist.
@@ -366,11 +366,13 @@ void Rend_DrawPlayerSprites(void)
 
             if(isFullBright)
             {
-                memset(&rgba, 255, 3);
+                rgba[0] = rgba[1] = rgba[2] = 1;
             }
             else if(useBias)
             {
-                memcpy(&rgba, &secbRGB, 3);
+                rgba[0] = secbRGB[0];
+                rgba[1] = secbRGB[1];
+                rgba[2] = secbRGB[2];
             }
             else
             {
@@ -378,17 +380,17 @@ void Rend_DrawPlayerSprites(void)
 
                 for(c = 0; c < 3; ++c)
                 {
-                    lval = light * (secRGB[c] * reciprocal255);
+                    lval = light * secRGB[c];
 
                     if(lval < 0)
                         lval = 0;
                     if(lval > 1)
                         lval = 1;
 
-                    rgba[c] = (byte) (255.0f * lval);
+                    rgba[c] = lval;
                 }
             }
-            rgba[CA] = psp[i].alpha * 255.0f;
+            rgba[CA] = psp[i].alpha;
 
             RL_VertexColors(tempquad, light, 1, rgba, rgba[CA]);
 
@@ -414,7 +416,6 @@ void Rend_DrawPlayerSprites(void)
  */
 void Rend_RenderMaskedWall(vissprite_t *vis)
 {
-    float       color[4];
     boolean     withDyn = false;
     int         normal, dyn = DGL_TEXTURE1;
 
@@ -438,8 +439,7 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 
         // The dynamic light.
         RL_BindTo(IS_MUL ? 0 : 1, vis->data.wall.light->texture);
-        RL_FloatRGB(vis->data.wall.light->color, color);
-        gl.SetFloatv(DGL_ENV_COLOR, color);
+        gl.SetFloatv(DGL_ENV_COLOR, vis->data.wall.light->color);
 
         // The actual texture.
         RL_BindTo(IS_MUL ? 1 : 0, vis->data.wall.texture);
@@ -616,12 +616,12 @@ static void Rend_SetupModelParamsForVissprite(modelparams_t *params,
         params->floorHeight = spr->data.mo.secfloor;
         params->ceilGlowAmount = spr->data.mo.ceilglowamount;
         params->floorGlowAmount = spr->data.mo.floorglowamount;
-        params->ceilGlowRGB = spr->data.mo.ceilglow;
-        params->floorGlowRGB = spr->data.mo.floorglow;
+        memcpy(params->ceilGlowRGB, spr->data.mo.ceilglow,
+               sizeof(float) * 3);
+        memcpy(params->floorGlowRGB, spr->data.mo.floorglow,
+               sizeof(float) * 3);
 
-        params->rgb[0] = spr->data.mo.rgb[0] / 255.f;
-        params->rgb[1] = spr->data.mo.rgb[1] / 255.f;
-        params->rgb[2] = spr->data.mo.rgb[2] / 255.f;
+        memcpy(params->rgb, spr->data.mo.rgb, sizeof(float) * 3);
         params->uniformColor = false;
         params->alpha = spr->data.mo.alpha;
 
@@ -841,7 +841,7 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
     {
         for(i = 0; i < 3; ++i)
         {
-            temp = slData->rgb1[i] + inleft * lum->rgb[i];
+            temp = slData->rgb1[i] + inleft * (lum->rgb[i] * 255.f);
             if(temp > 0xff)
                 temp = 0xff;
             slData->rgb1[i] = temp;
@@ -851,7 +851,7 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
     {
         for(i = 0; i < 3; ++i)
         {
-            temp = slData->rgb2[i] + inright * lum->rgb[i];
+            temp = slData->rgb2[i] + inright * (lum->rgb[i] * 255.f);
             if(temp > 0xff)
                 temp = 0xff;
             slData->rgb2[i] = temp;
@@ -860,10 +860,10 @@ static boolean Rend_SpriteLighter(lumobj_t *lum, fixed_t dist, void *data)
     return true;
 }
 
-static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul)
+static void Rend_ScaledAmbientLight(byte *out, float *ambient, float mul)
 {
-    int     i;
-    int     val;
+    uint        i;
+    byte        val;
 
     if(mul < 0)
         mul = 0;
@@ -872,7 +872,7 @@ static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul)
 
     for(i = 0; i < 3; ++i)
     {
-        val = ambient[i] * mul;
+        val = (byte) (255 * ambient[i] * mul);
         if(out[i] < val)
             out[i] = val;
     }
@@ -880,13 +880,13 @@ static void Rend_ScaledAmbientLight(byte *out, byte *ambient, float mul)
 
 void Rend_RenderSprite(vissprite_t *spr)
 {
-    int     patch = spr->data.mo.patch;
-    float   bot, top;
-    int     sprh;
-    float   v1[2];
-    DGLubyte alpha;
-    boolean additiveBlending = false, flip, restoreMatrix = false;
-    boolean usingSRVO = false, restoreZ = false;
+    int         patch = spr->data.mo.patch;
+    float       bot, top;
+    int         sprh;
+    float       v1[2];
+    float       alpha;
+    boolean     additiveBlending = false, flip, restoreMatrix = false;
+    boolean     usingSRVO = false, restoreZ = false;
     rendpoly_t *tempquad = NULL;
 
     if(renderTextures == 1)
@@ -919,33 +919,33 @@ void Rend_RenderSprite(vissprite_t *spr)
     {
         if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
         {
-            alpha = 204;            // 80 %.
+            alpha = .8f;            // 80 %.
         }
         else if(spr->data.mo.flags & DDMF_SHADOW)
-            alpha = 51;             // One third.
+            alpha = .333f;             // One third.
         else if(spr->data.mo.flags & DDMF_ALTSHADOW)
-            alpha = 160;            // Two thirds.
+            alpha = .666f;            // Two thirds.
         else
-            alpha = 255;
+            alpha = 1;
 
         // Sprite has a custom alpha multiplier?
         if(spr->data.mo.alpha >= 0)
             alpha *= spr->data.mo.alpha;
     }
     else
-        alpha = 255;
+        alpha = 1;
 
     if(missileBlend && (spr->data.mo.flags & DDMF_BRIGHTSHADOW))
         additiveBlending = true;
 
-    if(spr->data.mo.lightlevel < 0)
+    if(spr->data.mo.lightlevel < 0) // Fullbright.
     {
-        gl.Color4ub(0xff, 0xff, 0xff, alpha);
+        gl.Color4f(1, 1, 1, alpha);
     }
     else
     {
-        float lightLevel = spr->data.mo.lightlevel;
         // Note: light adaptation has already been applied.
+        float       lightLevel = spr->data.mo.lightlevel;
 
         v1[VX] = spr->center[VX];
         v1[VY] = spr->center[VY];
@@ -1054,14 +1054,14 @@ void Rend_RenderSprite(vissprite_t *spr)
         // Change the blending mode.
         gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
     }
-    else if(noSpriteTrans && alpha >= 250)
+    else if(noSpriteTrans && alpha >= .98f)
     {
         // Use the "no translucency" blending mode.
         GL_BlendMode(BM_ZEROALPHA);
     }
 
     // Transparent sprites shouldn't be written to the Z buffer.
-    if(alpha < 250 || additiveBlending)
+    if(alpha < .98f || additiveBlending)
     {
         restoreZ = true;
         gl.Disable(DGL_DEPTH_WRITE);

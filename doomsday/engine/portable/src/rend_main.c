@@ -129,15 +129,15 @@ static boolean firstsubsector;  // No range checking for the first one.
 
 // Wall section colors.
 // With accompanying ptrs to allow for "hot-swapping" (for speed).
-const byte *topColorPtr;
-static byte topColor[3];
-const byte *midColorPtr;
-static byte midColor[3];
-const byte *bottomColorPtr;
-static byte bottomColor[3];
+const float *topColorPtr;
+static float topColor[3];
+const float *midColorPtr;
+static float midColor[3];
+const float *bottomColorPtr;
+static float bottomColor[3];
 
 // Current sector light color.
-const byte *sLightColor;
+const float *sLightColor;
 
 byte devNoTexFix = 0;
 byte devNoLinkedSurfaces = 0;
@@ -538,7 +538,7 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
                 texheight = 64;
             }
 
-            if(!side->blendmode && side->SW_middlergba[3] == 255 && !masked)
+            if(!side->blendmode && side->SW_middlergba[3] >= 1 && !masked)
             {
                 float openTop[2], gapTop[2];
                 float openBottom[2], gapBottom[2];
@@ -629,7 +629,7 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
                 side->frameflags &= ~SIDEINF_MIDDLEPVIS;
 
             // Check alpha
-            if(side->SW_middlergba[3] == 0)
+            if(side->SW_middlergba[3] <= 0)
                 side->frameflags &= ~SIDEINF_MIDDLEPVIS;
 
             // Check Y placement?
@@ -940,14 +940,14 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
  */
 static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
                                    sector_t *frontsec, surface_t *surface,
-                                   segsection_t section, byte alpha, short flags)
+                                   segsection_t section, float alpha, short flags)
 {
     uint        i;
     uint        segIndex = GET_SEG_IDX(seg);
-    const byte *colorPtr = NULL;
-    const byte *color2Ptr = NULL;
+    const float *colorPtr = NULL;
+    const float *color2Ptr = NULL;
 
-    if(alpha == 0)
+    if(alpha <= 0)
         return; // no point rendering transparent polys...
 
     // Select the correct colors for this surface.
@@ -1016,7 +1016,11 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
     if(color2Ptr != NULL)
     {
         for(i=0; i < 2; ++i)
-            memcpy(quad->vertices[i].color.rgba, color2Ptr, 3);
+        {
+            quad->vertices[i].color.rgba[0] = (DGLubyte) (255 * color2Ptr[0]);
+            quad->vertices[i].color.rgba[1] = (DGLubyte) (255 * color2Ptr[1]);
+            quad->vertices[i].color.rgba[2] = (DGLubyte) (255 * color2Ptr[2]);
+        }
     }
 
     // Dynamic lights.
@@ -1066,7 +1070,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
  */
 static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
                                subplaneinfo_t* plane, surface_t *surface,
-                               float height, byte alpha, short flags)
+                               float height, float alpha, short flags)
 {
     uint        subIndex = GET_SUBSECTOR_IDX(subsector);
 
@@ -1121,12 +1125,11 @@ static void Rend_SetSurfaceColorsForSide(side_t *side)
     uint        i;
 
     // Top wall section color offset?
-    if(side->SW_toprgba[0] < 255 || side->SW_toprgba[1] < 255 ||
-       side->SW_toprgba[2] < 255)
+    if(side->SW_toprgba[0] < 1 || side->SW_toprgba[1] < 1 ||
+       side->SW_toprgba[2] < 1)
     {
         for(i = 0; i < 3; ++i)
-            topColor[i] =
-                (byte)(((side->SW_toprgba[i] * reciprocal255)) * sLightColor[i]);
+            topColor[i] = side->SW_toprgba[i] * sLightColor[i];
 
         topColorPtr = topColor;
     }
@@ -1134,12 +1137,11 @@ static void Rend_SetSurfaceColorsForSide(side_t *side)
         topColorPtr = sLightColor;
 
     // Mid wall section color offset?
-    if(side->SW_middlergba[0] < 255 || side->SW_middlergba[1] < 255 ||
-       side->SW_middlergba[2] < 255)
+    if(side->SW_middlergba[0] < 1 || side->SW_middlergba[1] < 1 ||
+       side->SW_middlergba[2] < 1)
     {
         for(i = 0; i < 3; ++i)
-            midColor[i] =
-                (byte)(((side->SW_middlergba[i] * reciprocal255)) * sLightColor[i]);
+            midColor[i] = side->SW_middlergba[i] * sLightColor[i];
 
         midColorPtr = midColor;
     }
@@ -1147,12 +1149,11 @@ static void Rend_SetSurfaceColorsForSide(side_t *side)
         midColorPtr = sLightColor;
 
     // Bottom wall section color offset?
-    if(side->SW_bottomrgba[0] < 255 || side->SW_bottomrgba[1] < 255 ||
-       side->SW_bottomrgba[2] < 255)
+    if(side->SW_bottomrgba[0] < 1 || side->SW_bottomrgba[1] < 1 ||
+       side->SW_bottomrgba[2] < 1)
     {
         for(i = 0; i < 3; ++i)
-            bottomColor[i] =
-                (byte)(((side->SW_bottomrgba[i] * reciprocal255)) * sLightColor[i]);
+            bottomColor[i] = side->SW_bottomrgba[i] * sLightColor[i];
 
         bottomColorPtr = bottomColor;
     }
@@ -1257,7 +1258,7 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
             tempflags |= RPF2_BLEND;
 
         Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_MIDDLE,
-                  /*Alpha*/    255, tempflags);
+                  /*Alpha*/    1, tempflags);
     }
     else
     {
@@ -1379,7 +1380,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         float   rfceil = seg->SG_frontsector->SP_ceilvisheight;
         float  rffloor = seg->SG_frontsector->SP_floorvisheight;
         float   gaptop, gapbottom;
-        byte    alpha = side->SW_middlergba[3];
+        float   alpha = side->SW_middlergba[3];
 
         surface = &side->SW_middlesurface;
         surfaceFlags = Rend_PrepareTextureForPoly(quad, surface);
@@ -1402,7 +1403,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                 if(vTL[VZ] >= gaptop && vBL[VZ] <= gapbottom &&
                    vTR[VZ] >= gaptop && vBR[VZ] <= gapbottom)
                 {
-                    if(!texmask && alpha == 255 && side->blendmode == 0)
+                    if(!texmask && alpha >= 1 && side->blendmode == 0)
                         solidSeg = true; // We could add clipping seg.
 
                     // Can the player walk through this surface?
@@ -1426,16 +1427,16 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 
                             if(distance < (FIX2FLT(mo->radius)*.8f))
                             {
-                                int temp = 0;
+                                float temp = 0;
 
                                 // Fade it out the closer the viewplayer gets.
                                 solidSeg = false;
-                                temp = ((float)alpha / (FIX2FLT(mo->radius)*.8f));
+                                temp = (alpha / (FIX2FLT(mo->radius)*.8f));
                                 temp *= distance;
 
                                 // Clamp it.
-                                if(temp > 255)
-                                    temp = 255;
+                                if(temp > 1)
+                                    temp = 1;
                                 if(temp < 0)
                                     temp = 0;
 
@@ -1452,7 +1453,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                     quad->blendmode = sid->blendmode;
 
                 // If alpha, masked or blended we must render as a vissprite
-                if(alpha < 255 || texmask || side->blendmode > 0)
+                if(alpha < 1 || texmask || side->blendmode > 0)
                     quad->flags = RPF_MASKED;
                 else
                     quad->flags = 0;
@@ -1488,9 +1489,9 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         // Is there a visible surface?
         if(surfaceFlags != -1)
         {
-            byte alpha;
+            float   alpha;
             boolean isVisible = true;
-            float tcyoff;
+            float   tcyoff;
 
             // Calculate texture coordinates.
             quad->texoffx = side->SW_topoffx + seg->offset;
@@ -1540,7 +1541,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                 if(!(ldef->flags & ML_DONTPEGTOP)) // Normal alignment to bottom.
                     quad->texoffy += texh - (fceil - bceil);
 
-                alpha = 255;
+                alpha = 1;
             }
 
             if(vBL[VZ] < ffloor)
@@ -1607,7 +1608,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                 tempflags |= RPF2_BLEND;
 
             Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_BOTTOM,
-                      /*Alpha*/    255, tempflags);
+                      /*Alpha*/    1, tempflags);
         }
     }
 
@@ -1993,7 +1994,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
                 tempflags |= RPF2_BLEND;
 
             Rend_DoRenderPlane(poly, subsector, plane, surface, height,
-                /*Alpha*/      255, tempflags);
+                /*Alpha*/      1, tempflags);
         }
 
         R_FreeRendPoly(poly);

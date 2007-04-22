@@ -154,7 +154,7 @@ static __inline float qatan2(float y, float x)
     //return atan2(y, x);
 }
 
-static void scaleAmbientRgb(float *out, byte *in, float mul)
+static void scaleAmbientRgb(float *out, const float *in, float mul)
 {
     int         i;
     float       val;
@@ -165,14 +165,14 @@ static void scaleAmbientRgb(float *out, byte *in, float mul)
         mul = 1;
     for(i = 0; i < 3; ++i)
     {
-        val = in[i] * mul / 255;
+        val = in[i] * mul;
 
         if(out[i] < val)
             out[i] = val;
     }
 }
 
-static void scaleFloatRgb(float *out, byte *in, float mul)
+static void scaleFloatRgb(float *out, const float *in, float mul)
 {
     memset(out, 0, sizeof(float) * 3);
     scaleAmbientRgb(out, in, mul);
@@ -1020,7 +1020,6 @@ void Rend_RenderModel(const modelparams_t *params)
     int         i;
     float       dist;
     mlight_t   *light;
-    byte        rgb[3];
 
     if(!params || !params->mf)
         return;
@@ -1031,10 +1030,7 @@ void Rend_RenderModel(const modelparams_t *params)
     quad = R_AllocRendPoly(RP_NONE, false, 1);
 
     // Note: Light adaptation has already been applied
-    rgb[0] = params->rgb[0] * 255.f;
-    rgb[1] = params->rgb[1] * 255.f;
-    rgb[2] = params->rgb[2] * 255.f;
-    RL_VertexColors(quad, params->lightLevel, params->distance, rgb, 255);
+    RL_VertexColors(quad, params->lightLevel, params->distance, params->rgb, 1);
 
     // Determine the ambient light affecting the model.
     for(i = 0; i < 3; ++i)
@@ -1087,8 +1083,8 @@ void Rend_RenderModel(const modelparams_t *params)
                 if(glowHeight > glowHeightMax)
                     glowHeight = glowHeightMax;
 
-                if(params->ceilGlowRGB[0] || params->ceilGlowRGB[1] ||
-                   params->ceilGlowRGB[2])
+                if(params->ceilGlowRGB[0] > 0 || params->ceilGlowRGB[1] > 0 ||
+                   params->ceilGlowRGB[2] > 0)
                 {
                     light = lights + numLights++;
                     light->used = true;
@@ -1110,8 +1106,8 @@ void Rend_RenderModel(const modelparams_t *params)
                 if(glowHeight > glowHeightMax)
                     glowHeight = glowHeightMax;
 
-                if(params->floorGlowRGB[0] || params->floorGlowRGB[1] ||
-                   params->floorGlowRGB[2])
+                if(params->floorGlowRGB[0] > 0 || params->floorGlowRGB[1] > 0||
+                   params->floorGlowRGB[2] > 0)
                 {
                     light = lights + numLights++;
                     light->used = true;

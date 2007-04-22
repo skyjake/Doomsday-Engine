@@ -90,7 +90,7 @@ static unsigned int lastChangeOnFrame;
 static biastracker_t trackChanged;
 static biastracker_t trackApplied;
 
-static byte biasColor[3];
+//static float biasColor[3];
 static float biasAmount;
 
 // CODE --------------------------------------------------------------------
@@ -800,29 +800,29 @@ void SB_EndFrame(void)
     SBE_EndFrame();
 }
 
-void SB_AddLight(gl_rgba_t *dest, const byte *color, float howMuch)
+void SB_AddLight(gl_rgba_t *dest, const float *color, float howMuch)
 {
     int         i, newval;
-    byte        amplified[3], largest = 0;
+    float       amplified[3], largest = 0;
 
     if(color == NULL)
     {
         for(i = 0; i < 3; ++i)
         {
-            amplified[i] = dest->rgba[i];
-            if(i == 0 || dest->rgba[i] > largest)
-                largest = dest->rgba[i];
+            amplified[i] = dest->rgba[i] * reciprocal255;
+            if(i == 0 || amplified[i] > largest)
+                largest = amplified[i];
         }
 
         if(largest == 0) // Black!
         {
-            amplified[0] = amplified[1] = amplified[2] = 255;
+            amplified[0] = amplified[1] = amplified[2] = 1;
         }
         else
         {
             for(i = 0; i < 3; ++i)
             {
-                amplified[i] = (byte) (amplified[i] / (float) largest * 255);
+                amplified[i] = amplified[i] / largest;
             }
         }
     }
@@ -830,7 +830,7 @@ void SB_AddLight(gl_rgba_t *dest, const byte *color, float howMuch)
     for(i = 0; i < 3; ++i)
     {
         newval = dest->rgba[i] + (byte)
-            ((color ? color : amplified)[i] * howMuch);
+            (255 * (color ? color : amplified)[i] * howMuch);
 
         if(newval > 255)
             newval = 255;
@@ -889,17 +889,12 @@ void SB_RendPoly(struct rendpoly_s *poly, struct surface_s *surface,
     // with bias lights.
     if(sector->lightlevel > biasMin && biasMax > biasMin)
     {
-        const byte *sectorColor;
-
         biasAmount = (sector->lightlevel - biasMin) / (biasMax - biasMin);
 
         if(biasAmount > 1)
             biasAmount = 1;
 
-        sectorColor = R_GetSectorLightColor(sector);
-
-        for(i = 0; i < 3; ++i)
-            biasColor[i] = sectorColor[i];
+//        memcpy(biasColor, R_GetSectorLightColor(sector), sizeof(float) * 3);
 
 /*            // Planes and the top edge of walls.
             SB_AddLight(&poly->vertices[i].color,
@@ -1043,7 +1038,7 @@ byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
 void SB_AmbientLight(float *point, gl_rgba_t *light)
 {
     // Add grid light (represents ambient lighting).
-    byte        color[3];
+    float       color[3];
 
     LG_Evaluate(point, color);
     SB_AddLight(light, color, 1.0f);
@@ -1096,41 +1091,45 @@ void SB_EvalPoint(gl_rgba_t *light,
 
     // Determine if any of the affecting lights have changed since
     // last frame.
-    for(i = 0, aff = affecting;
-        affectedSources[i].source >= 0 && i < MAX_BIAS_AFFECTED; ++i)
+    aff = affecting;
+    if(numSources > 0)
     {
-        idx = affectedSources[i].source;
-
-        // Is this a valid index?
-        if(idx >= numSources)
-            continue;
-
-        aff->index = idx;
-        //aff->affNum = i;
-        aff->source = &sources[idx];
-        aff->affection = &affectedSources[i];
-        aff->overrider = (aff->source->flags & BLF_COLOR_OVERRIDE) != 0;
-
-        if(SB_TrackerCheck(&trackChanged, idx))
+        for(i = 0;
+            affectedSources[i].source >= 0 && i < MAX_BIAS_AFFECTED; ++i)
         {
-            aff->changed = true;
-            illuminationChanged = true;
-            SB_TrackerMark(&trackApplied, idx);
+            idx = affectedSources[i].source;
 
-            // Keep track of the earliest time when an affected source
-            // was changed.
-            if(latestSourceUpdate < sources[idx].lastUpdateTime)
+            // Is this a valid index?
+            if(idx >= numSources)
+                continue;
+
+            aff->index = idx;
+            //aff->affNum = i;
+            aff->source = &sources[idx];
+            aff->affection = &affectedSources[i];
+            aff->overrider = (aff->source->flags & BLF_COLOR_OVERRIDE) != 0;
+
+            if(SB_TrackerCheck(&trackChanged, idx))
             {
-                latestSourceUpdate = sources[idx].lastUpdateTime;
-            }
-        }
-        else
-        {
-            aff->changed = false;
-        }
+                aff->changed = true;
+                illuminationChanged = true;
+                SB_TrackerMark(&trackApplied, idx);
 
-        // Move to the next.
-        aff++;
+                // Keep track of the earliest time when an affected source
+                // was changed.
+                if(latestSourceUpdate < sources[idx].lastUpdateTime)
+                {
+                    latestSourceUpdate = sources[idx].lastUpdateTime;
+                }
+            }
+            else
+            {
+                aff->changed = false;
+            }
+
+            // Move to the next.
+            aff++;
+        }
     }
     aff->source = NULL;
 
