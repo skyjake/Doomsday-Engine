@@ -173,7 +173,7 @@ void LG_Init(void)
     gridblock_t *block;
     int        *sampleResults = 0;
     int         n, size, numSamples, center, best;
-    uint        l, s;
+    uint        s;
     fixed_t     off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 

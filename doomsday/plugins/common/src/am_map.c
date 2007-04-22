@@ -456,7 +456,7 @@ static float subColors[10][4]; // ten sets of RGBA
 
 // CODE --------------------------------------------------------------------
 
-static _inline automap_t *mapForPlayerId(int id)
+static automap_t __inline *mapForPlayerId(int id)
 {
     if(id < 0 || id >= MAXPLAYERS)
     {
