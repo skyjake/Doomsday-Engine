@@ -694,8 +694,8 @@ void AM_Init(void)
         AM_RegisterSpecialLine(i, 0, 13, 0, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         AM_RegisterSpecialLine(i, 0, 83, 0, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Intra-level teleporters (all are blue).
-        AM_RegisterSpecialLine(i, 0, 70, 2, 0, 0, .776, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 71, 2, 0, 0, .776, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 70, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 71, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Inter-level teleport.
         AM_RegisterSpecialLine(i, 0, 74, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Game-winning exit.

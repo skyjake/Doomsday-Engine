@@ -77,7 +77,7 @@ typedef struct xsector_s {
     } planes[2];    // {floor, ceiling}
 
     float           origlight;
-    byte            origrgb[3];
+    float           origrgb[3];
     xgsector_t     *xg;
 
 } xsector_t;

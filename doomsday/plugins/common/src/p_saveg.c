@@ -2080,7 +2080,7 @@ Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
 
 static void SV_WriteSector(sector_t *sec)
 {
-    int         type;
+    int         i, type;
     float       flooroffx = P_GetFloatp(sec, DMU_FLOOR_OFFSET_X);
     float       flooroffy = P_GetFloatp(sec, DMU_FLOOR_OFFSET_Y);
     float       ceiloffx = P_GetFloatp(sec, DMU_CEILING_OFFSET_X);
@@ -2091,7 +2091,7 @@ static void SV_WriteSector(sector_t *sec)
     int         floorpic = P_GetIntp(sec, DMU_FLOOR_TEXTURE);
     int         ceilingpic = P_GetIntp(sec, DMU_CEILING_TEXTURE);
     xsector_t  *xsec = P_XSector(sec);
-    byte        rgb[3];
+    float       rgb[3];
 
 #if !__JHEXEN__
     // Determine type.
@@ -2121,14 +2121,17 @@ static void SV_WriteSector(sector_t *sec)
     SV_WriteByte(lightlevel);
 #endif
 
-    P_GetBytepv(sec, DMU_COLOR, rgb);
-    SV_Write(rgb, 3);
+    P_GetFloatpv(sec, DMU_COLOR, rgb);
+    for(i = 0; i < 3; ++i)
+        SV_WriteByte((byte)(255.f * rgb[i]));
 
-    P_GetBytepv(sec, DMU_FLOOR_COLOR, rgb);
-    SV_Write(rgb, 3);
+    P_GetFloatpv(sec, DMU_FLOOR_COLOR, rgb);
+    for(i = 0; i < 3; ++i)
+        SV_WriteByte((byte)(255.f * rgb[i]));
 
-    P_GetBytepv(sec, DMU_CEILING_COLOR, rgb);
-    SV_Write(rgb, 3);
+    P_GetFloatpv(sec, DMU_CEILING_COLOR, rgb);
+    for(i = 0; i < 3; ++i)
+        SV_WriteByte((byte)(255.f * rgb[i]));
 
     SV_WriteShort(xsec->special);
     SV_WriteShort(xsec->tag);
@@ -2167,7 +2170,7 @@ static void SV_WriteSector(sector_t *sec)
  */
 static void SV_ReadSector(sector_t *sec)
 {
-    int         ver = 1;
+    int         i, ver = 1;
     int         type = 0;
     int         floorTexID;
     int         ceilingTexID;
@@ -2242,24 +2245,27 @@ static void SV_ReadSector(sector_t *sec)
     else
         lightlevel = SV_ReadByte();
 #endif
-    P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) lightlevel / 255.0f);
+    P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) lightlevel / 255.f);
 
 #if !__JHEXEN__
     if(hdr.version > 1)
 #endif
     {
         SV_Read(rgb, 3);
-        P_SetBytepv(sec, DMU_COLOR, rgb);
+        for(i = 0; i < 3; ++i)
+            P_SetFloatp(sec, DMU_COLOR_RED + i, rgb[i] / 255.f);
     }
 
     // Ver 2 includes surface colours
     if(ver >= 2)
     {
         SV_Read(rgb, 3);
-        P_SetBytepv(sec, DMU_FLOOR_COLOR, rgb);
+        for(i = 0; i < 3; ++i)
+            P_SetFloatp(sec, DMU_FLOOR_COLOR_RED + i, rgb[i] / 255.f);
 
         SV_Read(rgb, 3);
-        P_SetBytepv(sec, DMU_CEILING_COLOR, rgb);
+        for(i = 0; i < 3; ++i)
+            P_SetFloatp(sec, DMU_CEILING_COLOR_RED + i, rgb[i] / 255.f);
     }
 
     xsec->special = SV_ReadShort();
@@ -2299,9 +2305,9 @@ static void SV_ReadSector(sector_t *sec)
 
 static void SV_WriteLine(line_t *li)
 {
-    uint        i;
+    uint        i, j;
     int         texid;
-    byte        rgba[4];
+    float       rgba[4];
     lineclass_e type;
     xline_t    *xli = P_XLine(li);
 
@@ -2359,14 +2365,17 @@ static void SV_WriteLine(line_t *li)
         texid = P_GetIntp(si, DMU_MIDDLE_TEXTURE);
         SV_WriteShort(SV_TextureArchiveNum(texid));
 
-        P_GetBytepv(si, DMU_TOP_COLOR, rgba);
-        SV_Write(rgba, 3);
+        P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
+        for(j = 0; j < 3; ++j)
+            SV_WriteByte((byte)(255 * rgba[j]));
 
-        P_GetBytepv(si, DMU_BOTTOM_COLOR, rgba);
-        SV_Write(rgba, 3);
+        P_GetFloatpv(si, DMU_BOTTOM_COLOR, rgba);
+        for(j = 0; j < 3; ++j)
+            SV_WriteByte((byte)(255 * rgba[j]));
 
-        P_GetBytepv(si, DMU_MIDDLE_COLOR, rgba);
-        SV_Write(rgba, 4);
+        P_GetFloatpv(si, DMU_MIDDLE_COLOR, rgba);
+        for(j = 0; j < 3; ++j)
+            SV_WriteByte((byte)(255 * rgba[j]));
 
         SV_WriteLong(P_GetIntp(si, DMU_MIDDLE_BLENDMODE));
         SV_WriteShort(P_GetIntp(si, DMU_FLAGS));
@@ -2387,7 +2396,7 @@ static void SV_WriteLine(line_t *li)
  */
 static void SV_ReadLine(line_t *li)
 {
-    int         i;
+    int         i, j;
     lineclass_e type;
     int         ver;
     int         topTexID;
@@ -2498,13 +2507,16 @@ static void SV_ReadLine(line_t *li)
         if(ver >= 2)
         {
             SV_Read(rgba, 3);
-            P_SetBytepv(si, DMU_TOP_COLOR, rgba);
+            for(j = 0; j < 3; ++j)
+                P_SetFloatp(si, DMU_TOP_COLOR_RED + j, rgba[j] / 255.f);
 
             SV_Read(rgba, 3);
-            P_SetBytepv(si, DMU_BOTTOM_COLOR, rgba);
+            for(j = 0; j < 3; ++j)
+                P_SetFloatp(si, DMU_BOTTOM_COLOR + j, rgba[j] / 255.f);
 
             SV_Read(rgba, 4);
-            P_SetBytepv(si, DMU_MIDDLE_COLOR, rgba);
+            for(j = 0; j < 3; ++j)
+                P_SetFloatp(si, DMU_MIDDLE_COLOR + j, rgba[j] / 255.f);
 
             P_SetIntp(si, DMU_MIDDLE_BLENDMODE, SV_ReadLong());
             P_SetIntp(si, DMU_FLAGS, SV_ReadShort());

@@ -119,27 +119,27 @@ void P_CopyLine(line_t *from, line_t *to)
         P_Copyp(DMU_BOTTOM_COLOR, sidefrom, sideto);
 #else
         {
-        byte temp[4];
+        float temp[4];
         float itemp[2];
 
         P_SetIntp(sideto, DMU_TOP_TEXTURE, P_GetIntp(sidefrom, DMU_TOP_TEXTURE));
         P_GetFloatpv(sidefrom, DMU_TOP_TEXTURE_OFFSET_XY, itemp);
         P_SetFloatpv(sideto, DMU_TOP_TEXTURE_OFFSET_XY, itemp);
-        P_GetBytepv(sidefrom, DMU_TOP_COLOR, temp);
-        P_SetBytepv(sideto, DMU_TOP_COLOR, temp);
+        P_GetFloatpv(sidefrom, DMU_TOP_COLOR, temp);
+        P_SetFloatpv(sideto, DMU_TOP_COLOR, temp);
 
         P_SetIntp(sideto, DMU_MIDDLE_TEXTURE, P_GetIntp(sidefrom, DMU_MIDDLE_TEXTURE));
-        P_GetBytepv(sidefrom, DMU_MIDDLE_COLOR, temp);
+        P_GetFloatpv(sidefrom, DMU_MIDDLE_COLOR, temp);
         P_GetFloatpv(sidefrom, DMU_MIDDLE_TEXTURE_OFFSET_XY, itemp);
         P_SetFloatpv(sideto, DMU_MIDDLE_TEXTURE_OFFSET_XY, itemp);
-        P_SetBytepv(sideto, DMU_MIDDLE_COLOR, temp);
+        P_SetFloatpv(sideto, DMU_MIDDLE_COLOR, temp);
         P_SetIntp(sideto, DMU_MIDDLE_BLENDMODE, P_GetIntp(sidefrom, DMU_MIDDLE_BLENDMODE));
 
         P_SetIntp(sideto, DMU_BOTTOM_TEXTURE, P_GetIntp(sidefrom, DMU_BOTTOM_TEXTURE));
         P_GetFloatpv(sidefrom, DMU_BOTTOM_TEXTURE_OFFSET_XY, itemp);
         P_SetFloatpv(sideto, DMU_BOTTOM_TEXTURE_OFFSET_XY, itemp);
-        P_GetBytepv(sidefrom, DMU_BOTTOM_COLOR, temp);
-        P_SetBytepv(sideto, DMU_BOTTOM_COLOR, temp);
+        P_GetFloatpv(sidefrom, DMU_BOTTOM_COLOR, temp);
+        P_SetFloatpv(sideto, DMU_BOTTOM_COLOR, temp);
         }
 #endif
     }
@@ -197,20 +197,20 @@ void P_CopySector(sector_t *from, sector_t *to)
     P_Copyp(DMU_CEILING_TARGET, from, to);
 #else
     {
-    byte temp[4];
+    float temp[4];
     int  itemp[2];
     float ftemp[NUM_REVERB_DATA];
 
     P_SetFloatp(to, DMU_LIGHT_LEVEL, P_GetFloatp(from, DMU_LIGHT_LEVEL));
-    P_GetBytepv(from, DMU_COLOR, temp);
-    P_SetBytepv(to, DMU_COLOR, temp);
+    P_GetFloatpv(from, DMU_COLOR, temp);
+    P_SetFloatpv(to, DMU_COLOR, temp);
     P_GetFloatpv(from, DMU_SOUND_REVERB, ftemp);
     P_SetFloatpv(to, DMU_SOUND_REVERB, ftemp);
 
     P_SetFixedp(to, DMU_FLOOR_HEIGHT, P_GetFixedp(from, DMU_FLOOR_HEIGHT));
     P_SetIntp(to, DMU_FLOOR_TEXTURE, P_GetIntp(from, DMU_FLOOR_TEXTURE));
-    P_GetBytepv(from, DMU_FLOOR_COLOR, temp);
-    P_SetBytepv(to, DMU_FLOOR_COLOR, temp);
+    P_GetFloatpv(from, DMU_FLOOR_COLOR, temp);
+    P_SetFloatpv(to, DMU_FLOOR_COLOR, temp);
     P_GetFloatpv(from, DMU_FLOOR_OFFSET_XY, ftemp);
     P_SetFloatpv(to, DMU_FLOOR_OFFSET_XY, ftemp);
     P_GetIntpv(from, DMU_FLOOR_TEXTURE_MOVE_XY, itemp);
@@ -220,8 +220,8 @@ void P_CopySector(sector_t *from, sector_t *to)
 
     P_SetFixedp(to, DMU_CEILING_HEIGHT, P_GetFixedp(from, DMU_CEILING_HEIGHT));
     P_SetIntp(to, DMU_CEILING_TEXTURE, P_GetIntp(from, DMU_CEILING_TEXTURE));
-    P_GetBytepv(from, DMU_CEILING_COLOR, temp);
-    P_SetBytepv(to, DMU_CEILING_COLOR, temp);
+    P_GetFloatpv(from, DMU_CEILING_COLOR, temp);
+    P_SetFloatpv(to, DMU_CEILING_COLOR, temp);
     P_GetFloatpv(from, DMU_CEILING_OFFSET_XY, ftemp);
     P_SetFloatpv(to, DMU_CEILING_OFFSET_XY, ftemp);
     P_GetIntpv(from, DMU_CEILING_TEXTURE_MOVE_XY, itemp);
@@ -242,7 +242,7 @@ void P_CopySector(sector_t *from, sector_t *to)
     xto->SP_floororigheight = xfrom->SP_floororigheight;
     xto->SP_ceilorigheight = xfrom->SP_ceilorigheight;
     xto->origlight = xfrom->origlight;
-    memcpy(xto->origrgb, xfrom->origrgb, 3);
+    memcpy(xto->origrgb, xfrom->origrgb, sizeof(float) * 3);
     if(xfrom->xg && xto->xg)
         memcpy(xto->xg, xfrom->xg, sizeof(*xto->xg));
     else

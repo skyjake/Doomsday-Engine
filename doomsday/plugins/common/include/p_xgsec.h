@@ -170,9 +170,9 @@ int C_DECL      XSTrav_Teleport(struct sector_s *sector, boolean ceiling,
                                    void *context, void *context2, struct mobj_s *activator);
 void            XS_SetSectorType(struct sector_s *sec, int special);
 void            XS_ChangePlaneTexture(struct sector_s *sector, boolean ceiling,
-                                      int tex, byte rgb[3]);
+                                      int tex, float *rgb);
 xgplanemover_t *XS_GetPlaneMover(struct sector_s *sector, boolean ceiling);
-void            XS_PlaneMover(xgplanemover_t * mover);  // A thinker for plane movers.
+void            XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
 
 void            SV_WriteXGSector(struct sector_s *sec);
 void            SV_ReadXGSector(struct sector_s *sec);

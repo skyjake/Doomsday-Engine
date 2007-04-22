@@ -214,18 +214,24 @@ void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
     // Check for offsets to current values.
     if(func[0] == '+')
     {
+        // IMPORTANT!
+        // The original value ranges must be maintained due to the cross linking
+        // between sector function types i.e:
+        // RGB = 0 > 254
+        // light = 0 > 254
+        // planeheight = -32768 > 32768
         switch(func[1])
         {
         case 'r':
-            offset += xsec->origrgb[0];
+            offset += 255.f * xsec->origrgb[0];
             break;
 
         case 'g':
-            offset += xsec->origrgb[1];
+            offset += 255.f * xsec->origrgb[1];
             break;
 
         case 'b':
-            offset += xsec->origrgb[2];
+            offset += 255.f * xsec->origrgb[2];
             break;
 
         case 'l':
@@ -233,11 +239,11 @@ void XF_Init(sector_t *sec, function_t * fn, char *func, int min, int max,
             break;
 
         case 'f':
-            offset += xsec->SP_floororigheight;
+            offset += xsec->SP_floororigheight * FRACUNIT;
             break;
 
         case 'c':
-            offset += xsec->SP_ceilorigheight;
+            offset += xsec->SP_ceilorigheight * FRACUNIT;
             break;
 
         default:
@@ -365,7 +371,6 @@ void XS_Init(void)
 {
     int         i;
     int         count = DD_GetInteger(DD_SECTOR_COUNT);
-    byte        tmprgb[3];
     sector_t   *sec;
     xsector_t  *xsec;
 
@@ -382,13 +387,11 @@ void XS_Init(void)
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = P_XSector(sec);
 
-        P_GetBytepv(sec, DMU_COLOR, tmprgb);
+        P_GetFloatpv(sec, DMU_COLOR, xsec->origrgb);
 
         xsec->SP_floororigheight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
         xsec->SP_ceilorigheight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
         xsec->origlight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
-
-        memcpy(xsec->origrgb, tmprgb, 3);
 
         // Initialize the XG data for this sector.
         XS_SetSectorType(sec, xsec->special);
@@ -449,12 +452,11 @@ void XS_MoverStopped(xgplanemover_t * mover, boolean done)
     }
 }
 
-/*
+/**
  * A thinker function for plane movers.
  */
 void XS_PlaneMover(xgplanemover_t *mover)
 {
-    byte rgb[3];
     int     res, res2;
     int     dir;
     float   ceil = P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT);
@@ -528,7 +530,7 @@ void XS_PlaneMover(xgplanemover_t *mover)
         if(mover->setflat > 0)
         {
             XS_ChangePlaneTexture(mover->sector, mover->ceiling,
-                                  mover->setflat, rgb);
+                                  mover->setflat, NULL);
         }
         if(mover->setsector >= 0)
         {
@@ -591,30 +593,25 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sector, boolean ceiling)
     return mover;
 }
 
-void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex, byte rgb[3])
+void XS_ChangePlaneTexture(sector_t *sector, boolean ceiling, int tex, float *rgb)
 {
-    int         i;
-
-    // Clamping is not necessary since the rgb array has already a byte type.
-
-    XG_Dev("XS_ChangePlaneTexture: Sector %i, %s, texture %i, red %i, green %i, blue %i",
-           P_ToIndex(sector), ceiling ? "ceiling" : "floor", tex,
-           rgb[0], rgb[1], rgb[2]);
+    XG_Dev("XS_ChangePlaneTexture: Sector %i, %s, texture %i",
+           P_ToIndex(sector), ceiling ? "ceiling" : "floor", tex);
+    if(rgb)
+        XG_Dev("red %g, green %g, blue %g", rgb[0], rgb[1], rgb[2]);
 
     if(ceiling)
     {
-        for(i = 0; i < 3; i++)
-            if(rgb[i])
-                P_SetBytep(sector, TO_DMU_CEILING_COLOR(i), rgb[i]);
+        if(rgb)
+            P_SetFloatpv(sector, DMU_CEILING_COLOR, rgb);
 
         if(tex)
             P_SetIntp(sector, DMU_CEILING_TEXTURE, tex);
     }
     else
     {
-        for(i = 0; i < 3; i++)
-            if(rgb[i])
-                P_SetBytep(sector, TO_DMU_FLOOR_COLOR(i), rgb[i]);
+        if(rgb)
+            P_SetFloatpv(sector, DMU_FLOOR_COLOR, rgb);
 
         if(tex)
             P_SetIntp(sector, DMU_FLOOR_TEXTURE, tex);
@@ -1301,7 +1298,6 @@ void XS_InitMovePlane(line_t *line)
 int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
                             void *context2, mobj_t *activator)
 {
-    byte rgb[3];
     line_t *line = (line_t *) context;
     linetype_t *info = (linetype_t *) context2;
     xgplanemover_t *mover;
@@ -1389,7 +1385,7 @@ int C_DECL XSTrav_MovePlane(sector_t *sector, boolean ceiling, void *context,
             XG_Dev("  Couldn't find suitable texture to set when move starts!");
     }
     if(flat > 0)
-        XS_ChangePlaneTexture(sector, ceiling, flat, rgb);
+        XS_ChangePlaneTexture(sector, ceiling, flat, NULL);
 
     // Should we play no more sounds?
     if(info->iparm[3] & PMF_ONE_SOUND_ONLY)
@@ -1633,7 +1629,7 @@ int C_DECL XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling, void *cont
     line_t *line = (line_t *) context;
     linetype_t *info = context2;
     int     pic;
-    byte rgb[3];
+    float   rgb[3];
 
     // i2: (spref) texture origin
     // i3: texture number (flat), used with SPREF_NONE
@@ -1649,9 +1645,13 @@ int C_DECL XSTrav_PlaneTexture(struct sector_s *sec, boolean ceiling, void *cont
                P_ToIndex(sec));
     }
 
-    rgb[0] = info->iparm[4];
-    rgb[1] = info->iparm[5];
-    rgb[2] = info->iparm[6];
+    rgb[0] = info->iparm[4] / 255.f;
+    CLAMP(rgb[0], 0, 1);
+    rgb[1] = info->iparm[5] / 255.f;
+    CLAMP(rgb[1], 0, 1);
+    rgb[2] = info->iparm[6] / 255.f;
+    CLAMP(rgb[2], 0, 1);
+
     // Set the texture.
     XS_ChangePlaneTexture(sec, ceiling, pic, rgb);
 
@@ -1676,7 +1676,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
     int     num, levels[MAX_VALS], i = 0;
     float   uselevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     sector_t *frontsector, *backsector;
-    byte    usergb[3];
+    float   usergb[3];
 
     frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
@@ -1733,15 +1733,15 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
                 break;
 
             case LIGHTREF_NEXT_HIGHEST:
-                i = FindNextOf(levels, num, 255.0f * uselevel);
+                i = FindNextOf(levels, num, 255.f * uselevel);
                 break;
 
             case LIGHTREF_NEXT_LOWEST:
-                i = FindPrevOf(levels, num, 255.0f * uselevel);
+                i = FindPrevOf(levels, num, 255.f * uselevel);
                 break;
             }
             if(i >= 0)
-                uselevel = (float) levels[i] / 255.0f;
+                uselevel = (float) levels[i] / 255.f;
             break;
 
         default:
@@ -1749,7 +1749,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
         }
 
         // Add the offset.
-        uselevel += (float) info->iparm[5] / 255.0f;
+        uselevel += (float) info->iparm[5] / 255.f;
 
         // Clamp the result.
         if(uselevel < 0)
@@ -1769,7 +1769,7 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
             {
             sector_t* sector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 
-            P_GetBytepv(sector, DMU_COLOR, usergb);
+            P_GetFloatpv(sector, DMU_COLOR, usergb);
             break;
             }
         case LIGHTREF_BACK:
@@ -1777,26 +1777,26 @@ int C_DECL XSTrav_SectorLight(sector_t *sector, boolean ceiling, void *context,
             sector_t* sector = P_GetPtrp(line, DMU_BACK_SECTOR);
 
             if(sector)
-                P_GetBytepv(sector, DMU_COLOR, usergb);
+                P_GetFloatpv(sector, DMU_COLOR, usergb);
             break;
             }
         case LIGHTREF_ORIGINAL:
-            memcpy(usergb, P_XSector(sector)->origrgb, 3);
+            memcpy(usergb, P_XSector(sector)->origrgb, sizeof(float) * 3);
             break;
 
         default:
-            memset(usergb, 0, 3);
+            memset(usergb, 0, sizeof(usergb));
             break;
         }
 
-        for(num = 0; num < 3; num++)
+        for(num = 0; num < 3; ++num)
         {
-            i = usergb[num] + info->iparm[7 + num];
-            if(i < 0)
-                i = 0;
-            if(i > 255)
-                i = 255;
-            P_SetBytep(sector, TO_DMU_COLOR(num), i);
+            float f = usergb[num] + (float) info->iparm[7 + num] / 255.f;
+            if(f < 0)
+                f = 0;
+            if(f > 1)
+                f = 1;
+            P_SetFloatp(sector, TO_DMU_COLOR(num), f);
         }
     }
 
@@ -2272,8 +2272,8 @@ void XS_UpdateLight(sector_t *sec)
 {
     xgsector_t *xg;
     function_t *fn;
-    int     i, c;
-    float   lightlevel;
+    int     i;
+    float   c, lightlevel;
 
     xg = P_XSector(sec)->xg;
 
@@ -2281,7 +2281,7 @@ void XS_UpdateLight(sector_t *sec)
     fn = &xg->light;
     if(UPDFUNC(fn))
     {
-        lightlevel = fn->value / 255.0f;
+        lightlevel = fn->value / 255.f;
 
         if(lightlevel < 0)
             lightlevel = 0;
@@ -2292,17 +2292,17 @@ void XS_UpdateLight(sector_t *sec)
     }
 
     // Red, green and blue.
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < 3; ++i)
     {
         fn = &xg->rgb[i];
         if(!UPDFUNC(fn))
             continue;
-        c = fn->value;
+        c = fn->value / 255.f;
         if(c < 0)
             c = 0;
-        if(c > 255)
-            c = 255;
-        P_SetBytep(sec, TO_DMU_COLOR(i), c);
+        if(c > 1)
+            c = 1;
+        P_SetFloatp(sec, TO_DMU_COLOR(i), c);
     }
 }
 
@@ -2583,6 +2583,7 @@ void XS_Think(sector_t *sector)
         {
             if(i < 2 && xg->plane[i].link)
                 xg->plane[i].value = xg->plane[i].link->value;
+
             if(xg->rgb[i].link)
                 xg->rgb[i].value = xg->rgb[i].link->value;
         }

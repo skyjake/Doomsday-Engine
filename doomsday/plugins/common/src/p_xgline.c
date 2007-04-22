@@ -1913,27 +1913,27 @@ void XL_ChangeTexture(line_t *line, int sidenum, int section, int texture,
             P_SetIntp(side, DMU_MIDDLE_BLENDMODE, blendmode);
 
         // Are we changing the surface color?
-        for(i = 0; i < 4; i++)
+        for(i = 0; i < 4; ++i)
             if(rgba[i])
-                P_SetBytep(side, TO_DMU_MIDDLE_COLOR(i), rgba[i]);
+                P_SetFloatp(side, TO_DMU_MIDDLE_COLOR(i), rgba[i] / 255.f);
     }
     else if(section == LWS_UPPER)
     {
         if(texture)
             P_SetIntp(side, DMU_TOP_TEXTURE, texture);
 
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
             if(rgba[i])
-                P_SetBytep(side, TO_DMU_TOP_COLOR(i), rgba[i]);
+                P_SetFloatp(side, TO_DMU_TOP_COLOR(i), rgba[i] / 255.f);
     }
     else if(section == LWS_LOWER)
     {
         if(texture)
             P_SetIntp(side, DMU_BOTTOM_TEXTURE, texture);
 
-        for(i = 0; i < 3; i++)
+        for(i = 0; i < 3; ++i)
             if(rgba[i])
-                P_SetBytep(side, TO_DMU_BOTTOM_COLOR(i), rgba[i]);
+                P_SetFloatp(side, TO_DMU_BOTTOM_COLOR(i), rgba[i] / 255.f);
     }
 
     // Adjust the side's flags

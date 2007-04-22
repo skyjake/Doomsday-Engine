@@ -213,7 +213,7 @@ void P_SetSectorColor(line_t *line)
 {
     side_t     *front, *back;
     sector_t   *sec = NULL;
-    byte        rgb[4];
+    float       rgb[4];
     iterlist_t *list;
 
     if(!line)
@@ -226,9 +226,9 @@ void P_SetSectorColor(line_t *line)
         return; // We need a twosided line.
 
     // Determine the color based on line texture offsets!?
-    rgb[0] = (byte) P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_X);
-    rgb[1] = (byte) P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_Y);
-    rgb[2] = (byte) P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_X);
+    rgb[0] = (float) P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_X) / 255.f;
+    rgb[1] = (float) P_GetIntp(front, DMU_MIDDLE_TEXTURE_OFFSET_Y) / 255.f;
+    rgb[2] = (float) P_GetIntp(back, DMU_MIDDLE_TEXTURE_OFFSET_X) / 255.f;
 
     list = P_GetSectorIterListForTag(P_XLine(line)->tag, false);
     if(!list)
@@ -237,7 +237,7 @@ void P_SetSectorColor(line_t *line)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
-        P_SetBytepv(sec, DMU_COLOR, rgb);
+        P_SetFloatpv(sec, DMU_COLOR, rgb);
     }
 }
 
