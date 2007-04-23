@@ -436,10 +436,10 @@ static void controlImpulse(int player, impulse_t impulse)
 boolean P_IsValidControl(const char *cmd)
 {
 	char        name[20], *ptr;
-    uint        idx;
+    uint        i, idx;
     int         console, localPlayer = 0;
 
-	// Check the prefix to see what will be the new state of the
+    // Check the prefix to see what will be the new state of the
 	// toggle.
 	if(cmd[0] == '+' || cmd[0] == '-')
 	{
@@ -450,8 +450,13 @@ boolean P_IsValidControl(const char *cmd)
 	}
 
     // Copy the name of the control and find the end.
-    for(ptr = name; *cmd && *cmd != '/'; cmd++)
+    for(ptr = name, i = 0; *cmd && *cmd != '/'; cmd++, ++i)
+    {
+        if(i >= 20)
+            return false;
+
         *ptr++ = *cmd;
+    }
     *ptr++ = 0;
 
 	// Is the local player number specified?

@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +30,6 @@
 #define __DOOMSDAY_REFRESH_SHADOW_H__
 
 void            R_InitSectorShadows(void);
-line_t         *R_GetShadowNeighbor(shadowpoly_t *poly, boolean left);
 sector_t       *R_GetShadowSector(shadowpoly_t *poly, uint plane,
                                   boolean getLinked);
 
