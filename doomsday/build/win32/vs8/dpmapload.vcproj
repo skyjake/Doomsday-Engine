@@ -42,21 +42,21 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName="./Bin/Release/dpMapLoad.tlb"
+				TypeLibraryName=".\./Bin/Release/dpMapLoad.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="..\..\..\external\zlib\portable\include;..\..\..\engine\api;..\..\..\external\glbsp\include"
-				PreprocessorDefinitions="GLBSP_PLUGIN;WIN32;NDEBUG;_WINDOWS;_USRDLL;DPDEHREAD_EXPORTS"
+				PreprocessorDefinitions="GLBSP_PLUGIN;WIN32;NDEBUG;_WINDOWS;_USRDLL;DPMAPLOAD_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile="./Obj/Release/dpMapLoad/dpMapLoad.pch"
-				AssemblerListingLocation="./Obj/Release/dpMapLoad/"
-				ObjectFile="./Obj/Release/dpMapLoad/"
-				ProgramDataBaseFileName="./Obj/Release/dpMapLoad/"
+				PrecompiledHeaderFile=".\./Obj/Release/dpMapLoad/dpMapLoad.pch"
+				AssemblerListingLocation=".\./Obj/Release/dpMapLoad/"
+				ObjectFile=".\./Obj/Release/dpMapLoad/"
+				ProgramDataBaseFileName=".\./Obj/Release/dpMapLoad/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -76,12 +76,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib"
-				OutputFile="./Bin/Release/dpMapLoad.dll"
-				LinkIncremental="2"
+				AdditionalDependencies="./bin/release/Doomsday.lib"
+				OutputFile=".\./Bin/Release/dpMapLoad.dll"
+				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile="./Bin/Release/dpMapLoad.pdb"
-				ImportLibrary="./Bin/Release/dpMapLoad.lib"
+				ProgramDatabaseFile=".\./Bin/Release/dpMapLoad.pdb"
+				ImportLibrary=".\./Bin/Release/dpMapLoad.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -214,14 +214,6 @@
 			<File
 				RelativePath="..\..\..\plugins\mapload\src\maploader.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CallingConvention="2"
-					/>
-				</FileConfiguration>
 			</File>
 			<Filter
 				Name="glBSP"

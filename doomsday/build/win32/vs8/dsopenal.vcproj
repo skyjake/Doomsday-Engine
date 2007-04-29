@@ -46,6 +46,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
+				AdditionalIncludeDirectories="..\..\..\engine\api;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DSOPENAL_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -73,11 +74,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib alut.lib openal32.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="./bin/release/doomsday.lib openal32.lib odbc32.lib odbccp32.lib"
 				OutputFile=".\./Bin/Release/dsOpenAL.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ModuleDefinitionFile=".\Src\dsOpenAL\dsOpenAL.def"
+				ModuleDefinitionFile="..\..\..\plugins\openal\api\dsopenal.def"
 				ProgramDatabaseFile=".\./Bin/Release/dsOpenAL.pdb"
 				ImportLibrary=".\./Bin/Release/dsOpenAL.lib"
 			/>

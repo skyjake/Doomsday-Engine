@@ -266,7 +266,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib opengl32.lib glu32.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="./bin/release/doomsday.lib opengl32.lib glu32.lib kernel32.lib user32.lib gdi32.lib"
 				OutputFile=".\./Bin/Release/drOpenGL.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

@@ -155,7 +155,7 @@
 				ProgramDataBaseFileName=".\./Obj/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				CallingConvention="2"
+				CallingConvention="0"
 				CompileAs="0"
 			/>
 			<Tool
@@ -172,7 +172,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="eax.lib eaxguid.lib dsound.lib dxguid.lib ./bin/release/doomsday.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="eax.lib eaxguid.lib dsound.lib dxguid.lib ./bin/release/doomsday.lib"
 				OutputFile=".\./Bin/Release/dsCompat.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

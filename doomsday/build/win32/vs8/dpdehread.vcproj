@@ -59,7 +59,7 @@
 				ProgramDataBaseFileName=".\./Obj/Release/dpDehRead/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				CallingConvention="2"
+				CallingConvention="0"
 				CompileAs="0"
 			/>
 			<Tool
@@ -76,7 +76,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./Bin/Release/Doomsday.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="./Bin/Release/Doomsday.lib"
 				OutputFile=".\./Bin/Release/dpDehRead.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
