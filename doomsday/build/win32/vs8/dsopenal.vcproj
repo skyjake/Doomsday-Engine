@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="dsOpenAL"
 	ProjectGUID="{0324DC98-86C1-40F5-B3B0-35A057F6173C}"
 	>
@@ -139,6 +139,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="..\..\..\engine\api;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DSOPENAL_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -166,11 +167,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/debug/doomsday.lib alut.lib openal32.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="./bin/debug/doomsday.lib openal32.lib odbc32.lib odbccp32.lib"
 				OutputFile=".\./Bin/Debug/dsOpenAL.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				ModuleDefinitionFile=".\Src\dsOpenAL\dsOpenAL.def"
+				ModuleDefinitionFile="..\..\..\plugins\openal\api\dsopenal.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/dsOpenAL.pdb"
 				ImportLibrary=".\./Bin/Debug/dsOpenAL.lib"
@@ -209,11 +210,29 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath=".\Src\dsOpenAL\driver_openal.c"
+				RelativePath="..\..\..\plugins\openal\src\driver_openal.c"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Src\dsOpenAL\dsOpenAL.def"
+				RelativePath="..\..\..\plugins\openal\api\dsopenal.def"
 				>
 			</File>
 		</Filter>

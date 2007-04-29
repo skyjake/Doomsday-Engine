@@ -1,5 +1,4 @@
 LIBRARY			DSOPENAL
-DESCRIPTION		"Doomsday Sound Driver - OpenAL 1.0"
 
 ; All exports should be prefixed DS_.
 
