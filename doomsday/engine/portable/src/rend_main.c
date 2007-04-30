@@ -1068,9 +1068,10 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
  * Same as above but for planes. Ultimately we should consider merging the
  * two into a Rend_RenderSurface.
  */
-static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
+static void Rend_DoRenderPlane(rendpoly_t *poly, sector_t *polySector,
+                               subsector_t *subsector,
                                subplaneinfo_t* plane, surface_t *surface,
-                               float height, float alpha, short flags)
+                               float height, short flags)
 {
     uint        subIndex = GET_SUBSECTOR_IDX(subsector);
 
@@ -1078,7 +1079,9 @@ static void Rend_DoRenderPlane(rendpoly_t *poly, subsector_t *subsector,
         poly->flags |= RPF_GLOW;
 
     // Surface color/light.
-    RL_PreparePlane(plane, poly, height, subsector, alpha);
+    RL_PreparePlane(plane, poly, height, subsector,
+                    Rend_SectorLight(polySector),
+                    R_GetSectorLightColor(polySector), surface->rgba);
 
     // Dynamic lights. Check for sky.
     if(R_IsSkySurface(surface))
@@ -1212,7 +1215,6 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     quad->flags = 0;
     quad->tex.detail = NULL;
     quad->intertex.detail = NULL;
-    quad->sector = frontsec;
 
     vBL = quad->vertices[0].pos;
     vBR = quad->vertices[1].pos;
@@ -1347,7 +1349,6 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     quad->flags = 0;
     quad->tex.detail = NULL;
     quad->intertex.detail = NULL;
-    quad->sector = frontsec;
 
     vBL = quad->vertices[0].pos;
     vBR = quad->vertices[1].pos;
@@ -1786,7 +1787,6 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             vBR[VY] = vTR[VY] = seg->SG_v2->pos[VY];
 
             quad->wall->length = seg->length;
-            quad->sector = frontsec;
 
             // Upper/lower normal skyfixes.
             if(!(frontsec->selfRefHack && backsec))
@@ -1941,13 +1941,11 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     int         surfaceFlags;
     float       height;
     surface_t  *surface;
-    int         flags;
+    int         flags = 0;
     sector_t   *polySector;
+    float       vec[3];
 
     polySector = R_GetLinkedSector(subsector, plane->type);
-    height = SECT_PLANE_HEIGHT(polySector, plane->type);
-    // Add the skyfix
-    height += polySector->skyfix[plane->type].offset;
     surface = &polySector->planes[plane->type]->surface;
 
     // We don't render planes for unclosed sectors when the polys would
@@ -1955,15 +1953,17 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
     if(sector->unclosed && R_IsSkySurface(surface))
         return;
 
-    flags = 0;
+    // Determine plane height.
+    height = SECT_PLANE_HEIGHT(polySector, plane->type);
+    // Add the skyfix
+    height += polySector->skyfix[plane->type].offset;
 
-    // The sky?
-    if(R_IsSkySurface(surface))
-        flags |= RPF_SKY_MASK;
+    vec[VX] = vx - subsector->midpoint.pos[VX];
+    vec[VY] = vz - subsector->midpoint.pos[VY];
+    vec[VZ] = vy - height;
 
-    // Is the plane visible?
-    if((plane->type == PLN_FLOOR && vy > height) ||
-       (plane->type == PLN_CEILING && vy < height))
+    // Don't bother with planes facing away from the camera.
+    if(!(M_DotProduct(vec, surface->normal) < 0))
     {
         rendpoly_t *poly =
             R_AllocRendPoly(RP_FLAT, false, subsector->numvertices);
@@ -1976,11 +1976,14 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
             short tempflags = 0;
 
             // Fill in the remaining quad data.
-            poly->flags = flags;
-            poly->sector = polySector;
+            poly->flags = 0;
 
             // Check for sky.
-            if(!R_IsSkySurface(surface))
+            if(R_IsSkySurface(surface))
+            {
+                poly->flags |= RPF_SKY_MASK;
+            }
+            else
             {
                 poly->texoffx = sector->planes[plane->type]->surface.offx;
                 poly->texoffy = sector->planes[plane->type]->surface.offy;
@@ -1993,8 +1996,8 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
             if(surfaceFlags & SUF_BLEND)
                 tempflags |= RPF2_BLEND;
 
-            Rend_DoRenderPlane(poly, subsector, plane, surface, height,
-                /*Alpha*/      1, tempflags);
+            Rend_DoRenderPlane(poly, polySector, subsector, plane, surface,
+                               height, tempflags);
         }
 
         R_FreeRendPoly(poly);

@@ -244,7 +244,6 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->interpos = 0;
     poly->lights = 0;
     poly->decorlightmap = 0;
-    poly->sector = 0;
     poly->blendmode = BM_NORMAL;
     poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN);
     poly->tex.detail = texdetail;
@@ -296,7 +295,6 @@ void R_MemcpyRendPoly(rendpoly_t *dest, rendpoly_t *src)
     dest->texoffy = src->texoffy;
     dest->flags = src->flags;
     dest->interpos = src->interpos;
-    dest->sector = src->sector;
     dest->blendmode = src->interpos;
     dest->lights = src->lights;
     dest->decorlightmap = src->decorlightmap;

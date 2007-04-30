@@ -438,7 +438,8 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
 }
 
 void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
-                     subsector_t *subsector, float alpha)
+                     subsector_t *subsector, float sectorLight,
+                     const float *sectorLightColor, float *surfaceColor)
 {
     int         i, num, vid;
 
@@ -462,27 +463,21 @@ void RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly, float height,
 
     if(!(poly->flags & RPF_SKY_MASK))
     {
-        float       sectorlight;
-        const float *pLightColor;
         float       vColor[] = { 0, 0, 0, 0};
-        surface_t  *surface = &poly->sector->planes[plane->type]->surface;
-
-        sectorlight = Rend_SectorLight(poly->sector);
-        pLightColor = R_GetSectorLightColor(poly->sector);
 
         // Calculate the color for each vertex, blended with plane color?
-        if(surface->rgba[0] < 1 || surface->rgba[1] < 1 || surface->rgba[2] < 1)
+        if(surfaceColor[0] < 1 || surfaceColor[1] < 1 || surfaceColor[2] < 1)
         {
-            // Blend sector light+color+planecolor
+            // Blend sector light+color+surfacecolor
             for(i = 0; i < 3; ++i)
-                vColor[i] = surface->rgba[i] * pLightColor[i];
+                vColor[i] = surfaceColor[i] * sectorLightColor[i];
 
-            RL_VertexColors(poly, sectorlight, -1, vColor, alpha);
+            RL_VertexColors(poly, sectorLight, -1, vColor, surfaceColor[3]);
         }
         else
         {
             // Use sector light+color only
-            RL_VertexColors(poly, sectorlight, -1, pLightColor, alpha);
+            RL_VertexColors(poly, sectorLight, -1, sectorLightColor, surfaceColor[3]);
         }
     }
 }
@@ -1653,6 +1648,9 @@ void RL_AddPoly(rendpoly_t *poly)
     dynlight_t *dyn;
     boolean useLights = false;
 
+    if(poly->numvertices < 3)
+        return; // huh?
+
     if(poly->flags & RPF_MASKED)
     {
         // Masked polys (walls) get a special treatment (=> vissprite).
@@ -1683,15 +1681,27 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
     {
         // In multiplicative mode, glowing surfaces are fullbright.
         // Rendering lights on them would be pointless.
-        if(!IS_MUL ||
-           !((poly->flags & RPF_GLOW) ||
-             (poly->sector && poly->sector->lightlevel >= 0.98f)))
+        if(!IS_MUL || !(poly->flags & RPF_GLOW))
         {
             // Surfaces lit by dynamic lights may need to be rendered
             // differently than non-lit surfaces.
             if(poly->lights)
             {
-                useLights = true;
+                uint        i;
+                long        avglightlevel = 0;
+
+                // Determine the average light level of this rend poly,
+                // if too bright; do not bother with lights.
+                for(i = 0; i < poly->numvertices; ++i)
+                {
+                    avglightlevel += (long) poly->vertices[i].color.rgba[0];
+                    avglightlevel += (long) poly->vertices[i].color.rgba[1];
+                    avglightlevel += (long) poly->vertices[i].color.rgba[2];
+                }
+                avglightlevel /= poly->numvertices * 3;
+
+                if(avglightlevel < 250)
+                    useLights = true;
             }
         }
     }

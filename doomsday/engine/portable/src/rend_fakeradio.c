@@ -1280,7 +1280,6 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     memset(&q->intertex, 0, sizeof(q->intertex));
     q->interpos = 0;
     q->lights = NULL;
-    q->sector = NULL;
     memset(q->vertices, 0, q->numvertices * sizeof(rendpoly_vertex_t));
 
     vtx = q->vertices;

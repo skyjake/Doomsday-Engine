@@ -161,7 +161,7 @@ typedef struct rendpoly_s {
     float           interpos;      // Blending strength (0..1).
     struct dynlight_s *lights;     // List of lights that affect this poly.
     DGLuint         decorlightmap; // Pregen RGB lightmap for decor lights.
-    struct sector_s *sector;        // The sector this poly belongs to (if any).
+    //struct sector_s *sector;        // The sector this poly belongs to (if any).
     blendmode_t     blendmode;     // Primitive-specific blending mode.
 
     // The geometry:

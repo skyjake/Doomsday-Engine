@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,9 @@ void            RL_DeleteLists();
 void            RL_AddPoly(rendpoly_t *poly);
 void            RL_PreparePlane(subplaneinfo_t *plane, rendpoly_t *poly,
                                 float height, subsector_t *subsector,
-                                float alpha);
+                                float sectorLight,
+                                const float *sectorLightColor,
+                                float *surfaceColor);
 void            RL_VertexColors(rendpoly_t *poly, float lightlevel,
                                 float distanceOverride, const float *rgb,
                                 float alpha);
