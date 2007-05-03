@@ -407,7 +407,7 @@ void P_InitPicAnims(void)
         ignore = false;
         if(type == ANIM_FLAT)
         {
-            if(W_CheckNumForName(sc_String) == -1)
+            if(R_CheckFlatNumForName(sc_String) == -1)
             {
                 ignore = true;
             }
@@ -419,7 +419,7 @@ void P_InitPicAnims(void)
             }
         }
         else
-        {                       // Texture
+        {   // Texture
             if(R_CheckTextureNumForName(sc_String) == -1)
             {
                 ignore = true;

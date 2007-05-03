@@ -253,7 +253,7 @@ void H2_ConsoleBg(int *width, int *height)
 
     if(consoleFlat)
     {
-        GL_SetFlat(consoleFlat + W_CheckNumForName("F_START") + 1);
+        GL_SetFlat(consoleFlat);
         *width = (int) (64 * consoleZoom);
         *height = (int) (64 * consoleZoom);
     }

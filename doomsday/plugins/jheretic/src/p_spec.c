@@ -149,7 +149,7 @@ void P_InitPicAnims(void)
             }
             else // Its a flat.
             {
-                if((W_CheckNumForName(animdefs[i].startname)) == -1)
+                if((R_CheckFlatNumForName(animdefs[i].startname)) == -1)
                     continue;
 
                 endFrame = R_FlatNumForName(animdefs[i].endname);
@@ -1275,18 +1275,12 @@ struct terraindef_s {
     int     type;
 } TerrainTypeDefs[] =
 {
-    {
-    "FLTWAWA1", FLOOR_WATER},
-    {
-    "FLTFLWW1", FLOOR_WATER},
-    {
-    "FLTLAVA1", FLOOR_LAVA},
-    {
-    "FLATHUH1", FLOOR_LAVA},
-    {
-    "FLTSLUD1", FLOOR_SLUDGE},
-    {
-    "END", -1}
+    {"FLTWAWA1", FLOOR_WATER},
+    {"FLTFLWW1", FLOOR_WATER},
+    {"FLTLAVA1", FLOOR_LAVA},
+    {"FLATHUH1", FLOOR_LAVA},
+    {"FLTSLUD1", FLOOR_SLUDGE},
+    {"END", -1}
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -1303,7 +1297,7 @@ void P_InitLava(void)
 void P_InitTerrainTypes(void)
 {
     int     i;
-    int     lump;
+    int     id;
     int     size;
 
     size = Get(DD_NUMLUMPS) * sizeof(int);
@@ -1311,10 +1305,10 @@ void P_InitTerrainTypes(void)
     memset(TerrainTypes, 0, size);
     for(i = 0; TerrainTypeDefs[i].type != -1; i++)
     {
-        lump = W_CheckNumForName(TerrainTypeDefs[i].name);
-        if(lump != -1)
+        id = R_CheckFlatNumForName(TerrainTypeDefs[i].name);
+        if(id != -1)
         {
-            TerrainTypes[lump] = TerrainTypeDefs[i].type;
+            TerrainTypes[id] = TerrainTypeDefs[i].type;
         }
     }
 }
@@ -1322,12 +1316,12 @@ void P_InitTerrainTypes(void)
 /*
  * Return the terrain type of the specified flat.
  *
- * @param flatlumpnum   The flat lump number to check.
+ * @param flatid   The flat id number to check.
  */
-int P_FlatToTerrainType(int flatlumpnum)
+int P_FlatToTerrainType(int flatid)
 {
-    if(flatlumpnum != -1)
-        return TerrainTypes[flatlumpnum];
+    if(flatid != -1)
+        return TerrainTypes[flatid];
     else
         return FLOOR_SOLID;
 }
@@ -1340,10 +1334,10 @@ int P_FlatToTerrainType(int flatlumpnum)
  */
 int P_GetTerrainType(sector_t* sec, int plane)
 {
-    int flatnum = P_GetIntp(sec, (plane? DMU_CEILING_TEXTURE : DMU_FLOOR_TEXTURE));
+    int flatid = P_GetIntp(sec, (plane? DMU_CEILING_TEXTURE : DMU_FLOOR_TEXTURE));
 
-    if(flatnum != -1)
-        return TerrainTypes[flatnum];
+    if(flatid != -1)
+        return TerrainTypes[flatid];
     else
         return FLOOR_SOLID;
 }

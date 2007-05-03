@@ -212,7 +212,7 @@ void P_InitPicAnims(void)
             }
             else // Its a flat.
             {
-                if((W_CheckNumForName(animdefs[i].startname)) == -1)
+                if((R_CheckFlatNumForName(animdefs[i].startname)) == -1)
                     continue;
 
                 endFrame = R_FlatNumForName(animdefs[i].endname);

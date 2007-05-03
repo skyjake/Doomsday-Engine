@@ -324,40 +324,7 @@ void            R_UpdateData(void);
 
 //void R_PrecacheLevel (void);
 
-//
-// R_things.c
-//
-#define MAXVISSPRITES   1024       //192
-
-//extern  vissprite_t     vissprites[MAXVISSPRITES], *vissprite_p;
-//extern  vissprite_t     vsprsortedhead;
-
-// constant arrays used for psprite clipping and initializing clipping
-extern short    negonearray[SCREENWIDTH];
-extern short    screenheightarray[SCREENWIDTH];
-
-// vars for R_DrawMaskedColumn
-extern short   *mfloorclip;
-extern short   *mceilingclip;
-extern fixed_t  spryscale;
-extern fixed_t  sprtopscreen;
-extern fixed_t  sprbotscreen;
-
 extern fixed_t  pspritescale, pspriteiscale;
-
-void            R_DrawMaskedColumn(column_t * column, signed int baseclip);
-
-void            R_SortVisSprites(void);
-
-void            R_AddSprites(sector_t *sec);
-void            R_AddPSprites(void);
-void            R_DrawSprites(void);
-
-//void    R_InitSprites (char **namelist);
-void            R_ClearSprites(void);
-void            R_DrawMasked(void);
-
-//void    R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
 
 //=============================================================================
 //

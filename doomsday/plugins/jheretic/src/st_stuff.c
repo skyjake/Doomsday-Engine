@@ -684,7 +684,7 @@ void ST_createWidgets(void)
                       &oldartiCount, &st_statusbaron, ST_ARTIFACTCWIDTH, &statusbarCounterAlpha);
 
     // inventory slots
-    width = SHORT(PatchARTIFACTS[5].width) + 1;
+    width = PatchARTIFACTS[5].width + 1;
     temp = 0;
 
     for (i = 0; i < NUMVISINVSLOTS; i++){
@@ -870,7 +870,7 @@ static void DrINumber(signed int val, int x, int y, float r, float g, float b, f
 
 static void DrBNumber(signed int val, int x, int y, float red, float green, float blue, float alpha)
 {
-    patch_t *patch;
+    lumppatch_t *patch;
     int     xpos;
     int     oldval;
 
