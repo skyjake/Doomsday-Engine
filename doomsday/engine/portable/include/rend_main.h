@@ -61,7 +61,7 @@ float           Rend_PointDist3D(float c[3]);
 float           Rend_SectorLight(sector_t *sec);
 int             Rend_MidTexturePos(float *bottomleft, float *bottomright,
                                    float *topleft, float *topright,
-                                   float *texoffy, float tcyoff,
+                                   float *texoffy, float tcyoff, float texHeight,
                                    boolean lower_unpeg);
 boolean         Rend_IsWallSectionPVisible(line_t *line, segsection_t section,
                                            boolean backside);

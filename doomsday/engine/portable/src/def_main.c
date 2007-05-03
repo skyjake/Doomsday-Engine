@@ -422,7 +422,7 @@ ded_reflection_t *Def_GetReflection(int number, boolean is_texture)
     for(i = defs.count.reflections.num - 1, ref = defs.reflections + i;
         i >= 0; --i, --ref)
     {
-        if(!ref->is_texture == !is_texture && number == ref->surface_index)
+        if(!ref->is_texture == !is_texture && number == ref->surfaceIndex)
         {
             // It would be great to have a unified system that would
             // determine whether effects such as decorations and
@@ -919,10 +919,10 @@ void Def_Read(void)
         ded_ptcgen_t *pg = defs.ptcgens + i;
         int     st = Def_GetStateNum(pg->state);
 
-        if(pg->flat[0])
-            pg->flat_num = W_CheckNumForName(pg->flat);
+        if(pg->surface[0])
+            pg->surfaceIndex = R_CheckFlatNumForName(pg->surface);
         else
-            pg->flat_num = -1;
+            pg->surfaceIndex = -1;
         pg->type_num = Def_GetMobjNum(pg->type);
         pg->type2_num = Def_GetMobjNum(pg->type2);
         pg->damage_num = Def_GetMobjNum(pg->damage);
@@ -1059,7 +1059,7 @@ void Def_PostInit(void)
     {
         details[i].wall_texture =
             R_CheckTextureNumForName(defs.details[i].wall);
-        details[i].flat_lump = W_CheckNumForName(defs.details[i].flat);
+        details[i].flat_texture = R_CheckFlatNumForName(defs.details[i].flat);
         details[i].detail_lump =
             W_CheckNumForName(defs.details[i].detail_lump.path);
         details[i].gltex = 0;   // Not loaded.
@@ -1074,7 +1074,7 @@ void Def_PostInit(void)
         if(decor->is_texture)
             decor->surface_index = R_CheckTextureNumForName(decor->surface);
         else
-            decor->surface_index = W_CheckNumForName(decor->surface);
+            decor->surface_index = R_CheckFlatNumForName(decor->surface);
 
         decor->pregen_lightmap = 0;
     }
@@ -1084,11 +1084,11 @@ void Def_PostInit(void)
     {
         ded_reflection_t *ref = defs.reflections + i;
 
-        ref->surface_index = -1;
+        ref->surfaceIndex = -1;
         if(ref->is_texture)
-            ref->surface_index = R_CheckTextureNumForName(ref->surface);
+            ref->surfaceIndex = R_CheckTextureNumForName(ref->surface);
         else
-            ref->surface_index = W_CheckNumForName(ref->surface);
+            ref->surfaceIndex = R_CheckFlatNumForName(ref->surface);
 
         // Initialize the pointers to handle textures.
         ref->shiny_tex = ref->mask_tex = 0;
@@ -1353,7 +1353,7 @@ void Def_CopyLineType(linetype_t * l, ded_linetype_t * def)
         {
             if(def->iparm_str[k][0])
                 l->iparm[k] =
-                    Friendly(W_CheckNumForName(def->iparm_str[k]));
+                    Friendly(R_CheckFlatNumForName(def->iparm_str[k]));
         }
         else if(a & MAP_MUS)
         {

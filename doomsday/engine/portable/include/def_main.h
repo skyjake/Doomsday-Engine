@@ -32,7 +32,7 @@
 
 typedef struct {
     int             wall_texture;
-    int             flat_lump;
+    int             flat_texture;
     int             detail_lump;
     unsigned int    gltex;
 } detailtex_t;

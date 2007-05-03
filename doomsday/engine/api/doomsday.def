@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 334 <--
+; --> 337 <--
 ; Other free ordinals:
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
@@ -249,12 +249,15 @@ EXPORTS
 	R_SetupLevel				@89 NONAME
 	R_PrecacheLevel				@90 NONAME
 	R_PrecacheSkinsForState		@240 NONAME
+	R_PrecachePatch				@335 NONAME
 	R_RenderPlayerView			@91 NONAME
 	R_ViewWindow				@92 NONAME
 	R_SetBorderGfx				@93 NONAME
 	R_GetSpriteInfo				@94 NONAME
 	R_GetPatchInfo				@237 NONAME
+	R_CheckFlatNumForName		@336 NONAME
 	R_FlatNumForName			@95 NONAME
+	R_FlatNameForNum			@337 NONAME
 	R_CheckTextureNumForName	@96 NONAME
 	R_TextureNumForName			@97 NONAME
 	R_TextureNameForNum			@98 NONAME

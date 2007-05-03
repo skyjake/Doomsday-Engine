@@ -1402,7 +1402,12 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
             {
                 READLABEL;
                 RV_STR("State", gen->state)
-                RV_STR("Flat", gen->flat)
+                if(ISLABEL("Flat"))
+                {
+                    READSTR(gen->surface)
+                    gen->is_texture = false;
+                }
+                else
                 RV_STR("Mobj", gen->type)
                 RV_STR("Alt mobj", gen->type2)
                 RV_STR("Damage mobj", gen->damage)

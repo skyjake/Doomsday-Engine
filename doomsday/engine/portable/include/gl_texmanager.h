@@ -65,7 +65,7 @@ typedef enum gfxmode_e {
 /*
  * Textures used in the lighting system.
  */
-typedef enum lightingtex_e {
+typedef enum lightingtexid_e {
     LST_DYNAMIC,                   // Round dynamic light
     LST_GRADIENT,                  // Top-down gradient
     LST_RADIO_CO,                  // FakeRadio closed/open corner shadow
@@ -73,26 +73,26 @@ typedef enum lightingtex_e {
     LST_RADIO_OO,                  // FakeRadio open/open shadow
     LST_RADIO_OE,                  // FakeRadio open/edge shadow
     NUM_LIGHTING_TEXTURES
-} lightingtex_t;
+} lightingtexid_t;
 
-typedef enum flaretex_e {
+typedef enum flaretexid_e {
     FXT_FLARE,                     // (flare)
     FXT_BRFLARE,                   // (brFlare)
     FXT_BIGFLARE,                  // (bigFlare)
     NUM_FLARE_TEXTURES
-} flaretex_t;
+} flaretexid_t;
 
 /*
  * Textures used in world rendering.
  * eg a surface with a missing tex/flat is drawn using the "missing" graphic
  */
-typedef enum ddtexture_e {
+typedef enum ddtextureid_e {
     DDT_UNKNOWN,          // Drawn if a texture/flat is unknown
     DDT_MISSING,          // Drawn in place of HOMs in dev mode.
     DDT_BBOX,             // Drawn when rendering bounding boxes
     DDT_GRAY,             // For lighting debug.
     NUM_DD_TEXTURES
-} ddtexture_t;
+} ddtextureid_t;
 
 extern int      glMaxTexSize;
 extern int      ratioLimit;
@@ -101,13 +101,8 @@ extern int      texMagMode;
 extern int      useSmartFilter;
 extern byte     loadExtAlways;
 extern int      texMagMode;
-extern float    texw, texh;
-extern int      texmask;
-extern detailinfo_t *texdetail;
-extern unsigned int curtex;
 
-extern DGLuint  lightingTexNames[NUM_LIGHTING_TEXTURES];
-extern DGLuint  flareTexNames[NUM_FLARE_TEXTURES];
+extern unsigned int curtex;
 
 void            GL_TexRegister(void);
 void            GL_InitTextureManager(void);
@@ -121,16 +116,18 @@ int             GL_InitPalettedTexture(void);
 void            GL_DestroySkinNames(void);
 void            GL_ResetLumpTexData(void);
 
-unsigned int    GL_BindTexFlat(struct flat_s *fl);
 void            GL_SetFlat(int idx);
 void            GL_BindTexture(DGLuint texname);
 void            GL_TextureFilterMode(int target, int parm);
+DGLuint         GL_BindTexPatch(struct patch_s *p);
+DGLuint         GL_GetOtherPart(int lump, texinfo_t **info);
+void            GL_SetPatch(int lump);  // No mipmaps are generated.
 
 extern int      pallump;
 void            GL_UpdateGamma(void);
 
 void            GL_LowRes(void);
-void            TranslatePatch(struct patch_s *patch, byte *transTable);
+void            TranslatePatch(lumppatch_t *patch, byte *transTable);
 byte           *GL_LoadImage(image_t *img, const char *imagefn,
                              boolean useModelPath);
 byte           *GL_LoadImageCK(image_t *img, const char *imagefn,
@@ -156,18 +153,22 @@ DGLuint         GL_UploadTexture(byte *data, int width, int height,
                                  int minFilter, int magFilter,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
-DGLuint         GL_GetTextureInfo(int index);
-DGLuint         GL_GetTextureInfo2(int index, boolean translate);
-DGLuint         GL_GetFlatInfo(int idx, boolean translate);
-DGLuint         GL_PrepareTexture(int idx);
-DGLuint         GL_PrepareTexture2(int idx, boolean translate);
-DGLuint         GL_PrepareFlat(int idx);
-DGLuint         GL_PrepareFlat2(int idx, boolean translate);
-DGLuint         GL_PrepareLSTexture(lightingtex_t which);
-DGLuint         GL_PrepareFlareTexture(flaretex_t flare);
-DGLuint         GL_PrepareSky(int idx, boolean zeroMask);
-DGLuint         GL_PrepareSky2(int idx, boolean zeroMask, boolean translate);
-DGLuint         GL_PrepareDDTexture(ddtexture_t idx);
+DGLuint         GL_GetTextureInfo(int index, texinfo_t **info);
+DGLuint         GL_GetTextureInfo2(int index, boolean translate, texinfo_t **info);
+DGLuint         GL_GetFlatInfo(int idx, texinfo_t **info);
+DGLuint         GL_GetFlatInfo2(int idx, boolean translate, texinfo_t **info);
+DGLuint         GL_GetPatchInfo(int idx, boolean part2, texinfo_t **info);
+DGLuint         GL_PrepareTexture(int idx, texinfo_t **info);
+DGLuint         GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info);
+DGLuint         GL_PrepareFlat(int idx, texinfo_t **info);
+DGLuint         GL_PrepareFlat2(int idx, boolean translate, texinfo_t **info);
+DGLuint         GL_PreparePatch(int idx, texinfo_t **info);
+DGLuint         GL_PrepareLSTexture(lightingtexid_t which, texinfo_t **info);
+DGLuint         GL_PrepareFlareTexture(flaretexid_t flare, texinfo_t **info);
+DGLuint         GL_PrepareSky(int idx, boolean zeroMask, texinfo_t **info);
+DGLuint         GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
+                               texinfo_t **info);
+DGLuint         GL_PrepareDDTexture(ddtextureid_t idx, texinfo_t **info);
 void            GL_BufferSkyTexture(int idx, byte **outbuffer, int *width,
                                     int *height, boolean zeroMask);
 unsigned int    GL_PrepareSprite(int pnum, int spriteMode);
@@ -177,11 +178,7 @@ void            GL_SetTexture(int idx);
 void            GL_SetSprite(int pnum, int spriteType);
 void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
 void            GL_NewSplitTex(int lump, DGLuint part2name);
-DGLuint         GL_GetOtherPart(int lump);
-void            GL_SetPatch(int lump);  // No mipmaps are generated.
 void            GL_SetNoTexture(void);
-int             GL_GetLumpTexWidth(int lump);
-int             GL_GetLumpTexHeight(int lump);
 void            GL_UpdateTexParams(int mipmode);
 void            GL_UpdateRawScreenParams(int smoothing);
 void            GL_DeleteRawImages(void);

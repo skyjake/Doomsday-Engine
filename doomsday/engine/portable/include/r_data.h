@@ -239,25 +239,34 @@ typedef struct {
     int             patch;
 } texpatch_t;
 
+typedef struct {
+    short           width;
+    short           height;
+    byte            masked;        // Is the (DGL) texture masked?
+    detailinfo_t    detail;        // Detail texture information.
+} texinfo_t;
+
 // a maptexturedef_t describes a rectangular texture, which is composed of one
 // or more mappatch_t structures that arrange graphic patches
 typedef struct {
+    DGLuint         tex;           // Name of the associated DGL texture.
     char            name[9];       // for switch changing, etc; ends in \0
-    short           width;
-    short           height;
+    texinfo_t       info;
     int             flags;         // TXF_* flags.
     rgbcol_t        color;
-    short           patchcount;
-    DGLuint         tex;           // Name of the associated DGL texture.
-    byte            masked;        // Is the (DGL) texture masked?
-    detailinfo_t    detail;        // Detail texture information.
     byte            ingroup;       // True if texture belongs to some animgroup.
     struct ded_decor_s *decoration; /* Pointer to the surface
                                      * decoration, if any. */
     struct ded_reflection_s *reflection; // Surface reflection definition.
 
+    short           patchcount;
     texpatch_t      patches[1];    // [patchcount] drawn back to front
 } texture_t;                       //   into the cached texture
+
+typedef struct {
+    DGLuint         tex;
+    texinfo_t       info;
+} ddtexture_t;
 
 typedef struct translation_s {
     int             current;
@@ -266,18 +275,39 @@ typedef struct translation_s {
 } translation_t;
 
 typedef struct flat_s {
-    struct flat_s  *next;
-    int             lump;
-    translation_t   translation;
+    DGLuint         tex;          // Name of the associated DGL texture.
+    char            name[9];      // for switch changing, etc; ends in \0
+    texinfo_t       info;
     short           flags;
     rgbcol_t        color;
-    detailinfo_t    detail;        // Detail texture information.
     byte            ingroup;       // True if belongs to some animgroup.
     struct ded_decor_s *decoration;// Pointer to the surface decoration,
                                    // if any.
     struct ded_reflection_s *reflection; // Surface reflection definition.
+
+    int             lump;
     struct ded_ptcgen_s *ptcgen;   // Particle generator for the flat.
 } flat_t;
+
+// a patch is a lumppatch that has been prepared for render.
+typedef struct patch_s {
+    int             lump;
+    // Part 1
+    DGLuint         tex;          // Name of the associated DGL texture.
+    texinfo_t       info;
+
+    // Part 2 (only used with textures larger than the max texture size).
+    DGLuint         tex2;
+    texinfo_t       info2;
+
+    struct patch_s *next;
+} patch_t;
+
+// a pic is an unmasked block of pixels
+typedef struct {
+    byte            width, height;
+    byte            data;
+} pic_t;
 
 typedef struct lumptexinfo_s {
     DGLuint         tex[2];        // Names of the textures (two parts for big ones)
@@ -317,6 +347,9 @@ extern int      viewwidth, viewheight;
 extern int      numtextures;
 extern texture_t **textures;
 extern translation_t *texturetranslation;   // for global animation
+extern int      numflats;
+extern flat_t **flats;
+extern translation_t *flattranslation;   // for global animation
 extern int      numgroups;
 extern animgroup_t *groups;
 extern int      levelFullBright;
@@ -337,15 +370,18 @@ void            R_UpdateSector(struct sector_s *sec, boolean forceUpdate);
 void            R_UpdateSurface(surface_t *current, boolean forceUpdate);
 void            R_UpdateAllSurfaces(boolean forceUpdate);
 void            R_PrecacheLevel(void);
+void            R_PrecachePatch(int lumpnum);
 void            R_InitAnimGroup(ded_group_t *def);
 void            R_ResetAnimGroups(void);
 boolean         R_IsInAnimGroup(int groupNum, int type, int number);
 void            R_AnimateAnimGroups(void);
 int             R_GraphicResourceFlags(resourceclass_t rclass, int id);
-flat_t         *R_FindFlat(int lumpnum);    // May return NULL.
-flat_t         *R_GetFlat(int lumpnum); // Creates new entries.
-flat_t        **R_CollectFlats(int *count);
+patch_t        *R_FindPatch(int lumpnum);    // May return NULL.
+patch_t        *R_GetPatch(int lumpnum); // Creates new entries.
+patch_t       **R_CollectPatches(int *count);
+int             R_CheckFlatNumForName(const char *name);
 int             R_FlatNumForName(const char *name);
+const char     *R_FlatNameForNum(int num);
 int             R_CheckTextureNumForName(const char *name);
 int             R_TextureNumForName(const char *name);
 const char     *R_TextureNameForNum(int num);

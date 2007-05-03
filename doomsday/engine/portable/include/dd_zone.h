@@ -43,11 +43,11 @@
 #define PU_DAVE         4          // anything else Dave wants static
 
 #define PU_OPENGL       10         // OpenGL allocated stuff.
-#define PU_REFRESHTEX   11         // Textures/refresh.
+#define PU_REFRESHTEX   11         // Textures/Flats/refresh.
 #define PU_REFRESHCM    12         // Colormap.
 #define PU_REFRESHTRANS 13
 #define PU_REFRESHSPR   14
-#define PU_FLAT         15
+#define PU_PATCH        15
 #define PU_MODEL        16
 #define PU_SPRITE       20
 

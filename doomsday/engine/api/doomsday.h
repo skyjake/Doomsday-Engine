@@ -334,6 +334,7 @@ extern          "C" {
     void            R_SetDataPath(const char *path);
     void            R_SetupLevel(int mode, int flags);
     void            R_PrecacheLevel(void);
+    void            R_PrecachePatch(int lumpnum);
     void            R_PrecacheSkinsForState(int stateIndex);
     void            R_RenderPlayerView(ddplayer_t *player);
     void            R_ViewWindow(int x, int y, int w, int h);
@@ -341,7 +342,9 @@ extern          "C" {
     void            R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t *sprinfo);
     void            R_GetPatchInfo(int lump, spriteinfo_t *info);
+    int             R_CheckFlatNumForName(const char *name);
     int             R_FlatNumForName(const char *name);
+    const char     *R_FlatNameForNum(int num);
     int             R_CheckTextureNumForName(const char *name);
     int             R_TextureNumForName(const char *name);
     const char     *R_TextureNameForNum(int num);

@@ -150,17 +150,18 @@ void GL_DrawRawScreen(int lump, float offx, float offy)
  */
 void GL_DrawPatch_CS(int x, int y, int lumpnum)
 {
-    int     w, h;
+    float           w, h;
+    texinfo_t      *texinfo;
 
     // Set the texture.
-    GL_SetPatch(lumpnum);
+    gl.Bind(curtex = GL_PreparePatch(lumpnum, &texinfo));
 
-    w = lumptexinfo[lumpnum].width[0];
-    h = lumptexinfo[lumpnum].height;
+    w = (float) texinfo->width;
+    h = (float) texinfo->height;
     if(usePatchOffset)
     {
-        x += lumptexinfo[lumpnum].offx;
-        y += lumptexinfo[lumpnum].offy;
+        x += (int) lumptexinfo[lumpnum].offx;
+        y += (int) lumptexinfo[lumpnum].offy;
     }
 
     gl.Begin(DGL_QUADS);
@@ -175,12 +176,12 @@ void GL_DrawPatch_CS(int x, int y, int lumpnum)
     gl.End();
 
     // Is there a second part?
-    if(GL_GetOtherPart(lumpnum))
+    if(GL_GetOtherPart(lumpnum, &texinfo))
     {
-        x += w;
+        x += (int) texinfo->width;
 
-        GL_BindTexture(GL_GetOtherPart(lumpnum));
-        w = lumptexinfo[lumpnum].width[1];
+        GL_BindTexture(GL_GetOtherPart(lumpnum, &texinfo));
+        w = (float) texinfo->width;
 
         gl.Begin(DGL_QUADS);
         gl.TexCoord2f(0, 0);

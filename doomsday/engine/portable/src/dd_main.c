@@ -830,7 +830,7 @@ void DD_CheckQuery(int query, int parm)
     switch (query)
     {
     case DD_TEXTURE_HEIGHT_QUERY:
-        queryResult = textures[parm]->height << FRACBITS;
+        queryResult = textures[parm]->info.height << FRACBITS;
         break;
 #if 0
     // Unused
@@ -962,7 +962,7 @@ int DD_GetInteger(int ddvalue)
             return (int) &gx;
 
         case DD_DYNLIGHT_TEXTURE:
-            return lightingTexNames[LST_DYNAMIC];
+            return (int) GL_PrepareLSTexture(LST_DYNAMIC, NULL);
 
         case DD_TRACE_ADDRESS:
             ASSERT_NOT_64BIT();

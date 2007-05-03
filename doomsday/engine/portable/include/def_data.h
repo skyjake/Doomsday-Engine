@@ -429,8 +429,9 @@ extern          "C" {
     typedef struct ded_ptcgen_s {
         struct ded_ptcgen_s *state_next;    // List of generators for a state.
         ded_stateid_t   state;     // Triggered by this state (if mobj-gen).
-        ded_string_t    flat;      // Triggered by this flat.
-        int             flat_num;
+        ded_string_t    surface;   // Texture or flat name.
+        int             is_texture; // True, if particle generator for a wall.
+        int             surfaceIndex; // Texture or flat index.
         ded_mobjid_t    type;      // Triggered by this type of mobjs.
         ded_mobjid_t    type2;     // Also triggered by this type.
         int             type_num;
@@ -496,7 +497,7 @@ extern          "C" {
     typedef struct ded_reflection_s {
         ded_string_t    surface;       // Texture or flat name.
         int             is_texture;    // True, if reflection for a wall.
-        int             surface_index; // Texture or flat index.
+        int             surfaceIndex; // Texture or flat index.
         ded_flags_t     blend_mode;    // Blend mode flags (bm_*).
         float           shininess;
         float           min_color[3];

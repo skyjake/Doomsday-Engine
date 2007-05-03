@@ -62,7 +62,7 @@ int             LineAverageRGB(byte *imgdata, int width, int height, int line,
                                byte *rgb, byte *palette, boolean hasAlpha);
 void            ColorOutlines(byte *buffer, int width, int height);
 int             DrawRealPatch(byte *buffer, int texwidth, int texheight,
-                              patch_t *patch, int origx, int origy,
+                              lumppatch_t *patch, int origx, int origy,
                               boolean maskZero, unsigned char *transtable,
                               boolean checkForAlpha);
 void            DeSaturate(byte *buffer, byte *palette, int width, int height);
