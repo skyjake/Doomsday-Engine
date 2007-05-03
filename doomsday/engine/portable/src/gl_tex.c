@@ -45,6 +45,16 @@
 
 // TYPES -------------------------------------------------------------------
 
+// posts are runs of non masked source pixels
+typedef struct {
+    byte            topdelta;  // -1 is the last post in a column
+    byte            length;
+    // length data bytes follows
+} post_t;
+
+// column_t is a list of 0 or more post_t, (byte)-1 terminated
+typedef post_t  column_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -527,16 +537,6 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
 }
 
 /**
- * 'fnum' is really a lump number.
- */
-void GL_GetFlatColor(int fnum, float *rgb)
-{
-    flat_t     *flat = R_GetFlat(fnum);
-
-    memcpy(rgb, flat->color.rgb, sizeof(float) * 3);
-}
-
-/**
  * Modified to allow taller masked textures - GMJ Aug 2002
  *
  * Warning: The buffer must have room for the new alpha data!
@@ -558,7 +558,7 @@ void GL_GetFlatColor(int fnum, float *rgb)
  *                      <code>false</code>. Else, <code>true</code> if the
  *                      buffer really has alpha information.
  */
-int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
+int DrawRealPatch(byte *buffer, int texwidth, int texheight, lumppatch_t *patch,
                   int origx, int origy, boolean maskZero,
                   unsigned char *transtable, boolean checkForAlpha)
 {
@@ -657,7 +657,7 @@ int DrawRealPatch(byte *buffer, int texwidth, int texheight, patch_t *patch,
 /**
  * Translate colors in the specified patch.
  */
-void TranslatePatch(patch_t *patch, byte *transTable)
+void TranslatePatch(lumppatch_t *patch, byte *transTable)
 {
     int         count;
     int         col = 0;

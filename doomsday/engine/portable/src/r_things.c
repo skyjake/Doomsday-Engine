@@ -108,7 +108,7 @@ static mobj_t *projectedThing;  // Used during RIT_VisMobjZ
 
 void R_InitSpriteLumps(void)
 {
-    patch_t *patch;
+    lumppatch_t *patch;
     spritelump_t *sl;
     int     i;
     char    buf[64];
@@ -124,7 +124,7 @@ void R_InitSpriteLumps(void)
         if(!(i % 50))
             Con_Progress(i, PBARF_SET | PBARF_DONTSHOW);*/
 
-        patch = W_CacheLumpNum(sl->lump, PU_CACHE);
+        patch = (lumppatch_t *) W_CacheLumpNum(sl->lump, PU_CACHE);
         sl->width = SHORT(patch->width);
         sl->height = SHORT(patch->height);
         sl->offset = SHORT(patch->leftoffset);
@@ -376,7 +376,7 @@ void R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo)
 
 void R_GetPatchInfo(int lump, spriteinfo_t *info)
 {
-    patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
+    lumppatch_t *patch = (lumppatch_t *) W_CacheLumpNum(lump, PU_CACHE);
 
     memset(info, 0, sizeof(*info));
     info->lump = info->realLump = lump;

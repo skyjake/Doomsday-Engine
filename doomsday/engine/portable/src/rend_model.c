@@ -891,7 +891,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
 
     if(renderTextures == 2)
         // For lighting debug, render all surfaces using the gray texture.
-        skinTexture = GL_PrepareDDTexture(DDT_GRAY);
+        skinTexture = GL_PrepareDDTexture(DDT_GRAY, NULL);
     else
         skinTexture = GL_PrepareSkin(mdl, useSkin);
 

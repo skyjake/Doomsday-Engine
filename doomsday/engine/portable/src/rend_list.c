@@ -1261,7 +1261,8 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
     base = RL_AllocateVertices(list->last->primSize);
 
     // Allocate the indices.
-    RL_AllocateIndices(list, 3 + poly->wall->divs[1].num + 3 + poly->wall->divs[0].num);
+    RL_AllocateIndices(list, 3 + poly->wall->divs[1].num + 
+                             3 + poly->wall->divs[0].num);
 
     hdr = list->last;
     hdr->indices[0] = base;
@@ -1666,9 +1667,10 @@ BEGIN_PROF( PROF_RL_ADD_POLY );
     // regular world polys (with a few obvious properties).
     if((poly->flags & RPF_SKY_MASK) && debugSky)
     {
-        poly->tex.id = curtex = GL_PrepareFlat(skyflatnum);
-        poly->tex.width = texw;
-        poly->tex.height = texh;
+        texinfo_t *texinfo;
+        poly->tex.id = curtex = GL_PrepareFlat(skyflatnum, &texinfo);
+        poly->tex.width = texinfo->width;
+        poly->tex.height = texinfo->height;
         poly->tex.detail = 0;
         poly->texoffy = poly->texoffx = 0;
         poly->lights = NULL;

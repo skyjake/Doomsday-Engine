@@ -347,7 +347,7 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
             if(lum->flareCustom)
                 tex = lum->flareTex;
             else
-                tex = GL_PrepareLSTexture(LST_DYNAMIC);
+                tex = GL_PrepareLSTexture(LST_DYNAMIC, NULL);
         }
         else
         {
@@ -361,16 +361,16 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
                 // The "Very Bright" condition.
                 radius *= .65f;
                 if(!i)
-                    tex = GL_PrepareFlareTexture(FXT_BIGFLARE);
+                    tex = GL_PrepareFlareTexture(FXT_BIGFLARE, NULL);
                 else
-                    tex = GL_PrepareFlareTexture(fl->texture);
+                    tex = GL_PrepareFlareTexture(fl->texture, NULL);
             }
             else
             {
                 if(!i)
-                    tex = GL_PrepareLSTexture(LST_DYNAMIC);
+                    tex = GL_PrepareLSTexture(LST_DYNAMIC, NULL);
                 else
-                    tex = GL_PrepareFlareTexture(fl->texture);
+                    tex = GL_PrepareFlareTexture(fl->texture, NULL);
             }
         }
 

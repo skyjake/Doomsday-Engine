@@ -2765,7 +2765,7 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
 
         // Update the surface's blended texture.
         if(suf->isflat)
-            suf->xlat = &R_GetFlat(suf->texture)->translation;
+            suf->xlat = &flattranslation[suf->texture];
         else
             suf->xlat = &texturetranslation[suf->texture];
 

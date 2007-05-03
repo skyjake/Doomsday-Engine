@@ -105,8 +105,6 @@ float   yfov;
 int     gamedrawhud = 1;    // Set to zero when we advise that the HUD
                             // should not be drawn
 
-extern DGLuint ddTextures[];
-
 uint    playerLightRange[MAXPLAYERS];
 
 lightsample_t playerLastLightSample[MAXPLAYERS];
@@ -373,28 +371,25 @@ static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
     // for the texture or flat in question.
     if(suf->isflat)
     {
-        flat_t *flat;
+        flat_t *flatptr;
 
-        if(suf->xlat && suf->xlat->current != suf->texture)
+        if(suf->xlat)
         {
             // The flat is currently translated to another one.
-            flat = R_GetFlat(suf->xlat->current);
+            flatptr = flats[suf->xlat->current];
         }
         else
         {
-            flat = R_GetFlat(suf->texture);
+            flatptr = flats[suf->texture];
         }
 
-        if(!flat)
-            return NULL;
-
-        ref = flat->reflection;
+        ref = flatptr->reflection;
         if(ref)
         {
             if(width)
-                *width = 64;
+                *width = flatptr->info.width;
             if(height)
-                *height = 64;
+                *height = flatptr->info.height;
         }
     }
     else
@@ -414,9 +409,9 @@ static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
         if(ref)
         {
             if(width)
-                *width = texptr->width;
+                *width = texptr->info.width;
             if(height)
-                *height = texptr->height;
+                *height = texptr->info.height;
         }
     }
 
@@ -473,6 +468,7 @@ static void Rend_AddShinyPoly(rendpoly_t *poly, ded_reflection_t *ref,
 static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
                               boolean enabled)
 {
+    texinfo_t      *texinfo;
     translation_t *xlat = surface->xlat;
 
     // If fog is active, inter=0 is accepted as well. Otherwise flickering
@@ -489,16 +485,16 @@ static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
         return;
     }
 
-    // Get info of the blend target. The globals texw and texh are modified.
+    // Get info of the blend target.
     if(surface->isflat)
-        poly->intertex.id = GL_PrepareFlat2(xlat->next, false);
+        poly->intertex.id = GL_PrepareFlat2(xlat->next, false, &texinfo);
     else
-        poly->intertex.id = GL_PrepareTexture2(xlat->next, false);
+        poly->intertex.id = GL_PrepareTexture2(xlat->next, false, &texinfo);
 
-    poly->intertex.width = texw;
-    poly->intertex.height = texh;
-    poly->intertex.detail = texdetail;
-    poly->intertex.masked = texmask;
+    poly->intertex.width = texinfo->width;
+    poly->intertex.height = texinfo->height;
+    poly->intertex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
+    poly->intertex.masked = texinfo->masked;
     poly->interpos = xlat->inter;
 }
 
@@ -520,25 +516,21 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
 
         if(side->SW_middlepic != 0)
         {
-            boolean masked;
-            int     texheight;
+            texinfo_t      *texinfo = NULL;
 
             if(side->SW_middlepic > 0)
             {
                 if(side->SW_middleisflat)
-                    GL_PrepareFlat2(side->SW_middlepic, true);
+                    GL_GetFlatInfo(side->SW_middlepic, &texinfo);
                 else
-                    GL_GetTextureInfo(side->SW_middlepic);
-                masked = texmask;
-                texheight = texh;
+                    GL_GetTextureInfo(side->SW_middlepic, &texinfo);
             }
             else // It's a DDay texture.
             {
-                masked = false;
-                texheight = 64;
+                GL_PrepareDDTexture(side->SW_middlepic, &texinfo);
             }
 
-            if(!side->blendmode && side->SW_middlergba[3] >= 1 && !masked)
+            if(!side->blendmode && side->SW_middlergba[3] >= 1 && !texinfo->masked)
             {
                 float openTop[2], gapTop[2];
                 float openBottom[2], gapBottom[2];
@@ -550,13 +542,13 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
 
                 // Could the mid texture fill enough of this gap for us
                 // to consider it completely closed?
-                if(texheight >= (openTop[0] - openBottom[0]) &&
-                   texheight >= (openTop[1] - openBottom[1]))
+                if(texinfo->height >= (openTop[0] - openBottom[0]) &&
+                   texinfo->height >= (openTop[1] - openBottom[1]))
                 {
                     // Possibly. Check the placement of the mid texture.
                     if(Rend_MidTexturePos
                        (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
-                        NULL, side->SW_middleoffy,
+                        NULL, side->SW_middleoffy, texinfo->height,
                         0 != (line->flags & ML_DONTPEGBOTTOM)))
                     {
                         if(openTop[0] >= gapTop[0] &&
@@ -686,18 +678,15 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
  * Prepares the correct flat/texture for the passed poly.
  *
  * @param poly:     Ptr to the poly to apply the texture to.
- * @param tex:      Texture/Flat id number. If -1 we'll apply the
- *                  special "missing" texture instead.
- * @param isFlat:   (True) "tex" is a flat id ELSE "tex" is a texture id.
+ * @param surface:  Ptr to the surface properties this rendpoly is using.
  * @return int      (-1) If the texture reference is invalid.
  *                  Else return the surface flags for this poly.
  */
-static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
+static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
+                                      texinfo_t **texinfo)
 {
+    texinfo_t   *info;
     int         flags;
-
-    if(surface->texture == 0)
-        return -1;
 
     if(R_IsSkySurface(surface))
         return 0;
@@ -705,40 +694,49 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface)
     // Prepare the flat/texture
     if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
-        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_GRAY);
+        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_GRAY, NULL);
 
         // We need the properties of the real flat/texture.
         if(surface->isflat)
-            GL_GetFlatInfo(surface->texture, true);
+            GL_GetFlatInfo(surface->texture, &info);
         else
-            GL_GetTextureInfo2(surface->texture, true);
+            GL_GetTextureInfo(surface->texture, &info);
 
         flags = surface->flags & ~(SUF_TEXFIX|SUF_BLEND);
     }
     else if((surface->flags & SUF_TEXFIX) && devNoTexFix)
     {   // For debug, render the "missing" texture instead of the texture
         // chosen for surfaces to fix the HOMs.
-        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_MISSING);
+        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_MISSING, &info);
         flags = SUF_GLOW; // Make it stand out
     }
     else if(surface->texture == -1)
-    {   // An unknown texture. The "unknown" graphic will be used.
+    {   // An unknown texture. The "unknown" graphic will be used
+        // NOTE: It has already been bound and paramaters set.
         return SUF_GLOW; // Make it stand out
     }
     else
     {
         if(surface->isflat)
-            poly->tex.id = curtex = GL_PrepareFlat2(surface->texture, true);
+            poly->tex.id = curtex =
+                GL_PrepareFlat2(surface->texture, true, &info);
         else
-            poly->tex.id = curtex = GL_PrepareTexture2(surface->texture, true);
+            poly->tex.id = curtex =
+                GL_PrepareTexture2(surface->texture, true, &info);
 
         flags = surface->flags;
     }
 
-    poly->tex.width = texw;
-    poly->tex.height = texh;
-    poly->tex.detail = texdetail;
-    poly->tex.masked = texmask;
+    poly->tex.width = info->width;
+    poly->tex.height = info->height;
+    poly->tex.detail = (r_detail && info->detail.tex? &info->detail : 0);
+    poly->tex.masked = info->masked;
+
+    if(info->masked)
+        flags &= ~SUF_NO_RADIO;
+
+    if(texinfo)
+        *texinfo = info;
 
     // Return the parameters for this surface.
     return flags;
@@ -830,11 +828,11 @@ static void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
                         if(!Rend_CheckDiv(quad, i, sceil))
                             div->pos[div->num++] = sceil;
                     }
-
                     // Have we reached the div limit?
                     if(div->num == RL_MAX_DIVS)
                         isDone = true;
-                    else
+                    
+                    if(!isDone)
                     {
                         // Divide at the sector's floor height?
                         if(sfloor > low && sfloor < hi)
@@ -843,7 +841,6 @@ static void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
                             if(!Rend_CheckDiv(quad, i, sfloor))
                                 div->pos[div->num++] = sfloor;
                         }
-
                         // Have we reached the div limit?
                         if(div->num == RL_MAX_DIVS)
                             isDone = true;
@@ -873,13 +870,12 @@ for(k = 0; k < div->num; ++k)
 
 /**
  * Calculates the placement for a middle texture (top, bottom, offset).
- * Texture must be prepared so texh is known.
  * texoffy may be NULL.
  * Returns false if the middle texture isn't visible (in the opening).
  */
 int Rend_MidTexturePos(float *bottomleft, float *bottomright,
                        float *topleft, float *topright, float *texoffy,
-                       float tcyoff, boolean lower_unpeg)
+                       float tcyoff, float texHeight, boolean lower_unpeg)
 {
     int         side;
     float       openingTop, openingBottom;
@@ -904,13 +900,13 @@ int Rend_MidTexturePos(float *bottomleft, float *bottomright,
         {
             *(side? bottomright : bottomleft) += tcyoff;
             *(side? topright : topleft) =
-                *(side? bottomright : bottomleft) + texh;
+                *(side? bottomright : bottomleft) + texHeight;
         }
         else
         {
             *(side? topright : topleft) += tcyoff;
             *(side? bottomright : bottomleft) =
-                *(side? topright : topleft) - texh;
+                *(side? topright : topleft) - texHeight;
         }
 
         // Clip it.
@@ -1004,10 +1000,6 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
     // Make it fullbright?
     if((flags & RPF2_GLOW) && glowingTextures)
         quad->flags |= RPF_GLOW;
-
-    // Check for neighborhood division?
-    if(!(section == SEG_MIDDLE && seg->SG_backsector))
-        Rend_WallHeightDivision(quad, seg, frontsec, section);
 
     // Surface color/light.
     RL_VertexColors(quad, Rend_SectorLight(frontsec), -1, colorPtr, alpha);
@@ -1216,6 +1208,9 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     quad->tex.detail = NULL;
     quad->intertex.detail = NULL;
 
+    // Check for neighborhood division?
+    Rend_WallHeightDivision(quad, seg, frontsec, SEG_MIDDLE);
+
     vBL = quad->vertices[0].pos;
     vBR = quad->vertices[1].pos;
     vTL = quad->vertices[2].pos;
@@ -1231,14 +1226,12 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 
     Rend_SetSurfaceColorsForSide(side);
 
-    // We only need one wall section extending from floor to ceiling.
     surface = &side->SW_middlesurface;
-    surfaceFlags = Rend_PrepareTextureForPoly(quad, surface);
-
     // Is there a visible surface?
-    if(surfaceFlags != -1)
+    if(surface->texture != 0)
     {
-        short tempflags = 0;
+        texinfo_t      *texinfo = NULL;
+        short           tempflags = 0;
 
         // Fill in the remaining quad data.
         quad->flags = 0;
@@ -1247,8 +1240,11 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 
         quad->texoffx = side->SW_middleoffx + seg->offset;
         quad->texoffy = side->SW_middleoffy;
+ 
+        surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
+
         if(ldef->flags & ML_DONTPEGBOTTOM)
-            quad->texoffy += texh - fsh;
+            quad->texoffy += texinfo->height - fsh;
 
         if(!(surfaceFlags & SUF_NO_RADIO))
             tempflags |= RPF2_SHADOW;
@@ -1291,15 +1287,13 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
  */
 static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 {
-    int         surfaceFlags;
     int         solidSeg = false; // -1 means NEVER.
     sector_t   *backsec;
     surface_t  *surface;
     side_t     *sid, *backsid, *side;
     line_t     *ldef;
     float       ffloor, fceil, bfloor, bceil, fsh, bsh;
-    rendpoly_t *quad;
-    float      *vBL, *vBR, *vTL, *vTR;
+    float       vL_ZTop, vL_ZBottom, vR_ZTop, vR_ZBottom, *vL_XY, *vR_XY;
     boolean     backSide = true;
     sector_t   *frontsec = ssec->sector, *fflinkSec, *fclinkSec;
     int         pid = viewplayer - players;
@@ -1344,24 +1338,9 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     bfloor = backsec->SP_floorvisheight;
     bsh = bceil - bfloor;
 
-    // Init the quad.
-    quad = R_AllocRendPoly(RP_QUAD, true, 4);
-    quad->flags = 0;
-    quad->tex.detail = NULL;
-    quad->intertex.detail = NULL;
-
-    vBL = quad->vertices[0].pos;
-    vBR = quad->vertices[1].pos;
-    vTL = quad->vertices[2].pos;
-    vTR = quad->vertices[3].pos;
-
-    // Get the start and end vertices, left then right. Top and bottom.
-    vBL[VX] = vTL[VX] = seg->SG_v1->pos[VX];
-    vBL[VY] = vTL[VY] = seg->SG_v1->pos[VY];
-    vBR[VX] = vTR[VX] = seg->SG_v2->pos[VX];
-    vBR[VY] = vTR[VY] = seg->SG_v2->pos[VY];
-
-    quad->wall->length = seg->length;
+    // Get the start and end vertices, left then right.
+    vL_XY = seg->SG_v1->pos;
+    vR_XY = seg->SG_v2->pos;
 
     Rend_SetSurfaceColorsForSide(side);
 
@@ -1384,27 +1363,34 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         float   alpha = side->SW_middlergba[3];
 
         surface = &side->SW_middlesurface;
-        surfaceFlags = Rend_PrepareTextureForPoly(quad, surface);
-
         // Is there a visible surface?
-        if(surfaceFlags != -1)
+        if(surface->texture != 0)
         {
-            // Calculate texture coordinates.
-            vTL[VZ] = vTR[VZ] = gaptop    = MIN_OF(rbceil, rfceil);
-            vBL[VZ] = vBR[VZ] = gapbottom = MAX_OF(rbfloor, rffloor);
+            float texOffY = 0;
+            texinfo_t *texinfo = NULL;
 
-            quad->texoffx = side->SW_middleoffx + seg->offset;
+            // Calculate texture coordinates.
+            vL_ZTop = vR_ZTop = gaptop = MIN_OF(rbceil, rfceil);
+            vL_ZBottom = vR_ZBottom = gapbottom = MAX_OF(rbfloor, rffloor);
+
+            // We need the properties of the real flat/texture.
+            if(surface->texture < 0)
+                GL_PrepareDDTexture(side->SW_middlepic, &texinfo);
+            else if(side->SW_middleisflat)
+                GL_GetFlatInfo(side->SW_middlepic, &texinfo);
+            else
+                GL_GetTextureInfo(side->SW_middlepic, &texinfo);
 
             if(Rend_MidTexturePos
-               (&vBL[VZ], &vBR[VZ], &vTL[VZ], &vTR[VZ],
-                &quad->texoffy, side->SW_middleoffy,
+               (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
+                &texOffY, side->SW_middleoffy, texinfo->height,
                 0 != (ldef->flags & ML_DONTPEGBOTTOM)))
             {
                 // Should a solid segment be added here?
-                if(vTL[VZ] >= gaptop && vBL[VZ] <= gapbottom &&
-                   vTR[VZ] >= gaptop && vBR[VZ] <= gapbottom)
+                if(vL_ZTop >= gaptop && vL_ZBottom <= gapbottom &&
+                   vR_ZTop >= gaptop && vR_ZBottom <= gapbottom)
                 {
-                    if(!texmask && alpha >= 1 && side->blendmode == 0)
+                    if(!texinfo->masked && alpha >= 1 && side->blendmode == 0)
                         solidSeg = true; // We could add clipping seg.
 
                     // Can the player walk through this surface?
@@ -1447,58 +1433,87 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                     }
                 }
 
-                // Blendmode
-                if(sid->blendmode == BM_NORMAL && noSpriteTrans)
-                    quad->blendmode = BM_ZEROALPHA; // "no translucency" mode
-                else
-                    quad->blendmode = sid->blendmode;
-
-                // If alpha, masked or blended we must render as a vissprite
-                if(alpha < 1 || texmask || side->blendmode > 0)
-                    quad->flags = RPF_MASKED;
-                else
-                    quad->flags = 0;
-
                 {
-                    short tempflags = 0;
+                    short       tempflags = 0;
+                    rendpoly_t *quad;
+                    int         surfaceFlags;
+                    texinfo_t  *texinfo;
 
-                    if(solidSeg && !(surfaceFlags & SUF_NO_RADIO) && !texmask)
+                    // Init the quad.
+                    quad = R_AllocRendPoly(RP_QUAD, true, 4);
+                    quad->flags = 0;
+                    quad->tex.detail = NULL;
+                    quad->intertex.detail = NULL;
+                    quad->wall->length = seg->length;
+
+                    quad->texoffx = side->SW_middleoffx + seg->offset;
+                    quad->texoffy = texOffY;
+
+                    // Blendmode
+                    if(sid->blendmode == BM_NORMAL && noSpriteTrans)
+                        quad->blendmode = BM_ZEROALPHA; // "no translucency" mode
+                    else
+                        quad->blendmode = sid->blendmode;
+
+                    surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
+                    if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
                         tempflags |= RPF2_SHADOW;
-                    if(solidSeg && surface->texture != -1 && !texmask)
+                    if(solidSeg && surface->texture != -1 && !texinfo->masked)
                         tempflags |= RPF2_SHINY;
                     if(surfaceFlags & SUF_GLOW)
                         tempflags |= RPF2_GLOW;
                     if(surfaceFlags & SUF_BLEND)
                         tempflags |= RPF2_BLEND;
 
+                    // Bottom Left.
+                    quad->vertices[0].pos[0] = vL_XY[VX];
+                    quad->vertices[0].pos[1] = vL_XY[VY];
+                    quad->vertices[0].pos[2] = vL_ZBottom;
+
+                    // Bottom Right.
+                    quad->vertices[1].pos[0] = vR_XY[VX];
+                    quad->vertices[1].pos[1] = vR_XY[VY];
+                    quad->vertices[1].pos[2] = vR_ZBottom;
+
+                    // Top Left.
+                    quad->vertices[2].pos[0] = vL_XY[VX];
+                    quad->vertices[2].pos[1] = vL_XY[VY];
+                    quad->vertices[2].pos[2] = vL_ZTop;
+
+                    // Top Right.
+                    quad->vertices[3].pos[0] = vR_XY[VX];
+                    quad->vertices[3].pos[1] = vR_XY[VY];
+                    quad->vertices[3].pos[2] = vR_ZTop;
+
+                    // If alpha, masked or blended we must render as a vissprite
+                    if(alpha < 1 || texinfo->masked || side->blendmode > 0)
+                        quad->flags = RPF_MASKED;
+                    else
+                        quad->flags = 0;
+
                     Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_MIDDLE,
                               /*Alpha*/    alpha, tempflags);
+
+                    R_FreeRendPoly(quad);
                 }
             }
         }
     }
 
-    // Restore original type, height division may change this.
-    quad->type = RP_QUAD;
-
     // Upper wall.
     if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide))
     {
         surface = &side->SW_topsurface;
-        surfaceFlags = Rend_PrepareTextureForPoly(quad, surface);
-
         // Is there a visible surface?
-        if(surfaceFlags != -1)
+        if(surface->texture != 0)
         {
             float   alpha;
             boolean isVisible = true;
-            float   tcyoff;
+            float   tcxoff, tcyoff;
 
             // Calculate texture coordinates.
-            quad->texoffx = side->SW_topoffx + seg->offset;
-            tcyoff = side->SW_middleoffy;
-
-            quad->flags = 0;
+            tcxoff = side->SW_topoffx + seg->offset;
+            tcyoff = 0;
 
            /* if(side->flags & SDF_MIDTEXUPPER)
             {
@@ -1535,26 +1550,34 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             }
             else*/
             {
-                vTL[VZ] = vTR[VZ] = fceil;
-                vBL[VZ] = vBR[VZ] = bceil;
-
-                quad->texoffy = tcyoff;
-                if(!(ldef->flags & ML_DONTPEGTOP)) // Normal alignment to bottom.
-                    quad->texoffy += texh - (fceil - bceil);
+                vL_ZTop = vR_ZTop = fceil;
+                vL_ZBottom = vR_ZBottom = bceil;
 
                 alpha = 1;
             }
 
-            if(vBL[VZ] < ffloor)
-            {
-                vBL[VZ] = ffloor;
-                vBR[VZ] = ffloor;
-            }
+            if(vL_ZBottom < ffloor)
+                vL_ZBottom = vR_ZBottom = ffloor;
 
             if(isVisible)
             {
-                short tempflags = 0;
+                short       tempflags = 0;
+                int         surfaceFlags;
+                texinfo_t  *texinfo;
+                rendpoly_t *quad;
 
+                // Init the quad.
+                quad = R_AllocRendPoly(RP_QUAD, true, 4);
+                quad->flags = 0;
+                quad->tex.detail = NULL;
+                quad->intertex.detail = NULL;
+
+                quad->texoffx = tcxoff;
+                quad->texoffy = side->SW_topoffy;
+
+                quad->wall->length = seg->length;
+
+                surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
                 if(!(surfaceFlags & SUF_NO_RADIO))
                     tempflags |= RPF2_SHADOW;
                 if(surface->texture != -1)
@@ -1564,41 +1587,73 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                 if(surfaceFlags & SUF_BLEND)
                     tempflags |= RPF2_BLEND;
 
+                // Bottom Left.
+                quad->vertices[0].pos[0] = vL_XY[VX];
+                quad->vertices[0].pos[1] = vL_XY[VY];
+                quad->vertices[0].pos[2] = vL_ZBottom;
+
+                // Bottom Right.
+                quad->vertices[1].pos[0] = vR_XY[VX];
+                quad->vertices[1].pos[1] = vR_XY[VY];
+                quad->vertices[1].pos[2] = vR_ZBottom;
+
+                // Top Left.
+                quad->vertices[2].pos[0] = vL_XY[VX];
+                quad->vertices[2].pos[1] = vL_XY[VY];
+                quad->vertices[2].pos[2] = vL_ZTop;
+
+                // Top Right.
+                quad->vertices[3].pos[0] = vR_XY[VX];
+                quad->vertices[3].pos[1] = vR_XY[VY];
+                quad->vertices[3].pos[2] = vR_ZTop;
+
+                if(!(ldef->flags & ML_DONTPEGTOP)) // Normal alignment to bottom.
+                    quad->texoffy += texinfo->height - (fceil - bceil);
+
+                // Check for neighborhood division?
+                Rend_WallHeightDivision(quad, seg, frontsec, SEG_TOP);
+
                 Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_TOP,
                           /*Alpha*/    alpha, tempflags);
+
+                R_FreeRendPoly(quad);
             }
         }
     }
-
-    // Restore original type, height division may change this.
-    quad->type = RP_QUAD;
 
     // Lower wall.
     if(Rend_IsWallSectionPVisible(seg->linedef, SEG_BOTTOM, backSide))
     {
         surface = &side->SW_bottomsurface;
-        surfaceFlags = Rend_PrepareTextureForPoly(quad, surface);
-
         // Is there a visible surface?
-        if(surfaceFlags != -1)
+        if(surface->texture != 0)
         {
-            short tempflags = 0;
+            short       tempflags = 0;
+            int         surfaceFlags;
+            rendpoly_t *quad;
+
+            // Init the quad.
+            quad = R_AllocRendPoly(RP_QUAD, true, 4);
+            quad->flags = 0;
+            quad->tex.detail = NULL;
+            quad->intertex.detail = NULL;
+            quad->wall->length = seg->length;
+
             // Calculate texture coordinates.
             quad->texoffx = side->SW_bottomoffx + seg->offset;
             quad->texoffy = side->SW_bottomoffy;
-            if(ldef->flags & ML_DONTPEGBOTTOM)
-                quad->texoffy += fceil - bfloor; // Align with normal middle texture.
 
             quad->flags = 0;
-            vTL[VZ] = vTR[VZ] = bfloor;
-            vBL[VZ] = vBR[VZ] = ffloor;
-            if(vTL[VZ] > fceil)
+            vL_ZTop = vR_ZTop = bfloor;
+            vL_ZBottom = vR_ZBottom = ffloor;
+            if(vL_ZTop > fceil)
             {
                 // Can't go over front ceiling, would induce polygon flaws.
-                quad->texoffy += vTL[VZ] - fceil;
-                vTL[VZ] = vTR[VZ] = fceil;
+                quad->texoffy += vL_ZTop - fceil;
+                vL_ZTop = vR_ZTop = fceil;
             }
 
+            surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, NULL);
             if(!(surfaceFlags & SUF_NO_RADIO))
                 tempflags |= RPF2_SHADOW;
             if(surface->texture != -1)
@@ -1608,17 +1663,42 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             if(surfaceFlags & SUF_BLEND)
                 tempflags |= RPF2_BLEND;
 
+            // Bottom Left.
+            quad->vertices[0].pos[0] = vL_XY[VX];
+            quad->vertices[0].pos[1] = vL_XY[VY];
+            quad->vertices[0].pos[2] = vL_ZBottom;
+
+            // Bottom Right.
+            quad->vertices[1].pos[0] = vR_XY[VX];
+            quad->vertices[1].pos[1] = vR_XY[VY];
+            quad->vertices[1].pos[2] = vR_ZBottom;
+
+            // Top Left.
+            quad->vertices[2].pos[0] = vL_XY[VX];
+            quad->vertices[2].pos[1] = vL_XY[VY];
+            quad->vertices[2].pos[2] = vL_ZTop;
+
+            // Top Right.
+            quad->vertices[3].pos[0] = vR_XY[VX];
+            quad->vertices[3].pos[1] = vR_XY[VY];
+            quad->vertices[3].pos[2] = vR_ZTop;
+
+            if(ldef->flags & ML_DONTPEGBOTTOM)
+                quad->texoffy += fceil - bfloor; // Align with normal middle texture.
+
+            // Check for neighborhood division?
+            Rend_WallHeightDivision(quad, seg, frontsec, SEG_BOTTOM);
+
             Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_BOTTOM,
                       /*Alpha*/    1, tempflags);
+
+            R_FreeRendPoly(quad);
         }
     }
 
     // Can we make this a solid segment in the clipper?
     if(solidSeg == -1)
-    {
-        R_FreeRendPoly(quad);
         return; // NEVER (we have a hole we couldn't fix).
-    }
 
     if(!solidSeg) // We'll have to determine whether we can...
     {
@@ -1646,9 +1726,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     }
 
     if(solidSeg && !P_IsInVoid(viewplayer))
-        C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
-
-    R_FreeRendPoly(quad);
+        C_AddViewRelSeg(vL_XY[VX], vL_XY[VY], vR_XY[VX], vR_XY[VY]);
 }
 
 float Rend_SectorLight(sector_t *sec)
@@ -1968,10 +2046,10 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
         rendpoly_t *poly =
             R_AllocRendPoly(RP_FLAT, false, subsector->numvertices);
 
-        surfaceFlags = Rend_PrepareTextureForPoly(poly, surface);
+        surfaceFlags = Rend_PrepareTextureForPoly(poly, surface, NULL);
 
         // Is there a visible surface?
-        if(surfaceFlags != -1)
+        if(surface->texture != 0)
         {
             short tempflags = 0;
 
@@ -2737,7 +2815,7 @@ static void Rend_RenderBoundingBoxes(void)
     gl.Enable(DGL_TEXTURING);
     gl.Disable(DGL_CULL_FACE);
 
-    gl.Bind(ddTextures[DDT_BBOX]);
+    gl.Bind(GL_PrepareDDTexture(DDT_BBOX, NULL));
     GL_BlendMode(BM_ADD);
 
     // For every sector

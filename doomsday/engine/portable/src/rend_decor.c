@@ -100,16 +100,7 @@ static ded_decor_t *Rend_GetGraphicResourceDecoration(int id, boolean isFlat)
         return NULL;
 
     if(isFlat)
-    {
-        flat_t *flat = R_GetFlat(id);
-
-        // Get the translated one?
-        if(flat->translation.current != id)
-        {
-            flat = R_GetFlat(flat->translation.current);
-        }
-        return flat->decoration;
-    }
+        return flats[flattranslation[id].current]->decoration;
     else
         return textures[texturetranslation[id].current]->decoration;
 }
@@ -390,7 +381,8 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
     float       posBase[2], delta[2], pos[3], brightMul;
     float       surfTexW, surfTexH, patternW, patternH;
     int         skip[2];
-    unsigned int i;
+    uint        i;
+    texinfo_t  *texinfo;
 
     // Is this a valid section?
     if(bottom > top || line->length == 0)
@@ -425,12 +417,12 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
 
     // Setup the global texture info variables.
     if(surface->isflat)
-        GL_PrepareFlat2(surface->texture, true);
+        GL_GetFlatInfo(surface->texture, &texinfo);
     else
-        GL_GetTextureInfo(surface->texture);
+        GL_GetTextureInfo(surface->texture, &texinfo);
 
-    surfTexW = texw;
-    surfTexH = texh;
+    surfTexW = texinfo->width;
+    surfTexH = texinfo->height;
 
     // Generate a number of lights.
     for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
@@ -591,15 +583,17 @@ static void Rend_DecorateLine(int index)
 
             if(side->SW_toppic > 0)
             {
+                texinfo_t *texinfo;
+
                 if(side->SW_topisflat)
-                    GL_PrepareFlat2(side->SW_toppic, true);
+                    GL_GetFlatInfo(side->SW_toppic, &texinfo);
                 else
-                    GL_GetTextureInfo(side->SW_toppic);
+                    GL_GetTextureInfo(side->SW_toppic, &texinfo);
 
                 Rend_DecorateLineSection(line, side, &side->SW_topsurface,
                                          highSector->SP_ceilvisheight,
                                          lowSector->SP_ceilvisheight,
-                                         line->flags & ML_DONTPEGTOP ? 0 : -texh +
+                                         line->flags & ML_DONTPEGTOP ? 0 : -texinfo->height +
                                          (highSector->SP_ceilvisheight -
                                           lowSector->SP_ceilvisheight));
             }
@@ -626,11 +620,6 @@ static void Rend_DecorateLine(int index)
 
             if(side->SW_bottompic > 0)
             {
-                if(side->SW_bottomisflat)
-                    GL_PrepareFlat2(side->SW_bottompic, true);
-                else
-                    GL_GetTextureInfo(side->SW_bottompic);
-
                 Rend_DecorateLineSection(line, side, &side->SW_bottomsurface,
                                          highSector->SP_floorvisheight,
                                          lowSector->SP_floorvisheight,
@@ -646,12 +635,6 @@ static void Rend_DecorateLine(int index)
         /*if(line->L_frontside && side = line->L_frontside->SW_middlepic)
         {
             rendpoly_t *quad = R_AllocRendPoly(RP_QUAD, true, 4);
-
-            // If there is an opening, process it.
-            if(side->SW_middleisflat)
-                GL_PrepareFlat2(side->SW_middlepic, true);
-            else
-                GL_GetTextureInfo(side->SW_middlepic);
 
             quad->top = MIN_OF(frontCeil, backCeil);
             quad->bottom = MAX_OF(frontFloor, backFloor);
@@ -673,14 +656,16 @@ static void Rend_DecorateLine(int index)
 
         if(side->SW_middlepic > 0)
         {
+            texinfo_t      *texinfo;
+
             if(side->SW_middleisflat)
-                GL_PrepareFlat2(side->SW_middlepic, true);
+                GL_GetFlatInfo(side->SW_middlepic, &texinfo);
             else
-                GL_GetTextureInfo(side->SW_middlepic);
+                GL_GetTextureInfo(side->SW_middlepic, &texinfo);
 
             Rend_DecorateLineSection(line, side, &side->SW_middlesurface, frontCeil,
                                      frontFloor,
-                                     line->flags & ML_DONTPEGBOTTOM ? -texh +
+                                     line->flags & ML_DONTPEGBOTTOM ? -texinfo->height +
                                      (frontCeil - frontFloor) : 0);
         }
     }

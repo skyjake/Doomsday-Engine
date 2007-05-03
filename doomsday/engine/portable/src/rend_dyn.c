@@ -495,23 +495,6 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
     if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
     {
         present |= SMIDDLE;
-        if(backsec)
-        {
-            // Check the middle texture's mask status.
-            if(sdef->SW_middlepic > 0)
-            {
-                if(sdef->SW_middleisflat)
-                    GL_PrepareFlat2(sdef->SW_middlepic, true);
-                else
-                    GL_GetTextureInfo(sdef->SW_middlepic);
-            }
-            /*if(texmask)
-               {
-               // We can't light masked textures.
-               // FIXME: Use vertex lighting.
-               present &= ~SMIDDLE;
-               } */
-        }
     }
 
     // Is there a top wall segment?
@@ -562,11 +545,19 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
     {
         if(backsec)
         {
+            texinfo_t      *texinfo;
+
             top[0]    = top[1]    = (fceil < bceil ? fceil : bceil);
             bottom[0] = bottom[1] = (ffloor > bfloor ? ffloor : bfloor);
 
+            // We need the properties of the real flat/texture.
+            if(sdef->SW_middleisflat)
+                GL_GetFlatInfo(sdef->SW_middlepic, &texinfo);
+            else
+                GL_GetTextureInfo(sdef->SW_middlepic, &texinfo);
+
             Rend_MidTexturePos(&bottom[0], &bottom[1], &top[0], &top[1],
-                               NULL, sdef->SW_middleoffy,
+                               NULL, sdef->SW_middleoffy, texinfo->height,
                                seg->linedef ? (seg->linedef->
                                                flags & ML_DONTPEGBOTTOM) !=
                                0 : false);
@@ -688,7 +679,7 @@ static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, segsection_t par
         s[1] = 1;
 
         dyn = DL_New(s, t);
-        dyn->texture = GL_PrepareLSTexture(LST_GRADIENT);
+        dyn->texture = GL_PrepareLSTexture(LST_GRADIENT, NULL);
 
         for(i = 0; i < 3; ++i)
         {
@@ -748,15 +739,17 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
         // Is there a middle?
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
         {
+            texinfo_t      *texinfo = NULL;
+
             if(sdef->SW_middlepic > 0)
             {
                 if(sdef->SW_middleisflat)
-                    GL_PrepareFlat2(sdef->SW_middlepic, true);
+                    GL_GetFlatInfo(sdef->SW_middlepic, &texinfo);
                 else
-                    GL_GetTextureInfo(sdef->SW_middlepic);
+                    GL_GetTextureInfo(sdef->SW_middlepic, &texinfo);
             }
 
-            if(!texmask)
+            if(!texinfo->masked)
             {
                 DL_CreateGlowLightPerPlaneForSegSection(seg, SEG_MIDDLE, opentop,
                                                         openbottom, do_floor, do_ceil);
@@ -1120,7 +1113,7 @@ void DL_AddLuminous(mobj_t *thing)
             {
                 // Use the same default light texture for all directions.
                 lum->tex = lum->ceilTex = lum->floorTex =
-                    GL_PrepareLSTexture(LST_DYNAMIC);
+                    GL_PrepareLSTexture(LST_DYNAMIC, NULL);
             }
         }
     }

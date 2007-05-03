@@ -168,7 +168,7 @@ static void Rend_ProcessThingShadow(mobj_t *mo)
     // Prepare the poly.
     poly = R_AllocRendPoly(RP_FLAT, false, 4);
     poly->flags = RPF_SHADOW;
-    poly->tex.id = GL_PrepareLSTexture(LST_DYNAMIC);
+    poly->tex.id = GL_PrepareLSTexture(LST_DYNAMIC, NULL);
     poly->tex.width = poly->tex.height = radius * 2;
     poly->texoffx = -pos[VX] + radius;
     poly->texoffy = -pos[VY] - radius;

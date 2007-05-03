@@ -1154,7 +1154,7 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
     ded_ptcgen_t *def;
     int         i;
     int         g;
-    flat_t     *flat = R_GetFlat(flatpic);
+    flat_t     *flat = flats[flatpic];
 
     if(!flat)
         return NULL;
@@ -1176,8 +1176,8 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
         {
             // This generator is triggered by all the flats in
             // the animation group.
-            flat_t *defFlat = R_GetFlat(def->flat_num);
-            flat_t *usedFlat = R_GetFlat(flatpic);
+            flat_t *defFlat = flats[def->surfaceIndex];
+            flat_t *usedFlat = flats[flatpic];
 
             // We only need to search if we know both the real used flat
             // and the flat of this definition belong in an animgroup.
@@ -1189,7 +1189,7 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
                     if(groups[g].flags & AGF_PRECACHE)
                         continue;
 
-                    if(R_IsInAnimGroup(groups[g].id, DD_FLAT, def->flat_num) &&
+                    if(R_IsInAnimGroup(groups[g].id, DD_FLAT, def->surfaceIndex) &&
                        R_IsInAnimGroup(groups[g].id, DD_FLAT, flatpic))
                     {
                         // Both are in this group! This def will do.
@@ -1199,7 +1199,7 @@ ded_ptcgen_t *P_GetPtcGenForFlat(int flatpic)
             }
         }
 
-        if(def->flat_num == flatpic)
+        if(def->is_texture && def->surfaceIndex == flatpic)
         {
             return flat->ptcgen = def;
         }
@@ -1241,18 +1241,21 @@ void P_CheckPtcPlanes(void)
         for(p = 0; p < 2; ++p)
         {
             plane = p;
-            def = P_GetPtcGenForFlat(sector->planes[plane]->surface.texture);
-
-            if(!def)
-                continue;
-            if(def->flags & PGF_CEILING_SPAWN)
-                plane = 1;
-            if(def->flags & PGF_FLOOR_SPAWN)
-                plane = 0;
-            if(!P_HasActivePtcGen(sector, plane))
+            if(sector->planes[plane]->surface.isflat)
             {
-                // Spawn it!
-                P_SpawnPlaneParticleGen(def, sector, plane);
+                def = P_GetPtcGenForFlat(sector->planes[plane]->surface.texture);
+
+                if(!def)
+                    continue;
+                if(def->flags & PGF_CEILING_SPAWN)
+                    plane = 1;
+                if(def->flags & PGF_FLOOR_SPAWN)
+                    plane = 0;
+                if(!P_HasActivePtcGen(sector, plane))
+                {
+                    // Spawn it!
+                    P_SpawnPlaneParticleGen(def, sector, plane);
+                }
             }
         }
     }

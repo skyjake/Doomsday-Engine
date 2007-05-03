@@ -93,13 +93,13 @@ void R_SetBorderGfx(char *gfx[9])
 
 void R_InitViewBorder(void)
 {
-    patch_t    *patch = NULL;
+    lumppatch_t    *patch = NULL;
 
     // Detemine the view border width.
     if(W_CheckNumForName(borderGfx[BG_TOP]) == -1)
         return;
 
-    patch = W_CacheLumpName(borderGfx[BG_TOP], PU_CACHE);
+    patch = (lumppatch_t*) W_CacheLumpName(borderGfx[BG_TOP], PU_CACHE);
     bwidth = SHORT(patch->height);
 }
 
@@ -108,7 +108,7 @@ void R_InitViewBorder(void)
  */
 void R_DrawViewBorder(void)
 {
-    int         lump;
+    texinfo_t      *texinfo;
 
     if(viewwidth == 320 && viewheight == 200)
         return;
@@ -126,24 +126,24 @@ void R_DrawViewBorder(void)
                         viewheight + 2 * bwidth);
 
     // The border top.
-    GL_SetPatch(lump = W_GetNumForName(borderGfx[BG_TOP]));
+    gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_TOP]), &texinfo));
     GL_DrawRectTiled(viewwindowx, viewwindowy - bwidth, viewwidth,
-                     lumptexinfo[lump].height, 16, lumptexinfo[lump].height);
+                     texinfo->height, 16, texinfo->height);
     // Border bottom.
-    GL_SetPatch(lump = W_GetNumForName(borderGfx[BG_BOTTOM]));
+    gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_BOTTOM]), &texinfo));
     GL_DrawRectTiled(viewwindowx, viewwindowy + viewheight , viewwidth,
-                     lumptexinfo[lump].height, 16, lumptexinfo[lump].height);
+                     texinfo->height, 16, texinfo->height);
 
     // Left view border.
-    GL_SetPatch(lump = W_GetNumForName(borderGfx[BG_LEFT]));
+    gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_LEFT]), &texinfo));
     GL_DrawRectTiled(viewwindowx - bwidth, viewwindowy,
-                     lumptexinfo[lump].width[0], viewheight,
-                     lumptexinfo[lump].width[0], 16);
+                     texinfo->width, viewheight,
+                     texinfo->width, 16);
     // Right view border.
-    GL_SetPatch(lump = W_GetNumForName(borderGfx[BG_RIGHT]));
+    gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_RIGHT]), &texinfo));
     GL_DrawRectTiled(viewwindowx + viewwidth , viewwindowy,
-                     lumptexinfo[lump].width[0], viewheight,
-                     lumptexinfo[lump].width[0], 16);
+                     texinfo->width, viewheight,
+                     texinfo->width, 16);
 
     GL_UsePatchOffset(false);
     GL_DrawPatch(viewwindowx - bwidth, viewwindowy - bwidth,
@@ -174,12 +174,12 @@ void R_DrawTopBorder(void)
     GL_DrawRectTiled(0, 0, 320, 64, 64, 64);
     if(viewwindowy < 65)
     {
-        int     lump;
+        texinfo_t      *texinfo;
 
-        GL_SetPatch(lump = W_GetNumForName(borderGfx[BG_TOP]));
+        gl.Bind(curtex = GL_PreparePatch(W_GetNumForName(borderGfx[BG_TOP]), &texinfo));
         GL_DrawRectTiled(viewwindowx, viewwindowy - bwidth, viewwidth,
-                         lumptexinfo[lump].height, 16,
-                         lumptexinfo[lump].height);
+                         texinfo->height, 16,
+                         texinfo->height);
 
         GL_UsePatchOffset(false);
         GL_DrawPatch(viewwindowx - bwidth, viewwindowy,

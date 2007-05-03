@@ -61,7 +61,6 @@ D_CMD(SkyDetail);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern float texw, texh;
 extern float vx, vy, vz;
 extern byte topLineRGB[3];
 
@@ -85,6 +84,7 @@ int     r_fullsky = false;
 static float maxSideAngle = (float) PI / 3;
 static float horizonOffset = 0;
 static float skyTexOff;
+static int skyTexWidth, skyTexHeight;
 static boolean yflip;
 static fadeout_t *currentFO;
 
@@ -181,13 +181,13 @@ static void SkyVertex(int r, int c)
     // And the texture coordinates.
     if(!yflip)                  // Flipped Y is for the lower hemisphere.
     {
-        gl.TexCoord2f((1024 / texw) * c / (float) skyColumns +
-                      skyTexOff / texw, r / (float) skyRows);
+        gl.TexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
+                      skyTexOff / skyTexWidth, r / (float) skyRows);
     }
     else
     {
-        gl.TexCoord2f((1024 / texw) * c / (float) skyColumns +
-                      skyTexOff / texw, (skyRows - r) / (float) skyRows);
+        gl.TexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
+                      skyTexOff / skyTexWidth, (skyRows - r) / (float) skyRows);
     }
     // Also the color.
     if(currentFO->use)
@@ -335,6 +335,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
     {
         if(slayer->flags & SLF_ENABLED)
         {
+            texinfo_t  *texinfo;
             resetup = false;
 
             if(slayer->texture == -1)
@@ -350,10 +351,18 @@ void Rend_RenderSkyHemisphere(int whichHemi)
             // The texture is actually loaded when an update is done.
             gl.Bind(renderTextures ?
                     GL_PrepareSky(slayer->texture,
-                                  slayer->flags & SLF_MASKED ? true : false) : 0);
+                                  slayer->flags & SLF_MASKED ? true : false, &texinfo) : 0);
 
             if(resetup)
                 SetupFadeout(slayer);
+
+            if(renderTextures)
+            {
+                skyTexWidth = texinfo->width;
+                skyTexHeight = texinfo->height;
+            }
+            else
+                skyTexWidth = skyTexHeight = 64;
 
             skyTexOff = slayer->offset;
             Rend_SkyRenderer(whichHemi);
@@ -524,7 +533,7 @@ static void internalSkyParams(skylayer_t * slayer, int parm, float value)
     case DD_TEXTURE:
         slayer->texture = (int) value;
         GL_PrepareSky(slayer->texture,
-                      slayer->flags & SLF_MASKED ? true : false);
+                      slayer->flags & SLF_MASKED ? true : false, NULL);
         SetupFadeout(slayer);
         break;
 

@@ -39,14 +39,14 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define FLAT_HASH_SIZE  128
-#define FLAT_HASH(x)    (flathash + (((unsigned) x) & (FLAT_HASH_SIZE - 1)))
+#define PATCH_HASH_SIZE  128
+#define PATCH_HASH(x)    (patchhash + (((unsigned) x) & (PATCH_HASH_SIZE - 1)))
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct flathash_s {
-    flat_t *first;
-} flathash_t;
+typedef struct patchhash_s {
+    patch_t *first;
+} patchhash_t;
 
 typedef struct {
     boolean     inUse;
@@ -73,11 +73,13 @@ byte    precacheSprites = false;
 
 lumptexinfo_t *lumptexinfo = 0;
 int     numlumptexinfo = 0;
-flathash_t flathash[FLAT_HASH_SIZE];
-int     firstpatch, lastpatch, numpatches;
+patchhash_t patchhash[PATCH_HASH_SIZE];
 int     numtextures;
 texture_t **textures;
 translation_t *texturetranslation;  // for global animation
+int     numflats;
+flat_t **flats;
+translation_t *flattranslation;  // for global animation
 int     numgroups;
 animgroup_t *groups;
 
@@ -234,7 +236,8 @@ static rendpoly_t *R_NewRendPoly(unsigned int numverts, boolean isWall)
 rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
                             unsigned int numverts)
 {
-    rendpoly_t *poly = R_NewRendPoly(numverts, isWall);
+    texinfo_t      *texinfo;
+    rendpoly_t     *poly = R_NewRendPoly(numverts, isWall);
 
     poly->type = type;
 
@@ -245,11 +248,12 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->lights = 0;
     poly->decorlightmap = 0;
     poly->blendmode = BM_NORMAL;
-    poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN);
-    poly->tex.detail = texdetail;
-    poly->tex.height = texh;
-    poly->tex.width = texw;
-    poly->tex.masked = texmask;
+    poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN, &texinfo);
+
+    poly->tex.detail = (r_detail && texinfo->detail.tex? &texinfo->detail : 0);
+    poly->tex.height = texinfo->height;
+    poly->tex.width = texinfo->width;
+    poly->tex.masked = texinfo->masked;
 
     return poly;
 }
@@ -308,17 +312,17 @@ void R_ShutdownData(void)
 }
 
 /**
- * Returns a NULL-terminated array of pointers to all the flats.
+ * Returns a NULL-terminated array of pointers to all the patches.
  * The array must be freed with Z_Free.
  */
-flat_t **R_CollectFlats(int *count)
+patch_t **R_CollectPatches(int *count)
 {
     int     i, num;
-    flat_t *f, **array;
+    patch_t *p, **array;
 
-    // First count the number of flats.
-    for(num = 0, i = 0; i < FLAT_HASH_SIZE; ++i)
-        for(f = flathash[i].first; f; f = f->next)
+    // First count the number of patches.
+    for(num = 0, i = 0; i < PATCH_HASH_SIZE; ++i)
+        for(p = patchhash[i].first; p; p = p->next)
             num++;
 
     // Tell this to the caller.
@@ -326,12 +330,12 @@ flat_t **R_CollectFlats(int *count)
         *count = num;
 
     // Allocate the array, plus one for the terminator.
-    array = Z_Malloc(sizeof(flat_t *) * (num + 1), PU_STATIC, NULL);
+    array = Z_Malloc(sizeof(patch_t *) * (num + 1), PU_STATIC, NULL);
 
     // Collect the pointers.
-    for(num = 0, i = 0; i < FLAT_HASH_SIZE; ++i)
-        for(f = flathash[i].first; f; f = f->next)
-            array[num++] = f;
+    for(num = 0, i = 0; i < PATCH_HASH_SIZE; ++i)
+        for(p = patchhash[i].first; p; p = p->next)
+            array[num++] = p;
 
     // Terminate.
     array[num] = NULL;
@@ -340,12 +344,12 @@ flat_t **R_CollectFlats(int *count)
 }
 
 /**
- * Returns a flat_t* for the given lump, if one already exists.
+ * Returns a patch_t* for the given lump, if one already exists.
  */
-flat_t *R_FindFlat(int lumpnum)
+patch_t *R_FindPatch(int lumpnum)
 {
-    flat_t *i;
-    flathash_t *hash = FLAT_HASH(lumpnum);
+    patch_t *i;
+    patchhash_t *hash = PATCH_HASH(lumpnum);
 
     for(i = hash->first; i; i = i->next)
         if(i->lump == lumpnum)
@@ -357,53 +361,49 @@ flat_t *R_FindFlat(int lumpnum)
 }
 
 /**
- * Get a flat_t data structure for a flat specified with a WAD lump
- * number.  Allocates a new flat_t if it hasn't been loaded yet.
+ * Get a patch_t data structure for a patch specified with a WAD lump
+ * number.  Allocates a new patch_t if it hasn't been loaded yet.
  */
-flat_t *R_GetFlat(int lumpnum)
+patch_t *R_GetPatch(int lumpnum)
 {
-    uint        c;
-    flat_t     *f = 0;
-    flathash_t *hash = 0;
+    patch_t    *p = 0;
+    patchhash_t *hash = 0;
 
     if(lumpnum >= numlumps)
     {
-        Con_Error("R_GetFlat: lumpnum = %i out of bounds (%i).\n", 
+        Con_Error("R_GetPatch: lumpnum = %i out of bounds (%i).\n", 
                   lumpnum, numlumps);
     }
     
-    f = R_FindFlat(lumpnum);
+    p = R_FindPatch(lumpnum);
     
     if(!lumpnum)
         return NULL;
 
-    // Check if this lump has already been loaded as a flat.
-    if(f)
-        return f;
+    // Check if this lump has already been loaded as a patch.
+    if(p)
+        return p;
 
-    // Hmm, this is an entirely new flat.
-    f = Z_Calloc(sizeof(flat_t), PU_FLAT, NULL);
-    hash = FLAT_HASH(lumpnum);
+    // Hmm, this is an entirely new patch.
+    p = Z_Calloc(sizeof(patch_t), PU_PATCH, NULL);
+    hash = PATCH_HASH(lumpnum);
 
     // Link to the hash.
-    f->next = hash->first;
-    hash->first = f;
+    p->next = hash->first;
+    hash->first = p;
 
     // Init the new one.
-    f->lump = lumpnum;
-    f->translation.current = f->translation.next = lumpnum;
-    for(c = 0; c < 3; ++c)
-        f->color.rgb[c] = 1;
-    return f;
+    p->lump = lumpnum;
+    return p;
 }
 
 int R_SetFlatTranslation(int flat, int translateTo)
 {
-    flat_t *f = R_GetFlat(flat);
-    int     old = f->translation.current;
+    int     old = flattranslation[flat].current;
 
-    f->translation.current = f->translation.next = translateTo;
-    f->translation.inter = 0;
+    flattranslation[flat].current = flattranslation[flat].next =
+        translateTo;
+    flattranslation[flat].inter = 0;
     return old;
 }
 
@@ -471,7 +471,7 @@ void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
     if(group->flags & AGF_TEXTURE)
         number = R_CheckTextureNumForName(name);
     else
-        number = W_CheckNumForName(name);
+        number = R_CheckFlatNumForName(name);
 
     if(number < 0)
     {
@@ -498,7 +498,7 @@ void R_AddToAnimGroup(int groupNum, const char *name, int tics, int randomTics)
     }
     else
     {
-        R_GetFlat(number)->ingroup = true;
+        flats[number]->ingroup = true;
     }
 }
 
@@ -545,7 +545,7 @@ void R_InitAnimGroup(ded_group_t *def)
         }
         else
         {
-            number = W_CheckNumForName(def->members[i].name);
+            number = R_CheckFlatNumForName(def->members[i].name);
         }
         if(number < 0)
             continue;
@@ -656,7 +656,7 @@ void R_InitTextures(void)
     }
     Z_Free(names);
 
-    // Load the map texture definitions from TEXTURE1/2.
+    // Load the texture definitions from TEXTURE1/2.
     maptex = maptex1 = W_CacheLumpName("TEXTURE1", PU_REFRESHTEX);
     numtextures1 = LONG(*maptex);
     maxoff = W_LumpLength(W_GetNumForName("TEXTURE1"));
@@ -677,7 +677,7 @@ void R_InitTextures(void)
     numtextures = numtextures1 + numtextures2;
 
     // FIXME: Surely not all of these are still needed?
-    textures = Z_Malloc(numtextures * 4, PU_REFRESHTEX, 0);
+    textures = Z_Malloc(numtextures * sizeof(texture_t*), PU_REFRESHTEX, 0);
 
     sprintf(buf, "R_Init: Initializing %i textures...", numtextures);
 
@@ -704,8 +704,8 @@ void R_InitTextures(void)
                 Z_Calloc(sizeof(texture_t) +
                         sizeof(texpatch_t) * (SHORT(mtexture->patchcount) - 1),
                         PU_REFRESHTEX, 0);
-            texture->width = SHORT(mtexture->width);
-            texture->height = SHORT(mtexture->height);
+            texture->info.width = SHORT(mtexture->width);
+            texture->info.height = SHORT(mtexture->height);
 
             texture->flags = mtexture->masked ? TXF_MASKED : 0;
 
@@ -738,8 +738,8 @@ void R_InitTextures(void)
                 Z_Calloc(sizeof(texture_t) +
                         sizeof(texpatch_t) * (SHORT(smtexture->patchcount) - 1),
                         PU_REFRESHTEX, 0);
-            texture->width = SHORT(smtexture->width);
-            texture->height = SHORT(smtexture->height);
+            texture->info.width = SHORT(smtexture->width);
+            texture->info.height = SHORT(smtexture->height);
 
             texture->flags = 0;
             texture->patchcount = SHORT(smtexture->patchcount);
@@ -785,10 +785,79 @@ void R_InitTextures(void)
     R_InitSwitchAnimGroups();
 }
 
-void R_UpdateTextures(void)
+/**
+ * Returns the new flat lump number.
+ */
+static int R_NewFlatLump(int lump)
+{
+    flat_t **newlist, *ptr;
+    int     i;
+
+    // Is this lump already entered?
+    for(i = 0; i < numflats; i++)
+        if(flats[i]->lump == lump)
+            return i;
+
+    newlist = Z_Malloc(sizeof(flat_t*) * ++numflats, PU_REFRESHTEX, 0);
+    if(numflats > 1)
+    {
+        for(i = 0; i < numflats -1; ++i)
+            newlist[i] = flats[i];
+
+        Z_Free(flats);
+    }
+    flats = newlist;
+    ptr = flats[numflats - 1] = Z_Calloc(sizeof(flat_t), PU_REFRESHTEX, 0);
+    ptr->lump = lump;
+    memcpy(ptr->name, lumpinfo[lump].name, 8);
+    return numflats - 1;
+}
+
+void R_InitFlats(void)
+{
+    int         i;
+    boolean     inFlatBlock;
+
+    numflats = 0;
+
+    inFlatBlock = false;
+    for(i = 0; i < numlumps; ++i)
+    {
+        char   *name = lumpinfo[i].name;
+
+        if(!strnicmp(name, "F_START", 7))
+        {
+            // We've arrived at *a* sprite block.
+            inFlatBlock = true;
+            continue;
+        }
+        else if(!strnicmp(name, "F_END", 5))
+        {
+            // The sprite block ends.
+            inFlatBlock = false;
+            continue;
+        }
+        if(!inFlatBlock)
+            continue;
+
+        R_NewFlatLump(i);
+    }
+
+    // Translation table for global animation.
+    flattranslation =
+        Z_Malloc(sizeof(translation_t) * (numflats + 1), PU_REFRESHTEX, 0);
+    for(i = 0; i < numflats; ++i)
+    {
+        flattranslation[i].current = flattranslation[i].next = i;
+        flattranslation[i].inter = 0;
+    }
+}
+
+void R_UpdateTexturesAndFlats(void)
 {
     Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
     R_InitTextures();
+    R_InitFlats();
 }
 
 int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
@@ -810,32 +879,33 @@ int R_GraphicResourceFlags(resourceclass_t rclass, int picid)
 
         return textures[picid]->flags;
 
-    case RC_FLAT:  // picid is a lumpnum
+    case RC_FLAT:  // picid is a flat id
+        if(picid >= numflats)
         {
-        flat_t *fl = R_GetFlat(picid);
-
-        if(!fl)
+            Con_Error("R_GraphicResourceFlags: RC_FLAT, picid %i out of bounds.\n",
+                      picid);                      
+        }
+        picid = flattranslation[picid].current;
+        if(picid < 0)
             return 0;
 
-        return fl->flags;
-        }
-        break;
+        return flats[picid]->flags;
 
     default:
         return 0;
     };
 }
 
-void R_InitFlats(void)
+void R_InitPatches(void)
 {
-    memset(flathash, 0, sizeof(flathash));
+    memset(patchhash, 0, sizeof(patchhash));
 }
 
-void R_UpdateFlats(void)
+void R_UpdatePatches(void)
 {
-    Z_FreeTags(PU_FLAT, PU_FLAT);
-    memset(flathash, 0, sizeof(flathash));
-    R_InitFlats();
+    Z_FreeTags(PU_PATCH, PU_PATCH);
+    memset(patchhash, 0, sizeof(patchhash));
+    R_InitPatches();
 }
 
 void R_InitLumpTexInfo(void)
@@ -856,14 +926,15 @@ void R_InitData(void)
 {
     R_InitTextures();
     R_InitFlats();
+    R_InitPatches();
     R_InitLumpTexInfo();
     Cl_InitTranslations();
 }
 
 void R_UpdateData(void)
 {
-    R_UpdateTextures();
-    R_UpdateFlats();
+    R_UpdateTexturesAndFlats();
+    R_UpdatePatches();
     R_InitLumpTexInfo();
     Cl_InitTranslations();
 }
@@ -897,20 +968,36 @@ void R_UpdateTranslationTables(void)
     R_InitTranslationTables();
 }
 
+int R_CheckFlatNumForName(const char *name)
+{
+    int     i;
+
+    if(name[0] == '-')          // no flat marker
+        return 0;
+
+    for(i = 0; i < numflats; ++i)
+        if(!strncasecmp(flats[i]->name, name, 8))
+            return i;
+
+    return -1;
+}
+
 int R_FlatNumForName(const char *name)
 {
     int     i;
-    char    namet[9];
 
-    i = W_CheckNumForName(name);
+    i = R_CheckFlatNumForName(name);
 
-    if(i == -1 && !levelSetup) // dont announce during level setup
-    {
-        namet[8] = 0;
-        memcpy(namet, name, 8);
-        Con_Message("R_FlatNumForName: %.8s not found!\n", namet);
-    }
-    return i;                   //R_GetFlatIndex(i);//i - firstflat;
+    if(i == -1 && !levelSetup)  // dont announce during level setup
+        Con_Message("R_FlatNumForName: %.8s not found!\n", name);
+    return i;
+}
+
+const char *R_FlatNameForNum(int num)
+{
+    if(num < 0 || num > numflats - 1)
+        return NULL;
+    return flats[num]->name;
 }
 
 int R_CheckTextureNumForName(const char *name)
@@ -1009,15 +1096,13 @@ boolean R_IsAllowedDecoration(ded_decor_t *def, int index, boolean hasExternal)
 
 /**
  * Prepares the specified flat and all the other flats in the same
- * animation group. Has the consequence that all lumps inside the
- * F_START...F_END block obtain a flat_t record.
+ * animation group.
  */
 void R_PrecacheFlat(int num)
 {
     int     i, k;
-    flat_t *f = R_GetFlat(num);
 
-    if(f->ingroup)
+    if(flats[num]->ingroup)
     {
         // The flat belongs in one or more animgroups.
         for(i = 0; i < numgroups; ++i)
@@ -1026,14 +1111,23 @@ void R_PrecacheFlat(int num)
             {
                 // Precache this group.
                 for(k = 0; k < groups[i].count; ++k)
-                    GL_PrepareFlat(groups[i].frames[k].number);
+                    GL_PrepareFlat(groups[i].frames[k].number, NULL);
             }
         }
     }
     else
     {
-        GL_PrepareFlat(num);
+        // Just this one flat.
+        GL_PrepareFlat(num, NULL);
     }
+}
+
+/**
+ * Prepares the specified patch.
+ */
+void R_PrecachePatch(int num)
+{
+    GL_PreparePatch(num, NULL);
 }
 
 /**
@@ -1053,14 +1147,14 @@ void R_PrecacheTexture(int num)
             {
                 // Precache this group.
                 for(k = 0; k < groups[i].count; ++k)
-                    GL_PrepareTexture(groups[i].frames[k].number);
+                    GL_PrepareTexture(groups[i].frames[k].number, NULL);
             }
         }
     }
     else
     {
         // Just this one texture.
-        GL_PrepareTexture(num);
+        GL_PrepareTexture(num, NULL);
     }
 }
 
@@ -1247,7 +1341,7 @@ translation_t *R_GetTranslation(boolean isTexture, int number)
     }
     else
     {
-        return &R_GetFlat(number)->translation;
+        return flattranslation + number;
     }
 }
 

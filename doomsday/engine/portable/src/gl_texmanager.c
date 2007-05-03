@@ -93,6 +93,7 @@ D_CMD(MipMap);
 D_CMD(SmoothRaw);
 
 byte   *GL_LoadHighResFlat(image_t *img, char *name);
+byte   *GL_LoadHighResPatch(image_t *img, char *name);
 void    GL_DeleteDetailTexture(detailtex_t * dtex);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -110,6 +111,9 @@ extern int skyflatnum;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+// The current texture.
+DGLuint curtex = 0;
+
 int     glMaxTexSize;           // Maximum supported texture size.
 int     ratioLimit = 0;         // Zero if none.
 boolean filloutlines = true;
@@ -118,32 +122,23 @@ byte    paletted = false;       // Use GL_EXT_paletted_texture (cvar)
 boolean load8bit = false;       // Load textures as 8 bit? (w/paltex)
 int     monochrome = 0;         // desaturate a patch (average colours)
 int     useSmartFilter = 0;     // Smart filter mode (cvar: 1=hq2x)
-
 int     mipmapping = 3, linearRaw = 1, texQuality = TEXQ_BEST;
 int     filterSprites = true;
-
-// Properties of the current texture.
-float   texw = 1, texh = 1;
-int     texmask = 0;
-DGLuint curtex = 0;
-detailinfo_t *texdetail;
-
 int     texMagMode = 1;         // Linear.
 
 // Convert a 18-bit RGB (666) value to a playpal index.
 // FIXME: 256kb - Too big?
 byte    pal18to8[262144];
-
 int     pallump;
 
 // Names of the dynamic light textures.
-DGLuint lightingTexNames[NUM_LIGHTING_TEXTURES];
+ddtexture_t lightingTextures[NUM_LIGHTING_TEXTURES];
 
 // Names of the "built-in" Doomsday textures.
-DGLuint ddTextures[NUM_DD_TEXTURES];
+ddtexture_t ddTextures[NUM_DD_TEXTURES];
 
 // Names of the flare textures (halos).
-DGLuint flaretexnames[NUM_FLARE_TEXTURES];
+ddtexture_t flareTextures[NUM_FLARE_TEXTURES];
 
 skycol_t *skytop_colors = NULL;
 int     num_skytop_colors = 0;
@@ -285,8 +280,8 @@ void GL_InitTextureManager(void)
     dtinstances = NULL;
 
     // System textures loaded in GL_LoadSystemTextures.
-    memset(flaretexnames, 0, sizeof(flaretexnames));
-    memset(lightingTexNames, 0, sizeof(lightingTexNames));
+    memset(flareTextures, 0, sizeof(flareTextures));
+    memset(lightingTextures, 0, sizeof(lightingTextures));
     memset(ddTextures, 0, sizeof(ddTextures));
 
     // Initialization done.
@@ -388,7 +383,7 @@ void GL_LoadLightMap(ded_lightmap_t *map)
         return;                 // Already loaded.
 
     // Default texture name.
-    map->tex = lightingTexNames[LST_DYNAMIC];
+    map->tex = lightingTextures[LST_DYNAMIC].tex;
 
     if(!strcmp(map->id, "-"))
     {
@@ -423,7 +418,7 @@ void GL_LoadLightMap(ded_lightmap_t *map)
 
 void GL_DeleteLightMap(ded_lightmap_t *map)
 {
-    if(map->tex != lightingTexNames[LST_DYNAMIC])
+    if(map->tex != lightingTextures[LST_DYNAMIC].tex)
     {
         gl.DeleteTextures(1, &map->tex);
     }
@@ -518,7 +513,7 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
                 // Maybe Automatic OR dynlight?
                 if(id == 0 || id == 1)
                 {
-                    map->tex = (id? GL_PrepareLSTexture(LST_DYNAMIC) : 0);
+                    map->tex = (id? GL_PrepareLSTexture(LST_DYNAMIC, NULL) : 0);
                     map->custom = false;
                     map->disabled = false;
                     loaded = true;
@@ -528,7 +523,7 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
                     id -= 2;
                     if(id >= 0 && id < NUM_FLARE_TEXTURES)
                     {
-                        map->tex = GL_PrepareFlareTexture(id);
+                        map->tex = GL_PrepareFlareTexture(id, NULL);
                         map->custom = false;
                         map->disabled = false;
                         loaded = true;
@@ -539,9 +534,9 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
     }
 }
 
-void GL_DeleteFlareMap(ded_flaremap_t * map)
+void GL_DeleteFlareMap(ded_flaremap_t *map)
 {
-    if(map->tex != flaretexnames[FXT_FLARE])
+    if(map->tex != flareTextures[FXT_FLARE].tex)
     {
         gl.DeleteTextures(1, &map->tex);
     }
@@ -622,15 +617,18 @@ void GL_DeleteReflectionMap(ded_reflection_t *ref)
  */
 void GL_LoadDDTextures(void)
 {
-    GL_PrepareDDTexture(DDT_UNKNOWN);
-    GL_PrepareDDTexture(DDT_MISSING);
-    GL_PrepareDDTexture(DDT_BBOX);
-    GL_PrepareDDTexture(DDT_GRAY);
+    GL_PrepareDDTexture(DDT_UNKNOWN, NULL);
+    GL_PrepareDDTexture(DDT_MISSING, NULL);
+    GL_PrepareDDTexture(DDT_BBOX, NULL);
+    GL_PrepareDDTexture(DDT_GRAY, NULL);
 }
 
 void GL_ClearDDTextures(void)
 {
-    gl.DeleteTextures(NUM_DD_TEXTURES, ddTextures);
+    uint        i;
+
+    for(i = 0; i < NUM_DD_TEXTURES; ++i)
+        gl.DeleteTextures(1, &ddTextures[i].tex);
     memset(ddTextures, 0, sizeof(ddTextures));
 }
 
@@ -649,15 +647,15 @@ void GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlares)
     UI_LoadTextures();
 
     // Preload lighting system textures.
-    GL_PrepareLSTexture(LST_DYNAMIC);
-    GL_PrepareLSTexture(LST_GRADIENT);
+    GL_PrepareLSTexture(LST_DYNAMIC, NULL);
+    GL_PrepareLSTexture(LST_GRADIENT, NULL);
 
     // Preload flares
-    GL_PrepareFlareTexture(FXT_FLARE);
+    GL_PrepareFlareTexture(FXT_FLARE, NULL);
     if(!haloRealistic)
     {
-        GL_PrepareFlareTexture(FXT_BRFLARE);
-        GL_PrepareFlareTexture(FXT_BIGFLARE);
+        GL_PrepareFlareTexture(FXT_BRFLARE, NULL);
+        GL_PrepareFlareTexture(FXT_BIGFLARE, NULL);
     }
 
     if(loadLightMaps || loadFlares)
@@ -739,11 +737,13 @@ void GL_ClearSystemTextures(void)
         }
     }
 
-    gl.DeleteTextures(NUM_LIGHTING_TEXTURES, lightingTexNames);
-    memset(lightingTexNames, 0, sizeof(lightingTexNames));
+    for(i = 0; i < NUM_LIGHTING_TEXTURES; ++i)
+        gl.DeleteTextures(1, &lightingTextures[i].tex);
+    memset(lightingTextures, 0, sizeof(lightingTextures));
 
-    gl.DeleteTextures(NUM_FLARE_TEXTURES, flaretexnames);
-    memset(flaretexnames, 0, sizeof(flaretexnames));
+    for(i = 0; i < NUM_FLARE_TEXTURES; ++i)
+        gl.DeleteTextures(1, &flareTextures[i].tex);
+    memset(flareTextures, 0, sizeof(flareTextures));
 
     GL_ClearDDTextures();
     UI_ClearTextures();
@@ -812,7 +812,7 @@ void GL_ClearRuntimeTextures(void)
 
     GL_DeleteRawImages();
 
-    // Delete any remaining lump textures (e.g. flats).
+    // Delete any remaining lump textures.
     for(i = 0; i < numlumptexinfo; ++i)
     {
         gl.DeleteTextures(2, lumptexinfo[i].tex);
@@ -1244,7 +1244,7 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
             continue;
 
         if((is_wall_texture && index == dt->wall_texture) ||
-           (!is_wall_texture && index == dt->flat_lump))
+           (!is_wall_texture && index == dt->flat_texture))
         {
             if(dtdef)
             {
@@ -1265,134 +1265,132 @@ DGLuint GL_PrepareDetailTexture(int index, boolean is_wall_texture,
     return 0;                   // There is no detail texture for this.
 }
 
-/*
- * No translation is done.
- */
-DGLuint GL_BindTexFlat(flat_t * fl)
+unsigned int GL_PrepareFlat(int idx, texinfo_t **info)
 {
-    DGLuint name;
+    return GL_PrepareFlat2(idx, true, info);
+}
+
+/*
+ * Returns the OpenGL name of the texture.
+ */
+unsigned int GL_PrepareFlat2(int idx, boolean translate, texinfo_t **info)
+{
     byte   *flatptr;
-    int     lump = fl->lump, width, height, pixSize = 3;
+    int     originalIndex = idx;
+    int     width, height, pixSize = 3;
     boolean RGBData = false, freeptr = false;
     ded_detailtexture_t *def;
     ded_decor_t *dec;
     image_t image;
     boolean hasExternal = false;
+    flat_t *flat;
 
-    if(lump < 0 || lump >= numlumps)
-    {
-        GL_BindTexture(0);
+    if(idx == 0) // No texture?
         return 0;
-    }
 
-    // Is there a high resolution version?
-    if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump)) &&
-       (flatptr = GL_LoadHighResFlat(&image, lumpinfo[lump].name)) != NULL)
+    if(translate)
     {
-        RGBData = true;
-        freeptr = true;
-        width = image.width;
-        height = image.height;
-        pixSize = image.pixelSize;
-
-        hasExternal = true;
+        idx = flattranslation[idx].current;
     }
-    else
+    flat = flats[idx];
+    if(!flat->tex)
     {
-        if(lumpinfo[lump].size < 4096)
-            return 0;           // Too small.
-        // Get a pointer to the texture data.
-        flatptr = W_CacheLumpNum(lump, PU_CACHE);
-        width = height = 64;
-    }
-    // Is there a detail texture for this?
-    if((fl->detail.tex = GL_PrepareDetailTexture(fl->lump, false, &def)))
-    {
-        // The width and height could be used for something meaningful.
-        fl->detail.width = 128;
-        fl->detail.height = 128;
-        fl->detail.scale = def->scale;
-        fl->detail.strength = def->strength;
-        fl->detail.maxdist = def->maxdist;
-    }
+        // Try to load a high resolution version of this flat.
+        if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(flat->lump)) &&
+           (flatptr = GL_LoadHighResFlat(&image, lumpinfo[flat->lump].name)) != NULL)
+        {
+            RGBData = true;
+            freeptr = true;
+            width = image.width;
+            height = image.height;
+            pixSize = image.pixelSize;
 
-    // Load the texture.
-    name = GL_UploadTexture(flatptr, width, height,
-                            pixSize == 4, true, RGBData, false, false,
-                            glmode[mipmapping], glmode[texMagMode],
-                            DGL_REPEAT, DGL_REPEAT, 0);
-
-    // Average color for glow planes.
-    if(RGBData)
-    {
-        averageColorRGB(&fl->color, flatptr, width, height);
-    }
-    else
-    {
-        averageColorIdx(&fl->color, flatptr, width, height,
-                        GL_GetPalette(), false);
-    }
-
-    if(freeptr)
-        M_Free(flatptr);
-
-    // Is there a surface decoration for this flat?
-    dec = Def_GetDecoration(lump, false, hasExternal);
-    if(dec)
-    {
-        // A glowing flat?
-        if(dec->glow)
-            fl->flags |= TXF_GLOW;
+            hasExternal = true;
+        }
         else
-            fl->flags &= ~TXF_GLOW;
+        {
+            if(lumpinfo[flat->lump].size < 4096)
+                return 0;           // Too small.
+            // Get a pointer to the texture data.
+            flatptr = W_CacheLumpNum(flat->lump, PU_CACHE);
+            width = height = 64;
+        }
+        flat->info.width = flat->info.height = 64;
+        flat->info.masked = false;
 
-        fl->decoration = dec;
+        // Is there a detail texture for this?
+        if((flat->info.detail.tex = GL_PrepareDetailTexture(idx, false, &def)))
+        {
+            // The width and height could be used for something meaningful.
+            flat->info.detail.width = 128;
+            flat->info.detail.height = 128;
+            flat->info.detail.scale = def->scale;
+            flat->info.detail.strength = def->strength;
+            flat->info.detail.maxdist = def->maxdist;
+        }
+
+        // Load the texture.
+        flat->tex = GL_UploadTexture(flatptr, width, height,
+                                pixSize == 4, true, RGBData, false, false,
+                                glmode[mipmapping], glmode[texMagMode],
+                                DGL_REPEAT, DGL_REPEAT, 0);
+
+        // Average color for glow planes.
+        if(RGBData)
+        {
+            averageColorRGB(&flat->color, flatptr, width, height);
+        }
+        else
+        {
+            averageColorIdx(&flat->color, flatptr, width, height,
+                            GL_GetPalette(), false);
+        }
+
+        if(freeptr)
+            M_Free(flatptr);
+
+        // Is there a surface decoration for this flat?
+        dec = Def_GetDecoration(idx, false, hasExternal);
+        if(dec)
+        {
+            // A glowing flat?
+            if(dec->glow)
+                flat->flags |= TXF_GLOW;
+            else
+                flat->flags &= ~TXF_GLOW;
+
+            flat->decoration = dec;
+        }
+
+        // Get the surface reflection for this flat.
+        flat->reflection = Def_GetReflection(idx, false);
     }
-
-    // Get the surface reflection for this flat.
-    fl->reflection = Def_GetReflection(lump, false);
-
-    // The name of the texture is returned.
-    return name;
+    return GL_GetFlatInfo2(originalIndex, translate, info);
 }
 
-unsigned int GL_PrepareFlat(int idx)
-{
-    return GL_PrepareFlat2(idx, true);
-}
-
-/*
- * Returns the OpenGL name of the texture.
- * (idx is really a lumpnum)
+/**
+ * Copy the averaged flat color into the dest buffer <code>rgb</code>.
+ *
+ * @param   flatid      The id of the flat.
+ * @param   rgb         The dest buffer.
  */
-unsigned int GL_PrepareFlat2(int idx, boolean translate)
+void GL_GetFlatColor(int flatid, float *rgb)
 {
-    flat_t *flat = R_GetFlat(idx);
+    flat_t *flat = flats[flatid];
 
-    // Get the translated one?
-    if(translate && flat->translation.current != idx)
-    {
-        flat = R_GetFlat(flat->translation.current);
-    }
-
-    if(!lumptexinfo[flat->lump].tex[0])
-    {
-        // The flat isn't yet bound with OpenGL.
-        lumptexinfo[flat->lump].tex[0] = GL_BindTexFlat(flat);
-    }
-    return GL_GetFlatInfo(idx, translate);
+    memcpy(rgb, flat->color.rgb, sizeof(float) * 3);
 }
 
 void GL_SetFlat(int idx)
 {
-    gl.Bind(curtex = GL_PrepareFlat2(idx, false));
+    gl.Bind(GL_PrepareFlat(idx, NULL));
 }
 
 /*
  * Prepares one of the "Doomsday Textures" 'which' must be one
  * of the DDT_* constants.
  */
-DGLuint GL_PrepareDDTexture(ddtexture_t which)
+DGLuint GL_PrepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
 {
     static const char *ddTexNames[NUM_DD_TEXTURES] = {
         "unknown",
@@ -1403,24 +1401,27 @@ DGLuint GL_PrepareDDTexture(ddtexture_t which)
 
     if(which < NUM_DD_TEXTURES)
     {
-        if(!ddTextures[which])
+        if(!ddTextures[which].tex)
         {
-            ddTextures[which] =
+            ddTextures[which].tex =
                 GL_LoadGraphics2(RC_GRAPHICS, ddTexNames[which], LGM_NORMAL,
                                  DGL_TRUE, false);
 
-            if(!ddTextures[which])
+            if(!ddTextures[which].tex)
                 Con_Error("GL_PrepareDDTexture: \"%s\" not found!\n",
                           ddTexNames[which]);
+
+            ddTextures[which].info.width =
+                ddTextures[which].info.height = 64;
         }
     }
     else
         Con_Error("GL_PrepareDDTexture: Invalid ddtexture %i\n", which);
 
-    texw = texh = 64;
-    texmask = false;
-    texdetail = 0;
-    return ddTextures[which];
+    if(texinfo)
+        *texinfo = &ddTextures[which].info;
+
+    return ddTextures[which].tex;
 }
 
 /*
@@ -1591,7 +1592,7 @@ byte *GL_LoadTexture(image_t * img, char *name)
  * Use this when loading high-res wall textures.
  * The returned buffer must be freed with M_Free.
  */
-byte *GL_LoadHighResTexture(image_t * img, char *name)
+byte *GL_LoadHighResTexture(image_t *img, char *name)
 {
     if(noHighResTex)
         return NULL;
@@ -1601,7 +1602,7 @@ byte *GL_LoadHighResTexture(image_t * img, char *name)
 /*
  * The returned buffer must be freed with M_Free.
  */
-byte *GL_LoadHighResFlat(image_t * img, char *name)
+byte *GL_LoadHighResFlat(image_t *img, char *name)
 {
     byte *ptr;
 
@@ -1614,6 +1615,16 @@ byte *GL_LoadHighResFlat(image_t * img, char *name)
 
     // Try the old-fashioned "Flat-NAME" in the Textures category.
     return GL_LoadHighRes(img, name, "flat-", false, RC_TEXTURE);
+}
+
+/*
+ * The returned buffer must be freed with M_Free.
+ */
+byte *GL_LoadHighResPatch(image_t *img, char *name)
+{
+    if(noHighResTex)
+        return NULL;
+    return GL_LoadHighRes(img, name, "", true, RC_PATCH);
 }
 
 DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
@@ -1725,7 +1736,7 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 {
     int     i, len;
     boolean alphaChannel = false;
-    patch_t *patch;
+    lumppatch_t *patch;
 
     len = width * height;
 
@@ -1740,9 +1751,10 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
     // been drawn.
     for(i = 0; i < tex->patchcount; ++i)
     {
-        patch = W_CacheLumpNum(tex->patches[i].patch, PU_CACHE);
+        patch = (lumppatch_t*) W_CacheLumpNum(tex->patches[i].patch, PU_CACHE);
+
         // Check for big patches?
-        if(SHORT(patch->height) > tex->height && has_big_patch &&
+        if(SHORT(patch->height) > tex->info.height && has_big_patch &&
            *has_big_patch < SHORT(patch->height))
         {
             *has_big_patch = SHORT(patch->height);
@@ -1760,15 +1772,15 @@ boolean GL_BufferTexture(texture_t *tex, byte *buffer, int width, int height,
 /*
  * Returns the DGL texture name.
  */
-unsigned int GL_PrepareTexture(int idx)
+unsigned int GL_PrepareTexture(int idx, texinfo_t **info)
 {
-    return GL_PrepareTexture2(idx, true);
+    return GL_PrepareTexture2(idx, true, info);
 }
 
 /*
  * Returns the DGL texture name.
  */
-unsigned int GL_PrepareTexture2(int idx, boolean translate)
+unsigned int GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info)
 {
     ded_detailtexture_t *def;
     ded_decor_t *dec;
@@ -1779,21 +1791,15 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
     image_t image;
     boolean hasExternal = false;
 
-    if(idx == 0)
-    {
-        // No texture?
-        texw = 1;
-        texh = 1;
-        texmask = 0;
-        texdetail = 0;
+    if(idx == 0) // No texture?
         return 0;
-    }
+
     if(translate)
     {
         idx = texturetranslation[idx].current;
     }
     tex = textures[idx];
-    if(!textures[idx]->tex)
+    if(!tex->tex)
     {
         // Try to load a high resolution version of this texture.
         if((loadExtAlways || highResWithPWAD || !R_IsCustomTexture(idx)) &&
@@ -1806,8 +1812,8 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
         }
         else
         {
-            image.width = tex->width;
-            image.height = tex->height;
+            image.width = tex->info.width;
+            image.height = tex->info.height;
             image.pixels = M_Malloc(2 * image.width * image.height);
             image.isMasked =
                 GL_BufferTexture(tex, image.pixels, image.width, image.height,
@@ -1818,7 +1824,7 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
             if(allowMaskedTexEnlarge && image.isMasked && i)
             {
                 // Adjust height to fit the largest patch.
-                tex->height = image.height = i;
+                tex->info.height = image.height = i;
                 // Get a new buffer.
                 M_Free(image.pixels);
                 image.pixels = M_Malloc(2 * image.width * image.height);
@@ -1832,18 +1838,18 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
         }
 
         // Load a detail texture (if one is defined).
-        if((textures[idx]->detail.tex =
+        if((tex->info.detail.tex =
             GL_PrepareDetailTexture(idx, true, &def)))
         {
             // The width and height could be used for something meaningful.
-            textures[idx]->detail.width = 128;
-            textures[idx]->detail.height = 128;
-            textures[idx]->detail.scale = def->scale;
-            textures[idx]->detail.strength = def->strength;
-            textures[idx]->detail.maxdist = def->maxdist;
+            tex->info.detail.width = 128;
+            tex->info.detail.height = 128;
+            tex->info.detail.scale = def->scale;
+            tex->info.detail.strength = def->strength;
+            tex->info.detail.maxdist = def->maxdist;
         }
 
-        textures[idx]->tex =
+        tex->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
                              alphaChannel, true, RGBData, false, false,
                              glmode[mipmapping], glmode[texMagMode],
@@ -1852,16 +1858,16 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
         // Average color for glow planes.
         if(RGBData)
         {
-            averageColorRGB(&textures[idx]->color, image.pixels, image.width,
+            averageColorRGB(&tex->color, image.pixels, image.width,
                             image.height);
         }
         else
         {
-            averageColorIdx(&textures[idx]->color, image.pixels, image.width,
+            averageColorIdx(&tex->color, image.pixels, image.width,
                             image.height, GL_GetPalette(), false);
         }
 
-        textures[idx]->masked = (image.isMasked != 0);
+        tex->info.masked = (image.isMasked != 0);
 
         GL_DestroyImage(&image);
 
@@ -1871,17 +1877,17 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate)
         {
             // A glowing texture?
             if(dec->glow)
-                textures[idx]->flags |= TXF_GLOW;
+                tex->flags |= TXF_GLOW;
             else
-                textures[idx]->flags &= ~TXF_GLOW;
+                tex->flags &= ~TXF_GLOW;
 
-            textures[idx]->decoration = dec;
+            tex->decoration = dec;
         }
 
         // Get the reflection for this surface.
-        textures[idx]->reflection = Def_GetReflection(idx, true);
+        tex->reflection = Def_GetReflection(idx, true);
     }
-    return GL_GetTextureInfo2(originalIndex, translate);
+    return GL_GetTextureInfo2(originalIndex, translate, info);
 }
 
 /*
@@ -1895,12 +1901,12 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
     byte   *imgdata;
     int     i, numpels;
 
-    *width = tex->width;
-    *height = tex->height;
+    *width = tex->info.width;
+    *height = tex->info.height;
 
     if(tex->patchcount > 1)
     {
-        numpels = tex->width * tex->height;
+        numpels = tex->info.width * tex->info.height;
         imgdata = M_Calloc(2 * numpels);
         /*for(i = 0; i < tex->width; i++)
            {
@@ -1919,7 +1925,7 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
            } */
         for(i = 0; i < tex->patchcount; ++i)
         {
-            DrawRealPatch(imgdata, /*palette,*/ tex->width, tex->height,
+            DrawRealPatch(imgdata, /*palette,*/ tex->info.width, tex->info.height,
                           W_CacheLumpNum(tex->patches[i].patch, PU_CACHE),
                           tex->patches[i].originx, tex->patches[i].originy,
                           zeroMask, 0, false);
@@ -1927,10 +1933,12 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
     }
     else
     {
-        patch_t *patch = W_CacheLumpNum(tex->patches[0].patch, PU_CACHE);
+        lumppatch_t *patch =
+            (lumppatch_t*) W_CacheLumpNum(tex->patches[0].patch, PU_CACHE);
         int     bufHeight =
-            SHORT(patch->height) > tex->height ? SHORT(patch->height)
-            : tex->height;
+            SHORT(patch->height) > tex->info.height ? SHORT(patch->height)
+            : tex->info.height;
+
         if(bufHeight > *height)
         {
             // Heretic sky textures are reported to be 128 tall, even if the
@@ -1940,10 +1948,11 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
             if(*height > 200)
                 *height = 200;
         }
+
         // Allocate a large enough buffer.
-        numpels = tex->width * bufHeight;
+        numpels = tex->info.width * bufHeight;
         imgdata = M_Calloc(2 * numpels);
-        DrawRealPatch(imgdata, /*palette,*/ tex->width, bufHeight, patch, 0, 0,
+        DrawRealPatch(imgdata, /*palette,*/ tex->info.width, bufHeight, patch, 0, 0,
                       zeroMask, 0, false);
     }
     if(zeroMask && filloutlines)
@@ -1954,15 +1963,16 @@ void GL_BufferSkyTexture(int idx, byte **outbuffer, int *width, int *height,
 /*
  * Sky textures are usually 256 pixels wide.
  */
-unsigned int GL_PrepareSky(int idx, boolean zeroMask)
+unsigned int GL_PrepareSky(int idx, boolean zeroMask, texinfo_t **info)
 {
-    return GL_PrepareSky2(idx, zeroMask, true);
+    return GL_PrepareSky2(idx, zeroMask, true, info);
 }
 
 /*
  * Sky textures are usually 256 pixels wide.
  */
-unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
+unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
+                            texinfo_t **texinfo)
 {
     boolean RGBData, alphaChannel;
     image_t image;
@@ -2007,16 +2017,19 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate)
                              DGL_REPEAT, DGL_REPEAT, TXCF_NO_COMPRESSION);
 
         // Do we have a masked texture?
-        textures[idx]->masked = (image.isMasked != 0);
+        textures[idx]->info.masked = (image.isMasked != 0);
+
+        // Sky textures don't support detail textures.
+        textures[idx]->info.detail.tex = 0;
 
         // Free the buffer.
         GL_DestroyImage(&image);
 
     }
-    texw = textures[idx]->width;
-    texh = textures[idx]->height;
-    texmask = textures[idx]->masked;
-    texdetail = 0;
+
+    if(texinfo)
+        *texinfo = &textures[idx]->info;
+
     return textures[idx]->tex;
 }
 
@@ -2064,7 +2077,8 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
     if(!isPsprite)
     {
         spritelump_t *slump = spritelumps[pnum];
-        patch_t *patch = W_CacheLumpNum(slump->lump, PU_CACHE);
+        lumppatch_t *patch =
+            (lumppatch_t*) W_CacheLumpNum(slump->lump, PU_CACHE);
 
         // Calculate light source properties.
         GL_CalcLuminance(pnum, image->pixels, image->width,
@@ -2104,7 +2118,8 @@ unsigned int GL_PrepareTranslatedSprite(int pnum, int tmap, int tclass)
     if(!tspr)
     {
         filename_t resource, fileName;
-        patch_t *patch = W_CacheLumpNum(spritelumps[pnum]->lump, PU_CACHE);
+        lumppatch_t *patch =
+            (lumppatch_t*) W_CacheLumpNum(spritelumps[pnum]->lump, PU_CACHE);
 
         // Compose a resource name.
         if(tclass || tmap)
@@ -2171,7 +2186,8 @@ unsigned int GL_PrepareSprite(int pnum, int spriteMode)
     {
         image_t image;
         filename_t hudResource, fileName;
-        patch_t *patch = W_CacheLumpNum(lumpNum, PU_CACHE);
+        lumppatch_t *patch =
+                        (lumppatch_t*) W_CacheLumpNum(lumpNum, PU_CACHE);
 
         // Compose a resource for the psprite.
         if(spriteMode == 1)
@@ -2250,9 +2266,17 @@ void GL_NewRawLump(int lump)
     rawlumps[numrawlumps - 1] = lump;
 }
 
-DGLuint GL_GetOtherPart(int lump)
+DGLuint GL_GetOtherPart(int idx, texinfo_t **info)
 {
-    return lumptexinfo[lump].tex[1];
+    patch_t *patch = R_GetPatch(idx);
+
+    if(!patch->tex)
+    {
+        // The patch isn't yet bound with OpenGL.
+        patch->tex = GL_BindTexPatch(patch);
+    }
+
+    return GL_GetPatchInfo(idx, true, info);
 }
 
 /*
@@ -2421,133 +2445,138 @@ unsigned int GL_SetRawImage(int lump, int part)
     return texId;
 }
 
-/*
- * Loads and sets up a patch using data from the specified lump.
+/**
+ * NOTE: No mipmaps are generated for regular patches.
  */
-void GL_PrepareLumpPatch(int lump)
+DGLuint GL_BindTexPatch(patch_t *p)
 {
-    patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
-    int     numpels = SHORT(patch->width) * SHORT(patch->height), alphaChannel;
-    byte   *buffer;
+    lumppatch_t *patch;
+    byte   *patchptr;
+    int     lump = p->lump;
+    image_t image;
 
-    if(!numpels)
-        return;                 // This won't do!
-
-    // Allocate memory for the patch.
-    buffer = M_Calloc(2 * numpels);
-
-    alphaChannel =
-        DrawRealPatch(buffer, SHORT(patch->width), SHORT(patch->height),
-                      patch, 0, 0, false, 0, true);
-    if(filloutlines)
-        ColorOutlines(buffer, SHORT(patch->width), SHORT(patch->height));
-
-    if(monochrome)
-        DeSaturate(buffer, GL_GetPalette(), SHORT(patch->width),
-                   SHORT(patch->height));
-
-    // See if we have to split the patch into two parts.
-    // This is done to conserve the quality of wide textures
-    // (like the status bar) on video cards that have a pitifully
-    // small maximum texture size. ;-)
-    if(SHORT(patch->width) > glMaxTexSize)
+    if(lump < 0 || lump >= numlumps)
     {
-        // The width of the first part is glMaxTexSize.
-        int     part2width = SHORT(patch->width) - glMaxTexSize;
-        byte   *tempbuff =
-            M_Malloc(2 * MAX_OF(glMaxTexSize, part2width) *
-                     SHORT(patch->height));
+        GL_BindTexture(0);
+        return 0;
+    }
 
-        // We'll use a temporary buffer for doing to splitting.
-        // First, part one.
-        pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
-               glMaxTexSize, SHORT(patch->height), alphaChannel,
-               0, 0, 0, 0, glMaxTexSize, SHORT(patch->height));
-        lumptexinfo[lump].tex[0] =
-            GL_UploadTexture(tempbuff, glMaxTexSize, SHORT(patch->height),
-                             alphaChannel, true, false, false, false,
-                             DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, 0);
+    patch = (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
+    lumptexinfo[lump].offx = -SHORT(patch->leftoffset);
+    lumptexinfo[lump].offy = -SHORT(patch->topoffset);
 
-        // Then part two.
-        pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
-               part2width, SHORT(patch->height), alphaChannel, glMaxTexSize,
-               0, 0, 0, part2width, SHORT(patch->height));
-        lumptexinfo[lump].tex[1] =
-            GL_UploadTexture(tempbuff, part2width, SHORT(patch->height),
-                             alphaChannel, true, false, false, false,
+    // Let's first try the resource locator and see if there is a
+    // 'high-resolution' version available.
+    if((loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump)) &&
+       (patchptr = GL_LoadHighResPatch(&image, lumpinfo[lump].name)) != NULL)
+    {
+        // This is our texture! No mipmaps are generated.
+        p->tex =
+            GL_UploadTexture(image.pixels, image.width, image.height,
+                             image.pixelSize == 4, true, true, false, false,
                              DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
 
-        GL_BindTexture(lumptexinfo[lump].tex[0]);
+        p->info.width = SHORT(patch->width);
+        p->info.height = SHORT(patch->height);
 
-        lumptexinfo[lump].width[0] = glMaxTexSize;
-        lumptexinfo[lump].width[1] = SHORT(patch->width) - glMaxTexSize;
-
-        M_Free(tempbuff);
-    }
-    else                        // We can use the normal one-part method.
-    {
-        // Generate a texture.
-        lumptexinfo[lump].tex[0] =
-            GL_UploadTexture(buffer, SHORT(patch->width), SHORT(patch->height),
-                             alphaChannel, true, false, false, false,
-                             DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
-
-        lumptexinfo[lump].width[0] = SHORT(patch->width);
-        lumptexinfo[lump].width[1] = 0;
-    }
-    M_Free(buffer);
-}
-
-/*
- * No mipmaps are generated for regular patches.
- */
-void GL_SetPatch(int lump)
-{
-    if(lump >= numlumps)
-        return;
-
-    if(!lumptexinfo[lump].tex[0])
-    {
-        patch_t *patch = W_CacheLumpNum(lump, PU_CACHE);
-        filename_t fileName;
-        image_t image;
-
-        // Let's first try the resource locator and see if there is a
-        // 'high-resolution' version available.
-        if(!noHighResPatches &&
-           (loadExtAlways || highResWithPWAD || W_IsFromIWAD(lump)) &&
-           R_FindResource(RC_PATCH, lumpinfo[lump].name, "-ck", fileName) &&
-           GL_LoadImage(&image, fileName, false))
-        {
-            // This is our texture! No mipmaps are generated.
-            lumptexinfo[lump].tex[0] =
-                GL_UploadTexture(image.pixels, image.width, image.height,
-                                 image.pixelSize == 4, true, true, false, false,
-                                 DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
-
-            // The original image is no longer needed.
-            GL_DestroyImage(&image);
-
-            lumptexinfo[lump].width[0] = SHORT(patch->width);
-            lumptexinfo[lump].width[1] = 0;
-            lumptexinfo[lump].tex[1] = 0;
-        }
-        else
-        {
-            // Use data from the normal lump.
-            GL_PrepareLumpPatch(lump);
-        }
-
-        // The rest of the size information.
-        lumptexinfo[lump].height = SHORT(patch->height);
-        lumptexinfo[lump].offx = -SHORT(patch->leftoffset);
-        lumptexinfo[lump].offy = -SHORT(patch->topoffset);
+        // The original image is no longer needed.
+        GL_DestroyImage(&image);
     }
     else
     {
-        GL_BindTexture(lumptexinfo[lump].tex[0]);
+        // Use data from the normal lump.
+        int     numpels = SHORT(patch->width) * SHORT(patch->height), alphaChannel;
+        byte   *buffer;
+
+        if(!numpels)
+            return 0; // This won't do!
+
+        // Allocate memory for the patch.
+        buffer = M_Calloc(2 * numpels);
+
+        alphaChannel =
+            DrawRealPatch(buffer, SHORT(patch->width), SHORT(patch->height),
+                          patch, 0, 0, false, 0, true);
+        if(filloutlines)
+            ColorOutlines(buffer, SHORT(patch->width), SHORT(patch->height));
+
+        if(monochrome)
+            DeSaturate(buffer, GL_GetPalette(), SHORT(patch->width),
+                       SHORT(patch->height));
+
+        // See if we have to split the patch into two parts.
+        // This is done to conserve the quality of wide textures
+        // (like the status bar) on video cards that have a pitifully
+        // small maximum texture size. ;-)
+        if(SHORT(patch->width) > glMaxTexSize)
+        {
+            // The width of the first part is glMaxTexSize.
+            int     part2width = SHORT(patch->width) - glMaxTexSize;
+            byte   *tempbuff =
+                M_Malloc(2 * MAX_OF(glMaxTexSize, part2width) *
+                         SHORT(patch->height));
+
+            // We'll use a temporary buffer for doing to splitting.
+            // First, part one.
+            pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
+                   glMaxTexSize, SHORT(patch->height), alphaChannel,
+                   0, 0, 0, 0, glMaxTexSize, SHORT(patch->height));
+            p->tex =
+                GL_UploadTexture(tempbuff, glMaxTexSize, SHORT(patch->height),
+                                 alphaChannel, true, false, false, false,
+                                 DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, 0);
+
+            // Then part two.
+            pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
+                   part2width, SHORT(patch->height), alphaChannel, glMaxTexSize,
+                   0, 0, 0, part2width, SHORT(patch->height));
+            p->tex2 =
+                GL_UploadTexture(tempbuff, part2width, SHORT(patch->height),
+                                 alphaChannel, true, false, false, false,
+                                 DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
+
+            p->info.width = glMaxTexSize;
+            p->info2.width = SHORT(patch->width) - glMaxTexSize;
+            p->info.height = p->info2.height = SHORT(patch->height);
+
+            M_Free(tempbuff);
+        }
+        else // We can use the normal one-part method.
+        {
+            // Generate a texture.
+            p->tex =
+                GL_UploadTexture(buffer, SHORT(patch->width), SHORT(patch->height),
+                                 alphaChannel, true, false, false, false,
+                                 DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
+
+            p->info.width = SHORT(patch->width);
+            p->info.height = SHORT(patch->height);
+        }
+        M_Free(buffer);
     }
-    curtex = lumptexinfo[lump].tex[0];
+
+    return p->tex;
+}
+
+/*
+ * Returns the OpenGL name of the texture.
+ * (idx is really a lumpnum)
+ */
+DGLuint GL_PreparePatch(int idx, texinfo_t **info)
+{
+    patch_t *patch = R_GetPatch(idx);
+
+    if(!patch->tex)
+    {
+        // The patch isn't yet bound with OpenGL.
+        patch->tex = GL_BindTexPatch(patch);
+    }
+    return GL_GetPatchInfo(idx, false, info);
+}
+
+void GL_SetPatch(int idx)
+{
+    gl.Bind(curtex = GL_PreparePatch(idx, NULL));
 }
 
 /*
@@ -2563,58 +2592,58 @@ void GL_SetNoTexture(void)
  * Prepare a texture used in the lighting system. 'which' must be one
  * of the LST_* constants.
  */
-DGLuint GL_PrepareLSTexture(lightingtex_t which)
+DGLuint GL_PrepareLSTexture(lightingtexid_t which, texinfo_t **texinfo)
 {
-    switch (which)
+    switch(which)
     {
     case LST_DYNAMIC:
         // The dynamic light map is a 64x64 grayscale 8-bit image.
-        if(!lightingTexNames[LST_DYNAMIC])
+        if(!lightingTextures[LST_DYNAMIC].tex)
         {
             // We don't want to compress the flares (banding would be noticeable).
-            lightingTexNames[LST_DYNAMIC] =
+            lightingTextures[LST_DYNAMIC].tex =
                 GL_LoadGraphics3("dLight", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR,
                                  DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
         }
         // Global tex variables not set! (scalable texture)
-        return lightingTexNames[LST_DYNAMIC];
+        return lightingTextures[LST_DYNAMIC].tex;
 
     case LST_GRADIENT:
-        if(!lightingTexNames[LST_GRADIENT])
+        if(!lightingTextures[LST_GRADIENT].tex)
         {
-            lightingTexNames[LST_GRADIENT] =
+            lightingTextures[LST_GRADIENT].tex =
                 GL_LoadGraphics3("wallglow", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR,
                                  DGL_REPEAT, DGL_CLAMP, 0);
         }
         // Global tex variables not set! (scalable texture)
-        return lightingTexNames[LST_GRADIENT];
+        return lightingTextures[LST_GRADIENT].tex;
 
     case LST_RADIO_CO:          // closed/open
     case LST_RADIO_CC:          // closed/closed
     case LST_RADIO_OO:          // open/open
     case LST_RADIO_OE:          // open/edge
         // FakeRadio corner shadows.
-        if(!lightingTexNames[which])
+        if(!lightingTextures[which].tex)
         {
             switch(which)
             {
             case LST_RADIO_CO:
-                lightingTexNames[which] =
+                lightingTextures[which].tex =
                     GL_LoadGraphics3("radioCO", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_CC:
-                lightingTexNames[which] =
+                lightingTextures[which].tex =
                     GL_LoadGraphics3("radioCC", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OO:
-                lightingTexNames[which] =
+                lightingTextures[which].tex =
                     GL_LoadGraphics3("radioOO", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OE:
-                lightingTexNames[which] =
+                lightingTextures[which].tex =
                     GL_LoadGraphics3("radioOE", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
@@ -2623,7 +2652,7 @@ DGLuint GL_PrepareLSTexture(lightingtex_t which)
             }
         }
         // Global tex variables not set! (scalable texture)
-        return lightingTexNames[which];
+        return lightingTextures[which].tex;
 
     default:
         // Failed to prepare anything.
@@ -2631,39 +2660,29 @@ DGLuint GL_PrepareLSTexture(lightingtex_t which)
     }
 }
 
-DGLuint GL_PrepareFlareTexture(flaretex_t flare)
+DGLuint GL_PrepareFlareTexture(flaretexid_t flare, texinfo_t **texinfo)
 {
     // There are three flare textures.
     if(flare >= NUM_FLARE_TEXTURES)
         return 0;
 
-    if(!flaretexnames[flare])
+    if(!flareTextures[flare].tex)
     {
         // We don't want to compress the flares (banding would be noticeable).
-        flaretexnames[flare] =
+        flareTextures[flare].tex =
             GL_LoadGraphics3(flare == 0 ? "flare" : flare == 1 ? "brflare" :
                              "bigflare", LGM_WHITE_ALPHA,
                              DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP,
                              TXCF_NO_COMPRESSION);
 
-        if(flaretexnames[flare] == 0)
+        if(flareTextures[flare].tex == 0)
         {
             Con_Error("GL_PrepareFlareTexture: flare texture %i not found!\n",
                       flare);
         }
     }
 
-    return flaretexnames[flare];
-}
-
-int GL_GetLumpTexWidth(int lump)
-{
-    return lumptexinfo[lump].width[0];
-}
-
-int GL_GetLumpTexHeight(int lump)
-{
-    return lumptexinfo[lump].height;
+    return flareTextures[flare].tex;
 }
 
 /*
@@ -2672,8 +2691,7 @@ int GL_GetLumpTexHeight(int lump)
  */
 void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
 {
-    int     i, k;
-    flat_t **flats, **ptr;
+    int     i;
 
     if(gameTex)
     {
@@ -2685,16 +2703,16 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
                 gl.TexParameter(DGL_MIN_FILTER, minMode);
                 gl.TexParameter(DGL_MAG_FILTER, magMode);
             }
+
         // Flats.
-        flats = R_CollectFlats(NULL);
-        for(ptr = flats; *ptr; ptr++)
-            if(lumptexinfo[(*ptr)->lump].tex[0])    // Is the texture loaded?
+        for(i = 0; i < numflats; ++i)
+            if(flats[i]->tex)    // Is the flat loaded?
             {
-                gl.Bind(lumptexinfo[(*ptr)->lump].tex[0]);
+                gl.Bind(flats[i]->tex);
                 gl.TexParameter(DGL_MIN_FILTER, minMode);
                 gl.TexParameter(DGL_MAG_FILTER, magMode);
             }
-        Z_Free(flats);
+
         // Sprites.
         for(i = 0; i < numSpriteLumps; ++i)
             if(spritelumps[i]->tex)
@@ -2703,6 +2721,7 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
                 gl.TexParameter(DGL_MIN_FILTER, minMode);
                 gl.TexParameter(DGL_MAG_FILTER, magMode);
             }
+
         // Translated sprites.
         for(i = 0; i < numtranssprites; ++i)
         {
@@ -2711,8 +2730,25 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
             gl.TexParameter(DGL_MAG_FILTER, magMode);
         }
     }
+
     if(uiTex)
     {
+        int         k;
+
+        // Patches.
+        {
+        patch_t **patches, **ptr;
+        patches = R_CollectPatches(NULL);
+        for(ptr = patches; *ptr; ptr++)
+            if((*ptr)->tex)    // Is the texture loaded?
+            {
+                gl.Bind((*ptr)->tex);
+                gl.TexParameter(DGL_MIN_FILTER, minMode);
+                gl.TexParameter(DGL_MAG_FILTER, magMode);
+            }
+        Z_Free(patches);
+        }
+
         for(i = 0; i < numlumps; ++i)
             for(k = 0; k < 2; ++k)
                 if(lumptexinfo[i].tex[k])
@@ -2937,15 +2973,15 @@ unsigned int GL_PrepareShinySkin(modeldef_t * md, int sub)
 /*
  * Returns the texture name, if it has been prepared.
  */
-DGLuint GL_GetTextureInfo(int index)
+DGLuint GL_GetTextureInfo(int index, texinfo_t **info)
 {
-    return GL_GetTextureInfo2(index, true);
+    return GL_GetTextureInfo2(index, true, info);
 }
 
 /*
  * Returns the texture name, if it has been prepared.
  */
-DGLuint GL_GetTextureInfo2(int index, boolean translate)
+DGLuint GL_GetTextureInfo2(int index, boolean translate, texinfo_t **texinfo)
 {
     texture_t *tex;
 
@@ -2959,35 +2995,54 @@ DGLuint GL_GetTextureInfo2(int index, boolean translate)
     }
     tex = textures[index];
 
-    // Set the global texture info variables.
-    texw = tex->width;
-    texh = tex->height;
-    texmask = tex->masked;
-    texdetail = (r_detail && tex->detail.tex ? &tex->detail : 0);
+    if(texinfo)
+        *texinfo = &textures[index]->info;
+
     return tex->tex;
+}
+
+DGLuint GL_GetFlatInfo(int index, texinfo_t **texinfo)
+{
+    return GL_GetFlatInfo2(index, true, texinfo);
 }
 
 /*
  * Returns the flat name, if it has been prepared.
  */
-DGLuint GL_GetFlatInfo(int idx, boolean translate)
+DGLuint GL_GetFlatInfo2(int index, boolean translate, texinfo_t **texinfo)
 {
-    flat_t *flat = R_GetFlat(idx);
+    flat_t *flat;
 
-    if(!flat)
+    if(!index)
         return 0;
 
     // Translate the flat.
-    if(translate && flat->translation.current != idx)
+    if(translate)
     {
-        flat = R_GetFlat(flat->translation.current);
+        index = flattranslation[index].current;
     }
+    flat = flats[index];
 
-    // Set the global texture info variables.
-    texw = texh = 64;
-    texmask = false;
-    texdetail = (r_detail && flat->detail.tex ? &flat->detail : 0);
-    return lumptexinfo[flat->lump].tex[0];
+    if(texinfo)
+        *texinfo = &flats[index]->info;
+
+    return flat->tex;
+}
+
+/**
+ * Returns the patch name, if it has been prepared.
+ */
+DGLuint GL_GetPatchInfo(int idx, boolean part2, texinfo_t **texinfo)
+{
+    patch_t *patch = R_GetPatch(idx);
+
+    if(!patch)
+        return 0;
+
+    if(texinfo)
+        *texinfo = (part2? &patch->info2 : &patch->info);
+
+    return (part2? patch->tex2 : patch->tex);
 }
 
 /**
@@ -3005,7 +3060,7 @@ void GL_GetTextureColor(int texid, float *rgb)
 
 void GL_SetTexture(int idx)
 {
-    gl.Bind(GL_PrepareTexture(idx));
+    gl.Bind(GL_PrepareTexture(idx, NULL));
 }
 
 /*
@@ -3102,7 +3157,7 @@ D_CMD(TranslateFont)
     char    name[32];
     int     i, lump;
     size_t  size;
-    patch_t *patch;
+    lumppatch_t *patch;
     byte    redToWhite[256];
 
     if(argc < 3)

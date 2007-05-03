@@ -672,7 +672,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     quad->flags = RPF_SHADOW;
     quad->texoffx = seg->offset;
     quad->texoffy = 0;
-    quad->tex.id = GL_PrepareLSTexture(LST_RADIO_CC);
+    quad->tex.id = GL_PrepareLSTexture(LST_RADIO_CC, NULL);
     quad->tex.detail = NULL;
     quad->tex.width = seg->linedef->length;
     quad->tex.height = shadowSize;
@@ -811,7 +811,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
             }
         }
 
-        quad->tex.id = GL_PrepareLSTexture(texture);
+        quad->tex.id = GL_PrepareLSTexture(texture, NULL);
         RL_AddPoly(quad);
     }
 
@@ -938,7 +938,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
             }
         }
 
-        quad->tex.id = GL_PrepareLSTexture(texture);
+        quad->tex.id = GL_PrepareLSTexture(texture, NULL);
         RL_AddPoly(quad);
     }
 
@@ -1065,7 +1065,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
                 texture = LST_RADIO_CC;
         }
 
-        quad->tex.id = GL_PrepareLSTexture(texture);
+        quad->tex.id = GL_PrepareLSTexture(texture, NULL);
 
         Rend_RadioSetColor(quad, sideCn[i].corner * shadowDark);
         RL_AddPoly(quad);
