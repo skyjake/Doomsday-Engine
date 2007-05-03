@@ -301,7 +301,7 @@ static ficmd_t fi_commands[] = {
     // Screen Control
     {"color", 3, FIC_Color},    // color (red) (green) (blue)
     {"coloralpha", 4, FIC_ColorAlpha},  // coloralpha (r) (g) (b) (a)
-    {"flat", 1, FIC_BGFlat},    // flat (flat-lump)
+    {"flat", 1, FIC_BGFlat},    // flat (flat-id)
     {"noflat", 0, FIC_NoBGFlat},
     {"offx", 1, FIC_OffsetX},   // offx (x)
     {"offy", 1, FIC_OffsetY},   // offy (y)
@@ -1423,8 +1423,8 @@ int FI_CharWidth(int ch, boolean fontb)
 
     if(ch < 33)
         return 4;
-    return fontb ? SHORT(hu_font_b[ch - HU_FONTSTART].width) :
-        SHORT(hu_font_a[ch - HU_FONTSTART].width);
+    return fontb ? hu_font_b[ch - HU_FONTSTART].width :
+        hu_font_a[ch - HU_FONTSTART].width;
 }
 
 int FI_GetLineWidth(char *text, boolean fontb)
@@ -1805,7 +1805,7 @@ void FIC_End(void)
 
 void FIC_BGFlat(void)
 {
-    fi->bgflat = W_CheckNumForName(FI_GetToken());
+    fi->bgflat = R_CheckFlatNumForName(FI_GetToken());
 }
 
 void FIC_NoBGFlat(void)

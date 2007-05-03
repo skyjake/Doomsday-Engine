@@ -83,13 +83,12 @@ void SV_PrepareTexture(int tex, boolean isflat, texarchive_t * arc)
     // Get the name of the texture/flat.
     if(isflat)
    {
-        if(tex > 0)
-            strcpy(name, W_CacheLumpNum(tex, PU_GETNAME));
+        if(R_FlatNameForNum > 0)
+            strncpy(name, R_FlatNameForNum(tex), 8);
         else
-        {
             strncpy(name, BADTEXNAME, 8);
-            name[8] = 0;
-        }
+
+        name[8] = 0;
     }
     else
     {
@@ -175,8 +174,8 @@ unsigned short SV_FlatArchiveNum(int flatnum)
 {
     char name[9];
 
-    if(flatnum > 0)
-        strncpy(name, W_CacheLumpNum(flatnum, PU_GETNAME), 8);
+    if(R_FlatNameForNum(flatnum))
+        strncpy(name, R_FlatNameForNum(flatnum), 8);
     else
         strncpy(name, BADTEXNAME, 8);
     name[8] = 0;

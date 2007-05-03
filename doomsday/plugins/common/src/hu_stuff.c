@@ -119,9 +119,9 @@ void HU_Register(void)
         Con_AddVariable(&hudCVars[i]);
 }
 
-void R_CachePatch(dpatch_t * dp, char *name)
+void R_CachePatch(dpatch_t *dp, char *name)
 {
-    patch_t *patch;
+    lumppatch_t *patch;
 
     if(IS_DEDICATED)
         return;
@@ -129,14 +129,14 @@ void R_CachePatch(dpatch_t * dp, char *name)
     dp->lump = W_CheckNumForName(name);
     if(dp->lump == -1)
         return;
-    patch = (patch_t *) W_CacheLumpNum(dp->lump, PU_CACHE);
-    dp->width = patch->width;
-    dp->height = patch->height;
-    dp->leftoffset = patch->leftoffset;
-    dp->topoffset = patch->topoffset;
+    patch = (lumppatch_t *) W_CacheLumpNum(dp->lump, PU_CACHE);
+    dp->width = SHORT(patch->width);
+    dp->height = SHORT(patch->height);
+    dp->leftoffset = SHORT(patch->leftoffset);
+    dp->topoffset = SHORT(patch->topoffset);
 
-    // Precache the texture while we're at it.
-    GL_SetPatch(dp->lump);
+    // Precache the patch while we're at it.
+    R_PrecachePatch(dp->lump);
 }
 
 /*
@@ -885,7 +885,7 @@ void WI_DrawParamText(int x, int y, char *str, dpatch_t *defFont,
                 {
                     string += 5;
                     cx = x;
-                    cy += scaleY * SHORT(font[0].height);
+                    cy += scaleY * font[0].height;
                 }
                 else if(!strnicmp(string, "r", 1))
                 {
@@ -1042,7 +1042,7 @@ int M_StringWidth(const char *string, dpatch_t * font)
             if(c < 0 || c >= HU_FONTSIZE)
                 w += 4;
             else
-                w += SHORT(font[c].width);
+                w += font[c].width;
         }
 
         if(string[i] == '}')
@@ -1058,7 +1058,7 @@ int M_StringHeight(const char *string, dpatch_t *font)
 {
     uint        i;
     int         h;
-    int         height = SHORT(font[17].height);
+    int         height = font[17].height;
 
     h = height;
     for(i = 0; i < strlen(string); ++i)
@@ -1210,8 +1210,8 @@ void M_WriteText3(int x, int y, const char *string, dpatch_t *font,
                 continue;
             }
 
-            w = SHORT(font[c].width);
-            h = SHORT(font[c].height);
+            w = font[c].width;
+            h = font[c].height;
 
             if(!font[c].lump){
                 // crap. a character we don't have a patch for...?!
@@ -1262,7 +1262,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     char    def[80], *string;
     int patchString = 0;
     int posx = x;
-    patch_t *patch;
+    lumppatch_t *patch;
 
     if(IS_DEDICATED)
         return;
@@ -1309,7 +1309,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     if(lump <= 0)
         return;
 
-    patch = (patch_t *) W_CacheLumpNum(lump, PU_CACHE);
+    patch = (lumppatch_t *) W_CacheLumpNum(lump, PU_CACHE);
 
     // No replacement possible/wanted - use the original patch.
     if(halign == ALIGN_CENTER)
@@ -1387,40 +1387,40 @@ void M_DrawBackgroundBox(int x, int y, int w, int h, float red, float green,
     {
         // Top
         GL_SetPatch(t->lump);
-        GL_DrawRectTiled(x, y - SHORT(t->height), w, SHORT(t->height),
-                         up * SHORT(t->width), up * SHORT(t->height));
+        GL_DrawRectTiled(x, y - t->height, w, t->height,
+                         up * t->width, up * t->height);
         // Bottom
         GL_SetPatch(b->lump);
-        GL_DrawRectTiled(x, y + h, w, SHORT(b->height), up * SHORT(b->width),
-                         up * SHORT(b->height));
+        GL_DrawRectTiled(x, y + h, w, b->height, up * b->width,
+                         up * b->height);
         // Left
         GL_SetPatch(l->lump);
-        GL_DrawRectTiled(x - SHORT(l->width), y, SHORT(l->width), h,
-                         up * SHORT(l->width), up * SHORT(l->height));
+        GL_DrawRectTiled(x - l->width, y, l->width, h,
+                         up * l->width, up * l->height);
         // Right
         GL_SetPatch(r->lump);
-        GL_DrawRectTiled(x + w, y, SHORT(r->width), h, up * SHORT(r->width),
-                         up * SHORT(r->height));
+        GL_DrawRectTiled(x + w, y, r->width, h, up * r->width,
+                         up * r->height);
 
         // Top Left
         GL_SetPatch(tl->lump);
-        GL_DrawRectTiled(x - SHORT(tl->width), y - SHORT(tl->height),
-                         SHORT(tl->width), SHORT(tl->height),
-                         up * SHORT(tl->width), up * SHORT(tl->height));
+        GL_DrawRectTiled(x - tl->width, y - tl->height,
+                         tl->width, tl->height,
+                         up * tl->width, up * tl->height);
         // Top Right
         GL_SetPatch(tr->lump);
-        GL_DrawRectTiled(x + w, y - SHORT(tr->height), SHORT(tr->width),
-                         SHORT(tr->height), up * SHORT(tr->width),
-                         up * SHORT(tr->height));
+        GL_DrawRectTiled(x + w, y - tr->height, tr->width,
+                         tr->height, up * tr->width,
+                         up * tr->height);
         // Bottom Right
         GL_SetPatch(br->lump);
-        GL_DrawRectTiled(x + w, y + h, SHORT(br->width), SHORT(br->height),
-                         up * SHORT(br->width), up * SHORT(br->height));
+        GL_DrawRectTiled(x + w, y + h, br->width, br->height,
+                         up * br->width, up * br->height);
         // Bottom Left
         GL_SetPatch(bl->lump);
-        GL_DrawRectTiled(x - SHORT(bl->width), y + h, SHORT(bl->width),
-                         SHORT(bl->height), up * SHORT(bl->width),
-                         up * SHORT(bl->height));
+        GL_DrawRectTiled(x - bl->width, y + h, bl->width,
+                         bl->height, up * bl->width,
+                         up * bl->height);
     }
 }
 

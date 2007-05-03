@@ -125,7 +125,7 @@ void HUlib_drawTextLine(hu_textline_t * l, boolean drawcursor)
         c = toupper(l->l[i]);
         if(c != ' ' && c >= l->sc && c <= '_')
         {
-            w = SHORT(l->f[c - l->sc].width);
+            w = l->f[c - l->sc].width;
             if(x + w > SCREENWIDTH)
                 break;
             GL_DrawPatch_CS(x, l->y, l->f[c - l->sc].lump);
@@ -140,7 +140,7 @@ void HUlib_drawTextLine(hu_textline_t * l, boolean drawcursor)
     }
 
     // draw the cursor if requested
-    if(drawcursor && x + SHORT(l->f['_' - l->sc].width) <= SCREENWIDTH)
+    if(drawcursor && x + l->f['_' - l->sc].width <= SCREENWIDTH)
         GL_DrawPatch_CS(x, l->y, l->f['_' - l->sc].lump);
 }
 
@@ -163,7 +163,7 @@ void HUlib_initSText(hu_stext_t * s, int x, int y, int h, dpatch_t * font,
     s->laston = true;
     s->cl = 0;
     for(i = 0; i < h; i++)
-        HUlib_initTextLine(&s->l[i], x, y - i * (SHORT(font[0].height) + 1),
+        HUlib_initTextLine(&s->l[i], x, y - i * (font[0].height + 1),
                            font, startchar);
 }
 

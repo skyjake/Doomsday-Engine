@@ -65,7 +65,7 @@ void            P_UpdateSpecials(void);
 
 // when needed
 int             P_GetTerrainType(sector_t* sec, int plane);
-int             P_FlatToTerrainType(int flatlumpnum);
+int             P_FlatToTerrainType(int flatid);
 boolean         P_ActivateLine(line_t *ld, mobj_t *mo, int side,
                                int activationType);
 

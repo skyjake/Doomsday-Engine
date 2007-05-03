@@ -481,7 +481,7 @@ void ST_doFullscreenStuff(void)
     {
         sprintf(buf, "HEALTH");
         pos = M_StringWidth(buf, hu_font_a)/2;
-        M_WriteText2(HUDBORDERX, h_height - HUDBORDERY - SHORT(hu_font[0].height) - 4,
+        M_WriteText2(HUDBORDERX, h_height - HUDBORDERY - hu_font[0].height - 4,
                      buf, hu_font_a, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->health);
@@ -582,7 +582,7 @@ void ST_doFullscreenStuff(void)
         sprintf(buf, "ARMOR");
         w = M_StringWidth(buf, hu_font_a);
         M_WriteText2(h_width - w - HUDBORDERX,
-                     h_height - HUDBORDERY - SHORT(hu_font[0].height) - 4,
+                     h_height - HUDBORDERY - hu_font[0].height - 4,
                      buf, hu_font_a, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->armorpoints);

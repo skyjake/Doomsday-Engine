@@ -60,7 +60,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define HU_INPUTX   HU_MSGX
-#define HU_INPUTY   (HU_MSGY + HU_MSGHEIGHT*(SHORT(hu_font[0].height) +1))
+#define HU_INPUTY   (HU_MSGY + HU_MSGHEIGHT*(hu_font[0].height +1))
 
 #define IN_RANGE(x) ((x)>=MAX_MESSAGES? (x)-MAX_MESSAGES : (x)<0? (x)+MAX_MESSAGES : (x))
 

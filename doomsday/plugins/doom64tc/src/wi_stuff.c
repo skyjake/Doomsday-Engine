@@ -59,7 +59,7 @@
 
 // NET GAME STUFF
 #define NG_STATSY       50
-#define NG_STATSX       (32 + SHORT(star.width)/2 + 32*!dofrags)
+#define NG_STATSX       (32 + star.width /2 + 32*!dofrags)
 #define NG_SPACINGX     64
 
 // DEATHMATCH STUFF
@@ -310,7 +310,7 @@ void WI_drawLF(void)
                  lnames[mapnum].lump, lname, false, ALIGN_CENTER);
 
     // draw "Finished!"
-    y += (5 * SHORT(lnames[mapnum].height)) / 4;
+    y += (5 * lnames[mapnum].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
                  finished.lump, NULL, false, ALIGN_CENTER);
@@ -347,7 +347,7 @@ void WI_drawEL(void)
                  NULL, false, ALIGN_CENTER);
 
     // draw level
-    y += (5 * SHORT(lnames[wbs->next].height)) / 4;
+    y += (5 * lnames[wbs->next].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
                  lnames[((gameepisode -1) * 9) + wbs->next].lump,
@@ -377,7 +377,7 @@ void WI_drawAnimatedBack(void)
  */
 int WI_drawNum(int x, int y, int n, int digits)
 {
-    int     fontwidth = SHORT(num[0].width);
+    int     fontwidth = num[0].width;
     int     neg;
     int     temp;
 
@@ -449,7 +449,7 @@ void WI_drawTime(int x, int y, int t)
         do
         {
             n = (t / div) % 60;
-            x = WI_drawNum(x, y, n, 2) - SHORT(colon.width);
+            x = WI_drawNum(x, y, n, 2) - colon.width;
             div *= 60;
 
             // draw
@@ -462,7 +462,7 @@ void WI_drawTime(int x, int y, int t)
     else
     {
         // "sucks"
-        WI_DrawPatch(x - SHORT(sucks.width), y, 1, 1, 1, 1, sucks.lump,
+        WI_DrawPatch(x - sucks.width, y, 1, 1, 1, 1, sucks.lump,
                      NULL, false, ALIGN_LEFT);
     }
 }
@@ -653,7 +653,7 @@ void WI_drawDeathmatchStats(void)
     WI_drawLF();
 
     // draw stat titles (top line)
-    WI_DrawPatch(DM_TOTALSX - SHORT(total.width) / 2,
+    WI_DrawPatch(DM_TOTALSX - total.width / 2,
                  DM_MATRIXY - WI_SPACINGY + 10, 1, 1, 1, 1, total.lump, NULL,
                  false, ALIGN_LEFT);
 
@@ -670,19 +670,19 @@ void WI_drawDeathmatchStats(void)
     {
         if(teaminfo[i].members)
         {
-            WI_DrawPatch(x - SHORT(p[i].width) / 2, DM_MATRIXY - WI_SPACINGY,
+            WI_DrawPatch(x - p[i].width / 2, DM_MATRIXY - WI_SPACINGY,
                          1, 1, 1, 1, p[i].lump, NULL, false, ALIGN_LEFT);
 
-            WI_DrawPatch(DM_MATRIXX - SHORT(p[i].width) / 2, y, 1, 1, 1, 1,
+            WI_DrawPatch(DM_MATRIXX - p[i].width / 2, y, 1, 1, 1, 1,
                          p[i].lump, NULL, false, ALIGN_LEFT);
 
             if(i == myteam)
             {
-                WI_DrawPatch(x - SHORT(p[i].width) / 2,
+                WI_DrawPatch(x - p[i].width / 2,
                              DM_MATRIXY - WI_SPACINGY, 1, 1, 1, 1, bstar.lump,
                              NULL, false, ALIGN_LEFT);
 
-                WI_DrawPatch(DM_MATRIXX - SHORT(p[i].width) / 2, y, 1, 1, 1, 1,
+                WI_DrawPatch(DM_MATRIXX - p[i].width / 2, y, 1, 1, 1, 1,
                              star.lump, NULL, false, ALIGN_LEFT);
             }
 
@@ -701,10 +701,10 @@ void WI_drawDeathmatchStats(void)
         }
         else
         {
-            WI_DrawPatch(x - SHORT(bp[i].width) / 2, DM_MATRIXY - WI_SPACINGY, 1, 1, 1, 1,
+            WI_DrawPatch(x - bp[i].width / 2, DM_MATRIXY - WI_SPACINGY, 1, 1, 1, 1,
                          bp[i].lump, NULL, false, ALIGN_LEFT);
 
-            WI_DrawPatch(DM_MATRIXX - SHORT(bp[i].width) / 2, y, 1, 1, 1, 1,
+            WI_DrawPatch(DM_MATRIXX - bp[i].width / 2, y, 1, 1, 1, 1,
                          bp[i].lump, NULL, false, ALIGN_LEFT);
         }
         x += DM_SPACINGX;
@@ -713,7 +713,7 @@ void WI_drawDeathmatchStats(void)
 
     // draw stats
     y = DM_MATRIXY + 10;
-    w = SHORT(num[0].width);
+    w = num[0].width;
 
     for(i = 0; i < NUM_TEAMS; i++)
     {
@@ -901,7 +901,7 @@ void WI_drawNetgameStats(void)
     int     i;
     int     x;
     int     y;
-    int     pwidth = SHORT(percent.width);
+    int     pwidth = percent.width;
 
     WI_slamBackground();
 
@@ -911,21 +911,21 @@ void WI_drawNetgameStats(void)
     WI_drawLF();
 
     // draw stat titles (top line)
-    WI_DrawPatch(NG_STATSX + NG_SPACINGX - SHORT(kills.width), NG_STATSY,
+    WI_DrawPatch(NG_STATSX + NG_SPACINGX - kills.width, NG_STATSY,
                  1, 1, 1, 1, kills.lump, NULL, false, ALIGN_LEFT);
 
-    WI_DrawPatch(NG_STATSX + 2 * NG_SPACINGX - SHORT(items.width), NG_STATSY,
+    WI_DrawPatch(NG_STATSX + 2 * NG_SPACINGX - items.width, NG_STATSY,
                  1, 1, 1, 1, items.lump, NULL, false, ALIGN_LEFT);
 
-    WI_DrawPatch(NG_STATSX + 3 * NG_SPACINGX - SHORT(secret.width), NG_STATSY,
+    WI_DrawPatch(NG_STATSX + 3 * NG_SPACINGX - secret.width, NG_STATSY,
                  1, 1, 1, 1, secret.lump, NULL, false, ALIGN_LEFT);
 
     if(dofrags)
-        WI_DrawPatch(NG_STATSX + 4 * NG_SPACINGX - SHORT(frags.width),
+        WI_DrawPatch(NG_STATSX + 4 * NG_SPACINGX - frags.width,
                      1, 1, 1, 1, NG_STATSY, frags.lump, NULL, false, ALIGN_LEFT);
 
     // draw stats
-    y = NG_STATSY + SHORT(kills.height);
+    y = NG_STATSY + kills.height;
 
     for(i = 0; i < NUM_TEAMS; i++)
     {
@@ -933,7 +933,7 @@ void WI_drawNetgameStats(void)
             continue;
 
         x = NG_STATSX;
-        WI_DrawPatch(x - SHORT(p[i].width), y, 1, 1, 1, 1, p[i].lump, NULL,
+        WI_DrawPatch(x - p[i].width, y, 1, 1, 1, 1, p[i].lump, NULL,
                      false, ALIGN_LEFT);
         // If more than 1 member, show the member count.
         if(teaminfo[i].members > 1)
@@ -946,7 +946,7 @@ void WI_drawNetgameStats(void)
         }
 
         if(i == myteam)
-            WI_DrawPatch(x - SHORT(p[i].width), y, 1, 1, 1, 1, star.lump, NULL,
+            WI_DrawPatch(x - p[i].width, y, 1, 1, 1, 1, star.lump, NULL,
                          false, ALIGN_LEFT);
 
         x += NG_SPACINGX;
@@ -1088,7 +1088,7 @@ void WI_drawStats(void)
     // line height
     int     lh;
 
-    lh = (3 * SHORT(num[0].height)) / 2;
+    lh = (3 * num[0].height) / 2;
 
     WI_slamBackground();
 

@@ -2,8 +2,8 @@
  *\section Copyright and License Summary
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © Raven Software, Corp.
  *\author Copyright © 1993-1996 by id Software, Inc.
  */
@@ -851,10 +851,6 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 
         case GA_SAVEGAME:
             G_DoSaveGame();
-            break;
-
-        case GA_PLAYDEMO:
-            G_DoPlayDemo();
             break;
 
         case GA_COMPLETED:
@@ -2260,37 +2256,6 @@ char   *P_GetLevelName(int episode, int map)
     return info.name;
 }
 #endif
-
-void G_DeferedPlayDemo(char *name)
-{
-    strcpy(defdemoname, name);
-    gameaction = GA_PLAYDEMO;
-}
-
-void G_DoPlayDemo(void)
-{
-    int     lnum = W_CheckNumForName(defdemoname);
-    char   *lump;
-    char    buf[128];
-
-    gameaction = GA_NONE;
-
-    // The lump should contain the path of the demo file.
-    if(lnum < 0 || W_LumpLength(lnum) != 64)
-    {
-        Con_Message("G_DoPlayDemo: invalid demo lump \"%s\".\n", defdemoname);
-        return;
-    }
-
-    lump = W_CacheLumpNum(lnum, PU_CACHE);
-    memset(buf, 0, sizeof(buf));
-    strcpy(buf, "playdemo ");
-    strncat(buf, lump, 64);
-
-    // Start playing the demo.
-    if(DD_Execute(buf, false))
-        G_ChangeGameState(GS_WAITING); // The demo will begin momentarily.
-}
 
 /*
  * Stops both playback and a recording. Called at critical points like

@@ -105,7 +105,7 @@ void Draw_EndZoom(void);
 #define HU_BROADCAST    5
 
 #define HU_TITLEX    0
-#define HU_TITLEY    (167 - SHORT(hu_font[0].height))
+#define HU_TITLEY    (167 - hu_font[0].height)
 
 extern boolean  message_noecho;
 

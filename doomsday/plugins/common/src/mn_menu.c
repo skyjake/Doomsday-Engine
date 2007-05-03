@@ -1788,7 +1788,7 @@ void M_Drawer(void)
             M_WriteText2(x, y, string, hu_font_a, cfg.menuColor2[0],
                          cfg.menuColor2[1], cfg.menuColor2[2], 1);
 
-            y += SHORT(hu_font_a[17].height);
+            y += hu_font_a[17].height;
         }
 
         goto end_draw_menu;
@@ -1895,8 +1895,8 @@ void M_Drawer(void)
                 menu_t* mn = (widgetEdit? &ColorWidgetMnu : currentMenu);
 
                 scale = mn->itemHeight / (float) LINEHEIGHT;
-                w = SHORT(cursorst[whichSkull].width) * scale; // skull size
-                h = SHORT(cursorst[whichSkull].height) * scale;
+                w = cursorst[whichSkull].width * scale; // skull size
+                h = cursorst[whichSkull].height * scale;
 
                 off_x = mn->x;
                 off_x += (SKULLXOFF * scale);

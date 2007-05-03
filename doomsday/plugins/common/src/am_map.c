@@ -2516,8 +2516,8 @@ static void drawMarks(void)
         {
             patch = &markerPatches[i];
 
-            w = (float) SHORT(patch->width);
-            h = (float) SHORT(patch->height);
+            w = (float) patch->width;
+            h = (float) patch->height;
 
             x = map->markpoints[i].pos[VX];
             y = map->markpoints[i].pos[VY];

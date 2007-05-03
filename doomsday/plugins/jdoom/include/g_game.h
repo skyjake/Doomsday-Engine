@@ -62,13 +62,7 @@ void            G_DoLoadGame(void);
 // Called by M_Responder.
 void            G_SaveGame(int slot, char *description);
 
-// Only called by startup code.
-void            G_RecordDemo(char *name);
 
-void            G_BeginRecording(void);
-
-void            G_PlayDemo(char *name);
-void            G_TimeDemo(char *name);
 void            G_StopDemo(void);
 void            G_DemoEnds(void);
 void            G_DemoAborted(void);
