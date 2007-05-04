@@ -22,9 +22,7 @@
 #  Boston, MA  02110-1301  USA
 ################################################################################
 #  
-#  This script is used to do a license audit on sources in The Doomsday Engine.
-#  It produces several files depending on the license of code it finds.
-#  Currently it identifiles GPL, GPL + jHeretic/jHexen exception and Raven.
+#  This script is used to do a find all "Defines" in The Doomsday Engine sources.
 #  
 ################################################################################
 FILES_PROCESSED=0
@@ -52,8 +50,11 @@ let FILES_PROCESSED=0
 for CURRENT_FILE in $FILE_LIST ;
 do
 #	echo $CURRENT_FILE
-	grep  ifdef $CURRENT_FILE 
-	grep  ifndef $CURRENT_FILE 
+	grep  '#if' $CURRENT_FILE 
+	grep  '#define' $CURRENT_FILE  
+	grep  '#elif' $CURRENT_FILE 
+	grep  '#else' $CURRENT_FILE 
+
 	let FILES_PROCESSED=FILES_PROCESSED+1
 done
 }
