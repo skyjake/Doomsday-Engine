@@ -3,6 +3,7 @@
 * License: GPL
 *
 *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+*\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
 *\author Copyright © 1993-1996 by id Software, Inc.
 */
 

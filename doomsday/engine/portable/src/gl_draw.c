@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,6 +67,7 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     boolean isTwoPart;
     int     pixelBorder = 0;
     float   tcb = 0;
+    rawtex_t *raw;
 
     if(lump < 0 || lump >= numlumps)
         return;
@@ -86,19 +87,20 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     gl.LoadIdentity();
     gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
 
-    GL_SetRawImage(lump, 1);
-    isTwoPart = (lumptexinfo[lump].tex[1] != 0);
+    GL_SetRawImage(lump, false);
+    raw = R_GetRawTex(lump);
+    isTwoPart = (raw->tex2 != 0);
 
     if(isTwoPart)
     {
-        tcb = lumptexinfo[lump].height / 256.0f;
+        tcb = (float) raw->info.height / 256.0f;
     }
     else
     {
         // Bottom texture coordinate.
         tcb = 1;
     }
-    pixelBorder = lumptexinfo[lump].width[0] * glScreenWidth / 320;
+    pixelBorder = raw->info.width * glScreenWidth / 320;
 
     // The first part is rendered in any case.
     gl.Begin(DGL_QUADS);
@@ -115,7 +117,7 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     if(isTwoPart)
     {
         // And the other part.
-        GL_SetRawImage(lump, 2);
+        GL_SetRawImage(lump, true);
         gl.Begin(DGL_QUADS);
         gl.TexCoord2f(0, 0);
         gl.Vertex2f(pixelBorder - 1, 0);
@@ -160,8 +162,9 @@ void GL_DrawPatch_CS(int x, int y, int lumpnum)
     h = (float) texinfo->height;
     if(usePatchOffset)
     {
-        x += (int) lumptexinfo[lumpnum].offx;
-        y += (int) lumptexinfo[lumpnum].offy;
+        patch_t *p = R_GetPatch(lumpnum);
+        x += (int) p->offx;
+        y += (int) p->offy;
     }
 
     gl.Begin(DGL_QUADS);
@@ -176,11 +179,11 @@ void GL_DrawPatch_CS(int x, int y, int lumpnum)
     gl.End();
 
     // Is there a second part?
-    if(GL_GetOtherPart(lumpnum, &texinfo))
+    if(GL_GetPatchOtherPart(lumpnum, &texinfo))
     {
         x += (int) texinfo->width;
 
-        GL_BindTexture(GL_GetOtherPart(lumpnum, &texinfo));
+        GL_BindTexture(GL_GetPatchOtherPart(lumpnum, &texinfo));
         w = (float) texinfo->width;
 
         gl.Begin(DGL_QUADS);

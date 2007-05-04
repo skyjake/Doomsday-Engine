@@ -2649,7 +2649,7 @@ static void setupGLStateForMap(void)
                             map->cfg.backgroundRGBA[1],
                             map->cfg.backgroundRGBA[2],
                             map->alpha * map->cfg.backgroundRGBA[3]);
-        GL_SetRawImage(maplumpnum, 0); // We only want the left portion.
+        GL_SetRawImage(maplumpnum, false); // We only want the left portion.
         GL_DrawRectTiled(win->x, win->y, win->width, win->height, 128, 100);
     }
     else

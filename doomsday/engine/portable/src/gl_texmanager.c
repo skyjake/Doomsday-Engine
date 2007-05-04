@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -151,9 +151,6 @@ static boolean noHighResTex = false;
 static boolean noHighResPatches = false;
 static boolean highResWithPWAD = false;
 
-// Raw screen lumps (just lump numbers).
-static int *rawlumps, numrawlumps;
-
 // Skinnames will only *grow*. It will never be destroyed, not even
 // at resets. The skin textures themselves will be deleted, though.
 // This is because we want to have permanent ID numbers for skins,
@@ -244,8 +241,8 @@ void GL_InitTextureManager(void)
     numtranssprites = 0;
 
     // Raw screen lump book-keeping.
-    rawlumps = 0;
-    numrawlumps = 0;
+    rawtextures = 0;
+    numrawtextures = 0;
 
     // The palette lump, for color information (really??!!?!?!).
     pallump = W_GetNumForName(PALLUMPNAME);
@@ -811,13 +808,6 @@ void GL_ClearRuntimeTextures(void)
     }
 
     GL_DeleteRawImages();
-
-    // Delete any remaining lump textures.
-    for(i = 0; i < numlumptexinfo; ++i)
-    {
-        gl.DeleteTextures(2, lumptexinfo[i].tex);
-        memset(lumptexinfo[i].tex, 0, sizeof(lumptexinfo[i].tex));
-    }
 }
 
 void GL_ClearTextureMemory(void)
@@ -2260,13 +2250,7 @@ void GL_SetTranslatedSprite(int pnum, int tmap, int tclass)
     GL_BindTexture(GL_PrepareTranslatedSprite(pnum, tmap, tclass));
 }
 
-void GL_NewRawLump(int lump)
-{
-    rawlumps = M_Realloc(rawlumps, sizeof(int) * ++numrawlumps);
-    rawlumps[numrawlumps - 1] = lump;
-}
-
-DGLuint GL_GetOtherPart(int idx, texinfo_t **info)
+DGLuint GL_GetPatchOtherPart(int idx, texinfo_t **info)
 {
     patch_t *patch = R_GetPatch(idx);
 
@@ -2279,125 +2263,38 @@ DGLuint GL_GetOtherPart(int idx, texinfo_t **info)
     return GL_GetPatchInfo(idx, true, info);
 }
 
-/*
- * Prepares and uploads a raw image texture from the given lump.
- * Called only by GL_SetRawImage(), so params are valid.
- */
-void GL_SetRawImageLump(int lump, int part)
+DGLuint GL_GetRawOtherPart(int idx, texinfo_t **info)
 {
-    int     i, k, c, idx;
-    byte   *dat1, *dat2, *palette, *lumpdata, *image;
-    int     height, assumedWidth = 320;
-    boolean need_free_image = true;
-    boolean rgbdata;
-    int     comps;
-    lumptexinfo_t *info = lumptexinfo + lump;
+    rawtex_t *raw = R_GetRawTex(idx);
 
-    // Load the raw image data.
-    // It's most efficient to create two textures for it (256 + 64 = 320).
-    lumpdata = W_CacheLumpNum(lump, PU_STATIC);
-    height = 200;
-
-    // Try to load it as a PCX image first.
-    image = M_Malloc(3 * 320 * 200);
-    if(PCX_MemoryLoad(lumpdata, lumpinfo[lump].size, 320, 200, image))
+    if(!raw->tex)
     {
-        rgbdata = true;
-        comps = 3;
-    }
-    else
-    {
-        // PCX load failed. It must be an old-fashioned raw image.
-        need_free_image = false;
-        M_Free(image);
-        height = lumpinfo[lump].size / 320;
-        rgbdata = false;
-        comps = 1;
-        image = lumpdata;
+        // The raw isn't yet bound with OpenGL.
+        raw->tex = GL_BindTexRaw(raw);
     }
 
-    if(!(height < 200 && part == 2))
-    {
-        if(height < 200)
-            assumedWidth = 256;
-
-        // Two pieces:
-        dat1 = M_Malloc(comps * 256 * 256);
-        dat2 = M_Malloc(comps * 64 * 256);
-        memset(dat1, 0, comps * 256 * 256);
-        memset(dat2, 0, comps * 64 * 256);
-        palette = GL_GetPalette();
-
-        // Image data loaded, divide it into two parts.
-        for(k = 0; k < height; ++k)
-            for(i = 0; i < 256; ++i)
-            {
-                idx = k * assumedWidth + i;
-                // Part one.
-                for(c = 0; c < comps; ++c)
-                    dat1[(k * 256 + i) * comps + c] = image[idx * comps + c];
-                // We can setup part two at the same time.
-                if(i < 64 && part)
-                    for(c = 0; c < comps; ++c)
-                    {
-                        dat2[(k * 64 + i) * comps + c] =
-                            image[(idx + 256) * comps + c];
-                    }
-            }
-
-        // Upload part one.
-        info->tex[0] =
-            GL_UploadTexture(dat1, 256, assumedWidth < 320 ? height : 256, false,
-                             false, rgbdata, false, false,
-                             DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
-                             DGL_CLAMP, DGL_CLAMP, 0);
-
-        if(part)
-        {
-            // And the other part.
-            info->tex[1] =
-                GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false, false,
-                                 DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
-                                 DGL_CLAMP, DGL_CLAMP, 0);
-
-            // Add it to the list.
-            GL_NewRawLump(lump);
-        }
-
-        info->width[0] = 256;
-        info->width[1] = 64;
-        info->height = height;
-        M_Free(dat1);
-        M_Free(dat2);
-    }
-
-    if(need_free_image)
-        M_Free(image);
-    W_ChangeCacheTag(lump, PU_CACHE);
+    return GL_GetRawTexInfo(idx, true, info);
 }
 
-/*
+/**
  * Raw images are always 320x200.
- * Part is either 1 or 2. Part 0 means only the left side is loaded.
- * No splittex is created in that case. Once a raw image is loaded
- * as part 0 it must be deleted before the other part is loaded at the
- * next loading. Part can also contain the width and height of the
- * texture.
  *
  * 2003-05-30 (skyjake): External resources can be larger than 320x200,
  * but they're never split into two parts.
  */
-unsigned int GL_SetRawImage(int lump, int part)
+DGLuint GL_BindTexRaw(rawtex_t *raw)
 {
     DGLuint texId = 0;
     image_t image;
-    lumptexinfo_t *info = lumptexinfo + lump;
+    int     lump = raw->lump;
 
-    // Check the part.
-    if(part < 0 || part > 2 || lump >= numlumps)
-        return texId;
+    if(lump < 0 || lump >= numlumps)
+    {
+        GL_BindTexture(0);
+        return 0;
+    }
 
-    if(!info->tex[0])
+    if(!raw->tex)
     {
         // First try to find an external resource.
         filename_t fileName;
@@ -2407,42 +2304,135 @@ unsigned int GL_SetRawImage(int lump, int part)
         {
             // We have the image in the buffer. We'll upload it as one
             // big texture.
-            info->tex[0] =
+            raw->tex =
                 GL_UploadTexture(image.pixels, image.width, image.height,
                                  image.pixelSize == 4, false, true, false, false,
                                  DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
                                  DGL_CLAMP, DGL_CLAMP, 0);
 
-            info->width[0] = 320;
-            info->width[1] = 0;
-            info->tex[1] = 0;
-            info->height = 200;
+            raw->info.width = 320;
+            raw->info2.width = 0;
+            raw->tex2 = 0;
+            raw->info.height = raw->info2.height = 200;
 
             GL_DestroyImage(&image);
         }
         else
         {
             // Must load the old-fashioned data lump.
-            GL_SetRawImageLump(lump, part);
+            int     i, k, c, idx;
+            byte   *dat1, *dat2, *palette, *lumpdata, *image;
+            int     height, assumedWidth = 320;
+            boolean need_free_image = true;
+            boolean rgbdata;
+            int     comps;
+
+            // Load the raw image data.
+            // It's most efficient to create two textures for it (256 + 64 = 320).
+            lumpdata = W_CacheLumpNum(lump, PU_STATIC);
+            height = 200;
+
+            // Try to load it as a PCX image first.
+            image = M_Malloc(3 * 320 * 200);
+            if(PCX_MemoryLoad(lumpdata, lumpinfo[lump].size, 320, 200, image))
+            {
+                rgbdata = true;
+                comps = 3;
+            }
+            else
+            {
+                // PCX load failed. It must be an old-fashioned raw image.
+                need_free_image = false;
+                M_Free(image);
+                height = lumpinfo[lump].size / 320;
+                rgbdata = false;
+                comps = 1;
+                image = lumpdata;
+            }
+
+            if(!(height < 200))
+            {
+                if(height < 200)
+                    assumedWidth = 256;
+
+                // Two pieces:
+                dat1 = M_Malloc(comps * 256 * 256);
+                dat2 = M_Malloc(comps * 64 * 256);
+                memset(dat1, 0, comps * 256 * 256);
+                memset(dat2, 0, comps * 64 * 256);
+                palette = GL_GetPalette();
+
+                // Image data loaded, divide it into two parts.
+                for(k = 0; k < height; ++k)
+                    for(i = 0; i < 256; ++i)
+                    {
+                        idx = k * assumedWidth + i;
+                        // Part one.
+                        for(c = 0; c < comps; ++c)
+                            dat1[(k * 256 + i) * comps + c] = image[idx * comps + c];
+
+                        // We can setup part two at the same time.
+                        for(c = 0; c < comps; ++c)
+                        {
+                            dat2[(k * 64 + i) * comps + c] =
+                                image[(idx + 256) * comps + c];
+                        }
+                    }
+
+                // Upload part one.
+                raw->tex =
+                    GL_UploadTexture(dat1, 256, assumedWidth < 320 ? height : 256, false,
+                                     false, rgbdata, false, false,
+                                     DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                                     DGL_CLAMP, DGL_CLAMP, 0);
+
+                // And the other part.
+                raw->tex2 =
+                    GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false, false,
+                                     DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                                     DGL_CLAMP, DGL_CLAMP, 0);
+
+                raw->info.width = 256;
+                raw->info2.width = 64;
+                raw->info.height = raw->info2.height = height;
+                M_Free(dat1);
+                M_Free(dat2);
+            }
+
+            if(need_free_image)
+                M_Free(image);
+            W_ChangeCacheTag(lump, PU_CACHE);
         }
     }
 
-    // Bind the part that was asked for.
-    if(!info->tex[1])
+    return raw->tex;
+}
+
+/**
+ * Returns the OpenGL name of the texture.
+ * (idx is really a lumpnum)
+ */
+DGLuint GL_PrepareRawTex(uint idx, boolean part2, texinfo_t **info)
+{
+    rawtex_t *raw = R_GetRawTex(idx);
+
+    if(!raw->tex)
     {
-        // There's only one part, so we'll bind it.
-        texId = info->tex[0];
+        // The rawtex isn't yet bound with OpenGL.
+        raw->tex = GL_BindTexRaw(raw);
     }
-    else
-    {
-        texId = info->tex[part <= 1 ? 0 : 1];
-    }
-    gl.Bind(texId);
+    return GL_GetRawTexInfo(idx, part2, info);
+}
+
+unsigned int GL_SetRawImage(unsigned int idx, boolean part2)
+{
+    unsigned int    tex;
 
     // We don't track the current texture with raw images.
     curtex = 0;
 
-    return texId;
+    gl.Bind(tex = GL_PrepareRawTex(idx, part2, NULL));
+    return tex;
 }
 
 /**
@@ -2462,8 +2452,8 @@ DGLuint GL_BindTexPatch(patch_t *p)
     }
 
     patch = (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
-    lumptexinfo[lump].offx = -SHORT(patch->leftoffset);
-    lumptexinfo[lump].offy = -SHORT(patch->topoffset);
+    p->offx = -SHORT(patch->leftoffset);
+    p->offy = -SHORT(patch->topoffset);
 
     // Let's first try the resource locator and see if there is a
     // 'high-resolution' version available.
@@ -2551,6 +2541,9 @@ DGLuint GL_BindTexPatch(patch_t *p)
 
             p->info.width = SHORT(patch->width);
             p->info.height = SHORT(patch->height);
+
+            p->tex2 = 0;
+            p->info2.width = p->info2.height = 0;
         }
         M_Free(buffer);
     }
@@ -2733,30 +2726,46 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
 
     if(uiTex)
     {
-        int         k;
+        uint            j;
 
         // Patches.
         {
         patch_t **patches, **ptr;
         patches = R_CollectPatches(NULL);
         for(ptr = patches; *ptr; ptr++)
+        {
             if((*ptr)->tex)    // Is the texture loaded?
             {
                 gl.Bind((*ptr)->tex);
                 gl.TexParameter(DGL_MIN_FILTER, minMode);
                 gl.TexParameter(DGL_MAG_FILTER, magMode);
             }
+            if((*ptr)->tex2)    // Is the texture loaded?
+            {
+                gl.Bind((*ptr)->tex2);
+                gl.TexParameter(DGL_MIN_FILTER, minMode);
+                gl.TexParameter(DGL_MAG_FILTER, magMode);
+            }
+        }
         Z_Free(patches);
         }
 
-        for(i = 0; i < numlumps; ++i)
-            for(k = 0; k < 2; ++k)
-                if(lumptexinfo[i].tex[k])
-                {
-                    gl.Bind(lumptexinfo[i].tex[k]);
-                    gl.TexParameter(DGL_MIN_FILTER, minMode);
-                    gl.TexParameter(DGL_MAG_FILTER, magMode);
-                }
+        // Raw textures.
+        for(j = 0; j < numrawtextures; ++j)
+        {
+            if(rawtextures[j].tex)
+            {
+                gl.Bind(rawtextures[j].tex);
+                gl.TexParameter(DGL_MIN_FILTER, minMode);
+                gl.TexParameter(DGL_MAG_FILTER, magMode);
+            }
+            if(rawtextures[j].tex2)
+            {
+                gl.Bind(rawtextures[j].tex2);
+                gl.TexParameter(DGL_MIN_FILTER, minMode);
+                gl.TexParameter(DGL_MAG_FILTER, magMode);
+            }
+        }
     }
 }
 
@@ -2800,35 +2809,36 @@ void GL_LowRes(void)
  */
 void GL_DeleteRawImages(void)
 {
-    int     i;
+    uint        i;
 
-    for(i = 0; i < numrawlumps; ++i)
+    for(i = 0; i < numrawtextures; ++i)
     {
-        gl.DeleteTextures(2, lumptexinfo[rawlumps[i]].tex);
-        lumptexinfo[rawlumps[i]].tex[0] = lumptexinfo[rawlumps[i]].tex[1] = 0;
+        gl.DeleteTextures(1, &rawtextures[i].tex);
+        gl.DeleteTextures(1, &rawtextures[i].tex2);
+        rawtextures[i].tex = rawtextures[i].tex2;
     }
 
-    M_Free(rawlumps);
-    rawlumps = 0;
-    numrawlumps = 0;
+    M_Free(rawtextures);
+    rawtextures = 0;
+    numrawtextures = 0;
 }
 
-/*
+/**
  * Updates the raw screen smoothing (linear magnification).
  */
 void GL_UpdateRawScreenParams(int smoothing)
 {
-    int     i;
-    int     glmode = smoothing ? DGL_LINEAR : DGL_NEAREST;
+    uint        i;
+    int         glmode = smoothing ? DGL_LINEAR : DGL_NEAREST;
 
     linearRaw = smoothing;
-    for(i = 0; i < numrawlumps; ++i)
+    for(i = 0; i < numrawtextures; ++i)
     {
         // First part 1.
-        gl.Bind(lumptexinfo[rawlumps[i]].tex[0]);
+        gl.Bind(rawtextures[i].tex);
         gl.TexParameter(DGL_MAG_FILTER, glmode);
         // Then part 2.
-        gl.Bind(lumptexinfo[rawlumps[i]].tex[1]);
+        gl.Bind(rawtextures[i].tex2);
         gl.TexParameter(DGL_MAG_FILTER, glmode);
     }
 }
@@ -3043,6 +3053,22 @@ DGLuint GL_GetPatchInfo(int idx, boolean part2, texinfo_t **texinfo)
         *texinfo = (part2? &patch->info2 : &patch->info);
 
     return (part2? patch->tex2 : patch->tex);
+}
+
+/**
+ * Returns the rawtex name, if it has been prepared.
+ */
+DGLuint GL_GetRawTexInfo(uint idx, boolean part2, texinfo_t **texinfo)
+{
+    rawtex_t *rawtex = R_GetRawTex(idx);
+
+    if(!rawtex)
+        return 0;
+
+    if(texinfo)
+        *texinfo = (part2? &rawtex->info2 : &rawtex->info);
+
+    return (part2? rawtex->tex2 : rawtex->tex);
 }
 
 /**

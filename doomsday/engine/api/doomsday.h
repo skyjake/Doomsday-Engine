@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -380,7 +380,7 @@ extern          "C" {
     void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
     void            GL_SetFlat(int idx);
     void            GL_SetTexture(int idx);
-    unsigned int    GL_SetRawImage(int lump, int part);
+    unsigned int    GL_SetRawImage(unsigned int lump, boolean part2);
     unsigned int    GL_LoadGraphics(const char *name, int mode);
 
     // Graphics: 2D drawing.

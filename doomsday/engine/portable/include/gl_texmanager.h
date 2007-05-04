@@ -120,8 +120,11 @@ void            GL_SetFlat(int idx);
 void            GL_BindTexture(DGLuint texname);
 void            GL_TextureFilterMode(int target, int parm);
 DGLuint         GL_BindTexPatch(struct patch_s *p);
-DGLuint         GL_GetOtherPart(int lump, texinfo_t **info);
+DGLuint         GL_GetPatchOtherPart(int lump, texinfo_t **info);
 void            GL_SetPatch(int lump);  // No mipmaps are generated.
+DGLuint         GL_BindTexRaw(struct rawtex_s *r);
+DGLuint         GL_GetRawOtherPart(int lump, texinfo_t **info);
+void            GL_SetRawTex(int lump, int part);
 
 extern int      pallump;
 void            GL_UpdateGamma(void);
@@ -158,11 +161,13 @@ DGLuint         GL_GetTextureInfo2(int index, boolean translate, texinfo_t **inf
 DGLuint         GL_GetFlatInfo(int idx, texinfo_t **info);
 DGLuint         GL_GetFlatInfo2(int idx, boolean translate, texinfo_t **info);
 DGLuint         GL_GetPatchInfo(int idx, boolean part2, texinfo_t **info);
+DGLuint         GL_GetRawTexInfo(uint idx, boolean part2, texinfo_t **texinfo);
 DGLuint         GL_PrepareTexture(int idx, texinfo_t **info);
 DGLuint         GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info);
 DGLuint         GL_PrepareFlat(int idx, texinfo_t **info);
 DGLuint         GL_PrepareFlat2(int idx, boolean translate, texinfo_t **info);
 DGLuint         GL_PreparePatch(int idx, texinfo_t **info);
+DGLuint         GL_PrepareRawTex(uint idx, boolean part2, texinfo_t **info);
 DGLuint         GL_PrepareLSTexture(lightingtexid_t which, texinfo_t **info);
 DGLuint         GL_PrepareFlareTexture(flaretexid_t flare, texinfo_t **info);
 DGLuint         GL_PrepareSky(int idx, boolean zeroMask, texinfo_t **info);
@@ -175,6 +180,7 @@ unsigned int    GL_PrepareSprite(int pnum, int spriteMode);
 byte           *GL_GetPalette(void);
 byte           *GL_GetPal18to8(void);
 void            GL_SetTexture(int idx);
+unsigned int    GL_SetRawImage(unsigned int lump, boolean part2);
 void            GL_SetSprite(int pnum, int spriteType);
 void            GL_SetTranslatedSprite(int pnum, int tmap, int tclass);
 void            GL_NewSplitTex(int lump, DGLuint part2name);
@@ -190,12 +196,6 @@ void            GL_GetSkyTopColor(int texidx, float *rgb);
 void            GL_GetSpriteColorf(int pnum, float *rgb);
 void            GL_GetFlatColor(int fnum, float *rgb);
 void            GL_GetTextureColor(int texid, float *rgb);
-
-// Part is either 1 or 2. Part 0 means only the left side is loaded.
-// No splittex is created in that case. Once a raw image is loaded
-// as part 0 it must be deleted before the other part is loaded at the
-// next loading.
-unsigned int    GL_SetRawImage(int lump, int part);
 
 // Returns the real DGL texture, if such exists
 unsigned int    GL_GetTextureName(int texidx);

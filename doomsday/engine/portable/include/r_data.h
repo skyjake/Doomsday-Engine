@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -292,6 +292,8 @@ typedef struct flat_s {
 // a patch is a lumppatch that has been prepared for render.
 typedef struct patch_s {
     int             lump;
+    short           offx, offy;
+
     // Part 1
     DGLuint         tex;          // Name of the associated DGL texture.
     texinfo_t       info;
@@ -303,17 +305,23 @@ typedef struct patch_s {
     struct patch_s *next;
 } patch_t;
 
+// A rawtex is a lump raw graphic that has been prepared for render.
+typedef struct rawtex_s {
+    int             lump;
+    // Part 1
+    DGLuint         tex;          // Name of the associated DGL texture.
+    texinfo_t       info;
+
+    // Part 2 (only used with textures larger than the max texture size).
+    DGLuint         tex2;
+    texinfo_t       info2;
+} rawtex_t;
+
 // a pic is an unmasked block of pixels
 typedef struct {
     byte            width, height;
     byte            data;
 } pic_t;
-
-typedef struct lumptexinfo_s {
-    DGLuint         tex[2];        // Names of the textures (two parts for big ones)
-    unsigned short  width[2], height;
-    short           offx, offy;
-} lumptexinfo_t;
 
 typedef struct animframe_s {
     int             number;
@@ -341,8 +349,6 @@ extern polyblock_t **polyblockmap;
 extern byte    *rejectmatrix;      // for fast sight rejection
 extern nodepile_t thingnodes, linenodes;
 
-extern lumptexinfo_t *lumptexinfo;
-extern int      numlumptexinfo;
 extern int      viewwidth, viewheight;
 extern int      numtextures;
 extern texture_t **textures;
@@ -350,6 +356,8 @@ extern translation_t *texturetranslation;   // for global animation
 extern int      numflats;
 extern flat_t **flats;
 extern translation_t *flattranslation;   // for global animation
+extern rawtex_t *rawtextures;
+extern uint numrawtextures;
 extern int      numgroups;
 extern animgroup_t *groups;
 extern int      levelFullBright;
@@ -379,6 +387,8 @@ int             R_GraphicResourceFlags(resourceclass_t rclass, int id);
 patch_t        *R_FindPatch(int lumpnum);    // May return NULL.
 patch_t        *R_GetPatch(int lumpnum); // Creates new entries.
 patch_t       **R_CollectPatches(int *count);
+rawtex_t       *R_FindRawTex(uint lumpnum);    // May return NULL.
+rawtex_t       *R_GetRawTex(uint lumpnum); // Creates new entries.
 int             R_CheckFlatNumForName(const char *name);
 int             R_FlatNumForName(const char *name);
 const char     *R_FlatNameForNum(int num);

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -71,8 +71,6 @@ extern boolean levelSetup; // we are currently setting up a level
 byte    precacheSkins = true;
 byte    precacheSprites = false;
 
-lumptexinfo_t *lumptexinfo = 0;
-int     numlumptexinfo = 0;
 patchhash_t patchhash[PATCH_HASH_SIZE];
 int     numtextures;
 texture_t **textures;
@@ -80,6 +78,9 @@ translation_t *texturetranslation;  // for global animation
 int     numflats;
 flat_t **flats;
 translation_t *flattranslation;  // for global animation
+// Raw screens.
+rawtex_t *rawtextures;
+uint numrawtextures;
 int     numgroups;
 animgroup_t *groups;
 
@@ -358,6 +359,54 @@ patch_t *R_FindPatch(int lumpnum)
         }
 
     return NULL;
+}
+
+/**
+ * Returns a rawtex_t* for the given lump, if one already exists.
+ */
+rawtex_t *R_FindRawTex(uint lumpnum)
+{
+    uint            i;
+
+    for(i = 0; i < numrawtextures; ++i)
+        if(rawtextures[i].lump == lumpnum)
+        {
+            return &rawtextures[i];
+        }
+
+    return NULL;
+}
+
+/**
+ * Get a rawtex_t data structure for a raw texture specified with a WAD lump
+ * number.  Allocates a new rawtex_t if it hasn't been loaded yet.
+ */
+rawtex_t *R_GetRawTex(uint lumpnum)
+{
+    rawtex_t       *r;
+
+    if(lumpnum >= (unsigned) numlumps)
+    {
+        Con_Error("R_GetPatch: lumpnum = %i out of bounds (%i).\n", 
+                  lumpnum, numlumps);
+    }
+    
+    r = R_FindRawTex(lumpnum);
+    // Check if this lump has already been loaded as a rawtex.
+    if(r)
+        return r;
+
+    // Hmm, this is an entirely new rawtex.
+    rawtextures = M_Realloc(rawtextures, sizeof(rawtex_t) * ++numrawtextures);
+    r = &rawtextures[numrawtextures - 1];
+    
+    r->lump = lumpnum;
+    r->tex = r->tex2 = 0;
+    r->info.width = r->info2.width = 0;
+    r->info.height = r->info2.height = 0;
+    r->info.masked = r->info2.masked = 0;
+
+    return r;
 }
 
 /**
@@ -908,16 +957,6 @@ void R_UpdatePatches(void)
     R_InitPatches();
 }
 
-void R_InitLumpTexInfo(void)
-{
-    if(lumptexinfo)
-        Z_Free(lumptexinfo);
-
-    // Allocate one info per lump. Rather a waste...
-    numlumptexinfo = numlumps;
-    lumptexinfo = Z_Calloc(sizeof(*lumptexinfo) * numlumps, PU_STATIC, 0);
-}
-
 /**
  * Locates all the lumps that will be used by all views.
  * Must be called after W_Init.
@@ -927,7 +966,6 @@ void R_InitData(void)
     R_InitTextures();
     R_InitFlats();
     R_InitPatches();
-    R_InitLumpTexInfo();
     Cl_InitTranslations();
 }
 
@@ -935,7 +973,6 @@ void R_UpdateData(void)
 {
     R_UpdateTexturesAndFlats();
     R_UpdatePatches();
-    R_InitLumpTexInfo();
     Cl_InitTranslations();
 }
 
