@@ -282,10 +282,6 @@ static dpatch_t PatchNumH2TOP;
 static dpatch_t PatchNumLFEDGE;
 static dpatch_t PatchNumRTEDGE;
 static dpatch_t PatchNumKILLS;
-static dpatch_t PatchNumMANADIM1;
-static dpatch_t PatchNumMANADIM2;
-static dpatch_t PatchNumMANABRIGHT1;
-static dpatch_t PatchNumMANABRIGHT2;
 static dpatch_t PatchNumCHAIN;
 static dpatch_t PatchNumSTATBAR;
 static dpatch_t PatchNumKEYBAR;
@@ -1936,8 +1932,8 @@ void ST_doFullscreenStuff(void)
 
     if(cfg.hudShown[HUD_MANA])
     {
-        int     dim[2] = { PatchNumMANADIM1.lump, PatchNumMANADIM2.lump };
-        int     bright[2] = { PatchNumMANABRIGHT1.lump, PatchNumMANABRIGHT2.lump };
+        int     dim[2] = { PatchMANAAICONS[0].lump, PatchMANABICONS[0].lump };
+        int     bright[2] = { PatchMANAAICONS[0].lump, PatchMANABICONS[0].lump };
         int     patches[2] = { 0, 0 };
         int     ypos = cfg.hudShown[HUD_MANA] == 2 ? 152 : 2;
 

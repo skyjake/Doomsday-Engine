@@ -2320,8 +2320,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
         else
         {
             // Must load the old-fashioned data lump.
-            int     i, k, c, idx;
-            byte   *dat1, *dat2, *palette, *lumpdata, *image;
+            byte   *lumpdata, *image;
             int     height, assumedWidth = 320;
             boolean need_free_image = true;
             boolean rgbdata;
@@ -2352,15 +2351,14 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
 
             if(!(height < 200))
             {
-                if(height < 200)
-                    assumedWidth = 256;
+                int     i, k, c, idx;
+                byte   *dat1, *dat2;
 
                 // Two pieces:
                 dat1 = M_Malloc(comps * 256 * 256);
                 dat2 = M_Malloc(comps * 64 * 256);
                 memset(dat1, 0, comps * 256 * 256);
                 memset(dat2, 0, comps * 64 * 256);
-                palette = GL_GetPalette();
 
                 // Image data loaded, divide it into two parts.
                 for(k = 0; k < height; ++k)
@@ -2397,6 +2395,23 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                 raw->info.height = raw->info2.height = height;
                 M_Free(dat1);
                 M_Free(dat2);
+            }
+            else // We can use the normal one-part method.
+            {
+                assumedWidth = 256;
+
+                // Generate a texture.
+                raw->tex =
+                    GL_UploadTexture(image, 256, height,
+                                     false, false, rgbdata, false, false,
+                                     DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                                     DGL_CLAMP, DGL_CLAMP, 0);
+
+                raw->info.width = 256;
+                raw->info.height = height;
+
+                raw->tex2 = 0;
+                raw->info2.width = raw->info2.height = 0;
             }
 
             if(need_free_image)
@@ -2558,6 +2573,9 @@ DGLuint GL_BindTexPatch(patch_t *p)
 DGLuint GL_PreparePatch(int idx, texinfo_t **info)
 {
     patch_t *patch = R_GetPatch(idx);
+
+    if(!patch)
+        return 0;
 
     if(!patch->tex)
     {

@@ -84,7 +84,7 @@ typedef struct
 typedef struct
 {
     char        name[8];
-    boolean         unused;
+    boolean     unused;
     short       width;
     short       height;
     short       patchcount;
@@ -316,12 +316,6 @@ typedef struct rawtex_s {
     DGLuint         tex2;
     texinfo_t       info2;
 } rawtex_t;
-
-// a pic is an unmasked block of pixels
-typedef struct {
-    byte            width, height;
-    byte            data;
-} pic_t;
 
 typedef struct animframe_s {
     int             number;
