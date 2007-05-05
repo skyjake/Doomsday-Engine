@@ -51,7 +51,7 @@
 static void UpdateSegBBox(seg_t *seg);
 static void RotatePt(int an, float *x, float *y, fixed_t startSpotX,
                      fixed_t startSpotY);
-static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po);
+static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -558,7 +558,8 @@ static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po)
             root = (mobj_t *) &blockrings[j + i];
             for(mobj = root->bnext; mobj != root; mobj = mobj->bnext)
             {
-                if(mobj->ddflags & DDMF_SOLID || mobj->dplayer)
+                if((mobj->ddflags & DDMF_SOLID) ||
+                   (mobj->dplayer && !(mobj->dplayer->flags & DDPF_CAMERA)))
                 {
                     tmbbox[BOXTOP]    = mobj->pos[VY] + mobj->radius;
                     tmbbox[BOXBOTTOM] = mobj->pos[VY] - mobj->radius;
