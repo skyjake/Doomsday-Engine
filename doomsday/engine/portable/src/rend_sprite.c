@@ -506,9 +506,9 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[0],
                            vis->data.wall.light->t[0]);
 
-        gl.Vertex3f(vis->data.wall.vertices[2].pos[VX],
-                    vis->data.wall.vertices[2].pos[VZ],
-                    vis->data.wall.vertices[2].pos[VY]);
+        gl.Vertex3f(vis->data.wall.vertices[1].pos[VX],
+                    vis->data.wall.vertices[1].pos[VZ],
+                    vis->data.wall.vertices[1].pos[VY]);
 
         gl.Color4ubv(vis->data.wall.vertices[1].color);
         gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
@@ -526,9 +526,9 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
         gl.MultiTexCoord2f(dyn, vis->data.wall.light->s[1],
                            vis->data.wall.light->t[1]);
 
-        gl.Vertex3f(vis->data.wall.vertices[1].pos[VX],
-                    vis->data.wall.vertices[1].pos[VZ],
-                    vis->data.wall.vertices[1].pos[VY]);
+        gl.Vertex3f(vis->data.wall.vertices[2].pos[VX],
+                    vis->data.wall.vertices[2].pos[VZ],
+                    vis->data.wall.vertices[2].pos[VY]);
 
         gl.End();
 
@@ -551,9 +551,9 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 
         gl.MultiTexCoord2fv(normal, vis->data.wall.texc[0]);
 
-        gl.Vertex3f(vis->data.wall.vertices[2].pos[VX],
-                    vis->data.wall.vertices[2].pos[VZ],
-                    vis->data.wall.vertices[2].pos[VY]);
+        gl.Vertex3f(vis->data.wall.vertices[1].pos[VX],
+                    vis->data.wall.vertices[1].pos[VZ],
+                    vis->data.wall.vertices[1].pos[VY]);
 
         gl.Color4ubv(vis->data.wall.vertices[1].color);
         gl.MultiTexCoord2f(normal, vis->data.wall.texc[1][VX],
@@ -565,9 +565,9 @@ void Rend_RenderMaskedWall(vissprite_t *vis)
 
         gl.MultiTexCoord2fv(normal, vis->data.wall.texc[1]);
 
-        gl.Vertex3f(vis->data.wall.vertices[1].pos[VX],
-                    vis->data.wall.vertices[1].pos[VZ],
-                    vis->data.wall.vertices[1].pos[VY]);
+        gl.Vertex3f(vis->data.wall.vertices[2].pos[VX],
+                    vis->data.wall.vertices[2].pos[VZ],
+                    vis->data.wall.vertices[2].pos[VY]);
 
         gl.End();
     }

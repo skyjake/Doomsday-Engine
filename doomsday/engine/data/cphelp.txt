@@ -626,7 +626,7 @@ desc = 1=Print lumobj count after rendering a frame.
 desc = 1=Print rendpoly pool state after rendering a frame.
 
 [rend-light]
-desc = 1=Render dynamic lights.
+desc = 1=Render dynamic lights. 2=Process without rendering.
 
 [rend-light-ambient]
 desc = Ambient light level.
@@ -1064,7 +1064,7 @@ desc = glBSP: changes the cost assigned to SEG splits (default: 7).
 desc = 1=Show console when a map is being loaded.
 
 [rend-fakeradio]
-desc = 1=Enable simulated radiosity lighting.
+desc = 1=Enable simulated radiosity lighting. 2=Process without rendering.
 
 [rend-fakeradio-darkness]
 desc = Darkness of simulated radiosity shadows.

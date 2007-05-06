@@ -61,7 +61,7 @@ typedef struct affection_s {
 void         SB_EvalPoint(gl_rgba_t *light,
                           vertexillum_t *illum,
                           biasaffection_t *affectedSources,
-                          float *point, float *normal);
+                          const float *point, float *normal);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -493,8 +493,8 @@ void SB_UpdateSegAffected(int segId, rendpoly_t *poly)
         for(i = 0; i < 2; ++i)
         {
             V2_Set(delta,
-                   poly->vertices[i].pos[VX] - src->pos[VX],
-                   poly->vertices[i].pos[VY] - src->pos[VY]);
+                   poly->vertices[i*2].pos[VX] - src->pos[VX],
+                   poly->vertices[i*2].pos[VY] - src->pos[VY]);
             len = V2_Normalize(delta);
 
             if(i == 0 || len < distance)
@@ -877,7 +877,6 @@ void SB_RendPoly(struct rendpoly_s *poly, struct surface_s *surface,
                  biastracker_t *tracker, biasaffection_t *affected,
                  uint mapElementIndex)
 {
-    float       pos[3];
     uint        i;
     boolean     forced;
 
@@ -911,47 +910,22 @@ void SB_RendPoly(struct rendpoly_s *poly, struct surface_s *surface,
     memcpy(&trackChanged, tracker, sizeof(trackChanged));
     memset(&trackApplied, 0, sizeof(trackApplied));
 
+    // Has any of the old affected lights changed?
+    forced = false;
+
     if(poly->isWall)
-    {
-        // Has any of the old affected lights changed?
-        forced = false; //seginfo[mapElementIndex].forced;
-
-        // It's a wall.
         SB_UpdateSegAffected(mapElementIndex, poly);
-
-        for(i = 0; i < poly->numvertices; ++i)
-        {
-            pos[VX] = poly->vertices[i].pos[VX];
-            pos[VY] = poly->vertices[i].pos[VY];
-            pos[VZ] = poly->vertices[i].pos[VZ];
-
-            SB_EvalPoint((i >= 2? &poly->vertices[i-2].color : &poly->vertices[i+2].color),
-                         &illumination[i], affected,
-                         pos, surface->normal);
-        }
-
-//        colorOverride = SB_CheckColorOverride(affected);
-    }
     else
-    {
-        forced = false; /*subsecinfo[mapElementIndex].plane[plane].forced*/
-
-        // It's a plane.
         SB_UpdateSubsectorAffected(mapElementIndex, poly);
 
-        for(i = 0; i < poly->numvertices; ++i)
-        {
-            pos[VX] = poly->vertices[i].pos[VX];
-            pos[VY] = poly->vertices[i].pos[VY];
-            pos[VZ] = poly->vertices[i].pos[VZ];
-
-            SB_EvalPoint(&poly->vertices[i].color,
-                         &illumination[i], affected,
-                         pos, surface->normal);
-        }
-
-//        colorOverride = SB_CheckColorOverride(affected);
+    for(i = 0; i < poly->numvertices; ++i)
+    {
+        SB_EvalPoint(&poly->vertices[i].color,
+                     &illumination[i], affected,
+                     poly->vertices[i].pos, surface->normal);
     }
+
+//    colorOverride = SB_CheckColorOverride(affected);
 
     SB_TrackerClear(tracker, &trackApplied);
 }
@@ -1035,7 +1009,7 @@ byte *SB_GetCasted(vertexillum_t *illum, int sourceIndex,
 /**
  * Add ambient light.
  */
-void SB_AmbientLight(float *point, gl_rgba_t *light)
+void SB_AmbientLight(const float *point, gl_rgba_t *light)
 {
     // Add grid light (represents ambient lighting).
     float       color[3];
@@ -1055,7 +1029,7 @@ void SB_AmbientLight(float *point, gl_rgba_t *light)
  */
 void SB_EvalPoint(gl_rgba_t *light,
                   vertexillum_t *illum, biasaffection_t *affectedSources,
-                  float *point, float *normal)
+                  const float *point, float *normal)
 {
     gl_rgba_t new;
     float       dot;

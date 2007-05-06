@@ -2355,10 +2355,8 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                 byte   *dat1, *dat2;
 
                 // Two pieces:
-                dat1 = M_Malloc(comps * 256 * 256);
-                dat2 = M_Malloc(comps * 64 * 256);
-                memset(dat1, 0, comps * 256 * 256);
-                memset(dat2, 0, comps * 64 * 256);
+                dat1 = M_Calloc(comps * 256 * 256);
+                dat2 = M_Calloc(comps * 64 * 256);
 
                 // Image data loaded, divide it into two parts.
                 for(k = 0; k < height; ++k)

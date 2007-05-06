@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1007,7 +1007,7 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
     // Bottom color (if different from top)?
     if(color2Ptr != NULL)
     {
-        for(i=0; i < 2; ++i)
+        for(i = 0; i < 4; i += 2)
         {
             quad->vertices[i].color.rgba[0] = (DGLubyte) (255 * color2Ptr[0]);
             quad->vertices[i].color.rgba[1] = (DGLubyte) (255 * color2Ptr[1]);
@@ -1019,8 +1019,8 @@ static void Rend_RenderWallSection(rendpoly_t *quad, seg_t *seg, side_t *side,
     quad->lights = DL_GetSegSectionLightLinks(segIndex, section);
 
     // Do BIAS lighting for this poly.
-    SB_RendPoly(quad, surface, frontsec, seg->illum[1],
-                &seg->tracker[1],  seg->affected,
+    SB_RendPoly(quad, surface, frontsec, seg->illum[section],
+                &seg->tracker[section],  seg->affected,
                 segIndex);
 
     // Smooth Texture Animation?
@@ -1212,8 +1212,8 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     Rend_WallHeightDivision(quad, seg, frontsec, SEG_MIDDLE);
 
     vBL = quad->vertices[0].pos;
-    vBR = quad->vertices[1].pos;
-    vTL = quad->vertices[2].pos;
+    vBR = quad->vertices[2].pos;
+    vTL = quad->vertices[1].pos;
     vTR = quad->vertices[3].pos;
 
     // Get the start and end vertices, left then right. Top and bottom.
@@ -1471,14 +1471,14 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                     quad->vertices[0].pos[2] = vL_ZBottom;
 
                     // Bottom Right.
-                    quad->vertices[1].pos[0] = vR_XY[VX];
-                    quad->vertices[1].pos[1] = vR_XY[VY];
-                    quad->vertices[1].pos[2] = vR_ZBottom;
+                    quad->vertices[2].pos[0] = vR_XY[VX];
+                    quad->vertices[2].pos[1] = vR_XY[VY];
+                    quad->vertices[2].pos[2] = vR_ZBottom;
 
                     // Top Left.
-                    quad->vertices[2].pos[0] = vL_XY[VX];
-                    quad->vertices[2].pos[1] = vL_XY[VY];
-                    quad->vertices[2].pos[2] = vL_ZTop;
+                    quad->vertices[1].pos[0] = vL_XY[VX];
+                    quad->vertices[1].pos[1] = vL_XY[VY];
+                    quad->vertices[1].pos[2] = vL_ZTop;
 
                     // Top Right.
                     quad->vertices[3].pos[0] = vR_XY[VX];
@@ -1593,14 +1593,14 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                 quad->vertices[0].pos[2] = vL_ZBottom;
 
                 // Bottom Right.
-                quad->vertices[1].pos[0] = vR_XY[VX];
-                quad->vertices[1].pos[1] = vR_XY[VY];
-                quad->vertices[1].pos[2] = vR_ZBottom;
+                quad->vertices[2].pos[0] = vR_XY[VX];
+                quad->vertices[2].pos[1] = vR_XY[VY];
+                quad->vertices[2].pos[2] = vR_ZBottom;
 
                 // Top Left.
-                quad->vertices[2].pos[0] = vL_XY[VX];
-                quad->vertices[2].pos[1] = vL_XY[VY];
-                quad->vertices[2].pos[2] = vL_ZTop;
+                quad->vertices[1].pos[0] = vL_XY[VX];
+                quad->vertices[1].pos[1] = vL_XY[VY];
+                quad->vertices[1].pos[2] = vL_ZTop;
 
                 // Top Right.
                 quad->vertices[3].pos[0] = vR_XY[VX];
@@ -1669,14 +1669,14 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             quad->vertices[0].pos[2] = vL_ZBottom;
 
             // Bottom Right.
-            quad->vertices[1].pos[0] = vR_XY[VX];
-            quad->vertices[1].pos[1] = vR_XY[VY];
-            quad->vertices[1].pos[2] = vR_ZBottom;
+            quad->vertices[2].pos[0] = vR_XY[VX];
+            quad->vertices[2].pos[1] = vR_XY[VY];
+            quad->vertices[2].pos[2] = vR_ZBottom;
 
             // Top Left.
-            quad->vertices[2].pos[0] = vL_XY[VX];
-            quad->vertices[2].pos[1] = vL_XY[VY];
-            quad->vertices[2].pos[2] = vL_ZTop;
+            quad->vertices[1].pos[0] = vL_XY[VX];
+            quad->vertices[1].pos[1] = vL_XY[VY];
+            quad->vertices[1].pos[2] = vL_ZTop;
 
             // Top Right.
             quad->vertices[3].pos[0] = vR_XY[VX];
@@ -1799,8 +1799,8 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     quad->intertex.detail = NULL;
 
     vBL = quad->vertices[0].pos;
-    vBR = quad->vertices[1].pos;
-    vTL = quad->vertices[2].pos;
+    vBR = quad->vertices[2].pos;
+    vTL = quad->vertices[1].pos;
     vTR = quad->vertices[3].pos;
 
     // First pass = walls, second pass = poly objects.

@@ -39,7 +39,7 @@ struct seg
     BYTE    byte		side    // 0=front, 1=back
     BYTE    byte        flags
     -       short       frameflags
-    -       biastracker_s[3] tracker // 0=top, 1=middle, 2=bottom
+    -       biastracker_s[3] tracker // 0=middle, 1=top, 2=bottom
     -       vertexillum_s[3][4] illum
     -       uint        updated
     -       biasaffection_s[MAX_BIAS_AFFECTED] affected

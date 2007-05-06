@@ -64,10 +64,10 @@ void GL_UsePatchOffset(boolean enable)
 void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
                          float scaley)
 {
-    boolean isTwoPart;
-    int     pixelBorder = 0;
-    float   tcb = 0;
-    rawtex_t *raw;
+    boolean     isTwoPart;
+    float       pixelBorder = 0;
+    float       tcb = 0;
+    rawtex_t   *raw;
 
     if(lump < 0 || lump >= numlumps)
         return;
@@ -93,7 +93,7 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
 
     if(isTwoPart)
     {
-        tcb = (float) raw->info.height / 256.0f;
+        tcb = raw->info.height / 256.0f;
     }
     else
     {
@@ -120,13 +120,13 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
         GL_SetRawImage(lump, true);
         gl.Begin(DGL_QUADS);
         gl.TexCoord2f(0, 0);
-        gl.Vertex2f(pixelBorder - 1, 0);
+        gl.Vertex2f(pixelBorder, 0);
         gl.TexCoord2f(1, 0);
         gl.Vertex2f(glScreenWidth, 0);
         gl.TexCoord2f(1, tcb);
         gl.Vertex2f(glScreenWidth, glScreenHeight);
         gl.TexCoord2f(0, tcb);
-        gl.Vertex2f(pixelBorder - 1, glScreenHeight);
+        gl.Vertex2f(pixelBorder, glScreenHeight);
         gl.End();
     }
 

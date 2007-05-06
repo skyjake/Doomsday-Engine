@@ -111,7 +111,7 @@ static float fFloor, fCeil;
 
 void Rend_RadioRegister(void)
 {
-    C_VAR_INT("rend-fakeradio", &rendFakeRadio, 0, 0, 1);
+    C_VAR_INT("rend-fakeradio", &rendFakeRadio, 0, 0, 2);
 
     C_VAR_FLOAT("rend-fakeradio-darkness", &rendFakeRadioDarkness, 0, 0, 2);
 }
@@ -239,9 +239,9 @@ static void Rend_RadioTexCoordX(rendpoly_t *q, float lineLength,
 static void Rend_RadioTexCoordY(rendpoly_t *q, float size)
 {
     if((q->tex.height = size) > 0)
-        q->texoffy = fCeil - q->vertices[2].pos[VZ];
+        q->texoffy = fCeil - q->vertices[1].pos[VZ];
     else
-        q->texoffy = fFloor - q->vertices[2].pos[VZ];
+        q->texoffy = fFloor - q->vertices[1].pos[VZ];
 }
 
 static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
@@ -682,9 +682,9 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     quad->intertex.detail = NULL;
 
     // Fade the shadow out if the height is below the min height.
-    if(quad->vertices[2].pos[VZ] - quad->vertices[0].pos[VZ] < EDGE_OPEN_THRESHOLD)
+    if(quad->vertices[3].pos[VZ] - quad->vertices[0].pos[VZ] < EDGE_OPEN_THRESHOLD)
         Rend_RadioSetColor(quad, shadowDark *
-                              ((quad->vertices[2].pos[VZ] - quad->vertices[0].pos[VZ]) / EDGE_OPEN_THRESHOLD));
+                              ((quad->vertices[3].pos[VZ] - quad->vertices[0].pos[VZ]) / EDGE_OPEN_THRESHOLD));
     else
         Rend_RadioSetColor(quad, shadowDark);
 
@@ -694,7 +694,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     // The top shadow will reach this far down.
     size = shadowSize + Rend_RadioLongWallBonus(ceilSpan->length);
     limit = fCeil - size;
-    if((quad->vertices[2].pos[VZ] > limit && quad->vertices[0].pos[VZ] < fCeil) &&
+    if((quad->vertices[3].pos[VZ] > limit && quad->vertices[0].pos[VZ] < fCeil) &&
        Rend_RadioNonGlowingFlat(frontSector, PLN_CEILING))
     {
         Rend_RadioTexCoordY(quad, size);
@@ -812,7 +812,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         }
 
         quad->tex.id = GL_PrepareLSTexture(texture, NULL);
-        RL_AddPoly(quad);
+        if(rendFakeRadio != 2)
+            RL_AddPoly(quad);
     }
 
     /*
@@ -820,7 +821,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
      */
     size = shadowSize + Rend_RadioLongWallBonus(floorSpan->length) / 2;
     limit = fFloor + size;
-    if((quad->vertices[0].pos[VZ] < limit && quad->vertices[2].pos[VZ] > fFloor) &&
+    if((quad->vertices[0].pos[VZ] < limit && quad->vertices[3].pos[VZ] > fFloor) &&
        Rend_RadioNonGlowingFlat(frontSector, PLN_FLOOR))
     {
         Rend_RadioTexCoordY(quad, -size);
@@ -939,7 +940,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         }
 
         quad->tex.id = GL_PrepareLSTexture(texture, NULL);
-        RL_AddPoly(quad);
+        if(rendFakeRadio != 2)
+            RL_AddPoly(quad);
     }
 
     // Walls with glowing floor & ceiling get no side shadows.
@@ -1068,7 +1070,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         quad->tex.id = GL_PrepareLSTexture(texture, NULL);
 
         Rend_RadioSetColor(quad, sideCn[i].corner * shadowDark);
-        RL_AddPoly(quad);
+        if(rendFakeRadio != 2)
+            RL_AddPoly(quad);
     }
     R_FreeRendPoly(quad);
 }
@@ -1313,7 +1316,8 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     vtx[idx[3]].pos[VY] = inner[0][VY];
     vtx[idx[3]].pos[VZ] = z;
 
-    RL_AddPoly(q);
+    if(rendFakeRadio != 2)
+        RL_AddPoly(q);
     R_FreeRendPoly(q);
 }
 

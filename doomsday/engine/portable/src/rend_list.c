@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -112,7 +112,7 @@ typedef enum listmode_e {
 
 // Types of rendering primitives.
 typedef enum primtype_e {
-    PT_TRIANGLES,               // Used for most stuff.
+    PT_TRIANGLE_STRIP,               // Used for most stuff.
     PT_FAN,
     PT_DOUBLE_FAN,
 } primtype_t;
@@ -280,11 +280,11 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
     float       midpoint[3];
 
     midpoint[VX] =
-        (poly->vertices[0].pos[VX] + poly->vertices[1].pos[VX]) / 2;
+        (poly->vertices[0].pos[VX] + poly->vertices[3].pos[VX]) / 2;
     midpoint[VY] =
-        (poly->vertices[0].pos[VY] + poly->vertices[1].pos[VY]) / 2;
+        (poly->vertices[0].pos[VY] + poly->vertices[3].pos[VY]) / 2;
     midpoint[VZ] =
-        (poly->vertices[0].pos[VZ] + poly->vertices[1].pos[VZ]) / 2;
+        (poly->vertices[0].pos[VZ] + poly->vertices[3].pos[VZ]) / 2;
 
     vis->type = VSPR_MASKED_WALL;
     vis->light = NULL;
@@ -316,7 +316,7 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
         vis->data.wall.texc[0][VX] + poly->wall->length / poly->tex.width;
     vis->data.wall.texc[0][VY] = poly->texoffy / (float) poly->tex.height;
     vis->data.wall.texc[1][VY] =
-        vis->data.wall.texc[0][VY] + (poly->vertices[2].pos[VZ] -
+        vis->data.wall.texc[0][VY] + (poly->vertices[3].pos[VZ] -
                                       poly->vertices[0].pos[VZ]) / poly->tex.height;
     vis->data.wall.blendmode = poly->blendmode;
 
@@ -371,7 +371,7 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
     {
         // Do a lighting adjustment based on orientation.
         lightlevel += (1.0f / 255.0f) *
-            ((poly->vertices[1].pos[VY] -
+            ((poly->vertices[2].pos[VY] -
              poly->vertices[0].pos[VY]) / poly->wall->length * 18 *
             rend_light_wall_angle);
         if(lightlevel < 0)
@@ -933,11 +933,14 @@ static void RL_QuadTexCoords(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *t
         if(poly->flags & RPF_HORIZONTAL)
         {
             // Special horizontal coordinates for wall shadows.
-            tc[3].st[0] = tc[2].st[0] = poly->texoffy / height;
-            tc[3].st[1] = tc[0].st[1] = poly->texoffx / width;
-            tc[0].st[0] = tc[3].st[0] + (poly->vertices[2].pos[VZ] - poly->vertices[0].pos[VZ]) / height;
-            tc[1].st[0] = tc[3].st[0] + (poly->vertices[3].pos[VZ] - poly->vertices[1].pos[VZ]) / height;
-            tc[1].st[1] = tc[2].st[1] = tc[3].st[1] + poly->wall->length / width;
+            tc[0].st[0] = poly->texoffy / height;
+            tc[2].st[0] = poly->texoffy / height;
+            tc[0].st[1] = poly->texoffx / width;
+            tc[1].st[1] = poly->texoffx / width;
+            tc[1].st[0] = tc[0].st[0] + (poly->vertices[1].pos[VZ] - poly->vertices[0].pos[VZ]) / height;
+            tc[3].st[0] = tc[0].st[0] + (poly->vertices[3].pos[VZ] - poly->vertices[2].pos[VZ]) / height;
+            tc[3].st[1] = tc[0].st[1] + poly->wall->length / width;
+            tc[2].st[1] = tc[0].st[1] + poly->wall->length / width;
             return;
         }
     }
@@ -949,11 +952,11 @@ static void RL_QuadTexCoords(gl_texcoord_t *tc, rendpoly_t *poly, gltexture_t *t
         height = tex->height;
     }
 
-    tc[0].st[0] = tc[3].st[0] = poly->texoffx / width;
-    tc[0].st[1] = tc[1].st[1] = poly->texoffy / height;
-    tc[1].st[0] = tc[2].st[0] = tc[0].st[0] + poly->wall->length / width;
-    tc[2].st[1] = tc[0].st[1] + (poly->vertices[2].pos[VZ] - poly->vertices[0].pos[VZ]) / height;
-    tc[3].st[1] = tc[0].st[1] + (poly->vertices[3].pos[VZ] - poly->vertices[1].pos[VZ]) / height;
+    tc[0].st[0] = tc[1].st[0] = poly->texoffx / width;
+    tc[3].st[1] = tc[1].st[1] = poly->texoffy / height;
+    tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + poly->wall->length / width;
+    tc[2].st[1] = tc[3].st[1] + (poly->vertices[1].pos[VZ] - poly->vertices[0].pos[VZ]) / height;
+    tc[0].st[1] = tc[3].st[1] + (poly->vertices[3].pos[VZ] - poly->vertices[2].pos[VZ]) / height;
 }
 
 static float RL_ShinyVertical(float dy, float dx)
@@ -970,9 +973,9 @@ static void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly)
 
     // Quad surface vector.
     V2_Set(surface,
-           (poly->vertices[1].pos[VX] - poly->vertices[0].pos[VX]) /
+           (poly->vertices[3].pos[VX] - poly->vertices[0].pos[VX]) /
            poly->wall->length,
-           (poly->vertices[1].pos[VY] - poly->vertices[0].pos[VY]) /
+           (poly->vertices[3].pos[VY] - poly->vertices[0].pos[VY]) /
            poly->wall->length);
 
     V2_Set(normal, surface[VY], -surface[VX]);
@@ -982,8 +985,8 @@ static void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly)
     {
         // View vector.
         V2_Set(view,
-               vx - poly->vertices[i].pos[VX],
-               vz - poly->vertices[i].pos[VY]);
+               vx - poly->vertices[i*2].pos[VX],
+               vz - poly->vertices[i*2].pos[VY]);
 
         distance = V2_Normalize(view);
 
@@ -1009,15 +1012,15 @@ static void RL_QuadShinyTexCoords(gl_texcoord_t *tc, rendpoly_t *poly)
         }
 
         // Horizontal coordinates.
-        tc[ (i == 0 ? 0 : 1) ].st[0] = tc[ (i == 0 ? 3 : 2) ].st[0] =
+        tc[ (i == 0 ? 1 : 3) ].st[0] = tc[ (i == 0 ? 0 : 2) ].st[0] =
             angle + .3f;     /*acos(-dot)/PI*/
 
         // Vertical coordinates.
-        tc[ (i == 0 ? 0 : 1) ].st[1] =
-            RL_ShinyVertical(vy - poly->vertices[2+i].pos[VZ], distance);
+        tc[ (i == 0 ? 1 : 3) ].st[1] =
+            RL_ShinyVertical(vy - poly->vertices[i*2+1].pos[VZ], distance);
 
-        tc[ (i == 0 ? 2 : 3) ].st[1] =
-            RL_ShinyVertical(vy - poly->vertices[i].pos[VZ], distance);
+        tc[ (i == 0 ? 2 : 0) ].st[1] =
+            RL_ShinyVertical(vy - poly->vertices[i*2].pos[VZ], distance);
     }
 }
 
@@ -1026,19 +1029,19 @@ static void RL_QuadDetailTexCoords(gl_texcoord_t *tc, rendpoly_t *poly,
 {
     float   mul = tex->detail->scale * detailScale;
 
-    tc[0].st[0] = tc[3].st[0] = poly->texoffx / tex->detail->width;
-    tc[0].st[1] = tc[1].st[1] = poly->texoffy / tex->detail->height;
-    tc[1].st[0] = tc[2].st[0] =
-        (tc[0].st[0] + poly->wall->length / tex->detail->width) * mul;
+    tc[1].st[0] = tc[0].st[0] = poly->texoffx / tex->detail->width;
+    tc[1].st[1] = tc[3].st[1] = poly->texoffy / tex->detail->height;
+    tc[3].st[0] = tc[2].st[0] =
+        (tc[1].st[0] + poly->wall->length / tex->detail->width) * mul;
     tc[2].st[1] =
-        (tc[0].st[1] + (poly->vertices[2].pos[VZ] - poly->vertices[0].pos[VZ]) / tex->detail->height) * mul;
-    tc[3].st[1] =
-        (tc[0].st[1] + (poly->vertices[3].pos[VZ] - poly->vertices[1].pos[VZ]) / tex->detail->height) * mul;
+        (tc[1].st[1] + (poly->vertices[1].pos[VZ] - poly->vertices[0].pos[VZ]) / tex->detail->height) * mul;
+    tc[0].st[1] =
+        (tc[1].st[1] + (poly->vertices[3].pos[VZ] - poly->vertices[2].pos[VZ]) / tex->detail->height) * mul;
 
-    tc[0].st[0] *= mul;
-    tc[0].st[1] *= mul;
+    tc[1].st[0] *= mul;
     tc[1].st[1] *= mul;
-    tc[3].st[0] *= mul;
+    tc[3].st[1] *= mul;
+    tc[0].st[0] *= mul;
 }
 
 static void RL_QuadColors(gl_color_t *color, rendpoly_t *poly)
@@ -1065,8 +1068,8 @@ static void RL_QuadColors(gl_color_t *color, rendpoly_t *poly)
     // Just copy RGB, set A to 255.
     memcpy(color[0].rgba, poly->vertices[0].color.rgba, 3);
     memcpy(color[1].rgba, poly->vertices[1].color.rgba, 3);
-    memcpy(color[2].rgba, poly->vertices[3].color.rgba, 3);
-    memcpy(color[3].rgba, poly->vertices[2].color.rgba, 3);
+    memcpy(color[2].rgba, poly->vertices[2].color.rgba, 3);
+    memcpy(color[3].rgba, poly->vertices[3].color.rgba, 3);
 
     color[0].rgba[3] = color[1].rgba[3] = color[2].rgba[3] = color[3].rgba[3] =
         255;
@@ -1074,22 +1077,29 @@ static void RL_QuadColors(gl_color_t *color, rendpoly_t *poly)
 
 static void RL_QuadVertices(gl_vertex_t *v, rendpoly_t *poly)
 {
-    v[0].xyz[0] = v[3].xyz[0] = poly->vertices[0].pos[VX];
-    v[0].xyz[1] = poly->vertices[2].pos[VZ];
-    v[1].xyz[1] = poly->vertices[3].pos[VZ];
-    v[0].xyz[2] = v[3].xyz[2] = poly->vertices[0].pos[VY];
-    v[1].xyz[0] = v[2].xyz[0] = poly->vertices[1].pos[VX];
-    v[2].xyz[1] = poly->vertices[0].pos[VZ];
-    v[3].xyz[1] = poly->vertices[1].pos[VZ];
-    v[1].xyz[2] = v[2].xyz[2] = poly->vertices[1].pos[VY];
+    v[0].xyz[0] = poly->vertices[0].pos[VX];
+    v[0].xyz[1] = poly->vertices[0].pos[VZ];
+    v[0].xyz[2] = poly->vertices[0].pos[VY];
+
+    v[1].xyz[0] = poly->vertices[1].pos[VX];
+    v[1].xyz[1] = poly->vertices[1].pos[VZ];
+    v[1].xyz[2] = poly->vertices[1].pos[VY];
+
+    v[2].xyz[0] = poly->vertices[2].pos[VX];
+    v[2].xyz[1] = poly->vertices[2].pos[VZ];
+    v[2].xyz[2] = poly->vertices[2].pos[VY];
+
+    v[3].xyz[0] = poly->vertices[3].pos[VX];
+    v[3].xyz[1] = poly->vertices[3].pos[VZ];
+    v[3].xyz[2] = poly->vertices[3].pos[VY];
 }
 
 static void RL_QuadLightCoords(gl_texcoord_t *tc, dynlight_t *dyn)
 {
-    tc[0].st[0] = tc[3].st[0] = dyn->s[0];
-    tc[0].st[1] = tc[1].st[1] = dyn->t[0];
-    tc[1].st[0] = tc[2].st[0] = dyn->s[1];
-    tc[2].st[1] = tc[3].st[1] = dyn->t[1];
+    tc[1].st[0] = tc[0].st[0] = dyn->s[0];
+    tc[1].st[1] = tc[3].st[1] = dyn->t[0];
+    tc[3].st[0] = tc[2].st[0] = dyn->s[1];
+    tc[2].st[1] = tc[0].st[1] = dyn->t[1];
 }
 
 static void RL_FlatShinyTexCoords(gl_texcoord_t *tc, float xy[2], float height)
@@ -1162,6 +1172,8 @@ static void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
     uint    base;
     primhdr_t *hdr = NULL;
 
+    list->last->type = PT_TRIANGLE_STRIP;
+
     // A quad is composed of two triangles.
     // We need four vertices.
     list->last->primSize = 4;
@@ -1233,7 +1245,7 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
     gl_vertex_t *v;
     uint    i, base;
     uint    sideBase[2];
-    int     side, other, index, top, bottom, div, c;
+    int     side, /*other,*/ index, top, bottom, div, c;
     float   z, height[2], inter;
     primhdr_t *hdr = NULL;
 
@@ -1251,8 +1263,8 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
     // 3---------<--[2]
     //
 
-    height[0] = poly->vertices[2].pos[VZ] - poly->vertices[0].pos[VZ];
-    height[1] = poly->vertices[3].pos[VZ] - poly->vertices[1].pos[VZ];
+    height[0] = poly->vertices[1].pos[VZ] - poly->vertices[0].pos[VZ];
+    height[1] = poly->vertices[3].pos[VZ] - poly->vertices[2].pos[VZ];
 
     list->last->type = PT_DOUBLE_FAN;
 
@@ -1313,42 +1325,40 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
     index = 0;
 
     // First vertices of each side (1=right, 0=left).
-    sideBase[1] = base + 4;
-    sideBase[0] = sideBase[1] + poly->wall->divs[1].num;
+    sideBase[0] = base + 4;
+    sideBase[1] = sideBase[0] + poly->wall->divs[0].num;
 
     // Set the rest of the indices and init the division vertices.
     for(side = 0; side < 2; ++side) // Left->right is side zero.
     {
         unsigned int num;
 
-        other = !side;
-
         // The actual top/bottom corner vertex.
-        top = base + (!side ? 1 : 0);
-        bottom = base + (!side ? 2 : 3);
+        top = base + (!side ? 3 : 1);
+        bottom = base + (!side ? 2 : 0);
 
         // Here begins the other triangle fan.
         if(side)
             hdr->beginOther = index;
 
         // The fan origin is the same for all the triangles.
-        hdr->indices[index++] = base + (!side ? 0 : 2);
+        hdr->indices[index++] = base + (!side ? 1 : 2);
 
         // The first (top/bottom) vertex of the side.
-        hdr->indices[index++] = base + (!side ? 1 : 3);
+        hdr->indices[index++] = base + (!side ? 3 : 0);
 
         // The division vertices.
-        num = poly->wall->divs[other].num;
+        num = poly->wall->divs[!side].num;
         for(i = 0; i < num; ++i)
         {
             // A division vertex of the other side.
-            hdr->indices[index++] = div = sideBase[other] + i;
+            hdr->indices[index++] = div = sideBase[!side] + i;
 
             // Division height of this vertex.
-            z = poly->wall->divs[other].pos[i];
+            z = poly->wall->divs[!side].pos[i];
 
             // We'll init this vertex by interpolating.
-            inter = (z - poly->vertices[side].pos[VZ]) / height[side];
+            inter = (z - poly->vertices[side*2].pos[VZ]) / height[side];
 
             if(!(poly->flags & RPF_SKY_MASK))
             {
@@ -1408,7 +1418,7 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
         }
 
         // The last (bottom/top) vertex of the side.
-        hdr->indices[index++] = base + (!side ? 2 : 0);
+        hdr->indices[index++] = base + (!side ? 2 : 1);
     }
 }
 
@@ -1420,6 +1430,8 @@ static void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
     gl_vertex_t *v;
     uint    base;
     unsigned int i, num;
+
+    list->last->type = PT_FAN;
 
     // A flat is composed of N triangles, where N = poly->numvertices - 2.
     list->last->primSize = poly->numvertices;
@@ -1602,34 +1614,41 @@ static void RL_WriteDynLight(rendlist_t *list, dynlight_t *dyn, primhdr_t *prim,
 
         if(poly->type == RP_DIVQUAD)
         {
-            int     side, other, top, bottom, sideBase[2];
+            int     side, top, bottom, sideBase[2];
             float   height[2];
 
-            height[0] = poly->vertices[2].pos[VZ] - poly->vertices[0].pos[VZ];
-            height[1] = poly->vertices[3].pos[VZ] - poly->vertices[1].pos[VZ];
+            height[0] = poly->vertices[1].pos[VZ] - poly->vertices[0].pos[VZ];
+            height[1] = poly->vertices[3].pos[VZ] - poly->vertices[2].pos[VZ];
 
             // First vertices of each side (1=right, 0=left).
-            sideBase[1] = base + 4;
-            sideBase[0] = sideBase[1] + poly->wall->divs[1].num;
+            sideBase[0] = base + 4;
+            sideBase[1] = sideBase[0] + poly->wall->divs[0].num;
 
             // Set the rest of the indices and init the division vertices.
             for(side = 0; side < 2; ++side) // Left->right is side zero.
             {
-                other = !side;
-
                 // The actual top/bottom corner vertex.
-                top = base + (!side ? 1 : 0);
-                bottom = base + (!side ? 2 : 3);
+                top = base + (!side ? 3 : 1);
+                bottom = base + (!side ? 2 : 0);
 
                 // Number of vertices per side: 2 + numdivs
-                num = poly->wall->divs[other].num;
-                for(i = 1; i <= num; ++i)
+                num = poly->wall->divs[!side].num;
+                for(i = 0; i < num; ++i)
                 {
-                    RL_InterpolateTexCoordT(texCoords[TCA_MAIN],
-                                            sideBase[other] + i - 1, top,
-                                            bottom,
-                                            (poly->wall->divs[other].pos[i - 1] -
-                                             poly->vertices[side].pos[VZ]) / height[side]);
+                    int         div;
+                    float       z, inter;
+
+                    // A division vertex of the other side.
+                    div = sideBase[!side] + i;
+
+                    // Division height of this vertex.
+                    z = poly->wall->divs[!side].pos[i];
+
+                    // We'll init this vertex by interpolating.
+                    inter = (z - poly->vertices[side*2].pos[VZ]) / height[side];
+
+                    RL_InterpolateTexCoordT(texCoords[TCA_MAIN], div, top,
+                                            bottom, inter);
                 }
             }
         }
@@ -1719,8 +1738,8 @@ END_PROF( PROF_RL_GET_LIST );
     li->last = hdr = RL_AllocateData(li, sizeof(primhdr_t));
 
     hdr->size = 0;
-    hdr->type = PT_FAN;
     hdr->indices = NULL;
+    hdr->type = PT_FAN;
     hdr->flags = poly->flags;
     hdr->light = (useLights ? poly->lights : NULL);
 
@@ -1854,8 +1873,12 @@ static void RL_DrawPrimitives(int conditions, rendlist_t *list)
                 GL_BlendMode(hdr->blendMode);
             }
 
+            if(hdr->type == PT_TRIANGLE_STRIP)
+            {
+                gl.DrawElements(DGL_TRIANGLE_STRIP, hdr->numIndices, hdr->indices);
+            }
             // Render a primitive (or two) as a triangle fan.
-            if(hdr->type == PT_FAN)
+            else if(hdr->type == PT_FAN)
             {
                 gl.DrawElements(DGL_TRIANGLE_FAN, hdr->numIndices, hdr->indices);
             }
