@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -313,6 +313,7 @@ static int LoadLumpsHook(int hookType, int parm, void *data)
     uint sourceTime;
     uint bspTime;
 
+/*
     // The bsp-build cvar determines whether we'll try to load
     // existing data (from a GWA) or build the nodes ourselves (and
     // cache them for later).
@@ -332,7 +333,7 @@ static int LoadLumpsHook(int hookType, int parm, void *data)
         }
         return true;
     }
-
+*/
     GetWorkDir(workDir, parm);
 
     // Make sure the work directory exists.

@@ -137,7 +137,6 @@ typedef struct {
     int         valueType;
 } selectprop_t;
 
-extern int      bspBuild;
 extern int      createBMap;
 extern int      createReject;
 
@@ -154,5 +153,4 @@ uint        P_RegisterCustomMapProperty(int type, valuetype_t dataType,
                                         char *name);
 
 boolean     P_AttemptMapLoad(char *levelId);
-boolean     P_GLNodeDataPresent(void);
 #endif

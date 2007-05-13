@@ -158,7 +158,6 @@ static void     countMapElements(gamemap_t *map);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // BSP cvars.
-int bspBuild = true;
 static int bspCache = true;
 static int bspFactor = 7;
 
@@ -191,9 +190,6 @@ static gamemap_t* currentMap = NULL;
 static uint    mapFormat;
 static uint    glNodeFormat;
 static uint    firstGLvertex = 0;
-
-// Set to true if glNodeData exists for the level.
-static boolean glNodeData = false;
 
 // types of MAP data structure
 // These arrays are temporary. Some of the data will be provided via DED definitions.
@@ -363,8 +359,6 @@ static mapproperty_t properties[DAM_NUM_PROPERTIES] =
 void DAM_Register(void)
 {
     C_VAR_INT("blockmap-build", &createBMap, 0, 0, 2);
-    C_VAR_INT("bsp-build", &bspBuild, 0, 0, 1);
-    // FIXME: bsp-cache and bsp-factor are not yet implemented.
     C_VAR_INT("bsp-cache", &bspCache, 0, 0, 1);
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
     C_VAR_INT("reject-build", &createReject, 0, 0, 2);
@@ -853,26 +847,11 @@ static boolean P_LocateMapData(char *levelID, int *lumpIndices)
                     (void*) lumpIndices))
     {
         // The plugin failed.
-        lumpIndices[0] = W_CheckNumForName(levelID);
-
-        // FIXME: The latest GLBSP spec supports maps with non-standard
-        // identifiers. To support these we must check the lump named
-        // GL_LEVEL. In this lump will be a text string which identifies
-        // the name of the lump the data is for.
-        lumpIndices[1] = W_CheckNumForName(glLumpName);
+        return false;
     }
 
     if(lumpIndices[0] == -1)
         return false; // The map data cannot be found.
-
-    // Do we have any GL Nodes?
-    if(lumpIndices[1] > lumpIndices[0])
-        glNodeData = true;
-    else
-    {
-        glNodeData = false;
-        glNodeFormat = 0;
-    }
 
     return true;
 }
@@ -971,8 +950,7 @@ static void DetermineMapDataLumpFormat(mapdatalumpinfo_t* mapLump)
         // the lump data or the lump format definition.
         return;
     }
-    else if(glNodeData &&
-            mapLump->lumpClass >= LCG_VERTEXES &&
+    else if(mapLump->lumpClass >= LCG_VERTEXES &&
             mapLump->lumpClass <= LCG_NODES)
     {
         unsigned int i;
@@ -1096,8 +1074,7 @@ static boolean verifyMapData(char *levelID)
         {
             // Is it a required lump class?
             //   Is this lump that will be generated if a BSP builder is available?
-            if(mapLmpInf->required == BSPBUILD &&
-               Plug_CheckForHook(HOOK_LOAD_MAP_LUMPS) && bspBuild)
+            if(mapLmpInf->required == BSPBUILD)
                 required = false;
             else if(mapLmpInf->required)
                 required = true;
@@ -1163,8 +1140,6 @@ static boolean determineMapDataFormat(void)
         node = node->next;
     }
 
-    // Do we have GL nodes?
-    if(glNodeData)
     {
         uint        i;
         boolean     failed;
@@ -1404,14 +1379,6 @@ boolean P_GetMapFormat(void)
     }
 }
 
-/**
- * Return <code>true</code> if gl node data is present for the CURRENT map.
- */
-boolean P_GLNodeDataPresent(void)
-{
-    return glNodeData;
-}
-
 void *DAM_IndexToPtr(gamemap_t* map, int objectType, uint id)
 {
     switch(objectType)
@@ -1460,34 +1427,32 @@ long DAM_VertexIdx(long idx)
     // The firstGLvertex offset should be handed down from the very
     // start of the read process, it should not be a global.
     // If GL NODES are available this might be an "extra" vertex.
-    if(glNodeData && bspBuild)
+
+    mapdatalumpformat_t *format = &glNodeFormats[glNodeFormat].
+           verInfo[DAM_MapLumpInfoForLumpClass(LCG_SEGS)->glLump];
+
+    // FIXME: Hard linked format logic.
+    switch(format->hversion)
     {
-        mapdatalumpformat_t *format = &glNodeFormats[glNodeFormat].
-               verInfo[DAM_MapLumpInfoForLumpClass(LCG_SEGS)->glLump];
-
-        // FIXME: Hard linked format logic.
-        switch(format->hversion)
+    case 2:
+        if(idx & 0x8000)
         {
-        case 2:
-            if(idx & 0x8000)
-            {
-                idx &= ~0x8000;
-                idx += firstGLvertex;
-            }
-            break;
-
-        case 3:
-        case 5:
-            if(idx & 0xc0000000)
-            {
-                idx &= ~0xc0000000;
-                idx += firstGLvertex;
-            }
-            break;
-
-        default:
-            break;
+            idx &= ~0x8000;
+            idx += firstGLvertex;
         }
+        break;
+
+    case 3:
+    case 5:
+        if(idx & 0xc0000000)
+        {
+            idx &= ~0xc0000000;
+            idx += firstGLvertex;
+        }
+        break;
+
+    default:
+        break;
     }
 
     return idx;
@@ -1517,26 +1482,13 @@ static boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
     mapdatalumpformat_t *lastUsedFormat = NULL;
     readprop_t *readProps = NULL;
 
-    // Are gl Nodes available?
-    if(glNodeData)
-    {
-        // Are we using them?
-        if(!bspBuild)
-        {
-            if(doClass == LCG_VERTEXES)
-                return true;
-        }
-        else
-        {
-            // Use the gl versions of the following lumps:
-            if(doClass == LCM_SUBSECTORS)
-                doClass = LCG_SUBSECTORS;
-            else if(doClass == LCM_SEGS)
-                doClass = LCG_SEGS;
-            else if(doClass == LCM_NODES)
-                doClass = LCG_NODES;
-        }
-    }
+    // Use the gl versions of the following lumps:
+    if(doClass == LCM_SUBSECTORS)
+        doClass = LCG_SUBSECTORS;
+    else if(doClass == LCM_SEGS)
+        doClass = LCG_SEGS;
+    else if(doClass == LCM_NODES)
+        doClass = LCG_NODES;
 
     node = mapDataLumps;
     while(node)
@@ -1714,14 +1666,6 @@ static boolean P_ReadMapData(gamemap_t* map, int doClass, selectprop_t *props,
                              uint numProps,
                              int (*callback)(int type, uint index, void* ctx))
 {
-    // Cant load GL NODE data if we don't have it.
-    if((!glNodeData || (glNodeData && !bspBuild)) &&
-       (doClass >= LCG_VERTEXES && doClass <= LCG_NODES))
-        // Not having the data is considered a success.
-        // This is due to us invoking the dpMapLoader plugin at an awkward
-        // point in the map loading process (at the start).
-        return true;
-
     if(!readMapData(map, doClass, props, numProps, callback))
     {
         FreeMapDataLumps();
@@ -1954,24 +1898,11 @@ static void countMapElements(gamemap_t *map)
             int         lumpClass = mapLump->lumpClass;
             boolean     inuse = true;
 
-            // Are gl Nodes available?
-            if(glNodeData)
-            {
-                // Are we using them?
-                if(!bspBuild)
-                {
-                    if(mapLumpInfo[lumpClass].glLump >= 0)
-                        inuse = false;
-                }
-                else
-                {
-                    // Use the gl versions of the following lumps:
-                    if(lumpClass == LCM_SUBSECTORS ||
-                       lumpClass == LCM_SEGS ||
-                       lumpClass == LCM_NODES)
-                        inuse = false;
-                }
-            }
+            // Use the gl versions of the following lumps:
+            if(lumpClass == LCM_SUBSECTORS ||
+               lumpClass == LCM_SEGS ||
+               lumpClass == LCM_NODES)
+                inuse = false;
 
             if(inuse)
             {   // Determine the number of map data objects of each type we'll need.
@@ -2384,10 +2315,7 @@ boolean P_AttemptMapLoad(char *levelId)
     // Find the actual map data lumps and their offsets.
     // Add them to the list of lumps to be processed.
     P_FindMapLumps(lumpNumbers[0]);
-
-    // If we have GL Node data, find those lumps too.
-    if(glNodeData)
-        P_FindMapLumps(lumpNumbers[1]);
+    P_FindMapLumps(lumpNumbers[1]); // GL nodes
 
     // Make sure we have all the data we need to load this level.
     if(!verifyMapData(levelId))
@@ -2407,8 +2335,6 @@ boolean P_AttemptMapLoad(char *levelId)
     {
         // Excellent, its a map we can read. Load it in!
         Con_Message("P_AttemptMapLoad: %s\n", levelId);
-        if(glNodeData && !bspBuild)
-            Con_Message(" : Ignoring GL Nodes\n");
 
         newmap = M_Malloc(sizeof(gamemap_t));
         // Initialize the new map.
