@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,9 +81,9 @@ int Cl_ReadSectorDelta(void)
     df = Msg_ReadPackedShort();
 
     if(df & SDF_FLOORPIC)
-        sec->SP_floorpic = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_floortexture = Cl_TranslateLump(Msg_ReadPackedShort());
     if(df & SDF_CEILINGPIC)
-        sec->SP_ceilpic = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_ceiltexture = Cl_TranslateLump(Msg_ReadPackedShort());
     if(df & SDF_LIGHT)
         sec->lightlevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_TARGET)
@@ -188,11 +188,11 @@ int Cl_ReadSideDelta(void)
     df = Msg_ReadByte();
 
     if(df & SIDF_TOPTEX)
-        sid->SW_toppic = Msg_ReadPackedShort();
+        sid->SW_toptexture = Msg_ReadPackedShort();
     if(df & SIDF_MIDTEX)
-        sid->SW_middlepic = Msg_ReadPackedShort();
+        sid->SW_middletexture = Msg_ReadPackedShort();
     if(df & SIDF_BOTTOMTEX)
-        sid->SW_bottompic = Msg_ReadPackedShort();
+        sid->SW_bottomtexture = Msg_ReadPackedShort();
 
     if(df & SIDF_LINE_FLAGS)
     {

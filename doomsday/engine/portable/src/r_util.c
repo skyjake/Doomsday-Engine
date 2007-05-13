@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -321,8 +321,8 @@ line_t *R_GetLineForSide(uint sideNumber)
         return NULL;
 
     for(i = 0; i < sector->linecount; ++i)
-        if(sector->Lines[i]->sides[0] == side ||
-           sector->Lines[i]->sides[1] == side)
+        if(sector->Lines[i]->L_frontside == side ||
+           sector->Lines[i]->L_backside == side)
         {
             return sector->Lines[i];
         }
@@ -343,8 +343,8 @@ line_t *R_GetLineForSide(uint sideNumber)
  */
 boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 {
-#define VI      (sector->Lines[i]->v[0])
-#define VJ      (sector->Lines[i]->v[1])
+#define VI      (line->L_v1)
+#define VJ      (line->L_v2)
 
     uint        i;
     boolean     isOdd = false;
@@ -352,9 +352,12 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 
     for(i = 0; i < sector->linecount; ++i)
     {
+        line_t      *line = sector->Lines[i];
+
         // Skip lines that aren't sector boundaries.
-        if(sector->Lines[i]->L_frontsector == sector &&
-           sector->Lines[i]->L_backsector == sector)
+        if(line->L_frontside && line->L_backside &&
+           line->L_frontsector == sector &&
+           line->L_backsector == sector)
             continue;
 
         // It shouldn't matter whether the line faces inward or outward.

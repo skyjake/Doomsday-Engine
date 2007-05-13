@@ -52,9 +52,10 @@
 #define DMT_SIDE_SECTOR DDVT_PTR
 #define DMT_SIDE_FLAGS DDVT_SHORT
 
+#define DMT_LINE_SEC DDVT_PTR
+
 #define DMT_LINE_V DDVT_PTR
 #define DMT_LINE_FLAGS DDVT_SHORT
-#define DMT_LINE_SEC DDVT_PTR          // [front, back] sectors.
 #define DMT_LINE_DX DDVT_FLOAT
 #define DMT_LINE_DY DDVT_FLOAT
 #define DMT_LINE_SLOPETYPE DDVT_INT

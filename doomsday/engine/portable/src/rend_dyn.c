@@ -552,9 +552,9 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
 
             // We need the properties of the real flat/texture.
             if(sdef->SW_middleisflat)
-                GL_GetFlatInfo(sdef->SW_middlepic, &texinfo);
+                GL_GetFlatInfo(sdef->SW_middletexture, &texinfo);
             else
-                GL_GetTextureInfo(sdef->SW_middlepic, &texinfo);
+                GL_GetTextureInfo(sdef->SW_middletexture, &texinfo);
 
             Rend_MidTexturePos(&bottom[0], &bottom[1], &top[0], &top[1],
                                NULL, sdef->SW_middleoffy, texinfo->height,
@@ -712,7 +712,7 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
         return;                 // Nope...
 
     // Which side?
-    if(seg->linedef->sides[0] != seg->sidedef)
+    if(seg->linedef->L_frontside != seg->sidedef)
         backSide = true;
 
     // Visible plane heights.
@@ -741,12 +741,12 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
         {
             texinfo_t      *texinfo = NULL;
 
-            if(sdef->SW_middlepic > 0)
+            if(sdef->SW_middletexture > 0)
             {
                 if(sdef->SW_middleisflat)
-                    GL_GetFlatInfo(sdef->SW_middlepic, &texinfo);
+                    GL_GetFlatInfo(sdef->SW_middletexture, &texinfo);
                 else
-                    GL_GetTextureInfo(sdef->SW_middlepic, &texinfo);
+                    GL_GetTextureInfo(sdef->SW_middletexture, &texinfo);
             }
 
             if(!texinfo->masked)
@@ -1138,7 +1138,7 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     sector_t   *source, *dest;
     float       distance;
 
-    if(!line->L_backsector || !line->L_frontsector ||
+    if(!line->L_backside || !line->L_frontside ||
        line->L_frontsector == line->L_backsector)
     {
         // Line must be between two different sectors.
@@ -1587,12 +1587,12 @@ void DL_ProcessSubsector(subsector_t *ssec)
     for(pln = 0, pVars = planeVars; pln < num; pVars++, ++pln)
     {
         linkSec = R_GetLinkedSector(ssec, pln);
-        pVars->height = SECT_PLANE_HEIGHT(linkSec, pln);
-        pVars->isLit = (!R_IsSkySurface(&sect->planes[pln]->surface));
+        pVars->height = linkSec->SP_planevisheight(pln);
+        pVars->isLit = (!R_IsSkySurface(&sect->SP_planesurface(pln)));
         pVars->decorMap = 0;
 
         // View height might prevent us from seeing the light.
-        if(ssec->planes[pln]->type == PLN_FLOOR)
+        if(ssec->SP_plane(pln)->type == PLN_FLOOR)
         {
             if(vy < pVars->height)
                 pVars->isLit = false;

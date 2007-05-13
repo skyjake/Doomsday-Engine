@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -170,11 +170,10 @@ void P_PlaneChanged(sector_t *sector, uint plane)
 
     for(i = 0; i < sector->linecount; ++i)
     {
-        front = sector->Lines[i]->sides[0];
-        back  = sector->Lines[i]->sides[1];
+        front = sector->Lines[i]->L_frontside;
+        back  = sector->Lines[i]->L_backside;
 
-        if(!front || !front->sector ||
-           !back || !back->sector)
+        if(!front || !front->sector || !back || !back->sector)
             continue;
 
         // Do as in the original Doom if the texture has not been defined -
@@ -184,14 +183,14 @@ void P_PlaneChanged(sector_t *sector, uint plane)
         {
             // Check for missing lowers.
             if(front->sector->SP_floorheight < back->sector->SP_floorheight &&
-               front->SW_bottompic == 0)
+               front->SW_bottomtexture == 0)
             {
                 if(!R_IsSkySurface(&front->sector->SP_floorsurface))
                 {
                     front->SW_bottomflags |= SUF_TEXFIX;
 
-                    front->SW_bottompic =
-                        front->sector->SP_floorpic;
+                    front->SW_bottomtexture =
+                        front->sector->SP_floortexture;
 
                     front->SW_bottomisflat =
                         front->sector->SP_floorisflat;
@@ -200,18 +199,18 @@ void P_PlaneChanged(sector_t *sector, uint plane)
                 if(back->SW_bottomflags & SUF_TEXFIX)
                 {
                     back->SW_bottomflags &= ~SUF_TEXFIX;
-                    back->SW_bottompic = 0;
+                    back->SW_bottomtexture = 0;
                 }
             }
             else if(front->sector->SP_floorheight > back->sector->SP_floorheight &&
-                    back->SW_bottompic == 0)
+                    back->SW_bottomtexture == 0)
             {
                 if(!R_IsSkySurface(&back->sector->SP_floorsurface))
                 {
                     back->SW_bottomflags |= SUF_TEXFIX;
 
-                    back->SW_bottompic =
-                        back->sector->SP_floorpic;
+                    back->SW_bottomtexture =
+                        back->sector->SP_floortexture;
 
                     back->SW_bottomisflat =
                         back->sector->SP_floorisflat;
@@ -220,7 +219,7 @@ void P_PlaneChanged(sector_t *sector, uint plane)
                 if(front->SW_bottomflags & SUF_TEXFIX)
                 {
                     front->SW_bottomflags &= ~SUF_TEXFIX;
-                    front->SW_bottompic = 0;
+                    front->SW_bottomtexture = 0;
                 }
             }
         }
@@ -228,23 +227,23 @@ void P_PlaneChanged(sector_t *sector, uint plane)
         {
             // Check for missing uppers.
             if(front->sector->SP_ceilheight > back->sector->SP_ceilheight &&
-               front->SW_toppic == 0)
+               front->SW_toptexture == 0)
             {
                 if(!R_IsSkySurface(&front->sector->SP_ceilsurface))
                 {
                     front->SW_topflags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
-                   /* if(front->SW_middlepic)
+                   /* if(front->SW_middletexture)
                     {
                         front->flags |= SDF_MIDTEXUPPER;
-                        front->SW_toppic = front->SW_middlepic;
+                        front->SW_toptexture = front->SW_middletexture;
                         front->SW_topisflat = front->SW_middleisflat;
                     }
                     else*/
                     {
-                        front->SW_toppic =
-                            front->sector->SP_ceilpic;
+                        front->SW_toptexture =
+                            front->sector->SP_ceiltexture;
 
                         front->SW_topisflat =
                             front->sector->SP_ceilisflat;
@@ -254,27 +253,27 @@ void P_PlaneChanged(sector_t *sector, uint plane)
                 if(back->SW_topflags & SUF_TEXFIX)
                 {
                     back->SW_topflags &= ~SUF_TEXFIX;
-                    back->SW_toppic = 0;
+                    back->SW_toptexture = 0;
                 }
             }
             else if(front->sector->SP_ceilheight < back->sector->SP_ceilheight &&
-                    back->SW_toppic == 0)
+                    back->SW_toptexture == 0)
             {
                 if(!R_IsSkySurface(&back->sector->SP_ceilsurface))
                 {
                     back->SW_topflags |= SUF_TEXFIX;
                     // Preference a middle texture when doing replacements as
                     // this could be a mid tex door hack.
-                   /* if(front->SW_middlepic)
+                   /* if(front->SW_middletexture)
                     {
                         back->flags |= SDF_MIDTEXUPPER;
-                        back->SW_toppic = back->SW_middlepic;
+                        back->SW_toptexture = back->SW_middletexture;
                         back->SW_topisflat = back->SW_middleisflat;
                     }
                     else*/
                     {
-                        back->SW_toppic =
-                            back->sector->SP_ceilpic;
+                        back->SW_toptexture =
+                            back->sector->SP_ceiltexture;
 
                         back->SW_topisflat =
                             back->sector->SP_ceilisflat;
@@ -284,7 +283,7 @@ void P_PlaneChanged(sector_t *sector, uint plane)
                 if(front->SW_topflags & SUF_TEXFIX)
                 {
                     front->SW_topflags &= ~SUF_TEXFIX;
-                    front->SW_toppic = 0;
+                    front->SW_toptexture = 0;
                 }
             }
         }

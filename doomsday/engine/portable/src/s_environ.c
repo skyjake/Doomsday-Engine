@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -142,18 +142,18 @@ Con_Message("%d bytes; sub_reverb: %p\n", sizeof(subreverb_t) * numsubsectors, s
         total = metal = rock = wood = cloth = 0;
         for(j = 0, seg = sub->firstseg; j < sub->segcount; ++j, seg++)
         {
-            if(!seg->linedef || !seg->sidedef || !seg->sidedef->SW_middlepic)
+            if(!seg->linedef || !seg->sidedef || !seg->sidedef->SW_middletexture)
                 continue;
             total += seg->length;
             // The texture of the seg determines its type.
-            if(seg->sidedef->SW_middlepic == -1)
+            if(seg->sidedef->SW_middletexture == -1)
             {
                 type = TEXTYPE_WOOD;
             }
             else
                 type =
                     S_TextureTypeForName(R_TextureNameForNum
-                                         (seg->sidedef->SW_middlepic));
+                                         (seg->sidedef->SW_middletexture));
             switch (type)
             {
             case TEXTYPE_METAL:

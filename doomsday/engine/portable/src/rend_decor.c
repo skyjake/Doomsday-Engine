@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -394,7 +394,7 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
         return;
 
     // Let's see which sidedef is present.
-    if(line->sides[1] && line->sides[1] == side)
+    if(line->L_backside && line->L_backside == side)
     {
         // Flip vertices, this is the backside.
         v[0] = line->L_v2;
@@ -475,11 +475,11 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
  */
 static side_t *R_GetSectorSide(line_t *line, sector_t *sector)
 {
-    side_t *side = line->sides[0];
+    side_t *side = line->L_frontside;
 
     // Swap if that wasn't the right one.
     if(side->sector != sector)
-        return line->sides[1];
+        return line->L_backside;
 
     return side;
 }
@@ -503,7 +503,8 @@ static boolean Rend_LineDecorationBounds(line_t *line)
     bounds[BCEILING] = FLT2FIX(sector->SP_ceilheight);
 
     // Is the other sector higher/lower?
-    if((sector = line->L_backsector) != NULL)
+    sector = (line->L_backside? line->L_backsector : NULL);
+    if(sector)
     {
         float bfloor = FLT2FIX(sector->SP_floorheight);
         float bceil  = FLT2FIX(sector->SP_ceilheight);
@@ -557,7 +558,7 @@ static void Rend_DecorateLine(int index)
     frontFloor = line->L_frontsector->SP_floorvisheight;
 
     // Do we have a double-sided line?
-    if(line->L_backsector)
+    if(line->L_backside)
     {
         backCeil  = line->L_backsector->SP_ceilvisheight;
         backFloor = line->L_backsector->SP_floorvisheight;
@@ -581,14 +582,14 @@ static void Rend_DecorateLine(int index)
             // Figure out the right side.
             side = R_GetSectorSide(line, highSector);
 
-            if(side->SW_toppic > 0)
+            if(side->SW_toptexture > 0)
             {
                 texinfo_t *texinfo;
 
                 if(side->SW_topisflat)
-                    GL_GetFlatInfo(side->SW_toppic, &texinfo);
+                    GL_GetFlatInfo(side->SW_toptexture, &texinfo);
                 else
-                    GL_GetTextureInfo(side->SW_toppic, &texinfo);
+                    GL_GetTextureInfo(side->SW_toptexture, &texinfo);
 
                 Rend_DecorateLineSection(line, side, &side->SW_topsurface,
                                          highSector->SP_ceilvisheight,
@@ -618,7 +619,7 @@ static void Rend_DecorateLine(int index)
             // Figure out the right side.
             side = R_GetSectorSide(line, lowSector);
 
-            if(side->SW_bottompic > 0)
+            if(side->SW_bottomtexture > 0)
             {
                 Rend_DecorateLineSection(line, side, &side->SW_bottomsurface,
                                          highSector->SP_floorvisheight,
@@ -632,7 +633,7 @@ static void Rend_DecorateLine(int index)
         // 2-sided middle texture?
         // FIXME: Since halos aren't usually clipped by 2-sided middle
         // textures, this looks a bit silly.
-        /*if(line->L_frontside && side = line->L_frontside->SW_middlepic)
+        /*if(line->L_frontside && side = line->L_frontside->SW_middletexture)
         {
             rendpoly_t *quad = R_AllocRendPoly(RP_QUAD, true, 4);
 
@@ -652,16 +653,16 @@ static void Rend_DecorateLine(int index)
     {
         // This is a single-sided line. We only need to worry about the
         // middle texture.
-        side = line->sides[line->L_frontside? FRONT:BACK];
+        side = line->L_side(line->L_frontside? FRONT:BACK);
 
-        if(side->SW_middlepic > 0)
+        if(side->SW_middletexture > 0)
         {
             texinfo_t      *texinfo;
 
             if(side->SW_middleisflat)
-                GL_GetFlatInfo(side->SW_middlepic, &texinfo);
+                GL_GetFlatInfo(side->SW_middletexture, &texinfo);
             else
-                GL_GetTextureInfo(side->SW_middlepic, &texinfo);
+                GL_GetTextureInfo(side->SW_middletexture, &texinfo);
 
             Rend_DecorateLineSection(line, side, &side->SW_middlesurface, frontCeil,
                                      frontFloor,
@@ -759,14 +760,14 @@ static void Rend_DecorateSector(uint index)
 
     for(i = 0; i < sector->planecount; ++i)
     {
-        pln = sector->planes[i];
-        def = Rend_GetGraphicResourceDecoration(pln->surface.texture,
-                                                pln->surface.isflat);
+        pln = sector->SP_plane(i);
+        def = Rend_GetGraphicResourceDecoration(pln->PS_texture,
+                                                pln->PS_isflat);
 
         if(def != NULL) // The surface is decorated.
-            Rend_DecoratePlane(index, SECT_PLANE_HEIGHT(sector, i),
-                               pln->surface.normal[VZ],
-                               pln->surface.offx, pln->surface.offy, def);
+            Rend_DecoratePlane(index, pln->visheight,
+                               pln->PS_normal[VZ],
+                               pln->PS_offx, pln->PS_offy, def);
     }
 }
 

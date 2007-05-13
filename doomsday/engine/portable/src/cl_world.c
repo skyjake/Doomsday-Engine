@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -467,9 +467,9 @@ if(num >= numsectors)
     }
 
     if(df & SDF_FLOORPIC)
-        sec->SP_floorpic = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_floortexture = Cl_TranslateLump(Msg_ReadPackedShort());
     if(df & SDF_CEILINGPIC)
-        sec->SP_ceilpic = Cl_TranslateLump(Msg_ReadPackedShort());
+        sec->SP_ceiltexture = Cl_TranslateLump(Msg_ReadPackedShort());
     if(df & SDF_LIGHT)
         sec->lightlevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_HEIGHT)
@@ -705,12 +705,12 @@ if(num >= numsides)
     sid = SIDE_PTR(num);
 
     if(df & SIDF_TOPTEX)
-        sid->SW_toppic = toptexture;
+        sid->SW_toptexture = toptexture;
     if(df & SIDF_MIDTEX)
-        sid->SW_middlepic = midtexture;
+        sid->SW_middletexture = midtexture;
     if(df & SIDF_BOTTOMTEX)
     {
-        sid->SW_bottompic = bottomtexture;
+        sid->SW_bottomtexture = bottomtexture;
 
 #ifdef _DEBUG
 Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num,

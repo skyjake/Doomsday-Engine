@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -335,7 +335,7 @@ void P_LineOpening(line_t *linedef)
 {
     sector_t *front, *back;
 
-    if(!linedef->L_backsector)
+    if(!linedef->L_backside)
     {                           // single sided line
         openrange = 0;
         return;
@@ -498,7 +498,7 @@ boolean PIT_LinkToLines(line_t *ld, void *parm)
 
     // One sided lines will not be linked to because a mobj
     // can't legally cross one.
-    if(!ld->L_backsector)
+    if(!(ld->L_frontside || ld->L_backside))
         return true;
 
     // No redundant nodes will be creates since this routine is
@@ -687,11 +687,14 @@ boolean P_ThingSectorsIterator(mobj_t *thing,
                 sec->validcount = validcount;
             }
             // And then the back side.
-            sec = ld->L_backsector;
-            if(sec->validcount != validcount)
+            if(ld->L_backside)
             {
-                *end++ = sec;
-                sec->validcount = validcount;
+                sec = ld->L_backsector;
+                if(sec->validcount != validcount)
+                {
+                    *end++ = sec;
+                    sec->validcount = validcount;
+                }
             }
         }
     }
@@ -796,7 +799,7 @@ boolean PIT_AddLineIntercepts(line_t *ld, void *data)
         return true;            // behind source
 
     // try to early out the check
-    if(earlyout && frac < FRACUNIT && !ld->L_backsector)
+    if(earlyout && frac < FRACUNIT && !ld->L_backside)
         return false;           // stop checking
 
     P_AddIntercept(frac, true, ld);

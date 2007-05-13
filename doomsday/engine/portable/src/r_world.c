@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ static void R_SetSectorLinks(sector_t *sec)
                     continue; // minisegs don't count.
 
                 // We are only interested in two-sided lines.
-                if(!(lin->L_frontsector && lin->L_backsector))
+                if(!(lin->L_frontside && lin->L_backside))
                     continue;
 
                 // Check the vertex line owners for both verts.
@@ -183,8 +183,8 @@ static void R_SetSectorLinks(sector_t *sec)
                     else
                         sid = backsid;
 
-                    if((sid->SW_bottompic && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
-                       (sid->SW_middlepic && !(sid->SW_middleflags & SUF_TEXFIX)))
+                    if((sid->SW_bottomtexture && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
+                       (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
                         hackfloor = false;
                     else
                         floorlink_candidate = back;
@@ -199,8 +199,8 @@ static void R_SetSectorLinks(sector_t *sec)
                     else
                         sid = backsid;
 
-                    if((sid->SW_toppic && !(sid->SW_topflags & SUF_TEXFIX)) ||
-                       (sid->SW_middlepic && !(sid->SW_middleflags & SUF_TEXFIX)))
+                    if((sid->SW_toptexture && !(sid->SW_topflags & SUF_TEXFIX)) ||
+                       (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
                         hackceil = false;
                     else
                         ceillink_candidate = back;
@@ -387,24 +387,24 @@ static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
                             lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(lOwner->line->L_backsector)
+                if(lOwner->line->L_backside)
                 if(doSkyFix(rOwner->line->L_frontsector,
                             lOwner->line->L_backsector, pln))
                     *adjusted[pln] = true;
 
-                if(rOwner->line->L_backsector)
+                if(rOwner->line->L_backside)
                 if(doSkyFix(rOwner->line->L_backsector,
                             lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(rOwner->line->L_backsector && lOwner->line->L_backsector)
+                if(rOwner->line->L_backside && lOwner->line->L_backside)
                 if(doSkyFix(rOwner->line->L_backsector,
                             lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
             }
         }
 
-        if(!rOwner->line->L_backsector)
+        if(!rOwner->line->L_backside)
             break;
 
         rOwner = rOwner->LO_next;
@@ -429,24 +429,24 @@ static void spreadSkyFixForNeighbors(vertex_t *vtx, line_t *refLine,
                             lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(lOwner->line->L_backsector)
+                if(lOwner->line->L_backside)
                 if(doSkyFix(rOwner->line->L_frontsector,
                             lOwner->line->L_backsector, pln))
                     *adjusted[pln] = true;
 
-                if(rOwner->line->L_backsector)
+                if(rOwner->line->L_backside)
                 if(doSkyFix(rOwner->line->L_backsector,
                             lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
 
-                if(rOwner->line->L_backsector && lOwner->line->L_backsector)
+                if(rOwner->line->L_backside && lOwner->line->L_backside)
                 if(doSkyFix(rOwner->line->L_backsector,
                             lOwner->line->L_frontsector, pln))
                     *adjusted[pln] = true;
             }
         }
 
-        if(!lOwner->line->L_backsector)
+        if(!lOwner->line->L_backside)
             break;
 
         lOwner = lOwner->LO_prev;
@@ -479,8 +479,8 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
         for(i = 0; i < numlines; ++i)
         {
             line_t     *line = LINE_PTR(i);
-            sector_t   *front = line->L_frontsector;
-            sector_t   *back = line->L_backsector;
+            sector_t   *front = (line->L_frontside? line->L_frontsector : NULL);
+            sector_t   *back = (line->L_backside? line->L_backsector : NULL);
 
             // The conditions: must have two sides.
             if(!front || !back)
@@ -676,7 +676,7 @@ static fvertex_t *edgeClipper(uint *numpoints, fvertex_t *points,
     return points;
 }
 
-static void R_ConvexClipper(subsector_t *ssec, uint num, divline_t *list)
+static void R_ConvexClipper(subsector_t *ssec, uint num, fdivline_t *list)
 {
     uint        i, numedgepoints;
     uint        numclippers = num + ssec->segcount;
@@ -685,15 +685,15 @@ static void R_ConvexClipper(subsector_t *ssec, uint num, divline_t *list)
 
     clippers = M_Malloc(numclippers * sizeof(fdivline_t));
 
-    // Convert the divlines to float, in reverse order.
+    // Reverse the order.
     for(i = 0, clip = clippers; i < numclippers; clip++, ++i)
     {
         if(i < num)
         {
-            clip->pos[VX] = FIX2FLT(list[num - i - 1].pos[VX]);
-            clip->pos[VY] = FIX2FLT(list[num - i - 1].pos[VY]);
-            clip->dx = FIX2FLT(list[num - i - 1].dx);
-            clip->dy = FIX2FLT(list[num - i - 1].dy);
+            clip->pos[VX] = list[num - i - 1].pos[VX];
+            clip->pos[VY] = list[num - i - 1].pos[VY];
+            clip->dx = list[num - i - 1].dx;
+            clip->dy = list[num - i - 1].dy;
         }
         else
         {
@@ -732,8 +732,6 @@ static void R_ConvexClipper(subsector_t *ssec, uint num, divline_t *list)
         printf("All clipped away: subsector %i\n", idx);
         ssec->numverts = 0;
         ssec->verts = 0;
-        //ssec->origverts = 0;
-        //ssec->diffverts = 0;
     }
     else
     {
@@ -755,10 +753,10 @@ static void R_ConvexClipper(subsector_t *ssec, uint num, divline_t *list)
  * Recursively polygonizes all ceilings and floors.
  */
 void R_CreateFloorsAndCeilings(uint bspnode, uint numdivlines,
-                               divline_t *divlines)
+                               fdivline_t *divlines)
 {
     node_t     *nod;
-    divline_t *childlist, *dl;
+    fdivline_t *childlist, *dl;
     uint        childlistsize = numdivlines + 1;
 
     // If this is a subsector we are dealing with, begin carving with the
@@ -777,24 +775,24 @@ void R_CreateFloorsAndCeilings(uint bspnode, uint numdivlines,
     nod = NODE_PTR(bspnode);
 
     // Allocate a new list for each child.
-    childlist = M_Malloc(childlistsize * sizeof(divline_t));
+    childlist = M_Malloc(childlistsize * sizeof(fdivline_t));
 
     // Copy the previous lines, from the parent nodes.
     if(divlines)
-        memcpy(childlist, divlines, numdivlines * sizeof(divline_t));
+        memcpy(childlist, divlines, numdivlines * sizeof(fdivline_t));
 
     dl = childlist + numdivlines;
-    dl->pos[VX] = FLT2FIX(nod->x);
-    dl->pos[VY] = FLT2FIX(nod->y);
+    dl->pos[VX] = nod->x;
+    dl->pos[VY] = nod->y;
     // The right child gets the original line (LEFT side clipped).
-    dl->dx = FLT2FIX(nod->dx);
-    dl->dy = FLT2FIX(nod->dy);
+    dl->dx = nod->dx;
+    dl->dy = nod->dy;
     R_CreateFloorsAndCeilings(nod->children[0], childlistsize, childlist);
 
     // The left side. We must reverse the line, otherwise the wrong
     // side would get clipped.
-    dl->dx = -FLT2FIX(nod->dx);
-    dl->dy = -FLT2FIX(nod->dy);
+    dl->dx = -nod->dx;
+    dl->dy = -nod->dy;
     R_CreateFloorsAndCeilings(nod->children[1], childlistsize, childlist);
 
     // We are finishing with this node, free the allocated list.
@@ -1046,7 +1044,7 @@ static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr,
         return;
 
     // If this is a one-sided line then this is an "anchored" vertex.
-    if(!(lineptr->L_frontsector && lineptr->L_backsector))
+    if(!(lineptr->L_frontside && lineptr->L_backside))
         vtx->anchored = true;
 
     // Has this line already been registered with this vertex?
@@ -1147,10 +1145,12 @@ static void R_BuildVertexOwners(void)
             {
                 uint idx = GET_VERTEX_IDX(line->v[p]);
 
-                R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
-                                       line->L_frontsector);
-                R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
-                                       line->L_backsector);
+                if(line->L_frontside)
+                    R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
+                                           line->L_frontsector);
+                if(line->L_backside)
+                    R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
+                                           line->L_backsector);
 
                 R_SetVertexLineOwner(line->v[p], line, &allocator);
             }
@@ -1395,7 +1395,7 @@ static void R_BuildSectorLinks(void)
         for(k = 0; k < sec->linecount; ++k)
         {
             lin = sec->Lines[k];
-            if(!lin->L_frontsector || !lin->L_backsector ||
+            if(!lin->L_frontside || !lin->L_backside ||
                 lin->L_frontsector != lin->L_backsector)
             {
                 dohack = false;
@@ -1435,9 +1435,12 @@ static void R_BuildSectorLinks(void)
                 other = lin->L_frontsector;
                 if(!other || other == sec)
                 {
-                    other = lin->L_backsector;
-                    if(!other || other == sec)
-                        continue;
+                    if(lin->L_backside)
+                    {
+                        other = lin->L_backsector;
+                        if(!other || other == sec)
+                            continue;
+                    }
                 }
                 other->lightsource = sec;
             }
@@ -1567,7 +1570,7 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
     {
         lin = sec->Lines[i];
 
-        if(lin->L_frontsector && lin->L_backsector &&
+        if(lin->L_frontside && lin->L_backside &&
            lin->L_frontsector == lin->L_backsector &&
            lin->L_backsector == sec)
         {
@@ -1606,12 +1609,12 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
                         else
                         {
                             if(rOwner->L_frontsector != lOwner->L_frontsector &&
-                               ((!rOwner->L_backsector || !lOwner->L_backsector) ||
-                                (rOwner->L_backsector && lOwner->L_backsector &&
+                               ((!rOwner->L_backside || !lOwner->L_backside) ||
+                                (rOwner->L_backside && lOwner->L_backside &&
                                  rOwner->L_backsector != lOwner->L_backsector)) &&
                                (rOwner->L_frontsector == sec || lOwner->L_frontsector == sec ||
-                                (rOwner->L_backsector && rOwner->L_backsector == sec) ||
-                                (lOwner->L_backsector && lOwner->L_backsector == sec)))
+                                (rOwner->L_backside && rOwner->L_backsector == sec) ||
+                                (lOwner->L_backside && lOwner->L_backsector == sec)))
                                 ok = true;
                         }
                     }
@@ -1627,12 +1630,12 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
                         else
                         {
                             if(rOwner->L_frontsector != lOwner->L_frontsector &&
-                               ((!rOwner->L_backsector || !lOwner->L_backsector) ||
-                                (rOwner->L_backsector && lOwner->L_backsector &&
+                               ((!rOwner->L_backside || !lOwner->L_backside) ||
+                                (rOwner->L_backside && lOwner->L_backside &&
                                  rOwner->L_backsector != lOwner->L_backsector)) &&
                                (rOwner->L_frontsector == sec || lOwner->L_frontsector == sec ||
-                                (rOwner->L_backsector && rOwner->L_backsector == sec) ||
-                                (lOwner->L_backsector && lOwner->L_backsector == sec)))
+                                (rOwner->L_backside && rOwner->L_backsector == sec) ||
+                                (lOwner->L_backside && lOwner->L_backsector == sec)))
                                 ok2 = true;
                         }
                     }
@@ -1753,7 +1756,7 @@ void R_RationalizeSectors(void)
                             line = next;
 
                             if(line->L_frontsector == sec &&
-                               (line->L_backsector && line->L_backsector == sec))
+                               (line->L_backside && line->L_backsector == sec))
                             {
                                 // Is this line already in the current run? (self collision)
                                 addToCollection = true;
@@ -1797,7 +1800,7 @@ void R_RationalizeSectors(void)
                                                         lcand = p->line;
 
                                                         if(lcand &&
-                                                           lcand->L_frontsector && lcand->L_backsector &&
+                                                           lcand->L_frontside && lcand->L_backside &&
                                                            lcand->L_frontsector == lcand->L_backsector &&
                                                            lcand->L_frontsector == sec)
                                                         {
@@ -2058,12 +2061,12 @@ line_t *R_FindLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
 
     if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
 
-    if(other->L_frontsector != other->L_backsector)
+    if(!other->L_backside || other->L_frontsector != other->L_backsector)
     {
         if(sector) // Must one of the sectors match?
         {
             if(other->L_frontsector == sector ||
-               (other->L_backsector && other->L_backsector == sector))
+               (other->L_backside && other->L_backsector == sector))
                 return other;
         }
         else
@@ -2086,7 +2089,7 @@ line_t *R_FindSolidLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own
 
     if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
 
-    if(!other->L_frontsector || !other->L_backsector)
+    if(!other->L_frontside || !other->L_backside)
     {
         return other;
     }
@@ -2103,7 +2106,7 @@ line_t *R_FindSolidLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own
     // Check for mid texture which fills the gap between floor and ceiling.
     // We should not give away the location of false walls (secrets).
     side = (other->L_frontsector == sector? 0 : 1);
-    if(other->sides[side]->SW_middlepic != 0)
+    if(other->sides[side]->SW_middletexture != 0)
     {
         float oFCeil  = other->L_frontsector->SP_ceilvisheight;
         float oFFloor = other->L_frontsector->SP_floorvisheight;
@@ -2151,10 +2154,10 @@ line_t *R_FindLineBackNeighbor(sector_t *sector, line_t *line, lineowner_t *own,
 
     if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
 
-    if(other->L_frontsector != other->L_backsector)
+    if(!other->L_backside || other->L_frontsector != other->L_backsector)
     {
         if(!(other->L_frontsector == sector ||
-             (other->L_backsector && other->L_backsector == sector)))
+             (other->L_backside && other->L_backsector == sector)))
             return other;
     }
 
@@ -2182,7 +2185,7 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
     if(other == line)
         return NULL;
 
-    if(!(other->L_backsector &&
+    if(!(other->L_backside &&
          other->L_backsector == other->L_frontsector))
     {
         diff = line->angle - other->angle;
@@ -2196,7 +2199,7 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
     }
 
     // Can't step over non-twosided lines.
-    if(!other->L_backsector || !other->L_frontsector)
+    if(!other->L_backside || !other->L_frontside)
         return NULL;
 
     // Not suitable, try the next.

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006-6007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -147,7 +147,7 @@ sector_t *R_GetShadowSector(shadowpoly_t *poly, uint pln, boolean getLinked)
 {
     if(getLinked)
         return R_GetLinkedSector(poly->ssec, pln);
-    return (poly->seg->linedef->sec[poly->flags & SHPF_FRONTSIDE ? FRONT : BACK]);
+    return (poly->seg->linedef->L_sector(poly->flags & SHPF_FRONTSIDE ? FRONT : BACK));
 }
 
 boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
@@ -239,14 +239,15 @@ void R_ShadowEdges(shadowpoly_t *poly)
         p = base->link[!edge];
         while(p != base && !done)
         {
-            if(!(p->line->L_frontsector == p->line->L_backsector))
+            if(!(p->line->L_frontside && p->line->L_backside &&
+                 p->line->L_frontsector == p->line->L_backsector))
             {
                 if(count == 0)
                 {   // Found the boundry line.
                     boundryOwner = p;
                 }
 
-                if(!p->line->L_frontsector || !p->line->L_backsector)
+                if(!p->line->L_frontside || !p->line->L_backside)
                     done = true; // Found the last one.
                 else
                     count++;
@@ -281,9 +282,9 @@ void R_ShadowEdges(shadowpoly_t *poly)
                 V2_Scale(left, -1);
 
             if(boundryOwner->line->L_frontsector == sector)
-                orientSec = boundryOwner->line->L_backsector;
+                orientSec = (boundryOwner->line->L_backside? boundryOwner->line->L_backsector : NULL);
             else
-                orientSec = boundryOwner->line->L_frontsector;
+                orientSec = (boundryOwner->line->L_frontside? boundryOwner->line->L_frontsector : NULL);
 
             p = boundryOwner;
             for(i = 0; i < count && i < MAX_BEXOFFSETS; ++i)
@@ -293,7 +294,8 @@ void R_ShadowEdges(shadowpoly_t *poly)
                 p = p->link[!edge];
                 do
                 {
-                    if(!(p->line->L_frontsector == p->line->L_backsector))
+                    if(!(p->line->L_frontside && p->line->L_backside &&
+                         p->line->L_frontsector == p->line->L_backsector))
                         neighbor = p->line;
                     else
                         p = p->link[!edge];
@@ -302,7 +304,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
                 // The back neighbor delta.
                 delta = (leftCorner ? left : right);
                 if(orientSec ==
-                   neighbor->sec[neighbor->v[0] == line->v[edge^!side]])
+                   neighbor->L_sector(neighbor->L_v1 == line->L_v(edge^!side)))
                 {
                     delta[VX] = neighbor->dx;
                     delta[VY] = neighbor->dy;
@@ -325,9 +327,9 @@ void R_ShadowEdges(shadowpoly_t *poly)
                 // Update orientSec ready for the next iteration?
                 if(i < count - 1)
                     if(neighbor->L_frontsector == orientSec)
-                        orientSec = neighbor->L_backsector;
+                        orientSec = (neighbor->L_backside? neighbor->L_backsector : NULL);
                     else
-                        orientSec = neighbor->L_frontsector;
+                        orientSec = (neighbor->L_frontside? neighbor->L_frontsector : NULL);
             }
         }
     }

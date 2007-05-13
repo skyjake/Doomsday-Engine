@@ -185,9 +185,9 @@ void PO_SetupPolyobjs(void)
 
                 for(k = 0; k < 2; ++k)
                 {
-                    if(line->sides[k])
+                    if(line->L_side(k))
                     {
-                        side = line->sides[k];
+                        side = line->L_side(k);
 
                         side->SW_topflags |= SUF_NO_RADIO;
                         side->SW_middleflags |= SUF_NO_RADIO;

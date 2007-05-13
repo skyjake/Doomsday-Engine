@@ -508,26 +508,26 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
-    if(line->L_backsector)
+    if(line->L_backside)
     {
-        sector_t *front = line->sec[backside];
-        sector_t *back  = line->sec[backside ^ 1];
-        side_t   *side  = line->sides[backside];
+        sector_t *front = line->L_sector(backside);
+        sector_t *back  = line->L_sector(backside^1);
+        side_t   *side  = line->L_side(backside);
 
-        if(side->SW_middlepic != 0)
+        if(side->SW_middletexture != 0)
         {
             texinfo_t      *texinfo = NULL;
 
-            if(side->SW_middlepic > 0)
+            if(side->SW_middletexture > 0)
             {
                 if(side->SW_middleisflat)
-                    GL_GetFlatInfo(side->SW_middlepic, &texinfo);
+                    GL_GetFlatInfo(side->SW_middletexture, &texinfo);
                 else
-                    GL_GetTextureInfo(side->SW_middlepic, &texinfo);
+                    GL_GetTextureInfo(side->SW_middletexture, &texinfo);
             }
             else // It's a DDay texture.
             {
-                GL_PrepareDDTexture(side->SW_middlepic, &texinfo);
+                GL_PrepareDDTexture(side->SW_middletexture, &texinfo);
             }
 
             if(!side->blendmode && side->SW_middlergba[3] >= 1 && !texinfo->masked)
@@ -574,10 +574,10 @@ boolean Rend_IsWallSectionPVisible(line_t* line, segsection_t section,
         return false; // huh?
 
     // Missing side?
-    if(!line->sides[backside])
+    if(!line->L_side(backside))
         return false;
 
-    side = line->sides[backside];
+    side = line->L_side(backside);
     switch(section)
     {
     case SEG_TOP:
@@ -606,10 +606,10 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
     for(i = 0; i < 2; ++i)
     {
         // Missing side?
-        if(!line->sides[i])
+        if(!line->L_side(i))
             continue;
 
-        side = line->sides[i];
+        side = line->L_side(i);
         side->frameflags |=
             (SIDEINF_TOPPVIS|SIDEINF_MIDDLEPVIS|SIDEINF_BOTTOMPVIS);
 
@@ -617,7 +617,7 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
         if(line->L_frontside && line->L_backside)
         {
             // Check middle texture
-            if(!(side->SW_middlepic || side->SW_middlepic == -1))
+            if(!(side->SW_middletexture || side->SW_middletexture == -1))
                 side->frameflags &= ~SIDEINF_MIDDLEPVIS;
 
             // Check alpha
@@ -628,7 +628,7 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
         }
 
         // Top
-        if(!line->L_backsector)
+        if(!line->L_backside)
             side->frameflags &= ~(SIDEINF_TOPPVIS|SIDEINF_BOTTOMPVIS);
         else
         {
@@ -1172,8 +1172,8 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     sector_t   *frontsec = ssec->sector, *fflinkSec, *fclinkSec;
     int         pid = viewplayer - players;
 
-    sid = seg->linedef->sides[0];
-    backsid = seg->linedef->sides[1];
+    sid = seg->linedef->L_frontside;
+    backsid = seg->linedef->L_backside;
     ldef = seg->linedef;
 
     if(!ldef->mapped[pid])
@@ -1299,8 +1299,8 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     int         pid = viewplayer - players;
 
     backsec = seg->SG_backsector;
-    sid = seg->linedef->sides[0];
-    backsid = seg->linedef->sides[1];
+    sid = seg->linedef->L_frontside;
+    backsid = seg->linedef->L_backside;
     ldef = seg->linedef;
 
     if(!ldef->mapped[pid])
@@ -1324,8 +1324,8 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
         side = backsid;
 
     if(backsec == seg->SG_frontsector &&
-       side->SW_toppic == 0 && side->SW_bottompic == 0 &&
-       side->SW_middlepic == 0)
+       side->SW_toptexture == 0 && side->SW_bottomtexture == 0 &&
+       side->SW_middletexture == 0)
        return; // Ugh... an obvious wall seg hack. Best take no chances...
 
     fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
@@ -1375,11 +1375,11 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 
             // We need the properties of the real flat/texture.
             if(surface->texture < 0)
-                GL_PrepareDDTexture(side->SW_middlepic, &texinfo);
+                GL_PrepareDDTexture(side->SW_middletexture, &texinfo);
             else if(side->SW_middleisflat)
-                GL_GetFlatInfo(side->SW_middlepic, &texinfo);
+                GL_GetFlatInfo(side->SW_middletexture, &texinfo);
             else
-                GL_GetTextureInfo(side->SW_middlepic, &texinfo);
+                GL_GetTextureInfo(side->SW_middletexture, &texinfo);
 
             if(Rend_MidTexturePos
                (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
@@ -1707,18 +1707,18 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             // An obvious hack, what to do though??
         }
         else if((bceil <= ffloor &&
-                    ((side->SW_toppic != 0 /* && !(side->flags & SDF_MIDTEXUPPER)*/) ||
-                     (side->SW_middlepic != 0))) ||
+                    ((side->SW_toptexture != 0 /* && !(side->flags & SDF_MIDTEXUPPER)*/) ||
+                     (side->SW_middletexture != 0))) ||
                 (bfloor >= fceil &&
-                    (side->SW_bottompic != 0 || side->SW_middlepic !=0)))
+                    (side->SW_bottomtexture != 0 || side->SW_middletexture !=0)))
         {
             // A closed gap.
             solidSeg = true;
         }
         else if((seg->frameflags & SEGINF_BACKSECSKYFIX) ||
                 (bsh == 0 && bfloor > ffloor && bceil < fceil &&
-                (side->SW_toppic != 0 /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
-                (side->SW_bottompic != 0)))
+                (side->SW_toptexture != 0 /*&& !(side->flags & SDF_MIDTEXUPPER)*/) &&
+                (side->SW_bottomtexture != 0)))
         {
             // A zero height back segment
             solidSeg = true;
@@ -1842,8 +1842,8 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             frontsec = seg->SG_frontsector;
 
             if(backsec == frontsec &&
-               side->SW_toppic == 0 && side->SW_bottompic == 0 &&
-               side->SW_middlepic == 0)
+               side->SW_toptexture == 0 && side->SW_bottomtexture == 0 &&
+               side->SW_middletexture == 0)
                continue; // Ugh... an obvious wall seg hack. Best take no chances...
 
             ffloor = frontsec->SP_floorvisheight;
@@ -2032,9 +2032,9 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
         return;
 
     // Determine plane height.
-    height = SECT_PLANE_HEIGHT(polySector, plane->type);
+    height = polySector->SP_planevisheight(plane->type);
     // Add the skyfix
-    height += polySector->skyfix[plane->type].offset;
+    height += polySector->S_skyfix(plane->type).offset;
 
     vec[VX] = vx - subsector->midpoint.pos[VX];
     vec[VY] = vz - subsector->midpoint.pos[VY];

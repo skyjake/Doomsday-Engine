@@ -256,14 +256,14 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
     float       iFFloor, iFCeil;
     float       iBFloor, iBCeil;
     int         scanSecSide = side;
-    sector_t   *startSector = line->sec[side];
+    sector_t   *startSector = line->L_sector(side);
     sector_t   *scanSector;
     boolean     clockwise = toLeft;
     boolean     stopScan = false;
     boolean     closed;
 
     // Retrieve the start owner node.
-    own = R_GetVtxLineOwner(line->v[(side^!toLeft)], line);
+    own = R_GetVtxLineOwner(line->L_v(side^!toLeft), line);
     do
     {
         // Select the next line.
@@ -273,7 +273,8 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
         scanSecSide = (iter->L_frontsector == startSector);
 
         // Step over selfreferencing lines?
-        while(iter->L_frontsector == iter->L_backsector)
+        while(iter->L_frontside && iter->L_backside &&
+              iter->L_frontsector == iter->L_backsector)
         {
             own = own->link[clockwise];
             diff += (clockwise? own->angle : own->LO_prev->angle);
@@ -283,8 +284,8 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
         }
 
         // Determine the relative backsector.
-        if(iter->sec[scanSecSide])
-            scanSector = iter->sec[scanSecSide];
+        if(iter->L_side(scanSecSide))
+            scanSector = iter->L_sector(scanSecSide);
         else
             scanSector = NULL;
 
@@ -294,7 +295,7 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
             iFFloor = iter->L_frontsector->SP_floorvisheight;
             iFCeil  = iter->L_frontsector->SP_ceilvisheight;
 
-            if(iter->L_backsector)
+            if(iter->L_backside)
             {
                 iBFloor = iter->L_backsector->SP_floorvisheight;
                 iBCeil  = iter->L_backsector->SP_ceilvisheight;
@@ -313,7 +314,7 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
             edge->sector = scanSector;
 
             closed = false;
-            if(side == 0 && iter->L_backsector != NULL)
+            if(side == 0 && iter->L_backside != NULL)
                 if(scanTop)
                 {
                     if(iBFloor >= fCeil)
@@ -329,13 +330,14 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
             // texture on the seg shadow edge being rendered?
             if(scanTop)
             {
-                if((side == 0 && iter->L_backsector == line->L_frontsector &&
+                if(iter->L_backside &&
+                   ((side == 0 && iter->L_backsector == line->L_frontsector &&
                     iFCeil >= fCeil) ||
                    (side == 1 && iter->L_backsector == line->L_backsector &&
                     iFCeil >= fCeil) ||
-                    (side == 0 && closed == false && iter->L_backsector != NULL &&
-                    iter->L_backsector != line->L_frontsector && iBCeil >= fCeil &&
-                    Rend_IsSectorOpen(iter->L_backsector)))
+                    (side == 0 && closed == false && iter->L_backsector != line->L_frontsector &&
+                    iBCeil >= fCeil &&
+                    Rend_IsSectorOpen(iter->L_backsector))))
                 {
                     gap += iter->length;  // Should we just mark it done instead?
                 }
@@ -347,13 +349,14 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
             }
             else
             {
-                if((side == 0 && iter->L_backsector == line->L_frontsector &&
+                if(iter->L_backside &&
+                   ((side == 0 && iter->L_backsector == line->L_frontsector &&
                     iFFloor <= fFloor) ||
                    (side == 1 && iter->L_backsector == line->L_backsector &&
                     iFFloor <= fFloor) ||
-                   (side == 0 && closed == false && iter->L_backsector != NULL &&
-                    iter->L_backsector != line->L_frontsector && iBFloor <= fFloor &&
-                    Rend_IsSectorOpen(iter->L_backsector)))
+                   (side == 0 && closed == false && iter->L_backsector != line->L_frontsector &&
+                    iBFloor <= fFloor &&
+                    Rend_IsSectorOpen(iter->L_backsector))))
                 {
                     gap += iter->length;  // Should we just mark it done instead?
                 }
@@ -414,8 +417,8 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
 
             // Skip into the back neighbor sector of the iter line if
             // heights are within accepted range.
-            if(scanSector &&
-               scanSector != line->sec[side^1] &&
+            if(scanSector && line->L_side(side^1) &&
+               scanSector != line->L_sector(side^1) &&
                 ((scanTop && scanSector->SP_ceilvisheight ==
                                 startSector->SP_ceilvisheight) ||
                  (!scanTop && scanSector->SP_floorvisheight ==
@@ -449,7 +452,7 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
         // get the next neighbor (it IS the backneighbor).
         edge->line =
             R_FindLineNeighbor(edge->sector, edge->line,
-                               edge->line->vo[(edge->line->L_backsector == edge->sector)^!toLeft],
+                               edge->line->vo[(edge->line->L_backside && edge->line->L_backsector == edge->sector)^!toLeft],
                                !toLeft, &edge->diff);
     }
 
@@ -466,7 +469,8 @@ static void Rend_RadioScanNeighbors(shadowcorner_t top[2],
     edgespan_t *span;
     shadowcorner_t *corner;
 
-    if(line->L_frontsector == line->L_backsector)
+    if(line->L_frontside && line->L_backside &&
+       line->L_frontsector == line->L_backsector)
         return;
 
     memset(edges, 0, sizeof(edges));
@@ -561,7 +565,7 @@ static void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
     side_t     *side;
     line_t     *other;
 
-    side = line->sides[sid];
+    side = line->L_side(sid);
 
     memset(sideCorners, 0, sizeof(sideCorners));
 
@@ -570,8 +574,8 @@ static void Rend_RadioScanEdges(shadowcorner_t topCorners[2],
     {
         binangle_t diff = 0;
 
-        other = R_FindSolidLineNeighbor(line->sec[sid], line,
-                                        line->vo[i^sid], i, &diff);
+        other = R_FindSolidLineNeighbor(line->L_sector(sid), line,
+                                        line->L_vo(i^sid), i, &diff);
         if(other && other != line)
         {
             if(diff > BANG_180)
@@ -1130,7 +1134,7 @@ static uint radioEdgeHackType(line_t *line, sector_t *front, sector_t *back,
                               int backside, boolean isCeiling, float fz,
                               float bz)
 {
-    surface_t  *surface = &line->sides[backside? BACK:FRONT]->
+    surface_t  *surface = &line->L_side(backside)->
                              sections[isCeiling? SEG_TOP:SEG_BOTTOM];
 
     if(fz < bz && surface->texture == 0 && !(surface->flags & SUF_TEXFIX))
@@ -1195,7 +1199,7 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
             // back neighbor at which plane heights differ.
             lineowner_t *base, *p;
             vertex_t   *vtx =
-                shadow->seg->linedef->v[i^!(shadow->flags & SHPF_FRONTSIDE)];
+                shadow->seg->linedef->L_v(i^!(shadow->flags & SHPF_FRONTSIDE));
             uint        id;
             boolean     found;
 
@@ -1205,9 +1209,10 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
             found = false;
             while(p != base && !found)
             {
-                if(!(p->line->L_frontsector == p->line->L_backsector))
+                if(!(p->line->L_frontside && p->line->L_backside &&
+                     p->line->L_frontsector == p->line->L_backsector))
                 {
-                    if(!p->line->L_backsector)
+                    if(!p->line->L_backside)
                     {
                         if((isCeiling &&
                             p->line->L_frontsector->SP_ceilvisheight == z) ||
@@ -1220,19 +1225,19 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
                         if((isCeiling &&
                             ((p->line->L_frontsector->SP_ceilvisheight < z ||
                               p->line->L_backsector->SP_ceilvisheight < z) ||
-                             ((p->line->v[i^1] == vtx &&
+                             ((p->line->L_v(i^1) == vtx &&
                                p->line->L_backsector->SP_floorvisheight >=
                                shadow->ssec->sector->SP_ceilvisheight) ||
-                              (p->line->v[i] == vtx &&
+                              (p->line->L_v(i) == vtx &&
                                p->line->L_frontsector->SP_floorvisheight >=
                                shadow->ssec->sector->SP_ceilvisheight)))) ||
                            (!isCeiling &&
                             ((p->line->L_frontsector->SP_floorvisheight > z ||
                               p->line->L_backsector->SP_floorvisheight > z) ||
-                             ((p->line->v[i^1] == vtx &&
+                             ((p->line->L_v(i^1) == vtx &&
                                p->line->L_backsector->SP_ceilvisheight <=
                                shadow->ssec->sector->SP_floorvisheight) ||
-                              (p->line->v[i] == vtx &&
+                              (p->line->L_v(i) == vtx &&
                                p->line->L_frontsector->SP_ceilvisheight <=
                                shadow->ssec->sector->SP_floorvisheight)))) ||
                            Rend_DoesMidTextureFillGap(p->line, p->line->v[i] == vtx))
@@ -1245,7 +1250,7 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
                         id++;
                 }
 
-                if(!p->line->L_backsector)
+                if(!p->line->L_backside)
                     break;
 
                 if(!found)
@@ -1374,7 +1379,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             suf = &subsector->sector->planes[pln]->surface;
 
             shadowSec = R_GetShadowSector(shadow, pln, true);
-            plnHeight = SECT_PLANE_HEIGHT(shadowSec, pln);
+            plnHeight = shadowSec->SP_planevisheight(pln);
             vec[VZ] = vy - plnHeight;
 
             // Glowing surfaces or missing textures shouldn't have shadows.
@@ -1389,7 +1394,7 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             line = shadow->seg->linedef;
             side = (shadow->flags & SHPF_FRONTSIDE) == 0;
 
-            if(line->L_backsector)
+            if(line->L_backside)
             {
                 if(subsector->sector->subsgroups[subsector->group].linked[pln] &&
                    !devNoLinkedSurfaces)
@@ -1407,8 +1412,8 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
                 }
                 else
                 {
-                    front = line->sec[side];
-                    back  = line->sec[side ^ 1];
+                    front = line->L_sector(side);
+                    back  = line->L_sector(side ^ 1);
                 }
                 setRelativeHeights(front, back, pln, &fz, &bz, &bhz);
 
@@ -1430,13 +1435,13 @@ BEGIN_PROF( PROF_RADIO_SUBSECTOR );
             {
                 line_t *neighbor =
                     R_FindLineNeighbor(shadow->ssec->sector, line,
-                                              line->vo[side^i], i, NULL);
-                if(neighbor && neighbor->L_backsector)
+                                       line->L_vo(side^i), i, NULL);
+                if(neighbor && neighbor->L_backside)
                 {
                     uint side2 = (neighbor->L_frontsector != shadowSec);
 
-                    front = neighbor->sec[side2];
-                    back  = neighbor->sec[side2 ^ 1];
+                    front = neighbor->L_sector(side2);
+                    back  = neighbor->L_sector(side2 ^ 1);
                     setRelativeHeights(front, back, pln, &fz, &bz, &bhz);
 
                     hack = radioEdgeHackType(neighbor, front, back, side2, pln, fz, bz);

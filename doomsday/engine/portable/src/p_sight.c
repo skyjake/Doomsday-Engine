@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ static divline_t strace;
 
 // CODE --------------------------------------------------------------------
 
-boolean PTR_SightTraverse(intercept_t * in)
+boolean PTR_SightTraverse(intercept_t *in)
 {
     line_t *li;
     fixed_t slope;
@@ -151,7 +151,7 @@ boolean P_SightBlockLinesIterator(int x, int y)
                         continue;   // line isn't crossed
 
                     // try to early out the check
-                    if(!ld->L_backsector)
+                    if(!ld->L_backside)
                         return false;   // stop checking
 
                     // store the line for later intersection testing
@@ -190,7 +190,7 @@ boolean P_SightBlockLinesIterator(int x, int y)
             continue;           // line isn't crossed
 
         // try to early out the check
-        if(!ld->L_backsector)
+        if(!ld->L_backside)
             return false;       // stop checking
 
         // store the line for later intersection testing

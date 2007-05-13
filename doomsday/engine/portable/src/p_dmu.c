@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -430,8 +430,8 @@ void* P_AllocDummy(int type, void* extraData)
                 dummyLines[i].inUse = true;
                 dummyLines[i].extraData = extraData;
                 dummyLines[i].line.header.type = DMU_LINE;
-                dummyLines[i].line.sides[0] =
-                    dummyLines[i].line.sides[1] = NULL;
+                dummyLines[i].line.L_frontside =
+                    dummyLines[i].line.L_backside = NULL;
                 return &dummyLines[i];
             }
         }
@@ -1229,9 +1229,9 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 0);
             break;
         case DMU_TOP_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SW_toppic, args, 0);
+            SetValue(DMT_SURFACE_TEXTURE, &p->SW_toptexture, args, 0);
             p->SW_topisflat = false; // Kludge
-           /* if(p->SW_toppic)
+           /* if(p->SW_toptexture)
                 p->flags &= ~SDF_MIDTEXUPPER;*/
             break;
         case DMU_TOP_TEXTURE_OFFSET_X:
@@ -1266,7 +1266,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SIDE_BLENDMODE, &p->blendmode, args, 0);
             break;
         case DMU_MIDDLE_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SW_middlepic, args, 0);
+            SetValue(DMT_SURFACE_TEXTURE, &p->SW_middletexture, args, 0);
             p->SW_middleisflat = false; // Kludge
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_X:
@@ -1294,7 +1294,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 0);
             break;
         case DMU_BOTTOM_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SW_bottompic, args, 0);
+            SetValue(DMT_SURFACE_TEXTURE, &p->SW_bottomtexture, args, 0);
             p->SW_bottomisflat = false; // Kludge
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_X:
@@ -1887,14 +1887,14 @@ static int GetProperty(void* ptr, void* context)
         {
             line_t* line = (line_t*)ptr;
             if(args->modifiers & DMU_SIDE0_OF_LINE)
-                p = line->sides[0];
+                p = line->L_frontside;
             else
             {
-                if(!line->sides[1])
+                if(!line->L_backside)
                     Con_Error("GetProperty: Line %d does not have a back side.\n",
                               GET_LINE_IDX(line));
 
-                p = line->sides[1];
+                p = line->L_backside;
             }
         }
 
@@ -1905,7 +1905,7 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_TOP_TEXTURE:
             {
-            short texture = p->SW_toppic;
+            short texture = p->SW_toptexture;
 
             if(p->SW_topflags & SUF_TEXFIX)
                 texture = 0;
@@ -1942,13 +1942,13 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_MIDDLE_TEXTURE:
             {
-            short texture = p->SW_middlepic;
+            short texture = p->SW_middletexture;
 
             if(p->SW_middleflags & SUF_TEXFIX)
                 texture = 0;
 
             /*if(p->flags & SDF_MIDTEXUPPER)
-                texture = p->SW_toppic;*/
+                texture = p->SW_toptexture;*/
 
             GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
             break;
@@ -1986,7 +1986,7 @@ static int GetProperty(void* ptr, void* context)
             break;
         case DMU_BOTTOM_TEXTURE:
             {
-            short texture = p->SW_bottompic;
+            short texture = p->SW_bottomtexture;
 
             if(p->SW_bottomflags & SUF_TEXFIX)
                 texture = 0;
@@ -2167,11 +2167,17 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_LINE_SLOPETYPE, &p->slopetype, args, 0);
             break;
         case DMU_FRONT_SECTOR:
-            GetValue(DMT_LINE_SEC, &p->L_frontsector, args, 0);
+        {
+            sector_t *sec = (p->L_frontside? p->L_frontsector : NULL);
+            GetValue(DMT_LINE_SEC, &sec, args, 0);
             break;
+        }
         case DMU_BACK_SECTOR:
-            GetValue(DMT_LINE_SEC, &p->L_backsector, args, 0);
+        {
+            sector_t *sec = (p->L_backside? p->L_backsector : NULL);
+            GetValue(DMT_LINE_SEC, &sec, args, 0);
             break;
+        }
         case DMU_FLAGS:
             GetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
             break;

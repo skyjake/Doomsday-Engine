@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -831,7 +831,7 @@ static void FreeMapDataLumps(void)
     }
 }
 
-/*
+/**
  * Locate the lump indices where the data of the specified map
  * resides (both regular and GL Node data).
  *
@@ -877,7 +877,7 @@ static boolean P_LocateMapData(char *levelID, int *lumpIndices)
     return true;
 }
 
-/*
+/**
  * Find the lump offsets for this map dataset automatically.
  * Some obscure PWADs have these lumps in a non-standard order... tsk, tsk.
  *
@@ -928,7 +928,7 @@ static void P_FindMapLumps(int startLump)
     }
 }
 
-/*
+/**
  * Attempt to determine the format of this map data lump.
  *
  * This is done by checking the start bytes of this lump (the lump "header")
@@ -1024,7 +1024,7 @@ static void DetermineMapDataLumpFormat(mapdatalumpinfo_t* mapLump)
     // Use the default data format for this lump (map format specific).
 }
 
-/*
+/**
  * Make sure we have (at least) one lump of each lump class that we require.
  *
  * During the process we will attempt to determine the format of an individual
@@ -1129,7 +1129,7 @@ static boolean verifyMapData(char *levelID)
     return true;
 }
 
-/*
+/**
  * Determines the format of the map by comparing the (already determined)
  * lump formats against the known map formats.
  *
@@ -1288,7 +1288,7 @@ static boolean determineMapDataFormat(void)
     return true;
 }
 
-/*
+/**
  * Validate the map data before loading the level.
  * This entails:
  *
@@ -2218,7 +2218,7 @@ static uint unpackSideDefs(gamemap_t *map)
             {
                 seg_t *seg = &map->segs[j];
                 if(seg->sidedef == side)
-                    seg->sidedef = seg->linedef->sides[seg->side];
+                    seg->sidedef = seg->linedef->L_side(seg->side);
             }
         }
         M_Free(sideOwnerLists);
@@ -2339,14 +2339,14 @@ static boolean loadMapData(gamemap_t *map)
     {
         seg_t *seg = &map->segs[i];
         if(seg->linedef)
-            seg->sidedef = seg->linedef->sides[seg->side];
+            seg->sidedef = seg->linedef->L_side(seg->side);
     }
     unpackSideDefs(map);
     finishLineDefs(map);
-    processSegs(map);
 
     readAllTypeProperties(map, DAM_SUBSECTOR, DAM_SetProperty);
     readAllTypeProperties(map, DAM_NODE, DAM_SetProperty);
+    processSegs(map);
 
     if(!P_ReadMapData(map, LCM_BLOCKMAP, NULL, 0, NULL))
         return false;
@@ -2446,7 +2446,7 @@ boolean P_AttemptMapLoad(char *levelId)
     }
 }
 
-/*
+/**
  * Finalizes the segs by linking the various side & sector ptrs
  * and calculating the length of each segment.
  * If angle and offset information is not provided they are
@@ -2471,11 +2471,11 @@ static void processSegs(gamemap_t *map)
         if(seg->linedef)
         {
             ldef = seg->linedef;
-            seg->SG_frontsector = ldef->sides[seg->side]->sector;
+            seg->SG_frontsector = ldef->L_side(seg->side)->sector;
 
-            if((ldef->flags & ML_TWOSIDED) && ldef->sides[seg->side ^ 1])
+            if((ldef->flags & ML_TWOSIDED) && ldef->L_side(seg->side ^ 1))
             {
-                seg->SG_backsector = ldef->sides[seg->side ^ 1]->sector;
+                seg->SG_backsector = ldef->L_side(seg->side ^ 1)->sector;
             }
             else
             {
@@ -2545,7 +2545,7 @@ static void processSegs(gamemap_t *map)
     }
 }
 
-/*
+/**
  * Completes the linedef loading by resolving the front/back
  * sector ptrs which we couldn't do earlier as the sidedefs
  * hadn't been loaded at the time.
@@ -2611,16 +2611,6 @@ static void finishLineDefs(gamemap_t* map)
             ld->bbox[BOXTOP]    = FLT2FIX(v[0]->pos[VY]);
         }
 
-        if(ld->L_frontside)
-            ld->L_frontsector = ld->L_frontside->sector;
-        else
-            ld->L_frontsector = 0;
-
-        if(ld->L_backside)
-            ld->L_backsector = ld->L_backside->sector;
-        else
-            ld->L_backsector = 0;
-
         // Increase the sector line count
         if(ld->L_frontsector)
         {
@@ -2633,7 +2623,7 @@ static void finishLineDefs(gamemap_t* map)
             numMissingFronts++;
         }
 
-        if(ld->L_backsector && ld->L_backsector != ld->L_frontsector)
+        if(ld->L_backside && ld->L_backsector != ld->L_frontsector)
         {
             ld->L_backsector->linecount++;
             numUniqueLines++;
@@ -2641,7 +2631,7 @@ static void finishLineDefs(gamemap_t* map)
     }
 }
 
-/*
+/**
  * Builds sector line lists and subsector sector numbers.
  * Finds block bounding boxes for sectors.
  */
@@ -2667,8 +2657,8 @@ static void finalizeMapData(gamemap_t *map)
     seg_t      *seg;
     fixed_t     bbox[4];
 
-    Con_Message("Group lines\n");
-    Con_Message(" Sector look up\n");
+    Con_Message("Group lines...\n");
+    Con_Message(" Sector look up...\n");
     // look up sector number for each subsector
     for(i = 0, ss = map->subsectors; i < map->numsubsectors; ++i, ss++)
     {
@@ -2679,6 +2669,8 @@ static void finalizeMapData(gamemap_t *map)
                 ss->sector->subscount++;
                 break;
             }
+
+        assert(ss->sector);
     }
 
     Con_Message(" Build line and subsector tables\n");
@@ -2717,7 +2709,7 @@ static void finalizeMapData(gamemap_t *map)
             li->L_frontsector->Lines[linesInSector[secid]++] = li;
         }
 
-        if(li->L_backsector != NULL && li->L_backsector != li->L_frontsector)
+        if(li->L_backside && li->L_backsector != li->L_frontsector)
         {
             secid = li->L_backsector - map->sectors;
             li->L_backsector->Lines[linesInSector[secid]++] = li;
@@ -2813,12 +2805,12 @@ static void finalizeMapData(gamemap_t *map)
         side_t *side = &map->sides[i];
 
         // Make sure the texture references are good.
-        if(!side->SW_topisflat && side->SW_toppic >= numtextures)
-            side->SW_toppic = 0;
-        if(!side->SW_middleisflat && side->SW_middlepic >= numtextures)
-            side->SW_middlepic = 0;
-        if(!side->SW_bottomisflat && side->SW_bottompic >= numtextures)
-            side->SW_bottompic = 0;
+        if(!side->SW_topisflat && side->SW_toptexture >= numtextures)
+            side->SW_toptexture = 0;
+        if(!side->SW_middleisflat && side->SW_middletexture >= numtextures)
+            side->SW_middletexture = 0;
+        if(!side->SW_bottomisflat && side->SW_bottomtexture >= numtextures)
+            side->SW_bottomtexture = 0;
     }
 
     // Initialize polyobject properties (here?)
@@ -2840,14 +2832,14 @@ static void finalizeMapData(gamemap_t *map)
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
-/*
+/**
  * Generate valid blockmap data from the already loaded level data.
  * Adapted from algorithm used in prBoom 2.2.6 -DJS
  *
  * Algorithm is order of nlines*(ncols+nrows) not nlines*ncols*nrows
  */
 
-/*
+/**
  * Subroutine to add a line number to a block list
  * It simply returns if the line is already in the block
  */
@@ -2870,7 +2862,7 @@ static void AddBlockLine(linelist_t **lists, uint *count, uint *done,
     done[blockno] = 1;
 }
 
-/*
+/**
  * Actually construct the blockmap lump from the level data
  *
  * This finds the intersection of each linedef with the column and
@@ -3156,7 +3148,7 @@ static void createBlockMap(gamemap_t* map)
     M_Free(blockdone);
 }
 
-/*
+/**
  * Attempts to load the BLOCKMAP data resource.
  *
  * If the level is too large (would overflow the size limit of
@@ -3225,7 +3217,7 @@ static boolean loadBlockMap(gamemap_t* map, mapdatalumpinfo_t* maplump)
     return true;
 }
 
-/*
+/**
  * Construct a REJECT LUT for the given map.
  *
  * TODO: We could generate a proper table if a suitable one is
@@ -3247,7 +3239,7 @@ static void P_CreateReject(gamemap_t* map)
         map->rejectmatrix = NULL;
 }
 
-/*
+/**
  * Attempt to load the REJECT.
  *
  * If a lump is not found, we'll generate an empty REJECT LUT.
@@ -3291,7 +3283,7 @@ static void P_CreateReject(gamemap_t* map)
  *   ceiling(numsectors^2)
  */
 
-/*
+/**
  * This is temporary. Ideally reject data should be loaded with
  * P_ReadBinaryMapData but not treated as an aggregate data type.
  * We should only need this func if we have to generate data.

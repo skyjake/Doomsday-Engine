@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -496,9 +496,9 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     side_t *side = SIDE_PTR(number);
     line_t *line = sideOwners[number];
 
-    reg->top.texture = side->SW_toppic;
-    reg->middle.texture = side->SW_middlepic;
-    reg->bottom.texture = side->SW_bottompic;
+    reg->top.texture = side->SW_toptexture;
+    reg->middle.texture = side->SW_middletexture;
+    reg->bottom.texture = side->SW_bottomtexture;
     reg->lineFlags = (line ? line->flags & 0xff : 0);
 
     memcpy(reg->top.rgba, side->SW_toprgba, sizeof(reg->top.rgba));
@@ -689,9 +689,9 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, uint number,
     int         df = 0;
 
     // Determine which data is different.
-    if(r->planes[PLN_FLOOR].surface.texture != s->SP_floorpic)
+    if(r->planes[PLN_FLOOR].surface.texture != s->SP_floortexture)
         df |= SDF_FLOORPIC;
-    if(r->planes[PLN_CEILING].surface.texture != s->SP_ceilpic)
+    if(r->planes[PLN_CEILING].surface.texture != s->SP_ceiltexture)
         df |= SDF_CEILINGPIC;
     if(r->lightlevel != s->lightlevel)
         df |= SDF_LIGHT;
@@ -838,27 +838,27 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
     byte        lineFlags = (line ? line->flags & 0xff : 0);
     byte        sideFlags = s->flags & 0xff;
 
-    if(r->top.texture != s->SW_toppic && !(s->SW_topflags & SUF_TEXFIX))
+    if(r->top.texture != s->SW_toptexture && !(s->SW_topflags & SUF_TEXFIX))
     {
         df |= SIDF_TOPTEX;
         if(doUpdate)
-            r->top.texture = s->SW_toppic;
+            r->top.texture = s->SW_toptexture;
     }
 
-    if(r->middle.texture != s->SW_middlepic &&
+    if(r->middle.texture != s->SW_middletexture &&
        !(s->SW_middleflags & SUF_TEXFIX))
     {
         df |= SIDF_MIDTEX;
         if(doUpdate)
-            r->middle.texture = s->SW_middlepic;
+            r->middle.texture = s->SW_middletexture;
     }
 
-    if(r->bottom.texture != s->SW_bottompic &&
+    if(r->bottom.texture != s->SW_bottomtexture &&
        !(s->SW_bottomflags & SUF_TEXFIX))
     {
         df |= SIDF_BOTTOMTEX;
         if(doUpdate)
-            r->bottom.texture = s->SW_bottompic;
+            r->bottom.texture = s->SW_bottomtexture;
     }
 
     if(r->lineFlags != lineFlags)

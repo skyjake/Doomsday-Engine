@@ -1232,28 +1232,28 @@ void R_PrecacheLevel(void)
     {
         side = SIDE_PTR(i);
 
-        if(side->SW_toppic != -1)
+        if(side->SW_toptexture != -1)
         {
             if(side->SW_topisflat)
-                R_PrecacheFlat(side->SW_toppic);
+                R_PrecacheFlat(side->SW_toptexture);
             else
-                texturepresent[side->SW_toppic] = 1;
+                texturepresent[side->SW_toptexture] = 1;
         }
 
-        if(side->SW_middlepic != -1)
+        if(side->SW_middletexture != -1)
         {
             if(side->SW_middleisflat)
-                R_PrecacheFlat(side->SW_middlepic);
+                R_PrecacheFlat(side->SW_middletexture);
             else
-                texturepresent[side->SW_middlepic] = 1;
+                texturepresent[side->SW_middletexture] = 1;
         }
 
-        if(side->SW_bottompic != -1)
+        if(side->SW_bottomtexture != -1)
         {
             if(side->SW_bottomisflat)
-                R_PrecacheFlat(side->SW_bottompic);
+                R_PrecacheFlat(side->SW_bottomtexture);
             else
-                texturepresent[side->SW_bottompic] = 1;
+                texturepresent[side->SW_bottomtexture] = 1;
         }
     }
 

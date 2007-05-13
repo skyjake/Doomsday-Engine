@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -653,7 +653,7 @@ boolean PIT_CheckLinePtc(line_t *ld, void *data)
 
     // We are possibly hitting something here.
     ptcHitLine = ld;
-    if(!ld->L_backsector)
+    if(!ld->L_backside)
         return false;           // Boing!
 
     // Determine the opening we have here.
@@ -956,8 +956,8 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            sector_t *front = pt->contact->L_frontsector;
-            sector_t *back = pt->contact->L_backsector;
+            sector_t *front = (pt->contact->L_frontside? pt->contact->L_frontsector : NULL);
+            sector_t *back = (pt->contact->L_backside? pt->contact->L_backsector : NULL);
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {

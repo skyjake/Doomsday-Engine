@@ -452,7 +452,7 @@ static float bounds[2][2]; // {TL{x,y}, BR{x,y}}
 static dpatch_t markerPatches[10]; // numbers used for marking by the automap (lump indices)
 
 // Used in subsector debug display.
-static float subColors[10][4]; // ten sets of RGBA
+static float subColors[10][3]; // ten sets of RGB
 
 // CODE --------------------------------------------------------------------
 
@@ -737,7 +737,6 @@ void AM_Init(void)
         subColors[i][0] = ((float) M_Random()) / 255.f;
         subColors[i][1] = ((float) M_Random()) / 255.f;
         subColors[i][2] = ((float) M_Random()) / 255.f;
-        subColors[i][3] = 1.0f;
     }
 }
 
@@ -1922,7 +1921,7 @@ static void rendLine(float x1, float y1, float x2, float y2, int color,
 static void rendLine2(float x1, float y1, float x2, float y2,
                       float r, float g, float b, float a,
                       glowtype_t glowType, float glowAlpha, float glowWidth,
-                      boolean scaleGlowWithView,
+                      boolean glowOnly, boolean scaleGlowWithView,
                       boolean caps, boolean blend, boolean drawNormal)
 {
     float       v1[2], v2[2];
@@ -2054,8 +2053,9 @@ static void rendLine2(float x1, float y1, float x2, float y2,
         }
     }
 
-    AM_AddLine4f(v1[VX], v1[VY], v2[VX], v2[VY],
-                 r, g, b, a);
+    if(!glowOnly)
+        AM_AddLine4f(v1[VX], v1[VY], v2[VX], v2[VY],
+                     r, g, b, a);
 
     if(drawNormal)
     {
@@ -2100,7 +2100,7 @@ static void renderGrid(void)
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
                   info->glow, info->glowAlpha, info->glowWidth,
-                  info->scaleWithView, false, (info->glow != NO_GLOW),
+                  false, info->scaleWithView, false, (info->glow != NO_GLOW),
                   false);
     }
 
@@ -2120,7 +2120,7 @@ static void renderGrid(void)
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
                   info->glow, info->glowAlpha, info->glowWidth,
-                  info->scaleWithView, false, (info->glow != NO_GLOW),
+                  false, info->scaleWithView, false, (info->glow != NO_GLOW),
                   false);
     }
 }
@@ -2156,21 +2156,22 @@ static void renderWalls(void)
         {
             seg = P_GetPtr(DMU_SUBSECTOR, s, DMU_SEG_OF_SUBSECTOR | i);
             line = P_GetPtrp(seg, DMU_LINE);
-            if(!line)
-                continue;
 
-            if(map->flags & AMF_REND_SUBSECTORS) // Debug cheat, show subsectors
+            if(map->flags & AMF_REND_SUBSECTORS) // Debug cheat, show subsectors.
             {
                 P_GetFloatpv(seg, DMU_VERTEX1_XY, v1);
                 P_GetFloatpv(seg, DMU_VERTEX2_XY, v2);
 
                 rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                           subColors[subColor][0], subColors[subColor][1],
-                          subColors[subColor][2], subColors[subColor][3],
-                          FRONT_GLOW, 1.0f, 7.5f, false, false, true,
-                          map->cheating);
+                          subColors[subColor][2], 1,
+                          FRONT_GLOW, 1.0f, 7.5f, true, false, false, true,
+                          false);
+
                 continue;
             }
+            if(!line)
+                continue;
 
             frontsector = P_GetPtrp(seg, DMU_FRONT_SECTOR);
             if(frontsector != P_GetPtrp(line, DMU_SIDE0_OF_LINE | DMU_SECTOR))
@@ -2193,7 +2194,7 @@ static void renderWalls(void)
                 {
                     rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                               .8f, 0, .8f, 1,
-                              TWOSIDED_GLOW, 1, 5, true, false, true,
+                              TWOSIDED_GLOW, 1, 5, false, true, false, true,
                               map->cheating);
                     continue;
                 }
@@ -2283,7 +2284,7 @@ static void renderWalls(void)
                       (xline->special && !map->cfg.glowingLineSpecials ?
                             NO_GLOW : info->glow),
                       info->glowAlpha,
-                      info->glowWidth, info->scaleWithView,
+                      info->glowWidth, false, info->scaleWithView,
                       (info->glow && !(xline->special && !map->cfg.glowingLineSpecials)),
                       (xline->special && !map->cfg.glowingLineSpecials ?
                             NO_GLOW : info->glow), map->cheating);

@@ -4,10 +4,10 @@
 struct vertex
     FLOAT   float[2]    pos
     -       uint        numsecowners // Number of sector owners.
-    -       uint*       secowners // Sector indices [numsecowners] size.
+    -       uint*       secowners	// Sector indices [numsecowners] size.
     -       uint        numlineowners // Number of line owners.
     -       lineowner_s* lineowners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
-    -       boolean     anchored // One or more of our line owners are one-sided.
+    -       boolean     anchored	// One or more of our line owners are one-sided.
 end
 
 internal
@@ -15,10 +15,12 @@ internal
 #define FRONT 0
 #define BACK  1
 
-#define SG_v1                   v[0]
-#define SG_v2                   v[1]
-#define SG_frontsector          sec[FRONT]
-#define SG_backsector           sec[BACK]
+#define SG_v(n)					v[(n)]
+#define SG_v1                   SG_v(0)
+#define SG_v2                   SG_v(1)
+#define SG_sector(n)			sec[(n)]
+#define SG_frontsector          SG_sector(FRONT)
+#define SG_backsector           SG_sector(BACK)
 
 // Seg flags
 #define SEGF_POLYOBJ			0x1 // Seg is part of a poly object.
@@ -29,14 +31,14 @@ internal
 end
 
 struct seg
-    PTR     vertex_s*[2] v      // [Start, End] of the segment.
-    FLOAT   float       length  // Accurate length of the segment (v1 -> v2).
+    PTR     vertex_s*[2] v			// [Start, End] of the segment.
+    FLOAT   float       length		// Accurate length of the segment (v1 -> v2).
     FLOAT   float       offset
     PTR     side_s*     sidedef
     PTR     line_s*     linedef
     PTR     sector_s*[2] sec
     ANGLE   angle_t     angle
-    BYTE    byte		side    // 0=front, 1=back
+    BYTE    byte		side		// 0=front, 1=back
     BYTE    byte        flags
     -       short       frameflags
     -       biastracker_s[3] tracker // 0=middle, 1=top, 2=bottom
@@ -48,13 +50,13 @@ end
 struct subsector
     PTR     sector_s*   sector
     UINT    uint        segcount
-    PTR     seg_s*      firstseg
-    PTR     polyobj_s*  poly    // NULL, if there is no polyobj.
+    PTR		seg_s*		firstseg
+    PTR     polyobj_s*  poly		// NULL, if there is no polyobj.
     BYTE    byte        flags
     -       ushort      numverts
-    -       fvertex_t*  verts   // A sorted list of edge vertices.
-    -       fvertex_t   bbox[2] // Min and max points.
-    -       fvertex_t   midpoint // Center of vertices.
+    -       fvertex_t*  verts		// A sorted list of edge vertices.
+    -       fvertex_t   bbox[2]		// Min and max points.
+    -       fvertex_t   midpoint	// Center of vertices.
     -       subplaneinfo_s** planes
     -       ushort      numvertices
     -       fvertex_s*  vertices
@@ -73,21 +75,21 @@ internal
 end
 
 struct surface
-    INT     int         flags   // SUF_ flags
+    INT     int         flags		// SUF_ flags
     -       int         oldflags
     SHORT   short       texture
     -       short       oldtexture
-    -       boolean     isflat  // true if current texture is a flat
+    -       boolean     isflat		// true if current texture is a flat
     -       boolean     oldisflat
-    -       float[3]    normal  // Surface normal
+    -       float[3]    normal		// Surface normal
     -       float[3]    oldnormal
-    FLOAT   float[2]    texmove // Texture movement X and Y
+    FLOAT   float[2]    texmove		// Texture movement X and Y
     -       float[2]    oldtexmove
-    FLOAT   float       offx	// Texture x offset
+    FLOAT   float       offx		// Texture x offset
     -       float       oldoffx
-    FLOAT   float       offy	// Texture y offset
+    FLOAT   float       offy		// Texture y offset
     -       float       oldoffy
-    FLOAT   float[4]    rgba    // Surface color tint
+    FLOAT   float[4]    rgba		// Surface color tint
     -       float[4]    oldrgba
     -       translation_s* xlat
 end
@@ -104,61 +106,90 @@ typedef struct skyfix_s {
 } skyfix_t;
 end
 
+internal
+#define PS_normal				surface.normal
+#define PS_texture				surface.texture
+#define PS_isflat				surface.isflat
+#define PS_offx					surface.offx
+#define PS_offy					surface.offy
+#define PS_texmove				surface.texmove
+end
+
 struct plane
-    FLOAT   float       height  // Current height
+    FLOAT   float       height		// Current height
     -       float[2]    oldheight
     -       surface_t   surface
-    FLOAT   float       glow    // Glow amount
-    FLOAT   float[3]    glowrgb // Glow color
-    FLOAT   float       target  // Target height
-    FLOAT   float       speed   // Move speed
-    PTR     degenmobj_t soundorg // Sound origin for plane
-    PTR     sector_s*   sector  // Owner of the plane (temp)
-    -       float       visheight // Visible plane height (smoothed)
+    FLOAT   float       glow		// Glow amount
+    FLOAT   float[3]    glowrgb		// Glow color
+    FLOAT   float       target		// Target height
+    FLOAT   float       speed		// Move speed
+    PTR     degenmobj_t soundorg	// Sound origin for plane
+    PTR     sector_s*   sector		// Owner of the plane (temp)
+    -       float       visheight	// Visible plane height (smoothed)
     -       float       visoffset
 end
 
 internal
 // Helper macros for accessing sector floor/ceiling plane data elements.
-#define SP_ceilsurface          planes[PLN_CEILING]->surface
-#define SP_ceilheight           planes[PLN_CEILING]->height
-#define SP_ceilnormal           planes[PLN_CEILING]->normal
-#define SP_ceilpic              planes[PLN_CEILING]->surface.texture
-#define SP_ceilisflat           planes[PLN_CEILING]->surface.isflat
-#define SP_ceiloffx             planes[PLN_CEILING]->surface.offx
-#define SP_ceiloffy             planes[PLN_CEILING]->surface.offy
-#define SP_ceilrgb              planes[PLN_CEILING]->surface.rgba
-#define SP_ceilglow             planes[PLN_CEILING]->glow
-#define SP_ceilglowrgb          planes[PLN_CEILING]->glowrgb
-#define SP_ceiltarget           planes[PLN_CEILING]->target
-#define SP_ceilspeed            planes[PLN_CEILING]->speed
-#define SP_ceiltexmove          planes[PLN_CEILING]->surface.texmove
-#define SP_ceilsoundorg         planes[PLN_CEILING]->soundorg
-#define SP_ceilvisheight        planes[PLN_CEILING]->visheight
+#define SP_plane(n)				planes[(n)]
 
-#define SP_floorsurface         planes[PLN_FLOOR]->surface
-#define SP_floorheight          planes[PLN_FLOOR]->height
-#define SP_floornormal          planes[PLN_FLOOR]->normal
-#define SP_floorpic             planes[PLN_FLOOR]->surface.texture
-#define SP_floorisflat          planes[PLN_FLOOR]->surface.isflat
-#define SP_flooroffx            planes[PLN_FLOOR]->surface.offx
-#define SP_flooroffy            planes[PLN_FLOOR]->surface.offy
-#define SP_floorrgb             planes[PLN_FLOOR]->surface.rgba
-#define SP_floorglow            planes[PLN_FLOOR]->glow
-#define SP_floorglowrgb         planes[PLN_FLOOR]->glowrgb
-#define SP_floortarget          planes[PLN_FLOOR]->target
-#define SP_floorspeed           planes[PLN_FLOOR]->speed
-#define SP_floortexmove         planes[PLN_FLOOR]->surface.texmove
-#define SP_floorsoundorg        planes[PLN_FLOOR]->soundorg
-#define SP_floorvisheight       planes[PLN_FLOOR]->visheight
+#define SP_planesurface(n)      SP_plane(n)->surface
+#define SP_planeheight(n)       SP_plane(n)->height
+#define SP_planenormal(n)       SP_plane(n)->surface.normal
+#define SP_planetexture(n)      SP_plane(n)->surface.texture
+#define SP_planeisflat(n)       SP_plane(n)->surface.isflat
+#define SP_planeoffx(n)         SP_plane(n)->surface.offx
+#define SP_planeoffy(n)         SP_plane(n)->surface.offy
+#define SP_planergb(n)          SP_plane(n)->surface.rgba
+#define SP_planeglow(n)         SP_plane(n)->glow
+#define SP_planeglowrgb(n)      SP_plane(n)->glowrgb
+#define SP_planetarget(n)       SP_plane(n)->target
+#define SP_planespeed(n)        SP_plane(n)->speed
+#define SP_planetexmove(n)      SP_plane(n)->surface.texmove
+#define SP_planesoundorg(n)     SP_plane(n)->soundorg
+#define SP_planevisheight(n)	SP_plane(n)->visheight
 
-#define SECT_PLANE_HEIGHT(x, n) (x->planes[n]->visheight)
+#define SP_ceilsurface          SP_planesurface(PLN_CEILING)
+#define SP_ceilheight           SP_planeheight(PLN_CEILING)
+#define SP_ceilnormal           SP_planenormal(PLN_CEILING)
+#define SP_ceiltexture          SP_planetexture(PLN_CEILING)
+#define SP_ceilisflat           SP_planeisflat(PLN_CEILING)
+#define SP_ceiloffx             SP_planeoffx(PLN_CEILING)
+#define SP_ceiloffy             SP_planeoffy(PLN_CEILING)
+#define SP_ceilrgb              SP_planergb(PLN_CEILING)
+#define SP_ceilglow             SP_planeglow(PLN_CEILING)
+#define SP_ceilglowrgb          SP_planeglowrgb(PLN_CEILING)
+#define SP_ceiltarget           SP_planetarget(PLN_CEILING)
+#define SP_ceilspeed            SP_planespeed(PLN_CEILING)
+#define SP_ceiltexmove          SP_planetexmove(PLN_CEILING)
+#define SP_ceilsoundorg         SP_planesoundorg(PLN_CEILING)
+#define SP_ceilvisheight        SP_planevisheight(PLN_CEILING)
+
+#define SP_floorsurface         SP_planesurface(PLN_FLOOR)
+#define SP_floorheight          SP_planeheight(PLN_FLOOR)
+#define SP_floornormal          SP_planenormal(PLN_FLOOR)
+#define SP_floortexture         SP_planetexture(PLN_FLOOR)
+#define SP_floorisflat          SP_planeisflat(PLN_FLOOR)
+#define SP_flooroffx            SP_planeoffx(PLN_FLOOR)
+#define SP_flooroffy            SP_planeoffy(PLN_FLOOR)
+#define SP_floorrgb             SP_planergb(PLN_FLOOR)
+#define SP_floorglow            SP_planeglow(PLN_FLOOR)
+#define SP_floorglowrgb         SP_planeglowrgb(PLN_FLOOR)
+#define SP_floortarget          SP_planetarget(PLN_FLOOR)
+#define SP_floorspeed           SP_planespeed(PLN_FLOOR)
+#define SP_floortexmove         SP_planetexmove(PLN_FLOOR)
+#define SP_floorsoundorg        SP_planesoundorg(PLN_FLOOR)
+#define SP_floorvisheight       SP_planevisheight(PLN_FLOOR)
+
+#define S_skyfix(n)				skyfix[(n)]
+#define S_floorskyfix			S_skyfix(PLN_FLOOR)
+#define S_ceilskyfix			S_skyfix(PLN_CEILING)
 end
 
 internal
 // Sector frame flags
-#define SIF_VISIBLE         0x1    // Sector is visible on this frame.
-#define SIF_FRAME_CLEAR     0x1    // Flags to clear before each frame.
+#define SIF_VISIBLE         0x1		// Sector is visible on this frame.
+#define SIF_FRAME_CLEAR     0x1		// Flags to clear before each frame.
 #define SIF_LIGHT_CHANGED   0x2
 
 // Sector flags.
@@ -213,38 +244,49 @@ typedef enum segsection_e {
 } segsection_t;
 
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
-#define SW_middlesurface        sections[SEG_MIDDLE]
-#define SW_middleflags          sections[SEG_MIDDLE].flags
-#define SW_middlepic            sections[SEG_MIDDLE].texture
-#define SW_middleisflat         sections[SEG_MIDDLE].isflat
-#define SW_middlenormal         sections[SEG_MIDDLE].normal
-#define SW_middletexmove        sections[SEG_MIDDLE].texmove
-#define SW_middleoffx           sections[SEG_MIDDLE].offx
-#define SW_middleoffy           sections[SEG_MIDDLE].offy
-#define SW_middlergba           sections[SEG_MIDDLE].rgba
-#define SW_middletexlat         sections[SEG_MIDDLE].xlat
+#define SW_surface(n)			sections[(n)]
+#define SW_surfaceflags(n)      SW_surface(n).flags
+#define SW_surfacetexture(n)    SW_surface(n).texture
+#define SW_surfaceisflat(n)     SW_surface(n).isflat
+#define SW_surfacenormal(n)     SW_surface(n).normal
+#define SW_surfacetexmove(n)    SW_surface(n).texmove
+#define SW_surfaceoffx(n)       SW_surface(n).offx
+#define SW_surfaceoffy(n)       SW_surface(n).offy
+#define SW_surfacergba(n)       SW_surface(n).rgba
+#define SW_surfacetexlat(n)     SW_surface(n).xlat
 
-#define SW_topsurface           sections[SEG_TOP]
-#define SW_topflags             sections[SEG_TOP].flags
-#define SW_toppic               sections[SEG_TOP].texture
-#define SW_topisflat            sections[SEG_TOP].isflat
-#define SW_topnormal            sections[SEG_TOP].normal
-#define SW_toptexmove           sections[SEG_TOP].texmove
-#define SW_topoffx              sections[SEG_TOP].offx
-#define SW_topoffy              sections[SEG_TOP].offy
-#define SW_toprgba              sections[SEG_TOP].rgba
-#define SW_toptexlat            sections[SEG_TOP].xlat
+#define SW_middlesurface        SW_surface(SEG_MIDDLE)
+#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
+#define SW_middletexture        SW_surfacetexture(SEG_MIDDLE)
+#define SW_middleisflat         SW_surfaceisflat(SEG_MIDDLE)
+#define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
+#define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
+#define SW_middleoffx           SW_surfaceoffx(SEG_MIDDLE)
+#define SW_middleoffy           SW_surfaceoffy(SEG_MIDDLE)
+#define SW_middlergba           SW_surfacergba(SEG_MIDDLE)
+#define SW_middletexlat         SW_surfacetexlat(SEG_MIDDLE)
 
-#define SW_bottomsurface        sections[SEG_BOTTOM]
-#define SW_bottomflags          sections[SEG_BOTTOM].flags
-#define SW_bottompic            sections[SEG_BOTTOM].texture
-#define SW_bottomisflat         sections[SEG_BOTTOM].isflat
-#define SW_bottomnormal         sections[SEG_BOTTOM].normal
-#define SW_bottomtexmove        sections[SEG_BOTTOM].texmove
-#define SW_bottomoffx           sections[SEG_BOTTOM].offx
-#define SW_bottomoffy           sections[SEG_BOTTOM].offy
-#define SW_bottomrgba           sections[SEG_BOTTOM].rgba
-#define SW_bottomtexlat         sections[SEG_BOTTOM].xlat
+#define SW_topsurface           SW_surface(SEG_TOP)
+#define SW_topflags             SW_surfaceflags(SEG_TOP)
+#define SW_toptexture           SW_surfacetexture(SEG_TOP)
+#define SW_topisflat            SW_surfaceisflat(SEG_TOP)
+#define SW_topnormal            SW_surfacenormal(SEG_TOP)
+#define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
+#define SW_topoffx              SW_surfaceoffx(SEG_TOP)
+#define SW_topoffy              SW_surfaceoffy(SEG_TOP)
+#define SW_toprgba              SW_surfacergba(SEG_TOP)
+#define SW_toptexlat            SW_surfacetexlat(SEG_TOP)
+
+#define SW_bottomsurface        SW_surface(SEG_BOTTOM)
+#define SW_bottomflags          SW_surfaceflags(SEG_BOTTOM)
+#define SW_bottomtexture        SW_surfacetexture(SEG_BOTTOM)
+#define SW_bottomisflat         SW_surfaceisflat(SEG_BOTTOM)
+#define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
+#define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
+#define SW_bottomoffx           SW_surfaceoffx(SEG_BOTTOM)
+#define SW_bottomoffy           SW_surfaceoffy(SEG_BOTTOM)
+#define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
+#define SW_bottomtexlat         SW_surfacetexlat(SEG_BOTTOM)
 
 // Side frame flags
 #define SIDEINF_TOPPVIS     0x0001
@@ -262,20 +304,27 @@ end
 
 internal
 // Helper macros for accessing linedef data elements.
-#define L_v1                    v[0]
-#define L_v2                    v[1]
-#define L_vo1                   vo[0]
-#define L_vo2                   vo[1]
-#define L_frontsector           sec[FRONT]
-#define L_backsector            sec[BACK]
-#define L_frontside             sides[FRONT]
-#define L_backside              sides[BACK]
+#define L_v(n)					v[(n)]
+#define L_v1                    L_v(0)
+#define L_v2                    L_v(1)
+#define L_vo(n)					vo[(n)]
+#define L_vo1                   L_vo(0)
+#define L_vo2                   L_vo(1)
+#define L_side(n)  			    sides[(n)]
+#define L_frontside             L_side(FRONT)
+#define L_backside              L_side(BACK)
+#define L_sector(n)             sides[(n)]->sector
+#define L_frontsector           L_sector(FRONT)
+#define L_backsector            L_sector(BACK)
+end
+
+public
+#define DMT_LINE_SEC DDVT_PTR
 end
 
 struct line
     PTR     vertex_s*[2] v
     SHORT   short       flags
-    PTR     sector_s*[2] sec        // [front, back] sectors.
     FLOAT   float       dx
     FLOAT   float       dy
     INT     slopetype_t slopetype
