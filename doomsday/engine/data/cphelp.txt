@@ -1051,9 +1051,6 @@ desc = 1=Print frame time offsets.
 [rend-camera-smooth]
 desc = 1=Filter camera movement between game tics (OBSOLETE).
 
-[bsp-build]
-desc = 1=Build GL nodes when loading a map.
-
 [bsp-cache]
 desc = 1=Load generated GL nodes data from the bspcache directory. 0=Always generate new GL data.
 

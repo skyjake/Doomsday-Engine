@@ -246,7 +246,15 @@ boolean P_BlockLinesIterator(int x, int y, boolean (*func) (line_t *, void *),
 
     for(list = blockmaplump + offset; *list != -1; list++)
     {
+        if((uint) *list >= numlines)
+            continue; // very odd...
+
         ld = LINE_PTR(*list);
+
+        // Ignore benign linedefs.
+        if(ld->flags & LINEF_BENIGN)
+            continue;
+
         if(ld->validcount == validcount)
             continue;           // line has already been checked
 

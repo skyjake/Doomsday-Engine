@@ -122,8 +122,6 @@ extern int      numthings;
 extern fixed_t  mapgravity;        // Gravity for the current map.
 extern int      mapambient;        // Ambient light level for the current map.
 
-extern uint     numUniqueLines;
-
 extern uint    *missingFronts;
 extern uint     numMissingFronts;
 

@@ -24,6 +24,9 @@ internal
 
 // Seg flags
 #define SEGF_POLYOBJ			0x1 // Seg is part of a poly object.
+#define SEGF_MIGRANT			0x2 // Seg's sectors are NOT the same as the subsector they are in.
+									// Apparently, glBSP combines segs from unclosed sectors into
+									// subsectors to guarantee they are convex.
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
@@ -37,6 +40,7 @@ struct seg
     PTR     side_s*     sidedef
     PTR     line_s*     linedef
     PTR     sector_s*[2] sec
+    PTR		seg_s*		backseg
     ANGLE   angle_t     angle
     BYTE    byte		side		// 0=front, 1=back
     BYTE    byte        flags
@@ -81,6 +85,7 @@ struct surface
     -       short       oldtexture
     -       boolean     isflat		// true if current texture is a flat
     -       boolean     oldisflat
+    BLENDMODE blendmode_t blendmode
     -       float[3]    normal		// Surface normal
     -       float[3]    oldnormal
     FLOAT   float[2]    texmove		// Texture movement X and Y
@@ -254,6 +259,7 @@ typedef enum segsection_e {
 #define SW_surfaceoffy(n)       SW_surface(n).offy
 #define SW_surfacergba(n)       SW_surface(n).rgba
 #define SW_surfacetexlat(n)     SW_surface(n).xlat
+#define SW_surfaceblendmode(n)  SW_surface(n).blendmode
 
 #define SW_middlesurface        SW_surface(SEG_MIDDLE)
 #define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
@@ -265,6 +271,7 @@ typedef enum segsection_e {
 #define SW_middleoffy           SW_surfaceoffy(SEG_MIDDLE)
 #define SW_middlergba           SW_surfacergba(SEG_MIDDLE)
 #define SW_middletexlat         SW_surfacetexlat(SEG_MIDDLE)
+#define SW_middleblendmode      SW_surfaceblendmode(SEG_MIDDLE)
 
 #define SW_topsurface           SW_surface(SEG_TOP)
 #define SW_topflags             SW_surfaceflags(SEG_TOP)
@@ -296,17 +303,22 @@ end
 
 struct side
     -       surface_t[3] sections
-    BLENDMODE blendmode_t blendmode
+    UINT	uint		segcount
+    PTR		seg_s**		segs		// [segcount] size, segs arranged left>right
     PTR     sector_s*   sector
     SHORT   short       flags
     -       short       frameflags
 end
 
+public
+#define DMT_LINE_SEC	DDVT_PTR
+end
+
 internal
 // Helper macros for accessing linedef data elements.
 #define L_v(n)					v[(n)]
-#define L_v1                    L_v(0)
-#define L_v2                    L_v(1)
+#define L_v1					L_v(0)
+#define L_v2					L_v(1)
 #define L_vo(n)					vo[(n)]
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
@@ -316,15 +328,19 @@ internal
 #define L_sector(n)             sides[(n)]->sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
-end
 
-public
-#define DMT_LINE_SEC DDVT_PTR
+// Line flags 
+#define LINEF_SELFREFHACKROOT	0x1	// This line is the root of a self-referencing hack sector
+#define LINEF_BENIGN			0x2 // Benign lines are those which have no front or back segs
+									// (though they may have sides). These are induced in GL
+									// node generation process. They are inoperable and will
+									// NOT be added to a sector's line table.
 end
 
 struct line
     PTR     vertex_s*[2] v
-    SHORT   short       flags
+    -		int			flags
+    SHORT   short       mapflags	// MF_* flags, read from the LINEDEFS, map data lump.
     FLOAT   float       dx
     FLOAT   float       dy
     INT     slopetype_t slopetype
@@ -334,7 +350,6 @@ struct line
     -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
     -       float       length      // Accurate length
     -       binangle_t  angle       // Calculated from front side's normal
-    -       boolean     selfrefhackroot // This line is the root of a self-referencing hack sector
     -       boolean[DDMAXPLAYERS] mapped // Whether the line has been mapped by each player yet.
 end
 

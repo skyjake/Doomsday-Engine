@@ -742,7 +742,7 @@ Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num,
         sid->SW_bottomrgba[2] = bottomrgb[2];
 
     if(df & SIDF_MID_BLENDMODE)
-        sid->blendmode = blendmode;
+        sid->SW_middleblendmode = blendmode;
 
     if(df & SIDF_FLAGS)
     {
@@ -758,8 +758,8 @@ Con_Printf("Cl_ReadSideDelta2: (%i) Bottom texture=%i\n", num,
         if(line)
         {
             // The delta includes the entire lowest byte.
-            line->flags &= ~0xff;
-            line->flags |= lineFlags;
+            line->mapflags &= ~0xff;
+            line->mapflags |= lineFlags;
 #if _DEBUG
 Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n",
            GET_LINE_IDX(line), lineFlags);

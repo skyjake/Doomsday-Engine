@@ -11,6 +11,7 @@
 #define DMT_SEG_SIDEDEF DDVT_PTR
 #define DMT_SEG_LINEDEF DDVT_PTR
 #define DMT_SEG_SEC DDVT_PTR
+#define DMT_SEG_BACKSEG DDVT_PTR
 #define DMT_SEG_ANGLE DDVT_ANGLE
 #define DMT_SEG_SIDE DDVT_BYTE         // 0=front, 1=back
 #define DMT_SEG_FLAGS DDVT_BYTE
@@ -23,6 +24,7 @@
 
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_TEXTURE DDVT_SHORT
+#define DMT_SURFACE_BLENDMODE DDVT_BLENDMODE
 #define DMT_SURFACE_TEXMOVE DDVT_FLOAT // Texture movement X and Y
 #define DMT_SURFACE_OFFX DDVT_FLOAT    // Texture x offset
 #define DMT_SURFACE_OFFY DDVT_FLOAT    // Texture y offset
@@ -48,14 +50,15 @@
 #define DMT_SECTOR_REVERB DDVT_FLOAT
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT
 
-#define DMT_SIDE_BLENDMODE DDVT_BLENDMODE
+#define DMT_SIDE_SEGCOUNT DDVT_UINT
+#define DMT_SIDE_SEGS DDVT_PTR         // [segcount] size, segs arranged left>right
 #define DMT_SIDE_SECTOR DDVT_PTR
 #define DMT_SIDE_FLAGS DDVT_SHORT
 
-#define DMT_LINE_SEC DDVT_PTR
+#define DMT_LINE_SEC	DDVT_PTR
 
 #define DMT_LINE_V DDVT_PTR
-#define DMT_LINE_FLAGS DDVT_SHORT
+#define DMT_LINE_MAPFLAGS DDVT_SHORT   // MF_* flags, read from the LINEDEFS, map data lump.
 #define DMT_LINE_DX DDVT_FLOAT
 #define DMT_LINE_DY DDVT_FLOAT
 #define DMT_LINE_SLOPETYPE DDVT_INT

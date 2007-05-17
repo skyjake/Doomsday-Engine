@@ -257,6 +257,7 @@ typedef struct {
     boolean         isflat;
     float           rgba[4];       // Surface color tint
     float           texmove[2];    // Texture movement X and Y.
+    int             blendmode;
 } dt_surface_t;
 
 typedef struct {
@@ -289,7 +290,6 @@ typedef struct {
     dt_surface_t    middle;
     dt_surface_t    bottom;
     byte            lineFlags;     // note: only a byte!
-    int             blendmode;
     byte            flags;         // Sidedef flags.
 } dt_side_t;
 

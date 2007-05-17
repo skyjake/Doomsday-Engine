@@ -726,6 +726,7 @@ extern          "C" {
     enum /* do not change the numerical values of the constants */
     {
         DMUSC_SECTOR_ISBENIGN,
+        DMUSC_LINE_ISBENIGN,
         DMUSC_LINE_FIRSTRENDERED
     };
 

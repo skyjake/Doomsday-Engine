@@ -202,8 +202,8 @@ int Cl_ReadSideDelta(void)
         if(line)
         {
             // The delta includes the lowest byte.
-            line->flags &= ~0xff;
-            line->flags |= updatedFlags;
+            line->mapflags &= ~0xff;
+            line->mapflags |= updatedFlags;
 #if _DEBUG
 Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
            updatedFlags);
@@ -235,7 +235,7 @@ Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
         sid->SW_bottomrgba[2] = Msg_ReadByte() / 255.f;
 
     if(df & SIDF_MID_BLENDMODE)
-        sid->blendmode = Msg_ReadShort() << 16;
+        sid->SW_middleblendmode = Msg_ReadShort() << 16;
 
     if(df & SIDF_FLAGS)
     {

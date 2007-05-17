@@ -131,13 +131,10 @@ int         mapambient;             // Ambient lightlevel for the current map.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// for sector->linecount
-uint numUniqueLines;
-
 // The following is used in error fixing/detection/reporting:
 // missing sidedefs
-uint numMissingFronts = 0;
-uint *missingFronts = NULL;
+uint numMissingFronts;
+uint *missingFronts;
 
 // bad texture list
 static uint numBadTexNames = 0;

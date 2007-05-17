@@ -88,6 +88,7 @@ enum {
 
     DAM_ANGLE,
     DAM_OFFSET,
+    DAM_BACK_SEG,
 
     DAM_SEG_COUNT,
     DAM_SEG_FIRST,

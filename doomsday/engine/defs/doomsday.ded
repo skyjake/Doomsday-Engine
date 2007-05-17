@@ -442,6 +442,12 @@ LumpFormat {
         Size = 2;
         Offset = 6;
     }
+    Property {
+        ID = "partnerseg";
+        Flags = unsigned;
+        Size = 2;
+        Offset = 8;
+    }
 }
 
 LumpFormat {
@@ -471,6 +477,12 @@ LumpFormat {
         Flags = unsigned;
         Size = 2;
         Offset = 10;
+    }
+    Property {
+        ID = "partnerseg";
+        Flags = unsigned;
+        Size = 4;
+        Offset = 12;
     }
 }
 

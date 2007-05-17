@@ -792,16 +792,8 @@ static int SetProperty2(void *ptr, void *context)
 
         switch(args->prop)
         {
-        case DAM_VERTEX1:
-            SetValue(DMT_LINE_V, &p->L_v1, args, 0);
-            break;
-
-        case DAM_VERTEX2:
-            SetValue(DMT_LINE_V, &p->L_v2, args, 0);
-            break;
-
         case DAM_FLAGS:
-            SetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
+            SetValue(DMT_LINE_MAPFLAGS, &p->mapflags, args, 0);
             break;
 
         case DAM_SIDE0:
@@ -917,10 +909,6 @@ static int SetProperty2(void *ptr, void *context)
             SetValue(DMT_SEG_V, &p->SG_v2, args, 0);
             break;
 
-        case DAM_ANGLE:
-            SetValue(DMT_SEG_ANGLE, &p->angle, args, 0);
-            break;
-
         case DAM_LINE:
             SetValue(DMT_SEG_LINEDEF, &p->linedef, args, 0);
             break;
@@ -929,8 +917,8 @@ static int SetProperty2(void *ptr, void *context)
             SetValue(DMT_SEG_SIDE, &p->side, args, 0);
             break;
 
-        case DAM_OFFSET:
-            SetValue(DMT_SEG_OFFSET, &p->offset, args, 0);
+        case DAM_SEG:
+            SetValue(DMT_SEG_BACKSEG, &p->backseg, args, 0);
             break;
 
         default:
