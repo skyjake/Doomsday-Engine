@@ -604,7 +604,7 @@ void Sv_WriteSideDelta(const void *deltaPtr)
         Msg_WriteByte((byte) (255 * d->bottom.rgba[2]));
 
     if(df & SIDF_MID_BLENDMODE)
-        Msg_WriteShort(d->blendmode >> 16);
+        Msg_WriteShort(d->middle.blendmode >> 16);
 
     if(df & SIDF_FLAGS)
         Msg_WriteByte(d->flags);

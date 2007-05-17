@@ -530,7 +530,7 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
                 GL_PrepareDDTexture(side->SW_middletexture, &texinfo);
             }
 
-            if(!side->blendmode && side->SW_middlergba[3] >= 1 && !texinfo->masked)
+            if(!side->SW_middleblendmode && side->SW_middlergba[3] >= 1 && !texinfo->masked)
             {
                 float openTop[2], gapTop[2];
                 float openBottom[2], gapBottom[2];
@@ -549,7 +549,7 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
                     if(Rend_MidTexturePos
                        (&gapBottom[0], &gapBottom[1], &gapTop[0], &gapTop[1],
                         NULL, side->SW_middleoffy, texinfo->height,
-                        0 != (line->flags & ML_DONTPEGBOTTOM)))
+                        0 != (line->mapflags & ML_DONTPEGBOTTOM)))
                     {
                         if(openTop[0] >= gapTop[0] &&
                            openTop[1] >= gapTop[1] &&
@@ -1243,7 +1243,7 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
  
         surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
 
-        if(ldef->flags & ML_DONTPEGBOTTOM)
+        if(ldef->mapflags & ML_DONTPEGBOTTOM)
             quad->texoffy += texinfo->height - fsh;
 
         if(!(surfaceFlags & SUF_NO_RADIO))
@@ -1384,17 +1384,17 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             if(Rend_MidTexturePos
                (&vL_ZBottom, &vR_ZBottom, &vL_ZTop, &vR_ZTop,
                 &texOffY, side->SW_middleoffy, texinfo->height,
-                0 != (ldef->flags & ML_DONTPEGBOTTOM)))
+                0 != (ldef->mapflags & ML_DONTPEGBOTTOM)))
             {
                 // Should a solid segment be added here?
                 if(vL_ZTop >= gaptop && vL_ZBottom <= gapbottom &&
                    vR_ZTop >= gaptop && vR_ZBottom <= gapbottom)
                 {
-                    if(!texinfo->masked && alpha >= 1 && side->blendmode == 0)
+                    if(!texinfo->masked && alpha >= 1 && side->SW_middleblendmode == 0)
                         solidSeg = true; // We could add clipping seg.
 
                     // Can the player walk through this surface?
-                    if(!(ldef->flags & ML_BLOCKING) ||
+                    if(!(ldef->mapflags & ML_BLOCKING) ||
                        !(viewplayer->flags & DDPF_NOCLIP))
                     {
                         mobj_t* mo = viewplayer->mo;
@@ -1450,10 +1450,10 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                     quad->texoffy = texOffY;
 
                     // Blendmode
-                    if(sid->blendmode == BM_NORMAL && noSpriteTrans)
+                    if(sid->SW_middleblendmode == BM_NORMAL && noSpriteTrans)
                         quad->blendmode = BM_ZEROALPHA; // "no translucency" mode
                     else
-                        quad->blendmode = sid->blendmode;
+                        quad->blendmode = sid->SW_middleblendmode;
 
                     surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
                     if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
@@ -1486,7 +1486,8 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                     quad->vertices[3].pos[2] = vR_ZTop;
 
                     // If alpha, masked or blended we must render as a vissprite
-                    if(alpha < 1 || texinfo->masked || side->blendmode > 0)
+                    if(alpha < 1 || texinfo->masked ||
+                       side->SW_middleblendmode > 0)
                         quad->flags = RPF_MASKED;
                     else
                         quad->flags = 0;
@@ -1607,7 +1608,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                 quad->vertices[3].pos[1] = vR_XY[VY];
                 quad->vertices[3].pos[2] = vR_ZTop;
 
-                if(!(ldef->flags & ML_DONTPEGTOP)) // Normal alignment to bottom.
+                if(!(ldef->mapflags & ML_DONTPEGTOP)) // Normal alignment to bottom.
                     quad->texoffy += texinfo->height - (fceil - bceil);
 
                 // Check for neighborhood division?
@@ -1683,7 +1684,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             quad->vertices[3].pos[1] = vR_XY[VY];
             quad->vertices[3].pos[2] = vR_ZTop;
 
-            if(ldef->flags & ML_DONTPEGBOTTOM)
+            if(ldef->mapflags & ML_DONTPEGBOTTOM)
                 quad->texoffy += fceil - bfloor; // Align with normal middle texture.
 
             // Check for neighborhood division?
@@ -2154,8 +2155,11 @@ static void Rend_RenderSubsector(uint ssecidx)
         if(seg->flags & SEGF_POLYOBJ) // Not handled here.
             continue;
 
-        if(seg->linedef == NULL)    // "minisegs" have no linedefs.
+        if(!seg->linedef)    // "minisegs" have no linedefs.
             continue;
+
+        if(seg->linedef->flags & LINEF_BENIGN)
+            continue;   // Benign linedefs are not rendered.
 
         // Let's first check which way this seg is facing.
         if(seg->frameflags & SEGINF_FACINGFRONT)

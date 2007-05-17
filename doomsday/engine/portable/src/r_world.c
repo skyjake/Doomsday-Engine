@@ -54,8 +54,6 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 static void    R_PrepareSubsector(subsector_t *sub);
-static void    R_FindLineNeighbors(sector_t *sector, line_t *line, int side,
-                                   struct line_s **neighbors, int alignment);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -497,18 +495,21 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
                             adjusted[pln] = true;
                 }
             }
-            else if(line->selfrefhackroot)
+            else if(line->flags & LINEF_SELFREFHACKROOT)
             {
                 // Its a selfreferencing hack line. These will ALWAYS return
                 // the same height on the front and back so we need to find the
                 // neighbouring lines either side of this and compare the front
                 // and back sectors of those instead.
                 uint        j;
+                vertex_t   *vtx[2];
 
+                vtx[0] = line->L_v1;
+                vtx[1] = line->L_v2;
                 // Walk around each vertex in each direction.
                 for(j = 0; j < 2; ++j)
-                    if(line->v[j]->numlineowners > 1)
-                        spreadSkyFixForNeighbors(line->v[j], line,
+                    if(vtx[j]->numlineowners > 1)
+                        spreadSkyFixForNeighbors(vtx[j], line,
                                                  doFix[PLN_FLOOR],
                                                  doFix[PLN_CEILING],
                                                  &adjusted[PLN_FLOOR],
@@ -690,6 +691,7 @@ static void R_SubsectorPlanes(void)
 static int C_DECL lineAngleSorter(const void *a, const void *b)
 {
     uint        i;
+    byte        edge;
     fixed_t     dx, dy;
     binangle_t  angles[2];
     lineowner_t *own[2];
@@ -706,17 +708,10 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
         else
         {
             line = own[i]->line;
+            edge = (line->L_v1 == rootVtx? 1:0);
 
-            if(line->L_v1 == rootVtx)
-            {
-                dx = line->L_v2->pos[VX] - rootVtx->pos[VX];
-                dy = line->L_v2->pos[VY] - rootVtx->pos[VY];
-            }
-            else
-            {
-                dx = line->L_v1->pos[VX] - rootVtx->pos[VX];
-                dy = line->L_v1->pos[VY] - rootVtx->pos[VY];
-            }
+            dx = line->L_v(edge)->pos[VX] - rootVtx->pos[VX];
+            dy = line->L_v(edge)->pos[VY] - rootVtx->pos[VY];
 
             own[i]->angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
 
@@ -921,7 +916,8 @@ static void R_BuildVertexOwners(void)
 
             for(p = 0; p < 2; ++p)
             {
-                uint idx = GET_VERTEX_IDX(line->v[p]);
+                vertex_t    *vtx = line->L_v(p);
+                uint        idx = GET_VERTEX_IDX(vtx);
 
                 if(line->L_frontside)
                     R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
@@ -930,7 +926,7 @@ static void R_BuildVertexOwners(void)
                     R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
                                            line->L_backsector);
 
-                R_SetVertexLineOwner(line->v[p], line, &allocator);
+                R_SetVertexLineOwner(vtx, line, &allocator);
             }
         }
     }
@@ -1034,11 +1030,12 @@ do
  * @return          Ptr to the lineowner for this line for this vertex else
  *                  <code>NULL</code>.
  */
-lineowner_t* R_GetVtxLineOwner(vertex_t *vtx, line_t *line)
+lineowner_t* R_GetVtxLineOwner(vertex_t *v, line_t *line)
 {
-    if(vtx == line->L_v1)
+    if(v == line->L_v1)
         return line->L_vo1;
-    else if(vtx == line->L_v2)
+
+    if(v == line->L_v2)
         return line->L_vo2;
 
     return NULL;
@@ -1420,7 +1417,7 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
 
                     if(ok && ok2)
                     {
-                        lin->selfrefhackroot = true;
+                        lin->flags |= LINEF_SELFREFHACKROOT;
                         VERBOSE2(Con_Message("L%i selfref root to S%i\n",
                                     GET_LINE_IDX(lin), GET_SECTOR_IDX(sec)));
                         ++numroots;
@@ -1504,7 +1501,7 @@ void R_RationalizeSectors(void)
             {
                 lin = sec->Lines[k];
 
-                if(!lin->selfrefhackroot)
+                if(!(lin->flags & LINEF_SELFREFHACKROOT))
                     continue;
 
                 if(lin->validcount == validcount)
@@ -1521,7 +1518,7 @@ void R_RationalizeSectors(void)
                     line = lin;
                     scanOwners = true;
 
-                    vtx = lin->v[l];
+                    vtx = lin->L_v(l);
 
                     p = base = vtx->lineowners;
                     do
@@ -1568,7 +1565,7 @@ void R_RationalizeSectors(void)
                                             o = 0;
                                             while(o < 2 && !found)
                                             {
-                                                vcand = cline->v[o];
+                                                vcand = cline->L_v(o);
 
                                                 if(vcand->numlineowners > 2)
                                                 {
@@ -1622,7 +1619,7 @@ void R_RationalizeSectors(void)
                                             // to self-referencing root lines.
                                             for(o = 0; o < count; ++o)
                                             {
-                                                collectedLines[o]->selfrefhackroot = true;
+                                                collectedLines[o]->flags |= LINEF_SELFREFHACKROOT;
                                                 VERBOSE2(Con_Message("  L%i selfref root to S%i\n",
                                                                      GET_LINE_IDX(collectedLines[o]),
                                                                      GET_SECTOR_IDX(sec)));
@@ -1656,17 +1653,22 @@ void R_RationalizeSectors(void)
 
                                     collectedLines[count-1] = line;
 
-                                    if(line->selfrefhackroot)
+                                    if(line->flags & LINEF_SELFREFHACKROOT)
                                         goto pickNewCandiate;
                                 }
 
                                 if(scanOwners)
                                 {
+                                    vertex_t    *vtx2[2];
+                                    
+                                    vtx2[0] = line->L_v1;
+                                    vtx2[1] = line->L_v2;
+
                                     // Get the vertex info for the other vertex.
-                                    if(vtx == line->L_v1)
-                                        vtx = line->L_v2;
+                                    if(vtx == vtx2[0])
+                                        vtx = vtx2[1];
                                     else
-                                        vtx = line->L_v1;
+                                        vtx = vtx2[0];
 
                                     rescanVtx = true; // Start from the begining with this vertex.
                                 }
@@ -1812,16 +1814,11 @@ void R_SetupSky(void)
  */
 void R_OrderVertices(line_t *line, const sector_t *sector, vertex_t *verts[2])
 {
-    if(sector == line->L_frontsector)
-    {
-        verts[0] = line->v[0];
-        verts[1] = line->v[1];
-    }
-    else
-    {
-        verts[0] = line->v[1];
-        verts[1] = line->v[0];
-    }
+    byte        edge;
+
+    edge = (sector == line->L_frontsector? 0:1);
+    verts[0] = line->L_v(edge);
+    verts[1] = line->L_v(edge^1);
 }
 
 /**
@@ -1986,149 +1983,6 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
 #undef SEP
 }
 
-/**
- * Find line neighbours, which will be used in the FakeRadio calculations.
- */
-#if 0
-void R_InitLineNeighbors(void)
-{
-    uint        startTime = Sys_GetRealTime();
-
-    uint        i, k, j, m, sid;
-    line_t     *line, *other;
-    sector_t   *sector;
-    side_t     *side;
-    vertex_t   *vtx;
-
-    // Find neighbours. We'll do this sector by sector.
-    for(k = 0; k < numsectors; ++k)
-    {
-        sector = SECTOR_PTR(k);
-        for(i = 0; i < sector->linecount; ++i)
-        {
-            line = sector->Lines[i];
-
-            // Which side is this?
-            sid = (line->L_frontsector == sector? FRONT:BACK);
-            side = line->sides[sid];
-
-            for(j = 0; j < 2; ++j)
-            {
-                side->neighbor[j] =
-                    R_FindLineNeighbor(sector, line, line->vo[sid^j], j, NULL);
-
-                // Figure out the sectors in the proximity.
-                // Neighbour must be two-sided.
-                if(side->neighbor[j] && side->neighbor[j]->L_frontsector &&
-                   side->neighbor[j]->L_backsector)
-                {
-                    int         nSide =
-                        (side->neighbor[j]->L_frontsector == sector ? BACK:FRONT);
-
-                    side->proxsector[j] = side->neighbor[j]->sec[nSide];
-                }
-                else
-                {
-                    side->proxsector[j] = NULL;
-                }
-
-                // Look for aligned neighbours.  They are side-specific.
-                side->alignneighbor[j] =
-                    R_FindLineAlignNeighbor(sector, line, line->vo[sid^j], j,
-                                    (side == line->L_frontside? 1:-1));
-            }
-
-            // Attempt to find "pretend" neighbours for this line, if "real"
-            // ones have not been found.
-            // NOTE: selfrefhackroot lines don't have neighbours.
-            //       They can only be "pretend" neighbours.
-
-            // Pretend neighbours are selfrefhackroot lines but BOTH vertices
-            // are owned by this sector and ONE of the vertexes is owned by
-            // this line.
-            if((!side->neighbor[0] || !side->neighbor[1]) &&
-               !line->selfrefhackroot)
-            {
-
-                uint        v;
-                boolean     done, ok = false;
-                lineowner_t *own;
-
-                for(j = 0; j < 2; ++j)
-                {
-                    if(!side->neighbor[j])
-                    {
-                        own = line->vo[sid^j];
-                        done = false;
-                        do
-                        {
-                            other = own->line;
-                            if(other->selfrefhackroot &&
-                               (other->L_v1 == line->L_v1 || other->L_v1 == line->L_v2 ||
-                                other->L_v2 == line->L_v1 || other->L_v2 == line->L_v2))
-                            {
-                                for(v = 0; v < 2; ++v)
-                                {
-                                    ok = false;
-                                    vtx = other->v[v];
-                                    for(m = 0; m < vtx->numsecowners && !ok; ++m)
-                                        if(vtx->secowners[m] == k) // k == sector id
-                                            ok = true;
-                                    if(!ok)
-                                        break;
-                                }
-
-                                if(ok)
-                                {
-                                    side->neighbor[j] = other;
-                                    side->pretendneighbor[j] = true;
-                                    done = true;
-                                }
-                            }
-
-                            own = own->LO_next;
-                        } while(own->line != line && !done);
-                    }
-                }
-            }
-        }
-    }
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_InitLineNeighbors: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
-
-#if _DEBUG
-if(verbose >= 1)
-{
-    for(i = 0; i < numlines; ++i)
-    {
-        line = LINE_PTR(i);
-        for(k = 0; k < 2; ++k)
-        {
-            if(!line->sides[k])
-                continue;
-
-            side = line->sides[k];
-
-            if(side->alignneighbor[0] || side->alignneighbor[1])
-                Con_Printf("Line %i/%i: l=%i r=%i\n", i, k,
-                           (side->alignneighbor[0] ?
-                            GET_LINE_IDX(side->alignneighbor[0]) : -1),
-                           (side->alignneighbor[1] ?
-                            GET_LINE_IDX(side->alignneighbor[1]) : -1));
-
-            if(side->neighbor[k] && side->pretendneighbor[k])
-                Con_Printf("  has a pretend neighbor, line %i\n",
-                           GET_LINE_IDX(side->neighbor[k]));
-        }
-    }
-}
-#endif
-}
-#endif
-
 void R_InitLinks(void)
 {
     uint        i;
@@ -2208,7 +2062,6 @@ void R_InitLevel(char *level_id)
     P_InitSubsectorBlockMap();
 
     R_RationalizeSectors();
-//    R_InitLineNeighbors();  // Must follow R_RationalizeSectors.
     R_InitSectorShadows();
 
     //Con_Progress(10, 0);
@@ -2353,7 +2206,7 @@ void R_SetupLevel(int mode, int flags)
         {
             line = LINE_PTR(i);
 
-            if(line->flags & 0x0100) // The old ML_MAPPED flag
+            if(line->mapflags & 0x0100) // The old ML_MAPPED flag
             {
                 // This line wants to be seen in the map from the begining.
                 memset(&line->mapped, 1, sizeof(&line->mapped));
@@ -2370,7 +2223,7 @@ void R_SetupLevel(int mode, int flags)
                                                       i, DMU_LINE, &pid);
                     }
                 }
-                line->flags &= ~0x0100; // remove the flag.
+                line->mapflags &= ~0x0100; // remove the flag.
             }
 
             // Update side surfaces.
@@ -2495,7 +2348,6 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
     int         texFlags, oldTexFlags;
 
     // Any change to the texture or glow properties?
-    // TODO: Implement Decoration{ Glow{}} definitions.
     texFlags =
         R_GraphicResourceFlags((suf->isflat? RC_FLAT : RC_TEXTURE),
                                suf->texture);

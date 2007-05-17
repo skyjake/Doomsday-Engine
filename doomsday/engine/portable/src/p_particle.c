@@ -632,13 +632,13 @@ boolean PIT_CheckLinePtc(line_t *ld, void *data)
     sector_t   *front, *back;
 
     // Setup the bounding box for the line.
-    p = (ld->v[0]->pos[VX] < ld->v[1]->pos[VX]);
-    bbox[BOXLEFT]   = FLT2FIX(ld->v[p^1]->pos[VX]);
-    bbox[BOXRIGHT]  = FLT2FIX(ld->v[p]->pos[VX]);
+    p = (ld->L_v1->pos[VX] < ld->L_v2->pos[VX]);
+    bbox[BOXLEFT]   = FLT2FIX(ld->L_v(p^1)->pos[VX]);
+    bbox[BOXRIGHT]  = FLT2FIX(ld->L_v(p)->pos[VX]);
 
-    p = (ld->v[0]->pos[VY] < ld->v[1]->pos[VY]);
-    bbox[BOXBOTTOM] = FLT2FIX(ld->v[p^1]->pos[VY]);
-    bbox[BOXTOP]    = FLT2FIX(ld->v[p]->pos[VY]);
+    p = (ld->L_v1->pos[VY] < ld->L_v2->pos[VY]);
+    bbox[BOXBOTTOM] = FLT2FIX(ld->L_v(p^1)->pos[VY]);
+    bbox[BOXTOP]    = FLT2FIX(ld->L_v(p)->pos[VY]);
 
     if(mbox[BOXRIGHT] <= bbox[BOXLEFT] || mbox[BOXLEFT] >= bbox[BOXRIGHT] ||
        mbox[BOXTOP] <= bbox[BOXBOTTOM] || mbox[BOXBOTTOM] >= bbox[BOXTOP])

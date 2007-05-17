@@ -343,9 +343,6 @@ line_t *R_GetLineForSide(uint sideNumber)
  */
 boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 {
-#define VI      (line->L_v1)
-#define VJ      (line->L_v2)
-
     uint        i;
     boolean     isOdd = false;
     float       fx = FIX2FLT(x), fy = FIX2FLT(y);
@@ -353,6 +350,7 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
     for(i = 0; i < sector->linecount; ++i)
     {
         line_t      *line = sector->Lines[i];
+        vertex_t    *vtx[2];
 
         // Skip lines that aren't sector boundaries.
         if(line->L_frontside && line->L_backside &&
@@ -360,13 +358,15 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
            line->L_backsector == sector)
             continue;
 
+        vtx[0] = line->L_v1;
+        vtx[1] = line->L_v2;
         // It shouldn't matter whether the line faces inward or outward.
-        if((VI->pos[VY] < fy && VJ->pos[VY] >= fy) ||
-           (VJ->pos[VY] < fy && VI->pos[VY] >= fy))
+        if((vtx[0]->pos[VY] < fy && vtx[1]->pos[VY] >= fy) ||
+           (vtx[1]->pos[VY] < fy && vtx[0]->pos[VY] >= fy))
         {
-            if(VI->pos[VX] +
-               (((fy - VI->pos[VY]) / (VJ->pos[VY] - VI->pos[VY])) *
-                (VJ->pos[VX] - VI->pos[VX])) < fx)
+            if(vtx[0]->pos[VX] +
+               (((fy - vtx[0]->pos[VY]) / (vtx[1]->pos[VY] - vtx[0]->pos[VY])) *
+                (vtx[1]->pos[VX] - vtx[0]->pos[VX])) < fx)
             {
                 // Toggle oddness.
                 isOdd = !isOdd;
@@ -376,9 +376,6 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
 
     // The point is inside if the number of crossed nodes is odd.
     return isOdd;
-
-#undef VI
-#undef VJ
 }
 
 /**

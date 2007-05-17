@@ -219,30 +219,28 @@ float P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
  */
 void P_SectorBoundingBox(sector_t *sec, float *bbox)
 {
-    float       pos[2];
     uint        i;
-    line_t     *li;
+    vertex_t   *vtx;
 
     if(!sec->linecount)
         return;
 
-    bbox[BLEFT] = bbox[BRIGHT]  = sec->Lines[0]->L_v1->pos[VX];
-    bbox[BTOP]  = bbox[BBOTTOM] = sec->Lines[0]->L_v1->pos[VY];
+    vtx = sec->Lines[0]->L_v1;
+    bbox[BLEFT] = bbox[BRIGHT]  = vtx->pos[VX];
+    bbox[BTOP]  = bbox[BBOTTOM] = vtx->pos[VY];
 
     for(i = 1; i < sec->linecount; ++i)
     {
-        li = sec->Lines[i];
-        pos[VX] = li->L_v1->pos[VX];
-        pos[VY] = li->L_v1->pos[VY];
+        vtx = sec->Lines[i]->L_v1;
 
-        if(pos[VX] < bbox[BLEFT])
-            bbox[BLEFT]   = pos[VX];
-        if(pos[VX] > bbox[BRIGHT])
-            bbox[BRIGHT]  = pos[VX];
-        if(pos[VY] < bbox[BTOP])
-            bbox[BTOP]    = pos[VY];
-        if(pos[VY] > bbox[BBOTTOM])
-            bbox[BBOTTOM] = pos[VY];
+        if(vtx->pos[VX] < bbox[BLEFT])
+            bbox[BLEFT]   = vtx->pos[VX];
+        if(vtx->pos[VX] > bbox[BRIGHT])
+            bbox[BRIGHT]  = vtx->pos[VX];
+        if(vtx->pos[VY] < bbox[BTOP])
+            bbox[BTOP]    = vtx->pos[VY];
+        if(vtx->pos[VY] > bbox[BBOTTOM])
+            bbox[BBOTTOM] = vtx->pos[VY];
     }
 }
 
@@ -252,10 +250,11 @@ void P_SectorBoundingBox(sector_t *sec, float *bbox)
 int P_PointOnLineSide(fixed_t x, fixed_t y, line_t *line)
 {
     float       fx = FIX2FLT(x), fy = FIX2FLT(y);
+    vertex_t   *vtx1 = line->L_v1;
 
-    return  !line->dx ? fx <= line->L_v1->pos[VX] ? line->dy > 0 : line->dy <
-        0 : !line->dy ? fy <= line->L_v1->pos[VY] ? line->dx < 0 : line->dx >
-        0 : (fy - line->L_v1->pos[VY]) * line->dx >= line->dy * (fx - line->L_v1->pos[VX]);
+    return  !line->dx ? fx <= vtx1->pos[VX] ? line->dy > 0 : line->dy <
+        0 : !line->dy ? fy <= vtx1->pos[VY] ? line->dx < 0 : line->dx >
+        0 : (fy - vtx1->pos[VY]) * line->dx >= line->dy * (fx - vtx1->pos[VX]);
 }
 
 /*
@@ -307,8 +306,10 @@ int P_PointOnDivlineSide(fixed_t x, fixed_t y, divline_t *line)
 
 void P_MakeDivline(line_t *li, divline_t *dl)
 {
-    dl->pos[VX] = FLT2FIX(li->L_v1->pos[VX]);
-    dl->pos[VY] = FLT2FIX(li->L_v1->pos[VY]);
+    vertex_t    *vtx = li->L_v1;
+
+    dl->pos[VX] = FLT2FIX(vtx->pos[VX]);
+    dl->pos[VY] = FLT2FIX(vtx->pos[VY]);
     dl->dx = FLT2FIX(li->dx);
     dl->dy = FLT2FIX(li->dy);
 }
@@ -477,13 +478,13 @@ boolean PIT_LinkToLines(line_t *ld, void *parm)
     nodeindex_t nix;
 
     // Setup the bounding box for the line.
-    p = (ld->v[0]->pos[VX] < ld->v[1]->pos[VX]);
-    bbox[BOXLEFT]   = FLT2FIX(ld->v[p^1]->pos[VX]);
-    bbox[BOXRIGHT]  = FLT2FIX(ld->v[p]->pos[VX]);
+    p = (ld->L_v1->pos[VX] < ld->L_v2->pos[VX]);
+    bbox[BOXLEFT]   = FLT2FIX(ld->L_v(p^1)->pos[VX]);
+    bbox[BOXRIGHT]  = FLT2FIX(ld->L_v(p)->pos[VX]);
 
-    p = (ld->v[0]->pos[VY] < ld->v[1]->pos[VY]);
-    bbox[BOXBOTTOM] = FLT2FIX(ld->v[p^1]->pos[VY]);
-    bbox[BOXTOP]    = FLT2FIX(ld->v[p]->pos[VY]);
+    p = (ld->L_v1->pos[VY] < ld->L_v2->pos[VY]);
+    bbox[BOXBOTTOM] = FLT2FIX(ld->L_v(p^1)->pos[VY]);
+    bbox[BOXTOP]    = FLT2FIX(ld->L_v(p)->pos[VY]);
 
     if(data->box[BOXRIGHT]  <= bbox[BOXLEFT] ||
        data->box[BOXLEFT]   >= bbox[BOXRIGHT] ||

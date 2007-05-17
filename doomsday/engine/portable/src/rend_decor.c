@@ -549,6 +549,10 @@ static void Rend_DecorateLine(int index)
     sector_t   *highSector, *lowSector;
     float       frontCeil, frontFloor, backCeil, backFloor;
 
+    // Ignore benign linedefs.
+    if(line->flags & LINEF_BENIGN)
+        return;
+
     // Only the lines within the decoration visibility bounding box
     // are processed.
     if(!Rend_LineDecorationBounds(line))
@@ -594,7 +598,7 @@ static void Rend_DecorateLine(int index)
                 Rend_DecorateLineSection(line, side, &side->SW_topsurface,
                                          highSector->SP_ceilvisheight,
                                          lowSector->SP_ceilvisheight,
-                                         line->flags & ML_DONTPEGTOP ? 0 : -texinfo->height +
+                                         line->mapflags & ML_DONTPEGTOP ? 0 : -texinfo->height +
                                          (highSector->SP_ceilvisheight -
                                           lowSector->SP_ceilvisheight));
             }
@@ -624,7 +628,7 @@ static void Rend_DecorateLine(int index)
                 Rend_DecorateLineSection(line, side, &side->SW_bottomsurface,
                                          highSector->SP_floorvisheight,
                                          lowSector->SP_floorvisheight,
-                                         line->flags & ML_DONTPEGBOTTOM ?
+                                         line->mapflags & ML_DONTPEGBOTTOM ?
                                          highSector->SP_floorvisheight -
                                          lowSector->SP_ceilvisheight : 0);
             }
@@ -666,7 +670,7 @@ static void Rend_DecorateLine(int index)
 
             Rend_DecorateLineSection(line, side, &side->SW_middlesurface, frontCeil,
                                      frontFloor,
-                                     line->flags & ML_DONTPEGBOTTOM ? -texinfo->height +
+                                     line->mapflags & ML_DONTPEGBOTTOM ? -texinfo->height +
                                      (frontCeil - frontFloor) : 0);
         }
     }

@@ -214,14 +214,16 @@ void Sv_InitPools(void)
     sideOrigins = Z_Malloc(sizeof(origin_t) * numsides, PU_LEVEL, 0);
     for(i = 0; i < numsides; ++i)
     {
+        vertex_t    *vtx;
         // The side must be owned by a line.
         if(sideOwners[i] == NULL)
             continue;
 
+        vtx = sideOwners[i]->L_v1;
         sideOrigins[i].pos[VX] =
-            FLT2FIX(sideOwners[i]->L_v1->pos[VX] + sideOwners[i]->dx / 2);
+            FLT2FIX(vtx->pos[VX] + sideOwners[i]->dx / 2);
         sideOrigins[i].pos[VY] =
-            FLT2FIX(sideOwners[i]->L_v1->pos[VY] + sideOwners[i]->dy / 2);
+            FLT2FIX(vtx->pos[VY] + sideOwners[i]->dy / 2);
     }
 
     // Store the current state of the world into both the registers.
@@ -499,12 +501,12 @@ void Sv_RegisterSide(dt_side_t *reg, uint number)
     reg->top.texture = side->SW_toptexture;
     reg->middle.texture = side->SW_middletexture;
     reg->bottom.texture = side->SW_bottomtexture;
-    reg->lineFlags = (line ? line->flags & 0xff : 0);
+    reg->lineFlags = (line ? line->mapflags & 0xff : 0);
 
     memcpy(reg->top.rgba, side->SW_toprgba, sizeof(reg->top.rgba));
     memcpy(reg->middle.rgba, side->SW_middlergba, sizeof(reg->middle.rgba));
     memcpy(reg->bottom.rgba, side->SW_bottomrgba, sizeof(reg->bottom.rgba));
-    reg->blendmode = side->blendmode;
+    reg->middle.blendmode = side->SW_middleblendmode; // only middle supports blendmode.
     reg->flags = side->flags & 0xff;
 }
 
@@ -835,7 +837,7 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
     const line_t *line = sideOwners[number];
     dt_side_t  *r = &reg->sides[number];
     int         df = 0;
-    byte        lineFlags = (line ? line->flags & 0xff : 0);
+    byte        lineFlags = (line ? line->mapflags & 0xff : 0);
     byte        sideFlags = s->flags & 0xff;
 
     if(r->top.texture != s->SW_toptexture && !(s->SW_topflags & SUF_TEXFIX))
@@ -938,11 +940,11 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number, sidedelta_t *d,
             r->bottom.rgba[3] = s->SW_bottomrgba[3];
     }
 
-    if(r->blendmode != s->blendmode)
+    if(r->middle.blendmode != s->SW_middleblendmode)
     {
         df |= SIDF_MID_BLENDMODE;
         if(doUpdate)
-            r->blendmode = s->blendmode;
+            r->middle.blendmode = s->SW_middleblendmode;
     }
 
     if(r->flags != sideFlags)
@@ -1477,7 +1479,7 @@ void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
             d->bottom.rgba[2] = s->bottom.rgba[2];
 
         if(sf & SIDF_MID_BLENDMODE)
-            d->blendmode = s->blendmode;
+            d->middle.blendmode = s->middle.blendmode;
 
         if(sf & SIDF_FLAGS)
             d->flags = s->flags;

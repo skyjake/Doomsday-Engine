@@ -680,11 +680,13 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
             // Flat against a wall, then?
             else if(flatOnWall)
             {
-                float line[2];
-                float pos[3];
+                float       line[2];
+                float       pos[3];
+                vertex_t   *vtx;
 
                 line[0] = pt->contact->dx;
                 line[1] = pt->contact->dy;
+                vtx = pt->contact->L_v1;
 
                 // There will be a slight approximation on the XY plane since
                 // the particles aren't that accurate when it comes to wall
@@ -696,8 +698,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 pos[VX] = FIX2FLT(pt->pos[VX]);
                 pos[VY] = FIX2FLT(pt->pos[VY]);
                 pos[VZ] = FIX2FLT(pt->pos[VZ]);
-                M_ProjectPointOnLine(pos, &pt->contact->L_v1->pos[VX], line, 1,
-                                     projected);
+                M_ProjectPointOnLine(pos, &vtx->pos[VX], line, 1, projected);
 
                 P_LineUnitVector(pt->contact, line);
 

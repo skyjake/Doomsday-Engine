@@ -1196,7 +1196,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_LINE_VALIDCOUNT, &p->validcount, args, 0);
             break;
         case DMU_FLAGS:
-            SetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
+            SetValue(DMT_LINE_MAPFLAGS, &p->mapflags, args, 0);
             break;
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_LINE.\n",
@@ -1263,7 +1263,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 0);
             break;
         case DMU_MIDDLE_BLENDMODE:
-            SetValue(DMT_SIDE_BLENDMODE, &p->blendmode, args, 0);
+            SetValue(DMT_SURFACE_BLENDMODE, &p->SW_middleblendmode, args, 0);
             break;
         case DMU_MIDDLE_TEXTURE:
             SetValue(DMT_SURFACE_TEXTURE, &p->SW_middletexture, args, 0);
@@ -1982,7 +1982,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SURFACE_RGBA, &p->SW_middlergba[3], args, 0);
             break;
         case DMU_MIDDLE_BLENDMODE:
-            GetValue(DMT_SIDE_BLENDMODE, &p->blendmode, args, 0);
+            GetValue(DMT_SURFACE_BLENDMODE, &p->SW_middleblendmode, args, 0);
             break;
         case DMU_BOTTOM_TEXTURE:
             {
@@ -2092,14 +2092,31 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SEG_SIDEDEF, &p->sidedef, args, 0);
             break;
         case DMU_LINE:
-            GetValue(DMT_SEG_LINEDEF, &p->linedef, args, 0);
+        {
+            line_t  *line = NULL;
+            if(p->linedef && !(p->linedef->flags & LINEF_BENIGN))
+                line = p->linedef;
+            GetValue(DMT_SEG_LINEDEF, &line, args, 0);
             break;
+        }
         case DMU_FRONT_SECTOR:
-            GetValue(DMT_SEG_SEC, &p->SG_frontsector, args, 0);
+        {
+            sector_t *sec = NULL;
+            if(p->SG_frontsector &&
+               p->linedef && !(p->linedef->flags & LINEF_BENIGN))
+                sec = p->SG_frontsector;
+            GetValue(DMT_SEG_SEC, &sec, args, 0);
             break;
+        }
         case DMU_BACK_SECTOR:
+        {
+            sector_t *sec = NULL;
+            if(p->SG_backsector &&
+               p->linedef && !(p->linedef->flags & LINEF_BENIGN))
+                sec = p->SG_backsector;
             GetValue(DMT_SEG_SEC, &p->SG_backsector, args, 0);
             break;
+        }
         case DMU_FLAGS:
             GetValue(DMT_SEG_FLAGS, &p->flags, args, 0);
             break;
@@ -2152,17 +2169,9 @@ static int GetProperty(void* ptr, void* context)
         case DMU_LENGTH:
             GetValue(DDVT_FLOAT, &p->length, args, 0);
             break;
-        /*
         case DMU_ANGLE:
-        {
-            // info->angle is a binangle_t, which is currently a 16-bit angle (ushort)
-            // (see dd_types.h), whle DDVT_ANGLE is 32-bit unsigned long.
-            // TODO: Use DDVT_ANGLE, but make the necessary conversion...
-
-            lineinfo_t* info = LINE_INFO(p);
-            GetValue(DDVT_ANGLE, &info->angle, args, 0);
+            GetValue(DDVT_ANGLE, &p->angle, args, 0);
             break;
-        }*/
         case DMU_SLOPE_TYPE:
             GetValue(DMT_LINE_SLOPETYPE, &p->slopetype, args, 0);
             break;
@@ -2179,7 +2188,7 @@ static int GetProperty(void* ptr, void* context)
             break;
         }
         case DMU_FLAGS:
-            GetValue(DMT_LINE_FLAGS, &p->flags, args, 0);
+            GetValue(DMT_LINE_MAPFLAGS, &p->mapflags, args, 0);
             break;
         case DMU_SIDE0:
             GetValue(DDVT_PTR, &p->L_frontside, args, 0);

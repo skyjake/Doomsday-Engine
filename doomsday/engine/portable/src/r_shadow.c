@@ -147,7 +147,7 @@ sector_t *R_GetShadowSector(shadowpoly_t *poly, uint pln, boolean getLinked)
 {
     if(getLinked)
         return R_GetLinkedSector(poly->ssec, pln);
-    return (poly->seg->linedef->L_sector(poly->flags & SHPF_FRONTSIDE ? FRONT : BACK));
+    return (poly->seg->SG_frontsector);
 }
 
 boolean R_ShadowCornerDeltas(pvec2_t left, pvec2_t right, shadowpoly_t *poly,
@@ -233,7 +233,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
 
         // The back extended offset(s):
         // Determine how many we'll need.
-        base = R_GetVtxLineOwner(line->v[edge^side], line);
+        base = R_GetVtxLineOwner(line->L_v(edge^side), line);
         count = 0;
         done = false;
         p = base->link[!edge];
@@ -289,6 +289,7 @@ void R_ShadowEdges(shadowpoly_t *poly)
             p = boundryOwner;
             for(i = 0; i < count && i < MAX_BEXOFFSETS; ++i)
             {
+                byte        otherside;
                 // Get the next back neighbor.
                 neighbor = NULL;
                 p = p->link[!edge];
@@ -303,8 +304,9 @@ void R_ShadowEdges(shadowpoly_t *poly)
 
                 // The back neighbor delta.
                 delta = (leftCorner ? left : right);
-                if(orientSec ==
-                   neighbor->L_sector(neighbor->L_v1 == line->L_v(edge^!side)))
+                otherside = neighbor->L_v1 == line->L_v(edge^!side);
+                if(neighbor->L_side(otherside) &&
+                   orientSec == neighbor->L_sector(otherside))
                 {
                     delta[VX] = neighbor->dx;
                     delta[VY] = neighbor->dy;
@@ -526,19 +528,18 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
         {
             for(k = 0; k < sector->linecount; ++k)
             {
-                //if(i == k) continue;
                 line = sector->Lines[k];
                 if(polys[i].seg->linedef == line)
                     continue;
 
-                if(line->selfrefhackroot)
+                if(line->flags & LINEF_SELFREFHACKROOT)
                     continue;
 
                 if((overlaps[i] & OVERLAP_ALL) == OVERLAP_ALL)
                     break;
 
-                V2_Set(a, line->v[0]->pos[VX], line->v[0]->pos[VY]);
-                V2_Set(b, line->v[1]->pos[VX], line->v[1]->pos[VY]);
+                V2_Set(a, line->L_v1->pos[VX], line->L_v1->pos[VY]);
+                V2_Set(b, line->L_v2->pos[VX], line->L_v2->pos[VY]);
 
                 // Try the left edge of the shadow.
                 V2_Intercept2(bound->left, bound->a, a, b, NULL, &s, &t);
@@ -612,8 +613,8 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
             // Iterate all the segs of the subsector.
             for(k = 0, seg = ssec->firstseg; k < ssec->segcount; ++k, seg++)
             {
-                if(!seg->linedef)
-                    continue; // minisegs don't get shadows.
+                if(!seg->linedef || (seg->linedef->flags & LINEF_BENIGN))
+                    continue; // minisegs and benign linedefs don't get shadows.
 
                 line = seg->linedef;
                 if(line->validcount == validcount)

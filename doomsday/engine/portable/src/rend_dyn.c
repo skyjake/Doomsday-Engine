@@ -559,7 +559,7 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
             Rend_MidTexturePos(&bottom[0], &bottom[1], &top[0], &top[1],
                                NULL, sdef->SW_middleoffy, texinfo->height,
                                seg->linedef ? (seg->linedef->
-                                               flags & ML_DONTPEGBOTTOM) !=
+                                               mapflags & ML_DONTPEGBOTTOM) !=
                                0 : false);
         }
         else
@@ -1137,6 +1137,7 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     contactfinder_data_t *light = data;
     sector_t   *source, *dest;
     float       distance;
+    vertex_t   *vtx;
 
     if(!line->L_backside || !line->L_frontside ||
        line->L_frontsector == line->L_backsector)
@@ -1195,9 +1196,10 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     }
 
     // Calculate distance to line.
+    vtx = line->L_v1;
     distance =
-        ((line->L_v1->pos[VY] - light->lum->pos[VY]) * line->dx -
-         (line->L_v1->pos[VX] - light->lum->pos[VX]) * line->dy)
+        ((vtx->pos[VY] - light->lum->pos[VY]) * line->dx -
+         (vtx->pos[VX] - light->lum->pos[VX]) * line->dy)
          / line->length;
 
     if((source == line->L_frontsector && distance < 0) ||

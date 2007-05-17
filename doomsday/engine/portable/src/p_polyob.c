@@ -108,34 +108,20 @@ polyobj_t *GetPolyobj(uint polyNum)
 
 void UpdateSegBBox(seg_t *seg)
 {
-    line_t *line;
+    line_t     *line = seg->linedef;
+    byte        edge;
 
-    line = seg->linedef;
+    edge = (seg->SG_v1->pos[VX] < seg->SG_v2->pos[VX]);
+    line->bbox[BOXLEFT]  = FLT2FIX(seg->SG_v(edge^1)->pos[VX]);
+    line->bbox[BOXRIGHT] = FLT2FIX(seg->SG_v(edge)->pos[VX]);
 
-    if(seg->v[0]->pos[VX] < seg->v[1]->pos[VX])
-    {
-        line->bbox[BOXLEFT]  = FLT2FIX(seg->v[0]->pos[VX]);
-        line->bbox[BOXRIGHT] = FLT2FIX(seg->v[1]->pos[VX]);
-    }
-    else
-    {
-        line->bbox[BOXLEFT]  = FLT2FIX(seg->v[1]->pos[VX]);
-        line->bbox[BOXRIGHT] = FLT2FIX(seg->v[0]->pos[VX]);
-    }
-    if(seg->v[0]->pos[VY] < seg->v[1]->pos[VY])
-    {
-        line->bbox[BOXBOTTOM] = FLT2FIX(seg->v[0]->pos[VY]);
-        line->bbox[BOXTOP]    = FLT2FIX(seg->v[1]->pos[VY]);
-    }
-    else
-    {
-        line->bbox[BOXBOTTOM] = FLT2FIX(seg->v[1]->pos[VY]);
-        line->bbox[BOXTOP]    = FLT2FIX(seg->v[0]->pos[VY]);
-    }
+    edge = (seg->SG_v1->pos[VY] < seg->SG_v2->pos[VY]);
+    line->bbox[BOXBOTTOM] = FLT2FIX(seg->SG_v(edge^1)->pos[VY]);
+    line->bbox[BOXTOP]    = FLT2FIX(seg->SG_v(edge)->pos[VY]);
 
     // Update the line's slopetype
-    line->dx = line->v[1]->pos[VX] - line->v[0]->pos[VX];
-    line->dy = line->v[1]->pos[VY] - line->v[0]->pos[VY];
+    line->dx = line->L_v2->pos[VX] - line->L_v1->pos[VX];
+    line->dy = line->L_v2->pos[VY] - line->L_v1->pos[VY];
     if(!line->dx)
     {
         line->slopetype = ST_VERTICAL;

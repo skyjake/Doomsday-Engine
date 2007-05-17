@@ -227,7 +227,8 @@ typedef struct automapcfg_s {
 #define AMF_REND_ALLLINES   0x04
 #define AMF_REND_XGLINES    0x08
 #define AMF_REND_SUBSECTORS 0x10
-#define AMF_REND_BLOCKMAP   0x20
+#define AMF_REND_VERTEXES   0x20
+#define AMF_REND_BLOCKMAP   0x40
 
 typedef struct automapspecialline_s {
     int         special;
@@ -1528,7 +1529,7 @@ void AM_SetCheatLevel(int pid, int level)
 
     map->cheating = level;
 
-    if(map->cheating)
+    if(map->cheating >= 1)
         map->flags |= AMF_REND_ALLLINES;
     else
         map->flags &= ~AMF_REND_ALLLINES;
@@ -1538,7 +1539,12 @@ void AM_SetCheatLevel(int pid, int level)
     else
         map->flags &= ~(AMF_REND_THINGS | AMF_REND_XGLINES);
 
-    if(map->cheating == 3)
+    if(map->cheating >= 2)
+        map->flags |= AMF_REND_VERTEXES;
+    else
+        map->flags &= ~AMF_REND_VERTEXES;
+
+    if(map->cheating >= 3)
         map->flags |= AMF_REND_SUBSECTORS;
     else
         map->flags &= ~AMF_REND_SUBSECTORS;
@@ -2773,6 +2779,22 @@ static void drawLevelName(void)
     }
 }
 
+static void renderVertexes(void)
+{
+    uint        i;
+    automap_t  *map = &automaps[mapviewplayer];
+    float       v[2];
+
+    for(i = 0; i < numvertexes; ++i)
+    {
+        P_GetFloatv(DMU_VERTEX, i, DMU_XY, v);
+
+        addPatchQuad(v[VX], v[VY], FIXXTOSCREENX(.75f) * map->scaleFTOM,
+             FIXYTOSCREENY(.75f) * map->scaleFTOM, 0,
+             0, .2f, .5f, 1, 1);
+    }
+}
+
 /**
  * Render the automap view window for the specified player.
  */
@@ -2805,6 +2827,10 @@ void AM_Drawer(int viewplayer)
             renderGrid();
 
         renderWalls();
+
+        if(map->flags & AMF_REND_VERTEXES)
+            renderVertexes();
+        
         renderPlayers();
 
         if(map->flags & AMF_REND_THINGS)

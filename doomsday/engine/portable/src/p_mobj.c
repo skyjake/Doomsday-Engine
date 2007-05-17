@@ -147,13 +147,13 @@ static boolean PIT_CheckLine(line_t *ld, void *parm)
     fixed_t     bbox[4];
 
     // Setup the bounding box for the line.
-    p = (ld->v[0]->pos[VX] < ld->v[1]->pos[VX]);
-    bbox[BOXLEFT]   = FLT2FIX(ld->v[p^1]->pos[VX]);
-    bbox[BOXRIGHT]  = FLT2FIX(ld->v[p]->pos[VX]);
+    p = (ld->L_v1->pos[VX] < ld->L_v2->pos[VX]);
+    bbox[BOXLEFT]   = FLT2FIX(ld->L_v(p^1)->pos[VX]);
+    bbox[BOXRIGHT]  = FLT2FIX(ld->L_v(p)->pos[VX]);
 
-    p = (ld->v[0]->pos[VY] < ld->v[1]->pos[VY]);
-    bbox[BOXBOTTOM] = FLT2FIX(ld->v[p^1]->pos[VY]);
-    bbox[BOXTOP]    = FLT2FIX(ld->v[p]->pos[VY]);
+    p = (ld->L_v1->pos[VY] < ld->L_v2->pos[VY]);
+    bbox[BOXBOTTOM] = FLT2FIX(ld->L_v(p^1)->pos[VY]);
+    bbox[BOXTOP]    = FLT2FIX(ld->L_v(p)->pos[VY]);
 
     if(tm->box[BOXRIGHT] <= bbox[BOXLEFT] || tm->box[BOXLEFT] >= bbox[BOXRIGHT] ||
        tm->box[BOXTOP] <= bbox[BOXBOTTOM] || tm->box[BOXBOTTOM] >= bbox[BOXTOP])
@@ -170,7 +170,7 @@ static boolean PIT_CheckLine(line_t *ld, void *parm)
 
     if(!(tm->thing->ddflags & DDMF_MISSILE))
     {
-        if(ld->flags & ML_BLOCKING)
+        if(ld->mapflags & ML_BLOCKING)
             return false;       // explicitly blocking everything
     }
 
@@ -613,7 +613,7 @@ static boolean PTR_SlideTraverse(intercept_t *in)
 
     li = in->d.line;
 
-    if(!(li->flags & ML_TWOSIDED))
+    if(!(li->mapflags & ML_TWOSIDED))
     {
         if(P_PointOnLineSide(slideMo->pos[VX], slideMo->pos[VY], li))
         {

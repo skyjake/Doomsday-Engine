@@ -635,7 +635,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     sector_t   *backSector;
     float       bFloor, bCeil, limit, size;
     rendpoly_t *quad;
-    int         i, texture = 0, sideNum;
+    int         i, texture = 0;
     shadowcorner_t topCn[2], botCn[2], sideCn[2];
     edgespan_t  spans[2];        // {bottom, top}
     edgespan_t *floorSpan = &spans[0], *ceilSpan = &spans[1];
@@ -646,19 +646,13 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
 
     backSector = seg->SG_backsector;
 
-    // Choose the correct side.
-    if(seg->linedef->L_frontsector == frontSector)
-        sideNum = 0;
-    else
-        sideNum = 1;
-
     // Determine the shadow properties on the edges of the poly.
     for(i = 0; i < 2; ++i)
     {
         spans[i].length = seg->linedef->length;
         spans[i].shift = seg->offset;
     }
-    Rend_RadioScanEdges(topCn, botCn, sideCn, seg->linedef, sideNum, spans);
+    Rend_RadioScanEdges(topCn, botCn, sideCn, seg->linedef, seg->side, spans);
 
     // Back sector visible plane heights.
     if(backSector)
@@ -1222,25 +1216,30 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
                     }
                     else
                     {
+                        vertex_t    *pvtx[2];
+
+                        pvtx[0] = p->line->L_v1;
+                        pvtx[1] = p->line->L_v2;
+
                         if((isCeiling &&
                             ((p->line->L_frontsector->SP_ceilvisheight < z ||
                               p->line->L_backsector->SP_ceilvisheight < z) ||
-                             ((p->line->L_v(i^1) == vtx &&
+                             ((pvtx[i^1] == vtx &&
                                p->line->L_backsector->SP_floorvisheight >=
                                shadow->ssec->sector->SP_ceilvisheight) ||
-                              (p->line->L_v(i) == vtx &&
+                              (pvtx[i] == vtx &&
                                p->line->L_frontsector->SP_floorvisheight >=
                                shadow->ssec->sector->SP_ceilvisheight)))) ||
                            (!isCeiling &&
                             ((p->line->L_frontsector->SP_floorvisheight > z ||
                               p->line->L_backsector->SP_floorvisheight > z) ||
-                             ((p->line->L_v(i^1) == vtx &&
+                             ((pvtx[i^1] == vtx &&
                                p->line->L_backsector->SP_ceilvisheight <=
                                shadow->ssec->sector->SP_floorvisheight) ||
-                              (p->line->L_v(i) == vtx &&
+                              (pvtx[i] == vtx &&
                                p->line->L_frontsector->SP_ceilvisheight <=
                                shadow->ssec->sector->SP_floorvisheight)))) ||
-                           Rend_DoesMidTextureFillGap(p->line, p->line->v[i] == vtx))
+                           Rend_DoesMidTextureFillGap(p->line, pvtx[i] == vtx))
                         {
                             found = true;
                         }
