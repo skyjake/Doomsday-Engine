@@ -1163,17 +1163,18 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 {
     int         surfaceFlags;
     surface_t  *surface;
-    side_t     *sid, *backsid, *side;
+    side_t     *side;
     line_t     *ldef;
     float       ffloor, fceil, fsh;
     rendpoly_t *quad;
-    float      *vBL, *vBR, *vTL, *vTR;
-    boolean     backSide = true;
-    sector_t   *frontsec = ssec->sector, *fflinkSec, *fclinkSec;
+    float       vL_ZTop, vL_ZBottom, vR_ZTop, vR_ZBottom, *vL_XY, *vR_XY;
+    boolean     backSide;
+    sector_t   *frontsec, *fflinkSec, *fclinkSec;
     int         pid = viewplayer - players;
 
-    sid = seg->linedef->L_frontside;
-    backsid = seg->linedef->L_backside;
+    frontsec = seg->sidedef->sector;
+    side = seg->sidedef;
+    backSide = seg->side;
     ldef = seg->linedef;
 
     if(!ldef->mapped[pid])
@@ -1187,15 +1188,6 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
                                            DMU_LINE, &pid);
     }
 
-    // Which side are we using?
-    if(sid == seg->sidedef)
-    {
-        side = sid;
-        backSide = false;
-    }
-    else
-        side = backsid;
-
     fflinkSec = R_GetLinkedSector(ssec, PLN_FLOOR);
     ffloor = fflinkSec->SP_floorvisheight;
     fclinkSec = R_GetLinkedSector(ssec, PLN_CEILING);
@@ -1208,23 +1200,14 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     quad->tex.detail = NULL;
     quad->intertex.detail = NULL;
 
-    // Check for neighborhood division?
-    Rend_WallHeightDivision(quad, seg, frontsec, SEG_MIDDLE);
+    // Get the start and end vertices, left then right.
+    vL_XY = seg->SG_v1->pos;
+    vR_XY = seg->SG_v2->pos;
 
-    vBL = quad->vertices[0].pos;
-    vBR = quad->vertices[2].pos;
-    vTL = quad->vertices[1].pos;
-    vTR = quad->vertices[3].pos;
-
-    // Get the start and end vertices, left then right. Top and bottom.
-    vBL[VX] = vTL[VX] = seg->SG_v1->pos[VX];
-    vBL[VY] = vTL[VY] = seg->SG_v1->pos[VY];
-    vBR[VX] = vTR[VX] = seg->SG_v2->pos[VX];
-    vBR[VY] = vTR[VY] = seg->SG_v2->pos[VY];
+    vL_ZTop = vR_ZTop = fceil;
+    vL_ZBottom = vR_ZBottom = ffloor;
 
     quad->wall->length = seg->length;
-
-    Rend_SetSurfaceColorsForSide(side);
 
     surface = &side->SW_middlesurface;
     // Is there a visible surface?
@@ -1233,11 +1216,13 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
         texinfo_t      *texinfo = NULL;
         short           tempflags = 0;
 
+        Rend_SetSurfaceColorsForSide(side);
+
+        // Check for neighborhood division?
+        Rend_WallHeightDivision(quad, seg, frontsec, SEG_MIDDLE);
+
         // Fill in the remaining quad data.
         quad->flags = 0;
-        vTL[VZ] = vTR[VZ] = fceil;
-        vBL[VZ] = vBR[VZ] = ffloor;
-
         quad->texoffx = side->SW_middleoffx + seg->offset;
         quad->texoffy = side->SW_middleoffy;
  
@@ -1255,6 +1240,26 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
         if(surfaceFlags & SUF_BLEND)
             tempflags |= RPF2_BLEND;
 
+        // Bottom Left.
+        quad->vertices[0].pos[0] = vL_XY[VX];
+        quad->vertices[0].pos[1] = vL_XY[VY];
+        quad->vertices[0].pos[2] = vL_ZBottom;
+
+        // Bottom Right.
+        quad->vertices[2].pos[0] = vR_XY[VX];
+        quad->vertices[2].pos[1] = vR_XY[VY];
+        quad->vertices[2].pos[2] = vR_ZBottom;
+
+        // Top Left.
+        quad->vertices[1].pos[0] = vL_XY[VX];
+        quad->vertices[1].pos[1] = vL_XY[VY];
+        quad->vertices[1].pos[2] = vL_ZTop;
+
+        // Top Right.
+        quad->vertices[3].pos[0] = vR_XY[VX];
+        quad->vertices[3].pos[1] = vR_XY[VY];
+        quad->vertices[3].pos[2] = vR_ZTop;
+
         Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_MIDDLE,
                   /*Alpha*/    1, tempflags);
     }
@@ -1268,8 +1273,25 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
             quad->lights = NULL;
             quad->intertex.id = 0;
 
-            vTL[VZ] = vTR[VZ] = fceil;
-            vBL[VZ] = vBR[VZ] = ffloor;
+            // Bottom Left.
+            quad->vertices[0].pos[0] = vL_XY[VX];
+            quad->vertices[0].pos[1] = vL_XY[VY];
+            quad->vertices[0].pos[2] = vL_ZBottom;
+
+            // Bottom Right.
+            quad->vertices[2].pos[0] = vR_XY[VX];
+            quad->vertices[2].pos[1] = vR_XY[VY];
+            quad->vertices[2].pos[2] = vR_ZBottom;
+
+            // Top Left.
+            quad->vertices[1].pos[0] = vL_XY[VX];
+            quad->vertices[1].pos[1] = vL_XY[VY];
+            quad->vertices[1].pos[2] = vL_ZTop;
+
+            // Top Right.
+            quad->vertices[3].pos[0] = vR_XY[VX];
+            quad->vertices[3].pos[1] = vR_XY[VY];
+            quad->vertices[3].pos[2] = vR_ZTop;
 
             RL_AddPoly(quad);
         }
@@ -1277,7 +1299,7 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 
     // We KNOW we can make it solid.
     if(!P_IsInVoid(viewplayer))
-        C_AddViewRelSeg(vBL[VX], vBL[VY], vBR[VX], vBR[VY]);
+        C_AddViewRelSeg(vL_XY[VX], vL_XY[VY], vR_XY[VX], vR_XY[VY]);
 
     R_FreeRendPoly(quad);
 }
@@ -1290,17 +1312,19 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     int         solidSeg = false; // -1 means NEVER.
     sector_t   *backsec;
     surface_t  *surface;
-    side_t     *sid, *backsid, *side;
+    side_t     *backsid, *side;
     line_t     *ldef;
     float       ffloor, fceil, bfloor, bceil, fsh, bsh;
     float       vL_ZTop, vL_ZBottom, vR_ZTop, vR_ZBottom, *vL_XY, *vR_XY;
-    boolean     backSide = true;
-    sector_t   *frontsec = ssec->sector, *fflinkSec, *fclinkSec;
+    boolean     backSide;
+    sector_t   *frontsec, *fflinkSec, *fclinkSec;
     int         pid = viewplayer - players;
 
-    backsec = seg->SG_backsector;
-    sid = seg->linedef->L_frontside;
-    backsid = seg->linedef->L_backside;
+    frontsec = seg->sidedef->sector;
+    backsec = seg->backseg->sidedef->sector;
+    backsid = seg->backseg->sidedef;
+    side = seg->sidedef;
+    backSide = seg->side;
     ldef = seg->linedef;
 
     if(!ldef->mapped[pid])
@@ -1314,16 +1338,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                                            DMU_LINE, &pid);
     }
 
-    // Which side are we using?
-    if(sid == seg->sidedef)
-    {
-        side = sid;
-        backSide = false;
-    }
-    else
-        side = backsid;
-
-    if(backsec == seg->SG_frontsector &&
+    if(backsec == frontsec &&
        side->SW_toptexture == 0 && side->SW_bottomtexture == 0 &&
        side->SW_middletexture == 0)
        return; // Ugh... an obvious wall seg hack. Best take no chances...
@@ -1351,14 +1366,9 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 
     // Quite probably a masked texture. Won't be drawn if a visible
     // top or bottom texture is missing.
-    if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide) /*&&
+    if(Rend_IsWallSectionPVisible(ldef, SEG_MIDDLE, backSide) /*&&
        !(side->flags & SDF_MIDTEXUPPER)*/)
     {
-        // Use actual (smoothed) sector heights (non-linked).
-        float   rbceil = seg->SG_backsector->SP_ceilvisheight;
-        float  rbfloor = seg->SG_backsector->SP_floorvisheight;
-        float   rfceil = seg->SG_frontsector->SP_ceilvisheight;
-        float  rffloor = seg->SG_frontsector->SP_floorvisheight;
         float   gaptop, gapbottom;
         float   alpha = side->SW_middlergba[3];
 
@@ -1369,9 +1379,12 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             float texOffY = 0;
             texinfo_t *texinfo = NULL;
 
+            //if(ldef - lines == 497)
+            //    Con_Message("Me\n");
+
             // Calculate texture coordinates.
-            vL_ZTop = vR_ZTop = gaptop = MIN_OF(rbceil, rfceil);
-            vL_ZBottom = vR_ZBottom = gapbottom = MAX_OF(rbfloor, rffloor);
+            vL_ZTop = vR_ZTop = gaptop = MIN_OF(bceil, fceil);
+            vL_ZBottom = vR_ZBottom = gapbottom = MAX_OF(bfloor, ffloor);
 
             // We need the properties of the real flat/texture.
             if(surface->texture < 0)
@@ -1401,7 +1414,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                         // If the player is close enough we should NOT add a solid seg
                         // otherwise they'd get HOM when they are directly on top of the
                         // line (eg passing through an opaque waterfall).
-                        if(mo->subsector->sector == side->sector)
+                        if(mo->subsector->sector == ssec->sector)
                         {
                             // Calculate 2D distance to line.
                             float c[2];
@@ -1410,7 +1423,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                             c[VX] = FIX2FLT(mo->pos[VX]);
                             c[VY] = FIX2FLT(mo->pos[VY]);
                             distance =
-                                M_PointLineDistance(seg->SG_v1->pos, seg->SG_v2->pos, c);
+                                M_PointLineDistance(vL_XY, vR_XY, c);
 
                             if(distance < (FIX2FLT(mo->radius)*.8f))
                             {
@@ -1450,10 +1463,10 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                     quad->texoffy = texOffY;
 
                     // Blendmode
-                    if(sid->SW_middleblendmode == BM_NORMAL && noSpriteTrans)
+                    if(side->SW_middleblendmode == BM_NORMAL && noSpriteTrans)
                         quad->blendmode = BM_ZEROALPHA; // "no translucency" mode
                     else
-                        quad->blendmode = sid->SW_middleblendmode;
+                        quad->blendmode = side->SW_middleblendmode;
 
                     surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
                     if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
@@ -1502,7 +1515,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     }
 
     // Upper wall.
-    if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide))
+    if(Rend_IsWallSectionPVisible(ldef, SEG_TOP, backSide))
     {
         surface = &side->SW_topsurface;
         // Is there a visible surface?
@@ -1535,15 +1548,15 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                     // middle textures on mid texture uppers.
 
                     // Blendmode
-                    if(sid->blendmode == BM_NORMAL && noSpriteTrans)
+                    if(side->SW_middleblendmode == BM_NORMAL && noSpriteTrans)
                         quad->blendmode = BM_ZEROALPHA; // "no translucency" mode
                     else
-                        quad->blendmode = sid->blendmode;
+                        quad->blendmode = side->SW_middleblendmode;
 
                     alpha = side->SW_middlergba[3];
 
                     // If alpha, masked or blended we must render as a vissprite
-                    if(alpha < 255 || texmask || side->blendmode > 0)
+                    if(alpha < 255 || texmask || side->SW_middleblendmode > 0)
                         quad->flags = RPF_MASKED;
                 }
                 else
@@ -1623,7 +1636,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     }
 
     // Lower wall.
-    if(Rend_IsWallSectionPVisible(seg->linedef, SEG_BOTTOM, backSide))
+    if(Rend_IsWallSectionPVisible(ldef, SEG_BOTTOM, backSide))
     {
         surface = &side->SW_bottomsurface;
         // Is there a visible surface?
@@ -1703,7 +1716,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 
     if(!solidSeg) // We'll have to determine whether we can...
     {
-        if(backsec == seg->SG_frontsector)
+        if(backsec == frontsec)
         {
             // An obvious hack, what to do though??
         }

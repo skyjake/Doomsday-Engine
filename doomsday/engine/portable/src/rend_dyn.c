@@ -609,7 +609,8 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
  * Generates one dynlight node per segplane glow. The light is attached to
  * the appropriate seg part.
  */
-static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, segsection_t part,
+static void DL_CreateGlowLightPerPlaneForSegSection(subsector_t *ssec, seg_t *seg,
+                                                    segsection_t part,
                                                     float segtop, float segbottom,
                                                     boolean glow_floor,
                                                     boolean glow_ceil)
@@ -618,14 +619,17 @@ static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, segsection_t par
     float       ceil, floor, top, bottom, s[2], t[2];
     float       glowHeight;
     dynlight_t *dyn;
-    sector_t   *sect = seg->sidedef->sector;
+    plane_t    *glowPlanes[2];
+
+    glowPlanes[PLN_FLOOR] = R_GetLinkedSector(ssec, PLN_FLOOR)->planes[PLN_FLOOR];
+    glowPlanes[PLN_CEILING] = R_GetLinkedSector(ssec, PLN_CEILING)->planes[PLN_CEILING];
 
     // Check the heights.
     if(segtop <= segbottom)
         return;                 // No height.
 
-    ceil  = sect->SP_ceilvisheight;
-    floor = sect->SP_floorvisheight;
+    floor = glowPlanes[PLN_FLOOR]->visheight;
+    ceil  = glowPlanes[PLN_CEILING]->visheight;
 
     if(segtop > ceil)
         segtop = ceil;
@@ -641,7 +645,7 @@ static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, segsection_t par
             continue;
 
         glowHeight =
-            (MAX_GLOWHEIGHT * sect->planes[g]->glow) * glowHeightFactor;
+            (MAX_GLOWHEIGHT * glowPlanes[g]->glow) * glowHeightFactor;
 
         // Don't make too small or too large glows.
         if(glowHeight <= 2)
@@ -683,7 +687,7 @@ static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, segsection_t par
 
         for(i = 0; i < 3; ++i)
         {
-            dyn->color[i] = sect->planes[g]->glowrgb[i] * dlFactor;
+            dyn->color[i] = glowPlanes[g]->glowrgb[i] * dlFactor;
 
             // In fog, additive blending is used. The normal fog color
             // is way too bright.
@@ -697,14 +701,15 @@ static void DL_CreateGlowLightPerPlaneForSegSection(seg_t *seg, segsection_t par
 /**
  * If necessary, generate dynamic lights for plane glow.
  */
-static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
+static void DL_ProcessSegForGlow(seg_t *seg, subsector_t *ssec)
 {
-    boolean     do_floor = (sect->SP_floorglow > 0)? true : false;
-    boolean     do_ceil = (sect->SP_ceilglow > 0)? true : false;
+    sector_t   *sec = ssec->sector;
+    boolean     do_floor = (sec->SP_floorglow > 0)? true : false;
+    boolean     do_ceil = (sec->SP_ceilglow > 0)? true : false;
     sector_t   *back = seg->SG_backsector;
     side_t     *sdef = seg->sidedef;
     float       fceil, ffloor, bceil, bfloor;
-    float       opentop, openbottom;    //, top, bottom;
+    float       opentop[2], openbottom[2];    // top, bottom, [left, right];
     boolean     backSide = false;
 
     // Check if this segment is actually facing our way.
@@ -716,14 +721,14 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
         backSide = true;
 
     // Visible plane heights.
-    fceil  = sect->SP_ceilvisheight;
-    ffloor = sect->SP_floorvisheight;
+    fceil  = sec->SP_ceilvisheight;
+    ffloor = sec->SP_floorvisheight;
 
     // Determine which portions of the segment get lit.
     if(!back)
     {
         // One sided.
-        DL_CreateGlowLightPerPlaneForSegSection(seg, SEG_MIDDLE, fceil, ffloor,
+        DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_MIDDLE, fceil, ffloor,
                                                 do_floor, do_ceil);
     }
     else
@@ -731,8 +736,8 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
         // Two-sided.
         bceil  = back->SP_ceilvisheight;
         bfloor = back->SP_floorvisheight;
-        opentop = MIN_OF(fceil, bceil);
-        openbottom = MAX_OF(ffloor, bfloor);
+        opentop[0] = opentop[1] = MIN_OF(fceil, bceil);
+        openbottom[0] = opentop[1] = MAX_OF(ffloor, bfloor);
 
         // The glow can only be visible in the front sector's height range.
 
@@ -751,22 +756,27 @@ static void DL_ProcessSegForGlow(seg_t *seg, sector_t *sect)
 
             if(!texinfo->masked)
             {
-                DL_CreateGlowLightPerPlaneForSegSection(seg, SEG_MIDDLE, opentop,
-                                                        openbottom, do_floor, do_ceil);
+                float texOffY = 0;
+                Rend_MidTexturePos
+               (&openbottom[0], &openbottom[1], &opentop[0], &opentop[1],
+                &texOffY, sdef->SW_middleoffy, texinfo->height,
+                0 != (seg->linedef->mapflags & ML_DONTPEGBOTTOM));
+                DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_MIDDLE, opentop[0],
+                                                        openbottom[0], do_floor, do_ceil);
             }
         }
 
         // Top?
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide))
         {
-            DL_CreateGlowLightPerPlaneForSegSection(seg, SEG_TOP, fceil, bceil,
+            DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_TOP, fceil, bceil,
                                                     do_floor, do_ceil);
         }
 
         // Bottom?
         if(Rend_IsWallSectionPVisible(seg->linedef, SEG_BOTTOM, backSide))
         {
-            DL_CreateGlowLightPerPlaneForSegSection(seg, SEG_BOTTOM, bfloor, ffloor,
+            DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_BOTTOM, bfloor, ffloor,
                                                     do_floor, do_ceil);
         }
     }
@@ -1644,7 +1654,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
                 if(seg->flags & SEGF_POLYOBJ)
                     continue;
 
-                DL_ProcessSegForGlow(seg, sect);
+                DL_ProcessSegForGlow(seg, ssec);
             }
         }
 
@@ -1655,7 +1665,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
             for(j = 0; j < num; ++j)
             {
                 seg = ssec->poly->segs[j];
-                DL_ProcessSegForGlow(seg, sect);
+                DL_ProcessSegForGlow(seg, ssec);
             }
         }
     }
