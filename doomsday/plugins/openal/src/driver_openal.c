@@ -451,7 +451,7 @@ void SetPan(ALuint source, float pan)
     float   pos[3];
 
     //alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
-    Vectors(headYaw - pan * PI / 2, headPitch, pos, 0);
+    Vectors((float) (headYaw - pan * PI / 2), headPitch, pos, 0);
     alSourcefv(source, AL_POSITION, pos);
 }
 
@@ -602,8 +602,9 @@ void DS_Listenerv(int property, float *values)
         break;
 
     case SFXLP_ORIENTATION:
-        Vectors(headYaw = values[VX] / 180 * PI, headPitch =
-                values[VY] / 180 * PI, ori, ori + 3);
+        Vectors(headYaw = (float) (values[VX] / 180 * PI),
+                headPitch = (float) (values[VY] / 180 * PI),
+                ori, ori + 3);
         alListenerfv(AL_ORIENTATION, ori);
         break;
 
