@@ -2086,23 +2086,35 @@ static void renderGrid(void)
     float       originx = FIX2FLT(*((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_X)));
     float       originy = FIX2FLT(*((fixed_t*) DD_GetVariable(DD_BLOCKMAP_ORIGIN_Y)));
     float       v1[2], v2[2];
+    float       winWidth, winHeight;
+    float       minLen, offX, offY;
     automap_t  *map = &automaps[mapviewplayer];
     mapobjectinfo_t *info = getMapObjectInfo(map, AMO_BLOCKMAPGRIDLINE);
 
+    // Window dimensions in map coordinate space.
+    winWidth = map->vframe[1][VX] - map->vframe[0][VX];
+    winHeight = map->vframe[1][VY] - map->vframe[0][VY];
+
+    // Determine the minimum length required for lines so that when rotated,
+    // the grid covers the entire screen.
+    minLen = sqrtf(winWidth * winWidth + winHeight * winHeight);
+    offX = (minLen - winWidth) / 2;
+    offY = (minLen - winHeight) / 2;
+
     // Figure out start of vertical gridlines.
-    start = map->vframe[0][VX];
+    start = map->vframe[0][VX] - offX;
     if((int) (start - originx) % MAPBLOCKUNITS)
         start += MAPBLOCKUNITS - ((int) (start - originx) % MAPBLOCKUNITS);
-    end = map->vframe[1][VX];
+    end = map->vframe[0][VX] + minLen - offX;
 
     // Draw vertical gridlines.
-    v1[VY] = map->vframe[0][VY];
-    v2[VY] = map->vframe[1][VY];
-
     for(x = start; x < end; x += MAPBLOCKUNITS)
     {
         v1[VX] = x;
+        v1[VY] = map->vframe[0][VY] - offY;
         v2[VX] = x;
+        v2[VY] = v1[VY] + minLen;
+
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
                   info->glow, info->glowAlpha, info->glowWidth,
@@ -2111,18 +2123,19 @@ static void renderGrid(void)
     }
 
     // Figure out start of horizontal gridlines.
-    start = map->vframe[0][VY];
+    start = map->vframe[0][VY] - offY;
     if((int) (start - originy) % MAPBLOCKUNITS)
         start += MAPBLOCKUNITS - ((int) (start - originy) % MAPBLOCKUNITS);
-    end = map->vframe[1][VY];
+    end = map->vframe[0][VY] + minLen - offY;
 
     // Draw horizontal gridlines
-    v1[VX] = map->vframe[0][VX];
-    v2[VX] = map->vframe[1][VX];
     for(y = start; y < end; y += MAPBLOCKUNITS)
     {
+        v1[VX] = map->vframe[0][VX] - offX;
         v1[VY] = y;
+        v2[VX] = v1[VX] + minLen;
         v2[VY] = y;
+
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
                   info->glow, info->glowAlpha, info->glowWidth,
