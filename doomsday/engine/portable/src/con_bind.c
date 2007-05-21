@@ -784,7 +784,7 @@ void B_Shutdown(void)
  * shortNameForKey
  * If buff is "" upon returning, the key is not valid for controls.
  */
-static char *shortNameForKey(int ddkey)
+char *B_ShortNameForKey(int ddkey)
 {
     uint        idx;
     boolean     found;
@@ -970,7 +970,7 @@ void formEventString(char *buff, uint deviceID, int controlID,
         switch(deviceID)
         {
         case IDEV_KEYBOARD:
-            if((begin = shortNameForKey(controlID)))
+            if((begin = B_ShortNameForKey(controlID)))
             {
                 sprintf(buff, "%c%s", evStatePrefixes[state], begin);
             }

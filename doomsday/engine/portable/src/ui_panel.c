@@ -769,6 +769,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     float       alpha = (ob->flags & UIF_DISABLED ? .2f : 1);
     char        buf[80];
     byte        key = Con_GetByte(ob->text);
+    char       *name;
 
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0,
                   1, 0);
@@ -776,7 +777,12 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
              UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (sel ? -1 : 1),
                   false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
-    sprintf(buf, "%i", key);
+    if(name = B_ShortNameForKey((int) key))
+        sprintf(buf, "%s", name);
+    else if(key > 32 && key < 128)
+        sprintf(buf, "%c", (char) key);
+    else
+        sprintf(buf, "%i", key);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, true, true,
                  UI_Color(UIC_TEXT), alpha);

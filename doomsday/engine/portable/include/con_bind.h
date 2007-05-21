@@ -70,6 +70,7 @@ void    B_RegisterBindClasses(void);
 int     B_BindingsForCommand(char *command, char *buffer, uint bindClass,
                              boolean allClasses);
 void    B_ClearBinding(char *command, uint bindClass, boolean allClasses);
+char   *B_ShortNameForKey(int ddkey);
 boolean B_Responder(ddevent_t *ev);
 void    B_WriteToFile(FILE *file);
 void    B_Shutdown(void);
