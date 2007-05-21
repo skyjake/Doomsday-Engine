@@ -290,8 +290,11 @@ typedef struct automap_s {
     float       oldAngle; // Previous.
     float       angleTimer;
 
-// Viewer frame dimensions on map (TODO: does not consider rotation!)
+// Viewer frame dimensions on map (TODO: does not consider rotation!).
     float       vframe[2][2]; // {TL{x,y}, BR{x,y}}
+
+// Clipbbox dimensions on map.
+    float       vbbox[4];
 
     // Misc
     int         cheating;
@@ -349,6 +352,8 @@ static void drawFragsTable(void);
 #elif __JHEXEN__ || __JSTRIFE__
 static void drawDeathmatchStats(void);
 #endif
+
+static void rotate2D(float *x, float *y, angle_t a);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1697,6 +1702,18 @@ static void mapWindowTicker(automap_t *map)
     }
 }
 
+static void addToBoxf(float *box, float x, float y)
+{
+    if(x < box[BOXLEFT])
+        box[BOXLEFT] = x;
+    else if(x > box[BOXRIGHT])
+        box[BOXRIGHT] = x;
+    if(y < box[BOXBOTTOM])
+        box[BOXBOTTOM] = y;
+    else if(y > box[BOXTOP])
+        box[BOXTOP] = y;
+}
+
 /**
  * Called each tic for each player's automap if they are in-game.
  */
@@ -1840,7 +1857,6 @@ static void mapTicker(automap_t *map)
                 endAngle = startAngle + (360 - diff);
         }
 
-
         map->angle = LERP(startAngle, endAngle, map->angleTimer);
     }
 
@@ -1856,12 +1872,53 @@ static void mapTicker(automap_t *map)
     width = FTOM(map, map->window.width);
     height = FTOM(map, map->window.height);
 
+    // Calculate the viewframe.
     // Top Left
     map->vframe[0][VX] = map->viewX - width / 2;
     map->vframe[0][VY] = map->viewY - height / 2;
     // Bottom Right
     map->vframe[1][VX] = map->viewX + width / 2;
     map->vframe[1][VY] = map->viewY + height / 2;
+
+    // Calculate the view clipbox (rotation aware).
+    {
+    angle_t     angle;
+    float       v[2];
+
+    /* $unifiedangles */ 
+    angle = (float) ANGLE_MAX * (map->angle / 360);
+
+    v[VX] = -width / 2;
+    v[VY] = -height / 2;
+    rotate2D(&v[VX], &v[VY], angle);
+    v[VX] += map->viewX;
+    v[VY] += map->viewY;
+
+    // First point is always excepted.
+    map->vbbox[BOXLEFT] = map->vbbox[BOXRIGHT] = v[VX];
+    map->vbbox[BOXTOP] = map->vbbox[BOXBOTTOM] = v[VY];
+
+    v[VX] = width / 2;
+    v[VY] = -height / 2;
+    rotate2D(&v[VX], &v[VY], angle);
+    v[VX] += map->viewX;
+    v[VY] += map->viewY;
+    addToBoxf(map->vbbox, v[VX], v[VY]);
+
+    v[VX] = -width / 2;
+    v[VY] = height / 2;
+    rotate2D(&v[VX], &v[VY], angle);
+    v[VX] += map->viewX;
+    v[VY] += map->viewY;
+    addToBoxf(map->vbbox, v[VX], v[VY]);
+
+    v[VX] = width / 2;
+    v[VY] = height / 2;
+    rotate2D(&v[VX], &v[VY], angle);
+    v[VX] += map->viewX;
+    v[VY] += map->viewY;
+    addToBoxf(map->vbbox, v[VX], v[VY]);
+    }
 
 #undef MAPALPHA_FADE_STEP
 }
@@ -1909,12 +1966,55 @@ static void clearFB(int color)
 }
 
 /**
+ * Is the given point within the viewframe of the automap?
+ *
+ * @return          <code>true</code> if the point is visible.
+ */
+static boolean isPointVisible(automap_t *map, float x, float y)
+{
+    // First check if the vector is completely outside the view bbox.
+    if(x < map->vbbox[BOXLEFT] || x > map->vbbox[BOXRIGHT] ||
+       y > map->vbbox[BOXTOP]  || y < map->vbbox[BOXBOTTOM])
+       return false;
+
+    // TODO: The point is within the view bbox but it is not necessarily
+    // within view. Implement a more accurate test.
+    return true;
+}
+
+/**
+ * Is the given vector within the viewframe of the automap?
+ *
+ * @return          <code>true</code> if the vector is at least partially
+ *                  visible.
+ */
+static boolean isVectorVisible(automap_t *map,
+                               float x1, float y1, float x2, float y2)
+{
+    // First check if the vector is completely outside the view bbox.
+    if((x1 < map->vbbox[BOXLEFT]   && x2 < map->vbbox[BOXLEFT]) ||
+       (x1 > map->vbbox[BOXRIGHT]  && x2 > map->vbbox[BOXRIGHT]) ||
+       (y1 > map->vbbox[BOXTOP]    && y2 > map->vbbox[BOXTOP]) ||
+       (y1 < map->vbbox[BOXBOTTOM] && y2 < map->vbbox[BOXBOTTOM]))
+       return false;
+
+    // TODO: The vector is within the view bbox but it is not necessarily
+    // within view. Implement a more accurate test. Should we even bother
+    // with determining the intersection and actively clip primitives in
+    // the window?
+    return true;
+}
+
+/**
  * Draws the given line. No cliping is done!
  */
 static void rendLine(float x1, float y1, float x2, float y2, int color,
                      float alpha)
 {
     automap_t  *map = &automaps[mapviewplayer];
+
+    if(!isVectorVisible(map, x1, y1, x2, y2))
+        return;
 
     AM_AddLine(CXMTOF(map, x1), CYMTOF(map, y1),
                CXMTOF(map, x2), CYMTOF(map, y2),
@@ -1940,6 +2040,9 @@ static void rendLine2(float x1, float y1, float x2, float y2,
     v1[VY] = CYMTOF(map, y1);
     v2[VX] = CXMTOF(map, x2);
     v2[VY] = CYMTOF(map, y2);
+
+    if(!isVectorVisible(map, x1, y1, x2, y2))
+        return;
 
     dx = v2[VX] - v1[VX];
     dy = v2[VY] - v1[VY];
@@ -2424,6 +2527,7 @@ static void renderPlayers(void)
         player_t   *p = &players[i];
         int         color;
         float       alpha;
+        float       v[2];
 
         if(!p->plr->ingame)
             continue;
@@ -2441,10 +2545,14 @@ static void renderPlayers(void)
             alpha *= 0.125;
 #endif
 
+        v[VX] = FIX2FLT(p->plr->mo->pos[VX]);
+        v[VY] = FIX2FLT(p->plr->mo->pos[VY]);
+        if(!isPointVisible(map, v[VX], v[VY]))
+            continue;
+
         /* $unifiedangles */
         addLineCharacter(vg, size, p->plr->mo->angle, color, alpha,
-                         FIX2FLT(p->plr->mo->pos[VX]),
-                         FIX2FLT(p->plr->mo->pos[VY]));
+                         v[VX], v[VY]);
     }
 }
 
@@ -2455,17 +2563,24 @@ static void renderThings(int color, int colorrange)
 {
     uint        i;
     mobj_t     *iter;
+    automap_t  *map = &automaps[mapviewplayer];
     float       size = FIX2FLT(PLAYERRADIUS);
     vectorgrap_t *vg = getVectorGraphic(VG_TRIANGLE);
+    float       v[2];
 
     for(i = 0; i < numsectors; ++i)
     {
         for(iter = P_GetPtr(DMU_SECTOR, i, DMU_THINGS); iter;
             iter = iter->snext)
         {
+            v[VX] = FIX2FLT(iter->pos[VX]);
+            v[VY] = FIX2FLT(iter->pos[VY]);
+            if(!isPointVisible(map, v[VX], v[VY]))
+                continue;
+
             addLineCharacter(vg, size, iter->angle,
                              color, cfg.automapLineAlpha,
-                             FIX2FLT(iter->pos[VX]), FIX2FLT(iter->pos[VY]));
+                             v[VX], v[VY]);
         }
     }
 }
@@ -2479,6 +2594,8 @@ static void renderKeys(void)
     thinker_t  *th;
     mobj_t     *mo;
     float       size = FIX2FLT(PLAYERRADIUS);
+    float       v[2];
+    automap_t  *map = &automaps[mapviewplayer];
 
     for(th = thinkercap.next; th != &thinkercap; th = th->next)
     {
@@ -2511,9 +2628,14 @@ static void renderKeys(void)
 #endif
             continue; // not a key.
 
+        v[VX] = FIX2FLT(mo->pos[VX]);
+        v[VY] = FIX2FLT(mo->pos[VY]);
+        if(!isPointVisible(map, v[VX], v[VY]))
+            continue;
+
         addLineCharacter(getVectorGraphic(VG_KEYSQUARE), size, 0,
                          keyColor, cfg.automapLineAlpha,
-                         FIX2FLT(mo->pos[VX]), FIX2FLT(mo->pos[VY]));
+                         v[VX], v[VY]);
     }
 }
 
@@ -2541,6 +2663,9 @@ static void drawMarks(void)
 
             x = map->markpoints[i].pos[VX];
             y = map->markpoints[i].pos[VY];
+
+            if(!isPointVisible(map, x, y))
+                continue;
 
             /* $unifiedangles */ 
             angle = (float) ANGLE_MAX * (map->angle / 360);
@@ -2801,6 +2926,9 @@ static void renderVertexes(void)
     for(i = 0; i < numvertexes; ++i)
     {
         P_GetFloatv(DMU_VERTEX, i, DMU_XY, v);
+
+        if(!isPointVisible(map, v[VX], v[VY]))
+            continue;
 
         addPatchQuad(v[VX], v[VY], FIXXTOSCREENX(.75f) * map->scaleFTOM,
              FIXYTOSCREENY(.75f) * map->scaleFTOM, 0,
