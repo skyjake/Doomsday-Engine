@@ -1241,9 +1241,9 @@ void P_CheckPtcPlanes(void)
         for(p = 0; p < 2; ++p)
         {
             plane = p;
-            if(sector->planes[plane]->surface.isflat)
+            if(sector->SP_planeisflat(plane))
             {
-                def = P_GetPtcGenForFlat(sector->planes[plane]->surface.texture);
+                def = P_GetPtcGenForFlat(sector->SP_planetexture(plane));
 
                 if(!def)
                     continue;

@@ -65,6 +65,9 @@ void            R_OrderVertices(line_t *line, const sector_t *sector,
                                 vertex_t *verts[2]);
 void            R_GetMapSize(fixed_t *min, fixed_t *max);
 
+plane_t        *R_NewPlaneForSector(sector_t *sec, planetype_t type);
+void            R_DestroyPlaneOfSector(uint id, sector_t *sec);
+
 lineowner_t    *R_GetVtxLineOwner(vertex_t *vtx, line_t *line);
 line_t         *R_FindLineNeighbor(sector_t *sector, line_t *line,
                                    lineowner_t *own,

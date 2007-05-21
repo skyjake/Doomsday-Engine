@@ -466,9 +466,9 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     Msg_WritePackedLong(df);
 
     if(df & SDF_FLOORPIC)
-        Msg_WritePackedShort(d->planes[PLN_FLOOR].surface.texture);
+        Msg_WritePackedShort(d->planes[PLN_FLOOR].surface.material.texture);
     if(df & SDF_CEILINGPIC)
-        Msg_WritePackedShort(d->planes[PLN_CEILING].surface.texture);
+        Msg_WritePackedShort(d->planes[PLN_CEILING].surface.material.texture);
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
@@ -571,11 +571,11 @@ void Sv_WriteSideDelta(const void *deltaPtr)
     Msg_WritePackedLong(df);
 
     if(df & SIDF_TOPTEX)
-        Msg_WritePackedShort(d->top.texture);
+        Msg_WritePackedShort(d->top.material.texture);
     if(df & SIDF_MIDTEX)
-        Msg_WritePackedShort(d->middle.texture);
+        Msg_WritePackedShort(d->middle.material.texture);
     if(df & SIDF_BOTTOMTEX)
-        Msg_WritePackedShort(d->bottom.texture);
+        Msg_WritePackedShort(d->bottom.material.texture);
 
     if(df & SIDF_LINE_FLAGS)
         Msg_WriteByte(d->lineFlags);

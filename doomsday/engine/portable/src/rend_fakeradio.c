@@ -179,9 +179,9 @@ void Rend_RadioInitForSubsector(subsector_t *ssec)
  */
 static __inline boolean Rend_RadioNonGlowingFlat(sector_t* sector, int plane)
 {
-    return !(sector->planes[plane]->surface.texture <= 0 ||
-             sector->planes[plane]->glow ||
-             R_IsSkySurface(&sector->planes[plane]->surface));
+    return !(sector->SP_planetexture(plane) <= 0 ||
+             sector->SP_planeglow(plane) ||
+             R_IsSkySurface(&sector->SP_planesurface(plane)));
 }
 
 /**
@@ -1131,7 +1131,7 @@ static uint radioEdgeHackType(line_t *line, sector_t *front, sector_t *back,
     surface_t  *surface = &line->L_side(backside)->
                              sections[isCeiling? SEG_TOP:SEG_BOTTOM];
 
-    if(fz < bz && surface->texture == 0 && !(surface->flags & SUF_TEXFIX))
+    if(fz < bz && surface->SM_texture == 0 && !(surface->flags & SUF_TEXFIX))
         return 3; // Consider it fully open.
 
     // Is the back sector closed?

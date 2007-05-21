@@ -152,7 +152,7 @@ void R_InitSkyMap(void)
  */
 boolean R_IsSkySurface(surface_t* surface)
 {
-    return surface->isflat && surface->texture == skyflatnum;
+    return surface->SM_isflat && surface->SM_texture == skyflatnum;
 }
 
 /**

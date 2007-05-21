@@ -74,6 +74,16 @@ typedef struct subsector_s {
     unsigned int        group;
 } subsector_t;
 
+typedef struct material_s {
+	short		texture;
+	boolean		isflat;
+	struct translation_s* xlat;
+} material_t;
+
+#define SM_texture		material.texture
+#define SM_isflat		material.isflat
+#define SM_xlat			material.xlat
+
 // Surface flags.
 #define SUF_TEXFIX      0x1         // Current texture is a fix replacement
                                     // (not sent to clients, returned via DMU etc).
@@ -85,10 +95,8 @@ typedef struct surface_s {
     runtime_mapdata_header_t header;
     int                 flags;         // SUF_ flags
     int                 oldflags;
-    short               texture;
-    short               oldtexture;
-    boolean             isflat;        // true if current texture is a flat
-    boolean             oldisflat;
+    material_t          material;
+    material_t          oldmaterial;
     blendmode_t         blendmode;
     float               normal[3];     // Surface normal
     float               oldnormal[3];
@@ -100,22 +108,21 @@ typedef struct surface_s {
     float               oldoffy;
     float               rgba[4];       // Surface color tint
     float               oldrgba[4];
-    struct translation_s* xlat;
 } surface_t;
 
-enum {
+typedef enum {
     PLN_FLOOR,
     PLN_CEILING,
     NUM_PLANE_TYPES
-};
+} planetype_t;
 
 typedef struct skyfix_s {
     float offset;
 } skyfix_t;
 
 #define PS_normal				surface.normal
-#define PS_texture				surface.texture
-#define PS_isflat				surface.isflat
+#define PS_texture				surface.SM_texture
+#define PS_isflat				surface.SM_isflat
 #define PS_offx					surface.offx
 #define PS_offy					surface.offy
 #define PS_texmove				surface.texmove
@@ -141,8 +148,8 @@ typedef struct plane_s {
 #define SP_planesurface(n)      SP_plane(n)->surface
 #define SP_planeheight(n)       SP_plane(n)->height
 #define SP_planenormal(n)       SP_plane(n)->surface.normal
-#define SP_planetexture(n)      SP_plane(n)->surface.texture
-#define SP_planeisflat(n)       SP_plane(n)->surface.isflat
+#define SP_planetexture(n)      SP_plane(n)->surface.SM_texture
+#define SP_planeisflat(n)       SP_plane(n)->surface.SM_isflat
 #define SP_planeoffx(n)         SP_plane(n)->surface.offx
 #define SP_planeoffy(n)         SP_plane(n)->surface.offy
 #define SP_planergb(n)          SP_plane(n)->surface.rgba
@@ -247,14 +254,14 @@ typedef enum segsection_e {
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
 #define SW_surface(n)			sections[(n)]
 #define SW_surfaceflags(n)      SW_surface(n).flags
-#define SW_surfacetexture(n)    SW_surface(n).texture
-#define SW_surfaceisflat(n)     SW_surface(n).isflat
+#define SW_surfacetexture(n)    SW_surface(n).SM_texture
+#define SW_surfaceisflat(n)     SW_surface(n).SM_isflat
 #define SW_surfacenormal(n)     SW_surface(n).normal
 #define SW_surfacetexmove(n)    SW_surface(n).texmove
 #define SW_surfaceoffx(n)       SW_surface(n).offx
 #define SW_surfaceoffy(n)       SW_surface(n).offy
 #define SW_surfacergba(n)       SW_surface(n).rgba
-#define SW_surfacetexlat(n)     SW_surface(n).xlat
+#define SW_surfacetexlat(n)     SW_surface(n).SM_xlat
 #define SW_surfaceblendmode(n)  SW_surface(n).blendmode
 
 #define SW_middlesurface        SW_surface(SEG_MIDDLE)

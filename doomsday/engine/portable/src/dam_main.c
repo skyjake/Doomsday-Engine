@@ -309,16 +309,16 @@ static mapproperty_t properties[DAM_NUM_PROPERTIES] =
     {DAM_MIDDLE_TEXTURE_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFY, "middletextureoffsety"},
     {DAM_BOTTOM_TEXTURE_OFFSET_X, DAM_SIDE, DMT_SURFACE_OFFX, "bottomtextureoffsetx"},
     {DAM_BOTTOM_TEXTURE_OFFSET_Y, DAM_SIDE, DMT_SURFACE_OFFY, "bottomtextureoffsety"},
-    {DAM_TOP_TEXTURE, DAM_SIDE, DMT_SURFACE_TEXTURE, "toptexture"},
-    {DAM_MIDDLE_TEXTURE, DAM_SIDE, DMT_SURFACE_TEXTURE, "middletexture"},
-    {DAM_BOTTOM_TEXTURE, DAM_SIDE, DMT_SURFACE_TEXTURE, "bottomtexture"},
+    {DAM_TOP_TEXTURE, DAM_SIDE, DMT_MATERIAL_TEXTURE, "toptexture"},
+    {DAM_MIDDLE_TEXTURE, DAM_SIDE, DMT_MATERIAL_TEXTURE, "middletexture"},
+    {DAM_BOTTOM_TEXTURE, DAM_SIDE, DMT_MATERIAL_TEXTURE, "bottomtexture"},
     // TODO: should be DMT_SIDE_SECTOR but we require special case logic
     {DAM_FRONT_SECTOR, DAM_SIDE, DDVT_SECT_IDX, "frontsector"},
 // Sector
     {DAM_FLOOR_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "floorheight"},
     {DAM_CEILING_HEIGHT, DAM_SECTOR, DMT_PLANE_HEIGHT, "ceilingheight"},
-    {DAM_FLOOR_TEXTURE, DAM_SECTOR, DMT_SURFACE_TEXTURE, "floortexture"},
-    {DAM_CEILING_TEXTURE, DAM_SECTOR, DMT_SURFACE_TEXTURE, "ceilingtexture"},
+    {DAM_FLOOR_TEXTURE, DAM_SECTOR, DMT_MATERIAL_TEXTURE, "floortexture"},
+    {DAM_CEILING_TEXTURE, DAM_SECTOR, DMT_MATERIAL_TEXTURE, "ceilingtexture"},
     {DAM_LIGHT_LEVEL, DAM_SECTOR, DDVT_SHORT, "lightlevel"},
 // Seg
     // TODO: should be DMT_SEG_V but we require special case logic
@@ -1765,9 +1765,12 @@ static void allocateMapData(gamemap_t *map)
             side->SW_bottomrgba[c] = 1;
         }
         side->SW_middleblendmode = BM_NORMAL;
-        side->SW_topsurface.isflat = side->SW_topsurface.oldisflat = false;
-        side->SW_middlesurface.isflat = side->SW_middlesurface.oldisflat = false;
-        side->SW_bottomsurface.isflat = side->SW_bottomsurface.oldisflat = false;
+        side->SW_topsurface.material.isflat =
+			side->SW_topsurface.oldmaterial.isflat = false;
+        side->SW_middlesurface.material.isflat =
+			side->SW_middlesurface.oldmaterial.isflat = false;
+        side->SW_bottomsurface.material.isflat =
+			side->SW_bottomsurface.oldmaterial.isflat = false;
     }
 
     // Segs.
@@ -1805,9 +1808,8 @@ static void allocateMapData(gamemap_t *map)
                             PU_LEVELSTATIC, 0);
     for(k = 0; k < map->numsectors; ++k)
     {
-        uint        j, c;
+        uint        j;
         sector_t   *sec = &map->sectors[k];
-        plane_t    *planes;
 
         sec->header.type = DMU_SECTOR;
         sec->subscount = 0;
@@ -1815,41 +1817,11 @@ static void allocateMapData(gamemap_t *map)
         for(j = 0;  j < 3; ++j)
             sec->rgb[j] = 1;
 
-        sec->planecount = 2;
-        sec->planes = Z_Malloc(sizeof(plane_t*) * sec->planecount, PU_LEVEL, 0);
-        planes = Z_Calloc(sizeof(plane_t) * sec->planecount, PU_LEVEL, 0);
-
         // Do the planes too.
-        for(j = 0; j < sec->planecount; ++j, planes++)
-        {
-            planes->header.type = DMU_PLANE;
-            for(c = 0; c < 3; ++c)
-                planes->glowrgb[c] = 1;
-            planes->glow = 0;
-            planes->height = 0;
-
-            // The back pointer (temporary)
-            planes->sector = sec;
-
-            planes->surface.header.type = DMU_SURFACE;
-            planes->surface.isflat = true;
-            planes->surface.oldisflat = true;
-            for(c = 0; c < 4; ++c)
-                planes->surface.rgba[c] = 1;
-            planes->surface.flags = 0;
-            planes->surface.offx = planes->surface.offy = 0;
-
-            sec->planes[j] = planes;
-        }
-
-        // Set plane normals
-        sec->planes[PLN_FLOOR]->surface.normal[VX] = 0;
-        sec->planes[PLN_FLOOR]->surface.normal[VY] = 0;
-        sec->planes[PLN_FLOOR]->surface.normal[VZ] = 1;
-
-        sec->planes[PLN_CEILING]->surface.normal[VX] = 0;
-        sec->planes[PLN_CEILING]->surface.normal[VY] = 0;
-        sec->planes[PLN_CEILING]->surface.normal[VZ] = -1;
+        sec->planecount = 0;
+        for(j = 0; j < 2; ++j)
+            sec->planes[j] = R_NewPlaneForSector(sec, j);
+        sec->SP_ceilnormal[VZ] = -1;
     }
 
     // Call the game's setup routines
@@ -2099,9 +2071,12 @@ static uint unpackSideDefs(gamemap_t *map)
                 side->SW_bottomrgba[c] = 1;
             }
             side->SW_middleblendmode = BM_NORMAL;
-            side->SW_topsurface.isflat = side->SW_topsurface.oldisflat = false;
-            side->SW_middlesurface.isflat = side->SW_middlesurface.oldisflat = false;
-            side->SW_bottomsurface.isflat = side->SW_bottomsurface.oldisflat = false;
+            side->SW_topsurface.material.isflat =
+				side->SW_topsurface.oldmaterial.isflat = false;
+            side->SW_middlesurface.material.isflat =
+				side->SW_middlesurface.oldmaterial.isflat = false;
+            side->SW_bottomsurface.material.isflat =
+				side->SW_bottomsurface.oldmaterial.isflat = false;
         }
 
         newIdx = map->numsides;
@@ -2248,9 +2223,9 @@ static boolean loadMapData(gamemap_t *map)
          * then tell us what texture to use.
          */
         selectprop_t props[] = {
-            {DAM_TOP_TEXTURE, DMT_SURFACE_TEXTURE},
-            {DAM_MIDDLE_TEXTURE, DMT_SURFACE_TEXTURE},
-            {DAM_BOTTOM_TEXTURE, DMT_SURFACE_TEXTURE}
+            {DAM_TOP_TEXTURE, DMT_MATERIAL_TEXTURE},
+            {DAM_MIDDLE_TEXTURE, DMT_MATERIAL_TEXTURE},
+            {DAM_BOTTOM_TEXTURE, DMT_MATERIAL_TEXTURE}
         };
         if(!P_ReadMapData(map, LCM_SIDEDEFS, &(*props), 3, DAM_SetProperty))
             return false;

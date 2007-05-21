@@ -163,7 +163,7 @@ typedef struct primhdr_s {
     ushort  beginOther;
 
     // The first dynamic light affecting the surface.
-    dynlight_t *light;
+    dynnode_t *firstLight;
 } primhdr_t;
 
 // Rendering List 'has' flags.
@@ -274,8 +274,6 @@ void RL_Register(void)
 static void RL_AddMaskedPoly(rendpoly_t *poly)
 {
     vissprite_t *vis = R_NewVisSprite();
-    float       brightest[3];
-    dynlight_t *dyn;
     int         i, c;
     float       midpoint[3];
 
@@ -323,12 +321,16 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
     // FIXME: Semitransparent masked polys arn't lit atm
     if(!(poly->flags & RPF_GLOW) && poly->lights && numTexUnits > 1 &&
        envModAdd && poly->vertices[0].color.rgba[3] == 255)
-    {
-        // Choose the brightest light.
-        memcpy(brightest, poly->lights->color, sizeof(float) * 3);
-        vis->data.wall.light = poly->lights;
-        for(dyn = poly->lights->next; dyn; dyn = dyn->next)
+    {   // Choose the brightest light.
+        dynnode_t      *node = poly->lights;
+        dynlight_t     *dyn = &node->light;
+        float           brightest[3];
+
+        memcpy(brightest, dyn->color, sizeof(float) * 3);
+        vis->data.wall.light = dyn;
+        for(node = node->next; node; node = node->next)
         {
+            dyn = &node->light;
             if((brightest[0] + brightest[1] + brightest[2]) / 3 <
                (dyn->color[0] + dyn->color[1] + dyn->color[2]) / 3)
             {
@@ -1234,9 +1236,10 @@ static void RL_WriteQuad(rendlist_t *list, rendpoly_t *poly)
     RL_QuadVertices(&vertices[base], poly);
 
     // Light texture coordinates.
-    if(list->last->light && IS_MTEX_LIGHTS)
+    if(list->last->firstLight && IS_MTEX_LIGHTS)
     {
-        RL_QuadLightCoords(&texCoords[TCA_LIGHT][base], list->last->light);
+        dynlight_t *dyn = &list->last->firstLight->light;
+        RL_QuadLightCoords(&texCoords[TCA_LIGHT][base], dyn);
     }
 }
 
@@ -1316,9 +1319,10 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
     RL_QuadVertices(&vertices[base], poly);
 
     // Texture coordinates for lights (normal quad corners).
-    if(hdr->light && IS_MTEX_LIGHTS)
+    if(hdr->firstLight && IS_MTEX_LIGHTS)
     {
-        RL_QuadLightCoords(&texCoords[TCA_LIGHT][base], hdr->light);
+        dynlight_t *dyn = &hdr->firstLight->light;
+        RL_QuadLightCoords(&texCoords[TCA_LIGHT][base], dyn);
     }
 
     // Index of the indices array.
@@ -1388,7 +1392,7 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
                 }
 
                 // Light coordinates.
-                if(hdr->light && IS_MTEX_LIGHTS)
+                if(hdr->firstLight && IS_MTEX_LIGHTS)
                 {
                     RL_InterpolateTexCoordT(texCoords[TCA_LIGHT], div, top,
                                             bottom, inter);
@@ -1502,15 +1506,13 @@ static void RL_WriteFlat(rendlist_t *list, rendpoly_t *poly)
         }
 
         // Light coordinates.
-        if(list->last->light && IS_MTEX_LIGHTS)
+        if(list->last->firstLight && IS_MTEX_LIGHTS)
         {
+            dynlight_t *dyn = &list->last->firstLight->light;
+
             tc = &texCoords[TCA_LIGHT][base + i];
-            tc->st[0] =
-                (vtx->pos[VX] +
-                 list->last->light->s[0]) * list->last->light->s[1];
-            tc->st[1] =
-                (-vtx->pos[VY] +
-                 list->last->light->t[0]) * list->last->light->t[1];
+            tc->st[0] = (vtx->pos[VX] + dyn->s[0]) * dyn->s[1];
+            tc->st[1] = (-vtx->pos[VY] + dyn->t[0]) * dyn->t[1];
         }
 
         // Blend texture coordinates.
@@ -1741,7 +1743,7 @@ END_PROF( PROF_RL_GET_LIST );
     hdr->indices = NULL;
     hdr->type = PT_FAN;
     hdr->flags = poly->flags;
-    hdr->light = (useLights ? poly->lights : NULL);
+    hdr->firstLight = (useLights ? poly->lights : NULL);
 
     switch (poly->type)
     {
@@ -1768,12 +1770,14 @@ END_PROF( PROF_RL_GET_LIST );
     // it's skipped.
     if(useLights)
     {
+        dynnode_t  *node;
         rendlist_t *dynList, *lastDynList = NULL;
         DGLuint     lastDynTexture = 0;
 
-        for(dyn = (IS_MTEX_LIGHTS ? li->last->light->next : li->last->light);
-            dyn; dyn = dyn->next)
+        for(node = (IS_MTEX_LIGHTS ? li->last->firstLight->next : li->last->firstLight);
+            node; node = node->next)
         {
+            dyn = &node->light;
             // If the texture is the same as the last, the list will be too.
             if(lastDynTexture == dyn->texture)
                 dynList = lastDynList;
@@ -1847,9 +1851,9 @@ static void RL_DrawPrimitives(int conditions, rendlist_t *list)
         if(!bypass)
         {
             skip = false;
-            if((conditions & DCF_JUST_ONE_LIGHT) && hdr->light->next)
+            if((conditions & DCF_JUST_ONE_LIGHT) && hdr->firstLight->next)
                 skip = true;
-            else if((conditions & DCF_MANY_LIGHTS) && !hdr->light->next)
+            else if((conditions & DCF_MANY_LIGHTS) && !hdr->firstLight->next)
                 skip = true;
         }
 
@@ -1857,11 +1861,12 @@ static void RL_DrawPrimitives(int conditions, rendlist_t *list)
         {
             if(conditions & DCF_SET_LIGHT_ENV)
             {
+                dynlight_t *dyn = &hdr->firstLight->light;
                 // Use the correct texture and color for the light.
                 gl.SetInteger(DGL_ACTIVE_TEXTURE,
                               conditions & DCF_SET_LIGHT_ENV0 ? 0 : 1);
-                RL_Bind(hdr->light->texture);
-                gl.SetFloatv(DGL_ENV_COLOR, hdr->light->color);
+                RL_Bind(dyn->texture);
+                gl.SetFloatv(DGL_ENV_COLOR, dyn->color);
                 // Make sure the light is not repeated.
                 gl.TexParameter(DGL_WRAP_S, DGL_CLAMP);
                 gl.TexParameter(DGL_WRAP_T, DGL_CLAMP);

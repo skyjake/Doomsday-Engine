@@ -841,15 +841,15 @@ static int SetProperty2(void *ptr, void *context)
             break;
 
         case DAM_TOP_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SW_toptexture, args, 0);
+            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_toptexture, args, 0);
             break;
 
         case DAM_MIDDLE_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SW_middletexture, args, 0);
+            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_middletexture, args, 0);
             break;
 
         case DAM_BOTTOM_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SW_bottomtexture, args, 0);
+            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_bottomtexture, args, 0);
             break;
 
         case DAM_FRONT_SECTOR:
@@ -877,11 +877,11 @@ static int SetProperty2(void *ptr, void *context)
             break;
 
         case DAM_FLOOR_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SP_floortexture, args, 0);
+            SetValue(DMT_MATERIAL_TEXTURE, &p->SP_floortexture, args, 0);
             break;
 
         case DAM_CEILING_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SP_ceiltexture, args, 0);
+            SetValue(DMT_MATERIAL_TEXTURE, &p->SP_ceiltexture, args, 0);
             break;
 
         case DAM_LIGHT_LEVEL:

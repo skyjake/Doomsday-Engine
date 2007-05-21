@@ -389,8 +389,8 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
         return;
 
     // Should this be decorated at all?
-    if(!(def = Rend_GetGraphicResourceDecoration(surface->texture,
-                                                 surface->isflat)))
+    if(!(def = Rend_GetGraphicResourceDecoration(surface->SM_texture,
+                                                 surface->SM_isflat)))
         return;
 
     // Let's see which sidedef is present.
@@ -416,10 +416,10 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
     lh = top - bottom;
 
     // Setup the global texture info variables.
-    if(surface->isflat)
-        GL_GetFlatInfo(surface->texture, &texinfo);
+    if(surface->SM_isflat)
+        GL_GetFlatInfo(surface->SM_texture, &texinfo);
     else
-        GL_GetTextureInfo(surface->texture, &texinfo);
+        GL_GetTextureInfo(surface->SM_texture, &texinfo);
 
     surfTexW = texinfo->width;
     surfTexH = texinfo->height;

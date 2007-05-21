@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,9 +45,6 @@
 
 typedef struct lumobj_s            // For dynamic lighting.
 {
-    struct lumobj_s *next;         // Next in the same DL block, or NULL.
-    struct lumobj_s *ssNext;       // Next in the same subsector, or NULL.
-
     int             flags;
     float           pos[3];
     subsector_t    *subsector;
@@ -72,13 +69,15 @@ typedef struct lumobj_s            // For dynamic lighting.
  * A list of these is associated with all the lit segs/planes in a frame.
  */
 typedef struct dynlight_s {
-    struct dynlight_s *next, *nextUsed;
-
-    int             flags;
     float           s[2], t[2];
     float           color[3];
     DGLuint         texture;
 } dynlight_t;
+
+typedef struct dynnode_s {
+	struct dynnode_s *next, *nextUsed;
+    dynlight_t		light;
+} dynnode_t;
 
 // Flags for projected dynamic lights.
 #define DYNF_PREGEN_DECOR   0x1    // Pregen RGB lightmap for a light decoration.
@@ -103,12 +102,12 @@ void            DL_Clear(void);        // 'Physically' destroy the tables.
 // Action.
 void            DL_ClearForFrame(void);
 void            DL_InitForNewFrame(void);
-unsigned int    DL_NewLuminous(void);
-lumobj_t*       DL_GetLuminous(unsigned int index);
-unsigned int    DL_GetNumLuminous(void);
+uint            DL_NewLuminous(void);
+lumobj_t*       DL_GetLuminous(uint idx);
+uint            DL_GetNumLuminous(void);
 void            DL_ProcessSubsector(subsector_t *ssec);
-dynlight_t*     DL_GetSegSectionLightLinks(uint segidx, segsection_t section);
-dynlight_t*     DL_GetSubSecPlaneLightLinks(uint ssecidx, uint plane);
+dynnode_t*      DL_GetSegSectionLightLinks(uint segidx, segsection_t section);
+dynnode_t*      DL_GetSubSecPlaneLightLinks(uint ssecidx, uint plane);
 
 // Helpers.
 boolean         DL_RadiusIterator(subsector_t *subsector, fixed_t x, fixed_t y,

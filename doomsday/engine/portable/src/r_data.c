@@ -1264,10 +1264,10 @@ void R_PrecacheLevel(void)
 
         for(j = 0; j < sec->planecount; ++j)
         {
-            if(sec->planes[j]->surface.isflat)
-                R_PrecacheFlat(sec->planes[j]->surface.texture);
+            if(sec->SP_planeisflat(j))
+                R_PrecacheFlat(sec->SP_planetexture(j));
             else
-                texturepresent[sec->planes[j]->surface.texture] = 1;
+                texturepresent[sec->SP_planetexture(j)] = 1;
         }
         
         /*if(i % SAFEDIV(numsectors, 10) == 0)

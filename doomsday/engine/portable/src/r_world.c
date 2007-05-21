@@ -81,6 +81,124 @@ static float mapBounds[4];
 
 // CODE --------------------------------------------------------------------
 
+/**
+ * Create a new plane for the given sector. The plane will be initialized
+ * with default values.
+ *
+ * Post: The sector's plane list will be replaced, the new plane will be
+ *       linked to the end of the list.
+ *
+ * @param sec           Ptr to sector for which a new plane will be created.
+ * @param type          Plane type to be created (PLN_FLOOR/PLN_CEILING).
+ *
+ * @return              Ptr to the newly created plane.
+ */
+plane_t *R_NewPlaneForSector(sector_t *sec, planetype_t type)
+{
+    uint            i;
+    surface_t      *suf;
+    plane_t        *plane, **newList;
+
+    if(!sec)
+        return NULL; // Do wha?
+    
+    if(sec->planecount >= 2)
+        Con_Error("P_NewPlaneForSector: Cannot create plane for sector, "
+                  "limit is %i per sector.\n", 2);
+
+    // Allocate the new plane.
+    plane = Z_Malloc(sizeof(plane_t), PU_LEVEL, 0);
+    suf = &plane->surface;
+
+    // Allocate a new plane list for this sector.
+    newList = Z_Malloc(sizeof(plane_t*) * (++sec->planecount + 1), PU_LEVEL, 0);
+    // Copy any existing plane ptrs.
+    i = 0;
+    for(; i < sec->planecount - 1; ++i)
+        newList[i] = sec->planes[i];
+    // Add the new plane to the end of the list.
+    newList[i++] = plane;
+    newList[i] = NULL; // Terminate.
+
+    // Link the new plane list to the sector.
+    Z_Free(sec->planes); // Free the old list.
+    sec->planes = newList;
+
+    // Setup header for DMU. 
+    plane->header.type = DMU_PLANE;
+
+    // Initalize the plane.
+    for(i = 0; i < 3; ++i)
+        plane->glowrgb[i] = 1;
+    plane->glow = 0;
+    plane->height = 0;
+
+    // The back pointer (temporary)
+    plane->sector = sec;
+
+    // Initialize the surface.
+	suf->material.texture = suf->oldmaterial.texture = -1;
+	suf->material.isflat = suf->oldmaterial.isflat = true;
+    for(i = 0; i < 4; ++i)
+        suf->rgba[i] = 1;
+    suf->flags = 0;
+    suf->offx = suf->offy = 0;
+
+    // Set normal.
+    suf->normal[VX] = 0;
+    suf->normal[VY] = 0;
+    suf->normal[VZ] = 1;
+
+	return plane;
+}
+
+/**
+ * Permanently destroys the specified plane of the given sector.
+ * The sector's plane list is updated accordingly.
+ *
+ * @param id            The sector, plane id to be destroyed.
+ * @param sec           Ptr to sector for which a plane will be destroyed.
+ */
+void R_DestroyPlaneOfSector(uint id, sector_t *sec)
+{
+    plane_t        *plane, **newList = NULL;
+
+    if(!sec)
+        return; // Do wha?
+
+    if(id >= sec->planecount)
+        Con_Error("P_DestroyPlaneOfSector: Plane id #%i is not valid for "
+                  "sector #%i", id, GET_SECTOR_IDX(sec));
+
+    plane = sec->planes[id];
+
+    // Create a new plane list?
+    if(sec->planecount > 1)
+    {
+        uint        i, n;
+
+        newList = Z_Malloc(sizeof(plane_t**) * sec->planecount, PU_LEVEL, 0);
+
+        // Copy ptrs to the planes.
+        n = 0;
+        for(i = 0; i < sec->planecount; ++i)
+        {
+            if(i == id)
+                continue;
+            newList[n++] = sec->planes[i];
+        }
+        newList[n] = NULL; // Terminate.
+    }
+
+    // Destroy the specified plane.
+    Z_Free(plane);
+    sec->planecount--;
+
+    // Link the new list to the sector.
+    Z_Free(sec->planes);
+    sec->planes = newList;
+}
+
 #ifdef MSVC
 #  pragma optimize("g", off)
 #endif
@@ -2349,22 +2467,22 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
 
     // Any change to the texture or glow properties?
     texFlags =
-        R_GraphicResourceFlags((suf->isflat? RC_FLAT : RC_TEXTURE),
-                               suf->texture);
+        R_GraphicResourceFlags((suf->material.isflat? RC_FLAT : RC_TEXTURE),
+                               suf->material.texture);
     oldTexFlags =
-        R_GraphicResourceFlags((suf->oldisflat? RC_FLAT : RC_TEXTURE),
-                               suf->oldtexture);
+        R_GraphicResourceFlags((suf->oldmaterial.isflat? RC_FLAT : RC_TEXTURE),
+                               suf->oldmaterial.texture);
 
     if(forceUpdate ||
-       suf->isflat != suf->oldisflat)
+       suf->material.isflat != suf->oldmaterial.isflat)
     {
-        suf->oldisflat = suf->isflat;
+        suf->oldmaterial.isflat = suf->material.isflat;
     }
 
     // FIXME >
     // Update glowing status?
     // The order of these tests is important.
-    if(forceUpdate || (suf->texture != suf->oldtexture))
+    if(forceUpdate || (suf->material.texture != suf->oldmaterial.texture))
     {
         // Check if the new texture is declared as glowing.
         // NOTE: Currently, we always discard the glow settings of the
@@ -2381,25 +2499,25 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
             // The new texture is glowing.
             suf->flags |= SUF_GLOW;
         }
-        else if(suf->oldtexture && (oldTexFlags & TXF_GLOW))
+        else if(suf->oldmaterial.texture && (oldTexFlags & TXF_GLOW))
         {
             // The old texture was glowing but the new one is not.
             suf->flags &= ~SUF_GLOW;
         }
 
-        suf->oldtexture = suf->texture;
+        suf->oldmaterial.texture = suf->material.texture;
 
         // No longer a missing texture fix?
-        if(suf->texture && (oldTexFlags & SUF_TEXFIX))
+        if(suf->material.texture && (oldTexFlags & SUF_TEXFIX))
             suf->flags &= ~SUF_TEXFIX;
 
         // Update the surface's blended texture.
-        if(suf->isflat)
-            suf->xlat = &flattranslation[suf->texture];
+        if(suf->material.isflat)
+            suf->material.xlat = &flattranslation[suf->material.texture];
         else
-            suf->xlat = &texturetranslation[suf->texture];
+            suf->material.xlat = &texturetranslation[suf->material.texture];
 
-        if(suf->xlat && suf->texture)
+        if(suf->material.xlat && suf->material.texture)
             suf->flags |= SUF_BLEND;
         else
             suf->flags &= ~SUF_BLEND;
@@ -2505,10 +2623,10 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         {
             plane->glow = 4; // Default height factor is 4
 
-            if(plane->surface.isflat)
-                GL_GetFlatColor(plane->surface.texture, plane->glowrgb);
+            if(plane->PS_isflat)
+                GL_GetFlatColor(plane->PS_texture, plane->glowrgb);
             else
-                GL_GetTextureColor(plane->surface.texture, plane->glowrgb);
+                GL_GetTextureColor(plane->PS_texture, plane->glowrgb);
         }
         else
         {

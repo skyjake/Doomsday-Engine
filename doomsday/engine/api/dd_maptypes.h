@@ -22,8 +22,9 @@
 #define DMT_SUBSECTOR_POLY DDVT_PTR    // NULL, if there is no polyobj.
 #define DMT_SUBSECTOR_FLAGS DDVT_BYTE
 
+#define DMT_MATERIAL_TEXTURE DDVT_SHORT
+
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
-#define DMT_SURFACE_TEXTURE DDVT_SHORT
 #define DMT_SURFACE_BLENDMODE DDVT_BLENDMODE
 #define DMT_SURFACE_TEXMOVE DDVT_FLOAT // Texture movement X and Y
 #define DMT_SURFACE_OFFX DDVT_FLOAT    // Texture x offset

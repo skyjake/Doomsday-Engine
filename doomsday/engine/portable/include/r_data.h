@@ -159,7 +159,7 @@ typedef struct rendpoly_s {
     gltexture_t     tex;
     gltexture_t     intertex;
     float           interpos;      // Blending strength (0..1).
-    struct dynlight_s *lights;     // List of lights that affect this poly.
+    struct dynnode_s *lights;      // List of lights that affect this poly.
     DGLuint         decorlightmap; // Pregen RGB lightmap for decor lights.
     blendmode_t     blendmode;     // Primitive-specific blending mode.
 

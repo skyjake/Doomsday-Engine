@@ -369,18 +369,18 @@ static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
 
     // Figure out what kind of surface properties have been defined
     // for the texture or flat in question.
-    if(suf->isflat)
+    if(suf->SM_isflat)
     {
         flat_t *flatptr;
 
-        if(suf->xlat)
+        if(suf->SM_xlat)
         {
             // The flat is currently translated to another one.
-            flatptr = flats[suf->xlat->current];
+            flatptr = flats[suf->SM_xlat->current];
         }
         else
         {
-            flatptr = flats[suf->texture];
+            flatptr = flats[suf->SM_texture];
         }
 
         ref = flatptr->reflection;
@@ -396,13 +396,13 @@ static ded_reflection_t *Rend_ShinyDefForSurface(surface_t *suf, short *width,
     {
         texture_t *texptr;
 
-        if(suf->xlat)
+        if(suf->SM_xlat)
         {
-            texptr = textures[suf->xlat->current];
+            texptr = textures[suf->SM_xlat->current];
         }
         else
         {
-            texptr = textures[suf->texture];
+            texptr = textures[suf->SM_texture];
         }
 
         ref = texptr->reflection;
@@ -469,7 +469,7 @@ static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
                               boolean enabled)
 {
     texinfo_t      *texinfo;
-    translation_t *xlat = surface->xlat;
+    translation_t *xlat = surface->SM_xlat;
 
     // If fog is active, inter=0 is accepted as well. Otherwise flickering
     // may occur if the rendering passes don't match for blended and
@@ -486,7 +486,7 @@ static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
     }
 
     // Get info of the blend target.
-    if(surface->isflat)
+    if(surface->SM_isflat)
         poly->intertex.id = GL_PrepareFlat2(xlat->next, false, &texinfo);
     else
         poly->intertex.id = GL_PrepareTexture2(xlat->next, false, &texinfo);
@@ -697,10 +697,10 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_GRAY, NULL);
 
         // We need the properties of the real flat/texture.
-        if(surface->isflat)
-            GL_GetFlatInfo(surface->texture, &info);
+        if(surface->SM_isflat)
+            GL_GetFlatInfo(surface->SM_texture, &info);
         else
-            GL_GetTextureInfo(surface->texture, &info);
+            GL_GetTextureInfo(surface->SM_texture, &info);
 
         flags = surface->flags & ~(SUF_TEXFIX|SUF_BLEND);
     }
@@ -710,19 +710,19 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_MISSING, &info);
         flags = SUF_GLOW; // Make it stand out
     }
-    else if(surface->texture == -1)
+    else if(surface->SM_texture == -1)
     {   // An unknown texture. The "unknown" graphic will be used
         // NOTE: It has already been bound and paramaters set.
         return SUF_GLOW; // Make it stand out
     }
     else
     {
-        if(surface->isflat)
+        if(surface->SM_isflat)
             poly->tex.id = curtex =
-                GL_PrepareFlat2(surface->texture, true, &info);
+                GL_PrepareFlat2(surface->SM_texture, true, &info);
         else
             poly->tex.id = curtex =
-                GL_PrepareTexture2(surface->texture, true, &info);
+                GL_PrepareTexture2(surface->SM_texture, true, &info);
 
         flags = surface->flags;
     }
@@ -1211,7 +1211,7 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 
     surface = &side->SW_middlesurface;
     // Is there a visible surface?
-    if(surface->texture != 0)
+    if(surface->SM_texture != 0)
     {
         texinfo_t      *texinfo = NULL;
         short           tempflags = 0;
@@ -1233,7 +1233,7 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
 
         if(!(surfaceFlags & SUF_NO_RADIO))
             tempflags |= RPF2_SHADOW;
-        if(surface->texture != -1)
+        if(surface->SM_texture != -1)
             tempflags |= RPF2_SHINY;
         if(surfaceFlags & SUF_GLOW)
             tempflags |= RPF2_GLOW;
@@ -1374,7 +1374,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 
         surface = &side->SW_middlesurface;
         // Is there a visible surface?
-        if(surface->texture != 0)
+        if(surface->SM_texture != 0)
         {
             float texOffY = 0;
             texinfo_t *texinfo = NULL;
@@ -1387,7 +1387,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             vL_ZBottom = vR_ZBottom = gapbottom = MAX_OF(bfloor, ffloor);
 
             // We need the properties of the real flat/texture.
-            if(surface->texture < 0)
+            if(surface->SM_texture < 0)
                 GL_PrepareDDTexture(side->SW_middletexture, &texinfo);
             else if(side->SW_middleisflat)
                 GL_GetFlatInfo(side->SW_middletexture, &texinfo);
@@ -1471,7 +1471,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                     surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
                     if(solidSeg && !(surfaceFlags & SUF_NO_RADIO))
                         tempflags |= RPF2_SHADOW;
-                    if(solidSeg && surface->texture != -1 && !texinfo->masked)
+                    if(solidSeg && surface->SM_texture != -1 && !texinfo->masked)
                         tempflags |= RPF2_SHINY;
                     if(surfaceFlags & SUF_GLOW)
                         tempflags |= RPF2_GLOW;
@@ -1519,7 +1519,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     {
         surface = &side->SW_topsurface;
         // Is there a visible surface?
-        if(surface->texture != 0)
+        if(surface->SM_texture != 0)
         {
             float   alpha;
             boolean isVisible = true;
@@ -1594,7 +1594,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                 surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, &texinfo);
                 if(!(surfaceFlags & SUF_NO_RADIO))
                     tempflags |= RPF2_SHADOW;
-                if(surface->texture != -1)
+                if(surface->SM_texture != -1)
                     tempflags |= RPF2_SHINY;
                 if(surfaceFlags & SUF_GLOW)
                     tempflags |= RPF2_GLOW;
@@ -1640,7 +1640,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     {
         surface = &side->SW_bottomsurface;
         // Is there a visible surface?
-        if(surface->texture != 0)
+        if(surface->SM_texture != 0)
         {
             short       tempflags = 0;
             int         surfaceFlags;
@@ -1670,7 +1670,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             surfaceFlags = Rend_PrepareTextureForPoly(quad, surface, NULL);
             if(!(surfaceFlags & SUF_NO_RADIO))
                 tempflags |= RPF2_SHADOW;
-            if(surface->texture != -1)
+            if(surface->SM_texture != -1)
                 tempflags |= RPF2_SHINY;
             if(surfaceFlags & SUF_GLOW)
                 tempflags |= RPF2_GLOW;
@@ -2063,7 +2063,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
         surfaceFlags = Rend_PrepareTextureForPoly(poly, surface, NULL);
 
         // Is there a visible surface?
-        if(surface->texture != 0)
+        if(surface->SM_texture != 0)
         {
             short tempflags = 0;
 
@@ -2081,7 +2081,7 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
                 poly->texoffy = sector->planes[plane->type]->surface.offy;
             }
 
-            if(surface->texture != -1)
+            if(surface->SM_texture != -1)
                 tempflags |= RPF2_SHINY;
             if(surfaceFlags & SUF_GLOW)
                 tempflags |= RPF2_GLOW;

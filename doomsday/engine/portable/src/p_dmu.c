@@ -1090,8 +1090,8 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_PLANE_HEIGHT, &p->height, args, 0);
             break;
         case DMU_PLANE_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->surface.texture, args, 0);
-            p->surface.isflat = true; // Kludge
+            SetValue(DMT_MATERIAL_TEXTURE, &p->PS_texture, args, 0);
+            p->PS_isflat = true; // Kludge
             break;
         case DMU_PLANE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->surface.offx, args, 0);
@@ -1229,7 +1229,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_RGBA, &p->SW_toprgba[2], args, 0);
             break;
         case DMU_TOP_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SW_toptexture, args, 0);
+            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_toptexture, args, 0);
             p->SW_topisflat = false; // Kludge
            /* if(p->SW_toptexture)
                 p->flags &= ~SDF_MIDTEXUPPER;*/
@@ -1266,7 +1266,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_BLENDMODE, &p->SW_middleblendmode, args, 0);
             break;
         case DMU_MIDDLE_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SW_middletexture, args, 0);
+            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_middletexture, args, 0);
             p->SW_middleisflat = false; // Kludge
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_X:
@@ -1294,7 +1294,7 @@ static int SetProperty(void* ptr, void* context)
             SetValue(DMT_SURFACE_RGBA, &p->SW_bottomrgba[2], args, 0);
             break;
         case DMU_BOTTOM_TEXTURE:
-            SetValue(DMT_SURFACE_TEXTURE, &p->SW_bottomtexture, args, 0);
+            SetValue(DMT_MATERIAL_TEXTURE, &p->SW_bottomtexture, args, 0);
             p->SW_bottomisflat = false; // Kludge
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_X:
@@ -1768,7 +1768,7 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_PLANE_HEIGHT, &p->height, args, 0);
             break;
         case DMU_PLANE_TEXTURE:
-            GetValue(DMT_SURFACE_TEXTURE, &p->surface.texture, args, 0);
+            GetValue(DMT_MATERIAL_TEXTURE, &p->PS_texture, args, 0);
             break;
         case DMU_PLANE_SOUND_ORIGIN:
         {
@@ -1913,7 +1913,7 @@ static int GetProperty(void* ptr, void* context)
            /*if(p->flags & SDF_MIDTEXUPPER)
                 texture = 0;*/
 
-            GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
+            GetValue(DMT_MATERIAL_TEXTURE, &texture, args, 0);
             break;
             }
         case DMU_TOP_TEXTURE_OFFSET_X:
@@ -1950,7 +1950,7 @@ static int GetProperty(void* ptr, void* context)
             /*if(p->flags & SDF_MIDTEXUPPER)
                 texture = p->SW_toptexture;*/
 
-            GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
+            GetValue(DMT_MATERIAL_TEXTURE, &texture, args, 0);
             break;
             }
         case DMU_MIDDLE_TEXTURE_OFFSET_X:
@@ -1991,7 +1991,7 @@ static int GetProperty(void* ptr, void* context)
             if(p->SW_bottomflags & SUF_TEXFIX)
                 texture = 0;
 
-            GetValue(DMT_SURFACE_TEXTURE, &texture, args, 0);
+            GetValue(DMT_MATERIAL_TEXTURE, &texture, args, 0);
             break;
             }
         case DMU_BOTTOM_TEXTURE_OFFSET_X:

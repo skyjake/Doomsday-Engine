@@ -253,8 +253,12 @@ typedef struct {
 } playerdelta_t;
 
 typedef struct {
-    short           texture;
+	short           texture;
     boolean         isflat;
+} dt_material_t;
+
+typedef struct {
+	dt_material_t   material;
     float           rgba[4];       // Surface color tint
     float           texmove[2];    // Texture movement X and Y.
     int             blendmode;
