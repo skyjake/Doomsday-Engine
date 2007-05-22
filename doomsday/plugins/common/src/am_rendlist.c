@@ -522,7 +522,10 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, boolean blend,
     }
 
     if(blend)
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE);
+    {
+        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+    }
 
     // Write commands.
     p = list->head;
@@ -594,7 +597,10 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, boolean blend,
     if(!tex)
         gl.Enable(DGL_TEXTURING);
     if(blend)
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+    {
+        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA_SATURATE, DGL_DST_ALPHA);
+    }
 }
 
 /**
@@ -616,4 +622,7 @@ void AM_RenderAllLists(float alpha)
 
     // Lines.
     AM_RenderList(0, 0, false, alpha, &amLineList);
+
+    gl.Enable(DGL_BLENDING);
+    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }

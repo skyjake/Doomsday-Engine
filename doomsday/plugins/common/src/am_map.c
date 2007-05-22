@@ -1824,8 +1824,8 @@ static void mapTicker(automap_t *map)
         map->viewY = LERP(map->oldViewY, map->targetViewY, map->viewTimer);
     }
     // Move the parallax layer.
-    map->viewPLX = map->viewX / 1000;
-    map->viewPLY = map->viewY / 1000;
+    map->viewPLX = map->viewX / 4000;
+    map->viewPLY = map->viewY / 4000;
 
     // Map view scale (zoom).
     map->viewScaleTimer += .4f;
@@ -2873,6 +2873,59 @@ static void setupGLStateForMap(void)
         gl.End();
     }*/
 
+    {
+        float border = win->width / 8;
+
+        gl.Disable(DGL_ALPHA_TEST);
+        gl.Enable(DGL_BLENDING);
+        gl.Func(DGL_BLENDING, DGL_DST_ALPHA, DGL_SRC_ALPHA);
+
+        // Draw the solid inner.
+        gl.Begin(DGL_QUADS);
+        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
+        gl.Vertex2f(win->x + border, win->y + border);
+        gl.Vertex2f(win->x + win->width - border, win->y + border);
+        gl.Vertex2f(win->x + win->width - border, win->y + win->height - border);
+        gl.Vertex2f(win->x + border, win->y + win->height - border);
+        gl.End();
+
+        // Draw the border.
+        gl.Begin(DGL_TRIANGLE_STRIP);
+        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
+        gl.Vertex2f(win->x + border, win->y + border);
+
+        gl.Color4f(0, 0, 0, map->alpha);
+        gl.Vertex2f(win->x, win->y);
+
+        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
+        gl.Vertex2f(win->x + win->width - border, win->y + border);
+
+        gl.Color4f(0, 0, 0, map->alpha);
+        gl.Vertex2f(win->x + win->width, win->y);
+
+        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
+        gl.Vertex2f(win->x + win->width - border, win->y + win->height - border);
+
+        gl.Color4f(0, 0, 0, map->alpha);
+        gl.Vertex2f(win->x + win->width, win->y + win->height);
+
+        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
+        gl.Vertex2f(win->x + border, win->y + win->height - border);
+
+        gl.Color4f(0, 0, 0, map->alpha);
+        gl.Vertex2f(win->x, win->y + win->height);
+
+        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
+        gl.Vertex2f(win->x + border, win->y + border);
+
+        gl.Color4f(0, 0, 0, map->alpha);
+        gl.Vertex2f(win->x, win->y);
+        gl.End(); 
+
+        gl.Enable(DGL_ALPHA_TEST);
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA_SATURATE, DGL_DST_ALPHA);
+    }
+
     // Setup the scissor clipper.
     gl.Scissor(win->x, win->y, win->width, win->height);
     gl.Enable(DGL_SCISSOR_TEST);
@@ -2890,6 +2943,9 @@ static void setupGLStateForMap(void)
  */
 static void restoreGLStateFromMap(void)
 {
+    // Return to the normal GL state.
+    gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
+    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();
 
