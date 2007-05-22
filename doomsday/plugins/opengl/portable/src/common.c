@@ -402,6 +402,15 @@ int DG_SetInteger(int name, int value)
             activeTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
+        else if(value == 12)
+        {
+            // Normal texture modulation on both stages. TU 1 modulates with 
+            // primary color, TU 2 with TU 1.
+            activeTexture(GL_TEXTURE1);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            activeTexture(GL_TEXTURE0);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        }                
         else if(value == 2 || value == 3)
         {
             // Texture modulation and interpolation.
