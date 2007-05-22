@@ -1820,7 +1820,7 @@ static void allocateMapData(gamemap_t *map)
         // Do the planes too.
         sec->planecount = 0;
         for(j = 0; j < 2; ++j)
-            sec->planes[j] = R_NewPlaneForSector(sec, j);
+            R_NewPlaneForSector(sec, j);
         sec->SP_ceilnormal[VZ] = -1;
     }
 
