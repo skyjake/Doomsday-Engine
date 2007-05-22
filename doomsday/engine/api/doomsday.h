@@ -374,6 +374,7 @@ extern          "C" {
     void            GL_SetColor(int palidx);
     void            GL_SetColor2(int palidx, float alpha);
     void            GL_SetColorAndAlpha(float r, float g, float b, float a);
+    void            GL_BlendMode(blendmode_t mode);
     void            GL_SetNoTexture(void);
     void            GL_SetPatch(int lump);
     void            GL_SetSprite(int pnum, int spriteType);
