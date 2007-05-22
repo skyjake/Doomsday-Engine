@@ -343,12 +343,14 @@ void    AM_SetGlobalAlphaTarget(int pid, float alpha);
 void    AM_SetColor(int pid, int objectname, float r, float g, float b);
 void    AM_SetColorAndAlpha(int pid, int objectname, float r, float g,
                             float b, float a);
+void    AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode);
 void    AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
                    float alpha, boolean canScale);
 void    AM_SetVectorGraphic(int pid, int objectname, int vgname);
 void    AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
                                int sided,
                                float r, float g, float b, float a,
+                               blendmode_t blendmode,
                                glowtype_t glowType, float glowAlpha,
                                float glowWidth, boolean scaleGlowWithView);
 int     AM_AddMark(int pid, float x, float y);

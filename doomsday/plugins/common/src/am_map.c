@@ -190,10 +190,12 @@ vgline_t         player_arrow[] = {
 
 typedef struct mapobjectinfo_s {
     float       rgba[4];
+    int         blendmode;
 
     float       glowAlpha;
     float       glowWidth;
     boolean     glow;
+
     boolean     scaleWithView;
 } mapobjectinfo_t;
 
@@ -601,6 +603,7 @@ void AM_Init(void)
         automap_t *map = &automaps[i];
 
         // Initialize.
+        // FIXME: Put these values into an array (or read from a lump?).
         map->followPlayer = i;
         map->oldViewScale = 1;
         map->window.oldX = map->window.x = 0;
@@ -610,6 +613,7 @@ void AM_Init(void)
         map->cfg.unseenLine.glow = NO_GLOW;
         map->cfg.unseenLine.glowAlpha = 1;
         map->cfg.unseenLine.glowWidth = 10;
+        map->cfg.unseenLine.blendmode = BM_NORMAL;
         map->cfg.unseenLine.scaleWithView = false;
         map->cfg.unseenLine.rgba[0] = 1;
         map->cfg.unseenLine.rgba[1] = 1;
@@ -618,6 +622,7 @@ void AM_Init(void)
         map->cfg.singleSidedLine.glow = NO_GLOW;
         map->cfg.singleSidedLine.glowAlpha = 1;
         map->cfg.singleSidedLine.glowWidth = 10;
+        map->cfg.singleSidedLine.blendmode = BM_NORMAL;
         map->cfg.singleSidedLine.scaleWithView = false;
         map->cfg.singleSidedLine.rgba[0] = 1;
         map->cfg.singleSidedLine.rgba[1] = 1;
@@ -626,6 +631,7 @@ void AM_Init(void)
         map->cfg.twoSidedLine.glow = NO_GLOW;
         map->cfg.twoSidedLine.glowAlpha = 1;
         map->cfg.twoSidedLine.glowWidth = 10;
+        map->cfg.twoSidedLine.blendmode = BM_NORMAL;
         map->cfg.twoSidedLine.scaleWithView = false;
         map->cfg.twoSidedLine.rgba[0] = 1;
         map->cfg.twoSidedLine.rgba[1] = 1;
@@ -634,6 +640,7 @@ void AM_Init(void)
         map->cfg.floorChangeLine.glow = NO_GLOW;
         map->cfg.floorChangeLine.glowAlpha = 1;
         map->cfg.floorChangeLine.glowWidth = 10;
+        map->cfg.floorChangeLine.blendmode = BM_NORMAL;
         map->cfg.floorChangeLine.scaleWithView = false;
         map->cfg.floorChangeLine.rgba[0] = 1;
         map->cfg.floorChangeLine.rgba[1] = 1;
@@ -642,6 +649,7 @@ void AM_Init(void)
         map->cfg.ceilingChangeLine.glow = NO_GLOW;
         map->cfg.ceilingChangeLine.glowAlpha = 1;
         map->cfg.ceilingChangeLine.glowWidth = 10;
+        map->cfg.ceilingChangeLine.blendmode = BM_NORMAL;
         map->cfg.ceilingChangeLine.scaleWithView = false;
         map->cfg.ceilingChangeLine.rgba[0] = 1;
         map->cfg.ceilingChangeLine.rgba[1] = 1;
@@ -650,6 +658,7 @@ void AM_Init(void)
         map->cfg.blockmapGridLine.glow = NO_GLOW;
         map->cfg.blockmapGridLine.glowAlpha = 1;
         map->cfg.blockmapGridLine.glowWidth = 10;
+        map->cfg.blockmapGridLine.blendmode = BM_NORMAL;
         map->cfg.blockmapGridLine.scaleWithView = false;
         map->cfg.blockmapGridLine.rgba[0] = 1;
         map->cfg.blockmapGridLine.rgba[1] = 1;
@@ -659,55 +668,55 @@ void AM_Init(void)
         // Register lines we want to display in a special way.
 #if __JDOOM__ || __DOOM64TC__ || __WOLFTC__
         // Blue locked door, open.
-        AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Blue locked door, locked.
-        AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 99, 0, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 133, 0, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 32, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 99, 0, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 133, 0, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Red locked door, open.
-        AM_RegisterSpecialLine(i, 0, 33, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 33, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Red locked door, locked.
-        AM_RegisterSpecialLine(i, 0, 28, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 134, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 135, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 28, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 134, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 135, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Yellow locked door, open.
-        AM_RegisterSpecialLine(i, 0, 34, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 34, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Yellow locked door, locked.
-        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 136, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 137, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 136, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 137, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Exit switch.
-        AM_RegisterSpecialLine(i, 1, 11, 1, 0, 1, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 1, 11, 1, 0, 1, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Exit cross line.
-        AM_RegisterSpecialLine(i, 1, 52, 2, 0, 1, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 1, 52, 2, 0, 1, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Secret Exit switch.
-        AM_RegisterSpecialLine(i, 1, 51, 1, 0, 1, 1, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 1, 51, 1, 0, 1, 1, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Secret Exit cross line.
-        AM_RegisterSpecialLine(i, 2, 124, 2, 0, 1, 1, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 2, 124, 2, 0, 1, 1, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
 #elif __JHERETIC__
         // Blue locked door.
-        AM_RegisterSpecialLine(i, 0, 26, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 26, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Blue switch?
-        AM_RegisterSpecialLine(i, 0, 32, 0, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 32, 0, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Yellow locked door.
-        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 27, 2, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Yellow switch?
-        AM_RegisterSpecialLine(i, 0, 34, 0, .905f, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 34, 0, .905f, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Green locked door.
-        AM_RegisterSpecialLine(i, 0, 28, 2, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 28, 2, 0, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Green switch?
-        AM_RegisterSpecialLine(i, 0, 33, 0, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 33, 0, 0, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
 #elif __JHEXEN__
         // A locked door (all are green).
-        AM_RegisterSpecialLine(i, 0, 13, 0, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 83, 0, 0, .9f, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 13, 0, 0, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 83, 0, 0, .9f, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Intra-level teleporters (all are blue).
-        AM_RegisterSpecialLine(i, 0, 70, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
-        AM_RegisterSpecialLine(i, 0, 71, 2, 0, 0, .776f, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 70, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 71, 2, 0, 0, .776f, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Inter-level teleport.
-        AM_RegisterSpecialLine(i, 0, 74, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 74, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
         // Game-winning exit.
-        AM_RegisterSpecialLine(i, 0, 75, 2, .682f, 0, 0, cfg.automapLineAlpha/2, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
+        AM_RegisterSpecialLine(i, 0, 75, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
 #endif
 
         // Setup map based on player's config.
@@ -1345,7 +1354,7 @@ void AM_GetColorAndAlpha(int pid, int objectname, float *r, float *g,
         return;
 
     if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
-        Con_Error("AM_SetColorAndAlpha: Unknown object %i.", objectname);
+        Con_Error("AM_GetColorAndAlpha: Unknown object %i.", objectname);
 
     // Check special cases first.
     if(objectname == AMO_BACKGROUND)
@@ -1394,6 +1403,53 @@ void AM_GetColorAndAlpha(int pid, int objectname, float *r, float *g,
     if(g) *g = info->rgba[1];
     if(b) *b = info->rgba[2];
     if(a) *a = info->rgba[3];
+}
+
+void AM_SetBlendmode(int pid, int objectname, blendmode_t blendmode)
+{
+    automap_t *map = mapForPlayerId(pid);
+    mapobjectinfo_t *info;
+
+    if(!map)
+        return;
+
+    if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
+        Con_Error("AM_SetBlendmode: Unknown object %i.", objectname);
+
+    // It must be an object with an info.
+    switch(objectname)
+    {
+    case AMO_UNSEENLINE:
+        info = &map->cfg.unseenLine;
+        break;
+
+    case AMO_SINGLESIDEDLINE:
+        info = &map->cfg.singleSidedLine;
+        break;
+
+    case AMO_TWOSIDEDLINE:
+        info = &map->cfg.twoSidedLine;
+        break;
+
+    case AMO_FLOORCHANGELINE:
+        info = &map->cfg.floorChangeLine;
+        break;
+
+    case AMO_CEILINGCHANGELINE:
+        info = &map->cfg.ceilingChangeLine;
+        break;
+
+    case AMO_BLOCKMAPGRIDLINE:
+        info = &map->cfg.blockmapGridLine;
+        break;
+
+    default:
+        Con_Error("AM_SetBlendmode: Object %i does not support blending modes.",
+                  objectname);
+        break;
+    }
+
+    info->blendmode = blendmode;
 }
 
 void AM_SetGlow(int pid, int objectname, glowtype_t type, float size,
@@ -1475,6 +1531,7 @@ void AM_SetVectorGraphic(int pid, int objectname, int vgname)
 void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
                             int sided,
                             float r, float g, float b, float a,
+                            blendmode_t blendmode,
                             glowtype_t glowType, float glowAlpha,
                             float glowWidth, boolean scaleGlowWithView)
 {
@@ -1527,6 +1584,7 @@ void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
     line->info.glowAlpha = CLAMP(glowAlpha, 0, 1);
     line->info.glowWidth = glowWidth;
     line->info.scaleWithView = scaleGlowWithView;
+    line->info.blendmode = blendmode;
 }
 
 void AM_SetCheatLevel(int pid, int level)
@@ -2035,7 +2093,7 @@ static void rendLine2(float x1, float y1, float x2, float y2,
                       float r, float g, float b, float a,
                       glowtype_t glowType, float glowAlpha, float glowWidth,
                       boolean glowOnly, boolean scaleGlowWithView,
-                      boolean caps, boolean blend, boolean drawNormal)
+                      boolean caps, blendmode_t blend, boolean drawNormal)
 {
     float       v1[2], v2[2];
     float       length, dx, dy;
@@ -2228,7 +2286,7 @@ static void renderGrid(void)
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
                   info->glow, info->glowAlpha, info->glowWidth,
-                  false, info->scaleWithView, false, (info->glow != NO_GLOW),
+                  false, info->scaleWithView, false, info->blendmode,
                   false);
     }
 
@@ -2249,7 +2307,7 @@ static void renderGrid(void)
         rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
                   info->glow, info->glowAlpha, info->glowWidth,
-                  false, info->scaleWithView, false, (info->glow != NO_GLOW),
+                  false, info->scaleWithView, false, info->blendmode,
                   false);
     }
 }
@@ -2294,7 +2352,7 @@ static void renderWalls(void)
                 rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                           subColors[subColor][0], subColors[subColor][1],
                           subColors[subColor][2], 1,
-                          FRONT_GLOW, 1.0f, 7.5f, true, false, false, true,
+                          FRONT_GLOW, 1.0f, 7.5f, true, false, false, BM_ADD,
                           false);
 
                 continue;
@@ -2323,7 +2381,7 @@ static void renderWalls(void)
                 {
                     rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
                               .8f, 0, .8f, 1,
-                              TWOSIDED_GLOW, 1, 5, false, true, false, true,
+                              TWOSIDED_GLOW, 1, 5, false, true, false, BM_ADD,
                               map->cheating);
                     continue;
                 }
@@ -2416,7 +2474,7 @@ static void renderWalls(void)
                       info->glowWidth, false, info->scaleWithView,
                       (info->glow && !(xline->special && !map->cfg.glowingLineSpecials)),
                       (xline->special && !map->cfg.glowingLineSpecials ?
-                            NO_GLOW : info->glow), map->cheating);
+                            BM_NORMAL : info->blendmode), map->cheating);
         }
     }
 }
@@ -2515,7 +2573,7 @@ static void addPatchQuad(float x, float y, float w, float h,
                0, 0, 1, 0,
                1, 1, 0, 1,
                r, g, b, a,
-               lumpnum, true, false);
+               lumpnum, true, BM_NORMAL);
 }
 
 /**
@@ -2873,59 +2931,6 @@ static void setupGLStateForMap(void)
         gl.End();
     }*/
 
-    {
-        float border = win->width / 8;
-
-        gl.Disable(DGL_ALPHA_TEST);
-        gl.Enable(DGL_BLENDING);
-        gl.Func(DGL_BLENDING, DGL_DST_ALPHA, DGL_SRC_ALPHA);
-
-        // Draw the solid inner.
-        gl.Begin(DGL_QUADS);
-        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
-        gl.Vertex2f(win->x + border, win->y + border);
-        gl.Vertex2f(win->x + win->width - border, win->y + border);
-        gl.Vertex2f(win->x + win->width - border, win->y + win->height - border);
-        gl.Vertex2f(win->x + border, win->y + win->height - border);
-        gl.End();
-
-        // Draw the border.
-        gl.Begin(DGL_TRIANGLE_STRIP);
-        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
-        gl.Vertex2f(win->x + border, win->y + border);
-
-        gl.Color4f(0, 0, 0, map->alpha);
-        gl.Vertex2f(win->x, win->y);
-
-        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
-        gl.Vertex2f(win->x + win->width - border, win->y + border);
-
-        gl.Color4f(0, 0, 0, map->alpha);
-        gl.Vertex2f(win->x + win->width, win->y);
-
-        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
-        gl.Vertex2f(win->x + win->width - border, win->y + win->height - border);
-
-        gl.Color4f(0, 0, 0, map->alpha);
-        gl.Vertex2f(win->x + win->width, win->y + win->height);
-
-        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
-        gl.Vertex2f(win->x + border, win->y + win->height - border);
-
-        gl.Color4f(0, 0, 0, map->alpha);
-        gl.Vertex2f(win->x, win->y + win->height);
-
-        gl.Color4f(map->alpha, map->alpha, map->alpha, 1 - map->alpha);
-        gl.Vertex2f(win->x + border, win->y + border);
-
-        gl.Color4f(0, 0, 0, map->alpha);
-        gl.Vertex2f(win->x, win->y);
-        gl.End(); 
-
-        gl.Enable(DGL_ALPHA_TEST);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA_SATURATE, DGL_DST_ALPHA);
-    }
-
     // Setup the scissor clipper.
     gl.Scissor(win->x, win->y, win->width, win->height);
     gl.Enable(DGL_SCISSOR_TEST);
@@ -2944,8 +2949,6 @@ static void setupGLStateForMap(void)
 static void restoreGLStateFromMap(void)
 {
     // Return to the normal GL state.
-    gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();
 

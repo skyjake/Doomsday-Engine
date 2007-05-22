@@ -91,7 +91,7 @@ typedef struct amprimlist_s {
 typedef struct amquadlist_s {
     uint        tex;
     boolean     texIsPatchLumpNum;
-    boolean     blend;
+    blendmode_t blend;
     amprimlist_t primlist;
     struct amquadlist_s *next;
 } amquadlist_t;
@@ -246,14 +246,15 @@ static amrline_t *AM_AllocateLine(void)
 /**
  * Create a new automap quad primitive and link it into the appropriate list.
  *
- * @param tex       DGLuint texture identifier for quad.
- * @param blend     If <code>true</code> this quad will be added to a list
- *                  suitable for blended primitives.
+ * @param tex       DGLuint texture identifier/patch lump number for quad.
+ * @param texIsPatchLumpNum If <code>true</code>, 'tex' is treated as a
+ *                  patch lump number.
+ * @param blend     The blendmode required for this quad.
  *
  * @return          Ptr to the new quad, automap render primitive. 
  */
 static amrquad_t *AM_AllocateQuad(uint tex, boolean texIsPatchLumpNum,
-                                  boolean blend)
+                                  blendmode_t blend)
 {
     amquadlist_t *list;
     amprim_t   *p;
@@ -437,8 +438,7 @@ void AM_AddLine4f(float x, float y, float x2, float y2,
  * @param a         Alpha value of the line (opacity).
  * @param tex       DGLuint texture identifier for quad OR patch lump num.
  * @param texIsPatchLumpNum  If <code>true</code> 'tex' is a patch lump num.
- * @param blend     If <code>true</code> this quad will be added to a list
- *                  suitable for additive blended primitives.       
+ * @param blend     Blendmode used for this primitive.   
  */
 void AM_AddQuad(float x1, float y1, float x2, float y2,
                 float x3, float y3, float x4, float y4,
@@ -447,7 +447,7 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
                 float tc3st1, float tc3st2,
                 float tc4st1, float tc4st2,
                 float r, float g, float b, float a,
-                uint tex, boolean texIsPatchLumpNum, boolean blend)
+                uint tex, boolean texIsPatchLumpNum, blendmode_t blend)
 {
     // Vertex layout.
     // 4--3
@@ -495,13 +495,13 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
  *
  * @param tex       DGLuint texture identifier for quads on the list.
  * @param texIsPatchLumpNum   If <code>true</code> 'tex' is a patch lump num.
- * @param blend     If <code>true</code> all primitives on the list will be
- *                  rendered with additive blending.
+ * @param blend     All primitives on the list will be rendered with this
+ *                  blending mode.
  * @param alpha     The alpha of primitives on the list will be rendered
  *                  using: (their alpha * alpha).
  * @param list      Ptr to the automap render list to be rendered.
  */
-void AM_RenderList(uint tex, boolean texIsPatchLumpNum, boolean blend,
+void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                    float alpha, amprimlist_t *list)
 {
     amprim_t *p;
@@ -521,11 +521,7 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, boolean blend,
         gl.Disable(DGL_TEXTURING);
     }
 
-    if(blend)
-    {
-        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-    }
+    GL_BlendMode(blend);
 
     // Write commands.
     p = list->head;
@@ -596,11 +592,8 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, boolean blend,
     // Restore previous state.
     if(!tex)
         gl.Enable(DGL_TEXTURING);
-    if(blend)
-    {
-        gl.Func(DGL_BLENDING_OP, DGL_ADD, 0);
-        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA_SATURATE, DGL_DST_ALPHA);
-    }
+
+    GL_BlendMode(BM_NORMAL);
 }
 
 /**
@@ -622,7 +615,4 @@ void AM_RenderAllLists(float alpha)
 
     // Lines.
     AM_RenderList(0, 0, false, alpha, &amLineList);
-
-    gl.Enable(DGL_BLENDING);
-    gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }

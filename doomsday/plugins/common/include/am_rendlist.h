@@ -53,6 +53,6 @@ void    AM_AddQuad(float x1, float y1, float x2, float y2,
                    float tc3st1, float tc3st2,
                    float tc4st1, float tc4st2,
                    float r, float g, float b, float a,
-                   uint tex, boolean texIsPatchLumpNum, boolean blend);
+                   uint tex, boolean texIsPatchLumpNum, blendmode_t blend);
 
 #endif
