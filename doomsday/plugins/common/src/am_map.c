@@ -270,30 +270,32 @@ typedef struct automap_s {
     automapwindow_t window;
 
 // Viewer location on the map.
+    float       viewTimer;
     float       viewX, viewY; // Current.
     float       targetViewX, targetViewY; // Should be at.
     float       oldViewX, oldViewY; // Previous.
-    float       viewTimer;
+    // For the parallax layer.
+    float       viewPLX, viewPLY; // Current.
 
 // Viewer frame scale.
+    float       viewScaleTimer;
     float       viewScale; // Current.
     float       targetViewScale; // Should be at.
     float       oldViewScale; // Previous.
-    float       viewScaleTimer;
 
     float       minScaleMTOF; // Viewer frame scale limits.
     float       maxScaleMTOF; // 
 
 // Viewer frame rotation.
+    float       angleTimer;
     float       angle; // Current.
     float       targetAngle; // Should be at.
     float       oldAngle; // Previous.
-    float       angleTimer;
 
-// Viewer frame dimensions on map (TODO: does not consider rotation!).
+// Viewer frame coordinates on map (TODO: does not consider rotation!).
     float       vframe[2][2]; // {TL{x,y}, BR{x,y}}
 
-// Clipbbox dimensions on map.
+// Clip bbox coordinates on map.
     float       vbbox[4];
 
     // Misc
@@ -1483,10 +1485,6 @@ void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
     if(!map)
         return;
 
-    // Any room for a new special line?
-    if(map->numSpecialLines >= AM_MAXSPECIALLINES)
-        Con_Error("AM_RegisterSpecialLine: No available slot.");
-
     if(cheatLevel < 0 || cheatLevel > 4)
         Con_Error("AM_RegisterSpecialLine: cheatLevel '%i' out of range {0-4}.",
                   cheatLevel);
@@ -1509,7 +1507,13 @@ void AM_RegisterSpecialLine(int pid, int cheatLevel, int lineSpecial,
     }
 
     if(!line) // It must be a new one.
+    {
+        // Any room for a new special line?
+        if(map->numSpecialLines >= AM_MAXSPECIALLINES)
+            Con_Error("AM_RegisterSpecialLine: No available slot.");
+
         line = &map->specialLines[map->numSpecialLines++];
+    }
 
     line->cheatLevel = cheatLevel;
     line->special = lineSpecial;
@@ -1819,6 +1823,9 @@ static void mapTicker(automap_t *map)
         map->viewX = LERP(map->oldViewX, map->targetViewX, map->viewTimer);
         map->viewY = LERP(map->oldViewY, map->targetViewY, map->viewTimer);
     }
+    // Move the parallax layer.
+    map->viewPLX = map->viewX / 1000;
+    map->viewPLY = map->viewY / 1000;
 
     // Map view scale (zoom).
     map->viewScaleTimer += .4f;
@@ -1894,7 +1901,7 @@ static void mapTicker(automap_t *map)
     v[VX] += map->viewX;
     v[VY] += map->viewY;
 
-    // First point is always excepted.
+    // First point is always accepted.
     map->vbbox[BOXLEFT] = map->vbbox[BOXRIGHT] = v[VX];
     map->vbbox[BOXTOP] = map->vbbox[BOXBOTTOM] = v[VY];
 
@@ -2006,7 +2013,7 @@ static boolean isVectorVisible(automap_t *map,
 }
 
 /**
- * Draws the given line. No cliping is done!
+ * Draws the given line. Basic cliping is done.
  */
 static void rendLine(float x1, float y1, float x2, float y2, int color,
                      float alpha)
@@ -2788,14 +2795,47 @@ static void setupGLStateForMap(void)
     // Do we want a background texture?
     if(maplumpnum)
     {
+        // Apply the background texture onto a parallaxing layer which
+        // follows the map view target (not player).
         gl.Enable(DGL_TEXTURING);
+
+        gl.MatrixMode(DGL_TEXTURE);
+        gl.PushMatrix();
+        gl.LoadIdentity();
+
+        GL_SetRawImage(maplumpnum, false); // We only want the left portion.
+
+        gl.TexParameter(DGL_WRAP_S, DGL_REPEAT);
+        gl.TexParameter(DGL_WRAP_T, DGL_REPEAT);
 
         GL_SetColorAndAlpha(map->cfg.backgroundRGBA[0],
                             map->cfg.backgroundRGBA[1],
                             map->cfg.backgroundRGBA[2],
                             map->alpha * map->cfg.backgroundRGBA[3]);
-        GL_SetRawImage(maplumpnum, false); // We only want the left portion.
-        GL_DrawRectTiled(win->x, win->y, win->width, win->height, 128, 100);
+
+        // Apply the parallax scrolling, map rotation and counteract the
+        // aspect of the quad (sized to map window dimensions).
+        gl.Translatef(MTOF(map, map->viewPLX) + .5f,
+                      MTOF(map, map->viewPLY) + .5f, 0);
+        gl.Rotatef(map->angle, 0, 0, 1);
+        gl.Scalef(1, win->height / win->width, 1);
+        gl.Translatef(-.5f, -.5f, 0);
+
+        gl.Begin(DGL_QUADS);
+        gl.TexCoord2f(0, 1);
+        gl.Vertex2f(win->x, win->y);
+        gl.TexCoord2f(1, 1);
+        gl.Vertex2f(win->x + win->width, win->y);
+        gl.TexCoord2f(1, 0);
+        gl.Vertex2f(win->x + win->width, win->y + win->height);
+        gl.TexCoord2f(0, 0);
+        gl.Vertex2f(win->x, win->y + win->height);
+        gl.End();
+
+        gl.MatrixMode(DGL_TEXTURE);
+        gl.PopMatrix();
+
+        gl.MatrixMode(DGL_PROJECTION);
     }
     else
     {
