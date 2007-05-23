@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,11 +22,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-//===========================================================================
-// G_DGL.H
-//  The game's interface to DGL. Only includes the functions the game can
-//  safely access.
-//===========================================================================
+/*
+ * g_dgl.h : The game's interface to DGL.
+ *
+ * Only includes the functions the game can safely access.
+ */
+
 #ifndef __GAME_DGL_DRIVER_H__
 #define __GAME_DGL_DRIVER_H__
 
@@ -90,6 +92,8 @@ typedef struct gamedgl_s {
     void            (*Vertex3fv) (float *data);
     void            (*TexCoord2f) (float s, float t);
     void            (*TexCoord2fv) (float *data);
+    void            (*MultiTexCoord2f) (int target, float s, float t);
+    void            (*MultiTexCoord2fv) (int target, float *data);
     void            (*Vertices2ftv) (int num, gl_ft2vertex_t * data);
     void            (*Vertices3ftv) (int num, gl_ft3vertex_t * data);
     void            (*Vertices3fctv) (int num, gl_fct3vertex_t * data);

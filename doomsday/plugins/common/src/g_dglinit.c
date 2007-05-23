@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,6 +114,8 @@ void G_InitDGL(void)
     Imp(Vertex3fv);
     Imp(TexCoord2f);
     Imp(TexCoord2fv);
+    Imp(MultiTexCoord2f);
+    Imp(MultiTexCoord2fv);
     Imp(Vertices2ftv);
     Imp(Vertices3ftv);
     Imp(Vertices3fctv);
