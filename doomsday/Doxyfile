@@ -88,7 +88,7 @@ FILE_PATTERNS          = *.c \
                          *.h \
                          *.m \
                          *.C \
-                         *.C++ \
+                         *.CPP \
                          *.H \
                          *.M
 RECURSIVE              = YES
