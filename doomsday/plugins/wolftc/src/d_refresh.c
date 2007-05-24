@@ -233,16 +233,11 @@ void D_Display(void)
 {
     static boolean viewactivestate = false;
     static boolean menuactivestate = false;
-    static int  fullscreenmode = 0;
     static gamestate_t oldgamestate = -1;
-    int         ay;
-    boolean     redrawsbar;
     player_t   *player = &players[displayplayer];
     boolean     iscam = (player->plr->flags & DDPF_CAMERA) != 0; // $democam
     float       x, y, w, h;
     boolean     mapHidesView;
-
-    redrawsbar = false;
 
     // $democam: can be set on every frame
     if(cfg.setblocks > 10 || iscam)
@@ -309,9 +304,43 @@ void D_Display(void)
         // Draw the automap?
         AM_Drawer(displayplayer);
 
+        // Need to update the borders?
+        if(oldgamestate != GS_LEVEL ||
+            (Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
+                cfg.sbarscale < 20 || !R_IsFullScreenViewWindow()))
+        {
+            // Update the borders.
+            GL_Update(DDUF_BORDER);
+        }
+
+        break;
+
+    default:
+        break;
+    }
+
+    GL_Update(DDUF_FULLSCREEN);
+
+    menuactivestate = menuactive;
+    viewactivestate = viewactive;
+    oldgamestate = wipegamestate = G_GetGameState();
+}
+
+void D_Display2(void)
+{
+    // Do buffered drawing.
+    switch(G_GetGameState())
+    {
+    case GS_LEVEL:
         // These various HUD's will be drawn unless Doomsday advises not to
         if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
         {
+            boolean     redrawsbar = false;
+
+            // Draw HUD displays only visible when the automap is open.
+            if(AM_IsMapActive(displayplayer))
+                HU_DrawMapCounters();
+
             // Level information is shown for a few seconds in the
             // beginning of a level.
             R_DrawLevelTitle();
@@ -322,6 +351,9 @@ void D_Display(void)
             // Do we need to render a full status bar at this point?
             if(!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 ))
             {
+                player_t   *player = &players[displayplayer];
+                boolean     iscam = (player->plr->flags & DDPF_CAMERA) != 0; // $democam
+
                 if(!iscam)
                 {
                     if(true == (viewheight == 200))
@@ -334,22 +366,9 @@ void D_Display(void)
                         ST_Drawer(0 , redrawsbar);
                     }
                 }
-                fullscreenmode = viewheight == 200;
             }
-
             HU_Drawer();
         }
-
-        // Need to update the borders?
-        if(oldgamestate != GS_LEVEL ||
-            (Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
-                cfg.sbarscale < 20 || !R_IsFullScreenViewWindow() ||
-                !mapHidesView))
-        {
-            // Update the borders.
-            GL_Update(DDUF_BORDER);
-        }
-
         break;
 
     case GS_INTERMISSION:
@@ -359,31 +378,24 @@ void D_Display(void)
     case GS_WAITING:
         gl.Clear(DGL_COLOR_BUFFER_BIT);
         M_WriteText2(5, 188, "WAITING... PRESS ESC FOR MENU", hu_font_a, 1, 0, 0, 1);
+        break;
 
     default:
         break;
     }
 
-    GL_Update(DDUF_FULLSCREEN);
-
-    menuactivestate = menuactive;
-    viewactivestate = viewactive;
-    oldgamestate = wipegamestate = G_GetGameState();
-
     // draw pause pic (but not if InFine active)
     if(paused && !fi_active)
     {
-        //if(AM_IsMapActive(displayplayer))
-            ay = 4;
-        //else
-        //    ay = viewwindowy + 4;
-
-        WI_DrawPatch(SCREENWIDTH /2, ay, 1, 1, 1, 1, W_GetNumForName("M_PAUSE"),
+        WI_DrawPatch(SCREENWIDTH /2, 4, 1, 1, 1, 1, W_GetNumForName("M_PAUSE"),
                      NULL, false, ALIGN_CENTER);
     }
 
     // InFine is drawn whenever active.
     FI_Drawer();
+
+    // The menu is drawn whenever active.
+    M_Drawer();
 }
 
 /**

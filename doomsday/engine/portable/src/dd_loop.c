@@ -191,14 +191,17 @@ void DD_DrawAndBlit(void)
         // Update the world ready for drawing view(s) of it.
         R_SetupWorldFrame();
 
-        // Draw the game graphics.
+        // Draw in-window game graphics. 
         gx.G_Drawer();
 
-        // Menu is not drawn if the UI fading is in effect.
-        if(!UI_IsActive() || UI_Alpha() >= 1.0)
+        // Draw the view border.
+        R_RenderPlayerViewBorder();
+
+        // Draw any over/outside view window game graphics (e.g. fullscreen
+        // menus and other displays).
+        if(gx.G_Drawer2 && (!UI_IsActive() || UI_Alpha() >= 1.0))
         {
-            // Draw Menu
-            gx.MN_Drawer();
+            gx.G_Drawer2();
         }
 
         // Restore the projection mode that was previously in effect.

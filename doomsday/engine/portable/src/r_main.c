@@ -574,6 +574,29 @@ void R_SetupFrame(ddplayer_t *player)
 }
 
 /**
+ * Draw the border around the view window.
+ */
+void R_RenderPlayerViewBorder(void)
+{
+    // View border?
+    if(BorderNeedRefresh)
+    {
+        R_DrawViewBorder();
+        BorderNeedRefresh = false;
+        BorderTopRefresh = false;
+        UpdateState |= I_FULLSCRN;
+    }
+    else if(BorderTopRefresh)
+    {
+        if(viewwindowx > 0)
+            R_DrawTopBorder();
+
+        BorderTopRefresh = false;
+        UpdateState |= I_MESSAGES;
+    }
+}
+
+/**
  * Draw the view of the player inside the view window.
  */
 void R_RenderPlayerView(ddplayer_t *player)
@@ -651,6 +674,7 @@ void R_RenderPlayerView(ddplayer_t *player)
         Con_Printf("Tris: %-4i (Mdl=%-4i)\n", i, modelTriCount);
         modelTriCount = 0;
     }
+
     if(rendInfoLums)
     {
         Con_Printf("LumObjs: %-4i\n", DL_GetNumLuminous());
@@ -658,24 +682,6 @@ void R_RenderPlayerView(ddplayer_t *player)
 
     R_InfoRendPolys();
 
-    // View border?
-    if(BorderNeedRefresh)
-    {
-        R_DrawViewBorder();
-        BorderNeedRefresh = false;
-        BorderTopRefresh = false;
-        UpdateState |= I_FULLSCRN;
-    }
-    else if(BorderTopRefresh)
-    {
-        if(viewwindowx > 0)
-            R_DrawTopBorder();
-
-        BorderTopRefresh = false;
-        UpdateState |= I_MESSAGES;
-    }
-
     // The colored filter.
-    if(GL_DrawFilter())
-        BorderNeedRefresh = true;
+    GL_DrawFilter();
 }

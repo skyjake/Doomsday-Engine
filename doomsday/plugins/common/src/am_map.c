@@ -1790,11 +1790,15 @@ static void mapWindowTicker(automap_t *map)
     win = &map->window;
 
     // Get the view window dimensions.
-    newX = newY = 0;
-    newWidth = Get(DD_SCREEN_WIDTH);
-    newHeight = Get(DD_SCREEN_HEIGHT);
+    R_GetViewWindow(&newX, &newY, &newWidth, &newHeight);
+    // Scale to screen space.
+    newX = FIXXTOSCREENX(newX);
+    newY = FIXYTOSCREENY(newY);
+    newWidth = FIXXTOSCREENX(newWidth);
+    newHeight = FIXYTOSCREENY(newHeight);
 
-    if(newWidth != win->height || newHeight != win->width)
+    if(newX != win->x || newY != win->y ||
+       newWidth != win->height || newHeight != win->width)
     {
         if(map->fullScreenMode)
         {
@@ -3169,7 +3173,6 @@ void AM_Drawer(int viewplayer)
 
     drawLevelName();
     restoreGLStateFromMap();
-    HU_DrawMapCounters();
 }
 
 // ------------------------------------------------------------------------------

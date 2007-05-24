@@ -174,7 +174,6 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
 
     boolean     retVal = false;
 
-    // Perhaps the automap completely obscures the view?
     if(AM_IsMapActive(displayplayer))
     {
         float   alpha;

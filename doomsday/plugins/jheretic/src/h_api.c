@@ -61,8 +61,8 @@ void    H_Ticker(void);
 
 // Drawing
 void    D_Display(void);
+void    D_Display2(void);
 void    H_EndFrame(void);
-void    M_Drawer(void);
 
 // Input responders
 int     G_PrivilegedResponder(event_t *event);
@@ -209,7 +209,7 @@ game_export_t *GetGameAPI(game_import_t * imports)
     gx.Shutdown = H_Shutdown;
     gx.G_Drawer = D_Display;
     gx.Ticker = H_Ticker;
-    gx.MN_Drawer = M_Drawer;
+    gx.G_Drawer2 = D_Display2;
     gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
     gx.FallbackResponder = M_Responder;
     gx.G_Responder = G_Responder;

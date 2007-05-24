@@ -209,16 +209,11 @@ void D_Display(void)
 {
     static boolean viewactivestate = false;
     static boolean menuactivestate = false;
-    static int fullscreenmode = 0;
     static gamestate_t oldgamestate = -1;
-    int         ay;
-    boolean     redrawsbar;
     player_t   *vplayer = &players[displayplayer];
     boolean     iscam = (vplayer->plr->flags & DDPF_CAMERA) != 0; // $democam
     float       x, y, w, h;
     boolean     mapHidesView;
-
-    redrawsbar = false;
 
     // $democam: can be set on every frame
     if(cfg.setblocks > 10 || iscam)
@@ -283,9 +278,40 @@ void D_Display(void)
         // Draw the automap?
         AM_Drawer(displayplayer);
 
+        // Need to update the borders?
+        if(oldgamestate != GS_LEVEL ||
+            ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
+                cfg.sbarscale < 20 || !R_IsFullScreenViewWindow())))
+        {
+            // Update the borders.
+            GL_Update(DDUF_BORDER);
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    GL_Update(DDUF_FULLSCREEN);
+
+    menuactivestate = menuactive;
+    viewactivestate = viewactive;
+    oldgamestate = wipegamestate = G_GetGameState();
+}
+
+void D_Display2(void)
+{
+    switch(G_GetGameState())
+    {
+    case GS_LEVEL:
         // These various HUD's will be drawn unless Doomsday advises not to
         if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
         {
+            boolean     redrawsbar = false;
+
+            // Draw HUD displays only visible when the automap is open.
+            if(AM_IsMapActive(displayplayer))
+                HU_DrawMapCounters();
 
             // Level information is shown for a few seconds in the
             // beginning of a level.
@@ -297,6 +323,9 @@ void D_Display(void)
             // Do we need to render a full status bar at this point?
             if(!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0))
             {
+                 player_t   *player = &players[displayplayer];
+                 boolean     iscam = (player->plr->flags & DDPF_CAMERA) != 0; // $democam
+
                 if(!iscam)
                 {
                     if(true == (viewheight == 200))
@@ -309,20 +338,8 @@ void D_Display(void)
                         ST_Drawer(0, redrawsbar);    // $democam
                     }
                 }
-                fullscreenmode = (viewheight == 200);
             }
-
             HU_Drawer();
-        }
-
-        // Need to update the borders?
-        if(oldgamestate != GS_LEVEL ||
-            ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
-                cfg.sbarscale < 20 || !R_IsFullScreenViewWindow() ||
-              !mapHidesView)))
-        {
-            // Update the borders.
-            GL_Update(DDUF_BORDER);
         }
         break;
 
@@ -339,25 +356,17 @@ void D_Display(void)
         break;
     }
 
-    GL_Update(DDUF_FULLSCREEN);
-
-    menuactivestate = menuactive;
-    viewactivestate = viewactive;
-    oldgamestate = wipegamestate = G_GetGameState();
-
     // draw pause pic (but not if InFine active)
     if(paused && !fi_active)
     {
-        //if(AM_IsMapActive(displayplayer))
-            ay = 4;
-        //else
-        //    ay = 4; // in jDOOM this is viewwindowy + 4
-
-        GL_DrawPatch(160, ay, W_GetNumForName("PAUSED"));
+        GL_DrawPatch(160, 4, W_GetNumForName("PAUSED"));
     }
 
     // InFine is drawn whenever active.
     FI_Drawer();
+
+    // The menu is drawn whenever active.
+    M_Drawer();
 }
 
 /**
