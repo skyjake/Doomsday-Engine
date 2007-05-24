@@ -533,7 +533,7 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
             else
             {
                 AM_SelectTexUnits(2);
-                gl.SetInteger(DGL_MODULATE_TEXTURE, 4);
+                gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
 
                 AM_BindTo(0, tex);
                 AM_BindTo(1, amMaskTexture);
@@ -709,34 +709,50 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                            p->data.quad.rgba[2],
                            p->data.quad.rgba[3] * alpha);
                 // V1
-                if(tex)
+                if(tex && maskID == 0)
                 gl.MultiTexCoord2f(normal,
                                    p->data.quad.verts[0].pos[0],
                                    p->data.quad.verts[0].pos[1]);
+                else
+                gl.MultiTexCoord2f(normal,
+                                   p->data.quad.verts[0].tex[0],
+                                   p->data.quad.verts[0].tex[1]);
 
                 gl.Vertex2f(p->data.quad.verts[0].pos[0],
                             p->data.quad.verts[0].pos[1]);
                 // V2
-                if(tex)
+                if(tex && maskID == 0)
                 gl.MultiTexCoord2f(normal,
                                    p->data.quad.verts[1].pos[0],
                                    p->data.quad.verts[1].pos[1]);
+                else
+                gl.MultiTexCoord2f(normal,
+                                   p->data.quad.verts[1].tex[0],
+                                   p->data.quad.verts[1].tex[1]);
 
                 gl.Vertex2f(p->data.quad.verts[1].pos[0],
                             p->data.quad.verts[1].pos[1]);
                 // V3
-                if(tex)
+                if(tex && maskID == 0)
                 gl.MultiTexCoord2f(normal,
                                    p->data.quad.verts[2].pos[0],
                                    p->data.quad.verts[2].pos[1]);
+                else
+                gl.MultiTexCoord2f(normal,
+                                   p->data.quad.verts[2].tex[0],
+                                   p->data.quad.verts[2].tex[1]);
 
                 gl.Vertex2f(p->data.quad.verts[2].pos[0],
                             p->data.quad.verts[2].pos[1]);
                 // V4
-                if(tex)
+                if(tex && maskID == 0)
                 gl.MultiTexCoord2f(normal,
                                    p->data.quad.verts[3].pos[0],
                                    p->data.quad.verts[3].pos[1]);
+                else
+                gl.MultiTexCoord2f(normal,
+                                   p->data.quad.verts[3].tex[0],
+                                   p->data.quad.verts[3].tex[1]);
 
                 gl.Vertex2f(p->data.quad.verts[3].pos[0],
                             p->data.quad.verts[3].pos[1]);
@@ -761,10 +777,10 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                                p->data.line.coldata.f4color.rgba[3] * alpha);
                 }
 
-                if(tex)
+                if(tex && maskID == 0)
                     gl.MultiTexCoord2f(normal, p->data.line.a.pos[0], p->data.line.a.pos[1]);
                 gl.Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
-                if(tex)
+                if(tex && maskID == 0)
                     gl.MultiTexCoord2f(normal, p->data.line.b.pos[0], p->data.line.b.pos[1]);
                 gl.Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
 
