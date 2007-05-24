@@ -576,9 +576,9 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
 
     if(texMatrix)
     {
-        float       w, h, angle;
+        float       x, y, w, h, angle;
 
-        AM_GetWindow(mapviewplayer, NULL, NULL, &w, &h);
+        AM_GetWindow(mapviewplayer, &x, &y, &w, &h);
         angle = AM_ViewAngle(mapviewplayer);
 
         gl.SetInteger(DGL_ACTIVE_TEXTURE, maskID);
@@ -587,12 +587,16 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         gl.LoadIdentity();
 
         // Scale from texture to window space.
+        gl.Translatef(x, y, 0);
         gl.Scalef(1.0f / w, 1.0f / h, 1);
 
         // Translate to the view origin, apply map rotation.
         gl.Translatef(w / 2, h / 2, 0);
         gl.Rotatef(angle, 0, 0, 1);
         gl.Translatef(-(w / 2), -(h / 2), 0);
+
+        // Undo the texture to window space translation.
+        gl.Translatef(-x, -y, 0);
     }
 
     // Write commands.

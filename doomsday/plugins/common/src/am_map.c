@@ -51,6 +51,7 @@
 #include "hu_stuff.h"
 #include "am_map.h"
 #include "g_common.h"
+#include "r_common.h"
 #include "p_player.h"
 #include "g_controls.h"
 #include "am_rendlist.h"
@@ -1780,7 +1781,7 @@ void AM_UnloadData(void)
  */
 static void mapWindowTicker(automap_t *map)
 {
-    float       newWidth, newHeight;
+    float       newX, newY, newWidth, newHeight;
     automapwindow_t *win;
 
     if(!map)
@@ -1788,23 +1789,29 @@ static void mapWindowTicker(automap_t *map)
 
     win = &map->window;
 
+    // Get the view window dimensions.
+    newX = newY = 0;
     newWidth = Get(DD_SCREEN_WIDTH);
     newHeight = Get(DD_SCREEN_HEIGHT);
 
-    if(newWidth != win->height || newHeight != win->width) 
+    if(newWidth != win->height || newHeight != win->width)
     {
         if(map->fullScreenMode)
         {
             // In fullscreen mode we always snap straight to the
             // new dimensions.
-            win->x = win->oldX = win->targetX = 0;
-            win->y = win->oldY = win->targetY = 0;
+            win->x = win->oldX = win->targetX = newX;
+            win->y = win->oldY = win->targetY = newY;
             win->width = win->oldWidth = win->targetWidth = newWidth;
             win->height = win->oldHeight = win->targetHeight = newHeight;
         }
         else
         {
             // Snap dimensions if new scale is smaller.
+            if(newX > win->x)
+                win->x = win->oldX = win->targetX = newX;
+            if(newY > win->y)
+                win->y = win->oldY = win->targetY = newY;
             if(newWidth < win->width)
                 win->width = win->oldWidth = win->targetWidth = newWidth;
             if(newHeight < win->height)
@@ -2941,13 +2948,16 @@ static void setupGLStateForMap(void)
                             map->cfg.backgroundRGBA[2],
                             map->alpha * map->cfg.backgroundRGBA[3]);
 
+        // Scale from texture to window space
+        gl.Translatef(win->x, win->y, 0);
+
         // Apply the parallax scrolling, map rotation and counteract the
         // aspect of the quad (sized to map window dimensions).
         gl.Translatef(MTOF(map, map->viewPLX) + .5f,
                       MTOF(map, map->viewPLY) + .5f, 0);
         gl.Rotatef(map->angle, 0, 0, 1);
         gl.Scalef(1, win->height / win->width, 1);
-        gl.Translatef(-.5f, -.5f, 0);
+        gl.Translatef(-(.5f), -(.5f), 0);
 
         gl.Begin(DGL_QUADS);
         gl.TexCoord2f(0, 1);
