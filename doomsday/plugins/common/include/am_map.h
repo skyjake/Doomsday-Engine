@@ -320,6 +320,8 @@ typedef enum vectorgraphname_e {
     NUM_VECTOR_GRAPHS
 } vectorgrapname_t;
 
+int mapviewplayer;
+
 void    AM_Register(void);  // Called during init to register automap cvars and ccmds.
 void    AM_Init(void);      // Called during init to initialize the automap.
 void    AM_Shutdown(void);  // Called on exit to free any allocated memory.
@@ -363,12 +365,16 @@ void    AM_SetCheatLevel(int pnum, int level);
 void    AM_IncMapCheatLevel(int pnum); // Called to increase map cheat level.
 
 boolean AM_IsMapActive(int pnum);
+float   AM_FrameToMap(int pid, float val);
+float   AM_MapToFrame(int pid, float val);
 void    AM_GetWindow(int pid, float *x, float *y, float *w, float *h);
 boolean AM_IsMapWindowInFullScreenMode(int pid);
-float   AM_GetGlobalAlpha(int pid);
+float   AM_GlobalAlpha(int pid);
 void    AM_GetColor(int pid, int objectname, float *r, float *g, float *b);
 void    AM_GetColorAndAlpha(int pid, int objectname, float *r, float *g,
                             float *b, float *a);
+void    AM_GetViewPosition(int pid, float *x, float *y);
+float   AM_ViewAngle(int pid);
 
 void    M_DrawMAP(void);    // Called to render the map menu.
 

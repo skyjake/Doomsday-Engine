@@ -181,7 +181,7 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
 
         AM_GetColorAndAlpha(displayplayer, AMO_BACKGROUND,
                                     NULL, NULL, NULL, &alpha);
-        if(!(alpha < 1) && !(AM_GetGlobalAlpha(displayplayer) < 1))
+        if(!(alpha < 1) && !(AM_GlobalAlpha(displayplayer) < 1))
         {
             if(AM_IsMapWindowInFullScreenMode(displayplayer))
             {

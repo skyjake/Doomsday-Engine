@@ -42,6 +42,7 @@
 #  include "jstrife.h"
 #endif
 
+#include "am_map.h"
 #include "am_rendlist.h"
 
 // MACROS ------------------------------------------------------------------
@@ -88,13 +89,13 @@ typedef struct amprimlist_s {
     amprim_t *head, *tail, *unused;
 } amprimlist_t;
 
-typedef struct amquadlist_s {
+typedef struct amlist_s {
+    amprimlist_t primlist;
     uint        tex;
     boolean     texIsPatchLumpNum;
     blendmode_t blend;
-    amprimlist_t primlist;
-    struct amquadlist_s *next;
-} amquadlist_t;
+    struct amlist_s *next;
+} amlist_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -115,13 +116,15 @@ cvar_t  automapListCVars[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+int numTexUnits;
+boolean envModAdd; // TexEnv: modulate and add is available.
+
+DGLuint amMaskTexture = 0; // Used to mask the map primitives.
+
 //
 // Rendering lists.
 //
-static amquadlist_t *amQuadListHead;
-
-// Lines.
-static amprimlist_t amLineList;
+static amlist_t *amListsHead;
 
 // CODE --------------------------------------------------------------------
 
@@ -142,8 +145,9 @@ void AM_ListRegister(void)
  */
 void AM_ListInit(void)
 {
-    amLineList.type = DGL_LINES;
-    amLineList.head = amLineList.tail = amLineList.unused = NULL;
+    // Does the graphics library support multitexturing?
+    numTexUnits = gl.GetInteger(DGL_MAX_TEXTURE_UNITS);
+    envModAdd = gl.GetInteger(DGL_MODULATE_ADD_COMBINE);
 }
 
 /**
@@ -151,40 +155,55 @@ void AM_ListInit(void)
  */
 void AM_ListShutdown(void)
 {
-    amquadlist_t *list, *listp;
+    amlist_t *list, *listp;
     amprim_t   *n, *np;
-    amprim_t   *nq, *npq;
 
     AM_ClearAllLists(true);
 
     // Empty the free node lists too.
-    // Lines.
-    n = amLineList.unused;
-    while(n)
-    {
-        np = n->next;
-        free(n);
-        n = np;
-    }
-    amLineList.unused = NULL;
-
-    // Quads.
-    list = amQuadListHead;
+    list = amListsHead;
     while(list)
     {
         listp = list->next;
 
-        nq = list->primlist.unused;
-        while(nq)
+        n = list->primlist.unused;
+        while(n)
         {
-            npq = nq->next;
-            free(nq);
-            nq = npq;
+            np = n->next;
+            free(n);
+            n = np;
         }
         list->primlist.unused = NULL;
         free(list);
 
         list = listp;
+    }
+}
+
+void AM_BindTo(int unit, DGLuint texture)
+{
+    gl.SetInteger(DGL_ACTIVE_TEXTURE, unit);
+    gl.Bind(texture);
+}
+
+/**
+ * The first selected unit is active after this call.
+ */
+void AM_SelectTexUnits(int count)
+{
+    int     i;
+
+    // Disable extra units.
+    for(i = numTexUnits - 1; i >= count; i--)
+        gl.Disable(DGL_TEXTURE0 + i);
+
+    // Enable the selected units.
+    for(i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits)
+            continue;
+
+        gl.Enable(DGL_TEXTURE0 + i);
     }
 }
 
@@ -230,43 +249,33 @@ static void AM_LinkPrimitiveToList(amprimlist_t *list, amprim_t *p)
 }
 
 /**
- * Create a new automap line primitive and link it into the appropriate list.
+ * Create a new automap primitive and link it into the appropriate list.
  *
- * @return          Ptr to the new line, automap render primitive. 
- */
-static amrline_t *AM_AllocateLine(void)
-{
-    amprimlist_t *list = &amLineList;
-    amprim_t   *p = AM_NewPrimitive(list);
-
-    AM_LinkPrimitiveToList(list, p);
-    return &(p->data.line);
-}
-
-/**
- * Create a new automap quad primitive and link it into the appropriate list.
- *
+ * @param type      Type of primitive required (DGL_QUADS or DGL_LINES).
  * @param tex       DGLuint texture identifier/patch lump number for quad.
  * @param texIsPatchLumpNum If <code>true</code>, 'tex' is treated as a
  *                  patch lump number.
  * @param blend     The blendmode required for this quad.
  *
- * @return          Ptr to the new quad, automap render primitive. 
+ * @return          Ptr to the new automap render primitive.
  */
-static amrquad_t *AM_AllocateQuad(uint tex, boolean texIsPatchLumpNum,
+static void *AM_AllocatePrimitive(int type, uint tex, boolean texIsPatchLumpNum,
                                   blendmode_t blend)
 {
-    amquadlist_t *list;
+    amlist_t *list;
     amprim_t   *p;
     boolean     found;
 
+    if(!(type == DGL_QUADS || type == DGL_LINES))
+        Con_Error("AM_AllocatePrimitive: Unsupported primitive type %i.", type);
+
     // Find a suitable primitive list (matching texture & blend).
-    list = amQuadListHead;
+    list = amListsHead;
     found = false;
     while(list && !found)
     {
-        if(list->tex == tex &&
-           list->texIsPatchLumpNum == texIsPatchLumpNum &&
+        if(list->primlist.type == type &&
+           list->tex == tex && list->texIsPatchLumpNum == texIsPatchLumpNum &&
            list->blend == blend)
             found = true;
         else
@@ -280,19 +289,22 @@ static amrquad_t *AM_AllocateQuad(uint tex, boolean texIsPatchLumpNum,
         list->tex = tex;
         list->texIsPatchLumpNum = texIsPatchLumpNum;
         list->blend = blend;
-        list->primlist.type = DGL_QUADS;
+        list->primlist.type = type;
         list->primlist.head = list->primlist.tail =
             list->primlist.unused = NULL;
 
         // Link it in.
-        list->next = amQuadListHead;
-        amQuadListHead = list;
+        list->next = amListsHead;
+        amListsHead = list;
     }
 
     p = AM_NewPrimitive(&list->primlist);
     AM_LinkPrimitiveToList(&list->primlist, p);
 
-    return &(p->data.quad);
+    if(type == DGL_LINES)
+        return &(p->data.line);
+    else
+        return &(p->data.quad);
 }
 
 /**
@@ -341,13 +353,9 @@ static void AM_DeleteList(amprimlist_t *list, boolean destroy)
  */
 void AM_ClearAllLists(boolean destroy)
 {
-    amquadlist_t *list;
+    amlist_t *list;
 
-    // Lines.
-    AM_DeleteList(&amLineList, destroy);
-
-    // Quads.
-    list = amQuadListHead;
+    list = amListsHead;
     while(list)
     {
         AM_DeleteList(&list->primlist, destroy);
@@ -366,11 +374,11 @@ void AM_ClearAllLists(boolean destroy)
  * @param alpha     Alpha value of the line (opacity).
  */
 void AM_AddLine(float x, float y, float x2, float y2, int color,
-                float alpha)
+                float alpha, blendmode_t blend)
 {
     amrline_t *l;
 
-    l = AM_AllocateLine();
+    l = AM_AllocatePrimitive(DGL_LINES, 0, false, blend);
 
     l->a.pos[0] = x;
     l->a.pos[1] = y;
@@ -395,11 +403,11 @@ void AM_AddLine(float x, float y, float x2, float y2, int color,
  * @param a         Alpha value of the line (opacity).
  */
 void AM_AddLine4f(float x, float y, float x2, float y2,
-                  float r, float g, float b, float a)
+                  float r, float g, float b, float a, blendmode_t blend)
 {
     amrline_t *l;
 
-    l = AM_AllocateLine();
+    l = AM_AllocatePrimitive(DGL_LINES, 0, false, blend);
 
     l->a.pos[0] = x;
     l->a.pos[1] = y;
@@ -457,7 +465,7 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
     //
     amrquad_t *q;
 
-    q = AM_AllocateQuad(tex, texIsPatchLumpNum, blend);
+    q = AM_AllocatePrimitive(DGL_QUADS, tex, texIsPatchLumpNum, blend);
 
     q->rgba[0] = r;
     q->rgba[1] = g;
@@ -504,24 +512,91 @@ void AM_AddQuad(float x1, float y1, float x2, float y2,
 void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                    float alpha, amprimlist_t *list)
 {
-    amprim_t *p;
+    amprim_t   *p;
+    int         normal = DGL_TEXTURE0, mask = DGL_TEXTURE1;
+    int         maskID = 1;
+    boolean     withMask = false, texMatrix = false;
 
     // Change render state for this list?
-    if(tex)
+
+    // If multitexturing is available, all primitives will be rendered using
+    // a modulation pass with the automap mask texture.
+    if(numTexUnits > 1)
     {
-        if(texIsPatchLumpNum)
-            GL_SetPatch(tex);
+        if(tex)
+        {
+            if(texIsPatchLumpNum)
+            {   // FIXME: Can not modulate these primitives as we don't know
+                // the GL texture name (DGLuint).
+                GL_SetPatch(tex);
+            }
+            else
+            {
+                AM_SelectTexUnits(2);
+                gl.SetInteger(DGL_MODULATE_TEXTURE, 5);
+
+                AM_BindTo(0, tex);
+                AM_BindTo(1, amMaskTexture);
+                withMask = true;
+                texMatrix = true;
+            }
+        }
         else
-            gl.Bind(tex);
+        {
+            AM_SelectTexUnits(1);
+            gl.SetInteger(DGL_MODULATE_TEXTURE, 12);
+            gl.Bind(amMaskTexture);
+
+            tex = amMaskTexture;
+            maskID = 0;
+            withMask = false;
+            texMatrix = true;
+        }
 
         gl.Enable(DGL_TEXTURING);
     }
     else
     {
-        gl.Disable(DGL_TEXTURING);
+        if(tex)
+        {
+            if(texIsPatchLumpNum)
+                GL_SetPatch(tex);
+            else
+                gl.Bind(tex);
+
+            gl.Enable(DGL_TEXTURING);
+        }
+        else
+        {
+            gl.Disable(DGL_TEXTURING);
+        }
     }
 
     GL_BlendMode(blend);
+
+    if(texMatrix)
+    {
+        float       w, h, x, y, angle;
+
+        w = Get(DD_SCREEN_WIDTH);
+        h = Get(DD_SCREEN_HEIGHT);
+        AM_GetViewPosition(mapviewplayer, &x, &y);
+        angle = AM_ViewAngle(mapviewplayer);
+
+        gl.SetInteger(DGL_ACTIVE_TEXTURE, maskID);
+        gl.MatrixMode(DGL_TEXTURE);
+        gl.PushMatrix();
+        gl.LoadIdentity();
+
+        // Scale from texture to screen space.
+        gl.Scalef(1.0f / w, 1.0f / h, 1);
+        gl.Scalef((float) h / w, 1, 1);
+
+        // Translate to the view origin, apply map rotation.
+        gl.Translatef(x + w / 2, y + h / 2, 0);
+        gl.Rotatef(angle, 0, 0, 1);
+        gl.Translatef(-(w / 2), -(h / 2), 0);
+    }
 
     // Write commands.
     p = list->head;
@@ -537,23 +612,47 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                        p->data.quad.rgba[3] * alpha);
 
             // V1
-            gl.TexCoord2f(p->data.quad.verts[0].tex[0],
-                          p->data.quad.verts[0].tex[1]);
+            gl.MultiTexCoord2f(normal,
+                               p->data.quad.verts[0].tex[0],
+                               p->data.quad.verts[0].tex[1]);
+            if(withMask)
+            gl.MultiTexCoord2f(mask,
+                               p->data.quad.verts[0].pos[0],
+                               p->data.quad.verts[0].pos[1]);
+
             gl.Vertex2f(p->data.quad.verts[0].pos[0],
                         p->data.quad.verts[0].pos[1]);
             // V2
-            gl.TexCoord2f(p->data.quad.verts[1].tex[0],
-                          p->data.quad.verts[1].tex[1]);
+            gl.MultiTexCoord2f(normal,
+                               p->data.quad.verts[1].tex[0],
+                               p->data.quad.verts[1].tex[1]);
+            if(withMask)
+            gl.MultiTexCoord2f(mask,
+                               p->data.quad.verts[1].pos[0],
+                               p->data.quad.verts[1].pos[1]);
+
             gl.Vertex2f(p->data.quad.verts[1].pos[0],
                         p->data.quad.verts[1].pos[1]);
             // V3
-            gl.TexCoord2f(p->data.quad.verts[2].tex[0],
-                          p->data.quad.verts[2].tex[1]);
+            gl.MultiTexCoord2f(normal,
+                               p->data.quad.verts[2].tex[0],
+                               p->data.quad.verts[2].tex[1]);
+            if(withMask)
+            gl.MultiTexCoord2f(mask,
+                               p->data.quad.verts[2].pos[0],
+                               p->data.quad.verts[2].pos[1]);
+
             gl.Vertex2f(p->data.quad.verts[2].pos[0],
                         p->data.quad.verts[2].pos[1]);
             // V4
-            gl.TexCoord2f(p->data.quad.verts[3].tex[0],
-                          p->data.quad.verts[3].tex[1]);
+            gl.MultiTexCoord2f(normal,
+                               p->data.quad.verts[3].tex[0],
+                               p->data.quad.verts[3].tex[1]);
+            if(withMask)
+            gl.MultiTexCoord2f(mask,
+                               p->data.quad.verts[3].pos[0],
+                               p->data.quad.verts[3].pos[1]);
+
             gl.Vertex2f(p->data.quad.verts[3].pos[0],
                         p->data.quad.verts[3].pos[1]);
 
@@ -577,8 +676,29 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
                            p->data.line.coldata.f4color.rgba[3] * alpha);
             }
 
-            gl.Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
-            gl.Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
+            if(withMask)
+            {
+                if(tex)
+                    gl.MultiTexCoord2f(normal, 0, 0);
+                gl.MultiTexCoord2f(mask, p->data.line.a.pos[0],
+                                   p->data.line.a.pos[1]);
+                gl.Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
+
+                if(tex)
+                    gl.MultiTexCoord2f(normal, 1, 1);
+                gl.MultiTexCoord2f(mask, p->data.line.b.pos[0],
+                                   p->data.line.b.pos[1]);
+                gl.Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
+            }
+            else
+            {
+                if(tex)
+                    gl.MultiTexCoord2f(normal, p->data.line.a.pos[0], p->data.line.a.pos[1]);
+                gl.Vertex2f(p->data.line.a.pos[0], p->data.line.a.pos[1]);
+                if(tex)
+                    gl.MultiTexCoord2f(normal, p->data.line.b.pos[0], p->data.line.b.pos[1]);
+                gl.Vertex2f(p->data.line.b.pos[0], p->data.line.b.pos[1]);
+            }
 
             p = p->next;
         }
@@ -590,6 +710,14 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
     gl.End();
 
     // Restore previous state.
+    if(texMatrix)
+    {
+        gl.MatrixMode(DGL_TEXTURE);
+        gl.PopMatrix();
+    }
+
+    AM_SelectTexUnits(1);
+    gl.SetInteger(DGL_MODULATE_TEXTURE, 1);
     if(!tex)
         gl.Enable(DGL_TEXTURING);
 
@@ -601,10 +729,9 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
  */
 void AM_RenderAllLists(float alpha)
 {
-    amquadlist_t *list;
+    amlist_t *list;
 
-    // Quads.
-    list = amQuadListHead;
+    list = amListsHead;
     while(list)
     {
         AM_RenderList(list->tex, list->texIsPatchLumpNum, list->blend,
@@ -612,7 +739,4 @@ void AM_RenderAllLists(float alpha)
                       &list->primlist);
         list = list->next;
     }
-
-    // Lines.
-    AM_RenderList(0, 0, false, alpha, &amLineList);
 }

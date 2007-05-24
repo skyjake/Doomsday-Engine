@@ -364,6 +364,10 @@ static void rotate2D(float *x, float *y, angle_t a);
 extern float menu_alpha;
 extern boolean viewactive;
 
+extern int numTexUnits;
+extern boolean envModAdd;
+extern DGLuint amMaskTexture;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 static vectorgrap_t *vectorGraphs[NUM_VECTOR_GRAPHS];
@@ -414,7 +418,7 @@ ccmd_t  mapCCmds[] = {
 
 static automap_t automaps[MAXPLAYERS];
 
-static int mapviewplayer;
+int mapviewplayer;
 
 #if __JDOOM__
 static int maplumpnum = 0; // if 0 no background image will be drawn
@@ -901,6 +905,34 @@ void AM_Stop(int pnum)
     GL_Update(DDUF_BORDER);
 }
 
+/**
+ * Translates from map to automap window coordinates.
+ */
+float AM_MapToFrame(int pid, float val)
+{
+    automap_t *map;
+
+    map = mapForPlayerId(pid);
+    if(!map)
+        return 0;
+
+    return MTOF(map, val);
+}
+
+/**
+ * Translates from automap window to map coordinates.
+ */
+float AM_FrameToMap(int pid, float val)
+{
+    automap_t *map;
+
+    map = mapForPlayerId(pid);
+    if(!map)
+        return 0;
+
+    return FTOM(map, val);
+}
+
 static void setWindowTarget(automap_t *map, int x, int y, int w, int h)
 {
     automapwindow_t *win;
@@ -1009,6 +1041,30 @@ void AM_SetViewTarget(int pid, float x, float y)
     if(!map)
         return;
     setViewTarget(map, x, y);
+}
+
+void AM_GetViewPosition(int pid, float *x, float *y)
+{
+    automap_t *map;
+
+    map = mapForPlayerId(pid);
+    if(!map)
+        return;
+
+    if(x) *x = map->viewX;
+    if(y) *y = map->viewY;
+}
+
+/**
+ * @return              Current alpha level of the automap.
+ */
+float AM_ViewAngle(int pid)
+{
+    automap_t *map = mapForPlayerId(pid);
+    if(!map)
+        return 0;
+
+    return map->angle;
 }
 
 static void setViewScaleTarget(automap_t *map, float scale)
@@ -1150,7 +1206,7 @@ void AM_SetGlobalAlphaTarget(int pid, float alpha)
 /**
  * @return              Current alpha level of the automap.
  */
-float AM_GetGlobalAlpha(int pid)
+float AM_GlobalAlpha(int pid)
 {
     automap_t *map = mapForPlayerId(pid);
     if(!map)
@@ -1689,8 +1745,19 @@ void AM_LoadData(void)
 #endif
 
     if(maplumpnum != 0)
-    {
         maplumpnum = W_GetNumForName("AUTOPAGE");
+
+    if(numTexUnits > 1)
+    {   // Great, we can replicate the map fade out effect using multitexture,
+        // load the mask texture.
+        if(!amMaskTexture && !Get(DD_NOVIDEO))
+        {
+            amMaskTexture =
+                GL_NewTextureWithParams2(DGL_LUMINANCE, 256, 256,
+                                         W_CacheLumpName("mapmask", PU_CACHE),
+                                         0, DGL_NEAREST, DGL_LINEAR,
+                                         DGL_REPEAT, DGL_REPEAT);
+        }        
     }
 }
 
@@ -1700,7 +1767,12 @@ void AM_LoadData(void)
  */
 void AM_UnloadData(void)
 {
-    // Nothing to do.
+    if(Get(DD_NOVIDEO))
+        return;
+
+    if(amMaskTexture)
+        gl.DeleteTextures(1, &amMaskTexture);
+    amMaskTexture = 0;
 }
 
 /**
@@ -2074,7 +2146,7 @@ static boolean isVectorVisible(automap_t *map,
  * Draws the given line. Basic cliping is done.
  */
 static void rendLine(float x1, float y1, float x2, float y2, int color,
-                     float alpha)
+                     float alpha, blendmode_t blendmode)
 {
     automap_t  *map = &automaps[mapviewplayer];
 
@@ -2083,7 +2155,7 @@ static void rendLine(float x1, float y1, float x2, float y2, int color,
 
     AM_AddLine(CXMTOF(map, x1), CYMTOF(map, y1),
                CXMTOF(map, x2), CYMTOF(map, y2),
-               color, alpha);
+               color, alpha, blendmode);
 }
 
 /**
@@ -2229,7 +2301,7 @@ static void rendLine2(float x1, float y1, float x2, float y2,
 
     if(!glowOnly)
         AM_AddLine4f(v1[VX], v1[VY], v2[VX], v2[VY],
-                     r, g, b, a);
+                     r, g, b, a, blend);
 
     if(drawNormal)
     {
@@ -2240,7 +2312,7 @@ static void rendLine2(float x1, float y1, float x2, float y2,
         AM_AddLine4f(center[VX], center[VY],
                      center[VX] - normal[VX] * 8,
                      center[VY] - normal[VY] * 8,
-                     r, g, b, a);
+                     r, g, b, a, blend);
     }
 }
 
@@ -2500,9 +2572,9 @@ static void rotate2D(float *x, float *y, angle_t a)
 /**
  * Draws a line character (eg the player arrow)
  */
-static void addLineCharacter(vectorgrap_t *vg, float scale,
-                             angle_t angle, int color, float alpha,
-                             float x, float y)
+static void addLineCharacter(vectorgrap_t *vg, float x, float y, angle_t angle,
+                             float scale, int color, float alpha,
+                             blendmode_t blendmode)
 {
     uint        i;
     float       v1[2], v2[2];
@@ -2531,7 +2603,7 @@ static void addLineCharacter(vectorgrap_t *vg, float scale,
         v2[VX] += x;
         v2[VY] += y;
 
-        rendLine(v1[VX], v1[VY], v2[VX], v2[VY], color, alpha);
+        rendLine(v1[VX], v1[VY], v2[VX], v2[VY], color, alpha, blendmode);
     }
 }
 
@@ -2616,8 +2688,8 @@ static void renderPlayers(void)
             continue;
 
         /* $unifiedangles */
-        addLineCharacter(vg, size, p->plr->mo->angle, color, alpha,
-                         v[VX], v[VY]);
+        addLineCharacter(vg, v[VX], v[VY], p->plr->mo->angle, size,
+                         color, alpha, BM_NORMAL);
     }
 }
 
@@ -2643,9 +2715,8 @@ static void renderThings(int color, int colorrange)
             if(!isPointVisible(map, v[VX], v[VY]))
                 continue;
 
-            addLineCharacter(vg, size, iter->angle,
-                             color, cfg.automapLineAlpha,
-                             v[VX], v[VY]);
+            addLineCharacter(vg, v[VX], v[VY], iter->angle, size,
+                             color, cfg.automapLineAlpha, BM_NORMAL);
         }
     }
 }
@@ -2698,9 +2769,8 @@ static void renderKeys(void)
         if(!isPointVisible(map, v[VX], v[VY]))
             continue;
 
-        addLineCharacter(getVectorGraphic(VG_KEYSQUARE), size, 0,
-                         keyColor, cfg.automapLineAlpha,
-                         v[VX], v[VY]);
+        addLineCharacter(getVectorGraphic(VG_KEYSQUARE), v[VX], v[VY], 0, size,
+                         keyColor, cfg.automapLineAlpha, BM_NORMAL);
     }
 }
 
@@ -3084,6 +3154,7 @@ void AM_Drawer(int viewplayer)
     }
     AM_RenderAllLists(map->alpha);
 
+    gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
 
     drawLevelName();
