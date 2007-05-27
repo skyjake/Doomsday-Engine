@@ -92,9 +92,14 @@ FILE_PATTERNS          = *.c \
                          *.H \
                          *.M
 RECURSIVE              = YES
-EXCLUDE                = 
+EXCLUDE                =
 EXCLUDE_SYMLINKS       = NO
-EXCLUDE_PATTERNS       = 
+EXCLUDE_PATTERNS       = */external/libcurl/* \
+                         */external/libpng/* \
+                         */external/zlib/* \
+                         */doxygen/* \
+                         */packs/* \
+                         */build/*
 EXAMPLE_PATH           = 
 EXAMPLE_PATTERNS       = *
 EXAMPLE_RECURSIVE      = NO
