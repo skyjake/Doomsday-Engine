@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * maploader.c: Doomsday Plugin for Loading Maps
  *
  * This plugin has been built on glBSP 2.20, which is hosted on
