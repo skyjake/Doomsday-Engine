@@ -20,9 +20,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * \bug Not 64bit clean: In function 'SV_ReadXGLine': cast to pointer from integer of different size
  */
 
-/*
+/**
  * p_xgsave.c: Extended Generalized Line Types.
  *
  * Implements: Saving and loading routines for the XG data.
@@ -78,10 +80,11 @@ void SV_WriteXGLine(line_t *li)
     // Version byte.
     SV_WriteByte(1);
 
-    // Remember, savegames are applied on top of an initialized level.
-    // No strings are saved, because they are all const strings
-    // defined either in the level's DDXGDATA lump or a DED file.
-    // During loading, XL_SetLineType is called with the id in the savegame.
+    /** Remember, savegames are applied on top of an initialized level.
+     * No strings are saved, because they are all const strings
+     * defined either in the level's DDXGDATA lump or a DED file.
+     * During loading, XL_SetLineType is called with the id in the savegame.
+     */
 
     SV_WriteLong(info->id);
     SV_WriteLong(info->act_count);
