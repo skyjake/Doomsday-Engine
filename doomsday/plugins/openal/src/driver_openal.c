@@ -20,6 +20,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, 
  * Boston, MA  02110-1301  USA
+ *
+ * \bug Not 64bit clean: In function 'DS_CreateBuffer': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_DestroyBuffer': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_Load': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_Play': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_Stop': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_Refresh': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_Set': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'DS_Setv': cast to pointer from integer of different size
  */
 
 /*

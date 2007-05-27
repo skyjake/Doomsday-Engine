@@ -22,6 +22,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * \bug Not 64bit clean: In function 'SV_ReadMobj': cast to pointer from integer of different size
+ * \bug Not 64bit clean: In function 'P_v19_UnArchivePlayers': cast from pointer to integer of different size
+ * \bug Not 64bit clean: In function 'P_v19_UnArchiveThinkers': cast from pointer to integer of different size
  */
 
 // HEADER FILES ------------------------------------------------------------
