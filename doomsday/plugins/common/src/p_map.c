@@ -1,5 +1,5 @@
 /**
- *\section Copyright and License Summary
+ *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>

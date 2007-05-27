@@ -1,5 +1,5 @@
 /**\file
-*\section Copyright and License Summary
+*\section License
 * License: GPL
 *
 *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>

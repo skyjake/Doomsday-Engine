@@ -1,5 +1,5 @@
 /**\file
- *\section Copyright and License Summary
+ *\section License
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *

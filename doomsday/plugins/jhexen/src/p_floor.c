@@ -1,5 +1,5 @@
 /**\file
- *\section Copyright and License Summary
+ *\section License
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *

@@ -1,5 +1,5 @@
 /**\file
- *\section Copyright and License Summary
+ *\section License
  * License: LGPL
  *
  *\author Copyright © 2006 Jaakko Keränen <jaakko.keranen@iki.fi>
