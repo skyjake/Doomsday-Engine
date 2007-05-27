@@ -39,6 +39,8 @@
  * You should have received a copy of the HERETIC / HEXEN source code
  * license along with this program (Ravenlic.txt); if not:
  * http://www.ravensoft.com/
+ *
+ * \bug Not 64bit clean: In function 'P_LoadACScripts': cast from pointer to integer of different size, cast to pointer from integer of different size
  */
 
 // HEADER FILES ------------------------------------------------------------
