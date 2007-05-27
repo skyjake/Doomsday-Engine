@@ -21,9 +21,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * \bug Not 64bit clean: In function 'DD_GetInteger': cast from pointer to integer of different size
+ * \bug Not 64bit clean: In function 'DD_SetInteger': cast to pointer from integer of different size
  */
 
-/*
+/**
  * dd_main.c: Engine Core
  */
 
@@ -320,10 +323,12 @@ void DD_AutoLoad(void)
 {
     int p;
 
-    // Load files from the Auto directory.  (If already loaded, won't
-    // be loaded again.)  This is done again because virtual files may
-    // now exist in the Auto directory.  Repeated until no new files
-    // found.
+    /**
+     * Load files from the Auto directory.  (If already loaded, won't
+     * be loaded again.)  This is done again because virtual files may
+     * now exist in the Auto directory.  Repeated until no new files
+     * found.
+     */
     while((p = DD_AddAutoData(true)) > 0)
     {
         VERBOSE(Con_Message("Autoload round completed with %i new files.\n",
@@ -373,9 +378,10 @@ void DD_Main(void)
     Dir_GetDir(&ddRuntimeDir);
 
 #ifdef UNIX
-    // The base path is always the same and depends on the build
-    // configuration.  Usually this is something like
-    // "/usr/share/deng/".
+    /** The base path is always the same and depends on the build
+     * configuration.  Usually this is something like
+     * "/usr/share/deng/".
+     */
 #   ifdef MACOSX
     strcpy(ddBasePath, "./");
 #   else
