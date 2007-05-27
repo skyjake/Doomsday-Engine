@@ -20,9 +20,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * \bug Not 64bit clean: In function 'G_RestoreState': cast from pointer to integer of different size
  */
 
-/*
+/**
  * Routines to call when updating the state of the engine
  * (when loading/unloading WADs and definitions).
  */
@@ -76,7 +78,7 @@ void    M_UnloadData(void);
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Called before the engine re-inits the definitions. After that all the
  * state, info, etc. pointers will be obsolete.
  */
@@ -121,7 +123,7 @@ void G_RestoreState(void)
     HU_UpdatePsprites();
 }
 
-/*
+/**
  * Handles engine updates and renderer restarts.
  */
 void G_UpdateState(int step)
