@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * gl_hq2x.c: High-Quality 2x Graphics Resizing
  *
  * Based on the routine by Maxim Stepin <maxst@hiend3d.com>
@@ -200,7 +200,7 @@ static void Interp10(unsigned char *pc, uint c1, uint c2, uint c3)
 	LerpColor(pc, c1, c2, c3, 14, 1, 1);
 }
 
-/*
+/**
  * Initialize the lookup tables used in the hq2x algorithm.
  */
 void GL_InitSmartFilter(void)
@@ -235,7 +235,7 @@ static int Diff(unsigned int dw1, unsigned int dw2)
 			(abs((YUV1 & Vmask) - (YUV2 & Vmask)) > trV));
 }
 
-/*
+/**
  * Operates on 32-bit pixels.
  */
 void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,

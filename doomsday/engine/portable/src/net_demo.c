@@ -20,9 +20,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * \bug - Demo playback is broken -> http://sourceforge.net/tracker/index.php?func=detail&aid=1693198&group_id=74815&atid=542099
  */
 
-/*
+/**
  * net_demo.c: Demos
  *
  * Handling of demo recording and playback.
@@ -127,7 +129,7 @@ void Demo_Init(void)
     M_CheckPath(demoPath);
 }
 
-/*
+/**
  * Open a demo file and begin recording.
  * Returns false if the recording can't be begun.
  */
@@ -192,7 +194,7 @@ void Demo_PauseRecording(int playerNum)
     cl->recordPaused = true;
 }
 
-/*
+/**
  * Resumes a paused recording.
  */
 void Demo_ResumeRecording(int playerNum)
@@ -210,7 +212,7 @@ void Demo_ResumeRecording(int playerNum)
     writeInfo[playerNum].begintime += DEMOTIC - writeInfo[playerNum].pausetime;
 }
 
-/*
+/**
  * Stop recording a demo.
  */
 void Demo_StopRecording(int playerNum)
@@ -418,7 +420,7 @@ boolean Demo_ReadPacket(void)
     return true;
 }
 
-/*
+/**
  * Writes a view angle and coords packet. Doesn't send the packet outside.
  */
 void Demo_WriteLocalCamera(int plnum)
@@ -461,7 +463,7 @@ void Demo_WriteLocalCamera(int plnum)
     Net_SendBuffer(plnum, SPF_DONT_SEND);
 }
 
-/*
+/**
  * Read a view angle and coords packet. NOTE: The Z coordinate of the
  * camera is the real eye Z coordinate, not the player mobj's Z coord.
  */
@@ -553,7 +555,7 @@ void Demo_ReadLocalCamera(void)
     }
 }
 
-/*
+/**
  * Called once per tic.
  */
 void Demo_Ticker(timespan_t time)
@@ -673,7 +675,7 @@ D_CMD(StopDemo)
     return true;
 }
 
-/*
+/**
  * Make a demo lump.
  */
 D_CMD(DemoLump)

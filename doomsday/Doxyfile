@@ -99,7 +99,8 @@ EXCLUDE_PATTERNS       = */external/libcurl/* \
                          */external/zlib/* \
                          */doxygen/* \
                          */packs/* \
-                         */build/*
+                         */build/* \
+			 */.svn/*
 EXAMPLE_PATH           = 
 EXAMPLE_PATTERNS       = *
 EXAMPLE_RECURSIVE      = NO
