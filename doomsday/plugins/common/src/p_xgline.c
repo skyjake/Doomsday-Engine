@@ -1453,7 +1453,7 @@ int C_DECL XLTrav_Music(line_t *line, boolean dummy, void *context, void *contex
         }
     }
 
-    // FIXME: Add code to validate song id here
+    //// \fixme Add code to validate song id here
 
     if(song)
     {
@@ -1798,8 +1798,8 @@ boolean XL_SwitchSwap(side_t* side, int section)
     strncpy(buf, name, 8);
     buf[8] = 0;
 
-    // Does this texture have another switch texture?
-    // FIXME: Use the switch texture list in p_switches for this.
+    //// \fixmeDoes this texture have another switch texture?
+    //// Use the switch texture list in p_switches for this.
 #ifdef __JHERETIC__
     //// \kludge A kludge for Heretic.  Since it has some switch texture names
     //// that don't follow the SW1/SW2 pattern, we'll do some special
@@ -2088,7 +2088,7 @@ void XL_ActivateLine(boolean activating, linetype_t * info, line_t *line,
 
         // Change the texture of the line if asked to.
         if(info->wallsection && info->act_tex)
-            XL_ChangeTexture(line, sidenum, info->wallsection, info->act_tex, BM_NORMAL, rgba, 0); //FIXME
+            XL_ChangeTexture(line, sidenum, info->wallsection, info->act_tex, BM_NORMAL, rgba, 0); //// \fixme XL_ChangeTexture(line, sidenum, info->wallsection, info->act_tex, BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to
         if(info->act_linetype)
@@ -2105,7 +2105,7 @@ void XL_ActivateLine(boolean activating, linetype_t * info, line_t *line,
         // Change the texture of the line if asked to.
         if(info->wallsection && info->deact_tex)
             XL_ChangeTexture(line, sidenum, info->wallsection,
-                             info->deact_tex, BM_NORMAL, rgba, 0); //FIXME
+                             info->deact_tex, BM_NORMAL, rgba, 0); //// \fixme info->deact_tex, BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to
         if(info->deact_linetype)
@@ -2134,7 +2134,7 @@ boolean XL_CheckKeys(mobj_t *mo, int flags2)
     boolean *keys = act->keys;
     int     badsound = sfx_plroof;
 #elif defined __JSTRIFE__
-//FIXME!!!
+//// \fixme FIXME!!!
     int     num = 3;
     char   *keystr[] = { "YELLOW KEY", "GREEN KEY", "BLUE KEY" };
     int    *keys = (int *) act->keys;
@@ -2156,7 +2156,7 @@ boolean XL_CheckKeys(mobj_t *mo, int flags2)
     return true;
 }
 
-/*
+/**
  * Decides if the event leads to (de)activation.
  * Returns true if the event is processed.
  * Line must be extended.
