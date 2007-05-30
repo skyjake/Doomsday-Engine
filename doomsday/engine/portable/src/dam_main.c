@@ -1412,7 +1412,7 @@ void *DAM_IndexToPtr(gamemap_t* map, int objectType, uint id)
 }
 
 /**
- * This is a kludge. Need to revise the way object indices are resolved in DAM.
+ * \kludge This is a kludge. Need to revise the way object indices are resolved in DAM.
  */
 long DAM_VertexIdx(long idx)
 {
@@ -1529,8 +1529,8 @@ static boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
                 uint        readNumProps = 0;
                 uint        startIndex;
 
-                // KLUDGE: firstGLvertex. We should determine the start index for this
-                // block of data depending on the map format.
+                //// \kludge firstGLvertex. We should determine the start index for this
+                //// block of data depending on the map format.
                 if(mapLump->lumpClass == LCM_VERTEXES)
                     firstGLvertex = mapLump->elements;
 

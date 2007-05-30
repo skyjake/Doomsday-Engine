@@ -1091,7 +1091,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_PLANE_TEXTURE:
             SetValue(DMT_MATERIAL_TEXTURE, &p->PS_texture, args, 0);
-            p->PS_isflat = true; // Kludge
+            p->PS_isflat = true; //// \kludge
             break;
         case DMU_PLANE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->surface.offx, args, 0);
@@ -1230,7 +1230,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_TOP_TEXTURE:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SW_toptexture, args, 0);
-            p->SW_topisflat = false; // Kludge
+            p->SW_topisflat = false; //// \kludge
            /* if(p->SW_toptexture)
                 p->flags &= ~SDF_MIDTEXUPPER;*/
             break;
@@ -1267,7 +1267,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_MIDDLE_TEXTURE:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SW_middletexture, args, 0);
-            p->SW_middleisflat = false; // Kludge
+            p->SW_middleisflat = false; //// \kludge
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->SW_middleoffx, args, 0);
@@ -1295,7 +1295,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_BOTTOM_TEXTURE:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SW_bottomtexture, args, 0);
-            p->SW_bottomisflat = false; // Kludge
+            p->SW_bottomisflat = false; //// \kludge
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->SW_bottomoffx, args, 0);
