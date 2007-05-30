@@ -1290,7 +1290,7 @@ static boolean P_TryMove2(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff)
 #endif
 
 #if __DOOM64TC__
-        // DJS - FIXME! Mother demon fire attack.
+        //// \fixme DJS - FIXME! Mother demon fire attack.
         if(!(thing->flags & MF_TELEPORT) /*&& thing->type != MT_SPAWNFIRE*/
             && tmfloorz - FIX2FLT(thing->pos[VZ]) > 24)
         { // Too big a step up
@@ -1432,9 +1432,9 @@ boolean P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, boolean dropoff, boolean 
 #endif
 }
 
-/*
- * FIXME: DJS - This routine has gotten way too big, split if(in->isaline)
- *        to a seperate routine?
+/**
+ * \fixme DJS - This routine has gotten way too big, split if(in->isaline)
+ * to a seperate routine?
  */
 static boolean PTR_ShootTraverse(intercept_t * in)
 {
@@ -2280,11 +2280,11 @@ static boolean PTR_SlideTraverse(intercept_t * in)
     return false;               // stop
 }
 
-/*
- * The momx / momy move is bad, so try to slide along a wall.
+/**
+ * \fixme The momx / momy move is bad, so try to slide along a wall.
  * Find the first line hit, move flush to it, and slide along it
  *
- * FIXME: This is a kludgy mess.
+ * This is a kludgy mess.
  *
  * @param mo            The mobj to attempt the slide move.
  */
@@ -2483,8 +2483,8 @@ static boolean PIT_ChangeSector(mobj_t *thing, void *data)
         }
 #else
 # if __DOOM64TC__
-        // kaiser - the def file is too fucked up..
-        // DJS - FIXME!
+        //// \fixme kaiser - the def file is too fucked up..
+        //// DJS - FIXME!
         P_SetMobjState(thing, S_HEADCANDLES + 3);
         S_StartSound(sfx_slop, thing);
 # elif __JDOOM__

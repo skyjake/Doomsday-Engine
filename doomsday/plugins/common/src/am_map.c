@@ -608,8 +608,8 @@ void AM_Init(void)
     {
         automap_t *map = &automaps[i];
 
-        // Initialize.
-        // FIXME: Put these values into an array (or read from a lump?).
+        //// Initialize.
+        //// \fixme Put these values into an array (or read from a lump?).
         map->followPlayer = i;
         map->oldViewScale = 1;
         map->window.oldX = map->window.x = 0;
