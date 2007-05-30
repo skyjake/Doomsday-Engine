@@ -229,7 +229,7 @@ void P_ArtiTele(player_t *player)
     }
     else
     {
-        // FIXME?: DJS - this doesn't seem right...
+        //// \fixme DJS - this doesn't seem right...
         destX = playerstarts[0].x << FRACBITS;
         destY = playerstarts[0].y << FRACBITS;
         destAngle = ANG45 * (playerstarts[0].angle / 45);

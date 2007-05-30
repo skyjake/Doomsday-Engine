@@ -41,7 +41,7 @@
  * http://www.ravensoft.com/
  */
 
-/*
+/**
  * Weapon sprite animation, weapon objects.
  * Action functions for weapons.
  */
@@ -643,7 +643,7 @@ static int MaceSpotCount;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Return the default for a value (retrieved from Doomsday)
  */
 int GetDefInt(char *def, int *returned_value)
@@ -674,7 +674,7 @@ void GetDefState(char *def, int *val)
         *val = 0;
 }
 
-/*
+/**
  *Initialize weapon info, maxammo and clipammo.
  */
 void P_InitWeaponInfo()
@@ -704,7 +704,7 @@ void P_OpenWeapons(void)
 
 void P_AddMaceSpot(thing_t * mthing)
 {
-    // FIXME: Remove fixed limits
+    //// \fixme Remove fixed limits
     if(MaceSpotCount == MAX_MACE_SPOTS)
     {
         Con_Error("Too many mace spots.");
@@ -714,7 +714,7 @@ void P_AddMaceSpot(thing_t * mthing)
     MaceSpotCount++;
 }
 
-/*
+/**
  * Chooses the next spot to place the mace.
  */
 void P_RepositionMace(mobj_t *mo)
@@ -735,7 +735,7 @@ void P_RepositionMace(mobj_t *mo)
     P_SetThingPosition(mo);
 }
 
-/*
+/**
  * Called at level load after things are loaded.
  */
 void P_CloseWeapons(void)
@@ -806,7 +806,7 @@ void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
     P_SetPsprite(player, ps_weapon, weaponinfo[weapon][player->class].mode[0].upstate);
 }
 
-/*
+/**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
 void P_BringUpWeapon(player_t *player)
@@ -905,7 +905,7 @@ void P_FireWeapon(player_t *player)
     player->plr->psprites[0].state = DDPSP_FIRE;
 }
 
-/*
+/**
  * The player died, so put the weapon away.
  */
 void P_DropWeapon(player_t *player)
@@ -922,7 +922,7 @@ void P_DropWeapon(player_t *player)
     }
 }
 
-/*
+/**
  * The player can fire the weapon or change to another weapon at this time.
  */
 void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
@@ -1140,7 +1140,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t * psp)
     P_SetPsprite(player, ps_weapon, newstate);
 }
 
-/*
+/**
  * Sets a slope so a near miss is at aproximately the height of the
  * intended target.
  */
@@ -1671,7 +1671,7 @@ void C_DECL A_FireSkullRodPL1(player_t *player, pspdef_t * psp)
     }
 }
 
-/*
+/**
  * The special2 field holds the player number that shot the rain missile.
  * The special1 field is used as a counter for the sound looping.
  */
@@ -1861,7 +1861,7 @@ void C_DECL A_InitPhoenixPL2(player_t *player, pspdef_t * psp)
     player->flamecount = FLAME_THROWER_TICS;
 }
 
-/*
+/**
  * Flame thrower effect.
  */
 void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t * psp)
@@ -2018,7 +2018,7 @@ void C_DECL A_Light2(player_t *player, pspdef_t * psp)
     player->plr->extralight = 2;
 }
 
-/*
+/**
  * Called at start of level for each player
  */
 void P_SetupPsprites(player_t *player)
@@ -2035,7 +2035,7 @@ void P_SetupPsprites(player_t *player)
     P_BringUpWeapon(player);
 }
 
-/*
+/**
  * Called every tic by player thinking routine
  */
 void P_MovePsprites(player_t *player)

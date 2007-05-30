@@ -695,7 +695,7 @@ void P_MobjThinker(mobj_t *mobj)
     {
         P_XYMovement(mobj);
 
-        // FIXME: decent NOP/NULL/Nil function pointer please.
+        //// \fixme decent NOP/NULL/Nil function pointer please.
         if(mobj->thinker.function == NOPFUNC)
             return;             // mobj was removed
     }
