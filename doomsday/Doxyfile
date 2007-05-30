@@ -41,6 +41,7 @@ BUILTIN_STL_SUPPORT    = NO
 DISTRIBUTE_GROUP_DOC   = NO
 SUBGROUPING            = YES
 ALIASES += "kludge=\xrefitem kludges \"Kludges\" \"Kludge List\"" 
+ALIASES += "fixme=\xrefitem fixme \"FIXME\" \"FIXME List\"" 
 #---------------------------------------------------------------------------
 # Build related configuration options
 #---------------------------------------------------------------------------
