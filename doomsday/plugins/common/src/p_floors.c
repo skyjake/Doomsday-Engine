@@ -576,7 +576,7 @@ int EV_DoFloor(line_t *line, floor_e floortype)
             floor->speed = FLOORSPEED * 16;
             floor->floordestheight = P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT);
 
-            // KLUDGE: fake the engine into accepting this special
+            //// \kludge fake the engine into accepting this special
             P_XSector(sec)->special = bitmipR;
             // < KLUDGE
             break;
@@ -886,17 +886,19 @@ int EV_DoFloorAndCeiling(line_t *line, byte *args, boolean raise)
 
     P_IterListResetIterator(list, true);
 
-    // Original Hexen KLUDGE:
-    // Due to the fact that sectors can only have one special thinker
-    // linked at a time, this routine manually removes the link before
-    // then creating a second thinker for the sector.
-    // In order to commonize this we should maintain seperate links in
-    // xsector_t for each type of special (not thinker type) i.e:
-    //
-    //   floor, ceiling, lightlevel
-    //
-    // Note: floor and ceiling are capable of moving at different speeds
-    // and with different target heights, we must remain compatible.
+    /** \kludge Original Hexen KLUDGE:
+    * Due to the fact that sectors can only have one special thinker
+    * linked at a time, this routine manually removes the link before
+    * then creating a second thinker for the sector.
+    * In order to commonize this we should maintain seperate links in
+    * xsector_t for each type of special (not thinker type) i.e:
+    *
+    *   floor, ceiling, lightlevel
+    *
+    * Note: floor and ceiling are capable of moving at different speeds
+    * and with different target heights, we must remain compatible.
+    */
+    
     if(raise)
     {
         floor = EV_DoFloor(line, args, FLEV_RAISEFLOORBYVALUE);

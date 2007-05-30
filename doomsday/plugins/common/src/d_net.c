@@ -233,8 +233,8 @@ int D_NetDisconnect(int before)
 
 long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 {
-    // Kludge: To preserve the ABI, these are done through player events.
-    // (They are, sort of.)
+    //// \kludge o preserve the ABI, these are done through player events.
+    //// (They are, sort of.)
     if(peType == DDPE_WRITE_COMMANDS)
     {
         // It's time to send ticcmds to the server.

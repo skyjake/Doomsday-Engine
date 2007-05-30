@@ -811,8 +811,8 @@ void NetCl_Paused(boolean setPause)
     DD_SetInteger(DD_CLIENT_PAUSED, paused);
 }
 
-/*
- * Write a DDPT_COMMANDS (32) packet. Returns a pointer to a static
+/**
+ * \kludge Write a DDPT_COMMANDS (32) packet. Returns a pointer to a static
  * buffer that contains the data (kludge to work around the parameter
  * passing from the engine).
  */

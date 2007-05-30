@@ -504,9 +504,9 @@ boolean P_CheckAmmo(player_t *player)
     int     count;
     boolean good;
 
-    // KLUDGE: Work around the multiple firing modes problems.
-    // We need to split the weapon firing routines and implement them as
-    // new fire modes.
+    //// \kludge Work around the multiple firing modes problems.
+    //// We need to split the weapon firing routines and implement them as
+    //// new fire modes.
     if(player->class == PCLASS_FIGHTER && player->readyweapon != WT_FOURTH)
         return true;
     // < KLUDGE

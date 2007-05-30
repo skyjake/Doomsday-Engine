@@ -1948,7 +1948,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
         respawnmonsters = cfg.respawnMonstersNightmare;
 #endif
 
-// KLUDGE:
+//// \kludge Doom/Heretic Fast Monters/Missiles
 #if __JDOOM__
     // Fast monsters?
     if(fastparm || (skill == SM_NIGHTMARE && gameskill != SM_NIGHTMARE))

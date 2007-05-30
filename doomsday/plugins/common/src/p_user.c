@@ -1581,8 +1581,8 @@ void P_PlayerThinkPowers(player_t *player)
             P_SetMessage(player, UNSEEOFF, false);
     }
 
-    // Hacks and kludges illustrated.
-    // DJS - There MUST be a better way to do this...
+    //// \kludge Hacks and kludges illustrated.
+    //// DJS - There MUST be a better way to do this...
     if(player->helltime)
     {
         int i;

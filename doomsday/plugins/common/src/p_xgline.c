@@ -1801,9 +1801,9 @@ boolean XL_SwitchSwap(side_t* side, int section)
     // Does this texture have another switch texture?
     // FIXME: Use the switch texture list in p_switches for this.
 #ifdef __JHERETIC__
-    // A kludge for Heretic.  Since it has some switch texture names
-    // that don't follow the SW1/SW2 pattern, we'll do some special
-    // checking.
+    //// \kludge A kludge for Heretic.  Since it has some switch texture names
+    //// that don't follow the SW1/SW2 pattern, we'll do some special
+    //// checking.
     if(!stricmp(buf, "SW1ON"))
     {
         texid = R_TextureNumForName("SW1OFF");

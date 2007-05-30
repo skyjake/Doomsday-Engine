@@ -160,8 +160,8 @@ void NetSv_UpdateGameConfig(void)
         strcat(gameConfigString, " jump");
 }
 
-/*
- * Unravel a DDPT_COMMANDS (32) packet. Returns a pointer to a static
+/**
+ * \kludge Unravel a DDPT_COMMANDS (32) packet. Returns a pointer to a static
  * buffer that contains the ticcmds (kludge to work around the parameter
  * passing from the engine).
  */

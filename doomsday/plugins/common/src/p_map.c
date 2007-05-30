@@ -531,7 +531,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *data)
             return true;
         }
 #endif
-        if(tmthing->damage == DDMAXINT) // Kludge to support old save games.
+        if(tmthing->damage == DDMAXINT) //// \kludge to support old save games.
             damage = tmthing->info->damage;
         else
             damage = tmthing->damage;
@@ -761,7 +761,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *data)
             S_StartSound(sfx_ripslop, tmthing);
 #endif
 
-            if(tmthing->damage == DDMAXINT) // Kludge to support old save games.
+            if(tmthing->damage == DDMAXINT) //// \kludge to support old save games.
                 damage = tmthing->info->damage;
             else
                 damage = tmthing->damage;
@@ -784,7 +784,7 @@ static boolean PIT_CheckThing(mobj_t *thing, void *data)
 
         // Do damage
 #if __JDOOM__
-        if(tmthing->damage == DDMAXINT) // Kludge to support old save games.
+        if(tmthing->damage == DDMAXINT) //// \kludge to support old save games.
             damage = tmthing->info->damage;
         else
 #endif

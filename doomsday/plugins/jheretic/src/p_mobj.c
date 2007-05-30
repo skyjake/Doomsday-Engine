@@ -1710,9 +1710,9 @@ mobj_t *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type)
     th->mom[MZ] = FixedMul(th->mom[MZ], dist);
 
 #if __JHERETIC__
-    // Set this global ptr as we need access to the mobj even if it
-    // explodes instantly in order to assign values to it.
-    // This is a bit of a kludge really...
+    //// \kludge Set this global ptr as we need access to the mobj even if it
+    //// explodes instantly in order to assign values to it.
+    //// This is a bit of a kludge really...
     MissileMobj = th;
 #endif
 
@@ -1827,9 +1827,9 @@ mobj_t *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t angle,
     }
 
 #if __JHERETIC__
-    // Set this global ptr as we need access to the mobj even if it
-    // explodes instantly in order to assign values to it.
-    // This is a bit of a kludge really...
+    //// \kludge Set this global ptr as we need access to the mobj even if it
+    //// explodes instantly in order to assign values to it.
+    //// This is a bit of a kludge really...
     MissileMobj = th;
 #endif
 

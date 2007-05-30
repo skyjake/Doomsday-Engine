@@ -100,7 +100,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  */
 static void GetWorkDir(char *dir, int mainLump)
 {
-    // Hacks'n'Kludges Illustrated: Accessing the Game Mode String!
+    //// \kludge Hacks'n'Kludges Illustrated: Accessing the Game Mode String!
     game_export_t *gex = (game_export_t*) DD_GetVariable(DD_GAME_EXPORTS);
     const char *sourceFile = W_LumpSourceFile(mainLump);
     filename_t base;
