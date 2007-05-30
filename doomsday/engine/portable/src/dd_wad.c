@@ -1388,8 +1388,8 @@ static void W_MapLumpName(int episode, int map, char *mapLump)
 }
 
 #if 0
-/*
- * FIXME: What about GL data?
+/**
+ * \fixme What about GL data?
  *
  * Change the map identifiers of all the maps in a PWAD.
  * 'episode' and 'map' are used with the first map in the PWAD, the rest

@@ -1472,7 +1472,7 @@ static uint writeBindList(FILE *file, binding_t *list, uint num,
             bindaxis_t *axis = &ctrl->data.axiscontrol;
 
             formEventString(buffer, deviceID, bnd->controlID, true, 0);
-            // FIXME: Using "after" is a hack...
+            //// \fixme Using "after" is a hack...
             fprintf(file, "after 1 { bindaxis %s %s ",
                     bindClasses[bindClass].name, buffer);
             if(axis->invert)

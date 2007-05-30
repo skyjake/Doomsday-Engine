@@ -499,9 +499,9 @@ static void Rend_PolyTexBlend(surface_t *surface, rendpoly_t *poly,
 }
 
 /**
- * FIXME: No need to do this each frame. Set a flag in side_t->flags to
- *        denote this. Is sensitive to plane heights, surface properties
- *        (e.g. alpha) and surface texture properties.
+ * \fixme No need to do this each frame. Set a flag in side_t->flags to
+ * denote this. Is sensitive to plane heights, surface properties
+ * (e.g. alpha) and surface texture properties.
  */
 boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
 {

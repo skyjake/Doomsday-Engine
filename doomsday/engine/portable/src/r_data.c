@@ -725,7 +725,7 @@ void R_InitTextures(void)
     }
     numtextures = numtextures1 + numtextures2;
 
-    // FIXME: Surely not all of these are still needed?
+    //// \fixme Surely not all of these are still needed?
     textures = Z_Malloc(numtextures * sizeof(texture_t*), PU_REFRESHTEX, 0);
 
     sprintf(buf, "R_Init: Initializing %i textures...", numtextures);
@@ -1276,7 +1276,7 @@ void R_PrecacheLevel(void)
     
     // Update progress.
 
-    // FIXME: Precache sky textures!
+    //// \fixme Precache sky textures!
 
     for(k = 0; k < numtextures; ++k)
         if(texturepresent[k])

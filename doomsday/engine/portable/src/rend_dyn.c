@@ -405,8 +405,8 @@ static void DL_ComputeLightColor(float *outRGB, lumobj_t *lum, float light)
         light = 1;
     light *= dlFactor;
 
-    // If fog is enabled, make the light dimmer.
-    // FIXME: This should be a cvar.
+    //// If fog is enabled, make the light dimmer.
+    //// \fixme This should be a cvar.
     if(usingFog)
         light *= .5f;           // Would be too much.
 
@@ -704,7 +704,7 @@ static void DL_CreateGlowLightPerPlaneForSegSection(subsector_t *ssec, seg_t *se
         segbottom = floor;
 
     segindex = GET_SEG_IDX(seg);
-    // FIXME: $nplanes
+    //// \fixme $nplanes
     for(g = 0; g < 2; ++g)
     {
         pln = glowPlanes[g];
@@ -909,8 +909,8 @@ uint DL_NewLuminous(void)
 
     numLuminous++;
 
-    // Only allocate memory when it's needed.
-    // FIXME: No upper limit?
+    //// Only allocate memory when it's needed.
+    //// \fixme No upper limit?
     if(numLuminous > maxLuminous)
     {
         maxLuminous *= 2;
@@ -1922,8 +1922,8 @@ void DL_ClipInSubsector(uint ssecidx)
 
         lobj->flags &= ~LUMF_CLIPPED;
 
-        // FIXME: Determine the exact centerpoint of the light in
-        // DL_AddLuminous!
+        //// \fixme Determine the exact centerpoint of the light in
+        //// DL_AddLuminous!
         if(!C_IsPointVisible(lobj->pos[VX], lobj->pos[VY],
                              lobj->pos[VZ] + lobj->zOff))
             lobj->flags |= LUMF_CLIPPED;    // Won't have a halo.

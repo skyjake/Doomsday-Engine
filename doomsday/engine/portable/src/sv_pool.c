@@ -468,7 +468,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
 
     reg->lightlevel = sec->lightlevel;
     memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
-    // FIXME: $nplanes
+    //// \fixme $nplanes
     for(i = 0; i < 2; ++i) // number of planes in sector.
     {
         // Plane properties
@@ -2768,7 +2768,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
     // Deltas become more important with age (milliseconds).
     score *= 1 + age / (ageScoreDouble * 1000.0f);
 
-    // FIXME: Consider viewpoint speed and angle.
+    //// \fixme Consider viewpoint speed and angle.
 
     // Priority bonuses based on the contents of the delta.
     if(delta->type == DT_MOBJ)
