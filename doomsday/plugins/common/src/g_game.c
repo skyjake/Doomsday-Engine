@@ -665,7 +665,7 @@ void G_DoLoadLevel(void)
 boolean G_Responder(event_t *ev)
 {
 #if 0 // FIXME! __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    // DJS - Why is this here??
+    //// \fixme DJS - Why is this here??
     player_t *plr = &players[consoleplayer];
 
     if(!actions[A_USEARTIFACT].on)

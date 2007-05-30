@@ -525,7 +525,7 @@ static void HU_MsgBufClear(msgbuffer_t *buf)
 }
 
 /**
- * FIXME: This doesn't seem to work as intended.
+ * \fixme This doesn't seem to work as intended.
  *
  * @param buf           Ptr to the message buffer to refresh.
  */

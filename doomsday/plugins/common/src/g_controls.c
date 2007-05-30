@@ -87,7 +87,7 @@ typedef enum joyaxis_e {
     NUM_JOYSTICK_AXES
 } joyaxis_t;
 
-#if 0 // FIXME! __JHERETIC__
+#if 0 //// \fixme FIXME! __JHERETIC__ (WTF is an if 0 ???)
 struct artifacthotkey_s {
     int     action;
     int     artifact;
@@ -433,7 +433,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         lspeed = 2;
 
     // Return the max speed for the player's class.
-    // FIXME: the Turbo movement multiplier should happen server-side!
+    //// \fixme the Turbo movement multiplier should happen server-side!
     sideMoveSpeed = pClassInfo->sidemove[speed] * turbomul;
     fwdMoveSpeed = pClassInfo->forwardmove[speed] * turbomul;
     turnSpeed = pClassInfo->turnSpeed[(cstate->turnheld < SLOWTURNTICS ? 2 : speed)];

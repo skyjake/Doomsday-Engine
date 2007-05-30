@@ -2567,7 +2567,7 @@ static int SV_ReadPolyObj(polyobj_t *po)
     deltaX = SV_ReadLong() - P_GetFixedp(po, DMU_START_SPOT_X);
     deltaY = SV_ReadLong() - P_GetFixedp(po, DMU_START_SPOT_Y);
     PO_MovePolyobj(P_GetIntp(po, DMU_TAG), deltaX, deltaY);
-    // FIXME: What about speed? It isn't saved at all?
+    //// \fixme What about speed? It isn't saved at all?
     return true;
 }
 #endif
@@ -5330,8 +5330,8 @@ void SV_MapTeleport(int map, int position)
     }
     randomclass = rClass;
 
-    // Redirect anything targeting a player mobj
-    // FIXME! This only supports single player games!!
+    //// \fixme Redirect anything targeting a player mobj
+    //// FIXME! This only supports single player games!!
     if(targetPlayerAddrs)
     {
         targetplraddress_t *p;
