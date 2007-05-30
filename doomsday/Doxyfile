@@ -40,6 +40,7 @@ OPTIMIZE_OUTPUT_JAVA   = NO
 BUILTIN_STL_SUPPORT    = NO
 DISTRIBUTE_GROUP_DOC   = NO
 SUBGROUPING            = YES
+ALIASES += "kludge=\xrefitem kludges \"Kludges\" \"Kludge List\"" 
 #---------------------------------------------------------------------------
 # Build related configuration options
 #---------------------------------------------------------------------------
