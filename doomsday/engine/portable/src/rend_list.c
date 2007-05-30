@@ -66,7 +66,7 @@ END_PROF_TIMERS()
 // Number of extra bytes to keep allocated in the end of each rendering list.
 #define LIST_DATA_PADDING   16
 
-// FIXME: Rlist allocation could be dynamic.
+//// \fixme Rlist allocation could be dynamic.
 #define MAX_RLISTS          1024
 #define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
                               defs.count.details.num > 0)
@@ -318,7 +318,7 @@ static void RL_AddMaskedPoly(rendpoly_t *poly)
                                       poly->vertices[0].pos[VZ]) / poly->tex.height;
     vis->data.wall.blendmode = poly->blendmode;
 
-    // FIXME: Semitransparent masked polys arn't lit atm
+    //// \fixme Semitransparent masked polys arn't lit atm
     if(!(poly->flags & RPF_GLOW) && poly->lights && numTexUnits > 1 &&
        envModAdd && poly->vertices[0].color.rgba[3] == 255)
     {   // Choose the brightest light.
@@ -413,7 +413,7 @@ void RL_VertexColors(rendpoly_t *poly, float lightlevel,
             if(real < newmin)
             {
                 real = newmin;
-                usewhite = true;    // FIXME : Do some linear blending.
+                usewhite = true;    //// \fixme Do some linear blending.
             }
         }
 
@@ -713,7 +713,7 @@ void RL_ClearLists(void)
 
     RL_RewindList(&skyMaskList);
 
-    // FIXME: Does this belong here?
+    //// \fixme Does this belong here?
     skyhemispheres = 0;
 }
 
@@ -2521,9 +2521,9 @@ BEGIN_PROF( PROF_RL_RENDER_ALL );
     if(!freezeRLs) // only update when lists arn't frozen
         rendSky = !P_IsInVoid(viewplayer);
 
-    // When in the void we don't render a sky.
-    // FIXME: We could use a stencil when rendering the sky, using the
-    //        already collected skymask polys as a mask.
+    //// When in the void we don't render a sky.
+    //// \fixme We could use a stencil when rendering the sky, using the
+    //// already collected skymask polys as a mask.
     if(rendSky && !debugSky)
         // The sky might be visible. Render the needed hemispheres.
         Rend_RenderSky(skyhemispheres);
@@ -2533,8 +2533,8 @@ BEGIN_PROF( PROF_RL_RENDER_ALL );
     // Mask the sky in the Z-buffer.
     lists[0] = &skyMaskList;
 
-    // FIXME: As we arn't rendering the sky when in the void we have
-    //        have no need to render the skymask.
+    //// \fixme As we arn't rendering the sky when in the void we have
+    //// have no need to render the skymask.
 BEGIN_PROF( PROF_RL_RENDER_SKYMASK );
     if(rendSky)
         RL_RenderLists(LM_SKYMASK, lists, 1);

@@ -179,11 +179,11 @@ boolean H_RenderHalo(float x, float y, float z, lumobj_t *lum, boolean primary)
 
     if(devNoCulling || P_IsInVoid(viewplayer))
     {
-        // Normal visible surface culling has been disabled meaning that this
-        // halo should, more than likely, be occluded (at least partially) by
-        // something else in the scene.
-        // FIXME: Therefore we need to check using a line-of-sight method
-        //        that only checks front facing geometry...?
+        //// Normal visible surface culling has been disabled meaning that this
+        //// halo should, more than likely, be occluded (at least partially) by
+        //// something else in the scene.
+        //// \fixme Therefore we need to check using a line-of-sight method
+        //// that only checks front facing geometry...?
             return false;
     }
 

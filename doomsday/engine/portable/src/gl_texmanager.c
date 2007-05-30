@@ -126,8 +126,8 @@ int     mipmapping = 3, linearRaw = 1, texQuality = TEXQ_BEST;
 int     filterSprites = true;
 int     texMagMode = 1;         // Linear.
 
-// Convert a 18-bit RGB (666) value to a playpal index.
-// FIXME: 256kb - Too big?
+//// Convert a 18-bit RGB (666) value to a playpal index.
+//// \fixme 256kb - Too big?
 byte    pal18to8[262144];
 int     pallump;
 
@@ -2896,8 +2896,8 @@ skintex_t *GL_GetSkinTex(const char *skin)
     if(!skin[0])
         return NULL;
 
-    // Convert the given skin file to a full pathname.
-    // FIXME: Why is this done here and not during init??
+    //// Convert the given skin file to a full pathname.
+    //// \fixme Why is this done here and not during init??
     _fullpath(realpath, skin, 255);
 
     for(i = 0; i < numskinnames; ++i)

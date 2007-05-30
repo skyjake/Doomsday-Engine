@@ -509,10 +509,10 @@ void C_AddOcclusionRange(binangle_t start, binangle_t end, float *normal,
         return;
     }
 
-    // FIXME: An optimization: remove existing oranges that are fully
-    // contained by the new orange. But how to do the check efficiently?
+    //// \fixme An optimization: remove existing oranges that are fully
+    //// contained by the new orange. But how to do the check efficiently?
 
-    // Add the new occlusion range to the appropriate position.
+    //// Add the new occlusion range to the appropriate position.
     orange = occHead;
     done = false;
     while(orange && !done)
@@ -598,8 +598,8 @@ static int C_TryMergeOccludes(occnode_t *orange, occnode_t *other)
     if(crossAngle >= orange->start && crossAngle <= orange->end)
         return 0;       // Crosses inside the range, can't do a thing.
 
-    // FIXME: Isn't it possible to consistently determine which
-    // direction the cross vector is pointing to?
+    //// \fixme Isn't it possible to consistently determine which
+    //// direction the cross vector is pointing to?
     crossAngle += BANG_180;
     if(crossAngle >= orange->start && crossAngle <= orange->end)
         return 0;       // Crosses inside the range, can't do a thing.
@@ -929,10 +929,10 @@ void C_AddViewRelOcclusion(float *v1, float *v2, float height, boolean tophalf)
     float       viewtov1[3], viewtov2[3];
     float       normal[3];
 
-    // FIXME: Optimization? Check if the given line is already occluded.
+    //// \fixme Optimization? Check if the given line is already occluded.
 
-    // Calculate the occlusion plane normal. We'll use the game's coordinate
-    // system (left-handed, but Y and Z are swapped).
+    //// Calculate the occlusion plane normal. We'll use the game's coordinate
+    //// system (left-handed, but Y and Z are swapped).
     viewtov1[VX] = v1[VX] - vx;
     viewtov1[VY] = v1[VY] - vz;
     viewtov2[VX] = v2[VX] - vx;
@@ -1136,10 +1136,10 @@ boolean C_IsSegOccluded(float relv1[3], float relv2[3], float reltop,
             }
         }
 
-        // Remember, side2 has a smaller angle.
+        //// Remember, side2 has a smaller angle.
 
-        // FIXME: What about trueStart/trueEnd!!! and isSafe! it must have
-        // an effect on this...
+        //// \fixme What about trueStart/trueEnd!!! and isSafe! it must have
+        //// an effect on this...
 
         if(side2)
         {

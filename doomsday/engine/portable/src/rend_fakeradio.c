@@ -167,8 +167,8 @@ void Rend_RadioInitForSubsector(subsector_t *ssec)
 
     frontSector = ssec->sector;
 
-    // Determine the shadow properties.
-    // FIXME: Make cvars out of constants.
+    //// Determine the shadow properties.
+    //// \fixme Make cvars out of constants.
     shadowSize = 2 * (8 + 16 - sectorlight * 16);
     shadowDark = Rend_RadioShadowDarkness(sectorlight) *.8f;
 }
