@@ -309,13 +309,14 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                 if(!(winf->mode[lvl].ammotype[ammo]))
                     continue;
 
-                // FIXME: Have we got enough of ALL used ammo types?
-                // Problem, since the ammo has not been given yet (could
-                // be an object that gives several ammo types eg backpack)
-                // we can't test for this with what we know!
-
-                // This routine should be called AFTER the new ammo has
-                // been given. Somewhat complex logic to decipher first...
+                /** \fixme Have we got enough of ALL used ammo types?
+                * Problem, since the ammo has not been given yet (could
+                * be an object that gives several ammo types eg backpack)
+                * we can't test for this with what we know!
+		*
+                * This routine should be called AFTER the new ammo has
+                * been given. Somewhat complex logic to decipher first...
+		*/
 
                 if(cfg.ammoAutoSwitch == 2)
                 {   // Always change weapon mode
@@ -737,7 +738,7 @@ DEFCC(CCmdPrintPlayerCoords)
 
 DEFCC(CCmdCycleSpy)
 {
-    // FIXME: The engine should do this.
+    //// \fixme The engine should do this.
     Con_Printf("Spying not allowed.\n");
 #if 0
     if(G_GetGameState() == GS_LEVEL && !deathmatch)

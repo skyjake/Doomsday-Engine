@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * f_infine.c : The "In Fine" finale engine.
  */
 
@@ -394,7 +394,7 @@ static boolean condition_presets[NUM_FICONDS];
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Clear the InFine state to the default, blank state.
  * The 'fi' pointer must be set before calling this function.
  */
@@ -539,7 +539,7 @@ void FI_PopState(void)
     }
 }
 
-/*
+/**
  * Reset the entire InFine state stack. This is called when a new game
  * is started.
  */
@@ -689,7 +689,7 @@ void FI_End(void)
     }
 }
 
-/*
+/**
  * Set the truth value of a condition. Used by clients after they've
  * received a GPT_FINALE2 packet.
  */
@@ -729,7 +729,7 @@ DEFCC(CCmdStopInFine)
     return true;
 }
 
-/*
+/**
  * Check if there is a finale before the map and play it.
  * Returns true if a finale was begun.
  */
@@ -753,7 +753,7 @@ int FI_Briefing(int episode, int map)
     return true;
 }
 
-/*
+/**
  * Check if there is a finale after the map and play it.
  * Returns true if a finale was begun.
  */
@@ -835,7 +835,7 @@ float FI_GetFloat(void)
     return strtod(FI_GetToken(), NULL);
 }
 
-/*
+/**
  * Reads the next token, which should be floating point number. It is
  * considered seconds, and converted to tics.
  */
@@ -916,7 +916,7 @@ void FI_Execute(char *cmd)
     Con_Message("FI_Execute: Unknown command \"%s\".\n", cmd);
 }
 
-/*
+/**
  * Returns true if a command was found. Only returns false if there are
  * no more commands in the script.
  */
@@ -1320,7 +1320,7 @@ void FI_SkipTo(const char *marker)
     fi->cp = fi->script;
 }
 
-/*
+/**
  * The user has requested a skip. Returns true if the skip was done.
  */
 int FI_SkipRequest(void)
@@ -1495,7 +1495,7 @@ void FI_UseTextColor(fitext_t * tex, int idx)
     }
 }
 
-/*
+/**
  * Returns the length as a counter.
  */
 int FI_TextObjectLength(fitext_t * tex)
@@ -1631,7 +1631,7 @@ void FI_GetTurnCenter(fipic_t *pic, float *center)
     center[VY] *= pic->object.scale[VY].value;
 }
 
-/*
+/**
  * Drawing is the most complex task here.
  */
 void FI_Drawer(void)
@@ -1742,8 +1742,8 @@ void FI_Drawer(void)
         }
         else
         {
-            // FIXME: The raw screen drawer should not ignore rotation.
-            // It should allow the caller to set up a transformation matrix.
+            //// \fixme The raw screen drawer should not ignore rotation.
+            //// It should allow the caller to set up a transformation matrix.
             GL_DrawRawScreen_CS(pic->lump[sq],
                                 pic->object.x.value - fi->imgoffset[0].value,
                                 pic->object.y.value - fi->imgoffset[1].value,
@@ -1781,7 +1781,7 @@ void FI_Drawer(void)
     }
 }
 
-/*
+/**
  * Command functions can only call FI_GetToken once for each operand.
  * Otherwise the script cursor ends up in the wrong place.
  */

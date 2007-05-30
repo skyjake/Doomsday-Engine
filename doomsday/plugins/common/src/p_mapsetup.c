@@ -227,22 +227,25 @@ int P_SetupLevelWorker(void *ptr)
         Con_Error("P_SetupLevel: Failed loading map \"%s\".\n",levelId);
     }
     
-    // First job is to zero unused flags if MF_INVALID is set.
-    //
-    // "This has been found to be necessary because of errors
-    //  in Ultimate DOOM's E2M7, where around 1000 linedefs have
-    //  the value 0xFE00 masked into the flags value.
-    //  There could potentially be many more maps with this problem,
-    //  as it is well-known that Hellmaker wads set all bits in
-    //  mapthings that it does not understand."
-    //      Thanks to Quasar for the heads up.
+    /** First job is to zero unused flags if MF_INVALID is set.
+    *
+    * \attention "This has been found to be necessary because of errors
+    *  in Ultimate DOOM's E2M7, where around 1000 linedefs have
+    *  the value 0xFE00 masked into the flags value.
+    *  There could potentially be many more maps with this problem,
+    *  as it is well-known that Hellmaker wads set all bits in
+    *  mapthings that it does not understand."
+    *  Thanks to Quasar for the heads up.
+    */
 #if !__JHEXEN__
-    // FIXME: This applies only to DOOM format maps but the game doesn't
-    // know what format the map is in (and shouldn't really) but the
-    // engine doesn't know if the game wants to do this...
+    /** \fixme This applies only to DOOM format maps but the game doesn't
+    * know what format the map is in (and shouldn't really) but the
+    * engine doesn't know if the game wants to do this...
+    */
 # if !__DOOM64TC__
-    // DJS - Can't do this with Doom64TC as it has used the ML_INVALID bit
-    // for another purpose... doh!
+    /** \attention DJS - Can't do this with Doom64TC as it has used the ML_INVALID bit
+    * for another purpose... doh!
+    */
     for(i = 0; i < numlines; ++i)
     {
         flags = P_GetInt(DMU_LINE, i, DMU_FLAGS);
@@ -280,11 +283,11 @@ int P_SetupLevelWorker(void *ptr)
 #if __JHEXEN__
     // Initialize polyobjs.
     Con_Message("Polyobject init\n");
-    // FIXME: Custom map data format support
+    //// \fixme Custom map data format support
     PO_Init(W_GetNumForName(levelId) + 1 /*ML_THINGS*/);   // Initialize the polyobjs
     
     Con_Message("Load ACS scripts\n");
-    // FIXME: Custom map data format support
+    //// \fixme Custom map data format support
     P_LoadACScripts(W_GetNumForName(levelId) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
     

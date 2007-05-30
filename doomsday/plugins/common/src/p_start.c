@@ -20,7 +20,7 @@
  * for more details.
  */
 
-/*
+/**
  * Compiles for jDoom/jHeretic/jHexen
  */
 
@@ -94,7 +94,7 @@ static int numPlayerStartsMax = 0;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Initializes various playsim related data
  */
 void P_Init(void)
@@ -180,7 +180,7 @@ void P_FreePlayerStarts(void)
     numPlayerStarts = numPlayerStartsMax = 0;
 }
 
-/*
+/**
  * Gives all the players in the game a playerstart.
  * Only needed in co-op games (start spots are random in deathmatch).
  */
@@ -241,7 +241,7 @@ void P_DealPlayerStarts(int group)
     }
 }
 
-/*
+/**
  * Returns false if the player cannot be respawned
  * at the given thing_t spot because something is occupying it
  */
@@ -302,7 +302,7 @@ boolean P_CheckSpot(int playernum, thing_t *mthing, boolean doTeleSpark)
     return true;
 }
 
-/*
+/**
  * Try to spawn close to the mapspot. Returns false if no clear spot
  * was found.
  */
@@ -340,7 +340,7 @@ boolean P_FuzzySpawn(thing_t * spot, int playernum, boolean doTeleSpark)
     return false;
 }
 
-/*
+/**
  * Spawns all THINGS that belong in the map.
  *
  * Polyobject anchors etc are still handled in PO_Init()
@@ -388,7 +388,7 @@ void P_SpawnThings(void)
     }
 
 #if __JHEXEN__
-    // FIXME: This stuff should be moved!
+    //// \fixme This stuff should be moved!
     P_CreateTIDList();
     P_InitCreatureCorpseQueue(false);   // false = do NOT scan for corpses
 
@@ -416,7 +416,7 @@ void P_SpawnThings(void)
     Z_Free(things);
 }
 
-/*
+/**
  * Spawns all players, using the method appropriate for current game mode.
  * Called during level setup.
  */
@@ -439,8 +439,9 @@ void P_SpawnPlayers(void)
 #ifdef __JDOOM__
         if(!IS_NETGAME)
         {
-            // Spawn all unused player starts. This will create 'zombies'.
-            // FIXME: Also in netgames?
+            /** \fixme Spawn all unused player starts. This will create 'zombies'.
+            * FIXME: Also in netgames?
+	    */
             for(i = 0; i < numPlayerStarts; ++i)
                 if(players[0].startspot != i && playerstarts[i].type == 1)
                 {
@@ -465,7 +466,7 @@ void P_SpawnPlayers(void)
     }
 }
 
-/*
+/**
  *  Spawns the given player at a dummy place.
  */
 void G_DummySpawnPlayer(int playernum)
@@ -477,7 +478,7 @@ void G_DummySpawnPlayer(int playernum)
     P_SpawnPlayer(&faraway, playernum);
 }
 
-/*
+/**
  * Spawns a player at one of the random death match spots
  * called at level load and each death
  */
@@ -527,7 +528,7 @@ void G_DeathMatchSpawnPlayer(int playernum)
 #endif
 }
 
-/*
+/**
  * Returns the correct start for the player. The start
  * is in the given group, or zero if no such group exists.
  *
@@ -582,7 +583,7 @@ fixed_t P_PointLineDistance(line_t *line, fixed_t x, fixed_t y,
 #endif
 
 #if __JHERETIC__
-/*
+/**
  * Only affects torches, which are often placed inside walls in the
  * original maps. The DOOM engine allowed these kinds of things but
  * a Z-buffer doesn't.
@@ -656,7 +657,7 @@ void P_MoveThingsOutOfWalls(void)
     }
 }
 
-/*
+/**
  * Fails in some places, but works most of the time.
  */
 void P_TurnGizmosAwayFromDoors(void)
