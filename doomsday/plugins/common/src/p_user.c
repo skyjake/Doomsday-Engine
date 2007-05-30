@@ -1245,7 +1245,7 @@ void P_PlayerThinkSounds(player_t *player)
 
 void P_PlayerThinkItems(player_t *player)
 {
-#if 0 // FIXME!
+#if 0 //// \fixme FIXME! (why is this here ? can't we fly in all supported games now ??)
 #if __JHERETIC__ || __JHEXEN__
     int fly;
 #endif

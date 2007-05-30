@@ -2081,7 +2081,7 @@ boolean M_Responder(event_t *ev)
  * The widget responder handles setting the specified vars to that of the
  * currentcolour.
  *
- * The global value rgba (fixme!) is used to control if rgb or rgba input
+ * \fixme The global value rgba (fixme!) is used to control if rgb or rgba input
  * is needed, as defined in the widgetcolors array.
  */
 void DrawColorWidget(void)
@@ -2282,8 +2282,8 @@ void M_StopMessage(void)
 }
 
 /**
- * Draws a 'fancy' menu effect.
- * FIXME: A bit of a mess really...
+ * \fixme Draws a 'fancy' menu effect.
+ * A bit of a mess really...
  */
 static void M_DrawBackground(menu_t *menu)
 {
@@ -2647,8 +2647,8 @@ void M_DrawSaveLoadBorder(int x, int y)
 }
 
 /**
- * M_Responder calls this when user is finished.
- * FIXME: not in jHexen it doesn't...
+ * \fixme M_Responder calls this when user is finished.
+ * not in jHexen it doesn't...
  */
 void M_DoSave(int slot)
 {
@@ -2960,14 +2960,15 @@ void M_DrawWeaponMenu(void)
 #ifdef __JDOOM__
         M_WriteMenuText(menu, 4+i, GET_TXT(TXT_WEAPON0 + cfg.weaponOrder[i]));
 #elif __JHERETIC__
-        // FIXME: We should allow different weapon preferences per player class.
-        //        However, since the only other class in jHeretic is the chicken
-        //        which has only 1 weapon anyway -we'll just show the names of the
-        //        player's weapons for now.
+        /** \fixme We should allow different weapon preferences per player class.
+        *        However, since the only other class in jHeretic is the chicken
+        *        which has only 1 weapon anyway -we'll just show the names of the
+        *        player's weapons for now.
+	*/
         M_WriteMenuText(menu, 4+i, GET_TXT(TXT_TXT_WPNSTAFF + cfg.weaponOrder[i]));
 #elif __JHEXEN__
-        // FIXME: We should allow different weapon preferences per player class.
-        //        Then we can show the real names here.
+        //// \fixme: We should allow different weapon preferences per player class.
+        ////  Then we can show the real names here.
         M_WriteMenuText(menu, 4+i, weaponids[cfg.weaponOrder[i]]);
 #endif
     }

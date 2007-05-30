@@ -526,8 +526,8 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         if(tex)
         {
             if(texIsPatchLumpNum)
-            {   // FIXME: Can not modulate these primitives as we don't know
-                // the GL texture name (DGLuint).
+            {   //// \fixme Can not modulate these primitives as we don't know
+                //// the GL texture name (DGLuint).
                 GL_SetPatch(tex);
             }
             else

@@ -687,8 +687,8 @@ void NetSv_NewPlayerEnters(int plrnumber)
     }
     else
     {
-        // Spawn the player into the world.
-        // FIXME: Spawn a telefog in front of the player.
+        //// Spawn the player into the world.
+        //// \fixme Spawn a telefog in front of the player.
         P_SpawnPlayer(&playerstarts[plr->startspot], plrnumber);
     }
 
