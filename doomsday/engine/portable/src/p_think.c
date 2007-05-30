@@ -92,8 +92,8 @@ void P_SetMobjID(thid_t id, boolean state)
 
 thid_t P_NewMobjID(void)
 {
-    // Increment the ID dealer until a free ID is found.
-    // FIXME: What if all IDs are in use? 65535 thinkers!?
+    //// Increment the ID dealer until a free ID is found.
+    //// \fixme What if all IDs are in use? 65535 thinkers!?
     while(P_IsUsedMobjID(++iddealer));
     // Mark this ID as used.
     P_SetMobjID(iddealer, true);

@@ -1133,8 +1133,8 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
     // Convert the network node into a real client node.
     node->hasJoined = true;
 
-    // FIXME: We should use more discretion with the name. It has
-    // been provided by an untrusted source.
+    //// \fixme We should use more discretion with the name. It has
+    //// been provided by an untrusted source.
     strncpy(node->name, name, sizeof(node->name) - 1);
 
     // Prepare the transmission stats for the node.
@@ -1595,8 +1595,8 @@ void N_Listen(void)
 
     if(netServerMode)
     {
-        // Any incoming connections on the listening socket?
-        // FIXME: Include this in the set of sockets?
+        //// Any incoming connections on the listening socket?
+        //// \fixme Include this in the set of sockets?
         while((sock = SDLNet_TCP_Accept(serverSock)) != NULL)
         {
             // A new client is attempting to connect. Let's try to
@@ -1631,11 +1631,12 @@ void N_Listen(void)
                         }
                         else
                         {
-                            // FIXME: Read into a buffer, execute when newline
-                            // received.
-
-                            // Process the command; we will need to answer, or
-                            // do something else.
+                            /** \fixme Read into a buffer, execute when newline
+                            * received.
+			    *
+                            * Process the command; we will need to answer, or
+                            * do something else.
+			    */
                             N_DoNodeCommand(i, buf, result);
                         }
                     }
