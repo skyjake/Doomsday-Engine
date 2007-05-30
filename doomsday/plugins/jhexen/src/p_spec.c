@@ -920,7 +920,7 @@ void P_SpawnSpecials(void)
         }
     }
 
-    // FIXME: Remove fixed limits.
+    //// \fixme Remove fixed limits.
     P_RemoveAllActiveCeilings();  // jff 2/22/98 use killough's scheme
     P_RemoveAllActivePlats();
 

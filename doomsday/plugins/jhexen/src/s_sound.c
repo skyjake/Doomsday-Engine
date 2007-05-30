@@ -139,8 +139,8 @@ void S_InitScript(void)
     // All sounds left without a lumpname will use "DEFAULT".
     for(i = 0; i < Get(DD_NUMSOUNDS); ++i)
     {
-        // DJS - This uses a kludge to traverse the entire sound list.
-        // FIXME: Implement a mechanism for walking the Def databases.
+        //// \kludge DJS - This uses a kludge to traverse the entire sound list.
+        //// \fixme Implement a mechanism for walking the Def databases.
         Def_Get(DD_DEF_SOUND_LUMPNAME, (char *) i, buf);
         if(!strcmp(buf, ""))
             Def_Set(DD_DEF_SOUND, i, DD_LUMP, "default");

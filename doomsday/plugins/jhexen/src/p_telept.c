@@ -303,7 +303,7 @@ void P_ArtiTele(player_t *player)
     }
     else
     {
-        // FIXME?: DJS - this doesn't seem right... why always player 0?
+        //// \fixme DJS - this doesn't seem right... why always player 0?
         destPos[VX] = playerstarts[0].x << FRACBITS;
         destPos[VY] = playerstarts[0].y << FRACBITS;
         destAngle = ANG45 * (playerstarts[0].angle / 45);

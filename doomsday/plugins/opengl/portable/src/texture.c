@@ -399,7 +399,7 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 			buffer = data;
 			loadFormat = GL_RGB;
 		}
-		else					// Needs converting. FIXME: This adds some overhead.
+		else					//// \fixme Needs converting. This adds some overhead.
 		{
 			needFree = DGL_TRUE;
 			buffer = malloc(numPixels * 4);

@@ -1015,7 +1015,7 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
 }
 
 /**
- * FIXME: DJS - We shouldn't need to go twice round the thing list here too
+ * \fixme DJS - We shouldn't need to go twice round the thing list here too
  */
 void PO_Init(int lump)
 {

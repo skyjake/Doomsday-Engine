@@ -147,7 +147,7 @@ boolean P_GiveMana(player_t *player, ammotype_t ammo, int num)
     if(player->ammo[ammo] > MAX_MANA)
         player->ammo[ammo] = MAX_MANA;
 
-    // FIXME - DJS: This shouldn't be actioned from here.
+    //// \fixme - DJS: This shouldn't be actioned from here.
     if(player->class == PCLASS_FIGHTER && player->readyweapon == WT_SECOND &&
        ammo == AT_BLUEMANA && prevMana <= 0)
     {
@@ -2074,7 +2074,7 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
             }
             else
             {                   // "electrocute" the target
-// fixme make fullbright for this frame -->
+//// \fixme make fullbright for this frame -->
                 //target->frame |= FF_FULLBRIGHT;
 // <-- fixme
                 if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
