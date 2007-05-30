@@ -928,7 +928,7 @@ void G_SpecialButton(int pnum)
  * Depending on the type of the event we may wish to eat it before
  * it is sent to the engine to check for bindings.
  *
- * TODO: all controls should be handled by the engine.
+ * \todo all controls should be handled by the engine.
  * Merge in engine-side axis controls from 1.8 alpha.
  *
  * @return boolean  (True) If the event should be checked for bindings

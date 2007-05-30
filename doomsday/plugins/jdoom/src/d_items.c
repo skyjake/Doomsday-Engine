@@ -248,7 +248,7 @@ void P_InitWeaponInfo()
 
     for(i = 0; i < NUM_WEAPON_TYPES; i++)
     {
-        // TODO: Only allows for one type of ammo per weapon.
+        //// \todo Only allows for one type of ammo per weapon.
         sprintf(buf, WPINF "%i|Type", i);
         if(Def_Get(DD_DEF_VALUE, buf, &data))
         {

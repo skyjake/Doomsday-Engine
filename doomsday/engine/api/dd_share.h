@@ -39,8 +39,8 @@ extern          "C" {
 #include "../portable/include/dd_version.h"
 #include "dd_types.h"
 #include "dd_maptypes.h"
-#include "../portable/include/p_think.h"        // TODO: Not officially a public header file!
-#include "../portable/include/def_share.h"      // TODO: Not officially a public header file!
+#include "../portable/include/p_think.h"        //// \todo Not officially a public header file!
+#include "../portable/include/def_share.h"      //// \todo Not officially a public header file!
 
     //------------------------------------------------------------------------
     //

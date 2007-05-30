@@ -20,15 +20,15 @@
  * for more details.
  */
 
-/*
+/**
  * p_user.c : Player related stuff.
  *
  * Bobbing POV/weapon, movement, pending weapon, artifact usage...
  * Compiles for jDoom, jHeretic and jHexen.
  */
 
-/*
- * TODO: DJS - This file contains a fair amount of Raven licensed code
+/**
+ * \todo DJS - This file contains a fair amount of Raven licensed code
  *       however none is included when the build target is jDoom.
  *
  *       In the process of cleaning this up I will attempt to segregate

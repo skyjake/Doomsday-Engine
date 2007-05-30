@@ -561,8 +561,8 @@ void ST_doFullscreenStuff(void)
     {
         ammotype_t ammotype;
 
-        // TODO: Only supports one type of ammo per weapon.
-        // for each type of ammo this weapon takes.
+        //// \todo Only supports one type of ammo per weapon.
+        //// for each type of ammo this weapon takes.
         for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
         {
             if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])

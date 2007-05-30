@@ -2625,13 +2625,13 @@ void XL_Think(line_t *line)
         fixed_t xoff = -FixedMul(finecosine[ang], spd);
         fixed_t yoff = FixedMul(finesine[ang], spd);
 
-        // Apply to both sides of the line.
-        // These are group offsets. All surfaces on a given side are
-        // moved using the same texmove speed/angle.
-
-        // TODO:
-        // Implement per-surface texture movement also which would
-        // be added to each independantly.
+        /** Apply to both sides of the line.
+        * These are group offsets. All surfaces on a given side are
+        * moved using the same texmove speed/angle.
+	*
+	* \todo Implement per-surface texture movement also which would
+        * be added to each independantly.
+	*/
 
         // Front side
         side = P_GetPtrp(line, DMU_SIDE0);

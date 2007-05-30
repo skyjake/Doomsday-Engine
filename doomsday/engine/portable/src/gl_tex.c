@@ -984,8 +984,7 @@ void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
         // In paletted mode, the alpha channel follows the actual image.
         alphasrc = buffer + width * height;
 
-    // TODO: This is not very efficent.
-    // Better to use an algorithm which works on full rows and full columns.
+    //// \todo This is not very efficent. Better to use an algorithm which works on full rows and full columns.
     for(k = 0; k < height; ++k)
         for(i = 0; i < width; ++i, src += pixelsize, alphasrc++)
         {

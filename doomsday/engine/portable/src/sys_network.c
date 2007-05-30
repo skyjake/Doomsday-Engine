@@ -428,8 +428,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     int     bytes = 0;
     boolean error, read;
     
-    // TODO: What if we get one byte? How come we are here if there's nothing
-    // to receive?
+    //// \todo What if we get one byte? How come we are here if there's nothing to receive?
     if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
     {
         int number = errno;
@@ -1678,7 +1677,7 @@ void N_Listen(void)
  */
 void N_PrintInfo(void)
 {
-    // TODO: Print information about send queues, ports, etc.
+    //// \todo Print information about send queues, ports, etc.
 
 #ifdef TRANSMIT_RANDOMIZER
     Con_Printf("Randomizer enabled: max delay = %i ms, dropping %i%%.\n",

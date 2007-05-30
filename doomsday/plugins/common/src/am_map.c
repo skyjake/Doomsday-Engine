@@ -295,7 +295,8 @@ typedef struct automap_s {
     float       targetAngle; // Should be at.
     float       oldAngle; // Previous.
 
-// Viewer frame coordinates on map (TODO: does not consider rotation!).
+//// Viewer frame coordinates on map
+//// \todo does not consider rotation!
     float       vframe[2][2]; // {TL{x,y}, BR{x,y}}
 
 // Clip bbox coordinates on map.
@@ -724,8 +725,8 @@ void AM_Init(void)
         AM_RegisterSpecialLine(i, 0, 75, 2, .682f, 0, 0, cfg.automapLineAlpha/2, BM_NORMAL, TWOSIDED_GLOW, cfg.automapLineAlpha/1.5, 5, true);
 #endif
 
-        // Setup map based on player's config.
-        // TODO: All players' maps work from the same config!
+        //// Setup map based on player's config.
+        //// \todo All players' maps work from the same config!
         map->cfg.lineGlowScale = cfg.automapDoorGlow;
         map->cfg.glowingLineSpecials = cfg.automapShowDoors;
         setViewRotateMode(map, cfg.automapRotate);
@@ -2125,8 +2126,8 @@ static boolean isPointVisible(automap_t *map, float x, float y)
        y > map->vbbox[BOXTOP]  || y < map->vbbox[BOXBOTTOM])
        return false;
 
-    // TODO: The point is within the view bbox but it is not necessarily
-    // within view. Implement a more accurate test.
+    //// \todo The point is within the view bbox but it is not necessarily
+    //// within view. Implement a more accurate test.
     return true;
 }
 
@@ -2146,10 +2147,11 @@ static boolean isVectorVisible(automap_t *map,
        (y1 < map->vbbox[BOXBOTTOM] && y2 < map->vbbox[BOXBOTTOM]))
        return false;
 
-    // TODO: The vector is within the view bbox but it is not necessarily
-    // within view. Implement a more accurate test. Should we even bother
-    // with determining the intersection and actively clip primitives in
-    // the window?
+    /** \todo The vector is within the view bbox but it is not necessarily
+    * within view. Implement a more accurate test. Should we even bother
+    * with determining the intersection and actively clip primitives in
+    * the window?
+    */
     return true;
 }
 

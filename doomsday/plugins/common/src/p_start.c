@@ -729,9 +729,9 @@ void P_TurnGizmosAwayFromDoors(void)
 #endif
 
 #if __JHEXEN__
-/*
+/**
  * Pretty much the same as P_TurnGizmosAwayFromDoors()
- * TODO: Merge them together
+ * \todo Merge them together
  */
 void P_TurnTorchesToFaceWalls(void)
 {

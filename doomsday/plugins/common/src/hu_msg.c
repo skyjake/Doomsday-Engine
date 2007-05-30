@@ -24,10 +24,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * Heads-up text and input code
  * Compiles for jDoom, jHeretic, jHexen
- * TODO: Merge chat input and menu-editbox widget
+ * \todo Merge chat input and menu-editbox widget
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -307,8 +307,8 @@ void HUMsg_Start(void)
     HUlib_initIText(&w_chat, HU_INPUTX, HU_INPUTY, hu_font_a, HU_FONTSTART,
                     &chatOn);
 
-    // Create the message and input buffers for all local players.
-    // TODO: we only need buffers for active local players.
+    //// Create the message and input buffers for all local players.
+    //// \todo we only need buffers for active local players.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         msgbuffer_t *buf = &msgBuffer[i];

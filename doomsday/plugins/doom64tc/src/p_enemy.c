@@ -607,14 +607,14 @@ int P_Massacre(void)
 
 // > DOOM64TC Specific ---------------------------------------------------------
 
-/*
+/**
  * DJS - This stuff all appears to be duplications of the exact same routine...
  *       We can do better than this.
- * TODO: Without having yet looked at the state definitions - my initial thoughts
+ * \todo Without having yet looked at the state definitions - my initial thoughts
  *       are to replace all of this with a single XG line definition.
  */
 
-/*
+/**
  * used for special stuff. works only per monster!!! samuel...
  */
 void C_DECL A_PossSpecial(mobj_t* mo)
@@ -1869,7 +1869,7 @@ void C_DECL A_SkelMissile(mobj_t *actor)
  * kaiser - Too lazy to add a new action, instead I'll just borrow this one.
  * DJS - yup you are lazy :P
  *
- * TODO:    Implement this properly as two seperate actions.
+ * \todo Implement this properly as two seperate actions.
  */
 void C_DECL A_SkelMissile(mobj_t *actor)
 {

@@ -287,7 +287,7 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
             // In this context Doomsday expects either -1 (a bad texture name)
             // Or the id of a wall texture it should set to this section.
 
-            // TODO: Add code to determine what to do.
+            //// \todo Add code to determine what to do.
             break;
 
         default:
@@ -302,7 +302,7 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
     return -1; // We ain't got a clue what to do with it...
 }
 
-/*
+/**
  * These status reports inform us of what Doomsday is doing to a particular
  * map data object (at any time) that we might want to react to.
  *

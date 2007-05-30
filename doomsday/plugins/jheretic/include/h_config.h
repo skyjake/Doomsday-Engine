@@ -135,9 +135,10 @@ typedef struct jheretic_config_s {
 
     float           inventoryTimer; // Number of seconds until the invetory auto-hides.
 
-    // Compatibility options.
-    // TODO: Put these into an array so we can use a bit array to change
-    //       multiple options based on a compatibility mode (ala PrBoom).
+    /** Compatibility options.
+    * \todo Put these into an array so we can use a bit array to change
+    * multiple options based on a compatibility mode (ala PrBoom).
+    */
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
     byte            moveBlock; // Dont handle large negative movement in P_TryMove.

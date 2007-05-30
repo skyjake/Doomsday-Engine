@@ -110,8 +110,8 @@ char *borderLumps[] = {
  * Attempt to change the current game mode. Can only be done when not
  * actually in a level.
  *
- * TODO: Doesn't actually do anything yet other than set the game mode
- *       global vars.
+ * \todo Doesn't actually do anything yet other than set the game mode
+ * global vars.
  *
  * @param mode          The game mode to change to.
  * @return boolean      (TRUE) if we changed game modes successfully.

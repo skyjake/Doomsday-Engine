@@ -208,24 +208,20 @@ void LG_Init(void)
     // Allocate memory for sample points array.
     samplePoints = M_Malloc(sizeof(lgsamplepoint_t) * numSamples);
 
-    // TODO: It would be possible to only allocate memory for the unique
-    // sample results. And then select the appropriate sample in the loop
-    // for initializing the grid instead of copying the previous results in
-    // the loop for acquiring the sample points.
-    //
-    // Calculate with the equation (number of unique sample points):
-    //
-    // ((1 + lgBlockHeight * lgMXSample) * (1 + lgBlockWidth * lgMXSample)) +
-    // (size % 2 == 0? numBlocks : 0)
-    //
-    // OR
-    //
-    // We don't actually need to store the ENTIRE sample points array. It
-    // would be sufficent to only store the results from the start of the
-    // previous row to current col index. This would save a bit of memory.
-    //
-    // However until lightgrid init is finalized it would be rather silly
-    // to optimize this much further.
+    /** \todo It would be possible to only allocate memory for the unique
+    * sample results. And then select the appropriate sample in the loop
+    * for initializing the grid instead of copying the previous results in
+    * the loop for acquiring the sample points.
+    * Calculate with the equation (number of unique sample points):
+    * ((1 + lgBlockHeight * lgMXSample) * (1 + lgBlockWidth * lgMXSample)) +
+    * (size % 2 == 0? numBlocks : 0)
+    * OR
+    * We don't actually need to store the ENTIRE sample points array. It
+    * would be sufficent to only store the results from the start of the
+    * previous row to current col index. This would save a bit of memory.
+    * However until lightgrid init is finalized it would be rather silly
+    * to optimize this much further.
+    */
 
     // Allocate memory for all the sample results.
     ssamples = M_Malloc(sizeof(sector_t*) *
@@ -374,8 +370,8 @@ void LG_Init(void)
     indexBitfield = M_Calloc(bitfieldSize);
     contributorBitfield = M_Calloc(bitfieldSize);
 
-    // TODO: It would be possible to only allocate memory for the grid
-    // blocks that are going to be in use.
+    //// \todo It would be possible to only allocate memory for the grid
+    //// blocks that are going to be in use.
 
     // Allocate memory for the entire grid.
     grid = Z_Calloc(sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight,
@@ -398,13 +394,14 @@ void LG_Init(void)
         {
             off[VX] = x * (lgBlockSize << FRACBITS);
 
-            // Pick the sector at each of the sample points.
-            // TODO: We don't actually need the blkSampleSectors array
-            // anymore. Now that ssamples stores the results consecutively
-            // a simple index into ssamples would suffice.
-            // However if the optimization to save memory is implemented as
-            // described in the comments above we WOULD still require it.
-            // Therefore, for now I'm making use of it to clarify the code.
+            /** Pick the sector at each of the sample points.
+            * \todo We don't actually need the blkSampleSectors array
+            * anymore. Now that ssamples stores the results consecutively
+            * a simple index into ssamples would suffice.
+            * However if the optimization to save memory is implemented as
+            * described in the comments above we WOULD still require it.
+            * Therefore, for now I'm making use of it to clarify the code.
+	    */
             n = (x + y * lgBlockWidth) * numSamples;
             for(i = 0; i < numSamples; ++i)
                 blkSampleSectors[i] = ssamples[i + n];
@@ -464,7 +461,7 @@ void LG_Init(void)
             {
                 if(block->sector == sector)
                 {
-                    // TODO: Determine min/max a/b before going into the loop.
+                    //// \todo Determine min/max a/b before going into the loop.
                     for(b = -2; b <= 2; ++b)
                     {
                         if(y + b < 0 || y + b >= lgBlockHeight)
@@ -791,7 +788,7 @@ void LG_Update(void)
                 bias = 0;
             }
 
-            // TODO: Calculate min/max for a and b.
+            //// \todo Calculate min/max for a and b.
             for(a = -2; a <= 2; ++a)
             {
                 for(b = -2; b <= 2; ++b)

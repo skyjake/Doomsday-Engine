@@ -2402,8 +2402,8 @@ void Rend_InitPlayerLightRanges(void)
  * Grabs the light value of the sector each player is currently
  * in and chooses an appropriate light range.
  *
- * TODO: Interpolate between current range and last when player
- *       changes sector.
+ * \todo Interpolate between current range and last when player
+ * changes sector.
  */
 void Rend_RetrieveLightSample(void)
 {
@@ -2434,12 +2434,13 @@ void Rend_RetrieveLightSample(void)
             continue;
         }
 
-        // Evaluate the light level at the point this player is at.
-        // Uses a very simply method which uses the sector in which the player
-        // is at currently and uses the light level of that sector.
-        // Really this is junk. We should evaluate the lighting condition using
-        // a much better method (perhaps obtain an average color from all the
-        // vertexes (selected lists only) rendered in the previous frame?)
+        /** Evaluate the light level at the point this player is at.
+        * Uses a very simply method which uses the sector in which the player
+        * is at currently and uses the light level of that sector.
+        * \todo Really this is junk. We should evaluate the lighting condition using
+        * a much better method (perhaps obtain an average color from all the
+        * vertexes (selected lists only) rendered in the previous frame?)
+	*/
      /*   if(useBias)
         {
             byte color[3];
@@ -2454,7 +2455,7 @@ void Rend_RetrieveLightSample(void)
             pos[VY] = FIX2FLT(player->mo->[VY]);
             pos[VZ] = FIX2FLT(player->mo->[VZ]);
 
-            // TODO: Should be affected by BIAS sources...
+            //// \todo Should be affected by BIAS sources...
             LG_Evaluate(pos, color);
             light = ((float)(color[0] + color[1] + color[2]) / 3) / 255.0f;
         }
@@ -2464,11 +2465,12 @@ void Rend_RetrieveLightSample(void)
             light = sub->sector->lightlevel;
         }
 
-        // Pick the range based on the current lighting conditions compared
-        // to the previous lighting conditions.
-        // We adapt to predominantly bright lighting conditions (mere seconds)
-        // much quicker than very dark lighting conditions (upto 30mins).
-        // Obviously that would be much too slow for a fast paced action game.
+        /** Pick the range based on the current lighting conditions compared
+        * to the previous lighting conditions.
+        * We adapt to predominantly bright lighting conditions (mere seconds)
+        * much quicker than very dark lighting conditions (upto 30mins).
+        * Obviously that would be much too slow for a fast paced action game.
+	*/
         if(light < playerLastLightSample[i].value)
         {
             // Going from a bright area to a darker one

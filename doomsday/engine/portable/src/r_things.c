@@ -567,8 +567,9 @@ void R_ProjectPlayerSprites(void)
 
         if(useBias)
         {
-            // Evaluate the position of this player in the light grid.
-            // TODO: Should be affected by BIAS sources.
+            /** Evaluate the position of this player in the light grid.
+            * \todo Should be affected by BIAS sources.
+	    */
             float       point[3];
 
             point[0] = FIX2FLT(viewplayer->mo->pos[VX]);

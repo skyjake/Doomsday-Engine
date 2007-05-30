@@ -440,7 +440,7 @@ static void drawFragsTable(void)
 
 /**
  * Draws the deathmatch stats
- * TODO: Merge with drawFragsTable()
+ * \todo Merge with drawFragsTable()
  */
 #if __JHEXEN__
 static void drawDeathmatchStats(void)

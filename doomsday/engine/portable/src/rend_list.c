@@ -261,7 +261,7 @@ static float blackColor[4] = { 0, 0, 0, 0 };
 
 void RL_Register(void)
 {
-    // TODO: Move cvars here.
+    //// \todo Move cvars here.
     C_VAR_BYTE("rend-dev-sky", &debugSky, 0, 0, 1);
 }
 

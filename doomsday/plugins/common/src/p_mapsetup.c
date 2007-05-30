@@ -272,10 +272,11 @@ int P_SetupLevelWorker(void *ptr)
     P_CloseWeapons();
 #endif
     
-    // DJS - TODO:
-    // This needs to be sorted out. R_SetupLevel should be called from the
-    // engine but in order to move it there we need to decide how polyobject
-    // init/setup is going to be handled.
+    /** DJS
+    * \todo This needs to be sorted out. R_SetupLevel should be called from the
+    * engine but in order to move it there we need to decide how polyobject
+    * init/setup is going to be handled.
+    */
 #if __JHEXEN__
     // Initialize polyobjs.
     Con_Message("Polyobject init\n");
@@ -330,7 +331,7 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
     
     DD_Executef(true, "texreset raw"); // delete raw images to save memory
     
-    // TODO: Use progress bar mode and update progress during the setup.
+    //// \todo Use progress bar mode and update progress during the setup.
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              P_SetupLevelWorker, &param);
 

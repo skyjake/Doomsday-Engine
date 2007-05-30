@@ -213,11 +213,11 @@ int P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
         case DAM_TOP_TEXTURE:
         case DAM_MIDDLE_TEXTURE:
         case DAM_BOTTOM_TEXTURE:
-            // It could be a BOOM overloaded texture name?
-            // In this context Doomsday expects either -1 (a bad texture name)
-            // Or the id of a wall texture it should set to this section.
-
-            // TODO: Add code to determine what to do.
+            /** It could be a BOOM overloaded texture name?
+            * In this context Doomsday expects either -1 (a bad texture name)
+            * Or the id of a wall texture it should set to this section.
+            * \todo Add code to determine what to do.
+	    */
             break;
 
         default:

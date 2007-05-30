@@ -1029,13 +1029,14 @@ void P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     if(inflictor && inflictor->type == MT_FIREEND)
     {   // Special for Motherdemon attack
 #if 0
-        // DJS - This was originally in a sub routine called P_TouchMotherFire
-        //       but due to the fact that <code>player</code> was not initialized
-        //       this likely does not work the way kaiser expected it to.
-        //       What would actually happen is not certain but I would guess it
-        //       would most likely simply return without doing anything at all.
-        // TODO: SHOULD this be fixed? Or is something implemented elsewhere
-        //       which does what this was attempting to do?
+        /** DJS - This was originally in a sub routine called P_TouchMotherFire
+        *       but due to the fact that <code>player</code> was not initialized
+        *       this likely does not work the way kaiser expected it to.
+        *       What would actually happen is not certain but I would guess it
+        *       would most likely simply return without doing anything at all.
+        * \todo SHOULD this be fixed? Or is something implemented elsewhere
+        *       which does what this was attempting to do?
+	*/
         int         damage;
         player_t   *player;
 

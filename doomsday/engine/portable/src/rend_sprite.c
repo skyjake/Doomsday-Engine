@@ -340,8 +340,9 @@ void Rend_DrawPlayerSprites(void)
 
         if(useBias)
         {
-            // Evaluate the position of this player in the light grid.
-            // TODO: Could be affected by BIAS (dynamic lights?).
+            /** Evaluate the position of this player in the light grid.
+            * \todo Could be affected by BIAS (dynamic lights?).
+	    */
             float point[3];
             
             point[VX] = FIX2FLT(viewplayer->mo->pos[VX]);

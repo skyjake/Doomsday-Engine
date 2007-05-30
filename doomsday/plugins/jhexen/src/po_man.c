@@ -39,6 +39,9 @@
  * You should have received a copy of the HERETIC / HEXEN source code
  * license along with this program (Ravenlic.txt); if not:
  * http://www.ravensoft.com/
+ *
+ * \bug PO_TranslateToStartSpot:  Multiple polyobjs in a single subsector -> https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1530158&group_id=74815
+ * 
  */
 
 /*

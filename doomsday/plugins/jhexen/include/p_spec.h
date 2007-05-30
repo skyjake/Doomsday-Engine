@@ -114,8 +114,7 @@ typedef struct {
     lighttype_t     type;
     float           value1;
     float           value2;
-    int             tics1;  // TODO: Type LITEGLOW uses this as a third light value.
-                            // As such, it has been left as 0 - 255 for now.
+    int             tics1;  //// \todo Type LITEGLOW uses this as a third light value. As such, it has been left as 0 - 255 for now.
     int             tics2;
     int             count;
 } light_t;

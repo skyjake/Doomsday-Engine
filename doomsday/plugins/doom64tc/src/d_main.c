@@ -107,12 +107,12 @@ char *borderLumps[] = {
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Attempt to change the current game mode. Can only be done when not
  * actually in a level.
  *
- * TODO: Doesn't actually do anything yet other than set the game mode
- *       global vars.
+ * \todo Doesn't actually do anything yet other than set the game mode
+ *  global vars.
  *
  * @param mode          The game mode to change to.
  * @return boolean      (TRUE) if we changed game modes successfully.
@@ -146,7 +146,7 @@ void D_GetDemoLump(int num, char *out)
     sprintf(out, "%cDEMO%i", 'R', num);
 }
 
-/*
+/**
  * Check which known IWADs are found. The purpose of this routine is to
  * find out which IWADs the user lets us to know about, but we don't
  * decide which one gets loaded or even see if the WADs are actually

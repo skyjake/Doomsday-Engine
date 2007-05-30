@@ -123,9 +123,10 @@ typedef struct d64tc_config_s {
     byte            coopRespawnItems;
     byte            respawnMonstersNightmare;
 
-    // Compatibility options.
-    // TODO: Put these into an array so we can use a bit array to change
-    //       multiple options based on a compatibility mode (ala PrBoom).
+    /** Compatibility options.
+    * \todo Put these into an array so we can use a bit array to change
+    * multiple options based on a compatibility mode (ala PrBoom).
+    */
     byte            maxskulls;
     byte            allowskullsinwalls;
     byte            anybossdeath;

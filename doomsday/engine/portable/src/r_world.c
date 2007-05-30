@@ -1267,9 +1267,8 @@ static void R_BuildSectorLinks(void)
             unclosed = true;
         else
         {
-            // TODO:
-            // Add algorithm to check for unclosed sectors here.
-            // Perhaps have a look at glBSP.
+            //// \todo Add algorithm to check for unclosed sectors here.
+            //// Perhaps have a look at glBSP.
         }
 
         if(unclosed)
@@ -1555,11 +1554,11 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
  * This algorithm detects self-referencing sector hacks used for
  * fake 3D structures.
  *
- * NOTE: Self-referencing sectors where all lines in the sector
- *       are self-referencing are NOT handled by this algorthim.
- *       Those kind of hacks are detected in R_BuildSectorLinks().
+ * \note Self-referencing sectors where all lines in the sector
+ * are self-referencing are NOT handled by this algorthim.
+ * Those kind of hacks are detected in R_BuildSectorLinks().
  *
- * TODO: DJS - We need to collect subsectors into "mutually
+ * \todo DJS - We need to collect subsectors into "mutually
  * exclusive groups" and instead of linking whole sectors to
  * another for rendering we should instead link each subsector
  * exclusion group to another sector (in most cases these can be
@@ -1575,6 +1574,7 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
  * From these line groups, we need to collect subsectors
  * into groups where all segs are in this group AND THIS side
  * (or self-referencing) is in this sector.
+ *
  */
 void R_RationalizeSectors(void)
 {
@@ -2579,9 +2579,9 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
         suf->rgba[2] != suf->oldrgba[2] ||
         suf->rgba[3] != suf->oldrgba[3]))
     {
-        // TODO: when surface colours are intergrated with the
-        // bias lighting model we will need to recalculate the
-        // vertex colours when they are changed.
+        //// \todo when surface colours are intergrated with the
+        //// bias lighting model we will need to recalculate the
+        //// vertex colours when they are changed.
         memcpy(suf->oldrgba, suf->rgba, sizeof(suf->oldrgba));
     }
 }

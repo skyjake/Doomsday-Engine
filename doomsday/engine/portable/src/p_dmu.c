@@ -802,7 +802,7 @@ int P_Callbackp(int type, void* ptr, void* context, int (*callback)(void* p, voi
 #endif
         break;
 
-    // TODO: If necessary, add special types for accessing multiple objects.
+    //// \todo If necessary, add special types for accessing multiple objects.
 
     default:
         Con_Error("P_Callbackp: Type %s unknown.\n", DMU_Str(type));
@@ -1124,7 +1124,7 @@ static int SetProperty(void* ptr, void* context)
                       DMU_Str(args->prop));
         }
 
-        // TODO: Notify relevant subsystems of any changes.
+        //// \todo Notify relevant subsystems of any changes.
         R_UpdateSector(p->sector, false);
 
         // Continue iteration.
@@ -1375,7 +1375,7 @@ static int SetProperty(void* ptr, void* context)
                       DMU_Str(args->prop));
         }
 
-        // TODO: Notify relevant subsystems of any changes.
+        //// \todo Notify relevant subsystems of any changes.
         R_UpdateSector(p, false);
 
         break;
@@ -1608,7 +1608,7 @@ static void GetValue(valuetype_t valueType, const void* src, setargs_t* args,
             args->intValues[index] = *s;
             break;
         case DDVT_FLOAT:
-            // TODO: Don't allow conversion from DDVT_FLATINDEX.
+            //// \todo Don't allow conversion from DDVT_FLATINDEX.
             args->floatValues[index] = *s;
             break;
         case DDVT_FIXED:

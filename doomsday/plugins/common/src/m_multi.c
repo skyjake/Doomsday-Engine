@@ -23,10 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * Multiplayer Menu (for jDoom, jHeretic and jHexen)
  * Contains an extension for edit fields.
- * TODO: Remove unnecessary SC* declarations and other unused code.
+ * \todo Remove unnecessary SC* declarations and other unused code.
  */
 
 // HEADER FILES ------------------------------------------------------------

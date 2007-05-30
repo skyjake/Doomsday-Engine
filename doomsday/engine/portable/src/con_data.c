@@ -522,7 +522,7 @@ if(cmd->params == NULL)
             // An existing ccmd with the same minimum number of args?
             else if(other->minArgs == minArgs)
             {
-                // TODO: Implement support for paramater type checking.
+                //// \todo Implement support for paramater type checking.
                 unique = false;
             }
 

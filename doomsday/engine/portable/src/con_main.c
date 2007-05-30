@@ -680,7 +680,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                            " attempted to use '%s'.\n"
                            "This command is not permitted for use by clients\n",
                            ccmd->name);
-                // TODO: Tell the client!
+                //// \todo Tell the client!
                 return true;
             }
 
@@ -707,7 +707,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                            " attempted to use '%s' via %s.\n"
                            "This invocation method is not permitted "
                            "by clients\n", ccmd->name, CMDTYPESTR(src));
-                // TODO: Tell the client!
+                //// \todo Tell the client!
                 return true;
 
             default:
@@ -1799,7 +1799,7 @@ void Con_Error(const char *error, ...)
         for(;;)
         {
             // We'll stop here. 
-            // TODO: Kill this thread?
+            //// \todo Kill this thread?
             Sys_Sleep(10000);
         }
     }

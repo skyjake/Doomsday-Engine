@@ -1104,12 +1104,12 @@ void P_SpawnSpecials(void)
     XG_Init();
 }
 
-/*
+/**
  * The code bellow this point has been taken from the Heretic source.
  * As such the HERETIC / HEXEN SOURCE CODE LICENSE applies.
  *
- * TODO: Move this stuff out of this file so that the above GPL code
- *       which is based on linuxdoom-1.10 can live in peace.
+ * \todo Move this stuff out of this file so that the above GPL code
+ * which is based on linuxdoom-1.10 can live in peace.
  */
 
 // FROM HERETIC ------------------------------------------------------------

@@ -1064,7 +1064,7 @@ int DAM_SetProperty(int type, uint idx, void *context)
     {
         void       *ptr = (type == DAM_THING? &index :
                            DAM_IndexToPtr(args->map, type, index));
-        // TODO: Use DMU's SetProperty for this, save code duplication.
+        //// \todo Use DMU's SetProperty for this, save code duplication.
         return SetProperty2(ptr, context);
     }
 }

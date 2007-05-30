@@ -164,8 +164,8 @@ void P_ShotAmmo(player_t *player)
  * use this ammo type.
  * If both non-zero - no more ammo for the current weapon.
  *
- * TODO: (C) Should be called AFTER ammo is given but we need to
- *       remember the old count before the change.
+ * \todo Should be called AFTER ammo is given but we need to
+ * remember the old count before the change.
  *
  * @param player            The player given the weapon.
  * @param weapon            The weapon given to the player (if any).

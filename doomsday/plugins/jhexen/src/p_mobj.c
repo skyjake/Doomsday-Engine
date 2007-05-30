@@ -694,7 +694,7 @@ void P_XYMovement(mobj_t *mo)
 }
 
 /**
- * TODO: Move this to p_inter ***
+ * \todo Move this to p_inter ***
  */
 void P_MonsterFallingDamage(mobj_t *mo)
 {

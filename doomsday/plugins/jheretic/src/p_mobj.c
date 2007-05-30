@@ -72,11 +72,10 @@
 
 // TYPES -------------------------------------------------------------------
 
-// TODO:
-// Currently Heretic doesn't really use the spawn que or spawnpoint stuff.
-// It uses quite a different method involving special STATEs. The respawn
-// time is therefore set by manipulation of the DED frame->time param of
-// each state. Furthermore, this process is divided in two parts.
+/** \todoCurrently Heretic doesn't really use the spawn que or spawnpoint stuff.
+* It uses quite a different method involving special STATEs. The respawn
+* time is therefore set by manipulation of the DED frame->time param of
+* each state. Furthermore, this process is divided in two parts. */
 typedef struct spawnobj_s {
     fixed_t pos[3];
     int     angle;
@@ -111,7 +110,7 @@ int     iquetail;
 
 // CODE --------------------------------------------------------------------
 
-/*
+/**
  * Returns true if the mobj is still present.
  */
 boolean P_SetMobjState(mobj_t *mobj, statenum_t state)

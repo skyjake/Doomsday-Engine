@@ -360,7 +360,7 @@ void    AM_ClearMarks(int pid);
 void    AM_SetCheatLevel(int pid, int level);
 void    AM_IncMapCheatLevel(int pid);
 
-// TODO: Split this functionality down into logical seperate settings.
+//// \todo Split this functionality down into logical seperate settings.
 void    AM_SetCheatLevel(int pnum, int level);
 void    AM_IncMapCheatLevel(int pnum); // Called to increase map cheat level.
 

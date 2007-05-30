@@ -117,20 +117,19 @@
  * Any questions?
  */
 
-/*
+/**
  * Mobj flags
  *
- * IMPORTANT - Keep this current!!!
- *
+ * \attention IMPORTANT - Keep this current!!!
  * LEGEND:
  * p    = Flag is persistent (never changes in-game).
  * i    = Internal use (not to be used in defintions).
  *
- * TODO: Persistent flags (p) don't need to be included in save games or sent to
+ * \todo Persistent flags (p) don't need to be included in save games or sent to
  * clients in netgames. We should collect those in to a const flags setting which
  * is set only once when the mobj is spawned.
  *
- * TODO: All flags for internal use only (i) should be put in another var and the
+ * \todo All flags for internal use only (i) should be put in another var and the
  * flags removed from those defined in GAME/objects.DED
  */
 

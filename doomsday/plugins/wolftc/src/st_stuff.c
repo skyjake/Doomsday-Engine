@@ -776,7 +776,7 @@ void ST_updateWidgets(void)
         if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])
             continue; // Weapon does not use this type of ammo.
 
-        // TODO: Only supports one type of ammo per weapon
+        //// \todo Only supports one type of ammo per weapon
         w_ready.num = &plr->ammo[ammotype];
         found = true;
     }
@@ -1076,8 +1076,8 @@ void ST_doFullscreenStuff(void)
     {
         ammotype_t ammotype;
 
-        // TODO: Only supports one type of ammo per weapon.
-        // for each type of ammo this weapon takes.
+        //// \todo Only supports one type of ammo per weapon.
+        //// for each type of ammo this weapon takes.
         for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
         {
             if(!weaponinfo[plr->readyweapon][plr->class].mode[0].ammotype[ammotype])
@@ -1336,8 +1336,8 @@ void ST_createWidgets(void)
     boolean    found;
     player_t *plyr = &players[consoleplayer];
 
-    // ready weapon ammo
-    // TODO: Only supports one type of ammo per weapon.
+    //// ready weapon ammo
+    //// \todo Only supports one type of ammo per weapon.
     found = false;
     for(ammotype=0; ammotype < NUM_AMMO_TYPES && !found; ++ammotype)
     {

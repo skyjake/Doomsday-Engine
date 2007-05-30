@@ -149,7 +149,7 @@ void P_InitData(void)
 }
 
 /**
- * TODO: Consolidate with R_UpdatePlanes?
+ * \todo Consolidate with R_UpdatePlanes?
  */
 void P_PlaneChanged(sector_t *sector, uint plane)
 {
@@ -173,9 +173,10 @@ void P_PlaneChanged(sector_t *sector, uint plane)
         if(!front || !front->sector || !back || !back->sector)
             continue;
 
-        // Do as in the original Doom if the texture has not been defined -
-        // extend the floor/ceiling to fill the space (unless its the skyflat),
-        // or if there is a midtexture use that instead.
+        /** Do as in the original Doom if the texture has not been defined -
+        * extend the floor/ceiling to fill the space (unless its the skyflat),
+        * or if there is a midtexture use that instead.
+	*/
         if(plane == PLN_FLOOR)
         {
             // Check for missing lowers.
@@ -367,8 +368,8 @@ boolean P_LoadMap(char *levelId)
  * to the user. If the errors couldn't be repaired or we cant
  * continue safely - an error dialog is presented.
  *
- * TODO: latter on this will be expanded to check for various
- *       doom.exe renderer hacks and other stuff.
+ * \todo latter on this will be expanded to check for various
+ * doom.exe renderer hacks and other stuff.
  *
  * @param silent        (True) Don't announce non-critical errors.
  *

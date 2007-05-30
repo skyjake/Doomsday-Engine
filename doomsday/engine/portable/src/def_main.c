@@ -1130,7 +1130,7 @@ void Def_PostInit(void)
     // Lump formats.
     for(i = 0; i < defs.count.lumpformats.num; ++i)
     {
-        // TODO: Initialize formats
+        //// \todo Initialize formats
     }
 
     // Animation groups.

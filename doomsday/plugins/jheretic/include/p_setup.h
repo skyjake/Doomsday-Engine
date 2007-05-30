@@ -44,13 +44,14 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-// Game specific map format properties for ALL games.
-// (notice jHeretic/jHexen properties are here too temporarily).
-
-// TODO: we don't need  to know about all of them once they
-//       are registered via DED.
-
-// Common map format properties
+/** Game specific map format properties for ALL games.
+* (notice jHeretic/jHexen properties are here too temporarily).
+*
+* \todo we don't need  to know about all of them once they
+* are registered via DED.
+*
+* Common map format properties
+*/
 enum {
     DAM_UNKNOWN = -2,
 

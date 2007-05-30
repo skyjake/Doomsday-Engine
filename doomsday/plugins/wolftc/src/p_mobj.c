@@ -360,7 +360,7 @@ static boolean PIT_Splash(sector_t *sector, void *data)
     if(mo->pos[VZ] < floorheight &&
        mo->pos[VZ] + mo->height / 2 > floorheight)
     {
-        // TODO: Play a sound, spawn a generator, etc.
+        //// \todo Play a sound, spawn a generator, etc.
     }
 
     // Continue checking.
