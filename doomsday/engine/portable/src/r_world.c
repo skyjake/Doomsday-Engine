@@ -1433,8 +1433,8 @@ static void R_BuildSubsectorPolys(void)
             // Initialize the illumination for the subsector.
             R_InitPlaneIllumination(sub, k);
         }
-        // FIXME: $nplanes
-        // Initialize the plane types.
+        //// \fixme $nplanes
+        //// Initialize the plane types.
         sub->planes[PLN_FLOOR]->type = PLN_FLOOR;
         sub->planes[PLN_CEILING]->type = PLN_CEILING;
     }
@@ -2479,9 +2479,9 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
         suf->oldmaterial.isflat = suf->material.isflat;
     }
 
-    // FIXME >
-    // Update glowing status?
-    // The order of these tests is important.
+
+    //// \fixme Update glowing status?
+    //// The order of these tests is important.
     if(forceUpdate || (suf->material.texture != suf->oldmaterial.texture))
     {
         // Check if the new texture is declared as glowing.
@@ -2617,8 +2617,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         // Surface changes?
         R_UpdateSurface(&plane->surface, forceUpdate);
 
-        // FIXME >
-        // Now update the glow properties.
+        //// \fixme Now update the glow properties.
         if(plane->surface.flags & SUF_GLOW)
         {
             plane->glow = 4; // Default height factor is 4

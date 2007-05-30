@@ -113,7 +113,7 @@ keyevent_t *I_GetKeyEvent(void)
 
 /**
  * Translate the SDL symbolic key code to a DDKEY.
- * FIXME: A translation array for these?
+ * \fixme A translation array for these?
  */
 int I_TranslateKeyCode(SDLKey sym)
 {
@@ -461,13 +461,14 @@ void I_GetJoystickState(joystate_t *state)
     // Update joysticks
     SDL_JoystickUpdate();
 
-    // Grab the first three axes. SDL returns a value between -32768 and
-    // 32767, but Doomsday is expecting -10000 to 10000. We'll convert
-    // as we go.
-
-    // FIXME: would changing IJOY_AXISMIN and IJOY_AXISMAX to -32768 and
-    // 32767 break the Windows version? If not that would make this
-    // cleaner.
+    /** Grab the first three axes. SDL returns a value between -32768 and
+    * 32767, but Doomsday is expecting -10000 to 10000. We'll convert
+    * as we go.
+    *
+    * \fixme would changing IJOY_AXISMIN and IJOY_AXISMAX to -32768 and
+    * 32767 break the Windows version? If not that would make this
+    * cleaner.
+    */
     for(i = 0; i < 3; ++i)
     {
         int         value;

@@ -22,11 +22,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_console.c: Text-Mode Console
  *
  * Standalone console window handling.  Used in dedicated mode.
- * FIXME: Some lazy programming in here...
+ * \fixme Some lazy programming in here...
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -39,7 +39,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LINELEN 256  // Lazy: This is the max acceptable window width.
+#define LINELEN 256  //// \fixme Lazy: This is the max acceptable window width.
 
 // TYPES -------------------------------------------------------------------
 

@@ -634,9 +634,9 @@ static void Rend_DecorateLine(int index)
             }
         }
 
-        // 2-sided middle texture?
-        // FIXME: Since halos aren't usually clipped by 2-sided middle
-        // textures, this looks a bit silly.
+        //// 2-sided middle texture?
+        //// \fixme Since halos aren't usually clipped by 2-sided middle
+        //// textures, this looks a bit silly.
         /*if(line->L_frontside && side = line->L_frontside->SW_middletexture)
         {
             rendpoly_t *quad = R_AllocRendPoly(RP_QUAD, true, 4);

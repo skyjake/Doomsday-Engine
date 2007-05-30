@@ -1638,8 +1638,8 @@ int Def_Set(int type, int index, int value, void *ptr)
 }
 
 /**
- * Prints a list of all the registered mobjs to the console.
- * FIXME: Does this belong here?
+ * \fixme Prints a list of all the registered mobjs to the console.
+ * Does this belong here?
  */
 D_CMD(ListMobjs)
 {

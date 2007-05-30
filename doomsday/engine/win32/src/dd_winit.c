@@ -255,7 +255,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
     case WM_CLOSE:
-        // FIXME: Allow closing via the close button.
+        //// \fixme Allow closing via the close button.
         break;
 
     default:
