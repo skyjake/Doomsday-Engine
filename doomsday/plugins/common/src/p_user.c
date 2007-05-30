@@ -28,10 +28,10 @@
  */
 
 /**
- * \todo DJS - This file contains a fair amount of Raven licensed code
+ * \bug  This file contains a fair amount of Raven licensed code
  *       however none is included when the build target is jDoom.
  *
- *       In the process of cleaning this up I will attempt to segregate
+ *       DJS - In the process of cleaning this up I will attempt to segregate
  *       offending code ready for rewrite or split.
  */
 

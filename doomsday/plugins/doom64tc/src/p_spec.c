@@ -82,7 +82,7 @@ static void P_ShootSpecialLine(mobj_t *thing, line_t *line);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-//// \todo From jHeretic, replace!
+//// \bug From jHeretic, replace!
 int    *TerrainTypes;
 struct terraindef_s {
     char   *name;
@@ -102,7 +102,7 @@ struct terraindef_s {
 // CODE --------------------------------------------------------------------
 
 /**
- * \todo This routine originated from jHeretic, we need to rewrite it!
+ * \bug This routine originated from jHeretic, we need to rewrite it!
  */
 void P_InitTerrainTypes(void)
 {
