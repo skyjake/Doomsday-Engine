@@ -663,8 +663,8 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
  */
 void P_ControlTicker(timespan_t time)
 {
-	// FIXME: Player class turn speed.
-	// angleturn[3] = {640, 1280, 320};	// + slow turn
+	//// \fixme  Player class turn speed.
+	//// angleturn[3] = {640, 1280, 320};	// + slow turn
 	uint        i;
 	float       pos, mul;
 

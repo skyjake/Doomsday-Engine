@@ -291,7 +291,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
  * pixel, or rather the number of bytes per pixel (3 or 4). The strides must
  * be byte-aligned anyway, though; not in pixels.
  *
- * FIXME: Probably could be optimized.
+ * \fixme Probably could be optimized.
  */
 static void scaleLine(byte *in, int inStride, byte *out, int outStride,
                       int outLen, int inLen, int comps)
@@ -802,7 +802,7 @@ void ImageAverageRGB(byte *imgdata, int width, int height, byte *rgb,
  * Fills the empty pixels with reasonable color indices in order to get rid
  * of black outlines caused by texture filtering.
  *
- * FIXME: Not a very efficient algorithm...
+ * \fixme Not a very efficient algorithm...
  */
 void ColorOutlines(byte *buffer, int width, int height)
 {

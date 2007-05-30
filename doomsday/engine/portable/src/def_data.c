@@ -22,10 +22,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * def_data.c: Doomsday Engine Definition Files
  *
- * FIXME: Needs to be redesigned.
+ * \fixme Needs to be redesigned.
  */
 
 #include <stdio.h>

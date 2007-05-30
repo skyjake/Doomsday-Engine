@@ -551,7 +551,7 @@ void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
     if(subsector->planes[PLN_FLOOR]->updated == lastChangeOnFrame || !updateAffected)
         return;
 
-    // FIXME: NOT optimal.
+    //// \fixme NOT optimal.
     aff = M_Calloc(subsector->sector->planecount * sizeof(affection_t));
 
     // For each plane.
@@ -568,8 +568,8 @@ void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
         if(src->intensity <= 0)
             continue;
 
-        // Calculate minimum 2D distance to the subsector.
-        // FIXME: This is probably too accurate an estimate.
+        //// Calculate minimum 2D distance to the subsector.
+        //// \fixme This is probably too accurate an estimate.
         for(k = 0; k < poly->numvertices; ++k)
         {
             V2_Set(delta,
@@ -1024,7 +1024,7 @@ void SB_AmbientLight(const float *point, gl_rgba_t *light)
  * the point have changed.  This is needed when there has been world
  * geometry changes.  'illum' is allowed to be NULL.
  *
- * FIXME: Only recalculate the changed lights.  The colors contributed
+ * \fixme Only recalculate the changed lights.  The colors contributed
  * by the others can be saved with the 'affected' array.
  */
 void SB_EvalPoint(gl_rgba_t *light,

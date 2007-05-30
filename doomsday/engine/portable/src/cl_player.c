@@ -148,9 +148,9 @@ int Cl_ReadPlayerDelta(void)
         clmobj_t *old = s->cmo;
         int     newid = Msg_ReadShort();
 
-        // Make sure the 'new' mobj is different than the old one;
-        // there will be linking problems otherwise.
-        // FIXME: What causes the duplicate sending of mobj ids?
+        //// Make sure the 'new' mobj is different than the old one;
+        //// there will be linking problems otherwise.
+        //// \fixme What causes the duplicate sending of mobj ids?
         if(newid != s->mobjId)
         {
             s->mobjId = newid;

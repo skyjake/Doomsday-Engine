@@ -373,8 +373,7 @@ static void SetValue(valuetype_t valueType, void* dst, damsetargs_t* args,
         case DDVT_VERT_IDX:
             {
             long        value;
-            // FIXME:
-            // There has to be a better way to do this...
+            //// \fixme There has to be a better way to do this...
             value = DAM_VertexIdx(args->longValues[index]);
             // end FIXME
             *(vertex_t **) dst = DAM_IndexToPtr(args->map, DAM_VERTEX, (unsigned) value);

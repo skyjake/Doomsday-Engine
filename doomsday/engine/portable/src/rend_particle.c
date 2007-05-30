@@ -255,7 +255,7 @@ void PG_InitForNewFrame(void)
         if((gen = activePtcGens[i]) != NULL)
         {
             gen->flags &= ~PGF_VISIBLE;
-            // FIXME: Overkill?
+            //// \fixme Overkill?
             for(k = 0; k < gen->count; ++k)
                 if(gen->ptcs[k].stage >= 0)
                     PG_LinkPtcGen(gen, gen->ptcs[k].sector);

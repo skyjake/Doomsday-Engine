@@ -102,7 +102,7 @@ static void P_FreePtcGen(ptcgen_t *gen)
 /**
  * Allocates a new active ptcgen and adds it to the list of active ptcgens.
  *
- * FIXME: Linear allocation when in-game is not good...
+ * \fixme Linear allocation when in-game is not good...
  */
 static ptcgen_t *P_NewPtcGen(void)
 {
@@ -502,11 +502,12 @@ static void P_NewParticle(ptcgen_t *gen)
             pt->pos[VZ] = FLT2FIX(gen->sector->SP_ceilheight) - i;
         }
 
-        // Choosing the XY spot is a bit more difficult.
-        // But we must be fast and only sufficiently accurate.
-
-        // FIXME: Nothing prevents spawning on the wrong side (or inside)
-        // of one-sided walls (large diagonal subsectors!).
+        /** Choosing the XY spot is a bit more difficult.
+        * But we must be fast and only sufficiently accurate.
+	*
+        * \fixme Nothing prevents spawning on the wrong side (or inside)
+        * of one-sided walls (large diagonal subsectors!).
+	*/
 
         box = gen->sector->bounds;
         for(i = 0; i < 5; ++i)  // Try a couple of times (max).

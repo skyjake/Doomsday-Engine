@@ -89,7 +89,7 @@ short  *xlat_lump;
  * server and the client are using different WAD configurations and
  * the lump index numbers happen to differ).
  *
- * FIXME: A bit questionable? Why not allow the clients to download
+ * \fixme A bit questionable? Why not allow the clients to download
  * data from the server in ambiguous cases?
  */
 void Cl_InitTranslations(void)

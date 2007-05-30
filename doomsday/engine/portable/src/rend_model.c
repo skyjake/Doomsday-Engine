@@ -54,7 +54,7 @@
 #define MAX_MODEL_LIGHTS    10
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)         qatan2(y,x)
-#define QASIN(x)            asin(x) // FIXME: Precalculate arcsin.
+#define QASIN(x)            asin(x) //// \fixme Precalculate arcsin.
 
 // TYPES -------------------------------------------------------------------
 

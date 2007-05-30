@@ -845,7 +845,7 @@ if(mo->dplayer)
                 if(max-- <= 0)
                     stopScan = true;
             }
-            // FIXME: What about max == -1? What should 'it' be then?
+            //// \fixme What about max == -1? What should 'it' be then?
         }
         if(!foundNext)
             *nextmodef = GetStateModel(it, mo->selector);
@@ -1317,7 +1317,7 @@ if(closest)
 
 /**
  * Frees all memory allocated for models.
- * FIXME: Why only centralized memory deallocation? Bad design...
+ * \fixme Why only centralized memory deallocation? Bad design...
  */
 void R_ShutdownModels(void)
 {

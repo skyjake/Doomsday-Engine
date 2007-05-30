@@ -871,7 +871,7 @@ static void P_FindMapLumps(int startLump)
     if(!strncmp(W_CacheLumpNum(startLump, PU_GETNAME), "GL_", 3))
     {
         AddMapDataLump(startLump, LCG_LABEL);
-        // FIXME: This isn't right.
+        //// \fixme This isn't right.
         aux = true; // We'll be checking the auxilary lump cache
     }
     else
@@ -1416,15 +1416,14 @@ void *DAM_IndexToPtr(gamemap_t* map, int objectType, uint id)
  */
 long DAM_VertexIdx(long idx)
 {
-    // FIXME:
-    // The firstGLvertex offset should be handed down from the very
-    // start of the read process, it should not be a global.
-    // If GL NODES are available this might be an "extra" vertex.
+    //// \fixme The firstGLvertex offset should be handed down from the very
+    //// start of the read process, it should not be a global.
+    //// If GL NODES are available this might be an "extra" vertex.
 
     mapdatalumpformat_t *format = &glNodeFormats[glNodeFormat].
            verInfo[DAM_MapLumpInfoForLumpClass(LCG_SEGS)->glLump];
 
-    // FIXME: Hard linked format logic.
+    //// \fixme Hard linked format logic.
     switch(format->hversion)
     {
     case 2:
