@@ -191,6 +191,8 @@ void DetectIWADs(void)
         {"doom1.wad", "-sdoom"},
         {"doom.wad", "-doom"},
         {"doom.wad", "-ultimate"},
+        {"doomu.wad", "-udoom"},
+	{"freedoom.wad", "-freedoom"},
         {0, 0}
     };
     int         i, k;
@@ -290,7 +292,7 @@ void D_IdentifyFromData(void)
         D_SetGameMode(registered);
         return;
     }
-    if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt"))
+    if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt") || ArgCheck("-freedoom"))
     {
         // DOOM 2.
         D_SetGameMode(commercial);
@@ -301,7 +303,7 @@ void D_IdentifyFromData(void)
             gamemission = GM_TNT;
         return;
     }
-    if(ArgCheck("-ultimate"))
+    if(ArgCheck("-ultimate") || ArgCheck("-udoom"))
     {
         // Retail DOOM 1: Ultimate DOOM.
         D_SetGameMode(retail);
