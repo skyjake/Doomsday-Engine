@@ -30,6 +30,12 @@
  * http://oss.sgi.com/projects/ogl-sample/
  */
 
+/** \todo The *NIX/SDL and Windows/GDI OpenGL Routines really need to be merged
+* into a combined *NIX-Windows/SDL based system. We far far too much duplication,
+* it its obvious changes on the *NIX side, never propogated to the Windows side.
+* I'd use the *NIX/SDL files as the base for the new combined OpenGL system - Yagian
+*/
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "drOpenGL.h"

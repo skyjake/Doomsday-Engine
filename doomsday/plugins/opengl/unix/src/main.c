@@ -34,6 +34,18 @@
 //**
 //**************************************************************************
 
+/** \todo The *NIX/SDL and Windows/GDI OpenGL Routines really need to be merged
+* into a combined *NIX-Windows/SDL based system. We far far too much duplication,
+* it its obvious changes on the *NIX side, never propogated to the Windows side.
+* I'd use the *NIX/SDL files as the base for the new combined OpenGL system - Yagisan
+* \todo We need to fully utilise graphics cards - suggest a few serperate rendering
+* paths, software (as a fallback when feature is unavialable), OpenGL fixed function
+* (Default older hardware), OpenGL Shaders (Default newer hardware). These graphics
+* cards, even the OpenGL fixed function ones (~1995) can instance many of our models
+* in hardware, giving a tremndous boost in speed, and allowing us to make deng the
+* undisputed eye-candy engine. - Yagisan
+*/
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "dropengl.h"
