@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * p_control.c: Player Controls
  */
 
@@ -57,7 +57,7 @@ enum
 	CTL_LOOK
 };
 
-/*
+/**
  * The control descriptors contain a mapping between symbolic control
  * names and the identifier numbers.
  */ 
@@ -70,7 +70,7 @@ typedef struct controlclass_s {
 	controldesc_t *desc;
 } controlclass_t;
 
-/*
+/**
  * Each player has his own control state table.
  */
 typedef struct controlstate_s {
@@ -116,7 +116,7 @@ static controlstate_t ctlState[DDMAXPLAYERS];
 
 // CODE --------------------------------------------------------------------
 
-/**
+/***
  * Register the console commands and cvars of the player controls subsystem. 
  */
 void P_RegisterControl(void)
@@ -284,7 +284,7 @@ static controldesc_t *controlAdd(uint class, const char *name)
  * All the symbolic names must be unique and at most MAX_DESCRIPTOR_LENGTH
  * chars long!
  *
- * @param class         Control class of the descriptor being registered.
+ * @param cClass        Control class of the descriptor being registered.
  * @param name          A unique name for the new control descriptor.
  */
 void P_RegisterPlayerControl(uint cClass, const char *name)
@@ -663,8 +663,9 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
  */
 void P_ControlTicker(timespan_t time)
 {
-	//// \fixme  Player class turn speed.
-	//// angleturn[3] = {640, 1280, 320};	// + slow turn
+	/** \fixme  Player class turn speed.
+	* angleturn[3] = {640, 1280, 320};	// + slow turn
+	*/
 	uint        i;
 	float       pos, mul;
 
