@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * con_buffer.c: Console history buffer.
  *
  * NOTE: With respect to threading, this code assumes that a cbuffer,
@@ -401,7 +401,7 @@ static uint bufferGetLines(cbuffer_t *buf, uint reqCount, int firstIdx,
  *                      use the current number of lines as the limit.
  * @param firstIdx      Line index of the first line to be retrieved. If
  *                      negative, the index is from the end of list.
- * @param buffer        Ptr to an array of console buffer ptrs which we'll
+ * @param list          Ptr to an array of console buffer ptrs which we'll
  *                      write to and terminate with <code>NULL</code>
  *
  * @return              The number of elements written back to the buffer.
