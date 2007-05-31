@@ -206,7 +206,16 @@ EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = 
 INCLUDE_FILE_PATTERNS  = 
-PREDEFINED             = __JDOOM__ __JHERETIC__ __JHEXEN__ __JSTRIFE__ __WOLFTC__ __DOOM64TC__ UNIX WIN32 MACOSX USE_MULTITEXTURE
+PREDEFINED             = __JDOOM__ \
+			 __JHERETIC__ \
+			 __JHEXEN__ \
+			 __JSTRIFE__ \
+			 __WOLFTC__ \
+			 __DOOM64TC__ \
+			 UNIX \
+			 WIN32 \
+			 MACOSX \
+			 USE_MULTITEXTURE
 EXPAND_AS_DEFINED      = 
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------
