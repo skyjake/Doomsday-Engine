@@ -854,7 +854,7 @@ void Con_UpdateKnownWords(void)
  *                  written back to this location if NOT <code>NULL</code>.
  *
  * @return          A NULL-terminated array of pointers to all the known
- *                  words which match (at least partially) @param word.
+ *                  words which match (at least partially) @param word
  */
 knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
                                                 unsigned int *count)
