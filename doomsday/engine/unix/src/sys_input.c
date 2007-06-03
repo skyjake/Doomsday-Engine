@@ -25,8 +25,9 @@
  */
 
 
-/*
+/**
  * sys_input.c: Keyboard, mouse and joystick input using SDL
+ * \todo - Unify this with Win32.
  */
 
 // HEADER FILES ------------------------------------------------------------

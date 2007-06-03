@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
+/**
  * sys_dylib.c: Dynamic Libraries
  *
  * These functions provide roughly the same functionality as the ltdl
