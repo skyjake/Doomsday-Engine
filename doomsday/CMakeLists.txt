@@ -74,6 +74,7 @@ IF (WIN32)
  	SET(ENV{ZLIBDIR} "c:/sdk/zlib")
 	SET(ENV{LIBPNGDIR} "c:/sdk/libpng")
 	SET(ENV{DIRECTXDIR} "c:/sdk/dx8mgw")
+	SET(ENV{LIBCURLDIR} "c:/sdk/libcurl")
 ENDIF (WIN32)
 
 ################################################################################
