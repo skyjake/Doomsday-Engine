@@ -12,7 +12,7 @@ MARK_AS_ADVANCED(CURL_INCLUDE_DIR)
 
 # Look for the library.
 FIND_LIBRARY(CURL_LIBRARY NAMES curl
-  $ENV{LIBCURLDIR}/lib))
+  $ENV{LIBCURLDIR}/lib)
 MARK_AS_ADVANCED(CURL_LIBRARY)
 
 # Copy the results to the output variables.
