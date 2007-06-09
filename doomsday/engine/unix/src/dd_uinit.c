@@ -297,7 +297,14 @@ int main(int argc, char **argv)
 	// run in dedicated mode.
 	if(!ArgExists("-dedicated"))
 	{
+/**
+*\attention  Solaris has no Joystick support according to https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
+*/
+#ifdef SOLARIS
+		if(SDL_InitSubSystem(SDL_INIT_VIDEO))
+#else
 		if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
+#endif
 		{
 			DD_ErrorBox(true, "SDL Init Failed: %s\n", SDL_GetError());
 			return 5;
