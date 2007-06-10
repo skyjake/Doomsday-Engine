@@ -79,47 +79,47 @@ void G_RegisterPlayerControls(void)
     } control_t;
 
     control_t axisCts[] = {
-    {"WALK"},
-    {"SIDESTEP"},
-    {"turn"},
-    {"ZFLY"},
-    {"look"},
-    {"MAPPANX"},
-    {"MAPPANY"},
-    {""}  // terminate
+        {"WALK"},
+        {"SIDESTEP"},
+        {"turn"},
+        {"ZFLY"},
+        {"look"},
+        {"MAPPANX"},
+        {"MAPPANY"},
+        {""}  // terminate
     };
 
     control_t toggleCts[] = {
-    {"ATTACK"},
-    {"USE"},
-    {"strafe"},
-    {"SPEED"},
-    {"JUMP"},
-    {"mlook"},
-    {"jlook"},
-    {"mzoomin"},
-    {"mzoomout"},
-    {""}  // terminate
+        {"ATTACK"},
+        {"USE"},
+        {"strafe"},
+        {"SPEED"},
+        {"JUMP"},
+        {"mlook"},
+        {"jlook"},
+        {"mzoomin"},
+        {"mzoomout"},
+        {""}  // terminate
     };
 
     control_t impulseCts[] = {
-    {"falldown"},
-    {"lookcntr"},
-    {"weap1"},
-    {"weapon1"},
-    {"weapon2"},
-    {"weap3"},
-    {"weapon3"},
-    {"weapon4"},
-    {"weapon5"},
-    {"weapon6"},
-    {"weapon7"},
-    {"weapon8"},
-    {"weapon9"},
-    {"nextwpn"},
-    {"prevwpn"},
-    {"demostop"},
-    {""}  // terminate
+        {"falldown"},
+        {"lookcntr"},
+        {"weap1"},
+        {"weapon1"},
+        {"weapon2"},
+        {"weap3"},
+        {"weapon3"},
+        {"weapon4"},
+        {"weapon5"},
+        {"weapon6"},
+        {"weapon7"},
+        {"weapon8"},
+        {"weapon9"},
+        {"nextwpn"},
+        {"prevwpn"},
+        {"demostop"},
+        {""}  // terminate
     };
     uint        i;
 
