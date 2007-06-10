@@ -215,7 +215,7 @@ ENDIF (UNIX)
 		)
 
 		SET (datadir
-		${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
+		${CMAKE_INSTALL_PREFIX}
 		CACHE
 		PATH
 		"install location for data files"
@@ -225,7 +225,7 @@ ENDIF (UNIX)
 	ENDIF (WIN32)
 
 IF (UNIX)
-	IF (NOT WIN32)
+#	IF (NOT WIN32)
 	## Where does it go on OSX ? FIXME
 	## Thess .pk3s is generated in the Generate.pk3 target.
 	SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 )
@@ -249,7 +249,7 @@ IF (UNIX)
 	SET (DENG_DOOM64TC_DATA ${CMAKE_CURRENT_BINARY_DIR}/doom64tc.pk3 )
 	SET (DENG_DOOM64TC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/doom64tc)
 
-	ENDIF (NOT WIN32)
+#	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
 IF (UNIX)
