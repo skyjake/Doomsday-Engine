@@ -163,9 +163,6 @@ MOVE /Y dd_maptypes.h ../../engine/api\
 MOVE /Y p_maptypes.h ../../engine/portable/include\
 GOTO DONE
 
-:packres
-CALL vcbuild.bar script "../../engine/scripts/makedmt.py < ../scripts/packres.py <
-
 
 :: *** Doomsday.exe
 :Doomsday
