@@ -723,11 +723,11 @@ IF (WIN32)
 ENDIF (WIN32)
 
 ## Work around for Win32 wanting something for the plugins to link to
-IF (WIN32)
-	ADD_LIBRARY (deng STATIC ${DENG_SOURCES} engine/api/doomsday.def)
-	TARGET_LINK_LIBRARIES (deng ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} wsock32 winmm gdi32 ole32 user32
-	${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
-ENDIF (WIN32)
+#IF (WIN32)
+#	ADD_LIBRARY (deng STATIC ${DENG_SOURCES} engine/api/doomsday.def)
+#	TARGET_LINK_LIBRARIES (deng ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} wsock32 winmm gdi32 ole32 user32
+#	${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
+#ENDIF (WIN32)
 
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################
