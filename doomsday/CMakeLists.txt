@@ -200,6 +200,27 @@ IF (UNIX)
 	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 	IF (WIN32)
+		SET (bindir
+		${CMAKE_INSTALL_PREFIX}/bin
+		CACHE
+		PATH
+		"install location for executables"
+		)
+
+		SET (libdir
+		${CMAKE_INSTALL_PREFIX}/lib
+		CACHE
+		PATH
+		"install location for libraries"
+		)
+
+		SET (datadir
+		${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
+		CACHE
+		PATH
+		"install location for data files"
+		)
+
 		## FIXME. Add location here for WIN32
 	ENDIF (WIN32)
 
