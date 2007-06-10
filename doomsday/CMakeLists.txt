@@ -605,9 +605,9 @@ ENDIF (NOT DOT)
 ######################## External LZSS Files ###################################
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
 
-IF (UNIX)
+IF (UNIX AND NOT WIN32)
 	FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c )
-ENDIF (UNIX)
+ENDIF (UNIX AND NOT WIN32)
 
 IF (WIN32)
 	SET (LZSS_SOURCES "")
