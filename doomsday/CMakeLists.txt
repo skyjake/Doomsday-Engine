@@ -721,8 +721,7 @@ IF (UNIX)
 ENDIF (UNIX)
 
 IF (WIN32)
-	MESSAGE( STATUS ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
-	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
+	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss.lib )
 ENDIF (WIN32)
 
 ## Work around for Win32 wanting something for the plugins to link to
