@@ -605,9 +605,11 @@ ENDIF (NOT DOT)
 ######################## External LZSS Files ###################################
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
 
-IF (UNIX AND NOT WIN32)
+IF (UNIX)
+	IF (NOT WIN32)
 	FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c )
-ENDIF (UNIX AND NOT WIN32)
+	ENDIF (NOT WIN32)
+ENDIF (UNIX)
 
 IF (WIN32)
 	SET (LZSS_SOURCES "")
@@ -719,6 +721,7 @@ IF (UNIX)
 ENDIF (UNIX)
 
 IF (WIN32)
+	MESSAGE( STATUS ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
 	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
 ENDIF (WIN32)
 
