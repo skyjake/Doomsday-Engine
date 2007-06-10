@@ -163,6 +163,9 @@ MOVE /Y dd_maptypes.h ../../engine/api\
 MOVE /Y p_maptypes.h ../../engine/portable/include\
 GOTO DONE
 
+:packres
+CALL vcbuild.bar script "../../engine/scripts/makedmt.py < ../scripts/packres.py <
+
 
 :: *** Doomsday.exe
 :Doomsday
@@ -199,6 +202,7 @@ cl /O2 /Gd /EHsc /MT /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "dr
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
+
 :: *** drOpenGL.dll
 :drOpenGL
 ECHO Compiling drOpenGL.dll (OpenGL driver)...
@@ -213,6 +217,15 @@ GOTO Failure
 ECHO Compiling dsA3D.dll (A3D SoundFX driver) -- SKIPPING!
 REM md %OBJ_DIR%\dsA3D
 REM cl /O2 /Ob1 %INCS% /I "%A3D_INC%" %DLLDEFINES% /D "DSA3D_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dsA3D" /Fd"./%OBJ_DIR%/dsA3D" /W3 /Gd  @dsa3d_cl.rsp  /link /OUT:"./%BIN_DIR%/dsA3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/a3d/api/dsA3D.def" /IMPLIB:"./%BIN_DIR%/dsA3D.lib" %LIBS% /LIBPATH:"%A3D_LIB%" ./%BIN_DIR%/doomsday.lib ia3dutil.lib ole32.lib 
+IF %ERRORLEVEL% == 0 GOTO Done
+GOTO Failure
+
+
+:: *** dsOpenAL.dll
+:dsOpenAL
+ECHO Compiling dsOpenAL.dll (OpenAL SoundFX driver)...
+REM md %OBJ_DIR%\dsOpenAL
+REM cl /O2 /Ob1 %INCS% /I "%OPENAL_INC" %DLLDEFINES% /D "DSOPENAL_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%oBJ_DIR/dsOpenAL" /Fd"./%OBJ_DIR/dsOpenAL" /W3 /Gd  @dsopenal_cl.rsp  /link /OUT:"./%BIN_DIR%/dsOpenAL.dll" %LFLAGS% /DLL / DEF:"./../../plugins/openal/api/dsOpenAL.def" /IMPLIB:"./%BIN_DIR%/dsOpenAL.lib" %LIBS% /LIBPATH:"%OPENAL_LIB%" ./%BIN_DIR%/doomsday.lib openal32.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

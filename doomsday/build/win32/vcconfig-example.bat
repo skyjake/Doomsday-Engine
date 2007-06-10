@@ -47,3 +47,10 @@ REM
 REM ---- Aureal A3D:
 SET A3D_INC=D:\sdk\Aureal\A3D 3.0 SDK\sdk\inc
 SET A3D_LIB=D:\sdk\Aureal\A3D 3.0 SDK\sdk\lib
+
+
+REM -=- Requirements for dsOpenAL.dll -=-
+REM
+REM ---- OpenAL:
+SET OPENAL_INC=D:\sdk\OpenAL 1.1 SDK\include
+SET OPENAL_LIB=D:\sdk\OpenAL 1.1 SDK\libs
