@@ -603,15 +603,15 @@ ENDIF (NOT DOT)
 ######################## External LZSS Files ###################################
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
 
-IF (UNIX)
-	IF (NOT WIN32)
+##IF (UNIX)
+##	IF (NOT WIN32)
 	FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c )
-	ENDIF (NOT WIN32)
-ENDIF (UNIX)
+##	ENDIF (NOT WIN32)
+##ENDIF (UNIX)
 
-IF (WIN32)
-	SET (LZSS_SOURCES "")
-ENDIF (WIN32)
+##IF (WIN32)
+##	SET (LZSS_SOURCES "")
+##ENDIF (WIN32)
 ################################################################################
 ######################## The Doomsday Engine  ##################################
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
@@ -682,7 +682,7 @@ IF (WIN32)
 	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c )
 
 
-	SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_WIN32_SOURCES})
+	SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_WIN32_SOURCES}  ${LZSS_SOURCES})
 ENDIF (WIN32)
 
 ## .m is Obj-C
@@ -719,7 +719,8 @@ IF (UNIX)
 ENDIF (UNIX)
 
 IF (WIN32)
-	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss.lib )
+##	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss.lib )
+	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 )
 ENDIF (WIN32)
 
 ## Work around for Win32 wanting something for the plugins to link to
