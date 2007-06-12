@@ -69,7 +69,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define O_BINARY 0
+Disable this because of: warning: "O_BINARY" redefined on mingw
+//#define O_BINARY 0
 
 #define FILE_OPEN(filename, handle)             handle = open(filename, O_RDONLY | O_BINARY)
 #define FILE_CREATE(filename, handle)           handle = open(filename, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, 0664)
