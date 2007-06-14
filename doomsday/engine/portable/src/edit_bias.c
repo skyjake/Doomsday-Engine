@@ -113,12 +113,10 @@ void SBE_Register(void)
     C_VAR_FLOAT("edit-bias-grab-distance", &editDistance, 0, 10, 1000);
 
     // DJS - Why were these cvars?
-/*
-    C_VAR_FLOAT("edit-bias-red", &editColor[0], 0, 0, 1);
-    C_VAR_FLOAT("edit-bias-green", &editColor[1], 0, 0, 1);
-    C_VAR_FLOAT("edit-bias-blue", &editColor[2], 0, 0, 1);
-    C_VAR_FLOAT("edit-bias-intensity", &editIntensity, 0, 1, 50000);
-*/
+    C_VAR_FLOAT("edit-bias-red", &editColor[0], CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_FLOAT("edit-bias-green", &editColor[1], CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_FLOAT("edit-bias-blue", &editColor[2], CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_FLOAT("edit-bias-intensity", &editIntensity, CVF_NO_ARCHIVE, 1, 50000);
 
     C_VAR_INT("edit-bias-blink", &editBlink, 0, 0, 1);
     C_VAR_INT("edit-bias-hide", &editHidden, 0, 0, 1);
