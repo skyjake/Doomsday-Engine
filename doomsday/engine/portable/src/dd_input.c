@@ -570,7 +570,8 @@ static void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
     }
     else
     {
-        dev->keys[ev->controlID] = (ev->data1 == EVS_DOWN);
+        dev->keys[ev->controlID] =
+            (ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT);
     }
 }
 
@@ -1169,46 +1170,63 @@ void DD_ReadJoystick(void)
     if(div > 100)
         div = 100;*/
 
-    ev.data1 = state.axis[0];
-    ev.controlID = 0;
-//    CLAMP(ev.data1);
-    DD_PostEvent(&ev);
+    // fixme\ Check each axis position against dead zone and previous value.
+    if(state.axis[0])
+    {
+        ev.data1 = state.axis[0];
+        ev.controlID = 0;
+        DD_PostEvent(&ev);
+    }
 
-    ev.data1 = state.axis[1];
-    ev.controlID = 1;
-//  CLAMP(ev.data1);
-    DD_PostEvent(&ev);
+    if(state.axis[1])
+    {
+        ev.data1 = state.axis[1];
+        ev.controlID = 1;
+        DD_PostEvent(&ev);
+    }
 
-    ev.data1 = state.axis[2];
-    ev.controlID = 2;
-//  CLAMP(ev.data1);
-    DD_PostEvent(&ev);
+    if(state.axis[2])
+    {
+        ev.data1 = state.axis[2];
+        ev.controlID = 2;
+        DD_PostEvent(&ev);
+    }
 
-    ev.data1 = state.rotAxis[0];
-    ev.controlID = 3;
-//  CLAMP(ev.data1);
-    DD_PostEvent(&ev);
+    if(state.rotAxis[0])
+    {
+        ev.data1 = state.rotAxis[0];
+        ev.controlID = 3;
+        DD_PostEvent(&ev);
+    }
 
-    ev.data1 = state.rotAxis[1];
-    ev.controlID = 4;
-//  CLAMP(ev.data1);
-    DD_PostEvent(&ev);
+    if(state.rotAxis[1])
+    {
+        ev.data1 = state.rotAxis[1];
+        ev.controlID = 4;
+        DD_PostEvent(&ev);
+    }
 
-    ev.data1 = state.rotAxis[2];
-    ev.controlID = 5;
-//  CLAMP(ev.data1);
-    DD_PostEvent(&ev);
+    if(state.rotAxis[2])
+    {
+        ev.data1 = state.rotAxis[2];
+        ev.controlID = 5;
+        DD_PostEvent(&ev);
+    }
 
     // The sliders.
-    ev.data1 = state.slider[0];
-    ev.controlID = 6;
-//  CLAMP(ev.data1);
-    DD_PostEvent(&ev);
+    if(state.slider[0])
+    {
+        ev.data1 = state.slider[0];
+        ev.controlID = 6;
+        DD_PostEvent(&ev);
+    }
 
-    ev.data1 = state.slider[1];
-    ev.controlID = 7;
-//  CLAMP(ev.data1);
-    DD_PostEvent(&ev);
+    if(state.slider[1])
+    {
+        ev.data1 = state.slider[1];
+        ev.controlID = 7;
+        DD_PostEvent(&ev);
+    }
 }
 
 static void I_PrintAxisConfig(inputdev_t *device, inputdevaxis_t *axis)

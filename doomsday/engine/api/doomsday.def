@@ -6,6 +6,8 @@ NAME			"DOOMSDAY"
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
 ; 232 formerly R_SetAnimGroup
+; 44 formerly B_FormEventString
+; 45 formerly B_BindingsForCommand
 
 EXPORTS
 	Plug_AddHook			@1 NONAME
@@ -76,15 +78,13 @@ EXPORTS
 	Con_Printf			@37 NONAME
 	Con_FPrintf			@38 NONAME
 	DD_Execute			@39 NONAME
-	DD_Executef		@40 NONAME
+	DD_Executef		    @40 NONAME
 	Con_Message			@41 NONAME
 	Con_Error			@42 NONAME
 	Con_Busy            @330 NONAME
 	Con_BusyWorkerEnd   @331 NONAME
 
 ; Console: Bindings.
-	B_FormEventString		@44 NONAME
-	B_BindingsForCommand	@45 NONAME
 	DD_AddBindClass		@251 NONAME
 	DD_SetBindClass		@252 NONAME
 
@@ -143,14 +143,14 @@ EXPORTS
 	P_Callback		@258 NONAME
 	P_Callbackp		@259 NONAME
 
-    	; dummy functions
-	P_AllocDummy		@321 NONAME
+    ; dummy functions
+	P_AllocDummy	@321 NONAME
 	P_FreeDummy		@322 NONAME
 	P_DummyType		@323 NONAME
 	P_IsDummy		@324 NONAME
-	P_DummyExtraData	@325 NONAME
+	P_DummyExtraData @325 NONAME
 
-    	; index-based write functions
+    ; index-based write functions
 	P_SetBool		@260 NONAME
 	P_SetByte		@261 NONAME
 	P_SetInt		@262 NONAME
@@ -179,9 +179,9 @@ EXPORTS
 	P_SetBoolpv		@282 NONAME
 	P_SetBytepv		@283 NONAME
 	P_SetIntpv		@284 NONAME
-	P_SetFixedpv		@285 NONAME
-	P_SetAnglepv		@286 NONAME
-	P_SetFloatpv		@287 NONAME
+	P_SetFixedpv	@285 NONAME
+	P_SetAnglepv	@286 NONAME
+	P_SetFloatpv	@287 NONAME
 	P_SetPtrpv		@288 NONAME    
 
 	; index-based read functions
@@ -213,9 +213,9 @@ EXPORTS
 	P_GetBoolpv		@310 NONAME
 	P_GetBytepv		@311 NONAME
 	P_GetIntpv		@312 NONAME
-	P_GetFixedpv		@313 NONAME
-	P_GetAnglepv		@314 NONAME
-	P_GetFloatpv		@315 NONAME
+	P_GetFixedpv	@313 NONAME
+	P_GetAnglepv	@314 NONAME
+	P_GetFloatpv	@315 NONAME
 	P_GetPtrpv		@316 NONAME
 
 	; manipulation functions

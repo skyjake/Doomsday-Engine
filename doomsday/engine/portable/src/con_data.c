@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -522,7 +522,7 @@ if(cmd->params == NULL)
             // An existing ccmd with the same minimum number of args?
             else if(other->minArgs == minArgs)
             {
-                //// \todo Implement support for paramater type checking.
+                // \todo Implement support for paramater type checking.
                 unique = false;
             }
 
@@ -568,6 +568,8 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
     boolean     found;
     ddccmd_t    *ccmd = NULL;
 
+    // \todo Use a faster than O(n) linear search. Note, ccmd->name is not
+    //       a unique key (ccmds can share names if params differ).
     found = false;
     i = 0;
     while(!found && i < numCCmds)

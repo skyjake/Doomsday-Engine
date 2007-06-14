@@ -505,7 +505,6 @@ void G_PostInit(void)
     XG_Register();              // register XG classnames
 #endif
 
-    G_DefaultBindings();
     R_SetViewSize(cfg.screenblocks, 0);
 
     Con_Message("P_Init: Init Playloop state.\n");

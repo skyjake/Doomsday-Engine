@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,9 +67,6 @@ void    B_Init(void);
 void    DD_AddBindClass(struct bindclass_s *);
 boolean  B_SetBindClass(uint classID, uint type);
 void    B_RegisterBindClasses(void);
-int     B_BindingsForCommand(char *command, char *buffer, uint bindClass,
-                             boolean allClasses);
-void    B_ClearBinding(char *command, uint bindClass, boolean allClasses);
 char   *B_ShortNameForKey(int ddkey);
 boolean B_Responder(ddevent_t *ev);
 void    B_WriteToFile(FILE *file);

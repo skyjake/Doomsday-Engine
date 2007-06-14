@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -192,6 +192,7 @@ static uint controlFind(controlclass_t *cl, const char *name)
 {
 	uint        i;
 
+    // \fixme Use a faster than O(n) linear search.
 	for(i = 0; i < cl->count; ++i)
 	{
 		if(!stricmp(cl->desc[i].name, name))
@@ -234,7 +235,9 @@ float P_ControlGetAxis(int player, const char *name)
 		pos = (axis->toggle->state == TG_POSITIVE? 1 : -1);
 
 		// During the slow turn time, the speed is halved.
-/*      // DJS - Not with ALL axes!
+/*      // DJS - The time and strength of the slow speed modifier should be
+        //       specified when the axis is registered by the game.
+        //       A time of zero, would mean no slow turn timer. 
         if(Sys_GetSeconds() - axis->toggle->time < SLOW_TURN_TIME)
 		{
 			pos /= 2;
@@ -335,6 +338,7 @@ void P_RegisterPlayerControl(uint cClass, const char *name)
  * controls are intended for local use only.
  *
  * @param player        Player num whose toggle control states to collect.
+ *
  * @return              The created bitmap.
  */
 int P_ControlGetToggles(int player)
@@ -682,177 +686,6 @@ void P_ControlTicker(timespan_t time)
 		P_ControlAxisDelta(i, CTL_LOOK, mul * pos);
 	}
 }
-
-#if 0
-boolean buildEventFromCtlDescriptor(int player, controldesc_t *desc,
-                                    evtype_t type, evstate_t state,
-                                    ddevent_t *ev)
-{
-    switch(type)
-    {
-    case EV_KEY:
-        if(!desc->defKey)
-            break;
-
-        if(ev)
-        {
-            ev->type = EV_KEY;
-            ev->state = state;
-            ev->data1 = desc->defKey;
-        }
-        return true;
-
-    case EV_MOUSE_BUTTON:
-        if(!desc->defMouse)
-            break;
-
-        if(ev)
-        {
-            ev->type = EV_MOUSE_BUTTON;
-            ev->state = state;
-            ev->data1 = 1 << (desc->defMouse - 1);
-        }
-        return true;
-
-    case EV_JOY_BUTTON:
-        if(!desc->defJoy)
-            break;
-
-        if(ev)
-        {
-            ev->type = EV_JOY_BUTTON;
-            ev->state = state;
-            ev->data1 = 1 << (desc->defJoy - 1);
-        }
-        return true;
-
-    default:
-        break; // unknown
-    }
-
-    return false;
-}
-
-void setDefaultBinding(int player controldesc_t *desc, boolean safe)
-{
-    uint        i, j;
-    ddevent_t   ev;
-    char        buff[80];
-    binding_t  *existing;
-
-    for(i = 0; i < NUM_EVENT_TYPES; ++i)
-    {
-        for(j = 0; j < NUM_EVENT_STATES; ++j)
-        {
-            if(buildEventFromCtlDescriptor(player, desc, i, j, &ev))
-            {
-                B_FormEventString(buff, ev.type, ev.state, ev.type);
-                if(player > 0)
-                    strcat(buff, "/%i", player);
-
-                if(safe && (existing = B_GetBinding(&ev, false)))
-                    if(existing->commands[desc->bindClass].command[ev.state])
-                        continue;
-
-                B_Bind(&ev, &buff, desc->bindClass);
-            }
-        }
-    }
-}
-
-void P_SetDefaultBinding(int player, const char *name, boolean safe)
-{
-    uint        i, idx;
-    controldesc_t *desc;
-
-    // An axis control?
-/*
-    if((idx = controlFind(&ctlClass[CC_AXIS], name)) > 0)
-    {
-        desc = &ctlClass[CC_AXIS].desc[idx - 1];
-
-        if(player < 0)
-        {
-            for(i = 0; i < DDMAXPLAYERS; ++i)
-                setDefaultBinding(i, desc, safe);
-        }
-        else
-        {
-            setDefaultBinding(player, desc, safe);
-        }
-        return;
-    }
-*/
-    // A toggle control?
-    if((idx = controlFind(&ctlClass[CC_TOGGLE], name)) > 0)
-    {
-        desc = &ctlClass[CC_TOGGLE].desc[idx - 1];
-
-        if(player < 0)
-        {
-            for(i = 0; i < DDMAXPLAYERS; ++i)
-                setDefaultBinding(i, desc, safe);
-        }
-        else
-        {
-            setDefaultBinding(player, desc, safe);
-        }
-        return;
-    }
-
-	// How about impulses?
-	if((idx = controlFind(&ctlClass[CC_IMPULSE], name)) > 0)
-	{
-        desc = &ctlClass[CC_IMPULSE].desc[idx - 1];
-
-        if(player < 0)
-        {
-            for(i = 0; i < DDMAXPLAYERS; ++i)
-                setDefaultBinding(i, desc, safe);
-        }
-        else
-        {
-            setDefaultBinding(player, desc, safe);
-        }
-        return;
-	}
-
-    /*
-    for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
-    {
-        controlclass_t *cClass = &ctlClass[i];
-
-        for(j = 0; j < cClass->count; ++j)
-        {
-            if(desc->defKey)
-            {
-                if(i == CC_TOGGLE)
-
-                else
-                    if(buildEventFromCtlDescriptor(player, desc, EV_KEY, &ev))
-                        B_Bind(&ev, char *command, desc->bindClass);
-            }
-
-            if(desc->defMouse)
-            {
-                if(i == CC_TOGGLE)
-
-                else
-                    if(buildEventFromCtlDescriptor(player, desc, EV_KEY, &ev))
-                        B_Bind(&ev, char *command, desc->bindClass);
-            }
-
-            if(desc->defJoy)
-            {
-                if(i == CC_TO
-                if(buildEventFromCtlDescriptor(player, desc, EV_KEY, &ev))
-                    B_Bind(&ev, char *command, desc->bindClass);
-            }
-        }
-    }
-    */
-}
-#endif
 
 /**
  * Prints a list of the registered control descriptors.
