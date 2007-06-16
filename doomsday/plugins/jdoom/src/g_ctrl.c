@@ -56,7 +56,7 @@
 void G_RegisterPlayerControls(void)
 {
     typedef struct {
-        char   *command;                // The command to execute.
+        const char   *command;                // The command to execute.
     } control_t;
 
     control_t axisCts[] = {
