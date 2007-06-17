@@ -5,15 +5,11 @@
 extern          "C" {
 #endif
 
-/**
-\fixme commenting this out enables win32 building - why ?? deleteing it cases a FTBFS
-*/
-
-//#ifdef WIN32
-//#	define LZSSEXPORT __stdcall
-//#elif defined(UNIX)
+#ifdef WIN32
+#	define LZSSEXPORT __stdcall
+#elif defined(UNIX)
 #	define LZSSEXPORT
-//#endif
+#endif
 
 #ifndef EOF
 #define EOF    (-1)

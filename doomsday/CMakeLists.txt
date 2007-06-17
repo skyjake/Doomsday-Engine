@@ -20,6 +20,7 @@
 ## along with the deng build scripts; if not, write to the Free Software
 ## Foundation, Inc., 51 Franklin St, Fifth Floor, 
 ## Boston, MA  02110-1301  USA
+##
 ################################################################################
 PROJECT(deng C CXX)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.4.5 FATAL_ERROR)
@@ -570,9 +571,17 @@ ENDIF (NOT DOT)
 
 ################################################################################
 ######################## External LZSS Files ###################################
-INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/include )
-FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/src/*.c )
+INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
 
+##IF (UNIX)
+##	IF (NOT WIN32)
+	FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c )
+##	ENDIF (NOT WIN32)
+##ENDIF (UNIX)
+
+##IF (WIN32)
+##	SET (LZSS_SOURCES "")
+##ENDIF (WIN32)
 ################################################################################
 ######################## The Doomsday Engine  ##################################
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
@@ -625,7 +634,7 @@ IF (UNIX)
 	IF (NOT WIN32)
 		INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
 		FILE(GLOB DENG_UNIX_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c)
-		SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_UNIX_SOURCES})
+		SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_UNIX_SOURCES} ${LZSS_SOURCES})
 	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
@@ -641,7 +650,9 @@ IF (WIN32)
 	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
 	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c
 	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c )
-	SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_WIN32_SOURCES})
+
+
+	SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_WIN32_SOURCES}  ${LZSS_SOURCES})
 ENDIF (WIN32)
 
 ## .m is Obj-C
@@ -664,7 +675,7 @@ IF (APPLE)
 ENDIF (APPLE)
 
 
-ADD_EXECUTABLE (doomsday MACOSX_BUNDLE ${LZSS_SOURCES} ${DENG_PORTABLE_SOURCES} ${DENG_ARCH_SPECIFIC_SOURCES})
+ADD_EXECUTABLE (doomsday MACOSX_BUNDLE ${DENG_PORTABLE_SOURCES} ${DENG_ARCH_SPECIFIC_SOURCES})
 
 TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} ${CURL_LIBRARIES})
 
@@ -678,8 +689,16 @@ IF (UNIX)
 ENDIF (UNIX)
 
 IF (WIN32)
+##	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss.lib )
 	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 )
 ENDIF (WIN32)
+
+## Work around for Win32 wanting something for the plugins to link to
+#IF (WIN32)
+#	ADD_LIBRARY (deng STATIC ${DENG_SOURCES} engine/api/doomsday.def)
+#	TARGET_LINK_LIBRARIES (deng ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} wsock32 winmm gdi32 ole32 user32
+#	${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
+#ENDIF (WIN32)
 
 ################################################################################
 ######################## OpenGL Renderer Plugin ################################

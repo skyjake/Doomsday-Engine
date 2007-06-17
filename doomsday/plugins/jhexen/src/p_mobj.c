@@ -41,7 +41,7 @@
  * http://www.ravensoft.com/
  */
 
-#ifdef _MSC_VER
+#ifdef MSVC
 #  pragma optimize("g", off)
 #endif
 

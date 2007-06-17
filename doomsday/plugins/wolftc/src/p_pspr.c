@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -30,7 +30,7 @@
  * Action functions for weapons.
  */
 
-#ifdef _MSC_VER
+#ifdef MSVC
 // Sumtin' 'ere messes with poor ol' MSVC's head...
 #  pragma optimize("g",off)
 #endif

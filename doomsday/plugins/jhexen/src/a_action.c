@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -262,7 +262,7 @@ void C_DECL A_CorpseExplode(mobj_t *actor)
     P_RemoveMobj(actor);
 }
 
-#ifdef _MSC_VER
+#ifdef MSVC
 // I guess the compiler gets confused by the multitude of P_Random()s...
 #  pragma optimize("g", off)
 #endif
@@ -285,7 +285,7 @@ void C_DECL A_LeafSpawn(mobj_t *actor)
         }
     }
 }
-#ifdef _MSC_VER
+#ifdef MSVC
 #  pragma optimize("", on)
 #endif
 
@@ -910,7 +910,7 @@ void C_DECL A_ThrustImpale(mobj_t *actor)
     PIT_ThrustSpike(actor);
 }
 
-#if _MSC_VER
+#if MSVC
 #  pragma optimize("g",off)
 #endif
 void C_DECL A_SoAExplode(mobj_t *actor)
@@ -946,7 +946,7 @@ void C_DECL A_SoAExplode(mobj_t *actor)
     S_StartSound(SFX_SUITOFARMOR_BREAK, mo);
     P_RemoveMobj(actor);
 }
-#if _MSC_VER
+#if MSVC
 #  pragma optimize("",on)
 #endif
 
