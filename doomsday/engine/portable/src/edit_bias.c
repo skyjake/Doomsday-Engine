@@ -112,7 +112,6 @@ void SBE_Register(void)
     // Editing variables.
     C_VAR_FLOAT("edit-bias-grab-distance", &editDistance, 0, 10, 1000);
 
-    // DJS - Why were these cvars?
     C_VAR_FLOAT("edit-bias-red", &editColor[0], CVF_NO_ARCHIVE, 0, 1);
     C_VAR_FLOAT("edit-bias-green", &editColor[1], CVF_NO_ARCHIVE, 0, 1);
     C_VAR_FLOAT("edit-bias-blue", &editColor[2], CVF_NO_ARCHIVE, 0, 1);

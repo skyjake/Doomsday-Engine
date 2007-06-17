@@ -27,7 +27,7 @@
  * Heads-up displays, font handling, text drawing routines
  */
 
-#ifdef MSVC
+#ifdef _MSC_VER
 #  pragma warning(disable:4018)
 #endif
 

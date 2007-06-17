@@ -4327,7 +4327,7 @@ void C_DECL A_IceCheckHeadDone(mobj_t *actor)
     }
 }
 
-#ifdef MSVC
+#ifdef _MSC_VER
 #  pragma optimize("g", off)
 #endif
 void C_DECL A_FreezeDeathChunks(mobj_t *actor)
@@ -4404,7 +4404,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t *actor)
     P_SetMobjState(actor, S_FREETARGMOBJ);
     actor->flags2 |= MF2_DONTDRAW;
 }
-#ifdef MSVC
+#ifdef _MSC_VER
 #  pragma optimize("", on)
 #endif
 

@@ -199,7 +199,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
     sec->planes = newList;
 }
 
-#ifdef MSVC
+#ifdef _MSC_VER
 #  pragma optimize("g", off)
 #endif
 
@@ -344,7 +344,7 @@ static void R_SetSectorLinks(sector_t *sec)
     }
 }
 
-#ifdef MSVC
+#ifdef _MSC_VER
 #  pragma optimize("", on)
 #endif
 

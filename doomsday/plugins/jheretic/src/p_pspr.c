@@ -4,7 +4,7 @@
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
@@ -46,7 +46,7 @@
  * Action functions for weapons.
  */
 
-#ifdef MSVC
+#ifdef _MSC_VER
 // Sumtin' 'ere messes with poor ol' MSVC's head...
 #  pragma optimize("g", off)
 #endif

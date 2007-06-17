@@ -52,7 +52,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="..\..\..\engine\win32\include;..\..\..\engine\portable\include;..\..\..\engine\api\;..\..\..\external\lzss\portable\include;..\..\..\external\zlib\portable\include;..\..\..\external\libpng\portable\include;..\..\..\external\libcurl\portable\include"
+				AdditionalIncludeDirectories="..\..\..\engine\win32\include;..\..\..\engine\portable\include;..\..\..\engine\api\;..\..\..\external\lzss\include;..\..\..\external\zlib\portable\include;..\..\..\external\libpng\portable\include;..\..\..\external\libcurl\portable\include"
 				PreprocessorDefinitions="__DOOMSDAY__,ZLIB_DLL,WIN32_GAMMA,NORANGECHECKING,WIN32,NDEBUG,_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -82,11 +82,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="curllib.lib dsound.lib dinput.lib dxguid.lib sdl_net.lib sdl.lib wsock32.lib winmm.lib zlib1.lib libpng13.lib lzss.lib gdi32.lib ole32.lib user32.lib"
+				AdditionalDependencies="curllib.lib dsound.lib dinput.lib dxguid.lib sdl_net.lib sdl.lib wsock32.lib winmm.lib zlib1.lib libpng13.lib gdi32.lib ole32.lib user32.lib"
 				OutputFile="./Bin/Release/Doomsday.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="./Bin/Release;..\..\..\external\lzss\win32;..\..\..\external\libpng\win32;..\..\..\external\libcurl\win32;..\..\..\external\zlib\win32"
+				AdditionalLibraryDirectories="./Bin/Release;..\..\..\external\libpng\win32;..\..\..\external\libcurl\win32;..\..\..\external\zlib\win32"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="..\..\..\engine\api\Doomsday.def"
 				ProgramDatabaseFile="./Bin/Release/Doomsday.pdb"
@@ -150,7 +150,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\engine\win32\include;..\..\..\engine\portable\include;..\..\..\engine\api\;..\..\..\external\lzss\portable\include;..\..\..\external\zlib\portable\include;..\..\..\external\libpng\portable\include;..\..\..\external\libcurl\portable\include"
+				AdditionalIncludeDirectories="..\..\..\engine\win32\include;..\..\..\engine\portable\include;..\..\..\engine\api\;..\..\..\external\lzss\include;..\..\..\external\zlib\portable\include;..\..\..\external\libpng\portable\include;..\..\..\external\libcurl\portable\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE,ZLIB_DLL,__DOOMSDAY__,WIN32_GAMMA,WIN32,_DEBUG,_WINDOWS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -179,12 +179,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="curllibd.lib dsound.lib dinput.lib dxguid.lib sdl_net.lib sdl.lib wsock32.lib zlib1.lib libpng13d.lib lzss.lib winmm.lib gdi32.lib ole32.lib user32.lib"
+				AdditionalDependencies="curllibd.lib dsound.lib dinput.lib dxguid.lib sdl_net.lib sdl.lib wsock32.lib zlib1.lib libpng13d.lib winmm.lib gdi32.lib ole32.lib user32.lib"
 				OutputFile="./Bin/Debug/Doomsday.exe"
 				Version="1.0"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="./Bin/Debug;..\..\..\external\lzss\win32;..\..\..\external\libpng\win32;..\..\..\external\libcurl\win32;..\..\..\external\zlib\win32"
+				AdditionalLibraryDirectories="./Bin/Debug;..\..\..\external\libpng\win32;..\..\..\external\libcurl\win32;..\..\..\external\zlib\win32"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile="..\..\..\engine\api\Doomsday.def"
 				GenerateDebugInformation="true"
@@ -1061,6 +1061,18 @@
 						/>
 					</FileConfiguration>
 				</File>
+			</Filter>
+			<Filter
+				Name="External"
+				>
+				<Filter
+					Name="lzss"
+					>
+					<File
+						RelativePath="..\..\..\external\lzss\src\lzss.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter

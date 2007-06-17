@@ -57,13 +57,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef MSVC
+#ifdef _MSC_VER
 // MSVC
-#include <io.h>
-#endif
-#ifndef MSVC
+#  include <io.h>
+#else
 // MinGW/*NIX/OSX
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
