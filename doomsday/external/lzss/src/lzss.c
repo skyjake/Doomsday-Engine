@@ -60,7 +60,8 @@
 #ifdef MSVC
 // MSVC
 #include <io.h>
-#else
+#endif
+#ifndef MSVC
 // MinGW/*NIX/OSX
 #include <unistd.h>
 #endif
