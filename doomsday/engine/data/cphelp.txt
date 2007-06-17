@@ -1170,3 +1170,6 @@ desc = 1=Enable the use of line-of-sight checking with shadow bias.
 
 [rend-dev-bias-affected]
 desc = 1=Keep track which sources affect which surfaces.
+
+[ctl-info]
+desc = 1=Show player control state debugging information.

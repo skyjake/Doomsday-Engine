@@ -68,6 +68,7 @@ void        P_ControlReset(int player);
 boolean     P_IsValidControl(const char *cmd);
 boolean     P_ControlExecute(const char *command);
 void        P_ControlTicker(timespan_t time);
+void        P_ControlDrawer(void);
 
 uint 	    P_ControlFindAxis(const char *name);
 float 	    P_ControlGetAxis(int player, const char *name);

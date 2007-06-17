@@ -35,6 +35,7 @@
 #include "de_network.h"
 #include "de_misc.h"
 #include "de_system.h"
+#include "de_graphics.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -111,6 +112,7 @@ const char *ctlClassNames[NUM_CONTROL_CLASSES][NUM_CONTROL_CLASSES] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int ctlInfo = false;
 static controlclass_t ctlClass[NUM_CONTROL_CLASSES];
 static controlstate_t ctlState[DDMAXPLAYERS];
 
@@ -122,6 +124,8 @@ static controlstate_t ctlState[DDMAXPLAYERS];
 void P_RegisterControl(void)
 {
     C_CMD("listcontrols",    "",     ListPlayerControls);
+    
+    C_VAR_INT("ctl-info", &ctlInfo, CVF_NO_ARCHIVE, 0, 1);
 }
 
 /**
@@ -615,7 +619,6 @@ void P_ControlSetAxis(int player, uint axisControlIndex, float pos)
  */
 void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 {
-
     controldesc_t *desc;
 	ddplayer_t *plr;
 	
@@ -631,6 +634,8 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
                   axisControlIndex);
 #endif
 
+    // FIXME: These should be in PlayerThink.
+    /*
 	plr = &players[player];
 	
 	// Get a descriptor of the axis control.
@@ -639,14 +644,14 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 	switch(axisControlIndex)
 	{
 	case CTL_TURN:
-        /* $unifiedangles */
+        // $unifiedangles 
         if(plr->mo)
 		    plr->mo->angle -= (angle_t) (delta/180 * ANGLE_180);
 		break;
 
 	case CTL_LOOK:
 		// 110 corresponds 85 degrees.
-        /* $unifiedangles */
+        // $unifiedangles 
         plr->lookdir += delta * 110.0f/85.0f;
         // Clamp it.
         if(plr->lookdir > 110)
@@ -658,7 +663,7 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 	default:
 		// Undefined for other axis controls?
 		break;
-	}
+	}*/
 }
 
 /**
@@ -714,4 +719,26 @@ D_CMD(ListPlayerControls)
         }
     }
     return true;
+}
+
+/**
+ * Draws a HUD overlay with information about the state of the game controls as seen
+ * by the engine. The cvar @c ctl-info is used for toggling the drawing of this info.
+ */
+void P_ControlDrawer(void)
+{
+    if(!ctlInfo)
+        return;
+    
+    // Go into screen projection mode.
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PushMatrix();
+    gl.LoadIdentity();
+    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
+
+    // TODO: Draw control state here.
+    
+    // Back to the original.
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PopMatrix();
 }

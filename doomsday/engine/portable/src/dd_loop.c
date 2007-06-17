@@ -211,6 +211,7 @@ void DD_DrawAndBlit(void)
         // Debug information.
         Net_Drawer();
         S_Drawer();
+        P_ControlDrawer();
     }
 
     if(UI_IsActive())
