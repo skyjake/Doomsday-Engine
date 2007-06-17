@@ -43,8 +43,8 @@
 * use these routines, and instead should use zlib's deflate routines
 * if LZSS compression or decompression is required.
 *
-* This code does not build on Win32, and uses an inseure temporary
-* name generation. It is likely to be a possible security hole in future
+* This code uses an inseure temporary name generation.
+* It is likely to be a possible security hole in future
 * and as such all code still using this should migrate to zlib's deflate
 * as soon as possible.
 *
@@ -57,7 +57,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef MSVC
+// MSVC
+#include <io.h>
+#else
+// MinGW/*NIX/OSX
 #include <unistd.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
