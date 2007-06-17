@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..\plugins\jdoom\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\include"
+				AdditionalIncludeDirectories="..\..\..\plugins\jdoom\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="__JDOOM__,WIN32,NDEBUG,_WINDOWS,_USRDLL,JDOOM_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -76,11 +76,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib odbc32.lib odbccp32.lib"
 				OutputFile="./Bin/Release/JDoom.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jdoom\api\jdoom.def"
 				ProgramDatabaseFile=".\./Bin/Release/JDoom.pdb"
 				ImportLibrary=".\./Bin/Release/JDoom.lib"
@@ -143,7 +143,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\plugins\jdoom\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\include"
+				AdditionalIncludeDirectories="..\..\..\plugins\jdoom\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE,__JDOOM__,WIN32,_DEBUG,_WINDOWS,_USRDLL,JDOOM_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -173,11 +173,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/debug/doomsday.lib"
+				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib"
 				OutputFile="./Bin/Debug/JDoom.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jdoom\api\jdoom.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/JDoom.pdb"
@@ -801,18 +801,6 @@
 				RelativePath="..\..\..\plugins\jdoom\src\wi_stuff.c"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="External Sources"
-			>
-			<Filter
-				Name="lzss"
-				>
-				<File
-					RelativePath="..\..\..\external\lzss\src\lzss.c"
-					>
-				</File>
-			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

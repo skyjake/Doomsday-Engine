@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..\plugins\jheretic\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\include"
+				AdditionalIncludeDirectories="..\..\..\plugins\jheretic\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="__JHERETIC__;WIN32;NDEBUG;_WINDOWS;_USRDLL;JHERETIC_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -77,11 +77,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib"
+				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib"
 				OutputFile=".\./Bin/Release/JHeretic.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jheretic\api\jheretic.def"
 				ProgramDatabaseFile=".\./Bin/Release/JHeretic.pdb"
 				ImportLibrary=".\./Bin/Release/JHeretic.lib"
@@ -144,7 +144,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\plugins\jheretic\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\include"
+				AdditionalIncludeDirectories="..\..\..\plugins\jheretic\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;__JHERETIC__;WIN32;_DEBUG;_WINDOWS;_USRDLL;JHERETIC_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -174,11 +174,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/debug/doomsday.lib"
+				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib "
 				OutputFile=".\./Bin/Debug/JHeretic.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jheretic\api\jheretic.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/JHeretic.pdb"
@@ -782,18 +782,6 @@
 				RelativePath="..\..\..\plugins\jheretic\src\tables.c"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="External Sources"
-			>
-			<Filter
-				Name="lzss"
-				>
-				<File
-					RelativePath="..\..\..\external\lzss\src\lzss.c"
-					>
-				</File>
-			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

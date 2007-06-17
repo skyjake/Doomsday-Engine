@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\plugins\jhexen\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\include"
+				AdditionalIncludeDirectories="..\..\..\plugins\jhexen\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;__JHEXEN__;WIN32;_DEBUG;_WINDOWS;_USRDLL;JHEXEN_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -77,11 +77,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/debug/doomsday.lib"
+				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib"
 				OutputFile=".\./Bin/Debug/JHexen.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/JHexen.pdb"
@@ -145,7 +145,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..\plugins\jhexen\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\include"
+				AdditionalIncludeDirectories="..\..\..\plugins\jhexen\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="__JHEXEN__;NORANGECHECKING;WIN32;NDEBUG;_WINDOWS;_USRDLL;JHEXEN_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -174,11 +174,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib"
+				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib"
 				OutputFile=".\./Bin/Release/JHexen.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
 				ProgramDatabaseFile=".\./Bin/Release/JHexen.pdb"
 				ImportLibrary=".\./Bin/Release/JHexen.lib"
@@ -751,18 +751,6 @@
 				RelativePath="..\..\..\plugins\jhexen\src\x_api.c"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="External Sources"
-			>
-			<Filter
-				Name="lzss"
-				>
-				<File
-					RelativePath="..\..\..\external\lzss\src\lzss.c"
-					>
-				</File>
-			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..\plugins\doom64tc\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\include"
+				AdditionalIncludeDirectories="..\..\..\plugins\doom64tc\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="__JDOOM__;__DOOM64TC__;WIN32;NDEBUG;_WINDOWS;_USRDLL;DOOM64TC_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -76,11 +76,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib"
+				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib"
 				OutputFile="./Bin/Release/Doom64TC.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\doom64tc\api\doom64tc.def"
 				ProgramDatabaseFile=".\./Bin/Release/Doom64TC.pdb"
 				ImportLibrary=".\./Bin/Release/Doom64TC.lib"
@@ -143,7 +143,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\plugins\doom64tc\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\include"
+				AdditionalIncludeDirectories="..\..\..\plugins\doom64tc\include;..\..\..\plugins\common\include;..\..\..\engine\api;..\..\..\external\lzss\portable\include"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;__JDOOM__;__DOOM64TC__;WIN32;_DEBUG;_WINDOWS;_USRDLL;DOOM64TC_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -173,11 +173,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/debug/doomsday.lib"
+				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib"
 				OutputFile="./Bin/Debug/Doom64TC.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
 				ModuleDefinitionFile="..\..\..\plugins\doom64tc\api\doom64tc.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/Doom64TC.pdb"
@@ -789,18 +789,6 @@
 				RelativePath="..\..\..\plugins\doom64tc\src\wi_stuff.c"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="External Sources"
-			>
-			<Filter
-				Name="lzss"
-				>
-				<File
-					RelativePath="..\..\..\external\lzss\src\lzss.c"
-					>
-				</File>
-			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
