@@ -199,7 +199,7 @@ void DD_DrawAndBlit(void)
 
         // Draw any over/outside view window game graphics (e.g. fullscreen
         // menus and other displays).
-        if(gx.G_Drawer2 && (!UI_IsActive() || UI_Alpha() >= 1.0))
+        if(gx.G_Drawer2 && !(UI_IsActive() && UI_Alpha() >= 1.0))
         {
             gx.G_Drawer2();
         }
