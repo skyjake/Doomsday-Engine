@@ -1691,7 +1691,7 @@
 				Name="Win32"
 				>
 				<File
-					RelativePath="..\..\..\engine\portable\include\dd_winit.h"
+					RelativePath="..\..\..\engine\win32\include\dd_winit.h"
 					>
 				</File>
 				<File

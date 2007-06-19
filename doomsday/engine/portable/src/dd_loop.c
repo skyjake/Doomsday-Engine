@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,6 +77,11 @@ void    DD_RunTics(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+boolean appShutdown = false; // Set to true when we should exit (normally).
+#ifdef WIN32
+boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
+#endif
+
 int     maxFrameRate = 200;     // Zero means 'unlimited'.
 
 timespan_t sysTime, gameTime, demoTime, levelTime;
@@ -106,9 +111,8 @@ void DD_RegisterLoop(void)
     C_VAR_INT("refresh-rate-maximum", &maxFrameRate, 0, 35, 1000);
 }
 
-/*
+/**
  * This is the refresh thread (the main thread).
- * There is no return from here.
  */
 void DD_GameLoop(void)
 {
@@ -128,14 +132,21 @@ void DD_GameLoop(void)
     {
 #ifdef WIN32
         // Start by checking Windows messages.
-        // This is the message pump.
-        // Could be in a separate thread?
-        while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        if(!suspendMsgPump)
         {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            // NOTE: Must be in the same thread as that which registered the
+            //       window it is handling messages for - DJS.
+            while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
         }
 #endif
+
+        if(appShutdown)
+            break;
+
         // Frame syncronous I/O operations.
         DD_StartFrame();
 
@@ -157,6 +168,20 @@ void DD_GameLoop(void)
         // After the first frame, start timedemo.
         DD_CheckTimeDemo();
     }
+
+    // Quit netgame if one is in progress.
+    if(netgame)
+    {
+        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
+                    true, false);
+    }
+
+    Demo_StopPlayback();
+    Con_SaveDefaults();
+    Sys_Shutdown();
+    B_Shutdown();
+    Con_Shutdown();
+    DD_Shutdown();
 }
 
 /*

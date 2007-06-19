@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,6 +74,8 @@ GETGAMEAPI GetGameAPI;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int paused = 0;
+
 // CODE --------------------------------------------------------------------
 
 BOOL InitApplication(HINSTANCE hInst)
@@ -87,7 +89,7 @@ BOOL InitApplication(HINSTANCE hInst)
     wc.cbWndExtra = 0;
     wc.hInstance = hInst;
     wc.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_DOOMSDAY));
-    wc.hCursor = NULL;          //LoadCursor(hInst, IDC_ARROW);
+    wc.hCursor = LoadCursor(hInst, IDC_ARROW);
     wc.hbrBackground = (HBRUSH) (COLOR_ACTIVEBORDER + 1);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = "DoomsdayMainWClass";
@@ -252,16 +254,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
  */
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    boolean forwardMsg = true;
+
     switch(msg)
     {
     case WM_CLOSE:
-        //// \fixme Allow closing via the close button.
+        appShutdown = true;
+        ignoreInput = true;
+        forwardMsg = false;
+        break;
+
+	case WM_ACTIVATE:
+		if(!appShutdown)
+		{
+			if(LOWORD(wParam) == WA_ACTIVE ||
+               (!HIWORD(wParam) && LOWORD(wParam) == WA_CLICKACTIVE))
+			{
+		        SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+                ignoreInput = false;
+            }
+			else
+			{
+		        SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
+                ignoreInput = true;
+			}
+		}
         break;
 
     default:
-        return DefWindowProc(hWnd, msg, wParam, lParam);
+        break;
     }
-    return 0;
+
+    return (forwardMsg? DefWindowProc(hWnd, msg, wParam, lParam) : 0);
 }
 
 /**

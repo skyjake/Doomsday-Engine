@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +28,11 @@
 
 #ifndef __DOOMSDAY_BASELOOP_H__
 #define __DOOMSDAY_BASELOOP_H__
+
+extern boolean appShutdown;
+#ifdef WIN32
+extern boolean suspendMsgPump;
+#endif
 
 extern timespan_t sysTime, gameTime, demoTime, levelTime;
 

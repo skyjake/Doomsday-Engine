@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -159,10 +159,12 @@ int Sys_CriticalMessage(char *msg)
 
     ShowCursor(TRUE);
     ShowCursor(TRUE);
+    suspendMsgPump = true;
     GetWindowText(hWndMain, buf, 255);
     ret =
         (MessageBox(hWndMain, msg, buf, MB_YESNO | MB_ICONEXCLAMATION) ==
          IDYES);
+    suspendMsgPump = false;
     ShowCursor(FALSE);
     ShowCursor(FALSE);
     return ret;
@@ -225,26 +227,11 @@ void Sys_ShowWindow(boolean show)
 }
 
 /**
- * Shut everything down and quit the program.
+ * Called when Doomsday should quit (will be deferred to the next cycle).
  */
 void Sys_Quit(void)
 {
-    // Quit netgame if one is in progress.
-    if(netgame)
-    {
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
-                    true, false);
-    }
-
-    Demo_StopPlayback();
-    Con_SaveDefaults();
-    Sys_Shutdown();
-    B_Shutdown();
-    Con_Shutdown();
-    DD_Shutdown();
-
-    // Stop the execution of the program.
-    exit(0);
+    appShutdown = true;
 }
 
 void Sys_MessageBox(const char *msg, boolean iserror)
@@ -252,9 +239,11 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 #ifdef WIN32
     char    title[300];
 
+    suspendMsgPump = true;
     GetWindowText(hWndMain, title, 300);
     MessageBox(hWndMain, msg, title,
                MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
+    suspendMsgPump = false;
 #endif
 #ifdef UNIX
     fprintf(stderr, "%s %s\n", iserror ? "**ERROR**" : "---", msg);

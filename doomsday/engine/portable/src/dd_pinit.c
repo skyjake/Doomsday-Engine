@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -92,8 +92,10 @@ void DD_ErrorBox(boolean error, char *format, ...)
     vsnprintf(buff, sizeof(buff), format, args);
     va_end(args);
 #ifdef WIN32
+    suspendMsgPump = true;
     MessageBox(NULL, buff, "Doomsday " DOOMSDAY_VERSION_TEXT,
                MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING));
+    suspendMsgPump = false;
 #endif
 #ifdef UNIX
     fputs(buff, stderr);
