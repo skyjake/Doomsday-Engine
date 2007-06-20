@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_misc.h"
+#include "de_ui.h"
 
 #include "r_draw.h"
 
@@ -80,8 +81,10 @@ typedef unsigned short gramp_t[3 * 256];
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(Fog);
+D_CMD(SetBPP);
 D_CMD(SetGamma);
 D_CMD(SetRes);
+D_CMD(ToggleFullscreen);
 
 void    GL_SetGamma(void);
 
@@ -101,11 +104,12 @@ extern HWND hWndMain;           // Handle to the main window.
 int     UpdateState;
 
 // The display mode and the default values.
-// ScreenBits is ignored.
 int     glScreenWidth = 640, glScreenHeight = 480, glScreenBits = 32;
+int     glScreenFull = true;
 
 // The default resolution (config file).
-int     defResX = 640, defResY = 480, defBPP = 0;
+int     defResX = 640, defResY = 480, defBPP = 32;
+int     defFullscreen = true;
 int     numTexUnits;
 boolean envModAdd;              // TexEnv: modulate and add is available.
 int     test3dfx = 0;
@@ -147,15 +151,19 @@ void GL_Register(void)
     // * video
     C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0);
     C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX, 240, 0);
+    C_VAR_INT("vid-bpp", &defBPP, 0, 16, 32);
+    C_VAR_INT("vid-fullscreen", &defFullscreen, 0, 0, 1);
     C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6);
     C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10);
     C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
 
     // Ccmds
     C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setgamma", "i", SetGamma, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("togglefullscreen", "", ToggleFullscreen, CMDF_NO_DEDICATED);
 
     GL_TexRegister();
 }
@@ -206,15 +214,15 @@ void GL_DoUpdate(void)
     gl.Show();
     if(renderWireframe)
         gl.Disable(DGL_WIREFRAME_MODE);
-    UpdateState = I_NOUPDATE;   // clear out all draw types
+    UpdateState = I_NOUPDATE; // Clear out all draw types.
 
     // Increment frame counter.
     r_framecounter++;
 }
 
 /**
- * On Win32, use the gamma ramp functions in the Win32 API.  On Linux,
- * use the XFree86-VidMode extension.
+ * On Win32, use the gamma ramp functions in the Win32 API. On Linux, use
+ * the XFree86-VidMode extension.
  */
 void GL_GetGammaRamp(unsigned short *ramp)
 {
@@ -317,16 +325,21 @@ void GL_SetGammaRamp(unsigned short *ramp)
 }
 
 /**
- * Gamma      - non-linear factor (curvature; >1.0 multiplies)
- * Contrast   - steepness
- * Brightness - uniform offset
+ * Calculate a gamma ramp and write the result to the location pointed to.
+ *
+ * PRE: 'ramp' must point to a ushort[256] area of memory.
+ *
+ * @param ramp          Ptr to the ramp table to write to.
+ * @param gamma         Non-linear factor (curvature; >1.0 multiplies).
+ * @param contrast      Steepness.
+ * @param bright        Brightness, uniform offset.
  */
 void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
                       float bright)
 {
-    int     i;
-    double  ideal[256];         // After processing clamped to unsigned short.
-    double  norm;
+    int         i;
+    double      ideal[256]; // After processing clamped to unsigned short.
+    double      norm;
 
     // Don't allow stupid values.
     if(contrast < 0.1f)
@@ -357,7 +370,7 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
     // Clamp it and write the ramp table.
     for(i = 0; i < 256; ++i)
     {
-        ideal[i] *= 0x100;      // Byte => word
+        ideal[i] *= 0x100; // Byte => word
         if(ideal[i] < 0)
             ideal[i] = 0;
         if(ideal[i] > 0xffff)
@@ -371,7 +384,7 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
  */
 void GL_SetGamma(void)
 {
-    gramp_t myramp;
+    gramp_t     myramp;
 
     oldgamma = vid_gamma;
     oldcontrast = vid_contrast;
@@ -453,44 +466,48 @@ void GL_ShutdownFont(void)
 
 void GL_InitVarFont(void)
 {
-    int     old_font;
-    int     i;
+    int         oldFont;
+    int         i;
 
     if(novideo || varFontInited)
         return;
 
     VERBOSE2(Con_Message("GL_InitVarFont.\n"));
 
-    old_font = FR_GetCurrent();
-    VERBOSE2(Con_Message("GL_InitVarFont: Old font = %i.\n", old_font));
+    oldFont = FR_GetCurrent();
+    VERBOSE2(Con_Message("GL_InitVarFont: Old font = %i.\n", oldFont));
 
     for(i = 0; i < NUM_GLFS; ++i)
     {
         // The bold font and light fonts are always loaded.
-        if(i == GLFS_BOLD || i == GLFS_LIGHT) continue;
+        if(i == GLFS_BOLD || i == GLFS_LIGHT)
+            continue;
 
         FR_PrepareFont(GL_ChooseVariableFont(i));
         glFontVariable[i] = FR_GetCurrent();
-        VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n", glFontVariable[i]));
+        VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n",
+                             glFontVariable[i]));
     }
 
-    FR_SetFont(old_font);
-    VERBOSE2(Con_Message("GL_InitVarFont: Restored old font %i.\n", old_font));
+    FR_SetFont(oldFont);
+    VERBOSE2(Con_Message("GL_InitVarFont: Restored old font %i.\n", oldFont));
 
     varFontInited = true;
 }
 
 void GL_ShutdownVarFont(void)
 {
-    int i;
+    int         i;
 
     if(novideo || !varFontInited)
         return;
+
     FR_SetFont(glFontFixed);
     for(i = 0; i < NUM_GLFS; ++i)
     {
         // Keep the bold and light fonts loaded.
-        if(i == GLFS_BOLD || i == GLFS_LIGHT) continue;
+        if(i == GLFS_BOLD || i == GLFS_LIGHT)
+            continue;
 
         FR_DestroyFont(glFontVariable[i]);
         glFontVariable[i] = glFontFixed;
@@ -499,15 +516,17 @@ void GL_ShutdownVarFont(void)
 }
 
 /**
- * One-time initialization of DGL and the renderer. This is done very early on
- * during engine startup, and is supposed to be fast. All subsystems cannot yet
- * be initialized, such as fonts or texture management, so any rendering occuring
- * before GL_Init() must be done with manually prepared textures.
+ * One-time initialization of DGL and the renderer. This is done very early
+ * on during engine startup, and is supposed to be fast. All subsystems
+ * cannot yet be initialized, such as fonts or texture management, so any
+ * rendering occuring before GL_Init() must be done with manually prepared
+ * textures.
  */
 void GL_EarlyInit(void)
 {
     if(initGLOk)
-        return;                 // Already initialized.
+        return; // Already initialized.
+
     if(novideo)
         return;
 
@@ -520,6 +539,7 @@ void GL_EarlyInit(void)
     glScreenWidth = defResX;
     glScreenHeight = defResY;
     glScreenBits = defBPP;
+    glScreenFull = defFullscreen;
 
     // Check for command line options modifying the defaults.
     if(ArgCheckWith("-width", 1))
@@ -533,8 +553,13 @@ void GL_EarlyInit(void)
     }
     if(ArgCheckWith("-bpp", 1))
         glScreenBits = atoi(ArgNext());
+    // Ensure a valid value.
+    if(glScreenBits != 16 && glScreenBits != 32)
+        glScreenBits = 32;
 
-    gl.Init(glScreenWidth, glScreenHeight, glScreenBits, !ArgExists("-window"));
+    glScreenFull = !(ArgExists("-nofullscreen") | ArgExists("-window"));
+
+    gl.Init(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull);
     GL_InitDeferred();
 
     // Check the maximum texture size.
@@ -800,7 +825,7 @@ void GL_UseFog(int yes)
 void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
                    boolean loadFlares)
 {
-    static char oldFontName[256];
+//    static char oldFontName[256];
     static boolean hadFog;
     static boolean wasStartup;
 
@@ -809,14 +834,19 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
 
     if(doShutdown)
     {
+        int         fontIDX = -1;
+
         hadFog = usingFog;
         wasStartup = startupScreen;
 
         // Remember the name of the font.
+//        fontIDX = FR_GetCurrent();
+
         if(wasStartup)
             Con_StartupDone();
-        else
-            strcpy(oldFontName, FR_GetFont(FR_GetCurrent())->name);
+
+//        if(fontIDX != -1)
+//            strcpy(oldFontName, FR_GetFont(fontIDX)->name);
 
         // Delete all textures.
         GL_ShutdownTextureManager();
@@ -855,24 +885,37 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
  * restarting it. All textures will be lost in the process.
  * Restarting the renderer is the compatible way to do the change.
  */
-int GL_ChangeResolution(int w, int h, int bits)
+int GL_ChangeResolution(int w, int h, int bits, boolean fullscreen)
 {
-    if(novideo)
+    boolean inControlPanel = UI_IsActive();
+
+    if(novideo || !GL_IsInited())
         return false;
-    if(glScreenWidth == w && glScreenHeight == h && (!bits || glScreenBits == bits))
+
+    if(glScreenWidth == w && glScreenHeight == h && glScreenFull == fullscreen &&
+       glScreenBits == bits)
         return true;
+
+    // Can't change the resolution while the UI is active.
+    // (controls need to be repositioned).
+    if(inControlPanel)
+        UI_End();
 
     // Shut everything down, but remember our settings.
     GL_TotalReset(true, 0, 0);
     gx.UpdateState(DD_RENDER_RESTART_PRE);
 
-    glScreenWidth = w;
-    glScreenHeight = h;
-    glScreenBits = bits;
+    if(w > 0)
+        glScreenWidth = w;
+    if(h > 0)
+        glScreenHeight = h;
+    if(bits > 0)
+        glScreenBits = bits;
+    glScreenFull = fullscreen;
 
     // Shutdown and re-initialize DGL.
     gl.Shutdown();
-    gl.Init(w, h, bits, !nofullscreen);
+    gl.Init(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull);
 
     // Re-initialize.
     GL_TotalReset(false, true, true);
@@ -882,6 +925,9 @@ int GL_ChangeResolution(int w, int h, int bits)
     if(glScreenBits)
         Con_Message(" x %i", glScreenBits);
     Con_Message(".\n");
+
+    if(inControlPanel) // Reactivate the panel?
+        Con_Execute(CMDS_DDAY, "panel", true, false);
     return true;
 }
 
@@ -957,13 +1003,34 @@ void GL_BlendMode(blendmode_t mode)
  */
 D_CMD(SetRes)
 {
-    return GL_ChangeResolution(atoi(argv[1]), atoi(argv[2]), 0);
+    return GL_ChangeResolution(atoi(argv[1]), atoi(argv[2]), 0, glScreenFull);
+}
+
+D_CMD(ToggleFullscreen)
+{
+    glScreenFull ^= 1;
+    GL_ChangeResolution(0, 0, 0, glScreenFull);
+    return true;
 }
 
 D_CMD(UpdateGammaRamp)
 {
     GL_SetGamma();
     Con_Printf("Gamma ramp set.\n");
+    return true;
+}
+
+D_CMD(SetBPP)
+{
+    int     bpp = atoi(argv[1]);
+
+    if(bpp != 16 || bpp != 32)
+    {
+        bpp = 32;
+        Con_Printf("%d not valid for bits per pixel, setting to 32.\n", bpp);
+    }
+    glScreenBits = bpp;
+    GL_ChangeResolution(0, 0, glScreenBits, glScreenFull);
     return true;
 }
 

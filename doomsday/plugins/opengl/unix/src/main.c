@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,32 +53,19 @@
 
 #include <stdlib.h>
 
-/*
-   //#define DEBUGMODE
-   #ifdef DEBUGMODE
-   #    define DEBUG
-   #    include <assert.h>
-   #    include <dprintf.h>
-   #endif */
-
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
 // FUNCTION PROTOTYPES -----------------------------------------------------
 
-void    initState(void);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean firstTimeInit = true;
-
 // The State.
-int     screenWidth, screenHeight, screenBits, windowed;
+int     screenWidth, screenHeight;
 int     palExtAvailable, sharedPalExtAvailable;
-boolean texCoordPtrEnabled;
 int     maxTexSize;
 float   maxAniso = 1;
 int     maxTexUnits;
@@ -91,11 +79,16 @@ boolean forceFinishBeforeSwap = DGL_FALSE;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean firstTimeInit = true;
+static int screenBits, windowed;
+
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// initOpenGL
-//===========================================================================
+/**
+ * Attempt to create a context for GL rendering. 
+ *
+ * @return              Non-zero= success.
+ */
 int initOpenGL(void)
 {
     int     flags = SDL_OPENGL;
@@ -118,9 +111,11 @@ int initOpenGL(void)
     return DGL_TRUE;
 }
 
-//===========================================================================
-// activeTexture
-//===========================================================================
+/**
+ * Set the currently active GL texture by name.
+ *
+ * @param texture       GL texture name to make active.
+ */
 void activeTexture(const GLenum texture)
 {
 #ifdef USE_MULTITEXTURE
@@ -128,11 +123,16 @@ void activeTexture(const GLenum texture)
 #endif
 }
 
-//===========================================================================
-// DG_Init
-//  'mode' is either DGL_MODE_WINDOW or DGL_MODE_FULLSCREEN. If 'bpp' is
-//  zero, the current display color depth is used.
-//===========================================================================
+/**
+ * Attempt to acquire a device context for OGL rendering and then init. 
+ *
+ * @param width         Width of the OGL window.
+ * @param height        Height of the OGL window.
+ * @param bpp           0= the current display color depth is used.
+ * @param mode          Either DGL_MODE_WINDOW or DGL_MODE_FULLSCREEN.
+ *
+ * @return              <code>DGL_OK</code>= success.
+ */
 int DG_Init(int width, int height, int bpp, int mode)
 {
     boolean fullscreen = (mode == DGL_MODE_FULLSCREEN);
@@ -141,11 +141,10 @@ int DG_Init(int width, int height, int bpp, int mode)
 
     Con_Message("DG_Init: OpenGL.\n");
 
-    // Are we in range here?
     info = SDL_GetVideoInfo();
-    screenBits = info->vfmt->BitsPerPixel;
     screenWidth = width;
     screenHeight = height;
+    screenBits = info->vfmt->BitsPerPixel;
     windowed = !fullscreen;
 
     allowCompression = true;
@@ -225,7 +224,6 @@ int DG_Init(int width, int height, int bpp, int mode)
             glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
             Con_Message("  Maximum anisotropy: %g\n", maxAniso);
         }
-        //if(!noArrays) Con_Message("  Using vertex arrays.\n");
     }
     free(extbuf);
 
@@ -238,11 +236,13 @@ int DG_Init(int width, int height, int bpp, int mode)
         dumpTextures = DGL_TRUE;
         Con_Message("  Dumping textures (mipmap level zero).\n");
     }
+
     if(extAniso && ArgExists("-anifilter"))
     {
         useAnisotropic = DGL_TRUE;
         Con_Message("  Using anisotropic texture filtering.\n");
     }
+
     if(ArgExists("-glfinish"))
     {
         forceFinishBeforeSwap = DGL_TRUE;
@@ -251,17 +251,14 @@ int DG_Init(int width, int height, int bpp, int mode)
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_Shutdown
-//===========================================================================
 void DG_Shutdown(void)
 {
     // No special shutdown procedures required.
 }
 
-//===========================================================================
-// DG_Show
-//===========================================================================
+/**
+ * Make the content of the framebuffer visible.
+ */
 void DG_Show(void)
 {
     if(forceFinishBeforeSwap)

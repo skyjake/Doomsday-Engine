@@ -4,6 +4,8 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,11 +32,12 @@
  * http://oss.sgi.com/projects/ogl-sample/
  */
 
-/** \todo The *NIX/SDL and Windows/GDI OpenGL Routines really need to be merged
-* into a combined *NIX-Windows/SDL based system. We far far too much duplication,
-* it its obvious changes on the *NIX side, never propogated to the Windows side.
-* I'd use the *NIX/SDL files as the base for the new combined OpenGL system - Yagian
-*/
+/**\todo The *NIX/SDL and Windows/GDI OpenGL Routines really need to be
+ * merged into a combined *NIX-Windows/SDL based system. We have far too
+ * much duplication, obvious changes on the *NIX side, never propogated to
+ * the Windows side. I'd use the *NIX/SDL files as the base for the new
+ * combined OpenGL system - Yagian
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -42,19 +45,7 @@
 
 #include <stdlib.h>
 
-/*
-   //#define DEBUGMODE
-   #ifdef DEBUGMODE
-   #    define DEBUG
-   #    include <assert.h>
-   #    include <dprintf.h>
-   #endif */
-
 // MACROS ------------------------------------------------------------------
-
-// A helpful macro that changes the origin of the screen
-// coordinate system.
-#define FLIP(y) (screenHeight - (y+1))
 
 // TYPES -------------------------------------------------------------------
 
@@ -64,39 +55,43 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean firstTimeInit = true;
-
-// The State.
 HWND    windowHandle;
 HGLRC   glContext;
-int     screenWidth, screenHeight, screenBits, windowed;
+
+// The State.
+int     screenWidth, screenHeight;
 int     palExtAvailable, sharedPalExtAvailable;
-boolean texCoordPtrEnabled;
 int     maxTexSize;
 float   maxAniso = 1;
 int     maxTexUnits;
 int     useAnisotropic;
 int     useVSync;
-float   nearClip, farClip;
-int     useFog;
-int     verbose;                //, noArrays = true;
+int     verbose;
 boolean wireframeMode;
 boolean allowCompression;
 boolean noArrays;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean firstTimeInit = true;
+static int screenBits, windowed;
+
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// fullscreenMode
-//  Change the display mode using the Win32 API.
-//  The closest available refresh rate is selected.
-//===========================================================================
-int fullscreenMode(int width, int height, int bpp)
+/**
+ * Change the display mode using the Win32 API, the closest available
+ * refresh rate is selected.
+ *
+ * @param width         Requested horizontal resolution.
+ * @param height        Requested vertical resolution.
+ * @param bpp           Requested bits per pixel.
+ *
+ * @return              Non-zero= success.
+ */
+static int fullscreenMode(int width, int height, int bpp)
 {
-    DEVMODE current, testMode, newMode;
-    int     res, i;
+    int         res, i;
+    DEVMODE     current, testMode, newMode;
 
     // First get the current settings.
     memset(&current, 0, sizeof(current));
@@ -107,8 +102,7 @@ int fullscreenMode(int width, int height, int bpp)
             bpp = current.dmBitsPerPel;
     }
     else if(!bpp)
-    {
-        // A safe fallback.
+    {   // A safe fallback.
         bpp = 16;
     }
 
@@ -154,7 +148,7 @@ int fullscreenMode(int width, int height, int bpp)
     if((res = ChangeDisplaySettings(&newMode, 0)) != DISP_CHANGE_SUCCESSFUL)
     {
         Con_Message("drOpenGL.setResolution: Error %x.\n", res);
-        return 0;               // Failed, damn you.
+        return 0; // Failed, damn you.
     }
 
     // Set the correct window style and size.
@@ -168,21 +162,22 @@ int fullscreenMode(int width, int height, int bpp)
     if(bpp)
         screenBits = bpp;
 
-    // Done!
-    return 1;
+    return 1; // Success.
 }
 
-//===========================================================================
-// windowedMode
-//  Only adjusts the window style and size.
-//===========================================================================
-void windowedMode(int width, int height)
+/**
+ * Only adjusts the window style and size.
+ *
+ * @param width         Width of the window.
+ * @param height        Height of the window.
+ */
+static void windowedMode(int width, int height)
 {
     // We need to have a large enough client area.
-    RECT    rect;
-    int     xoff = (GetSystemMetrics(SM_CXSCREEN) - width) / 2, yoff =
-        (GetSystemMetrics(SM_CYSCREEN) - height) / 2;
-    LONG    style;
+    RECT        rect;
+    int         xoff = (GetSystemMetrics(SM_CXSCREEN) - width) / 2;
+    int         yoff = (GetSystemMetrics(SM_CYSCREEN) - height) / 2;
+    LONG        style;
 
     if(ArgCheck("-nocenter"))
         xoff = yoff = 0;
@@ -197,25 +192,27 @@ void windowedMode(int width, int height)
     rect.bottom = yoff + height;
 
     // Set window style.
-    style =
-        GetWindowLong(windowHandle,
-                      GWL_STYLE) | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE |
-        WS_CAPTION | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+    style = GetWindowLong(windowHandle, GWL_STYLE) |
+                WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CAPTION |
+                WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     SetWindowLong(windowHandle, GWL_STYLE, style);
     AdjustWindowRect(&rect, style, FALSE);
-    SetWindowPos(windowHandle, 0, xoff, yoff,   /*rect.left, rect.top, */
-                 rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER);
+    SetWindowPos(windowHandle, 0, xoff, yoff, /*rect.left, rect.top, */
+                 rect.right - rect.left, rect.bottom - rect.top,
+                 SWP_NOZORDER);
 
     screenWidth = width;
     screenHeight = height;
 }
 
-//===========================================================================
-// initOpenGL
-//===========================================================================
-int initOpenGL()
+/**
+ * Attempt to create a context for GL rendering. 
+ *
+ * @return              <code>DGL_TRUE</code>= success.
+ */
+static int initOpenGL(void)
 {
-    HDC     hdc = GetDC(windowHandle);
+    HDC         hdc = GetDC(windowHandle);
 
     // Create the OpenGL rendering context.
     if(!(glContext = wglCreateContext(hdc)))
@@ -238,12 +235,14 @@ int initOpenGL()
     ReleaseDC(windowHandle, hdc);
 
     initState();
-    return 1;
+    return DGL_TRUE;
 }
 
-//===========================================================================
-// activeTexture
-//===========================================================================
+/**
+ * Set the currently active GL texture by name.
+ *
+ * @param texture       GL texture name to make active.
+ */
 void activeTexture(const GLenum texture)
 {
     if(!glActiveTextureARB)
@@ -251,36 +250,39 @@ void activeTexture(const GLenum texture)
     glActiveTextureARB(texture);
 }
 
-// THE ROUTINES ------------------------------------------------------------
-
-//===========================================================================
-// DG_Init
-//  'mode' is either DGL_MODE_WINDOW or DGL_MODE_FULLSCREEN. If 'bpp' is
-//  zero, the current display color depth is used.
-//===========================================================================
+/**
+ * Attempt to acquire a device context for OGL rendering and then init. 
+ *
+ * @param width         Width of the OGL window.
+ * @param height        Height of the OGL window.
+ * @param bpp           0= the current display color depth is used.
+ * @param mode          Either DGL_MODE_WINDOW or DGL_MODE_FULLSCREEN.
+ *
+ * @return              <code>DGL_OK</code>= success.
+ */
 int DG_Init(int width, int height, int bpp, int mode)
 {
-    boolean fullscreen = (mode == DGL_MODE_FULLSCREEN);
-    char   *token, *extbuf;
-    int     res, pixForm;
+    boolean     fullscreen = (mode == DGL_MODE_FULLSCREEN);
+    char       *token, *extbuf;
+    int         res, pixForm;
     PIXELFORMATDESCRIPTOR pfd =
 #ifndef DRMESA
     {
-        sizeof(PIXELFORMATDESCRIPTOR),  // The size
-        1,                      // Version
-        PFD_DRAW_TO_WINDOW |    // Support flags
+        sizeof(PIXELFORMATDESCRIPTOR),  // The size.
+        1,                      // Version.
+        PFD_DRAW_TO_WINDOW |    // Support flags.
             PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-        PFD_TYPE_RGBA,          // Pixel type
-        32,                     // Bits per pixel
+        PFD_TYPE_RGBA,          // Pixel type.
+        32,                     // Bits per pixel.
         0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0,
-        32,                     // Depth bits
+        32,                     // Depth bits.
         0, 0,
-        0,                      // Layer type (ignored?)
+        0,                      // Layer type.
         0, 0, 0, 0
     };
 #else
-        /* Double Buffer, no alpha */
+    /* Double Buffer, no alpha */
     { sizeof(PIXELFORMATDESCRIPTOR), 1,
         PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_FORMAT |
             PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
@@ -289,11 +291,10 @@ int DG_Init(int width, int height, int bpp, int mode)
         0, 0, 0, 0, 0, 16, 8, 0, 0, 0, 0, 0, 0
     };
 #endif
-    HWND    hDesktop = GetDesktopWindow();
-    HDC     desktop_hdc = GetDC(hDesktop), hdc;
-    int     deskbpp =
-        GetDeviceCaps(desktop_hdc, PLANES) * GetDeviceCaps(desktop_hdc,
-                                                           BITSPIXEL);
+    HWND        hDesktop = GetDesktopWindow();
+    HDC         desktop_hdc = GetDC(hDesktop), hdc;
+    int         deskbpp = GetDeviceCaps(desktop_hdc, PLANES) *
+                            GetDeviceCaps(desktop_hdc, BITSPIXEL);
 
     ReleaseDC(hDesktop, desktop_hdc);
 
@@ -316,7 +317,6 @@ int DG_Init(int width, int height, int bpp, int mode)
 
     allowCompression = true;
     verbose = ArgExists("-verbose");
-    //noArrays = ArgExists("-noarray");
 
     if(fullscreen)
     {
@@ -334,31 +334,30 @@ int DG_Init(int width, int height, int bpp, int mode)
     // Get the device context handle.
     hdc = GetDC(windowHandle);
 
-    // Set the pixel format for the device context. This can only be done once.
-    // (Windows...).
+    // Set the pixel format for the device context. Can only be done once
+    // (unless we release the context and acquire another).
     pixForm = ChoosePixelFormat(hdc, &pfd);
     if(!pixForm)
     {
         res = GetLastError();
-        Con_Error
-            ("drOpenGL.Init: Choosing of pixel format failed. Error %d.\n",
-             res);
+        Con_Error("drOpenGL.Init: Choosing of pixel format failed. Error %d.\n",
+                  res);
     }
 
     // Make sure that the driver is hardware-accelerated.
     DescribePixelFormat(hdc, pixForm, sizeof(pfd), &pfd);
     if(pfd.dwFlags & PFD_GENERIC_FORMAT && !ArgCheck("-allowsoftware"))
     {
-        Con_Error
-            ("drOpenGL.Init: OpenGL driver not accelerated!\nUse the -allowsoftware option to bypass this.\n");
+        Con_Error("drOpenGL.Init: OpenGL driver not accelerated!\n"
+                  "Use the -allowsoftware option to bypass this.\n");
     }
 
-    /*if(! */
-    SetPixelFormat(hdc, pixForm, &pfd);
-    /*{
+    if(!SetPixelFormat(hdc, pixForm, &pfd))
+    {
        res = GetLastError();
-       Con_Printf("Warning: Setting of pixel format failed. Error %d.\n",res);
-       } */
+       Con_Printf("Warning: Setting of pixel format failed. Error %d.\n",
+                  res);
+    }
     ReleaseDC(windowHandle, hdc);
 
     if(!initOpenGL())
@@ -410,13 +409,14 @@ int DG_Init(int width, int height, int bpp, int mode)
         Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
 
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTexUnits);
+        Con_Message("  Found Texture units: %i\n", maxTexUnits);
 #ifndef USE_MULTITEXTURE
         maxTexUnits = 1;
 #endif
         // But sir, we are simple people; two units is enough.
         if(maxTexUnits > 2)
             maxTexUnits = 2;
-        Con_Message("  Texture units: %i\n", maxTexUnits);
+        Con_Message("  Utilised Texture units: %i\n", maxTexUnits);
 
         Con_Message("  Maximum texture size: %i\n", maxTexSize);
         if(extAniso)
@@ -424,7 +424,6 @@ int DG_Init(int width, int height, int bpp, int mode)
             glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
             Con_Message("  Maximum anisotropy: %g\n", maxAniso);
         }
-        //if(!noArrays) Con_Message("  Using vertex arrays.\n");
     }
     free(extbuf);
 
@@ -437,6 +436,7 @@ int DG_Init(int width, int height, int bpp, int mode)
         dumpTextures = DGL_TRUE;
         Con_Message("  Dumping textures (mipmap level zero).\n");
     }
+
     if(extAniso && ArgExists("-anifilter"))
     {
         useAnisotropic = DGL_TRUE;
@@ -445,9 +445,9 @@ int DG_Init(int width, int height, int bpp, int mode)
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_Shutdown
-//===========================================================================
+/**
+ * Releases the OGL context and restores any changed environment settings.
+ */
 void DG_Shutdown(void)
 {
     // Delete the rendering context.
@@ -458,22 +458,12 @@ void DG_Shutdown(void)
     ChangeDisplaySettings(0, 0);
 }
 
-//===========================================================================
-// DG_Show
-//===========================================================================
+/**
+ * Make the content of the framebuffer visible.
+ */
 void DG_Show(void)
 {
     HDC     hdc = GetDC(windowHandle);
-
-#ifdef DEBUGMODE
-    /*  glBegin(GL_LINES);
-       glColor3f(1, 1, 1);
-       glVertex2f(50, 50);
-       glVertex2f(100, 60);
-       primType = DGL_LINES;
-       End(); */
-    //assert(glGetError() == GL_NO_ERROR);
-#endif
 
     // Swap buffers.
     SwapBuffers(hdc);
@@ -481,6 +471,8 @@ void DG_Show(void)
 
     if(wireframeMode)
     {
+        // When rendering is wireframe mode, we must clear the screen
+        // before rendering a frame.
         DG_Clear(DGL_COLOR_BUFFER_BIT);
     }
 }

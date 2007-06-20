@@ -200,7 +200,7 @@ void Sys_HideMouse(void)
     //  if(!I_MousePresent()) return;
 
 #ifdef WIN32
-    if(novideo || nofullscreen)
+    if(novideo || !glScreenFull)
         return;
     ShowCursor(FALSE);
     ShowCursor(FALSE);

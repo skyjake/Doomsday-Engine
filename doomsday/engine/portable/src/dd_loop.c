@@ -138,8 +138,15 @@ void DD_GameLoop(void)
             //       window it is handling messages for - DJS.
             while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
             {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                if(msg.message == WM_QUIT)
+                {
+                    appShutdown = true;
+                }
+                else
+                {
+                    TranslateMessage(&msg);
+                    DispatchMessage(&msg);
+                }
             }
         }
 #endif

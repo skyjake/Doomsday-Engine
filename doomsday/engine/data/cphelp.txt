@@ -497,6 +497,13 @@ inf = Params: setname (name)\nFor example, 'setname "my name"'.
 desc = Change video mode resolution or window size.
 inf = Params: setres (width) (height)\nFor example, 'setres 1024 768'.
 
+[setbpp]
+desc = Change color depth (bits per pixel), either 16 or 32.
+inf = Params: setbpp (bits)\nFor example, 'setbpp 32'.
+
+[togglefullscreen]
+desc = Toggle between fullscreen and windowed video modes.
+
 [settics]
 desc = Set number of game tics per second (default: 35).
 inf = Params: settics (tics)\nFor example, 'settics 15'.
@@ -1173,3 +1180,9 @@ desc = 1=Keep track which sources affect which surfaces.
 
 [ctl-info]
 desc = 1=Show player control state debugging information.
+
+[vid-fullscreen]
+desc = 1=Default to fullscreen.
+
+[vid-bpp]
+desc = Default color depth (bits per pixel), 16 or 32.

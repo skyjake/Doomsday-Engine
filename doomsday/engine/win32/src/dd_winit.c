@@ -84,7 +84,7 @@ BOOL InitApplication(HINSTANCE hInst)
 
     // We need to register a window class for our window.
     wc.style = CS_OWNDC;
-    wc.lpfnWndProc = MainWndProc;
+    wc.lpfnWndProc = (WNDPROC) MainWndProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = hInst;
@@ -107,7 +107,7 @@ BOOL InitInstance(HINSTANCE hInst, int cmdShow)
     hWndMain =
         CreateWindow("DoomsdayMainWClass", buf,
                      WS_CAPTION | WS_CLIPCHILDREN | WS_CLIPSIBLINGS |
-                     WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT,
+                     WS_MINIMIZEBOX | WS_MAXIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT,
                      CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInst, NULL);
     if(!hWndMain)
         return FALSE;
@@ -258,6 +258,19 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     switch(msg)
     {
+    case WM_SIZE:
+        switch(wParam)
+        {
+        case SIZE_MAXIMIZED:
+            GL_ChangeResolution(-1, -1, 0, true);
+            forwardMsg = false;
+            break;
+
+        default:
+            break;
+        }
+        break;
+
     case WM_CLOSE:
         appShutdown = true;
         ignoreInput = true;

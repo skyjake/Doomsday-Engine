@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,11 +79,11 @@ void    CP_CvarSlider(ui_object_t *ob);
 int     CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev);
 void    CP_KeyGrabDrawer(ui_object_t *ob);
 void    CP_QuickFOV(ui_object_t *ob);
-void    CP_ResolutionInfo(ui_object_t *ob);
+void    CP_VideoModeInfo(ui_object_t *ob);
 void    CP_ResolutionList(ui_object_t *ob);
-void    CP_SetDefaultRes(ui_object_t *ob);
-void    CP_SetRes(ui_object_t *ob);
-void    CP_ResChanged(ui_object_t *ob);
+void    CP_SetDefaultVidMode(ui_object_t *ob);
+void    CP_SetVidMode(ui_object_t *ob);
+void    CP_VidModeChanged(ui_object_t *ob);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -91,6 +91,7 @@ void    CP_ResChanged(ui_object_t *ob);
 
 char    panel_buttons[NUM_CP_BUTTONS] = { true };   // The first is active.
 char    panel_sv_password[100], panel_res_x[40], panel_res_y[40];
+int     panel_fullscreen, panel_bpp;
 int     panel_help_active = false;
 int     panel_help_offset = 0;  // Zero means the help is completely hidden.
 byte    panel_show_help = true; // cvar
@@ -151,6 +152,9 @@ cvarbutton_t cvarbuttons[] = {
     {0, "rend-fakeradio"},
     {0, 0}
 };
+
+uidata_button_t btn_bpp = {&panel_bpp, "32", "16"};
+uidata_button_t btn_fullscreen = {&panel_fullscreen, "Yes", "No"};
 
 uidata_listitem_t lstit_con_completion[] = {
     {"List with values", 0},
@@ -352,16 +356,23 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_vid_contrast },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 190, 0, 55,    "Display brightness", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 190, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_vid_bright },
-    { UI_LIST,      0,  CPID_RES_LIST,  680, 250, 300, 175, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_ResolutionList, &lst_resolution },
-    { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Horizontal resolution", UIText_Drawer },
-    { UI_EDIT,      0,  CPID_RES_X,     680, 430, 100, 55,  "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_ResChanged, &ed_res_x },
-    { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Vertical resolution", UIText_Drawer },
-    { UI_EDIT,      0,  CPID_RES_Y,     680, 490, 100, 55,  "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_ResChanged, &ed_res_y },
-    { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Default resolution", UIText_Drawer },
-    { UI_BOX,       0,  0,              680, 550, 0, 55,    "default",  CP_ResolutionInfo },
-    { UI_BUTTON,    0,  0,              680, 610, 170, 60,  "Set Default", UIButton_Drawer, UIButton_Responder, 0, CP_SetDefaultRes },
-    { UI_BUTTON,    0,  CPID_SET_RES,   680, 910, 300, 60,  "",         UIButton_Drawer, UIButton_Responder, 0, CP_SetRes },
-    { UI_BOX,       0,  0,              300, 910, 0, 60,    "",         CP_ResolutionInfo },
+    { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Current video mode", UIText_Drawer },
+    { UI_BOX,       0,  0,              680, 250, 0, 60,    "current",  CP_VideoModeInfo },
+    { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Resolution", UIText_Drawer },
+    { UI_LIST,      0,  CPID_RES_LIST,  680, 310, 300, 175, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_ResolutionList, &lst_resolution },
+    { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Custom resolution", UIText_Drawer },
+    { UI_EDIT,      0,  CPID_RES_X,     680, 490, 130, 55,   "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_VidModeChanged, &ed_res_x },
+    { UI_TEXT,      0,  0,              826, 490, 0, 55,    "x", UIText_Drawer },
+    { UI_EDIT,      0,  CPID_RES_Y,     850, 490, 130, 55,   "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_VidModeChanged, &ed_res_y },
+    { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Fullscreen", UIText_Drawer },
+    { UI_BUTTON2EX, 0,  0,              680, 550, 130, 55,  "",    UIButton_Drawer, UIButton_Responder, 0, CP_VidModeChanged, &btn_fullscreen },
+    { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Color depth", UIText_Drawer },
+    { UI_BUTTON2EX, 0,  0,              680, 610, 130, 55,  "",         UIButton_Drawer, UIButton_Responder, 0, CP_VidModeChanged, &btn_bpp },
+    { UI_TEXT,      0,  0,              300, 670, 0, 55,    "Default video mode", UIText_Drawer },
+    { UI_BOX,       0,  0,              680, 670, 0, 55,    "default",  CP_VideoModeInfo },
+    { UI_BUTTON,    0,  0,              680, 730, 170, 60,  "Set Default", UIButton_Drawer, UIButton_Responder, 0, CP_SetDefaultVidMode },
+    { UI_TEXT,      0,  0,              300, 910, 0, 55,    "Change to", UIText_Drawer },
+    { UI_BUTTON,    0,  CPID_SET_RES,   680, 910, 300, 60,  "",         UIButton_Drawer, UIButton_Responder, 0, CP_SetVidMode },
 
     { UI_META,      3 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Audio Options", UIText_BrightDrawer },
@@ -793,25 +804,30 @@ void CP_QuickFOV(ui_object_t *ob)
     Con_SetFloat("rend-camera-fov", sld_fov.value = atoi(ob->text), true);
 }
 
-void CP_ResolutionInfo(ui_object_t *ob)
+void CP_VideoModeInfo(ui_object_t *ob)
 {
     char        buf[80];
 
     if(!strcmp(ob->text, "default"))
-        sprintf(buf, "%i x %i", defResX, defResY);
+        sprintf(buf, "%i x %i x %i (%s)", defResX, defResY, defBPP,
+                defFullscreen? "fullscreen":"windowed");
     else
-        sprintf(buf, "Current resolution: %i x %i", glScreenWidth, glScreenHeight);
+        sprintf(buf, "%i x %i x %i (%s)", glScreenWidth, glScreenHeight,
+                glScreenBits, glScreenFull? "fullscreen":"windowed");
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TEXT),
                  1);
 }
 
-void CP_UpdateSetResButton(int w, int h)
+void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
 {
     ui_object_t *ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
 
-    sprintf(ob->text, "Change To %i x %i", w, h);
-    if(w == glScreenWidth && h == glScreenHeight)
+    bpp = (bpp? 32 : 16);
+    sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
+            fullscreen? "fullscreen":"windowed");
+    if(w == glScreenWidth && h == glScreenHeight && bpp == glScreenBits &&
+       fullscreen == glScreenFull)
         ob->flags |= UIF_DISABLED;
     else
         ob->flags &= ~UIF_DISABLED;
@@ -829,10 +845,10 @@ void CP_ResolutionList(ui_object_t *ob)
     strcpy(UI_FindObject(ob_panel, ob->group, CPID_RES_X)->text, panel_res_x);
     strcpy(UI_FindObject(ob_panel, ob->group, CPID_RES_Y)->text, panel_res_y);
 
-    CP_ResChanged(ob);
+    CP_VidModeChanged(ob);
 }
 
-void CP_SetDefaultRes(ui_object_t *ob)
+void CP_SetDefaultVidMode(ui_object_t *ob)
 {
     int         x = atoi(panel_res_x), y = atoi(panel_res_y);
 
@@ -840,11 +856,14 @@ void CP_SetDefaultRes(ui_object_t *ob)
         return;
     defResX = x;
     defResY = y;
+    defBPP = (panel_bpp? 32 : 16);
+    defFullscreen = panel_fullscreen;
 }
 
-void CP_SetRes(ui_object_t *ob)
+void CP_SetVidMode(ui_object_t *ob)
 {
     int         x = atoi(panel_res_x), y = atoi(panel_res_y);
+    int         bpp = (panel_bpp? 32 : 16);
 
     if(!x || !y)
         return;
@@ -853,17 +872,13 @@ void CP_SetRes(ui_object_t *ob)
 
     ob->flags |= UIF_DISABLED;
 
-    // Can't change the resolution while the UI is active.
-    // (controls need to be repositioned).
-    UI_End();
-    GL_ChangeResolution(x, y, 0);
-    // Reactivate the panel.
-    Con_Execute(CMDS_DDAY, "panel", true, false);
+    GL_ChangeResolution(x, y, bpp, panel_fullscreen);
 }
 
-void CP_ResChanged(ui_object_t *ob)
+void CP_VidModeChanged(ui_object_t *ob)
 {
-    CP_UpdateSetResButton(atoi(panel_res_x), atoi(panel_res_y));
+    CP_UpdateSetVidModeButton(atoi(panel_res_x), atoi(panel_res_y),
+                              panel_bpp, panel_fullscreen);
 }
 
 /**
@@ -1148,6 +1163,8 @@ D_CMD(OpenPanel)
     if(list->selection == -1)
         // Then use a reasonable default.
         list->selection = UI_ListFindItem(ob, RES(640, 480));
+    panel_fullscreen = glScreenFull;
+    panel_bpp = (glScreenBits == 32? 1 : 0);
     CP_ResolutionList(ob);
 
     UI_Init(true, true, false, false, false, false);

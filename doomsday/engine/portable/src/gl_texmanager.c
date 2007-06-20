@@ -126,8 +126,8 @@ int     mipmapping = 3, linearRaw = 1, texQuality = TEXQ_BEST;
 int     filterSprites = true;
 int     texMagMode = 1;         // Linear.
 
-//// Convert a 18-bit RGB (666) value to a playpal index.
-//// \fixme 256kb - Too big?
+// Convert a 18-bit RGB (666) value to a playpal index.
+// \fixme 256kb - Too big?
 byte    pal18to8[262144];
 int     pallump;
 
@@ -765,9 +765,11 @@ void GL_ClearRuntimeTextures(void)
     // Which, obviously, can't persist any longer...
     RL_DeleteLists();
 
-    // Textures and sprite lumps.
+    // Textures, flats and sprite lumps.
     for(i = 0; i < numtextures; ++i)
         GL_DeleteTexture(i);
+    for(i = 0; i < numflats; ++i)
+        GL_DeleteFlat(i);
     for(i = 0; i < numSpriteLumps; ++i)
         GL_DeleteSprite(i);
 
@@ -805,6 +807,25 @@ void GL_ClearRuntimeTextures(void)
     for(i = 0; i < defs.count.reflections.num; ++i)
     {
         GL_DeleteReflectionMap(&defs.reflections[i]);
+    }
+
+    {
+    patch_t **patches, **ptr;
+    patches = R_CollectPatches(NULL);
+    for(ptr = patches; *ptr; ptr++)
+    {
+        if((*ptr)->tex)
+        {
+            gl.DeleteTextures(1, &(*ptr)->tex);
+            (*ptr)->tex = 0;
+        }
+        if((*ptr)->tex2)
+        {
+            gl.DeleteTextures(1, &(*ptr)->tex2);
+            (*ptr)->tex2 = 0;
+        }
+    }
+    Z_Free(patches);
     }
 
     GL_DeleteRawImages();
@@ -2867,7 +2888,7 @@ void GL_TextureFilterMode(int target, int parm)
         GL_UpdateRawScreenParams(parm);
 }
 
-/*
+/**
  * Deletes a texture. Only for textures (not for sprites, flats, etc.).
  */
 void GL_DeleteTexture(int texidx)
@@ -2885,6 +2906,21 @@ void GL_DeleteTexture(int texidx)
 unsigned int GL_GetTextureName(int texidx)
 {
     return textures[texidx]->tex;
+}
+
+/**
+ * Deletes a flat. Only for flats (not for sprites, textures, etc.).
+ */
+void GL_DeleteFlat(int flatidx)
+{
+    if(flatidx < 0 || flatidx >= numflats)
+        return;
+
+    if(flats[flatidx]->tex)
+    {
+        gl.DeleteTextures(1, &flats[flatidx]->tex);
+        flats[flatidx]->tex = 0;
+    }
 }
 
 skintex_t *GL_GetSkinTex(const char *skin)

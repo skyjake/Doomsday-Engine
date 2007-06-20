@@ -117,7 +117,6 @@ boolean DevMaps;                // true = Map development mode
 char   *DevMapsDir = "";        // development maps directory
 int     shareware;              // true if only episode 1 present
 boolean debugmode;              // checkparm of -debug
-boolean nofullscreen;           // checkparm of -nofullscreen
 boolean cdrom;                  // true if cd-rom mode active
 boolean cmdfrag;                // true if a CMD_FRAG packet should be sent out
 boolean singletics;             // debug flag to cancel adaptiveness
@@ -743,7 +742,6 @@ static void HandleArgs(int state)
     if(state == 0)
     {
         debugmode = ArgExists("-debug");
-        nofullscreen = ArgExists("-nofullscreen") | ArgExists("-window");
         renderTextures = !ArgExists("-notex");
     }
 

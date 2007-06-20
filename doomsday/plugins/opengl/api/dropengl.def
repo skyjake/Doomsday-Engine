@@ -1,5 +1,5 @@
 LIBRARY			DROPENGL
-;DESCRIPTION		"Doomsday Graphics Library - OpenGL"
+;DESCRIPTION	"Doomsday Graphics Library - OpenGL"
 
 ; All exports should be prefixed DG_.
 
@@ -66,5 +66,3 @@ EXPORTS
 	DG_Fogv
 	DG_Project
 	DG_ReadPixels 
-
-	

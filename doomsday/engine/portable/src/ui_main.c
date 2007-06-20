@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -470,6 +470,14 @@ void UI_SetPage(ui_page_t *page)
         {
             // Stay-down button state.
             if(*(char *) ob->data)
+                ob->flags |= UIF_ACTIVE;
+            else
+                ob->flags &= ~UIF_ACTIVE;
+        }
+        else if(ob->type == UI_BUTTON2EX)
+        {
+            // Stay-down button state, with extended data.
+            if(*(char *) ((uidata_button_t *)ob->data)->data)
                 ob->flags |= UIF_ACTIVE;
             else
                 ob->flags &= ~UIF_ACTIVE;
@@ -993,8 +1001,19 @@ int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
         {
             // Stay-down buttons change state.
             ob->flags ^= UIF_ACTIVE;
+
             if(ob->data)
-                *(char *) ob->data = (ob->flags & UIF_ACTIVE) != 0;
+            {
+                void    *data;
+
+                if(ob->type == UI_BUTTON2EX)
+                    data = ((uidata_button_t *) ob->data)->data;
+                else
+                    data = ob->data;
+
+                *(char *) data = (ob->flags & UIF_ACTIVE) != 0;
+            }
+
             // Call the action function.
             if(ob->action)
                 ob->action(ob);
@@ -1014,6 +1033,21 @@ void UIButton_Drawer(ui_object_t *ob)
     ui_color_t  back;
     float       t = ob->timer / 15.0f;
     float       alpha = (dis ? .2f : 1);
+    const char *text;
+
+    if(ob->type == UI_BUTTON2EX)
+    {
+        uidata_button_t *data = ob->data;
+
+        if(down)
+            text = data->yes;
+        else
+            text = data->no;
+    }
+    else
+    {
+        text = ob->text;
+    }
 
     // Mix the background color.
     if(!click || t > .5f)
@@ -1029,7 +1063,7 @@ void UIButton_Drawer(ui_object_t *ob)
                   UI_BUTTON_BORDER * (down ? -1 : 1), false,
                   UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(ob->text,
+    UI_TextOutEx(text,
                  down + ob->x +
                  (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w /
                   2), down + ob->y + ob->h / 2, !(ob->flags & UIF_LEFT_ALIGN),
@@ -1978,7 +2012,7 @@ void UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start,
 /**
  * Draw white, shadowed text.
  */
-void UI_TextOut(char *text, int x, int y)
+void UI_TextOut(const char *text, int x, int y)
 {
     UI_TextOutEx(text, x, y, false, false, UI_Color(UIC_TEXT), 1);
 }
@@ -1986,7 +2020,7 @@ void UI_TextOut(char *text, int x, int y)
 /**
  * Draw shadowed text.
  */
-void UI_TextOutEx(char *text, int x, int y, int horizCenter, int vertCenter,
+void UI_TextOutEx(const char *text, int x, int y, int horizCenter, int vertCenter,
                   ui_color_t *color, float alpha)
 {
     alpha *= uiAlpha;
@@ -2008,7 +2042,7 @@ void UI_TextOutEx(char *text, int x, int y, int horizCenter, int vertCenter,
     FR_CustomShadowTextOut(text, x, y, UI_SHADOW_OFFSET, UI_SHADOW_OFFSET, .6f);
 }
 
-int UI_TextOutWrap(char *text, int x, int y, int w, int h)
+int UI_TextOutWrap(const char *text, int x, int y, int w, int h)
 {
     return UI_TextOutWrapEx(text, x, y, w, h, UI_Color(UIC_TEXT), 1);
 }
@@ -2017,7 +2051,7 @@ int UI_TextOutWrap(char *text, int x, int y, int w, int h)
  * Draw line-wrapped text inside a box. Returns the Y coordinate of the
  * last word.
  */
-int UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
+int UI_TextOutWrapEx(const char *text, int x, int y, int w, int h,
                      ui_color_t *color, float alpha)
 {
     char        word[2048], *wp = word;

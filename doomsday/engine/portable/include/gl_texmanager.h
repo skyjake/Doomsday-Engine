@@ -202,6 +202,7 @@ unsigned int    GL_GetTextureName(int texidx);
 
 // Only for textures (not for flats, sprites, etc.)
 void            GL_DeleteTexture(int texidx);
+void            GL_DeleteFlat(int flatidx);
 
 // Load the skin texture and prepare it for rendering.
 unsigned int    GL_PrepareSkin(model_t *mdl, int skin);

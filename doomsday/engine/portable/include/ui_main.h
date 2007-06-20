@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,6 +55,7 @@ typedef enum {
     UI_FOCUSBOX,                   // Can receive focus.
     UI_BUTTON,
     UI_BUTTON2,                    // Staydown/2-state button.
+    UI_BUTTON2EX,                  // Staydown/2-state with additional data.
     UI_EDIT,
     UI_LIST,
     UI_SLIDER,
@@ -142,6 +143,12 @@ typedef struct ui_page_s {
     int             timer;
     int             count;         // Object count, no need to initialize.
 } ui_page_t;
+
+typedef struct {
+    void           *data;
+    const char     *yes;
+    const char     *no;
+} uidata_button_t;
 
 typedef struct {
     char           *ptr;           // Text to modify.
@@ -265,11 +272,11 @@ void            UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi,
 void            UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
                               ui_color_t *background, boolean down,
                               boolean disabled, int arrow);
-void            UI_TextOut(char *text, int x, int y);
-void            UI_TextOutEx(char *text, int x, int y, int horiz_center,
+void            UI_TextOut(const char *text, int x, int y);
+void            UI_TextOutEx(const char *text, int x, int y, int horiz_center,
                              int vert_center, ui_color_t *color, float alpha);
-int             UI_TextOutWrap(char *text, int x, int y, int w, int h);
-int             UI_TextOutWrapEx(char *text, int x, int y, int w, int h,
+int             UI_TextOutWrap(const char *text, int x, int y, int w, int h);
+int             UI_TextOutWrapEx(const char *text, int x, int y, int w, int h,
                                  ui_color_t *color, float alpha);
 void            UI_DrawHelpBox(int x, int y, int w, int h, float alpha,
                                char *text);

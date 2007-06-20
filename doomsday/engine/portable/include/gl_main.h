@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ void            GL_SwitchTo3DState(boolean push_state);
 void            GL_Restore2DState(int step);
 void            GL_ProjectionMatrix(void);
 void            GL_RuntimeMode(void);
-int             GL_ChangeResolution(int w, int h, int bits);
+int             GL_ChangeResolution(int w, int h, int bits, boolean fullscreen);
 void            GL_Update(int flags);
 void            GL_DoUpdate(void);
 void            GL_BlendMode(blendmode_t mode);
@@ -69,11 +69,11 @@ const char*     GL_ChooseVariableFont(glfontstyle_t style);
 // deallocated by the caller.
 unsigned char  *GL_GrabScreen(void);
 
-extern int      glScreenWidth, glScreenHeight, glScreenbits;
+extern int      glScreenWidth, glScreenHeight, glScreenBits;
+extern boolean  glScreenFull;
 extern int      numTexUnits;
 extern boolean  envModAdd;
-extern int      defResX, defResY;
-extern float    nearClip, glFarClip;
+extern int      defResX, defResY, defBPP, defFullscreen;
 extern int      viewph, viewpw, viewpx, viewpy;
 extern int      r_framecounter;
 extern char     hiTexPath[], hiTexPath2[];

@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -120,14 +121,6 @@ void initState(void)
     if(wglSwapIntervalEXT != NULL)
         wglSwapIntervalEXT(0);
 #endif
-
-    /*  if(!noArrays)
-       {
-       glEnableClientState(GL_VERTEX_ARRAY);
-       glEnableClientState(GL_COLOR_ARRAY);
-       glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-       texCoordPtrEnabled = false;
-       } */
 
 #if DRMESA
     glDisable(GL_DITHER);
@@ -347,7 +340,7 @@ int DG_GetIntegerv(int name, int *v)
         break;
 
     case DGL_GRAY_MIPMAP:
-        *v = grayMipmapFactor * 255;
+        *v = (int) (grayMipmapFactor * 255);
         break;
         
     default:

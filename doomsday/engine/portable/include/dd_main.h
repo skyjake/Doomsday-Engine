@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@ extern int      maxzone;
 extern int      shareware;         // true if only episode 1 present
 extern boolean  cdrom;             // true if cd-rom mode active ("-cdrom")
 extern boolean  debugmode;         // checkparm of -debug
-extern boolean  nofullscreen;      // checkparm of -nofullscreen
 extern boolean  singletics;        // debug flag to cancel adaptiveness
 extern FILE    *outFile;           // Output file for console messages.
 extern int      isDedicated;

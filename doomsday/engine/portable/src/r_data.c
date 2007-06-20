@@ -725,7 +725,7 @@ void R_InitTextures(void)
     }
     numtextures = numtextures1 + numtextures2;
 
-    //// \fixme Surely not all of these are still needed?
+    // \fixme Surely not all of these are still needed?
     textures = Z_Malloc(numtextures * sizeof(texture_t*), PU_REFRESHTEX, 0);
 
     sprintf(buf, "R_Init: Initializing %i textures...", numtextures);
