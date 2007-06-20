@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
@@ -46,6 +46,11 @@
 // MACROS ------------------------------------------------------------------
 
 #define KEYBUFSIZE  32
+
+#define I_SAFE_RELEASE(d) { if(d) { IDirectInputDevice_Release(d); \
+                                    (d) = NULL; } }
+#define I_SAFE_RELEASE2(d) { if(d) { IDirectInputDevice2_Release(d); \
+                                     (d) = NULL; } }
 
 // TYPES -------------------------------------------------------------------
 
@@ -162,8 +167,7 @@ void I_InitMouse(void)
     return;
 
   kill_mouse:
-    IDirectInputDevice_Release(didMouse);
-    didMouse = 0;
+    I_SAFE_RELEASE(didMouse);
 }
 
 BOOL CALLBACK I_JoyEnum(LPCDIDEVICEINSTANCE lpddi, void *ref)
@@ -234,7 +238,7 @@ void I_InitJoystick(void)
        (void**) &didJoy);
 
        // Release the old interface.
-       IDirectInputDevice_Release(didJoy1);
+       I_SAFE_RELEASE(*didJoy1);
 
        if(FAILED(hr))
        {
@@ -302,34 +306,31 @@ void I_InitJoystick(void)
     return;
 
   kill_joy:
-    IDirectInputDevice_Release(didJoy);
-    didJoy = 0;
+    I_SAFE_RELEASE(didJoy);
 }
 
 void I_KillDevice(LPDIRECTINPUTDEVICE8 *dev)
 {
-    if(!*dev)
-        return;
-    IDirectInputDevice8_Unacquire(*dev);
-    IDirectInputDevice8_Release(*dev);
-    *dev = 0;
+    if(*dev)
+        IDirectInputDevice8_Unacquire(*dev);
+
+    I_SAFE_RELEASE(*dev);
 }
 
 #if 0
 void I_KillDevice2(LPDIRECTINPUTDEVICE2 *dev)
 {
-    if(!*dev)
-        return;
-    IDirectInputDevice2_Unacquire(*dev);
-    IDirectInputDevice2_Release(*dev);
-    *dev = 0;
+    if(*dev)
+        IDirectInputDevice2_Unacquire(*dev);
+
+    I_SAFE_RELEASE2(*dev);
 }
 #endif
 
 /**
  * Initialize input.
  *
- * @return: int         (true) if successful.
+ * @return          <code>true</code> if successful.
  */
 int I_Init(void)
 {
@@ -420,7 +421,7 @@ int I_Init(void)
 void I_Shutdown(void)
 {
     if(!initIOk)
-        return;                 // Not initialized.
+        return; // Not initialized.
     initIOk = false;
 
     // Release all the input devices.
