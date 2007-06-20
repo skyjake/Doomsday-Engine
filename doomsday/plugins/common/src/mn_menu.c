@@ -213,6 +213,11 @@ char   *endmsg[] = {
 };
 #endif
 
+#ifdef __JDOOM__
+/// The end message strings will be initialized in MN_Init().
+char *endmsg[NUM_QUITMESSAGES + 1];
+#endif
+
 const char* QuitEndMsg[] =
 {
     "ARE YOU SURE YOU WANT TO QUIT?",

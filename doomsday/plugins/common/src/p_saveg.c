@@ -204,20 +204,20 @@ typedef struct thinkerinfo_s {
     size_t          size;
 } thinkerinfo_t;
 
-typedef enum {
+typedef enum sectorclass_e {
     sc_normal,
     sc_ploff,                   // plane offset
 #if !__JHEXEN__
     sc_xg1
 #endif
-} sectorclass_e;
+} sectorclass_t;
 
-typedef enum {
+typedef enum lineclass_e {
     lc_normal,
 #if !__JHEXEN__
     lc_xg1
 #endif
-} lineclass_e;
+} lineclass_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -2316,7 +2316,7 @@ static void SV_WriteLine(line_t *li)
     uint        i, j;
     int         texid;
     float       rgba[4];
-    lineclass_e type;
+    lineclass_t type;
     xline_t    *xli = P_XLine(li);
 
 #if !__JHEXEN__
@@ -2405,7 +2405,7 @@ static void SV_WriteLine(line_t *li)
 static void SV_ReadLine(line_t *li)
 {
     int         i, j;
-    lineclass_e type;
+    lineclass_t type;
     int         ver;
     int         topTexID;
     int         bottomTexID;
