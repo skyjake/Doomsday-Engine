@@ -278,7 +278,7 @@ int DG_Init(int width, int height, int bpp, int mode)
         0, 0, 0, 0, 0,
         32,                     // Depth bits.
         0, 0,
-        0,                      // Layer type.
+        PFD_MAIN_PLANE,         // Layer type.
         0, 0, 0, 0
     };
 #else

@@ -273,7 +273,7 @@ int FR_PrepareFont(const char *name)
     struct {
         char   *name;
         int     gdires;
-        char   *winfontname;
+        char    winfontname[32]; // limit including terminator.
         int     pointsize;
     } fontmapper[] = {
         {"Fixed", SYSTEM_FIXED_FONT},
@@ -321,7 +321,7 @@ int FR_PrepareFont(const char *name)
                                    CLIP_DEFAULT_PRECIS,
                                    DEFAULT_QUALITY,
                                    VARIABLE_PITCH | FF_SWISS,
-                                   fontmapper[i].winfontname);
+                                   (LPCTSTR) fontmapper[i].winfontname);
 
                     FR_PrepareGDIFont(uifont);
                     DeleteObject(uifont);
@@ -550,7 +550,7 @@ int FR_PrepareGDIFont(HFONT hfont)
         ch[0] = i;
         ch[1] = 0;
 
-        GetTextExtentPoint32(hdc, ch, 1, &size);
+        GetTextExtentPoint32(hdc, (LPCTSTR) ch, 1, &size);
         fc->w = size.cx;
         fc->h = size.cy;
         maxh = max(maxh, fc->h);

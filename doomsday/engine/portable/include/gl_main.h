@@ -70,7 +70,7 @@ const char*     GL_ChooseVariableFont(glfontstyle_t style);
 unsigned char  *GL_GrabScreen(void);
 
 extern int      glScreenWidth, glScreenHeight, glScreenBits;
-extern boolean  glScreenFull;
+extern int      glScreenFull;
 extern int      numTexUnits;
 extern boolean  envModAdd;
 extern int      defResX, defResY, defBPP, defFullscreen;

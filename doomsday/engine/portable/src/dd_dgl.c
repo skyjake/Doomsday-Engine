@@ -352,7 +352,7 @@ int DD_InitDGL(void)
 
     // Load the DLL.
 #ifdef WIN32
-    dglHandle = LoadLibrary(libName);
+    dglHandle = LoadLibrary((LPCTSTR) libName);
 #endif
 #ifdef UNIX
     dglHandle = lt_dlopenext(libName);
