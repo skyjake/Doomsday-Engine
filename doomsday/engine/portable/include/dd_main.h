@@ -51,7 +51,7 @@ extern directory_t ddRuntimeDir, ddBinDir;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-void            DD_Main();
+int             DD_Main();
 void            DD_UpdateEngineState(void);
 void            DD_GameUpdate(int flags);
 void            DD_AddStartupWAD(const char *file);

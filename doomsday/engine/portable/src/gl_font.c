@@ -65,10 +65,6 @@ static void* FR_ReadFormat2(DFILE *file, jfrfont_t *font);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-#ifdef WIN32
-extern HWND hWndMain;
-#endif
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -298,8 +294,15 @@ int FR_PrepareFont(const char *name)
     strcat(buf, ".dfn");
     if(ArgCheck("-gdifonts") || (file = F_Open(buf, "rb")) == NULL)
     {
+        boolean retVal = false;
 #ifdef WIN32
-        int i;
+        ddwindow_t *window = DD_GetWindow(0);
+        HDC     hDC = NULL;
+        int     i;
+
+        if(window)
+            hDC = GetDC(window->hWnd);
+
         // No luck...
         for(i = 0; fontmapper[i].name; ++i)
             if(!stricmp(fontmapper[i].name, name))
@@ -309,9 +312,8 @@ int FR_PrepareFont(const char *name)
                     Con_Printf("FR_PrepareFont: GDI font for \"%s\".\n",
                                fontmapper[i].name);
                 }
-                if(fontmapper[i].winfontname)
+                if(window && hDC && fontmapper[i].winfontname)
                 {
-                    HDC     hDC = GetDC(hWndMain);
                     HFONT   uifont =
                         CreateFont(-MulDiv(fontmapper[i].pointsize,
                                            GetDeviceCaps(hDC, LOGPIXELSY), 72),
@@ -325,18 +327,21 @@ int FR_PrepareFont(const char *name)
 
                     FR_PrepareGDIFont(uifont);
                     DeleteObject(uifont);
-                    ReleaseDC(hWndMain, hDC);
                 }
                 else
                 {
                     FR_PrepareGDIFont(GetStockObject(fontmapper[i].gdires));
                 }
                 strcpy(fonts[currentFontIndex].name, name);
-                return true;
+                retVal = true;
+                break;
             }
+
+        if(window && hDC)
+            ReleaseDC(window->hWnd, hDC);
 #endif
         // The font was not found.
-        return false;
+        return retVal;
     }
 
     VERBOSE2(Con_Printf("FR_PrepareFont: %s\n", M_Pretty(buf)));

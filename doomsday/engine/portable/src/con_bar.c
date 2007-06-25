@@ -34,8 +34,6 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 
-#include "sys_stwin.h"
-
 // MACROS ------------------------------------------------------------------
 
 // Time for the progress to reach the new target (seconds).

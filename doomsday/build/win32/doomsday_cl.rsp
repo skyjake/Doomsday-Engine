@@ -100,7 +100,6 @@
  ./../../engine/win32/src/sys_musd_win.c
  ./../../engine/portable/src/sys_timer.c
  ./../../engine/portable/src/sys_system.c
- ./../../engine/win32/src/sys_stwin.c
  ./../../engine/portable/src/sys_sock.c
  ./../../engine/portable/src/sys_network.c
  ./../../engine/win32/src/sys_mixer.c

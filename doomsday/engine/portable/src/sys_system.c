@@ -26,6 +26,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32
+#  include <tchar.h>
 #  include <windows.h>
 #  include <process.h>
 #endif
@@ -54,11 +55,6 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-#ifdef WIN32
-extern HWND hWndMain;
-extern HINSTANCE hInstApp;
-#endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -90,11 +86,6 @@ static void C_DECL handler(int s)
  */
 void Sys_Init(void)
 {
-#ifdef WIN32
-    // Initialize COM.
-    CoInitialize(NULL);
-#endif
-
     Con_Message("Sys_Init: Initializing keyboard, mouse and joystick.\n");
     if(!isDedicated)
     {
@@ -145,24 +136,32 @@ void Sys_Shutdown(void)
     GL_Shutdown();
     I_ShutdownInputDevices();
     I_Shutdown();
-
-#ifdef WIN32
-    CoUninitialize();
-#endif
 }
 
 int Sys_CriticalMessage(char *msg)
 {
 #ifdef WIN32
-    char    buf[256];
-    int     ret;
+    char        buf[256];
+    int         ret;
+    ddwindow_t *window = DD_GetWindow(0);
+
+    if(!window)
+    {
+        suspendMsgPump = true;
+        MessageBox(HWND_DESKTOP,
+                   _T("Sys_CriticalMessage: Main window not available."), NULL,
+                   MB_ICONERROR | MB_OK);
+        suspendMsgPump = false;
+        return false;
+    }
 
     ShowCursor(TRUE);
     ShowCursor(TRUE);
     suspendMsgPump = true;
-    GetWindowText(hWndMain, buf, 255);
+    GetWindowText(window->hWnd, buf, 255);
     ret =
-        (MessageBox(hWndMain, msg, buf, MB_YESNO | MB_ICONEXCLAMATION) ==
+        (MessageBox(window->hWnd, _T(msg), _T(buf),
+                    MB_OK | MB_ICONEXCLAMATION) ==
          IDYES);
     suspendMsgPump = false;
     ShowCursor(FALSE);
@@ -197,37 +196,18 @@ void Sys_ShowCursor(boolean show)
 
 void Sys_HideMouse(void)
 {
-    //  if(!I_MousePresent()) return;
-
 #ifdef WIN32
     if(novideo || !glScreenFull)
         return;
     ShowCursor(FALSE);
-    ShowCursor(FALSE);
 #endif
 #ifdef UNIX
-    //if(novideo) return;
     Sys_ShowCursor(false);
 #endif
 }
 
-void Sys_ShowWindow(boolean show)
-{
-    // Showing does not work in dedicated mode.
-    if(isDedicated && show)
-        return;
-
-#ifdef WIN32
-    SetWindowPos(hWndMain, HWND_TOP, 0, 0, 0, 0,
-                 (show ? SWP_SHOWWINDOW : SWP_HIDEWINDOW) | SWP_NOSIZE |
-                 SWP_NOMOVE);
-    if(show)
-        SetActiveWindow(hWndMain);
-#endif
-}
-
 /**
- * Called when Doomsday should quit (will be deferred to the next cycle).
+ * Called when Doomsday should quit (will be deferred until convienent).
  */
 void Sys_Quit(void)
 {
@@ -238,10 +218,21 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 {
 #ifdef WIN32
     char    title[300];
+    ddwindow_t *window = DD_GetWindow(0);
+
+    if(!window)
+    {
+        suspendMsgPump = true;
+        MessageBox(HWND_DESKTOP,
+                   _T("Sys_MessageBox: Main window not available."), NULL,
+                   MB_ICONERROR | MB_OK);
+        suspendMsgPump = false;
+        return;
+    }
 
     suspendMsgPump = true;
-    GetWindowText(hWndMain, title, 300);
-    MessageBox(hWndMain, msg, title,
+    GetWindowText(window->hWnd, title, 300);
+    MessageBox(window->hWnd, msg, title,
                MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
     suspendMsgPump = false;
 #endif

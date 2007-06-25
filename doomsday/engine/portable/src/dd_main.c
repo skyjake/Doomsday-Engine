@@ -32,6 +32,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef WIN32
+#  define _WIN32_DCOM
+#  include <objbase.h>
+#endif
+
 #include "de_platform.h"
 
 #ifdef WIN32
@@ -96,7 +101,6 @@ static void HandleArgs(int state);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 #ifdef WIN32
-extern HWND hWndMain;
 extern HINSTANCE hInstDGL;
 #endif
 
@@ -338,7 +342,7 @@ void DD_AutoLoad(void)
 /**
  * Engine and game initialization. When complete, starts the game loop.
  */
-void DD_Main(void)
+int DD_Main(void)
 {
     char   *outfilename = "doomsday.out";
 
@@ -413,8 +417,13 @@ void DD_Main(void)
     //SW_Shutdown();              // The message window can be closed.
     if(!isDedicated)
     {
-        Sys_ShowWindow(true);   // Show the main window (was created hidden).
-        GL_EarlyInit();
+        DD_WindowShow(DD_GetWindow(0), true);   // Show the main window (was created hidden).
+        
+        if(!GL_EarlyInit())
+        {
+            Sys_CriticalMessage("GL_EarlyInit() failed.");
+            return -1;
+        }
     }
 
     // Enter busy mode until startup complete.
@@ -450,17 +459,17 @@ void DD_Main(void)
     // Final preparations for using the console UI.
     Con_InitUI();
 
-    DD_GameLoop();
+    return DD_GameLoop();
 }
 
 static int DD_StartupWorker(void *parm)
 {
     int     p = 0;
 
-    //Con_Message("Con_StartupInit: Init startup screen.\n");
-
-    // Create the startup messages window.
-    //SW_Init();
+#ifdef WIN32
+    // Initialize COM for this thread (needed for DirectInput).
+    CoInitialize(NULL);
+#endif
 
     Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
 
@@ -719,6 +728,11 @@ static int DD_StartupWorker(void *parm)
 
     Plug_DoHook(HOOK_INIT, 0, 0);   // Any initialization hooks?
     Con_UpdateKnownWords();         // For word completion (with Tab).
+
+#ifdef WIN32
+    // This thread has finished using COM.
+    CoUninitialize();
+#endif
 
     Con_BusyWorkerEnd();
     return 0;
@@ -996,7 +1010,7 @@ int DD_GetInteger(int ddvalue)
 #ifdef WIN32
         case DD_WINDOW_HANDLE:
             ASSERT_NOT_64BIT();
-            return (int) hWndMain;
+            return (int) DD_GetWindow(0)->hWnd;
 #endif
         }
         return 0;
@@ -1103,7 +1117,7 @@ void* DD_GetVariable(int ddvalue)
 
 #ifdef WIN32
         case DD_WINDOW_HANDLE:
-            return hWndMain;
+            return DD_GetWindow(0)->hWnd;
 #endif
         }
         return 0;

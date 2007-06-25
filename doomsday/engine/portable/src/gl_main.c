@@ -48,6 +48,7 @@
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
 #  include <icm.h>
+#  include <tchar.h>
 #  include <math.h>
 #endif
 
@@ -94,10 +95,6 @@ void    GL_SetGamma(void);
 
 extern int maxnumnodes;
 extern boolean filloutlines;
-
-#ifdef WIN32
-extern HWND hWndMain;           // Handle to the main window.
-#endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -242,14 +239,36 @@ void GL_GetGammaRamp(unsigned short *ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     {
-        HDC     hdc = GetDC(hWndMain);
-
-        gamma_support = false;
-        if(GetDeviceGammaRamp(hdc, (void*) ramp))
+        ddwindow_t *window = DD_GetWindow(0);
+        HDC     hDC;
+        
+        if(!window)
         {
-            gamma_support = true;
+            suspendMsgPump = true;
+            MessageBox(HWND_DESKTOP,
+                       _T("GL_GetGammaRamp: Main window not available."), NULL,
+                       MB_ICONERROR | MB_OK);
+            suspendMsgPump = false;
         }
-        ReleaseDC(hWndMain, hdc);
+        else
+        {      
+            hDC = GetDC(window->hWnd);
+
+            if(!hDC)
+            {
+                Con_Message("GL_GetGammaRamp: Failed getting device context.");
+                gamma_support = false;
+            }
+            else
+            {
+                gamma_support = false;
+                if(GetDeviceGammaRamp(hDC, (void*) ramp))
+                {
+                    gamma_support = true;
+                }
+                ReleaseDC(window->hWnd, hDC);
+            }
+        }
     }
 #endif
 
@@ -301,9 +320,31 @@ void GL_SetGammaRamp(unsigned short *ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     {
-        HDC hdc = GetDC(hWndMain);
-        SetDeviceGammaRamp(hdc, (void*) ramp);
-        ReleaseDC(hWndMain, hdc);
+        ddwindow_t *window = DD_GetWindow(0);
+
+        if(!window)
+        {
+            suspendMsgPump = true;
+            MessageBox(HWND_DESKTOP,
+                       _T("GL_SetGammaRamp: Main window not available."), NULL,
+                       MB_ICONERROR | MB_OK);
+            suspendMsgPump = false;
+        }
+        else
+        {
+            HDC hDC = GetDC(window->hWnd);
+
+            if(!hDC)
+            {
+                Con_Message("GL_SetGammaRamp: Failed getting device context.");
+                gamma_support = false;
+            }
+            else
+            {
+                SetDeviceGammaRamp(hDC, (void*) ramp);
+                ReleaseDC(window->hWnd, hDC);
+            }
+        }
     }
 #endif
 
@@ -522,13 +563,13 @@ void GL_ShutdownVarFont(void)
  * rendering occuring before GL_Init() must be done with manually prepared
  * textures.
  */
-void GL_EarlyInit(void)
+boolean GL_EarlyInit(void)
 {
     if(initGLOk)
-        return; // Already initialized.
+        return true; // Already initialized.
 
     if(novideo)
-        return;
+        return true;
 
     Con_Message("GL_Init: Initializing Doomsday Graphics Library.\n");
 
@@ -558,8 +599,9 @@ void GL_EarlyInit(void)
         glScreenBits = 32;
 
     glScreenFull = !(ArgExists("-nofullscreen") | ArgExists("-window"));
+    if(!gl.CreateContext(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull))
+        return false;
 
-    gl.CreateContext(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull);
     GL_InitDeferred();
 
     // Check the maximum texture size.
@@ -612,6 +654,7 @@ void GL_EarlyInit(void)
     FR_Init();
 
     initGLOk = true;
+    return true;
 }
 
 /**
@@ -915,6 +958,7 @@ int GL_ChangeResolution(int w, int h, int bits, boolean fullscreen)
 
     // Shutdown and re-initialize DGL.
     gl.Shutdown();
+    gl.Init();
     gl.CreateContext(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull);
 
     // Re-initialize.

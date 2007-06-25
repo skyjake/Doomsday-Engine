@@ -785,10 +785,6 @@
 					RelativePath="..\..\..\engine\win32\src\sys_sfxd_loader.c"
 					>
 				</File>
-				<File
-					RelativePath="..\..\..\engine\win32\src\sys_stwin.c"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Mac"

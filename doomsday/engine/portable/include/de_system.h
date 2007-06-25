@@ -38,7 +38,6 @@
 #include "sys_master.h"
 #include "sys_timer.h"
 #include "sys_mixer.h"
-#include "sys_stwin.h"
 
 #ifdef UNIX
 #  include "../../unix/include/sys_path.h"

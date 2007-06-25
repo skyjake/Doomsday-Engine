@@ -1,14 +1,11 @@
 /**\file
-*\section License
-* License: GPL
-*
-*\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
-*\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
-*\author Copyright © 1993-1996 by id Software, Inc.
-*/
-
-/* DE1: $Id$
- * Copyright (C) 2003, 2004 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\section License
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,7 +55,7 @@
 #define PU_PURGELEVEL   100
 #define PU_CACHE        101
 
-void            Z_Init(void);
+int             Z_Init(void);
 void            Z_Shutdown(void);
 void            Z_EnableFastMalloc(boolean isEnabled);
 //void            Z_PrintStatus(void);

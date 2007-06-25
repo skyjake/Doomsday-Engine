@@ -37,7 +37,7 @@ extern boolean suspendMsgPump;
 extern timespan_t sysTime, gameTime, demoTime, levelTime;
 
 void            DD_RegisterLoop(void);
-void            DD_GameLoop(void);
+int             DD_GameLoop(void);
 void            DD_DrawAndBlit(void);
 void            DD_StartFrame(void);
 void            DD_EndFrame(void);

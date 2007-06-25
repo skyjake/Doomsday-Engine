@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +31,12 @@
 
 #include "dd_pinit.h"
 
+typedef struct {
+    int     flags;
+} ddwindow_t;
+
+ddwindow_t     *DD_GetWindow(uint idx);
+void            DD_WindowShow(ddwindow_t *window, boolean show);
 void            DD_Shutdown(void);
 
 #endif

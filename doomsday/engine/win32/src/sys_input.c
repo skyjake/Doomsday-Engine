@@ -43,6 +43,8 @@
 #include "de_system.h"
 #include "de_misc.h"
 
+#include "dd_winit.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define KEYBUFSIZE  32
@@ -62,8 +64,6 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern HINSTANCE hInstApp;
-extern HWND hWndMain;
 extern boolean novideo;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -132,8 +132,17 @@ HRESULT I_SetRangeProperty(void *dev, REFGUID property, DWORD how, DWORD obj,
 
 void I_InitMouse(void)
 {
+    ddwindow_t  *window;
+
     if(ArgCheck("-nomouse") || novideo)
         return;
+
+    window = DD_GetWindow(0);
+    if(!window)
+    {
+        Con_Error("I_InitMouse: Main window not available, cannot init mouse.");
+        return;
+    }
 
     hr = IDirectInput_CreateDevice(dInput, &GUID_SysMouse, &didMouse, 0);
     if(FAILED(hr))
@@ -151,7 +160,7 @@ void I_InitMouse(void)
     }
 
     // Set behaviour.
-    hr = IDirectInputDevice_SetCooperativeLevel(didMouse, hWndMain,
+    hr = IDirectInputDevice_SetCooperativeLevel(didMouse, window->hWnd,
                                                 DISCL_FOREGROUND |
                                                 DISCL_EXCLUSIVE);
     if(FAILED(hr))
@@ -188,6 +197,7 @@ BOOL CALLBACK I_JoyEnum(LPCDIDEVICEINSTANCE lpddi, void *ref)
 
 void I_InitJoystick(void)
 {
+    ddwindow_t *window;
     DIDEVICEINSTANCE ddi;
     int     i, joyProp[] = {
         DIJOFS_X, DIJOFS_Y, DIJOFS_Z,
@@ -200,6 +210,13 @@ void I_InitJoystick(void)
 
     if(ArgCheck("-nojoy"))
         return;
+
+    window = DD_GetWindow(0);
+    if(!window)
+    {
+        Con_Error("I_InitJoystick: Main window not available, cannot init joystick.");
+        return;
+    }
 
     // ddi will contain info for the joystick device.
     memset(&firstJoystick, 0, sizeof(firstJoystick));
@@ -256,7 +273,7 @@ void I_InitJoystick(void)
     // Set behaviour.
     if(FAILED
        (hr =
-        IDirectInputDevice_SetCooperativeLevel(didJoy, hWndMain,
+        IDirectInputDevice_SetCooperativeLevel(didJoy, window->hWnd,
                                                DISCL_NONEXCLUSIVE |
                                                DISCL_FOREGROUND)))
     {
@@ -334,8 +351,17 @@ void I_KillDevice2(LPDIRECTINPUTDEVICE2 *dev)
  */
 int I_Init(void)
 {
+    ddwindow_t *window;
+
     if(initIOk)
         return true; // Already initialized.
+
+    window = DD_GetWindow(0);
+    if(!window)
+    {
+        Con_Error("I_Init: Main window not available, cannot init DirectInput.");
+        return false;
+    }
 
     // We'll create the DirectInput object. The only required input device
     // is the keyboard. The others are optional.
@@ -345,7 +371,7 @@ int I_Init(void)
         CoCreateInstance(&CLSID_DirectInput8, NULL, CLSCTX_INPROC_SERVER,
                          &IID_IDirectInput8, &dInput)) ||
        FAILED(hr =
-              IDirectInput8_Initialize(dInput, hInstApp, DIRECTINPUT_VERSION)))
+              IDirectInput8_Initialize(dInput, app.hInstance, DIRECTINPUT_VERSION)))
     {
         Con_Message("I_Init: DirectInput 8 init failed (0x%x).\n", hr);
         // Try DInput3 instead.
@@ -354,7 +380,7 @@ int I_Init(void)
            (hr =
             CoCreateInstance(&CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER,
                              &IID_IDirectInput2W, &dInput)) ||
-           FAILED(hr = IDirectInput2_Initialize(dInput, hInstApp, 0x0300)))
+           FAILED(hr = IDirectInput2_Initialize(dInput, app.hInstance, 0x0300)))
         {
             Con_Message
                 ("I_Init: failed to create DirectInput 3 object (0x%x).\n",
@@ -388,7 +414,7 @@ int I_Init(void)
     }
 
     // Set behaviour.
-    hr = IDirectInputDevice_SetCooperativeLevel(didKeyb, hWndMain,
+    hr = IDirectInputDevice_SetCooperativeLevel(didKeyb, window->hWnd,
                                                 DISCL_FOREGROUND |
                                                 DISCL_NONEXCLUSIVE);
     if(FAILED(hr))
@@ -456,7 +482,7 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
     // Try two times to get the data.
     tries = 1;
     aquired = false;
-    while(!aquired && tries >= 0)
+    while(!aquired && tries > 0)
     {
         num = KEYBUFSIZE;
         hr = IDirectInputDevice_GetDeviceData(didKeyb,
@@ -502,7 +528,7 @@ void I_GetMouseState(mousestate_t *state)
     // Try to get the mouse state.
     tries = 1;
     aquired = false;
-    while(!aquired && tries >= 0)
+    while(!aquired && tries > 0)
     {
         hr = IDirectInputDevice_GetDeviceState(didMouse, sizeof(mstate),
                                                &mstate);
@@ -550,7 +576,7 @@ void I_GetJoystickState(joystate_t *state)
 
     tries = 1;
     aquired = false;
-    while(!aquired && tries >= 0)
+    while(!aquired && tries > 0)
     {
         hr = IDirectInputDevice8_GetDeviceState(didJoy, sizeof(dijoy), &dijoy);
 

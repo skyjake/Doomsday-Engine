@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -196,6 +196,18 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 }
 #endif
 */
+
+ddwindow_t *DD_GetWindow(uint idx)
+{
+    // \fixme Not implemented.
+    return NULL;
+}
+
+void DD_WindowShow(ddwindow_t *window, boolean show)
+{
+    // \fixme Not implemented.
+    return;
+}
 
 int LoadPlugin(const char *pluginPath, lt_ptr data)
 {

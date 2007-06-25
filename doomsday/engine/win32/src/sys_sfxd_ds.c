@@ -82,8 +82,6 @@ void    DS_EAXCommitDeferred(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern HWND hWndMain;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 sfxdriver_t sfxd_dsound = {
@@ -264,9 +262,17 @@ int DS_EAXInit(void)
 int DS_DSoundInit(void)
 {
     DSBUFFERDESC desc;
+    ddwindow_t *window;
 
     if(dsound)
         return true;            // Already initialized?
+
+    window = DD_GetWindow(0);
+    if(!window)
+    {
+        Con_Error("DS_DSoundInit: Main window not available, cannot init");
+        return false;
+    }
 
     // First try to create the DirectSound object with EAX support.
     hr = DSERR_GENERIC;
@@ -305,7 +311,7 @@ int DS_DSoundInit(void)
     // Set cooperative level.
     if(FAILED
        (hr =
-        IDirectSound_SetCooperativeLevel(dsound, hWndMain, DSSCL_PRIORITY)))
+        IDirectSound_SetCooperativeLevel(dsound, window->hWnd, DSSCL_PRIORITY)))
     {
         DS_DSoundError("Failed to set cooperative level.");
         return false;

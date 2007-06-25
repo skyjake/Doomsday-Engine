@@ -107,8 +107,15 @@ void DD_ErrorBox(boolean error, char *format, ...)
  */
 void DD_MainWindowTitle(char *title)
 {
-    sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT " : %s",
-            (char *) __gx.GetVariable(DD_GAME_ID));
+    if(__gx.GetVariable)
+    {
+        char       *gameName = (char *) __gx.GetVariable(DD_GAME_ID);
+        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT " : %s", gameName);
+    }
+    else
+    {
+        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "");
+    }
 }
 
 void SetGameImports(game_import_t *imp)
@@ -132,7 +139,7 @@ void SetGameImports(game_import_t *imp)
 void DD_InitAPI(void)
 {
 #ifdef WIN32
-    extern GETGAMEAPI GetGameAPI;
+    GETGAMEAPI GetGameAPI = app.GetGameAPI;
 #endif
 
     game_export_t *gameExPtr;
@@ -187,9 +194,6 @@ void DD_ShutdownAll(void)
 
     DD_ShutdownHelp();
     Zip_Shutdown();
-
-    // Kill the message window if it happens to be open.
-    SW_Shutdown();
 
 #ifdef WIN32
     // Enables Alt-Tab, Alt-Esc, Ctrl-Alt-Del.

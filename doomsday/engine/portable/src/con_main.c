@@ -1636,8 +1636,6 @@ void conPrintf(int flags, const char *format, va_list args)
 
     if(consoleDump)
         fprintf(outFile, "%s", prbuff);
-    if(SW_IsActive())
-        SW_Printf(prbuff);
 
     // Servers might have to send the text to a number of clients.
     if(isServer)

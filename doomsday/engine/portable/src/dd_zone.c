@@ -189,10 +189,11 @@ memvolume_t *Z_Create(size_t volumeSize)
 /**
  * Initialize the memory zone.
  */
-void Z_Init(void)
+int Z_Init(void)
 {
     // Create the first volume.
     Z_Create(MEMORY_VOLUME_SIZE);
+    return true;
 }
 
 /**

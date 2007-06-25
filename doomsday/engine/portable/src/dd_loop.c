@@ -114,13 +114,14 @@ void DD_RegisterLoop(void)
 /**
  * This is the refresh thread (the main thread).
  */
-void DD_GameLoop(void)
+int DD_GameLoop(void)
 {
+    int     exitCode = 0;
 #ifdef WIN32
     MSG     msg;
 #endif
 
-    Sys_ShowWindow(true);
+    DD_WindowShow(DD_GetWindow(0), true);
 
     // Limit the frame rate to 35 when running in dedicated mode.
     if(isDedicated)
@@ -128,7 +129,7 @@ void DD_GameLoop(void)
         maxFrameRate = 35;
     }
 
-    for(;;)
+    while(!appShutdown)
     {
 #ifdef WIN32
         // Start by checking Windows messages.
@@ -136,11 +137,13 @@ void DD_GameLoop(void)
         {
             // NOTE: Must be in the same thread as that which registered the
             //       window it is handling messages for - DJS.
-            while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            while(!appShutdown &&
+                  PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
             {
                 if(msg.message == WM_QUIT)
                 {
                     appShutdown = true;
+                    exitCode = msg.wParam;
                 }
                 else
                 {
@@ -148,11 +151,11 @@ void DD_GameLoop(void)
                     DispatchMessage(&msg);
                 }
             }
+
+            if(appShutdown)
+                continue;
         }
 #endif
-
-        if(appShutdown)
-            break;
 
         // Frame syncronous I/O operations.
         DD_StartFrame();
@@ -189,6 +192,8 @@ void DD_GameLoop(void)
     B_Shutdown();
     Con_Shutdown();
     DD_Shutdown();
+
+    return exitCode;
 }
 
 /*

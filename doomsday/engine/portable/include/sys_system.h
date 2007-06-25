@@ -47,7 +47,6 @@ void            Sys_ShowCursor(boolean show);
 void            Sys_HideMouse(void);
 void            Sys_MessageBox(const char* msg, boolean iserror);
 void            Sys_OpenTextEditor(const char* filename);
-void            Sys_ShowWindow(boolean hide);
 
 thread_t        Sys_StartThread(systhreadfunc_t startpos, void* parm);
 void            Sys_SuspendThread(thread_t handle, boolean dopause);
