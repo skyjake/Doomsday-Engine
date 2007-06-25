@@ -1,10 +1,10 @@
 LIBRARY			DROPENGL
-;DESCRIPTION	"Doomsday Graphics Library - OpenGL"
 
 ; All exports should be prefixed DG_.
 
 EXPORTS
 	DG_Init
+	DG_CreateContext
 	DG_Shutdown
 	DG_Clear
 	DG_Show

@@ -193,8 +193,8 @@ static void windowedMode(int width, int height)
 
     // Set window style.
     style = GetWindowLong(windowHandle, GWL_STYLE) |
-                WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CAPTION |
-                WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+        WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CAPTION |
+        WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     SetWindowLong(windowHandle, GWL_STYLE, style);
     AdjustWindowRect(&rect, style, FALSE);
     SetWindowPos(windowHandle, 0, xoff, yoff, /*rect.left, rect.top, */
@@ -213,29 +213,32 @@ static void windowedMode(int width, int height)
 static int initOpenGL(void)
 {
     HDC         hdc = GetDC(windowHandle);
+    int         state = DGL_FALSE;
 
     // Create the OpenGL rendering context.
     if(!(glContext = wglCreateContext(hdc)))
     {
         int     res = GetLastError();
-
         Con_Message("drOpenGL.initOpenGL: Creation of rendering context "
                     "failed. Error %d.\n", res);
-        return 0;
     }
-
-    // Make the context current.
-    if(!wglMakeCurrent(hdc, glContext))
+    else if(!wglMakeCurrent(hdc, glContext)) // Make the context current.
     {
         Con_Message("drOpenGL.initOpenGL: Couldn't make the rendering "
                     "context current.\n");
-        return 0;
+    }
+    else // Success!
+    {
+        state = DGL_TRUE;
     }
 
     ReleaseDC(windowHandle, hdc);
 
-    initState();
-    return DGL_TRUE;
+    // If successful we can get on with initializing the OGL state.
+    if(state)
+        initState();
+
+    return state;
 }
 
 /**
@@ -251,6 +254,30 @@ void activeTexture(const GLenum texture)
 }
 
 /**
+ * Determine the desktop BPP.
+ *
+ * @return              BPP in use for the desktop.
+ */
+int DG_GetDesktopBPP(void)
+{
+    HWND        hDesktop = GetDesktopWindow();
+    HDC         desktop_hdc = GetDC(hDesktop);
+    int         deskbpp = GetDeviceCaps(desktop_hdc, PLANES) *
+                            GetDeviceCaps(desktop_hdc, BITSPIXEL);
+    ReleaseDC(hDesktop, desktop_hdc);
+    return deskbpp;
+}
+
+/**
+ * Called after the plugin has been loaded.
+ */
+int DG_Init(void)
+{
+    // Nothing to do.
+    return DGL_TRUE;
+}
+
+/**
  * Attempt to acquire a device context for OGL rendering and then init. 
  *
  * @param width         Width of the OGL window.
@@ -260,45 +287,96 @@ void activeTexture(const GLenum texture)
  *
  * @return              <code>DGL_OK</code>= success.
  */
-int DG_Init(int width, int height, int bpp, int mode)
+int DG_CreateContext(int width, int height, int bpp, int mode)
 {
+    HDC         hDC;
+    PIXELFORMATDESCRIPTOR pfd;
     boolean     fullscreen = (mode == DGL_MODE_FULLSCREEN);
     char       *token, *extbuf;
     int         res, pixForm;
-    PIXELFORMATDESCRIPTOR pfd =
-#ifndef DRMESA
-    {
-        sizeof(PIXELFORMATDESCRIPTOR),  // The size.
-        1,                      // Version.
-        PFD_DRAW_TO_WINDOW |    // Support flags.
-            PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-        PFD_TYPE_RGBA,          // Pixel type.
-        32,                     // Bits per pixel.
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0,
-        32,                     // Depth bits.
-        0, 0,
-        PFD_MAIN_PLANE,         // Layer type.
-        0, 0, 0, 0
-    };
-#else
-    /* Double Buffer, no alpha */
-    { sizeof(PIXELFORMATDESCRIPTOR), 1,
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_FORMAT |
-            PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
-        PFD_TYPE_RGBA,
-        24, 8, 0, 8, 8, 8, 16, 0, 0,
-        0, 0, 0, 0, 0, 16, 8, 0, 0, 0, 0, 0, 0
-    };
-#endif
-    HWND        hDesktop = GetDesktopWindow();
-    HDC         desktop_hdc = GetDC(hDesktop), hdc;
-    int         deskbpp = GetDeviceCaps(desktop_hdc, PLANES) *
-                            GetDeviceCaps(desktop_hdc, BITSPIXEL);
-
-    ReleaseDC(hDesktop, desktop_hdc);
+    int         deskbpp;
+    boolean     ok = DGL_OK;
 
     Con_Message("DG_Init: OpenGL.\n");
+
+    deskbpp = DG_GetDesktopBPP();
+
+    // Setup the pixel format descriptor.
+    ZeroMemory(&pfd, sizeof(pfd));
+    pfd.nSize = sizeof(pfd);
+    pfd.nVersion = 1;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.iLayerType = PFD_MAIN_PLANE;
+#ifndef DRMESA
+    pfd.dwFlags =
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pfd.cColorBits = 32;
+    pfd.cDepthBits = 32;
+#else /* Double Buffer, no alpha */
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+        PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
+    pfd.cColorBits = 24;
+    pfd.cRedBits = 8;
+    pfd.cGreenBits = 8;
+    pfd.cGreenShift = 8;
+    pfd.cBlueBits = 8;
+    pfd.cBlueShift = 16;
+    pfd.cDepthBits = 16;
+    pfd.cStencilBits = 8;
+#endif
+
+    if(ok)
+    {
+        // Acquire a device context handle.
+        hDC = GetDC(windowHandle);
+        if(!hDC)
+        {
+            Sys_CriticalMessage("drOpenGL.Init: Failed acquiring device context handle.");
+            hDC = NULL;
+            ok = DGL_FALSE;
+        }
+        else // Initialize.
+        {
+            // Nothing to do.
+        }
+    }
+
+    if(ok)
+    {   // Request a matching (or similar) pixel format.
+        pixForm = ChoosePixelFormat(hDC, &pfd);
+        if(!pixForm)
+        {
+            Sys_CriticalMessage("drOpenGL.Init: Choosing of pixel format failed.");
+            pixForm = -1;
+            ok = DGL_FALSE;
+        }
+    }
+
+    if(ok)
+    {   // Make sure that the driver is hardware-accelerated.
+        DescribePixelFormat(hDC, pixForm, sizeof(pfd), &pfd);
+        if((pfd.dwFlags & PFD_GENERIC_FORMAT) && !ArgCheck("-allowsoftware"))
+        {
+            Sys_CriticalMessage("drOpenGL.Init: OpenGL driver not accelerated!\n"
+                                "Use the -allowsoftware option to bypass this.");
+            ok = DGL_FALSE;
+        }
+    }
+
+    if(ok)
+    {   // Set the pixel format for the device context. Can only be done once
+        // (unless we release the context and acquire another).
+        if(!SetPixelFormat(hDC, pixForm, &pfd))
+        {
+           res = GetLastError();
+           Con_Printf("Warning: Setting of pixel format failed. Error %d.\n",
+                      res);
+        }
+    }
+
+    // We've now finished with the device context.
+    if(hDC)
+        ReleaseDC(windowHandle, hDC);
 
     // Are we in range here?
     if(!fullscreen)
@@ -322,8 +400,9 @@ int DG_Init(int width, int height, int bpp, int mode)
     {
         if(!fullscreenMode(screenWidth, screenHeight, bpp))
         {
-            Con_Error("drOpenGL.Init: Resolution change failed (%d x %d).\n",
-                      screenWidth, screenHeight);
+            Sys_CriticalMessage("drOpenGL.Init: Resolution change failed (%d x %d).\n",
+                                screenWidth, screenHeight);
+            ok = DGL_FALSE;
         }
     }
     else
@@ -331,118 +410,96 @@ int DG_Init(int width, int height, int bpp, int mode)
         windowedMode(screenWidth, screenHeight);
     }
 
-    // Get the device context handle.
-    hdc = GetDC(windowHandle);
-
-    // Set the pixel format for the device context. Can only be done once
-    // (unless we release the context and acquire another).
-    pixForm = ChoosePixelFormat(hdc, &pfd);
-    if(!pixForm)
+    if(ok && !initOpenGL())
     {
-        res = GetLastError();
-        Con_Error("drOpenGL.Init: Choosing of pixel format failed. Error %d.\n",
-                  res);
+        Sys_CriticalMessage("drOpenGL.Init: OpenGL init failed.");
+        ok = DGL_FALSE;
     }
 
-    // Make sure that the driver is hardware-accelerated.
-    DescribePixelFormat(hdc, pixForm, sizeof(pfd), &pfd);
-    if(pfd.dwFlags & PFD_GENERIC_FORMAT && !ArgCheck("-allowsoftware"))
+    if(ok)
     {
-        Con_Error("drOpenGL.Init: OpenGL driver not accelerated!\n"
-                  "Use the -allowsoftware option to bypass this.\n");
-    }
+        // Clear the buffers.
+        DG_Clear(DGL_COLOR_BUFFER_BIT | DGL_DEPTH_BUFFER_BIT);
 
-    if(!SetPixelFormat(hdc, pixForm, &pfd))
-    {
-       res = GetLastError();
-       Con_Printf("Warning: Setting of pixel format failed. Error %d.\n",
-                  res);
-    }
-    ReleaseDC(windowHandle, hdc);
+        token = (char *) glGetString(GL_EXTENSIONS);
+        extbuf = malloc(strlen(token) + 1);
+        strcpy(extbuf, token);
 
-    if(!initOpenGL())
-        Con_Error("drOpenGL.Init: OpenGL init failed.\n");
+        // Check the maximum texture size.
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
 
-    // Clear the buffers.
-    DG_Clear(DGL_COLOR_BUFFER_BIT | DGL_DEPTH_BUFFER_BIT);
+        initExtensions();
 
-    token = (char *) glGetString(GL_EXTENSIONS);
-    extbuf = malloc(strlen(token) + 1);
-    strcpy(extbuf, token);
-
-    // Check the maximum texture size.
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
-
-    initExtensions();
-
-    if(firstTimeInit)
-    {
-        firstTimeInit = DGL_FALSE;
-        // Print some OpenGL information (console must be initialized by now).
-        Con_Message("OpenGL information:\n");
-        Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
-        Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
-        Con_Message("  Version: %s\n", glGetString(GL_VERSION));
-        Con_Message("  Extensions:\n");
-
-        // Show the list of GL extensions.
-        token = strtok(extbuf, " ");
-        while(token)
+        if(firstTimeInit)
         {
-            Con_Message("      ");  // Indent.
-            if(verbose)
+            firstTimeInit = DGL_FALSE;
+            // Print some OpenGL information (console must be initialized by now).
+            Con_Message("OpenGL information:\n");
+            Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
+            Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
+            Con_Message("  Version: %s\n", glGetString(GL_VERSION));
+            Con_Message("  Extensions:\n");
+
+            // Show the list of GL extensions.
+            token = strtok(extbuf, " ");
+            while(token)
             {
-                // Show full names.
-                Con_Message("%s\n", token);
-            }
-            else
-            {
-                // Two on one line, clamp to 30 characters.
-                Con_Message("%-30.30s", token);
+                Con_Message("      ");  // Indent.
+                if(verbose)
+                {
+                    // Show full names.
+                    Con_Message("%s\n", token);
+                }
+                else
+                {
+                    // Two on one line, clamp to 30 characters.
+                    Con_Message("%-30.30s", token);
+                    token = strtok(NULL, " ");
+                    if(token)
+                        Con_Message(" %-30.30s", token);
+                    Con_Message("\n");
+                }
                 token = strtok(NULL, " ");
-                if(token)
-                    Con_Message(" %-30.30s", token);
-                Con_Message("\n");
             }
-            token = strtok(NULL, " ");
-        }
-        Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
+            Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
 
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTexUnits);
-        Con_Message("  Found Texture units: %i\n", maxTexUnits);
+            glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTexUnits);
+            Con_Message("  Found Texture units: %i\n", maxTexUnits);
 #ifndef USE_MULTITEXTURE
-        maxTexUnits = 1;
+            maxTexUnits = 1;
 #endif
-        // But sir, we are simple people; two units is enough.
-        if(maxTexUnits > 2)
-            maxTexUnits = 2;
-        Con_Message("  Utilised Texture units: %i\n", maxTexUnits);
+            // But sir, we are simple people; two units is enough.
+            if(maxTexUnits > 2)
+                maxTexUnits = 2;
+            Con_Message("  Utilised Texture units: %i\n", maxTexUnits);
 
-        Con_Message("  Maximum texture size: %i\n", maxTexSize);
-        if(extAniso)
+            Con_Message("  Maximum texture size: %i\n", maxTexSize);
+            if(extAniso)
+            {
+                glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+                Con_Message("  Maximum anisotropy: %g\n", maxAniso);
+            }
+        }
+        free(extbuf);
+
+        // Decide whether vertex arrays should be done manually or with real
+        // OpenGL calls.
+        InitArrays();
+
+        if(ArgCheck("-dumptextures"))
         {
-            glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-            Con_Message("  Maximum anisotropy: %g\n", maxAniso);
+            dumpTextures = DGL_TRUE;
+            Con_Message("  Dumping textures (mipmap level zero).\n");
+        }
+
+        if(extAniso && ArgExists("-anifilter"))
+        {
+            useAnisotropic = DGL_TRUE;
+            Con_Message("  Using anisotropic texture filtering.\n");
         }
     }
-    free(extbuf);
 
-    // Decide whether vertex arrays should be done manually or with real
-    // OpenGL calls.
-    InitArrays();
-
-    if(ArgCheck("-dumptextures"))
-    {
-        dumpTextures = DGL_TRUE;
-        Con_Message("  Dumping textures (mipmap level zero).\n");
-    }
-
-    if(extAniso && ArgExists("-anifilter"))
-    {
-        useAnisotropic = DGL_TRUE;
-        Con_Message("  Using anisotropic texture filtering.\n");
-    }
-    return DGL_OK;
+    return ok;
 }
 
 /**
@@ -466,6 +523,7 @@ void DG_Show(void)
     HDC     hdc = GetDC(windowHandle);
 
     // Swap buffers.
+    glFlush();
     SwapBuffers(hdc);
     ReleaseDC(windowHandle, hdc);
 

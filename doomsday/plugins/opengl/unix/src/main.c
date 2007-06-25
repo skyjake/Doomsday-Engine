@@ -124,6 +124,15 @@ void activeTexture(const GLenum texture)
 }
 
 /**
+ * Called after the plugin has been loaded.
+ */
+int DG_Init(void)
+{
+    // Nothing to do.
+    return DGL_TRUE;
+}
+
+/**
  * Attempt to acquire a device context for OGL rendering and then init. 
  *
  * @param width         Width of the OGL window.
@@ -133,7 +142,7 @@ void activeTexture(const GLenum texture)
  *
  * @return              <code>DGL_OK</code>= success.
  */
-int DG_Init(int width, int height, int bpp, int mode)
+int DG_CreateContext(int width, int height, int bpp, int mode)
 {
     boolean fullscreen = (mode == DGL_MODE_FULLSCREEN);
     char   *token, *extbuf;

@@ -1,10 +1,10 @@
 LIBRARY			DRMESA
-DESCRIPTION		"Doomsday Graphics Library - Mesa 3D"
 
 ; All exports should be prefixed DG_.
 
 EXPORTS
 	DG_Init
+	DG_CreateContext
 	DG_Shutdown
 	DG_Clear
 	DG_Show
@@ -57,6 +57,4 @@ EXPORTS
 	DG_Fog
 	DG_Fogv
 	DG_Project
-	DG_ReadPixels 
-
-	
+	DG_ReadPixels
