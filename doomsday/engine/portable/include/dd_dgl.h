@@ -36,7 +36,8 @@
  * DLL right after it has been loaded, in dd_dgl.c.
  */
 typedef struct dgldriver_s {
-    int             (*Init) (int width, int height, int bpp, int mode);
+    int             (*Init) (void);
+    int             (*CreateContext) (int width, int height, int bpp, int mode);
     void            (*Shutdown) (void);
 
     // Viewport.

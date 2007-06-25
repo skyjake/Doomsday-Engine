@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 #ifndef __DOOMSDAY_GL_SHARED_H__
 #define __DOOMSDAY_GL_SHARED_H__
 
-#define DGL_VERSION_NUM     14
+#define DGL_VERSION_NUM     15
 
 // Types.
 typedef unsigned char DGLubyte;
