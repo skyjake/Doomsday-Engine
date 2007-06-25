@@ -559,7 +559,7 @@ void GL_EarlyInit(void)
 
     glScreenFull = !(ArgExists("-nofullscreen") | ArgExists("-window"));
 
-    gl.Init(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull);
+    gl.CreateContext(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull);
     GL_InitDeferred();
 
     // Check the maximum texture size.
@@ -915,7 +915,7 @@ int GL_ChangeResolution(int w, int h, int bits, boolean fullscreen)
 
     // Shutdown and re-initialize DGL.
     gl.Shutdown();
-    gl.Init(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull);
+    gl.CreateContext(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull);
 
     // Re-initialize.
     GL_TotalReset(false, true, true);
