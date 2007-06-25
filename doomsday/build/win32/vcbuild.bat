@@ -99,7 +99,7 @@ GOTO Done
 
 :: *** Cleanup and build all targets.
 :All
-CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread dpmapload dropengl drd3d dssdlmixer dscompat jdoom jheretic jhexen wolftc doom64tc
+CALL vcbuild.bat cleanup copydll res dmt doomsday dpdehread dpmapload dropengl dssdlmixer dscompat jdoom jheretic jhexen wolftc doom64tc
 GOTO Done
 
 
@@ -187,15 +187,6 @@ GOTO Failure
 ECHO Compiling dpMapLoad.dll ((gl)BSP Node Builder Plugin)...
 md %OBJ_DIR%\dpMapLoad
 cl /O2 /Ob1 %INCS_ZLIB% %INCS% /I "./../../external/glbsp/include" %DLLDEFINES% /D "GLBSP_PLUGIN" /D "DPMAPLOAD_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"./%OBJ_DIR%/dpMapLoad/" /Fd"./%OBJ_DIR%/dpMapLoad/" /W3 /Gd  @dpmapload_cl.rsp  /link /OUT:"./%BIN_DIR%/dpMapLoad.dll" %LFLAGS% /DLL /IMPLIB:"./%BIN_DIR%/dpMapLoad.lib" %LIBS% ./%BIN_DIR%/Doomsday.lib 
-IF %ERRORLEVEL% == 0 GOTO Done
-GOTO Failure
-
-
-:: *** drD3D.dll
-:drD3D
-ECHO Compiling drD3D.dll (Direct3D 9 driver)...
-md %OBJ_DIR%\drD3D
-cl /O2 /Gd /EHsc /MT /I "./../../plugins/d3d/include" %INCS% %DLLDEFINES% /D "drD3D_EXPORTS" /Fo"./%OBJ_DIR%/drD3D/" /Fd"./%OBJ_DIR%/drD3D/" ./%OBJ_DIR%/drD3D/drD3D_res.obj  @drd3d_cl.rsp  /link  /OUT:"./%BIN_DIR%/drD3D.dll" %LFLAGS% /DLL /DEF:"./../../plugins/d3d/api/drD3D.def" /IMPLIB:"./%BIN_DIR%/drD3D.lib" %LIBS% ./%BIN_DIR%/doomsday.lib d3d9.lib d3dx9.lib dxerr9.lib user32.lib gdi32.lib ole32.lib uuid.lib advapi32.lib kernel32.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
