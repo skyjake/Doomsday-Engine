@@ -381,11 +381,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     CoUninitialize();
 
     // Unregister our window class.
-    if(!UnregisterClass(app.className, app.hInstance))
-    {
-        DD_ErrorBox(true, "Failed unregistering window class.");
-        exitCode = -1;
-    }
+    UnregisterClass(app.className, app.hInstance);
 
     // Bye!
     return exitCode;
