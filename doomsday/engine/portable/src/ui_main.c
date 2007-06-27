@@ -40,11 +40,13 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
+#include "rend_console.h" // \todo Move Con_InitUI somewhere more suitable.
+
 // MACROS ------------------------------------------------------------------
 
 #define SCROLL_TIME     3
-#define UICURSORWIDTH   16
-#define UICURSORHEIGHT  32
+#define UICURSORWIDTH   32
+#define UICURSORHEIGHT  64
 
 enum {
     UITEX_MOUSE,
@@ -53,6 +55,7 @@ enum {
     UITEX_SHADE,
     UITEX_HINT,
     UITEX_LOGO,
+    UITEX_BACKGROUND,
     NUM_UITEXTURES
 };
 
@@ -144,8 +147,14 @@ void UI_Register(void)
 void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
              boolean mousemod, boolean noescape)
 {
+    int         width, height;
+
     if(uiActive)
         return;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
+        Con_Error("UI_Init: Failed retrieving window dimensions.");
+
     uiActive = true;
 
     // Restore full alpha.
@@ -159,7 +168,12 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     allowMouseMod = mousemod;
 
     // Setup state.
-    Con_StartupInit();
+    GL_InitVarFont();
+
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PushMatrix();
+    gl.LoadIdentity();
+    gl.Ortho(0, 0, width, height, -1, 1);
 
     // Change font.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
@@ -175,8 +189,8 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     allowEscape = !noescape;
 
     // Load graphics.
-    uiCX = glScreenWidth / 2;
-    uiCY = glScreenHeight / 2;
+    uiCX = width / 2;
+    uiCY = height / 2;
     uiMoved = false;
 }
 
@@ -195,7 +209,13 @@ void UI_End(void)
     uiAlpha = uiTargetAlpha = 1.0;
 
     // Restore old state.
-    Con_StartupDone();
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PopMatrix();
+
+    GL_ShutdownVarFont();
+
+    // Update the secondary title and the game status.
+    Con_InitUI();
 
     // Restore the engine state
     tickFrame = true;
@@ -288,15 +308,17 @@ void UI_LoadTextures(void)
         "BoxFill",
         "BoxShade",
         "Hint",
-        "Logo"
+        "Logo",
+        "Background",
     };
 
     for(i = 0; i < NUM_UITEXTURES; ++i)
         if(!uiTextures[i])
         {
-            uiTextures[i] = //GL_LoadGraphics(picNames[i], LGM_NORMAL);
+            uiTextures[i] =
                 GL_LoadGraphics4(RC_GRAPHICS, picNames[i],
-                                 LGM_NORMAL, DGL_FALSE,
+                                 (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL),
+                                 DGL_FALSE,
                                  DGL_LINEAR, DGL_LINEAR,
                                  DGL_CLAMP, DGL_CLAMP,
                                  TXCF_NO_COMPRESSION);
@@ -405,12 +427,26 @@ void UI_InitPage(ui_page_t *page, ui_object_t *objects)
  */
 int UI_AvailableWidth(void)
 {
-    return glScreenWidth - UI_BORDER * 4;
+    int         winWidth;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
+    {
+        Con_Error("UI_AvailableWidth: Failed retrieving window dimensions.");
+    }
+
+    return winWidth - UI_BORDER * 4;
 }
 
 int UI_AvailableHeight(void)
 {
-    return glScreenHeight - UI_TITLE_HGT - UI_BORDER * 4;
+    int         winHeight;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, NULL, &winHeight))
+    {
+        Con_Error("UI_AvailableHeight: Failed retrieving window dimensions.");
+    }
+
+    return winHeight - UI_BORDER * 4;
 }
 
 /**
@@ -418,7 +454,7 @@ int UI_AvailableHeight(void)
  */
 int UI_ScreenX(int relx)
 {
-    return UI_BORDER * 2 + (relx * UI_AvailableWidth()) / 1000;
+    return UI_BORDER * 2 + ((relx / UI_WIDTH) * UI_AvailableWidth());
 }
 
 /**
@@ -426,17 +462,17 @@ int UI_ScreenX(int relx)
  */
 int UI_ScreenY(int rely)
 {
-    return UI_BORDER * 2 + UI_TITLE_HGT + (rely * UI_AvailableHeight()) / 1000;
+    return UI_BORDER * 2 + ((rely / UI_HEIGHT) * UI_AvailableHeight());
 }
 
 int UI_ScreenW(int relw)
 {
-    return (relw * UI_AvailableWidth()) / 1000;
+    return (relw / UI_WIDTH) * UI_AvailableWidth();
 }
 
 int UI_ScreenH(int relh)
 {
-    return (relh * UI_AvailableHeight()) / 1000;
+    return (relh / UI_HEIGHT) * UI_AvailableHeight();
 }
 
 /**
@@ -514,23 +550,31 @@ int UI_Responder(ddevent_t *ev)
 
     if(ev->deviceID == IDEV_MOUSE && ev->isAxis && ev->data1 != 0)
     {
+        int         winWidth, winHeight;
+
         uiMoved = true;
+
+        if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+        {
+            Con_Error("Con_DrawStartupScreen: Failed retrieving window "
+                      "dimensions.");
+        }
 
         if(ev->controlID == 0) // xaxis.
         {
             uiCX += ev->data1 / DD_MICKEY_ACCURACY;
             if(uiCX < 0)
                 uiCX = 0;
-            if(uiCX >= glScreenWidth)
-                uiCX = glScreenWidth - 1;
+            if(uiCX >= winWidth)
+                uiCX = winWidth - 1;
         }
         else if(ev->controlID == 1) // yaxis.
         {
             uiCY += ev->data1 / DD_MICKEY_ACCURACY;
             if(uiCY < 0)
                 uiCY = 0;
-            if(uiCY >= glScreenHeight)
-                uiCY = glScreenHeight - 1;
+            if(uiCY >= winHeight)
+                uiCY = winHeight - 1;
         }
     }
 
@@ -585,21 +629,43 @@ void UI_Ticker(timespan_t time)
  */
 void UI_Drawer(void)
 {
+    int         winWidth, winHeight;
+
     if(!uiActive)
         return;
     if(!uiCurrentPage)
         return;
 
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Message("UI_Drawer: Failed retrieving window dimensions.");
+        return;
+    }
+
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
+    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
 
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
-    // Draw mouse cursor.
-    UI_DrawMouse(uiCX, uiCY);
+
+    // Draw mouse cursor?
+    if(uiShowMouse)
+    {
+        float           width, height, scale;
+
+        if(winWidth >= winHeight)
+            scale = (winWidth / UI_WIDTH) * (winHeight / (float) winWidth);
+        else
+            scale = (winHeight / UI_HEIGHT) * (winWidth / (float) winHeight);
+
+        width = UICURSORWIDTH * scale * uiCursorWidthMul;
+        height = UICURSORHEIGHT * scale * uiCursorHeightMul;
+
+        UI_DrawMouse(uiCX - 1, uiCY - 1, width, height);
+    }
 
     // Restore the original matrices.
     gl.MatrixMode(DGL_PROJECTION);
@@ -885,17 +951,24 @@ void UIPage_Ticker(ui_page_t *page)
 void UIPage_Drawer(ui_page_t *page)
 {
     int         i;
+    int         winWidth, winHeight;
     float       t;
     ui_object_t *ob;
     ui_color_t  focuscol;
 
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Message("UIPage_Drawer: Failed retrieving window dimensions.");
+        return;
+    }
+
     // Draw background?
     if(page->background)
-        Con_DrawStartupBackground(uiAlpha);
+        UI_DrawDDBackground(0, 0, winWidth, winHeight, uiAlpha);
 
     // Draw title?
-    if(page->header)
-        UI_DrawTitle(page);
+    //if(page->header)
+    //    UI_DrawTitle(page);
 
     // Draw each object, unless they're hidden.
     for(i = 0, ob = page->objects; i < page->count; ++i, ob++)
@@ -1878,35 +1951,6 @@ void UI_SetColor(ui_color_t *color)
     gl.Color3f(color->red, color->green, color->blue);
 }
 
-void UI_DrawTitleEx(char *text, int height, float alpha)
-{
-    FR_SetFont(glFontVariable[GLFS_BOLD]);
-    UI_Gradient(0, 0, glScreenWidth, height, UI_Color(UIC_BG_MEDIUM),
-                UI_Color(UIC_BG_LIGHT), .8f * alpha, alpha);
-    UI_Gradient(0, height, glScreenWidth, UI_BORDER, UI_Color(UIC_SHADOW),
-                UI_Color(UIC_BG_DARK), alpha, 0);
-    UI_TextOutEx(text, UI_BORDER, height / 2, false, true, UI_Color(UIC_TITLE),
-                 alpha);
-}
-
-void UI_DrawTitle(ui_page_t *page)
-{
-    UI_DrawTitleEx(page->title, UI_TITLE_HGT, 1.f);
-    if(!uiShowMouse)
-    {
-        char *msg = "(Move with Tab/S-Tab)";
-        float currentUIAlpha = uiAlpha; // Never fade this text.
-        uiAlpha = 1.0;
-
-        // If the mouse cursor is not visible, print a short help message.
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(msg, glScreenWidth - UI_BORDER - FR_TextWidth(msg),
-                     UI_TITLE_HGT / 2, false, true, UI_Color(UIC_TEXT), 0.33f);
-
-        uiAlpha = currentUIAlpha;
-    }
-}
-
 void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
               ui_color_t *secondary, float alpha, float bottomAlpha)
 {
@@ -2403,33 +2447,24 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
 /**
  * Draw the mouse cursor at the given x, y co-ordinates.
  *
- * @param x         X co-ordinate.
- * @param y         Y co-ordinate.
+ * @param x         X coordinate.
+ * @param y         Y coordinate.
+ * @param w         Width of the cursor.
+ * @param h         Height of the cursor.
  */
-void UI_DrawMouse(int x, int y)
+void UI_DrawMouse(int x, int y, int w, int h)
 {
-    float       scale, xscale, yscale;
-
-    if(!uiShowMouse)
-        return;
-
-    scale = MAX_OF(1, glScreenWidth / 640.0f);
-    xscale = UICURSORWIDTH * uiCursorWidthMul * scale;
-    yscale = UICURSORHEIGHT * uiCursorHeightMul * scale;
-
-    x--;
-    y--;
     gl.Color3f(1, 1, 1);
     gl.Bind(uiTextures[UITEX_MOUSE]);
     gl.Begin(DGL_QUADS);
     gl.TexCoord2f(0, 0);
     gl.Vertex2f(x, y);
     gl.TexCoord2f(1, 0);
-    gl.Vertex2f(x + xscale, y);
+    gl.Vertex2f(x + w, y);
     gl.TexCoord2f(1, 1);
-    gl.Vertex2f(x + xscale, y + yscale);
+    gl.Vertex2f(x + w, y + h);
     gl.TexCoord2f(0, 1);
-    gl.Vertex2f(x, y + yscale);
+    gl.Vertex2f(x, y + h);
     gl.End();
 }
 
@@ -2437,6 +2472,52 @@ void UI_DrawLogo(int x, int y, int w, int h)
 {
     gl.Bind(uiTextures[UITEX_LOGO]);
     GL_DrawRect(x, y, w, h, 1, 1, 1, uiAlpha);
+}
+
+/**
+ * Background with the "The Doomsday Engine" text superimposed.
+ *
+ * @param x         X coordinate (left) to draw the background.
+ * @param y         Y coordinate (top) to draw the background.
+ * @param w         Width (from left) to draw the background.
+ * @param h         Height (from top) to draw the background.
+ * @param alpha     Alpha level to use when drawing the background.
+ */
+void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
+{
+    float       mul = (uiTextures[UITEX_BACKGROUND]? 1.5f : 1.0f);
+    ui_color_t *dark = UI_Color(UIC_BG_DARK);
+    ui_color_t *light = UI_Color(UIC_BG_LIGHT);
+
+    // Background gradient picture.
+    gl.Bind(uiTextures[UITEX_BACKGROUND]);
+    if(alpha < 1.0)
+    {
+        gl.Enable(DGL_BLENDING);
+        gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+    }
+    else
+    {
+        gl.Disable(DGL_BLENDING);
+    }
+
+    gl.Begin(DGL_QUADS);
+    // Top color.
+    gl.Color4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
+    gl.TexCoord2f(0, 0);
+    gl.Vertex2f(x, y);
+    gl.TexCoord2f(1, 0);
+    gl.Vertex2f(x + w, y);
+
+    // Bottom color.
+    gl.Color4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
+    gl.TexCoord2f(1, 1);
+    gl.Vertex2f(x + w, y + h);
+    gl.TexCoord2f(0, 1);
+    gl.Vertex2f(0, y + h);
+    gl.End();
+
+    gl.Enable(DGL_BLENDING);
 }
 
 /**

@@ -99,6 +99,7 @@ char    skyflatname[9] = "F_SKY";
 float   frameTimePos;           // 0...1: fractional part for sharp game tics
 
 int     loadInStartupMode = false;
+boolean startupScreen = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -194,14 +195,23 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    int     i;
+    int         i;
+    int         width, height;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
+        Con_Error("R_Update: Failed retrieving window dimensions.");
 
     // Stop playing sounds and music.
     Demo_StopPlayback();
     S_Reset();
 
     // Go back to startup-screen mode.
-    Con_StartupInit();
+    startupScreen = true;
+    GL_InitVarFont();
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PushMatrix();
+    gl.LoadIdentity();
+    gl.Ortho(0, 0, width, height, -1, 1);
     GL_TotalReset(true, false, false);
     GL_TotalReset(false, false, false);    // Bring GL back online (no lightmaps, flares yet).
     R_UpdateData();
@@ -224,7 +234,15 @@ void R_Update(void)
     // the re-initialization.
     RL_DeleteLists();
     // Back to the game.
-    Con_StartupDone();
+    startupScreen = false;
+
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PopMatrix();
+
+    GL_ShutdownVarFont();
+
+    // Update the secondary title and the game status.
+    Con_InitUI();
 
 #if _DEBUG
     Z_CheckHeap();

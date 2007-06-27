@@ -57,11 +57,19 @@
 
 #define MAINWCLASS _T("DoomsdayMainWClass")
 
+// TYPES -------------------------------------------------------------------
+
 // Doomsday window flags.
 #define DDWF_VISIBLE            0x01
 #define DDWF_FULLSCREEN         0x02
 
-// TYPES -------------------------------------------------------------------
+typedef struct {
+    HWND            hWnd;       // Window handle.
+
+    int             flags;
+    int             x, y, width, height;
+    int             bpp;
+} ddwindow_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -69,22 +77,30 @@
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-ddwindow_t *DD_CreateWindow(application_t *app, ddwindow_t *parent,
-                           int x, int y, int w, int h, int flags,
-                           const char *title, int cmdShow);
-void    DD_DestroyWindow(ddwindow_t *window);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static destroyDDWindow(ddwindow_t *win);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+uint            windowIDX;   // Main window.
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 application_t app;
+static ddwindow_t *mainWindow;
 
 // CODE --------------------------------------------------------------------
+
+static ddwindow_t *getWindow(uint idx)
+{
+    if(idx != 0)
+        return NULL;
+
+    return mainWindow;
+}
 
 BOOL InitApplication(application_t *app)
 {
@@ -113,21 +129,31 @@ BOOL InitApplication(application_t *app)
     return RegisterClassEx(&wcex);
 }
 
-ddwindow_t *DD_CreateWindow(application_t *app, ddwindow_t *parent,
-                            int x, int y, int w, int h, int flags,
-                            const char *title, int cmdShow)
+uint DD_CreateWindow(application_t *app, uint parentIDX,
+                     int x, int y, int w, int h, int bpp, int flags,
+                     const char *title, int cmdShow)
 {
-    ddwindow_t *win;
+    ddwindow_t *win, *pWin = NULL;
+    HWND        phWnd = NULL;
     BOOL        ok = TRUE;
+
+    if(!(bpp == 32 || bpp == 16))
+    {
+        Con_Message("DD_CreateWindow: Unsupported BPP %i.", bpp);
+        return 0;
+    }
+
+    if(parentIDX)
+    {
+        pWin = getWindow(parentIDX - 1);
+        if(pWin)
+            phWnd = pWin->hWnd;
+    }
 
     // Allocate a structure to wrap the various handles and state variables
     // used with this window.
     if((win = (ddwindow_t*) malloc(sizeof(ddwindow_t))) == NULL)
-        return FALSE;
-
-    // Initialize.
-    win->hWnd = NULL;
-    win->flags = 0;
+        return 0;
 
     // Create the main window.
     win->hWnd =
@@ -136,7 +162,7 @@ ddwindow_t *DD_CreateWindow(application_t *app, ddwindow_t *parent,
                        WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
                        CW_USEDEFAULT, CW_USEDEFAULT,
                        CW_USEDEFAULT, CW_USEDEFAULT,
-                       (parent? parent->hWnd : NULL), NULL,
+                       phWnd, NULL,
                        app->hInstance, NULL);
     if(!win->hWnd)
     {
@@ -145,23 +171,29 @@ ddwindow_t *DD_CreateWindow(application_t *app, ddwindow_t *parent,
     }
     else // Initialize.
     {
+        win->flags = flags;
+        win->x = x;
+        win->y = y;
+        win->width = w;
+        win->height = h;
+        win->bpp = bpp;
+
         // Ensure new windows are hidden on creation.
         ShowWindow(win->hWnd, SW_HIDE);
     }
 
     if(!ok)
     {   // Damn, something went wrong... clean up.
-        DD_DestroyWindow(win);
-        return NULL;
+        destroyDDWindow(win);
+        return 0;
     }
-    return win;
+
+    mainWindow = win;
+    return 1;
 }
 
-void DD_DestroyWindow(ddwindow_t *window)
+static destroyDDWindow(ddwindow_t *window)
 {
-    if(!window)
-        return;
-
     if(window->flags & DDWF_FULLSCREEN)
     {   // Change back to the desktop before doing anything further to try
         // and circumvent crusty old drivers from corrupting the desktop.
@@ -180,35 +212,169 @@ void DD_DestroyWindow(ddwindow_t *window)
     free(window);
 }
 
-ddwindow_t *DD_GetWindow(uint idx)
+boolean DD_DestroyWindow(uint idx)
 {
-    if(idx == 0)
-        return app.window;
+    ddwindow_t *window = getWindow(idx - 1);
 
-    return NULL;
+    if(!window)
+        return false;
+
+    destroyDDWindow(window);
+
+    if(idx == windowIDX)
+        windowIDX = 0;
+
+    return true;
 }
 
-void DD_WindowShow(ddwindow_t *window, boolean show)
+boolean DD_SetWindowDimensions(uint idx, int x, int y, int width, int height)
 {
+    ddwindow_t *window = getWindow(idx - 1);
+
     if(!window)
-        return;
+        return false;
+
+    // Moving does not work in dedicated mode.
+    if(isDedicated)
+        return false;
+/*
+    if(window->flags & DDWF_FULLSCREEN)
+        Con_Error("DD_ChangeWindowDimensions: Window is fullsreen; "
+                  "position not changeable.");
+*/
+    if(x != window->x || y != window->y ||
+       width != window->width || height != window->height)
+    {
+        window->x = x;
+        window->y = y;
+        window->width = width;
+        window->height = height;
+
+        SetWindowPos(window->hWnd, HWND_TOP, x, y, width, height,
+                     SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE);
+    }
+
+    return true;
+}
+
+boolean DD_GetWindowDimensions(uint idx, int *x, int *y, int *width, int *height)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(!window || (!x && !y && !width && !height))
+        return false;
+
+    // Moving does not work in dedicated mode.
+    if(isDedicated)
+        return false;
+
+    if(x)
+        *x = window->x;
+    if(y)
+        *y = window->y;
+    if(width)
+        *width = window->width;
+    if(height)
+        *height = window->height;
+
+    return true;
+}
+
+boolean DD_SetWindowBPP(uint idx, int bpp)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(!(bpp == 32 || bpp == 16))
+        Con_Error("DD_SetWindowBPP: Unsupported BPP %i.", bpp);
+
+    if(!window)
+        return false;
+
+    if(window->bpp != bpp)
+    {
+        window->bpp = bpp;
+    }
+
+    return true;
+}
+
+boolean DD_GetWindowBPP(uint idx, int *bpp)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(!window || !bpp)
+        return false;
+
+    // Not in dedicated mode.
+    if(isDedicated)
+        return false;
+
+    *bpp = window->bpp;
+
+    return true;
+}
+
+boolean DD_SetWindowFullscreen(uint idx, boolean fullscreen)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(!window)
+        return false;
+
+    if((window->flags & DDWF_FULLSCREEN) != fullscreen)
+    {
+        window->flags ^= DDWF_FULLSCREEN;
+    }
+
+    return true;
+}
+
+boolean DD_GetWindowFullscreen(uint idx, boolean *fullscreen)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(!window || !fullscreen)
+        return false;
+
+    *fullscreen = ((window->flags & DDWF_FULLSCREEN)? true : false);
+
+    return true;
+}
+
+boolean DD_SetWindowVisibility(uint idx, boolean show)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(!window)
+        return false;
 
     // Showing does not work in dedicated mode.
     if(isDedicated && show)
-        return;
+        return false;
 
-    if(show)
-        window->flags |= DDWF_VISIBLE;
-    else
-        window->flags &= ~DDWF_VISIBLE;
+    if((window->flags & DDWF_VISIBLE) != show)
+    {
+        window->flags ^= DDWF_VISIBLE;
 
-#ifdef WIN32
-    SetWindowPos(window->hWnd, HWND_TOP, 0, 0, 0, 0,
-                 ((window->flags & DDWF_VISIBLE) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW) |
-                 SWP_NOSIZE | SWP_NOMOVE);
-    if(window->flags & DDWF_VISIBLE)
-        SetActiveWindow(window->hWnd);
-#endif
+        SetWindowPos(window->hWnd, HWND_TOP, 0, 0, 0, 0,
+                     ((window->flags & DDWF_VISIBLE) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW) |
+                     SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
+
+        if(window->flags & DDWF_VISIBLE)
+            SetActiveWindow(window->hWnd);
+    }
+
+    return true;
+}
+
+HWND DD_GetWindowHandle(uint idx)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(!window)
+        return NULL;
+
+    return window->hWnd;
 }
 
 BOOL InitGameDLL(application_t *app)
@@ -308,8 +474,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     {
         DD_ErrorBox(true, "Couldn't initialize application.");
     }
-    else if(NULL == (app.window = 
-            DD_CreateWindow(&app, NULL, 0, 0, 640, 480, 0, buf, nCmdShow)))
+    else if(0 == (windowIDX = 
+            DD_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, nCmdShow)))
     {
         DD_ErrorBox(true, "Error creating main window.");
     }
@@ -347,6 +513,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         }
         else
         {   // All initialization complete.
+            ddwindow_t *win = getWindow(windowIDX-1);
+
             doShutdown = FALSE;
 
             // Append the main window title with the game name.
@@ -354,10 +522,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
             // Tell DGL of our main window.
             if(gl.SetInteger)
-                gl.SetInteger(DGL_WINDOW_HANDLE, (int) app.window->hWnd);
+                gl.SetInteger(DGL_WINDOW_HANDLE, (int) win->hWnd);
 
             // We can now show our main window.
-            DD_WindowShow(app.window, TRUE);
+            DD_SetWindowVisibility(1, TRUE);
         }
     }
 
@@ -368,14 +536,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
 
 #if _DEBUG
-    if(!ReleaseDC(app.window->hWnd, GetDC(app.window->hWnd)))
+    {
+    ddwindow_t *win = getWindow(windowIDX-1);
+    if(!ReleaseDC(win->hWnd, GetDC(win->hWnd)))
     {
         DD_ErrorBox(true, "Error someone destroyed the main window before us!");
         exitCode = -1;
     }
+    }
 #endif  
 
-    DD_DestroyWindow(app.window);
+    DD_DestroyWindow(windowIDX);
 
     // No more use of COM beyond this point.
     CoUninitialize();

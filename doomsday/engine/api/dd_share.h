@@ -151,8 +151,6 @@ extern          "C" {
 
         // Integer values for Set/Get
         DD_FIRST_VALUE = -1,
-        DD_SCREEN_WIDTH,
-        DD_SCREEN_HEIGHT,
         DD_NETGAME,
         DD_SERVER,
         DD_CLIENT,
@@ -163,8 +161,6 @@ extern          "C" {
         DD_VIEWWINDOW_Y,
         DD_VIEWWINDOW_WIDTH,
         DD_VIEWWINDOW_HEIGHT,
-        DD_VIEWWINDOW_SCREEN_WIDTH,
-        DD_VIEWWINDOW_SCREEN_HEIGHT,
         DD_VIEWX,
         DD_VIEWY,
         DD_VIEWZ,
@@ -291,6 +287,8 @@ extern          "C" {
         DD_MAP_AUTHOR,
         DD_MAP_MUSIC,
         DD_HIGHRES_TEXTURE_PATH,   // TGA texture directory (obsolete).
+        DD_WINDOW_WIDTH,
+        DD_WINDOW_HEIGHT,
         DD_WINDOW_HANDLE,
         DD_DYNLIGHT_TEXTURE,
         DD_GAME_EXPORTS,

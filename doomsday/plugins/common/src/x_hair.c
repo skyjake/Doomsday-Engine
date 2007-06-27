@@ -138,19 +138,21 @@ void X_Register(void)
 void X_Drawer(void)
 {
     // Where to draw the xhair?
-    int     centerX = Get(DD_SCREEN_WIDTH) / 2;
+    int     centerX = Get(DD_VIEWWINDOW_X) + (Get(DD_VIEWWINDOW_WIDTH) / 2);
     int     centerY =
-        (Get(DD_VIEWWINDOW_Y) + 2) * Get(DD_SCREEN_HEIGHT) / 200.0f +
-        Get(DD_VIEWWINDOW_SCREEN_HEIGHT) / 2.0f;
+        Get(DD_VIEWWINDOW_Y) + (Get(DD_VIEWWINDOW_HEIGHT) / 2);
     int     i;
     float   fact = (cfg.xhairSize + 1) / 2.0f;
-    byte    xcolor[4] = { cfg.xhairColor[0], cfg.xhairColor[1],
-        cfg.xhairColor[2], cfg.xhairColor[3]
+    byte    xcolor[4] = {
+        cfg.xhairColor[0],
+        cfg.xhairColor[1],
+        cfg.xhairColor[2],
+        cfg.xhairColor[3]
     };
     cross_t *cross;
 
     // Is there a crosshair to draw?
-    if(cfg.xhair < 1 || cfg.xhair > NUM_XHAIRS)
+    if(cfg.xhair < 1 || cfg.xhair > NUM_XHAIRS || !xcolor[3])
         return;
 
     gl.Disable(DGL_TEXTURING);
@@ -163,7 +165,7 @@ void X_Drawer(void)
     gl.PushMatrix();
     gl.LoadIdentity();
 
-    gl.Ortho(0, 0, Get(DD_SCREEN_WIDTH), Get(DD_SCREEN_HEIGHT), -1, 1);
+    gl.Ortho(0, 0, 320, 200, -1, 1);
 
     cross = crosshairs + cfg.xhair - 1;
 

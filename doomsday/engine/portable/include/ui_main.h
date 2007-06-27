@@ -63,9 +63,10 @@ typedef enum {
 } ui_obtype_e;
 
 // Standard dimensions.
-#define UI_BORDER       (glScreenWidth/120) // All borders are this wide.
-#define UI_SHADOW_OFFSET (MIN_OF(3, glScreenWidth/320))
-#define UI_TITLE_HGT    (UI_FontHeight() + UI_BORDER)
+#define UI_WIDTH        (1000.0f)
+#define UI_HEIGHT       (1000.0f)
+#define UI_BORDER       (UI_WIDTH/120) // All borders are this wide.
+#define UI_SHADOW_OFFSET (MIN_OF(3, UI_WIDTH/320))
 #define UI_BUTTON_BORDER (UI_BORDER)
 #define UI_BAR_WDH      (UI_BORDER * 3)
 #define UI_BAR_BORDER   (UI_BORDER / 2)
@@ -239,7 +240,9 @@ int             UI_MouseInside(ui_object_t *ob);
 int             UI_MouseResting(ui_page_t *page);
 int             UI_ListFindItem(ui_object_t *ob, int data_value);
 void            UI_DrawLogo(int x, int y, int w, int h);
-void            UI_DrawMouse(int x, int y);
+void            UI_DrawDDBackground(float x, float y, float w, float h,
+                                    float alpha);
+void            UI_DrawMouse(int x, int y, int w, int h);
 void            UI_DrawTitle(ui_page_t *page);
 void            UI_DrawTitleEx(char *text, int height, float alpha);
 void            UI_MixColors(ui_color_t *a, ui_color_t *b, ui_color_t *dest,

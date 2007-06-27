@@ -95,14 +95,11 @@ void    GL_SetGamma(void);
 
 extern int maxnumnodes;
 extern boolean filloutlines;
+extern boolean startupScreen;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     UpdateState;
-
-// The display mode and the default values.
-int     glScreenWidth = 640, glScreenHeight = 480, glScreenBits = 32;
-int     glScreenFull = true;
 
 // The default resolution (config file).
 int     defResX = 640, defResY = 480, defBPP = 32;
@@ -239,10 +236,10 @@ void GL_GetGammaRamp(unsigned short *ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     {
-        ddwindow_t *window = DD_GetWindow(0);
+        HWND    hWnd = DD_GetWindowHandle(windowIDX);
         HDC     hDC;
         
-        if(!window)
+        if(!hWnd)
         {
             suspendMsgPump = true;
             MessageBox(HWND_DESKTOP,
@@ -252,7 +249,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
         }
         else
         {      
-            hDC = GetDC(window->hWnd);
+            hDC = GetDC(hWnd);
 
             if(!hDC)
             {
@@ -266,7 +263,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
                 {
                     gamma_support = true;
                 }
-                ReleaseDC(window->hWnd, hDC);
+                ReleaseDC(hWnd, hDC);
             }
         }
     }
@@ -320,9 +317,9 @@ void GL_SetGammaRamp(unsigned short *ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     {
-        ddwindow_t *window = DD_GetWindow(0);
+        HWND        hWnd = DD_GetWindowHandle(windowIDX);
 
-        if(!window)
+        if(!hWnd)
         {
             suspendMsgPump = true;
             MessageBox(HWND_DESKTOP,
@@ -332,7 +329,7 @@ void GL_SetGammaRamp(unsigned short *ramp)
         }
         else
         {
-            HDC hDC = GetDC(window->hWnd);
+            HDC hDC = GetDC(hWnd);
 
             if(!hDC)
             {
@@ -342,7 +339,7 @@ void GL_SetGammaRamp(unsigned short *ramp)
             else
             {
                 SetDeviceGammaRamp(hDC, (void*) ramp);
-                ReleaseDC(window->hWnd, hDC);
+                ReleaseDC(hWnd, hDC);
             }
         }
     }
@@ -437,14 +434,24 @@ void GL_SetGamma(void)
 
 const char* GL_ChooseFixedFont(void)
 {
-    if(glScreenHeight < 300)
-        return "console11";
-    if(glScreenHeight > 768)
-        return "console18";
+    int         winWidth, winHeight;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Message("GL_ChooseFixedFont: Failed retrieving window dimensions.");
+    }
+    else
+    {
+        if(winWidth < 300)
+            return "console11";
+        if(winHeight > 768)
+            return "console18";
+    }
+
     return "console14";
 }
 
-const char* GL_ChooseVariableFont(glfontstyle_t style)
+const char* GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY)
 {
     const int SMALL_LIMIT = 500;
     const int MED_LIMIT = 800;
@@ -452,24 +459,31 @@ const char* GL_ChooseVariableFont(glfontstyle_t style)
     switch(style)
     {
     default:
-        return (glScreenHeight < SMALL_LIMIT ? "normal12" :
-                glScreenHeight < MED_LIMIT ? "normal18" :
+        return (resY < SMALL_LIMIT ? "normal12" :
+                resY < MED_LIMIT ? "normal18" :
                 "normal24");
 
     case GLFS_LIGHT:
-        return (glScreenHeight < SMALL_LIMIT ? "normallight12" :
-                glScreenHeight < MED_LIMIT ? "normallight18" :
+        return (resY < SMALL_LIMIT ? "normallight12" :
+                resY < MED_LIMIT ? "normallight18" :
                 "normallight24");
 
     case GLFS_BOLD:
-        return (glScreenHeight < SMALL_LIMIT ? "normalbold12" :
-                glScreenHeight < MED_LIMIT ? "normalbold18" :
+        return (resY < SMALL_LIMIT ? "normalbold12" :
+                resY < MED_LIMIT ? "normalbold18" :
                 "normalbold24");
     }
 }
 
 void GL_InitFont(void)
 {
+    int         winWidth, winHeight;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Error("GL_InitFont: Failed retrieving window dimensions.");
+    }
+
     FR_Init();
     FR_PrepareFont(GL_ChooseFixedFont());
     glFontFixed =
@@ -479,10 +493,10 @@ void GL_InitFont(void)
     Con_SetMaxLineLength();
 
     // Also keep the bold and light fonts loaded.
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD));
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD, winWidth, winHeight));
     glFontVariable[GLFS_BOLD] = FR_GetCurrent();
 
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_LIGHT));
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_LIGHT, winWidth, winHeight));
     glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
 
     FR_SetFont(glFontFixed);
@@ -509,11 +523,18 @@ void GL_InitVarFont(void)
 {
     int         oldFont;
     int         i;
+    int         winWidth, winHeight;
 
     if(novideo || varFontInited)
         return;
 
     VERBOSE2(Con_Message("GL_InitVarFont.\n"));
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Error("GL_InitVarFont: Failed retrieving window dimensions.");
+        return;
+    }
 
     oldFont = FR_GetCurrent();
     VERBOSE2(Con_Message("GL_InitVarFont: Old font = %i.\n", oldFont));
@@ -524,7 +545,7 @@ void GL_InitVarFont(void)
         if(i == GLFS_BOLD || i == GLFS_LIGHT)
             continue;
 
-        FR_PrepareFont(GL_ChooseVariableFont(i));
+        FR_PrepareFont(GL_ChooseVariableFont(i, winWidth, winHeight));
         glFontVariable[i] = FR_GetCurrent();
         VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n",
                              glFontVariable[i]));
@@ -565,6 +586,8 @@ void GL_ShutdownVarFont(void)
  */
 boolean GL_EarlyInit(void)
 {
+    int         winWidth, winHeight, winBPP, winFullscreen;
+
     if(initGLOk)
         return true; // Already initialized.
 
@@ -577,29 +600,35 @@ boolean GL_EarlyInit(void)
     GL_GetGammaRamp(original_gamma_ramp);
 
     // By default, use the resolution defined in (default).cfg.
-    glScreenWidth = defResX;
-    glScreenHeight = defResY;
-    glScreenBits = defBPP;
-    glScreenFull = defFullscreen;
+    winWidth = defResX;
+    winHeight = defResY;
+    winBPP = defBPP;
+    winFullscreen = defFullscreen;
 
     // Check for command line options modifying the defaults.
     if(ArgCheckWith("-width", 1))
-        glScreenWidth = atoi(ArgNext());
+        winWidth = atoi(ArgNext());
     if(ArgCheckWith("-height", 1))
-        glScreenHeight = atoi(ArgNext());
+        winHeight = atoi(ArgNext());
     if(ArgCheckWith("-winsize", 2))
     {
-        glScreenWidth = atoi(ArgNext());
-        glScreenHeight = atoi(ArgNext());
+        winWidth = atoi(ArgNext());
+        winHeight = atoi(ArgNext());
     }
     if(ArgCheckWith("-bpp", 1))
-        glScreenBits = atoi(ArgNext());
+        winBPP = atoi(ArgNext());
     // Ensure a valid value.
-    if(glScreenBits != 16 && glScreenBits != 32)
-        glScreenBits = 32;
+    if(winBPP != 16 && winBPP != 32)
+        winBPP = 32;
 
-    glScreenFull = !(ArgExists("-nofullscreen") | ArgExists("-window"));
-    if(!gl.CreateContext(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull))
+    winFullscreen = !(ArgExists("-nofullscreen") | ArgExists("-window"));
+
+    if(!DD_SetWindowDimensions(windowIDX, -1, -1, winWidth, winHeight))
+        Con_Error("GL_EarlyInit: Failed setting window dimensions.");
+    if(!DD_SetWindowBPP(windowIDX, winBPP))
+        Con_Error("GL_EarlyInit: Failed setting window BPP.");
+
+    if(!gl.CreateContext(winWidth, winHeight, winBPP, winFullscreen))
         return false;
 
     GL_InitDeferred();
@@ -610,7 +639,7 @@ boolean GL_EarlyInit(void)
     {
         Con_Message("  Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
-        if(glScreenBits == 32)
+        if(winBPP == 32)
         {
             Con_Message("  Warning: Are you sure your video card accelerates"
                         " a 32 bit mode?\n");
@@ -758,6 +787,14 @@ void GL_Init2DState(void)
 
 void GL_SwitchTo3DState(boolean push_state)
 {
+    int         winWidth, winHeight;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Error("GL_SwitchTo3DState: Failed retrieving window dimensions.");
+        return;
+    }
+
     if(push_state)
     {
         // Push the 2D matrices on the stack.
@@ -770,19 +807,19 @@ void GL_SwitchTo3DState(boolean push_state)
     gl.Enable(DGL_CULL_FACE);
     gl.Enable(DGL_DEPTH_TEST);
 
-    viewpx = viewwindowx * glScreenWidth / 320, viewpy =
-        viewwindowy * glScreenHeight / 200;
+    viewpx = viewwindowx * winWidth / 320, viewpy =
+        viewwindowy * winHeight / 200;
     // Set the viewport.
     if(viewheight != SCREENHEIGHT)
     {
-        viewpw = viewwidth * glScreenWidth / 320;
-        viewph = viewheight * glScreenHeight / 200 + 1;
+        viewpw = viewwidth * winWidth / 320;
+        viewph = viewheight * winHeight / 200 + 1;
         gl.Viewport(viewpx, viewpy, viewpw, viewph);
     }
     else
     {
-        viewpw = glScreenWidth;
-        viewph = glScreenHeight;
+        viewpw = winWidth;
+        viewph = winHeight;
     }
 
     // The 3D projection matrix.
@@ -793,8 +830,7 @@ void GL_Restore2DState(int step)
 {
     switch (step)
     {
-    case 1:
-        // After Restore Step 1 normal player sprites are rendered.
+    case 1: // After Restore Step 1 normal player sprites are rendered.
         gl.MatrixMode(DGL_PROJECTION);
         gl.LoadIdentity();
         gl.Ortho(0, 0, 320, (320 * viewheight) / viewwidth, -1, 1);
@@ -806,13 +842,21 @@ void GL_Restore2DState(int step)
         gl.Disable(DGL_DEPTH_TEST);
         break;
 
-    case 2:
-        // After Restore Step 2 nothing special happens.
-        gl.Viewport(0, 0, glScreenWidth, glScreenHeight);
+    case 2: // After Restore Step 2 nothing special happens.
+        {
+        int         winWidth, winHeight;
+
+        if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+        {
+            Con_Message("GL_Restore2DState: Failed retrieving window dimensions.");
+            return;
+        }
+            
+        gl.Viewport(0, 0, winWidth, winHeight);
+        }
         break;
 
-    case 3:
-        // After Restore Step 3 we're back in 2D rendering mode.
+    case 3: // After Restore Step 3 we're back in 2D rendering mode.
         gl.MatrixMode(DGL_PROJECTION);
         gl.PopMatrix();
         gl.MatrixMode(DGL_MODELVIEW);
@@ -886,7 +930,17 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
 //        fontIDX = FR_GetCurrent();
 
         if(wasStartup)
-            Con_StartupDone();
+        {
+            startupScreen = false;
+
+            gl.MatrixMode(DGL_PROJECTION);
+            gl.PopMatrix();
+
+            GL_ShutdownVarFont();
+
+            // Update the secondary title and the game status.
+            Con_InitUI();
+        }
 
 //        if(fontIDX != -1)
 //            strcpy(oldFontName, FR_GetFont(fontIDX)->name);
@@ -903,7 +957,19 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         // Go back to startup mode, if that's where we were.
         if(wasStartup)
         {
-            Con_StartupInit();
+            int         width, height;
+
+            GL_InitVarFont();
+
+            startupScreen = true;
+
+            if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
+                Con_Error("R_Update: Failed retrieving window dimensions.");
+
+            gl.MatrixMode(DGL_PROJECTION);
+            gl.PushMatrix();
+            gl.LoadIdentity();
+            gl.Ortho(0, 0, width, height, -1, 1);
         }
         else
         {
@@ -928,15 +994,24 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
  * restarting it. All textures will be lost in the process.
  * Restarting the renderer is the compatible way to do the change.
  */
-int GL_ChangeResolution(int w, int h, int bits, boolean fullscreen)
+int GL_ChangeResolution(int w, int h, int bpp, int fullscreen)
 {
+    int         winX, winY, winWidth, winHeight, winBPP;
+    boolean     winFullscreen;
     boolean inControlPanel = UI_IsActive();
 
     if(novideo || !GL_IsInited())
         return false;
 
-    if(glScreenWidth == w && glScreenHeight == h && glScreenFull == fullscreen &&
-       glScreenBits == bits)
+    if(!DD_GetWindowDimensions(windowIDX, &winX, &winY, &winWidth, &winHeight))
+        Con_Error("GL_ChangeResolution: Failed getting window dimensions.");
+    if(!DD_GetWindowBPP(windowIDX, &winBPP))
+        Con_Error("GL_ChangeResolution: Failed getting window BPP.");
+    if(!DD_GetWindowFullscreen(windowIDX, &winFullscreen))
+        Con_Error("GL_ChangeResolution: Failed getting window fullscreen.");
+
+    if(winWidth == w && winHeight == h && winFullscreen == fullscreen &&
+       winBPP == bpp)
         return true;
 
     // Can't change the resolution while the UI is active.
@@ -949,25 +1024,40 @@ int GL_ChangeResolution(int w, int h, int bits, boolean fullscreen)
     gx.UpdateState(DD_RENDER_RESTART_PRE);
 
     if(w > 0)
-        glScreenWidth = w;
+        winWidth = w;
     if(h > 0)
-        glScreenHeight = h;
-    if(bits > 0)
-        glScreenBits = bits;
-    glScreenFull = fullscreen;
+        winHeight = h;
+    if(bpp > 0)
+        winBPP = bpp;
+    if(fullscreen != 3) // no change.
+    {
+        if(fullscreen == 2) // toggle
+            winFullscreen = (fullscreen? false : true);
+        else
+            winFullscreen = (fullscreen? true : false);
+    }
 
     // Shutdown and re-initialize DGL.
     gl.Shutdown();
+
     gl.Init();
-    gl.CreateContext(glScreenWidth, glScreenHeight, glScreenBits, glScreenFull);
+    // \todo gl.CreateContext changes window dimensions.
+    gl.CreateContext(winWidth, winHeight, winBPP, winFullscreen);
+
+    if(!DD_SetWindowDimensions(windowIDX, winX, winY, winWidth, winHeight))
+        Con_Error("GL_ChangeResolution: Failed setting window dimensions.");
+    if(!DD_SetWindowBPP(windowIDX, winBPP))
+        Con_Error("GL_ChangeResolution: Failed setting window BPP.");
+    if(fullscreen != 3 && !DD_SetWindowFullscreen(windowIDX, winFullscreen))
+        Con_Error("GL_ChangeResolution: Failed setting window fullscreen.");
 
     // Re-initialize.
     GL_TotalReset(false, true, true);
     gx.UpdateState(DD_RENDER_RESTART_POST);
 
-    Con_Message("Display mode: %i x %i", glScreenWidth, glScreenHeight);
-    if(glScreenBits)
-        Con_Message(" x %i", glScreenBits);
+    Con_Message("Display mode: %i x %i", winWidth, winHeight);
+    if(winBPP)
+        Con_Message(" x %i", winBPP);
     Con_Message(".\n");
 
     if(inControlPanel) // Reactivate the panel?
@@ -982,9 +1072,15 @@ int GL_ChangeResolution(int w, int h, int bits, boolean fullscreen)
  */
 unsigned char *GL_GrabScreen(void)
 {
-    unsigned char *buffer = malloc(glScreenWidth * glScreenHeight * 3);
+    int         winWidth, winHeight;
+    unsigned char *buffer;
+    
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+        Con_Error("GL_ChangeResolution: Failed getting window dimensions.");
 
-    gl.Grab(0, 0, glScreenWidth, glScreenHeight, DGL_RGB, buffer);
+    buffer = malloc(winWidth * winHeight * 3);
+
+    gl.Grab(0, 0, winWidth, winHeight, DGL_RGB, buffer);
     return buffer;
 }
 
@@ -1047,13 +1143,12 @@ void GL_BlendMode(blendmode_t mode)
  */
 D_CMD(SetRes)
 {
-    return GL_ChangeResolution(atoi(argv[1]), atoi(argv[2]), 0, glScreenFull);
+    return GL_ChangeResolution(atoi(argv[1]), atoi(argv[2]), 0, 3); // no change fullscreen
 }
 
 D_CMD(ToggleFullscreen)
-{
-    glScreenFull ^= 1;
-    GL_ChangeResolution(0, 0, 0, glScreenFull);
+{ 
+    GL_ChangeResolution(0, 0, 0, 2); // toggle
     return true;
 }
 
@@ -1073,8 +1168,7 @@ D_CMD(SetBPP)
         bpp = 32;
         Con_Printf("%d not valid for bits per pixel, setting to 32.\n", bpp);
     }
-    glScreenBits = bpp;
-    GL_ChangeResolution(0, 0, glScreenBits, glScreenFull);
+    GL_ChangeResolution(0, 0, bpp, 3); // no change fullscreen
     return true;
 }
 

@@ -38,10 +38,11 @@ void    Rend_ConsoleInit(void);
 void    Rend_ConsoleTicker(timespan_t time);
 void    Rend_Console(void);
 
-void    Rend_ConsoleFPS(void);
+void    Rend_ConsoleFPS(int x, int y);
 void    Rend_ConsoleOpen(int yes);
 void    Rend_ConsoleMove(int numLines);
 void    Con_DrawRuler(int y, int lineHeight, float alpha);
+void    Con_InitUI(void);
 
 void    Rend_ConsoleToggleFullscreen(void);
 void    Rend_ConsoleCursorResetBlink(void);

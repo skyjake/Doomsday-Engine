@@ -32,14 +32,8 @@
 #include <windows.h>
 
 typedef struct {
-    HWND            hWnd;       // Window handle.
-    int             flags;
-} ddwindow_t;
-
-typedef struct {
     HINSTANCE       hInstance;
     LPCSTR          className;
-    ddwindow_t*     window;     // Main window.
     BOOL            suspendMsgPump; // Set to true to disable checking windows msgs.
 
     HINSTANCE       hInstGame;  // Instance handle to the game DLL.
@@ -47,10 +41,28 @@ typedef struct {
     GETGAMEAPI      GetGameAPI;
 } application_t;
 
+extern uint windowIDX;   // Main window.
 extern application_t app;
 
-ddwindow_t     *DD_GetWindow(uint idx);
-void            DD_WindowShow(ddwindow_t *window, boolean show);
+uint            DD_CreateWindow(application_t *app, uint parent,
+                                int x, int y, int w, int h, int bpp, int flags,
+                                const char *title, int cmdShow);
+boolean         DD_DestroyWindow(uint idx);
+
+boolean         DD_GetWindowDimensions(uint idx, int *x, int *y, int *w, int *h);
+boolean         DD_GetWindowBPP(uint idx, int *bpp);
+boolean         DD_GetWindowFullscreen(uint idx, boolean *fullscreen);
+boolean         DD_GetWindowVisibility(uint idx, boolean *show);
+
+boolean         DD_SetWindowDimensions(uint idx, int x, int y, int w, int h);
+boolean         DD_SetWindowBPP(uint idx, int bpp);
+boolean         DD_SetWindowFullscreen(uint idx, boolean fullscreen);
+boolean         DD_SetWindowVisibility(uint idx, boolean show);
+
+// \todo This is a compromise to prevent having to refactor half the engine.
+// In general, system specific patterns should not be carried into the engine.
+HWND            DD_GetWindowHandle(uint idx);
+
 void            DD_Shutdown(void);
 
 #endif

@@ -52,7 +52,7 @@ void            GL_SwitchTo3DState(boolean push_state);
 void            GL_Restore2DState(int step);
 void            GL_ProjectionMatrix(void);
 void            GL_RuntimeMode(void);
-int             GL_ChangeResolution(int w, int h, int bits, boolean fullscreen);
+int             GL_ChangeResolution(int w, int h, int bits, int fullscreen);
 void            GL_Update(int flags);
 void            GL_DoUpdate(void);
 void            GL_BlendMode(blendmode_t mode);
@@ -63,14 +63,12 @@ void            GL_UseFog(int yes);
 void            GL_InitVarFont(void);
 void            GL_ShutdownVarFont(void);
 const char*     GL_ChooseFixedFont();
-const char*     GL_ChooseVariableFont(glfontstyle_t style);
+const char*     GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
 
 // Returns a pointer to a copy of the screen. The pointer must be
 // deallocated by the caller.
 unsigned char  *GL_GrabScreen(void);
 
-extern int      glScreenWidth, glScreenHeight, glScreenBits;
-extern int      glScreenFull;
 extern int      numTexUnits;
 extern boolean  envModAdd;
 extern int      defResX, defResY, defBPP, defFullscreen;

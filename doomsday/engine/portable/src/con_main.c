@@ -553,16 +553,25 @@ void Con_Ticker(timespan_t time)
 
 void Con_SetMaxLineLength(void)
 {
+    int         winWidth;
     int         cw = FR_TextWidth("A");
     int         length;
+    boolean     noWin;
 
-    if(!cw)
+    if(true ==
+       (noWin = !DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
+                                        NULL)))
+    {
+        Con_Message("Con_SetMaxLineLength: Failed retrieving window dimensions.");
+    }
+
+    if(!cw || noWin)
     {
         length = 70;
     }
     else
     {
-        length = glScreenWidth / cw - 2;
+        length = winWidth / cw - 2;
         if(length > 250)
             length = 250;
     }

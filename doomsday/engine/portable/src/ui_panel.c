@@ -49,7 +49,7 @@
 #define CPID_SET_RES    UIF_ID2
 #define CPID_RES_LIST   UIF_ID3
 #define CPG_VIDEO       2
-#define HELP_OFFSET     (glScreenWidth*290/1000)
+#define HELP_OFFSET     (UI_ScreenW(UI_WIDTH)*290/UI_WIDTH)
 
 // TYPES -------------------------------------------------------------------
 
@@ -809,11 +809,26 @@ void CP_VideoModeInfo(ui_object_t *ob)
     char        buf[80];
 
     if(!strcmp(ob->text, "default"))
+    {
         sprintf(buf, "%i x %i x %i (%s)", defResX, defResY, defBPP,
                 defFullscreen? "fullscreen":"windowed");
+    }
     else
-        sprintf(buf, "%i x %i x %i (%s)", glScreenWidth, glScreenHeight,
-                glScreenBits, glScreenFull? "fullscreen":"windowed");
+    {
+        int         width, height, bpp;
+        boolean     fullscreen;
+
+        if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
+            return;
+        if(!DD_GetWindowBPP(windowIDX, &bpp))
+            return;
+        if(!DD_GetWindowFullscreen(windowIDX, &fullscreen))
+            return;
+
+        sprintf(buf, "%i x %i x %i (%s)", width, height, bpp,
+                (fullscreen? "fullscreen":"windowed"));
+    }
+
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TEXT),
                  1);
@@ -821,13 +836,25 @@ void CP_VideoModeInfo(ui_object_t *ob)
 
 void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
 {
-    ui_object_t *ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
+    int         cWidth, cHeight, cBPP;
+    boolean     cFullscreen;
+    ui_object_t *ob;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &cWidth, &cHeight))
+        return;
+    if(!DD_GetWindowBPP(windowIDX, &cBPP))
+        return;
+    if(!DD_GetWindowFullscreen(windowIDX, &cFullscreen))
+        return;
+
+    ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
 
     bpp = (bpp? 32 : 16);
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
             fullscreen? "fullscreen":"windowed");
-    if(w == glScreenWidth && h == glScreenHeight && bpp == glScreenBits &&
-       fullscreen == glScreenFull)
+
+    if(w == cWidth && h == cHeight && bpp == cBPP &&
+       fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
     else
         ob->flags &= ~UIF_DISABLED;
@@ -896,7 +923,7 @@ ui_object_t *CP_FindHover(void)
             continue;
 
         // Extend the detection area to the right edge of the screen.
-        if(UI_MouseInsideBox(ob->x, ob->y, glScreenWidth, ob->h))
+        if(UI_MouseInsideBox(ob->x, ob->y, UI_ScreenW(1000), ob->h))
             return ob;
     }
     return NULL;
@@ -993,7 +1020,7 @@ void CP_Drawer(ui_page_t *page)
     // Project home.
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(DOOMSDAY_PROJECTURL,
-                 glScreenWidth - UI_BORDER - FR_TextWidth(DOOMSDAY_PROJECTURL),
+                 UI_ScreenW(1000) - UI_BORDER - FR_TextWidth(DOOMSDAY_PROJECTURL),
                  UI_ScreenY(25), false, true, UI_Color(UIC_TEXT), 0.4f);
 
     // Is the help box visible?
@@ -1157,15 +1184,28 @@ D_CMD(OpenPanel)
     CP_InitCvarSliders(ob_panel);
 
     // Update width the current resolution.
+    {
+    int         cWidth, cHeight, cBPP;
+    boolean     cFullscreen;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &cWidth, &cHeight))
+        Con_Error("CCmd 'OpenPanel': Failed retrieving window dimensions.");
+
+    if(!DD_GetWindowBPP(windowIDX, &cBPP))
+        Con_Error("CCmd 'OpenPanel': Failed retrieving window bpp.");
+    if(!DD_GetWindowFullscreen(windowIDX, &cFullscreen))
+        Con_Error("CCmd 'OpenPanel': Failed retrieving window fullscreen.");
+
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
     list = ob->data;
-    list->selection = UI_ListFindItem(ob, RES(glScreenWidth, glScreenHeight));
+    list->selection = UI_ListFindItem(ob, RES(cWidth, cHeight));
     if(list->selection == -1)
         // Then use a reasonable default.
         list->selection = UI_ListFindItem(ob, RES(640, 480));
-    panel_fullscreen = glScreenFull;
-    panel_bpp = (glScreenBits == 32? 1 : 0);
+    panel_fullscreen = cFullscreen;
+    panel_bpp = (cBPP == 32? 1 : 0);
     CP_ResolutionList(ob);
+    }
 
     UI_Init(true, true, false, false, false, false);
     UI_SetPage(&page_panel);

@@ -55,6 +55,16 @@
 
 // TYPES -------------------------------------------------------------------
 
+// Doomsday window flags.
+#define DDWF_VISIBLE            0x01
+#define DDWF_FULLSCREEN         0x02
+
+typedef struct {
+    int             flags;
+    int             x, y, width, height;
+    int             bpp;
+} ddwindow_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -203,8 +213,20 @@ ddwindow_t *DD_GetWindow(uint idx)
     return NULL;
 }
 
+void DD_ChangeWindowDimensions(ddwindow_t *window, int x, int y, int width,
+                               int height)
+{
+    if(!window)
+        return;
+
+    // \fixme Not implemented.
+}
+
 void DD_WindowShow(ddwindow_t *window, boolean show)
 {
+    if(!window)
+        return;
+
     // \fixme Not implemented.
     return;
 }

@@ -727,14 +727,22 @@ D_CMD(ListPlayerControls)
  */
 void P_ControlDrawer(void)
 {
+    int         winWidth, winHeight;
+
     if(!ctlInfo)
         return;
     
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Message("P_ControlDrawer: Failed retrieving window dimensions.");
+        return;
+    }
+
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
+    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
 
     // TODO: Draw control state here.
     

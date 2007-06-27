@@ -189,8 +189,8 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
             else
             {
                 // We'll have to compare the dimensions.
-                float       scrwidth = Get(DD_SCREEN_WIDTH);
-                float       scrheight = Get(DD_SCREEN_HEIGHT);
+                float       scrwidth = Get(DD_WINDOW_WIDTH);
+                float       scrheight = Get(DD_WINDOW_HEIGHT);
                 float       fx = FIXXTOSCREENX(x);
                 float       fy = FIXYTOSCREENY(x);
                 float       fw = FIXXTOSCREENX(w);

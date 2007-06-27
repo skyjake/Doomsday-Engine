@@ -88,7 +88,7 @@ static int screenBits, windowed;
  *
  * @return              Non-zero= success.
  */
-static int fullscreenMode(int width, int height, int bpp)
+static int changeVideoMode(int width, int height, int bpp)
 {
     int         res, i;
     DEVMODE     current, testMode, newMode;
@@ -147,14 +147,9 @@ static int fullscreenMode(int width, int height, int bpp)
 
     if((res = ChangeDisplaySettings(&newMode, 0)) != DISP_CHANGE_SUCCESSFUL)
     {
-        Con_Message("drOpenGL.setResolution: Error %x.\n", res);
+        Con_Message("drOpenGL.changeVideoMode: Error %x.\n", res);
         return 0; // Failed, damn you.
     }
-
-    // Set the correct window style and size.
-    SetWindowLong(windowHandle, GWL_STYLE,
-                  WS_POPUP | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-    SetWindowPos(windowHandle, 0, 0, 0, width, height, SWP_NOZORDER);
 
     // Update the screen size variables.
     screenWidth = width;
@@ -398,11 +393,18 @@ int DG_CreateContext(int width, int height, int bpp, int mode)
 
     if(fullscreen)
     {
-        if(!fullscreenMode(screenWidth, screenHeight, bpp))
+        if(!changeVideoMode(screenWidth, screenHeight, bpp))
         {
             Sys_CriticalMessage("drOpenGL.Init: Resolution change failed (%d x %d).\n",
                                 screenWidth, screenHeight);
             ok = DGL_FALSE;
+        }
+        else
+        {
+            // Set the correct window style and size.
+            SetWindowLong(windowHandle, GWL_STYLE,
+                          WS_POPUP | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+            SetWindowPos(windowHandle, 0, 0, 0, screenWidth, screenHeight, SWP_NOZORDER);
         }
     }
     else

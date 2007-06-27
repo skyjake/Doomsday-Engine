@@ -823,6 +823,7 @@ void Net_Drawer(void)
 {
     char    buf[160], tmp[40];
     int     i, c;
+    int     winWidth, winHeight;
     boolean show_blink_r = false;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -841,11 +842,17 @@ void Net_Drawer(void)
     if(!net_dev && !show_blink_r && !consoleShowFPS)
         return;
 
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Message("Net_Drawer: Failed retrieving window dimensions.");
+        return;
+    }
+
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
+    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
 
     if(show_blink_r && SECONDS_TO_TICKS(gameTime) & 8)
     {
@@ -863,7 +870,7 @@ void Net_Drawer(void)
         }
 
         strcat(buf, "]");
-        i = glScreenWidth - FR_TextWidth(buf);
+        i = winWidth - FR_TextWidth(buf);
         //gl.Color3f(0, 0, 0);
         //FR_TextOut(buf, i - 8, 12);
         gl.Color3f(1, 1, 1);
@@ -883,7 +890,7 @@ void Net_Drawer(void)
            FR_TextOut(buf, 10, 10+10*(i+1));
            } */
     }
-    Rend_ConsoleFPS();
+    Rend_ConsoleFPS(winWidth - 10, 30);
 
     // Restore original matrix.
     gl.MatrixMode(DGL_PROJECTION);

@@ -285,10 +285,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\con_start.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\dam_main.c"
 				>
 			</File>
@@ -1117,10 +1113,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\con_main.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\con_start.h"
 				>
 			</File>
 			<File

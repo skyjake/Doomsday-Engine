@@ -920,10 +920,17 @@ void LG_Debug(void)
     gridblock_t *block;
     int         x, y;
     int         vx, vy;
+    int         winWidth, winHeight;
     static int  blink = 0;
 
     if(!lgInited || !lgShowDebug)
         return;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Message("LG_Debug: Failed retrieving window dimensions.");
+        return;
+    }
 
     blink++;
     vx = ((viewplayer->mo->pos[VX] - lgOrigin[VX]) / lgBlockSize) >> FRACBITS;
@@ -935,7 +942,7 @@ void LG_Debug(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
+    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
 
     gl.Disable(DGL_TEXTURING);
 

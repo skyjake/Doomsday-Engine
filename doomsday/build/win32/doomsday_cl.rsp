@@ -109,7 +109,6 @@
  ./../../engine/portable/src/sys_filein.c
  ./../../engine/portable/src/sys_direc.c
  ./../../engine/win32/src/sys_console.c
- ./../../engine/portable/src/con_start.c
  ./../../engine/portable/src/con_busy.c
  ./../../engine/portable/src/con_data.c
  ./../../engine/portable/src/con_buffer.c

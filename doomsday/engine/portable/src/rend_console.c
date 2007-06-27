@@ -72,10 +72,13 @@ static float ConsoleY;          // Where the console bottom is currently?
 static float ConsoleDestY;      // Where the console bottom should be?
 static float ConsoleBlink;      // Cursor blink timer (35 Hz tics).
 static boolean openingOrClosing = true;
-
 static float fontFx, fontSy;    // Font x factor and y size.
 
 static float funnyAng;
+
+static char *consoleTitle = "Doomsday " DOOMSDAY_VERSION_TEXT;
+static char secondaryTitleText[256];
+static char statusText[256];
 
 // CODE --------------------------------------------------------------------
 
@@ -190,7 +193,30 @@ static void drawRuler2(int y, int lineHeight, float alpha, int scrWidth)
 
 void Con_DrawRuler(int y, int lineHeight, float alpha)
 {
-    drawRuler2(y, lineHeight, alpha, glScreenWidth);
+    int         winWidth;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
+    {
+        Con_Message("Con_DrawRuler: Failed retrieving window dimensions.");
+        return;
+    }
+
+    drawRuler2(y, lineHeight, alpha, winWidth);
+}
+
+/**
+ * Initializes the Doomsday console user interface. This is called when
+ * engine startup is complete.
+ *
+ * \todo Doesn't belong here.
+ */
+void Con_InitUI(void)
+{
+    // Update the secondary title and the game status.
+    strncpy(secondaryTitleText, (char *) gx.GetVariable(DD_GAME_ID),
+            sizeof(secondaryTitleText) - 1);
+    strncpy(statusText, (char *) gx.GetVariable(DD_GAME_MODE),
+            sizeof(statusText) - 1);
 }
 
 /**
@@ -314,10 +340,10 @@ void Rend_ConsoleTicker(timespan_t time)
     ConsoleBlink += step;       // Cursor blink timer (0 = visible).
 }
 
-void Rend_ConsoleFPS(void)
+void Rend_ConsoleFPS(int x, int y)
 {
-    int     x, y = 30, w, h;
-    char    buf[160];
+    int         w, h;
+    char        buf[160];
 
     if(!consoleShowFPS)
         return;
@@ -329,7 +355,7 @@ void Rend_ConsoleFPS(void)
     sprintf(buf, "%.1f FPS", DD_GetFrameRate());
     w = FR_TextWidth(buf) + 16;
     h = FR_TextHeight(buf) + 16;
-    x = glScreenWidth - w - 10;
+    x -= w;
     UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM),
                   UI_Color(UIC_BG_LIGHT), .5f, .5f);
     UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
@@ -345,9 +371,10 @@ void Rend_Console(void)
     extern uint bLineOff;
 
     int         i, k;               // Line count and buffer cursor.
+    int         winWidth, winHeight;
     float       x, y;
     float       closeFade = 1;
-    float       gtosMulY = glScreenHeight / 200.0f;
+    float       gtosMulY;
     char        buff[CMDLINE_SIZE + 1], temp[CMDLINE_SIZE + 1], *cmdLine;
     float       fontScaledY;
     int         bgX = 64, bgY = 64;
@@ -361,6 +388,14 @@ void Rend_Console(void)
 
     if(ConsoleY <= 0)
         return;                 // We have nothing to do here.
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Message("Rend_Console: Failed retrieving window dimensions.");
+        return;
+    }
+
+    gtosMulY = winHeight / 200.0f;
 
     cmdLine = Con_GetCommandLine();
     cmdCursor = Con_CursorPosition();
@@ -388,7 +423,7 @@ void Rend_Console(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
+    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
 
     BorderNeedRefresh = true;
 
@@ -412,22 +447,22 @@ void Rend_Console(void)
     gl.LoadIdentity();
     gl.Translatef(2 * sin(funnyAng / 4), 2 * cos(funnyAng / 4), 0);
     gl.Rotatef(funnyAng * 3, 0, 0, 1);
-    GL_DrawRectTiled(0, (int) (ConsoleY * gtosMulY + 4), glScreenWidth,
-                     -glScreenHeight - 4, bgX, bgY);
+    GL_DrawRectTiled(0, (int) (ConsoleY * gtosMulY + 4), winWidth,
+                     -winHeight - 4, bgX, bgY);
     gl.MatrixMode(DGL_TEXTURE);
     gl.PopMatrix();
 
     // The border.
-    GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 3), glScreenWidth, 2, 0, 0, 0,
+    GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 3), winWidth, 2, 0, 0, 0,
                 closeFade);
 
     // Subtle shadow.
     gl.Begin(DGL_QUADS);
     gl.Color4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
     gl.Vertex2f(0, (int) (ConsoleY * gtosMulY + 5));
-    gl.Vertex2f(glScreenWidth, (int) (ConsoleY * gtosMulY + 5));
+    gl.Vertex2f(winWidth, (int) (ConsoleY * gtosMulY + 5));
     gl.Color4f(0, 0, 0, 0);
-    gl.Vertex2f(glScreenWidth, (int) (ConsoleY * gtosMulY + 13));
+    gl.Vertex2f(winWidth, (int) (ConsoleY * gtosMulY + 13));
     gl.Vertex2f(0, (int) (ConsoleY * gtosMulY + 13));
     gl.End();
 
@@ -470,7 +505,7 @@ void Rend_Console(void)
                 {
                     // Draw a ruler here, and nothing else.
                     drawRuler2(y / Cfont.sizeY, Cfont.height, closeFade,
-                               glScreenWidth / Cfont.sizeX);
+                               winWidth / Cfont.sizeX);
                 }
                 else
                 {
@@ -480,7 +515,7 @@ void Rend_Console(void)
                     memset(buff, 0, sizeof(buff));
                     strncpy(buff, line->text, 255);
 
-                    x = line->flags & CBLF_CENTER ? (glScreenWidth / Cfont.sizeX -
+                    x = line->flags & CBLF_CENTER ? (winWidth / Cfont.sizeX -
                                                      Cfont.Width(buff)) / 2 : 2;
 
                     if(Cfont.Filter)
@@ -547,11 +582,50 @@ void Rend_Console(void)
         gl.Enable(DGL_TEXTURING);
     }
 
-    Con_DrawTitle(closeFade);
-
     // Restore the original matrices.
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PopMatrix();
+
+    // Draw the console title bar.
+    {
+    int width = 0;
+    int height;
+    int oldFont = FR_GetCurrent();
+    int border = winWidth / 120;
+
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PushMatrix();
+    
+    FR_SetFont(glFontVariable[GLFS_BOLD]);
+    height = FR_TextHeight("W") + border;
+    FR_SetFont(glFontVariable[GLFS_BOLD]);
+    UI_Gradient(0, 0, winWidth, height, UI_Color(UIC_BG_MEDIUM),
+                UI_Color(UIC_BG_LIGHT), .8f * closeFade, closeFade);
+    UI_Gradient(0, height, winWidth, border, UI_Color(UIC_SHADOW),
+                UI_Color(UIC_BG_DARK), closeFade, 0);
+    UI_TextOutEx(consoleTitle, border, height / 2, false, true, UI_Color(UIC_TITLE),
+                 closeFade);
+    if(secondaryTitleText[0])
+    {
+        width = FR_TextWidth(consoleTitle) + FR_TextWidth("  ");
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        UI_TextOutEx(secondaryTitleText, border + width, height / 2,
+                     false, true, UI_Color(UIC_TEXT), .75f * closeFade);
+    }
+    if(statusText[0])
+    {
+        width = FR_TextWidth(statusText);
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        UI_TextOutEx(statusText, winWidth - UI_BORDER - width, height / 2,
+                     false, true, UI_Color(UIC_TEXT), .75f * closeFade);
+    }
+
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PopMatrix();
+
+    FR_SetFont(oldFont);
+    }
+
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
 }

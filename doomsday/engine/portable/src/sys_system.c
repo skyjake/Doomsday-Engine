@@ -143,9 +143,9 @@ int Sys_CriticalMessage(char *msg)
 #ifdef WIN32
     char        buf[256];
     int         ret;
-    ddwindow_t *window = DD_GetWindow(0);
+    HWND        hWnd = DD_GetWindowHandle(windowIDX);
 
-    if(!window)
+    if(!hWnd)
     {
         suspendMsgPump = true;
         MessageBox(HWND_DESKTOP,
@@ -158,9 +158,9 @@ int Sys_CriticalMessage(char *msg)
     ShowCursor(TRUE);
     ShowCursor(TRUE);
     suspendMsgPump = true;
-    GetWindowText(window->hWnd, buf, 255);
+    GetWindowText(hWnd, buf, 255);
     ret =
-        (MessageBox(window->hWnd, _T(msg), _T(buf),
+        (MessageBox(hWnd, _T(msg), _T(buf),
                     MB_OK | MB_ICONEXCLAMATION) ==
          IDYES);
     suspendMsgPump = false;
@@ -197,8 +197,9 @@ void Sys_ShowCursor(boolean show)
 void Sys_HideMouse(void)
 {
 #ifdef WIN32
-    if(novideo || !glScreenFull)
+    if(novideo)
         return;
+
     ShowCursor(FALSE);
 #endif
 #ifdef UNIX
@@ -218,9 +219,9 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 {
 #ifdef WIN32
     char    title[300];
-    ddwindow_t *window = DD_GetWindow(0);
+    HWND    hWnd = DD_GetWindowHandle(windowIDX);
 
-    if(!window)
+    if(!hWnd)
     {
         suspendMsgPump = true;
         MessageBox(HWND_DESKTOP,
@@ -231,8 +232,8 @@ void Sys_MessageBox(const char *msg, boolean iserror)
     }
 
     suspendMsgPump = true;
-    GetWindowText(window->hWnd, title, 300);
-    MessageBox(window->hWnd, msg, title,
+    GetWindowText(hWnd, title, 300);
+    MessageBox(hWnd, msg, title,
                MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
     suspendMsgPump = false;
 #endif

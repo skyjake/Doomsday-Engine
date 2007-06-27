@@ -701,8 +701,14 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     // Determine the suitable LOD.
     if(mdl->info.numLODs > 1 && rend_model_lod != 0)
     {
-        float   lodFactor =
-            rend_model_lod * glScreenWidth / 640.0f / (fieldOfView / 90.0f);
+        int     winWidth;
+        float   lodFactor;
+
+        if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
+            Con_Error("Mod_RenderSubModel: Failed retrieving window dimensions.");
+
+        lodFactor =
+            rend_model_lod * winWidth / 640.0f / (fieldOfView / 90.0f);
         if(lodFactor)
             lodFactor = 1 / lodFactor;
 

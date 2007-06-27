@@ -60,11 +60,6 @@ static void     Con_BusyDeleteTextures(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-/*
-boolean         startupScreen = false;
-int             startupLogo;
-*/
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean  busyInited;
@@ -197,7 +192,23 @@ static void Con_BusyLoadTextures(void)
     
     if(busyMode & BUSYF_CONSOLE_OUTPUT)
     {
-        const char* fontName = (glScreenWidth > 640? "normal18" : "normal12");
+        boolean     noWin;
+        int         winWidth = 0;
+        const char* fontName;
+
+        if(true ==
+           (noWin = !DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
+                                            NULL)))
+        {
+            Con_Message("Con_BusyLoadTextures: Failed retrieving window "
+                        "dimensions.");
+        }
+
+        if(noWin || !(winWidth > 640))
+            fontName = "normal12";
+        else
+            fontName = "normal18";
+
         if(FR_PrepareFont(fontName))
         {
             busyFont = FR_GetCurrent();
@@ -229,6 +240,7 @@ static void Con_BusyDeleteTextures(void)
 void Con_AcquireScreenshotTexture(void)
 {
     int         oldMaxTexSize = glMaxTexSize;
+    int         winWidth, winHeight;
     byte       *frame;
 #ifdef _DEBUG
     timespan_t startTime;
@@ -243,10 +255,15 @@ void Con_AcquireScreenshotTexture(void)
     startTime = Sys_GetRealSeconds();
 #endif
 
-    frame = M_Malloc(glScreenWidth * glScreenHeight * 3);
-    gl.Grab(0, 0, glScreenWidth, glScreenHeight, DGL_RGB, frame);
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Error("Con_AcquireScreenshotTexture: Failed retrieving window dimensions.");
+    }
+
+    frame = M_Malloc(winWidth * winHeight * 3);
+    gl.Grab(0, 0, winWidth, winHeight, DGL_RGB, frame);
     glMaxTexSize = 512; // A bit of a hack, but don't use too large a texture.
-    texScreenshot = GL_UploadTexture(frame, glScreenWidth, glScreenHeight,
+    texScreenshot = GL_UploadTexture(frame, winWidth, winHeight,
                                      false, false, true, false, true,
                                      DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP,
                                      TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION);
@@ -270,12 +287,24 @@ void Con_ReleaseScreenshotTexture(void)
  */
 static void Con_BusyLoop(void)
 {
+    int         winWidth, winHeight;
+    boolean     canDraw;
     timespan_t startTime = Sys_GetRealSeconds();
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    gl.LoadIdentity();
-    gl.Ortho(0, 0, glScreenWidth, glScreenHeight, -1, 1);
+    if(true ==
+       (canDraw = DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
+                                         &winHeight)))
+    {
+        Con_Message("Con_BusyLoop: Failed retrieving window dimensions.");
+    }
+
+    if(canDraw)
+    {
+        gl.MatrixMode(DGL_PROJECTION);
+        gl.PushMatrix();
+        gl.LoadIdentity();
+        gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
+    }
     
     while(!busyDone || (!(busyMode & BUSYF_NO_UPLOADS) && GL_GetDeferredCount() > 0))
     {
@@ -291,11 +320,15 @@ static void Con_BusyLoop(void)
         busyTime = Sys_GetRealSeconds() - startTime;
         
         // Time for an update?
-        Con_BusyDrawer();
+        if(canDraw)
+            Con_BusyDrawer();
     }
 
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();    
+    if(canDraw)
+    {
+        gl.MatrixMode(DGL_PROJECTION);
+        gl.PopMatrix();
+    }
     
     if(verbose)
     {
@@ -307,7 +340,8 @@ static void Con_BusyLoop(void)
  * Draws the captured screenshot as a background, or just clears the screen if no
  * screenshot is available.
  */
-static void Con_DrawScreenshotBackground(void)
+static void Con_DrawScreenshotBackground(float x, float y, float width,
+                                         float height)
 {
     if(texScreenshot)
     {
@@ -316,13 +350,13 @@ static void Con_DrawScreenshotBackground(void)
         gl.Color3ub(255, 255, 255);
         gl.Begin(DGL_QUADS);
         gl.TexCoord2f(0, 1);
-        gl.Vertex2f(0, 0);
+        gl.Vertex2f(x, y);
         gl.TexCoord2f(1, 1);
-        gl.Vertex2f(glScreenWidth, 0);
+        gl.Vertex2f(x + width, y);
         gl.TexCoord2f(1, 0);
-        gl.Vertex2f(glScreenWidth, glScreenHeight);
+        gl.Vertex2f(x + width, y + height);
         gl.TexCoord2f(0, 0);
-        gl.Vertex2f(0, glScreenHeight);
+        gl.Vertex2f(x, y + height);
         gl.End();
     }
     else
@@ -334,18 +368,16 @@ static void Con_DrawScreenshotBackground(void)
 /**
  * @param 0...1, to indicate how far things have progressed.
  */
-static void Con_BusyDrawIndicator(float pos)
+static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 {
-    int x = glScreenWidth/2;
-    int y = glScreenHeight/2;
-    int radius = glScreenHeight/16;
-    float col[4] = {
+    float       col[4] = {
          1.f, 1.f, 1.f, .2f
     };
-    int i = 0;
-    int edgeCount = 0;
-    int backW = glScreenWidth/12;
-    int backH = glScreenHeight/12;
+    int         i = 0;
+    int         edgeCount = 0;
+    int         backW, backH;
+
+    backW = backH = (radius * 2);
     
     pos = MINMAX_OF(0, pos, 1);
     edgeCount = MAX_OF(1, pos * 30);
@@ -414,15 +446,22 @@ static void Con_BusyDrawConsoleOutput(void)
     const float lineAlpha[LINE_COUNT] = {
         .05f, .1f, .2f, 1.f
     };
-    
     cbuffer_t  *buffer;
     static cbline_t *lines[LINE_COUNT + 1], **linesp = lines;
     int         y;
+    int         winWidth, winHeight;
     uint        i, linecount;
 
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Message("Con_BusyDrawConsoleOutput: Failed retrieving window "
+                    "dimensions.");
+        return;
+    }
+
     buffer = Con_GetConsoleBuffer();
-    linecount = Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT,
-                                   linesp);
+    linecount =
+        Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT, linesp);
 
     if(!linecount)
         return;
@@ -433,17 +472,17 @@ static void Con_BusyDrawConsoleOutput(void)
 
     gl.Begin(DGL_QUADS);
     gl.Color4ub(0, 0, 0, 0);
-    y = glScreenHeight - (LINE_COUNT + 3) * busyFontHgt;
+    y = winHeight - (LINE_COUNT + 3) * busyFontHgt;
     gl.Vertex2f(0, y);
-    gl.Vertex2f(glScreenWidth, y);
+    gl.Vertex2f(winWidth, y);
     gl.Color4ub(0, 0, 0, 128);
-    gl.Vertex2f(glScreenWidth, glScreenHeight);
-    gl.Vertex2f(0, glScreenHeight);
+    gl.Vertex2f(winWidth, winHeight);
+    gl.Vertex2f(0, winHeight);
     gl.End();
     
     gl.Enable(DGL_TEXTURING);
     
-    y = glScreenHeight - busyFontHgt * (linecount + .5f);
+    y = winHeight - busyFontHgt * (linecount + .5f);
     for(i = 0; i < linecount; ++i, y += busyFontHgt)
     {
         float color = lineAlpha[i];
@@ -458,7 +497,7 @@ static void Con_BusyDrawConsoleOutput(void)
                 continue;
 
             gl.Color4f(1.f, 1.f, 1.f, color);
-            FR_TextOut(line->text, (glScreenWidth - FR_TextWidth(line->text))/2, y);
+            FR_TextOut(line->text, (winWidth - FR_TextWidth(line->text))/2, y);
         }
     }
     
@@ -471,19 +510,28 @@ static void Con_BusyDrawConsoleOutput(void)
 static void Con_BusyDrawer(void)
 {
 //    char buf[100];
-    
-    Con_DrawScreenshotBackground();
-    
+    float       pos;
+    int         winWidth, winHeight;
+
+    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    {
+        Con_Message("Con_BusyDrawer: Failed retrieving window dimensions.");
+        return;
+    }
+
+    Con_DrawScreenshotBackground(0, 0, winWidth, winHeight);
+
     // Indefinite activity?
     if(busyMode & BUSYF_ACTIVITY)
     {
-        Con_BusyDrawIndicator(1);
+        pos = 1;
     }
     else if(busyMode & BUSYF_PROGRESS_BAR)
     {
         // The progress is animated elsewhere.
-        Con_BusyDrawIndicator(Con_GetProgress());
+        pos = Con_GetProgress();
     }
+    Con_BusyDrawIndicator(winWidth/2, winHeight/2, winHeight/12, pos);
     
     // Output from the console?
     if(busyMode & BUSYF_CONSOLE_OUTPUT)
@@ -600,27 +648,27 @@ void Con_DrawStartupBackground(float alpha)
 int Con_DrawTitle(float alpha)
 {
     int width = 0;
-    int height = UI_TITLE_HGT;
+    int height = UI_FontHeight();
 
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PushMatrix();
     gl.LoadIdentity();
 
     FR_SetFont(glFontVariable[GLFS_BOLD]);
-    height = FR_TextHeight("W") + UI_BORDER;
+    height = FR_TextHeight("W") + UI_ScreenW(UI_BORDER);
     UI_DrawTitleEx(titleText, height, alpha);
     if(secondaryTitleText[0])
     {
         width = FR_TextWidth(titleText) + FR_TextWidth("  ");
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(secondaryTitleText, UI_BORDER + width, height / 2,
+        UI_TextOutEx(secondaryTitleText, UI_ScreenW(UI_BORDER) + width, height / 2,
                      false, true, UI_COL(UIC_TEXT), .75f * alpha);
     }
     if(statusText[0])
     {
         width = FR_TextWidth(statusText);
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(statusText, glScreenWidth - UI_BORDER - width, height / 2,
+        UI_TextOutEx(statusText, glScreenWidth - UI_ScreenW(UI_BORDER) - width, height / 2,
                      false, true, UI_COL(UIC_TEXT), .75f * alpha);
     }
 
@@ -657,7 +705,7 @@ void Con_DrawStartupScreen(int show)
     // Draw the title.
     topy = Con_DrawTitle(1.0);
 
-    topy += UI_BORDER;
+    topy += UI_ScreenW(UI_BORDER);
     vislines = (glScreenHeight - topy + fontHgt / 2) / fontHgt;
     y = topy;
 

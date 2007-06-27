@@ -296,12 +296,12 @@ int FR_PrepareFont(const char *name)
     {
         boolean retVal = false;
 #ifdef WIN32
-        ddwindow_t *window = DD_GetWindow(0);
+        HWND    hWnd = DD_GetWindowHandle(windowIDX);
         HDC     hDC = NULL;
         int     i;
 
-        if(window)
-            hDC = GetDC(window->hWnd);
+        if(hWnd)
+            hDC = GetDC(hWnd);
 
         // No luck...
         for(i = 0; fontmapper[i].name; ++i)
@@ -312,7 +312,7 @@ int FR_PrepareFont(const char *name)
                     Con_Printf("FR_PrepareFont: GDI font for \"%s\".\n",
                                fontmapper[i].name);
                 }
-                if(window && hDC && fontmapper[i].winfontname)
+                if(hWnd && hDC && fontmapper[i].winfontname)
                 {
                     HFONT   uifont =
                         CreateFont(-MulDiv(fontmapper[i].pointsize,
@@ -337,8 +337,8 @@ int FR_PrepareFont(const char *name)
                 break;
             }
 
-        if(window && hDC)
-            ReleaseDC(window->hWnd, hDC);
+        if(hWnd && hDC)
+            ReleaseDC(hWnd, hDC);
 #endif
         // The font was not found.
         return retVal;

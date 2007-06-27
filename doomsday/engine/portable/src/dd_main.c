@@ -417,7 +417,12 @@ int DD_Main(void)
     //SW_Shutdown();              // The message window can be closed.
     if(!isDedicated)
     {
-        DD_WindowShow(DD_GetWindow(0), true);   // Show the main window (was created hidden).
+        // Show the main window (was created hidden).
+        if(!DD_SetWindowVisibility(windowIDX, true))
+        {
+            Sys_CriticalMessage("DD_Main: Failed setting window visibility.");
+            return -1;
+        }
         
         if(!GL_EarlyInit())
         {
@@ -868,8 +873,6 @@ void DD_CheckQuery(int query, int parm)
 
 /* *INDENT-OFF* */
 ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
-    {&glScreenWidth, 0},
-    {&glScreenHeight, 0},
     {&netgame, 0},
     {&isServer, 0},                         // An *open* server?
     {&isClient, 0},
@@ -880,8 +883,6 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&viewwindowy, &viewwindowy},
     {&viewwidth, &viewwidth},
     {&viewheight, &viewheight},
-    {&viewpw, 0},
-    {&viewph, 0},
     {&viewx, &viewx},
     {&viewy, &viewy},
     {&viewz, &viewz},
@@ -1007,10 +1008,32 @@ int DD_GetInteger(int ddvalue)
                 return Def_GetMusicNum(mapinfo->music);
             return -1;
 
+        case DD_WINDOW_WIDTH:
+            {
+            int         winWidth;
+            if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
+                                       NULL))
+            {
+                Con_Error("DD_GetInteger: Failed retreiving window width.");
+            }
+            return winWidth;
+            }
+
+        case DD_WINDOW_HEIGHT:
+            {
+            int         winHeight;
+            if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, NULL,
+                                       &winHeight))
+            {
+                Con_Error("DD_GetInteger: Failed retreiving window height.");
+            }
+            return winHeight;
+            }
+
 #ifdef WIN32
         case DD_WINDOW_HANDLE:
             ASSERT_NOT_64BIT();
-            return (int) DD_GetWindow(0)->hWnd;
+            return (int) DD_GetWindowHandle(windowIDX);
 #endif
         }
         return 0;
@@ -1117,7 +1140,7 @@ void* DD_GetVariable(int ddvalue)
 
 #ifdef WIN32
         case DD_WINDOW_HANDLE:
-            return DD_GetWindow(0)->hWnd;
+            return DD_GetWindowHandle(windowIDX);
 #endif
         }
         return 0;
@@ -1143,12 +1166,16 @@ void DD_SetVariable(int ddvalue, void *parm)
 {
     if(ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
     {
-        if(ddvalue == DD_SKYFLAT_NAME)
+        switch(ddvalue)
         {
+        case DD_SKYFLAT_NAME:
             memset(skyflatname, 0, 9);
             strncpy(skyflatname, parm, 9);
+            return;
+
+        default:
+            break;
         }
-        return;
     }
 }
 

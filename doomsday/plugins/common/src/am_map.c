@@ -597,8 +597,8 @@ void AM_Init(void)
 
     memset(vectorGraphs, 0, sizeof(vectorGraphs));
 
-    scrwidth = Get(DD_SCREEN_WIDTH);
-    scrheight = Get(DD_SCREEN_HEIGHT);
+    scrwidth = Get(DD_WINDOW_WIDTH);
+    scrheight = Get(DD_WINDOW_HEIGHT);
 
     AM_ListInit();
     AM_LoadData();
@@ -2081,8 +2081,8 @@ void AM_Ticker(void)
 
     // We need to respond right away if the screen dimensions change, so
     // keep a copy locally. 
-    scrwidth = Get(DD_SCREEN_WIDTH);
-    scrheight = Get(DD_SCREEN_HEIGHT);
+    scrwidth = Get(DD_WINDOW_WIDTH);
+    scrheight = Get(DD_WINDOW_HEIGHT);
 
     // All maps get to tick if their player is in-game.
     for(i = 0; i < MAXPLAYERS; ++i)

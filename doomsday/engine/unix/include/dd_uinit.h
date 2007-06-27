@@ -31,12 +31,17 @@
 
 #include "dd_pinit.h"
 
-typedef struct {
-    int     flags;
-} ddwindow_t;
+extern uint windowIDX;   // Main window.
 
-ddwindow_t     *DD_GetWindow(uint idx);
-void            DD_WindowShow(ddwindow_t *window, boolean show);
+uint            DD_CreateWindow(application_t *app, uint parent,
+                                int x, int y, int w, int h, int bpp, int flags,
+                                const char *title, int cmdShow);
+void            DD_DestroyWindow(uint idx);
+boolean         DD_GetWindowDimensions(uint idx, int *x, int *y, int *w, int *h);
+boolean         DD_GetWindowBPP(uint idx);
+boolean         DD_IsWindowFullscreen(uint idx);
+boolean         DD_SetWindowVisibility(uint idx, boolean show);
+
 void            DD_Shutdown(void);
 
 #endif

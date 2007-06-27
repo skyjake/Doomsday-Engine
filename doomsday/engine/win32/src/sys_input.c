@@ -132,13 +132,13 @@ HRESULT I_SetRangeProperty(void *dev, REFGUID property, DWORD how, DWORD obj,
 
 void I_InitMouse(void)
 {
-    ddwindow_t  *window;
+    HWND        hWnd;
 
     if(ArgCheck("-nomouse") || novideo)
         return;
 
-    window = DD_GetWindow(0);
-    if(!window)
+    hWnd = DD_GetWindowHandle(windowIDX);
+    if(!hWnd)
     {
         Con_Error("I_InitMouse: Main window not available, cannot init mouse.");
         return;
@@ -160,7 +160,7 @@ void I_InitMouse(void)
     }
 
     // Set behaviour.
-    hr = IDirectInputDevice_SetCooperativeLevel(didMouse, window->hWnd,
+    hr = IDirectInputDevice_SetCooperativeLevel(didMouse, hWnd,
                                                 DISCL_FOREGROUND |
                                                 DISCL_EXCLUSIVE);
     if(FAILED(hr))
@@ -197,9 +197,8 @@ BOOL CALLBACK I_JoyEnum(LPCDIDEVICEINSTANCE lpddi, void *ref)
 
 void I_InitJoystick(void)
 {
-    ddwindow_t *window;
     DIDEVICEINSTANCE ddi;
-    int     i, joyProp[] = {
+    int         i, joyProp[] = {
         DIJOFS_X, DIJOFS_Y, DIJOFS_Z,
         DIJOFS_RX, DIJOFS_RY, DIJOFS_RZ,
         DIJOFS_SLIDER(0), DIJOFS_SLIDER(1)
@@ -207,12 +206,13 @@ void I_InitJoystick(void)
     const char *axisName[] = {
         "X", "Y", "Z", "RX", "RY", "RZ", "Slider 1", "Slider 2"
     };
+    HWND        hWnd;
 
     if(ArgCheck("-nojoy"))
         return;
 
-    window = DD_GetWindow(0);
-    if(!window)
+    hWnd = DD_GetWindowHandle(windowIDX);
+    if(!hWnd)
     {
         Con_Error("I_InitJoystick: Main window not available, cannot init joystick.");
         return;
@@ -273,7 +273,7 @@ void I_InitJoystick(void)
     // Set behaviour.
     if(FAILED
        (hr =
-        IDirectInputDevice_SetCooperativeLevel(didJoy, window->hWnd,
+        IDirectInputDevice_SetCooperativeLevel(didJoy, hWnd,
                                                DISCL_NONEXCLUSIVE |
                                                DISCL_FOREGROUND)))
     {
@@ -351,13 +351,13 @@ void I_KillDevice2(LPDIRECTINPUTDEVICE2 *dev)
  */
 int I_Init(void)
 {
-    ddwindow_t *window;
+    HWND        hWnd;
 
     if(initIOk)
         return true; // Already initialized.
 
-    window = DD_GetWindow(0);
-    if(!window)
+    hWnd = DD_GetWindowHandle(windowIDX);
+    if(!hWnd)
     {
         Con_Error("I_Init: Main window not available, cannot init DirectInput.");
         return false;
@@ -414,7 +414,7 @@ int I_Init(void)
     }
 
     // Set behaviour.
-    hr = IDirectInputDevice_SetCooperativeLevel(didKeyb, window->hWnd,
+    hr = IDirectInputDevice_SetCooperativeLevel(didKeyb, hWnd,
                                                 DISCL_FOREGROUND |
                                                 DISCL_NONEXCLUSIVE);
     if(FAILED(hr))
