@@ -103,7 +103,7 @@ uint glThreadId = 0; // ID of the thread who's allowed to use the GL.
 #define DEF_6(RT, F, T1, T2, T3, T4, T5, T6) RT Routed_##F(T1 a, T2 b, T3 c, T4 d, T5 e, T6 f) { ASSERT_THREAD(); return __gl2.F(a, b, c, d, e, f); }
 
 #ifdef _DEBUG
-
+DEF_VOID_VOID(DestroyContext)
 DEF_VOID_VOID(Show)
 DEF_VOID_VOID(PushMatrix)
 DEF_VOID_VOID(PopMatrix)
@@ -163,6 +163,8 @@ DEF_2(int, SetInteger, int, int)
 DEF_2(int, SetFloatv, int, float*)
 DEF_3(int, ReadPixels, int*, int, void*)
 DEF_3(int, Project, int, gl_fc3vertex_t*, gl_fc3vertex_t*)
+DEF_3(int, ChangeVideoMode, int, int, int)
+DEF_4(int, CreateContext, int, int, int, int)
 DEF_5(int, TexImage, int, int, int, int, void*)
 DEF_6(int, Grab, int, int, int, int, int, void*)
 
@@ -176,6 +178,9 @@ void DD_RouteAPI(void)
     memcpy(&__gl2, &__gl, sizeof(__gl));
     
 #define ROUTE(n) __gl.n = Routed_##n;
+    ROUTE(CreateContext);
+    ROUTE(DestroyContext);
+    ROUTE(ChangeVideoMode);
     ROUTE(Clear);
     ROUTE(Show);
     ROUTE(Viewport);
@@ -242,7 +247,7 @@ void DD_RouteAPI(void)
 #endif
 }
 
-/*
+/**
  * DD_InitDGLDriver
  *  Returns true if no required functions are missing.
  *  All exported DGL functions should have the DG_ prefix (Driver/Graphics).
@@ -250,8 +255,10 @@ void DD_RouteAPI(void)
 int DD_InitDGLDriver(void)
 {    
     Req(Init);
-    Req(CreateContext);
     Req(Shutdown);
+    Req(ChangeVideoMode);
+    Req(CreateContext);
+    Req(DestroyContext);
 
     // Viewport.
     Req(Clear);

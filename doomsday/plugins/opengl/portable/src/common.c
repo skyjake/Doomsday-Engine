@@ -365,19 +365,10 @@ int DG_GetInteger(int name)
 //===========================================================================
 int DG_SetInteger(int name, int value)
 {
-#ifdef WIN32
-    extern HWND windowHandle;
-#endif
     float   color[4];
 
     switch (name)
     {
-#ifdef WIN32
-    case DGL_WINDOW_HANDLE:
-        windowHandle = (HWND) value;
-        break;
-#endif
-
     case DGL_ACTIVE_TEXTURE:
         activeTexture(GL_TEXTURE0 + value);
         break;

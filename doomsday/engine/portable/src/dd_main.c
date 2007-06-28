@@ -417,13 +417,6 @@ int DD_Main(void)
     //SW_Shutdown();              // The message window can be closed.
     if(!isDedicated)
     {
-        // Show the main window (was created hidden).
-        if(!DD_SetWindowVisibility(windowIDX, true))
-        {
-            Sys_CriticalMessage("DD_Main: Failed setting window visibility.");
-            return -1;
-        }
-        
         if(!GL_EarlyInit())
         {
             Sys_CriticalMessage("GL_EarlyInit() failed.");

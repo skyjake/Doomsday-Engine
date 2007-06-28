@@ -55,7 +55,6 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-HWND    windowHandle;
 HGLRC   glContext;
 
 // The State.
@@ -79,6 +78,21 @@ static int screenBits, windowed;
 // CODE --------------------------------------------------------------------
 
 /**
+ * Determine the desktop BPP.
+ *
+ * @return              BPP in use for the desktop.
+ */
+int DG_GetDesktopBPP(void)
+{
+    HWND        hDesktop = GetDesktopWindow();
+    HDC         desktop_hdc = GetDC(hDesktop);
+    int         deskbpp = GetDeviceCaps(desktop_hdc, PLANES) *
+                            GetDeviceCaps(desktop_hdc, BITSPIXEL);
+    ReleaseDC(hDesktop, desktop_hdc);
+    return deskbpp;
+}
+
+/**
  * Change the display mode using the Win32 API, the closest available
  * refresh rate is selected.
  *
@@ -88,10 +102,12 @@ static int screenBits, windowed;
  *
  * @return              Non-zero= success.
  */
-static int changeVideoMode(int width, int height, int bpp)
+int DG_ChangeVideoMode(int width, int height, int bpp)
 {
     int         res, i;
     DEVMODE     current, testMode, newMode;
+
+    screenBits = DG_GetDesktopBPP();
 
     // First get the current settings.
     memset(&current, 0, sizeof(current));
@@ -105,6 +121,10 @@ static int changeVideoMode(int width, int height, int bpp)
     {   // A safe fallback.
         bpp = 16;
     }
+
+    if(width == current.dmPelsWidth && height == current.dmPelsHeight &&
+       bpp == current.dmBitsPerPel)
+       return 1; // No need to change, so success!
 
     // Override refresh rate?
     if(ArgCheckWith("-refresh", 1))
@@ -161,82 +181,6 @@ static int changeVideoMode(int width, int height, int bpp)
 }
 
 /**
- * Only adjusts the window style and size.
- *
- * @param width         Width of the window.
- * @param height        Height of the window.
- */
-static void windowedMode(int width, int height)
-{
-    // We need to have a large enough client area.
-    RECT        rect;
-    int         xoff = (GetSystemMetrics(SM_CXSCREEN) - width) / 2;
-    int         yoff = (GetSystemMetrics(SM_CYSCREEN) - height) / 2;
-    LONG        style;
-
-    if(ArgCheck("-nocenter"))
-        xoff = yoff = 0;
-    if(ArgCheckWith("-xpos", 1))
-        xoff = atoi(ArgNext());
-    if(ArgCheckWith("-ypos", 1))
-        yoff = atoi(ArgNext());
-
-    rect.left = xoff;
-    rect.top = yoff;
-    rect.right = xoff + width;
-    rect.bottom = yoff + height;
-
-    // Set window style.
-    style = GetWindowLong(windowHandle, GWL_STYLE) |
-        WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CAPTION |
-        WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-    SetWindowLong(windowHandle, GWL_STYLE, style);
-    AdjustWindowRect(&rect, style, FALSE);
-    SetWindowPos(windowHandle, 0, xoff, yoff, /*rect.left, rect.top, */
-                 rect.right - rect.left, rect.bottom - rect.top,
-                 SWP_NOZORDER);
-
-    screenWidth = width;
-    screenHeight = height;
-}
-
-/**
- * Attempt to create a context for GL rendering. 
- *
- * @return              <code>DGL_TRUE</code>= success.
- */
-static int initOpenGL(void)
-{
-    HDC         hdc = GetDC(windowHandle);
-    int         state = DGL_FALSE;
-
-    // Create the OpenGL rendering context.
-    if(!(glContext = wglCreateContext(hdc)))
-    {
-        int     res = GetLastError();
-        Con_Message("drOpenGL.initOpenGL: Creation of rendering context "
-                    "failed. Error %d.\n", res);
-    }
-    else if(!wglMakeCurrent(hdc, glContext)) // Make the context current.
-    {
-        Con_Message("drOpenGL.initOpenGL: Couldn't make the rendering "
-                    "context current.\n");
-    }
-    else // Success!
-    {
-        state = DGL_TRUE;
-    }
-
-    ReleaseDC(windowHandle, hdc);
-
-    // If successful we can get on with initializing the OGL state.
-    if(state)
-        initState();
-
-    return state;
-}
-
-/**
  * Set the currently active GL texture by name.
  *
  * @param texture       GL texture name to make active.
@@ -246,21 +190,6 @@ void activeTexture(const GLenum texture)
     if(!glActiveTextureARB)
         return;
     glActiveTextureARB(texture);
-}
-
-/**
- * Determine the desktop BPP.
- *
- * @return              BPP in use for the desktop.
- */
-int DG_GetDesktopBPP(void)
-{
-    HWND        hDesktop = GetDesktopWindow();
-    HDC         desktop_hdc = GetDC(hDesktop);
-    int         deskbpp = GetDeviceCaps(desktop_hdc, PLANES) *
-                            GetDeviceCaps(desktop_hdc, BITSPIXEL);
-    ReleaseDC(hDesktop, desktop_hdc);
-    return deskbpp;
 }
 
 /**
@@ -284,138 +213,50 @@ int DG_Init(void)
  */
 int DG_CreateContext(int width, int height, int bpp, int mode)
 {
-    HDC         hDC;
-    PIXELFORMATDESCRIPTOR pfd;
+    HWND        hWnd;
+    HDC         hdc;
     boolean     fullscreen = (mode == DGL_MODE_FULLSCREEN);
     char       *token, *extbuf;
-    int         res, pixForm;
-    int         deskbpp;
     boolean     ok = DGL_OK;
 
-    Con_Message("DG_Init: OpenGL.\n");
+    Con_Message("drOpenGL.CreateContext: OpenGL.\n");
 
-    deskbpp = DG_GetDesktopBPP();
-
-    // Setup the pixel format descriptor.
-    ZeroMemory(&pfd, sizeof(pfd));
-    pfd.nSize = sizeof(pfd);
-    pfd.nVersion = 1;
-    pfd.iPixelType = PFD_TYPE_RGBA;
-    pfd.iLayerType = PFD_MAIN_PLANE;
-#ifndef DRMESA
-    pfd.dwFlags =
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    pfd.cColorBits = 32;
-    pfd.cDepthBits = 32;
-#else /* Double Buffer, no alpha */
-    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-        PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
-    pfd.cColorBits = 24;
-    pfd.cRedBits = 8;
-    pfd.cGreenBits = 8;
-    pfd.cGreenShift = 8;
-    pfd.cBlueBits = 8;
-    pfd.cBlueShift = 16;
-    pfd.cDepthBits = 16;
-    pfd.cStencilBits = 8;
-#endif
-
-    if(ok)
+    hWnd = (HWND) DD_GetVariable(DD_WINDOW_HANDLE);
+    hdc = GetDC(hWnd);
+    if(!hdc)
     {
-        // Acquire a device context handle.
-        hDC = GetDC(windowHandle);
-        if(!hDC)
-        {
-            Sys_CriticalMessage("drOpenGL.Init: Failed acquiring device context handle.");
-            hDC = NULL;
-            ok = DGL_FALSE;
-        }
-        else // Initialize.
-        {
-            // Nothing to do.
-        }
-    }
-
-    if(ok)
-    {   // Request a matching (or similar) pixel format.
-        pixForm = ChoosePixelFormat(hDC, &pfd);
-        if(!pixForm)
-        {
-            Sys_CriticalMessage("drOpenGL.Init: Choosing of pixel format failed.");
-            pixForm = -1;
-            ok = DGL_FALSE;
-        }
-    }
-
-    if(ok)
-    {   // Make sure that the driver is hardware-accelerated.
-        DescribePixelFormat(hDC, pixForm, sizeof(pfd), &pfd);
-        if((pfd.dwFlags & PFD_GENERIC_FORMAT) && !ArgCheck("-allowsoftware"))
-        {
-            Sys_CriticalMessage("drOpenGL.Init: OpenGL driver not accelerated!\n"
-                                "Use the -allowsoftware option to bypass this.");
-            ok = DGL_FALSE;
-        }
-    }
-
-    if(ok)
-    {   // Set the pixel format for the device context. Can only be done once
-        // (unless we release the context and acquire another).
-        if(!SetPixelFormat(hDC, pixForm, &pfd))
-        {
-           res = GetLastError();
-           Con_Printf("Warning: Setting of pixel format failed. Error %d.\n",
-                      res);
-        }
-    }
-
-    // We've now finished with the device context.
-    if(hDC)
-        ReleaseDC(windowHandle, hDC);
-
-    // Are we in range here?
-    if(!fullscreen)
-    {
-        if(width > GetSystemMetrics(SM_CXSCREEN))
-            width = GetSystemMetrics(SM_CXSCREEN);
-
-        if(height > GetSystemMetrics(SM_CYSCREEN))
-            height = GetSystemMetrics(SM_CYSCREEN);
+        Sys_CriticalMessage("drOpenGL.CreateContext: Failed acquiring device.");
+        ok = DGL_FALSE;
     }
 
     screenWidth = width;
     screenHeight = height;
-    screenBits = deskbpp;
+    screenBits = bpp;
     windowed = !fullscreen;
 
     allowCompression = true;
     verbose = ArgExists("-verbose");
 
-    if(fullscreen)
+    // Create the OpenGL rendering context.
+    if(!(glContext = wglCreateContext(hdc)))
     {
-        if(!changeVideoMode(screenWidth, screenHeight, bpp))
-        {
-            Sys_CriticalMessage("drOpenGL.Init: Resolution change failed (%d x %d).\n",
-                                screenWidth, screenHeight);
-            ok = DGL_FALSE;
-        }
-        else
-        {
-            // Set the correct window style and size.
-            SetWindowLong(windowHandle, GWL_STYLE,
-                          WS_POPUP | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-            SetWindowPos(windowHandle, 0, 0, 0, screenWidth, screenHeight, SWP_NOZORDER);
-        }
+        Sys_CriticalMessage("drOpenGL.CreateContext: Creation of rendering context "
+                            "failed.");
+        ok = DGL_FALSE;
     }
-    else
+    else if(!wglMakeCurrent(hdc, glContext)) // Make the context current.
     {
-        windowedMode(screenWidth, screenHeight);
+        Sys_CriticalMessage("drOpenGL.CreateContext: Couldn't make the rendering "
+                            "context current.");
+        ok = DGL_FALSE;
     }
 
-    if(ok && !initOpenGL())
-    {
-        Sys_CriticalMessage("drOpenGL.Init: OpenGL init failed.");
-        ok = DGL_FALSE;
+    if(hdc)
+        ReleaseDC(hWnd, hdc);
+    
+    if(ok)
+    {   // We can get on with initializing the OGL state.
+        initState();
     }
 
     if(ok)
@@ -504,14 +345,20 @@ int DG_CreateContext(int width, int height, int bpp, int mode)
     return ok;
 }
 
+void DG_DestroyContext(void)
+{
+    wglMakeCurrent(NULL, NULL);
+    wglDeleteContext(glContext);
+}
+
 /**
  * Releases the OGL context and restores any changed environment settings.
  */
 void DG_Shutdown(void)
 {
     // Delete the rendering context.
-    wglMakeCurrent(NULL, NULL);
-    wglDeleteContext(glContext);
+    if(glContext)
+        DG_DestroyContext();
 
     // Go back to normal display settings.
     ChangeDisplaySettings(0, 0);
@@ -522,12 +369,13 @@ void DG_Shutdown(void)
  */
 void DG_Show(void)
 {
-    HDC     hdc = GetDC(windowHandle);
+    HWND    hWnd = (HWND) DD_GetVariable(DD_WINDOW_HANDLE);
+    HDC     hdc = GetDC(hWnd);
 
     // Swap buffers.
     glFlush();
     SwapBuffers(hdc);
-    ReleaseDC(windowHandle, hdc);
+    ReleaseDC(hWnd, hdc);
 
     if(wireframeMode)
     {

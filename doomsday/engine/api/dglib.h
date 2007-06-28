@@ -116,7 +116,6 @@ enum {
 
     // Values
     DGL_VERSION = 0x2000,
-    DGL_WINDOW_HANDLE,
     DGL_COLOR_BITS,
     DGL_MAX_TEXTURE_SIZE,
     DGL_SCISSOR_BOX,

@@ -562,8 +562,6 @@ void Con_StartupInit(void)
     GL_InitVarFont();
     fontHgt = FR_SingleLineHeight("Doomsday!");
 
-    startupScreen = true;
-
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
@@ -588,7 +586,6 @@ void Con_StartupDone(void)
     if(isDedicated)
         return;
     titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
-    startupScreen = false;
     gl.DeleteTextures(1, (DGLuint*) &startupLogo);
     startupLogo = 0;
     gl.MatrixMode(DGL_PROJECTION);
@@ -693,7 +690,7 @@ void Con_DrawStartupScreen(int show)
     cbline_t   *line;
 
     // Print the messages in the console.
-    if(!startupScreen || ui_active)
+    if(ui_active)
         return;
 
     //gl.MatrixMode(DGL_PROJECTION);

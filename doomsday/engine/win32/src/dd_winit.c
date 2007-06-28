@@ -50,6 +50,7 @@
 #include "de_refresh.h"
 #include "de_network.h"
 #include "de_misc.h"
+#include "de_ui.h"
 
 #include "dd_winit.h"
 
@@ -57,11 +58,11 @@
 
 #define MAINWCLASS _T("DoomsdayMainWClass")
 
-// TYPES -------------------------------------------------------------------
+#define WINDOWEDSTYLE (WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | \
+                       WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
+#define FULLSCREENSTYLE (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
 
-// Doomsday window flags.
-#define DDWF_VISIBLE            0x01
-#define DDWF_FULLSCREEN         0x02
+// TYPES -------------------------------------------------------------------
 
 typedef struct {
     HWND            hWnd;       // Window handle.
@@ -155,11 +156,10 @@ uint DD_CreateWindow(application_t *app, uint parentIDX,
     if((win = (ddwindow_t*) malloc(sizeof(ddwindow_t))) == NULL)
         return 0;
 
-    // Create the main window.
+    // Create the window.
     win->hWnd =
         CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, _T(title),
-                       WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX |
-                       WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+                       WINDOWEDSTYLE,
                        CW_USEDEFAULT, CW_USEDEFAULT,
                        CW_USEDEFAULT, CW_USEDEFAULT,
                        phWnd, NULL,
@@ -171,6 +171,85 @@ uint DD_CreateWindow(application_t *app, uint parentIDX,
     }
     else // Initialize.
     {
+        PIXELFORMATDESCRIPTOR pfd;
+        int         pixForm;
+        HDC         hDC;
+
+        // Setup the pixel format descriptor.
+        ZeroMemory(&pfd, sizeof(pfd));
+        pfd.nSize = sizeof(pfd);
+        pfd.nVersion = 1;
+        pfd.iPixelType = PFD_TYPE_RGBA;
+        pfd.iLayerType = PFD_MAIN_PLANE;
+#ifndef DRMESA
+        pfd.dwFlags =
+            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+        pfd.cColorBits = 32;
+        pfd.cDepthBits = 32;
+#else /* Double Buffer, no alpha */
+        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+            PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
+        pfd.cColorBits = 24;
+        pfd.cRedBits = 8;
+        pfd.cGreenBits = 8;
+        pfd.cGreenShift = 8;
+        pfd.cBlueBits = 8;
+        pfd.cBlueShift = 16;
+        pfd.cDepthBits = 16;
+        pfd.cStencilBits = 8;
+#endif
+
+        if(ok)
+        {
+            // Acquire a device context handle.
+            hDC = GetDC(win->hWnd);
+            if(!hDC)
+            {
+                Sys_CriticalMessage("DD_CreateWindow: Failed acquiring device context handle.");
+                hDC = NULL;
+                ok = FALSE;
+            }
+            else // Initialize.
+            {
+                // Nothing to do.
+            }
+        }
+
+        if(ok)
+        {   // Request a matching (or similar) pixel format.
+            pixForm = ChoosePixelFormat(hDC, &pfd);
+            if(!pixForm)
+            {
+                Sys_CriticalMessage("drOpenGL.Init: Choosing of pixel format failed.");
+                pixForm = -1;
+                ok = FALSE;
+            }
+        }
+
+        if(ok)
+        {   // Make sure that the driver is hardware-accelerated.
+            DescribePixelFormat(hDC, pixForm, sizeof(pfd), &pfd);
+            if((pfd.dwFlags & PFD_GENERIC_FORMAT) && !ArgCheck("-allowsoftware"))
+            {
+                Sys_CriticalMessage("drOpenGL.Init: OpenGL driver not accelerated!\n"
+                                    "Use the -allowsoftware option to bypass this.");
+                ok = DGL_FALSE;
+            }
+        }
+
+        if(ok)
+        {   // Set the pixel format for the device context. Can only be done once
+            // (unless we release the context and acquire another).
+            if(!SetPixelFormat(hDC, pixForm, &pfd))
+            {
+               Sys_CriticalMessage("Warning: Setting of pixel format failed.");
+            }
+        }
+
+        // We've now finished with the device context.
+        if(hDC)
+            ReleaseDC(win->hWnd, hDC);
+
         win->flags = flags;
         win->x = x;
         win->y = y;
@@ -227,32 +306,216 @@ boolean DD_DestroyWindow(uint idx)
     return true;
 }
 
-boolean DD_SetWindowDimensions(uint idx, int x, int y, int width, int height)
+boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
+                     int newBPP, uint wFlags, uint uFlags)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    int             x, y, width, height, bpp, flags;
+    HWND            hWnd;
+    boolean         newGLContext = false;
+    boolean         updateStyle = false;
+    boolean         changeVideoMode = false;
+    boolean         noMove = (uFlags & DDSW_NOMOVE);
 
+    // Window paramaters are not changeable in dedicated mode.
+    if(isDedicated)
+        return false;
+
+    if(uFlags & DDSW_NOCHANGES)
+        return true; // Nothing to do.
+
+    // Grab the current values.
+    {
+    ddwindow_t *window = getWindow(idx - 1);
     if(!window)
         return false;
 
-    // Moving does not work in dedicated mode.
-    if(isDedicated)
-        return false;
-/*
-    if(window->flags & DDWF_FULLSCREEN)
-        Con_Error("DD_ChangeWindowDimensions: Window is fullsreen; "
-                  "position not changeable.");
-*/
-    if(x != window->x || y != window->y ||
-       width != window->width || height != window->height)
-    {
-        window->x = x;
-        window->y = y;
-        window->width = width;
-        window->height = height;
-
-        SetWindowPos(window->hWnd, HWND_TOP, x, y, width, height,
-                     SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE);
+    hWnd = window->hWnd;
+    x = window->x;
+    y = window->y;
+    width = window->width;
+    height = window->height;
+    bpp = window->bpp;
+    flags = window->flags;
     }
+
+    // Change auto window centering?
+    if(!(uFlags & DDSW_NOCENTER) &&
+       (flags & DDWF_CENTER) != (wFlags & DDWF_CENTER))
+    {
+        flags ^= DDWF_CENTER;
+    }
+
+    // Change to fullscreen?
+    if(!(uFlags & DDSW_NOFULLSCREEN) &&
+       (flags & DDWF_FULLSCREEN) != (wFlags & DDWF_FULLSCREEN))
+    {
+        flags ^= DDWF_FULLSCREEN;
+
+        newGLContext = true;
+        updateStyle = true;
+        changeVideoMode = true;
+    }
+
+    // Change window size?
+    if(!(uFlags & DDSW_NOSIZE) && (width != newWidth || height != newHeight))
+    {
+        width = newWidth;
+        height = newHeight;
+
+        if(flags & DDWF_FULLSCREEN)
+            changeVideoMode = true;
+        newGLContext = true;
+    }
+
+    // Change BPP (bits per pixel)?
+    if(!(uFlags & DDSW_NOBPP) && bpp != newBPP)
+    {
+        if(!(newBPP == 32 || newBPP == 16))
+            Con_Error("DD_SetWindow: Unsupported BPP %i.", newBPP);
+
+        bpp = newBPP;
+
+        newGLContext = true;
+        changeVideoMode = true;
+    }
+
+    if(changeVideoMode)
+    {
+        if(flags & DDWF_FULLSCREEN)
+        {
+            if(!gl.ChangeVideoMode(width, height, bpp))
+            {
+                Sys_CriticalMessage("DD_SetWindow: Resolution change failed.");
+                return false;
+            }
+        }
+        else
+        {
+            // Go back to normal display settings.
+            ChangeDisplaySettings(0, 0);
+        }
+    }
+
+    if(!(flags & DDWF_FULLSCREEN))
+    {
+        // Are we in range here?
+        if(width > GetSystemMetrics(SM_CXSCREEN))
+            width = GetSystemMetrics(SM_CXSCREEN);
+
+        if(height > GetSystemMetrics(SM_CYSCREEN))
+            height = GetSystemMetrics(SM_CYSCREEN);
+    }
+
+    // Change window position?
+    if(flags & DDWF_FULLSCREEN)
+    {
+        if(x != 0 || y != 0)
+        {   // Force move to [0,0]
+            x = y = 0;
+            noMove = false;
+        }
+    }
+    else if(!(uFlags & DDSW_NOMOVE))
+    {
+        if(flags & DDWF_CENTER)
+        {   // Auto centering mode.
+            x = (GetSystemMetrics(SM_CXSCREEN) - width) / 2;
+            y = (GetSystemMetrics(SM_CYSCREEN) - height) / 2;
+        }
+        else if(x != newX || y != newY)
+        {
+            x = newX;
+            y = newY;
+        }
+    }
+
+    // Change visibility?
+    if(!(uFlags & DDSW_NOVISIBLE) &&
+       (flags & DDWF_VISIBLE) != (wFlags & DDWF_VISIBLE))
+    {
+        flags ^= DDWF_VISIBLE;
+    }
+
+    // Hide the window while we make changes.
+    if(flags & DDWF_VISIBLE)
+        ShowWindow(hWnd, SW_HIDE);
+
+    if(updateStyle)
+    {   // We need to request changes to the window style.
+        LONG    style;
+
+        if(flags & DDWF_FULLSCREEN)
+            style = FULLSCREENSTYLE;
+        else
+            style = WINDOWEDSTYLE;
+
+        SetWindowLong(hWnd, GWL_STYLE, style);
+    }
+
+    // Make it so.
+    SetWindowPos(hWnd, HWND_TOP,
+                 x, y, width, height,
+                 ((uFlags & DDSW_NOSIZE)? SWP_NOSIZE : 0) |
+                 (noMove? SWP_NOMOVE : 0) |
+                 (updateStyle? SWP_FRAMECHANGED : 0) |
+                 SWP_NOZORDER | SWP_NOCOPYBITS | SWP_NOACTIVATE);
+
+    // Update the current values.
+    {
+    ddwindow_t *window = getWindow(idx - 1);
+    if(!window)
+    {   // Now this IS a serious error, window gone missing?
+        return false;
+    }
+
+    window->x = x;
+    window->y = y;
+    window->width = width;
+    window->height = height;
+    window->bpp = bpp;
+    window->flags = flags;
+    }
+
+    // Do we need a new GL context due to changes to the window?
+    if(!novideo && newGLContext)
+    {   // Maybe requires a renderer restart.
+        boolean         glIsInited;
+        boolean         inControlPanel;
+
+        glIsInited = GL_IsInited();
+        inControlPanel = UI_IsActive();
+
+        // Can't change the resolution while the UI is active.
+        // (controls need to be repositioned).
+        if(inControlPanel)
+            UI_End();
+
+        if(glIsInited)
+        {
+            // Shut everything down, but remember our settings.
+            GL_TotalReset(true, 0, 0);
+            gx.UpdateState(DD_RENDER_RESTART_PRE);
+
+            gl.DestroyContext();
+        }
+
+        gl.CreateContext(width, height, bpp,
+                         (flags & DDWF_FULLSCREEN)? DGL_MODE_FULLSCREEN : DGL_MODE_WINDOW);
+
+        if(glIsInited)
+        {
+            // Re-initialize.
+            GL_TotalReset(false, true, true);
+            gx.UpdateState(DD_RENDER_RESTART_POST);
+        }
+
+        if(inControlPanel) // Reactivate the panel?
+            Con_Execute(CMDS_DDAY, "panel", true, false);
+    }
+
+    // Re-show the hidden window?
+    if(flags & DDWF_VISIBLE)
+        ShowWindow(hWnd, SW_SHOW);
 
     return true;
 }
@@ -280,24 +543,6 @@ boolean DD_GetWindowDimensions(uint idx, int *x, int *y, int *width, int *height
     return true;
 }
 
-boolean DD_SetWindowBPP(uint idx, int bpp)
-{
-    ddwindow_t *window = getWindow(idx - 1);
-
-    if(!(bpp == 32 || bpp == 16))
-        Con_Error("DD_SetWindowBPP: Unsupported BPP %i.", bpp);
-
-    if(!window)
-        return false;
-
-    if(window->bpp != bpp)
-    {
-        window->bpp = bpp;
-    }
-
-    return true;
-}
-
 boolean DD_GetWindowBPP(uint idx, int *bpp)
 {
     ddwindow_t *window = getWindow(idx - 1);
@@ -314,21 +559,6 @@ boolean DD_GetWindowBPP(uint idx, int *bpp)
     return true;
 }
 
-boolean DD_SetWindowFullscreen(uint idx, boolean fullscreen)
-{
-    ddwindow_t *window = getWindow(idx - 1);
-
-    if(!window)
-        return false;
-
-    if((window->flags & DDWF_FULLSCREEN) != fullscreen)
-    {
-        window->flags ^= DDWF_FULLSCREEN;
-    }
-
-    return true;
-}
-
 boolean DD_GetWindowFullscreen(uint idx, boolean *fullscreen)
 {
     ddwindow_t *window = getWindow(idx - 1);
@@ -337,32 +567,6 @@ boolean DD_GetWindowFullscreen(uint idx, boolean *fullscreen)
         return false;
 
     *fullscreen = ((window->flags & DDWF_FULLSCREEN)? true : false);
-
-    return true;
-}
-
-boolean DD_SetWindowVisibility(uint idx, boolean show)
-{
-    ddwindow_t *window = getWindow(idx - 1);
-
-    if(!window)
-        return false;
-
-    // Showing does not work in dedicated mode.
-    if(isDedicated && show)
-        return false;
-
-    if((window->flags & DDWF_VISIBLE) != show)
-    {
-        window->flags ^= DDWF_VISIBLE;
-
-        SetWindowPos(window->hWnd, HWND_TOP, 0, 0, 0, 0,
-                     ((window->flags & DDWF_VISIBLE) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW) |
-                     SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
-
-        if(window->flags & DDWF_VISIBLE)
-            SetActiveWindow(window->hWnd);
-    }
 
     return true;
 }
@@ -474,11 +678,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     {
         DD_ErrorBox(true, "Couldn't initialize application.");
     }
-    else if(0 == (windowIDX = 
-            DD_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, nCmdShow)))
-    {
-        DD_ErrorBox(true, "Error creating main window.");
-    }
     else
     {
         // Initialize COM.
@@ -511,6 +710,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         {
             DD_ErrorBox(true, "Error initializing memory zone.");
         }
+        else if(0 == (windowIDX = 
+                DD_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, nCmdShow)))
+        {
+            DD_ErrorBox(true, "Error creating main window.");
+        }
         else
         {   // All initialization complete.
             ddwindow_t *win = getWindow(windowIDX-1);
@@ -519,13 +723,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
             // Append the main window title with the game name.
             DD_MainWindowTitle(buf);
-
-            // Tell DGL of our main window.
-            if(gl.SetInteger)
-                gl.SetInteger(DGL_WINDOW_HANDLE, (int) win->hWnd);
-
-            // We can now show our main window.
-            DD_SetWindowVisibility(1, TRUE);
         }
     }
 
@@ -575,7 +772,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             switch(wParam)
             {
             case SIZE_MAXIMIZED:
-                GL_ChangeResolution(-1, -1, 0, true);
+                DD_SetWindow(windowIDX, 0, 0, 0, 0, 0, DDWF_FULLSCREEN,
+                             DDSW_NOBPP|DDSW_NOSIZE|DDSW_NOMOVE|DDSW_NOCENTER);
                 forwardMsg = false;
                 break;
 

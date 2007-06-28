@@ -899,7 +899,9 @@ void CP_SetVidMode(ui_object_t *ob)
 
     ob->flags |= UIF_DISABLED;
 
-    GL_ChangeResolution(x, y, bpp, panel_fullscreen);
+    DD_SetWindow(windowIDX, 0, 0, x, y, bpp,
+                 (panel_fullscreen? DDWF_FULLSCREEN : 0),
+                 DDSW_NOVISIBLE|DDSW_NOCENTER);
 }
 
 void CP_VidModeChanged(ui_object_t *ob)

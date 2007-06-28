@@ -95,7 +95,6 @@ void    GL_SetGamma(void);
 
 extern int maxnumnodes;
 extern boolean filloutlines;
-extern boolean startupScreen;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -586,7 +585,9 @@ void GL_ShutdownVarFont(void)
  */
 boolean GL_EarlyInit(void)
 {
-    int         winWidth, winHeight, winBPP, winFullscreen;
+    int         winWidth, winHeight, winBPP, winX, winY;
+    uint        winFlags = DDWF_VISIBLE | DDWF_CENTER;
+    boolean     noCenter = false;
 
     if(initGLOk)
         return true; // Already initialized.
@@ -600,10 +601,12 @@ boolean GL_EarlyInit(void)
     GL_GetGammaRamp(original_gamma_ramp);
 
     // By default, use the resolution defined in (default).cfg.
+    winX = 0;
+    winY = 0;
     winWidth = defResX;
     winHeight = defResY;
     winBPP = defBPP;
-    winFullscreen = defFullscreen;
+    winFlags |= (defFullscreen? DDWF_FULLSCREEN : 0);
 
     // Check for command line options modifying the defaults.
     if(ArgCheckWith("-width", 1))
@@ -620,15 +623,26 @@ boolean GL_EarlyInit(void)
     // Ensure a valid value.
     if(winBPP != 16 && winBPP != 32)
         winBPP = 32;
+    if(ArgCheck("-nocenter"))
+        noCenter = true;
+    if(ArgCheckWith("-xpos", 1))
+    {
+        winX = atoi(ArgNext());
+        noCenter = true;
+    }
+    if(ArgCheckWith("-ypos", 1))
+    {
+        winY = atoi(ArgNext());
+        noCenter = true;
+    }
+    if(noCenter)
+        winFlags &= ~DDWF_CENTER;
 
-    winFullscreen = !(ArgExists("-nofullscreen") | ArgExists("-window"));
+    if(ArgExists("-nofullscreen") || ArgExists("-window"))
+        winFlags &= ~DDWF_FULLSCREEN; 
 
-    if(!DD_SetWindowDimensions(windowIDX, -1, -1, winWidth, winHeight))
-        Con_Error("GL_EarlyInit: Failed setting window dimensions.");
-    if(!DD_SetWindowBPP(windowIDX, winBPP))
-        Con_Error("GL_EarlyInit: Failed setting window BPP.");
-
-    if(!gl.CreateContext(winWidth, winHeight, winBPP, winFullscreen))
+    if(!DD_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP,
+                     winFlags, 0))
         return false;
 
     GL_InitDeferred();
@@ -914,7 +928,6 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
 {
 //    static char oldFontName[256];
     static boolean hadFog;
-    static boolean wasStartup;
 
     if(isDedicated)
         return;
@@ -924,23 +937,10 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         int         fontIDX = -1;
 
         hadFog = usingFog;
-        wasStartup = startupScreen;
+        GL_ShutdownVarFont();
 
-        // Remember the name of the font.
-//        fontIDX = FR_GetCurrent();
-
-        if(wasStartup)
-        {
-            startupScreen = false;
-
-            gl.MatrixMode(DGL_PROJECTION);
-            gl.PopMatrix();
-
-            GL_ShutdownVarFont();
-
-            // Update the secondary title and the game status.
-            Con_InitUI();
-        }
+        // Update the secondary title and the game status.
+        Con_InitUI();
 
 //        if(fontIDX != -1)
 //            strcpy(oldFontName, FR_GetFont(fontIDX)->name);
@@ -953,30 +953,12 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
     {
         // Getting back up and running.
         GL_InitFont();
+        GL_InitVarFont();
 
-        // Go back to startup mode, if that's where we were.
-        if(wasStartup)
-        {
-            int         width, height;
+        // Restore the old font.
+        //Con_Executef(CMDS_DDAY, true, "font name %s", oldFontName, false);
+        GL_Init2DState();
 
-            GL_InitVarFont();
-
-            startupScreen = true;
-
-            if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
-                Con_Error("R_Update: Failed retrieving window dimensions.");
-
-            gl.MatrixMode(DGL_PROJECTION);
-            gl.PushMatrix();
-            gl.LoadIdentity();
-            gl.Ortho(0, 0, width, height, -1, 1);
-        }
-        else
-        {
-            // Restore the old font.
-            //Con_Executef(CMDS_DDAY, true, "font name %s", oldFontName, false);
-            GL_Init2DState();
-        }
         GL_InitRefresh(loadLightMaps, loadFlares);
 
         // Restore map's fog settings.
@@ -986,83 +968,6 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
         if(hadFog)
             GL_UseFog(true);
     }
-}
-
-/**
- * Changes the resolution to the specified one.
- * The change is carried out by SHUTTING DOWN the rendering DLL and then
- * restarting it. All textures will be lost in the process.
- * Restarting the renderer is the compatible way to do the change.
- */
-int GL_ChangeResolution(int w, int h, int bpp, int fullscreen)
-{
-    int         winX, winY, winWidth, winHeight, winBPP;
-    boolean     winFullscreen;
-    boolean inControlPanel = UI_IsActive();
-
-    if(novideo || !GL_IsInited())
-        return false;
-
-    if(!DD_GetWindowDimensions(windowIDX, &winX, &winY, &winWidth, &winHeight))
-        Con_Error("GL_ChangeResolution: Failed getting window dimensions.");
-    if(!DD_GetWindowBPP(windowIDX, &winBPP))
-        Con_Error("GL_ChangeResolution: Failed getting window BPP.");
-    if(!DD_GetWindowFullscreen(windowIDX, &winFullscreen))
-        Con_Error("GL_ChangeResolution: Failed getting window fullscreen.");
-
-    if(winWidth == w && winHeight == h && winFullscreen == fullscreen &&
-       winBPP == bpp)
-        return true;
-
-    // Can't change the resolution while the UI is active.
-    // (controls need to be repositioned).
-    if(inControlPanel)
-        UI_End();
-
-    // Shut everything down, but remember our settings.
-    GL_TotalReset(true, 0, 0);
-    gx.UpdateState(DD_RENDER_RESTART_PRE);
-
-    if(w > 0)
-        winWidth = w;
-    if(h > 0)
-        winHeight = h;
-    if(bpp > 0)
-        winBPP = bpp;
-    if(fullscreen != 3) // no change.
-    {
-        if(fullscreen == 2) // toggle
-            winFullscreen = (fullscreen? false : true);
-        else
-            winFullscreen = (fullscreen? true : false);
-    }
-
-    // Shutdown and re-initialize DGL.
-    gl.Shutdown();
-
-    gl.Init();
-    // \todo gl.CreateContext changes window dimensions.
-    gl.CreateContext(winWidth, winHeight, winBPP, winFullscreen);
-
-    if(!DD_SetWindowDimensions(windowIDX, winX, winY, winWidth, winHeight))
-        Con_Error("GL_ChangeResolution: Failed setting window dimensions.");
-    if(!DD_SetWindowBPP(windowIDX, winBPP))
-        Con_Error("GL_ChangeResolution: Failed setting window BPP.");
-    if(fullscreen != 3 && !DD_SetWindowFullscreen(windowIDX, winFullscreen))
-        Con_Error("GL_ChangeResolution: Failed setting window fullscreen.");
-
-    // Re-initialize.
-    GL_TotalReset(false, true, true);
-    gx.UpdateState(DD_RENDER_RESTART_POST);
-
-    Con_Message("Display mode: %i x %i", winWidth, winHeight);
-    if(winBPP)
-        Con_Message(" x %i", winBPP);
-    Con_Message(".\n");
-
-    if(inControlPanel) // Reactivate the panel?
-        Con_Execute(CMDS_DDAY, "panel", true, false);
-    return true;
 }
 
 /**
@@ -1076,7 +981,7 @@ unsigned char *GL_GrabScreen(void)
     unsigned char *buffer;
     
     if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-        Con_Error("GL_ChangeResolution: Failed getting window dimensions.");
+        Con_Error("GL_GrabScreen: Failed getting window dimensions.");
 
     buffer = malloc(winWidth * winHeight * 3);
 
@@ -1143,12 +1048,22 @@ void GL_BlendMode(blendmode_t mode)
  */
 D_CMD(SetRes)
 {
-    return GL_ChangeResolution(atoi(argv[1]), atoi(argv[2]), 0, 3); // no change fullscreen
+    return DD_SetWindow(windowIDX, 0, 0, atoi(argv[1]), atoi(argv[2]), 0, 0,
+                        DDSW_NOVISIBLE|DDSW_NOCENTER|DDSW_NOFULLSCREEN|
+                        DDSW_NOBPP);
 }
 
 D_CMD(ToggleFullscreen)
 { 
-    GL_ChangeResolution(0, 0, 0, 2); // toggle
+    boolean         fullscreen;
+
+    if(!DD_GetWindowFullscreen(windowIDX, &fullscreen))
+        Con_Message("CCmd 'ToggleFullscreen': Failed acquiring window "
+                    "fullscreen");
+    else
+        DD_SetWindow(windowIDX, 0, 0, 0, 0, 0,
+                     (!fullscreen? DDWF_FULLSCREEN : 0),
+                     DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOBPP|DDSW_NOVISIBLE);
     return true;
 }
 
@@ -1163,13 +1078,15 @@ D_CMD(SetBPP)
 {
     int     bpp = atoi(argv[1]);
 
-    if(bpp != 16 || bpp != 32)
+    if(bpp != 16 && bpp != 32)
     {
         bpp = 32;
         Con_Printf("%d not valid for bits per pixel, setting to 32.\n", bpp);
     }
-    GL_ChangeResolution(0, 0, bpp, 3); // no change fullscreen
-    return true;
+
+    return DD_SetWindow(windowIDX, 0, 0, 0, 0, bpp, 0,
+                        DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOFULLSCREEN|
+                        DDSW_NOVISIBLE);
 }
 
 D_CMD(SetGamma)

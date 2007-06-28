@@ -99,7 +99,6 @@ char    skyflatname[9] = "F_SKY";
 float   frameTimePos;           // 0...1: fractional part for sharp game tics
 
 int     loadInStartupMode = false;
-boolean startupScreen = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -205,8 +204,6 @@ void R_Update(void)
     Demo_StopPlayback();
     S_Reset();
 
-    // Go back to startup-screen mode.
-    startupScreen = true;
     GL_InitVarFont();
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
@@ -233,8 +230,6 @@ void R_Update(void)
     // The rendeling lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
-    // Back to the game.
-    startupScreen = false;
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();

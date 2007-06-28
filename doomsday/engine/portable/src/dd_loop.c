@@ -121,8 +121,6 @@ int DD_GameLoop(void)
     MSG     msg;
 #endif
 
-    DD_SetWindowVisibility(windowIDX, true);
-
     // Limit the frame rate to 35 when running in dedicated mode.
     if(isDedicated)
     {

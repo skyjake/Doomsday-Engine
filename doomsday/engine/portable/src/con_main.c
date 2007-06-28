@@ -1741,7 +1741,6 @@ void Con_Message(const char *message, ...)
 
         M_Free(buffer);
     }
-    //Con_DrawStartupScreen(true);
 }
 
 /**

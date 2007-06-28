@@ -84,20 +84,14 @@ static int screenBits, windowed;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Attempt to create a context for GL rendering. 
- *
- * @return              Non-zero= success.
- */
-int initOpenGL(void)
+int DG_ChangeVideoMode(int width, int height, int bpp)
 {
     int     flags = SDL_OPENGL;
 
     if(!windowed)
         flags |= SDL_FULLSCREEN;
 
-    // Attempt to set the video mode.
-    if(!SDL_SetVideoMode(screenWidth, screenHeight, screenBits, flags))
+    if(!SDL_SetVideoMode(width, height, bpp, flags))
     {
         // This could happen for a variety of reasons, including
         // DISPLAY not being set, the specified resolution not being
@@ -105,6 +99,20 @@ int initOpenGL(void)
         Con_Message("SDL Error: %s\n", SDL_GetError());
         return DGL_FALSE;
     }
+
+    return DGL_TRUE;
+}
+
+/**
+ * Attempt to create a context for GL rendering. 
+ *
+ * @return              Non-zero= success.
+ */
+int initOpenGL(void)
+{
+    // Attempt to set the video mode.
+    if(!DG_ChangeVideoMode(screenWidth, screenHeight, screenBits))
+        return DGL_FALSE;
 
     // Setup the GL state like we want it.
     initState();
@@ -258,6 +266,11 @@ int DG_CreateContext(int width, int height, int bpp, int mode)
         Con_Message("  glFinish() forced before swapping buffers.\n");
     }
     return DGL_OK;
+}
+
+void DG_DestroyContext(void)
+{
+    // Nothing required??
 }
 
 void DG_Shutdown(void)

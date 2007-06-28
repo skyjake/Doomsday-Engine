@@ -4,8 +4,10 @@ LIBRARY			DROPENGL
 
 EXPORTS
 	DG_Init
-	DG_CreateContext
 	DG_Shutdown
+	DG_ChangeVideoMode
+	DG_CreateContext
+	DG_DestroyContext
 	DG_Clear
 	DG_Show
 	DG_Viewport

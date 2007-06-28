@@ -8,6 +8,7 @@ NAME			"DOOMSDAY"
 ; 232 formerly R_SetAnimGroup
 ; 44 formerly B_FormEventString
 ; 45 formerly B_BindingsForCommand
+; 108 formerly GL_ChangeResolution
 
 EXPORTS
 	Plug_AddHook			@1 NONAME
@@ -276,7 +277,6 @@ EXPORTS
 	GL_Update				@206 NONAME
 	GL_DoUpdate				@107 NONAME
 	GL_UseFog				@104 NONAME
-	GL_ChangeResolution		@108 NONAME
 	GL_GrabScreen			@109 NONAME
 	GL_TextureFilterMode	@112 NONAME
 	GL_SetColor				@113 NONAME

@@ -365,7 +365,6 @@ extern          "C" {
     void            GL_Update(int flags);
     void            GL_DoUpdate(void);
     void            GL_UseFog(int yes);
-    int             GL_ChangeResolution(int w, int h, int bits);
     byte           *GL_GrabScreen(void);
     unsigned int    GL_NewTextureWithParams2(int format, int width, int height, void* pixels, 
                                              int flags, int minFilter, int magFilter, 
