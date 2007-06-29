@@ -69,12 +69,12 @@ typedef struct {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-GETGAMEAPI GetGameAPI;
-
-lt_dlhandle hGame;
-lt_dlhandle hPlugins[MAX_PLUGS];
+uint            windowIDX;   // Main window.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+application_t app;
+static ddwindow_t *mainWindow;
 
 // CODE --------------------------------------------------------------------
 
@@ -109,14 +109,14 @@ boolean InitGame(void)
 	sprintf(libName, "lib%s", gameName);
 	strcat(libName, ".so");
 #endif
-	if(!(hGame = lt_dlopenext(libName)))
+	if(!(app.hGame = lt_dlopenext(libName)))
 	{
 		DD_ErrorBox(true, "InitGame: Loading of %s failed (%s).\n", libName,
 					lt_dlerror());
 		return false;
 	}
 
-    if(!(GetGameAPI = (GETGAMEAPI) lt_dlsym(hGame, "GetGameAPI")))
+    if(!(app.GetGameAPI = (GETGAMEAPI) lt_dlsym(app.hGame, "GetGameAPI")))
 	{
 		DD_ErrorBox(true,
 					"InitGame: Failed to get address of " "GetGameAPI (%s).\n",
@@ -137,8 +137,8 @@ static lt_dlhandle *NextPluginHandle(void)
 
 	for(i = 0; i < MAX_PLUGS; ++i)
 	{
-		if(!hPlugins[i])
-            return &hPlugins[i];
+		if(!app.hPlugins[i])
+            return &app.hPlugins[i];
 	}
 	return NULL;
 }
@@ -396,11 +396,11 @@ void DD_Shutdown(void)
 	SDL_Quit();
 
 	// Close the dynamic libraries.
-	lt_dlclose(hGame);
-	hGame = NULL;
-	for(i = 0; hPlugins[i]; ++i)
-		lt_dlclose(hPlugins[i]);
-	memset(hPlugins, 0, sizeof(hPlugins));
+	lt_dlclose(app.hGame);
+	app.hGame = NULL;
+	for(i = 0; app.hPlugins[i]; ++i)
+		lt_dlclose(app.hPlugins[i]);
+	memset(app.hPlugins, 0, sizeof(app.hPlugins));
 
 	lt_dlexit();
 }

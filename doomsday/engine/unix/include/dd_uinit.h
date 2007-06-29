@@ -48,7 +48,9 @@
                                  DDSW_NOCENTER)
 
 typedef struct {
-    int             placeHolder;
+    lt_dlhandle hGame;      // Instance handle to the game library.
+    lt_dlhandle hPlugins[MAX_PLUGS]; // Instance handle to all other libs.
+    GETGAMEAPI GetGameAPI;
 } application_t;
 
 extern uint windowIDX;   // Main window.
