@@ -55,14 +55,8 @@
 
 // TYPES -------------------------------------------------------------------
 
-// Doomsday window flags.
-#define DDWF_VISIBLE            0x01
-#define DDWF_FULLSCREEN         0x02
-
 typedef struct {
-    int             flags;
-    int             x, y, width, height;
-    int             bpp;
+    int             placeHolder;
 } ddwindow_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -207,28 +201,62 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 #endif
 */
 
-ddwindow_t *DD_GetWindow(uint idx)
+uint DD_CreateWindow(application_t *app, uint parentIDX,
+                     int x, int y, int w, int h, int bpp, int flags,
+                     const char *title, int cmdShow)
 {
     // \fixme Not implemented.
-    return NULL;
+    return 0;
 }
 
-void DD_ChangeWindowDimensions(ddwindow_t *window, int x, int y, int width,
-                               int height)
+boolean DD_DestroyWindow(uint idx)
 {
-    if(!window)
-        return;
-
     // \fixme Not implemented.
+    return true;
 }
 
-void DD_WindowShow(ddwindow_t *window, boolean show)
+boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
+                     int newBPP, uint wFlags, uint uFlags)
 {
-    if(!window)
-        return;
+    // Window paramaters are not changeable in dedicated mode.
+    if(isDedicated)
+        return false;
+
+    if(uFlags & DDSW_NOCHANGES)
+        return true; // Nothing to do.
 
     // \fixme Not implemented.
-    return;
+    return true;
+}
+
+boolean DD_GetWindowDimensions(uint idx, int *x, int *y, int *width, int *height)
+{
+    // Not in dedicated mode.
+    if(isDedicated)
+        return false;
+
+    // \fixme Not implemented.
+    return true;
+}
+
+boolean DD_GetWindowBPP(uint idx, int *bpp)
+{
+    // Not in dedicated mode.
+    if(isDedicated)
+        return false;
+
+    // \fixme Not implemented.
+    return true;
+}
+
+boolean DD_GetWindowFullscreen(uint idx, boolean *fullscreen)
+{
+    // Not in dedicated mode.
+    if(isDedicated)
+        return false;
+
+    // \fixme Not implemented.
+    return true;
 }
 
 int LoadPlugin(const char *pluginPath, lt_ptr data)

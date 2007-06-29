@@ -31,16 +31,41 @@
 
 #include "dd_pinit.h"
 
+// Doomsday window flags.
+#define DDWF_VISIBLE            0x01
+#define DDWF_FULLSCREEN         0x02
+#define DDWF_CENTER             0x04
+
+// Flags for DD_SetWindow()
+#define DDSW_NOSIZE             0x01
+#define DDSW_NOMOVE             0x02
+#define DDSW_NOBPP              0x04
+#define DDSW_NOFULLSCREEN       0x08
+#define DDSW_NOVISIBLE          0x10
+#define DDSW_NOCENTER           0x20
+#define DDSW_NOCHANGES          (DDSW_NOSIZE & DDSW_NOMOVE & DDSW_NOBPP & \
+                                 DDSW_NOFULLSCREEN & DDSW_NOVISIBLE & \
+                                 DDSW_NOCENTER)
+
+typedef struct {
+    int             placeHolder;
+} application_t;
+
 extern uint windowIDX;   // Main window.
+extern application_t app;
 
 uint            DD_CreateWindow(application_t *app, uint parent,
                                 int x, int y, int w, int h, int bpp, int flags,
                                 const char *title, int cmdShow);
-void            DD_DestroyWindow(uint idx);
+boolean         DD_DestroyWindow(uint idx);
+
 boolean         DD_GetWindowDimensions(uint idx, int *x, int *y, int *w, int *h);
-boolean         DD_GetWindowBPP(uint idx);
-boolean         DD_IsWindowFullscreen(uint idx);
-boolean         DD_SetWindowVisibility(uint idx, boolean show);
+boolean         DD_GetWindowBPP(uint idx, int *bpp);
+boolean         DD_GetWindowFullscreen(uint idx, boolean *fullscreen);
+boolean         DD_GetWindowVisibility(uint idx, boolean *show);
+
+boolean         DD_SetWindow(uint idx, int x, int y, int w, int h, int bpp,
+                             uint wflags, uint uflags);
 
 void            DD_Shutdown(void);
 
