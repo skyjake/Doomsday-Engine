@@ -1113,7 +1113,7 @@ static menu_t GameplayDef = {
 #if __DOOM64TC__
     17, GameplayItems,
 #elif __JDOOM__
-    17, GameplayItems,
+    18, GameplayItems,
 #else
     12, GameplayItems,
 #endif
@@ -1125,7 +1125,7 @@ static menu_t GameplayDef = {
 #if __DOOM64TC__
     0, 17
 #elif __JDOOM__
-    0, 17
+    0, 18
 #else
     0, 12
 #endif
