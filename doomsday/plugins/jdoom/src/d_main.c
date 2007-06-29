@@ -439,6 +439,7 @@ void D_PreInit(void)
     cfg.avoidDropoffs = true;
     cfg.moveBlock = false;
     cfg.fallOff = true;
+    cfg.fixOuchFace = true;
 
     cfg.statusbarAlpha = 1;
     cfg.statusbarCounterAlpha = 1;

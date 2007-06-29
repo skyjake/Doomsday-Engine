@@ -577,17 +577,16 @@ int ST_calcPainOffset(void)
  */
 void ST_updateFaceWidget(void)
 {
-    int     i;
-    angle_t badguyangle;
-    angle_t diffang;
-    static int lastattackdown = -1;
-    static int priority = 0;
-    boolean doevilgrin;
-    player_t *plyr = &players[consoleplayer];
+    int         i;
+    angle_t     badguyangle;
+    angle_t     diffang;
+    static int  lastattackdown = -1;
+    static int  priority = 0;
+    boolean     doevilgrin;
+    player_t   *plyr = &players[consoleplayer];
 
     if(priority < 10)
-    {
-        // dead
+    {   // Player is dead.
         if(!plyr->health)
         {
             priority = 9;
@@ -599,11 +598,10 @@ void ST_updateFaceWidget(void)
     if(priority < 9)
     {
         if(plyr->bonuscount)
-        {
-            // picking up bonus
+        {   // Picking up a bonus.
             doevilgrin = false;
 
-            for(i = 0; i < NUM_WEAPON_TYPES; i++)
+            for(i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
                 if(oldweaponsowned[i] != plyr->weaponowned[i])
                 {
@@ -611,36 +609,39 @@ void ST_updateFaceWidget(void)
                     oldweaponsowned[i] = plyr->weaponowned[i];
                 }
             }
+
             if(doevilgrin)
-            {
-                // evil grin if just picked up weapon
+            {   // Evil grin if just picked up weapon.
                 priority = 8;
                 st_facecount = ST_EVILGRINCOUNT;
                 st_faceindex = ST_calcPainOffset() + ST_EVILGRINOFFSET;
             }
         }
-
     }
 
     if(priority < 8)
     {
         if(plyr->damagecount && plyr->attacker &&
            plyr->attacker != plyr->plr->mo)
-        {
-            // being attacked
+        {   // Being attacked.
             priority = 7;
 
             // DOOM BUG
             // This test was inversed, thereby the OUCH face was NEVER used
             // in normal gameplay as it requires the player recieving damage
             // to end up with MORE health than he started with.
-
+            // Also, priority was not changed which would have resulted in a
+            // frame duration of only 1 tic.
             // if(plyr->health - st_oldhealth > ST_MUCHPAIN)
-            if(st_oldhealth - plyr->health > ST_MUCHPAIN)
+
+            if((cfg.fixOuchFace?
+               (st_oldhealth - plyr->health) :
+               (plyr->health - st_oldhealth)) > ST_MUCHPAIN)
             {
                 st_facecount = ST_TURNCOUNT;
                 st_faceindex = ST_calcPainOffset() + ST_OUCHOFFSET;
-                priority = 8;
+                if(cfg.fixOuchFace)
+                    priority = 8; // Added to fix 1 tic issue.
             }
             else
             {
@@ -649,34 +650,29 @@ void ST_updateFaceWidget(void)
                                     plyr->attacker->pos[VX], plyr->attacker->pos[VY]);
 
                 if(badguyangle > plyr->plr->mo->angle)
-                {
-                    // whether right or left
+                {   // Whether right or left.
                     diffang = badguyangle - plyr->plr->mo->angle;
                     i = diffang > ANG180;
                 }
                 else
-                {
-                    // whether left or right
+                {   // Whether left or right.
                     diffang = plyr->plr->mo->angle - badguyangle;
                     i = diffang <= ANG180;
-                }               // confusing, aint it?
+                }
 
                 st_facecount = ST_TURNCOUNT;
                 st_faceindex = ST_calcPainOffset();
 
                 if(diffang < ANG45)
-                {
-                    // head-on
+                {   // Head-on.
                     st_faceindex += ST_RAMPAGEOFFSET;
                 }
                 else if(i)
-                {
-                    // turn face right
+                {   // Turn face right.
                     st_faceindex += ST_TURNOFFSET;
                 }
                 else
-                {
-                    // turn face left
+                {   // Turn face left.
                     st_faceindex += ST_TURNOFFSET + 1;
                 }
             }
@@ -684,11 +680,18 @@ void ST_updateFaceWidget(void)
     }
 
     if(priority < 7)
-    {
-        // getting hurt because of your own damn stupidity
+    {   // Getting hurt because of your own damn stupidity.
         if(plyr->damagecount)
         {
-            if(plyr->health - st_oldhealth > ST_MUCHPAIN)
+            // DOOM BUG
+            // This test was inversed, thereby the OUCH face was NEVER used
+            // in normal gameplay as it requires the player recieving damage
+            // to end up with MORE health than he started with.
+            // if(plyr->health - st_oldhealth > ST_MUCHPAIN)
+
+            if((cfg.fixOuchFace?
+               (st_oldhealth - plyr->health) :
+               (plyr->health - st_oldhealth)) > ST_MUCHPAIN)
             {
                 priority = 7;
                 st_facecount = ST_TURNCOUNT;
@@ -700,18 +703,17 @@ void ST_updateFaceWidget(void)
                 st_facecount = ST_TURNCOUNT;
                 st_faceindex = ST_calcPainOffset() + ST_RAMPAGEOFFSET;
             }
-
         }
-
     }
 
     if(priority < 6)
-    {
-        // rapid firing
+    {   // Rapid firing.
         if(plyr->attackdown)
         {
             if(lastattackdown == -1)
+            {
                 lastattackdown = ST_RAMPAGEDELAY;
+            }
             else if(!--lastattackdown)
             {
                 priority = 5;
@@ -721,25 +723,24 @@ void ST_updateFaceWidget(void)
             }
         }
         else
+        {
             lastattackdown = -1;
-
+        }
     }
 
     if(priority < 5)
-    {
-        // invulnerability
-        if((P_GetPlayerCheats(plyr) & CF_GODMODE) || plyr->powers[PT_INVULNERABILITY])
+    {   // Invulnerability.
+        if((P_GetPlayerCheats(plyr) & CF_GODMODE) ||
+           plyr->powers[PT_INVULNERABILITY])
         {
             priority = 4;
 
             st_faceindex = ST_GODFACE;
             st_facecount = 1;
-
         }
-
     }
 
-    // look left or look right if the facecount has timed out
+    // Look left or look right if the facecount has timed out.
     if(!st_facecount)
     {
         st_faceindex = ST_calcPainOffset() + (st_randomnumber % 3);
@@ -748,7 +749,6 @@ void ST_updateFaceWidget(void)
     }
 
     st_facecount--;
-
 }
 
 void ST_updateWidgets(void)

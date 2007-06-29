@@ -868,6 +868,9 @@ desc = 1=Use EXACTLY DOOM's clipping code (disables DOOM bug fix).
 [game-zombiescanexit]
 desc = 1=Zombie players can exit levels (disables DOOM bug fix).
 
+[hud-face-ouchfix]
+desc = 1=Fix HUD OUCH face (enables DOOM bug fix).
+
 [game-player-wallrun-northonly]
 desc = 1=Players can only wallrun North (disables DOOM bug fix).
 

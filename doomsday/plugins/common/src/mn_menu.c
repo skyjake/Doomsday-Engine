@@ -1083,6 +1083,7 @@ static menuitem_t GameplayItems[] = {
 # if __JDOOM__
     {ITT_EFUNC, 0, "ZOMBIE PLAYERS CAN EXIT LEVELS :", M_ToggleVar, 0, NULL,
         "game-zombiescanexit"},
+    {ITT_EFUNC, 0, "FIX OUCH FACE :", M_ToggleVar, 0, NULL, "hud-face-ouchfix"},
 # endif
 #endif
 };
@@ -2941,6 +2942,7 @@ void M_DrawGameplay(void)
 # endif
 # if __JDOOM__
     M_WriteMenuText(menu, idx++, yesno[cfg.zombiesCanExit != 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.fixOuchFace != 0]);
 # endif
 #endif
 }
