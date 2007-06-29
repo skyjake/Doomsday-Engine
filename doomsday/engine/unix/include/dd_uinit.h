@@ -30,6 +30,7 @@
 #define __DOOMSDAY_UINIT_H__
 
 #include "dd_pinit.h"
+#include "sys_dylib.h"
 
 // Doomsday window flags.
 #define DDWF_VISIBLE            0x01
