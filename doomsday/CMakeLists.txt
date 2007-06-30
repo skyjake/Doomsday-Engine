@@ -1,14 +1,10 @@
 ## deng build scripts. 
-## Copyright © 2006 - 2007 Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
-## This file is licensed under the GNU GPLv2 or any later versions,
-##
-## This file is part of the deng build scripts
-##
-## Copyright © 2006 - 2007 Jamie Jones (Yagisan) <jamie_jones_au@yahoo.com.au>
+## Copyright © 2006 - 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+## This file is licensed under the GNU GPLv3 or any later versions,
 ##
 ## the deng build scripts is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 2 of the License, or
+## the Free Software Foundation; either version 3 of the License, or
 ## (at your option) any later version.
 ##
 ## the deng build scripts is distributed in the hope that it will be useful,
