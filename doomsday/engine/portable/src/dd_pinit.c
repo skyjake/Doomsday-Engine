@@ -138,9 +138,7 @@ void SetGameImports(game_import_t *imp)
 
 void DD_InitAPI(void)
 {
-#ifdef WIN32
     GETGAMEAPI GetGameAPI = app.GetGameAPI;
-#endif
 
     game_export_t *gameExPtr;
 
@@ -150,7 +148,7 @@ void DD_InitAPI(void)
     memset(&__gx, 0, sizeof(__gx));
     gameExPtr = GetGameAPI(&__gi);
     memcpy(&__gx, gameExPtr,
-           MIN_OF(sizeof(__gx), (unsigned) gameExPtr->apiSize));
+           MIN_OF(sizeof(__gx), gameExPtr->apiSize));
 }
 
 void DD_InitCommandLine(const char *cmdLine)

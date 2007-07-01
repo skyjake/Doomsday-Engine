@@ -39,7 +39,7 @@
  * using this structure (most importantly the map data).
  */
 typedef struct game_import_s {
-    int             apiSize;       // sizeof(game_import_t)
+    size_t          apiSize;       // sizeof(game_import_t)
     int             version;       // Doomsday Engine version.
 
     //
@@ -64,7 +64,7 @@ typedef struct game_import_s {
  * The routines/data exported from the game DLL.
  */
 typedef struct {
-    int             apiSize;       // sizeof(game_export_t)
+    size_t          apiSize;       // sizeof(game_export_t)
 
     // Base-level.
     void            (*PreInit) (void);
