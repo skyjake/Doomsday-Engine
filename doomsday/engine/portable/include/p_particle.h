@@ -133,6 +133,7 @@ void            P_SpawnMapParticleGens(char *map_id);
 void            P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor,
                                          int amount);
 void            P_CheckPtcPlanes(void);
+void            P_UpdateParticleGens(void);
 
 float           P_GetParticleRadius(ded_ptcstage_t *stage_def, int ptc_index);
 fixed_t         P_GetParticleZ(particle_t *pt);

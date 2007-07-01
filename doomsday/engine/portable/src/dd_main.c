@@ -832,7 +832,7 @@ void DD_UpdateEngineState(void)
     // Reset the anim groups (if in-game)
     R_ResetAnimGroups();
 
-    //// \fixme We need to update surfaces.
+    // \fixme We need to update surfaces.
     //R_UpdateAllSurfaces(true);
 
     gx.UpdateState(DD_POST);

@@ -1307,6 +1307,10 @@ void P_SpawnMapParticleGens(char *mapId)
     {
         if(!def->map[0] || stricmp(def->map, mapId))
             continue;
+
+        if(def->spawn_age > 0 && levelTime > def->spawn_age)
+            continue;           // No longer spawning this generator.
+
         if(!(gen = P_NewPtcGen()))
             return;             // No more generators.
 
@@ -1376,4 +1380,78 @@ void P_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
         // Is there a need to pre-simulate?
         P_PresimParticleGen(gen, def->presim);
     }
+}
+
+/**
+ * Called after a reset once the definitions have been re-read.
+ */
+void P_UpdateParticleGens(void)
+{
+    uint            i;
+    ptcgen_t       *gen;
+
+    for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
+    {
+        int             j;
+        ded_ptcgen_t   *def;
+        boolean         found;
+
+        if(!activePtcGens[i])
+            continue;
+
+        gen = activePtcGens[i];
+
+        // Map generators cannot be updated (we have no means to reliably
+        // identify them), so destroy them.
+        // Flat generators will be spawned automatically within a few tics so we'll
+        // just destroy those too.
+        if((gen->flags & PGF_UNTRIGGERED) ||
+           (gen->sector))
+        {
+            P_FreePtcGen(gen);
+            continue;
+        }
+
+        // Search for a suitable definition.
+        j = 0;
+        def = defs.ptcgens;
+        found = false;
+        while(j < defs.count.ptcgens.num && !found)
+        {
+            // A type generator?
+            if(def->type_num >= 0 &&
+               (gen->type == def->type_num || gen->type2 == def->type2_num))
+            {
+                found = true;
+            }
+            // A damage generator?
+            else if(gen->source && gen->source->type == def->damage_num)
+            {
+                found = true;
+            }
+            // A state generator?
+            else if(gen->source && def->state[0] &&
+                    gen->source->state - states == Def_GetStateNum(def->state))
+            {
+                found = true;
+            }
+            else
+            {
+                j++;
+                def++;
+            }
+        }
+
+        if(found)
+        {   // Update the generator using the new definition.
+            gen->def = def;
+        }
+        else
+        {   // Nothing else we can do, destroy it.
+            P_FreePtcGen(gen);
+        }
+    }
+
+    // Re-spawn map generators.
+    P_SpawnMapParticleGens(levelid);
 }

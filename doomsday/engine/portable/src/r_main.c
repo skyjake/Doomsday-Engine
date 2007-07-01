@@ -221,6 +221,7 @@ void R_Update(void)
     GL_LoadSystemTextures(true, true);
     Def_PostInit();
     R_InitModels();             // Defs might've changed.
+    P_UpdateParticleGens();     // Defs might've changed.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         // States have changed, the states are unknown.

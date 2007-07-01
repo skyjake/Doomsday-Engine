@@ -2480,8 +2480,8 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
     }
 
 
-    //// \fixme Update glowing status?
-    //// The order of these tests is important.
+    // \fixme Update glowing status?
+    // The order of these tests is important.
     if(forceUpdate || (suf->material.texture != suf->oldmaterial.texture))
     {
         // Check if the new texture is declared as glowing.
@@ -2579,9 +2579,9 @@ void R_UpdateSurface(surface_t *suf, boolean forceUpdate)
         suf->rgba[2] != suf->oldrgba[2] ||
         suf->rgba[3] != suf->oldrgba[3]))
     {
-        //// \todo when surface colours are intergrated with the
-        //// bias lighting model we will need to recalculate the
-        //// vertex colours when they are changed.
+        // \todo when surface colours are intergrated with the
+        // bias lighting model we will need to recalculate the
+        // vertex colours when they are changed.
         memcpy(suf->oldrgba, suf->rgba, sizeof(suf->oldrgba));
     }
 }
@@ -2617,7 +2617,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
         // Surface changes?
         R_UpdateSurface(&plane->surface, forceUpdate);
 
-        //// \fixme Now update the glow properties.
+        // \fixme Now update the glow properties.
         if(plane->surface.flags & SUF_GLOW)
         {
             plane->glow = 4; // Default height factor is 4
