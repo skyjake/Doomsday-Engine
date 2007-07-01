@@ -209,9 +209,6 @@ void UI_End(void)
     uiAlpha = uiTargetAlpha = 1.0;
 
     // Restore old state.
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
-
     GL_ShutdownVarFont();
 
     // Update the secondary title and the game status.

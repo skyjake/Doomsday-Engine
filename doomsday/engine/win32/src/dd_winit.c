@@ -314,7 +314,9 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
     boolean         newGLContext = false;
     boolean         updateStyle = false;
     boolean         changeVideoMode = false;
+    boolean         changeWindowDimensions = false;
     boolean         noMove = (uFlags & DDSW_NOMOVE);
+    boolean         inControlPanel;
 
     // Window paramaters are not changeable in dedicated mode.
     if(isDedicated)
@@ -337,6 +339,7 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
     bpp = window->bpp;
     flags = window->flags;
     }
+    inControlPanel = UI_IsActive();
 
     // Change auto window centering?
     if(!(uFlags & DDSW_NOCENTER) &&
@@ -365,6 +368,7 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
         if(flags & DDWF_FULLSCREEN)
             changeVideoMode = true;
         newGLContext = true;
+        changeWindowDimensions = true;
     }
 
     // Change BPP (bits per pixel)?
@@ -377,6 +381,14 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
 
         newGLContext = true;
         changeVideoMode = true;
+    }
+
+    if(changeWindowDimensions)
+    {
+        // Can't change the resolution while the UI is active.
+        // (controls need to be repositioned).
+        if(inControlPanel)
+            UI_End();
     }
 
     if(changeVideoMode)
@@ -436,8 +448,8 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
         flags ^= DDWF_VISIBLE;
     }
 
-    // Hide the window while we make changes.
-    if(flags & DDWF_VISIBLE)
+    // Hide the window?
+    if(!(flags & DDWF_VISIBLE))
         ShowWindow(hWnd, SW_HIDE);
 
     if(updateStyle)
@@ -479,16 +491,7 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
     // Do we need a new GL context due to changes to the window?
     if(!novideo && newGLContext)
     {   // Maybe requires a renderer restart.
-        boolean         glIsInited;
-        boolean         inControlPanel;
-
-        glIsInited = GL_IsInited();
-        inControlPanel = UI_IsActive();
-
-        // Can't change the resolution while the UI is active.
-        // (controls need to be repositioned).
-        if(inControlPanel)
-            UI_End();
+        boolean         glIsInited = GL_IsInited();
 
         if(glIsInited)
         {
@@ -508,12 +511,15 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
             GL_TotalReset(false, true, true);
             gx.UpdateState(DD_RENDER_RESTART_POST);
         }
+    }
 
+    if(changeWindowDimensions)
+    {
         if(inControlPanel) // Reactivate the panel?
             Con_Execute(CMDS_DDAY, "panel", true, false);
     }
 
-    // Re-show the hidden window?
+    // Show the hidden window?
     if(flags & DDWF_VISIBLE)
         ShowWindow(hWnd, SW_SHOW);
 
@@ -723,6 +729,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
             // Append the main window title with the game name.
             DD_MainWindowTitle(buf);
+            SetWindowText(win->hWnd, _T(buf));
         }
     }
 
