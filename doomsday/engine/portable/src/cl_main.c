@@ -87,18 +87,19 @@ void Cl_InitID(void)
     srand(time(NULL));
     if((file = fopen("Client.ID", "rb")) != NULL)
     {
-        fread(&clientID, 4, 1, file);
+        fread(&clientID, sizeof(clientID), 1, file);
+        clientID = ULONG(clientID);
         fclose(file);
         return;
     }
     // Ah-ha, we need to generate a new ID.
-    clientID =
-        Sys_GetRealTime() * rand() + (rand() & 0xfff) +
-        ((rand() & 0xfff) << 12) + ((rand() & 0xff) << 24);
+    clientID = (ident_t)
+        ULONG(Sys_GetRealTime() * rand() + (rand() & 0xfff) +
+              ((rand() & 0xfff) << 12) + ((rand() & 0xff) << 24));
     // Write it to the file.
     if((file = fopen("Client.ID", "wb")) != NULL)
     {
-        fwrite(&clientID, 4, 1, file);
+        fwrite(&clientID, sizeof(clientID), 1, file);
         fclose(file);
     }
 }

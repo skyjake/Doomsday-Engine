@@ -101,7 +101,7 @@ typedef unsigned int	size_t;
 typedef int				fixed_t;
 typedef unsigned int	angle_t;
 typedef int				spritenum_t;
-typedef unsigned int	ident_t;
+typedef uint32_t        ident_t;
 typedef unsigned short	nodeindex_t;
 typedef unsigned short	thid_t;
 typedef unsigned char	byte;
