@@ -1944,7 +1944,7 @@ if(custom && !typeSupportsCustomProperty(type))
             }
     }
 
-    if(*count)
+    if(count)
         *count = totalNum;
     return props;
 }

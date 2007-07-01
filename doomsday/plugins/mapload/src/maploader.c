@@ -54,13 +54,13 @@
 
 typedef struct {
     char    identification[4];
-    int     numlumps;
-    int     infotableofs;
+    int32_t numlumps;
+    int32_t infotableofs;
 } wadheader_t;
 
 typedef struct {
-    int     filepos;
-    size_t  size;
+    int32_t filepos;
+    int32_t size;
     char    name[8];
 } wadlump_t;
 
@@ -100,7 +100,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  */
 static void GetWorkDir(char *dir, int mainLump)
 {
-    //// \kludge Hacks'n'Kludges Illustrated: Accessing the Game Mode String!
+    // \kludge Hacks'n'Kludges Illustrated: Accessing the Game Mode String!
     game_export_t *gex = (game_export_t*) DD_GetVariable(DD_GAME_EXPORTS);
     const char *sourceFile = W_LumpSourceFile(mainLump);
     filename_t base;
@@ -306,7 +306,7 @@ static void display_close(void)
 static int LoadLumpsHook(int hookType, int parm, void *data)
 {
     int *returnedLumps = (int*) data;
-    char glLumpName[20];
+//    char glLumpName[20];
     filename_t workDir;
     filename_t mapDataFile;
     filename_t bspDataFile;
