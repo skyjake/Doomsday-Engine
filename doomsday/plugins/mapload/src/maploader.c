@@ -59,7 +59,7 @@ typedef struct {
 } wadheader_t;
 
 typedef struct {
-    int     filepos;
+    int32_t filepos;
     uint32_t size;
     char    name[8];
 } wadlump_t;
@@ -306,7 +306,7 @@ static void display_close(void)
 static int LoadLumpsHook(int hookType, int parm, void *data)
 {
     int *returnedLumps = (int*) data;
-    char glLumpName[20];
+//    char glLumpName[20];
     filename_t workDir;
     filename_t mapDataFile;
     filename_t bspDataFile;
