@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@
 
 #include "../../jhexen/include/acfnlink.h"
 #include "../../jhexen/include/h2def.h"
+#include "../../jhexen/include/g_ctrl.h"
 #include "../../jhexen/include/m_cheat.h"
 #include "../../jhexen/include/mn_def.h"
 #include "../../jhexen/include/p_local.h"

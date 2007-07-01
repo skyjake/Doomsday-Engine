@@ -606,6 +606,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\wolftc\include\g_ctrl.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\wolftc\include\g_game.h"
 				>
 			</File>

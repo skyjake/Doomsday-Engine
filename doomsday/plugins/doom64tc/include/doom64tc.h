@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include "../../doom64tc/include/doomdef.h"
 #include "../../doom64tc/include/dstrings.h"
 #include "../../doom64tc/include/g_game.h"
+#include "../../doom64tc/include/g_ctrl.h"
 #include "../../doom64tc/include/d_config.h"
 #include "../../doom64tc/include/d_event.h"
 #include "../../doom64tc/include/doomstat.h"

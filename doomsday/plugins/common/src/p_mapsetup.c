@@ -283,11 +283,11 @@ int P_SetupLevelWorker(void *ptr)
 #if __JHEXEN__
     // Initialize polyobjs.
     Con_Message("Polyobject init\n");
-    //// \fixme Custom map data format support
+    // \fixme Custom map data format support
     PO_Init(W_GetNumForName(levelId) + 1 /*ML_THINGS*/);   // Initialize the polyobjs
     
     Con_Message("Load ACS scripts\n");
-    //// \fixme Custom map data format support
+    // \fixme Custom map data format support
     P_LoadACScripts(W_GetNumForName(levelId) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
     
@@ -334,7 +334,7 @@ void P_SetupLevel(int episode, int map, int playerMask, skillmode_t skill)
     
     DD_Executef(true, "texreset raw"); // delete raw images to save memory
     
-    //// \todo Use progress bar mode and update progress during the setup.
+    // \todo Use progress bar mode and update progress during the setup.
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              P_SetupLevelWorker, &param);
 

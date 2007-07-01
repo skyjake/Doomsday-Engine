@@ -2942,7 +2942,9 @@ void M_DrawGameplay(void)
 # endif
 # if __JDOOM__
     M_WriteMenuText(menu, idx++, yesno[cfg.zombiesCanExit != 0]);
+#  if !(__DOOM64TC__ || __WOLFTC__)
     M_WriteMenuText(menu, idx++, yesno[cfg.fixOuchFace != 0]);
+#  endif
 # endif
 #endif
 }

@@ -388,7 +388,7 @@ void P_SpawnThings(void)
     }
 
 #if __JHEXEN__
-    //// \fixme This stuff should be moved!
+    // \fixme This stuff should be moved!
     P_CreateTIDList();
     P_InitCreatureCorpseQueue(false);   // false = do NOT scan for corpses
 

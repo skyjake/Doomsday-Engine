@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +35,7 @@
 #include "../../jdoom/include/doomdef.h"
 #include "../../jdoom/include/dstrings.h"
 #include "../../jdoom/include/g_game.h"
+#include "../../jdoom/include/g_ctrl.h"
 #include "../../jdoom/include/d_config.h"
 #include "../../jdoom/include/d_event.h"
 #include "../../jdoom/include/doomstat.h"

@@ -610,6 +610,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\doom64tc\include\g_ctrl.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\doom64tc\include\g_game.h"
 				>
 			</File>

@@ -233,7 +233,8 @@
 // Map Object definition.
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.
-    DD_BASE_MOBJ_ELEMENTS() mobjinfo_t *info;   // &mobjinfo[mobj->type]
+    DD_BASE_MOBJ_ELEMENTS()
+    mobjinfo_t     *info;          // &mobjinfo[mobj->type]
     int             damage;        // For missiles
     int             flags;
     int             flags2;
@@ -266,10 +267,10 @@ typedef struct mobj_s {
 
     // For nightmare/multiplayer respawn.
     struct {
-        fixed_t pos[3];   // Note DOOM didn't include VZ
-        angle_t angle;
-        int     type;
-        int     options;
+        fixed_t     pos[3];   // Note DOOM didn't include VZ
+        angle_t     angle;
+        int         type;
+        int         options;
     } spawninfo;
 
     // Thing being chased/attacked for tracers.

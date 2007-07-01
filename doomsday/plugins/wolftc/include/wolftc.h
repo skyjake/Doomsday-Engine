@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include "../../wolftc/include/doomdef.h"
 #include "../../wolftc/include/dstrings.h"
 #include "../../wolftc/include/g_game.h"
+#include "../../wolftc/include/g_ctrl.h"
 #include "../../wolftc/include/d_config.h"
 #include "../../wolftc/include/d_event.h"
 #include "../../wolftc/include/doomstat.h"

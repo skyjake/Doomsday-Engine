@@ -544,6 +544,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\jhexen\include\g_ctrl.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\jhexen\include\h2def.h"
 				>
 			</File>

@@ -3,7 +3,8 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +46,7 @@
 #include "../../jheretic/include/doomdef.h"
 #include "../../jheretic/include/dstrings.h"
 #include "../../jheretic/include/g_game.h"
+#include "../../jheretic/include/g_ctrl.h"
 #include "../../jheretic/include/h_config.h"
 #include "../../jheretic/include/h_event.h"
 #include "../../jheretic/include/h_stat.h"
