@@ -22,17 +22,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-//**************************************************************************
-//**
-//** COMMON.C
-//**
-//** Target:        DGL Driver for OpenGL
-//** Description:   Portable Init/State Routines
-//**
-//** Get OpenGL header files from:
-//** http://oss.sgi.com/projects/ogl-sample/
-//**
-//**************************************************************************
+/*
+ * common.c : Portable OpenGL init/state routines.
+ */
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -63,9 +55,6 @@ int     useFog;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// initState
-//===========================================================================
 void initState(void)
 {
     GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
@@ -139,14 +128,16 @@ void initState(void)
 
     // Update viewport to full display.
     DG_Viewport(0, 0, screenWidth, screenHeight);
+
+    // Clear the buffers.
+    DG_Clear(DGL_COLOR_BUFFER_BIT | DGL_DEPTH_BUFFER_BIT);
 }
 
-//===========================================================================
-// envAddColoredAlpha
-//  Requires a texture environment mode that can add and multiply.
-//  Nvidia's and ATI's appropriate extensions are supported, other
-//  cards will not be able to utilize multitextured lights.
-//===========================================================================
+/**
+ * Requires a texture environment mode that can add and multiply.
+ * Nvidia's and ATI's appropriate extensions are supported, other cards will
+ * not be able to utilize multitextured lights.
+ */
 void envAddColoredAlpha(int activate, GLenum addFactor)
 {
     if(activate)
@@ -155,7 +146,7 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
                   extNvTexEnvComb ? GL_COMBINE4_NV : GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
 
-        // Combine: texAlpha * constRGB + 1 * prevRGB
+        // Combine: texAlpha * constRGB + 1 * prevRGB.
         if(extNvTexEnvComb)
         {
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
@@ -169,8 +160,7 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_RGB_NV, GL_SRC_COLOR);
         }
         else if(extAtiTexEnvComb)
-        {
-            // MODULATE_ADD_ATI: Arg0 * Arg2 + Arg1
+        {   // MODULATE_ADD_ATI: Arg0 * Arg2 + Arg1.
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE_ADD_ATI);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, addFactor);
@@ -180,8 +170,7 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
         }
         else
-        {
-            // This doesn't look right.
+        {   // This doesn't look right.
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, addFactor);
@@ -195,12 +184,11 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
     }
 }
 
-//===========================================================================
-// envModMultiTex
-//  Setup the texture environment for single-pass multiplicative lighting.
-//  The last texture unit is always used for the texture modulation.
-//  TUs 1...n-1 are used for dynamic lights.
-//===========================================================================
+/**
+ * Setup the texture environment for single-pass multiplicative lighting.
+ * The last texture unit is always used for the texture modulation.
+ * TUs 1...n-1 are used for dynamic lights.
+ */
 void envModMultiTex(int activate)
 {
     // Setup TU 2: The modulated texture.
@@ -214,17 +202,13 @@ void envModMultiTex(int activate)
     // This is a single-pass mode. The alpha should remain unmodified
     // during the light stage.
     if(activate)
-    {
-        // Replace: primAlpha
+    {   // Replace: primAlpha.
         glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
         glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
         glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
     }
 }
 
-//===========================================================================
-// DG_Clear
-//===========================================================================
 void DG_Clear(int bufferbits)
 {
     GLbitfield mask = 0;
@@ -236,31 +220,22 @@ void DG_Clear(int bufferbits)
     glClear(mask);
 }
 
-//===========================================================================
-// DG_Viewport
-//===========================================================================
 void DG_Viewport(int x, int y, int width, int height)
 {
     glViewport(x, FLIP(y + height - 1), width, height);
 }
 
-//===========================================================================
-// DG_Scissor
-//===========================================================================
 void DG_Scissor(int x, int y, int width, int height)
 {
     glScissor(x, FLIP(y + height - 1), width, height);
 }
 
-//===========================================================================
-// DG_GetIntegerv
-//===========================================================================
 int DG_GetIntegerv(int name, int *v)
 {
-    int     i;
-    float   color[4];
+    int         i;
+    float       color[4];
 
-    switch (name)
+    switch(name)
     {
     case DGL_VERSION:
         *v = DGL_VERSION_NUM;
@@ -346,28 +321,23 @@ int DG_GetIntegerv(int name, int *v)
     default:
         return DGL_ERROR;
     }
+
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_GetInteger
-//===========================================================================
 int DG_GetInteger(int name)
 {
-    int     values[10];
+    int         values[10];
 
     DG_GetIntegerv(name, values);
     return values[0];
 }
 
-//===========================================================================
-// DG_SetInteger
-//===========================================================================
 int DG_SetInteger(int name, int value)
 {
-    float   color[4];
+    float       color[4];
 
-    switch (name)
+    switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
         activeTexture(GL_TEXTURE0 + value);
@@ -375,20 +345,17 @@ int DG_SetInteger(int name, int value)
 
     case DGL_MODULATE_TEXTURE:
         if(value == 0)
-        {
-            // No modulation: just replace with texture.
+        {   // No modulation: just replace with texture.
             activeTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         }
         else if(value == 1)
-        {
-            // Normal texture modulation with primary color.
+        {   // Normal texture modulation with primary color.
             activeTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
         else if(value == 12)
-        {
-            // Normal texture modulation on both stages. TU 1 modulates with 
+        {   // Normal texture modulation on both stages. TU 1 modulates with 
             // primary color, TU 2 with TU 1.
             activeTexture(GL_TEXTURE1);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -396,13 +363,12 @@ int DG_SetInteger(int name, int value)
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }                
         else if(value == 2 || value == 3)
-        {
-            // Texture modulation and interpolation.
+        {   // Texture modulation and interpolation.
             activeTexture(GL_TEXTURE1);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
             glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-            if(value == 2)      // Used with surfaces that have a color.
-            {
+            if(value == 2)
+            {   // Used with surfaces that have a color.
                 // TU 2: Modulate previous with primary color.
                 glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
                 glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
@@ -411,8 +377,8 @@ int DG_SetInteger(int name, int value)
                 glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
 
             }
-            else // Mode 3: Used with surfaces with no primary color.
-            {
+            else
+            {   // Mode 3: Used with surfaces with no primary color.
                 // TU 2: Pass through.
                 glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
                 glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
@@ -440,13 +406,11 @@ int DG_SetInteger(int name, int value)
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
         }
         else if(value == 4)
-        {
-            // Apply sector light, dynamic light and texture.
+        {   // Apply sector light, dynamic light and texture.
             envModMultiTex(true);
         }
         else if(value == 5 || value == 10)
-        {
-            // Sector light * texture + dynamic light.
+        {   // Sector light * texture + dynamic light.
             activeTexture(GL_TEXTURE1);
             envAddColoredAlpha(true, value == 5 ? GL_SRC_ALPHA : GL_SRC_COLOR);
 
@@ -475,14 +439,12 @@ int DG_SetInteger(int name, int value)
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
         else if(value == 6)
-        {
-            // Simple dynlight addition (add to primary color).
+        {   // Simple dynlight addition (add to primary color).
             activeTexture(GL_TEXTURE0);
             envAddColoredAlpha(true, GL_SRC_ALPHA);
         }
         else if(value == 7)
-        {
-            // Dynlight addition without primary color.
+        {   // Dynlight addition without primary color.
             activeTexture(GL_TEXTURE0);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
@@ -493,8 +455,7 @@ int DG_SetInteger(int name, int value)
             glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
         }
         else if(value == 8 || value == 9)
-        {
-            // Texture and Detail.
+        {   // Texture and Detail.
             activeTexture(GL_TEXTURE1);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
@@ -513,14 +474,13 @@ int DG_SetInteger(int name, int value)
             {
                 glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
             }
-            else // Mode 9: Ignore primary color.
-            {
+            else
+            {   // Mode 9: Ignore primary color.
                 glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
             }
         }
         else if(value == 11)
-        {
-            // Normal modulation, alpha of 2nd stage.
+        {   // Normal modulation, alpha of 2nd stage.
             // Tex0: texture
             // Tex1: shiny texture
             activeTexture(GL_TEXTURE1);
@@ -566,28 +526,24 @@ int DG_SetInteger(int name, int value)
     default:
         return DGL_ERROR;
     }
+
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_GetString
-//===========================================================================
-char   *DG_GetString(int name)
+char *DG_GetString(int name)
 {
-    switch (name)
+    switch(name)
     {
     case DGL_VERSION:
         return DROGL_VERSION_FULL;
     }
+
     return NULL;
 }
 
-//===========================================================================
-// DG_SetFloatv
-//===========================================================================
 int DG_SetFloatv(int name, float *values)
 {
-    switch (name)
+    switch(name)
     {
     case DGL_ENV_COLOR:
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, values);
@@ -596,12 +552,10 @@ int DG_SetFloatv(int name, float *values)
     default:
         return DGL_ERROR;
     }
+
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_Enable
-//===========================================================================
 int DG_Enable(int cap)
 {
     switch (cap)
@@ -683,15 +637,13 @@ int DG_Enable(int cap)
     default:
         return DGL_FALSE;
     }
+
     return DGL_TRUE;
 }
 
-//===========================================================================
-// DG_Disable
-//===========================================================================
 void DG_Disable(int cap)
 {
-    switch (cap)
+    switch(cap)
     {
     case DGL_TEXTURING:
         glDisable(GL_TEXTURE_2D);
@@ -770,15 +722,15 @@ void DG_Disable(int cap)
             useVSync = DGL_FALSE;
         }
         break;
+
+    default:
+        break;
     }
 }
 
-//===========================================================================
-// DG_Func
-//===========================================================================
 void DG_Func(int func, int param1, int param2)
 {
-    switch (func)
+    switch(func)
     {
     case DGL_BLENDING:
         glBlendFunc(param1 == DGL_ZERO ? GL_ZERO : param1 ==
@@ -830,12 +782,12 @@ void DG_Func(int func, int param1, int param2)
                     DGL_NOTEQUAL ? GL_NOTEQUAL : param1 ==
                     DGL_GEQUAL ? GL_GEQUAL : GL_ALWAYS, param2 / 255.0f);
         break;
+
+    default:
+        break;
     }
 }
 
-//===========================================================================
-// DG_MatrixMode
-//===========================================================================
 void DG_MatrixMode(int mode)
 {
     glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION :
@@ -843,86 +795,62 @@ void DG_MatrixMode(int mode)
                  GL_MODELVIEW);
 }
 
-//===========================================================================
-// DG_PushMatrix
-//===========================================================================
 void DG_PushMatrix(void)
 {
     glPushMatrix();
+
     if(glGetError() == GL_STACK_OVERFLOW)
     {
         Con_Error("DG_PushMatrix: Stack overflow.\n");
     }
 }
 
-//===========================================================================
-// DG_PopMatrix
-//===========================================================================
 void DG_PopMatrix(void)
 {
     glPopMatrix();
+
     if(glGetError() == GL_STACK_UNDERFLOW)
     {
         Con_Error("DG_PopMatrix: Stack underflow.\n");
     }
 }
 
-//===========================================================================
-// DG_LoadIdentity
-//===========================================================================
 void DG_LoadIdentity(void)
 {
     glLoadIdentity();
 }
 
-//===========================================================================
-// DG_Translatef
-//===========================================================================
 void DG_Translatef(float x, float y, float z)
 {
     glTranslatef(x, y, z);
 }
 
-//===========================================================================
-// DG_Rotatef
-//===========================================================================
 void DG_Rotatef(float angle, float x, float y, float z)
 {
     glRotatef(angle, x, y, z);
 }
 
-//===========================================================================
-// DG_Scalef
-//===========================================================================
 void DG_Scalef(float x, float y, float z)
 {
     glScalef(x, y, z);
 }
 
-//===========================================================================
-// DG_Ortho
-//===========================================================================
 void DG_Ortho(float left, float top, float right, float bottom, float znear,
               float zfar)
 {
     glOrtho(left, right, bottom, top, znear, zfar);
 }
 
-//===========================================================================
-// DG_Perspective
-//===========================================================================
 void DG_Perspective(float fovy, float aspect, float zNear, float zFar)
 {
     gluPerspective(fovy, aspect, zNear, zFar);
 }
 
-//===========================================================================
-// DG_Grab
-//===========================================================================
 int DG_Grab(int x, int y, int width, int height, int format, void *buffer)
 {
     if(format != DGL_RGB)
         return DGL_UNSUPPORTED;
+
     // y+height-1 is the bottom edge of the rectangle. It's
     // flipped to change the origin.
     glReadPixels(x, FLIP(y + height - 1), width, height, GL_RGB,
@@ -930,12 +858,9 @@ int DG_Grab(int x, int y, int width, int height, int format, void *buffer)
     return DGL_OK;
 }
 
-//===========================================================================
-// DG_Fog
-//===========================================================================
 void DG_Fog(int pname, float param)
 {
-    int     iparam = (int) param;
+    int         iparam = (int) param;
 
     switch (pname)
     {
@@ -968,24 +893,25 @@ void DG_Fog(int pname, float param)
             glFogfv(GL_FOG_COLOR, col);
         }
         break;
+
+    default:
+        break;
     }
 }
 
-//===========================================================================
-// DG_Fogv
-//===========================================================================
 void DG_Fogv(int pname, void *data)
 {
-    float   param = *(float *) data;
-    byte   *ubvparam = (byte *) data;
-    float   col[4];
-    int     i;
+    float       param = *(float *) data;
+    byte       *ubvparam = (byte *) data;
+    float       col[4];
+    int         i;
 
     switch (pname)
     {
     case DGL_FOG_COLOR:
-        for(i = 0; i < 4; i++)
+        for(i = 0; i < 4; ++i)
             col[i] = ubvparam[i] / 255.0f;
+
         glFogfv(GL_FOG_COLOR, col);
         break;
 
@@ -995,17 +921,13 @@ void DG_Fogv(int pname, void *data)
     }
 }
 
-//===========================================================================
-// DG_Project
-//  Clipping is performed.
-//===========================================================================
 int DG_Project(int num, gl_fc3vertex_t * inVertices,
                gl_fc3vertex_t * outVertices)
 {
-    GLdouble modelMatrix[16], projMatrix[16];
-    GLint   viewport[4];
-    GLdouble x, y, z;
-    int     i, numOut;
+    GLdouble    modelMatrix[16], projMatrix[16];
+    GLint       viewport[4];
+    GLdouble    x, y, z;
+    int         i, numOut;
     gl_fc3vertex_t *in = inVertices, *out = outVertices;
 
     if(num == 0)
@@ -1015,7 +937,7 @@ int DG_Project(int num, gl_fc3vertex_t * inVertices,
     glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
     glGetDoublev(GL_PROJECTION_MATRIX, projMatrix);
     glGetIntegerv(GL_VIEWPORT, viewport);
-    for(i = numOut = 0; i < num; i++, in++)
+    for(i = numOut = 0; i < num; ++i, in++)
     {
         if(gluProject
            (in->pos[VX], in->pos[VY], in->pos[VZ], modelMatrix, projMatrix,
@@ -1025,10 +947,12 @@ int DG_Project(int num, gl_fc3vertex_t * inVertices,
             out->pos[VX] = (float) x;
             out->pos[VY] = (float) FLIP(y);
             out->pos[VZ] = (float) z;
+
             // Check that it's truly visible.
             if(out->pos[VX] < 0 || out->pos[VY] < 0 ||
                out->pos[VX] >= screenWidth || out->pos[VY] >= screenHeight)
                 continue;
+
             memcpy(out->color, in->color, sizeof(in->color));
             numOut++;
             out++;
@@ -1037,11 +961,11 @@ int DG_Project(int num, gl_fc3vertex_t * inVertices,
     return numOut;
 }
 
-//===========================================================================
-// DG_ReadPixels
-//  NOTE: This function will not be needed any more when the halos are
-//  rendered using the new method.
-//===========================================================================
+/**
+ * NOTE: This function will not be needed any more when the halos are
+ * rendered using the new method.
+ */
+#if 0 // Currently unused.
 int DG_ReadPixels(int *inData, int format, void *pixels)
 {
     int     type = inData[0], num, *coords, i;
@@ -1074,3 +998,4 @@ int DG_ReadPixels(int *inData, int format, void *pixels)
     }
     return DGL_OK;
 }
+#endif

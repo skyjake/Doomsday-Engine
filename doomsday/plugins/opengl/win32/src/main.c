@@ -201,6 +201,88 @@ int DG_Init(void)
     return DGL_TRUE;
 }
 
+static void checkExtensions(void)
+{
+    char       *token, *extbuf;
+
+    if(!firstTimeInit)
+        return;
+    firstTimeInit = DGL_FALSE;
+
+    token = (char *) glGetString(GL_EXTENSIONS);
+    extbuf = malloc(strlen(token) + 1);
+    strcpy(extbuf, token);
+
+    // Check the maximum texture size.
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
+
+    initExtensions();
+
+    // Print some OpenGL information (console must be initialized by now).
+    Con_Message("OpenGL information:\n");
+    Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
+    Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
+    Con_Message("  Version: %s\n", glGetString(GL_VERSION));
+    Con_Message("  Extensions:\n");
+
+    // Show the list of GL extensions.
+    token = strtok(extbuf, " ");
+    while(token)
+    {
+        Con_Message("      ");  // Indent.
+        if(verbose)
+        {
+            // Show full names.
+            Con_Message("%s\n", token);
+        }
+        else
+        {
+            // Two on one line, clamp to 30 characters.
+            Con_Message("%-30.30s", token);
+            token = strtok(NULL, " ");
+            if(token)
+                Con_Message(" %-30.30s", token);
+            Con_Message("\n");
+        }
+        token = strtok(NULL, " ");
+    }
+    Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
+
+    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTexUnits);
+    Con_Message("  Found Texture units: %i\n", maxTexUnits);
+#ifndef USE_MULTITEXTURE
+    maxTexUnits = 1;
+#endif
+    // But sir, we are simple people; two units is enough.
+    if(maxTexUnits > 2)
+        maxTexUnits = 2;
+    Con_Message("  Utilised Texture units: %i\n", maxTexUnits);
+
+    Con_Message("  Maximum texture size: %i\n", maxTexSize);
+    if(extAniso)
+    {
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+        Con_Message("  Maximum anisotropy: %g\n", maxAniso);
+    }
+    free(extbuf);
+
+    // Decide whether vertex arrays should be done manually or with real
+    // OpenGL calls.
+    InitArrays();
+
+    if(ArgCheck("-dumptextures"))
+    {
+        dumpTextures = DGL_TRUE;
+        Con_Message("  Dumping textures (mipmap level zero).\n");
+    }
+
+    if(extAniso && ArgExists("-anifilter"))
+    {
+        useAnisotropic = DGL_TRUE;
+        Con_Message("  Using anisotropic texture filtering.\n");
+    }
+}
+
 /**
  * Attempt to acquire a device context for OGL rendering and then init. 
  *
@@ -216,7 +298,6 @@ int DG_CreateContext(int width, int height, int bpp, int mode)
     HWND        hWnd;
     HDC         hdc;
     boolean     fullscreen = (mode == DGL_MODE_FULLSCREEN);
-    char       *token, *extbuf;
     boolean     ok = DGL_OK;
 
     Con_Message("drOpenGL.CreateContext: OpenGL.\n");
@@ -255,91 +336,11 @@ int DG_CreateContext(int width, int height, int bpp, int mode)
         ReleaseDC(hWnd, hdc);
     
     if(ok)
-    {   // We can get on with initializing the OGL state.
-        initState();
-    }
-
-    if(ok)
     {
-        // Clear the buffers.
-        DG_Clear(DGL_COLOR_BUFFER_BIT | DGL_DEPTH_BUFFER_BIT);
-
-        token = (char *) glGetString(GL_EXTENSIONS);
-        extbuf = malloc(strlen(token) + 1);
-        strcpy(extbuf, token);
-
-        // Check the maximum texture size.
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
-
-        initExtensions();
-
-        if(firstTimeInit)
-        {
-            firstTimeInit = DGL_FALSE;
-            // Print some OpenGL information (console must be initialized by now).
-            Con_Message("OpenGL information:\n");
-            Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
-            Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
-            Con_Message("  Version: %s\n", glGetString(GL_VERSION));
-            Con_Message("  Extensions:\n");
-
-            // Show the list of GL extensions.
-            token = strtok(extbuf, " ");
-            while(token)
-            {
-                Con_Message("      ");  // Indent.
-                if(verbose)
-                {
-                    // Show full names.
-                    Con_Message("%s\n", token);
-                }
-                else
-                {
-                    // Two on one line, clamp to 30 characters.
-                    Con_Message("%-30.30s", token);
-                    token = strtok(NULL, " ");
-                    if(token)
-                        Con_Message(" %-30.30s", token);
-                    Con_Message("\n");
-                }
-                token = strtok(NULL, " ");
-            }
-            Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
-
-            glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTexUnits);
-            Con_Message("  Found Texture units: %i\n", maxTexUnits);
-#ifndef USE_MULTITEXTURE
-            maxTexUnits = 1;
-#endif
-            // But sir, we are simple people; two units is enough.
-            if(maxTexUnits > 2)
-                maxTexUnits = 2;
-            Con_Message("  Utilised Texture units: %i\n", maxTexUnits);
-
-            Con_Message("  Maximum texture size: %i\n", maxTexSize);
-            if(extAniso)
-            {
-                glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-                Con_Message("  Maximum anisotropy: %g\n", maxAniso);
-            }
-        }
-        free(extbuf);
-
-        // Decide whether vertex arrays should be done manually or with real
-        // OpenGL calls.
-        InitArrays();
-
-        if(ArgCheck("-dumptextures"))
-        {
-            dumpTextures = DGL_TRUE;
-            Con_Message("  Dumping textures (mipmap level zero).\n");
-        }
-
-        if(extAniso && ArgExists("-anifilter"))
-        {
-            useAnisotropic = DGL_TRUE;
-            Con_Message("  Using anisotropic texture filtering.\n");
-        }
+        checkExtensions();
+        
+        // We can get on with initializing the OGL state.
+        initState();
     }
 
     return ok;

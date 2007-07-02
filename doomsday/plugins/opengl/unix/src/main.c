@@ -180,9 +180,6 @@ int DG_CreateContext(int width, int height, int bpp, int mode)
         Con_Error("drOpenGL.Init: OpenGL init failed.\n");
     }
 
-    // Clear the buffers.
-    DG_Clear(DGL_COLOR_BUFFER_BIT | DGL_DEPTH_BUFFER_BIT);
-
     token = (char *) glGetString(GL_EXTENSIONS);
     extbuf = malloc(strlen(token) + 1);
     strcpy(extbuf, token);

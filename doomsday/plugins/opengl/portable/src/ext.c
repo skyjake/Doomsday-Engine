@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -75,17 +76,16 @@ PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// queryExtension
-//  Returns non-zero iff the extension string is found.
-//  This function is based on Mark J. Kilgard's tutorials about OpenGL
-//  extensions.
-//===========================================================================
+/**
+ * @return              Non-zero iff the extension string is found. This
+ *                      function is based on Mark J. Kilgard's tutorials
+ *                      about OpenGL extensions.
+ */
 int queryExtension(const char *name)
 {
     const GLubyte *extensions = glGetString(GL_EXTENSIONS);
     const GLubyte *start;
-    GLubyte *where, *terminator;
+    GLubyte    *where, *terminator;
 
     if(!extensions)
         return false;
@@ -104,6 +104,7 @@ int queryExtension(const char *name)
         where = (GLubyte *) strstr((const char *) start, name);
         if(!where)
             break;
+
         terminator = where + strlen(name);
         if(where == start || *(where - 1) == ' ')
             if(*terminator == ' ' || *terminator == '\0')
@@ -115,26 +116,20 @@ int queryExtension(const char *name)
     return false;
 }
 
-//===========================================================================
-// query
-//===========================================================================
 int query(const char *ext, int *var)
 {
     if((*var = queryExtension(ext)) != DGL_FALSE)
     {
-//        if(verbose)
-            Con_Message("Checking OpenGL extension: %s\n", ext);
+        Con_Message("Checking OpenGL extension: %s\n", ext);
         return true;
     }
+
     return false;
 }
 
-//===========================================================================
-// initExtensions
-//===========================================================================
 void initExtensions(void)
 {
-    int     i;
+    int         i;
 
     if(query("GL_EXT_compiled_vertex_array", &extLockArray))
     {
@@ -179,19 +174,18 @@ void initExtensions(void)
     // Texture compression.
     query("GL_EXT_texture_compression_s3tc", &extS3TC);
     // On by default if we have it.
-        glGetError();
-        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, (GLint*)&i);
-        if(i && glGetError() == GL_NO_ERROR)
-        {
-            useCompr = DGL_TRUE;
-            Con_Message("OpenGL: Texture compression (%i formats).\n", i);
-        }
+    glGetError();
+    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, (GLint*) &i);
+    if(i && glGetError() == GL_NO_ERROR)
+    {
+        useCompr = DGL_TRUE;
+        Con_Message("OpenGL: Texture compression (%i formats).\n", i);
+    }
 
     if(ArgExists("-notexcomp"))
     {
-    useCompr = DGL_FALSE;
+        useCompr = DGL_FALSE;
     }
-
 
 #ifdef USE_MULTITEXTURE
     // ARB_multitexture

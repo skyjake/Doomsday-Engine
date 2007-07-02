@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,9 +66,6 @@ array_t arrays[MAX_ARRAYS];
 
 // CODE --------------------------------------------------------------------
 
-//===========================================================================
-// InitArrays
-//===========================================================================
 void InitArrays(void)
 {
 	double  version = strtod((const char*) glGetString(GL_VERSION), NULL);
@@ -87,9 +85,6 @@ void InitArrays(void)
 	memset(arrays, 0, sizeof(arrays));
 }
 
-//===========================================================================
-// CheckError
-//===========================================================================
 void CheckError(void)
 {
 #ifdef _DEBUG
@@ -100,89 +95,56 @@ void CheckError(void)
 #endif
 }
 
-//===========================================================================
-// DG_Color3ub
-//===========================================================================
 void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
 	glColor3ub(r, g, b);
 }
 
-//===========================================================================
-// DG_Color3ubv
-//===========================================================================
 void DG_Color3ubv(DGLubyte * data)
 {
 	glColor3ubv(data);
 }
 
-//===========================================================================
-// DG_Color4ub
-//===========================================================================
 void DG_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
 	glColor4ub(r, g, b, a);
 }
 
-//===========================================================================
-// DG_Color4ubv
-//===========================================================================
 void DG_Color4ubv(DGLubyte * data)
 {
 	glColor4ubv(data);
 }
 
-//===========================================================================
-// DG_Color3f
-//===========================================================================
 void DG_Color3f(float r, float g, float b)
 {
 	glColor3f(r, g, b);
 }
 
-//===========================================================================
-// DG_Color3fv
-//===========================================================================
 void DG_Color3fv(float *data)
 {
 	glColor3fv(data);
 }
 
-//===========================================================================
-// DG_Color4f
-//===========================================================================
 void DG_Color4f(float r, float g, float b, float a)
 {
 	glColor4f(r, g, b, a);
 }
 
-//===========================================================================
-// DG_Color4fv
-//===========================================================================
 void DG_Color4fv(float *data)
 {
 	glColor4fv(data);
 }
 
-//===========================================================================
-// DG_TexCoord2f
-//===========================================================================
 void DG_TexCoord2f(float s, float t)
 {
 	glTexCoord2f(s, t);
 }
 
-//===========================================================================
-// DG_TexCoord2fv
-//===========================================================================
 void DG_TexCoord2fv(float *data)
 {
 	glTexCoord2fv(data);
 }
 
-//===========================================================================
-// DG_MultiTexCoord2f
-//===========================================================================
 void DG_MultiTexCoord2f(int target, float s, float t)
 {
 	if(target == GL_TEXTURE0)
@@ -191,9 +153,6 @@ void DG_MultiTexCoord2f(int target, float s, float t)
 		glMultiTexCoord2fARB(GL_TEXTURE0 + (target - DGL_TEXTURE0), s, t);
 }
 
-//===========================================================================
-// DG_MultiTexCoord2fv
-//===========================================================================
 void DG_MultiTexCoord2fv(int target, float *data)
 {
 	if(target == GL_TEXTURE0)
@@ -202,41 +161,26 @@ void DG_MultiTexCoord2fv(int target, float *data)
 		glMultiTexCoord2fvARB(GL_TEXTURE0 + (target - DGL_TEXTURE0), data);
 }
 
-//===========================================================================
-// DG_Vertex2f
-//===========================================================================
 void DG_Vertex2f(float x, float y)
 {
 	glVertex2f(x, y);
 }
 
-//===========================================================================
-// DG_Vertex2fv
-//===========================================================================
 void DG_Vertex2fv(float *data)
 {
 	glVertex2fv(data);
 }
 
-//===========================================================================
-// DG_Vertex3f
-//===========================================================================
 void DG_Vertex3f(float x, float y, float z)
 {
 	glVertex3f(x, y, z);
 }
 
-//===========================================================================
-// DG_Vertex3fv
-//===========================================================================
 void DG_Vertex3fv(float *data)
 {
 	glVertex3fv(data);
 }
 
-//===========================================================================
-// DG_Vertices2ftv
-//===========================================================================
 void DG_Vertices2ftv(int num, gl_ft2vertex_t * data)
 {
 	for(; num > 0; num--, data++)
@@ -246,9 +190,6 @@ void DG_Vertices2ftv(int num, gl_ft2vertex_t * data)
 	}
 }
 
-//===========================================================================
-// DG_Vertices3ftv
-//===========================================================================
 void DG_Vertices3ftv(int num, gl_ft3vertex_t * data)
 {
 	for(; num > 0; num--, data++)
@@ -258,9 +199,6 @@ void DG_Vertices3ftv(int num, gl_ft3vertex_t * data)
 	}
 }
 
-//===========================================================================
-// DG_Vertices3fctv
-//===========================================================================
 void DG_Vertices3fctv(int num, gl_fct3vertex_t * data)
 {
 	for(; num > 0; num--, data++)
@@ -271,14 +209,10 @@ void DG_Vertices3fctv(int num, gl_fct3vertex_t * data)
 	}
 }
 
-//===========================================================================
-// DG_Begin
-//===========================================================================
 void DG_Begin(int mode)
 {
 	if(mode == DGL_SEQUENCE)
-	{
-		// We don't need to worry about this.
+	{   // We don't need to worry about this.
 		return;
 	}
 
@@ -300,9 +234,6 @@ void DG_Begin(int mode)
 			DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);
 }
 
-//===========================================================================
-// DG_End
-//===========================================================================
 void DG_End(void)
 {
 	if(primLevel > 0)
@@ -317,12 +248,9 @@ void DG_End(void)
 #endif
 }
 
-//===========================================================================
-// DG_EnableArrays
-//===========================================================================
 void DG_EnableArrays(int vertices, int colors, int coords)
 {
-	int     i;
+	int         i;
 
 	if(vertices)
 	{
@@ -363,12 +291,9 @@ void DG_EnableArrays(int vertices, int colors, int coords)
 #endif
 }
 
-//===========================================================================
-// DG_DisableArrays
-//===========================================================================
 void DG_DisableArrays(int vertices, int colors, int coords)
 {
-	int     i;
+	int         i;
 
 	if(vertices)
 	{
@@ -410,14 +335,13 @@ void DG_DisableArrays(int vertices, int colors, int coords)
 #endif
 }
 
-//===========================================================================
-// DG_Arrays
-//  Enable, set and optionally lock all enabled arrays.
-//===========================================================================
+/**
+ * Enable, set and optionally lock all enabled arrays.
+ */
 void DG_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 			   int lock)
 {
-	int     i;
+	int         i;
 
 	if(vertices)
 	{
@@ -447,7 +371,7 @@ void DG_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 		}
 	}
 
-	for(i = 0; i < numCoords && i < MAX_TEX_UNITS; i++)
+	for(i = 0; i < numCoords && i < MAX_TEX_UNITS; ++i)
 	{
 		if(coords[i])
 		{
@@ -468,8 +392,7 @@ void DG_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 	}
 
 	if(!noArrays && lock > 0 && glLockArraysEXT)
-	{
-		// 'lock' is the number of vertices to lock.
+	{   // 'lock' is the number of vertices to lock.
 		glLockArraysEXT(0, lock);
 	}
 
@@ -478,9 +401,6 @@ void DG_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 #endif
 }
 
-//===========================================================================
-// DG_UnlockArrays
-//===========================================================================
 void DG_UnlockArrays(void)
 {
 	if(!noArrays && glUnlockArraysEXT)
@@ -493,9 +413,6 @@ void DG_UnlockArrays(void)
 #endif
 }
 
-//===========================================================================
-// DG_ArrayElement
-//===========================================================================
 void DG_ArrayElement(int index)
 {
 	if(!noArrays)
@@ -504,9 +421,9 @@ void DG_ArrayElement(int index)
 	}
 	else
 	{
-		int     i;
+		int         i;
 
-		for(i = 0; i < maxTexUnits && i < MAX_TEX_UNITS; i++)
+		for(i = 0; i < maxTexUnits && i < MAX_TEX_UNITS; ++i)
 		{
 			if(arrays[AR_TEXCOORD0 + i].enabled)
 			{
@@ -525,9 +442,6 @@ void DG_ArrayElement(int index)
 	}
 }
 
-//===========================================================================
-// DG_DrawElements
-//===========================================================================
 void DG_DrawElements(int type, int count, unsigned int *indices)
 {
 	GLenum  primType =
@@ -540,10 +454,10 @@ void DG_DrawElements(int type, int count, unsigned int *indices)
 	}
 	else
 	{
-		int     i;
+		int         i;
 
 		glBegin(primType);
-		for(i = 0; i < count; i++)
+		for(i = 0; i < count; ++i)
 		{
 			DG_ArrayElement(indices[i]);
 		}
