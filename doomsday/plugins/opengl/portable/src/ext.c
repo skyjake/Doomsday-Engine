@@ -78,56 +78,64 @@ PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
 /**
  * @return              Non-zero iff the extension string is found. This
- *                      function is based on Mark J. Kilgard's tutorials
- *                      about OpenGL extensions.
+ *                      function is based on the method used by David Blythe
+ *                      and Tom McReynolds in the book "Advanced Graphics
+ *                      Programming Using OpenGL" ISBN: 1-55860-659-9.
  */
-int queryExtension(const char *name)
+static int queryExtension(const char *name)
 {
-    const GLubyte *extensions = glGetString(GL_EXTENSIONS);
+    const GLubyte *extensions = NULL;
     const GLubyte *start;
-    GLubyte    *where, *terminator;
-
-    if(!extensions)
-        return false;
+    GLubyte    *c, *terminator;
 
     // Extension names should not have spaces.
-    where = (GLubyte *) strchr(name, ' ');
-    if(where || *name == '\0')
+    c = (GLubyte *) strchr(name, ' ');
+    if(c || *name == '\0')
         return false;
+
+    extensions = glGetString(GL_EXTENSIONS);
 
     // It takes a bit of care to be fool-proof about parsing the
     // OpenGL extensions string. Don't be fooled by sub-strings, etc.
     start = extensions;
-
     for(;;)
     {
-        where = (GLubyte *) strstr((const char *) start, name);
-        if(!where)
+        c = (GLubyte *) strstr((const char *) start, name);
+        if(!c)
             break;
 
-        terminator = where + strlen(name);
-        if(where == start || *(where - 1) == ' ')
+        terminator = c + strlen(name);
+        if(c == start || *(c - 1) == ' ')
             if(*terminator == ' ' || *terminator == '\0')
             {
                 return true;
             }
         start = terminator;
     }
+
     return false;
 }
 
-int query(const char *ext, int *var)
+static int query(const char *ext, int *var)
 {
-    if((*var = queryExtension(ext)) != DGL_FALSE)
+    int         result = DGL_FALSE;
+
+    if(ext)
     {
         Con_Message("Checking OpenGL extension: %s\n", ext);
-        return true;
+        result = (queryExtension(ext)? DGL_TRUE : DGL_FALSE);
+        if(var)
+            *var = result;
     }
 
-    return false;
+    return result;
 }
 
-void initExtensions(void)
+/**
+ * Pre: A rendering context must be aquired and made current before this is
+ * called.
+ */
+void DG_InitExtensions(void)
 {
     int         i;
 

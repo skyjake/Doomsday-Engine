@@ -103,12 +103,7 @@ int DG_ChangeVideoMode(int width, int height, int bpp)
     return DGL_TRUE;
 }
 
-/**
- * Attempt to create a context for GL rendering. 
- *
- * @return              Non-zero= success.
- */
-int initOpenGL(void)
+static int initOpenGL(void)
 {
     // Attempt to set the video mode.
     if(!DG_ChangeVideoMode(screenWidth, screenHeight, screenBits))
@@ -187,7 +182,7 @@ int DG_CreateContext(int width, int height, int bpp, int mode)
     // Check the maximum texture size.
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
 
-    initExtensions();
+    DG_InitExtensions();
 
     if(firstTimeInit)
     {

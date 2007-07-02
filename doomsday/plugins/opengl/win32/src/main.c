@@ -216,7 +216,7 @@ static void checkExtensions(void)
     // Check the maximum texture size.
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
 
-    initExtensions();
+    DG_InitExtensions();
 
     // Print some OpenGL information (console must be initialized by now).
     Con_Message("OpenGL information:\n");

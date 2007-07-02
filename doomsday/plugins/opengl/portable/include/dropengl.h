@@ -143,7 +143,7 @@ extern rgba_t   palette[256];
 extern int      usePalTex, dumpTextures, useCompr;
 extern float    grayMipmapFactor;
 
-int             Power2(int num);
+int             DG_Power2(int num);
 int             enablePalTexExt(int enable);
 DGLuint         DG_NewTexture(void);
 int             DG_TexImage(int format, int width, int height, int mipmap,
@@ -179,6 +179,6 @@ extern int      extGenMip;
 extern int      extBlendSub;
 extern int      extS3TC;
 
-void            initExtensions(void);
+void            DG_InitExtensions(void);
 
 #endif
