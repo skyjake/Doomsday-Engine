@@ -77,6 +77,9 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		Imp(Init);
 		Imp(Shutdown);
+        Imp(ChangeVideoMode);
+        Imp(CreateContext);
+        Imp(DestroyContext);
 
 		// Viewport.
 		Imp(Clear);
@@ -153,7 +156,7 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		Imp(Fog);
 		Imp(Fogv);
 		Imp(Project);
-		Imp(ReadPixels);
+//		Imp(ReadPixels);
 
 		break;
 
@@ -223,9 +226,24 @@ void out(int messageLevel, const char *format, ...)
 	out(1, #name": %i", result); \
 	return result;
 
-int DG_Init(int width, int height, int bpp, int mode)
+int DG_Init(void)
 {
-	INT4_INT(Init, width, height, bpp, mode);
+    SIMPLE(Init);
+}
+
+int DG_ChangeVideoMode(int width, int height, int bpp)
+{
+    INT3_INT(ChangeVideoMode, width, height, bpp);
+}
+
+int DG_CreateContext(int width, int height, int bpp, int mode)
+{
+	INT4_INT(CreateContext, width, height, bpp, mode);
+}
+
+void DG_DestroyContext(void)
+{
+    SIMPLE(DestroyContext);
 }
 
 void DG_Shutdown(void)
@@ -415,10 +433,12 @@ int DG_Project(int num, gl_fc3vertex_t * inVertices,
 	return gl.Project(num, inVertices, outVertices);
 }
 
+#if 0 // Currently unused.
 int DG_ReadPixels(int *inData, int format, void *pixels)
 {
 	return gl.ReadPixels(inData, format, pixels);
 }
+#endif
 
 void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
