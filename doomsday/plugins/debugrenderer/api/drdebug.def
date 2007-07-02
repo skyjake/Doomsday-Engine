@@ -5,6 +5,9 @@ LIBRARY			DRDEBUG
 EXPORTS
 	DG_Init
 	DG_Shutdown
+	DG_ChangeVideoMode
+	DG_CreateContext
+	DG_DestroyContext
 	DG_Clear
 	DG_Show
 	DG_Viewport
@@ -65,6 +68,6 @@ EXPORTS
 	DG_Fog
 	DG_Fogv
 	DG_Project
-	DG_ReadPixels 
+;	DG_ReadPixels 
 
 	
