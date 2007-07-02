@@ -71,11 +71,16 @@ static volatile int reservedCount = 0;
 
 static volatile deferred_t* deferredContentFirst = NULL;
 static volatile deferred_t* deferredContentLast = NULL;
+static boolean deferredInited = false;
 
 // CODE --------------------------------------------------------------------
 
 void GL_InitDeferred(void)
 {
+    if(deferredInited)
+        return; // Been here already...
+
+    deferredInited = true;
     deferredMutex = Sys_CreateMutex("DGLDeferredMutex");
     GL_ReserveNames();
 }
@@ -83,12 +88,15 @@ void GL_InitDeferred(void)
 void GL_ShutdownDeferred(void)
 {
     deferred_t *d;
-    
+
+    if(!deferredInited)
+        return;
+
     while((d = GL_GetNextDeferred()) != NULL)
     {    
         GL_DestroyDeferred(d);
     }
-    
+
     Sys_DestroyMutex(deferredMutex);
     deferredMutex = 0;
     reservedCount = 0;
@@ -96,9 +104,12 @@ void GL_ShutdownDeferred(void)
 
 int GL_GetDeferredCount(void)
 {
-    int count = 0;
+    int         count = 0;
     deferred_t* i = 0;
     
+    if(!deferredInited)
+        return 0;
+
     Sys_Lock(deferredMutex);
     for(i = (deferred_t*) deferredContentFirst; i; i = i->next, ++count);
     Sys_Unlock(deferredMutex);
@@ -108,12 +119,16 @@ int GL_GetDeferredCount(void)
 deferred_t* GL_GetNextDeferred(void)
 {
     deferred_t* d = NULL;
-    
+
+    if(!deferredInited)
+        return NULL;
+
     Sys_Lock(deferredMutex);
     if((d = (deferred_t*) deferredContentFirst) != NULL)
     {
         deferredContentFirst = d->next;
     }
+
     if(!deferredContentFirst) deferredContentLast = NULL;
     Sys_Unlock(deferredMutex);
     return d;
@@ -127,8 +142,11 @@ void GL_DestroyDeferred(deferred_t* d)
 
 void GL_ReserveNames(void)
 {
-    int i;
-    
+    int         i;
+
+    if(!deferredInited)
+        return; // Just ignore.
+
     Sys_Lock(deferredMutex);
     for(i = reservedCount; i < NUM_RESERVED_NAMES; ++i)
     {
@@ -140,8 +158,11 @@ void GL_ReserveNames(void)
 
 DGLuint GL_GetReservedName(void)
 {
-    DGLuint name;
-    
+    DGLuint     name;
+
+    if(!deferredInited) 
+        Con_Error("GL_GetReserved: Deferred GL task system not initialized.");
+
     Sys_Lock(deferredMutex);
     
     if(!reservedCount)
@@ -180,7 +201,7 @@ void GL_InitTextureContent(texturecontent_t *content)
 
 void GL_UploadTextureContent(texturecontent_t* content)
 {
-    int result = 0;
+    int         result = 0;
     
     if(content->flags & TXCF_EASY_UPLOAD)
     {
@@ -334,7 +355,12 @@ DGLuint GL_NewTextureWithParams2(int format, int width, int height, void* pixels
 void GL_UploadDeferredContent(uint timeOutMilliSeconds)
 {
     deferred_t *d;
-    uint startTime = Sys_GetRealTime();
+    uint        startTime;
+
+    if(!deferredInited)
+        Con_Error("GL_UploadDeferredContent: Deferred GL task system not initialized.");
+
+    startTime = Sys_GetRealTime();
     
     // We'll reserve names multiple times, because the worker thread may be needing
     // new texture names while we are uploading.

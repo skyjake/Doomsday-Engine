@@ -2249,7 +2249,8 @@ void R_InitLevel(char *level_id)
     // Initialize the lighting grid.
     LG_Init();
 
-    R_InitRendPolyPool();
+    if(!isDedicated)
+        R_InitRendPolyPool();
 
     //Con_Progress(10, 0);        // 50%.
 }

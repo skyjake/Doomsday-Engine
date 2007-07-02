@@ -124,7 +124,7 @@ int Con_Busy(int flags, busyworkerfunc_t worker, void *workerData)
     busyInited = false;
     
     // Make sure that any remaining deferred content gets uploaded.
-    if(!(busyMode & BUSYF_NO_UPLOADS))
+    if(!(isDedicated || (busyMode & BUSYF_NO_UPLOADS)))
     {
         GL_UploadDeferredContent(0);
     }
@@ -163,6 +163,9 @@ boolean Con_IsBusy(void)
 static void Con_BusyLoadTextures(void)
 {
     image_t image;
+
+    if(isDedicated)
+        return;
 
     if(!(busyMode & BUSYF_STARTUP))
     {
@@ -219,6 +222,9 @@ static void Con_BusyLoadTextures(void)
 
 static void Con_BusyDeleteTextures(void)
 {
+    if(isDedicated)
+        return;
+
     // Destroy the font.
     if(busyFont)
     {
@@ -288,14 +294,18 @@ void Con_ReleaseScreenshotTexture(void)
 static void Con_BusyLoop(void)
 {
     int         winWidth, winHeight;
-    boolean     canDraw;
+    boolean     canDraw = false;
+    boolean     canUpload = !(isDedicated || (busyMode & BUSYF_NO_UPLOADS));
     timespan_t startTime = Sys_GetRealSeconds();
 
-    if(true ==
-       (canDraw = DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
-                                         &winHeight)))
+    if(!isDedicated)
     {
-        Con_Message("Con_BusyLoop: Failed retrieving window dimensions.");
+        if(true == (canDraw =
+            DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
+                                             &winHeight)))
+        {
+            Con_Message("Con_BusyLoop: Failed retrieving window dimensions.");
+        }
     }
 
     if(canDraw)
@@ -306,12 +316,12 @@ static void Con_BusyLoop(void)
         gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
     }
     
-    while(!busyDone || (!(busyMode & BUSYF_NO_UPLOADS) && GL_GetDeferredCount() > 0))
+    while(!busyDone || (canUpload && GL_GetDeferredCount() > 0))
     {
         Sys_Sleep(20);
         
         // Make sure that any deferred content gets uploaded.
-        if(!(busyMode & BUSYF_NO_UPLOADS))
+        if(canUpload)
         {
             GL_UploadDeferredContent(15);
         }

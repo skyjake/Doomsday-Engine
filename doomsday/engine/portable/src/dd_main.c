@@ -414,7 +414,12 @@ int DD_Main(void)
     Con_Init();
     Con_Message("Con_Init: Initializing the console.\n");
 
-    //SW_Shutdown();              // The message window can be closed.
+    if(ArgCheck("-dedicated"))
+    {
+        isDedicated = true;
+        Sys_ConInit();
+    }
+
     if(!isDedicated)
     {
         if(!GL_EarlyInit())
@@ -508,13 +513,6 @@ static int DD_StartupWorker(void *parm)
     Zip_Init();
 
     Def_Init();
-
-    if(ArgCheck("-dedicated"))
-    {
-        //SW_Shutdown();
-        isDedicated = true;
-        Sys_ConInit();
-    }
 
     autostart = false;
     shareware = false;          // Always false for Hexen

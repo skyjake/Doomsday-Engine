@@ -86,21 +86,22 @@ static destroyDDWindow(ddwindow_t *win);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint            windowIDX;   // Main window.
+uint windowIDX = 0; // Main window.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 application_t app;
-static ddwindow_t *mainWindow;
+static uint numWindows = 0;
+static ddwindow_t **windows = NULL;
 
 // CODE --------------------------------------------------------------------
 
 static ddwindow_t *getWindow(uint idx)
 {
-    if(idx != 0)
+    if(idx >= numWindows)
         return NULL;
 
-    return mainWindow;
+    return windows[idx];
 }
 
 BOOL InitApplication(application_t *app)
@@ -130,9 +131,9 @@ BOOL InitApplication(application_t *app)
     return RegisterClassEx(&wcex);
 }
 
-uint DD_CreateWindow(application_t *app, uint parentIDX,
-                     int x, int y, int w, int h, int bpp, int flags,
-                     const char *title, int cmdShow)
+static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
+                                  int x, int y, int w, int h, int bpp,
+                                  int flags, const char *title, int cmdShow)
 {
     ddwindow_t *win, *pWin = NULL;
     HWND        phWnd = NULL;
@@ -264,11 +265,41 @@ uint DD_CreateWindow(application_t *app, uint parentIDX,
     if(!ok)
     {   // Damn, something went wrong... clean up.
         destroyDDWindow(win);
-        return 0;
+        return NULL;
     }
 
-    mainWindow = win;
-    return 1;
+    return win;
+}
+
+uint DD_CreateWindow(application_t *app, uint parentIDX,
+                     int x, int y, int w, int h, int bpp, int flags,
+                     const char *title, int cmdShow)
+{
+    ddwindow_t *win =
+        createDDWindow(app, parentIDX, x, y, w, h, bpp, flags, title, cmdShow);
+
+    if(win)
+    {   // Success, link it in.
+        uint        i = 0;
+        ddwindow_t **newList = malloc(sizeof(ddwindow_t*) * ++numWindows);
+
+        // Copy the existing list?
+        if(windows)
+        {
+            for(; i < numWindows - 1; ++i)
+                newList[i] = windows[i];
+        }
+
+        // Add the new one to the end.
+        newList[i] = win;
+
+        // Replace the list.
+        if(windows)
+            free(windows); // Free windows? har, har.
+        windows = newList;
+    }
+
+    return numWindows; // index + 1.
 }
 
 static destroyDDWindow(ddwindow_t *window)
@@ -299,10 +330,7 @@ boolean DD_DestroyWindow(uint idx)
         return false;
 
     destroyDDWindow(window);
-
-    if(idx == windowIDX)
-        windowIDX = 0;
-
+    windows[idx-1] = NULL;
     return true;
 }
 
@@ -716,7 +744,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         {
             DD_ErrorBox(true, "Error initializing memory zone.");
         }
-        else if(0 == (windowIDX = 
+        else if(0 == (windowIDX =
                 DD_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, nCmdShow)))
         {
             DD_ErrorBox(true, "Error creating main window.");
@@ -748,9 +776,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         exitCode = -1;
     }
     }
-#endif  
+#endif
 
-    DD_DestroyWindow(windowIDX);
+    // Destroy all created windows.
+    if(windows)
+    {
+        uint        i;
+
+        for(i = 0; i < numWindows; ++i)
+        {
+            DD_DestroyWindow(i+1);
+        }
+
+        free(windows);
+        windows = NULL;
+    }
 
     // No more use of COM beyond this point.
     CoUninitialize();
