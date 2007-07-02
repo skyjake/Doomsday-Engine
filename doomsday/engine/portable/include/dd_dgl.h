@@ -122,7 +122,7 @@ typedef struct dgldriver_s {
     void            (*Fogv) (int pname, void *data);
     int             (*Project) (int num, gl_fc3vertex_t * inVertices,
                                 gl_fc3vertex_t * outVertices);
-    int             (*ReadPixels) (int *inData, int format, void *pixels);
+//    int             (*ReadPixels) (int *inData, int format, void *pixels);
 } dgldriver_t;
 
 extern dgldriver_t __gl;

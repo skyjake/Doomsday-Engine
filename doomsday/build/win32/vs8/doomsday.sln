@@ -26,6 +26,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WolfTC", "WolfTC.vcproj", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dsA3D", "dsA3D.vcproj", "{872D3583-05F8-407F-BFAC-111C839845C7}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "drDebug", "drdebug.vcproj", "{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -111,6 +113,12 @@ Global
 		{872D3583-05F8-407F-BFAC-111C839845C7}.Mesa Release|Win32.Build.0 = Release|Win32
 		{872D3583-05F8-407F-BFAC-111C839845C7}.Release|Win32.ActiveCfg = Release|Win32
 		{872D3583-05F8-407F-BFAC-111C839845C7}.Release|Win32.Build.0 = Release|Win32
+		{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}.Debug|Win32.Build.0 = Debug|Win32
+		{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}.Mesa Release|Win32.ActiveCfg = Mesa Release|Win32
+		{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}.Mesa Release|Win32.Build.0 = Mesa Release|Win32
+		{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}.Release|Win32.ActiveCfg = Release|Win32
+		{FAD44EAA-44F7-42C1-BCD8-93059C60BDE0}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

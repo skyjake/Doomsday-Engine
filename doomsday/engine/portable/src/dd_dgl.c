@@ -161,7 +161,7 @@ DEF_1(int, Bind, DGLuint)
 DEF_2(int, GetIntegerv, int, int*)
 DEF_2(int, SetInteger, int, int)
 DEF_2(int, SetFloatv, int, float*)
-DEF_3(int, ReadPixels, int*, int, void*)
+// DEF_3(int, ReadPixels, int*, int, void*)
 DEF_3(int, Project, int, gl_fc3vertex_t*, gl_fc3vertex_t*)
 DEF_3(int, ChangeVideoMode, int, int, int)
 DEF_4(int, CreateContext, int, int, int, int)
@@ -242,7 +242,7 @@ void DD_RouteAPI(void)
     ROUTE(Fog);
     ROUTE(Fogv);
     ROUTE(Project);
-    ROUTE(ReadPixels);
+//    ROUTE(ReadPixels);
 #undef ROUTE
 #endif
 }
@@ -334,7 +334,7 @@ int DD_InitDGLDriver(void)
     Req(Fog);
     Req(Fogv);
     Req(Project);
-    Req(ReadPixels);
+//    Req(ReadPixels);
 
     DD_RouteAPI();
     

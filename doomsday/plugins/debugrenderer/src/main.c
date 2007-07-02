@@ -33,7 +33,7 @@
 #include <stdarg.h>
 
 #include "doomsday.h"
-#include "dd_dgl.h"
+#include "..\..\..\engine\portable\include\dd_dgl.h"
 
 /* 
  * This macro is used to import all the exported functions from the 
@@ -48,7 +48,7 @@ int     level;					// Debug message level.
 /*
  * Entry point of the DLL.
  */
-BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL __stdcall DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	const char *dglFileName = "drOpenGL.dll";
 
@@ -205,6 +205,12 @@ void out(int messageLevel, const char *format, ...)
  */
 
 #define SIMPLE(name)	in(1, #name); gl.name(); out(1, #name);
+#define VOID_INT(name) \
+	int result;	\
+	in(1, #name); \
+	result = gl.name(); \
+	out(1, #name": %i", result); \
+	return result;
 #define INT1_VOID(name, a) \
 	in(1, #name" (%i)", a); \
 	gl.name(a); \
@@ -215,6 +221,12 @@ void out(int messageLevel, const char *format, ...)
 	result = gl.name(a); \
 	out(1, #name": %i", result); \
 	return result;
+#define INT3_INT(name, a, b, c) \
+	int result;	\
+	in(1, #name" (%i, %i, %i)", a, b, c); \
+	result = gl.name(a, b, c); \
+	out(1, #name": %i", result); \
+    return result;
 #define INT4_VOID(name, a, b, c, d) \
 	in(1, #name" (%i, %i, %i, %i)", a, b, c, d); \
 	gl.name(a, b, c, d); \
@@ -228,7 +240,7 @@ void out(int messageLevel, const char *format, ...)
 
 int DG_Init(void)
 {
-    SIMPLE(Init);
+    VOID_INT(Init);
 }
 
 int DG_ChangeVideoMode(int width, int height, int bpp)
