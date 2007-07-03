@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -118,7 +118,6 @@ void Sys_ConPostEvents(void)
     ReadConsoleInput(hcInput, rec, MAXRECS, &read);
     for(ptr = rec; read > 0; read--, ptr++)
     {
-//Con_Message("Sys_ConPostEvents\n");
         if(ptr->EventType != KEY_EVENT)
             continue;
 
@@ -133,13 +132,12 @@ void Sys_ConPostEvents(void)
             ev.controlID = DD_ScanToKey(key->wVirtualScanCode);
         ev.isAxis = false;
         ev.noclass = true;
-        ev.useclass = 0; // initialize with something
+        ev.useclass = 0; // Initialize with something.
         DD_PostEvent(&ev);
-//Con_Message("Sys_ConPostEvents: Done\n");
     }
 }
 
-void Sys_ConSetCursor(int x, int y)
+static void setCursor(int x, int y)
 {
     COORD       pos;
 
@@ -148,7 +146,7 @@ void Sys_ConSetCursor(int x, int y)
     SetConsoleCursorPosition(hcScreen, pos);
 }
 
-void Sys_ConScrollLine(void)
+static void scrollLine(void)
 {
     SMALL_RECT  src;
     COORD       dest;
@@ -165,7 +163,7 @@ void Sys_ConScrollLine(void)
     ScrollConsoleScreenBuffer(hcScreen, &src, NULL, dest, &fill);
 }
 
-void Sys_ConSetAttrib(int flags)
+static void setAttrib(int flags)
 {
     attrib = 0;
     if(flags & CBLF_WHITE)
@@ -192,10 +190,10 @@ void Sys_ConSetAttrib(int flags)
 /**
  * Writes the text at the (cx,cy).
  */
-void Sys_ConWriteText(CHAR_INFO * line, int len)
+static void writeText(CHAR_INFO *line, int len)
 {
-    COORD       linesize = { len, 1 };
-    COORD       from = { 0, 0 };
+    COORD       linesize = {len, 1};
+    COORD       from = {0, 0};
     SMALL_RECT  rect;
 
     rect.Left = cx;
@@ -212,19 +210,19 @@ void Sys_ConPrint(int clflags, char *text)
     char       *ptr = text, ch;
 
     if(needNewLine)
-    {
-        // Need to make some room.
+    {   // Need to make some room.
         cx = 0;
         cy++;
         if(cy == cbInfo.dwSize.Y - 1)
         {
             cy--;
-            Sys_ConScrollLine();
+            scrollLine();
         }
         needNewLine = false;
     }
+
     bpos = linestart = cx;
-    Sys_ConSetAttrib(clflags);
+    setAttrib(clflags);
     for(; count > 0; count--, ptr++)
     {
         ch = *ptr;
@@ -238,29 +236,32 @@ void Sys_ConPrint(int clflags, char *text)
         // Time for newline?
         if(ch == '\n' || bpos == LINELEN)
         {
-            Sys_ConWriteText(line + linestart, bpos - linestart);
+            writeText(line + linestart, bpos - linestart);
             cx += bpos - linestart;
             bpos = 0;
             linestart = 0;
-            if(count > 1) // Not the last character?
-            {
+            if(count > 1)
+            {   // Not the last character.
                 needNewLine = false;
                 cx = 0;
                 cy++;
                 if(cy == cbInfo.dwSize.Y - 1)
                 {
-                    Sys_ConScrollLine();
+                    scrollLine();
                     cy--;
                 }
             }
             else
+            {
                 needNewLine = true;
+            }
         }
     }
-    // Something in the buffer?
+
+    // Something left in the buffer?
     if(bpos - linestart)
     {
-        Sys_ConWriteText(line + linestart, bpos - linestart);
+        writeText(line + linestart, bpos - linestart);
         cx += bpos - linestart;
     }
 }
@@ -269,8 +270,8 @@ void Sys_ConUpdateCmdLine(char *text)
 {
     CHAR_INFO   line[LINELEN], *ch;
     unsigned int i;
-    COORD       linesize = { LINELEN, 1 };
-    COORD       from = { 0, 0 };
+    COORD       linesize = {LINELEN, 1};
+    COORD       from = {0, 0};
     SMALL_RECT  rect;
 
     line[0].Char.AsciiChar = '>';
@@ -281,6 +282,7 @@ void Sys_ConUpdateCmdLine(char *text)
             ch->Char.AsciiChar = text[i];
         else
             ch->Char.AsciiChar = ' ';
+
         // Gray color.
         ch->Attributes = CMDLINE_ATTRIB;
     }
@@ -290,5 +292,5 @@ void Sys_ConUpdateCmdLine(char *text)
     rect.Top = cbInfo.dwSize.Y - 1;
     rect.Bottom = cbInfo.dwSize.Y - 1;
     WriteConsoleOutput(hcScreen, line, linesize, from, &rect);
-    Sys_ConSetCursor(strlen(text) + 1, cbInfo.dwSize.Y - 1);
+    setCursor(strlen(text) + 1, cbInfo.dwSize.Y - 1);
 }
