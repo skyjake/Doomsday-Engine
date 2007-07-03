@@ -58,15 +58,17 @@
 
 #define MAINWCLASS _T("DoomsdayMainWClass")
 
-#define WINDOWEDSTYLE (WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | \
-                       WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
+#define WINDOWEDSTYLE (WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | \
+                       WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
 #define FULLSCREENSTYLE (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
     HWND            hWnd;       // Window handle.
-
+    boolean         inited;     // True if the window has been initialized.
+                                // i.e. DD_SetWindow() has been called at
+                                // least once for this window.
     int             flags;
     int             x, y, width, height;
     int             bpp;
@@ -344,6 +346,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     boolean         changeVideoMode = false;
     boolean         changeWindowDimensions = false;
     boolean         noMove = (uFlags & DDSW_NOMOVE);
+    boolean         noSize = (uFlags & DDSW_NOSIZE);
     boolean         inControlPanel;
 
     // Window paramaters are not changeable in dedicated mode.
@@ -361,6 +364,11 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     height = window->height;
     bpp = window->bpp;
     flags = window->flags;
+    // Force update on init?
+    if(!window->inited)
+    {
+        newGLContext = updateStyle = true;
+    }
 
     inControlPanel = UI_IsActive();
 
@@ -431,16 +439,6 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
         }
     }
 
-    if(!(flags & DDWF_FULLSCREEN))
-    {
-        // Are we in range here?
-        if(width > GetSystemMetrics(SM_CXSCREEN))
-            width = GetSystemMetrics(SM_CXSCREEN);
-
-        if(height > GetSystemMetrics(SM_CYSCREEN))
-            height = GetSystemMetrics(SM_CYSCREEN);
-    }
-
     // Change window position?
     if(flags & DDWF_FULLSCREEN)
     {
@@ -462,6 +460,13 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
             x = newX;
             y = newY;
         }
+
+        // Are we in range here?
+        if(width > GetSystemMetrics(SM_CXSCREEN))
+            width = GetSystemMetrics(SM_CXSCREEN);
+
+        if(height > GetSystemMetrics(SM_CYSCREEN))
+            height = GetSystemMetrics(SM_CYSCREEN);
     }
 
     // Change visibility?
@@ -475,6 +480,18 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     if(!(flags & DDWF_VISIBLE))
         ShowWindow(hWnd, SW_HIDE);
 
+    // Update the current values.
+    window->x = x;
+    window->y = y;
+    window->width = width;
+    window->height = height;
+    window->bpp = bpp;
+    window->flags = flags;
+    if(!window->inited)
+        window->inited = true;
+
+    // Do NOT modify ddwindow_t properties after this point.
+
     if(updateStyle)
     {   // We need to request changes to the window style.
         LONG    style;
@@ -487,21 +504,27 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
         SetWindowLong(hWnd, GWL_STYLE, style);
     }
 
+    if(!(flags & DDWF_FULLSCREEN))
+    {   // We need to have a large enough client area.
+        RECT        rect;
+
+        rect.left = x;
+        rect.top = y;
+        rect.right = x + width;
+        rect.bottom = y + height;
+        AdjustWindowRect(&rect, WINDOWEDSTYLE, FALSE);
+        width = rect.right - rect.left;
+        height = rect.bottom - rect.top;
+        noSize = false;
+    }
+
     // Make it so.
     SetWindowPos(hWnd, HWND_TOP,
                  x, y, width, height,
-                 ((uFlags & DDSW_NOSIZE)? SWP_NOSIZE : 0) |
+                 (noSize? SWP_NOSIZE : 0) |
                  (noMove? SWP_NOMOVE : 0) |
                  (updateStyle? SWP_FRAMECHANGED : 0) |
                  SWP_NOZORDER | SWP_NOCOPYBITS | SWP_NOACTIVATE);
-
-    // Update the current values.
-    window->x = x;
-    window->y = y;
-    window->width = width;
-    window->height = height;
-    window->bpp = bpp;
-    window->flags = flags;
 
     // Do we need a new GL context due to changes to the window?
     if(!novideo && newGLContext)
@@ -517,8 +540,8 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
             gl.DestroyContext();
         }
 
-        gl.CreateContext(width, height, bpp,
-                         (flags & DDWF_FULLSCREEN)? DGL_MODE_FULLSCREEN : DGL_MODE_WINDOW,
+        gl.CreateContext(window->width, window->height, window->bpp,
+                         (window->flags & DDWF_FULLSCREEN)? DGL_MODE_FULLSCREEN : DGL_MODE_WINDOW,
                          window->hWnd);
 
         if(glIsInited)
@@ -529,6 +552,8 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
         }
     }
 
+    // If the window dimensions have changed, update any sub-systems
+    // which need to respond.
     if(changeWindowDimensions)
     {
         if(inControlPanel) // Reactivate the panel?
@@ -768,17 +793,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         // Fire up the engine. The game loop will also act as the message pump.
         exitCode = DD_Main();
     }
-
-#if _DEBUG
-    {
-    ddwindow_t *win = getWindow(windowIDX-1);
-    if(!ReleaseDC(win->hWnd, GetDC(win->hWnd)))
-    {
-        DD_ErrorBox(true, "Error someone destroyed the main window before us!");
-        exitCode = -1;
-    }
-    }
-#endif
 
     // Destroy all created windows.
     if(windows)
