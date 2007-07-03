@@ -248,9 +248,15 @@ int DG_ChangeVideoMode(int width, int height, int bpp)
     INT3_INT(ChangeVideoMode, width, height, bpp);
 }
 
-int DG_CreateContext(int width, int height, int bpp, int mode)
+int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
 {
-	INT4_INT(CreateContext, width, height, bpp, mode);
+	int     result;
+
+    in(1, "CreateContext (%i, %i, %i, %i, %s)",
+       width, height, bpp, mode, (data? "NOT NULL" : "NULL"));
+	result = gl.CreateContext(width, height, bpp, mode, data);
+	out(1, "CreateContext: %i", result);
+	return result;
 }
 
 void DG_DestroyContext(void)

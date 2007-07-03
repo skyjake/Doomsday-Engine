@@ -164,7 +164,7 @@ DEF_2(int, SetFloatv, int, float*)
 // DEF_3(int, ReadPixels, int*, int, void*)
 DEF_3(int, Project, int, gl_fc3vertex_t*, gl_fc3vertex_t*)
 DEF_3(int, ChangeVideoMode, int, int, int)
-DEF_4(int, CreateContext, int, int, int, int)
+DEF_5(int, CreateContext, int, int, int, int, void*)
 DEF_5(int, TexImage, int, int, int, int, void*)
 DEF_6(int, Grab, int, int, int, int, int, void*)
 

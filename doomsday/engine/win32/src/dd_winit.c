@@ -80,7 +80,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static destroyDDWindow(ddwindow_t *win);
+static void destroyDDWindow(ddwindow_t *win);
+static boolean setDDWindow(ddwindow_t *win, int newX, int newY, int newWidth,
+                           int newHeight, int newBPP, uint wFlags,
+                           uint uFlags);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -154,7 +157,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
 
     // Allocate a structure to wrap the various handles and state variables
     // used with this window.
-    if((win = (ddwindow_t*) malloc(sizeof(ddwindow_t))) == NULL)
+    if((win = (ddwindow_t*) calloc(1, sizeof(ddwindow_t))) == NULL)
         return 0;
 
     // Create the window.
@@ -251,12 +254,8 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
         if(hDC)
             ReleaseDC(win->hWnd, hDC);
 
-        win->flags = flags;
-        win->x = x;
-        win->y = y;
-        win->width = w;
-        win->height = h;
-        win->bpp = bpp;
+        setDDWindow(win, x, y, w, h, bpp, flags,
+                    DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
 
         // Ensure new windows are hidden on creation.
         ShowWindow(win->hWnd, SW_HIDE);
@@ -302,7 +301,7 @@ uint DD_CreateWindow(application_t *app, uint parentIDX,
     return numWindows; // index + 1.
 }
 
-static destroyDDWindow(ddwindow_t *window)
+static void destroyDDWindow(ddwindow_t *window)
 {
     if(window->flags & DDWF_FULLSCREEN)
     {   // Change back to the desktop before doing anything further to try
@@ -334,8 +333,9 @@ boolean DD_DestroyWindow(uint idx)
     return true;
 }
 
-boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
-                     int newBPP, uint wFlags, uint uFlags)
+static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
+                           int newWidth, int newHeight, int newBPP,
+                           uint wFlags, uint uFlags)
 {
     int             x, y, width, height, bpp, flags;
     HWND            hWnd;
@@ -354,11 +354,6 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
         return true; // Nothing to do.
 
     // Grab the current values.
-    {
-    ddwindow_t *window = getWindow(idx - 1);
-    if(!window)
-        return false;
-
     hWnd = window->hWnd;
     x = window->x;
     y = window->y;
@@ -366,7 +361,7 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
     height = window->height;
     bpp = window->bpp;
     flags = window->flags;
-    }
+
     inControlPanel = UI_IsActive();
 
     // Change auto window centering?
@@ -501,20 +496,12 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
                  SWP_NOZORDER | SWP_NOCOPYBITS | SWP_NOACTIVATE);
 
     // Update the current values.
-    {
-    ddwindow_t *window = getWindow(idx - 1);
-    if(!window)
-    {   // Now this IS a serious error, window gone missing?
-        return false;
-    }
-
     window->x = x;
     window->y = y;
     window->width = width;
     window->height = height;
     window->bpp = bpp;
     window->flags = flags;
-    }
 
     // Do we need a new GL context due to changes to the window?
     if(!novideo && newGLContext)
@@ -531,7 +518,8 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
         }
 
         gl.CreateContext(width, height, bpp,
-                         (flags & DDWF_FULLSCREEN)? DGL_MODE_FULLSCREEN : DGL_MODE_WINDOW);
+                         (flags & DDWF_FULLSCREEN)? DGL_MODE_FULLSCREEN : DGL_MODE_WINDOW,
+                         window->hWnd);
 
         if(glIsInited)
         {
@@ -549,9 +537,23 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
 
     // Show the hidden window?
     if(flags & DDWF_VISIBLE)
+    {
         ShowWindow(hWnd, SW_SHOW);
+        UpdateWindow(hWnd);
+    }
 
     return true;
+}
+
+boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
+                     int newBPP, uint wFlags, uint uFlags)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(window)
+        return setDDWindow(window, newX, newY, newWidth, newHeight, newBPP,
+                           wFlags, uFlags);
+    return false;
 }
 
 boolean DD_GetWindowDimensions(uint idx, int *x, int *y, int *width, int *height)

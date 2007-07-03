@@ -290,19 +290,20 @@ static void checkExtensions(void)
  * @param height        Height of the OGL window.
  * @param bpp           0= the current display color depth is used.
  * @param mode          Either DGL_MODE_WINDOW or DGL_MODE_FULLSCREEN.
+ * @param data          Ptr to system-specific data, e.g a window handle or
+ *                      similar.
  *
  * @return              <code>DGL_OK</code>= success.
  */
-int DG_CreateContext(int width, int height, int bpp, int mode)
+int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
 {
-    HWND        hWnd;
+    HWND        hWnd = (HWND) data;
     HDC         hdc;
     boolean     fullscreen = (mode == DGL_MODE_FULLSCREEN);
     boolean     ok = DGL_OK;
 
     Con_Message("drOpenGL.CreateContext: OpenGL.\n");
 
-    hWnd = (HWND) DD_GetVariable(DD_WINDOW_HANDLE);
     hdc = GetDC(hWnd);
     if(!hdc)
     {

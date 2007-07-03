@@ -39,7 +39,7 @@ typedef struct dgldriver_s {
     int             (*Init) (void);
     void            (*Shutdown) (void);
     int             (*ChangeVideoMode) (int width, int height, int bpp);
-    int             (*CreateContext) (int width, int height, int bpp, int mode);
+    int             (*CreateContext) (int width, int height, int bpp, int mode, void *data);
     void            (*DestroyContext) (void);
 
     // Viewport.
