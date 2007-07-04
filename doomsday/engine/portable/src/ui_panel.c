@@ -277,6 +277,7 @@ uidata_slider_t sld_detail_strength =
 uidata_slider_t sld_detail_far =
     { 1, 1000, 0, 1, true, "rend-tex-detail-far" };
 uidata_slider_t sld_tex_quality = { 0, 8, 0, 1, false, "rend-tex-quality" };
+uidata_slider_t sld_tex_aniso = { -1, 4, 0, 1, false, "rend-tex-filter-anisotropic", "Best Available"};
 uidata_slider_t sld_light_bright =
     { 0, 1, 0, .01f, true, "rend-light-bright" };
 uidata_slider_t sld_light_scale =
@@ -533,12 +534,14 @@ ui_object_t ob_panel[] =
     { UI_BUTTON2,   0,  0,              680, 370, 95, 55,   "rend-tex-filter-sprite", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_BUTTON2,   0,  0,              780, 370, 95, 55,   "rend-tex-filter-mag", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_BUTTON2,   0,  0,              880, 370, 95, 55,   "rend-tex-filter-raw", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Enable detail textures", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 430, 70, 55,   "rend-tex-detail", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Detail texture scaling factor", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 490, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_scale },
-    { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Detail texture contrast", UIText_Drawer },
-    { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
+    { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Anisotropic filtering", UIText_Drawer },
+    { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 430, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_tex_aniso },
+    { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Enable detail textures", UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 490, 70, 55,   "rend-tex-detail", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Detail texture scaling factor", UIText_Drawer },
+    { UI_SLIDER,    0,  0,              680, 550, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_scale },
+    { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Detail texture contrast", UIText_Drawer },
+    { UI_SLIDER,    0,  0,              680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_detail_strength },
 
     { UI_META,      10 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Graphics Options: Objects", UIText_BrightDrawer },
@@ -739,16 +742,22 @@ void CP_CvarSlider(ui_object_t *ob)
 {
     uidata_slider_t *slid = ob->data;
     cvar_t     *var = Con_GetVariable(slid->data);
+    float       value = slid->value;
 
     if(!var)
         return;
 
+    if(!slid->floatmode)
+    {
+        value += (slid->value < 0? -.5f : .5f);
+    }
+
     if(var->type == CVT_FLOAT)
-        Con_SetFloat(var->name, (int) (100 * slid->value + .5f) / 100.0f, true);
+        Con_SetFloat(var->name, (int) (100 * value) / 100.0f, true);
     else if(var->type == CVT_INT)
-        Con_SetInteger(var->name, (int) (slid->value + 0.5f), true);
+        Con_SetInteger(var->name, (int) value, true);
     else if(var->type == CVT_BYTE)
-        Con_SetInteger(var->name, (byte) (slid->value + 0.5f), true);
+        Con_SetInteger(var->name, (byte) value, true);
 }
 
 int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)

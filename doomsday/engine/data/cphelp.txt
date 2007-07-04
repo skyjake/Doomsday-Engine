@@ -153,6 +153,11 @@ desc = When enabled the hq2x texture filtering algorithm is used to enlarge all 
 [Bilinear filtering]
 desc = Controls which class(es) of graphics receive bilinear filtering. Disabling bilinear filtering results in "pixelated" textures when up close.
 
+[Anisotropic filtering]
+cvar = rend-tex-filter-anisotropic
+def = Best
+desc = When textures are drawn onto surfaces at high angles compared to the camera, bluring is introduced which reduces the overall quality of the visual. Anisotropic filtering can be used to help reduce this bluring. Sample multiplier: 0= Disabled, 1=2x, 2=4x, 3=8x, 4=16x.
+
 #
 # GRAPHICS: OBJECTS
 #
@@ -751,6 +756,9 @@ desc = 1=Use hq2x-filtering on all textures.
 
 [rend-tex-filter-mag]
 desc = 1=Use bilinear filtering for texture magnification.
+
+[rend-tex-filter-anisotropic]
+desc = Default level of anisotropic texture filtering -1=Best available, 0=Off, 1=2x, 2=4x, 3=8x, 4=16x.
 
 [rend-tex-detail]
 desc = 1=Render with detail textures.

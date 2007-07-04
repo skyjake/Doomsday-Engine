@@ -61,7 +61,7 @@ HGLRC   glContext;
 int     screenWidth, screenHeight;
 int     palExtAvailable, sharedPalExtAvailable;
 int     maxTexSize;
-float   maxAniso = 1;
+int     maxAniso = 1;
 int     maxTexUnits;
 int     useAnisotropic;
 int     useVSync;
@@ -261,8 +261,8 @@ static void checkExtensions(void)
     Con_Message("  Maximum texture size: %i\n", maxTexSize);
     if(extAniso)
     {
-        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-        Con_Message("  Maximum anisotropy: %g\n", maxAniso);
+        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+        Con_Message("  Maximum anisotropy: %i\n", maxAniso);
     }
     free(extbuf);
 
@@ -276,7 +276,7 @@ static void checkExtensions(void)
         Con_Message("  Dumping textures (mipmap level zero).\n");
     }
 
-    if(extAniso && ArgExists("-anifilter"))
+    if(extAniso && !ArgExists("-noanifilter"))
     {
         useAnisotropic = DGL_TRUE;
         Con_Message("  Using anisotropic texture filtering.\n");

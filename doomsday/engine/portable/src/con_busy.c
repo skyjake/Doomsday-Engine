@@ -271,7 +271,8 @@ void Con_AcquireScreenshotTexture(void)
     glMaxTexSize = 512; // A bit of a hack, but don't use too large a texture.
     texScreenshot = GL_UploadTexture(frame, winWidth, winHeight,
                                      false, false, true, false, true,
-                                     DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP,
+                                     DGL_LINEAR, DGL_LINEAR, 0 /*no anisotropy*/,
+                                     DGL_CLAMP, DGL_CLAMP,
                                      TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION);
     glMaxTexSize = oldMaxTexSize;
     M_Free(frame);

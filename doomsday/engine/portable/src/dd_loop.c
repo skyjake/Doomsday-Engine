@@ -131,28 +131,26 @@ int DD_GameLoop(void)
     {
 #ifdef WIN32
         // Start by checking Windows messages.
-        if(!suspendMsgPump)
+        // NOTE: Must be in the same thread as that which registered the
+        //       window it is handling messages for - DJS.
+        while(!suspendMsgPump &&
+              PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
         {
-            // NOTE: Must be in the same thread as that which registered the
-            //       window it is handling messages for - DJS.
-            while(!appShutdown &&
-                  PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
+            if(msg.message == WM_QUIT)
             {
-                if(msg.message == WM_QUIT)
-                {
-                    appShutdown = true;
-                    exitCode = msg.wParam;
-                }
-                else
-                {
-                    TranslateMessage(&msg);
-                    DispatchMessage(&msg);
-                }
+                appShutdown = true;
+                suspendMsgPump = true;
+                exitCode = msg.wParam;
             }
-
-            if(appShutdown)
-                continue;
+            else
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
         }
+
+        if(appShutdown)
+            continue;
 #endif
 
         // Frame syncronous I/O operations.

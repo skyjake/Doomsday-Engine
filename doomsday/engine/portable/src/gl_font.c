@@ -384,6 +384,7 @@ int FR_PrepareFont(const char *name)
         font->texture = GL_NewTextureWithParams2(DGL_RGBA,
                                                  font->texWidth, font->texHeight, image,
                                                  0, DGL_LINEAR, DGL_NEAREST,
+                                                 -1 /*best anisotropy*/,
                                                  DGL_CLAMP, DGL_CLAMP);                                                 
 
         M_Free(image); image = 0;
@@ -640,6 +641,7 @@ saveTGA24_rgba8888("ddfont.tga", bmpWidth, bmpHeight,
     // Create the DGL texture.
     font->texture = GL_NewTextureWithParams2(DGL_RGBA, imgWidth, imgHeight, image,
                                              0, DGL_NEAREST, DGL_NEAREST,
+                                             -1 /*best anisotropy*/,
                                              DGL_CLAMP, DGL_CLAMP);
 
     // We no longer need these.

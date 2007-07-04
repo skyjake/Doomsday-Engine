@@ -1894,6 +1894,7 @@ void AM_LoadData(void)
                 GL_NewTextureWithParams2(DGL_LUMINANCE, 256, 256,
                                          W_CacheLumpName("mapmask", PU_CACHE),
                                          0, DGL_NEAREST, DGL_LINEAR,
+                                         0 /*no anisotropy*/,
                                          DGL_CLAMP, DGL_CLAMP);
         }        
     }

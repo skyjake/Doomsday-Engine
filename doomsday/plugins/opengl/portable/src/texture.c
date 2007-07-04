@@ -180,15 +180,40 @@ DGLuint DG_NewTexture(void)
 	return texName;
 }
 
-void setTexAniso(void)
+void setTexAniso(int level)
 {
 	// Should anisotropic filtering be used?
-	if(useAnisotropic)
-	{
-		// Go with the maximum!
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-						maxAniso);
-	}
+	if(!useAnisotropic)
+        return;
+
+    if(level < 0)
+    {   // Go with the maximum!
+        level = maxAniso;
+    }
+    else
+    {   // Convert from a DGL aniso level to a multiplier.
+        // i.e 0 > 0, 1 > 2, 2 > 4, 3 > 8, 4 > 16
+        switch(level)
+        {
+        case 0: break;
+        case 1: level = 2; break; // x2
+        case 2: level = 4; break; // x4
+        case 3: level = 8; break; // x8
+        case 4: level = 16; break; // x16
+
+        default: // Wha?
+            level = 0;
+            break;
+        }
+
+        // Clamp.
+        if(level > maxAniso)
+            level = maxAniso;
+    }
+
+    
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+					level);
 }
 
 /**
@@ -295,7 +320,7 @@ int grayMipmap(int format, int width, int height, void *data)
 	free(faded);
 	free(image);
 
-	setTexAniso();
+	setTexAniso(-1 /*best*/);
 	return DGL_OK;
 }
 
@@ -466,7 +491,6 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 			free(buffer);
 	}
 
-	setTexAniso();
 	return DGL_OK;
 }
 
@@ -480,26 +504,33 @@ void DG_DeleteTextures(int num, DGLuint *names)
 
 void DG_TexParameter(int pname, int param)
 {
-	GLenum  mlevs[] = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST,
-		GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR,
-		GL_LINEAR_MIPMAP_LINEAR
-	};
+    if(pname == DGL_ANISO_FILTER)
+    {
+        setTexAniso(param);
+    }
+    else
+    {
+        GLenum  mlevs[] = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST,
+		    GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR,
+		    GL_LINEAR_MIPMAP_LINEAR
+	    };
 
-	switch(pname)
-	{
-	default:
-		glTexParameteri(GL_TEXTURE_2D,
-						pname == DGL_MIN_FILTER ? GL_TEXTURE_MIN_FILTER : 
-						pname == DGL_MAG_FILTER ? GL_TEXTURE_MAG_FILTER : 
-						pname == DGL_WRAP_S ? GL_TEXTURE_WRAP_S : 
-						GL_TEXTURE_WRAP_T,
-						(param >= DGL_NEAREST &&
-						 param <= DGL_LINEAR_MIPMAP_LINEAR) ? 
-						mlevs[param - DGL_NEAREST] : 
-						param == DGL_CLAMP ? GL_CLAMP_TO_EDGE : 
-						GL_REPEAT);
-		break;
-	}
+	    switch(pname)
+	    {
+	    default:
+		    glTexParameteri(GL_TEXTURE_2D,
+						    pname == DGL_MIN_FILTER ? GL_TEXTURE_MIN_FILTER : 
+						    pname == DGL_MAG_FILTER ? GL_TEXTURE_MAG_FILTER : 
+						    pname == DGL_WRAP_S ? GL_TEXTURE_WRAP_S : 
+						    GL_TEXTURE_WRAP_T,
+						    (param >= DGL_NEAREST &&
+						     param <= DGL_LINEAR_MIPMAP_LINEAR) ? 
+						    mlevs[param - DGL_NEAREST] : 
+						    param == DGL_CLAMP ? GL_CLAMP_TO_EDGE : 
+						    GL_REPEAT);
+		    break;
+	    }
+    }
 }
 
 void DG_GetTexParameterv(int level, int pname, int *v)

@@ -1286,7 +1286,7 @@ void M_LoadData(void)
     if(!menuFogTexture && !Get(DD_NOVIDEO))
     {
         menuFogTexture = GL_NewTextureWithParams2(DGL_LUMINANCE, 64, 64, W_CacheLumpName("menufog", PU_CACHE),
-                                                  0, DGL_NEAREST, DGL_LINEAR, DGL_REPEAT, DGL_REPEAT);
+                                                  0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
     }
 }
 

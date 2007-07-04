@@ -42,6 +42,7 @@ typedef struct texturecontent_s {
     int height;
     int minFilter;
     int magFilter;
+    int anisoFilter;
     int wrap[2];
     int grayMipmap;
     int flags;
@@ -67,7 +68,7 @@ DGLuint         GL_NewTexture(texturecontent_t *content);
 DGLuint         GL_NewTextureWithParams(int format, int width, int height, void* pixels, 
                                         int flags);
 DGLuint         GL_NewTextureWithParams2(int format, int width, int height, void* pixels, 
-                                         int flags, int minFilter, int magFilter, 
+                                         int flags, int minFilter, int magFilter, int anisoFilter, 
                                          int wrapS, int wrapT);
 
 #endif

@@ -194,6 +194,7 @@ void GL_InitTextureContent(texturecontent_t *content)
     memset(content, 0, sizeof(*content));
     content->minFilter = DGL_LINEAR;
     content->magFilter = DGL_LINEAR;
+    content->anisoFilter = -1; // Best.
     content->wrap[0] = DGL_CLAMP;
     content->wrap[1] = DGL_CLAMP;
     content->grayMipmap = -1;
@@ -240,6 +241,7 @@ void GL_UploadTextureContent(texturecontent_t* content)
     gl.TexParameter(DGL_MAG_FILTER, content->magFilter);
     gl.TexParameter(DGL_WRAP_S, content->wrap[0]);
     gl.TexParameter(DGL_WRAP_T, content->wrap[1]);
+    gl.TexParameter(DGL_ANISO_FILTER, content->anisoFilter);
 }
 
 DGLuint GL_NewTexture(texturecontent_t *content)
@@ -331,8 +333,8 @@ DGLuint GL_NewTextureWithParams(int format, int width, int height, void* pixels,
 }
 
 DGLuint GL_NewTextureWithParams2(int format, int width, int height, void* pixels, 
-                                 int flags, int minFilter, int magFilter, 
-                                 int wrapS, int wrapT)
+                                 int flags, int minFilter, int magFilter,
+                                 int anisoFilter, int wrapS, int wrapT)
 {
     texturecontent_t c;
     
@@ -344,6 +346,7 @@ DGLuint GL_NewTextureWithParams2(int format, int width, int height, void* pixels
     c.flags = flags;
     c.magFilter = magFilter;
     c.minFilter = minFilter;
+    c.anisoFilter = anisoFilter;
     c.wrap[0] = wrapS;
     c.wrap[1] = wrapT;
     return GL_NewTexture(&c);

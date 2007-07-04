@@ -196,6 +196,7 @@ enum {
     // Miscellaneous
     DGL_MIN_FILTER = 0xF000,
     DGL_MAG_FILTER,
+    DGL_ANISO_FILTER,
     DGL_NEAREST,
     DGL_LINEAR,
     DGL_NEAREST_MIPMAP_NEAREST,

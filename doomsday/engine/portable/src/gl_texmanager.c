@@ -125,6 +125,7 @@ int     useSmartFilter = 0;     // Smart filter mode (cvar: 1=hq2x)
 int     mipmapping = 3, linearRaw = 1, texQuality = TEXQ_BEST;
 int     filterSprites = true;
 int     texMagMode = 1;         // Linear.
+int     texAniso = -1;          // Use best.
 
 // Convert a 18-bit RGB (666) value to a playpal index.
 // \fixme 256kb - Too big?
@@ -188,7 +189,7 @@ void GL_TexRegister(void)
     C_VAR_INT2("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4,
                GL_DoTexReset);
     C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5,
-               GL_DoTexReset);
+               GL_DoUpdateTexParams);
     C_VAR_BYTE2("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1,
                 GL_DoTexReset);
     C_VAR_BYTE2("rend-tex-external-always", &loadExtAlways, 0, 0, 1,
@@ -202,6 +203,8 @@ void GL_TexRegister(void)
     C_VAR_INT2("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1,
                GL_DoTexReset);
     C_VAR_INT2("rend-tex-filter-mag", &texMagMode, 0, 0, 1, GL_DoTexReset);
+    C_VAR_INT2("rend-tex-filter-anisotropic", &texAniso, 0, -1, 4,
+               GL_DoUpdateTexParams);
     C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1);
     C_VAR_FLOAT("rend-tex-detail-scale", &detailScale,
                 CVF_NO_MIN | CVF_NO_MAX, 0, 0);
@@ -467,6 +470,7 @@ void GL_LoadFlareMap(ded_flaremap_t *map, int oldidx)
                                                 3 ? DGL_RGB : DGL_RGBA,
                                                 image.width, image.height, image.pixels,
                                                 TXCF_NO_COMPRESSION, DGL_NEAREST, DGL_LINEAR,
+                                                0 /*no anisotropy*/,
                                                 DGL_CLAMP, DGL_CLAMP);
 
             // Upload the texture.
@@ -881,7 +885,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
                          boolean flagRgbData,
                          boolean flagNoStretch,
                          boolean flagNoSmartFilter,
-                         int minFilter, int magFilter,
+                         int minFilter, int magFilter, int anisoFilter,
                          int wrapS, int wrapT, int otherFlags)/*boolean alphaChannel, boolean generateMipmaps,
                          boolean RGBData, boolean noStretch)*/
 {
@@ -901,6 +905,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
     if(flagNoSmartFilter) content.flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
     content.minFilter = minFilter;
     content.magFilter = magFilter;
+    content.anisoFilter = anisoFilter;
     content.wrap[0] = wrapS;
     content.wrap[1] = wrapT;
     return GL_NewTexture(&content);
@@ -1223,6 +1228,7 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
     // Set texture parameters.
     content.minFilter = DGL_LINEAR_MIPMAP_LINEAR;
     content.magFilter = DGL_LINEAR;
+    content.anisoFilter = -1; // Best
     content.wrap[0] = content.wrap[1] = DGL_REPEAT;
 
     inst->tex = GL_NewTexture(&content);
@@ -1344,6 +1350,7 @@ unsigned int GL_PrepareFlat2(int idx, boolean translate, texinfo_t **info)
         flat->tex = GL_UploadTexture(flatptr, width, height,
                                 pixSize == 4, true, RGBData, false, false,
                                 glmode[mipmapping], glmode[texMagMode],
+                                texAniso,
                                 DGL_REPEAT, DGL_REPEAT, 0);
 
         // Average color for glow planes.
@@ -1647,16 +1654,18 @@ DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
                          gfxmode_t mode, int useMipmap, boolean clamped)
 {
     return GL_LoadGraphics4(resClass, name, mode, useMipmap,
-                            DGL_LINEAR, glmode[texMagMode],
+                            DGL_LINEAR, glmode[texMagMode], 0 /*no anisotropy*/,
                             clamped? DGL_CLAMP : DGL_REPEAT,
                             clamped? DGL_CLAMP : DGL_REPEAT, 0);
 }
 
 DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
-                         int minFilter, int magFilter, int wrapS, int wrapT, int otherFlags)
+                         int minFilter, int magFilter, int anisoFilter,
+                         int wrapS, int wrapT, int otherFlags)
 {
     return GL_LoadGraphics4(RC_GRAPHICS, name, mode, DGL_FALSE,
-                            minFilter, magFilter, wrapS, wrapT, otherFlags);
+                            minFilter, magFilter, anisoFilter, wrapS, wrapT,
+                            otherFlags);
 }
 
 /*
@@ -1666,8 +1675,8 @@ DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
  */
 DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
                          gfxmode_t mode, int useMipmap,
-                         int minFilter, int magFilter, int wrapS, int wrapT,
-                         int otherFlags)
+                         int minFilter, int magFilter, int anisoFilter,
+                         int wrapS, int wrapT, int otherFlags)
 {
     image_t image;
     filename_t fileName;
@@ -1731,7 +1740,7 @@ DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
                                              (useMipmap == DGL_GRAY_MIPMAP? TXCF_GET_GRAY_MIPMAP : 0) |
                                              (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0) ),
                                            (useMipmap ? glmode[mipmapping] : DGL_LINEAR),
-                                           glmode[texMagMode],
+                                           glmode[texMagMode], texAniso,
                                            wrapS, wrapT);
 
         GL_DestroyImage(&image);
@@ -1863,7 +1872,7 @@ unsigned int GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info)
         tex->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
                              alphaChannel, true, RGBData, false, false,
-                             glmode[mipmapping], glmode[texMagMode],
+                             glmode[mipmapping], glmode[texMagMode], texAniso,
                              DGL_REPEAT, DGL_REPEAT, 0);
 
         // Average color for glow planes.
@@ -2024,7 +2033,7 @@ unsigned int GL_PrepareSky2(int idx, boolean zeroMask, boolean translate,
         textures[idx]->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
                              alphaChannel, true, RGBData, false, false,
-                             glmode[mipmapping], glmode[texMagMode],
+                             glmode[mipmapping], glmode[texMagMode], texAniso,
                              DGL_REPEAT, DGL_REPEAT, TXCF_NO_COMPRESSION);
 
         // Do we have a masked texture?
@@ -2109,7 +2118,7 @@ unsigned int GL_PrepareSpriteBuffer(int pnum, image_t *image,
         GL_UploadTexture(image->pixels, image->width, image->height,
                          image->pixelSize != 3, true, image->pixelSize > 1,
                          true, false, glmode[mipmapping],
-                         (filterSprites ? DGL_LINEAR : DGL_NEAREST),
+                         (filterSprites ? DGL_LINEAR : DGL_NEAREST), texAniso,
                          DGL_CLAMP, DGL_CLAMP, 0);
 
     // Determine coordinates for the texture.
@@ -2329,6 +2338,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                 GL_UploadTexture(image.pixels, image.width, image.height,
                                  image.pixelSize == 4, false, true, false, false,
                                  DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                                 0 /*no anisotropy*/,
                                  DGL_CLAMP, DGL_CLAMP, 0);
 
             raw->info.width = 320;
@@ -2401,12 +2411,14 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                     GL_UploadTexture(dat1, 256, assumedWidth < 320 ? height : 256, false,
                                      false, rgbdata, false, false,
                                      DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                                     0 /*no anisotropy*/,
                                      DGL_CLAMP, DGL_CLAMP, 0);
 
                 // And the other part.
                 raw->tex2 =
                     GL_UploadTexture(dat2, 64, 256, false, false, rgbdata, false, false,
                                      DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                                     0 /*no anisotropy*/,
                                      DGL_CLAMP, DGL_CLAMP, 0);
 
                 raw->info.width = 256;
@@ -2424,6 +2436,7 @@ DGLuint GL_BindTexRaw(rawtex_t *raw)
                     GL_UploadTexture(image, 256, height,
                                      false, false, rgbdata, false, false,
                                      DGL_NEAREST, (linearRaw ? DGL_LINEAR : DGL_NEAREST),
+                                     0 /*no anisotropy*/,
                                      DGL_CLAMP, DGL_CLAMP, 0);
 
                 raw->info.width = 256;
@@ -2498,7 +2511,8 @@ DGLuint GL_BindTexPatch(patch_t *p)
         p->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
                              image.pixelSize == 4, true, true, false, false,
-                             DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
+                             DGL_NEAREST, glmode[texMagMode], texAniso,
+                             DGL_CLAMP, DGL_CLAMP, 0);
 
         p->info.width = SHORT(patch->width);
         p->info.height = SHORT(patch->height);
@@ -2548,7 +2562,8 @@ DGLuint GL_BindTexPatch(patch_t *p)
             p->tex =
                 GL_UploadTexture(tempbuff, glMaxTexSize, SHORT(patch->height),
                                  alphaChannel, true, false, false, false,
-                                 DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, 0);
+                                 DGL_NEAREST, DGL_LINEAR, texAniso,
+                                 DGL_CLAMP, DGL_CLAMP, 0);
 
             // Then part two.
             pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
@@ -2557,7 +2572,8 @@ DGLuint GL_BindTexPatch(patch_t *p)
             p->tex2 =
                 GL_UploadTexture(tempbuff, part2width, SHORT(patch->height),
                                  alphaChannel, true, false, false, false,
-                                 DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
+                                 DGL_NEAREST, glmode[texMagMode], texAniso,
+                                 DGL_CLAMP, DGL_CLAMP, 0);
 
             p->info.width = glMaxTexSize;
             p->info2.width = SHORT(patch->width) - glMaxTexSize;
@@ -2571,7 +2587,8 @@ DGLuint GL_BindTexPatch(patch_t *p)
             p->tex =
                 GL_UploadTexture(buffer, SHORT(patch->width), SHORT(patch->height),
                                  alphaChannel, true, false, false, false,
-                                 DGL_NEAREST, glmode[texMagMode], DGL_CLAMP, DGL_CLAMP, 0);
+                                 DGL_NEAREST, glmode[texMagMode], texAniso,
+                                 DGL_CLAMP, DGL_CLAMP, 0);
 
             p->info.width = SHORT(patch->width);
             p->info.height = SHORT(patch->height);
@@ -2633,7 +2650,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which, texinfo_t **texinfo)
             // We don't want to compress the flares (banding would be noticeable).
             lightingTextures[LST_DYNAMIC].tex =
                 GL_LoadGraphics3("dLight", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR,
-                                 DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
+                                 -1 /*best anisotropy*/, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
         }
         // Global tex variables not set! (scalable texture)
         return lightingTextures[LST_DYNAMIC].tex;
@@ -2642,7 +2659,8 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which, texinfo_t **texinfo)
         if(!lightingTextures[LST_GRADIENT].tex)
         {
             lightingTextures[LST_GRADIENT].tex =
-                GL_LoadGraphics3("wallglow", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR,
+                GL_LoadGraphics3("wallglow", LGM_WHITE_ALPHA, DGL_LINEAR,
+                                 DGL_LINEAR, -1 /*best anisotropy*/,
                                  DGL_REPEAT, DGL_CLAMP, 0);
         }
         // Global tex variables not set! (scalable texture)
@@ -2659,22 +2677,30 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which, texinfo_t **texinfo)
             {
             case LST_RADIO_CO:
                 lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioCO", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
+                    GL_LoadGraphics3("radioCO", LGM_WHITE_ALPHA, DGL_LINEAR,
+                                     DGL_LINEAR, -1 /*best anisotropy*/,
+                                     DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_CC:
                 lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioCC", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
+                    GL_LoadGraphics3("radioCC", LGM_WHITE_ALPHA, DGL_LINEAR,
+                                     DGL_LINEAR, -1 /*best anisotropy*/,
+                                     DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OO:
                 lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioOO", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
+                    GL_LoadGraphics3("radioOO", LGM_WHITE_ALPHA, DGL_LINEAR,
+                                     DGL_LINEAR, -1 /*best anisotropy*/,
+                                     DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             case LST_RADIO_OE:
                 lightingTextures[which].tex =
-                    GL_LoadGraphics3("radioOE", LGM_WHITE_ALPHA, DGL_LINEAR, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
+                    GL_LoadGraphics3("radioOE", LGM_WHITE_ALPHA, DGL_LINEAR,
+                                     DGL_LINEAR, -1 /*best anisotropy*/,
+                                     DGL_CLAMP, DGL_CLAMP, TXCF_NO_COMPRESSION);
                 break;
 
             default:
@@ -2702,7 +2728,8 @@ DGLuint GL_PrepareFlareTexture(flaretexid_t flare, texinfo_t **texinfo)
         flareTextures[flare].tex =
             GL_LoadGraphics3(flare == 0 ? "flare" : flare == 1 ? "brflare" :
                              "bigflare", LGM_WHITE_ALPHA,
-                             DGL_NEAREST, DGL_LINEAR, DGL_CLAMP, DGL_CLAMP,
+                             DGL_NEAREST, DGL_LINEAR, 0 /*no anisotropy*/,
+                             DGL_CLAMP, DGL_CLAMP,
                              TXCF_NO_COMPRESSION);
 
         if(flareTextures[flare].tex == 0)
@@ -2719,7 +2746,8 @@ DGLuint GL_PrepareFlareTexture(flaretexid_t flare, texinfo_t **texinfo)
  * Updates the textures, flats and sprites (gameTex) or the user
  * interface textures (patches and raw screens).
  */
-void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
+void GL_SetTextureParams(int minMode, int magMode, int anisoLevel,
+                         int gameTex, int uiTex)
 {
     int     i;
 
@@ -2732,6 +2760,7 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
                 gl.Bind(textures[i]->tex);
                 gl.TexParameter(DGL_MIN_FILTER, minMode);
                 gl.TexParameter(DGL_MAG_FILTER, magMode);
+                gl.TexParameter(DGL_ANISO_FILTER, anisoLevel);
             }
 
         // Flats.
@@ -2741,6 +2770,7 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
                 gl.Bind(flats[i]->tex);
                 gl.TexParameter(DGL_MIN_FILTER, minMode);
                 gl.TexParameter(DGL_MAG_FILTER, magMode);
+                gl.TexParameter(DGL_ANISO_FILTER, anisoLevel);
             }
 
         // Sprites.
@@ -2750,6 +2780,7 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
                 gl.Bind(spritelumps[i]->tex);
                 gl.TexParameter(DGL_MIN_FILTER, minMode);
                 gl.TexParameter(DGL_MAG_FILTER, magMode);
+                gl.TexParameter(DGL_ANISO_FILTER, anisoLevel);
             }
 
         // Translated sprites.
@@ -2758,6 +2789,7 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
             gl.Bind(transsprites[i]->tex);
             gl.TexParameter(DGL_MIN_FILTER, minMode);
             gl.TexParameter(DGL_MAG_FILTER, magMode);
+            gl.TexParameter(DGL_ANISO_FILTER, anisoLevel);
         }
     }
 
@@ -2809,7 +2841,19 @@ void GL_SetTextureParams(int minMode, int magMode, int gameTex, int uiTex)
 void GL_UpdateTexParams(int mipmode)
 {
     mipmapping = mipmode;
-    GL_SetTextureParams(glmode[mipmode], glmode[texMagMode], true, false);
+    GL_SetTextureParams(glmode[mipmode], glmode[texMagMode], texAniso, true, false);
+}
+
+/**
+ * Called when changing the value of any cvar affecting texture quality which
+ * can be actioned by simply changing texture paramaters i.e. does not require
+ * flushing GL textures).
+ *
+ * @param   unused      Unused. Must be signature compatible.
+ */
+void GL_DoUpdateTexParams(cvar_t *unused)
+{
+    GL_SetTextureParams(glmode[mipmapping], glmode[texMagMode], texAniso, true, true);
 }
 
 void GL_TexReset(void)
@@ -2833,7 +2877,7 @@ void GL_DoTexReset(cvar_t *unused)
 void GL_LowRes(void)
 {
     // Set everything as low as they go.
-    GL_SetTextureParams(DGL_NEAREST, DGL_NEAREST, true, true);
+    GL_SetTextureParams(DGL_NEAREST, DGL_NEAREST, 0, true, true);
 
     // And do a texreset so everything is updated.
     GL_TexReset();
@@ -2995,7 +3039,8 @@ unsigned int GL_PrepareSkin(model_t * mdl, int skin)
 
         st->tex =
             GL_UploadTexture(image, width, height, size == 4, true, true, false, false,
-                             glmode[mipmapping], DGL_LINEAR, DGL_REPEAT, DGL_REPEAT,
+                             glmode[mipmapping], DGL_LINEAR, texAniso,
+                             DGL_REPEAT, DGL_REPEAT,
                              (!mdl->allowTexComp? TXCF_NO_COMPRESSION : 0));
 
         // We don't need the image data any more.
@@ -3024,7 +3069,8 @@ unsigned int GL_PrepareShinySkin(modeldef_t * md, int sub)
         stp->tex =
             GL_UploadTexture(image.pixels, image.width, image.height,
                              image.pixelSize == 4, true, true, false, false,
-                             glmode[mipmapping], DGL_LINEAR, DGL_REPEAT, DGL_CLAMP, 0);
+                             glmode[mipmapping], texAniso,
+                             DGL_LINEAR, DGL_REPEAT, DGL_CLAMP, 0);
 
         // We don't need the image data any more.
         GL_DestroyImage(&image);

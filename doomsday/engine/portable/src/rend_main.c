@@ -150,7 +150,7 @@ void Rend_Register(void)
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
     C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
     C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
-    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression,0, -1, 1,
+    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1,
                  Rend_CalcLightRangeModMatrix);
     C_VAR_FLOAT("rend-light-adaptation", &r_lightAdapt, 0, 0, 1);
     C_VAR_FLOAT2("rend-light-adaptation-ramp", &lightRangeAdaptRamp,

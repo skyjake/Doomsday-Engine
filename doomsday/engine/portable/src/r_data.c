@@ -256,6 +256,9 @@ rendpoly_t *R_AllocRendPoly(rendpolytype_t type, boolean isWall,
     poly->tex.width = texinfo->width;
     poly->tex.masked = texinfo->masked;
 
+    poly->intertex.id = 0;
+    poly->intertex.detail = NULL;
+
     return poly;
 }
 

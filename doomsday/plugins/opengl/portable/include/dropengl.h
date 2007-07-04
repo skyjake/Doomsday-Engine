@@ -101,7 +101,7 @@ extern boolean  noArrays;
 extern int      verbose;
 extern int      useAnisotropic;
 extern int      useVSync;
-extern float    maxAniso;
+extern int      maxAniso;
 extern int      maxTexUnits;
 extern boolean  wireframeMode;
 

@@ -97,7 +97,7 @@ typedef enum ddtextureid_e {
 extern int      glMaxTexSize;
 extern int      ratioLimit;
 extern int      mipmapping, linearRaw, texQuality, filterSprites;
-extern int      texMagMode;
+extern int      texMagMode, texAniso;
 extern int      useSmartFilter;
 extern byte     loadExtAlways;
 extern int      texMagMode;
@@ -112,6 +112,7 @@ void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
 void            GL_DoTexReset(cvar_t *unused);
+void            GL_DoUpdateTexParams(cvar_t *unused);
 int             GL_InitPalettedTexture(void);
 void            GL_DestroySkinNames(void);
 void            GL_ResetLumpTexData(void);
@@ -141,19 +142,19 @@ DGLuint         GL_LoadGraphics(const char *name, gfxmode_t mode);
 DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char *name,
                                  gfxmode_t mode, int useMipmap, boolean clamped);
 DGLuint         GL_LoadGraphics3(const char *name, gfxmode_t mode,
-                                 int minFilter, int magFilter, 
+                                 int minFilter, int magFilter, int anisoFilter,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_LoadGraphics4(resourceclass_t resClass, const char *name,
                                  gfxmode_t mode, int useMipmap, 
-                                 int minFilter, int magFilter, int wrapS, int wrapT, 
-                                 int otherFlags);
+                                 int minFilter, int magFilter, int anisoFilter,
+                                 int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture(byte *data, int width, int height,
                                  boolean flagAlphaChannel,
                                  boolean flagGenerateMipmaps,
                                  boolean flagRgbData,
                                  boolean flagNoStretch,
                                  boolean flagNoSmartFilter,
-                                 int minFilter, int magFilter,
+                                 int minFilter, int magFilter, int anisoFilter,
                                  int wrapS, int wrapT, int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
 DGLuint         GL_GetTextureInfo(int index, texinfo_t **info);

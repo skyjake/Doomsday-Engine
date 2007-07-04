@@ -226,7 +226,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
             pixForm = ChoosePixelFormat(hDC, &pfd);
             if(!pixForm)
             {
-                Sys_CriticalMessage("drOpenGL.Init: Choosing of pixel format failed.");
+                Sys_CriticalMessage("DD_CreateWindow: Choosing of pixel format failed.");
                 pixForm = -1;
                 ok = FALSE;
             }
@@ -237,7 +237,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
             DescribePixelFormat(hDC, pixForm, sizeof(pfd), &pfd);
             if((pfd.dwFlags & PFD_GENERIC_FORMAT) && !ArgCheck("-allowsoftware"))
             {
-                Sys_CriticalMessage("drOpenGL.Init: OpenGL driver not accelerated!\n"
+                Sys_CriticalMessage("DD_CreateWindow: GL driver not accelerated!\n"
                                     "Use the -allowsoftware option to bypass this.");
                 ok = DGL_FALSE;
             }
@@ -248,7 +248,8 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
             // (unless we release the context and acquire another).
             if(!SetPixelFormat(hDC, pixForm, &pfd))
             {
-               Sys_CriticalMessage("Warning: Setting of pixel format failed.");
+                Sys_CriticalMessage("DD_CreateWindow: Warning, setting of pixel "
+                                    "format failed.");
             }
         }
 
@@ -519,7 +520,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     }
 
     // Make it so.
-    SetWindowPos(hWnd, HWND_TOP,
+    SetWindowPos(hWnd, 0,
                  x, y, width, height,
                  (noSize? SWP_NOSIZE : 0) |
                  (noMove? SWP_NOMOVE : 0) |
@@ -782,9 +783,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
             doShutdown = FALSE;
 
-            // Append the main window title with the game name.
+            // Append the main window title with the game name and ensure it
+            // is the at the foreground, with focus.
             DD_MainWindowTitle(buf);
             SetWindowText(win->hWnd, _T(buf));
+            SetForegroundWindow(win->hWnd);
+            SetFocus(win->hWnd);
         }
     }
 
@@ -877,6 +881,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             EndPaint(hWnd, &ps);
         forwardMsg = false;
         result = FALSE;
+        break;
+
+    case WM_HOTKEY: // A hot-key combination we have registered has been used.
+        // Used to override alt+enter and other easily misshit combinations,
+        // at the user's request.
+        forwardMsg = false;
+        break;
+
+    case WM_SYSCOMMAND:
+        switch(wParam)
+        {
+        case SC_SCREENSAVE: // Screensaver about to begin.
+        case SC_MONITORPOWER: // Monitor trying to enter power save.
+            forwardMsg = false;
+            break;
+
+        default:
+            break;
+        }
         break;
 
     case WM_ACTIVATE:

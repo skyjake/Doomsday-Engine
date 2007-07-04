@@ -367,7 +367,7 @@ extern          "C" {
     void            GL_UseFog(int yes);
     byte           *GL_GrabScreen(void);
     unsigned int    GL_NewTextureWithParams2(int format, int width, int height, void* pixels, 
-                                             int flags, int minFilter, int magFilter, 
+                                             int flags, int minFilter, int magFilter, int anisoFilter, 
                                              int wrapS, int wrapT);
     void            GL_TextureFilterMode(int target, int parm);
     void            GL_SetColor(int palidx);

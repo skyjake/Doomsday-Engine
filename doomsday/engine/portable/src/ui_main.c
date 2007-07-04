@@ -317,7 +317,7 @@ void UI_LoadTextures(void)
                                  (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL),
                                  DGL_FALSE,
                                  DGL_LINEAR, DGL_LINEAR,
-                                 DGL_CLAMP, DGL_CLAMP,
+                                 DGL_CLAMP, DGL_CLAMP, 0 /*no anisotropy*/,
                                  TXCF_NO_COMPRESSION);
         }
 }
@@ -1571,7 +1571,12 @@ int UI_SliderThumbPos(ui_object_t *ob)
     if(dat->floatmode)
         useval = dat->value;
     else
-        useval = (int) (dat->value + 0.5f);
+    {
+        if(dat->value >= 0)
+            useval = (int) (dat->value + .5f);
+        else
+            useval = (int) (dat->value - .5f);
+    }
     useval -= dat->min;
     return ob->x + UI_BAR_BORDER + butw + useval / range * (ob->w -
                                                             UI_BAR_BORDER * 2 -
@@ -1612,7 +1617,12 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
                 if(dat->value > dat->max)
                     dat->value = dat->max;
                 if(!dat->floatmode)
-                    dat->value = (int) (dat->value + .5f);
+                {
+                    if(dat->value >= 0)
+                        dat->value = (int) (dat->value + .5f);
+                    else
+                        dat->value = (int) (dat->value - .5f);
+                }
                 if(ob->action)
                     ob->action(ob);
             }
