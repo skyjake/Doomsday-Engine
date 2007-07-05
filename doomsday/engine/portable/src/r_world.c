@@ -121,7 +121,8 @@ plane_t *R_NewPlaneForSector(sector_t *sec, planetype_t type)
     newList[i] = NULL; // Terminate.
 
     // Link the new plane list to the sector.
-    Z_Free(sec->planes); // Free the old list.
+    if(sec->planes)
+        Z_Free(sec->planes); // Free the old list.
     sec->planes = newList;
 
     // Setup header for DMU. 
