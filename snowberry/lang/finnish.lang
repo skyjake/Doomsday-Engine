@@ -80,14 +80,14 @@ conflict-choice2: ƒl‰ lataa lis‰osaa %1.
 value-conflict-message = "<b>%1</b> ei voida k‰ytt‰‰
 seuraavien asetusten kanssa:%2 <p>%1 ei ladata."
 
-keyword-conflict-message = "<b>%1</b> poissulkee seuraavat resurssit:%2 
+keyword-conflict-message = "<b>%1</b> poissulkee seuraavat resurssit:%2
 <p>Valitse n‰ist‰ ne lis‰osat, jotka ladataan."
 
 provide-conflict-message = "Seuraavat resurssit ovat konfliktissa :%1
-<p>Alla luetelluissa lis‰osissa on konfliktoivia versioita samasta resurssista. 
+<p>Alla luetelluissa lis‰osissa on konfliktoivia versioita samasta resurssista.
 Vain yksi n‰ist‰ resursseista voidaan ladata. <p>Valitse ladattava resurssi."
 
-missing-requirements-message = "<b>%1</b> ei voida k‰ytt‰‰, joska kaikkia sen 
+missing-requirements-message = "<b>%1</b> ei voida k‰ytt‰‰, joska kaikkia sen
 vaatimia resursseja ei ole ladattu. <p>K‰ytt‰‰ksesi %1
 sinun t‰ytyy ladata myˆs ne lis‰osat, jotka tarjoavat n‰m‰ vaaditut lis‰osat."
 
@@ -261,7 +261,7 @@ texture-depth-32: 32-bit
 
 texture-options: Tekstuurivalinnat
 extres-with-pwad: Salli ulkoiset tekstuurit PWAD:ien kanssa
-anisotropic-filter: Anisotrooppinen suodatus
+disable-anisotropic-filter: Poista Anisotrooppinen suodatus
 paletted-textures: K‰yt‰ 8-bittisi‰ tekstuureja
 
 maximum-texture-size: Suurin tekstuurin koko
@@ -305,7 +305,7 @@ custom-cmdline: Omat valinnat
 #
 # Apupaneeli
 #
-help-welcome = "Tervetuloa Snowberryyn. Valitse profiili vasemmalla 
+help-welcome = "Tervetuloa Snowberryyn. Valitse profiili vasemmalla
 puolella olevasta listasta."
 
 help-command = "K‰ynnist‰‰ksesi pelin paina <b>Play</b>-painiketta."
@@ -313,17 +313,17 @@ help-command = "K‰ynnist‰‰ksesi pelin paina <b>Play</b>-painiketta."
 help-command-defaults = "The <b>Oletus</b>-profiili sis‰lt‰‰
 kaikille profiileille yhteiset asetukset."
 
-help-tab-summary = "Yhteenveto-v‰lilehti n‰ytt‰‰ t‰rkeimm‰t tiedot 
+help-tab-summary = "Yhteenveto-v‰lilehti n‰ytt‰‰ t‰rkeimm‰t tiedot
 t‰m‰nhetkisest‰ profiilista."
 
 help-tab-addons = "Valitse ne lis‰osat, joita haluat k‰ytt‰‰ t‰m‰nhetkisen
 profiilin kanssa.<p><b>Asetukset</b>-painikeella p‰‰set muokkaamaan valittua
-lis‰osaa.<p>Muutaaksesi j‰rjestyst‰, jossa lis‰osat ladataan, paina 
+lis‰osaa.<p>Muutaaksesi j‰rjestyst‰, jossa lis‰osat ladataan, paina
 <b>Latausj‰rjestys</b>-painiketta."
 
-help-tab-settings = "Asetukset-v‰lilehdell‰ p‰‰set muokkaamaan t‰m‰nhetkist‰ 
+help-tab-settings = "Asetukset-v‰lilehdell‰ p‰‰set muokkaamaan t‰m‰nhetkist‰
 profiilia ja niit‰ lis‰osia, jotka olet valinnut ladattaviksi.
-<p>Muuttaaksesi kaikkiin profiileihin vaikuttavia oletusasetuksia valitse 
+<p>Muuttaaksesi kaikkiin profiileihin vaikuttavia oletusasetuksia valitse
 <b>Oletusprofiili</b>."
 
 #
@@ -337,14 +337,14 @@ help-value-max: Maksimi
 help-value-default: Oletus
 
 iwad-help = "Pelin datatiedosto sis‰lt‰‰ kaikki kartat, grafiikat, ‰‰net,
-efektit ja pelin muun sis‰llˆn. P‰‰st‰ksesi pelaamaan sinun pit‰‰ m‰‰r‰t‰ 
-pelin datatiedosto.  <p>Pelien datatiedostoja kutsutaan IWAD-tiedostoiksi 
-ja ne k‰ytt‰v‰t tiedostop‰‰tett‰ WAD. Ne ovat kooltaan yleens‰ 4-20 Mt. 
-Lˆyd‰t t‰m‰n tiedoston hakemistosta, johon olet asentanut alkuper‰isen 
+efektit ja pelin muun sis‰llˆn. P‰‰st‰ksesi pelaamaan sinun pit‰‰ m‰‰r‰t‰
+pelin datatiedosto.  <p>Pelien datatiedostoja kutsutaan IWAD-tiedostoiksi
+ja ne k‰ytt‰v‰t tiedostop‰‰tett‰ WAD. Ne ovat kooltaan yleens‰ 4-20 Mt.
+Lˆyd‰t t‰m‰n tiedoston hakemistosta, johon olet asentanut alkuper‰isen
 Doom:n, Heretic:n tai Hexen:n."
 
-window-size-help = "M‰‰ritell‰ksesi omavalintaisen resoluution (esimerkiksi 
-pelataksesi laajakuvamoodissa): 
+window-size-help = "M‰‰ritell‰ksesi omavalintaisen resoluution (esimerkiksi
+pelataksesi laajakuvamoodissa):
 <ul>
 <li>Aseta t‰m‰ asetukseen Omavalintainen.
 <li>Syˆt‰ leveys ja korkeus vastaaviin kenttiin.

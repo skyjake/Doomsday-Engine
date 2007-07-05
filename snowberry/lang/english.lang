@@ -35,11 +35,11 @@ wizard-locate-iwad-deathkings: Unlike the other games, the Death Kings WAD will 
 wizard-suggested-iwad: Original name
 deathkings-selection-title: Locate HEXDD.WAD
 wizard-addon-paths: My Addon Folders
-wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell the launcher to load them from their current location. Specify the folders below. The folders can be edited in the Shared Settings -> Settings -> Launcher page later on. If you later install addons using the Addons tab, they will be copied to the launcher's addon folder. 
+wizard-addon-paths-explanation: If you already have WAD files, resource packs, or other addons on your hard drive, you can tell the launcher to load them from their current location. Specify the folders below. The folders can be edited in the Shared Settings -> Settings -> Launcher page later on. If you later install addons using the Addons tab, they will be copied to the launcher's addon folder.
 wizard-launching: Launching Options
 wizard-launching-explanation: Should the frontend be closed when a game is started?
 wizard-unlaunchable-profiles: Some Profiles Unlaunchable
-wizard-unlaunchable-profiles-listed = 
+wizard-unlaunchable-profiles-listed =
 "The following profiles cannot be launched at the moment.
 They are missing a game data file (IWAD) and have been
 hidden. You can make them visible with Profile -> Show..."
@@ -55,7 +55,7 @@ GNU General Public License."
 about-website: http://sourceforge.net/projects/deng/
 show-credits: Credits
 about-credits: Credits
-credits = "<html><table width=''100%'' height=''100%'' border=''0'' 
+credits = "<html><table width=''100%'' height=''100%'' border=''0''
 cellspacing=''0'' cellpadding=''10''>
 <tr>
 <td width=''30%'' valign=top align=''right''><b>Concept:</b>
@@ -283,7 +283,7 @@ wad-analysis-custom-textures: textures
 #
 # Addons Tab
 #
-addon-counter: %1 out of %2 addons 
+addon-counter: %1 out of %2 addons
 addon-list-check:
 addon-list-name: Name
 addon-list-version: Version
@@ -316,10 +316,10 @@ category-gamedata: Game Data
 category-gamedata-doomsday: Doomsday Game Files
 category-gamedata-primary: Primary Data Files
 category-gamedata-maps: Maps
-category-gamedata-maps-ag: A-G	 
-category-gamedata-maps-hm: H-M	 
-category-gamedata-maps-ns: N-S	 
-category-gamedata-maps-tz: T-Z	 
+category-gamedata-maps-ag: A-G
+category-gamedata-maps-hm: H-M
+category-gamedata-maps-ns: N-S
+category-gamedata-maps-tz: T-Z
 category-gamedata-maps-09: 0-9
 category-gamedata-lumps: Data Lumps
 category-patches: DeHackEd Patches
@@ -377,7 +377,7 @@ window-size-1280x1024: 1280 x 1024
 window-size-1400x1050: 1400 x 1050
 window-size-1600x1200: 1600 x 1200
 window-size-800x500: 800 x 500 (16:10)
-window-size-1024x640: 1024 x 640 (16:10) 
+window-size-1024x640: 1024 x 640 (16:10)
 window-size-1280x800: 1280 x 800 (16:10)
 window-size-1600x1000: 1600 x 1000 (16:10)
 window-size-1680x1050: 1680 x 1050 (16:10)
@@ -412,7 +412,7 @@ texture-depth-32: 32-bit
 
 texture-options: Texture Options
 extres-with-pwad: Allow external with PWADs
-anisotropic-filter: Anisotropic filtering
+disable-anisotropic-filter: Disable Anisotropic filtering
 paletted-textures: Paletted textures
 
 maximum-texture-size: Maximum size
@@ -475,10 +475,10 @@ restart-required: Changes take effect after restarting.
 # Help
 #
 help-welcome = "<b><font size=''+1''>Welcome to Snowberry!</font></b><p>
-This is a frontend application that lets you launch <b>Doomsday Engine</b> 
+This is a frontend application that lets you launch <b>Doomsday Engine</b>
 with ease. Select a game profile from the list on the left and press <b>Play</b>.
-<p>The user interface of the frontend can be 
-modified in <b>Shared Settings</b> -&gt; <b>Settings</b> -&gt; 
+<p>The user interface of the frontend can be
+modified in <b>Shared Settings</b> -&gt; <b>Settings</b> -&gt;
 <b><a href=''show-snowberry-settings''>Frontend</a></b>."
 
 help-command = "To start a game, press the <b>Play</b> button."
@@ -525,13 +525,13 @@ size. You will find one in the directory where you have installed a
 copy of the original Doom, Heretic, or Hexen."
 
 window-size-help = "To define a custom resolution (for example to play
-in widescreen mode): 
+in widescreen mode):
 <ul>
 <li>Set this to Custom.
 <li>Enter the width and height into the corresponding fields.
 </ul>"
 
-window-width-help = "The width of the game window, or custom horizontal 
+window-width-help = "The width of the game window, or custom horizontal
 resolution."
 
 window-height-help = "The height of the game window, or custom vertical

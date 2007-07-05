@@ -43,7 +43,7 @@ new-profile-game: Spiel-Dll
 rename-profile-dialog: Profil umbenennen
 rename-profile-name: Neuer Name
 reset-profile-dialog: Profil zurücksetzen
-delete-profile-dialog: Profil löschen? 
+delete-profile-dialog: Profil löschen?
 delete-profile-query: Sind Sie sicher, dass Sie <b>%1</b> löschen möchten?
 duplicate-profile-dialog: Profil kopieren
 duplicating-profile: Sie erstellen ein Duplikat von <b>%1</b>.
@@ -51,7 +51,7 @@ unhide-profile-dialog: Profile anzeigen
 unhiding-profiles: Wählen Sie ein oder mehrere verborgene Profile zum Anzeigen.
 unhide-select-all: Alle wählen
 unhide-clear-all: Alle abwählen
-view-command-line-dialog: Eingabeaufforderung 
+view-command-line-dialog: Eingabeaufforderung
 install-addon-dialog: Installation von Erweiterungen
 addon-dialog-folder: Ordner:
 addon-dialog-folder-browse: ...
@@ -95,9 +95,9 @@ genutzt werden:%2 <p>Wählen Sie, welche dieser Erweiterungen geladen werden soll
 
 conflict-choice1 = "Lade %1.
 Die inkompatiblen Erweiterungen werden nicht geladen."
-conflict-choice2: Lade %1 nicht. 
+conflict-choice2: Lade %1 nicht.
 
-value-conflict-message = "<b>%1</b> kann nicht mit folgenden Einstellungen 
+value-conflict-message = "<b>%1</b> kann nicht mit folgenden Einstellungen
 genutzt werden:%2 <p>%1 wird nicht geladen."
 
 keyword-conflict-message = "<b>%1</b> kann nicht mit folgenden Ressourcen geladen werden:%2 <p>
@@ -208,7 +208,7 @@ summary-color-depth-32: 32-bit Farbe
 #
 maps-list-identifier: PWAD Erweiterungen
 maps-list-count: Inhalt
-maps-list-clear: Liste leeren 
+maps-list-clear: Liste leeren
 
 wad-analysis-maps: %1 map(s)
 wad-analysis-custom-textures: textures
@@ -234,7 +234,7 @@ category-effects-particle: Particle Effects
 category-effects-light: Lighting Effects
 category-gamedata: Spieledateien
 category-gamedata-doomsday: Doomsday Game Files
-category-gamedata-primary: IWAD-Haupt-Spieledateien 
+category-gamedata-primary: IWAD-Haupt-Spieledateien
 category-gamedata-maps: Maps
 category-gamedata-maps-ag: A-G
 category-gamedata-maps-hm: H-M
@@ -274,7 +274,7 @@ iwad: Haupt-Spieledatei
 iwad-selection-title: Wählen Sie die Haupt-Spieledatei
 memory-zone: Speicherbedarf (MB)
 
-renderer: Renderer 
+renderer: Renderer
 renderer-opengl: OpenGL
 renderer-direct3d: Microsoft Direct3D
 
@@ -319,7 +319,7 @@ texture-depth-32: 32-bit
 
 texture-options: Texturoptionen
 extres-with-pwad: Erlaube externe Texturen in PWADs
-anisotropic-filter: Anisotropische Filterung
+disable-anisotropic-filter: Anisotropische Filterung abschalten
 paletted-textures: Texturen mit eigener Palette
 
 maximum-texture-size: Maximle Größe
@@ -376,13 +376,13 @@ help-welcome = "Willkommen bei Snowberry. Snowberry ist ein Startprogramm, mit d
 
 help-command = "Klicken Sie auf die Schaltfläche <b>Play</b>, um ein Spiel zu starten."
 
-help-command-defaults = "Das <b>Basisprofil</b> enthält Einstellungen, 
+help-command-defaults = "Das <b>Basisprofil</b> enthält Einstellungen,
 die für alle Profile gelten."
 
 help-tab-summary = "Die Registerkarte Zusammenfassung zeigt wichtige Informationen zum aktuellen Profil."
 
-help-tab-maps = "Die Registerkarte Maps bietet eine schnelle Möglichkeit, zu wählen, welche Wad-Erweiterungen 
-mit dem aktuellen Profil genutzt werden sollen. Hier vorgenommene Änderungen spiegeln sich in der 
+help-tab-maps = "Die Registerkarte Maps bietet eine schnelle Möglichkeit, zu wählen, welche Wad-Erweiterungen
+mit dem aktuellen Profil genutzt werden sollen. Hier vorgenommene Änderungen spiegeln sich in der
 Registerkarte Erweiterungen wider."
 
 help-tab-addons = "Wählen Sie die Erweiterungen aus, die Sie mit dem aktuellen Profil nutzen möchten.<p>Die Schaltfläche <b>Einstellungen</b> ermöglicht es, die ausgewählten Erweiterungen anzupassen.<p>Um die Reihenfolge zu ändern, in der Erweiterungen geladen werden, klicken Sie auf die Schaltfläche <b>Reihenfolge</b>."
@@ -400,7 +400,7 @@ help-value-default: Vorgabe
 
 iwad-help = "Die Haupt-Spieledatei (IWAD) enthält unter anderem alle Maps, Grafiken, Sounds und Effekte. Sie müssen eine Haupt-Spieledatei angeben, um spielen zu können.<p> Diese Dateien werden IWAD (=interne WAD) genannt und besitzen die Dateiendung '.wad'. Üblicherweise sind sie 4-20 MB groß. Man findet diese IWAD Dateien in dem Ordner, in den das ursprüngliche Spiel (Doom, Heretic, oder Hexen) installiert wurde. "
 
-window-size-help = "Eigene Bildschirmauflösungen (um z.B. im Widescreen-Format spielen zu können): 
+window-size-help = "Eigene Bildschirmauflösungen (um z.B. im Widescreen-Format spielen zu können):
 <ul>
 <li>Stellen Sie dies hier auf Eigene Einstellung.
 <li>Geben Sie Breite und Höhe in die entsprechenden Felder ein.

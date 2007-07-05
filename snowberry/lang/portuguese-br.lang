@@ -34,12 +34,12 @@ wizard-locate-iwad: Para poder jogar este jogo, vocÍ precisar· localizar o pri
 wizard-locate-iwad-deathkings: Diferentemente de outros jogos, o arquivo WAD do jogo the Death Kings ser· instalado como uma extens„o. Death Kings È uma extens„o de Hexen.
 wizard-suggested-iwad: Nome Original
 deathkings-selection-title: Localizar HEXDD.WAD
-wizard-addon-paths: Minhas Pastas de Extensıes
-wizard-addon-paths-explanation: Se vocÍ j· possui os arquivos WAD, pacotes de recursos, ou outras extensıes em seu disco rÌgido, vocÍ pode dizer ao programa para carreg·-los do local atual onde est„o. Especifique as pastas abaixo. As pastas podem ser editadas em ConfiguraÁıes Compartilhadas -> configuraÁıes -> p·gina do Executador mais tarde. Se vocÍ instalar extensıes depois usando a aba Extensıes, eles ser„o copiados para a pasta de extensıes do executador.
-wizard-launching: OpÁıes do Executador
+wizard-addon-paths: Minhas Pastas de Extens?es
+wizard-addon-paths-explanation: Se vocÍ j· possui os arquivos WAD, pacotes de recursos, ou outras extens?es em seu disco rÌgido, vocÍ pode dizer ao programa para carreg·-los do local atual onde est„o. Especifique as pastas abaixo. As pastas podem ser editadas em ConfiguraÁ?es Compartilhadas -> configuraÁ?es -> p·gina do Executador mais tarde. Se vocÍ instalar extens?es depois usando a aba Extens?es, eles ser„o copiados para a pasta de extens?es do executador.
+wizard-launching: OpÁ?es do Executador
 wizard-launching-explanation: O frontend deve ser fechado quando um jogo È inicializado?
 wizard-unlaunchable-profiles: Alguns Perfis n„o podem ser Executados
-wizard-unlaunchable-profiles-listed = 
+wizard-unlaunchable-profiles-listed =
 "Os seguintes perfis n„o podem ser executados no momento.
 Est· faltando um um arquivo de dados do jogo (IWAD) e foram escondidos.
 VocÍ pode torn·-los visÌveis em Perfil -> Mostrar..."
@@ -51,11 +51,11 @@ about-dialog: Sobre o Snowberry
 about-subtitle: Interface ExtendÌvel para o Motor Doomsday
 about-version: Vers„o
 about-license = "Este programa È distribuÌdo sob a licenÁa
-P˙blica Geral GNU."
+P?blica Geral GNU."
 about-website: http://sourceforge.net/projects/deng/
 show-credits: CrÈditos
 about-credits: CrÈditos
-crÈditos = "<html><table width=''100%'' height=''100%'' border=''0'' 
+crÈditos = "<html><table width=''100%'' height=''100%'' border=''0''
 cellspacing=''0'' cellpadding=''10''>
 <tr>
 <td width=''30%'' valign=top align=''right''><b>Concito:</b>
@@ -87,9 +87,9 @@ new-profile-game: Biblioteca do Jogo
 rename-profile-dialog: Renomear Perfil
 rename-profile-name: Novo nome
 reset-profile-dialog: Redefinir Perfil
-reset-profile-query: VocÍ est· prestes a redefinir <b>%1</b> para o padr„o. VocÍ quer redefinir os valores de todas as configuraÁıes no perfil, as extensıes selecionadas para serem carregadas no peril, ou os dois?
+reset-profile-query: VocÍ est· prestes a redefinir <b>%1</b> para o padr„o. VocÍ quer redefinir os valores de todas as configuraÁ?es no perfil, as extens?es selecionadas para serem carregadas no peril, ou os dois?
 reset-profile-values: Redefinir Valores
-reset-profile-addons: Redefinir Extensıes
+reset-profile-addons: Redefinir Extens?es
 reset-profile-everything: Redefinir Tudo
 delete-profile-dialog: Apagar Perfil
 delete-profile-query: VocÍ tem certeza de que vocÍ quer apagar <b>%1</b>?
@@ -104,10 +104,10 @@ install-addon-dialog: Instalador da Extens„o
 addon-dialog-folder: Pasta:
 addon-dialog-folder-browse: ...
 addon-dialog-folder-uninstalled: Mostrar Desinstalados
-addon-dialog-add-to-custom-folders: Adicionar ‡s Minhas Pastas de Extensıes
+addon-dialog-add-to-custom-folders: Adicionar ‡s Minhas Pastas de Extens?es
 addon-dialog-browse-prompt: Escolher Pasta
-addon-dialog-found: Extensıes da pasta selecionada:
-addon-dialog-addons-copied: Extensıes Instaladas s„o copiadas para sua pasta pessoal de extensıes. Se vocÍ quer evitar a cÛpia, adicione a pasta ‡ sua pasta de extensıes.
+addon-dialog-found: Extens?es da pasta selecionada:
+addon-dialog-addons-copied: Extens?es Instaladas s„o copiadas para sua pasta pessoal de extens?es. Se vocÍ quer evitar a cÛpia, adicione a pasta ‡ sua pasta de extens?es.
 addon-dialog-name: Nome
 addon-dialog-type: Tipo
 addon-dialog-type-box: Box Container
@@ -120,13 +120,13 @@ addon-dialog-type-deh: CorreÁ„o DeHackEd
 addon-dialog-type-manifest: Manifesto da Extens„o
 uninstall-addon-dialog: Desinstalar Extens„o
 uninstall-addon-query: VocÍ tem certeza de que vocÍ quer desinstalar <b>%1</b>?
-uninstall-addon-query-several: VocÍ tem certeza de que vocÍ quer desinstalar estas extensıes:
+uninstall-addon-query-several: VocÍ tem certeza de que vocÍ quer desinstalar estas extens?es:
 load-order-dialog: Carregar Ordem
-load-order-message: Extensıes ser„o carregadas nesta ordem:
+load-order-message: Extens?es ser„o carregadas nesta ordem:
 load-order-move-up: Cima
 load-order-move-down: Baixo
 load-order-move-top: Primeiro
-load-order-move-bottom: ⁄ltimo
+load-order-move-bottom: ?ltimo
 
 addon-inspector-dialog: Inspetor de Extens„o
 addon-type-generic: Extens„o GenÈrica
@@ -135,38 +135,38 @@ addon-type-bundle: Combinado Snowberry
 addon-type-pk3: Pacote PK3
 addon-type-wad: Arquivo WAD
 addon-type-dehacked: CorreÁ„o DeHackEd
-addon-type-ded: DefiniÁıes do Motor Doomsday
+addon-type-ded: DefiniÁ?es do Motor Doomsday
 addon-type-lump: Data Lump
 
-conflict-wizard: Guia de Extensıes
+conflict-wizard: Guia de Extens?es
 
-category-conflict-message = "<b>%1</b> exclui as 
-seguintes extensıes:%2 <p>Selecione quais destas extensıes devem ser
+category-conflict-message = "<b>%1</b> exclui as
+seguintes extens?es:%2 <p>Selecione quais destas extens?es devem ser
 carregadas."
 
 conflict-choice1 = "Carregar %1.
-As extensıes apagadas n„o est„o carregadas."
+As extens?es apagadas n„o est„o carregadas."
 conflict-choice2: N„o carrega %1.
 
 value-conflict-message = "<b>%1</b> n„o pode ser usado com
-as seguintes configuraÁıes:%2 <p>%1 n„o ser· carregado."
+as seguintes configuraÁ?es:%2 <p>%1 n„o ser· carregado."
 
 keyword-conflict-message = "<b>%1</b> exclui os seguintes
-recursos:%2 <p>Selecione quais destas extensıes devem ser carregadas."
+recursos:%2 <p>Selecione quais destas extens?es devem ser carregadas."
 
 provide-conflict-message = "Existem recursos conflitantes:%1
-<p>As extensıes listadas abaixo provÍ versıes conflitantes do
-mesmo recurso. Apenas uma das extensıes pode ser carregada.
+<p>As extens?es listadas abaixo provÍ vers?es conflitantes do
+mesmo recurso. Apenas uma das extens?es pode ser carregada.
 <p>Selecione qual delas pode ser carregada."
 
 missing-requirements-message = "<b>%1</b> n„o pode ser usado porque todos
 os recursos que s„o requeridos n„o est„ sendo carregados.  <p>In order to use %1,
-vocÍ tambÈm deve carregar extensıes que fornecem estes recursos requeridos:"
+vocÍ tambÈm deve carregar extens?es que fornecem estes recursos requeridos:"
 
 #
 # Perfis e Componentes
 #
-defaults-profile: ConfiguraÁıes Compartilhadas
+defaults-profile: ConfiguraÁ?es Compartilhadas
 game-jdoom: jDoom
 game-jheretic: jHeretic
 game-jhexen: jHexen
@@ -175,7 +175,7 @@ game-jheretic-icon: orb-heretic
 game-jhexen-icon: orb-hexen
 
 #
-# Etiquetas de Botıes
+# Etiquetas de Bot?es
 #
 play: Jogar
 stop: Parar
@@ -188,7 +188,7 @@ install-addon: +
 uninstall-addon: -
 load-order: Carregar na Ordem
 addon-info: Info
-addon-settings: ConfiguraÁıes
+addon-settings: ConfiguraÁ?es
 show-addon-paths: Minhas Pastas
 about: Sobre
 popup-menu: Menu
@@ -212,7 +212,7 @@ menu-uninstall-addon: Desinstalar
 menu-addon-info: Info
 menu-load-order: ...
 menu-install-addon: Instalar Extens„o...
-menu-addon-settings: ConfiguraÁıes
+menu-addon-settings: ConfiguraÁ?es
 menu-check-category: Checar Categoria
 menu-uncheck-category: Deschecar Categoria
 menu-expand-all-categories: Expandir Tudo
@@ -236,15 +236,15 @@ menu-open-documentation-accel: Ctrl-?
 #
 tab-summary: Sum·rio
 tab-maps: Mapas
-tab-addons: Extensıes
-tab-settings: ConfiguraÁıes
+tab-addons: Extens?es
+tab-settings: ConfiguraÁ?es
 general-options: Interface
 game-options: Jogo
 display-options: Mostrar
 graphics-options: Gr·ficos
 sound-options: Som
 input-options: Entrada
-addons-options: Extensıes
+addons-options: Extens?es
 developer-options: Desenvolvedor
 
 #
@@ -256,14 +256,14 @@ display-options-icon: mostrar
 graphics-options-icon: gr·ficos
 sound-options-icon: som
 input-options-icon: entrada
-addons-options-icon: extensıes
+addons-options-icon: extens?es
 developer-options-icon: desenvolvedor
 
 #
 # Etiquetas para a Aba Sum·rio
 #
-loaded-addons: Extensıes Carregadas
-custom-settings: ConfiguraÁıes
+loaded-addons: Extens?es Carregadas
+custom-settings: ConfiguraÁ?es
 system-settings: ConfiguraÁ„o
 summary-run-in-window: rodar em janela
 summary-color-depth-16: 16-bit de cor
@@ -274,16 +274,16 @@ summary-color-depth-32: 32-bit de cor
 #
 maps-list-icon:
 maps-list-identifier: Extens„o PWAD
-maps-list-count: Conte˙do
+maps-list-count: Conte?do
 maps-list-clear: Limpar tudo
 
 wad-analysis-maps: %1 mapa(s)
 wad-analysis-custom-textures: texturas
 
 #
-# Aba de Extensıes
+# Aba de Extens?es
 #
-addon-counter: %1 de %2 extensıes 
+addon-counter: %1 de %2 extens?es
 addon-list-check:
 addon-list-name: Nome
 addon-list-version: Vers„o
@@ -293,21 +293,21 @@ menu-addon-list-uncheck-selected: Deschecar Selecionado
 menu-addon-list-check-all: Checar Tudo
 menu-addon-list-uncheck-all: Deschecar Tudo
 menu-addon-show-parent-box: Mostrar Caixa
-menu-addon-show-box-category: Mostrar Conte˙do da Caixa
+menu-addon-show-box-category: Mostrar Conte?do da Caixa
 
 addon-list-filter: Filtro:
 addon-list-filter-mode-all: Mostrar tudo
 addon-list-filter-mode-compatible: Somente compatÌvel
 addon-list-filter-mode-pwad: Somente PWADs
 addon-list-filter-mode-compatible-pwad: Somente PWADs compatÌveis
-addon-list-filter-mode-all-with-boxes: Mostrar tudo (tambÈm conte˙do da caixa)
+addon-list-filter-mode-all-with-boxes: Mostrar tudo (tambÈm conte?do da caixa)
 
-category-tree-root: Todas as Extensıes
+category-tree-root: Todas as Extens?es
 category-graphics: Gr·ficos
 category-graphics-3d: Recursos 3D
 category-graphics-textures: Texturas
 category-graphics-ui: Interface do Usu·rio
-category-music: M˙sica
+category-music: M?sica
 category-sound: Som
 category-effects: Efeitos
 category-effects-particle: Efeitos PartÌcula
@@ -316,29 +316,29 @@ category-gamedata: Dados do Jogo
 category-gamedata-doomsday: Arquivos de Jogo Doomsday
 category-gamedata-primary: Arquivos de Dados Prim·rios
 category-gamedata-maps: Mapas
-category-gamedata-maps-ag: A-G	 
-category-gamedata-maps-hm: H-M	 
-category-gamedata-maps-ns: N-S	 
-category-gamedata-maps-tz: T-Z	 
+category-gamedata-maps-ag: A-G
+category-gamedata-maps-hm: H-M
+category-gamedata-maps-ns: N-S
+category-gamedata-maps-tz: T-Z
 category-gamedata-maps-09: 0-9
 category-gamedata-lumps: Dados Lumps
 category-patches: DeHackEd Patches
-category-definitions: DefiniÁıes do Motor Doomsday
+category-definitions: DefiniÁ?es do Motor Doomsday
 
 #
 # Tipos de Arquivos
 #
 file-type-iwad: Arquivos de dados do jogo (*.wad)
 file-type-box: Caixas (*.box)
-file-type-bundle: Extensıes bundles (*.addon)
+file-type-bundle: Extens?es bundles (*.addon)
 file-type-pk3: Arquivos PK3 (*.pk3)
 file-type-wad: Arquivos WAD (*.wad)
 file-type-ded: Arquivos de definiÁ„o (*.ded)
-file-type-dehacked: CorreÁıes DeHackEd (*.deh)
+file-type-dehacked: CorreÁ?es DeHackEd (*.deh)
 file-type-anything: Todos os arquivos
 
 #
-# ConfiguraÁıes
+# ConfiguraÁ?es
 #
 no: N„o
 yes: Sim
@@ -377,7 +377,7 @@ window-size-1280x1024: 1280 x 1024
 window-size-1400x1050: 1400 x 1050
 window-size-1600x1200: 1600 x 1200
 window-size-800x500: 800 x 500 (16:10)
-window-size-1024x640: 1024 x 640 (16:10) 
+window-size-1024x640: 1024 x 640 (16:10)
 window-size-1280x800: 1280 x 800 (16:10)
 window-size-1600x1000: 1600 x 1000 (16:10)
 window-size-1680x1050: 1680 x 1050 (16:10)
@@ -395,7 +395,7 @@ triple-buffering: Buffering triplo
 
 enable-gamma: Usar ajustamentos de cor
 enable-highres-textures: Usar texturas externas
-enable-highres-patches: Usar correÁıes externas
+enable-highres-patches: Usar correÁ?es externas
 
 texture-compression: Compress„o da textura
 disable-genmips: Desabilitar SGIS_generate_mipmap
@@ -410,9 +410,9 @@ texture-depth: Profundidade da cor da textura
 texture-depth-16: 16-bit
 texture-depth-32: 32-bit
 
-texture-options: OpÁıes de Textura
+texture-options: OpÁ?es de Textura
 extres-with-pwad: Permitir externo com PWADs
-anisotropic-filter: Filtros AnisotrÛpicos
+disable-anisotropic-filter: Desabilitar Filtros AnisotrÛpicos
 paletted-textures: Texturas paletizadas
 
 maximum-texture-size: Tamanho m·ximo
@@ -436,11 +436,11 @@ sound-driver-dummy: Bobo (sem som)
 sound-channels: Canais de Som
 disable-audio: Desabilitar todo o ·udio
 disable-sound-effects: Desabilitar efeitos sonoros
-disable-music: Desabilitar m˙sica
-disable-primary-buffer: N„o definir formato de buffer prim·rio 
+disable-music: Desabilitar m?sica
+disable-primary-buffer: N„o definir formato de buffer prim·rio
 disable-fmod: Desabilitar FMOD
 
-eax-options: OpÁıes EAX
+eax-options: OpÁ?es EAX
 disable-eax: Desabilitar EAX
 ignore-eax-errors: Ignorar erros EAX
 
@@ -453,59 +453,59 @@ verbosity-none: N„o
 verbosity-devel: NÌvel 1
 verbosity-extra: NÌvel 2
 
-custom-cmdline: OpÁıes Customizadas
+custom-cmdline: OpÁ?es Customizadas
 
-addon-paths: Minhas Pastas de Extensıes
+addon-paths: Minhas Pastas de Extens?es
 new-addon-path: +
 delete-addon-path: -
-addon-paths-add-prompt: Adicionar aos Meus Caminhos de Extensıes
+addon-paths-add-prompt: Adicionar aos Meus Caminhos de Extens?es
 
 ui-parts: Interface do Usu·rio
 main-hide-title: Esconder tÌtulo do banner
-main-hide-help: Esconder painel de ajuda 
-profile-hide-buttons: Esconder botıes do perfil
+main-hide-help: Esconder painel de ajuda
+profile-hide-buttons: Esconder bot?es do perfil
 summary-profile-change-autoselect: MudanÁa do perfil mostra sum·rio
 profile-large-icons: Õcones grandes do perfil
 profile-minimal-mode: Lista mÌnima do perfil
 
-refresh-required: Lembrar de atualiar as extensıes.
+refresh-required: Lembrar de atualiar as extens?es.
 restart-required: MudanÁas ser„o aplicadas depois de reiniciar.
 
 #
 # Ajuda
 #
 help-welcome = "<b><font size=''+1''>Bem vindo/a ao Snowberry!</font></b><p>
-Esta È a aplicaÁ„o frontend que permite a vocÍ executar o <b>Motor Doomsday</b> 
+Esta È a aplicaÁ„o frontend que permite a vocÍ executar o <b>Motor Doomsday</b>
 com facilidade. Selecione um perfil de jogo da lista na esquerda e pressione <b>Jogar</b>.
 <p>A interface do usu·rio do frontend pode ser
-modificada em <b>ConfiguraÁıes Compartilhadas</b> -&gt; <b>ConfiguraÁıes</b> -&gt; 
+modificada em <b>ConfiguraÁ?es Compartilhadas</b> -&gt; <b>ConfiguraÁ?es</b> -&gt;
 <b><a href=''show-snowberry-settings''>Frontend</a></b>."
 
 help-command = "Para comeÁar um jogo, pressione o bot„o <b>Jogar</b>."
 
-help-command-defaults = "O Perfil de <b>ConfiguraÁıes Compartilhadas</b> contÈm 
-opÁıes comuns a todos os perfis."
+help-command-defaults = "O Perfil de <b>ConfiguraÁ?es Compartilhadas</b> contÈm
+opÁ?es comuns a todos os perfis."
 
 help-tab-summary = "<b><font size=''+1''>Aba Sum·rio</font></b><p>
-A Aba Sum·rio mostra as informaÁıes mais importantes 
+A Aba Sum·rio mostra as informaÁ?es mais importantes
 sobre o perfil atual ."
 
 help-tab-maps = "<b><font size=''+1''>Aba Mapas</font></b><p>
 A Aba mapas fornece um jeito r·pido de de selecionar qual extens„o WAD
-ser· usada no perfil atual. As seleÁıes feitas aqui ser„o refletidas
-na Aba Extensıes."
+ser· usada no perfil atual. As seleÁ?es feitas aqui ser„o refletidas
+na Aba Extens?es."
 
-help-tab-addons = "<b><font size=''+1''>Aba Extensıes</font></b><p>
-Selecione as extensıes que vocÍ gostaria de usar com o perfil
-atual.<p>O bot„o <b>ConfiguraÁıes</b> permite a vocÍ
-customizar a extens„o selecionada.<p>Para mudar a ordem na qual as extensıes
+help-tab-addons = "<b><font size=''+1''>Aba Extens?es</font></b><p>
+Selecione as extens?es que vocÍ gostaria de usar com o perfil
+atual.<p>O bot„o <b>ConfiguraÁ?es</b> permite a vocÍ
+customizar a extens„o selecionada.<p>Para mudar a ordem na qual as extens?es
 s„o carregadas, pressione o bot„o <b>Carregar</b> button."
 
-help-tab-settings = "<b><font size=''+1''>Aba ConfiguraÁıes</font></b><p>
-A Aba configuraÁıes permite a vocÍ customizar o
-atual perfil e extensıes que vocÍ selecionou para carregar.
-<p>Para mudar as configuraÁıes padr„o para todos os perfis,
-selecione o perfil <b>ConfiguraÁıes Compartilhadas</b>."
+help-tab-settings = "<b><font size=''+1''>Aba ConfiguraÁ?es</font></b><p>
+A Aba configuraÁ?es permite a vocÍ customizar o
+atual perfil e extens?es que vocÍ selecionou para carregar.
+<p>Para mudar as configuraÁ?es padr„o para todos os perfis,
+selecione o perfil <b>ConfiguraÁ?es Compartilhadas</b>."
 
 #
 # Settings Help
@@ -518,14 +518,14 @@ help-value-max: M·x
 help-value-default: Padr„o
 
 iwad-help = "O arquivo de dado do jogo contÈm todos os mapas, gr·ficos, efeitos
-sonoros, e outros conte˙dos do jogo. VocÍ deve especificar um arquivo de dado do jogo
+sonoros, e outros conte?dos do jogo. VocÍ deve especificar um arquivo de dado do jogo
 para poder jogar.  <p>Arquivos de dados de Jogo s„o chamados arquivos IWAD e eles usam
 a extens„o de nome de arquivo WAD. Eles possuem usualmente entre 4-20 MB em
 tamanho. VocÍ encontrar· um no diretÛrio onde vocÍ tem instalado
 uma cÛpia do Doom, Heretic, ou Hexen original."
 
 window-size-help = "Para definir uma resoluÁ„o (por exemplo jogar
-no modo tela mais larga): 
+no modo tela mais larga):
 <ul>
 <li>Customize esta opÁ„o.
 <li>Defina a largura e a altura nos campos correspondentes.
@@ -580,7 +580,7 @@ error-read-zip-info-file: Erro de InformaÁ„o de PK3
 error-read-zip-info-file-text: Houve um erro na entrada de metadados da extens„o <b>%2</b>, no arquivo <tt>%1</tt>.
 
 error-parsing-profile: Erro no Perfil
-error-parsing-profile-text: O perfil <tt>%1</tt> n„o pode ser carregado porque seu conte˙do È inv·lido. Para corrigir o problema vocÍ deve editar manualmente o arquivo e consertar as partes inv·lidas, ou apagar o arquivo.<p><b>Raz„o:</b><p>%2
+error-parsing-profile-text: O perfil <tt>%1</tt> n„o pode ser carregado porque seu conte?do È inv·lido. Para corrigir o problema vocÍ deve editar manualmente o arquivo e consertar as partes inv·lidas, ou apagar o arquivo.<p><b>Raz„o:</b><p>%2
 
 error-read-profile: Erro no Perfil
 error-read-profile-text: O perfil <tt>%1</tt> n„o pode ser carregado porque ocorreu um erro inesperado. Para corrigir o problema vocÍ deve editar manualmente e consertar as partes inv·lidas, ou apagar o arquivo.<p><b>Traceback:</b><p>%2
