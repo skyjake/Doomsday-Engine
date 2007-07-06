@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 #include "sys_file.h"
 
 // Zip entry indices are invalidated when a new Zip file is read.
-typedef int     zipindex_t;
+typedef uint    zipindex_t;
 
 void            Zip_Init(void);
 void            Zip_Shutdown(void);
@@ -41,8 +41,8 @@ boolean         Zip_Open(const char *fileName, DFILE *prevOpened);
 zipindex_t      Zip_Find(const char *fileName);
 zipindex_t      Zip_Iterate(int (*iterator) (const char*, void*),
                             void *parm);
-uint            Zip_GetSize(zipindex_t index);
-uint            Zip_Read(zipindex_t index, void *buffer);
+size_t          Zip_GetSize(zipindex_t index);
+size_t          Zip_Read(zipindex_t index, void *buffer);
 uint            Zip_GetLastModified(zipindex_t index);
 
 #endif
