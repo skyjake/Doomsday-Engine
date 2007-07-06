@@ -184,12 +184,72 @@ void DD_InitCommandLine(const char *cmdLine)
 }
 
 /**
+ * Sets the level of verbosity that was requested using the -verbose
+ * option(s).
+ */
+void DD_Verbosity(void)
+{
+    int         i;
+
+    for(i = 1, verbose = 0; i < Argc(); ++i)
+        if(ArgRecognize("-verbose", Argv(i)))
+            verbose++;
+}
+
+/**
+ * Called early on during the startup process so that we can get the console
+ * online ready for printing ASAP.
+ */
+boolean DD_EarlyInit(void)
+{
+    char       *outfilename = "doomsday.out";
+
+    // We'll redirect stdout to a log file.
+    DD_CheckArg("-out", &outfilename);
+    outFile = fopen(outfilename, "w");
+    if(!outFile)
+    {
+        DD_ErrorBox(false, "Couldn't open message output file.");
+    }
+    else
+    {
+        setbuf(outFile, NULL); // Don't buffer much.
+
+        // Determine the requested degree of verbosity.
+        DD_Verbosity();
+
+        // Get the console online ASAP.
+        if(!Con_Init())
+        {
+            DD_ErrorBox(true, "Error initializing console.");
+        }
+        else
+        {
+            Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
+
+            // Print the used command line.
+            if(verbose)
+            {
+                int         p;
+
+                Con_Message("Command line (%i strings):\n", Argc());
+                for(p = 0; p < Argc(); ++p)
+                    Con_Message("  %i: %s\n", p, Argv(p));
+            }
+        }
+    }
+
+    return true;
+}
+
+/**
  * This is called from DD_Shutdown().
  */
 void DD_ShutdownAll(void)
 {
     int     i;
 
+    Con_Shutdown();
     DD_ShutdownHelp();
     Zip_Shutdown();
 

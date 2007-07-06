@@ -351,7 +351,7 @@ void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
     }
 }
 
-void Con_Init(void)
+boolean Con_Init(void)
 {
     histBuf = Con_NewBuffer(512, 70, 0);
     bLineOff = 0;
@@ -394,6 +394,9 @@ void Con_Init(void)
     UI_Register();
     Demo_Register();
     P_RegisterControl();
+
+    Con_Message("Con_Init: Initializing the console.\n");
+    return true;
 }
 
 void Con_Shutdown(void)
@@ -1819,7 +1822,6 @@ void Con_AbnormalShutdown(const char* message)
 {
     Sys_Shutdown();
     B_Shutdown();
-    Con_Shutdown();
 
 #ifdef WIN32
     ChangeDisplaySettings(0, 0);    // Restore original mode, just in case.

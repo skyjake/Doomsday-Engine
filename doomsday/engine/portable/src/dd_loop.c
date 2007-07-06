@@ -175,20 +175,6 @@ int DD_GameLoop(void)
         DD_CheckTimeDemo();
     }
 
-    // Quit netgame if one is in progress.
-    if(netgame)
-    {
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
-                    true, false);
-    }
-
-    Demo_StopPlayback();
-    Con_SaveDefaults();
-    Sys_Shutdown();
-    B_Shutdown();
-    Con_Shutdown();
-    DD_Shutdown();
-
     return exitCode;
 }
 

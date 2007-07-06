@@ -752,8 +752,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         // Prepare the command line arguments.
         DD_InitCommandLine(GetCommandLine());
 
+        if(!DD_EarlyInit())
+        {
+            DD_ErrorBox(true, "Error during early init.");
+        }
         // Load the rendering DLL.
-        if(!DD_InitDGL())
+        else if(!DD_InitDGL())
         {
             DD_ErrorBox(true, "Error loading rendering library.");
         }
@@ -793,10 +797,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
 
     if(!doShutdown)
-    {
-        // Fire up the engine. The game loop will also act as the message pump.
+    {   // Fire up the engine. The game loop will also act as the message pump.
         exitCode = DD_Main();
     }
+    DD_Shutdown();
 
     // Destroy all created windows.
     if(windows)

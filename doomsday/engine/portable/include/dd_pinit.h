@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +36,7 @@ void            DD_ShutdownAll(void);
 int             DD_CheckArg(char *tag, char **value);
 void            DD_ErrorBox(boolean error, char *format, ...);
 void            DD_MainWindowTitle(char *title);
+boolean         DD_EarlyInit(void);
 void            DD_InitAPI(void);
 void            DD_InitCommandLine(const char *cmdLine);
 

@@ -308,7 +308,7 @@ boolean InitPlugins(void)
 int main(int argc, char **argv)
 {
 	char       *cmdLine;
-	int         i, length = 0;
+	int         i, length = 0, exitCode;
 
 	// Initialize libtool's dynamic library routines.
 	lt_dlinit();
@@ -336,9 +336,11 @@ int main(int argc, char **argv)
 
 	// Prepare the command line arguments.
 	DD_InitCommandLine(cmdLine);
-
 	free(cmdLine);
 	cmdLine = NULL;
+
+    if(!DD_EarlyInit())
+        return 1;
 	// Load the rendering DLL.
 	if(!DD_InitDGL())
 		return 1;
@@ -379,8 +381,10 @@ int main(int argc, char **argv)
 	Z_Init();
 
 	// Fire up the engine. The game loop will also act as the message pump.
-	DD_Main();
-	return 0;
+	exitCode = DD_Main();
+
+    DD_Shutdown();
+    return exitCode;
 }
 
 /**

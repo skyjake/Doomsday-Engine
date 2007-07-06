@@ -290,19 +290,6 @@ void DD_SetDefsFile(char *filename)
 }
 
 /**
- * Sets the level of verbosity that was requested using the -verbose
- * option(s).
- */
-void DD_Verbosity(void)
-{
-    int     i;
-
-    for(i = 1, verbose = 0; i < Argc(); ++i)
-        if(ArgRecognize("-verbose", Argv(i)))
-            verbose++;
-}
-
-/**
  * Define Auto mappings for the runtime directory.
  */
 void DD_DefineBuiltinVDM(void)
@@ -344,9 +331,7 @@ void DD_AutoLoad(void)
  */
 int DD_Main(void)
 {
-    char   *outfilename = "doomsday.out";
-
-    DD_Verbosity();
+    int         exitCode;
 
 #ifdef UNIX
 #   ifndef MACOSX
@@ -367,15 +352,6 @@ int DD_Main(void)
         Dir_MakeDir(ArgNext(), &ddRuntimeDir);
         userDirOk = Dir_ChDir(&ddRuntimeDir);
     }
-
-    // We'll redirect stdout to a log file.
-    DD_CheckArg("-out", &outfilename);
-    outFile = fopen(outfilename, "w");
-    if(!outFile)
-    {
-        DD_ErrorBox(false, "Couldn't open message output file.");
-    }
-    setbuf(outFile, NULL);      // Don't buffer much.
 
     // The current working directory is the runtime dir.
     Dir_GetDir(&ddRuntimeDir);
@@ -408,11 +384,6 @@ int DD_Main(void)
 
     Dir_MakeAbsolute(ddBasePath);
     Dir_ValidDir(ddBasePath);
-
-    // We need to get the console initialized. Otherwise Con_Message() will
-    // crash the system (yikes).
-    Con_Init();
-    Con_Message("Con_Init: Initializing the console.\n");
 
     if(ArgCheck("-dedicated"))
     {
@@ -462,7 +433,23 @@ int DD_Main(void)
     // Final preparations for using the console UI.
     Con_InitUI();
 
-    return DD_GameLoop();
+    // Start the game loop.
+    exitCode = DD_GameLoop();
+
+    // Time to shutdown.
+    
+    if(netgame)
+    {   // Quit netgame if one is in progress.
+        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
+                    true, false);
+    }
+
+    Demo_StopPlayback();
+    Con_SaveDefaults();
+    Sys_Shutdown();
+    B_Shutdown();
+
+    return exitCode;
 }
 
 static int DD_StartupWorker(void *parm)
@@ -473,16 +460,6 @@ static int DD_StartupWorker(void *parm)
     // Initialize COM for this thread (needed for DirectInput).
     CoInitialize(NULL);
 #endif
-
-    Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
-
-    // Print the used command line.
-    if(verbose)
-    {
-        Con_Message("Command line (%i strings):\n", Argc());
-        for(p = 0; p < Argc(); p++)
-            Con_Message("  %i: %s\n", p, Argv(p));
-    }
 
     F_InitMapping();
 

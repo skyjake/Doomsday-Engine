@@ -112,7 +112,7 @@ void            Con_SetInteger(const char *name, int value, byte override);
 void            Con_SetFloat(const char *name, float value, byte override);
 void            Con_SetString(const char *name, char *text, byte override);
 
-void            Con_Init(void);
+boolean         Con_Init(void);
 void            Con_Shutdown(void);
 void            Con_AbnormalShutdown(const char* message);
 void            Con_WriteAliasesToFile(FILE * file);
