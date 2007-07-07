@@ -223,15 +223,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\external\glbsp\include\analyze.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\..\external\glbsp\src\blockmap.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\external\glbsp\include\blockmap.h"
 					>
 				</File>
 				<File
@@ -239,15 +231,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\external\glbsp\include\glbsp.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\..\external\glbsp\src\level.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\external\glbsp\include\level.h"
 					>
 				</File>
 				<File
@@ -255,19 +239,56 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\external\glbsp\include\node.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\..\external\glbsp\src\reject.c"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\external\glbsp\include\reject.h"
+					RelativePath="..\..\..\external\glbsp\src\seg.c"
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\external\glbsp\src\seg.c"
+					RelativePath="..\..\..\external\glbsp\src\system.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\external\glbsp\src\util.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\external\glbsp\src\wad.c"
+					>
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl"
+			>
+			<Filter
+				Name="glBSP"
+				>
+				<File
+					RelativePath="..\..\..\external\glbsp\include\analyze.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\external\glbsp\include\blockmap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\external\glbsp\include\glbsp.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\external\glbsp\include\level.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\external\glbsp\include\node.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\external\glbsp\include\reject.h"
 					>
 				</File>
 				<File
@@ -279,15 +300,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\external\glbsp\src\system.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\..\external\glbsp\include\system.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\external\glbsp\src\util.c"
 					>
 				</File>
 				<File
@@ -295,19 +308,10 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\external\glbsp\src\wad.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\..\external\glbsp\include\wad.h"
 					>
 				</File>
 			</Filter>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl"
-			>
 		</Filter>
 		<Filter
 			Name="Resource Files"
