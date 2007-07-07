@@ -46,14 +46,14 @@ extern volatile nodebuildcomms_t *cur_comms;
 /* ----- function prototypes ---------------------------- */
 
 // fatal error messages (these don't return)
-void FatalError(const char *str, ...);
-void InternalError(const char *str, ...);
+void FatalError(const char *str, ...) PRINTF_F(1,2);
+void InternalError(const char *str, ...) PRINTF_F(1,2);
 
 // display normal messages & warnings to the screen
-void PrintMsg(const char *str, ...);
-void PrintVerbose(const char *str, ...);
-void PrintWarn(const char *str, ...);
-void PrintMiniWarn(const char *str, ...);
+void PrintMsg(const char *str, ...) PRINTF_F(1,2);
+void PrintVerbose(const char *str, ...) PRINTF_F(1,2);
+void PrintWarn(const char *str, ...) PRINTF_F(1,2);
+void PrintMiniWarn(const char *str, ...) PRINTF_F(1,2);
 
 // set message for certain errors
 void SetErrorMsg(const char *str);
@@ -66,7 +66,7 @@ uint32_g Endian_U32(uint32_g);
 // these are only used for debugging
 void InitDebug(void);
 void TermDebug(void);
-void PrintDebug(const char *str, ...);
+void PrintDebug(const char *str, ...) PRINTF_F(1,2);
 
 // macros for the display stuff
 #define DisplayOpen        (* cur_funcs->display_open)

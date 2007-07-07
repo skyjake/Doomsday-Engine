@@ -251,16 +251,16 @@ void InitEndian(void)
   /* sanity-check type sizes */
 
   if (sizeof(uint8_g) != 1)
-    FatalError("Sanity check failed: sizeof(uint8_g) = %d", 
-        sizeof(uint8_g));
+    FatalError("Sanity check failed: sizeof(uint8_g) = %lu", 
+               (unsigned long) sizeof(uint8_g));
 
   if (sizeof(uint16_g) != 2)
-    FatalError("Sanity check failed: sizeof(uint16_g) = %d", 
-        sizeof(uint16_g));
+    FatalError("Sanity check failed: sizeof(uint16_g) = %lu", 
+               (unsigned long) sizeof(uint16_g));
 
   if (sizeof(uint32_g) != 4)
-    FatalError("Sanity check failed: sizeof(uint32_g) = %d", 
-        sizeof(uint32_g));
+    FatalError("Sanity check failed: sizeof(uint32_g) = %lu", 
+               (unsigned long) sizeof(uint32_g));
 
   /* check endianness */
 

@@ -1150,9 +1150,8 @@ void AddMinisegs(seg_t *part,
     {
       if (!cur->self_ref && !next->self_ref)
         PrintMiniWarn("Sector mismatch: #%d (%1.1f,%1.1f) != #%d (%1.1f,%1.1f)\n",
-            cur->after->index, next->before->index,
-            cur->vertex->x, cur->vertex->y,
-            next->vertex->x, next->vertex->y);
+            cur->after->index, cur->vertex->x, cur->vertex->y,
+            next->before->index, next->vertex->x, next->vertex->y);
 
       // choose the non-self-referencing sector when we can
       if (cur->self_ref && !next->self_ref)

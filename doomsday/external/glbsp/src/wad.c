@@ -824,7 +824,7 @@ static void WriteLumpData(lump_t *lump)
 # endif
 
   if (ftell(out_file) != lump->new_start)
-    PrintWarn("Consistency failure writing %s (%08X, %08X\n",
+    PrintWarn("Consistency failure writing %s (%081X, %08X\n",
       lump->name, ftell(out_file), lump->new_start);
 
   if (lump->length == 0)
@@ -929,7 +929,7 @@ static int WriteDirectory(void)
 
   if (ftell(out_file) != wad.dir_start)
     PrintWarn("Consistency failure writing lump directory "
-      "(%08X,%08X)\n", ftell(out_file), wad.dir_start);
+      "(%081X,%08X)\n", ftell(out_file), wad.dir_start);
 
   for (cur=wad.dir_head; cur; cur=cur->next)
   {
@@ -1565,8 +1565,8 @@ void ReportOneOverflow(const lump_t *lump, int limit, boolean_g hard)
   {
     case LIMIT_VERTEXES: PrintMsg("Number of Vertices %s.\n", msg); break;
     case LIMIT_SECTORS:  PrintMsg("Number of Sectors %s.\n", msg); break;
-    case LIMIT_SIDEDEFS: PrintMsg("Number of Sidedefs %s\n", msg); break;
-    case LIMIT_LINEDEFS: PrintMsg("Number of Linedefs\n", msg); break;
+    case LIMIT_SIDEDEFS: PrintMsg("Number of Sidedefs %s.\n", msg); break;
+    case LIMIT_LINEDEFS: PrintMsg("Number of Linedefs %s.\n", msg); break;
 
     case LIMIT_SEGS:     PrintMsg("Number of Segs %s.\n", msg); break;
     case LIMIT_SSECTORS: PrintMsg("Number of Subsectors %s.\n", msg); break;

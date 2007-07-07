@@ -31,6 +31,12 @@
 #define GCCATTR(attr)  /* nothing */
 #endif
 
+// Format checking for printf-like functions in GCC2
+#if defined(__GNUC__) && __GNUC__ >= 2
+#   define PRINTF_F(f,v) __attribute__ ((format (printf, f, v)))
+#else
+#   define PRINTF_F(f,v)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -147,13 +153,13 @@ typedef struct nodebuildfuncs_s
   // goes wrong, e.g. out of memory.  This routine should show the
   // error to the user and abort the program.
   // 
-  void (* fatal_error)(const char *str, ...);
+  void (* fatal_error)(const char *str, ...) PRINTF_F(1,2);
 
   // The print_msg routine is used to display the various messages
   // that occur, e.g. "Building GL nodes on MAP01" and that kind of
   // thing.
   // 
-  void (* print_msg)(const char *str, ...);
+  void (* print_msg)(const char *str, ...) PRINTF_F(1,2);
 
   // This routine is called frequently whilst building the nodes, and
   // can be used to keep a GUI responsive to user input.  Many
