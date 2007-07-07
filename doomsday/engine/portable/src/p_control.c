@@ -619,8 +619,8 @@ void P_ControlSetAxis(int player, uint axisControlIndex, float pos)
  */
 void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 {
-    controldesc_t *desc;
-	ddplayer_t *plr;
+//    controldesc_t *desc;
+//    ddplayer_t *plr;
 	
 	if(player < 0 || player >= DDMAXPLAYERS)
         return;

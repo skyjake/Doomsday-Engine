@@ -436,16 +436,16 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    d = FIX2FLT(USHORT(*((short*)(src))) << FRACBITS);
+                    d = FIX2FLT(USHORT(*((int16_t*)(src))) << FRACBITS);
                 else
-                    d = FIX2FLT(USHORT(*((short*)(src))));
+                    d = FIX2FLT(USHORT(*((int16_t*)(src))));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    d = FIX2FLT(SHORT(*((short*)(src))) << FRACBITS);
+                    d = FIX2FLT(SHORT(*((int16_t*)(src))) << FRACBITS);
                 else
-                    d = FIX2FLT(SHORT(*((short*)(src))));
+                    d = FIX2FLT(SHORT(*((int16_t*)(src))));
             }
             break;
 
@@ -453,16 +453,16 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    d = FIX2FLT(ULONG(*((long*)(src))) << FRACBITS);
+                    d = FIX2FLT(ULONG(*((int32_t*)(src))) << FRACBITS);
                 else
-                    d = FIX2FLT(ULONG(*((long*)(src))));
+                    d = FIX2FLT(ULONG(*((int32_t*)(src))));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    d = FIX2FLT(LONG(*((long*)(src))) << FRACBITS);
+                    d = FIX2FLT(LONG(*((int32_t*)(src))) << FRACBITS);
                 else
-                    d = FIX2FLT(LONG(*((long*)(src))));
+                    d = FIX2FLT(LONG(*((int32_t*)(src))));
             }
             break;
 
@@ -481,16 +481,16 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((int16_t*)(src))) << FRACBITS;
                 else
-                    d = USHORT(*((short*)(src)));
+                    d = USHORT(*((int16_t*)(src)));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    d = SHORT(*((short*)(src))) << FRACBITS;
+                    d = SHORT(*((int16_t*)(src))) << FRACBITS;
                 else
-                    d = SHORT(*((short*)(src)));
+                    d = SHORT(*((int16_t*)(src)));
             }
             break;
 
@@ -498,12 +498,12 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             {
             if(flags & DT_TEXTURE)
             {
-                d = P_CheckTexture((char*)((long long*)(src)), false, valueType,
+                d = P_CheckTexture((char*)((int64_t*)(src)), false, valueType,
                                    elmIdx, args->prop);
             }
             else if(flags & DT_FLAT)
             {
-                d = P_CheckTexture((char*)((long long*)(src)), true, valueType,
+                d = P_CheckTexture((char*)((int64_t*)(src)), true, valueType,
                                    elmIdx, args->prop);
             }
             break;
@@ -523,24 +523,24 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((int16_t*)(src))) << FRACBITS;
                 else
-                    d = USHORT(*((short*)(src)));
+                    d = USHORT(*((int16_t*)(src)));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    d = SHORT(*((short*)(src))) << FRACBITS;
+                    d = SHORT(*((int16_t*)(src))) << FRACBITS;
                 else
-                    d = SHORT(*((short*)(src)));
+                    d = SHORT(*((int16_t*)(src)));
             }
             break;
 
         case 4:
             if(flags & DT_UNSIGNED)
-                d = ULONG(*((long*)(src)));
+                d = ULONG(*((int32_t*)(src)));
             else
-                d = LONG(*((long*)(src)));
+                d = LONG(*((int32_t*)(src)));
             break;
 
         default:
@@ -559,24 +559,24 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((int16_t*)(src))) << FRACBITS;
                 else
-                    d = USHORT(*((short*)(src)));
+                    d = USHORT(*((int16_t*)(src)));
             }
             else
             {
                 if(flags & DT_FRACBITS)
-                    d = SHORT(*((short*)(src))) << FRACBITS;
+                    d = SHORT(*((int16_t*)(src))) << FRACBITS;
                 else
-                    d = SHORT(*((short*)(src)));
+                    d = SHORT(*((int16_t*)(src)));
             }
             break;
 
         case 4:
             if(flags & DT_UNSIGNED)
-                d = ULONG(*((long*)(src)));
+                d = ULONG(*((int32_t*)(src)));
             else
-                d = LONG(*((long*)(src)));
+                d = LONG(*((int32_t*)(src)));
             break;
 
         default:
@@ -595,15 +595,15 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((int16_t*)(src))) << FRACBITS;
                 else
-                    d = USHORT(*((short*)(src)));
+                    d = USHORT(*((int16_t*)(src)));
             }
             else
             {
                 if(flags & DT_NOINDEX)
                 {
-                    unsigned short num = SHORT(*((short*)(src)));
+                    unsigned short num = SHORT(*((int16_t*)(src)));
 
                     d = NO_INDEX;
 
@@ -613,9 +613,9 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
                 else
                 {
                     if(flags & DT_FRACBITS)
-                        d = SHORT(*((short*)(src))) << FRACBITS;
+                        d = SHORT(*((int16_t*)(src))) << FRACBITS;
                     else
-                        d = SHORT(*((short*)(src)));
+                        d = SHORT(*((int16_t*)(src)));
                 }
             }
             if((flags & DT_MSBCONVERT) && (d & 0x8000))
@@ -627,9 +627,9 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
 
         case 4:
             if(flags & DT_UNSIGNED)
-                d = ULONG(*((long*)(src)));
+                d = ULONG(*((int32_t*)(src)));
             else
-                d = LONG(*((long*)(src)));
+                d = LONG(*((int32_t*)(src)));
             break;
 
         default:
@@ -649,29 +649,29 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
         case 2:
             if(flags & DT_UNSIGNED)
             {
-                d = USHORT(*((short*)(src)));
+                d = USHORT(*((int16_t*)(src)));
             }
             else
             {
                 if(flags & DT_NOINDEX)
                 {
-                    unsigned short num = SHORT(*((short*)(src)));
+                    unsigned short num = SHORT(*((int16_t*)(src)));
 
                     if(num != ((unsigned short)-1))
                         d = num;
                 }
                 else
                 {
-                    d = SHORT(*((short*)(src)));
+                    d = SHORT(*((int16_t*)(src)));
                 }
             }
             break;
 
         case 4:
             if(flags & DT_UNSIGNED)
-                d = ULONG(*((long*)(src)));
+                d = ULONG(*((int32_t*)(src)));
             else
-                d = LONG(*((long*)(src)));
+                d = LONG(*((int32_t*)(src)));
             break;
 
         default:
@@ -689,15 +689,15 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
             if(flags & DT_UNSIGNED)
             {
                 if(flags & DT_FRACBITS)
-                    d = USHORT(*((short*)(src))) << FRACBITS;
+                    d = USHORT(*((int16_t*)(src))) << FRACBITS;
                 else
-                    d = USHORT(*((short*)(src)));
+                    d = USHORT(*((int16_t*)(src)));
             }
             else
             {
                 if(flags & DT_NOINDEX)
                 {
-                    unsigned short num = SHORT(*((short*)(src)));
+                    unsigned short num = SHORT(*((int16_t*)(src)));
 
                     d = NO_INDEX;
 
@@ -707,9 +707,9 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
                 else
                 {
                     if(flags & DT_FRACBITS)
-                        d = SHORT(*((short*)(src))) << FRACBITS;
+                        d = SHORT(*((int16_t*)(src))) << FRACBITS;
                     else
-                        d = SHORT(*((short*)(src)));
+                        d = SHORT(*((int16_t*)(src)));
                 }
             }
             if((flags & DT_MSBCONVERT) && (d & 0x8000))
@@ -721,9 +721,9 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
 
         case 4:
             if(flags & DT_UNSIGNED)
-                d = ULONG(*((long*)(src)));
+                d = ULONG(*((int32_t*)(src)));
             else
-                d = LONG(*((long*)(src)));
+                d = LONG(*((int32_t*)(src)));
             break;
 
         default:
@@ -739,9 +739,9 @@ static void ReadValue(valuetype_t valueType, uint elmIdx, size_t size,
         {
         case 2:
             if(flags & DT_FRACBITS)
-                d = (angle_t) (SHORT(*((short*)(src))) << FRACBITS);
+                d = (angle_t) (SHORT(*((int16_t*)(src))) << FRACBITS);
             else
-                d = (angle_t) SHORT(*((short*)(src)));
+                d = (angle_t) SHORT(*((int16_t*)(src)));
             break;
 
         default:

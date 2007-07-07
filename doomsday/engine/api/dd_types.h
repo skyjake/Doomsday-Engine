@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -72,10 +73,6 @@ typedef int  int_fast32_t;
 typedef unsigned  int  uint_fast32_t;
 typedef long long  int_fast64_t;
 typedef unsigned long long   uint_fast64_t;
-
-/* 7.18.1.4  Integer types capable of holding object pointers */
-typedef int intptr_t;
-typedef unsigned uintptr_t;
 
 /* 7.18.1.5  Greatest-width integer types */
 typedef long long  intmax_t;
