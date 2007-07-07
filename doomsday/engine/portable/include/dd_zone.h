@@ -77,8 +77,8 @@ typedef struct memblock_s {
                                       tiny fragments */
     void          **user;          // NULL if a free block
     int             tag;           // purgelevel
-    struct memvolume_s *volume;    // volume this block belongs to
     int             id;            // should be ZONEID
+    struct memvolume_s *volume;    // volume this block belongs to
     struct memblock_s *next, *prev;
     struct memblock_s *seq_last, *seq_first;
 #ifdef FAKE_MEMORY_ZONE

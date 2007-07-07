@@ -69,7 +69,7 @@
 
 #define ZONEID  0x1d4a11
 
-#define MINFRAGMENT 64
+#define MINFRAGMENT (sizeof(memblock_t)+32)
 
 // TYPES -------------------------------------------------------------------
 
