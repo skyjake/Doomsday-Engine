@@ -910,13 +910,13 @@ int PatchThing(int thingy)
     {
         info = ded->mobjs + thingNum;
         if(verbose)
-            LPrintf("Thing %d\n", thingNum);
+            LPrintf("Thing %lu\n", (unsigned long) thingNum);
     }
     else
     {
         info = &dummy;
-        LPrintf("Thing %d out of range. Create more Thing defs!\n",
-                thingNum + 1);
+        LPrintf("Thing %lu out of range. Create more Thing defs!\n",
+                (unsigned long) thingNum + 1));
     }
 
     while((result = GetLine()) == 1)
