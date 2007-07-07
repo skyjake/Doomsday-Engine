@@ -263,8 +263,8 @@ void ArgAbbreviate(char *longname, char *shortname)
         return;
 
     if((name = M_Calloc(sizeof(*name))) == NULL)
-        Con_Error("ArgAbbreviate: calloc failed on allocation of %d bytes.",
-                  sizeof(*name));
+        Con_Error("ArgAbbreviate: calloc failed on allocation of %lu bytes.",
+                  (unsigned long) sizeof(*name));
 
     names[num_names++] = name;
     strncpy(name->long_name, longname, sizeof(name->long_name) - 1);

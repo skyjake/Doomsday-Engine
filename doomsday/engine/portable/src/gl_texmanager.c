@@ -2992,7 +2992,8 @@ skintex_t *GL_GetSkinTex(const char *skin)
 
     if(verbose)
     {
-        Con_Message("SkinTex: %s => %i\n", M_Pretty(skin), st - skinnames);
+        Con_Message("SkinTex: %s => %li\n", M_Pretty(skin),
+                    (long) (st - skinnames));
     }
     return st;
 }

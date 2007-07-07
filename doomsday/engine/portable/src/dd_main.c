@@ -623,8 +623,9 @@ static int DD_StartupWorker(void *parm)
         {
             strncpy(buff, lumpinfo[p].name, 8);
             buff[8] = 0;
-            printf("%04i - %-8s (hndl: %p, pos: %i, size: %i)\n", p, buff,
-                   lumpinfo[p].handle, lumpinfo[p].position, lumpinfo[p].size);
+            printf("%04i - %-8s (hndl: %p, pos: %i, size: %lu)\n", p, buff,
+                   lumpinfo[p].handle, lumpinfo[p].position, 
+                   (unsigned long) lumpinfo[p].size);
         }
         Con_Error("---End of lumps---\n");
     }

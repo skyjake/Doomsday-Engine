@@ -30,7 +30,7 @@
 extern int      xgDev;
 
 // Debug message printer.
-void            XG_Dev(const char *format, ...);
+void            XG_Dev(const char *format, ...) PRINTF_F(1,2);
 
 // Called once, at post init.
 void            XG_ReadTypes(void);

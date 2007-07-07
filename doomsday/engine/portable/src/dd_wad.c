@@ -1151,8 +1151,8 @@ void W_ReadLump(int lump, void *dest)
     c = F_Read(dest, l->size, l->handle);
     if(c < l->size)
     {
-        Con_Error("W_ReadLump: only read %i of %i on lump %i", c, l->size,
-                  lump);
+        Con_Error("W_ReadLump: only read %lu of %lu on lump %i",
+                  (unsigned long) c, (unsigned long) l->size, lump);
     }
 }
 
@@ -1172,8 +1172,8 @@ void W_ReadLumpSection(int lump, void *dest, int startoffset, size_t length)
     c = F_Read(dest, length, l->handle);
     if(c < length)
     {
-        Con_Error("W_ReadLumpSection: only read %i of %i on lump %i", c,
-                  length, lump);
+        Con_Error("W_ReadLumpSection: only read %lu of %lu on lump %i",
+                  (unsigned long) c, (unsigned long) length, lump);
     }
 }
 

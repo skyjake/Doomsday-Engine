@@ -492,7 +492,7 @@ void MPIUpdateServerList(void)
                 Con_Message("  remote = %i, local = %i\n", info.version,
                     DOOMSDAY_VERSION);
                 Con_Message("  remote = %s, local = %s\n",
-                            info.gameMode, gx.GetVariable(DD_GAME_MODE));
+                            info.gameMode, (char *) gx.GetVariable(DD_GAME_MODE));
                 Con_Message("  can join = %i\n", info.canJoin);
                 continue;
             }

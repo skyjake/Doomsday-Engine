@@ -38,7 +38,7 @@ typedef int socket_t;
 
 void            N_SockInit(void);
 void            N_SockShutdown(void);
-void            N_SockPrintf(socket_t s, const char *format, ...);
+void            N_SockPrintf(socket_t s, const char *format, ...) PRINTF_F(2,3);
 struct hostent *N_SockGetHost(const char *hostName);
 socket_t        N_SockNewStream(void);
 boolean         N_SockConnect(socket_t s, struct hostent *host,

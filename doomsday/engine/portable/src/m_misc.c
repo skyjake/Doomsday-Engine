@@ -721,31 +721,31 @@ static size_t FileReader(char const *name, byte **buffer, int mallocType)
     handle = open(name, O_RDONLY | O_BINARY, 0666);
     if(handle == -1)
     {
-        Con_Error("Couldn't read file %s\n", name);
+        Con_Error("FileReader: Couldn't read file %s\n", name);
     }
     if(fstat(handle, &fileinfo) == -1)
     {
-        Con_Error("Couldn't read file %s\n", name);
+        Con_Error("FileReader: Couldn't read file %s\n", name);
     }
     length = fileinfo.st_size;
     if(mallocType == MALLOC_ZONE)
-    {                           // Use zone memory allocation
+    {   // Use zone memory allocation
         buf = Z_Malloc(length, PU_STATIC, NULL);
     }
     else
-    {                           // Use c library memory allocation
+    {   // Use c library memory allocation
         buf = M_Malloc(length);
         if(buf == NULL)
         {
-            Con_Error("Couldn't malloc buffer %d for file %s.\n", length,
-                      name);
+            Con_Error("FileReader: Failed on allocation of %lu bytes for file %s.\n",
+                      (unsigned long) length, name);
         }
     }
     count = read(handle, buf, length);
     close(handle);
     if(count < length)
     {
-        Con_Error("Couldn't read file %s\n", name);
+        Con_Error("FileReader: Couldn't read file %s\n", name);
     }
     *buffer = buf;
     return length;

@@ -522,7 +522,9 @@ static void P_PrintMapBanner(int episode, int map)
     if(lname)
         Con_FPrintf(CBLF_LIGHT | CBLF_BLUE, "%s\n", lname);
 
+#if !__JHEXEN__
     if(lauthor)
         Con_FPrintf(CBLF_LIGHT | CBLF_BLUE, "Author: %s\n", lauthor);
+#endif
     Con_Printf("\n");
 }

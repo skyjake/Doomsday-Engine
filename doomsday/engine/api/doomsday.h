@@ -134,12 +134,12 @@ extern          "C" {
     void            Con_SetInteger(char *name, int value, byte override);
     void            Con_SetFloat(char *name, float value, byte override);
     void            Con_SetString(char *name, char *text, byte override);
-    void            Con_Printf(char *format, ...);
-    void            Con_FPrintf(int flags, char *format, ...);
+    void            Con_Printf(char *format, ...) PRINTF_F(1,2);
+    void            Con_FPrintf(int flags, char *format, ...) PRINTF_F(2,3);
     int             DD_Execute(const char *command, int silent);
     int             DD_Executef(int silent, const char *command, ...);
-    void            Con_Message(char *message, ...);
-    void            Con_Error(char *error, ...);
+    void            Con_Message(char *message, ...) PRINTF_F(1,2);
+    void            Con_Error(char *error, ...) PRINTF_F(1,2);
 
     // Console: Bindings.
     void            B_FormEventString(char *buff, evtype_t type, evstate_t state,

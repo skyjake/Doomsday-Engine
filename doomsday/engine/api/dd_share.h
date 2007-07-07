@@ -72,6 +72,13 @@ extern          "C" {
 #   define vsnprintf(buf, size, fmt, list) _vsnprintf(buf, size, fmt, list)
 #endif
 
+    // Format checking for printf-like functions in GCC2
+#if defined(__GNUC__) && __GNUC__ >= 2
+#   define PRINTF_F(f,v) __attribute__ ((format (printf, f, v)))
+#else
+#   define PRINTF_F(f,v)
+#endif
+
 #ifdef __BIG_ENDIAN__
     short           ShortSwap(short);
     long            LongSwap(long);

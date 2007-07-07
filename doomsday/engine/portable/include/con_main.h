@@ -131,8 +131,8 @@ knownword_t   **Con_CollectKnownWordsMatchingWord(const char *word,
                                                   unsigned int  *count);
 void            Con_Ticker(timespan_t time);
 boolean         Con_Responder(ddevent_t *event);
-void            Con_Printf(const char *format, ...);
-void            Con_FPrintf(int flags, const char *format, ...);    // Flagged printf.
+void            Con_Printf(const char *format, ...) PRINTF_F(1,2);
+void            Con_FPrintf(int flags, const char *format, ...) PRINTF_F(2,3);    // Flagged printf.
 int             Con_PrintFileName(const char *fn, filetype_t type, void *dir);
 void            Con_SetFont(ddfont_t *cfont);
 float           Con_FontScaleY(void);
@@ -141,8 +141,8 @@ int             Con_Execute(byte src, const char *command, int silent,
                             boolean netCmd);
 int             Con_Executef(byte src, int silent, const char *command, ...);
 
-void            Con_Message(const char *message, ...);
-void            Con_Error(const char *error, ...);
+void            Con_Message(const char *message, ...) PRINTF_F(1,2);
+void            Con_Error(const char *error, ...) PRINTF_F(1,2);
 
 char           *TrimmedFloat(float val);
 

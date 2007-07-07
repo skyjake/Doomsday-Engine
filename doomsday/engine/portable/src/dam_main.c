@@ -1046,9 +1046,10 @@ static boolean verifyMapData(char *levelID)
                 DetermineMapDataLumpFormat(mapDataLump);
 
                 // Announce
-                VERBOSE2(Con_Message("%s - %s is %d bytes.\n",
-                                     W_CacheLumpNum(mapDataLump->lumpNum, PU_GETNAME),
-                                     DAM_Str(mapLmpInf->dataType), mapDataLump->length));
+                VERBOSE2(Con_Message("%s - %s is %lu bytes.\n",
+                                     (char*) W_CacheLumpNum(mapDataLump->lumpNum, PU_GETNAME),
+                                     DAM_Str(mapLmpInf->dataType),
+                                     (unsigned long) mapDataLump->length));
 
                 // We've found (at least) one lump of this class.
                 found = true;
@@ -1492,7 +1493,7 @@ static boolean readMapData(gamemap_t *map, int doClass, selectprop_t *props,
             if(mapLump->lumpNum != -1)
             {
                 VERBOSE(Con_Message("readMapData: Processing \"%s\" (#%d) ver %s...\n",
-                                    W_CacheLumpNum(mapLump->lumpNum, PU_GETNAME),
+                                    (char*) W_CacheLumpNum(mapLump->lumpNum, PU_GETNAME),
                                     mapLump->elements,
                                     (lumpFormat->formatName? lumpFormat->formatName :"Unknown")));
             }

@@ -37,6 +37,13 @@ typedef struct ddstring_s {
 	size_t          size;		   // Allocated memory (not necessarily string size).
 } ddstring_t;
 
+// Format checking for Str_Appendf in GCC2
+#if defined(__GNUC__) && __GNUC__ >= 2
+#   define PRINTF_F(f,v) __attribute__ ((format (printf, f, v)))
+#else
+#   define PRINTF_F(f,v)
+#endif
+
 void            Str_Init(ddstring_t *ds);
 void            Str_Free(ddstring_t *ds);
 ddstring_t     *Str_New(void);
@@ -45,7 +52,7 @@ void            Str_Clear(ddstring_t *ds);
 void            Str_Reserve(ddstring_t *ds, size_t length);
 void            Str_Set(ddstring_t *ds, const char *text);
 void            Str_Append(ddstring_t *ds, const char *append_text);
-void            Str_Appendf(ddstring_t *ds, const char *format, ...);
+void            Str_Appendf(ddstring_t * ds, const char *format, ...) PRINTF_F(2,3);
 void            Str_PartAppend(ddstring_t *dest, const char *src, int start,
 							   size_t count);
 void            Str_Prepend(ddstring_t *ds, const char *prepend_text);

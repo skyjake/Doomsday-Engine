@@ -385,8 +385,8 @@ static void R_InitSkyFix(void)
 
                 if(verbose)
                 {
-                    Con_Printf("S%i: (mo)skyfix to %g (ceil=%g)\n",
-                               GET_SECTOR_IDX(sec), *fix,
+                    Con_Printf("S%li: (mo)skyfix to %g (ceil=%g)\n",
+                               (long) GET_SECTOR_IDX(sec), *fix,
                                sec->SP_ceilheight + *fix);
                 }
             }
@@ -458,7 +458,7 @@ static boolean doSkyFix(sector_t *front, sector_t *back, uint pln)
 
     if(verbose && adjusted)
     {
-        Con_Printf("S%i: skyfix to %g (%s=%g)\n",
+        Con_Printf("S%li: skyfix to %g (%s=%g)\n",
                    GET_SECTOR_IDX(adjustSec), *fix,
                    (pln == PLN_CEILING? "ceil" : "floor"),
                    adjustSec->planes[pln]->height + *fix);
@@ -1310,8 +1310,8 @@ static void R_BuildSectorLinks(void)
                     ssgrp->linked[p] = sec->containsector;
             }
 
-            Con_Printf("Linking S%i planes permanently to S%i\n", i,
-                       GET_SECTOR_IDX(sec->containsector));
+            Con_Printf("Linking S%i planes permanently to S%li\n", i,
+                       (long) GET_SECTOR_IDX(sec->containsector));
         }
 
         // Is this sector large enough to be a dominant light source?
@@ -1536,8 +1536,9 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
                     if(ok && ok2)
                     {
                         lin->flags |= LINEF_SELFREFHACKROOT;
-                        VERBOSE2(Con_Message("L%i selfref root to S%i\n",
-                                    GET_LINE_IDX(lin), GET_SECTOR_IDX(sec)));
+                        VERBOSE2(Con_Message("L%li selfref root to S%li\n",
+                                             (long) GET_LINE_IDX(lin),
+                                             (long) GET_SECTOR_IDX(sec)));
                         ++numroots;
                     }
                 }
@@ -1739,9 +1740,9 @@ void R_RationalizeSectors(void)
                                             for(o = 0; o < count; ++o)
                                             {
                                                 collectedLines[o]->flags |= LINEF_SELFREFHACKROOT;
-                                                VERBOSE2(Con_Message("  L%i selfref root to S%i\n",
-                                                                     GET_LINE_IDX(collectedLines[o]),
-                                                                     GET_SECTOR_IDX(sec)));
+                                                VERBOSE2(Con_Message("  L%li selfref root to S%li\n",
+                                                                     (long) GET_LINE_IDX(collectedLines[o]),
+                                                                     (long) GET_SECTOR_IDX(sec)));
 
                                                 // Use validcount to mark them as done.
                                                 collectedLines[o]->validcount = validcount;

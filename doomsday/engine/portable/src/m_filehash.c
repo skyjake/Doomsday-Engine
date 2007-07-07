@@ -157,8 +157,8 @@ static direcnode_t *FH_DirecNode(const char *name, direcnode_t *parent)
 
     // Add a new node.
     if((node = M_Malloc(sizeof(*node))) == NULL)
-        Con_Error("FH_DirecNode: failed on allocation of %d bytes for new node.",
-                   sizeof(*node));
+        Con_Error("FH_DirecNode: failed on allocation of %lu bytes for new node.",
+                  (unsigned long) sizeof(*node));
 
     node->next = NULL;
     node->parent = parent;
@@ -170,8 +170,8 @@ static direcnode_t *FH_DirecNode(const char *name, direcnode_t *parent)
 
     // Make a copy of the path. Freed in FH_Clear().
     if((node->path = M_Malloc(strlen(name) + 1)) == NULL)
-        Con_Error("FH_DirecNode: failed on allocation of %d bytes for path.",
-                   strlen(name) + 1);
+        Con_Error("FH_DirecNode: failed on allocation of %lu bytes for path.",
+                  (unsigned long) (strlen(name) + 1));
 
     strcpy(node->path, name);
 
@@ -201,8 +201,8 @@ static direcnode_t *FH_BuildDirecNodes(const char *path)
     //strlwr(relPath);
 
     if((tokPath = cursor = M_Malloc(strlen(relPath) + 1)) == NULL)
-        Con_Error("FH_BuildDirecNodes: failed on allocation of %d bytes.",
-                  strlen(relPath) + 1);
+        Con_Error("FH_BuildDirecNodes: failed on allocation of %lu bytes.",
+                  (unsigned long) (strlen(relPath) + 1));
 
     strcpy(tokPath, relPath);
     parent = NULL;
@@ -263,14 +263,14 @@ static void FH_AddFile(const char *filePath, direcnode_t *dir)
 
     // Create a new node and link it to the hash table.
     if((node = M_Malloc(sizeof(hashnode_t))) == NULL)
-        Con_Error("FH_AddFile: failed on allocation of %d bytes for node.",
-                  sizeof(hashnode_t));
+        Con_Error("FH_AddFile: failed on allocation of %lu bytes for node.",
+                  (unsigned long) sizeof(hashnode_t));
 
     node->directory = dir;
 
     if((node->fileName = M_Malloc(strlen(name) + 1)) == NULL)
-        Con_Error("FH_AddFile: failed on allocation of %d bytes for fileName.",
-                  strlen(name) + 1);
+        Con_Error("FH_AddFile: failed on allocation of %lu bytes for fileName.",
+                  (unsigned long) (strlen(name) + 1));
 
     strcpy(node->fileName, name);
     node->next = NULL;

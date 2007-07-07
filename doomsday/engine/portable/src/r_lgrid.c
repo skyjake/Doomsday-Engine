@@ -370,16 +370,16 @@ void LG_Init(void)
     indexBitfield = M_Calloc(bitfieldSize);
     contributorBitfield = M_Calloc(bitfieldSize);
 
-    //// \todo It would be possible to only allocate memory for the grid
-    //// blocks that are going to be in use.
+    // \todo It would be possible to only allocate memory for the grid
+    // blocks that are going to be in use.
 
     // Allocate memory for the entire grid.
     grid = Z_Calloc(sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight,
                     PU_LEVEL, NULL);
 
-    Con_Message("LG_Init: %i x %i grid (%i bytes).\n",
+    Con_Message("LG_Init: %i x %i grid (%lu bytes).\n",
                 lgBlockWidth, lgBlockHeight,
-                sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight);
+                (unsigned long) (sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight));
 
     // Allocate memory used for the collection of the sample results.
     blkSampleSectors = M_Malloc(sizeof(sector_t*) * numSamples);

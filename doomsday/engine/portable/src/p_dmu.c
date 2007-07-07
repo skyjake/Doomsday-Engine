@@ -1891,8 +1891,8 @@ static int GetProperty(void* ptr, void* context)
             else
             {
                 if(!line->L_backside)
-                    Con_Error("GetProperty: Line %d does not have a back side.\n",
-                              GET_LINE_IDX(line));
+                    Con_Error("GetProperty: Line %ld does not have a back side.\n",
+                              (long) GET_LINE_IDX(line));
 
                 p = line->L_backside;
             }
