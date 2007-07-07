@@ -916,7 +916,7 @@ int PatchThing(int thingy)
     {
         info = &dummy;
         LPrintf("Thing %lu out of range. Create more Thing defs!\n",
-                (unsigned long) thingNum + 1));
+                (unsigned long) (thingNum + 1));
     }
 
     while((result = GetLine()) == 1)
