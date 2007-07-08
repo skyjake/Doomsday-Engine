@@ -230,8 +230,6 @@ const char* QuitEndMsg[] =
 
 char    gammamsg[5][81];
 
-boolean devparm = false;
-
 boolean inhelpscreens;
 boolean menuactive;
 menu_t *currentMenu;
@@ -284,7 +282,6 @@ char   *episodemsg;
 int     epi;
 #endif
 
-boolean shiftdown;
 static char shiftTable[59] =    // Contains characters 32 to 90.
 {
     /* 32 */ 0, 0, 0, 0, 0, 0, 0, '"',

@@ -320,7 +320,7 @@ typedef enum vectorgraphname_e {
     NUM_VECTOR_GRAPHS
 } vectorgrapname_t;
 
-int mapviewplayer;
+extern int mapviewplayer;
 
 void    AM_Register(void);  // Called during init to register automap cvars and ccmds.
 void    AM_Init(void);      // Called during init to initialize the automap.
