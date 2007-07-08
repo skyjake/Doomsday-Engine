@@ -43,6 +43,7 @@
 	#include <SDL_mixer/SDL_mixer.h>
 	#else
 	#include <SDL/SDL_mixer.h>
+	#endif
 #else
 #  include <SDL.h>
 #  include <SDL_mixer.h>
