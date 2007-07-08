@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -159,7 +159,7 @@ typedef struct centralend_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void    removeDuplicateFiles(void);
+static void    removeDuplicateFiles(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
