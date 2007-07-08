@@ -80,6 +80,7 @@ OPTION (ENABLEDEBUG "Turn on internal debugging features. Default OFF" OFF)
 OPTION (ENABLENETDEBUG "Turn on internal network debugging features. Default OFF" OFF)
 OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default OFF" OFF)
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
+OPTION (FINK "Build with FINK on OSX. Default OFF" OFF)
 
 MARK_AS_ADVANCED (BUILDJSTRIFE)
 MARK_AS_ADVANCED (BUILDWOLFTC)
