@@ -169,7 +169,7 @@ IF (UNIX)
 		"install location for man files"
 		)
 
-		ENDIF (APPLE)
+		ENDIF (APPLE AND NOT FINK)
 	ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
