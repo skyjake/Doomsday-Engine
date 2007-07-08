@@ -134,9 +134,9 @@ ENDIF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
 
 IF (UNIX)
 	IF (NOT WIN32)
-		IF (APPLE)
+		IF (APPLE AND NOT FINK)
 			## FIXME. Add location here for OSX
-		ELSE (APPLE)
+		ELSE (APPLE AND NOT FINK)
 
 		## Do an approximation of the autotools install options. Should make an
 		## easy transition for package maintainers (like me when I'm not hacking here)
@@ -598,17 +598,16 @@ ENDIF (NOT DOT)
 
 ################################################################################
 ######################## External LZSS Files ###################################
-INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
 
-##IF (UNIX)
-##	IF (NOT WIN32)
+IF (UNIX)
+	INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/portable/include )
 	FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c )
-##	ENDIF (NOT WIN32)
-##ENDIF (UNIX)
+ENDIF (UNIX)
 
-##IF (WIN32)
-##	SET (LZSS_SOURCES "")
-##ENDIF (WIN32)
+IF (WIN32 AND NOT UNIX)
+	INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/win32/include )
+	FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/win32/src/*.c )
+ENDIF (WIN32 AND NOT UNIX)
 ################################################################################
 ######################## The Doomsday Engine  ##################################
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
