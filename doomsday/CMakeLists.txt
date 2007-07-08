@@ -361,9 +361,9 @@ INCLUDE(${CMAKE_ROOT}/Modules/CPack.cmake)
 ################################################################################
 ######################## Set Common Definitions  ###############################
 TEST_BIG_ENDIAN(ENDINESS)
-IF(ENDINESS STREQUAL "big endian")
+IF (ENDINESS STREQUAL "big endian")
 	ADD_DEFINITIONS (-D__BIG_ENDIAN__)
-ENDIF(ENDINESS STREQUAL "big endian")
+ENDIF (ENDINESS STREQUAL "big endian")
 
 IF (FINK)
 	ADD_DEFINITIONS (-DFINK)
@@ -427,8 +427,22 @@ ENDIF (WIN32)
 
 IF (APPLE)
 	ADD_DEFINITIONS ( -DMACOSX)
-	SET (CMAKE_OSX_ARCHITECTURES ppc;i386)
-	SET (BUILDSYSTEM MACOSX)
+	IF (NOT FINK)
+		# Native OSX Build - make a Universal binary
+		SET (CMAKE_OSX_ARCHITECTURES ppc;i386)
+		SET (BUILDSYSTEM MACOSX)
+	ENDIF (NOT FINK)
+	IF (FINK)
+		# Building with fink - only build the arch we are on
+		IF (ENDINESS STREQUAL "big endian")
+			SET (CMAKE_OSX_ARCHITECTURES ppc)
+		ELSE (ENDINESS STREQUAL "big endian")
+			SET (CMAKE_OSX_ARCHITECTURES i386)
+		ENDIF (ENDINESS STREQUAL "big endian")
+		SET (BUILDSYSTEM FINK)
+	ENDIF (FINK)
+
+
 
 	## Add needed Compiler and Linker flags for OSX
 	IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
