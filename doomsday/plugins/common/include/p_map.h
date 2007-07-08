@@ -39,8 +39,8 @@ extern int      tmfloorpic;
 extern line_t  *ceilingline;
 
 #if __JHEXEN__
-mobj_t *PuffSpawned;
-mobj_t *BlockingMobj;
+extern mobj_t *PuffSpawned;
+extern mobj_t *BlockingMobj;
 #endif
 
 boolean         P_CheckSides(mobj_t* actor, int x, int y);
