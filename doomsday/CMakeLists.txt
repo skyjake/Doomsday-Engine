@@ -358,6 +358,9 @@ INCLUDE(${CMAKE_ROOT}/Modules/CPack.cmake)
 
 ################################################################################
 ######################## Set Common Definitions  ###############################
+IF (FINK)
+	ADD_DEFINITIONS (-DFINK)
+ENDIF (FINK)
 
 IF (NOT ENABLERANGECHECKING)
 	ADD_DEFINITIONS (-DNORANGECHECKING)
