@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,10 @@
 
 #ifdef MACOSX
 #  include <SDL/SDL.h>
-#  include <SDL_mixer/SDL_mixer.h>
+	#ifndef FINK
+	#include <SDL_mixer/SDL_mixer.h>
+	#else
+	#include <SDL/SDL_mixer.h>
 #else
 #  include <SDL.h>
 #  include <SDL_mixer.h>
