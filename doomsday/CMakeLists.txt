@@ -302,6 +302,8 @@ ENDIF (UNIX)
 
 FIND_PACKAGE(Doxygen)
 
+INCLUDE(TestBigEndian)
+
 ################################################################################
 ######################## Cpack - Generate packages and source tarballs  ########
 
@@ -358,6 +360,11 @@ INCLUDE(${CMAKE_ROOT}/Modules/CPack.cmake)
 
 ################################################################################
 ######################## Set Common Definitions  ###############################
+TEST_BIG_ENDIAN(ENDINESS)
+IF(ENDINESS STREQUAL "big endian")
+	ADD_DEFINITIONS (-D__BIG_ENDIAN__)
+ENDIF(ENDINESS STREQUAL "big endian")
+
 IF (FINK)
 	ADD_DEFINITIONS (-DFINK)
 ENDIF (FINK)
