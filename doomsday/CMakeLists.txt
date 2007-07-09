@@ -367,6 +367,8 @@ ENDIF (ENDINESS STREQUAL "big endian")
 
 IF (FINK)
 	ADD_DEFINITIONS (-DFINK)
+# #fink has advised that this may be needed to fix linking errors on OSX
+#	ADD_DEFINITIONS (-D__DARWIN_UNIX03)
 ENDIF (FINK)
 
 IF (NOT ENABLERANGECHECKING)
