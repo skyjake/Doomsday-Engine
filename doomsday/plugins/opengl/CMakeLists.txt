@@ -55,6 +55,10 @@ ENDIF (UNIX)
 IF (WIN32)
 TARGET_LINK_LIBRARIES (dropengl deng)
 ENDIF (WIN32)
+
+IF (APPLE)
+	SET_TARGET_PROPERTIES (dropengl PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dropengl

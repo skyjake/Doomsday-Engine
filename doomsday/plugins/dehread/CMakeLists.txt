@@ -23,11 +23,8 @@
 FILE(GLOB DEHREAD_SOURCES src/*.c)
 ADD_LIBRARY (dpdehread SHARED ${DEHREAD_SOURCES})
 
-## Generate .bundle suffixes on OSX rather then .dylib for skyjake.
-## Isn't this a nasty hack ?
 IF (APPLE)
-SET_TARGET_PROPERTIES (dpdehread
-			PROPERTIES SUFFIX ".bundle")
+	SET_TARGET_PROPERTIES (dpdehread PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
 ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################

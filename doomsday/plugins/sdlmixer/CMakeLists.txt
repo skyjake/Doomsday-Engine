@@ -35,6 +35,10 @@ ENDIF (APPLE)
 
 ADD_LIBRARY (dssdlmixer SHARED ${SDLMIXER_SOURCES})
 TARGET_LINK_LIBRARIES (dssdlmixer ${SDL_LIBRARY} ${SDLMIXER_LIBRARY})
+
+IF (APPLE)
+	SET_TARGET_PROPERTIES (dssdlmixer PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dssdlmixer
