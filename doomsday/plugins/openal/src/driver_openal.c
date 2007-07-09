@@ -48,8 +48,13 @@
 #  pragma warning (disable: 4244)
 #endif
 
-#include <AL/al.h>
-#include <AL/alc.h>
+#ifndef FINK
+   #include <AL/al.h>
+   #include <AL/alc.h>
+#else
+   #include <openal/al.h>
+   #include <openal/alc.h>
+#endif
 #include <string.h>
 #include <math.h>
 
