@@ -27,6 +27,10 @@ FILE(GLOB MAPLOAD_SOURCES src/*.c)
 FILE(GLOB GLBSP_SOURCES ${CMAKE_SOURCE_DIR}/external/glbsp/src/*.c)
 
 ADD_LIBRARY (dpmapload SHARED ${MAPLOAD_SOURCES} ${GLBSP_SOURCES})
+
+IF (APPLE)
+	SET_TARGET_PROPERTIES (dpmapload PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS dpmapload

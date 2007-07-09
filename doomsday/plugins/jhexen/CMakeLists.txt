@@ -94,6 +94,10 @@ ENDIF (ENABLEMAO)
 IF (WIN32)
 TARGET_LINK_LIBRARIES (jhexen ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss)
 ENDIF (WIN32)
+
+IF (APPLE)
+	SET_TARGET_PROPERTIES (jhexen PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jhexen

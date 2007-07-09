@@ -33,6 +33,11 @@ INCLUDE_DIRECTORIES ( include )
 FILE(GLOB WOLFTC_SOURCES src/*.c)
 
 ADD_LIBRARY (wolftc SHARED ${WOLFTC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+
+IF (APPLE)
+	SET_TARGET_PROPERTIES (wolftc PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+ENDIF (APPLE)
+
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS wolftc

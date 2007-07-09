@@ -34,6 +34,10 @@ FILE(GLOB DOOM64TC_SOURCES src/*.c)
 
 ADD_LIBRARY (doom64tc SHARED ${DOOM64TC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 
+IF (APPLE)
+	SET_TARGET_PROPERTIES (doom64tc PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+ENDIF (APPLE)
+
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS doom64tc

@@ -72,6 +72,9 @@ ELSE (ENABLEMAO)
 	ADD_LIBRARY (jheretic SHARED ${JHERETIC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 ENDIF (ENABLEMAO)
 
+IF (APPLE)
+	SET_TARGET_PROPERTIES (jheretic PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+ENDIF (APPLE)
 ################################################################################
 ######################## Install Targets  ######################################
 INSTALL(TARGETS jheretic
