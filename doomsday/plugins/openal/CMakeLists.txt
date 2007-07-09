@@ -25,7 +25,7 @@ ADD_LIBRARY (dsopenal SHARED ${OPENAL_SOURCES})
 TARGET_LINK_LIBRARIES (dsopenal ${OPENAL_LIBRARY} )
 
 IF (APPLE)
-	SET_TARGET_PROPERTIES (openal PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+	SET_TARGET_PROPERTIES (dsopenal PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
 ENDIF (APPLE)
 
 ################################################################################
