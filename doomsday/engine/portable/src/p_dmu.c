@@ -36,6 +36,7 @@
 #include "de_base.h"
 #include "de_play.h"
 #include "de_refresh.h"
+#include "de_audio.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -180,7 +181,6 @@ const char* DMU_Str(uint prop)
         { DMU_THINGS, "DMU_THINGS" },
         { DMU_BOUNDING_BOX, "DMU_BOUNDING_BOX" },
         { DMU_SOUND_ORIGIN, "DMU_SOUND_ORIGIN" },
-        { DMU_SOUND_REVERB, "DMU_SOUND_REVERB" },
         { DMU_PLANE_HEIGHT, "DMU_PLANE_HEIGHT" },
         { DMU_PLANE_TEXTURE, "DMU_PLANE_TEXTURE" },
         { DMU_PLANE_OFFSET_X, "DMU_PLANE_OFFSET_X" },
@@ -1124,7 +1124,7 @@ static int SetProperty(void* ptr, void* context)
                       DMU_Str(args->prop));
         }
 
-        //// \todo Notify relevant subsystems of any changes.
+        // \todo Notify relevant subsystems of any changes.
         R_UpdateSector(p->sector, false);
 
         // Continue iteration.
@@ -1230,7 +1230,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_TOP_TEXTURE:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SW_toptexture, args, 0);
-            p->SW_topisflat = false; //// \kludge p->SW_topisflat = false;
+            p->SW_topisflat = false; // \kludge p->SW_topisflat = false;
            /* if(p->SW_toptexture)
                 p->flags &= ~SDF_MIDTEXUPPER;*/
             break;
@@ -1267,7 +1267,8 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_MIDDLE_TEXTURE:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SW_middletexture, args, 0);
-            p->SW_middleisflat = false; //// \kludge p->SW_middleisflat = false;
+            p->SW_middleisflat = false; // \kludge p->SW_middleisflat = false;
+            S_CalcSectorReverb(p->sector);
             break;
         case DMU_MIDDLE_TEXTURE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->SW_middleoffx, args, 0);
@@ -1295,7 +1296,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_BOTTOM_TEXTURE:
             SetValue(DMT_MATERIAL_TEXTURE, &p->SW_bottomtexture, args, 0);
-            p->SW_bottomisflat = false; //// \kludge p->SW_bottomisflat = false;
+            p->SW_bottomisflat = false; // \kludge p->SW_bottomisflat = false;
             break;
         case DMU_BOTTOM_TEXTURE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->SW_bottomoffx, args, 0);
@@ -1361,21 +1362,12 @@ static int SetProperty(void* ptr, void* context)
         case DMU_VALID_COUNT:
             SetValue(DMT_SECTOR_VALIDCOUNT, &p->validcount, args, 0);
             break;
-        case DMU_SOUND_REVERB:
-        {
-            uint        i;
-            for(i = 0; i < NUM_REVERB_DATA; ++i)
-            {
-                SetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i);
-            }
-            break;
-        }
         default:
             Con_Error("SetProperty: Property %s is not writable in DMU_SECTOR.\n",
                       DMU_Str(args->prop));
         }
 
-        //// \todo Notify relevant subsystems of any changes.
+        // \todo Notify relevant subsystems of any changes.
         R_UpdateSector(p, false);
 
         break;
@@ -1842,15 +1834,6 @@ static int GetProperty(void* ptr, void* context)
         {
             degenmobj_t *dmo = &p->soundorg;
             GetValue(DMT_SECTOR_SOUNDORG, &dmo, args, 0);
-            break;
-        }
-        case DMU_SOUND_REVERB:
-        {
-            uint        i;
-            for(i = 0; i < NUM_REVERB_DATA; ++i)
-            {
-                GetValue(DMT_SECTOR_REVERB, &p->reverb[i], args, i);
-            }
             break;
         }
         case DMU_LINE_COUNT:

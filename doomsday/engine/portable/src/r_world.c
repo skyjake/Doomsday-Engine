@@ -2194,7 +2194,7 @@ void R_InitLevel(char *level_id)
             ("R_InitLevel: Initial SkyFix Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
 
-    S_CalcSectorReverbs();
+    S_DetermineSubSecsAffectingSectorReverb();
 
     DL_InitForMap();
 
@@ -2593,6 +2593,7 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
 {
     uint        i, j;
     plane_t    *plane;
+    boolean     updateReverb = false;
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
@@ -2663,7 +2664,13 @@ void R_UpdateSector(sector_t* sec, boolean forceUpdate)
             }
 
             P_PlaneChanged(sec, i);
+            updateReverb = true;
         }
+    }
+
+    if(updateReverb)
+    {
+        S_CalcSectorReverb(sec);
     }
 
     if(!sec->permanentlink) // Assign new links

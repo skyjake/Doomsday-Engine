@@ -305,8 +305,10 @@ extern          "C" {
 
     typedef struct {
         ded_stringid_t  id;
-        ded_count_t     count;
+        ded_count_t     texCount;
         ded_str_t      *textures;
+        ded_count_t     flatCount;
+        ded_str_t      *flats;
     } ded_tenviron_t;
 
     typedef struct {

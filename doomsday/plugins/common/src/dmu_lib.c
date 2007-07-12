@@ -178,7 +178,6 @@ void P_CopySector(sector_t *from, sector_t *to)
     // P_Copyp is not implemented in Doomsday yet.
     P_Copyp(DMU_LIGHT_LEVEL, from, to);
     P_Copyp(DMU_COLOR, from, to);
-    P_Copyp(DMU_SOUND_REVERB, from, to);
 
     P_Copyp(DMU_FLOOR_HEIGHT, from, to);
     P_Copyp(DMU_FLOOR_TEXTURE, from, to);
@@ -197,20 +196,17 @@ void P_CopySector(sector_t *from, sector_t *to)
     P_Copyp(DMU_CEILING_TARGET, from, to);
 #else
     {
-    float temp[4];
+    float ftemp[4];
     int  itemp[2];
-    float ftemp[NUM_REVERB_DATA];
 
     P_SetFloatp(to, DMU_LIGHT_LEVEL, P_GetFloatp(from, DMU_LIGHT_LEVEL));
-    P_GetFloatpv(from, DMU_COLOR, temp);
-    P_SetFloatpv(to, DMU_COLOR, temp);
-    P_GetFloatpv(from, DMU_SOUND_REVERB, ftemp);
-    P_SetFloatpv(to, DMU_SOUND_REVERB, ftemp);
+    P_GetFloatpv(from, DMU_COLOR, ftemp);
+    P_SetFloatpv(to, DMU_COLOR, ftemp);
 
     P_SetFixedp(to, DMU_FLOOR_HEIGHT, P_GetFixedp(from, DMU_FLOOR_HEIGHT));
     P_SetIntp(to, DMU_FLOOR_TEXTURE, P_GetIntp(from, DMU_FLOOR_TEXTURE));
-    P_GetFloatpv(from, DMU_FLOOR_COLOR, temp);
-    P_SetFloatpv(to, DMU_FLOOR_COLOR, temp);
+    P_GetFloatpv(from, DMU_FLOOR_COLOR, ftemp);
+    P_SetFloatpv(to, DMU_FLOOR_COLOR, ftemp);
     P_GetFloatpv(from, DMU_FLOOR_OFFSET_XY, ftemp);
     P_SetFloatpv(to, DMU_FLOOR_OFFSET_XY, ftemp);
     P_GetIntpv(from, DMU_FLOOR_TEXTURE_MOVE_XY, itemp);
@@ -220,8 +216,8 @@ void P_CopySector(sector_t *from, sector_t *to)
 
     P_SetFixedp(to, DMU_CEILING_HEIGHT, P_GetFixedp(from, DMU_CEILING_HEIGHT));
     P_SetIntp(to, DMU_CEILING_TEXTURE, P_GetIntp(from, DMU_CEILING_TEXTURE));
-    P_GetFloatpv(from, DMU_CEILING_COLOR, temp);
-    P_SetFloatpv(to, DMU_CEILING_COLOR, temp);
+    P_GetFloatpv(from, DMU_CEILING_COLOR, ftemp);
+    P_SetFloatpv(to, DMU_CEILING_COLOR, ftemp);
     P_GetFloatpv(from, DMU_CEILING_OFFSET_XY, ftemp);
     P_SetFloatpv(to, DMU_CEILING_OFFSET_XY, ftemp);
     P_GetIntpv(from, DMU_CEILING_TEXTURE_MOVE_XY, itemp);

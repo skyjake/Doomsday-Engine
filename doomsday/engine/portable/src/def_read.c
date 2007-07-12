@@ -1201,7 +1201,21 @@ static int DED_ReadData(ded_t *ded, char *buffer, const char *sourceFile)
                 {
                     // A new texture name.
                     tn = DED_NewEntry((void**)&ded->tenviron[idx].textures,
-                                      &ded->tenviron[idx].count, sizeof(*tn));
+                                      &ded->tenviron[idx].texCount, sizeof(*tn));
+                    FINDBEGIN;
+                    for(;;)
+                    {
+                        READLABEL;
+                        RV_STR("ID", tn->str)
+                        RV_END
+                        CHECKSC;
+                    }
+                }
+                else if(ISLABEL("Flat"))
+                {
+                    // A new flat name.
+                    tn = DED_NewEntry((void**)&ded->tenviron[idx].flats,
+                                      &ded->tenviron[idx].flatCount, sizeof(*tn));
                     FINDBEGIN;
                     for(;;)
                     {

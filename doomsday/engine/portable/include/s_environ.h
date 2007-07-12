@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +29,17 @@
 #ifndef __DOOMSDAY_SOUND_ENVIRON_H__
 #define __DOOMSDAY_SOUND_ENVIRON_H__
 
-void            S_CalcSectorReverbs(void);
+typedef enum {
+    MATTYPE_UNKNOWN = -1,
+    MATTYPE_METAL = 0,
+    MATTYPE_ROCK,
+    MATTYPE_WOOD,
+    MATTYPE_CLOTH,
+    NUM_MATERIAL_TYPES
+} materialtype_t;
+
+void            S_CalcSectorReverb(struct sector_s *sec);
+void            S_DetermineSubSecsAffectingSectorReverb(void);
+materialtype_t  S_MaterialTypeForName(const char *name, boolean isFlat);
 
 #endif

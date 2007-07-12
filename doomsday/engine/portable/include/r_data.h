@@ -255,6 +255,7 @@ typedef struct {
     int             flags;         // TXF_* flags.
     rgbcol_t        color;
     byte            ingroup;       // True if texture belongs to some animgroup.
+    enum materialtype_t materialType; // Used for environmental sound properties.
     struct ded_decor_s *decoration; /* Pointer to the surface
                                      * decoration, if any. */
     struct ded_reflection_s *reflection; // Surface reflection definition.
@@ -281,6 +282,7 @@ typedef struct flat_s {
     short           flags;
     rgbcol_t        color;
     byte            ingroup;       // True if belongs to some animgroup.
+    enum materialtype_t materialType; // Used for environmental sound properties.
     struct ded_decor_s *decoration;// Pointer to the surface decoration,
                                    // if any.
     struct ded_reflection_s *reflection; // Surface reflection definition.

@@ -36,6 +36,7 @@
 #include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_audio.h" // For texture, environmental audio properties.
 
 // MACROS ------------------------------------------------------------------
 
@@ -828,6 +829,10 @@ void R_InitTextures(void)
     {
         texturetranslation[i].current = texturetranslation[i].next = i;
         texturetranslation[i].inter = 0;
+
+        // Determine the texture's material type.
+        textures[i]->materialType =
+            S_MaterialTypeForName(R_TextureNameForNum(i), false);
     }
 
     M_Free(patchlookup);
@@ -902,6 +907,10 @@ void R_InitFlats(void)
     {
         flattranslation[i].current = flattranslation[i].next = i;
         flattranslation[i].inter = 0;
+
+        // Determine the flat's material type.
+        flats[i]->materialType =
+            S_MaterialTypeForName(R_FlatNameForNum(i), true);
     }
 }
 

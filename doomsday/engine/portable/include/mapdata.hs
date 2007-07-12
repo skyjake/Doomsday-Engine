@@ -67,6 +67,7 @@ struct subsector
     -       int         validcount
     -       shadowlink_s* shadows
     -       uint        group
+    -       uint[NUM_REVERB_DATA] reverb
 end
 
 public
@@ -229,11 +230,12 @@ struct sector
     PTR     line_s**    Lines       // [linecount] size.
     UINT    uint        subscount
     PTR     subsector_s** subsectors // [subscount] size.
+    -		uint		numReverbSSecAttributors
+    -		subsector_s** reverbSSecs // [numReverbSSecAttributors] size.
     -       uint        subsgroupcount
     -       ssecgroup_t* subsgroups // [subsgroupcount] size.
     -       skyfix_t[2] skyfix      // floor, ceiling.
     PTR     degenmobj_t soundorg
-
     FLOAT   float[NUM_REVERB_DATA] reverb
     -       int[4]      blockbox    // Mapblock bounding box.
     UINT    uint        planecount

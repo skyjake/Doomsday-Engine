@@ -127,6 +127,7 @@ void DED_Destroy(ded_t *ded)
     for(i = 0; i < ded->count.tenviron.num; ++i)
     {
         M_Free(ded->tenviron[i].textures);
+        M_Free(ded->tenviron[i].flats);
     }
     M_Free(ded->tenviron);
 
@@ -405,6 +406,7 @@ int DED_AddTexEnviron(ded_t *ded, char *id)
 void DED_RemoveTexEnviron(ded_t *ded, int index)
 {
     M_Free(ded->tenviron[index].textures);
+    M_Free(ded->tenviron[index].flats);
     DED_DelEntry(index, (void **) &ded->tenviron, &ded->count.tenviron,
                  sizeof(ded_tenviron_t));
 }
