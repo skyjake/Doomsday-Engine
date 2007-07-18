@@ -2976,8 +2976,8 @@ skintex_t *GL_GetSkinTex(const char *skin)
     if(!skin[0])
         return NULL;
 
-    //// Convert the given skin file to a full pathname.
-    //// \fixme Why is this done here and not during init??
+    // Convert the given skin file to a full pathname.
+    // \fixme Why is this done here and not during init??
     _fullpath(realpath, skin, 255);
 
     for(i = 0; i < numskinnames; ++i)

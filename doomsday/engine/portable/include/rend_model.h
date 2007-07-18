@@ -49,7 +49,7 @@ typedef struct modelparams_s {
     float       center[3], gzt; // The real center point and global top z for silhouette clipping.
     float       srvo[3]; // Short-range visual offset.
     float       distance; // Distance from viewer.
-    float       yaw, extraYawAngle, yawAngleOffset; //// \todo we don't need three sets of angles, update users of this struct instead.
+    float       yaw, extraYawAngle, yawAngleOffset; // \todo we don't need three sets of angles, update users of this struct instead.
     float       pitch, extraPitchAngle, pitchAngleOffset;
 
     float       extraScale;

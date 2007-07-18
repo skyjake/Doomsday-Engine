@@ -96,11 +96,11 @@ char *_fullpath(char *full, const char *original, int maxLen)
 
 	Str_Init(&dir);
 
-	//// \fixme Check for '~'.
+	// \fixme Check for '~'.
 
 	if(original[0] != '/') // A relative path?
 	{
-		getcwd(workDir, sizeof(workDir)); //// \fixme Check for ERANGE.
+		getcwd(workDir, sizeof(workDir)); // \fixme Check for ERANGE.
 		Str_Set(&dir, workDir);
 		Str_Append(&dir, "/");
 		Str_Append(&dir, original);

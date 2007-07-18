@@ -845,7 +845,7 @@ if(mo->dplayer)
                 if(max-- <= 0)
                     stopScan = true;
             }
-            //// \fixme What about max == -1? What should 'it' be then?
+            // \fixme What about max == -1? What should 'it' be then?
         }
         if(!foundNext)
             *nextmodef = GetStateModel(it, mo->selector);

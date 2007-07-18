@@ -461,7 +461,7 @@ void LG_Init(void)
             {
                 if(block->sector == sector)
                 {
-                    //// \todo Determine min/max a/b before going into the loop.
+                    // \todo Determine min/max a/b before going into the loop.
                     for(b = -2; b <= 2; ++b)
                     {
                         if(y + b < 0 || y + b >= lgBlockHeight)
@@ -788,7 +788,7 @@ void LG_Update(void)
                 bias = 0;
             }
 
-            //// \todo Calculate min/max for a and b.
+            // \todo Calculate min/max for a and b.
             for(a = -2; a <= 2; ++a)
             {
                 for(b = -2; b <= 2; ++b)

@@ -174,7 +174,7 @@ int Cl_ReadSectorDelta(void)
  */
 int Cl_ReadSideDelta(void)
 {
-    short       num = Msg_ReadPackedShort(); //// \fixme we support > 32768 sidedefs!
+    short       num = Msg_ReadPackedShort(); // \fixme we support > 32768 sidedefs!
     side_t     *sid;
     int         df;
 

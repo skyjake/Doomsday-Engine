@@ -432,7 +432,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     int     bytes = 0;
     boolean error, read;
     
-    //// \todo What if we get one byte? How come we are here if there's nothing to receive?
+    // \todo What if we get one byte? How come we are here if there's nothing to receive?
     if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
     {
         int number = errno;
@@ -1137,8 +1137,8 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
     // Convert the network node into a real client node.
     node->hasJoined = true;
 
-    //// \fixme We should use more discretion with the name. It has
-    //// been provided by an untrusted source.
+    // \fixme We should use more discretion with the name. It has
+    // been provided by an untrusted source.
     strncpy(node->name, name, sizeof(node->name) - 1);
 
     // Prepare the transmission stats for the node.
@@ -1599,8 +1599,8 @@ void N_Listen(void)
 
     if(netServerMode)
     {
-        //// Any incoming connections on the listening socket?
-        //// \fixme Include this in the set of sockets?
+        // Any incoming connections on the listening socket?
+        // \fixme Include this in the set of sockets?
         while((sock = SDLNet_TCP_Accept(serverSock)) != NULL)
         {
             // A new client is attempting to connect. Let's try to
@@ -1682,7 +1682,7 @@ void N_Listen(void)
  */
 void N_PrintInfo(void)
 {
-    //// \todo Print information about send queues, ports, etc.
+    // \todo Print information about send queues, ports, etc.
 
 #ifdef TRANSMIT_RANDOMIZER
     Con_Printf("Randomizer enabled: max delay = %i ms, dropping %i%%.\n",

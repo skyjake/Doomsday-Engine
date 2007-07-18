@@ -339,7 +339,7 @@ void Sfx_GetListenerXYZ(float *pos)
     if(!listener)
         return;
 
-    //// \fixme Make it exactly eye-level! (viewheight)
+    // \fixme Make it exactly eye-level! (viewheight)
     pos[VX] = FIX2FLT(listener->pos[VX]);
     pos[VY] = FIX2FLT(listener->pos[VY]);
     pos[VZ] = FIX2FLT(listener->pos[VZ] + FLT2FIX(listener->height) - (5 << FRACBITS));

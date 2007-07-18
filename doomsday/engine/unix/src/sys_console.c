@@ -39,7 +39,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LINELEN 256  //// \fixme Lazy: This is the max acceptable window width.
+#define LINELEN 256  // \fixme Lazy: This is the max acceptable window width.
 
 // TYPES -------------------------------------------------------------------
 

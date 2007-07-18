@@ -186,7 +186,7 @@ void F_AddDirec(char *lumpname, char *symbolic_path)
     for(i = 0; direc[i].path && i < MAX_LUMPDIRS; ++i);
     if(i == MAX_LUMPDIRS)
     {
-        //// \fixme Why no dynamic allocation?
+        // \fixme Why no dynamic allocation?
         Con_Error("F_AddDirec: Not enough direcs (%s).\n", symbolic_path);
     }
     ld = direc + i;

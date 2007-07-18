@@ -480,8 +480,8 @@ if(!d->pos[VX] && !d->pos[VY])
     if(df & MDF_STATE)
         Cl_SetThingState(d, (unsigned short) Msg_ReadPackedShort());
 
-    //// Pack flags into a word (3 bytes?).
-    //// \fixme Do the packing!
+    // Pack flags into a word (3 bytes?).
+    // \fixme Do the packing!
     if(df & MDF_FLAGS)
     {
         // Only the flags in the pack mask are affected.
@@ -1002,8 +1002,8 @@ void Cl_ReadMobjDelta2(boolean skip)
         }
     }
 
-    //// Pack flags into a word (3 bytes?).
-    //// \fixme Do the packing!
+    // Pack flags into a word (3 bytes?).
+    // \fixme Do the packing!
     if(df & MDF_FLAGS)
     {
         // Only the flags in the pack mask are affected.

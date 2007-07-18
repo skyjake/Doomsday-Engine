@@ -309,8 +309,8 @@ if((df & 0xffff) == 0)
     if(df & MDF_STATE)
         Msg_WritePackedShort(d->state - states);
 
-    //// Pack flags into a word (3 bytes?).
-    //// \fixme Do the packing!
+    // Pack flags into a word (3 bytes?).
+    // \fixme Do the packing!
     if(df & MDF_FLAGS)
         Msg_WriteLong(d->ddflags & DDMF_PACK_MASK);
 

@@ -74,7 +74,7 @@ void N_SockInit(void)
     WSADATA wsaData;
 
     WSAStartup(MAKEWORD(1, 1), &wsaData);
-    //// \fixme Check the result... (who cares?)
+    // \fixme Check the result... (who cares?)
 #endif
 }
 

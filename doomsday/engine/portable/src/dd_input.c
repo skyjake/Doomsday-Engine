@@ -747,7 +747,7 @@ void DD_ProcessEvents(timespan_t ticLength)
         case IDEV_JOY2:
         case IDEV_JOY3:
         case IDEV_JOY4:
-            //// \fixme What about POV?
+            // \fixme What about POV?
             if(ddev->isAxis)
                 ev.type = EV_JOY_AXIS;
             else

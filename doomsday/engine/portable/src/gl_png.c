@@ -144,8 +144,8 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                         if(*pixelSize == 2)
                             *pixelSize = 4;       // With alpha channel.
 
-                        //// OK, let's copy it into Doomsday's buffer.
-                        //// \fixme Why not load directly into it?
+                        // OK, let's copy it into Doomsday's buffer.
+                        // \fixme Why not load directly into it?
                         retbuf =
                             M_Malloc(4 * png_info->width * png_info->height);
                         rows = png_get_rows(png_ptr, png_info);

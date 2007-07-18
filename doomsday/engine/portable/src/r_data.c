@@ -1288,7 +1288,7 @@ void R_PrecacheLevel(void)
     
     // Update progress.
 
-    //// \fixme Precache sky textures!
+    // \fixme Precache sky textures!
 
     for(k = 0; k < numtextures; ++k)
         if(texturepresent[k])

@@ -551,7 +551,7 @@ void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
     if(subsector->planes[PLN_FLOOR]->updated == lastChangeOnFrame || !updateAffected)
         return;
 
-    //// \fixme NOT optimal.
+    // \fixme NOT optimal.
     aff = M_Calloc(subsector->sector->planecount * sizeof(affection_t));
 
     // For each plane.
@@ -568,8 +568,8 @@ void SB_UpdateSubsectorAffected(uint sub, rendpoly_t *poly)
         if(src->intensity <= 0)
             continue;
 
-        //// Calculate minimum 2D distance to the subsector.
-        //// \fixme This is probably too accurate an estimate.
+        // Calculate minimum 2D distance to the subsector.
+        // \fixme This is probably too accurate an estimate.
         for(k = 0; k < poly->numvertices; ++k)
         {
             V2_Set(delta,
