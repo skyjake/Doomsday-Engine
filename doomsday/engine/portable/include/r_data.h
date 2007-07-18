@@ -35,6 +35,7 @@
 #include "m_nodepile.h"
 #include "def_data.h"
 #include "r_extres.h"
+#include "s_environ.h"
 
 // Flags for decorations.
 #define DCRF_NO_IWAD    0x1         // Don't use if from IWAD.
@@ -255,7 +256,7 @@ typedef struct {
     int             flags;         // TXF_* flags.
     rgbcol_t        color;
     byte            ingroup;       // True if texture belongs to some animgroup.
-    enum materialtype_t materialType; // Used for environmental sound properties.
+    materialtype_t  materialType;  // Used for environmental sound properties.
     struct ded_decor_s *decoration; /* Pointer to the surface
                                      * decoration, if any. */
     struct ded_reflection_s *reflection; // Surface reflection definition.
@@ -276,19 +277,19 @@ typedef struct translation_s {
 } translation_t;
 
 typedef struct flat_s {
-    DGLuint         tex;          // Name of the associated DGL texture.
-    char            name[9];      // for switch changing, etc; ends in \0
+    DGLuint         tex;            // Name of the associated DGL texture.
+    char            name[9];        // for switch changing, etc; ends in \0
     texinfo_t       info;
     short           flags;
     rgbcol_t        color;
-    byte            ingroup;       // True if belongs to some animgroup.
-    enum materialtype_t materialType; // Used for environmental sound properties.
-    struct ded_decor_s *decoration;// Pointer to the surface decoration,
-                                   // if any.
+    byte            ingroup;        // True if belongs to some animgroup.
+    materialtype_t  materialType;   // Used for environmental sound properties.
+    struct ded_decor_s *decoration; // Pointer to the surface decoration,
+                                    // if any.
     struct ded_reflection_s *reflection; // Surface reflection definition.
 
     int             lump;
-    struct ded_ptcgen_s *ptcgen;   // Particle generator for the flat.
+    struct ded_ptcgen_s *ptcgen;    // Particle generator for the flat.
 } flat_t;
 
 // a patch is a lumppatch that has been prepared for render.
