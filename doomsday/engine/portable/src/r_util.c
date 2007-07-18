@@ -361,12 +361,12 @@ boolean R_IsPointInSector(fixed_t x, fixed_t y, sector_t *sector)
         vtx[0] = line->L_v1;
         vtx[1] = line->L_v2;
         // It shouldn't matter whether the line faces inward or outward.
-        if((vtx[0]->pos[VY] < fy && vtx[1]->pos[VY] >= fy) ||
-           (vtx[1]->pos[VY] < fy && vtx[0]->pos[VY] >= fy))
+        if((vtx[0]->V_pos[VY] < fy && vtx[1]->V_pos[VY] >= fy) ||
+           (vtx[1]->V_pos[VY] < fy && vtx[0]->V_pos[VY] >= fy))
         {
-            if(vtx[0]->pos[VX] +
-               (((fy - vtx[0]->pos[VY]) / (vtx[1]->pos[VY] - vtx[0]->pos[VY])) *
-                (vtx[1]->pos[VX] - vtx[0]->pos[VX])) < fx)
+            if(vtx[0]->V_pos[VX] +
+               (((fy - vtx[0]->V_pos[VY]) / (vtx[1]->V_pos[VY] - vtx[0]->V_pos[VY])) *
+                (vtx[1]->V_pos[VX] - vtx[0]->V_pos[VX])) < fx)
             {
                 // Toggle oddness.
                 isOdd = !isOdd;
@@ -408,10 +408,10 @@ boolean R_IsPointInSector2(fixed_t x, fixed_t y, sector_t *sector)
     fx = FIX2FLT(x);
     fy = FIX2FLT(y);
 
-    for(i = 0; i < subsector->numverts; ++i)
+    for(i = 0; i < subsector->segcount; ++i)
     {
-        vi = &subsector->verts[i];
-        vj = &subsector->verts[(i + 1) % subsector->numverts];
+        vi = &subsector->segs[i]->SG_v1->v;
+        vj = &subsector->segs[(i + 1) % subsector->segcount]->SG_v1->v;
 
         if(((vi->pos[VY] - fy) * (vj->pos[VX] - vi->pos[VX]) -
             (vi->pos[VX] - fx) * (vj->pos[VY] - vi->pos[VY])) < 0)

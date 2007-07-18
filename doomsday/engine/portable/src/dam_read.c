@@ -373,7 +373,7 @@ static void SetValue(valuetype_t valueType, void* dst, damsetargs_t* args,
         case DDVT_VERT_IDX:
             {
             long        value;
-            //// \fixme There has to be a better way to do this...
+            // \fixme There has to be a better way to do this...
             value = DAM_VertexIdx(args->longValues[index]);
             // end FIXME
             *(vertex_t **) dst = DAM_IndexToPtr(args->map, DAM_VERTEX, (unsigned) value);
@@ -772,11 +772,11 @@ static int SetProperty2(void *ptr, void *context)
         switch(args->prop)
         {
         case DAM_X:
-            SetValue(DMT_VERTEX_POS, &p->pos[VX], args, 0);
+            SetValue(DMT_VERTEX_POS, &p->V_pos[VX], args, 0);
             break;
 
         case DAM_Y:
-            SetValue(DMT_VERTEX_POS, &p->pos[VY], args, 0);
+            SetValue(DMT_VERTEX_POS, &p->V_pos[VY], args, 0);
             break;
 
         default:
@@ -937,7 +937,7 @@ static int SetProperty2(void *ptr, void *context)
             break;
 
         case DAM_SEG_FIRST:
-            SetValue(DMT_SUBSECTOR_FIRSTSEG, &p->firstseg, args, 0);
+            SetValue(DDVT_UINT, &p->firstWADSeg, args, 0);
             break;
 
         default:
@@ -1063,7 +1063,7 @@ int DAM_SetProperty(int type, uint idx, void *context)
     {
         void       *ptr = (type == DAM_THING? &index :
                            DAM_IndexToPtr(args->map, type, index));
-        //// \todo Use DMU's SetProperty for this, save code duplication.
+        // \todo Use DMU's SetProperty for this, save code duplication.
         return SetProperty2(ptr, context);
     }
 }

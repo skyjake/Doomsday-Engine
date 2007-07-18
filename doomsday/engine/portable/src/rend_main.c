@@ -565,37 +565,9 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
     return false;
 }
 
-boolean Rend_IsWallSectionPVisible(line_t* line, segsection_t section,
-                                   boolean backside)
-{
-    side_t *side;
-
-    if(!line)
-        return false; // huh?
-
-    // Missing side?
-    if(!line->L_side(backside))
-        return false;
-
-    side = line->L_side(backside);
-    switch(section)
-    {
-    case SEG_TOP:
-        return side->frameflags & SIDEINF_TOPPVIS;
-
-    case SEG_MIDDLE:
-        return side->frameflags & SIDEINF_MIDDLEPVIS;
-
-    case SEG_BOTTOM:
-        return side->frameflags & SIDEINF_BOTTOMPVIS;
-    default:
-        return false; // shutup compiler.
-    }
-}
-
 static void Rend_MarkSegSectionsPVisible(seg_t *seg)
 {
-    uint        i;
+    uint        i, j;
     side_t     *side;
     line_t     *line;
 
@@ -610,64 +582,62 @@ static void Rend_MarkSegSectionsPVisible(seg_t *seg)
             continue;
 
         side = line->L_side(i);
-        side->frameflags |=
-            (SIDEINF_TOPPVIS|SIDEINF_MIDDLEPVIS|SIDEINF_BOTTOMPVIS);
+        for(j = 0; j < 3; ++j)
+            side->sections[j].frameflags |= SUFINF_PVIS;
 
         // A two sided line?
         if(line->L_frontside && line->L_backside)
         {
             // Check middle texture
-            if(!(side->SW_middletexture || side->SW_middletexture == -1))
-                side->frameflags &= ~SIDEINF_MIDDLEPVIS;
-
-            // Check alpha
-            if(side->SW_middlergba[3] <= 0)
-                side->frameflags &= ~SIDEINF_MIDDLEPVIS;
-
-            // Check Y placement?
+            if(!(side->SW_middletexture || side->SW_middletexture == -1) ||
+               side->SW_middlergba[3] <= 0) // Check alpha
+                side->sections[SEG_MIDDLE].frameflags &= ~SUFINF_PVIS;
         }
 
         // Top
         if(!line->L_backside)
-            side->frameflags &= ~(SIDEINF_TOPPVIS|SIDEINF_BOTTOMPVIS);
+        {
+            side->sections[SEG_TOP].frameflags &= ~SUFINF_PVIS;
+            side->sections[SEG_BOTTOM].frameflags &= ~SUFINF_PVIS;
+        }
         else
         {
             if(R_IsSkySurface(&line->L_backsector->SP_ceilsurface) &&
                R_IsSkySurface(&line->L_frontsector->SP_ceilsurface))
-               side->frameflags &= ~SIDEINF_TOPPVIS;
+               side->sections[SEG_TOP].frameflags &= ~SUFINF_PVIS;
             else
             {
                 if(i != 0)
                 {
                     if(line->L_backsector->SP_ceilvisheight <=
                        line->L_frontsector->SP_ceilvisheight)
-                        side->frameflags &= ~SIDEINF_TOPPVIS;
+                        side->sections[SEG_TOP].frameflags &= ~SUFINF_PVIS;
                 }
                 else
                 {
                     if(line->L_frontsector->SP_ceilvisheight <=
                        line->L_backsector->SP_ceilvisheight)
-                        side->frameflags &= ~SIDEINF_TOPPVIS;
+                        side->sections[SEG_TOP].frameflags &= ~SUFINF_PVIS;
                 }
             }
 
             // Bottom
             if(R_IsSkySurface(&line->L_backsector->SP_floorsurface) &&
                R_IsSkySurface(&line->L_frontsector->SP_floorsurface))
-               side->frameflags &= ~SIDEINF_BOTTOMPVIS;
+               side->sections[SEG_BOTTOM].frameflags &= ~SUFINF_PVIS;
             else
             {
                 if(i != 0)
                 {
                     if(line->L_backsector->SP_floorvisheight >=
                        line->L_frontsector->SP_floorvisheight)
-                        side->frameflags &= ~SIDEINF_BOTTOMPVIS;
+                        side->sections[SEG_BOTTOM].frameflags &= ~SUFINF_PVIS;
                 }
                 else
                 {
                     if(line->L_frontsector->SP_floorvisheight >=
                        line->L_backsector->SP_floorvisheight)
-                        side->frameflags &= ~SIDEINF_BOTTOMPVIS;
+                        side->sections[SEG_BOTTOM].frameflags &= ~SUFINF_PVIS;
                 }
             }
         }
@@ -1201,8 +1171,8 @@ static void Rend_RenderSSWallSeg(seg_t *seg, subsector_t *ssec)
     quad->intertex.detail = NULL;
 
     // Get the start and end vertices, left then right.
-    vL_XY = seg->SG_v1->pos;
-    vR_XY = seg->SG_v2->pos;
+    vL_XY = seg->SG_v1pos;
+    vR_XY = seg->SG_v2pos;
 
     vL_ZTop = vR_ZTop = fceil;
     vL_ZBottom = vR_ZBottom = ffloor;
@@ -1354,8 +1324,8 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     bsh = bceil - bfloor;
 
     // Get the start and end vertices, left then right.
-    vL_XY = seg->SG_v1->pos;
-    vR_XY = seg->SG_v2->pos;
+    vL_XY = seg->SG_v1pos;
+    vR_XY = seg->SG_v2pos;
 
     Rend_SetSurfaceColorsForSide(side);
 
@@ -1366,7 +1336,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
 
     // Quite probably a masked texture. Won't be drawn if a visible
     // top or bottom texture is missing.
-    if(Rend_IsWallSectionPVisible(ldef, SEG_MIDDLE, backSide) /*&&
+    if((side->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS) /*&&
        !(side->flags & SDF_MIDTEXUPPER)*/)
     {
         float   gaptop, gapbottom;
@@ -1515,7 +1485,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     }
 
     // Upper wall.
-    if(Rend_IsWallSectionPVisible(ldef, SEG_TOP, backSide))
+    if(side->sections[SEG_TOP].frameflags & SUFINF_PVIS)
     {
         surface = &side->SW_topsurface;
         // Is there a visible surface?
@@ -1636,7 +1606,7 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
     }
 
     // Lower wall.
-    if(Rend_IsWallSectionPVisible(ldef, SEG_BOTTOM, backSide))
+    if(side->sections[SEG_BOTTOM].frameflags & SUFINF_PVIS)
     {
         surface = &side->SW_bottomsurface;
         // Is there a visible surface?
@@ -1755,23 +1725,27 @@ float Rend_SectorLight(sector_t *sec)
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
 {
     uint        i;
-    seg_t      *seg;
+    seg_t      *seg, **ptr;
 
-    for(i = 0, seg = sub->firstseg; i < sub->segcount; ++i, seg++)
+    ptr = sub->segs;
+    while(*ptr)
     {
+        seg = *ptr;
+
         // Occlusions can only happen where two sectors contact.
-        if(!seg->linedef || (seg->flags & SEGF_POLYOBJ))
-            continue;
+        if(seg->linedef && !(seg->flags & SEGF_POLYOBJ))
+        {
+            seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
 
-        seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
+            // Which way should it be facing?
+            if(Rend_SegFacingDir(seg->SG_v1pos, seg->SG_v2pos))  // 1=front
+                seg->frameflags |= SEGINF_FACINGFRONT;
+            else
+                seg->frameflags &= ~SEGINF_FACINGFRONT;
 
-        // Which way should it be facing?
-        if(Rend_SegFacingDir(seg->SG_v1->pos, seg->SG_v2->pos))  // 1=front
-            seg->frameflags |= SEGINF_FACINGFRONT;
-        else
-            seg->frameflags &= ~SEGINF_FACINGFRONT;
-
-        Rend_MarkSegSectionsPVisible(seg);
+            Rend_MarkSegSectionsPVisible(seg);
+        }
+        *ptr++;
      }
 
     if(sub->poly)
@@ -1783,7 +1757,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
             seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
 
             // Which way should it be facing?
-            if(Rend_SegFacingDir(seg->SG_v1->pos, seg->SG_v2->pos))  // 1=front
+            if(Rend_SegFacingDir(seg->SG_v1pos, seg->SG_v2pos))  // 1=front
                 seg->frameflags |= SEGINF_FACINGFRONT;
             else
                 seg->frameflags &= ~SEGINF_FACINGFRONT;
@@ -1800,7 +1774,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     float      *vBL, *vBR, *vTL, *vTR;
     sector_t   *frontsec, *backsec;
     uint        j, num, pass;
-    seg_t      *seg, *list;
+    seg_t      *seg, **list;
     side_t     *side;
 
     // Init the quad.
@@ -1823,7 +1797,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         if(pass == 0)
         {
             num  = ssec->segcount;
-            list = ssec->firstseg;
+            list = ssec->segs;
         }
         else
         {
@@ -1831,12 +1805,12 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 break; // we're done
 
             num  = ssec->poly->numsegs;
-            list = *ssec->poly->segs;
+            list = ssec->poly->segs;
         }
 
         for(j = 0; j < num; ++j)
         {
-            seg = &list[j];
+            seg = list[j];
 
             if(!seg->linedef)    // "minisegs" have no linedefs.
                 continue;
@@ -1873,10 +1847,10 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 bsh = bceil = bfloor = 0;
 
             // Get the start and end vertices, left then right. Top and bottom.
-            vBL[VX] = vTL[VX] = seg->SG_v1->pos[VX];
-            vBL[VY] = vTL[VY] = seg->SG_v1->pos[VY];
-            vBR[VX] = vTR[VX] = seg->SG_v2->pos[VX];
-            vBR[VY] = vTR[VY] = seg->SG_v2->pos[VY];
+            vBL[VX] = vTL[VX] = seg->SG_v1pos[VX];
+            vBL[VY] = vTL[VY] = seg->SG_v1pos[VY];
+            vBR[VX] = vTR[VX] = seg->SG_v2pos[VX];
+            vBR[VY] = vTR[VY] = seg->SG_v2pos[VY];
 
             quad->wall->length = seg->length;
 
@@ -1962,11 +1936,10 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
  */
 static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
 {
-    uint        i;
     float       fronth[2], backh[2];
     float      *startv, *endv;
     sector_t   *front = sub->sector, *back;
-    seg_t      *seg;
+    seg_t      *seg, **ptr;
 
     if(devNoCulling || P_IsInVoid(viewplayer))
         return;
@@ -1974,56 +1947,61 @@ static void Rend_OccludeSubsector(subsector_t *sub, boolean forward_facing)
     fronth[0] = front->SP_floorheight;
     fronth[1] = front->SP_ceilheight;
 
-    for(i = 0, seg = sub->firstseg; i < sub->segcount; ++i, seg++)
+    ptr = sub->segs;
+    while(*ptr)
     {
+        seg = *ptr;
+
         // Occlusions can only happen where two sectors contact.
-        if(!seg->linedef || !seg->SG_backsector)
-            continue;
-
-        if(seg->flags & SEGF_POLYOBJ)
-            continue; // Polyobjects don't occlude.
-
-        if(forward_facing != (seg->frameflags & SEGINF_FACINGFRONT))
-            continue;
-
-        back = seg->SG_backsector;
-        backh[0] = back->SP_floorheight;
-        backh[1] = back->SP_ceilheight;
-        // Choose start and end vertices so that it's facing forward.
-        if(forward_facing)
+        if(seg->linedef && seg->SG_backsector &&
+           !(seg->flags & SEGF_POLYOBJ) && // Polyobjects don't occlude.
+           (forward_facing = (seg->frameflags & SEGINF_FACINGFRONT)))
         {
-            startv = seg->SG_v1->pos;
-            endv   = seg->SG_v2->pos;
-        }
-        else
-        {
-            startv = seg->SG_v2->pos;
-            endv   = seg->SG_v1->pos;
-        }
-        // Do not create an occlusion for sky floors.
-        if(!R_IsSkySurface(&back->SP_floorsurface) ||
-           !R_IsSkySurface(&front->SP_floorsurface))
-        {
-            // Do the floors create an occlusion?
-            if((backh[0] > fronth[0] && vy <= backh[0]) ||
-               (backh[0] < fronth[0] && vy >= fronth[0]))
+            back = seg->SG_backsector;
+            backh[0] = back->SP_floorheight;
+            backh[1] = back->SP_ceilheight;
+            // Choose start and end vertices so that it's facing forward.
+            if(forward_facing)
             {
-                // Occlude down.
-                C_AddViewRelOcclusion(startv, endv, MAX_OF(fronth[0], backh[0]), false);
+                startv = seg->SG_v1pos;
+                endv   = seg->SG_v2pos;
+            }
+            else
+            {
+                startv = seg->SG_v2pos;
+                endv   = seg->SG_v1pos;
+            }
+
+            // Do not create an occlusion for sky floors.
+            if(!R_IsSkySurface(&back->SP_floorsurface) ||
+               !R_IsSkySurface(&front->SP_floorsurface))
+            {
+                // Do the floors create an occlusion?
+                if((backh[0] > fronth[0] && vy <= backh[0]) ||
+                   (backh[0] < fronth[0] && vy >= fronth[0]))
+                {
+                    // Occlude down.
+                    C_AddViewRelOcclusion(startv, endv, MAX_OF(fronth[0], backh[0]),
+                                          false);
+                }
+            }
+
+            // Do not create an occlusion for sky ceilings.
+            if(!R_IsSkySurface(&back->SP_ceilsurface) ||
+               !R_IsSkySurface(&front->SP_ceilsurface))
+            {
+                // Do the ceilings create an occlusion?
+                if((backh[1] < fronth[1] && vy >= backh[1]) ||
+                   (backh[1] > fronth[1] && vy <= fronth[1]))
+                {
+                    // Occlude up.
+                    C_AddViewRelOcclusion(startv, endv, MIN_OF(fronth[1], backh[1]),
+                                          true);
+                }
             }
         }
-        // Do not create an occlusion for sky ceilings.
-        if(!R_IsSkySurface(&back->SP_ceilsurface) ||
-           !R_IsSkySurface(&front->SP_ceilsurface))
-        {
-            // Do the ceilings create an occlusion?
-            if((backh[1] < fronth[1] && vy >= backh[1]) ||
-               (backh[1] > fronth[1] && vy <= fronth[1]))
-            {
-                // Occlude up.
-                C_AddViewRelOcclusion(startv, endv, MIN_OF(fronth[1], backh[1]), true);
-            }
-        }
+
+        *ptr++;
     }
 }
 
@@ -2098,14 +2076,14 @@ static void Rend_RenderPlane(subplaneinfo_t *plane, subsector_t *subsector)
 
 static void Rend_RenderSubsector(uint ssecidx)
 {
-    uint        i, j;
+    uint        i;
     subsector_t *ssec = SUBSECTOR_PTR(ssecidx);
-    seg_t      *seg;
+    seg_t      *seg, **ptr;
     sector_t   *sect = ssec->sector;
     float       sceil = sect->SP_ceilvisheight;
     float       sfloor = sect->SP_floorvisheight;
 
-    if(sceil - sfloor <= 0 || ssec->numverts < 3)
+    if(sceil - sfloor <= 0 || ssec->numvertices < 3)
     {
         // Skip this, it has no volume.
         // Neighbors handle adding the solid clipper segments.
@@ -2163,25 +2141,23 @@ static void Rend_RenderSubsector(uint ssecidx)
         Rend_SSectSkyFixes(ssec);
 
     // Draw the walls.
-    for(j = 0, seg = ssec->firstseg; j < ssec->segcount; ++j, seg++)
+    ptr = ssec->segs;
+    while(*ptr)
     {
-        if(seg->flags & SEGF_POLYOBJ) // Not handled here.
-            continue;
+        seg = *ptr;
 
-        if(!seg->linedef)    // "minisegs" have no linedefs.
-            continue;
-
-        if(seg->linedef->flags & LINEF_BENIGN)
-            continue;   // Benign linedefs are not rendered.
-
-        // Let's first check which way this seg is facing.
-        if(seg->frameflags & SEGINF_FACINGFRONT)
+        if(!(seg->flags & SEGF_POLYOBJ)  &&// Not handled here.
+           seg->linedef && // "minisegs" have no linedefs.
+           !(seg->linedef->flags & LINEF_BENIGN) && // Benign linedefs are not rendered.
+           (seg->frameflags & SEGINF_FACINGFRONT))
         {
             if(!seg->SG_backsector || !seg->SG_frontsector)
                 Rend_RenderSSWallSeg(seg, ssec);
             else
                 Rend_RenderWallSeg(seg, ssec);
         }
+
+        *ptr++;
     }
 
     // Is there a polyobj on board?
@@ -2455,7 +2431,7 @@ void Rend_RetrieveLightSample(void)
             pos[VY] = FIX2FLT(player->mo->[VY]);
             pos[VZ] = FIX2FLT(player->mo->[VZ]);
 
-            //// \todo Should be affected by BIAS sources...
+            // \todo Should be affected by BIAS sources...
             LG_Evaluate(pos, color);
             light = ((float)(color[0] + color[1] + color[2]) / 3) / 255.0f;
         }

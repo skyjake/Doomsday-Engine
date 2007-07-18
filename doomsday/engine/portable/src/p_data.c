@@ -153,9 +153,9 @@ void P_InitData(void)
  */
 void P_PlaneChanged(sector_t *sector, uint plane)
 {
-    uint        i, k;
+    uint        i;
     subsector_t *sub;
-    seg_t      *seg;
+    seg_t      **ptr;
     side_t     *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
@@ -291,10 +291,12 @@ void P_PlaneChanged(sector_t *sector, uint plane)
     {
         sub = sector->subsectors[i];
 
-        for(k = 0, seg = sub->firstseg; k < sub->segcount; ++k, seg++)
+        ptr = sub->segs;
+        while(*ptr)
         {
             // Inform the shadow bias of changed geometry.
-            SB_SegHasMoved(seg);
+            SB_SegHasMoved(*ptr);
+            *ptr++;
         }
 
         // Inform the shadow bias of changed geometry.

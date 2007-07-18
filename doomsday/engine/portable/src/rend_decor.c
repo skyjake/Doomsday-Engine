@@ -406,8 +406,8 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
         v[1] = line->L_v2;
     }
 
-    delta[VX] = v[1]->pos[VX] - v[0]->pos[VX];
-    delta[VY] = v[1]->pos[VY] - v[0]->pos[VY];
+    delta[VX] = v[1]->V_pos[VX] - v[0]->V_pos[VX];
+    delta[VY] = v[1]->V_pos[VY] - v[0]->V_pos[VY];
     surfaceNormal[VX] = delta[VY] / line->length;
     surfaceNormal[VZ] = -delta[VX] / line->length;
     surfaceNormal[VY] = 0;
@@ -440,8 +440,8 @@ static void Rend_DecorateLineSection(line_t *line, side_t *side,
         // Skip must be at least one.
         Rend_DecorationPatternSkip(lightDef, skip);
 
-        posBase[VX] = v[0]->pos[VX] + lightDef->elevation * surfaceNormal[VX];
-        posBase[VY] = v[0]->pos[VY] + lightDef->elevation * surfaceNormal[VZ];
+        posBase[VX] = v[0]->V_pos[VX] + lightDef->elevation * surfaceNormal[VX];
+        posBase[VY] = v[0]->V_pos[VY] + lightDef->elevation * surfaceNormal[VZ];
 
         patternW = surfTexW * skip[VX];
         patternH = surfTexH * skip[VY];
@@ -634,9 +634,9 @@ static void Rend_DecorateLine(int index)
             }
         }
 
-        //// 2-sided middle texture?
-        //// \fixme Since halos aren't usually clipped by 2-sided middle
-        //// textures, this looks a bit silly.
+        // 2-sided middle texture?
+        // \fixme Since halos aren't usually clipped by 2-sided middle
+        // textures, this looks a bit silly.
         /*if(line->L_frontside && side = line->L_frontside->SW_middletexture)
         {
             rendpoly_t *quad = R_AllocRendPoly(RP_QUAD, true, 4);

@@ -213,7 +213,7 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
             subsector_t **ptr;
 
             sec->reverbSSecs =
-                Z_Malloc(sec->numReverbSSecAttributors * sizeof(subsector_t*),
+                Z_Malloc((sec->numReverbSSecAttributors + 1) * sizeof(subsector_t*),
                          PU_LEVELSTATIC, 0);
 
             for(k = 0, ptr = sec->reverbSSecs, node = subSecOwnerList.head;
@@ -233,6 +233,7 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
                 }
                 node = p;
             }
+            *ptr = NULL; // terminate.
         }
     }
 
@@ -255,7 +256,7 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
 static boolean calcSSecReverb(subsector_t *ssec)
 {
     uint        i, v;
-    seg_t      *seg;
+    seg_t     **ptr;
     float       total = 0;
     materialtype_t type;
     float       materials[NUM_MATERIAL_TYPES];
@@ -270,29 +271,33 @@ static boolean calcSSecReverb(subsector_t *ssec)
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the subsector.
-    for(i = 0, seg = ssec->firstseg; i < ssec->segcount; ++i, seg++)
+    ptr = ssec->segs;
+    while(*ptr)
     {
-        if(!seg->linedef || !seg->sidedef ||
-           !seg->sidedef->SW_middletexture)
-            continue;
+        seg_t      *seg = *ptr;
 
-        // The texture of the seg determines its type.
-        if(seg->sidedef->SW_middletexture >= 0)
+        if(seg->linedef && seg->sidedef && seg->sidedef->SW_middletexture)
         {
-            if(seg->sidedef->SW_middleisflat)
-                type = flats[seg->sidedef->SW_middletexture]->materialType;
+            // The texture of the seg determines its type.
+            if(seg->sidedef->SW_middletexture >= 0)
+            {
+                if(seg->sidedef->SW_middleisflat)
+                    type = flats[seg->sidedef->SW_middletexture]->materialType;
+                else
+                    type = textures[seg->sidedef->SW_middletexture]->materialType;
+            }
             else
-                type = textures[seg->sidedef->SW_middletexture]->materialType;
-        }
-        else
-        {
-            type = MATTYPE_UNKNOWN;
+            {
+                type = MATTYPE_UNKNOWN;
+            }
+
+            total += seg->length;
+            if(!(type >= 0 && type < NUM_MATERIAL_TYPES))
+                type = MATTYPE_WOOD; // Assume it's wood if unknown.
+            materials[type] += seg->length;
         }
 
-        total += seg->length;
-        if(!(type >= 0 && type < NUM_MATERIAL_TYPES))
-            type = MATTYPE_WOOD; // Assume it's wood if unknown.
-        materials[type] += seg->length;
+        *ptr++;
     }
 
     if(!total)

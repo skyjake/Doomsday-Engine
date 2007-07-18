@@ -113,8 +113,7 @@ plane_t *R_NewPlaneForSector(sector_t *sec, planetype_t type)
     // Allocate a new plane list for this sector.
     newList = Z_Malloc(sizeof(plane_t*) * (++sec->planecount + 1), PU_LEVEL, 0);
     // Copy any existing plane ptrs.
-    i = 0;
-    for(; i < sec->planecount - 1; ++i)
+    for(i = 0; i < sec->planecount - 1; ++i)
         newList[i] = sec->planes[i];
     // Add the new plane to the end of the list.
     newList[i++] = plane;
@@ -216,13 +215,13 @@ void R_DestroyPlaneOfSector(uint id, sector_t *sec)
  */
 static void R_SetSectorLinks(sector_t *sec)
 {
-    uint        i, j, k;
+    uint        i, k;
     sector_t   *back;
     line_t     *lin;
     boolean     hackfloor, hackceil;
     side_t     *sid, *frontsid, *backsid;
     sector_t   *floorlink_candidate = 0, *ceillink_candidate = 0;
-    seg_t      *seg;
+    seg_t      *seg, **ptr;
     subsector_t *sub;
     ssecgroup_t *ssgrp;
 
@@ -249,79 +248,81 @@ static void R_SetSectorLinks(sector_t *sec)
             if(sub->group != i)
                 continue;
 
-            for(j = 0, seg = sub->firstseg; j < sub->segcount; ++j, seg++)
+            ptr = sub->segs;
+            while(*ptr)
             {
                 if(!hackfloor && !hackceil)
                     break;
 
+                seg = *ptr;
                 lin = seg->linedef;
 
-                if(!lin)
-                    continue; // minisegs don't count.
-
-                // We are only interested in two-sided lines.
-                if(!(lin->L_frontside && lin->L_backside))
-                    continue;
-
-                // Check the vertex line owners for both verts.
-                // We are only interested in lines that do NOT share either vertex
-                // with a one-sided line (ie, its not "anchored").
-                if(lin->L_v1->anchored || lin->L_v2->anchored)
-                    return;
-
-                // Check which way the line is facing.
-                sid = lin->L_frontside;
-                if(sid->sector == sec)
+                if(lin && // minisegs don't count.
+                   lin->L_frontside && lin->L_backside) // Must be twosided.
                 {
-                    frontsid = sid;
-                    backsid = lin->L_backside;
-                }
-                else
-                {
-                    frontsid = lin->L_backside;
-                    backsid = sid;
-                }
-                back = backsid->sector;
-                if(back == sec)
-                    return;
+                    // Check the vertex line owners for both verts.
+                    // We are only interested in lines that do NOT share either vertex
+                    // with a one-sided line (ie, its not "anchored").
+                    if(lin->L_v1->anchored || lin->L_v2->anchored)
+                        return;
 
-                // Check that there is something on the other side.
-                if(back->SP_ceilheight == back->SP_floorheight)
-                    return;
-                // Check the conditions that prevent the invis plane.
-                if(back->SP_floorheight == sec->SP_floorheight)
-                {
-                    hackfloor = false;
-                }
-                else
-                {
-                    if(back->SP_floorheight > sec->SP_floorheight)
-                        sid = frontsid;
+                    // Check which way the line is facing.
+                    sid = lin->L_frontside;
+                    if(sid->sector == sec)
+                    {
+                        frontsid = sid;
+                        backsid = lin->L_backside;
+                    }
                     else
-                        sid = backsid;
+                    {
+                        frontsid = lin->L_backside;
+                        backsid = sid;
+                    }
+                    back = backsid->sector;
+                    if(back == sec)
+                        return;
 
-                    if((sid->SW_bottomtexture && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
-                       (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                    // Check that there is something on the other side.
+                    if(back->SP_ceilheight == back->SP_floorheight)
+                        return;
+
+                    // Check the conditions that prevent the invis plane.
+                    if(back->SP_floorheight == sec->SP_floorheight)
+                    {
                         hackfloor = false;
+                    }
                     else
-                        floorlink_candidate = back;
-                }
+                    {
+                        if(back->SP_floorheight > sec->SP_floorheight)
+                            sid = frontsid;
+                        else
+                            sid = backsid;
 
-                if(back->SP_ceilheight == sec->SP_ceilheight)
-                    hackceil = false;
-                else
-                {
-                    if(back->SP_ceilheight < sec->SP_ceilheight)
-                        sid = frontsid;
-                    else
-                        sid = backsid;
+                        if((sid->SW_bottomtexture && !(sid->SW_bottomflags & SUF_TEXFIX)) ||
+                           (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                            hackfloor = false;
+                        else
+                            floorlink_candidate = back;
+                    }
 
-                    if((sid->SW_toptexture && !(sid->SW_topflags & SUF_TEXFIX)) ||
-                       (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                    if(back->SP_ceilheight == sec->SP_ceilheight)
                         hackceil = false;
                     else
-                        ceillink_candidate = back;
+                    {
+                        if(back->SP_ceilheight < sec->SP_ceilheight)
+                            sid = frontsid;
+                        else
+                            sid = backsid;
+
+                        if((sid->SW_toptexture && !(sid->SW_topflags & SUF_TEXFIX)) ||
+                           (sid->SW_middletexture && !(sid->SW_middleflags & SUF_TEXFIX)))
+                            hackceil = false;
+                        else
+                            ceillink_candidate = back;
+                    }
                 }
+
+                *ptr++;
             }
         }
         if(hackfloor)
@@ -641,15 +642,19 @@ void R_SkyFix(boolean fixFloors, boolean fixCeilings)
 
 static void R_PrepareSubsector(subsector_t *sub)
 {
-    uint        j, num = sub->numverts;
-    fvertex_t  *vtx = sub->verts;
+    seg_t     **ptr;
+    fvertex_t  *vtx;
 
     // Find the center point. First calculate the bounding box.
+    ptr = sub->segs;
+    vtx = &((*ptr)->SG_v1->v);
     sub->bbox[0].pos[VX] = sub->bbox[1].pos[VX] = sub->midpoint.pos[VX] = vtx->pos[VX];
     sub->bbox[0].pos[VY] = sub->bbox[1].pos[VY] = sub->midpoint.pos[VY] = vtx->pos[VY];
 
-    for(j = 1, vtx++; j < num; ++j, vtx++)
+    *ptr++;
+    while(*ptr)
     {
+        vtx = &((*ptr)->SG_v1->v);
         if(vtx->pos[VX] < sub->bbox[0].pos[VX])
             sub->bbox[0].pos[VX] = vtx->pos[VX];
         if(vtx->pos[VY] < sub->bbox[0].pos[VY])
@@ -661,43 +666,15 @@ static void R_PrepareSubsector(subsector_t *sub)
 
         sub->midpoint.pos[VX] += vtx->pos[VX];
         sub->midpoint.pos[VY] += vtx->pos[VY];
-    }
-    sub->midpoint.pos[VX] /= num;
-    sub->midpoint.pos[VY] /= num;
-}
-
-static void R_PolygonizeWithoutCarving(void)
-{
-    uint        startTime = Sys_GetRealTime();
-
-    uint        i, j, num;
-    fvertex_t  *vtx;
-    subsector_t *sub;
-    seg_t      *seg;
-
-    for(i = 0; i < numsubsectors; ++i)
-    {
-        sub = SUBSECTOR_PTR(i);
-        num = sub->numverts = sub->segcount;
-        vtx = sub->verts =
-            Z_Malloc(sizeof(fvertex_t) * sub->segcount, PU_LEVELSTATIC, 0);
-
-        for(j = 0, seg = sub->firstseg; j < num; ++j, seg++, vtx++)
-        {
-            vtx->pos[VX] = seg->SG_v1->pos[VX];
-            vtx->pos[VY] = seg->SG_v1->pos[VY];
-        }
-
-        R_PrepareSubsector(sub);
+        *ptr++;
     }
 
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_PolygonizeWithoutCarving: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    sub->midpoint.pos[VX] /= sub->segcount; // num vertices.
+    sub->midpoint.pos[VY] /= sub->segcount;
 }
 
-static float TriangleArea(fvertex_t *o, fvertex_t *s, fvertex_t *t)
+
+static float triangleArea(fvertex_t *o, fvertex_t *s, fvertex_t *t)
 {
     fvertex_t a, b;
     float   area;
@@ -716,89 +693,276 @@ static float TriangleArea(fvertex_t *o, fvertex_t *s, fvertex_t *t)
         return area;
 }
 
-/**
- * Returns true if 'base' is a good tri-fan base.
- */
-static boolean R_TestTriFan(subsector_t *sub, uint base, uint num)
+static void R_InitPlaneIllumination(subsector_t *sub, uint planeid)
 {
-#define TRIFAN_LIMIT    0.1
-    uint        i, a, b;
-    fvertex_t  *verts = sub->verts;
+    uint        i, j, num;
+    subplaneinfo_t *plane = sub->planes[planeid];
 
-    if(num == 3)
-        return true;            // They're all valid.
+    num = sub->numvertices;
 
-    // Higher vertex counts need checking.
-    for(i = 0; i < num - 2; ++i)
+    plane->illumination =
+        Z_Calloc(num * sizeof(vertexillum_t), PU_LEVELSTATIC, NULL);
+
+    for(i = 0; i < num; ++i)
     {
-        a = base + 1 + i;
-        b = a + 1;
+        plane->illumination[i].flags |= VIF_STILL_UNSEEN;
 
-        if(a >= num) a -= num;
-        if(b >= num) b -= num;
-
-        if(TriangleArea(&verts[base], &verts[a], &verts[b]) <= TRIFAN_LIMIT)
-            return false;
+        for(j = 0; j < MAX_BIAS_AFFECTED; ++j)
+            plane->illumination[i].casted[j].source = -1;
     }
-
-    // Whole triangle fan checked out OK, must be good.
-    return true;
-#undef TRIFAN_LIMIT
 }
 
-static void R_SubsectorPlanes(void)
+static ownernode_t *unusedNodeList = NULL;
+
+static ownernode_t *newOwnerNode(void)
 {
-    uint        i, k, num, bufSize = 64;
-    subsector_t *sub;
-    fvertex_t  *verts;
-    fvertex_t  *vbuf;
-    size_t      size = sizeof(fvertex_t);
-    boolean     valid;
+    ownernode_t *node;
 
-    vbuf = M_Malloc(size * bufSize);
+    if(unusedNodeList)
+    {   // An existing node is available for re-use.
+        node = unusedNodeList;
+        unusedNodeList = unusedNodeList->next;
 
-    for(i = 0, sub = subsectors; i < numsubsectors; sub++, ++i)
+        node->next = NULL;
+        node->data = NULL;
+    }
+    else
+    {   // Need to allocate another.
+        node = M_Malloc(sizeof(ownernode_t));
+    }
+
+    return node;
+}
+
+static void addVertexToSSecOwnerList(ownerlist_t *ownerList, fvertex_t *v)
+{
+    ownernode_t *node;
+
+    if(!v)
+        return; // Wha?
+
+    // Add a new owner.
+    // NOTE: No need to check for duplicates.
+    ownerList->count++;
+
+    node = newOwnerNode();
+    node->data = v;
+    node->next = ownerList->head;
+    ownerList->head = node;
+}
+
+static void R_PolygonizeWithoutCarving(void)
+{
+    uint        startTime = Sys_GetRealTime();
+
+    uint        i;
+    ownernode_t *node, *p;
+
+    for(i = 0; i < numsubsectors; ++i)
     {
-        num = sub->numverts;
-        verts = sub->verts;
+        uint        j;
+        fvertex_t  *baseVtx = NULL;
+        seg_t     **ptr;
+        subsector_t *sub;
+        ownerlist_t subSecOwnerList;
+        boolean     found = false;
 
-        if(num >= bufSize - 2)
+        memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
+
+        sub = SUBSECTOR_PTR(i);
+        R_PrepareSubsector(sub);
+
+        // Create one node for each vertex of the subsector.
+        ptr = sub->segs;
+        while(*ptr)
         {
-            bufSize = num;
-            vbuf = M_Realloc(vbuf, size * (bufSize));
+            fvertex_t *other = &((*ptr)->SG_v1->v);
+            addVertexToSSecOwnerList(&subSecOwnerList, other);
+            *ptr++;
         }
 
-        // We need to find a good tri-fan base vertex.
-        // (One that doesn't generate zero-area triangles).
-        // We'll test each one and pick the first good one.
-        valid = false;
-        for(k = 0; k < num; ++k)
-        {
-            if(R_TestTriFan(sub, k, num))
+        // We need to find a good tri-fan base vertex, (one that doesn't
+        // generate zero-area triangles).
+        if(subSecOwnerList.count <= 3)
+        {   // Always valid.
+            found = true;
+        }
+        else
+        {   // Higher vertex counts need checking, we'll test each one
+            // and pick the first good one.
+            ownernode_t *base = subSecOwnerList.head;
+
+            while(base && !found)
             {
-                // Yes! This'll do nicely. Change the order of the
-                // vertices so that k comes first.
-                if(k)           // Need to change?
+                ownernode_t *current;
+                boolean     ok;
+
+                current = base;
+                ok = true;
+                j = 0;
+                while(j < subSecOwnerList.count - 2 && ok)
                 {
-                    memcpy(vbuf, verts, size * num);
-                    memcpy(verts, &vbuf[k], size * (num - k));
-                    memcpy(&verts[num - k], vbuf, size * k);
+#define TRIFAN_LIMIT    0.1
+
+                    ownernode_t *a, *b;
+
+                    if(current->next)
+                        a = current->next;
+                    else
+                        a = subSecOwnerList.head;
+                    if(a->next)
+                        b = a->next;
+                    else
+                        b = subSecOwnerList.head;
+
+                    if(triangleArea((fvertex_t*) base->data,
+                                    (fvertex_t*) a->data,
+                                    (fvertex_t*) b->data) <= TRIFAN_LIMIT)
+                    {
+                        ok = false;
+                    }
+                    else
+                    {   // Keep checking...
+                        if(current->next)
+                            current = current->next;
+                        else
+                            current = subSecOwnerList.head;
+
+                        j++;
+                    }
+
+#undef TRIFAN_LIMIT
                 }
-                valid = true;
-                break;
+
+                if(ok)
+                {   // This will do nicely.
+                    // Must ensure that the vertices are ordered such that
+                    // base comes last (this is because when adding vertices
+                    // to the ownerlist; it is done backwards).
+                    ownernode_t *last;
+
+                    // Find the last.
+                    last = base;
+                    while(last->next) last = last->next;
+
+                    if(base != last)
+                    {   // Need to change the order.
+                        last->next = subSecOwnerList.head;
+                        subSecOwnerList.head = base->next;
+                        base->next = NULL;
+                    }
+
+                    found = true;
+                }
+                else
+                {
+                    base = base->next;
+                }
             }
         }
 
-        if(!valid)
-        {
-            // There was no match. Bugger. We need to use the subsector
-            // midpoint as the base. It's always valid.
-            sub->flags |= DDSUBF_MIDPOINT;
-            //Con_Message("Using midpoint for subsctr %i.\n", i);
+        if(!found)
+        {   // No suitable triangle fan base vertex found.
+            ownernode_t *newNode, *last;
+
+            // Use the subsector midpoint as the base since it will always
+            // be valid.
+            sub->flags |= SUBF_MIDPOINT;
+
+            // This entails adding the midpoint as a vertex at the start
+            // and duplicating the first vertex at the end (so the fan
+            // wraps around).
+
+            // We'll have to add the end vertex manually...
+            // Find the end.
+            last = subSecOwnerList.head;
+            while(last->next) last = last->next;
+
+            newNode = newOwnerNode();
+            newNode->data = &sub->midpoint;
+            newNode->next = NULL;
+
+            last->next = newNode;
+            subSecOwnerList.count++;
+
+            addVertexToSSecOwnerList(&subSecOwnerList, last->data);
         }
+
+        // We can now create the subsector vertex array by hardening the list.
+        // NOTE: The same polygon is used for all planes of this subsector.
+        sub->numvertices = subSecOwnerList.count;
+        sub->vertices =
+            Z_Malloc(sizeof(fvertex_t*) * (sub->numvertices + 1),
+                     PU_LEVELSTATIC, 0);
+
+        node = subSecOwnerList.head;
+        j = sub->numvertices - 1;
+        while(node)
+        {
+            p = node->next;
+            sub->vertices[j--] = (fvertex_t*) node->data;
+
+            if(i < numsubsectors - 1)
+            {   // Move this node to the unused list for re-use.
+                node->next = unusedNodeList;
+                unusedNodeList = node;
+            }
+            else
+            {   // No further use for the nodes.
+                M_Free(node);
+            }
+            node = p;
+        }
+        sub->vertices[sub->numvertices] = NULL; // terminate.
     }
 
-    M_Free(vbuf);
+    // Free any nodes left in the unused list.
+    node = unusedNodeList;
+    while(node)
+    {
+        p = node->next;
+        M_Free(node);
+        node = p;
+    }
+    unusedNodeList = NULL;
+
+#ifdef _DEBUG
+    Z_CheckHeap();
+#endif
+
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_PolygonizeWithoutCarving: Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - startTime) / 1000.0f));
+}
+
+static void createSSecPlanes(void)
+{
+    uint        i, j;
+    subsector_t *sub;
+
+    for(i = 0; i < numsubsectors; ++i)
+    {
+        sub = SUBSECTOR_PTR(i);
+
+        // Allocate the subsector plane info array.
+        sub->planes =
+            Z_Malloc(sub->sector->planecount * sizeof(subplaneinfo_t*),
+                     PU_LEVEL, NULL);
+        for(j = 0; j < sub->sector->planecount; ++j)
+        {
+            sub->planes[j] =
+                Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
+
+            // Initialize the illumination for the subsector.
+            R_InitPlaneIllumination(sub, j);
+        }
+
+        // \fixme $nplanes
+        // Initialize the plane types.
+        sub->planes[PLN_FLOOR]->type = PLN_FLOOR;
+        sub->planes[PLN_CEILING]->type = PLN_CEILING;
+    }
 }
 
 /**
@@ -810,7 +974,6 @@ static void R_SubsectorPlanes(void)
 static int C_DECL lineAngleSorter(const void *a, const void *b)
 {
     uint        i;
-    byte        edge;
     fixed_t     dx, dy;
     binangle_t  angles[2];
     lineowner_t *own[2];
@@ -826,11 +989,13 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
         }
         else
         {
-            line = own[i]->line;
-            edge = (line->L_v1 == rootVtx? 1:0);
+            vertex_t    *otherVtx;
 
-            dx = line->L_v(edge)->pos[VX] - rootVtx->pos[VX];
-            dy = line->L_v(edge)->pos[VY] - rootVtx->pos[VY];
+            line = own[i]->line;
+            otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
+
+            dx = otherVtx->V_pos[VX] - rootVtx->V_pos[VX];
+            dy = otherVtx->V_pos[VY] - rootVtx->V_pos[VY];
 
             own[i]->angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
 
@@ -1268,8 +1433,8 @@ static void R_BuildSectorLinks(void)
             unclosed = true;
         else
         {
-            //// \todo Add algorithm to check for unclosed sectors here.
-            //// Perhaps have a look at glBSP.
+            // \todo Add algorithm to check for unclosed sectors here.
+            // Perhaps have a look at glBSP.
         }
 
         if(unclosed)
@@ -1341,109 +1506,7 @@ static void R_BuildSectorLinks(void)
     }
 }
 
-static void R_InitPlaneIllumination(subsector_t *sub, uint planeid)
-{
-    uint        i, j, num;
-    subplaneinfo_t *plane = sub->planes[planeid];
 
-    num = sub->numvertices;
-
-    plane->illumination =
-        Z_Calloc(num * sizeof(vertexillum_t), PU_LEVELSTATIC, NULL);
-
-    for(i = 0; i < num; ++i)
-    {
-        plane->illumination[i].flags |= VIF_STILL_UNSEEN;
-
-        for(j = 0; j < MAX_BIAS_AFFECTED; ++j)
-            plane->illumination[i].casted[j].source = -1;
-    }
-}
-
-static void R_InitSubsectorPoly(subsector_t *subsector)
-{
-    uint        numvrts, i;
-    fvertex_t  *vrts, *vtx, *pv;
-
-    // Take the subsector's vertices.
-    numvrts = subsector->numverts;
-    vrts = subsector->verts;
-
-    // Copy the vertices to the poly.
-    if(subsector->flags & DDSUBF_MIDPOINT)
-    {
-        // Triangle fan base is the midpoint of the subsector.
-        subsector->numvertices = 2 + numvrts;
-        subsector->vertices =
-            Z_Malloc(sizeof(fvertex_t) * subsector->numvertices, PU_LEVELSTATIC, 0);
-
-        memcpy(subsector->vertices, &subsector->midpoint, sizeof(fvertex_t));
-
-        vtx = vrts;
-        pv = subsector->vertices + 1;
-    }
-    else
-    {
-        subsector->numvertices = numvrts;
-        subsector->vertices =
-            Z_Malloc(sizeof(fvertex_t) * subsector->numvertices, PU_LEVELSTATIC, 0);
-
-        // The first vertex is always the same: vertex zero.
-        pv = subsector->vertices;
-        memcpy(pv, &vrts[0], sizeof(*pv));
-
-        vtx = vrts + 1;
-        pv++;
-        numvrts--;
-    }
-
-    // Add the rest of the vertices.
-    for(i = 0; i < numvrts; ++i, vtx++, pv++)
-        memcpy(pv, vtx, sizeof(*vtx));
-
-    if(subsector->flags & DDSUBF_MIDPOINT)
-    {
-        // Re-add the first vertex so the triangle fan wraps around.
-        memcpy(pv, &subsector->vertices[1], sizeof(*pv));
-    }
-}
-
-static void R_BuildSubsectorPolys(void)
-{
-    uint        i, k;
-    subsector_t *sub;
-
-#ifdef _DEBUG
-    Con_Printf("R_BuildSubsectorPolys\n");
-#endif
-
-    for(i = 0; i < numsubsectors; ++i)
-    {
-        sub = SUBSECTOR_PTR(i);
-
-        R_InitSubsectorPoly(sub);
-
-        sub->planes =
-            Z_Malloc(sub->sector->planecount * sizeof(subplaneinfo_t*),
-                     PU_LEVEL, NULL);
-        for(k = 0; k < sub->sector->planecount; ++k)
-        {
-            sub->planes[k] =
-                Z_Calloc(sizeof(subplaneinfo_t), PU_LEVEL, NULL);
-
-            // Initialize the illumination for the subsector.
-            R_InitPlaneIllumination(sub, k);
-        }
-        //// \fixme $nplanes
-        //// Initialize the plane types.
-        sub->planes[PLN_FLOOR]->type = PLN_FLOOR;
-        sub->planes[PLN_CEILING]->type = PLN_CEILING;
-    }
-
-#ifdef _DEBUG
-    Z_CheckHeap();
-#endif
-}
 
 /**
  * Determines if the given sector is made up of any self-referencing
@@ -1985,15 +2048,14 @@ line_t *R_FindSolidLineNeighbor(sector_t *sector, line_t *line, lineowner_t *own
     if(diff) *diff += (antiClockwise? own->LO_prev->angle : own->angle);
 
     if(!other->L_frontside || !other->L_backside)
-    {
         return other;
-    }
 
-    if(other->L_frontsector != other->L_backsector &&
+    if(!(other->flags & LINEF_SELFREF) &&
        (other->L_frontsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
         other->L_frontsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
         other->L_backsector->SP_floorvisheight >= sector->SP_ceilvisheight ||
-        other->L_backsector->SP_ceilvisheight <= sector->SP_floorvisheight))
+        other->L_backsector->SP_ceilvisheight <= sector->SP_floorvisheight ||
+        other->L_backsector->SP_ceilvisheight <= other->L_backsector->SP_floorvisheight))
         return other;
 
     // Both front and back MUST be open by this point.
@@ -2080,8 +2142,7 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
     if(other == line)
         return NULL;
 
-    if(!(other->L_backside &&
-         other->L_backsector == other->L_frontsector))
+    if(!(other->flags & LINEF_SELFREF))
     {
         diff = line->angle - other->angle;
 
@@ -2159,21 +2220,16 @@ void R_InitLevel(char *level_id)
     // Polygonize.
     R_PolygonizeWithoutCarving();
 
+    createSSecPlanes();
     //Con_Progress(10, 0);
 
     // Init Particle Generator links.
     PG_InitForLevel();
 
-    // Make sure subsector floors and ceilings will be rendered
-    // correctly.
-    R_SubsectorPlanes();
-
     // The map bounding box will be updated during sector info
     // initialization.
     memset(mapBounds, 0, sizeof(mapBounds));
     R_BuildSectorLinks();
-
-    R_BuildSubsectorPolys();
 
     // Compose the vertex owner arrays.
     R_BuildVertexOwners();

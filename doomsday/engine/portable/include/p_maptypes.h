@@ -5,9 +5,11 @@
 
 #include "p_mapdata.h"
 
+#define V_pos					v.pos
+
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
-    float               pos[2];
+    fvertex_t           v;
     unsigned int        numsecowners;  // Number of sector owners.
     unsigned int*       secowners;     // Sector indices [numsecowners] size.
     unsigned int        numlineowners; // Number of line owners.
@@ -20,8 +22,14 @@ typedef struct vertex_s {
 #define BACK  1
 
 #define SG_v(n)					v[(n)]
+#define SG_vpos(n)				SG_v(n)->V_pos
+
 #define SG_v1                   SG_v(0)
+#define SG_v1pos				SG_v(0)->V_pos
+
 #define SG_v2                   SG_v(1)
+#define SG_v2pos				SG_v(1)->V_pos
+
 #define SG_sector(n)			sec[(n)]
 #define SG_frontsector          SG_sector(FRONT)
 #define SG_backsector           SG_sector(BACK)
@@ -55,20 +63,21 @@ typedef struct seg_s {
     struct biasaffection_s affected[MAX_BIAS_AFFECTED];
 } seg_t;
 
+#define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
+
 typedef struct subsector_s {
     runtime_mapdata_header_t header;
     struct sector_s*    sector;
+    unsigned int        firstWADSeg;   // First seg index, as specified in SSECTORS lump.
     unsigned int        segcount;
-    struct seg_s*       firstseg;
+    struct seg_s**      segs;          // [segcount] size.
     struct polyobj_s*   poly;          // NULL, if there is no polyobj.
-    byte                flags;
-    unsigned short      numverts;
-    fvertex_t*          verts;         // A sorted list of edge vertices.
+    int                 flags;
     fvertex_t           bbox[2];       // Min and max points.
     fvertex_t           midpoint;      // Center of vertices.
     struct subplaneinfo_s** planes;
     unsigned short      numvertices;
-    struct fvertex_s*   vertices;
+    struct fvertex_s**  vertices;      // [numvertices] size
     int                 validcount;
     struct shadowlink_s* shadows;
     unsigned int        group;
@@ -92,6 +101,9 @@ typedef struct material_s {
 #define SUF_BLEND       0x4         // Surface possibly has a blended texture.
 #define SUF_NO_RADIO    0x8         // No fakeradio for this surface.
 
+// Surface frame flags
+#define SUFINF_PVIS     0x0001
+
 typedef struct surface_s {
     runtime_mapdata_header_t header;
     int                 flags;         // SUF_ flags
@@ -109,6 +121,7 @@ typedef struct surface_s {
     float               oldoffy;
     float               rgba[4];       // Surface color tint
     float               oldrgba[4];
+    short               frameflags;
 } surface_t;
 
 typedef enum {
@@ -301,11 +314,6 @@ typedef enum segsection_e {
 #define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
 #define SW_bottomtexlat         SW_surfacetexlat(SEG_BOTTOM)
 
-// Side frame flags
-#define SIDEINF_TOPPVIS     0x0001
-#define SIDEINF_MIDDLEPVIS  0x0002
-#define SIDEINF_BOTTOMPVIS  0x0004
-
 typedef struct side_s {
     runtime_mapdata_header_t header;
     surface_t           sections[3];
@@ -313,16 +321,22 @@ typedef struct side_s {
     struct seg_s**      segs;          // [segcount] size, segs arranged left>right
     struct sector_s*    sector;
     short               flags;
-    short               frameflags;
 } side_t;
 
 // Helper macros for accessing linedef data elements.
 #define L_v(n)					v[(n)]
+#define L_vpos(n)				v[(n)]->V_pos
+
 #define L_v1					L_v(0)
+#define L_v1pos					L_v(0)->V_pos
+
 #define L_v2					L_v(1)
+#define L_v2pos					L_v(1)->V_pos
+
 #define L_vo(n)					vo[(n)]
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
+
 #define L_side(n)  			    sides[(n)]
 #define L_frontside             L_side(FRONT)
 #define L_backside              L_side(BACK)
@@ -331,8 +345,9 @@ typedef struct side_s {
 #define L_backsector            L_sector(BACK)
 
 // Line flags
-#define LINEF_SELFREFHACKROOT	0x1	// This line is the root of a self-referencing hack sector
-#define LINEF_BENIGN			0x2 // Benign lines are those which have no front or back segs
+#define LINEF_SELFREF           0x1 // Front and back sectors of this line are the same.
+#define LINEF_SELFREFHACKROOT	0x2	// This line is the root of a self-referencing hack sector
+#define LINEF_BENIGN			0x4 // Benign lines are those which have no front or back segs
 									// (though they may have sides). These are induced in GL
 									// node generation process. They are inoperable and will
 									// NOT be added to a sector's line table.

@@ -255,7 +255,7 @@ void PG_InitForNewFrame(void)
         if((gen = activePtcGens[i]) != NULL)
         {
             gen->flags &= ~PGF_VISIBLE;
-            //// \fixme Overkill?
+            // \fixme Overkill?
             for(k = 0; k < gen->count; ++k)
                 if(gen->ptcs[k].stage >= 0)
                     PG_LinkPtcGen(gen, gen->ptcs[k].sector);
@@ -698,7 +698,7 @@ static void PG_RenderParticles(int rtype, boolean withBlend)
                 pos[VX] = FIX2FLT(pt->pos[VX]);
                 pos[VY] = FIX2FLT(pt->pos[VY]);
                 pos[VZ] = FIX2FLT(pt->pos[VZ]);
-                M_ProjectPointOnLine(pos, &vtx->pos[VX], line, 1, projected);
+                M_ProjectPointOnLine(pos, &vtx->V_pos[VX], line, 1, projected);
 
                 P_LineUnitVector(pt->contact, line);
 

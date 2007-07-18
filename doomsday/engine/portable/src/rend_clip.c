@@ -110,7 +110,7 @@ int     devNoCulling = 0;    // Set to 1 to disable culling completely
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int  anglistSize = 0;
+static uint  anglistSize = 0;
 static binangle_t *anglist;
 
 // CODE --------------------------------------------------------------------
@@ -509,10 +509,10 @@ void C_AddOcclusionRange(binangle_t start, binangle_t end, float *normal,
         return;
     }
 
-    //// \fixme An optimization: remove existing oranges that are fully
-    //// contained by the new orange. But how to do the check efficiently?
+    // \fixme An optimization: remove existing oranges that are fully
+    // contained by the new orange. But how to do the check efficiently?
 
-    //// Add the new occlusion range to the appropriate position.
+    // Add the new occlusion range to the appropriate position.
     orange = occHead;
     done = false;
     while(orange && !done)
@@ -598,8 +598,8 @@ static int C_TryMergeOccludes(occnode_t *orange, occnode_t *other)
     if(crossAngle >= orange->start && crossAngle <= orange->end)
         return 0;       // Crosses inside the range, can't do a thing.
 
-    //// \fixme Isn't it possible to consistently determine which
-    //// direction the cross vector is pointing to?
+    // \fixme Isn't it possible to consistently determine which
+    // direction the cross vector is pointing to?
     crossAngle += BANG_180;
     if(crossAngle >= orange->start && crossAngle <= orange->end)
         return 0;       // Crosses inside the range, can't do a thing.
@@ -929,10 +929,10 @@ void C_AddViewRelOcclusion(float *v1, float *v2, float height, boolean tophalf)
     float       viewtov1[3], viewtov2[3];
     float       normal[3];
 
-    //// \fixme Optimization? Check if the given line is already occluded.
+    // \fixme Optimization? Check if the given line is already occluded.
 
-    //// Calculate the occlusion plane normal. We'll use the game's coordinate
-    //// system (left-handed, but Y and Z are swapped).
+    // Calculate the occlusion plane normal. We'll use the game's coordinate
+    // system (left-handed, but Y and Z are swapped).
     viewtov1[VX] = v1[VX] - vx;
     viewtov1[VY] = v1[VY] - vz;
     viewtov2[VX] = v2[VX] - vx;
@@ -1136,10 +1136,10 @@ boolean C_IsSegOccluded(float relv1[3], float relv2[3], float reltop,
             }
         }
 
-        //// Remember, side2 has a smaller angle.
+        // Remember, side2 has a smaller angle.
 
-        //// \fixme What about trueStart/trueEnd!!! and isSafe! it must have
-        //// an effect on this...
+        // \fixme What about trueStart/trueEnd!!! and isSafe! it must have
+        // an effect on this...
 
         if(side2)
         {
@@ -1268,17 +1268,21 @@ clipnode_t *C_AngleClippedBy(binangle_t bang)
 }
 
 /**
- * Returns 1 if the subsector might be visible.
+ * @return              Non-zero if the subsector might be visible.
  */
 int C_CheckSubsector(subsector_t *ssec)
 {
-    int         i;
+    uint        i;
+    seg_t     **ptr;
+
+    if(!ssec || ssec->numvertices < 3)
+        return 0;
 
     if(devNoCulling)
         return 1;
 
     // Do we need to resize the angle list buffer?
-    if(ssec->numverts > anglistSize)
+    if(ssec->numvertices > anglistSize)
     {
         anglistSize *= 2;
         if(!anglistSize)
@@ -1288,20 +1292,23 @@ int C_CheckSubsector(subsector_t *ssec)
          Z_Realloc(anglist, sizeof(binangle_t) * anglistSize, PU_STATIC);
     }
 
-    for(i = 0; i < ssec->numverts; ++i) // Angles to all corners.
+    ptr = ssec->segs;
+    i = 0;
+    while(*ptr) // Angles to all corners.
     {
-        fvertex_t *vtx = ssec->verts + i;
+        vertex_t *vtx = (*ptr)->SG_v1;
 
         // Shift for more accuracy.
-        anglist[i] = bamsAtan2((int) ((vtx->pos[VY] - vz) * 100),
-                               (int) ((vtx->pos[VX] - vx) * 100));
+        anglist[i++] = bamsAtan2((int) ((vtx->V_pos[VY] - vz) * 100),
+                                 (int) ((vtx->V_pos[VX] - vx) * 100));
+        *ptr++;
     }
 
     // Check each of the ranges defined by the edges.
-    for(i = 0; i < ssec->numverts - 1; ++i)
+    for(i = 0; i < (uint) (ssec->numvertices - 1); ++i)
     {
-        int     end = i + 1;
-        binangle_t angLen;
+        uint        end = i + 1;
+        binangle_t  angLen;
 
         // The last edge won't be checked. This is because the edges
         // define a closed, convex polygon and the last edge's range is
@@ -1327,6 +1334,7 @@ int C_CheckSubsector(subsector_t *ssec)
                 return 1;
         }
     }
+
     // All clipped away, the subsector cannot be seen.
     return 0;
 }

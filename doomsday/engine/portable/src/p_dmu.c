@@ -802,7 +802,7 @@ int P_Callbackp(int type, void* ptr, void* context, int (*callback)(void* p, voi
 #endif
         break;
 
-    //// \todo If necessary, add special types for accessing multiple objects.
+    // \todo If necessary, add special types for accessing multiple objects.
 
     default:
         Con_Error("P_Callbackp: Type %s unknown.\n", DMU_Str(type));
@@ -1091,7 +1091,7 @@ static int SetProperty(void* ptr, void* context)
             break;
         case DMU_PLANE_TEXTURE:
             SetValue(DMT_MATERIAL_TEXTURE, &p->PS_texture, args, 0);
-            p->PS_isflat = true; //// \kludge p->PS_isflat = true;
+            p->PS_isflat = true; // \kludge p->PS_isflat = true;
             break;
         case DMU_PLANE_OFFSET_X:
             SetValue(DMT_SURFACE_OFFX, &p->surface.offx, args, 0);
@@ -1146,24 +1146,24 @@ static int SetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_VERTEX1_X:
-            SetValue(DMT_VERTEX_POS, &p->SG_v1->pos[VX], args, 0);
+            SetValue(DMT_VERTEX_POS, &p->SG_v1pos[VX], args, 0);
             break;
         case DMU_VERTEX1_Y:
-            SetValue(DMT_VERTEX_POS, &p->SG_v1->pos[VY], args, 0);
+            SetValue(DMT_VERTEX_POS, &p->SG_v1pos[VY], args, 0);
             break;
         case DMU_VERTEX1_XY:
-            SetValue(DMT_VERTEX_POS, &p->SG_v1->pos[VX], args, 0);
-            SetValue(DMT_VERTEX_POS, &p->SG_v1->pos[VY], args, 1);
+            SetValue(DMT_VERTEX_POS, &p->SG_v1pos[VX], args, 0);
+            SetValue(DMT_VERTEX_POS, &p->SG_v1pos[VY], args, 1);
             break;
         case DMU_VERTEX2_X:
-            SetValue(DMT_VERTEX_POS, &p->SG_v2->pos[VX], args, 0);
+            SetValue(DMT_VERTEX_POS, &p->SG_v2pos[VX], args, 0);
             break;
         case DMU_VERTEX2_Y:
-            SetValue(DMT_VERTEX_POS, &p->SG_v2->pos[VY], args, 0);
+            SetValue(DMT_VERTEX_POS, &p->SG_v2pos[VY], args, 0);
             break;
         case DMU_VERTEX2_XY:
-            SetValue(DMT_VERTEX_POS, &p->SG_v2->pos[VX], args, 0);
-            SetValue(DMT_VERTEX_POS, &p->SG_v2->pos[VY], args, 1);
+            SetValue(DMT_VERTEX_POS, &p->SG_v2pos[VX], args, 0);
+            SetValue(DMT_VERTEX_POS, &p->SG_v2pos[VY], args, 1);
             break;
         case DMU_FLAGS:
             SetValue(DMT_SEG_FLAGS, &p->flags, args, 0);
@@ -1324,9 +1324,6 @@ static int SetProperty(void* ptr, void* context)
         subsector_t* p = ptr;
         switch(args->prop)
         {
-        case DMU_FLAGS:
-            SetValue(DMT_SUBSECTOR_FLAGS, &p->flags, args, 0);
-            break;
         case DMU_POLYOBJ:
             SetValue(DMT_SUBSECTOR_POLY, &p->poly, args, 0);
             break;
@@ -1600,7 +1597,7 @@ static void GetValue(valuetype_t valueType, const void* src, setargs_t* args,
             args->intValues[index] = *s;
             break;
         case DDVT_FLOAT:
-            //// \todo Don't allow conversion from DDVT_FLATINDEX.
+            // \todo Don't allow conversion from DDVT_FLATINDEX.
             args->floatValues[index] = *s;
             break;
         case DDVT_FIXED:
@@ -1692,7 +1689,7 @@ static int GetProperty(void* ptr, void* context)
             Con_Error("GetProperty: DMU_SEG_OF_SECTOR %i does not exist.\n",
                       args->prop);
         }
-        segptr = (p->firstseg + args->prop);
+        segptr = (p->segs[args->prop]);
         GetValue(DDVT_PTR, &segptr, args, 0);
         return false; // stop iteration
     }
@@ -2018,14 +2015,14 @@ static int GetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_X:
-            GetValue(DMT_VERTEX_POS, &p->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->V_pos[VX], args, 0);
             break;
         case DMU_Y:
-            GetValue(DMT_VERTEX_POS, &p->pos[VY], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->V_pos[VY], args, 0);
             break;
         case DMU_XY:
-            GetValue(DMT_VERTEX_POS, &p->pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->pos[VY], args, 1);
+            GetValue(DMT_VERTEX_POS, &p->V_pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->V_pos[VY], args, 1);
             break;
         default:
             Con_Error("GetProperty: DMU_VERTEX has no property %s.\n",
@@ -2043,27 +2040,27 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_SEG_V, &p->SG_v1, args, 0);
             break;
         case DMU_VERTEX1_X:
-            GetValue(DMT_VERTEX_POS, &p->SG_v1->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->SG_v1pos[VX], args, 0);
             break;
         case DMU_VERTEX1_Y:
-            GetValue(DMT_VERTEX_POS, &p->SG_v1->pos[VY], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->SG_v1pos[VY], args, 0);
             break;
         case DMU_VERTEX1_XY:
-            GetValue(DMT_VERTEX_POS, &p->SG_v1->pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->SG_v1->pos[VY], args, 1);
+            GetValue(DMT_VERTEX_POS, &p->SG_v1pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->SG_v1pos[VY], args, 1);
             break;
         case DMU_VERTEX2:
             GetValue(DMT_SEG_V, &p->SG_v2, args, 0);
             break;
         case DMU_VERTEX2_X:
-            GetValue(DMT_VERTEX_POS, &p->SG_v2->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->SG_v2pos[VX], args, 0);
             break;
         case DMU_VERTEX2_Y:
-            GetValue(DMT_VERTEX_POS, &p->SG_v2->pos[VY], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->SG_v2pos[VY], args, 0);
             break;
         case DMU_VERTEX2_XY:
-            GetValue(DMT_VERTEX_POS, &p->SG_v2->pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->SG_v2->pos[VY], args, 1);
+            GetValue(DMT_VERTEX_POS, &p->SG_v2pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->SG_v2pos[VY], args, 1);
             break;
         case DMU_LENGTH:
             GetValue(DMT_SEG_LENGTH, &p->length, args, 0);
@@ -2121,27 +2118,27 @@ static int GetProperty(void* ptr, void* context)
             GetValue(DMT_LINE_V, &p->L_v1, args, 0);
             break;
         case DMU_VERTEX1_X:
-            GetValue(DMT_VERTEX_POS, &p->L_v1->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->L_v1pos[VX], args, 0);
             break;
         case DMU_VERTEX1_Y:
-            GetValue(DMT_VERTEX_POS, &p->L_v1->pos[VY], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->L_v1pos[VY], args, 0);
             break;
         case DMU_VERTEX1_XY:
-            GetValue(DMT_VERTEX_POS, &p->L_v1->pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->L_v1->pos[VY], args, 1);
+            GetValue(DMT_VERTEX_POS, &p->L_v1pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->L_v1pos[VY], args, 1);
             break;
         case DMU_VERTEX2:
             GetValue(DMT_LINE_V, &p->L_v2, args, 0);
             break;
         case DMU_VERTEX2_X:
-            GetValue(DMT_VERTEX_POS, &p->L_v2->pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->L_v2pos[VX], args, 0);
             break;
         case DMU_VERTEX2_Y:
-            GetValue(DMT_VERTEX_POS, &p->L_v2->pos[VY], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->L_v2pos[VY], args, 0);
             break;
         case DMU_VERTEX2_XY:
-            GetValue(DMT_VERTEX_POS, &p->L_v2->pos[VX], args, 0);
-            GetValue(DMT_VERTEX_POS, &p->L_v2->pos[VY], args, 1);
+            GetValue(DMT_VERTEX_POS, &p->L_v2pos[VX], args, 0);
+            GetValue(DMT_VERTEX_POS, &p->L_v2pos[VY], args, 1);
             break;
         case DMU_DX:
             GetValue(DMT_LINE_DX, &p->dx, args, 0);

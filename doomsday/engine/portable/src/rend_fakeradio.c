@@ -167,8 +167,8 @@ void Rend_RadioInitForSubsector(subsector_t *ssec)
 
     frontSector = ssec->sector;
 
-    //// Determine the shadow properties.
-    //// \fixme Make cvars out of constants.
+    // Determine the shadow properties.
+    // \fixme Make cvars out of constants.
     shadowSize = 2 * (8 + 16 - sectorlight * 16);
     shadowDark = Rend_RadioShadowDarkness(sectorlight) *.8f;
 }
@@ -273,8 +273,7 @@ static void Rend_RadioScanNeighbor(boolean scanTop, line_t *line, uint side,
         scanSecSide = (iter->L_frontsector == startSector);
 
         // Step over selfreferencing lines?
-        while(iter->L_frontside && iter->L_backside &&
-              iter->L_frontsector == iter->L_backsector)
+        while(iter->flags & LINEF_SELFREF)
         {
             own = own->link[clockwise];
             diff += (clockwise? own->angle : own->LO_prev->angle);
@@ -469,8 +468,7 @@ static void Rend_RadioScanNeighbors(shadowcorner_t top[2],
     edgespan_t *span;
     shadowcorner_t *corner;
 
-    if(line->L_frontside && line->L_backside &&
-       line->L_frontsector == line->L_backsector)
+    if(line->flags & LINEF_SELFREF)
         return;
 
     memset(edges, 0, sizeof(edges));
@@ -652,6 +650,7 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
         spans[i].length = seg->linedef->length;
         spans[i].shift = seg->offset;
     }
+
     Rend_RadioScanEdges(topCn, botCn, sideCn, seg->linedef, seg->side, spans);
 
     // Back sector visible plane heights.
@@ -1184,7 +1183,7 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
         {
             /*V2_Lerp(inner[i], shadow->inoffset[i],
                shadow->bextoffset[i], pos);*/
-            V2_Sum(inner[i], shadow->outer[i]->pos, shadow->inoffset[i]);
+            V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->inoffset[i]);
         }
         else if(pos == 1)       // Same height on both sides.
         {
@@ -1259,11 +1258,11 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
             if(found)
             {
                 // id is now the index + 1 into the side's bextoffset array.
-                V2_Sum(inner[i], shadow->outer[i]->pos, shadow->bextoffset[i][id-1].offset);
+                V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->bextoffset[i][id-1].offset);
             }
             else // Its an open edge.
             {
-                V2_Sum(inner[i], shadow->outer[i]->pos, shadow->extoffset[i]);
+                V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->extoffset[i]);
             }
         }
         else                    // Fully, unquestionably open.
@@ -1271,18 +1270,19 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
             if(pos > 2) pos = 2;
             /*V2_Lerp(inner[i], shadow->bextoffset[i],
                shadow->extoffset[i], pos - 1); */
-            V2_Sum(inner[i], shadow->outer[i]->pos, shadow->extoffset[i]);
+            V2_Sum(inner[i], shadow->outer[i]->V_pos, shadow->extoffset[i]);
         }
     }
 
     // What vertex winding order?
     // (for best results, the cross edge should always be the shortest).
-    wind = (V2_Distance(inner[1], shadow->outer[1]->pos) >
-                V2_Distance(inner[0], shadow->outer[0]->pos)? 1 : 0);
+    wind = (V2_Distance(inner[1], shadow->outer[1]->V_pos) >
+                V2_Distance(inner[0], shadow->outer[0]->V_pos)? 1 : 0);
 
     // Initialize the rendpoly.
     q = R_AllocRendPoly(RP_FLAT, false, 4);
-    q->flags = RPF_SHADOW;
+    if(!renderWireframe)
+        q->flags = RPF_SHADOW;
     memset(&q->tex, 0, sizeof(q->tex));
     memset(&q->intertex, 0, sizeof(q->intertex));
     q->interpos = 0;
@@ -1293,19 +1293,27 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     idx = (isCeiling ? ceilIndices[wind] : floorIndices[wind]);
 
     // Left outer corner.
-    vtx[idx[0]].pos[VX] = shadow->outer[0]->pos[VX];
-    vtx[idx[0]].pos[VY] = shadow->outer[0]->pos[VY];
+    vtx[idx[0]].pos[VX] = shadow->outer[0]->V_pos[VX];
+    vtx[idx[0]].pos[VY] = shadow->outer[0]->V_pos[VY];
     vtx[idx[0]].pos[VZ] = z;
-    vtx[idx[0]].color.rgba[CA] = (DGLubyte) (255 * darkness);   // Black.
+    vtx[idx[0]].color.rgba[CA] = (DGLubyte) (255 * darkness);
+
+    if(renderWireframe)
+        vtx[idx[0]].color.rgba[CR] = vtx[idx[0]].color.rgba[CG] =
+            vtx[idx[0]].color.rgba[CB] = 255;
 
     if(sideOpen[0] < 1)
         vtx[idx[0]].color.rgba[CA] *= 1 - sideOpen[0];
 
     // Right outer corner.
-    vtx[idx[1]].pos[VX] = shadow->outer[1]->pos[VX];
-    vtx[idx[1]].pos[VY] = shadow->outer[1]->pos[VY];
+    vtx[idx[1]].pos[VX] = shadow->outer[1]->V_pos[VX];
+    vtx[idx[1]].pos[VY] = shadow->outer[1]->V_pos[VY];
     vtx[idx[1]].pos[VZ] = z;
     vtx[idx[1]].color.rgba[CA] = (DGLubyte) (255 * darkness);
+
+    if(renderWireframe)
+        vtx[idx[1]].color.rgba[CR] = vtx[idx[1]].color.rgba[CG] =
+            vtx[idx[1]].color.rgba[CB] = 255;
 
     if(sideOpen[1] < 1)
         vtx[idx[1]].color.rgba[CA] *= 1 - sideOpen[1];
@@ -1315,10 +1323,18 @@ static void Rend_RadioAddShadowEdge(shadowpoly_t *shadow, boolean isCeiling,
     vtx[idx[2]].pos[VY] = inner[1][VY];
     vtx[idx[2]].pos[VZ] = z;
 
+    if(renderWireframe)
+        vtx[idx[2]].color.rgba[CR] = vtx[idx[2]].color.rgba[CG] =
+            vtx[idx[2]].color.rgba[CB] = 255;
+
     // Left inner corner.
     vtx[idx[3]].pos[VX] = inner[0][VX];
     vtx[idx[3]].pos[VY] = inner[0][VY];
     vtx[idx[3]].pos[VZ] = z;
+
+    if(renderWireframe)
+        vtx[idx[3]].color.rgba[CR] = vtx[idx[3]].color.rgba[CG] =
+            vtx[idx[3]].color.rgba[CB] = 255;
 
     if(rendFakeRadio != 2)
         RL_AddPoly(q);

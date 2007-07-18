@@ -3,7 +3,8 @@
 #ifndef __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__
 #define __DOOMSDAY_PLAY_PUBLIC_MAP_DATA_TYPES_H__
 
-#define DMT_VERTEX_POS DDVT_FLOAT
+#define DMT_VERTEX_POS	DDVT_FLOAT
+
 
 #define DMT_SEG_V DDVT_PTR             // [Start, End] of the segment.
 #define DMT_SEG_LENGTH DDVT_FLOAT      // Accurate length of the segment (v1 -> v2).
@@ -18,9 +19,8 @@
 
 #define DMT_SUBSECTOR_SECTOR DDVT_PTR
 #define DMT_SUBSECTOR_SEGCOUNT DDVT_UINT
-#define DMT_SUBSECTOR_FIRSTSEG DDVT_PTR
+#define DMT_SUBSECTOR_SEGS DDVT_PTR    // [segcount] size.
 #define DMT_SUBSECTOR_POLY DDVT_PTR    // NULL, if there is no polyobj.
-#define DMT_SUBSECTOR_FLAGS DDVT_BYTE
 
 #define DMT_MATERIAL_TEXTURE DDVT_SHORT
 

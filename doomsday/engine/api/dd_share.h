@@ -39,8 +39,8 @@ extern          "C" {
 #include "../portable/include/dd_version.h"
 #include "dd_types.h"
 #include "dd_maptypes.h"
-#include "../portable/include/p_think.h"        //// \todo Not officially a public header file!
-#include "../portable/include/def_share.h"      //// \todo Not officially a public header file!
+#include "../portable/include/p_think.h"        // \todo Not officially a public header file!
+#include "../portable/include/def_share.h"      // \todo Not officially a public header file!
 
     //------------------------------------------------------------------------
     //
@@ -769,8 +769,6 @@ extern          "C" {
         thinker_t       thinker;   // not used for anything
         fixed_t         pos[3];
     } degenmobj_t;
-
-#define DDSUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
 
     typedef struct {
         fixed_t         pos[2], dx, dy;

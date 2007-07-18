@@ -405,8 +405,8 @@ static void DL_ComputeLightColor(float *outRGB, lumobj_t *lum, float light)
         light = 1;
     light *= dlFactor;
 
-    //// If fog is enabled, make the light dimmer.
-    //// \fixme This should be a cvar.
+    // If fog is enabled, make the light dimmer.
+    // \fixme This should be a cvar.
     if(usingFog)
         light *= .5f;           // Would be too much.
 
@@ -523,7 +523,6 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
     dynlight_t *dyn;
     dynnode_t  *node;
     uint        segindex = GET_SEG_IDX(seg);
-    boolean     backSide = seg->side;
     float       lumRGB[3];
     sector_t   *linkSec;
 
@@ -534,15 +533,15 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
 
     // Let's begin with an analysis of the visible surfaces.
     // Is there a mid wall segment?
-    if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
+    if(seg->sidedef->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS)
         present |= SMIDDLE;
 
     // Is there a top wall segment?
-    if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide))
+    if(seg->sidedef->sections[SEG_TOP].frameflags & SUFINF_PVIS)
         present |= STOP;
 
     // Is there a lower wall segment?
-    if(Rend_IsWallSectionPVisible(seg->linedef, SEG_BOTTOM, backSide))
+    if(seg->sidedef->sections[SEG_BOTTOM].frameflags & SUFINF_PVIS)
         present |= SBOTTOM;
 
     // There are no surfaces to light!
@@ -572,8 +571,8 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
     pntLight[VY] = lum->pos[VY];
 
     // Calculate distance between seg and light source.
-    dist = ((seg->SG_v1->pos[VY] - pntLight[VY]) * (seg->SG_v2->pos[VX] - seg->SG_v1->pos[VX]) -
-            (seg->SG_v1->pos[VX] - pntLight[VX]) * (seg->SG_v2->pos[VY] - seg->SG_v1->pos[VY]))
+    dist = ((seg->SG_v1pos[VY] - pntLight[VY]) * (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]) -
+            (seg->SG_v1pos[VX] - pntLight[VX]) * (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]))
             / seg->length;
 
     // Is it close enough and on the right side?
@@ -581,8 +580,8 @@ static void DL_ProcessWallSeg(lumobj_t *lum, seg_t *seg, subsector_t *ssec)
         return; // Nope.
 
     // Do a scalar projection for the offset.
-    s[0] = (-((seg->SG_v1->pos[VY] - pntLight[VY]) * (seg->SG_v1->pos[VY] - seg->SG_v2->pos[VY]) -
-              (seg->SG_v1->pos[VX] - pntLight[VX]) * (seg->SG_v2->pos[VX] - seg->SG_v1->pos[VX]))
+    s[0] = (-((seg->SG_v1pos[VY] - pntLight[VY]) * (seg->SG_v1pos[VY] - seg->SG_v2pos[VY]) -
+              (seg->SG_v1pos[VX] - pntLight[VX]) * (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]))
               / seg->length +
                lum->radius) / (2 * lum->radius);
 
@@ -704,7 +703,7 @@ static void DL_CreateGlowLightPerPlaneForSegSection(subsector_t *ssec, seg_t *se
         segbottom = floor;
 
     segindex = GET_SEG_IDX(seg);
-    //// \fixme $nplanes
+    // \fixme $nplanes
     for(g = 0; g < 2; ++g)
     {
         pln = glowPlanes[g];
@@ -801,7 +800,6 @@ static void DL_ProcessSegForGlow(seg_t *seg, subsector_t *ssec)
     {
         float       bceil, bfloor;
         float       opentop[2], openbottom[2];    // top, bottom, [left, right];
-        boolean     backSide = seg->side;
 
         // Two-sided.
         bceil  = back->SP_ceilvisheight;
@@ -812,7 +810,7 @@ static void DL_ProcessSegForGlow(seg_t *seg, subsector_t *ssec)
         // The glow can only be visible in the front sector's height range.
 
         // Is there a middle?
-        if(Rend_IsWallSectionPVisible(seg->linedef, SEG_MIDDLE, backSide))
+        if(seg->sidedef->sections[SEG_MIDDLE].frameflags & SUFINF_PVIS)
         {
             texinfo_t      *texinfo = NULL;
 
@@ -837,14 +835,14 @@ static void DL_ProcessSegForGlow(seg_t *seg, subsector_t *ssec)
         }
 
         // Top?
-        if(Rend_IsWallSectionPVisible(seg->linedef, SEG_TOP, backSide))
+        if(seg->sidedef->sections[SEG_TOP].frameflags & SUFINF_PVIS)
         {
             DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_TOP, fceil, bceil,
                                                     do_floor, do_ceil);
         }
 
         // Bottom?
-        if(Rend_IsWallSectionPVisible(seg->linedef, SEG_BOTTOM, backSide))
+        if(seg->sidedef->sections[SEG_BOTTOM].frameflags & SUFINF_PVIS)
         {
             DL_CreateGlowLightPerPlaneForSegSection(ssec, seg, SEG_BOTTOM, bfloor, ffloor,
                                                     do_floor, do_ceil);
@@ -909,8 +907,8 @@ uint DL_NewLuminous(void)
 
     numLuminous++;
 
-    //// Only allocate memory when it's needed.
-    //// \fixme No upper limit?
+    // Only allocate memory when it's needed.
+    // \fixme No upper limit?
     if(numLuminous > maxLuminous)
     {
         maxLuminous *= 2;
@@ -1328,8 +1326,8 @@ static boolean DLIT_ContactFinder(line_t *line, void *data)
     // Calculate distance to line.
     vtx = line->L_v1;
     distance =
-        ((vtx->pos[VY] - light->lum->pos[VY]) * line->dx -
-         (vtx->pos[VX] - light->lum->pos[VX]) * line->dy)
+        ((vtx->V_pos[VY] - light->lum->pos[VY]) * line->dx -
+         (vtx->V_pos[VX] - light->lum->pos[VX]) * line->dy)
          / line->length;
 
     if((source == line->L_frontsector && distance < 0) ||
@@ -1659,18 +1657,21 @@ static void DL_ProcessPlane(lumobj_t *lum, subsector_t *subsector,
 static void DL_LightSegIteratorFunc(lumobj_t *lum, subsector_t *ssec)
 {
     uint        j;
-    seg_t      *seg;
+    seg_t      *seg, **ptr;
 
     // The wall segments.
-    for(j = 0, seg = ssec->firstseg; j < ssec->segcount; ++j, seg++)
+    ptr = ssec->segs;
+    while(*ptr)
     {
-        if(seg->linedef)    // "minisegs" have no linedefs.
-        {
-            if(seg->flags & SEGF_POLYOBJ)
-                continue;
+        seg = *ptr;
 
+        if(seg->linedef && // "minisegs" have no linedefs.
+           !(seg->flags & SEGF_POLYOBJ))
+        {
             DL_ProcessWallSeg(lum, seg, ssec);
         }
+
+        *ptr++;
     }
 
     // Is there a polyobj on board? Light it, too.
@@ -1708,7 +1709,7 @@ void DL_ProcessSubsector(subsector_t *ssec)
 {
     uint        pln, j;
     uint        num, ssecidx = GET_SUBSECTOR_IDX(ssec);
-    seg_t      *seg;
+    seg_t      *seg, **ptr;
     lumcontact_t *con;
     sector_t   *sect = ssec->sector, *linkSec;
     planeitervars_t *pVars;
@@ -1795,16 +1796,18 @@ void DL_ProcessSubsector(subsector_t *ssec)
        (sect->SP_floorglow || sect->SP_ceilglow))
     {
         // The wall segments.
-        num = ssec->segcount;
-        for(j = 0, seg = ssec->firstseg; j < num; ++j, seg++)
+        ptr = ssec->segs;
+        while(*ptr)
         {
-            if(seg->linedef)    // "minisegs" have no linedefs.
-            {
-                if(seg->flags & SEGF_POLYOBJ)
-                    continue;
+            seg = *ptr;
 
+            if(seg->linedef && // "minisegs" have no linedefs.
+               !(seg->flags & SEGF_POLYOBJ))
+            {
                 DL_ProcessSegForGlow(seg, ssec);
             }
+
+            *ptr++;
         }
 
         // Is there a polyobj on board? Light it, too.
@@ -1922,8 +1925,8 @@ void DL_ClipInSubsector(uint ssecidx)
 
         lobj->flags &= ~LUMF_CLIPPED;
 
-        //// \fixme Determine the exact centerpoint of the light in
-        //// DL_AddLuminous!
+        // \fixme Determine the exact centerpoint of the light in
+        // DL_AddLuminous!
         if(!C_IsPointVisible(lobj->pos[VX], lobj->pos[VY],
                              lobj->pos[VZ] + lobj->zOff))
             lobj->flags |= LUMF_CLIPPED;    // Won't have a halo.
@@ -1971,8 +1974,8 @@ void DL_ClipBySight(uint ssecidx)
 
                     V2_Set(source, lobj->pos[VX], lobj->pos[VY]);
 
-                    if(V2_Intercept2(source, eye, seg->SG_v1->pos,
-                                     seg->SG_v2->pos, NULL, NULL, NULL))
+                    if(V2_Intercept2(source, eye, seg->SG_v1pos,
+                                     seg->SG_v2pos, NULL, NULL, NULL))
                     {
                         lobj->flags |= LUMF_CLIPPED;
                     }

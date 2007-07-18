@@ -1,8 +1,16 @@
 # $Id$
 # Runtime map data defitions. Processed by the makedmt.py script.
 
+public
+#define DMT_VERTEX_POS	DDVT_FLOAT
+end
+
+internal
+#define V_pos					v.pos
+end
+
 struct vertex
-    FLOAT   float[2]    pos
+    -       fvertex_t	v
     -       uint        numsecowners // Number of sector owners.
     -       uint*       secowners	// Sector indices [numsecowners] size.
     -       uint        numlineowners // Number of line owners.
@@ -16,8 +24,14 @@ internal
 #define BACK  1
 
 #define SG_v(n)					v[(n)]
+#define SG_vpos(n)				SG_v(n)->V_pos
+
 #define SG_v1                   SG_v(0)
+#define SG_v1pos				SG_v(0)->V_pos
+
 #define SG_v2                   SG_v(1)
+#define SG_v2pos				SG_v(1)->V_pos
+
 #define SG_sector(n)			sec[(n)]
 #define SG_frontsector          SG_sector(FRONT)
 #define SG_backsector           SG_sector(BACK)
@@ -51,19 +65,24 @@ struct seg
     -       biasaffection_s[MAX_BIAS_AFFECTED] affected
 end
 
+internal
+#define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
+end
+
 struct subsector
     PTR     sector_s*   sector
+    -		uint		firstWADSeg // First seg index, as specified in SSECTORS lump.
     UINT    uint        segcount
-    PTR		seg_s*		firstseg
+    PTR		seg_s**		segs		// [segcount] size.
     PTR     polyobj_s*  poly		// NULL, if there is no polyobj.
-    BYTE    byte        flags
-    -       ushort      numverts
-    -       fvertex_t*  verts		// A sorted list of edge vertices.
+    -		int         flags
+#    -       ushort      numverts
+#    -       fvertex_t*  verts		// A sorted list of edge vertices.
     -       fvertex_t   bbox[2]		// Min and max points.
     -       fvertex_t   midpoint	// Center of vertices.
     -       subplaneinfo_s** planes
     -       ushort      numvertices
-    -       fvertex_s*  vertices
+    -       fvertex_s** vertices	// [numvertices] size
     -       int         validcount
     -       shadowlink_s* shadows
     -       uint        group
@@ -91,6 +110,9 @@ typedef struct material_s {
 #define SUF_GLOW        0x2         // Surface glows (full bright).
 #define SUF_BLEND       0x4         // Surface possibly has a blended texture.
 #define SUF_NO_RADIO    0x8         // No fakeradio for this surface.
+
+// Surface frame flags
+#define SUFINF_PVIS     0x0001
 end
 
 struct surface
@@ -109,6 +131,7 @@ struct surface
     -       float       oldoffy
     FLOAT   float[4]    rgba		// Surface color tint
     -       float[4]    oldrgba
+    -       short       frameflags
 end
 
 internal
@@ -307,11 +330,6 @@ typedef enum segsection_e {
 #define SW_bottomoffy           SW_surfaceoffy(SEG_BOTTOM)
 #define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
 #define SW_bottomtexlat         SW_surfacetexlat(SEG_BOTTOM)
-
-// Side frame flags
-#define SIDEINF_TOPPVIS     0x0001
-#define SIDEINF_MIDDLEPVIS  0x0002
-#define SIDEINF_BOTTOMPVIS  0x0004
 end
 
 struct side
@@ -320,7 +338,6 @@ struct side
     PTR		seg_s**		segs		// [segcount] size, segs arranged left>right
     PTR     sector_s*   sector
     SHORT   short       flags
-    -       short       frameflags
 end
 
 public
@@ -330,11 +347,18 @@ end
 internal
 // Helper macros for accessing linedef data elements.
 #define L_v(n)					v[(n)]
+#define L_vpos(n)				v[(n)]->V_pos
+
 #define L_v1					L_v(0)
+#define L_v1pos					L_v(0)->V_pos
+
 #define L_v2					L_v(1)
+#define L_v2pos					L_v(1)->V_pos
+
 #define L_vo(n)					vo[(n)]
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
+
 #define L_side(n)  			    sides[(n)]
 #define L_frontside             L_side(FRONT)
 #define L_backside              L_side(BACK)
@@ -343,8 +367,9 @@ internal
 #define L_backsector            L_sector(BACK)
 
 // Line flags 
-#define LINEF_SELFREFHACKROOT	0x1	// This line is the root of a self-referencing hack sector
-#define LINEF_BENIGN			0x2 // Benign lines are those which have no front or back segs
+#define LINEF_SELFREF           0x1 // Front and back sectors of this line are the same.
+#define LINEF_SELFREFHACKROOT	0x2	// This line is the root of a self-referencing hack sector
+#define LINEF_BENIGN			0x4 // Benign lines are those which have no front or back segs
 									// (though they may have sides). These are induced in GL
 									// node generation process. They are inoperable and will
 									// NOT be added to a sector's line table.

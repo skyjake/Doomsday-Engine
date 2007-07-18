@@ -221,9 +221,9 @@ void Sv_InitPools(void)
 
         vtx = sideOwners[i]->L_v1;
         sideOrigins[i].pos[VX] =
-            FLT2FIX(vtx->pos[VX] + sideOwners[i]->dx / 2);
+            FLT2FIX(vtx->V_pos[VX] + sideOwners[i]->dx / 2);
         sideOrigins[i].pos[VY] =
-            FLT2FIX(vtx->pos[VY] + sideOwners[i]->dy / 2);
+            FLT2FIX(vtx->V_pos[VY] + sideOwners[i]->dy / 2);
     }
 
     // Store the current state of the world into both the registers.
@@ -468,7 +468,7 @@ void Sv_RegisterSector(dt_sector_t *reg, uint number)
 
     reg->lightlevel = sec->lightlevel;
     memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
-    //// \fixme $nplanes
+    // \fixme $nplanes
     for(i = 0; i < 2; ++i) // number of planes in sector.
     {
         // Plane properties
@@ -2768,7 +2768,7 @@ boolean Sv_RateDelta(void *deltaPtr, ownerinfo_t *info)
     // Deltas become more important with age (milliseconds).
     score *= 1 + age / (ageScoreDouble * 1000.0f);
 
-    //// \fixme Consider viewpoint speed and angle.
+    // \fixme Consider viewpoint speed and angle.
 
     // Priority bonuses based on the contents of the delta.
     if(delta->type == DT_MOBJ)

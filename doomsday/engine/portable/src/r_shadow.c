@@ -513,12 +513,12 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
         // Calculate the boundaries.
         for(i = 0, bound = boundaries; i < count; ++i, bound++)
         {
-            V2_Set(bound->left, polys[i].outer[0]->pos[VX],
-                   polys[i].outer[0]->pos[VY]);
+            V2_Set(bound->left, polys[i].outer[0]->V_pos[VX],
+                   polys[i].outer[0]->V_pos[VY]);
             V2_Sum(bound->a, polys[i].inoffset[0], bound->left);
 
-            V2_Set(bound->right, polys[i].outer[1]->pos[VX],
-                   polys[i].outer[1]->pos[VY]);
+            V2_Set(bound->right, polys[i].outer[1]->V_pos[VX],
+                   polys[i].outer[1]->V_pos[VY]);
             V2_Sum(bound->b, polys[i].inoffset[1], bound->right);
         }
         memset(overlaps, 0, count);
@@ -538,8 +538,8 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
                 if((overlaps[i] & OVERLAP_ALL) == OVERLAP_ALL)
                     break;
 
-                V2_Set(a, line->L_v1->pos[VX], line->L_v1->pos[VY]);
-                V2_Set(b, line->L_v2->pos[VX], line->L_v2->pos[VY]);
+                V2_Set(a, line->L_v1pos[VX], line->L_v1pos[VY]);
+                V2_Set(b, line->L_v2pos[VX], line->L_v2pos[VY]);
 
                 // Try the left edge of the shadow.
                 V2_Intercept2(bound->left, bound->a, a, b, NULL, &s, &t);
@@ -586,11 +586,11 @@ void R_ResolveOverlaps(shadowpoly_t *polys, uint count, sector_t *sector)
  */
 uint R_MakeShadowEdges(shadowpoly_t *storage)
 {
-    uint        i, j, k, counter;
+    uint        i, j, counter;
     sector_t   *sector;
     line_t     *line;
     subsector_t *ssec;
-    seg_t      *seg;
+    seg_t      *seg, **ptr;
     boolean     frontside;
     shadowpoly_t *poly, *sectorFirst, *allocator = storage;
 
@@ -611,44 +611,54 @@ uint R_MakeShadowEdges(shadowpoly_t *storage)
         {
             ssec = sector->subsectors[j];
             // Iterate all the segs of the subsector.
-            for(k = 0, seg = ssec->firstseg; k < ssec->segcount; ++k, seg++)
+            ptr = ssec->segs;
+            while(*ptr)
             {
-                if(!seg->linedef || (seg->linedef->flags & LINEF_BENIGN))
-                    continue; // minisegs and benign linedefs don't get shadows.
+                uint    fidx, bidx;
 
-                line = seg->linedef;
-                if(line->validcount == validcount)
-                    continue; // already has a shadow poly.
+                seg = *ptr;
+                fidx = GET_SECTOR_IDX(seg->sec[FRONT]);
+                bidx = GET_SECTOR_IDX(seg->sec[BACK]);
 
-                frontside = (line->L_frontsector == sector);
+                // Minisegs and benign linedefs don't get shadows, even then, only one.
+                if(seg->linedef &&
+                   !((seg->linedef->validcount == validcount) ||
+                     (seg->linedef->flags & LINEF_BENIGN) ||
+                     (seg->linedef->flags & LINEF_SELFREF)))
+                {
+                    line = seg->linedef;
+                    frontside = (line->L_frontsector == sector);
 
-                // If the line hasn't got two neighbors, it won't get a
-                // shadow.
-                if(line->vo[0]->LO_next->line == line ||
-                   line->vo[1]->LO_next->line == line)
-                    continue;
+                    // If the line hasn't got two neighbors, it won't get a
+                    // shadow.
+                    if(!(line->vo[0]->LO_next->line == line ||
+                         line->vo[1]->LO_next->line == line))
+                    {
+                        // This side will get a shadow.  Increment counter (we'll
+                        // return this count).
+                        counter++;
+                        line->validcount = validcount;
 
-                // This side will get a shadow.  Increment counter (we'll
-                // return this count).
-                counter++;
-                line->validcount = validcount;
+                        if(allocator)
+                        {
+                            // Get a new shadow poly.
+                            poly = allocator++;
 
-                if(!allocator)
-                    continue;
+                            poly->seg = seg;
+                            poly->ssec = ssec;
+                            poly->flags = (frontside ? SHPF_FRONTSIDE : 0);
+                            poly->visframe = framecount - 1;
 
-                // Get a new shadow poly.
-                poly = allocator++;
+                            // The outer vertices are just the beginning and end of
+                            // the line.
+                            R_OrderVertices(line, sector, poly->outer);
 
-                poly->seg = seg;
-                poly->ssec = ssec;
-                poly->flags = (frontside ? SHPF_FRONTSIDE : 0);
-                poly->visframe = framecount - 1;
+                            R_ShadowEdges(poly);
+                        }
+                    }
+                }
 
-                // The outer vertices are just the beginning and end of
-                // the line.
-                R_OrderVertices(line, sector, poly->outer);
-
-                R_ShadowEdges(poly);
+                *ptr++;
             }
         }
 
@@ -715,14 +725,14 @@ void R_InitSectorShadows(void)
 
     for(i = 0, poly = shadows; i < maxCount; ++i, poly++)
     {
-        V2_Set(point, poly->outer[0]->pos[VX], poly->outer[0]->pos[VY]);
+        V2_Set(point, poly->outer[0]->V_pos[VX], poly->outer[0]->V_pos[VY]);
         V2_InitBox(bounds, point);
 
         // Use the extended points, they are wider than inoffsets.
         V2_Sum(point, point, poly->extoffset[0]);
         V2_AddToBox(bounds, point);
 
-        V2_Set(point, poly->outer[1]->pos[VX], poly->outer[1]->pos[VY]);
+        V2_Set(point, poly->outer[1]->V_pos[VX], poly->outer[1]->V_pos[VY]);
         V2_AddToBox(bounds, point);
 
         V2_Sum(point, point, poly->extoffset[1]);

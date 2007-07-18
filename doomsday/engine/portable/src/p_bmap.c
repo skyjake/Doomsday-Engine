@@ -89,7 +89,7 @@ void P_InitSubsectorBlockMap(void)
     for(i = 0; i < numvertexes; ++i)
     {
         vtx = VERTEX_PTR(i);
-        V2_Set(point, vtx->pos[VX], vtx->pos[VY]);
+        V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
         if(!i)
             V2_InitBox(bounds, point);
         else
