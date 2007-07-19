@@ -23,7 +23,7 @@
  */
 
 /*
- * dd_window.h: Win32-specific window management.
+ * sys_window.c: Win32-specific window management.
  *
  * This code wraps system-specific window management routines in order to
  * provide a cross-platform interface and common behavior.
@@ -113,6 +113,8 @@ boolean Sys_InitWindowManager(void)
 {
     if(winManagerInited)
         return true; // Already been here.
+
+    Con_Message("Sys_InitWindowManager: Using Win32 window management.\n"); 
 
     winManagerInited = true;
     return true;

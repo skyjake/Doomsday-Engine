@@ -55,10 +55,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
-    int             placeHolder;
-} ddwindow_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -74,7 +70,6 @@ uint            windowIDX;   // Main window.
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 application_t app;
-static ddwindow_t *mainWindow;
 
 // CODE --------------------------------------------------------------------
 
@@ -200,64 +195,6 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 }
 #endif
 */
-
-uint DD_CreateWindow(application_t *app, uint parentIDX,
-                     int x, int y, int w, int h, int bpp, int flags,
-                     const char *title, int cmdShow)
-{
-    // \fixme Not implemented.
-    return 0;
-}
-
-boolean DD_DestroyWindow(uint idx)
-{
-    // \fixme Not implemented.
-    return true;
-}
-
-boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
-                     int newBPP, uint wFlags, uint uFlags)
-{
-    // Window paramaters are not changeable in dedicated mode.
-    if(isDedicated)
-        return false;
-
-    if(uFlags & DDSW_NOCHANGES)
-        return true; // Nothing to do.
-
-    // \fixme Not implemented.
-    return true;
-}
-
-boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width, int *height)
-{
-    // Not in dedicated mode.
-    if(isDedicated)
-        return false;
-
-    // \fixme Not implemented.
-    return true;
-}
-
-boolean Sys_GetWindowBPP(uint idx, int *bpp)
-{
-    // Not in dedicated mode.
-    if(isDedicated)
-        return false;
-
-    // \fixme Not implemented.
-    return true;
-}
-
-boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
-{
-    // Not in dedicated mode.
-    if(isDedicated)
-        return false;
-
-    // \fixme Not implemented.
-    return true;
-}
 
 int LoadPlugin(const char *pluginPath, lt_ptr data)
 {

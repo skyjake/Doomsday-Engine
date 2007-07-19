@@ -204,9 +204,6 @@ boolean DD_EarlyInit(void)
 {
     char       *outfilename = "doomsday.out";
 
-    // Bring the window manager online.
-    Sys_InitWindowManager();
-
     // We'll redirect stdout to a log file.
     DD_CheckArg("-out", &outfilename);
     outFile = fopen(outfilename, "w");
@@ -241,6 +238,9 @@ boolean DD_EarlyInit(void)
             }
         }
     }
+
+    // Bring the window manager online.
+    Sys_InitWindowManager();
 
     return true;
 }

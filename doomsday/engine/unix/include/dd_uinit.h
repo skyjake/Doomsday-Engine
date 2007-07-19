@@ -32,22 +32,6 @@
 #include "dd_pinit.h"
 #include "sys_dylib.h"
 
-// Doomsday window flags.
-#define DDWF_VISIBLE            0x01
-#define DDWF_FULLSCREEN         0x02
-#define DDWF_CENTER             0x04
-
-// Flags for Sys_SetWindow()
-#define DDSW_NOSIZE             0x01
-#define DDSW_NOMOVE             0x02
-#define DDSW_NOBPP              0x04
-#define DDSW_NOFULLSCREEN       0x08
-#define DDSW_NOVISIBLE          0x10
-#define DDSW_NOCENTER           0x20
-#define DDSW_NOCHANGES          (DDSW_NOSIZE & DDSW_NOMOVE & DDSW_NOBPP & \
-                                 DDSW_NOFULLSCREEN & DDSW_NOVISIBLE & \
-                                 DDSW_NOCENTER)
-
 typedef struct {
     lt_dlhandle hGame;      // Instance handle to the game library.
     lt_dlhandle hPlugins[MAX_PLUGS]; // Instance handle to all other libs.
@@ -56,19 +40,6 @@ typedef struct {
 
 extern uint windowIDX;   // Main window.
 extern application_t app;
-
-uint            DD_CreateWindow(application_t *app, uint parent,
-                                int x, int y, int w, int h, int bpp, int flags,
-                                const char *title, int cmdShow);
-boolean         DD_DestroyWindow(uint idx);
-
-boolean         Sys_GetWindowDimensions(uint idx, int *x, int *y, int *w, int *h);
-boolean         Sys_GetWindowBPP(uint idx, int *bpp);
-boolean         Sys_GetWindowFullscreen(uint idx, boolean *fullscreen);
-boolean         DD_GetWindowVisibility(uint idx, boolean *show);
-
-boolean         Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp,
-                             uint wflags, uint uflags);
 
 void            DD_Shutdown(void);
 
