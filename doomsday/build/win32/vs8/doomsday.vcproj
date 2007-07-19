@@ -781,6 +781,10 @@
 					RelativePath="..\..\..\engine\win32\src\sys_sfxd_loader.c"
 					>
 				</File>
+				<File
+					RelativePath="..\..\..\engine\win32\src\sys_window.c"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Mac"
@@ -1653,6 +1657,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_timer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\sys_window.h"
 				>
 			</File>
 			<File

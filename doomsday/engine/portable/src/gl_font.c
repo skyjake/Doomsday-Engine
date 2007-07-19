@@ -296,7 +296,7 @@ int FR_PrepareFont(const char *name)
     {
         boolean retVal = false;
 #ifdef WIN32
-        HWND    hWnd = DD_GetWindowHandle(windowIDX);
+        HWND    hWnd = Sys_GetWindowHandle(windowIDX);
         HDC     hDC = NULL;
         int     i;
 

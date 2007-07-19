@@ -827,11 +827,11 @@ void CP_VideoModeInfo(ui_object_t *ob)
         int         width, height, bpp;
         boolean     fullscreen;
 
-        if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
+        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
             return;
-        if(!DD_GetWindowBPP(windowIDX, &bpp))
+        if(!Sys_GetWindowBPP(windowIDX, &bpp))
             return;
-        if(!DD_GetWindowFullscreen(windowIDX, &fullscreen))
+        if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
             return;
 
         sprintf(buf, "%i x %i x %i (%s)", width, height, bpp,
@@ -849,11 +849,11 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
     boolean     cFullscreen;
     ui_object_t *ob;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &cWidth, &cHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &cWidth, &cHeight))
         return;
-    if(!DD_GetWindowBPP(windowIDX, &cBPP))
+    if(!Sys_GetWindowBPP(windowIDX, &cBPP))
         return;
-    if(!DD_GetWindowFullscreen(windowIDX, &cFullscreen))
+    if(!Sys_GetWindowFullscreen(windowIDX, &cFullscreen))
         return;
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
@@ -908,7 +908,7 @@ void CP_SetVidMode(ui_object_t *ob)
 
     ob->flags |= UIF_DISABLED;
 
-    DD_SetWindow(windowIDX, 0, 0, x, y, bpp,
+    Sys_SetWindow(windowIDX, 0, 0, x, y, bpp,
                  (panel_fullscreen? DDWF_FULLSCREEN : 0),
                  DDSW_NOVISIBLE|DDSW_NOCENTER);
 }
@@ -1199,12 +1199,12 @@ D_CMD(OpenPanel)
     int         cWidth, cHeight, cBPP;
     boolean     cFullscreen;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &cWidth, &cHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &cWidth, &cHeight))
         Con_Error("CCmd 'OpenPanel': Failed retrieving window dimensions.");
 
-    if(!DD_GetWindowBPP(windowIDX, &cBPP))
+    if(!Sys_GetWindowBPP(windowIDX, &cBPP))
         Con_Error("CCmd 'OpenPanel': Failed retrieving window bpp.");
-    if(!DD_GetWindowFullscreen(windowIDX, &cFullscreen))
+    if(!Sys_GetWindowFullscreen(windowIDX, &cFullscreen))
         Con_Error("CCmd 'OpenPanel': Failed retrieving window fullscreen.");
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);

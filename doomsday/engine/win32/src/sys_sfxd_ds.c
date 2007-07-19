@@ -267,7 +267,7 @@ int DS_DSoundInit(void)
     if(dsound)
         return true;            // Already initialized?
 
-    hWnd = DD_GetWindowHandle(windowIDX);
+    hWnd = Sys_GetWindowHandle(windowIDX);
     if(!hWnd)
     {
         Con_Error("DS_DSoundInit: Main window not available, cannot init");

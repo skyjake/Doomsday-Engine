@@ -656,7 +656,7 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     char        buf[80];
     ui_color_t color;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("SBE_InfoBox: Failed retrieving window dimensions.");
         return;
@@ -808,9 +808,9 @@ void SBE_DrawHUD(void)
     if(!editActive || editHidden)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
-        Con_Message("DD_GetWindowDimensions: Failed retrieving window "
+        Con_Message("Sys_GetWindowDimensions: Failed retrieving window "
                     "dimensions.");
         return;
     }
@@ -896,7 +896,7 @@ static void SBE_DrawIndex(source_t *src)
     if(!editShowIndices)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
     {
         Con_Message("SBE_DrawIndex: Failed retrieving window dimensions.");
         return;

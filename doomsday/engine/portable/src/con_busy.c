@@ -200,7 +200,7 @@ static void Con_BusyLoadTextures(void)
         const char* fontName;
 
         if(true ==
-           (noWin = !DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
+           (noWin = !Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
                                             NULL)))
         {
             Con_Message("Con_BusyLoadTextures: Failed retrieving window "
@@ -261,7 +261,7 @@ void Con_AcquireScreenshotTexture(void)
     startTime = Sys_GetRealSeconds();
 #endif
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Error("Con_AcquireScreenshotTexture: Failed retrieving window dimensions.");
     }
@@ -302,7 +302,7 @@ static void Con_BusyLoop(void)
     if(!isDedicated)
     {
         if(true == (canDraw =
-            DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
+            Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
                                              &winHeight)))
         {
             Con_Message("Con_BusyLoop: Failed retrieving window dimensions.");
@@ -463,7 +463,7 @@ static void Con_BusyDrawConsoleOutput(void)
     int         winWidth, winHeight;
     uint        i, linecount;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("Con_BusyDrawConsoleOutput: Failed retrieving window "
                     "dimensions.");
@@ -524,7 +524,7 @@ static void Con_BusyDrawer(void)
     float       pos;
     int         winWidth, winHeight;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("Con_BusyDrawer: Failed retrieving window dimensions.");
         return;

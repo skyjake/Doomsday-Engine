@@ -980,7 +980,7 @@ int DD_GetInteger(int ddvalue)
         case DD_WINDOW_WIDTH:
             {
             int         winWidth;
-            if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
+            if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
                                        NULL))
             {
                 Con_Error("DD_GetInteger: Failed retreiving window width.");
@@ -991,7 +991,7 @@ int DD_GetInteger(int ddvalue)
         case DD_WINDOW_HEIGHT:
             {
             int         winHeight;
-            if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, NULL,
+            if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, NULL,
                                        &winHeight))
             {
                 Con_Error("DD_GetInteger: Failed retreiving window height.");
@@ -1002,7 +1002,7 @@ int DD_GetInteger(int ddvalue)
 #ifdef WIN32
         case DD_WINDOW_HANDLE:
             ASSERT_NOT_64BIT();
-            return (int) DD_GetWindowHandle(windowIDX);
+            return (int) Sys_GetWindowHandle(windowIDX);
 #endif
         }
         return 0;
@@ -1109,7 +1109,7 @@ void* DD_GetVariable(int ddvalue)
 
 #ifdef WIN32
         case DD_WINDOW_HANDLE:
-            return DD_GetWindowHandle(windowIDX);
+            return Sys_GetWindowHandle(windowIDX);
 #endif
         }
         return 0;

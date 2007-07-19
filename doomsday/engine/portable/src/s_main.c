@@ -495,7 +495,7 @@ void S_Drawer(void)
     if(!sound_info)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &w, &h))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &w, &h))
     {
         Con_Message("S_Drawer: Failed retrieving window dimensions.");
         return;

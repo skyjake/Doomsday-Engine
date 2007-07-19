@@ -704,7 +704,7 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
         int     winWidth;
         float   lodFactor;
 
-        if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
+        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
             Con_Error("Mod_RenderSubModel: Failed retrieving window dimensions.");
 
         lodFactor =

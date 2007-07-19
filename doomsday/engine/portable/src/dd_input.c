@@ -1027,7 +1027,7 @@ void DD_ReadMouse(void)
     {
         int         winWidth, winHeight;
 
-        if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
         {
             Con_Error("DD_ReadMouse: Failed retrieving window dimensions.");
             return;

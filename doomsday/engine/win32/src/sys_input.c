@@ -137,7 +137,7 @@ void I_InitMouse(void)
     if(ArgCheck("-nomouse") || novideo)
         return;
 
-    hWnd = DD_GetWindowHandle(windowIDX);
+    hWnd = Sys_GetWindowHandle(windowIDX);
     if(!hWnd)
     {
         Con_Error("I_InitMouse: Main window not available, cannot init mouse.");
@@ -211,7 +211,7 @@ void I_InitJoystick(void)
     if(ArgCheck("-nojoy"))
         return;
 
-    hWnd = DD_GetWindowHandle(windowIDX);
+    hWnd = Sys_GetWindowHandle(windowIDX);
     if(!hWnd)
     {
         Con_Error("I_InitJoystick: Main window not available, cannot init joystick.");
@@ -356,7 +356,7 @@ int I_Init(void)
     if(initIOk)
         return true; // Already initialized.
 
-    hWnd = DD_GetWindowHandle(windowIDX);
+    hWnd = Sys_GetWindowHandle(windowIDX);
     if(!hWnd)
     {
         Con_Error("I_Init: Main window not available, cannot init DirectInput.");

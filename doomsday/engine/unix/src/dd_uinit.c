@@ -82,7 +82,7 @@ void InitMainWindow(void)
 {
 	char        buf[256];
 
-	DD_MainWindowTitle(buf);
+	DD_ComposeMainWindowTitle(buf);
 	SDL_WM_SetCaption(buf, NULL);
 }
 
@@ -215,7 +215,7 @@ boolean DD_DestroyWindow(uint idx)
     return true;
 }
 
-boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
+boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
                      int newBPP, uint wFlags, uint uFlags)
 {
     // Window paramaters are not changeable in dedicated mode.
@@ -229,7 +229,7 @@ boolean DD_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
     return true;
 }
 
-boolean DD_GetWindowDimensions(uint idx, int *x, int *y, int *width, int *height)
+boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width, int *height)
 {
     // Not in dedicated mode.
     if(isDedicated)
@@ -239,7 +239,7 @@ boolean DD_GetWindowDimensions(uint idx, int *x, int *y, int *width, int *height
     return true;
 }
 
-boolean DD_GetWindowBPP(uint idx, int *bpp)
+boolean Sys_GetWindowBPP(uint idx, int *bpp)
 {
     // Not in dedicated mode.
     if(isDedicated)
@@ -249,7 +249,7 @@ boolean DD_GetWindowBPP(uint idx, int *bpp)
     return true;
 }
 
-boolean DD_GetWindowFullscreen(uint idx, boolean *fullscreen)
+boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 {
     // Not in dedicated mode.
     if(isDedicated)

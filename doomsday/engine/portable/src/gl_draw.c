@@ -73,7 +73,7 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     if(lump < 0 || lump >= numlumps)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("GL_DrawRawScreen_CS: Failed retrieving window dimensions.");
         return;

@@ -105,7 +105,7 @@ void DD_ErrorBox(boolean error, char *format, ...)
 /**
  * Compose the title for the main window.
  */
-void DD_MainWindowTitle(char *title)
+void DD_ComposeMainWindowTitle(char *title)
 {
     if(__gx.GetVariable)
     {
@@ -204,6 +204,9 @@ boolean DD_EarlyInit(void)
 {
     char       *outfilename = "doomsday.out";
 
+    // Bring the window manager online.
+    Sys_InitWindowManager();
+
     // We'll redirect stdout to a log file.
     DD_CheckArg("-out", &outfilename);
     outFile = fopen(outfilename, "w");
@@ -272,6 +275,7 @@ void DD_ShutdownAll(void)
     ArgShutdown();
     Z_Shutdown();
     DD_ShutdownDGL();
+    Sys_ShutdownWindowManager();
 
     // Close the message output file.
     fclose(outFile);

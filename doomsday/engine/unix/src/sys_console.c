@@ -66,7 +66,7 @@ void Sys_ConUpdateTitle(void)
 {
     char        title[256];
 
-    DD_MainWindowTitle(title);
+    DD_ComposeMainWindowTitle(title);
 
     // The background will also be in reverse.
     wbkgdset(winTitle, ' ' | A_REVERSE);

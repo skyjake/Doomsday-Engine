@@ -842,7 +842,7 @@ void Net_Drawer(void)
     if(!net_dev && !show_blink_r && !consoleShowFPS)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("Net_Drawer: Failed retrieving window dimensions.");
         return;

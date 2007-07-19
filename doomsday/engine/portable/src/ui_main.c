@@ -152,7 +152,7 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     if(uiActive)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
         Con_Error("UI_Init: Failed retrieving window dimensions.");
 
     uiActive = true;
@@ -426,7 +426,7 @@ int UI_AvailableWidth(void)
 {
     int         winWidth;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
     {
         Con_Error("UI_AvailableWidth: Failed retrieving window dimensions.");
     }
@@ -438,7 +438,7 @@ int UI_AvailableHeight(void)
 {
     int         winHeight;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, NULL, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, NULL, &winHeight))
     {
         Con_Error("UI_AvailableHeight: Failed retrieving window dimensions.");
     }
@@ -551,7 +551,7 @@ int UI_Responder(ddevent_t *ev)
 
         uiMoved = true;
 
-        if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
         {
             Con_Error("Con_DrawStartupScreen: Failed retrieving window "
                       "dimensions.");
@@ -633,7 +633,7 @@ void UI_Drawer(void)
     if(!uiCurrentPage)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("UI_Drawer: Failed retrieving window dimensions.");
         return;
@@ -953,7 +953,7 @@ void UIPage_Drawer(ui_page_t *page)
     ui_object_t *ob;
     ui_color_t  focuscol;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("UIPage_Drawer: Failed retrieving window dimensions.");
         return;

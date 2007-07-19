@@ -562,7 +562,7 @@ void Con_SetMaxLineLength(void)
     boolean     noWin;
 
     if(true ==
-       (noWin = !DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
+       (noWin = !Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
                                         NULL)))
     {
         Con_Message("Con_SetMaxLineLength: Failed retrieving window dimensions.");

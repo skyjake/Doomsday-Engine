@@ -926,7 +926,7 @@ void LG_Debug(void)
     if(!lgInited || !lgShowDebug)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("LG_Debug: Failed retrieving window dimensions.");
         return;

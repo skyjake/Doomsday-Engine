@@ -31,21 +31,7 @@
 #include "dd_pinit.h"
 #include <windows.h>
 
-// Doomsday window flags.
-#define DDWF_VISIBLE            0x01
-#define DDWF_FULLSCREEN         0x02
-#define DDWF_CENTER             0x04
-
-// Flags for DD_SetWindow()
-#define DDSW_NOSIZE             0x01
-#define DDSW_NOMOVE             0x02
-#define DDSW_NOBPP              0x04
-#define DDSW_NOFULLSCREEN       0x08
-#define DDSW_NOVISIBLE          0x10
-#define DDSW_NOCENTER           0x20
-#define DDSW_NOCHANGES          (DDSW_NOSIZE & DDSW_NOMOVE & DDSW_NOBPP & \
-                                 DDSW_NOFULLSCREEN & DDSW_NOVISIBLE & \
-                                 DDSW_NOCENTER)
+#define MAINWCLASS _T("DoomsdayMainWClass")
 
 typedef struct {
     HINSTANCE       hInstance;
@@ -59,23 +45,6 @@ typedef struct {
 
 extern uint windowIDX;   // Main window.
 extern application_t app;
-
-uint            DD_CreateWindow(application_t *app, uint parent,
-                                int x, int y, int w, int h, int bpp, int flags,
-                                const char *title, int cmdShow);
-boolean         DD_DestroyWindow(uint idx);
-
-boolean         DD_GetWindowDimensions(uint idx, int *x, int *y, int *w, int *h);
-boolean         DD_GetWindowBPP(uint idx, int *bpp);
-boolean         DD_GetWindowFullscreen(uint idx, boolean *fullscreen);
-boolean         DD_GetWindowVisibility(uint idx, boolean *show);
-
-boolean         DD_SetWindow(uint idx, int x, int y, int w, int h, int bpp,
-                             uint wflags, uint uflags);
-
-// \todo This is a compromise to prevent having to refactor half the engine.
-// In general, system specific patterns should not be carried into the engine.
-HWND            DD_GetWindowHandle(uint idx);
 
 void            DD_Shutdown(void);
 

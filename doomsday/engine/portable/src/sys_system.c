@@ -143,7 +143,7 @@ int Sys_CriticalMessage(char *msg)
 #ifdef WIN32
     char        buf[256];
     int         ret;
-    HWND        hWnd = DD_GetWindowHandle(windowIDX);
+    HWND        hWnd = Sys_GetWindowHandle(windowIDX);
 
     if(!hWnd)
     {
@@ -219,7 +219,7 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 {
 #ifdef WIN32
     char    title[300];
-    HWND    hWnd = DD_GetWindowHandle(windowIDX);
+    HWND    hWnd = Sys_GetWindowHandle(windowIDX);
 
     if(!hWnd)
     {

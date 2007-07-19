@@ -235,7 +235,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     {
-        HWND    hWnd = DD_GetWindowHandle(windowIDX);
+        HWND    hWnd = Sys_GetWindowHandle(windowIDX);
         HDC     hDC;
         
         if(!hWnd)
@@ -316,7 +316,7 @@ void GL_SetGammaRamp(unsigned short *ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     {
-        HWND        hWnd = DD_GetWindowHandle(windowIDX);
+        HWND        hWnd = Sys_GetWindowHandle(windowIDX);
 
         if(!hWnd)
         {
@@ -435,7 +435,7 @@ const char* GL_ChooseFixedFont(void)
 {
     int         winWidth, winHeight;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("GL_ChooseFixedFont: Failed retrieving window dimensions.");
     }
@@ -478,7 +478,7 @@ void GL_InitFont(void)
 {
     int         winWidth, winHeight;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Error("GL_InitFont: Failed retrieving window dimensions.");
     }
@@ -529,7 +529,7 @@ void GL_InitVarFont(void)
 
     VERBOSE2(Con_Message("GL_InitVarFont.\n"));
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Error("GL_InitVarFont: Failed retrieving window dimensions.");
         return;
@@ -641,7 +641,7 @@ boolean GL_EarlyInit(void)
     if(ArgExists("-nofullscreen") || ArgExists("-window"))
         winFlags &= ~DDWF_FULLSCREEN; 
 
-    if(!DD_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP,
+    if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP,
                      winFlags, 0))
         return false;
 
@@ -803,7 +803,7 @@ void GL_SwitchTo3DState(boolean push_state)
 {
     int         winWidth, winHeight;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Error("GL_SwitchTo3DState: Failed retrieving window dimensions.");
         return;
@@ -860,7 +860,7 @@ void GL_Restore2DState(int step)
         {
         int         winWidth, winHeight;
 
-        if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
         {
             Con_Message("GL_Restore2DState: Failed retrieving window dimensions.");
             return;
@@ -980,7 +980,7 @@ unsigned char *GL_GrabScreen(void)
     int         winWidth, winHeight;
     unsigned char *buffer;
     
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
         Con_Error("GL_GrabScreen: Failed getting window dimensions.");
 
     buffer = malloc(winWidth * winHeight * 3);
@@ -1048,7 +1048,7 @@ void GL_BlendMode(blendmode_t mode)
  */
 D_CMD(SetRes)
 {
-    return DD_SetWindow(windowIDX, 0, 0, atoi(argv[1]), atoi(argv[2]), 0, 0,
+    return Sys_SetWindow(windowIDX, 0, 0, atoi(argv[1]), atoi(argv[2]), 0, 0,
                         DDSW_NOVISIBLE|DDSW_NOCENTER|DDSW_NOFULLSCREEN|
                         DDSW_NOBPP);
 }
@@ -1057,11 +1057,11 @@ D_CMD(ToggleFullscreen)
 { 
     boolean         fullscreen;
 
-    if(!DD_GetWindowFullscreen(windowIDX, &fullscreen))
+    if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
         Con_Message("CCmd 'ToggleFullscreen': Failed acquiring window "
                     "fullscreen");
     else
-        DD_SetWindow(windowIDX, 0, 0, 0, 0, 0,
+        Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0,
                      (!fullscreen? DDWF_FULLSCREEN : 0),
                      DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOBPP|DDSW_NOVISIBLE);
     return true;
@@ -1084,7 +1084,7 @@ D_CMD(SetBPP)
         Con_Printf("%d not valid for bits per pixel, setting to 32.\n", bpp);
     }
 
-    return DD_SetWindow(windowIDX, 0, 0, 0, 0, bpp, 0,
+    return Sys_SetWindow(windowIDX, 0, 0, 0, 0, bpp, 0,
                         DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOFULLSCREEN|
                         DDSW_NOVISIBLE);
 }

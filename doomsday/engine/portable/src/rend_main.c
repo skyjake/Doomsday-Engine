@@ -2616,7 +2616,7 @@ void R_DrawLightRange(void)
     if(!debugLightModMatrix)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("R_DrawLightRange: Failed retrieving window dimensions.");
         return;
@@ -2807,7 +2807,7 @@ static void Rend_RenderBoundingBoxes(void)
     if(!devMobjBBox || netgame)
         return;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
     {
         Con_Message("Rend_RenderBoundingBoxes: Failed retrieving window "
                     "dimensions.");

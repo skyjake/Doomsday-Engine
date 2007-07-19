@@ -195,7 +195,7 @@ void Con_DrawRuler(int y, int lineHeight, float alpha)
 {
     int         winWidth;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
     {
         Con_Message("Con_DrawRuler: Failed retrieving window dimensions.");
         return;
@@ -389,7 +389,7 @@ void Rend_Console(void)
     if(ConsoleY <= 0)
         return;                 // We have nothing to do here.
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("Rend_Console: Failed retrieving window dimensions.");
         return;

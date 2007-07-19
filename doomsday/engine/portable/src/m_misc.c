@@ -845,7 +845,7 @@ int M_ScreenShot(char *filename, int bits)
     if(bits != 16 && bits != 24)
         return false;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("M_ScreenShot: Failed retrieving window dimensions.");
         return false;

@@ -197,7 +197,7 @@ void R_Update(void)
     int         i;
     int         width, height;
 
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
         Con_Error("R_Update: Failed retrieving window dimensions.");
 
     // Stop playing sounds and music.
