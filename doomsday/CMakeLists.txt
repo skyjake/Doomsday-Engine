@@ -641,16 +641,16 @@ ENDIF (UNIX)
 
 IF (WIN32)
 	INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/win32/include )
-	##FILE(GLOB DENG_WIN32_SOURCES ${CMAKE_SOURCE_DIR}/engine/win32/src/*.c)
-	SET (DENG_WIN32_SOURCES
-	${CMAKE_SOURCE_DIR}/engine/win32/src/dd_winit.c
-	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_console.c
-	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_findfile.c
-	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_mixer.c
-	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
-	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
-	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c
-	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c )
+	FILE(GLOB DENG_WIN32_SOURCES ${CMAKE_SOURCE_DIR}/engine/win32/src/*.c)
+##	SET (DENG_WIN32_SOURCES
+##	${CMAKE_SOURCE_DIR}/engine/win32/src/dd_winit.c
+##	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_console.c
+##	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_findfile.c
+##	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_mixer.c
+##	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
+##	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
+##	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_stwin.c
+##	${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c )
 
 
 	SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_WIN32_SOURCES}  ${LZSS_SOURCES})
