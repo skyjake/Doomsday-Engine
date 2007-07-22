@@ -251,7 +251,7 @@ static int initPluginSystem(void)
 	lt_dladdsearchdir(DENG_LIBRARY_DIR);
 #endif
 
-    return TRUE;
+    return true;
 }
 
 int main(int argc, char **argv)
@@ -260,6 +260,7 @@ int main(int argc, char **argv)
 	int         i, length;
     int         exitCode = 0;
     boolean     doShutdown = true;
+	char        buf[256];
 
 	// Assemble a command line string.
 	for(i = 0, length = 0; i < argc; ++i)
@@ -320,8 +321,6 @@ int main(int argc, char **argv)
     }
     else
     {   // All initialization complete.
-	    char        buf[256];
-
         doShutdown = false;
 
         // Append the main window title with the game name and ensure it
