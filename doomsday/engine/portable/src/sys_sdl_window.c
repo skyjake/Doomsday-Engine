@@ -367,6 +367,11 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     if(!novideo && newGLContext)
     {   // Maybe requires a renderer restart.
         boolean         glIsInited = GL_IsInited();
+#if defined(WIN32)
+        void           *data = window->hWnd;
+#else
+        void           *data = NULL;
+#endif
 
         if(glIsInited)
         {
@@ -379,7 +384,7 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
 
         gl.CreateContext(window->width, window->height, window->bpp,
                          (window->flags & DDWF_FULLSCREEN)? DGL_MODE_FULLSCREEN : DGL_MODE_WINDOW,
-                         window->hWnd);
+                         data);
 
         if(glIsInited)
         {
