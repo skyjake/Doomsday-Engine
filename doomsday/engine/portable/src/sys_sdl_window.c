@@ -35,6 +35,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <SDL.h>
+#include <SDL_syswm.h>
+
+#if defined(WIN32)
+#  include <windows.h>
+#endif
 
 #include "de_base.h"
 #include "de_console.h"
@@ -48,11 +54,13 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    boolean         inited;     // true if the window has been initialized.
-                                // i.e. Sys_SetWindow() has been called at
-                                // least once for this window.
+#if defined(WIN32)
+    HWND            hWnd;       // Needed for input (among other things).
+#endif
+    boolean         inited;
     int             flags;
-    int             x, y, width, height;
+    int             x, y;       // SDL cannot move windows; these are ignored.
+    int             width, height;
     int             bpp;
 } ddwindow_t;
 
@@ -63,9 +71,8 @@ typedef struct {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void destroyDDWindow(ddwindow_t *win);
-static boolean setDDWindow(ddwindow_t *win, int newX, int newY, int newWidth,
-                           int newHeight, int newBPP, uint wFlags,
-                           uint uFlags);
+static boolean setDDWindow(ddwindow_t *win, int newWidth, int newHeight,
+                           int newBPP, uint wFlags, uint uFlags);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -75,19 +82,20 @@ static boolean setDDWindow(ddwindow_t *win, int newX, int newY, int newWidth,
 
 static boolean winManagerInited = false;
 
+static ddwindow_t mainWindow;
+static boolean mainWindowInited = false;
+
 // CODE --------------------------------------------------------------------
 
 static __inline ddwindow_t *getWindow(uint idx)
 {
     if(!winManagerInited)
         return NULL; // Window manager is not initialized.
-/*
-    if(idx >= numWindows)
+
+    if(idx != 0)
         return NULL;
 
-    return windows[idx];
-*/
-    return 0;
+    return &mainWindow;
 }
 
 /**
@@ -103,6 +111,25 @@ boolean Sys_InitWindowManager(void)
 
     Con_Message("Sys_InitWindowManager: Using SDL window management.\n"); 
 
+	// Initialize the SDL video subsystem, unless we're going to run in
+    // dedicated mode.
+	if(!ArgExists("-dedicated"))
+	{
+/**
+ *\attention Solaris has no Joystick support according to https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
+ */
+#ifdef SOLARIS
+		if(SDL_InitSubSystem(SDL_INIT_VIDEO))
+#else
+		if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
+#endif
+		{
+			Con_Message("SDL Init Failed: %s\n", SDL_GetError());
+			return false;
+		}
+	}
+
+    memset(&mainWindow, 0, sizeof(mainWindow));
     winManagerInited = true;
     return true;
 }
@@ -117,29 +144,74 @@ boolean Sys_ShutdownWindowManager(void)
     if(!winManagerInited)
         return false; // Window manager is not initialized.
 
-
     // Now off-line, no more window management will be possible.
     winManagerInited = false;
 
     return true;
 }
 
-static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
-                                  int x, int y, int w, int h, int bpp,
-                                  int flags, const char *title, int nCmdShow)
+/**
+ * Complete the given wminfo_t, detailing what features are supported by
+ * this window manager implementation.
+ *
+ * @param info          Ptr to the wminfo_t structure to complete.
+ *
+ * @return              <code>true</code> if successful.
+ */
+boolean Sys_GetWindowManagerInfo(wminfo_t *info)
 {
-    return NULL;
+    if(!winManagerInited)
+        return false; // Window manager is not initialized.
+
+    if(!info)
+        return false; // Wha?
+
+    // Complete the structure detailing what features are available.
+    info->canMoveWindow = false;
+    info->maxWindows = 1;
+
+    return true;
+}
+
+static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
+                                  int flags, const char *title)
+{
+    // SDL only supports one window.
+    if(mainWindowInited)
+        return NULL;
+
+    if(!(bpp == 32 || bpp == 16))
+    {
+        Con_Message("createWindow: Unsupported BPP %i.", bpp);
+        return 0;
+    }
+
+#if defined(WIN32)
+    // We need to grab a handle from SDL so we can link other subsystems
+    // (e.g. DX-based input).
+    {
+    struct SDL_SysWMinfo wmInfo;
+    if(!SDL_GetWMInfo(&wmInfo))
+        return NULL;
+
+    mainWindow.hWnd = wmInfo.window;
+    }
+#endif
+
+    setDDWindow(&mainWindow, w, h, bpp, flags,
+                DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
+
+    mainWindowInited = true;
+    return &mainWindow;
 }
 
 /**
  * Create a new (OpenGL-ready) system window.
  *
  * @param app           Ptr to the application structure holding our globals.
- * @param parentIDX     Index number of the window that is to be the parent
- *                      of the new window. If <code>0</code> window has no
- *                      parent.
- * @param x             X position (in desktop-space).
- * @param y             Y position (in desktop-space).
+ * @param parentIDX     Ignored: SDL does not support parent/child windows.
+ * @param x             Ignored: SDL does not support changing X position.
+ * @param y             Ignored: SDL does not support changing Y position..
  * @param w             Width (client area).
  * @param h             Height (client area).
  * @param bpp           BPP (bits-per-pixel)
@@ -159,20 +231,18 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
 
-    win = createDDWindow(app, parentIDX, x, y, w, h, bpp, flags, title,
-                         NULL);
+    win = createDDWindow(app, w, h, bpp, flags, title);
+    
 
-    if(!win)
-    {   // Un-successful.
-        return 0;
-    }
+    if(win)
+        return 1; // Success.
 
-    return 0 /*numWindows*/; // index + 1.
+    return 0;
 }
 
 static void destroyDDWindow(ddwindow_t *window)
 {
-
+    
 }
 
 /**
@@ -196,16 +266,136 @@ boolean Sys_DestroyWindow(uint idx)
     return true;
 }
 
-static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
-                           int newWidth, int newHeight, int newBPP,
-                           uint wFlags, uint uFlags)
+static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
+                           int newBPP, uint wFlags, uint uFlags)
 {
+    int             width, height, bpp, flags;
+    boolean         newGLContext = false;
+    boolean         changeWindowDimensions = false;
+    boolean         inControlPanel;
+
     // Window paramaters are not changeable in dedicated mode.
     if(isDedicated)
         return false;
 
     if(uFlags & DDSW_NOCHANGES)
         return true; // Nothing to do.
+
+    // Grab the current values.
+    width = window->width;
+    height = window->height;
+    bpp = window->bpp;
+    flags = window->flags;
+    // Force update on init?
+    if(!window->inited)
+    {
+        newGLContext = true;
+    }
+
+    inControlPanel = UI_IsActive();
+
+    // Change to fullscreen?
+    if(!(uFlags & DDSW_NOFULLSCREEN) &&
+       (flags & DDWF_FULLSCREEN) != (wFlags & DDWF_FULLSCREEN))
+    {
+        flags ^= DDWF_FULLSCREEN;
+
+        newGLContext = true;
+      //  changeVideoMode = true;
+    }
+
+    // Change window size?
+    if(!(uFlags & DDSW_NOSIZE) && (width != newWidth || height != newHeight))
+    {
+        width = newWidth;
+        height = newHeight;
+
+        //if(flags & DDWF_FULLSCREEN)
+        //    changeVideoMode = true;
+        newGLContext = true;
+        changeWindowDimensions = true;
+    }
+
+    // Change BPP (bits per pixel)?
+    if(!(uFlags & DDSW_NOBPP) && bpp != newBPP)
+    {
+        if(!(newBPP == 32 || newBPP == 16))
+            Con_Error("Sys_SetWindow: Unsupported BPP %i.", newBPP);
+
+        bpp = newBPP;
+
+        newGLContext = true;
+//        changeVideoMode = true;
+    }
+
+    if(changeWindowDimensions)
+    {
+        // Can't change the resolution while the UI is active.
+        // (controls need to be repositioned).
+        if(inControlPanel)
+            UI_End();
+    }
+/*
+    if(changeVideoMode)
+    {
+        if(flags & DDWF_FULLSCREEN)
+        {
+            if(!gl.ChangeVideoMode(width, height, bpp))
+            {
+                Sys_CriticalMessage("Sys_SetWindow: Resolution change failed.");
+                return false;
+            }
+        }
+        else
+        {
+            // Go back to normal display settings.
+            ChangeDisplaySettings(0, 0);
+        }
+    }
+*/
+    // Update the current values.
+    window->width = width;
+    window->height = height;
+    window->bpp = bpp;
+    window->flags = flags;
+    if(!window->inited)
+        window->inited = true;
+
+    // Do NOT modify ddwindow_t properties after this point.
+
+    // Do we need a new GL context due to changes to the window?
+    if(!novideo && newGLContext)
+    {   // Maybe requires a renderer restart.
+        boolean         glIsInited = GL_IsInited();
+
+        if(glIsInited)
+        {
+            // Shut everything down, but remember our settings.
+            GL_TotalReset(true, 0, 0);
+            gx.UpdateState(DD_RENDER_RESTART_PRE);
+
+            gl.DestroyContext();
+        }
+
+        gl.CreateContext(window->width, window->height, window->bpp,
+                         (window->flags & DDWF_FULLSCREEN)? DGL_MODE_FULLSCREEN : DGL_MODE_WINDOW,
+                         window->hWnd);
+
+        if(glIsInited)
+        {
+            // Re-initialize.
+            GL_TotalReset(false, true, true);
+            gx.UpdateState(DD_RENDER_RESTART_POST);
+        }
+    }
+
+    // If the window dimensions have changed, update any sub-systems
+    // which need to respond.
+    if(changeWindowDimensions)
+    {
+        if(inControlPanel) // Reactivate the panel?
+            Con_Execute(CMDS_DDAY, "panel", true, false);
+    }
 
     return true;
 }
@@ -258,9 +448,8 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
     ddwindow_t *window = getWindow(idx - 1);
 
     if(window)
-    {
-
-    }
+        return setDDWindow(window, newWidth, newHeight, newBPP,
+                           wFlags, uFlags);
 
     return false;
 }
@@ -279,7 +468,8 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
 
     if(window)
     {
-
+        SDL_WM_SetCaption(title, NULL);
+        return true;
     }
 
     return false;
@@ -290,8 +480,10 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
  * area) in screen-space.
  *
  * @param idx           Index identifier (1-based) to the window.
- * @param x             Address to write the x position back to (if any).
- * @param y             Address to write the y position back to (if any).
+ * @param x             Address to write the x position back to,
+ *                      unsupported by SDL so always 0.
+ * @param y             Address to write the y position back to,
+ *                      unsupported by SDL so always 0.
  * @param width         Address to write the width back to (if any).
  * @param height        Address to write the height back to (if any).
  *
@@ -310,9 +502,9 @@ boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width,
         return false;
 
     if(x)
-        *x = window->x;
+        *x = 0;
     if(y)
-        *y = window->y;
+        *y = 0;
     if(width)
         *width = window->width;
     if(height)
@@ -364,3 +556,25 @@ boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 
     return true;
 }
+
+/**
+ * Attempt to get a HWND handle to the given window.
+ *
+ * \todo: Factor platform specific design patterns out of Doomsday. We should
+ * not be passing around HWND handles...
+ *
+ * @param idx           Index identifier (1-based) to the window.
+ *
+ * @return              HWND handle if successful, ELSE <code>NULL</code>.
+ */
+#if defined(WIN32)
+HWND Sys_GetWindowHandle(uint idx)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(!window)
+        return NULL;
+
+    return window->hWnd;
+}
+#endif

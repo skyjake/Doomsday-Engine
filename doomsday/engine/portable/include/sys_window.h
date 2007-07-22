@@ -29,6 +29,14 @@
 #ifndef __DOOMSDAY_SYS_WINDOW_H__
 #define __DOOMSDAY_SYS_WINDOW_H__
 
+// Structure used to describe what features are available in a window
+// manager implementation.
+typedef struct wminfo_s {
+    uint        maxWindows;         // Max number of simultaneous windows.
+                                    // 0 = Unlimited.
+    boolean     canMoveWindow;      // Windows can be moved.
+} wminfo_t;
+
 // Doomsday window flags.
 #define DDWF_VISIBLE            0x01
 #define DDWF_FULLSCREEN         0x02
@@ -47,6 +55,7 @@
 
 boolean         Sys_InitWindowManager(void);
 boolean         Sys_ShutdownWindowManager(void);
+boolean         Sys_GetWindowManagerInfo(wminfo_t *info);
 
 uint            Sys_CreateWindow(application_t *app, uint parent,
                                 int x, int y, int w, int h, int bpp, int flags,
@@ -64,9 +73,7 @@ boolean         Sys_SetWindowTitle(uint idx, const char *title);
 
 // \todo This is a compromise to prevent having to refactor half the engine.
 // In general, system specific patterns should not be carried into the engine.
-#if defined(USING_SDL_WINDOW)
-#
-#elif defined(WIN32)
+#if defined(WIN32)
 HWND            Sys_GetWindowHandle(uint idx);
 #endif
 

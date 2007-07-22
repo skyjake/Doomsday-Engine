@@ -636,7 +636,7 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 
     // FIXME: These should be in PlayerThink.
     /*
-	plr = &players[player];
+    plr = &players[player];
 	
 	// Get a descriptor of the axis control.
 	desc = &ctlClass[CC_AXIS].desc[axisControlIndex];
@@ -732,7 +732,7 @@ void P_ControlDrawer(void)
     if(!ctlInfo)
         return;
     
-    if(!DD_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
+    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
         Con_Message("P_ControlDrawer: Failed retrieving window dimensions.");
         return;

@@ -73,15 +73,7 @@ application_t app;
 
 // CODE --------------------------------------------------------------------
 
-void InitMainWindow(void)
-{
-	char        buf[256];
-
-	DD_ComposeMainWindowTitle(buf);
-	SDL_WM_SetCaption(buf, NULL);
-}
-
-boolean InitGame(void)
+static boolean loadGamePlugin(void)
 {
 	char       *gameName = NULL;
 	char        libName[PATH_MAX];
@@ -235,18 +227,21 @@ int LoadPlugin(const char *pluginPath, lt_ptr data)
 /**
  * Loads all the plugins from the library directory.
  */
-boolean InitPlugins(void)
+static boolean loadAllPlugins(void)
 {
 	// Try to load all libraries that begin with libdp.
 	lt_dlforeachfile(NULL, LoadPlugin, NULL);
 	return true;
 }
 
-int main(int argc, char **argv)
+static int initTimingSystem(void)
 {
-	char       *cmdLine;
-	int         i, length = 0, exitCode;
+	// For timing, we use SDL under *nix, so get it initialized.
+    return SDL_Init(SDL_INIT_TIMER);
+}
 
+static int initPluginSystem(void)
+{
 	// Initialize libtool's dynamic library routines.
 	lt_dlinit();
 
@@ -256,12 +251,22 @@ int main(int argc, char **argv)
 	lt_dladdsearchdir(DENG_LIBRARY_DIR);
 #endif
 
+    return TRUE;
+}
+
+int main(int argc, char **argv)
+{
+	char       *cmdLine;
+	int         i, length;
+    int         exitCode = 0;
+    boolean     doShutdown = true;
+
 	// Assemble a command line string.
 	for(i = 0, length = 0; i < argc; ++i)
 		length += strlen(argv[i]) + 1;
 
 	// Allocate a large enough string.
-	cmdLine = malloc(length);
+	cmdLine = M_Malloc(length);
 
 	for(i = 0, length = 0; i < argc; ++i)
 	{
@@ -273,54 +278,67 @@ int main(int argc, char **argv)
 
 	// Prepare the command line arguments.
 	DD_InitCommandLine(cmdLine);
-	free(cmdLine);
+	M_Free(cmdLine);
 	cmdLine = NULL;
 
     if(!DD_EarlyInit())
-        return 1;
-	// Load the rendering DLL.
-	if(!DD_InitDGL())
-		return 1;
-	// Load the game DLL.
-	if(!InitGame())
-		return 2;
-	// Load all plugins that are found.
-	if(!InitPlugins())
-		return 3;				// Fatal error occured?
-	// Initialize SDL.
-	if(SDL_Init(SDL_INIT_TIMER))
-	{
-		DD_ErrorBox(true, "SDL Init Failed: %s\n", SDL_GetError());
-		return 4;
-	}
+    {
+        DD_ErrorBox(true, "Error during early init.");
+    }
+    else if(!initTimingSystem())
+    {
+        DD_ErrorBox(true, "Error initalizing timing system.");
+    }
+    else if(!initPluginSystem())
+    {
+        DD_ErrorBox(true, "Error initializing plugin system.");
+    }
+    // Load the rendering DLL.
+	else if(!DD_InitDGL())
+    {
+		DD_ErrorBox(true, "Error loading rendering library.");
+    }
+	// Load the game plugin.
+	else if(!loadGamePlugin())
+    {
+		DD_ErrorBox(true, "Error loading game library.");
+    }
+	// Load all other plugins that are found.
+	else if(!loadAllPlugins())
+    {
+        DD_ErrorBox(true, "Error loading plugins.");
+    }
+    // Init memory zone.
+	else if(!Z_Init())
+    {
+        DD_ErrorBox(true, "Error initializing memory zone.");
+    }
+    else if(0 == (windowIDX =
+            Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, buf, NULL)))
+    {
+        DD_ErrorBox(true, "Error creating main window.");
+    }
+    else
+    {   // All initialization complete.
+	    char        buf[256];
 
-	// Also initialize the SDL video subsystem, unless we're going to
-	// run in dedicated mode.
-	if(!ArgExists("-dedicated"))
-	{
-/**
-*\attention  Solaris has no Joystick support according to https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
-*/
-#ifdef SOLARIS
-		if(SDL_InitSubSystem(SDL_INIT_VIDEO))
-#else
-		if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
-#endif
-		{
-			DD_ErrorBox(true, "SDL Init Failed: %s\n", SDL_GetError());
-			return 5;
-		}
-	}
+        doShutdown = false;
 
-	InitMainWindow();
+        // Append the main window title with the game name and ensure it
+        // is the at the foreground, with focus.
+        DD_ComposeMainWindowTitle(buf);
+	    Sys_SetWindowTitle(windowIDX, buf);
 
-	// Init memory zone.
-	Z_Init();
+       // \todo Set foreground window and focus.
+    }
 
-	// Fire up the engine. The game loop will also act as the message pump.
-	exitCode = DD_Main();
-
+    if(!doShutdown)
+    {   // Fire up the engine. The game loop will also act as the message pump.
+	    exitCode = DD_Main();
+    }
     DD_Shutdown();
+
+    // Bye!
     return exitCode;
 }
 

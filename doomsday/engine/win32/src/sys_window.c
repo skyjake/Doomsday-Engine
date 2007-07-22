@@ -149,6 +149,29 @@ boolean Sys_ShutdownWindowManager(void)
     return true;
 }
 
+/**
+ * Complete the given wminfo_t, detailing what features are supported by
+ * this window manager implementation.
+ *
+ * @param info          Ptr to the wminfo_t structure to complete.
+ *
+ * @return              <code>true</code> if successful.
+ */
+boolean Sys_GetWindowManagerInfo(wminfo_t *info)
+{
+    if(!winManagerInited)
+        return false; // Window manager is not initialized.
+
+    if(!info)
+        return false; // Wha?
+
+    // Complete the structure detailing what features are available.
+    info->canMoveWindow = true;
+    info->maxWindows = 0;
+
+    return true;
+}
+
 static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
                                   int x, int y, int w, int h, int bpp,
                                   int flags, const char *title, int nCmdShow)
@@ -159,7 +182,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
 
     if(!(bpp == 32 || bpp == 16))
     {
-        Con_Message("DD_CreateWindow: Unsupported BPP %i.", bpp);
+        Con_Message("createWindow: Unsupported BPP %i.", bpp);
         return 0;
     }
 

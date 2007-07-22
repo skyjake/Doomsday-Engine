@@ -105,7 +105,7 @@ BOOL InitApplication(application_t *app)
     return RegisterClassEx(&wcex);
 }
 
-BOOL InitGameDLL(application_t *app)
+static BOOL loadGamePlugin(application_t *app)
 {
     char       *dllName = NULL; // Pointer to the filename of the game DLL.
 
@@ -150,7 +150,7 @@ BOOL InitGameDLL(application_t *app)
  *
  * @return              <code>true</code> if the plugin was loaded succesfully.
  */
-int LoadPlugin(application_t *app, const char *filename)
+static int loadPlugin(application_t *app, const char *filename)
 {
     int         i;
 
@@ -168,7 +168,7 @@ int LoadPlugin(application_t *app, const char *filename)
 /**
  * Loads all the plugins from the startup directory.
  */
-int InitPlugins(application_t *app)
+static int loadAllPlugins(application_t *app)
 {
     long        hFile;
     struct _finddata_t fd;
@@ -179,9 +179,21 @@ int InitPlugins(application_t *app)
         return TRUE;
 
     do
-        LoadPlugin(app, fd.name);
+        loadPlugin(app, fd.name);
     while(!_findnext(hFile, &fd));
 
+    return TRUE;
+}
+
+static int initTimingSystem(void)
+{
+	// Nothing to do.
+    return TRUE;
+}
+
+static int initPluginSystem(void)
+{
+	// Nothing to do.
     return TRUE;
 }
 
@@ -219,18 +231,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         {
             DD_ErrorBox(true, "Error during early init.");
         }
+        else if(!initTimingSystem())
+        {
+            DD_ErrorBox(true, "Error initalizing timing system.");
+        }
+        else if(!initPluginSystem())
+        {
+            DD_ErrorBox(true, "Error initializing plugin system.");
+        }
         // Load the rendering DLL.
         else if(!DD_InitDGL())
         {
             DD_ErrorBox(true, "Error loading rendering library.");
         }
-        // Load the game DLL.
-        else if(!InitGameDLL(&app))
+        // Load the game plugin.
+        else if(!loadGamePlugin(&app))
         {
             DD_ErrorBox(true, "Error loading game library.");
         }
-        // Load all plugins that are found.
-        else if(!InitPlugins(&app))
+        // Load all other plugins that are found.
+        else if(!loadAllPlugins(&app))
         {
             DD_ErrorBox(true, "Error loading plugins.");
         }
