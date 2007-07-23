@@ -97,6 +97,7 @@ void G_RegisterPlayerControls(void)
         {"weapon7"},
         {"weapon8"},
         {"weapon9"},
+        {"weapon10"}, // Laser.
         {"nextwpn"},
         {"prevwpn"},
         {"demostop"},
