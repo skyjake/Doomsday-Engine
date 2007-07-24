@@ -357,7 +357,6 @@
 		B0F17815087C5A230051F24A /* con_config.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC3AA06B3FA91005824AD /* con_config.h */; };
 		B0F17816087C5A230051F24A /* con_decl.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC3AB06B3FA91005824AD /* con_decl.h */; };
 		B0F17817087C5A230051F24A /* con_main.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC3AC06B3FA91005824AD /* con_main.h */; };
-		B0F17818087C5A230051F24A /* con_start.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC3AD06B3FA91005824AD /* con_start.h */; };
 		B0F17819087C5A230051F24A /* dd_api.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC3B306B3FA91005824AD /* dd_api.h */; };
 		B0F1781A087C5A230051F24A /* dd_def.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC3B406B3FA91005824AD /* dd_def.h */; };
 		B0F1781B087C5A230051F24A /* dd_dgl.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC3B506B3FA91005824AD /* dd_dgl.h */; };
@@ -473,7 +472,6 @@
 		B0F1788E087C5A230051F24A /* sys_sfxd_loader.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC48F06B3FA91005824AD /* sys_sfxd_loader.h */; };
 		B0F1788F087C5A230051F24A /* sys_sfxd.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49006B3FA91005824AD /* sys_sfxd.h */; };
 		B0F17890087C5A230051F24A /* sys_sock.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49106B3FA91005824AD /* sys_sock.h */; };
-		B0F17891087C5A230051F24A /* sys_stwin.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49206B3FA91005824AD /* sys_stwin.h */; };
 		B0F17892087C5A230051F24A /* sys_system.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49306B3FA91005824AD /* sys_system.h */; };
 		B0F17893087C5A230051F24A /* sys_timer.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49406B3FA91005824AD /* sys_timer.h */; };
 		B0F17894087C5A230051F24A /* tab_anorms.h in Headers */ = {isa = PBXBuildFile; fileRef = B02AC49506B3FA91005824AD /* tab_anorms.h */; };
@@ -498,7 +496,6 @@
 		B0F178AF087C5A230051F24A /* con_bind.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC85806B41788005824AD /* con_bind.c */; };
 		B0F178B0087C5A230051F24A /* con_config.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC85906B41788005824AD /* con_config.c */; };
 		B0F178B1087C5A230051F24A /* con_main.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC85A06B41788005824AD /* con_main.c */; };
-		B0F178B2087C5A230051F24A /* con_start.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC85B06B41788005824AD /* con_start.c */; };
 		B0F178B3087C5A230051F24A /* dd_dgl.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC85C06B41788005824AD /* dd_dgl.c */; };
 		B0F178B4087C5A230051F24A /* dd_help.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC85D06B41788005824AD /* dd_help.c */; };
 		B0F178B5087C5A230051F24A /* dd_input.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC85E06B41788005824AD /* dd_input.c */; };
@@ -595,7 +592,6 @@
 		B0F17913087C5A230051F24A /* sys_path.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8C006B41788005824AD /* sys_path.c */; };
 		B0F17914087C5A230051F24A /* sys_sfxd_dummy.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8C106B41788005824AD /* sys_sfxd_dummy.c */; };
 		B0F17915087C5A230051F24A /* sys_sfxd_loader.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8C206B41788005824AD /* sys_sfxd_loader.c */; };
-		B0F17916087C5A230051F24A /* sys_stwin.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8C306B41788005824AD /* sys_stwin.c */; };
 		B0F17917087C5A230051F24A /* m_fixed.c in Sources */ = {isa = PBXBuildFile; fileRef = B0134F9606ECEB22007861F2 /* m_fixed.c */; };
 		B0F17918087C5A230051F24A /* sys_direc.c in Sources */ = {isa = PBXBuildFile; fileRef = B0134F9806ECEB71007861F2 /* sys_direc.c */; };
 		B0F17919087C5A230051F24A /* sys_system.c in Sources */ = {isa = PBXBuildFile; fileRef = B0134F9A06ECEB9F007861F2 /* sys_system.c */; };
@@ -611,6 +607,8 @@
 		B0F17927087C5A230051F24A /* SDL_mixer.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = B0134EC106ECD8B8007861F2 /* SDL_mixer.framework */; };
 		B0F17928087C5A230051F24A /* SDL_net.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = B0134EC206ECD8B8007861F2 /* SDL_net.framework */; };
 		B0F381020B4D6D7E0097029D /* p_mapinfo.c in Sources */ = {isa = PBXBuildFile; fileRef = B0F381010B4D6D7E0097029D /* p_mapinfo.c */; };
+		B0FE215D0C560E9D00EBB5BF /* sys_sdl_window.c in Sources */ = {isa = PBXBuildFile; fileRef = B0FE215C0C560E9D00EBB5BF /* sys_sdl_window.c */; };
+		B0FE215F0C560EB700EBB5BF /* sys_window.h in Headers */ = {isa = PBXBuildFile; fileRef = B0FE215E0C560EB700EBB5BF /* sys_window.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -875,7 +873,6 @@
 		B02AC3AA06B3FA91005824AD /* con_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = con_config.h; path = ../../engine/portable/include/con_config.h; sourceTree = SOURCE_ROOT; };
 		B02AC3AB06B3FA91005824AD /* con_decl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = con_decl.h; path = ../../engine/portable/include/con_decl.h; sourceTree = SOURCE_ROOT; };
 		B02AC3AC06B3FA91005824AD /* con_main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = con_main.h; path = ../../engine/portable/include/con_main.h; sourceTree = SOURCE_ROOT; };
-		B02AC3AD06B3FA91005824AD /* con_start.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = con_start.h; path = ../../engine/portable/include/con_start.h; sourceTree = SOURCE_ROOT; };
 		B02AC3B306B3FA91005824AD /* dd_api.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dd_api.h; path = ../../engine/api/dd_api.h; sourceTree = SOURCE_ROOT; };
 		B02AC3B406B3FA91005824AD /* dd_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dd_def.h; path = ../../engine/portable/include/dd_def.h; sourceTree = SOURCE_ROOT; };
 		B02AC3B506B3FA91005824AD /* dd_dgl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dd_dgl.h; path = ../../engine/portable/include/dd_dgl.h; sourceTree = SOURCE_ROOT; };
@@ -991,7 +988,6 @@
 		B02AC48F06B3FA91005824AD /* sys_sfxd_loader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys_sfxd_loader.h; path = ../../engine/portable/include/sys_sfxd_loader.h; sourceTree = SOURCE_ROOT; };
 		B02AC49006B3FA91005824AD /* sys_sfxd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys_sfxd.h; path = ../../engine/api/sys_sfxd.h; sourceTree = SOURCE_ROOT; };
 		B02AC49106B3FA91005824AD /* sys_sock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys_sock.h; path = ../../engine/portable/include/sys_sock.h; sourceTree = SOURCE_ROOT; };
-		B02AC49206B3FA91005824AD /* sys_stwin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys_stwin.h; path = ../../engine/portable/include/sys_stwin.h; sourceTree = SOURCE_ROOT; };
 		B02AC49306B3FA91005824AD /* sys_system.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys_system.h; path = ../../engine/portable/include/sys_system.h; sourceTree = SOURCE_ROOT; };
 		B02AC49406B3FA91005824AD /* sys_timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys_timer.h; path = ../../engine/portable/include/sys_timer.h; sourceTree = SOURCE_ROOT; };
 		B02AC49506B3FA91005824AD /* tab_anorms.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tab_anorms.h; path = ../../engine/portable/include/tab_anorms.h; sourceTree = SOURCE_ROOT; };
@@ -1010,7 +1006,6 @@
 		B02AC85806B41788005824AD /* con_bind.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = con_bind.c; path = ../../engine/portable/src/con_bind.c; sourceTree = SOURCE_ROOT; };
 		B02AC85906B41788005824AD /* con_config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = con_config.c; path = ../../engine/portable/src/con_config.c; sourceTree = SOURCE_ROOT; };
 		B02AC85A06B41788005824AD /* con_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = con_main.c; path = ../../engine/portable/src/con_main.c; sourceTree = SOURCE_ROOT; };
-		B02AC85B06B41788005824AD /* con_start.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = con_start.c; path = ../../engine/portable/src/con_start.c; sourceTree = SOURCE_ROOT; };
 		B02AC85C06B41788005824AD /* dd_dgl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dd_dgl.c; path = ../../engine/portable/src/dd_dgl.c; sourceTree = SOURCE_ROOT; };
 		B02AC85D06B41788005824AD /* dd_help.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dd_help.c; path = ../../engine/portable/src/dd_help.c; sourceTree = SOURCE_ROOT; };
 		B02AC85E06B41788005824AD /* dd_input.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dd_input.c; path = ../../engine/portable/src/dd_input.c; sourceTree = SOURCE_ROOT; };
@@ -1107,7 +1102,6 @@
 		B02AC8C006B41788005824AD /* sys_path.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_path.c; path = ../../engine/unix/src/sys_path.c; sourceTree = SOURCE_ROOT; };
 		B02AC8C106B41788005824AD /* sys_sfxd_dummy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_sfxd_dummy.c; path = ../../engine/portable/src/sys_sfxd_dummy.c; sourceTree = SOURCE_ROOT; };
 		B02AC8C206B41788005824AD /* sys_sfxd_loader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_sfxd_loader.c; path = ../../engine/unix/src/sys_sfxd_loader.c; sourceTree = SOURCE_ROOT; };
-		B02AC8C306B41788005824AD /* sys_stwin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_stwin.c; path = ../../engine/unix/src/sys_stwin.c; sourceTree = SOURCE_ROOT; };
 		B0346DC20A10F18D00C8BAB2 /* edit_bias.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = edit_bias.c; path = ../../engine/portable/src/edit_bias.c; sourceTree = SOURCE_ROOT; };
 		B0346DC40A10F1B100C8BAB2 /* dd_maptypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dd_maptypes.h; path = ../../engine/api/dd_maptypes.h; sourceTree = SOURCE_ROOT; };
 		B0346DC50A10F1B100C8BAB2 /* de_edit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = de_edit.h; path = ../../engine/portable/include/de_edit.h; sourceTree = SOURCE_ROOT; };
@@ -1330,6 +1324,8 @@
 		B0F381050B4D6D9D0097029D /* p_pspr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = p_pspr.h; path = ../../plugins/jhexen/include/p_pspr.h; sourceTree = SOURCE_ROOT; };
 		B0F381060B4D6D9D0097029D /* x_player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = x_player.h; path = ../../plugins/jhexen/include/x_player.h; sourceTree = SOURCE_ROOT; };
 		B0F381070B4D6D9D0097029D /* x_state.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = x_state.h; path = ../../plugins/jhexen/include/x_state.h; sourceTree = SOURCE_ROOT; };
+		B0FE215C0C560E9D00EBB5BF /* sys_sdl_window.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_sdl_window.c; path = ../../engine/portable/src/sys_sdl_window.c; sourceTree = SOURCE_ROOT; };
+		B0FE215E0C560EB700EBB5BF /* sys_window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys_window.h; path = ../../engine/portable/include/sys_window.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1484,6 +1480,7 @@
 		29B97315FDCFA39411CA2CEA /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B0FE215C0C560E9D00EBB5BF /* sys_sdl_window.c */,
 				B02115770C259574006A8A6B /* lzss.c */,
 				B0A7E6500B885F76009EE2D4 /* p_cmd.c */,
 				B0A7E6510B885F76009EE2D4 /* p_players.c */,
@@ -1518,7 +1515,6 @@
 				B02AC85806B41788005824AD /* con_bind.c */,
 				B02AC85906B41788005824AD /* con_config.c */,
 				B02AC85A06B41788005824AD /* con_main.c */,
-				B02AC85B06B41788005824AD /* con_start.c */,
 				B02AC85C06B41788005824AD /* dd_dgl.c */,
 				B02AC85D06B41788005824AD /* dd_help.c */,
 				B02AC85E06B41788005824AD /* dd_input.c */,
@@ -1616,7 +1612,6 @@
 				B02AC8C006B41788005824AD /* sys_path.c */,
 				B02AC8C106B41788005824AD /* sys_sfxd_dummy.c */,
 				B02AC8C206B41788005824AD /* sys_sfxd_loader.c */,
-				B02AC8C306B41788005824AD /* sys_stwin.c */,
 			);
 			name = Sources;
 			sourceTree = "<group>";
@@ -1846,6 +1841,7 @@
 		B02AC73506B3FBD4005824AD /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B0FE215E0C560EB700EBB5BF /* sys_window.h */,
 				B021157B0C2595EF006A8A6B /* lzss.h */,
 				B0A7E6540B885F88009EE2D4 /* p_cmd.h */,
 				B0A7E6550B885F88009EE2D4 /* p_players.h */,
@@ -1873,7 +1869,6 @@
 				B02AC3AA06B3FA91005824AD /* con_config.h */,
 				B02AC3AB06B3FA91005824AD /* con_decl.h */,
 				B02AC3AC06B3FA91005824AD /* con_main.h */,
-				B02AC3AD06B3FA91005824AD /* con_start.h */,
 				B02AC3B306B3FA91005824AD /* dd_api.h */,
 				B02AC3B406B3FA91005824AD /* dd_def.h */,
 				B02AC3B506B3FA91005824AD /* dd_dgl.h */,
@@ -1989,7 +1984,6 @@
 				B02AC48F06B3FA91005824AD /* sys_sfxd_loader.h */,
 				B02AC49006B3FA91005824AD /* sys_sfxd.h */,
 				B02AC49106B3FA91005824AD /* sys_sock.h */,
-				B02AC49206B3FA91005824AD /* sys_stwin.h */,
 				B02AC49306B3FA91005824AD /* sys_system.h */,
 				B02AC49406B3FA91005824AD /* sys_timer.h */,
 				B02AC49506B3FA91005824AD /* tab_anorms.h */,
@@ -2255,7 +2249,6 @@
 				B0F17815087C5A230051F24A /* con_config.h in Headers */,
 				B0F17816087C5A230051F24A /* con_decl.h in Headers */,
 				B0F17817087C5A230051F24A /* con_main.h in Headers */,
-				B0F17818087C5A230051F24A /* con_start.h in Headers */,
 				B0F17819087C5A230051F24A /* dd_api.h in Headers */,
 				B0F1781A087C5A230051F24A /* dd_def.h in Headers */,
 				B0F1781B087C5A230051F24A /* dd_dgl.h in Headers */,
@@ -2371,7 +2364,6 @@
 				B0F1788E087C5A230051F24A /* sys_sfxd_loader.h in Headers */,
 				B0F1788F087C5A230051F24A /* sys_sfxd.h in Headers */,
 				B0F17890087C5A230051F24A /* sys_sock.h in Headers */,
-				B0F17891087C5A230051F24A /* sys_stwin.h in Headers */,
 				B0F17892087C5A230051F24A /* sys_system.h in Headers */,
 				B0F17893087C5A230051F24A /* sys_timer.h in Headers */,
 				B0F17894087C5A230051F24A /* tab_anorms.h in Headers */,
@@ -2395,6 +2387,7 @@
 				B0C8FBEA0A3F4DEF00CFA4A5 /* dd_uinit.h in Headers */,
 				B08174040A88FD5A0081B2E1 /* m_md5.h in Headers */,
 				B01538FB0B46E479006C9D45 /* con_buffer.h in Headers */,
+				B0FE215F0C560EB700EBB5BF /* sys_window.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2993,7 +2986,6 @@
 				B0F178AF087C5A230051F24A /* con_bind.c in Sources */,
 				B0F178B0087C5A230051F24A /* con_config.c in Sources */,
 				B0F178B1087C5A230051F24A /* con_main.c in Sources */,
-				B0F178B2087C5A230051F24A /* con_start.c in Sources */,
 				B0F178B3087C5A230051F24A /* dd_dgl.c in Sources */,
 				B0F178B4087C5A230051F24A /* dd_help.c in Sources */,
 				B0F178B5087C5A230051F24A /* dd_input.c in Sources */,
@@ -3090,7 +3082,6 @@
 				B0F17913087C5A230051F24A /* sys_path.c in Sources */,
 				B0F17914087C5A230051F24A /* sys_sfxd_dummy.c in Sources */,
 				B0F17915087C5A230051F24A /* sys_sfxd_loader.c in Sources */,
-				B0F17916087C5A230051F24A /* sys_stwin.c in Sources */,
 				B0F17917087C5A230051F24A /* m_fixed.c in Sources */,
 				B0F17918087C5A230051F24A /* sys_direc.c in Sources */,
 				B0F17919087C5A230051F24A /* sys_system.c in Sources */,
@@ -3118,6 +3109,7 @@
 				B0A7E6520B885F76009EE2D4 /* p_cmd.c in Sources */,
 				B0A7E6530B885F76009EE2D4 /* p_players.c in Sources */,
 				B02115780C259574006A8A6B /* lzss.c in Sources */,
+				B0FE215D0C560E9D00EBB5BF /* sys_sdl_window.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
