@@ -237,7 +237,8 @@ static boolean loadAllPlugins(void)
 static int initTimingSystem(void)
 {
 	// For timing, we use SDL under *nix, so get it initialized.
-    return SDL_Init(SDL_INIT_TIMER);
+    // SDL_Init() returns zero on success.
+    return !SDL_Init(SDL_INIT_TIMER);
 }
 
 static int initPluginSystem(void)
