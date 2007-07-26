@@ -562,10 +562,18 @@ void D_Shutdown(void)
     AM_Shutdown();
 }
 
-void D_Ticker(void)
+void D_Ticker(timespan_t tickDuration)
 {
-    MN_Ticker();
-    G_Ticker();
+    static trigger_t fixed = { 1.0 / 35 };
+    
+    // Fixed ticks for the menu ticker.
+    if(M_CheckTrigger(&fixed, tickDuration))
+    {
+        MN_Ticker();
+    }
+    
+    // Game gets fractional ticks.
+    G_Ticker(tickDuration);
 }
 
 void D_EndFrame(void)
