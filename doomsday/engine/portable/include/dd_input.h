@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ enum
 
 // These are used internally, a cutdown version containing
 // only need-to-know stuff is sent down the games' responder chain. 
-typedef struct {
+typedef struct ddevent_s {
     uint            deviceID;  // e.g. IDEV_KEYBOARD
     uint            controlID; // axis/control/key id.
     boolean         isAxis;    // <code>true</code> = controlID is an axis id.
@@ -73,7 +73,7 @@ typedef struct inputdevaxis_s {
     float   position;       // Current translated position of the axis (-1..1) including any filtering.
     float   realPosition;   // The actual position of the axis (-1..1).
     float   scale;          // Scaling factor for real input values.
-    float   deadZone;
+    float   deadZone;       // Dead zone, in (0..1) range.
     int     filter;
 } inputdevaxis_t;
 

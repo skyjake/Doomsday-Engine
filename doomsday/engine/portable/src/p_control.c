@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -248,6 +248,7 @@ float P_ControlGetAxis(int player, const char *name)
 		}
 */
     }
+    //Con_Message("P_ControlGetAxis(%s): returning pos = %f\n", name, pos);
 
 	return pos;
 }
@@ -606,7 +607,7 @@ void P_ControlSetAxis(int player, uint axisControlIndex, float pos)
         return;
 #if _DEBUG
     if(axisControlIndex > ctlClass[CC_AXIS].count)
-        Con_Error("P_ControlSetAxis: Invlid axis index %i.",
+        Con_Error("P_ControlSetAxis: Invalid axis index %i.",
                   axisControlIndex);
 #endif
 
@@ -614,8 +615,7 @@ void P_ControlSetAxis(int player, uint axisControlIndex, float pos)
 }
 
 /**
- * Move a control bound to a POINTER type axis. This doesn't affect actual
- * position of the axis control (!).
+ * Move a control bound to a POINTER type axis.
  */
 void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 {
@@ -630,10 +630,12 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 
 #if _DEBUG
     if(axisControlIndex > ctlClass[CC_AXIS].count)
-        Con_Error("P_ControlAxisDelta: Invlid axis index %i.",
+        Con_Error("P_ControlAxisDelta: Invalid axis index %i.",
                   axisControlIndex);
 #endif
 
+    ctlState[player].axes[axisControlIndex].pos += delta;
+    
     // FIXME: These should be in PlayerThink.
     /*
     plr = &players[player];
@@ -669,9 +671,13 @@ void P_ControlAxisDelta(int player, uint axisControlIndex, float delta)
 /**
  * Update view angles according to the "turn" or "look" axes.
  * Done for all local players.
+ *
+ * FIXME: The code here is game logic, it does not belong here.
+ * Functionality to be done in PlayerThink.
  */
 void P_ControlTicker(timespan_t time)
 {
+#if 0
 	/** \fixme  Player class turn speed.
 	* angleturn[3] = {640, 1280, 320};	// + slow turn
 	*/
@@ -683,13 +689,14 @@ void P_ControlTicker(timespan_t time)
 	{
 		if(!players[i].ingame || !(players[i].flags & DDPF_LOCAL))
             continue;
-		
+
 		pos = P_ControlGetAxis(i, "turn");
 		P_ControlAxisDelta(i, CTL_TURN, mul * pos);
 
 		pos = P_ControlGetAxis(i, "look");
 		P_ControlAxisDelta(i, CTL_LOOK, mul * pos);
 	}
+#endif
 }
 
 /**

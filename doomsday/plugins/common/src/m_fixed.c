@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2004 Lukasz Stelmach
  *
  * This program is free software; you can redistribute it and/or modify

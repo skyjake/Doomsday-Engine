@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ void    D_PostInit(void);
 void    R_InitTranslation(void);
 
 // Timeing loop
-void    D_Ticker(void);
+void    D_Ticker(timespan_t tickDuration);
 
 // Drawing
 void    D_Display(void);

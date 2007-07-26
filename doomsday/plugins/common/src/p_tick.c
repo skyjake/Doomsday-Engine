@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -81,12 +81,12 @@ boolean P_IsPaused(void)
 /**
  * This is called at all times, no matter gamestate.
  */
-void P_RunPlayers(void)
+void P_RunPlayers(timespan_t tickDuration)
 {
-    boolean     pauseState = P_IsPaused();
+    boolean     isPaused = P_IsPaused();
     uint        i;
-    ticcmd_t    command;
-    boolean     gotCommands;
+    //ticcmd_t    command;
+    //boolean     gotCommands;
 
     // This is not for clients.
     if(IS_CLIENT)
@@ -99,6 +99,7 @@ void P_RunPlayers(void)
     for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->ingame)
         {
+            /*
             // We will combine all the waiting commands into this
             // buffer.
             memset(&command, 0, sizeof(command));
@@ -124,11 +125,12 @@ void P_RunPlayers(void)
 
             // Check for special buttons (pause and netsave).
             G_SpecialButton(i);
-
+            */
+            
             // The player thinks.
-            if(G_GetGameState() == GS_LEVEL && !pauseState)
+            if(G_GetGameState() == GS_LEVEL && !isPaused)
             {
-                P_PlayerThink(&players[i]);
+                P_PlayerThink(&players[i], tickDuration);
             }
         }
 }

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                                  ammotype_t ammo, boolean force);
 void        P_ShotAmmo(player_t *player);
 
-void        P_PlayerThink(player_t *player);
+void        P_PlayerThink(player_t *player, timespan_t tickDuration);
 void        P_RaiseDeadPlayer(player_t *player);
 
 void        P_SetMessage(player_t *pl, char *msg, boolean noHide);

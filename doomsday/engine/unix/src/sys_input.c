@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2005 Zachary Keene <zjkeene@bellsouth.net>
@@ -76,7 +76,6 @@ static int evHead, evTail;
 static int wheelCount;
 
 static SDL_Joystick *joy;
-static int numbuttons, numaxes;
 
 // CODE --------------------------------------------------------------------
 
@@ -346,11 +345,16 @@ void I_InitJoystick(void)
 
         // We'll handle joystick events manually
         SDL_JoystickEventState(SDL_IGNORE);
-
-        numaxes = SDL_JoystickNumAxes(joy);
-        numbuttons = SDL_JoystickNumButtons(joy);
-        if(numbuttons > IJOY_MAXBUTTONS)
-            numbuttons = IJOY_MAXBUTTONS;
+        
+        if(verbose)
+        {
+            Con_Message("I_InitJoystick: Joystick reports %i axes, %i buttons, %i hats, "
+                        "and %i trackballs.\n", 
+                        SDL_JoystickNumAxes(joy), 
+                        SDL_JoystickNumButtons(joy),
+                        SDL_JoystickNumHats(joy), 
+                        SDL_JoystickNumBalls(joy));
+        }
 
         useJoystick = true;
     }
@@ -462,74 +466,62 @@ void I_GetJoystickState(joystate_t *state)
     // Update joysticks
     SDL_JoystickUpdate();
 
-    /** Grab the first three axes. SDL returns a value between -32768 and
-    * 32767, but Doomsday is expecting -10000 to 10000. We'll convert
-    * as we go.
-    *
-    * \fixme would changing IJOY_AXISMIN and IJOY_AXISMAX to -32768 and
-    * 32767 break the Windows version? If not that would make this
-    * cleaner.
-    */
-    for(i = 0; i < 3; ++i)
+    // What do we have available to us?
+    state->numAxes =    MIN_OF( SDL_JoystickNumAxes(joy),    IJOY_MAXAXES );
+    state->numButtons = MIN_OF( SDL_JoystickNumButtons(joy), IJOY_MAXBUTTONS );
+    state->numHats =    MIN_OF( SDL_JoystickNumHats(joy),    IJOY_MAXHATS );
+
+    for(i = 0; i < state->numAxes; ++i)
     {
-        int         value;
-        if(i > numaxes)
-            break;
-
-        value = SDL_JoystickGetAxis(joy, i);
+        int value = SDL_JoystickGetAxis(joy, i);
+        // SDL returns a value between -32768 and 32767, but Doomsday is expecting 
+        // -10000 to 10000. We'll convert as we go.
         value = ((value + 32768) * CONVCONST) + IJOY_AXISMIN;
-
         state->axis[i] = value;
     }
-
-    // Dunno what to do with these using SDL so we'll set them
-    // all to 0 for now.
-    state->rotAxis[0] = 0;
-    state->rotAxis[1] = 0;
-    state->rotAxis[2] = 0;
-
-    state->slider[0] = 0;
-    state->slider[1] = 0;
-
-    for(i = 0; i < numbuttons; ++i)
-        state->buttons[i] = SDL_JoystickGetButton(joy, i);
-
-    pov = SDL_JoystickGetHat(joy, 0);
-    switch(pov)
+    for(i = 0; i < state->numButtons; ++i)
     {
-    case SDL_HAT_UP:
-        state->povAngle = 0;
-        break;
-
-    case SDL_HAT_RIGHT:
-        state->povAngle = 90;
-        break;
-
-    case SDL_HAT_DOWN:
-        state->povAngle = 180;
-        break;
-
-    case SDL_HAT_LEFT:
-        state->povAngle = 270;
-        break;
-
-    case SDL_HAT_RIGHTUP:
-        state->povAngle = 45;
-        break;
-
-    case SDL_HAT_RIGHTDOWN:
-        state->povAngle = 135;
-        break;
-
-    case SDL_HAT_LEFTUP:
-        state->povAngle = 315;
-        break;
-
-    case SDL_HAT_LEFTDOWN:
-        state->povAngle = 225;
-        break;
-
-    default:
-        state->povAngle = IJOY_POV_CENTER;
+        state->buttons[i] = SDL_JoystickGetButton(joy, i);
+    }
+    for(i = 0; i < state->numHats; ++i)
+    {
+        pov = SDL_JoystickGetHat(joy, i);
+        switch(pov)
+        {
+            case SDL_HAT_UP:
+                state->hatAngle[i] = 0;
+                break;
+                
+            case SDL_HAT_RIGHT:
+                state->hatAngle[i] = 90;
+                break;
+                
+            case SDL_HAT_DOWN:
+                state->hatAngle[i] = 180;
+                break;
+                
+            case SDL_HAT_LEFT:
+                state->hatAngle[i] = 270;
+                break;
+                
+            case SDL_HAT_RIGHTUP:
+                state->hatAngle[i] = 45;
+                break;
+                
+            case SDL_HAT_RIGHTDOWN:
+                state->hatAngle[i] = 135;
+                break;
+                
+            case SDL_HAT_LEFTUP:
+                state->hatAngle[i] = 315;
+                break;
+                
+            case SDL_HAT_LEFTDOWN:
+                state->hatAngle[i] = 225;
+                break;
+                
+            default:
+                state->hatAngle[i] = IJOY_POV_CENTER;
+        }
     }
 }

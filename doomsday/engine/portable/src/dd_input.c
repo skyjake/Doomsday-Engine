@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -41,13 +41,13 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
+
 #define MAX_AXIS_FILTER .6     // Guess
 
 #define KBDQUESIZE      32
 #define MAX_DOWNKEYS    16      // Most keyboards support 6 or 7.
 #define NUMKKEYS        256
-
-#define CLAMP(x) DD_JoyAxisClamp(&x)    //x = (x < -100? -100 : x > 100? 100 : x)
 
 // TYPES -------------------------------------------------------------------
 
@@ -228,7 +228,7 @@ static void I_DeviceAllocKeys(inputdev_t *dev, uint count)
 /**
  * Add a new axis to the input device.
  */
-static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name)
+static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint type)
 {
 	inputdevaxis_t *axis;
 	
@@ -238,12 +238,12 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name)
 	memset(axis, 0, sizeof(*axis));
 	strcpy(axis->name, name);
 
-	axis->type = IDAT_STICK;
+	axis->type = type;
 	
 	// Set reasonable defaults. The user's settings will be restored
 	// later.
-	axis->scale = 1/10.0f;
-	axis->deadZone = 0;//5/100.0f;
+	axis->scale = 1;
+	axis->deadZone = 0;
 
 	return axis;
 }
@@ -253,6 +253,7 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name)
  */
 void I_InitInputDevices(void)
 {
+    int i;
 	inputdev_t *dev;
     inputdevaxis_t *axis;
 
@@ -272,29 +273,33 @@ void I_InitInputDevices(void)
 
 	// The wheel is translated to keys, so there is no need to
 	// create an axis for it.
-	axis = I_DeviceNewAxis(dev, "x");
-    axis->type = IDAT_POINTER;
-    axis->filter = 1; // On by default;
-	axis = I_DeviceNewAxis(dev, "y");
-    axis->type = IDAT_POINTER;
-    axis->filter = 1; // On by default;
+	axis = I_DeviceNewAxis(dev, "x", IDAT_POINTER);
+    axis->filter = 1; // On by default.
+	axis = I_DeviceNewAxis(dev, "y", IDAT_POINTER);
+    axis->filter = 1; // On by default.
 
 	if(I_MousePresent())
 		dev->flags = ID_ACTIVE;
 
+    // TODO: Add support for several joysticks.
 	dev = &inputDevices[IDEV_JOY1];
 	strcpy(dev->name, "joy");
 	I_DeviceAllocKeys(dev, IJOY_MAXBUTTONS);
-
-	// We support eight axes.
-	I_DeviceNewAxis(dev, "x");
-	I_DeviceNewAxis(dev, "y");
-	I_DeviceNewAxis(dev, "z");
-	I_DeviceNewAxis(dev, "rx");
-	I_DeviceNewAxis(dev, "ry");
-	I_DeviceNewAxis(dev, "rz");
-    I_DeviceNewAxis(dev, "slider1");
-    I_DeviceNewAxis(dev, "slider2");
+    for(i = 0; i < IJOY_MAXAXES; ++i)
+    {
+        char name[32];
+        if(i < 3)
+        {
+            strcpy(name, i == 0? "x" : i == 1? "y" : "z");            
+        }
+        else
+        {
+            sprintf(name, "axis%i", i + 1);
+        }
+        axis = I_DeviceNewAxis(dev, name, IDAT_STICK);
+        axis->scale = 1.0f / IJOY_AXISMAX;
+        axis->deadZone = DEFAULT_JOYSTICK_DEADZONE;
+    }
 
 	// The joystick may not be active.
 	if(I_JoystickPresent())
@@ -461,33 +466,31 @@ boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
 /**
  * Update an input device axis.  Transformation is applied.
  */
-static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos,
-                         timespan_t ticLength)
+static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLength)
 {
 	inputdevaxis_t *a = &dev->axes[axis];
 
 	// Disabled axes are always zero.
 	if(a->flags & IDA_DISABLED)
 	{
-		a->position = 0;
+		a->position = a->realPosition = 0;
 		return;
 	}
 
 	// Apply scaling, deadzone and clamping.
 	pos *= a->scale;
-	if(a->type == IDAT_STICK) // Pointer axes are exempt.
+	if(a->type == IDAT_STICK) // Pointer axes are not dead-zoned or clamped.
 	{
 		if(fabs(pos) <= a->deadZone)
 		{
-			a->position = 0;
-			return;
+			pos = 0;
 		}
-		pos += a->deadZone * (pos > 0? -1 : 1);	// Remove the dead zone.
-		pos *= 1.0f/(1.0f - a->deadZone);		// Normalize.
-		if(pos < -1.0f)
-            pos = -1.0f;
-		if(pos > 1.0f)
-            pos = 1.0f;
+        else
+        {
+            pos -= a->deadZone * SIGN_OF(pos);	// Remove the dead zone.
+            pos *= 1.0f/(1.0f - a->deadZone);		// Normalize.
+            pos = MINMAX_OF(-1.0f, pos, 1.0f);
+        }
 	}
 	
 	if(a->flags & IDA_INVERT)
@@ -534,6 +537,9 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos,
 	}
 
     a->position = pos;
+    
+    Con_Message("I_UpdateAxis: device=%s axis=%i pos=%f\n",
+                dev->name, axis, pos);
 }
 
 /**
@@ -1117,15 +1123,14 @@ void DD_ReadJoystick(void)
     ddevent_t ev;
     joystate_t state;
     int     i, bstate;
-    //int     div = 100 - joySensitivity * 10;
 
     if(!I_JoystickPresent())
         return;
 
     I_GetJoystickState(&state);
 
-    bstate = 0;
     // Check the buttons.
+    bstate = 0;
     for(i = 0; i < IJOY_MAXBUTTONS; ++i)
         if(state.buttons[i])
             bstate |= 1 << i;   // Set the bits.
@@ -1150,94 +1155,38 @@ void DD_ReadJoystick(void)
     }
     oldJoyBState = bstate;
 
-    // Check for a POV change.
-    if(state.povAngle != oldPOV)
+    if(state.numHats > 0)
     {
-        if(oldPOV != IJOY_POV_CENTER)
+        // Check for a POV change.
+        // TODO: Some day, it would be nice to support multiple hats here. -jk
+        if(state.hatAngle[0] != oldPOV)
         {
-            // Send a notification that the existing POV angle is no
-            // longer active.
-            ev.data1 = EVS_UP;
-            ev.controlID = (int) (oldPOV / 45 + .5);    // Round off correctly w/.5.
-            DD_PostEvent(&ev);
+            if(oldPOV != IJOY_POV_CENTER)
+            {
+                // Send a notification that the existing POV angle is no
+                // longer active.
+                ev.data1 = EVS_UP;
+                ev.controlID = (int) (oldPOV / 45 + .5);    // Round off correctly w/.5.
+                DD_PostEvent(&ev);
+            }
+            if(state.hatAngle[0] != IJOY_POV_CENTER)
+            {
+                // The new angle becomes active.
+                ev.data1 = EVS_DOWN;
+                ev.controlID = (int) (state.hatAngle[0] / 45 + .5);
+                DD_PostEvent(&ev);
+            }
+            oldPOV = state.hatAngle[0];
         }
-        if(state.povAngle != IJOY_POV_CENTER)
-        {
-            // The new angle becomes active.
-            ev.data1 = EVS_DOWN;
-            ev.controlID = (int) (state.povAngle / 45 + .5);
-            DD_PostEvent(&ev);
-        }
-        oldPOV = state.povAngle;
     }
 
-    // Send joystick axis events, one per axis (XYZ and rotation-XYZ).
+    // Send joystick axis events, one per axis.
     ev.isAxis = true;
-
-    // The input code returns the axis positions in the range -10000..10000.
-    // The output axis data must be in range -100..100.
-    // Increased sensitivity causes the axes to max out earlier.
-    // Check that the divisor is valid.
-/*  if(div < 10)
-        div = 10;
-    if(div > 100)
-        div = 100;*/
-
-    // fixme\ Check each axis position against dead zone and previous value.
-    if(state.axis[0])
+    
+    for(i = 0; i < state.numAxes; ++i)
     {
-        ev.data1 = state.axis[0];
-        ev.controlID = 0;
-        DD_PostEvent(&ev);
-    }
-
-    if(state.axis[1])
-    {
-        ev.data1 = state.axis[1];
-        ev.controlID = 1;
-        DD_PostEvent(&ev);
-    }
-
-    if(state.axis[2])
-    {
-        ev.data1 = state.axis[2];
-        ev.controlID = 2;
-        DD_PostEvent(&ev);
-    }
-
-    if(state.rotAxis[0])
-    {
-        ev.data1 = state.rotAxis[0];
-        ev.controlID = 3;
-        DD_PostEvent(&ev);
-    }
-
-    if(state.rotAxis[1])
-    {
-        ev.data1 = state.rotAxis[1];
-        ev.controlID = 4;
-        DD_PostEvent(&ev);
-    }
-
-    if(state.rotAxis[2])
-    {
-        ev.data1 = state.rotAxis[2];
-        ev.controlID = 5;
-        DD_PostEvent(&ev);
-    }
-
-    // The sliders.
-    if(state.slider[0])
-    {
-        ev.data1 = state.slider[0];
-        ev.controlID = 6;
-        DD_PostEvent(&ev);
-    }
-
-    if(state.slider[1])
-    {
-        ev.data1 = state.slider[1];
-        ev.controlID = 7;
+        ev.data1 = state.axis[i];
+        ev.controlID = i;
         DD_PostEvent(&ev);
     }
 }

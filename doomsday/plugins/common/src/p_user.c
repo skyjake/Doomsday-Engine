@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  *
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2000-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2000-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © Raven Software, Corp.
  *\author Copyright © 1993-1996 by id Software, Inc.
  */
@@ -816,6 +816,10 @@ boolean P_UndoPlayerMorph(player_t *player)
  * Called once per tick by P_Ticker.
  * This routine does all the thinking for the console player during
  * netgames.
+ *
+ * FIXME: This should be removed in favor of the regular P_PlayerThink, which 
+ *        is supposed to handle all thinking regardless of whether it's a client
+ *        or a server doing the thinking.
  */
 void P_ClientSideThink(void)
 {
@@ -835,7 +839,7 @@ void P_ClientSideThink(void)
     mo = dpl->mo;
 
     // Applicable parts of the regular P_PlayerThink routine will be used.
-    P_PlayerThink(pl);
+    P_PlayerThink(pl, 1.0/TICSPERSEC);
 
     /*
 
@@ -1771,17 +1775,54 @@ void P_PlayerThinkPowers(player_t *player)
 }
 
 /**
+ * Handles the updating of the player's view angles depending on the game
+ * input controllers. Control states are queried from the engine. Note
+ * that this is done as often as possible (i.e., on every frame) so that
+ * changes will be smooth and lag-free. 
+ * 
+ * @param player  Player doing the thinking.
+ * @param tickDuration  Time to think, in seconds. Use as a multiplier.
+ *                      Note that original game logic was always using a 
+ *                      tick duration of 1/35 seconds.
+ */
+void P_PlayerThinkLookAround(player_t *player, timespan_t tickDuration)
+{
+    int playerNum = player - players;
+    ddplayer_t* plr = player->plr;
+    int turn = 0;
+
+    if(!plr->mo)
+        return; // Nothing to control.
+
+    // Turning is affected by the turn axis and the left/right toggles.
+    turn = P_ControlGetAxis(playerNum, "turn");
+ 
+    plr->mo->angle -= (angle_t) (tickDuration * turn); // / 180 * ANGLE_180);    
+
+    /*Con_Message("P_PlayerThinkLookAround: turnAxis = %i (moangle=%x)\n", turn, 
+                plr->mo->angle);*/
+}
+
+/**
  * Main thinker function for players. Handles both single player and multiplayer
  * games, as well as all the different types of players (normal/camera).
  * Functionality is divided to various other functions whose name begins with
  * "P_PlayerThink".
  *
- * @param player  Player that is doing the thinking.
+ * @param player        Player that is doing the thinking.
+ * @param tickDuration  How much time has passed in the game world, in seconds.
+ *                      For instance, to be used as a multiplier on turning.
  */
-void P_PlayerThink(player_t *player)
+void P_PlayerThink(player_t *player, timespan_t tickDuration)
 {
     P_PlayerThinkState(player);
 
+    // Adjust turn angles and look direction. This is done in fractional time.
+    P_PlayerThinkLookAround(player, tickDuration);
+    
+    if(!M_CheckTrigger(&player->plr->fixedtrigger, tickDuration))
+        return; // It's too soon.
+    
     if(!IS_CLIENT) // Locally only.
     {
         P_PlayerThinkCamera(player);      // $democam

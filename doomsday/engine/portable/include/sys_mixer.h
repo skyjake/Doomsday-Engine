@@ -2,7 +2,7 @@
  *\section License
  * License: GPL
  *
- *\author Copyright © 2000-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2000-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  */
 
 //===========================================================================

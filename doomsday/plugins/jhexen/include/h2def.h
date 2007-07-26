@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2004-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -678,7 +678,7 @@ void            G_StartNewInit(void);
 
 void            G_WorldDone(void);
 
-void            G_Ticker(void);
+void            G_Ticker(timespan_t tickDuration);
 boolean         G_Responder(event_t *ev);
 
 void            G_ScreenShot(void);

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  *
@@ -30,7 +30,7 @@
 #ifndef __COMMON_TICK_H__
 #define __COMMON_TICK_H__
 
-void    P_RunPlayers(void);
+void    P_RunPlayers(timespan_t tickDuration);
 boolean P_IsPaused(void);
 void    P_DoTick(void);
 

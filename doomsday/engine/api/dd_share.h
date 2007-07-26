@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1378,26 +1378,25 @@ typedef struct ticcmd_s {
 
     typedef struct ddplayer_s {
         ticcmd_t        cmd;
-        struct mobj_s  *mo;        // pointer to a (game specific) mobj
-        float           viewz;     // focal origin above r.z
+        struct mobj_s  *mo;         // pointer to a (game specific) mobj
+        float           viewz;      // focal origin above r.z
         float           viewheight; // base height above floor for viewz
         float           deltaviewheight;
-        float           lookdir;   // It's now a float, for mlook.
+        float           lookdir;    // It's now a float, for mlook.
         int             fixedcolormap;  // can be set to REDCOLORMAP, etc
         int             extralight; // so gun flashes light up areas
-        int             ingame;    // is this player in game?
-        int             invoid;    // True if player is in the void
-                                   // (not entirely accurate so it shouldn't
-                                   /// be used for anything critical).
+        int             ingame;     // is this player in game?
+        int             invoid;     // True if player is in the void
+                                    // (not entirely accurate so it shouldn't
+                                    /// be used for anything critical).
         int             flags;
-        int             filter;    // RGBA filter for the camera
-        //int             clAngle;   // client side
-        //float           clLookDir; // client side
-        fixcounters_t    fixcounter;
-        fixcounters_t    fixacked;
-        angle_t         lastangle; // For calculating turndeltas.
+        int             filter;     // RGBA filter for the camera
+        fixcounters_t   fixcounter;
+        fixcounters_t   fixacked;
+        angle_t         lastangle;  // For calculating turndeltas.
         ddpsprite_t     psprites[DDMAXPSPRITES];    // Player sprites.
-        void           *extradata; // Pointer to any game-specific data.
+        trigger_t       fixedtrigger;   // Trigger for 35 Hz ticking.
+        void           *extradata;  // Pointer to any game-specific data.
     } ddplayer_t;
 
 #ifdef __cplusplus

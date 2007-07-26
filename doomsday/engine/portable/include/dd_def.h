@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@
 
 #define ASSERT_NOT_64BIT() {if( sizeof(void*)!=sizeof(int) ) Con_Error("Pointer size assumption in "__FILE__" at line %i.\n", __LINE__);}
 
-#define MAXEVENTS       64
+#define MAXEVENTS       256
 #define SBARHEIGHT      39         // status bar height at bottom of screen
 //#define PI            3.141592657     // Why the small inaccuracy?
 #define PI              3.14159265359

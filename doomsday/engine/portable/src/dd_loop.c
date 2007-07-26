@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -313,14 +313,15 @@ void DD_Ticker(timespan_t time)
         // the range 0..1.
         realFrameTimePos += time * TICSPERSEC;
 
+        // Game logic.
+        gx.Ticker(time);    
+
         if(M_CheckTrigger(&fixed, time))
         {
             // A new 35 Hz tick begins, clear the player fixangles flags which
             // have been in effect for any fractional ticks since they were
             // set.
             //Sv_FixLocalAngles(true /* just clear flags; don't apply */);
-
-            gx.Ticker( /* time */ );    // Game DLL.
 
             // Server ticks.  These are placed here because
             // they still rely on fixed ticks and thus it's best to

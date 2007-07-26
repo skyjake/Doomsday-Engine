@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -708,10 +708,18 @@ void D_Shutdown(void)
     AM_Shutdown();
 }
 
-void D_Ticker(void)
+void D_Ticker(timespan_t tickDuration)
 {
-    MN_Ticker();
-    G_Ticker();
+    static trigger_t fixed = { 1.0 / 35 };
+
+    // Fixed ticks for the menu ticker.
+    if(M_CheckTrigger(&fixed, tickDuration))
+    {
+        MN_Ticker();
+    }
+    
+    // Game gets fractional ticks.
+    G_Ticker(tickDuration);
 }
 
 void D_EndFrame(void)

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -216,9 +216,12 @@ extern          "C" {
                                              struct mobj_s *inflictor,
                                              int amount);
 
+    // Play: Controls.
+    float           P_ControlGetAxis(int player, const char *name);
+
     // Play: Setup.
     boolean         P_LoadMap(char *levelID);
-
+    
     // Play: Map Data Updates and Information Access.
     unsigned int    P_ToIndex(const void* ptr);
     void*           P_ToPtr(int type, uint index);
@@ -468,6 +471,9 @@ extern          "C" {
     void            M_AddToBox(fixed_t *box, fixed_t x, fixed_t y);
     int             M_ScreenShot(char *filename, int bits);
 
+    // MiscellaneousL: Time utilities.
+    boolean         M_CheckTrigger(trigger_t *trigger, timespan_t advanceTime);
+    
     // Miscellaneous: Math.
     binangle_t      bamsAtan2(int y, int x);
 

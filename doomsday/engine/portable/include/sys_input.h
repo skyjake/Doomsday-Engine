@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -48,25 +48,28 @@
 // Joystick.
 #define IJOY_AXISMIN	-10000
 #define IJOY_AXISMAX	10000
+#define IJOY_MAXAXES    32
 #define IJOY_MAXBUTTONS	32
+#define IJOY_MAXHATS	4
 #define IJOY_POV_CENTER	-1
 
 typedef struct {
-	char            event;		   // Type of the event.       
-	unsigned char   code;		   // The scancode (extended, corresponds DI keys).
+	char            event;          // Type of the event.       
+	unsigned char   code;           // The scancode (extended, corresponds DI keys).
 } keyevent_t;
 
 typedef struct {
-	int             x, y, z;	   // Relative X and Y mickeys since last call.
-	int             buttons;	   // The buttons bitfield.
+	int             x, y, z;        // Relative X and Y mickeys since last call.
+	int             buttons;        // The buttons bitfield.
 } mousestate_t;
 
 typedef struct {
-	int             axis[3];
-	int             rotAxis[3];
-	int             slider[2];
+    int             numAxes;        // Number of axes present.
+    int             numButtons;     // Number of buttons present.
+    int             numHats;        // Number of hats present.
+	int             axis[IJOY_MAXAXES];
 	char            buttons[IJOY_MAXBUTTONS];
-	float           povAngle;	   // 0 - 359 degrees.
+	float           hatAngle[IJOY_MAXHATS];	   // 0 - 359 degrees.
 } joystate_t;
 
 extern byte     usejoystick;

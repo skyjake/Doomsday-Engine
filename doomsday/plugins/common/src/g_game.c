@@ -2,7 +2,7 @@
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright © 1999-2006 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 1999-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *\author Copyright © Raven Software, Corp.
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -782,13 +782,18 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
 /**
  * The core of the game timing loop.
  * Game state, game actions etc occur here.
+ *
+ * @param tickDuration  How long this tick is, in seconds.
  */
-void G_Ticker(void)
+void G_Ticker(timespan_t tickDuration)
 {
     int         i;
     player_t   *plyr = &players[consoleplayer];
     static gamestate_t oldgamestate = -1;
-
+    static trigger_t fixed = {
+        1.0 / TICSPERSEC
+    };
+    
     if(IS_CLIENT && !Get(DD_GAME_READY))
         return;
 
@@ -876,76 +881,81 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     }
 
     // Update the viewer's look angle
-    G_LookAround(consoleplayer);
+    //G_LookAround(consoleplayer);
 
-    // Enable/disable sending of frames (delta sets) to clients.
-    Set(DD_ALLOW_FRAMES, G_GetGameState() == GS_LEVEL);
     if(!IS_CLIENT)
     {
+        // Enable/disable sending of frames (delta sets) to clients.
+        Set(DD_ALLOW_FRAMES, G_GetGameState() == GS_LEVEL);
+
         // Tell Doomsday when the game is paused (clients can't pause
         // the game.)
         Set(DD_CLIENT_PAUSED, P_IsPaused());
     }
 
     // Must be called on every tick.
-    P_RunPlayers();
+    P_RunPlayers(tickDuration);
 
-    // Do main actions.
-    switch(G_GetGameState())
+    // The following is restricted to fixed 35 Hz ticks.
+    if(M_CheckTrigger(&fixed, tickDuration))
     {
-    case GS_LEVEL:
-        // update in-level game status cvar
-        if(oldgamestate != GS_LEVEL)
-            gsvInLevel = 1;
+        // Do main actions.
+        switch(G_GetGameState())
+        {
+        case GS_LEVEL:
+            // update in-level game status cvar
+            if(oldgamestate != GS_LEVEL)
+                gsvInLevel = 1;
 
-        P_DoTick();
+            P_DoTick();
 
-        HU_UpdatePsprites();
+            HU_UpdatePsprites();
 
-        // Active briefings once again (they were disabled when loading
-        // a saved game).
-        brief_disabled = false;
+            // Active briefings once again (they were disabled when loading
+            // a saved game).
+            brief_disabled = false;
 
-        if(IS_DEDICATED)
+            if(IS_DEDICATED)
+                break;
+
+            ST_Ticker();
+            AM_Ticker();
+            HU_Ticker();
             break;
 
-        ST_Ticker();
-        AM_Ticker();
-        HU_Ticker();
-        break;
+        case GS_INTERMISSION:
+    #if __JDOOM__
+            WI_Ticker();
+    #else
+            IN_Ticker();
+    #endif
 
-    case GS_INTERMISSION:
-#if __JDOOM__
-        WI_Ticker();
-#else
-        IN_Ticker();
-#endif
-
-    default:
-        if(oldgamestate != G_GetGameState())
-        {
-            // update game status cvars
-            gsvInLevel = 0;
-            Con_SetString("map-name", NOTAMAPNAME, 1);
-            gsvMapMusic = -1;
+        default:
+            if(oldgamestate != G_GetGameState())
+            {
+                // update game status cvars
+                gsvInLevel = 0;
+                Con_SetString("map-name", NOTAMAPNAME, 1);
+                gsvMapMusic = -1;
+            }
+            break;
         }
-        break;
+
+        // Update the game status cvars for player data
+        G_UpdateGSVarsForPlayer(plyr);
+
+        // Update view window size.
+        R_ViewWindowTicker();
+
+        // InFine ticks whenever it's active.
+        FI_Ticker();
+
+        // Servers will have to update player information and do such stuff.
+        if(!IS_CLIENT)
+            NetSv_Ticker();    
     }
 
-    oldgamestate = gamestate;
-
-    // Update the game status cvars for player data
-    G_UpdateGSVarsForPlayer(plyr);
-
-    // Update view window size.
-    R_ViewWindowTicker();
-
-    // InFine ticks whenever it's active.
-    FI_Ticker();
-
-    // Servers will have to update player information and do such stuff.
-    if(!IS_CLIENT)
-        NetSv_Ticker();
+    oldgamestate = gamestate;    
 }
 
 /*

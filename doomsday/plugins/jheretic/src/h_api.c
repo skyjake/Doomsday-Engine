@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2006-2007 Jaakko Keränen <skyjake@dengine.net>
  *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -57,7 +57,7 @@ void    H_PostInit(void);
 void    R_InitTranslationTables(void);
 
 // Timeing loop
-void    H_Ticker(void);
+void    H_Ticker(timespan_t tickDuration);
 
 // Drawing
 void    D_Display(void);
