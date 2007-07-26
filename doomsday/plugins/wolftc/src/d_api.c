@@ -48,7 +48,7 @@ void    D_PostInit(void);
 void    R_InitTranslation(void);
 
 // Timeing loop
-void    D_Ticker(void);
+void    D_Ticker(timespan_t tickDuration);
 
 // Drawing
 void    D_Display(void);
