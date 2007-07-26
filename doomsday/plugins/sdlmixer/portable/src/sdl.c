@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,11 +83,14 @@ void DM_Ext_Set(int property, float value)
 	if(!sdlInitOk)
 		return;
 
-	switch (property)
+	switch(property)
 	{
 	case MUSIP_VOLUME:
-		Mix_VolumeMusic(MIX_MAX_VOLUME * value);
+		Mix_VolumeMusic((int) (MIX_MAX_VOLUME * value));
 		break;
+
+    default:
+        break;
 	}
 }
 
@@ -95,7 +99,7 @@ int DM_Ext_Get(int property, void *value)
 	if(!sdlInitOk)
 		return false;
 
-	switch (property)
+	switch(property)
 	{
 	case MUSIP_ID:
 		strcpy(value, "SDLMixer/Ext");
@@ -207,7 +211,7 @@ int DM_Mus_Get(int property, void *value)
 	if(!sdlInitOk)
 		return false;
 
-	switch (property)
+	switch(property)
 	{
 	case MUSIP_ID:
 		strcpy(value, "SDLMixer/Mus");
@@ -236,7 +240,7 @@ void *DM_Mus_SongBuffer(int length)
 
 int	DM_Mus_Play(int looped)
 {
-	char *command = getenv("DENG_MIDI_CMD");
+	char       *command = getenv("DENG_MIDI_CMD");
 
 	if(command == NULL)
 		command = DEFAULT_MIDI_COMMAND;

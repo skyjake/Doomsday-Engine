@@ -4,6 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -138,8 +139,8 @@ static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
 static boolean getNextEvent(struct midi_event *ev)
 {
 	struct mus_event evDesc;
-	int     i;
-	byte    musEvent;
+	int         i;
+	byte        musEvent;
 
 	ev->deltaTime = readTime;
 	readTime = 0;
@@ -151,7 +152,6 @@ static boolean getNextEvent(struct midi_event *ev)
 	ev->command = 0;
 	ev->size = 0;
 	memset(ev->parms, 0, sizeof(ev->parms));
-	//midiStatus = midiChan = midiParm1 = midiParm2 = 0;
 
 	// Construct the MIDI event.
 	switch(evDesc.event)
@@ -234,27 +234,29 @@ static boolean getNextEvent(struct midi_event *ev)
 		return true;
 
 	// Read the time delta.
-	for(readTime = 0;;)
+    readTime = 0;
+	do
 	{
 		i = *readPos++;
 		readTime = (readTime << 7) + (i & 0x7f);
-		if(!(i & 0x80))
-			break;
-	}
-	return true;
+	} while(i & 0x80);
+
+    return true;
 }
 
-/*
- * The MUS data is in the 'data' buffer, whose size of 'length' bytes.
- * The resulting MIDI data will be written to the file 'outFile'.
+/**
+ * @param data          The MUS data to convert.
+ * @param length        The length of the data in bytes.
+ * @param outFile       Name of the file the resulting MIDI data will be
+ *                      written to.
  */
 void convertMusToMidi(unsigned char *data, uint length, const char *outFile)
 {
-	FILE *file;
+	FILE       *file;
 	unsigned char buffer[80];
-	int trackSizeOffset;
-	int trackSize;
-	int i;
+	int         trackSizeOffset;
+	int         trackSize;
+	int         i;
 	struct midi_event event;
 	struct mus_header *header;
 
@@ -310,12 +312,12 @@ void convertMusToMidi(unsigned char *data, uint length, const char *outFile)
 	readPos = data + USHORT(header->scoreStart);
 	readTime = 0;
 	// Init channel volumes.
-	for(i = 0; i < 16; i++)
+	for(i = 0; i < 16; ++i)
 		chanVols[i] = 64;
 	
 	while(getNextEvent(&event))
 	{
-		// Delta time.  Split into 7-bit segments.
+		// Delta time. Split into 7-bit segments.
 		if(event.deltaTime == 0)
 		{
 			buffer[0] = 0;
@@ -330,7 +332,8 @@ void convertMusToMidi(unsigned char *data, uint length, const char *outFile)
 				if(i > 0) buffer[i] |= 0x80;
 				event.deltaTime >>= 7;
 			}
-			// The bytes are written starting from the MSB.
+
+            // The bytes are written starting from the MSB.
 			for(; i >= 0; --i)
 				fwrite(&buffer[i], 1, 1, file);
 		}
@@ -347,8 +350,7 @@ void convertMusToMidi(unsigned char *data, uint length, const char *outFile)
 	buffer[3] = 0;
 	fwrite(buffer, 4, 1, file);
 
-	// All the MIDI data has now been written.  Update the track
-	// length.
+	// All the MIDI data has now been written. Update the track length.
 	trackSize = ftell(file) - trackSizeOffset - 4;
 	fseek(file, trackSizeOffset, SEEK_SET);
 
