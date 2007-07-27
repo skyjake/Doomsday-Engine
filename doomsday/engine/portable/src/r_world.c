@@ -2167,6 +2167,7 @@ line_t *R_FindLineAlignNeighbor(sector_t *sec, line_t *line,
 void R_InitLinks(void)
 {
     uint        i;
+    uint        starttime;
 
     Con_Message("R_InitLinks: Initializing\n");
 
@@ -2178,9 +2179,14 @@ void R_InitLinks(void)
     NP_Init(&linenodes, numlines + 1000);
 
     // Allocate the rings.
+    starttime = Sys_GetRealTime();
     linelinks = Z_Malloc(sizeof(*linelinks) * numlines, PU_LEVELSTATIC, 0);
     for(i = 0; i < numlines; ++i)
         linelinks[i] = NP_New(&linenodes, NP_ROOT_NODE);
+    // How much time did we spend?
+    VERBOSE(Con_Message
+            ("R_InitLinks: Allocating line link rings Done in %.2f seconds.\n",
+             (Sys_GetRealTime() - starttime) / 1000.0f));
 }
 
 /**
