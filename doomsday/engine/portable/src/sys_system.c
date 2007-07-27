@@ -160,7 +160,7 @@ int Sys_CriticalMessage(char *msg)
     suspendMsgPump = true;
     GetWindowText(hWnd, buf, 255);
     ret =
-        (MessageBox(hWnd, _T(*msg), _T(*buf),
+        (MessageBox(hWnd, LPCTSTR(msg), LPCTSTR(buf),
                     MB_OK | MB_ICONEXCLAMATION) ==
          IDYES);
     suspendMsgPump = false;
