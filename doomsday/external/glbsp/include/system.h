@@ -2,7 +2,7 @@
 // SYSTEM : Bridging code
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
@@ -24,12 +24,6 @@
 #include "glbsp.h"
 
 
-// consistency check
-#if (!defined(GLBSP_TEXT) && !defined(GLBSP_GUI) && !defined(GLBSP_PLUGIN))
-#error Must define one of GLBSP_TEXT, GLBSP_GUI or GLBSP_PLUGIN 
-#endif
-
-
 // use this for inlining.  Usually defined in the makefile.
 #ifndef INLINE_G
 #define INLINE_G  /* nothing */
@@ -46,17 +40,17 @@ extern volatile nodebuildcomms_t *cur_comms;
 /* ----- function prototypes ---------------------------- */
 
 // fatal error messages (these don't return)
-void FatalError(const char *str, ...) PRINTF_F(1,2);
-void InternalError(const char *str, ...) PRINTF_F(1,2);
+void FatalError(const char *str, ...) GCCATTR((format (printf, 1, 2)));
+void InternalError(const char *str, ...) GCCATTR((format (printf, 1, 2)));
 
 // display normal messages & warnings to the screen
-void PrintMsg(const char *str, ...) PRINTF_F(1,2);
-void PrintVerbose(const char *str, ...) PRINTF_F(1,2);
-void PrintWarn(const char *str, ...) PRINTF_F(1,2);
-void PrintMiniWarn(const char *str, ...) PRINTF_F(1,2);
+void PrintMsg(const char *str, ...) GCCATTR((format (printf, 1, 2)));
+void PrintVerbose(const char *str, ...) GCCATTR((format (printf, 1, 2)));
+void PrintWarn(const char *str, ...) GCCATTR((format (printf, 1, 2)));
+void PrintMiniWarn(const char *str, ...) GCCATTR((format (printf, 1, 2)));
 
 // set message for certain errors
-void SetErrorMsg(const char *str);
+void SetErrorMsg(const char *str, ...) GCCATTR((format (printf, 1, 2)));
 
 // endian handling
 void InitEndian(void);
@@ -66,7 +60,7 @@ uint32_g Endian_U32(uint32_g);
 // these are only used for debugging
 void InitDebug(void);
 void TermDebug(void);
-void PrintDebug(const char *str, ...) PRINTF_F(1,2);
+void PrintDebug(const char *str, ...) GCCATTR((format (printf, 1, 2)));
 
 // macros for the display stuff
 #define DisplayOpen        (* cur_funcs->display_open)

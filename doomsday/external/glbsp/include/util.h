@@ -2,7 +2,7 @@
 // UTILITY : general purpose functions
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
@@ -55,14 +55,19 @@ void *UtilRealloc(void *old, int size);
 char *UtilStrDup(const char *str);
 char *UtilStrNDup(const char *str, int size);
 
+// format the string and return the allocated memory.
+// The memory must be freed with UtilFree.
+char *UtilFormat(const char *str, ...) GCCATTR((format (printf, 1, 2)));
+
 // free some memory or a string.
 void UtilFree(void *data);
 
 // compare two strings case insensitively.
 int UtilStrCaseCmp(const char *A, const char *B);
 
-// return a string for the current data and time
-const char *UtilTimeString(void);
+// return an allocated string for the current data and time,
+// or NULL if an error occurred.
+char *UtilTimeString(void);
 
 // round a positive value up to the nearest power of two.
 int UtilRoundPOW2(int x);

@@ -2,7 +2,7 @@
 // SYSTEM : System specific code
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
@@ -39,7 +39,9 @@
 static int cpu_big_endian = 0;
 
 
-static char message_buf[1024];
+#define SYS_MSG_BUFLEN  4000
+
+static char message_buf[SYS_MSG_BUFLEN];
 
 #if DEBUG_ENABLED
 static FILE *debug_fp = NULL;
@@ -54,7 +56,7 @@ void FatalError(const char *str, ...)
   va_list args;
 
   va_start(args, str);
-  vsprintf(message_buf, str, args);
+  vsnprintf(message_buf, sizeof(message_buf), str, args);
   va_end(args);
 
   (* cur_funcs->fatal_error)("\nError: *** %s ***\n\n", message_buf);
@@ -68,7 +70,7 @@ void InternalError(const char *str, ...)
   va_list args;
 
   va_start(args, str);
-  vsprintf(message_buf, str, args);
+  vsnprintf(message_buf, sizeof(message_buf), str, args);
   va_end(args);
 
   (* cur_funcs->fatal_error)("\nINTERNAL ERROR: *** %s ***\n\n", message_buf);
@@ -82,7 +84,7 @@ void PrintMsg(const char *str, ...)
   va_list args;
 
   va_start(args, str);
-  vsprintf(message_buf, str, args);
+  vsnprintf(message_buf, sizeof(message_buf), str, args);
   va_end(args);
 
   (* cur_funcs->print_msg)("%s", message_buf);
@@ -99,23 +101,15 @@ void PrintVerbose(const char *str, ...)
 {
   va_list args;
 
-  if (! cur_info->quiet)
-  {
-    va_start(args, str);
-    vsprintf(message_buf, str, args);
-    va_end(args);
+  va_start(args, str);
+  vsnprintf(message_buf, sizeof(message_buf), str, args);
+  va_end(args);
 
+  if (! cur_info->quiet)
     (* cur_funcs->print_msg)("%s", message_buf);
-  }
 
 #if DEBUG_ENABLED
-  {
-    va_start(args, str);
-    vsprintf(message_buf, str, args);
-    va_end(args);
-
     PrintDebug(">>> %s", message_buf);
-  }
 #endif
 }
 
@@ -127,7 +121,7 @@ void PrintWarn(const char *str, ...)
   va_list args;
 
   va_start(args, str);
-  vsprintf(message_buf, str, args);
+  vsnprintf(message_buf, sizeof(message_buf), str, args);
   va_end(args);
 
   (* cur_funcs->print_msg)("Warning: %s", message_buf);
@@ -146,22 +140,16 @@ void PrintMiniWarn(const char *str, ...)
 {
   va_list args;
 
-  if (cur_info->mini_warnings)
-  {
-    va_start(args, str);
-    vsprintf(message_buf, str, args);
-    va_end(args);
+  va_start(args, str);
+  vsnprintf(message_buf, sizeof(message_buf), str, args);
+  va_end(args);
 
+  if (cur_info->mini_warnings)
     (* cur_funcs->print_msg)("Warning: %s", message_buf);
-  }
 
   cur_comms->total_small_warn++;
 
 #if DEBUG_ENABLED
-  va_start(args, str);
-  vsprintf(message_buf, str, args);
-  va_end(args);
-
   PrintDebug("MiniWarn: %s", message_buf);
 #endif
 }
@@ -169,11 +157,17 @@ void PrintMiniWarn(const char *str, ...)
 //
 // SetErrorMsg
 //
-void SetErrorMsg(const char *str)
+void SetErrorMsg(const char *str, ...)
 {
+  va_list args;
+
+  va_start(args, str);
+  vsnprintf(message_buf, sizeof(message_buf), str, args);
+  va_end(args);
+
   GlbspFree(cur_comms->message);
 
-  cur_comms->message = GlbspStrDup(str);
+  cur_comms->message = GlbspStrDup(message_buf);
 }
 
 
@@ -251,16 +245,16 @@ void InitEndian(void)
   /* sanity-check type sizes */
 
   if (sizeof(uint8_g) != 1)
-    FatalError("Sanity check failed: sizeof(uint8_g) = %lu", 
-               (unsigned long) sizeof(uint8_g));
+    FatalError("Sanity check failed: sizeof(uint8_g) = %d", 
+        (int)sizeof(uint8_g));
 
   if (sizeof(uint16_g) != 2)
-    FatalError("Sanity check failed: sizeof(uint16_g) = %lu", 
-               (unsigned long) sizeof(uint16_g));
+    FatalError("Sanity check failed: sizeof(uint16_g) = %d", 
+        (int)sizeof(uint16_g));
 
   if (sizeof(uint32_g) != 4)
-    FatalError("Sanity check failed: sizeof(uint32_g) = %lu", 
-               (unsigned long) sizeof(uint32_g));
+    FatalError("Sanity check failed: sizeof(uint32_g) = %d", 
+        (int)sizeof(uint32_g));
 
   /* check endianness */
 

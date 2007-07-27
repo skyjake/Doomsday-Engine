@@ -2,7 +2,7 @@
 // BLOCKMAP : Generate the blockmap
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
@@ -24,7 +24,7 @@
 #include "structs.h"
 #include "level.h"
 
-#define DEFAULT_BLOCK_LIMIT  44000
+#define DEFAULT_BLOCK_LIMIT  16000
 
 // compute blockmap origin & size (the block_x/y/w/h variables)
 // based on the set of loaded linedefs.

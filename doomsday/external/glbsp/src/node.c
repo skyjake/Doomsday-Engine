@@ -2,7 +2,7 @@
 // NODE : Recursively create nodes and return the pointers.
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
@@ -412,6 +412,10 @@ superblock_t *CreateSegs(void)
     if (line->overlap)
       continue;
 
+    // ignore self-referencing lines (only when explicitly disabled)
+    if (line->self_ref && cur_info->skip_self_ref)
+      continue;
+
     // check for Humungously long lines
     if (ABS(line->start->x - line->end->x) >= 10000 ||
         ABS(line->start->y - line->end->y) >= 10000)
@@ -464,8 +468,8 @@ superblock_t *CreateSegs(void)
         left->start   = line->end;
         left->end     = line->start;
         left->side    = 1;
-        left->linedef = NULL; // miniseg
-        left->sector  = NULL; //
+        left->linedef = right->linedef;
+        left->sector  = line->window_effect;
 
         left->source_line = line;
         left->index = -1;
@@ -583,12 +587,14 @@ static void ClockwiseOrder(subsec_t *sub)
   // referencing linedefs (they are often used for deep-water effects).
   for (i=0; i < total; i++)
   {
-    int cur_score = 2;
+    int cur_score = 3;
 
     if (! array[i]->linedef)
       cur_score = 0;
-    else if (array[i]->linedef->self_ref)
+    else if (array[i]->linedef->window_effect)
       cur_score = 1;
+    else if (array[i]->linedef->self_ref)
+      cur_score = 2;
 
     if (cur_score > score)
     {

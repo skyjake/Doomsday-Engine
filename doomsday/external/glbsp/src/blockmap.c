@@ -2,7 +2,7 @@
 // BLOCKMAP : Generate the blockmap
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
@@ -590,7 +590,7 @@ void PutBlockmap(void)
   block_overflowed = FALSE;
 
   // truncate blockmap if too large.  We're limiting the number of
-  // blocks to around 44000 (user changeable), this leaves about 20K
+  // blocks to around 16000 (user changeable), this leaves about 48K
   // of shorts for the actual line lists.
 
   if (block_count > cur_info->block_limit)
@@ -614,8 +614,8 @@ void PutBlockmap(void)
   if (block_overflowed)
     PrintVerbose("Blockmap overflowed (lump will be empty)\n");
   else
-    PrintVerbose("Completed blockmap building (compression: %d%%)\n",
-        block_compression);
+    PrintVerbose("Completed blockmap, size %dx%d (compression: %d%%)\n",
+        block_w, block_h, block_compression);
 
   FreeBlockmap();
 }

@@ -2,7 +2,7 @@
 // SEG : Choose the best Seg to use for a node line.
 //------------------------------------------------------------------------
 //
-//  GL-Friendly Node Builder (C) 2000-2005 Andrew Apted
+//  GL-Friendly Node Builder (C) 2000-2007 Andrew Apted
 //
 //  Based on 'BSP 2.3' by Colin Reed, Lee Killough and others.
 //
@@ -568,7 +568,7 @@ static int EvalPartition(superblock_t *seg_list, seg_t *part,
     return -1;
   
   /* make sure there is at least one real seg on each side */
-  if (!info.real_left || !info.real_right)
+  if (info.real_left == 0 || info.real_right == 0)
   {
 #   if DEBUG_PICKNODE
     PrintDebug("Eval : No real segs on %s%sside\n", 
@@ -1068,6 +1068,7 @@ void AddMinisegs(seg_t *part,
         cur->vertex->x, cur->vertex->y,
         cur->before ? cur->before->index : -1,
         cur->after ? cur->after->index : -1,
+        next->vertex,
         next->vertex->x, next->vertex->y,
         next->before ? next->before->index : -1,
         next->after ? next->after->index : -1);
