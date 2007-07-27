@@ -1304,6 +1304,7 @@ void PutNodes(char *name, int do_gl, int do_v5, node_t *root)
 
 
 /* ----- ZDBSP format writing --------------------------- */
+/** Disabled all zlib/zdoom related functions, we don't support compressed nodes
 
 static const uint8_g *lev_ZD_magic = (uint8_g *) "ZNOD";
 
@@ -1524,7 +1525,7 @@ void SaveZDFormat(node_t *root_node)
 
   ZLibFinishLump();
 }
-
+*/
 
 /* ----- whole-level routines --------------------------- */
 
@@ -1776,11 +1777,13 @@ void SaveLevel(node_t *root_node)
 
     if (lev_force_v5)
     {
+/** Disabled all zlib/zdoom related functions, we don't support compressed nodes
       // don't report a problem when -v5 was explicitly given
       if (cur_info->spec_version < 5)
         MarkZDSwitch();
 
       SaveZDFormat(root_node);
+*/
     }
     else
     {

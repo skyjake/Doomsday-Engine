@@ -1433,6 +1433,7 @@ void CloseWads(void)
 
 
 /* ---------------------------------------------------------------- */
+/** Disabled all zlib/zdoom related functions, we don't support compressed nodes
 
 static lump_t  *zout_lump;
 static z_stream zout_stream;
@@ -1524,6 +1525,7 @@ void ZLibFinishLump(void)
   zout_lump = NULL;
 }
 
+*/
 
 /* ---------------------------------------------------------------- */
 
