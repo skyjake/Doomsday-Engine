@@ -72,3 +72,4 @@ int			LZSSEXPORT	lzPutC(int c, LZFILE *f);
 #endif
 
 #endif
+
