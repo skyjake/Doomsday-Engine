@@ -259,7 +259,7 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
     }
 
     alBufferData(Buf(buf),
-                 sample->bytesPer == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
+                 sample->bytesper == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
                  sample->data, sample->size, sample->rate);
 
     error("Load", "BufferData");
