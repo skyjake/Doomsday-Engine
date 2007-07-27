@@ -242,9 +242,9 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
     *(Uint16 *) (conv + 20) = USHORT(1);
     *(Uint16 *) (conv + 22) = USHORT(1);
     *(Uint32 *) (conv + 24) = ULONG(sample->rate);
-    *(Uint32 *) (conv + 28) = ULONG(sample->rate * sample->bytesPer);
-    *(Uint16 *) (conv + 32) = USHORT(sample->bytesPer);
-    *(Uint16 *) (conv + 34) = USHORT(sample->bytesPer * 8);
+    *(Uint32 *) (conv + 28) = ULONG(sample->rate * sample->bytesper);
+    *(Uint16 *) (conv + 32) = USHORT(sample->bytesper);
+    *(Uint16 *) (conv + 34) = USHORT(sample->bytesper * 8);
 
     // Data chunk.
     strcpy(conv + 36, "data");
