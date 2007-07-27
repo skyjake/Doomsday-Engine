@@ -149,7 +149,7 @@ int Sys_CriticalMessage(char *msg)
     {
         suspendMsgPump = true;
         MessageBox(HWND_DESKTOP,
-                   _T("Sys_CriticalMessage: Main window not available."), NULL,
+                   ("Sys_CriticalMessage: Main window not available."), NULL,
                    MB_ICONERROR | MB_OK);
         suspendMsgPump = false;
         return false;
