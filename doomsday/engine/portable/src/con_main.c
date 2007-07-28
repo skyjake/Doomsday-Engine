@@ -914,7 +914,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     }
 
     // What *is* that?
-    Con_Printf("%s: no such command or variable.\n", args.argv[0]);
+    Con_Printf("%s: unknown identifier, or command arguments invalid.\n", args.argv[0]);
     return false;
 }
 

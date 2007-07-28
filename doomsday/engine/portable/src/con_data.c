@@ -562,14 +562,12 @@ if(cmd->params == NULL)
 ddccmd_t *Con_GetCommand(cmdargs_t *args)
 {
     uint        i;
-    boolean     found;
-    ddccmd_t    *ccmd = NULL;
+    ddccmd_t   *ccmd = NULL;
+    ddccmd_t   *matchingNameCmd = NULL;
 
     // \todo Use a faster than O(n) linear search. Note, ccmd->name is not
     //       a unique key (ccmds can share names if params differ).
-    found = false;
-    i = 0;
-    while(!found && i < numCCmds)
+    for(i = 0; i < numCCmds; ++i)
     {
         ccmd = &ccmds[i];
 
@@ -577,6 +575,10 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
         {
             boolean     invalidArgs = false;
 
+            // Remember the first one with a matching name.
+            if(!matchingNameCmd)
+                matchingNameCmd = ccmd;
+            
             // Are we validating the arguments?
             if(!(ccmd->minArgs == -1 && ccmd->maxArgs == -1))
             {
@@ -604,14 +606,17 @@ ddccmd_t *Con_GetCommand(cmdargs_t *args)
                 }
             }
             if(!invalidArgs)
-                found = true; // This is the one!
+                return ccmd; // This is the one!
         }
-        if(!found) // continue the search.
-            i++;
     }
 
-    if(found)
-        return ccmd;
+    if(matchingNameCmd)
+    {
+        // We did find a command, perhaps the user needs some help.
+        Con_PrintCCmdUsage(matchingNameCmd, false);
+    }
+
+    // No command found, or none with matching arguments.
     return NULL;
 }
 
