@@ -37,6 +37,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define EVTYPE_TO_CBDTYPE(evt)  ((evt) == E_AXIS? CBD_AXIS : (evt) == E_TOGGLE? CBD_TOGGLE : CBD_ANGLE)
+#define CBDTYPE_TO_EVTYPE(cbt)  ((cbt) == CBD_AXIS? E_AXIS : (cbt) == CBD_TOGGLE? E_TOGGLE : E_ANGLE)
 
 // TYPES -------------------------------------------------------------------
 
@@ -339,4 +340,40 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
     
     // Clamp appropriately.
     *pos = MINMAX_OF(-1.0f, *pos, 1.0f);
+}
+
+/**
+ * Does the opposite of the B_Parse* methods for a device binding, including the
+ * state conditions.
+ */
+void B_DeviceBindingToString(const dbinding_t* b, ddstring_t* str)
+{
+    int         i;
+    
+    Str_Clear(str);
+    
+    // Name of the device and the key/axis/hat.
+    B_AppendDeviceDescToString(b->device, CBDTYPE_TO_EVTYPE(b->type), b->id, str);
+    
+    if(b->type == CBD_ANGLE)
+    {
+        B_AppendAnglePositionToString(b->angle, str);
+    }
+    
+    // Additional flags.
+    if(b->flags & CBDF_TIME_STAGED)
+    {
+        Str_Append(str, "-staged");
+    }
+    if(b->flags & CBDF_INVERSE)
+    {
+        Str_Append(str, "-inverse");
+    }
+    
+    // Append any state conditions.
+    for(i = 0; i < b->numConds; ++i)
+    {
+        Str_Append(str, " + ");
+        B_AppendConditionToString(&b->conds[i], str);
+    }
 }

@@ -38,6 +38,8 @@
 #include "b_command.h"
 #include "p_control.h"
 
+#include <ctype.h>
+
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_BINDING_CLASS_NAME  "game"
@@ -68,13 +70,15 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-D_CMD(Bind);
-D_CMD(BindAxis);
+//D_CMD(Bind);
+//D_CMD(BindAxis);
+D_CMD(BindEventToCommand);
+D_CMD(BindControlToDevice);
+D_CMD(ListBindings);
+D_CMD(ListBindingClasses);
 D_CMD(ClearBindings);
 D_CMD(DeleteBind);
 D_CMD(EnableBindClass);
-D_CMD(ListBindings);
-D_CMD(ListBindClasses);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -223,7 +227,12 @@ bindclass_t ddBindClasses[] = {
 
 void B_Register(void)
 {
-    int        i;
+    C_CMD("bindevent",      "ss",   BindEventToCommand);
+    C_CMD("bindcontrol",    "ss",   BindControlToDevice);
+    C_CMD("listbclasses",   NULL,   ListBindingClasses);
+    C_CMD("listbindings",   NULL,   ListBindings);
+    
+    //int        i;
 
     /*
     C_CMD("bind",           NULL,   Bind);
@@ -275,7 +284,7 @@ void B_Init(void)
     B_BindControl("turn", "key-left-staged-inverse");
     B_BindControl("turn", "key-right-staged");
     B_BindControl("turn", "mouse-x");
-    B_BindControl("turn", "joy-x");
+    B_BindControl("turn", "joy-x + key-shift-up + joy-hat-center + key-code123-down");
     
     B_ActivateClass(B_ClassByName(DEFAULT_BINDING_CLASS_NAME), true);
     
@@ -301,19 +310,7 @@ void B_Init(void)
  */
 void B_Shutdown(void)
 {
-    /*
-    uint        i;
-    
-    B_ClearBindings(true, true); // All lists.
-    
-    // Now we can clear the bindClasses
-    for(i = 0; i < numBindClasses; ++i)
-        M_Free(bindClasses[i].name);
-    
-    M_Free(bindClasses);
-    bindClasses = NULL;
-    numBindClasses = maxBindClasses = 0;
-     */
+    B_DestroyAllClasses();
 }
 
 /**
@@ -348,7 +345,8 @@ const char* B_ParseClass(const char* desc, bclass_t** bc)
 evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
 {
     bclass_t* bc;
-
+    evbinding_t *b;
+    
     // The class may be included in the descriptor.
     eventDesc = B_ParseClass(eventDesc, &bc);
     if(!bc)
@@ -356,14 +354,19 @@ evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
         bc = B_ClassByName(DEFAULT_BINDING_CLASS_NAME);
     }
     
-    return B_NewCommandBinding(&bc->commandBinds, eventDesc, command);
+    if((b = B_NewCommandBinding(&bc->commandBinds, eventDesc, command)) != NULL)
+    {
+        B_UpdateDeviceStateAssociations();
+    }
+    return b;
 }
 
-controlbinding_t* B_BindControl(const char* controlDesc, const char* device)
+dbinding_t* B_BindControl(const char* controlDesc, const char* device)
 {
-    bclass_t* bc;
+    bclass_t* bc = 0;
     int localNum = 0;
     controlbinding_t* conBin = 0;
+    dbinding_t* devBin = 0;
     ddstring_t* str = 0;
     const char* ptr = 0;
     playercontrol_t* control = 0;
@@ -400,7 +403,7 @@ controlbinding_t* B_BindControl(const char* controlDesc, const char* device)
                          "bound to '%s'.\n", control->name, bc->name, localNum, device) );
     
     conBin = B_GetControlBinding(bc, control->id);
-    if(!B_NewDeviceBinding(&conBin->deviceBinds[localNum], device))
+    if(!(devBin = B_NewDeviceBinding(&conBin->deviceBinds[localNum], device)))
     {
         // Failure in the parsing.
         B_DestroyControlBinding(conBin);
@@ -408,9 +411,11 @@ controlbinding_t* B_BindControl(const char* controlDesc, const char* device)
         goto finished;
     }
     
+    B_UpdateDeviceStateAssociations();
+    
 finished:
     Str_Free(str);
-    return conBin;
+    return devBin;
 }
 
 dbinding_t* B_GetControlDeviceBindings(int localNum, int control, bclass_t** bClass)
@@ -422,6 +427,38 @@ dbinding_t* B_GetControlDeviceBindings(int localNum, int control, bclass_t** bCl
     bclass_t* bc = B_ClassByName(pc->bindClassName);
     if(bClass) *bClass = bc;
     return &B_GetControlBinding(bc, control)->deviceBinds[localNum];
+}
+
+D_CMD(BindEventToCommand)
+{
+    evbinding_t* b = B_BindCommand(argv[1], argv[2]);
+    if(b)
+    {
+        Con_Printf("Binding %i created.\n", b->bid);
+    }
+    return (b != NULL);
+}
+
+D_CMD(BindControlToDevice)
+{
+    dbinding_t* b = B_BindControl(argv[1], argv[2]);
+    if(b)
+    {
+        Con_Printf("Binding %i created.\n", b->bid);
+    }
+    return (b != NULL);
+}
+
+D_CMD(ListBindingClasses)
+{
+    B_PrintClasses();
+    return true;
+}
+
+D_CMD(ListBindings)
+{
+    B_PrintAllBindings();
+    return true;
 }
 
 #if 0
@@ -974,7 +1011,7 @@ const char *B_ShortNameForKey(int ddkey)
             return keyNames[idx].name;
     }
 
-    if(ddkey > 32 && ddkey < 127)
+    if(isalnum(ddkey))
     {
         // Printable character, fabricate a single-character name.
         nameBuffer[0] = tolower(ddkey);
@@ -996,7 +1033,7 @@ int B_KeyForShortName(const char *key)
             return keyNames[idx].key;
     }
     
-    if(strlen(key) == 1 && key[0] > 32 && key[0] < 127)
+    if(strlen(key) == 1 && isalnum(key[0]))
     {
         // ASCII char.
         return tolower(key[0]);
@@ -2115,8 +2152,9 @@ D_CMD(ListBindClasses)
 /**
  * List all control bindings for all devices (including inactive devices).
  */
+/*
 D_CMD(ListBindings)
-{/*
+{
     uint        i, g, comcount, bindClass = 0;
     char       *searchKey;
     uint       *num;
@@ -2180,8 +2218,9 @@ D_CMD(ListBindings)
         Con_Printf("Showing %i commands from %i bindings.\n",
                    comcount, totalBinds);
     }
- */   return true;
+    return true;
 }
+*/
 
 /**
  * Enables/disables binding classes.
@@ -2226,6 +2265,6 @@ D_CMD(EnableBindClass)
     if(B_SetBindClass(idx, (argc == 3)? atoi(argv[2]) : 2))
         return true;
     else
-        return false;*/
-    return true;
+        return false;
+*/    return true;
 }

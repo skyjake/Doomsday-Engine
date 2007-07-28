@@ -35,7 +35,7 @@ boolean     B_Responder(ddevent_t *ev);
 void        B_WriteToFile(FILE *file);
 
 struct evbinding_s* B_BindCommand(const char* eventDesc, const char* command);
-struct controlbinding_s* B_BindControl(const char* controlDesc, const char* device);
+struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);
 struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control, struct bclass_s** bClass);
 
 void        DD_AddBindClass(struct bindclass_s *);

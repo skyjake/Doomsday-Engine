@@ -236,14 +236,22 @@ desc = Create aliases for a (set of) console commands.
 desc = Set console background rotation speed.
 inf = Params: bgturn (speed)\nFor example, 'bgturn 20'.\nNegative speeds are allowed.
 
-[bind]
+[bindevent]
 desc = Bind a console command to an event.
+inf = Params: bindevent (event-descriptor) (command)\nExamples:\n  bindevent "key-M-down" {print "M was pressed"}\n  bindevent "mouse-right-up + key-shift" {print "RMB released while Shift down"}
 
-[bindr]
-desc = Bind a console command to an event (keys with repeat).
+[bindcontrol]
+desc = Bind an input device to a player control.
 
-[bindaxis]
-desc = Bind a device axis to an axis control.
+
+#[bind]
+#desc = Bind a console command to an event.
+
+#[bindr]
+#desc = Bind a console command to an event (keys with repeat).
+
+#[bindaxis]
+#desc = Bind a device axis to an axis control.
 
 [bledit]
 desc = Enter bias light edit mode.

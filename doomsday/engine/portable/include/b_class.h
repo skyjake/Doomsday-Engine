@@ -47,7 +47,9 @@ typedef struct bclass_s {
     controlbinding_t controlBinds;
 } bclass_t;
 
+void            B_UpdateDeviceStateAssociations(void);
 bclass_t       *B_NewClass(const char* name);
+void            B_DestroyAllClasses(void);
 void            B_ActivateClass(bclass_t* bc, boolean doActivate);
 bclass_t       *B_ClassByName(const char* name);
 int             B_ClassCount(void);
@@ -59,5 +61,7 @@ void            B_DestroyControlBinding(controlbinding_t* conBin);
 void            B_InitControlBindingList(controlbinding_t* listRoot);
 void            B_DestroyControlBindingList(controlbinding_t* listRoot);
 boolean         B_TryEvent(ddevent_t* event);
+void            B_PrintClasses(void);
+void            B_PrintAllBindings(void);
 
 #endif // __DOOMSDAY_BIND_CLASS_H__

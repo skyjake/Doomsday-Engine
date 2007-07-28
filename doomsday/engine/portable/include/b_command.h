@@ -50,6 +50,7 @@ void         B_InitCommandBindingList(evbinding_t* listRoot);
 void         B_DestroyCommandBindingList(evbinding_t* listRoot);
 evbinding_t* B_NewCommandBinding(evbinding_t* listRoot, const char* desc, const char* command);
 void         B_DestroyCommandBinding(evbinding_t* eb);
+void         B_EventBindingToString(const evbinding_t* eb, ddstring_t* str);
 boolean      B_TryCommandBinding(evbinding_t* eb, ddevent_t* event);
 
 #endif // __DOOMSDAY_BIND_COMMAND_H__

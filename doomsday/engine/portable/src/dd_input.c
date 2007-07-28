@@ -273,6 +273,13 @@ void I_InitInputDevices(void)
 	dev = &inputDevices[IDEV_MOUSE];
 	strcpy(dev->name, "mouse");
 	I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
+    
+    // The first five mouse buttons have symbolic names.
+    dev->keys[0].name = "left";
+    dev->keys[1].name = "middle";
+    dev->keys[2].name = "right";
+    dev->keys[3].name = "wheelup";
+    dev->keys[4].name = "wheeldown";
 
 	// The mouse wheel is translated to keys, so there is no need to
 	// create an axis for it.
@@ -436,6 +443,18 @@ int I_GetAxisByName(inputdev_t *device, const char *name)
 			return i;
 	}
 	return -1;
+}
+
+int I_GetKeyByName(inputdev_t* device, const char* name)
+{
+    int         i;
+    
+    for(i = 0; i < device->numKeys; ++i)
+    {
+        if(device->keys[i].name && !stricmp(device->keys[i].name, name))
+            return i;
+    }
+    return -1;
 }
 
 /**

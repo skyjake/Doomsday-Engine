@@ -150,32 +150,15 @@ boolean B_ParseKeyId(const char* desc, int* id)
 boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
 {
     // Maybe it's one of the buttons?
-    if(!strcasecmp(desc, "left"))
+    *id = I_GetKeyByName(I_GetDevice(IDEV_MOUSE, false), desc);
+    if(*id >= 0)
     {
+        // Got it.
         *type = E_TOGGLE;
-        *id = 0;
+        return true; 
     }
-    else if(!strcasecmp(desc, "middle"))
-    {
-        *type = E_TOGGLE;
-        *id = 1;
-    }
-    else if(!strcasecmp(desc, "right"))
-    {
-        *type = E_TOGGLE;
-        *id = 2;
-    }
-    else if(!strcasecmp(desc, "wheelup"))
-    {
-        *type = E_TOGGLE;
-        *id = 3;
-    }
-    else if(!strcasecmp(desc, "wheeldown"))
-    {
-        *type = E_TOGGLE;
-        *id = 4;
-    }
-    else if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6) // generic button
+    
+    if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6) // generic button
     {
         *type = E_TOGGLE;
         *id = strtoul(desc + 6, NULL, 10) - 1;
@@ -445,4 +428,103 @@ boolean B_CheckCondition(statecondition_t* cond)
             return fulfilled;
     }
     return !fulfilled;
+}
+
+void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str)
+{
+    inputdev_t* dev = I_GetDevice(device, false);
+    const char* name;
+    
+    // Name of the device.
+    Str_Append(str, dev->name);
+    Str_Append(str, "-");
+    
+    switch(type)
+    {
+        case E_TOGGLE:
+            if(dev->keys[id].name)
+            {
+                Str_Append(str, dev->keys[id].name);
+            }
+            else if(device == IDEV_KEYBOARD)
+            {
+                name = B_ShortNameForKey(id);
+                if(name)
+                    Str_Append(str, name);
+                else
+                    Str_Appendf(str, "code%03i", id);
+            }
+            else
+                Str_Appendf(str, "button%i",id + 1);
+            break;
+            
+        case E_AXIS:
+            Str_Append(str, dev->axes[id].name);
+            break;
+            
+        case E_ANGLE:
+            Str_Appendf(str, "hat%i", id + 1);
+            break;
+    }
+}
+
+void B_AppendToggleStateToString(ebstate_t state, ddstring_t* str)
+{
+    if(state == EBTOG_UNDEFINED)
+        Str_Append(str, "undefined");
+    if(state == EBTOG_DOWN)
+        Str_Append(str, "down");
+    if(state == EBTOG_REPEAT)
+        Str_Append(str, "repeat");
+    if(state == EBTOG_PRESS)
+        Str_Append(str, "press");
+    if(state == EBTOG_UP)
+        Str_Append(str, "up");
+}
+
+void B_AppendAnglePositionToString(float pos, ddstring_t* str)
+{
+    if(pos < 0)
+        Str_Append(str, "-center");
+    else
+        Str_Appendf(str, "-angle%g", pos);
+}
+
+/**
+ * @param str  The condition in textual format is appended here.
+ */
+void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
+{
+    B_AppendDeviceDescToString(cond->device, 
+                               cond->type == SCT_TOGGLE_STATE? E_TOGGLE :
+                               cond->type == SCT_AXIS_BEYOND? E_AXIS : E_ANGLE,
+                               cond->id, str);
+    
+    if(cond->type == SCT_TOGGLE_STATE)
+    {
+        Str_Append(str, "-");
+        B_AppendToggleStateToString(cond->state, str);
+    }
+    else if(cond->type == SCT_AXIS_BEYOND)
+    {
+        Str_Append(str, "-");
+        if(cond->state == EBAXIS_WITHIN)
+            Str_Appendf(str, "within %g", cond->pos);
+        else if(cond->state == EBAXIS_BEYOND)
+            Str_Appendf(str, "beyond %g", cond->pos);
+        else if(cond->state == EBAXIS_BEYOND_POSITIVE)
+            Str_Appendf(str, "pos %g", cond->pos);
+        else
+            Str_Appendf(str, "neg %g", cond->pos);
+    }
+    else if(cond->type == SCT_ANGLE_AT)
+    {
+        B_AppendAnglePositionToString(cond->pos, str);
+    }
+    
+    // Flags.
+    if(cond->negate)
+    {
+        Str_Append(str, "-not");
+    }
 }

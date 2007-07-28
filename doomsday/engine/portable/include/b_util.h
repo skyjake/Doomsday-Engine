@@ -29,6 +29,7 @@
 #define __DOOMSDAY_BIND_UTIL_H__
 
 #include "de_base.h"
+#include "m_string.h"
 
 // Event Binding Toggle State
 typedef enum ebstate_e {
@@ -68,5 +69,9 @@ boolean     B_ParseAnglePosition(const char* desc, float* pos);
 boolean     B_ParseStateCondition(statecondition_t* cond, const char* desc);
 boolean     B_CheckAxisPos(ebstate_t test, float testPos, float pos);
 boolean     B_CheckCondition(statecondition_t* cond);
+void        B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str);
+void        B_AppendToggleStateToString(ebstate_t state, ddstring_t* str);
+void        B_AppendAnglePositionToString(float pos, ddstring_t* str);
+void        B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str);
 
 #endif // __DOOMSDAY_BIND_UTIL_H__

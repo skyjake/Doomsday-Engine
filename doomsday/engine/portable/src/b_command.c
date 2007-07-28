@@ -384,3 +384,14 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event)
     Con_Executef(CMDS_BIND, false, eb->command);
     return true;
 }
+
+/**
+ * Does the opposite of the B_Parse* methods for event descriptor, including the
+ * state conditions.
+ */
+void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
+{
+    Str_Clear(str);
+    
+}
+

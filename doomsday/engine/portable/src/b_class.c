@@ -28,10 +28,12 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_misc.h"
 
 #include "b_main.h"
 #include "b_class.h"
+#include "p_control.h"
 
 #include <string.h>
 
@@ -56,9 +58,35 @@ static bclass_t** bindClasses;
 
 // CODE --------------------------------------------------------------------
 
-static void B_UpdateDeviceStateAssociations(void)
+/**
+ * Destroy all binding classes and the bindings within the classes.
+ * Called at shutdown time.
+ */
+void B_DestroyAllClasses(void)
+{
+    int     i;
+    
+    for(i = 0; i < bindClassCount; ++i)
+    {
+        B_DestroyClass(bindClasses[i]);
+    }
+    M_Free(bindClasses);
+    bindClasses = 0;
+    assert(bindClassCount == 0);
+}
+
+/**
+ * Marks all device states with the highest-priority binding class to which they have
+ * a connection via device bindings. This ensures that if a high-priority class is 
+ * using a particular device state, lower-priority classes will not be using the 
+ * same state for their own controls. 
+ *
+ * Called automatically whenever a class is activated or deactivated. 
+ */
+void B_UpdateDeviceStateAssociations(void)
 {
     bclass_t*   bc;
+    evbinding_t* eb;
     controlbinding_t* conBin;
     dbinding_t* db;
     int         i;
@@ -72,6 +100,30 @@ static void B_UpdateDeviceStateAssociations(void)
         // Skip inactive classes.
         if(!bc->active)
             continue;
+        
+        // Mark all event bindings in the class.
+        for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
+        {
+            inputdev_t* dev = I_GetDevice(eb->device, false);
+            switch(eb->type)
+            {
+                case E_TOGGLE:
+                    if(!dev->keys[eb->id].bClass)
+                        dev->keys[eb->id].bClass = bc;
+                    break;
+                    
+                case E_AXIS:
+                    if(!dev->axes[eb->id].bClass)
+                        dev->axes[eb->id].bClass = bc;
+                    break;
+                    
+                case E_ANGLE:
+                    if(!dev->hats[eb->id].bClass)
+                        dev->hats[eb->id].bClass = bc;
+                    break;
+            }
+        }
+        
         // All controls in the class.
         for(conBin = bc->controlBinds.next; conBin != &bc->controlBinds; 
             conBin = conBin->next)
@@ -288,4 +340,73 @@ boolean B_TryEvent(ddevent_t* event)
     }
     // Nobody used it.
     return false;
+}
+
+void B_PrintClasses(void)
+{
+    int         i;
+    bclass_t*   bc;
+    
+    Con_Printf("%i binding classes defined:\n", bindClassCount);
+    
+    for(i = 0; i < bindClassCount; ++i)
+    {
+        bc = bindClasses[i];
+        Con_Printf("[%3i] \"%s\" (%s)\n", i, bc->name, bc->active? "active" : "inactive");
+    }
+}
+
+void B_PrintAllBindings(void)
+{
+    int         i;
+    int         k;
+    bclass_t*   bc;
+    int         count;
+    evbinding_t* e;
+    controlbinding_t* c;
+    dbinding_t* d;
+    ddstring_t* str = Str_New();
+    
+    Con_Printf("%i binding classes defined.\n", bindClassCount);
+    
+    for(i = 0; i < bindClassCount; ++i)
+    {
+        bc = bindClasses[i];
+        
+        Con_Printf("Class \"%s\" (%s):\n", bc->name, bc->active? "active" : "inactive");
+        
+        // Commands.
+        for(count = 0, e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next, count++);
+        if(count)
+            Con_Printf("  %i event bindings:\n", count);
+        for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
+        {
+            B_EventBindingToString(e, str);
+            Con_Printf("  [%4i] %s : %s\n", e->bid, Str_Text(str), e->command);
+        }
+        
+        // Controls.
+        for(count = 0, c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next, count++);
+        if(count)
+            Con_Printf("  %i control bindings.\n", count);
+        for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
+        {
+            const char* controlName = P_PlayerControlById(c->control)->name;
+            Con_Printf("  Control \"%s\":\n", controlName);
+            for(k = 0; k < DDMAXPLAYERS; ++k)
+            {
+                for(count = 0, d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; 
+                    d = d->next, count++);
+                if(!count) continue;
+                Con_Printf("    Local player %i has %i device bindings for \"%s\":\n", 
+                           k + 1, count, controlName);
+                for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
+                {
+                    B_DeviceBindingToString(d, str);
+                    Con_Printf("    [%4i] %s\n", d->bid, Str_Text(str));
+                }                
+            }            
+        }
+    }             
+    Str_Free(str);
 }

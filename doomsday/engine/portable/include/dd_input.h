@@ -132,6 +132,7 @@ typedef struct inputdevkey_s {
     char    isDown;         // True/False for each key.
     uint    time;
     struct bclass_s* bClass;
+    const char* name;       // Symbolic name.
 } inputdevkey_t;
 
 typedef struct inputdevhat_s {
@@ -194,6 +195,7 @@ inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive);
 boolean     I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis);
 inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id);
 int         I_GetAxisByName(inputdev_t *device, const char *name);
+int         I_GetKeyByName(inputdev_t* device, const char* name);
 float       I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
 boolean     I_IsDeviceKeyDown(uint ident, uint code);
 
