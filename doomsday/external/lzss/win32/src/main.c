@@ -535,7 +535,7 @@ long Encrypt(long x)
 /* lzGetW:
  *  Reads a 16 bit word from a file, using intel byte ordering.
  */
-int lzGetW(LZFILE *f)
+int LZSSEXPORT lzGetW(LZFILE *f)
 {
 	int b1, b2;
 	
@@ -551,7 +551,7 @@ int lzGetW(LZFILE *f)
 /* LZGetL:
  *  Reads a 32 bit long from a file, using intel byte ordering.
  */
-long lzGetL(LZFILE *f)
+long LZSSEXPORT lzGetL(LZFILE *f)
 {
 	int b1, b2, b3, b4;
 	
@@ -570,7 +570,7 @@ long lzGetL(LZFILE *f)
 /* lzPutW:
  *  Writes a 16 bit int to a file, using intel byte ordering.
  */
-int lzPutW(int w, LZFILE *f)
+int LZSSEXPORT lzPutW(int w, LZFILE *f)
 {
 	int b1, b2;
 	
@@ -589,7 +589,7 @@ int lzPutW(int w, LZFILE *f)
 /* lzPutL:
  *  Writes a 32 bit long to a file, using intel byte ordering.
  */
-long lzPutL(long l, LZFILE *f)
+long LZSSEXPORT lzPutL(long l, LZFILE *f)
 {
 	int b1, b2, b3, b4;
 	
@@ -612,7 +612,7 @@ long lzPutL(long l, LZFILE *f)
 /* lzGetWm:
  *  Reads a 16 bit int from a file, using motorola byte-ordering.
  */
-int lzGetWm(LZFILE *f)
+int LZSSEXPORT lzGetWm(LZFILE *f)
 {
    int b1, b2;
 
@@ -628,7 +628,7 @@ int lzGetWm(LZFILE *f)
 /* lzGetLm:
  *  Reads a 32 bit long from a file, using motorola byte-ordering.
 */
-long lzGetLm(LZFILE *f)
+long LZSSEXPORT lzGetLm(LZFILE *f)
 {
 	int b1, b2, b3, b4;
 	
@@ -647,7 +647,7 @@ long lzGetLm(LZFILE *f)
 /* lzPutWm:
  *  Writes a 16 bit int to a file, using motorola byte-ordering.
  */
-int lzPutWm(int w, LZFILE *f)
+int LZSSEXPORT lzPutWm(int w, LZFILE *f)
 {
 	int b1, b2;
 	
@@ -666,7 +666,7 @@ int lzPutWm(int w, LZFILE *f)
 /* lzPutLm:
  *  Writes a 32 bit long to a file, using motorola byte-ordering.
  */
-long lzPutLm(long l, LZFILE *f)
+long LZSSEXPORT lzPutLm(long l, LZFILE *f)
 {
 	int b1, b2, b3, b4;
 	
@@ -707,7 +707,7 @@ long lzPutLm(long l, LZFILE *f)
  *  normal file in packed mode will cause errno to be set to EDOM.
  */
 
-LZFILE *lzOpen(char *filename, char *mode)
+LZFILE LZSSEXPORT *lzOpen(char *filename, char *mode)
 {
 	LZFILE *f, *f2;
 	FILE_SEARCH_STRUCT dta;
@@ -843,7 +843,7 @@ LZFILE *lzOpen(char *filename, char *mode)
  *  files: if the file was opened in read mode it will always succeed.
 */
 
-int lzClose(LZFILE *f)
+int LZSSEXPORT lzClose(LZFILE *f)
 {
 	if (f) {
 		if (f->flags & LZFILE_FLAG_WRITE) {
@@ -871,7 +871,7 @@ int lzClose(LZFILE *f)
  *  Like the stdio fseek() function, but only supports forward seeks 
  *  relative to the current file position.
  */
-int lzSeek(LZFILE *f, int offset)
+int LZSSEXPORT lzSeek(LZFILE *f, int offset)
 {
 	int i;
 	
@@ -937,7 +937,7 @@ int lzSeek(LZFILE *f, int offset)
  *  When you have finished reading or writing a chunk, you should call
  *  lzCloseChunk() to return to your original file.
  */
-LZFILE *lzOpenChunk(LZFILE *f, int pack)
+LZFILE LZSSEXPORT *lzOpenChunk(LZFILE *f, int pack)
 {
 	int c;
 	char *name;
@@ -1012,7 +1012,7 @@ LZFILE *lzOpenChunk(LZFILE *f, int pack)
  *  passed to lzOpenChunk()), to allow you to read or write data 
  *  after the chunk.
  */
-LZFILE *lzCloseChunk(LZFILE *f)
+LZFILE LZSSEXPORT *lzCloseChunk(LZFILE *f)
 {
 	LZFILE *parent = f->parent;
 	LZFILE *tmp;
@@ -1074,7 +1074,7 @@ LZFILE *lzCloseChunk(LZFILE *f)
  *  number of items read, which will be less than n if EOF is reached or an 
  *  error occurs. Error codes are stored in errno.
  */
-long lzRead(void *p, long n, LZFILE *f)
+long LZSSEXPORT lzRead(void *p, long n, LZFILE *f)
 {
 	long c;                       /* counter of bytes read */
 	int i;
@@ -1102,7 +1102,7 @@ long lzRead(void *p, long n, LZFILE *f)
  *  of items written, which will be less than n if an error occurs. Error 
  *  codes are stored in errno.
  */
-long lzWrite(void *p, long n, LZFILE *f)
+long LZSSEXPORT lzWrite(void *p, long n, LZFILE *f)
 {
 	long c;                       /* counter of bytes written */
 	unsigned char *cp = (unsigned char *)p;
@@ -1128,7 +1128,7 @@ long lzWrite(void *p, long n, LZFILE *f)
  *  pointer to where it stored the text, or NULL on error. The end of line
  *  is handled by detecting '\n' characters: '\r' is simply ignored.
  */
-char *lzGetS(char *p, int max, LZFILE *f)
+char LZSSEXPORT *lzGetS(char *p, int max, LZFILE *f)
 {
 	int c;
 	
@@ -1159,7 +1159,7 @@ char *lzGetS(char *p, int max, LZFILE *f)
  *  Writes a string to a text file, returning zero on success, -1 on error.
  *  EOL ('\n') characters are expanded to CR/LF ('\r\n') pairs.
  */
-int lzPutS(char *p, LZFILE *f)
+int LZSSEXPORT lzPutS(char *p, LZFILE *f)
 {
 	while (*p) {
 		if (*p == '\n') {
@@ -1258,7 +1258,7 @@ err:
 }
 
 
-int lzGetC(LZFILE *f)
+int LZSSEXPORT lzGetC(LZFILE *f)
 {
    f->buf_size--;
    if (f->buf_size > 0)
@@ -1268,7 +1268,7 @@ int lzGetC(LZFILE *f)
 }
 
 
-int lzPutC(int c, LZFILE *f)
+int LZSSEXPORT lzPutC(int c, LZFILE *f)
 {
    f->buf_size++;
    if (f->buf_size >= F_BUF_SIZE)
@@ -1280,7 +1280,7 @@ int lzPutC(int c, LZFILE *f)
 /* LZPassword:
  *  Sets the password to be used by all future read/write operations.
  */
-void lzPassword(char *password)
+void LZSSEXPORT lzPassword(char *password)
 {
 	if (password) {
 		strncpy(thepassword, password, 255);
