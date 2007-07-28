@@ -110,12 +110,16 @@
  ./../../engine/portable/src/sys_filein.c
  ./../../engine/portable/src/sys_direc.c
  ./../../engine/win32/src/sys_console.c
+ ./../../engine/portable/src/b_class.c
+ ./../../engine/portable/src/b_command.c
+ ./../../engine/portable/src/b_device.c
+ ./../../engine/portable/src/b_main.c
+ ./../../engine/portable/src/b_util.c
  ./../../engine/portable/src/con_busy.c
  ./../../engine/portable/src/con_data.c
  ./../../engine/portable/src/con_buffer.c
  ./../../engine/portable/src/con_main.c
  ./../../engine/portable/src/con_config.c
- ./../../engine/portable/src/con_bind.c
  ./../../engine/portable/src/con_bar.c
  ./../../engine/portable/src/dd_zone.c
  ./../../engine/portable/src/dd_zip.c

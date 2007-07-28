@@ -225,6 +225,26 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath="..\..\..\engine\portable\src\b_class.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\b_command.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\b_device.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\b_main.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\b_util.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\cl_frame.c"
 				>
 			</File>
@@ -258,10 +278,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\con_bar.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\con_bind.c"
 				>
 			</File>
 			<File
@@ -804,20 +820,6 @@
 				<File
 					RelativePath="..\..\..\engine\win32\src\sys_window.c"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter
@@ -1098,6 +1100,26 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
+				RelativePath="..\..\..\engine\portable\include\b_class.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\b_command.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\b_device.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\b_main.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\b_util.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\cl_def.h"
 				>
 			</File>
@@ -1123,10 +1145,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\con_bar.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\con_bind.h"
 				>
 			</File>
 			<File
@@ -1679,10 +1697,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_sock.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\sys_stwin.h"
 				>
 			</File>
 			<File
