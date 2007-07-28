@@ -1,6 +1,6 @@
 #include "Find.h"
 
-int myfindfirst(char *filename, struct finddata *dta, long attrib)
+int lzssfindfirst(char *filename, struct finddata *dta, long attrib)
 {
 	dta->hFile = _findfirst(filename, &dta->data);
 	
@@ -13,7 +13,7 @@ int myfindfirst(char *filename, struct finddata *dta, long attrib)
 	return dta->hFile<0;
 }
 
-int myfindnext(struct finddata *dta)
+int lzssfindnext(struct finddata *dta)
 {
 	int r = _findnext(dta->hFile, &dta->data);
 
@@ -26,7 +26,7 @@ int myfindnext(struct finddata *dta)
 	return r;
 }
 
-void myfindend(struct finddata *dta)
+void lzssfindend(struct finddata *dta)
 {
 	_findclose(dta->hFile);
 }
