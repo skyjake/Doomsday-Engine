@@ -519,7 +519,7 @@ static void bufferFlush(cbuffer_t *buf)
     //
     // Flush the write buffer.
     //
-    len = strlen(buf->writebuf);
+    len = buf->wbc;
     if(line->text != NULL)
     {   // We are re-using an existing line so we may not need to
         // reallocate at all.
@@ -531,7 +531,7 @@ static void bufferFlush(cbuffer_t *buf)
         line->text = M_Malloc(len + 1);
     }
 
-    strcpy(line->text, buf->writebuf);
+    strncpy(line->text, buf->writebuf, len);
     line->text[len] = 0;
     line->len = len;
     line->flags = buf->wbFlags;
