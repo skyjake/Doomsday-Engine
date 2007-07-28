@@ -37,31 +37,26 @@
 #include "de_system.h"
 #include "de_graphics.h"
 
+#include "b_main.h"
+#include "b_device.h"
+
 // MACROS ------------------------------------------------------------------
 
+/*
 // Number of triggered impulses buffered into each player's control state
 // table.  The buffer is emptied when a ticcmd is built.
 #define MAX_IMPULSES 	8
 #define MAX_DESCRIPTOR_LENGTH 20
 
 #define SLOW_TURN_TIME  (6.0f / 35)
-
+*/
 // TYPES -------------------------------------------------------------------
-
-// Built-in controls.
-enum
-{
-	CTL_WALK = 0,
-	CTL_SIDESTEP,
-	CTL_TURN,
-    CTL_ZFLY,
-	CTL_LOOK
-};
 
 /**
  * The control descriptors contain a mapping between symbolic control
  * names and the identifier numbers.
  */ 
+/*
 typedef struct controldesc_s {
 	char    name[MAX_DESCRIPTOR_LENGTH + 1];
 } controldesc_t;
@@ -70,11 +65,11 @@ typedef struct controlclass_s {
 	uint    count;
 	controldesc_t *desc;
 } controlclass_t;
-
+*/
 /**
  * Each player has his own control state table.
  */
-typedef struct controlstate_s {
+/*typedef struct controlstate_s {
 	// The axes are updated whenever their values are needed,
 	// i.e. during the call to P_BuildCommand.
 	controlaxis_t *axes;
@@ -86,48 +81,194 @@ typedef struct controlstate_s {
 	uint    head, tail;
 	impulse_t impulses[MAX_IMPULSES];
 } controlstate_t;
+*/
+
+typedef struct impulsecounter_s {
+    int     control;
+    short   counts[DDMAXPLAYERS];
+} impulsecounter_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(ListPlayerControls);
+D_CMD(Impulse);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static uint controlFind(controlclass_t *cl, const char *name);
+//static uint controlFind(controlclass_t *cl, const char *name);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern unsigned int numBindClasses;
+//extern unsigned int numBindClasses;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
+/*
 // Control class names - [singular, plural].
 const char *ctlClassNames[NUM_CONTROL_CLASSES][NUM_CONTROL_CLASSES] = {
     {{"Axis"}, {"Axes"}},
     {{"Toggle"}, {"Toggles"}},
     {{"Impulse"}, {"Impulses"}}
-};
+};*/
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int ctlInfo = false;
+/*static int ctlInfo = false;
 static controlclass_t ctlClass[NUM_CONTROL_CLASSES];
 static controlstate_t ctlState[DDMAXPLAYERS];
+*/
+
+static playercontrol_t* playerControls;
+static impulsecounter_t** impulseCounts;
+static int playerControlCount;
 
 // CODE --------------------------------------------------------------------
 
-/***
- * Register the console commands and cvars of the player controls subsystem. 
- */
-void P_RegisterControl(void)
+static playercontrol_t* P_AllocPlayerControl(void)
 {
-    C_CMD("listcontrols",    "",     ListPlayerControls);
-    
-    C_VAR_INT("ctl-info", &ctlInfo, CVF_NO_ARCHIVE, 0, 1);
+    playerControls = M_Realloc(playerControls, sizeof(playercontrol_t) *
+                               ++playerControlCount);
+    impulseCounts = M_Realloc(impulseCounts, sizeof(impulsecounter_t*) *
+                              playerControlCount);
+    memset(&playerControls[playerControlCount - 1], 0, sizeof(playercontrol_t));
+    impulseCounts[playerControlCount - 1] = NULL;
+    return &playerControls[playerControlCount - 1];
 }
 
+/**
+ * Register the console commands and cvars of the player controls subsystem. 
+ */
+void P_ControlRegister(void)
+{
+    C_CMD("listcontrols",   "",     ListPlayerControls);
+    C_CMD("impulse",        NULL,   Impulse);
+    
+    // TEST: Default controls.
+    P_AddPlayerControl(CTL_TURN, CTLT_NUMERIC, "turn", "game");
+}
+
+/** 
+ * This function is exported, so that plugins can register their controls.
+ */ 
+void P_AddPlayerControl(int id, controltype_t type, const char *name, const char* bindClass)
+{
+    playercontrol_t *pc = P_AllocPlayerControl();
+    pc->id = id;
+    pc->type = type;
+    pc->name = strdup(name);
+    pc->bindClassName = strdup(bindClass);
+    
+    if(type == CTLT_IMPULSE)
+    {
+        // Also allocate the impulse counter.
+        impulseCounts[pc - playerControls] = M_Calloc(sizeof(impulsecounter_t));
+    }
+}
+
+playercontrol_t* P_PlayerControlById(int id)
+{
+    int     i;
+    
+    for(i = 0; i < playerControlCount; ++i)
+    {
+        if(playerControls[i].id == id)
+            return playerControls + i;
+    }
+    return NULL;
+}
+
+playercontrol_t* P_PlayerControlByName(const char* name)
+{
+    int     i;
+    
+    for(i = 0; i < playerControlCount; ++i)
+    {
+        if(!strcasecmp(playerControls[i].name, name))
+            return playerControls + i;
+    }
+    return NULL;
+}
+
+void P_ControlShutdown(void)
+{
+    int     i;
+    
+    for(i = 0; i < playerControlCount; ++i)
+    {
+        free(playerControls[i].name);
+        free(playerControls[i].bindClassName);
+        M_Free(impulseCounts[i]);
+    }
+    playerControlCount = 0;
+    M_Free(playerControls);
+    playerControls = 0;
+    M_Free(impulseCounts);
+    impulseCounts = 0;
+}
+
+void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
+{
+#if _DEBUG
+    // Check that this is really a numeric control.
+    {
+        playercontrol_t* pc = P_PlayerControlById(control);
+        assert(pc->type == CTLT_NUMERIC);
+    }
+#endif
+    
+    struct bclass_s* bc = 0;
+    struct dbinding_s* binds = 
+        B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
+    B_EvaluateDeviceBindingList(binds, pos, relativeOffset, bc);
+}
+
+/**
+ * @return  Number of times the impulse has been triggered since the last call.
+ */
+int P_GetImpulseControlState(int playerNum, int control)
+{
+    playercontrol_t* pc = P_PlayerControlById(control);
+    short *counter;
+    int count = 0;
+
+#if _DEBUG
+    // Check that this is really an impulse control.
+    assert(pc->type == CTLT_IMPULSE);
+#endif
+    if(!impulseCounts[pc - playerControls])
+        return 0;
+    
+    counter = &impulseCounts[pc - playerControls]->counts[playerNum];
+    count = *counter;
+    *counter = 0;
+    return count;
+}
+
+void P_Impulse(int playerNum, int control)
+{
+    playercontrol_t* pc = P_PlayerControlById(control);
+
+    // Check that this is really an impulse control.
+    if(pc->type != CTLT_IMPULSE)
+    {
+        Con_Message("P_Impulse: Control '%s' is not an impulse control.\n", pc->name);
+        return;
+    }
+
+    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
+        return;
+    
+    impulseCounts[pc - playerControls]->counts[playerNum]++;
+}
+
+void P_ImpulseByName(int playerNum, const char* control)
+{
+    playercontrol_t* pc = P_PlayerControlByName(control);
+    P_Impulse(playerNum, pc->id);
+}
+
+#if 0
 /**
  * Initialize the control state table of the specified player. The control
  * descriptors must be fully initialized before this is called.
@@ -700,35 +841,6 @@ void P_ControlTicker(timespan_t time)
 }
 
 /**
- * Prints a list of the registered control descriptors.
- */
-D_CMD(ListPlayerControls)
-{
-    uint        i, j;
-	char        buf[MAX_DESCRIPTOR_LENGTH+1];
-
-    Con_Message("Player Controls:\n");
-    for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
-    {
-        controlclass_t *cClass = &ctlClass[i];
-
-        if(cClass->count > 0)
-        {
-            Con_Message("%i %s:\n", cClass->count,
-                        ctlClassNames[i][cClass->count > 1]);
-            for(j = 0; j < cClass->count; ++j)
-            {
-		        strncpy(buf, cClass->desc[j].name, sizeof(buf) - 1);
-		        strlwr(buf);
-                buf[strlen(cClass->desc[j].name)] = 0;
-                Con_Message("  %s\n", buf);
-            }
-        }
-    }
-    return true;
-}
-
-/**
  * Draws a HUD overlay with information about the state of the game controls as seen
  * by the engine. The cvar @c ctl-info is used for toggling the drawing of this info.
  */
@@ -756,4 +868,53 @@ void P_ControlDrawer(void)
     // Back to the original.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();
+}
+#endif
+
+/**
+ * Prints a list of the registered control descriptors.
+ */
+D_CMD(ListPlayerControls)
+{
+    /*
+    uint        i, j;
+	char        buf[MAX_DESCRIPTOR_LENGTH+1];
+    
+    Con_Message("Player Controls:\n");
+    for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
+    {
+        controlclass_t *cClass = &ctlClass[i];
+        
+        if(cClass->count > 0)
+        {
+            Con_Message("%i %s:\n", cClass->count,
+                        ctlClassNames[i][cClass->count > 1]);
+            for(j = 0; j < cClass->count; ++j)
+            {
+		        strncpy(buf, cClass->desc[j].name, sizeof(buf) - 1);
+		        strlwr(buf);
+                buf[strlen(cClass->desc[j].name)] = 0;
+                Con_Message("  %s\n", buf);
+            }
+        }
+    }*/
+    return true;
+}
+
+D_CMD(Impulse)
+{
+    int playerNum = consoleplayer;
+    
+    if(argc < 2 || argc > 3)
+    {
+        Con_Printf("Usage:\n  %s (impulse-name)\n  %s (impulse-name) (player-number)\n",
+                   argv[0], argv[0]);
+        return true;
+    }
+    if(argc == 3)
+    {
+        playerNum = strtoul(argv[2], NULL, 10);
+    }
+    P_ImpulseByName(playerNum, argv[1]);
+    return true;
 }

@@ -660,9 +660,6 @@ void FR_SetFont(int id)
     int     idx = -1;
 
     idx = FR_GetFontIdx(id);
-#if _DEBUG
-    VERBOSE2(Con_Printf("FR_SetFont: Font id %i has index %i.\n", id, idx));
-#endif
     if(idx == -1)
         return;                 // No such font.
     currentFontIndex = idx;

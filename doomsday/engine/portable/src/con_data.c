@@ -59,9 +59,6 @@ static int C_DECL knownWordListSorter(const void *e1, const void *e2);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern bindclass_t *bindClasses;
-extern unsigned int numBindClasses;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 static cvar_t *cvars = NULL;
@@ -813,7 +810,7 @@ void Con_UpdateKnownWords(void)
             knownVars++;
 
     // Fill the known words table.
-    numKnownWords = numCCmds + knownVars + numCAliases + numBindClasses;
+    numKnownWords = numCCmds + knownVars + numCAliases /*+ numBindClasses*/;
     knownWords = M_Realloc(knownWords, len =
                          sizeof(knownword_t) * numKnownWords);
     memset(knownWords, 0, len);
@@ -835,11 +832,14 @@ void Con_UpdateKnownWords(void)
         strncpy(knownWords[c].word, caliases[i].name, 63);
         knownWords[c].type = WT_ALIAS;
     }
+    // TODO: Add binding class names to the known words.
+    /*
     for(i = 0; i < numBindClasses; ++i, ++c)
     {
         strncpy(knownWords[c].word, bindClasses[i].name, 63);
         knownWords[c].type = WT_BINDCLASS;
     }
+     */
 
     // Sort it so we get nice alphabetical word completions.
     qsort(knownWords, numKnownWords, sizeof(knownword_t), knownWordListSorter);

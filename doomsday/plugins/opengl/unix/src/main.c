@@ -71,7 +71,6 @@ int     maxAniso = 1;
 int     maxTexUnits;
 int     useAnisotropic;
 int     useVSync;
-int     verbose;
 boolean wireframeMode;
 boolean allowCompression;
 boolean noArrays;
@@ -162,7 +161,7 @@ int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
     windowed = !fullscreen;
 
     allowCompression = true;
-    verbose = ArgExists("-verbose");
+    verboseMode = ArgExists("-verbose");
 
     // Set GL attributes.  We want at least 5 bits per color and a 16
     // bit depth buffer.  Plus double buffering, of course.
@@ -201,7 +200,7 @@ int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
         while(token)
         {
             Con_Message("  ");  // Indent.
-            if(verbose)
+            if(verboseMode)
             {
                 // Show full names.
                 Con_Message("%s\n", token);

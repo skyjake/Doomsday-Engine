@@ -98,7 +98,7 @@ extern int      useFog, maxTexSize;
 extern int      palExtAvailable, sharedPalExtAvailable;
 extern boolean  allowCompression;
 extern boolean  noArrays;
-extern int      verbose;
+extern int      verboseMode;
 extern int      useAnisotropic;
 extern int      useVSync;
 extern int      maxAniso;

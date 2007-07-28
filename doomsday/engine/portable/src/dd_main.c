@@ -133,6 +133,7 @@ char   *iwadlist[64];
 char   *defaultWads = "";       /* A list of wad names, whitespace in between
                                    (in .cfg). */
 filename_t configFileName;
+filename_t bindingsConfigFileName;
 filename_t defsFileName, topDefsFileName;
 filename_t ddBasePath = "";     // Doomsday root directory is at...?
 
@@ -277,6 +278,9 @@ void DD_SetConfigFile(char *filename)
 {
     strcpy(configFileName, filename);
     Dir_FixSlashes(configFileName);
+    strcpy(bindingsConfigFileName, configFileName);
+    strcpy(bindingsConfigFileName + strlen(bindingsConfigFileName) - 5,
+           "-bindings.cfg");
 }
 
 /**
@@ -498,8 +502,6 @@ static int DD_StartupWorker(void *parm)
 
     novideo = ArgCheck("-novideo") || isDedicated;
 
-    // Register the engine's binding classes
-    B_RegisterBindClasses();
     DAM_Init();
 
     if(gx.PreInit)
@@ -634,7 +636,11 @@ static int DD_StartupWorker(void *parm)
 
     Con_Message("Sys_Init: Setting up machine state.\n");
     Sys_Init();
-
+    
+    Con_Message("B_Init: Init bindings.\n");
+    B_Init();
+    Con_ParseCommands(bindingsConfigFileName, true);
+    
     Con_SetProgress(125);
 
     Con_Message("R_Init: Init the refresh daemon.\n");
@@ -688,10 +694,6 @@ static int DD_StartupWorker(void *parm)
             Con_Execute(CMDS_CMDLINE, arg, false, false);
         }
     }
-
-    // Initialize the control table.
-    for(p = 0; p < DDMAXPLAYERS; ++p)
-        P_ControlTableInit(p);
 
     // In dedicated mode the console must be opened, so all input events
     // will be handled by it.

@@ -1790,14 +1790,16 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t tickDuration)
     int playerNum = player - players;
     ddplayer_t* plr = player->plr;
     int turn = 0;
+    float vel, off;
 
     if(!plr->mo)
         return; // Nothing to control.
 
     // Turning is affected by the turn axis and the left/right toggles.
-    turn = P_ControlGetAxis(playerNum, "turn");
+    //turn = P_ControlGetAxis(playerNum, "turn");
+    P_GetControlState(playerNum, CTL_TURN, &vel, &off);
  
-    plr->mo->angle -= (angle_t) (tickDuration * turn); // / 180 * ANGLE_180);    
+    plr->mo->angle -= (angle_t) ((tickDuration * vel + off) * ANGLE_180 / 180 * 16);
 
     /*Con_Message("P_PlayerThinkLookAround: turnAxis = %i (moangle=%x)\n", turn, 
                 plr->mo->angle);*/

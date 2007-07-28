@@ -886,7 +886,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
  */
 void G_ControlReset(int player)
 {
-    P_ControlReset(player);
+    //P_ControlReset(player);
 }
 
 /**

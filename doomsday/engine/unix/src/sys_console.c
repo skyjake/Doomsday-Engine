@@ -188,16 +188,16 @@ void Sys_ConPostEvents(void)
            continue;
            } */
 
-        ev.deviceID = IDEV_KEYBOARD;
-        ev.data1 = EVS_DOWN;
-        ev.noclass = true;
-        ev.useclass = 0; // initialize with something
-        ev.isAxis = false;
-        ev.controlID = Sys_ConTranslateKey(key);
+        ev.device = IDEV_KEYBOARD;
+        ev.type = E_TOGGLE;
+        ev.toggle.state = ETOG_DOWN;
+        //ev.obsolete.noclass = true;
+        //ev.obsolete.useclass = 0; // initialize with something
+        ev.toggle.id = Sys_ConTranslateKey(key);
         DD_PostEvent(&ev);
 
         // Release immediately.
-        ev.data1 = EVS_UP;
+        ev.toggle.state = ETOG_DOWN;
         DD_PostEvent(&ev);
     }
 }

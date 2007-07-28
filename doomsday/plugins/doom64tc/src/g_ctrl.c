@@ -55,6 +55,7 @@
  */
 void G_RegisterPlayerControls(void)
 {
+    /*
     typedef struct {
         char   *command;                // The command to execute.
     } control_t;
@@ -122,4 +123,5 @@ void G_RegisterPlayerControls(void)
     {
         P_RegisterPlayerControl(CC_IMPULSE, impulseCts[i].command);
     }
+     */
 }

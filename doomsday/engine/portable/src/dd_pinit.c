@@ -189,11 +189,7 @@ void DD_InitCommandLine(const char *cmdLine)
  */
 void DD_Verbosity(void)
 {
-    int         i;
-
-    for(i = 1, verbose = 0; i < Argc(); ++i)
-        if(ArgRecognize("-verbose", Argv(i)))
-            verbose++;
+    verbose = ArgExists("-verbose");
 }
 
 /**

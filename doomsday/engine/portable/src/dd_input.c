@@ -79,7 +79,6 @@ boolean ignoreInput = false;
 /*
 int     mouseFilter = 1;        // Filtering on by default.
 int     mouseInverseY = false;
-int     mouseWheelSensi = 10;   // I'm shooting in the dark here.
 int     joySensitivity = 5;
 int     joyDeadZone = 10;
 */
@@ -181,8 +180,7 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 /* *INDENT-ON* */
 
 static repeater_t keyReps[MAX_DOWNKEYS];
-static int oldMouseButtons = 0;
-static int oldJoyBState = 0;
+//static int oldJoyBState = 0;
 static float oldPOV = IJOY_POV_CENTER;
 
 // CODE --------------------------------------------------------------------
@@ -197,7 +195,6 @@ void DD_RegisterInput(void)
 //    C_VAR_INT("input-joy-sensi", &joySensitivity, 0, 0, 9);
 //    C_VAR_INT("input-joy-deadzone", &joyDeadZone, 0, 0, 90);
 
-//    C_VAR_INT("input-mouse-wheel-sensi", &mouseWheelSensi, CVF_NO_MAX, 0, 0);
 //    C_VAR_INT("input-mouse-x-disable", &mouseDisableX, 0, 0, 1);
 //    C_VAR_INT("input-mouse-y-disable", &mouseDisableY, 0, 0, 1);
 //    C_VAR_INT("input-mouse-y-inverse", &mouseInverseY, 0, 0, 1);
@@ -222,7 +219,13 @@ void DD_RegisterInput(void)
 static void I_DeviceAllocKeys(inputdev_t *dev, uint count)
 {
 	dev->numKeys = count;
-	dev->keys = M_Calloc(count);
+	dev->keys = M_Calloc(count * sizeof(inputdevkey_t));
+}
+
+static void I_DeviceAllocHats(inputdev_t *dev, uint count)
+{
+    dev->numHats = count;
+    dev->hats = M_Calloc(count * sizeof(inputdevhat_t));
 }
 
 /**
@@ -271,12 +274,14 @@ void I_InitInputDevices(void)
 	strcpy(dev->name, "mouse");
 	I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
 
-	// The wheel is translated to keys, so there is no need to
+	// The mouse wheel is translated to keys, so there is no need to
 	// create an axis for it.
 	axis = I_DeviceNewAxis(dev, "x", IDAT_POINTER);
     axis->filter = 1; // On by default.
+    axis->scale = 1.f/1000;
 	axis = I_DeviceNewAxis(dev, "y", IDAT_POINTER);
     axis->filter = 1; // On by default.
+    axis->scale = 1.f/1000;
 
 	if(I_MousePresent())
 		dev->flags = ID_ACTIVE;
@@ -288,19 +293,25 @@ void I_InitInputDevices(void)
     for(i = 0; i < IJOY_MAXAXES; ++i)
     {
         char name[32];
-        if(i < 3)
+        if(i < 4)
         {
-            strcpy(name, i == 0? "x" : i == 1? "y" : "z");            
+            strcpy(name, i == 0? "x" : i == 1? "y" : i == 2? "z" : "w");
         }
         else
         {
-            sprintf(name, "axis%i", i + 1);
+            sprintf(name, "axis%02i", i + 1);
         }
         axis = I_DeviceNewAxis(dev, name, IDAT_STICK);
         axis->scale = 1.0f / IJOY_AXISMAX;
         axis->deadZone = DEFAULT_JOYSTICK_DEADZONE;
     }
 
+    I_DeviceAllocHats(dev, IJOY_MAXHATS);
+    for(i = 0; i < IJOY_MAXHATS; ++i)
+    {
+        dev->hats[i].pos = -1; // centered
+    }
+    
 	// The joystick may not be active.
 	if(I_JoystickPresent())
 		dev->flags = ID_ACTIVE;
@@ -317,10 +328,12 @@ void I_ShutdownInputDevices(void)
 	for(i = 0; i < NUM_INPUT_DEVICES; ++i)
 	{
 		dev = &inputDevices[i];
-		if(dev->keys) 
-            M_Free(dev->keys);
-		if(dev->axes)
-            M_Free(dev->axes);
+        M_Free(dev->keys);
+        dev->keys = 0;
+        M_Free(dev->axes);
+        dev->axes = 0;
+        M_Free(dev->hats);
+        dev->hats = 0;
 	}
 }
 
@@ -406,24 +419,23 @@ inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id)
 }
 
 /**
- * Retrieve the index + 1 of a device's axis by name.
+ * Retrieve the index of a device's axis by name.
  *
  * @param device        Ptr to input device info, to get the axis index from.
  * @param name          Ptr to string containing the name to be searched for.
  *
- * @return              Index of the device axis named OR <code>0</code> if
- *                      not found.
+ * @return              Index of the device axis named; or -1, if not found.
  */
-static uint I_GetAxisByName(inputdev_t *device, const char *name)
+int I_GetAxisByName(inputdev_t *device, const char *name)
 {
 	uint         i;
 
 	for(i = 0; i < device->numAxes; ++i)
 	{
 		if(!stricmp(device->axes[i].name, name))
-			return i + 1;
+			return i;
 	}
-	return 0;
+	return -1;
 }
 
 /**
@@ -463,21 +475,18 @@ boolean I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis)
 	return true;
 }
 
-/**
- * Update an input device axis.  Transformation is applied.
- */
-static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLength)
+float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
 {
+    float pos = rawPos;
 	inputdevaxis_t *a = &dev->axes[axis];
-
+    
 	// Disabled axes are always zero.
 	if(a->flags & IDA_DISABLED)
 	{
-		a->position = a->realPosition = 0;
-		return;
+		return 0;
 	}
-
-	// Apply scaling, deadzone and clamping.
+    
+    // Apply scaling, deadzone and clamping.
 	pos *= a->scale;
 	if(a->type == IDAT_STICK) // Pointer axes are not dead-zoned or clamped.
 	{
@@ -492,14 +501,34 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
             pos = MINMAX_OF(-1.0f, pos, 1.0f);
         }
 	}
-	
+        
 	if(a->flags & IDA_INVERT)
 	{
 		// Invert the axis position.
 		pos = -pos;
 	}
+    
+    return pos;
+}
 
-    a->realPosition = pos;
+/**
+ * Update an input device axis.  Transformation is applied.
+ */
+static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLength)
+{
+	inputdevaxis_t *a = &dev->axes[axis];
+    float oldRealPos = a->realPosition;
+    float transformed = I_TransformAxis(dev, axis, pos);
+    
+    // The unfiltered position.
+    a->realPosition = transformed;
+    
+    if(oldRealPos != a->realPosition)
+    {
+        // Mark down the time of the change.
+        a->time = Sys_GetRealTime();
+    }
+
 /* if(a->filter > 0)
 	{
         // Filtering ensures that events are sent more evenly on each frame.
@@ -530,16 +559,23 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
         // This is the new (filtered) axis position.
         pos = dir * used;
 	}
-	else*/
+	else
 	{
 		// This is the new axis position.
 		pos = a->realPosition;
-	}
-
-    a->position = pos;
+	}*/
     
-    Con_Message("I_UpdateAxis: device=%s axis=%i pos=%f\n",
-                dev->name, axis, pos);
+    // Unfiltered.
+    if(a->type == IDAT_STICK)
+        a->position = a->realPosition;
+    else // Cumulative.
+        a->position += a->realPosition;
+    
+    if(verbose > 3)
+    {
+        Con_Message("I_UpdateAxis: device=%s axis=%i pos=%f\n",
+                    dev->name, axis, pos);
+    }
 }
 
 /**
@@ -549,37 +585,69 @@ static void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 {
 	inputdev_t *dev;
 
-    if((dev = I_GetDevice(ev->deviceID, true)) == NULL)
+    if((dev = I_GetDevice(ev->device, true)) == NULL)
         return;
 
     // Track the state of Shift and Alt.
-    if(ev->deviceID == IDEV_KEYBOARD)
+    if(IS_KEY_TOGGLE(ev))
     {
-        if(ev->controlID == DDKEY_RSHIFT)
+        if(ev->toggle.id == DDKEY_RSHIFT)
         {
-            if(ev->data1 == EVS_DOWN)
+            if(ev->toggle.state == ETOG_DOWN)
                 shiftDown = true;
-            else if(ev->data1 == EVS_UP)
+            else if(ev->toggle.state == ETOG_UP)
                 shiftDown = false;
         }
-        else if(ev->controlID == DDKEY_RALT)
+        else if(ev->toggle.id == DDKEY_RALT)
         {
-            if(ev->data1 == EVS_DOWN)
+            if(ev->toggle.state == ETOG_DOWN)
                 altDown = true;
-            else if(ev->data1 == EVS_UP)
+            else if(ev->toggle.state == ETOG_UP)
                 altDown = false;
         }
     }
 
     // Update the state table.
-    if(ev->isAxis)
+    if(ev->type == E_AXIS)
     {
-        I_UpdateAxis(dev, ev->controlID, ev->data1, ticLength);
+        I_UpdateAxis(dev, ev->axis.id, ev->axis.pos, ticLength);
     }
-    else
+    else if(ev->type == E_TOGGLE)
     {
-        dev->keys[ev->controlID] =
-            (ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT);
+        dev->keys[ev->toggle.id].isDown =
+            (ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_REPEAT);
+        
+        // Mark down the time when the change occurs.
+        if(ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_UP)
+            dev->keys[ev->toggle.id].time = Sys_GetRealTime();
+    }
+    else if(ev->type == E_ANGLE)
+    {
+        dev->hats[ev->angle.id].pos = ev->angle.pos;
+
+        // Mark down the time when the change occurs.
+        dev->hats[ev->angle.id].time = Sys_GetRealTime();
+    }
+}
+
+void I_ClearDeviceClassAssociations(void)
+{
+    int         i, j;
+    inputdev_t* dev;
+    
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        dev = &inputDevices[i];
+        
+        // Keys.
+        for(j = 0; j < dev->numKeys; ++j)
+            dev->keys[j].bClass = NULL;
+        // Axes.
+        for(j = 0; j < dev->numAxes; ++j)
+            dev->axes[j].bClass = NULL;
+        // Hats.
+        for(j = 0; j < dev->numHats; ++j)
+            dev->hats[j].bClass = NULL;
     }
 }
 
@@ -595,7 +663,7 @@ boolean I_IsDeviceKeyDown(uint ident, uint code)
         if(code >= dev->numKeys)
             return false;
 
-        return dev->keys[code];
+        return dev->keys[code].isDown;
     }
 
     return false;
@@ -734,18 +802,25 @@ void DD_ProcessEvents(timespan_t ticLength)
         if(ignoreInput)
             continue;
 
+        // Update the state of the input device tracking table.
+		I_TrackInput(ddev, ticLength);
+        
         // Copy the essentials into a cutdown version for the game.
         // Ensure the format stays the same for future compatibility!
-        switch(ddev->deviceID)
+        //
+        // FIXME: This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
+        //
+        memset(&ev, 0, sizeof(ev));
+        switch(ddev->device)
         {
         case IDEV_KEYBOARD:
             ev.type = EV_KEY;
             break;
 
         case IDEV_MOUSE:
-            if(ddev->isAxis)
+            if(ddev->type == E_AXIS)
                 ev.type = EV_MOUSE_AXIS;
-            else
+            else if(ddev->type == E_TOGGLE)
                 ev.type = EV_MOUSE_BUTTON;
             break;
 
@@ -753,16 +828,28 @@ void DD_ProcessEvents(timespan_t ticLength)
         case IDEV_JOY2:
         case IDEV_JOY3:
         case IDEV_JOY4:
-            // \fixme What about POV?
-            if(ddev->isAxis)
-                ev.type = EV_JOY_AXIS;
-            else
+            if(ddev->type == E_AXIS)
             {
-                if(ddev->controlID == 6 || ddev->controlID == 7)
-                    ev.type = EV_JOY_SLIDER;
-                else
-                    ev.type = EV_JOY_BUTTON;
+                int* data = &ev.data1;
+                ev.type = EV_JOY_AXIS;
+                ev.state = 0;
+                if(ddev->axis.id >= 0 && ddev->axis.id < 6)
+                {
+                    data[ddev->axis.id] = ddev->axis.pos;
+                }
+                /// @todo  The other dataN's must contain up-to-date information
+                /// as well. Read them from the current joystick status.
             }
+            else if(ddev->type == E_TOGGLE)
+            {
+                ev.type = EV_JOY_BUTTON;
+                ev.state = ( ddev->toggle.state == ETOG_UP? EVS_UP :
+                             ddev->toggle.state == ETOG_DOWN? EVS_DOWN :
+                             EVS_REPEAT );
+                ev.data1 = ddev->toggle.id;
+            }
+            else if(ddev->type == E_ANGLE)
+                ev.type = EV_POV;
             break;
 
         default:
@@ -771,25 +858,6 @@ Con_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
 #endif
             break;
         }
-
-        if(!ddev->isAxis)
-        {
-            ev.state = ddev->data1;
-            ev.data1 = ddev->controlID;
-        }
-        else
-        {
-            ev.state = 0;
-            ev.data1 = ddev->data1;
-        }
-        ev.data2 = 0;
-        ev.data3 = 0;
-        ev.data4 = 0;
-        ev.data5 = 0;
-        ev.data6 = 0;
-
-        // Update the state of the input device tracking table.
-		I_TrackInput(ddev, ticLength);
 
         // Does the special responder use this event?
         if(gx.PrivilegedResponder)
@@ -884,19 +952,19 @@ void DD_ReadKeyboard(void)
     }
 
     // Check the repeaters.
-    ev.deviceID = IDEV_KEYBOARD;
-    ev.isAxis = false;
-    ev.data1 = EVS_REPEAT;
+    ev.device = IDEV_KEYBOARD;
+    ev.type = E_TOGGLE;
+    ev.toggle.state = ETOG_REPEAT;
 
-    ev.noclass = true; // Don't specify a class
-    ev.useclass = 0; // initialize with something
+    //ev.obsolete.noclass = true; // Don't specify a class
+    //ev.obsolete.useclass = 0; // initialize with something
     for(i = 0; i < MAX_DOWNKEYS; ++i)
     {
         repeater_t *rep = keyReps + i;
-
         if(!rep->key)
             continue;
-        ev.controlID = rep->key;
+
+        ev.toggle.id = rep->key;
 
         if(!rep->count && sysTime - rep->timer >= keyRepeatDelay1 / 1000.0)
         {
@@ -927,43 +995,43 @@ void DD_ReadKeyboard(void)
         // Check the type of the event.
         if(ke->event == IKE_KEY_DOWN)   // Key pressed?
         {
-            ev.data1 = EVS_DOWN;
+            ev.toggle.state = ETOG_DOWN;
         }
         else if(ke->event == IKE_KEY_UP) // Key released?
         {
-            ev.data1 = EVS_UP;
+            ev.toggle.state = ETOG_UP;
         }
 
         // Use the table to translate the scancode to a ddkey.
 #ifdef WIN32
-        ev.controlID = DD_ScanToKey(ke->code);
+        ev.toggle.id = DD_ScanToKey(ke->code);
 #endif
 #ifdef UNIX
-        ev.controlID = ke->code;
+        ev.toggle.id = ke->code;
 #endif
 
         // Should we print a message in the console?
-        if(showScanCodes && ev.data1 == EVS_DOWN)
-            Con_Printf("Scancode: %i (0x%x)\n", ev.controlID, ev.controlID);
+        if(showScanCodes && ev.toggle.id == EVS_DOWN)
+            Con_Printf("Scancode: %i (0x%x)\n", ev.toggle.id, ev.toggle.id);
 
         // Maintain the repeater table.
-        if(ev.data1 == EVS_DOWN)
+        if(ev.toggle.state == ETOG_DOWN)
         {
             // Find an empty repeater.
             for(k = 0; k < MAX_DOWNKEYS; ++k)
                 if(!keyReps[k].key)
                 {
-                    keyReps[k].key = ev.controlID;
+                    keyReps[k].key = ev.toggle.id;
                     keyReps[k].timer = sysTime;
                     keyReps[k].count = 0;
                     break;
                 }
         }
-        else if(ev.data1 == EVS_UP)
+        else if(ev.toggle.state == ETOG_UP)
         {
             // Clear any repeaters with this key.
             for(k = 0; k < MAX_DOWNKEYS; ++k)
-                if(keyReps[k].key == (int) ev.controlID)
+                if(keyReps[k].key == ev.toggle.id)
                     keyReps[k].key = 0;
         }
 
@@ -981,7 +1049,8 @@ void DD_ReadMouse(void)
     int         change;
     ddevent_t   ev;
     mousestate_t mouse;
-    int         xpos, ypos, zpos;
+    int         xpos, ypos;
+    int         i;
 
     if(!I_MousePresent())
         return;
@@ -1009,13 +1078,13 @@ void DD_ReadMouse(void)
         I_GetMouseState(&mouse);
     }
 
-    ev.deviceID = IDEV_MOUSE;
-    ev.isAxis = true;
-    xpos = mouse.x * DD_MICKEY_ACCURACY;
-    ypos = mouse.y * DD_MICKEY_ACCURACY;
-    zpos = mouse.z * DD_MICKEY_ACCURACY;
-    ev.noclass = true; // Don't specify a class
-    ev.useclass = 0; // initialize with something
+    ev.device = IDEV_MOUSE;
+    ev.type = E_AXIS;
+    ev.axis.type = EAXIS_RELATIVE;
+    xpos = mouse.x;
+    ypos = mouse.y;
+    //ev.obsolete.noclass = true; // Don't specify a class
+    //ev.obsolete.useclass = 0; // initialize with something
 
     // Mouse axis data may be modified if not in UI mode.
 /*
@@ -1052,66 +1121,51 @@ void DD_ReadMouse(void)
     // Don't post empty events.
     if(xpos)
     {
-        ev.data1 = xpos;
-        ev.controlID = 0;
+        ev.axis.id = 0;
+        ev.axis.pos = xpos;
         DD_PostEvent(&ev);
-        ev.data1 = 0;
     }
     if(ypos)
     {
-        ev.data1 = ypos;
-        ev.controlID = 1;
+        ev.axis.id = 1;
+        ev.axis.pos = ypos;
         DD_PostEvent(&ev);
-        ev.data1 = 0;
     }
 
-    // Insert the possible mouse Z axis into the button flags.
-    if(abs(zpos) >= 10 /*mouseWheelSensi*/)
+    // Some very verbose output about mouse buttons.
+    if(verbose >= 3)
     {
-        mouse.buttons |= zpos > 0 ? DDMB_MWHEELUP : DDMB_MWHEELDOWN;
+        for(i = 0; i < IMB_MAXBUTTONS; ++i)
+            if(mouse.buttonDowns[i] || mouse.buttonUps[i])
+                break;
+        if(i < IMB_MAXBUTTONS)
+        {
+            for(i = 0; i < IMB_MAXBUTTONS; ++i)
+                Con_Message("[%02i] %i/%i ", i, mouse.buttonDowns[i], mouse.buttonUps[i]);
+            Con_Message("\n");
+        }
     }
 
-    // Check the buttons and send the appropriate events.
-    change = oldMouseButtons ^ mouse.buttons;   // The change mask.
-    // Send the relevant events.
-    if((ev.controlID = mouse.buttons & change))
+    // Post mouse button up and down events.
+    ev.type = E_TOGGLE;
+    for(i = 0; i < IMB_MAXBUTTONS; ++i)
     {
-        ev.isAxis = false;
-        ev.data1 = EVS_DOWN;
-        DD_PostEvent(&ev);
+        ev.toggle.id = i;
+        while(mouse.buttonDowns[i] > 0 || mouse.buttonUps[i] > 0)
+        {
+            if(mouse.buttonDowns[i]-- > 0)
+            {
+                ev.toggle.state = ETOG_DOWN;
+                DD_PostEvent(&ev);
+            }
+            if(mouse.buttonUps[i]-- > 0)
+            {
+                ev.toggle.state = ETOG_UP;
+                DD_PostEvent(&ev);
+            }
+        }
     }
-    if((ev.controlID = oldMouseButtons & change))
-    {
-        ev.isAxis = false;
-        ev.data1 = EVS_UP;
-        DD_PostEvent(&ev);
-    }
-    oldMouseButtons = mouse.buttons;
 }
-
-/**
- * Applies the dead zone and clamps the value to -100...100.
- */
-#if 0 // currently unused
-void DD_JoyAxisClamp(int *val)
-{
-    if(abs(*val) < joyDeadZone)
-    {
-        // In the dead zone, just go to zero.
-        *val = 0;
-        return;
-    }
-    // Remove the dead zone.
-    *val += *val > 0 ? -joyDeadZone : joyDeadZone;
-    // Normalize.
-    *val *= 100.0f / (100 - joyDeadZone);
-    // Clamp.
-    if(*val > 100)
-        *val = 100;
-    if(*val < -100)
-        *val = -100;
-}
-#endif
 
 /*
  * Checks the current joystick state (axis, sliders, hat and buttons).
@@ -1130,30 +1184,50 @@ void DD_ReadJoystick(void)
     I_GetJoystickState(&state);
 
     // Check the buttons.
-    bstate = 0;
+    /*bstate = 0;
     for(i = 0; i < IJOY_MAXBUTTONS; ++i)
         if(state.buttons[i])
             bstate |= 1 << i;   // Set the bits.
-
-    ev.deviceID = IDEV_JOY1;
-    ev.isAxis = false;
-    ev.noclass = true; // Don't specify a class
-    ev.useclass = 0; // initialize with something
+*/
+    // Joystick buttons.
+    ev.device = IDEV_JOY1;
+    ev.type = E_TOGGLE;
+    
+    for(i = 0; i < state.numButtons; ++i)
+    {
+        ev.toggle.id = i;
+        while(state.buttonDowns[i] > 0 || state.buttonUps[i] > 0)
+        {
+            if(state.buttonDowns[i]-- > 0)
+            {
+                ev.toggle.state = ETOG_DOWN;
+                DD_PostEvent(&ev);
+            }
+            if(state.buttonUps[i]-- > 0)
+            {
+                ev.toggle.state = ETOG_UP;
+                DD_PostEvent(&ev);
+            }
+        }
+    }
+    
+    //ev.obsolete.noclass = true; // Don't specify a class
+    //ev.obsolete.useclass = 0; // initialize with something
 
     // Check for button state changes.
-    i = oldJoyBState ^ bstate;  // The change mask.
+/*    i = oldJoyBState ^ bstate;  // The change mask.
     // Send the relevant events.
-    if((ev.controlID = bstate & i))
+    if((ev.obsolete.controlID = bstate & i))
     {
-        ev.data1 = EVS_DOWN;
+        ev.obsolete.data1 = EVS_DOWN;
         DD_PostEvent(&ev);
     }
-    if((ev.controlID = oldJoyBState & i))
+    if((ev.obsolete.controlID = oldJoyBState & i))
     {
-        ev.data1 = EVS_UP;
+        ev.obsolete.data1 = EVS_UP;
         DD_PostEvent(&ev);
     }
-    oldJoyBState = bstate;
+    oldJoyBState = bstate;*/
 
     if(state.numHats > 0)
     {
@@ -1161,32 +1235,41 @@ void DD_ReadJoystick(void)
         // TODO: Some day, it would be nice to support multiple hats here. -jk
         if(state.hatAngle[0] != oldPOV)
         {
+            ev.type = E_ANGLE;
+            ev.angle.id = 0;
+            /*
             if(oldPOV != IJOY_POV_CENTER)
             {
                 // Send a notification that the existing POV angle is no
                 // longer active.
-                ev.data1 = EVS_UP;
-                ev.controlID = (int) (oldPOV / 45 + .5);    // Round off correctly w/.5.
+                ev.obsolete.data1 = EVS_UP;
+                ev.obsolete.controlID = (int) (oldPOV / 45 + .5);    // Round off correctly w/.5.
                 DD_PostEvent(&ev);
-            }
-            if(state.hatAngle[0] != IJOY_POV_CENTER)
+            }*/
+            
+            if(state.hatAngle[0] < 0)
             {
-                // The new angle becomes active.
-                ev.data1 = EVS_DOWN;
-                ev.controlID = (int) (state.hatAngle[0] / 45 + .5);
-                DD_PostEvent(&ev);
+                ev.angle.pos = -1;
             }
+            else
+            {            
+                // The new angle becomes active.
+                ev.angle.pos = (int) (state.hatAngle[0] / 45 + .5); // Round off correctly w/.5.
+            }
+            DD_PostEvent(&ev);
+
             oldPOV = state.hatAngle[0];
         }
     }
 
     // Send joystick axis events, one per axis.
-    ev.isAxis = true;
+    ev.type = E_AXIS;
     
     for(i = 0; i < state.numAxes; ++i)
     {
-        ev.data1 = state.axis[i];
-        ev.controlID = i;
+        ev.axis.id = i;
+        ev.axis.pos = state.axis[i];
+        ev.axis.type = EAXIS_ABSOLUTE;
         DD_PostEvent(&ev);
     }
 }

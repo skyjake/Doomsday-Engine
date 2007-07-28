@@ -195,6 +195,7 @@ static void Con_Register(void)
     C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD("dec",            NULL,   AddSub);
     C_CMD("echo",           "s*",   Echo);
+    C_CMD("print",          "s*",   Echo);
     C_CMD("exec",           "s*",   Parse);
     C_CMD("font",           NULL,   Font);
     C_CMD("help",           "",     Help);
@@ -359,7 +360,7 @@ boolean Con_Init(void)
     oldCmds = Con_NewBuffer(0, CMDLINE_SIZE, CBF_ALWAYSFLUSH);
     ocPos = 0; // No commands yet.
 
-    B_Init();
+    //B_Init();
 
     ConsoleActive = false;
     ConsoleInited = true;
@@ -393,7 +394,7 @@ boolean Con_Init(void)
     DAM_Register();
     UI_Register();
     Demo_Register();
-    P_RegisterControl();
+    P_ControlRegister();
 
     Con_Message("Con_Init: Initializing the console.\n");
     return true;
@@ -649,6 +650,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     if(!args.argc)
         return true;
 
+    /*
     if(args.argc == 1)  // Possibly a control command?
     {
 		if(P_ControlExecute(args.argv[0]))
@@ -658,6 +660,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 			return true;
 		}
     }
+     */
 
     // If logged in, send command to server at this point.
     if(!isServer && netLoggedIn)
@@ -1239,7 +1242,7 @@ void Con_Open(int yes)
 
     // Clear all action keys, keyup events won't go to bindings processing
     // when the console is open.
-    P_ControlReset(-1);
+    //P_ControlReset(-1);
     Rend_ConsoleOpen(yes);
     if(yes)
     {
@@ -1259,19 +1262,17 @@ void Con_Open(int yes)
  */
 boolean Con_Responder(ddevent_t *event)
 {
-    // The console is only interested in keyboard events.
-    if(!event->deviceID == IDEV_KEYBOARD)
+    // The console is only interested in keyboard toggle events.
+    if(!IS_KEY_TOGGLE(event))
         return false;
 
-    if(consoleShowKeys && event->data1 == EVS_DOWN)
+    if(consoleShowKeys && event->toggle.state == ETOG_DOWN)
     {
-        Con_Printf("Keydown: ASCII %i (0x%x)\n",
-                   event->controlID, event->controlID);
+        Con_Printf("Keydown: ASCII %i (0x%x)\n", event->toggle.id, event->toggle.id);
     }
 
     // Special console key: Shift-Escape opens the Control Panel.
-    if(!conInputLock &&
-       shiftDown && event->data1 == EVS_DOWN && event->controlID == DDKEY_ESCAPE)
+    if(!conInputLock && shiftDown && IS_TOGGLE_DOWN_ID(event, DDKEY_ESCAPE))
     {
         Con_Execute(CMDS_DDAY, "panel", true, false);
         return true;
@@ -1280,8 +1281,7 @@ boolean Con_Responder(ddevent_t *event)
     if(!ConsoleActive)
     {
         // In this case we are only interested in the activation key.
-        if(event->data1 == EVS_DOWN &&
-           (int) event->controlID == consoleActiveKey)
+        if(IS_TOGGLE_DOWN_ID(event, consoleActiveKey))
         {
             Con_Open(true);
             return true;
@@ -1290,7 +1290,7 @@ boolean Con_Responder(ddevent_t *event)
     }
 
     // All keyups are eaten by the console.
-    if(event->data1 == EVS_UP)
+    if(IS_TOGGLE_UP(event))
     {
         if(!shiftDown && conInputLock)
             conInputLock = false; // release the lock
@@ -1298,14 +1298,14 @@ boolean Con_Responder(ddevent_t *event)
     }
 
     // We only want keydown events.
-    if(!(event->data1 == EVS_DOWN || event->data1 == EVS_REPEAT))
+    if(!IS_KEY_PRESS(event))
         return false;
 
     // In this case the console is active and operational.
     // Check the shutdown key.
     if(!conInputLock)
     {
-        if((int) event->controlID == consoleActiveKey)
+        if(event->toggle.id == consoleActiveKey)
         {
             if(shiftDown) // Shift-Tilde to fullscreen and halfscreen.
                 Rend_ConsoleToggleFullscreen();
@@ -1315,20 +1315,28 @@ boolean Con_Responder(ddevent_t *event)
         }
         else
         {
-            switch(event->controlID)
+            switch(event->toggle.id)
             {
             case DDKEY_ESCAPE:
                 // Hitting Escape in the console closes it.
                 Con_Open(false);
                 return false; // Let the menu know about this.
 
-            case DDKEY_HOME:
-                Rend_ConsoleMove(shiftDown ? -3 : -1);
-                return true;
+            case DDKEY_PGUP:
+                if(shiftDown)
+                {
+                    Rend_ConsoleMove(-3);
+                    return true;
+                }
+                break;
 
-            case DDKEY_END:
-                Rend_ConsoleMove(shiftDown ? 3 : 1);
-                return true;
+            case DDKEY_PGDN:
+                if(shiftDown)
+                {
+                    Rend_ConsoleMove(3);
+                    return true;
+                }
+                break;
 
             default:
                 break;
@@ -1336,7 +1344,7 @@ boolean Con_Responder(ddevent_t *event)
         }
     }
 
-    switch(event->controlID)
+    switch(event->toggle.id)
     {
     case DDKEY_UPARROW:
         if(conInputLock)
@@ -1371,14 +1379,7 @@ boolean Con_Responder(ddevent_t *event)
         num = Con_BufferNumLines(histBuf);
         if(num > 0)
         {
-            if(shiftDown)
-            {
-                bLineOff += 2;
-                if(bLineOff > num - 1)
-                    bLineOff = num - 1;
-            }
-            else
-                bLineOff = num - 1;
+            bLineOff = MIN_OF(bLineOff + 3, num - 1);
         }
         return true;
     }
@@ -1386,16 +1387,21 @@ boolean Con_Responder(ddevent_t *event)
     case DDKEY_PGDN:
         if(conInputLock)
             break;
-
-        if(shiftDown)
-        {
-            if(bLineOff > 2)
-                bLineOff -= 2;
-        }
-        else
-            bLineOff = 0;
+        bLineOff = MAX_OF((int)bLineOff - 3, 0);
         return true;
 
+    case DDKEY_END:
+        if(conInputLock)
+            break;
+        bLineOff = 0;
+        return true;
+
+    case DDKEY_HOME:
+        if(conInputLock)
+            break;        
+        bLineOff = MAX_OF(0, Con_BufferNumLines(histBuf) - 1);
+        return true;
+        
     case DDKEY_ENTER:
         if(conInputLock)
             break;
@@ -1550,7 +1556,7 @@ boolean Con_Responder(ddevent_t *event)
         if(conInputLock)
             break;
 
-        ch = event->controlID;
+        ch = event->toggle.id;
         ch = DD_ModKey(ch);
         if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
             return true;
@@ -1903,28 +1909,22 @@ static void Con_Alias(char *aName, char *command)
 D_CMD(Help)
 {
     Con_FPrintf(CBLF_RULER | CBLF_YELLOW | CBLF_CENTER,
-                "-=- Doomsday " DOOMSDAY_VERSION_TEXT
-                " Console -=-\n");
+                "-=- Doomsday " DOOMSDAY_VERSION_TEXT " Console -=-\n");
     Con_Printf("Keys:\n");
-    Con_Printf("Tilde         Open/close the console.\n");
-    Con_Printf
-        ("Shift-Tilde   Switch between half and full screen mode.\n");
-    Con_Printf("F5            Clear the buffer.\n");
-    Con_Printf("Alt-C         Clear the command line.\n");
-    Con_Printf("Shift-Left    Move cursor to the start of the command line.\n");
-    Con_Printf("Shift-Right   Move cursor to the end of the command line.\n");
-    Con_Printf
-        ("Ins/Del       Move console window up/down one line.\n");
-    Con_Printf
-        ("Shift-Ins/Del Move console window three lines at a time.\n");
-    Con_Printf("Home          Jump to the beginning of the buffer.\n");
-    Con_Printf("End           Jump to the end of the buffer.\n");
-    Con_Printf("PageUp/Down   Scroll up/down two lines.\n");
+    Con_Printf("Tilde          Open/close the console.\n");
+    Con_Printf("Shift-Tilde    Switch between half and full screen mode.\n");
+    Con_Printf("F5             Clear the buffer.\n");
+    Con_Printf("Alt-C          Clear the command line.\n");
+    Con_Printf("Insert         Switch between replace and insert modes.\n");
+    Con_Printf("Shift-Left     Move cursor to the start of the command line.\n");
+    Con_Printf("Shift-Right    Move cursor to the end of the command line.\n");
+    Con_Printf("Shift-PgUp/Dn  Move console window up/down.\n");
+    Con_Printf("Home           Jump to the beginning of the buffer.\n");
+    Con_Printf("End            Jump to the end of the buffer.\n");
+    Con_Printf("PageUp/Down    Scroll up/down a couple of lines.\n");
     Con_Printf("\n");
-    Con_Printf
-        ("Type \"listcmds\" to see a list of available commands.\n");
-    Con_Printf
-        ("Type \"help (what)\" to see information about (what).\n");
+    Con_Printf("Type \"listcmds\" to see a list of available commands.\n");
+    Con_Printf("Type \"help (what)\" to see information about (what).\n");
     Con_FPrintf(CBLF_RULER, "\n");
     return true;
 }
@@ -2015,7 +2015,12 @@ D_CMD(Echo)
     int     i;
 
     for(i = 1; i < argc; ++i)
+    {
         Con_Printf("%s\n", argv[i]);
+#if _DEBUG
+        printf("%s\n", argv[i]);
+#endif
+    }
     return true;
 }
 

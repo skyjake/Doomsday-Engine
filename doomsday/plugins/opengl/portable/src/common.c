@@ -48,6 +48,7 @@ void    DG_Viewport(int x, int y, int width, int height);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+int     verboseMode;
 float   nearClip, farClip;
 int     useFog;
 

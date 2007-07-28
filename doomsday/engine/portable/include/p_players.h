@@ -29,6 +29,7 @@
 #ifndef __DOOMSDAY_PLAYERS_H__
 #define __DOOMSDAY_PLAYERS_H__
 
-int P_LocalToConsole(int localPlayer);
+int         P_LocalToConsole(int localPlayer);
+int         P_ConsoleToLocal(int playerNum);
 
 #endif

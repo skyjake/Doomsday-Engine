@@ -2025,7 +2025,7 @@ int DefsHook(int hook_type, int parm, void *data)
     char   *fn;
     int     i;
 
-    verbose = ArgCheck("-verbose") != 0;
+    verbose = ArgExists("-verbose");
     ded = (ded_t *) data;
 
     // Check for a DEHACKED lumps.

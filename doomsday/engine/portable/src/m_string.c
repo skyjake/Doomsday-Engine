@@ -340,3 +340,42 @@ const char *Str_GetLine(ddstring_t *ds, const char *src)
         src++;
     return src;
 }
+
+/**
+ * Performs a string comparison, ignoring differences in case.
+ */
+int Str_CompareIgnoreCase(ddstring_t *ds, const char *text)
+{
+    return strcasecmp(Str_Text(ds), text);
+}
+
+/**
+ * Copies characters from @c to @dest until a @c delim character is encountered. 
+ * Also ignores all whitespace characters.
+ *
+ * @param dest  Destination string.
+ * @param src   Source string.
+ * @param delim  Delimiter character, where copying will stop.
+ * 
+ * @return  Pointer to the character within @c src past the delimiter, or NULL if the
+ *          source data ended.
+ */
+const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delim)
+{
+    Str_Clear(dest);
+    
+    if(!src) 
+        return NULL;
+    
+    for(; *src && *src != delim; ++src)
+    {
+        if(!isspace(*src))
+            Str_PartAppend(dest, src, 0, 1);
+    }
+    
+    if(!*src) 
+        return NULL; // It ended.
+    
+    // Skip past the delimiter.
+    return src + 1;
+}

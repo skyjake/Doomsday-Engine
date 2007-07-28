@@ -526,7 +526,7 @@ D_CMD(BLEditor)
     {
         extern int consoleplayer;
 
-        P_ControlReset(-1); // clear the actions array
+        //P_ControlReset(-1); // clear the actions array
         Con_Open(false); // close the console if open
 
         // show the bias menu interface

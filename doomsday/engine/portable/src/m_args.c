@@ -390,10 +390,18 @@ int ArgIsOption(int i)
 }
 
 /**
- * @return          <code>true</code> if the given parameter exists in the
- *                  program's command line arguments else <code>false</code>.
+ * Determines if an argument exists on the command line.
+ *
+ * @return  Number of times the argument exists on the command line.
  */
 int ArgExists(char *check)
 {
-    return ArgCheck(check) != 0;
+    int         i;
+    int         count;
+    
+    for(i = 1, count = 0; i < Argc(); ++i)
+        if(ArgRecognize(check, Argv(i)))
+            count++;
+            
+    return count;
 }

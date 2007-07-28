@@ -50,6 +50,11 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct clicker_s {
+    int down;                   // Count for down events.
+    int up;                     // Count for up events.
+} clicker_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -73,7 +78,8 @@ static byte useMouse, useJoystick;
 static keyevent_t keyEvents[EVBUFSIZE];
 static int evHead, evTail;
 
-static int wheelCount;
+static clicker_t mouseClickers[IMB_MAXBUTTONS];
+static clicker_t joyClickers[IJOY_MAXBUTTONS];
 
 static SDL_Joystick *joy;
 
@@ -289,10 +295,19 @@ void I_PollEvents(void)
             break;
 
         case SDL_MOUSEBUTTONDOWN:
-            if(event.button.button == SDL_BUTTON_WHEELUP)
-                wheelCount++;
-            if(event.button.button == SDL_BUTTON_WHEELDOWN)
-                wheelCount--;
+            mouseClickers[MIN_OF(event.button.button - 1, IMB_MAXBUTTONS - 1)].down++;
+            break;
+
+        case SDL_MOUSEBUTTONUP:
+            mouseClickers[MIN_OF(event.button.button - 1, IMB_MAXBUTTONS - 1)].up++;
+            break;
+            
+        case SDL_JOYBUTTONDOWN:
+            joyClickers[MIN_OF(event.jbutton.button, IJOY_MAXBUTTONS - 1)].down++;
+            break;
+
+        case SDL_JOYBUTTONUP:
+            joyClickers[MIN_OF(event.jbutton.button, IJOY_MAXBUTTONS - 1)].up++;
             break;
 
         case SDL_QUIT:
@@ -344,7 +359,7 @@ void I_InitJoystick(void)
         Con_Message("I_InitJoystick: %s\n", SDL_JoystickName(SDL_JoystickIndex(joy)));
 
         // We'll handle joystick events manually
-        SDL_JoystickEventState(SDL_IGNORE);
+        SDL_JoystickEventState(SDL_ENABLE);
         
         if(verbose)
         {
@@ -435,22 +450,14 @@ void I_GetMouseState(mousestate_t *state)
 
     buttons = SDL_GetRelativeMouseState(&state->x, &state->y);
 
-    if(buttons & SDL_BUTTON(SDL_BUTTON_LEFT))
-        state->buttons |= IMB_LEFT;
-    if(buttons & SDL_BUTTON(SDL_BUTTON_RIGHT))
-        state->buttons |= IMB_RIGHT;
-    if(buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE))
-        state->buttons |= IMB_MIDDLE;
-
-    // The buttons bitfield is ordered according to the numbering.
-    for(i = 4; i < 8; ++i)
+    for(i = 0; i < IMB_MAXBUTTONS; ++i)
     {
-        if(buttons & SDL_BUTTON(i))
-            state->buttons |= 1 << (i - 1);
+        state->buttonDowns[i] = mouseClickers[i].down;
+        state->buttonUps[i] = mouseClickers[i].up;
+        
+        // Reset counters.
+        mouseClickers[i].down = mouseClickers[i].up = 0;
     }
-
-    state->z = wheelCount * 20;
-    wheelCount = 0;
 }
 
 void I_GetJoystickState(joystate_t *state)
@@ -481,11 +488,45 @@ void I_GetJoystickState(joystate_t *state)
     }
     for(i = 0; i < state->numButtons; ++i)
     {
-        state->buttons[i] = SDL_JoystickGetButton(joy, i);
+        state->buttonDowns[i] = joyClickers[i].down;
+        state->buttonUps[i] = joyClickers[i].up;
+        
+        // Reset counters.
+        joyClickers[i].down = joyClickers[i].up = 0;
     }
     for(i = 0; i < state->numHats; ++i)
     {
         pov = SDL_JoystickGetHat(joy, i);
+        
+        /*
+        {
+            // Debug: Simulating the hat with buttons 1-4.
+            int buts[4] = {
+                SDL_JoystickGetButton(joy, 0),
+                SDL_JoystickGetButton(joy, 1),
+                SDL_JoystickGetButton(joy, 2),
+                SDL_JoystickGetButton(joy, 3)
+            };
+            pov = SDL_HAT_CENTERED;
+            if(buts[0] && !buts[1] && !buts[3])
+                pov = SDL_HAT_UP;
+            else if(buts[0] && buts[1])
+                pov = SDL_HAT_RIGHTUP;
+            else if(buts[1] && !buts[2])
+                pov = SDL_HAT_RIGHT;
+            else if(buts[1] && buts[2])
+                pov = SDL_HAT_RIGHTDOWN;
+            else if(buts[2] && !buts[3])
+                pov = SDL_HAT_DOWN;
+            else if(buts[2] && buts[3])
+                pov = SDL_HAT_LEFTDOWN;
+            else if(buts[3] && !buts[0])
+                pov = SDL_HAT_LEFT;
+            else if(buts[3] && buts[0])
+                pov = SDL_HAT_LEFTUP;
+        }
+         */
+        
         switch(pov)
         {
             case SDL_HAT_UP:

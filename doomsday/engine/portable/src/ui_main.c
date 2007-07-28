@@ -225,12 +225,12 @@ void UI_End(void)
     // the UI was eating all the input events.
     if(!shiftDown)
     {
-        rel.deviceID = IDEV_KEYBOARD;
-        rel.data1 = EVS_UP;
-        rel.isAxis = false;
-        rel.controlID = DDKEY_RSHIFT;
-        rel.noclass = true;
-        rel.useclass = 0;
+        rel.device = IDEV_KEYBOARD;
+        rel.type = E_TOGGLE;
+        rel.toggle.state = ETOG_UP;
+        rel.toggle.id = DDKEY_RSHIFT;
+        //rel.obsolete.noclass = true;
+        //rel.obsolete.useclass = 0;
         DD_PostEvent(&rel);
     }
 }
@@ -545,7 +545,7 @@ int UI_Responder(ddevent_t *ev)
     if(!uiCurrentPage)
         return false;
 
-    if(ev->deviceID == IDEV_MOUSE && ev->isAxis && ev->data1 != 0)
+    if(IS_MOUSE_MOTION(ev))
     {
         int         winWidth, winHeight;
 
@@ -557,17 +557,17 @@ int UI_Responder(ddevent_t *ev)
                       "dimensions.");
         }
 
-        if(ev->controlID == 0) // xaxis.
+        if(ev->axis.id == 0) // xaxis.
         {
-            uiCX += ev->data1 / DD_MICKEY_ACCURACY;
+            uiCX += ev->axis.pos;
             if(uiCX < 0)
                 uiCX = 0;
             if(uiCX >= winWidth)
                 uiCX = winWidth - 1;
         }
-        else if(ev->controlID == 1) // yaxis.
+        else if(ev->axis.id == 1) // yaxis.
         {
-            uiCY += ev->data1 / DD_MICKEY_ACCURACY;
+            uiCY += ev->axis.pos;
             if(uiCY < 0)
                 uiCY = 0;
             if(uiCY >= winHeight)
@@ -787,15 +787,16 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
     ddevent_t   translated;
 
     // Translate mouse wheel?
-    if(ev->deviceID == IDEV_MOUSE && !ev->isAxis && ev->data1 == EVS_DOWN)
+    if(IS_MOUSE_DOWN(ev))
     {
-        if(ev->controlID & (DDMB_MWHEELUP | DDMB_MWHEELDOWN))
+        if(ev->toggle.id == DD_MWHEEL_UP || ev->toggle.id == DD_MWHEEL_DOWN)
         {
             UI_MouseFocus();
-            translated.deviceID = IDEV_KEYBOARD;
-            translated.data1 = EVS_DOWN;
-            translated.controlID =
-                (ev->controlID & DDMB_MWHEELUP ? DDKEY_UPARROW : DDKEY_DOWNARROW);
+            translated.device = IDEV_KEYBOARD;
+            translated.type = E_TOGGLE;
+            translated.toggle.state = ETOG_DOWN;
+            translated.toggle.id =
+                (ev->toggle.id == DD_MWHEEL_UP ? DDKEY_UPARROW : DDKEY_DOWNARROW);
             ev = &translated;
         }
     }
@@ -810,11 +811,10 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
     }
 
     // Check for Esc key.
-    if(ev->deviceID == IDEV_KEYBOARD &&
-       (ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT))
+    if(IS_KEY_PRESS(ev))
     {
         // We won't accept repeats with Esc.
-        if(ev->controlID == DDKEY_ESCAPE && ev->data1 == EVS_DOWN &&
+        if(ev->toggle.id == DDKEY_ESCAPE && ev->toggle.state == ETOG_DOWN &&
            allowEscape)
         {
             UI_SetPage(page->previous);
@@ -828,7 +828,7 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
 //            return false;
 
         // Tab is used for navigation.
-        if(ev->controlID == DDKEY_TAB)
+        if(ev->toggle.id == DDKEY_TAB)
         {
             // Remove the focus flag from the current focus object.
             page->objects[page->focus].flags &= ~UIF_FOCUS;
@@ -884,8 +884,7 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
         }
     }
 
-    if(uiTargetAlpha < 1.0 &&
-       ev->deviceID == IDEV_MOUSE && !ev->isAxis && ev->data1 == EVS_DOWN)
+    if(uiTargetAlpha < 1.0 && IS_MOUSE_DOWN(ev))
     {
         // When the UI the faded, an unhandled click brings back the UI.
         UI_DefaultFocus(page);
@@ -1043,12 +1042,12 @@ int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
 {
     if(ob->flags & UIF_CLICKED)
     {
-        if((ev->deviceID == IDEV_KEYBOARD || ev->deviceID == IDEV_MOUSE) &&
-           !ev->isAxis && ev->data1 == EVS_UP)
+        if((ev->device == IDEV_KEYBOARD || ev->device == IDEV_MOUSE) &&
+           IS_TOGGLE_UP(ev))
         {
             UI_Capture(0);
             ob->flags &= ~UIF_CLICKED;
-            if(UI_MouseInside(ob) || ev->deviceID == IDEV_KEYBOARD)
+            if(UI_MouseInside(ob) || ev->device == IDEV_KEYBOARD)
             {
                 // Activate?
                 if(ob->action)
@@ -1057,9 +1056,9 @@ int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
             return true;
         }
     }
-    else if(ev->data1 == EVS_DOWN &&
-            ((ev->deviceID == IDEV_MOUSE && !ev->isAxis && UI_MouseInside(ob)) ||
-             (ev->deviceID == IDEV_KEYBOARD && IS_ACTKEY(ev->controlID))))
+    else if(IS_TOGGLE_DOWN(ev) && 
+            ((ev->device == IDEV_MOUSE && UI_MouseInside(ob)) ||
+             (ev->device == IDEV_KEYBOARD && IS_ACTKEY(ev->toggle.id))))
     {
         if(ob->type == UI_BUTTON)
         {
@@ -1146,13 +1145,10 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
 
     if(ob->flags & UIF_ACTIVE)
     {
-        if(ev->deviceID != IDEV_KEYBOARD)
+        if(!IS_KEY_PRESS(ev))
             return false;
 
-        if(!(ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT))
-            return false;
-
-        switch(ev->controlID)
+        switch(ev->toggle.id)
         {
         case DDKEY_LEFTARROW:
             if(dat->cp > 0)
@@ -1197,21 +1193,21 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
             break;
 
         default:
-            if((int) strlen(ob->text) < dat->maxlen && ev->controlID >= 32 &&
-               (DD_ModKey(ev->controlID) <= 127 ||
-                DD_ModKey(ev->controlID) >= DD_HIGHEST_KEYCODE))
+            if((int) strlen(ob->text) < dat->maxlen && ev->toggle.id >= 32 &&
+               (DD_ModKey(ev->toggle.id) <= 127 ||
+                DD_ModKey(ev->toggle.id) >= DD_HIGHEST_KEYCODE))
             {
                 memmove(ob->text + dat->cp + 1, ob->text + dat->cp,
                         strlen(ob->text) - dat->cp);
-                ob->text[dat->cp++] = DD_ModKey(ev->controlID);
+                ob->text[dat->cp++] = DD_ModKey(ev->toggle.id);
             }
             break;
         }
         return true;
     }
-    else if(ev->data1 == EVS_DOWN &&
-            ((ev->deviceID == IDEV_MOUSE && !ev->isAxis && UI_MouseInside(ob)) ||
-             (ev->deviceID == IDEV_KEYBOARD && IS_ACTKEY(ev->controlID))))
+    else if(IS_TOGGLE_DOWN(ev) && 
+            ((ev->device == IDEV_MOUSE && UI_MouseInside(ob)) ||
+             (ev->device == IDEV_KEYBOARD && IS_ACTKEY(ev->toggle.id))))        
     {
         // Activate and capture.
         ob->flags |= UIF_ACTIVE;
@@ -1294,9 +1290,9 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
     if(ob->flags & UIF_CLICKED)
     {
         // We've captured all input.
-        if(ev->deviceID == IDEV_MOUSE)
+        if(ev->device == IDEV_MOUSE)
         {
-            if(ev->isAxis)
+            if(ev->type == E_AXIS)
             {
                 // Calculate the new position.
                 buth = UI_ListButtonHeight(ob);
@@ -1305,8 +1301,7 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
                 {
                     dat->first =
                         ((uiCY - ob->y - UI_BORDER -
-                          (buth * 3) / 2) * (dat->count - dat->numvis) + (barh -
-                                                                          buth) /
+                          (buth * 3) / 2) * (dat->count - dat->numvis) + (barh - buth) /
                          2) / (barh - buth);
                 }
                 else
@@ -1319,7 +1314,7 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
                 if(dat->first < 0)
                     dat->first = 0;
             }
-            else if(ev->data1 == EVS_UP)
+            else if(IS_TOGGLE_UP(ev))
             {
                 dat->button[1] = false;
                 // Release capture.
@@ -1330,11 +1325,10 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
         // We're eating everything.
         return true;
     }
-    else if(ev->deviceID == IDEV_KEYBOARD &&
-            (ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT))
+    else if(IS_KEY_PRESS(ev))
     {
         used = true;
-        switch(ev->controlID)
+        switch(ev->toggle.id)
         {
         case DDKEY_UPARROW:
             if(dat->selection > 0)
@@ -1358,8 +1352,7 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
             used = false;
         }
     }
-    else if(ev->deviceID == IDEV_MOUSE && !ev->isAxis &&
-            ev->data1 == EVS_DOWN)
+    else if(IS_MOUSE_DOWN(ev))
     {
         if(!UI_MouseInside(ob))
             return false;
@@ -1419,8 +1412,7 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
         else
             return false;
     }
-    else if(ev->deviceID == IDEV_MOUSE && !ev->isAxis &&
-            ev->data1 == EVS_UP)
+    else if(IS_MOUSE_UP(ev))
     {
         // Release all buttons.
         for(i = 0; i < 3; ++i)
@@ -1593,9 +1585,9 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
     if(ob->flags & UIF_CLICKED)
     {
         // We've captured all input.
-        if(ev->deviceID == IDEV_MOUSE)
+        if(ev->device == IDEV_MOUSE)
         {
-            if(ev->isAxis)
+            if(ev->type == E_AXIS)
             {
                 // Calculate new value from the mouse position.
                 butw = UI_SliderButtonWidth(ob);
@@ -1626,7 +1618,7 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
                 if(ob->action)
                     ob->action(ob);
             }
-            else if(ev->data1 == EVS_UP)
+            else if(IS_TOGGLE_UP(ev))
             {
                 dat->button[1] = false; // Release thumb.
                 UI_Capture(0);
@@ -1635,11 +1627,10 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
         }
         return true;
     }
-    else if(ev->deviceID == IDEV_KEYBOARD &&
-            (ev->data1 == EVS_DOWN || ev->data1 == EVS_REPEAT))
+    else if(IS_KEY_PRESS(ev))
     {
         used = true;
-        switch(ev->controlID)
+        switch(ev->toggle.id)
         {
         case DDKEY_HOME:
             dat->value = dat->min;
@@ -1670,8 +1661,7 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
             used = false;
         }
     }
-    else if(ev->deviceID == IDEV_MOUSE && !ev->isAxis &&
-            ev->data1 == EVS_DOWN)
+    else if(IS_MOUSE_DOWN(ev))
     {
         if(!UI_MouseInside(ob))
             return false;
@@ -1703,8 +1693,7 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
             return true;
         }
     }
-    else if(ev->deviceID == IDEV_MOUSE && !ev->isAxis &&
-            ev->data1 == EVS_UP)
+    else if(IS_MOUSE_UP(ev))
     {
         // Release all buttons.
         for(i = 0; i < 3; ++i)

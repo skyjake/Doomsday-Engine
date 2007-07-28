@@ -55,6 +55,7 @@
  */
 void G_RegisterPlayerControls(void)
 {
+    /*
     typedef struct {
         const char   *command;                // The command to execute.
     } control_t;
@@ -123,4 +124,5 @@ void G_RegisterPlayerControls(void)
     }
 
 	// FIXME: Now register any default bindings.
+     */
 }

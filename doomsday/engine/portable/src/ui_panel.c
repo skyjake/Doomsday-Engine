@@ -762,9 +762,9 @@ void CP_CvarSlider(ui_object_t *ob)
 
 int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)
 {
-    if(ev->data1 == EVS_DOWN &&
-       ((ev->deviceID == IDEV_MOUSE && !ev->isAxis && UI_MouseInside(ob)) ||
-        (ev->deviceID == IDEV_KEYBOARD && IS_ACTKEY(ev->controlID))))
+    if(IS_TOGGLE_DOWN(ev) &&
+       ((ev->device == IDEV_MOUSE && UI_MouseInside(ob)) ||
+        (ev->device == IDEV_KEYBOARD && IS_ACTKEY(ev->toggle.id))))
     {
         // We want the focus.
         return true;
@@ -773,9 +773,9 @@ int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)
     if(!(ob->flags & UIF_FOCUS))
         return false;
 
-    if(ev->deviceID == IDEV_KEYBOARD && ev->data1 == EVS_DOWN)
+    if(IS_KEY_DOWN(ev))
     {
-        Con_SetInteger(ob->text, ev->controlID, true);
+        Con_SetInteger(ob->text, ev->toggle.id, true);
         // All keydown events are eaten.
         // Note that the UI responder eats all Tabs!
         return true;

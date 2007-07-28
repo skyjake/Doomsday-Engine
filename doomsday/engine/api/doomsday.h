@@ -217,7 +217,9 @@ extern          "C" {
                                              int amount);
 
     // Play: Controls.
-    float           P_ControlGetAxis(int player, const char *name);
+    void            P_AddPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
+    void            P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
+    int             P_GetImpulseControlState(int playerNum, int control);
 
     // Play: Setup.
     boolean         P_LoadMap(char *levelID);
@@ -314,8 +316,6 @@ extern          "C" {
     // Play: Misc.
     uint            P_RegisterCustomMapProperty(int type, valuetype_t dataType,
                                                 char *name);
-    void            P_RegisterPlayerControl(uint ctlClass, const char *name);
-    void            P_ControlReset(int player);
     void            P_MergeCommand(ticcmd_t *dest, ticcmd_t *src); // temporary.
 
     // Play: Polyobjs.

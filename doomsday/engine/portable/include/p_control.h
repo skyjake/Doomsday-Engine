@@ -29,51 +29,25 @@
 #ifndef __DOOMSDAY_PLAYER_CONTROL_H__
 #define __DOOMSDAY_PLAYER_CONTROL_H__
 
-typedef enum togglestate_e {
-    TG_OFF 		= 0,
-    TG_ON		= 1,
-    TG_NEGATIVE	= 2,
-	
-	// Some aliases:
-    TG_POSITIVE	= TG_ON,
-    TG_MIDDLE 	= TG_OFF,
+// Public:
+void        P_AddPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
+void        P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
+int         P_GetImpulseControlState(int playerNum, int control);
 
-	// Special state:
-    TG_TOGGLE	= 3
-} togglestate_t;
+// Internal:
+typedef struct playercontrol_s {
+    int     id;
+    controltype_t type;
+    char*   name;
+    char*   bindClassName;
+} playercontrol_t;
 
-// Impulse numbers are 8-bit unsigned integers.
-typedef unsigned char impulse_t;
-
-typedef struct controltoggle_s {
-    togglestate_t state;
-    uint    time;               // Time of last change.
-} controltoggle_t;
-
-typedef struct controlaxis_s {
-    controltoggle_t *toggle;    // The toggle that affects this axis control.
-    float   pos;                // Possibly affected by toggles.
-    float   axisPos;            // Position of the input device axis.
-} controlaxis_t;
-
-void        P_RegisterControl(void);
-void        P_ControlTableInit(int player);
+void        P_ControlRegister(void);
 void        P_ControlShutdown(void);
 
-void        P_RegisterPlayerControl(uint class, const char *name);
+playercontrol_t* P_PlayerControlById(int id);
+playercontrol_t* P_PlayerControlByName(const char* name);
+void        P_Impulse(int playerNum, int control);
+void        P_ImpulseByName(int playerNum, const char* control);
 
-int         P_ControlGetToggles(int player);
-void        P_ControlReset(int player);
-
-boolean     P_IsValidControl(const char *cmd);
-boolean     P_ControlExecute(const char *command);
-void        P_ControlTicker(timespan_t time);
-void        P_ControlDrawer(void);
-
-uint 	    P_ControlFindAxis(const char *name);
-float 	    P_ControlGetAxis(int player, const char *name);
-const char *P_ControlGetAxisName(uint index);
-void        P_ControlSetAxis(int player, uint axisControlIndex, float pos);
-void        P_ControlAxisDelta(int player, uint axisControlIndex,
-                               float delta);
 #endif

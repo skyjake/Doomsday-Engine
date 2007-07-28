@@ -34,16 +34,8 @@
 #define IKE_KEY_DOWN	0x1
 #define IKE_KEY_UP		0x2
 
-// Mouse buttons.
-#define IMB_LEFT		0x1
-#define IMB_RIGHT		0x2
-#define IMB_MIDDLE		0x4
-#define IMB_FOUR		0x8
-#define IMB_FIVE		0x10
-#define IMB_SIX			0x20
-#define IMB_SEVEN		0x40
-#define IMB_EIGHT		0x80
-#define IMB_MAXBUTTONS  8
+// Mouse buttons. (1=left, 2=middle, 3=right, 4=wheel up, 5=wheel down)
+#define IMB_MAXBUTTONS  16
 
 // Joystick.
 #define IJOY_AXISMIN	-10000
@@ -53,22 +45,24 @@
 #define IJOY_MAXHATS	4
 #define IJOY_POV_CENTER	-1
 
-typedef struct {
+typedef struct keyevent_s {
 	char            event;          // Type of the event.       
 	unsigned char   code;           // The scancode (extended, corresponds DI keys).
 } keyevent_t;
 
-typedef struct {
-	int             x, y, z;        // Relative X and Y mickeys since last call.
-	int             buttons;        // The buttons bitfield.
+typedef struct mousestate_s {
+	int             x, y;           // Relative X and Y mickeys since last call.
+	int             buttonDowns[IMB_MAXBUTTONS]; // Button down count.
+	int             buttonUps[IMB_MAXBUTTONS]; // Button up count.
 } mousestate_t;
 
-typedef struct {
+typedef struct joystate_s {
     int             numAxes;        // Number of axes present.
     int             numButtons;     // Number of buttons present.
     int             numHats;        // Number of hats present.
 	int             axis[IJOY_MAXAXES];
-	char            buttons[IJOY_MAXBUTTONS];
+	int             buttonDowns[IJOY_MAXBUTTONS]; // Button down count.
+	int             buttonUps[IJOY_MAXBUTTONS]; // Button up count.
 	float           hatAngle[IJOY_MAXHATS];	   // 0 - 359 degrees.
 } joystate_t;
 

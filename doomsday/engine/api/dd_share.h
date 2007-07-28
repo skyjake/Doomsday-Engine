@@ -499,9 +499,8 @@ extern          "C" {
     } event_t;
 
     // The mouse wheel is considered two extra mouse buttons.
-#define DDMB_MWHEELUP       0x1000
-#define DDMB_MWHEELDOWN     0x2000
-
+#define DD_MWHEEL_UP        3
+#define DD_MWHEEL_DOWN      4
 #define DD_MICKEY_ACCURACY  1000
 
     // Control classes.
@@ -1323,6 +1322,21 @@ typedef struct ticcmd_s {
     // Player Data
     //
     //------------------------------------------------------------------------
+
+    // Built-in control identifiers.
+    enum
+    {
+        CTL_WALK = 1,           ///< Forward/backwards.
+        CTL_SIDESTEP = 2,       ///< Left/right sideways movement.
+        CTL_ZFLY = 3,           ///< Up/down movement.
+        CTL_TURN = 4,           ///< Turning horizontally.
+        CTL_LOOK = 5            ///< Turning up and down.
+    };
+
+    typedef enum controltype_e {
+        CTLT_NUMERIC,
+        CTLT_IMPULSE
+    } controltype_t;
 
     // Player flags.
 #define DDPF_FIXANGLES      0x1    // Server: send angle/pitch to client.

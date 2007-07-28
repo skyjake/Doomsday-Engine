@@ -55,20 +55,36 @@
  */
 int P_LocalToConsole(int localPlayer)
 {
-    int         i, count, n;
+    int         i, count;
 
     for(i = 0, count = 0; i < DDMAXPLAYERS; ++i)
     {
-        // The numbering begins from the consoleplayer.
-        n = (i + consoleplayer) % DDMAXPLAYERS;
-
-        if(players[n].flags & DDPF_LOCAL)
+        if(players[i].flags & DDPF_LOCAL)
         {
             if(count++ == localPlayer)
-                return n;
+                return i;
         }
     }
 
     // No match!
     return -1;
+}
+
+/**
+ * Determine the local player number used by a particular console.
+ * Local players are numbered starting from zero.
+ */
+int P_ConsoleToLocal(int playerNum)
+{
+    int         i, count;
+    
+    if(!(players[playerNum].flags & DDPF_LOCAL))
+        return -1; // Not local at all.
+    
+    for(i = 0, count = 0; i < playerNum; ++i)
+    {
+        if(players[i].flags & DDPF_LOCAL)
+            count++;
+    }
+    return count;
 }

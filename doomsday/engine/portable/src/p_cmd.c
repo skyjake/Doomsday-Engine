@@ -78,6 +78,9 @@ void P_MergeCommand(ticcmd_t *dest, ticcmd_t *src)
  */
 void P_BuildCommand(ticcmd_t *cmd, int playerNumber)
 {
+    memset(cmd, 0, sizeof(*cmd));
+    
+#if 0    
 	ddplayer_t *player = &players[playerNumber];
 	//client_t *client = clients + playerNumber;
 
@@ -110,4 +113,5 @@ void P_BuildCommand(ticcmd_t *cmd, int playerNumber)
         // Clients mirror their local commands.
         memcpy(&players->cmd, cmd, sizeof(*cmd));
     }
+#endif
 }
