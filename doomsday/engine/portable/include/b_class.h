@@ -48,18 +48,21 @@ typedef struct bclass_s {
 } bclass_t;
 
 void            B_UpdateDeviceStateAssociations(void);
-bclass_t       *B_NewClass(const char* name);
+bclass_t*       B_NewClass(const char* name);
 void            B_DestroyAllClasses(void);
 void            B_ActivateClass(bclass_t* bc, boolean doActivate);
-bclass_t       *B_ClassByName(const char* name);
+bclass_t*       B_ClassByPos(int pos);
+bclass_t*       B_ClassByName(const char* name);
 int             B_ClassCount(void);
 int             B_GetClassPos(bclass_t* bc);
 void            B_ReorderClass(bclass_t* bc, int pos);
+void            B_ClearClass(bclass_t* bc);
 void            B_DestroyClass(bclass_t* bc);
 controlbinding_t* B_GetControlBinding(bclass_t* bc, int control);
 void            B_DestroyControlBinding(controlbinding_t* conBin);
 void            B_InitControlBindingList(controlbinding_t* listRoot);
 void            B_DestroyControlBindingList(controlbinding_t* listRoot);
+boolean         B_DeleteBinding(bclass_t* bc, int bid);
 boolean         B_TryEvent(ddevent_t* event);
 void            B_PrintClasses(void);
 void            B_PrintAllBindings(void);

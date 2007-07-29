@@ -267,7 +267,7 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
     {
         // If this binding has conditions, they may prevent using it.
         skip = false;
-        for(i = 0; i < cb->numConds; ++cb)
+        for(i = 0; i < cb->numConds; ++i)
         {
             if(!B_CheckCondition(&cb->conds[i]))
             {
@@ -325,7 +325,10 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
             
         // Apply further modifications based on flags.
         if(cb->flags & CBDF_INVERSE)
+        {
             devicePos = -devicePos;
+            deviceOffset = -deviceOffset;            
+        }
         if(cb->flags & CBDF_TIME_STAGED)
         {
             if(nowTime - deviceTime < stageThreshold * 1000)

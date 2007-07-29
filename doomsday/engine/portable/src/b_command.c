@@ -391,7 +391,29 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event)
  */
 void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
 {
-    Str_Clear(str);
+    int         i;
     
+    Str_Clear(str);    
+    B_AppendDeviceDescToString(eb->device, eb->type, eb->id, str);
+    
+    if(eb->type == E_TOGGLE)
+    {
+        B_AppendToggleStateToString(eb->state, str);
+    }
+    else if(eb->type == E_AXIS)
+    {
+        B_AppendAxisPositionToString(eb->state, eb->pos, str);
+    }
+    else if(eb->type == E_ANGLE)
+    {
+        B_AppendAnglePositionToString(eb->pos, str);
+    }
+ 
+    // Append any state conditions.
+    for(i = 0; i < eb->numConds; ++i)
+    {
+        Str_Append(str, " + ");
+        B_AppendConditionToString(&eb->conds[i], str);
+    }    
 }
 

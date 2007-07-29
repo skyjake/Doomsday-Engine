@@ -35,6 +35,7 @@ typedef struct evbinding_s {
     struct evbinding_s* next;       // Next in list of bindings.
     int         bid;                // Binding identifier.
     char*       command;            // Command to execute.
+    
     uint        device;             // Which device? 
     ddeventtype_t type;             // Type of event.
     int         id;                 // Identifier.

@@ -204,9 +204,14 @@ void B_DestroyClass(bclass_t* bc)
 {
     B_RemoveClass(bc);
     free(bc->name);
+    B_ClearClass(bc);
+    M_Free(bc);
+}
+
+void B_ClearClass(bclass_t* bc)
+{
     B_DestroyCommandBindingList(&bc->commandBinds);
     B_DestroyControlBindingList(&bc->controlBinds);
-    M_Free(bc);
 }
 
 void B_ActivateClass(bclass_t* bc, boolean doActivate)
@@ -225,6 +230,13 @@ bclass_t* B_ClassByName(const char* name)
             return bindClasses[i];
     }
     return NULL;
+}
+
+bclass_t* B_ClassByPos(int pos)
+{
+    if(pos < 0 || pos >= bindClassCount)
+        return NULL;
+    return bindClasses[pos];
 }
 
 int B_ClassCount(void)
@@ -319,6 +331,52 @@ void B_DestroyControlBindingList(controlbinding_t* listRoot)
     }
 }
 
+/**
+ * @return  @c true, if the binding was found and deleted.
+ */
+boolean B_DeleteBinding(bclass_t* bc, int bid)
+{
+    evbinding_t* eb = 0;
+    controlbinding_t* conBin = 0;
+    dbinding_t* db = 0;
+    int         i;
+    
+    // Check if it one of the command bindings.
+    for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
+    {
+        if(eb->bid == bid)
+        {
+            B_DestroyCommandBinding(eb);
+            return true;
+        }
+    }
+    
+    // How about one fo the control bindings?
+    for(conBin = bc->controlBinds.next; conBin != &bc->controlBinds; conBin = conBin->next)
+    {
+        if(conBin->bid == bid)
+        {
+            B_DestroyControlBinding(conBin);
+            return true;
+        }
+        
+        // It may also be a device binding.
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            for(db = conBin->deviceBinds[i].next; db != &conBin->deviceBinds[i]; db = db->next)
+            {
+                if(db->bid == bid)
+                {
+                    B_DestroyDeviceBinding(db);
+                    return true;
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+
 boolean B_TryEvent(ddevent_t* event)
 {
     int     i;
@@ -369,6 +427,7 @@ void B_PrintAllBindings(void)
     
     Con_Printf("%i binding classes defined.\n", bindClassCount);
     
+#define BIDFORMAT   "[%4i]"
     for(i = 0; i < bindClassCount; ++i)
     {
         bc = bindClasses[i];
@@ -382,7 +441,7 @@ void B_PrintAllBindings(void)
         for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
         {
             B_EventBindingToString(e, str);
-            Con_Printf("  [%4i] %s : %s\n", e->bid, Str_Text(str), e->command);
+            Con_Printf("  "BIDFORMAT" %s : %s\n", e->bid, Str_Text(str), e->command);
         }
         
         // Controls.
@@ -392,7 +451,7 @@ void B_PrintAllBindings(void)
         for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
         {
             const char* controlName = P_PlayerControlById(c->control)->name;
-            Con_Printf("  Control \"%s\":\n", controlName);
+            Con_Printf("  Control \"%s\" "BIDFORMAT":\n", controlName, c->bid);
             for(k = 0; k < DDMAXPLAYERS; ++k)
             {
                 for(count = 0, d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; 
@@ -403,7 +462,7 @@ void B_PrintAllBindings(void)
                 for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
                 {
                     B_DeviceBindingToString(d, str);
-                    Con_Printf("    [%4i] %s\n", d->bid, Str_Text(str));
+                    Con_Printf("    "BIDFORMAT" %s\n", d->bid, Str_Text(str));
                 }                
             }            
         }

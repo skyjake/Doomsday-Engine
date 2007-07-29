@@ -471,15 +471,27 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
 void B_AppendToggleStateToString(ebstate_t state, ddstring_t* str)
 {
     if(state == EBTOG_UNDEFINED)
-        Str_Append(str, "undefined");
+        Str_Append(str, "-undefined");
     if(state == EBTOG_DOWN)
-        Str_Append(str, "down");
+        Str_Append(str, "-down");
     if(state == EBTOG_REPEAT)
-        Str_Append(str, "repeat");
+        Str_Append(str, "-repeat");
     if(state == EBTOG_PRESS)
-        Str_Append(str, "press");
+        Str_Append(str, "-press");
     if(state == EBTOG_UP)
-        Str_Append(str, "up");
+        Str_Append(str, "-up");
+}
+
+void B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str)
+{
+    if(state == EBAXIS_WITHIN)
+        Str_Appendf(str, "-within %g", pos);
+    else if(state == EBAXIS_BEYOND)
+        Str_Appendf(str, "-beyond %g", pos);
+    else if(state == EBAXIS_BEYOND_POSITIVE)
+        Str_Appendf(str, "-pos %g", pos);
+    else
+        Str_Appendf(str, "-neg %g", pos);
 }
 
 void B_AppendAnglePositionToString(float pos, ddstring_t* str)
@@ -502,20 +514,11 @@ void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
     
     if(cond->type == SCT_TOGGLE_STATE)
     {
-        Str_Append(str, "-");
         B_AppendToggleStateToString(cond->state, str);
     }
     else if(cond->type == SCT_AXIS_BEYOND)
     {
-        Str_Append(str, "-");
-        if(cond->state == EBAXIS_WITHIN)
-            Str_Appendf(str, "within %g", cond->pos);
-        else if(cond->state == EBAXIS_BEYOND)
-            Str_Appendf(str, "beyond %g", cond->pos);
-        else if(cond->state == EBAXIS_BEYOND_POSITIVE)
-            Str_Appendf(str, "pos %g", cond->pos);
-        else
-            Str_Appendf(str, "neg %g", cond->pos);
+        B_AppendAxisPositionToString(cond->state, cond->pos, str);
     }
     else if(cond->type == SCT_ANGLE_AT)
     {

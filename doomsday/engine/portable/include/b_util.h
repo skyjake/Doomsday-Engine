@@ -71,6 +71,7 @@ boolean     B_CheckAxisPos(ebstate_t test, float testPos, float pos);
 boolean     B_CheckCondition(statecondition_t* cond);
 void        B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str);
 void        B_AppendToggleStateToString(ebstate_t state, ddstring_t* str);
+void        B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str);
 void        B_AppendAnglePositionToString(float pos, ddstring_t* str);
 void        B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str);
 

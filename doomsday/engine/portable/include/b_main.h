@@ -31,6 +31,7 @@
 void        B_Register(void);
 void        B_Init(void);
 void        B_Shutdown(void);
+boolean     B_Delete(int bid);
 boolean     B_Responder(ddevent_t *ev);
 void        B_WriteToFile(FILE *file);
 

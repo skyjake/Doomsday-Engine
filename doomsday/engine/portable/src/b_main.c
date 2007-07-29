@@ -76,8 +76,9 @@ D_CMD(BindEventToCommand);
 D_CMD(BindControlToDevice);
 D_CMD(ListBindings);
 D_CMD(ListBindingClasses);
+D_CMD(ClearBindingClasses);
 D_CMD(ClearBindings);
-D_CMD(DeleteBind);
+D_CMD(DeleteBindingById);
 D_CMD(EnableBindClass);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -231,6 +232,9 @@ void B_Register(void)
     C_CMD("bindcontrol",    "ss",   BindControlToDevice);
     C_CMD("listbclasses",   NULL,   ListBindingClasses);
     C_CMD("listbindings",   NULL,   ListBindings);
+    C_CMD("clearbindings",  "",     ClearBindings);
+    C_CMD("clearbclasses",  "",     ClearBindingClasses);
+    C_CMD("delbind",        "i",    DeleteBindingById);
     
     //int        i;
 
@@ -246,13 +250,7 @@ void B_Register(void)
     C_CMD("safebind",       NULL,   Bind);
     C_CMD("safebindr",      NULL,   Bind);
     */
-    
-    /*
-    for(i = 0; ddBindClasses[i].name; ++i)
-    {
-        DD_AddBindClass(ddBindClasses + i);
-    }
-     */
+   
 }
 
 /**
@@ -287,22 +285,6 @@ void B_Init(void)
     B_BindControl("turn", "joy-x + key-shift-up + joy-hat-center + key-code123-down");
     
     B_ActivateClass(B_ClassByName(DEFAULT_BINDING_CLASS_NAME), true);
-    
-    /*
-    uint        i;
-
-    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
-    {
-        uint        j;
-        devcontrolbinds_t *dcb = &devCtrlBinds[i];
-
-        for(j = 0; j < NUM_BIND_LISTS; ++j)
-        {
-            dcb->binds[j] = NULL;
-            dcb->numBinds[j] = 0;
-        }
-    }
-     */
 }
 
 /**
@@ -429,6 +411,18 @@ dbinding_t* B_GetControlDeviceBindings(int localNum, int control, bclass_t** bCl
     return &B_GetControlBinding(bc, control)->deviceBinds[localNum];
 }
 
+boolean B_Delete(int bid)
+{
+    int         i;
+    
+    for(i = 0; i < B_ClassCount(); ++i)
+    {
+        if(B_DeleteBinding(B_ClassByPos(i), bid))
+            return true;
+    }
+    return false;
+}
+
 D_CMD(BindEventToCommand)
 {
     evbinding_t* b = B_BindCommand(argv[1], argv[2]);
@@ -458,6 +452,41 @@ D_CMD(ListBindingClasses)
 D_CMD(ListBindings)
 {
     B_PrintAllBindings();
+    return true;
+}
+
+D_CMD(ClearBindingClasses)
+{
+    B_DestroyAllClasses();
+    return true;
+}
+
+D_CMD(ClearBindings)
+{
+    int         i;
+    
+    for(i = 0; i < B_ClassCount(); ++i)
+    {
+        Con_Printf("Clearing binding class \"%s\"...\n", B_ClassByPos(i)->name);
+        B_ClearClass(B_ClassByPos(i));
+    }
+    // We can restart the id counter, all the old bindings were destroyed.
+    bindingIdCounter = 0;
+    return true;
+}
+
+D_CMD(DeleteBindingById)
+{
+    int bid = strtoul(argv[1], NULL, 10);
+    
+    if(B_Delete(bid))
+    {
+        Con_Printf("Binding %i deleted successfully.\n", bid);
+    }
+    else
+    {
+        Con_Printf("Cannot delete binding %i, it was not found.\n", bid);
+    }
     return true;
 }
 
@@ -2121,13 +2150,6 @@ D_CMD(Bind)
             B_Bind(&event, cmdptr, -1, bc);
     }*/
     return true;
-}
-
-D_CMD(ClearBindings)
-{/*
-    B_ClearBindings(true, false); // Just the active lists.
-    Con_Printf("All bindings cleared.\n");
-*/    return true;
 }
 
 D_CMD(DeleteBind)
