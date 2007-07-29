@@ -962,17 +962,21 @@ void CalculateWallTips(void)
   for (i=0; i < num_linedefs; i++)
   {
     linedef_t *line = lev_linedefs[i];
+    float_g x1, y1, x2, y2;
+
+    sector_t *left  = (line->left)  ? line->left->sector  : NULL;
+    sector_t *right = (line->right) ? line->right->sector : NULL;
 
     if (line->self_ref && cur_info->skip_self_ref)
       continue;
 
-    float_g x1 = line->start->x;
-    float_g y1 = line->start->y;
-    float_g x2 = line->end->x;
-    float_g y2 = line->end->y;
+    x1 = line->start->x;
+    y1 = line->start->y;
+    x2 = line->end->x;
+    y2 = line->end->y;
 
-    sector_t *left  = (line->left)  ? line->left->sector  : NULL;
-    sector_t *right = (line->right) ? line->right->sector : NULL;
+    left  = (line->left)  ? line->left->sector  : NULL;
+    right = (line->right) ? line->right->sector : NULL;
 
     VertexAddWallTip(line->start, x2-x1, y2-y1, left, right);
     VertexAddWallTip(line->end,   x1-x2, y1-y2, right, left);

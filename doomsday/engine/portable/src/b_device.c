@@ -189,10 +189,12 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
     // Any conditions?
     while(desc)
     {
+        statecondition_t *cond;
+
         // A new condition.
         desc = Str_CopyDelim(str, desc, '+');
         
-        statecondition_t *cond = B_AllocDeviceBindingCondition(cb);
+        cond = B_AllocDeviceBindingCondition(cb);
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
             // Failure parusing the condition.

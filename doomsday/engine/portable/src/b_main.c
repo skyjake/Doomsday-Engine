@@ -419,12 +419,17 @@ finished:
 
 dbinding_t* B_GetControlDeviceBindings(int localNum, int control, bclass_t** bClass)
 {
+    playercontrol_t* pc;
+    bclass_t* bc;
+
     if(localNum < 0 || localNum >= DDMAXPLAYERS)
         return NULL;
     
-    playercontrol_t* pc = P_PlayerControlById(control);
-    bclass_t* bc = B_ClassByName(pc->bindClassName);
-    if(bClass) *bClass = bc;
+    pc = P_PlayerControlById(control);
+    bc = B_ClassByName(pc->bindClassName);
+    if(bClass)
+        *bClass = bc;
+
     return &B_GetControlBinding(bc, control)->deviceBinds[localNum];
 }
 
@@ -1080,7 +1085,6 @@ const char *B_ShortNameForKey(int ddkey)
 int B_KeyForShortName(const char *key)
 {
     uint        idx;
-    char        c;
 
     for(idx = 0; keyNames[idx].key; ++idx)
     { 

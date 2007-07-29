@@ -227,10 +227,12 @@ boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
     // Any conditions?
     while(desc)
     {
+        statecondition_t *cond;
+
         // A new condition.
         desc = Str_CopyDelim(str, desc, '+');
         
-        statecondition_t *cond = B_AllocCommandBindingCondition(eb);
+        cond = B_AllocCommandBindingCondition(eb);
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
             // Failure parusing the condition.

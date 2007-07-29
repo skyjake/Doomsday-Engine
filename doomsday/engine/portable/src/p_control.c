@@ -206,6 +206,10 @@ void P_ControlShutdown(void)
 
 void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
 {
+    float       tmp;
+    struct bclass_s* bc = 0;
+    struct dbinding_s* binds = 0;
+
 #if _DEBUG
     // Check that this is really a numeric control.
     {
@@ -213,14 +217,12 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
         assert(pc->type == CTLT_NUMERIC);
     }
 #endif
-    
-    float tmp;
-    struct bclass_s* bc = 0;
-    struct dbinding_s* binds = 0;
 
     // Ignore NULLs.
-    if(!pos) pos = &tmp;
-    if(!relativeOffset) relativeOffset = &tmp;
+    if(!pos)
+        pos = &tmp;
+    if(!relativeOffset)
+        relativeOffset = &tmp;
     
     binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
     B_EvaluateDeviceBindingList(binds, pos, relativeOffset, bc);

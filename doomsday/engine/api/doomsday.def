@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 338 <--
+; --> 339 <--
 ; Other free ordinals:
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
@@ -85,10 +85,6 @@ EXPORTS
 	Con_Busy            @330 NONAME
 	Con_BusyWorkerEnd   @331 NONAME
 
-; Console: Bindings.
-	DD_AddBindClass		@251 NONAME
-	DD_SetBindClass		@252 NONAME
-
 ; System.
 ;	Sys_TicksPerSecond	@46 NONAME
 	Sys_GetTime			@47 NONAME
@@ -133,6 +129,11 @@ EXPORTS
 	P_CheckSight			@76 NONAME
 	P_SetState				@207 NONAME
 	P_SpawnDamageParticleGen		@233 NONAME
+
+; Play: Controls.
+    P_AddPlayerControl		@251 NONAME
+    P_GetControlState		@252 NONAME
+    P_GetImpulseControlState @339 NONAME
 
 ; Play: Setup.
 	P_LoadMap		@254 NONAME

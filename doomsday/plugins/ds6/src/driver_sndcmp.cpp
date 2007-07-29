@@ -314,7 +314,7 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
     bool        play3d = !(buf->flags & SFXBF_3D);
     void       *writePtr1 = NULL, *writePtr2 = NULL;
     DWORD       writeBytes1, writeBytes2;
-    unsigned int safeNumSamples = sample->numSamples + SAMPLE_SILENCE;
+    unsigned int safeNumSamples = sample->numsamples + SAMPLE_SILENCE;
     unsigned int safeSize, i;
     int         last, delta;
 
@@ -335,7 +335,7 @@ void DS_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 Con_Message("Safelen = %i\n", safeNumSamples);
 #endif*/
     }
-    safeSize = safeNumSamples * sample->bytesPer;
+    safeSize = safeNumSamples * sample->bytesper;
 /*#if _DEBUG
 Con_Message("Safesize = %i\n", safeSize);
 #endif*/
@@ -388,28 +388,28 @@ Con_Message("Fill %i bytes (orig=%i).\n", safeSize - sample->size,
 
     // Interpolate to silence.
     // numSafeSamples includes at least SAMPLE_ROUNDOFF extra samples.
-    if(sample->bytesPer == 1)
-        last = ((byte*)sample->data)[sample->numSamples - 1];
+    if(sample->bytesper == 1)
+        last = ((byte*)sample->data)[sample->numsamples - 1];
     else
-        last = ((short*)sample->data)[sample->numSamples - 1];
+        last = ((short*)sample->data)[sample->numsamples - 1];
 
-    delta = (sample->bytesPer==1? 0x80 - last : -last);
+    delta = (sample->bytesper==1? 0x80 - last : -last);
 
-    for(i = 0; i < safeNumSamples - sample->numSamples; ++i)
+    for(i = 0; i < safeNumSamples - sample->numsamples; ++i)
     {
         float       pos = i/(float)SAMPLE_SILENCE;
 
         if(pos > 1)
             pos = 1;
 
-        if(sample->bytesPer == 1)
+        if(sample->bytesper == 1)
         {   // 8-bit sample.
-            ((byte*)writePtr1)[sample->numSamples + i] =
+            ((byte*)writePtr1)[sample->numsamples + i] =
                 byte( last + delta*pos );
         }
         else
         {   // 16-bit sample.
-            ((short*)writePtr1)[sample->numSamples + i] =
+            ((short*)writePtr1)[sample->numsamples + i] =
                 short( last + delta*pos );
         }
     }
