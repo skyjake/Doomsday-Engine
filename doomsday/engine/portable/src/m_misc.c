@@ -1062,11 +1062,14 @@ char* M_StrCatQuoted(char *dest, char *src)
  */
 boolean M_CheckTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
+    // Either use the trigger's duration, or fall back to the default.
+    timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
+    
     trigger->accum += advanceTime;
 
-    if(trigger->accum >= trigger->duration)
+    if(trigger->accum >= duration)
     {
-        trigger->accum -= trigger->duration;
+        trigger->accum -= duration;
         return true;
     }
 

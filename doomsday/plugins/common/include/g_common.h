@@ -26,6 +26,7 @@
 #define __COMMON_GAME_H__
 
 #include "dd_share.h"
+#include "g_controls.h"
 
 #if  __DOOM64TC__
 # include "doom64tc.h"

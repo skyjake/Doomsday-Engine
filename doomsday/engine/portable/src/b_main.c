@@ -43,6 +43,7 @@
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_BINDING_CLASS_NAME  "game"
+#define CONSOLE_BINDING_CLASS_NAME  "console"
 
 // TYPES -------------------------------------------------------------------
 
@@ -70,8 +71,6 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-//D_CMD(Bind);
-//D_CMD(BindAxis);
 D_CMD(BindEventToCommand);
 D_CMD(BindControlToDevice);
 D_CMD(ListBindings);
@@ -79,7 +78,8 @@ D_CMD(ListBindingClasses);
 D_CMD(ClearBindingClasses);
 D_CMD(ClearBindings);
 D_CMD(DeleteBindingById);
-D_CMD(EnableBindClass);
+//D_CMD(EnableBindClass);
+D_CMD(DefaultBindings);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -235,6 +235,7 @@ void B_Register(void)
     C_CMD("clearbindings",  "",     ClearBindings);
     C_CMD("clearbclasses",  "",     ClearBindingClasses);
     C_CMD("delbind",        "i",    DeleteBindingById);
+    C_CMD("defaultbindings", "",    DefaultBindings);
     
     //int        i;
 
@@ -259,6 +260,7 @@ void B_Register(void)
 void B_Init(void)
 {
     B_NewClass(DEFAULT_BINDING_CLASS_NAME);
+    B_NewClass(CONSOLE_BINDING_CLASS_NAME);
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
     B_BindCommand("joy-hat-center", "print center");
@@ -279,12 +281,27 @@ void B_Init(void)
     B_BindCommand("joy-w-neg1.0", "print \"joy w negative\"");
     */
 
-    B_BindControl("turn", "key-left-staged-inverse");
+    /*B_BindControl("turn", "key-left-staged-inverse");
     B_BindControl("turn", "key-right-staged");
     B_BindControl("turn", "mouse-x");
     B_BindControl("turn", "joy-x + key-shift-up + joy-hat-center + key-code123-down");
-    
+    */
+
+    // Bind all the defaults (of engine & game, everything).
+    Con_Executef(CMDS_DDAY, false, "defaultbindings");
+
+    // Enable the classes for the initial state.
     B_ActivateClass(B_ClassByName(DEFAULT_BINDING_CLASS_NAME), true);
+}
+
+void B_BindDefaults(void)
+{
+    // Engine's highest priority class: opening control panel, opening the console.
+    
+    // Console bindings (when open).
+    
+    // Bias editor.
+    
 }
 
 /**
@@ -487,6 +504,15 @@ D_CMD(DeleteBindingById)
     {
         Con_Printf("Cannot delete binding %i, it was not found.\n", bid);
     }
+    return true;
+}
+
+D_CMD(DefaultBindings)
+{
+    B_BindDefaults();
+    
+    // Set the game's default bindings.
+    Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
     return true;
 }
 

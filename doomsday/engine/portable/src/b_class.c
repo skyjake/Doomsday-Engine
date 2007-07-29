@@ -72,7 +72,7 @@ void B_DestroyAllClasses(void)
     }
     M_Free(bindClasses);
     bindClasses = 0;
-    assert(bindClassCount == 0);
+    bindClassCount = 0;
 }
 
 /**

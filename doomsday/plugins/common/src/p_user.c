@@ -972,8 +972,23 @@ void P_ClientSideThink(void)
 
 void P_PlayerThinkState(player_t *player)
 {
+    int playerNum = player - players;
     mobj_t *plrmo = player->plr->mo;
+    classinfo_t *pClassInfo = PCLASS_INFO(player->class);    
+    float vel, off;
+    int speed;
+    
+    // Check for speed.
+    P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
+    speed = (vel != 0)? 2 : 1;
 
+    // Move status.
+    // FIXME: This is just temp stuff, ticcmd will be removed soon.
+    P_GetControlState(playerNum, CTL_WALK, &vel, &off);
+    player->plr->cmd.forwardMove = off + vel * speed;
+    P_GetControlState(playerNum, CTL_SIDESTEP, &vel, &off);
+    player->plr->cmd.sideMove = off + vel * speed;
+   
     // jDoom
     // Selector 0 = Generic (used by default)
     // Selector 1 = Fist
@@ -1791,18 +1806,36 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t tickDuration)
     ddplayer_t* plr = player->plr;
     int turn = 0;
     float vel, off;
+    int turnSpeed;
+    float offsetSensitivity = 20;
+    classinfo_t *pClassInfo = PCLASS_INFO(player->class);    
 
-    if(!plr->mo)
+    if(!plr->mo || player->playerstate == PST_DEAD || player->viewlock)
         return; // Nothing to control.
 
-    // Turning is affected by the turn axis and the left/right toggles.
-    //turn = P_ControlGetAxis(playerNum, "turn");
-    P_GetControlState(playerNum, CTL_TURN, &vel, &off);
- 
-    plr->mo->angle -= (angle_t) ((tickDuration * vel + off) * ANGLE_180 / 180 * 16);
+    turnSpeed = pClassInfo->turnSpeed[0] * 35;
 
-    /*Con_Message("P_PlayerThinkLookAround: turnAxis = %i (moangle=%x)\n", turn, 
-                plr->mo->angle);*/
+    // Check for extra speed.
+    P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
+    if(vel != 0)
+    {
+        // Hurry, good man!
+        turnSpeed = pClassInfo->turnSpeed[1] * 35;
+    }
+    
+    // Yaw.
+    P_GetControlState(playerNum, CTL_TURN, &vel, &off);
+    plr->mo->angle -= (angle_t) (FLT2FIX(turnSpeed * vel * tickDuration) + 
+                                 (offsetSensitivity * off) / 180 * ANGLE_180);
+
+    // Pitch.
+    P_GetControlState(playerNum, CTL_LOOK, &vel, &off);
+    plr->lookdir += 110.f/85.f * (turnSpeed/65535.f*360 * vel * tickDuration +
+                                  offsetSensitivity * off); 
+    if(plr->lookdir < -110)
+        plr->lookdir = -110;
+    else if(plr->lookdir > 110)
+        plr->lookdir = 110;
 }
 
 /**

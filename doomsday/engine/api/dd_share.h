@@ -1330,7 +1330,8 @@ typedef struct ticcmd_s {
         CTL_SIDESTEP = 2,       ///< Left/right sideways movement.
         CTL_ZFLY = 3,           ///< Up/down movement.
         CTL_TURN = 4,           ///< Turning horizontally.
-        CTL_LOOK = 5            ///< Turning up and down.
+        CTL_LOOK = 5,           ///< Turning up and down.
+        CTL_FIRST_GAME_CONTROL = 1000
     };
 
     typedef enum controltype_e {

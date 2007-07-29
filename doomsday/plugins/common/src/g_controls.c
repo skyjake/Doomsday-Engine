@@ -112,6 +112,8 @@ ArtifactHotkeys[] =
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+DEFCC( CCmdDefaultGameBinds );
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum, float elapsedTime);
@@ -169,6 +171,11 @@ cvar_t  controlCVars[] = {
     {NULL}
 };
 
+ccmd_t  controlCmds[] = {
+    { "defaultgamebindings", "", CCmdDefaultGameBinds },
+    { NULL }
+};
+
 // CODE --------------------------------------------------------------------
 
 /**
@@ -180,6 +187,56 @@ void G_ControlRegister(void)
 
     for(i = 0; controlCVars[i].name; ++i)
         Con_AddVariable(controlCVars + i);
+
+    for(i = 0; controlCmds[i].name; ++i)
+        Con_AddCommand(controlCmds + i);    
+
+    // FIXME: Is this is the proper place?
+    P_AddPlayerControl(CTL_WALK, CTLT_NUMERIC, "walk", "game");
+    P_AddPlayerControl(CTL_SIDESTEP, CTLT_NUMERIC, "sidestep", "game");
+    P_AddPlayerControl(CTL_ZFLY, CTLT_NUMERIC, "zfly", "game");
+    P_AddPlayerControl(CTL_TURN, CTLT_NUMERIC, "turn", "game");
+    P_AddPlayerControl(CTL_LOOK, CTLT_NUMERIC, "look", "game");
+    P_AddPlayerControl(CTL_SPEED, CTLT_NUMERIC, "speed", "game");
+    P_AddPlayerControl(CTL_USE, CTLT_IMPULSE, "use", "game");
+}
+
+DEFCC( CCmdDefaultGameBinds )
+{
+    // Traditional key bindings plus WASD and mouse look, and reasonable joystick defaults.
+    const char* binds[] = {
+        "bindcontrol walk key-up",
+        "bindcontrol walk key-w",
+        "bindcontrol walk key-down-inverse",
+        "bindcontrol walk key-s-inverse",
+        "bindcontrol walk joy-y",
+
+        "bindcontrol sidestep key-period",
+        "bindcontrol sidestep key-d",
+        "bindcontrol sidestep key-comma-inverse",
+        "bindcontrol sidestep key-a-inverse",
+
+        "bindcontrol zfly key-home",
+        "bindcontrol zfly key-end-inverse",
+        
+        "bindcontrol turn key-left-staged-inverse",
+        "bindcontrol turn key-right-staged",
+        "bindcontrol turn mouse-x",
+        "bindcontrol turn joy-x",
+        
+        "bindcontrol look key-pgup-staged",
+        "bindcontrol look key-pgdown-staged-inverse",
+        "bindcontrol look mouse-y",
+        
+        "bindcontrol speed key-shift",
+        NULL
+    };
+    int         i;
+    
+    for(i = 0; binds[i]; ++i)
+        DD_Execute(binds[i], false);
+    
+    return true;
 }
 
 /**

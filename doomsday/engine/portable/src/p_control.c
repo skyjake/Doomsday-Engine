@@ -143,9 +143,6 @@ void P_ControlRegister(void)
 {
     C_CMD("listcontrols",   "",     ListPlayerControls);
     C_CMD("impulse",        NULL,   Impulse);
-    
-    // TEST: Default controls.
-    P_AddPlayerControl(CTL_TURN, CTLT_NUMERIC, "turn", "game");
 }
 
 /** 
@@ -217,9 +214,15 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
     }
 #endif
     
+    float tmp;
     struct bclass_s* bc = 0;
-    struct dbinding_s* binds = 
-        B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
+    struct dbinding_s* binds = 0;
+
+    // Ignore NULLs.
+    if(!pos) pos = &tmp;
+    if(!relativeOffset) relativeOffset = &tmp;
+    
+    binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
     B_EvaluateDeviceBindingList(binds, pos, relativeOffset, bc);
 }
 

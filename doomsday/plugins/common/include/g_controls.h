@@ -40,6 +40,11 @@ enum {
     GBC_MESSAGE
 };
 
+enum {
+    CTL_SPEED = CTL_FIRST_GAME_CONTROL,
+    CTL_USE
+};
+
 void        G_ControlRegister(void);
 void        G_DefaultBindings(void);
 void        G_RegisterBindClasses(void);
