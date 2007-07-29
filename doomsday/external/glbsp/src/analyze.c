@@ -963,9 +963,8 @@ void CalculateWallTips(void)
   {
     linedef_t *line = lev_linedefs[i];
     float_g x1, y1, x2, y2;
-
-    sector_t *left  = (line->left)  ? line->left->sector  : NULL;
-    sector_t *right = (line->right) ? line->right->sector : NULL;
+    sector_t *left;
+    sector_t *right;
 
     if (line->self_ref && cur_info->skip_self_ref)
       continue;

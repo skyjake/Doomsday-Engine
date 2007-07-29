@@ -789,7 +789,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     float       alpha = (ob->flags & UIF_DISABLED ? .2f : 1);
     char        buf[80];
     byte        key = Con_GetByte(ob->text);
-    char       *name;
+    const char *name;
 
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0,
                   1, 0);

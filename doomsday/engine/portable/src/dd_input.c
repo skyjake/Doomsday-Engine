@@ -1065,7 +1065,6 @@ void DD_ReadKeyboard(void)
  */
 void DD_ReadMouse(void)
 {
-    int         change;
     ddevent_t   ev;
     mousestate_t mouse;
     int         xpos, ypos;
@@ -1195,7 +1194,7 @@ void DD_ReadJoystick(void)
 {
     ddevent_t ev;
     joystate_t state;
-    int     i, bstate;
+    int     i;
 
     if(!I_JoystickPresent())
         return;

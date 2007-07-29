@@ -189,9 +189,8 @@ static void B_RemoveClass(bclass_t* bc)
  */
 bclass_t* B_NewClass(const char* name)
 {
-    int         i;
-    
     bclass_t* bc = M_Calloc(sizeof(bclass_t));
+
     bc->name = strdup(name);
     bc->active = false;
     B_InitCommandBindingList(&bc->commandBinds);

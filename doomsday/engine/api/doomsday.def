@@ -1,16 +1,23 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 339 <--
+; --> 342 <--
 ; Other free ordinals:
-; 77 formerly P_LoadBlockMap
-; 78 formerly P_LoadReject
-; 232 formerly R_SetAnimGroup
+; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
 ; 45 formerly B_BindingsForCommand
+; 77 formerly P_LoadBlockMap
+; 78 formerly P_LoadReject
 ; 108 formerly GL_ChangeResolution
+; 232 formerly R_SetAnimGroup
+; 332 formerly P_ControlReset
 
 EXPORTS
+; Obsolete. To be deleted!
+	DD_SetBindClass			@341 NONAME
+	DD_AddBindClass			@342 NONAME
+
+; Plugins.
 	Plug_AddHook			@1 NONAME
 	Plug_RemoveHook			@2 NONAME
 	Plug_DoHook			@3 NONAME
@@ -228,8 +235,6 @@ EXPORTS
 
 ; Play: Misc.
 	P_RegisterCustomMapProperty @328 NONAME
-    P_RegisterPlayerControl @43 NONAME
-    P_ControlReset      @332 NONAME
     P_MergeCommand      @333 NONAME
 
 ; Play: Polyobjs.
@@ -358,6 +363,7 @@ EXPORTS
 	M_ClearBox			@208 NONAME
 	M_AddToBox			@209 NONAME
 	M_ScreenShot		@210 NONAME
+	M_CheckTrigger		@340 NONAME
 
 ; Miscellaneous: Math.
 	bamsAtan2			@145 NONAME
