@@ -122,17 +122,16 @@ void Sys_ConPostEvents(void)
             continue;
 
         key = &ptr->Event.KeyEvent;
-        ev.deviceID = IDEV_KEYBOARD;
-        ev.data1 = (key->bKeyDown ? EVS_DOWN : EVS_UP);
+        ev.device = IDEV_KEYBOARD;
+        ev.type =   E_TOGGLE;
+        ev.toggle.state = (key->bKeyDown ? ETOG_DOWN : ETOG_UP);
         if(key->wVirtualKeyCode == VK_UP)
-            ev.controlID = DDKEY_UPARROW;
+            ev.toggle.id = DDKEY_UPARROW;
         else if(key->wVirtualKeyCode == VK_DOWN)
-            ev.controlID = DDKEY_DOWNARROW;
+            ev.toggle.id = DDKEY_DOWNARROW;
         else
-            ev.controlID = DD_ScanToKey(key->wVirtualScanCode);
-        ev.isAxis = false;
-        ev.noclass = true;
-        ev.useclass = 0; // Initialize with something.
+            ev.toggle.id = DD_ScanToKey(key->wVirtualScanCode);
+
         DD_PostEvent(&ev);
     }
 }
