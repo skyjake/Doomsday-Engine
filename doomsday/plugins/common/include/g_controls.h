@@ -57,7 +57,7 @@ int         G_PrivilegedResponder(event_t *event);
 boolean     G_AdjustControlState(event_t *ev);
 
 void        G_LookAround(int pnum);
-void        G_SpecialButton(int pnum);
+void        G_SetPause(boolean yes);
 
 void        G_ResetMousePos(void);
 void        G_ControlReset(int pnum);

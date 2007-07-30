@@ -74,7 +74,7 @@ D_CMD(ListBindingClasses);
 D_CMD(ClearBindingClasses);
 D_CMD(ClearBindings);
 D_CMD(DeleteBindingById);
-//D_CMD(EnableBindClass);
+D_CMD(ActivateBindingClass);
 D_CMD(DefaultBindings);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -125,6 +125,7 @@ static const keyname_t keyNames[] = {
     {DDKEY_BACKSPACE,   "backspace"},
     {'-',               "minus"},
     {'+',               "plus"},
+    {'=',               "equals"},
     {' ',               "space"},
     {';',               "semicolon"},
     {',',               "comma"},
@@ -232,22 +233,8 @@ void B_Register(void)
     C_CMD("clearbclasses",  "",     ClearBindingClasses);
     C_CMD("delbind",        "i",    DeleteBindingById);
     C_CMD("defaultbindings", "",    DefaultBindings);
-    
-    //int        i;
-
-    /*
-    C_CMD("bind",           NULL,   Bind);
-    C_CMD("bindaxis",       NULL,   BindAxis);
-    C_CMD("bindr",          NULL,   Bind);
-    C_CMD("clearbinds",     "",     ClearBindings);
-    C_CMD("delbind",        NULL,   DeleteBind);
-    C_CMD("enablebindclass", NULL,  EnableBindClass);
-    C_CMD("listbindings",   NULL,   ListBindings);
-    C_CMD("listbindclasses", "",    ListBindClasses);
-    C_CMD("safebind",       NULL,   Bind);
-    C_CMD("safebindr",      NULL,   Bind);
-    */
-   
+    C_CMD("activatebclass", "s",    ActivateBindingClass);
+    C_CMD("deactivatebclass", "s",  ActivateBindingClass);
 }
 
 /**
@@ -258,6 +245,11 @@ void B_Init(void)
     bclass_t* bc;
     
     B_NewClass(DEFAULT_BINDING_CLASS_NAME);
+
+    // Game classes.
+    // FIXME: Obviously belong to the game, so shouldn't be here.
+    B_NewClass("menu");
+    B_AcquireKeyboard(B_NewClass("message"), true);
 
     // Binding class for the console.
     bc = B_NewClass(CONSOLE_BINDING_CLASS_NAME);
@@ -520,6 +512,20 @@ D_CMD(DefaultBindings)
     // Set the game's default bindings.
     Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
     return true;
+}
+
+D_CMD(ActivateBindingClass)
+{
+    boolean doActivate = !stricmp(argv[0], "activatebclass");
+    bclass_t* bc = B_ClassByName(argv[1]);
+    
+    if(!bc)
+    {
+        Con_Printf("Binding class '%s' does not exist.\n", argv[1]);
+        return false;
+    }
+    B_ActivateClass(bc, doActivate);
+    return true;    
 }
 
 #if 0

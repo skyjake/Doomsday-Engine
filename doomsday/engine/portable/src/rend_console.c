@@ -381,7 +381,7 @@ void Rend_Console(void)
     int         textOffsetY = 0;
     uint        cmdCursor;
     cbuffer_t  *buffer;
-    static cbline_t **lines = NULL;
+    static const cbline_t **lines = NULL;
     static int bufferSize = 0;
     int         reqLines;
     uint        count;

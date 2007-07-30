@@ -1590,6 +1590,9 @@ void M_StartMenu(void)
     if(menuactive)
         return;
 
+    // Aural feedback.
+    S_LocalSound(menusnds[2], NULL);
+
     Con_Open(false);
     menuactive = true;
     menu_color = 0;
@@ -1602,7 +1605,7 @@ void M_StartMenu(void)
     quitAsk = 0;
 
     // Enable the menu binding class
-    DD_SetBindClass(GBC_CLASS3, true);
+    DD_Executef(true, "activatebclass menu");
 }
 
 void M_SetupNextMenu(menu_t *menudef)
@@ -1648,7 +1651,7 @@ void M_ClearMenus(void)
     outFade = 0;
 
     // Disable the menu binding class
-    DD_SetBindClass(GBC_CLASS3, false);
+    DD_Executef(true, "deactivatebclass menu");
 }
 
 /**
@@ -2272,7 +2275,7 @@ void M_StartMessage(char *string, void *routine, boolean input)
     typein_time = 0;
 
     // Enable the message binding class
-    DD_SetBindClass(GBC_MESSAGE, true);
+    DD_Executef(true, "activatebclass message");
 }
 
 void M_StopMessage(void)
@@ -2281,7 +2284,7 @@ void M_StopMessage(void)
     messageToPrint = 0;
 
     // Disable the menu binding class
-    DD_SetBindClass(GBC_MESSAGE, false);
+    DD_Executef(true, "deactivatebclass message");
 }
 
 /**
@@ -3803,7 +3806,6 @@ DEFCC(CCmdMenuAction)
         if(!stricmp(argv[0], "menu") && !chatOn)   // Open menu
         {
             M_StartMenu();
-            S_LocalSound(menusnds[2], NULL);
             return true;
         }
     }
@@ -4178,20 +4180,20 @@ DEFCC(CCmdMenuAction)
             currentMenu = &ReadDef1;
 
         itemOn = 0;
-        S_LocalSound(menusnds[2], NULL);
+        //S_LocalSound(menusnds[2], NULL);
     }
     else if(!stricmp(argv[0], "SaveGame"))    // F2
     {
         M_StartMenu();
         menuTime = 0;
-        S_LocalSound(menusnds[2], NULL);
+        //S_LocalSound(menusnds[2], NULL);
         M_SaveGame(0, NULL);
     }
     else if(!stricmp(argv[0], "LoadGame"))
     {
         M_StartMenu();
         menuTime = 0;
-        S_LocalSound(menusnds[2], NULL);
+        //S_LocalSound(menusnds[2], NULL);
         M_LoadGame(0, NULL);
     }
     else if(!stricmp(argv[0], "SoundMenu"))    // F4
@@ -4200,7 +4202,7 @@ DEFCC(CCmdMenuAction)
         menuTime = 0;
         currentMenu = &Options2Def;
         itemOn = 0;                // sfx_vol
-        S_LocalSound(menusnds[2], NULL);
+        //S_LocalSound(menusnds[2], NULL);
     }
     else if(!stricmp(argv[0], "QuickSave"))    // F6
     {

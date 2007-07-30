@@ -834,6 +834,13 @@ void DD_ProcessEvents(timespan_t ticLength)
         {
         case IDEV_KEYBOARD:
             ev.type = EV_KEY;
+            if(ddev->type == E_TOGGLE)
+            {
+                ev.state = ( ddev->toggle.state == ETOG_UP? EVS_UP :
+                             ddev->toggle.state == ETOG_DOWN? EVS_DOWN :
+                             EVS_REPEAT );
+                ev.data1 = ddev->toggle.id;
+            }
             break;
 
         case IDEV_MOUSE:

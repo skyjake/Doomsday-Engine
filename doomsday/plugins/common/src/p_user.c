@@ -62,6 +62,7 @@
 #endif
 
 #include "p_player.h"
+#include "p_tick.h" // for P_IsPaused()
 #include "p_view.h"
 #include "d_net.h"
 #include "p_player.h"
@@ -1893,6 +1894,26 @@ void P_PlayerThinkUpdateControls(player_t* player)
  */
 void P_PlayerThink(player_t *player, timespan_t tickDuration)
 {
+    if(P_IsPaused())
+    {
+        int playerNum = player - players;
+        
+        // The game is paused, but the controls can still receive input. Let's poll
+        // them and ignore the data, so that when the game is unpaused, any 
+        // accumulated offsets won't bite us.
+        P_GetControlState(playerNum, CTL_TURN, NULL, NULL);
+        P_GetControlState(playerNum, CTL_LOOK, NULL, NULL);
+        return;
+    }
+    
+    if(G_GetGameState() != GS_LEVEL)
+    {
+        // Just check the controls in case some UI stuff is relying on them
+        // (like intermission).
+        P_PlayerThinkUpdateControls(player);
+        return;
+    }
+    
     P_PlayerThinkState(player);
 
     // Adjust turn angles and look direction. This is done in fractional time.

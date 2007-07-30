@@ -86,7 +86,6 @@ typedef struct autoload_s {
 
 void    G_CheckDemoStatus();
 void    F_Drawer(void);
-boolean F_Responder(ddevent_t *ev);
 void    S_InitScript(void);
 void    Net_Drawer(void);
 

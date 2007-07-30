@@ -93,7 +93,6 @@ DEFCC(CCmdMovePlane);
 
 DEFCC(CCmdScreenShot);
 DEFCC(CCmdViewSize);
-DEFCC(CCmdPause);
 DEFCC(CCmdHexenFont);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -185,7 +184,6 @@ ccmd_t  gameCCmds[] = {
     {"spy",         "",     CCmdCycleSpy},
     {"screenshot",  "",     CCmdScreenShot},
     {"viewsize",    "s",    CCmdViewSize},
-    {"pause",       "",     CCmdPause},
 
     // $cheats
     {"cheat",       "s",    CCmdCheat},
@@ -334,19 +332,6 @@ DEFCC(CCmdViewSize)
 
     // Update the view size if necessary.
     R_SetViewSize(cfg.screenblocks, 0);
-    return true;
-}
-
-/**
- * Console command to pause the game (when not in the menu).
- */
-DEFCC(CCmdPause)
-{
-    extern boolean sendpause;
-
-    if(!menuactive)
-        sendpause = true;
-
     return true;
 }
 

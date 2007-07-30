@@ -128,10 +128,7 @@ void P_RunPlayers(timespan_t tickDuration)
             */
             
             // The player thinks.
-            if(G_GetGameState() == GS_LEVEL && !isPaused)
-            {
-                P_PlayerThink(&players[i], tickDuration);
-            }
+            P_PlayerThink(&players[i], tickDuration);
         }
 }
 
