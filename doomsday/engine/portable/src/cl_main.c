@@ -374,7 +374,7 @@ void Cl_Ticker(void)
     if(!isClient || !Cl_GameReady() || clientPaused)
         return;
 
-    //if(!M_CheckTrigger(&fixed, time)) return;
+    //if(!M_RunTrigger(&fixed, time)) return;
 
     Cl_LocalCommand();
     Cl_PredictMovement();

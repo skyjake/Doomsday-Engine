@@ -1059,8 +1059,14 @@ char* M_StrCatQuoted(char *dest, char *src)
 
 /**
  * Advances time and return true if the trigger is triggered.
+ *
+ * @param trigger      Time trigger.
+ * @param advanceTime  Amount of time to advance the trigger.
+ *
+ * @return @c true, if the trigger has accumulated enough time to fill the trigger's
+ *         time threshold.
  */
-boolean M_CheckTrigger(trigger_t *trigger, timespan_t advanceTime)
+boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
     timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
@@ -1075,6 +1081,22 @@ boolean M_CheckTrigger(trigger_t *trigger, timespan_t advanceTime)
 
     // It wasn't triggered.
     return false;
+}
+
+/**
+* Advances time and return true if the trigger is triggered.
+ *
+ * @param trigger      Time trigger.
+ * @param advanceTime  Amount of time to advance the trigger.
+ *
+ * @return @c true, if the trigger has accumulated enough time to fill the trigger's
+ *         time threshold.
+ */
+boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
+{
+    // Either use the trigger's duration, or fall back to the default.
+    timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
+    return (trigger->accum + advanceTime>= duration);
 }
 
 /**

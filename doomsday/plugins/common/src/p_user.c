@@ -1855,7 +1855,7 @@ void P_PlayerThink(player_t *player, timespan_t tickDuration)
     // Adjust turn angles and look direction. This is done in fractional time.
     P_PlayerThinkLookAround(player, tickDuration);
     
-    if(!M_CheckTrigger(&player->plr->fixedtrigger, tickDuration))
+    if(!M_CheckTrigger(DD_GetVariable(DD_SHARED_FIXED_TRIGGER), tickDuration))
         return; // It's too soon.
     
     if(!IS_CLIENT) // Locally only.

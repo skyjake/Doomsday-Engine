@@ -217,7 +217,7 @@ extern          "C" {
                                              int amount);
 
     // Play: Controls.
-    void            P_AddPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
+    void            P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
     void            P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
     int             P_GetImpulseControlState(int playerNum, int control);
 
@@ -472,7 +472,8 @@ extern          "C" {
     int             M_ScreenShot(char *filename, int bits);
 
     // MiscellaneousL: Time utilities.
-    boolean         M_CheckTrigger(trigger_t *trigger, timespan_t advanceTime);
+    boolean         M_RunTrigger(trigger_t *trigger, timespan_t advanceTime);
+    boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
     
     // Miscellaneous: Math.
     binangle_t      bamsAtan2(int y, int x);

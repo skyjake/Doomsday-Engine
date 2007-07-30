@@ -34,7 +34,8 @@ extern boolean appShutdown;
 extern boolean suspendMsgPump;
 #endif
 
-extern timespan_t sysTime, gameTime, demoTime, levelTime;
+extern timespan_t   sysTime, gameTime, demoTime, levelTime;
+extern trigger_t    sharedFixedTrigger;
 
 void            DD_RegisterLoop(void);
 int             DD_GameLoop(void);

@@ -192,13 +192,13 @@ void G_ControlRegister(void)
         Con_AddCommand(controlCmds + i);    
 
     // FIXME: Is this is the proper place?
-    P_AddPlayerControl(CTL_WALK, CTLT_NUMERIC, "walk", "game");
-    P_AddPlayerControl(CTL_SIDESTEP, CTLT_NUMERIC, "sidestep", "game");
-    P_AddPlayerControl(CTL_ZFLY, CTLT_NUMERIC, "zfly", "game");
-    P_AddPlayerControl(CTL_TURN, CTLT_NUMERIC, "turn", "game");
-    P_AddPlayerControl(CTL_LOOK, CTLT_NUMERIC, "look", "game");
-    P_AddPlayerControl(CTL_SPEED, CTLT_NUMERIC, "speed", "game");
-    P_AddPlayerControl(CTL_USE, CTLT_IMPULSE, "use", "game");
+    P_NewPlayerControl(CTL_WALK, CTLT_NUMERIC, "walk", "game");
+    P_NewPlayerControl(CTL_SIDESTEP, CTLT_NUMERIC, "sidestep", "game");
+    P_NewPlayerControl(CTL_ZFLY, CTLT_NUMERIC, "zfly", "game");
+    P_NewPlayerControl(CTL_TURN, CTLT_NUMERIC, "turn", "game");
+    P_NewPlayerControl(CTL_LOOK, CTLT_NUMERIC, "look", "game");
+    P_NewPlayerControl(CTL_SPEED, CTLT_NUMERIC, "speed", "game");
+    P_NewPlayerControl(CTL_USE, CTLT_IMPULSE, "use", "game");
 }
 
 DEFCC( CCmdDefaultGameBinds )

@@ -564,7 +564,7 @@ void Demo_Ticker(timespan_t time)
     ddplayer_t *pl = players + consoleplayer;
     int     i;
 
-    if(!M_CheckTrigger(&fixed, time))
+    if(!M_RunTrigger(&fixed, time))
         return;
 
     // Only playback is handled.

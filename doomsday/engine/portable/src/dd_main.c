@@ -1057,61 +1057,64 @@ void* DD_GetVariable(int ddvalue)
         // How about some specials?
         switch (ddvalue)
         {
-        case DD_SECTOR_COUNT:
-            return &numsectors;
-
-        case DD_LINE_COUNT:
-            return &numlines;
-
-        case DD_SIDE_COUNT:
-            return &numsides;
-
-        case DD_VERTEX_COUNT:
-            return &numvertexes;
-
-        case DD_POLYOBJ_COUNT:
-            return &po_NumPolyobjs;
-
-        case DD_SEG_COUNT:
-            return &numsegs;
-
-        case DD_SUBSECTOR_COUNT:
-            return &numsubsectors;
-
-        case DD_NODE_COUNT:
-            return &numnodes;
-
-        case DD_THING_COUNT:
-            return &numthings;
-
-        case DD_GAME_EXPORTS:
-            return &gx;
-
-        case DD_TRACE_ADDRESS:
-            return &trace;
-
-        case DD_TRANSLATIONTABLES_ADDRESS:
-            return translationtables;
-
-        case DD_MAP_NAME:
-            if(mapinfo && mapinfo->name[0])
-                return mapinfo->name;
-            break;
-
-        case DD_MAP_AUTHOR:
-            if(mapinfo && mapinfo->author[0])
-                return mapinfo->author;
-            break;
-
-        case DD_BLOCKMAP_ORIGIN_X:
-            return &bmaporgx;
-
-        case DD_BLOCKMAP_ORIGIN_Y:
-            return &bmaporgy;
-
+            case DD_SHARED_FIXED_TRIGGER:
+                return &sharedFixedTrigger;
+                
+            case DD_SECTOR_COUNT:
+                return &numsectors;
+                
+            case DD_LINE_COUNT:
+                return &numlines;
+                
+            case DD_SIDE_COUNT:
+                return &numsides;
+                
+            case DD_VERTEX_COUNT:
+                return &numvertexes;
+                
+            case DD_POLYOBJ_COUNT:
+                return &po_NumPolyobjs;
+                
+            case DD_SEG_COUNT:
+                return &numsegs;
+                
+            case DD_SUBSECTOR_COUNT:
+                return &numsubsectors;
+                
+            case DD_NODE_COUNT:
+                return &numnodes;
+                
+            case DD_THING_COUNT:
+                return &numthings;
+                
+            case DD_GAME_EXPORTS:
+                return &gx;
+                
+            case DD_TRACE_ADDRESS:
+                return &trace;
+                
+            case DD_TRANSLATIONTABLES_ADDRESS:
+                return translationtables;
+                
+            case DD_MAP_NAME:
+                if(mapinfo && mapinfo->name[0])
+                    return mapinfo->name;
+                break;
+                
+            case DD_MAP_AUTHOR:
+                if(mapinfo && mapinfo->author[0])
+                    return mapinfo->author;
+                break;
+                
+            case DD_BLOCKMAP_ORIGIN_X:
+                return &bmaporgx;
+                
+            case DD_BLOCKMAP_ORIGIN_Y:
+                return &bmaporgy;
+                
 #ifdef WIN32
-        case DD_WINDOW_HANDLE:
-            return Sys_GetWindowHandle(windowIDX);
+            case DD_WINDOW_HANDLE:
+                return Sys_GetWindowHandle(windowIDX);
 #endif
         }
         return 0;

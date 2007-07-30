@@ -124,7 +124,7 @@ void P_Ticker(timespan_t time)
     if(!thinkercap.next)
         return;                 // Not initialized yet.
 
-    if(!M_CheckTrigger(&fixed, time))
+    if(!M_RunTrigger(&fixed, time))
         return;
 
     // New ptcgens for planes?

@@ -181,7 +181,7 @@ int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
     strcpy(extbuf, token);
 
     // Check the maximum texture size.
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &maxTexSize);
 
     DG_InitExtensions();
 
@@ -218,7 +218,7 @@ int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
         }
         Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
 
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTexUnits);
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &maxTexUnits);
         Con_Message("  Found Texture units: %i\n", maxTexUnits);
 #ifndef USE_MULTITEXTURE
         maxTexUnits = 1;
@@ -231,7 +231,7 @@ int DG_CreateContext(int width, int height, int bpp, int mode, void *data)
         Con_Message("  Maximum texture size: %i\n", maxTexSize);
         if(extAniso)
         {
-            glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+            glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &maxAniso);
             Con_Message("  Maximum anisotropy: %i\n", maxAniso);
         }
     }

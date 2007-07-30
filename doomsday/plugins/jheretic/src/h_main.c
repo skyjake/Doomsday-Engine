@@ -590,7 +590,7 @@ void H_Ticker(timespan_t tickDuration)
 {
     static trigger_t fixed = { 1.0 / 35 };
     
-    if(M_CheckTrigger(&fixed, tickDuration))
+    if(M_RunTrigger(&fixed, tickDuration))
     {
         MN_Ticker();
     }

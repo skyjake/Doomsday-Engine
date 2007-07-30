@@ -711,7 +711,7 @@ void D_Ticker(timespan_t tickDuration)
     static trigger_t fixed = { 1.0 / 35 };
     
     // Fixed ticks for the menu ticker.
-    if(M_CheckTrigger(&fixed, tickDuration))
+    if(M_RunTrigger(&fixed, tickDuration))
     {
         MN_Ticker();
     }

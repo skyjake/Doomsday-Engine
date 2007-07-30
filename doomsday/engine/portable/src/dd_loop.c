@@ -93,6 +93,8 @@ boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netg
 
 boolean drawGame = true; // If false the game viewport won't be rendered
 
+trigger_t sharedFixedTrigger = { 1 / 35.0 };
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static double lastFrameTime;
@@ -297,7 +299,6 @@ float DD_GetFrameRate(void)
  */
 void DD_Ticker(timespan_t time)
 {
-    static trigger_t fixed = { 1 / 35.0 };
     static float realFrameTimePos = 0;
 
     // Demo ticker. Does stuff like smoothing of view angles.
@@ -311,11 +312,11 @@ void DD_Ticker(timespan_t time)
         // positions are calculated, so that frametime always stays within
         // the range 0..1.
         realFrameTimePos += time * TICSPERSEC;
-
+        
         // Game logic.
         gx.Ticker(time);    
 
-        if(M_CheckTrigger(&fixed, time))
+        if(M_RunTrigger(&sharedFixedTrigger, time))
         {
             // A new 35 Hz tick begins, clear the player fixangles flags which
             // have been in effect for any fractional ticks since they were

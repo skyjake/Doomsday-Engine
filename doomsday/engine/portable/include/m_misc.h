@@ -110,7 +110,8 @@ float           M_CycleIntoRange(float value, float length);
 uint            M_CRC32(byte *data, uint length);
 
 // Time utilities.
-boolean         M_CheckTrigger(trigger_t * trigger, timespan_t advanceTime);
+boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
+boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 
 // Other utilities.
 int             M_ScreenShot(char *filename, int bits);

@@ -594,7 +594,7 @@ void UI_Ticker(timespan_t time)
     if(!uiCurrentPage)
         return;
 
-    if(!M_CheckTrigger(&fixed, time))
+    if(!M_RunTrigger(&fixed, time))
         return;
 
     // Move towards the target alpha level for the entire UI.

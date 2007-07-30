@@ -30,7 +30,7 @@
 #define __DOOMSDAY_PLAYER_CONTROL_H__
 
 // Public:
-void        P_AddPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
+void        P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
 void        P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
 int         P_GetImpulseControlState(int playerNum, int control);
 

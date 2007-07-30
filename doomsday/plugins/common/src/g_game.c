@@ -897,7 +897,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     P_RunPlayers(tickDuration);
 
     // The following is restricted to fixed 35 Hz ticks.
-    if(M_CheckTrigger(&fixed, tickDuration))
+    if(M_RunTrigger(&fixed, tickDuration))
     {
         // Do main actions.
         switch(G_GetGameState())

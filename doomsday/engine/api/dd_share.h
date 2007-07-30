@@ -312,7 +312,8 @@ extern          "C" {
         DD_BLOCKMAP_HEIGHT,
         DD_BLOCKMAP_ORIGIN_X,
         DD_BLOCKMAP_ORIGIN_Y,
-        DD_XGFUNC_LINK             // XG line classes
+        DD_XGFUNC_LINK,            // XG line classes
+        DD_SHARED_FIXED_TRIGGER
     };
 
     // Bounding box coordinates.
@@ -1410,7 +1411,6 @@ typedef struct ticcmd_s {
         fixcounters_t   fixacked;
         angle_t         lastangle;  // For calculating turndeltas.
         ddpsprite_t     psprites[DDMAXPSPRITES];    // Player sprites.
-        trigger_t       fixedtrigger;   // Trigger for 35 Hz ticking.
         void           *extradata;  // Pointer to any game-specific data.
     } ddplayer_t;
 

@@ -756,8 +756,10 @@ void DG_Func(int func, int param1, int param2)
         break;
 
     case DGL_BLENDING_OP:
+#ifndef UNIX
         if(!glBlendEquationEXT)
             break;
+#endif
         glBlendEquationEXT(param1 ==
                            DGL_SUBTRACT ? GL_FUNC_SUBTRACT : param1 ==
                            DGL_REVERSE_SUBTRACT ? GL_FUNC_REVERSE_SUBTRACT :

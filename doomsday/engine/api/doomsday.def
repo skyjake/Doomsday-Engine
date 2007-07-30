@@ -138,7 +138,7 @@ EXPORTS
 	P_SpawnDamageParticleGen		@233 NONAME
 
 ; Play: Controls.
-    P_AddPlayerControl		@251 NONAME
+    P_NewPlayerControl		@251 NONAME
     P_GetControlState		@252 NONAME
     P_GetImpulseControlState @339 NONAME
 

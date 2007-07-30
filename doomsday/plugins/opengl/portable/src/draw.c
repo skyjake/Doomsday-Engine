@@ -278,7 +278,9 @@ void DG_EnableArrays(int vertices, int colors, int coords)
 			}
 			else
 			{
+#ifndef UNIX
 				if(glClientActiveTextureARB)
+#endif
 					glClientActiveTextureARB(GL_TEXTURE0 + i);
 
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -321,7 +323,9 @@ void DG_DisableArrays(int vertices, int colors, int coords)
 			}
 			else
 			{
+#ifndef UNIX
 				if(glClientActiveTextureARB)
+#endif
 					glClientActiveTextureARB(GL_TEXTURE0 + i);
 
 				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -382,7 +386,9 @@ void DG_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 			}
 			else
 			{
+#ifndef UNIX
 				if(glClientActiveTextureARB)
+#endif
 					glClientActiveTextureARB(GL_TEXTURE0 + i);
 
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -391,10 +397,13 @@ void DG_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 		}
 	}
 
-	if(!noArrays && lock > 0 && glLockArraysEXT)
-	{   // 'lock' is the number of vertices to lock.
-		glLockArraysEXT(0, lock);
-	}
+#ifndef UNIX
+	if(glLockArraysEXT)
+#endif
+        if(!noArrays && lock > 0)
+        {   // 'lock' is the number of vertices to lock.
+            glLockArraysEXT(0, lock);
+        }
 
 #ifdef _DEBUG
 	CheckError();
@@ -403,9 +412,12 @@ void DG_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 
 void DG_UnlockArrays(void)
 {
-	if(!noArrays && glUnlockArraysEXT)
+	if(!noArrays)
 	{
-		glUnlockArraysEXT();
+#ifndef UNIX
+        if(glUnlockArraysEXT)
+#endif
+            glUnlockArraysEXT();
 	}
 
 #ifdef _DEBUG
