@@ -95,11 +95,22 @@ boolean Con_ParseCommands(char *fileName, boolean setdefault)
     return true;
 }
 
+static void Con_WriteHeaderComment(FILE* file)
+{
+    fprintf(file, "# %s / Doomsday Engine " DOOMSDAY_VERSION_TEXT "\n",
+            (char *) gx.GetVariable(DD_GAME_ID));
+    fprintf(file,
+            "# This configuration file is generated automatically. Each line is a\n");
+    fprintf(file,
+            "# console command. Lines beginning with # are comments. Use autoexec.cfg\n");
+    fprintf(file, "# for your own startup commands.\n\n");
+}
+
 /**
  * Writes the state of the console (variables, bindings, aliases) into the
  * given file, overwriting the previous contents.
  */
-boolean Con_WriteState(const char *fileName)
+boolean Con_WriteState(const char *fileName, const char *bindingsFileName)
 {
     unsigned int i;
     cvar_t     *var;
@@ -108,21 +119,14 @@ boolean Con_WriteState(const char *fileName)
     void       *ccmd_help;
     unsigned int numCVars = Con_CVarCount();
 
-    VERBOSE(Con_Printf("Con_WriteState: %s\n", fileName));
+    VERBOSE(Con_Printf("Con_WriteState: %s; %s\n", fileName, bindingsFileName));
 
     if((file = fopen(fileName, "wt")) == NULL)
     {
         Con_Message("Con_WriteState: Can't open %s for writing.\n", fileName);
         return false;
     }
-
-    fprintf(file, "# %s / Doomsday Engine " DOOMSDAY_VERSION_TEXT "\n",
-            (char *) gx.GetVariable(DD_GAME_ID));
-    fprintf(file,
-            "# This configuration file is generated automatically. Each line is a\n");
-    fprintf(file,
-            "# console command. Lines beginning with # are comments. Use autoexec.cfg\n");
-    fprintf(file, "# for your own startup commands.\n\n");
+    Con_WriteHeaderComment(file);
 
     fprintf(file, "#\n# CONSOLE VARIABLES\n#\n\n");
 
@@ -156,13 +160,27 @@ boolean Con_WriteState(const char *fileName)
         fprintf(file, "\n\n");
     }
 
-    fprintf(file, "#\n# BINDINGS\n#\n\n");
-    B_WriteToFile(file);
+    //fprintf(file, "#\n# BINDINGS\n#\n\n");
+    //B_WriteToFile(file);
 
     fprintf(file, "\n#\n# ALIASES\n#\n\n");
     Con_WriteAliasesToFile(file);
 
     fclose(file);
+    
+    if(bindingsFileName)
+    {
+        // Bindings go a separate file.
+        if((file = fopen(bindingsFileName, "wt")) == NULL)
+        {
+            Con_Message("Con_WriteState: Can't open %s for writing.\n", bindingsFileName);
+            return false;
+        }
+        Con_WriteHeaderComment(file);
+        B_WriteToFile(file);
+        fclose(file);        
+    }
+    
     return true;
 }
 
@@ -172,12 +190,12 @@ boolean Con_WriteState(const char *fileName)
  */
 void Con_SaveDefaults(void)
 {
-    Con_WriteState(cfgFile);
+    Con_WriteState(cfgFile, bindingsConfigFileName);
 }
 
 D_CMD(WriteConsole)
 {
     Con_Message("Writing to %s...\n", argv[1]);
 
-    return !Con_WriteState(argv[1]);
+    return !Con_WriteState(argv[1], NULL);
 }

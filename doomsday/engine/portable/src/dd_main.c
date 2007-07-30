@@ -279,7 +279,7 @@ void DD_SetConfigFile(char *filename)
     strcpy(configFileName, filename);
     Dir_FixSlashes(configFileName);
     strcpy(bindingsConfigFileName, configFileName);
-    strcpy(bindingsConfigFileName + strlen(bindingsConfigFileName) - 5,
+    strcpy(bindingsConfigFileName + strlen(bindingsConfigFileName) - 4,
            "-bindings.cfg");
 }
 
@@ -639,7 +639,7 @@ static int DD_StartupWorker(void *parm)
     
     Con_Message("B_Init: Init bindings.\n");
     B_Init();
-    Con_ParseCommands(bindingsConfigFileName, true);
+    Con_ParseCommands(bindingsConfigFileName, false);
     
     Con_SetProgress(125);
 

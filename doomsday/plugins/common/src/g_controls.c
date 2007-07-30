@@ -236,7 +236,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent mouse-right-down {impulse use}",
         
         "bindcontrol turn joy-x",
-        "bindcontrol walk joy-y",
+        "bindcontrol walk joy-y-inverse",
         
         NULL
     };

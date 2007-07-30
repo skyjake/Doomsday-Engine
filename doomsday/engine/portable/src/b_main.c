@@ -1769,41 +1769,21 @@ static uint writeBindList(FILE *file, binding_t *list, uint num,
     return count;
 }
 */
+
 /**
  * Dump all the bindings to a text (cfg) file.  Outputs console commands.
  */
 void B_WriteToFile(FILE *file)
-{/*
-    uint        c, d, l, count;
-    uint       *num;
-    binding_t **bnd;
-    devcontrolbinds_t *devBinds;
-    inputdev_t *device;
+{
+    int     i;
 
-    for(c = 0; c < numBindClasses; ++c)
+    // Start with a clean slate when restoring the bindings.
+    fprintf(file, "clearbindings\n\n");
+    
+    for(i = 0; i < B_ClassCount(); ++i)
     {
-        for(d = 0; d < NUM_INPUT_DEVICES; ++d)
-        {
-            device = I_GetDevice(d, false);
-            devBinds = &devCtrlBinds[d];
-
-            for(l = 0; l < NUM_BIND_LISTS; ++l)
-            {
-                // Don't write default binds.
-//                if(l == BL_KEYSD || l == BL_AXESD)
-//                    continue;
-
-                bnd = &devBinds->binds[l];
-                num = &devBinds->numBinds[l];
-                if(*bnd)
-                {
-                    count = writeBindList(file, *bnd, *num, d, c);
-                    if(count > 0)
-                        fprintf(file,"\n");
-                }
-            }
-        }
-    }*/
+        B_WriteClassToFile(B_ClassByPos(i), file);
+    }
 }
 
 /**

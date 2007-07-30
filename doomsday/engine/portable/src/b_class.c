@@ -468,3 +468,36 @@ void B_PrintAllBindings(void)
     }             
     Str_Free(str);
 }
+
+void B_WriteClassToFile(const bclass_t* bc, FILE* file)
+{
+    evbinding_t* e;
+    controlbinding_t* c;
+    dbinding_t* d;
+    int         k;
+    ddstring_t* str = Str_New();
+    
+    // Commands.
+    for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
+    {
+        B_EventBindingToString(e, str);
+        fprintf(file, "bindevent \"%s:%s\" \"", bc->name, Str_Text(str));
+        M_WriteTextEsc(file, e->command);
+        fprintf(file, "\"\n");
+    }
+    
+    // Controls.
+    for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
+    {
+        const char* controlName = P_PlayerControlById(c->control)->name;
+        for(k = 0; k < DDMAXPLAYERS; ++k)
+        {
+            for(d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
+            {
+                B_DeviceBindingToString(d, str);
+                fprintf(file, "bindcontrol local%i-%s \"%s\"\n", k + 1, controlName, Str_Text(str));
+            }                
+        }            
+    }
+    Str_Free(str);
+}

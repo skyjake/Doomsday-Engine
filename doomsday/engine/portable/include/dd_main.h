@@ -46,6 +46,7 @@ extern int      isDedicated;
 extern char     ddBasePath[];
 extern char    *defaultWads;       // A list of wad names, whitespace in between (in .cfg).
 extern directory_t ddRuntimeDir, ddBinDir;
+extern filename_t bindingsConfigFileName;
 
 #ifndef WIN32
 extern GETGAMEAPI GetGameAPI;

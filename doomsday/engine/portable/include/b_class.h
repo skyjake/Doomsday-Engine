@@ -66,5 +66,6 @@ boolean         B_DeleteBinding(bclass_t* bc, int bid);
 boolean         B_TryEvent(ddevent_t* event);
 void            B_PrintClasses(void);
 void            B_PrintAllBindings(void);
+void            B_WriteClassToFile(const bclass_t* bc, FILE* file);
 
 #endif // __DOOMSDAY_BIND_CLASS_H__
