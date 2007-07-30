@@ -28,6 +28,9 @@
 #ifndef __DOOMSDAY_BIND_MAIN_H__
 #define __DOOMSDAY_BIND_MAIN_H__
 
+#define DEFAULT_BINDING_CLASS_NAME  "game"
+#define CONSOLE_BINDING_CLASS_NAME  "console"
+
 void        B_Register(void);
 void        B_Init(void);
 void        B_Shutdown(void);

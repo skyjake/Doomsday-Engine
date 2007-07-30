@@ -89,7 +89,7 @@ void B_UpdateDeviceStateAssociations(void)
     evbinding_t* eb;
     controlbinding_t* conBin;
     dbinding_t* db;
-    int         i;
+    int         i, k;
     
     I_ClearDeviceClassAssociations();
     
@@ -128,10 +128,10 @@ void B_UpdateDeviceStateAssociations(void)
         for(conBin = bc->controlBinds.next; conBin != &bc->controlBinds; 
             conBin = conBin->next)
         {
-            for(i = 0; i < DDMAXPLAYERS; ++i)
+            for(k = 0; k < DDMAXPLAYERS; ++k)
             {
                 // Associate all the device bindings.
-                for(db = conBin->deviceBinds[i].next; db != &conBin->deviceBinds[i];
+                for(db = conBin->deviceBinds[k].next; db != &conBin->deviceBinds[k];
                     db = db->next)
                 {
                     inputdev_t* dev = I_GetDevice(db->device, false);
@@ -153,6 +153,17 @@ void B_UpdateDeviceStateAssociations(void)
                             break;
                     }
                 }                
+            }
+        }
+        
+        // If the class have made a broad device acquisition, mark all relevant states.
+        if(bc->acquireKeyboard)
+        {
+            inputdev_t* dev = I_GetDevice(IDEV_KEYBOARD, false);
+            for(k = 0; k < dev->numKeys; ++k)
+            {
+                if(!dev->keys[k].bClass)
+                    dev->keys[k].bClass = bc;
             }
         }
     }
@@ -192,7 +203,6 @@ bclass_t* B_NewClass(const char* name)
     bclass_t* bc = M_Calloc(sizeof(bclass_t));
 
     bc->name = strdup(name);
-    bc->active = false;
     B_InitCommandBindingList(&bc->commandBinds);
     B_InitControlBindingList(&bc->controlBinds);
     B_InsertClass(bc, 0);
@@ -216,6 +226,12 @@ void B_ClearClass(bclass_t* bc)
 void B_ActivateClass(bclass_t* bc, boolean doActivate)
 {
     bc->active = doActivate;    
+    B_UpdateDeviceStateAssociations();
+}
+
+void B_AcquireKeyboard(bclass_t* bc, boolean doAcquire)
+{
+    bc->acquireKeyboard = doAcquire;
     B_UpdateDeviceStateAssociations();
 }
 

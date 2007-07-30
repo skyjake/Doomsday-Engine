@@ -34,16 +34,12 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-#include "b_class.h"
 #include "b_command.h"
 #include "p_control.h"
 
 #include <ctype.h>
 
 // MACROS ------------------------------------------------------------------
-
-#define DEFAULT_BINDING_CLASS_NAME  "game"
-#define CONSOLE_BINDING_CLASS_NAME  "console"
 
 // TYPES -------------------------------------------------------------------
 
@@ -259,8 +255,13 @@ void B_Register(void)
  */
 void B_Init(void)
 {
+    bclass_t* bc;
+    
     B_NewClass(DEFAULT_BINDING_CLASS_NAME);
-    B_NewClass(CONSOLE_BINDING_CLASS_NAME);
+
+    // Binding class for the console.
+    bc = B_NewClass(CONSOLE_BINDING_CLASS_NAME);
+    B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
     B_BindCommand("joy-hat-center", "print center");

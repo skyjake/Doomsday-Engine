@@ -43,6 +43,8 @@ typedef struct controlbinding_s {
 typedef struct bclass_s {
     char       *name;                   // Name of the binding class.
     boolean     active;                 // The class is only used when it is active.
+    boolean     acquireKeyboard;        // Class has acquired all keyboard states, unless
+                                        // higher-priority classes override it.
     evbinding_t commandBinds;           // List of command bindings.
     controlbinding_t controlBinds;
 } bclass_t;
@@ -51,6 +53,7 @@ void            B_UpdateDeviceStateAssociations(void);
 bclass_t*       B_NewClass(const char* name);
 void            B_DestroyAllClasses(void);
 void            B_ActivateClass(bclass_t* bc, boolean doActivate);
+void            B_AcquireKeyboard(bclass_t* bc, boolean doAcquire);
 bclass_t*       B_ClassByPos(int pos);
 bclass_t*       B_ClassByName(const char* name);
 int             B_ClassCount(void);

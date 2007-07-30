@@ -1248,12 +1248,16 @@ void Con_Open(int yes)
     {
         ConsoleActive = true;
         ConsoleTime = 0;
+        
+        B_ActivateClass(B_ClassByName(CONSOLE_BINDING_CLASS_NAME), true);
     }
     else
     {
         memset(cmdLine, 0, sizeof(cmdLine));
         cmdCursor = 0;
         ConsoleActive = false;
+
+        B_ActivateClass(B_ClassByName(CONSOLE_BINDING_CLASS_NAME), false);
     }
 }
 
