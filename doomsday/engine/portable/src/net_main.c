@@ -1010,8 +1010,8 @@ void Net_Ticker(void /*timespan_t time*/)
                                 Sv_GetMaxFrameSize(i),
                                 Sv_CountUnackedDeltas(i));
                 }
-                if(players[i].ingame)
-                    Con_Message("%i: cmds=%i\n", i, clients[i].numTics);
+                /*if(players[i].ingame)
+                    Con_Message("%i: cmds=%i\n", i, clients[i].numTics);*/
             }
         }
     }

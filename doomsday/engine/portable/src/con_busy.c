@@ -447,40 +447,89 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     gl.PopMatrix();
 }
 
+#define LINE_COUNT 4
+
+/**
+ * @return  Number of new lines since the old ones.
+ */
+static int GetBufLines(cbuffer_t* buffer, const cbline_t** oldLines)
+{
+    const cbline_t* bufLines[LINE_COUNT + 1];
+    int count;
+    int newCount = 0;
+    int i, k;
+    
+    count = Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT, (const cbline_t**)&bufLines);
+    for(i = 0; i < count; ++i)
+    {
+        for(k = 0; k < 2 * LINE_COUNT - newCount; ++k)
+        {
+            if(oldLines[k] == bufLines[i])
+            {
+                goto lineIsNotNew;
+            }
+        }
+
+        newCount++;
+        memmove(oldLines, oldLines + 1, sizeof(cbline_t*) * (2 * LINE_COUNT - 1));
+        oldLines[2 * LINE_COUNT - 1] = bufLines[i];
+
+lineIsNotNew:;
+    }
+    return newCount;
+}
+
 /**
  * Draws a number of console output to the bottom of the screen.
+ * FIXME: Wow. I had some weird time hacking the smooth scrolling. Cleanup would be 
+ *        good some day. -jk
  */
-static void Con_BusyDrawConsoleOutput(void)
+void Con_BusyDrawConsoleOutput(void)
 {
-#define LINE_COUNT 4
-    
-    const float lineAlpha[LINE_COUNT] = {
-        .05f, .1f, .2f, 1.f
-    };
     cbuffer_t  *buffer;
-    static cbline_t *lines[LINE_COUNT + 1], **linesp = lines;
-    int         y;
+    static const cbline_t *visibleBusyLines[2 * LINE_COUNT];   
+    static float scroll = 0;
+    static float scrollStartTime = 0;
+    static float scrollEndTime = 0;
+    static double lastNewTime = 0;
+    static double timeSinceLastNew = 0;
+    double      nowTime = 0;
+    float       y, topY;
     int         winWidth, winHeight;
-    uint        i, linecount;
+    uint        i, newCount;
 
     if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("Con_BusyDrawConsoleOutput: Failed retrieving window "
-                    "dimensions.");
         return;
-    }
 
     buffer = Con_GetConsoleBuffer();
-    linecount =
-        Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT, linesp);
-
-    if(!linecount)
-        return;
+    newCount = GetBufLines(buffer, visibleBusyLines);
+    nowTime = Sys_GetRealSeconds();
+    if(newCount > 0)
+    {
+        timeSinceLastNew = nowTime - lastNewTime;
+        lastNewTime = nowTime;
+        if(nowTime < scrollEndTime)
+        {
+            // Abort last scroll.
+            scroll = 0;
+            scrollStartTime = nowTime;
+            scrollEndTime = nowTime;
+        }
+        else
+        {
+            double interval = MIN_OF(timeSinceLastNew/2, 1.3);
+            // Begin new scroll.
+            scroll = newCount;
+            scrollStartTime = nowTime;
+            scrollEndTime = nowTime + interval;
+        }
+    }
 
     gl.Disable(DGL_TEXTURING);
     gl.Enable(DGL_BLENDING);
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 
+    // Dark gradient as background.
     gl.Begin(DGL_QUADS);
     gl.Color4ub(0, 0, 0, 0);
     y = winHeight - (LINE_COUNT + 3) * busyFontHgt;
@@ -493,15 +542,29 @@ static void Con_BusyDrawConsoleOutput(void)
     
     gl.Enable(DGL_TEXTURING);
     
-    y = winHeight - busyFontHgt * (linecount + .5f);
-    for(i = 0; i < linecount; ++i, y += busyFontHgt)
+    // The text lines.
+    topY = y = winHeight - busyFontHgt * (2 * LINE_COUNT + .5f);
+    if(newCount > 0 || nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime)
     {
-        float color = lineAlpha[i];
-        const cbline_t *line = lines[i];
+        if(scrollEndTime - scrollStartTime > 0)
+            y += scroll * (scrollEndTime - nowTime) / (scrollEndTime - scrollStartTime) *
+                busyFontHgt;
+    }
+    
+    for(i = 0; i < 2 * LINE_COUNT; ++i, y += busyFontHgt)
+    {
+        float color = 1;//lineAlpha[i];
+        const cbline_t *line = visibleBusyLines[i];
 
         if(!line)
             continue;
 
+        color = ((y - topY) / busyFontHgt) - (LINE_COUNT - 1);
+        if(color < LINE_COUNT)
+            color = MINMAX_OF(0, color/2, 1);
+        else
+            color = 1 - (color - LINE_COUNT);
+        
         if(!(line->flags & CBLF_RULER)) // ignore rulers.
         {
             if(!line->text)
