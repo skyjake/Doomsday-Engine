@@ -198,6 +198,8 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_TURN, CTLT_NUMERIC, "turn", "game");
     P_NewPlayerControl(CTL_LOOK, CTLT_NUMERIC, "look", "game");
     P_NewPlayerControl(CTL_SPEED, CTLT_NUMERIC, "speed", "game");
+    P_NewPlayerControl(CTL_STRAFE, CTLT_NUMERIC, "strafe", "game");
+    P_NewPlayerControl(CTL_ATTACK, CTLT_NUMERIC, "attack", "game");
     P_NewPlayerControl(CTL_USE, CTLT_IMPULSE, "use", "game");
 }
 
@@ -209,26 +211,33 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol walk key-w",
         "bindcontrol walk key-down-inverse",
         "bindcontrol walk key-s-inverse",
-        "bindcontrol walk joy-y",
-
         "bindcontrol sidestep key-period",
         "bindcontrol sidestep key-d",
         "bindcontrol sidestep key-comma-inverse",
         "bindcontrol sidestep key-a-inverse",
-
+        //"bindcontrol sidestep {key-left-inverse + key-alt-down}",
+        //"bindcontrol sidestep {key-right + key-alt-down}",
         "bindcontrol zfly key-home",
         "bindcontrol zfly key-end-inverse",
-        
+        //"bindcontrol turn {key-left-staged-inverse + key-alt-up}",
+        //"bindcontrol turn {key-right-staged + key-alt-up}",
         "bindcontrol turn key-left-staged-inverse",
         "bindcontrol turn key-right-staged",
-        "bindcontrol turn mouse-x",
-        "bindcontrol turn joy-x",
-        
         "bindcontrol look key-pgup-staged",
         "bindcontrol look key-pgdown-staged-inverse",
-        "bindcontrol look mouse-y",
-        
+        "bindcontrol attack key-ctrl",
         "bindcontrol speed key-shift",
+        "bindcontrol strafe key-alt",
+               
+        "bindcontrol turn mouse-x",
+        "bindcontrol look mouse-y",
+        "bindcontrol attack mouse-left",
+        "bindevent key-space-down {impulse use}",
+        "bindevent mouse-right-down {impulse use}",
+        
+        "bindcontrol turn joy-x",
+        "bindcontrol walk joy-y",
+        
         NULL
     };
     int         i;

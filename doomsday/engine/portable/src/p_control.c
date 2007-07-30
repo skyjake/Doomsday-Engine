@@ -214,6 +214,7 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
     // Check that this is really a numeric control.
     {
         playercontrol_t* pc = P_PlayerControlById(control);
+        assert(pc);
         assert(pc->type == CTLT_NUMERIC);
     }
 #endif
@@ -252,6 +253,8 @@ void P_Impulse(int playerNum, int control)
 {
     playercontrol_t* pc = P_PlayerControlById(control);
 
+    assert(pc);
+    
     // Check that this is really an impulse control.
     if(pc->type != CTLT_IMPULSE)
     {

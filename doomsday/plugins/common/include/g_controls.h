@@ -40,9 +40,12 @@ enum {
     GBC_MESSAGE
 };
 
+// Control identifiers.
 enum {
     CTL_SPEED = CTL_FIRST_GAME_CONTROL,
-    CTL_USE
+    CTL_STRAFE,
+    CTL_ATTACK,
+    CTL_USE,
 };
 
 void        G_ControlRegister(void);

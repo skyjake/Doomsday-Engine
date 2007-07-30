@@ -972,23 +972,8 @@ void P_ClientSideThink(void)
 
 void P_PlayerThinkState(player_t *player)
 {
-    int playerNum = player - players;
     mobj_t *plrmo = player->plr->mo;
-    classinfo_t *pClassInfo = PCLASS_INFO(player->class);    
-    float vel, off;
-    int speed;
     
-    // Check for speed.
-    P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
-    speed = (vel != 0)? 2 : 1;
-
-    // Move status.
-    // FIXME: This is just temp stuff, ticcmd will be removed soon.
-    P_GetControlState(playerNum, CTL_WALK, &vel, &off);
-    player->plr->cmd.forwardMove = off + vel * speed;
-    P_GetControlState(playerNum, CTL_SIDESTEP, &vel, &off);
-    player->plr->cmd.sideMove = off + vel * speed;
-   
     // jDoom
     // Selector 0 = Generic (used by default)
     // Selector 1 = Fist
@@ -1805,9 +1790,10 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t tickDuration)
     int playerNum = player - players;
     ddplayer_t* plr = player->plr;
     int turn = 0;
+    boolean strafe = false;
     float vel, off;
     int turnSpeed;
-    float offsetSensitivity = 20;
+    float offsetSensitivity = 100; // FIXME: Should be done engine-side, mouse sensitivity!
     classinfo_t *pClassInfo = PCLASS_INFO(player->class);    
 
     if(!plr->mo || player->playerstate == PST_DEAD || player->viewlock)
@@ -1823,10 +1809,17 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t tickDuration)
         turnSpeed = pClassInfo->turnSpeed[1] * 35;
     }
     
-    // Yaw.
-    P_GetControlState(playerNum, CTL_TURN, &vel, &off);
-    plr->mo->angle -= (angle_t) (FLT2FIX(turnSpeed * vel * tickDuration) + 
-                                 (offsetSensitivity * off) / 180 * ANGLE_180);
+    // Check for strafe.
+    P_GetControlState(playerNum, CTL_STRAFE, &vel, 0);
+    strafe = (vel != 0);
+    
+    if(!strafe)
+    {
+        // Yaw.
+        P_GetControlState(playerNum, CTL_TURN, &vel, &off);
+        plr->mo->angle -= (angle_t) (FLT2FIX(turnSpeed * vel * tickDuration) + 
+                                     (offsetSensitivity * off) / 180 * ANGLE_180);
+    }
 
     // Pitch.
     P_GetControlState(playerNum, CTL_LOOK, &vel, &off);
@@ -1836,6 +1829,56 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t tickDuration)
         plr->lookdir = -110;
     else if(plr->lookdir > 110)
         plr->lookdir = 110;
+}
+
+void P_PlayerThinkUpdateControls(player_t* player)
+{
+    int playerNum = player - players;
+    classinfo_t *pClassInfo = PCLASS_INFO(player->class);    
+    float vel, off;
+    int speed;
+    boolean strafe = false;
+    
+    // Check for speed.
+    P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
+    speed = (vel != 0)? 2 : 1;
+    
+    // Check for strafe.
+    P_GetControlState(playerNum, CTL_STRAFE, &vel, 0);
+    strafe = (vel != 0);
+    
+    // Move status.
+    // FIXME: This is just temp stuff, ticcmd will be removed soon.
+    P_GetControlState(playerNum, CTL_WALK, &vel, &off);
+    player->plr->cmd.forwardMove = off + vel * speed;
+    P_GetControlState(playerNum, strafe? CTL_TURN : CTL_SIDESTEP, &vel, &off);
+    if(strafe) 
+    {   
+        // Saturate.
+        vel = (vel > 0? 1 : vel < 0? -1 : 0);
+    }
+    player->plr->cmd.sideMove = off + vel * speed;
+    
+    // Use.
+    if(P_GetImpulseControlState(playerNum, CTL_USE))
+    {
+        player->plr->cmd.actions |= BT_USE;
+    }
+    else
+    {
+        player->plr->cmd.actions &= ~BT_USE;
+    }
+    
+    // Fire.
+    P_GetControlState(playerNum, CTL_ATTACK, &vel, &off);
+    if(vel + off)
+    {
+        player->plr->cmd.actions |= BT_ATTACK;
+    }
+    else
+    {
+        player->plr->cmd.actions &= ~BT_ATTACK;
+    }
 }
 
 /**
@@ -1857,6 +1900,8 @@ void P_PlayerThink(player_t *player, timespan_t tickDuration)
     
     if(!M_CheckTrigger(DD_GetVariable(DD_SHARED_FIXED_TRIGGER), tickDuration))
         return; // It's too soon.
+    
+    P_PlayerThinkUpdateControls(player);
     
     if(!IS_CLIENT) // Locally only.
     {

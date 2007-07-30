@@ -426,7 +426,7 @@ void B_PrintAllBindings(void)
     
     Con_Printf("%i binding classes defined.\n", bindClassCount);
     
-#define BIDFORMAT   "[%4i]"
+#define BIDFORMAT   "[%3i]"
     for(i = 0; i < bindClassCount; ++i)
     {
         bc = bindClasses[i];
