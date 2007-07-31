@@ -382,7 +382,8 @@ static int loadLumpsHook(int hookType, int parm, void *data)
     filename_t  workDir;
     filename_t  cachedMapFile;
     uint        sourceTime;
-    uint        bspTime;
+    uint        bspTime, startTime;
+    boolean     built = false;
 
     GetWorkDir(workDir, parm);
 
@@ -401,6 +402,7 @@ static int loadLumpsHook(int hookType, int parm, void *data)
 
     //Con_Message("source=%i, bsp=%i\n", sourceTime, bspTime);
 
+    startTime = Sys_GetRealTime();
     if(!Con_GetInteger("bsp-cache") || !F_Access(cachedMapFile) ||
        bspTime < sourceTime)
     {
@@ -437,12 +439,16 @@ static int loadLumpsHook(int hookType, int parm, void *data)
 
         // Invoke glBSP.
         GlbspBuildNodes(&info, &funcs, &comms);
+        built = true;
     }
 
     // Load the cached data. The lumps are loaded into the auxiliary
     // lump cache, which means they use special index numbers and will
     // be automatically deleted when the next map is loaded.
-
     *returnedLumps = W_OpenAuxiliary(cachedMapFile); // All map data (original)
+
+    // How much time did we spend?
+    print_msg(" %s nodes in %.2f seconds.\n", (built? "Built" : "Loaded cached"),
+             (Sys_GetRealTime() - startTime) / 1000.0f);
     return true;
 }
