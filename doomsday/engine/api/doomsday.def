@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 342 <--
+; --> 343 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -14,17 +14,17 @@ NAME			"DOOMSDAY"
 
 EXPORTS
 ; Obsolete. To be deleted!
-	DD_SetBindClass			@341 NONAME
-	DD_AddBindClass			@342 NONAME
+	DD_SetBindClass			@342 NONAME
+	DD_AddBindClass			@343 NONAME
 
 ; Plugins.
 	Plug_AddHook			@1 NONAME
 	Plug_RemoveHook			@2 NONAME
-	Plug_DoHook			@3 NONAME
+	Plug_DoHook				@3 NONAME
 
 ; Base.
-	DD_GetDGLProcAddress		@106 NONAME
-	DD_AddIWAD			@4 NONAME
+	DD_GetDGLProcAddress	@106 NONAME
+	DD_AddIWAD				@4 NONAME
 	DD_AddStartupWAD		@5 NONAME
 	DD_SetConfigFile		@6 NONAME
 	DD_SetDefsFile			@7 NONAME
@@ -35,8 +35,8 @@ EXPORTS
 	DD_GetPlayer			@10 NONAME
 
 ; Base: Definitions.
-	Def_Get				@11 NONAME
-	Def_Set				@111 NONAME
+	Def_Get					@11 NONAME
+	Def_Set					@111 NONAME
 	Def_EvalFlags			@12 NONAME
 
 ; Base: Input.
@@ -364,6 +364,7 @@ EXPORTS
 	M_AddToBox			@209 NONAME
 	M_ScreenShot		@210 NONAME
 	M_CheckTrigger		@340 NONAME
+	M_RunTrigger		@341 NONAME
 
 ; Miscellaneous: Math.
 	bamsAtan2			@145 NONAME
