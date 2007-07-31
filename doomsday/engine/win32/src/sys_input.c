@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -515,6 +515,9 @@ int I_GetKeyEvents(keyevent_t *evbuf, int bufsize)
 
 void I_GetMouseState(mousestate_t *state)
 {
+    static boolean  oldButtons[8];
+    static int      oldZ;
+
     DIMOUSESTATE2 mstate;
     int         i, tries;
     boolean     aquired;
@@ -550,18 +553,61 @@ void I_GetMouseState(mousestate_t *state)
     // Fill in the state structure.
     state->x = mstate.lX;
     state->y = mstate.lY;
-    state->z = mstate.lZ;
 
-    // The buttons bitfield is ordered according to the numbering.
-    for(i = 0; i < 8; i++)
-        if(mstate.rgbButtons[i] & 0x80)
-            state->buttons |= 1 << i;
+    // Handle mouse wheel (convert to buttons).
+    state->buttonDowns[3] = 0;
+    state->buttonUps[4] = 0;
+    if(mstate.lZ > 0 && !(oldZ > 0))
+    {
+        state->buttonDowns[3] = 1;
+        state->buttonUps[4] = 1;
+    }
+    else if(mstate.lZ < 0 && !(oldZ < 0))
+    {
+        state->buttonDowns[4] = 1;
+        state->buttonUps[3] = 1;
+    }
+    else if(mstate.lZ == 0)
+    {
+        if(oldZ > 0)
+            state->buttonUps[3] = 1;
+        else if(oldZ < 0)
+            state->buttonUps[4] = 1;
+    }
+    oldZ = mstate.lZ;
+
+    for(i = 0; i < 8; ++i)
+    {
+        int         id;
+        boolean     isDown = (mstate.rgbButtons[i] & 0x80);
+
+        id = i;
+        switch(i)
+        {
+        case 0: id = 0; break;
+        case 1: id = 2; break;
+        case 2: id = 1; break;
+        default:
+            id += 2; // Wheel Up/down.
+            break;
+        }
+
+        state->buttonDowns[id] =
+            state->buttonUps[id] = 0;
+        if(isDown && !oldButtons[i])
+            state->buttonDowns[id] = 1;
+        else if(!isDown && oldButtons[i])
+            state->buttonUps[id] = 1;
+
+        oldButtons[i] = isDown;
+    }
 }
 
 void I_GetJoystickState(joystate_t *state)
 {
+    static boolean  oldButtons[IJOY_MAXBUTTONS]; // Thats a lot of buttons.
+
     int         tries, i;
-    int         pov;
     DIJOYSTATE  dijoy;
     boolean     aquired;
 
@@ -595,22 +641,39 @@ void I_GetJoystickState(joystate_t *state)
     if(!aquired)
         return; // The operation is a failure.
 
+    state->numAxes = 8;
     state->axis[0] = dijoy.lX;
     state->axis[1] = dijoy.lY;
     state->axis[2] = dijoy.lZ;
+    state->axis[3] = dijoy.lRx;
+    state->axis[4] = dijoy.lRy;
+    state->axis[5] = dijoy.lRz;
+    state->axis[6] = dijoy.rglSlider[0];
+    state->axis[7] = dijoy.rglSlider[1];
 
-    state->rotAxis[0] = dijoy.lRx;
-    state->rotAxis[1] = dijoy.lRy;
-    state->rotAxis[2] = dijoy.lRz;
-
-    state->slider[0] = dijoy.rglSlider[0];
-    state->slider[1] = dijoy.rglSlider[1];
-
+    state->numButtons = 32;
     for(i = 0; i < IJOY_MAXBUTTONS; ++i)
-        state->buttons[i] = (dijoy.rgbButtons[i] & 0x80) != 0;
-    pov = dijoy.rgdwPOV[0];
-    if((pov & 0xffff) == 0xffff)
-        state->povAngle = IJOY_POV_CENTER;
-    else
-        state->povAngle = pov / 100.0f;
+    {
+        boolean         isDown = (dijoy.rgbButtons[i] & 0x80);
+
+        state->buttonDowns[i] =
+            state->buttonUps[i] = 0;
+        if(isDown && !oldButtons[i])
+            state->buttonDowns[i] = 1;
+        else if(!isDown && oldButtons[i])
+            state->buttonUps[i] = 1;
+
+        oldButtons[i] = isDown;
+    }
+
+    state->numHats = 4;
+    for(i = 0; i < IJOY_MAXHATS; ++i)
+    {
+        int     pov = dijoy.rgdwPOV[i];
+
+        if((pov & 0xffff) == 0xffff)
+            state->hatAngle[i] = IJOY_POV_CENTER;
+        else
+            state->hatAngle[i] = pov / 100.0f;
+    }
 }
