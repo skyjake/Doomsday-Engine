@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -340,6 +340,9 @@ void P_PolyobjChanged(polyobj_t *po)
  */
 boolean P_LoadMap(char *levelId)
 {
+    if(!levelId)
+        return false; // Yeah, ok... :P
+
     // It would be very cool if map loading happened in another
     // thread. That way we could be keeping ourselves busy while
     // the intermission is played...

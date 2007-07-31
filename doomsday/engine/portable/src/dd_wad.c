@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
  * WAD Files and Data Lump Cache
  *
  * This version supports runtime (un)loading, replacement of flats and
- * sprites, GWA files and IWAD checking.
+ * sprites, IWAD checking and is GWA aware (but not supported).
  *
  * Internally, the cache has two parts: the Primary cache, which is loaded
  * from data files, and the Auxiliary cache, which is generated at runtime.
@@ -678,21 +678,6 @@ boolean W_AddFile(const char *filename, boolean allowDuplicate)
     if(rec->iwad)
         Con_Message("  IWAD identification: %08x\n",
                     W_CRCNumberForRecord(rec - records));
-
-    // glBSP: Also load a possible GWA.
-    if(!stricmp(extension, "wad"))
-    {
-        char    buff[256];
-
-        strcpy(buff, filename);
-        strcpy(buff + strlen(buff) - 3, "gwa");
-
-        // If GL data exists, load it.
-        if(F_Access(buff))
-        {
-            W_AddFile(buff, allowDuplicate);
-        }
-    }
 
     return true;
 }

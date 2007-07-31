@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2006-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -833,12 +833,6 @@ static void FreeMapDataLumps(void)
  */
 static boolean P_LocateMapData(char *levelID, int *lumpIndices)
 {
-    char glLumpName[40];
-
-    // Find map name.
-    sprintf(glLumpName, "GL_%s", levelID);
-    Con_Message("SetupLevel: %s\n", levelID);
-
     // Let's see if a plugin is available for loading the data.
     if(!Plug_DoHook(HOOK_LOAD_MAP_LUMPS, W_GetNumForName(levelID),
                     (void*) lumpIndices))
@@ -847,7 +841,7 @@ static boolean P_LocateMapData(char *levelID, int *lumpIndices)
         return false;
     }
 
-    if(lumpIndices[0] == -1)
+    if(*lumpIndices == -1)
         return false; // The map data cannot be found.
 
     return true;
@@ -859,38 +853,25 @@ static boolean P_LocateMapData(char *levelID, int *lumpIndices)
  *
  * @param startLump     The lump number to begin our search with.
  */
-static void P_FindMapLumps(int startLump)
+static void P_FindMapLumps(char *levelId, int startLump)
 {
-    unsigned int k;
-    unsigned int i;
-    boolean scan;
-    maplumpinfo_t* mapLmpInf;
-    boolean aux = false;
+    uint        i, k;
+    boolean     scan;
+    maplumpinfo_t *mapLmpInf;
 
-    // Add the marker lump to the list (there might be useful info in it)
-    if(!strncmp(W_CacheLumpNum(startLump, PU_GETNAME), "GL_", 3))
-    {
-        AddMapDataLump(startLump, LCG_LABEL);
-        // \fixme This isn't right.
-        aux = true; // We'll be checking the auxilary lump cache
-    }
-    else
-        AddMapDataLump(startLump, LCM_LABEL);
-
-    ++startLump;
     // Keep checking lumps to see if its a map data lump.
     for(i = (unsigned) startLump; ; ++i)
     {
-        if(!aux && i > (unsigned) numlumps - 1) // No more lumps?
-            break;
+        char        *lumpName;
 
         scan = true;
         // Compare the name of this lump with our known map data lump names
         mapLmpInf = mapLumpInfo;
+        lumpName =  W_CacheLumpNum(i, PU_GETNAME);
         for(k = NUM_LUMPCLASSES; k-- && scan; ++mapLmpInf)
         {
             if(mapLmpInf->lumpname)
-            if(!strncmp(mapLmpInf->lumpname, W_CacheLumpNum(i, PU_GETNAME), 8))
+            if(!strncmp(mapLmpInf->lumpname, lumpName, 8))
             {
                 // Lump name matches a known lump name.
                 // Add it to the lumps we'll process for map data.
@@ -898,9 +879,41 @@ static void P_FindMapLumps(int startLump)
                 scan = false;
             }
         }
+
+        // Still unknown?
+        if(scan)
+        {   // Perhaps its a marker lump?
+            if(!strcmp(lumpName, levelId))
+            {
+                AddMapDataLump(i, LCM_LABEL);
+                scan = false;
+            }
+            else if(!strcmp(lumpName, "GL_LEVEL"))
+            {   // GL_ marker lump
+                AddMapDataLump(i, LCG_LABEL);
+                scan = false;
+            }
+            else
+            {
+                size_t      idLen = strlen(levelId);
+                size_t      lumpNameLen = strlen(lumpName);
+
+                if(idLen == lumpNameLen - 3 /* -3 for "GL_" */)
+                {
+                    char *start = &lumpName[lumpNameLen - idLen];
+
+                    if(!strncmp(start, levelId, idLen))
+                    {   // GL_ marker lump
+                        AddMapDataLump(i, LCG_LABEL);
+                        scan = false;
+                    }
+                }
+            }
+        }
+
         // We didn't find a match for this name?
         if(scan)
-            break; // Stop looking, we've found them all.
+            break; // Stop looking, we *should* have found them all.
     }
 }
 
@@ -2256,8 +2269,10 @@ static boolean loadMapData(gamemap_t *map)
  */
 boolean P_AttemptMapLoad(char *levelId)
 {
-    int         lumpNumbers[2];
+    int         lumpNumbers;
     gamemap_t  *newmap;
+
+    Con_Message("P_AttempMapLoad: %s\n", levelId);
 
     mapDataLumps = NULL;
     numMapDataLumps = 0;
@@ -2266,7 +2281,7 @@ boolean P_AttemptMapLoad(char *levelId)
     mapFormat = 0;
 
     // Attempt to find the map data for this level
-    if(!P_LocateMapData(levelId, lumpNumbers))
+    if(!P_LocateMapData(levelId, &lumpNumbers))
     {
         // Well that was a non-starter...
         return false;
@@ -2274,8 +2289,7 @@ boolean P_AttemptMapLoad(char *levelId)
 
     // Find the actual map data lumps and their offsets.
     // Add them to the list of lumps to be processed.
-    P_FindMapLumps(lumpNumbers[0]);
-    P_FindMapLumps(lumpNumbers[1]); // GL nodes
+    P_FindMapLumps(levelId, lumpNumbers);
 
     // Make sure we have all the data we need to load this level.
     if(!verifyMapData(levelId))
