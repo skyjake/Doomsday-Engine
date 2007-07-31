@@ -305,7 +305,7 @@ static void Con_BusyLoop(void)
             Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
                                              &winHeight)))
         {
-            Con_Message("Con_BusyLoop: Failed retrieving window dimensions.");
+            Con_Message("Con_BusyLoop: Failed retrieving window dimensions.\n");
         }
     }
 
@@ -589,7 +589,7 @@ static void Con_BusyDrawer(void)
 
     if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
     {
-        Con_Message("Con_BusyDrawer: Failed retrieving window dimensions.");
+        Con_Message("Con_BusyDrawer: Failed retrieving window dimensions.\n");
         return;
     }
 
