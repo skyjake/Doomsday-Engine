@@ -701,14 +701,9 @@ static void Mod_RenderSubModel(uint number, const modelparams_t *params)
     // Determine the suitable LOD.
     if(mdl->info.numLODs > 1 && rend_model_lod != 0)
     {
-        int     winWidth;
         float   lodFactor;
 
-        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
-            Con_Error("Mod_RenderSubModel: Failed retrieving window dimensions.");
-
-        lodFactor =
-            rend_model_lod * winWidth / 640.0f / (fieldOfView / 90.0f);
+        lodFactor = rend_model_lod * theWindow->width / 640.0f / (fieldOfView / 90.0f);
         if(lodFactor)
             lodFactor = 1 / lodFactor;
 

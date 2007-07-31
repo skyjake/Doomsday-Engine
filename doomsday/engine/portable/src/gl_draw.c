@@ -64,7 +64,6 @@ void GL_UsePatchOffset(boolean enable)
 void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
                          float scaley)
 {
-    int         winWidth, winHeight;
     boolean     isTwoPart;
     float       pixelBorder = 0;
     float       tcb = 0;
@@ -73,26 +72,20 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     if(lump < 0 || lump >= numlumps)
         return;
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("GL_DrawRawScreen_CS: Failed retrieving window dimensions.");
-        return;
-    }
-
     gl.MatrixMode(DGL_MODELVIEW);
     gl.PushMatrix();
     gl.LoadIdentity();
 
     // Setup offset and scale.
     // Scale the offsets to match the resolution.
-    gl.Translatef(offx * winWidth / 320.0f, offy * winHeight / 200.0f,
+    gl.Translatef(offx * theWindow->width / 320.0f, offy * theWindow->height / 200.0f,
                   0);
     gl.Scalef(scalex, scaley, 1);
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
+    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     GL_SetRawImage(lump, false);
     raw = R_GetRawTex(lump);
@@ -107,7 +100,7 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
         // Bottom texture coordinate.
         tcb = 1;
     }
-    pixelBorder = raw->info.width * winWidth / 320;
+    pixelBorder = raw->info.width * theWindow->width / 320;
 
     // The first part is rendered in any case.
     gl.Begin(DGL_QUADS);
@@ -116,9 +109,9 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
     gl.TexCoord2f(1, 0);
     gl.Vertex2f(pixelBorder, 0);
     gl.TexCoord2f(1, tcb);
-    gl.Vertex2f(pixelBorder, winHeight);
+    gl.Vertex2f(pixelBorder, theWindow->height);
     gl.TexCoord2f(0, tcb);
-    gl.Vertex2f(0, winHeight);
+    gl.Vertex2f(0, theWindow->height);
     gl.End();
 
     if(isTwoPart)
@@ -129,11 +122,11 @@ void GL_DrawRawScreen_CS(int lump, float offx, float offy, float scalex,
         gl.TexCoord2f(0, 0);
         gl.Vertex2f(pixelBorder, 0);
         gl.TexCoord2f(1, 0);
-        gl.Vertex2f(winWidth, 0);
+        gl.Vertex2f(theWindow->width, 0);
         gl.TexCoord2f(1, tcb);
-        gl.Vertex2f(winWidth, winHeight);
+        gl.Vertex2f(theWindow->width, theWindow->height);
         gl.TexCoord2f(0, tcb);
-        gl.Vertex2f(pixelBorder, winHeight);
+        gl.Vertex2f(pixelBorder, theWindow->height);
         gl.End();
     }
 

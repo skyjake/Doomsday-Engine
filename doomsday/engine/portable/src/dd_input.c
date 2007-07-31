@@ -1125,17 +1125,9 @@ void DD_ReadMouse(void)
     */
     if(!allowMouseMod) // In UI mode.
     {
-        int         winWidth, winHeight;
-
-        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-        {
-            Con_Error("DD_ReadMouse: Failed retrieving window dimensions.");
-            return;
-        }
-
         // Scale the movement depending on screen resolution.
-        xpos *= MAX_OF(1, winWidth / 800.0f);
-        ypos *= MAX_OF(1, winHeight / 600.0f);
+        xpos *= MAX_OF(1, theWindow->width / 800.0f);
+        ypos *= MAX_OF(1, theWindow->height / 600.0f);
     }
     else
     {

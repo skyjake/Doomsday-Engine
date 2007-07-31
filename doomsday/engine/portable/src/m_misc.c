@@ -839,25 +839,18 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
  */
 int M_ScreenShot(char *filename, int bits)
 {
-    int     winWidth, winHeight;
-    byte   *screen;
+    byte   *screen = 0;
 
     if(bits != 16 && bits != 24)
         return false;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("M_ScreenShot: Failed retrieving window dimensions.");
-        return false;
-    }
 
     // Grab that screen!
     screen = GL_GrabScreen();
 
     if(bits == 16)
-        TGA_Save16_rgb888(filename, winWidth, winHeight, screen);
+        TGA_Save16_rgb888(filename, theWindow->width, theWindow->height, screen);
     else
-        TGA_Save24_rgb888(filename, winWidth, winHeight, screen);
+        TGA_Save24_rgb888(filename, theWindow->width, theWindow->height, screen);
 
     free(screen);
     return true;

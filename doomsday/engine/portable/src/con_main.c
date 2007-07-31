@@ -557,19 +557,11 @@ void Con_Ticker(timespan_t time)
 
 void Con_SetMaxLineLength(void)
 {
-    int         winWidth;
     int         cw = FR_TextWidth("A");
     int         length;
-    boolean     noWin;
+    float       winWidth = theWindow->width? theWindow->width : 640;
 
-    if(true ==
-       (noWin = !Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
-                                        NULL)))
-    {
-        Con_Message("Con_SetMaxLineLength: Failed retrieving window dimensions.");
-    }
-
-    if(!cw || noWin)
+    if(!cw)
     {
         length = 70;
     }

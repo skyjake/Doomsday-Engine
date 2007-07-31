@@ -108,4 +108,13 @@ typedef unsigned int DWORD;
 
 #endif							// UNIX
 
+// Initialization code.
+#ifdef WIN32
+#  include "dd_winit.h"
+#else
+#  ifdef UNIX
+#    include "dd_uinit.h"
+#  endif
+#endif
+
 #endif							// __DOOMSDAY_PLATFORM__

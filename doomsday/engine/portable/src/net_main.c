@@ -842,17 +842,11 @@ void Net_Drawer(void)
     if(!net_dev && !show_blink_r && !consoleShowFPS)
         return;
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("Net_Drawer: Failed retrieving window dimensions.");
-        return;
-    }
-
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
+    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     if(show_blink_r && SECONDS_TO_TICKS(gameTime) & 8)
     {
@@ -890,7 +884,7 @@ void Net_Drawer(void)
            FR_TextOut(buf, 10, 10+10*(i+1));
            } */
     }
-    Rend_ConsoleFPS(winWidth - 10, 30);
+    Rend_ConsoleFPS(theWindow->width - 10, 30);
 
     // Restore original matrix.
     gl.MatrixMode(DGL_PROJECTION);

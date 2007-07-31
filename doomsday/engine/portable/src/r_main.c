@@ -195,10 +195,6 @@ void R_Init(void)
 void R_Update(void)
 {
     int         i;
-    int         width, height;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
-        Con_Error("R_Update: Failed retrieving window dimensions.");
 
     // Stop playing sounds and music.
     Demo_StopPlayback();
@@ -208,7 +204,7 @@ void R_Update(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, width, height, -1, 1);
+    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
     GL_TotalReset(true, false, false);
     GL_TotalReset(false, false, false);    // Bring GL back online (no lightmaps, flares yet).
     R_UpdateData();

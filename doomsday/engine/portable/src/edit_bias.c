@@ -651,18 +651,12 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     float       eye[3];
     int         w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
     int         th = FR_TextHeight("a"), h = th * 6 + 16;
-    int         winWidth, winHeight;
     int         x, y;
     char        buf[80];
     ui_color_t color;
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("SBE_InfoBox: Failed retrieving window dimensions.");
-        return;
-    }
-    x = winWidth - 10 - w - rightX;
-    y = winHeight - 10 - h;
+    x = theWindow->width - 10 - w - rightX;
+    y = theWindow->height - 10 - h;
 
     eye[0] = vx;
     eye[1] = vz;
@@ -800,7 +794,6 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
 void SBE_DrawHUD(void)
 {
     int         w, h, y;
-    int         winWidth, winHeight;
     char        buf[80];
     float       alpha = .8f;
     source_t   *s;
@@ -808,25 +801,18 @@ void SBE_DrawHUD(void)
     if(!editActive || editHidden)
         return;
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("Sys_GetWindowDimensions: Failed retrieving window "
-                    "dimensions.");
-        return;
-    }
-
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
+    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     // Overall stats: numSources / MAX (left)
     sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS,
             MAX_BIAS_LIGHTS - numSources);
     w = FR_TextWidth(buf) + 16;
     h = FR_TextHeight(buf) + 16;
-    y = winHeight - 10 - h;
+    y = theWindow->height - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
     UI_TextOutEx(buf, 18, y + h / 2, false, true,
                  UI_Color(UIC_TITLE), alpha);
@@ -849,7 +835,7 @@ void SBE_DrawHUD(void)
 
     if(SBE_GetGrabbed() || SBE_GetNearest())
     {
-        SBE_DrawLevelGauge(20, winHeight/2 - 255/2, 255);
+        SBE_DrawLevelGauge(20, theWindow->height/2 - 255/2, 255);
     }
 
     gl.MatrixMode(DGL_PROJECTION);
@@ -889,23 +875,16 @@ void SBE_DrawStar(float pos[3], float size, float color[4])
 
 static void SBE_DrawIndex(source_t *src)
 {
-    int         winWidth;
     char        buf[80];
     float       eye[3], scale;
    
     if(!editShowIndices)
         return;
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
-    {
-        Con_Message("SBE_DrawIndex: Failed retrieving window dimensions.");
-        return;
-    }
-
     eye[0] = vx;
     eye[1] = vz;
     eye[2] = vy;
-    scale = M_Distance(src->pos, eye) / (winWidth / 2);
+    scale = M_Distance(src->pos, eye) / (theWindow->width / 2);
 
     gl.Disable(DGL_DEPTH_TEST);
     gl.Enable(DGL_TEXTURING);

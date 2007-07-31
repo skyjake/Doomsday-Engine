@@ -979,26 +979,10 @@ int DD_GetInteger(int ddvalue)
             return -1;
 
         case DD_WINDOW_WIDTH:
-            {
-            int         winWidth;
-            if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth,
-                                       NULL))
-            {
-                Con_Error("DD_GetInteger: Failed retreiving window width.");
-            }
-            return winWidth;
-            }
+            return theWindow->width;
 
         case DD_WINDOW_HEIGHT:
-            {
-            int         winHeight;
-            if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, NULL,
-                                       &winHeight))
-            {
-                Con_Error("DD_GetInteger: Failed retreiving window height.");
-            }
-            return winHeight;
-            }
+            return theWindow->height;
 
 #ifdef WIN32
         case DD_WINDOW_HANDLE:

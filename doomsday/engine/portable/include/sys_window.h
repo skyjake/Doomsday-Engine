@@ -29,6 +29,12 @@
 #ifndef __DOOMSDAY_SYS_WINDOW_H__
 #define __DOOMSDAY_SYS_WINDOW_H__
 
+#include "de_base.h"
+
+#if defined(WIN32)
+#  include <windows.h>
+#endif
+
 // Structure used to describe what features are available in a window
 // manager implementation.
 typedef struct wminfo_s {
@@ -36,6 +42,17 @@ typedef struct wminfo_s {
                                     // 0 = Unlimited.
     boolean     canMoveWindow;      // Windows can be moved.
 } wminfo_t;
+
+typedef struct {
+#if defined(WIN32)
+    HWND            hWnd;       // Needed for input (among other things).
+#endif
+    boolean         inited;
+    int             flags;
+    int             x, y;       // SDL cannot move windows; these are ignored.
+    int             width, height;
+    int             bpp;
+} ddwindow_t;
 
 // Doomsday window flags.
 #define DDWF_VISIBLE            0x01
@@ -52,6 +69,11 @@ typedef struct wminfo_s {
 #define DDSW_NOCHANGES          (DDSW_NOSIZE & DDSW_NOMOVE & DDSW_NOBPP & \
                                  DDSW_NOFULLSCREEN & DDSW_NOVISIBLE & \
                                  DDSW_NOCENTER)
+
+/// Currently active window. There is always one active window, so no need to worry about
+/// NULLs. The easiest way to get information about the window where drawing is being is
+/// done.
+extern const ddwindow_t* theWindow;
 
 boolean         Sys_InitWindowManager(void);
 boolean         Sys_ShutdownWindowManager(void);

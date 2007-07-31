@@ -433,20 +433,10 @@ void GL_SetGamma(void)
 
 const char* GL_ChooseFixedFont(void)
 {
-    int         winWidth, winHeight;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("GL_ChooseFixedFont: Failed retrieving window dimensions.");
-    }
-    else
-    {
-        if(winWidth < 300)
-            return "console11";
-        if(winHeight > 768)
-            return "console18";
-    }
-
+    if(theWindow->width < 300)
+        return "console11";
+    if(theWindow->width > 768)
+        return "console18";
     return "console14";
 }
 
@@ -476,13 +466,6 @@ const char* GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY)
 
 void GL_InitFont(void)
 {
-    int         winWidth, winHeight;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Error("GL_InitFont: Failed retrieving window dimensions.");
-    }
-
     FR_Init();
     FR_PrepareFont(GL_ChooseFixedFont());
     glFontFixed =
@@ -492,10 +475,10 @@ void GL_InitFont(void)
     Con_SetMaxLineLength();
 
     // Also keep the bold and light fonts loaded.
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD, winWidth, winHeight));
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD, theWindow->width, theWindow->height));
     glFontVariable[GLFS_BOLD] = FR_GetCurrent();
 
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_LIGHT, winWidth, winHeight));
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_LIGHT, theWindow->width, theWindow->height));
     glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
 
     FR_SetFont(glFontFixed);
@@ -522,18 +505,11 @@ void GL_InitVarFont(void)
 {
     int         oldFont;
     int         i;
-    int         winWidth, winHeight;
 
     if(novideo || varFontInited)
         return;
 
     VERBOSE2(Con_Message("GL_InitVarFont.\n"));
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Error("GL_InitVarFont: Failed retrieving window dimensions.");
-        return;
-    }
 
     oldFont = FR_GetCurrent();
     VERBOSE2(Con_Message("GL_InitVarFont: Old font = %i.\n", oldFont));
@@ -544,7 +520,7 @@ void GL_InitVarFont(void)
         if(i == GLFS_BOLD || i == GLFS_LIGHT)
             continue;
 
-        FR_PrepareFont(GL_ChooseVariableFont(i, winWidth, winHeight));
+        FR_PrepareFont(GL_ChooseVariableFont(i, theWindow->width, theWindow->height));
         glFontVariable[i] = FR_GetCurrent();
         VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n",
                              glFontVariable[i]));
@@ -801,14 +777,6 @@ void GL_Init2DState(void)
 
 void GL_SwitchTo3DState(boolean push_state)
 {
-    int         winWidth, winHeight;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Error("GL_SwitchTo3DState: Failed retrieving window dimensions.");
-        return;
-    }
-
     if(push_state)
     {
         // Push the 2D matrices on the stack.
@@ -821,19 +789,19 @@ void GL_SwitchTo3DState(boolean push_state)
     gl.Enable(DGL_CULL_FACE);
     gl.Enable(DGL_DEPTH_TEST);
 
-    viewpx = viewwindowx * winWidth / 320, viewpy =
-        viewwindowy * winHeight / 200;
+    viewpx = viewwindowx * theWindow->width / 320, viewpy =
+        viewwindowy * theWindow->height / 200;
     // Set the viewport.
     if(viewheight != SCREENHEIGHT)
     {
-        viewpw = viewwidth * winWidth / 320;
-        viewph = viewheight * winHeight / 200 + 1;
+        viewpw = viewwidth * theWindow->width / 320;
+        viewph = viewheight * theWindow->height / 200 + 1;
         gl.Viewport(viewpx, viewpy, viewpw, viewph);
     }
     else
     {
-        viewpw = winWidth;
-        viewph = winHeight;
+        viewpw = theWindow->width;
+        viewph = theWindow->height;
     }
 
     // The 3D projection matrix.
@@ -857,17 +825,7 @@ void GL_Restore2DState(int step)
         break;
 
     case 2: // After Restore Step 2 nothing special happens.
-        {
-        int         winWidth, winHeight;
-
-        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-        {
-            Con_Message("GL_Restore2DState: Failed retrieving window dimensions.");
-            return;
-        }
-            
-        gl.Viewport(0, 0, winWidth, winHeight);
-        }
+        gl.Viewport(0, 0, theWindow->width, theWindow->height);
         break;
 
     case 3: // After Restore Step 3 we're back in 2D rendering mode.
@@ -977,15 +935,10 @@ void GL_TotalReset(boolean doShutdown, boolean loadLightMaps,
  */
 unsigned char *GL_GrabScreen(void)
 {
-    int         winWidth, winHeight;
-    unsigned char *buffer;
+    unsigned char *buffer = 0;
     
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-        Con_Error("GL_GrabScreen: Failed getting window dimensions.");
-
-    buffer = malloc(winWidth * winHeight * 3);
-
-    gl.Grab(0, 0, winWidth, winHeight, DGL_RGB, buffer);
+    buffer = malloc(theWindow->width * theWindow->height * 3);
+    gl.Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
     return buffer;
 }
 

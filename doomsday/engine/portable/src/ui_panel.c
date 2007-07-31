@@ -824,18 +824,12 @@ void CP_VideoModeInfo(ui_object_t *ob)
     }
     else
     {
-        int         width, height, bpp;
-        boolean     fullscreen;
-
-        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
-            return;
-        if(!Sys_GetWindowBPP(windowIDX, &bpp))
-            return;
+        boolean fullscreen;
         if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
             return;
 
-        sprintf(buf, "%i x %i x %i (%s)", width, height, bpp,
-                (fullscreen? "fullscreen":"windowed"));
+        sprintf(buf, "%i x %i x %i (%s)", theWindow->width, theWindow->height, theWindow->bpp,
+                (fullscreen? "fullscreen" : "windowed"));
     }
 
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
@@ -845,14 +839,9 @@ void CP_VideoModeInfo(ui_object_t *ob)
 
 void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
 {
-    int         cWidth, cHeight, cBPP;
     boolean     cFullscreen;
     ui_object_t *ob;
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &cWidth, &cHeight))
-        return;
-    if(!Sys_GetWindowBPP(windowIDX, &cBPP))
-        return;
     if(!Sys_GetWindowFullscreen(windowIDX, &cFullscreen))
         return;
 
@@ -860,9 +849,9 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
 
     bpp = (bpp? 32 : 16);
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
-            fullscreen? "fullscreen":"windowed");
+            fullscreen? "fullscreen" : "windowed");
 
-    if(w == cWidth && h == cHeight && bpp == cBPP &&
+    if(w == theWindow->width && h == theWindow->height && bpp == theWindow->bpp &&
        fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
     else
@@ -1196,26 +1185,20 @@ D_CMD(OpenPanel)
 
     // Update width the current resolution.
     {
-    int         cWidth, cHeight, cBPP;
-    boolean     cFullscreen;
+        boolean cFullscreen = true;
+        Sys_GetWindowFullscreen(windowIDX, &cFullscreen);
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &cWidth, &cHeight))
-        Con_Error("CCmd 'OpenPanel': Failed retrieving window dimensions.");
-
-    if(!Sys_GetWindowBPP(windowIDX, &cBPP))
-        Con_Error("CCmd 'OpenPanel': Failed retrieving window bpp.");
-    if(!Sys_GetWindowFullscreen(windowIDX, &cFullscreen))
-        Con_Error("CCmd 'OpenPanel': Failed retrieving window fullscreen.");
-
-    ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
-    list = ob->data;
-    list->selection = UI_ListFindItem(ob, RES(cWidth, cHeight));
-    if(list->selection == -1)
-        // Then use a reasonable default.
-        list->selection = UI_ListFindItem(ob, RES(640, 480));
-    panel_fullscreen = cFullscreen;
-    panel_bpp = (cBPP == 32? 1 : 0);
-    CP_ResolutionList(ob);
+        ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
+        list = ob->data;
+        list->selection = UI_ListFindItem(ob, RES(theWindow->width, theWindow->height));
+        if(list->selection == -1)
+        {
+            // Then use a reasonable default.
+            list->selection = UI_ListFindItem(ob, RES(640, 480));
+        }
+        panel_fullscreen = cFullscreen;
+        panel_bpp = (theWindow->bpp == 32? 1 : 0);
+        CP_ResolutionList(ob);
     }
 
     UI_Init(true, true, false, false, false, false);

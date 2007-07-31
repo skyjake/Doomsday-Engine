@@ -193,15 +193,7 @@ static void drawRuler2(int y, int lineHeight, float alpha, int scrWidth)
 
 void Con_DrawRuler(int y, int lineHeight, float alpha)
 {
-    int         winWidth;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
-    {
-        Con_Message("Con_DrawRuler: Failed retrieving window dimensions.");
-        return;
-    }
-
-    drawRuler2(y, lineHeight, alpha, winWidth);
+    drawRuler2(y, lineHeight, alpha, theWindow->width);
 }
 
 /**
@@ -371,7 +363,6 @@ void Rend_Console(void)
     extern uint bLineOff;
 
     int         i, k;               // Line count and buffer cursor.
-    int         winWidth, winHeight;
     float       x, y;
     float       closeFade = 1;
     float       gtosMulY;
@@ -389,13 +380,7 @@ void Rend_Console(void)
     if(ConsoleY <= 0)
         return;                 // We have nothing to do here.
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("Rend_Console: Failed retrieving window dimensions.");
-        return;
-    }
-
-    gtosMulY = winHeight / 200.0f;
+    gtosMulY = theWindow->height / 200.0f;
 
     cmdLine = Con_GetCommandLine();
     cmdCursor = Con_CursorPosition();
@@ -423,7 +408,7 @@ void Rend_Console(void)
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
+    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     BorderNeedRefresh = true;
 
@@ -447,22 +432,22 @@ void Rend_Console(void)
     gl.LoadIdentity();
     gl.Translatef(2 * sin(funnyAng / 4), 2 * cos(funnyAng / 4), 0);
     gl.Rotatef(funnyAng * 3, 0, 0, 1);
-    GL_DrawRectTiled(0, (int) (ConsoleY * gtosMulY + 4), winWidth,
-                     -winHeight - 4, bgX, bgY);
+    GL_DrawRectTiled(0, (int) (ConsoleY * gtosMulY + 4), theWindow->width,
+                     -theWindow->height - 4, bgX, bgY);
     gl.MatrixMode(DGL_TEXTURE);
     gl.PopMatrix();
 
     // The border.
-    GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 3), winWidth, 2, 0, 0, 0,
+    GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 3), theWindow->width, 2, 0, 0, 0,
                 closeFade);
 
     // Subtle shadow.
     gl.Begin(DGL_QUADS);
     gl.Color4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
     gl.Vertex2f(0, (int) (ConsoleY * gtosMulY + 5));
-    gl.Vertex2f(winWidth, (int) (ConsoleY * gtosMulY + 5));
+    gl.Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 5));
     gl.Color4f(0, 0, 0, 0);
-    gl.Vertex2f(winWidth, (int) (ConsoleY * gtosMulY + 13));
+    gl.Vertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 13));
     gl.Vertex2f(0, (int) (ConsoleY * gtosMulY + 13));
     gl.End();
 
@@ -505,7 +490,7 @@ void Rend_Console(void)
                 {
                     // Draw a ruler here, and nothing else.
                     drawRuler2(y / Cfont.sizeY, Cfont.height, closeFade,
-                               winWidth / Cfont.sizeX);
+                               theWindow->width / Cfont.sizeX);
                 }
                 else
                 {
@@ -515,7 +500,7 @@ void Rend_Console(void)
                     memset(buff, 0, sizeof(buff));
                     strncpy(buff, line->text, 255);
 
-                    x = line->flags & CBLF_CENTER ? (winWidth / Cfont.sizeX -
+                    x = line->flags & CBLF_CENTER ? (theWindow->width / Cfont.sizeX -
                                                      Cfont.Width(buff)) / 2 : 2;
 
                     if(Cfont.Filter)
@@ -591,7 +576,7 @@ void Rend_Console(void)
     int width = 0;
     int height;
     int oldFont = FR_GetCurrent();
-    int border = winWidth / 120;
+    int border = theWindow->width / 120;
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
@@ -599,9 +584,9 @@ void Rend_Console(void)
     FR_SetFont(glFontVariable[GLFS_BOLD]);
     height = FR_TextHeight("W") + border;
     FR_SetFont(glFontVariable[GLFS_BOLD]);
-    UI_Gradient(0, 0, winWidth, height, UI_Color(UIC_BG_MEDIUM),
+    UI_Gradient(0, 0, theWindow->width, height, UI_Color(UIC_BG_MEDIUM),
                 UI_Color(UIC_BG_LIGHT), .8f * closeFade, closeFade);
-    UI_Gradient(0, height, winWidth, border, UI_Color(UIC_SHADOW),
+    UI_Gradient(0, height, theWindow->width, border, UI_Color(UIC_SHADOW),
                 UI_Color(UIC_BG_DARK), closeFade, 0);
     UI_TextOutEx(consoleTitle, border, height / 2, false, true, UI_Color(UIC_TITLE),
                  closeFade);
@@ -616,7 +601,7 @@ void Rend_Console(void)
     {
         width = FR_TextWidth(statusText);
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(statusText, winWidth - UI_BORDER - width, height / 2,
+        UI_TextOutEx(statusText, theWindow->width - UI_BORDER - width, height / 2,
                      false, true, UI_Color(UIC_TEXT), .75f * closeFade);
     }
 

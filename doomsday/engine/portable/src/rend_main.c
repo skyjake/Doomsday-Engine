@@ -2607,7 +2607,6 @@ static void DrawRangeBox(int x, int y, int w, int h, ui_color_t *c)
 void R_DrawLightRange(void)
 {
     int         i, r;
-    int         winWidth, winHeight;
     int         y;
     static char *title = "Light Range Matrix";
     float       c, off;
@@ -2616,16 +2615,10 @@ void R_DrawLightRange(void)
     if(!debugLightModMatrix)
         return;
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("R_DrawLightRange: Failed retrieving window dimensions.");
-        return;
-    }
-
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
+    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     gl.Translatef(BORDER, BORDER + BORDER, 0);
 
@@ -2795,7 +2788,6 @@ static void Rend_RenderBoundingBoxes(void)
     mobj_t     *mo;
     uint        i;
     sector_t   *sec;
-    int         winWidth;
     float       size;
     static float red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
     static float green[3] = { 0.2f, 1, 0.2f}; // solid objects
@@ -2806,13 +2798,6 @@ static void Rend_RenderBoundingBoxes(void)
 
     if(!devMobjBBox || netgame)
         return;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
-    {
-        Con_Message("Rend_RenderBoundingBoxes: Failed retrieving window "
-                    "dimensions.");
-        return;
-    }
 
     eye[VX] = FIX2FLT(viewplayer->mo->pos[VX]);
     eye[VY] = FIX2FLT(viewplayer->mo->pos[VY]);
@@ -2846,7 +2831,7 @@ static void Rend_RenderBoundingBoxes(void)
             pos[VX] = FIX2FLT(mo->pos[VX]);
             pos[VY] = FIX2FLT(mo->pos[VY]);
             pos[VZ] = FIX2FLT(mo->pos[VZ]);
-            alpha = 1 - ((M_Distance(pos, eye)/(winWidth/2))/4);
+            alpha = 1 - ((M_Distance(pos, eye)/(theWindow->width/2))/4);
 
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.

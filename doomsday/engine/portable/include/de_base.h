@@ -43,20 +43,6 @@
 #include "dd_help.h"
 #include "dd_zip.h"
 
-#ifdef WIN32
-#  include "dd_winit.h"
-#else
-#  ifdef UNIX
-#    include "dd_uinit.h"
-#  endif
-#endif
-
-// Use SDL for window management under *nix
-#ifdef UNIX
-#  define USING_SDL_WINDOW
-#endif
-
-#include "sys_window.h"
 
 // System headers needed everywhere.
 #include <assert.h>

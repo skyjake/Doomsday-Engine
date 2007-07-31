@@ -147,13 +147,8 @@ void UI_Register(void)
 void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
              boolean mousemod, boolean noescape)
 {
-    int         width, height;
-
     if(uiActive)
         return;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &width, &height))
-        Con_Error("UI_Init: Failed retrieving window dimensions.");
 
     uiActive = true;
 
@@ -173,7 +168,7 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, width, height, -1, 1);
+    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     // Change font.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
@@ -188,9 +183,9 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     // Allow use of the escape key to exit the ui?
     allowEscape = !noescape;
 
-    // Load graphics.
-    uiCX = width / 2;
-    uiCY = height / 2;
+    // Init cursor to the center of the screen.
+    uiCX = theWindow->width / 2;
+    uiCY = theWindow->height / 2;
     uiMoved = false;
 }
 
@@ -424,26 +419,12 @@ void UI_InitPage(ui_page_t *page, ui_object_t *objects)
  */
 int UI_AvailableWidth(void)
 {
-    int         winWidth;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, NULL))
-    {
-        Con_Error("UI_AvailableWidth: Failed retrieving window dimensions.");
-    }
-
-    return winWidth - UI_BORDER * 4;
+    return theWindow->width - UI_BORDER * 4;
 }
 
 int UI_AvailableHeight(void)
 {
-    int         winHeight;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, NULL, &winHeight))
-    {
-        Con_Error("UI_AvailableHeight: Failed retrieving window dimensions.");
-    }
-
-    return winHeight - UI_BORDER * 4;
+    return theWindow->height - UI_BORDER * 4;
 }
 
 /**
@@ -547,31 +528,23 @@ int UI_Responder(ddevent_t *ev)
 
     if(IS_MOUSE_MOTION(ev))
     {
-        int         winWidth, winHeight;
-
         uiMoved = true;
-
-        if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-        {
-            Con_Error("Con_DrawStartupScreen: Failed retrieving window "
-                      "dimensions.");
-        }
 
         if(ev->axis.id == 0) // xaxis.
         {
             uiCX += ev->axis.pos;
             if(uiCX < 0)
                 uiCX = 0;
-            if(uiCX >= winWidth)
-                uiCX = winWidth - 1;
+            if(uiCX >= theWindow->width)
+                uiCX = theWindow->width - 1;
         }
         else if(ev->axis.id == 1) // yaxis.
         {
             uiCY += ev->axis.pos;
             if(uiCY < 0)
                 uiCY = 0;
-            if(uiCY >= winHeight)
-                uiCY = winHeight - 1;
+            if(uiCY >= theWindow->height)
+                uiCY = theWindow->height - 1;
         }
     }
 
@@ -626,24 +599,14 @@ void UI_Ticker(timespan_t time)
  */
 void UI_Drawer(void)
 {
-    int         winWidth, winHeight;
-
-    if(!uiActive)
+    if(!uiActive || !uiCurrentPage)
         return;
-    if(!uiCurrentPage)
-        return;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("UI_Drawer: Failed retrieving window dimensions.");
-        return;
-    }
 
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, winWidth, winHeight, -1, 1);
+    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
@@ -653,10 +616,12 @@ void UI_Drawer(void)
     {
         float           width, height, scale;
 
-        if(winWidth >= winHeight)
-            scale = (winWidth / UI_WIDTH) * (winHeight / (float) winWidth);
+        if(theWindow->width >= theWindow->height)
+            scale = (theWindow->width / UI_WIDTH) * 
+                (theWindow->height / (float) theWindow->width);
         else
-            scale = (winHeight / UI_HEIGHT) * (winWidth / (float) winHeight);
+            scale = (theWindow->height / UI_HEIGHT) * 
+                (theWindow->width / (float) theWindow->height);
 
         width = UICURSORWIDTH * scale * uiCursorWidthMul;
         height = UICURSORHEIGHT * scale * uiCursorHeightMul;
@@ -947,20 +912,13 @@ void UIPage_Ticker(ui_page_t *page)
 void UIPage_Drawer(ui_page_t *page)
 {
     int         i;
-    int         winWidth, winHeight;
     float       t;
     ui_object_t *ob;
     ui_color_t  focuscol;
 
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &winWidth, &winHeight))
-    {
-        Con_Message("UIPage_Drawer: Failed retrieving window dimensions.");
-        return;
-    }
-
     // Draw background?
     if(page->background)
-        UI_DrawDDBackground(0, 0, winWidth, winHeight, uiAlpha);
+        UI_DrawDDBackground(0, 0, theWindow->width, theWindow->height, uiAlpha);
 
     // Draw title?
     //if(page->header)

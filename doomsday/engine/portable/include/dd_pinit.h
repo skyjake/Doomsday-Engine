@@ -29,6 +29,9 @@
 #ifndef __DOOMSDAY_PORTABLE_INIT_H__
 #define __DOOMSDAY_PORTABLE_INIT_H__
 
+#include "dd_share.h"
+#include "dd_api.h"
+
 // Maximum allowed number of plugins.
 #define MAX_PLUGS	32
 

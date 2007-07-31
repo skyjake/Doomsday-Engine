@@ -39,8 +39,12 @@
 #include "sys_timer.h"
 #include "sys_mixer.h"
 
+// Use SDL for window management under *nix
 #ifdef UNIX
+#  define USING_SDL_WINDOW
 #  include "../../unix/include/sys_path.h"
 #endif
+
+#include "sys_window.h"
 
 #endif

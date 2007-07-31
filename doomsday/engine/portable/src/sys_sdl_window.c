@@ -38,10 +38,6 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#if defined(WIN32)
-#  include <windows.h>
-#endif
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -52,17 +48,6 @@
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
-
-typedef struct {
-#if defined(WIN32)
-    HWND            hWnd;       // Needed for input (among other things).
-#endif
-    boolean         inited;
-    int             flags;
-    int             x, y;       // SDL cannot move windows; these are ignored.
-    int             width, height;
-    int             bpp;
-} ddwindow_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -77,6 +62,9 @@ static boolean setDDWindow(ddwindow_t *win, int newWidth, int newHeight,
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+// Currently active window where all drawing operations are directed at.
+const ddwindow_t* theWindow;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -116,7 +104,8 @@ boolean Sys_InitWindowManager(void)
 	if(!ArgExists("-dedicated"))
 	{
 /**
- *\attention Solaris has no Joystick support according to https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
+ * @attention Solaris has no Joystick support according to 
+ * https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
  */
 #ifdef SOLARIS
 		if(SDL_InitSubSystem(SDL_INIT_VIDEO))
@@ -131,6 +120,7 @@ boolean Sys_InitWindowManager(void)
 
     memset(&mainWindow, 0, sizeof(mainWindow));
     winManagerInited = true;
+    theWindow = &mainWindow;
     return true;
 }
 

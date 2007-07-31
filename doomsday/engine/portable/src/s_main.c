@@ -490,22 +490,14 @@ void S_StopMusic(void)
  */
 void S_Drawer(void)
 {
-    int         w, h;
-
     if(!sound_info)
         return;
-
-    if(!Sys_GetWindowDimensions(windowIDX, NULL, NULL, &w, &h))
-    {
-        Con_Message("S_Drawer: Failed retrieving window dimensions.");
-        return;
-    }
 
     // Go into screen projection mode.
     gl.MatrixMode(DGL_PROJECTION);
     gl.PushMatrix();
     gl.LoadIdentity();
-    gl.Ortho(0, 0, w, h, -1, 1);
+    gl.Ortho(0, 0, theWindow->width, theWindow->height, -1, 1);
 
     Sfx_DebugInfo();
 
