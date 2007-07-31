@@ -385,7 +385,7 @@ void P_MovePlayer(player_t *player)
     {
         // Cameramen have a 3D thrusters!
         P_Thrust3D(player, plrmo->angle, dp->lookdir,
-                   cmd->forwardMove * 2048, cmd->sideMove * 2048);
+                   cmd->forwardMove * 50 * 2048, cmd->sideMove * 50 * 2048);
     }
     else
     {

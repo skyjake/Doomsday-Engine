@@ -522,9 +522,20 @@ int P_CameraXYMovement(mobj_t *mo)
 #if __JDOOM__
     }
 #endif
+
     // Friction.
-    mo->mom[MX] = FixedMul(mo->mom[MX], 0xe800);
-    mo->mom[MY] = FixedMul(mo->mom[MY], 0xe800);
+    if(mo->player->plr->cmd.forwardMove || mo->player->plr->cmd.sideMove ||
+        mo->player->plr->cmd.upMove)
+    {   // While moving; normal friction applies.
+        mo->mom[MX] = FixedMul(mo->mom[MX], 0xe800);
+        mo->mom[MY] = FixedMul(mo->mom[MY], 0xe800);
+    }
+    else
+    {   // Else, lose momentum quickly!.
+        mo->mom[MX] = FixedMul(mo->mom[MX], 0x8000);
+        mo->mom[MY] = FixedMul(mo->mom[MY], 0x8000);
+    }
+
     return true;
 }
 
@@ -533,12 +544,18 @@ int P_CameraZMovement(mobj_t *mo)
     if(!P_IsCamera(mo))
         return false;
     mo->pos[VZ] += mo->mom[MZ];
-    mo->mom[MZ] = FixedMul(mo->mom[MZ], 0xe800);
 
-    /*if(mo->pos[VZ] < mo->floorz + 6 * FRACUNIT)
-        mo->pos[VZ] = mo->floorz + 6 * FRACUNIT;
-    if(mo->pos[VZ] > mo->ceilingz - 6 * FRACUNIT)
-        mo->pos[VZ] = mo->ceilingz - 6 * FRACUNIT;*/
+    // Friction.
+    if(mo->player->plr->cmd.forwardMove || mo->player->plr->cmd.sideMove ||
+        mo->player->plr->cmd.upMove)
+    {   // While moving; normal friction applies.
+        mo->mom[MZ] = FixedMul(mo->mom[MZ], 0xe800);
+    }
+    else
+    {   // Else, lose momentum quickly!.
+        mo->mom[MZ] = FixedMul(mo->mom[MZ], 0x8000);
+    }
+
     return true;
 }
 
