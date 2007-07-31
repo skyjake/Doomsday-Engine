@@ -93,8 +93,8 @@ typedef enum {
 typedef struct player_s {
     ddplayer_t     *plr;           // Pointer to the engine's player data.
     playerstate_t   playerstate;
-
-    playerclass_t        class;         // player class type
+    playerclass_t   class;         // player class type
+    playerbrain_t   brain;
 
     //  fixed_t     viewheight;             // base height above floor for viewz
     //  fixed_t     deltaviewheight;        // squat speed

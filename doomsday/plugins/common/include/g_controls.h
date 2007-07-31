@@ -24,7 +24,6 @@
 
 /*
  * g_controls.h: Common code for game controls
- *
  */
 
 #ifndef __COMMON_CONTROLS_H__
@@ -44,9 +43,36 @@ enum {
 enum {
     CTL_SPEED = CTL_FIRST_GAME_CONTROL,
     CTL_STRAFE,
-    CTL_ATTACK,
+    CTL_LOOK_CENTER,
     CTL_USE,
+    CTL_ATTACK,
+    CTL_WEAPON1,
+    CTL_WEAPON2,
+    CTL_WEAPON3,
+    CTL_WEAPON4,
+    CTL_WEAPON5,
+    CTL_WEAPON6,
+    CTL_WEAPON7,
+    CTL_WEAPON8,
+    CTL_WEAPON9,
+    CTL_WEAPON0,
+    CTL_NEXT_WEAPON,
+    CTL_PREV_WEAPON
 };
+
+// This structure replaced ticcmd as the place where players store the intentions
+// of their human operators.
+typedef struct playerbrain_s {
+    float       forwardMove;        // 1.0 for maximum movement
+    float       sideMove;           // 1.0 for maximum movement
+    int         changeWeapon;       // WT_NOCHANGE, or the weapon to change to
+    int         cycleWeapon;        // +1 or -1
+    // Bits:
+    uint        speed : 1;
+    uint        use : 1;
+    uint        attack : 1;
+    uint        lookCenter : 1;
+} playerbrain_t;
 
 void        G_ControlRegister(void);
 void        G_DefaultBindings(void);

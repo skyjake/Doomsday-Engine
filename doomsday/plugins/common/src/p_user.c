@@ -1296,35 +1296,50 @@ void P_PlayerThinkItems(player_t *player)
 
 void P_PlayerThinkWeapons(player_t *player)
 {
-    ticcmd_t   *cmd = &player->plr->cmd;
+    playerbrain_t *brain = &player->brain;
     weapontype_t oldweapon = player->pendingweapon;
     weapontype_t newweapon;
 
-    if(cmd->actions & BT_SPECIAL)
+    if(brain->cycleWeapon)
     {
-        // There might be a special weapon change.
-		if((cmd->actions & (BTS_NEXTWEAPON | BTS_PREVWEAPON)) &&
-		   !(cmd->actions & BTS_PAUSE))
-        {
-            player->pendingweapon =
-                P_PlayerFindWeapon(player,
-                                   (cmd->actions & BTS_NEXTWEAPON) != 0);
-            cmd->actions = 0;
-        }
+        player->pendingweapon = P_PlayerFindWeapon(player, brain->cycleWeapon > 0);
     }
 
     // Check for weapon change.
 #if __JHERETIC__ || __JHEXEN__
-    if((cmd->actions & BT_CHANGE) && !player->morphTics)
+    if(brain->changeWeapon != WT_NOCHANGE && !player->morphTics)
 #else
-    if(cmd->actions & BT_CHANGE)
+    if(brain->changeWeapon != WT_NOCHANGE)
 #endif
     {
+#if __JDOOM__ || __JHERETIC__
+#  define HAS_WEAPON(x) (player->weaponowned[x])
+#  define CUR_WEAPON(x)  (palyer->readyweapon == x)
+#endif
+        
         // The actual changing of the weapon is done
         //  when the weapon psprite can do it
         //  (read: not in the middle of an attack).
-        newweapon = (cmd->actions & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
+        newweapon = brain->changeWeapon;
 #if __JDOOM__
+        if(newweapon == player->readyweapon)
+        {
+            // Swapping between fists and chaingun.
+            if(newweapon == WT_FIRST)
+                newweapon = WT_EIGHTH;
+            else if(newweapon == WT_EIGHTH)
+                newweapon = WT_FIRST;
+
+            // Swapping between shotgun and super-shotgun.
+            if(gamemode == commercial)
+            {
+                if(newweapon == WT_THIRD)
+                    newweapon = WT_NINETH;
+                else if(newweapon == WT_NINETH)
+                    newweapon = WT_THIRD;                    
+            }
+        }
+        
 # if !__DOOM64TC__
         if(gamemode != commercial && newweapon == WT_NINETH)
         {
@@ -1332,7 +1347,19 @@ void P_PlayerThinkWeapons(player_t *player)
             newweapon = WT_THIRD;
         }
 # endif
-#endif
+#endif // __JDOOM__
+        
+#if __JHERETIC__
+        // Swapping between staff and gauntlets.
+        if(newweapon == player->readyweapon)
+        {
+            if(newweapon == WT_FIRST)
+                newweapon = WT_EIGHTH;
+            else if(newweapon == WT_EIGHTH)
+                newweapon = WT_FIRST;
+        }
+#endif // __JHERETIC__
+        
         if(player->weaponowned[newweapon] && newweapon != player->readyweapon)
         {
             if(weaponinfo[newweapon][player->class].mode[0].gamemodebits
@@ -1837,8 +1864,9 @@ void P_PlayerThinkUpdateControls(player_t* player)
     int playerNum = player - players;
     classinfo_t *pClassInfo = PCLASS_INFO(player->class);    
     float vel, off;
-    int speed;
+    int i, speed;
     boolean strafe = false;
+    playerbrain_t *brain = &player->brain;
     
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
@@ -1879,6 +1907,78 @@ void P_PlayerThinkUpdateControls(player_t* player)
     else
     {
         player->plr->cmd.actions &= ~BT_ATTACK;
+    }
+    
+    // Weapons.
+    brain->changeWeapon = WT_NOCHANGE;
+#if __JDOOM__
+   /* // Determine whether a weapon change should be done.
+    if(P_GetImpulseControlState(playerNum CTL_PREV_WEAPON)) //PLAYER_ACTION(pnum, A_WEAPONCYCLE1))  // Fist/chainsaw.
+    {
+        if(ISWPN(WT_FIRST) && GOTWPN(WT_EIGHTH))
+            i = WT_EIGHTH;
+        else if(ISWPN(WT_EIGHTH))
+            i = WT_FIRST;
+        else if(GOTWPN(WT_EIGHTH))
+            i = WT_EIGHTH;
+        else
+            i = WT_FIRST;
+        
+        cmd->changeWeapon = i + 1;
+    }
+    else if(P_GetImpuseControlState(playerNum, CTL_NEXT_WEAPON)) //PLAYER_ACTION(pnum, A_WEAPONCYCLE2)) // Shotgun/super sg.
+    {
+        if(ISWPN(WT_THIRD) && GOTWPN(WT_NINETH) &&
+           gamemode == commercial)
+            i = WT_NINETH;
+        else if(ISWPN(WT_NINETH))
+            i = WT_THIRD;
+        else if(GOTWPN(WT_NINETH) && gamemode == commercial)
+            i = WT_NINETH;
+        else
+            i = WT_THIRD;
+        
+        cmd->changeWeapon = i + 1;
+    }
+    else
+#elif __JHERETIC__
+        // Determine whether a weapon change should be done.
+        if(PLAYER_ACTION(pnum, A_WEAPONCYCLE1))  // Staff/Gauntlets.
+        {
+            if(ISWPN(WT_FIRST) && GOTWPN(WT_EIGHTH))
+                i = WT_EIGHTH;
+            else if(ISWPN(WT_EIGHTH))
+                i = WT_FIRST;
+            else if(GOTWPN(WT_EIGHTH))
+                i = WT_EIGHTH;
+            else
+                i = WT_FIRST;
+            
+            cmd->changeWeapon = i + 1;
+        }
+    else*/
+#endif
+    {
+        // Take the first weapon action.
+        for(i = 0; i < NUM_WEAPON_TYPES && (CTL_WEAPON1 + i <= CTL_WEAPON0); i++)
+            if(P_GetImpulseControlState(playerNum, CTL_WEAPON1 + i))
+            {
+                brain->changeWeapon = i;
+            }
+    }
+
+    // Weapon cycling.
+    if(P_GetImpulseControlState(playerNum, CTL_NEXT_WEAPON))
+    {
+        brain->cycleWeapon = +1;
+    }
+    else if(P_GetImpulseControlState(playerNum, CTL_PREV_WEAPON))
+    {
+        brain->cycleWeapon = -1;
+    }
+    else
+    {        
+        brain->cycleWeapon = 0;
     }
 }
 

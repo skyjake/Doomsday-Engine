@@ -193,7 +193,7 @@ void G_ControlRegister(void)
     for(i = 0; controlCmds[i].name; ++i)
         Con_AddCommand(controlCmds + i);    
 
-    // FIXME: Is this is the proper place?
+    // FIXME: Is this is the proper place, this being a console registering function?
     P_NewPlayerControl(CTL_WALK, CTLT_NUMERIC, "walk", "game");
     P_NewPlayerControl(CTL_SIDESTEP, CTLT_NUMERIC, "sidestep", "game");
     P_NewPlayerControl(CTL_ZFLY, CTLT_NUMERIC, "zfly", "game");
@@ -203,6 +203,19 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_STRAFE, CTLT_NUMERIC, "strafe", "game");
     P_NewPlayerControl(CTL_ATTACK, CTLT_NUMERIC, "attack", "game");
     P_NewPlayerControl(CTL_USE, CTLT_IMPULSE, "use", "game");
+    P_NewPlayerControl(CTL_LOOK_CENTER, CTLT_IMPULSE, "lookcenter", "game");
+    P_NewPlayerControl(CTL_WEAPON1, CTLT_IMPULSE, "weapon1", "game");
+    P_NewPlayerControl(CTL_WEAPON2, CTLT_IMPULSE, "weapon2", "game");
+    P_NewPlayerControl(CTL_WEAPON3, CTLT_IMPULSE, "weapon3", "game");
+    P_NewPlayerControl(CTL_WEAPON4, CTLT_IMPULSE, "weapon4", "game");
+    P_NewPlayerControl(CTL_WEAPON5, CTLT_IMPULSE, "weapon5", "game");
+    P_NewPlayerControl(CTL_WEAPON6, CTLT_IMPULSE, "weapon6", "game");
+    P_NewPlayerControl(CTL_WEAPON7, CTLT_IMPULSE, "weapon7", "game");
+    P_NewPlayerControl(CTL_WEAPON8, CTLT_IMPULSE, "weapon8", "game");
+    P_NewPlayerControl(CTL_WEAPON9, CTLT_IMPULSE, "weapon9", "game");
+    P_NewPlayerControl(CTL_WEAPON0, CTLT_IMPULSE, "weapon0", "game");
+    P_NewPlayerControl(CTL_NEXT_WEAPON, CTLT_IMPULSE, "nextweapon", "game");   
+    P_NewPlayerControl(CTL_PREV_WEAPON, CTLT_IMPULSE, "prevweapon", "game");   
 }
 
 DEFCC( CCmdDefaultGameBinds )
@@ -223,27 +236,47 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol sidestep key-a-inverse",
         //"bindcontrol sidestep {key-left-inverse + key-alt-down}",
         //"bindcontrol sidestep {key-right + key-alt-down}",
-        "bindcontrol zfly key-home",
-        "bindcontrol zfly key-end-inverse",
+        "bindcontrol zfly key-pgup",
+        "bindcontrol zfly key-ins-inverse",
+        "bindevent key-home-down {impulse falldown}",
         //"bindcontrol turn {key-left-staged-inverse + key-alt-up}",
         //"bindcontrol turn {key-right-staged + key-alt-up}",
         "bindcontrol turn key-left-staged-inverse",
         "bindcontrol turn key-right-staged",
-        "bindcontrol look key-pgdown-staged",
+        "bindcontrol look key-delete-staged",
+        "bindevent key-end-down {impulse lookcenter}",
         "bindcontrol look key-pgup-staged-inverse",
         "bindcontrol attack key-ctrl",
         "bindcontrol speed key-shift",
         "bindcontrol strafe key-alt",
-               
+
+        "bindevent key-1 {impulse weapon1}",
+        "bindevent key-2 {impulse weapon2}",
+        "bindevent key-3 {impulse weapon3}",
+        "bindevent key-4 {impulse weapon4}",
+        "bindevent key-5 {impulse weapon5}",
+        "bindevent key-6 {impulse weapon6}",
+        "bindevent key-7 {impulse weapon7}",
+        "bindevent key-8 {impulse weapon8}",
+        "bindevent key-9 {impulse weapon9}",
+
+        "bindevent key-pause pause",
+        "bindevent key-p pause",
+
+        // Player controls: mouse
         "bindcontrol turn mouse-x",
         "bindcontrol look mouse-y",
         "bindcontrol attack mouse-left",
         "bindevent key-space-down {impulse use}",
         "bindevent mouse-right-down {impulse use}",
-        
+        "bindevent mouse-wheelup {impulse nextweapon}",
+        "bindevent mouse-wheeldown {impulse prevweapon}",
+
+        // Player controls: joystick
         "bindcontrol turn joy-x",
         "bindcontrol walk joy-y-inverse",
         
+        // UI events
         "bindevent key-f1 helpscreen",
         "bindevent key-f2 savegame",
         "bindevent key-f3 loadgame",
@@ -258,9 +291,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-minus {viewsize -}",
         "bindevent key-equals {viewsize +}",
         
-        "bindevent key-pause pause",
-        "bindevent key-p pause",
-        
+        // Menu events
         "bindevent key-esc menu",
         "bindevent menu:key-backspace menucancel",
         "bindevent menu:key-up menuup",

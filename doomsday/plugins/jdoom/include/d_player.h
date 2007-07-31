@@ -40,6 +40,8 @@
 // case of the generic moving object/actor.
 #include "p_mobj.h"
 
+#include "g_controls.h"
+
 #ifdef __GNUG__
 #pragma interface
 #endif
@@ -71,8 +73,8 @@ typedef enum {
 typedef struct player_s {
     ddplayer_t     *plr;           // Pointer to the engine's player data.
     playerstate_t   playerstate;
-
-    playerclass_t        class;         // player class type
+    playerclass_t   class;         // player class type
+    playerbrain_t   brain;
 
     // bounded/scaled total momentum.
     fixed_t         bob;

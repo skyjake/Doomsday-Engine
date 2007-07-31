@@ -271,7 +271,10 @@ void P_Impulse(int playerNum, int control)
 void P_ImpulseByName(int playerNum, const char* control)
 {
     playercontrol_t* pc = P_PlayerControlByName(control);
-    P_Impulse(playerNum, pc->id);
+    if(pc)
+    {
+        P_Impulse(playerNum, pc->id);
+    }
 }
 
 #if 0
