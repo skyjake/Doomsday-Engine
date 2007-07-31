@@ -483,7 +483,7 @@ void IN_CheckForSkip(void)
     {
         if(players->plr->ingame)
         {
-            if(player->plr->cmd.actions & BT_ATTACK)
+            if(player->brain.attack)
             {
                 if(!player->attackdown)
                 {
@@ -495,7 +495,7 @@ void IN_CheckForSkip(void)
             {
                 player->attackdown = false;
             }
-            if(player->plr->cmd.actions & BT_USE)
+            if(player->brain.use)
             {
                 if(!player->usedown)
                 {

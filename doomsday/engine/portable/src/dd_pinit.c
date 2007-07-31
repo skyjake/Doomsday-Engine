@@ -200,6 +200,13 @@ boolean DD_EarlyInit(void)
 {
     char       *outfilename = "doomsday.out";
 
+    // First order of business: are we running in dedicated mode?
+    if(ArgCheck("-dedicated"))
+    {
+        isDedicated = true;
+        Sys_ConInit();
+    }
+    
     // We'll redirect stdout to a log file.
     DD_CheckArg("-out", &outfilename);
     outFile = fopen(outfilename, "w");

@@ -242,7 +242,13 @@ void B_Register(void)
  */
 void B_Init(void)
 {
-    bclass_t* bc;
+    bclass_t* bc = 0;
+    
+    if(isDedicated)
+    {
+        // Why sir, we are but poor folk! Them bindings are too good for us.
+        return;
+    }
     
     B_NewClass(DEFAULT_BINDING_CLASS_NAME);
 
@@ -339,6 +345,9 @@ evbinding_t* B_BindCommand(const char* eventDesc, const char* command)
     bclass_t* bc;
     evbinding_t *b;
     
+    if(isDedicated)
+        return NULL;
+    
     // The class may be included in the descriptor.
     eventDesc = B_ParseClass(eventDesc, &bc);
     if(!bc)
@@ -362,6 +371,9 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     ddstring_t* str = 0;
     const char* ptr = 0;
     playercontrol_t* control = 0;
+    
+    if(isDedicated)
+        return NULL;
     
     // The control description may begin with the local player number.
     str = Str_New();
@@ -507,6 +519,9 @@ D_CMD(DeleteBindingById)
 
 D_CMD(DefaultBindings)
 {
+    if(isDedicated)
+        return false;
+
     B_BindDefaults();
     
     // Set the game's default bindings.

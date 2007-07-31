@@ -225,6 +225,9 @@ void B_ClearClass(bclass_t* bc)
 
 void B_ActivateClass(bclass_t* bc, boolean doActivate)
 {
+    if(!bc)
+        return;
+    
     bc->active = doActivate;    
     B_UpdateDeviceStateAssociations();
 }

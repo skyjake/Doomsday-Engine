@@ -615,7 +615,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
     }
 
     // check for autofire
-    if(player->plr->cmd.actions & BT_ATTACK)
+    if(player->brain.attack)
     {
         wminfo = WEAPON_INFO(player->readyweapon, player->class, 0);
 
@@ -649,7 +649,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t * psp)
  */
 void C_DECL A_ReFire(player_t *player, pspdef_t *psp)
 {
-    if((player->plr->cmd.actions & BT_ATTACK) &&
+    if((player->brain.attack) &&
        player->pendingweapon == WT_NOCHANGE && player->health)
     {
         player->refire++;

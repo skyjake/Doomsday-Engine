@@ -388,12 +388,6 @@ int DD_Main(void)
     Dir_MakeAbsolute(ddBasePath);
     Dir_ValidDir(ddBasePath);
 
-    if(ArgCheck("-dedicated"))
-    {
-        isDedicated = true;
-        Sys_ConInit();
-    }
-
     if(!isDedicated)
     {
         if(!GL_EarlyInit())

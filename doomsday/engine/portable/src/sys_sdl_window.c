@@ -218,6 +218,9 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
 {
     ddwindow_t *win;
 
+    if(isDedicated)
+        return 1; // No use.
+    
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
 

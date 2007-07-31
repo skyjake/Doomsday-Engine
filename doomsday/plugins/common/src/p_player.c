@@ -250,7 +250,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             returnval = weapon;
         }
         // Is the player currently firing?
-        else if(!((player->plr->cmd.actions & BT_ATTACK) &&
+        else if(!((player->brain.attack) &&
                   cfg.noWeaponAutoSwitchIfFiring))
         {
             // Should we change weapon automatically?

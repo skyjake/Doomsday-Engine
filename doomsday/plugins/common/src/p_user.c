@@ -357,7 +357,8 @@ void P_MovePlayer(player_t *player)
 {
     ddplayer_t *dp = player->plr;
     mobj_t     *plrmo = player->plr->mo;
-    ticcmd_t   *cmd = &player->plr->cmd;
+    //ticcmd_t   *cmd = &player->plr->cmd;
+    playerbrain_t* brain = &player->brain;
     classinfo_t *pClassInfo = PCLASS_INFO(player->class);
     int         speed;
     fixed_t     forwardMove;
@@ -365,7 +366,7 @@ void P_MovePlayer(player_t *player)
 
     // Change the angle if possible.
     /* $unifiedangles */
-    if(IS_SERVER && player != &players[0])
+/*    if(IS_SERVER && player != &players[0])
     {
         if(dp->fixcounter.angles == dp->fixacked.angles)  // all acked?
         {
@@ -377,7 +378,7 @@ void P_MovePlayer(player_t *player)
             plrmo->angle = cmd->angle << 16;
             dp->lookdir = cmd->pitch / (float) DDMAXSHORT *110;
         }
-    }
+    }*/
 
     // Do not let the player control movement if not onground.
     onground = P_IsPlayerOnGround(player);
@@ -385,7 +386,7 @@ void P_MovePlayer(player_t *player)
     {
         // Cameramen have a 3D thrusters!
         P_Thrust3D(player, plrmo->angle, dp->lookdir,
-                   cmd->forwardMove * 50 * 2048, cmd->sideMove * 50 * 2048);
+                   brain->forwardMove * 50 * 2048, brain->sideMove * 50 * 2048);
     }
     else
     {
@@ -395,12 +396,13 @@ void P_MovePlayer(player_t *player)
                        (cfg.airborneMovement) ? cfg.airborneMovement * 64 : 0;
 
         // Walk -> run, run -> walk.
-        speed = (cmd->actions & BT_SPEED);
+        //speed = (cmd->actions & BT_SPEED);
+        speed = brain->speed;
         if(cfg.alwaysRun)
             speed = !speed;
 
-        forwardMove = cmd->forwardMove * pClassInfo->forwardmove[speed] * turbomul;
-        sideMove = cmd->sideMove * pClassInfo->sidemove[speed] * turbomul;
+        forwardMove = brain->forwardMove * pClassInfo->forwardmove[speed] * turbomul;
+        sideMove = brain->sideMove * pClassInfo->sidemove[speed] * turbomul;
 
         if(forwardMove > pClassInfo->maxmove)
             forwardMove = pClassInfo->maxmove;
@@ -607,7 +609,7 @@ void P_DeathThink(player_t *player)
 #endif
     }
 
-    if(player->plr->cmd.actions & BT_USE)
+    if(player->brain.use)
     {
         if(IS_CLIENT)
         {
@@ -1382,8 +1384,6 @@ void P_PlayerThinkWeapons(player_t *player)
 
 void P_PlayerThinkUse(player_t *player)
 {
-    ticcmd_t   *cmd = &player->plr->cmd;
-
     if(IS_NETGAME && IS_SERVER && player != &players[consoleplayer])
     {
         // Clients send use requests instead.
@@ -1391,7 +1391,7 @@ void P_PlayerThinkUse(player_t *player)
     }
 
     // check for use
-    if(cmd->actions & BT_USE)
+    if(player->brain.use)
     {
         if(!player->usedown)
         {
@@ -1864,50 +1864,35 @@ void P_PlayerThinkUpdateControls(player_t* player)
     int playerNum = player - players;
     classinfo_t *pClassInfo = PCLASS_INFO(player->class);    
     float vel, off;
-    int i, speed;
+    int i;
     boolean strafe = false;
     playerbrain_t *brain = &player->brain;
     
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
-    speed = (vel != 0)? 2 : 1;
+    brain->speed = (vel != 0);
     
     // Check for strafe.
     P_GetControlState(playerNum, CTL_STRAFE, &vel, 0);
     strafe = (vel != 0);
     
     // Move status.
-    // FIXME: This is just temp stuff, ticcmd will be removed soon.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);
-    player->plr->cmd.forwardMove = off + vel * speed;
+    brain->forwardMove = off + vel;
     P_GetControlState(playerNum, strafe? CTL_TURN : CTL_SIDESTEP, &vel, &off);
     if(strafe) 
     {   
         // Saturate.
         vel = (vel > 0? 1 : vel < 0? -1 : 0);
     }
-    player->plr->cmd.sideMove = off + vel * speed;
+    brain->sideMove = off + vel;
     
     // Use.
-    if(P_GetImpulseControlState(playerNum, CTL_USE))
-    {
-        player->plr->cmd.actions |= BT_USE;
-    }
-    else
-    {
-        player->plr->cmd.actions &= ~BT_USE;
-    }
+    brain->use = (P_GetImpulseControlState(playerNum, CTL_USE) != 0);
     
     // Fire.
     P_GetControlState(playerNum, CTL_ATTACK, &vel, &off);
-    if(vel + off)
-    {
-        player->plr->cmd.actions |= BT_ATTACK;
-    }
-    else
-    {
-        player->plr->cmd.actions &= ~BT_ATTACK;
-    }
+    brain->attack = (vel + off != 0);
     
     // Weapons.
     brain->changeWeapon = WT_NOCHANGE;

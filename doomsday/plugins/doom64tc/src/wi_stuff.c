@@ -1132,7 +1132,7 @@ void WI_checkForAccelerate(void)
     {
         if(players[i].plr->ingame)
         {
-            if(player->plr->cmd.actions & BT_ATTACK)
+            if(player->brain.attack)
             {
                 if(!player->attackdown)
                     acceleratestage = 1;
@@ -1140,7 +1140,7 @@ void WI_checkForAccelerate(void)
             }
             else
                 player->attackdown = false;
-            if(player->plr->cmd.actions & BT_USE)
+            if(player->brain.use)
             {
                 if(!player->usedown)
                     acceleratestage = 1;
