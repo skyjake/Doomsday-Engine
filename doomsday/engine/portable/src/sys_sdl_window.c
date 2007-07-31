@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -253,6 +253,19 @@ boolean Sys_DestroyWindow(uint idx)
     if(!window)
         return false;
 
+    return true;
+}
+
+/**
+ * Change the currently active window.
+ *
+ * @param idx           Index of the window to make active (1-based).
+ *
+ * @return              @c true, if successful.
+ */
+boolean Sys_SetActiveWindow(uint idx)
+{
+    // We only support one window, so yes its active.
     return true;
 }
 

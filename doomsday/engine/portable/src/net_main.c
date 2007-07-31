@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -823,7 +823,7 @@ void Net_Drawer(void)
 {
     char    buf[160], tmp[40];
     int     i, c;
-    int     winWidth, winHeight;
+//    int     winWidth, winHeight;
     boolean show_blink_r = false;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -864,7 +864,7 @@ void Net_Drawer(void)
         }
 
         strcat(buf, "]");
-        i = winWidth - FR_TextWidth(buf);
+        i = theWindow->width - FR_TextWidth(buf);
         //gl.Color3f(0, 0, 0);
         //FR_TextOut(buf, i - 8, 12);
         gl.Color3f(1, 1, 1);

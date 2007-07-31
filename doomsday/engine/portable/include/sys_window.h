@@ -89,6 +89,7 @@ boolean         Sys_GetWindowBPP(uint idx, int *bpp);
 boolean         Sys_GetWindowFullscreen(uint idx, boolean *fullscreen);
 boolean         Sys_GetWindowVisibility(uint idx, boolean *show);
 
+boolean         Sys_SetActiveWindow(uint idx);
 boolean         Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp,
                              uint wflags, uint uflags);
 boolean         Sys_SetWindowTitle(uint idx, const char *title);

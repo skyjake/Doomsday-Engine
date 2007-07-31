@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,16 +58,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
-    HWND            hWnd;       // Window handle.
-    boolean         inited;     // true if the window has been initialized.
-                                // i.e. Sys_SetWindow() has been called at
-                                // least once for this window.
-    int             flags;
-    int             x, y, width, height;
-    int             bpp;
-} ddwindow_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -82,6 +72,9 @@ static boolean setDDWindow(ddwindow_t *win, int newX, int newY, int newWidth,
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+// Currently active window where all drawing operations are directed at.
+const ddwindow_t* theWindow;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -366,6 +359,9 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
         return 0;
     }
 
+    // Make this the new active window.
+    theWindow = win;
+
     return numWindows; // index + 1.
 }
 
@@ -409,6 +405,24 @@ boolean Sys_DestroyWindow(uint idx)
 
     destroyDDWindow(window);
     windows[idx-1] = NULL;
+    return true;
+}
+
+/**
+ * Change the currently active window.
+ *
+ * @param idx           Index of the window to make active (1-based).
+ *
+ * @return              @c true, if successful.
+ */
+boolean Sys_SetActiveWindow(uint idx)
+{
+    ddwindow_t *window = getWindow(idx - 1);
+
+    if(!window)
+        return false;
+
+    theWindow = window;
     return true;
 }
 
