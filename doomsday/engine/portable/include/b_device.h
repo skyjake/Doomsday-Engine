@@ -65,3 +65,4 @@ void        B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float*
                                         struct bclass_s* controlClass);
 
 #endif // __DOOMSDAY_BIND_DEVICE_H__
+

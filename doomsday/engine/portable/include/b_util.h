@@ -76,3 +76,4 @@ void        B_AppendAnglePositionToString(float pos, ddstring_t* str);
 void        B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str);
 
 #endif // __DOOMSDAY_BIND_UTIL_H__
+
