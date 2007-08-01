@@ -32,7 +32,7 @@ else (EAX_LIBRARIES AND EAX_INCLUDE_DIRS)
     NAMES
       eax
     PATHS
-      $ENV{EAXDIR}/lib
+      $ENV{EAXDIR}/libs
       /usr/lib
       /usr/local/lib
       /opt/local/lib

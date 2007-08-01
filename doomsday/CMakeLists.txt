@@ -42,7 +42,6 @@ IF (WIN32)
 	SET(ENV{DIRECTXDIR} "c:/sdk/dx8mgw")
 	SET(ENV{LIBCURLDIR} "c:/sdk/libcurl")
 	SET(ENV{EAXDIR} "c:/sdk/eax")
-	MESSAGE(STATUS $ENV{EAXDIR})
 ENDIF (WIN32)
 
 ################################################################################
