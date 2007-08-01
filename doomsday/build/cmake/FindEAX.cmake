@@ -21,6 +21,7 @@ else (EAX_LIBRARIES AND EAX_INCLUDE_DIRS)
     NAMES
       eax.h
     PATHS
+      $ENV{EAXDIR}/include
       /usr/include
       /usr/local/include
       /opt/local/include
@@ -31,6 +32,7 @@ else (EAX_LIBRARIES AND EAX_INCLUDE_DIRS)
     NAMES
       eax
     PATHS
+      $ENV{EAXDIR}/lib
       /usr/lib
       /usr/local/lib
       /opt/local/lib

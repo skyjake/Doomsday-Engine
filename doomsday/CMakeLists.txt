@@ -41,8 +41,7 @@ IF (WIN32)
 	SET(ENV{LIBPNGDIR} "c:/sdk/libpng")
 	SET(ENV{DIRECTXDIR} "c:/sdk/dx8mgw")
 	SET(ENV{LIBCURLDIR} "c:/sdk/libcurl")
-	SET(ENV{EAX_INCLUDE_DIR} "c:/sdk/eax/include")
-	SET(ENV{EAX_LIBRARIES} "c:/sdk/eax/lib")
+	SET(ENV{EAXDIR} "c:/sdk/eax")
 ENDIF (WIN32)
 
 ################################################################################
