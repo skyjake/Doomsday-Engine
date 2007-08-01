@@ -1896,61 +1896,11 @@ void P_PlayerThinkUpdateControls(player_t* player)
     
     // Weapons.
     brain->changeWeapon = WT_NOCHANGE;
-#if __JDOOM__
-   /* // Determine whether a weapon change should be done.
-    if(P_GetImpulseControlState(playerNum CTL_PREV_WEAPON)) //PLAYER_ACTION(pnum, A_WEAPONCYCLE1))  // Fist/chainsaw.
-    {
-        if(ISWPN(WT_FIRST) && GOTWPN(WT_EIGHTH))
-            i = WT_EIGHTH;
-        else if(ISWPN(WT_EIGHTH))
-            i = WT_FIRST;
-        else if(GOTWPN(WT_EIGHTH))
-            i = WT_EIGHTH;
-        else
-            i = WT_FIRST;
-        
-        cmd->changeWeapon = i + 1;
-    }
-    else if(P_GetImpuseControlState(playerNum, CTL_NEXT_WEAPON)) //PLAYER_ACTION(pnum, A_WEAPONCYCLE2)) // Shotgun/super sg.
-    {
-        if(ISWPN(WT_THIRD) && GOTWPN(WT_NINETH) &&
-           gamemode == commercial)
-            i = WT_NINETH;
-        else if(ISWPN(WT_NINETH))
-            i = WT_THIRD;
-        else if(GOTWPN(WT_NINETH) && gamemode == commercial)
-            i = WT_NINETH;
-        else
-            i = WT_THIRD;
-        
-        cmd->changeWeapon = i + 1;
-    }
-    else
-#elif __JHERETIC__
-        // Determine whether a weapon change should be done.
-        if(PLAYER_ACTION(pnum, A_WEAPONCYCLE1))  // Staff/Gauntlets.
+    for(i = 0; i < NUM_WEAPON_TYPES && (CTL_WEAPON1 + i <= CTL_WEAPON0); i++)
+        if(P_GetImpulseControlState(playerNum, CTL_WEAPON1 + i))
         {
-            if(ISWPN(WT_FIRST) && GOTWPN(WT_EIGHTH))
-                i = WT_EIGHTH;
-            else if(ISWPN(WT_EIGHTH))
-                i = WT_FIRST;
-            else if(GOTWPN(WT_EIGHTH))
-                i = WT_EIGHTH;
-            else
-                i = WT_FIRST;
-            
-            cmd->changeWeapon = i + 1;
+            brain->changeWeapon = i;
         }
-    else*/
-#endif
-    {
-        // Take the first weapon action.
-        for(i = 0; i < NUM_WEAPON_TYPES && (CTL_WEAPON1 + i <= CTL_WEAPON0); i++)
-            if(P_GetImpulseControlState(playerNum, CTL_WEAPON1 + i))
-            {
-                brain->changeWeapon = i;
-            }
-    }
 
     // Weapon cycling.
     if(P_GetImpulseControlState(playerNum, CTL_NEXT_WEAPON))

@@ -80,6 +80,7 @@ static int evHead, evTail;
 
 static clicker_t mouseClickers[IMB_MAXBUTTONS];
 static clicker_t joyClickers[IJOY_MAXBUTTONS];
+static boolean gotFirstMouseMove = false;
 
 static SDL_Joystick *joy;
 
@@ -329,6 +330,7 @@ void I_InitMouse(void)
 
     // Init was successful.
     useMouse = true;
+    gotFirstMouseMove = false;
 
     // Grab all input.
     SDL_WM_GrabInput(SDL_GRAB_ON);
@@ -449,6 +451,13 @@ void I_GetMouseState(mousestate_t *state)
         return;
 
     buttons = SDL_GetRelativeMouseState(&state->x, &state->y);
+    
+    // Ignore the first nonzero offset, it appears it's a nasty jump.
+    if(!gotFirstMouseMove && (state->x || state->y))
+    {
+        gotFirstMouseMove = true;
+        state->x = state->y = 0;
+    }
 
     for(i = 0; i < IMB_MAXBUTTONS; ++i)
     {
