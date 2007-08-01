@@ -193,7 +193,7 @@ static ddwindow_t *createDDWindow(application_t *app, uint parentIDX,
 
     // Create the window.
     win->hWnd =
-        CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, _T(title),
+        CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, (title),
                        WINDOWEDSTYLE,
                        CW_USEDEFAULT, CW_USEDEFAULT,
                        CW_USEDEFAULT, CW_USEDEFAULT,
@@ -727,7 +727,7 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
     ddwindow_t *window = getWindow(idx - 1);
 
     if(window)
-        return (SetWindowText(window->hWnd, _T(title))? true : false);
+        return (SetWindowText(window->hWnd, (title))? true : false);
 
     return false;
 }
