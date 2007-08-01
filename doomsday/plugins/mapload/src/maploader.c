@@ -265,7 +265,7 @@ static void DumpMap(int mainLump, const char *fileName)
 
     // Rewrite the updated header.
     fseek(file, 0, SEEK_SET);
-    fwrite(&header, sizeof(header), id, file);
+    fwrite(&header, sizeof(header), 1, file);
     fclose(file);
 
 #undef MAX_MAP_LUMPS
