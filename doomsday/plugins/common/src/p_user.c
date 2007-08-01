@@ -37,9 +37,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if __JHEXEN__
-#  include <math.h>
-#endif
+#include <math.h>
 
 #if  __DOOM64TC__
 #  include "doom64tc.h"
@@ -1809,11 +1807,11 @@ void P_PlayerThinkPowers(player_t *player)
  * changes will be smooth and lag-free. 
  * 
  * @param player  Player doing the thinking.
- * @param tickDuration  Time to think, in seconds. Use as a multiplier.
+ * @param ticLength  Time to think, in seconds. Use as a multiplier.
  *                      Note that original game logic was always using a 
  *                      tick duration of 1/35 seconds.
  */
-void P_PlayerThinkLookAround(player_t *player, timespan_t tickDuration)
+void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
 {
     int playerNum = player - players;
     ddplayer_t* plr = player->plr;
@@ -1845,18 +1843,44 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t tickDuration)
     {
         // Yaw.
         P_GetControlState(playerNum, CTL_TURN, &vel, &off);
-        plr->mo->angle -= (angle_t) (FLT2FIX(turnSpeed * vel * tickDuration) + 
+        plr->mo->angle -= (angle_t) (FLT2FIX(turnSpeed * vel * ticLength) + 
                                      (offsetSensitivity * off) / 180 * ANGLE_180);
     }
+    
+    // Look center requested?
+    if(P_GetImpulseControlState(playerNum, CTL_LOOK_CENTER))
+        player->centering = true;
 
-    // Pitch.
     P_GetControlState(playerNum, CTL_LOOK, &vel, &off);
-    plr->lookdir += 110.f/85.f * (turnSpeed/65535.f*360 * vel * tickDuration +
-                                  offsetSensitivity * off); 
-    if(plr->lookdir < -110)
-        plr->lookdir = -110;
-    else if(plr->lookdir > 110)
-        plr->lookdir = 110;
+    if(player->centering)
+    {
+        // Automatic vertical look centering.
+        float step = 8 * ticLength * 35;
+        
+        if(plr->lookdir > step)
+        {
+            plr->lookdir -= step;
+        }
+        else if(plr->lookdir < -step)
+        {
+            plr->lookdir += step;
+        }
+        else
+        {
+            plr->lookdir = 0;
+            player->centering = false;
+        }
+    }
+    else
+    {
+        // Pitch as controlled by CTL_LOOK.
+        plr->lookdir += 110.f/85.f * (turnSpeed/65535.f*360 * vel * ticLength +
+                                      offsetSensitivity * off); 
+        if(plr->lookdir < -110)
+            plr->lookdir = -110;
+        else if(plr->lookdir > 110)
+            plr->lookdir = 110;
+    }
 }
 
 void P_PlayerThinkUpdateControls(player_t* player)
@@ -1886,6 +1910,14 @@ void P_PlayerThinkUpdateControls(player_t* player)
         vel = (vel > 0? 1 : vel < 0? -1 : 0);
     }
     brain->sideMove = off + vel;
+    
+    // Check for look centering based on lookSpring.
+    if(cfg.lookSpring &&
+       (fabs(brain->forwardMove) > .333f || fabs(brain->sideMove > .333f)))
+    {
+        // Center view when mlook released w/lookspring, or when moving.
+        player->centering = true;
+    }    
     
     // Use.
     brain->use = (P_GetImpulseControlState(playerNum, CTL_USE) != 0);
@@ -1924,10 +1956,10 @@ void P_PlayerThinkUpdateControls(player_t* player)
  * "P_PlayerThink".
  *
  * @param player        Player that is doing the thinking.
- * @param tickDuration  How much time has passed in the game world, in seconds.
+ * @param ticLength  How much time has passed in the game world, in seconds.
  *                      For instance, to be used as a multiplier on turning.
  */
-void P_PlayerThink(player_t *player, timespan_t tickDuration)
+void P_PlayerThink(player_t *player, timespan_t ticLength)
 {
     if(P_IsPaused())
     {
@@ -1952,9 +1984,9 @@ void P_PlayerThink(player_t *player, timespan_t tickDuration)
     P_PlayerThinkState(player);
 
     // Adjust turn angles and look direction. This is done in fractional time.
-    P_PlayerThinkLookAround(player, tickDuration);
+    P_PlayerThinkLookAround(player, ticLength);
     
-    if(!M_CheckTrigger(DD_GetVariable(DD_SHARED_FIXED_TRIGGER), tickDuration))
+    if(!M_CheckTrigger(DD_GetVariable(DD_SHARED_FIXED_TRIGGER), ticLength))
         return; // It's too soon.
     
     P_PlayerThinkUpdateControls(player);

@@ -586,15 +586,15 @@ void H_Shutdown(void)
     AM_Shutdown();
 }
 
-void H_Ticker(timespan_t tickDuration)
+void H_Ticker(timespan_t ticLength)
 {
     static trigger_t fixed = { 1.0 / 35 };
     
-    if(M_RunTrigger(&fixed, tickDuration))
+    if(M_RunTrigger(&fixed, ticLength))
     {
         MN_Ticker();
     }
-    G_Ticker(tickDuration);
+    G_Ticker(ticLength);
 }
 
 void H_EndFrame(void)

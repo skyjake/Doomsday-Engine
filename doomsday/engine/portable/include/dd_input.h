@@ -123,7 +123,8 @@ typedef struct inputdevaxis_s {
     float   realPosition;   // The actual position of the axis (-1..1).
     float   scale;          // Scaling factor for real input values.
     float   deadZone;       // Dead zone, in (0..1) range.
-    int     filter;
+    int     filter;         // Filter grade.
+    float   accumulation;   // Position accumulator for the filter.
     uint    time;           // Timestamp for the latest update that changed the position.
     struct bclass_s* bClass;
 } inputdevaxis_t;
@@ -176,7 +177,7 @@ void        DD_StartInput(void);
 void        DD_StopInput(void);
 
 void        DD_ReadKeyboard(void);
-void        DD_ReadMouse(void);
+void        DD_ReadMouse(timespan_t ticLength);
 void        DD_ReadJoystick(void);
 
 void        DD_PostEvent(ddevent_t *ev);

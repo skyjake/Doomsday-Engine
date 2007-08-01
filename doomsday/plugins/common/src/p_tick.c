@@ -81,7 +81,7 @@ boolean P_IsPaused(void)
 /**
  * This is called at all times, no matter gamestate.
  */
-void P_RunPlayers(timespan_t tickDuration)
+void P_RunPlayers(timespan_t ticLength)
 {
     boolean     isPaused = P_IsPaused();
     uint        i;
@@ -128,7 +128,7 @@ void P_RunPlayers(timespan_t tickDuration)
             */
             
             // The player thinks.
-            P_PlayerThink(&players[i], tickDuration);
+            P_PlayerThink(&players[i], ticLength);
         }
 }
 

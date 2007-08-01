@@ -85,7 +85,7 @@ typedef struct {
                                      int length);
 
     // Tickers.
-    void            (*Ticker) (timespan_t tickDuration);
+    void            (*Ticker) (timespan_t ticLength);
 
     // Responders.
     boolean         (*PrivilegedResponder) (event_t *event);

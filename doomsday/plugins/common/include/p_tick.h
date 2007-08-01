@@ -30,7 +30,7 @@
 #ifndef __COMMON_TICK_H__
 #define __COMMON_TICK_H__
 
-void    P_RunPlayers(timespan_t tickDuration);
+void    P_RunPlayers(timespan_t ticLength);
 boolean P_IsPaused(void);
 void    P_DoTick(void);
 

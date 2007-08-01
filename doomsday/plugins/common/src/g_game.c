@@ -783,9 +783,9 @@ void G_UpdateGSVarsForPlayer(player_t *pl)
  * The core of the game timing loop.
  * Game state, game actions etc occur here.
  *
- * @param tickDuration  How long this tick is, in seconds.
+ * @param ticLength  How long this tick is, in seconds.
  */
-void G_Ticker(timespan_t tickDuration)
+void G_Ticker(timespan_t ticLength)
 {
     int         i;
     player_t   *plyr = &players[consoleplayer];
@@ -894,10 +894,10 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     }
 
     // Must be called on every tick.
-    P_RunPlayers(tickDuration);
+    P_RunPlayers(ticLength);
 
     // The following is restricted to fixed 35 Hz ticks.
-    if(M_RunTrigger(&fixed, tickDuration))
+    if(M_RunTrigger(&fixed, ticLength))
     {
         // Do main actions.
         switch(G_GetGameState())

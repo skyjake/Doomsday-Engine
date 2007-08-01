@@ -43,7 +43,7 @@
 
 #define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
 
-#define MAX_AXIS_FILTER .6     // Guess
+#define MAX_AXIS_FILTER 40
 
 #define KBDQUESIZE      32
 #define MAX_DOWNKEYS    16      // Most keyboards support 6 or 7.
@@ -76,8 +76,8 @@ D_CMD(ListInputDevices);
 
 boolean ignoreInput = false;
 
-/*
 int     mouseFilter = 1;        // Filtering on by default.
+/*
 int     mouseInverseY = false;
 int     joySensitivity = 5;
 int     joyDeadZone = 10;
@@ -198,7 +198,7 @@ void DD_RegisterInput(void)
 //    C_VAR_INT("input-mouse-x-disable", &mouseDisableX, 0, 0, 1);
 //    C_VAR_INT("input-mouse-y-disable", &mouseDisableY, 0, 0, 1);
 //    C_VAR_INT("input-mouse-y-inverse", &mouseInverseY, 0, 0, 1);
-//    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_MOUSE_FILTER-1);
+    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
     C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
 
     C_VAR_BYTE("input-info-mouse", &showMouseInfo, 0, 0, 1);
@@ -548,53 +548,26 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
         a->time = Sys_GetRealTime();
     }
 
-/* if(a->filter > 0)
+    if(a->filter > 0)
 	{
-        // Filtering ensures that events are sent more evenly on each frame.
-        float   target;
-        int     dir;
-        float   avail;
-        int     used;
-
-        dir = (pos > 0? 1 : pos < 0? -1 : 0);
-        if(pos > a->position)
-            avail = pos - a->position;
-        else if(a->position > pos)
-            avail = a->position - pos;
-        else
-            avail = 0;
-
-        // Determine the target velocity.
-        target = avail * (MAX_AXIS_FILTER - a->filter);
-
-        // Determine the amount of mickeys to send. It depends on the
-        // current mouse velocity, and how much time has passed.
-        used = target * ticLength;
-
-        // Don't go over the available number of update frames.
-        if(used > avail)
-            used = pos;
-
-        // This is the new (filtered) axis position.
-        pos = dir * used;
+        pos = a->realPosition;
 	}
 	else
 	{
 		// This is the new axis position.
 		pos = a->realPosition;
-	}*/
+	}
     
-    // Unfiltered.
     if(a->type == IDAT_STICK)
-        a->position = a->realPosition;
+        a->position = pos; //a->realPosition;
     else // Cumulative.
-        a->position += a->realPosition;
+        a->position += pos; //a->realPosition;
     
-    if(verbose > 3)
+/*    if(verbose > 3)
     {
         Con_Message("I_UpdateAxis: device=%s axis=%i pos=%f\n",
                     dev->name, axis, pos);
-    }
+    }*/
 }
 
 /**
@@ -603,7 +576,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
 static void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 {
 	inputdev_t *dev;
-
+    
     if((dev = I_GetDevice(ev->device, true)) == NULL)
         return;
 
@@ -812,7 +785,7 @@ void DD_ProcessEvents(timespan_t ticLength)
     ddevent_t *ddev;
     event_t     ev;
 
-    DD_ReadMouse();
+    DD_ReadMouse(ticLength);
     DD_ReadJoystick();
     DD_ReadKeyboard();
 
@@ -1066,15 +1039,52 @@ void DD_ReadKeyboard(void)
     }
 }
 
+float I_FilterMouse(float pos, float* accumulation, float ticLength)
+{
+    float   target;
+    int     dir;
+    float   avail;
+    int     used;
+    
+    *accumulation += pos;
+    dir = SIGN_OF(*accumulation);
+    avail = fabs(*accumulation);
+    
+    // Determine the target velocity.
+    target = avail * (MAX_AXIS_FILTER - mouseFilter);
+    
+    // Determine the amount of mickeys to send. It depends on the
+    // current mouse velocity, and how much time has passed.
+    used = target * ticLength;
+    
+    // Don't go over the available number of update frames.
+    if(used > avail)
+    {
+        *accumulation = 0;
+        used = avail;
+    }
+    else
+    {
+        if(*accumulation > 0)
+            *accumulation -= used;
+        else
+            *accumulation += used;
+    }
+    
+    // This is the new (filtered) axis position.
+    return dir * used;
+}
+
 /**
  * Checks the current mouse state (axis, buttons and wheel).
  * Generates events and mickeys and posts them.
  */
-void DD_ReadMouse(void)
+void DD_ReadMouse(timespan_t ticLength)
 {
+    inputdev_t* dev;
     ddevent_t   ev;
     mousestate_t mouse;
-    int         xpos, ypos;
+    float       xpos, ypos;
     int         i;
 
     if(!I_MousePresent())
@@ -1111,6 +1121,14 @@ void DD_ReadMouse(void)
     //ev.obsolete.noclass = true; // Don't specify a class
     //ev.obsolete.useclass = 0; // initialize with something
 
+    if(mouseFilter > 0)
+    {
+        // Filtering ensures that events are sent more evenly on each frame.
+        static float accumulation[2] = { 0, 0 };
+        xpos = I_FilterMouse(xpos, &accumulation[0], ticLength);
+        ypos = I_FilterMouse(ypos, &accumulation[1], ticLength);
+    }
+    
     // Mouse axis data may be modified if not in UI mode.
 /*
     if(allowMouseMod)

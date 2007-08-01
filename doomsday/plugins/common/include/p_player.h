@@ -48,7 +48,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                                  ammotype_t ammo, boolean force);
 void        P_ShotAmmo(player_t *player);
 
-void        P_PlayerThink(player_t *player, timespan_t tickDuration);
+void        P_PlayerThink(player_t *player, timespan_t ticLength);
 void        P_RaiseDeadPlayer(player_t *player);
 
 void        P_SetMessage(player_t *pl, char *msg, boolean noHide);

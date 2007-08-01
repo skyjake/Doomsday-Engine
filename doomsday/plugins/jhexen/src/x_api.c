@@ -57,7 +57,7 @@ void    H2_PostInit(void);
 void    R_InitTranslationTables(void);
 
 // Timeing loop
-void    H2_Ticker(timespan_t tickDuration);
+void    H2_Ticker(timespan_t ticLength);
 
 // Drawing
 void    D_Display(void);

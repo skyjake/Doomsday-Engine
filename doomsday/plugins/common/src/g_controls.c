@@ -245,7 +245,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol turn key-right-staged",
         "bindcontrol look key-delete-staged",
         "bindevent key-end-down {impulse lookcenter}",
-        "bindcontrol look key-pgup-staged-inverse",
+        "bindcontrol look key-pgdown-staged-inverse",
         "bindcontrol attack key-ctrl",
         "bindcontrol speed key-shift",
         "bindcontrol strafe key-alt",

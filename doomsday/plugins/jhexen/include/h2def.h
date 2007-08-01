@@ -678,7 +678,7 @@ void            G_StartNewInit(void);
 
 void            G_WorldDone(void);
 
-void            G_Ticker(timespan_t tickDuration);
+void            G_Ticker(timespan_t ticLength);
 boolean         G_Responder(event_t *ev);
 
 void            G_ScreenShot(void);
