@@ -25,7 +25,6 @@ else (EAX_LIBRARIES AND EAX_INCLUDE_DIRS)
       /usr/local/include
       /opt/local/include
       /sw/include
-      c:/sdk/eax/include
   )
 
   find_library(EAX_LIBRARY
@@ -36,7 +35,6 @@ else (EAX_LIBRARIES AND EAX_INCLUDE_DIRS)
       /usr/local/lib
       /opt/local/lib
       /sw/lib
-      c:/sdk/eax/lib
   )
 
   set(EAX_INCLUDE_DIRS
