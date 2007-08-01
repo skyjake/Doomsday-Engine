@@ -533,6 +533,13 @@ IF (WIN32)
 		MESSAGE (FATAL_ERROR "** DirectX Dinput not found. On Windows install dx9sdk.exe.")
 	ENDIF (NOT DIRECTX_DINPUT_FOUND  STREQUAL "YES")
 	INCLUDE_DIRECTORIES (${DIRECTX_DINPUT_INCLUDE_DIR})
+
+## Confirm we have EAX
+	IF (NOT EAX_FOUND)
+	MESSAGE (FATAL_ERROR "** Creative EAX not found. On Windows instal FIXME")
+	ENDIF (NOT EAX_FOUND)
+	INCLUDE_DIRECTORIES (${EAX_INCLUDE_DIRS})
+
 ENDIF (WIN32)
 
 IF (BUILDOPENAL)
@@ -692,8 +699,7 @@ IF (UNIX)
 ENDIF (UNIX)
 
 IF (WIN32)
-##	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss.lib )
-	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 )
+	TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${EAX_LIBRARY})
 ENDIF (WIN32)
 
 ## Work around for Win32 wanting something for the plugins to link to
