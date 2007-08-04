@@ -955,8 +955,6 @@ void DD_ReadKeyboard(void)
     ev.type = E_TOGGLE;
     ev.toggle.state = ETOG_REPEAT;
 
-    //ev.obsolete.noclass = true; // Don't specify a class
-    //ev.obsolete.useclass = 0; // initialize with something
     for(i = 0; i < MAX_DOWNKEYS; ++i)
     {
         repeater_t *rep = keyReps + i;
@@ -1118,8 +1116,6 @@ void DD_ReadMouse(timespan_t ticLength)
     ev.axis.type = EAXIS_RELATIVE;
     xpos = mouse.x;
     ypos = mouse.y;
-    //ev.obsolete.noclass = true; // Don't specify a class
-    //ev.obsolete.useclass = 0; // initialize with something
 
     if(mouseFilter > 0)
     {
@@ -1218,12 +1214,6 @@ void DD_ReadJoystick(void)
 
     I_GetJoystickState(&state);
 
-    // Check the buttons.
-    /*bstate = 0;
-    for(i = 0; i < IJOY_MAXBUTTONS; ++i)
-        if(state.buttons[i])
-            bstate |= 1 << i;   // Set the bits.
-*/
     // Joystick buttons.
     ev.device = IDEV_JOY1;
     ev.type = E_TOGGLE;
@@ -1245,24 +1235,6 @@ void DD_ReadJoystick(void)
             }
         }
     }
-    
-    //ev.obsolete.noclass = true; // Don't specify a class
-    //ev.obsolete.useclass = 0; // initialize with something
-
-    // Check for button state changes.
-/*    i = oldJoyBState ^ bstate;  // The change mask.
-    // Send the relevant events.
-    if((ev.obsolete.controlID = bstate & i))
-    {
-        ev.obsolete.data1 = EVS_DOWN;
-        DD_PostEvent(&ev);
-    }
-    if((ev.obsolete.controlID = oldJoyBState & i))
-    {
-        ev.obsolete.data1 = EVS_UP;
-        DD_PostEvent(&ev);
-    }
-    oldJoyBState = bstate;*/
 
     if(state.numHats > 0)
     {
@@ -1272,15 +1244,6 @@ void DD_ReadJoystick(void)
         {
             ev.type = E_ANGLE;
             ev.angle.id = 0;
-            /*
-            if(oldPOV != IJOY_POV_CENTER)
-            {
-                // Send a notification that the existing POV angle is no
-                // longer active.
-                ev.obsolete.data1 = EVS_UP;
-                ev.obsolete.controlID = (int) (oldPOV / 45 + .5);    // Round off correctly w/.5.
-                DD_PostEvent(&ev);
-            }*/
             
             if(state.hatAngle[0] < 0)
             {

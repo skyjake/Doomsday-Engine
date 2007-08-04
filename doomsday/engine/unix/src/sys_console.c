@@ -191,13 +191,11 @@ void Sys_ConPostEvents(void)
         ev.device = IDEV_KEYBOARD;
         ev.type = E_TOGGLE;
         ev.toggle.state = ETOG_DOWN;
-        //ev.obsolete.noclass = true;
-        //ev.obsolete.useclass = 0; // initialize with something
         ev.toggle.id = Sys_ConTranslateKey(key);
         DD_PostEvent(&ev);
 
         // Release immediately.
-        ev.toggle.state = ETOG_DOWN;
+        ev.toggle.state = ETOG_UP;
         DD_PostEvent(&ev);
     }
 }

@@ -224,8 +224,6 @@ void UI_End(void)
         rel.type = E_TOGGLE;
         rel.toggle.state = ETOG_UP;
         rel.toggle.id = DDKEY_RSHIFT;
-        //rel.obsolete.noclass = true;
-        //rel.obsolete.useclass = 0;
         DD_PostEvent(&rel);
     }
 }
