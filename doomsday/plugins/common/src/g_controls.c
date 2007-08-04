@@ -87,27 +87,6 @@ typedef enum joyaxis_e {
     NUM_JOYSTICK_AXES
 } joyaxis_t;
 
-#if 0 //// \fixme FIXME! __JHERETIC__ (WTF is an if 0 ???)
-struct artifacthotkey_s {
-    int     action;
-    int     artifact;
-}
-ArtifactHotkeys[] =
-{
-    {A_INVULNERABILITY, arti_invulnerability},
-    {A_INVISIBILITY, arti_invisibility},
-    {A_HEALTH, arti_health},
-    {A_SUPERHEALTH, arti_superhealth},
-    {A_TORCH, arti_torch},
-    {A_FIREBOMB, arti_firebomb},
-    {A_EGG, arti_egg},
-    {A_FLY, arti_fly},
-    {A_TELEPORT, arti_teleport},
-    {A_PANIC, NUMARTIFACTS},
-    {0, arti_none}              // Terminator.
-};
-#endif
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -217,6 +196,25 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_NEXT_WEAPON, CTLT_IMPULSE, "nextweapon", "game");   
     P_NewPlayerControl(CTL_PREV_WEAPON, CTLT_IMPULSE, "prevweapon", "game");   
     P_NewPlayerControl(CTL_USE_ARTIFACT, CTLT_IMPULSE, "useartifact", "game");
+    
+    P_NewPlayerControl(CTL_TOMEOFPOWER, CTLT_IMPULSE, "tome", "game");
+    P_NewPlayerControl(CTL_INVISIBILITY, CTLT_IMPULSE, "invisibility", "game");
+    P_NewPlayerControl(CTL_FLY, CTLT_IMPULSE, "fly", "game");
+    P_NewPlayerControl(CTL_PANIC, CTLT_IMPULSE, "panic", "game");
+    P_NewPlayerControl(CTL_TORCH, CTLT_IMPULSE, "torch", "game");
+    P_NewPlayerControl(CTL_HEALTH, CTLT_IMPULSE, "health", "game");
+    P_NewPlayerControl(CTL_SUPERHEALTH, CTLT_IMPULSE, "superhealth", "game");
+    P_NewPlayerControl(CTL_MYSTICURN, CTLT_IMPULSE, "mysticurn", "game");
+    P_NewPlayerControl(CTL_KRATER, CTLT_IMPULSE, "krater", "game");
+    P_NewPlayerControl(CTL_SPEEDBOOTS, CTLT_IMPULSE, "speedboots", "game");
+    P_NewPlayerControl(CTL_BLASTRADIUS, CTLT_IMPULSE, "blast", "game");
+    P_NewPlayerControl(CTL_TELEPORT, CTLT_IMPULSE, "teleport", "game");
+    P_NewPlayerControl(CTL_TELEPORTOTHER, CTLT_IMPULSE, "teleportother", "game");
+    P_NewPlayerControl(CTL_POISONBAG, CTLT_IMPULSE, "poisonbag", "game");
+    P_NewPlayerControl(CTL_FIREBOMB, CTLT_IMPULSE, "firebomb", "game");
+    P_NewPlayerControl(CTL_INVULNERABILITY, CTLT_IMPULSE, "invulnerability", "game");
+    P_NewPlayerControl(CTL_DARKSERVANT, CTLT_IMPULSE, "darkservant", "game");
+    P_NewPlayerControl(CTL_EGG, CTLT_IMPULSE, "egg", "game");    
 }
 
 DEFCC( CCmdDefaultGameBinds )
@@ -227,6 +225,10 @@ DEFCC( CCmdDefaultGameBinds )
     
     // Traditional key bindings plus WASD and mouse look, and reasonable joystick defaults.
     const char* binds[] = {
+        // Basic movement:
+        "bindcontrol attack key-ctrl",
+        "bindcontrol speed key-shift",
+        "bindcontrol strafe key-alt",
         "bindcontrol walk key-up",
         "bindcontrol walk key-w",
         "bindcontrol walk key-down-inverse",
@@ -235,35 +237,48 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol sidestep key-d",
         "bindcontrol sidestep key-comma-inverse",
         "bindcontrol sidestep key-a-inverse",
-        //"bindcontrol sidestep {key-left-inverse + key-alt-down}",
-        //"bindcontrol sidestep {key-right + key-alt-down}",
         "bindcontrol zfly key-pgup",
         "bindcontrol zfly key-ins-inverse",
         "bindevent key-home-down {impulse falldown}",
-        //"bindcontrol turn {key-left-staged-inverse + key-alt-up}",
-        //"bindcontrol turn {key-right-staged + key-alt-up}",
         "bindcontrol turn key-left-staged-inverse",
         "bindcontrol turn key-right-staged",
         "bindcontrol look key-delete-staged-inverse",
         "bindcontrol look key-pgdown-staged",
         "bindevent key-end-down {impulse lookcenter}",
-        "bindcontrol attack key-ctrl",
-        "bindcontrol speed key-shift",
-        "bindcontrol strafe key-alt",
 
+        // Weapon keys:
         "bindevent key-1 {impulse weapon1}",
         "bindevent key-2 {impulse weapon2}",
         "bindevent key-3 {impulse weapon3}",
         "bindevent key-4 {impulse weapon4}",
+#ifndef __JHEXEN__
         "bindevent key-5 {impulse weapon5}",
         "bindevent key-6 {impulse weapon6}",
         "bindevent key-7 {impulse weapon7}",
         "bindevent key-8 {impulse weapon8}",
         "bindevent key-9 {impulse weapon9}",
+#endif
 
-        "bindevent key-pause pause",
-        "bindevent key-p pause",
+#ifdef __JHERETIC__
+        "bindevent key-backspace {impulse tome}",
+#endif
 
+#ifdef __JHEXEN__
+        "bindevent key-backspace {impulse panic}",
+        "bindevent key-backslash {impulse health}",
+        "bindevent key-9 {impulse blast}",
+        "bindevent key-8 {impulse teleport}",
+        "bindevent key-7 {impulse teleportother}",
+        "bindevent key-5 {impulse invulnerability}",
+        "bindevent key-6 {impulse egg}",
+#endif
+        
+#ifndef __JDOOM__
+        "bindevent key-sqbracketleft invleft",
+        "bindevent key-sqbracketright invright",
+        "bindevent key-enter {impulse useartifact}",
+#endif
+        
         // Player controls: mouse
         "bindcontrol turn mouse-x",
         "bindcontrol look mouse-y",
@@ -277,10 +292,6 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol turn joy-x",
         "bindcontrol walk joy-y-inverse",
         
-        "bindevent key-sqbracketleft invleft",
-        "bindevent key-sqbracketright invright",
-        "bindevent key-enter {impulse useartifact}",
-        
         // UI events
         "bindevent key-f1 helpscreen",
         "bindevent key-f2 savegame",
@@ -292,6 +303,9 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-f9 quickload",
         "bindevent key-f10 quit",
         "bindevent key-f11 togglegamma",
+        
+        "bindevent key-pause pause",
+        "bindevent key-p pause",
         
         "bindevent key-minus {viewsize -}",
         "bindevent key-equals {viewsize +}",

@@ -1288,7 +1288,76 @@ void P_PlayerThinkItems(player_t *player)
             }
         }
     }
-        
+    
+    // Artifact hot keys.
+#if __JHERETIC__
+    // Check Tome of Power and other artifact hotkeys.
+    if(!arti && P_GetImpulseControlState(pnum, CTL_TOMEOFPOWER) &&
+       !player->powers[PT_WEAPONLEVEL2])
+    {
+        arti = arti_tomeofpower;
+    }
+#endif
+#if __JHEXEN__
+    if(!arti && P_GetImpulseControlState(pnum, CTL_HEALTH) && 
+       (player->plr->mo->health < MAXHEALTH))
+    {
+        arti = arti_health;
+    }
+    if(!arti && P_GetImpulseControlState(pnum, CTL_INVULNERABILITY) &&
+       !player->powers[PT_INVULNERABILITY])
+    {
+        arti = arti_invulnerability;
+    }
+#endif
+    
+#ifndef __JDOOM__
+    {   
+        // Check for other artifact keys.
+        struct {
+            int control;
+            int artifact;
+        } controlArtiMap[] = {
+#if __JHERETIC__
+            { CTL_INVULNERABILITY, arti_invulnerability },
+            { CTL_INVISIBILITY, arti_invisibility },
+            { CTL_HEALTH, arti_health },
+            { CTL_SUPERHEALTH, arti_superhealth },
+            { CTL_TORCH, arti_torch },
+            { CTL_FIREBOMB, arti_firebomb },
+            { CTL_EGG, arti_egg },
+            { CTL_FLY, arti_fly },
+            { CTL_TELEPORT, arti_teleport },
+            { CTL_PANIC, NUMARTIFACTS },
+#endif
+#if __JHEXEN__ || __JSTRIFE__
+            { CTL_INVULNERABILITY, arti_invulnerability },
+            { CTL_BLASTRADIUS, arti_blastradius },
+            { CTL_MYSTICURN, arti_superhealth },
+            { CTL_TORCH, arti_torch },
+            { CTL_KRATER, arti_boostmana },
+            { CTL_SPEEDBOOTS, arti_speed },
+            { CTL_POISONBAG, arti_poisonbag },
+            { CTL_EGG, arti_egg },
+            { CTL_TELEPORT, arti_teleport },
+            { CTL_DARKSERVANT, arti_summon },
+            { CTL_TELEPORTOTHER, arti_teleportother },
+            { CTL_PANIC, NUMARTIFACTS },
+#endif
+            { 0, arti_none }              // Terminator.
+        };
+        int i;
+        for(i = 0; controlArtiMap[i].artifact != arti_none && !arti; i++)
+        {
+            if(P_GetImpulseControlState(pnum, controlArtiMap[i].control))
+            {
+                arti = controlArtiMap[i].artifact;
+                break;
+            }
+        }
+    }
+#endif    
+
     if(arti)
     {                           // Use an artifact
         if(arti == NUMARTIFACTS)
@@ -1297,11 +1366,11 @@ void P_PlayerThinkItems(player_t *player)
 # if __JHEXEN__ || __JSTRIFE__
             for(i = arti_none + 1; i < arti_firstpuzzitem; i++)
 # else
-                for(i = arti_none + 1; i < NUMARTIFACTS; i++)
+            for(i = arti_none + 1; i < NUMARTIFACTS; i++)
 # endif
-                {
-                    P_InventoryUseArtifact(player, i);
-                }
+            {
+                P_InventoryUseArtifact(player, i);
+            }
         }
         else if(arti == 0xff)
         {
@@ -1314,29 +1383,6 @@ void P_PlayerThinkItems(player_t *player)
     }
 #endif
 
-        /*
-        //
-        // Artifact hot keys
-        //
-#if __JHERETIC__
-        // Check Tome of Power and other artifact hotkeys.
-        if(PLAYER_ACTION(pnum, A_TOMEOFPOWER) && !cmd->arti &&
-           !plr->powers[PT_WEAPONLEVEL2])
-        {
-            PLAYER_ACTION(pnum, A_TOMEOFPOWER) = false;
-            cmd->arti = arti_tomeofpower;
-        }
-        for(i = 0; ArtifactHotkeys[i].artifact != arti_none && !cmd->arti; i++)
-        {
-            if(PLAYER_ACTION(pnum, ArtifactHotkeys[i].action))
-            {
-                PLAYER_ACTION(pnum, ArtifactHotkeys[i].action) = false;
-                cmd->arti = ArtifactHotkeys[i].artifact;
-                break;
-            }
-        }
-#endif
-        */
 #if __JHERETIC__ || __JHEXEN__
 /*    if((int)cmd->fly > 0 && !player->powers[PT_FLIGHT])
     {

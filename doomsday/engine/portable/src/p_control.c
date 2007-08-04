@@ -236,6 +236,8 @@ int P_GetImpulseControlState(int playerNum, int control)
     short *counter;
     int count = 0;
 
+    assert(pc != 0);
+
 #if _DEBUG
     // Check that this is really an impulse control.
     assert(pc->type == CTLT_IMPULSE);

@@ -58,7 +58,25 @@ enum {
     CTL_WEAPON0,
     CTL_NEXT_WEAPON,
     CTL_PREV_WEAPON,
-    CTL_USE_ARTIFACT
+    CTL_USE_ARTIFACT,
+    CTL_PANIC,
+    CTL_TOMEOFPOWER,
+    CTL_INVISIBILITY,
+    CTL_FLY,
+    CTL_TORCH,
+    CTL_HEALTH,
+    CTL_SUPERHEALTH,
+    CTL_MYSTICURN,
+    CTL_KRATER,
+    CTL_SPEEDBOOTS,
+    CTL_BLASTRADIUS,
+    CTL_TELEPORT,
+    CTL_TELEPORTOTHER,
+    CTL_FIREBOMB,
+    CTL_POISONBAG,
+    CTL_INVULNERABILITY,
+    CTL_DARKSERVANT,
+    CTL_EGG
 };
 
 // This structure replaced ticcmd as the place where players store the intentions

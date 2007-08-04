@@ -129,6 +129,7 @@ static const keyname_t keyNames[] = {
     {DDKEY_END,         "end"},
     {DDKEY_BACKSPACE,   "backspace"},
     {DDKEY_BACKSPACE,   "bkspc"},
+    {'\\',              "backslash"},
     {'[',               "sqbracketleft"},
     {']',               "sqbracketright"},
     {'+',               "plus"},
