@@ -105,6 +105,7 @@ extern int      texMagMode;
 extern unsigned int curtex;
 
 void            GL_TexRegister(void);
+void            GL_EarlyInitTextureManager(void);
 void            GL_InitTextureManager(void);
 void            GL_ShutdownTextureManager(void);
 void            GL_LoadSystemTextures(boolean loadLightMaps, boolean loadFlareMaps);

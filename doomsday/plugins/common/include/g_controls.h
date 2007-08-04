@@ -57,7 +57,8 @@ enum {
     CTL_WEAPON9,
     CTL_WEAPON0,
     CTL_NEXT_WEAPON,
-    CTL_PREV_WEAPON
+    CTL_PREV_WEAPON,
+    CTL_USE_ARTIFACT
 };
 
 // This structure replaced ticcmd as the place where players store the intentions

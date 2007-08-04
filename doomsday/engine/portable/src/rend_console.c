@@ -111,6 +111,18 @@ void Rend_ConsoleCursorResetBlink(void)
     ConsoleBlink = 0;
 }
 
+static float GetConsoleTitleBarHeight(void)
+{
+    int oldFont = FR_GetCurrent();
+    int border = theWindow->width / 120;
+    int height;
+    
+    FR_SetFont(glFontVariable[GLFS_BOLD]);
+    height = FR_TextHeight("W") + border;
+    FR_SetFont(oldFont);
+    return height;
+}
+
 static void consoleSetColor(int fl, float alpha)
 {
     float   r = 0, g = 0, b = 0;
@@ -278,9 +290,10 @@ void Rend_ConsoleMove(int numLines)
 
     if(numLines < 0)
     {
+        int minHeight = 1.25f*fontSy + GetConsoleTitleBarHeight() / theWindow->height * 200;
         ConsoleOpenY -= fontSy * -numLines;
-        if(ConsoleOpenY < fontSy)
-            ConsoleOpenY = fontSy;
+        if(ConsoleOpenY < minHeight)
+            ConsoleOpenY = minHeight;
     }
     else
     {
@@ -353,6 +366,46 @@ void Rend_ConsoleFPS(int x, int y)
     UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
     UI_SetColor(UI_Color(UIC_TEXT));
     UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_Color(UIC_TITLE), 1);
+}
+
+static void DrawConsoleTitleBar(float closeFade)
+{
+    int width = 0;
+    int height;
+    int oldFont = FR_GetCurrent();
+    int border = theWindow->width / 120;
+    
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PushMatrix();
+    
+    //FR_SetFont(glFontVariable[GLFS_BOLD]);
+    height = GetConsoleTitleBarHeight(); //FR_TextHeight("W") + border;
+    FR_SetFont(glFontVariable[GLFS_BOLD]);
+    UI_Gradient(0, 0, theWindow->width, height, UI_Color(UIC_BG_MEDIUM),
+                UI_Color(UIC_BG_LIGHT), .8f * closeFade, closeFade);
+    UI_Gradient(0, height, theWindow->width, border, UI_Color(UIC_SHADOW),
+                UI_Color(UIC_BG_DARK), closeFade, 0);
+    UI_TextOutEx(consoleTitle, border, height / 2, false, true, UI_Color(UIC_TITLE),
+                 closeFade);
+    if(secondaryTitleText[0])
+    {
+        width = FR_TextWidth(consoleTitle) + FR_TextWidth("  ");
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        UI_TextOutEx(secondaryTitleText, border + width, height / 2,
+                     false, true, UI_Color(UIC_TEXT), .75f * closeFade);
+    }
+    if(statusText[0])
+    {
+        width = FR_TextWidth(statusText);
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        UI_TextOutEx(statusText, theWindow->width - UI_BORDER - width, height / 2,
+                     false, true, UI_Color(UIC_TEXT), .75f * closeFade);
+    }
+    
+    gl.MatrixMode(DGL_PROJECTION);
+    gl.PopMatrix();
+    
+    FR_SetFont(oldFont);
 }
 
 /**
@@ -572,44 +625,7 @@ void Rend_Console(void)
     gl.PopMatrix();
 
     // Draw the console title bar.
-    {
-    int width = 0;
-    int height;
-    int oldFont = FR_GetCurrent();
-    int border = theWindow->width / 120;
-
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PushMatrix();
-    
-    FR_SetFont(glFontVariable[GLFS_BOLD]);
-    height = FR_TextHeight("W") + border;
-    FR_SetFont(glFontVariable[GLFS_BOLD]);
-    UI_Gradient(0, 0, theWindow->width, height, UI_Color(UIC_BG_MEDIUM),
-                UI_Color(UIC_BG_LIGHT), .8f * closeFade, closeFade);
-    UI_Gradient(0, height, theWindow->width, border, UI_Color(UIC_SHADOW),
-                UI_Color(UIC_BG_DARK), closeFade, 0);
-    UI_TextOutEx(consoleTitle, border, height / 2, false, true, UI_Color(UIC_TITLE),
-                 closeFade);
-    if(secondaryTitleText[0])
-    {
-        width = FR_TextWidth(consoleTitle) + FR_TextWidth("  ");
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(secondaryTitleText, border + width, height / 2,
-                     false, true, UI_Color(UIC_TEXT), .75f * closeFade);
-    }
-    if(statusText[0])
-    {
-        width = FR_TextWidth(statusText);
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(statusText, theWindow->width - UI_BORDER - width, height / 2,
-                     false, true, UI_Color(UIC_TEXT), .75f * closeFade);
-    }
-
-    gl.MatrixMode(DGL_PROJECTION);
-    gl.PopMatrix();
-
-    FR_SetFont(oldFont);
-    }
+    DrawConsoleTitleBar(closeFade);
 
     gl.MatrixMode(DGL_PROJECTION);
     gl.PopMatrix();

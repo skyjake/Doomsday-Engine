@@ -139,8 +139,8 @@ int     gamemodebits;
 char gameModeString[17];
 
 // default font colours
-const float deffontRGB[] = { 1.0f, 0.0f, 0.0f};
-const float deffontRGB2[] = { 1.0f, 1.0f, 1.0f};
+const float deffontRGB[] = { .9f, 0.0f, 0.0f};
+const float deffontRGB2[] = { .9f, .9f, .9f};
 
 // Network games parameters.
 

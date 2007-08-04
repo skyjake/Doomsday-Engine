@@ -216,6 +216,7 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_WEAPON0, CTLT_IMPULSE, "weapon0", "game");
     P_NewPlayerControl(CTL_NEXT_WEAPON, CTLT_IMPULSE, "nextweapon", "game");   
     P_NewPlayerControl(CTL_PREV_WEAPON, CTLT_IMPULSE, "prevweapon", "game");   
+    P_NewPlayerControl(CTL_USE_ARTIFACT, CTLT_IMPULSE, "useartifact", "game");
 }
 
 DEFCC( CCmdDefaultGameBinds )
@@ -243,9 +244,9 @@ DEFCC( CCmdDefaultGameBinds )
         //"bindcontrol turn {key-right-staged + key-alt-up}",
         "bindcontrol turn key-left-staged-inverse",
         "bindcontrol turn key-right-staged",
-        "bindcontrol look key-delete-staged",
+        "bindcontrol look key-delete-staged-inverse",
+        "bindcontrol look key-pgdown-staged",
         "bindevent key-end-down {impulse lookcenter}",
-        "bindcontrol look key-pgdown-staged-inverse",
         "bindcontrol attack key-ctrl",
         "bindcontrol speed key-shift",
         "bindcontrol strafe key-alt",
@@ -275,6 +276,10 @@ DEFCC( CCmdDefaultGameBinds )
         // Player controls: joystick
         "bindcontrol turn joy-x",
         "bindcontrol walk joy-y-inverse",
+        
+        "bindevent key-sqbracketleft invleft",
+        "bindevent key-sqbracketright invright",
+        "bindevent key-enter {impulse useartifact}",
         
         // UI events
         "bindevent key-f1 helpscreen",

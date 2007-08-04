@@ -641,6 +641,9 @@ static int DD_StartupWorker(void *parm)
 
     Con_SetProgress(199);
 
+    // Palette information will be needed for preparing textures.
+    GL_EarlyInitTextureManager();
+
     Con_Message("Net_InitGame: Initializing game data.\n");
     Net_InitGame();
     Demo_Init();

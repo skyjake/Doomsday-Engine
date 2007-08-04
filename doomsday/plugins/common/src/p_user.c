@@ -1250,17 +1250,48 @@ void P_PlayerThinkSounds(player_t *player)
 
 void P_PlayerThinkItems(player_t *player)
 {
-#if 0 //// \fixme FIXME! (why is this here ? can't we fly in all supported games now ??)
-#if __JHERETIC__ || __JHEXEN__
-    int fly;
-#endif
-
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    ticcmd_t *cmd = &player->plr->cmd;
-
-    if(cmd->arti)
+    int     arti = 0; // What to use?
+    int     pnum = player - players;
+    
+    // Moving in the inventory is handled by "invleft" and "invright" commands.
+    // FIXME: Switch to using impulses for consistency.
+    
+    // Check the "Use Artifact" impulse.
+    if(P_GetImpulseControlState(pnum, CTL_USE_ARTIFACT))
+    {
+        if(player->brain.speed && artiskip)
+        {
+            if(player->inventory[player->inv_ptr].type != arti_none)
+            {
+                arti = 0xff;
+            }
+        }
+        else
+        {
+            // If the inventory is visible, just close it (depending on cfg.chooseAndUse).
+            if(ST_IsInventoryVisible())
+            {
+                player->readyArtifact = player->inventory[player->inv_ptr].type;
+                
+                ST_Inventory(false); // close the inventory
+                
+                if(cfg.chooseAndUse)
+                    arti = player->inventory[player->inv_ptr].type;
+                else
+                    arti = 0;
+            }
+            else //if(usearti)
+            {
+                // Use the artifact.
+                arti = player->inventory[player->inv_ptr].type;
+            }
+        }
+    }
+        
+    if(arti)
     {                           // Use an artifact
-        if(cmd->arti == NUMARTIFACTS)
+        if(arti == NUMARTIFACTS)
         {                       // use one of each artifact (except puzzle artifacts)
             int     i;
 # if __JHEXEN__ || __JSTRIFE__
@@ -1272,25 +1303,46 @@ void P_PlayerThinkItems(player_t *player)
                     P_InventoryUseArtifact(player, i);
                 }
         }
-        else if(cmd->arti == 0xff)
+        else if(arti == 0xff)
         {
             P_InventoryNextArtifact(player);
         }
         else
         {
-            P_InventoryUseArtifact(player, cmd->arti);
+            P_InventoryUseArtifact(player, arti);
         }
     }
 #endif
 
+        /*
+        //
+        // Artifact hot keys
+        //
+#if __JHERETIC__
+        // Check Tome of Power and other artifact hotkeys.
+        if(PLAYER_ACTION(pnum, A_TOMEOFPOWER) && !cmd->arti &&
+           !plr->powers[PT_WEAPONLEVEL2])
+        {
+            PLAYER_ACTION(pnum, A_TOMEOFPOWER) = false;
+            cmd->arti = arti_tomeofpower;
+        }
+        for(i = 0; ArtifactHotkeys[i].artifact != arti_none && !cmd->arti; i++)
+        {
+            if(PLAYER_ACTION(pnum, ArtifactHotkeys[i].action))
+            {
+                PLAYER_ACTION(pnum, ArtifactHotkeys[i].action) = false;
+                cmd->arti = ArtifactHotkeys[i].artifact;
+                break;
+            }
+        }
+#endif
+        */
 #if __JHERETIC__ || __JHEXEN__
-    fly = cmd->fly;
-    if(fly > 0 && !player->powers[PT_FLIGHT])
+/*    if((int)cmd->fly > 0 && !player->powers[PT_FLIGHT])
     {
         // Start flying automatically.
         P_InventoryUseArtifact(player, arti_fly);
-    }
-#endif
+    }*/
 #endif
 }
 

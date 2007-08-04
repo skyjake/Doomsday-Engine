@@ -218,6 +218,24 @@ void GL_TexRegister(void)
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
 }
 
+/**
+ * Called before real texture management is up and running, during engine early init.
+ */
+void GL_EarlyInitTextureManager(void)
+{
+    int     i;
+    
+    // The palette lump, for color information (really??!!?!?!).
+    pallump = W_GetNumForName(PALLUMPNAME);
+    
+    // Load the pal18to8 table from the lump PAL18TO8. We need it
+    // when resizing textures.
+    if((i = W_CheckNumForName("PAL18TO8")) == -1)
+        CalculatePal18to8(pal18to8, GL_GetPalette());
+    else
+        memcpy(pal18to8, W_CacheLumpNum(i, PU_CACHE), sizeof(pal18to8));
+}
+
 /*
  * This should be cleaned up once and for all.
  */
@@ -247,9 +265,6 @@ void GL_InitTextureManager(void)
     rawtextures = 0;
     numrawtextures = 0;
 
-    // The palette lump, for color information (really??!!?!?!).
-    pallump = W_GetNumForName(PALLUMPNAME);
-
     // Do we need to generate a pal18to8 table?
     if(ArgCheck("-dump_pal18to8"))
     {
@@ -268,14 +283,7 @@ void GL_InitTextureManager(void)
     // DGL needs the palette information regardless of whether the
     // paletted textures are enabled or not.
     LoadPalette();
-
-    // Load the pal18to8 table from the lump PAL18TO8. We need it
-    // when resizing textures.
-    if((i = W_CheckNumForName("PAL18TO8")) == -1)
-        CalculatePal18to8(pal18to8, GL_GetPalette());
-    else
-        memcpy(pal18to8, W_CacheLumpNum(i, PU_CACHE), sizeof(pal18to8));
-
+        
     // Detail textures.
     dtinstances = NULL;
 

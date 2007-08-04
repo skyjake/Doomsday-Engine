@@ -147,6 +147,7 @@ int     conSilentCVars = 1;
 byte    consoleDump = true;
 int     consoleActiveKey = '`'; // Tilde.
 byte    consoleShowKeys = false;
+byte    consoleSnapBackOnPrint = false;
 
 char    trimmedFloatBuffer[32]; // Returned by TrimmedFloat().
 char   *prbuff = NULL;          // Print buffer, used by conPrintf.
@@ -219,6 +220,7 @@ static void Con_Register(void)
     C_VAR_INT("con-key-activate", &consoleActiveKey, 0, 0, 255);
     C_VAR_BYTE("con-key-show", &consoleShowKeys, 0, 0, 1);
     C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1);
+    C_VAR_BYTE("con-snapback", &consoleSnapBackOnPrint, 0, 0, 1);
     //C_VAR_BYTE("con-progress", &progress_enabled, 0, 0, 1);
 
     // File
@@ -1668,8 +1670,11 @@ void conPrintf(int flags, const char *format, va_list args)
     {
         Con_BufferWrite(histBuf, flags, prbuff);
 
-        // Now that something new has been printed, it will be shown.
-        bLineOff = 0;
+        if(consoleSnapBackOnPrint)
+        {
+            // Now that something new has been printed, it will be shown.
+            bLineOff = 0;
+        }
     }
 }
 

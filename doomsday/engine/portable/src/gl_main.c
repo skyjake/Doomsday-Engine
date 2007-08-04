@@ -671,7 +671,7 @@ boolean GL_EarlyInit(void)
 
     // Allow font rendering.
     FR_Init();
-
+    
     initGLOk = true;
     return true;
 }
