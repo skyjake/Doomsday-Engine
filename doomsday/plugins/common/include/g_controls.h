@@ -44,6 +44,7 @@ enum {
     CTL_SPEED = CTL_FIRST_GAME_CONTROL,
     CTL_STRAFE,
     CTL_LOOK_CENTER,
+    CTL_FALL_DOWN,
     CTL_USE,
     CTL_ATTACK,
     CTL_WEAPON1,
@@ -60,23 +61,26 @@ enum {
     CTL_PREV_WEAPON,
     CTL_USE_ARTIFACT,
     CTL_PANIC,
-    CTL_TOMEOFPOWER,
+    CTL_TOME_OF_POWER,
     CTL_INVISIBILITY,
     CTL_FLY,
     CTL_TORCH,
     CTL_HEALTH,
-    CTL_SUPERHEALTH,
-    CTL_MYSTICURN,
+    CTL_SUPER_HEALTH,
+    CTL_MYSTIC_URN,
     CTL_KRATER,
-    CTL_SPEEDBOOTS,
-    CTL_BLASTRADIUS,
+    CTL_SPEED_BOOTS,
+    CTL_BLAST_RADIUS,
     CTL_TELEPORT,
-    CTL_TELEPORTOTHER,
+    CTL_TELEPORT_OTHER,
     CTL_FIREBOMB,
     CTL_POISONBAG,
     CTL_INVULNERABILITY,
-    CTL_DARKSERVANT,
-    CTL_EGG
+    CTL_DARK_SERVANT,
+    CTL_EGG,
+    CTL_MAP_ZOOM,
+    CTL_MAP_PAN_X,
+    CTL_MAP_PAN_Y
 };
 
 // This structure replaced ticcmd as the place where players store the intentions
@@ -84,6 +88,7 @@ enum {
 typedef struct playerbrain_s {
     float       forwardMove;        // 1.0 for maximum movement
     float       sideMove;           // 1.0 for maximum movement
+    float       upMove;             // 1.0 for maximum movement
     int         changeWeapon;       // WT_NOCHANGE, or the weapon to change to
     int         cycleWeapon;        // +1 or -1
     // Bits:
@@ -91,6 +96,7 @@ typedef struct playerbrain_s {
     uint        use : 1;
     uint        attack : 1;
     uint        lookCenter : 1;
+    uint        fallDown : 1;
 } playerbrain_t;
 
 void        G_ControlRegister(void);

@@ -1145,7 +1145,7 @@ static int completeWord(int mode)
  * Wrapper for Con_Execute
  * Allows plugin dlls to execute a console command
  */
-int DD_Execute(const char *command, int silent)
+int DD_Execute(int silent, const char *command)
 {
     return Con_Execute(CMDS_GAME, command, silent, false);
 }
@@ -1404,6 +1404,9 @@ boolean Con_Responder(ddevent_t *event)
         if(conInputLock)
             break;
 
+        // Return to the bottom.
+        bLineOff = 0;
+        
         // Print the command line with yellow text.
         Con_FPrintf(CBLF_YELLOW, ">%s\n", cmdLine);
         // Process the command line.

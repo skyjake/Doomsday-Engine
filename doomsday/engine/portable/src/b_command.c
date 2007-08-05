@@ -306,21 +306,35 @@ void B_DestroyCommandBinding(evbinding_t* eb)
  * Checks if the event matches the binding's conditions, and if so, executes the 
  * bound command.
  * 
+ * @param eventClass  The event has been bound in this binding class. If the 
+ *                    bound state is associated with a higher-priority active
+ *                    class, the binding cannot be executed.
+ *
  * @return  @c true, if the bound command was executed. @c false otherwise, as the 
  *          event didn't match all the conditions.
  */
-boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event)
+boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* eventClass)
 {
-    int     i;
+    int         i;
+    inputdev_t* dev;
     
     if(eb->device != event->device || eb->type != event->type)
         return false;
+    
+    dev = I_GetDevice(eb->device, true);
+    if(!dev)
+    {
+        // The device is not active, there is no way this could get executed.
+        return false;
+    }
 
     switch(event->type)
     {
         case E_TOGGLE:
             if(eb->id != event->toggle.id)
                 return false;
+            if(eventClass && dev->keys[eb->id].bClass != eventClass)
+                return false; // Shadowed by a more important active class.
             // Is the state as required?
             switch(eb->state)
             {
@@ -356,6 +370,8 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event)
         case E_AXIS:
             if(eb->id != event->axis.id)
                 return false;
+            if(eventClass && dev->axes[eb->id].bClass != eventClass)
+                return false; // Shadowed by a more important active class.
             // Is the position as required?
             if(!B_CheckAxisPos(eb->state, eb->pos, 
                                I_TransformAxis(I_GetDevice(event->device, false), 
@@ -366,6 +382,8 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event)
         case E_ANGLE:
             if(eb->id != event->angle.id)
                 return false;
+            if(eventClass && dev->hats[eb->id].bClass != eventClass)
+                return false; // Shadowed by a more important active class.
             // Is the position as required?
             if(event->angle.pos != eb->pos)
                 return false;

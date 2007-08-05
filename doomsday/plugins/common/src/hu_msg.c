@@ -694,7 +694,7 @@ static void sendMessage(char *msg)
     {   // Send the message to the other players explicitly,
         strcpy(buff, "chat ");
         M_StrCatQuoted(buff, msg);
-        DD_Execute(buff, false);
+        DD_Execute(false, buff);
     }
     else
     {   // Send to all of the destination color.
@@ -703,7 +703,7 @@ static void sendMessage(char *msg)
             {
                 sprintf(buff, "chatNum %d ", i);
                 M_StrCatQuoted(buff, msg);
-                DD_Execute(buff, false);
+                DD_Execute(false, buff);
             }
     }
 

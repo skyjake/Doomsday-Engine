@@ -734,7 +734,7 @@ DEFCC(CCmdMakeLocal)
     players[p].playerstate = PST_REBORN;
     players[p].plr->ingame = true;
     sprintf(buf, "conlocp %i", p);
-    DD_Execute(buf, false);
+    DD_Execute(false, buf);
     P_DealPlayerStarts(0);
     return true;
 }

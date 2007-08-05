@@ -410,7 +410,7 @@ boolean B_TryEvent(ddevent_t* event)
         // See if the command bindings will have it.
         for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
         {
-            if(B_TryCommandBinding(eb, event))
+            if(B_TryCommandBinding(eb, event, bc))
                 return true;
         }
     }

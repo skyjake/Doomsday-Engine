@@ -3716,7 +3716,7 @@ void M_OpenDCP(int option, void *data)
         idx = 0;
 
     M_ClearMenus();
-    DD_Execute(panelNames[idx], true);
+    DD_Execute(true, panelNames[idx]);
 
 #undef NUM_PANEL_NAMES
 }
@@ -4231,7 +4231,7 @@ DEFCC(CCmdMenuAction)
     else if(!stricmp(argv[0], "quit"))    // F10
     {
         if(IS_DEDICATED)
-            DD_Execute("quit!", true);
+            DD_Execute(true, "quit!");
         else
         {
             S_LocalSound(menusnds[2], NULL);
@@ -4250,7 +4250,7 @@ DEFCC(CCmdMenuAction)
         P_SetMessage(players + consoleplayer, gammamsg[gammaLevel], true);
 #endif
         sprintf(buf, "setgamma %i", gammaLevel);
-        DD_Execute(buf, false);
+        DD_Execute(false, buf);
     }
 
     return true;

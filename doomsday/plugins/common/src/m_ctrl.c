@@ -233,7 +233,7 @@ int D_PrivilegedResponder(event_t *event)
                 grabbing->flags & CLF_REPEAT ? "bindr" : "bind",
                 grabbing->bindClass, evname + 1, buff);
 
-        DD_Execute(cmd, false);
+        DD_Execute(false, cmd);
 
         // We've finished the grab.
         grabbing = NULL;

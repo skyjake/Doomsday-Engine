@@ -2004,9 +2004,17 @@ static void mapTicker(automap_t *map)
 {
 #define MAPALPHA_FADE_STEP .07
 
+    int         playerNum = map - automaps;
     float       diff = 0;
     float       width, height, scale;
+    float       panX[2], panY[2];
+    float       zoomVel;
 
+    // Check the state of the controls. Done here so that offsets don't accumulate
+    // unnecessarily, as they would, if left unread.
+    P_GetControlState(playerNum, CTL_MAP_PAN_X, &panX[0], &panX[1]);
+    P_GetControlState(playerNum, CTL_MAP_PAN_Y, &panY[0], &panY[1]);
+    
     if(!map)
         return;
 
@@ -2033,38 +2041,30 @@ static void mapTicker(automap_t *map)
     //
 
     // Map view zoom contol.
-    /*
-    if(actions[A_MAPZOOMOUT].on)  // zoom out
+    P_GetControlState(playerNum, CTL_MAP_ZOOM, &zoomVel, NULL); // ignores rel offset -jk
+    if(zoomVel > 0)  // zoom out
     {
         setViewScaleTarget(map, map->viewScale + .02f);
     }
-    else if(actions[A_MAPZOOMIN].on) // zoom in
+    else if(zoomVel < 0) // zoom in
     {
         setViewScaleTarget(map, map->viewScale - .02f);
     }
-    */
 
     // Map viewer location paning control.
     if(map->panMode || !players[map->followPlayer].plr->ingame)
     {
         float       x = 0, y = 0; // deltas
-/*
-        // DOOM.EXE used to pan at 140 fixed pixels per second.
-        float       panUnitsPerTic =
-                        FTOM(map, FIXXTOSCREENX(140)) / TICSPERSEC;
-        player_t   *plr = &players[map - automaps];
 
-        // X axis.
-        if(PLAYER_ACTION(plr, A_MAPPANRIGHT)) // pan right?
-            x = panUnitsPerTic;
-        else if(PLAYER_ACTION(plr, A_MAPPANLEFT)) // pan left?
-            x = -panUnitsPerTic;
-        // Y axis.
-        if(PLAYER_ACTION(plr, A_MAPPANUP))  // pan up?
-            y = panUnitsPerTic;
-        else if(PLAYER_ACTION(plr, A_MAPPANDOWN))  // pan down?
-            y = -panUnitsPerTic;
-*/
+        // DOOM.EXE used to pan at 140 fixed pixels per second.
+        float       panUnitsPerTic = FTOM(map, FIXXTOSCREENX(140)) / TICSPERSEC;
+        player_t   *plr = &players[playerNum];
+
+        x = panX[0] * panUnitsPerTic + panX[1];
+        y = panY[0] * panUnitsPerTic + panY[1];
+        
+        // FIXME: Must take rotation into account!
+
         if(x || y)
             setViewTarget(map, map->viewX + x, map->viewY + y);
     }
@@ -3607,10 +3607,12 @@ DEFCC(CCmdMapAction)
             viewactive = true;
 
             // Disable the automap binding classes
-            DD_SetBindClass(GBC_CLASS1, false);
+            //DD_SetBindClass(GBC_CLASS1, false);
+            //if(map->panMode)
+            //    DD_SetBindClass(GBC_CLASS2, false);
 
-            if(map->panMode)
-                DD_SetBindClass(GBC_CLASS2, false);
+            DD_Execute(true, "deactivatebclass map");
+            DD_Execute(true, "deactivatebclass map-freepan");
 
             AM_Stop(consoleplayer);
         }
@@ -3618,9 +3620,13 @@ DEFCC(CCmdMapAction)
         {
             AM_Start(consoleplayer);
             // Enable/disable the automap binding classes
-            DD_SetBindClass(GBC_CLASS1, true);
+            //DD_SetBindClass(GBC_CLASS1, true);
+            //if(map->panMode)
+            //    DD_SetBindClass(GBC_CLASS2, true);
+            
+            DD_Execute(true, "activatebclass map");
             if(map->panMode)
-                DD_SetBindClass(GBC_CLASS2, true);
+                DD_Execute(true, "activatebclass map-freepan");
 
             viewactive = false;
         }
@@ -3637,10 +3643,10 @@ DEFCC(CCmdMapAction)
             map->panMode = !map->panMode;
 
             // Enable/disable the pan mode binding class
-            DD_SetBindClass(GBC_CLASS2, map->panMode);
+            //DD_SetBindClass(GBC_CLASS2, map->panMode);
+            DD_Executef(true, "%sactivatebclass map-freepan", !map->panMode? "de" : "");
 
-            P_SetMessage(plr, (map->panMode ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF),
-                         false);
+            P_SetMessage(plr, (map->panMode ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), false);
             Con_Printf("Follow mode toggle.\n");
             return true;
         }

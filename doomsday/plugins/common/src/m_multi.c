@@ -295,7 +295,7 @@ int Executef(int silent, char *format, ...)
     va_start(argptr, format);
     vsnprintf(buffer, sizeof(buffer), format, argptr);
     va_end(argptr);
-    return DD_Execute(buffer, silent);
+    return DD_Execute(silent, buffer);
 }
 
 void DrANumber(int number, int x, int y)
@@ -530,11 +530,11 @@ void SCEnterJoinMenu(int option, void *data)
 {
     if(IS_NETGAME)
     {
-        DD_Execute("net disconnect", false);
+        DD_Execute(false, "net disconnect");
         M_ClearMenus();
         return;
     }
-    DD_Execute("net setup client", false);
+    DD_Execute(false, "net setup client");
 }
 
 void SCEnterGameSetup(int option, void *data)
@@ -719,12 +719,12 @@ void SCOpenServer(int option, void *data)
     }
 
     // Go to DMI to setup server.
-    DD_Execute("net setup server", false);
+    DD_Execute(false, "net setup server");
 }
 
 void SCCloseServer(int option, void *data)
 {
-    DD_Execute("net server close", false);
+    DD_Execute(false, "net server close");
     M_ClearMenus();
 }
 
@@ -778,13 +778,13 @@ void SCAcceptPlayer(int option, void *data)
 
     strcpy(buf, "net-name ");
     M_StrCatQuoted(buf, plrNameEd.text);
-    DD_Execute(buf, false);
+    DD_Execute(false, buf);
 
     if(IS_NETGAME)
     {
         sprintf(buf, "setname ");
         M_StrCatQuoted(buf, plrNameEd.text);
-        DD_Execute(buf, false);
+        DD_Execute(false, buf);
 #if __JHEXEN__
         // Must do 'setclass' first; the real class and color do not change
         // until the server sends us a notification -- this means if we do

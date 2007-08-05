@@ -2272,7 +2272,7 @@ char   *P_GetLevelName(int episode, int map)
  */
 void G_StopDemo(void)
 {
-    DD_Execute("stopdemo", true);
+    DD_Execute(true, "stopdemo");
 }
 
 void G_DemoEnds(void)

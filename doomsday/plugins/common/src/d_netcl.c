@@ -160,7 +160,7 @@ void NetCl_UpdateGameState(byte *data)
         // Wrong game mode! This is highly irregular!
         Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
         // Stop the demo if one is being played.
-        DD_Execute("stopdemo", false);
+        DD_Execute(false, "stopdemo");
         return;
     }
 #endif

@@ -1309,7 +1309,7 @@ int C_DECL XL_DoCommand(line_t *line, boolean dummy, void *context,
 {
     linetype_t *info = context2;
 
-    DD_Execute(info->sparm[0], true);
+    DD_Execute(true, info->sparm[0]);
     return true;
 }
 

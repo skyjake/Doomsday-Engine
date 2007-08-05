@@ -4955,7 +4955,7 @@ static boolean SV_LoadGame2(void)
         {
             // Kick this player out, he doesn't belong here.
             sprintf(buf, "kick %i", i);
-            DD_Execute(buf, false);
+            DD_Execute(false, buf);
         }
     }
 

@@ -190,7 +190,7 @@ cvar_t  gameCVars[] = {
 ccmd_t  gameCCmds[] = {
     {"spy",        "",      CCmdCycleSpy},
     {"screenshot", "",      CCmdScreenShot},
-    {"viewsize",   "i",     CCmdViewSize},
+    {"viewsize",   "s",     CCmdViewSize},
 
     // $cheats
     {"cheat",      "s",     CCmdCheat},

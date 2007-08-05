@@ -183,6 +183,7 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_ATTACK, CTLT_NUMERIC, "attack", "game");
     P_NewPlayerControl(CTL_USE, CTLT_IMPULSE, "use", "game");
     P_NewPlayerControl(CTL_LOOK_CENTER, CTLT_IMPULSE, "lookcenter", "game");
+    P_NewPlayerControl(CTL_FALL_DOWN, CTLT_IMPULSE, "falldown", "game");
     P_NewPlayerControl(CTL_WEAPON1, CTLT_IMPULSE, "weapon1", "game");
     P_NewPlayerControl(CTL_WEAPON2, CTLT_IMPULSE, "weapon2", "game");
     P_NewPlayerControl(CTL_WEAPON3, CTLT_IMPULSE, "weapon3", "game");
@@ -196,25 +197,29 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_NEXT_WEAPON, CTLT_IMPULSE, "nextweapon", "game");   
     P_NewPlayerControl(CTL_PREV_WEAPON, CTLT_IMPULSE, "prevweapon", "game");   
     P_NewPlayerControl(CTL_USE_ARTIFACT, CTLT_IMPULSE, "useartifact", "game");
-    
-    P_NewPlayerControl(CTL_TOMEOFPOWER, CTLT_IMPULSE, "tome", "game");
+
+    P_NewPlayerControl(CTL_TOME_OF_POWER, CTLT_IMPULSE, "tome", "game");
     P_NewPlayerControl(CTL_INVISIBILITY, CTLT_IMPULSE, "invisibility", "game");
     P_NewPlayerControl(CTL_FLY, CTLT_IMPULSE, "fly", "game");
     P_NewPlayerControl(CTL_PANIC, CTLT_IMPULSE, "panic", "game");
     P_NewPlayerControl(CTL_TORCH, CTLT_IMPULSE, "torch", "game");
     P_NewPlayerControl(CTL_HEALTH, CTLT_IMPULSE, "health", "game");
-    P_NewPlayerControl(CTL_SUPERHEALTH, CTLT_IMPULSE, "superhealth", "game");
-    P_NewPlayerControl(CTL_MYSTICURN, CTLT_IMPULSE, "mysticurn", "game");
+    P_NewPlayerControl(CTL_SUPER_HEALTH, CTLT_IMPULSE, "superhealth", "game");
+    P_NewPlayerControl(CTL_MYSTIC_URN, CTLT_IMPULSE, "mysticurn", "game");
     P_NewPlayerControl(CTL_KRATER, CTLT_IMPULSE, "krater", "game");
-    P_NewPlayerControl(CTL_SPEEDBOOTS, CTLT_IMPULSE, "speedboots", "game");
-    P_NewPlayerControl(CTL_BLASTRADIUS, CTLT_IMPULSE, "blast", "game");
+    P_NewPlayerControl(CTL_SPEED_BOOTS, CTLT_IMPULSE, "speedboots", "game");
+    P_NewPlayerControl(CTL_BLAST_RADIUS, CTLT_IMPULSE, "blast", "game");
     P_NewPlayerControl(CTL_TELEPORT, CTLT_IMPULSE, "teleport", "game");
-    P_NewPlayerControl(CTL_TELEPORTOTHER, CTLT_IMPULSE, "teleportother", "game");
+    P_NewPlayerControl(CTL_TELEPORT_OTHER, CTLT_IMPULSE, "teleportother", "game");
     P_NewPlayerControl(CTL_POISONBAG, CTLT_IMPULSE, "poisonbag", "game");
     P_NewPlayerControl(CTL_FIREBOMB, CTLT_IMPULSE, "firebomb", "game");
     P_NewPlayerControl(CTL_INVULNERABILITY, CTLT_IMPULSE, "invulnerability", "game");
-    P_NewPlayerControl(CTL_DARKSERVANT, CTLT_IMPULSE, "darkservant", "game");
+    P_NewPlayerControl(CTL_DARK_SERVANT, CTLT_IMPULSE, "darkservant", "game");
     P_NewPlayerControl(CTL_EGG, CTLT_IMPULSE, "egg", "game");    
+    
+    P_NewPlayerControl(CTL_MAP_ZOOM, CTLT_NUMERIC, "mapzoom", "map");
+    P_NewPlayerControl(CTL_MAP_PAN_X, CTLT_NUMERIC, "mappanx", "map-freepan");
+    P_NewPlayerControl(CTL_MAP_PAN_Y, CTLT_NUMERIC, "mappany", "map-freepan");
 }
 
 DEFCC( CCmdDefaultGameBinds )
@@ -237,8 +242,8 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol sidestep key-d",
         "bindcontrol sidestep key-comma-inverse",
         "bindcontrol sidestep key-a-inverse",
-        "bindcontrol zfly key-pgup",
-        "bindcontrol zfly key-ins-inverse",
+        "bindcontrol zfly key-pgup-staged",
+        "bindcontrol zfly key-ins-staged-inverse",
         "bindevent key-home-down {impulse falldown}",
         "bindcontrol turn key-left-staged-inverse",
         "bindcontrol turn key-right-staged",
@@ -292,7 +297,22 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol turn joy-x",
         "bindcontrol walk joy-y-inverse",
         
-        // UI events
+        // Map events:
+        "bindevent key-tab automap",
+        "bindevent map:key-f follow",
+        "bindevent map:key-r rotate",
+        "bindevent map:key-g grid",
+        "bindcontrol mapzoom key-equals",
+        "bindcontrol mapzoom key-minus-inverse",
+        "bindevent map:key-0 zoommax",
+        "bindevent map:key-m addmark",
+        "bindevent map:key-c clearmarks",
+        "bindcontrol mappany key-up",
+        "bindcontrol mappany key-down-inverse",
+        "bindcontrol mappanx key-right",
+        "bindcontrol mappanx key-left-inverse",
+        
+        // UI events:
         "bindevent key-f1 helpscreen",
         "bindevent key-f2 savegame",
         "bindevent key-f3 loadgame",
@@ -310,7 +330,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-minus {viewsize -}",
         "bindevent key-equals {viewsize +}",
         
-        // Menu events
+        // Menu events:
         "bindevent key-esc menu",
         "bindevent menu:key-backspace menucancel",
         "bindevent menu:key-up menuup",
@@ -328,7 +348,7 @@ DEFCC( CCmdDefaultGameBinds )
     int         i;
     
     for(i = 0; binds[i]; ++i)
-        DD_Execute(binds[i], false);
+        DD_Execute(false, binds[i]);
     
     return true;
 }

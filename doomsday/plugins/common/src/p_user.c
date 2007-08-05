@@ -1131,8 +1131,6 @@ void P_PlayerThinkMove(player_t *player)
 void P_PlayerThinkFly(player_t *player)
 {
     mobj_t     *plrmo = player->plr->mo;
-    ticcmd_t   *cmd = &player->plr->cmd;
-    int         fly;
 
     // Reactiontime is used to prevent movement for a bit after a teleport.
     if(plrmo->reactiontime)
@@ -1142,31 +1140,28 @@ void P_PlayerThinkFly(player_t *player)
     if(player->plr->flags & DDPF_CAMERA)
         return;
 
-    fly = cmd->upMove;
-    if(fly && player->powers[PT_FLIGHT])
+    if(player->brain.fallDown)
     {
-        if(fly != TOCENTER)
+        plrmo->flags2 &= ~MF2_FLY;
+        plrmo->flags &= ~MF_NOGRAVITY;
+    }
+    else if(player->brain.upMove != 0 && player->powers[PT_FLIGHT])
+    {
+        player->flyheight = player->brain.upMove * 10;
+        if(!(plrmo->flags2 & MF2_FLY))
         {
-            player->flyheight = fly * 2;
-            if(!(plrmo->flags2 & MF2_FLY))
-            {
-                plrmo->flags2 |= MF2_FLY;
-                plrmo->flags |= MF_NOGRAVITY;
+            plrmo->flags2 |= MF2_FLY;
+            plrmo->flags |= MF_NOGRAVITY;
 #if __JHEXEN__
-                if(plrmo->mom[MZ] <= -39 * FRACUNIT)
-                {           // stop falling scream
-                    S_StopSound(0, plrmo);
-                }
-#endif
+            if(plrmo->mom[MZ] <= -39 * FRACUNIT)
+            {           // stop falling scream
+                S_StopSound(0, plrmo);
             }
-        }
-        else
-        {
-            plrmo->flags2 &= ~MF2_FLY;
-            plrmo->flags &= ~MF_NOGRAVITY;
+#endif
         }
     }
 
+    // Apply Z momentum based on flight speed.
     if(plrmo->flags2 & MF2_FLY)
     {
         plrmo->mom[MZ] = player->flyheight * FRACUNIT;
@@ -1292,7 +1287,7 @@ void P_PlayerThinkItems(player_t *player)
     // Artifact hot keys.
 #if __JHERETIC__
     // Check Tome of Power and other artifact hotkeys.
-    if(!arti && P_GetImpulseControlState(pnum, CTL_TOMEOFPOWER) &&
+    if(!arti && P_GetImpulseControlState(pnum, CTL_TOME_OF_POWER) &&
        !player->powers[PT_WEAPONLEVEL2])
     {
         arti = arti_tomeofpower;
@@ -1322,7 +1317,7 @@ void P_PlayerThinkItems(player_t *player)
             { CTL_INVULNERABILITY, arti_invulnerability },
             { CTL_INVISIBILITY, arti_invisibility },
             { CTL_HEALTH, arti_health },
-            { CTL_SUPERHEALTH, arti_superhealth },
+            { CTL_SUPER_HEALTH, arti_superhealth },
             { CTL_TORCH, arti_torch },
             { CTL_FIREBOMB, arti_firebomb },
             { CTL_EGG, arti_egg },
@@ -1332,16 +1327,16 @@ void P_PlayerThinkItems(player_t *player)
 #endif
 #if __JHEXEN__ || __JSTRIFE__
             { CTL_INVULNERABILITY, arti_invulnerability },
-            { CTL_BLASTRADIUS, arti_blastradius },
-            { CTL_MYSTICURN, arti_superhealth },
+            { CTL_BLAST_RADIUS, arti_blastradius },
+            { CTL_MYSTIC_URN, arti_superhealth },
             { CTL_TORCH, arti_torch },
             { CTL_KRATER, arti_boostmana },
-            { CTL_SPEEDBOOTS, arti_speed },
+            { CTL_SPEED_BOOTS, arti_speed },
             { CTL_POISONBAG, arti_poisonbag },
             { CTL_EGG, arti_egg },
             { CTL_TELEPORT, arti_teleport },
-            { CTL_DARKSERVANT, arti_summon },
-            { CTL_TELEPORTOTHER, arti_teleportother },
+            { CTL_DARK_SERVANT, arti_summon },
+            { CTL_TELEPORT_OTHER, arti_teleportother },
             { CTL_PANIC, NUMARTIFACTS },
 #endif
             { 0, arti_none }              // Terminator.
@@ -1384,11 +1379,11 @@ void P_PlayerThinkItems(player_t *player)
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-/*    if((int)cmd->fly > 0 && !player->powers[PT_FLIGHT])
+    if(player->brain.upMove > 0 && !player->powers[PT_FLIGHT])
     {
         // Start flying automatically.
         P_InventoryUseArtifact(player, arti_fly);
-    }*/
+    }
 #endif
 }
 
@@ -2008,6 +2003,18 @@ void P_PlayerThinkUpdateControls(player_t* player)
         vel = (vel > 0? 1 : vel < 0? -1 : 0);
     }
     brain->sideMove = off + vel;
+    
+    // Flight.
+    P_GetControlState(playerNum, CTL_ZFLY, &vel, &off);
+    brain->upMove = off + vel;
+    if(P_GetImpulseControlState(playerNum, CTL_FALL_DOWN))
+    {
+        brain->fallDown = true;
+    }
+    else
+    {
+        brain->fallDown = false;
+    }
     
     // Check for look centering based on lookSpring.
     if(cfg.lookSpring &&

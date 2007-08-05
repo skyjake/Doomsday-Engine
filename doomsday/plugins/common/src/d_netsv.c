@@ -395,7 +395,7 @@ void NetSv_CycleToMapNum(int map)
 #elif __JHEXEN__ || __JSTRIFE__
     sprintf(cmd, "setmap %i", map);
 #endif
-    DD_Execute(cmd, false);
+    DD_Execute(false, cmd);
 
     // In a couple of seconds, send everyone the rules of this map.
     cycleMode = CYCLE_TELL_RULES;
@@ -571,7 +571,7 @@ void NetSv_CheckCycling(void)
                     // Hmm?! Abort cycling.
                     Con_Message
                         ("NetSv_CheckCycling: All of a sudden MapCycle is invalid!\n");
-                    DD_Execute("endcycle", false);
+                    DD_Execute(false, "endcycle");
                     return;
                 }
             }
@@ -656,7 +656,7 @@ void NetSv_CheckCycling(void)
                     // Hmm?! Abort cycling.
                     Con_Message
                         ("NetSv_CheckCycling: All of a sudden MapCycle is invalid!\n");
-                    DD_Execute("endcycle", false);
+                    DD_Execute(false, "endcycle");
                     return;
                 }
             }
