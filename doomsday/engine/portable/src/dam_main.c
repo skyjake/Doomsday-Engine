@@ -2930,30 +2930,26 @@ static void finalizeMapData(gamemap_t *map)
         for(k = 0; k < sec->planecount; ++k)
             sec->subsgroups[0].linked[k] = NULL;
 
-        if(sec->linecount != 0)
-        {
-            M_ClearBox(bbox);
-
-            for(k = 0; k < sec->linecount; ++k)
-            {
-                li = sec->Lines[k];
-                if(li->flags & LINEF_BENIGN)
-                    continue;
-
-                M_AddToBox(bbox, FLT2FIX(li->L_v1pos[VX]), FLT2FIX(li->L_v1pos[VY]));
-                M_AddToBox(bbox, FLT2FIX(li->L_v2pos[VX]), FLT2FIX(li->L_v2pos[VY]));
-            }
-        }
-        else // Its a "benign sector"
-        {
+        if(!(sec->linecount > 0))
+        {   // Its a "benign" sector.
             // Send the game a status report (we don't need to do anything).
             if(gx.HandleMapObjectStatusReport)
                 gx.HandleMapObjectStatusReport(DMUSC_SECTOR_ISBENIGN,
                                                sec - map->sectors,
                                                DMU_SECTOR, NULL);
+            memset(sec->bounds, 0, sizeof(sec->bounds));
+        }
+        else
+        {   // Determine the bounding box for this sector.
+            P_SectorBoundingBox(sec, sec->bounds);
         }
 
-        // adjust bounding box to map blocks
+        bbox[BOXTOP] = FLT2FIX(sec->bounds[BOXTOP]);
+        bbox[BOXBOTTOM] = FLT2FIX(sec->bounds[BOXBOTTOM]);
+        bbox[BOXLEFT] = FLT2FIX(sec->bounds[BOXLEFT]);
+        bbox[BOXRIGHT] = FLT2FIX(sec->bounds[BOXRIGHT]);
+
+        // Determine sector blockmap blocks from the bounding box.
         block = (bbox[BOXTOP] - bmaporgy + MAXRADIUS) >> MAPBLOCKSHIFT;
         block = block >= bmapheight ? bmapheight - 1 : block;
         sec->blockbox[BOXTOP] = block;
