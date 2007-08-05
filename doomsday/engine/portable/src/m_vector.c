@@ -123,6 +123,19 @@ void V2_Scale(pvec2_t vec, float scalar)
 }
 
 /**
+ * Rotate the vector by a radian angle.
+ */
+void V2_Rotate(pvec2_t vec, float radians)
+{
+    const float c = cos(radians);
+    const float s = sin(radians); 
+    float x = c * vec[VX] - s * vec[VY];
+    float y = s * vec[VX] + c * vec[VY];
+    vec[VX] = x;
+    vec[VY] = y;
+}
+
+/**
  * Calculate the sum of two 2-dimensional vectors.
  */
 void V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)

@@ -43,6 +43,7 @@ float           V2_Distance(const pvec2_t a, const pvec2_t b);
 float           V2_Normalize(pvec2_t vector);
 void            V2_Copy(pvec2_t dest, const pvec2_t src);
 void            V2_Scale(pvec2_t vector, float scalar);
+void            V2_Rotate(pvec2_t vec, float radians);
 void            V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2);
 void            V2_Subtract(pvec2_t dest, const pvec2_t src1,
 							const pvec2_t src2);

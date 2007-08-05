@@ -476,6 +476,7 @@ extern          "C" {
     boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
     
     // Miscellaneous: Math.
+    void            V2_Rotate(float vec[2], float radians);
     binangle_t      bamsAtan2(int y, int x);
 
     // Miscellaneous: Command line.

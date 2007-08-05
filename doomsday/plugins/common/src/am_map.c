@@ -374,6 +374,8 @@ extern DGLuint amMaskTexture;
 
 static vectorgrap_t *vectorGraphs[NUM_VECTOR_GRAPHS];
 
+float automapZoomSpeed = .1f;
+
 cvar_t  mapCVars[] = {
 /*    {"map-position", 0, CVT_INT, &cfg.automapPos, 0, 8},
     {"map-width", 0, CVT_FLOAT, &cfg.automapWidth, 0, 1},
@@ -399,6 +401,7 @@ cvar_t  mapCVars[] = {
     {"map-huddisplay", 0, CVT_INT, &cfg.automapHudDisplay, 0, 2},
     {"map-door-colors", 0, CVT_BYTE, &cfg.automapShowDoors, 0, 1},
     {"map-door-glow", 0, CVT_FLOAT, &cfg.automapDoorGlow, 0, 200},
+    {"map-zoom-speed", 0, CVT_FLOAT, &automapZoomSpeed, 0, 1},
 #if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
     {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1},
 #endif
@@ -849,7 +852,7 @@ void AM_InitForLevel(void)
         calcViewScaleFactors(map);
 
         // Change the zoom.
-        setViewScaleTarget(map, (map->maxScale? 0 : 0.0125f));
+        setViewScaleTarget(map, map->maxScale? 0 : .45f); // zero clamped to minScaleMTOF
 
         // Clear any previously marked map points.
         clearMarks(map);
@@ -863,6 +866,13 @@ void AM_InitForLevel(void)
 #endif
         // If the map has been left open from the previous level; close it.
         AM_Stop(i);
+
+        // Reset position onto the follow player.
+        if(players[map->followPlayer].plr->mo)
+        {
+            mobj_t* mo = players[map->followPlayer].plr->mo;
+            setViewTarget(map, FIX2FLT(mo->pos[VX]), FIX2FLT(mo->pos[VY]));
+        }
     }
 }
 
@@ -889,12 +899,13 @@ void AM_Start(int pnum)
     map->active = true;
     AM_SetGlobalAlphaTarget(pnum, 1);
 
-    if(map->panMode || !players[map->followPlayer].plr->ingame)
+    /*if(map->panMode || !players[map->followPlayer].plr->ingame)
     {   // Set viewer target to the center of the map.
         setViewTarget(map, (bounds[1][VX] - bounds[0][VX]) / 2,
                             (bounds[1][VY] - bounds[0][VY]) / 2);
     }
-    else
+    else*/
+    if(!map->panMode)
     {   // Set viewer target to location of player to be followed.
         mobj_t *mo = players[map->followPlayer].plr->mo;
 
@@ -1123,7 +1134,7 @@ float AM_ViewAngle(int pid)
 
 static void setViewScaleTarget(automap_t *map, float scale)
 {
-    scale = CLAMP(scale, 0, 1);
+    scale = MINMAX_OF(map->minScaleMTOF, scale, map->maxScaleMTOF);
 
     // Already at this target?
     if(scale == map->targetViewScale)
@@ -2009,6 +2020,8 @@ static void mapTicker(automap_t *map)
     float       width, height, scale;
     float       panX[2], panY[2];
     float       zoomVel;
+    float       zoomSpeed;
+    mobj_t     *mo = players[map->followPlayer].plr->mo;
 
     // Check the state of the controls. Done here so that offsets don't accumulate
     // unnecessarily, as they would, if left unread.
@@ -2041,36 +2054,38 @@ static void mapTicker(automap_t *map)
     //
 
     // Map view zoom contol.
+    zoomSpeed = (1 + automapZoomSpeed);
+    if(players[playerNum].brain.speed)
+        zoomSpeed *= 1.5f;
     P_GetControlState(playerNum, CTL_MAP_ZOOM, &zoomVel, NULL); // ignores rel offset -jk
-    if(zoomVel > 0)  // zoom out
+    if(zoomVel > 0)  // zoom in
     {
-        setViewScaleTarget(map, map->viewScale + .02f);
+        setViewScaleTarget(map, map->viewScale * zoomSpeed);
     }
-    else if(zoomVel < 0) // zoom in
+    else if(zoomVel < 0) // zoom out
     {
-        setViewScaleTarget(map, map->viewScale - .02f);
+        setViewScaleTarget(map, map->viewScale / zoomSpeed);
     }
 
     // Map viewer location paning control.
     if(map->panMode || !players[map->followPlayer].plr->ingame)
     {
-        float       x = 0, y = 0; // deltas
+        float       xy[2] = { 0, 0 }; // deltas
 
         // DOOM.EXE used to pan at 140 fixed pixels per second.
         float       panUnitsPerTic = FTOM(map, FIXXTOSCREENX(140)) / TICSPERSEC;
         player_t   *plr = &players[playerNum];
-
-        x = panX[0] * panUnitsPerTic + panX[1];
-        y = panY[0] * panUnitsPerTic + panY[1];
         
-        // FIXME: Must take rotation into account!
-
-        if(x || y)
-            setViewTarget(map, map->viewX + x, map->viewY + y);
+        xy[VX] = panX[0] * panUnitsPerTic + panX[1];
+        xy[VY] = panY[0] * panUnitsPerTic + panY[1];
+        
+        V2_Rotate(xy, map->angle / 360 * 2 * PI);
+        
+        if(xy[VX] || xy[VY])
+            setViewTarget(map, map->viewX + xy[VX], map->viewY + xy[VY]);
     }
     else  // Camera follows the player
     {
-        mobj_t     *mo = players[map->followPlayer].plr->mo;
         float       angle;
 
         setViewTarget(map, FIX2FLT(mo->pos[VX]), FIX2FLT(mo->pos[VY]));
@@ -2149,10 +2164,10 @@ static void mapTicker(automap_t *map)
     //
     // Activate the new scale, position etc.
     //
-    scale = (map->maxScaleMTOF - map->minScaleMTOF) * map->viewScale;
+    scale = /*(map->maxScaleMTOF - map->minScaleMTOF)* */ map->viewScale;
 
     // Scaling multipliers.
-    map->scaleMTOF = map->minScaleMTOF + scale;
+    map->scaleMTOF = /*map->minScaleMTOF + */ scale;
     map->scaleFTOM = 1.0f / map->scaleMTOF;
 
     width = FTOM(map, map->window.width);
@@ -3646,7 +3661,7 @@ DEFCC(CCmdMapAction)
             //DD_SetBindClass(GBC_CLASS2, map->panMode);
             DD_Executef(true, "%sactivatebclass map-freepan", !map->panMode? "de" : "");
 
-            P_SetMessage(plr, (map->panMode ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), false);
+            P_SetMessage(plr, (map->panMode ? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON), false);
             Con_Printf("Follow mode toggle.\n");
             return true;
         }
