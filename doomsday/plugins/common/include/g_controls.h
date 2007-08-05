@@ -29,6 +29,7 @@
 #ifndef __COMMON_CONTROLS_H__
 #define __COMMON_CONTROLS_H__
 
+/*
 // Game registered bindClasses
 enum {
     GBC_CLASS1 = NUM_DDBINDCLASSES,
@@ -38,6 +39,7 @@ enum {
     GBC_CHAT,
     GBC_MESSAGE
 };
+*/
 
 // Control identifiers.
 enum {

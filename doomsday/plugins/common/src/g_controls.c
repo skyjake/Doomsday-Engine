@@ -104,6 +104,7 @@ extern boolean sendpause;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+/*
 // Binding classes (for the dynamic event responder chain)
 bindclass_t BindClasses[] = {
     {"map",             GBC_CLASS1,     0, 0},
@@ -114,6 +115,7 @@ bindclass_t BindClasses[] = {
     {"message",         GBC_MESSAGE,    0, BCF_ABSOLUTE},
     {NULL}
 };
+*/
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -299,6 +301,27 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol turn joy-x",
         "bindcontrol walk joy-y-inverse",
         
+        // Chat events:
+        "bindevent key-t beginchat",
+        "bindevent key-g {beginchat 0}",
+        "bindevent key-y {beginchat 1}",
+        "bindevent key-r {beginchat 2}",
+        "bindevent key-b {beginchat 3}",
+        "bindevent key-enter msgrefresh",
+        "bindevent chat:key-enter chatcomplete",
+        "bindevent chat:key-escape chatcancel",
+        "bindevent chat:key-f1 {chatsendmacro 0}",
+        "bindevent chat:key-f2 {chatsendmacro 1}",
+        "bindevent chat:key-f3 {chatsendmacro 2}",
+        "bindevent chat:key-f4 {chatsendmacro 3}",
+        "bindevent chat:key-f5 {chatsendmacro 4}",
+        "bindevent chat:key-f6 {chatsendmacro 5}",
+        "bindevent chat:key-f7 {chatsendmacro 6}",
+        "bindevent chat:key-f8 {chatsendmacro 7}",
+        "bindevent chat:key-f9 {chatsendmacro 8}",
+        "bindevent chat:key-f10 {chatsendmacro 9}",
+        "bindevent chat:key-backspace chatdelete",
+        
         // Map events:
         "bindevent key-tab automap",
         "bindevent map:key-f follow",
@@ -365,12 +388,15 @@ DEFCC( CCmdDefaultGameBinds )
  */
 void G_RegisterBindClasses(void)
 {
+/*
     uint        i;
 
     Con_Message("G_PreInit: Registering Bind Classes...\n");
 
     for(i = 0; BindClasses[i].name; ++i)
         DD_AddBindClass(BindClasses + i);
+ */
+    // FIXME: Move the game's binding class creation here.
 }
 
 DEFCC( CCmdPause )
@@ -1095,7 +1121,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
  */
 void G_ControlReset(int player)
 {
-    //P_ControlReset(player);
+    DD_Execute(true, "resetctlaccum");
 }
 
 /**

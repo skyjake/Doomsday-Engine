@@ -268,6 +268,7 @@ void B_Init(void)
     B_NewClass("map");
     B_NewClass("map-freepan");
     B_NewClass("menu");
+    B_AcquireKeyboard(B_NewClass("chat"), true);
     B_AcquireKeyboard(B_NewClass("message"), true);
 
     // Binding class for the console.

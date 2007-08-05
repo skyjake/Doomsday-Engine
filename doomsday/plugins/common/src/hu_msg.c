@@ -669,7 +669,8 @@ static void openChat(int plynum)
     HUlib_resetIText(&w_chat);
 
     // Enable the chat binding class
-    DD_SetBindClass(GBC_CHAT, true);
+    //DD_SetBindClass(GBC_CHAT, true);
+    DD_Execute(true, "activatebclass chat");
 }
 
 static void closeChat(void)
@@ -678,7 +679,8 @@ static void closeChat(void)
     {
         chatOn = false;
         // Disable the chat binding class
-        DD_SetBindClass(GBC_CHAT, false);
+        //DD_SetBindClass(GBC_CHAT, false);
+        DD_Execute(true, "deactivatebclass chat");
     }
 }
 
