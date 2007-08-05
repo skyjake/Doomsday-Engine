@@ -184,6 +184,7 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_USE, CTLT_IMPULSE, "use", "game");
     P_NewPlayerControl(CTL_LOOK_CENTER, CTLT_IMPULSE, "lookcenter", "game");
     P_NewPlayerControl(CTL_FALL_DOWN, CTLT_IMPULSE, "falldown", "game");
+    P_NewPlayerControl(CTL_JUMP, CTLT_IMPULSE, "jump", "game");
     P_NewPlayerControl(CTL_WEAPON1, CTLT_IMPULSE, "weapon1", "game");
     P_NewPlayerControl(CTL_WEAPON2, CTLT_IMPULSE, "weapon2", "game");
     P_NewPlayerControl(CTL_WEAPON3, CTLT_IMPULSE, "weapon3", "game");
@@ -250,6 +251,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindcontrol look key-delete-staged-inverse",
         "bindcontrol look key-pgdown-staged",
         "bindevent key-end-down {impulse lookcenter}",
+        "bindevent key-slash {impulse jump}",
 
         // Weapon keys:
         "bindevent key-1 {impulse weapon1}",
@@ -323,10 +325,12 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-f9 quickload",
         "bindevent key-f10 quit",
         "bindevent key-f11 togglegamma",
+        "bindevent key-f12 screenshot",
         
         "bindevent key-pause pause",
         "bindevent key-p pause",
         
+        "bindevent key-h showhud", // FIXME: does 'showhud' work? -jk
         "bindevent key-minus {viewsize -}",
         "bindevent key-equals {viewsize +}",
         
@@ -390,6 +394,12 @@ void G_SetPause(boolean yes)
     {
         // This will stop all sounds from all origins.
         S_StopSound(0, 0);
+    }
+    else
+    {
+        // Any impulses or accumulated relative offsets that occured
+        // during the pause should be ignored.
+        DD_Execute(true, "resetctlaccum");
     }
     
     // Servers are responsible for informing clients about

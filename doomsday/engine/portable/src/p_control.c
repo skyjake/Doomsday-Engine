@@ -93,6 +93,7 @@ typedef struct impulsecounter_s {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(ListPlayerControls);
+D_CMD(ClearControlAccumulation);
 D_CMD(Impulse);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -143,6 +144,7 @@ void P_ControlRegister(void)
 {
     C_CMD("listcontrols",   "",     ListPlayerControls);
     C_CMD("impulse",        NULL,   Impulse);
+    C_CMD("resetctlaccum",  "",     ClearControlAccumulation);
 }
 
 /** 
@@ -277,6 +279,25 @@ void P_ImpulseByName(int playerNum, const char* control)
     {
         P_Impulse(playerNum, pc->id);
     }
+}
+
+D_CMD(ClearControlAccumulation)
+{
+    int     i, p;
+    playercontrol_t* pc;
+    
+    for(i = 0; i < playerControlCount; ++i)
+    {
+        pc = &playerControls[i];
+        for(p = 0; p < DDMAXPLAYERS; ++p)
+        {                
+            if(pc->type == CTLT_NUMERIC)
+                P_GetControlState(p, pc->id, NULL, NULL);
+            else if(pc->type == CTLT_IMPULSE)
+                P_GetImpulseControlState(p, pc->id);
+        }
+    }
+    return true;
 }
 
 #if 0

@@ -47,6 +47,7 @@ enum {
     CTL_FALL_DOWN,
     CTL_USE,
     CTL_ATTACK,
+    CTL_JUMP,
     CTL_WEAPON1,
     CTL_WEAPON2,
     CTL_WEAPON3,
@@ -97,6 +98,7 @@ typedef struct playerbrain_s {
     uint        attack : 1;
     uint        lookCenter : 1;
     uint        fallDown : 1;
+    uint        jump : 1;
 } playerbrain_t;
 
 void        G_ControlRegister(void);

@@ -46,6 +46,7 @@ typedef enum {
 
 extern gameaction_t gameaction;
 
+/*
 //
 // Button/action code definitions.
 //
@@ -57,24 +58,24 @@ typedef enum
     //BT_USE			= 2,
 
     // Flag: game events, not really buttons.
-    BT_SPECIAL		= 128,
-    BT_SPECIALMASK	= 3,
+    //BT_SPECIAL		= 128,
+    //BT_SPECIALMASK	= 3,
 
 	// Center player look angle (pitch back to zero).
 	//BT_LOOKCENTER	= 64,
     
     // Flag, weapon change pending.
     // If true, the next 3 bits hold weapon num.
-    BT_CHANGE		= 4,
+    //BT_CHANGE		= 4,
     // The 3bit weapon mask and shift, convenience.
-    BT_WEAPONMASK	= (8+16+32+64),
-    BT_WEAPONSHIFT	= 3,
+    //BT_WEAPONMASK	= (8+16+32+64),
+    //BT_WEAPONSHIFT	= 3,
 
-	BT_JUMP			= 8,
-    BT_SPEED        = 16,
+	//BT_JUMP			= 8,
+    //BT_SPEED        = 16,
 
     // Pause the game.
-    BTS_PAUSE		= 1,
+    //BTS_PAUSE		= 1,
     // Save the game at each console.
     //BTS_SAVEGAME	= 2,
 
@@ -84,9 +85,9 @@ typedef enum
     //BTS_SAVESHIFT 	= 2,
 
 	// Special weapon change flags.
-	BTS_NEXTWEAPON	= 4,
-	BTS_PREVWEAPON	= 8,
+	//BTS_NEXTWEAPON	= 4,
+	//BTS_PREVWEAPON	= 8,
   
-} buttoncode_t;
+} buttoncode_t;*/
 
 #endif

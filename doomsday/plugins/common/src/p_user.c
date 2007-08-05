@@ -325,15 +325,13 @@ boolean P_IsPlayerOnGround(player_t *player)
 void P_CheckPlayerJump(player_t *player)
 {
     float       power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
-    ticcmd_t   *cmd = &player->plr->cmd;
 
     if(player->plr->flags & DDPF_CAMERA)
         return; // Cameras don't jump.
 
     // Check if we are allowed to jump.
     if(cfg.jumpEnabled && power > 0 && P_IsPlayerOnGround(player) &&
-       !(cmd->actions & BT_SPECIAL) && !(cmd->actions & BT_CHANGE) &&
-       (cmd->actions & BT_JUMP) && player->jumptics <= 0)
+       player->brain.jump && player->jumptics <= 0)
     {
         // Jump, then!
 #if __JHEXEN__
@@ -2024,6 +2022,9 @@ void P_PlayerThinkUpdateControls(player_t* player)
         player->centering = true;
     }    
     
+    // Jump.
+    brain->jump = (P_GetImpulseControlState(playerNum, CTL_JUMP) != 0);
+    
     // Use.
     brain->use = (P_GetImpulseControlState(playerNum, CTL_USE) != 0);
     
@@ -2067,16 +2068,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
 void P_PlayerThink(player_t *player, timespan_t ticLength)
 {
     if(P_IsPaused())
-    {
-        int playerNum = player - players;
-        
-        // The game is paused, but the controls can still receive input. Let's poll
-        // them and ignore the data, so that when the game is unpaused, any 
-        // accumulated offsets won't bite us.
-        P_GetControlState(playerNum, CTL_TURN, NULL, NULL);
-        P_GetControlState(playerNum, CTL_LOOK, NULL, NULL);
         return;
-    }
     
     if(G_GetGameState() != GS_LEVEL)
     {
