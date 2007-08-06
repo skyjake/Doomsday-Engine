@@ -245,6 +245,7 @@ typedef struct {
     short           height;
     short           offsetX;
     short           offsetY;
+    boolean         sharpened;
     byte            masked;        // Is the (DGL) texture masked?
     detailinfo_t    detail;        // Detail texture information.
 } texinfo_t;

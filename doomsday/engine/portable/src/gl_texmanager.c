@@ -2678,6 +2678,9 @@ DGLuint GL_BindTexPatch(patch_t *p)
             M_Free(upscaledPixels);
             M_Free(buffer);
             buffer = rgbaPixels;
+            
+            // We'll sharpen it in the future as well.
+            p->info.sharpened = true;
         }
         
         // See if we have to split the patch into two parts.
@@ -2755,8 +2758,19 @@ DGLuint GL_PreparePatch(int idx, texinfo_t **info)
 
     if(!patch->tex)
     {
+        // A bit of a hack, but here we set the upscale mode if the patch
+        // has previously been upscaled. E.g., when textures have been 
+        // reset, it is upscaled again.
+        int oldUpscale = upscaleAndSharpenPatches;
+        if(patch->info.sharpened)
+        {
+            upscaleAndSharpenPatches = true;            
+        }
+        
         // The patch isn't yet bound with OpenGL.
         patch->tex = GL_BindTexPatch(patch);
+        
+        upscaleAndSharpenPatches = oldUpscale;
     }
     return GL_GetPatchInfo(idx, false, info);
 }
