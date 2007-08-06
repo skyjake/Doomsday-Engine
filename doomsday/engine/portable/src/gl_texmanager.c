@@ -2560,6 +2560,37 @@ static void EnhanceContrast(byte *pixels, int width, int height)
     }
 }
 
+static void SharpenPixels(byte* pixels, int width, int height)
+{
+    int     x, y, a, b, c;
+    byte*   result = M_Calloc(4 * width * height);
+    const float strength = .05f;
+    float   A, B, C;
+    
+    A = strength;
+    B = .70710678 * strength; // 1/sqrt(2)
+    C = 1 + 4*A + 4*B;
+    
+    for(y = 1; y < height - 1; ++y)
+    {
+        for(x = 1; x < width -1; ++x)
+        {
+            byte* pix = pixels + (x + y*width) * 4;
+            byte* out = result + (x + y*width) * 4;
+            for(c = 0; c < 3; ++c)
+            {
+                int r = (C*pix[c] - A*pix[c - width] - A*pix[c + 4] - A*pix[c - 4] - 
+                         A*pix[c + width] - B*pix[c + 4 - width] - B*pix[c + 4 + width] - 
+                         B*pix[c - 4 - width] - B*pix[c - 4 + width]);
+                out[c] = MINMAX_OF(0, r, 255);
+            }
+            out[3] = pix[3];
+        }
+    }
+    memcpy(pixels, result, 4 * width * height);
+    M_Free(result);
+}
+
 /**
  * NOTE: No mipmaps are generated for regular patches.
  */
@@ -2635,7 +2666,8 @@ DGLuint GL_BindTexPatch(patch_t *p)
             patchWidth *= 2;
             patchHeight *= 2;
             
-            EnhanceContrast(upscaledPixels, patchWidth, patchHeight);
+            //EnhanceContrast(upscaledPixels, patchWidth, patchHeight);
+            SharpenPixels(upscaledPixels, patchWidth, patchHeight);
             BlackOutlines(upscaledPixels, patchWidth, patchHeight);
             
             // Back to indexed+alpha.
