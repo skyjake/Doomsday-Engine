@@ -28,7 +28,7 @@
  * Based on the routine by Maxim Stepin <maxst@hiend3d.com>
  * For more information, see: http://hiend3d.com/hq2x.html
  *
- * Now uses 32-bit data and 0xAABBGGRR pixel byte order (assume Intel!).
+ * Now uses 32-bit data and 0xAABBGGRR pixel byte order (little endian).
  * Alpha is taken into account in the processing to preserve edges.
  * Not quite as efficient as the original version.
  */
@@ -36,6 +36,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "dd_types.h"
+#include "dd_share.h"
 
 #include <stdlib.h>
 
@@ -55,7 +56,7 @@
 #define trU   	((int)0x00000700)
 #define trV   	((int)0x00000006)
 
-#define PIXEL00_0     *((uint*)(pOut)) = c[5];
+#define PIXEL00_0     *((uint*)(pOut)) = ULONG( c[5] );
 #define PIXEL00_10    Interp1(pOut, c[5], c[1]);
 #define PIXEL00_11    Interp1(pOut, c[5], c[4]);
 #define PIXEL00_12    Interp1(pOut, c[5], c[2]);
@@ -67,7 +68,7 @@
 #define PIXEL00_70    Interp7(pOut, c[5], c[4], c[2]);
 #define PIXEL00_90    Interp9(pOut, c[5], c[4], c[2]);
 #define PIXEL00_100   Interp10(pOut, c[5], c[4], c[2]);
-#define PIXEL01_0     *((uint*)(pOut+4)) = c[5];
+#define PIXEL01_0     *((uint*)(pOut+4)) = ULONG( c[5] );
 #define PIXEL01_10    Interp1(pOut+4, c[5], c[3]);
 #define PIXEL01_11    Interp1(pOut+4, c[5], c[2]);
 #define PIXEL01_12    Interp1(pOut+4, c[5], c[6]);
@@ -79,7 +80,7 @@
 #define PIXEL01_70    Interp7(pOut+4, c[5], c[2], c[6]);
 #define PIXEL01_90    Interp9(pOut+4, c[5], c[2], c[6]);
 #define PIXEL01_100   Interp10(pOut+4, c[5], c[2], c[6]);
-#define PIXEL10_0     *((uint*)(pOut+BpL)) = c[5];
+#define PIXEL10_0     *((uint*)(pOut+BpL)) = ULONG( c[5] );
 #define PIXEL10_10    Interp1(pOut+BpL, c[5], c[7]);
 #define PIXEL10_11    Interp1(pOut+BpL, c[5], c[8]);
 #define PIXEL10_12    Interp1(pOut+BpL, c[5], c[4]);
@@ -91,7 +92,7 @@
 #define PIXEL10_70    Interp7(pOut+BpL, c[5], c[8], c[4]);
 #define PIXEL10_90    Interp9(pOut+BpL, c[5], c[8], c[4]);
 #define PIXEL10_100   Interp10(pOut+BpL, c[5], c[8], c[4]);
-#define PIXEL11_0     *((uint*)(pOut+BpL+4)) = c[5];
+#define PIXEL11_0     *((uint*)(pOut+BpL+4)) = ULONG( c[5] );
 #define PIXEL11_10    Interp1(pOut+BpL+4, c[5], c[9]);
 #define PIXEL11_11    Interp1(pOut+BpL+4, c[5], c[6]);
 #define PIXEL11_12    Interp1(pOut+BpL+4, c[5], c[8]);
@@ -126,7 +127,7 @@ static int YUV1, YUV2;
 static void LerpColor(unsigned char *out, uint c1, uint c2, uint c3, uint f1,
 					  uint f2, uint f3)
 {
-	int     i, total = f1 + f2 + f3;
+	int i, total = f1 + f2 + f3;
 
 	for(i = 0; i < 4; i++)
 	{
@@ -137,66 +138,31 @@ static void LerpColor(unsigned char *out, uint c1, uint c2, uint c3, uint f1,
 
 static void Interp1(unsigned char *pc, uint c1, uint c2)
 {
-	//*((uint*)pc) = (c1*3 + c2) >> 2;
 	LerpColor(pc, c1, c2, 0, 3, 1, 0);
 }
 
 static void Interp2(unsigned char *pc, uint c1, uint c2, uint c3)
 {
-	//  *((uint*)pc) = (c1*2 + c2 + c3) >> 2;
 	LerpColor(pc, c1, c2, c3, 2, 1, 1);
 }
 
-/*static void Interp5(unsigned char * pc, uint c1, uint c2)
-   {
-   *((uint*)pc) = (c1+c2) >> 1;
-   } */
-
 static void Interp6(unsigned char *pc, uint c1, uint c2, uint c3)
 {
-	//*((uint*)pc) = (c1*5+c2*2+c3)/8;
-
-	/*  *((uint*)pc) = ((((c1 & 0x00FF00)*5 + (c2 & 0x00FF00)*2 + (c3 & 0x00FF00) )
-	   & 0x0007F800) +
-	   (((c1 & 0xFF00FF)*5 + (c2 & 0xFF00FF)*2 + (c3 & 0xFF00FF) )
-	   & 0x07F807F8)) >> 3; */
-
 	LerpColor(pc, c1, c2, c3, 5, 2, 1);
 }
 
 static void Interp7(unsigned char *pc, uint c1, uint c2, uint c3)
 {
-	//*((uint*)pc) = (c1*6+c2+c3)/8;
-
-	/*  *((uint*)pc) = ((((c1 & 0x00FF00)*6 + (c2 & 0x00FF00) + (c3 & 0x00FF00) ) &
-	   0x0007F800) +
-	   (((c1 & 0xFF00FF)*6 + (c2 & 0xFF00FF) + (c3 & 0xFF00FF) ) &
-	   0x07F807F8)) >> 3; */
-
 	LerpColor(pc, c1, c2, c3, 6, 1, 1);
 }
 
 static void Interp9(unsigned char *pc, uint c1, uint c2, uint c3)
 {
-	//*((uint*)pc) = (c1*2+(c2+c3)*3)/8;
-
-	/*  *((uint*)pc) = ((((c1 & 0x00FF00)*2 + ((c2 & 0x00FF00) +
-	   (c3 & 0x00FF00))*3 ) & 0x0007F800) +
-	   (((c1 & 0xFF00FF)*2 + ((c2 & 0xFF00FF) +
-	   (c3 & 0xFF00FF))*3 ) & 0x07F807F8))
-	   >> 3; */
-
 	LerpColor(pc, c1, c2, c3, 2, 3, 3);
 }
 
 static void Interp10(unsigned char *pc, uint c1, uint c2, uint c3)
 {
-	//*((uint*)pc) = (c1*14+c2+c3)/16;
-
-	/*  *((uint*)pc) = ((((c1 & 0x00FF00)*14 + (c2 & 0x00FF00) + (c3 & 0x00FF00) )
-	   & 0x000FF000) +
-	   (((c1 & 0xFF00FF)*14 + (c2 & 0xFF00FF) + (c3 & 0xFF00FF) )
-	   & 0x0FF00FF0)) >> 4; */
 	LerpColor(pc, c1, c2, c3, 14, 1, 1);
 }
 
@@ -275,15 +241,15 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 		for(i = 0; i < Xres; i++)
 		{
 			// The image data has 32-bit pixels.
-			dw[2] = *((unsigned int *) (pIn + prevline));
-			dw[5] = *((unsigned int *) pIn);
-			dw[8] = *((unsigned int *) (pIn + nextline));
+			dw[2] = ULONG( *((uint*) (pIn + prevline)) );
+			dw[5] = ULONG( *((uint*) pIn) );
+			dw[8] = ULONG( *((uint*) (pIn + nextline)) );
 
 			if(i > 0)
 			{
-				dw[1] = *((unsigned int *) (pIn + prevline - BPP));
-				dw[4] = *((unsigned int *) (pIn - BPP));
-				dw[7] = *((unsigned int *) (pIn + nextline - BPP));
+				dw[1] = ULONG( *((uint*) (pIn + prevline - BPP)) );
+				dw[4] = ULONG( *((uint*) (pIn - BPP)) );
+				dw[7] = ULONG( *((uint*) (pIn + nextline - BPP)) );
 			}
 			else
 			{
@@ -294,9 +260,9 @@ void GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut, int Xres,
 
 			if(i < Xres - 1)
 			{
-				dw[3] = *((unsigned int *) (pIn + prevline + BPP));
-				dw[6] = *((unsigned int *) (pIn + BPP));
-				dw[9] = *((unsigned int *) (pIn + nextline + BPP));
+				dw[3] = ULONG( *((uint*) (pIn + prevline + BPP)) );
+				dw[6] = ULONG( *((uint*) (pIn + BPP)) );
+				dw[9] = ULONG( *((uint*) (pIn + nextline + BPP)) );
 			}
 			else
 			{

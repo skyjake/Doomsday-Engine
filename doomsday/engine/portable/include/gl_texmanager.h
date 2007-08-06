@@ -101,6 +101,7 @@ extern int      texMagMode, texAniso;
 extern int      useSmartFilter;
 extern byte     loadExtAlways;
 extern int      texMagMode;
+extern int      upscaleAndSharpenPatches;
 
 extern unsigned int curtex;
 

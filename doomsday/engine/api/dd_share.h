@@ -215,6 +215,7 @@ extern          "C" {
         DD_MONOCHROME_PATCHES,      // DJS - convert patch image data to monochrome. 1= linear 2= weighted
         DD_GAME_DATA_FORMAT,
         DD_GAME_DRAW_HUD_HINT,        // Doomsday advises not to draw the HUD
+        DD_UPSCALE_AND_SHARPEN_PATCHES,
         DD_LAST_VALUE,
 
         // General constants (not to be used with Get/Set).

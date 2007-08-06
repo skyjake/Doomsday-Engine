@@ -168,6 +168,7 @@ void HU_Init(void)
 #ifdef __JDOOM__
     // load the heads-up fonts
     j = HU_FONTSTART;
+    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
     for(i = 0; i < HU_FONTSIZE; i++, j++)
     {
         // The original small red font.
@@ -188,6 +189,7 @@ void HU_Init(void)
             memcpy(&hu_font_b[0 + i], &hu_font_b[4], sizeof(dpatch_t));
         }
     }
+    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
 
     // load the map name patches
 # if __DOOM64TC__
@@ -261,6 +263,7 @@ void HU_Init(void)
     // Tell Doomsday to load the following patches in monochrome mode
     // (2 = weighted average)
     DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
+    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
 
     // Heretic/Hexen don't use ASCII numbered font patches
     // plus they don't even have a full set eg '!' = 1 '_'= 58 !!!
@@ -284,9 +287,10 @@ void HU_Init(void)
 
     // deactivate monochrome mode
     DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
+    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
 
     // Heretic and Hexen don't use ASCII numbering for all font patches.
-    // As such we need to switch some pathches.
+    // As such we need to switch some patches.
 
     tmp = hu_font_a[58];
     memcpy(&hu_font_a[58], &hu_font_a[62], sizeof(dpatch_t));

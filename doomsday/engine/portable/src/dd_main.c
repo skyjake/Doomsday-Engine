@@ -896,7 +896,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&monochrome, &monochrome},
     {&gamedataformat, &gamedataformat},
-    {&gamedrawhud, 0}
+    {&gamedrawhud, 0},
+    {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches}
 };
 /* *INDENT-ON* */
 

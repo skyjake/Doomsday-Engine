@@ -150,8 +150,10 @@ void GL_DrawRawScreen(int lump, float offx, float offy)
 /*
  * Drawing with the Current State.
  */
-void GL_DrawPatch_CS(int x, int y, int lumpnum)
+void GL_DrawPatch_CS(int posX, int posY, int lumpnum)
 {
+    float           x = posX;
+    float           y = posY;
     float           w, h;
     texinfo_t      *texinfo;
 
@@ -165,6 +167,16 @@ void GL_DrawPatch_CS(int x, int y, int lumpnum)
         patch_t *p = R_GetPatch(lumpnum);
         x += (int) p->offx;
         y += (int) p->offy;
+    }
+    if(texinfo->offsetX)
+    {
+        // This offset is used only for the extra borders in the 
+        // "upscaled and sharpened" patches, so we can tweak the values
+        // to our liking a bit more.
+        x += texinfo->offsetX * .75f;
+        y += texinfo->offsetY * .75f;
+        w -= fabs(texinfo->offsetX) / 2;
+        h -= fabs(texinfo->offsetY) / 2;
     }
 
     gl.Begin(DGL_QUADS);

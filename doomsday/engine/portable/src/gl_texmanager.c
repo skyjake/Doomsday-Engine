@@ -121,6 +121,7 @@ byte    loadExtAlways = false;  // Always check for extres (cvar)
 byte    paletted = false;       // Use GL_EXT_paletted_texture (cvar)
 boolean load8bit = false;       // Load textures as 8 bit? (w/paltex)
 int     monochrome = 0;         // desaturate a patch (average colours)
+int     upscaleAndSharpenPatches = 0;
 int     useSmartFilter = 0;     // Smart filter mode (cvar: 1=hq2x)
 int     mipmapping = 3, linearRaw = 1, texQuality = TEXQ_BEST;
 int     filterSprites = true;
@@ -2497,6 +2498,49 @@ unsigned int GL_SetRawImage(unsigned int idx, boolean part2)
 }
 
 /**
+ * @param pixels  RGBA data. Input read here, and output written here.
+ * @param width   Width of the buffer.
+ * @param height  Height of the buffer.
+ */
+static void BlackOutlines(byte* pixels, int width, int height)
+{
+    short*  dark = M_Calloc(width * height * 2);
+    int     x, y;
+    int     a, b;
+    byte*   pix;
+    
+    for(y = 1; y < height - 1; ++y)
+    {
+        for(x = 1; x < width - 1; ++x)
+        {
+            pix = pixels + (x + y * width) * 4;
+            if(pix[3] > 128) // Not transparent.
+            {
+                // Apply darkness to surrounding transparent pixels.
+                for(a = -1; a <= 1; ++a)
+                {
+                    for(b = -1; b <= 1; ++b)
+                    {
+                        byte* other = pix + (a + b * width) * 4;
+                        if(other[3] < 128) // Transparent.
+                        {
+                            dark[(x + a) + (y + b) * width] += 40;
+                        }
+                    }
+                }
+            }
+        }
+    }
+            
+    // Apply the darkness.
+    for(a = 0, pix = pixels; a < width * height; ++a, pix += 4)
+    {
+        uint c = pix[3] + dark[a];
+        pix[3] = MIN_OF(255, c);
+    }
+}
+
+/**
  * NOTE: No mipmaps are generated for regular patches.
  */
 DGLuint GL_BindTexPatch(patch_t *p)
@@ -2537,7 +2581,10 @@ DGLuint GL_BindTexPatch(patch_t *p)
     else
     {
         // Use data from the normal lump.
-        int     numpels = SHORT(patch->width) * SHORT(patch->height), alphaChannel;
+        int     addBorder = (upscaleAndSharpenPatches? 1 : 0);
+        int     patchWidth = SHORT(patch->width) + addBorder*2;
+        int     patchHeight = SHORT(patch->height) + addBorder*2;
+        int     numpels = patchWidth * patchHeight, alphaChannel;
         byte   *buffer;
 
         if(!numpels)
@@ -2547,15 +2594,39 @@ DGLuint GL_BindTexPatch(patch_t *p)
         buffer = M_Calloc(2 * numpels);
 
         alphaChannel =
-            DrawRealPatch(buffer, SHORT(patch->width), SHORT(patch->height),
-                          patch, 0, 0, false, 0, true);
-        if(filloutlines)
-            ColorOutlines(buffer, SHORT(patch->width), SHORT(patch->height));
+            DrawRealPatch(buffer, patchWidth, patchHeight,
+                          patch, addBorder, addBorder, false, 0, true);
+        
+        if(filloutlines && !upscaleAndSharpenPatches)
+            ColorOutlines(buffer, patchWidth, patchHeight);
 
         if(monochrome)
-            DeSaturate(buffer, GL_GetPalette(), SHORT(patch->width),
-                       SHORT(patch->height));
+            DeSaturate(buffer, GL_GetPalette(), patchWidth,
+                       patchHeight);
 
+        if(upscaleAndSharpenPatches)
+        {
+            byte* rgbaPixels = M_Malloc(numpels * 4 * 2); // also for the final output
+            byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
+            GL_ConvertBuffer(patchWidth, patchHeight, 2, 4, buffer, rgbaPixels, 
+                             GL_GetPalette(), false);
+            GL_SmartFilter2x(rgbaPixels, upscaledPixels, patchWidth, patchHeight,
+                             patchWidth * 8);
+            patchWidth *= 2;
+            patchHeight *= 2;
+            
+            BlackOutlines(upscaledPixels, patchWidth, patchHeight);
+            
+            // Back to indexed+alpha.
+            GL_ConvertBuffer(patchWidth, patchHeight, 4, 2, upscaledPixels, rgbaPixels, 
+                             GL_GetPalette(), false);
+            
+            // Replace the old buffer.
+            M_Free(upscaledPixels);
+            M_Free(buffer);
+            buffer = rgbaPixels;
+        }
+        
         // See if we have to split the patch into two parts.
         // This is done to conserve the quality of wide textures
         // (like the status bar) on video cards that have a pitifully
@@ -2563,28 +2634,28 @@ DGLuint GL_BindTexPatch(patch_t *p)
         if(SHORT(patch->width) > glMaxTexSize)
         {
             // The width of the first part is glMaxTexSize.
-            int     part2width = SHORT(patch->width) - glMaxTexSize;
+            int     part2width = patchWidth - glMaxTexSize;
             byte   *tempbuff =
                 M_Malloc(2 * MAX_OF(glMaxTexSize, part2width) *
-                         SHORT(patch->height));
+                         patchHeight);
 
             // We'll use a temporary buffer for doing to splitting.
             // First, part one.
-            pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
-                   glMaxTexSize, SHORT(patch->height), alphaChannel,
-                   0, 0, 0, 0, glMaxTexSize, SHORT(patch->height));
+            pixBlt(buffer, patchWidth, patchHeight, tempbuff,
+                   glMaxTexSize, patchHeight, alphaChannel,
+                   0, 0, 0, 0, glMaxTexSize, patchHeight);
             p->tex =
-                GL_UploadTexture(tempbuff, glMaxTexSize, SHORT(patch->height),
+                GL_UploadTexture(tempbuff, glMaxTexSize, patchHeight,
                                  alphaChannel, true, false, false, false,
                                  DGL_NEAREST, DGL_LINEAR, texAniso,
                                  DGL_CLAMP, DGL_CLAMP, 0);
 
             // Then part two.
-            pixBlt(buffer, SHORT(patch->width), SHORT(patch->height), tempbuff,
-                   part2width, SHORT(patch->height), alphaChannel, glMaxTexSize,
-                   0, 0, 0, part2width, SHORT(patch->height));
+            pixBlt(buffer, patchWidth, patchHeight, tempbuff,
+                   part2width, patchHeight, alphaChannel, glMaxTexSize,
+                   0, 0, 0, part2width, patchHeight);
             p->tex2 =
-                GL_UploadTexture(tempbuff, part2width, SHORT(patch->height),
+                GL_UploadTexture(tempbuff, part2width, patchHeight,
                                  alphaChannel, true, false, false, false,
                                  DGL_NEAREST, glmode[texMagMode], texAniso,
                                  DGL_CLAMP, DGL_CLAMP, 0);
@@ -2599,13 +2670,15 @@ DGLuint GL_BindTexPatch(patch_t *p)
         {
             // Generate a texture.
             p->tex =
-                GL_UploadTexture(buffer, SHORT(patch->width), SHORT(patch->height),
+                GL_UploadTexture(buffer, patchWidth, patchHeight,
                                  alphaChannel, true, false, false, false,
                                  DGL_NEAREST, glmode[texMagMode], texAniso,
                                  DGL_CLAMP, DGL_CLAMP, 0);
 
-            p->info.width = SHORT(patch->width);
-            p->info.height = SHORT(patch->height);
+            p->info.width = SHORT(patch->width) + addBorder*2;
+            p->info.height = SHORT(patch->height) + addBorder*2;
+            p->info.offsetX = -addBorder;
+            p->info.offsetY = -addBorder;
 
             p->tex2 = 0;
             p->info2.width = p->info2.height = 0;
