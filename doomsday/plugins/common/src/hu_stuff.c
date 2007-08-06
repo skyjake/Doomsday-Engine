@@ -1122,7 +1122,7 @@ void M_WriteText(int x, int y, const char *string)
 void M_WriteText2(int x, int y, const char *string, dpatch_t *font, float red,
                   float green, float blue, float alpha)
 {
-    M_WriteText3(x, y, string, font, red, green, blue, alpha, true, 0);
+    M_WriteText3(x, y, string, font, red, green, blue, alpha, false, 0);
 }
 
 /*
