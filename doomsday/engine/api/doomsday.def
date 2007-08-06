@@ -1,7 +1,7 @@
 NAME			"DOOMSDAY"
 
 ; Highest ordinal is currently 
-; --> 344 <--
+; --> 345 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -128,6 +128,7 @@ EXPORTS
 	P_BlockLinesIterator		@68 NONAME
 	P_BlockThingsIterator		@69 NONAME
 	P_BlockPolyobjsIterator		@70 NONAME
+	P_SubsectorBoxIterator		@345 NONAME
 	P_ThingLinesIterator		@71 NONAME
 	P_ThingSectorsIterator		@72 NONAME
 	P_LineThingsIterator		@73 NONAME

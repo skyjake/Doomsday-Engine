@@ -186,6 +186,8 @@ extern          "C" {
     void            P_LinkThing(struct mobj_s *thing, byte flags);
     void            P_UnlinkThing(struct mobj_s *thing);
     void            P_PointToBlock(fixed_t x, fixed_t y, int *bx, int *by);
+
+    // Object type in blockmap iterators.
     boolean         P_BlockLinesIterator(int x, int y,
                                          boolean (*func) (struct line_s *,
                                                           void *), void *);
@@ -195,26 +197,32 @@ extern          "C" {
     boolean         P_BlockPolyobjsIterator(int x, int y,
                                             boolean (*func) (void *, void *),
                                             void *);
+    boolean         P_SubsectorBoxIterator(fixed_t *box, sector_t *sector,
+                                           boolean (*func) (subsector_t *, void *),
+                                           void *parm);
+
+    // Thing linked object iterators.
     boolean         P_ThingLinesIterator(struct mobj_s *thing,
                                          boolean (*func) (struct line_s *,
                                                           void *), void *);
     boolean         P_ThingSectorsIterator(struct mobj_s *thing,
                                            boolean (*func) (sector_t*, void*),
                                            void *data);
+
+    // Object type touching things iterators.
     boolean         P_LineThingsIterator(struct line_s *line,
                                          boolean (*func) (struct mobj_s *,
                                                           void *), void *data);
     boolean         P_SectorTouchingThingsIterator
                         (sector_t *sector, boolean (*func) (struct mobj_s*, void*),
                          void *data);
+
+
     boolean         P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2,
                                    fixed_t y2, int flags,
                                    boolean (*trav) (intercept_t *));
     boolean         P_CheckSight(struct mobj_s *t1, struct mobj_s *t2);
     void            P_SetState(struct mobj_s *mobj, int statenum);
-    void            P_SpawnDamageParticleGen(struct mobj_s *mo,
-                                             struct mobj_s *inflictor,
-                                             int amount);
 
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindClass);
@@ -317,6 +325,9 @@ extern          "C" {
     uint            P_RegisterCustomMapProperty(int type, valuetype_t dataType,
                                                 char *name);
     void            P_MergeCommand(ticcmd_t *dest, ticcmd_t *src); // temporary.
+    void            P_SpawnDamageParticleGen(struct mobj_s *mo,
+                                             struct mobj_s *inflictor,
+                                             int amount);
 
     // Play: Polyobjs.
     void            PO_Allocate(void);
