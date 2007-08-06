@@ -353,7 +353,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-pause pause",
         "bindevent key-p pause",
         
-        "bindevent key-h showhud", // FIXME: does 'showhud' work? -jk
+        "bindevent key-h showhud",
         "bindevent key-minus {viewsize -}",
         "bindevent key-equals {viewsize +}",
         

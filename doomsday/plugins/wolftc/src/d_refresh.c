@@ -202,12 +202,12 @@ void R_DrawLevelTitle(void)
         y += 14;                //9;
     }
 
-    gl.Color4f(.5f, .5f, .5f, alpha);
+    //gl.Color4f(.5f, .5f, .5f, alpha);
     if(lauthor && W_IsFromIWAD(lnames[mapnum].lump) &&
        (!cfg.hideAuthorIdSoft || stricmp(lauthor, "id software")))
     {
-        M_WriteText2(160 - M_StringWidth(lauthor, hu_font_a) / 2, y, lauthor,
-                     hu_font_a, -1, -1, -1, -1);
+        M_WriteText3(160 - M_StringWidth(lauthor, hu_font_a) / 2, y, lauthor,
+                     hu_font_a, .5f, .5f, .5f, alpha, false, 0);
     }
 
     gl.MatrixMode(DGL_MODELVIEW);
