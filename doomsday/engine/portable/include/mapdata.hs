@@ -11,8 +11,6 @@ end
 
 struct vertex
     -       fvertex_t	v
-    -       uint        numsecowners // Number of sector owners.
-    -       uint*       secowners	// Sector indices [numsecowners] size.
     -       uint        numlineowners // Number of line owners.
     -       lineowner_s* lineowners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     -       boolean     anchored	// One or more of our line owners are one-sided.

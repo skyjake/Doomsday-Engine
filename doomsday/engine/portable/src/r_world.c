@@ -1139,32 +1139,6 @@ static void R_SetVertexLineOwner(vertex_t *vtx, line_t *lineptr,
         lineptr->L_vo2 = newOwner;
 }
 
-static void R_SetVertexSectorOwner(ownerlist_t *ownerList, sector_t *secptr)
-{
-    uint        i;
-    ownernode_t *node;
-
-    if(!secptr)
-        return;
-
-    // Has this sector been already registered?
-    if(ownerList->count)
-    {
-        for(i = 0, node = ownerList->head; i < ownerList->count; ++i,
-            node = node->next)
-            if((sector_t*) node->data == secptr)
-                return;             // Yes, we can exit.
-    }
-
-    // Add a new owner.
-    ownerList->count++;
-
-    node = M_Malloc(sizeof(ownernode_t));
-    node->data = secptr;
-    node->next = ownerList->head;
-    ownerList->head = node;
-}
-
 /**
  * Generates an array of sector references for each vertex. The list
  * includes all the sectors the vertex belongs to.
@@ -1181,10 +1155,6 @@ static void R_BuildVertexOwners(void)
     sector_t       *sec;
     line_t         *line;
     lineowner_t    *lineOwners, *allocator;
-    ownerlist_t    *vtxSecOwnerLists;
-
-    // Allocate memory for vertex sector owner processing.
-    vtxSecOwnerLists = M_Calloc(sizeof(ownerlist_t) * numvertexes);
 
     // We know how many vertex line owners we need (numlines * 2).
     lineOwners =
@@ -1201,44 +1171,15 @@ static void R_BuildVertexOwners(void)
             for(p = 0; p < 2; ++p)
             {
                 vertex_t    *vtx = line->L_v(p);
-                uint        idx = GET_VERTEX_IDX(vtx);
-
-                if(line->L_frontside)
-                    R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
-                                           line->L_frontsector);
-                if(line->L_backside)
-                    R_SetVertexSectorOwner(&vtxSecOwnerLists[idx],
-                                           line->L_backsector);
-
                 R_SetVertexLineOwner(vtx, line, &allocator);
             }
         }
     }
 
-    // Now "harden" the sector owner linked lists into arrays and free as
-    // we go. Also need to sort line owners and then finish the rings.
+    // Sort line owners and then finish the rings.
     for(i = 0; i < numvertexes; ++i)
     {
         vertex_t   *v = VERTEX_PTR(i);
-
-        // Sector owners:
-        v->numsecowners = vtxSecOwnerLists[i].count;
-        if(v->numsecowners != 0)
-        {
-            uint       *ptr;
-            ownernode_t *node, *p;
-
-            v->secowners =
-                Z_Malloc(v->numsecowners * sizeof(uint), PU_LEVELSTATIC, 0);
-            for(k = 0, ptr = v->secowners, node = vtxSecOwnerLists[i].head;
-                k < v->numsecowners; ++k, ptr++)
-            {
-                p = node->next;
-                *ptr = GET_SECTOR_IDX((sector_t*) node->data);
-                M_Free(node);
-                node = p;
-            }
-        }
 
         // Line owners:
         if(v->numlineowners != 0)
@@ -1302,7 +1243,6 @@ do
 #endif
         }
     }
-    M_Free(vtxSecOwnerLists);
 
     // How much time did we spend?
     VERBOSE(Con_Message
@@ -1542,7 +1482,7 @@ static uint MarkSecSelfRefRootLines(sector_t *sec)
                 // So, check all line owners of each vertex.
 
                 // Test simple case - single line dividing a sector
-                if(!(vtx[0]->numsecowners == 1 && vtx[1]->numsecowners == 1))
+                //if(!(vtx[0]->numsecowners == 1 && vtx[1]->numsecowners == 1))
                 {
                     lineowner_t *base;
                     line_t      *lOwner, *rOwner;

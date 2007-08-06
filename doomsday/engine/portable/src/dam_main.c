@@ -1736,8 +1736,6 @@ static void allocateMapData(gamemap_t *map)
         vtx->numlineowners = 0;
         vtx->lineowners = NULL;
         vtx->anchored = false;
-        vtx->numsecowners = 0;
-        vtx->secowners = NULL;
     }
 
     // Linedefs + missing fronts.

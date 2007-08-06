@@ -10,8 +10,6 @@
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
     fvertex_t           v;
-    unsigned int        numsecowners;  // Number of sector owners.
-    unsigned int*       secowners;     // Sector indices [numsecowners] size.
     unsigned int        numlineowners; // Number of line owners.
     struct lineowner_s* lineowners;    // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     boolean             anchored;      // One or more of our line owners are one-sided.

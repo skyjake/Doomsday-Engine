@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -713,21 +713,83 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
 }
 
 /**
- * @return          <code>true</code> if the quad has a division at the
- *                  specified height.
+ * @return          @true,  if there is a division at the specified height.
  */
-static int Rend_CheckDiv(rendpoly_t *quad, int side, float height)
+static int checkDiv(walldiv_t *div, float height)
 {
-    uint        i, num;
-    walldiv_t  *div;
+    uint        i;
 
-    div = &quad->wall->divs[side];
-    num = div->num;
-    for(i = 0; i < num; ++i)
+    for(i = 0; i < div->num; ++i)
         if(div->pos[i] == height)
             return true;
 
     return false;
+}
+
+static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
+                             walldiv_t *div, float bottomZ, float topZ,
+                             boolean doRight)
+{
+    uint        i;
+    line_t     *iter;
+    sector_t   *scanSec;
+    lineowner_t *base, *own;
+    boolean     clockwise = !doRight;
+    boolean     stopScan = false;
+
+    div->num = 0;
+
+    if(!seg->linedef || !seg->sidedef)
+        return; // Mini-segs arn't drawn.
+
+    // Only segs at sidedef ends can/should be split.
+    if(!(seg == seg->sidedef->segs[0] && !doRight ||
+         seg == seg->sidedef->segs[seg->sidedef->segcount -1] && doRight))
+        return;
+
+    // Retrieve the start owner node.
+    base = own = R_GetVtxLineOwner(seg->linedef->L_v(seg->side^doRight), seg->linedef);
+    do
+    {
+        own = own->link[clockwise];
+
+        if(own == base)
+            stopScan = true;
+        else
+        {
+            iter = own->line;
+
+            if(iter->flags & LINEF_SELFREF)
+                continue;
+
+            scanSec = NULL;
+            if(iter->L_frontside && iter->L_frontsector != frontSec)
+                scanSec = iter->L_frontsector;
+            else if(iter->L_backside && iter->L_backsector != frontSec)
+                scanSec = iter->L_backsector;
+
+            if(scanSec)
+                for(i = 0; i < scanSec->planecount && !stopScan; ++i)
+                {
+                    plane_t *pln = scanSec->SP_plane(i);
+                    if(pln->visheight > bottomZ && pln->visheight < topZ)
+                    {
+                        if(!checkDiv(div, pln->visheight))
+                        {
+                            div->pos[div->num++] = pln->visheight;
+
+                            // Have we reached the div limit?
+                            if(div->num == RL_MAX_DIVS)
+                                stopScan = true;
+                        }
+                    }
+                }
+
+                // Stop the scan when a single sided line is reached.
+            if(!iter->L_frontside || !iter->L_backside)
+                stopScan = true;
+        }
+    } while(!stopScan);
 }
 
 /**
@@ -738,10 +800,7 @@ static void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
                                     sector_t *frontsec, segsection_t mode)
 {
     uint        i, k;
-    vertex_t   *vtx;
-    sector_t   *sec;
     float       hi, low;
-    float       sceil, sfloor;
     walldiv_t  *div;
 
     switch(mode)
@@ -769,63 +828,23 @@ static void Rend_WallHeightDivision(rendpoly_t *quad, const seg_t *seg,
         return;
     }
 
-    quad->wall->divs[0].num = 0;
-    quad->wall->divs[1].num = 0;
-
-    // Check both ends.
     for(i = 0; i < 2; ++i)
     {
-        vtx = seg->v[i];
         div = &quad->wall->divs[i];
-        if(vtx->numsecowners > 1)
+        calcSegDivisions(seg, frontsec, div, low, hi, i);
+
+        if(div->num > 0)
+            quad->type = RP_DIVQUAD;
+
+        // We need to sort the divisions for the renderer.
+        if(div->num > 1)
         {
-            boolean isDone;
+            // Sorting is required. This shouldn't take too long...
+            // There seldom are more than one or two divisions.
+            qsort(div->pos, div->num, sizeof(float),
+                  i!=0 ? DivSortDescend : DivSortAscend);
+        }
 
-            // More than one sectors! The checks must be made.
-            isDone = false;
-            for(k = 0; !isDone && k < vtx->numsecowners; ++k)
-            {
-                sec = SECTOR_PTR(vtx->secowners[k]);
-                if(!(sec == frontsec || sec == seg->SG_backsector))
-                {
-                    sceil = sec->SP_ceilvisheight;
-                    sfloor = sec->SP_floorvisheight;
-
-                    // Divide at the sector's ceiling height?
-                    if(sceil > low && sceil < hi)
-                    {
-                        quad->type = RP_DIVQUAD;
-                        if(!Rend_CheckDiv(quad, i, sceil))
-                            div->pos[div->num++] = sceil;
-                    }
-                    // Have we reached the div limit?
-                    if(div->num == RL_MAX_DIVS)
-                        isDone = true;
-                    
-                    if(!isDone)
-                    {
-                        // Divide at the sector's floor height?
-                        if(sfloor > low && sfloor < hi)
-                        {
-                            quad->type = RP_DIVQUAD;
-                            if(!Rend_CheckDiv(quad, i, sfloor))
-                                div->pos[div->num++] = sfloor;
-                        }
-                        // Have we reached the div limit?
-                        if(div->num == RL_MAX_DIVS)
-                            isDone = true;
-                    }
-                }
-            }
-
-            // We need to sort the divisions for the renderer.
-            if(div->num > 1)
-            {
-                // Sorting is required. This shouldn't take too long...
-                // There seldom are more than one or two divisions.
-                qsort(div->pos, div->num, sizeof(float),
-                      i!=0 ? DivSortDescend : DivSortAscend);
-            }
 #ifdef RANGECHECK
 for(k = 0; k < div->num; ++k)
     if(div->pos[k] > hi || div->pos[k] < low)
@@ -834,7 +853,6 @@ for(k = 0; k < div->num; ++k)
                   i, div->pos[k], hi, low, div->num);
     }
 #endif
-        }
     }
 }
 
