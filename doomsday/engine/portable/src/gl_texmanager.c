@@ -577,7 +577,7 @@ boolean GL_LoadReflectionMap(ded_reflection_t *loading_ref)
     {
         // Need to load the shiny texture.
         ref->shiny_tex = GL_LoadGraphics2(RC_LIGHTMAP, ref->shiny_map.path,
-                                          LGM_NORMAL, DGL_FALSE, true);
+                                          LGM_NORMAL, DGL_FALSE, true, 0);
         if(ref->shiny_tex == 0)
         {
             VERBOSE(Con_Printf("GL_LoadReflectionMap: %s not found!\n",
@@ -594,7 +594,7 @@ boolean GL_LoadReflectionMap(ded_reflection_t *loading_ref)
         {
             ref->mask_tex = GL_LoadGraphics2(RC_LIGHTMAP,
                                              ref->mask_map.path,
-                                             LGM_NORMAL, DGL_TRUE, true);
+                                             LGM_NORMAL, DGL_TRUE, true, 0);
             if(ref->mask_tex == 0)
             {
                 VERBOSE(Con_Printf("GL_LoadReflectionMap: %s not found!\n",
@@ -1174,20 +1174,24 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
     // Detail textures are faded to gray depending on the contrast factor.
     // The texture is also progressively faded towards gray when each
     // mipmap level is loaded.
-    content.grayMipmap = contrast * 255;
-    gl.SetInteger(DGL_GRAY_MIPMAP, content.grayMipmap);
+    content.grayMipmap = MINMAX_OF(0, contrast * 255, 255);
 
     // Try external first.
     if(external != NULL)
     {
-        inst->tex = GL_LoadGraphics2(RC_TEXTURE, external, LGM_NORMAL,
-            DGL_GRAY_MIPMAP, true);
+        //inst->tex = GL_LoadGraphics2(RC_TEXTURE, external, LGM_NORMAL,
+        //    DGL_GRAY_MIPMAP, true, (content.grayMipmap << TXCF_GRAY_MIPMAP_LEVEL_SHIFT));
+        inst->tex = GL_LoadGraphics4(RC_TEXTURE, external, LGM_NORMAL,
+                                     DGL_GRAY_MIPMAP, DGL_LINEAR_MIPMAP_LINEAR, 
+                                     DGL_LINEAR, -1, DGL_REPEAT, DGL_REPEAT, 
+                                     (content.grayMipmap << TXCF_GRAY_MIPMAP_LEVEL_SHIFT));
 
         if(inst->tex == 0)
         {
             VERBOSE(Con_Message("GL_LoadDetailTexture: "
                                 "Failed to load: %s\n", external));
         }
+        return inst->tex; // We're done.
     }
     else
     {
@@ -1238,6 +1242,7 @@ DGLuint GL_LoadDetailTexture(int num, float contrast, const char *external)
     content.magFilter = DGL_LINEAR;
     content.anisoFilter = -1; // Best
     content.wrap[0] = content.wrap[1] = DGL_REPEAT;
+    content.flags |= TXCF_GRAY_MIPMAP | (content.grayMipmap << TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
 
     inst->tex = GL_NewTexture(&content);
 
@@ -1431,7 +1436,7 @@ DGLuint GL_PrepareDDTexture(ddtextureid_t which, texinfo_t **texinfo)
         {
             ddTextures[which].tex =
                 GL_LoadGraphics2(RC_GRAPHICS, ddTexNames[which], LGM_NORMAL,
-                                 DGL_TRUE, false);
+                                 DGL_TRUE, false, 0);
 
             if(!ddTextures[which].tex)
                 Con_Error("GL_PrepareDDTexture: \"%s\" not found!\n",
@@ -1655,16 +1660,17 @@ byte *GL_LoadHighResPatch(image_t *img, char *name)
 
 DGLuint GL_LoadGraphics(const char *name, gfxmode_t mode)
 {
-    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, DGL_FALSE, true);
+    return GL_LoadGraphics2(RC_GRAPHICS, name, mode, DGL_FALSE, true, 0);
 }
 
 DGLuint GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                         gfxmode_t mode, int useMipmap, boolean clamped)
+                         gfxmode_t mode, int useMipmap, boolean clamped, 
+                         int otherFlags)
 {
     return GL_LoadGraphics4(resClass, name, mode, useMipmap,
                             DGL_LINEAR, glmode[texMagMode], 0 /*no anisotropy*/,
                             clamped? DGL_CLAMP : DGL_REPEAT,
-                            clamped? DGL_CLAMP : DGL_REPEAT, 0);
+                            clamped? DGL_CLAMP : DGL_REPEAT, otherFlags);
 }
 
 DGLuint GL_LoadGraphics3(const char *name, gfxmode_t mode,
@@ -1745,7 +1751,7 @@ DGLuint GL_LoadGraphics4(resourceclass_t resClass, const char *name,
                                              image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
                                            image.width, image.height, image.pixels,
                                            ( otherFlags | (useMipmap? TXCF_MIPMAP : 0) |
-                                             (useMipmap == DGL_GRAY_MIPMAP? TXCF_GET_GRAY_MIPMAP : 0) |
+                                             (useMipmap == DGL_GRAY_MIPMAP? TXCF_GRAY_MIPMAP : 0) |
                                              (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0) ),
                                            (useMipmap ? glmode[mipmapping] : DGL_LINEAR),
                                            glmode[texMagMode], texAniso,

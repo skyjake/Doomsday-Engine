@@ -282,10 +282,10 @@ DGLuint GL_NewTexture(texturecontent_t *content)
         content->bufferSize = content->width * content->height * bytesPerPixel;
     }
     
-    if(content->flags & TXCF_GET_GRAY_MIPMAP)
+    if(content->flags & TXCF_GRAY_MIPMAP)
     {
-        // Use the current level of gray mipmap.
-        content->grayMipmap = gl.GetInteger(DGL_GRAY_MIPMAP);
+        content->grayMipmap = ((content->flags & TXCF_GRAY_MIPMAP_LEVEL_MASK) 
+                               >> TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
     }
     
     content->name = GL_GetReservedName();

@@ -129,7 +129,7 @@ void PG_InitTextures(void)
 
     // Load the zeroth texture (the default: a blurred point).
     ptctexname[0] =
-        GL_LoadGraphics2(RC_GRAPHICS, "Zeroth", LGM_WHITE_ALPHA, DGL_TRUE, true);
+        GL_LoadGraphics2(RC_GRAPHICS, "Zeroth", LGM_WHITE_ALPHA, DGL_TRUE, true, 0);
 
     if(ptctexname[0] == 0)
     {

@@ -141,7 +141,8 @@ void            GL_DestroyImage(image_t *img);
 byte           *GL_LoadTexture(image_t *img, char *name);
 DGLuint         GL_LoadGraphics(const char *name, gfxmode_t mode);
 DGLuint         GL_LoadGraphics2(resourceclass_t resClass, const char *name,
-                                 gfxmode_t mode, int useMipmap, boolean clamped);
+                                 gfxmode_t mode, int useMipmap, boolean clamped,
+                                 int otherFlags);
 DGLuint         GL_LoadGraphics3(const char *name, gfxmode_t mode,
                                  int minFilter, int magFilter, int anisoFilter,
                                  int wrapS, int wrapT, int otherFlags);

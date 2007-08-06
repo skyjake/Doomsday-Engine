@@ -51,13 +51,15 @@ typedef struct texturecontent_s {
 // Flags for texture content.
 #define TXCF_NO_COMPRESSION             0x1
 #define TXCF_MIPMAP                     0x2
-#define TXCF_GET_GRAY_MIPMAP            0x4
+#define TXCF_GRAY_MIPMAP                0x4
 #define TXCF_EASY_UPLOAD                0x8
 #define TXCF_UPLOAD_ARG_ALPHACHANNEL    0x10
 #define TXCF_UPLOAD_ARG_RGBDATA         0x20
 #define TXCF_UPLOAD_ARG_NOSTRETCH       0x40
 #define TXCF_UPLOAD_ARG_NOSMARTFILTER   0x80
 #define TXCF_NEVER_DEFER                0x100
+#define TXCF_GRAY_MIPMAP_LEVEL_SHIFT    24
+#define TXCF_GRAY_MIPMAP_LEVEL_MASK     0xff000000
 
 void            GL_InitDeferred(void);
 void            GL_ShutdownDeferred(void);
