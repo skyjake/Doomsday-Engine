@@ -121,6 +121,9 @@ typedef struct {
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     float           inventoryTimer; // Number of seconds until the invetory auto-hides.
 
+    byte            counterCheat;
+    float           counterCheatScale;
+
     // Automap stuff.
 /*    int             automapPos;
     float           automapWidth;
@@ -136,9 +139,9 @@ typedef struct {
     byte            automapShowDoors;
     float           automapDoorGlow;
     byte            automapBabyKeys;
-
-    byte            counterCheat;
-    float           counterCheatScale;
+    float           automapZoomSpeed;
+    float           automapPanSpeed;
+    byte            automapPanResetOnOpen;
 
     int             snd_3D, messageson;
     char           *chat_macros[10];

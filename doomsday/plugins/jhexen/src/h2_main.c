@@ -3,9 +3,9 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright ¬© 2003-2007 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
- *\author Copyright ¬© 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright ¬© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * versions of it that use the same license as the libjhexen or
  * libjheretic libraries), and distribute the linked executables.
  * You must obey the GNU General Public License in all respects for
- * all of the code used other than ‚Äúlibjhexen or libjheretic‚Äù. If
+ * all of the code used other than ìlibjhexen or libjhereticî. If
  * you modify this file, you may extend this exception to your
  * version of the file, but you are not obligated to do so. If you
  * do not wish to do so, delete this exception statement from your version.
@@ -359,6 +359,9 @@ void H2_PreInit(void)
     cfg.automapHudDisplay = 2;
     cfg.automapRotate = true;
     cfg.automapBabyKeys = false;
+    cfg.automapZoomSpeed = .1f;
+    cfg.automapPanSpeed = .5f;
+    cfg.automapPanResetOnOpen = true;
     cfg.counterCheatScale = .7f; //From jHeretic
 
     cfg.msgShow = true;

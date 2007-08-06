@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2005-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -186,6 +186,7 @@ vgline_t         player_arrow[] = {
 #define CYMTOF(map, ypos)  ((map)->window.y + ((map)->window.height - MTOF((map), (ypos) - (map)->vframe[0][VY])))
 
 #define AM_MAXSPECIALLINES      32
+#define NUM_SSEC_COLORS         10
 
 // TYPES -------------------------------------------------------------------
 
@@ -216,6 +217,9 @@ typedef struct automapcfg_s {
     float       lineGlowScale;
     boolean     glowingLineSpecials;
     float       backgroundRGBA[4];
+    float       panSpeed;
+    boolean     panResetOnOpen;
+    float       zoomSpeed;
 
     mapobjectinfo_t unseenLine;
     mapobjectinfo_t singleSidedLine;
@@ -295,14 +299,12 @@ typedef struct automap_s {
     float       targetAngle; // Should be at.
     float       oldAngle; // Previous.
 
-// Viewer frame coordinates on map
-// \todo does not consider rotation!
+// Viewer frame coordinates on map.
     float       vframe[2][2]; // {TL{x,y}, BR{x,y}}
 
-// Clip bbox coordinates on map.
-    float       vbbox[4];
+    float       vbbox[4]; // Clip bbox coordinates on map.
 
-    // Misc
+// Misc
     int         cheating;
 
     // Marked map points.
@@ -320,6 +322,11 @@ typedef struct automaptex_s {
     int         width, height;
     DGLuint     tex;
 } automaptex_t;
+
+typedef struct {
+    player_t   *plr;
+    automap_t  *map;
+} ssecitervars_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -347,6 +354,7 @@ DEFCC(CCmdMapAction);
 static void setWindowFullScreenMode(automap_t *map, int value);
 static void setViewTarget(automap_t *map, float x, float y);
 static void setViewScaleTarget(automap_t *map, float scale);
+static void setViewAngleTarget(automap_t *map, float angle);
 static void setViewRotateMode(automap_t *map, boolean on);
 static void clearMarks(automap_t *map);
 
@@ -372,14 +380,17 @@ extern DGLuint amMaskTexture;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-static vectorgrap_t *vectorGraphs[NUM_VECTOR_GRAPHS];
-
-float automapZoomSpeed = .1f;
+int mapviewplayer;
 
 cvar_t  mapCVars[] = {
-/*    {"map-position", 0, CVT_INT, &cfg.automapPos, 0, 8},
-    {"map-width", 0, CVT_FLOAT, &cfg.automapWidth, 0, 1},
-    {"map-height", 0, CVT_FLOAT, &cfg.automapHeight, 0, 1},*/
+    {"map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1},
+#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
+    {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1},
+#endif
+    {"map-background-r", 0, CVT_FLOAT, &cfg.automapBack[0], 0, 1},
+    {"map-background-g", 0, CVT_FLOAT, &cfg.automapBack[1], 0, 1},
+    {"map-background-b", 0, CVT_FLOAT, &cfg.automapBack[2], 0, 1},
+    {"map-background-a", 0, CVT_FLOAT, &cfg.automapBack[3], 0, 1},
     {"map-color-unseen-r", 0, CVT_FLOAT, &cfg.automapL0[0], 0, 1},
     {"map-color-unseen-g", 0, CVT_FLOAT, &cfg.automapL0[1], 0, 1},
     {"map-color-unseen-b", 0, CVT_FLOAT, &cfg.automapL0[2], 0, 1},
@@ -392,19 +403,13 @@ cvar_t  mapCVars[] = {
     {"map-color-ceiling-r", 0, CVT_FLOAT, &cfg.automapL3[0], 0, 1},
     {"map-color-ceiling-g", 0, CVT_FLOAT, &cfg.automapL3[1], 0, 1},
     {"map-color-ceiling-b", 0, CVT_FLOAT, &cfg.automapL3[2], 0, 1},
-    {"map-background-r", 0, CVT_FLOAT, &cfg.automapBack[0], 0, 1},
-    {"map-background-g", 0, CVT_FLOAT, &cfg.automapBack[1], 0, 1},
-    {"map-background-b", 0, CVT_FLOAT, &cfg.automapBack[2], 0, 1},
-    {"map-background-a", 0, CVT_FLOAT, &cfg.automapBack[3], 0, 1},
-    {"map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1},
-    {"map-rotate", 0, CVT_BYTE, &cfg.automapRotate, 0, 1},
-    {"map-huddisplay", 0, CVT_INT, &cfg.automapHudDisplay, 0, 2},
     {"map-door-colors", 0, CVT_BYTE, &cfg.automapShowDoors, 0, 1},
     {"map-door-glow", 0, CVT_FLOAT, &cfg.automapDoorGlow, 0, 200},
-    {"map-zoom-speed", 0, CVT_FLOAT, &automapZoomSpeed, 0, 1},
-#if __JDOOM__ || __JHERETIC__ || __DOOM64TC__ || __WOLFTC__
-    {"map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1},
-#endif
+    {"map-huddisplay", 0, CVT_INT, &cfg.automapHudDisplay, 0, 2},
+    {"map-pan-speed", 0, CVT_FLOAT, &cfg.automapPanSpeed, 0, 1},
+    {"map-pan-resetonopen", 0, CVT_BYTE, &cfg.automapPanResetOnOpen, 0, 1},
+    {"map-rotate", 0, CVT_BYTE, &cfg.automapRotate, 0, 1},
+    {"map-zoom-speed", 0, CVT_FLOAT, &cfg.automapZoomSpeed, 0, 1},
     {NULL}
 };
 
@@ -423,7 +428,7 @@ ccmd_t  mapCCmds[] = {
 
 static automap_t automaps[MAXPLAYERS];
 
-int mapviewplayer;
+static vectorgrap_t *vectorGraphs[NUM_VECTOR_GRAPHS];
 
 #if __JDOOM__
 static int maplumpnum = 0; // if 0 no background image will be drawn
@@ -471,7 +476,7 @@ static float bounds[2][2]; // {TL{x,y}, BR{x,y}}
 static dpatch_t markerPatches[10]; // numbers used for marking by the automap (lump indices)
 
 // Used in subsector debug display.
-static float subColors[10][3]; // ten sets of RGB
+static float subColors[NUM_SSEC_COLORS][3]; // ten sets of RGB
 
 // CODE --------------------------------------------------------------------
 
@@ -573,6 +578,47 @@ static mapobjectinfo_t *getMapObjectInfo(automap_t *map, int objectname)
     }
 
     return NULL;
+}
+
+static mapobjectinfo_t *getInfoForSpecialLine(automap_t *map, int special,
+                                              sector_t *frontsector,
+                                              sector_t *backsector)
+{
+    uint        i;
+    mapobjectinfo_t *info = NULL;
+
+    if(special > 0)
+    {
+        for(i = 0; i < map->numSpecialLines && !info; ++i)
+        {
+            automapspecialline_t *sl = &map->specialLines[i];
+
+            // Is there a line special restriction?
+            if(sl->special)
+            {
+                if(sl->special != special)
+                    continue;
+            }
+
+            // Is there a sided restriction?
+            if(sl->sided)
+            {
+                if(sl->sided == 1 && backsector && frontsector)
+                    continue;
+                else if(sl->sided == 2 && (!backsector || !frontsector))
+                    continue;
+            }
+
+            // Is there a cheat level restriction?
+            if(sl->cheatLevel > map->cheating)
+                continue;
+
+            // This is the one!
+            info = &sl->info;
+        }
+    }
+
+    return info;
 }
 
 /**
@@ -736,6 +782,9 @@ void AM_Init(void)
         // \todo All players' maps work from the same config!
         map->cfg.lineGlowScale = cfg.automapDoorGlow;
         map->cfg.glowingLineSpecials = cfg.automapShowDoors;
+        map->cfg.panSpeed = cfg.automapPanSpeed;
+        map->cfg.panResetOnOpen = cfg.automapPanResetOnOpen;
+        map->cfg.zoomSpeed = cfg.automapZoomSpeed;
         setViewRotateMode(map, cfg.automapRotate);
 
         AM_SetVectorGraphic(i, AMO_THINGPLAYER, VG_ARROW);
@@ -762,7 +811,7 @@ void AM_Init(void)
     }
 
     // Set the colors for the subsector debug display.
-    for(i = 0; i < 10; ++i)
+    for(i = 0; i < NUM_SSEC_COLORS; ++i)
     {
         subColors[i][0] = ((float) M_Random()) / 255.f;
         subColors[i][1] = ((float) M_Random()) / 255.f;
@@ -899,17 +948,30 @@ void AM_Start(int pnum)
     map->active = true;
     AM_SetGlobalAlphaTarget(pnum, 1);
 
-    /*if(map->panMode || !players[map->followPlayer].plr->ingame)
+    if(!players[map->followPlayer].plr->ingame)
     {   // Set viewer target to the center of the map.
         setViewTarget(map, (bounds[1][VX] - bounds[0][VX]) / 2,
                             (bounds[1][VY] - bounds[0][VY]) / 2);
+        setViewAngleTarget(map, 0);
     }
-    else*/
-    if(!map->panMode)
-    {   // Set viewer target to location of player to be followed.
+    else
+    {   // The map's target player is available.
         mobj_t *mo = players[map->followPlayer].plr->mo;
 
-        setViewTarget(map, FIX2FLT(mo->pos[VX]), FIX2FLT(mo->pos[VY]));
+        if(!(map->panMode && !map->cfg.panResetOnOpen))
+            setViewTarget(map, FIX2FLT(mo->pos[VX]), FIX2FLT(mo->pos[VY]));
+
+        if(map->panMode && map->cfg.panResetOnOpen)
+        {
+            float       angle;
+
+            /* $unifiedangles */
+            if(map->rotate)
+                angle = mo->angle / (float) ANGLE_MAX * 360 - 90;
+            else
+                angle = 0;
+            setViewAngleTarget(map, angle);
+        }
     }
 }
 
@@ -2054,7 +2116,7 @@ static void mapTicker(automap_t *map)
     //
 
     // Map view zoom contol.
-    zoomSpeed = (1 + automapZoomSpeed);
+    zoomSpeed = (1 + map->cfg.zoomSpeed);
     if(players[playerNum].brain.speed)
         zoomSpeed *= 1.5f;
     P_GetControlState(playerNum, CTL_MAP_ZOOM, &zoomVel, NULL); // ignores rel offset -jk
@@ -2073,9 +2135,12 @@ static void mapTicker(automap_t *map)
         float       xy[2] = { 0, 0 }; // deltas
 
         // DOOM.EXE used to pan at 140 fixed pixels per second.
-        float       panUnitsPerTic = FTOM(map, FIXXTOSCREENX(140)) / TICSPERSEC;
-        player_t   *plr = &players[playerNum];
+        float       panUnitsPerTic = (FTOM(map, FIXXTOSCREENX(140)) / TICSPERSEC) *
+                        (2 * map->cfg.panSpeed);
         
+        if(panUnitsPerTic < 8)
+            panUnitsPerTic = 8;
+
         xy[VX] = panX[0] * panUnitsPerTic + panX[1];
         xy[VY] = panY[0] * panUnitsPerTic + panY[1];
         
@@ -2553,170 +2618,172 @@ static void renderGrid(void)
 }
 
 /**
+ * Sub-routine of renderWalls().
+ */
+boolean renderWallsInSubsector(subsector_t *s, void *data)
+{
+    ssecitervars_t *vars = (ssecitervars_t*) data;
+    int         i, segCount, lineFlags;
+    uint        subColor = 0;
+    float       v1[2], v2[2];
+    line_t     *line;
+    xline_t    *xLine;
+    sector_t   *frontSector, *backSector;
+    seg_t      *seg;
+    mapobjectinfo_t *info;
+    player_t   *plr = vars->plr;
+    automap_t  *map = vars->map;
+
+    if(map->flags & AMF_REND_SUBSECTORS)
+        subColor = P_ToIndex(s) % NUM_SSEC_COLORS;
+
+    segCount = P_GetIntp(s, DMU_SEG_COUNT);
+    for(i = 0; i < segCount; ++i)
+    {
+        seg = P_GetPtrp(s, DMU_SEG_OF_SUBSECTOR | i);
+        line = P_GetPtrp(seg, DMU_LINE);
+
+        if(map->flags & AMF_REND_SUBSECTORS) // Debug cheat, show subsectors.
+        {
+            P_GetFloatpv(seg, DMU_VERTEX1_XY, v1);
+            P_GetFloatpv(seg, DMU_VERTEX2_XY, v2);
+
+            rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
+                      subColors[subColor][0], subColors[subColor][1],
+                      subColors[subColor][2], 1,
+                      FRONT_GLOW, 1.0f, 7.5f, true, false, false, BM_ADD,
+                      false);
+
+            continue;
+        }
+        if(!line)
+            continue;
+
+        xLine = P_XLine(line);
+        if(xLine->validcount == validCount)
+            continue; // Already drawn once.
+
+        lineFlags = P_GetIntp(line, DMU_FLAGS);
+        if((lineFlags & ML_DONTDRAW) && !(map->flags & AMF_REND_ALLLINES))
+            continue;
+
+        frontSector = P_GetPtrp(seg, DMU_FRONT_SECTOR);
+        if(frontSector != P_GetPtrp(line, DMU_SIDE0_OF_LINE | DMU_SECTOR))
+            continue; // we only want to draw twosided lines once.
+
+#if !__JHEXEN__
+#if !__JSTRIFE__
+        if(map->flags & AMF_REND_XGLINES) // Debug cheat.
+        {
+            // Show active XG lines.
+            if(xLine->xg && xLine->xg->active && (leveltime & 4))
+            {
+                P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
+                P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
+
+                rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
+                          .8f, 0, .8f, 1,
+                          TWOSIDED_GLOW, 1, 5, false, true, false, BM_ADD,
+                          map->cheating);
+
+                xLine->validcount = validCount;  // Mark as drawn this frame.
+                continue;
+            }
+        }
+#endif
+#endif
+        info = NULL;
+        backSector = P_GetPtrp(seg, DMU_BACK_SECTOR);
+        if((map->flags & AMF_REND_ALLLINES) ||
+           xLine->mapped[mapviewplayer])
+        {
+            // Perhaps this is a specially colored line?
+            info = getInfoForSpecialLine(map, xLine->special,
+                                         frontSector, backSector);
+
+            if(!info)
+            {   // Perhaps a default colored line?
+                if(!(frontSector && backSector) || (lineFlags & ML_SECRET))
+                {
+                    // solid wall (well probably anyway...)
+                    info = getMapObjectInfo(map, AMO_SINGLESIDEDLINE);
+                }
+                else
+                {
+                    if(P_GetFloatp(backSector, DMU_FLOOR_HEIGHT) !=
+                       P_GetFloatp(frontSector, DMU_FLOOR_HEIGHT))
+                    {
+                        // Floor level change.
+                        info = getMapObjectInfo(map, AMO_FLOORCHANGELINE);
+                    }
+                    else if(P_GetFloatp(backSector, DMU_CEILING_HEIGHT) !=
+                            P_GetFloatp(frontSector, DMU_CEILING_HEIGHT))
+                    {
+                        // Ceiling level change.
+                        info = getMapObjectInfo(map, AMO_CEILINGCHANGELINE);
+                    }
+                    else if(map->flags & AMF_REND_ALLLINES)
+                    {
+                        info = getMapObjectInfo(map, AMO_UNSEENLINE);
+                    }
+                }
+            }
+        }
+        else if(plr->powers[PT_ALLMAP])
+        {
+            if(!(lineFlags & ML_DONTDRAW))
+            {
+                // An as yet, unseen line.
+                info = getMapObjectInfo(map, AMO_UNSEENLINE);
+            }
+        }
+
+        if(info)
+        {
+            P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
+            P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
+
+            rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
+                      info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
+                      (xLine->special && !map->cfg.glowingLineSpecials ?
+                            NO_GLOW : info->glow),
+                      info->glowAlpha,
+                      info->glowWidth, false, info->scaleWithView,
+                      (info->glow && !(xLine->special && !map->cfg.glowingLineSpecials)),
+                      (xLine->special && !map->cfg.glowingLineSpecials ?
+                            BM_NORMAL : info->blendmode), map->cheating);
+
+            xLine->validcount = validCount; // Mark as drawn this frame.
+        }
+    }
+
+    return true; // Continue iteration.
+}
+
+/**
  * Determines visible lines, draws them.
  */
 static void renderWalls(void)
 {
-    int         i, segcount, flags;
-    uint        j, s, subColor = 0;
-    float       v1[2], v2[2];
-    line_t     *line;
-    xline_t    *xline;
-    sector_t   *frontsector, *backsector;
-    seg_t      *seg;
-    mapobjectinfo_t *info;
     player_t   *plr = &players[mapviewplayer];
     automap_t  *map = &automaps[mapviewplayer];
+    ssecitervars_t data;
+    fixed_t     bbox[4];
 
+    // validcount is used to track which lines have been drawn this frame.
     validCount++;
-    for(s = 0; s < numsubsectors; ++s)
-    {
-        if(map->flags & AMF_REND_SUBSECTORS) // Debug cheat, show subsectors
-        {
-            subColor++;
-            if(subColor == 10)
-                subColor = 0;
-        }
 
-        segcount = P_GetInt(DMU_SUBSECTOR, s, DMU_SEG_COUNT);
-        for(i = 0; i < segcount; ++i)
-        {
-            seg = P_GetPtr(DMU_SUBSECTOR, s, DMU_SEG_OF_SUBSECTOR | i);
-            line = P_GetPtrp(seg, DMU_LINE);
+    // Set the vars used during iteration.
+    data.plr = plr;
+    data.map = map;
 
-            if(map->flags & AMF_REND_SUBSECTORS) // Debug cheat, show subsectors.
-            {
-                P_GetFloatpv(seg, DMU_VERTEX1_XY, v1);
-                P_GetFloatpv(seg, DMU_VERTEX2_XY, v2);
+    // Convert the map's viewframe bounding box.
+    bbox[BOXTOP]    = FLT2FIX(map->vbbox[BOXTOP]);
+    bbox[BOXBOTTOM] = FLT2FIX(map->vbbox[BOXBOTTOM]);
+    bbox[BOXLEFT]   = FLT2FIX(map->vbbox[BOXLEFT]);
+    bbox[BOXRIGHT]  = FLT2FIX(map->vbbox[BOXRIGHT]);
 
-                rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
-                          subColors[subColor][0], subColors[subColor][1],
-                          subColors[subColor][2], 1,
-                          FRONT_GLOW, 1.0f, 7.5f, true, false, false, BM_ADD,
-                          false);
-
-                continue;
-            }
-            if(!line)
-                continue;
-
-            frontsector = P_GetPtrp(seg, DMU_FRONT_SECTOR);
-            if(frontsector != P_GetPtrp(line, DMU_SIDE0_OF_LINE | DMU_SECTOR))
-                continue; // we only want to draw twosided lines once.
-
-            xline = P_XLine(line);
-            if(xline->validcount == validCount)
-                continue; // Already drawn once.
-            xline->validcount = validCount;
-
-            P_GetFloatpv(line, DMU_VERTEX1_XY, v1);
-            P_GetFloatpv(line, DMU_VERTEX2_XY, v2);
-
-#if !__JHEXEN__
-#if !__JSTRIFE__
-            if(map->flags & AMF_REND_XGLINES) // Debug cheat.
-            {
-                // Show active XG lines.
-                if(xline->xg && xline->xg->active && (leveltime & 4))
-                {
-                    rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
-                              .8f, 0, .8f, 1,
-                              TWOSIDED_GLOW, 1, 5, false, true, false, BM_ADD,
-                              map->cheating);
-                    continue;
-                }
-            }
-#endif
-#endif
-            info = NULL;
-            backsector = P_GetPtrp(seg, DMU_BACK_SECTOR);
-            flags = P_GetIntp(line, DMU_FLAGS);
-            if((map->flags & AMF_REND_ALLLINES) ||
-               xline->mapped[mapviewplayer])
-            {
-                if((flags & ML_DONTDRAW) &&
-                   !(map->flags & AMF_REND_ALLLINES))
-                    continue;
-
-                // Perhaps this is a specially colored line?
-                for(j = 0; j < map->numSpecialLines && !info; ++j)
-                {
-                    automapspecialline_t *sl = &map->specialLines[j];
-
-                    // Is there a line special restriction?
-                    if(sl->special)
-                    {
-                        if(sl->special != xline->special)
-                            continue;
-                    }
-
-                    // Is there a sided restriction?
-                    if(sl->sided)
-                    {
-                        if(sl->sided == 1 && backsector && frontsector)
-                            continue;
-                        else if(sl->sided == 2 && (!backsector || !frontsector))
-                            continue;
-                    }
-
-                    // Is there a cheat level restriction?
-                    if(sl->cheatLevel > map->cheating)
-                        continue;
-
-                    // This is the one!
-                    info = &sl->info;
-                }
-
-                if(!info)
-                {
-                    // Perhaps a default colored line?
-                    if(!backsector || (flags & ML_SECRET))
-                    {
-                        // solid wall (well probably anyway...)
-                        info = getMapObjectInfo(map, AMO_SINGLESIDEDLINE);
-                    }
-                    else
-                    {
-                        if(P_GetFloatp(backsector, DMU_FLOOR_HEIGHT) !=
-                           P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT))
-                        {
-                            // Floor level change.
-                            info = getMapObjectInfo(map, AMO_FLOORCHANGELINE);
-                        }
-                        else if(P_GetFloatp(backsector, DMU_CEILING_HEIGHT) !=
-                                P_GetFloatp(frontsector, DMU_CEILING_HEIGHT))
-                        {
-                            // Ceiling level change.
-                            info = getMapObjectInfo(map, AMO_CEILINGCHANGELINE);
-                        }
-                        else if(map->flags & AMF_REND_ALLLINES)
-                        {
-                            info = getMapObjectInfo(map, AMO_UNSEENLINE);
-                        }
-                    }
-                }
-            }
-            else if(plr->powers[PT_ALLMAP])
-            {
-                if(!(flags & ML_DONTDRAW))
-                {
-                    // An as yet, unseen line.
-                    info = getMapObjectInfo(map, AMO_UNSEENLINE);
-                }
-            }
-
-            if(info)
-            rendLine2(v1[VX], v1[VY], v2[VX], v2[VY],
-                      info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3],
-                      (xline->special && !map->cfg.glowingLineSpecials ?
-                            NO_GLOW : info->glow),
-                      info->glowAlpha,
-                      info->glowWidth, false, info->scaleWithView,
-                      (info->glow && !(xline->special && !map->cfg.glowingLineSpecials)),
-                      (xline->special && !map->cfg.glowingLineSpecials ?
-                            BM_NORMAL : info->blendmode), map->cheating);
-        }
-    }
+    P_SubsectorBoxIterator(bbox, NULL, renderWallsInSubsector, &data);
 }
 
 /**
@@ -3689,14 +3756,14 @@ DEFCC(CCmdMapAction)
 
         if(map->active)
         {
-            // If switching to maXScale mode, store the old scale.
+            // When switching to max scale mode, store the old scale.
             if(!map->maxScale)
                 map->priorToMaxScale = map->viewScale;
 
             map->maxScale = !map->maxScale;
             setViewScaleTarget(map, (map->maxScale? 0 : map->priorToMaxScale));
 
-            Con_Printf("Maximum zoom toggle in automap.\n");
+            Con_Printf("Maximum zoom %s in automap.\n", map->maxScale? "ON":"OFF");
             return true;
         }
     }

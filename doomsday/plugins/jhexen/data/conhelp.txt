@@ -100,6 +100,9 @@ inf = Params: cheat (cheat)\nFor example, 'cheat satan'.
 [god]
 desc = I don't think He needs any help...
 
+[notarget]
+desc = Enemies will not target the player (cheat).
+
 [noclip]
 desc = Movement clipping on/off.
 
@@ -655,6 +658,18 @@ desc = 1=Show door colors in automap.
 
 [map-door-glow]
 desc = Door glow thickness in the automap (with map-door-colors).
+
+[map-babykeys]
+desc = 1=Show keys in automap (easy skill mode only).
+
+[map-pan-speed]
+desc = Pan speed multiplier in the automap.
+
+[map-pan-resetonopen]
+desc = 1= Reset automap pan location when opening the automap.
+
+[map-zoom-speed]
+desc = Zoom in/out speed multiplier in the automap.
 
 [input-mouse-x-sensi]
 desc = Mouse X axis sensitivity.

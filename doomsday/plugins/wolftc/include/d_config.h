@@ -138,9 +138,10 @@ typedef struct wolftc_config_s {
     byte            zombiesCanExit; // Zombie players can exit levels.
     byte            fallOff; // Objects fall under their own weight.
 
-    // Automap stuff.
     byte            counterCheat;
     float           counterCheatScale;
+
+    // Automap stuff.
 /*  int             automapPos;
     float           automapWidth;
     float           automapHeight;*/
@@ -155,6 +156,9 @@ typedef struct wolftc_config_s {
     byte            automapShowDoors;
     float           automapDoorGlow;
     byte            automapBabyKeys;
+    float           automapZoomSpeed;
+    float           automapPanSpeed;
+    byte            automapPanResetOnOpen;
 
     int             msgCount;
     float           msgScale;

@@ -99,6 +99,9 @@ inf = Params: cheat (cheat)\nFor example, 'cheat ddslia'.
 [god]
 desc = God mode.
 
+[notarget]
+desc = Enemies will not target the player (cheat).
+
 [noclip]
 desc = No movement clipping (walk through walls).
     
@@ -172,19 +175,19 @@ desc = Crosshair setup.
         
 [chatcomplete]
 desc = Send the chat message and exit chat mode.
-	
+    
 [chatdelete]
 desc = Delete a character from the chat buffer.
-	
+    
 [chatcancel]
 desc = Exit chat mode without sending the message.
-	
+    
 [chatsendmacro]
 desc = Send a chat macro.
-	
+    
 [beginchat]
 desc = Begin chat mode.
-	
+    
 [msgrefresh]
 desc = Show last HUD message.
 
@@ -549,6 +552,15 @@ desc = Size factor for the counters in the automap.
 
 [map-babykeys]
 desc = 1=Show keys in automap (easy skill mode only).
+
+[map-pan-speed]
+desc = Pan speed multiplier in the automap.
+
+[map-pan-resetonopen]
+desc = 1= Reset automap pan location when opening the automap.
+
+[map-zoom-speed]
+desc = Zoom in/out speed multiplier in the automap.
 
 [input-mouse-x-sensi]
 desc = Mouse X axis sensitivity.

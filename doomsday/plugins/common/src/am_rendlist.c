@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -587,7 +587,6 @@ void AM_RenderList(uint tex, boolean texIsPatchLumpNum, blendmode_t blend,
         gl.LoadIdentity();
 
         // Scale from texture to window space.
-        gl.Translatef(x, y, 0);
         gl.Scalef(1.0f / w, 1.0f / h, 1);
 
         // Translate to the view origin, apply map rotation.

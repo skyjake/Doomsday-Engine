@@ -99,6 +99,9 @@ inf = Params: cheat (cheat)
 [god]
 desc = God mode.
 
+[notarget]
+desc = Enemies will not target the player (cheat).
+
 [noclip]
 desc = No movement clipping (walk through walls).
     
@@ -550,6 +553,15 @@ desc = Size factor for the counters in the automap.
 
 [map-babykeys]
 desc = 1=Show keys in automap (easy skill mode only).
+
+[map-pan-speed]
+desc = Pan speed multiplier in the automap.
+
+[map-pan-resetonopen]
+desc = 1= Reset automap pan location when opening the automap.
+
+[map-zoom-speed]
+desc = Zoom in/out speed multiplier in the automap.
 
 [input-mouse-x-sensi]
 desc = Mouse X axis sensitivity.

@@ -142,9 +142,10 @@ typedef struct jdoom_config_s {
     byte            fallOff; // Objects fall under their own weight.
     byte            fixOuchFace;
 
-    // Automap stuff.
     byte            counterCheat;
     float           counterCheatScale;
+
+    // Automap stuff.
 /*  int             automapPos;
     float           automapWidth;
     float           automapHeight;*/
@@ -159,6 +160,9 @@ typedef struct jdoom_config_s {
     byte            automapShowDoors;
     float           automapDoorGlow;
     byte            automapBabyKeys;
+    float           automapZoomSpeed;
+    float           automapPanSpeed;
+    byte            automapPanResetOnOpen;
 
     int             msgCount;
     float           msgScale;
