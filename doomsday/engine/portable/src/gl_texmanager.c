@@ -2540,6 +2540,26 @@ static void BlackOutlines(byte* pixels, int width, int height)
     }
 }
 
+static void EnhanceContrast(byte *pixels, int width, int height)
+{
+    int     i, c;
+    byte*   pix;
+    
+    for(i = 0, pix = pixels; i < width * height; ++i, pix += 4)
+    {
+        for(c = 0; c < 3; ++c)
+        {
+            float f = pix[c];
+            if(f < 90) // Darken dark parts.
+                f = (f - 90) * 3 + 90;
+            else if(f > 200) // Lighten light parts.
+                f = (f - 200) * 2 + 200;
+                
+            pix[c] = MINMAX_OF(0, f, 255);
+        }
+    }
+}
+
 /**
  * NOTE: No mipmaps are generated for regular patches.
  */
@@ -2615,6 +2635,7 @@ DGLuint GL_BindTexPatch(patch_t *p)
             patchWidth *= 2;
             patchHeight *= 2;
             
+            EnhanceContrast(upscaledPixels, patchWidth, patchHeight);
             BlackOutlines(upscaledPixels, patchWidth, patchHeight);
             
             // Back to indexed+alpha.
