@@ -2636,7 +2636,9 @@ DGLuint GL_BindTexPatch(patch_t *p)
         int     patchHeight = SHORT(patch->height) + addBorder*2;
         int     numpels = patchWidth * patchHeight, alphaChannel;
         byte   *buffer;
-
+        boolean scaleSharp = (upscaleAndSharpenPatches ||
+                              (p->info.modFlags & TXIF_UPSCALE_AND_SHARPEN));
+        
         if(!numpels)
             return 0; // This won't do!
 
@@ -2647,14 +2649,16 @@ DGLuint GL_BindTexPatch(patch_t *p)
             DrawRealPatch(buffer, patchWidth, patchHeight,
                           patch, addBorder, addBorder, false, 0, true);
         
-        if(filloutlines && !upscaleAndSharpenPatches)
+        if(filloutlines && !scaleSharp)
             ColorOutlines(buffer, patchWidth, patchHeight);
 
-        if(monochrome)
-            DeSaturate(buffer, GL_GetPalette(), patchWidth,
-                       patchHeight);
-
-        if(upscaleAndSharpenPatches)
+        if(monochrome || (p->info.modFlags & TXIF_MONOCHROME))
+        {
+            DeSaturate(buffer, GL_GetPalette(), patchWidth, patchHeight);
+            p->info.modFlags |= TXIF_MONOCHROME;
+        }
+                
+        if(scaleSharp)
         {
             byte* rgbaPixels = M_Malloc(numpels * 4 * 2); // also for the final output
             byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
@@ -2664,6 +2668,9 @@ DGLuint GL_BindTexPatch(patch_t *p)
                              patchWidth * 8);
             patchWidth *= 2;
             patchHeight *= 2;
+            
+            Con_Message("upscale and sharpen on %s (lump %i) monochrome:%i\n", W_LumpName(p->lump),
+                        p->lump, p->info.modFlags & TXIF_MONOCHROME);
             
             //EnhanceContrast(upscaledPixels, patchWidth, patchHeight);
             SharpenPixels(upscaledPixels, patchWidth, patchHeight);
@@ -2679,7 +2686,7 @@ DGLuint GL_BindTexPatch(patch_t *p)
             buffer = rgbaPixels;
             
             // We'll sharpen it in the future as well.
-            p->info.sharpened = true;
+            p->info.modFlags |= TXIF_UPSCALE_AND_SHARPEN;
         }
         
         // See if we have to split the patch into two parts.
@@ -2757,19 +2764,8 @@ DGLuint GL_PreparePatch(int idx, texinfo_t **info)
 
     if(!patch->tex)
     {
-        // A bit of a hack, but here we set the upscale mode if the patch
-        // has previously been upscaled. E.g., when textures have been 
-        // reset, it is upscaled again.
-        int oldUpscale = upscaleAndSharpenPatches;
-        if(patch->info.sharpened)
-        {
-            upscaleAndSharpenPatches = true;            
-        }
-        
         // The patch isn't yet bound with OpenGL.
         patch->tex = GL_BindTexPatch(patch);
-        
-        upscaleAndSharpenPatches = oldUpscale;
     }
     return GL_GetPatchInfo(idx, false, info);
 }

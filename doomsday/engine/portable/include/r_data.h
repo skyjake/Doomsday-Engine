@@ -240,12 +240,16 @@ typedef struct {
     int             patch;
 } texpatch_t;
 
+// Flags for texinfo.
+#define TXIF_MONOCHROME             0x1
+#define TXIF_UPSCALE_AND_SHARPEN    0x2
+
 typedef struct {
     short           width;
     short           height;
     short           offsetX;
     short           offsetY;
-    boolean         sharpened;
+    int             modFlags;      // Possible modifier filters to apply (monochrome, scale+sharp)
     byte            masked;        // Is the (DGL) texture masked?
     detailinfo_t    detail;        // Detail texture information.
 } texinfo_t;
