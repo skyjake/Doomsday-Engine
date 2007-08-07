@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -242,12 +242,11 @@ void GL_EarlyInitTextureManager(void)
  */
 void GL_InitTextureManager(void)
 {
-    int     i;
-
     if(novideo)
         return;
+
     if(texInited)
-        return;                 // Don't init again.
+        return; // Don't init again.
 
     // The -bigmtex option allows the engine to enlarge masked textures
     // that have taller patches than they are themselves.
@@ -2562,7 +2561,7 @@ static void EnhanceContrast(byte *pixels, int width, int height)
 
 static void SharpenPixels(byte* pixels, int width, int height)
 {
-    int     x, y, a, b, c;
+    int     x, y, c;
     byte*   result = M_Calloc(4 * width * height);
     const float strength = .05f;
     float   A, B, C;
@@ -3306,6 +3305,25 @@ DGLuint GL_GetPatchInfo(int idx, boolean part2, texinfo_t **texinfo)
         *texinfo = (part2? &patch->info2 : &patch->info);
 
     return (part2? patch->tex2 : patch->tex);
+}
+
+/**
+ * @return          The ddtexture name, if it has been prepared.
+ */
+DGLuint GL_GetDDTextureInfo(ddtextureid_t which, texinfo_t **texinfo)
+{
+    if(which < NUM_DD_TEXTURES)
+    {
+        if(ddTextures[which].tex)
+        {
+            if(texinfo)
+                *texinfo = &ddTextures[which].info;
+
+            return ddTextures[which].tex;
+        }
+    }
+
+    return 0;
 }
 
 /**

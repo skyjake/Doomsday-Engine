@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -549,8 +549,8 @@ boolean P_IsInVoid(ddplayer_t *player)
     // (so check z height above/below ceiling/floor).
     if((player->flags & DDPF_CAMERA) &&
        (player->invoid ||
-         (FIX2FLT(player->mo->pos[VZ]) > player->mo->ceilingz ||
-          FIX2FLT(player->mo->pos[VZ]) < player->mo->floorz)))
+         (FIX2FLT(player->mo->pos[VZ]) > player->mo->ceilingz - 4 ||
+          FIX2FLT(player->mo->pos[VZ]) < player->mo->floorz + 4)))
         return true;
 
     return false;

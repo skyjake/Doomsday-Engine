@@ -166,6 +166,7 @@ DGLuint         GL_GetFlatInfo(int idx, texinfo_t **info);
 DGLuint         GL_GetFlatInfo2(int idx, boolean translate, texinfo_t **info);
 DGLuint         GL_GetPatchInfo(int idx, boolean part2, texinfo_t **info);
 DGLuint         GL_GetRawTexInfo(uint idx, boolean part2, texinfo_t **texinfo);
+DGLuint         GL_GetDDTextureInfo(ddtextureid_t which, texinfo_t **texinfo);
 DGLuint         GL_PrepareTexture(int idx, texinfo_t **info);
 DGLuint         GL_PrepareTexture2(int idx, boolean translate, texinfo_t **info);
 DGLuint         GL_PrepareFlat(int idx, texinfo_t **info);

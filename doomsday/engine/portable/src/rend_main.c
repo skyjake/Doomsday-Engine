@@ -289,11 +289,10 @@ int R_AttenuateLevel(float lightlevel, float distance)
 }
 #endif
 
-static __inline int Rend_SegFacingDir(float v1[2], float v2[2])
+static __inline float segFacingViewerDot(float v1[2], float v2[2])
 {
-    // The dot product. (1 if facing front.)
-    return (v1[VY] - v2[VY]) * (v1[VX] - vx) + (v2[VX] - v1[VX]) * (v1[VY] -
-                                                                    vz) > 0;
+    // The dot product.
+    return (v1[VY] - v2[VY]) * (v1[VX] - vx) + (v2[VX] - v1[VX]) * (v1[VY] - vz);
 }
 
 #if 0 // unused atm
@@ -527,7 +526,7 @@ boolean Rend_DoesMidTextureFillGap(line_t *line, int backside)
             }
             else // It's a DDay texture.
             {
-                GL_PrepareDDTexture(side->SW_middletexture, &texinfo);
+                GL_GetDDTextureInfo(DDT_UNKNOWN, &texinfo);
             }
 
             if(!side->SW_middleblendmode && side->SW_middlergba[3] >= 1 && !texinfo->masked)
@@ -667,7 +666,9 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
         poly->tex.id = curtex = GL_PrepareDDTexture(DDT_GRAY, NULL);
 
         // We need the properties of the real flat/texture.
-        if(surface->SM_isflat)
+        if(surface->SM_texture == -1)
+            GL_GetDDTextureInfo(DDT_UNKNOWN, &info);
+        else if(surface->SM_isflat)
             GL_GetFlatInfo(surface->SM_texture, &info);
         else
             GL_GetTextureInfo(surface->SM_texture, &info);
@@ -681,9 +682,9 @@ static int Rend_PrepareTextureForPoly(rendpoly_t *poly, surface_t *surface,
         flags = SUF_GLOW; // Make it stand out
     }
     else if(surface->SM_texture == -1)
-    {   // An unknown texture. The "unknown" graphic will be used
-        // NOTE: It has already been bound and paramaters set.
-        return SUF_GLOW; // Make it stand out
+    {   // An unknown texture.
+        poly->tex.id = curtex = GL_PrepareDDTexture(DDT_UNKNOWN, &info);
+        flags = SUF_GLOW; // Make it stand out
     }
     else
     {
@@ -730,7 +731,7 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
                              walldiv_t *div, float bottomZ, float topZ,
                              boolean doRight)
 {
-    uint        i;
+    uint        i, j;
     line_t     *iter;
     sector_t   *scanSec;
     lineowner_t *base, *own;
@@ -741,6 +742,9 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
 
     if(!seg->linedef || !seg->sidedef)
         return; // Mini-segs arn't drawn.
+
+    if(bottomZ >= topZ)
+        return; // Obviously no division.
 
     // Only segs at sidedef ends can/should be split.
     if(!(seg == seg->sidedef->segs[0] && !doRight ||
@@ -762,30 +766,46 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
             if(iter->flags & LINEF_SELFREF)
                 continue;
 
-            scanSec = NULL;
-            if(iter->L_frontside && iter->L_frontsector != frontSec)
-                scanSec = iter->L_frontsector;
-            else if(iter->L_backside && iter->L_backsector != frontSec)
-                scanSec = iter->L_backsector;
+            i = 0;
+            do
+            {   // First front, then back.
+                scanSec = NULL;
+                if(!i && iter->L_frontside && iter->L_frontsector != frontSec)
+                    scanSec = iter->L_frontsector;
+                else if(i && iter->L_backside && iter->L_backsector != frontSec)
+                    scanSec = iter->L_backsector;
 
-            if(scanSec)
-                for(i = 0; i < scanSec->planecount && !stopScan; ++i)
-                {
-                    plane_t *pln = scanSec->SP_plane(i);
-                    if(pln->visheight > bottomZ && pln->visheight < topZ)
+                if(scanSec)
+                    for(j = 0; j < scanSec->planecount && !stopScan; ++j)
                     {
-                        if(!checkDiv(div, pln->visheight))
+                        plane_t *pln = scanSec->SP_plane(j);
+                        if(pln->visheight > bottomZ && pln->visheight < topZ)
                         {
-                            div->pos[div->num++] = pln->visheight;
+                            if(!checkDiv(div, pln->visheight))
+                            {
+                                div->pos[div->num++] = pln->visheight;
 
-                            // Have we reached the div limit?
-                            if(div->num == RL_MAX_DIVS)
+                                // Have we reached the div limit?
+                                if(div->num == RL_MAX_DIVS)
+                                    stopScan = true;
+                            }
+                        }
+
+                        if(!stopScan)
+                        {   // Clip a range bound to this height?
+                            if(j == PLN_FLOOR && pln->visheight > bottomZ)
+                                bottomZ = pln->visheight;
+                            else if(j == PLN_CEILING && pln->visheight < topZ)
+                                topZ = pln->visheight;
+
+                            // All clipped away?
+                            if(bottomZ >= topZ)
                                 stopScan = true;
                         }
                     }
-                }
+            } while(!stopScan && ++i < 2);
 
-                // Stop the scan when a single sided line is reached.
+            // Stop the scan when a single sided line is reached.
             if(!iter->L_frontside || !iter->L_backside)
                 stopScan = true;
         }
@@ -1367,16 +1387,13 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
             float texOffY = 0;
             texinfo_t *texinfo = NULL;
 
-            //if(ldef - lines == 497)
-            //    Con_Message("Me\n");
-
             // Calculate texture coordinates.
             vL_ZTop = vR_ZTop = gaptop = MIN_OF(bceil, fceil);
             vL_ZBottom = vR_ZBottom = gapbottom = MAX_OF(bfloor, ffloor);
 
             // We need the properties of the real flat/texture.
             if(surface->SM_texture < 0)
-                GL_PrepareDDTexture(side->SW_middletexture, &texinfo);
+                GL_GetDDTextureInfo(DDT_UNKNOWN, &texinfo);
             else if(side->SW_middleisflat)
                 GL_GetFlatInfo(side->SW_middletexture, &texinfo);
             else
@@ -1492,6 +1509,10 @@ static void Rend_RenderWallSeg(seg_t *seg, subsector_t *ssec)
                         quad->flags = RPF_MASKED;
                     else
                         quad->flags = 0;
+ 
+                    // Check for neighborhood division?
+                    if(solidSeg && !(quad->flags & RPF_MASKED))
+                        Rend_WallHeightDivision(quad, seg, frontsec, SEG_MIDDLE);
 
                     Rend_RenderWallSection(quad, seg, side, frontsec, surface, SEG_MIDDLE,
                               /*Alpha*/    alpha, tempflags);
@@ -1756,7 +1777,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
             seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
 
             // Which way should it be facing?
-            if(Rend_SegFacingDir(seg->SG_v1pos, seg->SG_v2pos))  // 1=front
+            if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
                 seg->frameflags |= SEGINF_FACINGFRONT;
             else
                 seg->frameflags &= ~SEGINF_FACINGFRONT;
@@ -1775,7 +1796,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
             seg->frameflags &= ~SEGINF_BACKSECSKYFIX;
 
             // Which way should it be facing?
-            if(Rend_SegFacingDir(seg->SG_v1pos, seg->SG_v2pos))  // 1=front
+            if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
                 seg->frameflags |= SEGINF_FACINGFRONT;
             else
                 seg->frameflags &= ~SEGINF_FACINGFRONT;
