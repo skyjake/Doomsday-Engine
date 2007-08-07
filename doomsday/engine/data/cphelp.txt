@@ -498,10 +498,6 @@ desc = Send a chat message to the specified player.
 desc = Set console and viewplayer.
 inf = Params: setcon (playernum)\nFor example, 'setcon 1'.
 
-[setgamma]
-desc = Set the gamma correction level.
-inf = Params: setgamma (0-4).
-
 [setname]
 desc = Set your name.
 inf = Params: setname (name)\nFor example, 'setname "my name"'.
@@ -739,7 +735,7 @@ desc = Distance to begin fading halos.
 desc = 1=Render with textures. 2=Render with gray texture.
 
 [rend-tex-gamma]
-desc = The gamma correction level (0-4).
+desc = Texture gamma correction factor.
 
 [rend-tex-mipmap]
 desc = The mipmapping mode for textures.

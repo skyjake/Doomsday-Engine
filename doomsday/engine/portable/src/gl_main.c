@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +83,6 @@ typedef unsigned short gramp_t[3 * 256];
 
 D_CMD(Fog);
 D_CMD(SetBPP);
-D_CMD(SetGamma);
 D_CMD(SetRes);
 D_CMD(ToggleFullscreen);
 
@@ -153,7 +152,6 @@ void GL_Register(void)
     // Ccmds
     C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setgamma", "i", SetGamma, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("togglefullscreen", "", ToggleFullscreen, CMDF_NO_DEDICATED);
@@ -1040,28 +1038,6 @@ D_CMD(SetBPP)
     return Sys_SetWindow(windowIDX, 0, 0, 0, 0, bpp, 0,
                         DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOFULLSCREEN|
                         DDSW_NOVISIBLE);
-}
-
-D_CMD(SetGamma)
-{
-    int     newlevel;
-
-    newlevel = strtol(argv[1], NULL, 0);
-    // Clamp it to the min and max.
-    if(newlevel < 0)
-        newlevel = 0;
-    if(newlevel > 4)
-        newlevel = 4;
-    // Only reload textures if it's necessary.
-    if(newlevel != usegamma)
-    {
-        usegamma = newlevel;
-        GL_UpdateGamma();
-        Con_Printf("Gamma correction set to level %d.\n", usegamma);
-    }
-    else
-        Con_Printf("Gamma correction already set to %d.\n", usegamma);
-    return true;
 }
 
 D_CMD(Fog)

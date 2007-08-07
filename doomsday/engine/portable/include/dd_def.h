@@ -95,9 +95,8 @@ extern game_import_t __gi;
 #define gx __gx
 #define gi __gi
 
-// tab_video.c
-extern byte     gammatable[5][256];
-extern int      usegamma;
+extern byte     gammatable[256];
+extern float    texGamma;
 
 // tab_tables.c
 extern fixed_t  finesine[5 * FINEANGLES / 4];

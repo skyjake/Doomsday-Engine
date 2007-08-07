@@ -128,6 +128,9 @@ int     filterSprites = true;
 int     texMagMode = 1;         // Linear.
 int     texAniso = -1;          // Use best.
 
+float   texGamma = 0;
+byte    gammatable[256];
+
 // Convert a 18-bit RGB (666) value to a playpal index.
 // \fixme 256kb - Too big?
 byte    pal18to8[262144];
@@ -187,8 +190,8 @@ void GL_TexRegister(void)
 {
     // Cvars
     C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 2);
-    C_VAR_INT2("rend-tex-gamma", &usegamma, CVF_PROTECTED, 0, 4,
-               GL_DoTexReset);
+    C_VAR_FLOAT2("rend-tex-gamma", &texGamma, 0, 0, 1,
+               GL_DoUpdateTexGamma);
     C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5,
                GL_DoUpdateTexParams);
     C_VAR_BYTE2("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1,
@@ -329,19 +332,25 @@ void GL_DestroySkinNames(void)
 
 static void LoadPalette(void)
 {
+    int     i, c;
     byte   *playpal;
     byte    paldata[256 * 3];
-    int     i, c, gammalevel = /*gammaSupport? 0 : */ usegamma;
+	double	invgamma;
 
     pallump = W_GetNumForName(PALLUMPNAME);
     playpal = GL_GetPalette();
+
+    // Clamp to a sane range.
+	invgamma = 1.0f - MINMAX_OF(0, texGamma, 1);
+	for(i = 0; i < 256; ++i)
+		gammatable[i] = (byte)(255.0f * pow(i / 255.0f, invgamma));
 
     // Prepare the color table.
     for(i = 0; i < 256; ++i)
     {
         // Adjust the values for the appropriate gamma level.
         for(c = 0; c < 3; ++c)
-            paldata[i * 3 + c] = gammatable[gammalevel][playpal[i * 3 + c]];
+            paldata[i * 3 + c] = gammatable[playpal[i * 3 + c]];
     }
     gl.Palette(DGL_RGB, paldata);
 }
@@ -853,20 +862,6 @@ void GL_ClearTextureMemory(void)
 
     // Delete system textures.
     GL_ClearSystemTextures();
-}
-
-void GL_UpdateGamma(void)
-{
-    /*if(gammaSupport)
-       {
-       // The driver knows how to update the gamma directly.
-       gl.Gamma(DGL_TRUE, gammatable[usegamma]);
-       }
-       else
-       { */
-    LoadPalette();
-    GL_ClearRuntimeTextures();
-    //}
 }
 
 /*
@@ -3010,6 +3005,17 @@ void GL_TexReset(void)
     GL_ClearTextureMemory();
     GL_LoadSystemTextures(true, true);
     Con_Printf("All DGL textures deleted.\n");
+}
+
+/**
+ * Called when changing the value of the texture gamma cvar.
+ */
+void GL_DoUpdateTexGamma(cvar_t *unused)
+{
+    GL_TexReset();
+    LoadPalette();
+
+    Con_Printf("Gamma correction set to %f.\n", texGamma);
 }
 
 /**

@@ -114,6 +114,7 @@ void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
 void            GL_DoTexReset(cvar_t *unused);
+void            GL_DoUpdateTexGamma(cvar_t *unused);
 void            GL_DoUpdateTexParams(cvar_t *unused);
 int             GL_InitPalettedTexture(void);
 void            GL_DestroySkinNames(void);
@@ -130,7 +131,6 @@ DGLuint         GL_GetRawOtherPart(int lump, texinfo_t **info);
 void            GL_SetRawTex(int lump, int part);
 
 extern int      pallump;
-void            GL_UpdateGamma(void);
 
 void            GL_LowRes(void);
 void            TranslatePatch(lumppatch_t *patch, byte *transTable);

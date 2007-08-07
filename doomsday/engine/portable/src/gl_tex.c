@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -209,10 +209,9 @@ void CalculatePal18to8(byte *dest, byte *palette)
 void PalIdxToRGB(byte *pal, int idx, byte *rgb)
 {
     int         c;
-    int         gammalevel = /*gammaSupport? 0 : */ usegamma;
 
     for(c = 0; c < 3; ++c)      // Red, green and blue.
-        rgb[c] = gammatable[gammalevel][pal[idx * 3 + c]];
+        rgb[c] = gammatable[pal[idx * 3 + c]];
 }
 
 /**
@@ -245,7 +244,7 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
             if(gamma)
             {
                 for(a = 0; a < 3; ++a)
-                    out[a] = gammatable[usegamma][*(palette + 3 * (*in) + a)];
+                    out[a] = gammatable[*(palette + 3 * (*in) + a)];
             }
             else
             {
