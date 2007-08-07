@@ -376,9 +376,9 @@ boolean P_LoadMap(char *levelId)
  * \todo latter on this will be expanded to check for various
  * doom.exe renderer hacks and other stuff.
  *
- * @param silent        (True) Don't announce non-critical errors.
+ * @param silent        @c true = don't announce non-critical errors.
  *
- * @return boolean      (True) We can continue setting up the level.
+ * @return              @c true = we can continue setting up the level.
  */
 boolean P_CheckLevel(char *levelID, boolean silent)
 {
@@ -391,7 +391,7 @@ boolean P_CheckLevel(char *levelID, boolean silent)
     // Critical
     if(numMissingFronts)
     {
-        Con_Message(" ![100] %d linedef(s) missing a front sidedef:\n",
+        Con_Message(" ![100] Error: Found %u linedef(s) missing front sidedefs:\n",
                     numMissingFronts);
 
         printCount = 0;
@@ -399,7 +399,7 @@ boolean P_CheckLevel(char *levelID, boolean silent)
         {
             if(missingFronts[i])
             {
-                Con_Printf("%s%d,", printCount? " ": "   ", i);
+                Con_Printf("%s%u,", printCount? " ": "   ", i);
 
                 if((++printCount) > 9)
                 {   // print 10 per line then wrap.
@@ -415,11 +415,11 @@ boolean P_CheckLevel(char *levelID, boolean silent)
     // Non-critical as a "MISSING" texture will be drawn in place of them.
     if(numBadTexNames && !silent)
     {
-        Con_Message("  [110] %d bad texture name(s):\n", numBadTexNames);
+        Con_Message("  [110] Warning: Found %u bad texture name(s):\n",
+                    numBadTexNames);
 
         for(i = 0; i < numBadTexNames; ++i)
-            Con_Message("   Found %d unknown %s \"%s\"\n", badTexNames[i].count,
-                        (badTexNames[i].planeTex)? "Flat" : "Texture",
+            Con_Message(" %4u x \"%s\"\n", badTexNames[i].count,
                         badTexNames[i].name);
     }
 
