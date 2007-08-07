@@ -740,11 +740,16 @@ static void calcSegDivisions(const seg_t *seg, sector_t *frontSec,
 
     div->num = 0;
 
+    if(bottomZ >= topZ)
+        return; // Obviously no division.
+
     if(!seg->linedef || !seg->sidedef)
         return; // Mini-segs arn't drawn.
 
-    if(bottomZ >= topZ)
-        return; // Obviously no division.
+    // \kludge: Apparently, finalizeMapData() is not fool-proof yet...  
+    if(!(seg->sidedef->segcount > 0))
+        return;
+    // End kludge.
 
     // Only segs at sidedef ends can/should be split.
     if(!(seg == seg->sidedef->segs[0] && !doRight ||
