@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1216,7 +1216,7 @@ void R_PrecacheTexture(int num)
  */
 void R_PrecacheLevel(void)
 {
-    char   *texturepresent;
+    char   *texturepresent, *flatpresent;
     char   *spritepresent = NULL;
     uint    i, j;
     int     k, lump, mocount;
@@ -1236,9 +1236,9 @@ void R_PrecacheLevel(void)
 
     starttime = Sys_GetSeconds();
 
-    // Precache textures.
-    texturepresent = M_Malloc(numtextures);
-    memset(texturepresent, 0, numtextures);
+    // Precache textures and flats.
+    texturepresent = M_Calloc(numtextures);
+    flatpresent = M_Calloc(numflats);
 
     for(i = 0; i < numsides; ++i)
     {
@@ -1247,7 +1247,7 @@ void R_PrecacheLevel(void)
         if(side->SW_toptexture != -1)
         {
             if(side->SW_topisflat)
-                R_PrecacheFlat(side->SW_toptexture);
+                flatpresent[side->SW_toptexture] = 1;
             else
                 texturepresent[side->SW_toptexture] = 1;
         }
@@ -1255,7 +1255,7 @@ void R_PrecacheLevel(void)
         if(side->SW_middletexture != -1)
         {
             if(side->SW_middleisflat)
-                R_PrecacheFlat(side->SW_middletexture);
+                flatpresent[side->SW_middletexture] = 1;
             else
                 texturepresent[side->SW_middletexture] = 1;
         }
@@ -1263,27 +1263,25 @@ void R_PrecacheLevel(void)
         if(side->SW_bottomtexture != -1)
         {
             if(side->SW_bottomisflat)
-                R_PrecacheFlat(side->SW_bottomtexture);
+                flatpresent[side->SW_bottomtexture] = 1;
             else
                 texturepresent[side->SW_bottomtexture] = 1;
         }
     }
-
-    // Precache flats.
     for(i = 0; i < numsectors; ++i)
     {
         sec = SECTOR_PTR(i);
 
         for(j = 0; j < sec->planecount; ++j)
         {
-            if(sec->SP_planeisflat(j))
-                R_PrecacheFlat(sec->SP_planetexture(j));
-            else
-                texturepresent[sec->SP_planetexture(j)] = 1;
+            if(sec->SP_planetexture(j) != -1)
+            {
+                if(sec->SP_planeisflat(j))
+                    flatpresent[sec->SP_planetexture(j)] = 1;
+                else
+                    texturepresent[sec->SP_planetexture(j)] = 1;
+            }
         }
-        
-        /*if(i % SAFEDIV(numsectors, 10) == 0)
-            Con_Progress(1, PBARF_DONTSHOW);*/
     }
     
     // Update progress.
@@ -1294,8 +1292,11 @@ void R_PrecacheLevel(void)
         if(texturepresent[k])
         {
             R_PrecacheTexture(k);
-            /*if(k % SAFEDIV(numtextures, 10) == 0)
-                Con_Progress(1, PBARF_DONTSHOW);*/
+        }
+    for(k = 0; k < numflats; ++k)
+        if(flatpresent[k])
+        {
+            R_PrecacheFlat(k);
         }
             
     // Update progress.
@@ -1371,6 +1372,7 @@ void R_PrecacheLevel(void)
     }
 
     M_Free(texturepresent);
+    M_Free(flatpresent);
 
     if(verbose)
     {
