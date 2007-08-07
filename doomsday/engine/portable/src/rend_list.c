@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1256,15 +1256,15 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
     // Vertex layout (and triangles for one side):
     // [n] = fan base vertex
     //
-    //[0]-->---------1
-    // |\.......     |
-    // 8  \...  .....4
-    // |    \ ....   |
-    // 7      \   ...5
-    // |        \    |
-    // 6          \  |
-    // |            \|
-    // 3---------<--[2]
+    // 1------------[3]
+    // |            /|
+    // 8          /  |
+    // |        /    |
+    // 7      /   ...4
+    // |    / ....   |
+    // 6  /...  .....5
+    // |/.......     |
+    //[0]------------2
     //
 
     height[0] = poly->vertices[1].pos[VZ] - poly->vertices[0].pos[VZ];
@@ -1347,7 +1347,7 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
             hdr->beginOther = index;
 
         // The fan origin is the same for all the triangles.
-        hdr->indices[index++] = base + (!side ? 1 : 2);
+        hdr->indices[index++] = base + (!side ? 0 : 3);
 
         // The first (top/bottom) vertex of the side.
         hdr->indices[index++] = base + (!side ? 3 : 0);
@@ -1363,7 +1363,7 @@ static void RL_WriteDivQuad(rendlist_t *list, rendpoly_t *poly)
             z = poly->wall->divs[!side].pos[i];
 
             // We'll init this vertex by interpolating.
-            inter = (z - poly->vertices[side*2].pos[VZ]) / height[side];
+            inter = (z - poly->vertices[side*2].pos[VZ]) / height[!side];
 
             if(!(poly->flags & RPF_SKY_MASK))
             {
