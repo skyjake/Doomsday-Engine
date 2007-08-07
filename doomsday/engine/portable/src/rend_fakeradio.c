@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2004-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -956,6 +956,8 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
     size = shadowSize + Rend_RadioLongWallBonus(seg->linedef->length);
     for(i = 0; i < 2; ++i)
     {
+        float       shadowMul;
+
         quad->flags |= RPF_HORIZONTAL;
         quad->texoffy = quad->vertices[0].pos[VZ] - fFloor;
         quad->tex.height = fCeil - fFloor;
@@ -1066,7 +1068,9 @@ void Rend_RadioWallSection(const seg_t *seg, rendpoly_t *origQuad)
 
         quad->tex.id = GL_PrepareLSTexture(texture, NULL);
 
-        Rend_RadioSetColor(quad, sideCn[i].corner * shadowDark);
+        shadowMul = sideCn[i].corner;
+        shadowMul *= shadowMul * shadowMul;
+        Rend_RadioSetColor(quad, shadowMul * shadowDark);
         if(rendFakeRadio != 2)
             RL_AddPoly(quad);
     }
