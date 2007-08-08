@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -229,6 +229,9 @@ void GL_EarlyInitTextureManager(void)
 {
     int     i;
     
+    // Initialize the smart texture filtering routines.
+    GL_InitSmartFilter();
+    
     // The palette lump, for color information (really??!!?!?!).
     pallump = W_GetNumForName(PALLUMPNAME);
     
@@ -297,9 +300,6 @@ void GL_InitTextureManager(void)
 
     // Initialization done.
     texInited = true;
-
-    // Initialize the smart texture filtering routines.
-    GL_InitSmartFilter();
 }
 
 /*
@@ -2626,46 +2626,61 @@ DGLuint GL_BindTexPatch(patch_t *p)
     else
     {
         // Use data from the normal lump.
-        int     addBorder = (upscaleAndSharpenPatches? 1 : 0);
+        boolean scaleSharp = (upscaleAndSharpenPatches ||
+                              (p->info.modFlags & TXIF_UPSCALE_AND_SHARPEN));
+        int     addBorder = (scaleSharp? 1 : 0);
         int     patchWidth = SHORT(patch->width) + addBorder*2;
         int     patchHeight = SHORT(patch->height) + addBorder*2;
         int     numpels = patchWidth * patchHeight, alphaChannel;
         byte   *buffer;
-        boolean scaleSharp = (upscaleAndSharpenPatches ||
-                              (p->info.modFlags & TXIF_UPSCALE_AND_SHARPEN));
         
         if(!numpels)
             return 0; // This won't do!
-
+        
         // Allocate memory for the patch.
         buffer = M_Calloc(2 * numpels);
 
         alphaChannel =
             DrawRealPatch(buffer, patchWidth, patchHeight,
                           patch, addBorder, addBorder, false, 0, true);
-        
+
         if(filloutlines && !scaleSharp)
             ColorOutlines(buffer, patchWidth, patchHeight);
-
+        
         if(monochrome || (p->info.modFlags & TXIF_MONOCHROME))
         {
             DeSaturate(buffer, GL_GetPalette(), patchWidth, patchHeight);
             p->info.modFlags |= TXIF_MONOCHROME;
         }
-                
+
         if(scaleSharp)
         {
             byte* rgbaPixels = M_Malloc(numpels * 4 * 2); // also for the final output
             byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
+                        
             GL_ConvertBuffer(patchWidth, patchHeight, 2, 4, buffer, rgbaPixels, 
                              GL_GetPalette(), false);
+            
             GL_SmartFilter2x(rgbaPixels, upscaledPixels, patchWidth, patchHeight,
                              patchWidth * 8);
             patchWidth *= 2;
             patchHeight *= 2;
-            
+
+            /*
+            {
+                static int counter = 1;
+                FILE *f;
+                char buf[100];
+                sprintf(buf, "dumped-%s-%i.dat", W_LumpName(p->lump), counter++);
+                f = fopen(buf, "wb");
+                fwrite(upscaledPixels, 4 * 4 * numpels, 1, f);
+                fclose(f);
+            }
+            */            
+            /*
             Con_Message("upscale and sharpen on %s (lump %i) monochrome:%i\n", W_LumpName(p->lump),
                         p->lump, p->info.modFlags & TXIF_MONOCHROME);
+             */
             
             //EnhanceContrast(upscaledPixels, patchWidth, patchHeight);
             SharpenPixels(upscaledPixels, patchWidth, patchHeight);
