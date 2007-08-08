@@ -768,45 +768,6 @@ IF (BUILDJSTRIFE)
 	ADD_SUBDIRECTORY (${CMAKE_SOURCE_DIR}/plugins/jstrife )
 ENDIF (BUILDJSTRIFE)
 ################################################################################
-######################## Doxygenate Engine  ####################################
-##
-## 25m20.447s to genereate on a 2GHz Athlon64 (64bit mode)
-
-IF (BUILDDOX)
-	IF (DOXYGEN)
-		IF (DOT)
-			ADD_CUSTOM_TARGET (Doxygenate.engine  ALL doxygen
-			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/engine )
-		ENDIF (DOT)
-	ENDIF (DOXYGEN)
-ENDIF (BUILDDOX)
-################################################################################
-######################## Doxygenate Externals  #################################
-##
-## 2m30.932s to genereate on a 2GHz Athlon64 (64bit mode)
-
-IF (BUILDDOX)
-	IF (DOXYGEN)
-		IF (DOT)
-			ADD_CUSTOM_TARGET (Doxygenate.externals  ALL doxygen
-			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/external )
-		ENDIF (DOT)
-	ENDIF (DOXYGEN)
-ENDIF (BUILDDOX)
-################################################################################
-######################## Doxygenate Plugins  ###################################
-##
-## 22m27.128s to genereate on a 2GHz Athlon64 (64bit mode)
-
-IF (BUILDDOX)
-	IF (DOXYGEN)
-		IF (DOT)
-			ADD_CUSTOM_TARGET (Doxygenate.plugins  ALL doxygen
-			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/plugins )
-		ENDIF (DOT)
-	ENDIF (DOXYGEN)
-ENDIF (BUILDDOX)
-################################################################################
 ######################## Doxygenate All Source  ################################
 ## This target mixes all the documentation together. It's sometimes useful,
 ## but the 3 seperate functionaliy targets are better in most cases.
@@ -814,7 +775,7 @@ ENDIF (BUILDDOX)
 IF (BUILDDOX)
 	IF (DOXYGEN)
 		IF (DOT)
-			ADD_CUSTOM_TARGET (Doxygenate.all  doxygen
+			ADD_CUSTOM_TARGET (Doxygenate.all ALL doxygen
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
 		ENDIF (DOT)
 	ENDIF (DOXYGEN)
