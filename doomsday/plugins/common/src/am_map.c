@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright Â© 2005-2007 Jaakko Kerâ€°nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -3271,7 +3271,7 @@ static void restoreGLStateFromMap(void)
  */
 static void drawLevelName(void)
 {
-    int         x, y, otherY;
+    int         x, y, otherY, bx, by;
     const char *lname = "";
     automap_t  *map = &automaps[mapviewplayer];
     automapwindow_t *win = &map->window;
@@ -3316,9 +3316,21 @@ static void drawLevelName(void)
         }
 
         y -= 24; // border
+        
+        gl.MatrixMode(DGL_MODELVIEW);
+        gl.PushMatrix();
+
+        // Scale the text to be a bit smaller than traditional hu_font_a.
+        bx = x + M_StringWidth(lname, hu_font_a)/2;
+        by = y + M_StringHeight(lname, hu_font_a);
+        gl.Translatef(bx, by, 0);
+        gl.Scalef(scrwidth/320.f * .8f, scrwidth/320.f * .8f, 1);
+        gl.Translatef(-bx, -by, 0);
 
         M_WriteText2(x, y, (char*)lname, hu_font_a, 1, 1, 1, map->alpha);
 
+        gl.MatrixMode(DGL_MODELVIEW);
+        gl.PopMatrix();
         gl.MatrixMode(DGL_PROJECTION);
         gl.PopMatrix();
     }
