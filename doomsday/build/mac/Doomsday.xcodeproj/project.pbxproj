@@ -616,7 +616,6 @@
 		B0F17905087C5A230051F24A /* sys_sock.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8B006B41788005824AD /* sys_sock.c */; };
 		B0F17906087C5A230051F24A /* sys_timer.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8B106B41788005824AD /* sys_timer.c */; };
 		B0F17907087C5A230051F24A /* tab_tables.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8B206B41788005824AD /* tab_tables.c */; };
-		B0F17908087C5A230051F24A /* tab_video.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8B306B41788005824AD /* tab_video.c */; };
 		B0F17909087C5A230051F24A /* ui_main.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8B406B41788005824AD /* ui_main.c */; };
 		B0F1790A087C5A230051F24A /* ui_mpi.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8B506B41788005824AD /* ui_mpi.c */; };
 		B0F1790B087C5A230051F24A /* ui_panel.c in Sources */ = {isa = PBXBuildFile; fileRef = B02AC8B606B41788005824AD /* ui_panel.c */; };
@@ -1163,7 +1162,6 @@
 		B02AC8B006B41788005824AD /* sys_sock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_sock.c; path = ../../engine/portable/src/sys_sock.c; sourceTree = SOURCE_ROOT; };
 		B02AC8B106B41788005824AD /* sys_timer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys_timer.c; path = ../../engine/portable/src/sys_timer.c; sourceTree = SOURCE_ROOT; };
 		B02AC8B206B41788005824AD /* tab_tables.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tab_tables.c; path = ../../engine/portable/src/tab_tables.c; sourceTree = SOURCE_ROOT; };
-		B02AC8B306B41788005824AD /* tab_video.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tab_video.c; path = ../../engine/portable/src/tab_video.c; sourceTree = SOURCE_ROOT; };
 		B02AC8B406B41788005824AD /* ui_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ui_main.c; path = ../../engine/portable/src/ui_main.c; sourceTree = SOURCE_ROOT; };
 		B02AC8B506B41788005824AD /* ui_mpi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ui_mpi.c; path = ../../engine/portable/src/ui_mpi.c; sourceTree = SOURCE_ROOT; };
 		B02AC8B606B41788005824AD /* ui_panel.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ui_panel.c; path = ../../engine/portable/src/ui_panel.c; sourceTree = SOURCE_ROOT; };
@@ -1801,7 +1799,6 @@
 				B02AC8B006B41788005824AD /* sys_sock.c */,
 				B02AC8B106B41788005824AD /* sys_timer.c */,
 				B02AC8B206B41788005824AD /* tab_tables.c */,
-				B02AC8B306B41788005824AD /* tab_video.c */,
 				B02AC8B406B41788005824AD /* ui_main.c */,
 				B02AC8B506B41788005824AD /* ui_mpi.c */,
 				B02AC8B606B41788005824AD /* ui_panel.c */,
@@ -3567,7 +3564,6 @@
 				B0F17905087C5A230051F24A /* sys_sock.c in Sources */,
 				B0F17906087C5A230051F24A /* sys_timer.c in Sources */,
 				B0F17907087C5A230051F24A /* tab_tables.c in Sources */,
-				B0F17908087C5A230051F24A /* tab_video.c in Sources */,
 				B0F17909087C5A230051F24A /* ui_main.c in Sources */,
 				B0F1790A087C5A230051F24A /* ui_mpi.c in Sources */,
 				B0F1790B087C5A230051F24A /* ui_panel.c in Sources */,
