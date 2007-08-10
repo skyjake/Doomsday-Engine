@@ -64,7 +64,7 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean novideo;
+extern int novideo;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

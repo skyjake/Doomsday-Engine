@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -216,8 +216,8 @@ int R_SlopeDiv(unsigned num, unsigned den)
  */
 angle_t R_PointToAngle(fixed_t x, fixed_t y)
 {
-    x -= viewx;
-    y -= viewy;
+    x -= FLT2FIX(viewx);
+    y -= FLT2FIX(viewy);
     if((!x) && (!y))
         return 0;
 
@@ -262,8 +262,8 @@ angle_t R_PointToAngle(fixed_t x, fixed_t y)
 
 angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 {
-    viewx = x1;
-    viewy = y1;
+    viewx = FIX2FLT(x1);
+    viewy = FIX2FLT(y1);
     return R_PointToAngle(x2, y2);
 }
 
@@ -273,8 +273,8 @@ fixed_t R_PointToDist(fixed_t x, fixed_t y)
     fixed_t     dx, dy, temp;
     fixed_t     dist;
 
-    dx = abs(x - viewx);
-    dy = abs(y - viewy);
+    dx = abs(x - FLT2FIX(viewx));
+    dy = abs(y - FLT2FIX(viewy));
 
     if(dy > dx)
     {

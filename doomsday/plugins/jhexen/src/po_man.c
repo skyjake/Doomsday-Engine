@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1999 Activision
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -71,9 +71,9 @@ static polyobj_t *GetPolyobj(uint polyNum);
 static int GetPolyobjMirror(uint polyNum);
 static void ThrustMobj(mobj_t *mobj, seg_t *seg, polyobj_t * po);
 static void InitBlockMap(void);
-static void IterFindPolySegs(int x, int y, seg_t **segList);
+static void IterFindPolySegs(float x, float y, seg_t **segList);
 static void SpawnPolyobj(uint polyNum, int tag, boolean crush);
-static void TranslateToStartSpot(int tag, int originX, int originY);
+static void TranslateToStartSpot(int tag, float originX, float originY);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -84,8 +84,8 @@ extern thing_t *things;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static uint PolySegCount;
-static fixed_t PolyStartX;
-static fixed_t PolyStartY;
+static float PolyStartX;
+static float PolyStartY;
 
 // CODE --------------------------------------------------------------------
 
@@ -103,14 +103,14 @@ void PO_StopSequence(polyobj_t *poly)
 void PO_SetDestination(polyobj_t *poly, fixed_t dist, angle_t angle,
                        fixed_t speed)
 {
-    ddvertex_t startSpot;
+    ddvertexf_t startSpot;
 
-    P_GetFixedpv(poly, DMU_START_SPOT_XY, startSpot.pos);
+    P_GetFloatpv(poly, DMU_START_SPOT_XY, startSpot.pos);
 
-    P_SetFixedp(poly, DMU_DESTINATION_X,
-                startSpot.pos[VX] + FixedMul(dist, finecosine[angle]));
-    P_SetFixedp(poly, DMU_DESTINATION_Y,
-                startSpot.pos[VY] + FixedMul(dist, finesine[angle]));
+    P_SetFloatp(poly, DMU_DESTINATION_X,
+                startSpot.pos[VX] + FIX2FLT(FixedMul(dist, finecosine[angle])));
+    P_SetFloatp(poly, DMU_DESTINATION_Y,
+                startSpot.pos[VY] + FIX2FLT(FixedMul(dist, finesine[angle])));
     P_SetFixedp(poly, DMU_SPEED, speed);
 }
 
@@ -264,7 +264,7 @@ void T_MovePoly(polyevent_t *pe)
     unsigned int absSpeed;
     polyobj_t  *poly;
 
-    if(PO_MovePolyobj(pe->polyobj, pe->xSpeed, pe->ySpeed))
+    if(PO_MovePolyobj(pe->polyobj, FIX2FLT(pe->xSpeed), FIX2FLT(pe->ySpeed)))
     {
         absSpeed = abs(pe->speed);
         pe->dist -= absSpeed;
@@ -391,7 +391,7 @@ void T_PolyDoor(polydoor_t *pd)
     switch(pd->type)
     {
     case PODOOR_SLIDE:
-        if(PO_MovePolyobj(pd->polyobj, pd->xSpeed, pd->ySpeed))
+        if(PO_MovePolyobj(pd->polyobj, FIX2FLT(pd->xSpeed), FIX2FLT(pd->ySpeed)))
         {
             absSpeed = abs(pd->speed);
             pd->dist -= absSpeed;
@@ -728,7 +728,7 @@ static void InitBlockMap(void)
  * @param segList       <code>NULL</code> will cause IterFindPolySegs to
  *                      count the number of segs in the polyobj.
  */
-static void IterFindPolySegs(int x, int y, seg_t **segList)
+static void IterFindPolySegs(float x, float y, seg_t **segList)
 {
     uint        i;
 
@@ -742,8 +742,8 @@ static void IterFindPolySegs(int x, int y, seg_t **segList)
         if(!P_GetPtr(DMU_SEG, i, DMU_LINE))
             continue;
 
-        if(P_GetFixed(DMU_SEG, i, DMU_VERTEX1_X) == x &&
-           P_GetFixed(DMU_SEG, i, DMU_VERTEX1_Y) == y)
+        if(P_GetFloat(DMU_SEG, i, DMU_VERTEX1_X) == x &&
+           P_GetFloat(DMU_SEG, i, DMU_VERTEX1_Y) == y)
         {
             if(!segList)
             {
@@ -753,8 +753,8 @@ static void IterFindPolySegs(int x, int y, seg_t **segList)
             {
                 *segList++ = P_ToPtr(DMU_SEG, i);
             }
-            IterFindPolySegs(P_GetFixed(DMU_SEG, i, DMU_VERTEX2_X),
-                             P_GetFixed(DMU_SEG, i, DMU_VERTEX2_Y), segList);
+            IterFindPolySegs(P_GetFloat(DMU_SEG, i, DMU_VERTEX2_X),
+                             P_GetFloat(DMU_SEG, i, DMU_VERTEX2_Y), segList);
             return;
         }
     }
@@ -790,17 +790,17 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
             xline->special = 0;
             xline->arg1 = 0;
             PolySegCount = 1;
-            PolyStartX = P_GetFixed(DMU_SEG, i, DMU_VERTEX1_X);
-            PolyStartY = P_GetFixed(DMU_SEG, i, DMU_VERTEX1_Y);
-            IterFindPolySegs(P_GetFixed(DMU_SEG, i, DMU_VERTEX2_X),
-                             P_GetFixed(DMU_SEG, i, DMU_VERTEX2_Y), NULL);
+            PolyStartX = P_GetFloat(DMU_SEG, i, DMU_VERTEX1_X);
+            PolyStartY = P_GetFloat(DMU_SEG, i, DMU_VERTEX1_Y);
+            IterFindPolySegs(P_GetFloat(DMU_SEG, i, DMU_VERTEX2_X),
+                             P_GetFloat(DMU_SEG, i, DMU_VERTEX2_Y), NULL);
             P_SetInt(DMU_POLYOBJ, index, DMU_SEG_COUNT, PolySegCount);
             P_SetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST,
                 Z_Malloc(PolySegCount * sizeof(seg_t*), PU_LEVEL, 0));
             P_SetPtrp(P_ToPtr(DMU_POLYOBJ, index), DMU_SEG_OF_POLYOBJ | 0,
                       P_ToPtr(DMU_SEG, i)); // insert the first seg
-            IterFindPolySegs(P_GetFixed(DMU_SEG, i, DMU_VERTEX2_X),
-                             P_GetFixed(DMU_SEG, i, DMU_VERTEX2_Y),
+            IterFindPolySegs(P_GetFloat(DMU_SEG, i, DMU_VERTEX2_X),
+                             P_GetFloat(DMU_SEG, i, DMU_VERTEX2_Y),
                              /*P_GetPtrp(P_ToPtr(DMU_POLYOBJ, index),
                                        DMU_SEG_OF_POLYOBJ | 1)*/
                              ((seg_t**)P_GetPtr(DMU_POLYOBJ, index, DMU_SEG_LIST)) + 1);
@@ -923,13 +923,13 @@ static void SpawnPolyobj(uint index, int tag, boolean crush)
     }
 }
 
-static void TranslateToStartSpot(int tag, int originX, int originY)
+static void TranslateToStartSpot(int tag, float originX, float originY)
 {
     uint        i;
-    int         deltaX, deltaY;
-    ddvertex_t  avg; // used to find a polyobj's center, and hence subsector
+    fixed_t     deltaX, deltaY;
+    ddvertexf_t avg; // used to find a polyobj's center, and hence subsector
     seg_t     **tempSeg, **veryTempSeg;
-    ddvertex_t *tempPt;
+    ddvertexf_t *tempPt;
     subsector_t *sub;
     polyobj_t  *po;
     int         poNumSegs = 0;
@@ -952,8 +952,8 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
               Z_Malloc(poNumSegs * sizeof(ddvertex_t), PU_LEVEL, 0));
     P_SetPtrp(po, DMU_PREVIOUS_POINTS,
               Z_Malloc(poNumSegs * sizeof(ddvertex_t), PU_LEVEL, 0));
-    deltaX = originX - P_GetFixedp(po, DMU_START_SPOT_X);
-    deltaY = originY - P_GetFixedp(po, DMU_START_SPOT_Y);
+    deltaX = FLT2FIX(originX - P_GetFloatp(po, DMU_START_SPOT_X));
+    deltaY = FLT2FIX(originY - P_GetFloatp(po, DMU_START_SPOT_Y));
 
     tempSeg = P_GetPtrp(po, DMU_SEG_LIST);
     tempPt = P_GetPtrp(po, DMU_ORIGINAL_POINTS);
@@ -986,25 +986,25 @@ static void TranslateToStartSpot(int tag, int originX, int originY)
 
         if(veryTempSeg == tempSeg)
         {                       // the point hasn't been translated, yet
-            fixed_t v1[2];
-            P_GetFixedpv(*tempSeg, DMU_VERTEX1_XY, v1);
-            v1[0] -= deltaX;
-            v1[1] -= deltaY;
-            P_SetFixedpv(*tempSeg, DMU_VERTEX1_XY, v1);
+            float v1[2];
+            P_GetFloatpv(*tempSeg, DMU_VERTEX1_XY, v1);
+            v1[0] -= FIX2FLT(deltaX);
+            v1[1] -= FIX2FLT(deltaY);
+            P_SetFloatpv(*tempSeg, DMU_VERTEX1_XY, v1);
         }
-        avg.pos[VX] += P_GetIntp(*tempSeg, DMU_VERTEX1_X);
-        avg.pos[VY] += P_GetIntp(*tempSeg, DMU_VERTEX1_Y);
+        avg.pos[VX] += P_GetFloatp(*tempSeg, DMU_VERTEX1_X);
+        avg.pos[VY] += P_GetFloatp(*tempSeg, DMU_VERTEX1_Y);
         // the original Pts are based off the startSpot Pt, and are
         // unique to each seg, not each linedef
-        tempPt->pos[VX] = P_GetFixedp(*tempSeg, DMU_VERTEX1_X) -
-                            P_GetFixedp(po, DMU_START_SPOT_X);
-        tempPt->pos[VY] = P_GetFixedp(*tempSeg, DMU_VERTEX1_Y) -
-                            P_GetFixedp(po, DMU_START_SPOT_Y);
+        tempPt->pos[VX] = P_GetFloatp(*tempSeg, DMU_VERTEX1_X) -
+                            P_GetFloatp(po, DMU_START_SPOT_X);
+        tempPt->pos[VY] = P_GetFloatp(*tempSeg, DMU_VERTEX1_Y) -
+                            P_GetFloatp(po, DMU_START_SPOT_Y);
     }
 
     avg.pos[VX] /= poNumSegs;
     avg.pos[VY] /= poNumSegs;
-    sub = R_PointInSubsector(avg.pos[VX] << FRACBITS, avg.pos[VY] << FRACBITS);
+    sub = R_PointInSubsector(FLT2FIX(avg.pos[VX]), FLT2FIX(avg.pos[VY]));
     if(P_GetPtrp(sub, DMU_POLYOBJ) != NULL)
     {
         Con_Message("PO_TranslateToStartSpot: Warning: Multiple polyobjs in a single subsector\n"
@@ -1022,7 +1022,7 @@ void PO_Init(int lump)
     int         i;
     thing_t    *mt;
     uint        polyIndex;
-    fixed_t     x, y;
+    float       x, y;
     short       angle, type;
 
     // ThrustMobj will handle polyobj <-> mobj interaction.
@@ -1038,8 +1038,8 @@ void PO_Init(int lump)
     // Find the startSpot points, and spawn each polyobj
     for(i = 0; i < numthings; ++i, mt++)
     {
-        x = mt->x;
-        y = mt->y;
+        x = (float) mt->x;
+        y = (float) mt->y;
         angle = mt->angle;
         type = mt->type;
 
@@ -1047,8 +1047,8 @@ void PO_Init(int lump)
         if(type == PO_SPAWN_TYPE ||
            type == PO_SPAWNCRUSH_TYPE)
         {                       // Polyobj StartSpot Pt.
-            P_SetInt(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_X, x);
-            P_SetInt(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_Y, y);
+            P_SetFloat(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_X, x);
+            P_SetFloat(DMU_POLYOBJ, polyIndex, DMU_START_SPOT_Y, y);
             SpawnPolyobj(polyIndex, angle,
                          (type == PO_SPAWNCRUSH_TYPE));
             polyIndex++;
@@ -1058,14 +1058,14 @@ void PO_Init(int lump)
     mt = things;
     for(i = 0; i < numthings; ++i, mt++)
     {
-        x = mt->x;
-        y = mt->y;
+        x = (float) mt->x;
+        y = (float) mt->y;
         angle = mt->angle;
         type = mt->type;
 
         if(type == PO_ANCHOR_TYPE)
         {                       // Polyobj Anchor Pt.
-            TranslateToStartSpot(angle, x << FRACBITS, y << FRACBITS);
+            TranslateToStartSpot(angle, x, y);
         }
     }
 

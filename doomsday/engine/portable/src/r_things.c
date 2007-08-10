@@ -3,10 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -505,12 +505,12 @@ void R_ProjectPlayerSprites(void)
         vis->data.mo.flags = 0;
         // Adjust the vector slightly so an angle can be calculated.
         ang = viewangle >>ANGLETOFINESHIFT;
-        vis->center[VX] = FIX2FLT(viewx + (2 * finecosine[ang]));
-        vis->center[VY] = FIX2FLT(viewy + (2 * finesine[ang]));
+        vis->center[VX] = viewx + FIX2FLT(2 * finecosine[ang]);
+        vis->center[VY] = viewy + FIX2FLT(2 * finesine[ang]);
         vis->data.mo.v1[VX] = vis->center[VX];
         vis->data.mo.v1[VY] = vis->center[VY];
         // 32 is the raised weapon height.
-        vis->data.mo.gzt = vis->center[VZ] = FIX2FLT(viewz);
+        vis->data.mo.gzt = vis->center[VZ] = viewz;
         vis->data.mo.secfloor = viewplayer->mo->subsector->sector->SP_floorvisheight;
         vis->data.mo.secceil = viewplayer->mo->subsector->sector->SP_ceilvisheight;
         vis->data.mo.pclass = 0;
@@ -539,8 +539,8 @@ void R_ProjectPlayerSprites(void)
         vis->data.mo.nextmf = nextmf;
         vis->data.mo.viewaligned = true;
         // Use the exact center with HUD models.
-        vis->center[VX] = FIX2FLT(viewx);
-        vis->center[VY] = FIX2FLT(viewy);
+        vis->center[VX] = viewx;
+        vis->center[VY] = viewy;
         vis->data.mo.v1[VX] = vis->center[VX];
         vis->data.mo.v1[VY] = vis->center[VY];
 
@@ -670,8 +670,8 @@ void R_ProjectSprite(mobj_t *thing)
     }
 
     // Transform the origin point.
-    trx = thing->pos[VX] - viewx;
-    try = thing->pos[VY] - viewy;
+    trx = thing->pos[VX] - FLT2FIX(viewx);
+    try = thing->pos[VY] - FLT2FIX(viewy);
 
     // Decide which patch to use for sprite relative to player.
 
@@ -782,7 +782,7 @@ void R_ProjectSprite(mobj_t *thing)
             // to disappear too early.
             if(P_ApproxDistance
                (distance * FRACUNIT,
-                thing->pos[VZ] + FLT2FIX(thing->height / 2) - viewz) >
+                thing->pos[VZ] + FLT2FIX((thing->height / 2) - viewz)) >
                MAX_OBJECT_RADIUS * FRACUNIT)
             {
                 return;         // Can't be visible.
@@ -900,7 +900,7 @@ void R_ProjectSprite(mobj_t *thing)
             vis->data.mo.pitch =
                 -BANG2DEG(bamsAtan2
                           (((vis->center[VZ] + vis->data.mo.gzt) / 2 -
-                            FIX2FLT(viewz)) * 10, distance * 10));
+                            viewz) * 10, distance * 10));
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
         {

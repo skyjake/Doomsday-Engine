@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1191,8 +1191,9 @@ void DL_AddLuminous(mobj_t *mo)
 
             // Approximate the distance in 3D.
             lum->distance =
-                P_ApproxDistance3(mo->pos[VX] - viewx, mo->pos[VY] - viewy,
-                                  mo->pos[VZ] - viewz);
+                P_ApproxDistance3(mo->pos[VX] - FLT2FIX(viewx),
+                                  mo->pos[VY] - FLT2FIX(viewy),
+                                  mo->pos[VZ] - FLT2FIX(viewz));
 
             // Is there a model definition?
             R_CheckModelFor(mo, &mf, &nextmf);

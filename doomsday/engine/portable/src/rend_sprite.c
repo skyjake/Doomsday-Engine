@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -133,8 +133,8 @@ static void Rend_DoLightSprite(vissprite_t *spr, rendpoly_t *quad)
     data.rgb1 = quad->vertices[0].color.rgba;
     data.rgb2 = quad->vertices[1].color.rgba;
 
-    data.viewvec.pos[VX] = spr->center[VX] - FIX2FLT(viewx);
-    data.viewvec.pos[VY] = spr->center[VY] - FIX2FLT(viewy);
+    data.viewvec.pos[VX] = spr->center[VX] - viewx;
+    data.viewvec.pos[VY] = spr->center[VY] - viewy;
 
     len = sqrt(data.viewvec.pos[VX] * data.viewvec.pos[VX] +
                data.viewvec.pos[VY] * data.viewvec.pos[VY]);

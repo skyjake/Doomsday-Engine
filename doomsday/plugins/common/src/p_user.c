@@ -2,10 +2,10 @@
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2000-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© Raven Software, Corp.
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2000-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 1993-1996 by id Software, Inc.
  */
 
 /* $Id$
@@ -354,7 +354,7 @@ void P_MovePlayer(player_t *player)
     ddplayer_t *dp = player->plr;
     mobj_t     *plrmo = player->plr->mo;
     //ticcmd_t   *cmd = &player->plr->cmd;
-    playerbrain_t* brain = &player->brain;
+    playerbrain_t *brain = &player->brain;
     classinfo_t *pClassInfo = PCLASS_INFO(player->class);
     int         speed;
     fixed_t     forwardMove;
@@ -362,7 +362,7 @@ void P_MovePlayer(player_t *player)
 
     // Change the angle if possible.
     /* $unifiedangles */
-/*    if(IS_SERVER && player != &players[0])
+   /*if(IS_SERVER && player != &players[0])
     {
         if(dp->fixcounter.angles == dp->fixacked.angles)  // all acked?
         {
@@ -376,13 +376,21 @@ void P_MovePlayer(player_t *player)
         }
     }*/
 
+    // Slow > fast. Fast > slow.
+    speed = brain->speed;
+    if(cfg.alwaysRun)
+        speed = !speed;
+
     // Do not let the player control movement if not onground.
     onground = P_IsPlayerOnGround(player);
     if(dp->flags & DDPF_CAMERA)    // $democam
     {
+        static const fixed_t cameraSpeed[2] = {0x19, 0x31};
+
         // Cameramen have a 3D thrusters!
         P_Thrust3D(player, plrmo->angle, dp->lookdir,
-                   brain->forwardMove * 50 * 2048, brain->sideMove * 50 * 2048);
+                   brain->forwardMove * cameraSpeed[speed] * 2048,
+                   brain->sideMove * cameraSpeed[speed] * 2048);
     }
     else
     {
@@ -390,12 +398,6 @@ void P_MovePlayer(player_t *player)
         // Movement while in air traditionally disabled.
         int movemul = (onground || plrmo->flags2 & MF2_FLY) ? pClassInfo->movemul :
                        (cfg.airborneMovement) ? cfg.airborneMovement * 64 : 0;
-
-        // Walk -> run, run -> walk.
-        //speed = (cmd->actions & BT_SPEED);
-        speed = brain->speed;
-        if(cfg.alwaysRun)
-            speed = !speed;
 
         forwardMove = brain->forwardMove * pClassInfo->forwardmove[speed] * turbomul;
         sideMove = brain->sideMove * pClassInfo->sidemove[speed] * turbomul;
@@ -2031,7 +2033,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
     // Fire.
     P_GetControlState(playerNum, CTL_ATTACK, &vel, &off);
     brain->attack = (vel + off != 0);
-    
+
     // Weapons.
     brain->changeWeapon = WT_NOCHANGE;
     for(i = 0; i < NUM_WEAPON_TYPES && (CTL_WEAPON1 + i <= CTL_WEAPON0); i++)

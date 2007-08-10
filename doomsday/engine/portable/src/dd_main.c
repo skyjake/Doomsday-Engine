@@ -850,14 +850,6 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&viewwindowy, &viewwindowy},
     {&viewwidth, &viewwidth},
     {&viewheight, &viewheight},
-    {&viewx, &viewx},
-    {&viewy, &viewy},
-    {&viewz, &viewz},
-    {&viewxOffset, &viewxOffset},
-    {&viewyOffset, &viewyOffset},
-    {&viewzOffset, &viewzOffset},
-    {(int *) &viewangle, (int *) &viewangle},
-    {&viewangleoffset, &viewangleoffset},
     {&consoleplayer, &consoleplayer},
     {&displayplayer, &displayplayer},
     {0, 0},
@@ -878,7 +870,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
     {0, 0},
     {&isDedicated, 0},
-    {(int *) &novideo, 0},
+    {&novideo, 0},
     {&defs.count.mobjs.num, 0},
     {&mapgravity, &mapgravity},
     {&gotframe, 0},
@@ -891,7 +883,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&pspOffY, &pspOffY},
     {&psp_move_speed, &psp_move_speed},
     {&cplr_thrust_mul, &cplr_thrust_mul},
-    {(int *) &clientPaused, (int *) &clientPaused},
+    {&clientPaused, &clientPaused},
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&monochrome, &monochrome},
     {&gamedataformat, &gamedataformat},
@@ -1037,64 +1029,88 @@ void* DD_GetVariable(int ddvalue)
         // How about some specials?
         switch (ddvalue)
         {
-            case DD_SHARED_FIXED_TRIGGER:
-                return &sharedFixedTrigger;
-                
-            case DD_SECTOR_COUNT:
-                return &numsectors;
-                
-            case DD_LINE_COUNT:
-                return &numlines;
-                
-            case DD_SIDE_COUNT:
-                return &numsides;
-                
-            case DD_VERTEX_COUNT:
-                return &numvertexes;
-                
-            case DD_POLYOBJ_COUNT:
-                return &po_NumPolyobjs;
-                
-            case DD_SEG_COUNT:
-                return &numsegs;
-                
-            case DD_SUBSECTOR_COUNT:
-                return &numsubsectors;
-                
-            case DD_NODE_COUNT:
-                return &numnodes;
-                
-            case DD_THING_COUNT:
-                return &numthings;
-                
-            case DD_GAME_EXPORTS:
-                return &gx;
-                
-            case DD_TRACE_ADDRESS:
-                return &trace;
-                
-            case DD_TRANSLATIONTABLES_ADDRESS:
-                return translationtables;
-                
-            case DD_MAP_NAME:
-                if(mapinfo && mapinfo->name[0])
-                    return mapinfo->name;
-                break;
-                
-            case DD_MAP_AUTHOR:
-                if(mapinfo && mapinfo->author[0])
-                    return mapinfo->author;
-                break;
-                
-            case DD_BLOCKMAP_ORIGIN_X:
-                return &bmaporgx;
-                
-            case DD_BLOCKMAP_ORIGIN_Y:
-                return &bmaporgy;
+        case DD_VIEWX:
+            return &viewx;
+
+        case DD_VIEWY:
+            return &viewy;
+
+        case DD_VIEWZ:
+            return &viewz;
+
+        case DD_VIEWX_OFFSET:
+            return &viewxOffset;
+
+        case DD_VIEWY_OFFSET:
+            return &viewyOffset;
+
+        case DD_VIEWZ_OFFSET:
+            return &viewzOffset;
+
+        case DD_VIEWANGLE:
+            return &viewangle;
+
+        case DD_VIEWANGLE_OFFSET:
+            return &viewangleoffset;
+
+        case DD_SHARED_FIXED_TRIGGER:
+            return &sharedFixedTrigger;
+            
+        case DD_SECTOR_COUNT:
+            return &numsectors;
+            
+        case DD_LINE_COUNT:
+            return &numlines;
+            
+        case DD_SIDE_COUNT:
+            return &numsides;
+            
+        case DD_VERTEX_COUNT:
+            return &numvertexes;
+            
+        case DD_POLYOBJ_COUNT:
+            return &po_NumPolyobjs;
+            
+        case DD_SEG_COUNT:
+            return &numsegs;
+            
+        case DD_SUBSECTOR_COUNT:
+            return &numsubsectors;
+            
+        case DD_NODE_COUNT:
+            return &numnodes;
+            
+        case DD_THING_COUNT:
+            return &numthings;
+            
+        case DD_GAME_EXPORTS:
+            return &gx;
+            
+        case DD_TRACE_ADDRESS:
+            return &trace;
+            
+        case DD_TRANSLATIONTABLES_ADDRESS:
+            return translationtables;
+            
+        case DD_MAP_NAME:
+            if(mapinfo && mapinfo->name[0])
+                return mapinfo->name;
+            break;
+            
+        case DD_MAP_AUTHOR:
+            if(mapinfo && mapinfo->author[0])
+                return mapinfo->author;
+            break;
+            
+        case DD_BLOCKMAP_ORIGIN_X:
+            return &bmaporgx;
+            
+        case DD_BLOCKMAP_ORIGIN_Y:
+            return &bmaporgy;
                 
 #ifdef WIN32
-            case DD_WINDOW_HANDLE:
-                return Sys_GetWindowHandle(windowIDX);
+        case DD_WINDOW_HANDLE:
+            return Sys_GetWindowHandle(windowIDX);
 #endif
         }
         return 0;
@@ -1122,6 +1138,38 @@ void DD_SetVariable(int ddvalue, void *parm)
     {
         switch(ddvalue)
         {
+        case DD_VIEWX:
+            viewx = *(float*) parm;
+            return;
+
+        case DD_VIEWY:
+            viewy = *(float*) parm;
+            return;
+
+        case DD_VIEWZ:
+            viewz = *(float*) parm;
+            return;
+
+        case DD_VIEWX_OFFSET:
+            viewxOffset = *(float*) parm;
+            return;
+
+        case DD_VIEWY_OFFSET:
+            viewyOffset = *(float*) parm;
+            return;
+
+        case DD_VIEWZ_OFFSET:
+            viewzOffset = *(float*) parm;
+            return;
+
+        case DD_VIEWANGLE:
+            viewangle = *(angle_t*) parm;
+            return;
+
+        case DD_VIEWANGLE_OFFSET:
+            viewangleoffset = *(int*) parm;
+            return;
+
         case DD_SKYFLAT_NAME:
             memset(skyflatname, 0, 9);
             strncpy(skyflatname, parm, 9);

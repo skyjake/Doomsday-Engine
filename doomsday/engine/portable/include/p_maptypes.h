@@ -375,8 +375,8 @@ typedef struct polyobj_s {
     degenmobj_t         startSpot;
     angle_t             angle;
     int                 tag;           // reference tag assigned in HereticEd
-    ddvertex_t*         originalPts;   // used as the base for the rotations
-    ddvertex_t*         prevPts;       // use to restore the old point values
+    fvertex_t*          originalPts;   // used as the base for the rotations
+    fvertex_t*          prevPts;       // use to restore the old point values
     fixed_t             bbox[4];
     fvertex_t           dest;
     int                 speed;         // Destination XY and speed.

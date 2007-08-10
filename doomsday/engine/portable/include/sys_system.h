@@ -36,7 +36,7 @@ typedef void*   thread_t;
 typedef intptr_t mutex_t;
 typedef int     (C_DECL *systhreadfunc_t) (void* parm);
 
-extern boolean  novideo;
+extern int  novideo;
 
 void            Sys_Init(void);
 void            Sys_Shutdown(void);

@@ -331,7 +331,7 @@ extern          "C" {
 
     // Play: Polyobjs.
     void            PO_Allocate(void);
-    boolean         PO_MovePolyobj(uint num, int x, int y);
+    boolean         PO_MovePolyobj(uint num, float x, float y);
     boolean         PO_RotatePolyobj(uint num, angle_t angle);
     void            PO_UnLinkPolyobj(void *po);
     void            PO_LinkPolyobj(void *po);

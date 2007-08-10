@@ -35,7 +35,7 @@ extern struct   polyobj_s *polyobjs; // list of all poly-objects on the level
 extern uint     po_NumPolyobjs;
 
 void            PO_SetCallback(void (*func) (mobj_t *, void *, void *));
-boolean         PO_MovePolyobj(uint num, int x, int y);
+boolean         PO_MovePolyobj(uint num, float x, float y);
 boolean         PO_RotatePolyobj(uint num, angle_t angle);
 void            PO_UnLinkPolyobj(polyobj_t *po);
 void            PO_LinkPolyobj(polyobj_t *po);

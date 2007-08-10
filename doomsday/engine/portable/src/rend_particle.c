@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,8 +101,8 @@ void Rend_ParticleRegister(void)
 
 static fixed_t PG_PointDist(fixed_t c[3])
 {
-    fixed_t dist = FixedMul(viewy - c[VY], -viewsin)    //viewsidex
-        - FixedMul(viewx - c[VX], viewcos);
+    fixed_t dist = FixedMul(FLT2FIX(viewy) - c[VY], -viewsin)
+        - FixedMul(FLT2FIX(viewx) - c[VX], viewcos);
 
     if(dist < 0)
         return -dist;           // Always return positive.

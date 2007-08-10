@@ -29,9 +29,9 @@
 #ifndef __DOOMSDAY_REFRESH_MAIN_H__
 #define __DOOMSDAY_REFRESH_MAIN_H__
 
-extern fixed_t  viewx, viewy, viewz;
+extern float    viewx, viewy, viewz;
 extern float    viewfrontvec[3], viewupvec[3], viewsidevec[3];
-extern fixed_t  viewxOffset, viewyOffset, viewzOffset;
+extern float    viewxOffset, viewyOffset, viewzOffset;
 extern angle_t  viewangle;
 extern float    viewpitch;
 extern ddplayer_t *viewplayer;

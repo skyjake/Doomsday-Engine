@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -252,6 +252,8 @@ void D_Display(void)
         if(!(MN_CurrentMenuHasBackground() && MN_MenuAlpha() >= 1) &&
            !mapHidesView)
         {
+            int viewAngleOffset = ANGLE_MAX * -G_GetLookOffset(displayplayer);
+
             // Draw the player view.
             if(IS_CLIENT)
             {
@@ -259,7 +261,7 @@ void D_Display(void)
                 R_SetAllDoomsdayFlags();
             }
             // The view angle offset.
-            Set(DD_VIEWANGLE_OFFSET, ANGLE_MAX * -G_GetLookOffset(displayplayer));
+            DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
             GL_SetFilter(vplayer->plr->filter);
 
             // How about fullbright?

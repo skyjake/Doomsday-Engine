@@ -222,9 +222,9 @@ void Rend_Reset(void)
 
 void Rend_ModelViewMatrix(boolean useAngles)
 {
-    vx = FIX2FLT(viewx);
-    vy = FIX2FLT(viewz);
-    vz = FIX2FLT(viewy);
+    vx = viewx;
+    vy = viewz;
+    vz = viewy;
     vang = viewangle / (float) ANGLE_MAX *360 - 90;
     vpitch = viewpitch * 85.0 / 110.0;
 
@@ -2244,7 +2244,7 @@ static void Rend_RenderNode(uint bspnum)
         bsp = NODE_PTR(bspnum);
 
         // Decide which side the view point is on.
-        side = R_PointOnSide(viewx, viewy, bsp);
+        side = R_PointOnSide(FLT2FIX(viewx), FLT2FIX(viewy), bsp);
 
         Rend_RenderNode(bsp->children[side]);   // Recursively divide front space.
         Rend_RenderNode(bsp->children[side ^ 1]);   // ...and back space.

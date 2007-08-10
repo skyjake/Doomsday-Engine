@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ void P_CalcHeight(player_t *player)
     boolean morphed = false;
     ddplayer_t *dplay = player->plr;
     mobj_t *pmo = dplay->mo;
-    int     angle, bobmul, target, step;
+    float   zOffset, target, step;
     static int aircounter = 0;
 
     // Regular movement bobbing.
@@ -88,7 +88,7 @@ void P_CalcHeight(player_t *player)
         player->bob = MAXBOB;
 
     // When flying, don't bob the view.
-    if(pmo->flags2 & MF2_FLY && pmo->pos[VZ] > FLT2FIX(pmo->floorz))
+    if((pmo->flags2 & MF2_FLY) && pmo->pos[VZ] > FLT2FIX(pmo->floorz))
     {
         player->bob = FRACUNIT / 2;
     }
@@ -116,32 +116,33 @@ void P_CalcHeight(player_t *player)
         }
         else
         {
-            angle = (FINEANGLES / 20 * leveltime) & FINEMASK;
-            bobmul = FRACUNIT * cfg.bobView;
-            target =
-                FixedMul(bobmul, FixedMul(player->bob / 2, finesine[angle]));
+            angle_t angle = (FINEANGLES / 20 * leveltime) & FINEMASK;
+            target = cfg.bobView * FIX2FLT(FixedMul(player->bob / 2, finesine[angle]));
         }
+
         // Do the change gradually.
-        angle = Get(DD_VIEWZ_OFFSET);
+        zOffset = *((float*) DD_GetVariable(DD_VIEWZ_OFFSET));
         if(airborne || aircounter > 0)
-            step = 0x40000 - (aircounter > 0 ? aircounter * 0x35C0 : 0x38000);
+            step = 4.0f - (aircounter > 0 ? aircounter * 0.2f : 3.5f);
         else
-            step = 0x40000;
-        if(angle > target)
+            step = 4.0f;
+
+        if(zOffset > target)
         {
-            if(angle - target > step)
-                angle -= step;
+            if(zOffset - target > step)
+                zOffset -= step;
             else
-                angle = target;
+                zOffset = target;
         }
-        else if(angle < target)
+        else if(zOffset < target)
         {
-            if(target - angle > step)
-                angle += step;
+            if(target - zOffset > step)
+                zOffset += step;
             else
-                angle = target;
+                zOffset = target;
         }
-        Set(DD_VIEWZ_OFFSET, angle);
+        DD_SetVariable(DD_VIEWZ_OFFSET, &zOffset);
+
         // The aircounter will soften the touchdown after a fall.
         aircounter--;
         if(airborne)

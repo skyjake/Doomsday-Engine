@@ -2965,12 +2965,11 @@ static void finalizeMapData(gamemap_t *map)
         sec->blockbox[BOXLEFT] = block;
 
         // Set the degenmobj_t to the middle of the bounding box
-        sec->soundorg.pos[VX] = (bbox[BOXRIGHT] + bbox[BOXLEFT]) / 2;
-        sec->soundorg.pos[VY] = (bbox[BOXTOP] + bbox[BOXBOTTOM]) / 2;
+        sec->soundorg.pos[VX] = FIX2FLT((bbox[BOXRIGHT] + bbox[BOXLEFT]) / 2);
+        sec->soundorg.pos[VY] = FIX2FLT((bbox[BOXTOP] + bbox[BOXBOTTOM]) / 2);
 
         // Set the z height of the sector sound origin
-        sec->soundorg.pos[VZ] =
-            FLT2FIX((sec->SP_ceilheight - sec->SP_floorheight) / 2);
+        sec->soundorg.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
 
         // Set the position of the sound origin for all plane sound origins
         // and target heights of all planes.
@@ -2978,7 +2977,7 @@ static void finalizeMapData(gamemap_t *map)
         {
             sec->planes[k]->soundorg.pos[VX] = sec->soundorg.pos[VX];
             sec->planes[k]->soundorg.pos[VY] = sec->soundorg.pos[VY];
-            sec->planes[k]->soundorg.pos[VZ] = FLT2FIX(sec->planes[k]->height);
+            sec->planes[k]->soundorg.pos[VZ] = sec->planes[k]->height;
 
             sec->planes[k]->target = sec->planes[k]->height;
         }

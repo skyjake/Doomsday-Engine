@@ -38,7 +38,7 @@ extern int      serverTime;
 extern boolean  handshakeReceived;
 extern int      gameReady;
 extern boolean  netLoggedIn;
-extern boolean  clientPaused;
+extern int      clientPaused;
 
 void            Cl_InitID(void);
 void            Cl_CleanUp(void);

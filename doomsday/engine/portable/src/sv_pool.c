@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1689,8 +1689,8 @@ fixed_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
     {
         polyobj_t *po = PO_PTR(delta->id);
 
-        return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
-                                info->pos[VY] - po->startSpot.pos[VY]);
+        return P_ApproxDistance(info->pos[VX] - FLT2FIX(po->startSpot.pos[VX]),
+                                info->pos[VY] - FLT2FIX(po->startSpot.pos[VY]));
     }
 
     if(delta->type == DT_MOBJ_SOUND)
@@ -1709,8 +1709,8 @@ fixed_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
     {
         polyobj_t *po = PO_PTR(delta->id);
 
-        return P_ApproxDistance(info->pos[VX] - po->startSpot.pos[VX],
-                                info->pos[VY] - po->startSpot.pos[VY]);
+        return P_ApproxDistance(info->pos[VX] - FLT2FIX(po->startSpot.pos[VX]),
+                                info->pos[VY] - FLT2FIX(po->startSpot.pos[VY]));
     }
 
     // Unknown distance.

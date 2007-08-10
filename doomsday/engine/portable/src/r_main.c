@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,9 +79,9 @@ int     validcount = 1;         // increment every time a check is made
 int     framecount;             // just for profiling purposes
 int     rendInfoTris = 0;
 int     useVSync = 0;
-fixed_t viewx, viewy, viewz;
+float   viewx, viewy, viewz;
 float   viewfrontvec[3], viewupvec[3], viewsidevec[3];
-fixed_t viewxOffset = 0, viewyOffset = 0, viewzOffset = 0;
+float   viewxOffset = 0, viewyOffset = 0, viewzOffset = 0;
 angle_t viewangle;
 float   viewpitch;              // player->lookdir, global version
 fixed_t viewcos, viewsin;
@@ -271,9 +271,9 @@ void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos,
 
 void R_SetViewPos(viewer_t *v)
 {
-    viewx = v->pos[VX];
-    viewy = v->pos[VY];
-    viewz = v->pos[VZ];
+    viewx = FIX2FLT(v->pos[VX]);
+    viewy = FIX2FLT(v->pos[VY]);
+    viewz = FIX2FLT(v->pos[VZ]);
     viewangle = v->angle;
     viewpitch = v->pitch;
 }
@@ -307,9 +307,9 @@ void R_GetSharpView(viewer_t *view, ddplayer_t *player)
     /* $unifiedangles */
     view->angle = player->mo->angle + viewangleoffset;
     view->pitch = player->lookdir;
-    view->pos[VX] = player->mo->pos[VX] + viewxOffset;
-    view->pos[VY] = player->mo->pos[VY] + viewyOffset;
-    view->pos[VZ] = FLT2FIX(player->viewz) + viewzOffset;
+    view->pos[VX] = player->mo->pos[VX] + FLT2FIX(viewxOffset);
+    view->pos[VY] = player->mo->pos[VY] + FLT2FIX(viewyOffset);
+    view->pos[VZ] = FLT2FIX(player->viewz + viewzOffset);
     if((player->flags & DDPF_CHASECAM) && !(player->flags & DDPF_CAMERA))
     {
         /* STUB

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -273,14 +273,15 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
 void Cl_PolyMoverThinker(polymover_t *mover)
 {
     polyobj_t  *poly = mover->poly;
-    int         dx, dy, dist;
+    float       dx, dy;
+    int         dist;
 
     if(mover->move)
     {
         // How much to go?
-        dx = FLT2FIX(poly->dest.pos[VX]) - poly->startSpot.pos[VX];
-        dy = FLT2FIX(poly->dest.pos[VY]) - poly->startSpot.pos[VY];
-        dist = P_ApproxDistance(dx, dy);
+        dx = poly->dest.pos[VX] - poly->startSpot.pos[VX];
+        dy = poly->dest.pos[VY] - poly->startSpot.pos[VY];
+        dist = P_ApproxDistance(FLT2FIX(dx), FLT2FIX(dy));
         if(dist <= poly->speed || !poly->speed)
         {
             // We'll arrive at the destination.
@@ -289,8 +290,8 @@ void Cl_PolyMoverThinker(polymover_t *mover)
         else
         {
             // Adjust deltas to fit speed.
-            dx = FixedMul(poly->speed, FixedDiv(dx, dist));
-            dy = FixedMul(poly->speed, FixedDiv(dy, dist));
+            dx = FIX2FLT(poly->speed) * (dx / FIX2FLT(dist));
+            dy = FIX2FLT(poly->speed) * (dy / FIX2FLT(dist));
         }
         // Do the move.
         PO_MovePolyobj(mover->number | 0x80000000, dx, dy);

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2006-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1390,14 +1390,14 @@ static int SetProperty(void* ptr, void* context)
         switch(args->prop)
         {
         case DMU_START_SPOT_X:
-            SetValue(DDVT_FIXED, &p->startSpot.pos[VX], args, 0);
+            SetValue(DDVT_FLOAT, &p->startSpot.pos[VX], args, 0);
             break;
         case DMU_START_SPOT_Y:
-            SetValue(DDVT_FIXED, &p->startSpot.pos[VY], args, 0);
+            SetValue(DDVT_FLOAT, &p->startSpot.pos[VY], args, 0);
             break;
         case DMU_START_SPOT_XY:
-            SetValue(DDVT_FIXED, &p->startSpot.pos[VX], args, 0);
-            SetValue(DDVT_FIXED, &p->startSpot.pos[VY], args, 1);
+            SetValue(DDVT_FLOAT, &p->startSpot.pos[VX], args, 0);
+            SetValue(DDVT_FLOAT, &p->startSpot.pos[VY], args, 1);
             break;
         case DMU_DESTINATION_X:
             SetValue(DDVT_FLOAT, &p->dest.pos[VX], args, 0);
@@ -2258,14 +2258,14 @@ static int GetProperty(void* ptr, void* context)
             break;
         }
         case DMU_START_SPOT_X:
-            GetValue(DDVT_FIXED, &p->startSpot.pos[VX], args, 0);
+            GetValue(DDVT_FLOAT, &p->startSpot.pos[VX], args, 0);
             break;
         case DMU_START_SPOT_Y:
-            GetValue(DDVT_FIXED, &p->startSpot.pos[VY], args, 0);
+            GetValue(DDVT_FLOAT, &p->startSpot.pos[VY], args, 0);
             break;
         case DMU_START_SPOT_XY:
-            GetValue(DDVT_FIXED, &p->startSpot.pos[VX], args, 0);
-            GetValue(DDVT_FIXED, &p->startSpot.pos[VY], args, 1);
+            GetValue(DDVT_FLOAT, &p->startSpot.pos[VX], args, 0);
+            GetValue(DDVT_FLOAT, &p->startSpot.pos[VY], args, 1);
             break;
         case DMU_ORIGINAL_POINTS:
             GetValue(DDVT_PTR, &p->originalPts, args, 0);

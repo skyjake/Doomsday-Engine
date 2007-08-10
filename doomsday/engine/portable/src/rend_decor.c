@@ -306,9 +306,9 @@ static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
 
     // Approximate the distance.
     lum->distance =
-        P_ApproxDistance3(FLT2FIX(lum->pos[VX]) - viewx,
-                          FLT2FIX(lum->pos[VY]) - viewy,
-                          FLT2FIX(lum->pos[VZ]) - viewz);
+        P_ApproxDistance3(FLT2FIX(lum->pos[VX] - viewx),
+                          FLT2FIX(lum->pos[VY] - viewy),
+                          FLT2FIX(lum->pos[VZ] - viewz));
 }
 
 /**
@@ -317,11 +317,14 @@ static void Rend_AddLightDecoration(float pos[3], ded_decorlight_t *def,
  */
 static boolean Rend_CheckDecorationBounds(fixed_t bounds[6], float fMaxDist)
 {
+    fixed_t vX = FLT2FIX(viewx);
+    fixed_t vY = FLT2FIX(viewy);
+    fixed_t vZ = FLT2FIX(viewz);
     fixed_t maxDist = FRACUNIT * fMaxDist;
 
-    return viewx > bounds[BLEFT] - maxDist   && viewx < bounds[BRIGHT] + maxDist
-        && viewy > bounds[BBOTTOM] - maxDist && viewy < bounds[BTOP] + maxDist
-        && viewz > bounds[BFLOOR] - maxDist  && viewz < bounds[BCEILING] + maxDist;
+    return vX > bounds[BLEFT] - maxDist   && vX < bounds[BRIGHT] + maxDist
+        && vY > bounds[BBOTTOM] - maxDist && vY < bounds[BTOP] + maxDist
+        && vZ > bounds[BFLOOR] - maxDist  && vZ < bounds[BCEILING] + maxDist;
 }
 
 /**

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2544,15 +2544,15 @@ static void SV_WritePolyObj(polyobj_t *po)
 
     SV_WriteLong(P_GetIntp(po, DMU_TAG));
     SV_WriteLong(P_GetAnglep(po, DMU_ANGLE));
-    SV_WriteLong(P_GetFixedp(po, DMU_START_SPOT_X));
-    SV_WriteLong(P_GetFixedp(po, DMU_START_SPOT_Y));
+    SV_WriteLong(FLT2FIX(P_GetFloatp(po, DMU_START_SPOT_X)));
+    SV_WriteLong(FLT2FIX(P_GetFloatp(po, DMU_START_SPOT_Y)));
 }
 
 static int SV_ReadPolyObj(polyobj_t *po)
 {
     int         ver;
-    fixed_t     deltaX;
-    fixed_t     deltaY;
+    float       deltaX;
+    float       deltaY;
     angle_t     angle;
 
     if(saveVersion >= 3)
@@ -2564,8 +2564,8 @@ static int SV_ReadPolyObj(polyobj_t *po)
     angle = (angle_t) SV_ReadLong();
     PO_RotatePolyobj(P_GetIntp(po, DMU_TAG), angle);
     P_SetAnglep(po, DMU_DESTINATION_ANGLE, angle);
-    deltaX = SV_ReadLong() - P_GetFixedp(po, DMU_START_SPOT_X);
-    deltaY = SV_ReadLong() - P_GetFixedp(po, DMU_START_SPOT_Y);
+    deltaX = FIX2FLT(SV_ReadLong()) - P_GetFloatp(po, DMU_START_SPOT_X);
+    deltaY = FIX2FLT(SV_ReadLong()) - P_GetFloatp(po, DMU_START_SPOT_Y);
     PO_MovePolyobj(P_GetIntp(po, DMU_TAG), deltaX, deltaY);
     //// \fixme What about speed? It isn't saved at all?
     return true;

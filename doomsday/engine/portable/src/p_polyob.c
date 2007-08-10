@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,8 +49,8 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void UpdateSegBBox(seg_t *seg);
-static void RotatePt(int an, float *x, float *y, fixed_t startSpotX,
-                     fixed_t startSpotY);
+static void RotatePt(int an, float *x, float *y, float startSpotX,
+                     float startSpotY);
 static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -185,15 +185,15 @@ void PO_SetupPolyobjs(void)
     }
 }
 
-boolean PO_MovePolyobj(uint num, int x, int y)
+boolean PO_MovePolyobj(uint num, float fx, float fy)
 {
     uint        count;
     seg_t     **segList;
     seg_t     **veryTempSeg;
     polyobj_t  *po;
-    ddvertex_t *prevPts;
+    fvertex_t  *prevPts;
     boolean     blocked;
-    float       fx = FIX2FLT(x), fy = FIX2FLT(y);
+    fixed_t     x = FLT2FIX(fx), y = FLT2FIX(fy);
 
     if(num & 0x80000000)
     {
@@ -211,7 +211,7 @@ boolean PO_MovePolyobj(uint num, int x, int y)
     blocked = false;
 
     validcount++;
-    for(count = po->numsegs; count; count--, segList++, prevPts++)
+    for(count = 0; count < po->numsegs; ++count, segList++, prevPts++)
     {
         if((*segList)->linedef->validcount != validcount)
         {
@@ -233,11 +233,11 @@ boolean PO_MovePolyobj(uint num, int x, int y)
             (*segList)->SG_v1pos[VX] += fx;
             (*segList)->SG_v1pos[VY] += fy;
         }
-        (*prevPts).pos[VX] += x;      // previous points are unique for each seg
-        (*prevPts).pos[VY] += y;
+        (*prevPts).pos[VX] += fx;      // previous points are unique for each seg
+        (*prevPts).pos[VY] += fy;
     }
     segList = po->segs;
-    for(count = po->numsegs; count; count--, segList++)
+    for(count = 0; count < po->numsegs; ++count, segList++)
     {
         if(CheckMobjBlocking(*segList, po))
         {
@@ -246,11 +246,11 @@ boolean PO_MovePolyobj(uint num, int x, int y)
     }
     if(blocked)
     {
-        count = po->numsegs;
+        count = 0;
         segList = po->segs;
         prevPts = po->prevPts;
         validcount++;
-        while(count--)
+        while(count++ < po->numsegs)
         {
             if((*segList)->linedef->validcount != validcount)
             {
@@ -272,8 +272,8 @@ boolean PO_MovePolyobj(uint num, int x, int y)
                 (*segList)->SG_v1pos[VX] -= fx;
                 (*segList)->SG_v1pos[VY] -= fy;
             }
-            (*prevPts).pos[VX] -= x;
-            (*prevPts).pos[VY] -= y;
+            (*prevPts).pos[VX] -= fx;
+            (*prevPts).pos[VY] -= fy;
 
             segList++;
             prevPts++;
@@ -281,8 +281,8 @@ boolean PO_MovePolyobj(uint num, int x, int y)
         PO_LinkPolyobj(po);
         return false;
     }
-    po->startSpot.pos[VX] += x;
-    po->startSpot.pos[VY] += y;
+    po->startSpot.pos[VX] += fx;
+    po->startSpot.pos[VY] += fy;
     PO_LinkPolyobj(po);
 
     // A change has occured.
@@ -291,30 +291,29 @@ boolean PO_MovePolyobj(uint num, int x, int y)
     return true;
 }
 
-static void RotatePt(int an, float *x, float *y, fixed_t startSpotX,
-                     fixed_t startSpotY)
+static void RotatePt(int an, float *x, float *y, float startSpotX, float startSpotY)
 {
-    fixed_t trx, try;
-    fixed_t gxt, gyt;
+    float trx, try;
+    float gxt, gyt;
 
-    trx = FLT2FIX(*x);
-    try = FLT2FIX(*y);
+    trx = *x;
+    try = *y;
 
-    gxt = FixedMul(trx, finecosine[an]);
-    gyt = FixedMul(try, finesine[an]);
-    *x = FIX2FLT((gxt - gyt) + startSpotX);
+    gxt = trx * FIX2FLT(finecosine[an]);
+    gyt = try * FIX2FLT(finesine[an]);
+    *x = gxt - gyt + startSpotX;
 
-    gxt = FixedMul(trx, finesine[an]);
-    gyt = FixedMul(try, finecosine[an]);
-    *y = FIX2FLT((gyt + gxt) + startSpotY);
+    gxt = trx * FIX2FLT(finesine[an]);
+    gyt = try * FIX2FLT(finecosine[an]);
+    *y = gyt + gxt + startSpotY;
 }
 
 boolean PO_RotatePolyobj(uint num, angle_t angle)
 {
     uint        count;
     seg_t     **segList;
-    ddvertex_t *originalPts;
-    ddvertex_t *prevPts;
+    fvertex_t  *originalPts;
+    fvertex_t  *prevPts;
     int         an;
     polyobj_t  *po;
     boolean     blocked;
@@ -336,15 +335,15 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
     originalPts = po->originalPts;
     prevPts = po->prevPts;
 
-    for(count = po->numsegs; count;
-        count--, segList++, originalPts++, prevPts++)
+    for(count = 0; count < po->numsegs;
+        ++count, segList++, originalPts++, prevPts++)
     {
         vtx = (*segList)->SG_v1;
 
-        prevPts->pos[VX] = FLT2FIX(vtx->V_pos[VX]);
-        prevPts->pos[VY] = FLT2FIX(vtx->V_pos[VY]);
-        vtx->V_pos[VX] = FIX2FLT(originalPts->pos[VX]);
-        vtx->V_pos[VY] = FIX2FLT(originalPts->pos[VY]);
+        prevPts->pos[VX] = vtx->V_pos[VX];
+        prevPts->pos[VY] = vtx->V_pos[VY];
+        vtx->V_pos[VX] = originalPts->pos[VX];
+        vtx->V_pos[VY] = originalPts->pos[VY];
 
         RotatePt(an, &vtx->V_pos[VX], &vtx->V_pos[VY],
                  po->startSpot.pos[VX], po->startSpot.pos[VY]);
@@ -352,7 +351,7 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
     segList = po->segs;
     blocked = false;
     validcount++;
-    for(count = po->numsegs; count; count--, segList++)
+    for(count = 0; count < po->numsegs; ++count, segList++)
     {
         if(CheckMobjBlocking(*segList, po))
         {
@@ -369,16 +368,16 @@ boolean PO_RotatePolyobj(uint num, angle_t angle)
     {
         segList = po->segs;
         prevPts = po->prevPts;
-        for(count = po->numsegs; count; count--, segList++, prevPts++)
+        for(count = 0; count < po->numsegs; ++count, segList++, prevPts++)
         {
             vtx = (*segList)->SG_v1;
 
-            vtx->V_pos[VX] = FIX2FLT(prevPts->pos[VX]);
-            vtx->V_pos[VY] = FIX2FLT(prevPts->pos[VY]);
+            vtx->V_pos[VX] = prevPts->pos[VX];
+            vtx->V_pos[VY] = prevPts->pos[VY];
         }
         segList = po->segs;
         validcount++;
-        for(count = po->numsegs; count; count--, segList++, prevPts++)
+        for(count = 0; count < po->numsegs; ++count, segList++, prevPts++)
         {
             if((*segList)->linedef->validcount != validcount)
             {
@@ -510,7 +509,7 @@ void PO_LinkPolyobj(polyobj_t * po)
     }
 }
 
-static boolean CheckMobjBlocking(seg_t *seg, polyobj_t * po)
+static boolean CheckMobjBlocking(seg_t *seg, polyobj_t *po)
 {
     mobj_t     *mobj, *root;
     int         i, j;

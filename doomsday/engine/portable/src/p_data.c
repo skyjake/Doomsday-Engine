@@ -159,11 +159,11 @@ void P_PlaneChanged(sector_t *sector, uint plane)
     side_t     *front = NULL, *back = NULL;
 
     // Update the z positions of the degenmobjs for this sector.
-    sector->planes[plane]->soundorg.pos[VZ] = FLT2FIX(sector->planes[plane]->height);
+    sector->planes[plane]->soundorg.pos[VZ] = sector->planes[plane]->height;
 
     if(plane == PLN_FLOOR || plane == PLN_CEILING)
         sector->soundorg.pos[VZ] =
-            FLT2FIX((sector->SP_ceilheight - sector->SP_floorheight) / 2);
+            (sector->SP_ceilheight - sector->SP_floorheight) / 2;
 
     for(i = 0; i < sector->linecount; ++i)
     {

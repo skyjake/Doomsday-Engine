@@ -168,14 +168,6 @@ extern          "C" {
         DD_VIEWWINDOW_Y,
         DD_VIEWWINDOW_WIDTH,
         DD_VIEWWINDOW_HEIGHT,
-        DD_VIEWX,
-        DD_VIEWY,
-        DD_VIEWZ,
-        DD_VIEWX_OFFSET,
-        DD_VIEWY_OFFSET,
-        DD_VIEWZ_OFFSET,
-        DD_VIEWANGLE,
-        DD_VIEWANGLE_OFFSET,
         DD_CONSOLEPLAYER,
         DD_DISPLAYPLAYER,
         DD_MUSIC_DEVICE,
@@ -314,7 +306,15 @@ extern          "C" {
         DD_BLOCKMAP_ORIGIN_X,
         DD_BLOCKMAP_ORIGIN_Y,
         DD_XGFUNC_LINK,            // XG line classes
-        DD_SHARED_FIXED_TRIGGER
+        DD_SHARED_FIXED_TRIGGER,
+        DD_VIEWX,
+        DD_VIEWY,
+        DD_VIEWZ,
+        DD_VIEWX_OFFSET,
+        DD_VIEWY_OFFSET,
+        DD_VIEWZ_OFFSET,
+        DD_VIEWANGLE,
+        DD_VIEWANGLE_OFFSET
     };
 
     // Bounding box coordinates.
@@ -768,7 +768,7 @@ extern          "C" {
     // each sector has a degenmobj_t in it's center for sound origin purposes
     typedef struct {
         thinker_t       thinker;   // not used for anything
-        fixed_t         pos[3];
+        float           pos[3];
     } degenmobj_t;
 
     typedef struct {

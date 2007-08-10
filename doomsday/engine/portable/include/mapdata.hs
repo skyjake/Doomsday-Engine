@@ -396,8 +396,8 @@ struct polyobj
     PTR     degenmobj_t startSpot
     ANGLE   angle_t     angle
     INT     int         tag         // reference tag assigned in HereticEd
-    -       ddvertex_t* originalPts // used as the base for the rotations
-    -       ddvertex_t* prevPts     // use to restore the old point values
+    -       fvertex_t*  originalPts // used as the base for the rotations
+    -       fvertex_t*  prevPts     // use to restore the old point values
     FIXED   fixed_t[4]  bbox
     -       fvertex_t   dest
     INT     int         speed       // Destination XY and speed.
