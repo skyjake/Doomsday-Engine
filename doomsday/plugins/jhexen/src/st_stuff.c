@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright Â© 2005-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1999 Activision
+ *\author Copyright © 2005-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -686,7 +686,6 @@ void SB_SetClassData(void)
     }
 
     SB_state = -1;
-    GL_Update(DDUF_FULLSCREEN);
 }
 
 void ST_updateWidgets(void)
@@ -1109,7 +1108,6 @@ static void DrawSoundInfo(void)
         MN_DrTextA(text, xPos[x++], y);
         sprintf(text, "%d", c->distance);
     }
-    GL_Update(DDUF_FULLSCREEN | DDUF_BORDER);
 }
 #endif
 
@@ -1500,7 +1498,6 @@ static void DrawAnimatedIcons(void)
                 }
             }
         }
-        GL_Update(DDUF_TOP | DDUF_MESSAGES);
     }
 
     // Speed Boots
@@ -1513,7 +1510,6 @@ static void DrawAnimatedIcons(void)
             GL_DrawPatchLitAlpha(60 + leftoff, 19, 1, iconalpha,
                                  SpinSpeedLump.lump + frame);
         }
-        GL_Update(DDUF_TOP | DDUF_MESSAGES);
     }
 
     Draw_EndZoom();
@@ -1530,7 +1526,6 @@ static void DrawAnimatedIcons(void)
             GL_DrawPatchLitAlpha(260, 19, 1, iconalpha,
                                  SpinDefenseLump.lump + frame);
         }
-        GL_Update(DDUF_TOP | DDUF_MESSAGES);
     }
 
     // Minotaur Active
@@ -1543,7 +1538,6 @@ static void DrawAnimatedIcons(void)
             GL_DrawPatchLitAlpha(300, 19, 1, iconalpha,
                                  SpinMinotaurLump.lump + frame);
         }
-        GL_Update(DDUF_TOP | DDUF_MESSAGES);
     }
 
     Draw_EndZoom();
@@ -1722,8 +1716,6 @@ void DrawChain(void)
                 gemglow - (1 - statusbarCounterAlpha));
 
     gl.Func(DGL_BLENDING, DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
-
-    GL_Update(DDUF_STATBAR);
 }
 
 void ST_drawWidgets(boolean refresh)
@@ -2067,23 +2059,6 @@ void Draw_TeleportIcon(void)
             break;
         gl.Show();
     }
-
-    // Mark the next frame for fullscreen update.
-    GL_Update(DDUF_FULLSCREEN);
-}
-
-void Draw_SaveIcon(void)
-{
-    GL_DrawPatch(100, 68, W_GetNumForName("saveicon"));
-    GL_Update(DDUF_FULLSCREEN | DDUF_UPDATE);
-    GL_Update(DDUF_FULLSCREEN);
-}
-
-void Draw_LoadIcon(void)
-{
-    GL_DrawPatch(100, 68, W_GetNumForName("loadicon"));
-    GL_Update(DDUF_FULLSCREEN | DDUF_UPDATE);
-    GL_Update(DDUF_FULLSCREEN);
 }
 
 /**

@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1999 Activision
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -204,19 +204,19 @@ static void ProcessStairSector(sector_t *sec, int type, float height,
         xtsec = P_XSector(tsec);
         if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialdata &&
            P_GetIntp(tsec, DMU_FLOOR_TEXTURE) == stairData.texture &&
-           P_GetIntp(tsec, DMU_VALID_COUNT) != validCount)
+           P_GetIntp(tsec, DMU_VALID_COUNT) != VALIDCOUNT)
         {
             QueueStairSector(tsec, type ^ 1, height);
-            P_SetIntp(tsec, DMU_VALID_COUNT, validCount);
+            P_SetIntp(tsec, DMU_VALID_COUNT, VALIDCOUNT);
         }
         tsec = P_GetPtrp(line, DMU_BACK_SECTOR);
         xtsec = P_XSector(tsec);
         if(xtsec->special == type + STAIR_SECTOR_TYPE && !xtsec->specialdata &&
            P_GetIntp(tsec, DMU_FLOOR_TEXTURE) == stairData.texture &&
-           P_GetIntp(tsec, DMU_VALID_COUNT) != validCount)
+           P_GetIntp(tsec, DMU_VALID_COUNT) != VALIDCOUNT)
         {
             QueueStairSector(tsec, type ^ 1, height);
-            P_SetIntp(tsec, DMU_VALID_COUNT, validCount);
+            P_SetIntp(tsec, DMU_VALID_COUNT, VALIDCOUNT);
         }
     }
 }
@@ -250,7 +250,7 @@ int EV_BuildStairs(line_t *line, byte *args, int direction,
         stairData.textureChange = (int) args[4];
     }
 
-    validCount++;
+    VALIDCOUNT++;
 
     list = P_GetSectorIterListForTag((int) args[0], false);
     if(!list)

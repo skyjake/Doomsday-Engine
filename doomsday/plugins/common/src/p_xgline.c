@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1650,7 +1650,7 @@ int C_DECL XLTrav_LineTeleport(line_t *newline, boolean dummy, void *context, vo
     // Adjust the player's view, incase there has been a height change
     if(mobj->player)
     {
-        mobj->dplayer->viewz = FIX2FLT(mobj->pos[VZ]) + mobj->dplayer->viewheight;
+        mobj->dplayer->viewZ = FIX2FLT(mobj->pos[VZ]) + mobj->dplayer->viewheight;
         mobj->dplayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     }
 

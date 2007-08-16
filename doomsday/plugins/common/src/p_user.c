@@ -1550,7 +1550,6 @@ void P_PlayerThinkPowers(player_t *player)
             }
             player->plr->mo->flags2 &= ~MF2_FLY;
             player->plr->mo->flags &= ~MF_NOGRAVITY;
-            GL_Update(DDUF_TOP);
         }
     }
 #endif
@@ -1575,7 +1574,6 @@ void P_PlayerThinkPowers(player_t *player)
                 player->pendingweapon = player->readyweapon;
                 player->update |= PSF_PENDING_WEAPON;
             }
-            GL_Update(DDUF_TOP);
         }
     }
 #endif

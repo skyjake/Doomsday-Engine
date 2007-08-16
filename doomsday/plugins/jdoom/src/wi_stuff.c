@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -389,7 +389,7 @@ void WI_drawLF(void)
 {
     int     y = WI_TITLEY;
     int     mapnum;
-    char   *lname, *ptr;
+    char   *lname, *ptr = NULL;
 
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
 
@@ -398,7 +398,9 @@ void WI_drawLF(void)
     else
         mapnum = ((gameepisode -1) * 9) + wbs->last;
 
-    ptr = strchr(lname, ':');   // Skip the E#M# or Level #.
+    if(lname)
+        ptr = strchr(lname, ':');   // Skip the E#M# or Level #.
+
     if(ptr)
     {
         lname = ptr + 1;

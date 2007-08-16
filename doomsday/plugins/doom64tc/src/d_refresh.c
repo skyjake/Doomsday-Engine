@@ -307,23 +307,11 @@ void D_Display(void)
 
         // Draw the automap?
         AM_Drawer(displayplayer);
-
-        // Need to update the borders?
-        if(oldgamestate != GS_LEVEL ||
-            ((Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
-                !R_IsFullScreenViewWindow())))
-        {
-            // Update the borders.
-            GL_Update(DDUF_BORDER);
-        }
-
         break;
 
     default:
         break;
     }
-
-    GL_Update(DDUF_FULLSCREEN);
 
     menuactivestate = menuactive;
     viewactivestate = viewactive;

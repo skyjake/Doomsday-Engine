@@ -960,18 +960,18 @@ static void TranslateToStartSpot(int tag, float originX, float originY)
     avg.pos[VX] = 0;
     avg.pos[VY] = 0;
 
-    validCount++;
+    VALIDCOUNT++;
     for(i = 0; i < (uint) poNumSegs; ++i, tempSeg++, tempPt++)
     {
         line_t* linedef = P_GetPtrp(*tempSeg, DMU_LINE);
-        if(P_GetIntp(linedef, DMU_VALID_COUNT) != validCount)
+        if(P_GetIntp(linedef, DMU_VALID_COUNT) != VALIDCOUNT)
         {
             fixed_t *bbox = P_GetPtrp(linedef, DMU_BOUNDING_BOX);
             bbox[BOXTOP]    -= deltaY;
             bbox[BOXBOTTOM] -= deltaY;
             bbox[BOXLEFT]   -= deltaX;
             bbox[BOXRIGHT]  -= deltaX;
-            P_SetIntp(linedef, DMU_VALID_COUNT, validCount);
+            P_SetIntp(linedef, DMU_VALID_COUNT, VALIDCOUNT);
         }
 
         for(veryTempSeg = P_GetPtrp(po, DMU_SEG_LIST);

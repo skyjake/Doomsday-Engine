@@ -2,10 +2,10 @@
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1999-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© Raven Software, Corp.
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 1993-1996 by id Software, Inc.
  */
 
 /* $Id: p_start.c 3509 2006-08-09 15:06:59Z danij $
@@ -245,7 +245,7 @@ boolean P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, boolean alwaysstomp)
     tmceilingz = P_GetFloatp(newsubsec, DMU_CEILING_HEIGHT);
     tmfloorpic = P_GetIntp(newsubsec, DMU_FLOOR_TEXTURE);
 
-    validCount++;
+    VALIDCOUNT++;
     P_EmptyIterList(spechit);
 
     // stomp on any things contacted
@@ -1060,7 +1060,7 @@ boolean P_CheckPosition2(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z)
     tmceilingz = P_GetFloatp(newsec, DMU_CEILING_HEIGHT);
     tmfloorpic = P_GetIntp(newsec, DMU_FLOOR_TEXTURE);
 
-    validCount++;
+    VALIDCOUNT++;
     P_EmptyIterList(spechit);
 
 #if __JHEXEN__
@@ -2544,7 +2544,7 @@ boolean P_ChangeSector(sector_t *sector, boolean crunch)
     nofit = false;
     crushchange = crunch;
 
-    validCount++;
+    VALIDCOUNT++;
     P_SectorTouchingThingsIterator(sector, PIT_ChangeSector, 0);
 
     return nofit;
@@ -2710,7 +2710,7 @@ mobj_t *P_CheckOnMobj(mobj_t *thing)
     tmceilingz = P_GetFloatp(newsubsec, DMU_CEILING_HEIGHT);
     tmfloorpic = P_GetIntp(newsubsec, DMU_FLOOR_TEXTURE);
 
-    validCount++;
+    VALIDCOUNT++;
     P_EmptyIterList(spechit);
 
     if(tmthing->flags & MF_NOCLIP)

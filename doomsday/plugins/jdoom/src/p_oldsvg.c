@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -93,7 +93,7 @@ static void SV_ReadPlayer(player_t *pl)
     SV_ReadLong();
     pl->playerstate = SV_ReadLong();
     SV_Read(temp, 8);
-    pl->plr->viewz = FIX2FLT(SV_ReadLong());
+    pl->plr->viewZ = FIX2FLT(SV_ReadLong());
     pl->plr->viewheight = FIX2FLT(SV_ReadLong());
     pl->plr->deltaviewheight = FIX2FLT(SV_ReadLong());
     pl->bob = SV_ReadLong();
@@ -132,7 +132,7 @@ static void SV_ReadPlayer(player_t *pl)
 
     SV_ReadLong();
 
-    pl->plr->extralight = SV_ReadLong();
+    pl->plr->extraLight = SV_ReadLong();
     pl->plr->fixedcolormap = SV_ReadLong();
     pl->colormap = SV_ReadLong();
     SV_Read(pl->psprites, 2 * sizeof(pspdef_t));

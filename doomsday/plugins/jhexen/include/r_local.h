@@ -197,8 +197,6 @@ extern angle_t  rw_normalangle;
 extern int      centerx, centery;
 extern int      flyheight;
 
-#define validCount      (*gi.validcount)
-
 extern int      sscount, linecount, loopcount;
 extern lighttable_t *scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
 extern lighttable_t *scalelightfixed[MAXLIGHTSCALE];
@@ -331,9 +329,6 @@ extern fixed_t  pspritescale, pspriteiscale;
 // R_draw.c
 //
 //=============================================================================
-
-extern byte    *translationtables;
-extern byte    *dc_translation;
 
 void            R_InitBuffer(int width, int height);
 void            R_InitTranslationTables(void);

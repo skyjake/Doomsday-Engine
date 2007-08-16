@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2005-2007 Jaakko Kerâ€°nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2005-2007 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -992,8 +992,6 @@ void AM_Stop(int pnum)
 
     map->active = false;
     AM_SetGlobalAlphaTarget(pnum, 0);
-
-    GL_Update(DDUF_BORDER);
 }
 
 /**
@@ -2315,26 +2313,6 @@ void AM_Ticker(void)
 }
 
 /**
- * Draw a border if needed.
- */
-static void clearFB(int color)
-{
-#if !__DOOM64TC__
-    float       scaler = cfg.sbarscale / 20.0f;
-
-    GL_Update(DDUF_FULLSCREEN);
-
-    if(cfg.automapHudDisplay != 1)
-    {
-        GL_SetPatch(W_GetNumForName( BORDERGRAPHIC ));
-        GL_DrawCutRectTiled(0, SCREENHEIGHT, 320, BORDEROFFSET, 16, BORDEROFFSET,
-                            0, 0, 160 - 160 * scaler + 1, SCREENHEIGHT,
-                            320 * scaler - 2, BORDEROFFSET);
-    }
-#endif
-}
-
-/**
  * Is the given point within the viewframe of the automap?
  *
  * @return          <code>true</code> if the point is visible.
@@ -2660,7 +2638,7 @@ boolean renderWallsInSubsector(subsector_t *s, void *data)
             continue;
 
         xLine = P_XLine(line);
-        if(xLine->validcount == validCount)
+        if(xLine->validcount == VALIDCOUNT)
             continue; // Already drawn once.
 
         lineFlags = P_GetIntp(line, DMU_FLAGS);
@@ -2686,7 +2664,7 @@ boolean renderWallsInSubsector(subsector_t *s, void *data)
                           TWOSIDED_GLOW, 1, 5, false, true, false, BM_ADD,
                           map->cheating);
 
-                xLine->validcount = validCount;  // Mark as drawn this frame.
+                xLine->validcount = VALIDCOUNT;  // Mark as drawn this frame.
                 continue;
             }
         }
@@ -2753,7 +2731,7 @@ boolean renderWallsInSubsector(subsector_t *s, void *data)
                       (xLine->special && !map->cfg.glowingLineSpecials ?
                             BM_NORMAL : info->blendmode), map->cheating);
 
-            xLine->validcount = validCount; // Mark as drawn this frame.
+            xLine->validcount = VALIDCOUNT; // Mark as drawn this frame.
         }
     }
 
@@ -2770,8 +2748,8 @@ static void renderWalls(void)
     ssecitervars_t data;
     fixed_t     bbox[4];
 
-    // validcount is used to track which lines have been drawn this frame.
-    validCount++;
+    // VALIDCOUNT is used to track which lines have been drawn this frame.
+    VALIDCOUNT++;
 
     // Set the vars used during iteration.
     data.plr = plr;
@@ -3376,7 +3354,6 @@ void AM_Drawer(int viewplayer)
         return;
 
     // Setup for frame.
-    clearFB(BACKGROUND);
     setupGLStateForMap();
 
     // Freeze the lists if the map is fading out from being open

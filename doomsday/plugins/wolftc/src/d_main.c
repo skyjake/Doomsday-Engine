@@ -680,7 +680,6 @@ void D_PostInit(void)
 
     if(gameaction != GA_LOADGAME)
     {
-        GL_Update(DDUF_BORDER | DDUF_FULLSCREEN);
         if(autostart || IS_NETGAME)
         {
             G_DeferedInitNew(startskill, startepisode, startmap);

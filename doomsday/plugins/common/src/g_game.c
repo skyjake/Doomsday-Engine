@@ -2,10 +2,10 @@
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright Â© 1999-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© Raven Software, Corp.
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 1999-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 1993-1996 by id Software, Inc.
  */
 
 /* $Id$
@@ -1061,7 +1061,7 @@ void G_PlayerExitMap(int player)
 
     p->plr->lookdir = 0;
     p->plr->mo->flags &= ~MF_SHADOW;    // cancel invisibility
-    p->plr->extralight = 0;     // cancel gun flashes
+    p->plr->extraLight = 0;     // cancel gun flashes
     p->plr->fixedcolormap = 0;  // cancel ir gogles
 
     // Clear filter.
@@ -1819,8 +1819,7 @@ void G_DoLoadGame(void)
     gameaction = GA_NONE;
 
 #if __JHEXEN__ || __JSTRIFE__
-
-    Draw_LoadIcon();
+    GL_DrawPatch(100, 68, W_GetNumForName("loadicon"));
 
     SV_LoadGame(GameLoadSlot);
     if(!IS_NETGAME)
@@ -1850,7 +1849,7 @@ void G_SaveGame(int slot, char *description)
 void G_DoSaveGame(void)
 {
 #if __JHEXEN__ || __JSTRIFE__
-    Draw_SaveIcon();
+    GL_DrawPatch(100, 68, W_GetNumForName("saveicon"));
 
     SV_SaveGame(savegameslot, savedescription);
 #else
@@ -2016,7 +2015,6 @@ void G_InitNew(skillmode_t skill, int episode, int map)
     gameepisode = episode;
     gamemap = map;
     gameskill = skill;
-    GL_Update(DDUF_BORDER);
 
     NetSv_UpdateGameConfig();
 

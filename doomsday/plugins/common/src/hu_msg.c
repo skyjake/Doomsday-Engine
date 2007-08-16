@@ -3,10 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -440,9 +440,6 @@ void HUMsg_PlayerMessage(player_t *plr, char *message, int tics,
 void HUMsg_ClearMessages(player_t *player)
 {
     HU_MsgBufClear(&msgBuffer[player - players]);
-
-    if(player == &players[consoleplayer])
-        GL_Update(DDUF_TOP);
 }
 
 /**
@@ -580,9 +577,6 @@ static void HU_MsgBufTick(msgbuffer_t *buf)
     {
         buf->visible = false;
         buf->nottobefuckedwith = false;
-
-        // Refresh the screen when a message goes away
-        GL_Update(DDUF_TOP);
     }
 }
 

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -405,7 +405,7 @@ static void P_ResetWorldState(void)
     }
 
     // Initial height of PointOfView; will be set by player think.
-    players[consoleplayer].plr->viewz = 1;
+    players[consoleplayer].plr->viewZ = 1;
 
     for(i = 0; i < MAXPLAYERS; i++)
     {

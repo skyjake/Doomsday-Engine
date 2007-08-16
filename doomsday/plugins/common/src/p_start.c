@@ -2,10 +2,10 @@
  *\section License
  * License: GPL + jHeretic/jHexen Exception
  *
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© Raven Software, Corp.
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © Raven Software, Corp.
+ *\author Copyright © 1993-1996 by id Software, Inc.
  */
 
 /* $Id$
@@ -295,7 +295,7 @@ boolean P_CheckSpot(int playernum, thing_t *mthing, boolean doTeleSpark)
                             pos[VY] + 20 * finesine[an]);
 
         // don't start sound on first frame
-        if(players[consoleplayer].plr->viewz != 1)
+        if(players[consoleplayer].plr->viewZ != 1)
             S_StartSound(TELEPORTSOUND, mo);
     }
 

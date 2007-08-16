@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1999 Activision
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -1956,7 +1956,7 @@ void C_DECL A_GauntletAttack(player_t *player, pspdef_t * psp)
     {
         if(P_Random() > 64)
         {
-            player->plr->extralight = !player->plr->extralight;
+            player->plr->extraLight = !player->plr->extraLight;
         }
         S_StartSoundEx(sfx_gntful, player->plr->mo);
         return;
@@ -1964,15 +1964,15 @@ void C_DECL A_GauntletAttack(player_t *player, pspdef_t * psp)
     randVal = P_Random();
     if(randVal < 64)
     {
-        player->plr->extralight = 0;
+        player->plr->extraLight = 0;
     }
     else if(randVal < 160)
     {
-        player->plr->extralight = 1;
+        player->plr->extraLight = 1;
     }
     else
     {
-        player->plr->extralight = 2;
+        player->plr->extraLight = 2;
     }
     if(player->powers[PT_WEAPONLEVEL2])
     {
@@ -2005,17 +2005,17 @@ void C_DECL A_GauntletAttack(player_t *player, pspdef_t * psp)
 
 void C_DECL A_Light0(player_t *player, pspdef_t * psp)
 {
-    player->plr->extralight = 0;
+    player->plr->extraLight = 0;
 }
 
 void C_DECL A_Light1(player_t *player, pspdef_t * psp)
 {
-    player->plr->extralight = 1;
+    player->plr->extraLight = 1;
 }
 
 void C_DECL A_Light2(player_t *player, pspdef_t * psp)
 {
-    player->plr->extralight = 2;
+    player->plr->extraLight = 2;
 }
 
 /**

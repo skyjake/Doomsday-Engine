@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -651,17 +651,17 @@ void C_DECL A_FireCGun(player_t *player, pspdef_t * psp)
 
 void C_DECL A_Light0(player_t *player, pspdef_t * psp)
 {
-    player->plr->extralight = 0;
+    player->plr->extraLight = 0;
 }
 
 void C_DECL A_Light1(player_t *player, pspdef_t * psp)
 {
-    player->plr->extralight = 1;
+    player->plr->extraLight = 1;
 }
 
 void C_DECL A_Light2(player_t *player, pspdef_t * psp)
 {
-    player->plr->extralight = 2;
+    player->plr->extraLight = 2;
 }
 
 /*

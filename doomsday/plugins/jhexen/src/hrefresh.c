@@ -112,7 +112,6 @@ void R_SetViewSize(int blocks, int detail)
         ST_HUDUnHide(HUE_FORCE);
     }
     cfg.setblocks = blocks;
-    GL_Update(DDUF_BORDER);
 }
 
 void R_DrawMapTitle(void)
@@ -273,15 +272,6 @@ void G_Drawer(void)
 
         // Draw the automap.
         AM_Drawer(displayplayer);
-
-        // Need to update the borders?
-        if(oldgamestate != GS_LEVEL ||
-            (Get(DD_VIEWWINDOW_WIDTH) != 320 || menuactive ||
-                cfg.sbarscale < 20 || !R_IsFullScreenViewWindow()))
-        {
-            // Update the borders.
-            GL_Update(DDUF_BORDER);
-        }
         break;
 
     default:
@@ -320,8 +310,6 @@ void G_Drawer2(void)
             // beginning of a level.
             R_DrawMapTitle();
 
-            GL_Update(DDUF_FULLSCREEN);
-
             // DJS - Do we need to render a full status bar at this point?
             if (!(AM_IsMapActive(displayplayer) && cfg.automapHudDisplay == 0 ))
             {
@@ -350,15 +338,10 @@ void G_Drawer2(void)
         IN_Drawer();
         break;
 
-    case GS_INFINE:
-        GL_Update(DDUF_FULLSCREEN);
-        break;
-
     case GS_WAITING:
         GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
         gl.Color3f(1, 1, 1);
         MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
-        GL_Update(DDUF_FULLSCREEN);
         break;
 
     default:

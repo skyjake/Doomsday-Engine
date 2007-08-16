@@ -3,9 +3,9 @@
  * License: Raven
  * Online License Link: http://www.dengine.net/raven_license/End_User_License_Hexen_Source_Code.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006-2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1999 Activision
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999 Activision
  *
  * This program is covered by the HERETIC / HEXEN (LIMITED USE) source
  * code license; you can redistribute it and/or modify it under the terms
@@ -111,7 +111,7 @@ static void SV_v13_ReadPlayer(player_t *pl)
     SV_v13_ReadLong();          // mo
     pl->playerstate = SV_v13_ReadLong();
     SV_v13_Read(temp, 10);      // ticcmd_t
-    ddpl->viewz = FIX2FLT(SV_v13_ReadLong());
+    ddpl->viewZ = FIX2FLT(SV_v13_ReadLong());
     ddpl->viewheight = FIX2FLT(SV_v13_ReadLong());
     ddpl->deltaviewheight = FIX2FLT(SV_v13_ReadLong());
     pl->bob = SV_v13_ReadLong();
@@ -146,7 +146,7 @@ static void SV_v13_ReadPlayer(player_t *pl)
     pl->bonuscount = SV_v13_ReadLong();
     pl->flamecount = SV_v13_ReadLong();
     SV_v13_ReadLong();          // attacker
-    ddpl->extralight = SV_v13_ReadLong();
+    ddpl->extraLight = SV_v13_ReadLong();
     ddpl->fixedcolormap = SV_v13_ReadLong();
     pl->colormap = SV_v13_ReadLong();
     SV_v13_Read(pl->psprites, 16 * 2);

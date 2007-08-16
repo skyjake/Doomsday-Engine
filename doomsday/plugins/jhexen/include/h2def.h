@@ -96,6 +96,7 @@ extern game_import_t gi;
 
 #define states      (*gi.states)
 #define mobjinfo    (*gi.mobjinfo)
+#define VALIDCOUNT  (*gi.validCount)
 
 /*
    ===============================================================================
@@ -885,8 +886,6 @@ boolean         SB_Responder(event_t *event);
 void            SB_Ticker(void);
 void            SB_Drawer(int fullscreenmode, boolean refresh);
 void            Draw_TeleportIcon(void);
-void            Draw_SaveIcon(void);
-void            Draw_LoadIcon(void);
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 

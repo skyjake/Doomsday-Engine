@@ -3,11 +3,11 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2005-2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright Â© 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -127,11 +127,11 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
     xsector_t *xsec = P_XSector(sec);
 
     // wake up all monsters in this sector
-    if(P_GetIntp(sec, DMU_VALID_COUNT) == validCount &&
+    if(P_GetIntp(sec, DMU_VALID_COUNT) == VALIDCOUNT &&
        xsec->soundtraversed <= soundblocks + 1)
         return;                 // already flooded
 
-    P_SetIntp(sec, DMU_VALID_COUNT, validCount);
+    P_SetIntp(sec, DMU_VALID_COUNT, VALIDCOUNT);
 
     xsec->soundtraversed = soundblocks + 1;
     xsec->soundtarget = soundtarget;
@@ -173,7 +173,7 @@ void P_RecursiveSound(sector_t *sec, int soundblocks)
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     soundtarget = target;
-    validCount++;
+    VALIDCOUNT++;
     P_RecursiveSound(P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
 }
 
@@ -486,7 +486,7 @@ static fixed_t P_AvoidDropoff(mobj_t *actor)
 
     dropoff_deltax = dropoff_deltay = 0;
 
-    validCount++;
+    VALIDCOUNT++;
 
     // check lines
     P_ThingLinesIterator(actor, PIT_AvoidDropoff, 0);

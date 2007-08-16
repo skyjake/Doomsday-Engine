@@ -179,7 +179,7 @@ void P_CalcHeight(player_t *player)
     }
 
     // Set the player's eye-level Z coordinate.
-    dplay->viewz = FIX2FLT(pmo->pos[VZ]) +
+    dplay->viewZ = FIX2FLT(pmo->pos[VZ]) +
                      (P_IsCamera(pmo)? 0 : dplay->viewheight);
 
     // During demo playback (or camera mode) the viewz will not be
@@ -189,7 +189,7 @@ void P_CalcHeight(player_t *player)
         if(morphed)
         {
             // Chicken or pig.
-            dplay->viewz -= 20;
+            dplay->viewZ -= 20;
         }
         // Foot clipping is done for living players.
         if(player->playerstate != PST_DEAD)
@@ -197,7 +197,7 @@ void P_CalcHeight(player_t *player)
             // Foot clipping is done for living players.
             if(pmo->floorclip && FIX2FLT(pmo->pos[VZ]) <= pmo->floorz)
             {
-                dplay->viewz -= pmo->floorclip;
+                dplay->viewZ -= pmo->floorclip;
             }
         }
     }

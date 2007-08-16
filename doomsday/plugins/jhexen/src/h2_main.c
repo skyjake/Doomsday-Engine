@@ -473,7 +473,6 @@ void H2_PostInit(void)
 
     if(gameaction != GA_LOADGAME)
     {
-        GL_Update(DDUF_FULLSCREEN | DDUF_BORDER);
         if(autostart || IS_NETGAME)
         {
             G_StartNewInit();

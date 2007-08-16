@@ -3,10 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright Â© 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -191,8 +191,8 @@ void P_ApplyTorque(mobj_t *mo)
 
     tmthing = mo;
 
-    // Use validCount to prevent checking the same line twice
-    validCount++;
+    // Use VALIDCOUNT to prevent checking the same line twice
+    VALIDCOUNT++;
 
     P_ThingLinesIterator(mo, PIT_ApplyTorque, 0);
 

@@ -1035,7 +1035,7 @@ static void SV_WritePlayer(int playernum)
 #if __JHEXEN__
     SV_WriteLong(p->class);    // 2nd class...?
 #endif
-    SV_WriteLong(FLT2FIX(dp->viewz));
+    SV_WriteLong(FLT2FIX(dp->viewZ));
     SV_WriteLong(FLT2FIX(dp->viewheight));
     SV_WriteLong(FLT2FIX(dp->deltaviewheight));
 #if !__JHEXEN__
@@ -1128,7 +1128,7 @@ static void SV_WritePlayer(int playernum)
     SV_WriteLong(p->poisoncount);
 #endif
 
-    SV_WriteLong(dp->extralight);
+    SV_WriteLong(dp->extraLight);
     SV_WriteLong(dp->fixedcolormap);
     SV_WriteLong(p->colormap);
 
@@ -1186,7 +1186,7 @@ static void SV_ReadPlayer(player_t *p)
 #if __JHEXEN__
     p->class = SV_ReadLong();        // 2nd class...?
 #endif
-    dp->viewz = FIX2FLT(SV_ReadLong());
+    dp->viewZ = FIX2FLT(SV_ReadLong());
     dp->viewheight = FIX2FLT(SV_ReadLong());
     dp->deltaviewheight = FIX2FLT(SV_ReadLong());
 #if !__JHEXEN__
@@ -1292,7 +1292,7 @@ static void SV_ReadPlayer(player_t *p)
     p->poisoncount = SV_ReadLong();
 #endif
 
-    dp->extralight = SV_ReadLong();
+    dp->extraLight = SV_ReadLong();
     dp->fixedcolormap = SV_ReadLong();
     p->colormap = SV_ReadLong();
 
@@ -1432,7 +1432,7 @@ static void SV_WriteMobj(mobj_t *original)
     SV_WriteLong(mo->mom[MY]);
     SV_WriteLong(mo->mom[MZ]);
 
-    // If == validcount, already checked.
+    // If == VALIDCOUNT, already checked.
     SV_WriteLong(mo->valid);
 
     SV_WriteLong(mo->type);
@@ -1762,7 +1762,7 @@ static int SV_ReadMobj(thinker_t *th)
     mo->mom[MY] = SV_ReadLong();
     mo->mom[MZ] = SV_ReadLong();
 
-    // If == validcount, already checked.
+    // If == VALIDCOUNT, already checked.
     mo->valid = SV_ReadLong();
     mo->type = SV_ReadLong();
 #if __JHEXEN__
@@ -4581,14 +4581,23 @@ void SV_ClientSaveGameFile(unsigned int game_id, char *str)
             clientSavePath, game_id);
 }
 
+enum {
+    SV_OK = 0,
+    SV_INVALIDFILENAME,
+};
+
+typedef struct savegameparam_s {
 #if __JHEXEN__
-boolean SV_SaveGame(int slot, char *description)
-#else
-boolean SV_SaveGame(char *filename, char *description)
+    int         slot;
 #endif
+    char       *filename;
+    char       *description;
+} savegameparam_t;
+
+int SV_SaveGameWorker(void *ptr)
 {
+    savegameparam_t *param = ptr;
 #if __JHEXEN__
-    char        fileName[256];
     char        versionText[HXS_VERSION_TEXT_LENGTH];
 #else
     int     i;
@@ -4596,24 +4605,17 @@ boolean SV_SaveGame(char *filename, char *description)
 
     playerHeaderOK = false; // Uninitialized.
 
-#if __JHEXEN__
     // Open the output file
-    sprintf(fileName, "%shex6.hxs", savePath);
-    M_TranslatePath(fileName, fileName);
-    OpenStreamOut(fileName);
-#else
-    savefile = lzOpen(filename, "wp");
+    savefile = lzOpen(param->filename, "wp");
     if(!savefile)
     {
-        Con_Message("P_SaveGame: couldn't open \"%s\" for writing.\n",
-                    filename);
-        return false;           // No success.
+        Con_BusyWorkerEnd();
+        return SV_INVALIDFILENAME;           // No success.
     }
-#endif
 
 #if __JHEXEN__
     // Write game save description
-    SV_Write(description, SAVESTRINGSIZE);
+    SV_Write(param->description, SAVESTRINGSIZE);
 
     // Write version info
     memset(versionText, 0, HXS_VERSION_TEXT_LENGTH);
@@ -4643,7 +4645,7 @@ boolean SV_SaveGame(char *filename, char *description)
     hdr.gamemode = 0;
 # endif
 
-    strncpy(hdr.description, description, SAVESTRINGSIZE);
+    strncpy(hdr.description, param->description, SAVESTRINGSIZE);
     hdr.description[SAVESTRINGSIZE - 1] = 0;
     hdr.skill = gameskill;
 # if __JDOOM__
@@ -4711,13 +4713,49 @@ boolean SV_SaveGame(char *filename, char *description)
 
 #if __JHEXEN__
     // Clear all save files at destination slot.
-    ClearSaveSlot(slot);
+    ClearSaveSlot(param->slot);
 
     // Copy base slot to destination slot
-    CopySaveSlot(BASE_SLOT, slot);
+    CopySaveSlot(BASE_SLOT, param->slot);
 #endif
 
-    return true; // Success!
+    Con_BusyWorkerEnd();
+    return SV_OK; // Success!
+}
+
+#if __JHEXEN__
+boolean SV_SaveGame(int slot, char *description)
+#else
+boolean SV_SaveGame(char *filename, char *description)
+#endif
+{
+    int         result;
+#if __JHEXEN__
+    char        filename[256];
+#endif
+    savegameparam_t param;
+
+#if __JHEXEN__
+    param.slot = slot;
+#endif
+#if __JHEXEN__
+    sprintf(filename, "%shex6.hxs", savePath);
+    M_TranslatePath(filename, filename);
+#endif
+    param.filename = filename;
+    param.description = description;
+
+    // \todo Use progress bar mode and update progress during the setup.
+    result = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                      SV_SaveGameWorker, &param);
+
+    if(result == SV_INVALIDFILENAME)
+    {
+        Con_Message("P_SaveGame: Couldn't open \"%s\" for writing.\n",
+                    filename);
+    }
+
+    return result;
 }
 
 #if __JHEXEN__

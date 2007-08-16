@@ -68,7 +68,7 @@ extern game_export_t gx;
 
 #define mobjinfo    (*gi.mobjinfo)
 #define states      (*gi.states)
-#define validCount  (*gi.validcount)
+#define VALIDCOUNT  (*gi.validCount)
 
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }

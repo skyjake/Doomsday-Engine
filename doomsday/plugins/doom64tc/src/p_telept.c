@@ -3,10 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2006 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright Â© 1993-1996 by id Software, Inc.
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -155,7 +155,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing, boolean spawnFog)
                     {
                         thing->pos[VZ] = FLT2FIX(thing->ceilingz - thing->height);
                     }
-                    thing->dplayer->viewz =
+                    thing->dplayer->viewZ =
                         FIX2FLT(thing->pos[VZ]) + thing->dplayer->viewheight;
                 }
                 else
