@@ -52,7 +52,7 @@ typedef struct dgldriver_s {
     int             (*GetInteger) (int name);
     int             (*GetIntegerv) (int name, int *values);
     int             (*SetInteger) (int name, int value);
-    int             (*SetFloatv) (int name, float *values);
+    int             (*SetFloatv) (int name, const float *values);
     char           *(*GetString) (int name);
     int             (*Enable) (int cap);
     void            (*Disable) (int cap);
@@ -65,7 +65,7 @@ typedef struct dgldriver_s {
 
     // Textures.
     DGLuint         (*NewTexture) (void);
-    void            (*DeleteTextures) (int num, DGLuint * names);
+    void            (*DeleteTextures) (int num, const DGLuint *names);
     int             (*TexImage) (int format, int width, int height, int mipmap,
                                  void *data);
     void            (*TexParameter) (int pname, int param);
@@ -88,40 +88,40 @@ typedef struct dgldriver_s {
 
     // Colors.
     void            (*Color3ub) (DGLubyte r, DGLubyte g, DGLubyte b);
-    void            (*Color3ubv) (void *data);
+    void            (*Color3ubv) (const void *data);
     void            (*Color4ub) (DGLubyte r, DGLubyte g, DGLubyte b,
                                  DGLubyte a);
-    void            (*Color4ubv) (void *data);
+    void            (*Color4ubv) (const void *data);
     void            (*Color3f) (float r, float g, float b);
-    void            (*Color3fv) (float *data);
+    void            (*Color3fv) (const float *data);
     void            (*Color4f) (float r, float g, float b, float a);
-    void            (*Color4fv) (float *data);
+    void            (*Color4fv) (const float *data);
 
     // Drawing.
     void            (*Begin) (int mode);
     void            (*End) (void);
     void            (*Vertex2f) (float x, float y);
-    void            (*Vertex2fv) (float *data);
+    void            (*Vertex2fv) (const float *data);
     void            (*Vertex3f) (float x, float y, float z);
-    void            (*Vertex3fv) (float *data);
+    void            (*Vertex3fv) (const float *data);
     void            (*TexCoord2f) (float s, float t);
-    void            (*TexCoord2fv) (float *data);
+    void            (*TexCoord2fv) (const float *data);
     void            (*MultiTexCoord2f) (int target, float s, float t);
-    void            (*MultiTexCoord2fv) (int target, float *data);
-    void            (*Vertices2ftv) (int num, gl_ft2vertex_t * data);
-    void            (*Vertices3ftv) (int num, gl_ft3vertex_t * data);
-    void            (*Vertices3fctv) (int num, gl_fct3vertex_t * data);
+    void            (*MultiTexCoord2fv) (int target, const float *data);
+    void            (*Vertices2ftv) (int num, const gl_ft2vertex_t *data);
+    void            (*Vertices3ftv) (int num, const gl_ft3vertex_t *data);
+    void            (*Vertices3fctv) (int num, const gl_fct3vertex_t *data);
     void            (*ArrayElement) (int index);
     void            (*DrawElements) (int type, int count,
-                                     unsigned int *indices);
+                                     const unsigned int *indices);
 
     // Miscellaneous.
     int             (*Grab) (int x, int y, int width, int height, int format,
                              void *buffer);
     void            (*Fog) (int pname, float param);
-    void            (*Fogv) (int pname, void *data);
-    int             (*Project) (int num, gl_fc3vertex_t * inVertices,
-                                gl_fc3vertex_t * outVertices);
+    void            (*Fogv) (int pname, const void *data);
+    int             (*Project) (int num, gl_fc3vertex_t *inVertices,
+                                gl_fc3vertex_t *outVertices);
 //    int             (*ReadPixels) (int *inData, int format, void *pixels);
 } dgldriver_t;
 

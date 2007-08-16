@@ -3,9 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
- *\author Copyright Â© 2006 Jamie Jones <yagisan@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -117,24 +117,24 @@ DEF_VOID_1(ZBias, int);
 DEF_VOID_1(MatrixMode, int)
 DEF_VOID_1(ArrayElement, int)
 DEF_VOID_1(Begin, int)
-DEF_VOID_1(Color4ubv, void*)
-DEF_VOID_1(Vertex2fv, float*)
-DEF_VOID_1(Vertex3fv, float*)
-DEF_VOID_1(Color3ubv, void*)
-DEF_VOID_1(Color3fv, float*)
-DEF_VOID_1(Color4fv, float*)
-DEF_VOID_1(TexCoord2fv, float*)
-DEF_VOID_2(DeleteTextures, int, DGLuint*)
+DEF_VOID_1(Color4ubv, const void*)
+DEF_VOID_1(Vertex2fv, const float*)
+DEF_VOID_1(Vertex3fv, const float*)
+DEF_VOID_1(Color3ubv, const void*)
+DEF_VOID_1(Color3fv, const float*)
+DEF_VOID_1(Color4fv, const float*)
+DEF_VOID_1(TexCoord2fv, const float*)
+DEF_VOID_2(DeleteTextures, int, const DGLuint*)
 DEF_VOID_2(TexParameter, int, int)
 DEF_VOID_2(Vertex2f, float, float)
-DEF_VOID_2(MultiTexCoord2fv, int, float*)
-DEF_VOID_2(Vertices2ftv, int, gl_ft2vertex_t*)
-DEF_VOID_2(Vertices3ftv, int, gl_ft3vertex_t*)
-DEF_VOID_2(Vertices3fctv, int, gl_fct3vertex_t*)
+DEF_VOID_2(MultiTexCoord2fv, int, const float*)
+DEF_VOID_2(Vertices2ftv, int, const gl_ft2vertex_t*)
+DEF_VOID_2(Vertices3ftv, int, const gl_ft3vertex_t*)
+DEF_VOID_2(Vertices3fctv, int, const gl_fct3vertex_t*)
 DEF_VOID_2(TexCoord2f, float, float)
 DEF_VOID_2(Palette, int, void*)
 DEF_VOID_2(Fog, int, float)
-DEF_VOID_2(Fogv, int, void*)
+DEF_VOID_2(Fogv, int, const void*)
 DEF_VOID_3(EnableArrays, int, int, int)
 DEF_VOID_3(DisableArrays, int, int, int)
 DEF_VOID_3(Func, int, int, int)
@@ -145,7 +145,7 @@ DEF_VOID_3(Color3ub, DGLubyte, DGLubyte, DGLubyte)
 DEF_VOID_3(Color3f, float, float, float)
 DEF_VOID_3(Vertex3f, float, float, float)
 DEF_VOID_3(MultiTexCoord2f, int, float, float)
-DEF_VOID_3(DrawElements, int, int, unsigned int*)
+DEF_VOID_3(DrawElements, int, int, const unsigned int*)
 DEF_VOID_4(Viewport, int, int, int, int)
 DEF_VOID_4(Scissor, int, int, int, int)
 DEF_VOID_4(Color4ub, DGLubyte, DGLubyte, DGLubyte, DGLubyte)
@@ -160,7 +160,7 @@ DEF_1(int, Enable, int)
 DEF_1(int, Bind, DGLuint)
 DEF_2(int, GetIntegerv, int, int*)
 DEF_2(int, SetInteger, int, int)
-DEF_2(int, SetFloatv, int, float*)
+DEF_2(int, SetFloatv, int, const float*)
 // DEF_3(int, ReadPixels, int*, int, void*)
 DEF_3(int, Project, int, gl_fc3vertex_t*, gl_fc3vertex_t*)
 DEF_3(int, ChangeVideoMode, int, int, int)
