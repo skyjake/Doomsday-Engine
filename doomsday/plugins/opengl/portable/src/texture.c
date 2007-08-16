@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -494,12 +494,12 @@ int DG_TexImage(int format, int width, int height, int genMips, void *data)
 	return DGL_OK;
 }
 
-void DG_DeleteTextures(int num, DGLuint *names)
+void DG_DeleteTextures(int num, const DGLuint *names)
 {
 	if(!num || !names)
 		return;
 
-    glDeleteTextures(num, (GLuint*) names);
+    glDeleteTextures(num, (const GLuint*) names);
 }
 
 void DG_TexParameter(int pname, int param)

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2003-2007 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- *\author Copyright Â© 2007 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2007 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ void DG_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 	glColor3ub(r, g, b);
 }
 
-void DG_Color3ubv(DGLubyte * data)
+void DG_Color3ubv(const DGLubyte *data)
 {
 	glColor3ubv(data);
 }
@@ -110,7 +110,7 @@ void DG_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 	glColor4ub(r, g, b, a);
 }
 
-void DG_Color4ubv(DGLubyte * data)
+void DG_Color4ubv(const DGLubyte *data)
 {
 	glColor4ubv(data);
 }
@@ -120,7 +120,7 @@ void DG_Color3f(float r, float g, float b)
 	glColor3f(r, g, b);
 }
 
-void DG_Color3fv(float *data)
+void DG_Color3fv(const float *data)
 {
 	glColor3fv(data);
 }
@@ -130,7 +130,7 @@ void DG_Color4f(float r, float g, float b, float a)
 	glColor4f(r, g, b, a);
 }
 
-void DG_Color4fv(float *data)
+void DG_Color4fv(const float *data)
 {
 	glColor4fv(data);
 }
@@ -140,7 +140,7 @@ void DG_TexCoord2f(float s, float t)
 	glTexCoord2f(s, t);
 }
 
-void DG_TexCoord2fv(float *data)
+void DG_TexCoord2fv(const float *data)
 {
 	glTexCoord2fv(data);
 }
@@ -166,7 +166,7 @@ void DG_Vertex2f(float x, float y)
 	glVertex2f(x, y);
 }
 
-void DG_Vertex2fv(float *data)
+void DG_Vertex2fv(const float *data)
 {
 	glVertex2fv(data);
 }
@@ -176,12 +176,12 @@ void DG_Vertex3f(float x, float y, float z)
 	glVertex3f(x, y, z);
 }
 
-void DG_Vertex3fv(float *data)
+void DG_Vertex3fv(const float *data)
 {
 	glVertex3fv(data);
 }
 
-void DG_Vertices2ftv(int num, gl_ft2vertex_t * data)
+void DG_Vertices2ftv(int num, const gl_ft2vertex_t *data)
 {
 	for(; num > 0; num--, data++)
 	{
@@ -190,7 +190,7 @@ void DG_Vertices2ftv(int num, gl_ft2vertex_t * data)
 	}
 }
 
-void DG_Vertices3ftv(int num, gl_ft3vertex_t * data)
+void DG_Vertices3ftv(int num, const gl_ft3vertex_t *data)
 {
 	for(; num > 0; num--, data++)
 	{
@@ -199,7 +199,7 @@ void DG_Vertices3ftv(int num, gl_ft3vertex_t * data)
 	}
 }
 
-void DG_Vertices3fctv(int num, gl_fct3vertex_t * data)
+void DG_Vertices3fctv(int num, const gl_fct3vertex_t *data)
 {
 	for(; num > 0; num--, data++)
 	{
@@ -454,7 +454,7 @@ void DG_ArrayElement(int index)
 	}
 }
 
-void DG_DrawElements(int type, int count, unsigned int *indices)
+void DG_DrawElements(int type, int count, const unsigned int *indices)
 {
 	GLenum  primType =
 		(type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : type ==
